@@ -85,7 +85,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		}
 		for axis, limits in stagelimits.items():
 			if stageposition[axis] < limits[0] or stageposition[axis] > limits[1]:
-				messagestr = 'target stage position %s out of range... target aborting' % (stagepos,)
+				messagestr = 'target stage position %s out of range... target aborting' % (stageposition,)
 				#print messagestr
 				self.acquisitionlog.error(messagestr)
 				raise InvalidStagePosition(messagestr)
