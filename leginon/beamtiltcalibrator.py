@@ -40,6 +40,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		calibrator.Calibrator.__init__(self, id, session, managerlocation, **kwargs)
 
 		self.defaultmeasurebeamtilt = 0.01
+		self.resultvalue = None
 
 		self.calclient = calibrationclient.BeamTiltCalibrationClient(self)
 		self.euclient = calibrationclient.EucentricFocusClient(self)
@@ -63,9 +64,9 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			matcol = self.calclient.eq11(diff1, diff2, 0, 0, tilt_value)
 			matdict[axis] = matcol
 
-		self.logger.info('Making matrix...')
+		self.logger.debug('Making matrix...')
 		matrix = Numeric.zeros((2,2), Numeric.Float32)
-		self.logger.info('Matrix type %s, matrix dict type %s'
+		self.logger.debug('Matrix type %s, matrix dict type %s'
 											% (matrix.type(), matdict['x'].type()))
 		matrix[:,0] = matdict['x']
 		matrix[:,1] = matdict['y']
@@ -88,9 +89,9 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			shift1, shift2 = self.calclient.measureDisplacements(axis, tilt_value, state1, state2)
 			matcol = self.calclient.eq11(shift1, shift2, defocus1, defocus2, tilt_value)
 			matdict[axis] = matcol
-		self.logger.info('Making matrix...')
+		self.logger.debug('Making matrix...')
 		matrix = Numeric.zeros((2,2), Numeric.Float32)
-		self.logger.info('Matrix type %s, matrix dict type %s'
+		self.logger.debug('Matrix type %s, matrix dict type %s'
 											% (matrix.type(), matdict['x'].type()))
 
 		m00 = float(matdict['x'][0])
@@ -103,10 +104,11 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.logger.info('Storing calibration...')
 		ht = self.getHighTension()
 		mag, mags = self.getMagnification()
-		self.logger.info('Matrix %s, shape %s, type %s, flat %s'
+		self.logger.debug('Matrix %s, shape %s, type %s, flat %s'
 						% (matrix, matrix.shape, matrix.type(), Numeric.ravel(matrix)))
 		self.calclient.storeMatrix(ht, mag, 'defocus', matrix)
 		self.logger.info('Calibration stored')
+		self.logger.info('Calibration completed')
 		self.beep()
 		return ''
 
@@ -125,7 +127,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 					stig[axis][sign][axis] -= delta/2.0
 
 		for stigaxis in ('x','y'):
-			self.logger.info('Calculating matrix for stig %s' % (stigaxis,))
+			self.logger.debug('Calculating matrix for stig %s' % (stigaxis,))
 			matdict = {}
 			for tiltaxis in ('x','y'):
 				self.logger.info('Measuring %s tilt' % (tiltaxis,))
@@ -134,8 +136,10 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 				state1 = data.ScopeEMData(stigmator={'objective':stig1})
 				state2 = data.ScopeEMData(stigmator={'objective':stig2})
 				shift1, shift2 = self.calclient.measureDisplacements(tiltaxis, tilt_value, state1, state2)
-				self.logger.info('Shift 1 %s' % shift1)
-				self.logger.info('Shift 2 %s' % shift2)
+				self.logger.info('Pixel shift (1 of 2): (%.2f, %.2f)'
+														% (shift1['col'], shift1['row']))
+				self.logger.info('Pixel shift (2 of 2): (%.2f, %.2f)'
+														% (shift2['col'], shift2['row']))
 				stigval1 = stig1[stigaxis]
 				stigval2 = stig2[stigaxis]
 				matcol = self.calclient.eq11(shift1, shift2, stigval1, stigval2, tilt_value)
@@ -145,15 +149,18 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			matrix[:,1] = matdict['y']
 
 			## store calibration
+			self.logger.info('Storing calibration...')
 			mag, mags = self.getMagnification()
 			ht = self.getHighTension()
 			type = 'stig' + stigaxis
 			self.calclient.storeMatrix(ht, mag, type, matrix)
+			self.logger.info('Calibration stored')
 
 		## return to original stig
 		stigdict = {'stigmator':{'objective':currentstig}}
 		stigdata = data.ScopeEMData(initializer=stigdict)
 		self.emclient.setScope(stigdata)
+		self.logger.info('Calibration completed')
 		self.beep()
 		return ''
 
@@ -176,18 +183,22 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.calibrateDefocus(self.settings['defocus beam tilt'],
 													self.settings['first defocus'],
 													self.settings['second defocus'])
+		self.panel.calibrationDone()
 
 	def uiCalibrateStigmators(self):
 		self.calibrateStigmators(self.settings['stig beam tilt'],
 															self.settings['stig delta'])
+		self.panel.calibrationDone()
 
 	def uiMeasureDefocusStig(self, btilt):
 		result = self.measureDefocusStig(btilt, stig=True)
 		self.resultvalue = result
+		self.panel.measurementDone()
 
 	def uiMeasureDefocus(self, btilt):
 		result = self.measureDefocusStig(btilt, stig=False)
 		self.resultvalue = result
+		self.panel.measurementDone()
 
 	def uiCorrectDefocus(self):
 		delta = self.resultvalue
@@ -199,6 +210,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		newdefocus = current['defocus'] + delta['defocus']
 		newdata = data.ScopeEMData(defocus=newdefocus)
 		self.emclient.setScope(newdata)
+		self.panel.setInstrumentDone()
 
 	def uiCorrectStigmator(self):
 		delta = self.resultvalue
@@ -212,11 +224,13 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		stigdict = {'stigmator': {'objective': {'x':newstigx,'y':newstigy}}}
 		newdata = data.ScopeEMData(initializer=stigdict)
 		self.emclient.setScope(newdata)
+		self.panel.setInstrumentDone()
 
 	def uiResetDefocus(self):
 		newemdata = data.ScopeEMData()
 		newemdata['reset defocus'] = True
 		self.emclient.setScope(newemdata)
+		self.panel.setInstrumentDone()
 
 	def getCurrentValues(self):
 		emdata = self.emclient.getScope()
@@ -226,21 +240,16 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		stigy = stig['y']
 		return {'defocus':defocus, 'stigx':stigx, 'stigy':stigy}
 
-	def uiEucToScope(self):
-		self.eucToScope()
-
-	def uiEucFromScope(self):
-		self.eucFromScope()
-
 	def eucToScope(self):
+		estr = 'Unable to set euc. focus: %s'
 		scope = self.emclient.getScope()
 		ht = scope['high tension']
 		mag = scope['magnification']
 		eudata = self.euclient.researchEucentricFocus(ht,mag)
 		if eudata is None:
-			message = 'No eucentric focus has been saved for ht=%s and mag=%s' % (ht,mag)
-			self.logger.info(message)
-			self.messagelog.information(message)
+			e = 'none saved for HT: %s, Mag.: %s' % (ht, mag)
+			self.logger.error(estr % e)
+			self.panel.setInstrumentDone()
 			return
 		focus = eudata['focus']
 
@@ -249,8 +258,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		try:
 			self.emclient.setScope(scopedata)
 		except node.PublishError:
-			self.logger.exception('Cannot set instrument parameters')
-			self.messagelog.error('Cannot set instrument parameters')
+			self.logger.error(estr % 'cannot set instrument parameters')
+		self.panel.setInstrumentDone()
 
 	def eucFromScope(self):
 		## get current value of focus
@@ -259,7 +268,9 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		mag = scope['magnification']
 		focus = scope['focus']
 		self.euclient.publishEucentricFocus(ht, mag, focus)
-		self.eucstatus.information('published:  HT: %s, Mag: %s, Euc. Focus: %s' % (ht, mag, focus))
+		self.logger.info('Publishing HT: %s, Mag.: %s, Euc. Focus: %s'
+											% (ht, mag, focus))
+		self.panel.getInstrumentDone()
 
 	def abortCalibration(self):
 		raise NotImplementedError

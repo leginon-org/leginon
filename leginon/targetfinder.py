@@ -215,17 +215,23 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		'scale image': True,
 		'scale size': 512,
 		'mosaic image on tile change': True,
-		'size': 5,
-		'sigma': 1.4,
+		'lpf': {
+			'on': True,
+			'size': 5,
+			'sigma': 1.4,
+		},
 		'threshold': 100.0,
-		'border': 0,
-		'max blobs': 100,
-		'min blob size': 10,
-		'max blob size': 10000,
-		'min blob mean': 1000,
-		'max blob mean': 20000,
-		'min blob stdev': 10,
-		'max blob stdev': 500,
+		'blobs': {
+			'on': True,
+			'border': 0,
+			'max blobs': 100,
+			'min blob size': 10,
+			'max blob size': 10000,
+			'min blob mean': 1000,
+			'max blob mean': 20000,
+			'min blob stdev': 10,
+			'max blob stdev': 500,
+		},
 	}
 
 	eventoutputs = ClickTargetFinder.eventoutputs + [event.MosaicDoneEvent]

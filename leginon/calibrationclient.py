@@ -113,7 +113,6 @@ class CalibrationClient(object):
 		else:
 			self.node.logger.info('Checking for drift...')
 
-			self.node.logger.info('Acquiring image (2 of 2)')
 			info1 = self.acquireStateImage(state1, publish_images, settle)
 			imagedata1 = info1['imagedata']
 			imagecontent1 = imagedata1
@@ -161,6 +160,7 @@ class CalibrationClient(object):
 
 		self.checkAbort()
 
+		self.node.logger.info('Acquiring image (2 of 2)')
 		info2 = self.acquireStateImage(state2, publish_images, settle)
 		imagedata2 = info2['imagedata']
 		imagecontent2 = imagedata2
@@ -608,7 +608,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 
 		### try/finally to be sure we return to original beam tilt
 		try:
-			self.node.logger.info('Beam tilt %s' % beamtilt)
+			self.node.logger.debug('Beam tilt %s' % beamtilt)
 			beamtilts = (dict(beamtilt),dict(beamtilt))
 			beamtilts[0][tilt_axis] += tilt_value
 			beamtilts[1][tilt_axis] -= tilt_value
@@ -629,8 +629,10 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			self.node.logger.debug('States 2 %s' % (states2,))
 			shiftinfo = self.measureStateShift(states2[0], states2[1], 1, settle=0.25)
 			pixelshift2 = shiftinfo['pixel shift']
-			self.node.logger.info('Pixel shift 1 %s, Pixel shift 2 %s'
-														% (pixelshift1, pixelshift2))
+			self.node.logger.info('Pixel shift (1 of 2): (%.2f, %.2f)'
+														% (pixelshift1['col'], pixelshift1['row']))
+			self.node.logger.info('Pixel shift (2 of 2): (%.2f, %.2f)'
+														% (pixelshift2['col'], pixelshift2['row']))
 		except:
 			self.node.logger.exception('')
 		## return to original beam tilt
@@ -651,7 +653,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 
 		### try/finally to be sure we return to original beam tilt
 		try:
-			self.node.logger.info('Beam tilt %s' % beamtilt)
+			self.node.logger.debug('Beam tilt %s' % beamtilt)
 
 			### apply misalignment, this is the base value
 			### from which the two equal and opposite tilts

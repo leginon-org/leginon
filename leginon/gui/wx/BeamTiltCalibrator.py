@@ -1,3 +1,4 @@
+import threading
 import wx
 from gui.wx.Entry import IntEntry, FloatEntry
 import gui.wx.Calibrator
@@ -30,8 +31,17 @@ class Panel(gui.wx.Calibrator.Panel):
 													'instrumentset',
 													shortHelpString='Eucentric Focus To Scope')
 
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
+
+		self.Bind(gui.wx.Events.EVT_GET_INSTRUMENT_DONE, self.onGetInstrumentDone)
+		self.Bind(gui.wx.Events.EVT_SET_INSTRUMENT_DONE, self.onSetInstrumentDone)
+		self.Bind(gui.wx.Events.EVT_MEASUREMENT_DONE, self.onMeasurementDone)
+
 	def onNodeInitialized(self):
 		gui.wx.Calibrator.Panel.onNodeInitialized(self)
+
+		self.measuredialog = MeasureDialog(self)
+
 		self.toolbar.Bind(wx.EVT_TOOL, self.onParameterSettingsTool,
 											id=gui.wx.ToolBar.ID_PARAMETER_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureTool,
@@ -41,16 +51,59 @@ class Panel(gui.wx.Calibrator.Panel):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onEucToScope,
 											id=gui.wx.ToolBar.ID_SET_INSTRUMENT)
 
+	def _instrumentEnable(self, enable):
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ACQUIRE, enable)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_CALIBRATE, enable)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_MEASURE, enable)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_GET_INSTRUMENT, enable)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SET_INSTRUMENT, enable)
+		self.measuredialog.bmeasure.Enable(enable)
+		self.measuredialog.bcorrectdefocus.Enable(enable)
+		self.measuredialog.bcorrectstig.Enable(enable)
+		self.measuredialog.bresetdefocus.Enable(enable)
+
+	def _acquisitionEnable(self, enable):
+		self._instrumentEnable(enable)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SETTINGS, enable)
+
+	def _calibrationEnable(self, enable):
+		self._acquisitionEnable(enable)
+		self.cparameter.Enable(enable)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PARAMETER_SETTINGS, enable)
+		# not implemented
+		#self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, not enable)
+
+	def onGetInstrumentDone(self, evt):
+		self._instrumentEnable(True)
+
+	def onSetInstrumentDone(self, evt):
+		self._instrumentEnable(True)
+
+	def onMeasurementDone(self, evt):
+		self._calibrationEnable(True)
+		result = self.node.resultvalue
+		for key, value in self.measuredialog.sts.items():
+			try:
+				value.SetLabel(str(result[key]))
+			except:
+				value.SetLabel('Not measured')
+		self.measuredialog.szmain.Layout()
+		self.measuredialog.Fit()
+
+	def measurementDone(self):
+		evt = gui.wx.Events.MeasurementDoneEvent()
+		self.GetEventHandler().AddPendingEvent(evt)
+
 	def onEucToScope(self, evt):
-		self.node.uiEucToScope()
+		self._instrumentEnable(False)
+		threading.Thread(target=self.node.eucToScope).start()
 
 	def onEucFromScope(self, evt):
-		self.node.uiEucFromScope()
+		self._instrumentEnable(False)
+		threading.Thread(target=self.node.eucFromScope).start()
 
 	def onMeasureTool(self, evt):
-		dialog = MeasureDialog(self)
-		dialog.ShowModal()
-		dialog.Destroy()
+		self.measuredialog.ShowModal()
 
 	def onParameterSettingsTool(self, evt):
 		parameter = self.cparameter.GetStringSelection()
@@ -64,11 +117,12 @@ class Panel(gui.wx.Calibrator.Panel):
 		dialog.Destroy()
 
 	def onCalibrateTool(self, evt):
+		self._calibrationEnable(False)
 		parameter = self.cparameter.GetStringSelection()
 		if parameter == 'Defocus':
-			self.node.uiCalibrateDefocus()
+			threading.Thread(target=self.node.uiCalibrateDefocus).start()
 		elif parameter == 'Stigmators':
-			self.node.uiCalibrateStigmators()
+			threading.Thread(target=self.node.uiCalibrateStigmators).start()
 		else:
 			raise RuntimeError
 
@@ -151,7 +205,7 @@ class MeasureDialog(wx.Dialog):
 		szresult.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szresult.Add(self.sts['stigy'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		self.bmeasure = wx.Button(self, -1, 'Measure All')
+		self.bmeasure = wx.Button(self, -1, 'Measure')
 		self.bcorrectdefocus = wx.Button(self, -1, 'Correct Defocus')
 		self.bcorrectstig = wx.Button(self, -1, 'Correct Stigmator')
 		self.bresetdefocus = wx.Button(self, -1, 'Reset Defocus')
@@ -174,14 +228,14 @@ class MeasureDialog(wx.Dialog):
 		sbsz = wx.StaticBoxSizer(self.sb, wx.VERTICAL)
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
-		self.bdone = wx.Button(self, wx.ID_OK, 'Done')
+		self.bdone = wx.Button(self, wx.ID_OK, 'Close')
 
-		szmain = wx.GridBagSizer(5, 5)
-		szmain.Add(sbsz, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
-		szmain.Add(self.bdone, (1, 0), (1, 1),
+		self.szmain = wx.GridBagSizer(5, 5)
+		self.szmain.Add(sbsz, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
+		self.szmain.Add(self.bdone, (1, 0), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 10)
 
-		self.SetSizerAndFit(szmain)
+		self.SetSizerAndFit(self.szmain)
 
 		self.Bind(wx.EVT_BUTTON, self.onMeasureButton, self.bmeasure)
 		self.Bind(wx.EVT_BUTTON, self.onCorrectDefocusButton, self.bcorrectdefocus)
@@ -189,21 +243,21 @@ class MeasureDialog(wx.Dialog):
 		self.Bind(wx.EVT_BUTTON, self.onResetDefocusButton, self.bresetdefocus)
 
 	def onMeasureButton(self, evt):
-		result = self.node.uiMeasureDefocusStig(self.febeamtilt.GetValue())
-		for key, value in self.sts.items():
-			try:
-				value.SetLabel(str(result[key]))
-			except:
-				value.SetLabel('Not measured')
+		self.GetParent()._calibrationEnable(False)
+		threading.Thread(target=self.node.uiMeasureDefocusStig,
+											args=(self.febeamtilt.GetValue(),)).start()
 
 	def onCorrectDefocusButton(self, evt):
-		self.node.uiCorrectDefocus()
+		self.GetParent()._instrumentEnable(False)
+		threading.Thread(target=self.node.uiCorrectDefocus).start()
 
 	def onCorrectStigButton(self, evt):
-		self.node.uiCorrectStigmator()
+		self.GetParent()._instrumentEnable(False)
+		threading.Thread(target=self.node.uiCorrectStigmator).start()
 
 	def onResetDefocusButton(self, evt):
-		self.node.uiResetDefocus()
+		self.GetParent()._instrumentEnable(False)
+		threading.Thread(target=self.node.uiResetDefocus).start()
 
 if __name__ == '__main__':
 	class App(wx.App):

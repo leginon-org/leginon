@@ -190,7 +190,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 		ht = self.getHighTension()
 
 		matrix = calclient.measurementToMatrix(shifts)
-		self.logger.info('Matrix %s' % matrix)
+		self.logger.debug('Matrix %s' % matrix)
 		calclient.storeMatrix(ht, mag, self.parameter, matrix)
 		self.beep()
 

@@ -95,6 +95,9 @@ class Panel(gui.wx.Node.Panel):
 	def _acquisitionEnable(self, enable):
 		self.toolbar.Enable(enable)
 
+	def onAcquisitionDone(self, evt):
+		self._acquisitionEnable(True)
+
 	def _calibrationEnable(self, enable):
 		self.toolbar.Enable(enable)
 

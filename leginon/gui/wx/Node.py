@@ -94,3 +94,17 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 		evt = gui.wx.Events.AcquisitionDoneEvent()
 		self.GetEventHandler().AddPendingEvent(evt)
 
+	def onGetInstrumentDone(self, evt):
+		pass
+
+	def getInstrumentDone(self):
+		evt = gui.wx.Events.GetInstrumentDoneEvent()
+		self.GetEventHandler().AddPendingEvent(evt)
+
+	def onSetInstrumentDone(self, evt):
+		pass
+
+	def setInstrumentDone(self):
+		evt = gui.wx.Events.SetInstrumentDoneEvent()
+		self.GetEventHandler().AddPendingEvent(evt)
+

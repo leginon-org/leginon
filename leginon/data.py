@@ -1571,9 +1571,9 @@ class SetupWizardSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
-class CameraSettingsData(SettingsData):
+class CameraSettingsData(Data):
 	def typemap(cls):
-		return SettingsData.typemap() + (
+		return Data.typemap() + (
 			('dimension', dict),
 			('offset', dict),
 			('binning', dict),
@@ -1658,9 +1658,9 @@ class ClickTargetFinderSettingsData(TargetFinderSettingsData):
 		)
 	typemap = classmethod(typemap)
 
-class LowPassFilterSettingsData(SettingsData):
+class LowPassFilterSettingsData(Data):
 	def typemap(cls):
-		return SettingsData.typemap() + (
+		return Data.typemap() + (
 			('on', bool),
 			('size', int),
 			('sigma', foat),
@@ -1735,9 +1735,10 @@ class LowPassFilterSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
-class BlobFinderSettingsData(SettingsData):
+class BlobFinderSettingsData(Data):
 	def typemap(cls):
 		return SettingsData.typemap() + (
+			('on', bool),
 			('border', int),
 			('max blobs', int),
 			('min blob size', int),
@@ -1749,11 +1750,11 @@ class BlobFinderSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
-class SquareFinderSettingsData(LowPassFilterSettingsData,
-																BlobFinderSettingsData):
+class SquareFinderSettingsData(SettingsData):
 	def typemap(cls):
-		return LowPassFilterSettingsData.typemap() \
-						+ BlobFinderSettingsData.typemap() + (
+		return SettingsData.typemap() + (
+			('lpf', LowPassFilterSettingsData),
+			('blobs', BlobFinderSettingsData),
 			('threshold', float),
 		)
 	typemap = classmethod(typemap)
@@ -1761,8 +1762,9 @@ class SquareFinderSettingsData(LowPassFilterSettingsData,
 class MosaicClickTargetFinderSettingsData(ClickTargetFinderSettingsData,
 																					SquareFinderSettingsData):
 	def typemap(cls):
-		return ClickTargetFinderSettingsData.typemap() \
-						+ SquareFinderSettingsData.typemap() + (
+		typemap = ClickTargetFinderSettingsData.typemap()
+		typemap += SquareFinderSettingsData.typemap()
+		typemap += (
 			('calibration parameter', str),
 			('scale image', bool),
 			('scale size', int),
