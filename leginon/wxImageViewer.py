@@ -779,10 +779,15 @@ class TargetTool(ImageTool):
 	def addComboBox(self, name):
 		if self.combobox is None:
 			if len(self.imagepanel.target_types) > 1:
-				self.combobox = wxComboBox(self.imagepanel, -1, value=self.target_type,
-																		choices=self.imagepanel.target_types.keys(),
-																		style=wxCB_DROPDOWN|wxCB_READONLY|wxCB_SORT)
-				EVT_COMBOBOX(self.imagepanel, self.combobox.GetId(),
+#				self.combobox = wxComboBox(self.imagepanel, -1, value=self.target_type,
+#																		choices=self.imagepanel.target_types.keys(),
+#																		style=wxCB_DROPDOWN|wxCB_READONLY|wxCB_SORT)
+#				EVT_COMBOBOX(self.imagepanel, self.combobox.GetId(),
+#											self.OnComboBoxSelect)
+				self.combobox = wxChoice(self.imagepanel, -1,
+																		choices=self.imagepanel.target_types.keys())
+				self.combobox.SetStringSelection(self.target_type)
+				EVT_CHOICE(self.imagepanel, self.combobox.GetId(),
 											self.OnComboBoxSelect)
 				self.sizer.Add(self.combobox, 0, wxALIGN_CENTER_VERTICAL | wxALL, 3)
 				self.sizer.Layout()
@@ -1174,13 +1179,13 @@ if __name__ == '__main__':
 			frame = wxFrame(NULL, -1, 'Image Viewer')
 			self.SetTopWindow(frame)
 
-#			self.panel = TargetImagePanel(frame, -1)
-#			self.panel.addTargetType('foo')
-#			self.panel.addTargetType('bar')
+			self.panel = TargetImagePanel(frame, -1)
+			self.panel.addTargetType('foo')
+			self.panel.addTargetType('bar')
 
 #			self.panel = ClickImagePanel(frame, -1, bar)
 
-			self.panel = ImagePanel(frame, -1)
+#			self.panel = ImagePanel(frame, -1)
 			frame.Fit()
 			frame.Show(true)
 			return true
