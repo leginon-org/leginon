@@ -29,6 +29,7 @@ class CameraPanel(wx.Panel):
 		self.geometry = None
 		self.binnings = {'x': [1,2,4,8,16], 'y': [1,2,4,8,16]}
 		self.defaultexptime = 1000.0
+		self.common = {}
 
 		# geometry
 		std = wx.StaticText(self, -1, 'Dimension:')
@@ -117,7 +118,10 @@ class CameraPanel(wx.Panel):
 	def clear(self):
 		self.Freeze()
 		self.ccommon.SetSelection(0)
-		self.setGeometry(self.common[self.ccommon.GetStringSelection()])
+		try:
+			self.setGeometry(self.common[self.ccommon.GetStringSelection()])
+		except KeyError:
+			pass
 		self.feexposuretime.SetValue(self.defaultexptime)
 		self.Enable(False)
 		self.Thaw()
