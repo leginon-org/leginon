@@ -159,6 +159,14 @@ class IceCalculator(object):
 	def get_thickness(self, intensity):
 		return Numeric.log(self.i0 / intensity)
 
+	def get_stdev_thickness(self, stdev_intensity, mean_intensity):
+		return Numeric.log(mean_intensity / (mean_intensity-stdev_intensity))
+
+	def get_stdev_intensity(self, stdev_thickness, mean_thickness):
+		### figure this out later
+		pass
+
+
 ### Note:  we should create a base class ImageProcess
 ### which defines the basic idea of a series of operations on 
 ### an image or a pipeline of operations.
@@ -229,9 +237,10 @@ class HoleFinder(object):
 		self.template_config = {'min_radius': 25, 'max_radius': 30}
 		self.correlation_config = {'cortype': 'cross correlation'}
 		self.threshold = 3.0
+		self.blobs_config = {'border': 20}
 		self.lattice_config = {'tolerance': 0.1, 'vector': 100.0, 'minspace': 20}
 		self.holestats_config = {'radius': 20}
-		self.ice_config = {'i0': None, 'min': 0.0, 'max': 0.01}
+		self.ice_config = {'i0': None, 'min': 0.0, 'max': 0.1, 'std': 0.05}
 
 	def __getitem__(self, key):
 		return self.__results[key]
@@ -362,6 +371,10 @@ class HoleFinder(object):
 		if self.save_mrc:
 			Mrc.numeric_to_mrc(t, 'threshold.mrc')
 
+	def configure_blobs(self, border=None):
+		if border is not None:
+			self.blobs_config['border'] = border
+
 	def find_blobs(self):
 		'''
 		find blobs on a thresholded image
@@ -371,7 +384,8 @@ class HoleFinder(object):
 		print 'finding blobs'
 		im = self.__results['correlation']
 		mask = self.__results['threshold']
-		blobs = imagefun.find_blobs(im, mask)
+		border = self.blobs_config['border']
+		blobs = imagefun.find_blobs(im, mask, border)
 		self.__update_result('blobs', blobs)
 
 	def configure_lattice(self, tolerance=None, spacing=None, minspace=None):
@@ -493,24 +507,27 @@ class HoleFinder(object):
 		self.configure_holestats(radius=radius)
 		im = self.__results['original']
 		r = self.holestats_config['radius']
-		holes = self.__results['holes']
+		holes = list(self.__results['holes'])
 		for hole in holes:
 			coord = hole.stats['center']
 			holestats = self.get_hole_stats(im, coord, r)
 			if holestats is None:
+				self.__results['holes'].remove(hole)
 				continue
 			hole.stats['hole_stat_radius'] = r
 			hole.stats['hole_n'] = holestats['n']
 			hole.stats['hole_mean'] = holestats['mean']
 			hole.stats['hole_std'] = holestats['std']
 
-	def configure_ice(self, i0=None, tmin=None, tmax=None):
+	def configure_ice(self, i0=None, tmin=None, tmax=None, tstd=None):
 		if i0 is not None:
 			self.ice_config['i0'] = i0
 		if tmin is not None:
 			self.ice_config['tmin'] = tmin
 		if tmax is not None:
 			self.ice_config['tmax'] = tmax
+		if tstd is not None:
+			self.ice_config['tstd'] = tstd
 
 	def calc_ice(self, i0=None, tmin=None, tmax=None):
 		if self.__results['holes'] is None:
@@ -521,13 +538,15 @@ class HoleFinder(object):
 		i0 = self.ice_config['i0']
 		tmin = self.ice_config['tmin']
 		tmax = self.ice_config['tmax']
+		tstd = self.ice_config['tstd']
 		self.icecalc.set_i0(i0)
 		for hole in holes:
 			if 'hole_mean' not in hole.stats:
 				## no mean was calculated
 				continue
 			t = self.icecalc.get_thickness(hole.stats['hole_mean'])
-			if tmin <= t <= tmax:
+			ts = self.icecalc.get_stdev_thickness(hole.stats['hole_std'], hole.stats['hole_mean'])
+			if (tmin <= t <= tmax) and (ts < tstd):
 				holes2.append(hole)
 		self.__update_result('holes2', holes2)
 
