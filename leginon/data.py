@@ -301,7 +301,7 @@ scope_params = [
 	('column valves', str),
 	('column pressure', float),
 	('turbo pump', str),
-	('high tension', float),
+	('high tension', int),
 ]
 camera_params = [
 	('dimension', dict),
