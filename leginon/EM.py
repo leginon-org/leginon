@@ -70,23 +70,31 @@ class EMClient(object):
 	def handleCameraImagePublish(self, ievent):
 		self.cameraimageref = ievent
 
-	def getScope(self, key=None):
+	def getScope(self, key=None, temp=False):
 		if self.scoperef is None:
 			raise ScopeUnavailable()
 		## still has to get whole ScopeEMData just to get one key
 		dat = self.scoperef['data']
-		dat = data.ScopeEMData(initializer=dat)
+		if temp:
+			hold = False
+		else:
+			hold = None
+		dat = data.ScopeEMData(hold=hold, initializer=dat)
 		if key is None:
 			return dat
 		else:
 			return dat[key]
 
-	def getCamera(self, key=None):
+	def getCamera(self, key=None, temp=False):
 		if self.cameraref is None:
 			raise ScopeUnavailable()
 		## still has to get whole CameraEMData just to get one key
 		dat = self.cameraref['data']
-		dat = data.CameraEMData(initializer=dat)
+		if temp:
+			hold = False
+		else:
+			hold = None
+		dat = data.CameraEMData(hold=hold, initializer=dat)
 		self.node.logger.debug('getCamera dat dmid: %s' % (dat.dmid,))
 		if key is None:
 			return dat
@@ -97,6 +105,11 @@ class EMClient(object):
 		if self.cameraimageref is None:
 			raise CameraUnavailable()
 		dat = self.cameraimageref['data']
+		if temp:
+			hold = False
+		else:
+			hold = None
+		dat = data.CameraEMData(hold=hold, initializer=dat)
 		if key is None:
 			return dat
 		else:
@@ -284,7 +297,7 @@ class EM(node.Node):
 			state = self.state
 		finally:
 			self.statelock.release()
-		newdata = data.ScopeEMData()
+		newdata = data.ScopeEMData(hold=False)
 		newdata.friendly_update(state)
 		return newdata
 
@@ -297,7 +310,7 @@ class EM(node.Node):
 			state = self.state
 		finally:
 			self.statelock.release()
-		newdata = data.CameraEMData()
+		newdata = data.CameraEMData(hold=False)
 		newdata.friendly_update(state)
 		return newdata
 
@@ -310,7 +323,7 @@ class EM(node.Node):
 			state = self.state
 		finally:
 			self.statelock.release()
-		newdata = data.CameraEMData()
+		newdata = data.CameraEMData(hold=False)
 		newdata.friendly_update(state)
 		return newdata
 
