@@ -6,6 +6,7 @@ import gui.wx.Node
 import wxImageViewer
 
 class Panel(gui.wx.Node.Panel):
+	icon = 'navigator'
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1, name='%s.pNavigator' % name)
 
@@ -63,7 +64,7 @@ class Panel(gui.wx.Node.Panel):
 		axes = ['x', 'y', 'z', 'a', 'b']
 		for i, a in enumerate(axes):
 			stposition[a] = wx.StaticText(self, -1, a)
-			self.stposition[a] = wx.StaticText(self, -1, 'N/A')
+			self.stposition[a] = wx.StaticText(self, -1, '-')
 			self.szlocations.Add(stposition[a], (0, i + 1), (1, 1), wx.ALIGN_CENTER)
 			self.szlocations.Add(self.stposition[a], (1, i + 1), (1, 1),
 														wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
@@ -195,11 +196,11 @@ class Panel(gui.wx.Node.Panel):
 		for a in ['x', 'y', 'z', 'a', 'b']:
 			try:
 				if l[a] is None:
-					self.stposition[a].SetLabel('N/A')
+					self.stposition[a].SetLabel('-')
 				else:
 					self.stposition[a].SetLabel(str(l[a]))
 			except KeyError:
-				self.stposition[a].SetLabel('N/A')
+				self.stposition[a].SetLabel('-')
 		if comment is None:
 			comment = ''
 		else:
@@ -209,6 +210,8 @@ class Panel(gui.wx.Node.Panel):
 		self.btoscope.Enable(True)
 		self.bfromscope.Enable(True)
 		self.bremove.Enable(True)
+
+		self.szlocations.Layout()
 
 	def onImageDoubleClicked(self, evt):
 		# ...

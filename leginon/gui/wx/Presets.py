@@ -281,6 +281,7 @@ class EditPresetOrder(PresetOrder):
 		self.deletebutton.Enable(True)
 
 class Panel(gui.wx.Node.Panel):
+	icon = 'presets'
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1, name='%s.pPresets' % name)
 
