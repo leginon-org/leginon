@@ -368,7 +368,7 @@ class SessionImageDirectoryPage(WizardPage):
 												self.directorytextctrl.GetValue(),
 												style=wx.DD_DEFAULT_STYLE|wx.DD_NEW_DIR_BUTTON)
 		if dlg.ShowModal() == wx.ID_OK:
-			self.directorytextctrl.SetLabel(dlg.GetPath())
+			self.directorytextctrl.SetValue(dlg.GetPath())
 		dlg.Destroy()
 
 class SessionCreatePage(WizardPage):
