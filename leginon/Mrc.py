@@ -54,7 +54,8 @@ def numeric_to_mrcstr(ndata):
 		raise TypeError('ndata must be Numeric array')
 	f = cStringIO.StringIO()
 	mrc_write(f, ndata)
-	return f.getvalue()
+	mrcstr = f.getvalue()
+	return mrcstr
 
 def mrc_read(mrcfile):
 	hdr = MrcHeader(mrcfile)
@@ -118,9 +119,9 @@ class MrcData:
 		typecode = narray.typecode()
 		self.mode = typecode_mrcmode[typecode]
 
-		# cast array to the proper typecode
+		# array to the proper typecode
 		newtypecode = mrcmode_typecode[self.mode][1]
-		narray = Numeric.array(narray.tolist(), newtypecode)
+		narray = narray.astype(newtypecode)
 			
 		## get my description from Numeric shape
 		shape = narray.shape
