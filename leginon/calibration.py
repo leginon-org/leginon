@@ -31,6 +31,7 @@ class Calibration(node.Node):
 		self.range = [0.0000001, 0.00001]
 		####
 
+		# correlation maybe goes into a different node
 		self.validshift = \
 			{'correlation':
 				{'pixel':
@@ -333,6 +334,7 @@ class Calibration(node.Node):
 		self.registerUIData('Minimum', 'float', default=self.range[0]),
 		self.registerUIData('Maximum', 'float', default=self.range[1]),
 		self.registerUIData('Attempts', 'integer', default=self.attempts),
+		self.registerUIData('Correlation Threshold', 'integer', default=self.correlationthreshold),
 		self.registerUIData('Camera State', 'struct', default=self.camerastate)
 		)
 		rspec = self.registerUIMethod(self.uiSetParameters, 'Set Parameters', argspec)
@@ -346,12 +348,13 @@ class Calibration(node.Node):
 		self.calibrate()
 		return ''
 
-	def uiSetParameters(self, emnode, param, r0, r1, a, cs):
+	def uiSetParameters(self, emnode, param, r0, r1, a, ct, cs):
 		self.emnode = ('manager', emnode)
 		self.parameter = param
 		self.range[0] = r0
 		self.range[1] = r1
 		self.attempts = a
+		self.correlationthreshold = ct
 		self.camerastate = cs
 		# update valid somehow
 		#self.validShiftCallback(self.validshift)
