@@ -709,7 +709,7 @@ class ImageTargetData(InSessionData):
 		  ('scope', ScopeEMData),
 		  ('camera', CameraEMData),
 		  ('preset', PresetData),
-#		  ('image', ImageData)
+		  ('image', ImageData)
 		]
 		return t
 	typemap = classmethod(typemap)
