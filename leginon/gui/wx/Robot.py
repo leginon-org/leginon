@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Robot.py,v $
-# $Revision: 1.2 $
+# $Revision: 1.3 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-12-11 01:23:24 $
+# $Date: 2005-03-02 22:12:00 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -20,47 +20,21 @@ import threading
 import wx
 import unique
 
-class NotificationPanel(gui.wx.Node.Panel):
-	#icon = 'robot'
-	def __init__(self, parent, name):
-		gui.wx.Node.Panel.__init__(self, parent, -1)
-
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_INSERT,
-													'node', shortHelpString='Insert')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_EXTRACT,
-													'node', shortHelpString='Extract')
-		#self.toolbar.EnableTool(gui.wx.ToolBar.ID_INSERT, False)
-		#self.toolbar.EnableTool(gui.wx.ToolBar.ID_EXTRACT, False)
-		self.toolbar.Realize()
-
-		self.SetSizer(self.szmain)
-		self.SetAutoLayout(True)
-		self.SetupScrolling()
-
-	def onNodeInitialized(self):
-		self.toolbar.Bind(wx.EVT_TOOL, self.onInsertTool,
-											id=gui.wx.ToolBar.ID_INSERT)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onExtractTool,
-											id=gui.wx.ToolBar.ID_EXTRACT)
-
-	def onInsertTool(self, evt):
-		threading.Thread(target=self.node.insert).start()
-
-	def onExtractTool(self, evt):
-		threading.Thread(target=self.node.extract).start()
-
-class ControlPanel(gui.wx.Node.Panel):
+class Panel(gui.wx.Node.Panel):
 	#icon = 'robot'
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
 
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY,
 													'play', shortHelpString='Start')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_EXTRACT,
+													'node', shortHelpString='Extract')
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_GRID,
 													'grid', shortHelpString='Grid Cleared')
 		#self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
 		#self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, False)
+		#self.toolbar.EnableTool(gui.wx.ToolBar.ID_EXTRACT, False)
 		self.toolbar.Realize()
 
 		self.ctray = wx.Choice(self, -1)
@@ -98,6 +72,8 @@ class ControlPanel(gui.wx.Node.Panel):
 	def onNodeInitialized(self):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onPlayTool, id=gui.wx.ToolBar.ID_PLAY)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onGridTool, id=gui.wx.ToolBar.ID_GRID)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onExtractTool,
+											id=gui.wx.ToolBar.ID_EXTRACT)
 
 		self.Bind(wx.EVT_CHOICE, self.onTrayChoice, self.ctray)
 		choices = self.node.getTrayLabels()
@@ -115,6 +91,9 @@ class ControlPanel(gui.wx.Node.Panel):
 
 	def onGridTool(self, evt):
 		threading.Thread(target=self.node.gridCleared).start()
+
+	def onExtractTool(self, evt):
+		threading.Thread(target=self.node.extract).start()
 
 	def onSelectAllButton(self, evt):
 		self.tray.selectAll()

@@ -97,35 +97,6 @@ def validateGridNumber(gridnumber):
 	else:
 		return False
 
-class RobotNode(node.Node):
-	eventinputs = node.Node.eventinputs
-	eventoutputs = node.Node.eventoutputs
-	def __init__(self, id, session, managerlocation, **kwargs):
-		self.abort = False
-		node.Node.__init__(self, id, session, managerlocation, **kwargs)
-		self.instrument = instrument.Proxy(self.objectservice, self.session)
-
-	def waitScope(self, parameter, value, interval=-1.0, timeout=0.0):
-		if self.instrument.tem.hasAttribute(parameter):
-			o = self.instrument.tem
-		elif self.instrument.ccdcamera.hasAttribute(parameter):
-			o = self.instrument.ccdcamera
-		else:
-			raise ValueError('invalid parameter')
-		parametervalue = getattr(o, parameter)
-		elapsed = 0.0
-		if interval >= 0.0:
-			while parametervalue != value:
-				time.sleep(interval)
-				if timeout > 0.0:
-					elapsed += interval
-					if elapsed > timeout:
-						raise ScopeException('parameter is not set to value')
-				parametervalue = getattr(o, parameter)
-		else:
-			if parametervalue != value:
-				raise ValueError('parameter is not set to value')
-
 class Request(object):
 	def __init__(self):
 		self.event = threading.Event()
@@ -145,22 +116,25 @@ if sys.platform == 'win32':
 	import pywintypes
 	import Queue
 
-class RobotControl(RobotNode):
-	panelclass = gui.wx.Robot.ControlPanel
-	eventinputs = RobotNode.eventinputs + [event.ExtractGridEvent,
-																					event.InsertGridEvent,]
-	eventoutputs = RobotNode.eventoutputs + [event.GridInsertedEvent,
-																						event.GridExtractedEvent,
+class Robot(node.Node):
+	panelclass = gui.wx.Robot.Panel
+	eventinputs = node.Node.eventinputs + [event.TargetListDoneEvent,
+																					event.MosaicDoneEvent]
+	eventoutputs = node.Node.eventoutputs + [event.MakeTargetListEvent,
 																						event.EmailEvent]
 	def __init__(self, id, session, managerlocation, **kwargs):
 
 		self.simulate = False
 		#self.simulate = True
 
-		RobotNode.__init__(self, id, session, managerlocation, **kwargs)
+		node.Node.__init__(self, id, session, managerlocation, **kwargs)
+		self.instrument = instrument.Proxy(self.objectservice, self.session)
+
 		self.gridnumber = None
 		self.griddata = None
+
 		self.timings = {}
+
 		self.gridcleared = threading.Event()
 
 		self.emailclient = emailnotification.EmailClient(self)
@@ -176,21 +150,27 @@ class RobotControl(RobotNode):
 		threading.Thread(name='robot control queue handler thread',
 											target=self._queueHandler).start()
 
-		self.addEventInput(event.InsertGridEvent, self.handleInsert)
-		self.addEventInput(event.ExtractGridEvent, self.handleExtract)
+		self.addEventInput(event.MosaicDoneEvent, self.handleGridDataCollectionDone)
+		self.addEventInput(event.TargetListDoneEvent,
+												self.handleGridDataCollectionDone)
 
 		self.start()
 
 	def _queueHandler(self):
 		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
 		if self.simulate:
-				self.communication = TestCommunication()
+			self.communication = TestCommunication()
 		else:
 			try:
 				self.communication = win32com.client.Dispatch(
 																								'RobotCommunications.Signal')
-			except pywintypes.com_error, e:
-				raise RuntimeError('cannot initialize robot communications')
+			except:
+				self.logger.warning(
+					'Cannot initialize robot communications, starting in simulation mode'
+				)
+				self.simulate = True
+				self.communication = TestCommunication()
+				
 
 		while True:
 			request = self.queue.get()
@@ -210,7 +190,7 @@ class RobotControl(RobotNode):
 		request = ExitRequest()
 		self.queue.put(request)
 		request.event.wait()
-		RobotNode.exit(self)
+		node.Node.exit(self)
 
 	def zeroStage(self):
 		self.logger.info('Zeroing stage position')
@@ -303,8 +283,10 @@ class RobotControl(RobotNode):
 			gridnumber = '(unknown)'
 		else:
 			gridnumber = self.gridnumber
-		subject = 'Grid #%s failed to be removed from specimen holder properly' % gridnumber
-		text = 'Reply to this message if grid is no longer in the specimen holder.\nImage of the specimen holder is attached.'
+		m = 'Grid #%s failed to be removed from specimen holder properly'
+		subject = m % gridnumber
+		text = 'Reply to this message if grid is not in the specimen holder.\n' + \
+						'An image of the specimen holder is attached.'
 		time.sleep(5.0)
 		try:
 			raise NotImplemetedError
@@ -421,8 +403,10 @@ class RobotControl(RobotNode):
 			except GridQueueEmpty:
 				self.logger.info('Grid queue is empty')
 				raise
+
 			if self.simulate:
-				return
+				break
+
 			try:
 				self.waitForRobotGridLoad()
 			except GridLoadException:
@@ -430,21 +414,10 @@ class RobotControl(RobotNode):
 			else:
 				selectgrid = False
 
-	def outputGridInsertedEvent(self):
-		self.logger.info('Sending notification the holder is inserted')
-		evt = event.GridInsertedEvent()
-		evt['grid'] = self.griddata
-		self.outputEvent(evt)
-		self.logger.info('Sent notification the holder is inserted')
-
-	def outputGridExtractedEvent(self):
-		self.logger.info('Sending notification the holder is extracted')
-		evt = event.GridExtractedEvent()
-		evt['grid'] = self.griddata
-		self.outputEvent(evt)
+	def gridExtracted(self):
 		self.gridnumber = None
 		self.griddata = None
-		self.logger.info('Sent notification the holder is extracted')
+		self.insert()
 
 	def estimateTimeLeft(self):
 		if 'insert' not in self.timings:
@@ -471,7 +444,8 @@ class RobotControl(RobotNode):
 			except GridQueueEmpty:
 				#self.insertmethod.enable()
 				return
-			self.outputGridInsertedEvent()
+			self.logger.info('Insertion of holder successfully completed')
+			self.gridInserted()
 			return
 
 		#self.insertmethod.disable()
@@ -503,13 +477,13 @@ class RobotControl(RobotNode):
 		self.signalRobotToInsert2()
 		self.waitForRobotToInsert2()
 
-		self.outputGridInsertedEvent()
-
 		self.logger.info('Insertion of holder successfully completed')
+		self.gridInserted()
 
 	def _extract(self):
 		if self.simulate:
-			self.outputGridExtractedEvent()
+			self.logger.info('Extraction of holder successfully completed')
+			self.gridExtracted()
 			return
 
 		self.logger.info('Extracting holder from microscope')
@@ -523,51 +497,43 @@ class RobotControl(RobotNode):
 		self.signalRobotToExtract()
 		self.waitForRobotToExtract()
 
-		self.outputGridExtractedEvent()
-
 		self.logger.info('Extraction of holder successfully completed')
+		self.gridExtracted()
 
 	def insert(self):
 		request = InsertRequest()
 		self.queue.put(request)
-		request.event.wait()
 
 	def extract(self):
+		if self.simulate:
+			self.logger.info('Data collection finished')
+			request = ExtractRequest()
+			self.queue.put(request)
+			return
+
+		self.logger.info('Data collection finished')
+
+		self.logger.info('Zeroing stage position')
+		self.instrument.tem.StagePosition = {'x': 0.0, 'y': 0.0, 'z': 0.0, 'a': 0.0}
+		self.logger.info('Stage position zeroed')
+
+		self.logger.info('Closing column valves')
+		self.instrument.tem.ColumnValvePosition = 'closed'
+		self.logger.info('Column valves closed')
+
+		if self.instrument.ccdcamrea.hasAttribute('Inserted'):
+			self.logger.info('Retracting camera')
+			self.instrument.ccdcamera.Inserted = False
+
+			self.logger.info('Checking camera is retracted')
+			self.waitScope('Inserted', False, 0.5, 600)
+			self.logger.info('Camera is retracted')
+
 		request = ExtractRequest()
 		self.queue.put(request)
-		request.event.wait()
 
-	def handleInsert(self, ievent):
-		self.insert()
-
-	def handleExtract(self, ievent):
+	def handleGridDataCollectionDone(self, ievent):
 		self.extract()
-
-	def gridQueueCallback(self, value):
-		'''
-		gridstring = str(value[0])
-		lastvalue = value[0]
-		c = False
-		for i in value[1:]:
-			if i - lastvalue == 1:
-				c = True
-			else:
-				if c:
-					gridstring += '-'
-					gridstring += str(lastvalue)
-					c = False
-				gridstring += ', '
-				gridstring += str(i)
-			lastvalue = i
-
-		if c:
-			gridstring += '-'
-			gridstring += str(lastvalue)
-
-		self.uigridstring.set(gridstring)
-		'''
-
-		self.uigridtray.set(value)
 
 	def getTrayLabels(self):
 		return self.gridtrayids.keys()
@@ -589,34 +555,10 @@ class RobotControl(RobotNode):
 		gridlocations = gridboxidindex[gridboxid].fetchall()
 		return [int(i['location']) for i in gridlocations]
 
-class RobotNotification(RobotNode):
-	panelclass = gui.wx.Robot.NotificationPanel
-	eventinputs = RobotNode.eventinputs + [event.GridInsertedEvent,
-																					event.GridExtractedEvent,
-																					event.MosaicDoneEvent,
-																					event.TargetListDoneEvent]
-	eventoutputs = RobotNode.eventoutputs + [event.ExtractGridEvent,
-																						event.InsertGridEvent,
-																						event.MakeTargetListEvent]
-	def __init__(self, id, session, managerlocation, **kwargs):
-
-		self.simulate = False
-		#self.simulate = True
-
-		RobotNode.__init__(self, id, session, managerlocation, **kwargs)
-
-		self.addEventInput(event.GridInsertedEvent, self.handleGridInserted)
-		self.addEventInput(event.GridExtractedEvent, self.handleGridExtracted)
-		self.addEventInput(event.MosaicDoneEvent, self.handleGridDataCollectionDone)
-		self.addEventInput(event.TargetListDoneEvent,
-												self.handleGridDataCollectionDone)
-
-		self.start()
-
-	def handleGridInserted(self, ievent):
+	def gridInserted(self):
 		if self.simulate:
 			evt = event.MakeTargetListEvent()
-			evt['grid'] = ievent['grid']
+			evt['grid'] = self.griddata
 			self.outputEvent(evt)
 			return
 
@@ -649,46 +591,28 @@ class RobotNotification(RobotNode):
 
 		self.logger.info('Outputting data collection event')
 		evt = event.MakeTargetListEvent()
-		evt['grid'] = ievent['grid']
+		evt['grid'] = self.griddata
 		self.outputEvent(evt)
 		self.logger.info('Data collection event outputted')
 
-	def handleGridDataCollectionDone(self, ievent):
-		self.extract()
-
-	def extract(self):
-		if self.simulate:
-			self.outputEvent(event.ExtractGridEvent())
-			return
-
-		self.logger.info('Data collection finished (event received)')
-
-		self.logger.info('Zeroing stage position')
-		self.instrument.tem.StagePosition = {'x': 0.0, 'y': 0.0, 'z': 0.0, 'a': 0.0}
-		self.logger.info('Stage position zeroed')
-
-		self.logger.info('Closing column valves')
-		self.instrument.tem.ColumnValvePosition = 'closed'
-		self.logger.info('Column valves closed')
-
-		if self.instrument.ccdcamrea.hasAttribute('Inserted'):
-			self.logger.info('Retracting camera')
-			self.instrument.ccdcamera.Inserted = False
-
-			self.logger.info('Checking camera is retracted')
-			self.waitScope('Inserted', False, 0.5, 600)
-			self.logger.info('Camera is retracted')
-
-		self.logger.info('Outputting grid extract event')
-		self.outputEvent(event.ExtractGridEvent())
-		self.logger.info('Grid extract event outputted')
-
-	def handleGridExtracted(self, ievent):
-		self.insert()
-
-	def insert(self):
-		self.logger.info('Outputting grid insert event')
-		evt = event.InsertGridEvent()
-		self.outputEvent(evt)
-		self.logger.info('Grid insert event outputted')
+	def waitScope(self, parameter, value, interval=None, timeout=0.0):
+		if self.instrument.tem.hasAttribute(parameter):
+			o = self.instrument.tem
+		elif self.instrument.ccdcamera.hasAttribute(parameter):
+			o = self.instrument.ccdcamera
+		else:
+			raise ValueError('invalid parameter')
+		parametervalue = getattr(o, parameter)
+		elapsed = 0.0
+		if interval is not None and interval > 0:
+			while parametervalue != value:
+				time.sleep(interval)
+				if timeout > 0.0:
+					elapsed += interval
+					if elapsed > timeout:
+						raise ValueError('parameter is not set to value')
+				parametervalue = getattr(o, parameter)
+		else:
+			if parametervalue != value:
+				raise ValueError('parameter is not set to value')
 
