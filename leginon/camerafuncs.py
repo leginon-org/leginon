@@ -18,7 +18,6 @@ class CameraFuncs(object):
 	def acquireCameraImageData(self, camstate=None, correction=None):
 		## configure camera
 		if camstate is not None:
-			print 'CAMSTATE', camstate
 			self.state(camstate)
 
 		if correction is None:
@@ -51,7 +50,6 @@ class CameraFuncs(object):
 			t2 = Timer('publish camera state')
 			try:
 				camdata = data.CameraEMData(('camera',), initializer=camstate)
-				print 'CAMDATA', camdata
 				self.node.publishRemote(camdata)
 			except Exception, detail:
 				print 'camerafuncs.state: unable to set camera state'
@@ -140,9 +138,20 @@ class CameraFuncs(object):
 					'binning':{'x':4, 'y':4},
 					'offset':{'x':0,'y':0}
 				}
+			else:
+				initstate = dict(initstate)
+				del initstate['id']
+				del initstate['session']
+				del initstate['image data']
+				del initstate['camera size']
+				del initstate['system time']
 
 			self.autoOffset(initstate)
 			self.cameraconfigvalue['state'] = initstate
 
 		# return a copy of the current config value
 		return copy.deepcopy(self.cameraconfigvalue)
+
+
+
+
