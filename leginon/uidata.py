@@ -8,7 +8,7 @@
 
 import threading
 import data
-import strictdict
+import newdict
 #from uiserver import Server
 
 # Exceptions
@@ -291,11 +291,11 @@ class Struct(Data):
 class Application(Struct):
 	typelist = Struct.typelist + ('application',)
 
-class Container(Object, strictdict.OrderedDict):
+class Container(Object, newdict.OrderedDict):
 	typelist = Object.typelist + ('container',)
 	def __init__(self, name, tooltip=None):
 		Object.__init__(self, name, tooltip)
-		strictdict.OrderedDict.__init__(self)
+		newdict.OrderedDict.__init__(self)
 		self.positions = {}
 
 	def _setServer(self, server):

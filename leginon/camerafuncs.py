@@ -17,7 +17,7 @@ import copy
 import uidata
 from timer import Timer
 import event
-import strictdict
+import newdict
 
 class NoCorrectorError(Exception):
 	pass
@@ -259,7 +259,7 @@ class SmartCameraParameters(uidata.Container):
 	def initConfigSelector(self):
 		### assume square camera
 		camerasize = self.camerasize['x']
-		self.configselectdict = strictdict.OrderedDict()
+		self.configselectdict = newdict.OrderedDict()
 		table = centered_square_table(camerasize)
 		self.configselectdict['Manual'] = None
 		for item in table:

@@ -8,7 +8,7 @@
 
 import extendedlogging
 import Queue
-import strictdict
+import newdict
 import threading
 import datatransport
 
@@ -27,7 +27,7 @@ class DataBinder(object):
 		## because there may be more than one function for every 
 		## data class
 		self.threaded = threaded
-		self.bindings = strictdict.OrderedDict()
+		self.bindings = newdict.OrderedDict()
 
 		## a queue to hold incoming data, and a thread
 		## to process data from the queue

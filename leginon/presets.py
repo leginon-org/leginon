@@ -17,7 +17,7 @@ import camerafuncs
 import threading
 import time
 import unique
-import strictdict
+import newdict
 import EM
 import Numeric
 
@@ -80,7 +80,7 @@ class PresetsClient(object):
 		## sort by number (maybe name if old, non-numbered data)
 		keys = pdict.keys()
 		keys.sort()
-		namedict = strictdict.OrderedDict()
+		namedict = newdict.OrderedDict()
 		for key in keys:
 			p = pdict[key]
 			namedict[p['name']] = p
@@ -180,7 +180,7 @@ class PresetsManager(node.Node):
 
 		self.currentselection = None
 		self.currentpreset = None
-		self.presets = strictdict.OrderedDict()
+		self.presets = newdict.OrderedDict()
 		self.selectedsessionpresets = None
 
 		self.defineUserInterface()
@@ -222,7 +222,7 @@ class PresetsManager(node.Node):
 		an identical set for this session
 		'''
 		## make new presets with this session
-		self.presets = strictdict.OrderedDict()
+		self.presets = newdict.OrderedDict()
 		for name, preset in pdict.items():
 			newp = data.PresetData(initializer=preset, session=self.session)
 			self.presetToDB(newp)
@@ -250,7 +250,7 @@ class PresetsManager(node.Node):
 		if names is None:
 			names = self.presets.keys()
 
-		newdict = strictdict.OrderedDict()
+		newdict = newdict.OrderedDict()
 		number = 0
 		for name in names:
 			p = self.presets[name]

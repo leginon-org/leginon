@@ -25,7 +25,7 @@ import leginonobject
 import extendedlogging
 import copy
 import time
-import strictdict
+import newdict
 
 class DataBinder(databinder.DataBinder):
 	def handleData(self, newdata):
@@ -735,7 +735,7 @@ class Manager(node.Node):
 	def uiUpdateRecentApplications(self):
 		recent = data.LaunchedApplicationData(session=data.SessionData(user=self.session['user']), application=data.ApplicationData())
 		recent = self.research(recent, results=300)
-		names = strictdict.OrderedDict()
+		names = newdict.OrderedDict()
 		names['(Select an application)'] = None
 		for lapp in recent:
 			name = lapp['application']['name']
