@@ -34,10 +34,10 @@ class ImagePanel(wxPanel):
 		size = self.panel.GetSize()
 		self.sizer.SetItemMinSize(self.panel, size.GetWidth(), size.GetHeight())
 
+		self.initValue()
 		self.initZoom()
 #		self.initScaleEntry()
 #		self.initValueLabels()
-		EVT_MOTION(self.panel, self.motion)
 
 		self.Fit()
 
@@ -63,9 +63,35 @@ class ImagePanel(wxPanel):
 		self.valuesizer.Add(self.valuelabel)
 		self.sizer.Prepend(self.valuesizer)
 
+	def bitmapTool(self, filename):
+		image = Image.open(filename)
+		wximage = wxEmptyImage(image.size[0], image.size[1])
+		wximage.SetData(image.convert('RGB').tostring())
+		bitmap = wxBitmapFromImage(wximage)
+		bitmap.SetMask(wxMaskColour(bitmap, wxWHITE))
+		return bitmap
+
+	def initValue(self):
+		self.valueflag = True
+		bitmap = self.bitmapTool('valuetool.bmp')
+		valuebutton = wxBitmapButton(self, -1, bitmap)
+		EVT_BUTTON(self, valuebutton.GetId(), self.OnValueButton)
+		self.sizer.Prepend(valuebutton, 0, wxALL, 3)
+
+	def OnValueButton(self, evt):
+		if self.valueflag:
+			EVT_MOTION(self.panel, self.motion)
+		else:
+			EVT_MOTION(self.panel, None)
+			self.UpdateDrawing()
+		self.valueflag = not self.valueflag
+
 	def initZoom(self):
+		self.zoomflag = True
 		self.zoomsizer = wxBoxSizer(wxHORIZONTAL)
-		zoombutton = wxButton(self, -1, 'Zoom')
+		#zoombutton = wxButton(self, -1, 'Zoom')
+		bitmap = self.bitmapTool('zoomtool.bmp')
+		zoombutton = wxBitmapButton(self, -1, bitmap)
 		EVT_BUTTON(self, zoombutton.GetId(), self.OnZoomButton)
 		self.zoomsizer.Add(zoombutton, 0, wxCENTER | wxALL, 3)
 		self.zoomsizer.Add(wxStaticText(self, -1, 'Zoom:'), 0, wxCENTER | wxALL, 3)
@@ -75,9 +101,15 @@ class ImagePanel(wxPanel):
 		self.sizer.Prepend(self.zoomsizer)
 
 	def OnZoomButton(self, evt):
-		self.panel.SetCursor(wxStockCursor(wxCURSOR_MAGNIFIER))
-		EVT_LEFT_UP(self.panel, self.OnZoomIn)
-		EVT_RIGHT_UP(self.panel, self.OnZoomOut)
+		if self.zoomflag:
+			self.panel.SetCursor(wxStockCursor(wxCURSOR_MAGNIFIER))
+			EVT_LEFT_UP(self.panel, self.OnZoomIn)
+			EVT_RIGHT_UP(self.panel, self.OnZoomOut)
+		else:
+			self.panel.SetCursor(wxCROSS_CURSOR)
+			EVT_LEFT_UP(self.panel, None)
+			EVT_RIGHT_UP(self.panel, None)
+		self.zoomflag = not self.zoomflag
 
 	def OnZoomIn(self, evt):
 		self.setScale((self.scale[0]*2, self.scale[1]*2),
@@ -205,7 +237,7 @@ class ImagePanel(wxPanel):
 #			self.xlabel.SetLabel(str(x))
 #			self.ylabel.SetLabel(str(y))
 #			self.valuelabel.SetLabel(str(value))
-		except:
+		except Exception, e:
 			pass
 
 	def drawLabel(self, xy, value):
@@ -216,6 +248,8 @@ class ImagePanel(wxPanel):
 		dc.SetPen(wxPen(wxBLACK, 1))
 
 		string = '(%d, %d): %d' % (xy[0], xy[1], value)
+		#tooltip = wxToolTip(string)
+		#self.panel.SetToolTip(tooltip)
 
 		try:
 			apply(self.blit, self.damaged)
@@ -257,14 +291,12 @@ class ImagePanel(wxPanel):
 			return
 		dc = wxMemoryDC()
 		dc.SelectObject(self.buffer)
-		#dc.SetUserScale(self.scale[0], self.scale[1])
 		viewoffset = self.panel.GetViewStart()
 		clientdc = wxClientDC(self.panel)
 		size = self.panel.GetClientSize()
 		clientdc.SetUserScale(self.scale[0], self.scale[1])
 		ix, iy = self.view2image((x, y))
 		vx, vy = self.image2view((x, y))
-		#clientdc.Blit(x, y, w, h, dc, ix, iy)
 		clientdc.Blit(x/self.scale[0], y/self.scale[1],
 									w/self.scale[0] + 1, h/self.scale[1] + 1, dc, ix, iy)
 
