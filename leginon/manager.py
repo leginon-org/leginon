@@ -154,8 +154,7 @@ class Manager(node.Node):
 		target = callable object under self.common
 		args, kwargs = args for callable object
 		"""
-		#ev = event.LaunchEvent(nodeid, nodeclass, newproc)
-		ev = event.LaunchEvent(newproc, target, args, kwargs)
+		ev = event.LaunchEvent(self.ID(), newproc, target, args, kwargs)
 		self.clients[launcher].push(ev)
 
 	def addEventDistmap(self, eventclass, from_node=None, to_node=None):

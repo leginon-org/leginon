@@ -103,7 +103,7 @@ class Node(leginonobject.LeginonObject):
 
 	## no longer have to mark_data becuase id takes care of it
 	#def mark_data(self, data):
-	#	data.origin['id'] = self.nodeid
+	#	data.origin['id'] = self.id
 	#	data.origin['location'] = self.location()
 
 	def research(self, loc, dataid):

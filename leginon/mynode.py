@@ -5,8 +5,8 @@ import time
 import data
 
 class MyNode(node.Node):
-	def __init__(self, nodeid, managerlocation):
-		node.Node.__init__(self, nodeid, managerlocation)
+	def __init__(self, id, managerlocation):
+		node.Node.__init__(self, id, managerlocation)
 
 		#self.addEventInput(event.ControlEvent, self.handle_intervalchange)
 		self.addEventInput(event.PublishEvent, self.handle_intervalpublished)
@@ -15,7 +15,6 @@ class MyNode(node.Node):
 
 		self.interval = 5
 		print self.location()
-		print self.nodeid
 		self.main()
 
 	def main(self):
@@ -27,7 +26,7 @@ class MyNode(node.Node):
 
 	def print_stuff(self):
 		self.timenow = time.asctime()
-		print 'node %s says %s' % (self.nodeid,self.timenow)
+		print 'node %s says %s' % (self.id,self.timenow)
 		mydata = data.StringData(self.ID(), self.timenow)
 		self.publish(mydata)
 

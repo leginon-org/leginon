@@ -22,7 +22,7 @@ class AcquireLoop(timedloop.TimedLoop):
 	def __init__(self, id, managerlocation):
 		timedloop.TimedLoop.__init__(self, id, managerlocation)
 		self.addEventOutput(event.PublishEvent)
-		print 'AcquireLoop %s started' % self.nodeid
+		print 'AcquireLoop %s started' % self.id
 
 	def action(self):
 		"""

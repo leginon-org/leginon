@@ -13,7 +13,7 @@ class IntGen(node.Node):
 		self.addEventOutput(event.StopEvent)
 
 		print self.location()
-		print self.nodeid
+		print self.id
 
 		self.main()
 
