@@ -328,14 +328,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 		sequencecontainer = uidata.Container('Presets Sequence')
 		sequencecontainer.addObjects((self.uipresetnames, refreshpresetnames))
 
-		pselect = self.presetsclient.uiPresetSelector()
+		#pselect = self.presetsclient.uiPresetSelector()
 
-		toscopemethod = uidata.Method('Apply Preset', self.uiToScope)
-		toscopeandacquiremethod = uidata.Method('Apply Preset and Acquire',
-																							self.uiToScopeAcquire)
-		presetscontainer = uidata.Container('Presets')
-		presetscontainer.addObjects((sequencecontainer, pselect, toscopemethod,
-																		toscopeandacquiremethod))
+		#toscopemethod = uidata.Method('Apply Preset', self.uiToScope)
+		#toscopeandacquiremethod = uidata.Method('Apply Preset and Acquire', self.uiToScopeAcquire)
+		#presetscontainer = uidata.Container('Presets')
+		#presetscontainer.addObjects((sequencecontainer, pselect, toscopemethod, toscopeandacquiremethod))
+		#presetscontainer.addObjects((sequencecontainer, pselect))
 		trialmethod = uidata.Method('Trial', self.uiTrial)
 
 		self.displayimageflag = uidata.Boolean('Display Image', True, 'rw', persist=True)
@@ -343,8 +342,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 
 		container = uidata.MediumContainer('Acquisition')
-		container.addObjects((settingscontainer, presetscontainer, trialmethod,
-													self.displayimageflag, self.ui_image))
+		container.addObjects((self.displayimageflag, self.ui_image, settingscontainer, sequencecontainer, trialmethod))
 
 		self.uiserver.addObject(container)
 
