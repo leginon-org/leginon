@@ -35,8 +35,19 @@ class Calibrator(node.Node):
 		self.cam = camerafuncs.CameraFuncs(self)
 
 	def getMagnification(self):
-		mag = self.emclient.getScope()['magnification']
-		return mag
+		try:
+			scopedata = self.emclient.getScope()
+		except EM.ScopeUnavailable:
+			return None, None
+		try:
+			mag = scopedata['magnification']
+		except KeyError:
+			mag = None
+		try:
+			mags = scopedata['magnifications']
+		except KeyError:
+			mags = None
+		return mag, mags
 
 	def getHighTension(self):
 		ht = self.emclient.getScope()['high tension']

@@ -781,6 +781,7 @@ class EMData(InSessionData):
 
 scope_params = (
 	('magnification', int),
+	('magnifications', list),
 	('spot size', int),
 	('intensity', float),
 	('image shift', dict),

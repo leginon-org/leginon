@@ -72,7 +72,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 		## store calibration
 		self.logger.info('Storing calibration...')
-		mag = self.getMagnification()
+		mag, mags = self.getMagnification()
 		ht = self.getHighTension()
 		self.calclient.storeMatrix(ht, mag, 'coma-free', matrix)
 		self.logger.info('Calibration stored')
@@ -102,7 +102,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		## store calibration
 		self.logger.info('Storing calibration...')
 		ht = self.getHighTension()
-		mag = self.getMagnification()
+		mag, mags = self.getMagnification()
 		self.logger.info('Matrix %s, shape %s, type %s, flat %s'
 						% (matrix, matrix.shape, matrix.type(), Numeric.ravel(matrix)))
 		self.calclient.storeMatrix(ht, mag, 'defocus', matrix)
@@ -145,7 +145,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			matrix[:,1] = matdict['y']
 
 			## store calibration
-			mag = self.getMagnification()
+			mag, mags = self.getMagnification()
 			ht = self.getHighTension()
 			type = 'stig' + stigaxis
 			self.calclient.storeMatrix(ht, mag, type, matrix)

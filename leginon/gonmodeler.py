@@ -63,7 +63,7 @@ class GonModeler(calibrator.Calibrator):
 		## set camera state
 		self.cam.setCameraDict(self.settings['camera settings'])
 
-		mag = self.getMagnification()
+		mag, mags = self.getMagnification()
 		ht = self.getHighTension()
 		known_pixelsize = self.pcal.retrievePixelSize(mag)
 
@@ -188,14 +188,6 @@ class GonModeler(calibrator.Calibrator):
 		# label, mag, axis, terms,...
 		self.calclient.fit(self.modellabel, self.settings['model magnification'], self.settings['model axis'], self.settings['model terms'], magonly=self.settings['model mag only'])
 		return ''
-
-	def getMagnification(self):
-		dat = self.emclient.getScope()
-		return dat['magnification']
-
-	def getHighTension(self):
-		dat = self.emclient.getScope()
-		return dat['high tension']
 
 	def uiStartLoop(self):
 		if not self.threadlock.acquire(0):

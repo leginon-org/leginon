@@ -109,7 +109,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 		## calculate delta based on pixel size and camera config
 		## use 1/4 image width to calculate delta
 		## delta = dimension['x'] * binning['x'] * pixsize / 4
-		mag = self.getMagnification()
+		mag, mags = self.getMagnification()
 		pixsize = self.pixsizeclient.retrievePixelSize(mag)
 		camconfig = self.cam.getCameraEMData()
 
@@ -181,7 +181,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 		emdata[self.parameter] = basebase
 		self.emclient.setScope(emdata)
 
-		mag = self.getMagnification()
+		mag, mags = self.getMagnification()
 		ht = self.getHighTension()
 
 		matrix = calclient.measurementToMatrix(shifts)
@@ -191,7 +191,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 
 	def fakeCalibration(self):
 		ht = self.getHighTension()
-		mag = self.getMagnification()
+		mag, mags = self.getMagnification()
 		matrix = Numeric.zeros((2,2))
 		calclient = self.parameters[self.parameter]
 		calclient.storeMatrix(ht, mag, self.parameter, matrix)

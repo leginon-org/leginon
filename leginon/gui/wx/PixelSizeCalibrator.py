@@ -26,15 +26,16 @@ class Panel(gui.wx.Calibrator.Panel):
 		dialog.Destroy()
 
 class ExtrapolateDialog(wx.Dialog):
-	def __init__(self, parent, mags):
+	def __init__(self, parent, frommags, mags):
 		self.node = parent.node
 
 		wx.Dialog.__init__(self, parent, -1, 'Extrapolate Pixel Size')
 
-		self.mags = mags
-		strmags = str(mags)[1:-1]
+		self.mags = frommags
+		strmags = str(frommags)[1:-1]
 		self.stmags = wx.StaticText(self, -1, strmags)
-		self.femag = FloatEntry(self, -1, chars=6)
+		self.cmag = wx.Choice(self, -1, choices=map(str, mags))
+		self.cmag.SetSelection(0)
 		self.stps = wx.StaticText(self, -1, '')
 		self.tccomment = wx.TextCtrl(self, -1, 'Extrapolated from %s' % (strmags,),
 																	style=wx.TE_MULTILINE)
@@ -47,8 +48,8 @@ class ExtrapolateDialog(wx.Dialog):
 
 		label = wx.StaticText(self, -1, 'Magnification:')
 		szenter.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szenter.Add(self.femag, (1, 1), (1, 1),
-								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
+		szenter.Add(self.cmag, (1, 1), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
 		label = wx.StaticText(self, -1, 'Pixel size:')
 		szenter.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -88,7 +89,7 @@ class ExtrapolateDialog(wx.Dialog):
 		self.Bind(wx.EVT_BUTTON, self.onExtrapolateButton, self.bextrapolate)
 
 	def onExtrapolateButton(self, evt):
-		mag = self.femag.GetValue()
+		mag = float(self.cmag.GetStringSelection())
 		if mag is None:
 			dialog = wx.MessageDialog(self, 'No magnification entered',
 																'Error', wx.OK|wx.ICON_ERROR)
@@ -104,10 +105,11 @@ class ExtrapolateDialog(wx.Dialog):
 		self.bsave.Enable(True)
 
 class EnterDialog(wx.Dialog):
-	def __init__(self, parent):
+	def __init__(self, parent, mags):
 		wx.Dialog.__init__(self, parent, -1, 'Enter Pixel Size')
 
-		self.femag = FloatEntry(self, -1, chars=6)
+		self.cmag = wx.Choice(self, -1, choices=map(str, mags))
+		self.cmag.SetSelection(0)
 		self.feps = FloatEntry(self, -1, chars=6)
 		self.tccomment = wx.TextCtrl(self, -1, 'Manual entry',
 																	style=wx.TE_MULTILINE)
@@ -115,8 +117,8 @@ class EnterDialog(wx.Dialog):
 		szenter = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Magnification:')
 		szenter.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szenter.Add(self.femag, (0, 1), (1, 1),
-								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
+		szenter.Add(self.cmag, (0, 1), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
 		label = wx.StaticText(self, -1, 'Pixel size:')
 		szenter.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -153,9 +155,9 @@ class EnterDialog(wx.Dialog):
 		self.Bind(wx.EVT_BUTTON, self.validate, self.bsave)
 
 	def validate(self, evt):
-		mag = self.femag.GetValue()
-		ps = self.feps.GetValue()
-		if None in [mag, ps]:
+		self.mag = float(self.cmag.GetStringSelection())
+		self.ps = self.feps.GetValue()
+		if None in [self.mag, self.ps]:
 			dialog = wx.MessageDialog(self, 'Pixel size entry',
 																'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
@@ -296,6 +298,7 @@ class PixelSizeCalibrationDialog(wx.Dialog):
 		wx.Dialog.__init__(self, parent, -1, 'Pixel Size Calibration')
 
 		self.measurement = parent.measurement
+		self.mag, self.mags = self.node.getMagnification()
 
 		self.lcpixelsize = PixelSizeListCtrl(self, -1)
 		cals = self.node.getCalibrations()
@@ -307,6 +310,10 @@ class PixelSizeCalibrationDialog(wx.Dialog):
 
 		self.benter = wx.Button(self, -1, 'Enter...')
 		self.bextrapolate = wx.Button(self, -1, 'Extrapolate...')
+		if self.mags is None:
+			self.benter.Enable(False)
+			self.bextrapolate.Enable(False)
+
 		self.bmeasure = wx.Button(self, -1, 'Measure...')
 		if None in [self.node.mag, self.node.bin, self.measurement]:
 			self.bmeasure.Enable(False)
@@ -343,10 +350,10 @@ class PixelSizeCalibrationDialog(wx.Dialog):
 		self.Bind(wx.EVT_BUTTON, self.onMeasureButton, self.bmeasure)
 
 	def onEnterButton(self, evt):
-		dialog = EnterDialog(self)
+		dialog = EnterDialog(self, self.mags)
 		if dialog.ShowModal() == wx.ID_OK:
-			mag = dialog.femag.GetValue()
-			ps = dialog.feps.GetValue()
+			mag = dialog.mag
+			ps = dialog.ps
 			comment = dialog.tccomment.GetValue()
 			self.node._store(mag, ps, comment)
 			self.lcpixelsize.addPixelSize(mag, ps, comment)
@@ -361,7 +368,7 @@ class PixelSizeCalibrationDialog(wx.Dialog):
 			dialog.Destroy()
 			return
 
-		dialog = ExtrapolateDialog(self, mags)
+		dialog = ExtrapolateDialog(self, mags, self.mags)
 		if dialog.ShowModal() == wx.ID_OK:
 			mag = dialog.mag
 			ps = dialog.ps
