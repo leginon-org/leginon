@@ -45,6 +45,11 @@ class Navigator(node.Node):
 		## calculate delta from image center
 		deltarow = clickrow - clickshape[0] / 2
 		deltacol = clickcol - clickshape[1] / 2
+
+		## to shift clicked point to center...
+		deltarow = -deltarow
+		deltacol = -deltacol
+
 		deltarowcol = {'row':deltarow, 'column':deltacol}
 		print 'deltarowcol', deltarowcol
 

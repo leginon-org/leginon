@@ -245,12 +245,14 @@ class Calibration(node.Node):
 		# 
 
 		## judge based on correlation peak value
-		if peakvalue < minpeakvalue:
-			peakverdict = 'low'
-		elif peakvalue > maxpeakvalue:
-			peakverdict = 'high'
-		else:
-			peakverdict = 'normal'
+		
+
+#		if peakvalue < minpeakvalue:
+#			peakverdict = 'low'
+#		elif peakvalue > maxpeakvalue:
+#			peakverdict = 'high'
+#		else:
+#			peakverdict = 'normal'
 
 		### Is this right?:
 		### We care about shift on each axis when it comes
