@@ -108,7 +108,7 @@ class viewer {
 		.''.$this->crlf;
 
 		$loicontrol = ''
-		.'<table border=0>'.$this->crlf
+		.'<table border="0">'.$this->crlf
 		.'<tr>'.$this->crlf
 		.'<td>'.$this->crlf
 		.'	<label for="refreshtime">Refresh (s):</label>'.$this->crlf
@@ -134,6 +134,10 @@ class viewer {
 
 		$this->addloicontrol = $loicontrol;
 		$this->addloijavascript = $loijavascript;
+	}
+
+	function addCommentBox() {
+		$this->addcommentbox = true;
 	}
 
 	function addFileSelector($filenames=array(), $size=40) {
@@ -226,14 +230,40 @@ class viewer {
 		$display .= '<textarea name=debug rows=10 cols=50></textarea>';
 		$display .= '<input type=button value="clear" onclick="javascript:document.viewerform.debug.value=\'\'">';
 		}
-		$display .= '<table border="0">';
+		if ($this->addloicontrol || $this->addcommentbox) 
+			$display .= '<table border="0"><tr valign="top">';
 		if ($this->addloicontrol) {
-			$display .= '<tr>';
-			$display .= '<td colspan=2>';
+			$display .= '<td>';
 			$display .= $this->addloicontrol;
 			$display .= '</td>';
-			$display .= '</tr>';
 		}
+		if ($this->addcommentbox) {
+			$display .= '<td>';
+			$display .= '
+ <table border="0" cellpadding="3" >
+  <tr valign="top" width=50>
+   <td>name<br>
+   <input class="field" type="text" name="name" size="20" maxlength="20"
+	value=""> 
+	<div><div id="commentdiv" style="position:absolute; z-index:99; visibility: hidden"><img src="addcomment.php" name="commentimg" ></div></div>
+   </td>
+   <td rowspan="2" >comment<br>
+   <textarea class="textarea" name="comment" rows="5" cols="20" wrap="virtual"
+></textarea>
+  </td>
+  </tr>
+  <tr>
+   <td>
+    <input type="button" name="action" value="Save" onClick=\'addComment()\'/>
+   </td>
+  </tr>
+ </table>
+';
+			$display .= '</td>';
+		}
+		if ($this->addloicontrol || $this->addcommentbox) 
+			$display .= '</tr></table>';
+		$display .= '<table border="0">';
 		if ($this->addsessionsel) {
 			$display .= '<tr>';
 			if ($this->addprojectsel) {
@@ -320,6 +350,10 @@ class view {
 		$this->menucolor = ' class="bgcolor1" ';
 		$this->presetscript = 'getpreset.php';
 		$this->imagescript = 'getparentimgtarget.php';
+		$this->scale_st = "false";
+		$this->target_st = "false";
+		$this->quality = "80";
+		
 	}
 
 	function setSize($size) {
@@ -385,18 +419,36 @@ class view {
 		$this->displaytargeticon = $state;
 	}
 
+	function displayTarget($state) {
+		$state_str = ($state) ? "true" : "false";
+		$this->target_st= $state_str;
+	}
+
 	function displayScaleIcon($state) {
 		$this->displayscaleicon = $state;
 	}
 
+	function displayScale($state) {
+		$state_str = ($state) ? "true" : "false";
+		$this->scale_st = $state_str;
+	}
+
 	function displayAdjustLink($state) {
-		$this->displayadjustlink= $state;
+		$this->displayadjustlink = $state;
+	}
+
+	function setPreset($preset) {
+		$this->preset = $preset;
+	}
+
+	function setQuality($quality) {
+		$this->quality = $quality;
 	}
 
 	function getJavascriptvar() {
 		$javascript = ''
-			.'var '.$this->name.'target_bt_st=false;'.$this->crlf
-			.'var '.$this->name.'scale_bt_st=false;'.$this->crlf
+			.'var '.$this->name.'target_bt_st='.$this->target_st.';'.$this->crlf
+			.'var '.$this->name.'scale_bt_st='.$this->scale_st.';'.$this->crlf
 			.'var '.$this->name.'fft_bt_st=false;'.$this->crlf
 			.'var '.$this->name.'filter_bt_st=false;'.$this->crlf
 			.'var '.$this->name.'close_bt_st=false;'.$this->crlf
@@ -408,6 +460,8 @@ class view {
 			.'var jsmax'.$this->name.';'.$this->crlf
 			.'var jsfilter'.$this->name.';'
 			.'var jsbinning'.$this->name.';'
+			.'var jspreset'.$this->name.'="'.$this->preset.'";'.$this->crlf
+			.'var jsquality'.$this->name.'="'.$this->quality.'";'.$this->crlf
 			.$this->crlf;
 		return $javascript;
 	}
@@ -468,6 +522,7 @@ class view {
 		$defaultdatatype = ($this->selecteddatatype) ? $this->selecteddatatype : $datatypes[0];
 		$defaultpre = ($_POST[$prememo]) ? $_POST[$prememo] : $defaultdatatype;
 		$selpre = ($_POST[$prename]) ? $_POST[$prename] : $defaultpre;
+		$selpre = 'grid';
 		$displayview = $this->getViewState();
 		$htmlframe = '
 		<input type="hidden" name="'.$displayname.'" value="'.$displayview.'">

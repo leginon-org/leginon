@@ -343,4 +343,10 @@ return $data;
 
 }
 
+function formatHtmlRow($k, $v) {
+	return '<tr><td><span class="datafield0">'
+		.$k.':</span></td><td>'
+		.$v.'</td></tr>'."\n";
+}
+
 ?>

@@ -161,6 +161,18 @@ function blankimage() {
 	return $blkimg;
 }
 
+function createAltMessage($text, $fontsize=2, $margin=6) {
+	$width = 2*$margin + strlen($text)*($fontsize+4);
+	$height = 2*$margin + $fontsize+12; 
+	$img = imagecreate($width, $height);
+	imagecolorallocate($img, 255, 255, 200);
+	$black = imagecolorallocate($img, 0, 0, 0);
+	$textcolor = $black;
+	imagerectangle($img, 0,0, $width-1, $height-1, $black);
+	imagestring($img, $fontsize, $margin, $margin, $text, $textcolor);
+	return ($img);
+}
+
 class Mosaic {
 
 	var $imageIds = array();

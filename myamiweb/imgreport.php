@@ -26,12 +26,6 @@ $preset=$_GET[preset];
 $newimage = $leginondata->findImage($imgId, $preset);
 $imgId = $newimage[id];
 
-function formatHtmlRow($k, $v) {
-	return '<tr><td><span class="datafield0">'
-		.$k.':</span></td><td>'
-		.$v.'</td></tr>'."\n";
-}
-
 $imageinfo = $leginondata->getImageInfo($imgId);
 $sessionId = $imageinfo[sessionId];
 $path = $leginondata->getImagePath($sessionId);

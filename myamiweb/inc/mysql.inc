@@ -171,9 +171,17 @@ class mysql {
 		return $host;
 	}
 
+	function getError() {
+		return $this->mysqlerror;
+	}
+
 	function SQLQuery($query, $insert=false) {
 		$this->connect_db($this->new_sqlhost);
-		$result = mysql_query($query) or die("Error: ".mysql_error());
+		$result = mysql_query($query); 
+		if (!$result) {
+			$this->mysqlerror = "Error: ".mysql_error();
+			return False;
+		}
 		if ($insert)
 			$res = mysql_insert_id();
 		else

@@ -29,6 +29,7 @@ $viewer->setSessionId($sessionId);
 $viewer->setImageId($imageId);
 $viewer->addSessionSelector($sessions);
 $viewer->addLoiControl($refreshtime);
+$viewer->addCommentBox();
 
 $javascript = $viewer->getJavascript();
 

@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.21 $
- *	@version $Id: leginon.inc,v 1.21 2004-06-17 23:09:00 dfellman Exp $
+ *	@version $Revision: 1.22 $
+ *	@version $Id: leginon.inc,v 1.22 2004-09-01 17:40:49 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -30,6 +30,27 @@ class leginondata {
 	function leginondata() {
 		require("config.php");
 		$this->mysql = new mysql($HOSTNAME, $DBUSER, $DBPASSWORD, $DATABASE);
+		$this->viewer_tables();
+	}
+
+	function viewer_tables() {
+		$comment_tbl_name = 'viewer_comment';
+		$comment_tbl_def  = ''
+		.'CREATE TABLE `'.$comment_tbl_name.'` ('
+		.'`id` int(11) NOT NULL auto_increment,'
+		.'`timestamp` timestamp(14) NOT NULL,'
+		.'`sessionId` int(11) NOT NULL default "0",'
+		.'`imageId` int(11) NOT NULL default "0",'
+		.'`name` text NOT NULL,'
+		.'`comment` text NOT NULL,'
+		.'PRIMARY KEY  (`id`),'
+		.'KEY `timestamp` (`timestamp`),'
+		.'KEY `sessionId` (`sessionId`),'
+		.'KEY `imageId` (`imageId`)'
+		.');';
+		if (!$this->mysql->SQLTableExists($comment_tbl_name)) 
+			$this->mysql->SQLQuery($comment_tbl_def);
+
 	}
 
 	function query($q) {
@@ -222,6 +243,12 @@ class leginondata {
 		$Rpath=$this->mysql->SQLQuery($q);
 		$path = mysql_fetch_array($Rpath);
 		return $this->formatPath($path[path]);
+	}
+
+	function findField($name) {
+	    $result = $this->mysql->SQLQuery("SHOW TABLES");
+	    while($row = mysql_fetch_row($result))
+		$tables[] = $row[0];
 	}
 
 	function getId($fields=array(), $table = "AcquisitionImageData") {

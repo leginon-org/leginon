@@ -95,14 +95,26 @@ function getviewindex(name) {
 	return index;
 }
 
+function addComment() {
+	name = document.viewerform.name.value;
+	comment = document.viewerform.comment.value;
+	url = "addcomment.php?sessionId="+jsSessionId+"&imageId="+jsimgId+"&name="+escape(name)+"&comment="+escape(comment);
+	if (img = document.images[eval("\"commentimg\"")]) 
+		img.src = url;
+
+	if (commentdivstyle = document.getElementById("commentdiv").style) {
+		commentdivstyle.visibility = 'visible';
+		setTimeout("commentdivstyle.visibility = 'hidden'; img.src = 'addcomment.php'", 1500);
+	}
+}
 
 var lastoptions = new Array();
 function newfile(view){
 	jssize = eval(view+"size");
 	jsvfile = eval("jsvfile"+view);
+	selpreset = eval("jspreset"+view);
 	jsimagescriptcur = eval("jsimagescript"+view);
 	jspresetscriptcur = eval("jspresetscript"+view);
-	selpreset = "";
 	vid = getviewindex(view);
 	
 	if (list = eval("document.viewerform."+view+"pre"))
@@ -119,11 +131,12 @@ function newfile(view){
 	if (cmax = eval("jsmax"+view)) xp="&xp="+cmax; else xp="";
 	if ((cfilter = eval("jsfilter"+view)) && eval(view+"filter_bt_st")) flt="&flt="+cfilter; else flt="";
 	if (cbinning = eval("jsbinning"+view)) binning="&binning="+cbinning; else binning="";
+	if (cquality = eval("jsquality"+view)) quality="&t="+cquality; else quality="";
 
 	options = "preset="+selpreset+
 		"&session="+jsSessionId+
 		"&id="+jsimgId+
-		"&s="+jssize+"&t=80"+tg+sb+fft+np+xp+flt+binning;
+		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+binning;
 
 	if (options == lastoptions[vid])
 		return;
