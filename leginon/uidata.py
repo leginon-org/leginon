@@ -1,5 +1,8 @@
 import copy
 import xmlrpclib
+import Numeric
+import Image
+import cStringIO
 
 # Exceptions
 # maybe overdone
@@ -215,6 +218,11 @@ class UIBinary(UIData):
 			value = xmlrpclib.Binary(value)
 		UIData.__init__(self, name, value, permissions, callback)
 
+	def _set(self, value):
+		if type(value) is str:
+			value = xmlrpclib.Binary(value)
+		UIData._set(self, value)
+
 class UIDialog(UIContainer):
 	typelist = UIContainer.typelist + ('dialog',)
 	def __init__(self, name):
@@ -236,4 +244,19 @@ class UIMessageDialog(UIDialog):
 
 class UIImage(UIBinary):
 	typelist = UIBinary.typelist + ('image',)
+	def __init__(self, name, value, permissions='r', callback=None):
+		if isinstance(value, Numeric.arraytype):
+			value = self.array2image(value)
+		UIBinary.__init__(self, name, value, permissions, callback)
+
+	def array2image(self, a):
+		if a.typecode() == Numeric.UnsignedInt8:
+			mode = "L"
+		elif a.typecode() == Numeric.Float32:
+			mode = "F"
+		else:
+			raise ValueError('unsupported image mode')
+		stream = cStringIO.StringIO()
+		Image.fromstring(mode, (a.shape[1],a.shape[0]), a.tostring()).save(stream,'PNG')
+		return stream.getvalue()
 

@@ -6,7 +6,7 @@ class ImagePanel(wxPanel):
 		wxPanel.__init__(self, parent, id)
 		self.image = None
 		self.bitmap = None
-#		EVT_MOTION(self, self.motion)
+		EVT_MOTION(self, self.motion)
 		EVT_PAINT(self, self.OnPaint)
 		wxInitAllImageHandlers()
 
