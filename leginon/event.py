@@ -126,6 +126,16 @@ class ReferenceImagePublishEvent(ImagePublishEvent):
 	def __init__(self, id, content, confirm):
 		ImagePublishEvent.__init__(self, id, content, confirm)
 
+class ImageTilePublishEvent(ImagePublishEvent):
+	'Event indicating image tile was published'
+	def __init__(self, id, content, confirm):
+		ImagePublishEvent.__init__(self, id, content, confirm)
+
+class EMImageTilePublishEvent(ImagePublishEvent):
+	'Event indicating image tile was published'
+	def __init__(self, id, content, confirm):
+		ImagePublishEvent.__init__(self, id, content, confirm)
+
 class DarkImagePublishEvent(ReferenceImagePublishEvent):
 	'Event indicating image was published'
 	def __init__(self, id, content, confirm):
