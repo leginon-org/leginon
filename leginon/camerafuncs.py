@@ -17,11 +17,8 @@ class CameraFuncs(object):
 
 	def acquireCameraImageData(self, camstate=None, correction=None):
 		## configure camera
-		if camstate is None:
-			cs = self.config()['state']
-		else:
-			cs = camstate
-		self.state(cs)
+		if camstate is not None:
+			self.state(camstate)
 
 		if correction is None:
 			cor = self.config()['correct']
