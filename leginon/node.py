@@ -394,7 +394,7 @@ class Node(leginonobject.LeginonObject):
 		if 'dataid' in publishevent:
 			dataid = publishevent['dataid']
 			if dataid is not None:
-				newdata = self.researchByDataID(self, dataid)
+				newdata = self.researchByDataID(dataid)
 				if newdata is None:
 					if issubclass(publishevent.dataclass, data.Data):
 						initializer = {'id': dataid, 'session': self.session}
