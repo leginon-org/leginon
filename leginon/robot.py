@@ -380,14 +380,14 @@ if sys.platform == 'win32':
 		def outputGridInsertedEvent(self):
 			self.setStatusMessage('Sending notification the holder is inserted')
 			evt = event.GridInsertedEvent()
-			evt['grid number'] = self.gridnumber
+			evt['grid ID'] = self.gridnumber
 			self.outputEvent(evt)
 			self.setStatusMessage('Sent notification the holder is inserted')
 
 		def outputGridExtractedEvent(self):
 			self.setStatusMessage('Sending notification the holder is extracted')
 			evt = event.GridExtractedEvent()
-			evt['grid number'] = self.gridnumber
+			evt['grid ID'] = self.gridnumber
 			self.gridnumber = None
 			self.uicurrentgridnumber.set(None)
 			self.outputEvent(evt)
@@ -615,7 +615,9 @@ class RobotNotification(RobotNode):
 		'''
 
 		self.setStatus('Outputting data collection event')
-		self.outputEvent(event.PublishSpiralEvent())
+		evt = event.PublishSpiralEvent()
+		evt['grid ID'] = ievent['grid ID']
+		self.outputEvent(evt)
 		self.setStatus('Data collection event outputted')
 
 	def handleGridDataCollectionDone(self, ievent):
@@ -645,7 +647,6 @@ class RobotNotification(RobotNode):
 	def handleGridExtracted(self, ievent):
 		self.setStatus('Outputting grid insert event')
 		evt = event.InsertGridEvent()
-		evt['grid number'] = -1
 		self.outputEvent(evt)
 		self.setStatus('Grid insert event outputted')
 

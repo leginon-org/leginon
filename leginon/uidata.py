@@ -144,7 +144,10 @@ class Data(Object):
 	def set(self, value, callback=True, block=True, thread=False):
 		self.lock.acquire()
 		if callback and self.callback is not None:
-			value = self.callback(value)
+			try:
+				value = self.callback(value)
+			except Exception, e:
+				print 'Exception in callback:', str(e)
 		if self.validate(value):
 			self.value = value
 		else:

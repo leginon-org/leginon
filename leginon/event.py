@@ -114,7 +114,7 @@ class GridInsertedEvent(NotificationEvent):
 	'Event indicating a grid has been inserted'
 	def typemap(cls):
 		t = NotificationEvent.typemap()
-		t += [('grid number', int)]
+		t += [('grid ID', int)]
 		return t
 	typemap = classmethod(typemap)
 
@@ -122,7 +122,7 @@ class GridExtractedEvent(NotificationEvent):
 	'Event indicating a grid has been extracted'
 	def typemap(cls):
 		t = NotificationEvent.typemap()
-		t += [('grid number', int)]
+		t += [('grid ID', int)]
 		return t
 	typemap = classmethod(typemap)
 
@@ -264,11 +264,7 @@ class UnlockEvent(ControlEvent):
 
 class InsertGridEvent(ControlEvent):
 	'Event that signals a grid to be inserted'
-	def typemap(cls):
-		t = NotificationEvent.typemap()
-		t += [('grid number', int)]
-		return t
-	typemap = classmethod(typemap)
+	pass
 
 class ExtractGridEvent(ControlEvent):
 	'Event that signals a grid to be extracted'
@@ -276,7 +272,11 @@ class ExtractGridEvent(ControlEvent):
 
 class PublishSpiralEvent(ControlEvent):
 	'Event telling sprial target maker to publish a spiral '
-	pass
+	def typemap(cls):
+		t = NotificationEvent.typemap()
+		t += [('grid ID', int)]
+		return t
+	typemap = classmethod(typemap)
 
 class EmailEvent(Event):
 	'Event to send email'

@@ -434,7 +434,7 @@ class wxContainerWidget(wxWidget):
 
 		self.nosizerclasses = (wxNotebookContainerWidget, wxDialogContainerWidget,
 														wxTreePanelContainerWidget, wxMessageDialogWidget,
-														wxFileDialogWidget)
+														wxFileDialogWidget, wxGridTrayWidget)
 		self.expandclasses = (wxMessageWidget, wxMessageLogWidget)
 		wxWidget.__init__(self, name, parent, container, value, configuration)
 		self.childparent = self.parent
