@@ -550,9 +550,10 @@ class CameraImageData(ImageData):
 		return t
 	typemap = classmethod(typemap)
 
+
 ## the camstate key is redundant (it's a subset of 'camera')
 ## but for now it helps to query the same way we used to
-class CorrectorImageData(CameraImageData):
+class CorrectorImageData(ImageData):
 	def typemap(cls):
 		t = CameraImageData.typemap()
 		t += [ ('camstate', CorrectorCamstateData), ]
@@ -768,3 +769,22 @@ class BindingSpec2Data(Data):
 		return t
 	typemap = classmethod(typemap)
 
+
+
+
+########## for testing
+
+## new class of data
+class MyData(Data):
+	def typemap(cls):
+		t = Data.typemap()
+		t += [('other', MyOtherData)]
+		return t
+	typemap = classmethod(typemap)
+
+class MyOtherData(Data):
+	def typemap(cls):
+		t = Data.typemap()
+		t += [('stuff', int)]
+		return t
+	typemap = classmethod(typemap)
