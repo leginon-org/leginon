@@ -3,6 +3,7 @@
 import event, data
 import watcher
 import threading
+import uidata
 
 class TargetWatcher(watcher.Watcher):
 	'''
