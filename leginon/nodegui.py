@@ -47,10 +47,17 @@ class NotebookContainer(SpecWidget):
 		self.label.pack()
 
 		self.notebook = Pmw.NoteBook(self)
+		total_tab_width = 0
 		for spec in self.spec['content']:
 			name = spec['name']
 			spectype = spec['spectype']
 			newframe = self.notebook.add(name)
+
+			### add the width of this tab to total
+			tabname = name + '-tab'
+			w = self.notebook.component(tabname).winfo_reqwidth()
+			total_tab_width += w
+
 			if spectype == 'container':
 				widget = Container(newframe, self.uiclient, spec)
 			elif spectype == 'method':
@@ -64,6 +71,7 @@ class NotebookContainer(SpecWidget):
 
 		self.notebook.pack(fill=BOTH, expand=YES)
 		self.notebook.setnaturalsize()
+		self.notebook.component('hull')['width'] = total_tab_width
 
 
 def whichDataClass(dataspec):

@@ -314,11 +314,13 @@ class Manager(node.Node):
 		argspec = (
 		self.registerUIData('Filename', 'string'),
 		)
-		saveapp = self.registerUIMethod(self.saveApp, 'Save Application', argspec)
-		loadapp = self.registerUIMethod(self.loadApp, 'Load Application', argspec)
-		launchapp = self.registerUIMethod(self.launchApp, 'Launch Application', ())
+		saveapp = self.registerUIMethod(self.saveApp, 'Save', argspec)
+		loadapp = self.registerUIMethod(self.loadApp, 'Load', argspec)
+		launchapp = self.registerUIMethod(self.launchApp, 'Launch', ())
 
-		self.registerUISpec('MANAGER', (nodespec, spec1, spec2, spec3, saveapp, loadapp, launchapp, nodetree))
+		app = self.registerUIContainer('Application', (saveapp, loadapp, launchapp))
+
+		self.registerUISpec('MANAGER', (nodespec, spec1, spec2, spec3, app, nodetree))
 
 	def nodeDict(self):
 		"""
