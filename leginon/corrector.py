@@ -9,6 +9,7 @@ import threading
 import Mrc
 import camerafuncs
 import xmlrpclib
+import os
 #import xmlrpclib2 as xmlbinlib
 xmlbinlib = xmlrpclib
 
@@ -31,6 +32,18 @@ class DataHandler(node.DataHandler):
 			return node.DataHandler.query(self, id)
 
 class Corrector(node.Node):
+	'''
+	Manages dark/bright images and does other corrections
+	Basic Instructions:
+	  Create a corrector plan for every camera configuration that
+	  requires correction.  Right now, camera configuration means:
+	   dimension, binning, offset, (future: dose).
+	  To create a plan, set the camera configuration in 'Preferences', 
+	  set other plan options in 'Plan' and then 'Set Plan Params'.
+	  This creates a plan file in the corrections directory.  Acquire
+	  a dark and bright image for this plan.  These are stored as MRC
+	  in the corrections directory.
+	'''
 	def __init__(self, id, nodelocations, **kwargs):
 		self.cam = camerafuncs.CameraFuncs(self)
 		self.plans = {}
@@ -337,11 +350,28 @@ class CorrectorPlan(object):
 	def __hash__(self):
 		return hash(self.id)
 
+	def path(self):
+		dirname = 'corrections'
+		### this is not a great idea because it will not create
+		### directory if there are permissions problems
+		### Trying to catch exception if dir already exists
+		try:
+			os.mkdir(dirname)
+		except OSError:
+			pass
+		return 'corrections'
+
 	def planFilename(self):
-		return self.id + '.plan'
+		path = self.path()
+		planfile = self.id + '.plan'
+		planfile = os.path.join(path, planfile)
+		return planfile
 
 	def refFilename(self, reftype):
-		return self.id + '_' + reftype + '.mrc'
+		path = self.path()
+		reffile = self.id + '_' + reftype + '.mrc'
+		reffile = os.path.join(path, reffile)
+		return reffile
 
 	def save(self):
 		filename = self.planFilename()
