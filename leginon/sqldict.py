@@ -184,7 +184,9 @@ class SQLDict:
 	def __init__(self, db, queryinfo):
 	    self.db = db
 	    self.queryinfo = queryinfo
+	    #print 'querinfo ', self.queryinfo
 	    self.queries = setQueries(queryinfo)
+	    #print 'queries ', self.queries
 	    self.cursors = {}
 	    self.execute()
 
@@ -195,6 +197,7 @@ class SQLDict:
 	    for key,query in self.queries.items():
 	    	c = self._cursor()
 		try:
+			#print "THIS ONE: ", query
 			c.execute(query)
 		except MySQLdb.ProgrammingError, e:
 			errno = e.args[0]
@@ -329,7 +332,7 @@ class SQLDict:
 
 	    for column in addcolumns:
 		q = sqlexpr.AlterTable(self.table, column).sqlRepr()
-		print q
+		#print q
 		try:
 			c.execute(q)
 		except MySQLdb.OperationalError, e:

@@ -664,7 +664,7 @@ class ImageTargetData(Data):
 class FocusTargetData(ImageTargetData):
 	pass
 
-### XXX the list here has variable lenght
+### XXX the list here has variable length
 class ImageTargetListData(Data):
 	def typemap(cls):
 		t = Data.typemap()
@@ -677,6 +677,36 @@ class PixelDriftData(Data):
 		t = Data.typemap()
 		t += [ ('rows', float), ]
 		t += [ ('cols', float), ]
+		return t
+	typemap = classmethod(typemap)
+
+class ApplicationData(Data):
+	def typemap(cls):
+		t = Data.typemap()
+		t += [('name', str)]
+		return t
+	typemap = classmethod(typemap)
+
+class NodeSpecData(Data):
+	def typemap(cls):
+		t = Data.typemap()
+		t += [('class string', str),
+					('name', str),
+					('launcher ID', tuple),
+					('args', list),
+					('new process flag', int),
+					('dependencies', list),
+					('application', ApplicationData)]
+		return t
+	typemap = classmethod(typemap)
+
+class BindingSpecData(Data):
+	def typemap(cls):
+		t = Data.typemap()
+		t += [('event class string', str),
+					('from node ID', tuple),
+					('to node ID', tuple),
+					('application', ApplicationData)]
 		return t
 	typemap = classmethod(typemap)
 

@@ -651,7 +651,9 @@ def whereFormat(in_dict):
 	alias = in_dict['alias']
 	wherelist = []
 	for key, value in whereDict.items():
-		evalue = MySQLdb.escape_string(str(value))
+		if type(value) in [tuple, list]:
+			key = sqldict.seq2sqlColumn(key)
+		evalue = str(value)
 		wherelist.append(''' %s.`%s`="%s" ''' % (alias, key, evalue))
 	wherestr = ' AND '.join(wherelist)
         return wherestr

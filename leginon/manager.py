@@ -126,10 +126,12 @@ class Manager(node.Node):
 				del self.confirmmap[eventid]
 				self.outputEvent(ievent, 0, nodeid)
 
-	def addEventDistmap(self, eventclass, from_node=None, to_node=None):
+	def addEventDistmap(self, eventclass, from_node=None, to_node=None,
+											addtoapp=True):
 		'''Map distribution of an event of eventclass from a node to a node.'''
 		args = (eventclass, from_node, to_node)
-		self.app.addBindSpec(args)
+		if addtoapp:
+			self.app.addBindingSpec(eventclass.__name__, from_node, to_node)
 
 		if eventclass not in self.distmap:
 			self.distmap[eventclass] = {}
@@ -146,7 +148,7 @@ class Manager(node.Node):
 											+ ' to ' + str(tonodeid) + ' no such binding')
 
 		args = (eventclass, fromnodeid, tonodeid)
-		self.app.delBindSpec(args)
+		self.app.delBindingSpec(eventclass.__name__, fromnodeid, tonoded)
 
 	def distributeEvents(self, ievent):
 		'''Push event to eventclients based on event class and source.'''
@@ -342,7 +344,7 @@ class Manager(node.Node):
 		for dataid in self.datahandler.ids():
 			self.unpublishDataLocation(dataid, nodeid)
 
-	def launchNode(self, launcher, newproc, target, name, nodeargs=(), dependencies=[]):
+	def launchNode(self, launcher, newproc, target, name, nodeargs=(), dependencies=[], addtoapp=True):
 		'''
 		Launch a node with a launcher node.
 		launcher = id of launcher node
@@ -351,7 +353,9 @@ class Manager(node.Node):
 		dependencies = node dependent on to launch
 		'''
 		args = (launcher, newproc, target, name, nodeargs, dependencies)
-		self.app.addLaunchSpec(args)
+		if addtoapp:
+			self.app.addNodeSpec(target, name, launcher, nodeargs, newproc,
+																													dependencies)
 		t = threading.Thread(target=self.waitNode, args=args)
 		t.start()
 		return self.id + (name,)
@@ -460,13 +464,14 @@ class Manager(node.Node):
 
 	# application methods
 
-	def saveApp(self, filename):
+	def saveApp(self, name):
 		'''Calls application.Application.save.'''
-		self.app.save(filename)
+		self.app.setName(name)
+		self.app.save()
 
-	def loadApp(self, filename):
+	def loadApp(self, name):
 		'''Calls application.Application.load.'''
-		self.app.load(filename)
+		self.app.load(name)
 
 	def launchApp(self):
 		'''Calls application.Application.launch.'''
@@ -574,13 +579,13 @@ class Manager(node.Node):
 
 	def uiSaveApp(self):
 		'''UI helper for saveApp. See saveApp.'''
-		filename = self.uiapplicationfilename.get()
-		self.saveApp(filename)
+		name = self.uiapplicationname.get()
+		self.saveApp(name)
 
 	def uiLoadApp(self):
 		'''UI helper for loadApp. See loadApp.'''
-		filename = self.uiapplicationfilename.get()
-		self.loadApp(filename)
+		name = self.uiapplicationname.get()
+		self.loadApp(name)
 
 	def uiLaunchApp(self):
 		'''UI helper for launchApp. See launchApp.'''
@@ -634,12 +639,12 @@ class Manager(node.Node):
 		nodemanagementcontainer = uidata.UIMediumContainer('Node Management')
 		nodemanagementcontainer.addUIObjects(infoobjects + addobjects + killobjects)
 
-		self.uiapplicationfilename = uidata.UIString('Filename', '', 'rw')
+		self.uiapplicationname = uidata.UIString('Name', '', 'rw')
 		applicationsavemethod = uidata.UIMethod('Save', self.uiSaveApp)
 		applicationloadmethod = uidata.UIMethod('Load', self.uiLoadApp)
 		applicationlaunchmethod = uidata.UIMethod('Launch', self.uiLaunchApp)
 		applicationkillmethod = uidata.UIMethod('Kill', self.uiKillApp)
-		applicationobjects = (self.uiapplicationfilename, applicationsavemethod,
+		applicationobjects = (self.uiapplicationname, applicationsavemethod,
 													applicationloadmethod, applicationlaunchmethod,
 													applicationkillmethod)
 		applicationcontainer = uidata.UIMediumContainer('Application')

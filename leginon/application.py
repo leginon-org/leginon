@@ -1,49 +1,98 @@
 '''
 This is an Application manager to be included as a component of Manager
 '''
-import shelve
-import leginonobject
+import data
+import event
 import time
-import os
 import threading
+import leginonobject
 
 class Application(leginonobject.LeginonObject):
-	def __init__(self, id, manager):
+	def __init__(self, id, manager, name=None):
 		leginonobject.LeginonObject.__init__(self, id)
 		self.manager = manager
-		self.initApp()
-
-	def initApp(self):
-		self.launchspec = []
-		self.bindspec = []
+		self.data = data.ApplicationData(id=self.ID())
+		if name is not None:
+			self.data['name'] = name
+		self.nodespecs = []
+		self.bindingspecs = []
 		self.launchednodeslock = threading.RLock()
 		self.launchednodes = []
 
-	def addLaunchSpec(self, args):
-		if args not in self.launchspec:
-			self.launchspec.append(args)
+	def setName(self, name):
+		self.data['name'] = name
 
-	def delLaunchSpec(self, args):
-		if args in self.launchspec:
-			self.launchspec.remove(args)
+	def addNodeSpec(self, class_string, name, launcherid,
+									args=(), npf=0, dependencies=[]):
+		for spec in self.nodespecs:
+			if name == spec['name']:
+				raise ValueError('node already exists in application')
+		nodespecdata = data.NodeSpecData()
+		nodespecdata['class string'] = class_string
+		nodespecdata['name'] = name
+		nodespecdata['launcher ID'] = launcherid
+		nodespecdata['args'] = args
+		nodespecdata['new process flag'] = npf
+		nodespecdata['dependencies'] = dependencies
+		nodespecdata['application'] = self.data
+		self.nodespecs.append(nodespecdata)
 
-	def addBindSpec(self, args):
-		if args not in self.bindspec:
-			self.bindspec.append(args)
+	def delNodeSpec(self, name):
+		for nodespec in self.nodespecs:
+			if nodespec['name'] == name:
+				self.nodespecs.remove(nodespec)
 
-	def delBindSpec(self, args):
-		if args in self.bindspec:
-			self.bindspec.remove(args)
+	def addBindingSpec(self, eventclass_string, fromnodeid, tonodeid):
+		bindingspecdata = data.BindingSpecData()
+		bindingspecdata['event class string'] = eventclass_string
+		bindingspecdata['from node ID'] = fromnodeid
+		bindingspecdata['to node ID'] = tonodeid
+		bindingspecdata['application'] = self.data
+		for spec in self.bindingspecs:
+			same = True
+			for key in bindingspecdata:
+				if bindingspecdata[key] != spec[key]:
+					same = False
+			if same:
+				raise ValueError('binding already exists in application')
+		self.bindingspecs.append(bindingspecdata)
 
-	def getLaunchers(self):
-		launchers = []
-		for args in self.launchspec:
-			launchers.append(args[0])
-		return launchers
+	def delBindingSpec(self, eventclass_string, fromnode, tonode):
+		bindingspecdata = data.BindingSpecData()
+		bindingspecdata['event class string'] = eventclass_string
+		bindingspecdata['from node ID'] = fromnodeid
+		bindingspecdata['to node ID'] = tonodeid
+		bindingspecdata['application'] = self.data
+		for spec in self.bindingspecs:
+			same = True
+			for key in bindingspecdata:
+				if bindingspecdata[key] != spec[key]:
+					same = False
+			if same:
+				self.bindingspec.remove(spec)
+
+	def getLauncherIDs(self):
+		launcherids = []
+		for spec in self.nodespecs:
+			launcherids.append(spec['launcher ID'])
+		return launcherids
+
+	def nodeSpec2Args(self, ns):
+		return (ns['launcher ID'], ns['new process flag'], ns['class string'],
+						ns['name'], tuple(ns['args']), ns['dependencies'], False)
+
+	def bindingSpec2Args(self, bs):
+		# i know...
+		try:
+			eventclass = eval('event.' + bs['event class string'])
+		except:
+			raise ValueError('cannot get event class for binding')
+		return (eventclass, bs['from node ID'], bs['to node ID'], False)
 
 	def launch(self):
 		threads = []
-		for args in self.launchspec:
+		for nodespec in self.nodespecs:
+			args = self.nodeSpec2Args(nodespec)
 			t = threading.Thread(name='launch %s thread' % str(args),
 															target=self.launchNode, args=(args,))
 			t.start()
@@ -51,10 +100,10 @@ class Application(leginonobject.LeginonObject):
 			print 'application sleep 0.5'
 			time.sleep(0.5)
 			print 'application sleep done'
-			#print 'NEWID', newid
 		for thread in threads:
 			thread.join()
-		for args in self.bindspec:
+		for bindingspec in self.bindingspecs:
+			args = self.bindingSpec2Args(bindingspec)
 			self.printerror('binding %s' % str(args))
 			apply(self.manager.addEventDistmap, args)
 
@@ -76,19 +125,24 @@ class Application(leginonobject.LeginonObject):
 				print 'error while killing %s' % (nodeid,)
 		self.launchednodeslock.release()
 
-	def save(self, filename):
-		# for some reason updating after delLaunchSpec no worky
-		try:
-			os.remove(filename)
-		except OSError:
-			pass
-		s = shelve.open(filename)
-		s['launchspec'] = self.launchspec
-		s['bindspec'] = self.bindspec
-		s.close()
+	def save(self):
+		self.manager.publish(self.data, database=True)
+		for nodespecdata in self.nodespecs:
+			self.manager.publish(nodespecdata, database=True)
+		for bindingspecdata in self.bindingspecs:
+			self.manager.publish(bindingspecdata, database=True)
 
-	def load(self, filename):
-		s = shelve.open(filename)
-		self.launchspec = s['launchspec']
-		self.bindspec = s['bindspec']
-		s.close()
+	def load(self, name):
+		instance = data.ApplicationData(name=name)
+		applicationdatalist = self.manager.research(datainstance=instance)
+		try:
+			self.data = applicationdatalist[0]
+		except IndexError:
+			raise ValueError('no such application')
+		instance['session'] = self.data['session']
+		instance['id'] = self.data['id']
+		nodeinstance = data.NodeSpecData(application=instance)
+		self.nodespecs = self.manager.research(datainstance=nodeinstance)
+		bindinginstance = data.BindingSpecData(application=instance)
+		self.bindingspecs = self.manager.research(datainstance=bindinginstance)
+
