@@ -673,6 +673,21 @@ class CorrectorCamstateData(InSessionData):
 		return t
 	typemap = classmethod(typemap)
 
+class MosaicTargetData(InSessionData):
+	'''
+	this is an alias for an AcquisitionImageTargetData which is used
+	to show a target in a full mosaic image
+	'''
+	def typemap(cls):
+		t = InSessionData.typemap()
+		t += [
+		  ('row', int),
+		  ('column', int),
+		  ('target', AcquisitionImageTargetData),
+		]
+		return t
+	typemap = classmethod(typemap)
+
 class ImageTargetData(InSessionData):
 	def typemap(cls):
 		t = InSessionData.typemap()
@@ -685,7 +700,7 @@ class ImageTargetData(InSessionData):
 		  ('preset', PresetData),
 		  ('type', str),
 		  ('version', int),
-		  ('index', int),
+		  ('number', int),
 		]
 		return t
 	typemap = classmethod(typemap)
