@@ -28,13 +28,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.defineUserInterface()
 		self.start()
 
-	def setCamState(self):
-		config = self.cam.cameraConfig()
-		emdata = self.cam.configToEMData(config)
-		self.cam.currentCameraEMData(emdata)
-
 	def calibrateAlignment(self, tilt_value):
-		self.setCamState()
+		self.cam.uiApplyAsNeeded()
 
 		state1 = {'beam tilt': tilt_value}
 		state2 = {'beam tilt': -tilt_value}
@@ -65,8 +60,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		return ''
 
 	def calibrateDefocus(self, tilt_value, defocus1, defocus2):
-		self.setCamState()
-		print 'did setCamState'
+		self.cam.uiApplyAsNeeded()
 		state1 = {'defocus': defocus1}
 		state2 = {'defocus': defocus2}
 		matdict = {}
@@ -97,7 +91,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		return ''
 
 	def calibrateStigmators(self, tilt_value, delta):
-		self.setCamState()
+		self.cam.uiApplyAsNeeded()
 
 		currentstig = self.getObjectiveStigmator()
 		## set up the stig states
@@ -143,7 +137,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		return ''
 
 	def measureDefocusStig(self, btilt):
-		self.setCamState()
+		self.cam.uiApplyAsNeeded()
 		try:
 			ret = self.calclient.measureDefocusStig(btilt)
 		except:

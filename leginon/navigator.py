@@ -159,7 +159,8 @@ class Navigator(node.Node):
 
 	def acquireImage(self):
 		print 'acquiring image'
-		imagedata = self.cam.acquireCameraImageData(camconfig='UI')
+		self.cam.uiApplyAsNeeded()
+		imagedata = self.cam.acquireCameraImageData()
 
 		if imagedata is None:
 			return
@@ -382,7 +383,7 @@ class Navigator(node.Node):
 		self.completestate = uidata.Boolean('Complete State', False, 'rw', persist=True)
 
 		#self.usecamconfig = uidata.Boolean('Use This Configuration', True, 'rw', persist=True)
-		cameraconfigure = self.cam.configUIData()
+		cameraconfigure = self.cam.uiSetupContainer()
 
 		settingscontainer = uidata.Container('Settings')
 		settingscontainer.addObjects((self.movetype, self.completestate, self.delaydata, cameraconfigure))

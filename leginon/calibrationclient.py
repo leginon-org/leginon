@@ -35,7 +35,10 @@ class CalibrationClient(object):
 	'''
 	def __init__(self, node):
 		self.node = node
-		self.cam = node.cam
+		try:
+			self.cam = node.cam
+		except AttributeError:
+			self.cam = None
 
 		self.correlator = correlator.Correlator()
 		self.peakfinder = peakfinder.PeakFinder()

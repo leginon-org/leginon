@@ -117,17 +117,16 @@ class Corrector(node.Node):
 		self.ui_image = uidata.Image('Image', None, 'rw')
 
 		self.uiframestoaverage = uidata.Integer('Frames to Average', 3, 'rw')
-		self.uifakeflag = uidata.Boolean('Fake Image', False, 'rw')
-		cameraconfigure = self.cam.configUIData()
 		self.cliplimits = uidata.Sequence('Clip Limits', (), 'rw')
 		self.badrows = uidata.Sequence('Bad Rows', (), 'rw')
 		self.badcols = uidata.Sequence('Bad Cols', (), 'rw')
 		setplan = uidata.Method('Set Plan', self.uiSetPlanParams)
 		getplan = uidata.Method('Get Plan', self.uiGetPlanParams)
+		camsetup = self.cam.uiSetupContainer()
 
 		settingscontainer = uidata.Container('Settings')
-		settingscontainer.addObjects((self.uiframestoaverage, self.uifakeflag,
-																	cameraconfigure, self.cliplimits,
+		settingscontainer.addObjects((self.uiframestoaverage,
+																	camsetup, self.cliplimits,
 																	self.badrows, self.badcols, setplan, getplan))
 		container = uidata.LargeContainer('Corrector')
 		container.addObjects((statuscontainer, settingscontainer, controlcontainer,
@@ -135,12 +134,11 @@ class Corrector(node.Node):
 		self.uiserver.addObject(container)
 
 	def uiSetPlanParams(self):
-		camconfig = self.cam.cameraConfig()
+		camconfig = self.cam.uiGetParams()
 		newcamstate = data.CorrectorCamstateData()
 		newcamstate['dimension'] = camconfig['dimension']
 		newcamstate['offset'] = camconfig['offset']
 		newcamstate['binning'] = camconfig['binning']
-		current = self.cam.currentCameraEMData()
 		plandata = data.CorrectorPlanData()
 		plandata['camstate'] = newcamstate
 		plandata['clip_limits'] = self.cliplimits.get()
@@ -149,7 +147,7 @@ class Corrector(node.Node):
 		self.storePlan(plandata)
 
 	def uiGetPlanParams(self):
-		camconfig = self.cam.cameraConfig()
+		camconfig = self.cam.uiGetParams()
 		newcamstate = data.CorrectorCamstateData()
 		newcamstate['dimension'] = camconfig['dimension']
 		newcamstate['offset'] = camconfig['offset']
@@ -171,6 +169,7 @@ class Corrector(node.Node):
 			self.outputError('Cannot set EM parameter, EM may not be running')
 		else:
 			self.displayImage(imagedata)
+			node.beep()
 
 	def uiAcquireBright(self):
 		try:
@@ -179,11 +178,12 @@ class Corrector(node.Node):
 			self.outputError('Cannot set EM parameter, EM may not be running')
 		else:
 			self.displayImage(imagedata)
+			node.beep()
 
 	def uiAcquireRaw(self):
-		#camconfig = self.cam.cameraConfig()
 		try:
-			imagedata = self.cam.acquireCameraImageData(camconfig='UI', correction=False)
+			self.cam.uiApplyAsNeeded()
+			imagedata = self.cam.acquireCameraImageData(correction=False)
 		except node.PublishError:
 			self.outputError('Cannot set EM parameter, EM may not be running')
 		else:
@@ -192,6 +192,7 @@ class Corrector(node.Node):
 
 	def uiAcquireCorrected(self):
 		try:
+			self.cam.uiApplyAsNeeded()
 			imagedata = self.acquireCorrectedArray()
 		except node.PublishError:
 			self.outputError('Cannot set EM parameter, EM may not be running')
@@ -246,8 +247,7 @@ class Corrector(node.Node):
 		return {'image series': series, 'scope': scopedata, 'camera':camdata}
 
 	def acquireReference(self, dark=False):
-		camconfig = self.cam.cameraConfig()
-		camdata = self.cam.configToEMData(camconfig)
+		camdata = self.cam.getCameraEMData()
 		if dark:
 			camdata['exposure type'] = 'dark'
 			typekey = 'dark'
@@ -255,15 +255,12 @@ class Corrector(node.Node):
 		else:
 			typekey = 'bright'
 			self.uistatus.set('Acquiring bright')
-
-		self.cam.currentCameraEMData(camdata)
+		self.cam.setCameraEMData(camdata)
 
 		navg = self.uiframestoaverage.get()
 
 		seriesinfo = self.acquireSeries(navg, camdata=camdata)
 		series = seriesinfo['image series']
-#		for im in series:
-#			print im.shape, im.typecode()
 		seriescam = seriesinfo['camera']
 		seriesscope = seriesinfo['scope']
 
@@ -283,12 +280,9 @@ class Corrector(node.Node):
 		# since its not in use yet
 		if camdata['exposure type'] == 'dark':
 			self.uistatus.set('Reseting camera exposure type to normal from dark')
-			camconfig = self.cam.cameraConfig()
-			camdata = self.cam.configToEMData(camconfig)
 			camdata['exposure type'] = 'normal'
-			self.cam.currentCameraEMData(camdata)
+			self.cam.setCameraEMData(camdata)
 
-		#print 'returning ref'
 		return ref
 
 	def researchRef(self, camstate, type):
@@ -398,26 +392,21 @@ class Corrector(node.Node):
 		#print 'saving'
 		self.storeRef('norm', norm, corstate)
 
-	def acquireCorrectedArray(self, camconfig=None):
-		imagedata = self.acquireCorrectedImageData(camconfig='UI')
+	def acquireCorrectedArray(self):
+		imagedata = self.acquireCorrectedImageData()
 		return imagedata['image']
 
-	def acquireCorrectedImageData(self, camconfig=None):
-		if self.uifakeflag.get():
-			numimage = Mrc.mrc_to_numeric('fake.mrc')
-			corrected = self.correct(numimage, camstate)
-			return data.CameraImageData(id=self.ID, image=corrected)
-		else:
-			imagedata = self.cam.acquireCameraImageData(camconfig=camconfig, correction=0)
-			numimage = imagedata['image']
-			camdata = imagedata['camera']
-			corstate = data.CorrectorCamstateData()
-			corstate['dimension'] = camdata['dimension']
-			corstate['offset'] = camdata['offset']
-			corstate['binning'] = camdata['binning']
-			corrected = self.correct(numimage, corstate)
-			imagedata['image'] = corrected
-			return imagedata
+	def acquireCorrectedImageData(self):
+		imagedata = self.cam.acquireCameraImageData(correction=0)
+		numimage = imagedata['image']
+		camdata = imagedata['camera']
+		corstate = data.CorrectorCamstateData()
+		corstate['dimension'] = camdata['dimension']
+		corstate['offset'] = camdata['offset']
+		corstate['binning'] = camdata['binning']
+		corrected = self.correct(numimage, corstate)
+		imagedata['image'] = corrected
+		return imagedata
 
 	def correct(self, original, camstate):
 		'''
@@ -503,8 +492,10 @@ class Corrector(node.Node):
 			'auto offset': True,
 			'exposure time': 0,
 		}
-		config = self.cam.cameraConfig(config)
-		imagedata = self.cam.acquireCameraImageData(camconfig=config, correction=False)
+
+		raise NotImplementedError('need to work out the details of configuring the camera here')
+
+		imagedata = self.cam.acquireCameraImageData(correction=False)
 		im = imagedata['image']
 		mean = darkmean = imagefun.mean(im)
 		self.displayImage(im)
@@ -519,8 +510,8 @@ class Corrector(node.Node):
 		tries = 5
 		for i in range(tries):
 			config = { 'exposure time': trial_exp }
-			config = self.cam.cameraConfig(config)
-			imagedata = self.cam.acquireCameraImageData(camconfig=config, correction=False)
+			raise NotImplementedError('need to work out the details of configuring the camera here')
+			imagedata = self.cam.acquireCameraImageData(correction=False)
 			im = imagedata['image']
 			mean = imagefun.mean(im)
 			self.displayImage(im)

@@ -7,7 +7,6 @@
 #
 
 import calibrationclient
-import camerafuncs
 import data
 import event
 import imagewatcher
@@ -302,7 +301,6 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 	def __init__(self, id, session, nodelocations, **kwargs):
 		self.mosaicselectionmapping = {}
 		ClickTargetFinder.__init__(self, id, session, nodelocations, **kwargs)
-		self.cam = camerafuncs.CameraFuncs(self)
 		self.calclients = {
 			'image shift': calibrationclient.ImageShiftCalibrationClient(self),
 			'stage position': calibrationclient.StageCalibrationClient(self),

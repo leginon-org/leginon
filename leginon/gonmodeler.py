@@ -36,9 +36,7 @@ class GonModeler(node.Node):
 	# calibrate needs to take a specific value
 	def loop(self, label, axis, points, interval):
 		## set camera state
-		camconfig = self.cam.cameraConfig()
-		emdata = self.cam.configToEMData(camconfig)
-		self.cam.currentCameraEMData(camdata=emdata)
+		self.cam.uiApplyAsNeeded()
 
 		mag = self.getMagnification()
 		ht = self.getHighTension()
@@ -220,7 +218,7 @@ class GonModeler(node.Node):
 		modelcont = uidata.Container('Model')
 		modelcont.addObjects((self.uifitlabel, self.uifitmag, self.uifitaxis, self.uiterms, fit, magonly))
 
-		camconfig = self.cam.configUIData()
+		camconfig = self.cam.uiSetupContainer()
 
 		maincont = uidata.LargeContainer('GonModeler')
 		maincont.addObjects((measurecont, modelcont, camconfig))

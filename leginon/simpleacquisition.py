@@ -11,7 +11,6 @@
 import event
 import data
 import time
-import camerafuncs
 import presets
 import threading
 import acquisition

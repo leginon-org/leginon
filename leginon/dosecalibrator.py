@@ -45,13 +45,11 @@ class DoseCalibrator(calibrator.Calibrator):
 
 		### camera calibration
 		camcont = uidata.Container('Camera Sensitivity Calibration (Do Dose Measurement First)')
-		self.dim = uidata.Integer('Image Size', 512, 'rw', persist=True)
-		self.bin = uidata.Integer('Image Binning', 1, 'rw', persist=True)
-		self.exp = uidata.Integer('Image Exposure Time (ms)', 500, 'rw', persist=True)
+		camsetup = self.cam.uiSetupContainer()
 		calcam = uidata.Method('Calibrate Camera Sensitivity', self.uiCalibrateCamera)
 		self.ui_sens = uidata.Float('Sensitivity (counts/electron)', 0.0, 'r')
 		self.ui_image = uidata.Image('Calibration Image', None, 'r')
-		camcont.addObjects((self.dim, self.bin, self.exp, calcam, self.ui_sens, self.ui_image))
+		camcont.addObjects((camsetup, calcam, self.ui_sens, self.ui_image))
 
 		mycontainer = uidata.LargeContainer('Dose Calibrator')
 		mycontainer.addObjects((controlcont, dosecont, camcont))
@@ -99,13 +97,8 @@ class DoseCalibrator(calibrator.Calibrator):
 
 	def acquireImage(self):
 		self.screenUp()
-		exp = self.exp.get()
-		bin = self.bin.get()
-		dim = self.dim.get()
-		conf = {'auto square':True, 'auto offset':True, 'dimension':{'x':dim}, 'binning':{'x':bin}, 'offset':{'x':0}, 'exposure time':exp}
-		camconfig = self.cam.cameraConfig(conf)
-		print 'CAMCONFIG', camconfig
-		imdata = self.cam.acquireCameraImageData(camconfig, correction=True)
+		self.cam.uiApplyAsNeeded()
+		imdata = self.cam.acquireCameraImageData(correction=True)
 		self.ui_image.set(imdata['image'])
 		return imdata
 

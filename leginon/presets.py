@@ -116,8 +116,7 @@ class PresetsManager(node.Node):
 		e = event.ListPublishEvent(idlist=ids)
 		self.outputEvent(e)
 
-		## camerafuncs not needed, but calclients need it
-		self.cam = None
+		self.cam = camerafuncs.CameraFuncs(self)
 		self.calclients = {
 			'pixel size':calibrationclient.PixelSizeCalibrationClient(self),
 			'image':calibrationclient.ImageShiftCalibrationClient(self),
@@ -127,7 +126,6 @@ class PresetsManager(node.Node):
 		}
 		self.dosecal = calibrationclient.DoseCalibrationClient(self)
 
-		self.cam = camerafuncs.CameraFuncs(self)
 		self.currentselection = None
 		self.currentpreset = None
 		self.presets = []
@@ -727,7 +725,7 @@ class PresetsManager(node.Node):
 		self.orderlist.set(pnames)
 
 		# acquisition
-		cameraconfigure = self.cam.configUIData()
+		cameraconfigure = self.cam.uiSetupContainer()
 		acqdosemeth = uidata.Method('Acquire Dose Image (be sure specimen is not in the field of view)', self.uiAcquireDose)
 		acqrefmeth = uidata.Method('Acquire Preset Reference Image',
 																self.uiAcquireRef)
@@ -754,7 +752,8 @@ class PresetsManager(node.Node):
 
 	def uiAcquireRef(self):
 		self.uistatus.set('Acquiring reference image')
-		imagedata = self.cam.acquireCameraImageData(camconfig='UI', correction=True)
+		self.cam.uiApplyAsNeeded()
+		imagedata = self.cam.acquireCameraImageData(correction=True)
 		if imagedata is None:
 			return
 
@@ -777,12 +776,16 @@ class PresetsManager(node.Node):
 			self.messagelog.error('You go to a preset before measuring dose')
 			return
 		self.uistatus.set('Acquiring dose image using preset config at 512x512')
-		config = data.CameraConfigData()
-		config.friendly_update(self.currentpreset)
-		config['dimension'] = {'x':512,'y':512}
-		config['auto offset'] = True
-		config = self.cam.cameraConfig(config)
-		imagedata = self.cam.acquireCameraImageData(camconfig=config, correction=True)
+		camdata0 = data.CameraEMData()
+		camdata0.friendly_update(self.currentpreset)
+
+		camdata1 = copy.deepcopy(camdata0)
+		camdata1['dimension'] = {'x':512,'y':512}
+		camdata1['offset'] = self.cam.autoOffset(camdata1['dimension'], camdata1['binning'])
+		self.cam.setCameraEMData(camdata1)
+		imagedata = self.cam.acquireCameraImageData(correction=True)
+		self.uistatus.set('returning to original preset camera dimensions')
+		self.cam.setCameraEMData(camdata0)
 		if imagedata is None:
 			return
 

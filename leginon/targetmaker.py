@@ -10,7 +10,6 @@ import node, event, data
 import uidata
 import presets
 import calibrationclient
-import camerafuncs
 import math
 
 class TargetMaker(node.Node):
@@ -37,7 +36,6 @@ class SpiralTargetMaker(TargetMaker):
 	eventinputs = TargetMaker.eventinputs + [event.PublishSpiralEvent]
 	def __init__(self, id, session, nodelocations, **kwargs):
 		TargetMaker.__init__(self, id, session, nodelocations, **kwargs)
-		self.cam = camerafuncs.CameraFuncs(self)
 		self.pixelsizecalclient = calibrationclient.PixelSizeCalibrationClient(self)
 		self.addEventInput(event.PublishSpiralEvent, self.publishTargetList)
 		self.presetsclient = presets.PresetsClient(self)

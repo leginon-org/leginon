@@ -43,13 +43,7 @@ class ImViewer(imagewatcher.ImageWatcher):
 	def uiAcquireLoop(self):
 		if not self.looplock.acquire(0):
 			return
-
-		## configure camera
-		camconfig = self.cam.cameraConfig()
-		camdata = self.cam.configToEMData(camconfig)
-		self.cam.currentCameraEMData(camdata)
-		self.loopconfig = True
-
+		self.cam.uiApplyAsNeeded()
 		try:
 			t = threading.Thread(target=self.loop)
 			t.setDaemon(1)
@@ -85,6 +79,7 @@ class ImViewer(imagewatcher.ImageWatcher):
 		return ''
 
 	def uiAcquire(self):
+		self.cam.uiApplyAsNeeded()
 		imarray = self.acquireArray()
 		if imarray is not None:
 			self.numarray = imarray
@@ -92,11 +87,7 @@ class ImViewer(imagewatcher.ImageWatcher):
 		self.doPow()
 
 	def acquireArray(self):
-		if self.loopconfig:
-			camconfig = None
-		else:
-			camconfig = 'UI'
-		imdata = self.cam.acquireCameraImageData(camconfig=camconfig)
+		imdata = self.cam.acquireCameraImageData()
 		imarray = imdata['image']
 		return imarray
 
@@ -156,7 +147,7 @@ class ImViewer(imagewatcher.ImageWatcher):
 		self.filecontainer = uidata.Container('File')
 		self.filecontainer.addObjects((savemethod, loadmethod))
 
-		cameraconfigure = self.cam.configUIData()
+		cameraconfigure = self.cam.uiSetupContainer()
 		settingscontainer = uidata.Container('Settings')
 		settingscontainer.addObject(cameraconfigure)
 

@@ -20,6 +20,9 @@ from timer import Timer
 class NoCorrectorError(Exception):
 	pass
 
+class CameraConfigError(Exception):
+	pass
+
 def autoOffset(camerasize, dimension, binning):
 	'''
 	calculate the image offset from the dimension/binning
@@ -47,192 +50,148 @@ class CameraFuncs(object):
 	'''
 	def __init__(self, node):
 		self.node = node
-		self.__cameraconfig = data.CameraConfigData()
-		self.__cameraconfig.update(leginonconfig.CAMERA_CONFIG)
 
-	def acquireCameraImageData(self, camconfig=None, correction=True):
-		## try to use UI camera config if none was specified
-		if camconfig == 'UI':
-			try:
-				use = self.useconfig.get()
-			except:
-				use = False
-			if use:
-				camconfig = self.cameraConfig()
-			else:
-				camconfig = None
-
-		# now configure the camera if a camera config is available
-		if camconfig is not None:
-			print 'CONFIGURING CAMERA'
-			camdata = self.configToEMData(camconfig)
-			self.currentCameraEMData(camdata)
-			print 'DONE CONFIG'
-
+	def acquireCameraImageData(self, correction=True):
+		'''
+		Acquire data from the camera, optionally corrected
+		This returns a CameraImageData object which will have
+		and ID created by this node, even if the data was 
+		originally created by another node (like Corrector)
+		'''
 		if correction:
 			### get image data from corrector node
 			try:
 				imdata = self.node.researchByDataID(('corrected image data',))
 			except node.ResearchError:
-				print 'EXC'
 				raise NoCorrectorError('maybe corrector node is not running')
 		else:
 			### create my own data from acquisition
-			#print 'research'
 			scopedata = self.node.researchByDataID(('scope',))
-			#print 'scopedata =', scopedata
 			camdata = self.node.researchByDataID(('camera',))
-			#print 'camdata =', camdata
 
 			### move image to its own key
 			numimage = camdata['image data']
 			camdata['image data'] = None
 			dataid = self.node.ID()
-			#print 'creating imdata'
 			imdata = data.CameraImageData(session=self.node.session, id=dataid, image=numimage, scope=scopedata, camera=camdata)
-			#print 'created imdata'
 		return imdata
 
-	def currentCameraEMData(self, camdata=None):
+	def autoOffset(self, dimension, binning):
+		camsize = self.node.session['instrument']['camera size']
+		camsize = {'x':camsize, 'y':camsize}
+		offset = autoOffset(camsize, dimension, binning)
+		return offset
+
+	def setCameraDict(self, camdict):
+		'''
+		configure the camera given a dict similar to CameraEMData
+		'''
+		camdata = CameraEMData(('camera',))
+		camdata.friendly_update(camdict)
+		self.setCameraEMData(camdata)
+
+	def getCameraDict(self):
+		'''
+		get current camera configuration as a dict
+		'''
+		camdata = self.getCameraEMData()
+		return dict(camdata)
+
+	def validateCameraEMData(self, camdata):
+		'''
+		raise an excpeption if there is a problem in a CameraEMData
+		'''
+		camsize = self.node.session['instrument']['camera size']
+		dim = camdata['dimension']
+		bin = camdata['binning']
+		off = camdata['offset']
+
+		## offset must not be negative
+		if off['x'] < 0 or off['y'] < 0:
+			raise CameraConfigError('illegal offset: %s' % (off,))
+		## dimension must be greater than 0
+		if dim['x'] < 1 or dim['y'] < 1:
+			raise CameraConfigError('illegal dimension: %s' % (dim,))
+		## offset, binning, dimension must not cause out of bounds
+		for axis in ('x','y'):
+			bound = off[axis] + bin[axis] * dim[axis]
+			if bound > camsize:
+				message = 'Out of bounds: offset(%s)+binning(%s)*dimension(%s) = %s, camsize: %s' % (off[axis],bin[axis],dim[axis],bound,camsize)
+				raise CameraConfigError(message)
+
+	def setCameraEMData(self, camdata):
 		'''
 		Sets the camera state using camdata.
-		If called without camdata, return the current camera state
 		'''
-#		t = Timer('camerafuncs state')
-		if camdata is not None:
-			if not isinstance(camdata, data.CameraEMData):
-				raise TypeError('camdata not type CameraEMData')
-#			t2 = Timer('publish camera state')
-			try:
-				self.node.publishRemote(camdata)
-			except Exception, detail:
-				print 'camerafuncs.state: unable to set camera state'
-				raise
-#			t2.stop()
+		if not isinstance(camdata, data.CameraEMData):
+			raise TypeError('camdata not type CameraEMData')
+		self.validateCameraEMData(camdata)
+		try:
+			self.node.publishRemote(camdata)
+		except Exception, detail:
+			print 'camerafuncs.state: unable to set camera state'
+			raise
 
+	def getCameraEMData(self):
+		'''
+		return the current camera state as a CameraEMData object
+		'''
 		try:
 			newcamdata = self.node.researchByDataID(('camera no image data',))
-#			t.stop()
 			return newcamdata
 		except:
-			#self.node.outputWarning('Cannot find current camera settings, EM may not be running.')
 			print('Cannot find current camera settings, EM may not be running.')
 			return None
 
-	def autoOffset(self, camconfig):
+	def uiSetupContainer(self):
 		'''
-		recalculate the image offset from the dimensions
-		to get an image centered on the camera
-		camconfig must be a CameraConfigData instance
-		camconfig['offset'] will be set to new value
+		Returns a container full of setup parameters.
+		There are three ways that the camera can be configured prior
+		to doing an acquisition:
+		   1)  Explicit:  use the 'Apply' button provide here
+		   2)  Slave:  do not configure, use existing config
+		   3)  As needed: if 'Apply As Needed' is turned on:
+		       when an acquisition is requested by the user, the
+		       callback method should first call uiAutoApply before
+		       acquiring images.
 		'''
-		camsize = self.node.session['instrument']['camera size']
-		if not camsize:
-			raise RuntimeError('instrument camsize: %s... maybe you are not connected to an instrument')
-		camsize = {'x':camsize, 'y':camsize}
-		bin = camconfig['binning']
-		dim = camconfig['dimension']
-		offset = autoOffset(camsize, dim, bin)
-		camconfig['offset'] = offset
+		container = uidata.Container('Camera Setup')
 
-	def uiGetDictData(self, uidict):
-		uidictdata = {}
-		for key, value in uidict.items():
-			if isinstance(value, uidata.Data):
-				uidictdata[key] = value.get()
-			else:
-				uidictdata[key] = self.uiGetDictData(value)
-		return uidictdata
+		self.cameraparams = SmartCameraParameters(self.node)
+		applymeth = uidata.Method('Apply To Camera Now', self.uiApply)
+		self.applyasneeded = uidata.Boolean('Apply As Needed', False, 'rw', persist=True)
 
-	def uiSetDictData(self, uidict, dictdata):
-		for key, value in uidict.items():
-			if key in dictdata:
-				if isinstance(value, uidata.Data):
-					value.set(dictdata[key], callback=False)
-				else:
-					self.uiSetDictData(value, dictdata[key])
+		container.addObjects((self.cameraparams, applymeth, self.applyasneeded))
+		return container
 
-#	def uiCallback(self, value):
-#		cameraconfig = self.uiGetDictData(self.uicameradict)
-#		print 'cameraconfig =', cameraconfig
-#		try:
-#			cameraconfig = dict(self.cameraConfig(cameraconfig))
-#		except KeyError, e:
-#			print e
-#			pass
-#		self.uiSetDictData(self.uicameradict, cameraconfig)
-#		return None
-
-	def uiSet(self):
-		cameraconfig = self.uiGetDictData(self.uicameradict)
-		try:
-			cameraconfig = dict(self.cameraConfig(cameraconfig))
-		except:
-			cameraconfig = {}
-		self.uiSetDictData(self.uicameradict, cameraconfig)
-
-	def configUIData(self):
+	def uiApply(self):
 		'''
-		returns camera configuration UI object
+		get params from SmartCameraParameters and set the Camera
 		'''
+		params = self.uiGetParams()
+		self.setCameraDict(params)
 
-		self.uicameradict = {}
-		cameraparameterscontainer = uidata.Container('Camera Configuration')
-		self.useconfig = uidata.Boolean('Use This Configuration', False, permissions='rw', persist=True)
-		cameraparameterscontainer.addObject(self.useconfig)
+	def uiGetParams(self):
+		return self.cameraparams.get()
 
-		parameters = [('exposure time', 'Exposure time', uidata.Float, 500.0, 'rw'),
-									('auto offset', 'Auto offset', uidata.Boolean, True, 'rw'),
-									('auto square', 'Auto square', uidata.Boolean, True, 'rw')]
-
-		pairs = [('dimension', 'Dimension', ['x', 'y'], uidata.Integer, [512, 512]),
-							('offset', 'Offset', ['x', 'y'], uidata.Integer, [0, 0]),
-							('binning', 'Binning', ['x', 'y'], uidata.Integer, [1, 1])]
-
-		for key, name, axes, datatype, values, in pairs:
-			self.uicameradict[key] = {}
-			container = uidata.Container(name)
-			for i in range(len(axes)):
-				self.uicameradict[key][axes[i]] = datatype(axes[i], values[i], 'rw', persist=True)
-				container.addObject(self.uicameradict[key][axes[i]])
-			cameraparameterscontainer.addObject(container)
-
-		for key, name, datatype, value, permissions in parameters:
-			self.uicameradict[key] = datatype(name, value, permissions, persist=True)
-			cameraparameterscontainer.addObject(self.uicameradict[key])
-
-		setmethod = uidata.Method('Apply', self.uiSet)
-		cameraparameterscontainer.addObject(setmethod)
-
-		self.uiSet()
-		return cameraparameterscontainer
-
-	def configToEMData(self, configdata):
-		newconfig = copy.deepcopy(configdata)
-		newemdata = data.CameraEMData()
-		newemdata.friendly_update(newconfig)
-		newemdata['id'] = ('camera',)
-		return newemdata
-
-	def cameraConfig(self, newconfig=None):
+	def uiApplyAsNeeded(self):
 		'''
-		get/set my CameraConfigData
+		When a user requests image(s) to be acquired, this should be
+		called before the acquisitions actually happen.
+		This makes sure that the camera will be configured if 
+		the 'Apply As Needed' option is turned on
 		'''
-		if newconfig is not None:
-			newc = copy.deepcopy(newconfig)
-			self.__cameraconfig.update(newc)
-			c = self.__cameraconfig
-			if c['auto square']:
-				c['dimension']['y'] = c['dimension']['x']
-				c['binning']['y'] = c['binning']['x']
-				c['offset']['y'] = c['offset']['x']
-			if c['auto offset']:
-				self.autoOffset(c)
-		return copy.deepcopy(self.__cameraconfig)
+		if self.applyasneeded.get():
+			self.uiApply()
 
 class SmartCameraParameters(uidata.Container):
+	'''
+	This is a UI data object that packages all the camera parameters.
+	It requires a node instance in the initializer which is used
+	to get the camera size of the current instrument.
+	'''
 	def __init__(self, node):
-		uidata.Container.__init__(self, 'Camera Parameters')
+		uidata.Container.__init__(self, '')
 		self.node = node
 
 		self.setCameraSize()
@@ -261,8 +220,8 @@ class SmartCameraParameters(uidata.Container):
 
 		if not self.camerasize:
 			print 'There was a problem getting the current instrument camera size.'
-			print 'camera size will be faked: 4096x4096'
-			self.camerasize = 4096
+			print 'camera size will be faked: 1024x1024'
+			self.camerasize = 1024
 
 	def squareToggleCallback(self, value):
 		self.xyoptions['square'] = value
@@ -278,16 +237,10 @@ class SmartCameraParameters(uidata.Container):
 		self.xycontainer = uidata.Container('Geometry')
 
 		self.exposuretime = uidata.Integer('Exposure Time (ms)', 500, 'rw', persist=True)
-		testmeth = uidata.Method('Test', self.test)
-
 		self.squaretoggle = uidata.Boolean('Square', self.xyoptions['square'], 'rw', persist=True, callback=self.squareToggleCallback)
 		self.centeredtoggle = uidata.Boolean('Centered', self.xyoptions['centered'], 'rw', persist=True, callback=self.centeredToggleCallback)
 
-		self.addObjects((self.squaretoggle, self.centeredtoggle, self.xycontainer, self.exposuretime, testmeth))
-
-	def test(self):
-		params = self.get()
-		print 'params', params
+		self.addObjects((self.squaretoggle, self.centeredtoggle, self.xycontainer, self.exposuretime))
 
 	def get(self):
 		paramdict = {}

@@ -137,17 +137,17 @@ class Focuser(acquisition.Acquisition):
 		melt_time = self.melt.get()
 		if melt_time and not target['pre_exposure']:
 			melt_time_ms = int(round(melt_time * 1000))
-			camstate = self.cam.currentCameraEMData()
+			camstate = self.cam.getCameraEMData()
 			current_exptime = camstate['exposure time']
 			camstate['exposure time'] = melt_time_ms
-			camstate = self.cam.currentCameraEMData(camstate)
+			self.cam.setCameraEMData(camstate)
 
 			print 'Melting for %s seconds' % (melt_time,)
 			self.cam.acquireCameraImageData()
 			print 'Done melting, resetting exposure time'
 
 			camstate['exposure time'] = current_exptime
-			camstate = self.cam.currentCameraEMData(camstate)
+			self.cam.setCameraEMData(camstate)
 			target['pre_exposure'] = True
 
 		## pre manual check

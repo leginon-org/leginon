@@ -69,9 +69,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 		calclient = self.parameters[uiparameter]
 
 		## set cam state
-		camconfig = self.cam.cameraConfig()
-		emdata = self.cam.configToEMData(camconfig)
-		self.cam.currentCameraEMData(emdata)
+		self.cam.uiApplyAsNeeded()
 
 		basebase = self.getBase()
 		baselist = []
@@ -87,6 +85,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 		## delta = dimension['x'] * binning['x'] * pixsize / 4
 		mag = self.getMagnification()
 		pixsize = self.pixsizeclient.retrievePixelSize(mag)
+		camconfig = self.cam.getCameraEMData()
 
 		percent = self.shiftpercent.get()
 		delta = percent * camconfig['dimension']['x']*camconfig['binning']['x']*pixsize

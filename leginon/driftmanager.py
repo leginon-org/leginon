@@ -231,9 +231,7 @@ class DriftManager(watcher.Watcher):
 
 	def uiMeasureDrift(self):
 		## configure camera
-		camconfig = self.cam.cameraConfig()
-		camdata = self.cam.configToEMData(camconfig)
-		self.cam.currentCameraEMData(camdata)
+		self.cam.uiApplyAsNeeded()
 		mag = self.getMag()
 		pixsize = self.pixsizeclient.retrievePixelSize(mag)
 		print 'PIXSIZE', pixsize
@@ -283,7 +281,7 @@ class DriftManager(watcher.Watcher):
 		self.pausetime = uidata.Float('Pause Time (s)', 2.0, 'rw', persist=True)
 		abortmeth = uidata.Method('Abort', self.abort)
 
-		camconfig = self.cam.configUIData()
+		camconfig = self.cam.uiSetupContainer()
 		measuremeth = uidata.Method('Measure Drift Once', self.uiMeasureDrift)
 		monitormeth = uidata.Method('Monitor Drift', self.uiMonitorDrift)
 		self.driftvalue = uidata.Float('Drift Rate', 0.0, 'r')

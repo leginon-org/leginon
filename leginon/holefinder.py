@@ -41,7 +41,7 @@ class HoleFinder(targetfinder.TargetFinder):
 
 		self.testfile = uidata.String('Filename', '', 'rw', persist=True)
 		readmeth = uidata.Method('Read Image', self.readImage)
-		cameraconfigure = self.cam.configUIData()
+		cameraconfigure = self.cam.uiSetupContainer()
 		acqmeth = uidata.Method('Acquire Image', self.acqImage)
 		testmeth = uidata.Method('Test All', self.everything)
 		self.originalimage = uidata.Image('Original', None, 'r')
@@ -135,7 +135,8 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.originalimage.set(orig)
 
 	def acqImage(self):
-		imdata = self.cam.acquireCameraImageData(camconfig='UI')
+		self.cam.uiApplyAsNeeded()
+		imdata = self.cam.acquireCameraImageData()
 		orig = imdata['image']
 		self.hf['original'] = orig
 		self.originalimage.set(orig)
