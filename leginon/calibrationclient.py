@@ -171,7 +171,13 @@ class MatrixCalibrationClient(CalibrationClient):
 		'''
 		finds the requested matrix using magnification and type
 		'''
-		caldatalist = self.node.research(dataclass=data.MatrixCalibrationData, magnification=mag, type=caltype)
+		qinst = data.MatrixCalibrationData(magnification=mag, type=caltype)
+		print 'QINST', qinst
+		caldatalist = self.node.research(datainstance=qinst, results=1)
+
+		print 'CALDATALIST'
+		print caldatalist
+
 		if len(caldatalist) > 0:
 			caldata = caldatalist[0]
 		else:
