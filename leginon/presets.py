@@ -590,6 +590,7 @@ class PresetsManager(node.Node):
 		newpreset.update(presetdict)
 
 		### make sure other pointers go to this new preset
+		self.presets[newpreset['name']] = newpreset
 		if self.currentpreset is oldpreset:
 			self.currentpreset = newpreset
 		self.currentselection = newpreset
