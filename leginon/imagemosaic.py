@@ -218,13 +218,14 @@ class ImageMosaic(watcher.Watcher):
 					maxcoordinate[i] = max
 		imageshape = (maxcoordinate[0] - mincoordinate[0], 
 									maxcoordinate[1] - mincoordinate[1]) 
-		image = Numeric.zeros(imageshape, Numeric.UnsignedInt16)
+		mosaicimage = Numeric.zeros(imageshape, Numeric.UnsignedInt16)
 		for tileid in mosaic:
 			row = mosaic[tileid]['position'][0] - mincoordinate[0]
 			column = mosaic[tileid]['position'][1] - mincoordinate[1]
 			iti = mosaic[tileid]['image']
-			image[row:row + iti.shape[0], column:column + iti.shape[1]] = iti.astype(Numeric.UnsignedInt16)
-		return image
+			mosaicimage[row:row + iti.shape[0], column:column + iti.shape[1]] \
+												= iti.astype(Numeric.UnsignedInt16)
+		return mosaicimage
 
 	def OLDuiShow(self):
 		i = self.makeImage(self.imagemosaic)
@@ -361,6 +362,9 @@ class StateImageMosaic(ImageMosaic):
 	def uiPublishMosaicImage(self):
 		#ImageMosaic.uiPublishMosaicImage(self)
 
+		for dataid in self.imagemosaic:
+			print 'PMI: %s position = %s' % (str(dataid),
+																		str(self.imagemosaic[dataid]['position']))
 		odata = data.ImageData(self.ID(), self.makeImage(self.imagemosaic))
 		self.publish(odata, event.ImagePublishEvent)
 
