@@ -4,6 +4,7 @@ import os, socket
 class LeginonObject(object):
 	def __init__(self, id):
 		self.id = id
+		self.idcounter = 0
 
 	def location(self):
 		'return a dict describing the location of this object'
@@ -16,4 +17,8 @@ class LeginonObject(object):
 		return loc
 
 	def ID(self):
-		raise NotImplementedError
+		newid = list(self.id)
+		newid.append(self.idcounter)
+		self.idcounter += 1
+		return newid
+
