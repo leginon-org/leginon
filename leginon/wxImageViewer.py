@@ -42,6 +42,10 @@ class ImagePanel(wxPanel):
 		EVT_PAINT(self.panel, self.OnPaint)
 		EVT_SIZE(self.panel, self.OnSize)
 		EVT_MOTION(self.panel, self.motion)
+		EVT_LEAVE_WINDOW(self.panel, self.leave)
+
+	def leave(self, evt):
+		self.UpdateDrawing()
 
 	def smallScale(self, scale=None):
 		if scale is None:
