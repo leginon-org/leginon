@@ -236,8 +236,8 @@ class Focuser(acquisition.Acquisition):
 			imarray = imagedata['image']
 			maskrad = self.maskrad.get()
 			pow = imagefun.power(imarray, maskrad)
-			self.man_image.set(imarray)
 			self.man_power.set(pow)
+			self.man_image.set(imarray)
 		try:
 			message.clear()
 		except:
