@@ -25,13 +25,6 @@ class Navigator(node.Node):
 		self.addEventInput(event.ImageAcquireEvent, self.handleImageAcquire)
 		self.addEventOutput(event.CameraImagePublishEvent)
 
-		## default camera config
-		currentconfig = self.cam.cameraConfig()
-		currentconfig['dimension']['x'] = 1024
-		currentconfig['binning']['x'] = 4
-		currentconfig['exposure time'] = 400
-		self.cam.cameraConfig(currentconfig)
-
 	def handleImageClick(self, clickevent):
 		print 'handling image click'
 		clickinfo = copy.deepcopy(clickevent)
@@ -80,18 +73,9 @@ class Navigator(node.Node):
 
 	def acquireImage(self):
 		camconfig = self.cam.cameraConfig()
-		camstate = camconfig
 
 		print 'acquiring image'
-		acqtype = self.acqtype.getSelectedValue()[0]
-		if acqtype == 'raw':
-			imagedata = self.cam.acquireCameraImageData(camstate,0)
-		elif acqtype == 'corrected':
-			try:
-				imagedata = self.cam.acquireCameraImageData(camstate,1)
-			except:
-				print 'image not acquired'
-				imagedata = None
+		imagedata = self.cam.acquireCameraImageData(camconfig)
 
 		if imagedata is None:
 			return
@@ -116,12 +100,10 @@ class Navigator(node.Node):
 																						selected, 'r')
 		self.delaydata = uidata.UIFloat('Delay (sec)', 2.5, 'rw')
 
-		self.acqtype = uidata.UISelectFromList('Acquisition Type',
-																						('raw', 'corrected'), [0], 'r')
 		cameraconfigure = self.cam.configUIData()
 
 		settingscontainer = uidata.UIContainer('Settings')
-		settingscontainer.addUIObjects((self.movetype, self.delaydata, self.acqtype, cameraconfigure))
+		settingscontainer.addUIObjects((self.movetype, self.delaydata, cameraconfigure))
 
 		self.image = uidata.UIClickImage('Navigation', self.handleImageClick2, None)
 		controlcontainer = uidata.UIContainer('Control')
