@@ -116,10 +116,20 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
             addrsetitemfromstr(uri, key, vector2pobj(*mxGetPr(prhs[3]),
                                                      *(mxGetPr(prhs[3])+1)));
           } else if((strcmp(key, "stage position") == 0)) {
-            addrsetitemfromstr(uri, key, stagevec2pobj(*mxGetPr(plhs[3]),
-                                                     *(mxGetPr(plhs[3]) + 1),
-                                                     *(mxGetPr(plhs[3]) + 2),
-                                                     *(mxGetPr(plhs[3]) + 3)));
+            double *vector = NULL;
+            unsigned int m = 0, n = 0;
+
+            m = mxGetM(prhs[3]);
+            n = mxGetN(prhs[3]);
+            if((m != 1) || (n != 4)) {
+              mexErrMsgTxt(
+                "stage position requires that input be a 1 x 4 vector.");
+            }
+            vector = mxGetPr(prhs[3]);
+            addrsetitemfromstr(uri, key, stagevec2pobj(vector[0],
+                                                       vector[1],
+                                                       vector[2],
+                                                       vector[3]));
           } else if((strcmp(key, "diffraction mode") == 0) ||
                     (strcmp(key, "low dose") == 0) ||
                     (strcmp(key, "low dose mode") == 0) ||
