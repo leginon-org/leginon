@@ -37,6 +37,17 @@ def mapPath(path):
 				break
 		return path
 
+def unmapPath(path):
+		if not pathmapping:
+			return path
+
+		for key, value in pathmapping.items():
+			if key == path[:len(key)]:
+				path = value + path[len(key):]
+				break
+
+		return os.path.normpath(path)
+
 # Here is a replacement for os.mkdirs that won't complain if dir
 # already exists (from Python Cookbook, Recipe 4.17)
 def mkdirs(newdir, mode=0777):
