@@ -637,7 +637,7 @@ class Manager(node.Node):
 		except:
 			self.logger.exception('cannot push KillEvent to ' + nodename
 														+ ', unregistering')
-			# maybe didn't uninitialized
+			# maybe didn't get uninitialized
 			self.setNodeStatus(nodename, False)
 			# group into another function
 			self.removeNode(nodename)

@@ -140,6 +140,8 @@ class Node(leginonobject.LeginonObject):
 		self.delEventInput()
 		if self.launcher is not None:
 			self.launcher.onDestroyNode(self)
+			if self.databinder is self.launcher.databinder:
+				return
 		self.databinder.exit()
 
 	def die(self, ievent=None):
