@@ -219,6 +219,7 @@ class DataBinder(DataHandler):
 		self.bindings = {}
 
 	def insert(self, newdata):
+		# this could be threaded, but it would ruin the 'priority' thing
 		# now send data to a type specific handler function
 		dataclass = newdata.__class__
 		for bindclass in self.priority:
