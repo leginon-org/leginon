@@ -24,7 +24,6 @@ class SimpleAcquisition(acquisition.Acquisition):
 	'''
 	def __init__(self, id, session, nodelocations, **kwargs):
 		self.loopstop = threading.Event()
-		self.looplock = threading.Lock()
 
 		acquisition.Acquisition.__init__(self, id, session, nodelocations, **kwargs)
 
@@ -40,18 +39,9 @@ class SimpleAcquisition(acquisition.Acquisition):
 		return False
 
 	def acquireImageLoop(self):
-		if not self.looplock.acquire(0):
-			return
-		try:
-			t = threading.Thread(target=self.loop)
-			t.setDaemon(1)
-			t.start()
-		except:
-			try:
-				self.looplock.release()
-			except:
-				pass
-			raise
+		t = threading.Thread(target=self.loop)
+		t.setDaemon(1)
+		t.start()
 		return ''
 
 	def loop(self):
@@ -63,12 +53,10 @@ class SimpleAcquisition(acquisition.Acquisition):
 				break
 			self.processTargetData(None)
 			time.sleep(self.pausetime.get())
-		try:
-			self.looploock.release()
-		except:
-			pass
+		print 'loop done'
 
 	def acquireImageLoopStop(self):
+		print 'will stop loop when this iteration completes'
 		self.loopstop.set()
 		return ''
 
