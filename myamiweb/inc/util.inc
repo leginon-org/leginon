@@ -138,13 +138,19 @@ class iconlink {
 	var $titles = array();
 	var $subtitles = array();
 	var $images = array();
+	var $targets = array();
 	var $imagepath = "";
+	var $align = 'center';
+	var $cols = 3;
+	var $onimg = "_on.gif";
+	var $offimg = "_off.gif";
 
-	function addlink($link, $title, $subtitle='', $image='') {
+	function addlink($link, $title, $subtitle='', $image='', $target='_blank') {
 		$this->links[] = $link;
 		$this->titles[] = $title;
 		$this->subtitles[] = $subtitle;
 		$this->images[] = $image;
+		$this->targets[] = $target;
 	}
 
 	function setImagePath($path) {
@@ -157,9 +163,9 @@ class iconlink {
 		for ($i=0; $i<count($this->links); $i++) {
 			if (!empty($this->images[$i]))
 			  $script .= "link".$i."_off = new Image();".$crlf
-			  ."link".$i."_off.src = '".$this->imagepath.$this->images[$i]."_off.gif';".$crlf
+			  ."link".$i."_off.src = '".$this->imagepath.$this->images[$i].$this->offimg."';".$crlf
 			  ."link".$i."_on = new Image();".$crlf
-			  ."link".$i."_on.src = '".$this->imagepath.$this->images[$i]."_on.gif';".$crlf;
+			  ."link".$i."_on.src = '".$this->imagepath.$this->images[$i].$this->onimg."';".$crlf;
 		}
 		$script .= $crlf
 		. 'function mousein(num) { '.$crlf
@@ -176,18 +182,18 @@ class iconlink {
 	function getHtmlTableIcons($mod) {
 		$crlf = "\n";
 		$script = $crlf
-			.'<table border=0 cellspacing=10 align=center>'.$crlf;
+			.'<table border=0 cellspacing=10 align='.$this->align.'>'.$crlf;
 
 		$cpt=-1;
 
 		for ($i=0; $i<count($this->links); $i++) {
 			$cpt++;
 			if ($cpt % $mod == 0) {
-				$nrow = '<tr align=center valign=top>'.$crlf;
+				$nrow = '<tr align='.$this->align.' valign=top>'.$crlf;
 				$script .= ($i>1) ? "</tr>".$crlf.$nrow : $nrow;
 			}
 			$script .= "<td>".$crlf
-				."<a class=\"header\" target=\"_blank\" href='".$this->links[$i]."'".$crlf;
+				."<a class=\"header\" target=\"".$this->targets[$i]."\" href='".$this->links[$i]."'".$crlf;
 
 			if (!empty($this->images[$i]))
 			$script .= "onMouseOver='mousein(".$i.")'".$crlf
@@ -198,7 +204,7 @@ class iconlink {
 
 			if (!empty($this->images[$i]))
 			$script	.="<img border=0 name='link".$i."' src='"
-				.$this->imagepath.$this->images[$i]."_off.gif'></a>".$crlf
+				.$this->imagepath.$this->images[$i].$this->offimg."'></a>".$crlf
 				."<br><small>".$this->subtitles[$i]."</small>".$crlf
 				."</td>".$crlf;
 
@@ -209,7 +215,7 @@ class iconlink {
 
 	function Display() {
 		echo $this->getScript();
-		echo $this->getHtmlTableIcons(3);
+		echo $this->getHtmlTableIcons($this->cols);
 	}
 
 	

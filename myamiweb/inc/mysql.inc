@@ -216,6 +216,61 @@ class mysql {
 		$this->close_db();
 		return mysql_insert_id();
 	}
+
+	function SQLInsert($table, $data) {
+		if (!$data || !$table || !is_array($data))
+			return False;
+		$fields = array_keys($data);
+		foreach($fields as $k=>$v)
+			$fields[$k] = "`".$v."`";
+		foreach($data as $k=>$v)
+			if (!is_numeric($v))
+				$data[$k] = "'".addslashes($v)."'";
+		$q = "INSERT INTO `$table` (".implode(', ',$fields).") VALUES (".implode(', ',$data).")";
+		// echo $q;
+		return $this->SQLQuery($q,true);
+	}
+
+	function SQLUpdate($table, $data, $where="") {
+		if (!$data || !$table || !is_array($data))
+			return False;
+		if (is_array($where)) {
+			$wherestr = " WHERE ";
+			foreach ($where as $k=>$v) 
+				$whereformat[] = "`$k`='".addslashes($v)."'";
+			$wherestr .= implode(' AND ', $whereformat);
+		} else if (!empty($where)) {
+			$wherestr .= $where;
+		}
+		foreach ($data as $k=>$v) {
+			if (!is_numeric($v))
+				$v = "'".addslashes($v)."'";
+			$kv[] = "`".$k."`=".$v;
+		}
+		$q = "UPDATE `$table` SET ".implode(', ',$kv).$wherestr;
+		// echo $q;
+		if (!$this->SQLQuery($q))
+			return False;
+		return true;
+	}
+
+	function SQLDelete($table, $where="") {
+		if (!$table)
+                        return False;
+                if (is_array($where)) {
+                        $wherestr = " WHERE ";
+                        foreach ($where as $k=>$v)
+                                $whereformat[] = "`$k`='".addslashes($v)."'";
+                        $wherestr .= implode(' AND ', $whereformat);
+                } else if (!empty($where)) {
+                        $wherestr .= $where;
+                }
+		$q = "DELETE FROM `$table` ".$wherestr;
+		// echo $q;
+		if (!$this->SQLQuery($q))
+			return False;
+		return true;
+	}
 	
 	function getFields($table) {
 		$fields = array();

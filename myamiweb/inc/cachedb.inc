@@ -1,7 +1,7 @@
 <?
 /**
- *	@version $Revision: 1.1 $
- *	@version $Id: cachedb.inc,v 1.1 2004-10-04 19:06:47 dfellman Exp $
+ *	@version $Revision: 1.2 $
+ *	@version $Id: cachedb.inc,v 1.2 2004-10-07 22:59:25 dfellman Exp $
  */
 /**
  *	cachedb: a class to cache any data in a db.	
@@ -22,7 +22,7 @@ class cachedb {
 			return False;
 
 		$q = "select `image` "
-			."from `images` "
+			."from `images_prev` "
 			."where `id`='".$id."'";
 		$Rq = $this->mysql->SQLQuery($q);
 		$r = mysql_fetch_array($Rq, MYSQL_ASSOC);
@@ -41,7 +41,7 @@ class cachedb {
 			if (!$imgblob=$this->mkbinblobfromfile($uri))
 				return False;
 
-		$q =	"insert into images "
+		$q =	"insert into images_prev "
 			."(`checksum`, `image`) "
 			."values "
 			."('".$checksum."',".$imgblob.")";
@@ -54,7 +54,7 @@ class cachedb {
 
 	function exists($checksum) {
 		$q = "select `id` "
-			."from `images` "
+			."from `images_prev` "
 			."where `checksum`='".$checksum."'";
 		$Rq = $this->mysql->SQLQuery($q);
 		$r = mysql_fetch_array($Rq);

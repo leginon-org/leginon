@@ -12,15 +12,16 @@ $link = new iconlink();
 $link->setImagePath('img/');
 $link->addlink('imageviewer.php','Image Viewer','', 'viewer');
 $link->addlink('3wviewer.php','3 Way Viewer','', '3wviewer');
-$link->addlink('application.php','Import/Export Application','', 'application');
 $link->addlink('loi.php','LOI','', 'loi');
+$link->addlink('application.php','Import/Export Application','', 'application');
+$link->addlink('admin.php','Administration','', 'admin');
 
 ?>
 
 <html>
 <head>
 <title>Leginon II database Tools</title>
-<link rel="stylesheet" href="css/leginon.css" type="text/css" /> 
+<link rel="stylesheet" href="css/viewer.css" type="text/css" /> 
 </head>
 <body Background='img/background.jpg'>
 

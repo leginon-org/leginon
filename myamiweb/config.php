@@ -11,10 +11,11 @@
 
 // --- Set your leginon MySQL database server parameters
 
-$HOSTNAME = "defcon3";
+$HOSTNAME = "cronus1";
 $DBUSER = "usr_object";
 $DBPASSWORD = "";
 $DATABASE = "dbemdata";
+// $DATABASE = "lbldbem";
 
 // --- Project database URL
 

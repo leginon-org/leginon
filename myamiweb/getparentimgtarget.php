@@ -10,7 +10,10 @@
 require('inc/leginon.inc');
 require('inc/image.inc');
 require('inc/cachedb.inc');
-$cache=True;
+$cachehost = 'cronus1';
+// $cachehost = 'stratocaster';
+// $cache=True;
+$cache=False;
 
 $g=true;
 if (!$sessionId=stripslashes($_GET[session])) {
@@ -33,11 +36,20 @@ if ($t=='png') {
 }
 
 if ($cache) {
+	$begin=getmicrotime();
 	$uri = "http://".$_SERVER[SERVER_NAME].$REQUEST_URI;
-	$cachedb = new cachedb('cronus1', 'usr_object', '', 'cache');
+	$cachedb = new cachedb($cachehost, 'usr_object', '', 'cache');
 	if ($image = $cachedb->get($uri)) {
 		Header( "Content-type: $type ");
-		echo $image;
+		$img = imagecreatefromstring($image);
+		$blue = imagecolorallocate($img, 0, 255, 255);
+		$end=getmicrotime();
+		imagestringshadow($img, 4, 10, 30, "cache time: ".($end-$begin), $blue);
+		if ($t=='png')
+			imagepng($img);
+		else
+			imagejpeg($img,'',$quality);
+		imagedestroy($img);
 		exit;
 	}
 }
