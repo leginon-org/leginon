@@ -74,7 +74,8 @@ class Client(leginonobject.LeginonObject):
 		serverexception = cPickle.loads(self.receive())
 		self.close()
 		if serverexception != None:
-			raise serverexception
+			print "socket transport, push: server failed to be pushed"
+			raise IOError
 
 	def connect(self, family, type = socket.SOCK_STREAM):
 		raise NotImplementedError

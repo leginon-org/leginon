@@ -32,21 +32,25 @@ class Client(Base):
 				pass
 
 		self.serverlocation = serverlocation
+		if len(self.clients) == 0:
+			raise IOError
 
 	def pull(self, idata):
-		for t in self.transportmodules:
+		for c in self.clients:
 			try:
-				return self.clients[t].pull(idata)
-			except KeyError, IOError:
+				return self.clients[c].pull(idata)
+			except IOError:
 				pass
+		print "transport IOError, unable to pull data:", idata
 		return None
 
 	def push(self, odata):
-		for t in self.transportmodules:
+		for c in self.clients:
 			try:
-				return self.clients[t].push(odata)
-			except KeyError, IOError:
+				return self.clients[c].push(odata)
+			except IOError:
 				pass
+		print "transport IOError, unable to push data:", odata
 		return None
 
 class Server(Base):

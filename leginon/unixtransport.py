@@ -43,12 +43,10 @@ class Client(socketstreamtransport.Client):
 		# needs error handling
 		try:
 			self.socket.connect(self.serverlocation['UNIX pipe filename'])
-		except Exception, var:
+		except Exception, e:
 			# socket error, connection refused
-			if (var[0] == 111):
+			if (e[0] == 111 or e[0] == 2):
 				self.socket = None
-				print "unix transport, receive: unable to connect to", \
-						self.serverlocation['UNIX pipe filename']
 				raise IOError
 			else:
 				raise
