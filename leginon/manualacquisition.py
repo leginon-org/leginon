@@ -13,12 +13,8 @@ import project
 import threading
 import time
 import uidata
-from node import ResearchError
 
 class AcquireError(Exception):
-	pass
-
-class PublishError(Exception):
 	pass
 
 class ManualAcquisition(node.Node):
@@ -34,10 +30,10 @@ class ManualAcquisition(node.Node):
 	def acquire(self):
 		correct = self.correctimage.get()
 		if correct:
-			acquiremessage = 'Acquiring corrected image...'
+			prefix = ''
 		else:
-			acquiremessage = 'Acquiring uncorrected image...'
-		self.status.set(acquiremessage)
+			prefix = 'un'
+		self.status.set('Acquiring %scorrected image...' % prefix)
 		try:
 			self.camerafuncs.uiApplyAsNeeded()
 			imagedata = self.camerafuncs.acquireCameraImageData(correction=correct)
@@ -59,9 +55,13 @@ class ManualAcquisition(node.Node):
 			self.status.set('Saving image to database...')
 			try:
 				self.publishImageData(imagedata)
-			except PublishError:
-				self.status.set('Error saving image to database')
-				return	
+			except node.PublishError, e:
+				message = 'Error saving image to database'
+				self.status.set(message)
+				if str(e):
+					message += ' (%s)' % str(e)
+				self.messagelog.error(message)
+				raise AcquireError
 		self.status.set('Image acquisition complete')
 
 	def setScreenPosition(self, position):
@@ -84,12 +84,12 @@ class ManualAcquisition(node.Node):
 			acquisitionimagedata['grid'] = griddata
 
 		acquisitionimagedata['filename'] = \
-			data.ImageData.filename(acquisitionimagedata)
+			data.ImageData.filename(acquisitionimagedata)[:-4]
 
 		try:
 			self.publish(acquisitionimagedata, database=True)
 		except RuntimeError:
-			raise PublishError
+			raise node.PublishError
 
 	def acquireImage(self):
 		self.acquiremethod.disable()
@@ -101,6 +101,7 @@ class ManualAcquisition(node.Node):
 				self.setScreenPosition('up')
 			except node.PublishError:
 				self.messagelog.error('Cannot access EM node to move screen')
+				self.status.set('Error moving screen up')
 				self.acquiremethod.enable()
 				self.startmethod.enable()
 				return
@@ -108,16 +109,18 @@ class ManualAcquisition(node.Node):
 		try:
 			self.acquire()
 		except AcquireError:
-			pass
+			self.acquiremethod.enable()
+			self.startmethod.enable()
+			return
 
 		if self.down.get():
 			try:
 				self.setScreenPosition('down')
 			except node.PublishError:
 				self.messagelog.error('Cannot access EM node to move screen')
+				self.status.set('Error moving screen down')
 				self.acquiremethod.enable()
 				self.startmethod.enable()
-				return
 
 		self.status.set('Image acquired')
 		self.acquiremethod.enable()
@@ -131,6 +134,7 @@ class ManualAcquisition(node.Node):
 				self.setScreenPosition('up')
 			except node.PublishError:
 				self.messagelog.error('Cannot access EM node to move screen')
+				self.status.set('Error moving screen up')
 				self.acquiremethod.enable()
 				self.startmethod.enable()
 				self.stopmethod.disable()
@@ -156,6 +160,7 @@ class ManualAcquisition(node.Node):
 				self.setScreenPosition('down')
 			except node.PublishError:
 				self.messagelog.error('Cannot access EM node to move screen')
+				self.status.set('Error moving screen down')
 				self.acquiremethod.enable()
 				self.startmethod.enable()
 				self.stopmethod.disable()
@@ -163,6 +168,7 @@ class ManualAcquisition(node.Node):
 
 		self.acquiremethod.enable()
 		self.startmethod.enable()
+		self.stopmethod.disable()
 		self.status.set('Acquisition loop stopped')
 
 	def acquisitionLoopStart(self):
