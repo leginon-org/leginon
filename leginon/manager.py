@@ -755,7 +755,8 @@ class ManagerSetup(object):
 			self.manager.publish(session, database=True)
 			try:
 				hostname = session['instrument']['hostname']
-				self.manager.addNode(hostname, 55555)
+				if hostname:
+					self.manager.addNode(hostname, 55555)
 			except (TypeError, socket.error), e:
 				if isinstance(e, socket.error):
 					self.manager.outputWarning('Cannot add instrument\'s launcher.')
@@ -787,7 +788,7 @@ class ManagerSetup(object):
 	def initInstruments(self):
 		instruments = self.getInstruments()
 		self.instruments = self.indexByName(instruments)
-		self.instruments['None'] = None
+		self.instruments['None'] = data.InstrumentData(name='None',description='No Instrument', hostname=None, scope=None, camera=None)
 		self.uiUpdateInstrument()
 
 	def uiUpdateInstrument(self):
