@@ -203,5 +203,6 @@ class EM(node.Node):
 
 		filespec = self.registerUIContainer('File', (savespec, loadspec))
 
-		self.registerUISpec('EM', (statespec, filespec, nodespec))
-
+		myspec = self.registerUISpec('EM', (statespec, filespec))
+		myspec += nodespec
+		return myspec
