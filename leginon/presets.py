@@ -334,35 +334,34 @@ class PresetsManager(node.Node):
 		self.toScopeFollowCycle(new)
 
 	def toScopeFollowCycle(self, new):
-		order = self.orderlist.get()
-		print 'NEW', new
-		if self.currentpreset is None:
-			current = order[0]
-		else:
-			current = self.currentpreset['name']
-		print 'CURRENT', current
-
-		## if cycle creation works, then 
-		try:
-			cycle = self.createCycleList(current, new)
-		except RuntimeError:
-			cycle = []
-		print 'CYCLE', cycle
-
-		usecycle = self.usecycle.get() and bool(cycle)
-		print 'USECYCLE', usecycle
-
+		usecycle = self.usecycle.get()
 		if usecycle:
-			print 'following cycle to %s' % (new,)
-			# remove first and last from list
+			order = self.orderlist.get()
+			print 'NEW', new
+			if self.currentpreset is None:
+				current = order[0]
+			else:
+				current = self.currentpreset['name']
+			print 'CURRENT', current
+
+			## if cycle creation works, then 
 			try:
-				del cycle[0]
-				del cycle[-1]
-			except IndexError:
-				pass
-			for p in cycle:
-				print 'toScope(%s)' % (p,)
-				self.toScope(p)
+				cycle = self.createCycleList(current, new)
+			except RuntimeError:
+				cycle = []
+			print 'CYCLE', cycle
+
+			if cycle:
+				print 'following cycle to %s' % (new,)
+				# remove first and last from list
+				try:
+					del cycle[0]
+					del cycle[-1]
+				except IndexError:
+					pass
+				for p in cycle:
+					print 'toScope(%s)' % (p,)
+					self.toScope(p)
 		print 'toScope(%s)' % (new,)
 		self.toScope(new)
 
@@ -548,18 +547,19 @@ class PresetsManager(node.Node):
 		be tightly coupled.
 		'''
 		## first cycle through presets before sending the final one
-		order = self.orderlist.get()
-		if self.currentpreset is None:
-			currentname = order[0]
-		else:
-			currentname = self.currentpreset['name']
-		previousname = order[order.index(newpresetname)-1]
-		print 'PREV', previousname
-		print 'CUR', currentname
-		print 'NEW', newpresetname
-		if currentname not in (newpresetname, previousname):
-			print 'now cycling to %s' % (previousname,)
-			self.toScopeFollowCycle(previousname)
+		if self.usecycle.get():
+			order = self.orderlist.get()
+			if self.currentpreset is None:
+				currentname = order[0]
+			else:
+				currentname = self.currentpreset['name']
+			previousname = order[order.index(newpresetname)-1]
+			print 'PREV', previousname
+			print 'CUR', currentname
+			print 'NEW', newpresetname
+			if currentname not in (newpresetname, previousname):
+				print 'now cycling to %s' % (previousname,)
+				self.toScopeFollowCycle(previousname)
 
 		## XXX this might be dangerous:  I'm taking the original target
 		## preset and using it's name to get the PresetManager's preset
