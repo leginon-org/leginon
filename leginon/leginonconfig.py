@@ -36,3 +36,15 @@ try:
 	mkdirs(IMAGE_PATH)
 except:
 	print 'error creating IMAGE_PATH %s' % (IMAGE_PATH,)
+
+###################################
+#       Default Camera Config     #
+###################################
+CAMERA_CONFIG = {}
+CAMERA_CONFIG['auto square'] = 1
+CAMERA_CONFIG['auto offset'] = 1
+CAMERA_CONFIG['correct'] = 1
+CAMERA_CONFIG['offset'] = {'x': 0, 'y': 0}
+CAMERA_CONFIG['dimension'] = {'x': 1024, 'y': 1024}
+CAMERA_CONFIG['binning'] = {'x': 4, 'y': 4}
+CAMERA_CONFIG['exposure time'] = 500
