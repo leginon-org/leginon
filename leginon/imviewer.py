@@ -14,6 +14,9 @@ class ImViewer(imagewatcher.ImageWatcher):
 		imagewatcher.ImageWatcher.__init__(self, id, session, nodelocations, **kwargs)
 		self.cam = camerafuncs.CameraFuncs(self)
 		self.clicklock = threading.Lock()
+		self.looplock = threading.Lock()
+		self.loopstop = threading.Event()
+		self.loopconfig = False
 		self.defineUserInterface()
 		self.start()
 
@@ -27,23 +30,63 @@ class ImViewer(imagewatcher.ImageWatcher):
 			pow = cameraimage.power(self.numarray)
 			self.ui_image_pow.set(pow)
 
-	def uiAcquireRaw(self):
-		imarray = self.acquireArray(0)
-		if imarray is not None:
-			self.numarray = imarray
-			self.ui_image.set(imarray)
-		self.doPow()
+	def uiAcquireLoop(self):
+		if not self.looplock.acquire(0):
+			return
 
-	def uiAcquireCorrected(self):
-		imarray = self.acquireArray(1)
-		if imarray is not None:
-			self.numarray = imarray
-			self.ui_image.set(imarray)
-		self.doPow()
-
-	def acquireArray(self, corr=0):
+		## configure camera
 		camconfig = self.cam.cameraConfig()
-		imdata = self.cam.acquireCameraImageData(camconfig, correction=corr)
+		camdata = self.cam.configToEMData(camconfig)
+		self.cam.currentCameraEMData(camdata)
+		self.loopconfig = True
+
+		try:
+			t = threading.Thread(target=self.loop)
+			t.setDaemon(1)
+			t.start()
+		except:
+			try:
+				self.looplock.release()
+			except:
+				pass
+			raise
+		return ''
+
+	def loop(self):
+		## would be nice if only set preset at beginning
+		## need to change Acquisition to do that as option
+		self.loopstop.clear()
+		while 1:
+			if self.loopstop.isSet():
+				break
+			try:
+				self.uiAcquire()
+			except:
+				self.printException()
+				break
+		try:
+			self.looplock.release()
+		except:
+			pass
+
+	def uiAcquireLoopStop(self):
+		self.loopstop.set()
+		self.loopconfig = False
+		return ''
+
+	def uiAcquire(self):
+		imarray = self.acquireArray()
+		if imarray is not None:
+			self.numarray = imarray
+			self.ui_image.set(imarray)
+		self.doPow()
+
+	def acquireArray(self):
+		if self.loopconfig:
+			camconfig = None
+		else:
+			camconfig = self.cam.cameraConfig()
+		imdata = self.cam.acquireCameraImageData(camconfig)
 		imarray = imdata['image']
 		return imarray
 
@@ -84,14 +127,15 @@ class ImViewer(imagewatcher.ImageWatcher):
 		settingscontainer = uidata.Container('Settings')
 		settingscontainer.addObject(cameraconfigure)
 
-		rawmethod = uidata.Method('Acquire Raw', self.uiAcquireRaw)
-		correctedmethod = uidata.Method('Acquire Corrected', self.uiAcquireCorrected)
+		acqmethod = uidata.Method('Acquire', self.uiAcquire)
+		acqloopmethod = uidata.Method('Acquire Loop', self.uiAcquireLoop)
+		acqstopmethod = uidata.Method('Stop Acquire Loop', self.uiAcquireLoopStop)
 		self.do_pow = uidata.Boolean('Do Power', False, 'rw')
 		self.ui_image = uidata.Image('Image', None, 'r')
 		self.ui_image_pow = uidata.Image('Power Image', None, 'r')
 		eventmethod = uidata.Method('Event Acquire', self.acquireEvent)
 		acquirecontainer = uidata.Container('Acquisition')
-		acquirecontainer.addObjects((rawmethod, correctedmethod, eventmethod, self.do_pow, self.ui_image, self.ui_image_pow))
+		acquirecontainer.addObjects((acqmethod, acqloopmethod, acqstopmethod, eventmethod, self.do_pow, self.ui_image, self.ui_image_pow))
 
 
 		container = uidata.MediumContainer('Image Viewer')
