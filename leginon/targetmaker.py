@@ -1,6 +1,7 @@
 import threading
 import node, event, data
 import uidata
+import presets
 
 class TargetMaker(node.Node):
 	def __init__(self, id, session, nodelocations, **kwargs):
@@ -11,6 +12,7 @@ class TargetMaker(node.Node):
 		if self.targetlist:
 			targetlistdata = data.ImageTargetListData(id=self.ID(),
 																								targets=self.targetlist)
+			print 'publishing ', targetlistdata['id']
 			self.publish(targetlistdata, pubevent=True)
 
 	def defineUserInterface(self):
@@ -24,19 +26,21 @@ class TargetMaker(node.Node):
 class SpiralTargetMaker(TargetMaker):
 	def __init__(self, id, session, nodelocations, **kwargs):
 		TargetMaker.__init__(self, id, session, nodelocations, **kwargs)
+		self.presetsclient = presets.PresetsClient(self)
 		self.defineUserInterface()
+		self.start()
 
 	def defineUserInterface(self):
 		TargetMaker.defineUserInterface(self)
 
-		self.maxtargets = uidata.UIInteger('Maximum Targets', 9, 'rw')
-		self.overlap = uidata.UIInteger('Percent Overlap', 25, 'rw')
+		pselect = self.presetsclient.uiPresetSelector()
+		self.maxtargets = uidata.UIInteger('Maximum Targets', 2, 'rw')
+		self.overlap = uidata.UIInteger('Percent Overlap', 50, 'rw')
 		self.center = uidata.UIStruct('Spiral Center', {'x': 0.0, 'y': 0.0}, 'rw')
 		settingscontainer = uidata.UIContainer('Settings')
-		settingscontainer.addUIObjects((self.maxtargets, self.overlap, self.center))
+		settingscontainer.addUIObjects((pselect, self.maxtargets, self.overlap, self.center))
 
-		publishspiralmethod = uidata.UIMethod('Publish Spiral',
-																						self.publishTargetList)
+		publishspiralmethod = uidata.UIMethod('Publish Spiral', self.publishTargetList)
 		self.progress = uidata.UIProgress('', 0)
 		controlcontainer = uidata.UIContainer('Control')
 		controlcontainer.addUIObjects((self.progress, publishspiralmethod))
@@ -47,22 +51,25 @@ class SpiralTargetMaker(TargetMaker):
 
 	def publishTargetList(self):
 		self.progress.set(0)
+
+		### do targets referenced from current state
 		scope = self.researchByDataID(('scope',))
 		camera = self.researchByDataID(('camera',))
-#		scope = {'stage position': {'x': 1.1, 'y': 2.2}}
-#		camera = {'dimension': {'x': 512}}
-		# waiting to revise with presets
+		pname = self.presetsclient.uiGetSelectedName()
+		preset = self.presetsclient.getPresetByName(pname)
+		camera.friendly_update(preset)
 		size = camera['dimension']['x']
-		center = self.center.get()
-		for key in center:
+
+		### for debugging, always use current position as center
+		#center = self.center.get()
+		#for key in center:
 			# stage position for now
-			scope['stage position'][key] = center[key]
+			#scope['stage position'][key] = center[key]
+
 		maxtargets = self.maxtargets.get()
 		overlap = self.overlap.get()
 		for delta in self.makeSpiral(maxtargets, overlap, size):
-			initializer = {'id': self.ID(), 'session': self.session,
-											'delta row': delta[0], 'delta column': delta[1],
-											'scope': None, 'camera': None, 'preset': None}
+			initializer = {'id': self.ID(), 'session': self.session, 'delta row': delta[0], 'delta column': delta[1], 'scope': scope, 'camera': camera, 'preset': preset}
 			self.targetlist.append(data.ImageTargetData(initializer=initializer))
 			self.progress.set(self.progress.get() + 100/maxtargets)
 		self.progress.set(100)
