@@ -567,9 +567,8 @@ class Manager(node.Node):
 		nodesspec = self.registerUIContainer('Nodes',
 											(self.uinodesdata, addnodespec))
 
-		self.registerUISpec('Manager', (nodespec, launchspec,
-#								killspec, bindspec, appspec, launcherspec, nodesspec))
-								killspec, bindingspec, appspec, nodesspec))
+		myspec = self.registerUISpec('Manager', (launchspec, killspec, bindingspec, appspec, nodesspec))
+		myspec += nodespec
 
 if __name__ == '__main__':
 	import sys
