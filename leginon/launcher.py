@@ -17,16 +17,11 @@ import uiserver
 import wxLauncher
 
 class Launcher(node.Node):
-	def __init__(self, name, session=None, tcpport=None, xmlrpcport=None, **kwargs):
+	def __init__(self, name, session=None, **kwargs):
 		self.nodes = []
-
-		self.initializeLogger(name)
-
-		node.Node.__init__(self, name, session, tcpport=tcpport, xmlrpcport=xmlrpcport, **kwargs)
+		node.Node.__init__(self, name, session, **kwargs)
 
 		self.addEventInput(event.CreateNodeEvent, self.onCreateNode)
-		if session is None:
-			self.frame = wxLauncher.LauncherFrame(self)
 
 	def start(self):
 		pass
@@ -63,13 +58,22 @@ class Launcher(node.Node):
 		kwargs['otheruiserver'] = self.uiserver
 		kwargs['launcher'] = self
 		kwargs['otherdatabinder'] = self.databinder
+		kwargs['parent'] = self.panel
 
-		self.nodes.append(nodeclass(nodename, session, managerlocation, **kwargs))
+		n = nodeclass(nodename, session, managerlocation, **kwargs)
+		self.nodes.append(n)
+
+		evt = wxLauncher.CreateNodeEvent(n)
+		self.panel.GetEventHandler().AddPendingEvent(evt)
+
 		self.confirmEvent(ievent)
 
-	def onDestroyNode(self, node):
+	def onDestroyNode(self, n):
+		evt = wxLauncher.DestroyNodeEvent(n)
+		self.panel.GetEventHandler().AddPendingEvent(evt)
+
 		try:
-			self.nodes.remove(node)
+			self.nodes.remove(n)
 		except ValueError:
 			pass # ???
 
@@ -94,7 +98,6 @@ if __name__ == '__main__':
 	except IndexError:
 		try:
 			args, kwargs = (launchername,), {'tcpport': 55555}
-			launcher = Launcher(launchername, tcpport=55555)
 		except:
 			args, kwargs = (launchername,), {}
 	l = wxLauncher.LauncherApp(*args, **kwargs)

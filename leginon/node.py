@@ -56,7 +56,7 @@ class Node(leginonobject.LeginonObject):
 									event.NodeInitializedEvent,
 									event.NodeUninitializedEvent]
 
-	def __init__(self, name, session, managerlocation=None, otherdatabinder=None, otherdbdatakeeper=None, otheruiserver=None, tcpport=None, xmlrpcport=None, launcher=None):
+	def __init__(self, name, session, managerlocation=None, otherdatabinder=None, otherdbdatakeeper=None, otheruiserver=None, tcpport=None, xmlrpcport=None, launcher=None, **kwargs):
 		leginonobject.LeginonObject.__init__(self)
 		self.name = name
 		
@@ -107,13 +107,6 @@ class Node(leginonobject.LeginonObject):
 			except:
 				self.logger.exception('exception in setManager')
 				raise
-
-	def initializeLoggerUserInterface(self):
-		if self.databinder.logger.container not in self.logger.container.values():
-			self.logger.container.addObject(self.databinder.logger.container,
-																			position={'span': (1,2), 'expand': 'all'})
-		#if self.server.logger.container not in self.logger.container.values():
-		#	self.logger.container.addObject(self.server.logger.container, position={'span': (1,2), 'expand': 'all'})
 
 	def initializeLogger(self, name=None):
 		if hasattr(self, 'logger'):

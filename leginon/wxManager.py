@@ -6,6 +6,7 @@ import threading
 import uiclient
 import wx
 import wx.lib.intctrl
+import wxLauncher
 import wxLogging
 
 AddNodeEventType = wx.NewEventType()
@@ -16,6 +17,7 @@ ApplicationStartingEventType = wx.NewEventType()
 ApplicationNodeStartedEventType = wx.NewEventType()
 ApplicationStartedEventType = wx.NewEventType()
 ApplicationKilledEventType = wx.NewEventType()
+AddLauncherPanelEventType = wx.NewEventType()
 EVT_ADD_NODE = wx.PyEventBinder(AddNodeEventType)
 EVT_REMOVE_NODE = wx.PyEventBinder(RemoveNodeEventType)
 EVT_ADD_LAUNCHER = wx.PyEventBinder(AddLauncherEventType)
@@ -24,6 +26,7 @@ EVT_APPLICATION_STARTING = wx.PyEventBinder(ApplicationStartingEventType)
 EVT_APPLICATION_NODE_STARTED = wx.PyEventBinder(ApplicationNodeStartedEventType)
 EVT_APPLICATION_STARTED = wx.PyEventBinder(ApplicationStartedEventType)
 EVT_APPLICATION_KILLED = wx.PyEventBinder(ApplicationKilledEventType)
+EVT_ADD_LAUNCHER_PANEL = wx.PyEventBinder(AddLauncherPanelEventType)
 
 class AddNodeEvent(wx.PyEvent):
 	def __init__(self, name):
@@ -72,6 +75,12 @@ class ApplicationKilledEvent(wx.PyEvent):
 	def __init__(self):
 		wx.PyEvent.__init__(self)
 		self.SetEventType(ApplicationKilledEventType)
+
+class AddLauncherPanelEvent(wx.PyEvent):
+	def __init__(self, launcher):
+		wx.PyEvent.__init__(self)
+		self.SetEventType(AddLauncherPanelEventType)
+		self.launcher = launcher
 
 class ManagerApp(wx.App):
 	def __init__(self, session, tcpport=None, xmlrpcport=None, **kwargs):
@@ -196,8 +205,24 @@ class ManagerFrame(wx.Frame):
 		self.Bind(EVT_APPLICATION_NODE_STARTED, self.onApplicationNodeStarted)
 		self.Bind(EVT_APPLICATION_STARTED, self.onApplicationStarted)
 		self.Bind(EVT_APPLICATION_KILLED, self.onApplicationKilled)
+		self.Bind(EVT_ADD_LAUNCHER_PANEL, self.onAddLauncherPanel)
 
 		self.panel = ManagerPanel(self, self.manager.uicontainer.location())
+
+	def onAddLauncherPanel(self, evt):
+		# this doesn't really work
+		dialog = wx.Dialog(self, -1, 'Temporary Launcher Window',
+												style=wx.CAPTION|wx.SYSTEM_MENU|wx.CLOSE_BOX|
+															wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.RESIZE_BORDER)
+		#sizer = wx.GridBagSizer(0, 0)
+		panel = wxLauncher.LauncherPanel(dialog, evt.launcher)
+		#sizer.Add(panel, (0, 0), (1, 1), wx.EXPAND|wx.ALL)
+		#dialog.SetSizerAndFit(sizer)
+
+		evt.launcher.panel = panel
+
+		dialog.SetSize((800, 600))
+		dialog.Show(True)
 
 	def onExit(self, evt):
 		self.manager.exit()

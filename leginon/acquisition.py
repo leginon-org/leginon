@@ -22,6 +22,8 @@ import uidata
 import node
 import EM
 import imagefun
+import wxAcquisition
+
 try:
 	import numarray as Numeric
 except:
@@ -52,7 +54,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 											event.ImageListPublishEvent, event.DriftWatchEvent] \
 									+ EM.EMClient.eventoutputs
 
-	def __init__(self, id, session, managerlocation, target_types=('acquisition',), **kwargs):
+	def __init__(self, id, session, managerlocation, target_types=('acquisition',), parent=None, **kwargs):
 
 		targetwatcher.TargetWatcher.__init__(self, id, session, managerlocation, target_types=target_types, **kwargs)
 		self.addEventInput(event.DriftDoneEvent, self.handleDriftDone)
@@ -71,6 +73,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.doneevents = {}
 		self.imagelistdata = None
 
+		self.panel = wxAcquisition.Panel(parent, self)
 		self.defineUserInterface()
 		self.presetsclient.uistatus = self.uiacquisitionstatus
 		self.start()

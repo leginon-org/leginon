@@ -119,25 +119,41 @@ class Manager(node.Node):
 		self.uicontainer.session = setup.session
 		self.uicontainer.getUserPreferencesFromDatabase()
 
-		threading.Thread(name='local launcher thread', target=launcher.Launcher,
-											args=(socket.gethostname().lower(),),
-											kwargs={'session': self.session,
-															'managerlocation': self.location()}).start()
-#		launcher.Launcher(socket.gethostname().lower(), session=self.session,
-#           				    managerlocation=self.location())
+		# needs threading, but shouldn't
+		t = threading.Thread(name='create launcher thread',
+													target=self.createLauncher)
+		t.start()
 
-		if setup.connect and self.session['instrument'] is not None:
-			if self.session['instrument']['hostname'] != socket.gethostname().lower():
-				try:
-					hostname = self.session['instrument']['hostname']
-					if hostname:
-						location = {}
-						location['TCP transport'] = {}
-						location['TCP transport']['hostname'] = hostname
-						location['TCP transport']['port'] = 55555
-						self.addNode(hostname, location)
-				except (IOError, TypeError, socket.error):
-					self.logger.warning('Cannot add instrument\'s launcher.')
+		if setup.connect:
+			self.addInstrumentLauncher()
+
+	def onAddLauncherPanel(self, l):
+		evt = wxManager.AddLauncherPanelEvent(l)
+		self.frame.GetEventHandler().AddPendingEvent(evt)
+
+	def createLauncher(self):
+		l = launcher.Launcher(socket.gethostname().lower(),
+													session=self.session,
+													managerlocation=self.location())
+		self.onAddLauncherPanel(l)
+
+	def addInstrumentLauncher(self):
+		if self.session['instrument'] is None:
+			self.logger.warning('Cannot add instrument\'s launcher.')
+			return
+		if not self.session['instrument']['hostname']:
+			self.logger.warning('Cannot add instrument\'s launcher.')
+			return
+		if self.session['instrument']['hostname'] == socket.gethostname().lower():
+			return
+		try:
+			location = {}
+			location['TCP transport'] = {}
+			location['TCP transport']['hostname'] = hostname
+			location['TCP transport']['port'] = 55555
+			self.addNode(hostname, location)
+		except (IOError, TypeError, socket.error):
+			self.logger.warning('Cannot add instrument\'s launcher.')
 
 	def location(self):
 		location = leginonobject.LeginonObject.location(self)

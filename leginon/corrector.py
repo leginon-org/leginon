@@ -371,7 +371,6 @@ class SimpleCorrector(node.Node):
 		self.abortevent.set()
 
 	def defineUserInterface(self):
-		self.initializeLoggerUserInterface()
 		node.Node.defineUserInterface(self)
 
 		self.displayacquire = uidata.Boolean('Acquired images', False,
@@ -504,7 +503,6 @@ class Corrector(node.Node):
 #		self.server.exit()
 
 	def defineUserInterface(self):
-		self.initializeLoggerUserInterface()
 		node.Node.defineUserInterface(self)
 
 		self.messagelog = uidata.MessageLog('Messages')

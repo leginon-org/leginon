@@ -643,7 +643,6 @@ class PresetsManager(node.Node):
 		self.importplist.set('Select a session to see available presets')
 
 	def defineUserInterface(self):
-		self.initializeLoggerUserInterface()
 		node.Node.defineUserInterface(self)
 
 		self.messagelog = uidata.MessageLog('Message Log')
