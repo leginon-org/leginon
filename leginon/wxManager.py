@@ -182,7 +182,7 @@ class ManagerFrame(wx.Frame):
 		self.statusbar = ManagerStatusBar(self)
 		self.SetStatusBar(self.statusbar)
 
-		self.applicationprogressdialog = None
+		self.appgauge = None
 
 		self.Bind(EVT_ADD_NODE, self.onAddNode)
 		self.Bind(EVT_REMOVE_NODE, self.onRemoveNode)
@@ -323,23 +323,35 @@ class ManagerFrame(wx.Frame):
 
 	def onApplicationStarting(self, evt):
 		self.runappmenuitem.Enable(False)
-		dlg = wx.ProgressDialog('Starting %s...' % evt.name,
-														'Starting application %s' % evt.name,
-														maximum=evt.nnodes, parent=self,
-														style=wx.PD_APP_MODAL)
-		dlg.count = 0
-		self.applicationprogressdialog = dlg
+		count = self.statusbar.GetFieldsCount()
+		count += 1
+		self.statusbar.SetFieldsCount(count)
+		self.statusbar.SetStatusText('Starting application %s...' % evt.name)
+		self.appgauge = wx.Gauge(self.statusbar, -1, evt.nnodes)
+		self.appgauge.count = 0
+		self.applicationGaugeSize()
+
+	def applicationGaugeSize(self, evt=None):
+		field = self.statusbar.GetFieldsCount() - 1
+		rect = self.statusbar.GetFieldRect(field)
+		self.appgauge.SetPosition((rect.x+2, rect.y+2))
+		self.appgauge.SetSize((rect.width-4, rect.height-4))
 
 	def onApplicationNodeStarted(self, evt):
-		dlg = self.applicationprogressdialog
-		if dlg is not None:
-			dlg.count += 1
-			dlg.Update(dlg.count, 'Started %s node' % evt.name)
+		if self.appgauge is not None:
+			self.statusbar.SetStatusText('Started %s node' % evt.name)
+			self.appgauge.count += 1
+			self.appgauge.SetValue(self.appgauge.count)
 
 	def onApplicationStarted(self, evt):
 		self.killappmenuitem.Enable(True)
-		if self.applicationprogressdialog is not None:
-			self.applicationprogressdialog.Destroy()
+		if self.appgauge is not None:
+			self.statusbar.SetStatusText('Application %s started.' % evt.name)
+			self.appgauge.Destroy()
+			self.appgauge = None
+			count = self.statusbar.GetFieldsCount()
+			count -= 1
+			self.statusbar.SetFieldsCount(count)
 
 	def onApplicationKilled(self, evt):
 		self.killappmenuitem.Enable(False)
