@@ -231,12 +231,16 @@ class DataBinder(DataHandler):
 
 	def handlerLoop(self):
 		'''
-		This executes an infinite loop that calls the callback 
-		function on every item that we dequeue.
+		This executes an infinite loop that dequeues items from
+		our received data queue.
+		Each of these dequeued items is then handled in a new thread
+		by handleData.
+		This seems risky to have this many threads created 
+		in the same node, all acting on common data and not sure
+		which data has proper locks.  For now it works.
 		'''
 		while 1:
 			item = self.queue.get(block=True)
-			print self.id, 'DEQUEUED', item
 			try:
 				t = threading.Thread(target=self.handleData, args=(item,))
 				t.setDaemon(1)
@@ -256,14 +260,10 @@ class DataBinder(DataHandler):
 		args = (newdata,)
 		for bindclass, func in self.bindings:
 			if issubclass(dataclass, bindclass):
-				print '++++++++++++++++++++++++++++++++++'
-				print 'FUNC', func, args
 				try:
 					apply(func, args)
 				except:
-					print 'EXC'
 					self.printException()
-				print '----------------------------------'
 
 	def addBinding(self, dataclass, func):
 		'func must take data instance as first arg'
