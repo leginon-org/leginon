@@ -3,6 +3,9 @@
 Provides several specialized mapping types derived from the built-in dict type.
 '''
 
+## still missing from this classes:
+##   __copy__
+
 class OrderedDict(dict):
 	'''
 	OrderedDict is like a dict, but the order of items IS defined.
@@ -209,7 +212,7 @@ class TypedDict(KeyedDict):
 		except KeyError:
 			raise TypeError('no factory to validate %s' % (value, valuetype))
 		try: newvalue = valuefactory(value)
-		except TypeError, detail:
+		except ValueError, detail:
 			newdetail = 'value for %s must be %s; ' % (key,valuetype)
 			newdetail += str(detail)
 			raise TypeError(newdetail)
@@ -236,9 +239,13 @@ factories = {
 	list: list,
 	dict: dict,
 
-	## is None necessary?  should factory convert anything to None like this?
-	## or raise exception for anything except None?
+	## is None necessary? should factory convert anything to None?
+	## Or raise exception for anything except None?
 	types.NoneType: lambda x: None,
+
+	## object type can handle anything. Should this use x.copy()?
+	## Probably should, but classes in this module have no copy method.
+	object: lambda x: x,
 
 	## from Numeric
 	Numeric.ArrayType: Numeric.array,
