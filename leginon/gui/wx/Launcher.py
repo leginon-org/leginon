@@ -212,7 +212,7 @@ class Panel(ListCtrlPanel):
 		self.addPanel(panel, label, i)
 
 	def removeNode(self, n):
-		if not hasattr(n, 'panel'):
+		if not hasattr(n, 'panel') or n.panel is None:
 			return
 		self.removePanel(n.panel)
 
@@ -220,7 +220,8 @@ class Panel(ListCtrlPanel):
 		self.addNode(evt.node)
 
 	def onDestroyNode(self, evt):
-		self.removeNode(evt.node)
+		if evt.node is not None:
+			self.removeNode(evt.node)
 
 	def onCreateNodePanel(self, evt):
 		self.Freeze()
