@@ -248,8 +248,6 @@ class MrcHeader:
 
 		fmtstr = dims + pad1 + stats + pad2
 
-		print 'FMT'
-		print fmtstr
 		headstr = struct.pack(fmtstr, 
 			self['width'], self['height'],
 			self['depth'], self['mode'] ,
