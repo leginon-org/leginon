@@ -52,3 +52,11 @@ def averageSeries(series):
 	divisor = Numeric.array(slen, Numeric.Float32)
 	avg = sum / divisor
 	return avg
+
+def zeroRow(inputarray, row):
+	inputarray[row] = 0
+	return inputarray
+
+def zeroCol(inputarray, col):
+	inputarray[:,col] = 0
+	return inputarray

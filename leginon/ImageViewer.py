@@ -41,6 +41,7 @@ class ImageViewer(Frame):
 		Display 2D Numeric array in this ImageViewer.
 		Optional 'clip' tuple gives min and max value to display
 		"""
+		self.imagearray = data
 		self.canvas.use_numeric(data)
 
 	def clip(self, newclip=None):

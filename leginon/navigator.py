@@ -5,8 +5,10 @@ import event
 import data
 import time
 import cameraimage
+import camerafuncs
+reload(camerafuncs)
 
-class Navigator(node.Node):
+class Navigator(node.Node, camerafuncs.CameraFuncs):
 	def __init__(self, id, nodelocations):
 		self.shift_types = {
 			'image shift': event.ImageShiftPixelShiftEvent,
@@ -76,22 +78,15 @@ class Navigator(node.Node):
 		self.acquireImage()
 
 	def acquireImage(self):
-		print 'setting camera state'
 		camstate = self.camdata.get()
-		camdata = data.EMData('camera', camstate)
-		print 'publishing camera state'
-		self.publishRemote(camdata)
+
 
 		print 'acquiring image'
 		acqtype = self.acqtype.get()
 		if acqtype == 'raw':
-			print 'acquiring raw image'
-			image = self.researchByDataID('image data')
-			image = image.content['image data']
+			image = self.cameraAcquireArray(camstate,0)
 		elif acqtype == 'corrected':
-			print 'acquiring corrected image'
-			image = self.researchByDataID('normalized image data')
-			image = image.content
+			image = self.cameraAcquireArray(camstate,1)
 
 		imagedata = data.ImageData(self.ID(), image)
 		print 'publishing image'
@@ -113,18 +108,7 @@ class Navigator(node.Node):
 
 		prefs = self.registerUIContainer('Preferences', (movetype, self.delaydata, self.acqtype))
 
-		### Camera State Data Spec
-		defaultsize = (512,512)
-		camerasize = (2048,2048)
-		offset = cameraimage.centerOffset(camerasize,defaultsize)
-		camstate = {
-			'exposure time': 500,
-			'binning': {'x':1, 'y':1},
-			'dimension': {'x':defaultsize[0], 'y':defaultsize[1]},
-			'offset': {'x': offset[0], 'y': offset[1]}
-		}
-		self.defaultcamstate = camstate
-		self.camdata = self.registerUIData('Camera', 'struct', default=camstate)
+		self.camdata = self.cameraConfigUISpec()
 
 		self.registerUISpec('Navigator', (prefs, self.camdata, nodeui))
 

@@ -8,12 +8,17 @@ import signal, time
 
 from ImageViewer import ImageViewer
 import watcher
+reload(watcher)
 import node, event, data
-from Mrc import mrc_to_numeric
+import Mrc
 import cameraimage
+import camerafuncs
+reload(camerafuncs)
+import xmlrpclib
 
+fake = 1
 
-class ImViewer(watcher.Watcher):
+class ImViewer(watcher.Watcher, camerafuncs.CameraFuncs):
 	def __init__(self, id, nodelocations):
 		watchfor = event.ImagePublishEvent
 		lockblocking = 0
@@ -22,10 +27,11 @@ class ImViewer(watcher.Watcher):
 		self.addEventOutput(event.ImageClickEvent)
 
 		self.iv = None
+		self.numarray = None
 		self.viewer_ready = threading.Event()
 		self.start_viewer_thread()
 
-	def die(self, killevent):
+	def die(self, killevent=None):
 		self.close_viewer()
 		self.exit()
 
@@ -60,8 +66,10 @@ class ImViewer(watcher.Watcher):
 
 		#print 'acqbut'
 		buttons = Frame(root)
-		self.acqbut = Button(buttons, text='Acquire', command=self.acquire)
-		self.acqbut.pack(side=LEFT)
+		self.acqrawbut = Button(buttons, text='Acquire Raw', command=self.acquireRaw)
+		self.acqrawbut.pack(side=LEFT)
+		self.acqcorbut = Button(buttons, text='Acquire Corrected', command=self.acquireCorrected)
+		self.acqcorbut.pack(side=LEFT)
 		self.acqeventbut = Button(buttons, text='Acquire Event', command=self.acquireEvent)
 		self.acqeventbut.pack(side=LEFT)
 		buttons.pack(side=TOP)
@@ -87,24 +95,43 @@ class ImViewer(watcher.Watcher):
 		except TclError:
 			pass
 
-	def acquire(self):
-		### Camera State Data Spec
+	def acquireRaw(self):
+		self.acqrawbut['state'] = DISABLED
+		self.acquireAndDisplay(0)
+		self.acqrawbut['state'] = NORMAL
+
+	def uiAcquireRaw(self):
+		imarray = self.acquireArray(0)
+		mrcstr = Mrc.numeric_to_mrcstr(imarray)
+		return xmlrpclib.Binary(mrcstr)
+
+	def acquireCorrected(self):
+		self.acqcorbut['state'] = DISABLED
+		if fake:
+			self.acquireAndDisplay(2)
+		else:
+			self.acquireAndDisplay(1)
+		self.acqcorbut['state'] = NORMAL
+
+	def uiAcquireCorrected(self):
+		if fake:
+			im = self.acquireArray(2)
+		else:
+			im = self.acquireArray(1)
+		mrcstr = Mrc.numeric_to_mrcstr(im)
+		return xmlrpclib.Binary(mrcstr)
+
+	def acquireArray(self, corr=0):
 		defaultsize = (512,512)
 		camerasize = (2048,2048)
 		offset = cameraimage.centerOffset(camerasize,defaultsize)
-		camstate = {
-			'exposure time': 500,
-			'binning': {'x':1, 'y':1},
-			'dimension': {'x':defaultsize[0], 'y':defaultsize[1]},
-			'offset': {'x': offset[0], 'y': offset[1]}
-		}
-		camdata = data.EMData('camera', camstate)
-		self.publishRemote(camdata)
+		camstate = self.camconfig.get()
+		imarray = self.cameraAcquireArray(camstate, correction=corr)
+		return imarray
 
-		self.acqbut['state'] = DISABLED
-		imdata = self.researchByDataID('image data')
-		self.displayNumericArray(imdata.content['image data'])
-		self.acqbut['state'] = NORMAL
+	def acquireAndDisplay(self, corr=0):
+		imarray = self.acquireArray(corr)
+		self.displayNumericArray(imarray)
 
 	def acquireEvent(self):
 		self.acqeventbut['state'] = DISABLED
@@ -114,7 +141,8 @@ class ImViewer(watcher.Watcher):
 		self.outputEvent(e)
 		#print 'sent ImageAcquireEvent'
 		self.acqeventbut['state'] = NORMAL
-	
+		return ''
+
 	def processData(self, imagedata):
 		#camdict = imagedata.content
 		#imarray = array.array(camdict['datatype code'], base64.decodestring(camdict['image data']))
@@ -125,9 +153,9 @@ class ImViewer(watcher.Watcher):
 
 		## self.im must be 2-d numeric data
 
-		numarray = imagedata.content
+		self.numarray = imagedata.content
 		self.imageid = imagedata.id
-		self.displayNumericArray(numarray)
+		self.displayNumericArray(self.numarray)
 
 	def displayNumericArray(self, numarray):
 		self.start_viewer_thread()
@@ -141,15 +169,33 @@ class ImViewer(watcher.Watcher):
 		argspec = (
 		self.registerUIData('Filename', 'string'),
 		)
-		loadspec = self.registerUIMethod(self.uiLoadImage, 'Load', argspec)
-		self.registerUISpec(`self.id`, (watcherspec, loadspec))
+		loadspec = self.registerUIMethod(self.uiLoadImage, 'Load MRC', argspec)
+		savespec = self.registerUIMethod(self.uiSaveImage, 'Save MRC', argspec)
+		filespec = self.registerUIContainer('File', (loadspec,savespec))
+
+		acqret = self.registerUIData('Image', 'binary')
+
+		acqraw = self.registerUIMethod(self.uiAcquireRaw, 'Acquire Raw', (), returnspec=acqret)
+		acqcor = self.registerUIMethod(self.uiAcquireCorrected, 'Acquire Corrected', (), returnspec=acqret)
+		acqev = self.registerUIMethod(self.acquireEvent, 'Acquire Event', ())
+
+		self.camconfig = self.cameraConfigUISpec()
+
+		self.registerUISpec(`self.id`, (acqraw, acqcor, acqev, self.camconfig, filespec, watcherspec))
 
 	def uiLoadImage(self, filename):
-		im = mrc_to_numeric(filename)
+		im = Mrc.mrc_to_numeric(filename)
 		self.displayNumericArray(im)
+		return ''
+
+	def uiSaveImage(self, filename):
+		numarray = self.iv.imagearray
+		Mrc.numeric_to_mrc(numarray, filename)
 		return ''
 
 if __name__ == '__main__':
 	id = ('ImViewer',)
 	i = ImViewer(id, {})
 	signal.pause()
+
+

@@ -4,6 +4,7 @@ import Numeric
 import array
 import struct
 import sys
+import cStringIO
 
 mrcmode_typecode = {
 	0: (1, Numeric.UnsignedInt8),
@@ -22,24 +23,40 @@ typecode_mrcmode = {
 
 def mrc_to_numeric(filename):
 	f = open(filename, 'rb')
-	hdr = MrcHeader(f)
-	dat = MrcData()
-	dat.useheader(hdr)
-	dat.fromfile(f)
+	image = mrc_read(f)
 	f.close()
-	return dat.toNumeric()
+	return image
 
 def numeric_to_mrc(ndata, filename):
+	f = open(filename, 'wb')
+	mrc_write(f, ndata)
+	f.close()
+
+def mrcstr_to_numeric(mrcstr):
+	f = cStringIO.StringIO(mrcstr)
+	image = mrc_read(f)
+	f.close()
+	return image
+
+def numeric_to_mrcstr(ndata):
+	f = cStringIO.StringIO()
+	mrc_write(f, ndata)
+	return f.getvalue()
+
+def mrc_read(mrcfile):
+	hdr = MrcHeader(mrcfile)
+	dat = MrcData()
+	dat.useheader(hdr)
+	dat.fromfile(mrcfile)
+	return dat.toNumeric()
+
+def mrc_write(mrcfile, image):
 	hdr = MrcHeader()
 	dat = MrcData()
-
-	dat.fromNumeric(ndata)
+	dat.fromNumeric(image)
 	hdr.usedata(dat)
-
-	f = open(filename, 'wb')
-	hdr.tofile(f)
-	dat.tofile(f)
-	f.close()
+	hdr.tofile(mrcfile)
+	dat.tofile(mrcfile)
 
 class MrcData:
 	def __init__(self):

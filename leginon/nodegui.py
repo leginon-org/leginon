@@ -8,6 +8,9 @@ import TreeWidget
 import os
 import threading
 import socket
+from ImageViewer import ImageViewer
+import Mrc
+import xmlrpclib
 
 False=0
 True=1
@@ -120,6 +123,8 @@ def whichDataClass(dataspec):
 		return EntryData
 	elif type == 'struct':
 		return TreeData
+	elif type == 'binary':
+		return ImageData
 	else:
 		raise RuntimeError('type not supported')
 
@@ -410,6 +415,30 @@ class TreeData(Data):
 		return self.dict
 
 
+class ImageData(Data):
+	def __init__(self, parent, uiclient, spec):
+		Data.__init__(self, parent, uiclient, spec)
+		if self.type != 'binary':
+			raise RuntimeError('ImageData requires binary type')
+
+	def buildWidget(self, parent):
+		self.iv = ImageViewer(parent)
+		return self.iv
+
+	def setWidget(self, value):
+		# value must be binary data from xmlrpc
+		if not isinstance(value, xmlrpclib.Binary):
+			raise RuntimeError('value must be instance of xmlrpclib.Binary')
+
+		print 'setting widget'
+		numdata = Mrc.mrcstr_to_numeric(value.data)
+		self.iv.import_numeric(numdata)
+
+	def getWidget(self):
+		print 'not implemented'
+		raise NotImplementedError()
+
+
 class Method(SpecWidget):
 	def __init__(self, parent, uiclient, spec):
 		SpecWidget.__init__(self, parent, uiclient, spec, bd=3, relief=SOLID)
@@ -420,6 +449,7 @@ class Method(SpecWidget):
 		self.argspec = self.spec['argspec']
 		
 		if 'returnspec' in self.spec:
+			print 'returnspec', self.spec['returnspec']
 			self.returnspec = self.spec['returnspec']
 		else:
 			self.returnspec = None
@@ -463,30 +493,6 @@ class Method(SpecWidget):
 	def process_return(self, returnvalue):
 		if self.retwidget is not None:
 			self.retwidget.setWidget(returnvalue)
-
-	def init_return(self, returntype):
-		'''
-		set up for handling return values
-		return a widget if one was created
-		'''
-		self.returntype = returntype
-		if returntype in ('array','string'):
-			wid = Frame(self)
-			widlab = Label(wid, text='Result:',bg=self['bg'])
-			self.retwidget = Text(wid, height=1,width=30,wrap=NONE)
-			self.retwidget['state'] = DISABLED
-			retscroll = Scrollbar(wid, orient=HORIZONTAL)
-			retscroll['command'] = self.retwidget.xview
-			self.retwidget['xscrollcommand'] = retscroll.set
-			widlab.grid(row=0,column=0,rowspan=2)
-			self.retwidget.grid(row=0, column=1)
-			retscroll.grid(row=1,column=1,sticky=EW)
-			return wid
-		if returntype == 'struct':
-			self.retwidget = TreeWidget.ScrolledCanvas(self, bg='white', highlightthickness=0)
-			return self.retwidget.frame
-		else:
-			return None
 
 
 class NodeGUI(Frame):

@@ -100,6 +100,9 @@ class ImageCanvas(Frame):
 	def use_numeric(self, ndata):
 		## use the old value of clip
 		oldclip = self.clip()
+		if ndata is None:
+			## should probably clear canvas here
+			return
 		self.numimage = NumericImage(ndata,clip=oldclip)
 		sw = self.scalingwidget
 		if sw is not None:
@@ -129,15 +132,15 @@ class ImageCanvas(Frame):
 
 	def update_canvas(self):
 		if self.numimage is None:
-			return
-		self.numimage.update_image()
-		## this next line is currently the time waster
-		self.photo = self.numimage.photoimage()
-		newwidth = self.photo.width()
-		newheight = self.photo.height()
-		self.resize(0,0,newwidth,newheight)
+			self.photo = None
+		else:
+			self.numimage.update_image()
+			## this next line is currently the time waster
+			self.photo = self.numimage.photoimage()
+			newwidth = self.photo.width()
+			newheight = self.photo.height()
+			self.resize(0,0,newwidth,newheight)
 		self.canvas.itemconfig(self.canimage, image=self.photo)
-		#self.update()
 
 	def zoom(self, factor):
 		if self.numimage is None:

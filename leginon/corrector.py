@@ -7,6 +7,8 @@ import data, event
 import shelve
 import threading
 from Mrc import mrc_to_numeric, numeric_to_mrc
+import camerafuncs
+reload(camerafuncs)
 
 ### these should go in a stats node or module
 
@@ -29,7 +31,7 @@ class DataHandler(node.DataHandler):
 			self.lock.release()
 			return node.DataHandler.query(self, id)
 
-class Corrector(node.Node):
+class Corrector(node.Node, camerafuncs.CameraFuncs):
 	def __init__(self, id, nodelocations):
 
 		self.refs = {}
@@ -59,22 +61,17 @@ class Corrector(node.Node):
 		acqcorr = self.registerUIMethod(self.acquireCorrected, 'Corrected', ())
 		acq = self.registerUIContainer('Acquire References', (acqdark, acqbright, acqcorr))
 
-		### Camera State Data Spec
-		defaultsize = (512,512)
-		camerasize = (2048,2048)
-		offset = cameraimage.centerOffset(camerasize,defaultsize)
-		camstate = {
-			'exposure time': 500,
-			'binning': {'x':1, 'y':1},
-			'dimension': {'x':defaultsize[0], 'y':defaultsize[1]},
-			'offset': {'x': offset[0], 'y': offset[1]}
-		}
-		self.defaultcamstate = camstate
-		self.camdata = self.registerUIData('Camera', 'struct', default=camstate)
+		self.camdata = self.cameraConfigUISpec()
 
 		self.navgdata = self.registerUIData('Frames to Average', 'integer', default=3, permissions='rw')
 
-		self.registerUISpec('Corrector', (acq, self.navgdata, self.camdata, nodespec))
+		self.clipflag = self.registerUIData('Do Clipping', 'boolean', default=1, permissions='rw')
+		self.clipmin = self.registerUIData('Clip Min', 'float', default=0.0, permissions='rw')
+		self.clipmax = self.registerUIData('Clip Max', 'float', default=8000, permissions='rw')
+
+		prefs = self.registerUIContainer('Preferences', (self.camdata, self.navgdata, self.clipflag, self.clipmin, self.clipmax))
+
+		self.registerUISpec('Corrector', (acq, prefs, nodespec))
 
 	def saveRefs(self, filename, key):
 		strkey = str(key)
@@ -100,15 +97,14 @@ class Corrector(node.Node):
 		series = []
 		for i in range(n):
 			print 'acquiring %s of %s' % (i+1, n)
-			imagedata = self.researchByDataID('image data')
-			numimage = imagedata.content['image data']
+			numimage = self.cameraAcquire()
 			series.append(numimage)
 		return series
 
 	def acquireBright(self):
 		camstate = dict(self.camdata.get())
-		camdata = data.EMData('camera', camstate)
-		self.publishRemote(camdata)
+		self.cameraState(camstate)
+
 		navg = self.navgdata.get()
 		series = self.acquireSeries(navg)
 		bright = cameraimage.averageSeries(series)
@@ -128,8 +124,8 @@ class Corrector(node.Node):
 	def acquireDark(self):
 		camstate = dict(self.camdata.get())
 		camstate['exposure time'] = 0.0
-		camdata = data.EMData('camera', camstate)
-		self.publishRemote(camdata)
+		self.cameraState(camstate)
+
 		navg = self.navgdata.get()
 		series = self.acquireSeries(navg)
 		dark = cameraimage.averageSeries(series)
@@ -146,49 +142,58 @@ class Corrector(node.Node):
 		self.calc_norm(key)
 		return ''
 
+	def removeBadPixels(self, image):
+		return image
+
+	def clip(self, image):
+		if self.clipflag.get():
+			minclip = self.clipmin.get()
+			maxclip = self.clipmax.get()
+			return Numeric.clip(image, minclip, maxclip)
+		else:
+			return image
+
 	def acquireCorrectedImageData(self):
-		camdata = self.researchByDataID('camera')
-		camstate = camdata.content
+		camstate = self.cameraAcquireCamera()
 		numimage = camstate['image data']
 		#binning = self.researchByDataID('binning').content['binning']
 		key = self.cameraKey(camstate)
 		corrected = self.correct(numimage, key)
-		print 'corrected done'
 		return data.ImageData(self.ID(), corrected)
+
+	def correct(self, original, key):
+		'''
+		this puts an image through a pipeline of corrections
+		'''
+		normalized = self.normalize(original, key)
+		touchedup = self.removeBadPixels(normalized)
+		clipped = self.clip(touchedup)
+		return clipped
 
 	def acquireCorrected(self, ievent=None):
 		correctdata = self.acquireCorrectedImageData()
-		print 'publishing corrected'
 		self.publish(correctdata, event.ImagePublishEvent)
-		print 'done pub correct'
 		return ''
 
 	def acquireCorrectedFakeImageData(self):
 		numimage = mrc_to_numeric('test1.mrc')
-		camstate = self.defaultcamstate
-		#binning = self.researchByDataID('binning').content['binning']
+		camstate = self.camdata.get()
+		print 'camstate', camstate
 		key = self.cameraKey(camstate)
+		print 'key', key
 		corrected = self.correct(numimage, key)
-		numeric_to_mrc(corrected, 'corr.mrc')
-		print 'corrected done'
 		return data.ImageData(self.ID(), corrected)
 
 	def acquireCorrectedFake(self, ievent=None):
 		correctdata = self.acquireCorrectedFakeImageData()
-		print 'publishing corrected'
 		self.publish(correctdata, event.ImagePublishEvent)
-		print 'done pub correct'
 		return ''
 
 	def stats(self, im):
 		mean = cameraimage.mean(im)
-		print 'mean', mean
 		stdev = cameraimage.stdev(im)
-		print 'stdev', stdev
 		mn = cameraimage.min(im)
-		print 'mn', mn
 		mx = cameraimage.max(im)
-		print 'mx', mx
 		return {'mean':mean,'stdev':stdev,'min':mn,'max':mx}
 
 	def calc_norm(self, key):
@@ -210,7 +215,7 @@ class Corrector(node.Node):
 			print 'saving refs'
 			self.saveRefs('refs', key)
 
-	def correct(self, raw, key):
+	def normalize(self, raw, key):
 		if key not in self.refs:
 			print 'loading refs'
 			self.loadRefs('refs', key)
@@ -265,7 +270,7 @@ if __name__ == '__main__':
 	corrector.set_dark(dark)
 	corrector.set_bright(bright)
 	print 'correcting'
-	good = corrector.correct(raw)
+	good = corrector.normalize(raw)
 
 	#print 'dark', dark
 	#print 'bright', bright

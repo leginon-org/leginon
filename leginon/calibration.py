@@ -10,11 +10,13 @@ import Numeric
 import LinearAlgebra
 import cPickle
 import cameraimage
+import camerafuncs
+reload(camerafuncs)
 
 False=0
 True=1
 
-class Calibration(node.Node):
+class Calibration(node.Node, camerafuncs.CameraFuncs):
 	def __init__(self, id, nodelocations):
 
 		ffteng = fftengine.fftNumeric()
@@ -27,6 +29,7 @@ class Calibration(node.Node):
 
 		# asdf
 		self.axislist = ['x', 'y']
+		self.settle = 2.0
 
 		self.calibration = {}
 		self.clearStateImages()
@@ -159,27 +162,19 @@ class Calibration(node.Node):
 				return info
 
 		## acquire image at this state
-		print 'setting state', state
 		newemdata = data.EMData('scope', state)
-		print 'publishing state', newemdata
 		self.publish(event.LockEvent(self.ID()))
 		self.publishRemote(newemdata)
-		print 'sleeping 1 sec'
-		time.sleep(1.0)
+		print 'state settling time %s' % (self.settle,)
+		time.sleep(self.settle)
 		print 'getting image data'
 
 		emdata = self.researchByDataID('image data')
 		self.publish(event.UnlockEvent(self.ID()))
-		print 'emdata type', type(emdata)
 		image = emdata.content['image data']
 
-		print 'image type', type(image)
 		imagedata = data.ImageData(self.ID(), image)
-		print 'imagedata type', type(imagedata)
-		print 'imagedata', imagedata
-		print 'imagedata location', imagedata.location()
 		self.publish(imagedata, event.ImagePublishEvent)
-		print 'published imagedata'
 		## should find image stats to help determine validity of image
 		## in correlations
 		image_stats = None
