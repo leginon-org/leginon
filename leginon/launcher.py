@@ -7,12 +7,13 @@ import nodeclassreg
 import calllauncher
 import time
 import threading
+import sys
 
 
 class Launcher(node.Node):
 	def __init__(self, id, nodelocations = {}, port = None, **kwargs):
 		node.Node.__init__(self, id, nodelocations, tcpport=port, **kwargs)
-
+		self.checkPythonVersion()
 		self.addEventInput(event.LaunchEvent, self.handleLaunch)
 		self.addEventOutput(event.NodeClassesPublishEvent)
 		self.__launchlock = threading.Lock()

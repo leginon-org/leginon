@@ -30,9 +30,12 @@ class Manager(node.Node):
 
 		node.Node.__init__(self, id, session, nodelocations={},
 															datahandlers=[(DataHandler, ()),
+
 																						(dbdatakeeper.DBDataKeeper, ())],
 															tcpport=tcpport, xmlrpcport=xmlrpcport, **kwargs)
 
+
+		self.checkPythonVersion()
 		self.uiserver.server.register_function(self.uiGetNodeLocations,
 																						'getNodeLocations')
 
@@ -652,7 +655,6 @@ class Manager(node.Node):
 
 if __name__ == '__main__':
 	import sys
-
 	try:
 		session = sys.argv[1]
 	except IndexError:
