@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from wxPython.wx import *
+from wxPython.wxc import wxPyAssertionError
 import cStringIO
 import Numeric
 import Image
@@ -301,17 +302,20 @@ class ImagePanel(wxPanel):
 		if USE_BUFFERED_DC:
 			dc = wxBufferedPaintDC(self.panel, self.buffer)
 		else:
-			dc = wxMemoryDC()
-			dc.SelectObject(self.buffer)
-			self.Draw(dc)
-			viewoffset = self.panel.GetViewStart()
-			paintdc = wxPaintDC(self.panel)
-			paintdc.SetUserScale(self.scale[0], self.scale[1])
-			size = self.panel.GetClientSize()
-			paintdc.Blit(0, 0, Numeric.ceil(size[0]/self.scale[0]),
-													Numeric.ceil(size[1]/self.scale[1]), dc,
-													viewoffset[0]/self.scale[0],
-													viewoffset[1]/self.scale[1])
+			try:
+				dc = wxMemoryDC()
+				dc.SelectObject(self.buffer)
+				self.Draw(dc)
+				viewoffset = self.panel.GetViewStart()
+				paintdc = wxPaintDC(self.panel)
+				paintdc.SetUserScale(self.scale[0], self.scale[1])
+				size = self.panel.GetClientSize()
+				paintdc.Blit(0, 0, Numeric.ceil(size[0]/self.scale[0]),
+														Numeric.ceil(size[1]/self.scale[1]), dc,
+														viewoffset[0]/self.scale[0],
+														viewoffset[1]/self.scale[1])
+			except wxPyAssertionError:
+				pass
 
 class TargetImagePanel(ImagePanel):
 	def __init__(self, parent, id, callback=None):
