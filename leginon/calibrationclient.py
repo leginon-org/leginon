@@ -8,6 +8,7 @@ import fftengine
 import correlator
 import peakfinder
 import time
+import sqldict
 
 class CalibrationClient(object):
 	'''
@@ -53,7 +54,6 @@ class CalibrationClient(object):
 		print 'state settling time %s' % (self.settle,)
 		time.sleep(self.settle)
 
-		print 'XXXXXXXXXXXXXXXXXX', self, self.node
 		imagedata = self.cam.acquireCameraImageData()
 		actual_state = imagedata.content['scope']
 		self.node.publish(imagedata, event.CameraImagePublishEvent)
@@ -124,6 +124,23 @@ class CalibrationClient(object):
 class BeamTiltCalibrationClient(CalibrationClient):
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)
+		self.db = sqldict.SQLDict()
+		self.createDBTable()
+
+	def createDBTable(self):
+		columns = [
+			{'Field': 'id', 'Type': 'int(16)', 'Key': 'PRIMARY', 'Extra':'auto_increment'},
+			{'Field': 'time', 'Type': 'timestamp', 'Null': 'YES', 'Key': 'INDEX'},
+			{'Field': 'magnification', 'Type': 'mediumint unsigned'},
+			{'Field': 'type', 'Type': 'varchar(50)'},
+			{'Field': 'm1_1', 'Type': 'float'},
+			{'Field': 'm1_2', 'Type': 'float'},
+			{'Field': 'm2_1', 'Type': 'float'},
+			{'Field': 'm2_2', 'Type': 'float'}
+		]
+		self.db.createSQLTable('beamtilt', columns)
+		self.db.beamtilt = self.db.Table('beamtilt', ['magnification', 'type', 'm1_1', 'm1_2', 'm2_1', 'm2_2'])
+		self.db.beamtilt.magtype = self.db.beamtilt.Index(['magnification', 'type'])
 
 	def setCalibration(self, key, calibration):
 		dat = data.MatrixCalibrationData(('calibrations',key), calibration)
@@ -137,6 +154,22 @@ class BeamTiltCalibrationClient(CalibrationClient):
 	def setMatrix(self, mag, type, matrix):
 		key = self.magCalibrationKey(mag, type)
 		self.setCalibration(key, matrix)
+
+	def getMatrixDB(self, mag, type):
+		result = self.db.beamtilt.magtype[mag,type]
+		rows = result.fetchall()
+
+		print rows
+
+	def setMatrixDB(self, mag, type, matrix):
+		'''
+		This stores a calibration matrix in the DB
+		   mag:  magnification (int)
+		   type:  calibration type (str)
+		   matrix:  calibration matrix (Numeric 2x2 matrix)
+		'''
+		mydict = {'magnification':  mag, 'type': type, 'm1_1': float(matrix[0,0]), 'm1_2': float(matrix[0,1]), 'm2_1': float(matrix[1,0]), 'm2_2': float(matrix[1,1])}
+		self.db.beamtilt.insert([mydict,])
 
 	def getBeamTilt(self):
 		emdata = self.node.researchByDataID('beam tilt')
@@ -219,6 +252,7 @@ class BeamTiltCalibrationClient(CalibrationClient):
 			'stigx': solution[0][1],
 			'stigy': solution[0][2],
 			}
+		print 'SOLUTION CHISQ', solution[1]
 		return result
 
 	def eq11(self, shift1, shift2, param1, param2, beam_tilt):
@@ -250,38 +284,39 @@ class BeamTiltCalibrationClient(CalibrationClient):
 		'''
 		
 		beamtilt = self.getBeamTilt()
-		print 'BEAMTILT', beamtilt
-		beamtilts = (copy.deepcopy(beamtilt),copy.deepcopy(beamtilt))
-		beamtilts[0]['beam tilt'][tilt_axis] += tilt_value
-		beamtilts[1]['beam tilt'][tilt_axis] -= tilt_value
 
-		## set up to measure states
-		states1 = (copy.deepcopy(state1), copy.deepcopy(state1))
-		states2 = (copy.deepcopy(state2), copy.deepcopy(state2))
+		### try/finally to be sure we return to original beam tilt
+		try:
+			print 'BEAMTILT', beamtilt
+			beamtilts = (copy.deepcopy(beamtilt),copy.deepcopy(beamtilt))
+			beamtilts[0]['beam tilt'][tilt_axis] += tilt_value
+			beamtilts[1]['beam tilt'][tilt_axis] -= tilt_value
 
-		states1[0].update(beamtilts[0])
-		states1[1].update(beamtilts[1])
+			## set up to measure states
+			states1 = (copy.deepcopy(state1), copy.deepcopy(state1))
+			states2 = (copy.deepcopy(state2), copy.deepcopy(state2))
 
-		states2[0].update(beamtilts[0])
-		states2[1].update(beamtilts[1])
+			states1[0].update(beamtilts[0])
+			states1[1].update(beamtilts[1])
 
-		print 'STATES1'
-		print states1
-		shiftinfo = self.measureStateShift(states1[0], states1[1])
-		pixelshift1 = shiftinfo['pixel shift']
-		print 'shiftinfo'
-		print shiftinfo
+			states2[0].update(beamtilts[0])
+			states2[1].update(beamtilts[1])
 
-		print 'STATES2'
-		print states2
-		shiftinfo = self.measureStateShift(states2[0], states2[1])
-		pixelshift2 = shiftinfo['pixel shift']
-		print 'shiftinfo'
-		print shiftinfo
+			print 'STATES1'
+			print states1
+			shiftinfo = self.measureStateShift(states1[0], states1[1])
+			pixelshift1 = shiftinfo['pixel shift']
 
-		## return to original beam tilt
-		emdata = data.EMData('scope', beamtilt)
-		self.node.publishRemote(emdata)
+			print 'STATES2'
+			print states2
+			shiftinfo = self.measureStateShift(states2[0], states2[1])
+			pixelshift2 = shiftinfo['pixel shift']
+			print 'PIXELSHIFT1', pixelshift1
+			print 'PIXELSHIFT2', pixelshift2
+		finally:
+			## return to original beam tilt
+			emdata = data.EMData('scope', beamtilt)
+			self.node.publishRemote(emdata)
 
 		return (pixelshift1, pixelshift2)
 
