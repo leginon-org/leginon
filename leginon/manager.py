@@ -108,20 +108,9 @@ class Manager(node.Node):
 
 	# main/start methods
 
-	def main(self):
-		'''Overrides node.Node.main'''
-		pass
-
 	def start(self):
 		'''Overrides node.Node.start'''
-#		self.print_location()
-#		interact_thread = self.interact()
-#
-#		self.main()
-#
-#		# wait until the interact thread terminates
-#		interact_thread.join()
-#		self.exit()
+		pass
 
 	def exit(self):
 		'''Overrides node.Node.exit'''

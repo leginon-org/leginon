@@ -8,7 +8,6 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import calllauncher
 import data
 import datatransport
 import event
@@ -35,7 +34,6 @@ class Launcher(node.Node):
 		self.datahandler.insert(self.uicontainer)
 
 		self.addEventInput(event.LaunchEvent, self.handleLaunch)
-		self.caller = calllauncher.CallLauncher()
 		self.defineUserInterface()
 #		l = self.location()
 #		self.start()
@@ -47,17 +45,11 @@ class Launcher(node.Node):
 		self.outputEvent(event.NodeInitializedEvent(id=self.ID()))
 
 	def start(self):
-		self.main()
-		self.die_event.wait()
-		self.outputEvent(event.NodeUninitializedEvent(id=self.ID()))
-		self.exit()
+		pass
 
 	def exit(self):
 		node.Node.exit(self)
 		self.server.exit()
-
-	def main(self):
-		pass
 
 	def location(self):
 		location = leginonobject.LeginonObject.location(self)
@@ -89,7 +81,10 @@ class Launcher(node.Node):
 
 		#print 'launching', nodeclass
 
-		self.caller.launchCall(nodeclass, args, kwargs)
+		id = args[0]
+		session = args[1]
+		nodelocations = args[2]
+		nodeclass(id, session, nodelocations, **kwargs)
 		self.confirmEvent(launchevent)
 
 	def launchThread(self):

@@ -184,31 +184,23 @@ class Node(leginonobject.LeginonObject):
 			self.id_count_lock.release()
 		return new_count
 
-	def main(self):
-		'''The body of taking place when the node is started. See start.'''
-		pass
-
 	def exit(self):
 		'''Cleans up the node before it dies.'''
 		self.outputEvent(event.NodeUnavailableEvent(id=self.ID()))
 		if self.uicontainer is not None and self.uicontainer.parent is not None:
 			self.uicontainer.parent.deleteObject(self.uicontainer.name)
+		self.outputEvent(event.NodeUninitializedEvent(), wait=True)
 #		self.server.exit()
 #		self.printerror('exited')
 
 	def die(self, ievent=None):
 		'''Tell the node to finish and call exit.'''
-		self.die_event.set()
+		self.exit()
 		if ievent is not None:
 			self.confirmEvent(ievent)
 
 	def start(self):
-		'''Call to make the node active and react to a call to exit. Calls main.'''
 		self.outputEvent(event.NodeInitializedEvent(id=self.ID()))
-		self.main()
-		self.die_event.wait()
-		self.outputEvent(event.NodeUninitializedEvent(), wait=True)
-		self.exit()
 
 	# location method
 
