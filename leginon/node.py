@@ -143,7 +143,6 @@ class Node(leginonobject.LeginonObject):
 		if not hasattr(self, 'idcount'):
 			self.idcount = 0
 		self.idcount += 1
-		return self.idcount - 1
 
 		fname = ''
 		if self.session is not None:
