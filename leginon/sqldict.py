@@ -346,7 +346,6 @@ class SQLDict:
 
 	    for column in addcolumns:
 		q = sqlexpr.AlterTable(self.table, column).sqlRepr()
-		#print q
 		try:
 			c.execute(q)
 		except MySQLdb.OperationalError, e:
@@ -699,6 +698,12 @@ def queryFormatOptimized(in_dict,tableselect):
 			a = value['alias']
 			j = value['join']
 			r = value['root']
+			w = value['where']
+
+			if w:
+				if not a in optimizedjoinlist:
+					optimizedjoinlist.append(a)
+				
 			if r:
 				sqlfrom = sqlexpr.fromFormat(c,a)
 				sqlorder = sqlexpr.orderFormat(a)
@@ -719,9 +724,6 @@ def queryFormatOptimized(in_dict,tableselect):
 			sqlexprstr = sqlexpr.whereFormat(value)
 			if sqlexprstr:
 				sqlwhere.append(sqlexprstr)
-
-	if alljoinon.has_key(tableselect):
-		optimizedjoinlist.append(alljoinon[tableselect])
 	if not tableselect in optimizedjoinlist:
 		optimizedjoinlist.append(tableselect)
 
@@ -731,11 +733,10 @@ def queryFormatOptimized(in_dict,tableselect):
 				optimizedjoinlist.append(joinon[l])
 			if not alljoinon[l] in sqljoin:
 				sqljoin.append(alljoinon[l])
-		elif onjoin.has_key(l):
+		if onjoin.has_key(l):
 			if not alljoinon[onjoin[l]] in sqljoin:
 				sqljoin.append(alljoinon[onjoin[l]])
 			
-
 	sqljoinstr = ' '.join(sqljoin)
 	if sqlwhere:
 		sqlwherestr= 'WHERE ' + ' AND '.join(sqlwhere)
