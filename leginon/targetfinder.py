@@ -75,8 +75,8 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		raise NotImplementedError()
 
 	### this needs to be done by linking images to an ImageList object
-	### or something like that,  lists of data need to outlawed to
-	### avoid data referencing problems
+	### or something like that, data containing lists of data needs 
+	### to outlawed to avoid data referencing and database storing problems
 	def processImageListData(self, imagelistdata):
 		if 'images' not in imagelistdata or imagelistdata['images'] is None:
 			return
