@@ -11,6 +11,7 @@ import newdict
 import threading
 import datatransport
 import data
+import remotecall
 
 class ExitException(Exception):
 	pass
@@ -27,6 +28,7 @@ class DataBinder(object):
 		## data class
 		self.threaded = threaded
 		self.bindings = newdict.OrderedDict()
+		self.remotecallobjects = {}
 
 		## a queue to hold incoming data, and a thread
 		## to process data from the queue
@@ -77,10 +79,35 @@ class DataBinder(object):
 			return self.insert(request)
 		elif isinstance(request, data.Data):
 			return self.insert(request)
+		elif isinstance(request, remotecall.Request):
+			return self.handleRemoteCall(request)
 		else:
 			#return self.query(request)
 			print 'unhandled request: %s' % request
 			return
+
+	def handleRemoteCall(self, request):
+		try:
+			remotecallobject = self.remotecallobjects[request.node][request.name]
+		except KeyError:
+			estr = 'No remotecallobject %s for node %s' % (request.node, request.name)
+			return ValueError(estr)
+		try:
+			return remotecallobject._execute(request.attributename, request.type,
+																				request.args, request.kwargs)
+		except Exception, e:
+			return e
+
+	def addRemoteCallObject(self, nodename, name, remotecallobject):
+		if nodename not in self.remotecallobjects:
+			self.remotecallobjects[nodename] = {}
+		self.remotecallobjects[nodename][name] = remotecallobject
+
+	def removeRemoteCallObject(self, nodename, name):
+		try:
+			self.remotecallobjects[nodename][name] = remotecallobject
+		except:
+			raise ValueError('No remotecallobject %s for node %s' % (nodename, name))
 
 	def insert(self, newdata):
 		self.queue.put(newdata)

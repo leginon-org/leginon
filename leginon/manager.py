@@ -25,6 +25,7 @@ import socket
 import gui.wx.SetupWizard
 import gui.wx.Manager
 import nodeclassreg
+import remotecall
 
 class DataBinder(databinder.DataBinder):
 	def handleData(self, newdata):
@@ -64,6 +65,7 @@ class DataBinder(databinder.DataBinder):
 
 class Manager(node.Node):
 	'''Overlord of the nodes. Handles node communication (data and events).'''
+	objectserviceclass = remotecall.ManagerObjectService
 	def __init__(self, session, tcpport=None, **kwargs):
 		self.clients = {}
 

@@ -43,7 +43,7 @@ class Client(object):
 	def _send(self, request):
 		try:
 			return self.serverobject.handle(request)
-		except:
+		except Exception, e:
 			raise IOError('Local transport client send request')
 
 if __name__ == '__main__':

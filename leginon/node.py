@@ -18,6 +18,7 @@ import gui.wx.Logging
 import gui.wx.Node
 import copy
 import socket
+import remotecall
 
 import leginonconfig
 import os
@@ -50,6 +51,8 @@ class Node(object):
 									event.NodeUnavailableEvent,
 									event.NodeInitializedEvent,
 									event.NodeUninitializedEvent]
+
+	objectserviceclass = remotecall.NodeObjectService
 
 	def __init__(self, name, session, managerlocation=None, otherdatabinder=None, otherdbdatakeeper=None, tcpport=None, launcher=None, panel=None):
 		self.name = name
@@ -95,6 +98,8 @@ class Node(object):
 			except:
 				self.logger.exception('exception in setManager')
 				raise
+
+		self.objectservice = self.objectserviceclass(self)
 
 		self.initializeSettings()
 

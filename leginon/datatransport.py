@@ -48,7 +48,7 @@ class Client(Base):
 			try:
 				return client.send(request)
 			except IOError:
-				self.logger.warning('%s client send request failed' % str(c))
+				self.logger.warning('%s client send request failed' % str(client))
 		raise IOError('Unable to send request')
 
 	def send(self, request):
