@@ -52,32 +52,34 @@ class PeakFinder(object):
 		rowinds = Numeric.arrayrange(rowrange[0], rowrange[1])
 
 		## fill in rowvals, wrap around array if necessary
-		rowvals = []
+		rowvals = rowinds.astype(Numeric.Float32)
+		myind = 0
 		for row in rowinds:
 			if row < 0:
-				rowvals.append(self.image[rows + row, peakcol])
+				rowvals[myind] = self.image[rows + row, peakcol]
 			elif row >= rows:
-				rowvals.append(self.image[row - rows, peakcol])
+				rowvals[myind] = self.image[row - rows, peakcol]
 			else:
-				rowvals.append(self.image[row, peakcol])
-		rowvals = Numeric.array(rowvals)
+				rowvals[myind] = self.image[row, peakcol]
+			myind += 1
 
 		colrange = (peakcol-npix/2, peakcol+npix/2+1)
 		colinds = Numeric.arrayrange(colrange[0], colrange[1])
 
 		## fill in colvals, wrap around array if necessary
-		colvals = []
+		colvals = colinds.astype(Numeric.Float32)
+		myind = 0
 		for col in colinds:
 			if col < 0:
-				colvals.append(self.image[peakrow, cols + col])
+				colvals[myind] = self.image[peakrow, cols + col]
 			elif col >= cols:
-				colvals.append(self.image[peakrow, col - cols])
+				colvals[myind] = self.image[peakrow, col - cols]
 			else:
-				colvals.append(self.image[peakrow, col])
-		colvals = Numeric.array(colvals)
+				colvals[myind] = self.image[peakrow, col]
+			myind += 1
 
 		## create quadratic design matrix for row data
-		row_dm = Numeric.zeros(npix * 3, Numeric.Float)
+		row_dm = Numeric.zeros(npix * 3, Numeric.Float32)
 		row_dm.shape = (npix, 3)
 		i = 0
 		for row in rowinds:
@@ -85,7 +87,7 @@ class PeakFinder(object):
 			i += 1
 
 		## create quadratic design matrix for col data
-		col_dm = Numeric.zeros(npix * 3, Numeric.Float)
+		col_dm = Numeric.zeros(npix * 3, Numeric.Float32)
 		col_dm.shape = (npix, 3)
 		i = 0
 		for col in colinds:
@@ -103,8 +105,8 @@ class PeakFinder(object):
 			colfit = linear_least_squares(col_dm, colvals)
 			colcoeffs = colfit[0]
 
-		rowzero = -rowcoeffs[1][0] / 2 / rowcoeffs[2][0]
-		colzero = -colcoeffs[1][0] / 2 / colcoeffs[2][0]
+		rowzero = -rowcoeffs[1] / 2 / rowcoeffs[2]
+		colzero = -colcoeffs[1] / 2 / colcoeffs[2]
 
 		subpixelpeak = (float(rowzero), float(colzero))
 		self.results['subpixel peak'] = subpixelpeak
