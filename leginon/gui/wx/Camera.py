@@ -284,7 +284,9 @@ class CameraPanel(wx.Panel):
 	def setData(self, d):
 		if d is None:
 			return
-		self.setConfiguration(d.toDict())
+		if hasattr(d, 'toDict'):
+			d = d.toDict()
+		self.setConfiguration(d)
 		self.setCommonChoice()
 
 	def onSetConfiguration(self, evt):
