@@ -6,12 +6,11 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 import extendedxmlrpclib
-import uiserver
+import xmlrpc
 import threading
 import time
 import sys
 from wxPython.wx import *
-from wxPython.wxc import wxPyAssertionError
 import wxImageViewer
 import wxDictTree
 import wxOrderedListBox
@@ -179,23 +178,6 @@ def WidgetClassFromTypeList(typelist):
 					return wxEntryWidget
 	raise ValueError('invalid type for widget')
 	
-class XMLRPCClient(object):
-	def __init__(self, serverhostname, serverport, port=None):
-		self.serverhostname = serverhostname
-		self.serverport = serverport
-		uri = 'http://%s:%s' % (serverhostname, serverport)
-		self.proxy = extendedxmlrpclib.ServerProxy(uri, allow_none=1)
-
-	def execute(self, function_name, args=()):
-		try:
-			return getattr(self.proxy, function_name)(*args)
-		except extendedxmlrpclib.ProtocolError:
-			# usually return value not correct type
-			raise
-		except extendedxmlrpclib.Fault:
-			# exception during call of the function
-			raise
-
 class LocalUIClient(object):
 	def __init__(self, uiserver):
 		self.uiserver = uiserver
@@ -219,10 +201,10 @@ class LocalUIClient(object):
 		else:
 			self.uiserver.commandFromClient(namelist, args)
 
-class XMLRPCUIClient(XMLRPCClient, uiserver.XMLRPCServer):
+class XMLRPCUIClient(xmlrpc.Client, xmlrpc.Server):
 	def __init__(self, serverhostname, serverport, port=None):
-		XMLRPCClient.__init__(self, serverhostname, serverport, port)
-		uiserver.XMLRPCServer.__init__(self, port)
+		xmlrpc.Client.__init__(self, serverhostname, serverport, port)
+		xmlrpc.Server.__init__(self, port)
 		self.xmlrpcserver.register_function(self.addFromServer, 'add')
 		self.xmlrpcserver.register_function(self.setFromServer, 'set')
 		self.xmlrpcserver.register_function(self.removeFromServer, 'remove')
@@ -713,7 +695,6 @@ class wxDialogContainerWidget(wxContainerWidget):
 																configuration)
 		self.childparent = self.panel
 		self.layout()
-
 
 	def getParentCenter(self):
 		parent = self.parent

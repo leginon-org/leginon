@@ -10,8 +10,7 @@
 
 import manager
 #import launcher
-import socket
-import threading
+#import socket
 import uiclient
 
 #import gc
@@ -24,3 +23,4 @@ location = m.location()
 #									nodelocations={'manager': location})
 client = uiclient.UIApp(location['UI'], 'Leginon II')
 m.exit()
+

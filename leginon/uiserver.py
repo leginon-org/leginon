@@ -5,66 +5,23 @@
 #       For terms of the license agreement
 #       see  http://ami.scripps.edu/software/leginon-license
 #
-import SimpleXMLRPCServer
 import socket
 import threading
 import uidata
 import extendedxmlrpclib
 import Queue
 import data
+import xmlrpc
 
 # preferences
 import cPickle
-import leginonconfig
-import os
-
-# range defined by IANA as dynamic/private
-portrange = xrange(49152, 65536)
+#import leginonconfig
+#import os
 
 class NoValueError(Exception):
 	pass
 
-class XMLRPCServer(object):
-	"""
-	A SimpleXMLRPCServer that figures out its own host and port
-	Sets self.host and self.port accordingly
-	"""
-	def __init__(self, port=None):
-		self.hostname = socket.gethostname().lower()
-
-		self.port = port
-		if self.port is not None:
-			# this exception will fall through if __init__ fails
-			self.xmlrpcserver = SimpleXMLRPCServer.SimpleXMLRPCServer(
-																	(self.hostname, self.port), logRequests=False)
-			self._startServing()
-			return
-
-		# find a port in range defined by IANA as dynamic/private
-		for self.port in portrange:
-			try:
-				self.xmlrpcserver = SimpleXMLRPCServer.SimpleXMLRPCServer(
-																										(self.hostname, self.port),
-																										logRequests=False)
-				break
-			except Exception, var:
-				if (var[0] == 98 or var[0] == 10048 or var[0] == 112):
-					continue
-				else:
-					raise
-		if self.port is None:
-			raise RuntimeError('no ports available')
-
-		self._startServing()
-
-	def _startServing(self):
-		t = threading.Thread(name='UI XML-RPC server thread',
-													target=self.xmlrpcserver.serve_forever)
-		t.setDaemon(1)
-		t.start()
-		self.serverthread = t
-
-class Server(XMLRPCServer, uidata.Container):
+class Server(xmlrpc.Server, uidata.Container):
 	typelist = uidata.Container.typelist + ('server',)
 	def __init__(self, name='UI', port=None, tries=5,
 								dbdatakeeper=None, session=None):
@@ -76,7 +33,7 @@ class Server(XMLRPCServer, uidata.Container):
 
 		self.pref_lock = threading.Lock()
 
-		XMLRPCServer.__init__(self, port=port)
+		xmlrpc.Server.__init__(self, port=port)
 
 		uidata.Container.__init__(self, name)
 		self.server = self
@@ -126,8 +83,7 @@ class Server(XMLRPCServer, uidata.Container):
 			if client.serverhostname == hostname and client.serverport == port:
 				self.xmlrpcclients.remove(client)
 			
-		from uiclient import XMLRPCClient
-		client = XMLRPCClient(hostname, port)
+		client = xmlrpc.Client(hostname, port)
 		self.xmlrpcclients.append(client)
 		for childobject in self.uiobjectlist:
 			self._addObject(childobject, client)

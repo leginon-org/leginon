@@ -689,7 +689,7 @@ class Application(wxObjectCanvas.wxRectangleObject):
 					if node.getAlias() == bindspec[2]:
 						tocp = node.inputconnectionpoints[0]
 				if fromcp is not None and tocp is not None:
-					binding = Binding(eval('event.' + bindspec[0]), fromcp, tocp)
+					binding = Binding(getattr(event, bindspec[0]), fromcp, tocp)
 					self.addShapeObject(binding)
 				else:
 					print 'Warning, cannot add binding', bindspec
