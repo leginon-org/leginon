@@ -281,14 +281,15 @@ class PresetsManager(node.Node):
 			print 'Enter a preset name!'
 
 	def uiSelectCallback(self, value):
-		print 'VALUE'
-		print value
 		if value:
-			index = value[0]
-			self.current = self.presets[index]
-			d = self.current.toDict(noNone=True)
-			print 'D', d
-			self.presetparams.set(d, callback=False)
+			try:
+				index = value[0]
+			except IndexError:
+				self.current = None
+			else:
+				self.current = self.presets[index]
+				d = self.current.toDict(noNone=True)
+				self.presetparams.set(d, callback=False)
 		return value
 
 	def uiParamsCallback(self, value):
