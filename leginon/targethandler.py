@@ -78,8 +78,12 @@ class TargetHandler(object):
 			grid = imagedata['grid']
 		else:
 			grid = None
-		lastnumber = self.lastTargetNumber(image=imagedata, session=self.session)
-		number = lastnumber + 1
+
+		## get next number if not already specified
+		if 'number' not in kwargs or kwargs['number'] is None:
+			lastnumber = self.lastTargetNumber(image=imagedata, session=self.session)
+			number = lastnumber + 1
+
 		targetdata = self.newTarget(image=imagedata, scope=imagedata['scope'], camera=imagedata['camera'], preset=imagedata['preset'], drow=drow, dcol=dcol, number=number, session=self.session, **kwargs)
 		return targetdata
 

@@ -54,6 +54,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
 			self.waitForTargetListDone()
 
 	def targetsFromClickImage(self, clickimage, typename, targetlist):
+		lastnumber = self.lastTargetNumber(image=imagedata, session=self.session)
+		number = lastnumber + 1
 		for imagetarget in clickimage.getTargetType(typename):
 			column, row = imagetarget
 			imagedata = clickimage.imagedata
@@ -61,8 +63,9 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
 			drow = row - imagearray.shape[0]/2
 			dcol = column - imagearray.shape[1]/2
 
-			targetdata = self.newTargetForImage(imagedata, drow, dcol, type=typename, list=targetlist)
+			targetdata = self.newTargetForImage(imagedata, drow, dcol, type=typename, list=targetlist, number=number)
 			self.publish(targetdata, database=True)
+			number += 1
 
 	def processImageData(self, imagedata):
 		'''
