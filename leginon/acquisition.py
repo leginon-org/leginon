@@ -84,10 +84,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 			stagepos = oldtargetemdata['stage position']
 			for axis,limits in stagelimits.items():
 				if stagepos[axis] < limits[0] or stagepos[axis] > limits[1]:
-					message = 'target stage position %s out of range... target aborting' % (stagepos,)
-					print message
-					title = 'stage out of range'
-					self.outputMessage(title, message)
+					messagestr = 'target stage position %s out of range... target aborting' % (stagepos,)
+					print messagestr
+					self.messagelog.error(messagestr)
 					return 'invalid'
 
 			oldpreset = targetdata['preset']
@@ -437,6 +436,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 	def defineUserInterface(self):
 		targetwatcher.TargetWatcher.defineUserInterface(self)
 
+		self.messagelog = uidata.MessageLog('Messages')
+
 		self.ui_image = uidata.Image('Image', None, 'rw')
 
 		self.displayimageflag = uidata.Boolean('Display Image', True, 'rw',
@@ -492,7 +493,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 																	trialmethod))
 
 		container = uidata.LargeContainer('Acquisition')
-		container.addObjects((self.ui_image, settingscontainer, controlcontainer))
+		container.addObjects((self.messagelog, self.ui_image, settingscontainer, controlcontainer))
 
 		self.uiserver.addObject(container)
 

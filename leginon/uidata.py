@@ -472,17 +472,19 @@ class MessageLog(Container):
 		Container.addObject(self, uiobject, block, thread)
 
 	def message(self, type, message):
-		self.addObject(Message('Message #%d' % self.counter, type, message))
+		messageobj = Message('Message #%d' % self.counter, type, message)
+		self.addObject(messageobj)
 		self.counter += 1
+		return messageobj
 
 	def information(self, message):
-		self.message('info', message)
+		return self.message('info', message)
 
 	def warning(self, message):
-		self.message('warning', message)
+		return self.message('warning', message)
 
 	def error(self, message):
-		self.message('error', message)
+		return self.message('error', message)
 
 class Dialog(ExternalContainer):
 	typelist = ExternalContainer.typelist + ('dialog',)

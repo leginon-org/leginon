@@ -178,14 +178,6 @@ class Focuser(acquisition.Acquisition):
 		t = threading.Thread(target=self.manualCheckLoop, args=(presetnames[0],))
 		t.setDaemon(1)
 		t.start()
-
-	def notifyManualFocus(self):
-		myname = self.id[-1]
-		title = 'manual focus ' + myname
-		message = 'Please confirm defocus in Focuser %s' % (myname,)
-		self.outputMessage(title, message)
-		node.beep()
-
 	def manualCheckLoop(self, presetname, emtarget=None):
 		## go to preset and target
 		self.presetsclient.toScope(presetname, emtarget)
@@ -194,7 +186,8 @@ class Focuser(acquisition.Acquisition):
 		time.sleep(delay)
 		self.manual_check_done.clear()
 		print 'starting manual focus loop'
-		self.notifyManualFocus()
+		message = self.messagelog.information('Please confirm defocus')
+		node.beep()
 		while 1:
 			if self.manual_check_done.isSet():
 				break
@@ -212,13 +205,16 @@ class Focuser(acquisition.Acquisition):
 			pow = imagefun.power(imarray)
 			self.man_image.set(imarray)
 			self.man_power.set(pow)
+		message.clear()
 		print 'manual focus loop done'
 
 	def waitForContinue(self):
 		print 'manual focus paused'
+		message = self.messagelog.information('manual focus is paused')
 		self.manual_continue.wait()
 		self.manual_continue.clear()
 		self.manual_pause.clear()
+		message.clear()
 
 	def uiFocusUp(self):
 		self.changeFocus('up')
@@ -325,6 +321,8 @@ class Focuser(acquisition.Acquisition):
 	def defineUserInterface(self):
 		acquisition.Acquisition.defineUserInterface(self)
 
+		self.messagelog = uidata.MessageLog('Messages')
+
 		self.melt = uidata.Float('Melt Time (s)', 0.0, 'rw', persist=True)
 
 		## auto focus
@@ -373,6 +371,6 @@ class Focuser(acquisition.Acquisition):
 		abortfailmethod = uidata.Method('Abort With Failure', self.uiAbortFailure)
 		testmethod = uidata.Method('Test Autofocus (broken)', self.uiTest)
 		container = uidata.LargeContainer('Focuser')
-		container.addObjects((self.melt, autocont, mancont, self.acquirefinal, abortfailmethod, testmethod))
+		container.addObjects((self.messagelog, self.melt, autocont, mancont, self.acquirefinal, abortfailmethod, testmethod))
 		self.uiserver.addObject(container)
 

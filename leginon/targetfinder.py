@@ -165,9 +165,8 @@ class TargetFinder(imagewatcher.ImageWatcher):
 
 	def notifyUserSubmit(self):
 		myname = self.id[-1]
-		title = '%s waiting' % (myname,)
-		message = '%s is waiting for you to submit targets' % (myname,)
-		self.outputMessage(title, message)
+		message = 'waiting for you to submit targets'
+		self.messagelog.information(message)
 		node.beep()
 
 	def handleTargetListDone(self, targetlistdoneevent):
@@ -200,6 +199,8 @@ class TargetFinder(imagewatcher.ImageWatcher):
 	def defineUserInterface(self):
 		imagewatcher.ImageWatcher.defineUserInterface(self)
 
+		self.messagelog = uidata.MessageLog('Messages')
+
 		# turn off data queuing by default
 		self.uidataqueueflag.set(False)
 
@@ -207,7 +208,7 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		self.ignore_images = uidata.Boolean('Ignore Images', False, 'rw', persist=True)
 
 		container = uidata.LargeContainer('Target Finder')
-		container.addObjects((self.wait_for_done,self.ignore_images))
+		container.addObjects((self.messagelog, self.wait_for_done,self.ignore_images))
 
 		self.uiserver.addObject(container)
 
