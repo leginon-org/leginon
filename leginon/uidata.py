@@ -310,6 +310,7 @@ class Integer(Data):
 	nonevalue = ''
 
 	def validate(self, value):
+		return True
 		if type(value) is not int and value is not None:
 			return False
 		else:
@@ -320,6 +321,7 @@ class Float(Data):
 	nonevalue = ''
 
 	def validate(self, value):
+		return True
 		if type(value) is not float and value is not None:
 			return False
 		else:
@@ -331,6 +333,7 @@ class String(Data):
 	nonevalue = ''
 
 	def validate(self, value):
+		return True
 		if type(value) is not str and value is not None:
 			return False
 		else:
