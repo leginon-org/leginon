@@ -269,7 +269,7 @@ class Focuser(acquisition.Acquisition):
 			self.logger.info('Correct image %s' % cor)
 			self.manualchecklock.acquire()
 			try:
-				imagedata = self.cam.acquireCameraImageData(correction=cor)
+				imagedata = self.cam.acquireCameraImageData(correction=cor, temp=True)
 			finally:
 				self.manualchecklock.release()
 			imarray = imagedata['image']
