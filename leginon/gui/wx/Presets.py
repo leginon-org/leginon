@@ -211,7 +211,7 @@ class PresetOrder(wx.Panel):
 		else:
 			self.downbutton.Enable(False)
 
-class EditPresetOrder(wx.Panel):
+class EditPresetOrder(PresetOrder):
 	def _widgets(self):
 		PresetOrder._widgets(self)
 		self.choice = wx.Choice(self, -1)
