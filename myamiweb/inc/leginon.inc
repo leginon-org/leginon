@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.36 $
- *	@version $Id: leginon.inc,v 1.36 2004-11-12 17:17:32 dfellman Exp $
+ *	@version $Revision: 1.37 $
+ *	@version $Id: leginon.inc,v 1.37 2004-11-16 08:05:30 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -608,9 +608,10 @@ class leginondata {
 			."on (pp.DEF_id=parent.`REF|PresetData|preset`) "
 			."where " 
 			."a.`DEF_id` ='".$imgId."' "; 
-		return $this->mysql->getSQLResult($q);
-		$Rparent = $this->mysql->SQLQuery($q);
-		$parent = mysql_fetch_array($Rparent, MYSQL_ASSOC);
+
+		$parents=array();
+		if ($Rparent = $this->mysql->getSQLResult($q))
+			$parent = $Rparent[0];
 		return $parent;
 	}
 
@@ -622,12 +623,12 @@ class leginondata {
 		$parentjoin = "";
 		$gridtable = $this->mysql->isTable('GridData');
 		$parenttargetfields = $this->mysql->getFields('AcquisitionImageTargetData');
-		$parenttargetjoin = (in_array('REF|CameraEMData|camera', $parenttargetfields)) ?  
+		$parenttargetjoin = 
 			"left join AcquisitionImageTargetData parenttarget "
-			."on (parenttarget.`DEF_id`=a.`REF|AcquisitionImageTargetData|target`) "
-			."left join CameraEMData cp "
+			."on (parenttarget.`DEF_id`=a.`REF|AcquisitionImageTargetData|target`) ";
+		$parenttargetjoin .= (in_array('REF|CameraEMData|camera', $parenttargetfields)) ?  
+			"left join CameraEMData cp "
 			."on (parenttarget.`REF|CameraEMData|camera`=cp.`DEF_id`) " : "";
-		$parenttargetjoin = "";
 		$gridselect = ($gridtable) ?
 			"grid.`grid ID` as gridId, " : "";
 		$gridjoin = ($gridtable) ?
@@ -675,10 +676,6 @@ class leginondata {
 			."scope.magnification, "
 			."scope.defocus, "
 			."scope.`high tension` "
-	//		."parenttarget.`delta column`, "
-	//		."parenttarget.`delta row`, "
-	//		."floor(parenttarget.`delta column`+cp.`SUBD|dimension|x`/2) as targetx, "
-	//		."floor(parenttarget.`delta row`+cp.`SUBD|dimension|y`/2) as targety "
 			."from AcquisitionImageData a "
 			."left join ScopeEMData scope on (scope.`DEF_id`=a.`REF|ScopeEMData|scope`) "
 			."left join SessionData s1 on (s1.`DEF_id`=a.`REF|SessionData|session`) "
