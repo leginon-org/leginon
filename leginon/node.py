@@ -258,6 +258,11 @@ class Node(leginonobject.LeginonObject):
 			[*] - keys in data
 		'''
 		result = []
+		if 'results' in kwargs:
+			results = kwargs['results']
+		else:
+			results = 0
+
 		if 'id' in kwargs and 'session' in kwargs and len(kwargs) == 2:
 			if self.session == kwargs['session']:
 				try:
@@ -265,30 +270,28 @@ class Node(leginonobject.LeginonObject):
 				except ResearchError:
 					pass
 
-		try:
-			datainstance = kwargs['dataclass'](('dummy ID',))
-			# copy should suffice
-			if 'indexinstance' in kwargs:
-				indices = dict(kwargs['indexinstance'])
-			else:
-				indices = copy.copy(kwargs)
-				del indices['dataclass']
-				for index in indices:
-					if index not in datainstance:
-						raise ValueError
-		except ValueError:
-				self.printerror('DBDataKeeper research failed, bad kwarg \'%s\''
-																																	% index)
-		else:
+		if results == 0 or results - len(result) > 0:
 			try:
-				result += self.datahandlers[dbdatakeeper.DBDataKeeper].query(
-																											datainstance, indices)
-			except KeyError:
-				self.printerror('DBDataKeeper research failed, no DBDataKeeper')
+				datainstance = kwargs['dataclass'](('dummy ID',))
+				# copy should suffice
+				if 'indexinstance' in kwargs:
+					indices = dict(kwargs['indexinstance'])
+				else:
+					indices = copy.copy(kwargs)
+					del indices['dataclass']
+					for index in indices:
+						if index not in datainstance:
+							raise ValueError
+			except ValueError:
+					self.printerror('DBDataKeeper research failed, bad kwarg \'%s\''
+																																		% index)
+			else:
+				try:
+					result += self.datahandlers[dbdatakeeper.DBDataKeeper].query(
+																	datainstance, indices, results - len(result))
+				except KeyError:
+					self.printerror('DBDataKeeper research failed, no DBDataKeeper')
 
-		if 'results' in kwargs:
-			if kwargs['results'] > 0:
-				return result[0:kwargs['results']]
 		return result
 
 	def unpublish(self, dataid, eventclass=event.UnpublishEvent):

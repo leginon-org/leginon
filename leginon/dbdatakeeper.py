@@ -13,7 +13,7 @@ class DBDataKeeper(datahandler.DataHandler):
 		# session id = session
 		self.dbd = sqldict.SQLDict()
 
-	def query(self, idata, indices):
+	def query(self, idata, indices, results=0):
 		# idata: instance of a Data class 
 		# indices: {field:value, ... } for the WHERE clause
 		#print 'querying'
@@ -26,7 +26,10 @@ class DBDataKeeper(datahandler.DataHandler):
 		self.dbd.myTable.myIndex = self.dbd.myTable.Index(sqlindices.keys(),
 															orderBy = {'fields':('DEF_timestamp',),'sort':'DESC'})
 		# return a list of dictionnaries for all matching rows
-		result = self.dbd.myTable.myIndex[sqlindices.values()].fetchall()
+		if results > 0:
+			result = self.dbd.myTable.myIndex[sqlindices.values()].fetchmany(results)
+		else:
+			result = self.dbd.myTable.myIndex[sqlindices.values()].fetchall()
 		result = map(sqldict.sql2data, result)
 		for i in range(len(result)):
 			del result[i]['DEF_id']
@@ -84,7 +87,10 @@ class DBDataKeeper(datahandler.DataHandler):
 			if idata['image'] is not None:
 				# filename = ???
 				filename = './images/%s-%s.mrc' % (self.session, idata['id'])
-				Mrc.numeric_to_mrc(idata['image'], filename)
+				try:
+					Mrc.numeric_to_mrc(idata['image'], filename)
+				except:
+					self.printerror('error converting image to file')
 				idata['database filename'] = filename
 				idata['image'] = None
 
@@ -94,7 +100,10 @@ class DBDataKeeper(datahandler.DataHandler):
 				if idata[key]['image'] is not None:
 					# filename = ???
 					filename = './images/%s-%s-%s.mrc' % (self.session, idata['id'], key)
-					Mrc.numeric_to_mrc(idata[key]['image'], filename)
+					try:
+						Mrc.numeric_to_mrc(idata[key]['image'], filename)
+					except:
+						self.printerror('error converting image to file')
 					idata[key]['database filename'] = filename
 					idata[key]['image'] = None
 
