@@ -3,6 +3,7 @@ import tkSimpleDialog
 import math
 import application
 import nodeclassreg
+import event
 
 class Line(object):
 	def __init__(self, canvas, position1, position2):
@@ -158,9 +159,10 @@ class ArrowLine(Line):
 														widget.getBox())
 
 class LabeledLine(ArrowLine):
-	def __init__(self, canvas, originposition, destinationposition,
-																						destination, binding):
-		self.binding = binding
+	def __init__(self, canvas, editor, originposition,
+								destinationposition, destination):
+		self.labels = {}
+		self.editor = editor
 		ArrowLine.__init__(self, canvas, originposition,
 												destinationposition, destination)
 
@@ -173,39 +175,54 @@ class LabeledLine(ArrowLine):
 	def createline(self, originposition, destinationposition):
 		ArrowLine.createline(self, originposition, destinationposition)
 
-		self.labeltext = Tkinter.StringVar()
-		self.labeltext.set(self.labelText(self.binding))
-		self.label = Tkinter.Label(self.canvas, textvariable=self.labeltext,
-																relief=Tkinter.RAISED, justify=Tkinter.LEFT,
-																bd=1, padx=5, pady=3, bg='white')
-		self.label.lower()
-		self.label.place(
-							x = (int(destinationposition[0]) + int(originposition[0]))/2,
-							y = (int(destinationposition[1]) + int(originposition[1]))/2,
-							anchor=Tkinter.CENTER)
-		self.label.bind('<Button-1>', self.lift)
-
 	def lift(self, ievent):
-		self.label.lift()
+		for label in self.labels:
+			self.labels[label].lift()
 
 	def move(self, originposition, destinationposition, destination=None):
 		ArrowLine.move(self, originposition, destinationposition, destination)
-		self.label.place(
-							x = (int(destinationposition[0]) + int(originposition[0]))/2,
-							y = (int(destinationposition[1]) + int(originposition[1]))/2,
-							anchor=Tkinter.CENTER)
+		self.placeLabels()
+
+	def placeLabels(self):
+		coordinates = self.canvas.coords(self.line)
+		originposition = (coordinates[0], coordinates[1])
+		destinationposition = (coordinates[2], coordinates[3])
+		offset = 0
+		for label in self.labels:
+			self.labels[label].place(
+				x = (int(destinationposition[0]) + int(originposition[0]))/2,
+				y = (int(destinationposition[1]) + int(originposition[1]))/2 + offset,
+				anchor=Tkinter.CENTER)
+			offset += self.labels[label].winfo_reqheight()
 
 	def delete(self):
-		ArrowLine.delete(self)
-		self.label.place_forget()
+		labels = self.labels.keys()
+		for label in labels:
+			self.deleteBinding(label)
 
 	def append(self, binding):
-		text = self.labeltext.get()
-		self.labeltext.set(text + '\n' + self.labelText(binding))
+		if binding in self.labels:
+			return
+		labeltext = Tkinter.StringVar()
+		labeltext.set(self.labelText(binding))
+		self.labels[binding] = Tkinter.Label(self.canvas, textvariable=labeltext,
+																relief=Tkinter.RAISED, justify=Tkinter.LEFT,
+																bd=1, padx=5, pady=3, bg='white')
+
+		self.placeLabels()
+		self.labels[binding].bind('<Button-1>', self.lift)
+
+	def deleteBinding(self, binding):
+		self.labels[binding].place_forget()
+		del self.labels[binding]
+		if len(self.labels) == 0:
+			ArrowLine.delete(self)
+		self.editor.app.delBindSpec(binding)
 
 class ConnectionManager(Line):
-	def __init__(self, canvas):
+	def __init__(self, canvas, editor):
 		self.canvas = canvas
+		self.editor = editor
 		self.activeconnection = None
 		self.lines = {}
 
@@ -243,9 +260,7 @@ class ConnectionManager(Line):
 		if origin == destination:
 			return
 		key = (origin, destination)
-		if key in self.lines:
-			self.lines[key]['line'].append(binding)
-		else:
+		if not key in self.lines:
 			self.lines[key] = {}
 			inversekey = (destination, origin)
 			if inversekey in self.lines:
@@ -257,8 +272,10 @@ class ConnectionManager(Line):
 				self.lines[key]['offset'] = False
 
 			position = self.offsetPosition(origin, destination)
-			self.lines[key]['line'] = LabeledLine(self.canvas, position[0],
-																						position[1], destination, binding)
+			self.lines[key]['line'] = LabeledLine(self.canvas, self.editor,
+																	position[0], position[1], destination)
+		self.lines[key]['line'].append(binding)
+		self.editor.app.addBindSpec(binding)
 
 	def deleteConnection(self, origin, destination):
 		key = (origin, destination)
@@ -286,18 +303,24 @@ class ConnectionManager(Line):
 
 	def startConnection(self, origin, binding=None):
 		if self.activeconnection is None:
-			position = origin.getPosition()
-			self.activeconnection = {}
-			self.activeconnection['origin'] = origin
-			self.activeconnection['binding'] = binding
-			self.activeconnection['line'] = LabeledLine(self.canvas, position,
-																									position, None, binding)
+			eventdialog = EventDialog(self.editor, 'New Connection')
+			if eventdialog.result is not None:
+				binding = (eventdialog.result, origin, None)
+				position = origin.getPosition()
+				self.activeconnection = {}
+				self.activeconnection['origin'] = origin
+				self.activeconnection['binding'] = binding
+				self.activeconnection['line'] = LabeledLine(self.canvas, self.editor,
+																										position, position, None)
+				self.activeconnection['line'].append(binding)
 
 	def finishConnection(self, destination):
 		if self.activeconnection is not None:
 			self.activeconnection['line'].delete()
+			binding = (self.activeconnection['binding'][0],
+									self.activeconnection['binding'][1], None)
 			self.addConnection(self.activeconnection['origin'], destination,
-																					self.activeconnection['binding'])
+																																binding)
 			self.activeconnection = None
 
 	def abortConnection(self, ievent=None):
@@ -398,7 +421,7 @@ class Editor(Tkinter.Frame):
 		self.pack(fill=Tkinter.BOTH, expand=1)
 		self.nodes = []
 		self.canvas = Tkinter.Canvas(self, height=600, width=800, bg='white')
-		self.connectionmanager = ConnectionManager(self.canvas)
+		self.connectionmanager = ConnectionManager(self.canvas, self)
 		self.canvas.bind('<Button-3>', self.connectionmanager.abortConnection)
 		self.canvas.bind('<Motion>', self.moveConnection)
 		self.canvas.pack(fill=Tkinter.BOTH, expand=1)
@@ -413,10 +436,16 @@ class Editor(Tkinter.Frame):
 		return node
 
 	def circle(self):
-		radius = (250, 200)
+		nNodes = len(self.nodes)
+		if nNodes == 0:
+			return
+		angle = 2*math.pi/nNodes
 		center = (400, 300)
-		angle = 2*math.pi/len(self.nodes)
-		for i in range(len(self.nodes)):
+		if nNodes == 1:
+			radius = (0, 0)
+		else:
+			radius = (250, 200)
+		for i in range(nNodes):
 			self.nodes[i].move(int(round(math.cos(i*angle)*radius[0] + center[0])),
 													int(round(math.sin(i*angle)*radius[1] + center[1])))
 
@@ -465,9 +494,37 @@ class ApplicationEditor(Editor):
 																					self.mapping[binding[2]],
 																					binding)
 
+class EventDialog(tkSimpleDialog.Dialog):
+	def __init__(self, parent, title, args=None):
+		self.args = args
+		self.eventclasses = event.eventClasses()
+		tkSimpleDialog.Dialog.__init__(self, parent, title)
+
+	def body(self, master):
+		Tkinter.Label(master, text='Event:').grid(row=0)
+
+		self.eventslistbox = Tkinter.Listbox(master)
+		for item in self.eventclasses:
+			self.eventslistbox.insert(Tkinter.END, item)
+		self.eventslistbox.select_set(0)
+
+		self.eventslistbox.grid(row=0, column=1)
+
+		if self.args is not None:
+			self.classlistbox.select_clear(0, Tkinter.END)
+			self.classlistbox.select_set(self.eventclasses.index(self.args))
+
+	def apply(self):
+		selection = self.eventslistbox.curselection()
+		if len(selection) == 0:
+			selection = ('0',)
+		event = self.eventclasses[self.eventclasses.keys()[int(selection[0])]]
+		self.result = event
+
 class NodeDialog(tkSimpleDialog.Dialog):
 	def __init__(self, parent, title, args=None):
 		self.args = args
+		self.nodeclasses = nodeclassreg.getNodeClassNames()
 		tkSimpleDialog.Dialog.__init__(self, parent, title)
 
 	def body(self, master):
@@ -480,7 +537,6 @@ class NodeDialog(tkSimpleDialog.Dialog):
 		self.nameentry = Tkinter.Entry(master)
 
 		self.classlistbox = Tkinter.Listbox(master)
-		self.nodeclasses = nodeclassreg.getNodeClassNames()
 		for item in self.nodeclasses:
 			self.classlistbox.insert(Tkinter.END, item)
 		self.classlistbox.select_set(0)
