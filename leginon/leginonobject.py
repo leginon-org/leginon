@@ -10,5 +10,5 @@ class LeginonObject(object):
 
 	def location(self):
 		'return a dict describing the location of this object'
-		return loc
+		return self.loc
 
