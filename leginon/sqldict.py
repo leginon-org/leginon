@@ -151,6 +151,7 @@ from types import *
 import data
 import strictdict
 import Mrc
+import os
 
 class SQLDict:
 
@@ -294,12 +295,29 @@ class SQLDict:
 		return datalist
 
 	def _connectData(self, root, pool):
+		'''
+		This connects the individual data instances together.
+		After connecting, it also reads in data from files.
+		'''
 		if root is None:
 			return
+		needpath = []
 		for key,value in root.items():
 			if isinstance(value, data.DataReference):
-				root[key] = pool[value.qikey]
-				self._connectData(root[key], pool)
+				target = pool[value.qikey]
+				root[key] = target
+				self._connectData(target, pool)
+				if isinstance(target, data.SessionData):
+					imagepath = target['image path']
+			if isinstance(value, FileReference):
+				needpath.append(key)
+
+		## now read data using the found path
+		for key in needpath:
+			fileref = root[key]
+			# replace reference with actual data
+			root[key] = fileref.read(imagepath)
+
 
     class _createSQLTable:
 
@@ -961,25 +979,17 @@ def matrix2dict(matrix, name=None):
 			j+=1
 	return d
 
-def saveMRC(object, name, filename):
+def saveMRC(object, name, path, filename):
 	"""
 	Save Numeric array to MRC file and replace it with filename
 	"""
 	d={}
 	k = sep.join(['MRC',name])
+	fullname = os.path.join(path,filename)
 	if object is not None:
-		Mrc.numeric_to_mrc(object, filename)
+		Mrc.numeric_to_mrc(object, fullname)
 	d[k] = filename
 	return d
-
-def loadMRC(in_dict):
-	'''
-	Load MRC and return Numeric array
-	'''
-	## should be only one item in this dict
-	key,value = in_dict.popitem()
-	narray = Mrc.mrc_to_numeric(value)
-	return narray
 
 def bin2dict(object, name=None):
 	"""
@@ -1079,10 +1089,11 @@ def sqlColumnsDefinition(in_dict, noDefault=None):
 				nd.sort()
 			else:
 				filename = in_dict.filename()
+				path = in_dict.path()
 				## value = None means don't really save
 				## MRC in file system, but return filename 
 				## string
-				mrcdict = saveMRC(None,key,filename)
+				mrcdict = saveMRC(None,key,path,filename)
 				nd = sqlColumnsDefinition(mrcdict, noDefault=[])
 			columns += nd
 			# Think about store the filename
@@ -1156,7 +1167,8 @@ def sqlColumnsFormat(in_dict):
 				datadict = matrix2dict(value,key)
 			else:
 				filename = in_dict.filename()
-				datadict = saveMRC(value,key,filename)
+				path = in_dict.path()
+				datadict = saveMRC(value,key,path,filename)
 			columns.update(datadict)
 		elif type(value) is dict:
 			flatdict = flatDict({key:value})
@@ -1208,13 +1220,31 @@ def sql2data(in_dict, qikey=None, qinfo=None):
 
 	return content
 
+## this is a place holder for data that is stored in a file
+## until we find the full path
+class FileReference(object):
+	'''
+	this is a place holder for data that is stored in a file
+	until we find the full path
+	   'filename' is the filename, without a path.
+	   'loader' is a function that takes the full path filename and
+	     returns the data that was read from file.
+	Once you find the path, call read(path) to return the data.
+	'''
+	def __init__(self, filename, pathkey, loader):
+		self.filename = filename
+		self.loader = loader
+		self.pathkey = pathkey
+
+	def read(self, path):
+		fullname = os.path.join(path, self.filename)
+		return self.loader(fullname)
 
 def datatype(in_dict, qikey=None, qinfo=None):
 	"""
 	This function converts a specific string or a SQL type to 
 	a python type.
 	"""
-
 	content={}
 	allarrays={}
 	for key,value in in_dict.items():
@@ -1231,7 +1261,9 @@ def datatype(in_dict, qikey=None, qinfo=None):
 		elif a[0] == 'BIN':
 			content[a[1]] = dict2bin({key:value})
 		elif a[0] == 'MRC':
-			content[a[1]] = loadMRC({key:value})
+			## set up a FileReference, to be used later
+			## when we know the full path
+			content[a[1]] = FileReference(value, 'image path', Mrc.mrc_to_numeric)
 		elif a[0] == 'REF':
 			jqikey = qinfo[qikey]['join'][a[2]]
 			dr = data.DataReference()
@@ -1239,6 +1271,7 @@ def datatype(in_dict, qikey=None, qinfo=None):
 			content[a[2]] = dr
 		elif not a[0] in ['SUBD', ]:
 			content[key]=value
+
 	for matrix in allarrays:
 		dm={}
 		for key,value in in_dict.items():
