@@ -77,5 +77,9 @@ class LeginonObject(object):
 		You are not using Python 2.2.2!  deepcopy at your own risk!
 		XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 		'''
-		if sys.version[:5] != '2.2.2':
+		vinfo = sys.version_info
+
+		if vinfo[0] == 2 and vinfo[1] == 2 and vinfo[2] >=2:
+			pass
+		else:
 			self.printerror(message)
