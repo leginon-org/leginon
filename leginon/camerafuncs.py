@@ -79,8 +79,8 @@ class CameraFuncs(object):
 
 		currentcamstate = self.cameraState()
 		if currentcamstate is None:
-			sizex = 2048
-			sizey = 2048
+			sizex = 4096
+			sizey = 4096
 		else:
 			sizex = currentcamstate.content['camera size']['x']
 			sizey = currentcamstate.content['camera size']['y'] 
@@ -125,9 +125,9 @@ class CameraFuncs(object):
 			initstate = self.cameraState()
 			if initstate is None:
 				initstate = {
-					'exposure time': 500,
-					'dimension':{'x':512,'y':512},
-					'binning':{'x':1, 'y':1},
+					'exposure time': 400,
+					'dimension':{'x':1024,'y':1024},
+					'binning':{'x':4, 'y':4},
 					'offset':{'x':0,'y':0}
 				}
 			else:
