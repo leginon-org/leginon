@@ -69,6 +69,12 @@ def seconds2str(seconds):
 		string += '%i second%s' % (seconds, value)
 	return string
 
+class TestCommunication(object):
+	def __init__(self):
+		self.gridNumber = -1
+		for i in range(11):
+			setattr(self, 'Signal' + str(i), 0)
+
 class RobotException(Exception):
 	pass
 
@@ -171,6 +177,7 @@ if sys.platform == 'win32':
 		def __init__(self, id, session, managerlocation, **kwargs):
 
 			self.simulate = False
+			#self.simulate = True
 
 			RobotNode.__init__(self, id, session, managerlocation, **kwargs)
 			self.gridorder = []
@@ -199,11 +206,14 @@ if sys.platform == 'win32':
 
 		def _queueHandler(self):
 			pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
-			try:
-				self.communication = win32com.client.Dispatch(
+			if self.simulate:
+					self.communication = TestCommunication()
+			else:
+				try:
+					self.communication = win32com.client.Dispatch(
 																									'RobotCommunications.Signal')
-			except pywintypes.com_error, e:
-				raise RuntimeError('Cannot initialized robot communications')
+				except pywintypes.com_error, e:
+					raise RuntimeError('Cannot initialized robot communications')
 
 			while True:
 				request = self.queue.get()
@@ -676,6 +686,7 @@ class RobotNotification(RobotNode):
 	def __init__(self, id, session, managerlocation, **kwargs):
 
 		self.simulate = False
+		#self.simulate = True
 
 		RobotNode.__init__(self, id, session, managerlocation, **kwargs)
 
