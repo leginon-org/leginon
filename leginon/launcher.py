@@ -4,7 +4,7 @@ import signal
 import node
 import event
 import threading
-import common
+import nodeclassreg
 import calllauncher
 
 
@@ -26,11 +26,15 @@ class Launcher(node.Node):
 		self.managerloc = loc
 		self.addEventClient(('manager',), loc)
 
-		e = event.LauncherAvailableEvent(self.ID(), self.location())
+		launcherinfo = {'location': self.location(), 'node classes': self.getNodeClassNames()}
+		e = event.LauncherAvailableEvent(self.ID(), launcherinfo)
 		self.outputEvent(ievent=e, wait=1)
 
 	def main(self):
 		pass
+
+	def getNodeClassNames(self):
+		return nodeclassreg.getNodeClassNames()
 
 	def handleLaunch(self, launchevent):
 		# unpack event content
@@ -39,11 +43,14 @@ class Launcher(node.Node):
 		args = launchevent.content['args']
 		kwargs = launchevent.content['kwargs']
 
+		# get the requested class object
+		nodeclass = nodeclassreg.getNodeClass(targetclass)
+
 		## thread or process
 		if newproc:
-			self.caller.launchCall('fork',targetclass,args,kwargs)
+			self.caller.launchCall('fork',nodeclass,args,kwargs)
 		else:
-			self.caller.launchCall('thread',targetclass,args,kwargs)
+			self.caller.launchCall('thread',nodeclass,args,kwargs)
 
 	def launchThread(self):
 		pass

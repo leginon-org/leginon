@@ -6,7 +6,6 @@ import datahandler
 import node
 import application
 import data
-import common
 import event
 import launcher
 
@@ -18,7 +17,8 @@ class Manager(node.Node):
 		# the id is manager (in a list)
 		node.Node.__init__(self, id, None)
 
-		self.common = common
+		self.nodeclasslist = []
+
 		self.distmap = {}
 		# maps event id to list of node it was distributed to if event.confirm
 		self.confirmmap = {}
@@ -75,12 +75,15 @@ class Manager(node.Node):
 				del self.confirmmap[ievent.content]
 				self.outputEvent(ievent, 0, nodeid)
 
-	def addLauncher(self, nodeid):
+	def addLauncher(self, nodeid, nodeclasses):
 		name = nodeid[-1]
 		if name not in self.launcherlist:
 			self.launcherlist.append(name)
-		self.launcherdict[name] = nodeid
+		self.launcherdict[name] = {'id':nodeid, 'node classes':nodeclasses}
 		self.launcherlistdata.set(self.launcherlist)
+
+		### temporary, see def below
+		self.addNodeClasses(nodeclasses)
 
 	def delLauncher(self, nodeid):
 		try:
@@ -90,10 +93,27 @@ class Manager(node.Node):
 			pass
 		self.launcherlistdata.set(self.launcherlist)
 
+	### this is a temporary way of listing all available node classes
+	### until we do launcher specific node class lists
+	def addNodeClasses(self, nodeclasslist):
+		for nodeclass in  nodeclasslist:
+			if nodeclass not in self.nodeclasslist:
+				self.nodeclasslist.append(nodeclass)
+		self.nodeclasslistdata.set(self.nodeclasslist)
+
 	def registerNode(self, readyevent):
 		nodeid = readyevent.id[:-1]
 		print 'registering node', nodeid
-		nodelocation = readyevent.content
+
+		# check if new node is launcher
+		## this is kind of stupid, but content is different
+		## between launcher and regular nodes
+		if isinstance(readyevent, event.LauncherAvailableEvent):
+			nodelocation = readyevent.content['location']
+			nodeclasses = readyevent.content['node classes']
+			self.addLauncher(nodeid, nodeclasses)
+		else:
+			nodelocation = readyevent.content
 
 		# for the clients and mapping
 		self.addEventClient(nodeid, nodelocation)
@@ -108,9 +128,6 @@ class Manager(node.Node):
 			nodelocationdata = data.NodeLocationData(nodeid, nodelocation)
 		self.server.datahandler._insert(nodelocationdata)
 
-		# check if new node is launcher
-		if isinstance(readyevent, event.LauncherAvailableEvent):
-			self.addLauncher(nodeid)
 
 		ndict = self.nodeDict()
 		self.nodetreedata.set(ndict)
@@ -207,7 +224,7 @@ class Manager(node.Node):
 		"""
 		launcher = id of launcher node
 		newproc = flag to indicate new process, else new thread
-		target = callable object under self.common
+		target = name of a class in this launchers node class list
 		args, kwargs = args for callable object
 		"""
 		ev = event.LaunchEvent(self.ID(), newproc, target, args, kwargs)
@@ -275,18 +292,15 @@ class Manager(node.Node):
 		self.ui_launchers = {}
 
 		self.ui_eventclasses = event.eventClasses()
-		self.ui_nodeclasses = common.nodeClasses()
 
 		eventclass_list = self.ui_eventclasses.keys()
 		eventclass_list.sort()
-		nodeclass_list = self.ui_nodeclasses.keys()
-		nodeclass_list.sort()
 		self.launcherlist = []
 		self.launcherdict = {}
 
 		## UI data to be used as enums for method args
 		self.launcherlistdata = self.registerUIData('launcherlist', 'array')
-		self.nodeclasslistdata = self.registerUIData('nodeclasslist', 'array', default=nodeclass_list)
+		self.nodeclasslistdata = self.registerUIData('nodeclasslist', 'array', default=())
 		self.eventclasslistdata = self.registerUIData('eventclasslist', 'array', default=eventclass_list)
 
 		argspec = (
@@ -341,16 +355,15 @@ class Manager(node.Node):
 				nodeinfo[nodename] = nodeloc
 		return nodeinfo
 
-	def uiLaunch(self, name, launcher_str, nodeclass_str, args, newproc=0):
+	def uiLaunch(self, name, launcher_str, nodeclass, args, newproc=0):
 		"""
 		user interface to the launchNode method
 		This simplifies the call for a user by using a
 		string to represent the launcher ID, node class, and args
 		"""
-		print 'LAUNCH %s,%s,%s,%s,%s' % (name, launcher_str, nodeclass_str, args, newproc)
+		print 'LAUNCH %s,%s,%s,%s,%s' % (name, launcher_str, nodeclass, args, newproc)
 
-		launcher_id = self.launcherdict[launcher_str]
-		nodeclass = self.ui_nodeclasses[nodeclass_str]
+		launcher_id = self.launcherdict[launcher_str]['id']
 
 		args = '(%s)' % args
 		try:

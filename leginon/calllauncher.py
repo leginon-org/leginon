@@ -9,8 +9,6 @@ call to any callable python object either in a new thread or a new process
 """
 
 import os, sys, threading, cPickle
-import common
-
 
 class CallLauncher(object):
 	def __init__(self, slave=0):
