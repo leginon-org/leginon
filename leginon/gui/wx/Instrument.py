@@ -124,6 +124,7 @@ class StageSizer(wx.StaticBoxSizer):
 								wx.ALIGN_CENTER_VERTICAL)
 
 		self.sz.Add(self.parameters['Correction'], (1, 0), (1, 4), wx.ALIGN_CENTER)
+		self.parameters['Correction'].Enable(False)
 
 		st = wx.StaticText(self.parent, -1, 'Position:')
 		self.sz.Add(st, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -133,12 +134,14 @@ class StageSizer(wx.StaticBoxSizer):
 			self.sz.Add(st, (2, i+1), (1, 1), wx.ALIGN_CENTER)
 			self.sz.Add(self.parameters[a], (3, i+1), (1, 1),
 									wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+			self.parameters[a].Enable(False)
 
 		for i, a in enumerate(['a', 'b']):
 			st = wx.StaticText(self.parent, -1, a)
 			self.sz.Add(st, (4, i+1), (1, 1), wx.ALIGN_CENTER)
 			self.sz.Add(self.parameters[a], (5, i+1), (1, 1),
 									wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+			self.parameters[a].Enable(False)
 
 		st = wx.StaticText(self.parent, -1, 'Angle:')
 		self.sz.Add(st, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -286,7 +289,7 @@ class MainSizer(wx.StaticBoxSizer):
 			'Intensity',
 			'Spot size',
 		]
-		parameters = {
+		self.parameters = {
 			'High tension': wx.StaticText(self.parent, -1, ''),
 			'Magnification': FloatEntry(self.parent, -1, chars=7),
 			'Intensity': FloatEntry(self.parent, -1, chars=7),
@@ -296,9 +299,11 @@ class MainSizer(wx.StaticBoxSizer):
 		for i, p in enumerate(parameterorder):
 			st = wx.StaticText(self.parent, -1, p + ':')
 			self.sz.Add(st, (i, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-			self.sz.Add(parameters[p], (i, 1), (1, 1),
+			self.sz.Add(self.parameters[p], (i, 1), (1, 1),
 									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
 			self.sz.AddGrowableRow(i)
+			if isinstance(self.parameters[p], Entry):
+				self.parameters[p].Enable(False)
 
 		self.sz.AddGrowableCol(1)
 
@@ -341,6 +346,10 @@ class Panel(gui.wx.Node.Panel):
 		self.szparameters.Add(self.szlowdose, (4, 1), (1, 1), wx.EXPAND)
 
 		self.parametermap = {
+			'high tension': self.szmain.parameters['High tension'],
+			'magnification': self.szmain.parameters['Magnification'],
+			'intensity': self.szmain.parameters['Intensity'],
+			'spot size': self.szmain.parameters['Spot size'],
 			'stage status': self.szstage.parameters['Status'],
 			'corrected stage position': self.szstage.parameters['Correction'],
 			'stage position': {
@@ -365,6 +374,7 @@ class Panel(gui.wx.Node.Panel):
 			parameter.SetLabel(value)
 		elif isinstance(parameter, (Entry, wx.TextCtrl, wx.CheckBox)):
 			parameter.SetValue(value)
+			parameter.Enable(True)
 
 	def _setParameters(self, parameters, parametermap=None):
 		if parametermap is None:
