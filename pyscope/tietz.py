@@ -30,6 +30,8 @@ class Ping:
 		return False
 
 class Tietz(object):
+	cameratype = None
+	mmname = ''
 	dependencymapping = {
 		'getChipName': [('cpChipName', 'r')],
 		'getCameraName': [('cpCameraName', 'r')],
@@ -70,7 +72,10 @@ class Tietz(object):
 		'setUseSpeedTableForGainSwitch': [('cpUseSpeedtabForGainSwitch', 'w')],
 	}
 
-	def __init__(self, cameratypename):
+	def __init__(self):
+		if self.cameratype is None:
+			raise NotImplementedError('Tietz virtual class')
+
 		self.unsupported = []
 		self.arraytypecode = 'H'
 		self.numerictypecode = Numeric.UInt16
@@ -122,29 +127,8 @@ class Tietz(object):
 		elif hr == win32com.client.constants.crSucceed:
 			pass
 
-		if cameratypename == 'PXL':
-			cameratype = win32com.client.constants.ctPXL
-			self.mmname = 'CAM_PXL_DATA'
-		elif cameratypename == 'Simulation':
-			cameratype = win32com.client.constants.ctSimulation
-			self.mmname = 'CAM_SIMU_DATA'
-		elif cameratypename == 'PVCam':
-			cameratype = win32com.client.constants.ctPVCam
-			self.mmname = 'CAM_PVCAM_DATA'
-		elif cameratypename == 'FastScan':
-			cameratype = win32com.client.constants.ctFastScan
-			self.mmname = 'CAM_FASTSCAN_DATA'
-		elif cameratypename == 'FastScanFW':
-			cameratype = win32com.client.constants.ctF114_FW
-			self.mmname = 'CAM_FSFW_DATA'
-		elif cameratypename == 'SCX':
-			cameratype = win32com.client.constants.ctSCX
-			self.mmname = 'CAM_SCX_DATA'
-		else:
-			raise ValueError('Invalid camera type specified')
-	
 		try:
-			hr = self.camera.Initialize(cameratype, 0)
+			hr = self.camera.Initialize(self.cameratype, 0)
 		except pywintypes.com_error, e:
 			print 'Error initializing camera'
 			print e
@@ -209,7 +193,7 @@ class Tietz(object):
 			'offset': {'type': dict, 'values':
 																		{'x': {'type': int}, 'y': {'type': int}}},
 			'exposure time': {'type': int},
-			'exposure type': {'type': str, 'values': ['normal', 'dark']},
+			'exposure type': {'type': str, 'values': ['normal', 'dark', 'bias']},
 			'image data': {'type': Numeric.arraytype},
 			'chip name': {'type': str},
 			'camera name': {'type': str},
@@ -321,13 +305,13 @@ class Tietz(object):
 
 	def exit(self):
 		self.camera.UnlockCAMC()
-	
-	def mmapImage(self, size):
-		map = mmapfile.mmapfile('', self.mmname, size)
-		result = map.read(size)
-		map.close()
-		return result
 
+	def __del__(self):
+		try:
+			self.camera.UnlockCAMC()
+		except:
+			pass
+	
 	def getOffset(self):
 		return self.offset
 
@@ -378,8 +362,8 @@ class Tietz(object):
 		return self.exposuretype
 
 	def setExposureType(self, value):
-		# {'type': str, 'values': ['normal', 'dark']}
-		if value not in ['normal', 'dark']:
+		# {'type': str, 'values': ['normal', 'dark', 'bias']}
+		if value not in ['normal', 'dark', 'bias']:
 			raise ValueError('Invalid exposure type')
 		self.exposuretype = value
 	
@@ -418,16 +402,21 @@ class Tietz(object):
 
 		exposuretype = self.getExposureType()
 		if exposuretype == 'normal':
-			acquiremethod = self.camera.AcquireImage
+			hr = self.camera.AcquireImage(self.getExposureTime(), 0)
 		elif exposuretype == 'dark':
-			acquiremethod = self.camera.AcquireDark
-
-		hr = acquiremethod(self.getExposureTime(), 0)
+			hr = self.camera.AcquireDark(self.getExposureTime(), 0)
+		elif exposuretype == 'bias':
+			hr = self.camera.AcquireBias(0)
+		else:
+			raise ValueError('Invalid exposure type for image acquisition')
 
 		imagesize = self.bytesperpixel*dimension['x']*dimension['y']
+
 		# Numeric directly?
-		a = array.array(self.arraytypecode, self.mmapImage(imagesize))
-		na = Numeric.array(a, self.numerictypecode)
+		map = mmapfile.mmapfile('', self.mmname, imagesize)
+		na = Numeric.array(array.array(self.arraytypecode, map.read(imagesize)),
+												self.numerictypecode)
+		map.close()
 		na.shape = (dimension['y'], dimension['x'])
 		return na
 		#return Numeric.reshape(na, (dimension['y'], dimension['x']))
@@ -659,26 +648,26 @@ class Tietz(object):
 			raise RuntimeError('Error getting camera axis')
 
 class TietzPXL(Tietz):
-	def __init__(self):
-		Tietz.__init__(self, 'PXL')
+	cameratype = win32com.client.constants.ctPXL
+	mmname = 'CAM_PXL_DATA'
 	
 class TietzSimulation(Tietz):
-	def __init__(self):
-		Tietz.__init__(self, 'Simulation')
+	cameratype = win32com.client.constants.ctSimulation
+	mmname = 'CAM_SIMU_DATA'
 
 class TietzPVCam(Tietz):
-	def __init__(self):
-		Tietz.__init__(self, 'PVCam')
+	cameratype = win32com.client.constants.ctPVCam
+	mmname = 'CAM_PVCAM_DATA'
 	
 class TietzFastScan(Tietz):
-	def __init__(self):
-		Tietz.__init__(self, 'FastScan')
+	cameratype = win32com.client.constants.ctFastScan
+	mmname = 'CAM_FASTSCAN_DATA'
 	
 class TietzFastScanFW(Tietz):
-	def __init__(self):
-		Tietz.__init__(self, 'FastScanFW')
+	cameratype = win32com.client.constants.ctF114_FW
+	mmname = 'CAM_FSFW_DATA'
 	
 class TietzSCX(Tietz):
-	def __init__(self):
-		Tietz.__init__(self, 'SCX')
+	cameratype = win32com.client.constants.ctSCX
+	mmname = 'CAM_SCX_DATA'
 
