@@ -366,6 +366,7 @@ class ImageShiftCalibration(Calibration):
 		return {'image shift': {axis: value}}
 
 	def pixelShift(self, ievent):
+		print 'foooooooooo'
 		print 'calibration =', self.calibration
 		print 'pixel shift =', ievent.content
 		matrix = self.calibration2matrix()
