@@ -11,13 +11,13 @@ import copy
 class Acquisition(targetwatcher.TargetWatcher):
 	def __init__(self, id, nodelocations, **kwargs):
 		targetwatcher.TargetWatcher.__init__(self, id, nodelocations, **kwargs)
+		self.cam = camerafuncs.CameraFuncs(self)
 
 		self.calclients = {
 			'image shift': calibrationclient.ImageShiftCalibrationClient(self),
 			'stage position': calibrationclient.StageCalibrationClient(self),
 			'modeled stage position': calibrationclient.ModeledStageCalibrationClient(self)
 		}
-		self.cam = camerafuncs.CameraFuncs(self)
 		self.presetsclient = presets.PresetsClient(self)
 
 		self.defineUserInterface()
