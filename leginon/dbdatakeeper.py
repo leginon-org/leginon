@@ -71,7 +71,11 @@ class DBDataKeeper(datahandler.DataHandler):
 		info['alias'] = myalias
 		#info['python id'] = myid
 
-		wheredict = {}
+		dbid = mydata.dbid
+		if dbid is not None:
+			wheredict = {'DEF_id':dbid}
+		else:
+			wheredict = {}
 		joindict = {}
 		for key,value in mydata.items():
 			if value is None:
@@ -79,7 +83,9 @@ class DBDataKeeper(datahandler.DataHandler):
 			elif isinstance(value, data.Data):
 				joindict[key] = id(value)
 			else:
-				wheredict[key] = value
+				if dbid is None:
+					wheredict[key] = value
+
 		info['where'] = wheredict
 		info['join'] = joindict
 		isroot=0
