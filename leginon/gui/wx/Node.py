@@ -33,17 +33,17 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 	def __init__(self, *args, **kwargs):
 		wx.lib.scrolledpanel.ScrolledPanel.__init__(self, *args, **kwargs)
 		self.node = None
-		self.Bind(EVT_NODE_INITIALIZED, self.onNodeInitialized)
+		self.Bind(EVT_NODE_INITIALIZED, self._onNodeInitialized)
 		self.Bind(EVT_SET_STATUS, self.onSetStatus)
 		self.Bind(EVT_SET_IMAGE, self.onSetImage)
 
-	def initializeValues(self):
-		pass
-
-	def onNodeInitialized(self, evt):
+	def _onNodeInitialized(self, evt):
 		self.node = evt.node
-		self.initializeValues()
+		self.onNodeInitialized()
 		evt.event.set()
+
+	def onNodeInitialized(self):
+		pass
 
 	def onSetStatus(self, evt):
 		self.ststatus.SetLabel(evt.status)

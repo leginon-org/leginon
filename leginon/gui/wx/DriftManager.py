@@ -78,7 +78,7 @@ class Panel(gui.wx.Node.Panel):
 		self.SetSizerAndFit(self.szmain)
 		self.SetupScrolling()
 
-	def initializeValues(self):
+	def onNodeInitialized(self):
 		self.cpcamconfig.setSize(self.node.session)
 
 		gui.wx.Data.setWindowFromDB(self.cbcheckdrift)

@@ -105,7 +105,7 @@ class Panel(gui.wx.Node.Panel):
 		self.SetSizerAndFit(self.szmain)
 		self.SetupScrolling()
 
-	def initializeValues(self):
+	def onNodeInitialized(self):
 		movetypes = self.node.calclients.keys()
 		if movetypes:
 			self.cmovetype.AppendItems(movetypes)

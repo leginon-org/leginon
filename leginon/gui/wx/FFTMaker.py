@@ -59,7 +59,7 @@ class Panel(gui.wx.Node.Panel):
 
 		self.Bind(gui.wx.Node.EVT_SET_STATUS, self.onSetStatus)
 
-	def initializeValues(self):
+	def onNodeInitialized(self):
 		gui.wx.Data.setWindowFromDB(self.cbprocess)
 		gui.wx.Data.setWindowFromDB(self.ncmaskradius)
 		gui.wx.Data.setWindowFromDB(self.tclabel)

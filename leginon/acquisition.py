@@ -76,18 +76,41 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.doneevents = {}
 		self.imagelistdata = None
 
-		self.delay = None
-		self.movetype = None
-		self.presetnames = None
-		self.correct = None
-		self.display = None
-		self.save = None
-		self.wait = None
-		self.waitrejects = None
-		self.duplicate = None
-		self.duplicatetype = None
+		self.duplicatetypes = ['acquisition', 'focus']
+
+		self.initializeSettings()
 
 		self.start()
+
+	def initializeSettings(self):
+		qsession = data.SessionData(initializer={'user': self.session['user']})
+		qdata = data.AcquisitionSettingsData(initializer={'session': qsession,
+																											'name': self.name})
+		try:
+			self.settings = self.research(qdata, results=1)[0]
+		except IndexError:
+			initializer = {
+				'pause time': 2.5,
+				'move type': 'image shift',
+				'preset order': [],
+				'correct image': True,
+				'display image': True,
+				'save image': True,
+				'wait for process': False,
+				'wait for rejects': False,
+				'duplicate targets': False,
+				'duplicate target type': 'focus',
+			}
+			self.settings = data.AcquisitionSettingsData(initializer=initializer)
+
+	def setSettings(self, sd):
+		sd['session'] = self.session
+		sd['name'] = self.name
+		self.publish(sd, database=True, dbforce=True)
+		self.settings = sd
+
+	def getSettings(self):
+		return self.settings
 
 	def onPresetPublished(self, evt):
 		evt = gui.wx.Presets.NewPresetEvent()
@@ -125,13 +148,14 @@ class Acquisition(targetwatcher.TargetWatcher):
 				raise InvalidStagePosition(messagestr)
 
 	def validatePresets(self):
-		if not self.presetnames:
+		presetorder = self.settings['preset order']
+		if not presetorder:
 			raise InvalidPresetsSequence()
 		availablepresets = self.getPresetNames()
-		for presetname in self.presetnames:
+		for presetname in presetorder:
 			if presetname not in availablepresets:
 				raise InvalidPresetsSequence()
-		return list(self.presetnames)
+		return list(presetorder)
 
 	def processTargetData(self, targetdata, force=False, attempt=None):
 		'''
@@ -178,8 +202,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 				continue
 			if p is not None:
 				self.reportStatus('processing', 'Current preset is "%s"' % p['name'])
-			self.reportStatus('processing', 'Pausing for %s seconds before acquiring' % (delay,))
-			time.sleep(self.delay)
+			pausetime = self.settings['pause time']
+			self.reportStatus('processing',
+												'Pausing for %s seconds before acquiring' % pausetime)
+			time.sleep(pausetime)
 
 			if p['film']:
 				self.reportStatus('acquisition', 'Acquiring film...')
@@ -263,7 +289,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 			pixelshift = {'row':deltarow, 'col':deltacol}
 	
 			## figure out scope state that gets to the target
-			calclient = self.calclients[self.movetype]
+			movetype = self.settings['movetype']
+			calclient = self.calclients[movetype]
 			try:
 				newscope = calclient.transform(pixelshift, targetscope, targetcamera)
 			except calibrationclient.NoMatrixCalibrationError:
@@ -278,7 +305,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			oldpreset = targetdata['preset']
 
 			emtargetdata['preset'] = oldpreset
-			emtargetdata['movetype'] = self.movetype
+			emtargetdata['movetype'] = movetype
 			emtargetdata['image shift'] = dict(newscope['image shift'])
 			emtargetdata['beam shift'] = dict(newscope['beam shift'])
 			emtargetdata['stage position'] = dict(newscope['stage position'])
@@ -332,7 +359,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.emclient.setScope(request)
 
 		## record in database
-		self.publish(filmdata, pubevent=True, database=self.save)
+		self.publish(filmdata, pubevent=True, database=self.settings['save image'])
 
 	def acquire(self, presetdata, target=None, presettarget=None, attempt=None):
 		### corrected or not??
@@ -340,9 +367,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## acquire image
 		self.reportStatus('acquisition', 'acquiring image...')
 		imagedata = None
+		correctimage = self.settings['correct image']
 		try:
 			try:
-				imagedata = self.cam.acquireCameraImageData(correction=self.correct)
+				imagedata = self.cam.acquireCameraImageData(correction=correctimage)
 			except node.ResearchError:
 				self.logger.error('Cannot access EM node to acquire image')
 		except camerafuncs.NoCorrectorError:
@@ -381,7 +409,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.setImageFilename(imagedata)
 
 		self.reportStatus('output', 'Publishing image...')
-		self.publish(imagedata, pubevent=True, database=self.save)
+		self.publish(imagedata, pubevent=True, database=self.settings['save image'])
 		self.reportStatus('output', 'Image published')
 		self.reportStatus('output', 'Publishing stats...')
 		self.publishStats(imagedata)
@@ -394,12 +422,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.doneevents[dataid] = {}
 		self.doneevents[dataid]['received'] = threading.Event()
 		self.doneevents[dataid]['status'] = 'waiting'
-		if self.display:
+		if self.settings['display image']:
 			self.reportStatus('output', 'Displaying image...')
 			self.setImage(imagedata['image'].astype(Numeric.Float32))
 			self.reportStatus('output', 'Image displayed')
 
-		if self.wait:
+		if self.settings['wait for process']:
 			self.waitForImageProcessDone()
 		return 'ok'
 

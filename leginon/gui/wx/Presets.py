@@ -103,8 +103,8 @@ class PresetChoice(wx.Choice):
 		self.Thaw()
 
 class PresetOrder(wx.Panel):
-	def __init__(self, *args, **kwargs):
-		wx.Panel.__init__(self, *args, **kwargs)
+	def __init__(self, parent, id, **kwargs):
+		wx.Panel.__init__(self, parent, id, **kwargs)
 		self._widgets()
 		self._sizer()
 		self._bind()
@@ -546,7 +546,7 @@ class Panel(gui.wx.Node.Panel):
 		self.Bind(EVT_SET_PARAMETERS, self.onSetParameters)
 		self.Bind(EVT_SET_CALIBRATIONS, self.onSetCalibrations)
 
-	def initializeValues(self):
+	def onNodeInitialized(self):
 		gui.wx.Data.setWindowFromDB(self.ncpause)
 		gui.wx.Data.setWindowFromDB(self.cbxyonly)
 		gui.wx.Data.setWindowFromDB(self.cbstagealways)

@@ -139,10 +139,10 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		self.logger.debug('%d process, %d pass, %d total' % (len(goodtargets), len(rejects), len(targetlist)))
 
 		# republish the rejects and wait for them to complete
-		if not hasattr(self, 'waitrejects'):
-			waitrejects = rejects and self.publishrejects.get()
+		if hasattr(self, 'settings'):
+			waitrejects = rejects and self.settings['wait for rejects']
 		else:
-			waitrejects = rejects and self.waitrejects
+			waitrejects = rejects and self.publishrejects.get()
 		if waitrejects:
 			rejectstatus = self.rejectTargets(rejects)
 			if rejectstatus != 'success':
@@ -183,18 +183,18 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				continue
 
 			### generate a focus target
-			if not hasattr(self, 'duplicate'):
-				if self.autogenerate.get():
-					gentype = self.autogeneratetype.get()
+			if hasattr(self, 'settings'):
+				if self.settings['duplicate targets']:
 					focustarget = data.AcquisitionImageTargetData(initializer=target)
-					focustarget['type'] = gentype
+					focustarget['type'] = self.settings['duplicate target type']
 					self.publish(focustarget, database=True)
 					tlist = [focustarget]
 					self.rejectTargets(tlist)
 			else:
-				if self.duplicate:
+				if self.autogenerate.get():
+					gentype = self.autogeneratetype.get()
 					focustarget = data.AcquisitionImageTargetData(initializer=target)
-					focustarget['type'] = self.duplicatetype
+					focustarget['type'] = gentype
 					self.publish(focustarget, database=True)
 					tlist = [focustarget]
 					self.rejectTargets(tlist)

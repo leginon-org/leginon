@@ -68,7 +68,7 @@ class Panel(gui.wx.Node.Panel):
 
 		self.Bind(gui.wx.Node.EVT_SET_STATUS, self.onSetStatus)
 
-	def initializeValues(self):
+	def onNodeInitialized(self):
 		self.onNewPreset()
 		# TODO: handle preset validation
 		gui.wx.Data.setWindowFromDB(self.presetchoice)

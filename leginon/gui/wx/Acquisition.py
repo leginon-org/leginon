@@ -1,10 +1,10 @@
-import wx
-from gui.wx.Entry import FloatEntry, EVT_ENTRY
-import wx.lib.scrolledpanel
+import data
 import gui.wx.Data
-import wxImageViewer
+from gui.wx.Entry import FloatEntry, EVT_ENTRY
 import gui.wx.Node
-import gui.wx.Presets
+from gui.wx.Presets import EditPresetOrder, EVT_PRESET_ORDER_CHANGED
+import wx
+import wxImageViewer
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'acquisition'
@@ -21,195 +21,40 @@ class Panel(gui.wx.Node.Panel):
 		self.szstatus.Add(self.stcount, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.szstatus.Add(self.ststatus, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		# settings
-		self.szsettings = self._getStaticBoxSizer('Settings', (1, 0), (1, 1),
-																							wx.EXPAND)
-
-		label0 = wx.StaticText(self, -1, 'Use')
-		self.cmovetype = wx.Choice(self, -1, name='cMoveType')
-		label1 = wx.StaticText(self, -1, 'to move to target')
-		szmovetype = wx.GridBagSizer(5, 5)
-		szmovetype.Add(label0, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szmovetype.Add(self.cmovetype, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szmovetype.Add(label1, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-		label0 = wx.StaticText(self, -1, 'Wait')
-		self.fewait = FloatEntry(self, -1, min=0.0, allownone=False, chars=4,
-																				value='2.5', name='feWait')
-		label1 = wx.StaticText(self, -1, 'seconds before acquiring image')
-		szwait = wx.GridBagSizer(5, 5)
-		szwait.Add(label0, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szwait.Add(self.fewait, (0, 1), (1, 1),
-								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		szwait.Add(label1, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-		self.presetorder = gui.wx.Presets.EditPresetOrder(self, -1,
-																											name='poPresetOrder')
-		self.cbcorrectimage = wx.CheckBox(self, -1, 'Correct image',
-																			name='cbCorrectImage')
-		self.cbdisplayimage = wx.CheckBox(self, -1, 'Display image',
-																			name='cbDisplayImage')
-		self.cbsaveimage = wx.CheckBox(self, -1, 'Save image to database',
-																		name='cbSaveImage')
-		self.cbwaitimageprocess = wx.CheckBox(self, -1,
-																				'Wait for a node to process the image',
-																				name='cbWaitImageProcess')
-		self.cbwaitrejects = wx.CheckBox(self, -1,
-																			'Publish and wait for rejected targets',
-																			name='cbWaitRejects')
-
-		self.cbduplicate = wx.CheckBox(self, -1, 'Duplicate targets with type:',
-																		name='cbDuplicate')
-		self.cduplicatetype = wx.Choice(self, -1, name='cDuplicateType')
-
-		szduplicate = wx.GridBagSizer(0, 0)
-		szduplicate.Add(self.cbduplicate, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szduplicate.Add(self.cduplicatetype, (0, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL)
-
-		self.szsettings.Add(szmovetype, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.szsettings.Add(szwait, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.szsettings.Add(self.presetorder, (2, 0), (1, 1), wx.ALIGN_CENTER)
-		self.szsettings.Add(self.cbcorrectimage, (3, 0), (1, 1),
-												wx.ALIGN_CENTER_VERTICAL)
-		self.szsettings.Add(self.cbdisplayimage, (4, 0), (1, 1),
-												wx.ALIGN_CENTER_VERTICAL)
-		self.szsettings.Add(self.cbsaveimage, (5, 0), (1, 1),
-												wx.ALIGN_CENTER_VERTICAL)
-		self.szsettings.Add(self.cbwaitimageprocess, (6, 0), (1, 1),
-												wx.ALIGN_CENTER_VERTICAL)
-		self.szsettings.Add(self.cbwaitrejects, (7, 0), (1, 1),
-												wx.ALIGN_CENTER_VERTICAL)
-		self.szsettings.Add(szduplicate, (8, 0), (1, 1))
-
 		# controls
-		self.szcontrols = wx.GridBagSizer(5, 5)
+		self.szcontrols = self._getStaticBoxSizer('Controls', (1, 0), (1, 1),
+																								wx.ALIGN_TOP)
+		self.bsettings = wx.Button(self, -1, 'Settings...')
 		self.tbpause = wx.ToggleButton(self, -1, 'Pause')
 		self.tbstop = wx.ToggleButton(self, -1, 'Stop')
-		self.szcontrols.Add(self.tbpause, (0, 0), (1, 1),
-												wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		self.szcontrols.Add(self.tbstop, (0, 1), (1, 1),
-												wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
-		self.szcontrols.AddGrowableCol(0)
-		self.szcontrols.AddGrowableCol(1)
-		self.szmain.Add(self.szcontrols, (2, 0), (1, 1),
-										wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_TOP|wx.TOP, 10)
+		self.szcontrols.Add(self.bsettings, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		self.szcontrols.Add(self.tbpause, (1, 0), (1, 1), wx.ALIGN_CENTER)
+		self.szcontrols.Add(self.tbstop, (2, 0), (1, 1), wx.ALIGN_CENTER)
 
 		# image
-		self.szimage = self._getStaticBoxSizer('Image', (1, 1), (3, 1),
+		self.szimage = self._getStaticBoxSizer('Image', (1, 1), (1, 1),
 																						wx.EXPAND|wx.ALL)
 		self.imagepanel = wxImageViewer.ImagePanel(self, -1)
 		self.szimage.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND|wx.ALL)
 
-		self.szmain.AddGrowableRow(3)
+		self.szmain.AddGrowableRow(1)
 		self.szmain.AddGrowableCol(1)
 
 		self.SetSizerAndFit(self.szmain)
 		self.SetupScrolling()
+		self.Enable(False)
 
-		self.Bind(gui.wx.Presets.EVT_NEW_PRESET, self.onNewPreset)
-
-		self.Bind(EVT_ENTRY, self.onWaitEntry, self.fewait)
-		self.Bind(wx.EVT_CHOICE, self.onMoveTypeChoice, self.cmovetype)
-		self.Bind(gui.wx.Presets.EVT_PRESET_ORDER_CHANGED,
-								self.onPresetOrderChanged, self.presetorder)
-		self.Bind(wx.EVT_CHECKBOX, self.onCorrectCheckBox, self.cbcorrectimage)
-		self.Bind(wx.EVT_CHECKBOX, self.onDisplayCheckBox, self.cbdisplayimage)
-		self.Bind(wx.EVT_CHECKBOX, self.onSaveCheckBox, self.cbsaveimage)
-		self.Bind(wx.EVT_CHECKBOX, self.onWaitCheckBox, self.cbwaitimageprocess)
-		self.Bind(wx.EVT_CHECKBOX, self.onWaitRejectsCheckBox, self.cbwaitrejects)
-		self.Bind(wx.EVT_CHECKBOX, self.onDuplicateCheckBox, self.cbduplicate)
-		self.Bind(wx.EVT_CHOICE, self.onDuplicateTypeChoice, self.cduplicatetype)
-
+	def onNodeInitialized(self):
+		self.Bind(wx.EVT_BUTTON, self.onSettingsButton, self.bsettings)
 		self.Bind(wx.EVT_TOGGLEBUTTON, self.onTogglePause, self.tbpause)
 		self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggleStop, self.tbstop)
 
-	def initializeValues(self):
-		movetypes = self.node.calclients.keys()
-		if movetypes:
-			self.cmovetype.AppendItems(movetypes)
-			self.cmovetype.SetSelection(0)
+		self.Enable(True)
 
-		self.onNewPreset()
-		# TODO: handle preset validation
-		gui.wx.Data.setWindowFromDB(self.presetorder)
-		gui.wx.Data.bindWindowToDB(self.presetorder)
-
-		duplicatetypes = ['focus', 'acquisition']
-		self.cduplicatetype.AppendItems(duplicatetypes)
-		self.cduplicatetype.SetSelection(0)
-
-		gui.wx.Data.setWindowFromDB(self.fewait)
-		gui.wx.Data.setWindowFromDB(self.cmovetype)
-		gui.wx.Data.setWindowFromDB(self.presetorder)
-		gui.wx.Data.setWindowFromDB(self.cbcorrectimage)
-		gui.wx.Data.setWindowFromDB(self.cbdisplayimage)
-		gui.wx.Data.setWindowFromDB(self.cbsaveimage)
-		gui.wx.Data.setWindowFromDB(self.cbwaitimageprocess)
-		gui.wx.Data.setWindowFromDB(self.cbwaitrejects)
-		gui.wx.Data.setWindowFromDB(self.cbduplicate)
-		gui.wx.Data.setWindowFromDB(self.cduplicatetype)
-
-		self.node.wait = self.fewait.GetValue()
-		self.node.movetype = self.cmovetype.GetStringSelection()
-		self.node.presetnames = self.presetorder.getValues()
-		self.node.correct = self.cbcorrectimage.GetValue()
-		self.node.display = self.cbdisplayimage.GetValue()
-		self.node.save = self.cbsaveimage.GetValue()
-		self.node.wait = self.cbwaitimageprocess.GetValue()
-		self.node.waitrejects = self.cbwaitrejects.GetValue()
-		self.node.duplicate = self.cbduplicate.GetValue()
-		self.node.duplicatetype = self.cduplicatetype.GetStringSelection()
-
-		gui.wx.Data.bindWindowToDB(self.cmovetype)
-		gui.wx.Data.bindWindowToDB(self.fewait)
-		gui.wx.Data.bindWindowToDB(self.presetorder)
-		gui.wx.Data.bindWindowToDB(self.cbcorrectimage)
-		gui.wx.Data.bindWindowToDB(self.cbdisplayimage)
-		gui.wx.Data.bindWindowToDB(self.cbsaveimage)
-		gui.wx.Data.bindWindowToDB(self.cbwaitimageprocess)
-		gui.wx.Data.bindWindowToDB(self.cbwaitrejects)
-		gui.wx.Data.bindWindowToDB(self.cbduplicate)
-		gui.wx.Data.bindWindowToDB(self.cduplicatetype)
-
-		self.szmain.Layout()
-
-	def onNewPreset(self, evt=None):
-		presets = self.node.presetsclient.getPresetNames()
-		if presets:
-			evt = gui.wx.Presets.PresetsChangedEvent(presets)
-			self.presetorder.GetEventHandler().AddPendingEvent(evt)
-
-	def onWaitEntry(self, evt):
-		self.node.wait = evt.GetValue()
-
-	def onMoveTypeChoice(self, evt):
-		self.node.movetype = evt.GetString()
-
-	def onPresetOrderChanged(self, evt):
-		if self.node is not None:
-			self.node.presetnames = evt.presets
-
-	def onCorrectCheckBox(self, evt):
-		self.node.correct = evt.IsChecked()
-
-	def onDisplayCheckBox(self, evt):
-		self.node.display = evt.IsChecked()
-
-	def onSaveCheckBox(self, evt):
-		self.node.save = evt.IsChecked()
-
-	def onWaitCheckBox(self, evt):
-		self.node.wait = evt.IsChecked()
-
-	def onWaitRejectsCheckBox(self, evt):
-		self.node.waitrejects = evt.IsChecked()
-
-	def onDuplicateCheckBox(self, evt):
-		self.node.duplicate = evt.IsChecked()
-
-	def onDuplicateTypeChoice(self, evt):
-		self.node.duplicatetype = evt.GetString()
+	def onSettingsButton(self, evt):
+		dialog = SettingsDialog(self)
+		dialog.ShowModal()
+		dialog.Destroy()
 
 	def onTogglePause(self, evt):
 		if evt.IsChecked():
@@ -222,6 +67,185 @@ class Panel(gui.wx.Node.Panel):
 			self.node.abort = True
 		else:
 			self.node.abort = False
+
+class SettingsError(Exception):
+	pass
+
+class SettingsDialog(wx.Dialog):
+	def __init__(self, parent):
+		self.node = parent.node
+
+		title = '%s Settings' % self.node.name
+		wx.Dialog.__init__(self, parent, -1, title) 
+
+		self.widgets = {}
+
+		# move type
+		movetypes = self.node.calclients.keys()
+		self.widgets['move type'] = wx.Choice(self, -1, choices=movetypes)
+		szmovetype = wx.GridBagSizer(5, 5)
+		szmovetype.Add(wx.StaticText(self, -1, 'Use'),
+										(0, 0), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL)
+		szmovetype.Add(self.widgets['move type'],
+										(0, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL)
+		szmovetype.Add(wx.StaticText(self, -1, 'to move to target'),
+										(0, 2), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL)
+
+		# pause time
+		self.widgets['pause time'] = FloatEntry(self, -1,
+																		min=0.0,
+																		allownone=False,
+																		chars=4,
+																		value='0.0')
+		szpausetime = wx.GridBagSizer(5, 5)
+		szpausetime.Add(wx.StaticText(self, -1, 'Wait'),
+								(0, 0), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL)
+		szpausetime.Add(self.widgets['pause time'],
+								(0, 1), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		szpausetime.Add(wx.StaticText(self, -1, 'seconds before acquiring image'),
+								(0, 2), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL)
+
+		# preset order
+		presets = self.node.presetsclient.getPresetNames()
+		self.widgets['preset order'] = EditPresetOrder(self, -1)
+		self.widgets['preset order'].setChoices(presets)
+
+		# misc. checkboxes
+		self.widgets['correct image'] = wx.CheckBox(self, -1, 'Correct image')
+		self.widgets['display image'] = wx.CheckBox(self, -1, 'Display image')
+		self.widgets['save image'] = wx.CheckBox(self, -1, 'Save image to database')
+		self.widgets['wait for process'] = wx.CheckBox(self, -1,
+																				'Wait for a node to process the image')
+		self.widgets['wait for rejects'] = wx.CheckBox(self, -1,
+																				'Publish and wait for rejected targets')
+		# duplicate target
+		self.widgets['duplicate targets'] = wx.CheckBox(self, -1,
+																				'Duplicate targets with type:')
+		self.widgets['duplicate target type'] = wx.Choice(self, -1,
+																							choices=self.node.duplicatetypes)
+
+		szduplicate = wx.GridBagSizer(0, 0)
+		szduplicate.Add(self.widgets['duplicate targets'], (0, 0), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL)
+		szduplicate.Add(self.widgets['duplicate target type'], (0, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL)
+
+		# settings sizer
+		sz = wx.GridBagSizer(5, 5)
+		sz.Add(szmovetype, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szpausetime, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['preset order'], (2, 0), (1, 1), wx.ALIGN_CENTER)
+		sz.Add(self.widgets['correct image'], (3, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['display image'], (4, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['save image'], (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['wait for process'], (6, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['wait for rejects'], (7, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szduplicate, (8, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+
+		# buttons
+		self.bok = wx.Button(self, wx.ID_OK, 'OK')
+		self.bcancel = wx.Button(self, wx.ID_CANCEL, 'Cancel')
+		self.bapply = wx.Button(self, wx.ID_APPLY, 'Apply')
+		szbuttons = wx.GridBagSizer(5, 5)
+		szbuttons.Add(self.bok, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		szbuttons.Add(self.bcancel, (0, 1), (1, 1), wx.ALIGN_CENTER)
+		szbuttons.Add(self.bapply, (0, 2), (1, 1), wx.ALIGN_CENTER)
+
+		szmain = wx.GridBagSizer(5, 5)
+		szmain.Add(sz, (0, 0), (1, 1),
+								wx.ALIGN_CENTER|wx.ALL, 10)
+		szmain.Add(szbuttons, (1, 0), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 10)
+
+		# set values
+		self.getNodeSettings()
+
+		self.SetSizerAndFit(szmain)
+
+		self.Bind(wx.EVT_BUTTON, self.onSet, self.bok)
+		self.Bind(wx.EVT_BUTTON, self.onSet, self.bapply)
+
+		modifiedevents = {
+			wx.CheckBox: wx.EVT_CHECKBOX,
+			wx.Choice: wx.EVT_CHOICE,
+			FloatEntry: EVT_ENTRY,
+			EditPresetOrder: EVT_PRESET_ORDER_CHANGED,
+		}
+
+		for widget in self.widgets.values():
+			self.Bind(modifiedevents[widget.__class__], self.onModified)
+
+	def onModified(self, evt):
+		if self.getSettings() == self.settings:
+			self.bapply.Enable(False)
+		else:
+			self.bapply.Enable(True)
+		evt.Skip()
+
+	def onSet(self, evt):
+		try:
+			self.setNodeSettings()
+			evt.Skip()
+		except SettingsError:
+			dialog = wx.MessageDialog(self, str(e), 'Settings Error',
+																wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+
+	def getSettings(self):
+		getmethods = {
+			wx.CheckBox: 'GetValue',
+			wx.Choice: 'GetStringSelection',
+			FloatEntry: 'GetValue',
+			EditPresetOrder: 'getValues',
+		}
+		settings = {}
+		for key, widget in self.widgets.items():
+			settings[key] = getattr(widget, getmethods[widget.__class__])()
+		return settings
+
+	def setSettings(self, sd):
+		setmethods = {
+			wx.CheckBox: 'SetValue',
+			wx.Choice: 'SetStringSelection',
+			FloatEntry: 'SetValue',
+			EditPresetOrder: 'setValues',
+		}
+		for key, widget in self.widgets.items():
+			getattr(widget, setmethods[widget.__class__])(sd[key])
+
+	def setNodeSettings(self):
+		node = self.GetParent().node
+		if node is None:
+			return
+		settings = self.getSettings()
+		if settings != self.settings:
+			settingsdata = data.AcquisitionSettingsData(initializer=settings)
+			node.setSettings(settingsdata)
+			self.settings = settings
+			self.bapply.Enable(False)
+
+	def getNodeSettings(self):
+		node = self.GetParent().node
+		if node is None:
+			return
+
+		settingsdata = node.getSettings()
+		self.setSettings(settingsdata)
+
+		self.settings = self.getSettings()
+		self.bapply.Enable(False)
 
 if __name__ == '__main__':
 	class App(wx.App):

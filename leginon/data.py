@@ -1496,6 +1496,29 @@ class wxIntEntryData(wxEntryData):
 class wxFloatEntryData(wxEntryData):
 	_valuetype = float
 
+class SettingsData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('name', str),
+		)
+	typemap = classmethod(typemap)
+
+class AcquisitionSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('pause time', float),
+			('move type', str),
+			('preset order', list),
+			('correct image', bool),
+			('display image', bool),
+			('save image', bool),
+			('wait for process', bool),
+			('wait for rejects', bool),
+			('duplicate targets', bool),
+			('duplicate target type', str),
+		)
+	typemap = classmethod(typemap)
+
 class Request(type):
 	def __new__(cls, dataclass):
 		return type.__new__(cls, 'Request' + dataclass.__name__, (Data,),
