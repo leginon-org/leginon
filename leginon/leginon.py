@@ -272,7 +272,6 @@ class CustomWidget(Tkinter.Frame):
 
 
 	def widgetFromName(self, parent, uiclient, name):
-		widget = None
 		spec = uiclient.getSpec()
 		return self.widgetFrom(parent, uiclient, spec, name)
 
@@ -343,7 +342,7 @@ class AcquireAndTargetWidget(CustomWidget):
 		self.targetid = targetid
 
 		widget = self.addWidget('Settings', acquisition,
-															('Preferences', 'Preset Names'))
+															('Presets', 'Preset Names'))
 		self.arrangeEntry(widget, 20, Tkinter.LEFT)
 		self.addWidget('Image', clicktargetfinder, ('Clickable Image',))
 
