@@ -105,43 +105,25 @@ class ManualAcquisition(node.Node):
 				raise AcquireError
 		self.logger.info('Image acquisition complete')
 
-	def setScope(self, value):
-		scopedata = data.ScopeEMData(initializer=value)
-		try:
-			self.emclient.setScope(scopedata)
-		except node.PublishError:
-			self.logger.error('Cannot access EM node')
-			self.logger.info('Error setting instrument parameters')
-			raise RuntimeError('unable to set instrument parameters')
-
-	def getScope(self, key=None):
-		try:
-			value = self.emclient.getScope(key)
-		except (node.ResearchError, EM.ScopeUnavailable):
-			self.logger.error('Cannot access EM node')
-			self.logger.info('Error getting instrument parameters')
-			raise RuntimeError('unable to get instrument parameters')
-		return value
-
 	def preExposure(self):
 		if self.settings['screen up']:
-			self.setScope({'main screen position': 'up'})
+			self.instrument.tem.MainScreenPosition = 'up'
 
 		if self.settings['low dose']:
-			self.lowdosemode = self.getScope('low dose mode')
+			self.lowdosemode = self.instrument.tem.LowDoseMode
 			if self.lowdosemode is None:
 				self.logger.warning('Failed to save previous low dose state')
-			self.setScope({'low dose mode': 'exposure'})
+			self.instrument.tem.LowDoseMode = 'exposure'
 			time.sleep(self.settings['low dose pause time'])
 
 	def postExposure(self):
 		if self.lowdosemode is not None:
-			self.setScope({'low dose mode': self.lowdosemode})
+			self.instrument.tem.LowDoseMode = self.lowdosemode
 			self.lowdosemode = None
 			time.sleep(self.settings['low dose pause time'])
 
 		if self.settings['screen down']:
-			self.setScope({'main screen position': 'down'})
+			self.instrument.tem.MainScreenPosition = 'down'
 
 	def setImageFilename(self, imagedata):
 		if imagedata['filename']:

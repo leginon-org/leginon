@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/remotecall.py,v $
-# $Revision: 1.11 $
+# $Revision: 1.12 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-23 21:17:32 $
+# $Date: 2005-02-23 22:01:18 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -95,7 +95,7 @@ class Object(object):
 	def _execute(self, origin, name, type, args=(), kwargs={}):
 		try:
 			result = self._interface[name][type](*args, **kwargs)
-		except KeyError:
+		except KeyError, e:
 			result = TypeError('invalid execution name')
 		except Exception, result:
 			pass
@@ -186,13 +186,11 @@ class ObjectProxy(object):
 		self.__name = name
 
 	def __getattr__(self, name):
-		if name == 'multiCall':
-			return object.__getattr__(self, name)
 		d, t = self.__objectservice.descriptions[self.__nodename][self.__name]
 		try:
 			description = d[name]
 		except KeyError:
-			raise ValueError('no method %s in object description' % name)
+			raise AttributeError('attribute %s not in descripition' % name)
 		if 'method' in description:
 			args = (self.__nodename, self.__name, name, 'method')
 			return ObjectCallProxy(self.__objectservice._call, args)
@@ -200,6 +198,21 @@ class ObjectProxy(object):
 			return self.__objectservice._call(self.__nodename, self.__name, name, 'r')
 		else:
 			raise TypeError('attribute %s is not readable' % name)
+
+	def __setattr__(self, name, value):
+		try:
+			d, t = self.__objectservice.descriptions[self.__nodename][self.__name]
+		except:
+			return object.__setattr__(self, name, value)
+		try:
+			description = d[name]
+		except KeyError:
+			raise AttributeError('attribute %s not in descripition' % name)
+		if 'w' in description:
+			args = (self.__nodename, self.__name, name, 'w', (value,))
+			return self.__objectservice._call(*args)
+		else:
+			raise TypeError('attribute %s is not writeable' % name)
 
 	def hasAttribute(self, name):
 		d, t = self.__objectservice.descriptions[self.__nodename][self.__name]
