@@ -142,6 +142,8 @@ class Navigator(node.Node):
 		if isinstance(clickevent, event.ImageClickEvent):
 			self.confirmEvent(clickevent)
 
+		node.beep()
+
 	def handleImageAcquire(self, acqevent):
 		self.acquireImage()
 		self.confirmEvent(acqevent)
