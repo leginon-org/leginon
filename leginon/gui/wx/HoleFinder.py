@@ -457,17 +457,18 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 		sbsztt = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsztt.Add(sztt, 1, wx.EXPAND|wx.ALL, 5)
 
-		self.bice = wx.Button(self, -1, 'Analyze Ice')
+		self.bice = wx.Button(self, -1, 'Test')
 		szbutton = wx.GridBagSizer(5, 5)
 		szbutton.Add(self.bice, (0, 0), (1, 1),
 									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		szbutton.AddGrowableCol(0)
 
-		self.Bind(wx.EVT_BUTTON, self.onAnalyzeIceButton, self.bice)
+		self.Bind(wx.EVT_BUTTON, self.onTestButton, self.bice)
 
 		return [sbszice, sbsztt, szbutton]
 
-	def onAnalyzeIceButton(self, evt):
+	def onTestButton(self, evt):
+		self.setNodeSettings()
 		self.node.ice()
 
 class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
