@@ -167,6 +167,11 @@ class PresetsManager(node.Node):
 		### if using another session's presets, now save them
 		### as this sessions presets
 		if diffsession:
+			## since this is a new session, we don't trust
+			## previously acquired references (plus they won't
+			## be linked to these new presets anyway)
+			for p in self.presets:
+				p['hasref'] = False
 			self.presetToDB()
 
 	def presetToDB(self, presetdata=None):
