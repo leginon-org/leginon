@@ -61,9 +61,6 @@ class xmlrpcserver(SimpleXMLRPCServer):
 	def _dispatch(self, method, params):
 		meth = getattr(self, 'EXPORT_' + method)
 
-		print 'METHOD:', method
-		print 'PARAMS:', params
-
 		## truncate args to the specs of the method
 		argnames = self.argspec(meth)
 		arglen = len(argnames)
@@ -76,7 +73,6 @@ class xmlrpcserver(SimpleXMLRPCServer):
 			return ret
 
 	def EXPORT_methods(self):
-		print "here's methods"
 		methlist = inspect.getmembers(self, inspect.ismethod)
 		rpcmethdict = {}
 		for methtup in methlist:
@@ -91,7 +87,6 @@ class xmlrpcserver(SimpleXMLRPCServer):
 		# exclude this function
 		del(rpcmethdict['methods'])
 
-		print 'rpcmethdict', rpcmethdict
 		return rpcmethdict
 
 
@@ -116,7 +111,6 @@ class xmlrpcnode(xmlrpcserver):
 	def callProxy(self, id, method, args=()):
 		proxy = self.proxies[id]
 		#return getattr(proxy,method)(*args)
-		print 'method args', method, args
 		return apply(getattr(proxy,method), args)
 
 class callerbut(Frame):
@@ -148,14 +142,10 @@ class xmlrpcgui(Frame):
 		Frame.__init__(self, parent)
 		uri = 'http://' + host + ':' + `port`
 		self.proxy = xmlrpclib.ServerProxy(uri)
-		print 'calling methods'
 		meths = self.proxy.methods()
-		print 'called methods'
 		for meth in meths:
 			name = meth
-			print "METHS:", meths
 			args = meths[meth]['args']
-			print 'ARGS', args
 			callerbut(self, self.proxy, name, args).pack(anchor=W)
 
 if __name__ == '__main__':

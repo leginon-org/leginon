@@ -1,27 +1,55 @@
 #!/usr/bin/env python
 
-import string, cPickle
+import cPickle
+
+class NodeEvents(object):
+	def __init__(self):
+		self.inputmap = {}
+		self.outputs = []
+
+	def addInput(self, eventclass, handler):
+		self.inputmap[eventclass] = handler
+
+	def addOutput(self, eventclass):
+		self.outputs.append(eventclass)
+
+	def __str__(self):
+		ret = 'Input Map:  %s\n' % self.inputmap
+		ret += 'Outputs:  %s\n' % self.outputs
+		return ret
+
+	def xmlrpc_repr(self):
+		repr = {}
+		repr['outputs'] = []
+		for eventclass in self.outputs:
+			classrepr = eventclass.class_xmlrpc_repr()
+			repr['outputs'].append(classrepr)
+		repr['inputs'] = {}
+		for eventclass in self.inputmap:
+			classrepr = eventclass.class_xmlrpc_repr()
+			repr['inputs'] = classrepr
+		return repr
 
 
 class Event(object):
 	def __init__(self, source = None):
 		self.source = source
 
-	def class_string(self):
-		myclass = self.__class__
-		mybasetup = bases_tup(myclass)
-		mystr = string.join(mybasetup, '.')
-		return mystr
+	def hierarchy(cls):
+		mybasetup = bases_tup(cls)
+		return mybasetup
+	hierarchy = classmethod(hierarchy)
 
-	def xmlrpc_repr(self):
+	def xmlrpc_repr(thing):
 		"""
-		package the event into a dict for xmlrpc
+		thing can be class or instance
 		"""
-		myclass = self.class_string()
-		picklestring = cPickle.dumps(self)
 
-		xmlrpcdict = {'class':myclass, 'pickle':picklestring}
+		picklestring = cPickle.dumps(thing)
+		xmlrpcdict = {'class':thing.hierarchy(), 'pickle':picklestring}
 		return xmlrpcdict
+
+	class_xmlrpc_repr = classmethod(xmlrpc_repr)
 
 
 def bases_tup(classobject):
@@ -41,20 +69,10 @@ class MyEvent(Event):
 	def __init__(self):
 		Event.__init__(self)
 
-	def xmlrpc_repr(self):
-		repr = Event.xmlrpc_repr(self)
-		repr['newstuff'] = 'stuff for MyEvent'
-		return repr
-
 
 class YourEvent(Event):
 	def __init__(self):
 		Event.__init__(self)
-
-	def xmlrpc_repr(self):
-		repr = Event.xmlrpc_repr(self)
-		repr['somestuff'] = 'stuff for YourEvent'
-		return repr
 
 
 class DataPublished(Event):

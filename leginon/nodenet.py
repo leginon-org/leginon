@@ -4,6 +4,7 @@ import urllib
 import cPickle
 import location
 import register
+import event
 
 class Node(xmlrpcnode.xmlrpcnode):
 	def __init__(self, manageraddress):
@@ -19,14 +20,15 @@ class Node(xmlrpcnode.xmlrpcnode):
 							self.location.pid,
 							self.datahandler.port)
 
-		## eventmap should be initialized by subclass before this
-		self.eventmap = getattr(self, 'eventmap', {})
-		self.outevents = getattr(self, 'outevents', ())
+		self.init_events()
 
 		if manageraddress:
 			manager_location = location.Location(manageraddress[0],
 							manageraddress[1], None)
 			self.id = self.manager_connect(manager_location.getURI())
+
+	def init_events(self):
+		raise NotImplementedError()
 
 	def __del__(self):
 		self.manager_close()
@@ -35,19 +37,14 @@ class Node(xmlrpcnode.xmlrpcnode):
 		self.addProxy('manager', uri)
 		meths = self.EXPORT_methods()
 
-		### still thinking of the best way to pass events to manager
-		### right now just passing nothing
+		eventinfo = {}
+		eventinfo['inputs'] = self.events.inputmap.keys()
+		eventinfo['outputs'] = self.events.outputs
 
-		inevents = ()
-		outevents = ()
-		eventinfo = {'in': inevents, 'out': outevents}
-		## should be this way:
-		#inevents = self.eventmap.keys()
-		#outevents = self.outevents
+		locpickle = cPickle.dumps(self.location)
+		eventpickle = cPickle.dumps(eventinfo)
 
-		nodeinfo = {'location pickle' : cPickle.dumps(self.location),
-				'methods' : meths,
-				'events': eventinfo}
+		nodeinfo = {'location pickle' : locpickle, 'methods' : 'meths', 'events pickle': eventpickle}
 
 		args = (nodeinfo,)
 		self.callProxy('manager', 'addNode', args)
@@ -60,9 +57,9 @@ class Node(xmlrpcnode.xmlrpcnode):
 		except:
 			pass
 
-	def announce(self, event):
+	def announce(self, eventinst):
 		### this sends an outgoing event to the manager
-		eventrepr = event.xmlrpc_repr()
+		eventrepr = eventinst.xmlrpc_repr()
 		args = (eventrepr,)
 		self.callProxy('manager', 'notify', args)
 
@@ -70,9 +67,9 @@ class Node(xmlrpcnode.xmlrpcnode):
 		### this decides what to do with incoming events
 
 		eventpickle = eventrepr['pickle']
-		event = cPickle.loads(eventpickle)
-		eventclass = event.__class__
-		meth = self.eventmap[eventclass]
+		eventinst = cPickle.loads(eventpickle)
+		eventclass = eventinst.__class__
+		meth = self.events.inputmap[eventclass]
 		apply(meth, (event,))
 
 	def publish(self, dataid, data):
@@ -127,13 +124,14 @@ class Manager(xmlrpcnode.xmlrpcnode):
 		self.locations = {}
 
 	def EXPORT_addNode(self, node):
+
 		id = self.register.addEntry(
 			register.RegisterEntry(node['methods'],
-				node['events'],
+				cPickle.loads(node['events pickle']),
 				cPickle.loads(node['location pickle'])))
 		self.addProxy(id, self.register.entries[id].location.getURI())
 		print 'node %s has been added' % id
-		#print 'nodes: %s' % self.nodes
+		self.print_nodes()
 
 	def EXPORT_deleteNode(self, id):
 		try:
@@ -143,19 +141,26 @@ class Manager(xmlrpcnode.xmlrpcnode):
 		except KeyError:
 			pass
 
-	def EXPORT_nodes(self):
-		return self.nodes
+	def print_nodes(self):
+		print 'NODES:'
+		print self.register
 
-	def EXPORT_notify(self, source, event):
-		key = (source,event)
-		print 'key', key
-		if key in self.bindings:
-			print 'bound to', self.bindings[key]
-			calls = self.bindings[key]
-			for target,method in calls:
-				self.callProxy(target, method)
+	def EXPORT_nodes(self):
+		nodes = self.register.xmlrpc_repr()
+		print 'XMLRPCRPER', nodes
+		return nodes
+
+	def EXPORT_notify(self, source, eventrepr):
+		eventinst = cPickle.loads(eventrepr['event'])
+		eventclass = eventinst.__class__
+		if eventclass in self.bindings:
+			targets = self.bindings[key]
+			for target in targets:
+				args = (eventclass,)
+				self.callProxy(target, 'event_dispatch', args)
 
 	def EXPORT_bindings(self):
+		##### not ready yet
 		bindlist = []
 		for key in self.bindings:
 			binditem = (key, self.bindings[key])
@@ -163,6 +168,7 @@ class Manager(xmlrpcnode.xmlrpcnode):
 		return bindlist
 
 	def EXPORT_addBinding(self, source, event, target, method):
+		##### not ready yet
 		key = (source,event)
 		bindtup = (target, method)
 		if key not in self.bindings:
@@ -172,6 +178,7 @@ class Manager(xmlrpcnode.xmlrpcnode):
 		print 'bindings', self.bindings
 
 	def EXPORT_deleteBinding(self, source, event, target, method):
+		###### not ready yet
 		key = (source, event)
 		bindtup = (target, method)
 		if key in self.bindings:
@@ -180,6 +187,7 @@ class Manager(xmlrpcnode.xmlrpcnode):
 				del(self.bindings[key])
 
 	def EXPORT_locate(self, dataid):
+		######### I think this is replaced by the register stuff
 		## find the uri of the data referenced by dataid
 		location = ''
 		try:
@@ -191,12 +199,14 @@ class Manager(xmlrpcnode.xmlrpcnode):
 		return location
 
 	def EXPORT_addLocation(self, dataid, location):
+		##### same here
 		if dataid not in self.locations:
 			self.locations[dataid] = []
 		self.locations[dataid].append(location)
 		print 'new data location: ', dataid, location
 
 	def EXPORT_deleteLocation(self, dataid, location):
+		###### same here
 		try:
 			self.locations[dataid].remove(location)
 		except KeyError:
