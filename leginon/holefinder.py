@@ -70,12 +70,34 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.cam = camerafuncs.CameraFuncs(self)
 		self.icecalc = ice.IceCalculator()
 
+		self.images = {
+			'Original': None,
+			'Edge': None,
+			'Template': None,
+			'Threshold': None,
+			'Blobs': None,
+			'Lattice': None,
+			'Final': None,
+		}
+		self.imagetargets = {
+			'Original': {},
+			'Edge': {},
+			'Template': {},
+			'Threshold': {},
+			'Blobs': {},
+			'Lattice': {},
+			'Final': {},
+		}
 		self.filtertypes = [
 			'sobel',
 			'laplacian3',
 			'laplacian5',
 			'laplacian-gaussian'
 		]
+		# ...
+		self.typenames = ['acquisition', 'focus', 'All blobs', 'Lattice Blobs']
+		self.panel.addTargetTypes(self.typenames)
+
 		self.cortypes = ['cross', 'phase']
 		self.focustypes = ['Off', 'Any Hole', 'Good Hole']
 		self.userpause = threading.Event()
@@ -87,31 +109,25 @@ class HoleFinder(targetfinder.TargetFinder):
 		cameraconfigure = self.cam.uiSetupContainer()
 		acqmeth = uidata.Method('Acquire Image', self.acqImage)
 		testmeth = uidata.Method('Test All', self.everything)
-		self.originalimage = uidata.Image('Original', None, 'r')
-		self.edgeimage = uidata.Image('Edge Image', None, 'r')
-		self.corimage = uidata.Image('Correlation Image', None, 'r')
-		self.threshimage = uidata.Image('Thresholded Image', None, 'r')
-		self.allblobsimage = uidata.TargetImage('All Blobs Image', None, 'r')
-		self.allblobsimage.addTargetType('All Blobs')
-		self.latblobsimage = uidata.TargetImage('Lattice Blobs Image', None, 'r')
-		self.latblobsimage.addTargetType('Lattice Blobs')
-		self.goodholesimage = uidata.TargetImage('Good Holes Image', None, 'r')
-		self.goodholesimage.addTargetType('acquisition', [], (0,255,0))
-		self.goodholesimage.addTargetType('focus', [], (0,0,255))
 	'''
+
+	def updateImage(self, name, image, targets={}):
+		self.images[name] = image
+		self.imagetargets[name] = targets
+		self.panel.imageUpdated(name, image, targets)
 
 	def readImage(self, filename):
 		orig = Mrc.mrc_to_numeric(filename)
 		self.hf['original'] = orig
 		self.currentimagedata = None
-		self.originalimage.set(orig)
+		self.updateImage('Original', orig)
 
 	def acqImage(self):
 		self.cam.uiApplyAsNeeded()
 		imdata = self.cam.acquireCameraImageData()
 		orig = imdata['image']
 		self.hf['original'] = orig
-		self.originalimage.set(orig)
+		self.updateImage('Original', orig)
 
 	def findEdges(self):
 		self.logger.info('find edges')
@@ -126,7 +142,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.hf.configure_edges(filter=filt, size=n, sigma=sig, absvalue=ab, lp=lowpasson, lpn=lowpassn, lpsig=lowpasssig, thresh=edgethresh)
 		self.hf.find_edges()
 		# convert to Float32 to prevent seg fault
-		self.edgeimage.set(self.hf['edges'].astype(Numeric.Float32))
+		self.updateImage('Edge', self.hf['edges'].astype(Numeric.Float32))
 
 	def correlateTemplate(self):
 		self.logger.info('correlate ring template')
@@ -147,7 +163,7 @@ class HoleFinder(targetfinder.TargetFinder):
 			corfilt = None
 		self.hf.configure_correlation(cortype, corfilt)
 		self.hf.correlate_template()
-		self.corimage.set(self.hf['correlation'].astype(Numeric.Float32))
+		self.updateImage('Template', self.hf['correlation'].astype(Numeric.Float32))
 
 	def threshold(self):
 		self.logger.info('threshold')
@@ -155,7 +171,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.hf.configure_threshold(tvalue)
 		self.hf.threshold_correlation()
 		# convert to Float32 to prevent seg fault
-		self.threshimage.set(self.hf['threshold'].astype(Numeric.Float32))
+		self.updateImage('Threshold', self.hf['threshold'].astype(Numeric.Float32))
 
 	def blobCenters(self, blobs):
 		centers = []
@@ -174,8 +190,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		blobs = self.hf['blobs']
 		centers = self.blobCenters(blobs)
 		self.logger.info('Blobs: %s' % (len(centers),))
-		self.allblobsimage.setImage(self.hf['original'])
-		self.allblobsimage.setTargetType('All Blobs', centers)
+		self.updateImage('Blobs', self.hf['original'], {'All Blobs': centers})
 
 	def fitLattice(self):
 		self.logger.info('fit lattice')
@@ -202,8 +217,7 @@ class HoleFinder(targetfinder.TargetFinder):
 			tstd = self.icecalc.get_stdev_thickness(std, mean)
 			center = tuple(hole.stats['center'])
 			mylist.append({'m':mean, 'tm': tmean, 's':std, 'ts': tstd, 'c':center})
-		self.latblobsimage.setImage(self.hf['original'])
-		self.latblobsimage.setTargetType('Lattice Blobs', centers)
+		self.updateImage('Lattice', self.hf['original'], {'Lattice Blobs': centers})
 
 	def ice(self):
 		self.logger.info('limit thickness')
@@ -239,8 +253,7 @@ class HoleFinder(targetfinder.TargetFinder):
 					focus_points.append(fochole)
 
 		self.logger.info('Holes with good ice: %s' % (len(centers),))
-		self.goodholesimage.setImage(self.hf['original'])
-		self.goodholesimage.imagedata = self.currentimagedata
+		self.imagedata = self.currentimagedata
 		# takes x,y instead of row,col
 		if self.settings['target template']:
 			newtargets = self.applyTargetTemplate(centers)
@@ -249,8 +262,8 @@ class HoleFinder(targetfinder.TargetFinder):
 		else:
 			acq_points = centers
 
-		self.goodholesimage.setTargetType('acquisition', acq_points)
-		self.goodholesimage.setTargetType('focus', focus_points)
+		self.updateImage('Final', self.hf['original'], {'acquisition': acq_points,
+																										'focus': focus_points})
 		self.logger.info('Acquisition Targets: %s' % (len(acq_points),))
 		self.logger.info('Focus Targets: %s' % (len(focus_points),))
 		hfprefs = self.storeHoleFinderPrefsData(self.currentimagedata)
@@ -301,10 +314,9 @@ class HoleFinder(targetfinder.TargetFinder):
 		return closest_point
 
 	def bypass(self):
-		self.goodholesimage.setTargetType('acquisition', [])
-		self.goodholesimage.setTargetType('focus', [])
-		self.goodholesimage.setImage(self.hf['original'])
-		self.goodholesimage.imagedata = self.currentimagedata
+		self.updateImage('Final', self.hf['original'], {'acquisition': [],
+																										'focus': []})
+		self.imagedata = self.currentimagedata
 
 	def applyTargetTemplate(self, centers):
 		self.logger.info('apply template')
@@ -439,8 +451,8 @@ class HoleFinder(targetfinder.TargetFinder):
 			self.unNotifyUserSubmit()
 
 		### publish targets from goodholesimage
-		self.targetsFromClickImage(self.goodholesimage, 'focus', targetlist)
-		self.targetsFromClickImage(self.goodholesimage, 'acquisition', targetlist)
+		self.publishTargets('focus', targetlist)
+		self.publishTargets('acquisition', targetlist)
 
 	def submit(self):
 		self.userpause.set()

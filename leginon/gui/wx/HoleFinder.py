@@ -43,8 +43,8 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.targetcolors = {
 			'acquisition': wx.GREEN,
 			'focus': wx.BLUE,
-			'done': wx.RED,
-			'position': wx.Color(255, 255, 0),
+			'All Blobs': wx.Color(0, 255, 255),
+			'Lattice Blobs': wx.Color(255, 0, 255),
 		}
 
 		self.szdisplay = self._getStaticBoxSizer('Display', (2, 0), (1, 1),
@@ -84,6 +84,24 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.Bind(EVT_ADD_TARGET_TYPES, self.onAddTargetTypes)
 		self.Bind(EVT_ADD_TARGETS, self.onAddTargets)
 		self.Bind(EVT_SET_TARGETS, self.onSetTargets)
+		self.Bind(gui.wx.TargetFinder.EVT_IMAGE_UPDATED, self.onImageUpdated)
+
+	def onImageUpdated(self, evt):
+		if self.rbdisplay[evt.name].GetValue():
+			self.imagepanel.setImage(evt.image)
+			if evt.targets is not None:
+				self._setTargets(evt.targets)
+
+	def _setTargets(self, targets):
+		self.imagepanel.clearTargets()
+		for typename, targetlist in targets.items():
+			for target in targetlist:
+				x, y = target
+				self.imagepanel.addTarget(typename, x, y)
+
+	def imageUpdated(self, name, image, targets=None):
+		evt = gui.wx.TargetFinder.ImageUpdatedEvent(self, name, image, targets)
+		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onAddTargetTypes(self, evt):
 		for typename in evt.typenames:
@@ -117,9 +135,26 @@ class Panel(gui.wx.TargetFinder.Panel):
 	def getTargets(self, typename):
 		return self.imagepanel.getTargetTypeValue(typename)
 
+	def onDisplayRadioButton(self, evt):
+		for key, value in self.rbdisplay.items():
+			if value.GetValue():
+				try:
+					image = self.node.images[key]
+				except KeyError:
+					image = None
+				self.imagepanel.setImage(image)
+				try:
+					targets = self.node.imagetargets[key]
+				except KeyError:
+					targets = {}
+				self._setTargets(targets)
+				break
+
 	def onNodeInitialized(self):
 		gui.wx.TargetFinder.Panel.onNodeInitialized(self)
 		self.Bind(wx.EVT_BUTTON, self.onSubmitButton, self.bsubmit)
+		for value in self.rbdisplay.values():
+			self.Bind(wx.EVT_RADIOBUTTON, self.onDisplayRadioButton, value)
 		self.Bind(wx.EVT_BUTTON, self.onOriginalSettingsButton,
 							self.bhf['Original'])
 		self.Bind(wx.EVT_BUTTON, self.onEdgeSettingsButton,

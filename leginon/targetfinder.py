@@ -201,8 +201,6 @@ class ClickTargetFinder(TargetFinder):
 		self.userpause.wait()
 		self.unNotifyUserSubmit()
 		self.logger.info('Done waiting')
-		#self.targetsFromClickImage(self.clickimage, 'focus', targetlist)
-		#self.targetsFromClickImage(self.clickimage, 'acquisition', targetlist)
 		self.publishTargets('focus', targetlist)
 		self.publishTargets('acquisition', targetlist)
 

@@ -2,16 +2,8 @@ import wx
 from gui.wx.Choice import Choice
 from gui.wx.Entry import IntEntry, FloatEntry
 import gui.wx.Settings
+import gui.wx.TargetFinder
 import gui.wx.ClickTargetFinder
-
-ImageUpdatedEventType = wx.NewEventType()
-EVT_IMAGE_UPDATED = wx.PyEventBinder(ImageUpdatedEventType)
-class ImageUpdatedEvent(wx.PyCommandEvent):
-	def __init__(self, source, name, image):
-		wx.PyCommandEvent.__init__(self, ImageUpdatedEventType, source.GetId())
-		self.SetEventObject(source)
-		self.name = name
-		self.image = image
 
 class Panel(gui.wx.ClickTargetFinder.Panel):
 	icon = 'atlastarget'
@@ -45,13 +37,21 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.blpfsettings, (1, 1), (1, 1), wx.ALIGN_CENTER)
 		sz.Add(self.bblobsettings, (2, 1), (1, 1), wx.ALIGN_CENTER)
-
-		self.Bind(EVT_IMAGE_UPDATED, self.onImageUpdated)
+		self.Bind(gui.wx.TargetFinder.EVT_IMAGE_UPDATED, self.onImageUpdated)
 
 	def onImageUpdated(self, evt):
-		# targets ?
 		if self.rbdisplay[evt.name].GetValue():
 			self.imagepanel.setImage(evt.image)
+			if evt.targets is not None:
+				self.imagepanel.clearTargets()
+				for typename, targetlist in evt.targets.items():
+					for target in targetlist:
+						x, y = target
+						self.imagepanel.addTarget(typename, x, y)
+
+	def imageUpdated(self, name, image, targets=None):
+		evt = gui.wx.TargetFinder.ImageUpdatedEvent(self, name, image, targets)
+		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onDisplayRadioButton(self, evt):
 		for key, value in self.rbdisplay.items():
@@ -62,10 +62,6 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 					image = None
 				self.imagepanel.setImage(image)
 				break
-
-	def imageUpdated(self, name, image):
-		evt = ImageUpdatedEvent(self, name, image)
-		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onNodeInitialized(self):
 		gui.wx.ClickTargetFinder.Panel.onNodeInitialized(self)
