@@ -13,7 +13,7 @@ class TargetWatcher(watcher.Watcher):
 
 	eventinputs = watcher.Watcher.eventinputs + [event.TargetListDoneEvent,
 																							event.ImageTargetListPublishEvent]
-	eventoutputs = watcher.Watcher.eventoutputs + [event.TargetListDoneEvent]
+	eventoutputs = watcher.Watcher.eventoutputs + [event.TargetListDoneEvent, event.ImageTargetListPublishEvent]
 
 	def __init__(self, id, session, nodelocations, targetclass=data.ImageTargetData, **kwargs):
 		watchfor = event.ImageTargetListPublishEvent
