@@ -89,7 +89,7 @@ class DataBinder(object):
 		try:
 			remotecallobject = self.remotecallobjects[request.node][request.name]
 		except KeyError:
-			estr = 'no remotecallobject %s for node %s' % (request.node, request.name)
+			estr = 'no remotecallobject %s for node %s' % (request.name, request.node)
 			return ValueError(estr)
 		try:
 			return remotecallobject._handleRequest(request)
@@ -103,7 +103,7 @@ class DataBinder(object):
 
 	def removeRemoteCallObject(self, nodename, name):
 		try:
-			self.remotecallobjects[nodename][name] = remotecallobject
+			del self.remotecallobjects[nodename][name]
 		except:
 			raise ValueError('no remotecallobject %s for node %s' % (nodename, name))
 

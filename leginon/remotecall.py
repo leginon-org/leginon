@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/remotecall.py,v $
-# $Revision: 1.16 $
+# $Revision: 1.17 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-11 01:41:12 $
-# $Author: pulokas $
+# $Date: 2005-03-11 19:02:13 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
@@ -185,8 +185,7 @@ class ObjectCallProxy(object):
 
 class ObjectProxy(object):
 	def __init__(self, objectservice, nodename, name):
-		## to avoid using __setattr__ below, use base class methods
-		## (prevents some seg fault issues)
+		# to avoid using __setattr__ below, use base class methods
 		object.__setattr__(self, '_nodename', nodename)
 		object.__setattr__(self, '_name', name)
 		object.__setattr__(self, '_objectservice', objectservice)
@@ -208,8 +207,8 @@ class ObjectProxy(object):
 	def __setattr__(self, name, value):
 		try:
 			d, t = self._objectservice.descriptions[self._nodename][self._name]
-		except:
-			return object.__setattr__(self, name, value)
+		except KeyError:
+			raise RuntimeError('object %s not in objectservice' % self._name)
 		try:
 			description = d[name]
 		except KeyError:
@@ -404,7 +403,7 @@ class ManagerObjectService(ObjectService):
 		for nn in self.descriptions:
 			if nn == nodename:
 				continue
-			location = self.node.nodelocations[nodename]['location']
+			location = self.node.nodelocations[nn]['location']
 			for n in self.descriptions[nn]:
 				d, t = self.descriptions[nn][n]
 				if 'ObjectService' in t:
@@ -413,8 +412,7 @@ class ManagerObjectService(ObjectService):
 				else:
 					descriptions.append((nn, n, d, t, location['data binder']))
 		if descriptions and 'ObjectService' in types:
-			args = (descriptions,)
-			self._call(nodename, name, 'addDescriptions', 'method', args)
+			self._call(nodename, name, 'addDescriptions', 'method', (descriptions,))
 
 	def removeDescription(self, nodename, name):
 		args = (nodename, name)
