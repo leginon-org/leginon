@@ -821,13 +821,8 @@ static PyObject *rgbstring(PyObject *self, PyObject *args) {
 		scale = 255.0/fromrange;
 
 	size = inputarray->dimensions[0]*inputarray->dimensions[1]*3;
-	string = (unsigned char *)malloc(size);
-	if(string == NULL) {
-		PyErr_SetString(PyExc_MemoryError, "cannot allocate memory for string");
-		return NULL;
-	}
-
-	index = string;
+	output = PyString_FromStringAndSize(NULL, size);
+	index = PyString_AsString(output);
 	for(i = 0; i < inputarray->dimensions[0]; i++) {
 		for(j = 0; j < inputarray->dimensions[1]; j++) {
 			value = *(float *)(inputarray->data
@@ -849,8 +844,6 @@ static PyObject *rgbstring(PyObject *self, PyObject *args) {
 
 	Py_DECREF(inputarray);
 
-	output = PyString_FromStringAndSize(string, size);
-	free(string);
 	return output;
 }
 
