@@ -13,6 +13,7 @@ import dbdatakeeper
 import uidata
 import datahandler
 import leginonobject
+import socket
 
 class DataHandler(node.DataHandler):
 	def __init__(self, id, session, mynode):
@@ -754,8 +755,8 @@ class ManagerSetup(object):
 			try:
 				hostname = session['instrument']['hostname']
 				self.manager.addNode(hostname, 55555)
-			except (TypeError, IOError), e:
-				if isinstance(e, IOError):
+			except (TypeError, socket.error), e:
+				if isinstance(e, socket.error):
 					self.manager.outputWarning('Cannot add instrument\'s launcher.')
 			parent = self.container.getParent()
 			if parent is not None:
