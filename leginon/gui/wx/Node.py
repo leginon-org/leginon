@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Node.py,v $
-# $Revision: 1.23 $
+# $Revision: 1.24 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
+# $Date: 2004-10-22 18:43:53 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -34,11 +34,9 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 	def __init__(self, parent, id, tools=None, **kwargs):
 
 		self.node = None
-		#if 'style' in kwargs:
-		#	kwargs['style'] |= wx.SIMPLE_BORDER
-		#else:
-		#	kwargs['style'] = wx.SIMPLE_BORDER
+		kwargs['style'] = 0
 		wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent, id, **kwargs)
+		print self.GetWindowStyle() & wx.TAB_TRAVERSAL
 
 		self.toolbar = parent.getToolBar()
 
@@ -52,6 +50,9 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 		self.Bind(gui.wx.Events.EVT_SET_TARGETS, self.onSetTargets)
 		self.Bind(gui.wx.Events.EVT_ACQUISITION_DONE, self.onAcquisitionDone)
 		self.Bind(gui.wx.MessageLog.EVT_ADD_MESSAGE, self.onAddMessage)
+
+	def OnChildFocus(self, evt):
+		evt.Skip()
 
 	def onAddMessage(self, evt):
 		self.messagelog.addMessage(evt.level, evt.message)
