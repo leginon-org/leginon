@@ -194,11 +194,6 @@ class FilmPublishEvent(AcquisitionImagePublishEvent):
 class CorrectorImagePublishEvent(CameraImagePublishEvent):
 	dataclass = data.CorrectorImageData
 
-### should be using ImageListPublish or ImageTargetListPublish
-class XXXMosaicPublishEvent(PublishEvent):
-	'Event indicating mosaic image was published'
-	dataclass = data.MosaicData
-
 class DarkImagePublishEvent(CorrectorImagePublishEvent):
 	dataclass = data.DarkImageData
 

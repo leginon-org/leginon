@@ -1145,12 +1145,12 @@ class BrightImageData(CorrectorImageData):
 class NormImageData(CorrectorImageData):
 	pass
 
-### instead, use ImageListData, or ImageTargetListData
-class XXXMosaicData(InSessionData):
+class MosaicTileData(InSessionData):
 	def typemap(cls):
 		t = InSessionData.typemap()
 		t += [
-			('data IDs', list),
+			('list', ImageListData),
+			('image', AcquisitionImageData),
 		]
 		return t
 	typemap = classmethod(typemap)
