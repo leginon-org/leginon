@@ -42,6 +42,7 @@ else:
 				for value in row:
 					imagelist.append(value)
 			image = array.array('H', imagelist)
-			return base64.encodestring(image.tostring())
+			#return base64.encodestring(image.tostring())
+			return image.tostring()
 	        
 	    

@@ -44,7 +44,8 @@ else:
 			map = mmapfile.mmapfile(mmname, size)
 			result = map.read(size)
 			map.close()
-			return base64.encodestring(result)
+			#return base64.encodestring(result)
+			return result
 	
 		def getImage(self, xOff, yOff, xDim, yDim, xBin, yBin, expTime, type):	
 			# 0 uses internal flash signal
