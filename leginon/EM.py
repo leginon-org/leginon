@@ -33,6 +33,9 @@ prunekeys = (
 	'holder type',
 	'holder status',
 	'stage status',
+	'vacuum status',
+	'column valves',
+	'turbo pump',
 #	'screen position'
 )
 

@@ -4,6 +4,9 @@ import win32com.client
 import time
 import pywintypes
 import sys
+import node
+import data
+import uidata
 
 class Test(object):
 	def __init__(self):
@@ -16,19 +19,196 @@ class Test(object):
 		self.Signal6 = 1
 		self.Signal7 = 1
 
-class RobotControl(object):
-	def __init__(self):
-		self.scope = scopedict.factory(tecnai.tecnai)()
+class RobotControl(node.Node):
+	def __init__(self, id, session, nodelocations, **kwargs):
+		node.Node.__init__(self, id, session, nodelocations, **kwargs)
+#		self.scope = scopedict.factory(tecnai.tecnai)()
 		try:
 #			self.communication = win32com.client.Dispatch('RobotCommunications.Signal')
 			self.communication = Test()
 		except pywintypes.com_error:
 			raise RuntimeError('Cannot initialized robot communications')
+		self.statushistory = []
+		self.statusindex = -1
+
+		self.defineUserInterface()
+		self.start()
 
 	def __del__(self):
-		self.scope = None
+#		self.scope = None
 		self.communication = None
 
+	def condition(self, parameter, value, signal=None, poll=False,
+								interval=0.5, timeout=0.0):
+		parametervalue = self.getScope(parameter)
+		print parameter, parametervalue, value
+		elapsed = 0.0
+		if poll:
+			while parametervalue != value:
+				time.sleep(interval)
+				if timeout > 0.0:
+					elapsed += interval
+					if elapsed > timeout:
+						raise RuntimeError('parameter is not set to value')
+				parametervalue = self.getScope(parameter)
+				print parameter, parametervalue, value
+		else:
+			if parametervalue != value:
+				raise RuntimeError('parameter is not set to value')
+		if signal is not None:
+			signal = 1
+
+	def getScope(self, key):
+		parameterdata = self.researchByDataID((key,))
+		if parameterdata is None:
+			raise RuntimeError('cannot get parameter value')
+		return parameterdata[key]
+
+	def setScope(self, key, value):
+		scopedata = data.ScopeEMData()
+		scopedata['id'] = ('scope',)
+		scopedata[key] = value
+		try:
+			self.publishRemote(scopedata)
+		except node.PublishError:
+			raise RuntimeError('cannot set parameter to value')
+
+	def setStatus(self, message):
+		self.statushistory.append(message)
+		self.statuslabel.set(message)
+
+	def insertStage(self):
+		self.setStatus('Verifying robot is ready for insertion')
+		while not self.communication.Signal0:
+			time.sleep(0.5)
+		self.communication.Signal0 = 0
+		self.setStatus('Robot is ready for insertion')
+
+		self.setStatus('Zeroing stage position')
+		self.setScope('stage position', {'x': 0.0, 'y': 0.0, 'z': 0.0, 'a': 0.0})
+		self.setStatus('Verifying stage position is zeroed')
+		self.condition('stage position', {'x': 0.0, 'y': 0.0, 'z': 0.0, 'a': 0.0},
+										None, True, 0.5, 15)
+		self.setStatus('Stage position is zeroed')
+
+		self.setStatus('Verifying there is no holder inserted')
+		self.condition('holder status', 'not inserted')
+		self.setStatus('No holder currently inserted')
+
+		self.setStatus('Verifying vacuum is ready')
+		self.condition('vacuum status', 'ready', None, True, 0.5, 600)
+		self.setStatus('Vacuum is ready')
+
+		self.setStatus('Closing column valves')
+		self.setScope('column valves', 'closed')
+		self.setStatus('Verifying column valves are closed')
+		self.condition('column valves', 'closed', None, True, 0.5, 15)
+		self.setStatus('Column valves are closed')
+
+		self.setStatus('Turning on turbo pump')
+		self.setScope('turbo pump', 'on')
+		self.setStatus('Verifying turbo pump is on')
+		self.condition('turbo pump', 'on', None, True, 0.5, 15)
+		self.setStatus('Turbo pump is on')
+
+		self.setStatus('Waiting for stage to be ready')
+		self.condition('stage status', 'ready', self.communication.Signal1,
+										True, 0.5, 600)
+		self.setStatus('Stage is ready, signaled robot to begin insertion step 1')
+
+		self.setStatus('Waiting for robot to complete insertion step 1')
+		while not self.communication.Signal2:
+			time.sleep(0.5)
+		self.communication.Signal2 = 0
+		self.setStatus('Robot has completed insertion step 1')
+
+		self.setStatus('Setting holder type to single tilt')
+		self.setScope('holder type', 'single tilt')
+		self.setStatus('Verifying holder type is set to single tilt')
+		self.condition('holder type', 'single tilt', None, True, 0.5, 60)
+		self.setStatus('Holder type is set to single tilt')
+
+		self.setStatus('Waiting for stage to be ready')
+		self.condition('stage status', 'ready', self.communication.Signal3,
+										True, 0.5, 600)
+		self.setStatus('Stage is ready, signaled robot to begin insertion step 2')
+
+		self.setStatus('Waiting for robot to complete insertion step 2')
+		while not self.communication.Signal4:
+			time.sleep(0.5)
+		self.communication.Signal4 = 0
+		self.setStatus('Robot has completed insertion step 2')
+
+	def extractStage(self):
+		self.setStatus('Verifying robot is ready for extraction')
+		while not self.communication.Signal5:
+			time.sleep(0.5)
+		self.communication.Signal5 = 0
+		self.setStatus('Robot is ready for extraction')
+
+		self.setStatus('Zeroing stage position')
+		self.setScope('stage position', {'x': 0.0, 'y': 0.0, 'z': 0.0, 'a': 0.0})
+#		self.setStatus('Verifying stage position is zeroed')
+#		self.condition('stage position', {'x': 0.0, 'y': 0.0, 'z': 0.0, 'a': 0.0},
+#										None, True, 0.5, 15)
+		self.setStatus('Stage position is zeroed')
+
+		self.setStatus('Verifying holder is inserted')
+		self.condition('holder status', 'inserted')
+		self.setStatus('Holder is currently inserted')
+
+		self.setStatus('Verifying vacuum is ready')
+		self.condition('vacuum status', 'ready', None, True, 0.5, 600)
+		self.setStatus('Vacuum is ready')
+
+		self.setStatus('Closing column valves')
+		self.setScope('column valves', 'closed')
+		self.setStatus('Verifying column valves are closed')
+		self.condition('column valves', 'closed', None, True, 0.5, 15)
+		self.setStatus('Column valves are closed')
+
+		self.setStatus('Waiting for stage to be ready')
+		self.condition('stage status', 'ready', self.communication.Signal6,
+										True, 0.5, 600)
+		self.setStatus('Stage is ready, signaled robot to begin extraction')
+
+		self.setStatus('Waiting for robot to complete extraction')
+		while not self.communication.Signal7:
+			time.sleep(0.5)
+		self.communication.Signal7 = 0
+		self.setStatus('Robot has completed extraction')
+
+	def insert(self):
+		self.setStatus('Inserting stage')
+		try:
+			self.insertStage()
+		except RuntimeError:
+			self.setStatus('Error inserting stage')
+
+	def extract(self):
+		self.setStatus('Extracting stage')
+		try:
+			self.extractStage()
+		except RuntimeError:
+			self.setStatus('Error extracting stage')
+
+	def defineUserInterface(self):
+		node.Node.defineUserInterface(self)
+
+		self.statuslabel = uidata.String('Current Operation', '', 'r')
+		statuscontainer = uidata.Container('Status')
+		statuscontainer.addObjects((self.statuslabel,))
+
+		insertmethod = uidata.Method('Insert', self.insert)
+		extractmethod = uidata.Method('Extract', self.extract)
+		controlcontainer = uidata.Container('Control')
+		controlcontainer.addObjects((insertmethod, extractmethod))
+
+		rccontainer = uidata.MediumContainer('Robot Control')
+		rccontainer.addObjects((statuscontainer, controlcontainer))
+		self.uiserver.addObject(rccontainer)
+
+'''
 	def insert(self):
 		# verify robot ready for insertion
 		print 'Verifying robot ready for insertion...',
@@ -186,7 +366,9 @@ class RobotControl(object):
 
 if __name__ == '__main__':
 	rc = RobotControl()
-	rc.insert()
-	rc.extract()
+	rc.insertStage()
+	rc.extractStage()
 	del rc
+
+'''
 

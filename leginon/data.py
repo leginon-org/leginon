@@ -354,6 +354,12 @@ class ScopeEMData(EMData):
 			('beam tilt', dict),
 			('corrected stage position', int),
 			('stage position', dict),
+			('holder type', str),
+			('holder status', str),
+			('stage status', str),
+			('vacuum status', str),
+			('column valves', str),
+			('turbo pump', str),
 		]
 		return t
 	typemap = classmethod(typemap)
