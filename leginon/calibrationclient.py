@@ -86,6 +86,7 @@ class CalibrationClient(object):
 		imagecontent1 = imagedata1
 		stats1 = info1['image stats']
 		actual1 = imagecontent1['scope']
+		t0 = actual1['system time']
 		self.numimage1 = imagecontent1['image']
 		if image_callback is not None:
 			apply(image_callback, (self.numimage1,))
@@ -102,6 +103,7 @@ class CalibrationClient(object):
 			imagecontent1 = imagedata1
 			stats1 = info1['image stats']
 			actual1 = imagecontent1['scope']
+			t1 = actual1['system time']
 			self.numimage1 = imagecontent1['image']
 			if image_callback is not None:
 				apply(image_callback, (self.numimage1,))
@@ -122,7 +124,10 @@ class CalibrationClient(object):
 			self.node.publish(d, database=True)
 
 			drift = abs(shift[0] + 1j * shift[1])
-			print 'DRIFT: ', drift
+			seconds = t1 - t0
+			print 'SECONDS: ', seconds
+			print 'PIXELS: ', drift
+			print 'PIXELS/SECOND: %.4e', float(drift) / seconds
 			if drift > drift_threshold:
 				raise Drifting()
 
