@@ -2,8 +2,8 @@ import os, socket
 #import threading, weakref
 
 class LeginonObject(object):
-	def __init__(self):
-		self.id = id(self)
+	def __init__(self, id):
+		self.id = id
 
 	def location(self):
 		'return a dict describing the location of this object'

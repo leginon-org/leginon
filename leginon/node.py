@@ -50,6 +50,8 @@ class Node(leginonobject.LeginonObject):
 	def __init__(self, id, managerloc = None, dh = NodeDataHandler, dhargs = (), clientclass = Client):
 		leginonobject.LeginonObject.__init__(self, id)
 
+		self.idcounter = 0
+
 		# added from eventhandler
 		self.clients = {}
 		self.registry = {'outputs':[], 'inputs':[]}
@@ -59,8 +61,6 @@ class Node(leginonobject.LeginonObject):
 
 		if managerloc:
 			self.addManager(managerloc)
-
-		self.idcounter = 0
 
 	def ID(self):
 		newid = list(self.id)
