@@ -176,7 +176,7 @@ class Corrector(node.Node):
 	def acquireSeries(self, n, camdata):
 		series = []
 		for i in range(n):
-			self.setStatus('Acquiring %s of %s' % (i+1, n))
+			self.logger.info('Acquiring %s of %s' % (i+1, n))
 			imagedata = self.cam.acquireCameraImageData(correction=False)
 			numimage = imagedata['image']
 			camdata = imagedata['camera']
@@ -191,11 +191,11 @@ class Corrector(node.Node):
 		if dark:
 			tempcamdata['exposure type'] = 'dark'
 			typekey = 'dark'
-			self.setStatus('Acquiring dark')
+			self.logger.info('Acquiring dark')
 		else:
 			tempcamdata['exposure type'] = 'normal'
 			typekey = 'bright'
-			self.setStatus('Acquiring bright')
+			self.logger.info('Acquiring bright')
 		self.cam.setCameraEMData(tempcamdata)
 
 		seriesinfo = self.acquireSeries(self.settings['n average'],
@@ -204,7 +204,7 @@ class Corrector(node.Node):
 		seriescam = seriesinfo['camera']
 		seriesscope = seriesinfo['scope']
 
-		self.setStatus('Averaging series')
+		self.logger.info('Averaging series')
 		ref = imagefun.averageSeries(series)
 
 		corstate = data.CorrectorCamstateData()
@@ -214,11 +214,11 @@ class Corrector(node.Node):
 
 		refimagedata = self.storeRef(typekey, ref, corstate)
 
-		self.setStatus('Got reference image, calculating normalization')
+		self.logger.info('Got reference image, calculating normalization')
 		self.calc_norm(refimagedata)
 
 		if tempcamdata['exposure type'] == 'dark':
-			self.setStatus('Reseting camera exposure type to normal from dark')
+			self.logger.info('Reseting camera exposure type to normal from dark')
 			self.cam.setCameraEMData(originalcamdata)
 		return ref
 
@@ -235,9 +235,9 @@ class Corrector(node.Node):
 		imagetemp['camstate'] = camstate
 		imagetemp['session'] = data.SessionData()
 		imagetemp['session']['instrument'] = self.session['instrument']
-		self.setStatus('Researching reference image')
+		self.logger.info('Researching reference image')
 		refs = self.research(datainstance=imagetemp, results=1)
-		self.setStatus('Reference image researched')
+		self.logger.info('Reference image researched')
 		if refs:
 			ref = refs[0]
 		else:
@@ -265,7 +265,7 @@ class Corrector(node.Node):
 		try:
 			return self.ref_cache[key]
 		except KeyError:
-			self.setStatus('Loading reference image "%s"' % str(key))
+			self.logger.info('Loading reference image "%s"' % str(key))
 
 		## use reference image from database
 		ref = self.researchRef(camstate, type)
@@ -273,7 +273,7 @@ class Corrector(node.Node):
 			image = ref['image']
 			self.ref_cache[key] = image
 		else:
-			self.setStatus('No reference image found')
+			self.logger.info('No reference image found')
 			image = None
 		return image
 
@@ -296,9 +296,9 @@ class Corrector(node.Node):
 		imagetemp['camstate'] = camstate
 		imagetemp['filename'] = self.filename(type, imagetemp.dmid[-1])
 		imagetemp['session'] = self.session
-		self.setStatus('Publishing reference image...')
+		self.logger.info('Publishing reference image...')
 		self.publish(imagetemp, pubevent=True, database=True)
-		self.setStatus('Reference image published')
+		self.logger.info('Reference image published')
 		return imagetemp
 
 	def filename(self, reftype, imid):
@@ -311,13 +311,13 @@ class Corrector(node.Node):
 			dark = corimagedata['image']
 			bright = self.retrieveRef(corstate, 'bright')
 			if bright is None:
-				self.setStatus('No bright reference image')
+				self.logger.info('No bright reference image')
 				return
 		if isinstance(corimagedata, data.BrightImageData):
 			bright = corimagedata['image']
 			dark = self.retrieveRef(corstate, 'dark')
 			if dark is None:
-				self.setStatus('No dark reference image')
+				self.logger.info('No dark reference image')
 				return
 
 		norm = bright - dark
@@ -447,7 +447,7 @@ class Corrector(node.Node):
 		im = imagedata['image']
 		mean = darkmean = imagefun.mean(im)
 		self.displayImage(im)
-		self.setStatus('Dark reference mean: %s' % str(darkmean))
+		self.logger.info('Dark reference mean: %s' % str(darkmean))
 
 		target_exp = 0
 		trial_exp = initial_exp
@@ -463,7 +463,7 @@ class Corrector(node.Node):
 			im = imagedata['image']
 			mean = imagefun.mean(im)
 			self.displayImage(im)
-			self.setStatus('Image mean: %s' % str(mean))
+			self.logger.info('Image mean: %s' % str(mean))
 
 			if minmean <= mean <= maxmean:
 				i = -1
@@ -473,5 +473,5 @@ class Corrector(node.Node):
 				trial_exp = (targetmean - darkmean) / slope
 
 		if i == tries-1:
-			self.setStatus('Failed to find target mean after %s tries' % (tries,))
+			self.logger.info('Failed to find target mean after %s tries' % (tries,))
 

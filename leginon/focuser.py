@@ -141,11 +141,11 @@ class Focuser(acquisition.Acquisition):
 			correction = self.btcalclient.measureDefocusStig(btilt, pub, drift_threshold=driftthresh, image_callback=self.setImage, target=target)
 		except calibrationclient.Abort:
 			self.logger.info('measureDefocusStig was aborted')
-			self.setStatus('aborted')
+			self.logger.info('aborted')
 			return 'aborted'
 		except calibrationclient.Drifting:
 			self.driftDetected(presettarget)
-			self.setStatus('drift detected (will try again when drift is done)')
+			self.logger.info('drift detected (will try again when drift is done)')
 			return 'repeat'
 
 		self.logger.info('Measured defocus and stig %s' % correction)
@@ -199,7 +199,7 @@ class Focuser(acquisition.Acquisition):
 			resultstring = 'invalid focus measurement (min=%s)' % (fitmin,)
 		if resultdata['stig correction']:
 			resultstring = resultstring + ', corrected stig by x,y=%.4f,%.4f' % (stigx, stigy)
-		self.setStatus(resultstring)
+		self.logger.info(resultstring)
 		return status
 
 	def acquire(self, presetdata, target=None, presettarget=None, attempt=None):

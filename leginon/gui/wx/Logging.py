@@ -434,7 +434,14 @@ class MessageLogHandler(logging.Handler):
 		if level is None:
 			return
 		message = self.format(record)
-		evt = gui.wx.MessageLog.AddMessageEvent(self.window, level, message)
+		try:	
+			# listctrl can't do this...need to activate and show with dialog
+			index = message.index('\n')
+			message = message[:index]
+		except ValueError:
+			pass
+		secs = record.created
+		evt = gui.wx.MessageLog.AddMessageEvent(self.window, level, message, secs)
 		self.window.GetEventHandler().AddPendingEvent(evt)
 
 if __name__ == '__main__':

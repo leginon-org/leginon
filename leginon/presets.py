@@ -214,16 +214,16 @@ class PresetsManager(node.Node):
 		emtarget = ievent['emtarget']
 		try:
 			if emtarget is None or emtarget['movetype'] is None:
-				self.setStatus('Changing preset to "%s"' % pname)
+				self.logger.info('Changing preset to "%s"' % pname)
 				self.cycleToScope(pname)
 			else:
-				self.setStatus('Changing preset to "%s" and targeting' % pname)
+				self.logger.info('Changing preset to "%s" and targeting' % pname)
 				self.targetToScope(pname, emtarget)
 		except PresetChangeError:
-			self.setStatus('preset request to "%s" failed' % pname)
+			self.logger.info('preset request to "%s" failed' % pname)
 			pass
 		else:
-			self.setStatus('Preset changed to "%s"' % pname)
+			self.logger.info('Preset changed to "%s"' % pname)
 			pass
 		## should we confirm if failure?
 		self.confirmEvent(ievent)
@@ -349,7 +349,6 @@ class PresetsManager(node.Node):
 			scopedata.friendly_update(presetdata)
 			cameradata.friendly_update(presetdata)
 
-		self.setStatus(beginmessage)
 		self.logger.info(beginmessage)
 
 		self.emclient.setScope(scopedata)
@@ -361,7 +360,6 @@ class PresetsManager(node.Node):
 			self.currentpreset = None
 		else:
 			self.currentpreset = presetdata
-		self.setStatus(endmessage)
 		self.logger.info(endmessage)
 		if outputevent:
 			self.outputEvent(event.PresetChangedEvent(name=name, preset=presetdata))
@@ -397,7 +395,7 @@ class PresetsManager(node.Node):
 		## update UI
 		# ???
 		self.panel.onSetOrder(self.presets.keys())
-		self.setStatus('Set preset "%s" values from instrument' % name)
+		self.logger.info('Set preset "%s" values from instrument' % name)
 		node.beep()
 		return newpreset
 
@@ -610,7 +608,7 @@ class PresetsManager(node.Node):
 		if self.currentpreset is None:
 			self.logger.error('You go to a preset before measuring dose')
 			return
-		self.setStatus('Acquiring dose image using preset config at 512x512')
+		self.logger.info('Acquiring dose image using preset config at 512x512')
 		camdata0 = data.CameraEMData()
 		camdata0.friendly_update(self.currentpreset)
 
@@ -625,7 +623,7 @@ class PresetsManager(node.Node):
 
 		self.cam.setCameraEMData(camdata1)
 		imagedata = self.cam.acquireCameraImageData(correction=True)
-		self.setStatus('returning to original preset camera dimensions')
+		self.logger.info('returning to original preset camera dimensions')
 		self.cam.setCameraEMData(camdata0)
 		if imagedata is None:
 			return
@@ -697,7 +695,7 @@ class PresetsManager(node.Node):
 			newmag = 'SA'
 
 		if oldmag == newmag:
-			self.setStatus('Using same magnification mode')
+			self.logger.info('Using same magnification mode')
 			myimage['x'] -= oldpreset['image shift']['x']
 			myimage['x'] += newpreset['image shift']['x']
 			myimage['y'] -= oldpreset['image shift']['y']
@@ -708,7 +706,7 @@ class PresetsManager(node.Node):
 			mybeam['y'] -= oldpreset['beam shift']['y']
 			mybeam['y'] += newpreset['beam shift']['y']
 		else:
-			self.setStatus('Using different magnification mode')
+			self.logger.info('Using different magnification mode')
 			myimage['x'] = newpreset['image shift']['x']
 			myimage['y'] = newpreset['image shift']['y']
 
@@ -737,7 +735,6 @@ class PresetsManager(node.Node):
 		name = newpreset['name']
 		self.currentpreset = newpreset
 		message = 'Preset (with target) changed to %s' % (name,)
-		self.setStatus(message)
 		self.logger.info(message)
 		self.outputEvent(event.PresetChangedEvent(name=name, preset=newpreset))
 

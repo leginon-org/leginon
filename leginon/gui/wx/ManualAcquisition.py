@@ -4,7 +4,6 @@ import gui.wx.Camera
 import gui.wx.Node
 import gui.wx.Settings
 import gui.wx.ImageViewer
-import gui.wx.MessageLog
 
 ImageUpdatedEventType = wx.NewEventType()
 EVT_IMAGE_UPDATED = wx.PyEventBinder(ImageUpdatedEventType)
@@ -43,12 +42,6 @@ class Panel(gui.wx.Node.Panel):
 		self.SetupScrolling()
 
 	def initialize(self):
-		self.szmain = wx.GridBagSizer(5, 5)
-
-		# status
-		self.messagelog = gui.wx.MessageLog.MessageLog(self)
-		self.szmain.Add(self.messagelog, (0, 0), (1, 2), wx.EXPAND|wx.ALL, 3)
-
 		# settings
 
 		self.bsettings = wx.Button(self, -1, 'Settings...')
@@ -77,11 +70,6 @@ class Panel(gui.wx.Node.Panel):
 		self.Bind(EVT_IMAGE_UPDATED, self.onImageUpdated)
 		self.Bind(EVT_LOOP_STARTED, self.onLoopStarted)
 		self.Bind(EVT_LOOP_STOPPED, self.onLoopStopped)
-
-		self.Bind(gui.wx.MessageLog.EVT_ADD_MESSAGE, self.onAddMessage)
-
-	def onAddMessage(self, evt):
-		self.messagelog.addMessage(evt.level, evt.message)
 
 	def onNodeInitialized(self):
 		self.Bind(wx.EVT_BUTTON, self.onSettingsButton, self.bsettings)

@@ -17,14 +17,6 @@ class Panel(gui.wx.Node.Panel):
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
 
-		self.szmain = wx.GridBagSizer(5, 5)
-
-		# status
-		self.szstatus = self._getStaticBoxSizer('Status', (0, 0), (1, 2),
-																						wx.EXPAND|wx.ALL)
-		self.ststatus = wx.StaticText(self, -1, '')
-		self.szstatus.Add(self.ststatus, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
 		# statistics
 		self.szstats = self._getStaticBoxSizer('Statistics', (1, 0), (1, 1),
 																						wx.EXPAND|wx.ALL)

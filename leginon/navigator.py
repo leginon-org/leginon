@@ -95,7 +95,6 @@ class Navigator(node.Node):
 
 	def navigate(self, xy):
 		self.logger.info('Handling image click...')
-		self.setStatus('')
 		## get relavent info from click event
 		clickrow = xy[1]
 		clickcol = xy[0]
@@ -168,7 +167,7 @@ class Navigator(node.Node):
 				else:
 					## insert into DB?
 					pass
-			self.setStatus(res)
+			self.logger.info(res)
 
 		node.beep()
 

@@ -237,7 +237,6 @@ class DriftManager(watcher.Watcher):
 			seconds = t1 - t0
 			current_drift = meters / seconds
 			self.logger.info('Drift rate: %.4e' % (current_drift,))
-			self.setStatus('Drift rate: %.4e' % (current_drift,))
 
 			d = data.DriftData(session=self.session, rows=rows, cols=cols, interval=seconds, rowmeters=rowmeters, colmeters=colmeters, target=target)
 			self.publish(d, database=True, dbforce=True)
@@ -303,7 +302,6 @@ class DriftManager(watcher.Watcher):
 		self.logger.info('Seconds %s' % seconds)
 		current_drift = meters / seconds
 		self.logger.info('Drift rate: %.4f' % (current_drift,))
-		self.setStatus('Drift rate: %.4f' % (current_drift,))
 
 	def targetsToDatabase(self):
 		for target in self.targetlist:

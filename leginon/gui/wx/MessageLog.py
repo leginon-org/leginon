@@ -6,11 +6,12 @@ from wx.lib.mixins.listctrl import ColumnSorterMixin
 AddMessageEventType = wx.NewEventType()
 EVT_ADD_MESSAGE = wx.PyEventBinder(AddMessageEventType)
 class AddMessageEvent(wx.PyCommandEvent):
-	def __init__(self, source, level, message):
+	def __init__(self, source, level, message, secs=None):
 		wx.PyCommandEvent.__init__(self, AddMessageEventType, source.GetId())
 		self.SetEventObject(source)
 		self.level = level
 		self.message = message
+		self.secs = secs
 
 class MessageLog(wx.ListCtrl, ColumnSorterMixin):
 	def __init__(self, parent):
@@ -38,7 +39,7 @@ class MessageLog(wx.ListCtrl, ColumnSorterMixin):
 		self.Bind(EVT_ADD_MESSAGE, self.onAddMessage)
 
 	def onAddMessage(self, evt):
-		self.addMessage(evt.level, evt.message)
+		self.addMessage(evt.level, evt.message, evt.secs)
 
 	def GetListCtrl(self):
 		return self
@@ -75,19 +76,29 @@ class MessageLog(wx.ListCtrl, ColumnSorterMixin):
 	def onListItemActivated(self, evt):
 		pass
 
-	def addMessage(self, level, message):
+	def addMessage(self, level, message, secs=None):
 		if level not in self.levels:
 			raise ValueError('Invalid level')
-		secs = time.time()
+		if secs is None:
+			secs = time.time()
 		localtime = time.localtime(secs)
 		strtime = time.strftime('%I:%M:%S %p', localtime)
 		strtime = strtime.lstrip('0')
-		index = self.InsertImageStringItem(0, level, self.icons[level])
+		#index = self.InsertImageStringItem(0, level, self.icons[level])
+		index = self.InsertImageStringItem(0, '', self.icons[level])
 		self.SetStringItem(index, 1, strtime)
 		self.SetStringItem(index, 2, message)
 		self.SetItemData(index, self.data)
 		self.itemDataMap[self.data] = (self.levels.index(level), secs, message)
 		self.data += 1
+		self.arrange()
+
+	def arrange(self):
+		self.SetColumnWidth(0, wx.LIST_AUTOSIZE)
+		self.SetColumnWidth(1, wx.LIST_AUTOSIZE)
+		width, height = self.GetClientSize()
+		width -= self.GetColumnWidth(0) + self.GetColumnWidth(1)
+		self.SetColumnWidth(2, width)
 
 if __name__ == '__main__':
 	class App(wx.App):
@@ -97,15 +108,6 @@ if __name__ == '__main__':
 			panel = wx.Panel(frame, -1)
 
 			ml = MessageLog(panel)
-			ml.addMessage('info', 'Message 0')
-			ml.addMessage('warning', 'Message 1')
-			ml.addMessage('error', 'Message 2')
-			ml.addMessage('info', 'Message 0')
-			ml.addMessage('warning', 'Message 1')
-			ml.addMessage('error', 'Message 2')
-			ml.addMessage('info', 'Message 0')
-			ml.addMessage('warning', 'Message 1')
-			ml.addMessage('error', 'Message 2')
 			ml.addMessage('info', 'Message 0')
 			ml.addMessage('warning', 'Message 1')
 			ml.addMessage('error', 'Message 2')

@@ -35,9 +35,6 @@ class SetTargetsEvent(wx.PyCommandEvent):
 		self.targets = targets
 
 class Panel(gui.wx.TargetFinder.Panel):
-	def __init__(self, parent, name):
-		gui.wx.TargetFinder.Panel.__init__(self, parent, name) 
-
 	def initialize(self):
 		gui.wx.TargetFinder.Panel.initialize(self)
 

@@ -1,13 +1,12 @@
 import threading
 import wx
 import wx.lib.scrolledpanel
+import gui.wx.MessageLog
 
 NodeInitializedEventType = wx.NewEventType()
-SetStatusEventType = wx.NewEventType()
 SetImageEventType = wx.NewEventType()
 SetCorrelationImageEventType = wx.NewEventType()
 EVT_NODE_INITIALIZED = wx.PyEventBinder(NodeInitializedEventType)
-EVT_SET_STATUS = wx.PyEventBinder(SetStatusEventType)
 EVT_SET_IMAGE = wx.PyEventBinder(SetImageEventType)
 EVT_SET_CORRELATION_IMAGE = wx.PyEventBinder(SetCorrelationImageEventType)
 
@@ -17,12 +16,6 @@ class NodeInitializedEvent(wx.PyEvent):
 		self.SetEventType(NodeInitializedEventType)
 		self.node = node
 		self.event = threading.Event()
-
-class SetStatusEvent(wx.PyEvent):
-	def __init__(self, status):
-		wx.PyEvent.__init__(self)
-		self.SetEventType(SetStatusEventType)
-		self.status = status
 
 class SetImageEvent(wx.PyEvent):
 	def __init__(self, image, statistics={}):
@@ -40,12 +33,23 @@ class SetCorrelationImageEvent(wx.PyEvent):
 
 class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 	def __init__(self, *args, **kwargs):
-		wx.lib.scrolledpanel.ScrolledPanel.__init__(self, *args, **kwargs)
+
 		self.node = None
+
+		wx.lib.scrolledpanel.ScrolledPanel.__init__(self, *args, **kwargs)
+
+		self.szmain = wx.GridBagSizer(5, 5)
+
+		self.messagelog = gui.wx.MessageLog.MessageLog(self)
+		self.szmain.Add(self.messagelog, (0, 0), (1, 2), wx.EXPAND|wx.ALL, 3)
+
 		self.Bind(EVT_NODE_INITIALIZED, self._onNodeInitialized)
-		self.Bind(EVT_SET_STATUS, self.onSetStatus)
 		self.Bind(EVT_SET_IMAGE, self.onSetImage)
 		self.Bind(EVT_SET_CORRELATION_IMAGE, self.onSetCorrelationImage)
+		self.Bind(gui.wx.MessageLog.EVT_ADD_MESSAGE, self.onAddMessage)
+
+	def onAddMessage(self, evt):
+		self.messagelog.addMessage(evt.level, evt.message)
 
 	def _onNodeInitialized(self, evt):
 		self.node = evt.node
@@ -54,9 +58,6 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 
 	def onNodeInitialized(self):
 		pass
-
-	def onSetStatus(self, evt):
-		self.ststatus.SetLabel(evt.status)
 
 	def onSetImage(self, evt):
 		self.imagepanel.setImage(evt.image)

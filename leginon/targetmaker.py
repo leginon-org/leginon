@@ -62,30 +62,30 @@ class MosaicTargetMaker(TargetMaker):
 
 	def makeMosaicTargetList(self, ievent=None):
 		# make targets using current instrument state and selected preset
-		self.setStatus('Getting current EM state...')
+		self.logger.info('Getting current EM state...')
 		try:
 			scope = self.emclient.getScope()
 			camera = self.emclient.getCamera()
 		except node.ResearchError:
-			self.setStatus('Error publishing targets, cannot find EM')
+			self.logger.info('Error publishing targets, cannot find EM')
 			return
 		alpha = scope['stage position']['a']
 		alphadeg = alpha * 180.0 / 3.14159
 		self.logger.info('using current alpha tilt in targets: %.2f deg' % (alphadeg,))
 		presetname = self.settings['preset']
 		if presetname is None:
-			self.setStatus('Error publishing targets, no preset selected')
+			self.logger.info('Error publishing targets, no preset selected')
 			return
 
-		self.setStatus('Finding preset "%s"' % presetname)
+		self.logger.info('Finding preset "%s"' % presetname)
 		preset = self.presetsclient.getPresetByName(presetname)
 
 		if preset is None:
 			message = 'Error publishing tagets, cannot find preset "%s"' % presetname
-			self.setStatus(message)
+			self.logger.info(message)
 			return
 
-		self.setStatus('Updating target settings')
+		self.logger.info('Updating target settings')
 		scope.friendly_update(preset)
 		camera.friendly_update(preset)
 		size = camera['dimension']['x']
@@ -97,7 +97,7 @@ class MosaicTargetMaker(TargetMaker):
 
 		overlap = self.settings['overlap']/100.0
 		if overlap < 0.0 or overlap >= 100.0:
-			self.setStatus('Invalid overlap specified')
+			self.logger.info('Invalid overlap specified')
 			return
 		magnification = scope['magnification']
 		try:
@@ -108,7 +108,7 @@ class MosaicTargetMaker(TargetMaker):
 		binning = camera['binning']['x']
 		imagesize = camera['dimension']['x']
 
-		self.setStatus('Creating target list')
+		self.logger.info('Creating target list')
 		if ievent is None: 
 			### generated from user invoked method
 			targetlist = self.newTargetList(mosaic=True, label=self.settings['label'])
@@ -119,7 +119,7 @@ class MosaicTargetMaker(TargetMaker):
 			gridid = grid['grid ID']
 			label = '%06d' % (gridid,)
 			targetlist = self.newTargetList(mosaic=True, label=label)
-		self.setStatus('Publishing target list')
+		self.logger.info('Publishing target list')
 		### publish to DB so new targets get right reference
 		self.publish(targetlist, database=True)
 		args = (self.settings['radius'], pixelsize, binning, imagesize, overlap)
@@ -128,7 +128,7 @@ class MosaicTargetMaker(TargetMaker):
 			self.publish(targetdata, database=True)
 		### publish with event
 		self.publish(targetlist, pubevent=True)
-		self.setStatus('Target list published')
+		self.logger.info('Target list published')
 
 	def makeCircle(self, radius, pixelsize, binning, imagesize, overlap=0.0):
 		imagesize = int(round(imagesize*(1.0 - overlap)))

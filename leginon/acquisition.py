@@ -523,6 +523,5 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.driftdone.wait()
 
 	def reportStatus(self, type, message):
-		self.logger.info('%s:  %s' % (type, message))
-		self.setStatus(message)
+		self.logger.info('%s: %s' % (type, message))
 

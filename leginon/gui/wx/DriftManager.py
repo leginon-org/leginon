@@ -9,15 +9,6 @@ class Panel(gui.wx.Node.Panel):
 	icon = 'driftmanager'
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
-
-		self.szmain = wx.GridBagSizer(5, 5)
-
-		# status
-		self.szstatus = self._getStaticBoxSizer('Status', (0, 0), (1, 2),
-																						wx.EXPAND|wx.ALL)
-		self.ststatus = wx.StaticText(self, -1, '')
-		self.szstatus.Add(self.ststatus, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
 		# settings
 
 		self.bsettings = wx.Button(self, -1, 'Settings...')
