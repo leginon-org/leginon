@@ -54,6 +54,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		### do each preset for this acquisition
 		presetnames = self.presetnames.get()
+
+		if not presetnames:
+			print 'NO PRESETS SPECIFIED'
+		## maybe could acquire anyway at target with no preset?
+
 		for presetname in presetnames:
 			newpreset = self.presetsclient.getPreset(presetname)
 			### simulated target is easy, real target requires
@@ -161,9 +166,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		return ''
 
 	def uiTrial(self):
-		## calling this witout targetdata means teset just the preset
+		## calling this witout targetdata means test just the preset
 		## and acquire
-		self.processTargetData()
+		self.processTargetData(targetdata=None)
 		return ''
 
 	def defineUserInterface(self):
