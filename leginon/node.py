@@ -1,4 +1,5 @@
 
+import code
 import leginonobject
 import event
 import clientpull
@@ -40,7 +41,6 @@ class Node(leginonobject.LeginonObject):
 		data.origin['location'] = self.location()
 
 	def research(self, creator, dataid):
-		print 'hello world', creator
 		newdata = self.datahandler.query(creator, dataid)
 		return newdata
 
@@ -65,6 +65,12 @@ class Node(leginonobject.LeginonObject):
 	def delEventOut(self, eventclass):
 		self.eventhandler.delOutput(eventclass)
 
+	def interact(self):
+		banner = "Starting interpreter for %s" % self.__class__
+		readfunc = raw_input
+		local = locals()
+		code.interact(banner,readfunc,local)
+
 
 class NodeDataHandler(leginonobject.LeginonObject):
 	def __init__(self):
@@ -76,8 +82,6 @@ class NodeDataHandler(leginonobject.LeginonObject):
 		self.server.datahandler.insert(newdata)
 
 	def query(self, creator, dataid):
-		print 'hello world again'
-		print 'NodeDataHandler.query creator', creator
 		hostname,port = creator
 		client = clientpull.Client(hostname, port)
 		return client.pull(dataid)

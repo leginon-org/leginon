@@ -35,13 +35,11 @@ class MyNode(node.Node):
 		self.change_interval(new_interval)
 
 	def handle_intervalpublished(self, publishevent):
-		print 'got publish event %s' % publishevent
 		dataid = publishevent.content
-		print 'publish event dataid %s' % dataid
+		print 'publish event %s dataid %s' % (publishevent, dataid)
 		datahost = publishevent.origin['location']['hostname']
 		dataport = publishevent.origin['location']['data port']
 		dataserv = (datahost,dataport)
-		print 'dataserv ', dataserv
 		new_interval = self.research(dataserv, dataid)
 		print 'new_interval %s is type %s' % (new_interval, type(new_interval))
 		self.change_interval(new_interval.content)

@@ -90,13 +90,11 @@ class EventHandler(leginonobject.LeginonObject):
 			    if to_node not in done:
 		              self.push(to_node, event)
 		              done.append(to_node)
-			      print 'DISTRIBUTE:  %s, %s' % (to_node,event)
 		          else:
 			    for to_node in self.handler.clients:
 			      if to_node not in done:
 		                self.push(to_node, event)
 		                done.append(to_node)
-			        print 'DISTRIBUTE:  %s, %s' % (to_node,event)
 
 	def push(self, client, event):
 		self.clients[client].push(event)

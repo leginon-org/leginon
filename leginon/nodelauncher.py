@@ -25,7 +25,7 @@ class NodeLauncher(node.Node):
 		self.announce(event.NodeLauncherReadyEvent())
 
 	def main(self):
-		signal.pause()
+		self.interact()
 
 	def handleLaunchNode(self, launchevent):
 		print 'handling LaunchNodeEvent', launchevent
@@ -67,7 +67,3 @@ if __name__ == '__main__':
 	myhost = socket.gethostname()
 
 	m = NodeLauncher(myhost, manloc)
-	try:
-		signal.pause()
-	except KeyboardInterrupt:
-		sys.exit()
