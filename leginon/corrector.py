@@ -218,7 +218,7 @@ class Corrector(node.Node):
 		imagetemp['camstate'] = camstate
 		print 'IMAGETEMP'
 		print imagetemp
-		refs = self.research(datainstance=imagetemp)
+		refs = self.research(datainstance=imagetemp, results=1)
 		if refs:
 			ref = refs[0]
 			image = ref['image']
