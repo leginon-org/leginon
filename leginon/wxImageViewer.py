@@ -29,7 +29,7 @@ class ImagePanel(wxPanel):
 		EVT_MOTION(self.panel, self.motion)
 		EVT_PAINT(self.panel, self.OnPaint)
 		EVT_SIZE(self.panel, self.OnSize)
-		wxInitAllImageHandlers()
+#		wxInitAllImageHandlers()
 
 	def setImageFromMrcString(self, imagestring):
 		self.clearImage()
