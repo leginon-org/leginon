@@ -97,7 +97,7 @@ class Tecnai(object):
 			'low dose mode': {'get': 'getLowDoseMode', 'set': 'setLowDoseMode'},
 			'diffraction mode': {'get': 'getDiffractionMode',
 														'set': 'setDiffractionMode'},
-			'reset defocus': {'set': 'resetDefocus'},
+			'reset defocus': {'set': 'resetDefocus', 'get': 'getResetDefocus'},
 			'main screen position': {'get': 'getMainScreen', 'set': 'setMainScreen'},
 			'small screen position': {'get': 'getSmallScreen'},
 			'holder type': {'get': 'getHolderType', 'set': 'setHolderType'},
@@ -548,6 +548,9 @@ class Tecnai(object):
 		if not value:
 			return
 		self.theScope.Projection.ResetDefocus()
+
+	def getResetDefocus(self):
+		return False
 	
 	def getMagnification(self):
 		if self.theScope.Camera.MainScreen == win32com.client.constants.spUp:

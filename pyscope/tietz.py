@@ -184,7 +184,7 @@ class Tietz(object):
 			'retractable': {'get':'getRetractable'},
 			'camera axis': {'get':'getCameraAxis'},
 			'speed table gain switch': {'set': 'setUseSpeedTableForGainSwitch'},
-			'dump': {'set': 'dumpImage'},
+			'dump': {'set': 'dumpImage', 'get': 'getDump'},
 		}
 
 		self.typemapping = {
@@ -375,6 +375,9 @@ class Tietz(object):
 			return
 		## could this be fast if we force a large binning on it?
 		hr = self.camera.AcquireReadout(0)
+
+	def getDump(self):
+		return False
 	
 	def getImage(self):
 		# {'type': Numeric.arraytype}
@@ -417,6 +420,7 @@ class Tietz(object):
 		elif exposuretype == 'bias':
 			hr = self.camera.AcquireBias(0)
 		elif exposuretype == 'readout':
+			print 'acquireReadout'
 			hr = self.camera.AcquireReadout(0)
 		else:
 			raise ValueError('Invalid exposure type for image acquisition')
