@@ -625,8 +625,12 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		caldata = data.StageModelCalibrationData()
 		caldata['axis'] = axis
 		caldata['period'] = period
+		## force it to be 2 dimensional so sqldict likes it
+		a.shape = (1,len(a))
+		b.shape = (1,len(b))
 		caldata['a'] = a
 		caldata['b'] = b
+
 		self.node.publish(caldata, database=True)
 
 	def retrieveModelCalibration(self, axis):
@@ -659,7 +663,7 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		self.storeMagCalibration(mag, axis, angle, mean)
 		if magonly:
 			return
-		self.calclient.storeModelCalibration(axis, period, a, b)
+		self.storeModelCalibration(axis, period, a, b)
 
 	def transform(self, pixelshift, scope, camera):
 		curstage = scope['stage position']
