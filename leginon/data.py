@@ -231,7 +231,7 @@ class DataManager(object):
 			if dbkey in self.db2dm:
 				## here we just randomly take one of the dmids
 				## maybe should be more picky
-				dmid = self.db2dm[dbkey].values()[0]
+				dmid = self.db2dm[dbkey].keys()[0]
 
 			## maybe data is remote, but we have a local copy
 			if dmid in self.remote2local:
