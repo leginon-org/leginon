@@ -94,8 +94,8 @@ class Navigator(node.Node):
 		try:
 			newstate = calclient.transform(pixelshift, clickscope, clickcamera)
 		except:
-			message = 'Error in transform. Likely missing calibration for %s at %sx' \
-									+ ' and current high tension' % (movetype, mag)
+			message = ('Error in transform. Likely missing calibration for %s at %s'
+									+ ' and current high tension') % (movetype, mag)
 			self.messagelog.error(message)
 			self.logger.error(message)
 			node.beep()
