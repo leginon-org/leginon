@@ -22,17 +22,27 @@ class PeakFinder(object):
 	def getResults(self):
 		return self.results
 
-	def pixelPeak(self):
-		if self.results['pixel peak']:
-			return
+	def pixelPeak(self, newimage=None):
+		if newimage is not None:
+			self.setImage(newimage)
 
-		peak = Numeric.argmax(self.image.flat)
-		rows,cols = self.shape
-		peakrow = peak / rows
-		peakcol = peak % rows
-		self.results['pixel peak'] = (peakrow, peakcol)
+		if self.results['pixel peak'] is None:
+			peak = Numeric.argmax(self.image.flat)
+			rows,cols = self.shape
+			peakrow = peak / rows
+			peakcol = peak % rows
+			pixelpeak = (peakrow, peakcol)
+			self.results['pixel peak'] = pixelpeak
 
-	def subpixelPeak(self, npix=3):
+		return self.results['pixel peak']
+
+	def subpixelPeak(self, npix=3, newimage=None):
+		if newimage is not None:
+			self.setImage(newimage)
+
+		if self.results['subpixel peak'] is not None:
+			return self.results['subpixel peak']
+
 		self.pixelPeak()
 		peakrow,peakcol = self.results['pixel peak']
 
@@ -96,7 +106,9 @@ class PeakFinder(object):
 		rowzero = -rowcoeffs[1][0] / 2 / rowcoeffs[2][0]
 		colzero = -colcoeffs[1][0] / 2 / colcoeffs[2][0]
 
-		self.results['subpixel peak'] = (float(rowzero), float(colzero))
+		subpixelpeak = (float(rowzero), float(colzero))
+		self.results['subpixel peak'] = subpixelpeak
+		return subpixelpeak
 
 
 if __name__ == '__main__':

@@ -8,7 +8,7 @@ class Server(SocketServer.ThreadingTCPServer, socketstreamtransport.Server):
 		socketstreamtransport.Server.__init__(self, id, dh)
 
 		# instantiater can choose a port or we'll choose one for them
-		if port:
+		if port is not None:
 			SocketServer.ThreadingTCPServer.__init__(self, ('', port), \
 				socketstreamtransport.Handler)
 		else:

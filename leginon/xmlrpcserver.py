@@ -21,7 +21,7 @@ class xmlrpcserver(object):
 		self.object_instance = object_instance 
 		self.port = port
 		hostname = socket.gethostname()
-		if self.port:
+		if self.port is not None:
 			# this exception will fall through if __init__ fails
 			self.server = SimpleXMLRPCServer((hostname,self.port))
 			self._start_serving()
@@ -37,14 +37,14 @@ class xmlrpcserver(object):
 					continue
 				else:
 					raise
-		if not self.port:
+		if self.port is None:
 			raise RuntimeError('no ports available')
 
 		self._start_serving()
 
 	def _start_serving(self):
 		self.server.register_function(self.RPCmethods)
-		if self.object_instance:
+		if self.object_instance is not None:
 			self.server.register_instance(self.object_instance)
 		th = threading.Thread(name='xmlrpcserver thread', target=self.server.serve_forever)
 		th.setDaemon(1)

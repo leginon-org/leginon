@@ -81,7 +81,7 @@ class Client(leginonobject.LeginonObject):
 		raise NotImplementedError
 
 	def send(self, odata):
-		if self.socket:
+		if self.socket is not None:
 			self.socket.send(odata)
 		else:
 			print "socket transport, send: no socket available"
@@ -89,7 +89,7 @@ class Client(leginonobject.LeginonObject):
 
 	def receive(self):
 		data = ""
-		if self.socket:
+		if self.socket is not None:
 			while 1:
 			  r = self.socket.recv(self.buffer_size) # Receive up to buffer_size bytes
 			  if not r:
@@ -101,7 +101,7 @@ class Client(leginonobject.LeginonObject):
 			raise IOError
 
 	def close(self):
-		if self.socket:
+		if self.socket is not None:
 			self.socket.close()
 		else:
 			print "socket transport, close: no socket available"

@@ -116,7 +116,7 @@ class Manager(node.Node):
 
 	def removeNode(self, nodeid):
 		nodelocationdata = self.server.datahandler.query(nodeid)
-		if nodelocationdata:
+		if nodelocationdata is not None:
 			self.removeNodeData(nodeid)
 			self.removeNodeDistmaps(nodeid)
 			self.server.datahandler.remove(nodeid)
@@ -172,7 +172,7 @@ class Manager(node.Node):
 	# creates/appends list with nodeid of published data
 	def unpublishDataLocation(self, dataid, nodeid):
 		datalocationdata = self.server.datahandler.query(dataid)
-		if datalocationdata and (type(datalocationdata) == data.DataLocationData):
+		if (datalocationdata is not None) and (type(datalocationdata) == data.DataLocationData):
 			try:
 				datalocationdata.content.remove(nodeid)
 				if len(datalocationdata.content) == 0:
@@ -220,7 +220,7 @@ class Manager(node.Node):
 				for fromnode in (from_node, None):
 					if fromnode in fromnodes:
 						for to_node in fromnodes[from_node]:
-							if to_node:
+							if to_node is not None:
 								if to_node not in do:
 									do.append(to_node)
 							else:
@@ -284,7 +284,7 @@ class Manager(node.Node):
 		for nodename in self.clientlist:
 			nodeid = self.clientdict[nodename]
 			nodelocationdata = self.server.datahandler.query(nodeid)
-			if nodelocationdata:
+			if nodelocationdata is not None:
 				nodeloc = nodelocationdata.content
 				nodeinfo[nodename] = nodeloc	
 		return nodeinfo
@@ -339,7 +339,7 @@ if __name__ == '__main__':
 	m = Manager(manager_id)
 
 	## GUI
-	gui = 0
+	gui = 1
 	if gui:
 		import nodegui
 		import Tkinter

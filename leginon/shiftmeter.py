@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import watcher
-import correlator
+import correlator, fftengine, peakfinder
 import data, event
 from mrc.Mrc import mrc_to_numeric
 from Tkinter import *
@@ -18,40 +18,43 @@ class ShiftMeter(watcher.Watcher):
 		watchfor = event.ImagePublishEvent
 		lockblocking = 0
 		watcher.Watcher.__init__(self, id, managerlocation, watchfor, lockblocking)
-		self.correlator = correlator.Correlator(1)
+		ffteng = fftengine.fftFFTW(planshapes=(),estimate=1)
+		self.correlator = correlator.Correlator(ffteng)
+		self.peakfinder = peakfinder.PeakFinder()
+		self.shift = ()
 
 		#t = threading.Thread(target=self.initViewers)
 		#t.setDaemon(1)
 		#t.start()
 
 	def processData(self, newdata):
-		shiftinfo = self.correlator.insert(newdata)
-		if shiftinfo == {}: return
+		## phase correlation with new image
+		newimage = newdata.content
+		self.correlator.insertImage(newimage)
+		try:
+			pcim = self.correlator.phaseCorrelate()
+		except correlator.MissingImageError:
+			print 'missing image, no correlation'
+			return
 
-		# prepare shiftinfo for publishing
-		if shiftinfo.has_key('cross correlation image'):
-			ccid = self.ID()
-			cc = shiftinfo['cross correlation image']
-			ccdata = data.CrossCorrelationImageData(ccid, cc)
-			self.publish(ccdata, eventclass=event.CrossCorrelationImagePublishEvent)
-			ccshift = shiftinfo['cross correlation shift']
-			# publish only the id of the image
-			shiftinfo['cross correlation image'] = ccid
+		## find peak in correlation image
+		peak = self.peakfinder.subpixelPeak(npix=3,newimage=pcim)
+		print 'peak', peak
+		## interpret as a shift
+		shift = correlator.wrap_coord(peak, pcim.shape)
+		print 'shift', shift
+		self.shift = shift
 
-		if shiftinfo.has_key('phase correlation image'):
-			pcid = self.ID()
-			pc = shiftinfo['phase correlation image']
-			pcdata = data.PhaseCorrelationImageData(pcid, pc)
-			self.publish(pcdata, eventclass=event.PhaseCorrelationImagePublishEvent)
-			pcshift = shiftinfo['phase correlation shift']
-			# publish only the id of the image
-			shiftinfo['phase correlation image'] = pcid
-		print '****IMAGE PUBLISHED'
-		print 'shiftinfo', shiftinfo
-		corrdata = data.CorrelationData(self.ID(), shiftinfo)
+		pcid = self.ID()
+		pcdata = data.PhaseCorrelationImageData(pcid, pcim)
+		self.publish(pcdata, eventclass=event.PhaseCorrelationImagePublishEvent)
+		corrinfo = {}
+		corrinfo['phase correlation image'] = pcid
+		corrinfo['phase correlation shift'] = shift
+		corrdata = data.CorrelationData(self.ID(), corrinfo)
 		self.publish(corrdata, eventclass=event.CorrelationPublishEvent)
 
-	def process_numeric(self, numarray):
+	def process_numeric(self, numarray, filename):
 		'''mainly for debugging'''
 		class fakedata: pass
 		fakedata.content = numarray
@@ -66,17 +69,22 @@ class ShiftMeter(watcher.Watcher):
 			)
 		self.registerUIFunction(self.uiLoadImage, argspec, 'Load')
 		self.registerUIFunction(self.uiClearBuffer, (), 'Clear Buffer')
+		self.registerUIFunction(self.uiGetResult, (), 'Get Result', returntype='array')
 
 	def uiLoadImage(self, filename):
 		print 'reading %s' % filename
 		newimage = mrc_to_numeric(filename)
 		print 'image read'
-		self.process_numeric(newimage)
+		self.process_numeric(newimage, filename)
 		return 'image loaded'
 
 	def uiClearBuffer(self):
-		self.correlator.clear()
+		self.correlator.clearBuffer()
 		return ''
+
+	def uiGetResult(self):
+		print 'uiGetResult:', self.shift
+		return self.shift
 
 	def initViewers(self):
 		ccwin = Toplevel()

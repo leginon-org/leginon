@@ -78,7 +78,7 @@ class Node(leginonobject.LeginonObject):
 		self.addEventOutput(event.NodeUnavailableEvent)
 		self.addEventInput(event.KillEvent, self.die)
 		self.addEventInput(event.ConfirmationEvent, self.registerConfirmedEvent)
-		if self.managerloc:
+		if self.managerloc is not None:
 			print 'adding manager, %s' % self.managerloc
 			try:
 				self.addManager(self.managerloc)
@@ -121,8 +121,8 @@ class Node(leginonobject.LeginonObject):
 		self.registerUIFunction(self.uiID, (), 'ID')
 		self.registerUIFunction(self.uiClass, (), 'Class')
 
-	def registerUIFunction(self, func, argspec, alias=None):
-		self.uiserver.registerFunction(func, argspec, alias)
+	def registerUIFunction(self, func, argspec, alias=None, returntype=None):
+		self.uiserver.registerFunction(func, argspec, alias, returntype)
 
 	def uiID(self):
 		return self.id

@@ -60,16 +60,16 @@ class Correlator(object):
 		mainly an intermediate step
 		'''
 
-		if self.results['cross correlation fft']:
-			return
+		if self.results['cross correlation fft'] is not None:
+			return self.results['cross correlation fft']
 
 		im0 = self.getImage(0)
 		if im0 is None:
-			raise RuntimeError('no image in buffer slot 0')
+			raise MissingImageError('no image in buffer slot 0')
 
 		im1 = self.getImage(1)
 		if im1 is None:
-			raise RuntimeError('no image in buffer slot 1')
+			raise MissingImageError('no image in buffer slot 1')
 
 		if im0.shape != im1.shape:
 			raise RuntimeError('images not same dimensions')
@@ -87,24 +87,29 @@ class Correlator(object):
 
 		ccfft = Numeric.multiply(Numeric.conjugate(fft0), fft1)
 		self.results['cross correlation fft'] = ccfft
+		return ccfft
 	
 	def crossCorrelate(self):
 		'''calculate the cross correlation image'''
-		# invert correlation to use
-		self.crossCorrelationFFT()
-		ccfft = self.results['cross correlation fft']
-		cc = ffteng.itransform(ccfft)
-		self.results['cross correlation image'] = cc
+		if self.results['cross correlation image'] is None:
+			# invert correlation to use
+			self.crossCorrelationFFT()
+			ccfft = self.results['cross correlation fft']
+			cc = ffteng.itransform(ccfft)
+			self.results['cross correlation image'] = cc
+		return cc
 
 	def phaseCorrelate(self):
 		# elementwise phase-correlation =
 		# cross-correlation / magnitude(cross-correlation
-		self.crossCorrelationFFT()
-		ccfft = self.results['cross correlation fft']
-		pcfft = ccfft / Numeric.absolute(ccfft)
-		self.results['phase correlation fft'] = pcfft
-		pc = self.fftengine.itransform(pcfft)
-		self.results['phase correlation image'] = pc
+		if self.results['phase correlation image'] is None:
+			self.crossCorrelationFFT()
+			ccfft = self.results['cross correlation fft']
+			pcfft = ccfft / Numeric.absolute(ccfft)
+			self.results['phase correlation fft'] = pcfft
+			pc = self.fftengine.itransform(pcfft)
+			self.results['phase correlation image'] = pc
+		return pc
 
 #### this is a utility function to convert an unsigned coordinate
 #### to a +- shift from 0 by wrapping around
@@ -120,6 +125,12 @@ def wrap_coord(coord, shape):
 	else:
 		wrapped1 = coord[1] - shape[1]
 	return (wrapped0, wrapped1)
+
+
+class MissingImageError(Exception):
+	def __init__(self, info):
+		Exception.__init__(self, info)
+
 
 if __name__ == '__main__':
 	from mrc.Mrc import mrc_to_numeric

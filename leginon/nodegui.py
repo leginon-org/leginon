@@ -32,7 +32,7 @@ class NodeGUIArg(Frame):
 			raise RuntimeError('argtype not supported')
 
 		## sets the initial value
-		if argvalue:
+		if argvalue is not None:
 			self.tkvar.set(argvalue)
 
 	def get(self):
@@ -104,17 +104,46 @@ class NodeGUIComponent(Frame):
 			for key,value in self.args.items():
 				self.client.setarg(key, self.args[key].get())
 			ret = self.client.execute()
-			print ret
+			self.process_return(ret)
 
 		but = Button(self, text=name, command=butcom)
 		but.pack()
 
+		print 'RETURN TYPE', self.client.returntype
+		retwidget = self.init_return(self.client.returntype)
+		if retwidget is not None:
+			print 'packing retwidget'
+			retwidget.pack()
+
+	def process_return(self, returnvalue):
+		if self.returntype == 'array':
+			self.retwidget['text'] = `returnvalue`
+		else:
+			pass
+
+	def init_return(self, returntype):
+		'''
+		set up for handling return values
+		return a widget if one was created
+		'''
+		self.returntype = returntype
+		print 'RETURN', returntype
+		if returntype == 'array':
+			wid = Frame(self)
+			widlab = Label(wid, text='Result:')
+			self.retwidget = Label(wid)
+			widlab.pack(side=LEFT)
+			self.retwidget.pack(side=LEFT)
+			return wid
+		else:
+			return None
+
 
 class NodeGUI(Frame):
 	def __init__(self, parent, hostname=None, port=None, node=None):
-		if hostname and port:
+		if (hostname is not None) and (port is not None):
 			pass
-		elif node:
+		elif node is not None:
 			hostname = node.location()['hostname']
 			port = node.location()['UI port']
 		else:

@@ -16,8 +16,8 @@ class Server(xmlrpcserver.xmlrpcserver):
 		self.funclist = []
 		self.server.register_function(self.uiMethods, 'methods')
 
-	def registerFunction(self, func, argspec, alias=None):
-		if not alias:
+	def registerFunction(self, func, argspec, alias=None, returntype=None):
+		if alias is None:
 			alias = func.__name__
 
 ### I have commented some things until client makes RPC calls with kwargs dict.
@@ -36,7 +36,7 @@ class Server(xmlrpcserver.xmlrpcserver):
 				if type(xmlrpctype) not in (tuple,list):
 					raise RuntimeError('bad xmlrpctype')
 
-		self.funcdict[alias] = {'func': func, 'argspec':argspec}
+		self.funcdict[alias] = {'func': func, 'argspec':argspec, 'returntype':returntype}
 		self.funclist.append(alias)
 		self.server.register_function(func, alias)
 
@@ -47,16 +47,19 @@ class Server(xmlrpcserver.xmlrpcserver):
 		for key,value in self.funcdict.items():
 			fdict[key] = {}
 			fdict[key]['argspec'] = value['argspec']
+			if value['returntype'] is not None:
+				fdict[key]['return'] = value['returntype']
 		funcstruct['dict'] = fdict
 		funcstruct['list'] = self.funclist
 		return funcstruct
 
 
 class ClientComponent(object):
-	def __init__(self, parent, name, argspec):
+	def __init__(self, parent, name, argspec, returntype):
 		self.parent = parent
 		self.name = name
 		self.init_args(argspec)
+		self.returntype = returntype
 
 	def init_args(self, argspec):
 		self.argspec = argspec
@@ -125,10 +128,15 @@ class Client(object):
 		self.funcdict = {}
 		self.funclist = []
 		f = self.proxy.methods()
+		print 'METHODS', f
 		fdict = f['dict']
 		self.funclist = f['list']
 		for key,value in fdict.items():
-			c = ClientComponent(self, key, value['argspec'])
+			if 'return' in value:
+				returntype = value['return']
+			else:
+				returntype = None
+			c = ClientComponent(self, key, value['argspec'], returntype)
 			self.funcdict[key] = c
 
 	def execute(self, funcname):

@@ -30,5 +30,4 @@ try:
 except ImportError:
 	pass
 from getdata import GetData
-#from shiftmeter import ShiftMeter
-
+from shiftmeter import ShiftMeter

@@ -20,6 +20,7 @@ class ImViewer(watcher.Watcher):
 
 	def open_viewer(self):
 		root = Tk()
+		root.wm_maxsize(800,800)
 		self.iv = ImageViewer(root, bg='#488')
 		self.iv.pack()
 		root.mainloop()
