@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/HoleFinder.py,v $
-# $Revision: 1.28 $
+# $Revision: 1.29 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-02 23:08:51 $
+# $Date: 2004-11-05 17:37:04 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -35,6 +35,7 @@ class Panel(gui.wx.TargetFinder.Panel):
 
 		self.imagepanel = gui.wx.ImageViewer.TargetImagePanel(self, -1)
 		self.imagepanel.addTypeTool('Original', display=True, settings=True)
+		self.imagepanel.selectiontool.setDisplayed('Original', True)
 		self.imagepanel.addTypeTool('Edge', display=True, settings=True)
 		self.imagepanel.addTypeTool('Template', display=True, settings=True)
 		self.imagepanel.addTypeTool('Threshold', display=True, settings=True)
@@ -46,6 +47,8 @@ class Panel(gui.wx.TargetFinder.Panel):
 																	settings=True)
 		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True,
 																	settings=True)
+		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
+		self.imagepanel.selectiontool.setDisplayed('focus', True)
 
 		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND)
 		self.szmain.AddGrowableRow(1)
