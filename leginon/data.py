@@ -569,11 +569,23 @@ class BrightImageData(CorrectorImageData):
 class NormImageData(CorrectorImageData):
 	pass
 
-class MosaicImageData(CameraImageData):
-	## scope and camera may not be useful if the mosaic is
-	## mangled too much, maybe something else useful to put
-	## here
+class MosaicImageData(ImageData):
+	'''
+	this holds image data for a mosaic image
+	the individual tiles that make up this image should probably 
+	reference this image
+	'''
 	pass
+
+class MosaicTileData(Data):
+	def typemap(cls):
+		t = Data.typemap()
+		t += [
+			('moaic', MosaicImageData),
+			('image', ImageData),
+		]
+		return t
+	typemap = classmethod(typemap)
 
 class PresetImageData(CameraImageData):
 	'''
@@ -594,13 +606,6 @@ class NewPresetImageData(CameraImageData):
 	def typemap(cls):
 		t = CameraImageData.typemap()
 		t += [ ('preset', NewPresetData), ]
-		return t
-	typemap = classmethod(typemap)
-
-class TileImageData(PresetImageData):
-	def typemap(cls):
-		t = PresetImageData.typemap()
-		t += [ ('neighbor_tiles', list), ]
 		return t
 	typemap = classmethod(typemap)
 
@@ -635,18 +640,6 @@ class CorrectorCamstateData(Data):
 			('binning', dict),
 			('offset', dict),
 		]
-		return t
-	typemap = classmethod(typemap)
-
-### XXX the dict here has variable lenght
-class StateMosaicData(Data):
-	'''
-	mosaic data contains data ID of images mapped to their 
-	position and state.
-	'''
-	def typemap(cls):
-		t = Data.typemap()
-		t += [ ('mosaic data', dict), ]
 		return t
 	typemap = classmethod(typemap)
 
