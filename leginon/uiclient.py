@@ -124,14 +124,15 @@ class UIClient(XMLRPCClient, uiserver.XMLRPCServer):
 	def addServer(self):
 		self.execute('ADDSERVER', (self.hostname, self.port))
 
-	def setServer(self, namelist, value, thread=True):
+	def setServer(self, namelist, value, thread=False):
+		#print 'setServer', namelist, value
 		if thread:
 			threading.Thread(target=self.execute,
 												args=('SET', (namelist, value))).start()
 		else:
 			self.execute('SET', (namelist, value))
 
-	def commandServer(self, namelist, args, thread=True):
+	def commandServer(self, namelist, args, thread=False):
 		if thread:
 			threading.Thread(target=self.execute,
 												args=('COMMAND', (namelist, args))).start()
@@ -155,11 +156,13 @@ class wxUIClient(UIClient):
 		threading.Thread(target=self.addServer, args=()).start()
 
 	def addFromServer(self, namelist, typelist, value, read, write):
+		#print 'addFromServer', namelist, value
 		evt = AddWidgetEvent(namelist, typelist, value, read, write)
 		wxPostEvent(self.container.widgethandler, evt)
 		return ''
 
 	def setFromServer(self, namelist, value):
+		#print 'setFromServer', namelist, value
 		evt = SetWidgetEvent(namelist, value)
 		wxPostEvent(self.container.widgethandler, evt)
 		return ''
@@ -706,10 +709,7 @@ class wxComboBoxWidget(wxContainerWidget):
 	def setSelected(self, value):
 		self.value['Selected'] = value
 		if self.value['List']:
-			if value > len(self.value['List']):
-				value = 0
-			stringvalue = str(self.value['List'][value])
-			self.combobox.SetValue(stringvalue)
+			self.combobox.SetSelection(value)
 
 	def _addWidget(self, name, typelist, value, read, write):
 		if name == 'List':

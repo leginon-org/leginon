@@ -65,7 +65,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 #			self.printException()
 #			return
 
-		presetnames = self.uipresetnames.GetSelectedValues()
+		presetnames = self.uipresetnames.getSelectedValues()
 
 		if not presetnames:
 			print 'NO PRESETS SPECIFIED'
