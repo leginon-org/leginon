@@ -5,6 +5,7 @@ import array
 import Numeric
 import strictdict
 import copy
+import Mrc
 
 ## Unresolved issue:
 ##  It would be nice if you could cast one Data type to another
@@ -387,8 +388,29 @@ class ImageData(Data):
 			try:
 				Mrc.numeric_to_mrc(numdata, filename)
 			except:
+				raise
 				self.printerror('error converting image to file')
 			self['filename'] = filename
+
+	def load(self, filename=None):
+		'''
+		loads MRC image using either the 'filename' item of ImageData instance, or the specified 'filename' argument.
+		'''
+		if filename is not None:
+			self['filename'] = filename
+		if self['filename'] is None:
+			raise RuntimeError('no filename specified for ImageData load')
+
+		try:
+			self['image'] = Mrc.mrc_to_numeric(self['filename'])
+		except:
+			self.printerror('error converting image from file')
+
+		### Should this be done by the original caller or this method?
+		### maybe there are nested ImageData instances in this one
+		for thing in self.values():
+			if isinstance(thing, ImageData):
+				thing.load()
 
 class CorrelationImageData(ImageData):
 	'''
