@@ -284,6 +284,18 @@ class SQLDict:
 	    c.close()
 	    self._checkTable()
 
+	def formatDescription(self, description):
+		newdict = {}
+		newdict['Field'] = description['Field']
+		typestr = description['Type'].upper()
+		try:
+			ind = typestr.index('(')
+			typestr = typestr[:ind]
+		except ValueError:
+			pass
+		newdict['Type'] = typestr
+		return newdict
+
 	def _checkTable(self):
 	    q = "DESCRIBE %s" % (self.table)
 	    c = self._cursor()
@@ -296,11 +308,11 @@ class SQLDict:
 	    
 	    describe=[]
 	    for col in describeTable:
-		describe.append({'Field': col['Field'], 'Type': col['Type']})
+		describe.append(self.formatDescription(col))
 
 	    definition=[]
 	    for col in self.definition:
-		definition.append({'Field': col['Field'], 'Type': col['Type']})
+		definition.append(self.formatDescription(col))
 
 	    addcolumns = [col for col in definition if col not in describe]
 
