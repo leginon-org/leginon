@@ -8,6 +8,7 @@ import cameraimage
 import camerafuncs
 import calibrationclient
 import copy
+import uidata
 
 class Navigator(node.Node):
 	def __init__(self, id, session, nodelocations, **kwargs):
@@ -25,11 +26,11 @@ class Navigator(node.Node):
 		self.addEventOutput(event.CameraImagePublishEvent)
 
 		## default camera config
-		currentconfig = self.cam.config()
-		currentconfig['state']['dimension']['x'] = 1024
-		currentconfig['state']['binning']['x'] = 4
-		currentconfig['state']['exposure time'] = 400
-		self.cam.config(currentconfig)
+		currentconfig = self.cam.cameraConfig()
+		currentconfig['dimension']['x'] = 1024
+		currentconfig['binning']['x'] = 4
+		currentconfig['exposure time'] = 400
+		self.cam.cameraConfig(currentconfig)
 
 	def handleImageClick(self, clickevent):
 		print 'handling image click'
@@ -53,7 +54,7 @@ class Navigator(node.Node):
 		mag = clickscope['magnification']
 
 		## figure out shift
-		movetype = self.movetype.get()
+		movetype = self.movetype.getSelectedValue()[0]
 		calclient = self.calclients[movetype]
 		newstate = calclient.transform(pixelshift, clickscope, clickcamera)
 		emdat = data.ScopeEMData(('scope',), initializer=newstate)
@@ -68,12 +69,21 @@ class Navigator(node.Node):
 	def handleImageAcquire(self, acqevent):
 		self.acquireImage()
 
+	# I wouldn't expect this to actually work
+	def handleImageClick2(self, xy):
+		click = {'array row': xy[1],
+							'array column': xy[0],
+							'array shape': self.shape,
+							'scope': self.scope,
+							'camera': self.camera}
+		self.handleImageClick(click)
+
 	def acquireImage(self):
-		camconfig = self.cam.config()
-		camstate = camconfig['state']
+		camconfig = self.cam.cameraConfig()
+		camstate = camconfig
 
 		print 'acquiring image'
-		acqtype = self.acqtype.get()
+		acqtype = self.acqtype.getSelectedValue()[0]
 		if acqtype == 'raw':
 			imagedata = self.cam.acquireCameraImageData(camstate,0)
 		elif acqtype == 'corrected':
@@ -85,29 +95,60 @@ class Navigator(node.Node):
 
 		if imagedata is None:
 			return
+
+		self.scope = imagedata['scope']
+		self.camera = imagedata['camera']
+		self.shape = imagedata['image'].shape
+		self.image.setImage(imagedata['image'])
+
 		print 'publishing image'
 		self.publish(imagedata, pubevent=True)
 		print 'image published'
 
 	def defineUserInterface(self):
-		nodeui = node.Node.defineUserInterface(self)
-
+		node.Node.defineUserInterface(self)
 		movetypes = self.calclients.keys()
-		temparam = self.registerUIData('temparam', 'array', default=movetypes)
-		self.movetype = self.registerUIData('TEM Parameter', 'string', choices=temparam, permissions='rw', default='image shift')
+		if movetypes:
+			selected = [0]
+		else:
+			selected = []
+		self.movetype = uidata.UISelectFromList('TEM Parameter', movetypes,
+																						selected, 'r')
+		self.delaydata = uidata.UIFloat('Delay (sec)', 2.5, 'rw')
 
-		self.delaydata = self.registerUIData('Delay (sec)', 'float', default=2.5, permissions='rw')
+		self.acqtype = uidata.UISelectFromList('Acquisition Type',
+																						('raw', 'corrected'), [0], 'r')
+		cameraconfigure = self.cam.configUIData()
 
-		acqtypes = self.registerUIData('acqtypes', 'array', default=('raw', 'corrected'))
-		self.acqtype = self.registerUIData('Acquisition Type', 'string', default='raw', permissions='rw', choices=acqtypes)
+		settingscontainer = uidata.UIContainer('Settings')
+		settingscontainer.addUIObjects((self.movetype, self.delaydata, self.acqtype, cameraconfigure))
 
-		prefs = self.registerUIContainer('Preferences', (self.movetype, self.delaydata, self.acqtype))
+		self.image = uidata.UIClickImage('Navigation', self.handleImageClick2, None)
+		controlcontainer = uidata.UIContainer('Control')
+		controlcontainer.addUIObject(self.image)
 
-		camspec = self.cam.configUIData()
+		container = uidata.UIMediumContainer('Navigator')
+		container.addUIObjects((settingscontainer, controlcontainer))
+		self.uiserver.addUIObject(container)
 
-		myui = self.registerUISpec('Navigator', (prefs, camspec))
-		myui += nodeui
-		return myui
+#		nodeui = node.Node.defineUserInterface(self)
+#
+#		movetypes = self.calclients.keys()
+#		temparam = self.registerUIData('temparam', 'array', default=movetypes)
+#		self.movetype = self.registerUIData('TEM Parameter', 'string', choices=temparam, permissions='rw', default='image shift')
+#
+#		self.delaydata = self.registerUIData('Delay (sec)', 'float', default=2.5, permissions='rw')
+#
+#		acqtypes = self.registerUIData('acqtypes', 'array', default=('raw', 'corrected'))
+#		self.acqtype = self.registerUIData('Acquisition Type', 'string', default='raw', permissions='rw', choices=acqtypes)
+#
+#		prefs = self.registerUIContainer('Preferences', (self.movetype, self.delaydata, self.acqtype))
+#
+#		camspec = self.cam.configUIData()
+#
+#		myui = self.registerUISpec('Navigator', (prefs, camspec))
+#		myui += nodeui
+#		return myui
 
 class SimpleNavigator(Navigator):
 	def __init__(self, id, session, nodelocations, **kwargs):

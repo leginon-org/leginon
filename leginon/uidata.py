@@ -388,6 +388,9 @@ class UIClickImage(UIContainer):
 		self.addUIObject(self.method)
 		self.addUIObject(self.image)
 
+	def setImage(self, value):
+		self.image.set(value)
+
 	def doClickCallback(self):
 		self.clickcallback(tuple(self.coordinates.get()))
 
