@@ -44,9 +44,13 @@ class Panel(gui.wx.Node.Panel):
 		# settings
 
 		self.bsettings = wx.Button(self, -1, 'Settings...')
+		self.bcalibrate = wx.Button(self, -1, 'Calibrate')
+		self.babort = wx.Button(self, -1, 'Abort')
 
 		self.szbuttons = wx.GridBagSizer(5, 5)
 		self.szbuttons.Add(self.bsettings, (0, 0), (1, 1), wx.EXPAND)
+		self.szbuttons.Add(self.bcalibrate, (1, 0), (1, 1), wx.EXPAND)
+		self.szbuttons.Add(self.babort, (2, 0), (1, 1), wx.EXPAND)
 		self.szmain.Add(self.szbuttons, (1, 0), (1, 1), wx.ALIGN_CENTER)
 		self.szmain.AddGrowableCol(1)
 
@@ -92,6 +96,8 @@ class Panel(gui.wx.Node.Panel):
 
 	def onNodeInitialized(self):
 		self.Bind(wx.EVT_BUTTON, self.onSettingsButton, self.bsettings)
+		self.Bind(wx.EVT_BUTTON, self.onCalibrateButton, self.bcalibrate)
+		self.Bind(wx.EVT_BUTTON, self.onAbortButton, self.babort)
 		self.Bind(wx.EVT_CHOICE, self.onDisplayChoice, self.cdisplay)
 
 	def onImageUpdated(self, evt):
@@ -128,6 +134,12 @@ class Panel(gui.wx.Node.Panel):
 		dialog = SettingsDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
+
+	def onCalibrateButton(self, evt):
+		raise NotImplementedError
+
+	def onAbortButton(self, evt):
+		raise NotImplementedError
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):

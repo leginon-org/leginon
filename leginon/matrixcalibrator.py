@@ -87,7 +87,6 @@ class MatrixCalibrator(calibrator.Calibrator):
 		self.axislist = ['x', 'y']
 		self.aborted = threading.Event()
 
-		self.defineUserInterface()
 		self.start()
 
 	# calibrate needs to take a specific value
@@ -196,18 +195,6 @@ class MatrixCalibrator(calibrator.Calibrator):
 		matrix = Numeric.zeros((2,2))
 		calclient = self.parameters[self.parameter]
 		calclient.storeMatrix(ht, mag, self.parameter, matrix)
-
-	def defineUserInterface(self):
-		calibrator.Calibrator.defineUserInterface(self)
-
-		calibratemethod = uidata.Method('Calibrate', self.uiCalibrate)
-		abortmethod = uidata.Method('Abort', self.uiAbort)
-		fakecalibrationmethod = uidata.Method('Fake Calibration',
-																				self.fakeCalibration)
-
-		container = uidata.LargeContainer('Matrix Calibrator')
-		container.addObjects((calibratemethod, abortmethod, fakecalibrationmethod))
-		self.uicontainer.addObject(container)
 
 	def uiCalibrate(self):
 		self.getParameter()

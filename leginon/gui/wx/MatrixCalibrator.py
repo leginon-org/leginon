@@ -38,6 +38,12 @@ class Panel(gui.wx.Calibrator.Panel):
 	def onParameterChoice(self, evt):
 		self.node.parameter = evt.GetString().lower()
 
+	def onCalibrateButton(self, evt):
+		self.node.uiCalibrate()
+
+	def onAbortButton(self, evt):
+		self.node.uiAbort()
+
 class MatrixSettingsDialog(gui.wx.Settings.Dialog):
 	def __init__(self, parent, parameter, parametername):
 		self.parameter = parameter
@@ -100,6 +106,7 @@ class MatrixSettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(self.widgets['%s current as base' % self.parameter], (4, 0), (1, 3),
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szbase, (5, 0), (1, 3), wx.ALIGN_CENTER)
+		sz.AddGrowableCol(1)
 
 		self.sb = wx.StaticBox(self, -1, '%s calibration' % self.parametername)
 		sbsz = wx.StaticBoxSizer(self.sb, wx.VERTICAL)
