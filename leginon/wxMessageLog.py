@@ -1,16 +1,18 @@
 from wxPython.wx import *
 
 iconsdir = 'icons'
+types = ['error', 'warning', 'info']
 
 class wxMessage(wxPanel):
 	def __init__(self, parent, type, message, clearcallback=None):
-		if type not in ['info', 'warning', 'error']:
+		if type not in types:
 			raise ValueError
 		self.clearcallback = clearcallback
 		wxPanel.__init__(self, parent, -1, style=wxSIMPLE_BORDER)
 
 		self.SetBackgroundColour(wxWHITE)
 
+		self.type = type
 		try:
 			image = wxImage('%s/%s.bmp' % (iconsdir, type))
 			bitmap = wxBitmapFromImage(image)

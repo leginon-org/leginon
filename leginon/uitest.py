@@ -30,6 +30,9 @@ messages = [uidata.Message('0', 'error', 'Testing error message'),
 						uidata.Message('4', 'error', 'Testing error message')]
 messagelog = uidata.MessageLog('Message log name')
 container.addObject(messagelog)
+#container.addObject(uidata.LargeContainer('Sub Container 0'))
+#container.addObject(uidata.LargeContainer('Sub Container 1'))
+#container.addObject(uidata.LargeContainer('Sub Container 2'))
 server.addObject(container)
 messagelog.addObjects(messages)
 client = uiclient.UIApp({'instance': server}, 'UI Test')

@@ -26,6 +26,8 @@ wxEVT_REMOVE_WIDGET = wxNewEventType()
 wxEVT_CONFIGURE_WIDGET = wxNewEventType()
 wxEVT_SET_SERVER = wxNewEventType()
 wxEVT_COMMAND_SERVER = wxNewEventType()
+wxEVT_ADD_MESSAGE = wxNewEventType()
+wxEVT_REMOVE_MESSAGE = wxNewEventType()
 
 class AddWidgetEvent(wxPyEvent):
 	def __init__(self, dependencies, namelist, typelist, value,	
@@ -78,6 +80,20 @@ class CommandServerEvent(wxPyEvent):
 		self.namelist = namelist
 		self.args = args
 		self.thread = thread
+
+class AddMessageEvent(wxPyEvent):
+	def __init__(self, type, message):
+		wxPyEvent.__init__(self)
+		self.SetEventType(wxEVT_ADD_MESSAGE)
+		self.type = type
+		self.message = message
+
+class RemoveMessageEvent(wxPyEvent):
+	def __init__(self, type, message):
+		wxPyEvent.__init__(self)
+		self.SetEventType(wxEVT_REMOVE_MESSAGE)
+		self.type = type
+		self.message = message
 
 def WidgetClassFromTypeList(typelist):
 	if typelist:
@@ -417,6 +433,9 @@ class wxContainerWidget(wxWidget):
 		self.widgethandler.Connect(-1, -1, wxEVT_SET_SERVER, self.onSetServer)
 		self.widgethandler.Connect(-1, -1, wxEVT_COMMAND_SERVER,
 																self.onCommandServer)
+		self.widgethandler.Connect(-1, -1, wxEVT_ADD_MESSAGE, self.onAddMessage)
+		self.widgethandler.Connect(-1, -1, wxEVT_REMOVE_MESSAGE,
+																self.onRemoveMessage)
 
 	def childEvent(self, evt):
 		for name, child in self.children.items():
@@ -540,6 +559,12 @@ class wxContainerWidget(wxWidget):
 
 	def onCommandServer(self, evt):
 		evt.namelist.insert(0, self.name)
+		wxPostEvent(self.container.widgethandler, evt)
+
+	def onAddMessage(self, evt):
+		wxPostEvent(self.container.widgethandler, evt)
+
+	def onRemoveMessage(self, evt):
 		wxPostEvent(self.container.widgethandler, evt)
 
 	def showNotebook(self, show):
@@ -724,6 +749,12 @@ def wxClientContainerFactory(wxcontainerwidget):
 		def onCommandServer(self, evt):
 			evt.namelist.insert(0, self.name)
 			self.uiclient.commandServer(evt.namelist, evt.args, evt.thread)
+
+		def onAddMessage(self, evt):
+			pass
+
+		def onRemoveMessage(self, evt):
+			pass
 
 	return wxClientContainer
 
@@ -1545,8 +1576,33 @@ class wxTreePanel(wxPanel):
 		self.sashwindow.SetSashVisible(wxSASH_RIGHT, True)
 		self.sashwindow.SetExtraBorderSize(5)
 
+		bitmaps = {}
+		height = None
+		width = None
+		for type in wxMessageLog.types:
+			bitmap = wxBitmapFromImage(wxImage('%s/%s.bmp' % 
+																					(wxMessageLog.iconsdir, type)))
+			if width is None:
+				width = bitmap.GetWidth()
+			elif width != bitmap.GetWidth():
+				raise ValueError('Invalid tree bitmap width')
+			if height is None:
+				height = bitmap.GetHeight()
+			elif height != bitmap.GetHeight():
+				raise ValueError('Invalid tree bitmap height')
+			bitmaps[type] = bitmap
+
+		self.imagelist = wxImageList(width, height)
+		self.bitmaps = {}
+		for type in bitmaps:
+			self.bitmaps[type] = self.imagelist.Add(bitmaps[type])
+
+		self.bitmaps[None] = self.imagelist.AddWithColourMask(wxEmptyBitmap(width, height), wxBLACK)
+
 		self.tree = wxTreeCtrl(self.sashwindow, -1,
 														style=wxTR_HIDE_ROOT|wxTR_NO_BUTTONS)
+
+		self.tree.SetImageList(self.imagelist)
 		self.root = self.tree.AddRoot('Containers')
 
 		self.childpanel = wxScrolledWindow(self, -1, size=(512, 512),
@@ -1585,7 +1641,24 @@ class wxTreePanel(wxPanel):
 			self.tree.Expand(parentid)
 		self.containers[container] = id
 		self.tree.SetPyData(id, container)
+		self.setImage(None, id)
 		#self.tree.SelectItem(id)
+
+	def setContainerImage(self, type, container):
+		id = self.containers[container]
+		self.setImage(type, id)
+
+	def setImage(self, type, id):
+		if not self.tree.ItemHasChildren(id):
+			childid = self.tree.AppendItem(id, 'Refreshing...')
+		else:
+			childid = None
+		self.tree.Expand(id)
+		for state in [wxTreeItemIcon_Normal, wxTreeItemIcon_Selected,
+									wxTreeItemIcon_Expanded, wxTreeItemIcon_SelectedExpanded]:
+			self.tree.SetItemImage(id, self.bitmaps[type], state)
+		if childid is not None:
+			self.tree.Delete(childid)
 
 	def deleteContainer(self, container):
 		id = self.containers[container]
@@ -1608,6 +1681,7 @@ class wxTreePanelContainerWidget(wxContainerWidget):
 	def __init__(self, name, parent, container, value, configuration):
 		self.treepanel = container.getTreeContainer()
 		self.sizer = wxBoxSizer(wxVERTICAL)
+		self.messages = {}
 		wxContainerWidget.__init__(self, name, parent, container, value,
 																configuration)
 		self.childparent = self.treepanel.childpanel
@@ -1639,6 +1713,31 @@ class wxTreePanelContainerWidget(wxContainerWidget):
 	def destroy(self):
 		wxContainerWidget.destroy(self)
 		self.treepanel.deleteContainer(self)
+
+	def updateMessages(self):
+		for type in wxMessageLog.types:
+			if type in self.messages:
+				self.treepanel.setContainerImage(type, self)
+				return
+		self.treepanel.setContainerImage(None, self)
+
+	def onAddMessage(self, evt):
+		try:
+			self.messages[evt.type] += 1
+		except KeyError:
+			self.messages[evt.type] = 1
+			self.updateMessages()
+		wxContainerWidget.onAddMessage(self, evt)
+
+	def onRemoveMessage(self, evt):
+		try:
+			self.messages[evt.type] -= 1
+			if self.messages[evt.type] == 0:
+				del self.messages[evt.type]
+				self.updateMessages()
+		except KeyError:
+			pass
+		wxContainerWidget.onRemoveMessage(self, evt)
 
 class wxFileDialogWidget(wxContainerWidget):
 	def __init__(self, name, parent, container, value, configuration):
@@ -1721,12 +1820,13 @@ class wxMessageWidget(wxContainerWidget):
 																							self.message, self.onClear)
 		self.sizer.Add(self.messagewidget, 0, wxEXPAND)
 		self.sizer.Layout()
+		evt = AddMessageEvent(self.type, self.message)
+		wxPostEvent(self.container.widgethandler, evt)
 
 	def _addWidget(self, name, typelist, value, configuration, children):
 		if name == 'Type':
 			self.type = value
 		if name == 'Message':
-			print value
 			self.message = value
 		elif name == 'Clear':
 			self.clearflag = True
@@ -1756,6 +1856,8 @@ class wxMessageWidget(wxContainerWidget):
 	def destroy(self):
 		if self.messagewidget is not None:
 			self.messagewidget.Destroy()
+		evt = RemoveMessageEvent(self.type, self.message)
+		wxPostEvent(self.container.widgethandler, evt)
 
 	def _show(self, show):
 		if self.messagewidget is not None:
@@ -1783,6 +1885,8 @@ class wxMessageLogWidget(wxContainerWidget):
 				pass
 		self.messages[name] = self.messagelog.addMessage(type, message,
 																											self.onClear)
+		evt = AddMessageEvent(type, message)
+		wxPostEvent(self.container.widgethandler, evt)
 
 	def onClear(self, messagewidget):
 		for name, widget in self.messages.items():
@@ -1797,6 +1901,8 @@ class wxMessageLogWidget(wxContainerWidget):
 
 	def onRemoveWidget(self, evt):
 		name = evt.namelist[0]
+		wxPostEvent(self.container.widgethandler,
+			RemoveMessageEvent(self.messages[name].type, self.messages[name].message))
 		try:
 			self.messagelog.removeMessage(self.messages[name])
 			del self.messages[name]
