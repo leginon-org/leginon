@@ -19,11 +19,5 @@ def mrc2jpeg(filename, quality=100):
 if __name__ == '__main__':
 	import sys
 
-	file = 'test1.mrc'
-	quality = 100
-        if len(sys.argv) == 3:
-                file = sys.argv[1]
-                quality = int(sys.argv[2])
-        elif len(sys.argv) == 2:
-                file = sys.argv[1]
-	mrc2jpeg(file,quality)
+	for file in sys.argv[1:]:
+		mrc2jpeg(file)
