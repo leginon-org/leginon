@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Navigator.py,v $
-# $Revision: 1.25 $
+# $Revision: 1.26 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-11 19:43:17 $
+# $Date: 2004-11-12 18:11:55 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -64,14 +64,25 @@ class Panel(gui.wx.Node.Panel):
 	def onNodeInitialized(self):
 		self.locationsdialog = StageLocationsDialog(self, self.node)
 
+		movetypes = self.node.calclients.keys()
+		self.cmovetype = Choice(self.toolbar, -1, choices=movetypes)
+		self.cmovetype.SetStringSelection(self.node.settings['move type'])
+		self.cmovetype.SetToolTip(wx.ToolTip('Navigion Parameter'))
+		self.toolbar.InsertControl(2, self.cmovetype)
+		self.toolbar.Realize()
+
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
 											id=gui.wx.ToolBar.ID_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onAcquireTool,
 											id=gui.wx.ToolBar.ID_ACQUIRE)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onStageLocationsTool,
 											id=gui.wx.ToolBar.ID_STAGE_LOCATIONS)
+		self.cmovetype.Bind(wx.EVT_CHOICE, self.onMoveTypeChoice)
 		self.Bind(gui.wx.ImageViewer.EVT_IMAGE_CLICKED, self.onImageClicked,
 							self.imagepanel)
+
+	def onMoveTypeChoice(self, evt):
+		self.node.settings['move type'] = evt.GetString()
 
 	def onSetImage(self, evt):
 		self.imagepanel.setImage(evt.image)
@@ -247,18 +258,18 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		gui.wx.Settings.Dialog.initialize(self)
 
 		# move type
-		movetypes = self.node.calclients.keys()
-		self.widgets['move type'] = Choice(self, -1, choices=movetypes)
-		szmovetype = wx.GridBagSizer(5, 5)
-		szmovetype.Add(wx.StaticText(self, -1, 'Use'),
-										(0, 0), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL)
-		szmovetype.Add(self.widgets['move type'],
-										(0, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL)
-		szmovetype.Add(wx.StaticText(self, -1, 'to move to target'),
-										(0, 2), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL)
+#		movetypes = self.node.calclients.keys()
+#		self.widgets['move type'] = Choice(self, -1, choices=movetypes)
+#		szmovetype = wx.GridBagSizer(5, 5)
+#		szmovetype.Add(wx.StaticText(self, -1, 'Use'),
+#										(0, 0), (1, 1),
+#										wx.ALIGN_CENTER_VERTICAL)
+#		szmovetype.Add(self.widgets['move type'],
+#										(0, 1), (1, 1),
+#										wx.ALIGN_CENTER_VERTICAL)
+#		szmovetype.Add(wx.StaticText(self, -1, 'to move to target'),
+#										(0, 2), (1, 1),
+#										wx.ALIGN_CENTER_VERTICAL)
 
 		# pause time
 		self.widgets['pause time'] = FloatEntry(self, -1,
@@ -289,9 +300,9 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 
 		# settings sizer
 		sz = wx.GridBagSizer(5, 10)
-		sz.Add(szmovetype, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szpausetime, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['check calibration'], (2, 0), (1, 1),
+#		sz.Add(szmovetype, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szpausetime, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['check calibration'], (1, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 #		sz.Add(self.widgets['complete state'], (3, 0), (1, 1),
 #						wx.ALIGN_CENTER_VERTICAL)
