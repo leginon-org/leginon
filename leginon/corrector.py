@@ -88,7 +88,7 @@ class Corrector(node.Node):
 		testcontainer.addObjects((rawmethod, correctedmethod))
 		controlcontainer = uidata.Container('Control')
 
-		self.despikeon = uidata.Boolean('Despike', False, 'rw', persist=True)
+		self.despikeon = uidata.Boolean('Despike', True, 'rw', persist=True)
 		self.despikevalue = uidata.Float('Despike Threshold', 3.5, 'rw', persist=True)
 		self.despikesize = uidata.Integer('Neighborhood Size', 11, 'rw', persist=True)
 
