@@ -807,12 +807,46 @@ class TargetImagePanel(ImagePanel):
 
 		memorydc.SelectObject(wxNullBitmap)
 
+	def drawTargets(self, dc):
+		selectedtargets = []
+		for tool in self.tools:
+			if hasattr(tool, 'closest_target'):
+				selectedtargets.append(tool.closest_target)
+
+		xscale, yscale = self.getScale()
+		memorydc = wxMemoryDC()
+		for target_type in self.targets:
+			for target in self.targets[target_type]:
+				if self.biggerView():
+					targetx, targety = target
+					targetx *= xscale
+					targety *= yscale
+				else:
+					targetx, targety = self.image2view(target)
+				if target in selectedtargets:
+					bitmap = self.targetbitmaps[target_type]['selected']
+				else:
+					bitmap = self.targetbitmaps[target_type]['default']
+				memorydc.Clear()
+				memorydc.SelectObject(bitmap)
+				width = bitmap.GetWidth()
+				height = bitmap.GetHeight()
+				if not self.smallScale():
+					memorydc.SetUserScale(1.0/xscale, 1.0/yscale)
+					width *= xscale
+					height *= yscale
+				dc.Blit(targetx - width/2, targety - height/2,
+								width, height, memorydc, 0, 0, wxCOPY, True)
+
+				memorydc.SelectObject(wxNullBitmap)
+
 	def Draw(self, dc):
 		ImagePanel.Draw(self, dc)
 		dc.BeginDrawing()
-		for target_type in self.targets.values():
-			for target in target_type:
-				self.drawTarget(dc, target)
+#		for target_type in self.targets.values():
+#			for target in target_type:
+#				self.drawTarget(dc, target)
+		self.drawTargets(dc)
 		dc.EndDrawing()
 
 if __name__ == '__main__':
