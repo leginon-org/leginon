@@ -16,7 +16,7 @@ class WatcherQueue(Queue.Queue):
 			self.callback(self.queue)
 
 	def _get(self):
-		item = Queue.Queue(self)
+		item = Queue.Queue._get(self)
 		if callable(self.callback):
 			self.callback(self.queue)
 		return item
@@ -66,11 +66,17 @@ class Watcher(node.Node):
 
 	def eventcallback(self, value):
 		if hasattr(self, 'uieventqueue'):
-			self.uieventqueue.set(map(str, value))
+			idlist = []
+			for data in value:
+				idlist.append(str(data['id']))
+			self.uieventqueue.set(idlist)
 
 	def datacallback(self, value):
 		if hasattr(self, 'uidataqueue'):
-			self.uidataqueue.set(map(str, value))
+			idlist = []
+			for data in value:
+				idlist.append(str(data['id']))
+			self.uidataqueue.set(idlist)
 
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
