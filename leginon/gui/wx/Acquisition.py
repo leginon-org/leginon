@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Acquisition.py,v $
-# $Revision: 1.30 $
+# $Revision: 1.31 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-18 18:37:55 $
+# $Date: 2005-02-24 19:24:48 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -14,7 +14,7 @@
 import gui.wx.Node
 import gui.wx.Settings
 from gui.wx.Choice import Choice
-from gui.wx.Entry import FloatEntry, EVT_ENTRY
+from gui.wx.Entry import FloatEntry, EVT_ENTRY, IntEntry
 from gui.wx.Presets import EditPresetOrder, EVT_PRESET_ORDER_CHANGED
 import wx
 import gui.wx.Events
@@ -44,6 +44,12 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SIMULATE_TARGET,
 													'simulatetarget',
 													shortHelpString='Simulate Target')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP,
+													'simulatetargetloop',
+													shortHelpString='Simulate Target Loop')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP_STOP,
+													'simulatetargetloopstop',
+													shortHelpString='Stop Simulate Target Loop')
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False)
@@ -76,9 +82,19 @@ class Panel(gui.wx.Node.Panel):
 											id=gui.wx.ToolBar.ID_ABORT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSimulateTargetTool,
 											id=gui.wx.ToolBar.ID_SIMULATE_TARGET)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onSimulateTargetLoopTool,
+											id=gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onSimulateTargetLoopStopTool,
+											id=gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP_STOP)
 
 	def onSimulateTargetTool(self, evt):
 		threading.Thread(target=self.node.simulateTarget).start()
+
+	def onSimulateTargetLoopTool(self, evt):
+		threading.Thread(target=self.node.simulateTargetLoop).start()
+
+	def onSimulateTargetLoopStopTool(self, evt):
+		threading.Thread(target=self.node.simulateTargetLoopStop).start()
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
@@ -166,6 +182,32 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['wait for rejects'] = wx.CheckBox(self, -1,
 																				'Publish and wait for rejected targets')
 
+		# simulate loop settings
+		self.widgets['wait time'] = FloatEntry(self, -1, min=0.0, chars=6)
+		self.widgets['iterations'] = IntEntry(self, -1, min=0.0, chars=6)
+
+		szwaittime = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Wait Time:')
+		szwaittime.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szwaittime.Add(self.widgets['wait time'], (0, 1), (1, 1),
+		wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'seconds')
+		szwaittime.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		sziterations = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Iterations:')
+		sziterations.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sziterations.Add(self.widgets['iterations'], (0, 1), (1, 1),
+		wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+
+		szsim = wx.GridBagSizer(5, 5)
+		szsim.Add(szwaittime, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szsim.Add(sziterations, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		sbsim = wx.StaticBox(self, -1, 'Simulated Target Loop')
+		sbszsim = wx.StaticBoxSizer(sbsim, wx.VERTICAL)
+		sbszsim.Add(szsim, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+
 #		# duplicate target
 #		self.widgets['duplicate targets'] = wx.CheckBox(self, -1,
 #																				'Duplicate targets with type:')
@@ -192,6 +234,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['wait for rejects'], (4, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sbszsim, (5,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
 #		sz.Add(szduplicate, (5, 1), (1, 1),
 #						wx.ALIGN_CENTER_VERTICAL)
 #		sz.AddGrowableRow(6)

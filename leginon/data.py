@@ -1797,6 +1797,8 @@ class AcquisitionSettingsData(SettingsData):
 			('wait for rejects', bool),
 			('duplicate targets', bool),
 			('duplicate target type', str),
+			('wait time', float),
+			('iterations', int),
 		)
 	typemap = classmethod(typemap)
 

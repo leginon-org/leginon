@@ -52,6 +52,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'wait for rejects': False,
 		'duplicate targets': False,
 		'duplicate target type': 'focus',
+		'iterations': 1,
+		'wait time': 0,
 	}
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
 								+ [event.DriftDoneEvent,
@@ -84,6 +86,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.presetsclient = presets.PresetsClient(self)
 		self.doneevents = {}
 		self.imagelistdata = None
+		self.simloopstop = threading.Event()
 
 		self.duplicatetypes = ['acquisition', 'focus']
 		self.presetlocktypes = ['acquisition', 'target', 'target list']
@@ -527,3 +530,21 @@ class Acquisition(targetwatcher.TargetWatcher):
 		ret = self.processTargetData(targetdata=proctargetdata, attempt=1)
 		self.logger.info('Done with simulated target, status: %s (repeat will not be honored)' % (ret,))
 
+	def simulateTargetLoop(self):
+		iterations = self.settings['iterations']
+		self.logger.info('begin simulated target loop of %s iterations' % (iterations,))
+		self.simloopstop.clear()
+		for i in range(iterations):
+			self.logger.info('iteration %s of %s' % (i+1, iterations,))
+			self.simulateTarget()
+			if self.simloopstop.isSet():
+				self.logger.info('User stopped loop')
+				break
+			waittime = self.settings['wait time']
+			time.sleep(waittime)
+		self.logger.info('Simulated Target Loop Done')
+	
+
+	def simulateTargetLoopStop(self):
+		self.logger.info('Simulated Target Loop will stop after next iteration')
+		self.simloopstop.set()
