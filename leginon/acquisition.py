@@ -15,15 +15,16 @@ import uidata
 
 class Acquisition(targetwatcher.TargetWatcher):
 
-	eventinputs = targetwatcher.TargetWatcher.eventinputs+[event.ImageClickEvent]
-	eventoutputs = targetwatcher.TargetWatcher.eventoutputs + [event.LockEvent, event.UnlockEvent, event.AcquisitionImagePublishEvent, event.TrialImagePublishEvent, event.ChangePresetEvent]
+	eventinputs = targetwatcher.TargetWatcher.eventinputs+[event.ImageClickEvent, event.DriftDoneEvent, event.ImageProcessDoneEvent]
+	eventoutputs = targetwatcher.TargetWatcher.eventoutputs + [event.LockEvent, event.UnlockEvent, event.AcquisitionImagePublishEvent, event.TrialImagePublishEvent, event.ChangePresetEvent, event.DriftDetectedEvent]
 
 	def __init__(self, id, session, nodelocations, targetclass=data.AcquisitionImageTargetData, **kwargs):
 
 		targetwatcher.TargetWatcher.__init__(self, id, session, nodelocations, targetclass, **kwargs)
 		self.addEventInput(event.ImageClickEvent, self.handleImageClick)
-		self.addEventOutput(event.LockEvent)
-		self.addEventOutput(event.UnlockEvent)
+		self.addEventInput(event.DriftDoneEvent, self.handleDriftDone)
+		self.addEventInput(event.ImageProcessDoneEvent, self.handleImageProcessDone)
+		self.driftdone = threading.Event()
 		self.cam = camerafuncs.CameraFuncs(self)
 
 		self.calclients = {
@@ -32,11 +33,24 @@ class Acquisition(targetwatcher.TargetWatcher):
 			'modeled stage position': calibrationclient.ModeledStageCalibrationClient(self)
 		}
 		self.presetsclient = presets.PresetsClient(self)
+		self.doneevents = {}
 
 		self.defineUserInterface()
 		self.start()
 
-	def processTargetData(self, targetdata):
+	def handleDriftDone(self, ev):
+		print 'HANDLING DRIFT DONE'
+		self.driftdonestatus = ev['status']
+		self.driftdone.set()
+
+	def handleImageProcessDone(self, ev):
+		imageid = ev['imageid']
+		status = ev['status']
+		if imageid in self.doneevents:
+			self.doneevents[imageid]['status'] = status
+			self.doneevents[imageid]['received'].set()
+
+	def processTargetData(self, targetdata, trial=False):
 		'''
 		This is called by TargetWatcher.processData when targets available
 		If called with targetdata=None, this simulates what occurs at
@@ -60,7 +74,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		
 		if abort:
 			self.outputError('Aborting target because focus failed')
-			return False
+			return 'abort'
 
 		if targetdata is None:
 			emtarget = None
@@ -73,7 +87,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			# this creates ScopeEMData from the ImageTargetData
 			oldtargetemdata = self.targetToEMData(targetdata)
 			if oldtargetemdata is None:
-				return False
+				return 'abort'
 			oldpreset = targetdata['preset']
 
 			# now make EMTargetData to hold all this
@@ -88,18 +102,18 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.presetsclient.toScope(newpresetname, emtarget)
 			print 'getting current preset'
 			p = self.presetsclient.getCurrentPreset()
-			print 'current preset'
-			print p
+			print 'current preset', p['name']
 			delay = self.uidelay.get()
 			print 'pausing for %s sec.' % (delay,)
 			time.sleep(delay)
 			print 'acquire()'
-			ret = self.acquire(p, target=targetdata, trial=False)
-			if ret:
-				return False
+			ret = self.acquire(p, target=targetdata, trial=trial)
+			# in these cases, return immediately
+			if ret in ('abort', 'repeat'):
+				return ret
 			print 'done'
 
-		return True
+		return 'ok'
 
 	def targetToEMData(self, targetdata):
 		'''
@@ -109,14 +123,23 @@ class Acquisition(targetwatcher.TargetWatcher):
 		the target on the camera, but not necessarily at the
 		desired preset.  It is shifted from the preset of the 
 		original targetdata.
+
+		Certain fields are reset to None becuase they are not
+		necessary, and cause problems if used between different
+		magnification modes (LM, M, SA).
 		'''
 		targetinfo = copy.deepcopy(targetdata)
 
-		# get relavent info from target event
+		# get relavent info from target data
 		targetdeltarow = targetinfo['delta row']
 		targetdeltacolumn = targetinfo['delta column']
 		targetscope = targetinfo['scope']
 		targetcamera = targetinfo['camera']
+
+		## ignore these fields:
+		ignore = ('beam tilt', 'stigmator', 'holder type', 'holder status', 'stage status', 'vacuum status', 'column valves', 'turbo pump')
+		for key in ignore:
+			targetscope[key] = None
 
 		## to shift targeted point to center...
 		deltarow = -targetdeltarow
@@ -127,13 +150,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## figure out scope state that gets to the target
 		movetype = self.uimovetype.getSelectedValue()
 		calclient = self.calclients[movetype]
-		print 'ORIGINAL', targetscope['image shift']
 		try:
 			newscope = calclient.transform(pixelshift, targetscope, targetcamera)
 		except calibrationclient.NoMatrixCalibrationError:
 			self.outputWarning('No calibration for acquisition move to target')
 			return None
-		print 'WITH TARGET', newscope['image shift']
 		# create new EMData object to hole this
 		emdata = data.ScopeEMData(id=('scope',), initializer=newscope)
 		return emdata
@@ -149,7 +170,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		imagedata = self.cam.acquireCameraImageData(correction=cor)
 
 		if imagedata is None:
-			return
+			return 'fail'
 
 		imarray = imagedata['image']
 
@@ -163,19 +184,56 @@ class Acquisition(targetwatcher.TargetWatcher):
 			trialimage = data.TrialImageData(id=dataid, initializer=imagedata, preset=presetdata, label=labelstring)
 			print 'publishing trial image'
 			self.publish(trialimage, pubevent=True, database=False)
+			print 'image published'
+			if self.displayimageflag.get():
+				print 'displaying image'
+				self.ui_image.set(imarray)
 		else:
 			pimagedata = data.AcquisitionImageData(id=dataid, initializer=imagedata, preset=presetdata, label=labelstring, target=target)
 
+			## set up to handle done events
+			self.doneevents[dataid] = {}
+			self.doneevents[dataid]['received'] = threading.Event()
+			self.doneevents[dataid]['status'] = 'waiting'
+
 			self.publish(pimagedata, pubevent=True, database=self.databaseflag.get())
+			print 'image published'
+			if self.displayimageflag.get():
+				print 'displaying image'
+				self.ui_image.set(imarray)
+
+			if self.wait_for_done.get():
+				self.waitForImageProcessDone()
 
 #			print 'PIMAGEDATA'
 #			print '   scope image shift', pimagedata['scope']['image shift']
 #			print '   preset image shift', pimagedata['preset']['image shift']
 
-		print 'image published'
-		if self.displayimageflag.get():
-			print 'displaying image'
-			self.ui_image.set(imarray)
+
+		return 'ok'
+
+	def waitForImageProcessDone(self):
+		imageids = self.doneevents.keys()
+		imageidstrs = map(str, imageids)
+		self.waitingforimages.setList(imageidstrs)
+		# wait for image processing nodes to complete
+		for id, eventinfo in self.doneevents.items():
+			print 'waiting for image %s to complete' % (id,)
+			eventinfo['received'].wait()
+			idstr = str(id)
+			imageidstrs.remove(idstr)
+			self.waitingforimages.setList(imageidstrs)
+		self.doneevents.clear()
+
+	def stopWaitingForImage(self):
+		imageidstr = self.waitingforimages.getSelectedValue()
+		try:
+			imageid = eval(imageidstr)
+		except TypeError:
+			return
+		if imageid in self.doneevents:
+			self.doneevents[imageid]['received'].set()
+			self.doneevents[imageid]['status'] = 'forced'
 
 	def handleImageClick(self, clickevent):
 		'''
@@ -236,7 +294,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		print 'Acquired'
 
 	def uiTrial(self):
-		self.processTargetData(targetdata=None)
+		self.processTargetData(targetdata=None, trial=True)
 
 	def getPresetNames(self):
 		presetnames = []
@@ -253,18 +311,34 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.uipresetnames.setSelected([])
 		self.uipresetnames.setList(self.getPresetNames())
 
+	def driftDetected(self):
+		'''
+		notify DriftManager of drifting
+		'''
+		allemdata = self.researchByDataID(('all em',))
+		print 'PASSING BEAM TILT', allemdata['beam tilt']
+		allemdata['id'] = self.ID()
+		self.driftdone.clear()
+		self.publish(allemdata, pubevent=True, pubeventclass=event.DriftDetectedEvent)
+		print '%s waiting for DriftManager' % (self.id,)
+		self.driftdone.wait()
+
 	def defineUserInterface(self):
 		targetwatcher.TargetWatcher.defineUserInterface(self)
 		self.uimovetype = uidata.SingleSelectFromList('Move Type',
 																							self.calclients.keys(), 0, persist=True)
-		self.uidelay = uidata.Float('Delay (sec)', 2.5, 'rw')
+		self.uidelay = uidata.Float('Delay (sec)', 2.5, 'rw', persist=True)
 		self.uiacquiretype = uidata.SingleSelectFromList('Acquisition Type',
 																							['raw', 'corrected'], 0, persist=True)
 		self.databaseflag = uidata.Boolean('Publish to Database', True, 'rw')
 		self.labelstring = uidata.String('Label', self.id[-1], 'rw', persist=True)
+		self.wait_for_done = uidata.Boolean('Wait for "Done"', True, 'rw', persist=True)
+		self.waitingforimages = uidata.SingleSelectFromList('Waiting For', [], 0)
+		stopwaiting = uidata.Method('Stop Waiting', self.stopWaitingForImage)
+
+
 		settingscontainer = uidata.Container('Settings')
-		settingscontainer.addObjects((self.uimovetype, self.uidelay,
-																		self.uiacquiretype, self.databaseflag, self.labelstring))
+		settingscontainer.addObjects((self.uimovetype, self.uidelay, self.uiacquiretype, self.databaseflag, self.labelstring, self.wait_for_done, self.waitingforimages, stopwaiting))
 
 		presets = self.getPresetNames()
 		self.uipresetnames = uidata.SelectFromList('Sequence', presets, [], 'r')
