@@ -397,7 +397,7 @@ if __name__ == '__main__':
 
 	## GUI
 	if sys.platform == 'win32':
-		gui = 1
+		gui = 0
 	else:
 		gui = 1
 	if gui:

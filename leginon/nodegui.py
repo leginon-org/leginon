@@ -447,16 +447,47 @@ class StructTreeItem(TreeWidget.TreeItem):
 		else:
 			return [StructTreeItem(self, None, self.value)]
 
+class NodeGUILauncher(Frame):
+	def __init__(self, parent):
+		#self.parent = parent
+		Frame.__init__(self, parent)
+		self.__build()
 
+	def __build(self):
+		f = Frame(self, bd=4, relief=SOLID)
 
+		launchbut = Button(f, text='Launch GUI', command=self.launchgui)
+		launchhostlab = Label(f, text='Host')
+		self.launchhostent = Entry(f, width=15)
+		launchportlab = Label(f, text='Port')
+		self.launchportent = Entry(f, width=15)
+		launchbut.pack(side=LEFT)
+		launchhostlab.pack(side=LEFT)
+		self.launchhostent.pack(side=LEFT)
+		launchportlab.pack(side=LEFT)
+		self.launchportent.pack(side=LEFT)
+
+		f.pack(side=TOP, fill=BOTH)
+
+	def launchgui(self):
+		host = self.launchhostent.get()
+		port = self.launchportent.get()
+		tk = self.newGUIWindow(host, port)
+
+	def newGUIWindow(self, host, port):
+		top = Toplevel()
+		top.title('Node GUI')
+		gui = NodeGUI(top, host, port)
+		gui.pack(expand=YES, fill=BOTH)
 
 if __name__ == '__main__':
-	import sys
-	hostname = sys.argv[1]
-	port = int(sys.argv[2])
+#	import sys
+#	hostname = sys.argv[1]
+#	port = int(sys.argv[2])
 
 	root = Tk()
-	gui = NodeGUI(root, hostname, port)
+	#gui = NodeGUI(root, hostname, port)
+	gui = NodeGUILauncher(root)
 	gui.pack(expand=YES, fill=BOTH)
 	root.mainloop()
 
