@@ -8,6 +8,7 @@ import Mrc
 import uidata
 import Numeric
 import mosaic
+import calibrationclient
 
 import xmlrpclib
 #import xmlrpclib2 as xmlbinlib
@@ -206,10 +207,13 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 	def advanceImage(self):
 		pass
 
+	def mosaicClear(self):
+		self.mosaic.clear()
+
 	def defineUserInterface(self):
 		ClickTargetFinder.defineUserInterface(self)
-		clearmethod = uidata.UIMethod('Reset Mosaic', self.mosaic.clear)
+		clearmethod = uidata.UIMethod('Reset Mosaic', self.mosaicClear)
 		container = uidata.UIMediumContainer('Mosaic Click Target Finder')
-		container.addUIObjects((clearmethod))
+		container.addUIObjects((clearmethod,))
 		self.uiserver.addUIObject(container)
 
