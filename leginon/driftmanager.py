@@ -14,7 +14,7 @@ import presets
 
 class DriftManager(watcher.Watcher):
 	eventinputs = watcher.Watcher.eventinputs + [event.DriftDetectedEvent, event.AcquisitionImagePublishEvent, event.NeedTargetShiftEvent]
-	eventoutputs = watcher.Watcher.eventoutputs + [event.DriftDoneEvent, event.ImageTargetShiftPublishEvent]
+	eventoutputs = watcher.Watcher.eventoutputs + [event.DriftDoneEvent, event.ImageTargetShiftPublishEvent, event.ChangePresetEvent]
 	def __init__(self, id, session, nodelocations, **kwargs):
 		watchfor = [event.DriftDetectedEvent, event.AcquisitionImagePublishEvent]
 		watcher.Watcher.__init__(self, id, session, nodelocations, watchfor, **kwargs)
