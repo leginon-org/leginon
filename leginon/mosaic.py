@@ -66,6 +66,8 @@ class Mosaic(object):
 						'max': (int(round(mosaicmax[0])), int(round(mosaicmax[1])))}
 
 	def getMosaicImage(self, astype=Numeric.Int16):
+		if not self.tiles:
+			return None
 		bbox = self.getMosaicImageBoundaries()
 		imageshape = (bbox['max'][0] - bbox['min'][0], 
 									bbox['max'][1] - bbox['min'][1])

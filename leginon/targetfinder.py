@@ -134,6 +134,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 												calibrationclient.ModeledStageCalibrationClient(self)
 		}
 		self.mosaic = mosaic.EMMosaic(self.calclients)
+		initializer = {'id': self.ID(), 'data IDs': []}
+		self.mosaicdata = data.MosaicData(initializer=initializer)
 		if self.__class__ == MosaicClickTargetFinder:
 			self.defineUserInterface()
 			self.start()
@@ -141,12 +143,54 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 	def processData(self, newdata):
 		ClickTargetFinder.processData(self, newdata)
 		self.mosaic.addTile(newdata)
+		self.mosaicdata['data IDs'].append(newdata['id'])
 		self.clickimage.setImage(self.mosaic.getMosaicImage())
 		# needs to update target positions
 		self.clickimage.setTargets([])
 
-	def mosaicFromDB(self):
-		self.mosaic.mosaicFromDB()
+	def mosaicToDatabase(self):
+		if self.mosaicdata['session'] is not None:
+			if self.mosaicdata['session']['name'] != self.session['name']:
+				self.outputError('Cannot save loaded mosaic.')
+				return
+		mosaicdata = self.mosaicdata
+		initializer = {'id': self.ID(), 'data IDs': list(mosaicdata['data IDs'])}
+		self.mosaicdata = data.MosaicData(initializer=initializer)
+		self.publish(mosaicdata, database=True)
+
+	def updateMosaicSelection(self):
+		sessioninitializer = {'user': self.session['user'],
+													'instrument': self.session['instrument']}
+		session = data.SessionData(initializer=sessioninitializer)
+		initializer = {'session': session}
+		instance = data.MosaicData(initializer=initializer)
+		mosaics = self.research(datainstance=instance)
+		self.mosaicselectionmapping = {}
+		for mosaic in mosaics:
+			key = str(mosaic['session']['name']) + ' ' + str(mosaic['id'])
+			self.mosaicselectionmapping[key] = mosaic
+		self.mosaicselection.set(self.mosaicselectionmapping.keys(), 0)
+
+	def mosaicFromDatabase(self):
+		key = self.mosaicselection.getSelectedValue()
+		try:
+			mosaicdata = self.mosaicselectionmapping[key]
+		except KeyError:
+			self.outputError('Invalid mosaic selected.')
+			return
+		self.mosaic.clear()
+		mosaicsession = mosaicdata['session']
+		for dataid in mosaicdata['data IDs']:
+			initializer = {'id': dataid, 'session': mosaicsession}
+			instance = data.AcquisitionImageData(initializer=initializer)
+			imagedatalist = self.research(datainstance=instance, results=1)
+			try:
+				imagedata = imagedatalist[0]
+			except IndexError:
+				self.outputWarning('Cannot find image data referenced by mosaic')
+			else:
+				self.mosaic.addTile(imagedata)
+		self.mosaicdata = mosaicdata
 		self.clickimage.setImage(self.mosaic.getMosaicImage())
 		self.clickimage.setTargets([])
 
@@ -167,6 +211,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 	def mosaicClear(self):
 		self.mosaic.clear()
+		initializer = {'id': self.ID(), 'data IDs': []}
+		self.mosaicdata = data.MosaicData(initializer=initializer)
 		self.clickimage.setImage(None)
 
 	def uiSetCalibrationParameter(self, value):
@@ -183,11 +229,30 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		ClickTargetFinder.defineUserInterface(self)
 		# turn queue off by default
 		self.uidataqueueflag.set(False)
+
+		self.mosaicselection = uidata.SingleSelectFromList('Mosaic', [], 0)
+		self.updateMosaicSelection()
+		refreshmethod = uidata.Method('Refresh', self.updateMosaicSelection)
+		loadmethod = uidata.Method('Load', self.mosaicFromDatabase)
+		loadcontainer = uidata.Container('Load')
+		loadcontainer.addObjects((self.mosaicselection, refreshmethod,
+																											loadmethod))
+		savecurrentmethod = uidata.Method('Save Current', self.mosaicToDatabase)
+		savecontainer = uidata.Container('Save')
+		savecontainer.addObjects((savecurrentmethod,))
+		databasecontainer = uidata.Container('Database')
+		databasecontainer.addObjects((loadcontainer, savecontainer))
+
 		parameters = self.mosaic.getCalibrationParameters()
 		parameter = parameters.index(self.mosaic.getCalibrationParameter())
-		self.uicalibrationparameter = uidata.SingleSelectFromList('Calibration Parameter', parameters, parameter, callback=self.uiSetCalibrationParameter, persist=True)
+		self.uicalibrationparameter = uidata.SingleSelectFromList(
+																			'Calibration Parameter', parameters,
+																			parameter,
+																			callback=self.uiSetCalibrationParameter,
+																			persist=True)
 		clearmethod = uidata.Method('Reset Mosaic', self.mosaicClear)
 		container = uidata.MediumContainer('Mosaic Click Target Finder')
-		container.addObjects((clearmethod, self.uicalibrationparameter))
+		container.addObjects((databasecontainer, clearmethod,
+													self.uicalibrationparameter))
 		self.uiserver.addObject(container)
 

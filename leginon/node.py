@@ -339,7 +339,7 @@ class Node(leginonobject.LeginonObject):
 		### for research by dataclass, use kwargs to find instance
 		if dataclass is not None:
 			datainstance = dataclass()
-			self.addEmptyInstances(datainstance)
+			#self.addEmptyInstances(datainstance)
 			#raise NotImplementedError('research by data class is not implemented')
 
 		### standard search for data by ID

@@ -631,20 +631,11 @@ class BrightImageData(CorrectorImageData):
 class NormImageData(CorrectorImageData):
 	pass
 
-class MosaicImageData(ImageData):
-	'''
-	this holds image data for a mosaic image
-	the individual tiles that make up this image should probably 
-	reference this image
-	'''
-	pass
-
-class MosaicTileData(InSessionData):
+class MosaicData(InSessionData):
 	def typemap(cls):
 		t = InSessionData.typemap()
 		t += [
-			('moaic', MosaicImageData),
-			('image', ImageData),
+			('data IDs', list),
 		]
 		return t
 	typemap = classmethod(typemap)

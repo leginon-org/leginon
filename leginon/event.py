@@ -160,9 +160,9 @@ class TrialImagePublishEvent(PresetImagePublishEvent):
 class CorrectorImagePublishEvent(CameraImagePublishEvent):
 	dataclass = data.CorrectorImageData
 
-class MosaicImagePublishEvent(ImagePublishEvent):
+class MosaicPublishEvent(PublishEvent):
 	'Event indicating mosaic image was published'
-	dataclass = data.MosaicImageData
+	dataclass = data.MosaicData
 
 class DarkImagePublishEvent(CorrectorImagePublishEvent):
 	dataclass = data.DarkImageData
