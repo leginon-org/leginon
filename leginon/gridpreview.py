@@ -46,7 +46,7 @@ class GridPreview(node.Node):
 		mag = self.registerUIData('Magnification', 'float', callback=self.uiMagnification, default=self.magnification, permissions='rw')
 		self.sim = self.registerUIData('Simulate TEM/camera', 'boolean', permissions='rw', default=0)
 		cam = self.cam.configUIData()
-		defprefs = {'center': {'x':0,'y':0}, 'overlap': 50, 'maxtargets': 4}
+		defprefs = {'center': {'x':0.0,'y':0.0}, 'overlap': 50, 'maxtargets': 4}
 		spiralprefs = self.registerUIData('Spiral', 'struct', callback=self.uiSpiralPrefs, default=defprefs, permissions='rw')
 		self.sim = self.registerUIData('Simulate TEM/camera', 'boolean', permissions='rw', default=0)
 		prefs = self.registerUIContainer('Preferences', (mag, cam, spiralprefs, self.sim))
