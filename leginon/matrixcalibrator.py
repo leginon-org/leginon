@@ -40,26 +40,21 @@ class MatrixCalibrator(calibrator.Calibrator):
 
 		self.axislist = ['x', 'y']
 
+		## default camera config
+		currentconfig = self.cam.config()
+		currentconfig['state']['dimension']['x'] = 1024
+		currentconfig['state']['binning']['x'] = 4
+		currentconfig['state']['exposure time'] = 500
+		self.cam.config(currentconfig)
+
 		self.defineUserInterface()
 		self.start()
 
 	# calibrate needs to take a specific value
 	def calibrate(self):
 		calclient = self.parameters[self.parameter]
-		size = self.camerastate['size']
-		bin = self.camerastate['binning']
-		exp = self.camerastate['exposure time']
-		camstate = {
-			"dimension": {'x': size, 'y': size},
-			"binning": {'x': bin, 'y': bin},
-			"exposure time": exp
-		}
-		self.cam.autoOffset(camstate)
 
-		camdata = data.EMData(('camera',), camstate)
-
-		self.publish(event.LockEvent(self.ID()))
-		self.publishRemote(camdata)
+		## set cam state
 
 		baselist = []
 		for i in range(self.navg):
@@ -107,7 +102,6 @@ class MatrixCalibrator(calibrator.Calibrator):
 			shifts[axis]['col'] /= self.navg
 
 		mag = self.getMagnification()
-		self.publish(event.UnlockEvent(self.ID()))
 
 		matrix = calclient.measurementToMatrix(shifts)
 		calclient.storeMatrix(mag, self.parameter, matrix)
@@ -117,12 +111,13 @@ class MatrixCalibrator(calibrator.Calibrator):
 	def defineUserInterface(self):
 		nodespec = calibrator.Calibrator.defineUserInterface(self)
 
+		camspec = self.cam.configUIData()
+
 		#### parameters for user to set
 		self.navg = 1
 		self.delta = 2e-6
 		self.interval = 2e-6
 
-		self.camerastate = {'size': 1024, 'binning': 4, 'exposure time': 400}
 
 		try:
 			curstate = self.currentState()
@@ -142,7 +137,6 @@ class MatrixCalibrator(calibrator.Calibrator):
 		self.registerUIData('Delta', 'float', default=self.delta),
 		self.registerUIData('Interval', 'float', default=self.interval),
 
-		self.registerUIData('Camera State', 'struct', default=self.camerastate)
 		)
 
 		rspec = self.registerUIMethod(self.uiSetParameters, 'Set Parameters', argspec)
@@ -155,7 +149,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 			}
 		)
 
-		myspec = self.registerUISpec('Matrix Calibrator', (cspec, rspec, self.validshift))
+		myspec = self.registerUISpec('Matrix Calibrator', (cspec, rspec, camspec))
 		myspec += nodespec
 		return nodespec
 
@@ -163,13 +157,12 @@ class MatrixCalibrator(calibrator.Calibrator):
 		self.calibrate()
 		return ''
 
-	def uiSetParameters(self, parameter, navg, base, delta, interval, cs):
+	def uiSetParameters(self, parameter, navg, base, delta, interval):
 		self.parameter = parameter
 		self.navg = navg
 		self.base = base
 		self.delta = delta
 		self.interval = interval
-		self.camerastate = cs
 		return ''
 
 	def makeState(self, value, axis):
