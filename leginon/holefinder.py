@@ -15,7 +15,6 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.cam = camerafuncs.CameraFuncs(self)
 		self.icecalc = holefinderback.IceCalculator()
 
-		self.currentimage = None
 		self.userpause = threading.Event()
 
 		#if self.__class__ == ClickTargetFinder:
@@ -96,7 +95,8 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.goodholes = uidata.Sequence('Good Holes', [])
 		self.goodholesimage = uidata.TargetImage('Good Holes Image', None, 'r')
 		submitmeth = uidata.Method('Submit', self.submit)
-		self.goodholesimage.addTargetType('Good Holes')
+		self.goodholesimage.addTargetType('Imaging Target')
+		self.goodholesimage.addTargetType('Focus Target')
 		blobcont = uidata.Container('Blobs')
 		blobcont.addObjects((self.blobborder, findblobmeth, self.allblobs, self.allblobsimage, self.latspacing, self.lattol, self.holestatsrad, self.icei0, fitlatmeth, self.latblobs, self.latblobsimage, self.icetmin, self.icetmax, self.icetstd, icemeth, self.goodholes, self.goodholesimage, submitmeth))
 
@@ -203,7 +203,9 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.goodholes.set(centers)
 		self.goodholesimage.setImage(self.hf['original'])
 		# takes x,y instead of row,col
-		self.goodholesimage.setTargetType('Good Holes', centers)
+		self.goodholesimage.setTargetType('Imaging Target', centers)
+		self.goodholesimage.setTargetType('Focus Target', [])
+
 
 	def everything(self):
 		# find edges
@@ -222,14 +224,14 @@ class HoleFinder(targetfinder.TargetFinder):
 	def findTargets(self, imdata):
 		## automated part
 		self.hf['original'] = imdata['image']
-		self.currentimage = imdata['image']
 		self.everything()
 
 		## user part
 		if self.usercheckon.get():
 			self.userpause.clear()
 			self.userpause.wait()
-		self.getTargetDataList('Good Holes', data.AcquisitionImageTargetData)
+		self.getTargetDataList('Focus Target', data.FocusTargetData)
+		self.getTargetDataList('Imaging Target', data.AcquisitionImageTargetData)
 
 	def submit(self):
 		self.userpause.set()
@@ -238,8 +240,8 @@ class HoleFinder(targetfinder.TargetFinder):
 		for imagetarget in self.goodholesimage.getTargetType(typename):
 			column, row = imagetarget
 			# using self.currentiamge.shape could be bad
-			target = {'delta row': row - self.currentimage.shape[0]/2,
-								'delta column': column - self.currentimage.shape[1]/2}
+			target = {'delta row': row - self.numarray.shape[0]/2,
+								'delta column': column - self.numarray.shape[1]/2}
 			imageinfo = self.imageInfo()
 			target.update(imageinfo)
 			targetdata = datatype(id=self.ID())
