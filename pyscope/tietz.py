@@ -15,16 +15,13 @@ import win32com.server.register
 import array
 import mmapfile
 import numarray as Numeric
-
-CAMC4CameraCLSID = '{4AB9E74C-AC91-43D3-8973-5EE5F4467461}'
-
 try:
-	win32com.client.gencache.EnsureModule(CAMC4CameraCLSID, 0, 1, 0, 0)
-except:
-	raise RuntimeError('Failed to initialize info for CAMC4.Camera')
+	import tietzcom
+except ImportError:
+	import pyScope.tietzcom as tietzcom
 
 class Ping(object):
-	_typelib_guid_ = CAMC4CameraCLSID
+	_typelib_guid_ = tietzcom.CLSID
 	_com_interfaces_ = ['ICAMCCallBack']
 	_public_methods_ = ['LivePing', 'RequestLock']
 	_reg_clsid_ = '{CB1473AA-6F1E-4744-8EFD-68F91CED4294}'

@@ -6,6 +6,7 @@ info = [
 	('Tecnai Scripting', 'tecnaicom.py', 'Tecnai Scripting'),
 	('Low Dose Server Library', 'ldcom.py', 'Tecnai Low Dose Kit'),
 	('adaExp Library', 'adacom.py', 'Tecnai Exposure Adaptor'),
+	('CAMC4 1.0 Type Library', 'tietzcom.py', 'Tietz CCD Camera'),
 ]
 items = selecttlb.EnumTlbs()
 
