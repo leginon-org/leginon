@@ -372,6 +372,9 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 		self.positions = {}
 		self.connectionobjects = []
 
+		self.connectioninputs = []
+		self.connectionoutputs = []
+
 		self.popupmenu = None
 
 	def getPosition(self):
@@ -436,6 +439,26 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 			del self.positions[so]
 			# delete handler?
 			self.UpdateDrawing()
+
+	def addConnectionInput(self, cpo):
+		if cpo not in self.connectioninputs:
+			self.connectioninputs.append(cpo)
+			self.addShapeObject(cpo)
+
+	def removeConnectionInput(self, cpo):
+		if cpo in self.connectioninputs:
+			self.connectioninputs.remove(cpo)
+			self.removeShapeObject(cpo)
+
+	def addConnectionOutput(self, cpo):
+		if cpo not in self.connectionoutputs:
+			self.connectionoutputs.append(cpo)
+			self.addShapeObject(cpo)
+
+	def removeConnectionOutput(self, cpo):
+		if cpo in self.connectoutputs:
+			self.connectionoutputs.remove(cpo)
+			self.removeShapeObject(cpo)
 
 	def addConnectionObject(self, connectionobject):
 		if connectionobject not in self.connectionobjects:
@@ -621,6 +644,43 @@ class wxRectangleObject(wxShapeObject):
 		x, y = self.getCanvasPosition()
 		dc.DrawRectangle(x, y, self.width, self.height)
 		wxShapeObject.Draw(self, dc)
+
+	def addConnectionInput(self, cpo):
+		wxShapeObject.addConnectionInput(self, cpo)
+		self.positionConnectionInputs()
+
+	def removeConnectionInput(self, cpo):
+		wxShapeObject.removeConnectionInput(self, cpo)
+		self.positionConnectionInputs()
+
+	def addConnectionOutput(self, cpo):
+		wxShapeObject.addConnectionOutput(self, cpo)
+		self.positionConnectionOutputs()
+
+	def removeConnectionOutput(self, cpo):
+		wxShapeObject.removeConnectionOutput(self, cpo)
+		self.positionConnectionOutputs()
+
+	def positionConnectionInputs(self):
+		x, y = self.getCanvasPosition()
+		nconnectionpoints = len(self.connectioninputs)
+		spacings = range(x, x + self.width, self.width/(nconnectionpoints + 1))
+		for i in range(nconnectionpoints):
+			ci = self.connectioninputs[i]
+			self.setChildPosition(ci, spacings[i + 1] - ci.width/2, y - ci.height/2)
+
+	def positionConnectionOutputs(self):
+		x, y = self.getCanvasPosition()
+		nconnectionpoints = len(self.connectionoutputs)
+		spacings = range(x, x + self.width, self.width/(nconnectionpoints + 1))
+		for i in range(nconnectionpoints):
+			co = self.connectionoutputs[i]
+			self.setChildPosition(co, spacings[i + 1] - co.width/2,
+														y - co.height/2 + self.height - 1)
+
+class wxConnectionPointObject(wxRectangleObject):
+	def __init__(self):
+		wxRectangleObject.__init__(self, 5, 5)
 
 class DragInfo(object):
 	def __init__(self, shapeobject, xoffset, yoffset, startx, starty):

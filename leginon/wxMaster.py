@@ -109,7 +109,10 @@ class Node(wxObjectCanvas.wxRectangleObject):
 			self.parent.removeShapeObject(self)
 
 	def addShapeObject(self, so, x=0, y=0):
-		raise TypeError('Invalid object type to add')
+		if isinstance(so, wxObjectCanvas.wxConnectionPointObject):
+			wxObjectCanvas.wxRectangleObject.addShapeObject(self, so, x, y)
+		else:
+			raise TypeError('Invalid object type to add')
 
 class Binding(wxObjectCanvas.wxConnectionObject):
 	def __init__(self, name, fromnode=None, tonode=None):
@@ -362,6 +365,23 @@ if __name__ == '__main__':
 	n2 = Node('Node 2')
 	n3 = Node('Node 3')
 	n4 = Node('Node 4')
+	cpo1 = wxObjectCanvas.wxConnectionPointObject()
+	cpo2 = wxObjectCanvas.wxConnectionPointObject()
+	cpo3 = wxObjectCanvas.wxConnectionPointObject()
+	cpo4 = wxObjectCanvas.wxConnectionPointObject()
+	cpo5 = wxObjectCanvas.wxConnectionPointObject()
+	cpo6 = wxObjectCanvas.wxConnectionPointObject()
+	n1.addConnectionInput(cpo1)
+	n2.addConnectionInput(cpo2)
+	n1.addConnectionInput(cpo3)
+	n4.addConnectionInput(wxObjectCanvas.wxConnectionPointObject())
+	n4.addConnectionOutput(wxObjectCanvas.wxConnectionPointObject())
+	n4.addConnectionOutput(wxObjectCanvas.wxConnectionPointObject())
+	n0.addConnectionOutput(cpo4)
+	n4.addConnectionOutput(wxObjectCanvas.wxConnectionPointObject())
+	n3.addConnectionOutput(cpo5)
+	n4.addConnectionOutput(wxObjectCanvas.wxConnectionPointObject())
+	n3.addConnectionOutput(cpo6)
 
 	app.master.addShapeObject(l1)
 	app.master.addShapeObject(l0)
@@ -371,9 +391,9 @@ if __name__ == '__main__':
 	l0.addShapeObject(n0)
 	l1.addShapeObject(n3)
 	l2.addShapeObject(n4)
-	b0 = Binding('Binding 0', n0, n1)
-	b1 = Binding('Binding 1', n3, n2)
-	b2 = Binding('Binding 2', n3, n1)
+	b0 = Binding('Binding 0', cpo4, cpo1)
+	b1 = Binding('Binding 1', cpo5, cpo2)
+	b2 = Binding('Binding 2', cpo6, cpo3)
 	app.master.addConnectionObject(b0)
 	app.master.addConnectionObject(b1)
 	app.master.addConnectionObject(b2)
