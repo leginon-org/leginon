@@ -279,10 +279,13 @@ class SimpleCorrector(node.Node):
 	def acquireReferenceImages(self):
 		naverage = self.imagestoaverage.get()
 		exposuretypestrings = {'dark': 'Dark', 'normal': 'Bright'}
+		binnings = [1, 2, 4, 8]
+		binnings.sort()
+		binnings.reverse()
 		try:
 			# invert binning/exposure type for calculating normalizations
 			# could be less than optimal if retracting camera on darks
-			for binning in [1, 2, 4, 8]:
+			for binning in binnings:
 				self.exposuretype.set('')
 				self.binning.set(str(binning))
 				self.status.set('Finding exposure time...')
