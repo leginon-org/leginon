@@ -49,22 +49,11 @@ minimum_stage = {
 	'a': 6e-5,
 }
 
+class MagnificationsUninitialized(Exception):
+	pass
+
 class Tecnai(tem.TEM):
 	name = 'Tecnai'
-	magtable = [
-		21, 28, 38, 56, 75, 97, 120, 170, 220, 330, 420, 550, 800, 1100, 1500, 2100,
-		1700, 2500, 3500, 5000, 6500, 7800, 9600, 11500, 14500, 19000, 25000, 29000,
-		50000, 62000, 80000, 100000, 150000, 200000, 240000, 280000, 390000, 490000,
-		700000,
-	]
-
-	mainscreenmagtable = [
-		18.5, 25, 34, 50, 66, 86, 105, 150, 195, 290, 370, 490, 710, 970, 1350,
-		1850, 1500, 2200, 3100, 4400, 5800, 6900, 8500, 10000, 13000, 17000, 22000,
-		25500, 44000, 55000, 71000, 89000, 135000, 175000, 210000, 250000, 350000,
-		430000, 620000,
-	]
-
 	def __init__(self):
 		tem.TEM.__init__(self)
 		self.correctedstage = True
@@ -86,146 +75,14 @@ class Tecnai(tem.TEM):
 		except pythoncom.com_error, (hr, msg, exc, arg):
 			raise RuntimeError('unable to initialize exposure adapter, %s' % msg)
 
-		self.magnifications = map(float, self.magtable)
-		self.sortedmagnifications = list(self.magnifications)
-		self.sortedmagnifications.sort()
-		self.mainscreenmagnifications = map(float, self.mainscreenmagtable)
+		self.magnifications = None
+		# from simulator
+		self.mainscreenscale = 26.0/30.0
 
-		self.methodmapping = {
-			'beam blank': {'get': 'getBeamBlank', 'set': 'setBeamBlank'},
-			'gun tilt': {'get': 'getGunTilt', 'set': 'setGunTilt'},
-			'gun shift': {'get': 'getGunShift', 'set': 'setGunShift'},
-			'high tension': {'get': 'getHighTension'}, #'set': 'setHighTension'},
-			'intensity': {'get': 'getIntensity', 'set': 'setIntensity'},
-			'dark field mode': {'get': 'getDarkFieldMode', 'set': 'setDarkFieldMode'},
-			'stigmator': {'get': 'getStigmator', 'set': 'setStigmator'},
-			'spot size': {'get': 'getSpotSize', 'set': 'setSpotSize'},
-			'beam tilt': {'get': 'getBeamTilt', 'set': 'setBeamTilt'},
-			'beam shift': {'get': 'getBeamShift', 'set': 'setBeamShift'},
-			'image shift': {'get': 'getImageShift', 'set': 'setImageShift'},
-			'raw image shift': {'get': 'getRawImageShift', 'set': 'setRawImageShift'},
-			'defocus': {'get': 'getDefocus', 'set': 'setDefocus'},
-			'magnification': {'get': 'getMagnification', 'set': 'setMagnification'},
-			'main screen magnification': {'get': 'getMainScreenMagnification'},
-			'magnification index': {'get': 'getMagnificationIndex',
-															'set': 'setMagnificationIndex'},
-			'magnifications': {'get': 'getMagnifications'},
-			'stage position': {'get': 'getStagePosition', 'set': 'setStagePosition'},
-			'corrected stage position': {'get': 'getCorrectedStagePosition',
-																		'set': 'setCorrectedStagePosition'},
-			'low dose': {'get': 'getLowDose', 'set': 'setLowDose'},
-			'low dose mode': {'get': 'getLowDoseMode', 'set': 'setLowDoseMode'},
-			'diffraction mode': {'get': 'getDiffractionMode',
-														'set': 'setDiffractionMode'},
-			'reset defocus': {'set': 'resetDefocus', 'get': 'getResetDefocus'},
-			'main screen position': {'get': 'getMainScreenPosition',
-																'set': 'setMainScreenPosition'},
-			'small screen position': {'get': 'getSmallScreenPosition'},
-			'holder type': {'get': 'getHolderType', 'set': 'setHolderType'},
-			'turbo pump': {'get': 'getTurboPump', 'set': 'setTurboPump'},
-			'column valves': {'get': 'getColumnValves', 'set': 'setColumnValves'},
-			'screen current': {'get': 'getScreenCurrent'},
-			'holder status': {'get': 'getHolderStatus'},
-			'stage status': {'get': 'getStageStatus'},
-			'vacuum status': {'get': 'getVacuumStatus'},
-			'column pressure': {'get': 'getColumnPressure'},
-			'objective excitation': {'get': 'getObjectiveExcitation'},
-			'focus': {'get': 'getFocus', 'set': 'setFocus'},
-			'film stock': {'get': 'getFilmStock'},
-			'film exposure number': {'get': 'getFilmExposureNumber',
-																'set': 'setFilmExposureNumber'},
-			'pre film exposure': {'set': 'preFilmExposure'},
-			'post film exposure': {'set': 'postFilmExposure'},
-			'film exposure': {'set': 'filmExposure'},
-			'film exposure type': {'get': 'getFilmExposureType',
-															'set': 'setFilmExposureType'},
-			'film exposure time': {'get': 'getFilmExposureTime'},
-			'film manual exposure time': {'get': 'getFilmManualExposureTime',
-																		'set': 'setFilmManualExposureTime'},
-			'film automatic exposure time': {'get': 'getFilmAutomaticExposureTime'},
-			'film text': {'get': 'getFilmText', 'set': 'setFilmText'},
-			'film user code': {'get': 'getFilmUserCode', 'set': 'setFilmUserCode'},
-			'film date type': {'get': 'getFilmDateType', 'set': 'setFilmDateType'},
-			'shutter': {'set': 'setShutter', 'get': 'getShutter'},
-			'external shutter': {'set': 'setExternalShutter', 'get': 'getExternalShutter'},
-		}
-
-		self.typemapping = {
-			'beam blank': {'type': str, 'values': ['on', 'off']},
-			'gun tilt': {'type': dict, 'values':
-																	{'x': {'type': float}, 'y': {'type': float}}},
-			'gun shift': {'type': dict, 'values':
-																	{'x': {'type': float}, 'y': {'type': float}}},
-			'high tension': {'type': int},
-			'intensity': {'type': float},
-			'dark field mode': {'type': str, 'values':
-																				['off', 'cartesian', 'conical']},
-			'stigmator': {'type':  dict, 'values':
-														{'condenser': {'type': dict, 'values':
-															{'x': {'type': float}, 'y': {'type': float}}},
-														'objective': {'type': dict, 'values':
-															{'x': {'type': float}, 'y': {'type': float}}},
-														'diffraction': {'type': dict, 'values':
-															{'x': {'type': float}, 'y': {'type': float}}}}},
-			'spot size': {'type': int},
-			'beam tilt': {'type': dict, 'values':
-																	{'x': {'type': float}, 'y': {'type': float}}},
-			'beam shift': {'type': dict, 'values':
-																	{'x': {'type': float}, 'y': {'type': float}}},
-			'image shift': {'type': dict, 'values':
-																	{'x': {'type': float}, 'y': {'type': float}}},
-			'raw image shift': {'type': dict, 'values':
-																	{'x': {'type': float}, 'y': {'type': float}}},
-			'defocus': {'type': float},
-			'magnification': {'type': float, 'values': self.magnifications},
-			'magnification index': {'type': int},
-			'magnifications': {'type': list},
-			# correct for holder type
-			'stage position': {'type': dict, 'values':
-																{'x': {'type': float}, 'y': {'type': float},
-																	'z': {'type': float}, 'a': {'type': float}}},
-			'corrected stage position': {'type': bool},
-			'low dose': {'type': str, 'values': ['on', 'off']},
-			'low dose mode': {'type': str, 'values':
-																		['exposure', 'focus1', 'focus2', 'search']},
-			'diffraction mode': {'type': str, 'values': ['imaging', 'diffraction']},
-			'reset defocus': {'type': bool},
-			'main screen position': {'type': str, 'values': ['up', 'down']},
-			'small screen position': {'type': str, 'values': ['up', 'down']},
-			# no unknown holder
-			'holder type': {'type': str, 'values':
-																			['no holder', 'single tilt', 'cryo']},
-			'turbo pump': {'type': str, 'values': ['on', 'off']},
-			'column valves': {'type': str, 'values': ['open', 'closed']},
-			'screen current': {'type': float},
-			'holder status': {'type': str},
-			'stage status': {'type': str},
-			'vacuum status': {'type': str},
-			'column pressure': {'type': float},
-			'objective excitation': {'type': float},
-			'focus': {'type': float},
-			'film stock': {'type': int},
-			'film exposure number': {'type': int},
-			'pre film exposure': {'type': bool},
-			'post film exposure': {'type': bool},
-			'film exposure': {'type': bool},
-			'film exposure type': {'type': str, 'values': ['manual', 'automatic']},
-			'film exposure time': {'type': float},
-			'film manual exposure time': {'type': float},
-			'film automatic exposure time': {'type': float},
-			'film text': {'type': str},
-			'film user code': {'type': str},
-			'film date type': {'type': str,
-										'values': ['no date', 'DD-MM-YY', 'MM/DD/YY', 'YY.MM.DD']},
-			'shutter': {'type': str, 'values': ['open', 'closed']},
-			'external shutter': {'type': str, 'values': ['connected', 'disconnected']},
-		}
-		self.parameterdependencies = {
-			'main screen position': ['small screen position'],
-			'film exposure type': ['film exposure time'],
-			'defocus': ['focus'],
-			'reset defocus': ['defocus'],
-		}
+	def getMagnificationsInitialized(self):
+		if self.magnifications is None:
+			return False
+		return True
 
 	def setCorrectedStagePosition(self, value):
 		self.correctedstage = value
@@ -353,12 +210,10 @@ class Tecnai(tem.TEM):
 		self.tecnai.Gun.Shift = vec
 	
 	def getHighTension(self):
-		return int(self.tecnai.Gun.HTValue)
+		return float(self.tecnai.Gun.HTValue)
 	
-	'''
 	def setHighTension(self, ht):
 		self.tecnai.Gun.HTValue = ht
-	'''
 	
 	def getIntensity(self):
 		return float(self.tecnai.Illumination.Intensity)
@@ -633,41 +488,61 @@ class Tecnai(tem.TEM):
 		return False
 	
 	def getMagnification(self):
-		index = self.tecnai.Projection.MagnificationIndex
-		if index < 1:
-			index = 1
-		return float(self.magnifications[index - 1])
+		return int(round(self.tecnai.Projection.Magnification))
 
 	def getMainScreenMagnification(self):
-		index = self.tecnai.Projection.MagnificationIndex
-		if index < 1:
-			index = 1
-		return float(self.mainscreenmagnifications[index - 1])
+		return int(round(self.tecnai.Projection.Magnification*self.mainscreenscale))
+
+	def getMainScreenScale(self):
+		return self.mainscreenscale
+
+	def setMainScreenScale(self, mainscreenscale):
+		self.mainscreenscale = mainscreenscale
 
 	def setMagnification(self, mag):
+		if not self.getMagnificationsInitialized():
+			raise MagnificationsUninitialized
+
 		try:
-			mag = float(mag)
+			mag = int(round(mag))
 		except:
 			raise TypeError
-		prevmag = self.sortedmagnifications[0]
 	
-		for m in self.sortedmagnifications:
-			if m > mag:
-				break
-			prevmag = m
-			
-		index = self.magnifications.index(prevmag) + 1
-		self.tecnai.Projection.MagnificationIndex = index
+		try:
+			index = self.magnifications.index(mag)
+		except ValueError:
+			raise ValueError('invalid magnification')
+
+		self.setMagnificationIndex(index)
 		return
 
 	def getMagnificationIndex(self):
 		return self.tecnai.Projection.MagnificationIndex - 1
 
 	def setMagnificationIndex(self, value):
-		self.tecnai.Projection.MagnificationIndex  = value + 1
+		self.tecnai.Projection.MagnificationIndex = value + 1
 
 	def getMagnifications(self):
 		return self.magnifications
+
+	def setMagnifications(self, magnifications):
+		self.magnifications = magnifications
+
+	def findMagnifications(self):
+		savedindex = self.getMagnificationIndex()
+		magnifications = []
+		previousindex = None
+		index = 0
+		while True:
+			self.setMagnificationIndex(index)
+			index = self.getMagnificationIndex()
+			if index == previousindex:
+				break
+			magnifications.append(self.getMagnification())
+			previousindex = index
+			index += 1
+		self.setMagnifications(magnifications)
+		self.setMagnificationIndex(savedindex)
 	
 	def getStagePosition(self):
 		value = {'x': None, 'y': None, 'z': None, 'a': None}
@@ -1131,22 +1006,4 @@ class Tecnai(tem.TEM):
 				= win32com.client.constants.dtYYMMDD
 		else:
 			raise ValueError('Invalid film date type specified')
-
-'''
-class TecnaiPolara(Tecnai):
-	name = 'Tecnai Polara'
-	magtable = [
-		62, 76, 100, 125, 175, 220, 280, 360, 480, 650, 790, 990, 1200, 1800, 2300,
-		2950, 3000, 4500, 5600, 9300, 13500, 18000, 22500, 27500, 34000, 41000,
-		50000, 61000, 77000, 95000, 115000, 160000, 200000, 235000, 310000, 400000,
-		470000, 630000, 800000,
-	]
-
-	mainscreenmagtable = [
-		54, 67, 91, 110, 155, 195, 250, 320, 430, 570, 700, 880, 1100, 1600, 2050,
-		2600, 2650, 3900, 5000, 8200, 12000, 15500, 20000, 24500, 29500, 36000,
-		44000, 54000, 68000, 84000, 105000, 140000, 175000, 210000, 275000, 350000,
-		420000, 560000, 710000
-	]
-'''
 

@@ -52,23 +52,30 @@ def testTietz():
 	elif hr == win32com.client.constants.crSucceed:
 		pass
 
-	cameratype = win32com.client.constants.ctSCX
-	#cameratype = win32com.client.constants.ctSimulation
+	cameratypes = [('Tietz Simulation', 'ctSimulation'),
+									('Tietz SCX', 'ctSCX'),
+									('Tietz PXL', 'ctPXL'),
+									('Tietz PVCam', 'ctPVCam'),
+									('Tietz FastScan', 'ctFastScan'),
+									('Tietz FastScan Firewire', 'ctF114_FW')]
 
-	try:
-		hr = camera.Initialize(cameratype, 0)
-	except pythoncom.com_error, (hr, msg, exc, arg):
-		print 'Error initializing camera: %s' % msg
-		return
+	for name, cameratype in cameratypes:
+		cameratype = getattr(win32com.client.constants, cameratype)
+		print name + ':',
+		try:
+			hr = camera.Initialize(cameratype, 0)
+		except pythoncom.com_error, (hr, msg, exc, arg):
+			print 'error initializing camera, %s' % msg
+		else:
+			print 'camera initialization succeeded'
 
 	camera.UnlockCAMC()
 
-	print 'Tietz test successful'
-
 if __name__ == '__main__':
-	print 'Testing Tecnai...'
-	testTecnai()
-	print
+	#print 'Testing Tecnai...'
+	#testTecnai()
+	#print
 	print 'Testing Tietz...'
 	testTietz()
+	print 'Tietz test completed.'
 
