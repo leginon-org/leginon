@@ -196,9 +196,8 @@ class BlobFinderPlugin(Plugin):
 		minblobsize = self.minblobsize.get()
 		maxblobsize = self.maxblobsize.get()
 		scale = self.scale.getSelectedValue()
-		meanthreshold = self.meanthreshold.get()
-		cvthreshold = self.cvthreshold.get()
-		#centersize =  self.centersize.get()
+		threshold = self.threshold.get()
+		thresholdpoint = self.thresholdpoint.get()
 		if scale is None:
 			scale = 1
 		else:
@@ -213,19 +212,11 @@ class BlobFinderPlugin(Plugin):
 
 		thresholdedblobs = []
 		for blob in blobs:
-#			center = (int(round(scale*blob.stats['center'][0])),
-#								int(round(scale*blob.stats['center'][1])))
-#			values = input.image[center[0] - centersize:center[0] + centersize,
-#														center[1] - centersize:center[1] + centersize]
-#			mean = imagefun.mean(values)
-#			stdev = imagefun.stdev(values, mean)
-			mean = blob.stats['mean']
-			stdev = blob.stats['stddev']
-			if mean > meanthreshold:
-				continue
-			if stdev/mean > cvthreshold:
-				continue
-			thresholdedblobs.append(blob)
+			blobvalues = list(blob.value_list)
+			blobvalues.sort()
+			thresholdvalue = blobvalues[int(len(blobvalues) * thresholdpoint)]
+			if thresholdvalue < threshold:
+				thresholdedblobs.append(blob)
 
 		blobs = thresholdedblobs
 
@@ -252,16 +243,13 @@ class BlobFinderPlugin(Plugin):
 		scales = ['1', '1/2', '1/4', '1/8', '1/16']
 		self.scale = uidata.SingleSelectFromList('Scale', scales, 0, persist=True)
 
-		#self.centersize = uidata.Number('Center size', 10, 'rw', persist=True,
-		#																	size=(4, 1))
-		self.meanthreshold = uidata.Number('Mean', 0, 'rw', persist=True,
+		self.threshold = uidata.Number('Blob', 25000, 'rw', persist=True,
+																		size=(5,1))
+		self.thresholdpoint = uidata.Number('Point', 0.5, 'rw', persist=True,
 																				size=(5,1))
-		self.cvthreshold = uidata.Number('Coefficient of variance', 0, 'rw',
-																					persist=True, size=(5,1))
 		thresholdcontainer = uidata.Container('Threshold')
-		thresholdcontainer.addObject(self.meanthreshold)
-		thresholdcontainer.addObject(self.cvthreshold)
-		#thresholdcontainer.addObject(self.centersize)
+		thresholdcontainer.addObject(self.threshold)
+		thresholdcontainer.addObject(self.thresholdpoint)
 
 		self.uicontainer.addObjects((self.blobsizecontainer, self.border,
 																	self.maxblobs, self.scale,
