@@ -118,25 +118,6 @@ class UIMethod(UIObject):
 			raise TypeError('method must be callable')
 		self.method = method
 
-class UIDialog(UIContainer):
-	typelist = UIContainer.typelist + ('dialog',)
-	def __init__(self, name):
-		UIContainer.__init__(self, name)
-
-	def destroy(self):
-		self.parent.deleteUIObject(self.name)
-
-class UIMessageDialog(UIDialog):
-	typelist = UIDialog.typelist + ('message',)
-	def __init__(self, name, label):
-		UIDialog.__init__(self, name)
-		self.addUIObject(UIString('label', label, 'r'))
-		self.addUIObject(UIMethod('OK', self.ok))
-
-	def ok(self):
-		self.destroy()
-		print 'ok done'
-
 class UIData(UIObject):
 	permissionsvalues = ('r', 'w', 'rw', 'wr')
 	typelist = UIObject.typelist + ('data',)
@@ -228,4 +209,26 @@ class UIDate(UIData):
 
 class UIBinary(UIData):
 	typelist = UIData.typelist + ('binary',)
+
+class UIDialog(UIContainer):
+	typelist = UIContainer.typelist + ('dialog',)
+	def __init__(self, name):
+		UIContainer.__init__(self, name)
+
+	def destroy(self):
+		self.parent.deleteUIObject(self.name)
+
+class UIMessageDialog(UIDialog):
+	typelist = UIDialog.typelist + ('message',)
+	def __init__(self, name, label):
+		UIDialog.__init__(self, name)
+		self.addUIObject(UIString('label', label, 'r'))
+		self.addUIObject(UIMethod('OK', self.ok))
+
+	def ok(self):
+		self.destroy()
+		print 'ok done'
+
+class UIImage(UIBinary):
+	typelist = UIBinary.typelist + ('image',)
 
