@@ -206,7 +206,6 @@ class Focuser(acquisition.Acquisition):
 			else:
 				resultdata['defocus correction'] = focustype
 				focusmethod(defoc)
-		if 'defocus correction' in resultdata:
 			resultstring = 'corrected focus by %.3e using %s (min=%s)' % (defoc, focustype,fitmin)
 		else:
 			resultstring = 'invalid focus measurement (min=%s)' % (fitmin,)
