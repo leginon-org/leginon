@@ -86,18 +86,12 @@ class BindingConnectionPoint(wxObjectCanvas.wxConnectionPointObject):
 		self.UpdateDrawing()
 
 class BindingInput(BindingConnectionPoint):
-	def __init__(self, eventclass):
-		BindingConnectionPoint.__init__(self, eventclass, wxRED)
+	def __init__(self):
+		BindingConnectionPoint.__init__(self, None, wxRED)
 		self.popupmenu = None
 
 	def Draw(self, dc):
 		BindingConnectionPoint.Draw(self, dc)
-		if self.getDrawText():
-			x, y = self.getCanvasPosition()
-			x = x - dc.GetTextExtent(self.eventclass.__name__)[0] - 2
-			y = y - self.height/2
-			#dc.DrawRotatedText(self.eventclass.__name__, x, y, 90)
-			dc.DrawText(self.eventclass.__name__, x, y)
 
 class BindingOutput(BindingConnectionPoint):
 	def __init__(self, eventclass):
@@ -128,9 +122,8 @@ class Node(wxObjectCanvas.wxRectangleObject):
 		self.dependencies = dependencies
 
 		nc = nodeclassreg.getNodeClass(self.nodeclass)
-		for inputclass in nc.eventinputs:
-			input = BindingInput(inputclass)
-			self.addInputConnectionPoint(input)
+		input = BindingInput()
+		self.addInputConnectionPoint(input)
 		for outputclass in nc.eventoutputs:
 			output = BindingOutput(outputclass)
 			self.addOutputConnectionPoint(output)
@@ -197,13 +190,13 @@ class Node(wxObjectCanvas.wxRectangleObject):
 		#evt.Skip()
 
 	def OnEnter(self, evt):
-		for i in self.inputconnectionpoints + self.outputconnectionpoints:
+		for i in self.outputconnectionpoints:
 			i.setDrawText(True)
 		self.UpdateDrawing()
 
 	def OnLeave(self, evt):
 		wxObjectCanvas.wxRectangleObject.OnLeave(self, evt)
-		for i in self.inputconnectionpoints + self.outputconnectionpoints:
+		for i in self.outputconnectionpoints:
 			i.setDrawText(False)
 		self.UpdateDrawing()
 
@@ -402,9 +395,11 @@ class Launcher(wxObjectCanvas.wxRoundedRectangleObject):
 		self.popupmenu.Append(101, 'Rename...')
 		self.popupmenu.Append(102, 'Add Node...')
 		self.popupmenu.Append(103, 'Delete')
+		self.popupmenu.Append(104, 'Arrange')
 		EVT_MENU(self.popupmenu, 101, self.menuRename)
 		EVT_MENU(self.popupmenu, 102, self.menuAddNode)
 		EVT_MENU(self.popupmenu, 103, self.menuDelete)
+		EVT_MENU(self.popupmenu, 104, self.menuArrange)
 
 	def getAlias(self):
 		return self.alias
@@ -434,6 +429,12 @@ class Launcher(wxObjectCanvas.wxRoundedRectangleObject):
 		for node in self.getNodes():
 			node.removeConnections()
 		self.delete()
+
+	def menuArrange(self, evt):
+		self.arrange()
+
+	def arrange(self):
+		self.arrangeShapeObjects(self.getNodes())
 
 	def addShapeObject(self, so, x=0, y=0):
 		if isinstance(so, Node):
@@ -506,9 +507,14 @@ class Application(wxObjectCanvas.wxRectangleObject):
 		self.popupmenu.Append(101, 'Rename...')
 		self.popupmenu.Append(102, 'Add Launcher...')
 		self.popupmenu.Append(103, 'Delete')
+		self.popupmenu.Append(104, 'Arrange')
 		EVT_MENU(self.popupmenu, 101, self.menuRename)
 		EVT_MENU(self.popupmenu, 102, self.menuAddLauncher)
 		EVT_MENU(self.popupmenu, 103, self.menuDelete)
+		EVT_MENU(self.popupmenu, 104, self.menuArrange)
+
+	def setSize(self, width, height):
+		wxObjectCanvas.wxRectangleObject.setSize(self, width, height)
 
 	def getName(self):
 		return self.name
@@ -536,6 +542,21 @@ class Application(wxObjectCanvas.wxRectangleObject):
 
 	def menuDelete(self, evt):
 		self.delete()
+
+	def menuArrange(self, evt):
+		self.arrange()
+
+	def arrange(self):
+		launchers = self.getLaunchers()
+		for launcher in launchers:
+			launcher.arrangeShapeObjects(launcher.getNodes())
+		newwidth, newheight = self.arrangeShapeObjects(launchers, False)
+		width, height = self.getSize()
+		if newwidth <= width:
+			newwidth = None
+		if newheight <= height:
+			newheight = None
+		self.setSize(newwidth, newheight)
 
 	def getLaunchers(self):
 		return self.getShapeObjectsOfType(Launcher)
@@ -574,29 +595,6 @@ class Application(wxObjectCanvas.wxRectangleObject):
 			wxObjectCanvas.wxRectangleObject.addShapeObject(self, so, x, y)
 		else:
 			raise TypeError('Invalid object type to add')
-
-	def OnStartConnection(self, evt):
-		wxObjectCanvas.wxRectangleObject.OnStartConnection(self, evt)
-		for node in self.getNodes():
-			for input in node.inputconnectionpoints:
-				if issubclass(self.connection.eventclass, input.eventclass):
-					input.setDrawText(True)
-
-	def OnEndConnection(self, evt):
-		if self.connection is not None:
-			if issubclass(self.connection.eventclass, evt.toso.eventclass):
-				for node in self.getNodes():
-					for input in node.inputconnectionpoints:
-						if issubclass(self.connection.eventclass, input.eventclass):
-							input.setDrawText(False)
-				wxObjectCanvas.wxRectangleObject.OnEndConnection(self, evt)
-
-	def cancelConnection(self):
-		for node in self.getNodes():
-			for input in node.inputconnectionpoints:
-				if issubclass(self.connection.eventclass, input.eventclass):
-					input.setDrawText(False)
-		wxObjectCanvas.wxRectangleObject.cancelConnection(self)
 
 	def getApplication(self):
 		application = {'name': self.getName(), 'nodes': [], 'bindings': []}
@@ -681,18 +679,13 @@ class Application(wxObjectCanvas.wxRectangleObject):
 							if output.getEventClass().__name__ == bindspec[0]:
 								fromcp = output
 					if node.getAlias() == bindspec[2]:
-						for input in node.inputconnectionpoints:
-							if input.getEventClass().__name__ == bindspec[0]:
-								tocp = input
-						if tocp is None:
-							for input in node.inputconnectionpoints:
-								if input.getEventClass().__name__ == 'Event':
-									tocp = input
+						tocp = node.inputconnectionpoints[0]
 				if fromcp is not None and tocp is not None:
 					binding = Binding(eval('event.' + bindspec[0]), fromcp, tocp)
 					self.addShapeObject(binding)
 				else:
 					print 'Warning, cannot add binding', bindspec
+		self.arrange()
 
 class Master(wxObjectCanvas.wxRectangleObject):
 	def __init__(self):

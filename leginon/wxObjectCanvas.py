@@ -363,13 +363,16 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 		else:
 			setheight = True
 
+		if not setwidth and not setheight:
+			return
+
 		for so in self.shapeobjects:
 			if not isinstance(so, wxConnectionPointObject):
 				x, y = self.getChildPosition(so)
 				w, h = so.getSize()
-				if x + w > width:
+				if setwidth and x is not None and w is not None and x + w > width:
 					setwidth = False
-				if y + h > height:
+				if setheight and y is not None and h is not None and y + h > height:
 					setheight = False
 
 		if setwidth:
@@ -1060,6 +1063,7 @@ class wxTextObject(wxShapeObject):
 		self.draginfo = None
 
 	def Draw(self, dc):
+		dc.SetFont(wxSWISS_FONT)
 		self.width, self.height = dc.GetTextExtent(self.text)
 		pen = dc.GetPen()
 		dc.SetPen(wxPen(self.color, 1, self.style))
@@ -1125,6 +1129,34 @@ class wxRectangleObject(wxShapeObject):
 			self.setChildPosition(co,
 														-co.width/2 + self.width - 1,
 														spacings[i + 1] - co.height/2)
+
+	def arrangeShapeObjects(self, shapeobjects, resize=True):
+		buffer = 25
+		maxwidth = buffer*2
+		y = buffer
+		n = int(math.ceil(math.sqrt(len(shapeobjects))))
+		while shapeobjects:
+			x = buffer
+			maxheight = 0
+			for i in range(n):
+				try:
+					so = shapeobjects[0]
+				except IndexError:
+					break
+				del shapeobjects[0]
+				so.setPosition(x, y)
+				width, height = so.getSize()
+				x += width + buffer
+				if height > maxheight:
+					maxheight = height
+			if x > maxwidth:
+				maxwidth = x
+			y += maxheight + buffer
+		size = (maxwidth, y)
+		if resize:
+			apply(self.setSize, size)
+		self.UpdateDrawing()
+		return size
 
 class wxRoundedRectangleObject(wxRectangleObject):
 	def __init__(self, width, height, color=wxBLACK):
