@@ -21,7 +21,7 @@ class SimpleAcquisition(acquisition.Acquisition):
 		acquisition.Acquisition.__init__(self, id, session, nodelocations, **kwargs)
 
 	def acquireImageOne(self):
-		self.processTargetData(None)
+		self.processTargetData(None, trial=False)
 		return ''
 
 	def acquireImageLoop(self):
@@ -46,7 +46,7 @@ class SimpleAcquisition(acquisition.Acquisition):
 		while 1:
 			if self.loopstop.isSet():
 				break
-			self.processTargetData(None)
+			self.processTargetData(None, trial=False)
 			time.sleep(pausetime)
 		try:
 			self.looploock.release()
