@@ -800,6 +800,9 @@ class wxButtonWidget(wxMethodWidget):
 		self.button.Show(show)
 		wxMethodWidget._show(self, show)
 
+	def destroy(self):
+		self.button.Destroy()
+
 class wxDataWidget(wxWidget):
 	def __init__(self, name, parent, container, value, configuration):
 		if 'read' in configuration and configuration['read']:
