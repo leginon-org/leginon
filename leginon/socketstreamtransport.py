@@ -57,11 +57,10 @@ class Server(leginonobject.LeginonObject):
 		pass
 
 class Client(leginonobject.LeginonObject):
-	def __init__(self, id, location, buffer_size):
+	def __init__(self, id, location):
 		leginonobject.LeginonObject.__init__(self, id)
 		self.serverlocation = location
 		self.socket = None
-		self.buffer_size = buffer_size
 
 	def pull(self, id):
 		self.connect()
@@ -94,7 +93,7 @@ class Client(leginonobject.LeginonObject):
 			self.printerror('no socket available')
 			raise IOError
 
-	def receive(self):
+	def OLDreceive(self):
 		data = ""
 		if self.socket is not None:
 			while 1:
@@ -102,6 +101,19 @@ class Client(leginonobject.LeginonObject):
 			  if not r:
 			    break
 			  data += r
+			return data
+		else:
+			self.printeror('no socket available')
+			raise IOError
+
+	def receive(self):
+		data = ""
+		if self.socket is not None:
+			## this seems to set up buffering in an optimized way
+			## without having to manually specify it
+			f = self.socket.makefile('r')
+			data = f.read()
+			f.close()
 			return data
 		else:
 			self.printeror('no socket available')
