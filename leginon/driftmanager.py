@@ -154,7 +154,7 @@ class DriftManager(watcher.Watcher):
 		self.publish(dat, pubevent=True)
 
 	def acquireImage(self):
-		imagedata = self.cam.acquireCameraImageData()
+		imagedata = self.cam.acquireCameraImageData(temp=True)
 		self.im.set(imagedata['image'])
 		return imagedata
 
