@@ -31,6 +31,7 @@ class Panel(gui.wx.Node.Panel):
 		# image
 		self.imagepanel = self.imagepanelclass(self, -1)
 		self.imagepanel.addTypeTool('Image', display=True)
+		self.imagepanel.selectiontool.setDisplayed('Image', True)
 		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND|wx.ALL, 3)
 
 		self.szmain.AddGrowableRow(1)

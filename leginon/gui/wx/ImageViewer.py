@@ -1370,6 +1370,8 @@ class TargetType(object):
 		self.targets = map(lambda (x, y): Target(x, y, self), targets)
 
 	def getTargetPositions(self):
+		if self.targets is None:
+			return []
 		return map(lambda t: t.position, self.targets)
 
 class TargetImagePanel(ImagePanel):

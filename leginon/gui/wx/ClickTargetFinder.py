@@ -15,17 +15,22 @@ class Panel(gui.wx.TargetFinder.Panel):
 
 		self.imagepanel = gui.wx.ImageViewer.TargetImagePanel(self, -1)
 		self.imagepanel.addTypeTool('acquisition', target=wx.GREEN, display=True)
+		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
 		self.imagepanel.addTypeTool('focus', target=wx.BLUE, display=True)
+		self.imagepanel.selectiontool.setDisplayed('focus', True)
 		self.imagepanel.addTypeTool('done', target=wx.RED, display=True)
+		self.imagepanel.selectiontool.setDisplayed('done', True)
 		self.imagepanel.addTypeTool('position', target=wx.Color(255, 128, 0),
 																	display=True)
+		self.imagepanel.selectiontool.setDisplayed('position', True)
 		self.imagepanel.addTypeTool('Image', display=True)
+		self.imagepanel.selectiontool.setDisplayed('Image', True)
 		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND)
 		self.szmain.AddGrowableRow(1)
 		self.szmain.AddGrowableCol(0)
 
-	def getTargets(self, typename):
-		return self.imagepanel.getTargets(typename)
+	def getTargetPositions(self, typename):
+		return self.imagepanel.getTargetPositions(typename)
 
 	def onNodeInitialized(self):
 		gui.wx.TargetFinder.Panel.onNodeInitialized(self)

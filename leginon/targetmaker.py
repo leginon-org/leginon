@@ -63,90 +63,125 @@ class MosaicTargetMaker(TargetMaker):
 	def __init__(self, id, session, managerlocation, **kwargs):
 		TargetMaker.__init__(self, id, session, managerlocation, **kwargs)
 		self.pixelsizecalclient = calibrationclient.PixelSizeCalibrationClient(self)
-		self.addEventInput(event.MakeTargetListEvent, self.makeMosaicTargetList)
+		self.addEventInput(event.MakeTargetListEvent, self._makeAtlas)
 		self.presetsclient = presets.PresetsClient(self)
 
 		self.start()
 
 	def makeAtlas(self):
-		self.makeMosaicTargetList()
+		try:
+			self._makeAtlas()
+		except AtlasError, e:
+			self.logger.exception('Atlas creation failed: %s' % e)
+		except Exception, e:
+			self.logger.exception('Atlas creation failed: %s' % e)
 		self.panel.atlasCreated()
 
-	def makeMosaicTargetList(self, ievent=None):
-		# make targets using current instrument state and selected preset
-		self.logger.info('Getting current EM state...')
+	def validateSettings(self):
+		radius = self.settings['radius']
+		if radius <= 0.0:
+			raise AtlasError('invalid radius specified')
+		overlap = self.settings['overlap']/100.0
+		if overlap < 0.0 or overlap >= 100.0:
+			raise AtlasError('invalid overlap specified')
+		return radius, overlap
+
+	def getState(self):
+		self.logger.debug('Getting current EM state...')
 		try:
 			scope = self.emclient.getScope()
 		except EM.ScopeUnavailable:
-			self.logger.error('Error publishing targets, cannot access microscope')
-			return
+			raise AtlasError('unable to access microscope')
 		try:
 			camera = self.emclient.getCamera()
 		except EM.CameraUnavailable:
-			self.logger.error('Error publishing targets, cannot access camera')
-			return
-		self.logger.info('Get current EM state completed')
-		alpha = scope['stage position']['a']
-		alpha = scope['stage position']['a']
-		alphadeg = alpha * 180.0 / 3.14159
-		if alphadeg != 0.0:
-			self.logger.info('Using current alpha tilt in targets: %.2f deg' % (alphadeg,))
+			raise AtlasError('unable to access camera')
+		self.logger.debug('Get current EM state completed')
+		return scope, camera
+
+	def getAlpha(self, scope):
+		try:
+			alpha = scope['stage position']['a']
+		except KeyError:
+			return None
+		degrees = alpha * 180.0 / 3.14159
+		if degrees != 0.0:
+			infostr = 'Using current alpha tilt in targets: %.2f deg' % degrees
+			self.logger.info(infostr)
+		return alpha
+
+	def getPreset(self):
 		presetname = self.settings['preset']
 		if not presetname:
-			self.logger.error('Error publishing targets, no preset selected')
-			return
+			raise AtlasError('no preset selected')
 
-		self.logger.info('Finding preset "%s"' % presetname)
 		preset = self.presetsclient.getPresetByName(presetname)
-
 		if preset is None:
-			message = 'Error publishing tagets, cannot find preset "%s"' % presetname
-			self.logger.error(message)
-			return
+			raise AtlasError('cannot find preset \'%s\'' % presetname)
 
-		self.logger.info('Updating target settings...')
+		return preset
+
+	def updateState(self, preset, scope, camera):
+		self.logger.debug('Updating target settings...')
+
 		scope.friendly_update(preset)
 		camera.friendly_update(preset)
-		size = camera['dimension']['x']
 
 		center = {'x': 0.0, 'y': 0.0}
 		for key in center:
-			# stage position
 			scope['stage position'][key] = center[key]
+		self.logger.debug('Target settings updated')
 
-		overlap = self.settings['overlap']/100.0
-		if overlap < 0.0 or overlap >= 100.0:
-			self.logger.info('Invalid overlap specified')
-			return
-		magnification = scope['magnification']
+	def getPixelSize(self, scope):
 		try:
-			pixelsize = self.pixelsizecalclient.retrievePixelSize(magnification)
+			magnification = scope['magnification']
+		except KeyError:
+			raise AtlasError('unable to get magnification')
+		try:
+			return self.pixelsizecalclient.retrievePixelSize(magnification)
 		except calibrationclient.NoPixelSizeError:
-			self.logger.error('No available pixel size')
-			return
-		binning = camera['binning']['x']
-		imagesize = camera['dimension']['x']
+			raise AtlasError('unable to get pixel size')
 
-		self.logger.info('Creating target list...')
-		if ievent is None: 
-			### generated from user invoked method
+	def getCameraParameters(self, camera):
+		try:
+			return camera['binning']['x'], camera['dimension']['x']
+		except KeyError:
+			raise AtlasError('unable to get camera geometry')
+
+	def getTargetList(self, evt):
+		self.logger.debug('Creating target list...')
+		if evt is None: 
+			# generated from user invoked method
 			targetlist = self.newTargetList(mosaic=True, label=self.settings['label'])
 			grid = None
 		else:
 			### generated from external event
-			grid = ievent['grid']
+			grid = evt['grid']
 			gridid = grid['grid ID']
 			label = '%06d' % (gridid,)
 			targetlist = self.newTargetList(mosaic=True, label=label)
-		self.logger.info('Publishing target list...')
-		### publish to DB so new targets get right reference
-		self.publish(targetlist, database=True)
-		args = (self.settings['radius'], pixelsize, binning, imagesize, overlap)
+		self.logger.debug('Target list created')
+		return targetlist, grid
+
+	def _makeAtlas(self, evt=None):
+		self.logger.info('Creating atlas targets...')
+		radius, overlap = self.validateSettings()
+		scope, camera = self.getState()
+		alpha = self.getAlpha(scope)
+		preset = self.getPreset()
+		self.updateState(preset, scope, camera)
+		pixelsize = self.getPixelSize(scope)
+		binning, imagesize = self.getCameraParameters(camera)
+
+		targetlist, grid = self.getTargetList(evt)
+
+		# publish to DB so new targets get right reference
 		try:
-			deltas = self.makeCircle(*args)
-		except AtlasSizeError, e:
-			self.logger.error('Error creating atlas: %s' % e)
-			return
+			self.publish(targetlist, database=True)
+		except node.PublishError:
+			raise AtlasError('unable to publish atlas targets')
+
+		deltas = self.makeCircle(radius, pixelsize, binning, imagesize, overlap)
 		for delta in deltas:
 			targetdata = self.newTargetForGrid(grid,
 																					delta[0], delta[1],
@@ -155,9 +190,10 @@ class MosaicTargetMaker(TargetMaker):
 																					list=targetlist,
 																					type='acquisition')
 			self.publish(targetdata, database=True)
-		### publish with event
+
+		# publish the completed target list with event
 		self.publish(targetlist, pubevent=True)
-		self.logger.info('Target list published')
+		self.logger.info('Atlas targets published')
 
 	def makeCircle(self, radius, pixelsize, binning, imagesize, overlap=0.0):
 		maxtargets = self.settings['max targets']

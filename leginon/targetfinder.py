@@ -277,7 +277,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 	def getTargetDataList(self, typename):
 		displayedtargetdata = {}
-		targetsfromimage = self.panel.getTargets(typename)
+		targetsfromimage = self.panel.getTargetPositions(typename)
 		for t in targetsfromimage:
 			## if displayed previously (not clicked)...
 			if t in self.displayedtargetdata and self.displayedtargetdata[t]:
@@ -562,7 +562,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 	def uiPublishMosaicImage(self):
 		self.publishMosaicImage()
 
-	def setCalibrationParameter(self, value):
+	def setCalibrationParameter(self):
 		calclient = self.calclients[self.settings['calibration parameter']]
 		self.mosaic.setCalibrationClient(calclient)
 
