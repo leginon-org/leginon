@@ -10,3 +10,8 @@ class Timer(object):
 		t1 = time.time()
 		tdiff = t1 - self.t0
 		print 'Timer Stop: %s, Time: %.2f' % (self.message, tdiff)
+
+	def reset(self):
+		print 'Timer Start: %s' % (self.message,)
+		self.t0 = time.time()
+

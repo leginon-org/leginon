@@ -48,7 +48,7 @@ class Client(socketstreamtransport.Client):
 			self.socket.connect((self.serverlocation['hostname'], self.serverlocation['TCP port']))
 		except Exception, var:
 			# socket error, connection refused
-			if (var[0] == 111):
+			if (var[0] == 111) or (var[0] == 10061):
 				self.socket = None
 				self.printerror('unable to connect to %s:%s'
 					% (self.serverlocation['hostname'], self.serverlocation['TCP port']))
