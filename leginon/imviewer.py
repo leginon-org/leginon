@@ -116,7 +116,7 @@ class ImViewer(imagewatcher.ImageWatcher):
 			pass
 
 	def saveImage(self, filename):
-		numarray = Numeric.array(self.numarray)
+		numarray = self.numarray.copy()
 		try:
 			Mrc.numeric_to_mrc(numarray, filename)
 		except (TypeError, IOError):

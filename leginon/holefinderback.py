@@ -518,7 +518,7 @@ class HoleFinder(object):
 		if None in (self.__results['holes'], self.__results['original']):
 			raise RuntimeError('need original image and holes before marking holes')
 		image = self.__results['original']
-		im = Numeric.array(image)
+		im = image.copy()
 		value = imagefun.min(im)
 		for hole in self.__results['holes']:
 			coord = hole.stats['center']

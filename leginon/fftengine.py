@@ -135,7 +135,7 @@ else:
 			mod = type_module[fftim.typecode()]
 			plan = self.timer(self.iplan, (imshape,mod))
 			### the input image will be destroyed, so make copy
-			fftimcopy = Numeric.array(fftim)
+			fftimcopy = fftim.copy()
 			mod.rfftwnd_one_complex_to_real(plan, fftimcopy, im)
 			norm = imshape[0] * imshape[1]
 			im = Numeric.divide(im, norm)
