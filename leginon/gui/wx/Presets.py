@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Presets.py,v $
-# $Revision: 1.20 $
+# $Revision: 1.21 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-24 23:34:01 $
-# $Author: suloway $
+# $Date: 2005-03-17 23:40:38 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -96,7 +96,7 @@ class PresetChoice(wx.Choice):
 				self.SetSelection(0)
 			else:
 				self.SetSelection(n)
-		self.Enable(choices)
+		self.Enable(bool(choices))
 		self.Thaw()
 
 	def SetStringSelection(self, string):
@@ -295,8 +295,8 @@ class EditPresetOrder(PresetOrder):
 		self.choice.AppendItems(choices)
 		if choices:
 			self.choice.SetSelection(0)
-		self.choice.Enable(choices)
-		self.insertbutton.Enable(choices)
+		self.choice.Enable(bool(choices))
+		self.insertbutton.Enable(bool(choices))
 		self.Thaw()
 
 	def onInsert(self, evt):
