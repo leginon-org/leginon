@@ -211,6 +211,7 @@ class ZoomTool(ImageTool):
 		cursor = wx.StockCursor(wx.CURSOR_MAGNIFIER)
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, True)
 		self.zoomlevels = range(7, -8, -1)
+		# wx.Choice seems a bit slow, at least on windows
 		self.zoomchoice = wx.Choice(self.imagepanel, -1,
 																choices=map(self.log2str, self.zoomlevels))
 		self.zoom(self.zoomlevels.index(0), (0, 0))
