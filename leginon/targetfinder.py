@@ -24,7 +24,6 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
 	eventoutputs = imagewatcher.ImageWatcher.eventoutputs + [
 																							event.ImageTargetListPublishEvent] + EM.EMClient.eventoutputs
 	def __init__(self, id, session, managerlocation, **kwargs):
-		self.targetlist = []
 		self.targetlistevents = {}
 		imagewatcher.ImageWatcher.__init__(self, id, session, managerlocation,
 																				**kwargs)
@@ -33,8 +32,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
 
 	def findTargets(self, imdata, targetlist):
 		'''
-		Virtual function, inheritting classes implement building self.targetlist,
-		a list of ImageTargetData items.
+		Virtual function, inheritting classes implement creating targets
 		'''
 		raise NotImplementedError()
 
@@ -143,7 +141,6 @@ class ClickTargetFinder(TargetFinder):
 		if previous:
 			self.logger.warning('There are %s existing targets for this image'
 													% (len(previous),))
-			self.targetlist = previous
 			if self.preventrepeat.get():
 				self.logger.error('You are not allowed to submit targets again')
 				return
@@ -230,11 +227,25 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.outputEvent(event.MosaicDoneEvent())
 		self.setStatusMessage('Mosaic is done, notification sent')
 
+	def getTargetDataList(self, typename):
+		displayedtargetdata = {}
+		targetsfromimage = self.clickimage.getTargetType(typename)
+		for t in targetsfromimage:
+			## if displayed previously (not clicked)...
+			if t in self.displayedtargetdata and self.displayedtargetdata[t]:
+				targetdata = self.displayedtargetdata[t].pop()
+			else:
+				c,r = t
+				targetdata = self.mosaicToTarget(typename, r, c)
+			if t not in displayedtargetdata:
+				displayedtargetdata[t] = []
+			displayedtargetdata[t].append(targetdata)
+		self.displayedtargetdata = displayedtargetdata
+
 	def submitTargets(self):
 		self.setStatusMessage('Sumbiting targets')
-		targetlist = self.getTargetDataList('acquisition')
-		self.targetlist.extend(targetlist)
-		self.publishTargetList()
+		self.getTargetDataList('acquisition')
+		self.publish(self.targetlist, pubevent=True)
 		self.setStatusMessage('Targets submitted')
 
 	def clearTiles(self):
@@ -242,6 +253,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.imagemap = {}
 		self.targetmap = {}
 		self.mosaic.clear()
+		self.targetlist = None
 		if hasattr(self, 'autocreate') and self.autocreate.get():
 			self.clearMosaicImage()
 
@@ -263,6 +275,9 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 	def targetsFromDatabase(self):
 		for id, imagedata in self.imagemap.items():
 			targets = self.researchTargets(image=imagedata)
+			### set my target list to same as first target found
+			if targets and self.targetlist is None:
+				self.targetlist = targets[0]['list']
 			self.targetmap[id] = targets
 
 	def uiRefreshCurrentPosition(self):
@@ -437,7 +452,12 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		shape = tile.image.shape
 		drow,dcol = pos[0]-shape[0]/2, pos[1]-shape[1]/2
 		imagedata = tile.imagedata
-		targetdata = self.newTarget(drow, dcol, type=typename, image=imagedata)
+		### create a new target list if we don't have one already
+		if self.targetlist is None:
+			self.targetlist = self.newTargetList()
+			self.publish(self.targetlist, database=True, dbforce=True)
+		targetdata = self.newTargetForImage(imagedata, drow, dcol, type=typename, list=self.targetlist)
+		self.publish(targetdata, database=True)
 		return targetdata
 
 	def createMosaicImage(self):
@@ -464,24 +484,6 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 	def uiPublishMosaicImage(self):
 		self.publishMosaicImage()
-
-	def getTargetDataList(self, typename):
-		targetlist = []
-		displayedtargetdata = {}
-		targetsfromimage = self.clickimage.getTargetType(typename)
-		for t in targetsfromimage:
-			## if displayed previously (not clicked)...
-			if t in self.displayedtargetdata and self.displayedtargetdata[t]:
-				targetdata = self.displayedtargetdata[t].pop()
-			else:
-				c,r = t
-				targetdata = self.mosaicToTarget(typename, r, c)
-			targetlist.append(targetdata)
-			if t not in displayedtargetdata:
-				displayedtargetdata[t] = []
-			displayedtargetdata[t].append(targetdata)
-		self.displayedtargetdata = displayedtargetdata
-		return targetlist
 
 	def uiSetCalibrationParameter(self, value):
 		if not hasattr(self, 'uicalibrationparameter'):

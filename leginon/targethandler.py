@@ -74,13 +74,13 @@ class TargetHandler(object):
 		'''
 		returns a new target data object with data filled in from the image data
 		'''
-		if 'grid' in image and image['grid'] is not None:
-			grid = image['grid']
+		if 'grid' in imagedata and imagedata['grid'] is not None:
+			grid = imagedata['grid']
 		else:
 			grid = None
-		lastnumber = self.lastTargetNumber(image=image, list=list, session=self.session)
+		lastnumber = self.lastTargetNumber(image=imagedata, session=self.session)
 		number = lastnumber + 1
-		targetdata = self.newTarget(image=image, scope=image['scope'], camera=image['camera'], preset=image['preset'], drow=drow, dcol=dcol, number=number, session=self.session, **kwargs)
+		targetdata = self.newTarget(image=imagedata, scope=imagedata['scope'], camera=imagedata['camera'], preset=imagedata['preset'], drow=drow, dcol=dcol, number=number, session=self.session, **kwargs)
 		return targetdata
 
 	def newTargetForGrid(self, grid, drow, dcol, **kwargs):
