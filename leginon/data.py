@@ -660,22 +660,6 @@ class CorrectorCamstateData(InSessionData):
 		return t
 	typemap = classmethod(typemap)
 
-	def __hash__(self):
-		## treat one special:  if an item is None
-		keylist = []
-		if None in (self['dimension'],self['binning'],self['offset']):
-			return hash(None)
-
-		hashtuple = (
-			self['dimension']['x'],
-			self['dimension']['y'],
-			self['binning']['x'],
-			self['binning']['y'],
-			self['offset']['x'],
-			self['offset']['y'],
-		)
-		return hash(hashtuple)
-
 class ImageTargetData(InSessionData):
 	def typemap(cls):
 		t = InSessionData.typemap()

@@ -252,19 +252,31 @@ class Corrector(node.Node):
 			ref = None
 		return ref
 
-	def retrieveRef(self, camstate, type):
-		key = (camstate, type)
-		print '***KEY', hash(key)
+	def refKey(self, camstate, type):
+		mylist = []
+		for param in ('dimension', 'binning', 'offset'):
+			values = camstate[param]
+			if values is None:
+				valuetuple = (None,None)
+			else:
+				valuetuple = (values['x'],values['y'])
+			mylist.extend( valuetuple )
+		mylist.append(type)
+		return tuple(mylist)
 
+	def retrieveRef(self, camstate, type):
+		key = self.refKey(camstate, type)
+		print 'KEY', key
 		## another way to do the cache would be to use the local
 		##   data keeper
 
 		## try to use reference image from cache
-		print 'KEYS', map(hash,self.ref_cache.keys())
+		print 'KEYS'
+		print self.ref_cache.keys()
 		try:
 			return self.ref_cache[key]
 		except KeyError:
-			print hash(key), 'is not in', map(hash,self.ref_cache.keys())
+			print key, 'is not in', self.ref_cache.keys()
 			pass
 
 		## use reference image from database
@@ -282,7 +294,7 @@ class Corrector(node.Node):
 		## data keeper
 
 		## store in cache
-		key = (camstate, type)
+		key = self.refKey(camstate, type)
 		self.ref_cache[key] = numdata
 
 		## store in database
