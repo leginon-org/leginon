@@ -18,24 +18,34 @@ class DBDataKeeper(datahandler.DataHandler):
 		# indices: {field:value, ... } for the WHERE clause
 		
 		table = idata.__class__.__name__
-		select = sqldict.sqlColumnsSelect(idata)
-		self.dbd.myTable = self.dbd.Table(table,select)
-		sqlindices = map(sqldict.sqlColumnsFormat, indices.keys())
-		self.dbd.myTable.Index = self.dbd.Table(sqlindices,
-					orderBy = {'fields':('DEF_timestamp',),'sort':'DESC'})
+#		select = sqldict.sqlColumnsSelect(idata)
+#		self.dbd.myTable = self.dbd.Table(table,select)
+		self.dbd.myTable = self.dbd.Table(table)
+		sqlindices = sqldict.sqlColumnsFormat(indices)
+		self.dbd.myTable.myIndex = self.dbd.myTable.Index(sqlindices.keys())
 
 		# return a list of dictionnaries for all matching rows
-		result = self.dbd.myTable.Index[indices.values()].fetchalldict()
+		result = self.dbd.myTable.myIndex[sqlindices.values()].fetchall()
 		result = map(sqldict.sql2data, result)
-		return map(self.file2image, result)
+		for i in range(len(result)):
+			del result[i]['DEF_id']
+			del result[i]['DEF_timestamp']
+			newid = result[i]['id']
+			del result[i]['id']
+			try:
+				result[i] = idata.__class__(newid, result[i])
+			except KeyError, e:
+				print e
+		map(self.file2image, result)
+		return result
 
 		# return an instance
-		# result =  self.dbd.myTable.Index[indices.values()].fetchonedict()
+		# result =  self.dbd.myTable.Index[indices.values()].fetchone()
 		# val = data.update((sqldict.sql2data(result))
 		# return val
 
 		# to return one match only:
-		# result = self.db.myTable.Index[indices.values()].fetchonedict()
+		# result = self.db.myTable.Index[indices.values()].fetchone()
 		# return sqldict.sql2data(result)
 	
 		# images with be converted from an mrc file here, an instance of Data
@@ -68,31 +78,36 @@ class DBDataKeeper(datahandler.DataHandler):
 
 	def image2file(self, idata):
 		if isinstance(idata, data.ImageData):
-			# filename = ???
-			filename = './images/%s-%s.mrc' % (self.session, idata['id'])
-			Mrc.numeric_to_mrc(idata['image'], filename)
-			idata['database filename'] = filename
-			idata['image'] = None
+			if idata['image'] is not None:
+				# filename = ???
+				filename = './images/%s-%s.mrc' % (self.session, idata['id'])
+				Mrc.numeric_to_mrc(idata['image'], filename)
+				idata['database filename'] = filename
+				idata['image'] = None
 
 		types = idata.types()
 		for key in types:
 			if issubclass(types[key], data.ImageData):
-				# filename = ???
-				filename = './images/%s-%s-%s.mrc' % (self.session, idata['id'], key)
-				Mrc.numeric_to_mrc(idata[key]['image'], filename)
-				idata[key]['database filename'] = filename
-				idata[key]['image'] = None
+				if idata[key]['image'] is not None:
+					# filename = ???
+					filename = './images/%s-%s-%s.mrc' % (self.session, idata['id'], key)
+					Mrc.numeric_to_mrc(idata[key]['image'], filename)
+					idata[key]['database filename'] = filename
+					idata[key]['image'] = None
 
 	def file2image(self, idata):
 		if isinstance(idata, data.ImageData):
-			idata['image'] = Mrc.mrc_to_numeric(idata['database filename'])
-			idata['database filename'] = None
+			if idata['database filename'] is not None:
+				idata['image'] = Mrc.mrc_to_numeric(idata['database filename'])
+				idata['database filename'] = None
 
 		types = idata.types()
 		for key in types:
 			if issubclass(types[key], data.ImageData):
-				idata[key]['image']=Mrc.mrc_to_numeric(idata[key]['database filename'])
-				idata[key]['database filename'] = None
+				if idata[key]['database filename'] is not None:
+					idata[key]['image'] = Mrc.mrc_to_numeric(
+																					idata[key]['database filename'])
+					idata[key]['database filename'] = None
 
 # Ignore for now
 
