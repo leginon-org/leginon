@@ -193,75 +193,131 @@ class Robot(node.Node):
 		node.Node.exit(self)
 
 	def zeroStage(self):
-		self.logger.info('Zeroing stage position')
+		self.logger.info('Zeroing stage position...')
 		self.instrument.tem.StagePosition = {'x': 0.0, 'y': 0.0, 'z': 0.0, 'a': 0.0}
-		self.logger.info('Stage position is zeroed')
+		self.logger.info('Stage position is zeroed.')
 
 	def holderNotInScope(self):
-		self.logger.info('Verifying there is no holder inserted')
+		self.logger.info('Verifying there is no holder inserted...')
 		self.waitScope('HolderStatus', 'not inserted')
-		self.logger.info('No holder currently inserted')
+		self.logger.info('No holder currently inserted.')
 
 	def holderInScope(self):
-		self.logger.info('Verifying holder is inserted')
+		self.logger.info('Verifying holder is inserted...')
 		self.waitScope('HolderStatus', 'inserted')
-		self.logger.info('No holder currently inserted')
+		self.logger.info('No holder currently inserted.')
 
 	def vacuumReady(self):
-		self.logger.info('Verifying vacuum is ready')
+		self.logger.info('Verifying vacuum is ready...')
 		self.waitScope('VacuumStatus', 'ready', 0.25)
-		self.logger.info('Vacuum is ready')
+		self.logger.info('Vacuum is ready.')
+
+	def openColumnValves(self):
+		self.logger.info('Opening column valves...')
+		self.instrument.tem.ColumnValvePosition = 'open'
+		self.logger.info('Verifying column valves are open...')
+		self.waitScope('ColumnValvePosition', 'open', 0.25)
+		self.logger.info('Column valves are open.')
 
 	def closeColumnValves(self):
-		self.logger.info('Closing column valves')
+		self.logger.info('Closing column valves...')
 		self.instrument.tem.ColumnValvePosition = 'closed'
-		self.logger.info('Verifying column valves are closed')
+		self.logger.info('Verifying column valves are closed...')
 		self.waitScope('ColumnValvePosition', 'closed', 0.25)
-		self.logger.info('Column valves are closed')
+		self.logger.info('Column valves are closed.')
 
 	def turboPumpOn(self):
-		self.logger.info('Turning on turbo pump')
+		self.logger.info('Turning on turbo pump...')
 		self.instrument.tem.TurboPump = 'on'
-		self.logger.info('Verifying turbo pump is on')
+		self.logger.info('Verifying turbo pump is on...')
 		self.waitScope('TurboPump', 'on', 0.25)
-		self.logger.info('Turbo pump is on')
+		self.logger.info('Turbo pump is on.')
+
+	def turboPumpOff(self):
+		self.logger.info('Turning off turbo pump...')
+		self.instrument.tem.TurboPump = 'off'
+		#self.logger.info('Verifying turbo pump is off...')
+		#self.waitScope('TurboPump', 'off', 0.25)
+		self.logger.info('Turbo pump is off.')
 
 	def stageReady(self):
-		self.logger.info('Waiting for stage to be ready')
+		self.logger.info('Waiting for stage to be ready...')
 		self.waitScope('StageStatus', 'ready', 0.25)
-		self.logger.info('Stage is ready')
+		self.logger.info('Stage is ready...')
 
 	def setHolderType(self):
-		self.logger.info('Setting holder type to single tilt')
+		self.logger.info('Setting holder type to single tilt...')
 		self.instrument.tem.HolderType = 'single tilt'
-		self.logger.info('Verifying holder type is set to single tilt')
+		self.logger.info('Verifying holder type is set to single tilt...')
 		self.waitScope('HolderType', 'single tilt', 0.25)
-		self.logger.info('Holder type is set to single tilt')
+		self.logger.info('Holder type is set to single tilt.')
+
+	def checkColumnPressure(self):
+		self.logger.info('Checking column pressure...')
+		while self.instrument.tem.ColumnPressure > 3.5e-5:
+			time.sleep(0.1)
+		self.logger.info('Column pressure is below threshold.')
+
+	def highTensionOn(self):
+		self.logger.info('Checking high tension state...')
+		self.waitScope('HighTensionState', 'on', 0.25)
+		self.logger.info('High tension is on.')
+
+	def insertCameras(self):
+		ccdcameras = self.instrument.getCCDCameraNames()
+		for ccdcamera in ccdcameras:
+			self.instrument.setCCDCamera(ccdcamera)
+			if self.instrument.ccdcamrea.hasAttribute('Inserted'):
+				self.logger.info('Inserting %s camera...' % ccdcamera)
+				self.instrument.ccdcamera.Inserted = True
+				self.waitScope('Inserted', True, 0.25)
+				self.logger.info('%s camera is inserted.' % ccdcamera)
+
+	def retractCameras(self):
+		ccdcameras = self.instrument.getCCDCameraNames()
+		for ccdcamera in ccdcameras:
+			self.instrument.setCCDCamera(ccdcamera)
+			if self.instrument.ccdcamrea.hasAttribute('Inserted'):
+				self.logger.info('Retracting %s camera...' % ccdcamera)
+				self.instrument.ccdcamera.Inserted = False
+				self.waitScope('Inserted', False, 0.25)
+				self.logger.info('%s camera is retracted.' % ccdcamera)
 
 	def scopeReadyForInsertion1(self):
-		self.logger.info('Readying microscope for insertion step 1')
+		self.logger.info('Readying microscope for insertion step 1...')
+		self.turboPumpOn()
 		self.zeroStage()
 		self.holderNotInScope()
 		self.vacuumReady()
 		self.closeColumnValves()
-		self.turboPumpOn()
 		self.stageReady()
-		self.logger.info('Microscope ready for insertion step 1')
+		self.logger.info('Microscope ready for insertion step 1.')
 
 	def scopeReadyForInsertion2(self):
-		self.logger.info('Readying microscope for insertion step 2')
+		self.logger.info('Readying microscope for insertion step 2...')
 		self.setHolderType()
 		self.stageReady()
-		self.logger.info('Microscope ready for insertion step 2')
+		self.logger.info('Microscope ready for insertion step 2.')
 
 	def scopeReadyForExtraction(self):
-		self.logger.info('Readying microscope for extraction')
+		self.logger.info('Readying microscope for extraction...')
+		self.closeColumnValves()
+		self.retractCameras()
 		self.zeroStage()
 		self.holderInScope()
 		self.vacuumReady()
-		self.closeColumnValves()
 		self.stageReady()
-		self.logger.info('Microscope ready for extraction')
+		self.logger.info('Microscope ready for extraction.')
+
+	def scopeReadyForImaging(self):
+		self.logger.info('Readying microscope for imaging...')
+		self.turboPumpOff()
+		self.insertCameras()
+		self.highTensionOn()
+		self.vacuumReady()
+		self.checkColumnPressure()
+		self.openColumnValves()
+		self.logger.info('Microscope ready for imaging.')
 
 	def signalRobotToInsert1(self):
 		self.logger.info('Signaling robot to begin insertion step 1')
@@ -512,22 +568,6 @@ class Robot(node.Node):
 
 		self.logger.info('Data collection finished')
 
-		self.logger.info('Zeroing stage position')
-		self.instrument.tem.StagePosition = {'x': 0.0, 'y': 0.0, 'z': 0.0, 'a': 0.0}
-		self.logger.info('Stage position zeroed')
-
-		self.logger.info('Closing column valves')
-		self.instrument.tem.ColumnValvePosition = 'closed'
-		self.logger.info('Column valves closed')
-
-		if self.instrument.ccdcamrea.hasAttribute('Inserted'):
-			self.logger.info('Retracting camera')
-			self.instrument.ccdcamera.Inserted = False
-
-			self.logger.info('Checking camera is retracted')
-			self.waitScope('Inserted', False, 0.25)
-			self.logger.info('Camera is retracted')
-
 		request = ExtractRequest()
 		self.queue.put(request)
 
@@ -564,32 +604,9 @@ class Robot(node.Node):
 			self.panel.gridInserted()
 			return
 
-		self.logger.info('Grid inserted')
+		self.logger.info('Grid inserted.')
 
-		self.logger.info('Turning off turbo pump')
-		self.instrument.tem.TurboPump = 'off'
-
-		self.logger.info('Checking vacuum')
-		self.waitScope('VacuumStatus', 'ready', 0.25)
-		self.logger.info('Vacuum ready')
-
-		self.logger.info('Checking column pressure')
-		while self.instrument.tem.ColumnPressure > 3.5e-5:
-			time.sleep(0.1)
-		self.logger.info('Column pressure ready')
-
-		self.logger.info('Opening column valves')
-		time.sleep(5.0)
-		self.instrument.tem.ColumnValvePosition = 'open'
-		self.logger.info('Column valves open')
-
-		if self.instrument.ccdcamrea.hasAttribute('Inserted'):
-			self.logger.info('Inserting camera')
-			self.instrument.ccdcamera.Inserted = True
-
-			self.logger.info('Checking camera is inserted')
-			self.waitScope('Inserted', True, 0.25)
-			self.logger.info('Camera is inserted')
+		self.scopeReadyForImaging()
 
 		self.logger.info('Outputting data collection event')
 		evt = event.MakeTargetListEvent()
