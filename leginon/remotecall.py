@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/remotecall.py,v $
-# $Revision: 1.17 $
+# $Revision: 1.18 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-11 19:02:13 $
+# $Date: 2005-03-22 19:45:25 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -150,7 +150,7 @@ class Locker(Object):
 			result = None
 		else:
 			result = Object._execute(self, origin, name, type, args, kwargs)
-		if not haslock and name != 'lock':
+		if (not haslock and name != 'lock') or name == 'unlock':
 			self.locknode = None
 			self._lock.notify()
 		self._lock.release()

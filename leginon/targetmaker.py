@@ -63,7 +63,7 @@ class MosaicTargetMaker(TargetMaker):
 	def __init__(self, id, session, managerlocation, **kwargs):
 		TargetMaker.__init__(self, id, session, managerlocation, **kwargs)
 		self.pixelsizecalclient = calibrationclient.PixelSizeCalibrationClient(self)
-		self.addEventInput(event.MakeTargetListEvent, self._makeAtlas)
+		self.addEventInput(event.MakeTargetListEvent, self.makeAtlas)
 		self.presetsclient = presets.PresetsClient(self)
 
 		self.publishargs = None
@@ -192,6 +192,10 @@ class MosaicTargetMaker(TargetMaker):
 		args = self._calculateAtlas()
 		kwargs = {'evt': evt}
 		self._publishAtlas(*args, **kwargs)
+
+	def makeAtlas(self, evt):
+		self.calculateAtlas()
+		self.publishAtlas()
 
 	def _calculateAtlas(self):
 		self.logger.info('Creating atlas targets...')

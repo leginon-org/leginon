@@ -137,8 +137,8 @@ class Robot(node.Node):
 	defaultcolumnpressurethreshold = 3.5e-5
 	def __init__(self, id, session, managerlocation, **kwargs):
 
-		self.simulate = True
-		#self.simulate = False
+		#self.simulate = True
+		self.simulate = False
 
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 		self.instrument = instrument.Proxy(self.objectservice, self.session)
@@ -369,7 +369,7 @@ class Robot(node.Node):
 		ccdcameras = self.instrument.getCCDCameraNames()
 		for ccdcamera in ccdcameras:
 			self.instrument.setCCDCamera(ccdcamera)
-			if self.instrument.ccdcamrea.hasAttribute('Inserted'):
+			if self.instrument.ccdcamera.hasAttribute('Inserted'):
 				self.logger.info('Inserting %s camera...' % ccdcamera)
 				self.instrument.ccdcamera.Inserted = True
 				self.waitScope('Inserted', True, 0.25)
@@ -379,7 +379,7 @@ class Robot(node.Node):
 		ccdcameras = self.instrument.getCCDCameraNames()
 		for ccdcamera in ccdcameras:
 			self.instrument.setCCDCamera(ccdcamera)
-			if self.instrument.ccdcamrea.hasAttribute('Inserted'):
+			if self.instrument.ccdcamera.hasAttribute('Inserted'):
 				self.logger.info('Retracting %s camera...' % ccdcamera)
 				self.instrument.ccdcamera.Inserted = False
 				self.waitScope('Inserted', False, 0.25)
@@ -387,7 +387,6 @@ class Robot(node.Node):
 
 	def scopeReadyForInsertion1(self):
 		self.logger.info('Readying microscope for insertion step 1...')
-		self.turboPumpOn()
 		self.zeroStage()
 		self.holderNotInScope()
 		self.vacuumReady()
@@ -610,16 +609,25 @@ class Robot(node.Node):
 			self.logger.info(timestring + ' remaining')
 
 	def insert(self):
+		self.lockScope()
+
 		if self.simulate:
 			self.estimateTimeLeft()
 			self.logger.info('Insertion of holder successfully completed')
-			return self.gridInserted(self.gridnumber)
+			try:
+				griddata = self.gridInserted(self.gridnumber)
+			except Exception, e:
+				self.logger.error('Failed to get scope ready for imaging: %s' % e)
+				self.unlockScope()
+			self.unlockScope()
+			return griddata
 
 		self.estimateTimeLeft()
 
 		self.logger.info('Inserting holder into microscope')
 
-		self.lockScope()
+
+		self.turboPumpOn()
 
 		self.robotReadyForInsertion()
 
@@ -640,10 +648,16 @@ class Robot(node.Node):
 			raise
 		self.signalRobotToInsert2()
 		self.waitForRobotToInsert2()
-		self.unlockScope()
 
 		self.logger.info('Insertion of holder successfully completed')
-		return self.gridInserted(self.gridnumber)
+		try:
+			griddata = self.gridInserted(self.gridnumber)
+		except Exception, e:
+			self.logger.error('Failed to get scope ready for imaging: %s' % e)
+			self.unlockScope()
+
+		self.unlockScope()
+		return griddata
 
 	def extract(self):
 		if self.simulate:
@@ -653,6 +667,9 @@ class Robot(node.Node):
 		self.logger.info('Extracting holder from microscope')
 
 		self.lockScope()
+
+		self.turboPumpOn()
+
 		self.robotReadyForExtraction()
 		try:
 			self.scopeReadyForExtraction()
