@@ -64,6 +64,13 @@ class Leginon(Tkinter.Frame):
 														self.nodeLocation('Grid Atlas Mosaic Navigator'),
 														self.nodeLocation('Grid Atlas Image Viewer'))
 		gridatlaswidget.pack()
+
+		aatpage = self.notebook.add('Acquire and Target')
+		aatwidget = AcquireAndTargetWidget(aatpage,
+														self.nodeLocation('Acquisition'),
+														self.nodeLocation('Click Target Finder'))
+		aatwidget.pack()
+
 		self.notebook.setnaturalsize()
 
 	def nodeLocations(self):
@@ -112,9 +119,10 @@ class CustomWidget(Tkinter.Frame):
 				else:
 					return self.widgetFrom(parent, uiclientname, subspec, name[1:])
 
-	def arrangeEntry(self, widget, width = 10):
+	# kwargs
+	def arrangeEntry(self, widget, width = 10, justify = Tkinter.RIGHT):
 		widget.entry['width'] = width
-		widget.entry['justify'] = Tkinter.RIGHT
+		widget.entry['justify'] = justify
 		widget.entry.grid(row = 0, column = 1, padx = 5, pady = 5, columnspan = 1)
 		widget.getbutton.grid(row = 0, column = 2, padx = 5, pady = 5)
 		widget.setbutton.grid(row = 0, column = 3, padx = 5, pady = 5)
@@ -149,8 +157,6 @@ class GridAtlasWidget(CustomWidget):
 
 		self.uiClient('Grid Preview', gridpreview)
 		self.uiClient('State Image Mosaic', stateimagemosaic)
-#		self.uiClient('MN', mosaicnavigator)
-#		self.uiClient('IV', imageviewer)
 
 		widget = self.addWidget('Settings', 'Grid Preview',
 														('Preferences', 'Magnification'))
@@ -162,9 +168,19 @@ class GridAtlasWidget(CustomWidget):
 		self.addWidget('Control', 'Grid Preview', ('Controls', 'Run'))
 		self.addWidget('Control', 'Grid Preview', ('Controls', 'Stop'))
 		self.addWidget('Control', 'Grid Preview', ('Controls', 'Reset'))
-#		self.addWidget('Control', 'State Image Mosaic', ('Image', 'Publish Image'))
 
 		self.addWidget('Image', 'State Image Mosaic', ('Mosaic Image',))
+
+class AcquireAndTargetWidget(CustomWidget):
+	def __init__(self, parent, acquisition, clicktargetfinder):
+		CustomWidget.__init__(self, parent)
+		self.uiClient('Acquisition', acquisition)
+		self.uiClient('Click Target Finder', clicktargetfinder)
+
+		widget = self.addWidget('Settings', 'Acquisition',
+															('Preferences', 'Preset Names'))
+		self.arrangeEntry(widget, 20, Tkinter.LEFT)
+		self.addWidget('Image', 'Click Target Finder', ('Clickable Image',))
 
 if __name__ == '__main__':
 
