@@ -54,13 +54,12 @@ class HoleFinder(targetfinder.TargetFinder):
 
 
 		### Correlate Template
-		self.mindia = uidata.Float('Minimum Diameter', 20.0, 'rw', persist=True)
-		self.maxdia = uidata.Float('Maximum Diameter', 40.0, 'rw', persist=True)
+		self.ringlist = uidata.Float('Ring Diameters', [(30,40)], 'rw', persist=True)
 		self.cortype = uidata.SingleSelectFromList('Correlation Type', ['cross correlation', 'phase correlation'], 0, persist=True)
 		cormeth = uidata.Method('Correlate Template', self.correlateTemplate)
 		self.corimage = uidata.Image('Correlation Image', None, 'r')
 		corcont = uidata.MediumContainer('Template Correlation')
-		corcont.addObjects((self.mindia, self.maxdia, self.cortype, cormeth, self.corimage))
+		corcont.addObjects((self.ringlist, self.cortype, cormeth, self.corimage))
 
 		### threshold
 		self.threshvalue = uidata.Float('Threshold Value', 3.0, 'rw', persist=True)
@@ -139,13 +138,15 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.edgeimage.set(self.hf['edges'])
 
 	def correlateTemplate(self):
-		mindia = self.mindia.get()
-		maxdia = self.maxdia.get()
-		cortype = self.cortype.getSelectedValue()
-		minrad = mindia / 2.0
-		maxrad = maxdia / 2.0
-		self.hf.configure_template(min_radius=minrad, max_radius=maxrad)
+		ringlist = self.ringlist.get()
+		# convert diameters to radii
+		radlist = []
+		for ring in ringlist:
+			radring = (ring[0] / 2.0, ring[1] / 2.0)
+			radlist.append(radring)
+		self.hf.configure_template(ring_list=radlist)
 		self.hf.create_template()
+		cortype = self.cortype.getSelectedValue()
 		self.hf.configure_correlation(cortype)
 		self.hf.correlate_template()
 		self.corimage.set(self.hf['correlation'])

@@ -43,7 +43,7 @@ class CircleMaskCreator(object):
 			i1 = Numeric.where(indices1<cutoff[1], indices1-center[1]+lshift[1], indices1-center[0]+gshift[1])
 			rsq = i0*i0+i1*i1
 			c = Numeric.where((rsq>=minradsq)&(rsq<=maxradsq), 1.0, 0.0)
-			return c
+			return c.astype(Numeric.Int8)
 		temp = Numeric.fromfunction(circle, shape)
 		self.masks[key] = temp
 		return temp
@@ -238,7 +238,7 @@ class HoleFinder(object):
 		## some default configuration parameters
 		self.save_mrc = True
 		self.edges_config = {'filter': 'laplacian', 'size': 9, 'sigma': 1.4, 'abs': False, 'lp':True, 'lpn':5, 'lpsig':1.0}
-		self.template_config = {'min_radius': 25, 'max_radius': 30}
+		self.template_config = {'ring_list': [(25,30)]}
 		self.correlation_config = {'cortype': 'cross correlation'}
 		self.threshold = 3.0
 		self.blobs_config = {'border': 20, 'maxblobsize': 50}
@@ -337,30 +337,32 @@ class HoleFinder(object):
 		if self.save_mrc:
 			Mrc.numeric_to_mrc(edges, 'edges.mrc')
 
-	def configure_template(self, min_radius=None, max_radius=None):
-		if min_radius is not None:
-			self.template_config['min_radius'] = min_radius
-		if max_radius is not None:
-			self.template_config['max_radius'] = max_radius
+	def configure_template(self, ring_list=None):
+		if ring_list is not None:
+			self.template_config['ring_list'] = ring_list
 
 	## for test1, test1: 30, 37
 	## for test3, test4: 22, 30
-	def create_template(self, min_radius=None, max_radius=None):
+	def create_template(self, ring_list=None):
 		'''
 		This creates the template image that will be correlated
 		with the edge image.  This will fail if there is no
 		existing edge image, which is necessary to determine the
 		size of the template.
 		'''
-		if self.__results['edges'] is None:
-			raise RuntimeError('need edge image before creating template')
+		fromimage = 'edges'
+		if self.__results[fromimage] is None:
+			raise RuntimeError('need image %s before creating template' % (fromimage,))
 		print 'creating template'
-		self.configure_template(min_radius, max_radius)
-		shape = self.__results['edges'].shape
+		self.configure_template(ring_list)
+		shape = self.__results[fromimage].shape
 		center = (0,0)
-		rmin = self.template_config['min_radius']
-		rmax = self.template_config['max_radius']
-		template = self.circle.get(shape, center, rmin, rmax)
+		ring_list = self.template_config['ring_list']
+		template = Numeric.zeros(shape, Numeric.Int8)
+		for ring in ring_list:
+			temp = self.circle.get(shape, center, ring[0], ring[1])
+			template = template | temp
+		template = template.astype(Numeric.Float32)
 		template = imagefun.zscore(template)
 		self.__update_result('template', template)
 		if self.save_mrc:
@@ -371,10 +373,11 @@ class HoleFinder(object):
 			self.correlation_config['cortype'] = cortype
 
 	def correlate_template(self):
-		if None in (self.__results['edges'], self.__results['template']):
-			raise RuntimeError('need edge image and template before correlation')
+		fromimage = 'edges'
+		if None in (self.__results[fromimage], self.__results['template']):
+			raise RuntimeError('need image %s and template before correlation' % (fromimage,))
 		print 'correlating template'
-		edges = self.__results['edges']
+		edges = self.__results[fromimage]
 		template = self.__results['template']
 		cortype = self.correlation_config['cortype']
 		if cortype == 'cross correlation':
@@ -383,6 +386,11 @@ class HoleFinder(object):
 			cc = imagefun.phase_correlate(edges, template)
 		else:
 			raise RuntimeError('bad correlation type: %s' % (cortype,))
+		cc = Numeric.absolute(cc)
+		#kernel = convolver.gaussian_kernel(9, 1.0)
+		#self.edgefinder.setKernel(kernel)
+		#smooth = self.edgefinder.convolve(image=cc)
+		#cc = imagefun.zscore(smooth)
 		cc = imagefun.zscore(cc)
 		self.__update_result('correlation', cc)
 		if self.save_mrc:
