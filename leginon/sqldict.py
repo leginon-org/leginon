@@ -511,6 +511,7 @@ def unflatDict(in_dict):
 
 	{'scope':{ 'BShift':{'X': 45.0, 'Y': 18.0}, 'IShift':{'X': 8.0, 'Y': 6.0}}}
 	"""
+	print 'INDICT', in_dict
 
 	items = {}
 	try:
@@ -529,6 +530,7 @@ def unflatDict(in_dict):
 		else:
 			items.update(datatype({key:value}))
 
+	print 'ITEMS', items
 	for subdict in allsubdicts:
 		dm={}
 		for key,value in in_dict.items():
@@ -571,11 +573,14 @@ def dict2matrix(in_dict):
 	size  = shape[0]*shape[1]
 
 	# Build the matrix
-	matrix = Numeric.zeros(size)
-	matrix.shape = shape
+	matrix = Numeric.zeros(shape, Numeric.Float64)
+	print 'dict2matrixINDICT', in_dict
 	for m in in_dict:
 		i=eval(re.findall('\d+',m)[0])-1
 		j=eval(re.findall('\d+',m)[1])-1
+		print 'm', m
+		print 'i', i
+		print 'j', j
 		matrix[i][j]=in_dict[m]
 
 	return matrix
