@@ -5,10 +5,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/DoseCalibrator.py,v $
-# $Revision: 1.8 $
+# $Revision: 1.9 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-22 00:28:25 $
-# $Author: suloway $
+# $Date: 2004-11-02 23:20:20 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -72,8 +72,7 @@ class DoseCalibrationDialog(gui.wx.Settings.Dialog):
 		sz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.stdoserate, (2, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		#label = wx.StaticText(self, -1, 'e/m²/s')
-		label = wx.StaticText(self, -1, 'e/m^2/s')
+		label = wx.StaticText(self, -1, 'e/A^2/s')
 		sz.Add(label, (2, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, 'Beam diameter:')
@@ -136,7 +135,7 @@ class DoseCalibrationDialog(gui.wx.Settings.Dialog):
 		try:
 			self.stbeamcurrent.SetLabel(str(results['beam current']))
 			self.stscreenmag.SetLabel(str(results['screen magnification']))
-			self.stdoserate.SetLabel(str(results['dose rate']))
+			self.stdoserate.SetLabel(str(results['dose rate']*10e20))
 		except KeyError:
 			self.stbeamcurrent.SetLabel('')
 			self.stscreenmag.SetLabel('')
