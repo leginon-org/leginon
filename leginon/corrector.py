@@ -8,10 +8,11 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
+import data
 import node
 import Numeric
 import imagefun
-import data, event
+import event
 import cPickle
 import string
 import threading

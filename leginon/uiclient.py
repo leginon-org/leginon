@@ -17,6 +17,7 @@ import wxDictTree
 import wxOrderedListBox
 import wxMaster
 import wxGridTray
+from Numeric import arraytype
 
 wxEVT_ADD_WIDGET = wxNewEventType()
 wxEVT_SET_WIDGET = wxNewEventType()
@@ -154,17 +155,30 @@ class XMLRPCClient(object):
 			# exception during call of the function
 			raise
 
-class UIClient(XMLRPCClient, uiserver.XMLRPCServer):
+class LocalUIClient(object):
+	def __init__(self, uiserver):
+		self.uiserver = uiserver
+
+	def addServer(self):
+		self.uiserver.addLocalClient(self)
+
+	def setServer(self, namelist, value, thread=False):
+		self.uiserver.setFromClient(namelist, value)
+
+	def commandServer(self, namelist, args, thread=False):
+		self.uiserver.commandFromClient(namelist, args)
+
+class XMLRPCUIClient(XMLRPCClient, uiserver.XMLRPCServer):
 	def __init__(self, serverhostname, serverport, port=None):
 		XMLRPCClient.__init__(self, serverhostname, serverport, port)
 		uiserver.XMLRPCServer.__init__(self, port)
-		self.server.register_function(self.addFromServer, 'ADD')
-		self.server.register_function(self.setFromServer, 'SET')
-		self.server.register_function(self.removeFromServer, 'DEL')
-		self.server.register_function(self.configureFromServer, 'CONFIGURE')
+		self.server.register_function(self.addFromServer, 'add')
+		self.server.register_function(self.setFromServer, 'set')
+		self.server.register_function(self.removeFromServer, 'remove')
+		self.server.register_function(self.configureFromServer, 'configure')
 
 	def addServer(self):
-		self.execute('ADDSERVER', (self.hostname, self.port))
+		self.execute('add client', (self.hostname, self.port))
 
 	def setServer(self, namelist, value, thread=False):
 		#print 'setServer', namelist, value
@@ -177,56 +191,68 @@ class UIClient(XMLRPCClient, uiserver.XMLRPCServer):
 	def commandServer(self, namelist, args, thread=False):
 		if thread:
 			threading.Thread(target=self.execute,
-												args=('COMMAND', (namelist, args))).start()
+												args=('command', (namelist, args))).start()
 		else:
-			self.execute('COMMAND', (namelist, args))
+			self.execute('command', (namelist, args))
 
-	def addFromServer(self, dependencies, namelist, typelist, value,
-										configuration):
-		raise NotImplementedError
-
-	def setFromServer(self, namelist, value):
-		raise NotImplementedError
-
-	def removeFromServer(self, namelist):
-		raise NotImplementedError
-
-	def configureFromServer(self, namelist, configuration):
-		raise NotImplementedError
-
-class wxUIClient(UIClient):
-	def __init__(self, container, serverhostname, serverport, port=None):
+class wxUIClient(object):
+	def __init__(self, container):
 		# there are some timing issues to be thought out
 		self.container = container
-		UIClient.__init__(self, serverhostname, serverport, port)
-		threading.Thread(target=self.addServer, args=()).start()
 
-	def addFromServer(self, dependencies, namelist, typelist, value,
-										configuration):
+		#UIClient.__init__(self, serverhostname, serverport, port)
+		#threading.Thread(target=self.addServer, args=()).start()
+
+	def addFromServer(self, properties):
+		dependencies = properties['dependencies']
+		namelist = properties['namelist']
+		typelist = properties['typelist']
+		try:
+			value = properties['value']
+		except KeyError:
+			value = ''
+		configuration = properties['configuration']
 		evt = AddWidgetEvent(dependencies, namelist, typelist, value, configuration)
 		wxPostEvent(self.container.widgethandler, evt)
 		return ''
 
-	def setFromServer(self, namelist, value):
-		#print 'setFromServer', namelist, value
+	def setFromServer(self, properties):
+		namelist = properties['namelist']
+		value = properties['value']
 		evt = SetWidgetEvent(namelist, value)
 		wxPostEvent(self.container.widgethandler, evt)
 		return ''
 
-	def removeFromServer(self, namelist):
+	def removeFromServer(self, properties):
+		namelist = properties['namelist']
 		evt = RemoveWidgetEvent(namelist)
 		wxPostEvent(self.container.widgethandler, evt)
 		return ''
 
-	def configureFromServer(self, namelist, configuration):
+	def configureFromServer(self, properties):
+		namelist = properties['namelist']
+		configuration = properties['configuration']
 		evt = ConfigureWidgetEvent(namelist, configuration)
 		wxPostEvent(self.container.widgethandler, evt)
 		return ''
 
+class wxLocalClient(LocalUIClient, wxUIClient):
+	def __init__(self, server, container):
+		LocalUIClient.__init__(self, server)
+		wxUIClient.__init__(self, container)
+		self.addServer()
+
+class wxXMLRPCClient(XMLRPCUIClient, wxUIClient):
+	def __init__(self, serverhostname, serverport, container, port=None):
+		XMLRPCUIClient.__init__(self, serverhostname, serverport, port)
+		wxUIClient.__init__(self, container)
+		threading.Thread(target=self.addServer, args=()).start()
+
 class UIApp(wxApp):
-	def __init__(self, serverhostname, serverport, title='UI', containername='UI Client'):
-		self.serverhostname = serverhostname
-		self.serverport = serverport
+	def __init__(self, clientclass, clientclassargs, title='UI',
+								containername='UI Client'):
+		self.clientclass = clientclass
+		self.clientclassargs = clientclassargs
 		self.title = title
 		self.containername = containername
 		wxApp.__init__(self, 0)
@@ -238,7 +264,7 @@ class UIApp(wxApp):
 		self.panel.SetScrollRate(1, 1)		
 		containerclass = wxClientContainerFactory(wxSimpleContainerWidget)
 		self.container = containerclass(self.containername, self.panel, self,
-																		(self.serverhostname, self.serverport))
+																		self.clientclass, self.clientclassargs)
 		if self.container.sizer is not None:
 			self.panel.SetSizer(self.container.sizer)
 		self.SetTopWindow(self.frame)
@@ -330,7 +356,12 @@ class wxContainerWidget(wxWidget):
 	def _addWidget(self, name, typelist, value, configuration):
 		childclass = WidgetClassFromTypeList(typelist)
 		if issubclass(childclass, wxClientContainerWidget):
-			child = childclass(name, self.childparent, self, value)
+			if isinstance(value, uiserver.Server):
+				clientclass = wxLocalClient
+				value = (value,)
+			else:
+				clientclass = wxXMLRPCClient
+			child = childclass(name, self.childparent, self, clientclass, value)
 		elif issubclass(childclass, wxDataWidget):
 			child = childclass(name, self.childparent, self, value, configuration)
 		else:
@@ -592,10 +623,9 @@ class wxClientContainerWidget(object):
 
 def wxClientContainerFactory(wxcontainerwidget):
 	class wxClientContainer(wxClientContainerWidget, wxcontainerwidget):
-		def __init__(self, name, parent, container, serverhostnameport):
+		def __init__(self, name, parent, container, clientclass, clientclassargs):
 			wxcontainerwidget.__init__(self, name, parent, container)
-			self.uiclient = wxUIClient(self, serverhostnameport[0],
-																				serverhostnameport[1])
+			self.uiclient = apply(clientclass, clientclassargs + (self,))
 
 		def onSetServer(self, evt):
 			evt.namelist.insert(0, self.name)
@@ -940,12 +970,20 @@ class wxImageWidget(wxDataWidget):
 		pass
 
 	def setWidget(self, value):
-		if value.data:
-			self.imageviewer.setImageFromMrcString(value.data)
-			width, height = self.imageviewer.GetSizeTuple()
-			self.sizer.SetItemMinSize(self.imageviewer, width, height)
+		if isinstance(value, xmlrpclib.Binary):
+			if value.data:
+				self.imageviewer.setImageFromMrcString(value.data)
+				width, height = self.imageviewer.GetSizeTuple()
+				self.sizer.SetItemMinSize(self.imageviewer, width, height)
+			else:
+				self.imageviewer.clearImage()
 		else:
-			self.imageviewer.clearImage()
+			if isinstance(value, arraytype):
+				self.imageviewer.setNumericImage(value)
+				width, height = self.imageviewer.GetSizeTuple()
+				self.sizer.SetItemMinSize(self.imageviewer, width, height)
+			else:
+				self.imageviewer.clearImage()
 
 	def destroy(self):
 		self.label.Destroy()

@@ -6,14 +6,9 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-## defines the Event and EventHandler classes
+# defines the Event and EventHandler classes
 
-import leginonobject
 import data
-
-### False is not defined in early python 2.2
-False = 0
-True = 1
 
 def eventClasses():
 	"""
@@ -283,6 +278,16 @@ class PublishSpiralEvent(ControlEvent):
 	'Event telling sprial target maker to publish a spiral '
 	pass
 
+class EmailEvent(Event):
+	'Event to send email'
+	def typemap(cls):
+		t = Event.typemap()
+		t += [('subject', str)]
+		t += [('text', str)]
+		t += [('image string', str)]
+		return t
+	typemap = classmethod(typemap)
+
 ## this is basically the same as data.ImageTargetData
 class ImageClickEvent(Event):
 	def typemap(cls):
@@ -323,8 +328,47 @@ class PresetChangedEvent(Event):
 		return t
 	typemap = classmethod(typemap)
 
-##############################################################
-## generate the mapping of data class to publish event class
+class DeviceLockEvent(ControlEvent):
+	pass
+
+class DeviceUnlockEvent(ControlEvent):
+	pass
+
+class DeviceGetPublishEvent(PublishEvent):
+	dataclass = data.DeviceGetData
+
+class DevicePublishEvent(PublishEvent):
+	dataclass = data.DeviceData
+	def typemap(cls):
+		t = PublishEvent.typemap()
+		t += [('get data ID', tuple)]
+		return t
+	typemap = classmethod(typemap)
+
+'''
+class DeviceGetEvent(Event):
+	def typemap(cls):
+		t = Event.typemap()
+		t += [('data ID', tuple),]
+		return t
+	typemap = classmethod(typemap)
+
+class DeviceSetEvent(Event):
+	def typemap(cls):
+		t = Event.typemap()
+		t += [('data ID', tuple),]
+		return t
+	typemap = classmethod(typemap)
+'''
+
+class DeviceConfirmationEvent(ConfirmationEvent):
+	def typemap(cls):
+		t = ConfirmationEvent.typemap()
+		t += [('data ID', tuple),]
+		return t
+	typemap = classmethod(typemap)
+
+# generate the mapping of data class to publish event class
 publish_events = {}
 event_classes = eventClasses()
 for eventclass in event_classes.values():
@@ -332,10 +376,21 @@ for eventclass in event_classes.values():
 		if hasattr(eventclass, 'dataclass'):
 			publish_events[eventclass.dataclass] = eventclass
 
+# event related exceptions
 
-###########################################################
-###########################################################
-## event related exceptions
+class InvalidEventError(TypeError):
+	pass
+
+
+# generate the mapping of data class to publish event class
+publish_events = {}
+event_classes = eventClasses()
+for eventclass in event_classes.values():
+	if issubclass(eventclass, PublishEvent):
+		if hasattr(eventclass, 'dataclass'):
+			publish_events[eventclass.dataclass] = eventclass
+
+# event related exceptions
 
 class InvalidEventError(TypeError):
 	pass

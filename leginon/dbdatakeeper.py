@@ -5,20 +5,15 @@
 #       For terms of the license agreement
 #       see  http://ami.scripps.edu/software/leginon-license
 #
-import cPickle
-import threading
+
+import data
 import datahandler
 import sqldict
-import data
-import Mrc
-import os
-import strictdict
+import threading
 
 class DBDataKeeper(datahandler.DataHandler):
-	def __init__(self, id, session):
-		datahandler.DataHandler.__init__(self, id, session)
-		# leginon object id = id
-		# session id = session
+	def __init__(self):
+		datahandler.DataHandler.__init__(self)
 		self.dbd = sqldict.SQLDict()
 		self.lock = threading.RLock()
 

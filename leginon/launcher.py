@@ -23,7 +23,6 @@ class Launcher(node.Node):
 		initializer = {'name': 'launcher session'}
 		session = data.SessionData(initializer=initializer)
 		node.Node.__init__(self, id, session, nodelocations, tcpport=port, **kwargs)
-#		self.checkPythonVersion()
 		self.addEventInput(event.LaunchEvent, self.handleLaunch)
 		self.caller = calllauncher.CallLauncher()
 		l = self.location()

@@ -11,8 +11,8 @@ import leginonobject
 import socketstreamtransport
 
 class Server(SocketServer.ThreadingTCPServer, socketstreamtransport.Server):
-	def __init__(self, id, dh, port=None):
-		socketstreamtransport.Server.__init__(self, id, dh)
+	def __init__(self, dh, port=None):
+		socketstreamtransport.Server.__init__(self, dh)
 
 		# instantiater can choose a port or we'll choose one for them
 		if port is not None:
@@ -46,8 +46,8 @@ class Server(SocketServer.ThreadingTCPServer, socketstreamtransport.Server):
 		self.server_close()
 
 class Client(socketstreamtransport.Client):
-	def __init__(self, id, location):
-		socketstreamtransport.Client.__init__(self, id, location)
+	def __init__(self, location):
+		socketstreamtransport.Client.__init__(self, location)
 
 	def connect(self, family = socket.AF_INET, type = socket.SOCK_STREAM):
 		self.socket = socket.socket(family, type)

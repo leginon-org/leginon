@@ -44,6 +44,12 @@ class Object(object):
 	def getParent(self):
 		return self.parent
 
+	def getNameList(self):
+		namelist = (self.name,)
+		if self.parent is not None:
+			namelist = self.parent.getNameList() + namelist
+		return namelist
+
 	def setParent(self, parent):
 		if parent is not None and not isinstance(parent, Container):
 			raise TypeError('parent must be a Container or None')
@@ -65,12 +71,12 @@ class Object(object):
 	def _enable(self, enabled):
 		self.enabled = enabled
 		if self.parent is not None:
-			self.parent.settingsObjectCallback((self.name,), {'enabled': enabled})
+			self.parent.configureObjectCallback(self)
 
-	def getSettings(self):
-		settings = {}
-		settings['enabled'] = self.enabled
-		return settings
+	def getConfiguration(self):
+		configuration = {}
+		configuration['enabled'] = self.enabled
+		return configuration
 
 class Container(Object):
 	typelist = Object.typelist + ('container',)
@@ -94,9 +100,7 @@ class Container(Object):
 					dependencies = [self.uiobjectlist[-1].getName()]
 				except IndexError:
 					dependencies = []
-				self.addObjectCallback(dependencies, (uiobject.name,),
-																uiobject.typelist, value,
-																uiobject.getSettings())
+				self.addObjectCallback(uiobject)
 				if isinstance(uiobject, Container):
 					uiobject.addObjectsCallback()
 				self.uiobjectdict[uiobject.name] = uiobject
@@ -116,9 +120,7 @@ class Container(Object):
 				dependencies = []
 			else:
 				dependencies = [self.uiobjectlist[i - 1].getName()]
-			self.addObjectCallback(dependencies, (uiobject.name,),
-															uiobject.typelist, value,
-															uiobject.getSettings(), client)
+			self.addObjectCallback(uiobject, client)
 			if isinstance(uiobject, Container):
 				uiobject.addObjectsCallback(client)
 
@@ -132,30 +134,29 @@ class Container(Object):
 			uiobject = self.uiobjectdict[name]
 			del self.uiobjectdict[name]
 			self.uiobjectlist.remove(uiobject)
-			self.deleteObjectCallback((uiobject.name,))
+			self.deleteObjectCallback(uiobject)
 			uiobject.setParent(None)
 		except KeyError:
 			raise ValueError('cannot delete Object, not in Object mapping')
 
-	def addObjectCallback(self, dependencies,  namelist, typelist, value, settings, client=None):
+	def addObjectCallback(self, uiobject, client=None):
 		if self.parent is not None:
-			self.parent.addObjectCallback(dependencies, (self.name,) + namelist,
-																			typelist, value, settings, client)
+			self.parent.addObjectCallback(uiobject, client)
 		else:
 			pass
 			#raise RuntimeError('cannot add object to container without parent')
 
-	def setObjectCallback(self, namelist, value):
+	def setObjectCallback(self, uiobject):
 		if self.parent is not None:
-			self.parent.setObjectCallback((self.name,) + namelist, value)
+			self.parent.setObjectCallback(uiobject)
 
-	def deleteObjectCallback(self, namelist):
+	def deleteObjectCallback(self, uiobject):
 		if self.parent is not None:
-			self.parent.deleteObjectCallback((self.name,) + namelist)
+			self.parent.deleteObjectCallback(uiobject)
 
-	def settingsObjectCallback(self, namelist, settings):
+	def configureObjectCallback(self, uiobject):
 		if self.parent is not None:
-			self.parent.settingsObjectCallback((self.name,) + namelist, settings)
+			self.parent.configureObjectCallback(uiobject)
 
 	def getObjectFromList(self, namelist):
 		if type(namelist) not in (list, tuple):
@@ -192,9 +193,14 @@ class ExternalContainer(Container):
 def clientContainerFactory(containerclass):
 	class ClientContainer(containerclass):
 		typelist = containerclass.typelist + ('client',)
-		def __init__(self, name, location):
-			self.value = location
+		def __init__(self, name, uiserver, location):
+			self.value = uiserver
+			self.xmlrpclocation = location
 			containerclass.__init__(self, name)
+
+		def toXMLRPC(self, value):
+			return self.xmlrpclocation
+
 	return ClientContainer
 
 SmallClientContainer = clientContainerFactory(SmallContainer)
@@ -232,11 +238,11 @@ class Data(Object):
 
 		self.set(value)
 
-	def getSettings(self):
-		settings = Object.getSettings(self)
-		settings['read'] = self.read
-		settings['write'] = self.write
-		return settings
+	def getConfiguration(self):
+		configuration = Object.getConfiguration(self)
+		configuration['read'] = self.read
+		configuration['write'] = self.write
+		return configuration
 
 	def setCallback(self, callback):
 		if callable(callback):
@@ -273,7 +279,7 @@ class Data(Object):
 		else:
 			raise TypeError('invalid data value for type')
 		if self.parent is not None:
-			self.parent.setObjectCallback((self.name,), self.value)
+			self.parent.setObjectCallback(self)
 
 	# needs reversal of _get/get like set
 	def get(self):
@@ -493,15 +499,19 @@ class SelectFromStruct(Container):
 
 class Binary(Data):
 	typelist = Data.typelist + ('binary',)
-	def __init__(self, name, value, permissions='r', callback=None, persist=False):
+#	def __init__(self, name, value, permissions='r', callback=None,
+#																										persist=False):
 #		if type(value) is str:
 #			value = xmlrpclib.Binary(value)
-		Data.__init__(self, name, value, permissions, callback, persist)
+#		Data.__init__(self, name, value, permissions, callback, persist)
+#
+#	def set(self, value):
+#		if type(value) is str:
+#			value = xmlrpclib.Binary(value)
+#		Data.set(self, value)
 
-	def set(self, value):
-		if type(value) is str:
-			value = xmlrpclib.Binary(value)
-		Data.set(self, value)
+	def toXMLRPC(self, value):
+		return xmlrpclib.Binary(value)
 
 class Dialog(Container):
 	typelist = Container.typelist + ('message dialog',)
@@ -527,11 +537,21 @@ class MessageDialog(Dialog):
 class PILImage(Binary):
 	typelist = Binary.typelist + ('PIL image',)
 	nonevalue = ''
-	def __init__(self, name, value, permissions='r', callback=None,
-																										persist=False):
-		Binary.__init__(self, name, value, permissions, callback, persist)
+#	def __init__(self, name, value, permissions='r', callback=None,
+#																										persist=False):
+#		Binary.__init__(self, name, value, permissions, callback, persist)
 
-	def set(self, value):
+#	def set(self, value):
+#		if value is not None:
+#			stream = cStringIO.StringIO()
+#			value.save(stream, 'jpeg')
+#			value = xmlrpclib.Binary(stream.getvalue())
+#			stream.close()
+#		else:
+#			value = xmlrpclib.Binary(value)
+#		Data.set(self, value)
+
+	def toXMLRPC(self, value):
 		if value is not None:
 			stream = cStringIO.StringIO()
 			value.save(stream, 'jpeg')
@@ -539,26 +559,33 @@ class PILImage(Binary):
 			stream.close()
 		else:
 			value = xmlrpclib.Binary(value)
-		Data.set(self, value)
+		return value
 
 class Image(Binary):
 	typelist = Binary.typelist + ('image',)
 	nonevalue = ''
-	def __init__(self, name, value, permissions='r', callback=None, persist=False):
+#	def __init__(self, name, value, permissions='r', callback=None, persist=False):
 #		if isinstance(value, Numeric.arraytype):
 #			value = self.array2image(value)
-		Binary.__init__(self, name, value, permissions, callback, persist)
+#		Binary.__init__(self, name, value, permissions, callback, persist)
 
 	# needs optimization
 	def array2image(self, a):
 		return Mrc.numeric_to_mrcstr(a)
 
-	def set(self, value):
+#	def set(self, value):
+#		if isinstance(value, Numeric.arraytype):
+#			value = xmlrpclib.Binary(self.array2image(value))
+#		else:
+#			value = xmlrpclib.Binary(value)
+#		Data.set(self, value)
+
+	def toXMLRPC(self, value):
 		if isinstance(value, Numeric.arraytype):
 			value = xmlrpclib.Binary(self.array2image(value))
 		else:
 			value = xmlrpclib.Binary(value)
-		Data.set(self, value)
+		return value
 
 class ClickImage(Container):
 	typelist = Container.typelist + ('click image',)

@@ -8,36 +8,25 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import leginonobject
 import localtransport
-import sys
-#if sys.platform != 'win32':
-#	import unixtransport
 import tcptransport
-import datahandler
-import sys
 import threading
 
-class Base(leginonobject.LeginonObject):
-	def __init__(self, id):
-		leginonobject.LeginonObject.__init__(self, id)
+class Base(object):
+	def __init__(self):
 		# order matters
-#		if sys.platform != 'win32':
-#			self.transportmodules = [localtransport, unixtransport, tcptransport]
-#		else:
-#			self.transportmodules = [localtransport, tcptransport]
 		self.transportmodules = [localtransport, tcptransport]
 
 class Client(Base):
 	# hostname/port -> location or whatever
 	# needs to be transport generalized like server
-	def __init__(self, id, serverlocation):
-		Base.__init__(self, id)
+	def __init__(self, serverlocation):
+		Base.__init__(self)
 		self.clients = []
 
 		for t in self.transportmodules:
 			try:
-				self.clients.append(apply(t.Client, (self.ID(), serverlocation,)))
+				self.clients.append(apply(t.Client, (serverlocation,)))
 			except ValueError:
 				pass
 
@@ -91,15 +80,15 @@ class Client(Base):
 			raise
 
 class Server(Base):
-	def __init__(self, id, dh, tcpport=None):
-		Base.__init__(self, id)
+	def __init__(self, dh, tcpport=None):
+		Base.__init__(self)
 		self.datahandler = dh
 		self.servers = {}
 		for t in self.transportmodules:
 			if tcpport is not None and t is tcptransport:
-				args = (self.ID(), self.datahandler, tcpport)
+				args = (self.datahandler, tcpport)
 			else:
-				args = (self.ID(), self.datahandler)
+				args = (self.datahandler,)
 			self.servers[t] = apply(t.Server, args)
 			self.servers[t].start()
 
@@ -108,11 +97,10 @@ class Server(Base):
 			self.servers[t].exit()
 
 	def location(self):
-		loc = {}
-		loc.update(leginonobject.LeginonObject.location(self))
+		location = {}
 		for t in self.transportmodules:
-			loc.update(self.servers[t].location())
-		return loc
+			location.update(self.servers[t].location())
+		return location
 
 if __name__ == '__main__':
 	pass

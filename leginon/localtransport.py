@@ -8,19 +8,17 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import leginonobject
-import copy
+#import copy
+import socket
 import threading
-#import weakref
 
-#_id2obj_dict = weakref.WeakValueDictionary()
 localserverdict = {}
 localserverdictlock = threading.RLock()
 
-class Server(leginonobject.LeginonObject):
-	def __init__(self, nid, dh):
-		leginonobject.LeginonObject.__init__(self, nid)
+class Server(object):
+	def __init__(self, dh):
 		self.datahandler = dh
+		self.hostname = socket.gethostname()
 		self.pythonid = id(self)
 		localserverdictlock.acquire()
 		try:
@@ -32,9 +30,10 @@ class Server(leginonobject.LeginonObject):
 		pass
 
 	def location(self):
-		loc = leginonobject.LeginonObject.location(self)
-		loc['local server python ID'] = self.pythonid
-		return loc
+		location = {}
+		location['hostname'] = self.hostname
+		location['local server python ID'] = self.pythonid
+		return location
 
 	def exit(self):
 		localserverdictlock.acquire()
@@ -43,11 +42,10 @@ class Server(leginonobject.LeginonObject):
 		finally:
 			localserverdictlock.release()
 
-class Client(leginonobject.LeginonObject):
-	def __init__(self, id, location):
-		leginonobject.LeginonObject.__init__(self, id)
-		if location['hostname'] != self.location()['hostname']:
-			raise ValueError
+class Client(object):
+	def __init__(self, location):
+		if location['hostname'] != socket.gethostname():
+			raise ValueError('local client cannot connect to different host')
 		self.serverlocation = location
 
 	def push(self, idata):

@@ -5,11 +5,10 @@
 #       For terms of the license agreement
 #       see  http://ami.scripps.edu/software/leginon-license
 #
-import os, socket
-import random
-#import threading, weakref
+
+import os
+import socket
 import sys
-import copy
 
 class LeginonObject(object):
 	'''Generic base class for objects. Defines ID and location.'''
@@ -21,10 +20,8 @@ class LeginonObject(object):
 		'''Returns a dict describing the location of this object.'''
 		loc = {}
 		loc['hostname'] = socket.gethostname()
-		loc['PID'] = os.getpid()
-		loc['python ID'] = id(self)
-		#loc['thread'] = threading.currentThread()
-		#loc['weakref'] = weakref.ref(self)
+#		loc['PID'] = os.getpid()
+#		loc['python ID'] = id(self)
 		return loc
 
 	def print_location(self):
@@ -77,15 +74,3 @@ class LeginonObject(object):
 		excinfo = sys.exc_info()
 		sys.excepthook(*excinfo)
 
-	def checkPythonVersion(self):
-		message = '''
-		XXXXXXXXXXXXXXXXXX X X X  WARNING  X X X XXXXXXXXXXXXXXXXXX
-		You are not using Python 2.2.2!  deepcopy at your own risk!
-		XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-		'''
-		vinfo = sys.version_info
-
-		if vinfo[0] == 2 and vinfo[1] == 2 and vinfo[2] >=2:
-			pass
-		else:
-			self.printerror(message)

@@ -16,8 +16,14 @@ import socket
 import os
 import sys
 import data
-#import gc
+import threading
 
+#import psyco
+#psyco.log()
+#psyco.profile()
+#psyco.full()
+
+#import gc
 #gc.enable()
 #gc.set_debug(gc.DEBUG_LEAK)
 
@@ -30,7 +36,9 @@ m = manager.Manager(('manager',), None)
 managerlocation = m.location()
 launcher = launcher.Launcher((socket.gethostname(),),
 															{'manager': managerlocation})
-client = uiclient.UIApp(managerlocation['hostname'],
-												managerlocation['UI port'],
+#client = uiclient.UIApp(managerlocation['hostname'],
+#												managerlocation['UI port'],
+
+client = uiclient.UIApp(uiclient.wxLocalClient, (m.uiserver,),
 												'Leginon II')
 

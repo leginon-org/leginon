@@ -15,8 +15,7 @@ import node
 import application
 import data
 import event
-import launcher
-import copy
+#import copy
 import time
 import dbdatakeeper
 import uidata
@@ -25,22 +24,6 @@ import leginonobject
 import socket
 import os
 
-class DataHandler(node.DataHandler):
-	def __init__(self, id, session, mynode):
-		leginonobject.LeginonObject.__init__(self, id)
-		## giving these all the same id, don't know why
-		self.datakeeper = datahandler.DictDataKeeper(id, session)
-		self.databinder = datahandler.DataBinder(id, session)
-		self.dbdatakeeper = dbdatakeeper.DBDataKeeper(id, session)
-		self.node = mynode
-
-	def insert(self, idata):
-		if isinstance(idata, event.Event):
-			self.databinder.insert(idata)
-		else:
-			#self.datakeeper.insert(copy.deepcopy(idata))
-			self.datakeeper.insert(idata)
-
 class Manager(node.Node):
 	'''Overlord of the nodes. Handles node communication (data and events).'''
 	def __init__(self, id, session, tcpport=None, xmlrpcport=None, **kwargs):
@@ -48,14 +31,13 @@ class Manager(node.Node):
 
 		self.clients = {}
 
-		node.Node.__init__(self, id, session, nodelocations={},
-												datahandler=DataHandler, tcpport=tcpport,
+		node.Node.__init__(self, id, session, nodelocations={}, tcpport=tcpport,
 												xmlrpcport=xmlrpcport, **kwargs)
 
 		self.uiclientcontainers = {}
 
-#		self.checkPythonVersion()
-		self.uiserver.server.register_function(self.uiGetNodeLocations, 'getNodeLocations')
+		self.uiserver.server.register_function(self.uiGetNodeLocations,
+																						'getNodeLocations')
 
 		self.nodelocations['manager'] = self.location()
 
@@ -110,7 +92,7 @@ class Manager(node.Node):
 
 	def addClient(self, newid, loc):
 		'''Add a client of clientclass to a node keyed by the node ID.'''
-		self.clients[newid] = self.clientclass(self.ID(), loc)
+		self.clients[newid] = self.clientclass(loc)
 
 	def delClient(self, newid):
 		'''Deleted a client to a node by the node ID.'''
@@ -192,7 +174,7 @@ class Manager(node.Node):
 
 		## if nothing to do, report a warning and return now
 		if not do:
-			print 'FYI:  %s event from node %s is not bound to any nodes.' % (eventclass.__name__, from_node)
+#			print 'FYI:  %s event from node %s is not bound to any nodes.' % (eventclass.__name__, from_node)
 			return
 
 		### set up confirmation event waiting
@@ -329,7 +311,11 @@ class Manager(node.Node):
 	def addNodeUIClient(self, nodeid, nodelocation):
 		if nodeid in self.uiclientcontainers:
 			self.deleteNodeUIClient(nodeid)
-		clientcontainer = uidata.LargeClientContainer(str(nodeid[-1]),
+		if nodelocation['hostname'] == self.location()['hostname']:
+			nodeuiserver = self.researchByLocation(nodelocation, 'UI server')
+		else:
+			nodeuiserver = None
+		clientcontainer = uidata.LargeClientContainer(str(nodeid[-1]), nodeuiserver,
 														(nodelocation['hostname'], nodelocation['UI port']))
 		try:
 			self.uiserver.addObject(clientcontainer)
@@ -420,7 +406,8 @@ class Manager(node.Node):
 		dependencies = node dependent on to launch
 		'''
 		args = (launcher, newproc, target, name, nodeargs, dependencies)
-		t = threading.Thread(target=self.waitNode, args=args)
+		t = threading.Thread(name='manager wait node thread',
+													target=self.waitNode, args=args)
 		t.start()
 		nodeid = self.id + (name,)
 		return nodeid
@@ -471,8 +458,7 @@ class Manager(node.Node):
 	def addNode(self, hostname, port):
 		'''Add a running node to the manager. Sends an event to the location.'''
 		e = event.NodeAvailableEvent(id=self.id, location=self.location(), nodeclass=self.__class__.__name__)
-		client = self.clientclass(self.ID(),
-												{'hostname': hostname, 'TCP port': port})
+		client = self.clientclass({'hostname': hostname, 'TCP port': port})
 
 		try:
 			client.push(e)

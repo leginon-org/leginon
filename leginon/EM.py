@@ -5,22 +5,24 @@
 #       For terms of the license agreement
 #       see  http://ami.scripps.edu/software/leginon-license
 #
-import node
-import methoddict
-import threading
+
 import data
+import emregistry
 import event
 import imp
-import copy
+import methoddict
+import node
+import Numeric
+import Queue
+import threading
 import time
 import uidata
-import Queue
-import emregistry
 import unique
-import Numeric
 
 class DataHandler(node.DataHandler):
 	def query(self, id):
+		if id == 'UI server':
+			return node.DataHandler.query(self, id)
 		emkey = id[0]
 		self.node.statelock.acquire()
 		done_event = threading.Event()
@@ -168,6 +170,12 @@ class EM(node.Node):
 		self.nodelock = threading.Lock()
 		self.locknodeid = None
 
+		# state tracks always keeps the current (known by EM) and compares
+		# to changes in the UI state in order to only change parameters that
+		# the user has modified (to save time)
+		self.statelock = threading.RLock()
+		self.state = {}
+
 		node.Node.__init__(self, id, session, nodelocations,
 												datahandler=DataHandler, **kwargs)
 
@@ -190,12 +198,6 @@ class EM(node.Node):
 		# add event inputs for locking and unlocking EM from a node
 		self.addEventInput(event.LockEvent, self.doLock)
 		self.addEventInput(event.UnlockEvent, self.doUnlock)
-
-		# state tracks always keeps the current (known by EM) and compares
-		# to changes in the UI state in order to only change parameters that
-		# the user has modified (to save time)
-		self.statelock = threading.RLock()
-		self.state = {}
 
 		# the handler thread waits for queue requests and processes them
 		# scope and camera are typically COM objects and need to be intialized
@@ -248,7 +250,7 @@ class EM(node.Node):
 
 		if ids:
 			e = event.ListPublishEvent(id=self.ID(), idlist=ids)
-			self.outputEvent(e, wait=True)
+#			self.outputEvent(e, wait=True)
 
 		self.outputEvent(event.NodeInitializedEvent(id=self.ID()))
 
@@ -623,6 +625,8 @@ class EM(node.Node):
 		return interfaceclass(key, value, permissions=permissions), None
 
 	def interfaceFromObject(self, obj):
+		if obj is None:
+			return uidata.Container('Parameters'), {}
 		orderedkeys = obj.keys()
 		orderedkeys.sort(self.cmpEM)
 		interfaceobjects = []

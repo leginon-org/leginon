@@ -5,17 +5,17 @@
 #       For terms of the license agreement
 #       see  http://ami.scripps.edu/software/leginon-license
 #
-import SocketServer
+
 import cPickle
-import socket
-import leginonobject
 import data
+import socket
+import SocketServer
 import threading
-import time
 
 class Handler(SocketServer.StreamRequestHandler):
 	def __init__(self, request, server_address, server):
-		SocketServer.StreamRequestHandler.__init__(self, request, server_address, server)
+		SocketServer.StreamRequestHandler.__init__(self, request,
+																								server_address, server)
 
 	def handle(self):
 		try:
@@ -34,63 +34,55 @@ class Handler(SocketServer.StreamRequestHandler):
 				raise
 			try:
 				# returns exception if error, else None
-				cPickle.dump(e, self.wfile, 1)
+				cPickle.dump(e, self.wfile, True)
 			except IOError:
 				print('write failed when acknowledging push')
 		else:
 			try:
-				newdata = self.server.datahandler.query(obj)
-
-				s = cPickle.dumps(newdata, 1)
-				self.wfile.write(s)
-
+				self.wfile.write(cPickle.dumps(self.server.datahandler.query(obj),
+																				True))
 			except IOError:
 				print('write failed when returning requested data')
 
-class Server(leginonobject.LeginonObject):
-	def __init__(self, id, dh):
-		leginonobject.LeginonObject.__init__(self, id)
+class Server(object):
+	def __init__(self, dh):
 		self.datahandler = dh
+		self.hostname = socket.gethostname()
 
 	def start(self):
-		self.thread = threading.Thread(name='socket server thread', target=self.serve_forever)
+		self.thread = threading.Thread(name='socket server thread',
+																		target=self.serve_forever)
 		self.thread.setDaemon(1)
 		self.thread.start()
 
 	def location(self):
-		return leginonobject.LeginonObject.location(self)
+		return {'hostname': self.hostname}
 
 	def exit(self):
 		pass
 
-class Client(leginonobject.LeginonObject):
-	def __init__(self, id, location):
-		leginonobject.LeginonObject.__init__(self, id)
+class Client(object):
+	def __init__(self, location):
 		self.serverlocation = location
 		self.socket = None
 
 	def pull(self, id):
 		self.connect()
-		idpickle = cPickle.dumps(id, 1)
-		self.send(idpickle)
+		self.send(cPickle.dumps(id, True))
 		data = self.receive()
 		self.close()
-		p = cPickle.loads(data)
-		return p
+		return cPickle.loads(data)
 
 	def push(self, idata):
 		self.connect()
-		p = cPickle.dumps(idata, 1)
-		self.send(p)
-		r = self.receive()
-		serverexception = cPickle.loads(r)
-
+		self.send(cPickle.dumps(idata, 1))
+		serverexception = cPickle.loads(self.receive())
 		self.close()
 		if serverexception is not None:
 			self.printerror('server failed to be pushed')
 			raise IOError
 
-	def connect(self, family, type = socket.SOCK_STREAM):
+	def connect(self, family, type=socket.SOCK_STREAM):
 		raise NotImplementedError
 
 	def send(self, odata):
@@ -103,24 +95,11 @@ class Client(leginonobject.LeginonObject):
 			self.printerror('socket send exception: %s' % str(e))
 			raise IOError
 
-	def OLDreceive(self):
-		data = ""
-		if self.socket is not None:
-			while 1:
-			  r = self.socket.recv(self.buffer_size) # Receive up to buffer_size bytes
-			  if not r:
-			    break
-			  data += r
-			return data
-		else:
-			self.printerror('no socket available')
-			raise IOError
-
 	def receive(self):
-		data = ""
+		data = ''
 		if self.socket is not None:
-			## this seems to set up buffering in an optimized way
-			## without having to manually specify it
+			# this seems to set up buffering in an optimized way
+			# without having to manually specify it
 			f = self.socket.makefile('r')
 			data = f.read()
 			f.close()
@@ -135,3 +114,4 @@ class Client(leginonobject.LeginonObject):
 		else:
 			self.printerror('no socket available')
 			raise IOError
+

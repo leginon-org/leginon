@@ -12,6 +12,7 @@ import data
 import uidata
 import event
 import threading
+import emailnotification
 
 # ...
 def seconds2str(seconds):
@@ -162,13 +163,16 @@ if sys.platform == 'win32':
 		eventinputs = RobotNode.eventinputs + [event.ExtractGridEvent,
 																						event.InsertGridEvent,]
 		eventoutputs = RobotNode.eventoutputs + [event.GridInsertedEvent,
-																							event.GridExtractedEvent]
+																							event.GridExtractedEvent,
+																							event.EmailEvent]
 		def __init__(self, id, session, nodelocations, **kwargs):
 			RobotNode.__init__(self, id, session, nodelocations, **kwargs)
 			self.gridorder = []
 			self.gridnumber = None
 			self.timings = {}
 			self.gridcleared = threading.Event()
+
+			self.emailclient = emailnotification.EmailClient(self)
 	
 			#self.communication = TestCommunications()
 
@@ -274,11 +278,18 @@ if sys.platform == 'win32':
 			self.communication.Signal6 = 1
 			self.setRobotStatusMessage('Signaled robot to begin extraction')
 
+		def emailGridClear(self):
+			subject = 'Grid #%d failed to be removed from specimen holder properly' % self.gridnumber
+			text = 'Reply to this message if grid is no longer in the specimen holder.\nImage of the specimen holder is attached.'
+			imagestring = None
+			self.emailclient.sendAndSet(self.gridcleared, subject, text, imagestring)
+
 		def waitForGridClear(self):
 			self.gridcleared.clear()
-			self.setRobotStatusMessage('Waiting for operator to clear grid')
+			self.setRobotStatusMessage('Waiting for confirmation that grid is clear')
+			self.emailGridClear()
 			self.gridcleared.wait()
-			self.gridcleared.clear()
+			self.gridcleared = threading.Event()
 			self.setRobotStatusMessage('Resuming operation')
 			self.communication.Signal10 = 1
 

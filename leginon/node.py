@@ -5,53 +5,36 @@
 #       For terms of the license agreement
 #       see  http://ami.scripps.edu/software/leginon-license
 #
-import leginonconfig
-import threading
-import code
-import leginonobject
-import event
-import datatransport
+
+#import copy
+import data
 import datahandler
+import datatransport
 import dbdatakeeper
-import sys
-import copy
-import time
+import event
+import leginonobject
+import threading
 import uiserver
 import uidata
-import data
-import os
+
+# for ID counter
 import cPickle
+import leginonconfig
+import os
 
-# False is not defined in early python 2.2
-False = 0
-True = 1
-
-class DataHandler(leginonobject.LeginonObject):
+class DataHandler(object):
 	'''
 	handles data published by the node
 	'''
-	def __init__(self, id, session, mynode):
-		leginonobject.LeginonObject.__init__(self, id)
-		if isinstance(session, data.SessionData) or session is None:
-			self.session = session
-		else:
-			raise TypeError('session must be of proper type')
-		## giving these all the same id, don't know why
-		self.datakeeper = datahandler.SizedDataKeeper(id, session)
-		self.databinder = datahandler.DataBinder(id, session)
-		self.dbdatakeeper = dbdatakeeper.DBDataKeeper(id, session)
+	def __init__(self, mynode,
+								datakeeperclass=datahandler.SizedDataKeeper,
+								databinderclass=datahandler.DataBinder,
+								dbdatakeeperclass=dbdatakeeper.DBDataKeeper):
+		# giving these all the same id, don't know why
+		self.datakeeper = datakeeperclass()
+		self.databinder = databinderclass()
+		self.dbdatakeeper = dbdatakeeperclass()
 		self.node = mynode
-
-	def local_only_insert(self, idata):
-		'''Insert data into the datahandler. Only events can be inserted from and external source. Events are bound. See addBinding.'''
-		if isinstance(idata, event.Event):
-			self.databinder.insert(idata)
-		else:
-			if idata['id'][:-1] == self.id[:-1]:
-				#self.datakeeper.insert(copy.deepcopy(idata))
-				self.datakeeper.insert(idata)
-			else:
-				raise RuntimeError('local only insert on data not from this node')
 
 	def insert(self, idata):
 		if isinstance(idata, event.Event):
@@ -82,7 +65,6 @@ class DataHandler(leginonobject.LeginonObject):
 	def __getattr__(self, attr):
 		return getattr(self.datakeeper, attr)
 
-
 class Node(leginonobject.LeginonObject):
 	'''Atomic operating unit for performing tasks, creating data and events.'''
 
@@ -98,7 +80,8 @@ class Node(leginonobject.LeginonObject):
 									event.NodeInitializedEvent,
 									event.NodeUninitializedEvent]
 
-	def __init__(self, id, session, nodelocations = {}, datahandler=DataHandler, tcpport=None, xmlrpcport=None, clientclass = datatransport.Client):
+	def __init__(self, id, session, nodelocations={}, datahandler=DataHandler,
+							tcpport=None, xmlrpcport=None, clientclass=datatransport.Client):
 		leginonobject.LeginonObject.__init__(self, id)
 		self.id_count_lock = threading.Lock()
 
@@ -109,17 +92,14 @@ class Node(leginonobject.LeginonObject):
 
 		self.nodelocations = nodelocations
 
-		self.datahandler = datahandler(self.ID(), session, self)
-
-		self.server = datatransport.Server(self.ID(),
-																	self.datahandler, tcpport)
+		self.datahandler = datahandler(self)
+		self.server = datatransport.Server(self.datahandler, tcpport)
 		self.clientclass = clientclass
 
 		self.uiserver = uiserver.Server(str(self.id[-1]), xmlrpcport)
+		self.datahandler.insert(self.uiserver)
 
-#		if not isinstance(self.session, data.SessionData):
-#			self.outputWarning('No session specified')
-
+		self.confirmationevents = {}
 		self.eventswaiting = {}
 		self.ewlock = threading.Lock()
 
@@ -151,7 +131,6 @@ class Node(leginonobject.LeginonObject):
 	def IDCounter(self):
 		self.id_count_lock.acquire()
 		try:
-
 			# read current ID count value
 			if not hasattr(self, 'idcount'):
 				self.idcount = 0
@@ -178,7 +157,8 @@ class Node(leginonobject.LeginonObject):
 				cPickle.dump(new_count, f, 0)
 				f.close()
 			except:
-				print 'error while saving %s to pickle in file %s' % (new_count, fullname)
+				print 'error while saving %s to pickle in file %s' % (new_count,
+																															fullname)
 				raise
 		finally:
 			self.id_count_lock.release()
@@ -202,13 +182,8 @@ class Node(leginonobject.LeginonObject):
 
 	def start(self):
 		'''Call to make the node active and react to a call to exit. Calls main.'''
-		#interact_thread = self.interact()
-
 		self.outputEvent(event.NodeInitializedEvent(id=self.ID()))
 		self.main()
-
-		# wait until the interact thread terminates
-		#interact_thread.join()
 		self.die_event.wait()
 		self.outputEvent(event.NodeUninitializedEvent(), wait=True)
 		self.exit()
@@ -250,7 +225,6 @@ class Node(leginonobject.LeginonObject):
 			eventwait = self.eventswaiting[eventid]
 			self.ewlock.release()
 
-
 		### send event and cross your fingers
 		try:
 			client.push(ievent)
@@ -262,6 +236,7 @@ class Node(leginonobject.LeginonObject):
 			self.printException()
 			raise
 
+		confirmationevent = None
 
 		if wait:
 			### this wait should be released 
@@ -270,6 +245,8 @@ class Node(leginonobject.LeginonObject):
 			notimeout = eventwait.isSet()
 			self.ewlock.acquire()
 			try:
+				confirmationevent = self.confirmationevents[eventid]
+				del self.confirmationevents[eventid]
 				del self.eventswaiting[eventid]
 			except KeyError:
 				print 'This could be bad to except KeyError'
@@ -277,17 +254,20 @@ class Node(leginonobject.LeginonObject):
 			if not notimeout:
 				raise ConfirmationTimeout(str(ievent))
 
+		return confirmationevent
+
 
 	def outputEvent(self, ievent, wait=False, timeout=None):
 		'''
 		output an event to the manager
 		'''
-		self.eventToClient(ievent, self.managerclient, wait, timeout)
+		return self.eventToClient(ievent, self.managerclient, wait, timeout)
 
 	def handleConfirmedEvent(self, ievent):
 		'''Handler for ConfirmationEvents. Unblocks the call waiting for confirmation of the event generated.'''
 		eventid = ievent['eventid']
 		if eventid in self.eventswaiting:
+			self.confirmationevents[eventid] = ievent
 			self.eventswaiting[eventid].set()
 		## this should not confirm ever, right?
 
@@ -354,18 +334,23 @@ class Node(leginonobject.LeginonObject):
 
 
 		### publish event
-		if 'pubevent' in kwargs and kwargs['pubevent']:
+		if 'publisheventinstance' in kwargs:
+			return self.outputEvent(kwargs['publisheventinstance'])
+		elif 'pubevent' in kwargs and kwargs['pubevent']:
 			if 'confirm' in kwargs:
 				confirm = kwargs['confirm']
 			else:
 				confirm = False
+			wait = False
+			if confirm and 'wait' in kwargs:
+				wait = kwargs['wait']
 			
 			if pubeventclass is None:
 				eventclass = event.publish_events[idata.__class__]
 			else:
 				eventclass = pubeventclass
 			e = eventclass(id=self.ID(), dataid=idata['id'], confirm=confirm)
-			self.outputEvent(e)
+			return self.outputEvent(e, wait=wait)
 
 	def addSession(self, datainstance):
 		## setting an item of datainstance will reset the dbid
@@ -476,7 +461,7 @@ class Node(leginonobject.LeginonObject):
 
 		for nodeid in nodeiddata['location']:
 			nodelocation = self.researchByLocation(self.nodelocations['manager'], nodeid)
-			client = self.clientclass(self.ID(), nodelocation['location'])
+			client = self.clientclass(nodelocation['location'])
 			client.push(idata)
 
 	def locateDataByID(self, dataid):
@@ -488,7 +473,7 @@ class Node(leginonobject.LeginonObject):
 
 	def researchByLocation(self, loc, dataid):
 		'''Get a piece of data with the specified data ID by the location of a node.'''
-		client = self.clientclass(self.ID(), loc)
+		client = self.clientclass(loc)
 		try:
 			cdata = client.pull(dataid)
 		except IOError:
@@ -529,7 +514,7 @@ class Node(leginonobject.LeginonObject):
 
 	def addManager(self, loc):
 		'''Set the manager controlling the node and notify said manager this node is available.'''
-		self.managerclient = self.clientclass(self.ID(), loc)
+		self.managerclient = self.clientclass(loc)
 		available_event = event.NodeAvailableEvent(id=self.ID(), location=self.location(), nodeclass=self.__class__.__name__)
 		self.outputEvent(ievent=available_event, wait=True, timeout=10)
 
@@ -545,22 +530,6 @@ class Node(leginonobject.LeginonObject):
 		# basically the 'confirmation' of this event
 
 	# utility methods
-
-	def interact(self):
-		'''Create a prompt with namespace within the class instance for command linecontrol of the node.'''
-		banner = "Starting interpreter for %s" % self.__class__
-		readfunc = self.raw_input
-		local = locals()
-		t = threading.Thread(name='interact thread', target=code.interact,
-													args=(banner, readfunc, local))
-		t.setDaemon(1)
-		t.start()
-		return t
-
-	def raw_input(self, prompt):
-		'''Helper function for interact. See interact.'''
-		newprompt = '%s%s' % (str(self.id), prompt)
-		return raw_input(newprompt)
 
 	def key2str(self, d):
 		'''Makes keys and values into strings.'''
@@ -581,17 +550,13 @@ class Node(leginonobject.LeginonObject):
 		idarray = uidata.Array('ID', self.id, 'r')
 		class_string = uidata.String('Class', self.__class__.__name__, 'r')
 		locationstruct = uidata.Struct('Location', self.location(), 'r')
-#		self.uidatastruct = uidata.Struct('Data',
-#						self.datahandlers[self.datahandler].datadict, 'rw')
 		datakeepercontainer = self.datahandler.datakeeper.UI()
 		exitmethod = uidata.Method('Exit', self.uiExit)
 
 		container = uidata.LargeContainer('Node')
 		if datakeepercontainer is not None:
 			container.addObject(datakeepercontainer)
-		container.addObjects((idarray, class_string, locationstruct,
-#														self.uidatastruct, exitmethod))
-														exitmethod))
+		container.addObjects((idarray, class_string, locationstruct, exitmethod))
 		self.uiserver.addObject(container)
 
 	def outputMessage(self, title, message, number=0):

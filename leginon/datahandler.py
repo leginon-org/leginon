@@ -5,29 +5,17 @@
 #       For terms of the license agreement
 #       see  http://ami.scripps.edu/software/leginon-license
 #
-import leginonobject
+
+#import copy
 import data
-import threading
 import Queue
-import os
-import shelve
-import time
-import event
-import random
-import pickle
-import uidata
 import strictdict
-import copy
+import threading
+import time
+import uidata
 
-class DataHandler(leginonobject.LeginonObject):
+class DataHandler(object):
 	'''Base class for DataHandlers. Defines virtual functions.'''
-	def __init__(self, id, session):
-		leginonobject.LeginonObject.__init__(self, id)
-		if session is None or isinstance(session, data.SessionData):
-			self.session = session
-		else:
-			raise TypeError('session must be of proper type')
-
 	def query(self, id):
 		'''Returns data with data ID.'''
 		raise NotImplementedError
@@ -46,8 +34,8 @@ class DataHandler(leginonobject.LeginonObject):
 
 class DictDataKeeper(DataHandler):
 	'''Keep data in a dictionary.'''
-	def __init__(self, id, session):
-		DataHandler.__init__(self, id, session)
+	def __init__(self):
+		DataHandler.__init__(self)
 		self.datadict = {}
 		self.lock = threading.RLock()
 
@@ -85,15 +73,17 @@ class DictDataKeeper(DataHandler):
 		return None
 
 class SizedDataKeeper(DictDataKeeper):
-	def __init__(self, id, session, maxsize=18.0):
-		DictDataKeeper.__init__(self, id, session)
+	def __init__(self, maxsize=18.0):
+		DictDataKeeper.__init__(self)
 		self.maxsize = maxsize * 1024 * 1024 * 8
 		self.datadict = strictdict.OrderedDict()
 		self.size = 0
 
 	def insert(self, newdata):
 		if not issubclass(newdata.__class__, data.Data):
-			raise TypeError
+			self.datadict['UI server'] = newdata
+			return
+			#raise TypeError
 		self.lock.acquire()
 		self.size += newdata.size()
 		#self.datadict[newdata['id']] = copy.deepcopy(newdata)
@@ -116,17 +106,15 @@ class SizedDataKeeper(DictDataKeeper):
 		while self.size > self.maxsize:
 			try:
 				removeid = self.datadict.keys()[0]
-				print 'clean: removing', removeid, 'old size =', self.size/1024/1024/8.0, 'M',
 				self.remove(removeid)
-				print 'new size =', self.size/1024/1024/8.0, 'M'
 			except IndexError:
 				return
 		self.lock.release()
 
 class TimeoutDataKeeper(DictDataKeeper):
 	'''Keep remove data after a timeout.'''
-	def __init__(self, id, session, timeout=300.0, interval=30.0):
-		DictDataKeeper.__init__(self, id, session)
+	def __init__(self, timeout=300.0, interval=30.0):
+		DictDataKeeper.__init__(self)
 		self.timestampdict = {}
 		self.setTimeout(timeout)
 		self.setInterval(interval)
@@ -222,17 +210,18 @@ class TimeoutDataKeeper(DictDataKeeper):
 
 class DataBinder(DataHandler):
 	'''Bind data to a function. Used for mapping Events to handlers.'''
-	def __init__(self, id, session):
-		DataHandler.__init__(self, id, session)
+	def __init__(self, threaded=True, queueclass=Queue.Queue):
+		DataHandler.__init__(self)
 		## this is a mapping of data class to function
 		## using list instead of dict to preserve order, and also
 		## because there may be more than one function for every 
 		## data class
+		self.threaded = threaded
 		self.bindings = []
 
 		## a queue to hold incoming data, and a thread
 		## to process data from the queue
-		self.queue = Queue.Queue()
+		self.queue = queueclass()
 		t = threading.Thread(target=self.handlerLoop)
 		t.setDaemon(1)
 		t.start()
@@ -247,15 +236,17 @@ class DataBinder(DataHandler):
 		in the same node, all acting on common data and not sure
 		which data has proper locks.  For now it works.
 		'''
-		while 1:
+		while True:
 			item = self.queue.get(block=True)
 			try:
-				t = threading.Thread(target=self.handleData, args=(item,))
-				t.setDaemon(1)
-				t.start()
-				#self.handleData(item)
-			except:
-				self.printException()
+				if self.threaded:
+					t = threading.Thread(target=self.handleData, args=(item,))
+					t.setDaemon(1)
+					t.start()
+				else:
+					self.handleData(item)
+			except Exception, e:
+				print e
 
 	def insert(self, newdata):
 		self.queue.put(newdata)
@@ -266,12 +257,12 @@ class DataBinder(DataHandler):
 		'''
 		dataclass = newdata.__class__
 		args = (newdata,)
-		for bindclass, func in self.bindings:
+		for bindclass, method in self.bindings:
 			if issubclass(dataclass, bindclass):
 				try:
-					apply(func, args)
-				except:
-					self.printException()
+					apply(method, args)
+				except Exception, e:
+					print e
 
 	def addBinding(self, dataclass, func):
 		'func must take data instance as first arg'
@@ -296,3 +287,4 @@ class DataBinder(DataHandler):
 
 			if matchclass and matchfunc:
 				self.bindings.remove(binding)
+

@@ -8,15 +8,11 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import glob
 import leginonconfig
 import leginonobject
-import array
-import strictdict
-import copy
-import Mrc
-import warnings
 import Numeric
+import strictdict
+import warnings
 
 ## Unresolved issue:
 ##  It would be nice if you could cast one Data type to another
@@ -810,6 +806,20 @@ class BindingSpecData(Data):
 		return t
 	typemap = classmethod(typemap)
 
+class DeviceGetData(Data):
+	def typemap(cls):
+		t = Data.typemap()
+		t += [('keys', list)]
+		return t
+	typemap = classmethod(typemap)
+
+class DeviceData(Data):
+	def typemap(cls):
+		t = Data.typemap()
+		return t
+	typemap = classmethod(typemap)
+
+# for testing
 class DiaryData(InSessionData):
 	'''
 	User's diary entry
@@ -825,7 +835,7 @@ class DiaryData(InSessionData):
 
 ########## for testing
 
-## new class of data
+# new class of data
 class MyData(Data):
 	def typemap(cls):
 		t = Data.typemap()

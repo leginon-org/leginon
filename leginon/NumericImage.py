@@ -8,13 +8,11 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-from wxPython.wx import *
-## commenting this while Tk is broken
-#from Tkinter import *
-#import ImageTk
+from wxPython.wx import wxEmptyImage
 import Image
 import Numeric
-import math,sys
+import math
+import sys
 import time
 
 ## (Numeric typcode,size) => (PIL mode,  PIL rawmode)
@@ -30,15 +28,20 @@ ntype_itype = {
 	(Numeric.Float64,8) : ('F','F;64NF')
 	}
 
-def Numeric2wxImage(numericarray):
+def Numeric2PILImage(numericarray, scale=False):
+	if scale:
+		numericarray = linearscale(numericarray, (None, None), (0, 255)).astype(Numeric.UnsignedInt8)
 	type = numericarray.typecode()
 	h, w = numericarray.shape
 	imsize = w, h
 	itemsize = numericarray.itemsize()
-	immode = ntype_itype[type,itemsize][0]
-	rawmode = ntype_itype[type,itemsize][1]
+	immode = ntype_itype[type, itemsize][0]
+	rawmode = ntype_itype[type, itemsize][1]
 	nstr = numericarray.tostring()
-	image = Image.fromstring(immode, imsize, nstr, 'raw', rawmode, 0, 1)
+	return Image.fromstring(immode, imsize, nstr, 'raw', rawmode, 0, 1)
+
+def Numeric2wxImage(numericarray):
+	image = Numeric2PILImage(numericarray)
 	wximage = wxEmptyImage(image.size[0], image.size[1])
 	wximage.SetData(image.convert('RGB').tostring())
 	return wximage

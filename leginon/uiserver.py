@@ -5,12 +5,13 @@
 #       For terms of the license agreement
 #       see  http://ami.scripps.edu/software/leginon-license
 #
-import inspect
 import SimpleXMLRPCServer
 import socket
 import threading
 import uidata
 import xmlrpclib
+
+# preferences
 import cPickle
 import leginonconfig
 import os
@@ -29,8 +30,8 @@ class XMLRPCServer(object):
 		self.hostname = socket.gethostname()
 		if self.port is not None:
 			# this exception will fall through if __init__ fails
-			self.server = SimpleXMLRPCServer.SimpleXMLRPCServer((self.hostname, 
-																								 self.port), logRequests=False)
+			self.server = SimpleXMLRPCServer.SimpleXMLRPCServer(
+																	(self.hostname, self.port), logRequests=False)
 			self._startServing()
 			return
 
@@ -58,40 +59,152 @@ class XMLRPCServer(object):
 		t.start()
 		self.serverthread = t
 
+from uiclient import XMLRPCClient
+
 class Server(XMLRPCServer, uidata.Container):
-	def __init__(self, name='UI', port=None):
-		self.uiclients = []
-		self.tries = 5
+	def __init__(self, name='UI', port=None, tries=5):
+		self.xmlrpcclients = []
+		self.localclients = []
+		self.tries = tries
 		self.failures = []
+
 		self.pref_lock = threading.Lock()
+
 		XMLRPCServer.__init__(self, port=port)
 		uidata.Container.__init__(self, name)
-		self.server.register_function(self.setFromClient, 'SET')
-		self.server.register_function(self.commandFromClient, 'COMMAND')
-		self.server.register_function(self.addServer, 'ADDSERVER')
+
+		self.server.register_function(self.setFromClient, 'set')
+		self.server.register_function(self.commandFromClient, 'command')
+		self.server.register_function(self.addXMLRPCClientServer, 'add client')
+
+	def getNameList(self):
+		return ()
 
 	def getObjectFromList(self, namelist):
 		namelist[0] = self.name
 		return uidata.Container.getObjectFromList(self, namelist)
 
 	def setFromClient(self, namelist, value):
-		#print 'setFromClient', namelist
 		'''this is how a UI client sets a data value'''
 		uidataobject = self.getObjectFromList(namelist)
 		if not isinstance(uidataobject, uidata.Data):
 			raise TypeError('name list does not resolve to Data instance')
 		# except from this client?
 		uidataobject._set(value)
+
 		# record new value in a pickle
 		if uidataobject.persist:
 			self.updatePickle(namelist, value)
+
 		return ''
 
 	def addObject(self, uiobject):
-		### calls base class addObject, but then updates
-		### the objects with stored preferences
 		uidata.Container.addObject(self, uiobject)
+
+		# updates the objects with stored preferences
 		self.usePreferences()
+
+	def commandFromClient(self, namelist, args):
+		uimethodobject = self.getObjectFromList(namelist)
+		if not isinstance(uimethodobject, uidata.Method):
+			raise TypeError('name list does not resolve to Method instance')
+		apply(uimethodobject.method, args)
+		return ''
+
+#	def set(self, namelist, value):
+#		for client in self.xmlrpcclients:
+#			# delete if fail?
+#			client.execute('set', (namelist, value))
+
+	def addXMLRPCClientServer(self, hostname, port):
+		addclient = XMLRPCClient(hostname, port)
+		self.xmlrpcclients.append(addclient)
+		self.failures.append(0)
+		self.addObjectsCallback(addclient)
+		return ''
+
+	def addLocalClient(self, client):
+		self.localclients.append(client)
+		self.addObjectsCallback(client)
+
+	def localExecute(self, commandstring, properties, client=None):
+		if client in self.localclients:
+			localclients = [client]
+		elif client is None:
+			localclients = self.localclients
+		else:
+			return
+		for localclient in localclients:
+			target = getattr(localclient, commandstring)
+			args = (properties,)
+#			threading.Thread(target=target, args=args).start()
+			apply(target, args)
+
+	def XMLRPCExecute(self, commandstring, properties, client=None):
+		if client in self.xmlrpcclients:
+			xmlrpcclients = [client]
+		elif client is None:
+			xmlrpcclients = self.xmlrpcclients
+		else:
+			return
+		failures = []
+		for i, client in enumerate(xmlrpcclients):
+			try:
+				client.execute(commandstring, (properties,))
+				self.failures[i] = 0
+			except (xmlrpclib.ProtocolError, socket.error), e:
+				self.failures[i] += 1
+				if self.failures[i] >= self.tries:
+					failures.append(i)
+		for i in failures:
+			del self.xmlrpcclients[i]
+			del self.failures[i]
+
+	def addObjectCallback(self, uiobject, client=None):
+		properties = {}
+		properties['dependencies'] = []
+		properties['namelist'] = uiobject.getNameList()
+		properties['typelist'] = uiobject.typelist
+		try:
+			properties['value'] = uiobject.value
+		except AttributeError:
+			pass
+		properties['configuration'] = uiobject.getConfiguration()
+
+		if 'client' in properties['typelist']:
+			if properties['value'] is None:
+				properties['value'] = uiobject.toXMLRPC(properties['value'])
+		self.localExecute('addFromServer', properties, client)
+
+		if hasattr(uiobject, 'toXMLRPC') and 'value' in properties:
+			properties['value'] = uiobject.toXMLRPC(properties['value'])
+		self.XMLRPCExecute('add', properties, client)
+
+	def setObjectCallback(self, uiobject, client=None):
+		properties = {}
+		properties['namelist'] = uiobject.getNameList()
+		properties['value'] = uiobject.value
+
+		self.localExecute('setFromServer', properties, client)
+
+		if hasattr(uiobject, 'toXMLRPC') and 'value' in properties:
+			properties['value'] = uiobject.toXMLRPC(properties['value'])
+		self.XMLRPCExecute('set', properties, client)
+
+	def deleteObjectCallback(self, uiobject, client=None):
+		properties = {}
+		properties['namelist'] = uiobject.getNameList()
+		self.localExecute('removeFromServer', properties, client)
+		self.XMLRPCExecute('remove', properties, client)
+
+	def configureObjectCallback(self, uiobject, client=None):
+		properties = {}
+		properties['namelist'] = uiobject.getNameList()
+		properties['configuration'] = uiobject.getConfiguration()
+		self.localExecute('configureFromServer', properties, client)
+		self.XMLRPCExecute('configure', properties, client)
+
+	# file based preference methods
 
 	def setFromPickle(self, namelist, value):
 		'''
@@ -136,7 +249,7 @@ class Server(XMLRPCServer, uidata.Container):
 		fname = '%s.pref' % (self.name,)
 		fname = os.path.join(leginonconfig.PREFS_PATH, fname)
 		try:
-			f = open(fname, 'r')
+			f = file(fname, 'rb')
 		except IOError:
 			d = {}
 		else:
@@ -169,7 +282,7 @@ class Server(XMLRPCServer, uidata.Container):
 
 		## read current value
 		try:
-			f = open(fname, 'r')
+			f = file(fname, 'rb')
 		except IOError:
 			d = {}
 		else:
@@ -181,99 +294,7 @@ class Server(XMLRPCServer, uidata.Container):
 			f.close()
 		## update and store
 		d[tuple(namelist)] = value
-		f = open(fname, 'w')
-		cPickle.dump(d, f, 1)
+		f = file(fname, 'wb')
+		cPickle.dump(d, f, True)
 		f.close()
-
-	def commandFromClient(self, namelist, args):
-		#print 'commandFromClient', namelist, args
-		uimethodobject = self.getObjectFromList(namelist)
-		if not isinstance(uimethodobject, uidata.Method):
-			raise TypeError('name list does not resolve to Method instance')
-		# need to catch arg error
-		#threading.Thread(name=uimethodobject.name + ' thread',
-		#									target=uimethodobject.method, args=args).start()
-		apply(uimethodobject.method, args)
-		return ''
-
-	def set(self, namelist, value):
-		for client in self.uiclients:
-			# delete if fail?
-			client.execute('SET', (namelist, value))
-
-	def addServer(self, hostname, port):
-		# mapping to trackable value?
-		import uiclient
-		addclient = uiclient.XMLRPCClient(hostname, port)
-		self.uiclients.append(addclient)
-		self.failures.append(0)
-		self.addObjectsCallback(addclient)
-		return ''
-
-	def addObjectCallback(self, dependencies, namelist, typelist, value, settings, client=None):
-		if client is not None:
-			try:
-				client.execute('ADD', (dependencies, namelist, typelist, value, settings))
-			except xmlrpclib.ProtocolError, e:
-				print 'Error adding to client ' + str(client) + ': ' + str(e)
-		else:
-			failures = []
-			for i, client in enumerate(self.uiclients):
-				try:
-					client.execute('ADD',
-													(dependencies, namelist, typelist, value, settings))
-					self.failures[i] = 0
-				except (xmlrpclib.ProtocolError, socket.error), e:
-					print 'Error adding to client ' + str(client) + ': ' + str(e)
-					self.failures[i] += 1
-					if self.failures[i] >= self.tries:
-						failures.append(i)
-			for i in failures:
-				del self.uiclients[i]
-				del self.failures[i]
-
-	def setObjectCallback(self, namelist, value):
-		failures = []
-		for i, client in enumerate(self.uiclients):
-			try:
-				client.execute('SET', (namelist, value))
-				self.failures[i] = 0
-			except (xmlrpclib.ProtocolError, socket.error), e:
-				print 'Error setting client ' + str(client) + ': ' + str(e)
-				self.failures[i] += 1
-				if self.failures[i] >= self.tries:
-					failures.append(i)
-		for i in failures:
-			del self.uiclients[i]
-			del self.failures[i]
-
-	def deleteObjectCallback(self, namelist):
-		failures = []
-		for i, client in enumerate(self.uiclients):
-			try:
-				client.execute('DEL', (namelist,))
-				self.failures[i] = 0
-			except (xmlrpclib.ProtocolError, socket.error), e:
-				print 'Error deleting from client ' + str(client) + ': ' + str(e)
-				self.failures[i] += 1
-				if self.failures[i] >= self.tries:
-					failures.append(i)
-		for i in failures:
-			del self.uiclients[i]
-			del self.failures[i]
-
-	def settingsObjectCallback(self, namelist, settings):
-		failures = []
-		for i, client in enumerate(self.uiclients):
-			try:
-				client.execute('CONFIGURE', (namelist, settings))
-				self.failures[i] = 0
-			except xmlrpclib.ProtocolError, e:
-				print 'Error setting settings client ' + str(client) + ': ' + str(e)
-				self.failures[i] += 1
-				if self.failures[i] >= self.tries:
-					failures.append(i)
-		for i in failures:
-			del self.uiclients[i]
-			del self.failures[i]
 
