@@ -55,12 +55,11 @@ class ImageMosaicInfo(object):
 	def getTileShape(self, dataid):
 		return self.getTileImage(dataid).shape
 
-	def getMosaicSize(self):
+	def getMosaicLimits(self):
 		# could be Inf
 		imagemin = [0, 0]
 		imagemax = [0, 0]
 		tiledataids = self.getTileDataIDs()
-		print tiledataids
 		for tiledataid in tiledataids:
 			tileposition = self.getTilePosition(tiledataid)
 			tileshape = self.getTileShape(tiledataid)
@@ -76,7 +75,7 @@ class ImageMosaicInfo(object):
 						'max': (int(round(imagemax[0])), int(round(imagemax[1])))}
 
 	def getMosaicImage(self, astype=Numeric.Int16):
-		limits = self.getMosaicSize()
+		limits = self.getMosaicLimits()
 		imageshape = (limits['max'][0] - limits['min'][0], 
 									limits['max'][1] - limits['min'][1])
 
@@ -90,13 +89,6 @@ class ImageMosaicInfo(object):
 			tileoffset = (tileposition[0] - limits['min'][0],
 										tileposition[1] - limits['min'][1])
 			tilelimit = (tileoffset[0] + tileshape[0], tileoffset[1] + tileshape[1])
-			print 'tileposition =', tileposition
-			print 'tileshape =', tileshape
-			print 'tileoffset =', tileoffset
-			print 'tilelimit =', tilelimit
-			print 'image min =', limits['min']
-			print 'image max =', limits['max']
-			print 'image shape =', imageshape
 			mosaicimage[int(round(tileoffset[0])):int(round(tilelimit[0])),
 									int(round(tileoffset[1])):int(round(tilelimit[1]))] \
 																				= tileimage.astype(astype)
@@ -110,12 +102,24 @@ class StateImageMosaicInfo(ImageMosaicInfo):
 		self.imageinfo[dataid]['camera'] = camera
 		self.imageinfo[dataid]['shape'] = image.shape
 
-#	def getTileState(self, dataid):
-#		try:
-#			return self.imageinfo[dataid]['state']
-#		except KeyError:
-#			raise ValueError
+	def getTileState(self, dataid):
+		try:
+			tilestatedata = {}
+			tilestatedata['position'] = self.getTilePosition(dataid)
+			tilestatedata['scope'] = self.imageinfo[dataid]['scope']
+			tilestatedata['camera'] = self.imageinfo[dataid]['camera']
+			tilestatedata['shape'] = self.imageinfo[dataid]['shape']
+			limits = self.getMosaicLimits()
+			tilestatedata['offset'] = (-limits['min'][0], -limits['min'][1])
+		except KeyError:
+			raise ValueError
+		return tilestatedata
 
+	def getTileStates(self):
+		tilestatesdata = {}
+		for tiledataid in self.getTileDataIDs():
+			tilestatesdata[tiledataid] = self.getTileState(tiledataid)
+		return tilestatesdata
 
 class ImageMosaic(watcher.Watcher):
 	def __init__(self, id, nodelocations, watchfor = event.TileImagePublishEvent, **kwargs):
@@ -392,7 +396,8 @@ class ImageMosaic(watcher.Watcher):
 		# publish most recent for now
 		if len(self.imagemosaics) == 0:
 			return ''
-		odata = data.MosaicImageData(self.ID(), self.imagemosaics[-1].getMosaicImage(), scope=None, camera=None)
+		odata = data.MosaicImageData(self.ID(),
+							self.imagemosaics[-1].getMosaicImage(), scope=None, camera=None)
 		self.publish(odata, event.MosaicImagePublishEvent)
 		return ''
 
@@ -424,7 +429,7 @@ class ImageMosaic(watcher.Watcher):
 
 class StateImageMosaic(ImageMosaic):
 	def __init__(self, id, nodelocations, watchfor = event.TileImagePublishEvent, **kwargs):
-#		self.calibrationmatrix = None
+
 		self.calibrationclients = {}
 		calibrationclasses = [calibrationclient.StageCalibrationClient,
 													calibrationclient.ImageShiftCalibrationClient]
@@ -432,23 +437,17 @@ class StateImageMosaic(ImageMosaic):
 			instance = calibrationclass(self)
 			self.calibrationclients[instance.parameter()] = instance
 
-#		self.pixelsize = None
-#		self.rotationmatrix = None
-
-		# testing
-#		self.setPixelSizeAndRotation(None)
-
 		ImageMosaic.__init__(self, id, nodelocations, watchfor, **kwargs)
 
 #		self.positionmethods['pixel size'] = self.positionByPixelSize
-		self.positionmethods['calibration'] = self.positionByCalibration
 #		self.automaticpriority = ['pixel size', 'calibration', 'correlation']
-		self.automaticpriority = ['calibration', 'correlation']
-		#self.positionmethod = self.positionmethods.keys()[0]
 #		self.positionmethod = 'pixel size'
+
+		self.positionmethods['calibration'] = self.positionByCalibration
+		self.automaticpriority = ['calibration', 'correlation']
+#		self.positionmethod = self.positionmethods.keys()[0]
 		self.positionmethod = 'calibration'
 
-#		self.addEventInput(event.CalibrationPublishEvent, self.setCalibration)
 		self.start()
 
 	def setProcessingMethod(self, positionmethod):
@@ -460,7 +459,6 @@ class StateImageMosaic(ImageMosaic):
 	def processData(self, idata):
 		tileimage = idata.content['image']
 		neighbors = idata.content['neighbor tiles']
-#		tilestate = idata.content['scope']
 		tilescope = idata.content['scope']
 		tilecamera = idata.content['camera']
 		mosaics = []
@@ -472,45 +470,18 @@ class StateImageMosaic(ImageMosaic):
 		if len(mosaics) == 0:
 			imagemosaic = StateImageMosaicInfo()
 			position = self.positionmethods[self.positionmethod](idata, None)
-#			imagemosaic.addTile(idata.id, tileimage, position, tilestate)
 			imagemosaic.addTile(idata.id, tileimage, position, tilescope, tilecamera)
 			self.imagemosaics.append(imagemosaic)
 			print idata.id, "position =", imagemosaic.getTilePosition(idata.id)
 		else:
 			for imagemosaic in mosaics:
 				position = self.positionmethods[self.positionmethod](idata, imagemosaic)
-#				imagemosaic.addTile(idata.id, tileimage, position, tilestate)
 				imagemosaic.addTile(idata.id, tileimage, position,
 																									tilescope, tilecamera)
 				print idata.id, "position =", imagemosaic.getTilePosition(idata.id)
 
-#	def setCalibration(self, ievent):
-#		idata = self.researchByDataID(ievent.content)
-#		self.calibrationmatrix = self.calculateCalibrationMatrix(idata.content)
-
-#	def calculateCalibrationMatrix(self, calibration):
-#		matrix = Numeric.array([[calibration['x pixel shift']['x'],
-#															calibration['x pixel shift']['y']],
-#														[calibration['y pixel shift']['x'],
-#															calibration['y pixel shift']['y']]])
-#		matrix[0] /= calibration['x pixel shift']['value']
-#		matrix[1] /= calibration['y pixel shift']['value']
-#		return matrix
-
 	def positionByCalibration(self, idata, imagemosaic,
 																					parameter='stage position'):
-#		if self.calibrationmatix is None:
-#			self.printerror('cannot process by calibration, no calibration available')
-#			raise ValueError
-
-#		row = idata.content['scope']['stage position']['y']
-#		column = idata.content['scope']['stage position']['x']
-#		matrix = self.calibrationmatrix
-#		# bin by 4 hardcoded for now, maybe attach to image data
-#		x = -(column * matrix[0, 0] + row * matrix[1, 0])/4
-#		y = -(column * matrix[0, 1] + row * matrix[1, 1])/4
-#		return (int(round(y)), int(round(x)))
-
 		position = self.calibrationclients[parameter].itransform(
 																		idata.content['scope'][parameter],
 																		idata.content['scope'],
@@ -519,6 +490,28 @@ class StateImageMosaic(ImageMosaic):
 		position['row'] *= -1
 		position['col'] *= -1
 		return (position['row'], position['col'])
+
+	def uiPublishMosaicImage(self):
+		#ImageMosaic.uiPublishMosaicImage(self)
+
+		if len(self.imagemosaics) == 0:
+			return ''
+		odata = data.MosaicImageData(self.ID(),
+							self.imagemosaics[-1].getMosaicImage(), scope=None, camera=None)
+		self.publish(odata, event.MosaicImagePublishEvent)
+
+		statedata = {'image data ID': self.imagemosaics[-1].getTileStates()}
+		self.publish(data.StateMosaicData(self.ID(), statedata),
+																			event.StateMosaicPublishEvent)
+
+		return ''
+
+#	def defineUserInterface(self):
+#		imagemosaicspec = ImageMosaic.defineUserInterface(self)
+#		percentspec = self.registerUIData('Percent', 'float',
+#																			permissions='rw', default=self.percent)
+#		statespec = self.registerUIContainer('State', (percentspec,))
+#		self.registerUISpec('State Image Mosaic', imagemosaicspec + statespec)
 
 #	def setPixelSizeAndRotation(self, ievent):
 #		idata = self.researchByDataID(ievent.content)
@@ -553,42 +546,4 @@ class StateImageMosaic(ImageMosaic):
 #		position = Numeric.matrixmultiply(self.rotationmatrix,
 #																		stateposition / self.pixelsize)
 #		return (int(round(position[0])), int(round(position[1])))
-
-	def uiPublishMosaicImage(self):
-		#ImageMosaic.uiPublishMosaicImage(self)
-
-		if len(self.imagemosaics) == 0:
-			return ''
-		odata = data.MosaicImageData(self.ID(), self.imagemosaics[-1].getMosaicImage(), scope=None, camera=None)
-		self.publish(odata, event.MosaicImagePublishEvent)
-
-		statedata = {'image data ID': odata.id}
-		for tiledataid in self.imagemosaics[-1].getTileDataIDs():
-			statedata[tiledataid] = {}
-			statedata[tiledataid]['position'] = \
-										self.imagemosaics[-1].getTilePosition(tiledataid)
-#			statedata[tiledataid]['state'] = \
-#										 self.imagemosaics[-1].getTileState(tiledataid)
-			statedata[tiledataid]['scope'] = \
-										 self.imagemosaics[-1].imageinfo[tiledataid]['scope']
-			statedata[tiledataid]['camera'] = \
-										 self.imagemosaics[-1].imageinfo[tiledataid]['camera']
-			statedata[tiledataid]['shape'] = \
-										 self.imagemosaics[-1].imageinfo[tiledataid]['shape']
-
-			limits = self.imagemosaics[-1].getMosaicSize()
-			offset = (-limits['min'][0], -limits['min'][1])
-			statedata[tiledataid]['offset'] = offset
-
-		self.publish(data.StateMosaicData(self.ID(), statedata),
-																			event.StateMosaicPublishEvent)
-
-		return ''
-
-#	def defineUserInterface(self):
-#		imagemosaicspec = ImageMosaic.defineUserInterface(self)
-#		percentspec = self.registerUIData('Percent', 'float',
-#																			permissions='rw', default=self.percent)
-#		statespec = self.registerUIContainer('State', (percentspec,))
-#		self.registerUISpec('State Image Mosaic', imagemosaicspec + statespec)
 
