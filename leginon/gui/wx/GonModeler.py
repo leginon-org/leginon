@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/GonModeler.py,v $
-# $Revision: 1.10 $
+# $Revision: 1.11 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-02 21:17:22 $
+# $Date: 2004-11-04 22:42:29 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -130,6 +130,7 @@ class Panel(gui.wx.Calibrator.Panel):
 
 	def onCalibrateTool(self, evt):
 		self._calibrationEnable(False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, True)
 		threading.Thread(target=self.node.uiFit).start()
 
 if __name__ == '__main__':
