@@ -1537,7 +1537,7 @@ class TreePanel(wx.Panel):
 	def __init__(self, parent):
 		self.bitmaps = {}
 		for type in wxMessageLog.types:
-			self.bitmaps[type] = wx.BitmapFromImage(wx.Image('%s/%s.bmp' %
+			self.bitmaps[type] = wx.BitmapFromImage(wx.Image('%s/%s.png' %
 																								(wxMessageLog.iconsdir, type)))
 			self.bitmapsize = (self.bitmaps[type].GetWidth(),
 													self.bitmaps[type].GetHeight())

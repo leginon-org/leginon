@@ -15,7 +15,7 @@ class wxMessage(wxPanel):
 
 		self.type = type
 		try:
-			image = wxImage('%s/%s.bmp' % (iconsdir, type))
+			image = wxImage('%s/%s.png' % (iconsdir, type))
 			bitmap = wxBitmapFromImage(image)
 		except:
 			bitmap = wxNullBitmap
