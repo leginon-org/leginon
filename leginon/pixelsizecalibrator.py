@@ -36,9 +36,10 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 
 	def uiGetCalibrations(self):
 		calibrations = self.research(dataclass=data.PixelSizeCalibrationData)
+		calibrations = self.calclient.retrieveAllPixelSizes()
 		calibrationstrings = []
 		for calibration in calibrations:
-			calibrationstrings.append('Magnification: %.1f Pixel size: %f Comment: %s, Session: %s Instrument: %s' %(calibration['magnification'], calibration['pixelsize'], calibration['comment'], calibration['session']['name'], calibration['session']['instrument']['name']))
+			calibrationstrings.append('Magnification: %.1f Pixel size: %e Comment: %s, Session: %s Instrument: %s' %(calibration['magnification'], calibration['pixelsize'], calibration['comment'], calibration['session']['name'], calibration['session']['instrument']['name']))
 		self.uilisting.set(calibrationstrings)
 
 	def uiStore(self):
