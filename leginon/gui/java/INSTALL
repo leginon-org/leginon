@@ -21,3 +21,16 @@ Run:
    Microsoft Windows:
 	java -classpath .\class\xmlrpc-1.1.jar;.\class\JTreeTable.jar;. nodegui http://host:port
 
+Install nodegui as Applet
+
+Compile:
+	javac -classpath ./class/nodeapplet.jar:. nodeapplet.java
+
+Run:
+	appletviewer nodeapplet.html
+
+If you run the applet via a webserver, edit the file nodeapplet.html and update the java code path:
+
+	
+	-Line 22:	document.writeln('java_codebase="http://stratocaster.scripps.edu/xmlrpc/applet/"');
+	-Line 31:	<PARAM NAME="java_codebase" VALUE="http://stratocaster.scripps.edu/xmlrpc/applet/">
