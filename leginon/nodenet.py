@@ -1,4 +1,4 @@
-import xmlrpcnode
+import xmlrpcserver
 import dataserver
 import urllib
 import cPickle
@@ -6,9 +6,9 @@ import location
 import registry
 import event
 
-class Node(xmlrpcnode.xmlrpcserver):
+class Node(xmlrpcserver.xmlrpcserver):
 	def __init__(self, manageraddress):
-		xmlrpcnode.xmlrpcserver.__init__(self)
+		xmlrpcserver.xmlrpcserver.__init__(self)
 
 		self.datahandler = DataHandler(self)
 
@@ -118,9 +118,9 @@ class DataHandler(object):
 
 		return data
 
-class Manager(xmlrpcnode.xmlrpcserver):
+class Manager(xmlrpcserver.xmlrpcserver):
 	def __init__(self, *args, **kwargs):
-		xmlrpcnode.xmlrpcserver.__init__(self)
+		xmlrpcserver.xmlrpcserver.__init__(self)
 		self.registry = registry.Registry()
 		self.distributor = event.EventDistributor(self.registry)
 		self.locations = {}

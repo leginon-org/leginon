@@ -6,7 +6,7 @@ if len(sys.argv) != 3:
 	sys.exit(1)
 
 from Tkinter import *
-from xmlrpcnode import *
+from xmlrpcserver import *
 
 
 host = sys.argv[1]

@@ -131,9 +131,9 @@ class xmlrpcgui(Frame):
 if __name__ == '__main__':
 	import signal
 
-	class mynode(xmlrpcnode):
+	class mynode(xmlrpcserver):
 		def __init__(self):
-			xmlrpcnode.__init__(self)
+			xmlrpcserver.__init__(self)
 
 		def EXPORT_test(self, jim, bob):
 			print 'this is a test', jim, bob
