@@ -456,6 +456,7 @@ class ImageMosaic(watcher.Watcher):
 		for target in targetlist:
 			self.adjustTarget(target)
 			# should still work
+			del target['button']
 			targetdata = data.ImageTargetData(self.ID(), target)
 			self.targetlist.append(targetdata)
 		self.publishTargetList()
