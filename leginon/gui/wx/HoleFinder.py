@@ -37,6 +37,7 @@ class SetTargetsEvent(wx.PyCommandEvent):
 		self.targets = targets
 
 class Panel(gui.wx.TargetFinder.Panel):
+	icon = 'holefinder'
 	def __init__(self, parent, name):
 		gui.wx.TargetFinder.Panel.__init__(self, parent, name) 
 

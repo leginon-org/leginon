@@ -45,8 +45,7 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.bsubmit = wx.Button(self, -1, 'Submit Targets')
 		self.szbuttons.Add(self.bsubmit, (1, 0), (1, 1), wx.EXPAND)
 
-		self.imagepanel = gui.wx.ImageViewer.TargetImagePanel(self, -1,
-																													self.callback)
+		self.imagepanel = gui.wx.ImageViewer.TargetImagePanel(self, -1)
 		self.szimage = self._getStaticBoxSizer('Target Image', (1, 1), (3, 1),
 																						wx.EXPAND|wx.ALL)
 		self.szimage.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND)
