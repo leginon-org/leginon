@@ -216,7 +216,7 @@ class ImageMosaic(watcher.Watcher):
 			row = mosaic[tileid]['position'][0] - mincoordinate[0]
 			column = mosaic[tileid]['position'][1] - mincoordinate[1]
 			iti = mosaic[tileid]['image']
-			image[row:row + iti.shape[0], column:column + iti.shape[1]] = iti
+			image[row:row + iti.shape[0], column:column + iti.shape[1]] = iti.astype(Numeric.UnsignedInt8)
 		return image
 
 	def uiShow(self):
