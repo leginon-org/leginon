@@ -6,6 +6,8 @@ import numarray.fft
 import numarray.nd_image
 import correlator
 import peakfinder
+import time
+import NumericImage
 
 def _minmax(coor, minc, maxc):
     if coor[0] < minc[0]:
@@ -89,6 +91,23 @@ def normalize(image):
 	r = imagefun.minmax(image)
 	return (image - r[0])/r[1]
 
+plans = {}
+
+def polarPlan(shape):
+	if shape in plans:
+		return plans[shape]
+	maxrho = min(shape[0]/2, shape[1]/2)
+	plan = numarray.zeros((maxrho, 180, 2))
+	for i in range(plan.shape[1]):
+		theta = math.radians(i)
+		sintheta = math.sin(theta)
+		costheta = math.cos(theta)
+		for rho in range(maxrho):
+			plan[rho, i, 0] = int(round(shape[0]/2.0 + rho*sintheta))
+			plan[rho, i, 1] = int(round(shape[1]/2.0 + rho*costheta))
+	plans[shape] = plan
+	return plan
+
 def findRotation(image1, image2):
 	ac1 = imagefun.auto_correlate(image1)
 	ac2 = imagefun.auto_correlate(image2)
@@ -96,18 +115,13 @@ def findRotation(image1, image2):
 	ac2 = imagefun.swap_quadrants(ac2)
 
 	thetas = numarray.zeros((2, 180))
-	for i in range(thetas.shape[1]):
-		theta = math.radians(i)
-		sintheta = math.sin(theta)
-		costheta = math.cos(theta)
-		for rho in range(ac1.shape[1]/8, ac1.shape[1]/2):
-			row = int(round(ac1.shape[0]/2.0 + rho*sintheta))
-			column = int(round(ac1.shape[1]/2.0 + rho*costheta))
-			thetas[0, i] += ac1[row, column]
-		for rho in range(ac2.shape[1]/8, ac2.shape[1]/2):
-			row = int(round(ac2.shape[0]/2.0 + rho*sintheta))
-			column = int(round(ac2.shape[1]/2.0 + rho*costheta))
-			thetas[1, i] += ac2[row, column]
+	for i, ac in enumerate([ac1, ac2]):
+		plan = polarPlan(ac.shape)
+		for rho in range(plan.shape[0]):
+			for theta in range(plan.shape[1]):
+				row = plan[rho, theta, 0]
+				column = plan[rho, theta, 1]
+				thetas[i, theta] += ac[row, column]
 
 	ft1 = numarray.fft.real_fft(thetas[0])
 	ft2 = numarray.fft.real_fft(thetas[1])
@@ -175,13 +189,15 @@ def shiftImage(image1, image2, shift):
 
 for i in range(16):
 #for i in [0]:
-	#for j in range(9):
-	for j in [4]:
+	for j in range(9):
+	#for j in [4]:
 		f1 = '04dec17b_000%d_0000%dgr.mrc' % (749 + i, j + 1)
 		f2 = '05jan20a_000%d_0000%dgr.mrc' % (749 + i, j + 1)
 
 		image1 = Mrc.mrc_to_numeric(f1)
 		image2 = Mrc.mrc_to_numeric(f2)
+
+		t = time.time()
 
 		image1 = normalize(image1)
 		image2 = normalize(image2)
@@ -190,7 +206,9 @@ for i in range(16):
 		image1, image2 = padAndRotate(image1, image2, theta)
 		shift = correlate(image1, image2)
 
+		t = time.time() - t
+
 		image = shiftImage(image1, image2, shift)
-		Mrc.numeric_to_mrc(image, '%d_%d.mrc' % (749 + i, j + 1))
-		print 'grid ID %d, image %d: rotation %d degrees, shift %s pixels' % (749 + i, j + 1, theta, shift)
+		NumericImage.NumericImage(image).jpeg('%d_%d.jpg' % (749 + i, j + 1), 100)
+		print 'grid ID %d, image %d: rotation %d degrees, shift %s pixels (%g seconds)' % (749 + i, j + 1, theta, shift, t)
 

@@ -17,6 +17,7 @@ except:
 import math
 import sys
 import time
+import imagefun
 
 ## (Numeric typcode,size) => (PIL mode,  PIL rawmode)
 ntype_itype = {
@@ -33,7 +34,7 @@ ntype_itype = {
 
 def Numeric2PILImage(numericarray, scale=False):
 	if scale:
-		numericarray = linearscale(numericarray, (None, None), (0, 255)).astype(Numeric.UInt8)
+		numericarray = imagefun.linearscale(numericarray, (None, None), (0, 255)).astype(Numeric.UInt8)
 	type = numericarray.type()
 	h, w = numericarray.shape
 	imsize = w, h
@@ -49,54 +50,6 @@ def Numeric2wxImage(numericarray):
 	wximage.SetData(image.convert('RGB').tostring())
 	return wximage
 
-def linearscale(input, boundfrom, boundto, extrema=None):
-	"""
-	Rescale the data in the range 'boundfrom' to the range 'boundto'.
-	"""
-
-	### check args
-	if len(input) < 1:
-		return input
-	if len(boundfrom) != 2:
-		raise ValueError, 'boundfrom must be length 2'
-	if len(boundto) != 2:
-		raise ValueError, 'boundto must be length 2'
-
-	minfrom,maxfrom = boundfrom
-	minto,maxto = boundto
-
-	### default from bounds are min,max of the input
-	if minfrom is None:
-		if extrema:
-			minfrom = extrema[0]
-		else:
-			minfrom = Numeric.argmin(Numeric.ravel(input))
-			minfrom = Numeric.ravel(input)[minfrom]
-	if maxfrom is None:
-		if extrema:
-			maxfrom = extrema[1]
-		else:
-			maxfrom = Numeric.argmax(Numeric.ravel(input))
-			maxfrom = Numeric.ravel(input)[maxfrom]
-
-	## prepare for fast math
-	rangefrom = Numeric.array((maxfrom - minfrom)).astype('f')
-	rangeto = Numeric.array((maxto - minto)).astype('f')
-	minfrom = Numeric.array(minfrom).astype('f')
-
-	# this is a hack to prevent zero division
-	# is there a better way to do this with some sort of 
-	# float limits module rather than hard coding 1e-99?
-	if not rangefrom:
-		rangefrom = 1e-99
-
-	#output = (input - minfrom) * rangeto / rangefrom
-	scale = rangeto / rangefrom
-	offset = minfrom * scale
-	output = input * scale - offset
-
-	return output
-
 # resize and rotate filters:  NEAREST, BILINEAR, BICUBIC
 
 def resize(pil_image, size):
@@ -108,22 +61,6 @@ def resize(pil_image, size):
 	else:
 		new_image = pil_image
 	return new_image
-
-# 1024x1024:  0.1
-def extrema(numarray):
-#		t0 = time.clock()
-
-		flat = Numeric.ravel(numarray)
-		extmin = Numeric.argmin(flat)
-		extmax = Numeric.argmax(flat)
-		minval = flat[extmin]
-		maxval = flat[extmax]
-		ext = (minval, maxval)
-
-#		t1 = time.clock()
-#		t = t1 - t0
-#		print 'time: %.3f' % (t,)
-		return ext
 
 class NumericImage:
 	"""
@@ -190,7 +127,7 @@ class NumericImage:
 		"""
 
 		clip = self.transform['clip']
-		final = linearscale(self.orig_array, clip, (0,255), self.extrema)
+		final = imagefun.linearscale(self.orig_array, clip, (0,255), self.extrema)
 		type = final.type()
 		h,w = final.shape
 		imsize = w,h
@@ -268,13 +205,13 @@ if __name__ == '__main__':
 
 	a = array([5,6,7,8,9], Float)
 	print 'a', a
-	b = linearscale(a, (None,None), (0,1))
+	b = imagefun.linearscale(a, (None,None), (0,1))
 	print 'b', b
-	b = linearscale(a, (6,8), (0,1))
+	b = imagefun.linearscale(a, (6,8), (0,1))
 	print 'b', b
-	b = linearscale(a, (8,6), (0,1))
+	b = imagefun.linearscale(a, (8,6), (0,1))
 	print 'b', b
-	b = linearscale(a, (6,8), (1.0,-1.0))
+	b = imagefun.linearscale(a, (6,8), (1.0,-1.0))
 	print 'b', b
 
 	#a1 = reshape(arrayrange(128**2), (128,128))
