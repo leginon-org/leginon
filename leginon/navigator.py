@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
-import node, event
+import node
+reload(node)
+import event
+reload(event)
 
 class Navigator(node.Node):
 	def __init__(self, id, nodelocations, emnode='em'):
@@ -8,6 +11,7 @@ class Navigator(node.Node):
 		self.emnode = emnode
 
 		self.addEventInput(event.ImageClickEvent, self.handleImageClick)
+		self.addEventInput(event.ImageAcquireEvent, self.handleImageAcquire)
 		self.addEventOutput(event.ImagePublishEvent)
 
 	def handleImageClick(self, clickevent):
@@ -18,6 +22,9 @@ class Navigator(node.Node):
 		deltastage = self.image2stage(deltaimage)
 		print 'deltastage', deltastage
 		self.moveAcquire(deltastage)
+
+	def handleImageAcquire(self, acqevent):
+		self.acquireImage()
 
 	def moveAcquire(self, deltaxy):
 		self.moveStage(deltaxy)
@@ -46,6 +53,9 @@ class Navigator(node.Node):
 		stagex = 1e-7 * rows
 		stagey = 1e-7 * cols
 		return (stagex, stagey)
+
+	#def defineUserInterface(self):
+	#	nodeui = node.Node.defineUserInterface(self)
 
 if __name__ == '__main__':
 	id = ('navigator',)

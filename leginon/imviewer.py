@@ -26,6 +26,10 @@ class ImViewer(watcher.Watcher):
 
 		self.print_location()
 
+	def die(self, killevent):
+		self.close_viewer()
+		watcher.Watcher.die(self, killevent)
+
 	def start_viewer_thread(self):
 		if self.iv is not None:
 			return
@@ -34,7 +38,7 @@ class ImViewer(watcher.Watcher):
 		self.viewerthread.start()
 		print 'thread started'
 
-	def publishClickInfo(self, event):
+	def clickEvent(self, event):
 		clickinfo = self.iv.eventXYInfo(event)
 		clickinfo['image id'] = self.imageid
 		## prepare for xmlrpc
@@ -46,15 +50,24 @@ class ImViewer(watcher.Watcher):
 		self.outputEvent(e)
 
 	def open_viewer(self):
-		root = Tk()
+		root = self.root = Tk()
 		root.wm_maxsize(800,800)
 		self.iv = ImageViewer(root, bg='#488')
-		self.iv.bindCanvas('<Double-1>', self.publishClickInfo)
+		self.iv.bindCanvas('<Double-1>', self.clickEvent)
 		self.iv.pack()
+		acqbut = Button(root, text='Acquire', command=self.acquireEvent)
+		acqbut.pack()
 		self.viewer_ready.set()
 		root.mainloop()
 		self.viewer_ready.clear()
 		self.iv = None
+
+	def close_viewer(self):
+		self.root.destroy()
+
+	def acquireEvent(self):
+		e = event.AcquireImageEvent(self.ID())
+		self.outputEvent(e)
 	
 	def processData(self, imagedata):
 		#camdict = imagedata.content
