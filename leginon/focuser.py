@@ -20,6 +20,7 @@ except:
 	import Numeric
 import copy
 import gui.wx.Focuser
+import player
 
 class Focuser(acquisition.Acquisition):
 	panelclass = gui.wx.Focuser.Panel
@@ -64,14 +65,12 @@ class Focuser(acquisition.Acquisition):
 		}
 
 		self.manualchecklock = threading.Lock()
-		self.manual_check_done = threading.Event()
-		self.manual_pause = threading.Event()
-		self.manual_continue = threading.Event()
 		self.parameter = 'Defocus'
 		self.maskradius = 0.01
 		self.increment = 5e-7
 		self.man_power = None
 		self.man_image = None
+		self.manualplayer = player.Player(callback=self.onManualPlayer)
 		acquisition.Acquisition.__init__(self, id, session, managerlocation, target_types=('focus',), **kwargs)
 		self.btcalclient = calibrationclient.BeamTiltCalibrationClient(self)
 		self.euclient = calibrationclient.EucentricFocusClient(self)
@@ -314,25 +313,28 @@ class Focuser(acquisition.Acquisition):
 
 	def manualCheckLoop(self, presettarget=None):
 		## go to preset and target
-		self.onManualCheck()
 		if presettarget is not None:
-			self.presetsclient.toScope(presettarget['preset'], presettarget['emtarget'])
+			self.presetsclient.toScope(presettarget['preset'],
+																	presettarget['emtarget'])
 			delay = self.settings['pause time']
 			self.logger.info('Pausing for %s seconds' % (delay,))
 			time.sleep(delay)
-		self.manual_check_done.clear()
 		self.logger.info('Starting manual focus loop...')
 		self.logger.info('Please confirm defocus')
 		self.beep()
+		self.manualplayer.play()
+		self.onManualCheck()
 		while True:
-			if self.manual_check_done.isSet():
+			state = self.manualplayer.state()
+			if state == 'stop':
 				break
-			if self.manual_pause.isSet():
-				self.waitForContinue()
+			elif state == 'pause':
+				self.manualplayer.wait()
 				if presettarget is not None:
 					self.logger.info('reseting preset and target after pause')
 					self.logger.debug('preset %s' % (presettarget['preset'],))
-					self.presetsclient.toScope(presettarget['preset'], presettarget['emtarget'])
+					self.presetsclient.toScope(presettarget['preset'],
+																			presettarget['emtarget'])
 			# acquire image, show image and power spectrum
 			# allow user to adjust defocus and stig
 			cor = self.settings['correct image']
@@ -343,8 +345,9 @@ class Focuser(acquisition.Acquisition):
 			finally:
 				self.manualchecklock.release()
 			if imagedata is None:
+				self.manualplayer.pause()
 				self.logger.error('Failed to acquire image')
-				break
+				continue
 			imarray = imagedata['image']
 			pow = imagefun.power(imarray, self.maskradius)
 			self.man_power = pow.astype(Numeric.Float32)
@@ -353,12 +356,6 @@ class Focuser(acquisition.Acquisition):
 			self.panel.setManualImage(self.man_power, 'Power')
 		self.onManualCheckDone()
 		self.logger.info('Manual focus loop done')
-
-	def waitForContinue(self):
-		self.logger.info('Manual focus paused')
-		self.manual_continue.wait()
-		self.manual_continue.clear()
-		self.manual_pause.clear()
 
 	def uiFocusUp(self):
 		self.changeFocus('up')
@@ -390,12 +387,15 @@ class Focuser(acquisition.Acquisition):
 	def uiEucentricFromScope(self):
 		self.eucentricFocusFromScope()
 
-	def uiChangeToZero(self):
+	def setFocus(self, value):
 		self.manualchecklock.acquire()
 		self.logger.info('Changing to zero defocus')
 		try:
 			newemdata = data.ScopeEMData()
-			newemdata['defocus'] = 0.0
+			if self.parameter == 'Stage Z':
+				newemdata['stage position'] = {'z': value}
+			elif self.parameter == 'Defocus':
+				newemdata['defocus'] = value
 			self.emclient.setScope(newemdata)
 		finally:
 			self.manualchecklock.release()
@@ -429,15 +429,15 @@ class Focuser(acquisition.Acquisition):
 
 	def manualDone(self):
 		self.logger.info('Will quit manual focus loop after this iteration...')
-		self.manual_check_done.set()
+		self.manualplayer.stop()
 
 	def manualPause(self):
 		self.logger.info('Will pause manual focus loop after this iteration...')
-		self.manual_pause.set()
+		self.manualplayer.pause()
 
 	def manualContinue(self):
-		self.logger.info('Continuing manual focus')
-		self.manual_continue.set()
+		self.logger.info('Continuing manual focus...')
+		self.manualplayer.play()
 
 	def correctStig(self, deltax, deltay):
 		stig = self.emclient.getScope()['stigmator']
@@ -484,3 +484,5 @@ class Focuser(acquisition.Acquisition):
 	def uiAbortFailure(self):
 		self.btcalclient.abortevent.set()
 
+	def onManualPlayer(self, state):
+		self.panel.playerEvent(state, self.panel.manualdialog)

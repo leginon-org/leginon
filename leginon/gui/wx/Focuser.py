@@ -2,7 +2,9 @@ import wx
 from gui.wx.Choice import Choice
 from gui.wx.Entry import FloatEntry, EVT_ENTRY
 import gui.wx.Acquisition
+import gui.wx.Dialog
 import gui.wx.Events
+import gui.wx.Icons
 import gui.wx.ImageViewer
 import gui.wx.ToolBar
 
@@ -51,7 +53,7 @@ class Panel(gui.wx.Acquisition.Panel):
 		self.szmain.Layout()
 
 	def onNodeInitialized(self):
-		self.manualdialog = ManualFocusDialog(self)
+		self.manualdialog = ManualFocusDialog(self.GetParent(), self.node)
 		self.Bind(EVT_MANUAL_CHECK, self.onManualCheck, self)
 		self.Bind(EVT_MANUAL_CHECK_DONE, self.onManualCheckDone, self)
 
@@ -74,8 +76,7 @@ class Panel(gui.wx.Acquisition.Panel):
 		self.node.manualNow()
 
 	def onManualCheck(self, evt):
-		self.manualdialog.ShowModal()
-		self.node.manualDone()
+		self.manualdialog.Show()
 
 	def onManualCheckDone(self, evt):
 		self.manualdialog.Show(False)
@@ -202,154 +203,195 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 
 		return asz + [sbsz]
 
-class ManualFocusDialog(wx.Dialog):
-	def __init__(self, parent, title='Manual Focus'):
-		wx.Dialog.__init__(self, parent, -1, title)
-		self.node = parent.node
-
-		self.tbpause = wx.ToggleButton(self, -1, 'Pause')
-		self.bdone = wx.Button(self, wx.ID_OK, 'Done')
-
-		self.beftoscope = wx.Button(self, -1, 'To Scope')
-		self.beffromscope = wx.Button(self, -1, 'From Scope')
-
-		sz = wx.GridBagSizer(5, 5)
-		sz.Add(self.beftoscope, (0, 0), (1, 1), wx.ALIGN_CENTER)
-		sz.Add(self.beffromscope, (1, 0), (1, 1), wx.ALIGN_CENTER)
-		szef = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Eucentric Focus'),
-															wx.VERTICAL)
-		szef.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
-
-		self.cparameter = wx.Choice(self, -1, choices=['Defocus', 'Stage Z'])
-		self.cparameter.SetSelection(0)
-		self.feincrement = FloatEntry(self, -1, min=0.0,
-																						allownone=False,
+class ManualFocusSettingsDialog(gui.wx.Dialog.Dialog):
+	def onInitialize(self):
+		self.maskradius = FloatEntry(self, -1, allownone=False,
 																						chars=6,
-																						value='5e-7')
-		self.bup = wx.Button(self, -1, 'Up')
-		self.bdown = wx.Button(self, -1, 'Down')
-		self.bzero = wx.Button(self, -1, 'Zero')
+																						value='0.01')
 
-		sz = wx.GridBagSizer(5, 5)
-		sz.Add(self.cparameter, (0, 0), (1, 3), wx.ALIGN_CENTER)
-		sz.Add(wx.StaticText(self, -1, 'Increment:'), (1, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.feincrement, (1, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		sz.Add(wx.StaticText(self, -1, 'm'), (1, 2), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.bup, (2, 0), (1, 3), wx.ALIGN_CENTER)
-		sz.Add(self.bdown, (3, 0), (1, 3), wx.ALIGN_CENTER)
-		sz.Add(self.bzero, (4, 0), (1, 3), wx.ALIGN_CENTER)
-		szadjust = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Adjust'), wx.VERTICAL)
-		szadjust.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+		self.increment = FloatEntry(self, -1, min=0.0,
+																					allownone=False,
+																					chars=6,
+																					value='5e-7')
 
-		self.breset = wx.Button(self, -1, 'Reset')
-		szreset = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Instrument Defocus'),
-															wx.VERTICAL)
-		szreset.Add(self.breset, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+		label = wx.StaticText(self, -1, 'Mask radius:')
+		self.sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(self.maskradius, (0, 1), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, '% of image')
+		self.sz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		self.femaskradius = FloatEntry(self, -1, allownone=False,
-																							chars=6,
-																							value='0.01')
-		szmaskradius = wx.GridBagSizer(5, 5)
-		szmaskradius.Add(wx.StaticText(self, -1, 'Mask radius:'), (0, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		szmaskradius.Add(self.femaskradius, (0, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		szmaskradius.Add(wx.StaticText(self, -1, '% of image'), (0, 2), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'Increment:')
+		self.sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(self.increment, (1, 1), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'm')
+		self.sz.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		szimage = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Image'), wx.VERTICAL)
-		szimage.Add(szmaskradius, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+		self.addButton('OK', wx.ID_OK)
+		self.addButton('Cancel', wx.ID_CANCEL)
 
-		self.image = gui.wx.ImageViewer.ImagePanel(self, -1)
-		self.image.addTypeTool('Image', display=True)
-		self.image.addTypeTool('Power', display=True)
-		self.image.selectiontool.setDisplayed('Image', True)
+class ManualFocusDialog(wx.MiniFrame):
+	def __init__(self, parent, node, title='Manual Focus'):
+		wx.MiniFrame.__init__(self, parent, -1, title)
+		self.node = node
 
-		sz = wx.GridBagSizer(5, 5)
-		sz.Add(szef, (0, 0), (1, 2), wx.EXPAND)
-		sz.Add(szadjust, (1, 0), (1, 2), wx.EXPAND)
-		sz.Add(szreset, (2, 0), (1, 2), wx.EXPAND)
-		sz.Add(szimage, (3, 0), (1, 2), wx.EXPAND)
-		sz.Add(self.tbpause, (4, 0), (1, 1), wx.ALIGN_CENTER|wx.TOP, 10)
-		sz.Add(self.bdone, (4, 1), (1, 1), wx.ALIGN_CENTER|wx.TOP, 10)
-		szmain = wx.GridBagSizer(5, 5)
-		szmain.Add(sz, (0, 0), (1, 1), wx.ALIGN_TOP|wx.ALL, 10)
-		szmain.Add(self.image, (0, 1), (1, 1), wx.ALIGN_CENTER|wx.ALL, 10)
-		self.SetSizerAndFit(szmain)
+		self.toolbar = wx.ToolBar(self, -1)
 
-		self.Bind(wx.EVT_BUTTON, self.onEFToScopeButton, self.beftoscope)
-		self.Bind(wx.EVT_BUTTON, self.onEFFromScopeButton, self.beffromscope)
-		self.Bind(wx.EVT_BUTTON, self.onZeroButton, self.bzero)
-		self.Bind(wx.EVT_BUTTON, self.onUpButton, self.bup)
-		self.Bind(wx.EVT_BUTTON, self.onDownButton, self.bdown)
-		self.Bind(wx.EVT_BUTTON, self.onResetButton, self.breset)
-		self.Bind(wx.EVT_TOGGLEBUTTON, self.onTogglePause, self.tbpause)
-		self.Bind(EVT_ENTRY, self.onMaskRadiusEntry, self.femaskradius)
-		self.Bind(EVT_ENTRY, self.onIncrementEntry, self.feincrement)
-		self.Bind(wx.EVT_CHOICE, self.onParameterChoice, self.cparameter)
-		self.Bind(gui.wx.Events.EVT_SET_IMAGE, self.onSetImage)
+		bitmap = gui.wx.Icons.icon('settings')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS, bitmap,
+													shortHelpString='Settings')
 
-		self.onParameterChoice()
-		self.onMaskRadiusEntry()
-		self.onIncrementEntry()
+		self.toolbar.AddSeparator()
 
-	def onSetImage(self, evt):
-		self.image.setImageType(evt.typename, evt.image)
+		bitmap = gui.wx.Icons.icon('play')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY, bitmap,
+													shortHelpString='Play')
+		bitmap = gui.wx.Icons.icon('pause')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_PAUSE, bitmap,
+													shortHelpString='Pause')
+		bitmap = gui.wx.Icons.icon('stop')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_STOP, bitmap,
+													shortHelpString='Stop')
 
-	def onTogglePause(self, evt):
-		if evt.IsChecked():
-			self.node.manualPause()
-		else:
-			self.node.manualContinue()
+		self.toolbar.AddSeparator()
 
-	def onEFToScopeButton(self, evt):
-		self.node.uiChangeToEucentric()
+		self.parameter = wx.Choice(self.toolbar, -1, choices=['Defocus', 'Stage Z'])
+		self.toolbar.AddControl(self.parameter)
+		bitmap = gui.wx.Icons.icon('plus')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLUS, bitmap,
+													shortHelpString='Increment up')
+		bitmap = gui.wx.Icons.icon('minus')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_MINUS, bitmap,
+													shortHelpString='Increment down')
 
-	def onEFFromScopeButton(self, evt):
-		self.node.uiEucentricFromScope()
+		self.toolbar.AddSeparator()
 
-	def onZeroButton(self, evt):
-		self.node.uiChangeToZero()
+		self.value = FloatEntry(self.toolbar, -1, allownone=False, chars=6,
+														value='0.0')
+		self.toolbar.AddControl(self.value)
+		self.toolbar.AddControl(wx.StaticText(self.toolbar, -1, ' m'))
+		bitmap = gui.wx.Icons.icon('instrumentset')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_VALUE, bitmap,
+													shortHelpString='Set instrument')
 
-	def onUpButton(self, evt):
+		self.toolbar.AddSeparator()
+
+		bitmap = gui.wx.Icons.icon('instrumentsetnew')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_RESET, bitmap,
+													shortHelpString='Reset Defocus')
+
+		self.toolbar.AddSeparator()
+
+		bitmap = gui.wx.Icons.icon('instrumentget')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_GET_INSTRUMENT, bitmap,
+													shortHelpString='Eucentric from instrument')
+
+		bitmap = gui.wx.Icons.icon('instrumentset')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SET_INSTRUMENT, bitmap,
+													shortHelpString='Eucentric to instrument')
+
+		self.toolbar.Realize()
+
+		self.SetToolBar(self.toolbar)
+
+		self.panel = gui.wx.ImageViewer.ImagePanel(self, -1)
+
+		self.statusbar = wx.StatusBar(self, -1)
+		self.SetStatusBar(self.statusbar)
+
+		self.Fit()
+
+		self.settingsdialog = ManualFocusSettingsDialog(self,
+																										'Manual Focus Settings',
+																										'Settings')
+
+		n = self.parameter.FindString(self.node.parameter)
+		if n == wx.NOT_FOUND:
+			raise RuntimeError
+		self.parameter.SetSelection(n)
+
+		self.Bind(gui.wx.Events.EVT_PLAYER, self.onPlayer)
+		self.Bind(wx.EVT_TOOL, self.onSettingsTool, id=gui.wx.ToolBar.ID_SETTINGS)
+		self.Bind(wx.EVT_TOOL, self.onPlayTool, id=gui.wx.ToolBar.ID_PLAY)
+		self.Bind(wx.EVT_TOOL, self.onPauseTool, id=gui.wx.ToolBar.ID_PAUSE)
+		self.Bind(wx.EVT_TOOL, self.onStopTool, id=gui.wx.ToolBar.ID_STOP)
+		self.Bind(wx.EVT_TOOL, self.onPlusTool, id=gui.wx.ToolBar.ID_PLUS)
+		self.Bind(wx.EVT_TOOL, self.onMinusTool, id=gui.wx.ToolBar.ID_MINUS)
+		self.Bind(wx.EVT_TOOL, self.onValueTool, id=gui.wx.ToolBar.ID_VALUE)
+		self.Bind(wx.EVT_TOOL, self.onResetTool, id=gui.wx.ToolBar.ID_RESET)
+		self.Bind(wx.EVT_TOOL, self.onGetInstrumentTool,
+							id=gui.wx.ToolBar.ID_GET_INSTRUMENT)
+		self.Bind(wx.EVT_TOOL, self.onSetInstrumentTool,
+							id=gui.wx.ToolBar.ID_SET_INSTRUMENT)
+		self.Bind(wx.EVT_CLOSE, self.onClose)
+
+	def onSettingsTool(self, evt):
+		self.settingsdialog.maskradius.SetValue(self.node.maskradius)
+		self.settingsdialog.increment.SetValue(self.node.increment)
+		if self.settingsdialog.ShowModal() == wx.ID_OK:
+			self.node.maskradius = self.settingsdialog.maskradius.GetValue()
+			self.node.increment = self.settingsdialog.increment.GetValue()
+
+	def onPlayTool(self, evt):
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, False)
+		self.node.manualplayer.play()
+
+	def onPauseTool(self, evt):
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, False)
+		self.node.manualplayer.pause()
+
+	def onStopTool(self, evt):
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, False)
+		self.node.manualplayer.stop()
+
+	def onPlayer(self, evt):
+		if evt.state == 'play':
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, True)
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, True)
+		elif evt.state == 'pause':
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False) 
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, True)
+		elif evt.state == 'stop':
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, True) 
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, False)
+
+	def onPlusTool(self, evt):
 		self.node.uiFocusUp()
 
-	def onDownButton(self, evt):
+	def onMinusTool(self, evt):
 		self.node.uiFocusDown()
 
-	def onResetButton(self, evt):
+	def onValueTool(self, evt):
+		value = self.value.GetValue()
+		self.node.setFocus(value)
+
+	def onResetTool(self, evt):
 		self.node.uiResetDefocus()
 
-	def onMaskRadiusEntry(self, evt=None):
-		if evt is None:
-			value = self.femaskradius.GetValue()
-		else:
-			value = evt.GetValue()
-		self.node.maskradius = value
+	def onGetInstrumentTool(self, evt):
+		self.node.uiEucentricFromScope()
 
-	def onIncrementEntry(self, evt=None):
-		if evt is None:
-			value = self.feincrement.GetValue()
-		else:
-			value = evt.GetValue()
-		self.node.increment = value
+	def onSetInstrumentTool(self, evt):
+		self.node.uiChangeToEucentric()
 
-	def onParameterChoice(self, evt=None):
-		if evt is None:
-			parameter = self.cparameter.GetStringSelection()
-		else:
-			parameter = evt.GetString()
-		self.node.parameter = parameter
+	def onClose(self, evt):
+		self.node.manualplayer.stop()
+		evt.Skip()
 
 if __name__ == '__main__':
 	class App(wx.App):
 		def OnInit(self):
 			frame = wx.Frame(None, -1, 'Focuser Test')
-			panel = Panel(frame, 'Test')
-			frame.node = object() 
 			dialog = ManualFocusDialog(frame)
 			frame.Fit()
 			self.SetTopWindow(frame)
