@@ -16,17 +16,6 @@ True = 1
 if sys.platform == 'win32':
 	sys.coinit_flags = 0
 
-# Once used to prevent pushing of any data except events on the client side.
-#class Client(datatransport.Client):
-#	def __init__(self, id, loc):
-#		datatransport.Client.__init__(self, id, loc)
-#
-#	def push(self, idata):
-#		if isinstance(idata, event.Event):
-#			datatransport.Client.push(self, idata)
-#		else:
-#			raise event.InvalidEventError('event must be Event instance')
-
 class DataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
 	'''Overrides SimpleDataKeeper and DataBinder to combine storing data and mapping events for use by Node.'''
 	def __init__(self, id):
@@ -39,15 +28,11 @@ class DataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
 		if isinstance(idata, event.Event):
 			datahandler.DataBinder.insert(self, idata)
 		else:
-			raise InvalidEventError('event must be Event instance')
-
-	# use this to insert into your own server
-	def _insert(self, idata):
-		'''Insert data into an internal (your own) datahandler.'''
-		if isinstance(idata, event.Event):
-			datahandler.DataBinder.insert(self, idata)
-		else:
-			datahandler.SimpleDataKeeper.insert(self, copy.deepcopy(idata))
+			print idata.id, self.id
+			if idata.id[:-1] == self.id[:-1]:
+				datahandler.SimpleDataKeeper.insert(self, copy.deepcopy(idata))
+			else:
+				raise InvalidEventError('event must be Event instance')
 
 	# def query(self, id): is inherited from SimpleDataKeeper
 
@@ -60,8 +45,10 @@ class DataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
 
 class Node(leginonobject.LeginonObject):
 	'''Atomic operating unit for performing tasks, creating data and events.'''
-	def __init__(self, id, nodelocations = {}, dh = DataHandler, dhargs = (),
-								tcpport=None, xmlrpcport=None, clientclass = datatransport.Client, launchlock=None):
+	def __init__(self, id, nodelocations = {},
+											dh = DataHandler, dhargs = (),
+											tcpport=None, xmlrpcport=None,
+											clientclass = datatransport.Client, launchlock=None):
 		leginonobject.LeginonObject.__init__(self, id)
 
 		self.nodelocations = nodelocations
@@ -154,13 +141,15 @@ class Node(leginonobject.LeginonObject):
 
 	def addEventInput(self, eventclass, func):
 		'''Map a function (event handler) to be called when the specified event is received.'''
-		self.server.datahandler.setBinding(eventclass, func)
+#		self.server.datahandler.setBinding(eventclass, func)
+		self.datahandler.setBinding(eventclass, func)
 		if eventclass not in self.eventmapping['inputs']:
 			self.eventmapping['inputs'].append(eventclass)
 
 	def delEventInput(self, eventclass):
 		'''Unmap all functions (event handlers) to be called when the specified event is received.'''
-		self.server.datahandler.setBinding(eventclass, None)
+#		self.server.datahandler.setBinding(eventclass, None)
+		self.datahandler.setBinding(eventclass, None)
 		if eventclass in self.eventmapping['inputs']:
 			self.eventmapping['inputs'].remove(eventclass)
 
@@ -198,7 +187,8 @@ class Node(leginonobject.LeginonObject):
 		'''Make a piece of data available to other nodes.'''
 		if not issubclass(eventclass, event.PublishEvent):
 			raise TypeError('PublishEvent subclass required')
-		self.server.datahandler._insert(idata)
+#		self.server.datahandler._insert(idata)
+		self.datahandler.insert(idata)
 		# this idata.id is content, I think
 		e = eventclass(self.ID(), idata.id, confirm)
 		self.outputEvent(e)
@@ -208,7 +198,8 @@ class Node(leginonobject.LeginonObject):
 		'''Make a piece of data unavailable to other nodes.'''
 		if not issubclass(eventclass, event.UnpublishEvent):
 			raise TypeError('UnpublishEvent subclass required')
-		self.server.datahandler.remove(dataid)
+#		self.server.datahandler.remove(dataid)
+		self.datahandler.remove(dataid)
 		self.outputEvent(eventclass(self.ID(), dataid))
 
 	def publishRemote(self, idata):
@@ -302,8 +293,9 @@ class Node(leginonobject.LeginonObject):
 		'''Generate a dictionary of currently published data and attributes in a XML-RPC compatible format.'''
 		if value is None:
 			try:
-				return self.key2str(self.server.datahandler.datadict)
-				return self.server.datahandler.datadict
+#				return self.key2str(self.server.datahandler.datadict)
+				return self.key2str(self.datahandler.datadict)
+#				return self.server.datahandler.datadict
 			except AttributeError:
 				return {}
 
