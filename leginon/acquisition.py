@@ -277,13 +277,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 			targetscope['beam shift'] = dict(origscope['beam shift'])
 
 			movetype = self.settings['move type']
+			oldpreset = targetdata['preset']
 
 			### simulated target does not require transform
 			if targetdata['type'] == 'simulated':
-				oldpreset = None
 				newscope = origscope
 			else:
-				oldpreset = targetdata['preset']
 				targetcamera = targetdata['camera']
 		
 				## to shift targeted point to center...
@@ -549,7 +548,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.logger.info('%s: %s' % (type, message))
 
 	def simulateTarget(self):
-		targetdata = self.newSimulatedTarget()
+		currentpreset = self.presetsclient.getCurrentPreset()
+		if currentpreset is None:
+			self.logger.warning('No preset currently on instrument. Targeting may fail.')
+		targetdata = self.newSimulatedTarget(preset=currentpreset)
 		self.publish(targetdata, database=True)
 		## change to 'processing' just like targetwatcher does
 		proctargetdata = data.AcquisitionImageTargetData(initializer=targetdata, status='processing')
