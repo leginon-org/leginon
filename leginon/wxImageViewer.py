@@ -296,7 +296,7 @@ class ImagePanel(wx.Panel):
 		self.panel.SetScrollRate(1, 1)
 		self.defaultcursor = wx.CROSS_CURSOR
 		self.panel.SetCursor(self.defaultcursor)
-		self.sizer.Add(self.panel)
+		self.sizer.Add(self.panel, 1, wx.EXPAND|wx.ALL)
 		width, height = self.panel.GetSizeTuple()
 		self.sizer.SetItemMinSize(self.panel, width, height)
 
@@ -339,7 +339,7 @@ class ImagePanel(wx.Panel):
 			self.bitmap = None
 			return
 
-		if self.smallScale():
+		if self.scaleImage():
 			xscale, yscale = self.getScale()
 			width = int(wximage.GetWidth()*xscale)
 			height = int(wximage.GetHeight()*yscale)
@@ -359,7 +359,7 @@ class ImagePanel(wx.Panel):
 			clientwidth, clientheight = self.panel.GetClientSize()
 
 			xscale, yscale = self.scale
-			if not self.smallScale():
+			if not self.scaleImage():
 				bitmapwidth = int(bitmapwidth * xscale)
 				bitmapheight = int(bitmapheight * yscale)
 
@@ -382,7 +382,7 @@ class ImagePanel(wx.Panel):
 		self.panel.SetVirtualSize((0, 0))
 		if self.bitmap is not None:
 			width, height = self.bitmap.GetWidth(), self.bitmap.GetHeight()
-			if self.smallScale():
+			if self.scaleImage():
 				virtualsize = (width - 1, height - 1)
 			else:
 				xscale, yscale = self.getScale()
@@ -469,9 +469,9 @@ class ImagePanel(wx.Panel):
 	def getScale(self):
 		return self.scale
 
-	def smallScale(self, scale=None):
+	def scaleImage(self, scale=None):
 		'''
-		If image is smaller than the view XXX NEEDS UPDATE? XXX
+		If image is being compressed
 		'''
 		if scale is None:
 			scale = self.getScale()
@@ -487,7 +487,7 @@ class ImagePanel(wx.Panel):
 				return
 		oldscale = self.getScale()
 		self.scale = (float(scale[0]), float(scale[1]))
-		if self.smallScale() or self.smallScale(oldscale):
+		if self.scaleImage() or self.scaleImage(oldscale):
 			self.setBitmap()
 
 		self.setVirtualSize()
@@ -560,7 +560,7 @@ class ImagePanel(wx.Panel):
 		if self.buffer is None:
 			return
 
-		if self.smallScale():
+		if self.scaleImage():
 			xoffset, yoffset = self.offset
 			width, height = self.virtualsize
 			if evt.m_x < xoffset or evt.m_x > xoffset + width: 
@@ -659,7 +659,7 @@ class ImagePanel(wx.Panel):
 			bitmapdc = wx.MemoryDC()
 			bitmapdc.SelectObject(self.bitmap)
 
-			if self.smallScale():
+			if self.scaleImage():
 				xscale, yscale = (1.0, 1.0)
 			else:
 				xscale, yscale = self.getScale()
@@ -689,7 +689,10 @@ class ImagePanel(wx.Panel):
 			dc.SelectObject(wx.NullBitmap)
 
 	def OnSize(self, evt):
-		self.UpdateDrawing()
+		#self.setBitmap()
+		self.setVirtualSize()
+		self.setBuffer()
+		#self.UpdateDrawing()
 
 	def OnPaint(self, evt):
 		if self.buffer is None:
@@ -826,7 +829,7 @@ class TargetTool(ImageTool):
 	def closestTarget(self, x, y):
 		minimum_magnitude = 10
 
-		if self.imagepanel.smallScale():
+		if self.imagepanel.scaleImage():
 			xscale, yscale = self.imagepanel.getScale()
 			minimum_magnitude /= xscale
 
@@ -1104,7 +1107,7 @@ class TargetImagePanel(ImagePanel):
 		else:
 			y = ny
 
-		if not self.smallScale():
+		if not self.scaleImage():
 			memorydc.SetUserScale(1.0/xscale, 1.0/yscale)
 			width *= xscale
 			height *= yscale
@@ -1142,7 +1145,7 @@ class TargetImagePanel(ImagePanel):
 			width = bitmap.GetWidth()
 			height = bitmap.GetHeight()
 
-			if not self.smallScale():
+			if not self.scaleImage():
 				memorydc.SetUserScale(1.0/xscale, 1.0/yscale)
 				width *= xscale
 				height *= yscale
@@ -1172,7 +1175,7 @@ if __name__ == '__main__':
 	class MyApp(wx.App):
 		def OnInit(self):
 			frame = wx.Frame(None, -1, 'Image Viewer')
-			self.SetTopWindow(frame)
+			self.sizer = wx.BoxSizer(wx.VERTICAL)
 
 			self.panel = TargetImagePanel(frame, -1)
 			self.panel.addTargetType('foo')
@@ -1181,7 +1184,10 @@ if __name__ == '__main__':
 #			self.panel = ClickImagePanel(frame, -1, bar)
 
 #			self.panel = ImagePanel(frame, -1)
-			frame.Fit()
+
+			self.sizer.Add(self.panel, 1, wx.EXPAND|wx.ALL)
+			frame.SetSizerAndFit(self.sizer)
+			self.SetTopWindow(frame)
 			frame.Show(True)
 			return True
 
