@@ -107,10 +107,10 @@ class MatrixCalibrator(calibrator.Calibrator):
 				state2 = self.makeState(newvalue, axis)
 				self.logger.info('States %s, %s' % (state1, state2))
 				shiftinfo = calclient.measureStateShift(state1, state2, 1, settle=self.settle[uiparameter])
-				self.logger.info('Shift info %s' % shiftinfo)
 
 				rowpix = shiftinfo['pixel shift']['row']
 				colpix = shiftinfo['pixel shift']['col']
+				self.logger.info('shift %s rows, %s cols' % (rowpix, colpix))
 				totalpix = abs(rowpix + 1j * colpix)
 
 				actual_states = shiftinfo['actual states']
