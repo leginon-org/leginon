@@ -159,6 +159,7 @@ import data
 import strictdict
 import Mrc
 import os
+import leginonconfig
 
 class SQLDict(object):
 
@@ -1047,7 +1048,7 @@ def saveMRC(object, name, path, filename, thumb=False):
 	"""
 	d={}
 	k = sep.join(['MRC',name])
-	fullname = os.path.join(path,filename)
+	fullname = leginonconfig.mapPath(os.path.join(path,filename))
 	if object is not None:
 		Mrc.numeric_to_mrc(object, fullname)
 	d[k] = filename
@@ -1309,7 +1310,9 @@ def datatype(in_dict, qikey=None, qinfo=None):
 		elif a[0] == 'MRC':
 			## set up a FileReference, to be used later
 			## when we know the full path
-			content[a[1]] = strictdict.FileReference(value, 'image path', Mrc.mrc_to_numeric)
+			content[a[1]] = strictdict.FileReference(leginonconfig.mapPath(value),
+																								'image path',
+																								Mrc.mrc_to_numeric)
 		elif a[0] == 'REF':
 			try:
 				jqikey = qinfo[qikey]['join'][a[2]]

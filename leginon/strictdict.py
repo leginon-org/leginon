@@ -17,6 +17,7 @@ from types import NoneType
 import copy
 import time
 import os
+import leginonconfig
 
 ### The type Numeric.ArrayType will not pickle properly, so here I create
 ### an object here to represent it

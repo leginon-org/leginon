@@ -577,6 +577,7 @@ class ImageData(InSessionData):
 		return the full path of this directory.
 		'''
 		impath = self['session']['image path']
+		impath = leginonconfig.mapPath(impath)
 		leginonconfig.mkdirs(impath)
 		return impath
 

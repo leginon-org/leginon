@@ -905,14 +905,11 @@ class wxEntryWidget(wxDataWidget):
 		self.label = wxStaticText(parent, -1, name + ':')
 
 		if 'write' in configuration and configuration['write']:
-#			self.applybutton = wxButton(parent, -1, 'Apply')
-#			self.applybutton.Enable(false)
 			if str in self.types:
 				size = (150, -1)
 			else:
 				size = (-1, -1)
 			self.entry = wxTextCtrl(parent, -1, size=size, style=wxTE_PROCESS_ENTER)
-#			self.dirty = False
 		else:
 			self.entry = wxStaticText(parent, -1, '')
 
@@ -921,17 +918,12 @@ class wxEntryWidget(wxDataWidget):
 		self.set(value)
 
 		if self.write:
-#			EVT_BUTTON(self.applybutton, self.applybutton.GetId(), self.setFromWidget)
 			EVT_KILL_FOCUS(self.entry, self.onKillFocus)
-#			EVT_TEXT(self.entry, self.entry.GetId(), self.onEdit)
 			EVT_TEXT_ENTER(self.entry, self.entry.GetId(), self.onEnter)
 			EVT_CHAR(self.entry, self.onChar)
 
 		self.sizer.Add(self.label, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
 		self.sizer.Add(self.entry, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
-#		if hasattr(self, 'applybutton'):
-#			self.sizer.Add(self.applybutton, 0, wxALIGN_CENTER|wxLEFT|wxRIGHT, 3)
-#			self.dirty = self.applybutton.IsEnabled()
 		self.layout()
 
 	def onChar(self, evt):
@@ -944,17 +936,10 @@ class wxEntryWidget(wxDataWidget):
 		evt.Skip()
 
 	def destroy(self):
-#		if hasattr(self, 'applybutton'):
-#			self.applybutton.Destroy()
 		self.entry.Destroy()
 		self.label.Destroy()
 
-#	def onEdit(self, evt):
-#		self.dirty = True
-#		self.applybutton.Enable(true)
-
 	def onEnter(self, evt):
-#		if self.applybutton.IsEnabled():
 		self.setFromWidget(evt)
 
 	def setFromWidget(self, evt=None):
@@ -963,15 +948,11 @@ class wxEntryWidget(wxDataWidget):
 			try:
 				value = eval(value)
 			except:
-#				excinfo = sys.exc_info()
-#				sys.excepthook(*excinfo)
 				if str not in self.types:
 					return
 		if type(value) not in self.types:
 			return
 		self.value = value
-#		self.dirty = False
-#		self.applybutton.Enable(false)
 		self.setServer(self.value)
 
 	def setWidget(self, value):
@@ -1000,25 +981,15 @@ class wxEntryWidget(wxDataWidget):
 				self.entry.SetValue('')
 			else:
 				self.entry.SetValue(str(self.value))
-#		if hasattr(self, 'applybutton'):
-#			self.dirty = False
-#			self.applybutton.Enable(false)
 
 	def _enable(self, enable):
 		self.label.Enable(enable)
 		self.entry.Enable(enable)
-#		if hasattr(self, 'applybutton'):
-#			if enable and self.dirty:
-#				self.applybutton.Enable(True)
-#			else:
-#				self.applybutton.Enable(False)
 		wxDataWidget._enable(self, enable)
 
 	def _show(self, show):
 		self.label.Show(show)
 		self.entry.Show(show)
-#		if hasattr(self, 'applybutton'):
-#			self.applybutton.Show(show)
 		wxDataWidget._show(self, show)
 
 def entryWidgetClassFactory(itypes):

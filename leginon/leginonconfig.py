@@ -19,6 +19,25 @@ import os
 #   utility functions and exceptions used in this script    #
 #     (do not change any of this, skip to next section)     #
 #############################################################
+#pathmapping = {'Z:': '/ami/amishare',
+#								'Y:': '/ami/data04',
+#								'X:': '/ami/data03',
+#								'W:': '/ami/data02',
+#								'V:': '/ami/data01'}
+
+pathmapping = {}
+
+def mapPath(path):
+		if not pathmapping:
+			return path
+
+		for key, value in pathmapping.items():
+			if value == path[:len(value)]:
+				path = key + path[len(value):]
+				break
+
+		return path
+
 # Here is a replacement for os.mkdirs that won't complain if dir
 # already exists (from Python Cookbook, Recipe 4.17)
 def mkdirs(newdir, mode=0777):
@@ -79,7 +98,7 @@ if not IMAGE_PATH:
 
 ## create those paths
 try:
-	mkdirs(IMAGE_PATH)
+	mkdirs(mapPath(IMAGE_PATH))
 except:
 	print 'error creating IMAGE_PATH %s' % (IMAGE_PATH,)
 try:
