@@ -288,7 +288,10 @@ class Node(leginonobject.LeginonObject):
 					dataclass = idata.dataclass
 				else:
 					dataclass = idata.__class__
-				eventclass = event.publish_events[dataclass]
+				try:
+					eventclass = event.publish_events[dataclass]
+				except KeyError:
+					eventclass = None
 			else:
 				eventclass = pubeventclass
 			if eventclass is None:
