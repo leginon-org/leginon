@@ -89,7 +89,10 @@ class DataBinder(object):
 					for method in methods:
 						self.logger.info('%s handling destination %s, method %s'
 															% (dataclass, newdata['destination'], method))
-						method(args)
+						try:
+							method(args)
+						except:
+							self.logger.exception('databinder exception while executing callback %s' % (method.__name__,))
 				except KeyError:
 					pass
 	
