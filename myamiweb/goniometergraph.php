@@ -49,12 +49,12 @@ for ($n=0; $n<count($A); $n++)
 $serie_str = implode(" + ",$serie);
 
 $f = new FuncGenerator($serie_str);
-list($xdata,$ydata) = $f->E(-0.0003,0.0003,1000);
+list($xdata,$ydata) = $f->E(-0.00001,0.0004,1000);
 
 
 
 // Setup the basic graph
-$graph = new Graph(950,500,"auto");
+$graph = new Graph(850,500,"auto");
 $graph->SetScale("linlin");
 //$graph->SetShadow();
 $graph->img->SetMargin(5,10,60,9);	
@@ -86,6 +86,7 @@ $graph->xaxis->HideZeroLabel();
 $graph->xaxis->HideFirstLastLabel();
 $graph->xaxis->SetFont(FF_FONT1,FS_BOLD);
 $graph->xaxis->SetColor('lightgreen','lightgreen');
+$graph->xaxis->SetTextLabelInterval(2);
 
 $lp1 = new LinePlot($ydata,$xdata);
 $lp1->SetColor('blue');

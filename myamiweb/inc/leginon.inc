@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.33 $
- *	@version $Id: leginon.inc,v 1.33 2004-11-11 18:33:36 dfellman Exp $
+ *	@version $Revision: 1.34 $
+ *	@version $Id: leginon.inc,v 1.34 2004-11-11 21:11:52 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -35,7 +35,8 @@ class leginondata {
 		'MatrixCalibrationData',
 		'PixelSizeCalibrationData',
 		'StageModelCalibrationData',
-		'StageModelMagCalibrationData'
+		'StageModelMagCalibrationData',
+		'EucentricFocusData'
 	);
 	var $applicationtables = array (
 		'ApplicationData',

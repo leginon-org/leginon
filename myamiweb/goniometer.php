@@ -7,16 +7,12 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require('inc/leginon.inc');
+require('inc/admin.inc');
 $selectedmodelId = $_POST[modelId];
 $models= $leginondata->getAllGoniometerModels();
+admin_header();
 ?>
-<html>
-<head>
-<title>Leginon2 - Goniometer</title>
-<link rel="stylesheet" type="text/css" href="css/leginon.css"> 
-</head>
-<body>
+<h3>View Goniometer</h3>
 <form name="goniometerform" method="POST" action="<?=$_SERVER['PHP_SELF']?>">
 <select name="modelId" onChange="javascript:document.goniometerform.submit()">
 <?
@@ -38,6 +34,5 @@ if($selectedmodelId) {
 <img src="goniometergraph.php?Id=<?=$selectedmodelId?>">
 <?
 }
+admin_footer();
 ?>
-</body>
-</html>
