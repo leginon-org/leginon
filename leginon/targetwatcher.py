@@ -77,12 +77,16 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		abortmethod = uidata.Method('Abort', self.abortTargetListLoop)
 
 		self.publishrejects = uidata.Boolean('Publish and wait for rejected targets', False, 'rw', persist=True)
+		self.autogenerate = uidata.Boolean('Clone each target', False, 'rw', persist=True)
+		self.autogeneratetype = uidata.String('Clone Type', 'focus', 'rw', persist=True)
 
 		targetcontainer = uidata.Container('Target Processing')
 		targetcontainer.addObject(pausemethod, position={'position':(0,0)})
 		targetcontainer.addObject(continuemethod, position={'position':(0,1)})
 		targetcontainer.addObject(abortmethod, position={'position':(0,2)})
 		targetcontainer.addObject(self.publishrejects, position={'position':(1,0), 'span':(1,3)})
+		targetcontainer.addObject(self.autogenerate, position={'position':(2,0), 'span':(1,3)})
+		targetcontainer.addObject(self.autogeneratetype, position={'position':(3,0), 'span':(1,3)})
 
 		controlcontainer = uidata.Container('Control')
 		controlcontainer.addObjects((targetcontainer,))
@@ -136,26 +140,13 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 		# republish the rejects and wait for them to complete
 		if rejects and self.publishrejects.get():
-			self.uistatus.set('Publishing passed targets')
-			rejectlist = self.newTargetList()
-			self.publish(rejectlist, database=True, dbforce=True)
-			for target in rejects:
-				reject = data.AcquisitionImageTargetData(initializer=target)
-				reject['list'] = rejectlist
-				self.publish(reject, database=True)
-
-			self.passTargets(rejectlist)
-			self.uistatus.set('Waiting for passed targets to be processed...')
-			rejectstatus = self.waitForRejects()
-
-			# decide whether or not to continue doing the
-			# good targets based on result of reject targets
+			rejectstatus = self.rejectTargets(rejects)
 			if rejectstatus != 'success':
 				## report my status as reject status
 				## may not be a good idea all the time
 				## This means if rejects were aborted
 				## then this whole target list was aborted
-				self.uistatus.set('Passed targets not processed, aborted current target list')
+				self.uistatus.set('Passed targets not processed, aborting current target list')
 				self.reportTargetListDone(newdata.dmid, rejectstatus)
 				return
 
@@ -189,6 +180,15 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			if target['status'] in ('done', 'aborted'):
 				self.uitargetstatus.set('Target has been done, processing next target')
 				continue
+
+			### generate a focus target
+			if self.autogenerate.get():
+				gentype = self.autogeneratetype.get()
+				focustarget = data.AcquisitionImageTargetData(initializer=target)
+				focustarget['type'] = gentype
+				self.publish(focustarget, database=True)
+				tlist = [focustarget]
+				self.rejectTargets(tlist)
 
 			self.uitargetstatus.set('Processing target')
 
@@ -293,13 +293,6 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		e = event.TargetListDoneEvent(targetlistid=listid, status=status)
 		self.outputEvent(e)
 
-	def passTargets(self, targetlistdata):
-		tlistid = targetlistdata.dmid
-		self.targetlistevents[tlistid] = {}
-		self.targetlistevents[tlistid]['received'] = threading.Event()
-		self.targetlistevents[tlistid]['status'] = 'waiting'
-		self.publish(targetlistdata, pubevent=True)
-
 	def waitForRejects(self):
 		# wait for focus target list to complete
 		for tid, teventinfo in self.targetlistevents.items():
@@ -315,6 +308,23 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		self.targetlistevents.clear()
 		
 		return status
+
+	def rejectTargets(self, targets):
+		self.uistatus.set('Publishing reject targets')
+		rejectlist = self.newTargetList()
+		self.publish(rejectlist, database=True, dbforce=True)
+		for target in targets:
+			reject = data.AcquisitionImageTargetData(initializer=target)
+			reject['list'] = rejectlist
+			self.publish(reject, database=True)
+		tlistid = rejectlist.dmid
+		self.targetlistevents[tlistid] = {}
+		self.targetlistevents[tlistid]['received'] = threading.Event()
+		self.targetlistevents[tlistid]['status'] = 'waiting'
+		self.publish(rejectlist, pubevent=True)
+		self.uistatus.set('Waiting for reject targets to be processed...')
+		rejectstatus = self.waitForRejects()
+		return rejectstatus
 
 	def handleTargetListDone(self, targetlistdoneevent):
 		targetlistid = targetlistdoneevent['targetlistid']
