@@ -368,17 +368,12 @@ class Focuser(acquisition.Acquisition):
 		self.stigfocminthresh = uidata.Float('Stig Defocus Min', 1e-6, 'rw', persist=True)
 		self.stigfocmaxthresh = uidata.Float('Stig Defocus Max', 4e-6, 'rw', persist=True)
 
-
-
 		autocont.addObject(self.auto_on, position={'position':(0,0)})
 		autocont.addObject(self.btilt, position={'position':(0,1)})
 		autocont.addObject(self.drifton, position={'position':(1,0)})
 		autocont.addObject(self.driftthresh, position={'position':(1,1)})
 
-
-
 		autocont.addObject(self.autofocuspreset, position={'position':(3,0), 'span':(1,2)})
-
 
 		autocont.addObject(self.fitlimit, position={'position':(4,0)})
 		autocont.addObject(self.focustype, position={'position':(4,1)})
@@ -388,8 +383,8 @@ class Focuser(acquisition.Acquisition):
 		autocont.addObject(self.stigfocmaxthresh, position={'position':(5,2)})
 
 		## manual focus check
-		self.pre_manual_check = uidata.Boolean('Manual Check Before Auto', False, 'rw', persist=True)
-		self.post_manual_check = uidata.Boolean('Manual Check After Auto', False, 'rw', persist=True)
+		self.pre_manual_check = uidata.Boolean('Before Auto', False, 'rw', persist=True)
+		self.post_manual_check = uidata.Boolean('After Auto', False, 'rw', persist=True)
 		manualmeth = uidata.Method('Manual Check Now', self.manualNow)
 		manualpause = uidata.Method('Pause', self.manualPause)
 		manualcontinue = uidata.Method('Continue', self.manualContinue)
@@ -406,8 +401,33 @@ class Focuser(acquisition.Acquisition):
 		self.maskrad = uidata.Float('Mask Radius (% of image width)', 0.01, 'rw', persist=True)
 		self.man_power = uidata.Image('Manual Focus Power Spectrum', None, 'rw')
 		mancont = uidata.Container('Manual Focus')
-		mancont.addObjects((self.pre_manual_check, self.post_manual_check, manualmeth, manualpause, manualcontinue, manualdone, manualreset, manualtozero, self.manual_parameter, self.manual_delta, manchangeup, manchangedown, self.maskrad, self.man_power, self.man_image))
 
+		# row 0
+		mancont.addObject(manualmeth, position={'position':(0,0)})
+		mancont.addObject(self.pre_manual_check, position={'position':(0,1)})
+		mancont.addObject(self.post_manual_check, position={'position':(0,2)})
+		# row 1
+		mancont.addObject(manualpause, position={'position':(1,0)})
+		mancont.addObject(manualcontinue, position={'position':(1,1)})
+		mancont.addObject(manualdone, position={'position':(1,2)})
+		# row 2
+		mancont.addObject(manualreset, position={'position':(2,1)})
+		# row 3
+		mancont.addObject(self.manual_parameter, position={'position':(3,0), 'span':(1,3)})
+		# row 4
+		mancont.addObject(self.manual_delta, position={'position':(4,0), 'span':(1,3)})
+		# row5
+		mancont.addObject(manchangeup, position={'position':(5,0)})
+		mancont.addObject(manchangedown, position={'position':(5,1)})
+		mancont.addObject(manualtozero, position={'position':(5,2)})
+		# row6
+		mancont.addObject(self.maskrad, position={'position':(6,0), 'span':(1,3)})
+		# row 7
+		mancont.addObject(self.man_power, position={'position':(7,0), 'span':(1,3)})
+		# row8
+		mancont.addObject(self.man_image, position={'position':(8,0), 'span':(1,3)})
+
+		#### other
 		self.acquirefinal = uidata.Boolean('Acquire Final Image', True, 'rw', persist=True)
 		abortfailmethod = uidata.Method('Abort With Failure', self.uiAbortFailure)
 		testmethod = uidata.Method('Test Autofocus (broken)', self.uiTest)
