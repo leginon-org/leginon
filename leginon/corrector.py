@@ -47,6 +47,31 @@ class Corrector(node.Node):
 	  in the corrections directory.
 	'''
 	panelclass = gui.wx.Corrector.Panel
+	settingsclass = data.CorrectorSettingsData
+	defaultsettings = {
+		'n average': 3,
+		'despike': True,
+		'despike size': 11,
+		'despike threshold': 3.5,
+		'camera settings':
+			data.CameraSettingsData(
+				initializer={
+					'dimension': {
+						'x': 1024,
+						'y': 1024,
+					},
+					'offset': {
+						'x': 0,
+						'y': 0,
+					},
+					'binning': {
+						'x': 1,
+						'y': 1,
+					},
+					'exposure time': 1000.0,
+				}
+			),
+	}
 	eventinputs = node.Node.eventinputs + EM.EMClient.eventinputs
 	eventoutputs = node.Node.eventoutputs + [event.DarkImagePublishEvent, event.BrightImagePublishEvent] + EM.EMClient.eventoutputs
 	def __init__(self, name, session, managerlocation, **kwargs):
@@ -63,17 +88,12 @@ class Corrector(node.Node):
 																			getdata=self.acquireCorrectedImageData)
 		self.publish(self.imagedata, pubevent=True, broadcast=True)
 
-		self.naverage = None
-		self.camconfig = None
 		self.plan = None
-		self.despike = None
-		self.nsize = None
-		self.threshold = None
 
 		self.start()
 
 	def setPlan(self):
-		self.cam.setCameraDict(self.camconfig)
+		self.cam.setCameraDict(self.settings['camera settings'])
 		camconfig = self.cam.getCameraEMData()
 
 		newcamstate = data.CorrectorCamstateData()
@@ -90,9 +110,9 @@ class Corrector(node.Node):
 
 	def getPlan(self):
 		newcamstate = data.CorrectorCamstateData()
-		newcamstate['dimension'] = self.camconfig['dimension']
-		newcamstate['offset'] = self.camconfig['offset']
-		newcamstate['binning'] = self.camconfig['binning']
+		newcamstate['dimension'] = self.settings['camera settings']['dimension']
+		newcamstate['offset'] = self.settings['camera settings']['offset']
+		newcamstate['binning'] = self.settings['camera settings']['binning']
 		self.plan = self.retrievePlan(newcamstate)
 
 	def acquireDark(self):
@@ -103,6 +123,7 @@ class Corrector(node.Node):
 		else:
 			self.displayImage(imagedata)
 			node.beep()
+		self.panel.acquisitionDone()
 
 	def acquireBright(self):
 		try:
@@ -112,25 +133,28 @@ class Corrector(node.Node):
 		else:
 			self.displayImage(imagedata)
 			node.beep()
+		self.panel.acquisitionDone()
 
 	def acquireRaw(self):
 		try:
-			self.cam.setCameraDict(self.camconfig)
+			self.cam.setCameraDict(self.settings['camera settings'])
 			imagedata = self.cam.acquireCameraImageData(correction=False)
 		except node.PublishError:
 			self.logger.exception('Cannot set EM parameter, EM may not be running')
 		else:
 			imagearray = imagedata['image']
 			self.displayImage(imagearray)
+		self.panel.acquisitionDone()
 
 	def acquireCorrected(self):
 		try:
-			self.cam.setCameraDict(self.camconfig)
+			self.cam.setCameraDict(self.settings['camera settings'])
 			imagedata = self.acquireCorrectedArray()
 		except node.PublishError:
 			self.logger.exception('Cannot set EM parameter, EM may not be running')
 		else:
 			self.displayImage(imagedata)
+		self.panel.acquisitionDone()
 
 	def displayImage(self, imagedata):
 		self.setImage(imagedata.astype(Numeric.Float32), self.stats(imagedata))
@@ -163,7 +187,7 @@ class Corrector(node.Node):
 		return {'image series': series, 'scope': scopedata, 'camera':camdata}
 
 	def acquireReference(self, dark=False):
-		self.cam.setCameraDict(self.camconfig)
+		self.cam.setCameraDict(self.settings['camera settings'])
 		originalcamdata = self.cam.getCameraEMData()
 		tempcamdata = data.CameraEMData(initializer=originalcamdata)
 		if dark:
@@ -176,7 +200,8 @@ class Corrector(node.Node):
 			self.setStatus('Acquiring bright')
 		self.cam.setCameraEMData(tempcamdata)
 
-		seriesinfo = self.acquireSeries(self.naverage, camdata=tempcamdata)
+		seriesinfo = self.acquireSeries(self.settings['n average'],
+																		camdata=tempcamdata)
 		series = seriesinfo['image series']
 		seriescam = seriesinfo['camera']
 		seriesscope = seriesinfo['scope']
@@ -336,9 +361,10 @@ class Corrector(node.Node):
 		plan = self.retrievePlan(camstate)
 		good = self.removeBadPixels(normalized, plan)
 
-		if self.despike:
+		if self.settings['despike']:
 			self.logger.info('Despiking...')
-			good = imagefun.despike(good, self.nsize, self.threshold)
+			good = imagefun.despike(good, self.settings['despike size'],
+																		self.settings['despike threshold'])
 			self.logger.info('Despiked')
 
 		## this has been commented because original.type()

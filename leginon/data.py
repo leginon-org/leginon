@@ -1513,6 +1513,17 @@ class CameraSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class CorrectorSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('n average', int),
+			('despike', bool),
+			('despike size', int),
+			('despike threshold', float),
+			('camera settings', CameraSettingsData),
+		)
+	typemap = classmethod(typemap)
+
 class NavigatorSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (

@@ -1,10 +1,17 @@
 import wx
-from wx.lib.masked import NumCtrl, EVT_NUM
-from wx.lib.intctrl import IntCtrl, EVT_INT
+from gui.wx.Entry import IntEntry, FloatEntry
 import gui.wx.Data
 import gui.wx.Node
 import gui.wx.ImageViewer
+import gui.wx.Settings
 import threading
+
+AcquisitionDoneEventType = wx.NewEventType()
+EVT_ACQUISITION_DONE = wx.PyEventBinder(AcquisitionDoneEventType)
+class AcquisitionDoneEvent(wx.PyEvent):
+	def __init__(self):
+		wx.PyEvent.__init__(self)
+		self.SetEventType(AcquisitionDoneEventType)
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'corrector'
@@ -47,75 +54,34 @@ class Panel(gui.wx.Node.Panel):
 		self.szstats.AddGrowableCol(1)
 
 		# settings
-		self.szsettings = self._getStaticBoxSizer('Settings', (2, 0), (1, 1),
+		self.szplan = self._getStaticBoxSizer('Plan', (2, 0), (1, 1),
 																							wx.EXPAND|wx.ALL)
 
-		label = wx.StaticText(self, -1, 'Frames to average:')
-		self.szsettings.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.icnaverage = IntCtrl(self, -1, 3, min=1, max=99, limited=True,
-															style=wx.TE_RIGHT, name='icNAverage')
-		self.szsettings.Add(self.icnaverage, (0, 1), (1, 1),
-												wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-
-		# camera size
-		self.cpcamconfig = gui.wx.Camera.CameraPanel(self)
-		self.szsettings.Add(self.cpcamconfig, (1, 0), (1, 2), wx.EXPAND|wx.ALL)
-
-		szplan = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Bad rows:')
-		szplan.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.szplan.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.stbadrows = wx.StaticText(self, -1)
-		szplan.Add(self.stbadrows, (0, 1), (1, 1),
+		self.szplan.Add(self.stbadrows, (0, 1), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 
 		label = wx.StaticText(self, -1, 'Bad columns:')
-		szplan.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.szplan.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.stbadcolumns = wx.StaticText(self, -1)
-		szplan.Add(self.stbadcolumns, (1, 1), (1, 1),
+		self.szplan.Add(self.stbadcolumns, (1, 1), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 
-		szplan.AddGrowableCol(1)
+		self.szplan.AddGrowableCol(1)
 
-		beditplan = wx.Button(self, -1, 'Edit...')
-		szplan.Add(beditplan, (2, 1), (1, 2),
+		self.beditplan = wx.Button(self, -1, 'Edit...')
+		self.szplan.Add(self.beditplan, (2, 1), (1, 2),
 												wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
-		sb = wx.StaticBox(self, -1, 'Plan')
-		sbszplan = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		sbszplan.Add(szplan, 1, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 3)
-		self.szsettings.Add(sbszplan, (2, 0), (1, 2),
-												wx.ALIGN_CENTER|wx.EXPAND|wx.ALL)
-		
-		szdespike = wx.GridBagSizer(5, 5)
-		self.cbdespike = wx.CheckBox(self, -1, 'Despike images', name='cbDespike')
-		szdespike.Add(self.cbdespike, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		self.bsettings = wx.Button(self, -1, 'Settings...')
+		self.szbuttons = wx.GridBagSizer(5, 5)
+		self.szbuttons.Add(self.bsettings, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		self.szmain.Add(self.szbuttons, (3, 0), (1, 1), wx.ALIGN_CENTER)
 
-		label = wx.StaticText(self, -1, 'Neighborhood size:')
-		szdespike.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.ncnsize = NumCtrl(self, -1, 11, integerWidth=8,
-																				fractionWidth=0,
-																				allowNone=False,
-																				allowNegative=False,
-																				name='ncNSize')
-		szdespike.Add(self.ncnsize, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-		label = wx.StaticText(self, -1, 'Threshold:')
-		szdespike.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.ncthreshold = NumCtrl(self, -1, 3.5, integerWidth=6,
-																							fractionWidth=2,
-																							allowNone=False,
-																							allowNegative=False,
-																							name='ncThreshold')
-		szdespike.Add(self.ncthreshold, (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-
-		sb = wx.StaticBox(self, -1, 'Despike')
-		sbszdespike = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		sbszdespike.Add(szdespike, 1, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 3)
-		self.szsettings.Add(sbszdespike, (3, 0), (1, 2),
-												wx.ALIGN_CENTER|wx.EXPAND|wx.ALL)
-		
 		# controls
-		self.szcontrols = self._getStaticBoxSizer('Controls', (3, 0), (1, 1),
+		self.szcontrols = self._getStaticBoxSizer('Controls', (4, 0), (1, 1),
 																wx.EXPAND|wx.ALL)
 		szrb = wx.GridBagSizer(0, 0)
 		self.rbdark = wx.RadioButton(self, -1, 'Dark reference', style=wx.RB_GROUP)
@@ -135,7 +101,7 @@ class Panel(gui.wx.Node.Panel):
 		self.szcontrols.AddGrowableCol(0)
 
 		# image
-		self.szimage = self._getStaticBoxSizer('Image', (1, 1), (4, 1),
+		self.szimage = self._getStaticBoxSizer('Image', (1, 1), (5, 1),
 																						wx.EXPAND|wx.ALL)
 		self.imagepanel = gui.wx.ImageViewer.ImagePanel(self, -1)
 		self.szimage.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND|wx.ALL)
@@ -148,38 +114,13 @@ class Panel(gui.wx.Node.Panel):
 		self.SetSizerAndFit(self.szmain)
 		self.SetupScrolling()
 
-		self.Bind(wx.EVT_BUTTON, self.onEditPlan, beditplan)
-		self.Bind(wx.EVT_BUTTON, self.onAcquire, self.bacquire)
-
 	def onNodeInitialized(self):
-		self.cpcamconfig.setSize(self.node.session)
-
-		gui.wx.Data.setWindowFromDB(self.icnaverage)
-		gui.wx.Data.setWindowFromDB(self.cpcamconfig)
-		gui.wx.Data.setWindowFromDB(self.cbdespike)
-		gui.wx.Data.setWindowFromDB(self.ncnsize)
-		gui.wx.Data.setWindowFromDB(self.ncthreshold)
-
-		self.node.naverage = self.icnaverage.GetValue()
-		self.node.camconfig = self.cpcamconfig.getConfiguration()
 		self.node.getPlan()
 		self.setPlan(self.node.plan)
-		self.node.despike = self.cbdespike.GetValue()
-		self.node.nsize = self.ncnsize.GetValue()
-		self.node.threshold = self.ncthreshold.GetValue()
-
-		self.Bind(EVT_INT, self.onNAverageInt, self.icnaverage)
-		self.Bind(gui.wx.Camera.EVT_CONFIGURATION_CHANGED, self.onCamConfigChanged,
-							self.cpcamconfig)
-		self.Bind(wx.EVT_CHECKBOX, self.onDespikeCheck, self.cbdespike)
-		self.Bind(EVT_NUM, self.onNSizeNum, self.ncnsize)
-		self.Bind(EVT_NUM, self.onThresholdNum, self.ncthreshold)
-
-		gui.wx.Data.bindWindowToDB(self.icnaverage)
-		gui.wx.Data.bindWindowToDB(self.cpcamconfig)
-		gui.wx.Data.bindWindowToDB(self.cbdespike)
-		gui.wx.Data.bindWindowToDB(self.ncnsize)
-		gui.wx.Data.bindWindowToDB(self.ncthreshold)
+		self.Bind(EVT_ACQUISITION_DONE, self.onAcquisitionDone)
+		self.Bind(wx.EVT_BUTTON, self.onSettingsButton, self.bsettings)
+		self.Bind(wx.EVT_BUTTON, self.onEditPlan, self.beditplan)
+		self.Bind(wx.EVT_BUTTON, self.onAcquire, self.bacquire)
 
 	def onSetImage(self, evt):
 		gui.wx.Node.Panel.onSetImage(self, evt)
@@ -195,24 +136,15 @@ class Panel(gui.wx.Node.Panel):
 		#	self.szmain.Layout()
 		#	self.GetParent().Layout()
 
-	def onNAverageInt(self, evt):
-		self.node.naverage = evt.GetValue()
-
-	def onCamConfigChanged(self, evt):
-		self.node.camconfig = evt.configuration
+	def onSettingsButton(self, evt):
+		dialog = SettingsDialog(self)
+		dialog.ShowModal()
+		dialog.Destroy()
 		self.node.getPlan()
 		self.setPlan(self.node.plan)
 
-	def onDespikeCheck(self, evt):
-		self.node.despike = evt.IsChecked()
-
-	def onNSizeNum(self, evt):
-		self.node.size = evt.GetValue()
-
-	def onThresholdNum(self, evt):
-		self.node.threshold = evt.GetValue()
-
 	def onAcquire(self, evt):
+		self.Enable(False)
 		if self.rbdark.GetValue():
 			method = self.node.acquireDark
 		elif self.rbbright.GetValue():
@@ -222,6 +154,13 @@ class Panel(gui.wx.Node.Panel):
 		elif self.rbcorrected.GetValue():
 			method = self.node.acquireCorrected
 		threading.Thread(target=method).start()	
+
+	def onAcquisitionDone(self, evt):
+		self.Enable(True)
+
+	def acquisitionDone(self):
+		evt = AcquisitionDoneEvent()
+		self.GetEventHandler().AddPendingEvent(evt)
 
 	def setPlan(self, plan):
 		self.stbadrows.SetLabel(self.plan2str(plan['rows']))
@@ -260,6 +199,46 @@ class Panel(gui.wx.Node.Panel):
 		plan.sort()
 		return plan
 
+class SettingsDialog(gui.wx.Settings.Dialog):
+	def initialize(self):
+		gui.wx.Settings.Dialog.initialize(self)
+
+		self.widgets['n average'] = IntEntry(self, -1, min=1, max=99, chars=2)
+		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
+		self.widgets['camera settings'].setSize(self.node.session)
+		self.widgets['despike'] = wx.CheckBox(self, -1, 'Despike images')
+		self.widgets['despike size'] = IntEntry(self, -1, min=1, chars=4)
+		self.widgets['despike threshold'] = FloatEntry(self, -1, min=1, chars=9)
+
+		szdespike = wx.GridBagSizer(5, 5)
+		szdespike.Add(self.widgets['despike'], (0, 0), (1, 2),
+									wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'Neighborhood size:')
+		szdespike.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szdespike.Add(self.widgets['despike size'], (1, 1), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'Threshold:')
+		szdespike.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szdespike.Add(self.widgets['despike threshold'], (2, 1), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL)
+		sb = wx.StaticBox(self, -1, 'Despike')
+		sbszdespike = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sbszdespike.Add(szdespike, 1, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 3)
+
+		sz = wx.GridBagSizer(5, 10)
+		label = wx.StaticText(self, -1, 'Images to average:')
+		sz.Add(self.widgets['camera settings'], (0, 0), (2, 1), wx.ALIGN_CENTER)
+		sz.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['n average'], (0, 2), (1, 1),
+						wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		sz.Add(sbszdespike, (1, 1), (1, 2), wx.ALIGN_CENTER|wx.EXPAND|wx.ALL)
+
+		sb = wx.StaticBox(self, -1, 'Image Correction')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+
+		return sbsz
+
 class EditPlanDialog(wx.Dialog):
 	def __init__(self, parent):
 		wx.Dialog.__init__(self, parent, -1, 'Edit Plan')
@@ -275,12 +254,15 @@ class EditPlanDialog(wx.Dialog):
 		szbutton.Add(bsave, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		szbutton.Add(bcancel, (0, 1), (1, 1), wx.ALIGN_CENTER)
 
+		szplan = wx.GridBagSizer(5, 5)
+		szplan.Add(strows, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szplan.Add(self.tcrows, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szplan.Add(stcolumns, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szplan.Add(self.tccolumns, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
 		sz = wx.GridBagSizer(5, 5)
-		sz.Add(strows, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.tcrows, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(stcolumns, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.tccolumns, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szbutton, (2, 0), (1, 2), wx.ALIGN_RIGHT|wx.ALL, border=5)
+		sz.Add(szplan, (0, 0), (1, 1), wx.ALIGN_RIGHT|wx.ALL, border=5)
+		sz.Add(szbutton, (1, 0), (1, 1), wx.ALIGN_RIGHT|wx.ALL, border=5)
 
 		self.SetSizerAndFit(sz)
 
