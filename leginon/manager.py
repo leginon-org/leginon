@@ -8,6 +8,7 @@ import application
 import data
 import common
 import event
+import launcher
 
 class Manager(node.Node):
 	def __init__(self, id):
@@ -261,6 +262,12 @@ class Manager(node.Node):
 		for key,value in loc.items():
 			print '%-25s  %s' % (key,value)
 
+	def spawnLauncher(self, id):
+		t = threading.Thread(name='launcher thread', target=launcher.Launcher, args=(self.id + (id,), self.location()))
+		t.start()
+		# for XML-RPC
+		return ''
+
 	def defineUserInterface(self):
 		nodespec = node.Node.defineUserInterface(self)
 
@@ -320,7 +327,10 @@ class Manager(node.Node):
 
 		app = self.registerUIContainer('Application', (saveapp, loadapp, launchapp))
 
-		self.registerUISpec('Manager', (nodespec, spec1, spec2, spec3, app, self.nodetreedata))
+		argspec = (self.registerUIData('ID', 'string'),)
+		launcherspec = self.registerUIMethod(self.spawnLauncher, 'Spawn Launcher', (argspec))
+
+		self.registerUISpec('Manager', (nodespec, spec1, spec2, spec3, app, launcherspec, self.nodetreedata))
 
 	def nodeDict(self):
 		"""

@@ -442,9 +442,10 @@ def newGUIWindow(host, port):
 	gui = NodeGUI(tk, host, port)
 	gui.pack(expand=YES, fill=BOTH)
 
-	t = threading.Thread(target=tk.mainloop)
-	t.setDaemon(1)
-	t.start()
+#	t = threading.Thread(target=tk.mainloop)
+#	t.setDaemon(1)
+#	t.start()
+	tk.mainloop()
 	return tk
 
 
