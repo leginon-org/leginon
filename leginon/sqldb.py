@@ -1,13 +1,13 @@
 "MySQL module for pyLeginon"
 import MySQLdb
-import config
+import leginonconfig
 
 def connect(**kwargs):
 	defaults = {
-		'host':config.DB_HOST,
-		'user':config.DB_USER,
-		'db':config.DB_NAME,
-		'passwd':config.DB_PASS
+		'host':leginonconfig.DB_HOST,
+		'user':leginonconfig.DB_USER,
+		'db':leginonconfig.DB_NAME,
+		'passwd':leginonconfig.DB_PASS
 	}
 	defaults.update(kwargs)
 	c = MySQLdb.connect(**defaults)
