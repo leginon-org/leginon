@@ -111,6 +111,7 @@ class Calibration(node.Node):
 	def state(self, value):
 		raise NotImplementedError()
 
+	# calibrate needs to take a specific value
 	def calibrate(self):
 		self.clearStateImages()
 
@@ -137,9 +138,9 @@ class Calibration(node.Node):
 				verdict = self.validateShift(shiftinfo)
 
 				if verdict == 'good':
-					print "good", self.calculate(cdata, value) 
+					print "good"
 					self.publishRemote(self.emnode, data.EMData(self.ID(), self.state(0.0, axis)))
-					cal.update(self.state(self.calculate(cdata, value), axis))
+					cal.update({axis + " pixel shift": {'x': shiftinfo['shift']['x'], 'y': cdata['shift']['y'], 'value': value}})
 				elif verdict == 'small shift':
 					print "too small"
 					adjustedrange[0] = value
@@ -213,9 +214,6 @@ class Calibration(node.Node):
 		shift = correlator.wrap_coord(peak['subpixel peak'], pcimage.shape)
 		shiftinfo = {'shift': shift, 'peak value': peakvalue, 'shape':pcimage.shape, 'stats': (stats1, stats2)}
 		return shiftinfo
-
-	def calculate(self, cdata, value):
-		return {'x': cdata['shift']['x'] / value, 'y': cdata['shift']['y'] / value}
 
 
 	### some of this should be put directly in Correlator 
@@ -368,7 +366,31 @@ class ImageShiftCalibration(Calibration):
 class AutoFocusCalibration(Calibration):
 	def __init__(self, id, managerlocation):
 		Calibration.__init__(self, id, managerlocation)
+		self.axislist = ['x']
+		self.defocus = 0.0001
+		self.deltadefocus
 
 	def state(self, value, axis):
 		return {'beam tilt': {axis: value}}
 
+	def calibrate(self):
+		emdata = data.EMData(self.ID(), {'defocus': self.defocus})
+		self.publishRemote(self.emnode, emdata)
+		time.sleep(1.0)
+
+		cal1 = Calibration.calibrate(self)
+
+		emdata = data.EMData(self.ID(),
+			{'defocus': self.defocus + self.deltadefocus})
+		self.publishRemote(self.emnode, emdata)
+		time.sleep(1.0)
+
+		cal2 = Calibration.calibrate(self)
+
+		cal = {'autofocus': {}}
+		cal['autofocus']['x shift'] = cal2['x shift']['x'] - cal1['x shift']['x'] / self.deltadefocus
+		cal['autofocus']['y shift'] = cal2['x shift']['y'] - cal1['x shift']['y'] / self.deltadefocus
+		# calibrate needs to take a specific value
+		cal['autofocus']['beam tilt'] = cal2['x shift']['value']
+
+		return cal
