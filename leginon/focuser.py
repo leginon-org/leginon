@@ -60,7 +60,7 @@ class Focuser(acquisition.Acquisition):
 			target['pre_exposure'] = True
 
 		## pre manual check
-		if self.post_manual_check.get():
+		if self.pre_manual_check.get():
 			self.manualCheckLoop(presetdata['name'], emtarget)
 
 		if self.drifton.get():
@@ -128,7 +128,7 @@ class Focuser(acquisition.Acquisition):
 				focusmethod(defoc)
 
 		## manual focus
-		if self.pose_manual_check.get():
+		if self.post_manual_check.get():
 			self.manualCheckLoop(presetdata['name'], emtarget)
 
 		## aquire and save the focus image
