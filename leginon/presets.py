@@ -281,9 +281,11 @@ class PresetsManager(node.Node):
 			pcopy = list(self.presets)
 			for preset in pcopy:
 				if preset['name'] == p:
-					self.presets.remove(p)
+					self.presets.remove(preset)
 		else:
 			self.presets.remove(p)
+		pnames = self.presetNames()
+		self.uiselectpreset.set(pnames, 0)
 
 	def toScope(self, p):
 		'''
