@@ -9,12 +9,15 @@ class MyNode(node.Node):
 		node.Node.__init__(self, id, managerlocation)
 
 		self.addEventInput(event.NumericControlEvent, self.handle_intervalchange)
-		self.addEventInput(event.StartEvent, self.main)
+		self.addEventInput(event.StartEvent, self.start)
 		self.addEventInput(event.PublishEvent, self.handle_intervalpublished)
 
 		self.interval = 5
 		print self.location()
 		self.start()
+
+	def start(self, startevent=None):
+		self.main()
 
 	def main(self):
 		#while 1:

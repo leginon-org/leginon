@@ -12,15 +12,15 @@ import signal
 import os
 
 class Manager(node.Node):
-	def __init__(self, id, usegui=0):
+	def __init__(self, id):
 		# the id is manager (in a list)
 		node.Node.__init__(self, id, None)
 
 		self.common = common
 		self.distmap = {}
 
-		self.gui_ok = 0
-		self.usegui = usegui
+		### this initializes the "UI server"
+		self.uiInit()
 
 		## this makes every received event get distributed
 		self.addEventInput(event.Event, self.distribute)
@@ -31,15 +31,13 @@ class Manager(node.Node):
 		self.addEventInput(event.UnpublishEvent, self.unregisterData)
 		self.addEventInput(event.ListPublishEvent, self.registerData)
 
-		self.start()
+		#self.start()
 
 	def main(self):
 		pass
 
 	def start(self):
 		print self.location()
-		if self.usegui:
-			self.start_gui()
 		interact_thread = self.interact()
 
 		self.main()
@@ -73,12 +71,17 @@ class Manager(node.Node):
 			nodelocationdata = data.NodeLocationData(nodeid, nodelocation)
 		self.server.datahandler._insert(nodelocationdata)
 
-		self.gui_add_node(readyevent)
-
+		# let UI server know about the new node
+		self.uiAddNode(nodeid)
+		if isinstance(readyevent, event.LauncherAvailableEvent):
+			self.uiAddLauncher(nodeid)
 
 	def unregisterNode(self, unavailable_event):
 		nodeid = unavailable_event.id[:-1]
 		self.removeNode(nodeid)
+
+		# let UI server know about unregistered node
+		## NOT DONE YET
 
 	def removeNode(self, nodeid):
 		nodelocationdata = self.server.datahandler.query(nodeid)
@@ -196,157 +199,42 @@ class Manager(node.Node):
 										self.clients[to_node].push(ievent)
 										done.append(to_node)
 
-	def start_gui(self):
-		guithread = threading.Thread(target=self.gui)
-		guithread.setDaemon(1)
-		guithread.start()
+	### the following ui* methods could be put into a seperate class
+	### and maybe one day general node ui server class
 
-	def gui(self):
-		"""
-		open a GUI for the manager	
-		"""
+	def uiInit(self):
+		self.ui_info = {}
+		self.ui_info['nodeclasses'] = {}
+		self.ui_info['nodes'] = {}
+		self.ui_info['launchers'] = {}
+		self.ui_info['eventclasses'] = {}
 
-		try:
-			root = Tk()
-		except TclError, e:
-			print "manager, cannot start GUI:", e
-			return
+		self.uiUpdateEventclasses()
+		self.uiUpdateNodeclasses()
 
-		######################
-		#### Launch Node Frame
-		self.gui_launch_newproc = IntVar()
-		self.gui_launch_name = StringVar()
-		self.gui_launch_args = StringVar()
+	def uiGetInfo(self, key):
+		return self.ui_info[key].keys()
 
-		launch_frame = Frame(root, relief=RAISED, bd=3)
+	def uiUpdateEventclasses(self):
+		self.ui_info['eventclasses'] = event.eventClasses()
 
-		f = Frame(launch_frame)
-		lab = Label(f, text='Node Name')
-		ent = Entry(f, textvariable=self.gui_launch_name)
-		lab.pack(side=LEFT)
-		ent.pack(side=LEFT)
-		f.pack(side=TOP)
+	def uiUpdateNodeclasses(self):
+		self.ui_info['nodeclasses'] = common.nodeClasses()
 
-		f = Frame(launch_frame)
-		lab = Label(f, text='Launcher ID')
-		self.gui_launcher_str2id = {}
-		self.gui_launcherlist = ComboBox(f)
-		lab.pack(side=TOP)
-		self.gui_launcherlist.pack(side=TOP)
-		f.pack(side=TOP)
+	def uiAddNode(self, node_id):
+		node_str = node_id[-1]
+		self.ui_info['nodes'][node_str] = node_id
 
-		f = Frame(launch_frame)
-		lab = Label(f, text='Node Class')
-		self.gui_nodeclasslist = ComboBox(f)
-		self.nodeclasses = common.nodeClasses()
-		for nodeclass in self.nodeclasses:
-			self.gui_nodeclasslist.insert(END, nodeclass)
-		lab.pack(side=TOP)
-		self.gui_nodeclasslist.pack(side=TOP)
-		f.pack(side=TOP)
+	def uiAddLauncher(self, launcher_id):
+		launcher_str = launcher_id[-1]
+		self.ui_info['launchers'][launcher_str] = launcher_id
 
-		f = Frame(launch_frame)
-		lab = Label(f, text='Node Args')
-		ent = Entry(f, textvariable=self.gui_launch_args)
-		lab.pack(side=LEFT)
-		ent.pack(side=LEFT)
-		f.pack(side=TOP)
+	def uiLaunch(self, name, launcher_str, nodeclass_str, args, newproc):
+		"interface to the launchNode method"
 
-		newproc = Checkbutton(launch_frame, text='New Process', variable=self.gui_launch_newproc) 
-		newproc.pack(side=TOP)
+		launcher_id = self.ui_info['launchers'][launcher_str]
+		nodeclass = self.ui_info['nodeclasses'][nodeclass_str]
 
-		launch_but = Button(launch_frame, text='Launch')
-		launch_but['command'] = self.gui_launch_command
-		launch_but.pack(side=TOP)
-
-		launch_frame.pack(side=LEFT)
-
-		####################
-		##### Event Frame
-
-		event_frame = Frame(root, relief=RAISED, bd=3)
-
-		f = Frame(event_frame)
-		lab = Label(f, text='Event Type')
-		self.gui_eventclasslist = ComboBox(f)
-		self.eventclasses = event.eventClasses()
-		for eventclass in self.eventclasses:
-			self.gui_eventclasslist.insert(END, eventclass)
-		lab.pack(side=TOP)
-		self.gui_eventclasslist.pack(side=TOP)
-		f.pack(side=TOP)
-
-
-		f = Frame(event_frame)
-		lab = Label(f, text='From Node')
-		self.gui_fromnodelist = ComboBox(f)
-		self.gui_fromnodelist_str2id = {}
-		lab.pack(side=TOP)
-		self.gui_fromnodelist.pack(side=TOP)
-		f.pack(side=TOP)
-
-		f = Frame(event_frame)
-		lab = Label(f, text='To Node')
-		self.gui_tonodelist = ComboBox(f)
-		self.gui_tonodelist_str2id = {}
-		lab.pack(side=TOP)
-		self.gui_tonodelist.pack(side=TOP)
-		f.pack(side=TOP)
-
-		addevent_but = Button(event_frame, text='Add Event Distmap')
-		addevent_but['command'] = self.gui_event_command
-		addevent_but.pack(side=TOP)
-
-		event_frame.pack(side=LEFT)
-
-		self.gui_ok = 1
-		root.mainloop()
-
-
-	def gui_add_node(self, eventinst):
-		if not self.gui_ok:
-			return
-
-		self.junk = eventinst
-		print 'STUFF %s' % (eventinst,)
-		print 'STUFF %s' % (eventinst.id,)
-		print 'STUFF %s' % (eventinst.id[:-1],)
-		nodeid = eventinst.id[:-1]
-		str_id = str(nodeid)
-		print 'nodeid %s' % (nodeid,)
-
-		## add to the to and from node lists
-		print 'HELLO'
-		self.gui_fromnodelist.insert(END, str_id)
-		self.gui_fromnodelist_str2id[str_id] = nodeid
-		self.gui_tonodelist.insert(END, str_id)
-		self.gui_tonodelist_str2id[str_id] = nodeid
-		print 'BYE'
-
-		## stuff to do if Node is a Launcher
-		if isinstance(eventinst, event.LauncherAvailableEvent):
-			str_id = str(nodeid)
-			self.gui_launcherlist.insert(END, str_id)
-			self.gui_launcher_str2id[str_id] = nodeid
-
-	def gui_del_node(self, launcherid):
-		if not self.gui_ok:
-			return
-		### NOT DONE YET
-
-	def gui_launch_command(self):
-
-		launcher_str = self.gui_launcherlist.entry.get()
-		launcher_id = self.gui_launcher_str2id[launcher_str]
-
-		newproc = self.gui_launch_newproc.get()
-
-		target = self.gui_nodeclasslist.entry.get()
-		target = self.nodeclasses[target]
-
-		newname = self.gui_launch_name.get()
-
-		args = self.gui_launch_args.get()
 		args = '(%s)' % args
 		try:
 			args = eval(args)
@@ -354,25 +242,30 @@ class Manager(node.Node):
 			print 'problem evaluating args'
 			return
 
-		self.launchNode(launcher_id, newproc, target, newname, args)
+		self.launchNode(launcher_id, newproc, nodeclass, name, args)
 
-	def gui_event_command(self):
-		eventclass = self.gui_eventclasslist.entry.get()
-		eventclass = self.eventclasses[eventclass]
-
-		fromnode_str = self.gui_fromnodelist.entry.get()
-		fromnode_id = self.gui_fromnodelist_str2id[fromnode_str]
-
-		tonode_str = self.gui_tonodelist.entry.get()
-		tonode_id = self.gui_tonodelist_str2id[tonode_str]
-		
+	def uiAddDistmap(self, eventclass_str, fromnode_str, tonode_str):
+		eventclass = self.ui_info['eventclasses'][eventclass_str]
+		fromnode_id = self.ui_info['nodes'][fromnode_str]
+		tonode_id = self.ui_info['nodes'][tonode_str]
 		self.addEventDistmap(eventclass, fromnode_id, tonode_id)
 
 
 if __name__ == '__main__':
 	import signal, sys
+	import managergui
 
 	manager_id = ('manager',)
-	m = Manager(manager_id, usegui=1)
-	#m = Manager(manager_id, usegui=0)
-
+	m = Manager(manager_id)
+	
+	## GUI
+	gui = 1
+	if gui:
+		tk = Tk()
+		mgui = managergui.ManagerGUI(tk, m)
+		mgui.pack()
+		t = threading.Thread(target = tk.mainloop)
+		t.setDaemon(1)
+		t.start()
+	## interact interface (could be changed to use ui* methods, like GUI)
+	m.start()

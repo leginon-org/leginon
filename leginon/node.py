@@ -1,3 +1,6 @@
+import threading
+import socket
+import xmlrpcserver
 import code
 import leginonobject
 import event
@@ -52,9 +55,7 @@ class Node(leginonobject.LeginonObject):
 	def __init__(self, id, managerloc = None, dh = NodeDataHandler, dhargs = (), clientclass = Client):
 		leginonobject.LeginonObject.__init__(self, id)
 
-		self.idcounter = 0
-
-		# added from eventhandler
+		self.rpc_port = None
 		self.clients = {}
 		self.registry = {'outputs':[], 'inputs':[]}
 
@@ -75,6 +76,10 @@ class Node(leginonobject.LeginonObject):
 
 	def die(self, ievent):
 		sys.exit()
+
+	def startRPC(self):
+		x = xmlrpcserver.xmlrpcserver(self)
+		self.rpc_port = x.port
 
 	def addManager(self, loc):
 		self.managerloc = loc
@@ -151,6 +156,7 @@ class Node(leginonobject.LeginonObject):
 	def location(self):
 		loc = leginonobject.LeginonObject.location(self)
 		loc.update(self.server.location())
+		loc['RPC port'] = self.rpc_port
 		return loc
 
 	def interact(self):
