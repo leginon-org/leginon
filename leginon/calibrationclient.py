@@ -9,6 +9,7 @@ import correlator
 import peakfinder
 import time
 import sys
+import threading
 
 class DriftingTimeout(Exception):
 	pass
