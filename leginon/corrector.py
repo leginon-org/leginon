@@ -683,6 +683,7 @@ class Corrector(node.Node):
 			typekey = 'dark'
 			self.uistatus.set('Acquiring dark')
 		else:
+			camdata['exposure type'] = 'normal'
 			typekey = 'bright'
 			self.uistatus.set('Acquiring bright')
 		self.cam.setCameraEMData(camdata)
