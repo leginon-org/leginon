@@ -263,6 +263,19 @@ class ConstantSpace:
 ## SQL Statements
 ########################################
 
+class Show(SQLExpression):
+    def __init__(self, items, table=None):
+	self.table = table
+        self.items = items
+
+    def sqlRepr(self):
+        show = "SHOW %s" % (self.items,)
+
+	if self.table is not None:
+		show += " FROM `%s`" % (self.table,)
+
+        return show
+
 class Select(SQLExpression):
     def __init__(self, items, table=None, where=None, groupBy=None,
                  having=None, orderBy=None, limit=None):
@@ -722,6 +735,7 @@ if __name__ == "__main__":
 >>> CreateTable('OBJECT', [{'Field': 'Id', 'Type': 'int(20) unsigned', 'Key': 'PRIMARY', 'Extra':'auto_increment'}, {'Field': 'hash', 'Type': 'VARCHAR(64)', 'Key': 'UNIQUE', 'Index': ['hash']}, {'Field': 'objectKey', 'Type': 'varchar(50)', 'Key': 'UNIQUE', 'Index': ['objectKey(50)'], 'Null' : 'YES', 'Default': 'Denis'}, {'Field': 'object', 'Type': 'longblob'}, {'Field': 'objectKeyString', 'Type': 'text'}, {'Field': 'objectString', 'Type': 'text'},{'Field':'timestamp','Type':'timestamp','Null':'YES', 'Key':'INDEX'}])
 >>> SelectAll(table.PRESET, where=LIKE(table.PRESET.name, "%square%"), orderBy=None)
 >>> Select([table.preset.name, table.preset2.Defocus], where=AND(LIKE(table.preset.name, "%square%"), table.preset.id==table.preset2.id), orderBy={'fields':('id', 'name'), 'sort':'DESC'})
+>>> Show('Index', table.PRESET)
 """
     for expr in tests.split('\n'):
         if not expr.strip(): continue
