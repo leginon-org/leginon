@@ -22,7 +22,7 @@ import uidata
 import node
 import EM
 try:
-	import numarray
+	import numarray as Numeric
 except:
 	import Numeric
 

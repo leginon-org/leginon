@@ -9,7 +9,7 @@
 #
 
 try:
-	import numarray
+	import numarray as Numeric
 except:
 	import Numeric
 import Mrc
