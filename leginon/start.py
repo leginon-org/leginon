@@ -7,6 +7,10 @@ import socket
 import os
 import sys
 import data
+#import gc
+
+#gc.enable()
+#gc.set_debug(gc.DEBUG_LEAK)
 
 try:
 	session = sys.argv[1]
@@ -19,3 +23,4 @@ launcher = launcher.Launcher((socket.gethostname(),),
 															{'manager': managerlocation})
 client = uiclient.UIApp(managerlocation['hostname'],
 													managerlocation['UI port'])
+
