@@ -30,7 +30,7 @@ class AcquireLoop(timedloop.TimedLoop):
 
 		# this is rough, ImageData type, etc. to come soon
 		camerastate = self.researchByDataID('camera')
-		t = threading.Thread(target=self.process, args=(camerastate,))
+		t = threading.Thread(name='process image thread', target=self.process, args=(camerastate,))
 		t.setDaemon(1)
 		t.start()
 

@@ -19,7 +19,7 @@ class Handler(SocketServer.StreamRequestHandler):
 			return
 
 		if isinstance(obj, data.Data):
-			# if is data, then push
+			# if is data, then pushed
 			e = None
 			try:
 				self.server.datahandler.insert(obj)
@@ -43,12 +43,15 @@ class Server(leginonobject.LeginonObject):
 		self.datahandler = dh
 
 	def start(self):
-		self.thread = threading.Thread(None, self.serve_forever, None, (), {})
+		self.thread = threading.Thread(name='socket server thread', target=self.serve_forever)
 		self.thread.setDaemon(1)
 		self.thread.start()
 
 	def location(self):
 		return leginonobject.LeginonObject.location(self)
+
+	def exit(self):
+		pass
 
 class Client(leginonobject.LeginonObject):
 	def __init__(self, id, location, buffer_size = 1024):

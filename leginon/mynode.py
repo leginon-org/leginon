@@ -16,16 +16,29 @@ class MyNode(node.Node):
 		print self.location()
 		self.start()
 
-	def main(self):
+	def main(self, interact_thread):
 		while 1:
 		#for i in [1, 2, 3]:
+			if not interact_thread.isAlive():
+				break
 			self.print_stuff()
 			time.sleep(self.interval)
+
+	def start(self):
+		'''this is the node's parent method'''
+		interact_thread = self.interact()
+
+		self.main(interact_thread)
+
+		# wait until the interact thread terminates
+		interact_thread.join()
+		self.exit()
 
 	def print_stuff(self):
 		self.timenow = time.asctime()
 		print 'node %s says %s' % (self.id,self.timenow)
 		mydata = data.StringData(self.ID(), self.timenow)
+		print "MyNode publishing id", mydata.id
 		self.publish(mydata)
 
 	def handle_intervalchange(self, controlevent):

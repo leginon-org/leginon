@@ -283,7 +283,7 @@ if __name__ == '__main__':
 		tk = Tkinter.Tk()
 		mgui = managergui.ManagerGUI(tk, hostname, port)
 		mgui.pack()
-		t = threading.Thread(target = tk.mainloop)
+		t = threading.Thread(name = 'Tk GUI thread', target = tk.mainloop)
 		t.setDaemon(1)
 		t.start()
 	## interact interface (could be changed to use ui* methods, like GUI)

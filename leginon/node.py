@@ -7,6 +7,7 @@ import datahandler
 import interface
 import sys
 import copy
+import time
 
 if sys.platform == 'win32':
 	sys.coinit_flags = 0
@@ -168,11 +169,18 @@ class Node(leginonobject.LeginonObject):
 		#print "data ID =", dataid
 		return client.pull(dataid)
 
-	def researchByDataID(self, dataid):
-		nodeiddata = None
+	def researchByDataID(self, dataid, timeout = 0.5, retries = 10):
 		# will change soon
-		while nodeiddata == None:
+		for i in xrange(0, retries):
 			nodeiddata = self.researchByLocation(self.managerloc, dataid)
+			if nodeiddata == None:
+				time.sleep(timeout)
+			else:
+				break
+
+		if nodeiddata == None:
+			raise IOError
+
 		# should interate over nodes, be crafty, etc.
 		datalocationdata = self.researchByLocation(self.managerloc, nodeiddata.content[0])
 		return self.researchByLocation(datalocationdata.content, dataid)
@@ -187,7 +195,7 @@ class Node(leginonobject.LeginonObject):
 		banner = "Starting interpreter for %s" % self.__class__
 		readfunc = self.raw_input
 		local = locals()
-		t = threading.Thread(target=code.interact, args=(banner, readfunc, local))
+		t = threading.Thread(name='interact thread', target=code.interact, args=(banner, readfunc, local))
 		t.setDaemon(1)
 		t.start()
 		return t

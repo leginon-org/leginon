@@ -66,7 +66,7 @@ class TimedLoop(node.Node):
 		start a new main thread after receiving StartEvent
 		"""
 		print 'got start event %s' % startevent
-		t = threading.Thread(target=self.main)
+		t = threading.Thread(name='self.main thread', target=self.main)
 		t.setDaemon(1)
 		t.start()
 

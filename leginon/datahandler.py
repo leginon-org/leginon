@@ -83,7 +83,8 @@ class ShelveDataKeeper(DataHandler):
 		self.shelflock = threading.Lock()
 
 	def __del__(self):
-		self.exit()
+		#self.exit()
+		pass
 
 	def exit(self):
 		os.remove(self.filename)
@@ -142,6 +143,7 @@ class CachedDictDataKeeper(DataHandler):
 		self.age = age
 		self.timeout = timeout
 		self.timer = threading.Timer(self.timeout, self.writeoutcache)
+		self.timer.setName('cache timer thread')
 		self.timer.setDaemon(1)
 		self.timer.start()
 
@@ -187,6 +189,7 @@ class CachedDictDataKeeper(DataHandler):
 
 	def writeoutcache(self):
 		self.timer = threading.Timer(self.timeout, self.writeoutcache)
+		self.timer.setName('cache timer thread')
 		self.timer.setDaemon(1)
 		self.timer.start()
 		now = time.time()

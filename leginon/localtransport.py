@@ -20,6 +20,9 @@ class Server(leginonobject.LeginonObject):
 		loc['local server python ID'] = self.pythonid
 		return loc
 
+	def exit(self):
+		pass
+
 class Client(leginonobject.LeginonObject):
 	def __init__(self, id, location):
 		leginonobject.LeginonObject.__init__(self, id)

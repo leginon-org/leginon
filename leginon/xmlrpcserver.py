@@ -46,7 +46,7 @@ class xmlrpcserver(object):
 		self.server.register_function(self.RPCmethods)
 		if self.object_instance:
 			self.server.register_instance(self.object_instance)
-		th = threading.Thread(target=self.server.serve_forever)
+		th = threading.Thread(name='xmlrpcserver thread', target=self.server.serve_forever)
 		th.setDaemon(1)
 		th.start()
 		self.serverthread = th

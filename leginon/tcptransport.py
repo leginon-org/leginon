@@ -9,7 +9,8 @@ class Server(SocketServer.ThreadingTCPServer, socketstreamtransport.Server):
 
 		# instantiater can choose a port or we'll choose one for them
 		if port:
-			SocketServer.ThreadingTCPServer.__init__(self, ('', port), socketstreamtransport.Handler)
+			SocketServer.ThreadingTCPServer.__init__(self, ('', port), \
+				socketstreamtransport.Handler)
 		else:
 			# range define by IANA as dynamic/private or so says Jim
 			portrange = (49152,65536)
@@ -47,4 +48,5 @@ class Client(socketstreamtransport.Client):
 				self.socket = None
 				print "tcptransport, receive: unable to connect to", self.serverlocation['hostname'], "port", self.serverlocation['TCP port']
 				raise IOError
-
+			else:
+				raise
