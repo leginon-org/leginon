@@ -39,7 +39,8 @@ class TargetFinder(imagewatcher.ImageWatcher):
 	def publishTargetList(self):
 
 		if self.targetlist:
-			targetlistdata = data.ImageTargetListData(self.ID(), self.targetlist)
+			targetlistdata = data.ImageTargetListData(self.ID(),
+																								targets=self.targetlist)
 			self.publish(targetlistdata, event.ImageTargetListPublishEvent)
 			print 'published targetlistdata', targetlistdata
 			print 'content'
@@ -110,6 +111,7 @@ class ClickTargetFinder(TargetFinder):
 			imageinfo = self.imageInfo()
 			target.update(imageinfo)
 			print 'TARGET', target
+			# hopefully target matches ImageTargetData
 			targetdata = data.ImageTargetData(self.ID(), target)
 			self.targetlist.append(targetdata)
 		self.publishTargetList()

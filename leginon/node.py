@@ -29,7 +29,7 @@ class DataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
 		if isinstance(idata, event.Event):
 			datahandler.DataBinder.insert(self, idata)
 		else:
-			if idata.id[:-1] == self.id[:-1]:
+			if idata['id'][:-1] == self['id'][:-1]:
 				datahandler.SimpleDataKeeper.insert(self, copy.deepcopy(idata))
 			else:
 				raise InvalidEventError('event must be Event instance')

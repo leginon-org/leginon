@@ -127,7 +127,7 @@ class TestLoop(TimedLoop):
 		a = Numeric.arrayrange(size * size)
 		a = Numeric.reshape(a, (size,size)) 
 		a[0,0] = time.time()
-		adata = data.NumericData(self.ID(), a)
+		adata = data.NumericData(self.ID(), array=a)
 		print 'publishing:'
 		print a
 		self.publish(adata, event.PublishEvent)

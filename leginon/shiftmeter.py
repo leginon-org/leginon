@@ -35,10 +35,7 @@ class ShiftMeter(watcher.Watcher):
 
 	def processData(self, newdata):
 		## phase correlation with new image
-		if type(newdata.content) is dict:
-			newimage = newdata.content['image']
-		else:
-			newimage = newdata.content
+		newimage = newdata['image']
 
 		self.correlator.insertImage(newimage)
 		try:
@@ -56,19 +53,23 @@ class ShiftMeter(watcher.Watcher):
 		self.shift = shift
 
 		pcid = self.ID()
-		pcdata = data.PhaseCorrelationImageData(pcid, pcim)
+		# no subject1, subject2
+		pcdata = data.PhaseCorrelationImageData(pcid, image=pcim)
 		self.publish(pcdata, eventclass=event.PhaseCorrelationImagePublishEvent)
-		corrinfo = {}
-		corrinfo['phase correlation image'] = pcid
-		corrinfo['phase correlation shift'] = shift
-		corrdata = data.CorrelationData(self.ID(), corrinfo)
-		#self.publish(corrdata, eventclass=event.CorrelationPublishEvent)
+#		corrinfo = {}
+#		corrinfo['phase correlation image'] = pcid
+#		corrinfo['phase correlation shift'] = shift
+#		corrdata = data.CorrelationData(self.ID(), corrinfo)
+#		#self.publish(corrdata, eventclass=event.CorrelationPublishEvent)
 
-	def process_numeric(self, numarray, filename):
-		'''mainly for debugging'''
-		class fakedata: pass
-		fakedata.content = numarray
-		fakedata.id = (filename,)
+#	def process_numeric(self, numarray, filename):
+#		'''mainly for debugging'''
+#		class fakedata: pass
+#		fakedata.content = numarray
+#		fakedata.id = (filename,)
+#		print 'processing data'
+#		self.processData(fakedata)
+		fakedata = {'id': (filename,), 'image': numarray}
 		print 'processing data'
 		self.processData(fakedata)
 

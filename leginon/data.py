@@ -210,7 +210,7 @@ class BrightImageData(CorrectionImageData):
 class TileImageData(CameraImageData):
 	def typemap(cls):
 		t = CameraImageData.typemap()
-		t += [ ('neighbor tiles', list), ]
+		t += [ ('neighbor_tiles', list), ]
 		return t
 	typemap = classmethod(typemap)
 

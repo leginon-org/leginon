@@ -17,7 +17,7 @@ class TargetWatcher(watcher.Watcher):
 		if isinstance(newdata, data.ImageTargetData):
 			self.processTargetData(newdata)
 		elif isinstance(newdata, data.ImageTargetListData):
-			targetlist = newdata.content
+			targetlist = newdata['targets']
 			print 'TARGETLIST len', len(targetlist)
 			self.abort.clear()
 			for target in targetlist:

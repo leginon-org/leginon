@@ -43,9 +43,11 @@ class TestMosaic(node.Node):
 			time.sleep(1.0)
 			print 'publishing'
 			newid = self.ID()
-			self.publish(data.TileImageData(newid, tile,
-						{'stage position': {'x': x, 'y': y}}, None, neighbors),
-																				event.TileImagePublishEvent)
+			self.publish(data.TileImageData(newid,
+																scope={'stage position': {'x': x, 'y': y}},
+																camera={'image data': tile},
+																neighbor_tiles=neighbors),
+										event.TileImagePublishEvent)
 			neighbors = [newid]
 
 #	def defineUserInterface(self):
