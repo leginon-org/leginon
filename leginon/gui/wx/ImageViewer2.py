@@ -190,15 +190,21 @@ class OffsetWindow(ScaledWindow):
 			updated = True
 		return updated
 
-	def updateScrollbars(self, position=(0, 0)):
-		xposition, yposition = position
+	def updateScrollbars(self, position=None):
+		if position is None:
+			xposition = self.GetScrollPos(wx.HORIZONTAL)
+			yposition = self.GetScrollPos(wx.VERTICAL)
+		else:
+			xposition, yposition = position
 		xthumbsize = min(int(self._clientwidth/self._xscale), self._clientwidth)
 		ythumbsize = min(int(self._clientheight/self._yscale), self._clientheight)
-		xrange = min(self._bitmapwidthscaled, self._bitmapwidth)
-		yrange = min(self._bitmapheightscaled, self._bitmapheight)
+		if self._bitmap is None:
+			xrange, yrange = 0, 0
+		else:
+			xrange = min(self._bitmapwidthscaled, self._bitmapwidth)
+			yrange = min(self._bitmapheightscaled, self._bitmapheight)
 		self.SetScrollbar(wx.HORIZONTAL, xposition, xthumbsize, xrange)
 		self.SetScrollbar(wx.VERTICAL, yposition, ythumbsize, yrange)
-		# ?
 		self._xscroll = self.GetScrollPos(wx.HORIZONTAL)
 		self._yscroll = self.GetScrollPos(wx.VERTICAL)
 
@@ -208,8 +214,10 @@ class OffsetWindow(ScaledWindow):
 
 	def _onSize(self, evt):
 		ScaledWindow._onSize(self, evt)
+		self.updateScrollbars()
+		updated = self.updateOffset()
 		# GTK requests a paint of the full area on size
-		if self.updateOffset() and wx.Platform != '__WXGTK__':
+		if updated and wx.Platform != '__WXGTK__':
 			self.Refresh()
 
 	def clientToImage(self, x, y):
@@ -246,6 +254,8 @@ class OffsetWindow(ScaledWindow):
 		if self._setScale(x, y, center):
 			self.updateDrawing()
 			self.Refresh()
+
+class ScrolledWindow(OffsetWindow):
 
 if __name__ == '__main__':
 	import sys
