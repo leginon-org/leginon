@@ -376,6 +376,8 @@ class Manager(node.Node):
 		string to represent the launcher ID, node class, and args
 		"""
 
+		if len(launchclass) != 2:
+			raise ValueError('launchclass must contain launcher and class')
 		launcher_str, nodeclass = launchclass
 
 		self.printerror('launching \'%s\' on \'%s\' (class %s)'
