@@ -197,7 +197,7 @@ class SQLDict:
 	    self.readimages = readimages
 	    #print 'querinfo ', self.queryinfo
 	    self.queries = setQueries(queryinfo)
-	    #print 'queries ', self.queries
+	    # print 'queries ', self.queries
 	    self.cursors = {}
 	    self.execute()
 
@@ -208,8 +208,8 @@ class SQLDict:
 	    for key,query in self.queries.items():
 	    	c = self._cursor()
 		try:
-			#print '-----------------------------------------------'
-			#print 'query =', query
+			# print '-----------------------------------------------'
+			# print 'query =', query
 			c.execute(query)
 		except MySQLdb.ProgrammingError, e:
 			errno = e.args[0]
@@ -875,7 +875,7 @@ def joinFieldName (refalias, colname):
 	"""
 	join the fieldname with the right alias.
 	"""
-	fieldname = "%s.`%s`" % (refalias,colname)
+	fieldname = "%s.%s" % (sqlexpr.backquote(refalias),sqlexpr.backquote(colname))
 	return fieldname
 
 def flatDict(in_dict):

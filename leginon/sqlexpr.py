@@ -250,7 +250,7 @@ class Field(SQLExpression):
         self.tableName = tableName
         self.fieldName = fieldName
     def sqlRepr(self):
-	return self.tableName + "." + backquote(self.fieldName)
+	return backquote(self.tableName) + "." + backquote(self.fieldName)
     def tablesUsedImmediate(self):
         return [self.tableName]
 
@@ -272,7 +272,7 @@ class Show(SQLExpression):
         show = "SHOW %s" % (self.items,)
 
 	if self.table is not None:
-		show += " FROM `%s`" % (self.table,)
+		show += " FROM %s" % backquote(self.table,)
 
         return show
 
@@ -453,10 +453,10 @@ class ColumnSpec(dict):
 				for indexName in index:
 					indexes.append(indexName)
 				index_str = string.join(indexes, ',')
-				keys.append(key_str+' `'+name +'` (`' + index_str + '`)')
+				keys.append(key_str+' '+backquote(name) +' (' + backquote(index_str) + ')')
 
 			if primary:
-				keys.append('PRIMARY KEY '+'(`'+ name +'`)' )
+				keys.append('PRIMARY KEY '+'('+ backquote(name) +')' )
 
 	       		return string.join(keys)
 
@@ -469,7 +469,7 @@ class AlterTable(SQLExpression):
         if not self.column:
             return ''
 	else:
-	    alter = "ALTER TABLE `%s` ADD `%s` %s NOT NULL " % (self.table, self.column['Field'], self.column['Type'])
+	    alter = "ALTER TABLE %s ADD %s %s NOT NULL " % (backquote(self.table), backquote(self.column['Field']), self.column['Type'])
 	return alter
 
 class CreateTable(SQLExpression):
@@ -485,7 +485,7 @@ class CreateTable(SQLExpression):
 	else:
 		type_str = " TYPE=MyISAM" 
 
-        create = "CREATE TABLE IF NOT EXISTS `%s` " % self.table
+        create = "CREATE TABLE IF NOT EXISTS %s " % backquote(self.table)
 	keys = []
 	fields = []
 
@@ -663,17 +663,16 @@ def _likeQuote(s):
 
 
 def selectAllFormat(field):
-	return "SELECT %s.* " % field
+	return "SELECT %s.* " % backquote(field)
 
 def fromFormat(table, alias=None):
-	sqlfrom = "FROM `%s` " % (table)
+	sqlfrom = "FROM %s " % backquote(table)
 	if alias is not None:
-		sqlfrom += "AS %s " % (alias)
+		sqlfrom += "AS %s " % backquote(alias)
 	return sqlfrom
 
 def joinFormat(field, joinTable):
-	sqljoin = " JOIN %s AS %s ON (%s = %s.`DEF_ID`) " % (joinTable['class name'], joinTable['alias'], field, joinTable['alias'])
-	# sqljoin = " LEFT JOIN %s AS %s ON (%s = %s.`DEF_ID`) " % (joinTable['class name'], joinTable['alias'], field, joinTable['alias'])
+	sqljoin = " JOIN %s AS %s ON (%s = %s.%s) " % (backquote(joinTable['class name']), backquote(joinTable['alias']), field, backquote(joinTable['alias']), backquote('DEF_ID'))
 	return sqljoin
 
 def whereFormat(in_dict):
@@ -685,7 +684,7 @@ def whereFormat(in_dict):
 		if type(value) in [tuple, list]:
 			key = sqldict.seq2sqlColumn(key)
 		evalue = str(value)
-		wherelist.append(''' %s.`%s`="%s" ''' % (alias, key, evalue))
+		wherelist.append(''' %s.%s="%s" ''' % (backquote(alias), backquote(key), evalue))
 	wherestr = ' AND '.join(wherelist)
         return wherestr
 
@@ -697,12 +696,12 @@ def whereFormatSimple(in_dict):
 		if type(value) in [tuple, list]:
 			key = sqldict.seq2sqlColumn(key)
 		evalue = str(value)
-		wherelist.append(''' `%s`="%s" ''' % (key, evalue))
+		wherelist.append(''' %s="%s" ''' % (backquote(key), evalue))
 	wherestr = ' AND '.join(wherelist)
         return wherestr
 
 def orderFormat(alias):
-	sqlorder = "ORDER BY %s.DEF_timestamp DESC " % (alias)
+	sqlorder = "ORDER BY %s.DEF_timestamp DESC " % backquote(alias)
 	return sqlorder 
 
 ########################################
