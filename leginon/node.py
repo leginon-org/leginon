@@ -118,8 +118,8 @@ class Node(leginonobject.LeginonObject):
 		self.clientlist = []
 		self.clientdict = {}
 		print 'clientlist initialized'
-		self.registerUIFunction(self.uiID, (), 'ID')
-		self.registerUIFunction(self.uiClass, (), 'Class')
+		self.registerUIFunction(self.uiID, (), 'ID', returntype='array')
+		self.registerUIFunction(self.uiClass, (), 'Class', returntype='string')
 
 	def registerUIFunction(self, func, argspec, alias=None, returntype=None):
 		self.uiserver.registerFunction(func, argspec, alias, returntype)

@@ -4,6 +4,7 @@ import threading
 import leginonobject
 import datahandler
 import node
+import application
 import data
 import common
 import event
@@ -18,6 +19,7 @@ class Manager(node.Node):
 		self.distmap = {}
 		# maps event id to list of node it was distributed to if event.confirm
 		self.confirmmap = {}
+		self.app = application.Application(self.ID(), self)
 
 		## this makes every received event get distributed
 		self.addEventInput(event.NodeAvailableEvent, self.registerNode)
@@ -183,6 +185,9 @@ class Manager(node.Node):
 				pass
 
 	def launchNode(self, launcher, newproc, target, name, nodeargs=()):
+		args = (launcher, newproc, target, name, nodeargs)
+		self.app.addLaunchSpec(args)
+
 		manloc = self.location()
 		newid = self.nodeID(name)
 		args = (newid, manloc) + nodeargs
@@ -203,12 +208,27 @@ class Manager(node.Node):
 		self.removeNode(nodeid)
 
 	def addEventDistmap(self, eventclass, from_node=None, to_node=None):
+		args = (eventclass, from_node, to_node)
+		self.app.addBindSpec(args)
+
 		if eventclass not in self.distmap:
 			self.distmap[eventclass] = {}
 		if from_node not in self.distmap[eventclass]:
 			self.distmap[eventclass][from_node] = []
 		if to_node not in self.distmap[eventclass][from_node]:
 			self.distmap[eventclass][from_node].append(to_node)
+
+	def saveApp(self, filename):
+		self.app.save(filename)
+		return ''
+
+	def loadApp(self, filename):
+		self.app.load(filename)
+		return ''
+
+	def launchApp(self):
+		self.app.launch()
+		return ''
 
 	def distribute(self, ievent):
 		'''push event to eventclients based on event class and source'''
@@ -274,7 +294,12 @@ class Manager(node.Node):
 			)
 		self.registerUIFunction(self.uiAddDistmap, argspec, 'Bind')
 		
-		self.registerUIFunction(self.uiNodes, (), 'nodes')
+		self.registerUIFunction(self.uiNodes, (), 'nodes', returntype='struct')
+		argspec = (
+			{'name':'filename', 'alias':'Filename', 'type':'string'},)
+		self.registerUIFunction(self.saveApp, argspec, 'Save App')
+		self.registerUIFunction(self.loadApp, argspec, 'Load App')
+		self.registerUIFunction(self.launchApp, (), 'Launch App')
 
 	def uiNodes(self):
 		"""

@@ -128,7 +128,6 @@ class Client(object):
 		self.funcdict = {}
 		self.funclist = []
 		f = self.proxy.methods()
-		print 'METHODS', f
 		fdict = f['dict']
 		self.funclist = f['list']
 		for key,value in fdict.items():
