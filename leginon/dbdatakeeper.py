@@ -5,6 +5,7 @@ import datahandler
 import sqldict
 import data
 import Mrc
+import os
 
 class DBDataKeeper(datahandler.DataHandler):
 	def __init__(self, id, session):
@@ -90,7 +91,10 @@ class DBDataKeeper(datahandler.DataHandler):
 
 		if numdata is not None:
 			# filename = ???
-			filename = './images/%s-%s.mrc' % (session, idstr)
+			try:
+				filename = os.environ['LEGINONPATH'] + './images/%s-%s.mrc' % (session, idstr)
+			except:
+				filename = './images/%s-%s.mrc' % (session, idstr)
 			try:
 				Mrc.numeric_to_mrc(numdata, filename)
 			except:

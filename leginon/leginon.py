@@ -19,9 +19,7 @@ try:
 		applicationfilename = os.environ['LEGINONPATH'] + '\\leginon.app'
 	else:
 		applicationfilename = os.environ['LEGINONPATH'] + '/leginon-linux.app'
-	print applicationfilename
-except Exception, e:
-	print e
+except:
 	raise RuntimeError('LEGINONPATH environment variable error')
 
 class mySimpleDialog(tkSimpleDialog.Dialog):
