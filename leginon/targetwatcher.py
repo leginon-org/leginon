@@ -8,6 +8,10 @@ class TargetWatcher(watcher.Watcher):
 	def __init__(self, id, session, nodelocations, targetclass=data.ImageTargetData, **kwargs):
 		watchfor = event.ImageTargetListPublishEvent
 		watcher.Watcher.__init__(self, id, session, nodelocations, watchfor, lockblocking=0, **kwargs)
+
+		## moved here from acquisition, hope this doesn't break it
+		self.addEventInput(event.TargetDoneEvent, self.handleTargetDone)
+
 		self.abort = threading.Event()
 		self.targetclass = targetclass
 		self.targetevents = {}
@@ -65,6 +69,7 @@ class TargetWatcher(watcher.Watcher):
 		print 'got targetdone event, setting threading event', targetid
 		if targetid in self.targetevents:
 			self.targetevents[targetid].set()
+		self.confirmEvent(targetdoneevent)
 
 	def processTargetData(self, targetdata):
 		raise NotImplementedError()

@@ -17,7 +17,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 	def __init__(self, id, session, nodelocations, targetclass=data.ImageTargetData, **kwargs):
 		targetwatcher.TargetWatcher.__init__(self, id, session, nodelocations, targetclass, **kwargs)
 		self.addEventInput(event.ImageClickEvent, self.handleImageClick)
-		self.addEventInput(event.TargetDoneEvent, self.handleTargetDone)
 		self.cam = camerafuncs.CameraFuncs(self)
 
 		self.calclients = {
@@ -188,6 +187,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## acquire image
 		self.acquire(presetdata=None, trial=True)
 		self.outputEvent(event.UnlockEvent(self.ID()))
+		self.confirmEvent(clickevent)
 
 	def uiToScope(self):
 		try:
