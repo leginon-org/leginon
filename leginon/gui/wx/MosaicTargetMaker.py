@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MosaicTargetMaker.py,v $
-# $Revision: 1.17 $
+# $Revision: 1.18 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
-# $Author: suloway $
+# $Date: 2004-11-04 00:59:26 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -16,6 +16,7 @@ import wx
 from gui.wx.Entry import Entry, FloatEntry
 import gui.wx.Node
 from gui.wx.Presets import PresetChoice
+from gui.wx.Choice import Choice
 import gui.wx.Settings
 import gui.wx.ToolBar
 import gui.wx.Events
@@ -95,6 +96,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['label'] = Entry(self, -1)
 		self.widgets['radius'] = FloatEntry(self, -1, min=0.0, chars=6)
 		self.widgets['overlap'] = FloatEntry(self, -1, min=0.0, chars=6)
+		self.widgets['mosaic center'] = Choice(self, -1, choices=['stage center', 'current position'])
 
 		#szradius = wx.GridBagSizer(5, 5)
 		#szradius.Add(self.widgets['radius'], (0, 0), (1, 1),
@@ -133,8 +135,15 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		#sz.Add(szoverlap, (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		sz.Add(self.widgets['overlap'], (3, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+
 		label = wx.StaticText(self, -1, '%')
 		sz.Add(label, (3, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		label = wx.StaticText(self, -1, 'Mosaic Center:')
+		sz.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['mosaic center'], (4, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+
 
 		sz.AddGrowableCol(1)
 

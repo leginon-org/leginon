@@ -57,6 +57,7 @@ class MosaicTargetMaker(TargetMaker):
 		'overlap': 0.0,
 		'max targets': 128,
 		'max size': 16384,
+		'mosaic center': 'stage center',
 	}
 	eventinputs = TargetMaker.eventinputs + [event.MakeTargetListEvent]
 	def __init__(self, id, session, managerlocation, **kwargs):
@@ -187,7 +188,8 @@ class MosaicTargetMaker(TargetMaker):
 		scope, camera = self.getState()
 		alpha = self.getAlpha(scope)
 		preset = self.getPreset()
-		self.updateState(preset, scope, camera)
+		if self.settings['mosaic center'] == 'stage center':
+			self.updateState(preset, scope, camera)
 		pixelsize = self.getPixelSize(scope)
 		binning, imagesize = self.getCameraParameters(camera)
 		targets = self.makeCircle(radius, overlap, pixelsize, binning, imagesize)
