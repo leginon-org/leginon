@@ -8,7 +8,7 @@ import wxImageViewer
 class Panel(gui.wx.Node.Panel):
 	icon = 'corrector'
 	def __init__(self, parent, name):
-		gui.wx.Node.Panel.__init__(self, parent, -1, name='%s.pAcquisition' % name)
+		gui.wx.Node.Panel.__init__(self, parent, -1, name='%s.pCorrector' % name)
 
 		self.szmain = wx.GridBagSizer(5, 5)
 
@@ -147,7 +147,6 @@ class Panel(gui.wx.Node.Panel):
 
 		self.Bind(wx.EVT_BUTTON, self.onEditPlan, beditplan)
 		self.Bind(wx.EVT_BUTTON, self.onAcquire, self.bacquire)
-		self.Bind(gui.wx.Node.EVT_SET_IMAGE, self.onSetImage)
 
 	def initializeValues(self):
 		gui.wx.Data.setWindowFromDB(self.icnaverage)
@@ -178,7 +177,7 @@ class Panel(gui.wx.Node.Panel):
 		gui.wx.Data.bindWindowToDB(self.ncthreshold)
 
 	def onSetImage(self, evt):
-		self.imagepanel.setNumericImage(evt.image)
+		gui.wx.Node.SetImage(self, evt)
 		if 'mean' in evt.statistics:
 			self.stvmean.SetLabel(str(evt.statistics['mean']))
 		if 'min' in evt.statistics:
@@ -295,7 +294,7 @@ class EditPlanDialog(wx.Dialog):
 if __name__ == '__main__':
 	class App(wx.App):
 		def OnInit(self):
-			frame = wx.Frame(None, -1, 'Camera Test')
+			frame = wx.Frame(None, -1, 'Corrector Test')
 			panel = Panel(frame, 'Test')
 			frame.Fit()
 			self.SetTopWindow(frame)

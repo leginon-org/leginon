@@ -34,6 +34,8 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 		wx.lib.scrolledpanel.ScrolledPanel.__init__(self, *args, **kwargs)
 		self.node = None
 		self.Bind(EVT_NODE_INITIALIZED, self.onNodeInitialized)
+		self.Bind(EVT_SET_STATUS, self.onSetStatus)
+		self.Bind(EVT_SET_IMAGE, self.onSetImage)
 
 	def initializeValues(self):
 		pass
@@ -42,6 +44,12 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 		self.node = evt.node
 		self.initializeValues()
 		evt.event.set()
+
+	def onSetStatus(self, evt):
+		self.ststatus.SetLabel(evt.status)
+
+	def onSetImage(self, evt):
+		self.imagepanel.setNumericImage(evt.image)
 
 	def _getStaticBoxSizer(self, label, *args):
 		sbs = wx.StaticBoxSizer(wx.StaticBox(self, -1, label), wx.VERTICAL)

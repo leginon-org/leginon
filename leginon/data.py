@@ -1463,6 +1463,8 @@ class wxPresetOrderData(wxData):
 		)
 	typemap = classmethod(typemap)
 
+wxEditPresetOrder = wxPresetOrderData
+
 class wxPresetChoiceData(wxData):
 	def typemap(cls):
 		return wxData.typemap() + (

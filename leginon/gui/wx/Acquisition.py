@@ -44,7 +44,8 @@ class Panel(gui.wx.Node.Panel):
 		label = wx.StaticText(self, -1, 'to move to target')
 		self.szsettings.Add(label, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		self.presetorder = gui.wx.Presets.PresetOrder(self, -1, name='poPresetOrder')
+		self.presetorder = gui.wx.Presets.EditPresetOrder(self, -1,
+																											name='poPresetOrder')
 		gui.wx.Data.bindWindowToDB(self.presetorder)
 		self.szsettings.Add(self.presetorder, (1, 0), (1, 5),
 													wx.ALIGN_CENTER|wx.EXPAND|wx.ALL)
@@ -112,8 +113,8 @@ class Panel(gui.wx.Node.Panel):
 
 		self.Bind(wx.lib.masked.EVT_NUM, self.onWaitNum, self.ncwait)
 		self.Bind(wx.EVT_CHOICE, self.onMoveTypeChoice, self.cmovetype)
-		self.Bind(gui.wx.Presets.EVT_PRESET_ORDER_CHANGED, self.onPresetOrderChanged,
-							self.presetorder)
+		self.Bind(gui.wx.Presets.EVT_PRESET_ORDER_CHANGED,
+								self.onPresetOrderChanged, self.presetorder)
 		self.Bind(wx.EVT_CHECKBOX, self.onCorrectCheckBox, self.cbcorrectimage)
 		self.Bind(wx.EVT_CHECKBOX, self.onDisplayCheckBox, self.cbdisplayimage)
 		self.Bind(wx.EVT_CHECKBOX, self.onSaveCheckBox, self.cbsaveimage)
@@ -124,9 +125,6 @@ class Panel(gui.wx.Node.Panel):
 
 		self.Bind(wx.EVT_TOGGLEBUTTON, self.onTogglePause, self.tbpause)
 		self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggleStop, self.tbstop)
-
-		self.Bind(gui.wx.Node.EVT_SET_STATUS, self.onSetStatus)
-		self.Bind(gui.wx.Node.EVT_SET_IMAGE, self.onSetImage)
 
 	def initializeValues(self):
 		movetypes = self.node.calclients.keys()
@@ -216,10 +214,4 @@ class Panel(gui.wx.Node.Panel):
 			self.node.abort = True
 		else:
 			self.node.abort = False
-
-	def onSetStatus(self, evt):
-		self.ststatus.SetLabel(evt.status)
-
-	def onSetImage(self, evt):
-		self.imagepanel.setNumericImage(evt.image)
 

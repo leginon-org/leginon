@@ -3,11 +3,21 @@ import wx
 from wx.lib.intctrl import IntCtrl, EVT_INT
 
 ConfigurationChangedEventType = wx.NewEventType()
+SetConfigurationEventType = wx.NewEventType()
+
 EVT_CONFIGURATION_CHANGED = wx.PyEventBinder(ConfigurationChangedEventType)
+EVT_SET_CONFIGURATION = wx.PyEventBinder(SetConfigurationEventType)
+
 class ConfigurationChangedEvent(wx.PyCommandEvent):
 	def __init__(self, configuration, source):
 		wx.PyCommandEvent.__init__(self, ConfigurationChangedEventType,
 																source.GetId())
+		self.SetEventObject(source)
+		self.configuration = configuration
+
+class SetConfigurationEvent(wx.PyCommandEvent):
+	def __init__(self, configuration, source):
+		wx.PyCommandEvent.__init__(self, SetConfigurationEventType, source.GetId())
 		self.SetEventObject(source)
 		self.configuration = configuration
 
@@ -63,13 +73,14 @@ class CameraPanel(wx.Panel):
 
 		sb = wx.StaticBox(self, -1, 'Camera Configuration')
 		self.sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		self.sbsz.Add(self.szmain, 0, wx.ALIGN_CENTER, 3)
+		self.sbsz.Add(self.szmain, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		self.SetSizerAndFit(self.sbsz)
 
 		self.Bind(wx.EVT_CHOICE, self.onCommonChoice, self.ccommon)
 		self.Bind(wx.EVT_BUTTON, self.onCustomButton, bcustom)
 		self.Bind(EVT_INT, self.onExposureTime, self.icexposuretime)
+		self.Bind(EVT_SET_CONFIGURATION, self.onSetConfiguration)
 
 		self.ccommon.SetSelection(0)
 		self.setGeometry(self.common[self.ccommon.GetStringSelection()])
@@ -203,6 +214,13 @@ class CameraPanel(wx.Panel):
 		c = dict(g)
 		g['exposure time'] = self._getExposureTime()
 		return g
+
+	def setConfiguration(self, value):
+		self._setExposureTime(value['exposure time'])
+		self.setGeometry(value)
+
+	def onSetConfiguration(self, evt):
+		self.setConfiguration(evt.configuration)
 
 class CustomDialog(wx.Dialog):
 	def __init__(self, parent, geometry):
