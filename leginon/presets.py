@@ -766,8 +766,14 @@ class PresetsManager(node.Node):
 		camdata0.friendly_update(self.currentpreset)
 
 		camdata1 = copy.deepcopy(camdata0)
-		camdata1['dimension'] = {'x':512,'y':512}
-		camdata1['offset'] = self.cam.autoOffset(camdata1['dimension'], camdata1['binning'])
+
+		## figure out if we want to cut down to 512x512
+		for axis in ('x','y'):
+			change = camdata0['dimension'][axis] - 512
+			if change > 0:
+				camdata1['dimension'][axis] = 512
+				camdata1['offset'][axis] += (change / 2)
+
 		self.cam.setCameraEMData(camdata1)
 		imagedata = self.cam.acquireCameraImageData(correction=True)
 		self.uistatus.set('returning to original preset camera dimensions')
