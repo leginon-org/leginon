@@ -47,7 +47,6 @@ class Corrector(node.Node):
 	'''
 	def __init__(self, id, session, nodelocations, **kwargs):
 		self.cam = camerafuncs.CameraFuncs(self)
-		self.plans = {}
 
 		node.Node.__init__(self, id, session, nodelocations,
 												[(DataHandler, (self,)),
@@ -98,26 +97,19 @@ class Corrector(node.Node):
 	def uiSetPlanParams(self, cliplimits, badrows, badcols):
 		camconfig = self.cam.config()
 		camstate = camconfig['state']
-		key = self.newPlan(camstate)
-		newplan = self.plans[key]
-		newplan['clip limits'] = cliplimits
-		newplan['bad rows'] = badrows
-		newplan['bad cols'] = badcols
-		print 'updated %s to %s' % (key, self.plans[key])
+		plandata = self.newPlan(camstate)
+		plandata['clip_limits'] = cliplimits
+		plandata['bad_rows'] = badrows
+		plandata['bad_cols'] = badcols
+		self.storePlan(plandata)
 		return ''
 
 	def uiGetPlanParams(self):
 		camconfig = self.cam.config()
 		camstate = camconfig['state']
-		key = self.newPlan(camstate)
-		plan = self.plans[key]
-		plandict = {}
-		plandict['key'] = key
-		plandict['clip limits'] = plan['clip limits']
-		plandict['bad rows'] = plan['bad rows']
-		plandict['bad cols'] = plan['bad cols']
-		print 'plandict', plandict
-		return plandict
+		plandata = self.retrievePlan(camstate)
+		print 'plandata', plandata
+		return dict(plandata)
 
 	def uiAcquireDark(self):
 		dark = self.acquireReference(dark=True)
@@ -141,29 +133,15 @@ class Corrector(node.Node):
 		return xmlbinlib.Binary(mrcstr)
 
 	def newPlan(self, camstate):
-		key = self.planKey(camstate)
-		if key not in self.plans:
-			plan = CorrectorPlan(key)
-			self.plans[key] = plan
-		return key
+		plan = CorrectorPlanData(self.ID(), camstate=camstate)
+		return plan
 
-	def updatePlan(self, plankey, itemkey, value):
-		self.plans[plankey][itemkey] = value
+	def retrievePlan(self, camstate):
+		plan = self.research(dataclass=data.CorrectorPlanData, camstate=camstate)
+		return plan
 
-	def planKey(self, camstate):
-		'''
-		make a string key from a camera state
-		'''
-		dim = camstate['dimension']
-		bin = camstate['binning']
-		off = camstate['offset']
-		## ignore exposure time for now
-		## exp = self.camstate['exposure time']
-
-		tuplekey = (dim['x'],dim['y'],bin['x'],bin['y'],off['x'],off['y'])
-		strtuplekey = map( lambda a: str(int(a)), tuplekey)
-		strkey = string.join(strtuplekey, '_')
-		return strkey
+	def storePlan(self, plandata):
+		self.publish(plandata, database=True)
 
 	def acquireSeries(self, n):
 		series = []
@@ -200,24 +178,36 @@ class Corrector(node.Node):
 		seriesscope = seriesinfo['scope']
 
 		ref = cameraimage.averageSeries(series)
-		print type(ref)
-
-		plankey = self.newPlan(camstate)
-
-		self.plans[plankey][typekey] = ref
-
-		imagedata = datatype(self.ID(), image=ref, scope=seriesscope, camera=seriescam)
+		imagedata = datatype(self.ID(), image=ref, scope=seriesscope, camera=seriescam, camstate=camstate)
 		self.publish(imagedata, eventclass=pubtype, database=True)
 
-		self.calc_norm(plankey)
+		self.calc_norm(camstate)
 		return ref
 
-	def calc_norm(self, key):
-		bright = self.plans[key]['bright']
-		dark = self.plans[key]['dark']
+	def getRef(self, camstate, type):
+		if type == 'dark':
+			imageclass = data.DarkImageData
+		elif type == 'bright':
+			imageclass = data.BrightImageData
+		elif type == 'norm':
+			imageclass = data.NormImageData
+		else:
+			return None
+
+		try:
+			ref = self.research(dataclass=imageclass, camstate=camstate)
+			return ref['image']
+		except:
+			return None
+
+	def calc_norm(self, camstate):
+		bright = self.getRef(camstate, 'dark')
+		bright = self.getRef(camstate, 'bright')
 		if bright is None:
+			print 'NO BRIGHT'
 			return
 		if dark is None:
+			print 'NO DARK'
 			return
 
 		print 'norm 1'
@@ -235,7 +225,8 @@ class Corrector(node.Node):
 		print 'norm 3'
 		norm = normavg / norm
 		print 'saving'
-		self.plans[key]['norm'] = norm
+		imagedata = data.NormImageData(self.ID(), image=norm, scope=seriesscope, camera=seriescam)
+		self.publish(imagedata, eventclass=pubtype, database=True)
 		
 	def acquireCorrectedArray(self):
 		imagedata = self.acquireCorrectedImageData()
@@ -264,19 +255,19 @@ class Corrector(node.Node):
 		'''
 		this puts an image through a pipeline of corrections
 		'''
-		key = self.newPlan(camstate)
+		plandata = self.retrievePlan(camstate)
 #		print 'normalize'
-		normalized = self.normalize(original, key)
+		normalized = self.normalize(original, camstate)
 #		print 'touchup'
-		touchedup = self.removeBadPixels(normalized, key)
+		touchedup = self.removeBadPixels(normalized, plandata)
 #		print 'clip'
-		clipped = self.clip(touchedup, key)
+		clipped = self.clip(touchedup, plandata)
 #		print 'done'
 		return clipped
 
-	def removeBadPixels(self, image, key):
-		badrows = self.plans[key]['bad rows']
-		badcols = self.plans[key]['bad cols']
+	def removeBadPixels(self, image, plandata):
+		badrows = plandata['bad_rows']
+		badcols = plandata['bad_cols']
 
 		shape = image.shape
 
@@ -296,16 +287,16 @@ class Corrector(node.Node):
 
 		return image
 
-	def clip(self, image, key):
-		cliplimits = self.plans[key]['clip limits']
+	def clip(self, image, plandata):
+		cliplimits = plandata['clip_limits']
 		if len(cliplimits) == 0:
 			return image
 		minclip,maxclip = cliplimits
 		return Numeric.clip(image, minclip, maxclip)
 
-	def normalize(self, raw, key):
-		dark = self.plans[key]['dark']
-		norm = self.plans[key]['norm']
+	def normalize(self, raw, camstate):
+		dark = self.getRef(camstate, 'dark')
+		norm = self.getRef(camstate, 'norm')
 		if dark is not None and norm is not None:
 			diff = raw - dark
 			## this may result in some infinity values
@@ -320,95 +311,6 @@ class Corrector(node.Node):
 		mn = cameraimage.min(im)
 		mx = cameraimage.max(im)
 		return {'mean':mean,'stdev':stdev,'min':mn,'max':mx}
-
-class CorrectorPlan(object):
-	def __init__(self, id):
-		self.id = id
-		self.plan = {}
-		self.refs = {}
-		self.reftypes = ('dark','bright','norm')
-
-		## defaults
-		self.plan['bad rows'] = ()
-		self.plan['bad cols'] = ()
-		self.plan['clip limits'] = ()
-
-		## load existing state
-		self.load()
-
-		## load existing reference images
-		for reftype in self.reftypes:
-			self.loadRef(reftype)
-
-	def __setitem__(self, key, value):
-		if key in self.reftypes:
-			self.refs[key] = value
-			self.saveRef(key)
-		else:
-			self.plan[key] = value
-			self.save()
-
-	def __getitem__(self, key):
-		if key in self.reftypes:
-			return self.refs[key]
-		else:
-			return self.plan[key]
-
-	def keys(self):
-		return self.plan.keys() + self.refs.keys()
-
-	def __hash__(self):
-		return hash(self.id)
-
-	def path(self):
-		dirname = 'corrections'
-		### this is not a great idea because it will not create
-		### directory if there are permissions problems
-		### Trying to catch exception if dir already exists
-		try:
-			os.mkdir(dirname)
-		except OSError:
-			pass
-		return 'corrections'
-
-	def planFilename(self):
-		path = self.path()
-		planfile = self.id + '.plan'
-		planfile = os.path.join(path, planfile)
-		return planfile
-
-	def refFilename(self, reftype):
-		path = self.path()
-		reffile = self.id + '_' + reftype + '.mrc'
-		reffile = os.path.join(path, reffile)
-		return reffile
-
-	def save(self):
-		filename = self.planFilename()
-		f = open(filename, 'wb')
-		cPickle.dump(self.plan, f, 1)
-		f.close()
-
-	def load(self):
-		filename = self.planFilename()
-		try:
-			f = open(filename, 'rb')
-		except IOError:
-			print 'creating plan file: %s' % (filename,)
-			self.save()
-			return
-		self.plan = cPickle.load(f)
-		f.close()
-
-	def saveRef(self, reftype):
-		filename = self.refFilename(reftype)
-		if self.refs[reftype] is not None:
-			print 'saving %s' % (filename,)
-			Mrc.numeric_to_mrc(self.refs[reftype], filename)
-
-	def loadRef(self, reftype):
-		filename = self.refFilename(reftype)
-		self.refs[reftype] = Mrc.mrc_to_numeric(filename)
 
 
 if __name__ == '__main__':
