@@ -78,7 +78,7 @@ class ImageMosaicInfo(object):
 	def getMosaicImage(self, astype=Numeric.Int16):
 		limits = self.getMosaicSize()
 		imageshape = (limits['max'][0] - limits['min'][0], 
-									limits['max'][1] - limits['min'][0])
+									limits['max'][1] - limits['min'][1])
 
 		mosaicimage = Numeric.zeros(imageshape, astype)
 
