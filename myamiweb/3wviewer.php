@@ -68,6 +68,7 @@ $javascript .= $viewer->getJavascriptInit();
 <?=$javascript?>
 </head>
 <body onload='initviewer();'>
+<a class="header" target="summary" href="summary.php?expId=<?=$sessionId?>">&lt;summary&gt;</A>
 <?$viewer->display();?>
 </body>
 </html>

@@ -1,7 +1,7 @@
 <?
 /**
- *	@version $Revision: 1.17 $
- *	@version $Id: image.inc,v 1.17 2005-01-27 00:13:51 dfellman Exp $
+ *	@version $Revision: 1.18 $
+ *	@version $Id: image.inc,v 1.18 2005-02-04 17:24:29 dfellman Exp $
  */
 /**
  *	Tools to display images / mosaic
@@ -128,7 +128,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		    if ($targets = $leginondata->getImageFocusTargets($imageId, true)) 
 		    foreach ($targets as $target) {
 			$tgn=$target[tversion];
-			$tn='focus'."  ".$tgn;
+			$tn='focus';
 			if (abs($target[x]-$parent[targetx])<5
 				&& abs($target[y]-$parent[targety])<5 ){
 				$col = $blue;

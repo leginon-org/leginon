@@ -129,7 +129,8 @@ function newfile(view){
 	if (eval(view+"target_bt_st")) tg="&tg=1"; else tg="";
 	if (cmin = eval("jsmin"+view)) np="&np="+cmin; else np="";
 	if (cmax = eval("jsmax"+view)) xp="&xp="+cmax; else xp="";
-	if ((cfilter = eval("jsfilter"+view)) && eval(view+"filter_bt_st")) flt="&flt="+cfilter; else flt="";
+	filter_st = eval(view+"filter_bt_st");
+	if ((cfilter = eval("jsfilter"+view)) && (filter_st==true || filter_st=="on")) flt="&flt="+cfilter; else flt="";
 	if (cbinning = eval("jsbinning"+view)) binning="&binning="+cbinning; else binning="";
 	if (cquality = eval("jsquality"+view)) quality="&t="+cquality; else quality="";
 	if (ccolormap= eval("jscolormap"+view)) colormap="&colormap="+ccolormap; else colormap="";
