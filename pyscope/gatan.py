@@ -26,7 +26,7 @@ class Gatan(object):
 
 		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
 		try:
-			self.camera = win32com.client.dynamic.Dispatch('TecnaiCCD.GatanCamera')        
+			self.camera = win32com.client.dynamic.Dispatch('TecnaiCCD.GatanCamera.2')
 		except pywintypes.com_error, e:
 			raise RuntimeError('unable to initialize Gatan interface')
 
