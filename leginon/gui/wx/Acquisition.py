@@ -9,7 +9,7 @@ import gui.wx.ImageViewer
 class Panel(gui.wx.Node.Panel):
 	icon = 'acquisition'
 	def __init__(self, parent, name):
-		gui.wx.Node.Panel.__init__(self, parent, -1, name='%s.pAcquisition' % name)
+		gui.wx.Node.Panel.__init__(self, parent, -1)
 
 		self.szmain = wx.GridBagSizer(5, 5)
 

@@ -1,5 +1,4 @@
 import wx
-import gui.wx.Data
 from gui.wx.Entry import Entry, FloatEntry
 import gui.wx.Node
 from gui.wx.Presets import PresetChoice
@@ -8,8 +7,7 @@ import gui.wx.Settings
 class Panel(gui.wx.Node.Panel):
 	icon = 'atlasmaker'
 	def __init__(self, parent, name):
-		gui.wx.Node.Panel.__init__(self, parent, -1,
-																name='%s.pMosaicTargetMaker' % name)
+		gui.wx.Node.Panel.__init__(self, parent, -1)
 		self.szmain = wx.GridBagSizer(5, 5)
 
 		self.szstatus = self._getStaticBoxSizer('Status', (0, 0), (1, 2),

@@ -25,7 +25,7 @@ class SetConfigurationEvent(wx.PyCommandEvent):
 
 class CameraPanel(wx.Panel):
 	def __init__(self, parent):
-		wx.Panel.__init__(self, parent, -1, name='pCamera')
+		wx.Panel.__init__(self, parent, -1)
 		self.geometry = None
 		self.binnings = {'x': [1,2,4,8,16], 'y': [1,2,4,8,16]}
 

@@ -1,7 +1,6 @@
 import wx
 from gui.wx.Entry import FloatEntry
 import gui.wx.Camera
-import gui.wx.Data
 import gui.wx.ImageViewer
 import gui.wx.Node
 import gui.wx.Settings
@@ -9,7 +8,7 @@ import gui.wx.Settings
 class Panel(gui.wx.Node.Panel):
 	icon = 'driftmanager'
 	def __init__(self, parent, name):
-		gui.wx.Node.Panel.__init__(self, parent, -1, name='%s.pDriftManager' % name)
+		gui.wx.Node.Panel.__init__(self, parent, -1)
 
 		self.szmain = wx.GridBagSizer(5, 5)
 

@@ -59,8 +59,7 @@ class StatusBar(wx.StatusBar):
 class Frame(wx.Frame):
 	def __init__(self, launcher):
 		self.launcher = launcher
-		wx.Frame.__init__(self, None, -1, 'Leginon', size=(750, 750),
-											name='fLeginon')
+		wx.Frame.__init__(self, None, -1, 'Leginon', size=(750, 750))
 
 		# menu
 		self.menubar = wx.MenuBar()
@@ -174,8 +173,7 @@ class ListCtrlPanel(wx.Panel):
 class Panel(ListCtrlPanel):
 	def __init__(self, parent, launcher):
 		self.launcher = launcher
-		ListCtrlPanel.__init__(self, parent, -1, style=wx.NO_BORDER,
-														name='pLauncher')
+		ListCtrlPanel.__init__(self, parent, -1, style=wx.NO_BORDER)
 
 		self.initializeImageList()
 

@@ -19,7 +19,7 @@ import time
 import unique
 import newdict
 import EM
-import gui.wx.Presets
+import gui.wx.PresetsManager
 
 try:
 	import numarray as Numeric
@@ -165,7 +165,16 @@ class SinglePresetSelector(uidata.Container):
 
 
 class PresetsManager(node.Node):
-	panelclass = gui.wx.Presets.Panel
+	panelclass = gui.wx.PresetsManager.Panel
+	settingsclass = data.PresetsManagerSettingsData
+	defaultsettings = {
+		'pause time': 1.0,
+		'xy only': True,
+		'stage always': False,
+		'cycle': True,
+		'optimize cycle': True,
+		'mag only': True,
+	}
 	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent] + EM.EMClient.eventinputs
 	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.PresetPublishEvent] + EM.EMClient.eventoutputs
 
@@ -193,13 +202,6 @@ class PresetsManager(node.Node):
 		self.currentpreset = None
 		self.presets = newdict.OrderedDict()
 		self.selectedsessionpresets = None
-
-		self.pause = None
-		self.xyonly = None
-		self.stagealways = None
-		self.cycleon = None
-		self.cycleoptimize = None
-		self.cyclemagonly = None
 
 		## this will fill in UI with current session presets
 		self.getPresetsFromDB()
@@ -356,7 +358,7 @@ class PresetsManager(node.Node):
 		if cameradata is not None:
 			self.emclient.setCamera(cameradata)
 
-		time.sleep(self.pause)
+		time.sleep(self.settings['pause time'])
 		if magonly:
 			self.currentpreset = None
 		else:
@@ -417,15 +419,15 @@ class PresetsManager(node.Node):
 		magonly = True:  all presets in cycle (except for final) 
 		   will only send magnification to TEM
 		'''
-		if not self.cycleon:
+		if not self.settings['cycle on']:
 			if dofinal:
 				self.toScope(presetname)
 			node.beep()
 			return
 
 		order = self.presets.keys()
-		magonly = self.cyclemagonly
-		magshortcut = self.cycleoptimize
+		magonly = self.settings['mag only']
+		magshortcut = self.settings['optimize cycle']
 
 		if presetname not in order:
 			raise RuntimeError('final preset %s not in cycle order list' % (presetname,))
@@ -669,10 +671,10 @@ class PresetsManager(node.Node):
 		## decide if moving stage or not, and which axes to move
 		movetype = emtargetdata['movetype']
 		if movetype in ('image shift', 'image beam shift'):
-			if not self.stagealways:
+			if not self.settings['stage always']:
 				mystage = None
 
-		if mystage and self.xyonly:
+		if mystage and self.settings['xy only']:
 			## only set stage x and y
 			for key in mystage.keys():
 				if key not in ('x','y'):
@@ -731,7 +733,7 @@ class PresetsManager(node.Node):
 			self.logger.error(message)
 			raise PresetChangeError(message)
 
-		time.sleep(self.pause)
+		time.sleep(self.settings['pause time'])
 		name = newpreset['name']
 		self.currentpreset = newpreset
 		message = 'Preset (with target) changed to %s' % (name,)

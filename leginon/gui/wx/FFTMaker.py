@@ -1,14 +1,12 @@
 import wx
 from gui.wx.Entry import Entry, FloatEntry, EVT_ENTRY
-import gui.wx.Data
 import gui.wx.Node
 import gui.wx.Settings
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'fftmaker'
 	def __init__(self, parent, name):
-		gui.wx.Node.Panel.__init__(self, parent, -1,
-																name='%s.pFFTMaker' % name)
+		gui.wx.Node.Panel.__init__(self, parent, -1)
 		self.szmain = wx.GridBagSizer(5, 5)
 
 		self.szstatus = self._getStaticBoxSizer('Status', (0, 0), (1, 1),
@@ -24,7 +22,7 @@ class Panel(gui.wx.Node.Panel):
 
 		label = wx.StaticText(self, -1, 'Find images in this session with label:')
 		self.szdatabase.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.telabel = Entry(self, -1, name='teLabel')
+		self.telabel = Entry(self, -1)
 		self.szdatabase.Add(self.telabel, (0, 1), (1, 1),
 												wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 

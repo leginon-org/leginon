@@ -4,7 +4,6 @@ import leginonconfig
 import os.path
 import project
 import time
-import gui.wx.Data
 import wx
 import wx.wizard
 import wx.lib.intctrl
@@ -73,17 +72,12 @@ class UserPage(WizardPage):
 		self.setUserSelection()
 		self.Bind(wx.EVT_CHOICE, self.onUserChoice, self.userchoice)
 
-	def setRootWindowSession(self, userdata):
-		path, root = gui.wx.Data.getWindowPath(self)
-		root.session = data.SessionData(user=userdata)
-
 	def onUserChoice(self, evt=None):
 		if evt is None:
 			name = self.userchoice.GetStringSelection()
 		else:
 			name = evt.GetString()
 		userdata = self.users[name]
-		self.setRootWindowSession(userdata)
 		self.names, self.sessions = self.GetParent().setup.getSessions(userdata)
 
 		parent = self.GetParent()
@@ -122,8 +116,7 @@ class SessionTypePage(WizardPage):
 		self.sessiontyperadiobox = wx.RadioBox(self, -1, 'Session Type',
 																						choices=choices,
 																						majorDimension=1,
-																						style=wx.RA_SPECIFY_COLS,
-																						name='rbSessionType')
+																						style=wx.RA_SPECIFY_COLS)
 		sizer.Add(self.sessiontyperadiobox, (1, 0), (1, 2), wx.ALIGN_CENTER)
 
 		sizer.Add(wx.StaticText(self, -1,
@@ -163,22 +156,21 @@ class SessionSelectPage(WizardPage):
 			'Please select the session you would like to continue.'),
 							(0, 0), (1, 2))
 
-		self.sessionchoice = wx.Choice(self, -1, name='cSession')
+		self.sessionchoice = wx.Choice(self, -1)
 		self.sizer.Add(self.sessionchoice, (1, 0), (1, 2), wx.ALIGN_CENTER)
 
 		self.sizer.AddGrowableCol(0)
 		self.sizer.AddGrowableCol(1)
 
 		self.limitsizer = wx.GridBagSizer(0, 3)
-		self.limitcheckbox = wx.CheckBox(self, -1, '', name='cbLimit')
+		self.limitcheckbox = wx.CheckBox(self, -1, '')
 		self.Bind(wx.EVT_CHECKBOX, self.onLimitChange, self.limitcheckbox)
 		self.limitsizer.Add(self.limitcheckbox, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		label = wx.StaticText(self, -1, 'List only last')
 		self.limitsizer.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER)
 		self.limitintctrl = wx.lib.intctrl.IntCtrl(self, -1, 10, size=(32, -1),
 																								style=wx.TE_CENTER,
-																								min=1, max=99, limited=True,
-																								name='icLimit')
+																								min=1, max=99, limited=True)
 		self.limitintctrl.Bind(wx.EVT_TEXT, self.onLimitChange, self.limitintctrl)
 		self.limitsizer.Add(self.limitintctrl, (0, 2), (1, 1), wx.ALIGN_CENTER)
 		label = wx.StaticText(self, -1, 'sessions')
@@ -203,8 +195,7 @@ class SessionSelectPage(WizardPage):
 
 		self.Bind(wx.EVT_CHOICE, self.onSessionChoice, self.sessionchoice)
 
-		self.connectcheckbox = wx.CheckBox(self, -1, 'Connect to instrument',
-																				name='cbConnect')
+		self.connectcheckbox = wx.CheckBox(self, -1, 'Connect to instrument')
 		self.sizer.Add(self.connectcheckbox, (7, 0), (1, 2), wx.ALIGN_CENTER)
 
 		self.sizer.Add(wx.StaticText(self, -1,

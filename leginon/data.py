@@ -1534,6 +1534,18 @@ class MosaicTargetMakerSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class PresetsManagerSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('pause time', float),
+			('xy only', bool),
+			('stage always', bool),
+			('cycle', bool),
+			('optimize cycle', bool),
+			('mag only', bool),
+		)
+	typemap = classmethod(typemap)
+
 class CorrectorSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (

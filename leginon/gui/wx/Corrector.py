@@ -1,6 +1,5 @@
 import wx
 from gui.wx.Entry import IntEntry, FloatEntry
-import gui.wx.Data
 import gui.wx.Node
 import gui.wx.ImageViewer
 import gui.wx.Settings
@@ -16,7 +15,7 @@ class AcquisitionDoneEvent(wx.PyEvent):
 class Panel(gui.wx.Node.Panel):
 	icon = 'corrector'
 	def __init__(self, parent, name):
-		gui.wx.Node.Panel.__init__(self, parent, -1, name='%s.pCorrector' % name)
+		gui.wx.Node.Panel.__init__(self, parent, -1)
 
 		self.szmain = wx.GridBagSizer(5, 5)
 

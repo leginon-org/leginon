@@ -111,7 +111,7 @@ class Frame(wx.Frame):
 		self.publish = publish
 		self.session = None
 
-		wx.Frame.__init__(self, None, -1, 'Leginon', size=(750, 750), name='fLeginon')
+		wx.Frame.__init__(self, None, -1, 'Leginon', size=(750, 750))
 
 		# menu
 		self.menubar = wx.MenuBar()
@@ -213,8 +213,7 @@ class Frame(wx.Frame):
 		# this doesn't really work
 		dialog = wx.Dialog(self, -1, 'Temporary Launcher Window',
 												style=wx.CAPTION|wx.SYSTEM_MENU|wx.CLOSE_BOX|
-															wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.RESIZE_BORDER,
-												name='')
+															wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.RESIZE_BORDER)
 		#sizer = wx.GridBagSizer(0, 0)
 		panel = gui.wx.Launcher.Panel(dialog, evt.launcher)
 		#sizer.Add(panel, (0, 0), (1, 1), wx.EXPAND|wx.ALL)

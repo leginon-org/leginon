@@ -580,7 +580,7 @@ class CamConfigSizer(wx.StaticBoxSizer):
 
 class Panel(gui.wx.Node.Panel):
 	def __init__(self, parent, name):
-		gui.wx.Node.Panel.__init__(self, parent, -1, name='%s.pInstrument' % name)
+		gui.wx.Node.Panel.__init__(self, parent, -1)
 
 		self.szmain = wx.GridBagSizer(5, 5)
 

@@ -2,7 +2,6 @@ import wx
 from gui.wx.Entry import FloatEntry, EVT_ENTRY
 import gui.wx.Camera
 from gui.wx.Choice import Choice
-import gui.wx.Data
 import gui.wx.ImageViewer
 import gui.wx.Node
 import gui.wx.Settings
@@ -10,7 +9,7 @@ import gui.wx.Settings
 class Panel(gui.wx.Node.Panel):
 	icon = 'navigator'
 	def __init__(self, parent, name):
-		gui.wx.Node.Panel.__init__(self, parent, -1, name='%s.pNavigator' % name)
+		gui.wx.Node.Panel.__init__(self, parent, -1)
 
 		self.szmain = wx.GridBagSizer(5, 5)
 
