@@ -63,6 +63,11 @@ def factory(scopeclass):
               self.setLowDoseMode(val)
           elif key == "diffraction mode":
               self.setDiffractionMode(val)
+          elif key == 'reset defocus':
+              if val == 1:
+                  self.resetDefocus()
+              else:
+                  raise ValueError
           else:
               raise KeyError
           return 0
@@ -104,6 +109,8 @@ def factory(scopeclass):
               return self.getLowDoseMode()
           elif key == "diffraction mode":
               return self.getDiffractionMode()
+          elif key == 'reset defocus':
+              return 0
           else:
               raise KeyError
   
