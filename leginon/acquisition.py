@@ -397,19 +397,26 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if imagedata['filename']:
 			return
 		rootname = self.getRootName(imagedata)
+		listlabel = ''
+
 		## use either data id or target number
 		if imagedata['target'] is None or imagedata['target']['number'] is None:
 			print 'This image does not have a target number, it would be nice to have an alternative to target number, like an image number.  for now we will use dmid'
 			numberstr = '%05d' % (imagedata.dmid[-1],)
 		else:
 			numberstr = '%05d' % (imagedata['target']['number'],)
+			if imagedata['target']['list'] is not None:
+				listlabel = image['target']['list']['label']
 		if imagedata['preset'] is None:
 			presetstr = ''
 		else:
 			presetstr = imagedata['preset']['name']
 		mystr = numberstr + presetstr
 		sep = '_'
-		parts = (rootname, mystr)
+		if listlabel:
+			parts = (rootname, listlabel, mystr)
+		else:
+			parts = (rootname, mystr)
 		filename = sep.join(parts)
 		self.reportStatus('output', 'Using filename "%s"' % filename)
 		imagedata['filename'] = filename
