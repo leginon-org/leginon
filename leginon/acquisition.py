@@ -16,8 +16,7 @@ import uidata
 class Acquisition(targetwatcher.TargetWatcher):
 
 	eventinputs = targetwatcher.TargetWatcher.eventinputs+[event.ImageClickEvent]
-	eventoutputs = targetwatcher.TargetWatcher.eventoutputs + [event.LockEvent,
-																															event.UnlockEvent]
+	eventoutputs = targetwatcher.TargetWatcher.eventoutputs + [event.LockEvent, event.UnlockEvent, event.AcquisitionImagePublishEvent, event.TrialImagePublishEvent, event.ChangePresetEvent]
 
 	def __init__(self, id, session, nodelocations, targetclass=data.ImageTargetData, **kwargs):
 		targetwatcher.TargetWatcher.__init__(self, id, session, nodelocations, targetclass, **kwargs)
@@ -97,6 +96,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 			p = self.presetsclient.getCurrentPreset()
 			print 'current preset'
 			print p
+			delay = self.uidelay.get()
+			print 'pausing for %s sec.' % (delay,)
+			time.sleep(delay)
 			print 'acquire()'
 			ret = self.acquire(p)
 			if ret:
