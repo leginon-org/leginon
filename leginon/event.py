@@ -111,6 +111,11 @@ class NodeClassesPublishEvent(PublishEvent):
 	def __init__(self, id, content, confirm):
 		PublishEvent.__init__(self, id, content, confirm)
 
+class CalibrationPublishEvent(PublishEvent):
+	'Event indicating calibration was published'
+	def __init__(self, id, content, confirm):
+		PublishEvent.__init__(self, id, content, confirm)
+
 class CorrelationPublishEvent(PublishEvent):
 	'Event indicating cross correlation was published'
 	def __init__(self, id, content, confirm):
