@@ -140,7 +140,7 @@ class BitmapWindow(BufferedWindow):
 
 class ScaledWindow(BitmapWindow):
 	def __init__(self, parent, id):
-		self.fit2page = False
+		self._fit = False
 		self._xscale = 1.0
 		self._yscale = 1.0
 		self._updatedrawing = False
@@ -174,7 +174,7 @@ class ScaledWindow(BitmapWindow):
 		self._updateBlitGeometry()
 
 	def setScale(self, x, y):
-		self.fit2page = False
+		self._fit = False
 		self._setScale(x, y)
 		if self._updatedrawing:
 			self.updateDrawing()
@@ -182,8 +182,8 @@ class ScaledWindow(BitmapWindow):
 			self.Refresh()
 			self._refresh = False
 
-	def setFitToPage(self, fit2page):
-		self.fit2page = fit2page
+	def setFit(self, fit):
+		self._fit = fit
 
 	def getScale(self):
 		return (self._xscale, self._yscale)
@@ -195,20 +195,20 @@ class ScaledWindow(BitmapWindow):
 
 	def _setBitmap(self, bitmap):
 		BitmapWindow._setBitmap(self, bitmap)
-		if self.fit2page:
-			self._fitToPage()
+		if self._fit:
+			self.fit()
 
 	def _onSize(self, evt):
 		BitmapWindow._onSize(self, evt)
-		if self.fit2page:
-			self._fitToPage()
+		if self._fit:
+			self.fit()
 
-	def _fitToPage(self):
+	def fit(self):
 		try:
 			x = float(self._clientwidth)/self._bitmaprect.width
 			y = float(self._clientheight)/self._bitmaprect.height
-			x = y = min(x, y)
-			self._setScale(x, y)
+			scale = min(x, y)
+			self._setScale(scale, scale)
 		except ZeroDivisionError:
 			return False
 		return True
@@ -385,12 +385,9 @@ class ScrolledWindow(OffsetWindow):
 		self.SetScrollPos(wx.HORIZONTAL, x)
 		self.SetScrollPos(wx.VERTICAL, y)
 
-	def updateScrollbars(self, position=None):
-		if position is None:
-			xposition = self.GetScrollPos(wx.HORIZONTAL)
-			yposition = self.GetScrollPos(wx.VERTICAL)
-		else:
-			xposition, yposition = position
+	def updateScrollbars(self):
+		xposition = self.GetScrollPos(wx.HORIZONTAL)
+		yposition = self.GetScrollPos(wx.VERTICAL)
 		xthumbsize = min(int(self._clientwidth/self._xscale), self._clientwidth)
 		ythumbsize = min(int(self._clientheight/self._yscale), self._clientheight)
 		if self._bitmap is None:
