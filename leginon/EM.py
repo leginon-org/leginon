@@ -36,7 +36,7 @@ minimum_stage = {
 	'x': 5e-8,
 	'y': 5e-8,
 	'z': 5e-8,
-	'a': 0.001,
+	'a': 6e-5,
 }
 
 class EMUnavailable(Exception):
