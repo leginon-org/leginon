@@ -105,10 +105,11 @@ class BindingOutput(BindingConnectionPoint):
 			dc.DrawRotatedText(self.eventclass.__name__, x, y, -90)
 
 class Node(wxObjectCanvas.wxRectangleObject):
-	def __init__(self, alias, nodeclass):
+	def __init__(self, alias, nodeclass, dependencies):
 		wxObjectCanvas.wxRectangleObject.__init__(self, 100, 100,wxColor(128,0,128))
 		self.alias = alias 
 		self.nodeclass = nodeclass
+		self.dependencies = dependencies
 
 		nc = nodeclassreg.getNodeClass(self.nodeclass)
 		for inputclass in nc.eventinputs:
@@ -136,6 +137,9 @@ class Node(wxObjectCanvas.wxRectangleObject):
 
 	def getClass(self):
 		return self.nodeclass
+
+	def getDependencies(self):
+		return self.dependencies
 
 	def menuRename(self, evt):
 		dialog = RenameDialog(None, -1)
@@ -329,6 +333,14 @@ class AddNodeDialog(wxDialog):
 		sizer.AddSizer(box)
 
 		box = wxBoxSizer(wxHORIZONTAL)
+		label = wxStaticText(self, -1, 'Dependencies:')
+		box.Add(label, 0, wxALIGN_CENTER|wxALL, 3)
+		self.dependenciesentry = wxTextCtrl(self, -1, '[]')
+		box.Add(self.dependenciesentry, 1, wxALIGN_CENTER|wxALL, 3)
+		sizer.AddSizer(box)
+
+		box = wxBoxSizer(wxHORIZONTAL)
+		box = wxBoxSizer(wxHORIZONTAL)
 		button = wxButton(self, wxID_OK, 'Add')
 		button.SetDefault()
 		box.Add(button, 0, wxALIGN_CENTER|wxALL, 5)
@@ -341,12 +353,18 @@ class AddNodeDialog(wxDialog):
 		sizer.Fit(self)
 
 	def GetValue(self):
-		return self.aliasentry.GetValue(), self.classcombo.GetStringSelection()
+		try:
+			dependencies = eval(self.dependenciesentry.GetValue())
+		except Exception, e:
+			print e
+			dependencies = []
+		return self.aliasentry.GetValue(), self.classcombo.GetStringSelection(), dependencies
 		#return self.aliasentry.GetValue(), self.classentry.GetValue()
 
-	def SetValue(self, alias, nodeclass):
+	def SetValue(self, alias, nodeclass, dependencies):
 		self.aliasentry.SetValue(alias)
 		self.classcombo.SetStringSelection(nodeclass)
+		self.dependenciesentry.SetValue(str(dependencies))
 		#self.classentry.SetValue(nodeclass)
 
 class Launcher(wxObjectCanvas.wxRectangleObject):
@@ -381,8 +399,8 @@ class Launcher(wxObjectCanvas.wxRectangleObject):
 	def menuAddNode(self, evt):
 		dialog = AddNodeDialog(None, -1)
 		if dialog.ShowModal() == wxID_OK:
-			alias, nodeclass = dialog.GetValue()
-			self.addShapeObject(Node(alias, nodeclass))
+			alias, nodeclass, dependencies = dialog.GetValue()
+			self.addShapeObject(Node(alias, nodeclass, dependencies))
 		dialog.Destroy()
 
 	def menuDelete(self, evt):
@@ -552,7 +570,7 @@ class Application(wxObjectCanvas.wxRectangleObject):
 		for launcher in self.getLaunchers():
 			for node in launcher.getNodes():
 				nodetuple = (node.getClass(), node.getAlias(),
-											launcher.getAlias(), (), 0, [])
+											launcher.getAlias(), (), 0, node.getDependencies())
 				application['nodes'].append(nodetuple)
 		bindings = {}
 		for binding in self.getBindings():
@@ -575,10 +593,11 @@ class Application(wxObjectCanvas.wxRectangleObject):
 			for nodespec in application['nodes']:
 				if node.getClass() == nodespec[0]:
 					if node.getAlias() == nodespec[1]:
-						parent = node.getParent()
-						if parent is not None and parent.getAlias() == nodespec[2]:
-							nodes.append(node)
-							nodespecs.append(nodespec)
+						if node.getDependencies() == nodespec[5]:
+							parent = node.getParent()
+							if parent is not None and parent.getAlias() == nodespec[2]:
+								nodes.append(node)
+								nodespecs.append(nodespec)
 
 		for node in self.getNodes():
 			if node not in nodes:
@@ -598,7 +617,7 @@ class Application(wxObjectCanvas.wxRectangleObject):
 					launcher = Launcher(nodespec[2])
 					self.addShapeObject(launcher)
 			
-				launcher.addShapeObject(Node(nodespec[1], nodespec[0]))
+				launcher.addShapeObject(Node(nodespec[1], nodespec[0], nodespec[5]))
 
 		bindings = []
 		bindspecs = []

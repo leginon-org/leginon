@@ -113,9 +113,12 @@ class Application(leginonobject.LeginonObject):
 			raise ValueError('Invalid node specification')
 		nodename = self.getName() + ' ' + ns['alias']
 		args = tuple(ns['args'])
+		dependencies = []
+		for dependency in ns['dependencies']:
+			dependencies.append(self.getName() + ' ' + dependency)
 		return ns['alias'], (launcherid, ns['new process flag'],
 													ns['class string'], nodename, args,
-													ns['dependencies'])
+													dependencies)
 
 	def bindingSpec2Args(self, bs):
 		# i know...

@@ -745,7 +745,7 @@ class wxApplicationWidget(wxDataWidget):
 		self.applicationeditor.application.setApplication(self.value)
 
 	def destroy(self):
-		self.tree.Destroy()
+		self.applicationeditor.Destroy()
 
 class wxImageWidget(wxDataWidget):
 	def __init__(self, name, parent, container, value, read, write):

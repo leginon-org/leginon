@@ -407,13 +407,15 @@ class Manager(node.Node):
 	def waitNode(self, launcher, newproc, target, name, nodeargs, dependencies):
 		newid = self.id + (name,)
 		args = (newid, self.session, self.nodelocations) + nodeargs
-		dependenciescopy = copy.copy(dependencies)
+		dependencyids = []
+		for dependency in dependencies:
+			dependencyids.append(('manager', dependency))
 
 		# be dependent on the launcher you're launching from by default
-		if launcher not in dependenciescopy:
-			dependenciescopy.append(launcher)
+		if launcher not in dependencyids:
+			dependencyids.append(launcher)
 
-		#self.waitNodes(dependenciescopy)
+		self.waitNodes(dependencyids)
 		ev = event.LaunchEvent(id=self.ID(), newproc=newproc, targetclass=target, args=args)
 		self.outputEvent(ev, launcher, wait=True)
 
@@ -434,7 +436,7 @@ class Manager(node.Node):
 	def waitNodes(self, nodes):
 		self.initializednodescondition.acquire()
 		while not self.sublist(nodes, self.initializednodes):
-			self.initializednodescondition.wait()
+			self.initializednodescondition.wait(0.1)
 		self.initializednodescondition.release()
 
 	# probably an easier way

@@ -180,14 +180,17 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			return
 		self.mosaic.clear()
 		mosaicsession = mosaicdata['session']
+		print 'mosaicsession =', mosaicsession
 		for dataid in mosaicdata['data IDs']:
 			initializer = {'id': dataid, 'session': mosaicsession}
+			print 'initializer =', initializer
 			instance = data.AcquisitionImageData(initializer=initializer)
-			imagedatalist = self.research(datainstance=instance, results=1)
+			imagedatalist = self.research(datainstance=instance) #, results=1)
 			try:
 				imagedata = imagedatalist[0]
 			except IndexError:
-				self.outputWarning('Cannot find image data referenced by mosaic')
+				#self.outputWarning('Cannot find image data referenced by mosaic')
+				print 'Cannot find image data referenced by mosaic'
 			else:
 				self.mosaic.addTile(imagedata)
 		self.mosaicdata = mosaicdata
