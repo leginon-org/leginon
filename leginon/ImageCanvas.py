@@ -256,6 +256,7 @@ class ImageCanvas(Frame):
 			self.resize(0,0,newwidth,newheight)
 		self.deleteMessage()
 		self.canvas.itemconfig(self.canimage, image=self.photo)
+		self.crosshairswidget.toggle()
 
 	def zoom(self, factor):
 		if self.numimage is None:
@@ -450,6 +451,8 @@ class CrosshairsWidget(Frame):
 			self.delCrosshairs()
 		
 	def drawCrosshairs(self):
+		self.delCrosshairs()
+
 		## get coords of center of canvas
 		w = int(self.imagecanvas.canvas['width'])
 		h = int(self.imagecanvas.canvas['height'])
@@ -457,7 +460,7 @@ class CrosshairsWidget(Frame):
 		centery = h/2
 		
 		## draw lines
-		size = 20
+		size = 30
 		x1 = centerx - size
 		x2 = centerx + size
 		y1 = centery - size

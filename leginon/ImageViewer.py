@@ -32,9 +32,9 @@ class ImageViewer(Frame):
 		#self.targets = self.canvas.targets_widget(tarframe)
 		#self.targets.pack()
 
+		self.cross.pack(side=LEFT)
 		self.cursorinfowid.pack(side=LEFT)
 		self.zoomer.pack(side=LEFT)
-		self.cross.pack(side=LEFT)
 
 		self.scaler.pack(side=TOP)
 		zframe.pack(side=TOP)
