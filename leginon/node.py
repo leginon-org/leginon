@@ -271,7 +271,7 @@ class Node(leginonobject.LeginonObject):
 			raise IOError
 
 		# should interate over nodes, be crafty, etc.
-		datalocationdata = self.researchByLocation(self.nodelocations['manager'], nodeiddata.content[0])
+		datalocationdata = self.researchByLocation(self.nodelocations['manager'], nodeiddata.content[-1])
 
 		return self.researchByLocation(datalocationdata.content, dataid)
 

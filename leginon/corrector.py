@@ -11,11 +11,18 @@ from Mrc import mrc_to_numeric, numeric_to_mrc
 ### these should go in a stats node or module
 
 class DataHandler(node.DataHandler):
+	def __init__(self, id, inode):
+		self.node = inode
+		node.DataHandler.__init__(self, id)
 	# acq/rel twice on normal data
 	def query(self, id):
 		self.lock.acquire()
 		if id == 'normalzed image data':
-			result = self.acquireCorrectedImageData()
+			result = self.node.acquireCorrectedImageData()
+			self.lock.release()
+			return result
+		elif id == 'fake normalized image data':
+			result = self.node.acquireCorrectedFakeImageData()
 			self.lock.release()
 			return result
 		else:
@@ -27,14 +34,14 @@ class Corrector(node.Node):
 
 		self.refs = {}
 
-		node.Node.__init__(self, id, nodelocations)
+		node.Node.__init__(self, id, nodelocations, DataHandler, (self,))
 		self.addEventInput(event.ImageAcquireEvent, self.acquireCorrected)
 		self.addEventOutput(event.ImagePublishEvent)
 		self.addEventOutput(event.DarkImagePublishEvent)
 		self.addEventOutput(event.BrightImagePublishEvent)
 		self.addEventOutput(event.ListPublishEvent)
 
-		ids = ['normalized image data']
+		ids = ['normalized image data', 'fake normalized image data']
 		e = event.ListPublishEvent(self.ID(), ids)
 		self.outputEvent(e)
 
@@ -156,7 +163,7 @@ class Corrector(node.Node):
 		print 'done pub correct'
 		return ''
 
-	def acquireCorrectedFake(self, ievent=None):
+	def acquireCorrectedFakeImageData(self):
 		numimage = mrc_to_numeric('test1.mrc')
 		camstate = self.defaultcamstate
 		#binning = self.researchByDataID('binning').content['binning']
@@ -164,7 +171,10 @@ class Corrector(node.Node):
 		corrected = self.correct(numimage, key)
 		numeric_to_mrc(corrected, 'corr.mrc')
 		print 'corrected done'
-		correctdata = data.ImageData(self.ID(), corrected)
+		return data.ImageData(self.ID(), corrected)
+
+	def acquireCorrectedFake(self, ievent=None):
+		correctdata = self.acquireCorrectedFakeImageData()
 		print 'publishing corrected'
 		self.publish(correctdata, event.ImagePublishEvent)
 		print 'done pub correct'

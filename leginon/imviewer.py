@@ -99,11 +99,11 @@ class ImViewer(watcher.Watcher):
 			'offset': {'x': offset[0], 'y': offset[1]}
 		}
 		camdata = data.EMData('camera', camstate)
-		self.publishRemote(camdata)
+		#self.publishRemote(camdata)
 
 		self.acqbut['state'] = DISABLED
-		imdata = self.researchByDataID('image data')
-		self.displayNumericArray(imdata.content['image data'])
+		imdata = self.researchByDataID('fake normalized image data')
+		self.displayNumericArray(imdata.content)
 		self.acqbut['state'] = NORMAL
 
 	def acquireEvent(self):
