@@ -354,7 +354,7 @@ blobs(PyObject *self, PyObject *args)
 	return results;
 }
 
-despike_FLOAT(float *array, int rows, int cols, int statswidth, float ztest) {
+int despike_FLOAT(float *array, int rows, int cols, int statswidth, float ztest) {
 	float *newptr, *oldptr, *rowptr, *colptr;
 	int sw2, sw2cols, sw2cols_sw2, sw2cols__sw2;
 	int r, c, rr, cc;
@@ -423,18 +423,18 @@ despike_FLOAT(float *array, int rows, int cols, int statswidth, float ztest) {
 		rowptr += cols;
 	}
 	/* double -> float? */
-	ppm = 1000000.0 * (float)spikes / (float)(rows * cols);
-	/*printf("despiked %d pixels (%.1f ppm)\n", spikes, ppm);*/
+	return spikes;
 }
 
 static PyObject *
 despike(PyObject *self, PyObject *args)
 {
 	PyArrayObject *image, *floatimage;
-	int rows, cols, size;
+	int rows, cols, size, debug;
 	float ztest;
+	int spikes, ppm;
 
-	if (!PyArg_ParseTuple(args, "O!if", &PyArray_Type, &image, &size, &ztest))
+	if (!PyArg_ParseTuple(args, "O!ifi", &PyArray_Type, &image, &size, &ztest, &debug))
 		return NULL;
 
 	/* must be 2-d array */
@@ -451,7 +451,9 @@ despike(PyObject *self, PyObject *args)
 	rows = floatimage->dimensions[0];
 	cols = floatimage->dimensions[1];
 
-	despike_FLOAT((float *)(floatimage->data), rows, cols, size, ztest);
+	spikes = despike_FLOAT((float *)(floatimage->data), rows, cols, size, ztest);
+	ppm = 1000000 * spikes / (rows * cols);
+	if(debug) printf("despike ppm:  %d\n", ppm);
 
 	return PyArray_Return(floatimage);
 }
