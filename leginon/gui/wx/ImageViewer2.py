@@ -198,7 +198,6 @@ class OffsetWindow(ScaledWindow):
 		nuy = min(int(self._bitmapheight*self._yscale), self._bitmapheight)
 		self.SetScrollbars(ppux, ppuy, nux, nuy)
 		self.updateOffset()
-		self.Refresh()
 
 	def _onSize(self, evt):
 		ScaledWindow._onSize(self, evt)
@@ -235,6 +234,7 @@ class OffsetWindow(ScaledWindow):
 			yposition += min(self._yoffset*self._yscale, self._yoffset)
 
 			self.SetScrollbars(ppux, ppuy, nux, nuy, xposition, yposition)
+			self._xview, self._yview = self.GetViewStart()
 			return True
 		return False
 
@@ -259,7 +259,6 @@ class OffsetWindow(ScaledWindow):
 				self.Refresh()
 				return
 		ScaledWindow._onPaint(self, dc)
-
 
 if __name__ == '__main__':
 	import sys
