@@ -23,7 +23,7 @@ if ($viewsql) {
 }
 
 foreach ($driftdata as $drift) {
-	$id = $drift['imageId'];
+	$id = $drift['targetId'];
 	$data[$id] = $drift;
 }
 

@@ -5,6 +5,7 @@ include ("inc/jpgraph_scatter.php");
 include ("inc/jpgraph_bar.php");
 require ("inc/leginon.inc");
 require ("inc/image.inc");
+require ("inc/histogram.inc");
 
 $defaultId= 1445;
 $sessionId= ($_GET[Id]) ? $_GET[Id] : $defaultId;
@@ -13,7 +14,10 @@ $width = $_GET['w'];
 $height = $_GET['h'];
 $viewdata = $_GET['vd'];
 $viewsql = $_GET['vs'];
-
+$histogram = ($_GET[hg]==1) ? true : false;
+$maxrate = $_GET[maxr];
+$minrate = $_GET[minr];
+$optimizedpoint = ($_GET['opt']==1) ? true : false;
 
 if($ch0 = $_GET['ch0'])
 	$channels[] = '0';
@@ -92,7 +96,6 @@ function gettemp($channel,$sdate,$edate,$delta=1,$optimize=false) {
 		from temperature 
 		where channel = '$channel'
 		and time between from_unixtime('".$sdate."') and from_unixtime('".$edate."') 
-		and temperature>0.2904
 		order by time ASC"; 
 	}
 	$tdata = $db->getSQLResult($q);
@@ -115,13 +118,27 @@ function createlines($datay,$datax,$color,$label) {
 	return $pl;
 }
 
+function createhistogram($datay,$color,$label) {
+	$histogram = new histogram($datay);
+	$histogram->setBarsNumber(50);
+	$rdata = $histogram->getData();
+	$rdatax = $rdata['x'];
+	$rdatay = $rdata['y'];
+
+	$bplot = new BarPlot($rdatay, $rdatax);
+	$bplot->SetFillColor("$color");
+	$bplot->SetLegend($label);
+	return $bplot;
+}
+
+
 function TimeCallback($unixtimestamp) {
-    	return Date("m/d, H:i:s",$unixtimestamp);
+    	return Date("H:i:s",$unixtimestamp);
 }
 
 if($channels)
 foreach ($channels as $k=>$channel) {
-	$tdata = gettemp($channel,$begints,$endts,$delta,true);
+	$tdata = gettemp($channel,$begints,$endts,$delta, $optimizedpoint);
 	if ($viewdata && $tdata) {
 		echo "--- Channel: ".$labels[$channel]." --- <BR>";
 		echo dumpData($tdata);
@@ -132,6 +149,10 @@ foreach ($channels as $k=>$channel) {
 		echo ';<br>';
 	}
 	foreach ($tdata as $d) {
+		if ($maxrate && $d['temperature'] > $maxrate)
+			continue;
+		if ($minrate && $d['temperature'] < $minrate)
+			continue;
 		$datax[$channel][] = $d[timestamp];
 		$datay[$channel][] = $d[temperature];
 	}
@@ -145,51 +166,78 @@ if ($viewsql || $viewdata) {
 // Setup the basic graph
 $Ymax = (empty($datay)) ? 25 : 'auto';
 
-$graph = new Graph(725,600,"auto");
-$graph->SetScale('intlin');
-$graph->SetScale('intlin',0, $Ymax, $begints, $endts); 
-$graph->SetMargin(70,25,50,180);    
-$graph->title->Set("Temperature vs. Time,  
- $begintime to $endtime ");
-$graph->title->SetMargin(10);
-$graph->SetAlphaBlending();
 
-// Setup the x-axis with a format callback to convert the timestamp
-// to a user readable time
-$graph->xaxis->SetLabelFormatCallback('TimeCallback');
-$graph->xaxis->SetLabelAngle(90);
-$graph->xaxis->SetTitleMargin(88);
-$graph->xaxis->SetTitle('Date/Time (Mo/Day, Hr:Min:Sec)', 'center');
+	if ($histogram) {
 
-// y-axis
-$graph->yaxis->SetTitle("Temperature (deg C)", 'center');
-$graph->yaxis->SetTitleMargin(45);
-$graph->SetTickDensity(TICKD_SPARSE);
-$graph->yscale->SetAutoTicks();
+		$graph = new Graph(700,400,"auto");
+		$graph->SetMargin(70,50,50,105);    
+		$graph->title->Set("Histogram");
+		$graph->SetScale("linlin");
+		$graph->xaxis->SetTextLabelInterval(2);
+		$graph->xaxis->SetTitle("Temperature (deg C)", 'center');
+		$graph->yaxis->title->Set("Frequency");
 
-// Show gridlines
-$graph->ygrid->Show(true,false);
-$graph->xgrid->Show(true,false);
+	} else {
+
+		$graph = new Graph(700,500,"auto");
+		$graph->SetMargin(70,50,50,170);    
+		$graph->SetScale('intlin',0, $Ymax, $begints, $endts); 
+		$graph->title->Set("Temperature vs. Time,\n $begintime to $endtime ");
+		$graph->title->SetMargin(10);
+		$graph->SetAlphaBlending();
+
+
+		// Setup the x-axis with a format callback to convert the timestamp
+		// to a user readable time
+		$graph->xaxis->SetLabelFormatCallback('TimeCallback');
+		$graph->xaxis->SetLabelAngle(90);
+		$graph->xaxis->SetTitleMargin(60);
+		$graph->xaxis->SetTitle('Date/Time (Hr:Min:Sec)', 'center');
+
+		// y-axis
+		$graph->yaxis->SetTitle("Temperature (deg C)", 'center');
+		$graph->yaxis->SetTitleMargin(45);
+		$graph->SetTickDensity(TICKD_SPARSE);
+		$graph->yscale->SetAutoTicks();
+
+		// Show gridlines
+		$graph->ygrid->Show(true,false);
+		$graph->xgrid->Show(true,false);
+	}
+
 
 if ($channels)
 foreach ($channels as $k=>$c) {
 	if ($datay[$c]) {
-		$p[$c] = createlines($datay[$c],$datax[$c],$colors[$c],$labels[$c]);
-		$graph->Add($p[$c]);
+		if ($histogram) {
+			$p[$c] = createhistogram($datay[$c],$colors[$c],$labels[$c]);
+			$graph->Add($p[$c]);
+		} else { 
+			$p[$c] = createlines($datay[$c],$datax[$c],$colors[$c],$labels[$c]);
+			if ($c==7 && count($p)>1) {
+				$graph->SetY2Scale("lin");
+				$graph->AddY2($p[$c]);
+			} else {
+				$graph->Add($p[$c]);
+			}
+		}
 	}
 	$nmax += $n[$c];
 }
 
 // Add arbitrary text to include the number of points
 $txt = new Text("$nmax points");
-$txt->Pos(655,580);
+if ($histogram)
+	$txt->Pos(630,380);
+else
+	$txt->Pos(630,480);
 $txt->SetColor("black");
 $graph->AddText($txt);
 
 // Legend
 $graph->legend->SetLayout(LEGEND_HOR);
 $graph->legend->SetColumns($numcols);
-$graph->legend->Pos(0.5,0.945,'center','center');
+$graph->legend->Pos(0.5,0.88,'center','center');
 
 // Output line
 $source = $graph->Stroke(_IMG_HANDLER);

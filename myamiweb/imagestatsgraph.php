@@ -17,14 +17,22 @@ require ("inc/leginon.inc");
 
 $defaultId= 1445;
 $defaultpreset='hl';
+$histogram = ($_GET[hg]==1) ? true : false;
 $sessionId= ($_GET[Id]) ? $_GET[Id] : $defaultId;
 $preset = ($_GET[preset]) ? $_GET[preset] : $defaultpreset;
 $viewdata = ($_GET['vdata']==1) ? true : false;
 $viewsql = $_GET[vs];
+$stdev = ($_GET['stdev']==1) ? true : false;
+if ($stdev) {
+	$data_name='stdev';
+} else {
+	$data_name='mean';
+}
 
 $thicknessdata = $leginondata->getImageStats($sessionId, $preset);
 foreach($thicknessdata as $t) {
-	$data[] = $t['mean'];
+	$datax[] = $t['unix_timestamp'];
+	$datay[] = $t[$data_name];
 }
 if ($viewsql) {
 	$sql = $leginondata->mysql->getSQLQuery();
@@ -32,39 +40,63 @@ if ($viewsql) {
 	exit;
 }
 if ($viewdata) {
-	$keys = array("timestamp", "mean");
+	$keys = array("timestamp", $data_name);
 	echo dumpData($thicknessdata, $keys);
 	exit;
 }
 
+function TimeCallback($aVal) {
+    return Date('H:i',$aVal);
+}
+
 $width = $_GET['w'];
 $height = $_GET['h'];
-if (!$data) {
+if (!$datay) {
 	$width = 12;
 	$height = 12;
 	$source = blankimage($width,$height);
 } else {
-	$histogram = new histogram($data);
-	$histogram->setBarsNumber(50);
-	$rdata = $histogram->getData();
+		$graph = new Graph(600,400,"auto");    
+	if ($histogram) {
+		$histogram = new histogram($datay);
+		$histogram->setBarsNumber(50);
+		$rdata = $histogram->getData();
 
-	$rdatax = $rdata['x'];
-	$rdatay = $rdata['y'];
+		$rdatax = $rdata['x'];
+		$rdatay = $rdata['y'];
 
-	$graph = new Graph(600,400,"auto");    
-	$graph->SetScale("linlin");
+		$graph->SetScale("linlin");
 
-	$graph->img->SetMargin(40,30,20,40);
+		$graph->img->SetMargin(40,30,20,40);
 
-	$bplot = new BarPlot($rdatay, $rdatax);
-	$graph->Add($bplot);
+		$bplot = new BarPlot($rdatay, $rdatax);
+		$graph->Add($bplot);
 
-	$graph->title->Set("Pixel mean histogram for preset $preset");
-	$graph->xaxis->title->Set("mean");
-	$graph->yaxis->title->Set("Frequency");
+		$graph->title->Set("Pixel $data_name histogram for preset $preset");
+		$graph->xaxis->title->Set("pixel $data_name");
+
+		$graph->yaxis->title->Set("Frequency");
+	} else {
+		$graph->title->Set("Pixel $data_name for preset $preset");
+		$graph->SetAlphaBlending();
+		$graph->SetScale("intlin",0,'auto'); //,$datax[0],$datax[$n-1]);
+		$graph->xaxis->SetLabelFormatCallback('TimeCallback');
+		$graph->xaxis->SetLabelAngle(90);
+		$graph->xaxis->SetTitlemargin(25);
+		$graph->xaxis->title->Set("time");
+		$graph->yaxis->SetTitlemargin(35);
+		$graph->yaxis->title->Set("pixel $data_name");
+
+		$sp1 = new ScatterPlot($datay,$datax);
+		$sp1->mark->SetType(MARK_CIRCLE);
+		$sp1->mark->SetColor('red');
+		$sp1->mark->SetWidth(4);
+		$graph->Add($sp1);
+		$p1 = new LinePlot($datay,$datax);
+	}
 	$source = $graph->Stroke(_IMG_HANDLER);
 }
 
-resample($source, $width, $height);
+	resample($source, $width, $height);
 
 ?>

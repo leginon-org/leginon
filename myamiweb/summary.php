@@ -16,6 +16,7 @@ $expId = (empty($_GET[expId])) ? $lastId : $_GET[expId];
 $sessioninfo = $leginondata->getSessionInfo($expId);
 $title = $sessioninfo[Name];
 
+
 ?>
 <html>
 <head>
@@ -103,25 +104,32 @@ echo "</table>\n";
 echo "</td>";
 echo "<td valign='top' >";
 echo divtitle("Temperature");
-	$channels = "&ch0=1&ch1=1&ch2=1&ch4=1&ch5=1&ch6=1";
+$channels = "&ch0=1&ch1=1&ch2=1&ch4=1&ch5=1&ch6=1&ch7=1&opt=1";
+echo "<a href='temperaturereport.php?Id=$expId$channels'>report &raquo;</a>";
+echo "<table border='0'>\n";
+	echo "<tr>";
+		echo "<td>";
 	echo "<a href='temperaturegraph.php?vd=1&Id=$expId$channels'>[data]</a>";
 	echo "<a href='temperaturegraph.php?vs=1&Id=$expId$channels'>[sql]</a><br>";
 	echo "<a href='temperaturegraph.php?Id=$expId$channels'>";
 	echo "<img border='0' src='temperaturegraph.php?w=256&Id=$expId$channels'>";
 	echo "</a>";
+		echo "</td>";
+	echo "</tr>";
+echo "</table>\n";
 echo "</td>";
 echo "</tr>";
 $presets = $leginondata->getDatatypes($expId);
 	echo "<tr>";
 	echo "<td colspan='2'>";
 	echo divtitle("Image Stats");
+	echo "<a href='imagestatsreport.php?Id=$expId'>report &raquo;</a>";
 	echo "<table border='0'>\n";
 $n=0;
 echo "<tr>";
 foreach ($presets as $preset) {
 	$sessionId=$expId;
-	if (!$leginondata->getRelatedStats($expId, $preset))
-		continue;
+	
 	if ($n%3==0) {
 		echo "</tr>";
 		echo "<tr>";
@@ -130,10 +138,10 @@ foreach ($presets as $preset) {
 ?>
 <td>
 Preset: <?=$preset?>
-<a href="imagestatsgraph.php?vdata=1&Id=<?=$sessionId?>&preset=<?=$preset?>">[data]</a>
-<a href="imagestatsgraph.php?vs=1&Id=<?=$sessionId?>&preset=<?=$preset?>">[sql]</a><br>
-<a href="imagestatsgraph.php?Id=<?=$sessionId?>&preset=<?=$preset?>"><img
- border="0"  src="imagestatsgraph.php?w=210&Id=<?=$sessionId?>&preset=<?=$preset?>"></a>
+<a href="imagestatsgraph.php?hg=1&vdata=1&Id=<?=$sessionId?>&preset=<?=$preset?>">[data]</a>
+<a href="imagestatsgraph.php?hg=1&vs=1&Id=<?=$sessionId?>&preset=<?=$preset?>">[sql]</a><br>
+<a href="imagestatsgraph.php?hg=1&Id=<?=$sessionId?>&preset=<?=$preset?>"><img
+ border="0"  src="imagestatsgraph.php?hg=1&w=210&Id=<?=$sessionId?>&preset=<?=$preset?>"></a>
 </td>
 <?
 }
