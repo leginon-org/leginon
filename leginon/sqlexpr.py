@@ -701,7 +701,8 @@ def whereFormatSimple(in_dict):
         return wherestr
 
 def orderFormat(alias):
-	sqlorder = "ORDER BY %s.DEF_timestamp DESC " % backquote(alias)
+	#sqlorder = "ORDER BY %s.DEF_timestamp DESC " % backquote(alias)
+	sqlorder = "ORDER BY %s.DEF_id DESC " % backquote(alias)
 	return sqlorder 
 
 ########################################

@@ -66,9 +66,10 @@ class Manager(node.Node):
 
 		self.clients = {}
 
-		self.uicontainer = uiserver.Server('Manager', xmlrpcport)
 		self.datahandler = node.DataHandler(self, databinderclass=DataBinder)
 		self.server = datatransport.Server(self.datahandler, tcpport)
+		self.uicontainer = uiserver.Server('Manager', xmlrpcport,
+										dbdatakeeper=self.datahandler.dbdatakeeper, session=session)
 
 		node.Node.__init__(self, id, session, **kwargs)
 
@@ -692,7 +693,9 @@ class Manager(node.Node):
 
 	def uiAddNode(self):
 		'''UI helper calling addNode. See addNode.'''
-		hostname = self.uiaddnodehostname.getSelectedValue()
+		hostname = self.uiaddnodehostname.get()
+		if hostname is None:
+			self.messagelog.error('No hostname entered for adding a node')
 		port = self.uiaddnodeport.get()
 		location = {}
 		location['TCP transport'] = {}
@@ -827,8 +830,8 @@ class Manager(node.Node):
 
 		self.uinodeinfo = uidata.Struct('Node Information', {}, 'r')
 		infoobjects = (self.uinodeinfo,)
-		self.uiaddnodehostname = uidata.SingleSelectFromList('Hostname',
-																										leginonconfig.LAUNCHERS, 0)
+		self.uiaddnodehostname = uidata.HistoryData(uidata.String, 'Hostname',
+																								None, persist=True)
 		self.uiaddnodeport = uidata.Integer('TCP Port', 55555, 'rw')
 		addmethod = uidata.Method('Add', self.uiAddNode)
 		addobjects = (self.uiaddnodehostname, self.uiaddnodeport, addmethod)

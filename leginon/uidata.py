@@ -438,6 +438,56 @@ class SingleSelectFromList(SelectFromList):
 		except IndexError:
 			return None
 
+class HistoryData(Container):
+	typelist = Container.typelist + ('history data',)
+	def __init__(self, uidatatype, name, value, history=[], callback=None,	
+								persist=False, length=10):
+		Container.__init__(self, name)
+		#self.persist = persist
+		self.length = length
+		self.valuecallback = callback
+		self.history = Sequence('History', history, permissions='r',
+														persist=persist)
+		self.value = uidatatype('Value', value, permissions='rw', persist=persist)
+		self.addObject(self.history)
+		self.addObject(self.value)
+		self.value.setCallback(self.onSetValue)
+
+	def onSetValue(self, value):
+		if callable(self.valuecallback):
+			value = self.valuecallback(value)
+		if value is not None:
+			history = self.history.get()
+			if value in history:
+				history.remove(value)
+			history.insert(0, value)
+			if len(history) > self.length:
+				history = history[:self.length]
+			self.history.set(history, thread=True)
+			if self.server is not None:
+				self.server.setDatabaseFromObject(self.history)
+		return value
+
+	def getValue(self):
+		return self.value.get()
+
+	def getHistory(self):
+		return self.history.get()
+
+	def get(self):
+		return self.getValue()
+
+	def setValue(self, value):
+		self.value.set(value)
+
+	def setHistory(self, history):
+		self.history.set(history)
+
+	def set(self, value, history=None):
+		self.setValue(value)
+		if self.history is not None:
+			self.setHistory(history)
+
 class SelectFromStruct(Container):
 	typelist = Container.typelist + ('select from struct',)
 	# callback

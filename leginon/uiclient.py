@@ -137,6 +137,8 @@ def WidgetClassFromTypeList(typelist):
 							return wxMessageWidget
 						elif typelist[2] == 'message log':
 							return wxMessageLogWidget
+						elif typelist[2] == 'history data':
+							return wxHistoryEntryWidget
 					return wxStaticBoxContainerWidget
 				elif typelist[1] == 'method':
 					return wxButtonWidget
@@ -903,6 +905,7 @@ class wxGridTrayWidget(wxDataWidget):
 class wxEntryWidget(wxDataWidget):
 	types = [str]
 	def __init__(self, name, parent, container, value, configuration):
+		self.dirty = False
 		self.sizer = wxBoxSizer(wxHORIZONTAL)
 		self.label = wxStaticText(parent, -1, name + ':')
 
@@ -920,6 +923,7 @@ class wxEntryWidget(wxDataWidget):
 		self.set(value)
 
 		if self.write:
+			self.entry.SetDefaultStyle(wxTextAttr(wxBLACK))
 			EVT_KILL_FOCUS(self.entry, self.onKillFocus)
 			EVT_TEXT_ENTER(self.entry, self.entry.GetId(), self.onEnter)
 			EVT_CHAR(self.entry, self.onChar)
@@ -928,13 +932,22 @@ class wxEntryWidget(wxDataWidget):
 		self.sizer.Add(self.entry, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
 		self.layout()
 
+	def setDirty(self, dirty):
+		self.dirty = dirty
+		if dirty:
+			self.entry.SetDefaultStyle(wxTextAttr(wxRED))
+		else:
+			self.entry.SetDefaultStyle(wxTextAttr(wxBLACK))
+
 	def onChar(self, evt):
+		self.setDirty(True)
 		if evt.GetKeyCode() == WXK_ESCAPE:
 			self.setWidget(self.value)
 		evt.Skip()
 
 	def onKillFocus(self, evt):
-		self.setFromWidget()
+		if self.dirty:
+			self.setFromWidget()
 		evt.Skip()
 
 	def destroy(self):
@@ -954,6 +967,7 @@ class wxEntryWidget(wxDataWidget):
 					return
 		if type(value) not in self.types:
 			return
+		self.setDirty(False)
 		self.value = value
 		self.setServer(self.value)
 
@@ -983,6 +997,7 @@ class wxEntryWidget(wxDataWidget):
 				self.entry.SetValue('')
 			else:
 				self.entry.SetValue(str(self.value))
+			self.setDirty(False)
 
 	def _enable(self, enable):
 		self.label.Enable(enable)
@@ -1953,6 +1968,108 @@ class wxMessageLogWidget(wxContainerWidget):
 
 	def _show(self, show):
 		self.messagelog.Show(show)
+		wxContainerWidget._show(self, show)
+
+class wxHistoryEntryWidget(wxContainerWidget):
+	typemap = {'integer': [int], 'float': [float],
+							'number': [int, float], 'string': [str]}
+	types = [str]
+	def __init__(self, name, parent, container, value, configuration):
+		self.dirty = False
+		self.sizer = wxBoxSizer(wxHORIZONTAL)
+		self.label = wxStaticText(parent, -1, name + ':')
+
+		self.combobox = wxComboBox(parent, -1, style=wxCB_DROPDOWN)
+
+		wxContainerWidget.__init__(self, name, parent, container, value,
+																configuration)
+
+		#EVT_KILL_FOCUS(self.entry, self.onKillFocus)
+		EVT_TEXT_ENTER(self.combobox, self.combobox.GetId(), self.onEnter)
+		EVT_COMBOBOX(self.combobox, self.combobox.GetId(), self.onComboBox)
+		#EVT_CHAR(self.combobox, self.onChar)
+
+		self.sizer.Add(self.label, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
+		self.sizer.Add(self.combobox, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
+		self.layout()
+
+#	def onChar(self, evt):
+#		print evt
+
+	def _addWidget(self, name, typelist, value, configuration, children):
+		if name == 'Value':
+			try:
+				self.types = self.typemap[typelist[-1]]
+			except KeyError:
+				pass
+			self.setValue(value)
+		elif name == 'History':
+			self.setHistory(value)
+
+	def onAddWidget(self, evt):
+		self._addWidget(evt.namelist[0], None, evt.value, None, None)
+		if evt.event is not None:
+			evt.event.set()
+
+	def onSetWidget(self, evt):
+		if evt.namelist == ['Value']:
+			self.setValue(evt.value)
+		if evt.namelist == ['History']:
+			self.setHistory(evt.value)
+		if evt.event is not None:
+			evt.event.set()
+
+	def onRemoveWidget(self, evt):
+		if evt.event is not None:
+			evt.event.set()
+
+	def destroy(self):
+		self.combobox.Destroy()
+		self.label.Destroy()
+
+	def onEnter(self, evt):
+		self.setFromWidget(evt)
+
+	def onComboBox(self, evt):
+		self.setFromWidget(evt)
+
+	def setFromWidget(self, evt):
+		value = evt.GetString()
+		if self.types != [str]:
+			try:
+				value = eval(value)
+			except:
+				if str not in self.types:
+					return
+		if type(value) not in self.types:
+			return
+		evt = SetServerEvent([self.name, 'Value'], value)
+		wxPostEvent(self.container.widgethandler, evt)
+
+	def setValue(self, value):
+		if value is None:
+			self.combobox.SetValue('')
+		else:
+			self.combobox.SetValue(str(value))
+
+	def setHistory(self, history):
+		value = self.combobox.GetValue()
+		if history is None:
+			self.combobox.Clear()
+		else:
+			self.combobox.Clear()
+			for item in history:
+				self.combobox.Append(str(item))
+		self.combobox.SetValue(value)
+
+	def _enable(self, enable):
+		self.label.Enable(enable)
+		self.combobox.Enable(enable)
+		wxContainerWidget._enable(self, enable)
+
+	def _show(self, show):
+		self.label.Show(show)
+		self.combobox.Show(show)
 		wxContainerWidget._show(self, show)
 
 if __name__ == '__main__':

@@ -24,6 +24,7 @@ class ManagerSetup(object):
 		session_name = self.sessionselector.getSelectedValue()
 		session = self.session_dict[session_name]
 		self.manager.session = session
+		self.manager.uicontainer.session = session
 
 		if (session['instrument'] is not None and session['instrument']['hostname']
 				not in self.manager.launcherdict.keys() and

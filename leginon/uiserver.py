@@ -230,7 +230,7 @@ class Server(XMLRPCServer, uidata.Container):
 
 	def _addObject(self, uiobject, client=None, block=True, thread=True):
 		if client is None:
-			self.setObjectFromDatabase(uiobject)
+			flag = self.setObjectFromDatabase(uiobject)
 		properties = self.propertiesFromObject(uiobject, block, thread)
 		self.localExecute('addFromServer', properties, client, block, thread)
 		self.XMLRPCExecute('add', properties, client, block, thread)
@@ -274,12 +274,12 @@ class Server(XMLRPCServer, uidata.Container):
 
 	def setObjectFromDatabase(self, uiobject):
 		if self.dbdatakeeper is None or self.session is None:
-			return
+			return False
 		if isinstance(uiobject, uidata.Container):
 			for childobject in uiobject.uiobjectlist:
 				self.setObjectFromDatabase(childobject)
 		if not isinstance(uiobject, uidata.Data) or not uiobject.persist:
-			return
+			return False
 		namelist = uiobject._getNameList()
 		try:
 			session = data.SessionData()
@@ -295,17 +295,22 @@ class Server(XMLRPCServer, uidata.Container):
 						value = cPickle.loads(pickledvalue)
 					except:
 						print 'Error unpickling UI value'
-						return
+						return False
 					uiobject.set(value, server=False)
+					return True
 				except KeyError:
-					return
+					return False
 		except:
 			print 'Error setting preference'
+		return False
 
 	def setDatabaseFromObject(self, uiobject):
 		if self.dbdatakeeper is None or self.session is None:
 			print 'Cannot save UI values to database'
 			return
+		if isinstance(uiobject, uidata.Container):
+			for childobject in uiobject.uiobjectlist:
+				self.setDatabaseFromObject(childobject)
 		if not isinstance(uiobject, uidata.Data):
 			return
 		namelist = uiobject._getNameList()
@@ -315,7 +320,7 @@ class Server(XMLRPCServer, uidata.Container):
 										'object': namelist,
 										'pickled value': pickledvalue}
 		odata = data.UIData(initializer=initializer)
-		self.dbdatakeeper.insert(odata)
+		self.dbdatakeeper.insert(odata, force=True)
 
 	def _setObjectFromFile(self, uiobject, d):
 		if isinstance(uiobject, uidata.Container):
