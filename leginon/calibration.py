@@ -142,7 +142,7 @@ class Calibration(node.Node):
 				if verdict == 'good':
 					print "good"
 					self.publishRemote(data.EMData('scope', self.state(0.0, axis)))
-					self.calibration.update({axis + " pixel shift": {'x': shiftinfo['shift']['x'], 'y': shiftinfo['shift']['y'], 'value': value}})
+					self.calibration.update({axis + " pixel shift": 'x':shiftinfo['shift'][1], 'y':shiftinfo['shift'][0], 'value': value}})
 				elif verdict == 'small shift':
 					print "too small"
 					adjustedrange[0] = value
