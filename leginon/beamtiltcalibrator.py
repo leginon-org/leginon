@@ -34,8 +34,35 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		camstate = camconfig['state']
 		self.cam.state(camstate)
 
-	def calibrateAlignment(self):
-		pass
+	def calibrateAlignment(self, tilt_value):
+		self.setCamState()
+
+		state1 = {'beam tilt': tilt_value}
+		state2 = {'beam tilt': -tilt_value}
+
+		matdict = {}
+
+		for axis in ('x','y'):
+			print 'measuring %s tilt' % (axis,)
+
+			diff1 = self.calclient.measureDispDiff(axis, tilt_value, tilt_value)
+			diff2 = self.calclient.measureDispDiff(axis, -tilt_value, tilt_value)
+
+			matcol = self.calclient.eq11(diff1, diff2, 0, 0, tilt_value)
+			matdict[axis] = matcol
+
+		print 'making matrix'
+		matrix = Numeric.zeros((2,2), Numeric.Float32)
+		print 'matrix type', matrix.typecode()
+		print 'matdict type', matdict['x'].typecode()
+		matrix[:,0] = matdict['x']
+		matrix[:,1] = matdict['y']
+
+		## store calibration
+		print 'storing calibration'
+		mag = self.getMagnification()
+		self.calclient.storeMatrix(mag, 'coma-free', matrix)
+		return ''
 
 	def calibrateDefocus(self, tilt_value, defocus1, defocus2):
 		self.setCamState()
@@ -49,15 +76,22 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			matdict[axis] = matcol
 		print 'making matrix'
 		matrix = Numeric.zeros((2,2), Numeric.Float32)
-		print 'matrix type', matrix.typecode()
 		print 'matdict type', matdict['x'].typecode()
-		matrix[:,0] = matdict['x']
-		matrix[:,1] = matdict['y']
+
+		m00 = float(matdict['x'][0])
+		m10 = float(matdict['x'][1])
+		m01 = float(matdict['y'][0])
+		m11 = float(matdict['y'][1])
+		matrix = Numeric.array([[m00,m01],[m10,m11]],Numeric.Float32)
 
 		## store calibration
 		print 'storing calibration'
 		mag = self.getMagnification()
-		self.calclient.setMatrix(mag, 'defocus', matrix)
+		print 'MATRIX', matrix
+		print 'MATRIX shape', matrix.shape
+		print 'MATRIX type', matrix.typecode()
+		print 'MATRIX flat', Numeric.ravel(matrix)
+		self.calclient.storeMatrix(mag, 'defocus', matrix)
 		return ''
 
 	def calibrateStigmators(self, tilt_value, delta):
@@ -95,7 +129,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			## store calibration
 			mag = self.getMagnification()
 			type = 'stig' + stigaxis
-			self.calclient.setMatrix(mag, type, matrix)
+			self.calclient.storeMatrix(mag, type, matrix)
 
 		return ''
 

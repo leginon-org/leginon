@@ -11,7 +11,7 @@ inf = 1.0 / Numeric.array(0.0, Numeric.Float32)
 
 
 def stdev(inputarray):
-	f = inputarray.flat
+	f = Numeric.ravel(inputarray)
 	inlen = len(f)
 	divisor = Numeric.array(inlen, Numeric.Float32)
 	m = Numeric.sum(f) / divisor
@@ -24,19 +24,19 @@ def stdev(inputarray):
 	return stdev
 
 def mean(inputarray):
-	f = inputarray.flat
+	f = Numeric.ravel(inputarray)
 	inlen = len(f)
 	divisor = Numeric.array(inlen, Numeric.Float32)
 	m = Numeric.sum(f) / divisor
 	return m
 
 def min(inputarray):
-	f = inputarray.flat
+	f = Numeric.ravel(inputarray)
 	i = Numeric.argmin(f)
 	return f[i]
 
 def max(inputarray):
-	f = inputarray.flat
+	f = Numeric.ravel(inputarray)
 	i = Numeric.argmax(f)
 	return f[i]
 

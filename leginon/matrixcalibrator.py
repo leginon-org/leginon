@@ -6,6 +6,7 @@ import peakfinder
 import time
 import camerafuncs
 import calibrationclient
+import Numeric
 
 False=0
 True=1
@@ -104,6 +105,10 @@ class MatrixCalibrator(calibrator.Calibrator):
 		mag = self.getMagnification()
 
 		matrix = calclient.measurementToMatrix(shifts)
+		print 'MATRIX', matrix
+		print 'MATRIX shape', matrix.shape
+		print 'MATRIX type', matrix.typecode()
+		print 'MATRIX flat', Numeric.ravel(matrix)
 		calclient.storeMatrix(mag, self.parameter, matrix)
 
 		print 'CALIBRATE DONE', shifts

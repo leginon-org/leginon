@@ -126,6 +126,7 @@ class MatrixCalibrationClient(CalibrationClient):
 		'''
 		stores a newly calibration matrix
 		'''
+		newmatrix = Numeric.array(matrix, Numeric.Float64)
 		caldata = data.MatrixCalibrationData(self.node.ID(), magnification=mag, type=type, matrix=matrix)
 		self.node.publish(caldata, database=True)
 
@@ -137,7 +138,8 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 	def getBeamTilt(self):
 		emdata = self.node.researchByDataID(('beam tilt',))
 		#beamtilt = emdata.content
-		beamtilt = emdata
+		beamtilt = emdata['em']
+		print 'getBeamTilt', beamtilt
 		return beamtilt
 
 	def measureDefocusStig(self, tilt_value, publish_images=0):
@@ -284,6 +286,53 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			self.node.publishRemote(emdata)
 
 		return (pixelshift1, pixelshift2)
+
+	def measureDispDiff(self, tilt_axis, tilt_m, tilt_t):
+		'''
+		This measures one displacement difference that go into 
+		eq. (11). Each call of this function acquires four images
+		and returns one shift displacement.  We could also use
+		something other than measureStateShift and do this with
+		only 3 images.
+		'''
+		beamtilt = self.getBeamTilt()
+
+		### try/finally to be sure we return to original beam tilt
+		try:
+			print 'BEAMTILT', beamtilt
+
+			### apply misalignment, this is the base value
+			### from which the two equal and opposite tilts
+			### are made
+			state0 = copy.deepcopy(beamtilt)
+			state0['beam tilt'][tilt_axis] += tilt_m
+			print 'state0', state0
+
+			### create the two equal and opposite tilted states
+			statepos = copy.deepcopy(state0)
+			statepos['beam tilt'][tilt_axis] += tilt_t
+			print 'statepos', statepos
+			stateneg = copy.deepcopy(state0)
+			stateneg['beam tilt'][tilt_axis] -= tilt_t
+			print 'stateneg', stateneg
+
+			shiftinfo = self.measureStateShift(state0, statepos, 1, settle=0.25)
+			pixelshift1 = shiftinfo['pixel shift']
+
+			shiftinfo = self.measureStateShift(state0, stateneg, 1, settle=0.25)
+			pixelshift2 = shiftinfo['pixel shift']
+			print 'PIXELSHIFT1', pixelshift1
+			print 'PIXELSHIFT2', pixelshift2
+		finally:
+			## return to original beam tilt
+			emdata = data.EMData(('scope',), em=beamtilt)
+			self.node.publishRemote(emdata)
+
+		pixelshiftdiff = {}
+		pixelshiftdiff['row'] = pixelshift2['row'] - pixelshift1['row']
+		pixelshiftdiff['col'] = pixelshift2['col'] - pixelshift1['col']
+		return pixelshiftdiff
+
 
 class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 	def __init__(self, node):

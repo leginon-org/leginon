@@ -27,7 +27,7 @@ class PeakFinder(object):
 			self.setImage(newimage)
 
 		if self.results['pixel peak'] is None:
-			flatimage = self.image.flat
+			flatimage = Numeric.ravel(self.image)
 			peak = Numeric.argmax(flatimage)
 			peakvalue = flatimage[peak]
 			rows,cols = self.shape
