@@ -90,15 +90,15 @@ class UIServer(XMLRPCServer, uidata.UIContainer):
 
 	def addUIObjects(self, client, uiobject, namelist):
 		print 'updating', namelist
-		client.execute('ADD', (namelist, uiobject.typename, uiobject.value))
+		client.execute('ADD', (namelist, uiobject.typelist, uiobject.value))
 		if isinstance(uiobject, uidata.UIContainer):
 			for childuiobject in uiobject.uiobjectdict.values():
 				self.addUIObjects(client, childuiobject, namelist+(childuiobject.name,))
 
-	def addUIObjectCallback(self, namelist, typename, value):
+	def addUIObjectCallback(self, namelist, typelist, value):
 		for client in self.uiclients:
 			# delete if fail?
-			client.execute('ADD', ((self.name,) + namelist, typename, value))
+			client.execute('ADD', ((self.name,) + namelist, typelist, value))
 
 	def setUIObjectCallback(self, namelist, value):
 		for client in self.uiclients:

@@ -54,11 +54,13 @@ class UIDataWidget(UIWidget, Tkinter.Frame):
 		else:
 			raise ValueError('incorrect widget')
 
-def UIWidgetClassFromType(typename):
-	if typename == 'container':
+def UIWidgetClassFromType(typelist):
+	if typelist[:2] == ['object', 'container']:
 		return UIContainerWidget
-	else:
+	elif typelist[:2] == ['object', 'data']:
 		return UIEntryWidget
+	else:
+		raise ValueError('invalid type list for UI widget class')
 
 class UIContainerWidget(UIWidget, Pmw.Group):
 	def __init__(self, name, parent, tkparent):
@@ -85,11 +87,11 @@ class UIContainerWidget(UIWidget, Pmw.Group):
 		else:
 			raise ValueError('specfied name does not match widget name')
 			
-	def add(self, namelist, typename, value):
+	def add(self, namelist, typelist, value):
 		container = self.getWidgetFromList(namelist[:-1])
 		if not isinstance(container, UIContainerWidget):
 			raise ValueError('parent of widget must be a container')
-		uiwidget_type = UIWidgetClassFromType(typename)
+		uiwidget_type = UIWidgetClassFromType(typelist)
 		name = namelist[-1]
 		uiwidget = uiwidget_type(name, container, container.interior())
 		if isinstance(uiwidget, UIDataWidget):
@@ -118,9 +120,15 @@ class UIContainerWidget(UIWidget, Pmw.Group):
 		except KeyError:
 			raise ValueError('container \'%s\' does not contain widget \'%s\''
 																						% (self.name, name))
+		deletedrow = uiwidget.grid_info()['row']
 		uiwidget.grid_forget()
 		#uiwidget.destroy()
 		del container.uiwidgets[name]
+
+		for uiwidget in container.uiwidgets.values():
+			row = uiwidget.grid_info()['row']
+			if row > deletedrow:
+				uiwidget.grid_configure(row=int(row)-1)
 
 	def applyCallback(self, namelist, value):
 		self.parent.applyCallback((self.name,) + namelist, value)
@@ -146,10 +154,12 @@ class UIEntryWidget(UIDataWidget):
 				value = eval(value)
 			except:
 				return
-			if type(value) != type(self.value):
-				return
-			else:
+			if type(value) == type(self.value):
 				self.set(value)
+			else:
+				return
+		else:
+			self.set(value)
 		self.parent.applyCallback((self.name,), self.value)
 
 class UIClient(XMLRPCClient, uiserver.XMLRPCServer, UIContainerWidget):
@@ -165,9 +175,9 @@ class UIClient(XMLRPCClient, uiserver.XMLRPCServer, UIContainerWidget):
 	def setServer(self, namelist, value):
 		self.execute('SET', (namelist, value))
 
-	def addFromServer(self, namelist, typename, value):
-		print 'ADD', namelist, typename, value
-		self.add(namelist, typename, value)
+	def addFromServer(self, namelist, typelist, value):
+		print 'ADD', namelist, typelist, value
+		self.add(namelist, typelist, value)
 		return ''
 
 	def setFromServer(self, namelist, value):

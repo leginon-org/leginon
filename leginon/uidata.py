@@ -16,7 +16,7 @@ class PermissionsError(UIDataError):
 
 # UI Objects
 class UIObject(object):
-	typename = 'object'
+	typelist = ('object',)
 	def __init__(self, name):
 		if type(name) is str:
 			self.name = name
@@ -37,7 +37,7 @@ class UIObject(object):
 			raise ValueError('incorrect UI object')
 
 class UIContainer(UIObject):
-	typename = 'container'
+	typelist = UIObject.typelist + ('container',)
 	# don't keep
 	value = ''
 	def __init__(self, name):
@@ -49,7 +49,7 @@ class UIContainer(UIObject):
 		if uiobject.name not in self.uiobjectdict:
 			if isinstance(uiobject, UIObject):
 				uiobject.setParent(self)
-				self.addUIObjectCallback((uiobject.name,), uiobject.typename,
+				self.addUIObjectCallback((uiobject.name,), uiobject.typelist,
 																											uiobject.value)
 				self.uiobjectdict[uiobject.name] = uiobject
 			else:
@@ -67,9 +67,9 @@ class UIContainer(UIObject):
 		except KeyError:
 			raise ValueError('name does not exist in UI Object mapping')
 
-	def addUIObjectCallback(self, namelist, typename, value):
+	def addUIObjectCallback(self, namelist, typelist, value):
 		if self.parent is not None:
-			self.parent.addUIObjectCallback((self.name,) + namelist, typename, value)
+			self.parent.addUIObjectCallback((self.name,) + namelist, typelist, value)
 		else:
 			raise RuntimeError('cannot add object to container without parent')
 
@@ -122,12 +122,12 @@ class UIContainer(UIObject):
 	# getUIObject?
 
 class UIMethod(UIObject):
-	typename = 'method'
+	typelist = UIObject.typelist + ('method',)
 	pass
 
 class UIData(UIObject):
 	permissionsvalues = ('r', 'w', 'rw', 'wr')
-	typename = 'data'
+	typelist = UIObject.typelist + ('data',)
 	def __init__(self, name, value, permissions='r', callback=None):
 		UIObject.__init__(self, name)
 		if permissions in self.permissionsvalues:
@@ -194,34 +194,26 @@ class UIData(UIObject):
 		return True
 
 class UIBoolean(UIData):
-	typename = 'boolean'
-	pass
+	typelist = UIData.typelist + ('boolean',)
 
 class UIInteger(UIData):
-	typename = 'integer'
-	pass
+	typelist = UIData.typelist + ('integer',)
 
 class UIFloat(UIData):
-	typename = 'float'
-	pass
+	typelist = UIData.typelist + ('float',)
 
 class UIString(UIData):
-	typename = 'string'
-	pass
+	typelist = UIData.typelist + ('string',)
 
 class UIArray(UIData):
-	typename = 'array'
-	pass
+	typelist = UIData.typelist + ('array',)
 
 class UIStruct(UIData):
-	typename = 'struct'
-	pass
+	typelist = UIData.typelist + ('struct',)
 
 class UIDate(UIData):
-	typename = 'date'
-	pass
+	typelist = UIData.typelist + ('date',)
 
 class UIBinary(UIData):
-	typename = 'binary'
-	pass
+	typelist = UIData.typelist + ('binary',)
 
