@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.26 $
+# $Revision: 1.27 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-11 19:43:17 $
-# $Author: suloway $
+# $Date: 2004-11-14 03:06:29 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -101,7 +101,7 @@ class Parameters(wx.Panel):
 		sty = wx.StaticText(self, -1, 'y')
 		stimageshift = wx.StaticText(self, -1, 'Image shift')
 		stbeamshift = wx.StaticText(self, -1, 'Beam shift')
-		stdose = wx.StaticText(self, -1, 'Dose:')
+		stdose = wx.StaticText(self, -1, 'Dose (e/A^2):')
 
 		self.femag = FloatEntry(self, -1, chars=9)
 		self.fedefocus = FloatEntry(self, -1, chars=9)
@@ -164,7 +164,7 @@ class Parameters(wx.Panel):
 		if not dose or dose == 'N/A':
 			dose = None
 		else:
-			dose = float(dose)
+			dose = float(dose) * 1e20
 		parameters.update(self.cpcamconfig.getConfiguration())
 		return parameters
 
@@ -194,7 +194,7 @@ class Parameters(wx.Panel):
 			if parameters['dose'] is None:
 				dose = 'N/A'
 			else:
-				dose = '%e' % (parameters['dose'],)
+				dose = '%e' % (parameters['dose']/1e20,)
 			self.stdose.SetLabel(dose)
 
 			try:
@@ -331,7 +331,7 @@ class DoseDialog(gui.wx.Dialog.Dialog):
 			dosestr = 'N/A'
 		else:
 			dosestr = '%e' % (dose/1e20)
-		dosestr = 'Use the measured dose %s for this preset?' % dosestr
+		dosestr = 'Use the measured dose %s e/A^2 for this preset?' % dosestr
 		self.doselabel.SetLabel(dosestr)
 
 class Panel(gui.wx.Node.Panel):
