@@ -448,7 +448,7 @@ class ImageData(Data):
 		t = Data.typemap()
 		t += [ ('image', strictdict.NumericArrayType), ]
 		# for DB
-		t += [ ('filename', str), ]
+		t += [ ('filename', str), ('label', str)]
 		return t
 	typemap = classmethod(typemap)
 
