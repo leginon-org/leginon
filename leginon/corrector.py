@@ -40,16 +40,11 @@ class Corrector(node.Node):
 	  a dark and bright image for this plan.  These are stored as MRC
 	  in the corrections directory.
 	'''
-	eventoutputs = node.Node.eventoutputs + [event.DarkImagePublishEvent,
-																						event.BrightImagePublishEvent,
-																						event.ListPublishEvent]
+	eventoutputs = node.Node.eventoutputs + [event.DarkImagePublishEvent, event.BrightImagePublishEvent, event.ListPublishEvent]
 	def __init__(self, id, session, nodelocations, **kwargs):
 		self.cam = camerafuncs.CameraFuncs(self)
 
 		node.Node.__init__(self, id, session, nodelocations, datahandler=DataHandler, **kwargs)
-		self.addEventOutput(event.DarkImagePublishEvent)
-		self.addEventOutput(event.BrightImagePublishEvent)
-		self.addEventOutput(event.ListPublishEvent)
 
 		ids = [('corrected image data',)]
 		e = event.ListPublishEvent(id=self.ID(), idlist=ids)

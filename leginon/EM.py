@@ -222,8 +222,6 @@ class EM(node.Node):
 			if camera[1]:
 				self.camera = cameradict.factory(cameramodule.__dict__[camera[1]])()
 
-		self.addEventOutput(event.ListPublishEvent)
-
 		ids = ['scope', 'camera', 'camera no image data', 'all em']
 		ids += self.scope.keys()
 		ids += self.camera.keys()
