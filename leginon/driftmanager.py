@@ -104,6 +104,7 @@ class DriftManager(watcher.Watcher):
 		self.references[nodeid] = {'imageid': imageid, 'image': imagedata, 'shift': {}}
 
 	def uiMonitorDrift(self):
+		self.cam.uiApplyAsNeeded()
 		## calls monitorDrift in a new thread
 		t = threading.Thread(target=self.monitorDrift)
 		t.setDaemon(1)
@@ -197,11 +198,16 @@ class DriftManager(watcher.Watcher):
 
 			## calculate drift 
 			meters = dist * binning * pixsize
+			rowmeters = rows * binning * pixsize
+			colmeters = cols * binning * pixsize
 			# rely on system time of EM node
 			seconds = t1 - t0
 			current_drift = meters / seconds
 			print 'DRIFT RATE:  %.4e' % (current_drift,)
 			self.driftvalue.set(current_drift)
+
+			d = data.DriftData(id=self.ID(), rows=rows, cols=cols, interval=seconds, rowmeters=rowmeters, colmeters=colmeters)
+			self.publish(d, database=True, dbforce=True)
 
 			## t0 becomes t1 and t1 will be reset for next image
 			t0 = t1
