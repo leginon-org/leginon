@@ -347,9 +347,9 @@ if __name__ == '__main__':
 		mgui = nodegui.NodeGUI(tk, node=m)
 		#tk.wm_title('Leginon Manager')
 		mgui.pack()
-		t = threading.Thread(name = 'Tk GUI thread', target = tk.mainloop)
-		t.setDaemon(1)
-		t.start()
+#		t = threading.Thread(name = 'Tk GUI thread', target = tk.mainloop)
+#		t.setDaemon(1)
+#		t.start()
 	## interact interface (could be changed to use ui* methods, like GUI)
 	m.start()
 

@@ -36,6 +36,7 @@ def correlation(image1, image2, ccflag=1, pcflag=1, subpixelflag=1):
 
 		pcdict = findPeak(pc, subpixelflag)
 		val['phase correlation peak'] = pcdict['peak']
+		val['phase correlation index'] = findPeak(pc, 0)['peak']
 		val['phase correlation shift'] = pcdict['shift']
 		val['phase correlation image'] = pc
 

@@ -195,7 +195,7 @@ class Node(leginonobject.LeginonObject):
 
 	def publishRemote(self, nodeid, idata):
 		# perhaps an event can be generated in this too
-		nodelocation = self.researchByLocation(self.managerloc, nodeid)
+		nodelocation = self.researchByLocation(self.managerloc, nodeid).content
 		# should interate over nodes, be crafty, etc.
 		self.addEventClient(nodeid, nodelocation)
 		self.clients[nodeid].push(idata)

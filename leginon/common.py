@@ -24,10 +24,11 @@ from mynode import MyNode
 from intgen import IntGen
 from EM import EM
 from emtest import EMTest
-#from betacalibration import BetaCalibration
+from betacalibration import BetaCalibration
 try:
 	from imviewer import ImViewer
 except ImportError:
 	pass
 from getdata import GetData
-from shiftmeter import ShiftMeter
+#from shiftmeter import ShiftMeter
+
