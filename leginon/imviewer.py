@@ -32,7 +32,7 @@ class ImViewer(watcher.Watcher):
 	def start_viewer_thread(self):
 		if self.iv is not None:
 			return
-		self.viewerthread = threading.Thread(target=self.open_viewer)
+		self.viewerthread = threading.Thread(name='image viewer thread', target=self.open_viewer)
 		self.viewerthread.setDaemon(1)
 		self.viewerthread.start()
 		#print 'thread started'

@@ -542,12 +542,6 @@ class NodeGUI(Frame):
 		gui = NodeGUI(top, host, port)
 		gui.pack(expand=YES, fill=BOTH)
 
-#	t = threading.Thread(target=tk.mainloop)
-#	t.setDaemon(1)
-#	t.start()
-#	tk.mainloop()
-#	return tk
-
 # This was done quickly, should be thought out more I suppose
 class StructTreeItem(TreeWidget.TreeItem):
 	def __init__(self, parent, key, value):

@@ -42,7 +42,7 @@ class CallLauncher(object):
 		"""
 		make a call to targetcall in a new thread
 		"""
-		t = threading.Thread(target=targetcall, args=args, kwargs=kwargs)
+		t = threading.Thread(name='%s node thread' % targetcall.__name__, target=targetcall, args=args, kwargs=kwargs)
 		t.setDaemon(1)
 		t.start()
 		return t

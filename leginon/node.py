@@ -55,12 +55,13 @@ class DataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
 			raise event.InvalidEventError('eventclass must be Event subclass')
 
 class Node(leginonobject.LeginonObject):
-	def __init__(self, id, nodelocations = {}, dh = DataHandler, dhargs = (), clientclass = Client):
+	def __init__(self, id, nodelocations = {}, dh = DataHandler,
+								dhargs = (), clientclass = Client):
 		leginonobject.LeginonObject.__init__(self, id)
 
 		self.nodelocations = nodelocations
 
-		self.registry = {'outputs':[], 'inputs':[]}
+		self.eventmapping = {'outputs':[], 'inputs':[]}
 
 		self.server = datatransport.Server(self.ID(), dh, dhargs)
 		self.clientclass = clientclass
@@ -76,9 +77,11 @@ class Node(leginonobject.LeginonObject):
 		self.addEventOutput(event.UnpublishEvent)
 		self.addEventOutput(event.NodeAvailableEvent)
 		self.addEventOutput(event.NodeUnavailableEvent)
+
 		self.addEventInput(event.KillEvent, self.die)
 		self.addEventInput(event.ConfirmationEvent, self.registerConfirmedEvent)
 		self.addEventInput(event.ManagerAvailableEvent, self.eventAddManager)
+
 		if 'manager' in self.nodelocations:
 			try:
 				self.addManager(self.nodelocations['manager'])
@@ -253,15 +256,6 @@ class Node(leginonobject.LeginonObject):
 			client = self.clientclass(self.ID(), nodelocation.content)
 			self.client.push(idata)
 
-	## no longer have to mark_data becuase id takes care of it
-	#def mark_data(self, data):
-	#	data.origin['id'] = self.id
-	#	data.origin['location'] = self.location()
-
-	def research(self, loc, dataid):
-		# can this determine what to do?
-		return self.researchByLocation(loc, dataid)
-
 	def researchByLocation(self, loc, dataid):
 		client = self.clientclass(self.ID(), loc)
 		cdata = client.pull(dataid)
@@ -276,6 +270,7 @@ class Node(leginonobject.LeginonObject):
 
 		# should interate over nodes, be crafty, etc.
 		datalocationdata = self.managerclient.pull(nodeiddata.content[-1])
+
 		return self.researchByLocation(datalocationdata.content, dataid)
 
 	def location(self):
@@ -299,19 +294,19 @@ class Node(leginonobject.LeginonObject):
 
 	def addEventInput(self, eventclass, func):
 		self.server.datahandler.setBinding(eventclass, func)
-		if eventclass not in self.registry['inputs']:
-			self.registry['inputs'].append(eventclass)
+		if eventclass not in self.eventmapping['inputs']:
+			self.eventmapping['inputs'].append(eventclass)
 
 	def delEventInput(self, eventclass):
 		self.server.datahandler.setBinding(eventclass, None)
-		if eventclass in self.registry['inputs']:
-			self.registry['inputs'].remove(eventclass)
+		if eventclass in self.eventmapping['inputs']:
+			self.eventmapping['inputs'].remove(eventclass)
 
 	def addEventOutput(self, eventclass):
-		if eventclass not in self.registry['outputs']:
-			self.registry['outputs'].append(eventclass)
+		if eventclass not in self.eventmapping['outputs']:
+			self.eventmapping['outputs'].append(eventclass)
 		
 	def delEventOutput(self, eventclass):
-		if eventclass in self.registry['outputs']:
-			self.registry['outputs'].remove(eventclass)
+		if eventclass in self.eventmapping['outputs']:
+			self.eventmapping['outputs'].remove(eventclass)
 
