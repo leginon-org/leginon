@@ -61,7 +61,7 @@ class Panel(gui.wx.Node.Panel):
 							self.imagepanel)
 
 	def onSetImage(self, evt):
-		self.imagepanel.setImage(evt.image, scroll=True)
+		self.imagepanel.setImage(evt.image)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)

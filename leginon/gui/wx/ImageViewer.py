@@ -591,7 +591,6 @@ class ImagePanel(wx.Panel):
 		'''
 		Set size of viewport and offset for scrolling if image is bigger than view
 		'''
-		self.panel.SetVirtualSize((0, 0))
 		if self.bitmap is not None:
 			width, height = self.bitmap.GetWidth(), self.bitmap.GetHeight()
 			if self.scaleImage():
@@ -599,10 +598,10 @@ class ImagePanel(wx.Panel):
 			else:
 				xscale, yscale = self.getScale()
 				virtualsize = (int((width - 1) * xscale), int((height - 1) * yscale))
-			self.panel.SetVirtualSize(virtualsize)
 			self.virtualsize = virtualsize
 		else:
 			self.virtualsize = (0, 0)
+		self.panel.SetVirtualSize(self.virtualsize)
 
 		xv, yv = self.biggerView()
 		xsize, ysize = self.virtualsize
@@ -623,12 +622,12 @@ class ImagePanel(wx.Panel):
 		self.selectiontool.setImage(name, imagedata, **kwargs)
 		#self.setImage(imagedata, **kwargs)
 
-	def setImage(self, imagedata, scroll=False, stats={}):
+	def setImage(self, imagedata, stats={}):
 		stats = dict(stats)
 		if isinstance(imagedata, Numeric.ArrayType):
-			self.setNumericImage(imagedata, scroll, stats)
+			self.setNumericImage(imagedata, stats)
 		elif isinstance(imagedata, Image.Image):
-			self.setPILImage(imagedata, scroll)
+			self.setPILImage(imagedata)
 			self.statspanel.setStats(stats)
 			self.sizer.Layout()
 		elif imagedata is None:
@@ -638,18 +637,29 @@ class ImagePanel(wx.Panel):
 		else:
 			raise TypeError('Invalid image data type for setting image')
 
-	def setPILImage(self, pilimage, scroll=False):
+	def setPILImage(self, pilimage):
 		if not isinstance(pilimage, Image.Image):
 			raise TypeError('PIL image must be of Image.Image type')
 		self.imagedata = pilimage
 		self.setBitmap()
 		self.setVirtualSize()
 		self.setBuffer()
-		if not scroll:
-			self.panel.Scroll(0, 0)
 		self.UpdateDrawing()
 
-	def setNumericImage(self, numericimage, scroll=False, stats={}):
+	def getScrolledCenter(self):
+		x, y = self.panel.GetViewStart()
+		width, height = self.panel.GetSize()
+		vwidth, vheight = self.panel.GetVirtualSize()
+		return (x + width/2.0)/vwidth, (y + height/2.0)/vheight
+
+	def setScrolledCenter(self, center):
+		cwidth, cheight = center
+		width, height = self.panel.GetSize()
+		vwidth, vheight = self.panel.GetVirtualSize()
+		x, y = int(vwidth*cwidth - width/2.0), int(vheight*cheight - height/2.0)
+		self.panel.Scroll(x, y)
+
+	def setNumericImage(self, numericimage, stats={}):
 		'''
 		Set the numeric image, update bitmap, update buffer, set viewport size,
 		scroll, and refresh the screen.
@@ -657,6 +667,8 @@ class ImagePanel(wx.Panel):
 
 		if not isinstance(numericimage, Numeric.ArrayType):
 			raise TypeError('Numeric image must be of Numeric.ArrayType')
+
+		center = self.getScrolledCenter()
 
 		self.imagedata = numericimage
 
@@ -682,8 +694,7 @@ class ImagePanel(wx.Panel):
 		self.setBitmap()
 		self.setVirtualSize()
 		self.setBuffer()
-		if not scroll:
-			self.panel.Scroll(0, 0)
+		self.setScrolledCenter(center)
 		self.UpdateDrawing()
 		self.sizer.Layout()
 		self.panel.Refresh()
@@ -697,10 +708,10 @@ class ImagePanel(wx.Panel):
 		self.panel.Scroll(0, 0)
 		self.UpdateDrawing()
 
-	def setImageFromMrcString(self, imagestring, scroll=False):
-		self.setImage(Mrc.mrcstr_to_numeric(imagestring), scroll)
+	def setImageFromMrcString(self, imagestring):
+		self.setImage(Mrc.mrcstr_to_numeric(imagestring))
 
-	def setImageFromPILString(self, imagestring, scroll=False):
+	def setImageFromPILString(self, imagestring):
 		buffer = cStringIO.StringIO(pilimage)
 		imagedata = Image.open(buffer)
 		self.setImage(imagedata)
@@ -1459,6 +1470,8 @@ if __name__ == '__main__':
 #			self.panel = ImagePanel(frame, -1)
 
 			self.panel = ClickImagePanel(frame, -1)
+			self.panel.Bind(EVT_IMAGE_CLICKED,
+							lambda e: self.panel.setImage(self.panel.imagedata))
 
 #			self.panel = TargetImagePanel(frame, -1)
 #			self.panel.addTypeTool('Target Practice', display=True, target=wx.RED)
