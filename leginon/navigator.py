@@ -55,6 +55,14 @@ class Navigator(node.Node, camerafuncs.CameraFuncs):
 		deltarow = clickrow - clickshape[0] / 2
 		deltacol = clickcol - clickshape[1] / 2
 
+		## binning
+		camconfig = self.cameraConfig()
+		camstate = camconfig['state']
+		binx = camstate['binning']['x']
+		biny = camstate['binning']['y']
+		deltarow *= biny
+		deltacol *= binx
+
 		## to shift clicked point to center...
 		deltarow = -deltarow
 		deltacol = -deltacol
