@@ -132,7 +132,7 @@ class Focuser(acquisition.Acquisition):
 			scope = self.emclient.getScope()
 			defoc = scope['defocus']
 			foc = scope['focus']
-			self.logger.info('Defocus: %s, Focus: %s' % (defoc, focus))
+			self.logger.info('Defocus: %s, Focus: %s' % (defoc, foc))
 		except Exception, e:
 			self.logger.exception('Autofocus failed: %s' % e)
 
