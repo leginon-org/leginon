@@ -1,8 +1,18 @@
-<? if ($mvId!=0) { ?>
+<? 
+
+/**
+ *	The Leginon software is Copyright 2003 
+ *	The Scripps Research Institute, La Jolla, CA
+ *	For terms of the license agreement
+ *	see  http://ami.scripps.edu/software/leginon-license
+ */
+
+if ($mvId!=0) { ?>
+
 		<!-- Debut Table Main View -->
 		<table class="bgcolor1" border="0" cellpadding="1" cellspacing="0" >
 		 <tr>
-			<td>Main View</td>
+			<td>Image Type</td>
 		 </tr>
 		 <tr>
 			<td>
@@ -13,7 +23,11 @@
 					<select name = "mlist" onchange = "setlist(); newexp(); " > 
 <?
 					for ($i=0; $i<count($datatypes); $i++) {
+					if ($mvsel=='') {
+						if ($datatypes[$i]==$mvImg) $s='selected'; else $s=''; 	
+					} else {
 						if ($datatypes[$i]==$mvsel) $s='selected'; else $s=''; 	
+					}
 						echo "<option value=\"$datatypes[$i]\" $s>$datatypes[$i] \n"; 
 					}
 ?>
@@ -26,35 +40,25 @@
 					<input id=nextbutton type=button name=next value =" Next " onclick = "incIndex(); newfile(); getdata(); updatemap();" >
 				</td>
 				<td>
-					<a href="javascript:downloadfile();" ><img src="img/download.gif" border="0" vspace="0" ></a></td>
-				<td>
 					<input id="filenametext" type="text" name="filename_text" size="<? echo $mvtextsize ?>" onchange = "newenterfile(); newfile(); <? if ($treeframe!=0) echo " GetData();"; ?> " > 
 				</td>
 			 </tr>
 			 <tr>
-				<td colspan="5">
+				<td colspan=4 valign=top height=512 width=512 >
 <?
-$preset=$mvsel;
-if ($mvpre==1) {
+$iframesize = ($_GET["ifs"]==1) ? 'width=100% height=100% ' : 'width="512" height="512"';
+$src = "src=\"getimage.php?tmpl=$imgmv&table=$tmv&session=$expId&id=".$fileId[0]."&s=1\"";
 ?>
-	
-		<iframe	class=textarea name="ifmv" 
-                        src="getpreset.php?id=<?=$fileId[0]?>&preset=<?=$preset?>"
-			frameborder="0" width="100%" height="20"
-			marginheight="1" marginwidth="5"
-			scrolling="no" ></iframe>
-<?	 
-
-} else echo "&nbsp;"
-?>
-				</td>
-			 </tr>
-			 <tr>
-				<td colspan="5" valign=top height="278" width="421" rowspan="6">
+<iframe id=iframeimg name="picturebox" <? echo "$iframesize  $src" ?> scrolling="auto" ></iframe>
 <?
-$imgsrc = "$imgmv?preset=$preset&session=$expId&id=".$fileId[0]."&t=80&s=512&tg=1";
-?>
-<a href="javascript:popUp('nw.php?Lmv&preset=<?=$preset?>&session=<?=$expId?>&id=<?=$fileId[0]?>');"><img name="newimgmv" border="0" width="512" src="<?=$imgsrc?>" ></a>
+ /*
+			<script> <!--   
+			document.writeln(" <A HREF=\"javascript:popUp('nwi.php?Lmv&table="+escape(jstmv)+"');\" >"); 
+			document.writeln(" <IMG  NAME = \"newimgmv\" BORDER=\"0\" "); 
+			document.writeln(" SRC= \""+jsimgmv+"?table="+escape(jstmv)+"&session="+escape(jsexpId)+"&id="+escape(jsfileId)+"&s=1\"></A>"); 
+			document.writeln(" </A>"); 
+			//--> </script>
+*/ ?>
 				</td>
 			 </tr>
 			</table>

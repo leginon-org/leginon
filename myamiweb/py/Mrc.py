@@ -20,7 +20,8 @@ typecode_mrcmode = {
 	Numeric.Float: 2,
 	Numeric.Float64: 2,
 	Numeric.Int: 2,
-	Numeric.Int32: 2
+	Numeric.Int32: 2,
+	Numeric.Int8: 1
 	}
 
 def min(inputarray):

@@ -8,19 +8,36 @@
  */
 
 require('inc/leginon.inc');
-$applications = $leginondata->getApplications();
+$selectedmodelId = $_POST[modelId];
+$models= $leginondata->getAllGoniometerModels();
 ?>
 <html>
 <head>
-<title>Leginon2 Application Import/Export</title>
+<title>Leginon2 - Goniometer</title>
 <link rel="stylesheet" type="text/css" href="css/leginon.css"> 
 </head>
 <body>
+<form name="goniometerform" method="POST" action="<?=$PHP_SELF?>">
+<select name="modelId" onChange="javascript:document.goniometerform.submit()">
 <?
-$label = ($_GET[label]) ? $_GET[label] : "03sep23x";
-$axis = ($_GET[axis]) ? $_GET[axis] : "x";
-$goniometerId = $leginondata->getGoniometerModelId($label, $axis);
+foreach($models as $model) {
+	if ($model[DEF_id]==$selectedmodelId)
+        	$s='selected';
+    	else
+        	$s='';
+	echo '<option value="'.$model[DEF_id].'" '.$s.' >'.$model[label].'</option>';
+}
+
 ?>
-<img src="goniometergraph.php?Id=<? echo $goniometerId; ?>">
+</select>
+<input type="submit" value="view">
+</form>
+<?
+if($selectedmodelId) {
+?>
+<img src="goniometergraph.php?Id=<?=$selectedmodelId?>">
+<?
+}
+?>
 </body>
 </html>

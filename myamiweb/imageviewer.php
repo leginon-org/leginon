@@ -294,18 +294,17 @@ function init(){
 
 </head>
 <body bgcolor="#FFFFFF" onload="init();ir();initmap();inittree();">
-<div id="treedata" style="z-index:99999;position:absolute;visibility:hidden;border:1px solid black"></div>
-<div id="imagemap" style="z-index:99999;position:absolute;visibility:hidden;border:1px solid black"></div>
-<form method="post" name="listform" id="adjust" onsubmit="return sendForm('viewer.php', 'prefId')">
+<form method="post" name="listform" id="adjust" onsubmit="return sendForm('imageviewer.php', 'prefId')">
  <input type="hidden" name="ncfid" value="">
-  <table border="0" cellpadding="1" cellspacing="1" height="600" width="950">
+  <table border="0" cellpadding="1" cellspacing="1" height="600" >
       <tr>
 	<td vAlign="bottom" height="25" width="150"><b>Session</b></td>
         <td vAlign="bottom" bgColor="#FFFFFF" height="10" >
 	<b>Image Adjust</b>
-<?
-// require('comment.inc');
-?>
+	</td>
+	<td rowspan="4">
+<div id="imagemap" style="z-index:99999;position:absolute;visibility:hidden;border:1px solid black"></div>
+<div id="treedata" style="z-index:99999;position:absolute;visibility:hidden;border:1px solid black"></div>
 	</td>
       </tr>
       <tr>
@@ -401,7 +400,14 @@ function init(){
 	</td>
       </tr>
       <tr>
-	<td><b>Id</b></td>
+	<td><b>Filename</b></td>
+	<td>
+	 <iframe name="ifpmv" 
+                        src="getpreset.php?id=<?=$fileId[0]?>"
+                        frameborder="0" width="100%" height="20"
+                        marginheight="1" marginwidth="5"
+                        scrolling="no" ></iframe>
+	</td>
       </tr>
       <tr vAlign="top">
 	<td height="462" rowSpan="2" >
@@ -410,15 +416,16 @@ function init(){
 			<?
 			for ($i=0; $i<$nrows; $i++) {
 				if ($fileId[$i]==$allfile ) $s[$i]='selected'; else $s[$i]='';
-				$d = $fileId[$i];
-				echo "<option value=\"$fileId[$i]\" $s[$i]>data$d \n"; 
+				$d = $file[$i];
+				// $d = $fileId[$i];
+				echo "<option value=\"$fileId[$i]\" $s[$i]>$d \n"; 
 			} 
 			?> 
 		</select>
 	</td>
-	<td height="462" width="778" rowspan="2">
+	<td height="462" rowspan="2">
 <?
-require('inc/mainview.inc');
+ require('inc/ifmainview.inc');
 ?> 
 	</td>
       </tr>

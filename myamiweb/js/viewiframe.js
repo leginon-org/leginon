@@ -96,6 +96,8 @@ function newfile() {
 	var lId;
 	if (jsmvId.length != 0){
 		parent.picturebox.document.getElementById('imgmv').src=jsimgmv+"?table="+escape(jstmv)+"&session="+escape(jsexpId)+"&id="+escape(jsfexp)+"&t="+jsquality+"&s="+jssize+"&np="+jsminpix+"&xp="+jsmaxpix; 
+		// var imgURL="getimage.php?tmpl="+jsimgmv+"&table="+escape(jstmv)+"&session="+escape(jsexpId)+"&id="+escape(jsfexp)+"&t="+jsquality+"&s="+jssize+"&np="+jsminpix+"&xp="+jsmaxpix; 
+		// picturebox.document.location.replace(imgURL);
 		
 //		lId=GetLinkId('Lmv');
 //		if ((lId=GetLinkId('Lmv')) != -1 ) {
@@ -103,6 +105,8 @@ function newfile() {
 //		document.links[lId].href="javascript:popUp('"+url+"')"; 
 		// }
 	}
+	var URL="getpreset.php?id="+escape(jsfexp);
+	ifpmv.document.location.replace(URL);
 }
 
 function bsSliderChange1(sliderObj, val, newPos){ 
@@ -208,7 +212,7 @@ function initmap() {
 		viewlink=document.getElementById("viewlink");
 
 		crossobj=document.getElementById? document.getElementById("imagemap") : document.all.imagemap
-		crossobj.style.left=710;
+		crossobj.style.left=750;
 		crossobj.style.top=50;
 		crossobj.innerHTML='<table border=0 width=256><tr><td><div align=left><b onClick=updatemap()>refresh</b></div></td><td><div align=right id=divstyle><b onClick=closemappreview()>close</b></div></td></tr></table><img id="mapimg" name="mapimgname" width=256 height=256 >'
 		mapimg = document.getElementById('mapimg');
@@ -222,8 +226,8 @@ function inittree() {
 
 		viewtreelink=document.getElementById("viewtreelink");
 		treedata=document.getElementById? document.getElementById("treedata") : document.all.treedata
-		treedata.style.left=710;
-		treedata.style.top=325;
+		treedata.style.left=750;
+		treedata.style.top=327;
 		treedata.innerHTML='<table border=0 width=256><tr><td><div align=left><b onClick=getdata()>refresh</b></div></td><td><div align=right id=divstyle><b onClick=closetreepreview()>close</b></div></td></tr></table><iframe class=textarea id=treeiframe name="infomv" src="getdata.php" frameborder="0" width=256 height=400 marginheight="1" marginwidth="5" scrolling="yes"></iframe>'
 		getdata();
 	}

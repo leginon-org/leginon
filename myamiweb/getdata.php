@@ -48,10 +48,10 @@ foreach($nodeId as $i) {
 		}
         }
 
-        $file = ereg_replace ("^.*\/","", $node[$i]);
+        $file = ereg_replace ($node[$nodeparent[$i]], "", $node[$i]);
+        $file = ereg_replace ("^\/","", $file);
 		if ($i<>0)
-                // echo $jsvar[$i],"=\"", $nodeId[$i],"|", $nodeparent[$i],"|",$file,"|","","\";\n";
-                echo $jsvar[$i],"=\"", $nodeId[$i],"|", $nodeparent[$i],"|",$file,"|","javascript:oc($nodeId[$i], $nodeparent[$i])","\";\n";
+                	echo $jsvar[$i],"=\"", $nodeId[$i],"|", $nodeparent[$i],"|",$file,"|","javascript:oc($nodeId[$i], $nodeparent[$i])","\";\n";
 }
 }
 

@@ -7,6 +7,7 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
+require('inc/leginon.inc');
 ?>
 <html>
 <head>
@@ -21,12 +22,14 @@ $quality=$_GET['t'];
 $minpix=$_GET['np'];
 $maxpix=$_GET['xp'];
 
+$targets = $leginondata->getImageTargets($id);
+$focustargets = $leginondata->getImageFocusTargets($id);
+
 $src = "$template?table=$table&session=$session&id=$id&t=$quality&s=$size&np=$minpix&xp=$maxpix";
 ?>
 
 <body leftmargin="0" topmargin="0" bottommargin="0" marginwidth="0" marginheight="0" >
-<img id=imgmv name=newimgmv src="<? echo $src ?>">
-
+<img id=imgmv name=newimgmv src="<?= $src ?>">
 </body>
 </html>
 

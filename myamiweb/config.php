@@ -18,5 +18,5 @@ $DATABASE = "dbemdata";
 
 
 // --- Set External SQL server here (use for import/export application)
-$SQL_HOSTS[] = "localhost";
-$SQL_HOSTS[] = "";
+$SQL_HOSTS[] = "cronus2";
+$SQL_HOSTS[] = "stratocaster";
