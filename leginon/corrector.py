@@ -21,6 +21,7 @@ import threading
 import gui.wx.Corrector
 import remotecall
 import instrument
+import sys
 
 class CameraError(Exception):
 	pass
@@ -363,7 +364,7 @@ class Corrector(node.Node):
 
 		# division may result infinity or zero division
 		# so make sure there are no zeros in norm
-		norm = Numeric.clip(norm, 1.0, imagefun.inf)
+		norm = Numeric.clip(norm, 0.001, sys.maxint)
 		norm = normavg / norm
 		self.storeRef('norm', norm, corstate)
 
