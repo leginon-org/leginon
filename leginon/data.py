@@ -51,45 +51,12 @@ class DataDict(strictdict.TypedDict):
 			f = strictdict.TypedDict.getFactory(self, valuetype)
 		return f
 
-def replaceData(originaldata, func, memo=None):
+class UnknownData(object):
 	'''
-	(this is confusing, difficult to describe)
-	func is called on a copy of original data, but only after func 
-	has already been called on all children of original data 
-	which are themselves Data instances.  The children are replaced
-	with 
-	Before func is called on the copy of original Data instance, all the 
-	children which are Data instances are replaced with the result of
-	calling func on them.
+	this is a place holder for a Data instance that is not yet known
 	'''
-	## create copy of originaldata, recursively replace each child 
-	## with replaceData(child).  Which is similar to saying:
-	## replace each child with func(child)
-
-	d = id(originaldata)
-
-	if memo is None:
-		memo = {}
-	if memo.has_key(d):
-		return memo[d]
-
-	## deepcopy makes our memo system fail because children
-	## now have multiple copies
-	#mycopy = copy.deepcopy(originaldata)
-
-	## copy fails because originaldata's children are modified
-	mycopy = copy.copy(originaldata)
-
-	for key,value in mycopy.items():
-		if isinstance(value, Data):
-			mycopy[key] = replaceData(value, func, memo)
-		else:
-			mycopy[key] = value
-
-	replacement = func(mycopy)
-
-	memo[d] = replacement
-	return replacement
+	def __init__(self, qikey):
+		self.qikey = qikey
 
 def accumulateData(originaldata, func, memo=None):
 	d = id(originaldata)
@@ -122,20 +89,6 @@ def data2dict(idata, noNone=False):
 			if not noNone or value is not None:
 				d[key] = copy.deepcopy(value)
 	return d
-
-class DataReference(dict):
-	'''
-	instances of DataReference can be used in place of the actual data
-	when one Data object references another.
-	'''
-	def __init__(self, target=None):
-		self.target = target
-
-	def __getitem__(self, key):
-		return self.target[key]
-
-	def __setitem__(self, key, value):
-		raise NotImplementedError('Maybe setting items through a DataReference is a bad idea.  If you do not agree, implement __setitem__')
 
 class Data(DataDict, leginonobject.LeginonObject):
 	'''
@@ -190,31 +143,6 @@ class Data(DataDict, leginonobject.LeginonObject):
 		return t
 	typemap = classmethod(typemap)
 
-	def replaceData(self, func):
-		'''
-		return a copy of self where all child Data instances
-		have recursively been replaced by calling func on them
-		and then func is called on the parent.
-		'''
-		mycopy = copy.deepcopy(self)
-		return replaceData(mycopy, func)
-
-	def split(self):
-		'''
-		return a list containing copies of self and all self's
-		children Data instances.  The copies have had all contained
-		Data instances replaced with DataReferences.
-		'''
-		self.split_list = []
-		mycopy = copy.deepcopy(self)
-		replaceData(mycopy, self.split_appender)
-		print 'SPLIT', self.split_list
-		return self.split_list
-
-	def split_appender(self, datainstance):
-		self.split_list.append(datainstance)
-		return datainstance.reference()
-
 	def getFactory(self, valuetype):
 		try:
 			mine = issubclass(valuetype, Data)
@@ -223,9 +151,9 @@ class Data(DataDict, leginonobject.LeginonObject):
 
 		if mine:
 			def f(value):
-				if isinstance(value, DataReference):
+				if isinstance(value, valuetype):
 					return value
-				elif isinstance(value, valuetype):
+				elif isinstance(value, UnknownData):
 					return value
 				else:
 					raise ValueError('must be type %s' % (valuetype,))
@@ -233,14 +161,6 @@ class Data(DataDict, leginonobject.LeginonObject):
 		else:
 			f = DataDict.getFactory(self, valuetype)
 		return f
-
-	def reference(self):
-		'''
-		return a DataReference to this instance
-		'''
-		dr = DataReference()
-		dr.target = self
-		return dr
 
 	def toDict(self, noNone=False):
 		return data2dict(self, noNone)

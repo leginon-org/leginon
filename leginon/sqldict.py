@@ -285,6 +285,8 @@ class SQLDict:
 					## this is friendly_update because
 					## there could be columns that
 					## are no longer used
+					print 'RESULT I'
+					print result[i]
 					newdata.friendly_update(result[i])
 				except KeyError, e:
 					raise
@@ -306,13 +308,14 @@ class SQLDict:
 			return
 		needpath = []
 		for key,value in root.items():
-			if isinstance(value, data.DataReference):
+			if isinstance(value, data.UnknownData):
 				target = pool[value.qikey]
+				print 'TARGET', target
 				root[key] = target
 				self._connectData(target, pool)
 				if isinstance(target, data.SessionData):
 					imagepath = target['image path']
-			if isinstance(value, strictdict.FileReference):
+			elif isinstance(value, strictdict.FileReference):
 				needpath.append(key)
 
 		## now read data using the found path
@@ -448,7 +451,11 @@ class SQLDict:
 		except KeyError:
 			raise KeyError('No Primary Key found')
 	    else:
+	    	print 'VVV'
+		print v
 		q = sqlexpr.Insert(self.table, v).sqlRepr()
+		print 'QQQ'
+		print q
 		c.execute(q)
 		return c.insert_id()
 
@@ -1032,11 +1039,11 @@ def sqltype(object,key=None):
 	else:
 		return None
 
-def ref2field(key, datareference):
+def ref2field(key, dataobject):
 	'''
-	figure out the column name for a data.DataReference
+	figure out the column name for a Data instance
 	'''
-	reftable = datareference.target.__class__.__name__
+	reftable = dataobject.__class__.__name__
 	colname = sep.join(['REF',reftable,key])
 	return colname
 
@@ -1064,28 +1071,28 @@ def sqlColumnsDefinition(in_dict, noDefault=None):
 		columns += defaults
 
 	# get a type map of in_dict into a dictionary
+	in_dict_types=dict(in_dict.typemap())
 	for key in in_dict:
 		column={}
 		value=in_dict[key]
+		## create empty instance of Data if value is None
+		if value is None and issubclass(in_dict_types[key], data.Data):
+				value = in_dict_types[key]()
+
 		sqlt = sqltype(value,key)
-		if value is None:
-			in_dict_types=dict(in_dict.typemap())
- 			if not isinstance(in_dict_types[key], strictdict._NumericArrayType):
-				if issubclass(in_dict_types[key], data.Data) and not issubclass(in_dict_types[key], data.DataReference):
-					newvalue = in_dict_types[key]()
-					column['Field'] = sep.join(['REF',newvalue.__class__.__name__,key])
-					column['Type'] = 'INT(20)'
-					columns.append(column)
-				
-		elif sqlt is not None:
+		if sqlt is not None:
+			### simple types
 			column['Field']=key
 			column['Type']=sqlt
 			columns.append(column)
-		elif isinstance(value, data.DataReference):
+		elif isinstance(value, data.Data):
+			### data.Data reference
 			column['Field'] = ref2field(key,value)
 			column['Type'] = 'INT(20)'
+			column['Key'] = 'INDEX'
 			columns.append(column)
 		elif type(value) is Numeric.ArrayType:
+			### Numeric array
 			if len(Numeric.ravel(value)) < 10:
 				arraydict = matrix2dict(value,key)
 				nd = sqlColumnsDefinition(arraydict, noDefault=[])
@@ -1099,15 +1106,14 @@ def sqlColumnsDefinition(in_dict, noDefault=None):
 				mrcdict = saveMRC(None,key,path,filename)
 				nd = sqlColumnsDefinition(mrcdict, noDefault=[])
 			columns += nd
-			# Think about store the filename
-
 		elif type(value) is dict:
+			### python dict
 			flatdict = flatDict({key:value})
 			nd = sqlColumnsDefinition(flatdict, noDefault=[])
 			nd.sort()
 			columns += nd
-
 		elif type(value) in [tuple, list]:
+			### python sequences
 			nd = sqlColumnsDefinition({seq2sqlColumn(key):repr(value)}, noDefault=[])
 			columns += nd
 			
@@ -1177,8 +1183,9 @@ def sqlColumnsFormat(in_dict):
 			flatdict = flatDict({key:value})
 			nf = sqlColumnsFormat(flatdict)
 			columns.update(nf)
-		elif isinstance(value, data.DataReference):
-			columns[ref2field(key,value)] = value.id
+		elif isinstance(value, data.Data):
+			print 'VALUE DBID', value.dbid
+			columns[ref2field(key,value)] = value.dbid
 		elif type(value) in [tuple, list]:
 			columns[seq2sqlColumn(key)] = repr(value)
 	return columns
@@ -1255,9 +1262,8 @@ def datatype(in_dict, qikey=None, qinfo=None):
 				# did not request it.  Just set it to None
 				content[a[2]] = None
 			else:
-				dr = data.DataReference()
-				dr.qikey = jqikey
-				content[a[2]] = dr
+				## This references a Data instance
+				content[a[2]] = data.UnknownData(jqikey)
 		elif not a[0] in ['SUBD', ]:
 			content[key]=value
 

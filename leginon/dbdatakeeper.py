@@ -92,8 +92,6 @@ class DBDataKeeper(datahandler.DataHandler):
 	def queryInfo(self, idata):
 		'''
 		Items of idata that are None, should be ignored.
-		Items of idata that are DataReferences refer to another Data
-		Other items are normal comparisons for the WHERE clause
 		'''
 		idata.isRoot=1
 		mylist = data.accumulateData(idata, self.datainfo)
@@ -109,6 +107,20 @@ class DBDataKeeper(datahandler.DataHandler):
 		finally:
 			self.lock.release()
 
+	def recursiveInsert(self, newdata):
+		'''
+		recursive insert will insert an objects children before
+		inserting an object
+		'''
+		## insert children if they are Data instances
+		for value in newdata.values():
+			if isinstance(value, data.Data):
+				self.recursiveInsert(value)
+
+		## insert this object if is has never been inserted
+		if newdata.dbid is None:
+			newdata.dbid = self.flatInsert(newdata)
+
 	def _insert(self, newdata):
 		#self.flatInsert(newdata)
 		return self.recursiveInsert(newdata)
@@ -116,22 +128,19 @@ class DBDataKeeper(datahandler.DataHandler):
 	def flatInsert(self, newdata):
 		if newdata.dbid is not None:
 			## this object is already in DB
+			print 'Object already in DB', newdata.__class__, newdata.dbid
 			return newdata.dbid
-		newdatacopy = copy.deepcopy(newdata)
+		#newdatacopy = copy.deepcopy(newdata)
+		newdatacopy = newdata
 		table = newdatacopy.__class__.__name__
 		definition = sqldict.sqlColumnsDefinition(newdatacopy)
 		formatedData = sqldict.sqlColumnsFormat(newdatacopy)
 		self.dbd.createSQLTable(table, definition)
 		myTable = self.dbd.Table(table)
 		newid = myTable.insert([formatedData])
+		print 'NEWID', newid
 		newdata.dbid = newid
 		return newid
-
-	def recursiveInsert(self, newdata):
-		'''
-		split up and insert newdata and its children individually
-		'''
-		return newdata.replaceData(self.insertWithForeignKeys)
 
 	def insertWithForeignKeys(self, newdata):
 		'''
@@ -139,19 +148,9 @@ class DBDataKeeper(datahandler.DataHandler):
 		are references to other data.  Returns a reference to
 		this newly inserted data object.
 		'''
-		### insert the data object and return a DataReference to it
-		dr = data.DataReference()
-		dr.id = self.flatInsert(newdata)
-		dr.target = newdata
-		return dr
-
-	def ref2lastid(self, datareference):
-		return datareference.id
-
-	def lastid2ref(self, lastid):
-		dr = data.DataReference()
-		dr.id = lastid
-		return dr
+		insertid = self.flatInsert(newdata)
+		newdata.dbid = insertid
+		return newdata
 
 	# don't bother with these for now
 	def remove(self, id):
