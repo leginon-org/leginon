@@ -21,6 +21,7 @@ import threading
 import uidata
 import node
 import EM
+import imagefun
 try:
 	import numarray as Numeric
 except:
