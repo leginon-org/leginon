@@ -100,17 +100,21 @@ class Convolver(object):
 		result = self.fftengine.itransform(self.result_fft)
 		return result
 
-def laplacian():
-	'''
-	produces laplacian edge detector kernel
-	'''
-	k1 = Numeric.array((1,-1,1,-1,0,-1,1,-1,1),Numeric.Float32)
-	k2 = Numeric.array((0,1,0,1,-4,1,0,1,0), Numeric.Float32)
-	k = 1.0 / 2 * (k1 + k2)
-	k.shape = (3,3)
-	return k.astype(Numeric.Float32)
 
-def gaussian(n, sigma):
+########
+######## common convolution kernels
+########
+
+#### 3x3 Laplacian
+laplacian_kernel3 = Numeric.array((0,-1,0,-1,4,-1,0,-1,0), Numeric.Float32)
+laplacian_kernel3.shape = (3,3)
+
+#### 5x5 Laplacian
+laplacian_kernel5 = Numeric.ones((5,5), Numeric.float32)
+laplacian_kernel5[2,2] = 24.0
+
+#### Gaussian
+def gaussian_kernel(n, sigma):
 	'''
 	produces gaussian smoothing kernel
 	'''
@@ -128,8 +132,8 @@ def gaussian(n, sigma):
 	k = Numeric.fromfunction(i, (n,n))
 	return k
 
-### smoothing and edge finder
-def laplacian_of_gaussian(n, sigma):
+#### Laplacian of Gaussian
+def laplacian_of_gaussian_kernel(n, sigma):
 	if not n % 2:
 		raise ValueError('kernel size must be odd')
 	half = (n - 1) / 2
@@ -147,11 +151,14 @@ def laplacian_of_gaussian(n, sigma):
 			k[row,col] = func(x,y)
 	return k
 
-### sobel row and column derivative
-sobel_row = Numeric.array((1,2,1,0,0,0,-1,-2,-1), Numeric.Float32)
-sobel_row.shape = (3,3)
-sobel_col = Numeric.array((1,0,-1,2,0,-2,1,0,-1), Numeric.Float32)
-sobel_col.shape = (3,3)
+#### Sobel Row Derivative
+sobel_row_kernel = Numeric.array((1,2,1,0,0,0,-1,-2,-1), Numeric.Float32)
+sobel_row_kernel.shape = (3,3)
+
+#### Sobel Column Derivative
+sobel_col_kernel = Numeric.array((1,0,-1,2,0,-2,1,0,-1), Numeric.Float32)
+sobel_col_kernel.shape = (3,3)
+
 
 if __name__ == '__main__':
 	import Mrc

@@ -229,8 +229,7 @@ class HoleFinder(object):
 		}
 
 		## other necessary components
-		#self.edgefinder = imagefun.LaplacianFilter(0.4)
-		#self.edgefinder = imagefun.LaplacianGaussianFilter(n, sigma)
+		self.edgefinder = convolver.Convolver()
 		self.peakfinder = peakfinder.PeakFinder()
 		self.circle = CircleMaskCreator()
 		self.icecalc = IceCalculator()
@@ -290,15 +289,30 @@ class HoleFinder(object):
 		sigma = self.edges_config['sigma']
 		ab = self.edges_config['abs']
 
-		if filt == 'laplacian':
-			edgefinder = imagefun.LaplacianFilter()
+		print 'finding edges'
+
+		if filt == 'laplacian3':
+			kernel = convolver.laplacian_kernel3
+			self.edgefinder.setKernel(kernel)
+			edges = self.edgefinder.convolve(image=sourceim)
+		if filt == 'laplacian5':
+			kernel = convolver.laplacian_kernel5
+			self.edgefinder.setKernel(kernel)
+			edges = self.edgefinder.convolve(image=sourceim)
 		elif filt == 'laplacian-gaussian':
-			edgefinder = imagefun.LaplacianGaussianFilter(n,sigma)
+			kernel = convolver.laplacian_of_gaussian_kernel(n,sigma)
+			self.edgefinder.setKernel(kernel)
+			edges = self.edgefinder.convolve(image=sourceim)
+		elif filt == 'sobel':
+			self.edgefinder.setImage(sourceim)
+			kernel1 = convolver.sobel_row_kernel
+			kernel2 = convolver.sobel_col_kernel
+			edger = self.edgefinder.convolve(kernel=kernel1)
+			edgec = self.edgefinder.convolve(kernel=kernel2)
+			edges = Numeric.hypot(edger,edgc)
 		else:
 			raise RuntimeError('no such filter type: %s' % (filt,))
 
-		print 'finding edges'
-		edges = edgefinder.run(sourceim)
 		if ab:
 			edges = Numeric.absolute(edges)
 

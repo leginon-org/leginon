@@ -37,7 +37,7 @@ class HoleFinder(targetfinder.TargetFinder):
 
 		### edge detection
 		self.edgeson = uidata.Boolean('Find Edges On', True, 'rw', persist=True)
-		self.filtertype = uidata.SingleSelectFromList('Filter Type', ['laplacian', 'laplacian-gaussian'], 0, persist=True)
+		self.filtertype = uidata.SingleSelectFromList('Filter Type', ['laplacian3', 'laplacian5', 'laplacian-gaussian', 'sobel'], 0, persist=True)
 		self.glapsize = uidata.Integer('LoG Size', 9, 'rw', persist=True)
 		self.glapsigma = uidata.Float('LoG Sigma', 1.4, 'rw', persist=True)
 		self.edgeabs = uidata.Boolean('Absolute Value', False, 'rw', persist=True)
