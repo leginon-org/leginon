@@ -4,22 +4,16 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Presets.py,v $
-# $Revision: 1.19 $
+# $Revision: 1.20 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
+# $Date: 2005-02-24 23:34:01 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
-import icons
+import gui.wx.Icons
 import wx
 import wx.lib.buttons
-
-def getBitmap(filename):
-	iconpath = icons.getPath(filename)
-	wximage = wx.Image(iconpath)
-	bitmap = wx.BitmapFromImage(wximage)
-	return bitmap
 
 PresetOrderChangedEventType = wx.NewEventType()
 PresetRemovedEventType = wx.NewEventType()
@@ -148,7 +142,7 @@ class PresetOrder(wx.Panel):
 		self.Bind(EVT_PRESETS_CHANGED, self.onPresetsChanged)
 
 	def _bitmapButton(self, name, tooltip=None):
-		bitmap = getBitmap('%s.png' % name)
+		bitmap = gui.wx.Icons.icon(name)
 		button = wx.lib.buttons.GenBitmapButton(self, -1, bitmap, size=(20, 20))
 		button.SetBezelWidth(1)
 		button.Enable(False)
@@ -182,7 +176,7 @@ class PresetOrder(wx.Panel):
 			presetname = None
 		return presetname
 
-	def setSelectedPreset(self):
+	def setSelectedPreset(self, presetname):
 		n = self.listbox.FindString(presetname)
 		if n == wx.NOT_FOUND:
 			return False

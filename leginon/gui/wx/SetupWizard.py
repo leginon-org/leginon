@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/SetupWizard.py,v $
-# $Revision: 1.9 $
+# $Revision: 1.10 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
+# $Date: 2005-02-24 23:34:01 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -20,6 +20,8 @@ import time
 import wx
 import wx.wizard
 import wx.lib.intctrl
+import gui.wx.Dialog
+import gui.wx.ListBox
 
 class WizardPage(wx.wizard.PyWizardPage):
 	pass
@@ -194,21 +196,26 @@ class SessionSelectPage(WizardPage):
 		self.sizer.Add(self.descriptiontext, (4, 0), (1, 2), wx.ALIGN_CENTER)
 
 		textsizer = wx.GridBagSizer(0, 3)
-		label = wx.StaticText(self, -1, 'Instrument:')
-		textsizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.instrumenttext = wx.StaticText(self, -1, '')
-		textsizer.Add(self.instrumenttext, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'Image Directory:')
-		textsizer.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		textsizer.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.imagedirectorytext = wx.StaticText(self, -1, '')
-		textsizer.Add(self.imagedirectorytext, (1, 1), (1, 1),
+		textsizer.Add(self.imagedirectorytext, (0, 1), (1, 1),
 									wx.ALIGN_CENTER_VERTICAL)
 		self.sizer.Add(textsizer, (5, 0), (1, 2), wx.ALIGN_CENTER)
 
 		self.Bind(wx.EVT_CHOICE, self.onSessionChoice, self.sessionchoice)
 
-		self.connectcheckbox = wx.CheckBox(self, -1, 'Connect to instrument')
-		self.sizer.Add(self.connectcheckbox, (7, 0), (1, 2), wx.ALIGN_CENTER)
+		clientssizer = wx.GridBagSizer(5, 5)
+		self.clientslabel = wx.StaticText(self, -1, '')
+		self.setClients([])
+		clientssizer.Add(self.clientslabel, (0, 0), (1, 1),
+											wx.ALIGN_CENTER_VERTICAL)
+		editclientsbutton = wx.Button(self, -1, 'Edit...')
+		clientssizer.Add(editclientsbutton, (0, 1), (1, 1),
+											wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		clientssizer.AddGrowableCol(0)
+		clientssizer.AddGrowableCol(1)
+		self.sizer.Add(clientssizer, (7, 0), (1, 2), wx.EXPAND)
 
 		self.sizer.Add(wx.StaticText(self, -1,
 							'Finally, press the "Finish" button to begin.'), (9, 0), (1, 2))
@@ -218,6 +225,26 @@ class SessionSelectPage(WizardPage):
 		self.pagesizer.AddGrowableCol(0)
 
 		self.SetSizerAndFit(self.pagesizer)
+
+		self.Bind(wx.EVT_BUTTON, self.onEditClientsButton, editclientsbutton)
+
+	def setClients(self, clients):
+		self.clients = clients
+		label = 'Connect to clients: '
+		if clients:
+			for i in clients:
+				label += i
+				label += ', '
+			label = label[:-2]
+		else:
+			label += '(no clients selected)'
+		self.clientslabel.SetLabel(label)
+
+	def onEditClientsButton(self, evt):
+		dialog = EditClientsDialog(self, self.clients)
+		if dialog.ShowModal() == wx.ID_OK:
+			self.setClients(dialog.listbox.getValues())
+		dialog.Destroy()
 
 	def onLimitChange(self, evt):
 		if self.IsShown():
@@ -232,26 +259,18 @@ class SessionSelectPage(WizardPage):
 		parent = self.GetParent()
 		if not selection:
 			self.descriptiontext.SetLabel('')
-			self.instrumenttext.SetLabel('')
-			self.connectcheckbox.Enable(False)
 			self.imagedirectorytext.SetLabel('')
 		else:
 			session = parent.userpage.sessions[selection]
 			self.descriptiontext.SetLabel(session['comment'])
-			try:
-				self.instrumenttext.SetLabel(session['instrument']['name'])
-				self.connectcheckbox.Enable(True)
-			except (AttributeError, KeyError, TypeError):
-				self.instrumenttext.SetLabel('(No instrument)')
-				self.connectcheckbox.Enable(False)
 			directory = leginonconfig.mapPath(session['image path'])
 			self.imagedirectorytext.SetLabel(directory)
 		# autoresize on static text gets reset by sizer during layout
-		for i in [self.descriptiontext, self.instrumenttext,
-							self.imagedirectorytext]:
+		for i in [self.descriptiontext, self.imagedirectorytext]:
 			# if label is too big for wizard (presized) need to resize or truncate
 			self.sizer.SetItemMinSize(i, i.GetSize())
 		self.pagesizer.Layout()
+		self.setClients(parent.setup.getClients(selection))
 
 	def setSessionNames(self, names):
 		selection = self.sessionchoice.GetStringSelection()
@@ -333,7 +352,7 @@ class SessionNamePage(WizardPage):
 	def GetNext(self):
 		parent = self.GetParent()
 		if parent.projectpage is None:
-			return parent.instrumentpage
+			return parent.imagedirectorypage
 		else:
 			return parent.projectpage
 
@@ -380,56 +399,6 @@ class SessionProjectPage(WizardPage):
 
 	def GetPrev(self):
 		return self.GetParent().namepage
-
-	def GetNext(self):
-		return self.GetParent().instrumentpage
-
-class SessionInstrumentPage(WizardPage):
-	def __init__(self, parent):
-		WizardPage.__init__(self, parent)
-		pagesizer = wx.GridBagSizer()
-		sizer = wx.GridBagSizer()
-
-		sizer.Add(wx.StaticText(self, -1,
-				'Select the instrument (if any) to be used in this session,'),
-												(0, 0), (1, 2))
-
-		sizer.AddGrowableCol(0)
-		sizer.AddGrowableCol(1)
-
-		sizer.Add(wx.StaticText(self, -1, 'Instrument:'), (1, 0), (1, 1),
-														wx.ALIGN_CENTER_VERTICAL)
-		self.instruments = parent.setup.getInstruments()
-		choices = self.instruments.keys()
-		choices.sort()
-		choices.insert(0, 'No instrument')
-		self.instrumentchoice = wx.Choice(self, -1, choices=choices)
-		self.instrumentchoice.SetSelection(0)
-		sizer.Add(self.instrumentchoice, (1, 1), (1, 1),
-														wx.ALIGN_CENTER_VERTICAL)
-
-		sizer.Add(wx.StaticText(self, -1,
-									'then press the "Next" button to continue.'), (3, 0), (1, 2))
-
-		pagesizer.Add(sizer, (0, 0), (1, 1), wx.ALIGN_CENTER)
-		pagesizer.AddGrowableRow(0)
-		pagesizer.AddGrowableCol(0)
-
-		self.SetSizerAndFit(pagesizer)
-
-	def getSelectedInstrument(self):
-		instrument = self.instrumentchoice.GetStringSelection()
-		try:
-			return self.instruments[instrument]
-		except KeyError:
-			return None
-
-	def GetPrev(self):
-		parent = self.GetParent()
-		if parent.projectpage is None:
-			return parent.namepage
-		else:
-			return parent.projectpage
 
 	def GetNext(self):
 		return self.GetParent().imagedirectorypage
@@ -481,7 +450,11 @@ class SessionImageDirectoryPage(WizardPage):
 		dlg.Destroy()
 
 	def GetPrev(self):
-		return self.GetParent().instrumentpage
+		parent = self.GetParent()
+		if parent.projectpage is None:
+			return parent.namepage
+		else:
+			return parent.projectpage
 
 	def GetNext(self):
 		return self.GetParent().sessioncreatepage
@@ -514,22 +487,26 @@ class SessionCreatePage(WizardPage):
 			textsizer.Add(self.projecttext, (0, 1), (1, 1),
 															wx.ALIGN_CENTER_VERTICAL)
 
-		textsizer.Add(wx.StaticText(self, -1, 'Instrument:'), (1, 0), (1, 1),
-														wx.ALIGN_CENTER_VERTICAL)
-		self.instrumenttext = wx.StaticText(self, -1, '')
-		textsizer.Add(self.instrumenttext, (1, 1), (1, 1),
-														wx.ALIGN_CENTER_VERTICAL)
 
-		textsizer.Add(wx.StaticText(self, -1, 'Image Directory:'), (2, 0), (1, 1),
+		textsizer.Add(wx.StaticText(self, -1, 'Image Directory:'), (1, 0), (1, 1),
 														wx.ALIGN_CENTER_VERTICAL)
 		self.imagedirectorytext = wx.StaticText(self, -1, '')
-		textsizer.Add(self.imagedirectorytext, (2, 1), (1, 1),
+		textsizer.Add(self.imagedirectorytext, (1, 1), (1, 1),
 														wx.ALIGN_CENTER_VERTICAL)
 
 		self.sizer.Add(textsizer, (3, 0), (1, 2), wx.ALIGN_CENTER)
 
-		self.connectcheckbox = wx.CheckBox(self, -1, 'Connect to instrument')
-		self.sizer.Add(self.connectcheckbox, (5, 0), (1, 2), wx.ALIGN_CENTER)
+		clientssizer = wx.GridBagSizer(5, 5)
+		self.clientslabel = wx.StaticText(self, -1, '')
+		self.setClients([])
+		clientssizer.Add(self.clientslabel, (0, 0), (1, 1),
+											wx.ALIGN_CENTER_VERTICAL)
+		editclientsbutton = wx.Button(self, -1, 'Edit...')
+		clientssizer.Add(editclientsbutton, (0, 1), (1, 1),
+											wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		clientssizer.AddGrowableCol(0)
+		clientssizer.AddGrowableCol(1)
+		self.sizer.Add(clientssizer, (5, 0), (1, 2), wx.EXPAND)
 
 		self.sizer.Add(wx.StaticText(self, -1,
 					'Please press the "Finish" button if these settings are correct.'),
@@ -540,6 +517,26 @@ class SessionCreatePage(WizardPage):
 		self.pagesizer.AddGrowableCol(0)
 
 		self.SetSizerAndFit(self.pagesizer)
+
+		self.Bind(wx.EVT_BUTTON, self.onEditClientsButton, editclientsbutton)
+
+	def setClients(self, clients):
+		self.clients = clients
+		label = 'Connect to clients: '
+		if clients:
+			for i in clients:
+				label += i
+				label += ', '
+			label = label[:-2]
+		else:
+			label += '(no clients selected)'
+		self.clientslabel.SetLabel(label)
+
+	def onEditClientsButton(self, evt):
+		dialog = EditClientsDialog(self, self.clients)
+		if dialog.ShowModal() == wx.ID_OK:
+			self.setClients(dialog.listbox.getValues())
+		dialog.Destroy()
 
 	def GetPrev(self):
 		return self.GetParent().imagedirectorypage
@@ -562,7 +559,6 @@ class SetupWizard(wx.wizard.Wizard):
 			self.projectpage = SessionProjectPage(self)
 		except NoProjectDatabaseError:
 			self.projectpage = None
-		self.instrumentpage = SessionInstrumentPage(self)
 		self.imagedirectorypage = SessionImageDirectoryPage(self)
 		self.sessionselectpage = SessionSelectPage(self)
 		self.sessioncreatepage = SessionCreatePage(self)
@@ -610,21 +606,21 @@ class SetupWizard(wx.wizard.Wizard):
 				self.namepage.nameExistsDialog()
 		elif page is self.sessionselectpage:
 			self.session = self.sessionselectpage.getSelectedSession()
-			self.connect = (self.sessionselectpage.connectcheckbox.GetValue() and 
-											self.sessionselectpage.connectcheckbox.IsEnabled())
+			self.clients = self.sessionselectpage.clients
+			self.setup.saveClients(self.session, self.clients)
 		elif page is self.sessioncreatepage:
 			user = self.userpage.getSelectedUser()
 			name = self.namepage.nametextctrl.GetValue()
 			description = self.namepage.descriptiontextctrl.GetValue()
-			instrument = self.instrumentpage.getSelectedInstrument()
 			directory = self.imagedirectorypage.directorytextctrl.GetValue()
 			self.session = self.setup.createSession(user, name, description,
-																							instrument, directory)
+																							directory)
 			self.publish(self.session, database=True)
 			if self.projectpage is not None:
 				projectid = self.projectpage.getSelectedProjectId()
 				self.setup.linkSessionProject(self.session, projectid)
-			self.connect = self.sessioncreatepage.connectcheckbox.GetValue()
+			self.clients = self.sessioncreatepage.clients
+			self.setup.saveClients(self.session, self.clients)
 
 	def onPageChanged(self, evt):
 		page = evt.GetPage()
@@ -633,16 +629,14 @@ class SetupWizard(wx.wizard.Wizard):
 			description = self.namepage.descriptiontextctrl.GetValue()
 			if self.projectpage is not None:
 				project = self.projectpage.projectchoice.GetStringSelection()
-			instrument = self.instrumentpage.instrumentchoice.GetStringSelection()
 			directory = self.imagedirectorypage.directorytextctrl.GetValue()
 			self.sessioncreatepage.nametext.SetLabel(name)
 			self.sessioncreatepage.descriptiontext.SetLabel(description)
 			if self.projectpage is not None:
 				self.sessioncreatepage.projecttext.SetLabel(project)
-			self.sessioncreatepage.instrumenttext.SetLabel(instrument)
 			self.sessioncreatepage.imagedirectorytext.SetLabel(directory)
 			# autoresize on static text gets reset by sizer during layout
-			texts = ['name', 'description', 'project', 'instrument', 'imagedirectory']
+			texts = ['name', 'description', 'project', 'imagedirectory']
 			for i in texts:
 				# if label is too big for wizard (presized) need to resize or truncate
 				try:
@@ -665,7 +659,6 @@ class SetupWizard(wx.wizard.Wizard):
 			n = self.sessionselectpage.sessionchoice.FindString(s)
 			if n != wx.NOT_FOUND:
 				self.sessionselectpage.sessionchoice.SetSelection(n)
-		self.sessionselectpage.connectcheckbox.SetValue(sd['connect'])
 
 	def getSettings(self):
 		initializer = {
@@ -677,8 +670,6 @@ class SetupWizard(wx.wizard.Wizard):
 				self.sessionselectpage.limitcheckbox.GetValue(),
 			'n limit':
 				self.sessionselectpage.limitintctrl.GetValue(),
-			'connect':
-				self.sessionselectpage.connectcheckbox.GetValue(),
 		}
 		return initializer
 
@@ -723,6 +714,19 @@ class Setup(object):
 			settings = settingsclass(initializer=defaultsettings)
 		return settings
 
+	def getClients(self, name):
+		sessiondata = data.SessionData(initializer={'name': name})
+		querydata = data.ConnectToClientsData(session=sessiondata)
+		try:
+			return self.research(querydata, results=1)[0]['clients']
+		except IndexError:
+			return []
+
+	def saveClients(self, session, clients):
+		initializer = {'session': session, 'clients': clients}
+		clientsdata = data.ConnectToClientsData(initializer=initializer)
+		self.publish(clientsdata, database=True, dbforce=True)
+
 	def saveSettings(self, userdata, initializer):
 		settingsclass = data.SetupWizardSettingsData
 		sd = settingsclass(initializer=initializer)
@@ -742,11 +746,6 @@ class Setup(object):
 		projectdatalist = projects.getall()
 		return _indexBy('name', projectdatalist)
 
-	def getInstruments(self):
-		instrumentdata = data.InstrumentData(initializer={})
-		instrumentdatalist = self.research(datainstance=instrumentdata)
-		return _indexBy('name', instrumentdatalist)
-
 	def suggestSessionName(self):
 		session_name = '<cannot suggest a name>'
 		for suffix in 'abcdefghijklmnopqrstuvwxyz':
@@ -764,13 +763,12 @@ class Setup(object):
 			return True
 		return False
 
-	def createSession(self, user, name, description, instrument, directory):
+	def createSession(self, user, name, description, directory):
 		imagedirectory = os.path.join(leginonconfig.unmapPath(directory), name, 'rawdata').replace('\\', '/')
 		initializer = {
 			'name': name,
 			'comment': description,
 			'user': user,
-			'instrument': instrument,
 			'image path': imagedirectory,
 		}
 		return data.SessionData(initializer=initializer)
@@ -781,6 +779,20 @@ class Setup(object):
 		projectsession = project.ProjectExperiment(projectid, sessiondata['name'])
 		experiments = self.projectdata.getProjectExperiments()
 		experiments.insert([projectsession.dumpdict()])
+
+class EditClientsDialog(gui.wx.Dialog.Dialog):
+	def __init__(self, parent, clients):
+		self.clients = clients
+		gui.wx.Dialog.Dialog.__init__(self, parent, 'Edit Clients')
+
+	def onInitialize(self):
+		self.listbox = gui.wx.ListBox.EditListBox(self, -1, 'Clients')
+		self.listbox.setValues(self.clients)
+		self.sz.Add(self.listbox, (0, 0), (1, 1), wx.EXPAND)
+		self.sz.AddGrowableRow(0)
+		self.sz.AddGrowableCol(0)
+		self.addButton('OK', id=wx.ID_OK)
+		self.addButton('Cancel', id=wx.ID_CANCEL)
 
 if __name__ == '__main__':
 	class TestApp(wx.App):

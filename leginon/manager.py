@@ -115,18 +115,21 @@ class Manager(node.Node):
 
 		# handle better
 		if setup.session is None:
+			self.exit()
 			raise RuntimeError('setup cancelled')
 
 		self.session = setup.session
 		self.frame.session = self.session
 
-		# needs threading, but shouldn't
 		t = threading.Thread(name='create launcher thread',
 													target=self.createLauncher)
 		t.start()
 
-		if setup.connect:
-			self.addInstrumentLauncher()
+		for client in setup.clients:
+			try:
+				self.addLauncher(client, 55555)
+			except Exception, e:
+				self.logger.warning('Failed to add launcher: %s' % e)
 
 	def onAddLauncherPanel(self, l):
 		evt = gui.wx.Manager.AddLauncherPanelEvent(l)
@@ -137,22 +140,6 @@ class Manager(node.Node):
 																			session=self.session,
 																			managerlocation=self.location())
 		self.onAddLauncherPanel(self.launcher)
-
-	def addInstrumentLauncher(self):
-		if self.session['instrument'] is None:
-			self.logger.warning('Cannot add instrument\'s launcher.')
-			return
-		hostname = self.session['instrument']['hostname']
-		if not hostname:
-			self.logger.warning('Cannot add instrument\'s launcher.')
-			return
-		if hostname == socket.gethostname().lower():
-			return
-		try:
-			port = 55555
-			self.addLauncher(hostname, port)
-		except Exception, e:
-			self.logger.warning('Cannot add instrument\'s launcher: %s' % e)
 
 	def location(self):
 		location = {}
@@ -167,7 +154,8 @@ class Manager(node.Node):
 		pass
 
 	def exit(self):
-		self.killNode(self.launcher.name, wait=True)
+		if self.launcher is not None:
+			self.killNode(self.launcher.name, wait=True)
 		launchers = self.getLauncherNames()
 		nodes = self.getNodeNames()
 		for node in nodes:

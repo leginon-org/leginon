@@ -1582,6 +1582,13 @@ class SettingsData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
+class ConnectToClientsData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('clients', list),
+		)
+	typemap = classmethod(typemap)
+
 class SetupWizardSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
