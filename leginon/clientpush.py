@@ -24,7 +24,7 @@ class Server(leginonobject.LeginonObject):
 		leginonobject.LeginonObject.__init__(self)
 		self.datahandler = apply(dhclass, dhargs)
 		self.servers = {}
-		#self.servers[datalocal.PushServer] = datalocal.PushServer(self.datahandler)
+		self.servers[datalocal.PushServer] = datalocal.PushServer(self.datahandler)
 		self.servers[datatcp.PushServer] = datatcp.PushServer(self.datahandler)
 		thread = threading.Thread(None, self.servers[datatcp.PushServer].serve_forever, None, (), {})
 		# this isn't working right now
@@ -35,7 +35,6 @@ class Server(leginonobject.LeginonObject):
 		loc = leginonobject.LeginonObject.location(self)
 		loc['datatcp port'] = self.servers[datatcp.PushServer].port
 		return loc
-
 
 if __name__ == '__main__':
 	class MyServer(Server):

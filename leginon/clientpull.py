@@ -12,6 +12,8 @@ class Client(leginonobject.LeginonObject):
 	def __init__(self, hostname, port):
 		leginonobject.LeginonObject.__init__(self)
 		self.clients = {}
+		# this needs to be able to get the server some how, most likely through
+		# the manager. perhaps clients need to be created per request. or not.
 		#self.clients[datalocal.PullClient] = datalocal.PullClient()
 		self.clients[datatcp.PullClient] = datatcp.PullClient(hostname, port)
 
@@ -24,7 +26,7 @@ class Server(leginonobject.LeginonObject):
 		leginonobject.LeginonObject.__init__(self)
 		self.datahandler = apply(dhclass, dhargs)
 		self.servers = {}
-		#self.servers[datalocal.PullServer] = datalocal.PullServer(self.datahandler)
+		self.servers[datalocal.PullServer] = datalocal.PullServer(self.datahandler)
 		self.servers[datatcp.PullServer] = datatcp.PullServer(self.datahandler)
 		thread = threading.Thread(None, self.servers[datatcp.PullServer].serve_forever, None, (), {})
 		# this isn't working right now
