@@ -9,8 +9,8 @@ import random
 
 class DataHandler(leginonobject.LeginonObject):
 	'''Base class for DataHandlers. Defines virtual functions.'''
-	def __init__(self, id):
-		leginonobject.LeginonObject.__init__(self, id)
+	def __init__(self, id, session):
+		leginonobject.LeginonObject.__init__(self, id, session)
 
 	def query(self, id):
 		'''Returns data with data ID.'''
@@ -33,8 +33,8 @@ class DataHandler(leginonobject.LeginonObject):
 
 class DictDataKeeper(DataHandler):
 	'''Keep data in a dictionary.'''
-	def __init__(self, id):
-		DataHandler.__init__(self, id)
+	def __init__(self, id, session):
+		DataHandler.__init__(self, id, session)
 		self.datadict = {}
 		self.datadictlock = threading.Lock()
 
@@ -70,8 +70,8 @@ class DictDataKeeper(DataHandler):
 
 class ShelveDataKeeper(DataHandler):
 	'''Keep data in a shelf (dictionary in a file).'''
-	def __init__(self, id, filename = None, path = '.'):
-		DataHandler.__init__(self, id)
+	def __init__(self, id, session, filename = None, path = '.'):
+		DataHandler.__init__(self, id, session)
 
 		self.openshelf(filename, path)
 
@@ -128,8 +128,8 @@ class ShelveDataKeeper(DataHandler):
 # I'm reasonably sure this works, but it hasn't been fully tested
 class CachedDictDataKeeper(DataHandler):
 	'''Keep data in a dictionary. Cache data on disk after timeout has elasped.'''
-	def __init__(self, id, age = 600.0, timeout = 60.0, filename = None, path = '.'):
-		DataHandler.__init__(self, id)
+	def __init__(self, id, session, age = 600.0, timeout = 60.0, filename = None, path = '.'):
+		DataHandler.__init__(self, id, session)
 
 		self.datadict = {}
 		self.lock = threading.Lock()
@@ -225,8 +225,8 @@ class SimpleDataKeeper(CachedDictDataKeeper):
 
 class DataBinder(DataHandler):
 	'''Bind data to a function. Used for mapping Events to handlers.'''
-	def __init__(self, id):
-		DataHandler.__init__(self, id)
+	def __init__(self, id, session):
+		DataHandler.__init__(self, id, session)
 		self.priority = []
 		self.bindings = {}
 

@@ -8,6 +8,7 @@ import event
 import sys
 import imp
 import cPickle
+import dbdatakeeper
 if sys.platform == 'win32':
 	import pythoncom
 

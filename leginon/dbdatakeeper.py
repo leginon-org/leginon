@@ -5,7 +5,7 @@ import datahandler
 
 class DBDataKeeper(datahandler.DataHandler):
 	def __init__(self, id, session):
-		datahandler.DataHandler.__init__(self, id)
+		datahandler.DataHandler.__init__(self, id, session)
 		# leginon object id = id
 		# session id = session
 		# connect?

@@ -6,9 +6,9 @@ import copy
 
 class LeginonObject(object):
 	'''Generic base class for objects. Defines ID and location.'''
-	def __init__(self, id):
+	def __init__(self, id, session=None):
 		self.id = self.validateID(id)
-		self.session = self.id[0]
+		self.session = session
 		self.idcounter = 0
 
 	def validateID(self, id):

@@ -19,10 +19,10 @@ if sys.platform == 'win32':
 
 class DataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
 	'''Overrides SimpleDataKeeper and DataBinder to combine storing data and mapping events for use by Node.'''
-	def __init__(self, id):
+	def __init__(self, id, session):
 		# this will call LeginonObject constructor twice I think
-		datahandler.SimpleDataKeeper.__init__(self, id)
-		datahandler.DataBinder.__init__(self, id)
+		datahandler.SimpleDataKeeper.__init__(self, id, session)
+		datahandler.DataBinder.__init__(self, id, session)
 
 	def insert(self, idata):
 		'''Insert data into the datahandler. Only events can be inserted from and external source. Events are bound. See setBinding.'''
@@ -60,14 +60,16 @@ class Node(leginonobject.LeginonObject):
 		# manager.launchNode could specify which datahandlers to have
 		self.datahandlers = {}
 		for dh in datahandlers:
-			self.datahandlers[dh[0]] = apply(dh[0], (self.ID(),) + dh[1])
+			self.datahandlers[dh[0]] = apply(dh[0], (self.ID(), self.session) + dh[1])
+		# could be in args
+		self.datahandler = datahandlers[0][0]
 
 #		self.datahandlers['node'] = apply(dh, (self.ID(),) + dhargs)
 #		self.datahandlers['database'] = dbdatakeeper.DBDataKeeper(self.ID(),
 #																															self.session)
 
 		self.server = datatransport.Server(self.ID(),
-																				self.datahandlers[DataHandler], tcpport)
+																	self.datahandlers[self.datahandler], tcpport)
 		self.clientclass = clientclass
 
 		self.uiserver = interface.Server(self.ID(), xmlrpcport)
@@ -151,14 +153,14 @@ class Node(leginonobject.LeginonObject):
 	def addEventInput(self, eventclass, func):
 		'''Map a function (event handler) to be called when the specified event is received.'''
 #		self.server.datahandler.setBinding(eventclass, func)
-		self.datahandlers[DataHandler].setBinding(eventclass, func)
+		self.datahandlers[self.datahandler].setBinding(eventclass, func)
 		if eventclass not in self.eventmapping['inputs']:
 			self.eventmapping['inputs'].append(eventclass)
 
 	def delEventInput(self, eventclass):
 		'''Unmap all functions (event handlers) to be called when the specified event is received.'''
 #		self.server.datahandler.setBinding(eventclass, None)
-		self.datahandlers[DataHandler].setBinding(eventclass, None)
+		self.datahandlers[self.datahandler].setBinding(eventclass, None)
 		if eventclass in self.eventmapping['inputs']:
 			self.eventmapping['inputs'].remove(eventclass)
 
@@ -227,7 +229,7 @@ class Node(leginonobject.LeginonObject):
 			confirm = False
 
 		if 'node' in kwargs and kwargs['node']:
-			self.datahandlers[DataHandler].insert(idata)
+			self.datahandlers[self.datahandler].insert(idata)
 
 			# this idata.id is content, I think
 			e = eventclass(self.ID(), idata.id, confirm)
@@ -267,7 +269,7 @@ class Node(leginonobject.LeginonObject):
 		if not issubclass(eventclass, event.UnpublishEvent):
 			raise TypeError('UnpublishEvent subclass required')
 #		self.server.datahandler.remove(dataid)
-		self.datahandlers[DataHandler].remove(dataid)
+		self.datahandlers[self.datahandler].remove(dataid)
 		self.outputEvent(eventclass(self.ID(), dataid))
 
 	def publishRemote(self, idata):
@@ -362,7 +364,7 @@ class Node(leginonobject.LeginonObject):
 		if value is None:
 			try:
 #				return self.key2str(self.server.datahandler.datadict)
-				return self.key2str(self.datahandlers[DataHandler].datadict)
+				return self.key2str(self.datahandlers[self.datahandler].datadict)
 #				return self.server.datahandler.datadict
 			except AttributeError:
 				return {}
