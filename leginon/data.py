@@ -565,6 +565,9 @@ class Data(newdict.TypedDict):
 				self.__setitem__(key, value, force=True)
 				# use new reference
 				value = value.getData()
+		if isinstance(value, newdict.FileReference):
+				value = value.read()
+				self.__setitem__(key, value, force=True)
 		return value
 
 	def __getitem__(self, key):
@@ -789,6 +792,9 @@ class InSessionData(Data):
 			('session', SessionData),
 		)
 	typemap = classmethod(typemap)
+
+class QueueData(InSessionData):
+	pass
 
 class EMData(InSessionData):
 	def typemap(cls):
@@ -1079,6 +1085,7 @@ class ImageData(InSessionData):
 			('label', str),
 			('filename', str),
 			('list', ImageListData),
+			('queue', QueueData),
 		)
 	typemap = classmethod(typemap)
 

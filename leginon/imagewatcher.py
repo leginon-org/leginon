@@ -11,13 +11,15 @@
 import data
 import event
 import watcher
+import newdict
 
 class ImageWatcher(watcher.Watcher):
 	eventinputs = watcher.Watcher.eventinputs + [event.ImagePublishEvent,
-																								event.ImageListPublishEvent]
+																								event.ImageListPublishEvent,
+																								event.QueuePublishEvent]
 	eventoutputs = watcher.Watcher.eventoutputs + [event.ImageProcessDoneEvent]
 	def __init__(self, id, session, managerlocation, **kwargs):
-		watchfor = [event.ImagePublishEvent, event.ImageListPublishEvent]
+		watchfor = [event.ImagePublishEvent, event.ImageListPublishEvent, event.QueuePublishEvent]
 		watcher.Watcher.__init__(self, id, session, managerlocation, watchfor,
 															**kwargs)
 
@@ -40,6 +42,7 @@ class ImageWatcher(watcher.Watcher):
 			self.logger.debug('Imagewathcer.processData (ImageData)')
 			imageid = idata.dbid
 			self.currentimagedata = idata
+
 			self.numarray = idata['image']
 			self.processImageData(idata)
 			self.publishImageProcessDone(imageid)

@@ -408,7 +408,7 @@ class SQLDict(object):
 				raise AttributeError(message)
 		## now set path in FileReferences, read image
 		for key in needpath:
-			fileref = root[key]
+			fileref = root.special_getitem(key, dereference=False)
 			fileref.setPath(leginonconfig.mapPath(imagepath))
 			if self.readimages:
 				# replace reference with actual data

@@ -158,6 +158,9 @@ class ConfirmationEvent(NotificationEvent):
 		)
 	typemap = classmethod(typemap)
 
+class QueuePublishEvent(PublishEvent):
+	dataclass = data.QueueData
+
 class ImageTargetShiftPublishEvent(PublishEvent):
 	dataclass = data.ImageTargetShiftData
 

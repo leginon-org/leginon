@@ -68,9 +68,6 @@ class FFTMaker(imagewatcher.ImageWatcher):
 			fft = self.research(fquery, readimages=False)
 			if fft:
 				continue
-			## read image
-			num = im['image'].read()
-			im.__setitem__('image', num, force=True)
 			self.publishPowerImage(im)
 
 	def onStartPostProcess(self):
