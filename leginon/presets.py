@@ -860,8 +860,15 @@ class PresetsManager(node.Node):
 
 		self.logger.info('Going to target and to preset %s' % (newpresetname,))
 
-		oldpreset = emtargetdata['preset']
 		newpreset = self.presetByName(newpresetname)
+
+		## this is a hack to make this work with simulated targets which
+		## have no "old preset"
+		if emtargetdata['preset'] is None:
+			oldpreset = newpreset
+		else:
+			oldpreset = emtargetdata['preset']
+
 		## make copy of target stage and image shift
 		mystage = dict(emtargetdata['stage position'])
 		myimage = dict(emtargetdata['image shift'])

@@ -263,9 +263,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		magnification modes (LM, M, SA).
 		'''
 		emtargetdata = data.EMTargetData()
-		if targetdata is not None and targetdata['type'] != 'simulated':
-			originalpreset = targetdata['preset']
-	
+		if targetdata is not None:
 			# get relevant info from target data
 			targetdeltarow = targetdata['delta row']
 			targetdeltacolumn = targetdata['delta column']
@@ -277,35 +275,42 @@ class Acquisition(targetwatcher.TargetWatcher):
 			targetscope['stage position'] = dict(origscope['stage position'])
 			targetscope['image shift'] = dict(origscope['image shift'])
 			targetscope['beam shift'] = dict(origscope['beam shift'])
-			targetcamera = targetdata['camera']
-	
-			## to shift targeted point to center...
-			deltarow = -targetdeltarow
-			deltacol = -targetdeltacolumn
-	
-			pixelshift = {'row':deltarow, 'col':deltacol}
-	
-			## figure out scope state that gets to the target
+
 			movetype = self.settings['move type']
-			calclient = self.calclients[movetype]
-			try:
-				newscope = calclient.transform(pixelshift, targetscope, targetcamera)
-			except calibrationclient.NoMatrixCalibrationError:
-				message = 'No calibration for acquisition move to target'
-				self.logger.error(message)
-				raise NoMoveCalibration(message)
+
+			### simulated target does not require transform
+			if targetdata['type'] == 'simulated':
+				oldpreset = None
+				newscope = origscope
+			else:
+				oldpreset = targetdata['preset']
+				targetcamera = targetdata['camera']
+		
+				## to shift targeted point to center...
+				deltarow = -targetdeltarow
+				deltacol = -targetdeltacolumn
+		
+				pixelshift = {'row':deltarow, 'col':deltacol}
+		
+				## figure out scope state that gets to the target
+				calclient = self.calclients[movetype]
+				try:
+					newscope = calclient.transform(pixelshift, targetscope, targetcamera)
+				except calibrationclient.NoMatrixCalibrationError:
+					message = 'No calibration for acquisition move to target'
+					self.logger.error(message)
+					raise NoMoveCalibration(message)
 	
 			### check if stage position is valid
 			if newscope['stage position']:
 				self.validateStagePosition(newscope['stage position'])
 	
-			oldpreset = targetdata['preset']
-
 			emtargetdata['preset'] = oldpreset
 			emtargetdata['movetype'] = movetype
 			emtargetdata['image shift'] = dict(newscope['image shift'])
 			emtargetdata['beam shift'] = dict(newscope['beam shift'])
 			emtargetdata['stage position'] = dict(newscope['stage position'])
+
 		emtargetdata['target'] = targetdata
 
 		## publish in DB because it will likely be needed later
