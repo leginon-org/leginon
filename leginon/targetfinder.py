@@ -63,7 +63,9 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
 		self.makeTargetListEvent(targetlist)
 		self.publish(targetlist, database=True, dbforce=True, pubevent=True)
 		if self.settings['wait for done']:
+			self.setStatus('waiting')
 			self.waitForTargetListDone()
+			self.setStatus('processing')
 
 	def targetsFromClickImage(self, clickimage, typename, targetlist):
 		imagedata = clickimage.imagedata
@@ -109,11 +111,13 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
 		targetlist = self.newTargetList(image=imagedata)
 		self.findTargets(imagedata, targetlist)
 		self.makeTargetListEvent(targetlist)
-		self.logger.debug('publishing targetlist')
+		self.logger.debug('Publishing targetlist...')
 		self.publish(targetlist, database=True, pubevent=True)
-		self.logger.debug('published targetlist %s' % (targetlist.dbid,))
+		self.logger.debug('Published targetlist %s' % (targetlist.dbid,))
 		if self.settings['wait for done']:
+			self.setStatus('waiting')
 			self.waitForTargetListDone()
+			self.setStatus('processing')
 
 	def makeTargetListEvent(self, targetlistdata):
 		'''
@@ -136,7 +140,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
 		self.logger.info('%s done waiting' % (self.name,))
 
 	def notifyUserSubmit(self):
-		message = 'waiting for you to submit targets'
+		message = 'Waiting for user to submit targets...'
 		self.logger.info(message)
 		self.beep()
 
@@ -189,9 +193,10 @@ class ClickTargetFinder(TargetFinder):
 		# user now clicks on targets
 		self.notifyUserSubmit()
 		self.userpause.clear()
-		self.logger.info('Waiting for user to select targets...')
+		self.setStatus('user input')
 		self.userpause.wait()
-		self.logger.info('Done waiting')
+		self.setStatus('processing')
+		self.logger.info('User has submitted targets')
 		self.publishTargets(imdata, 'focus', targetlist)
 		self.publishTargets(imdata, 'acquisition', targetlist)
 
@@ -391,6 +396,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 				else:
 					targets.append(vcoord)
 		self.setTargets(targets, 'acquisition')
+		# ...
+		self.setTargets([], 'focus')
 		self.setTargets(donetargets, 'done')
 		self.updateCurrentPosition()
 		self.setTargets(self.currentposition, 'position')
@@ -427,6 +434,9 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.logger.info('Processing inbound image data')
 		### create a new imagelist if not already done
 		targets = imagedata['target']['list']
+		if not targets:
+			self.logger.info('No targets to process')
+			return
 		imagelist = self.getMosaicImageList(targets)
 		self.logger.info('creating MosaicTileData')
 		self.logger.debug('creating MosaicTileData for image %s' % (imagedata.dbid,))

@@ -35,6 +35,8 @@ class Throbber(wx.lib.throbber.Throbber):
 			self.Stop()
 		elif value == 'idle':
 			self.Rest()
+		else:
+			raise TypeError('Invalid value for set')
 		self.Refresh()
 
 if __name__ == '__main__':

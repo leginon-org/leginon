@@ -36,19 +36,26 @@ class ImageWatcher(watcher.Watcher):
 
 	def processData(self, idata):
 		if isinstance(idata, data.ImageData):
-			self.logger.debug('** imagewathcer processData')
+			self.setStatus('processing')
+			self.logger.debug('Imagewathcer.processData (ImageData)')
 			imageid = idata.dbid
 			self.currentimagedata = idata
 			self.numarray = idata['image']
 			self.processImageData(idata)
 			self.publishImageProcessDone(imageid)
+			self.logger.debug('Imagewathcer.processData (ImageData) done')
+			self.setStatus('idle')
 		elif isinstance(idata, data.ImageListData):
-			# self.currentimagedata, self.numarray not implemented
+			self.setStatus('processing')
+			self.logger.debug('Imagewathcer.processData (ImageListData)')
 			self.processImageListData(idata)
 			if 'images' in idata and idata['images'] is not None:
 				for ref in idata['images']:
 					imageid = ref.dbid
 					self.publishImageProcessDone(imageid=imageid)
+			self.logger.debug('Imagewathcer.processData (ImageListData) done')
+			self.setStatus('idle')
 		else:
-			raise TypeError('data to be processed is not an ImageData instance')
+			self.setStatus('idle')
+			raise TypeError('Data to be processed must be an ImageData instance')
 
