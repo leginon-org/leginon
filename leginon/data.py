@@ -478,6 +478,7 @@ class StageModelCalibrationData(CalibrationData):
 	def typemap(cls):
 		t = CalibrationData.typemap()
 		t += [
+			('label', str),
 			('axis', str),
 			('period', float),
 			('a', strictdict.NumericArrayType),
@@ -490,6 +491,22 @@ class StageModelMagCalibrationData(MagDependentCalibrationData):
 	def typemap(cls):
 		t = MagDependentCalibrationData.typemap()
 		t += [ ('axis', str), ('angle', float), ('mean',float)]
+		return t
+	typemap = classmethod(typemap)
+
+class StageMeasurementData(InSessionData):
+	def typemap(cls):
+		t = InSessionData.typemap()
+		t += [
+			('label', str),
+			('magnification', int),
+			('axis', str),
+			('x',float),
+			('y',float),
+			('delta',float),
+			('imagex',float),
+			('imagey',float),
+		]
 		return t
 	typemap = classmethod(typemap)
 
