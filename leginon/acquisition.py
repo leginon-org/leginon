@@ -226,14 +226,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 		# get relevant info from target data
 		targetdeltarow = targetdata['delta row']
 		targetdeltacolumn = targetdata['delta column']
-		targetscope = targetdata['scope']
-		targetscope = data.ScopeEMData(initializer=targetscope)
+		origscope = targetdata['scope']
+		targetscope = data.ScopeEMData()
+		targetscope['stage position'] = copy.deepcopy(origscope['stage position'])
+		targetscope['image shift'] = copy.deepcopy(origscope['image shift'])
 		targetcamera = targetdata['camera']
-
-		## ignore these fields:
-		ignore = ('beam tilt', 'stigmator', 'holder type', 'holder status', 'stage status', 'vacuum status', 'column valves', 'turbo pump')
-		for key in ignore:
-			targetscope[key] = None
 
 		## to shift targeted point to center...
 		deltarow = -targetdeltarow
@@ -261,12 +258,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if newscope['stage position']:
 			self.validateStagePosition(newscope['stage position'])
 
-		# create new EMData object to hold this
-		emdata = data.ScopeEMData(initializer=newscope)
-
 		oldpreset = targetdata['preset']
 		# now make EMTargetData to hold all this
-		emtargetdata = data.EMTargetData(scope=emdata, preset=oldpreset)
+		emtargetdata = data.EMTargetData(scope=newscope, preset=oldpreset)
 		return emtargetdata
 
 	def acquireFilm(self, presetdata, target=None, emtarget=None):
