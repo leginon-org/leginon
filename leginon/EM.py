@@ -134,6 +134,36 @@ class EM(node.Node):
 			self.locknodeid = None
 			self.nodelock.release()
 
+	def save(self, filename):
+		print "Saving state to file: %s..." % filename,
+		try:
+			f = file(filename, 'w')
+			savestate = self.server.datahandler.query('all')
+			try:
+				del savestate['image data']
+			except KeyError:
+				pass
+			cPickle.dump(savestate, f)
+			f.close()
+		except:
+			print "Error: failed to save EM state"
+		else:
+			print "done."
+		return ''
+
+	def load(self, filename):
+		print "Loading state from file: %s..." % filename,
+		try:
+			f = file(filename, 'r')
+			loadstate = data.EMData('all', cPickle.load(f))
+			self.server.datahandler.insert(loadstate)
+			f.close()
+		except:
+			print "Error: failed to load EM state"
+		else:
+			print "done."
+		return ''
+
 	def uiCallback(self, value=None):
 		if value:
 			for id in value:
@@ -154,7 +184,15 @@ class EM(node.Node):
 		nodespec = node.Node.defineUserInterface(self)
 		emspec = self.registerUIData('EM State', 'struct', permissions='rw')
 		emspec.set(self.uiCallback)
-		self.registerUISpec('EM', (nodespec, emspec))
+
+		argspec = (self.registerUIData('Filename', 'string'),)
+		save = self.registerUIMethod(self.save, 'Save', argspec)
+		load = self.registerUIMethod(self.load, 'Load', argspec)
+
+		filespec = self.registerUIContainer('File', (save, load))
+
+		self.registerUISpec('EM', (nodespec, emspec, filespec))
+
 		d = {}
 		if self.scope:
 			d.update(self.scope)
