@@ -342,7 +342,7 @@ class Navigator(node.Node):
 		locdata = None
 		if type(loc) is int:
 			locdata = self.stagelocations[p]
-		elif type(loc) is str:
+		elif type(loc) in (str, unicode):
 			for location in self.stagelocations:
 				if loc == location['name']:
 					locdata = location
