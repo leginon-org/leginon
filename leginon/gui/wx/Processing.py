@@ -13,8 +13,29 @@ class Throbber(wx.lib.throbber.Throbber):
 			bitmap = gui.wx.Icons.icon(path)
 			images.append(bitmap)
 
+		overlay = gui.wx.Icons.icon('userinput')
+
 		wx.lib.throbber.Throbber.__init__(self, parent, -1, images, size=(16, 16),
-																			frameDelay=0.1)
+																			frameDelay=0.1, overlay=overlay)
+		self.ToggleOverlay(False)
+
+	def set(self, value):
+		if value == 'user input' and not self.showOverlay:
+			self.ToggleOverlay(True)
+		elif self.showOverlay:
+			self.ToggleOverlay(False)
+
+		if value == 'processing':
+			self.Start()
+		elif value == 'waiting':
+			self.OnTimer(None)
+			self.Stop()
+		elif value == 'user input':
+			self.OnTimer(None)
+			self.Stop()
+		elif value == 'idle':
+			self.Rest()
+		self.Refresh()
 
 if __name__ == '__main__':
 	class App(wx.App):
@@ -30,6 +51,7 @@ if __name__ == '__main__':
 			sizer.AddGrowableCol(0)
 			panel.SetSizerAndFit(sizer)
 			throbber.Start()
+			throbber.ToggleOverlay(True)
 			frame.Fit()
 			self.SetTopWindow(frame)
 			frame.Show()

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Selector.py,v $
-# $Revision: 1.8 $
+# $Revision: 1.9 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-01 19:53:23 $
+# $Date: 2004-11-01 21:02:19 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -107,16 +107,7 @@ class SelectorItem(object):
 		self.items[index].SetBitmap(getBitmap(name))
 
 	def setStatus(self, value):
-		running = self.items[3].Running()
-		if value == 'processing' and not running:
-			self.items[3].Start()
-		elif value == 'waiting':
-			pass
-		elif value == 'user input':
-			pass
-		elif value == 'idle' and running:
-			self.items[3].Rest()
-			self.items[3].Refresh()
+		self.items[3].set(value)
 
 class Selector(wx.lib.scrolledpanel.ScrolledPanel):
 	def __init__(self, parent):
