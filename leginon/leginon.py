@@ -532,11 +532,33 @@ class ImageCorrectionWidget(CustomWidget):
 		widget = self.addWidget('Results', corrector, ('Acquire', 'Image'))
 
 class ImageCollectorWidget(CustomWidget):
-	def __init__(self, parent, imagecollector):
+	def __init__(self, parent, acquisition, imagecollector):
 		CustomWidget.__init__(self, parent)
-		self.addWidget('Settings', imagecollector, ('Images', 'Queue List'))
+		widget = self.addWidget('Settings', acquisition,
+															('Presets', 'Acquisition Presets'), True)
+		self.arrangeEntry(widget, 20, Tkinter.LEFT, False)
+		widget = self.addWidget('Settings', acquisition,
+															('Preferences', 'TEM Parameter'), True)
+		self.arrangeCombobox(widget, 'Positioning Method', False)
+		widget = self.addWidget('Settings', acquisition,
+															('Preferences', 'Acquisition Type'), True)
+		self.arrangeCombobox(widget, None, False)
+
+		self.addWidget('Presets', acquisition, ('Presets', 'Preset'))
+		widget = self.addWidget('Presets', acquisition, ('Presets', 'Apply Preset'))
+		widget.button.pack_forget()
+		widget.button.pack()
+		widget = self.addWidget('Presets', acquisition,
+															('Presets', 'Preset Name'))
+		self.arrangeEntry(widget, 20, Tkinter.LEFT)
+		widget = self.addWidget('Presets', acquisition,
+																	('Presets', 'Create Preset'))
+		widget.button.pack_forget()
+		widget.button.pack()
+
+#		self.addWidget('Settings', imagecollector, ('Images', 'Queue List'))
 		self.addWidget('Control', imagecollector, ('Images', 'Advance Image'))
-		self.addWidget('Control', imagecollector, ('Images', 'Select Image'))
+#		self.addWidget('Control', imagecollector, ('Images', 'Select Image'))
 		self.addWidget('Results', imagecollector, ('Images', 'Image'))
 
 class PresetsWidget(CustomWidget):
@@ -812,6 +834,7 @@ class ImageCollector(WidgetWrapper):
 																		debug, windowmenu, name, sourceids):
 		WidgetWrapper.__init__(self, manager, manageruiclient, launcherid,
 														notebook, debug, windowmenu, name)
+		self.addNodeInfo('acquire', self.name + ' Acquisition', 'Acquisition')
 		self.addNodeInfo('imagecollector', self.name + ' Image Collector',
 																											'ImageCollector')
 		self.sourceids = sourceids
@@ -819,12 +842,16 @@ class ImageCollector(WidgetWrapper):
 
 	def initializeWidget(self):
 		self.widget = ImageCollectorWidget(self.page,
-															self.nodeinfo['imagecollector']['UI info'])
+																		self.nodeinfo['acquire']['UI info'],
+																		self.nodeinfo['imagecollector']['UI info'])
 
 	def initializeBindings(self):
+		self.manager.addEventDistmap(event.AcquisitionImagePublishEvent,
+																				self.nodeinfo['acquire']['ID'],
+																				self.nodeinfo['imagecollector']['ID'])
 		for nodeid in self.sourceids:
-			self.manager.addEventDistmap(event.AcquisitionImagePublishEvent,
-																	nodeid, self.nodeinfo['imagecollector']['ID'])
+			self.manager.addEventDistmap(event.ImageTargetListPublishEvent,
+																				nodeid, self.nodeinfo['acquire']['ID'])
 
 class Presets(WidgetWrapper):
 	def __init__(self, manager, manageruiclient, launcherid, notebook,

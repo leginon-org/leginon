@@ -46,20 +46,20 @@ class ImageCollector(imagewatcher.ImageWatcher):
 	def __init__(self, id, session, nodelocations, **kwargs):
 		imagewatcher.ImageWatcher.__init__(self, id, session, nodelocations,
 																																**kwargs)
+#		self.dataqueue = CallbackQueue(self.getCallback, self.putCallback, 0)
 		# ???
-		self.dataqueue = CallbackQueue(self.getCallback, self.putCallback, 0)
 		self.defineUserInterface()
 		self.start()
 
 	def defineUserInterface(self):
 		iwspec = imagewatcher.ImageWatcher.defineUserInterface(self)
 		self.dataqueuetoggle.set(1)
-		self.queuelist = self.registerUIData('Queue List', 'struct', permissions='rw', default={'list': [], 'selected': []}, subtype='selected list')
+#		self.queuelist = self.registerUIData('Queue List', 'struct', permissions='rw', default={'list': [], 'selected': []}, subtype='selected list')
 		self.ui_image = self.registerUIData('Image', 'binary', permissions='r')
 		nextspec = self.registerUIMethod(self.advanceImage, 'Advance Image', ())
 		selectspec = self.registerUIMethod(self.selectImage, 'Select Image', ())
 		imagecontainer = self.registerUIContainer('Images',	
-													(self.ui_image, nextspec, selectspec, self.queuelist))
+											(self.ui_image, nextspec, selectspec)) #, self.queuelist))
 		spec = self.registerUISpec('Image Collector', (imagecontainer,))
 		spec += iwspec
 		return spec
