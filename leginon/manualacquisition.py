@@ -18,11 +18,15 @@ from node import ResearchError
 class AcquireError(Exception):
 	pass
 
+class PublishError(Exception):
+	pass
+
 class ManualAcquisition(node.Node):
 	def __init__(self, id, session, nodelocations, **kwargs):
 		self.loopstop = threading.Event()
 		self.loopstop.set()
 		self.camerafuncs = camerafuncs.CameraFuncs(self)
+		self.gridmapping = {'None': None}
 		node.Node.__init__(self, id, session, nodelocations, **kwargs)
 		self.defineUserInterface()
 		self.start()
@@ -45,11 +49,18 @@ class ManualAcquisition(node.Node):
 				self.messagelog.error('Error acquiring image')
 			self.status.set('Error acquiring image')
 			raise AcquireError
+		if imagedata is None:
+			self.status.set('Error acquiring image')
+			raise AcquireError
 		self.status.set('Displaying image...')
 		self.image.set(imagedata['image'])
 		if self.usedatabase.get():
-			self.status.set('Saving image to database')
-			self.publishImageData(imagedata)
+			self.status.set('Saving image to database...')
+			try:
+				self.publishImageData(imagedata)
+			except PublishError:
+				self.status.set('Error saving image to database')
+				return	
 		self.status.set('Image acquisition complete')
 
 	def publishImageData(self, imagedata):
@@ -57,13 +68,19 @@ class ManualAcquisition(node.Node):
 		acquisitionimagedata['id'] = self.ID()
 
 		grid = self.gridselect.getSelectedValue()
-		gridid = self.gridmapping[grid]['gridId']
-		griddata = data.GridData()
-		griddata['id'] = self.ID()
-		griddata['grid ID'] = gridid
-		acquisitionimagedata['grid'] = griddata
+		gridinfo = self.gridmapping[grid]
+		if gridinfo is not None:
+			griddata = data.GridData()
+			griddata['grid ID'] = gridinfo['gridId']
+			acquisitionimagedata['grid'] = griddata
 
-		self.publish(acquisitionimagedata, database=True)
+		acquisitionimagedata['filename'] = \
+			data.ImageData.filename(acquisitionimagedata)
+
+		try:
+			self.publish(acquisitionimagedata, database=True)
+		except RuntimeError:
+			raise PublishError
 
 	def acquireImage(self):
 		self.acquiremethod.disable()
