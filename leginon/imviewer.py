@@ -180,8 +180,7 @@ class ImViewer(imagewatcher.ImageWatcher):
 		acqev = self.registerUIMethod(self.acquireEvent, 'Acquire Event', ())
 
 		popupdefault = xmlrpclib.Boolean(1)
-		popuptoggle = self.registerUIData('Pop-up Viewer', 'boolean', permissions='rw', default=popupdefault)
-		popuptoggle.registerCallback(self.popupCallback)
+		popuptoggle = self.registerUIData('Pop-up Viewer', 'boolean', permissions='rw', default=popupdefault, callback=self.popupCallback)
 
 		camconfig = self.cam.configUIData()
 		prefs = self.registerUIContainer('Preferences', (popuptoggle, camconfig,))

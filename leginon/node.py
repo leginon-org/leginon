@@ -451,8 +451,7 @@ class Node(leginonobject.LeginonObject):
 		locationspec = self.registerUIData('Location', 'struct', 'r',
 																	default=self.location())
 
-		datatree = self.registerUIData('Data', 'struct', permissions='r')
-		datatree.registerCallback(self.uiDataDict)
+		datatree = self.registerUIData('Data', 'struct', permissions='r', callback=self.uiDataDict)
 
 		cont = self.registerUIContainer('Node', (exitspec, idspec, classspec, locationspec, datatree))
 
