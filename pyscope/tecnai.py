@@ -202,7 +202,7 @@ class Tecnai(object):
 			stagenow = self.getStagePosition()
 			# calculate pre-position
 			prevalue = {}
-			for axis in ('x','y'):
+			for axis in ('x','y','z'):
 				if axis in value:
 					prevalue[axis] = value[axis] - delta
 			if prevalue:
