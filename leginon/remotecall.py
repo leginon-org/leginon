@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/remotecall.py,v $
-# $Revision: 1.14 $
+# $Revision: 1.15 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-02 01:02:18 $
+# $Date: 2005-03-02 19:13:31 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -248,22 +248,22 @@ class ObjectService(Locker):
 		self._addObject('Object Service', self)
 
 	def _addDescriptionHandler(self, add=None, remove=None):
-		self.lock()
+		self.lock(self.node.name)
 		if add is not None:
 			self.addhandlers.append(add)
 			for args in self._getDescriptions():
 				add(*args)
 		if remove is not None:
 			self.removehandlers.append(remove)
-		self.unlock()
+		self.unlock(self.node.name)
 
 	def _removeDescriptionHandler(self, add=None, remove=None):
-		self.lock()
+		self.lock(self.node.name)
 		if add is not None:
 			self.addhandlers.remove(add)
 		if remove is not None:
 			self.removehandlers.remove(remove)
-		self.unlock()
+		self.unlock(self.node.name)
 
 	def _addHandler(self, nodename, name, description, types):
 		for handler in self.addhandlers:
