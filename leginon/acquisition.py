@@ -49,7 +49,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 	def __init__(self, id, session, managerlocation, target_types=('acquisition',), **kwargs):
 
-		targetwatcher.TargetWatcher.__init__(self, id, session, managerlocation, target_types, **kwargs)
+		targetwatcher.TargetWatcher.__init__(self, id, session, managerlocation, target_types=target_types, **kwargs)
 		self.addEventInput(event.DriftDoneEvent, self.handleDriftDone)
 		self.addEventInput(event.ImageProcessDoneEvent, self.handleImageProcessDone)
 		self.driftdone = threading.Event()
@@ -486,53 +486,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.acquire(p, target=None)
 		self.reportStatus('acquisition', 'Image acquired...')
 
-	def researchSimulatedTargets(self):
-		'''
-		Get a list of all targets in this session that are simulated
-		only want most recent versions of each
-		'''
-		targetquery = data.AcquisitionImageTargetData(session=self.session, type='simulated')
-		targets = self.research(datainstance=targetquery)
-
-		## now filter out only the latest versions
-		# map target number to latest version
-		# assuming query result is ordered by timestamp, this works
-		have = {}
-		for target in targets:
-			targetnum = target['number']
-			if targetnum not in have:
-				have[targetnum] = target
-		havelist = have.values()
-		havelist.sort(self.compareTargetNumber)
-		if havelist:
-			self.logger.info('Found %s simulated targets'
-												% (len(havelist),))
-		return havelist
-
-	def compareTargetNumber(self, first, second):
-		return cmp(first['number'], second['number'])
-
-	def lastSimulatedTargetNumber(self):
-		'''
-		Returns the number of the last target associated with the
-		grid.
-		'''
-		targets = self.researchSimulatedTargets()
-		maxnumber = 0
-		for target in targets:
-			if target['number'] > maxnumber:
-				maxnumber = target['number']
-		return maxnumber
-
-	def createSimulatedTarget(self):
-		lastnumber = self.lastSimulatedTargetNumber()
-		nextnumber = lastnumber + 1
-		newtarget = data.AcquisitionImageTargetData(type='simulated', version=0, number=nextnumber, status='new')
-		self.publish(newtarget, database=True)
-		return newtarget
-
 	def uiSimulateTarget(self):
-		targetdata = self.createSimulatedTarget()
+		targetdata = self.newSimulatedTarget()
+		self.publish(targetdata, database=True)
 		## change to 'processing' just like targetwatcher does
 		proctargetdata = data.AcquisitionImageTargetData(initializer=targetdata, status='processing')
 		self.processTargetData(targetdata=proctargetdata)

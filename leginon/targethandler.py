@@ -63,11 +63,14 @@ class TargetHandler(object):
 		create new AcquistionImageTargetData and fill in all fields
 		'''
 		targetdata = data.AcquisitionImageTargetData(initializer=kwargs)
-		targetdata['session'] = self.session
 		targetdata['delta row'] = drow
 		targetdata['delta column'] = dcol
-		targetdata['version'] = 0
-		targetdata['status'] = 'new'
+		if 'session' not in kwargs:
+			targetdata['session'] = self.session
+		if 'version' not in kwargs:
+			targetdata['version'] = 0
+		if 'status' not in kwargs:
+			targetdata['status'] = 'new'
 		return targetdata
 
 	def newTargetForImage(self, imagedata, drow, dcol, **kwargs):
@@ -101,6 +104,12 @@ class TargetHandler(object):
 		number = lastnumber + 1
 		targetdata = self.newTarget(grid=grid, drow=drow, dcol=dcol, number=number, session=self.session, **kwargs)
 		return targetdata
+
+	def newSimulatedTarget(self):
+		lastnumber = self.lastTargetNumber(session=self.session, type='simulated')
+		nextnumber = lastnumber + 1
+		newtarget = self.newTarget(drow=None, dcol=None, number=nextnumber, type='simulated')
+		return newtarget
 
 	###########################################################
 
