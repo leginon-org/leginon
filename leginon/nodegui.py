@@ -542,7 +542,8 @@ class NodeGUI(Frame):
 		self.mainframe.pack(expand=YES, fill=BOTH)
 
 	def getSpec(self):
-		return self.uiclient.getSpec()
+		spec = self.uiclient.getSpec()
+		return spec
 
 	def launchgui(self):
 		host = self.launchhostent.get()

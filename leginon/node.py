@@ -64,9 +64,7 @@ class Node(leginonobject.LeginonObject):
 		self.server = datatransport.Server(self.ID(), dh, dhargs, tcpport)
 		self.clientclass = clientclass
 
-		uiserverid = self.ID()
-		self.uiserver = interface.Server(uiserverid, xmlrpcport)
-		self.uiactive = 0
+		self.uiserver = interface.Server(self.ID(), xmlrpcport)
 		self.defineUserInterface()
 
 		self.confirmwaitlist = {}
@@ -89,6 +87,7 @@ class Node(leginonobject.LeginonObject):
 			else:
 				self.printerror('connected to manager')
 		self.die_event = threading.Event()
+
 
 	# main, start/stop methods
 	def main(self):
@@ -294,8 +293,6 @@ class Node(leginonobject.LeginonObject):
 		  (defaults to __name__)
 		'''
 
-		self.uiactive = 1
-
 		exitspec = self.registerUIMethod(self.uiExit, 'Exit', ())
 
 		idspec = self.registerUIData('ID', 'array', 'r', default=self.id)
@@ -305,7 +302,7 @@ class Node(leginonobject.LeginonObject):
 																	default=self.location())
 
 		datatree = self.registerUIData('Data', 'struct', permissions='r')
-		datatree.set(self.uiDataDict)
+		datatree.registerCallback(self.uiDataDict)
 
 		containerspec = self.registerUIContainer('Node',
 								(exitspec, idspec, classspec, locationspec, datatree))

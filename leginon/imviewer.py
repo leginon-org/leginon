@@ -155,13 +155,14 @@ class ImViewer(watcher.Watcher, camerafuncs.CameraFuncs):
 		acqcor = self.registerUIMethod(self.uiAcquireCorrected, 'Acquire Corrected', (), returnspec=acqret)
 		acqev = self.registerUIMethod(self.acquireEvent, 'Acquire Event', ())
 
-		popuptoggle = self.registerUIData('Pop-up Viewer', 'boolean', permissions='rw', default=self.popupCallback)
-		popuptoggle.set(xmlrpclib.Boolean(0))
+		popupdefault = xmlrpclib.Boolean(0)
+		popuptoggle = self.registerUIData('Pop-up Viewer', 'boolean', permissions='rw', default=popupdefault)
+		popuptoggle.registerCallback(self.popupCallback)
 
-		#camconfig = self.cameraConfigUISpec()
-		#prefs = self.registerUIContainer('Preferences', (popuptoggle,))
+		camconfig = self.cameraConfigUISpec()
+		prefs = self.registerUIContainer('Preferences', (popuptoggle, camconfig))
 
-		self.registerUISpec(`self.id`, (acqraw, acqcor, acqev, filespec, watcherspec))
+		self.registerUISpec(`self.id`, (acqraw, acqcor, acqev, prefs, filespec, watcherspec))
 
 	def popupCallback(self, value=None):
 		if value is not None:

@@ -28,7 +28,7 @@ class Watcher(node.Node):
 		nui = node.Node.defineUserInterface(self)
 		
 		toggle = self.registerUIData('Watcher On', 'boolean', permissions = 'rw', default=1)
-		toggle.set(self.uiWatchToggleCallback)
+		toggle.registerCallback(self.uiWatchToggleCallback)
 
 		myspec = self.registerUISpec('Watcher', (toggle,))
 		myspec += nui

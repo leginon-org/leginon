@@ -454,13 +454,13 @@ class Manager(node.Node):
 
 		# this is data for ui to read, but not visible
 		nodelistdata = self.registerUIData('nodelist', 'array', 'r')
-		nodelistdata.set(self.uiNodeListCallback)
+		nodelistdata.registerCallback(self.uiNodeListCallback)
 
 		# launch node from tree of launchers
 		self.uilauncherdict = {}
 		self.uilauncherdictdatadict = {}
-		self.uilauncherdictdata = self.registerUIData('launcherdict',
-												'struct', 'r', default=self.uiGetLauncherDict)
+		self.uilauncherdictdata = self.registerUIData('launcherdict', 'struct', 'r')
+		self.uilauncherdictdata.registerCallback(self.uiGetLauncherDict)
 
 		argspec = (self.registerUIData('Name', 'string'),
 								self.registerUIData('Launcher and Class', 'array',
@@ -505,7 +505,7 @@ class Manager(node.Node):
 
 		# managing other nodes, information on nodes, adding a node
 		self.uinodesdata = self.registerUIData('Nodes', 'struct', 'r')
-		self.uinodesdata.set(self.uiNodeDict)
+		self.uinodesdata.registerCallback(self.uiNodeDict)
 		argspec = (self.registerUIData('Hostname', 'string'),
 								self.registerUIData('TCP Port', 'integer'))
 		addnodespec = self.registerUIMethod(self.uiAddNode, 'Add Node', (argspec))

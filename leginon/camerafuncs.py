@@ -93,7 +93,8 @@ class CameraFuncs(object):
 		### default state will be current state if accessable
 		### otherwise a default is defined here
 		try:
-			defaultcamstate = self.cameraState()
+			#defaultcamstate = self.cameraState()
+			defaultcamstate = None
 		except:
 			defaultcamstate = None
 		if defaultcamstate is None:
@@ -107,7 +108,7 @@ class CameraFuncs(object):
 		self.defaultoffset = self.registerUIData('Auto Offset (center image on camera)', 'boolean', default=1, permissions='rw')
 
 		self.camconfig = self.registerUIData('Parameters', 'struct', permissions='rw', default=defaultcamstate)
-		self.camconfig.set(self.cameraConfigCallback)
+		self.camconfig.registerCallback(self.cameraConfigCallback)
 
 		camcont = self.registerUIContainer('Camera Config', (self.camconfig,self.defaultoffset))
 		return camcont

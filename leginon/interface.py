@@ -38,27 +38,32 @@ class DataSpec(SpecObject):
 		else:
 			raise RuntimeError('invalid permissions %s' % permissions)
 		self.choices = choices
-		self.uidata = None
+		self.callback = None
 		self.default = default
-		if self.default is not None:
-			self.set(self.default)
+		self.uidata = default
 		self.pyname = pyname
 
-	def get(self):
-		if callable(self.uidata):
-			return self.uidata()
+	def registerCallback(self, callback):
+		if callable(callback):
+			self.callback = callback
 		else:
+			raise TypeError('callback must be callable')
+
+		if self.default is not None:
+			self.callback(self.default)
+
+	def get(self):
+		if self.callback is None:
 			return copy.deepcopy(self.uidata)
+		else:
+			return self.callback()
 
 	def set(self, value):
-		if callable(self.uidata):
-			self.uidata(value)
+		if self.callback is None:
+			self.uidata = copy.deepcopy(value)
+			return value
 		else:
-			#self.uidata = copy.deepcopy(value)
-			if callable(value):
-				self.uidata = value
-			else:
-				self.uidata = copy.deepcopy(value)
+			return self.callback(value)
 
 	def dict(self):
 		d = SpecObject.dict(self)
@@ -206,14 +211,15 @@ class Client(object):
 		try:
 			ret = getattr(self.proxy, funcname)(*args)
 		except xmlrpclib.ProtocolError, detail:
-			print 'ProtocolError during XML-RPC call'
+			print 'ProtocolError during XML-RPC call:', funcname
 			print 'Note:  this usually means an attempt was made'
 			print ' to send unsupported types, like NoneType or'
 			print ' something other than a string as a dict key.'
 			print ' Check the return value of the remote method.'
+			print 'ProtocolError detail:', detail.errmsg
 			ret = None
 		except xmlrpclib.Fault, detail:
-			print 'Received the following excepetion from XML-RPC Server:'
+			print 'Received the following excepetion from XML-RPC Server during call to %s:' % funcname
 			print detail.faultString
 			ret = None
 		return ret
