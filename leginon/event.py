@@ -24,6 +24,11 @@ def eventClasses():
 	return eventclasses
 
 class Event(data.Data):
+	def __init__(self, **kwargs):
+		if 'hold' not in kwargs:
+			kwargs['hold'] = False
+		data.Data.__init__(self, **kwargs)
+
 	def typemap(cls):
 		t = data.Data.typemap()
 		t += [('node', str), ('confirm', tuple), ('destination', str)]

@@ -100,9 +100,16 @@ class DataManager(object):
 		finally:
 			self.lock.release()
 
-	def insert(self, datainstance, hold=False, remote=False):
+	def insert(self, datainstance, hold=None, remote=False):
 		self.lock.acquire()
 		try:
+			### if hold false, give it a dmid and return
+			### do not manage it
+			if hold is False:
+				newid = self.newid()
+				datainstance.dmid = newid
+				return
+
 			if self.server is None:
 				self.startServer()
 			## if it is already persistent, and we already have
@@ -419,7 +426,7 @@ class Data(DataDict, leginonobject.LeginonObject):
 	to initialize with a dictionary.  If a key exists in both
 	initializer and kwargs, the kwargs value is used.
 	'''
-	def __init__(self, initializer=None, hold=False, **kwargs):
+	def __init__(self, initializer=None, hold=None, **kwargs):
 		####################################################
 		# remember:  pickle and copy do not call __init__
 		# when they regenerate an instance
@@ -447,6 +454,7 @@ class Data(DataDict, leginonobject.LeginonObject):
 		k = self.keys()
 		self.__sizedict = dict(zip(k, [0 for key in k]))
 
+		self.hold = hold
 		datamanager.insert(self, hold=hold)
 
 		# if initializer was given, update my values
@@ -660,6 +668,8 @@ class Data(DataDict, leginonobject.LeginonObject):
 		## would it be better to have only one data reference
 		## that this data instance holds on to and returns
 		## for those who request it?
+		if self.hold is False:
+			raise RuntimeError('cannot reference data that is not managed by DataManager')
 		dr = DataReference(datainstance=self)
 		return dr
 
