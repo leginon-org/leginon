@@ -1117,30 +1117,6 @@ class ImageData(InSessionData):
 			raise RuntimeError('"filename" not set for this image')
 		return self['filename'] + '.mrc'
 
-	### now you just have to set 'filename' to use the new filename()
-	### method, or just implement a new filename() function.
-	def OLDfilename(self):
-		'''
-		create a unique filename for this image
-		filename format:  [session]_[label]_[nodename]_[integer].mrc
-		'''
-		basename = self['session']['name']
-		## use label if available, else use node name
-		if self['label'] is not None:
-			basename += '_%s' % (self['label'],)
-		else:
-			raise RuntimeError('figure out how to create filename without having "label"')
-			
-		raise RuntimeError('figure out how to create filename index without having "id"')
-		myindex = None
-		basename += '_%06d.mrc' % (myindex,)
-		return basename
-
-	def thumb_filename(self):
-		regular = self.filename()
-		thumb = 'thumb_' + regular
-		return thumb
-
 class MosaicImageData(ImageData):
 	'''Image of a mosaic'''
 	def typemap(cls):
@@ -1226,6 +1202,19 @@ class AcquisitionImageData(PresetImageData):
 		t = PresetImageData.typemap()
 		t += [ ('target', AcquisitionImageTargetData), ]
 		t += [('grid', GridData)]
+		return t
+	typemap = classmethod(typemap)
+
+class AcquisitionImageStatsData(InSessionData):
+	def typemap(cls):
+		t = InSessionData.typemap()
+		t += [
+			('image', AcquisitionImageData),
+			('min', float),
+			('max', float),
+			('mean', float),
+			('stdev', float),
+		]
 		return t
 	typemap = classmethod(typemap)
 
@@ -1458,21 +1447,6 @@ class UIData(InSessionData):
 		t = InSessionData.typemap()
 		t += [('object', tuple),
 			('value', strictdict.AnyObject)]
-		return t
-	typemap = classmethod(typemap)
-
-class ImageStatData(InSessionData):
-	def typemap(cls):
-		t = InSessionData.typemap()
-		t += [('nx', int),
-					('ny', int),
-					('nz', int),
-					('mode', int),
-					('amin', float),
-					('amax', float),
-					('amean', float),
-					('stdev', float),
-					('image', AcquisitionImageData)]
 		return t
 	typemap = classmethod(typemap)
 
