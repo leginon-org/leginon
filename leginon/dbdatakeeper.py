@@ -12,8 +12,8 @@ import sqldict
 import threading
 
 class DBDataKeeper(datahandler.DataHandler):
-	def __init__(self):
-		datahandler.DataHandler.__init__(self)
+	def __init__(self, loggername=None):
+		datahandler.DataHandler.__init__(self, loggername)
 		self.dbd = sqldict.SQLDict()
 		self.lock = threading.RLock()
 

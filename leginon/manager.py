@@ -66,8 +66,13 @@ class Manager(node.Node):
 
 		self.clients = {}
 
-		self.datahandler = node.DataHandler(self, databinderclass=DataBinder)
-		self.server = datatransport.Server(self.datahandler, tcpport)
+		self.initializeLogger(id[-1])
+
+		self.datahandler = node.DataHandler(self,
+																				databinderclass=DataBinder,
+																				loggername=self.logger.name)
+		self.server = datatransport.Server(self.datahandler, tcpport,
+																				loggername=self.logger.name)
 		self.uicontainer = uiserver.Server('Manager', xmlrpcport,
 										dbdatakeeper=self.datahandler.dbdatakeeper, session=session)
 
@@ -123,7 +128,7 @@ class Manager(node.Node):
 
 	def addClient(self, newid, datatransportlocation):
 		'''Add a client of clientclass to a node keyed by the node ID.'''
-		self.clients[newid] = self.clientclass(datatransportlocation)
+		self.clients[newid] = self.getClient(datatransportlocation)
 
 	def delClient(self, newid):
 		'''Deleted a client to a node by the node ID.'''
@@ -508,7 +513,7 @@ class Manager(node.Node):
 		e = event.SetManagerEvent(id=self.id, destination=nodeid,
 																	location=self.location(),
 																	session=self.session)
-		client = self.clientclass(location)
+		client = self.getClient(location)
 		try:
 			client.push(e)
 		except (IOError, EOFError):
@@ -813,8 +818,7 @@ class Manager(node.Node):
 
 	def defineUserInterface(self):
 		'''See node.Node.defineUserInterface.'''
-#		node.Node.defineUserInterface(self)
-
+		#node.Node.defineUserInterface(self)
 		self.messagelog = uidata.MessageLog('Message Log')
 
 		self.uinodeinfo = uidata.Struct('Node Information', {}, 'r',
@@ -941,10 +945,15 @@ class Manager(node.Node):
 
 		container = uidata.LargeContainer('Manager')
 
+		self.logger.container.addObject(self.datahandler.logger.container,
+																		position={'span': (1,2)})
+		self.logger.container.addObject(self.server.logger.container,
+																		position={'span': (1,2)})
+
 #		container.addObject(uimanagersetup)
-		container.addObjects((self.messagelog, nodemanagementcontainer,
+		container.addObject(self.messagelog, position={'expand': 'all'})
+		container.addObjects((self.logger.container, nodemanagementcontainer,
 													eventcontainer, self.applicationcontainer))
-													#, diarycontainer))
 
 		self.uiUpdateNodeInfo()
 		self.uiUpdateLauncherInfo()

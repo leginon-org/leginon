@@ -48,8 +48,10 @@ class SimpleCorrector(node.Node):
 		self.abortevent = threading.Event()
 		self.camerafuncs = camerafuncs.CameraFuncs(self)
 
-		self.datahandler = DataHandler(self)
-		self.server = datatransport.Server(self.datahandler, tcpport)
+		self.initializeLogger(id[-1])
+		self.datahandler = DataHandler(self, loggername=self.logger.name)
+		self.server = datatransport.Server(self.datahandler, tcpport,
+																				loggername=self.logger.name)
 		kwargs['datahandler'] = None
 
 		node.Node.__init__(self, id, session, nodelocations, **kwargs)
@@ -377,6 +379,10 @@ class SimpleCorrector(node.Node):
 		self.abortevent.set()
 
 	def defineUserInterface(self):
+		self.logger.container.addObject(self.datahandler.logger.container,
+																		position={'span': (1,2)})
+		self.logger.container.addObject(self.server.logger.container,
+																		position={'span': (1,2)})
 		node.Node.defineUserInterface(self)
 
 		self.displayacquire = uidata.Boolean('Acquired images', False,
@@ -489,8 +495,10 @@ class Corrector(node.Node):
 	def __init__(self, id, session, nodelocations, tcpport=None, **kwargs):
 		self.cam = camerafuncs.CameraFuncs(self)
 
-		self.datahandler = DataHandler(self)
-		self.server = datatransport.Server(self.datahandler, tcpport)
+		self.initializeLogger(id[-1])
+		self.datahandler = DataHandler(self, loggername=self.logger.name)
+		self.server = datatransport.Server(self.datahandler, tcpport,
+																				loggername=self.logger.name)
 		kwargs['datahandler'] = None
 
 		node.Node.__init__(self, id, session, nodelocations, **kwargs)
@@ -514,6 +522,10 @@ class Corrector(node.Node):
 		return location
 
 	def defineUserInterface(self):
+		self.logger.container.addObject(self.datahandler.logger.container,
+																		position={'span': (1,2)})
+		self.logger.container.addObject(self.server.logger.container,
+																		position={'span': (1,2)})
 		node.Node.defineUserInterface(self)
 
 		self.messagelog = uidata.MessageLog('Messages')

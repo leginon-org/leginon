@@ -125,8 +125,10 @@ class PresetsManager(node.Node):
 	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.ListPublishEvent]
 
 	def __init__(self, id, session, nodelocations, tcpport=None, **kwargs):
-		self.datahandler = DataHandler(self)
-		self.server = datatransport.Server(self.datahandler, tcpport)
+		self.initializeLogger(id[-1])
+		self.datahandler = DataHandler(self, loggername=self.logger.name)
+		self.server = datatransport.Server(self.datahandler, tcpport,
+																				loggername=self.logger.name)
 		kwargs['datahandler'] = None
 
 		node.Node.__init__(self, id, session, nodelocations, **kwargs)
@@ -586,6 +588,10 @@ class PresetsManager(node.Node):
 		return sessionnamelist
 
 	def defineUserInterface(self):
+		self.logger.container.addObject(self.datahandler.logger.container,
+																		position={'span': (1,2)})
+		self.logger.container.addObject(self.server.logger.container,
+																		position={'span': (1,2)})
 		node.Node.defineUserInterface(self)
 
 		self.messagelog = uidata.MessageLog('Message Log')

@@ -21,8 +21,11 @@ class Launcher(node.Node):
 	def __init__(self, id, session=None, tcpport=None, xmlrpcport=None, **kwargs):
 		self.nodes = []
 
-		self.datahandler = node.DataHandler(self)
-		self.server = datatransport.Server(self.datahandler, tcpport)
+		self.initializeLogger(id[-1])
+
+		self.datahandler = node.DataHandler(self, loggername=self.logger.name)
+		self.server = datatransport.Server(self.datahandler, tcpport,
+																				loggername=self.logger.name)
 		self.uicontainer = uiserver.Server(str(id[-1]), xmlrpcport,
 																		dbdatakeeper=self.datahandler.dbdatakeeper,
 																		session=session)
@@ -34,6 +37,13 @@ class Launcher(node.Node):
 		self.defineUserInterface()
 		self.addEventInput(event.CreateNodeEvent, self.onCreateNode)
 		self.start()
+
+	def defineUserInterface(self):
+		self.logger.container.addObject(self.datahandler.logger.container,
+																		position={'span': (1,2)})
+		self.logger.container.addObject(self.server.logger.container,
+																		position={'span': (1,2)})
+		node.Node.defineUserInterface(self)
 
 	def start(self):
 		pass

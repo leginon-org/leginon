@@ -12,6 +12,7 @@ import datatransport
 import dbdatakeeper
 import event
 import leginonobject
+import extendedlogging
 import threading
 import uiserver
 import uidata
@@ -48,11 +49,19 @@ class DataHandler(object):
 	def __init__(self, mynode,
 								datakeeperclass=datahandler.SizedDataKeeper,
 								databinderclass=datahandler.DataBinder,
-								dbdatakeeperclass=dbdatakeeper.DBDataKeeper):
-		# giving these all the same id, don't know why
-		self.datakeeper = datakeeperclass()
-		self.databinder = databinderclass()
-		self.dbdatakeeper = dbdatakeeperclass()
+								dbdatakeeperclass=dbdatakeeper.DBDataKeeper,
+								loggername=None):
+		self.logger = extendedlogging.Logger(self.__class__.__name__, loggername)
+
+		self.datakeeper = datakeeperclass(loggername=self.logger.name)
+		self.databinder = databinderclass(loggername=self.logger.name)
+		self.dbdatakeeper = dbdatakeeperclass(loggername=self.logger.name)
+		self.logger.container.addObject(self.datakeeper.logger.container,
+																		position={'span': (1,2)})
+		self.logger.container.addObject(self.databinder.logger.container,
+																		position={'span': (1,2)})
+		self.logger.container.addObject(self.dbdatakeeper.logger.container,
+																		position={'span': (1,2)})
 		self.node = mynode
 
 	def exit(self):
@@ -106,6 +115,8 @@ class Node(leginonobject.LeginonObject):
 								uicontainer=None, launcher=None,
 								clientclass=datatransport.Client):
 		leginonobject.LeginonObject.__init__(self, id)
+		
+		self.initializeLogger()
 
 		self.managerclient = None
 
@@ -146,6 +157,13 @@ class Node(leginonobject.LeginonObject):
 				raise
 			else:
 				pass
+
+	def initializeLogger(self, name=None):
+		if hasattr(self, 'logger'):
+			return
+		if name is None:
+			name = self.id[-1]
+		self.logger = extendedlogging.Logger(name)
 
 	# main, start/stop methods
 
@@ -506,6 +524,9 @@ class Node(leginonobject.LeginonObject):
 		self.datahandler.remove(dataid)
 		self.outputEvent(eventclass(id=self.ID(), dataid=dataid))
 
+	def getClient(self, location):
+		return self.clientclass(location, loggername=self.logger.name)
+
 	def publishRemote(self, idata):
 		'''Publish a piece of data with the specified data ID, setting all other data with the same data ID to the data value (including other nodes).'''
 		dataid = idata['id']
@@ -524,12 +545,12 @@ class Node(leginonobject.LeginonObject):
 		for nodeid in nodeiddata['location']:
 			nodelocation = self.researchByLocation(self.nodelocations['manager'],
 																							nodeid)
-			client = self.clientclass(nodelocation['location']['data transport'])
+			client = self.getClient(nodelocation['location']['data transport'])
 			client.push(idata)
 
 	def researchByLocation(self, location, dataid):
 		'''Get a piece of data with the specified data ID by the location of a node.'''
-		client = self.clientclass(location['data transport'])
+		client = self.getClient(location['data transport'])
 		try:
 			cdata = client.pull(dataid)
 		except IOError:
@@ -577,7 +598,7 @@ class Node(leginonobject.LeginonObject):
 
 	def setManager(self, location):
 		'''Set the manager controlling the node and notify said manager this node is available.'''
-		self.managerclient = self.clientclass(location['data transport'])
+		self.managerclient = self.getClient(location['data transport'])
 		available_event = event.NodeAvailableEvent(id=self.ID(),
 																							location=self.location(),
 																							nodeclass=self.__class__.__name__)
@@ -617,5 +638,5 @@ class Node(leginonobject.LeginonObject):
 
 		container = uidata.LargeContainer('Node')
 		self.uicontainer.addObjects((idarray, classstring, locationstruct,
-																	exitmethod))
+																	self.logger.container, exitmethod))
 

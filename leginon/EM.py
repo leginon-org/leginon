@@ -195,8 +195,10 @@ class EM(node.Node):
 		self.statelock = threading.RLock()
 		self.state = {}
 
-		self.datahandler = DataHandler(self)
-		self.server = datatransport.Server(self.datahandler, tcpport)
+		self.initializeLogger(id[-1])
+		self.datahandler = DataHandler(self, loggername=self.logger.name)
+		self.server = datatransport.Server(self.datahandler, tcpport,
+																				loggername=self.logger.name)
 		kwargs['datahandler'] = None
 
 		node.Node.__init__(self, id, session, nodelocations, **kwargs)
@@ -694,6 +696,10 @@ class EM(node.Node):
 		return container, mapping
 
 	def defineUserInterface(self):
+		self.logger.container.addObject(self.datahandler.logger.container,
+																		position={'span': (1,2)})
+		self.logger.container.addObject(self.server.logger.container,
+																		position={'span': (1,2)})
 		node.Node.defineUserInterface(self)
 
 		self.uipauses = uidata.Boolean('Do Pauses', True, permissions='rw',
