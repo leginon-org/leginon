@@ -1,6 +1,7 @@
 import node
 import application
 import uidata
+import data
 
 class ApplicationEditor(node.Node):
 	def __init__(self, id, session, nodelocations, **kwargs):
@@ -24,13 +25,22 @@ class ApplicationEditor(node.Node):
 		self.application.save()
 		self.printerror('application saved')
 
-	def uiLoad(self):
-		applicationdata = self.applicationeditor.get()
-		applicationdata['nodes'] = []
-		applicationdata['bindings'] = []
+	def uiUpdate(self):
+		applicationdatalist = self.research(dataclass=data.ApplicationData)
+		applicationnamelist = []
+		for applicationdata in applicationdatalist:
+			name = applicationdata['name']
+			if name not in applicationnamelist:
+				applicationnamelist.append(name)
+		self.uiapplicationlist.set(applicationnamelist, 0)
 
+	def uiLoad(self):
+		name = self.uiapplicationlist.getSelectedValue()
+		if name is None:
+			return
 		self.application.clear()
-		self.application.load(applicationdata['name'])
+		self.application.load(name)
+		applicationdata = {'name': name, 'nodes': [], 'bindings': []}
 		for nodespecdata in self.application.nodespecs:
 			applicationdata['nodes'].append((nodespecdata['class string'],
 																				nodespecdata['alias'],
@@ -52,8 +62,11 @@ class ApplicationEditor(node.Node):
 		self.applicationeditor = uidata.Application('Application Editor',
 																								application, 'rw')
 		save = uidata.Method('Save', self.uiSave)
+		self.uiapplicationlist = uidata.SingleSelectFromList('Application', [], 0)
+		self.uiUpdate()
+		update = uidata.Method('Refresh', self.uiUpdate)
 		load = uidata.Method('Load', self.uiLoad)
 		container = uidata.MediumContainer('Application Editor')
-		container.addObjects((self.applicationeditor, save, load))
+		container.addObjects((self.applicationeditor, save, self.uiapplicationlist, update, load))
 		self.uiserver.addObject(container)
 
