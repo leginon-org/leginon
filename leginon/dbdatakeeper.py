@@ -71,7 +71,7 @@ class DBDataKeeper(datahandler.DataHandler):
 			# filename = ???
 			filename = './images/%s-%s.mrc' % (self.session, idata['id'])
 			Mrc.numeric_to_mrc(idata['image'], filename)
-			idata['filename'] = filename
+			idata['database filename'] = filename
 			idata['image'] = None
 
 		types = idata.types()
@@ -80,19 +80,19 @@ class DBDataKeeper(datahandler.DataHandler):
 				# filename = ???
 				filename = './images/%s-%s-%s.mrc' % (self.session, idata['id'], key)
 				Mrc.numeric_to_mrc(idata[key]['image'], filename)
-				idata[key]['filename'] = filename
+				idata[key]['database filename'] = filename
 				idata[key]['image'] = None
 
 	def file2image(self, idata):
 		if isinstance(idata, data.ImageData):
-			idata['image'] = Mrc.mrc_to_numeric(idata['filename'])
-			idata['filename'] = None
+			idata['image'] = Mrc.mrc_to_numeric(idata['database filename'])
+			idata['database filename'] = None
 
 		types = idata.types()
 		for key in types:
 			if issubclass(types[key], data.ImageData):
-				idata[key]['image'] = Mrc.mrc_to_numeric(idata[key]['filename'])
-				idata[key]['filename'] = None
+				idata[key]['image']=Mrc.mrc_to_numeric(idata[key]['database filename'])
+				idata[key]['database filename'] = None
 
 # Ignore for now
 
