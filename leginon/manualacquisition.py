@@ -20,6 +20,8 @@ class AcquireError(Exception):
 	pass
 
 class ManualAcquisition(node.Node):
+	eventinputs = node.Node.eventinputs + EM.EMClient.eventinputs
+	eventoutputs = node.Node.eventoutputs + EM.EMClient.eventoutputs
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.loopstop = threading.Event()
 		self.loopstop.set()

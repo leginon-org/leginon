@@ -94,6 +94,8 @@ def validateGridNumber(gridnumber):
 		return False
 
 class RobotNode(node.Node):
+	eventinputs = node.Node.eventinputs + EM.EMClient.eventinputs
+	eventoutputs = node.Node.eventoutputs + EM.EMClient.eventoutputs
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.statushistory = []
 		self.statusindex = -1

@@ -19,6 +19,8 @@ class Calibrator(node.Node):
 	Calibrator base class
 	Contains basic functions useful for doing calibrations
 	'''
+	eventinputs = node.Node.eventinputs + EM.EMClient.eventinputs
+	eventoutputs = node.Node.eventoutputs + EM.EMClient.eventoutputs
 	def __init__(self, id, session, managerlocation, **kwargs):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 		self.emclient = EM.EMClient(self)

@@ -24,8 +24,10 @@ import EM
 class Navigator(node.Node):
 
 	eventinputs = node.Node.eventinputs + [event.ImageClickEvent,
-																					event.ImageAcquireEvent]
-	eventoutputs = node.Node.eventoutputs + [event.CameraImagePublishEvent]
+																					event.ImageAcquireEvent] \
+									+ EM.EMClient.eventinputs
+	eventoutputs = node.Node.eventoutputs + [event.CameraImagePublishEvent] \
+									+ EM.EMClient.eventoutputs
 
 	def __init__(self, id, session, managerlocation, **kwargs):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)

@@ -19,7 +19,8 @@ import uidata
 import EM
 
 class ImViewer(imagewatcher.ImageWatcher):
-	eventoutputs = imagewatcher.ImageWatcher.eventoutputs + [event.ImageAcquireEvent]
+	eventinputs = imagewatcher.ImageWatcher.eventinputs + EM.EMClient.eventinputs
+	eventoutputs = imagewatcher.ImageWatcher.eventoutputs + [event.ImageAcquireEvent] + EM.EMClient.eventoutputs
 	def __init__(self, id, session, managerlocation, **kwargs):
 		imagewatcher.ImageWatcher.__init__(self, id, session, managerlocation, **kwargs)
 

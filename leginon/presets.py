@@ -154,8 +154,8 @@ class SinglePresetSelector(uidata.Container):
 
 class PresetsManager(node.Node):
 
-	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent]
-	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent]
+	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent] + EM.EMClient.eventinputs
+	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent] + EM.EMClient.eventoutputs
 
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.initializeLogger(id[-1])

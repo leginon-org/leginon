@@ -22,6 +22,8 @@ import math
 import EM
 
 class GonModeler(node.Node):
+	eventinputs = node.Node.eventinputs + EM.EMClient.eventinputs
+	eventoutputs = node.Node.eventoutputs + EM.EMClient.eventoutputs
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.correlator = correlator.Correlator()
 		self.peakfinder = peakfinder.PeakFinder()

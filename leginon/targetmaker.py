@@ -32,7 +32,8 @@ def sortTargets(targets, start=None):
 	return targets
 
 class TargetMaker(node.Node):
-	eventoutputs = node.Node.eventoutputs + [event.ImageTargetListPublishEvent]
+	eventinputs = node.Node.eventinputs + EM.EMClient.eventinputs
+	eventoutputs = node.Node.eventoutputs + [event.ImageTargetListPublishEvent] + EM.EMClient.eventoutputs
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.targetlist = []
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)

@@ -30,8 +30,10 @@ class AbortError(Exception):
 	pass
 
 class SimpleCorrector(node.Node):
+	eventinputs = node.Node.eventinputs + EM.EMClient.eventinputs
 	eventoutputs = node.Node.eventoutputs + [event.DarkImagePublishEvent,
-																						event.BrightImagePublishEvent]
+																						event.BrightImagePublishEvent] \
+																				 + EM.EMClient.eventoutputs
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.references = {}
 		self.abortevent = threading.Event()
@@ -469,7 +471,8 @@ class Corrector(node.Node):
 	  a dark and bright image for this plan.  These are stored as MRC
 	  in the corrections directory.
 	'''
-	eventoutputs = node.Node.eventoutputs + [event.DarkImagePublishEvent, event.BrightImagePublishEvent]
+	eventinputs = node.Node.eventinputs + EM.EMClient.eventinputs
+	eventoutputs = node.Node.eventoutputs + [event.DarkImagePublishEvent, event.BrightImagePublishEvent] + EM.EMClient.eventoutputs
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.initializeLogger(id[-1])
 

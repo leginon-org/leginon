@@ -33,8 +33,20 @@ class InvalidPresetsSequence(Exception):
 
 class Acquisition(targetwatcher.TargetWatcher):
 
-	eventinputs = targetwatcher.TargetWatcher.eventinputs+[event.ImageClickEvent, event.DriftDoneEvent, event.ImageProcessDoneEvent]
-	eventoutputs = targetwatcher.TargetWatcher.eventoutputs + [event.LockEvent, event.UnlockEvent, event.AcquisitionImagePublishEvent, event.TrialImagePublishEvent, event.ChangePresetEvent, event.DriftDetectedEvent, event.AcquisitionImageListPublishEvent]
+	eventinputs = targetwatcher.TargetWatcher.eventinputs \
+								+ [event.ImageClickEvent,
+										event.DriftDoneEvent,
+										event.ImageProcessDoneEvent] \
+								+ EM.EMClient.eventinputs
+	eventoutputs = targetwatcher.TargetWatcher.eventoutputs \
+									+ [event.LockEvent,
+											event.UnlockEvent,
+											event.AcquisitionImagePublishEvent,
+											event.TrialImagePublishEvent,
+											event.ChangePresetEvent,
+											event.DriftDetectedEvent,
+											event.AcquisitionImageListPublishEvent] \
+									+ EM.EMClient.eventoutputs
 
 	def __init__(self, id, session, managerlocation, target_type='acquisition', **kwargs):
 

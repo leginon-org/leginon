@@ -19,9 +19,9 @@ import EM
 
 class TargetFinder(imagewatcher.ImageWatcher):
 	eventoutputs = imagewatcher.ImageWatcher.eventoutputs + [
-																							event.ImageTargetListPublishEvent]
+																							event.ImageTargetListPublishEvent] + EM.EMClient.eventinputs
 	eventinputs = imagewatcher.ImageWatcher.eventinputs + [
-																							event.TargetListDoneEvent]
+																							event.TargetListDoneEvent] + EM.EMClient.eventoutputs
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.targetlist = []
 		self.targetlistevents = {}

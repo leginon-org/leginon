@@ -38,6 +38,10 @@ class CameraUnavailable(EMUnavailable):
 	pass
 
 class EMClient(object):
+	eventinputs = [event.ScopeEMPublishEvent,
+									event.CameraEMPublishEvent,
+									event.CameraImageEMPublishEvent]
+	eventoutputs = [event.SetScopeEvent, event.SetCameraEvent]
 	def __init__(self, node):
 		self.node = node
 		## for referencing the scope and camera
