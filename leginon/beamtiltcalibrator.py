@@ -18,22 +18,14 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 		self.calclient = calibrationclient.BeamTiltCalibrationClient(self)
 
-		## default camera config
-		currentconfig = self.cam.config()
-		currentconfig['state']['dimension']['x'] = 1024
-		currentconfig['state']['binning']['x'] = 4
-		currentconfig['state']['exposure time'] = 500
-		currentconfig['correct'] = 1
-		self.cam.config(currentconfig)
-
 
 		self.defineUserInterface()
 		self.start()
 
 	def setCamState(self):
-		camconfig = self.cam.config()
-		camstate = camconfig['state']
-		self.cam.state(camstate)
+		config = self.cam.cameraConfig()
+		emdata = self.cam.configToEMData(config)
+		self.cam.currentCameraEMData(emdata)
 
 	def calibrateAlignment(self, tilt_value):
 		self.setCamState()
@@ -67,6 +59,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 	def calibrateDefocus(self, tilt_value, defocus1, defocus2):
 		self.setCamState()
+		print 'did setCamState'
 		state1 = {'defocus': defocus1}
 		state2 = {'defocus': defocus2}
 		matdict = {}
@@ -135,8 +128,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		return ''
 
 	def measureDefocusStig(self, btilt):
-		conf = self.cam.config()
-		self.cam.state(conf['state'])
+		self.setCamState()
 		ret = self.calclient.measureDefocusStig(btilt)
 		print 'RET', ret
 		return ret
@@ -170,6 +162,9 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		stigcontainer.addUIObjects((self.stigtiltvalue, self.stigdelta,
 																calstigmethod))
 
+
+		calimage = self.imageViewer()
+
 		self.measuretiltvalue = uidata.UIFloat('Measure Tilt', 0.01, 'rw')
 		self.resultvalue = uidata.UIStruct('Necessary Correction', {}, 'r')
 		measuremethod = uidata.UIMethod('Measure', self.uiMeasureDefocusStig)
@@ -178,8 +173,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 																		measuremethod))
 
 		container = uidata.UIMediumContainer('Beam Tilt Calibrator')
-		container.addUIObjects((cameraconfig, defocuscontainer,
-														stigcontainer, measurecontainer))
+		container.addUIObjects((cameraconfig, defocuscontainer, stigcontainer, calimage, measurecontainer))
 		self.uiserver.addUIObject(container)
 
 	def uiCalibrateDefocus(self):
