@@ -1216,9 +1216,9 @@ class CorrectorCamstateData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
-class GridData(InSessionData):
+class GridData(Data):
 	def typemap(cls):
-		return InSessionData.typemap() + (
+		return Data.typemap() + (
 			('grid ID', int),
 			('insertion', int),
 		)

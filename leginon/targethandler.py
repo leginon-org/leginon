@@ -121,8 +121,45 @@ class TargetHandler(object):
 		newtarget = self.newTarget(drow=None, dcol=None, number=nextnumber, type='simulated')
 		return newtarget
 
-	###########################################################
+class TargetWaitHandler(TargetHandler):
+	eventinputs = TargetHandler.eventinputs + [event.TargetListDoneEvent]
+	def __init__(self):
+		self.targetlistevents = {}
+		TargetHandler.__init__(self)
+		self.addEventInput(event.TargetListDoneEvent, self.handleTargetListDone)
 
+	def handleTargetListDone(self, targetlistdoneevent):
+		'''
+		Receives a target list done event and sets the threading event.
+		'''
+		targetlistid = targetlistdoneevent['targetlistid']
+		status = targetlistdoneevent['status']
+		self.logger.info('Got target list done event, setting threading event %s'
+											% (targetlistid,))
+		if targetlistid in self.targetlistevents:
+			self.targetlistevents[targetlistid]['status'] = status
+			self.targetlistevents[targetlistid]['received'].set()
+		self.confirmEvent(targetlistdoneevent)
+
+	def makeTargetListEvent(self, targetlistdata):
+		'''
+		Creates a threading event to be waited on for target list data.
+		'''
+		tlistid = targetlistdata.dmid
+		self.targetlistevents[tlistid] = {}
+		self.targetlistevents[tlistid]['received'] = threading.Event()
+		self.targetlistevents[tlistid]['status'] = 'waiting'
+
+	def waitForTargetListDone(self):
+		'''
+		Waits until theading events of all target list data are cleared.
+		'''
+		for tid, teventinfo in self.targetlistevents.items():
+			self.logger.info('%s waiting for %s' % (self.name, tid))
+			teventinfo['received'].wait()
+			self.logger.info('%s done waiting for %s' % (self.name, tid))
+		self.targetlistevents.clear()
+		self.logger.info('%s done waiting' % (self.name,))
 
 if __name__ == '__main__':
 	import node
@@ -149,5 +186,4 @@ if __name__ == '__main__':
 	print 'DBID', tar[0].dbid
 	#print 'TAR0', tar[0]
 	print 'IM REF', tar[0].special_getitem('image', dereference=False)
-
 

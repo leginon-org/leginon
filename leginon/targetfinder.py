@@ -23,22 +23,24 @@ import gui.wx.TargetFinder
 import gui.wx.ClickTargetFinder
 import gui.wx.MosaicClickTargetFinder
 
-class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
+class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 	panelclass = gui.wx.TargetFinder.Panel
 	settingsclass = data.TargetFinderSettingsData
 	defaultsettings = {
 		'wait for done': True,
 		'ignore images': False,
 	}
-	eventinputs = imagewatcher.ImageWatcher.eventinputs + [event.AcquisitionImagePublishEvent,
-																							event.TargetListDoneEvent] + EM.EMClient.eventinputs
-	eventoutputs = imagewatcher.ImageWatcher.eventoutputs + [
-																							event.ImageTargetListPublishEvent] + EM.EMClient.eventoutputs
+	eventinputs = imagewatcher.ImageWatcher.eventinputs \
+									+ [event.AcquisitionImagePublishEvent] \
+									+ EM.EMClient.eventinputs \
+									+ targethandler.TargetWaitHandler.eventinputs
+	eventoutputs = imagewatcher.ImageWatcher.eventoutputs \
+									+ EM.EMClient.eventoutputs \
+									+ targethandler.TargetWaitHandler.eventoutputs
 	def __init__(self, id, session, managerlocation, **kwargs):
-		self.targetlistevents = {}
 		imagewatcher.ImageWatcher.__init__(self, id, session, managerlocation,
 																				**kwargs)
-		self.addEventInput(event.TargetListDoneEvent, self.handleTargetListDone)
+		targethandler.TargetWaitHandler.__init__(self)
 		self.emclient = EM.EMClient(self)
 
 	def findTargets(self, imdata, targetlist):
@@ -119,43 +121,10 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
 			self.waitForTargetListDone()
 			self.setStatus('processing')
 
-	def makeTargetListEvent(self, targetlistdata):
-		'''
-		Creates a threading event to be waited on for target list data.
-		'''
-		tlistid = targetlistdata.dmid
-		self.targetlistevents[tlistid] = {}
-		self.targetlistevents[tlistid]['received'] = threading.Event()
-		self.targetlistevents[tlistid]['status'] = 'waiting'
-
-	def waitForTargetListDone(self):
-		'''
-		Waits until theading events of all target list data are cleared.
-		'''
-		for tid, teventinfo in self.targetlistevents.items():
-			self.logger.info('%s waiting for %s' % (self.name, tid))
-			teventinfo['received'].wait()
-			self.logger.info('%s done waiting for %s' % (self.name, tid))
-		self.targetlistevents.clear()
-		self.logger.info('%s done waiting' % (self.name,))
-
 	def notifyUserSubmit(self):
 		message = 'Waiting for user to submit targets...'
 		self.logger.info(message)
 		self.beep()
-
-	def handleTargetListDone(self, targetlistdoneevent):
-		'''
-		Receives a target list done event and sets the threading event.
-		'''
-		targetlistid = targetlistdoneevent['targetlistid']
-		status = targetlistdoneevent['status']
-		self.logger.info('Got target list done event, setting threading event %s'
-											% (targetlistid,))
-		if targetlistid in self.targetlistevents:
-			self.targetlistevents[targetlistid]['status'] = status
-			self.targetlistevents[targetlistid]['received'].set()
-		self.confirmEvent(targetlistdoneevent)
 
 class ClickTargetFinder(TargetFinder):
 	targetnames = ['focus', 'acquisition']

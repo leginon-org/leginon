@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/atlasviewer.py,v $
-# $Revision: 1.4 $
+# $Revision: 1.5 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-05 00:30:57 $
+# $Date: 2005-02-09 20:34:23 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -95,6 +95,13 @@ class Grid(object):
 				return insertion
 		return None
 
+	def getInsertionNumbers(self):
+		numbers = []
+		for insertion in self.insertions:
+			numbers.append(insertion.number)
+		numbers.sort()
+		return numbers
+
 class Insertion(object):
 	def __init__(self, number=None):
 		self.number = number
@@ -136,7 +143,7 @@ class Image(object):
 	def clearTargets(self):
 		self.targets = []
 
-class AtlasViewer(node.Node, targethandler.TargetHandler):
+class AtlasViewer(node.Node, targethandler.TargetWaitHandler):
 	panelclass = gui.wx.AtlasViewer.Panel
 	eventinputs = (
 		node.Node.eventinputs +
@@ -151,6 +158,8 @@ class AtlasViewer(node.Node, targethandler.TargetHandler):
 		self.insertion = None
 
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
+
+		targethandler.TargetWaitHandler.__init__(self)
 
 		self.emclient = EM.EMClient(self)
 		self.cameraclient = camerafuncs.CameraFuncs(self)
@@ -246,10 +255,11 @@ class AtlasViewer(node.Node, targethandler.TargetHandler):
 				image.clearTargets()
 				for target in list(targets):
 					l = image.location
-					if (target[0] >= l[0][0] and target[0] <= l[0][1] and
-							target[1] >= l[1][0] and target[1] <= l[1][1]):
+					column, row = target
+					if (row >= l[0][0] and row <= l[0][1] and
+							column >= l[1][0] and column <= l[1][1]):
 						targets.remove(target)
-						target = (target[0] - l[0][0], target[1] - l[1][0])
+						target = (row - l[0][0], column - l[1][0])
 						image.addTarget(target)
 			self.insertion.images.reverse()
 
@@ -304,37 +314,88 @@ class AtlasViewer(node.Node, targethandler.TargetHandler):
 			atlasimage[l[0][0]:l[0][1], l[1][0]:l[1][1]] = i
 			image.location = l
 			for target in image.targets:
-				targets.append((target[0] + l[0][0], target[1] + l[1][0]))
+				targets.append((target[1] + l[1][0], target[0] + l[0][0]))
 		self.setImage(atlasimage, 'Image')
 		self.setTargets(targets, 'Acquisition')
 
 	def submitTargets(self):
 		self.updateAtlasTargets()
+
+		# TODO: lock UI targeting or selectively delete
+		self.setTargets([], 'Acquisition')
+
 		# should sort these properly
 		for grid in self.grids.grids:
-			# tell the robot to insert this grid
-			# wait for the grid to be inserted
+			# TODO: tell the robot to insert this grid
+			# TODO: wait for the grid to be inserted
 			for insertion in grid.insertions:
+				# TODO: track acquired images and reuse per insertion
 				for image in insertion.images:
 					if image.targets:
-						print grid.gridid, insertion.number, image.targets
+						# acquire image and align
 						image1 = image.data['image'].read()
 						#image2 = self.reacquireImage(image.data)
 						image2 = image1
 						theta, shift = align.alignImages(image1, image2)
 						infostring = 'Rotation: %g, shift: (%g, %g)' % ((theta,) + shift)
 						self.logger.info(infostring)
+
+						targetlist = self.newTargetList()
+
+						griddata = self.getLastGridInsertion(grid.gridid)
+						if griddata is None:
+							self.logger.warning('Failed to get grid insertion, continuing')
+							continue
+
+						try:
+							scope = self.emclient.getScope()
+						except EM.ScopeUnavailable:
+							self.logger.warning('Failed to access microscope, continuing')
+							continue
+						try:
+							camera = self.emclient.getCamera()
+						except EM.CameraUnavailable:
+							self.logger.warning('Failed to access camera, continuing')
+							continue
+
+						presetdata = image.data['preset']
+
+						# align targets
 						shape1 = image1.shape
 						shape2 = image2.shape
-						targets = []
 						for target in image.targets:
 							target = align.alignTarget(target, shape1, shape2, theta, shift)
-							targets.append(target)
-						print targets
-				
-						# remove, submit targets and wait for them to be done
+							row = target[0] - shape2[0]/2
+							column = target[1] - shape2[1]/2
+							targetdata = self.newTargetForGrid(griddata, row, column,
+																									scope=scope, camera=camera,
+																									preset=presetdata,
+																									list=targetlist,
+																									type='acquisition')
+							self.publish(targetdata, database=True)
+
+						# remove targets for this image
+						image.targets = []
+
+						self.makeTargetListEvent(targetlist)
+						self.publish(targetlist, database=True, dbforce=True, pubevent=True)
+
+						self.waitForTargetListDone()
 
 		self.panel.targetsSubmitted()
+
+	def getLastGridInsertion(self, gridid):
+		initializer = {}
+		initializer['grid ID'] = gridid
+		querydata = data.GridData(initializer=initializer)
+		griddatalist = self.research(querydata)
+		maxinsertion = -1
+		griddata = None
+		for gd in griddatalist:
+			if gd['insertion'] > maxinsertion:
+				griddata = gd
+				maxinsertion = gd['insertion']
+		return griddata
 
 	def reacquireImage(self, imagedata):
 		presetdata = imagedata['preset']
