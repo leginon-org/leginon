@@ -361,11 +361,6 @@ class SimpleCalibration(Calibration):
 
 		Calibration.__init__(self, id, nodelocations, **kwargs)
 		self.addEventInput(event.PixelShiftEvent, self.pixelShift)
-		self.start()
-
-	def main(self):
-		pass
-		#self.interact()
 
 	def state(self, value, axis):
 		return {self.parameter: {axis: value}}
@@ -415,10 +410,12 @@ class ImageShiftCalibration(SimpleCalibration):
 	def __init__(self, id, nodelocations, **kwargs):
 		param='image shift'
 		SimpleCalibration.__init__(self, id, nodelocations, parameter=param, **kwargs)
+		self.start()
 
 
 class StageShiftCalibration(SimpleCalibration):
 	def __init__(self, id, nodelocations, **kwargs):
 		param='stage position'
 		SimpleCalibration.__init__(self, id, nodelocations, parameter=param, **kwargs)
+		self.start()
 
