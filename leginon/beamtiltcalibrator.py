@@ -86,6 +86,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		print 'MATRIX type', matrix.typecode()
 		print 'MATRIX flat', Numeric.ravel(matrix)
 		self.calclient.storeMatrix(mag, 'defocus', matrix)
+		self.calclient.storeGoodTilt(mag, tilt_value)
 		return ''
 
 	def calibrateStigmators(self, tilt_value, delta):
