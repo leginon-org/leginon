@@ -99,7 +99,7 @@ class Node(object):
 				self.logger.exception('exception in setManager')
 				raise
 
-		self.objectservice = self.objectserviceclass(self)
+		#self.objectservice = self.objectserviceclass(self)
 
 		self.initializeSettings()
 
@@ -357,6 +357,7 @@ class Node(object):
 		'''Set the manager controlling the node and notify said manager this node is available.'''
 		self.managerclient = datatransport.Client(location['data binder'],
 																							self.clientlogger)
+
 		available_event = event.NodeAvailableEvent(location=self.location(),
 																							nodeclass=self.__class__.__name__)
 		self.outputEvent(ievent=available_event, wait=True, timeout=10)
