@@ -185,6 +185,9 @@ class StateMosaicPublishEvent(PublishEvent):
 class ImageTargetListPublishEvent(PublishEvent):
 	dataclass = data.ImageTargetListData
 
+class PixelDriftPublishEvent(PublishEvent):
+	dataclass = data.PixelDriftData
+
 class ControlEvent(Event):
 	'Event that passes a value with it'
 	pass
