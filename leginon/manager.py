@@ -290,8 +290,10 @@ if __name__ == '__main__':
 	if gui:
 		import managergui
 		import Tkinter
+		hostname = m.location()['hostname']
+		port = m.location()['UI port']
 		tk = Tkinter.Tk()
-		mgui = managergui.ManagerGUI(tk, m)
+		mgui = managergui.ManagerGUI(tk, hostname, port)
 		mgui.pack()
 		t = threading.Thread(target = tk.mainloop)
 		t.setDaemon(1)

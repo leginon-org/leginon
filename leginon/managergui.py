@@ -1,19 +1,14 @@
+#!/usr/bin/env python
 
 from Tkinter import *
 import Pmw
-import xmlrpclib
+import interface
 
 class ManagerGUI(Frame):
-	def __init__(self, parent, managerobject=None, host=None, port=None):
+	def __init__(self, parent, hostname, port):
 		Frame.__init__(self, parent)
-		if managerobject:
-			self.manager = managerobject
-		elif host and port:
-			uri = 'http://%s:%s' % (host, port)
-			self.manager = xmlrpclib.ServerProxy(uri)
-		else:
-			raise RuntimeError('specify either managerobject or host and port')
-
+		self.uiclient = interface.Client(hostname, port)
+		self.uiclient.getMethods()
 		self.build_it()
 
 	def update_all(self):
@@ -23,35 +18,35 @@ class ManagerGUI(Frame):
 		self.update_nodeclasslist()
 
 	def update_launcherlist(self):
-		launcherlist = self.manager.uiGetInfo('launchers')
+		launcherlist = self.uiclient.execute('launchers')
 		self.gui_launcherlist.setlist(launcherlist)
 	def update_nodelists(self):
-		nodelist = self.manager.uiGetInfo('nodes')
+		nodelist = self.uiclient.execute('nodes')
 		self.gui_fromnodelist.setlist(nodelist)
 		self.gui_tonodelist.setlist(nodelist)
 	def update_eventclasslist(self):
-		eventclasslist = self.manager.uiGetInfo('eventclasses')
+		eventclasslist = self.uiclient.execute('eventclasses')
 		self.gui_eventclasslist.setlist(eventclasslist)
 	def update_nodeclasslist(self):
-		nodeclasslist = self.manager.uiGetInfo('nodeclasses')
+		nodeclasslist = self.uiclient.execute('nodeclasses')
 		self.gui_nodeclasslist.setlist(nodeclasslist)
 
 
 	def launch(self):
 		'button callback'
-		name = self.gui_launch_name.get()
-		launcher_str = self.gui_launcherlist.get()
-		nodeclass_str = self.gui_nodeclasslist.get()
-		args = self.gui_launch_args.get()
-		newproc = self.gui_launch_newproc.get()
-		self.manager.uiLaunch(name, launcher_str, nodeclass_str, args, newproc)
+		self.uiclient.setarg('launch','name',self.gui_launch_name.get())
+		self.uiclient.setarg('launch', 'launcher_str', self.gui_launcherlist.get())
+		self.uiclient.setarg('launch', 'nodeclass_str', self.gui_nodeclasslist.get())
+		self.uiclient.setarg('launch', 'args', self.gui_launch_args.get())
+		self.uiclient.setarg('launch', 'newproc', self.gui_launch_newproc.get())
+		self.uiclient.execute('launch')
 
 	def addDistmap(self):
 		'button callback'
-		eventclass_str = self.gui_eventclasslist.get()
-		fromnode_str = self.gui_fromnodelist.get()
-		tonode_str = self.gui_tonodelist.get()
-		self.manager.uiAddDistmap(eventclass_str, fromnode_str, tonode_str)
+		self.uiclient.setarg('bind', 'eventclass_str', self.gui_eventclasslist.get())
+		self.uiclient.setarg('bind', 'fromnode_str', self.gui_fromnodelist.get())
+		self.uiclient.setarg('bind', 'tonode_str', self.gui_tonodelist.get())
+		self.uiclient.execute('bind')
 
 	def build_it(self):
 		"""
@@ -147,6 +142,16 @@ class ManagerGUI(Frame):
 		self.update_all()
 
 		root.pack()
+
+
+if __name__ == '__main__':
+	
+	import Tkinter, sys
+
+	tk = Tkinter.Tk()
+	mgui = ManagerGUI(tk, sys.argv[1], sys.argv[2])
+	mgui.pack()
+	tk.mainloop()
 
 
 
