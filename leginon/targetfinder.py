@@ -127,7 +127,7 @@ class TargetFinder(imagewatcher.ImageWatcher):
 			self.logger.info('Publishing (%s, %s) %s' %
 					(target['delta row'], target['delta column'], target['image'].dmid))
 			self.publish(target, database=True)
-			targetrefs.append(target.reference())
+			#targetrefs.append(target.reference())
 
 		## make a list of references to the targets
 		refs = map(lambda x: x.reference(), self.targetlist)
