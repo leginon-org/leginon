@@ -67,6 +67,10 @@ class LeginonObject(object):
 			printstring += '\033[0m'
 		print printstring
 
+	def printException(self):
+		excinfo = sys.exc_info()
+		sys.excepthook(excinfo)
+
 	def checkPythonVersion(self):
 		message = '''
 		XXXXXXXXXXXXXXXXXX X X X  WARNING  X X X XXXXXXXXXXXXXXXXXX
