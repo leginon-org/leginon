@@ -34,7 +34,6 @@ class PresetsClient(object):
 			print 'no response from PresetsManager after 10s'
 
 	def presetchanged(self, ievent):
-		print 'IEVENT', ievent
 		name = ievent['name']
 		if name in self.pchanged:
 			self.pchanged[name].set()
@@ -190,8 +189,10 @@ class PresetsManager(node.Node):
 		pname = ievent['name']
 		emtarget = ievent['emtarget']
 		if emtarget is None:
+			print 'ToScope'
 			self.toScope(pname)
 		else:
+			print 'targetToScope'
 			self.targetToScope(pname, emtarget)
 		self.confirmEvent(ievent)
 		print 'Preset changed to %s' % (pname,)
@@ -276,6 +277,11 @@ class PresetsManager(node.Node):
 		'''
 		if type(p) is int:
 			del self.presets[p]
+		elif type(p) is str:
+			pcopy = list(self.presets)
+			for preset in pcopy:
+				if preset['name'] == p:
+					self.presets.remove(p)
 		else:
 			self.presets.remove(p)
 
@@ -346,6 +352,8 @@ class PresetsManager(node.Node):
 		self.uiselectpreset.set(pnames, 0)
 		return newpreset
 
+
+
 	def presetNames(self):
 		names = [p['name'] for p in self.presets]
 		return names
@@ -363,6 +371,10 @@ class PresetsManager(node.Node):
 	def uiSelectedFromScope(self):
 		sel = self.uiselectpreset.getSelectedValue()
 		newpreset = self.fromScope(sel)
+
+	def uiSelectedRemove(self):
+		sel = self.uiselectpreset.getSelectedValue()
+		self.removePreset(sel)
 
 	def uiNewFromScope(self):
 		newname = self.enteredname.get()
@@ -408,12 +420,13 @@ class PresetsManager(node.Node):
 
 		toscopemethod = uidata.Method('To Scope', self.uiToScope)
 		fromscopemethod = uidata.Method('Selected From Scope', self.uiSelectedFromScope)
+		removemethod = uidata.Method('Remove Selected', self.uiSelectedRemove)
 
 		self.enteredname = uidata.String('New Name', '', 'rw')
 		newfromscopemethod = uidata.Method('New From Scope', self.uiNewFromScope)
 
 		container = uidata.MediumContainer('Presets Manager')
-		container.addObjects((self.othersession, fromdb, self.uiselectpreset, toscopemethod, fromscopemethod, self.enteredname, newfromscopemethod, self.presetparams))
+		container.addObjects((self.othersession, fromdb, self.uiselectpreset, toscopemethod, fromscopemethod, removemethod, self.enteredname, newfromscopemethod, self.presetparams))
 		self.uiserver.addObject(container)
 
 		return
