@@ -94,5 +94,5 @@ class ImViewer(watcher.Watcher):
 
 if __name__ == '__main__':
 	id = ('ImViewer',)
-	i = ImViewer(id, None)
+	i = ImViewer(id, {})
 	signal.pause()
