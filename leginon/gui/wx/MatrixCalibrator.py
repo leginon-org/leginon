@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MatrixCalibrator.py,v $
-# $Revision: 1.9 $
+# $Revision: 1.10 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-12 17:54:38 $
+# $Date: 2005-03-11 01:46:34 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -17,9 +17,11 @@ from gui.wx.Choice import Choice
 from gui.wx.Entry import IntEntry, FloatEntry
 import gui.wx.Camera
 import gui.wx.Calibrator
-import gui.wx.Settings
+import gui.wx.Dialog
 import gui.wx.ImageViewer
+import gui.wx.Settings
 import gui.wx.ToolBar
+import numarray
 
 def capitalize(string):
 	if string:
@@ -31,21 +33,26 @@ class Panel(gui.wx.Calibrator.Panel):
 	def initialize(self):
 		gui.wx.Calibrator.Panel.initialize(self)
 
-		#self.toolbar.InsertSeparator(2)
+		#InsertSeparator(2)
 		self.cparameter = wx.Choice(self.toolbar, -1)
 		self.cparameter.SetSelection(0)
 		self.toolbar.InsertControl(5, self.cparameter)
 		self.toolbar.InsertTool(6, gui.wx.ToolBar.ID_PARAMETER_SETTINGS,
 													'settings',
 													shortHelpString='Parameter Settings')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_EDIT, 'edit',
+													shortHelpString='Edit current calibration')
 
 	def onNodeInitialized(self):
 		gui.wx.Calibrator.Panel.onNodeInitialized(self)
+		self.Bind(gui.wx.Events.EVT_EDIT_MATRIX, self.onEditMatrix)
 		self.cparameter.AppendItems(map(capitalize, self.node.parameters.keys()))
 		self.cparameter.SetStringSelection(capitalize(self.node.parameter))
 		self.cparameter.Bind(wx.EVT_CHOICE, self.onParameterChoice, self.cparameter)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onParameterSettingsTool,
 											id=gui.wx.ToolBar.ID_PARAMETER_SETTINGS)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onEditMatrixTool,
+											id=gui.wx.ToolBar.ID_EDIT)
 		self.toolbar.Realize()
 
 	def onParameterSettingsTool(self, evt):
@@ -64,6 +71,7 @@ class Panel(gui.wx.Calibrator.Panel):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ACQUIRE, enable)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_CALIBRATE, enable)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, not enable)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_EDIT, enable)
 
 	def onCalibrateTool(self, evt):
 		self._calibrationEnable(False)
@@ -72,6 +80,26 @@ class Panel(gui.wx.Calibrator.Panel):
 	def onAbortTool(self, evt):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
 		threading.Thread(target=self.node.uiAbort).start()
+
+	def onEditMatrixTool(self, evt):
+		threading.Thread(target=self.node.editCurrentCalibration).start()
+
+	def onEditMatrix(self, evt):
+		matrix = evt.calibrationdata['matrix']
+		parameter = evt.calibrationdata['type']
+		ht = evt.calibrationdata['high tension']
+		mag = evt.calibrationdata['magnification']
+		tem = evt.calibrationdata['tem']
+		ccdcamera = evt.calibrationdata['ccdcamera']
+		dialog = EditMatrixDialog(self, matrix, 'Edit Calibration')
+		if dialog.ShowModal() == wx.ID_OK:
+			matrix = dialog.getMatrix()
+			self.node.saveCalibration(matrix, parameter, ht, mag, tem, ccdcamera)
+		dialog.Destroy()
+
+	def editCalibration(self, calibrationdata):
+		evt = gui.wx.Events.EditMatrixEvent(calibrationdata=calibrationdata)
+		self.GetEventHandler().AddPendingEvent(evt)
 
 class MatrixSettingsDialog(gui.wx.Settings.Dialog):
 	def __init__(self, parent, parameter, parametername):
@@ -143,11 +171,68 @@ class MatrixSettingsDialog(gui.wx.Settings.Dialog):
 
 		return [sbsz]
 
+class EditMatrixDialog(gui.wx.Dialog.Dialog):
+	def __init__(self, parent, matrix, title, subtitle='Calibration Matrix'):
+		if matrix is not None and len(matrix.shape) != 2:
+			raise ValueError
+		self.matrix = matrix
+		gui.wx.Dialog.Dialog.__init__(self, parent, title, subtitle=subtitle,
+																	style=wx.DEFAULT_DIALOG_STYLE)
+
+	def onInitialize(self):
+		self.floatentries = []
+		if self.matrix is None:
+			shape = (2, 2)
+		else:
+			shape = self.matrix.shape
+		for row in range(shape[0]):
+			self.floatentries.append([])
+			for column in range(shape[1]):
+				self.floatentries[row].append([])
+				self.floatentries[row][column] = FloatEntry(self, -1, chars=9)
+				if self.matrix is not None:
+					self.floatentries[row][column].SetValue(self.matrix[row, column])
+				self.sz.Add(self.floatentries[row][column], (row, column), (1, 1),
+										wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+
+		self.addButton('Save', wx.ID_OK)
+		self.addButton('Cancel', wx.ID_CANCEL)
+
+		self.Bind(wx.EVT_BUTTON, self.onSaveButton, id=wx.ID_OK)
+
+	def onSaveButton(self, evt):
+		try:
+			self.matrix = self.getMatrix()
+		except ValueError:
+			dialog = wx.MessageDialog(self, 'Invalid matrix values',
+																'Error', wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+		else:
+			evt.Skip()
+
+	def getMatrix(self):
+		if self.matrix is None:
+			shape = (2, 2)
+		else:
+			shape = self.matrix.shape
+		matrix = numarray.zeros(shape, numarray.Float64)
+		for row in range(shape[0]):
+			for column in range(shape[1]):
+				value = self.floatentries[row][column].GetValue()
+				if value is None:
+					raise ValueError
+				matrix[row, column] = value
+		return matrix
+
 if __name__ == '__main__':
 	class App(wx.App):
 		def OnInit(self):
 			frame = wx.Frame(None, -1, 'Matrix Calibration Test')
-			panel = Panel(frame, 'Test')
+			#panel = Panel(frame, 'Test')
+			matrix = numarray.zeros((2, 2))
+			dialog = EditMatrixDialog(frame, matrix, 'Test Edit Dialog')
+			dialog.Show()
 			frame.Fit()
 			self.SetTopWindow(frame)
 			frame.Show()

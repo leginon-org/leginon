@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Dialog.py,v $
-# $Revision: 1.4 $
+# $Revision: 1.5 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-02 23:35:11 $
+# $Date: 2005-03-11 01:46:34 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -14,9 +14,9 @@
 import wx
 
 class Dialog(wx.Dialog):
-	def __init__(self, parent, title, subtitle=''):
-		wx.Dialog.__init__(self, parent, -1, title,
-												style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
+	def __init__(self, parent, title, subtitle='',
+								style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER):
+		wx.Dialog.__init__(self, parent, -1, title, style=style)
 
 		self.sz = wx.GridBagSizer(5, 5)
 

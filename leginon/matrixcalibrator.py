@@ -254,3 +254,33 @@ class MatrixCalibrator(calibrator.Calibrator):
 	def makeState(self, value, axis):
 		return {self.parameter: {axis: value}}
 
+	def getCurrentCalibration(self):
+		if self.instrument.tem is None:
+			raise RuntimeError('cannot access TEM')
+		try:
+			calclient = self.parameters[self.parameter]
+		except KeyError:
+			raise RuntimeError('no parameter selected')
+		return calclient.researchMatrix()
+
+	def editCurrentCalibration(self):
+		try:
+			calibrationdata = self.getCurrentCalibration()
+		except calibrationclient.NoMatrixCalibrationError, e:
+			if e.state is None:
+				raise e
+			else:
+				self.logger.warning('No calibration found for current state: %s' % e)
+				calibrationdata = e.state
+		except Exception, e:
+			self.logger.error('Calibration edit failed: %s' % e)
+			return
+		self.panel.editCalibration(calibrationdata)
+
+	def saveCalibration(self, matrix, parameter, ht, mag, tem, ccdcamera):
+		try:
+			calclient = self.parameters[parameter]
+		except KeyError:
+			raise RuntimeError('no parameter selected')
+		calclient.storeMatrix(ht, mag, parameter, matrix, tem, ccdcamera)
+

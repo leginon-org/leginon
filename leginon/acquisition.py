@@ -197,7 +197,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			try:
 				self.instrument.setTEM(presetdata['tem'])
 				self.instrument.setCCDCamera(presetdata['ccdcamera'])
-			except:
+			except Exception, e:
 				self.logger.error('Acquisition failed to set instrument: %s' % (e,))
 				return 'aborted'
 
@@ -437,9 +437,16 @@ class Acquisition(targetwatcher.TargetWatcher):
 	def setImageFilename(self, imagedata):
 		if imagedata['filename']:
 			return
+		parts = []
 		rootname = self.getRootName(imagedata)
-		listlabel = ''
+		parts.append(rootname)
 
+		if 'grid' in imagedata and imagedata['grid'] is not None:
+			if imagedata['grid']['grid ID'] is not None:
+				grididstr = '%05d' % (imagedata['grid']['grid ID'],)
+				parts.append(grididstr)
+
+		listlabel = ''
 		## use either data id or target number
 		if imagedata['target'] is None or imagedata['target']['number'] is None:
 			print 'This image does not have a target number, it would be nice to have an alternative to target number, like an image number.  for now we will use dmid'
@@ -454,10 +461,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 			presetstr = imagedata['preset']['name']
 		mystr = numberstr + presetstr
 		sep = '_'
+
 		if listlabel:
-			parts = (rootname, listlabel, mystr)
-		else:
-			parts = (rootname, mystr)
+			parts.append(listlabel)
+		parts.append(mystr)
+
 		filename = sep.join(parts)
 		self.reportStatus('output', 'Using filename "%s"' % filename)
 		imagedata['filename'] = filename

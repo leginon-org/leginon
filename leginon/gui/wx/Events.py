@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Events.py,v $
-# $Revision: 1.24 $
+# $Revision: 1.25 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-02 23:05:12 $
+# $Date: 2005-03-11 01:46:34 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -77,6 +77,7 @@ eventFactory('Grid Queue Empty')
 eventFactory('Clear Grid')
 eventFactory('Grid Inserted')
 eventFactory('Extracting Grid')
+eventFactory('Edit Matrix', attributes=['calibrationdata'])
 eventFactory('Add TEM', attributes=['name'], command=True)
 eventFactory('Remove TEM', attributes=['name'], command=True)
 eventFactory('Set TEM', attributes=['name'], command=True)

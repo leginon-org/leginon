@@ -86,6 +86,27 @@ if __name__ == "__main__":
 	# getall projects
 	#allprojects = projects.getall()
 	projectdata = ProjectData()
+
+	gridid = 751
+	grids = projectdata.getGrids()
+	gridsindex = grids.Index(['gridId'])
+	grid = gridsindex[gridid].fetchone()
+	print grid
+	if grid is None:
+		print
+	gridtrayid = 58
+	if grid['boxId'] != gridtrayid:
+		print
+	gridlocations = projectdata.getGridLocations()
+	gridlocationsindex = gridlocations.Index(['gridId'])
+	gridlocation = gridlocationsindex[gridid].fetchone()
+	if gridlocation is None:
+		print
+	if gridlocation['gridboxId'] != gridtrayid:
+		print
+	print gridlocation
+	#return int(gridlocation['location'])
+
 	"""
 	for i in range(1, 97):
 		projectdata.newGrid('Robot Grids 2, #%d' % i, 113, i, 12, i)

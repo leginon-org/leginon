@@ -299,6 +299,21 @@ class QueueGridEvent(ControlEvent):
 		)
 	typemap = classmethod(typemap)
 
+class GridLoadedEvent(NotificationEvent):
+	def typemap(cls):
+		return ControlEvent.typemap() + (
+			('grid ID', int),
+			('request node', str),
+			('status', str),
+		)
+	typemap = classmethod(typemap)
+
+class UnloadGridEvent(NotificationEvent):
+	def typemap(cls):
+		return ControlEvent.typemap() + (
+		)
+	typemap = classmethod(typemap)
+
 class InsertGridEvent(ControlEvent):
 	'Event that signals a grid to be inserted'
 	pass
@@ -310,7 +325,7 @@ class ExtractGridEvent(ControlEvent):
 class MakeTargetListEvent(ControlEvent):
 	'Event telling target maker to make a target list'
 	def typemap(cls):
-		return NotificationEvent.typemap() + (
+		return ControlEvent.typemap() + (
 			('grid', data.GridData),
 		)
 	typemap = classmethod(typemap)

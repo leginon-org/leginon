@@ -110,6 +110,7 @@ class GridRequest(Request):
 	def __init__(self, number):
 		Request.__init__(self)
 		self.number = number
+		self.loaded = False
 
 if sys.platform == 'win32':
 	import pythoncom
@@ -120,9 +121,11 @@ if sys.platform == 'win32':
 class Robot(node.Node):
 	panelclass = gui.wx.Robot.Panel
 	eventinputs = node.Node.eventinputs + [event.TargetListDoneEvent,
+																					event.UnloadGridEvent,
 																					event.QueueGridEvent,
 																					event.MosaicDoneEvent]
 	eventoutputs = node.Node.eventoutputs + [event.MakeTargetListEvent,
+																						event.GridLoadedEvent,
 																						event.EmailEvent]
 	settingsclass = data.RobotSettingsData
 	defaultsettings = {
@@ -131,8 +134,8 @@ class Robot(node.Node):
 	defaultcolumnpressurethreshold = 3.5e-5
 	def __init__(self, id, session, managerlocation, **kwargs):
 
-		#self.simulate = True
-		self.simulate = False
+		self.simulate = True
+		#self.simulate = False
 
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 		self.instrument = instrument.Proxy(self.objectservice, self.session)
@@ -171,10 +174,22 @@ class Robot(node.Node):
 		self.start()
 
 	def handleQueueGrid(self, ievent):
-		request = GridRequest(ievent['number'])
+		number = self.getGridNumber(ievent['grid ID'])
+		evt = event.GridLoadedEvent()
+		evt['grid ID'] = ievent['grid ID']
+		evt['request node'] = ievent['node']
+		if number is None:
+			evt['status'] = 'invalid'
+			self.outputEvent(evt)
+			return
+		request = GridRequest(number)
 		self.queue.put(request)
 		request.event.wait()
-		self.confirmEvent(ievent)
+		if request.loaded:
+			evt['status'] = 'ok'
+		else:
+			evt['status'] = 'failed'
+		self.outputEvent(evt)
 
 	def _queueHandler(self):
 		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
@@ -218,6 +233,8 @@ class Robot(node.Node):
 					self.gridnumber = None
 					continue
 
+				if hasattr(request, 'loaded'):
+					request.loaded = True
 				request.event.set()
 
 				self.extractevent.clear()
@@ -483,12 +500,40 @@ class Robot(node.Node):
 		return projectdata.newGrid('Robot Generated Grid #%d' % gridnumber,	
 																-1, gridnumber, gridboxid, gridnumber)
 
+	def getGridNumber(self, gridid):
+		try:
+			projectdata = project.ProjectData()
+		except project.NotConnectedError, e:
+			self.logger.error('Failed to find grid information: %s' % e)
+			return None
+
+		grids = projectdata.getGrids()
+		gridsindex = grids.Index(['gridId'])
+		grid = gridsindex[gridid].fetchone()
+		if grid is None:
+			self.logger.error('Failed to find grid information: %s' % e)
+			return None
+		if grid['boxId'] != self.gridtrayid:
+			self.logger.error('Grid ID #%s is not in selected grid tray' % gridid)
+			return None
+		gridlocations = projectdata.getGridLocations()
+		gridlocationsindex = gridlocations.Index(['gridId'])
+		gridlocation = gridlocationsindex[gridid].fetchone()
+		if gridlocation is None:
+			self.logger.error('Failed to find grid number for grid ID #%s' % (gridid))
+			return None
+		if gridlocation['gridboxId'] != self.gridtrayid:
+			self.logger.error('Last location for grid ID #%s does not match selected tray' % (gridid))
+			return None
+		return int(gridlocation['location'])
+
 	def getGridID(self, gridboxid, gridnumber):
 		try:
 			projectdata = project.ProjectData()
 		except project.NotConnectedError, e:
 			self.logger.error('Failed to find grid information: %s' % e)
 			return None
+
 		gridlocations = projectdata.getGridLocations()
 		gridboxidindex = gridlocations.Index(['gridboxId'])
 		gridlocations = gridboxidindex[gridboxid].fetchall()

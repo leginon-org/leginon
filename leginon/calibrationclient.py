@@ -31,7 +31,12 @@ class NoPixelSizeError(Exception):
 	pass
 
 class NoMatrixCalibrationError(Exception):
-	pass
+	def __init__(self, *args, **kwargs):
+		if 'state' in kwargs:
+			self.state = kwargs['state']
+		else:
+			self.state = None
+		Exception.__init__(self, *args)
 
 class NoSensitivityError(Exception):
 	pass
@@ -374,42 +379,65 @@ class MatrixCalibrationClient(CalibrationClient):
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)
 
-	def researchMatrix(self, ht, mag, caltype):
-		missing = []
-		if ht is None:
-			missing.append('ht')
-		if mag is None:
-			missing.append('mag')
-		if caltype is None:
-			missing.append('caltype')
-		if missing:
-			missing = ', '.join(missing)
-			message = 'need to specify %s to find calibration matrix' % (missing,)
-			raise RuntimeError(message)
+	def parameter(self):
+		raise NotImplementedError
 
-		queryinstance = data.MatrixCalibrationData(magnification=mag, type=caltype)
+	def researchMatrix(self, caltype=None, ht=None, mag=None,
+											tem=None, ccdcamera=None):
+		if caltype is None:
+			caltype = self.parameter()
+
+		if ht is None:
+			try:
+				ht = self.instrument.tem.HighTension
+			except AttributeError:
+				raise NoMatrixCalibrationError('no TEM selected for high tension')
+			except Exception, e:
+				raise NoMatrixCalibrationError(e)
+		if mag is None:
+			try:
+				mag = self.instrument.tem.Magnification
+			except AttributeError:
+				raise NoMatrixCalibrationError('no TEM selected for magnification')
+			except Exception, e:
+				raise NoMatrixCalibrationError(e)
+		if tem is None:
+			try:
+				tem = self.instrument.getTEMData()
+			except Exception, e:
+				raise NoMatrixCalibrationError(e)
+		if ccdcamera is None:
+			try:
+				ccdcamera = self.instrument.getCCDCameraData()
+			except Exception, e:
+				raise NoMatrixCalibrationError(e)
+
+		queryinstance = data.MatrixCalibrationData()
+		queryinstance['type'] = caltype
+		queryinstance['magnification'] = mag
 		queryinstance['high tension'] = ht
-		queryinstance['tem'] = self.instrument.getTEMData()
-		queryinstance['ccdcamera'] = self.instrument.getCCDCameraData()
+		queryinstance['tem'] = tem
+		queryinstance['ccdcamera'] = ccdcamera
 		caldatalist = self.node.research(datainstance=queryinstance, results=1)
 		if len(caldatalist) > 0:
 			caldata = caldatalist[0]
 			return caldata
 		else:
-			excstr = '%s at HT: %s, mag: %sX' % (caltype, ht, mag)
-			raise NoMatrixCalibrationError(excstr)
+			excstr = '%s, HT %s, %sX' % (caltype, ht, mag)
+			raise NoMatrixCalibrationError(excstr, state=queryinstance)
 
-	def retrieveMatrix(self, ht, mag, caltype):
+	def retrieveMatrix(self, caltype=None, ht=None, mag=None,
+											tem=None, ccdcamera=None):
 		'''
 		finds the requested matrix using magnification and type
 		'''
-		caldata = self.researchMatrix(ht, mag, caltype)
+		caldata = self.researchMatrix(caltype, ht, mag, tem, ccdcamera)
 		matrix = caldata['matrix'].copy()
 		return matrix
 
 	def time(self, ht, mag, caltype):
 		try:
-			caldata = self.researchMatrix(ht, mag, caltype)
+			caldata = self.researchMatrix(caltype, ht, mag)
 		except:
 			caldata = None
 		if caldata is None:
@@ -418,12 +446,16 @@ class MatrixCalibrationClient(CalibrationClient):
 			timestamp = caldata.timestamp
 		return timestamp
 
-	def storeMatrix(self, ht, mag, type, matrix):
+	def storeMatrix(self, ht, mag, type, matrix, tem=None, ccdcamera=None):
 		'''
 		stores a new calibration matrix
 		'''
+		if tem is None:
+			tem = self.instrument.getTEMData()
+		if ccdcamera is None:
+			ccdcamera = self.instrument.getCCDCameraData()
 		newmatrix = Numeric.array(matrix, Numeric.Float64)
-		caldata = data.MatrixCalibrationData(session=self.node.session, magnification=mag, type=type, matrix=matrix, tem=self.instrument.getTEMData(), ccdcamera=self.instrument.getCCDCameraData())
+		caldata = data.MatrixCalibrationData(session=self.node.session, magnification=mag, type=type, matrix=matrix, tem=tem, ccdcamera=ccdcamera)
 		caldata['high tension'] = ht
 		self.node.publish(caldata, database=True, dbforce=True)
 
@@ -440,15 +472,12 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 
 	def measureDefocusStig(self, tilt_value, publish_images=0, drift_threshold=None, image_callback=None, stig=True, target=None):
 		self.abortevent.clear()
-		scopedata = self.instrument.getData(data.ScopeEMData, image=False)
-		mag = scopedata['magnification']
-		ht = scopedata['high tension']
-		fmatrix = self.retrieveMatrix(ht, mag, 'defocus')
+		fmatrix = self.retrieveMatrix('defocus')
 		if fmatrix is None:
 				raise RuntimeError('missing calibration matrix')
 		if stig:
-			amatrix = self.retrieveMatrix(ht, mag, 'stigx')
-			bmatrix = self.retrieveMatrix(ht, mag, 'stigy')
+			amatrix = self.retrieveMatrix('stigx')
+			bmatrix = self.retrieveMatrix('stigy')
 			if None in (amatrix, bmatrix):
 				raise RuntimeError('missing calibration matrix')
 
@@ -734,7 +763,7 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		biny = camera['binning']['y']
 		par = self.parameter()
 
-		matrix = self.retrieveMatrix(ht, mag, par)
+		matrix = self.retrieveMatrix(par, ht, mag)
 
 		xvect = matrix[:,0]
 		yvect = matrix[:,1]
@@ -764,7 +793,7 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		pixcol = pixelshift['col'] * binx
 		pixvect = (pixrow, pixcol)
 
-		matrix = self.retrieveMatrix(ht, mag, par)
+		matrix = self.retrieveMatrix(par, ht, mag)
 
 		change = Numeric.matrixmultiply(matrix, pixvect)
 		changex = change[0]
@@ -801,7 +830,7 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 			newshift['y'] = newshift['y'] * Numeric.cos(alpha)
 		vect = (newshift['x'], newshift['y'])
 
-		matrix = self.retrieveMatrix(ht, mag, par)
+		matrix = self.retrieveMatrix(par, ht, mag)
 		matrix = LinearAlgebra.inverse(matrix)
 
 		pixvect = Numeric.matrixmultiply(matrix, vect)
