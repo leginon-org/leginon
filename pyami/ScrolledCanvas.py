@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from Tkinter import *
+from ImageCanvas import ImageCanvas
 
 class ScrolledCanvas(Frame):
 	def __init__(self, *args, **kargs):
@@ -16,7 +17,7 @@ class ScrolledCanvas(Frame):
 
 	def _build(self):
 		bgcolor = self['background']
-		can = self.canvas = Canvas(self, bg=bgcolor)
+		can = self.canvas = ImageCanvas(self, bg=bgcolor)
 		hs = self.hscroll = Scrollbar(self, orient=HORIZONTAL, background=bgcolor, troughcolor=bgcolor)
 		vs = self.vscroll = Scrollbar(self, orient=VERTICAL, background=bgcolor, troughcolor=bgcolor)
 
@@ -65,21 +66,22 @@ class ScrolledCanvas(Frame):
 			self.vscroll_state(OFF)
 		else:
 			self.vscroll_state(ON)
-
 			
 	def resize(self, x1, y1, x2, y2):
-		width = x2 - x1
-		height = y2 - y1
-		self.canvas['width'] = width
-		self.canvas['height'] = height
-		self.canvas['scrollregion'] = (x1,y1,x2,y2)
+		self.canvas.resize(x1,y1,x2,y2)
 
 if __name__ == '__main__':
 	mycan = ScrolledCanvas(bg='darkgrey')
 	mycan.pack(expand=YES,fill=BOTH)
 
+
+	from Mrc import *
+	ndata = mrc_to_numeric('test1.mrc')
+	mycan.canvas.use_numeric(ndata)
+	mycan.canvas.image_display()
+
 	mycan.canvas.create_oval(0,0,50,50, fill='green')
 	mycan.canvas.create_oval(-50,-50,0,0, fill='red')
 
-	mycan.resize(-100,-100,100,100)
+	#mycan.resize(-100,-100,100,100)
 	mycan.mainloop()

@@ -75,73 +75,6 @@ class ImageItem:
 		self.canvas.fit_images()
 
 
-class ImageCanvas(ScrolledCanvas):
-	"""
-	This is a ScrolledCanvas with special event bindings and
-	easy management of any number of PhotoImage items
-	"""
-	def __init__(self,*args,**kargs):
-		ScrolledCanvas.__init__(self,*args,**kargs)
-		self['cursor'] = 'crosshair'
-		self.images = []
-		self.cursorinfo = CursorInfo(self)
-
-		### linkable Tk variables
-		self.can_x = IntVar()
-		self.can_y = IntVar()
-		self.img_x = IntVar()
-		self.img_y = IntVar()
-		self.img_i = IntVar()
-
-	def new_image(self, x, y):
-		"""
-		Creates a new image on the canvas with NW corner at x,y.
-		"""
-		im = ImageItem(self, x, y)
-		self.images.append( im )
-		return im
-
-	def leave_callback(self, event):
-		ScrolledCanvas.leave_callback(self,event)
-		self.canvas.delete('overlaytext')
-
-	def motion_callback(self,event):
-		ScrolledCanvas.motion_callback(self,event)
-		can = self.canvas
-
-		view_width = can.winfo_width()
-		view_height = can.winfo_height()
-		can_x = can.canvasx(event.x)
-		can_y = can.canvasy(event.y)
-
-		self.can_x.set(can_x)
-		self.can_y.set(can_y)
-
-		info = self.cursorinfo.query(can_x, can_y)
-
-	def fit_images(self):
-		"""resize the canvas to fit all its images"""
-		### find the min/max extents of all images
-		xmin = ymin = sys.maxint
-		xmax = ymax = -sys.maxint
-		for image in self.images:
-			imgxmin = image.nwx
-			imgymin = image.nwy
-			imgxmax = imgxmin + image.dispwidth
-			imgymax = imgymin + image.dispheight
-			
-			if imgxmin < xmin:
-				xmin = imgxmin
-			if imgxmax > xmax:
-				xmax = imgxmax
-			if imgymin < ymin:
-				ymin = imgymin
-			if imgymax > ymax:
-				ymax = imgymax
-
-		self.resize(xmin,ymin,xmax,ymax)
-
-
 class CursorInfo:
 	"""
 	CursorInfo(imagecanvas)
@@ -244,13 +177,12 @@ class ImageViewer(Frame):
 
 	## put together component widgets
 	def _build(self):
-		self.canvas = ImageCanvas(self, bg = '#acf',bd=4, relief=RAISED)
+		self.canvas = ScrolledCanvas(self, bg = '#acf',bd=4, relief=RAISED)
 		self.canvas.pack(padx=4,pady=4,expand=YES,fill=BOTH,side=TOP)
-		self.im = self.canvas.new_image(0,0)
-		self.cursorinfo = CursorInfoWidget(self, self.canvas.cursorinfo)
-		self.cursorinfo.pack(side=TOP)
-		self.clipper = self.im.create_clipper(self)
-		self.clipper.pack(side=TOP)
+		#self.cursorinfo = CursorInfoWidget(self, self.canvas.cursorinfo)
+		#self.cursorinfo.pack(side=TOP)
+		#self.clipper = self.im.create_clipper(self)
+		#self.clipper.pack(side=TOP)
 
 	def info_bar(self, state):
 		if state == ON:
@@ -264,17 +196,15 @@ class ImageViewer(Frame):
 		Display 2D Numeric array in this ImageViewer.
 		Optional 'clip' tuple gives min and max value to display
 		"""
-		self.im.import_numeric(data)
-		h,w = data.shape
-		self.canvas.resize(0,0,w,h)
+		self.canvas.canvas.use_numeric(data)
 
 	def show(self, clip=None):
-		self.im.show(clip)
+		self.canvas.canvas.image_display()
 
 	## resize my canvas when I am resized
 	def configure_callback(self, event):
-		self.canvas['width'] = event.width
-		self.canvas['height'] = event.height
+		self.canvas.canvas.resize(0,0,event.width, event.height)
+
 
 if __name__ == '__main__':
 	root = Tk()
@@ -282,11 +212,9 @@ if __name__ == '__main__':
 	jim = ImageViewer(root, bg='#488')
 	jim.pack()
 
-
-
 	## read mrc image into Numeric array
 	data1 = mrc_to_numeric('test1.mrc')
-	data1 = data1[:256]
+	#data1 = data1[:256]
 
 	#import Numeric
 	#data = Numeric.arrayrange(16384)
@@ -294,5 +222,6 @@ if __name__ == '__main__':
 
 	## create a photo image and plug it into the viewer
 	jim.import_numeric(data1)
+	jim.show()
 
 	root.mainloop()

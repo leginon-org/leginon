@@ -30,46 +30,47 @@ def numeric_bin(ndata, bin):
 	newshape = shape[0]/bin[0], shape[1]/bin[1]
 
 
-class NumericImage(ImageTk.PhotoImage):
-	"""extends the PIL PhotoImage to take 2D Numeric data, scaled to
-	the clients preference"""
+class NumericImage:
+	"""
+	NumericImage couples a Numeric array with a PIL Image instance.
+	"""
+	def __init__(self, orig_array):
+		self.use_numeric(orig_array)
+		self.transform = {'clip':(None,None), 'zoom':1.0}
+		self.update_image()
 
-	def __init__(self,*args,**kargs):
-		ImageTk.PhotoImage.__init__(self, *args, **kargs)
+	def __setitem__(self, key, value):
+		if key not in self.transform.keys():
+			raise KeyError, 'key must be one of: ' + `self.transform.keys()`
+		self.transform[key] = value
 
-	def use_array(self, ndata):
-		self.array = ndata
-		self.array_min = min(Numeric.reshape(self.array,(1,-1))[0])
-		self.array_max = max(Numeric.reshape(self.array,(1,-1))[0])
+	def use_numeric(self, num_data):
+		shape = num_data.shape
+		if len(shape) != 2:
+			raise RuntimeError, 'orig_array must be 2-D Numeric array'
+		self.orig_array = num_data
+		h,w = shape  # transpose Numeric array
+		self.orig_size = w,h
+		self.num_min = min(Numeric.ravel(self.orig_array))
+		self.num_max = max(Numeric.ravel(self.orig_array))
+		print 'stats', self.num_min, self.num_max
 
-	def zoom(self, *args, **kargs):
-		ImageTk.PhotoImage._PhotoImage__photo.zoom(self,*args,**kargs)
+	def zoom(self):
+		pass
 
-	def paste(self, clip=None):
-		"""Paste a Numeric array into photo image.
-		'clip' specifies the min and max values of the array
-		that should be scaled to the display (0-255)
-		If no clip is specified, default is min and max of array"""
-		newim = self.array_to_image(clip)
-		ImageTk.PhotoImage.paste(self, newim)
-
-	def array_to_image(self, clip=None):
-		h,w = self.array.shape
-		size = (w,h)
-		if len(size) != 2:
-			return None
-
-		## if no clip specified, use min and max of array
-		if clip:
-			minval,maxval = clip
-		else:
-			minval = self.array_min
-			maxval = self.array_max
-
+	def clip(self, input):
+		"""
+		Scale Numeric data to a viewable range (0-255).
+		clip tuple specifies (min, max) where min scales to 0, and
+		max scales to 255.
+		"""
+		minval = self.transform['clip'][0]
+		maxval = self.transform['clip'][1]
+		## if no clip specified, use min or max of array
 		if minval == None:
-			minval = self.array_min
+			minval = self.num_min
 		if maxval == None:
-			maxval = self.array_max
+			maxval = self.num_max
 
 		range = maxval - minval
 		try:
@@ -78,52 +79,39 @@ class NumericImage(ImageTk.PhotoImage):
 		except ZeroDivisionError:
 			scl = 0.0
 			off = 0.0
-		newdata = scl * self.array + off
-		
-		type = newdata.typecode()
-		itemsize = newdata.itemsize()
-		im_mode = ntype_itype[type,itemsize][0]
-		im_rawmode = ntype_itype[type,itemsize][1]
 
-		nstr = newdata.tostring()
+		output = scl * input + off
+		return output
+
+	def update_image(self):
+		"""
+		generates the PIL Image representation of this Numeric array
+		"""
+
+		final = self.clip(self.orig_array)
+		type = final.typecode()
+		h,w = final.shape
+		imsize = w,h
+		itemsize = final.itemsize()
+		immode = ntype_itype[type,itemsize][0]
+		rawmode = ntype_itype[type,itemsize][1]
+
+		nstr = final.tostring()
 
 		stride = 0
 		orientation = 1
+		self.image = Image.fromstring(immode, imsize, nstr, 'raw', rawmode, stride, orientation)
+		return self.image
 
-		im = Image.fromstring( im_mode, size, nstr, "raw",
-			        im_rawmode, stride, orientation
-				        )
-		return im
+	def photoimage(self):
+		"""
+		generates a PhotoImage object representing this PIL Image
+		"""
+		photo = ImageTk.PhotoImage(self.image)
+		return photo
+
 
 if __name__ == '__main__':
-	root = Tk()
-	can = Canvas(width = 512, height = 512, bg='blue')
-	can.pack()
-
-	mode = 'I'
-	size = (128,256)
-	ndata = Numeric.arrayrange(256**2/2)
-	ndata.shape = size
-
-	numphoto1 = NumericImage(mode, size)
-	numphoto1.use_array(ndata)
-	numphoto1.paste((10000,30000))
-
-	numphoto2 = NumericImage(mode, size)
-	numphoto2.use_array(ndata)
-	numphoto2.paste()
-
-	numphoto3 = NumericImage(mode, size)
-	numphoto3.use_array(ndata)
-	numphoto3.paste()
-
-	numphoto4 = NumericImage(mode, size)
-	numphoto4.use_array(ndata)
-	numphoto4.paste()
-
-	can.create_image(0,0,anchor=NW,image=numphoto1)
-	can.create_image(0,256,anchor=NW,image=numphoto2)
-	can.create_image(256,0,anchor=NW,image=numphoto3)
-	can.create_image(256,256,anchor=NW,image=numphoto4)
-
-	root.mainloop()
+	from Numeric import *
+	a1 = reshape(arrayrange(128**2), (128,128))
+	n1 = NumericImage(a)
