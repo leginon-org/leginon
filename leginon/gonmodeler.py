@@ -158,7 +158,8 @@ class GonModeler(calibrator.Calibrator):
 			self.peakfinder.subpixelPeak()
 			peakresults = self.peakfinder.getResults()
 			peak = peakresults['subpixel peak']
-			self.setTargets([peak], 'Peak')
+			y,x = peak
+			self.setTargets([(x,y)], 'Peak')
 			shift = correlator.wrap_coord(peak, crosscorr.shape)
 			binx = newimagedata['camera']['binning']['x']
 			biny = newimagedata['camera']['binning']['y']
