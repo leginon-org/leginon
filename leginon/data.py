@@ -93,7 +93,7 @@ def replaceData(originaldata, func, memo=None, copymemo=None):
 	memo[d] = replacement
 	return replacement
 
-class DataReference(object):
+class DataReference(dict):
 	'''
 	instances of DataReference can be used in place of the actual data
 	when one Data object references another.
