@@ -62,6 +62,16 @@ class OrderedDict(dict):
 	def items(self):
 		return list(self.__ordered_items)
 
+	def iterkeys(self):
+		return iter(self.keys())
+	__iter__ = iterkeys
+
+	def itervalues(self):
+		return iter(self.values())
+
+	def iteritems(self):
+		return iter(self.items())
+
 	def __setitem__(self, key, value):
 		dict.__setitem__(self, key, value)
 		self.__setlists(key, value)
