@@ -245,6 +245,7 @@ class Node(leginonobject.LeginonObject):
 		'''
 		Get piece[s] of data.
 		Takes kwargs:
+			results for number of results to return 0 means all, default is all
 			for node's datahandlers specify 'id' and 'session'
 			for DBDataKeeper specify 'dataclass' and keys ('id', 'magnification', ...)
 				or
@@ -271,22 +272,20 @@ class Node(leginonobject.LeginonObject):
 				for index in indices:
 					if index not in datainstance:
 						raise ValueError
-			result += self.datahandlers[dbdatakeeper.DBDataKeeper].query(datainstance,
-																																				indices)
-		except (KeyError, ValueError), e:
-			if isinstance(e, KeyError):
-				self.printerror('DBDataKeeper research failed, no DBDataKeeper')
-			elif isinstance(e, ValueError):
+		except ValueError:
 				self.printerror('DBDataKeeper research failed, bad kwarg \'%s\''
 																																	% index)
-			else:
-				self.printerror('DBDataKeeper research failed')
+		else:
+			try:
+				result += self.datahandlers[dbdatakeeper.DBDataKeeper].query(
+																													datainstance, indices)
+			except KeyError:
+				self.printerror('DBDataKeeper research failed, no DBDataKeeper')
 
-		# first for now
-		try:
-			return result[0]
-		except:
-			return None
+		if results in kwargs:
+			return result[0:kwargs['results']]
+		else:
+			return result
 
 	def unpublish(self, dataid, eventclass=event.UnpublishEvent):
 		'''Make a piece of data unavailable to other nodes.'''
