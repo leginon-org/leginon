@@ -372,7 +372,10 @@ class ImportExport:
 		ref_tables=['ApplicationData',]
 		tables = self.db.selectall("SHOW TABLES")
 		for table in tables:
-			tablename=table['Tables_in_dbemdata']
+			tablename=table.values()[0]
+			### do not export table LaunchedApplicationData ###
+			if tablename=='LaunchedApplicationData':
+				continue
 			q = "SHOW FIELDS FROM `%s`" % (tablename,)
 			rows = self.db.selectall(q)
 			for row in rows:
@@ -393,10 +396,10 @@ class ImportExport:
 
 if __name__ == "__main__":
 	appname = "MSI1_062"
-	appfile= "/home/dfellman/MSI1_062_1.xml"
+#	appfile= "/home/dfellman/MSI1_062_1.xml"
 	app = ImportExport()
-	app.setDBparam(host="stratocaster")
-	app.importApplication(appfile)
-	print app.getMessageLog()
+#	app.setDBparam(host="stratocaster")
+#	app.importApplication(appfile)
+#	print app.getMessageLog()
 	dump = app.exportApplication(appname)
-	#print dump
+	print dump

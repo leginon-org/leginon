@@ -15,37 +15,31 @@ import dbdatakeeper
  #initializer = {'name': 'voici'}
 initializer = {'name': 'Session Test 2'}
 session = data.SessionData(initializer=initializer)
+
+# n = node.Node(('my node',), None)
+# n.research(datainstance=session)
+# n.publish(session, database=True)
+
 dk = dbdatakeeper.DBDataKeeper()
 # d = dbdatakeeper.DBDataKeeper(('fake',), session)
 value = {"denis":68}
 # namelist = ('ufer', 'Presets Manager', 'Selection', 'Cycle', 'Cycle On')
 namelist = ('Manager', 'Nodes', 'Add Existing Node', 'Hostname', 'History')
-bin = data.Binary(value)
 
 initializer = {'session': session,
 		'object': namelist,
-		'binary value': None }
+		'value': value }
 
 odata = data.UIData(initializer=initializer)
- #dk.insert(odata)
+Dk.insert(odata)
 print odata
 
 # sys.exit()
 
 
-result = dk.query(odata)
+# result = dk.query(odata)
 #print "----------------------"
 #print "Result: ",result
-
-d = result[0]['binary value'].getObject()
-print "-----------"
-print d
-print "-----------"
-if isinstance(value, data.Binary):
-	d = value.getObject()
-print "object: %s, %s " % (d, type(d))
-
-
 
 
 
@@ -81,7 +75,7 @@ db.createSQLTable('PRESET_TEST', presetDefinition)
 
 
 
-db.Preset = db.Table('PRESET', [ 'Name', 'Width', 'Height', 'Binning', 'ExpTime', 'Dose',
+db.Preset = db.Table('PRESET_TEST', [ 'Name', 'Width', 'Height', 'Binning', 'ExpTime', 'Dose',
 		'BeamCurrent', 'LDButton', 'Mag', 'PixelSize', 'Defocus', 'SpotSize',
 		'Intensity', 'BShiftX', 'BShiftY', 'IShiftX', 'IShiftY' ])
 
