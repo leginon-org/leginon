@@ -757,7 +757,7 @@ class ManagerSetup(object):
 				hostname = session['instrument']['hostname']
 				if hostname:
 					self.manager.addNode(hostname, 55555)
-			except (TypeError, socket.error), e:
+			except (IOError, TypeError, socket.error), e:
 				if isinstance(e, socket.error):
 					self.manager.outputWarning('Cannot add instrument\'s launcher.')
 			parent = self.container.getParent()
