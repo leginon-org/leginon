@@ -72,7 +72,7 @@ class EMClient(object):
 		setevent = SetScopeEvent(data=value)
 		self.node.outputEvent(setevent, wait=True)
 
-	def setScope(self, value):
+	def setCamera(self, value):
 		setevent = SetCameraEvent(data=value)
 		self.node.outputEvent(setevent, wait=True)
 
