@@ -233,7 +233,6 @@ class Corrector(node.Node):
 		## somehow session is being set to the current session
 		## don't want to query based on that.
 		imagetemp['session'] = None
-		print 'IMAGETEMP', imagetemp
 		refs = self.research(datainstance=imagetemp, results=1)
 		if refs:
 			ref = refs[0]
