@@ -133,9 +133,9 @@ class MissingImageError(Exception):
 
 
 if __name__ == '__main__':
-	from mrc.Mrc import mrc_to_numeric
+	from Mrc import mrc_to_numeric
 	from Tkinter import *
-	from viewer.ImageViewer import ImageViewer
+	from ImageViewer import ImageViewer
 	import fftengine, peakfinder
 
 	tk = Tk()
@@ -150,7 +150,10 @@ if __name__ == '__main__':
 		im2 = mrc_to_numeric('02dec12a.001.post.mrc')
 
 	### set estimate = 0 for optimized fft (but longer planning step)
-	f = fftengine.fftFFTW(estimate=1)
+	if sys.platform == 'win32':
+		f = fftengine.fftNumeric()
+	else:
+		f = fftengine.fftFFTW(estimate=1)
 	c = Correlator(f)
 	p = peakfinder.PeakFinder()
 

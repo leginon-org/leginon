@@ -3,10 +3,11 @@
 import watcher
 import correlator, fftengine, peakfinder
 import data, event
-from mrc.Mrc import mrc_to_numeric
+from Mrc import mrc_to_numeric
 from Tkinter import *
-from viewer.ImageViewer import ImageViewer
+from ImageViewer import ImageViewer
 import threading
+import sys
 
 class ShiftMeter(watcher.Watcher):
 	'''
@@ -18,7 +19,10 @@ class ShiftMeter(watcher.Watcher):
 		watchfor = event.ImagePublishEvent
 		lockblocking = 0
 		watcher.Watcher.__init__(self, id, managerlocation, watchfor, lockblocking)
-		ffteng = fftengine.fftFFTW(planshapes=(),estimate=1)
+		if sys.platform == 'win32':
+			ffteng = fftengine.fftNumeric()
+		else:
+			ffteng = fftengine.fftFFTW(planshapes=(),estimate=1)
 		self.correlator = correlator.Correlator(ffteng)
 		self.peakfinder = peakfinder.PeakFinder()
 		self.shift = ()
