@@ -578,8 +578,9 @@ class Manager(node.Node):
 
 	def updateNodeOrder(self, nodeclasses=[]):
 		nodeorder = self.sortNodes(nodeclasses)
-		evt = event.NodeOrderEvent(order=nodeorder)
+		# broadcast?
 		for launcher in self.launcherdict:
+			evt = event.NodeOrderEvent(order=nodeorder)
 			self.outputEvent(evt, launcher)
 
 	def addLauncher(self, hostname, port):
