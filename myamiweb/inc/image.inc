@@ -148,9 +148,17 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 			$scalebar->display();
 		    }
 		}
-		return $img;
+	} else {
+		$img = blankimage();
 	}
+	return $img;
 
+}
+
+function blankimage() {
+	$blkimg = imagecreate(256,256);
+	imagecolorallocate($blkimg, 255, 255, 255);
+	return $blkimg;
 }
 
 class Mosaic {
@@ -210,6 +218,8 @@ class Mosaic {
 	}
 
 	function getMosaic() {
+		if (!$this->imageIds)
+			return blankimage();
 		if ($this->loadtime) 
 			$begin=getmicrotime();
 		$leginondata = new leginondata();
@@ -226,11 +236,14 @@ class Mosaic {
 		$margin = $this->margin;
 
 		foreach($this->imageIds as $k=>$v) {
-			$imageinfo[$k] = $leginondata->getImageInfo($v);
-			if ($dr = $imageinfo[$k]['delta row'])
-				$drows[$k] = $dr;
-			if ($dc = $imageinfo[$k]['delta column'])
-				$dcols[$k] = $dc;
+			$curimageinfo = $leginondata->getImageInfo($v);
+			$dr = $curimageinfo['delta row'];
+			$dc = $curimageinfo['delta column'];
+			if (is_null($dr) || is_null($dc))
+				continue;
+			$imageinfo[] = $curimageinfo;
+			$drows[] = $dr;
+			$dcols[] = $dc;
 		}
 
 		if ($drows && $dcols) {

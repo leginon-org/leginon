@@ -72,12 +72,10 @@ if ($g) {
 			$gridId = $leginondata->getId(
 				array('SEQ|id'=>$did, 'REF|SessionData|session'=>$sessionId)
 				);
-			if (is_array($gridId)) {
+			if (is_array($gridId)) 
 				foreach($gridId as $g)
-					if (!in_array($g, $gridIds))
-						$gridIds[]=$g;
-			}
-			else if (!in_array($gridId, $gridIds))
+					$gridIds[]=$g;
+			else 
 				$gridIds[] = $gridId;
 		}
 
@@ -111,6 +109,7 @@ if ($g) {
 	imagedestroy($img);
 } else {
 	Header("Content-type: image/x-png");
-	$blkimg = imagecreate(256,256);
+	$blkimg = blankimage();
+	imagedestroy($blkimg);
 }
 ?>

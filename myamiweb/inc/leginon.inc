@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.18 $
- *	@version $Id: leginon.inc,v 1.18 2004-05-26 00:27:30 dfellman Exp $
+ *	@version $Revision: 1.19 $
+ *	@version $Id: leginon.inc,v 1.19 2004-05-27 20:53:42 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -25,6 +25,7 @@ class leginondata {
 	var $saveasfile = false;
 	var $ffttypes = array('focpow', 'fft');
 	var $defaulttypes = array('all'=>'all', 'atlas'=>'atlas');
+	var $manualtype = 'manual';
 
 	function leginondata() {
 		require("config.php");
@@ -126,7 +127,10 @@ class leginondata {
 		$Rdatatype = $this->mysql->SQLQuery($q) or die ("No data type found");
 		$ndata=mysql_num_rows($Rdatatype);
 		while ($row = mysql_fetch_row($Rdatatype)) 
-			$datatypes[$row[0]]=$row[0]; 
+			if ($row[0])
+				$datatypes[$row[0]]=$row[0]; 
+			else
+				$datatypes[$this->manualtype]=$this->manualtype; 
 		return $datatypes;
 	}
 
@@ -151,8 +155,12 @@ class leginondata {
 		    ." from `$table` a "
 		    ." left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
 		    ." where a.`REF|SessionData|session`='$expId' ";
-			if ($name)
-		    	$q .=" and p.name = '$name' ";
+			if ($name) {
+				if ($name == $this->manualtype)
+					$q .=" and p.name is null ";
+				else
+					$q .=" and p.name = '$name' ";
+			}
 		    $q .=" order by a.`DEF_id` DESC ";
 		}
 		$filenames = array();
@@ -589,6 +597,7 @@ class leginondata {
 		if (	empty($preset)
 			|| $imageinfo[preset]==$preset 
 			|| in_array($preset, $this->defaulttypes)
+			|| $preset == $this->manualtype
 		) { 
 			$newimage[id] = $imageinfo[imageId];
 			$newimage[preset] = $imageinfo[preset];
