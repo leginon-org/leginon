@@ -330,7 +330,7 @@ class Float(Data):
 class String(Data):
 	typelist = Data.typelist + ('string',)
 	# no
-	nonevalue = ''
+	nonevalue = -1
 
 	def validate(self, value):
 		return True

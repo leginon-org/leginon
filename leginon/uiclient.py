@@ -98,10 +98,14 @@ def WidgetClassFromTypeList(typelist):
 							if len(typelist) > 3:
 								if typelist[3] == 'progress':
 									return wxProgressWidget
+							else:
+								return entryWidgetClass([int])
 						elif typelist[2] == 'boolean':
 							return wxCheckBoxWidget
+						elif typelist[2] == 'float':
+							return entryWidgetClass([float])
 						elif typelist[2] == 'number':
-							return wxNumberEntryWidget
+							return entryWidgetClass([int, float])
 						elif typelist[2] == 'struct':
 							if len(typelist) > 3:
 								if typelist[3] == 'application':
@@ -606,6 +610,7 @@ class wxProgressWidget(wxDataWidget):
 		self.gauge.Destroy()
 
 class wxEntryWidget(wxDataWidget):
+	types = [str]
 	def __init__(self, name, parent, container, value, settings):
 		wxDataWidget.__init__(self, name, parent, container, value, settings)
 		self.sizer = wxBoxSizer(wxHORIZONTAL)
@@ -645,16 +650,15 @@ class wxEntryWidget(wxDataWidget):
 
 	def setFromWidget(self, evt):
 		value = self.entry.GetValue()
-		if type(self.value) is not str:
+		if self.types != [str]:
 			try:
 				value = eval(value)
 			except:
 				excinfo = sys.exc_info()
 				sys.excepthook(*excinfo)
-				return
-		else:
-			value = str(value)
-		if type(self.value) != type(value):
+				if str not in self.types:
+					return
+		if type(value) not in self.types:
 			return
 		self.value = value
 		self.dirty = False
@@ -694,21 +698,10 @@ class wxEntryWidget(wxDataWidget):
 			else:
 				self.applybutton.Enable(False)
 
-class wxNumberEntryWidget(wxEntryWidget):
-	def setFromWidget(self, evt):
-		value = self.entry.GetValue()
-		try:
-			value = eval(value)
-		except:
-			excinfo = sys.exc_info()
-			sys.excepthook(*excinfo)
-			return
-		if type(self.value) is not float or type(self.value) is not int:
-			return
-		self.value = value
-		self.dirty = False
-		self.applybutton.Enable(false)
-		self.setServer(self.value)
+def entryWidgetClass(itypes):
+	class EWC(wxEntryWidget):
+		types = itypes
+	return EWC
 
 class wxCheckBoxWidget(wxDataWidget):
 	def __init__(self, name, parent, container, value, settings):
