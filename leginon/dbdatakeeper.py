@@ -5,14 +5,16 @@ import datahandler
 
 class DBDataKeeper(datahandler.DataHandler):
 	def __init__(self, id):
-		# session == self.id[0]
 		datahandler.DataHandler.__init__(self, id)
+		# session ID == self.id[0]
+		# leginon object ID == self.id[1:]
 		# connect?
 
 	def query(self, **kwargs):
 		pass
 		# WHERE stuff
-		# return instance of Data
+		# return instance of the necessary Data class or optionally a list of
+		# matching instances
 
 		# images with be converted from an mrc file here, an instance of Data
 		# will have to be created here.
