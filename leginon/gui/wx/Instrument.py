@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Instrument.py,v $
-# $Revision: 1.34 $
+# $Revision: 1.35 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-01 18:59:08 $
+# $Date: 2005-03-01 19:17:54 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -861,8 +861,10 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onPausesTool,
 											id=gui.wx.ToolBar.ID_PAUSES)
 		self.onPausesTool()
+		'''
 		self.Bind(EVT_CONFIGURATION_CHANGED, self.onCamConfig,
 							self.szcamconfig.parameters['Camera configuration'])
+		'''
 		self.Enable(True)
 
 class SelectionPanel(wx.Panel):
