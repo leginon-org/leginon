@@ -659,7 +659,7 @@ class GridAtlasWidget(CustomWidget):
 		CustomWidget.__init__(self, parent)
 
 		widget = self.addWidget('Settings', gridpreview,
-														('Preferences', 'Preset Names'), True)
+														('Preferences', 'Preset Name'), True)
 		self.arrangeEntry(widget, 9, Tkinter.RIGHT, False)
 		widget = self.addWidget('Settings', stateimagemosaic,
 																			('Scale', 'Auto Scale'), True)
