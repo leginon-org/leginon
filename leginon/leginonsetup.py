@@ -178,7 +178,7 @@ class InitialSetupWidget(Tkinter.Frame):
 class StartWidget(Tkinter.Frame):
 	def __init__(self, parent):
 		Tkinter.Frame.__init__(self, parent)
-		instructions = 'Leginon setup is complete. Click \'Next\' to start Leginon'
+		instructions = 'Leginon setup is complete. Click \'Next\' to initialize Leginon'
 		instructionslabel = Tkinter.Label(self, text=instructions,
 																	wraplength=wraplength, justify=Tkinter.LEFT)
 		instructionslabel.grid(row=0, column=0)
@@ -211,7 +211,7 @@ class RunWidget(Tkinter.Frame):
 		if not self.addNode(locallauncher[0], locallauncher[1]):
 			return False
 
-		self.instructionsvariable.set('Leginon has started successfully, click \'Done\' to continue.')
+		self.instructionsvariable.set('Leginon has initialized successfully, click \'Start\' to run Leginon.')
 		return True
 
 	def addNode(self, hostname, port, id=None, attempts=10):
@@ -237,7 +237,7 @@ class RunWidget(Tkinter.Frame):
 			return True
 		else:
 			self.stopManager()
-			self.instructionsvariable.set('Unable to start Leginon, please make sure the configuration entered is correct and try again.')
+			self.instructionsvariable.set('Unable to initialize Leginon, please make sure the configuration entered is correct and try again.')
 			return False
 
 	def startManager(self):
@@ -308,7 +308,7 @@ class SetupWizard(Wizard):
 			self.manager = self.runwidget.manager
 			if self.launchersetupwidget.getHostnamePort() is not None:
 				self.remotelauncher = (self.launchersetupwidget.getHostname(),)
-			self.nextbutton['text'] = 'Done'
+			self.nextbutton['text'] = 'Start'
 		else:
 			self.setWidget(self.runwidget, self.startSetup, None, self.destroy)
 
