@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Instrument.py,v $
-# $Revision: 1.40 $
+# $Revision: 1.41 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-09 18:25:02 $
+# $Date: 2005-03-09 23:17:40 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -1185,7 +1185,7 @@ class SelectionPanel(wx.Panel):
 	def setTEM(self, tem):
 		if tem is None:
 			tem = self.nonestring
-		if self.ctem.FindString(tem) == wx.NOT_FOUND:
+		elif self.ctem.FindString(tem) == wx.NOT_FOUND:
 			tem = self.nonestring
 		self.ctem.SetStringSelection(tem)
 		if not self.ctem.IsEnabled():
@@ -1217,7 +1217,7 @@ class SelectionPanel(wx.Panel):
 	def setCCDCamera(self, ccdcamera):
 		if ccdcamera is None:
 			ccdcamera = self.nonestring
-		if self.cccdcamera.FindString(ccdcamera) == wx.NOT_FOUND:
+		elif self.cccdcamera.FindString(ccdcamera) == wx.NOT_FOUND:
 			ccdcamera = self.nonestring
 		self.cccdcamera.SetStringSelection(ccdcamera)
 		if not self.cccdcamera.IsEnabled():

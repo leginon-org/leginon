@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.30 $
+# $Revision: 1.31 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-01 01:22:21 $
+# $Date: 2005-03-09 23:17:40 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -132,7 +132,7 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 		self.cbfilm = wx.CheckBox(self, -1, 'Use film')
 		self.cpcamconfig = gui.wx.Camera.CameraPanel(self)
 
-		if self.ctem.FindString(parameters['tem']) == wx.NOT_FOUND:
+		if parameters['tem'] is None or self.ctem.FindString(parameters['tem']) == wx.NOT_FOUND:
 			self.ctem.SetStringSelection(self.nonestring)
 		else:
 			self.ctem.SetStringSelection(parameters['tem'])
@@ -149,7 +149,7 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 		self.febeamshiftx.SetValue(parameters['beam shift']['x'])
 		self.febeamshifty.SetValue(parameters['beam shift']['y'])
 
-		if self.cccdcamera.FindString(parameters['ccdcamera']) == wx.NOT_FOUND:
+		if parameters['ccdcamera'] is None or self.cccdcamera.FindString(parameters['ccdcamera']) == wx.NOT_FOUND:
 			self.cccdcamera.SetStringSelection(self.nonestring)
 		else:
 			self.cccdcamera.SetStringSelection(parameters['ccdcamera'])
