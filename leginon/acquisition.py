@@ -172,8 +172,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 #			print '   scope image shift', pimagedata['scope']['image shift']
 #			print '   preset image shift', pimagedata['preset']['image shift']
 
-		print 'image published, displaying image'
-		self.ui_image.set(imarray)
+		print 'image published'
+		if self.displayimageflag.get():
+			print 'displaying image'
+			self.ui_image.set(imarray)
 
 	def handleImageClick(self, clickevent):
 		'''
@@ -242,6 +244,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 			presetnames.append(preset['name'])
 		return presetnames
 
+	def setDisplayImage(self, value):
+		if not value:
+			self.ui_image.set(None)
+		return value
+
 	def uiRefreshPresetNames(self):
 		self.uipresetnames.setSelected([])
 		self.uipresetnames.setList(self.getPresetNames())
@@ -275,11 +282,14 @@ class Acquisition(targetwatcher.TargetWatcher):
 																		toscopeandacquiremethod))
 		trialmethod = uidata.Method('Trial', self.uiTrial)
 
+		self.displayimageflag = uidata.Boolean('Display Image', True, 'rw',
+																				self.setDisplayImage)
 		self.ui_image = uidata.Image('Image', None, 'rw')
 
 
 		container = uidata.MediumContainer('Acquisition')
-		container.addObjects((settingscontainer, presetscontainer, trialmethod, self.ui_image))
+		container.addObjects((settingscontainer, presetscontainer, trialmethod,
+													self.displayimageflag, self.ui_image))
 
 		self.uiserver.addObject(container)
 
