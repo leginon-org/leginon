@@ -211,9 +211,6 @@ class Server(XMLRPCServer, uidata.Container):
 			block = False
 		properties['block'] = block
 
-		if 'client' in properties['typelist']:
-			if properties['value'] is None:
-				properties['value'] = uiobject.toXMLRPC(properties['value'])
 		self.localExecute('addFromServer', properties, client, block, thread)
 
 		properties = self.toXMLRPC(uiobject, properties)

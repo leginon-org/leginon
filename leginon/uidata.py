@@ -168,19 +168,22 @@ def clientContainerFactory(containerclass):
 	class ClientContainer(containerclass):
 		typelist = containerclass.typelist + ('client',)
 		def __init__(self, name, location):
+			self.value = {}
 			try:
-				self.xmlrpclocation = (location['hostname'], location['XML-RPC port'])
+				self.value['XML-RPC'] = (location['hostname'], location['XML-RPC port'])
 			except KeyError:
-				self.xmlrpclocation = None
+				pass
 			try:
-				self.value = location['instance']
+				self.value['local'] = location['instance']
 			except KeyError:
-				self.value = self.xmlrpclocation
+				pass
 			containerclass.__init__(self, name)
 
 		def toXMLRPC(self, value):
-			return self.xmlrpclocation
-
+			try:
+				return {'XML-RPC': value['XML-RPC']}
+			except KeyError:
+				return {}
 	return ClientContainer
 
 SmallClientContainer = clientContainerFactory(SmallContainer)

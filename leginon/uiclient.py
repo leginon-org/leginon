@@ -208,9 +208,6 @@ class wxUIClient(object):
 		# there are some timing issues to be thought out
 		self.container = container
 
-		#UIClient.__init__(self, serverhostname, serverport, port)
-		#threading.Thread(target=self.addServer, args=()).start()
-
 	def addFromServer(self, properties):
 		dependencies = properties['dependencies']
 		namelist = properties['namelist']
@@ -394,11 +391,14 @@ class wxContainerWidget(wxWidget):
 	def _addWidget(self, name, typelist, value, configuration):
 		childclass = WidgetClassFromTypeList(typelist)
 		if issubclass(childclass, wxClientContainerWidget):
-			if isinstance(value, uiserver.Server):
+			if 'local' in value and value['local'] is not None:
 				clientclass = wxLocalClient
-				value = (value,)
-			else:
+				value = (value['local'],)
+			elif 'XML-RPC' in value and value['XML-RPC'] is not None:
 				clientclass = wxXMLRPCClient
+				value = value['XML-RPC']
+			else:
+				return
 			child = childclass(name, self.childparent, self, clientclass, value)
 		elif issubclass(childclass, wxDataWidget):
 			child = childclass(name, self.childparent, self, value, configuration)
@@ -417,9 +417,6 @@ class wxContainerWidget(wxWidget):
 			self.sizer.Add(childsizer, 0, wxALL, 3)
 			self.sizer.Show(childsizer, self.shown)
 		child.show(self.shown)
-
-#		if isinstance(child, wxClientContainerWidget):
-#			child.uiclient.start()
 
 		# hmm...
 		for evt in list(self.pending):
