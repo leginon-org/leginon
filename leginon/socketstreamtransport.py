@@ -48,15 +48,17 @@ class Handler(SocketServer.StreamRequestHandler):
 
 				print 'socketstreamserver dumping 222'
 				t1 = time.clock()
-
 				s = cPickle.dumps(newdata, 1)
-				self.wfile.write(s)
-
-				#cPickle.dump(newdata, self.wfile, 1)
-
 				t2 = time.clock()
 				tdiff = t2 - t1
 				print 'TTTT cPickle.dump not Data instance', tdiff
+				print 'writing to socket'
+				t1 = time.clock()
+				self.wfile.write(s)
+				t2 = time.clock()
+				tdiff = t2 - t1
+				print 'socket written', tdiff
+
 			except IOError:
 				print('write failed when returning requested data')
 
