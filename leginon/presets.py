@@ -405,13 +405,36 @@ class PresetsManager(node.Node):
 			self.logger.error(message)
 			raise PresetChangeError(message)
 		
-		try:
-			self.instrument.setTEM(presetdata['tem'])
-			self.instrument.setCCDCamera(presetdata['ccdcamera'])
-		except Exception, e:
-			message = 'Preset change failed: %s' % (e,)
-			self.logger.error(message)
-			raise PresetChangeError(message)
+		if presetdata['tem'] in self.instrument.getTEMNames():
+			try:
+				self.instrument.setTEM(presetdata['tem'])
+			except Exception, e:
+				msg = 'Preset change failed: %s' % (e,)
+				self.logger.error(msg)
+				raise PresetChangeError(msg)
+		else:
+			if presetdata['tem']:
+				msg = 'Preset change failed: canont set TEM to %s' % presetdata['tem']
+			else:
+				msg = 'Preset change failed: no TEM selection for this preset'
+			self.logger.error(msg)
+			raise PresetChangeError(msg)
+
+		if presetdata['ccdcamera'] in self.instrument.getCCDCameraNames():
+			try:
+				self.instrument.setCCDCamera(presetdata['ccdcamera'])
+			except Exception, e:
+				msg = 'Preset change failed: %s' % (e,)
+				self.logger.error(msg)
+				raise PresetChangeError(msg)
+		else:
+			if presetdata['ccdcamera']:
+				msg = 'Preset change failed: canont set CCD camera to %s' \
+								% presetdata['ccdcamera']
+			else:
+				msg = 'Preset change failed: no CCD camera selection for this preset'
+			self.logger.error(msg)
+			raise PresetChangeError(msg)
 
 		try:
 			self.instrument.setData(scopedata)
@@ -631,6 +654,14 @@ class PresetsManager(node.Node):
 
 	def selectPreset(self, pname):
 		self.currentselection = self.presetByName(pname)
+		try:
+			self.instrument.setTEM(presetdata['tem'])
+		except:
+			self.instrument.setTEM(None)
+		try:
+			self.instrument.setCCDCamera(presetdata['ccdcamera'])
+		except:
+			self.instrument.setCCDCamera(None)
 		self.panel.setParameters(self.currentselection)
 		self.displayCalibrations(self.currentselection)
 		#self.displayDose(self.currentselection)
@@ -691,9 +722,16 @@ class PresetsManager(node.Node):
 			self.currentselection = newpreset
 		return newpreset
 
-	def updateParams(self, parameters):
-		newpreset = self.renewPreset(self.currentselection)
-		newpreset.update(parameters)
+	def updatePreset(self, presetname, parameters):
+		update = False
+		if self.currentselection is not None:
+			if self.currentselection['name'] == presetname:
+				update = True
+		preset = self.presetByName(presetname)
+		newpreset = self.renewPreset(preset)
+		newpreset.friendly_update(parameters)
+		if update:
+			self.panel.setParameters(newpreset)
 		self.presetToDB(newpreset)
 
 	def getSessionList(self):

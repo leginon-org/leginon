@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.19 $
+# $Revision: 1.20 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-25 22:07:02 $
+# $Date: 2005-03-01 01:22:21 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -23,6 +23,8 @@ class Proxy(object):
 		self.tem = None
 		self.ccdcamera = None
 		self.camerasize = None
+		self.magnifications = {}
+		self.camerasizes = {}
 		self.imagecorrection = None
 		self.session = session
 		self.wxeventhandler = wxeventhandler
@@ -34,6 +36,7 @@ class Proxy(object):
 		if 'TEM' in types:
 			proxy = self.objectservice.getObjectProxy(nodename, name)
 			self.tems[name] = proxy
+			self.magnifications[name] = proxy.Magnifications
 			if self.wxeventhandler is not None:
 				names = self.getTEMNames()
 				evt = gui.wx.Events.SetTEMsEvent(self.wxeventhandler, names)
@@ -44,6 +47,7 @@ class Proxy(object):
 		if 'CCDCamera' in types:
 			proxy = self.objectservice.getObjectProxy(nodename, name)
 			self.ccdcameras[name] = proxy
+			self.camerasizes[name] = proxy.CameraSize
 			if self.wxeventhandler is not None:
 				names = self.getCCDCameraNames()
 				evt = gui.wx.Events.SetCCDCamerasEvent(self.wxeventhandler, names)
@@ -60,9 +64,19 @@ class Proxy(object):
 	def onRemoveDescription(self, nodename, name):
 		if name in self.tems and self.tem is self.tems[name]:
 			self.setTEM(None)
+			del self.tems[name]
+		try:
+			del self.magnifications[name]
+		except KeyError:
+			pass
 
 		if name in self.ccdcameras and self.ccdcamera is self.ccdcameras[name]:
 			self.setCCDCamera(None)
+			del self.ccdcameras[name]
+		try:
+			del self.camerasizes[name]
+		except KeyError:
+			pass
 
 		if name in self.imagecorrections:
 			if self.imagecorrection is self.imagecorrections[name]:
@@ -113,7 +127,7 @@ class Proxy(object):
 			self.camerasize = None
 		else:
 			self.ccdcamera = self.ccdcameras[name]
-			self.camerasize = self.ccdcamera.CameraSize
+			self.camerasize = self.camerasizes[name]
 		if self.wxeventhandler is not None:
 			evt = gui.wx.Events.SetCCDCameraEvent(self.wxeventhandler, name)
 			self.wxeventhandler.GetEventHandler().AddPendingEvent(evt)
