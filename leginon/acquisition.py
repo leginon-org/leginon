@@ -312,6 +312,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		for data in presetsdata:
 			if data['name'] not in presetsnames:
 				presetsnames.append(data['name'])
+		presetsnames.sort()
 		return presetsnames
 
 	def defineUserInterface(self):
