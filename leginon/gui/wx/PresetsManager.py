@@ -147,14 +147,14 @@ class Panel(gui.wx.Node.Panel):
 		self.bfromscope = wx.Button(self, -1, 'From Scope')
 		self.bremove = wx.Button(self, -1, 'Remove')
 
+		szbuttons = wx.GridBagSizer(5, 5)
+		szbuttons.Add(self.btoscope, (0, 0), (1, 1), wx.EXPAND)
+		szbuttons.Add(self.bfromscope, (1, 0), (1, 1), wx.EXPAND)
+		szbuttons.Add(self.bremove, (2, 0), (1, 1), wx.EXPAND)
+
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(self.cycleorder, (0, 0), (1, 1), wx.ALIGN_CENTER)
-		sz.Add(self.btoscope, (1, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.bfromscope, (2, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.bremove, (3, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(szbuttons, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
 		szcreate = wx.GridBagSizer(5, 5)
 
@@ -196,7 +196,8 @@ class Panel(gui.wx.Node.Panel):
 		self.szmain.AddGrowableCol(1)
 		self.szmain.AddGrowableRow(3)
 
-		self.SetSizerAndFit(self.szmain)
+		self.SetSizer(self.szmain)
+		self.SetAutoLayout(True)
 		self.SetupScrolling()
 
 		self.Bind(wx.EVT_BUTTON, self.onNew, self.bnew)

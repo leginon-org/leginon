@@ -730,7 +730,8 @@ class Panel(gui.wx.Node.Panel):
 				pass
 
 		self.Enable(False)
-		self.SetSizerAndFit(self.szmain)
+		self.SetSizer(self.szmain)
+		self.SetAutoLayout(True)
 		self.SetupScrolling()
 
 	def onRefreshTool(self, evt):

@@ -22,7 +22,8 @@ class Panel(gui.wx.Node.Panel):
 
 		self.szmain.AddGrowableCol(0)
 
-		self.SetSizerAndFit(self.szmain)
+		self.SetSizer(self.szmain)
+		self.SetAutoLayout(True)
 		self.SetupScrolling()
 
 		self.Bind(gui.wx.Events.EVT_ATLAS_CREATED, self.onAtlasCreated)

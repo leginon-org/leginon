@@ -23,7 +23,8 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.Realize()
 
 		self.szmain.AddGrowableCol(0)
-		self.SetSizerAndFit(self.szmain)
+		self.SetSizer(self.szmain)
+		self.SetAutoLayout(True)
 		self.SetupScrolling()
 
 	def onNodeInitialized(self):

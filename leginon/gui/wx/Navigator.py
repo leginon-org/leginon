@@ -34,7 +34,8 @@ class Panel(gui.wx.Node.Panel):
 		self.szmain.AddGrowableRow(1)
 		self.szmain.AddGrowableCol(0)
 
-		self.SetSizerAndFit(self.szmain)
+		self.SetSizer(self.szmain)
+		self.SetAutoLayout(True)
 		self.SetupScrolling()
 
 	def onNodeInitialized(self):
