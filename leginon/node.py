@@ -121,8 +121,6 @@ class Node(leginonobject.LeginonObject):
 		'''Call to make the node active and react to a call to exit. Calls main.'''
 		#interact_thread = self.interact()
 
-		print '%s sleeping for 2 sec before releasing launcher' % (self.id,)
-		time.sleep(2)
 		self.releaseLauncher()
 		self.main()
 
