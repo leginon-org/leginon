@@ -361,10 +361,16 @@ class Manager(node.Node):
 			dependenciescopy.append(launcher)
 
 		self.waitNodes(dependenciescopy)
-
 		ev = event.LaunchEvent(self.ID(), newproc=newproc,
 														targetclass=target, args=args)
-		self.outputEvent(ev, 0, launcher)
+		attempts = 10
+		for i in range(attempts):
+			try:
+				self.outputEvent(ev, 0, launcher)
+			except IOError:
+				time.sleep(1.0)
+			else:
+				break
 
 	def waitNodes(self, nodes):
 		self.initializednodescondition.acquire()

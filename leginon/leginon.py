@@ -430,20 +430,20 @@ class CustomWidget(Pmw.ScrolledFrame):
 		except KeyError:
 			return None
 
-	def widgetFromName(self, parent, uiclient, name, attempts=10):
+	def widgetFromName(self, parent, uiclient, name, attempts=10, server=True):
 		for i in range(attempts):
 			spec = uiclient.getSpec()
 			if spec is not None:
 				break
 			time.sleep(0.25)
-		return self.widgetFrom(parent, uiclient, spec, name)
+		return self.widgetFrom(parent, uiclient, spec, name, server)
 
-	def widgetFrom(self, parent, uiclient, spec, name):
+	def widgetFrom(self, parent, uiclient, spec, name, server=True):
 		content = spec['content']
 		for subspec in content:
 			if subspec['name'] == name[0]:
 				if len(name) == 1:
-					w = nodegui.widgetFromSpec(parent, uiclient, subspec, False, True)
+					w = nodegui.widgetFromSpec(parent, uiclient, subspec, False, server)
 					if subspec['id'] in self.widgets:
 						print 'error, widget id %s already exists' % str(subspec['id'])
 					self.widgets[subspec['id']] = w
@@ -515,13 +515,13 @@ class CustomWidget(Pmw.ScrolledFrame):
 		if 'Results' in self.groups:
 			self.groups['Results'].grid_configure(rowspan=len(self.groups))
 
-	def addWidget(self, groupname, info, name, groupset=False):
+	def addWidget(self, groupname, info, name, groupset=False, server=True):
 		info['server'].nodegui = self
 		uiclient = info['client']
 		if groupname not in self.groups:
 			self.addGroup(groupname)
 		interior = self.groups[groupname].interior()
-		widget = self.widgetFromName(interior, uiclient, name)
+		widget = self.widgetFromName(interior, uiclient, name, server=server)
 		if groupset and widget.setbutton is not None:
 			self.groups[groupname].addWidget(widget, widget.setbutton.invoke)
 		else:
@@ -709,7 +709,7 @@ class TargetWidget(CustomWidget):
 		widget.button.pack_forget()
 		widget.button.pack()
 
-		widget = self.addWidget('Results', clicktargetfinder, ('Clickable Image',))
+		widget = self.addWidget('Results', clicktargetfinder, ('Clickable Image',), groupset=False, server=False)
 
 class FocusTargetWidget(TargetWidget):
 	def __init__(self, parent, acquisition, focuser, clicktargetfinder):

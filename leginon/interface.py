@@ -172,7 +172,8 @@ class Server(xmlrpcserver.xmlrpcserver):
 		'''this is how a UI client sets a data value'''
 		data = self.uidata[idstr]
 		data.set(value)
-		return data.get()
+		#return data.get()
+		return ''
 
 	def uiServerPush(self, id, value):
 		uiclients = copy.copy(self.uiclients)
