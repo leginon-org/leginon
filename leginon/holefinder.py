@@ -223,7 +223,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		if self.use_target_template.get():
 			newtargets = self.applyTargetTemplate(centers)
 			acq_points = newtargets['acquisition']
-			foc_points = newtargets['focus']
+			focus_points = newtargets['focus']
 		else:
 			acq_points = centers
 			focus_points = []
