@@ -246,6 +246,8 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.goodholesimage.setTargetType('focus', focus_points)
 
 	def bypass(self):
+		self.goodholesimage.setTargetType('acquisition', [])
+		self.goodholesimage.setTargetType('focus', [])
 		self.goodholesimage.setImage(self.hf['original'])
 		self.goodholesimage.imagedata = self.currentimagedata
 
