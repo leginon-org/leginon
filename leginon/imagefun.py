@@ -219,20 +219,18 @@ def power(numericarray, mask_radius=0.01, thresh=3):
 	try:
 		pow = Numeric.log(pow)
 	except OverflowError:
-		print 'correcting zeros'
 		pow = Numeric.log(pow+1e-20)
 
-	print 'shuffle'
 	pow = shuffle(pow)
 
 	center_mask(pow, int(mask_radius*pow.shape[0]))
 
 	m = mean(pow)
 	s = stdev(pow, known_mean=m)
-	print 'clip', m, s
-	pow = Numeric.clip(pow, m-thresh*s, m+thresh*s)
+	minval = Numeric.array(m-thresh*s, Numeric.Float32)
+	maxval = Numeric.array(m+thresh*s, Numeric.Float32)
+	pow = Numeric.clip(pow, minval, maxval)
 
-	print 'return'
 	return pow
 
 def filled_circle(shape, radius):
