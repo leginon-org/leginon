@@ -73,21 +73,26 @@ class DBDataKeeper(datahandler.DataHandler):
 
 		dbid = mydata.dbid
 		if dbid is not None:
+			## now I don't think we even need to set wheredict
+			## becuase it will not query if known
 			wheredict = {'DEF_id':dbid}
+			info['where'] = wheredict
+			info['known'] = mydata
+			info['join'] = {}
 		else:
 			wheredict = {}
-		joindict = {}
-		for key,value in mydata.items():
-			if value is None:
-				pass
-			elif isinstance(value, data.Data):
-				joindict[key] = id(value)
-			else:
-				if dbid is None:
+			joindict = {}
+			for key,value in mydata.items():
+				if value is None:
+					pass
+				elif isinstance(value, data.Data):
+					joindict[key] = id(value)
+				else:
 					wheredict[key] = value
+			info['where'] = wheredict
+			info['join'] = joindict
+			info['known'] = None
 
-		info['where'] = wheredict
-		info['join'] = joindict
 		isroot=0
 		if hasattr(mydata, 'isRoot'):
 			isroot = 1
