@@ -145,6 +145,7 @@ import sqldb
 import string
 import re
 import Numeric
+import MySQLdb.cursors
 from types import *
 
 class SQLDict:
@@ -313,7 +314,7 @@ class SQLDict:
 	    object."""
 
 	    def __init__(self, db, load, columns):
-		self.cursor = db.cursor()
+		self.cursor = db.cursor(cursorclass=MySQLdb.cursors.DictCursor)
 		self.columns = columns
 		self.load = load
 		self.db = db
@@ -332,17 +333,6 @@ class SQLDict:
 		"""Fetch many objects from the current cursor context.
 		Can specify an optional size argument for number of rows."""
 		return map(self.load, apply(self.cursor.fetchmany, size))
-
-	    def fetchonedict(self):
-		"""Fetch one object from current cursor context as a dictionary."""
-		row = self.fetchone()
-		return self.__2dict(self.columns,row)
-		
-	    def fetchalldict(self):
-		"""Fetch all object from current cursor context as a
-		   list of  dictionaries."""
-		rows = self.fetchall()
-	    	return list(map(lambda row: self.__2dict(self.columns,row), rows))
 
 	    def __getattr__(self, attr):
 		return getattr(self.cursor, attr)
@@ -518,10 +508,10 @@ def flatDict(in_dict):
 def unflatDict(in_dict):
 	"""
 	This function unflat a dictionary. For example:
-	>>> d = {'SUBD|IShift|Y': 6.0, 'SUBD|BShift|Y': 18.0, 'SUBD|BShift|X': 45.0, 'SUBD|IShift|X': 8.0}
+	>>> d = {'SUBD|scope|SUBD|IShift|Y': 6.0, 'SUBD|scope|SUBD|BShift|Y': 18.0, 'SUBD|scope|SUBD|BShift|X': 45.0, 'SUBD|scope|SUBD|IShift|X': 8.0}
 	>>> unflatDict(d)
 
-	{ 'BShift':{'X': 45.0, 'Y': 18.0}, 'IShift':{'X': 8.0, 'Y': 6.0}}
+	{'scope':{ 'BShift':{'X': 45.0, 'Y': 18.0}, 'IShift':{'X': 8.0, 'Y': 6.0}}}
 	"""
 
 	items = {}
@@ -542,11 +532,19 @@ def unflatDict(in_dict):
 	for subdict in allsubdicts:
 		dm={}
 		for key,value in in_dict.items():
-			l = re.findall('SUBD%s%s' %(sep,subdict,),key)
+			l = re.findall('^SUBD%s%s' %(sep,subdict,),key)
 			if l:
-				a = re.findall('[^%s]+'%(sep,),key)
-				dm.update({a[2]:value})
-		allsubdicts[subdict]=dm
+				s = re.sub('^SUBD\%s%s' %(sep,subdict,),'',key)
+				a = re.findall('^%sSUBD'%(sep,),s)
+				if a:
+					s = re.sub('^\%s'%(sep),'',s)
+				dm.update({s:value})
+
+		mdm = unflatDict(dm)
+		if mdm:
+			allsubdicts[subdict]=mdm
+		else:
+			allsubdicts[subdict]=dm
 
 	return allsubdicts
 
