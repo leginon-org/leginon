@@ -2,8 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "mrc.h"
 #include "gd.h"
+#include "mrc.h"
+#include "gd_mrc.h"
 #include "filter.h"
 
 /*
@@ -263,7 +264,7 @@ void mrc_to_image(MRC *mrc, int ** tpixels,
 }
 
 /* get pixel indexes from a  binning factor applied to a pixel index */
-void getIndexes(int indexes[], int binning, int index, int imagewidth) {
+int getIndexes(int indexes[], int binning, int index, int imagewidth) {
 	int	i=0,
 		b_w=0,
 		b_h=0;
@@ -274,7 +275,7 @@ void getIndexes(int indexes[], int binning, int index, int imagewidth) {
 }
 
 /* get pixel indexes from a mask (kernelxkernel) applied to a pixel index */
-void getMaskDataIndexes(int indexes[], int kernel, int index, int imagewidth) {
+int getMaskDataIndexes(int indexes[], int kernel, int index, int imagewidth) {
 	int	i=0,
 		m_w=0,
 		m_h=0,

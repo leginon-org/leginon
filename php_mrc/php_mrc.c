@@ -15,7 +15,7 @@
   | Author:                                                              |
   +----------------------------------------------------------------------+
 
-  $Id: php_mrc.c,v 1.1 2005-02-22 19:18:10 dfellman Exp $ 
+  $Id: php_mrc.c,v 1.2 2005-02-23 02:03:28 dfellman Exp $ 
 */
 
 #ifdef HAVE_CONFIG_H
@@ -41,13 +41,23 @@ ZEND_DECLARE_MODULE_GLOBALS(mrc)
 /* True global resources - no need for thread safety here */
 static int le_mrc;
 
+
 /* {{{ mrc_functions[]
  *
  * Every user visible function must have an entry in mrc_functions[].
  */
 function_entry mrc_functions[] = {
-	PHP_FE(confirm_mrc_compiled,	NULL)		/* For testing, remove later. */
-	ZEND_FE(imagemrcinfo, NULL)
+	ZEND_FE(imagecreatefrommrc, NULL)
+        ZEND_FE(imagefilteredcreatefrommrc, NULL)
+        ZEND_FE(imagemrcinfo, NULL)
+        ZEND_FE(imagefiltergaussian, NULL)
+        ZEND_FE(imagefastcopyresized, NULL)
+        ZEND_FE(imagescale, NULL)
+        ZEND_FE(logscale, NULL)
+#ifdef HAVE_FFTW
+        ZEND_FE(getfft, NULL)
+        ZEND_FE(imagecreatefftfrommrc, NULL)
+#endif
 	{NULL, NULL, NULL}	/* Must be the last line in mrc_functions[] */
 };
 /* }}} */
@@ -164,22 +174,6 @@ PHP_MINFO_FUNCTION(mrc)
    purposes. */
 
 /* Every user-visible function in PHP should document itself in the source */
-/* {{{ proto string confirm_mrc_compiled(string arg)
-   Return a string to confirm that the module is compiled in */
-PHP_FUNCTION(confirm_mrc_compiled)
-{
-	char *arg = NULL;
-	int arg_len, len;
-	char string[256];
-
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &arg, &arg_len) == FAILURE) {
-		return;
-	}
-
-	len = sprintf(string, "Congratulations! You have successfully modified ext/%.78s/config.m4. Module %.78s is now compiled into PHP.", "mrc", arg);
-	RETURN_STRINGL(string, len, 1);
-}
-/* }}} */
 
 /* 
 {{{ imagecreatefrommrc -- Create a new image from MRC file, URL or a String, with rescaling options.

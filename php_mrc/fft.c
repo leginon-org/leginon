@@ -9,8 +9,8 @@
 #include "php.h"
 #include "mrc.h"
 #include "gd.h"
+#include "gd_mrc.h"
 #include "filter.h"
-#include "php_mrc.h"
 #include "fft.h"
 #include <sfftw.h>
 #include <srfftw.h>

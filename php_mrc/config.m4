@@ -1,4 +1,4 @@
-dnl $Id: config.m4,v 1.2 2005-02-22 20:26:28 dfellman Exp $
+dnl $Id: config.m4,v 1.3 2005-02-23 02:03:28 dfellman Exp $
 dnl config.m4 for extension mrcmod
 
 dnl Comments in this file start with the string 'dnl'.
@@ -24,13 +24,20 @@ if test "$PHP_MRC" = "yes"; then
 		done
 		if test "$FFTW_LIB_DIR"; then
 			AC_MSG_RESULT(FFTW_LIB_DIR found)
-dnl			PHP_CHECK_LIBRARY(fftw, rfftw2d_create_plan, [
-dnl			AC_DEFINE(HAVE_FFTW,1,[ ])], [], [-L$FFTW_LIB_DIR -lsrfftw -lsfftw -lm])
-			AC_DEFINE(HAVE_FFTW,1,[ ])
+			PHP_CHECK_LIBRARY(sfftw, fftw_make_plan,
+			[
+				AC_DEFINE(HAVE_FFTW,1,[ ])
+			], [
+				AC_MSG_ERROR([Problem with sfftw.(a|so) or srfftw.(a|so). Please check config.log for more information.])
+			], [
+				-L$FFTW_LIB_DIR -lsrfftw -lsfftw -lm
+			])
 			fft_source="fft.c"
-			MRCLIB_CFLAGS="-L$FFTW_LIB_DIR -lsrfftw -lsfftw -lm"
 		fi
 	fi
-	PHP_NEW_EXTENSION(mrc, php_mrc.c mrc.c gd_mrc.c filter.c $fft_source, $ext_shared,, \\$(MRCLIB_CFLAGS))
-	PHP_SUBST(MRCLIB_CFLAGS)
+	PHP_ADD_LIBRARY_WITH_PATH(sfftw, $FFTW_LIB_DIR, MRC_SHARED_LIBADD)
+	PHP_ADD_LIBRARY_WITH_PATH(srfftw, $FFTW_LIB_DIR, MRC_SHARED_LIBADD)
+	PHP_ADD_INCLUDE($FFTW_DIR/include)
+	PHP_SUBST(MRC_SHARED_LIBADD)
+	PHP_NEW_EXTENSION(mrc, php_mrc.c mrc.c gd_mrc.c filter.c $fft_source, $ext_shared)
 fi
