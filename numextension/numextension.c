@@ -876,12 +876,9 @@ static PyObject *hanning(PyObject *self, PyObject *args, PyObject *kwargs) {
 	PyArrayObject *result;
 	int i, j;
 
-	static char *kwlist[] = {"shape", "a", NULL};
+	static char *kwlist[] = {"m", "n", "a", NULL};
 
-	if(!PyArg_ParseTupleAndKeywords(args, kwargs, "O|f", kwlist, shape, &a))
-		return NULL;
-
-	if(!PyArg_ParseTuple(shape, "(ii)", &m, &n))
+	if(!PyArg_ParseTupleAndKeywords(args, kwargs, "ii|f", kwlist, &m, &n, &a))
 		return NULL;
 
 	if(!(result = NA_NewArray(NULL, tFloat32, 2, m, n)))
@@ -906,7 +903,7 @@ static PyObject *highpass(PyObject *self, PyObject *args) {
 	int i, j;
 	float x;
 
-	if(!PyArg_ParseTuple(args, "(ii)", &m, &n))
+	if(!PyArg_ParseTuple(args, "ii", &m, &n))
 		return NULL;
 
 	if(!(result = NA_NewArray(NULL, tFloat32, 2, m, n)))
@@ -959,7 +956,7 @@ static PyObject *logpolar(PyObject *self, PyObject *args) {
 	int inputsize;
 	float base;
 
-	if(!PyArg_ParseTuple(args, "O(ii)", &input, &m, &n))
+	if(!PyArg_ParseTuple(args, "Oii", &input, &m, &n))
 		return NULL;
 
 	if(!(outputarray = NA_NewArray(NULL, tFloat32, 2, m, n)))
