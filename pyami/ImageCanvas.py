@@ -82,10 +82,8 @@ class ImageCanvas(Frame):
 
 	def extrema(self):
 		if self.numimage:
-			print self.numimage.extrema
 			return self.numimage.extrema
 		else:
-			print 'no numimage'
 			return None
 
 	def resize(self, x1, y1, x2, y2):
@@ -127,15 +125,11 @@ class ImageCanvas(Frame):
 		self.numimage.update_image()
 		## this next line is currently the time waster
 		self.photo = self.numimage.photoimage()
-		print 'END'
-		t0 = time.clock()
 		newwidth = self.photo.width()
 		newheight = self.photo.height()
 		self.resize(0,0,newwidth,newheight)
 		self.canvas.itemconfig(self.canimage, image=self.photo)
 		self.update()
-		t1 = time.clock()
-		t = t1 - t0
 
 	def zoom(self, factor):
 		self.zoomfactor = self.zoomfactor * factor
@@ -247,9 +241,6 @@ class ScalingWidget(Frame):
 		self.maxscale = Scale(self, orient=HORIZONTAL, showvalue=NO, width=8, length=300)
 		self.minlab = Label(self, textvariable=self.rangemin)
 		self.maxlab = Label(self, textvariable=self.rangemax)
-
-		print 'minrepeatdelay', self.minscale['repeatdelay']
-		print 'maxrepeatdelay', self.maxscale['repeatdelay']
 
 		self.minscale.grid(column=0, row=0)
 		self.maxscale.grid(column=0, row=1)

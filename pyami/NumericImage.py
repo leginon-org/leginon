@@ -61,13 +61,6 @@ def linearscale(input, boundfrom, boundto, extrema=None):
 			maxfrom = Numeric.argmax(input.flat)
 			maxfrom = input.flat[maxfrom]
 
-	t0 = time.clock()
-
-	# 0.58
-	#rangefrom = float(maxfrom - minfrom)
-	#rangeto = float(maxto - minto)
-
-	# 
 	## prepare for fast math
 	rangefrom = Numeric.array((maxfrom - minfrom)).astype('f')
 	rangeto = Numeric.array((maxto - minto)).astype('f')
@@ -84,9 +77,6 @@ def linearscale(input, boundfrom, boundto, extrema=None):
 	offset = minfrom * scale
 	output = input * scale - offset
 
-	t1 = time.clock()
-	t = t1 - t0
-	print 'linscale math:  %.3f' % (t,)
 	return output
 
 # resize and rotate filters:  NEAREST, BILINEAR, BICUBIC
@@ -170,7 +160,6 @@ class NumericImage:
 	def __init__(self, orig_array, clip=(None,None), output_size=None):
 		self.transform = {'clip':clip, 'output_size':output_size}
 		self.__use_numeric(orig_array)
-		print 'NumericImage initialized:', self.transform['clip']
 
 	def __setitem__(self, key, value):
 		if key not in self.transform.keys():
@@ -188,14 +177,12 @@ class NumericImage:
 		### if output size and clip are not set, use defaults
 		if not self.transform['output_size']:
 			self.transform['output_size'] = self.orig_size
-		print 'find extrema'
 		flat = self.orig_array.flat
 		extmin = Numeric.argmin(flat)
 		extmax = Numeric.argmax(flat)
 		minval = flat[extmin]
 		maxval = flat[extmax]
 		self.extrema = (minval, maxval)
-		print 'numeric extrema set'
 		if not self.transform['clip']:
 			self.transform['clip'] = self.extrema
 
