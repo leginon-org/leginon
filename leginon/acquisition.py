@@ -140,11 +140,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		return emdata
 
 	def acquire(self, presetdata, target=None, trial=False, emtarget=None):
-		acqtype = self.uiacquiretype.getSelectedValue()
-		if acqtype == 'corrected':
-			cor = True
-		else:
-			cor = False
+		cor = self.uicorrectimage.get()
 
 		### corrected or not??
 		imagedata = self.cam.acquireCameraImageData(correction=cor)
@@ -182,7 +178,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 				print 'displaying image'
 				self.ui_image.set(imarray)
 
-			if self.wait_for_done.get():
+			if self.waitfordone.get():
 				self.waitForImageProcessDone()
 
 #			print 'PIMAGEDATA'
@@ -307,42 +303,56 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 	def defineUserInterface(self):
 		targetwatcher.TargetWatcher.defineUserInterface(self)
+
+		self.ui_image = uidata.Image('Image', None, 'rw')
+
+		self.displayimageflag = uidata.Boolean('Display Image', True, 'rw',
+																						persist=True)
+		uicontainer = uidata.Container('User Interface')
+		uicontainer.addObjects((self.displayimageflag,))
+
+		presetnames = self.getPresetNames()
+		self.uipresetnames = uidata.SelectFromList('Sequence', presetnames, [], 'r')
+		refreshpresetnames = uidata.Method('Refresh', self.uiRefreshPresetNames)
+		presetscontainer = uidata.Container('Presets Sequence')
+		presetscontainer.addObjects((self.uipresetnames, refreshpresetnames))
+
 		self.uimovetype = uidata.SingleSelectFromList('Move Type',
-																							self.calclients.keys(), 0, persist=True)
+																									self.calclients.keys(),
+																									0, persist=True)
 		self.uidelay = uidata.Float('Delay (sec)', 2.5, 'rw', persist=True)
-		self.uiacquiretype = uidata.SingleSelectFromList('Acquisition Type',
-																							['raw', 'corrected'], 0, persist=True)
+		self.uicorrectimage = uidata.Boolean('Correct image', True, 'rw',
+																			persist=True)
+
+		self.waitfordone = uidata.Boolean('Wait for "Done"', True, 'rw',
+																				persist=True)
+
+		acquirecontainer = uidata.Container('Acquisition')
+		acquirecontainer.addObjects((self.uicorrectimage, self.uimovetype,
+																	self.uidelay, self.waitfordone))
+
 		self.databaseflag = uidata.Boolean('Publish to Database', True, 'rw')
 		self.labelstring = uidata.String('Label', self.id[-1], 'rw', persist=True)
-		self.wait_for_done = uidata.Boolean('Wait for "Done"', True, 'rw', persist=True)
+
+		databasecontainer = uidata.Container('Database')
+		databasecontainer.addObjects((self.databaseflag, self.labelstring))
+
+		settingscontainer = uidata.Container('Settings')
+		settingscontainer.addObjects((uicontainer, presetscontainer,
+																	acquirecontainer, databasecontainer))
+
+		#statuscontainer = uidata.Container('Status')
+
+		trialmethod = uidata.Method('Trial Image', self.uiTrial)
 		self.waitingforimages = uidata.SingleSelectFromList('Waiting For', [], 0)
 		stopwaiting = uidata.Method('Stop Waiting', self.stopWaitingForImage)
 
-
-		settingscontainer = uidata.Container('Settings')
-		settingscontainer.addObjects((self.uimovetype, self.uidelay, self.uiacquiretype, self.databaseflag, self.labelstring, self.wait_for_done, self.waitingforimages, stopwaiting))
-
-		presets = self.getPresetNames()
-		self.uipresetnames = uidata.SelectFromList('Sequence', presets, [], 'r')
-		refreshpresetnames = uidata.Method('Refresh', self.uiRefreshPresetNames)
-		sequencecontainer = uidata.Container('Presets Sequence')
-		sequencecontainer.addObjects((self.uipresetnames, refreshpresetnames))
-
-		#pselect = self.presetsclient.uiPresetSelector()
-
-		#toscopemethod = uidata.Method('Apply Preset', self.uiToScope)
-		#toscopeandacquiremethod = uidata.Method('Apply Preset and Acquire', self.uiToScopeAcquire)
-		#presetscontainer = uidata.Container('Presets')
-		#presetscontainer.addObjects((sequencecontainer, pselect, toscopemethod, toscopeandacquiremethod))
-		#presetscontainer.addObjects((sequencecontainer, pselect))
-		trialmethod = uidata.Method('Trial', self.uiTrial)
-
-		self.displayimageflag = uidata.Boolean('Display Image', True, 'rw', persist=True)
-		self.ui_image = uidata.Image('Image', None, 'rw')
-
+		controlcontainer = uidata.Container('Control')
+		controlcontainer.addObjects((self.waitingforimages, stopwaiting,
+																	trialmethod))
 
 		container = uidata.MediumContainer('Acquisition')
-		container.addObjects((self.displayimageflag, self.ui_image, settingscontainer, sequencecontainer, trialmethod))
+		container.addObjects((self.ui_image, settingscontainer, controlcontainer))
 
 		self.uiserver.addObject(container)
 

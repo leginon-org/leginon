@@ -35,12 +35,19 @@ class TargetWatcher(watcher.Watcher):
 	def defineUserInterface(self):
 		watcher.Watcher.defineUserInterface(self)
 
-		pausemeth = uidata.Method('Pause Target List', self.pauseTargetListLoop)
-		continuemeth = uidata.Method('Continue Target List', self.continueTargetListLoop)
-		abortmeth = uidata.Method('Abort Target List', self.abortTargetListLoop)
+		pausemethod = uidata.Method('Pause', self.pauseTargetListLoop)
+		continuemethod = uidata.Method('Continue',
+																		self.continueTargetListLoop)
+		abortmethod = uidata.Method('Abort', self.abortTargetListLoop)
+
+		targetcontainer = uidata.Container('Target Processing')
+		targetcontainer.addObjects((pausemethod, continuemethod, abortmethod))
+
+		controlcontainer = uidata.Container('Control')
+		controlcontainer.addObjects((targetcontainer,))
 
 		container = uidata.MediumContainer('Target Watcher')
-		container.addObjects((pausemeth, continuemeth, abortmeth))
+		container.addObjects((controlcontainer,))
 
 		self.uiserver.addObject(container)
 
@@ -94,6 +101,7 @@ class TargetWatcher(watcher.Watcher):
 		self.pause.clear()
 		self.cont.clear()
 		targetliststatus = 'success'
+		ntargets = len(goodtargets)
 		for target in goodtargets:
 			print 'STARTING NEW TARGET', target['id']
 			print 'python id', id(target)
