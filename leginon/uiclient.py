@@ -39,24 +39,27 @@ class AddWidgetEvent(wxPyEvent):
 		self.event = event
 
 class SetWidgetEvent(wxPyEvent):
-	def __init__(self, namelist, value):
+	def __init__(self, namelist, value, event):
 		wxPyEvent.__init__(self)
 		self.SetEventType(wxEVT_SET_WIDGET)
 		self.namelist = namelist
 		self.value = value
+		self.event = event
 
 class RemoveWidgetEvent(wxPyEvent):
-	def __init__(self, namelist):
+	def __init__(self, namelist, event):
 		wxPyEvent.__init__(self)
 		self.SetEventType(wxEVT_REMOVE_WIDGET)
 		self.namelist = namelist
+		self.event = event
 
 class ConfigureWidgetEvent(wxPyEvent):
-	def __init__(self, namelist, configuration):
+	def __init__(self, namelist, configuration, event):
 		wxPyEvent.__init__(self)
 		self.SetEventType(wxEVT_CONFIGURE_WIDGET)
 		self.namelist = namelist
 		self.configuration = configuration
+		self.event = event
 
 class SetServerEvent(wxPyEvent):
 	def __init__(self, namelist, value, thread=True):
@@ -168,7 +171,11 @@ class LocalUIClient(object):
 		self.uiserver.setFromClient(namelist, value)
 
 	def commandServer(self, namelist, args, thread=False):
-		self.uiserver.commandFromClient(namelist, args)
+		if thread:
+			threading.Thread(target=self.uiserver.commandFromClient,
+												args=(namelist, args)).start()
+		else:
+			self.uiserver.commandFromClient(namelist, args)
 
 class XMLRPCUIClient(XMLRPCClient, uiserver.XMLRPCServer):
 	def __init__(self, serverhostname, serverport, port=None):
@@ -183,7 +190,6 @@ class XMLRPCUIClient(XMLRPCClient, uiserver.XMLRPCServer):
 		self.execute('add client', (self.hostname, self.port))
 
 	def setServer(self, namelist, value, thread=False):
-		#print 'setServer', namelist, value
 		if thread:
 			threading.Thread(target=self.execute,
 												args=('set', (namelist, value))).start()
@@ -214,37 +220,56 @@ class wxUIClient(object):
 		except KeyError:
 			value = ''
 		configuration = properties['configuration']
+
+		threadingevent = None
 		if 'block' in properties and properties['block']:
-			threadingevent = threading.Event()
-		else:
-			threadingevent = None
+			if not isinstance(threading.currentThread(), threading._MainThread):
+				threadingevent = threading.Event()
+
 		evt = AddWidgetEvent(dependencies, namelist, typelist, value,	
 													configuration, threadingevent)
 		wxPostEvent(self.container.widgethandler, evt)
 		if threadingevent is not None:
-			if not isinstance(threading.currentThread(), threading._MainThread):
-				threadingevent.wait()
+			threadingevent.wait()
 		return ''
 
 	def setFromServer(self, properties):
 		namelist = properties['namelist']
 		#namelist = list(namelist)
 		value = properties['value']
-		evt = SetWidgetEvent(namelist, value)
+		threadingevent = None
+		if 'block' in properties and properties['block']:
+			if not isinstance(threading.currentThread(), threading._MainThread):
+				threadingevent = threading.Event()
+		evt = SetWidgetEvent(namelist, value, threadingevent)
 		wxPostEvent(self.container.widgethandler, evt)
+		if threadingevent is not None:
+			threadingevent.wait()
 		return ''
 
 	def removeFromServer(self, properties):
 		namelist = properties['namelist']
-		evt = RemoveWidgetEvent(namelist)
+		threadingevent = None
+		if 'block' in properties and properties['block']:
+			if not isinstance(threading.currentThread(), threading._MainThread):
+				threadingevent = threading.Event()
+		evt = RemoveWidgetEvent(namelist, threadingevent)
 		wxPostEvent(self.container.widgethandler, evt)
+		if threadingevent is not None:
+			threadingevent.wait()
 		return ''
 
 	def configureFromServer(self, properties):
 		namelist = properties['namelist']
 		configuration = properties['configuration']
-		evt = ConfigureWidgetEvent(namelist, configuration)
+		threadingevent = None
+		if 'block' in properties and properties['block']:
+			if not isinstance(threading.currentThread(), threading._MainThread):
+				threadingevent = threading.Event()
+		evt = ConfigureWidgetEvent(namelist, configuration, threadingevent)
 		wxPostEvent(self.container.widgethandler, evt)
+		if threadingevent is not None:
+			threadingevent.wait()
 		return ''
 
 class wxLocalClient(LocalUIClient, wxUIClient):
@@ -303,6 +328,8 @@ class wxWidget(object):
 	def onConfigureWidget(self, evt):
 		if 'enabled' in evt.configuration:
 			self.enable(evt.configuration['enabled'])
+		if evt.event is not None:
+			evt.event.set()
 
 	def enable(self, enabled):
 		pass
@@ -417,15 +444,13 @@ class wxContainerWidget(wxWidget):
 
 	def onAddWidget(self, evt):
 		if len(evt.namelist) == 1:
-#			for name in self.children:
-#				for i in evt.dependencies:
-#					if i == name:
-#						evt.dependencies.remove(i)
-#			if evt.dependencies:
-#				print 'too early', evt.namelist, evt.dependencies
-#				self.pending.append(evt)
-#			else:
-			if True:
+			for name in self.children:
+				for i in evt.dependencies:
+					if i == name:
+						evt.dependencies.remove(i)
+			if evt.dependencies:
+				self.pending.append(evt)
+			else:
 				childname = evt.namelist[0]
 				self._addWidget(childname, evt.typelist, evt.value, evt.configuration)
 				if evt.event is not None:
@@ -458,6 +483,8 @@ class wxContainerWidget(wxWidget):
 						childsizer = child.sizer
 					if self.sizer is not None and childsizer is not None:
 						self.sizer.Remove(childsizer)
+					if evt.event is not None:
+						evt.event.set()
 					return
 				else:
 					evt.namelist = evt.namelist[1:]
@@ -469,6 +496,8 @@ class wxContainerWidget(wxWidget):
 	def onConfigureWidget(self, evt):
 		if len(evt.namelist) == 0:
 			self.configuration(evt.configuration)
+			if evt.event is not None:
+				evt.event.set()
 		else:
 			for name, child in self.children.items():
 				if name == evt.namelist[0]:
@@ -701,6 +730,8 @@ class wxDataWidget(wxWidget):
 
 	def onSetWidget(self, evt):
 		self.set(evt.value)
+		if evt.event is not None:
+			evt.event.set()
 
 	def setWidget(self, value):
 		pass
@@ -1069,9 +1100,12 @@ class wxMessageDialogWidget(wxContainerWidget):
 	def onSetWidget(self, evt):
 		if evt.namelist == ['Message']:
 			self.setMessage(evt.value)
+		if evt.event is not None:
+			evt.event.set()
 
 	def onRemoveWidget(self, evt):
-		pass
+		if evt.event is not None:
+			evt.event.set()
 
 	def dialogCallback(self):
 		evt = CommandServerEvent([self.name, 'OK'], ())
@@ -1137,9 +1171,12 @@ class wxComboBoxWidget(wxContainerWidget):
 			self.setList(evt.value)
 		if evt.namelist == ['Selected']:
 			self.setSelected(evt.value)
+		if evt.event is not None:
+			evt.event.set()
 
 	def onRemoveWidget(self, evt):
-		pass
+		if evt.event is not None:
+			evt.event.set()
 
 	def layout(self):
 		self.sizer.Layout()
@@ -1187,9 +1224,12 @@ class wxOrderedListBoxWidget(wxContainerWidget):
 			self.setList(evt.value)
 		if evt.namelist == ['Selected']:
 			self.setSelected(evt.value)
+		if evt.event is not None:
+			evt.event.set()
 
 	def onRemoveWidget(self, evt):
-		pass
+		if evt.event is not None:
+			evt.event.set()
 
 	def layout(self):
 		self.orderedlistbox.sizer.Layout()
@@ -1241,9 +1281,12 @@ class wxTreeSelectWidget(wxContainerWidget):
 			self.setStruct(evt.value)
 		if evt.namelist == ['Selected']:
 			self.setSelected(evt.value)
+		if evt.event is not None:
+			evt.event.set()
 
 	def onRemoveWidget(self, evt):
-		pass
+		if evt.event is not None:
+			evt.event.set()
 
 	def layout(self):
 		self.sizer.Layout()
@@ -1300,9 +1343,12 @@ class wxClickImageWidget(wxContainerWidget):
 			self.condition.acquire()
 			self.condition.notify()
 			self.condition.release()
+		if evt.event is not None:
+			evt.event.set()
 
 	def onRemoveWidget(self, evt):
-		pass
+		if evt.event is not None:
+			evt.event.set()
 
 	def layout(self):
 		self.sizer.Layout()
@@ -1354,9 +1400,12 @@ class wxTargetImageWidget(wxContainerWidget):
 			self.setImage(evt.value)
 		else:
 			self.setTargets(evt.namelist[0], evt.value)
+		if evt.event is not None:
+			evt.event.set()
 
 	def onRemoveWidget(self, evt):
-		pass
+		if evt.event is not None:
+			evt.event.set()
 
 	def layout(self):
 		self.sizer.Layout()

@@ -25,9 +25,8 @@ class Launcher(node.Node):
 		node.Node.__init__(self, id, session, nodelocations, tcpport=port, **kwargs)
 		self.addEventInput(event.LaunchEvent, self.handleLaunch)
 		self.caller = calllauncher.CallLauncher()
-		l = self.location()
-		print 'launcher initialized'
 		self.defineUserInterface()
+#		l = self.location()
 #		self.start()
 
 	def addManager(self, location):
@@ -64,7 +63,7 @@ class Launcher(node.Node):
 		# get the requested class object
 		nodeclass = nodeclassreg.getNodeClass(targetclass)
 
-		print 'launching', nodeclass
+		#print 'launching', nodeclass
 
 		## thread or process
 		if newproc:
@@ -82,6 +81,7 @@ class Launcher(node.Node):
 if __name__ == '__main__':
 	import sys, socket
 
+	print 'Launcher initializing...',
 	myhost = socket.gethostname()
 	myid = (myhost,)
 
@@ -101,5 +101,6 @@ if __name__ == '__main__':
 			m = Launcher(myid, {}, 55555)
 		except:
 			m = Launcher(myid, {})
+	print 'Done.'
 	m.start()
 

@@ -36,9 +36,5 @@ m = manager.Manager(('manager',), None)
 managerlocation = m.location()
 launcher = launcher.Launcher((socket.gethostname(),),
 															{'manager': managerlocation})
-#client = uiclient.UIApp(managerlocation['hostname'],
-#												managerlocation['UI port'],
-
-client = uiclient.UIApp(uiclient.wxLocalClient, (m.uiserver,),
-												'Leginon II')
+client = uiclient.UIApp(uiclient.wxLocalClient, (m.uiserver,), 'Leginon II')
 

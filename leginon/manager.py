@@ -287,7 +287,7 @@ class Manager(node.Node):
 	def registerNode(self, readyevent):
 		'''Event handler for registering a node with the manager. Initializes a client for the node and adds information regarding the node's location.'''
 		nodeid = readyevent['id'][:-1]
-		self.printerror('registering node ' + str(nodeid))
+#		self.printerror('registering node ' + str(nodeid))
 
 		nodelocation = readyevent['location']
 
@@ -372,7 +372,7 @@ class Manager(node.Node):
 #			self.server.datahandler.remove(nodeid)
 			self.datahandler.remove(nodeid)
 			self.delClient(nodeid)
-			self.printerror('node ' + str(nodeid) + ' unregistered')
+#			self.printerror('node ' + str(nodeid) + ' unregistered')
 		else:
 			self.printerror('Manager: node ' + str(nodeid) + ' does not exist')
 

@@ -116,7 +116,8 @@ class Node(leginonobject.LeginonObject):
 				self.printException()
 				raise
 			else:
-				self.printerror('connected to manager')
+#				self.printerror('connected to manager')
+				pass
 		self.die_event = threading.Event()
 
 	# main, start/stop methods
@@ -172,7 +173,7 @@ class Node(leginonobject.LeginonObject):
 		'''Cleans up the node before it dies.'''
 		self.outputEvent(event.NodeUnavailableEvent(id=self.ID()))
 		self.server.exit()
-		self.printerror('exited')
+#		self.printerror('exited')
 
 	def die(self, ievent=None):
 		'''Tell the node to finish and call exit.'''

@@ -65,7 +65,6 @@ class Server(XMLRPCServer, uidata.Container):
 		self.xmlrpcclients = []
 		self.localclients = []
 		self.tries = tries
-		self.failures = []
 
 		self.pref_lock = threading.Lock()
 
@@ -76,7 +75,8 @@ class Server(XMLRPCServer, uidata.Container):
 
 		self.xmlrpcserver.register_function(self.setFromClient, 'set')
 		self.xmlrpcserver.register_function(self.commandFromClient, 'command')
-		self.xmlrpcserver.register_function(self.addXMLRPCClientServer, 'add client')
+		self.xmlrpcserver.register_function(self.addXMLRPCClientServer,	
+																				'add client')
 
 	def location(self):
 		location = {}
@@ -106,7 +106,6 @@ class Server(XMLRPCServer, uidata.Container):
 
 		return ''
 
-
 	def commandFromClient(self, namelist, args):
 		uimethodobject = self.getObjectFromList(namelist)
 		if not isinstance(uimethodobject, uidata.Method):
@@ -118,7 +117,6 @@ class Server(XMLRPCServer, uidata.Container):
 		from uiclient import XMLRPCClient
 		addclient = XMLRPCClient(hostname, port)
 		self.xmlrpcclients.append(addclient)
-		self.failures.append(0)
 		self.addChildObjects(addclient)
 		return ''
 
@@ -126,7 +124,8 @@ class Server(XMLRPCServer, uidata.Container):
 		self.localclients.append(client)
 		self.addChildObjects(client)
 
-	def localExecute(self, commandstring, properties, client=None):
+	def localExecute(self, commandstring, properties,
+										client=None, block=True, thread=False):
 		if client in self.localclients:
 			localclients = [client]
 		elif client is None:
@@ -136,37 +135,66 @@ class Server(XMLRPCServer, uidata.Container):
 		for localclient in localclients:
 			target = getattr(localclient, commandstring)
 			args = (properties,)
-#			thread = threading.Thread(target=target, args=args)
-#			thread.start()
-			apply(target, args)
+			if thread:
+				localthread = threading.Thread(target=target, args=args)
+				localthread.start()
+			else:
+				apply(target, args)
 
-	def XMLRPCExecute(self, commandstring, properties, client=None):
+	def XMLRPCExecute(self, commandstring, properties,
+										client=None, block=True, thread=False):
 		if client in self.xmlrpcclients:
 			xmlrpcclients = [client]
 		elif client is None:
 			xmlrpcclients = self.xmlrpcclients
 		else:
 			return
-		failures = []
-		for i, client in enumerate(xmlrpcclients):
+
+		removeclients = []
+		if thread:
+			removeclientslock = threading.Lock()
+		else:
+			removeclientslock = None
+
+		# marshalling XML-RPC data for each client inefficient
+		for client in xmlrpcclients:
+			if thread:
+				xmlrpcthread = threading.Thread(target=self.XMLRPCClientExecute,
+																				args=(commandstring, properties, client,
+																							removeclients, removeclientslock))
+				xmlrpcthread.start()
+			else:
+				self.XMLRPCClientExecute(commandstring, properties, client,
+																	removeclients, removeclientslock)
+
+		for removeclient in removeclients:
+			try:
+				self.xmlrpcclients.remove(removeclient)
+			except ValueError:
+				pass
+
+	def XMLRPCClientExecute(self, commandstring, properties, client,
+													removeclients=None, removeclientslock=None):
+		failures = 0
+		while failures < self.tries:
 			try:
 				client.execute(commandstring, (properties,))
-				self.failures[i] = 0
+				return
 			except (xmlrpclib.ProtocolError, socket.error), e:
-				self.failures[i] += 1
-				if self.failures[i] >= self.tries:
-					failures.append(i)
-		for i in failures:
-			del self.xmlrpcclients[i]
-			del self.failures[i]
+				failures += 1
+		if removeclientslock is not None:
+			removeclientslock.acquire()
+		removeclients.append(client)
+		if removeclientslock is not None:
+			removeclientslock.release()
 
-	def addObject(self, uiobject):
-		uidata.Container.addObject(self, uiobject)
+	def addObject(self, uiobject, block=True, thread=False):
+		uidata.Container.addObject(self, uiobject, block, thread)
 
 		# updates the objects with stored preferences
 		self.usePreferences()
 
-	def _addObject(self, uiobject, client=None, block=True, thread=False):
+	def _addObject(self, uiobject, client=None, block=True, thread=True):
 		uiobject.server = self
 		properties = {}
 		properties['dependencies'] = []
@@ -177,40 +205,56 @@ class Server(XMLRPCServer, uidata.Container):
 		except AttributeError:
 			pass
 		properties['configuration'] = uiobject.getConfiguration()
+		if thread:
+			block = False
 		properties['block'] = block
 
 		if 'client' in properties['typelist']:
 			if properties['value'] is None:
 				properties['value'] = uiobject.toXMLRPC(properties['value'])
-		self.localExecute('addFromServer', properties, client)
+		self.localExecute('addFromServer', properties, client, block, thread)
 
 		if hasattr(uiobject, 'toXMLRPC') and 'value' in properties:
 			properties['value'] = uiobject.toXMLRPC(properties['value'])
-		self.XMLRPCExecute('add', properties, client)
+		self.XMLRPCExecute('add', properties, client, block, thread)
 
-	def _setObject(self, uiobject, client=None):
+	def _setObject(self, uiobject, client=None, block=True, thread=False):
 		properties = {}
 		properties['namelist'] = uiobject.getNameList()
 		properties['value'] = uiobject.value
 
-		self.localExecute('setFromServer', properties, client)
+		if thread:
+			block = False
+		properties['block'] = block
+
+		self.localExecute('setFromServer', properties, client, block, thread)
 
 		if hasattr(uiobject, 'toXMLRPC') and 'value' in properties:
 			properties['value'] = uiobject.toXMLRPC(properties['value'])
-		self.XMLRPCExecute('set', properties, client)
+		self.XMLRPCExecute('set', properties, client, block, thread)
 
-	def _deleteObject(self, uiobject, client=None):
+	def _deleteObject(self, uiobject, client=None, block=True, thread=False):
 		properties = {}
 		properties['namelist'] = uiobject.getNameList()
-		self.localExecute('removeFromServer', properties, client)
-		self.XMLRPCExecute('remove', properties, client)
 
-	def _configureObject(self, uiobject, client=None):
+		if thread:
+			block = False
+		properties['block'] = block
+
+		self.localExecute('removeFromServer', properties, client, block, thread)
+		self.XMLRPCExecute('remove', properties, client, block, thread)
+
+	def _configureObject(self, uiobject, client=None, block=True, thread=False):
 		properties = {}
 		properties['namelist'] = uiobject.getNameList()
 		properties['configuration'] = uiobject.getConfiguration()
-		self.localExecute('configureFromServer', properties, client)
-		self.XMLRPCExecute('configure', properties, client)
+
+		if thread:
+			block = False
+		properties['block'] = block
+
+		self.localExecute('configureFromServer', properties, client, block, thread)
+		self.XMLRPCExecute('configure', properties, client, block, thread)
 
 	# file based preference methods
 

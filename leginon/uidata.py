@@ -60,11 +60,11 @@ class Object(object):
 	def enable(self):
 		self._enable(True)
 
-	def _enable(self, enabled):
+	def _enable(self, enabled, block=True, thread=False):
 		self.lock.acquire()
 		self.enabled = enabled
 		if self.server is not None:
-			self.server._configureObject(self)
+			self.server._configureObject(self, None, block, thread)
 		self.lock.release()
 
 	def getConfiguration(self):
@@ -115,14 +115,14 @@ class Container(Object):
 				uiobject.addChildObjects(client, block, thread)
 		self.lock.release()
 
-	def deleteObject(self, name):
+	def deleteObject(self, name, client=None, block=True, thread=False):
 		self.lock.acquire()
 		try:
 			uiobject = self.uiobjectdict[name]
 			del self.uiobjectdict[name]
 			self.uiobjectlist.remove(uiobject)
 			if self.server is not None:
-				self.server._deleteObject(uiobject)
+				self.server._deleteObject(uiobject, client, block, thread)
 			uiobject.server = None
 			uiobject.parent = None
 		except KeyError:
@@ -238,7 +238,7 @@ class Data(Object):
 		else:
 			raise PermissionsError('cannot set, permission denied')
 
-	def set(self, value, callback=True):
+	def set(self, value, callback=True, block=True, thread=False):
 		#try:
 		#	value = copy.deepcopy(value)
 		#except copy.Error:
@@ -255,7 +255,7 @@ class Data(Object):
 		else:
 			raise TypeError('invalid data value for type')
 		if self.server is not None:
-			self.server._setObject(self)
+			self.server._setObject(self, None, block, thread)
 
 	# needs reversal of _get/get like set
 	def get(self):
