@@ -32,6 +32,9 @@ class SetTargetsEvent(wx.PyCommandEvent):
 		self.targets = targets
 
 class Panel(gui.wx.TargetFinder.Panel):
+	tools = gui.wx.TargetFinder.Panel.tools + [
+		'submit'
+	]
 	def initialize(self):
 		gui.wx.TargetFinder.Panel.initialize(self)
 
@@ -41,9 +44,6 @@ class Panel(gui.wx.TargetFinder.Panel):
 			'done': wx.RED,
 			'position': wx.Color(255, 255, 0),
 		}
-
-		self.bsubmit = wx.Button(self, -1, 'Submit Targets')
-		self.szbuttons.Add(self.bsubmit, (1, 0), (1, 1), wx.EXPAND)
 
 		self.imagepanel = gui.wx.ImageViewer.TargetImagePanel(self, -1)
 		self.szimage = self._getStaticBoxSizer('Target Image', (1, 1), (3, 1),
@@ -91,12 +91,11 @@ class Panel(gui.wx.TargetFinder.Panel):
 
 	def onNodeInitialized(self):
 		gui.wx.TargetFinder.Panel.onNodeInitialized(self)
-		self.Bind(wx.EVT_BUTTON, self.onSubmitButton, self.bsubmit)
 
-	def onSubmitButton(self, evt):
+	def onSubmitTool(self, evt):
 		self.node.submitTargets()
 
-	def onSettingsButton(self, evt):
+	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()

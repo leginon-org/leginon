@@ -25,6 +25,12 @@ class ImageUpdatedEvent(wx.PyCommandEvent):
 
 class Panel(gui.wx.Node.Panel):
 	imageclass = gui.wx.ImageViewer.TargetImagePanel
+	tools = [
+		'settings',
+		'acquire',
+		'calibrate',
+		'abort',
+	]
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
 
@@ -35,19 +41,6 @@ class Panel(gui.wx.Node.Panel):
 
 	def initialize(self):
 		# settings
-
-		self.bsettings = wx.Button(self, -1, 'Settings...')
-		self.bcalibrate = wx.Button(self, -1, 'Calibrate')
-		self.babort = wx.Button(self, -1, 'Abort')
-		self.bacquire = wx.Button(self, -1, 'Acquire')
-
-		self.szbuttons = wx.GridBagSizer(5, 5)
-		self.szbuttons.Add(self.bsettings, (0, 0), (1, 1), wx.EXPAND)
-		self.szbuttons.Add(self.bacquire, (1, 0), (1, 1), wx.EXPAND)
-		self.szbuttons.Add(self.bcalibrate, (2, 0), (1, 1), wx.EXPAND)
-		self.szbuttons.Add(self.babort, (3, 0), (1, 1), wx.EXPAND)
-		self.szmain.Add(self.szbuttons, (1, 0), (1, 1), wx.ALIGN_CENTER)
-		self.szmain.AddGrowableCol(1)
 
 		self.targetcolors = {
 			'Peak': wx.Color(255, 128, 0),
@@ -72,7 +65,9 @@ class Panel(gui.wx.Node.Panel):
 		self.szimage.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND)
 		self.szimage.AddGrowableRow(0)
 		self.szimage.AddGrowableCol(0)
+
 		self.szmain.AddGrowableRow(5)
+		self.szmain.AddGrowableCol(1)
 
 		self.Bind(EVT_ADD_TARGET_TYPES, self.onAddTargetTypes)
 		self.Bind(EVT_IMAGE_UPDATED, self.onImageUpdated)
@@ -92,13 +87,9 @@ class Panel(gui.wx.Node.Panel):
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onNodeInitialized(self):
-		self.Bind(wx.EVT_BUTTON, self.onSettingsButton, self.bsettings)
-		self.Bind(wx.EVT_BUTTON, self.onCalibrateButton, self.bcalibrate)
-		self.Bind(wx.EVT_BUTTON, self.onAbortButton, self.babort)
-		self.Bind(wx.EVT_BUTTON, self.onAcquireButton, self.bacquire)
 		self.Bind(wx.EVT_CHOICE, self.onDisplayChoice, self.cdisplay)
 
-	def onAcquireButton(self, evt):
+	def onAcquireTool(self, evt):
 		self.node.acquireImage()
 
 	def onImageUpdated(self, evt):
@@ -131,15 +122,15 @@ class Panel(gui.wx.Node.Panel):
 		evt = ImageUpdatedEvent(self, name, image, targets)
 		self.GetEventHandler().AddPendingEvent(evt)
 
-	def onSettingsButton(self, evt):
+	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
 
-	def onCalibrateButton(self, evt):
+	def onCalibrateTool(self, evt):
 		raise NotImplementedError
 
-	def onAbortButton(self, evt):
+	def onAbortTool(self, evt):
 		raise NotImplementedError
 
 class SettingsDialog(gui.wx.Settings.Dialog):

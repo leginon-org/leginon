@@ -5,17 +5,16 @@ from gui.wx.Entry import FloatEntry, EVT_ENTRY
 from gui.wx.Presets import EditPresetOrder, EVT_PRESET_ORDER_CHANGED
 import wx
 import gui.wx.ImageViewer
-import gui.wx.ToolBar
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'acquisition'
+	tools = [
+		'settings',
+		'play',
+		'pause',
+		'stop',
+	]
 	def __init__(self, parent, name):
-		self.tools = [
-			'settings',
-			'play',
-			'pause',
-			'stop',
-		]
 		gui.wx.Node.Panel.__init__(self, parent, -1)
 
 		# image

@@ -13,6 +13,9 @@ class ImageUpdatedEvent(wx.PyCommandEvent):
 		self.targets = targets
 
 class Panel(gui.wx.Node.Panel):
+	tools = [
+		'settings',
+	]
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
 
@@ -22,19 +25,9 @@ class Panel(gui.wx.Node.Panel):
 		self.SetupScrolling()
 
 	def initialize(self):
-		# settings
+		pass
 
-		self.bsettings = wx.Button(self, -1, 'Settings...')
-
-		self.szbuttons = wx.GridBagSizer(5, 5)
-		self.szbuttons.Add(self.bsettings, (0, 0), (1, 1), wx.EXPAND)
-		self.szmain.Add(self.szbuttons, (1, 0), (1, 1), wx.ALIGN_CENTER)
-		self.szmain.AddGrowableCol(1)
-
-	def onNodeInitialized(self):
-		self.Bind(wx.EVT_BUTTON, self.onSettingsButton, self.bsettings)
-
-	def onSettingsButton(self, evt):
+	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()

@@ -1,11 +1,15 @@
 import icons
 import wx
 
-ID_SETTINGS = 1
-ID_ACQUIRE = 2
-ID_PLAY = 4
-ID_PAUSE = 8
-ID_STOP = 16
+ID_SETTINGS = 1001
+ID_ACQUIRE = 1002
+ID_PLAY = 1003
+ID_PAUSE = 1004
+ID_STOP = 1005
+ID_CALIBRATE = 1006
+ID_MEASURE = 1007
+ID_ABORT = 1008
+ID_SUBMIT = 1009
 
 class ToolBar(wx.ToolBar):
 	def __init__(self, parent):
@@ -15,52 +19,33 @@ class ToolBar(wx.ToolBar):
 
 		self.panel = None
 
-		self.order = [
-			'settings',
-			'acquire',
-			'play',
-			'pause',
-			'stop',
+		tools = [
+			('settings', ID_SETTINGS, 'settings.png', 'Settings', 'onSettingsTool'),
+			('acquire', ID_ACQUIRE, 'acquire.png', 'Acquire', 'onAcquireTool',),
+			('calibrate', ID_CALIBRATE, 'play.png', 'Calibrate',
+				'onCalibrateTool',),
+			('abort', ID_ABORT, 'stop.png', 'Abort', 'onAbortTool',),
+			('play', ID_PLAY, 'play.png', 'Play', 'onPlayTool',),
+			('pause', ID_PAUSE, 'pause.png', 'Pause', 'onPauseTool',),
+			('stop', ID_STOP, 'stop.png', 'Stop', 'onStopTool',),
+			('measure', ID_MEASURE, 'ruler.png', 'Measure', 'onMeasureTool',),
+			('submit', ID_SUBMIT, 'play.png', 'Submit', 'onSubmitTool',),
 		]
 
-		self.ids = {
-			'settings': ID_SETTINGS,
-			'acquire': ID_ACQUIRE,
-			'play': ID_PLAY,
-			'pause': ID_PAUSE,
-			'stop': ID_STOP,
-		}
-
-		self.bitmaps = {
-			'settings': wx.BitmapFromImage(wx.Image(icons.getPath('settings.png')))
-		}
-
-		self.tooltips = {
-			'settings': 'Settings',
-			'acquire': 'Acquire',
-			'play': 'Play',
-			'pause': 'Pause',
-			'stop': 'Stop',
-		}
-
-		self.methods = {
-			ID_SETTINGS: 'onSettingsTool',
-			ID_ACQUIRE: 'onAcquireTool',
-			ID_PLAY: 'onPlayTool',
-			ID_PAUSE: 'onPauseTool',
-			ID_STOP: 'onStopTool',
-		}
-
+		self.order = []
+		self.ids = {}
+		self.methods = {}
 		self.tools = {}
-
-		for tool in self.order:
-			toolid = self.ids[tool]
-			try:
-				bitmap = self.bitmaps[tool]
-			except KeyError:
+		for tool in tools:
+			self.order.append(tool[0])
+			self.ids[tool[0]] = tool[1]
+			self.methods[tool[1]] = tool[4]
+			if tool[2]:
+				bitmap = wx.BitmapFromImage(wx.Image(icons.getPath(tool[2])))
+			else:
 				bitmap = wx.EmptyBitmap(16, 16)
-			tooltip = self.tooltips[tool]
-			self.AddSimpleTool(toolid, bitmap, tooltip)
+			tooltip = tool[3]
+			self.AddSimpleTool(tool[1], bitmap, tooltip)
 
 		self.Realize()
 

@@ -78,6 +78,7 @@ class Panel(gui.wx.Node.Panel):
 		self.SetupScrolling()
 
 	def onNodeInitialized(self):
+		self.dialog = SettingsDialog(self)
 		self.node.getPlan()
 		self.setPlan(self.node.plan)
 		self.Bind(gui.wx.Events.EVT_ACQUISITION_DONE, self.onAcquisitionDone)
@@ -90,9 +91,7 @@ class Panel(gui.wx.Node.Panel):
 		self.statspanel.setStats(evt.statistics)
 
 	def onSettingsButton(self, evt):
-		dialog = SettingsDialog(self)
-		dialog.ShowModal()
-		dialog.Destroy()
+		self.dialog.ShowModal()
 		self.node.getPlan()
 		self.setPlan(self.node.plan)
 

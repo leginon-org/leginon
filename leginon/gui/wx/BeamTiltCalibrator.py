@@ -4,6 +4,9 @@ import gui.wx.Calibrator
 import gui.wx.Settings
 
 class Panel(gui.wx.Calibrator.Panel):
+	tools = gui.wx.Calibrator.Panel.tools + [
+		'measure',
+	]
 	def initialize(self):
 		gui.wx.Calibrator.Panel.initialize(self)
 
@@ -23,13 +26,9 @@ class Panel(gui.wx.Calibrator.Panel):
 		self.szeuc.Add(self.beuctoscope, (0, 0), (1, 1), wx.EXPAND)
 		self.szeuc.Add(self.beucfromscope, (1, 0), (1, 1), wx.EXPAND)
 
-		self.bmeasure = wx.Button(self, -1, 'Measure...')
-		self.szbuttons.Add(self.bmeasure, (4, 0), (1, 1), wx.EXPAND)
-
 	def onNodeInitialized(self):
 		gui.wx.Calibrator.Panel.onNodeInitialized(self)
 		self.Bind(wx.EVT_BUTTON, self.onParameterSettingsButton, self.bpsettings)
-		self.Bind(wx.EVT_BUTTON, self.onMeasureButton, self.bmeasure)
 		self.Bind(wx.EVT_BUTTON, self.onEucToScope, self.beuctoscope)
 		self.Bind(wx.EVT_BUTTON, self.onEucFromScope, self.beucfromscope)
 
@@ -39,7 +38,7 @@ class Panel(gui.wx.Calibrator.Panel):
 	def onEucFromScope(self, evt):
 		self.node.uiEucFromScope()
 
-	def onMeasureButton(self, evt):
+	def onMeasureTool(self, evt):
 		dialog = MeasureDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
@@ -55,7 +54,7 @@ class Panel(gui.wx.Calibrator.Panel):
 		dialog.ShowModal()
 		dialog.Destroy()
 
-	def onCalibrateButton(self, evt):
+	def onCalibrateTool(self, evt):
 		parameter = self.cparameter.GetStringSelection()
 		if parameter == 'Defocus':
 			self.node.uiCalibrateDefocus()
@@ -64,7 +63,7 @@ class Panel(gui.wx.Calibrator.Panel):
 		else:
 			raise RuntimeError
 
-	def onAbortButton(self, evt):
+	def onAbortTool(self, evt):
 		self.node.abortCalibration()
 
 class DefocusSettingsDialog(gui.wx.Settings.Dialog):
