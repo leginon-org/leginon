@@ -158,15 +158,23 @@ class ArrowLine(Line):
 														widget.getBox())
 
 class LabeledLine(ArrowLine):
-	def __init__(self, canvas, originposition, destinationposition, destination, text):
-		self.text = text
-		ArrowLine.__init__(self, canvas, originposition, destinationposition, destination)
+	def __init__(self, canvas, originposition, destinationposition,
+																						destination, binding):
+		self.binding = binding
+		ArrowLine.__init__(self, canvas, originposition,
+												destinationposition, destination)
 
+	def labelText(self, binding):
+		if binding is None:
+			return '<None>'
+		else:
+			return str(binding[0])
+		
 	def createline(self, originposition, destinationposition):
 		ArrowLine.createline(self, originposition, destinationposition)
 
 		self.labeltext = Tkinter.StringVar()
-		self.labeltext.set(self.text)
+		self.labeltext.set(self.labelText(self.binding))
 		self.label = Tkinter.Label(self.canvas, textvariable=self.labeltext,
 																relief=Tkinter.RAISED, justify=Tkinter.LEFT,
 																bd=1, padx=5, pady=3, bg='white')
@@ -191,9 +199,9 @@ class LabeledLine(ArrowLine):
 		ArrowLine.delete(self)
 		self.label.place_forget()
 
-	def append(self, itext):
-		otext = self.labeltext.get()
-		self.labeltext.set(otext + '\n' + itext)
+	def append(self, binding):
+		text = self.labeltext.get()
+		self.labeltext.set(text + '\n' + self.labelText(binding))
 
 class ConnectionManager(Line):
 	def __init__(self, canvas):
@@ -230,13 +238,13 @@ class ConnectionManager(Line):
 							(destinationposition[0], destinationposition[1]))
 		return line
 
-	def addConnection(self, origin, destination, text):
+	def addConnection(self, origin, destination, binding):
 		# could send events to self, not bothering for now
 		if origin == destination:
 			return
 		key = (origin, destination)
 		if key in self.lines:
-			self.lines[key]['line'].append(text)
+			self.lines[key]['line'].append(binding)
 		else:
 			self.lines[key] = {}
 			inversekey = (destination, origin)
@@ -250,7 +258,7 @@ class ConnectionManager(Line):
 
 			position = self.offsetPosition(origin, destination)
 			self.lines[key]['line'] = LabeledLine(self.canvas, position[0],
-																						position[1], destination, text)
+																						position[1], destination, binding)
 
 	def deleteConnection(self, origin, destination):
 		key = (origin, destination)
@@ -276,20 +284,20 @@ class ConnectionManager(Line):
 				position = self.offsetPosition(key[0], key[1])
 				self.lines[key]['line'].move(position[0], position[1])
 
-	def startConnection(self, origin, text='<None>'):
+	def startConnection(self, origin, binding=None):
 		if self.activeconnection is None:
 			position = origin.getPosition()
 			self.activeconnection = {}
 			self.activeconnection['origin'] = origin
-			self.activeconnection['text'] = text
+			self.activeconnection['binding'] = binding
 			self.activeconnection['line'] = LabeledLine(self.canvas, position,
-																									position, None, text)
+																									position, None, binding)
 
 	def finishConnection(self, destination):
 		if self.activeconnection is not None:
 			self.activeconnection['line'].delete()
 			self.addConnection(self.activeconnection['origin'], destination,
-																					self.activeconnection['text'])
+																					self.activeconnection['binding'])
 			self.activeconnection = None
 
 	def abortConnection(self, ievent=None):
@@ -455,7 +463,7 @@ class ApplicationEditor(Editor):
 	def displayConnection(self, binding):
 		self.connectionmanager.addConnection(self.mapping[binding[1]],
 																					self.mapping[binding[2]],
-																					str(binding[0]))
+																					binding)
 
 class NodeDialog(tkSimpleDialog.Dialog):
 	def __init__(self, parent, title, args=None):
