@@ -111,7 +111,8 @@ class Application(leginonobject.LeginonObject):
 			launcherid = self.getLauncherIDFromAlias(ns['launcher alias'])
 		except ValueError:
 			raise ValueError('Invalid node specification')
-		nodename = self.getName() + ' ' + ns['alias']
+		#nodename = self.getName() + ' ' + ns['alias']
+		nodename = ns['alias']
 		args = tuple(ns['args'])
 		dependencies = []
 		for dependency in ns['dependencies']:
