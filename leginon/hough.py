@@ -115,8 +115,8 @@ if __name__=='__main__':
 
 	t.reset()
 
-	houghimage = hough(edgeimage, 100, [28,28])
-	#houghimage = Numeric.clip(m2, 400, 30000)
+	houghimage = hough(edgeimage, 300, [28,28])
+	#houghimage = Numeric.clip(houghimage, 150, 30000)
 
 	t.stop()
 
