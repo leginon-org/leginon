@@ -759,7 +759,7 @@ class TietzPVCam(Tietz, ccdcamera.CCDCamera):
 		ccdcamera.CCDCamera.__init__(self)
 		Tietz.__init__(self)
 	
-class TietzFastScan(Tietz, ccdcamera.CCDCamera):
+class TietzFastScan(Tietz, ccdcamera.FastCCDCamera):
 	name = 'Tietz FastScan'
 	try:
 		cameratype = win32com.client.constants.ctFastScan
@@ -770,7 +770,7 @@ class TietzFastScan(Tietz, ccdcamera.CCDCamera):
 		ccdcamera.CCDCamera.__init__(self)
 		Tietz.__init__(self)
 	
-class TietzFastScanFW(Tietz, ccdcamera.CCDCamera):
+class TietzFastScanFW(Tietz, ccdcamera.FastCCDCamera):
 	name = 'Tietz FastScan Firewire'
 	try:
 		cameratype = win32com.client.constants.ctF114_FW

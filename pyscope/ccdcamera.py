@@ -4,15 +4,15 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyScope/ccdcamera.py,v $
-# $Revision: 1.2 $
+# $Revision: 1.3 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-23 17:54:40 $
+# $Date: 2005-02-23 22:15:44 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
 class CCDCamera(object):
-	name = None
+	name = 'CCD Camera'
 
 	def getBinning(self):
 		raise NotImplementedError
@@ -50,3 +50,5 @@ class CCDCamera(object):
 	def getCameraSize(self):
 		raise NotImplementedError
 
+class FastCCDCamera(CCDCamera):
+	name = 'Fast CCD Camera'
