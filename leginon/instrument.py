@@ -4,23 +4,32 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.2 $
+# $Revision: 1.3 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-22 23:47:19 $
+# $Date: 2005-02-23 01:00:32 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
 class Proxy(object):
 	def __init__(self, objectservice):
-		self.objectservice = objectservice
 		self.tems = {}
 		self.ccdcameras = {}
 		self.tem = None
 		self.ccdcamera = None
+		self.objectservice = objectservice
+		self.objectservice._addDescriptionHandler(add=self.onAddDescription,
+																							remove=self.onRemoveDescription)
+
+	def onAddDescription(self, nodename, name, description, types):
+		pass
+
+	def onRemoveDescription(self, nodename, name):
+		pass
 
 	def getTEMNames(self):
 		objects = self.objectservice.getObjectsByType('TEM')
+		self.tems = {}
 		for nodename, name in objects:
 			string = '%s (%s)' % (name, nodename)
 			proxy = self.objectservice.getObjectProxy(nodename, name)
@@ -29,6 +38,7 @@ class Proxy(object):
 
 	def getCCDCameraNames(self):
 		objects = self.objectservice.getObjectsByType('CCDCamera')
+		self.ccdcameras = {}
 		for nodename, name in objects:
 			string = '%s (%s)' % (name, nodename)
 			proxy = self.objectservice.getObjectProxy(nodename, name)

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/remotecall.py,v $
-# $Revision: 1.6 $
+# $Revision: 1.7 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-22 23:47:20 $
+# $Date: 2005-02-23 01:00:32 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -132,15 +132,15 @@ class Object(object):
 class Locker(Object):
 	def __init__(self):
 		self.locknode = None
-		self.lock = threading.Condition()
+		self._lock = threading.Condition()
 		Object.__init__(self)
 
 	def _execute(self, origin, name, type, args=(), kwargs={}):
 		# handle lock and unlock directly
-		self.lock.acquire()
+		self._lock.acquire()
 		if self.locknode != origin:
 			if self.locknode is not None:
-				self.lock.wait()
+				self._lock.wait()
 			self.locknode = origin
 		if name in ['lock', 'unlock']:
 			result = None
@@ -148,27 +148,27 @@ class Locker(Object):
 			result = Object._execute(self, origin, name, type, args, kwargs)
 		if name != 'lock':
 			self.locknode = None
-			self.lock.notify()
-		self.lock.release()
+			self._lock.notify()
+		self._lock.release()
 		return result
 
-	def lock(self, node):
-		self.lock.acquire()
-		if self.locknode != node:
+	def lock(self):
+		self._lock.acquire()
+		if self.locknode != self.node.name:
 			if self.locknode is not None:
-				self.lock.wait()
-			self.locknode = node
-		self.lock.release()
+				self._lock.wait()
+			self.locknode = self.node.name
+		self._lock.release()
 
-	def unlock(self, node):
-		self.lock.acquire()
-		if self.locknode != node:
-			self.lock.release()
+	def unlock(self):
+		self._lock.acquire()
+		if self.locknode != self.node.name:
+			self._lock.release()
 			raise UnlockError
 		else:
 			self.locknode = None
-		self.lock.notify()
-		self.lock.release()
+		self._lock.notify()
+		self._lock.release()
 
 class ObjectCallProxy(object):
 	def __init__(self, call, args):
@@ -186,6 +186,8 @@ class ObjectProxy(object):
 		self.__name = name
 
 	def __getattr__(self, name):
+		if name == 'multiCall':
+			return object.__getattr__(self, name)
 		d, t = self.__objectservice.descriptions[self.__nodename][self.__name]
 		try:
 			description = d[name]
@@ -199,15 +201,54 @@ class ObjectProxy(object):
 		else:
 			raise TypeError('attribute %s is not readable' % name)
 
+	def multiCall(self, names, types, args=None, kwargs=None):
+		args = (self.__nodename, self.__name, names, types, args, kwargs)
+		return self.__objectservice._multiCall(*args)
+
 #class ObjectService(Object):
 class ObjectService(Locker):
 	def __init__(self, node):
 		self.descriptions = {}
 		self.clients = {}
 		self.node = node
+		self.addhandlers = []
+		self.removehandlers = []
 		#Object.__init__(self)
 		Locker.__init__(self)
 		self._addObject('Object Service', self)
+
+	def _addDescriptionHandler(self, add=None, remove=None):
+		self.lock()
+		if add is not None:
+			self.addhandlers.append(add)
+			for args in self._getDescriptions():
+				add(*args)
+		if remove is not None:
+			self.removehandlers.append(remove)
+		self.unlock()
+
+	def _removeDescriptionHandler(self, add=None, remove=None):
+		self.lock()
+		if add is not None:
+			self.addhandlers.remove(add)
+		if remove is not None:
+			self.removehandlers.remove(remove)
+		self.unlock()
+
+	def _addHandler(self, nodename, name, description, types):
+		for handler in self.addhandlers:
+			handler(nodename, name, description, types)
+
+	def _removeHandler(self, nodename, name):
+		for handler in self.removehandlers:
+			handler(nodename, name)
+
+	def _getDescriptions(self):
+		args = []
+		for nodename in self.descriptions:
+			for name in self.descriptions[nodename]:
+				args.append((nodename, name) + self.descriptions[nodename][name])
+		return args
 
 	def addDescription(self, nodename, name, description, types, location):
 		if (nodename not in self.clients or
@@ -218,10 +259,15 @@ class ObjectService(Locker):
 		if nodename not in self.descriptions:
 			self.descriptions[nodename] = {}
 		self.descriptions[nodename][name] = (description, types)
+		self._addHandler(nodename, name, description, types)
 
 	def removeDescription(self, nodename, name):
+		self._removeDescription(self, nodename, name)
+
+	def _removeDescription(self, nodename, name):
 		try:
 			del self.descriptions[nodename][name]
+			self._removeHandler(nodename, name)
 		except KeyError:
 			pass
 
@@ -232,10 +278,17 @@ class ObjectService(Locker):
 	def removeDescriptions(self, descriptions):
 		for description in descriptions:
 			self.removeDescription(*description)
+		
+	def _removeDescriptions(self, descriptions):
+		for description in descriptions:
+			self._removeDescription(*description)
 
 	def removeNode(self, nodename):
 		try:
-			del self.descriptions[nodename]
+			descriptions = []
+			for name in self.descriptions[nodename]:
+				descriptions.append((nodename, name))
+			self._removeDescriptions(descriptions)
 		except KeyError:
 			pass
 		try:
@@ -246,6 +299,15 @@ class ObjectService(Locker):
 	def _call(self, node, name, attributename, type, args=(), kwargs={}):
 		request = Request(self.node.name, node, name, attributename, type,
 											args, kwargs)
+		try:
+			return self.clients[node].send(request)
+		except KeyError:
+			raise ValueError('no client for node %s' % node)
+
+	def _multiCall(self, node, name, attributenames, types,
+									args=None, kwargs=None):
+		request = MultiRequest(self.node.name, node, name, attributenames, types,
+														args, kwargs)
 		try:
 			return self.clients[node].send(request)
 		except KeyError:
@@ -313,9 +375,11 @@ class ManagerObjectService(ObjectService):
 			location = self.node.nodelocations[nodename]['location']
 			for n in self.descriptions[nn]:
 				d, t = self.descriptions[nn][n]
-				if 'ObjectService' in t and 'ObjectService' not in types:
-					self._call(nn, n, 'addDescription', 'method', args)
-				descriptions.append((nn, n, d, t, location['data binder']))
+				if 'ObjectService' in t:
+					if 'ObjectService' not in types:
+						self._call(nn, n, 'addDescription', 'method', args)
+				else:
+					descriptions.append((nn, n, d, t, location['data binder']))
 		if descriptions and 'ObjectService' in types:
 			args = (descriptions,)
 			self._call(nodename, name, 'addDescriptions', 'method', args)
@@ -340,6 +404,7 @@ class ManagerObjectService(ObjectService):
 				d, t = self.descriptions[nn][n]
 				if 'ObjectService' in t:
 					self._call(nn, n, 'removeNode', 'method', args)
+		ObjectService.removeNode(self, nodename)
 
 class TEM(Locker):
 	pass
