@@ -14,6 +14,9 @@ import uiclient
 import threading
 
 server = uiserver.Server()
-
-client = uiclient.UIApp({'instance': server}, 'UI Test')
+server.addObject(uidata.Container('Foo'))
+server.addObject(uidata.ExternalContainer('Bar'))
+threading.Thread(target=uiclient.UIApp,
+									args=({'instance': server}, 'UI Test')).start()
+#client = uiclient.UIApp({'instance': server}, 'UI Test')
 

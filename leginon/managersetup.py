@@ -366,17 +366,23 @@ class ManagerSetup(object):
 	def createSelectSessionContainer(self):
 		self.sessionselector = uidata.SingleSelectFromList('Session', [], 0, 'rw')
 		self.selectsessioncomment = uidata.String('Comment', '', 'r')
-		self.selectsessioninstrument = uidata.String('Instrument', '', 'r')
-		self.selectsessionpath = uidata.String('Image Path', '', 'r')
+		self.selectsessioninstrument = uidata.String('Instrument', '', 'r',
+				tooltip='Instrument used with this session')
+		self.selectsessionpath = uidata.String('Image Path', '', 'r',
+				tooltip='Path where images are stored for use with the database')
 
 		self.sessionselector.setCallback(self.onSessionSelect)
 
 		self.connectinstrument = uidata.Boolean('Connect to instrument launcher',
-																							True, 'rw', persist=True)
+																							True, 'rw', persist=True,
+				tooltip='When the session is started, connect to the launcher on the '
+									+ 'machine where the instrument is located')
 		self.startsessionmethod = uidata.Method('Start Session',
-																						self.onStartSession)
+																						self.onStartSession,
+				tooltip='Begin the selected Leginon II session with the given settings')
 		self.createsessionmethod = uidata.Method('Create Session',
-																							self.onCreateSession)
+																							self.onCreateSession,
+												tooltip='Configure and create a new Leginon II session')
 
 		selectsessioncontainer = uidata.Container('Select Session')
 		selectsessioncontainer.addObjects((self.sessionselector,

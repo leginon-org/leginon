@@ -83,7 +83,7 @@ class GridTrayPanel(wxPanel):
 		if callable(self.callback):
 			self.callback(self.queue + [number])
 
-	def set(self, queue):
+	def setQueue(self, queue):
 		self.queue = queue
 		mapping = {}
 

@@ -58,7 +58,6 @@ def getNodeClass(classname):
 def getNodeClassNames():
 	return reg_list
 
-
 ### register Node classes in the order you want them listed publicly
 registerNodeClass('corrector', 'Corrector')
 registerNodeClass('corrector', 'SimpleCorrector')
@@ -84,11 +83,11 @@ registerNodeClass('simpleacquisition', 'SimpleAcquisition')
 registerNodeClass('targetmaker', 'SpiralTargetMaker')
 registerNodeClass('applicationeditor', 'ApplicationEditor')
 registerNodeClass('administration', 'Administration')
-registerNodeClass('robot', 'RobotNotification')
+#registerNodeClass('robot', 'RobotNotification')
 registerNodeClass('EM', 'EM')
 registerNodeClass('emailnotification', 'Email')
 registerNodeClass('fftmaker', 'FFTMaker')
-if sys.platform == 'win32':
-	registerNodeClass('webcam', 'Webcam')
-	registerNodeClass('robot', 'RobotControl')
+#if sys.platform == 'win32':
+#	registerNodeClass('webcam', 'Webcam')
+#	registerNodeClass('robot', 'RobotControl')
 

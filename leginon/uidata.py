@@ -50,7 +50,7 @@ class PrintRLock(object):
 # UI Objects
 class Object(object):
 	typelist = ('object',)
-	def __init__(self, name):
+	def __init__(self, name, tooltip=None):
 		if type(name) is not str:
 			raise TypeError('name must be a string')
 		self.name = name
@@ -58,6 +58,8 @@ class Object(object):
 		self.server = None
 		self.configuration = {}
 		self.configuration['enabled'] = True
+		if tooltip is not None:
+			self.configuration['tool tip'] = tooltip
 		#self.lock = PrintRLock(self.name)
 		self.lock = threading.RLock()
 
@@ -94,6 +96,8 @@ class Object(object):
 
 	def setToolTip(self, tooltip, block=True, thread=False):
 		self.lock.acquire()
+		if tooltip is None:
+			tooltip = ''
 		self.configuration['tool tip'] = tooltip
 		if self.server is not None:
 			self.server._configureObject(self, None, block, thread)
@@ -105,8 +109,8 @@ class Object(object):
 
 class Method(Object):
 	typelist = Object.typelist + ('method',)
-	def __init__(self, name, method):
-		Object.__init__(self, name)
+	def __init__(self, name, method, tooltip=None):
+		Object.__init__(self, name, tooltip)
 		if not callable(method):
 			raise TypeError('method must be callable')
 		self.method = method
@@ -115,8 +119,8 @@ class Data(Object):
 	permissionsvalues = ('r', 'w', 'rw', 'wr')
 	typelist = Object.typelist + ('data',)
 	def __init__(self, name, value, permissions='r', callback=None,
-								postcallback=None, persist=False):
-		Object.__init__(self, name)
+								postcallback=None, persist=False, tooltip=None):
+		Object.__init__(self, name, tooltip)
 		if permissions in self.permissionsvalues:
 			if 'r' in permissions:
 				self.configuration['read'] = True

@@ -1102,7 +1102,7 @@ def bin2dict(object, name=None):
 		name='blob'
 	d={}
 	k = sep.join(['BIN',name])
-	pobject = cPickle.dumps(object, 1)
+	pobject = cPickle.dumps(object, cPickle.HIGHEST_PROTOCOL)
 	d[k]=pobject
 	return d
 

@@ -28,14 +28,14 @@ class DictTreeCtrlPanel(wxPanel):
 		EVT_TREE_SEL_CHANGED(self, self.tree.GetId(), self.OnSelect)
 		self.SetSize(self.tree.GetSize())
 
-	def set(self, dictvalue):
+	def _set(self, dictvalue):
 		self.tree.DeleteChildren(self.root)
 		self.dict = dictvalue
 		self.tree.SetPyData(self.root, self.dict)
 		self.setDict(self.root, self.dict)
 		self.tree.Expand(self.root)
 
-	def get(self):
+	def _get(self):
 		return self.dict
 
 	def setDict(self, parent, dictvalue):

@@ -32,7 +32,7 @@ def localHack(obj):
 	except KeyError:
 		uiinstance = None
 
-	pickle = cPickle.dumps(obj, True)
+	pickle = cPickle.dumps(obj, cPickle.HIGHEST_PROTOCOL)
 
 	if ltinstance is not None:
 		location['data transport']['local transport']['instance'] = ltinstance
@@ -69,14 +69,14 @@ class Handler(SocketServer.StreamRequestHandler):
 				raise
 			try:
 				# returns exception if error, else None
-				cPickle.dump(e, self.wfile, True)
+				cPickle.dump(e, self.wfile, cPickle.HIGHEST_PROTOCOL)
 			except IOError:
 				print 'write failed when acknowledging push'
 		else:
 			try:
 				try:
 					self.wfile.write(cPickle.dumps(self.server.datahandler.query(obj),
-																					True))
+																					cPickle.HIGHEST_PROTOCOL))
 				except cPickle.UnpickleableError:
 					try:
 						self.wfile.write(localHack(self.server.datahandler.query(obj)))
@@ -120,7 +120,7 @@ class Client(object):
 
 	def pull(self, id):
 		self.connect()
-		self.send(cPickle.dumps(id, True))
+		self.send(cPickle.dumps(id, cPickle.HIGHEST_PROTOCOL))
 		data = self.receive()
 		self.close()
 		try:
@@ -134,7 +134,7 @@ class Client(object):
 		except socket.error, e:
 			raise IOError('connect to server failed')
 		try:
-			self.send(cPickle.dumps(idata, True))
+			self.send(cPickle.dumps(idata, cPickle.HIGHEST_PROTOCOL))
 		except cPickle.UnpickleableError:
 			try:
 				self.send(localHack(idata))

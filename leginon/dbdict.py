@@ -55,7 +55,7 @@ class dbDict(object):
 	##
 
 	def __pickle_key(self, key):
-		return cPickle.dumps(key, 1)
+		return cPickle.dumps(key, cPickle.HIGHEST_PROTOCOL)
 
 	def __unpickle_key(self, pkey):
 		return cPickle.loads(pkey)

@@ -271,7 +271,7 @@ class Server(xmlrpc.Server, uidata.Container):
 			return
 		namelist = uiobject._getNameList()
 		value = uiobject.get()
-		pickledvalue = cPickle.dumps(value, True)
+		pickledvalue = cPickle.dumps(value, cPickle.HIGHEST_PROTOCOL)
 		initializer = {'session': self.session,
 										'object': namelist,
 										'pickled value': pickledvalue}
@@ -320,7 +320,7 @@ class Server(xmlrpc.Server, uidata.Container):
 			d = {}
 		namelist = uiobject._getNameList()
 		d[tuple(namelist)]= uiobject.get()
-		cPickle.dump(d, f, True)
+		cPickle.dump(d, f, cPickle.HIGHEST_PROTOCOL)
 		f.close()
 
 	def setFromPickle(self, namelist, value):
@@ -398,6 +398,6 @@ class Server(xmlrpc.Server, uidata.Container):
 		## update and store
 		d[tuple(namelist)] = value
 		f = file(fname, 'wb')
-		cPickle.dump(d, f, True)
+		cPickle.dump(d, f, cPickle.HIGHEST_PROTOCOL)
 		f.close()
 

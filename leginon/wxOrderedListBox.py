@@ -60,7 +60,7 @@ class wxOrderedListBox(wxPanel):
 	def getList(self):
 		return self.list
 
-	def setList(self, value):
+	def _setList(self, value):
 		self.list = value
 		self._updateSelected()
 		self.update()
@@ -68,7 +68,7 @@ class wxOrderedListBox(wxPanel):
 	def getSelected(self):
 		return self.selected
 
-	def setSelected(self, value):
+	def _setSelected(self, value):
 		self.selected = value
 		self._updateSelected()
 		self.update()
