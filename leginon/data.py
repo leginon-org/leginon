@@ -378,7 +378,7 @@ class DriftData(Data):
 class CalibrationData(Data):
 	def typemap(cls):
 		t = Data.typemap()
-		t += [ ('type', str), ]
+		t += [ ('type', str), ('em host', str)]
 		return t
 	typemap = classmethod(typemap)
 
