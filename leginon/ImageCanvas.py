@@ -43,7 +43,7 @@ class ImageCanvas(Frame):
 		can.config(xscrollcommand=hs.set, yscrollcommand=vs.set)
 		hs.config(command=can.xview)
 		vs.config(command=can.yview)
-		can.grid(row=0, column=0, sticky=NSEW)
+		can.grid(row=0, column=0, sticky=NSEW, padx=0, pady=0)
 		self.rowconfigure(0, weight=1)
 		self.columnconfigure(0, weight=1)
 
@@ -66,13 +66,14 @@ class ImageCanvas(Frame):
 
 	def configure_callback(self, event):
 
-		### check if container is bigger than canvas
-		if self.winfo_width() < int(self.canvas['width']):
+		## determine if scrolls are needed
+		xview = self.canvas.xview()
+		yview = self.canvas.yview()
+		if xview[0] > 0.0 or xview[1] < 1.0:
 			self.hscroll_state(ON)
 		else:
 			self.hscroll_state(OFF)
-
-		if self.winfo_height() < int(self.canvas['height']):
+		if yview[0] > 0.0 or yview[1] < 1.0:
 			self.vscroll_state(ON)
 		else:
 			self.vscroll_state(OFF)
