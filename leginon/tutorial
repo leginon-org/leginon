@@ -43,11 +43,17 @@ ImViewer - General purpose image viewing node.  Accepts any ImagePublishEvent.
 SimpleNavigator - Link between ImViewer and calibrations that are necessary to 
      navigate around a displayed image.
 
-GridPreviewer - Acquires images at low magnification while spiraling out
+MosaicNavigator - like Navigator, but handles a mosaic image as a collection
+     of its component images
+
+GridPreview - Acquires images at low magnification while spiraling out
      from the center of a grid.
 
 StateImageMosaic - Takes a series of images and combines them into a mosaic
      based on the state at which they were acquired.  Usually used with
      GridPreviewer.
 
+Acquisition - handles targets and acquires images
 
+ClickTargetFinder - subclass of TargetFinder which gets images and allows
+     user to click on targets
