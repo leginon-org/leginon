@@ -67,7 +67,7 @@ class Node(leginonobject.LeginonObject):
 
 		self.confirmwaitlist = {}
 
-		self.uiserver = interface.Server()
+		self.uiserver = interface.Server(self.id)
 		self.defineUserInterface()
 
 		self.addEventOutput(event.PublishEvent)

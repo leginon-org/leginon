@@ -237,26 +237,21 @@ class Manager(node.Node):
 		self.launcherlist = []
 		self.launcherdict = {}
 
-		self.uiserver.RegisterMethod(self.uiGetID, (), 'id')
-
 		argspec = (
-			{'name':'name', 'type':'string'},
-			{'name':'launcher_str', 'type':self.launcherlist},
-			{'name':'nodeclass_str', 'type':nodeclass_list},
-			{'name':'args', 'type':'string', 'default':''},
-			{'name':'newproc', 'type':'boolean', 'default':False}
+			{'name':'name', 'alias':'Name', 'type':'string'},
+			{'name':'launcher_str', 'alias':'Launcher', 'type':self.launcherlist},
+			{'name':'nodeclass_str', 'alias':'Node Class', 'type':nodeclass_list},
+			{'name':'args', 'alias':'Args', 'type':'string', 'default':''},
+			{'name':'newproc', 'alias':'New Process', 'type':'boolean', 'default':False}
 			)
 		self.uiserver.RegisterMethod(self.uiLaunch, argspec, 'launch')
 
 		argspec = (
-			{'name':'eventclass_str', 'type':eventclass_list},
-			{'name':'fromnode_str', 'type':self.clientlist},
-			{'name':'tonode_str', 'type':self.clientlist}
+			{'name':'eventclass_str', 'alias':'Event Class', 'type':eventclass_list},
+			{'name':'fromnode_str', 'alias':'From Node', 'type':self.clientlist},
+			{'name':'tonode_str', 'alias':'To Node', 'type':self.clientlist}
 			)
 		self.uiserver.RegisterMethod(self.uiAddDistmap, argspec, 'bind')
-
-	def uiGetID(self):
-		return self.id
 
 	def uiLaunch(self, name, launcher_str, nodeclass_str, args, newproc):
 		"interface to the launchNode method"
@@ -294,14 +289,15 @@ if __name__ == '__main__':
 	m = Manager(manager_id)
 
 	## GUI
-	gui = 0
+	gui = 1
 	if gui:
-		import managergui
+		import nodegui
 		import Tkinter
 		hostname = m.location()['hostname']
 		port = m.location()['UI port']
 		tk = Tkinter.Tk()
-		mgui = managergui.ManagerGUI(tk, hostname, port)
+		mgui = nodegui.NodeGUI(tk, hostname, port)
+		tk.wm_title('Leginon Manager')
 		mgui.pack()
 		t = threading.Thread(name = 'Tk GUI thread', target = tk.mainloop)
 		t.setDaemon(1)
