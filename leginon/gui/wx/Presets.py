@@ -6,7 +6,6 @@ def getBitmap(filename):
 	iconpath = icons.getPath(filename)
 	wximage = wx.Image(iconpath)
 	bitmap = wx.BitmapFromImage(wximage)
-	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
 	return bitmap
 
 PresetOrderChangedEventType = wx.NewEventType()
