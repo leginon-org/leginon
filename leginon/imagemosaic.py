@@ -348,7 +348,7 @@ class StateImageMosaic(ImageMosaic):
 		x = (column * matrix[0, 0] + row * matrix[1, 0])/4
 		y = (column * matrix[0, 1] + row * matrix[1, 1])/4
 		print 'pixelLocation x, y =', x, y
-		return (int(round(x)), int(round(y)))
+		return (int(round(y)), int(round(x)))
 
 	def calibration2matrix(self):
 		matrix = Numeric.array([[self.calibration['x pixel shift']['x'],
