@@ -99,14 +99,18 @@ class LowerEvent(wxPyEvent):
 		self.bottom = bottom
 
 class EnterEvent(wxPyEvent):
-	def __init__(self):
+	def __init__(self, fromshapeobject, toshapeobject):
 		wxPyEvent.__init__(self)
 		self.SetEventType(wxEVT_ENTER)
+		self.fromshapeobject = fromshapeobject
+		self.toshapeobject = toshapeobject
 
 class LeaveEvent(wxPyEvent):
-	def __init__(self):
+	def __init__(self, fromshapeobject, toshapeobject):
 		wxPyEvent.__init__(self)
 		self.SetEventType(wxEVT_LEAVE)
+		self.fromshapeobject = fromshapeobject
+		self.toshapeobject = toshapeobject
 
 class SetCursorEvent(wxPyEvent):
 	def __init__(self, cursor):
@@ -1260,9 +1264,9 @@ class wxObjectCanvas(wxScrolledWindow):
 			shapeobject = self.master.getShapeObjectFromXY(evt.m_x, evt.m_y)
 			if shapeobject != self.lastshapeobject:
 				if self.lastshapeobject is not None:
-					self.lastshapeobject.ProcessEvent(LeaveEvent())
+					self.lastshapeobject.ProcessEvent(LeaveEvent(self.lastshapeobject, shapeobject))
 				if shapeobject is not None:
-					shapeobject.ProcessEvent(EnterEvent())
+					shapeobject.ProcessEvent(EnterEvent(self.lastshapeobject, shapeobject))
 			self.lastshapeobject = shapeobject
 
 		if self.lastshapeobject is not None:

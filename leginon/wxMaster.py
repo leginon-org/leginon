@@ -13,6 +13,9 @@ class LabelObject(wxObjectCanvas.wxTextObject):
 	def OnMotion(self, evt):
 		pass
 
+	def OnEnter(self, evt):
+		pass
+
 class RenameDialog(wxDialog):
 	def __init__(self, parent, id, title='Rename', pos=wxDefaultPosition,
 								size=wxDefaultSize, style=wxDEFAULT_DIALOG_STYLE):
