@@ -59,7 +59,7 @@ class CalibrationLibrary(node.Node):
 				if id not in ids:
 					ids.append(id)
 
-		e = event.ListPublishEvent(self.ID(), ids)
+		e = event.ListPublishEvent(self.ID(), idlist=ids)
 		self.outputEvent(e)
 
 	def setCalibration(self, idata):
