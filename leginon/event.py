@@ -24,8 +24,8 @@ def eventClasses():
 	return eventclasses
 
 class Event(data.Data):
-	def __init__(self, **kwargs):
-		data.Data.__init__(self, **kwargs)
+	def __init__(self, initializer=None, **kwargs):
+		data.Data.__init__(self, initializer, **kwargs)
 
 	def typemap(cls):
 		return data.Data.typemap() + (
