@@ -435,6 +435,18 @@ class ColumnSpec(dict):
 
 	       		return string.join(keys)
 
+class AlterTable(SQLExpression):
+    def __init__(self, table, column):
+        self.table = table
+        self.column = column
+
+    def sqlRepr(self):
+        if not self.column:
+            return ''
+	else:
+	    alter = "ALTER TABLE `%s` ADD `%s` %s NOT NULL " % (self.table, self.column['Field'], self.column['Type'])
+	return alter
+
 class CreateTable(SQLExpression):
     def __init__(self, table, columns, type=None):
         self.table = table

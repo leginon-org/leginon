@@ -272,13 +272,49 @@ class SQLDict:
 	    self.db = db
 	    self.table = table
 	    self.definition = definition
-	    self.create(db)
+	    self.create()
 
-	def create(self, db):
+	def _cursor(self):
+	    return self.db.cursor(cursorclass=MySQLdb.cursors.DictCursor)
+
+	def create(self):
 	    q = sqlexpr.CreateTable(self.table, self.definition).sqlRepr()
-	    c = db.cursor()
+	    c = self._cursor()
 	    c.execute(q)
-	    return c
+	    c.close()
+	    self._checkTable()
+
+	def _checkTable(self):
+	    q = "DESCRIBE %s" % (self.table)
+	    c = self._cursor()
+	    try:
+		c.execute(q)
+		describeTable = c.fetchall()
+	    except MySQLdb.ProgrammingError:
+		describeTable = ()
+
+	    
+	    describe=[]
+	    for col in describeTable:
+		describe.append({'Field': col['Field'], 'Type': col['Type']})
+
+	    definition=[]
+	    for col in self.definition:
+		definition.append({'Field': col['Field'], 'Type': col['Type']})
+
+	    addcolumns = [col for col in definition if col not in describe]
+
+	    for column in addcolumns:
+		q = sqlexpr.AlterTable(self.table, column).sqlRepr()
+		print q
+		try:
+			c.execute(q)
+		except MySQLdb.OperationalError, e:
+			pass
+	    c.close()
+
+	    
+	
 
     class _Table:
 
