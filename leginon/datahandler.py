@@ -2,7 +2,7 @@ import leginonobject
 import data
 import threading
 
-class DataKeeper(leginonobject.LeginonObject):
+class DataHandler(leginonobject.LeginonObject):
 	def __init__(self):
 		leginonobject.LeginonObject.__init__(self)
 
@@ -12,7 +12,8 @@ class DataKeeper(leginonobject.LeginonObject):
 	def insert(self, newdata):
 		raise NotImplementedError
 
-class SimpleDataKeeper(DataKeeper):
+
+class SimpleDataKeeper(DataHandler):
 	def __init__(self):
 		DataKeeper.__init__(self)
 		self.datadict = {}
@@ -34,3 +35,27 @@ class SimpleDataKeeper(DataKeeper):
 		self.datadict[newdata.id] = newdata
 		self.datadictlock.release()
 
+
+class DataHandler(DataHandler):
+	def __init__(self):
+		DataKeeper.__init__(self)
+		self.bindings = {}
+
+	def insert(self, newdata):
+		# now send data to a type specific handler function
+		dataclass = newdata.__class__
+		if dataclass in self.bindings:
+			func = self.bindings[dataclass]
+			args = (newdata,)
+			try:
+				apply(func, args)
+			except:
+				pass
+
+	def bind(self, dataclass, func=None):
+		'func must take data instance as first arg'
+		if func == None:
+			if dataclass in self.bindings:
+				del self.bindings[dataclass]
+		else:
+			self.bindings[dataclass] = func

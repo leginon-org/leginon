@@ -35,6 +35,19 @@ class Node(leginonobject.LeginonObject):
 		loc['data port'] = self.datahandler.port
 		return loc
 
+	def addEventIn(self, eventclass, func):
+		self.eventhandler.addInput(eventclass, func)
+
+	def delEventIn(self, eventclass):
+		self.eventhandler.delInput(eventclass)
+
+	def addEventOut(self, eventclass):
+		self.eventhandler.addOutput(eventclass)
+		
+	def delEventOut(self, eventclass):
+		self.eventhandler.delOutput(eventclass)
+
+
 class NodeDataHandler(clientpull.Client, clientpull.Server):
 	def __init__(self):
 		clientpull.Server.__init__(self)
@@ -44,3 +57,9 @@ class NodeDataHandler(clientpull.Client, clientpull.Server):
 
 	def addClient(self, hostname, port):
 		clientpull.Client.__init__(self, hostname, port)
+
+	def insert(self, newdata):
+		dataid = id(newdata)
+		self.datastore[id] = newdata
+		return dataid
+

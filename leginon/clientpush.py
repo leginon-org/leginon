@@ -37,20 +37,10 @@ class Server(leginonobject.LeginonObject):
 		loc['datatcp port'] = self.servers[datatcp.PushServer].port
 		return loc
 
-	def bind(self, dataclass, func=None):
-		'func must take data instance as first arg'
-		if func == None:
-			del self.bindings[dataclass]
-		else:
-			self.bindings[dataclass] = func
 
 	def handle_data(self, newdata):
 		print 'handling %s' % newdata
 
-class Bindings(dict, leginonobject.LeginonObject):
-	def __init__(self, *args):
-		dict.__init__(self, *args)
-		leginonobject.LeginonObject.__init__(self)
 
 if __name__ == '__main__':
 	class MyServer(Server):
