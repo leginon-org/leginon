@@ -141,10 +141,10 @@ class TileImagePublishEvent(CameraImagePublishEvent):
 	def __init__(self, id, content, confirm):
 		CameraImagePublishEvent.__init__(self, id, content, confirm)
 
-class StateTileImagePublishEvent(CameraImagePublishEvent):
-	'Event indicating image tile was published'
-	def __init__(self, id, content, confirm):
-		CameraImagePublishEvent.__init__(self, id, content, confirm)
+#class StateTileImagePublishEvent(CameraImagePublishEvent):
+#	'Event indicating image tile was published'
+#	def __init__(self, id, content, confirm):
+#		CameraImagePublishEvent.__init__(self, id, content, confirm)
 
 class DarkImagePublishEvent(CorrectionImagePublishEvent):
 	'Event indicating image was published'

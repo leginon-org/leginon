@@ -11,6 +11,7 @@ from Tkinter import *
 import ImageViewer
 import Mrc
 import xmlrpclib
+import math
 #import xmlrpclib2 as xmlbinlib
 xmlbinlib = xmlrpclib
 
@@ -92,7 +93,7 @@ class ImageMosaicInfo(object):
 
 		return mosaicimage
 
-class StateImageMosaicInfo(object):
+class StateImageMosaicInfo(ImageMosaicInfo):
 	def addTile(self, dataid, image, position, state):
 		ImageMosaicInfo.addTile(self, dataid, image, position)
 		self.imageinfo[dataid]['state'] = state
@@ -120,7 +121,7 @@ class ImageMosaic(watcher.Watcher):
 		self.positionmethods['automatic'] = self.automaticPosition
 		self.automaticpriority = ['correlation']
 		#self.positionmethod = self.positionmethods.keys()[0]
-		self.positionmethod = 'correlation'
+		self.positionmethod = 'automatic'
 
 		### some things for the pop-up viewer
 		self.iv = None
@@ -404,23 +405,26 @@ class ImageMosaic(watcher.Watcher):
 		# most recent for now
 		if len(self.imagemosaics) == 0:
 			return ''
-		mrcstr = Mrc.numeric_to_mrcstr(self.imagemosaics[-1].getMosaicImage())
+		mrcstr = Mrc.numeric_to_mrcstr(self.imagemosaics[-1].getMosaicImage(Numeric.Float32))
 		return xmlbinlib.Binary(mrcstr)
 
 class StateImageMosaic(ImageMosaic):
-	def __init__(self, id, nodelocations,
-								watchfor = event.StateTileImagePublishEvent, **kwargs):
+	def __init__(self, id, nodelocations, watchfor = event.TileImagePublishEvent, **kwargs):
 		self.calibrationmatrix = None
 
 		self.pixelsize = None
 		self.rotationmatrix = None
+
+		# testing
+		self.setPixelSizeAndRotation(None)
 
 		ImageMosaic.__init__(self, id, nodelocations, watchfor, **kwargs)
 
 		self.positionmethods['pixel size'] = self.positionByPixelSize
 		self.positionmethods['calibration'] = self.positionByCalibration
 		self.automaticpriority = ['pixel size', 'calibration', 'correlation']
-		self.positionmethod = self.positionmethods.keys()[0]
+		#self.positionmethod = self.positionmethods.keys()[0]
+		self.positionmethod = 'pixel size'
 
 		self.addEventInput(event.CalibrationPublishEvent, self.setCalibration)
 		self.start()
@@ -434,7 +438,7 @@ class StateImageMosaic(ImageMosaic):
 	def processData(self, idata):
 		tileimage = idata.content['image']
 		neighbors = idata.content['neighbor tiles']
-		tilestate = idata.content['state']
+		tilestate = idata.content['scope']
 		mosaics = []
 		for imagemosaic in self.imagemosaics:
 			for neighbor in neighbors:
@@ -471,8 +475,8 @@ class StateImageMosaic(ImageMosaic):
 			self.printerror('cannot process by calibration, no calibration available')
 			raise ValueError
 
-		row = idata.content['state']['stage position']['y']
-		column = idata.content['state']['stage position']['x']
+		row = idata.content['scope']['stage position']['y']
+		column = idata.content['scope']['stage position']['x']
 		matrix = self.calibrationmatrix
 		# bin by 4 hardcoded for now, maybe attach to image data
 		x = -(column * matrix[0, 0] + row * matrix[1, 0])/4
@@ -480,30 +484,37 @@ class StateImageMosaic(ImageMosaic):
 		return (int(round(y)), int(round(x)))
 
 	def setPixelSizeAndRotation(self, ievent):
-		idata = self.researchByDataID(ievent.content)
-		self.rotationmatrix = self.calculateRotationMatrix(
-																						idata.content['image angle'])
-		self.pixelsize = Numeric.array([idata.content['pixel size']['y'],
-																		idata.content['pixel size']['x']],
+#		idata = self.researchByDataID(ievent.content)
+#		self.rotationmatrix = self.calculateRotationMatrix(
+#																						idata.content['image angle'])
+#		self.pixelsize = Numeric.array([idata.content['pixel size']['y'],
+#																		idata.content['pixel size']['x']],
+#																												Numeric.Float32)
+		# testing
+		theta = 2.310 + 1.0 * math.pi / 2.0
+		pixelsize = (3.56127239707e-07, 3.56127239707e-07)
+		self.rotationmatrix = self.calculateRotationMatrix(theta)
+		self.pixelsize = Numeric.array([pixelsize[0], pixelsize[1]],
 																												Numeric.Float32)
 
-	def calculateCalibrationMatrix(self, theta):
+
+	def calculateRotationMatrix(self, theta):
 		sintheta = math.sin(theta)
 		costheta = math.cos(theta)      
 		return Numeric.array([[-costheta, sintheta],
 													[sintheta, costheta]], Numeric.Float32)
 
 	def positionByPixelSize(self, idata, imagemosaic):
-		tilestate = idata.content['state']
+		tilescopestate = idata.content['scope']
 		if self.rotationmatrix is None or self.pixelsize is None:
 			self.printerror('cannot process by pixel size, no calibration available')
 			raise ValueError
-		x = tilestate['stage position']['x']
-		y = tilestate['stage position']['y']
+		x = tilescopestate['stage position']['x']
+		y = tilescopestate['stage position']['y']
 		stateposition = Numeric.array([y, x], Numeric.Float32)
 		position = Numeric.matrixmultiply(self.rotationmatrix,
 																		stateposition / self.pixelsize)
-		return (int(round(offset[0])), int(round(offset[1])))
+		return (int(round(position[0])), int(round(position[1])))
 
 	def uiPublishMosaicImage(self):
 		#ImageMosaic.uiPublishMosaicImage(self)
