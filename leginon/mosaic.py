@@ -70,7 +70,6 @@ class Mosaic(object):
 		imageshape = (bbox['max'][0] - bbox['min'][0], 
 									bbox['max'][1] - bbox['min'][1])
 		mosaicimage = Numeric.zeros(imageshape, astype)
-
 		for tile in self.tiles:
 			position = self.getTilePosition(tile)
 			shape = self.getTileShape(tile)
@@ -78,7 +77,7 @@ class Mosaic(object):
 			limit = (offset[0] + shape[0], offset[1] + shape[1])
 			mosaicimage[int(round(offset[0])):int(round(limit[0])),
 									int(round(offset[1])):int(round(limit[1]))] \
-																					= tile.astype(astype)
+																					= tile.image.astype(astype)
 		return mosaicimage
 
 	def addTile(self, image, neighbors):
@@ -283,14 +282,15 @@ class Mosaic(object):
 		return nearesttile, nearestdelta, location
 
 class EMTile(Tile):
-	def __init__(self, image, position, state):
+	def __init__(self, image, state, position):
 		Tile.__init__(self, image, position)
 		self.state = state
 
 class EMMosaic(Mosaic):
 	def __init__(self, calibrationclients):
 		self.calibrationclients = calibrationclients
-		self.calibration = self.calibrationclients.keys()[0]
+		#self.calibration = self.calibrationclients.keys()[0]
+		self.calibration = 'image shift'
 
 		Mosaic.__init__(self)
 
@@ -298,12 +298,14 @@ class EMMosaic(Mosaic):
 		self.automaticpriority = ['calibration', 'correlation']
 		self.positionmethod = 'calibration'
 
-	def addTile(self, image, state):
-		position = self.positionmethods[self.positionmethod](state)
-		self.tiles.append(EMTile(image, position, state))
+	def addTile(self, imagedata):
+		image = imagedata['image']
+		state = {}
+		state['scope'] = imagedata['scope']
+		state['camera'] = imagedata['camera']
+		position = self.positionmethods[self.positionmethod](imagedata)
 
-	def getTilePosition(self, tile):
-		return self.tiles[tile]['position']
+		self.tiles.append(EMTile(image, state, position))
 
 	def positionByCalibration(self, state):
 		if self.calibration == 'all':
