@@ -1,11 +1,7 @@
-import event
 import logging
 import launcher
-import os
-import threading
-import uiclient
 import wx
-import wx.lib.intctrl
+import wx.lib.scrolledpanel
 import wxLogging
 
 class LauncherApp(wx.App):
@@ -69,16 +65,11 @@ class LauncherFrame(wx.Frame):
 		dialog.ShowModal()
 		dialog.Destroy()
 
-class LauncherPanel(wx.ScrolledWindow):
+class LauncherPanel(wx.lib.scrolledpanel.ScrolledPanel):
 	def __init__(self, parent, location):
 		self._enabled = True
 		self._shown = True
-		wx.ScrolledWindow.__init__(self, parent, -1)
-		self.SetScrollRate(5, 5)
-		containerclass = uiclient.SimpleContainerWidget
-		containerclass = uiclient.ClientContainerFactory(containerclass)
-		self.container = containerclass('UI Client', self, self, location, {})
-		self.SetSizerAndFit(self.container)
+		wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent, -1)
 
 	def layout(self):
 		pass

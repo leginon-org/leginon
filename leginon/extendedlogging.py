@@ -5,6 +5,8 @@ import sys
 import time
 import uidata
 
+logging.Logger.manager.emittedNoHandlerWarning = 1
+
 class Logger(logging.Logger):
 	def __init__(self, name):
 		logging.Logger.__init__(self, name)
