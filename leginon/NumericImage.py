@@ -20,16 +20,6 @@ ntype_itype = {
 	(Numeric.Float64,8) : ('F','F;64NF')
 	}
 
-def numeric_bin(ndata, bin):
-	shape = ndata.shape
-	if len(shape) != 2:
-		raise RuntimeError, 'ndata must be 2-D Numeric array'
-	if len(bin) != 2:
-		raise RuntimeError, 'bin must be 2-tuple'
-	if shape[0] % bin[0] or shape[1] % bin[1]:
-		raise RuntimeError, 'shape must be multiple of bin'
-
-	newshape = shape[0]/bin[0], shape[1]/bin[1]
 
 def linearscale(input, boundfrom, boundto, extrema=None):
 	"""
@@ -91,20 +81,8 @@ def resize(pil_image, size):
 		new_image = pil_image
 	return new_image
 
-# 1024x1024:  1.89
-def extrema1(numarray):
-		t0 = time.clock()
-
-		flat = Numeric.ravel(numarray)
-		ext =  min(flat), max(flat)
-		t1 = time.clock()
-
-		t = t1 - t0
-		print 'time: %.3f' % (t,)
-		return ext
-
 # 1024x1024:  0.1
-def extrema2(numarray):
+def extrema(numarray):
 		t0 = time.clock()
 
 		flat = Numeric.ravel(numarray)
@@ -118,40 +96,6 @@ def extrema2(numarray):
 		t = t1 - t0
 		print 'time: %.3f' % (t,)
 		return ext
-
-# 1024x1024:  3.4
-def extrema3(numarray):
-		t0 = time.clock()
-
-		flat = Numeric.ravel(numarray)
-		minval = maxval = flat[0]
-		for val in flat:
-			if val > maxval:
-				maxval = val
-			elif val < minval:
-				minval = val
-		ext = (minval, maxval)
-
-		t1 = time.clock()
-		t = t1 - t0
-		print 'time: %.3f' % (t,)
-		return ext
-
-# 1024x1024:  3.75
-def extrema4(numarray):
-		t0 = time.clock()
-
-		flat = Numeric.ravel(numarray)
-		sflat = Numeric.sort(flat)
-		minval = sflat[0]
-		maxval = sflat[-1]
-		ext = (minval, maxval)
-
-		t1 = time.clock()
-		t = t1 - t0
-		print 'time: %.3f' % (t,)
-		return ext
-
 
 class NumericImage:
 	"""
