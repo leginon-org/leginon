@@ -102,9 +102,13 @@ class Node(leginonobject.LeginonObject):
 
 	def interact(self):
 		banner = "Starting interpreter for %s" % self.__class__
-		readfunc = raw_input
+		readfunc = self.raw_input
 		local = locals()
 		code.interact(banner,readfunc,local)
+
+	def raw_input(self, prompt):
+		newprompt = '%s%s' % (str(self.nodeid), prompt)
+		return raw_input(newprompt)
 
   # down from here is from EventHandler
 	def addEventClient(self, newid, location):
