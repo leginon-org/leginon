@@ -28,11 +28,16 @@ class ProjectExperiment(sqldict.ObjectBuilder):
 	indices = [ ('projectId', ['projectId'] )]
 
 class GridBox(sqldict.ObjectBuilder):
-	'''Project: a class object to access the
-	`projects` table in the project DB
-	'''
 	table = 'gridboxes'
 	columns = ['gridboxId', 'label']
+
+class Grid(sqldict.ObjectBuilder):
+	table = 'grids'
+	columns = ['gridId', 'label']
+
+class GridLocation(sqldict.ObjectBuilder):
+	table = 'gridlocations'
+	columns = ['gridlocationId', 'gridboxId', 'gridId', 'location']
 
 class ProjectData:
 	def __init__(self, **kwargs):
@@ -44,6 +49,8 @@ class ProjectData:
 		self.projects = Project().register(self.db)
 		self.projectexperiments = ProjectExperiment().register(self.db)
 		self.gridboxes = GridBox().register(self.db)
+		self.grids = Grid().register(self.db)
+		self.gridlocations = GridLocation().register(self.db)
 
 	def isConnected(self):
 		return self.dbprojectconnection
@@ -54,8 +61,14 @@ class ProjectData:
 	def getProjectExperiments(self):
 		return self.projectexperiments
 
-	def getGridBox(self):
+	def getGridBoxes(self):
 		return self.gridboxes
+
+	def getGrids(self):
+		return self.grids
+
+	def getGridLocations(self):
+		return self.gridlocations
 
 ########################################
 ## Testing
@@ -70,9 +83,25 @@ if __name__ == "__main__":
 		print "Project DB not available"
 		sys.exit()
 
+	gridboxes = projectdata.getGridBoxes()
+	labelindex = gridboxes.Index(['label'])
+	gridboxlabels = map(lambda d: d['label'], gridboxes.getall())
+	print gridboxlabels
+	gridbox = labelindex['Simple Test Tray'].fetchone()
+	gridboxid = gridbox['gridboxId']
+	gridlocations = projectdata.getGridLocations()
+	gridboxidindex = gridlocations.Index(['gridboxId'])
+	gridlocations = gridboxidindex[gridboxid].fetchall()
+	grids = projectdata.getGrids()
+	grididindex = grids.Index(['gridId'])
+	gridmapping = {}
+	for gridlocation in gridlocations:
+		grid = grididindex[gridlocation['gridId']].fetchone()
+		gridmapping[grid['label']] = {'gridId': gridlocation['gridId'],
+																	'location': gridlocation['location']}
+	print gridmapping
+
 	"""
-	projects = projectdata.getProjects()
-	print projects.getall()
 	projectdata1 = ProjectData()
 	projects = projectdata1.getProjects()
 	print projects.getall()

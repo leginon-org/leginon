@@ -191,7 +191,7 @@ if sys.platform == 'win32':
 			# if label is same, kinda screwed
 			self.gridtrayids = {}
 			projectdata = project.ProjectData()
-			gridboxes = projectdata.getGridBox()
+			gridboxes = projectdata.getGridBoxes()
 			for i in gridboxes.getall():
 				self.gridtrayids[i['label']] = i['gridboxId']
 	
