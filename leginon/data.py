@@ -210,13 +210,14 @@ class DataManager(object):
 		return datainstance
 
 	def getData(self, datareference):
+		dataclass = datareference.dataclass
+		datainstance = None
+		dmid = datareference.dmid
+		dbid = datareference.dbid
+
+		#### attempt to find datainstance in local datadict
 		self.lock.acquire()
 		try:
-			dataclass = datareference.dataclass
-			datainstance = None
-			dmid = datareference.dmid
-			dbid = datareference.dbid
-
 			## maybe data instance has been reborn from DB
 			## since DataReference object was created
 			if (dataclass,dbid) in self.db2dm:
@@ -226,36 +227,31 @@ class DataManager(object):
 			if dmid in self.remote2local:
 				dmid = self.remote2local[dmid]
 
-			### check if this is a remote data reference
-			location = self.location
-			if dmid is not None:
-				location = dmid[0]
-
-			## now find the data
-			if location != self.location:
-				## in remote memory
-				datainstance = self.getRemoteData(datareference)
 			if dmid in self.datadict:
 				## in local memory
 				datainstance = self.datadict[dmid]
 				# access to datadict causes move to front
 				del self.datadict[dmid]
 				self.datadict[dmid] = datainstance
+		finally:
+			self.lock.release()
+
+		#### not found locally, try external locations
+		if datainstance is None:
+			if dmid is not None and dmid[0] != self.location:
+				## in remote memory
+				datainstance = self.getRemoteData(datareference)
 			elif dbid is not None:
 				## in database
 				datainstance = self.getDataFromDB(dataclass, dbid)
-			## may be a DataHandler, get actual instance
-			if isinstance(datainstance, DataHandler):
-				try:
-					datainstance = datainstance.getData()
-				except:
-					print 'exception in %s.getData' % (datainstance.__class__.__name__, )
-					datainstance = None
+		## if datainstance is a DataHandler, get actual instance
+		if isinstance(datainstance, DataHandler):
+			datainstance = datainstance.getData()
 
-			if datainstance is None:
-				raise DataAccessError('Referenced data can not be found: %s' % (datareference,))
-		finally:
-			self.lock.release()
+		## if sill None, then must not exist anymore
+		if datainstance is None:
+			raise DataAccessError('Referenced data can not be found: %s' % (datareference,))
+
 		return datainstance
 
 	def query(self, datareference):
