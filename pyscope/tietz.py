@@ -7,7 +7,7 @@ if sys.platform != 'win32':
 			pass
 else:
 	import win32com.client
-	import tietzcom
+#	import tietzcom
 	import mmapfile
 	import array
 	import Numeric
