@@ -74,7 +74,7 @@ class Focuser(acquisition.Acquisition):
 		stig = self.researchByDataID(('stigmator',))
 		stig['stigmator']['objective']['x'] += deltax
 		stig['stigmator']['objective']['y'] += deltay
-		emdata = data.ScopeEMData(('scope',), stig)
+		emdata = data.ScopeEMData(id=('scope',), initializer=stig)
 		print 'correcting stig by %s,%s' % (deltax,deltay)
 		self.publishRemote(emdata)
 
@@ -82,7 +82,7 @@ class Focuser(acquisition.Acquisition):
 		defocus = self.researchByDataID(('defocus',))
 		defocus['defocus'] += delta
 		defocus['reset defocus'] = 1
-		emdata = data.ScopeEMData(('scope',), defocus)
+		emdata = data.ScopeEMData(id=('scope',), initializer=defocus)
 		print 'correcting defocus by %s' % (delta,)
 		self.publishRemote(emdata)
 
@@ -91,7 +91,7 @@ class Focuser(acquisition.Acquisition):
 		newz = stage['stage position']['z'] + delta
 		newstage = {'stage position': {'z': newz }}
 		newstage['reset defocus'] = 1
-		emdata = data.ScopeEMData(('scope',), initializer=newstage)
+		emdata = data.ScopeEMData(id=('scope',), initializer=newstage)
 		print 'correcting stage Z by %s' % (delta,)
 		self.publishRemote(emdata)
 
