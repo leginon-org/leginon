@@ -143,13 +143,7 @@ class Navigator(node.Node):
 		self.handleImageClick(click)
 
 	def acquireImage(self):
-		#if self.usecamconfig.get():
-		#	camconfig = self.cam.cameraConfig()
-		#else:
-		#	camconfig = None
-
 		print 'acquiring image'
-		#imagedata = self.cam.acquireCameraImageData(camconfig)
 		imagedata = self.cam.acquireCameraImageData(camconfig='UI')
 
 		if imagedata is None:
@@ -161,10 +155,6 @@ class Navigator(node.Node):
 		self.shape = newimage.shape
 		self.newImage(newimage)
 		self.image.setImage(newimage)
-
-		#print 'publishing image'
-		#self.publish(imagedata, pubevent=True)
-		#print 'image published'
 
 	def fromScope(self, name, comment=''):
 		'''

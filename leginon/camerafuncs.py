@@ -197,26 +197,11 @@ class CameraFuncs(object):
 			self.uicameradict[key] = datatype(name, value, permissions, persist=True)
 			cameraparameterscontainer.addObject(self.uicameradict[key])
 
-		setmethod = uidata.Method('Set', self.uiSet)
+		setmethod = uidata.Method('Apply', self.uiSet)
 		cameraparameterscontainer.addObject(setmethod)
 
 		self.uiSet()
 		return cameraparameterscontainer
-
-#		return uidata.Struct('Camera Configuration', None, 'rw', self.uiConfig)
-
-	def uiConfig(self, value=None):
-		'''
-		wrapper around CameraConfigData so it works with UI
-		'''
-		myconfig = self.cameraConfig(value)
-		d = dict(myconfig)
-		for key in ('id', 'session'):
-			try:
-				del d[key]
-			except KeyError:
-				pass
-		return d
 
 	def configToEMData(self, configdata):
 		newconfig = copy.deepcopy(configdata)
