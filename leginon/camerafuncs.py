@@ -28,7 +28,6 @@ class CameraFuncs(object):
 		else:
 			cor = correction
 
-		print 'COR', cor, self, self.node
 		if cor:
 			### get image data from corrector node
 			imdata = self.node.researchByDataID('corrected image data')
@@ -42,7 +41,6 @@ class CameraFuncs(object):
 			del cameradict['image data']
 			dataid = self.node.ID()
 			imdata = data.CameraImageData(dataid, image=numimage, scope=scopedict, camera=cameradict)
-		print 'imdata', imdata
 
 		return imdata
 
