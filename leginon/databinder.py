@@ -56,7 +56,6 @@ class DataBinder(object):
 		'''
 		while True:
 			item = self.queue.get(block=True)
-			print item
 			if isinstance(item, ExitException):
 				self.logger.info('Handler loop exited')
 				break
