@@ -20,22 +20,27 @@ static PyObject *acquire(PyObject *self, PyObject *args) {
 
 	// don't initialize com/create instance every acquire, will update
 	// I also meant to set exceptions
-	if (FAILED(CoInitializeEx(NULL, COINIT_MULTITHREADED)))
-		return NULL;
+	CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
 	hr = pCamera.CoCreateInstance(&(OLESTR("TecnaiCCD.GatanCamera")));
-	if (FAILED(hr))
+	if (FAILED(hr)) {
+		PyErr_SetString(PyExc_RuntimeError, "Failed to initialize camera");
 		return NULL;
+	}
 
 	vTemp = pCamera->AcquireRawImage();
 
-	if (!(vTemp.vt & VT_ARRAY))
+	if (!(vTemp.vt & VT_ARRAY)) {
+		PyErr_SetString(PyExc_RuntimeError, "Image is not an array");
 		return NULL;
+	}
 	psaImage = vTemp.parray;
 
 	hr = SafeArrayAccessData(psaImage, (void HUGEP* FAR*)&pbuffer);
-	if (FAILED(hr))
+	if (FAILED(hr)) {
+		PyErr_SetString(PyExc_RuntimeError, "Access image data failed");
 		return NULL;
+	}
 
 	SafeArrayGetVartype(psaImage, &vartype);
 
@@ -53,6 +58,7 @@ static PyObject *acquire(PyObject *self, PyObject *args) {
 			type = tFloat64;
 			break;
 		default:
+			PyErr_SetString(PyExc_RuntimeError, "Invalid image type");
 			return NULL;
 	}
 
@@ -63,6 +69,9 @@ static PyObject *acquire(PyObject *self, PyObject *args) {
 	result = NA_vNewArray(pbuffer, type, psaImage->cDims, dims);
 	SafeArrayUnaccessData(psaImage);
 	delete dims;
+
+	pCamera.Release();
+	CoUninitialize();
 
 	return (PyObject *)result;
 }
