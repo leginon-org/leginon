@@ -48,12 +48,11 @@ class UserPage(WizardPage):
 	def setUserSelection(self):
 		self.skip = False
 		if hasattr(leginonconfig, 'USERNAME') and leginonconfig.USERNAME:
-			usernames = _indexBy('name', self.users.values())
-			try:
-				name = usernames[leginonconfig.USERNAME]['full name']
-				self.userchoice.SetStringSelection(name)
+			usernames = _indexBy('full name', self.users.values())
+			if leginonconfig.USERNAME in usernames:
+				self.userchoice.SetStringSelection(leginonconfig.USERNAME)
 				self.skip = True
-			except KeyError:
+			else:
 				dlg = wx.MessageDialog(self,
 									'Cannot find user "%s" in database' % leginonconfig.USERNAME,
 									'Warning', wx.OK|wx.ICON_WARNING)
