@@ -24,19 +24,14 @@ class PresetsClient(object):
 		send the named preset to the scope
 		optionally send a target to the scope as well
 		'''
-		print 'XXXXXXXXXXXX'
 		self.pchanged[presetname] = threading.Event()
-		print 'YYYYYYYYYYYYY'
 		evt = event.ChangePresetEvent()
-		print 'ZZZZZZZZZZZZ'
 		evt['name'] = presetname
-		print 'WWWWWWWWWWWWW'
 		evt['emtarget'] = emtarget
-		print 'ouputEvent', evt
-		self.node.outputEvent(evt, wait=True, timeout=10)
-		print 'outputEvent done'
-		#print 'waiting for preset %s to be set' % (presetname,)
-		#self.pchanged[presetname].wait(10)
+		try:
+			self.node.outputEvent(evt, wait=True, timeout=10)
+		except node.ConfirmationTimeout:
+			print 'no response from PresetsManager after 10s'
 
 	def presetchanged(self, ievent):
 		print 'IEVENT', ievent
