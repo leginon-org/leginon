@@ -35,13 +35,6 @@ class ImageMosaic(watcher.Watcher):
 		peak = self.peakfinder.getResults()
 		return peak['pixel peak value']
 
-	def testimages(self, t1, t2):
-		import Image
-		import time
-		Image.fromstring('L', (t1.shape[1], t1.shape[0]), t1.tostring()).show()
-		time.sleep(2.0)
-		Image.fromstring('L', (t2.shape[1], t2.shape[0]), t2.tostring()).show()
-
 	def compareShifts(self, unwrappedshift, wrappedshift, image1, image2):
 		# if both shift values disagree, we must check all four of the possible
 		# correct shift pairs
@@ -203,12 +196,6 @@ class ImageMosaic(watcher.Watcher):
 			self.imagemosaic[idata.id]['image'] = tileimage
 			self.imagemosaic[idata.id]['position'] = tuple(position)
 
-	def uiShow(self):
-		import Image
-		i = self.makeImage(self.imagemosaic)
-		Image.fromstring('L', (i.shape[1], i.shape[0]), i.tostring()).show()
-		return ''
-
 	def makeImage(self, mosaic):
 		# could be Inf
 		mincoordinate = [0, 0]
@@ -231,8 +218,21 @@ class ImageMosaic(watcher.Watcher):
 			image[row:row + iti.shape[0], column:column + iti.shape[1]] = iti
 		return image
 
+	def uiShow(self):
+		i = self.makeImage(self.imagemosaic)
+		import Image
+		Image.fromstring('L', (i.shape[1], i.shape[0]), i.tostring()).show()
+		return ''
+
+	def uiPublishMosaicImage(self):
+		self.publish(data.ImageData(self.ID(), self.makeImage(self.imagemosaic)))
+		return ''
+
 	def defineUserInterface(self):
 		watcherspec = watcher.Watcher.defineUserInterface(self)
-		showspec = self.registerUIMethod(self.uiShow, 'Show', ())
-		self.registerUISpec('Image Mosaic', (watcherspec, showspec))
+		showspec = self.registerUIMethod(self.uiShow, 'Show Image', ())
+		publishspec = self.registerUIMethod(self.uiPublishMosaicImage,
+										'Publish Image', ())
+		imagespec = self.registerUIContainer('Image', (showspec, publishspec))
+		self.registerUISpec('Image Mosaic', (watcherspec, imagespec))
 
