@@ -743,6 +743,7 @@ class ImageTargetShiftData(InSessionData):
 		t = InSessionData.typemap()
 		t += [
 			('shifts', dict),
+			('requested', bool),
 		]
 		return t
 	typemap = classmethod(typemap)
