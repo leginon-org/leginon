@@ -287,6 +287,7 @@ class Manager(node.Node):
 			try:
 				self.clients[to_node].push(ievent)
 			except IOError:
+				print "unable to push to node, unregistering node", to_node
 				# group into another function
 				self.removeNode(to_node)
 				# also remove from launcher registry
