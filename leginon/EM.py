@@ -13,59 +13,19 @@ if sys.platform == 'win32':
 	import pythoncom
 
 class DataHandler(datahandler.DataBinder):
-	def __init__(self, id, lock, scope, camera, EMnode):
+	def __init__(self, id, EMnode):
 		datahandler.DataBinder.__init__(self, id)
-		self.lock = lock
-		self.scope = scope
-		self.camera = camera
 		self.EMnode = EMnode
 
 	def query(self, id):
-		self.lock.acquire()
-		if self.scope and self.scope.has_key(id):
-			result = data.EMData(self.ID(), {id : self.scope[id]})
-		elif self.camera and self.camera.has_key(id):
-			result = data.EMData(self.ID(), {id : self.camera[id]})
-		elif self.scope and id == 'scope':
-			result = data.EMData(self.ID(), self.scope)
-		elif self.camera and id == 'camera':
-			result = data.EMData(self.ID(), self.camera)
-		elif id == 'all':
-			result = data.EMData(self.ID(), {})
-			if self.scope:
-				result.content.update(self.scope)
-			if self.camera:
-				result.content.update(self.camera)
-		else:
-			result = None
-
-		self.lock.release()
+		result = data.EMData(self.ID(), EMnode.getEM([id]))
 		return result
-
-	def exit(self):
-		# perhaps not here
-		self.scope.exit()
-		self.camera.exit()
 
 	def insert(self, idata):
 		if isinstance(idata, event.Event):
 			datahandler.DataBinder.insert(self, idata)
 		else:
-			self.lock.acquire()
-			for id in idata.content:
-				if self.scope and self.scope.has_key(id):
-					print id, idata.content[id]
-					try:
-						self.scope[id] = idata.content[id]
-					except:	
-						print "failed to set '%s' to" % id, idata.content[id]
-				elif self.camera and self.camera.has_key(id):
-					print id, idata.content[id]
-					try:
-						self.camera[id] = idata.content[id]
-					except:	
-						print "failed to set '%s' to" % id, idata.content[id]
-			self.lock.release()
+			EMnode.setEM(idata.content)
 
 	# borrowed from NodeDataHandler
 	def setBinding(self, eventclass, func):
@@ -87,49 +47,40 @@ class EM(node.Node):
 			scope = ('tecnai', 'tecnai')
 		if camera is None:
 			camera = ('tietz', 'tietz')
-		self.setEM(scope, camera)
+		self.setEMclasses(scope, camera)
 
-		node.Node.__init__(self, id, nodelocations, DataHandler, (self.lock, self.scope, self.camera, self))
+		node.Node.__init__(self, id, nodelocations, DataHandler, (self,))
 
 		self.addEventInput(event.LockEvent, self.doLock)
 		self.addEventInput(event.UnlockEvent, self.doUnlock)
 
 		self.start()
 
-	def setEM(self, scope, camera):
+	def setEMclasses(self, scope, camera):
+		self.scope = self.camera = {}
 		if scope[0]:
 			fp, pathname, description = imp.find_module(scope[0])
 			scopemodule = imp.load_module(scope[0], fp, pathname, description)
 			if scope[1]:
 				self.scope = scopedict.factory(scopemodule.__dict__[scope[1]])()
-			else:
-				self.scope = None
-		else:
-			self.scope = None
 		if camera[0]:
 			fp, pathname, description = imp.find_module(camera[0])
 			cameramodule = imp.load_module(camera[0], fp, pathname, description)
 			if camera[1]:
 				self.camera = cameradict.factory(cameramodule.__dict__[camera[1]])()
-			else:
-				self.camera = None
-		else:
-			self.camera = None
 
 	def main(self):
 		self.addEventOutput(event.ListPublishEvent)
-		ids = []
-		if self.scope:
-			ids.append('scope')
-			ids += self.scope.keys()
-		if self.camera:
-			ids.append('camera')
-			ids += self.camera.keys()
-		if self.scope and self.camera:
-			ids.append('all')
-
+		ids = ['scope', 'camera', 'all']
+		ids += self.scope.keys()
+		ids += self.camera.keys()
 		e = event.ListPublishEvent(self.ID(), ids)
 		self.outputEvent(e)
+
+	def exit(self):
+		node.Node.exit(self)
+		self.scope.exit()
+		self.camera.exit()
 
 	def doLock(self, ievent):
 		if ievent.id[-1] != self.locknodeid:
@@ -142,15 +93,67 @@ class EM(node.Node):
 			self.locknodeid = None
 			self.nodelock.release()
 
+	def getEM(self, withkeys=None, withoutkeys=None):
+		self.lock.acquire()
+		result = {}
+		if withkeys is not None:
+			for EMkey in withkeys:
+				if EMkey in self.scope:
+					try:
+						result[EMkey] = self.scope[EMkey]
+					except:	
+						print "failed to get '%s'" % EMkey
+				elif EMkey in self.camera:
+					try:
+						result[EMkey] = self.camera[EMkey]
+					except:	
+						print "failed to get '%s'" % EMkey
+				elif EMkey == 'scope' or EMkey == 'all':
+					result.update(self.scope)
+				elif EMkey == 'camera' or EMkey == 'all':
+					result.update(self.camera)
+		elif withoutkeys is not None:
+			if not ('scope' in withoutkeys or 'all' in withoutkeys):
+				for EMkey in self.scope:
+					if not EMkey in withoutkeys:
+						try:
+							result[EMkey] = self.scope[EMkey]
+						except:	
+							print "failed to get '%s'" % EMkey
+			if not ('camera' in withoutkeys or 'all' in withoutkeys):
+				for EMkey in self.camera:
+					if not EMkey in withoutkeys:
+						try:
+							result[EMkey] = self.camera[EMkey]
+						except:	
+							print "failed to get '%s'" % EMkey
+		else:
+			result.update(self.scope)
+			result.update(self.camera)
+
+		self.lock.release()
+		return result
+
+	def setEM(self, EMstate):
+		self.lock.acquire()
+		for EMkey in EMstate:
+			if EMkey in self.scope:
+				try:
+					self.scope[EMkey] = EMstate[EMkey]
+				except:	
+					print "failed to set '%s' to" % EMkey, EMstate[EMkey]
+			elif EMkey in self.camera:
+				try:
+					self.camera[EMkey] = EMstate[EMkey]
+				except:	
+					print "failed to set '%s' to" % EMkey, EMstate[EMkey]
+		self.lock.release()
+
 	def save(self, filename):
 		print "Saving state to file: %s..." % filename,
 		try:
 			f = file(filename, 'w')
-			savestate = self.server.datahandler.query('all')
-			try:
-				del savestate.content['image data']
-			except KeyError:
-				pass
+			savestate = self.getEM(withoutkeys=['image data'])
 			cPickle.dump(savestate, f)
 			f.close()
 		except:
@@ -165,7 +168,7 @@ class EM(node.Node):
 		try:
 			f = file(filename, 'r')
 			loadstate = cPickle.load(f)
-			self.server.datahandler.insert(loadstate)
+			self.setEM(loadstate)
 			f.close()
 		except:
 			print "Error: failed to load EM state"
@@ -176,37 +179,21 @@ class EM(node.Node):
 
 	def uiCallback(self, value=None):
 		if value:
-			for id in value:
-				if self.scope and self.scope.has_key(id):
-					self.scope[id] = value[id]
-				elif self.camera and self.camera.has_key(id):
-					self.camera[id] = value[id]
+			return self.setEM(value)
 		else:
-			d = {}
-			if self.scope:
-				d.update(self.scope)
-			if self.camera:
-				d.update(self.camera)
-				del d['image data']
-			return d
+			return self.getEM(withoutkeys=['image data'])
 
 	def defineUserInterface(self):
 		nodespec = node.Node.defineUserInterface(self)
-		emspec = self.registerUIData('EM State', 'struct', permissions='rw')
-		emspec.set(self.uiCallback)
+
+		statespec = self.registerUIData('EM State', 'struct', permissions='rw')
+		statespec.set(self.uiCallback)
 
 		argspec = (self.registerUIData('Filename', 'string'),)
-		save = self.registerUIMethod(self.save, 'Save', argspec)
-		load = self.registerUIMethod(self.load, 'Load', argspec)
+		savespec = self.registerUIMethod(self.save, 'Save', argspec)
+		loadspec = self.registerUIMethod(self.load, 'Load', argspec)
 
-		filespec = self.registerUIContainer('File', (save, load))
+		filespec = self.registerUIContainer('File', (savespec, loadspec))
 
-		self.registerUISpec('EM', (nodespec, emspec, filespec))
-
-		d = {}
-		if self.scope:
-			d.update(self.scope)
-		if self.camera:
-			d.update(self.camera)
-			del d['image data']
+		self.registerUISpec('EM', (nodespec, statespec, filespec))
 
