@@ -74,7 +74,7 @@ class GonModeler(node.Node):
 
 		## acquire image
 		newimagedata = self.cam.acquireCameraImageData(correction=0)
-		self.publish(newimagedata, pubevent=True)
+		self.publish(newimagedata, pubevent=True, force=True)
 		newnumimage = newimagedata['image']
 		print 'NEWNUMIMAGE shape', newnumimage.shape
 
@@ -169,7 +169,7 @@ class GonModeler(node.Node):
 		stagedata['imagex'] = imx
 		stagedata['imagey'] = imy
 		print 'Writing', stagedata
-		self.publish(stagedata, database=True)
+		self.publish(stagedata, database=True, force=True)
 
 	def uiFit(self):
 		# label, mag, axis, terms,...
