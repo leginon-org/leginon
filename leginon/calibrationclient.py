@@ -38,9 +38,8 @@ class CalibrationClient(object):
 		print 'state settling time %s' % (settle,)
 		time.sleep(settle)
 
-		self.cam.state(self.cam.config()['state'])
-		imagedata = self.cam.acquireCameraImageData()
-		#actual_state = imagedata.content['scope']
+		myconfig = self.cam.cameraConfig()
+		imagedata = self.cam.acquireCameraImageData(camconfig=myconfig)
 		actual_state = imagedata['scope']
 
 		if publish_image:
@@ -134,7 +133,7 @@ class CalibrationClient(object):
 		print 'correlation'
 		pcimage = self.correlator.phaseCorrelate()
 		#pcimagedata = data.PhaseCorrelationImageData(self.node.ID(), pcimage, imagedata1.id, imagedata2.id)
-		pcimagedata = data.PhaseCorrelationImageData(id=self.node.ID(), image=pcimage, subject1=imagedata1['id'], subject2=imagedata2['id'])
+		pcimagedata = data.PhaseCorrelationImageData(id=self.node.ID(), image=pcimage, subject1=imagedata1, subject2=imagedata2)
 
 		#self.publish(pcimagedata, pubevent=True)
 
