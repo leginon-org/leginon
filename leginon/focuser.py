@@ -222,6 +222,8 @@ class Focuser(acquisition.Acquisition):
 				break
 			if self.manual_pause.isSet():
 				self.waitForContinue()
+				self.logger.info('reseting preset and target after pause')
+				self.presetsclient.toScope(presetname, emtarget)
 			# acquire image, show image and power spectrum
 			# allow user to adjust defocus and stig
 			cor = self.uicorrectimage.get()
