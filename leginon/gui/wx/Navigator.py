@@ -115,7 +115,7 @@ class StageLocationsDialog(wx.Dialog):
 		self.stcomment = wx.StaticText(self, -1, '(No location selected)')
 		label2 = wx.StaticText(self, -1, 'Locations')
 		choices = self.node.getLocationNames()
-		self.lblocations = wx.ListBox(self, -1, choices=choices, style=wx.LB_SINGLE)
+		self.lblocations = wx.ListBox(self, -1, style=wx.LB_SINGLE)
 		self.bnew = wx.Button(self, -1, 'New...')
 		self.btoscope = wx.Button(self, -1, 'To scope')
 		self.bfromscope = wx.Button(self, -1, 'From scope')
@@ -129,7 +129,8 @@ class StageLocationsDialog(wx.Dialog):
 		self.sz.Add(self.stcomment, (2, 1), (1, 5),
 													wx.ALIGN_CENTER_VERTICAL)
 		self.sz.Add(label2, (3, 1), (1, 5), wx.ALIGN_CENTER_VERTICAL)
-		self.sz.Add(self.lblocations, (4, 1), (1, 5), wx.EXPAND)
+		self.sz.Add(self.lblocations, (4, 1), (1, 5), wx.EXPAND|wx.FIXED_MINSIZE|wx.ALL, 5)
+		self.lblocations.AppendItems(choices)
 
 		szbuttons = wx.GridBagSizer(5, 5)
 		szbuttons.Add(self.bnew, (0, 0), (1, 1), wx.ALIGN_CENTER)
