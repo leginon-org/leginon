@@ -551,8 +551,8 @@ class PresetsManager(node.Node):
 			except KeyError:
 				pass
 			self.presetparams.set(d, callback=False)
-			print 'display'
-			self.displayCalibrations(self.currentselection)
+			print 'displaying calibration info is currently commented out until we fix the problem'
+			#self.displayCalibrations(self.currentselection)
 			print 'done disp'
 		return index
 
