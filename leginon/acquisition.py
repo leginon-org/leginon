@@ -74,6 +74,19 @@ class Acquisition(targetwatcher.TargetWatcher):
 			oldtargetemdata = self.targetToEMData(targetdata)
 			if oldtargetemdata is None:
 				return 'aborted'
+
+
+			## check for out of stage range target
+			stagelimits = {
+				'x': (-9.9e-4, 9.9e-4),
+				'y': (-9.9e-4, 9.9e-4),
+			}
+			stagepos = oldtargetemdata['stage position']
+			for axis,limits in stagelimits.items():
+				if stagepos[axis] < limits[0] or stagepos[axis] > limits[1]:
+					print 'target stage position %s out of range... target aborting' % (stagepos,)
+					return 'invalid'
+
 			oldpreset = targetdata['preset']
 
 			# now make EMTargetData to hold all this
