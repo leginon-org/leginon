@@ -404,7 +404,10 @@ class EM(node.Node):
 		if self.camera is not None:
 			keys += self.camera.keys()
 		if keys:
-			self.state = self.getEM(keys, withoutkeys=['image data'])
+			self.state = self.getEM(keys, withoutkeys=['image data',
+																									'vacuum status',
+																									'column valves',
+																									'column pressure'])
 
 		self.start()
 		self.publishData()
