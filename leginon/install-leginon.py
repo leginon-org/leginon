@@ -21,6 +21,7 @@ if __name__ == '__main__':
 	if sys.argv[1] == '-install':
 		try:
 			os.mkdir(leginonfolder)
+			directory_created(leginonfolder)
 		except OSError:
 			pass
 
