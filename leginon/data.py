@@ -317,7 +317,8 @@ class SessionData(Data):
 		t = Data.typemap()
 		t += [('name', str),
 					('user', UserData),
-					('instrument', InstrumentData)]
+					('instrument', InstrumentData),
+					('path', str)]
 		return t
 	typemap = classmethod(typemap)
 
@@ -371,6 +372,9 @@ class CameraEMData(EMData):
 		return t
 	typemap = classmethod(typemap)
 
+### I would like to have a way to inherit typemap from both ScopeEMData
+### and CameraEMData.  Could use them both as base classes, but how do 
+### we orgainize.
 class AllEMData(EMData):
 	def typemap(cls):
 		t = EMData.typemap()
@@ -387,6 +391,8 @@ class AllEMData(EMData):
 			('stigmator', dict),
 			('beam tilt', dict),
 			('corrected stage position', int),
+			('stage position', dict),
+
 			('dimension', dict),
 			('binning', dict),
 			('offset', dict),
@@ -564,9 +570,10 @@ class CorrelationData(InSessionData):
 class ImageData(InSessionData):
 	def typemap(cls):
 		t = InSessionData.typemap()
-		t += [ ('image', strictdict.NumericArrayType), ]
-		# for DB
-		t += [ ('filename', str), ('label', str)]
+		t += [
+			('image', strictdict.NumericArrayType),
+			('label', str),
+		]
 		return t
 	typemap = classmethod(typemap)
 
@@ -575,10 +582,9 @@ class ImageData(InSessionData):
 		create a unique filename for this image
 		filename format:  [session]_[label]_[nodename]_[integer].mrc
 		'''
-		impath = leginonconfig.IMAGE_PATH
-
 		# create new directory for session
 		sessionname = self['session']['name']
+		impath = self['session']['path']
 		impath = os.path.join(impath, sessionname)
 		leginonconfig.mkdirs(impath)
 
