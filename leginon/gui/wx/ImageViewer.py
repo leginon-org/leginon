@@ -310,7 +310,7 @@ class RulerTool(ImageTool):
 	def getToolTipString(self, x, y, value):
 		if self.button.GetToggle() and self.start is not None:
 			x0, y0 = self.start
-			return 'From (%d, %d) x=%d y=%d %.2f' % (x0, y0, x - x0, y - y0,
+			return 'From (%d, %d) x=%d y=%d d=%.2f' % (x0, y0, x - x0, y - y0,
 																								math.sqrt((x-x0)**2+(y-y0)**2))
 		else:
 			return ''
@@ -379,6 +379,8 @@ class ImagePanel(wx.Panel):
 		self.bitmap = None
 		self.buffer = None
 
+		self.selectiontool = None
+
 		# get size of image panel (image display dimensions)
 		if type(imagesize) != tuple:
 			raise TypeError('Invalid type for image panel size, must be tuple')
@@ -405,7 +407,7 @@ class ImagePanel(wx.Panel):
 
 		# create tool size to contain individual tools
 		self.toolsizer = wx.BoxSizer(wx.HORIZONTAL)
-		self.sizer.Add(self.toolsizer, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sizer.Add(self.toolsizer, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.tools = []
 
 		# create image panel, set cursor
@@ -413,9 +415,9 @@ class ImagePanel(wx.Panel):
 		self.panel.SetScrollRate(1, 1)
 		self.defaultcursor = wx.CROSS_CURSOR
 		self.panel.SetCursor(self.defaultcursor)
-		self.sizer.Add(self.panel, (1, 0), (1, 1), wx.EXPAND)
+		self.sizer.Add(self.panel, (1, 1), (1, 1), wx.EXPAND)
 		self.sizer.AddGrowableRow(1)
-		self.sizer.AddGrowableCol(0)
+		self.sizer.AddGrowableCol(1)
 		width, height = self.panel.GetSizeTuple()
 		self.sizer.SetItemMinSize(self.panel, width, height)
 
@@ -524,6 +526,12 @@ class ImagePanel(wx.Panel):
 		else:
 			yoffset = 0
 		self.offset = (xoffset, yoffset)
+
+	def setImageType(self, name, imagedata, **kwargs):
+		if self.selectiontool is None:
+			raise ValueError('No types added')
+		self.selectiontool.setImage(name, imagedata, **kwargs)
+		#self.setImage(imagedata, **kwargs)
 
 	def setImage(self, imagedata, scroll=False, stats={}):
 		if isinstance(imagedata, Numeric.ArrayType):
@@ -636,6 +644,8 @@ class ImagePanel(wx.Panel):
 	# utility functions
 
 	def getValue(self, x, y):
+		if x < 0 or y < 0:
+			return None
 		try:
 			if isinstance(self.imagedata, Numeric.ArrayType):
 				return self.imagedata[y, x]
@@ -828,6 +838,7 @@ class ImagePanel(wx.Panel):
 		#self.setBitmap()
 		self.setVirtualSize()
 		self.setBuffer()
+		self.Refresh()
 		#self.UpdateDrawing()
 
 	def OnPaint(self, evt):
@@ -842,6 +853,14 @@ class ImagePanel(wx.Panel):
 
 	def OnLeave(self, evt):
 		self.UpdateDrawing()
+
+	def addTypeTool(self, name, **kwargs):
+		if self.selectiontool is None:
+			self.selectiontool = SelectionTool(self)
+			self.sizer.Add(self.selectiontool, (1, 0), (1, 1),
+											wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_TOP|wx.ALL, 3)
+		self.selectiontool.addTypeTool(name, **kwargs)
+		self.sizer.Layout()
 
 ImageDoubleClickedEventType = wx.NewEventType()
 EVT_IMAGE_DOUBLE_CLICKED = wx.PyEventBinder(ImageDoubleClickedEventType)
@@ -997,55 +1016,169 @@ class TargetTool(ImageTool):
 		else:
 			return ''
 
+DisplayEventType = wx.NewEventType()
+SettingsEventType = wx.NewEventType()
+
+EVT_DISPLAY = wx.PyEventBinder(DisplayEventType)
+EVT_SETTINGS = wx.PyEventBinder(SettingsEventType)
+
+class DisplayEvent(wx.PyCommandEvent):
+	def __init__(self, source, name, value):
+		wx.PyCommandEvent.__init__(self, DisplayEventType, source.GetId())
+		self.SetEventObject(source)
+		self.name = name
+		self.value = value
+
+class SettingsEvent(wx.PyCommandEvent):
+	def __init__(self, source, name):
+		wx.PyCommandEvent.__init__(self, SettingsEventType, source.GetId())
+		self.SetEventObject(source)
+		self.name = name
+
 class TypeTool(object):
-	def __init__(self, parent, name):
+	def __init__(self, parent, name, display=None, target=None, settings=None):
 		self.parent = parent
+		self.name = name
+
 		self.label = wx.StaticText(parent, -1, name)
+
+		self.bitmaps = {
+			'red': getBitmap('red.png'),
+			'green': getBitmap('green.png'),
+		}
+
+		self.bitmap = wx.StaticBitmap(parent, -1, self.bitmaps['red'],
+																	(self.bitmaps['red'].GetWidth(),
+																		self.bitmaps['red'].GetHeight()))
+
 		self.tb = {}
-		self.initButtons()
+
+		if display is not None:
+			bitmap = getBitmap('display.png')
+			self.tb['display'] = GenBitmapToggleButton(self.parent, -1, bitmap,
+																									size=(24, 24))
+			self.tb['display'].SetToolTip(wx.ToolTip('Display'))
+			self.tb['display'].Bind(wx.EVT_BUTTON, self.onToggleDisplay)
+
+		if target is not None:
+			bitmap = getTargetBitmap(target)
+			self.tb['target'] = GenBitmapToggleButton(self.parent, -1, bitmap,
+																								size=(24, 24))
+			self.tb['target'].SetToolTip(wx.ToolTip('Add Targets'))
+
+		if settings is not None:
+			bitmap = getBitmap('settings.png')
+			self.tb['settings'] = GenBitmapButton(self.parent, -1, bitmap,
+																						size=(24, 24))
+			self.tb['settings'].SetToolTip(wx.ToolTip('Settings'))
+			self.tb['settings'].Bind(wx.EVT_BUTTON, self.onSettingsButton)
+
 		for tb in self.tb.values():
 			tb.SetBezelWidth(1)
 
-	def initButtons(self):
-		bitmap = getBitmap('display.png')
-		self.tb['display'] = GenBitmapToggleButton(self.parent, -1, bitmap,
-																								size=(24, 24))
-		self.tb['display'].SetToolTip(wx.ToolTip('Display'))
-		bitmap = getBitmap('settings.png')
-		self.tb['settings'] = GenBitmapButton(self.parent, -1, bitmap,
-																					size=(24, 24))
-		self.tb['settings'].SetToolTip(wx.ToolTip('Settings'))
+	def SetBitmap(self, name):
+		try:
+			self.bitmap.SetBitmap(self.bitmaps[name])
+		except KeyError:
+			raise AttributeError
 
-class ImageTypeTool(TypeTool):
-	pass
+	def onToggleDisplay(self, evt):
+		evt = DisplayEvent(evt.GetEventObject(), self.name, evt.GetIsDown())
+		self.tb['display'].GetEventHandler().AddPendingEvent(evt)
 
-class TargetTypeTool(TypeTool):
-	def __init__(self, parent, name, color):
-		self.color = color
-		TypeTool.__init__(self, parent, name)
-
-	def initButtons(self):
-		TypeTool.initButtons(self)
-		bitmap = getTargetBitmap(self.color)
-		self.tb['target'] = GenBitmapToggleButton(self.parent, -1, bitmap,
-																							size=(24, 24))
-		self.tb['target'].SetToolTip(wx.ToolTip('Add Targets'))
+	def onSettingsButton(self, evt):
+		evt = SettingsEvent(evt.GetEventObject(), self.name)
+		self.tb['settings'].GetEventHandler().AddPendingEvent(evt)
 
 class SelectionTool(wx.GridBagSizer):
-	def __init__(self):
+	def __init__(self, parent):
+		self.parent = parent
 		wx.GridBagSizer.__init__(self, 3, 3)
-		self.typetools = []
+		self.SetEmptyCellSize((0, 24))
+		self.order = []
+		self.tools = {}
+		self.images = {}
+		self.targets = {}
 
-	def addTypeTool(self, typetool):
-		n = len(self.typetools)
-		self.typetools.append(typetool)
-		self.Add(typetool.label, (n, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+	def _addTypeTool(self, typetool):
+		n = len(self.tools)
+		self.Add(typetool.bitmap, (n, 0), (1, 1), wx.ALIGN_CENTER)
+		self.Add(typetool.label, (n, 1), (1, 1),
+							wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, 5)
 		if 'display' in typetool.tb:
 			self.Add(typetool.tb['display'], (n, 2), (1, 1), wx.ALIGN_CENTER)
+			typetool.tb['display'].Bind(EVT_DISPLAY, self.onDisplay)
 		if 'target' in typetool.tb:
 			self.Add(typetool.tb['target'], (n, 3), (1, 1), wx.ALIGN_CENTER)
+			self.targets[typetool.name] = None
+		else:
+			self.images[typetool.name] = None
 		if 'settings' in typetool.tb:
 			self.Add(typetool.tb['settings'], (n, 4), (1, 1), wx.ALIGN_CENTER)
+
+	def addTypeTool(self, name, **kwargs):
+		if name in self.tools:
+			raise ValueError('Type \'%s\' already exists' % name)
+		typetool = TypeTool(self.parent, name, **kwargs)
+		self._addTypeTool(typetool)
+		self.order.append(name)
+		self.tools[name] = typetool
+
+	def hasType(self, name):
+		if name in self.tools:
+			return True
+		else:
+			return False
+
+	def _getTypeTool(self, name):
+		try:
+			return self.tools[name]
+		except KeyError:
+			raise ValueError('No type \'%s\' added' % name)
+
+	def isDisplayed(self, name):
+		tool = self._getTypeTool(name)
+		try:
+			return tool.tb['display'].GetValue()
+		except KeyError:
+			return True
+
+	def _setDisplayed(self, name, value):
+		if name in self.images:
+			for n in self.images:
+				if n == name:
+					continue
+				tool = self._getTypeTool(n)
+				try:
+					tool.tb['display'].SetValue(False)
+				except KeyError:
+					pass
+			if value:
+				image = self.images[name]
+				self.parent.setImage(image)
+			else:
+				self.parent.setImage(None)
+
+	def setDisplayed(self, name, value):
+		tool = self._getTypeTool(name)
+		try:
+			return tool.tb['display'].SetValue(value)
+		except KeyError:
+			raise AttributeError
+		self._setDisplayed(name, value)
+
+	def onDisplay(self, evt):
+		self._setDisplayed(evt.name, evt.value)
+
+	def setImage(self, name, image):
+		tool = self._getTypeTool(name)
+		if image is None:
+			tool.SetBitmap('red')
+		else:
+			tool.SetBitmap('green')
+		self.images[name] = image
+		if self.isDisplayed(name):
+			self.parent.setImage(image)
 
 class Target(object):
 	def __init__(self, x, y, target_type=None):
@@ -1379,14 +1512,12 @@ if __name__ == '__main__':
 			self.panel.addTargetType('foo')
 			self.panel.addTargetType('bar')
 
-			'''
-			selectiontool = SelectionTool()
-			self.panel.sizer.Add(selectiontool, (1, 0), (1, 1), wx.ALIGN_CENTER)
-			imagetypetool = ImageTypeTool(self.panel, 'Foo')
-			targettypetool = TargetTypeTool(self.panel, 'Bar', wx.BLUE)
-			selectiontool.addTypeTool(imagetypetool)
-			selectiontool.addTypeTool(targettypetool)
-			'''
+			self.panel.addTypeTool('Image')
+			self.panel.addTypeTool('Target', display=True, target=wx.BLUE, settings=True)
+			self.panel.addTypeTool('Target 2', display=True, target=wx.RED, settings=True)
+			self.panel.addTypeTool('Target 3', display=True, settings=True)
+			self.panel.addTypeTool('Target 4', display=True, target=wx.GREEN, settings=True)
+			self.panel.addTypeTool('Image 2', display=True, settings=True)
 
 #			self.panel = ClickImagePanel(frame, -1, bar)
 
@@ -1402,7 +1533,9 @@ if __name__ == '__main__':
 	if filename is None:
 		app.panel.setImage(None)
 	elif filename[-4:] == '.mrc':
-		app.panel.setImageFromMrcString(open(filename, 'rb').read())
+		#app.panel.setImageFromMrcString(
+		image = Mrc.mrcstr_to_numeric(open(filename, 'rb').read())
+		app.panel.setImageType('Image 2', image)
 	else:
 		app.panel.setImage(Image.open(filename))
 	app.MainLoop()
