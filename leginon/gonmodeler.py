@@ -21,7 +21,7 @@ class GonModeler(node.Node):
 		#ffteng = fftengine.fftFFTW(planshapes=(), estimate=1)
 		self.correlator = correlator.Correlator(ffteng)
 		self.peakfinder = peakfinder.PeakFinder()
-		self.settle = 2.0
+		self.settle = 5.0
 		self.threadstop = threading.Event()
 		self.threadlock = threading.Lock()
 		self.calclient = calibrationclient.ModeledStageCalibrationClient(self)
