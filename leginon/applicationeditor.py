@@ -745,6 +745,7 @@ class NodeDialog(mySimpleDialog):
 	def __init__(self, parent, title, args=None):
 		self.args = args
 		self.nodeclasses = nodeclassreg.getNodeClassNames()
+		self.nodeclasses.sort()
 		mySimpleDialog.__init__(self, parent, title)
 
 	def body(self, master):
