@@ -120,7 +120,7 @@ class Dialog(wx.Dialog):
 				self.setSettings(widget, sd[key])
 			else:
 				try:
-					if sd[key] is None:
+					if key not in sd or sd[key] is None:
 						widgetvalue = getattr(widget, attributes[widget.__class__][0])()
 						sd[key] = widgetvalue
 					else:

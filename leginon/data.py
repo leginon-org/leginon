@@ -372,11 +372,17 @@ def data2dict(idata, noNone=False, dereference=False):
 def dict2data(d, datatype):
 	instance = datatype()
 	for key, subtype in datatype.typemap():
-		if key in d:
+		if d is None:
+			continue
+		try:
 			if issubclass(subtype, Data):
 				instance[key] = dict2data(d[key], subtype)
 			else:
 				instance[key] = d[key]
+		except KeyError:
+			pass
+		except TypeError:
+			print type(d), d
 	return instance
 
 class Data(newdict.TypedDict, leginonobject.LeginonObject):
@@ -1651,15 +1657,22 @@ class ClickTargetFinderSettingsData(TargetFinderSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class LowPassFilterSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('on', bool),
+			('size', int),
+			('sigma', foat),
+		)
+	typemap = classmethod(typemap)
+
 class HoleFinderSettingsData(TargetFinderSettingsData):
 	def typemap(cls):
 		return TargetFinderSettingsData.typemap() + (
 			('user check', bool),
 			('skip', bool),
 			('image filename', str),
-			('edge lpf', bool),
-			('edge lpf size', int),
-			('edge lpf sigma', float),
+			('edge lpf', LowPassFilterSettingsData),
 			('edge', bool),
 			('edge type', str),
 			('edge log size', int),
@@ -1668,9 +1681,7 @@ class HoleFinderSettingsData(TargetFinderSettingsData):
 			('edge threshold', float),
 			('template rings', list),
 			('template type', str),
-			('template lpf', bool),
-			('template lpf size', int),
-			('template lpf sigma', float),
+			('template lpf', LowPassFilterSettingsData),
 			('threshold', float),
 			('blobs border', int),
 			('blobs max', int),

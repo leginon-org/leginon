@@ -31,9 +31,11 @@ class HoleFinder(targetfinder.TargetFinder):
 		'user check': False,
 		'skip': False,
 		'image filename': '',
-		'edge lpf': True,
-		'edge lpf size': 5,
-		'edge lpf sigma': 1.0,
+		'edge lpf': {
+			'on': True,
+			'size': 5,
+			'sigma': 1.0,
+		},
 		'edge': True,
 		'edge type': 'sobel',
 		'edge log size': 9,
@@ -42,9 +44,11 @@ class HoleFinder(targetfinder.TargetFinder):
 		'edge threshold': 100.0,
 		'template rings': [(30, 40)],
 		'template type': 'cross',
-		'template lpf': False,
-		'template lpf size': 15,
-		'template lpf sigma': 1.0,
+		'template lpf': {
+			'on': False,
+			'size': 15,
+			'sigma': 1.0,
+		},
 		'threshold': 3.0,
 		'blobs border': 20,
 		'blobs max': 300,
@@ -131,9 +135,10 @@ class HoleFinder(targetfinder.TargetFinder):
 		ab = self.settings['edge absolute']
 		edges = self.settings['edge']
 		filt = self.settings['edge type']
-		lowpasson = self.settings['edge lpf']
-		lowpassn = self.settings['edge lpf size']
-		lowpasssig = self.settings['edge lpf sigma']
+		lpfsettings = self.settings['edge lpf']
+		lowpasson = lpfsettings['on']
+		lowpassn = lpfsettings['size']
+		lowpasssig = lpfsettings['sigma']
 		edgethresh = self.settings['edge threshold']
 		self.hf.configure_edges(filter=filt, size=n, sigma=sig, absvalue=ab, lp=lowpasson, lpn=lowpassn, lpsig=lowpasssig, thresh=edgethresh, edges=edges)
 		self.hf.find_edges()
@@ -151,9 +156,10 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.hf.configure_template(ring_list=radlist)
 		self.hf.create_template()
 		cortype = self.settings['template type']
-		if self.settings['template lpf']:
-			corsize = self.settings['template lpf size']
-			corsigma = self.settings['template lpf sigma']
+		lpfsettings = self.settings['template lpf']
+		if lpfsettings['on']:
+			corsize = lpfsettings['size']
+			corsigma = lpfsettings['sigma']
 			corfilt = (corsize, corsigma)
 		else:
 			corfilt = None
@@ -393,15 +399,15 @@ class HoleFinder(targetfinder.TargetFinder):
 			'user-check': self.settings['user check'],
 			'skip-auto': self.settings['skip'],
 
-			'edge-lpf-on': self.settings['edge lpf'],
-			'edge-lpf-size': self.settings['edge lpf size'],
-			'edge-lpf-sigma': self.settings['edge lpf sigma'],
+			'edge-lpf-on': self.settings['edge lpf']['on'],
+			'edge-lpf-size': self.settings['edge lpf']['size'],
+			'edge-lpf-sigma': self.settings['edge lpf']['sigma'],
 			'edge-filter-type': self.settings['edge type'],
 			'edge-threshold': self.settings['edge threshold'],
 
 			'template-rings': self.settings['template rings'],
 			'template-correlation-type': self.settings['template type'],
-			'template-lpf': self.settings['template lpf sigma'],
+			'template-lpf': self.settings['template lpf']['sigma'],
 
 			'threshold-value': self.settings['threshold'],
 			'blob-border': self.settings['blobs border'],

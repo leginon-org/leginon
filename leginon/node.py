@@ -16,6 +16,7 @@ import logging
 import threading
 import gui.wx.Logging
 import gui.wx.Node
+import copy
 
 import leginonconfig
 import os
@@ -107,16 +108,18 @@ class Node(leginonobject.LeginonObject):
 																						'name': self.name})
 		try:
 			settings = self.research(qdata, results=1)[0]
+			self.settings = settings.toDict(dereference=True)
+			del self.settings['session']
+			del self.settings['name']
 		except IndexError:
-			settings = self.settingsclass(initializer=self.defaultsettings)
-		self.settings = settings.toDict(dereference=True)
+			self.settings = copy.deepcopy(self.defaultsettings)
 
 	def setSettings(self, d):
-		d['session'] = self.session
-		d['name'] = self.name
-		sd = self.settingsclass.fromDict(d)
-		self.publish(sd, database=True, dbforce=True)
 		self.settings = d
+		sd = self.settingsclass.fromDict(d)
+		sd['session'] = self.session
+		sd['name'] = self.name
+		self.publish(sd, database=True, dbforce=True)
 
 	def getSettings(self):
 		return self.settings
