@@ -74,6 +74,8 @@ class Navigator(node.Node):
 		self.newshape = None
 		self.oldshape = None
 
+		self.scope = None
+		self.camera = None
 		self.shape = None
 		self.start()
 
@@ -94,34 +96,44 @@ class Navigator(node.Node):
 		return delta
 
 	def navigate(self, xy):
-		self.logger.info('Handling image click...')
-		## get relavent info from click event
+		errstr = 'Move failed: %s'
+		# get relavent info from click event
 		clickrow = xy[1]
 		clickcol = xy[0]
 		clickshape = self.shape
 		clickscope = self.scope
 		clickcamera = self.camera
 
-		## calculate delta from image center
+		if None in (clickrow, clickcol, clickshape, clickscope, clickcamera):
+			self.panel.acquisitionDone()
+			return
+
+		self.logger.info('Moving to clicked position...')
+
+		# calculate delta from image center
 		deltarow = clickrow - clickshape[0] / 2
 		deltacol = clickcol - clickshape[1] / 2
 
-		## to shift clicked point to center...
+		# to shift clicked point to center...
 		deltarow = -deltarow
 		deltacol = -deltacol
 
 		pixelshift = {'row':deltarow, 'col':deltacol}
 		mag = clickscope['magnification']
 
-		## figure out shift
+		# figure out shift
 		movetype = self.settings['move type']
 		calclient = self.calclients[movetype]
 		try:
 			newstate = calclient.transform(pixelshift, clickscope, clickcamera)
-		except:
-			message = ('Error in transform. Likely missing calibration for %s at %s'
-									+ ' and current high tension') % (movetype, mag)
-			self.logger.error(message)
+		except calibrationclient.NoMatrixCalibrationError, e:
+			errsubstr = 'unable to find calibration for %s' % e
+			self.logger.error(errstr % errsubstr)
+			self.beep()
+			self.panel.acquisitionDone()
+			return
+		except Exception, e:
+			self.logger.exception(errstr % e)
 			self.beep()
 			self.panel.acquisitionDone()
 			return
@@ -160,7 +172,7 @@ class Navigator(node.Node):
 				dist = errordist * pixsize * binning
 				umdist = dist * 1000000.0
 
-				res = 'Error: %.3f um (Pixels: Request: (%d, %d),	Actual: (%.1f, %.1f),	Error: %.3f)' % (umdist, pixelshift['col'], pixelshift['row'], newshift[1], newshift[0], errordist)
+				res = 'Error: %.3f um (Request (%d, %d), Actual (%.1f, %.1f), Error: %.3f) pixels' % (umdist, pixelshift['col'], pixelshift['row'], newshift[1], newshift[0], errordist)
 				self.logger.info(res)
 
 				if (abs(pixelshift['row']) > clickshape[0]/4) or (abs(pixelshift['col']) > clickshape[1]/4):
@@ -245,7 +257,8 @@ class Navigator(node.Node):
 
 		self.locationToDB(newloc)
 		locnames = self.locationNames()
-		self.logger.info('Location names %s' % (locnames,))
+		self.panel.locationsEvent(locnames)
+		#self.logger.info('Location names %s' % (locnames,))
 		return newloc
 
 	def removeLocation(self, loc):
@@ -266,10 +279,13 @@ class Navigator(node.Node):
 		else:
 			locremove = loc 
 			self.stagelocations.remove(loc)
+
 		if locremove is not None:
-			locremove['removed'] = 1
-			self.locationToDB(locremove)
+			removeloc = data.StageLocationData(initializer=locremove.toDict())
+			removeloc['removed'] = True
+			self.locationToDB(removeloc)
 		locnames = self.locationNames()
+		self.panel.locationsEvent(locnames)
 
 	def locationNames(self):
 		names = [loc['name'] for loc in self.stagelocations]

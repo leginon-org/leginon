@@ -257,6 +257,9 @@ class Corrector(node.Node):
 		except IndexError:
 			self.logger.warning('Finding reference image failed')
 			ref = None
+		except Exception, e:
+			self.logger.error('Error retrieving reference image: %s' % e)
+			ref = None
 		else:
 			self.logger.info('Reference image researched')
 		return ref

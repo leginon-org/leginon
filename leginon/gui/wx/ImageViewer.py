@@ -40,7 +40,7 @@ EVT_TARGETING = wx.PyEventBinder(TargetingEventType)
 EVT_SETTINGS = wx.PyEventBinder(SettingsEventType)
 
 class ImageClickedEvent(wx.PyCommandEvent):
-	def __init__(self, xy, source):
+	def __init__(self, source, xy):
 		wx.PyCommandEvent.__init__(self, ImageClickedEventType, source.GetId())
 		self.SetEventObject(source)
 		self.xy = xy
@@ -514,8 +514,8 @@ class ImagePanel(wx.Panel):
 		self.sizer.Add(self.statspanel, (1, 0), (1, 1), wx.EXPAND|wx.ALL, 3)
 
 		# bind panel events
-		self.panel.Bind(wx.EVT_LEFT_UP, self.OnLeftUp)
-		self.panel.Bind(wx.EVT_RIGHT_UP, self.OnRightUp)
+		self.panel.Bind(wx.EVT_LEFT_UP, self.OnLeftClick)
+		self.panel.Bind(wx.EVT_RIGHT_UP, self.OnRightClick)
 		self.panel.Bind(wx.EVT_PAINT, self.OnPaint)
 		self.panel.Bind(wx.EVT_SIZE, self.OnSize)
 		self.panel.Bind(wx.EVT_MOTION, self.OnMotion)
@@ -863,7 +863,7 @@ class ImagePanel(wx.Panel):
 	def _onLeftClick(self, evt):
 		pass
 
-	def OnLeftUp(self, evt):
+	def OnLeftClick(self, evt):
 		for tool in self.tools:
 			tool.OnLeftClick(evt)
 		self._onLeftClick(evt)
@@ -871,7 +871,7 @@ class ImagePanel(wx.Panel):
 	def _onRightClick(self, evt):
 		pass
 
-	def OnRightUp(self, evt):
+	def OnRightClick(self, evt):
 		for tool in self.tools:
 			tool.OnRightClick(evt)
 		self._onRightClick(evt)
@@ -980,25 +980,22 @@ class ImagePanel(wx.Panel):
 		self.sizer.Layout()
 
 class ClickTool(ImageTool):
-	def __init__(self, imagepanel, sizer, callback=None):
+	def __init__(self, imagepanel, sizer):
 		bitmap = getBitmap('arrow.png')
 		tooltip = 'Click Tool'
 		cursor = wx.StockCursor(wx.CURSOR_BULLSEYE)
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, True)
-		self.callback = callback
 
-	def OnLeftUp(self, evt):
+	def OnLeftClick(self, evt):
 		if self.button.GetToggle():
 			xy = self.imagepanel.view2image((evt.m_x, evt.m_y))
-			if callable(self.callback):
-				self.callback(xy)
-			idcevt = ImageClickedEvent(xy, self.imagepanel)
+			idcevt = ImageClickedEvent(self.imagepanel, xy)
 			self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
 
 class ClickImagePanel(ImagePanel):
-	def __init__(self, parent, id, callback=None):
+	def __init__(self, parent, id):
 		ImagePanel.__init__(self, parent, id)
-		self.clicktool = self.addTool(ClickTool(self, self.toolsizer, callback))
+		self.clicktool = self.addTool(ClickTool(self, self.toolsizer))
 		self.sizer.Layout()
 		self.Fit()
 
@@ -1460,9 +1457,11 @@ if __name__ == '__main__':
 			self.sizer = wx.BoxSizer(wx.VERTICAL)
 
 #			self.panel = ImagePanel(frame, -1)
-#			self.panel = ClickImagePanel(frame, -1, lambda xy: print xy)
-			self.panel = TargetImagePanel(frame, -1)
-			self.panel.addTypeTool('Target Practice', display=True, target=wx.RED)
+
+			self.panel = ClickImagePanel(frame, -1)
+
+#			self.panel = TargetImagePanel(frame, -1)
+#			self.panel.addTypeTool('Target Practice', display=True, target=wx.RED)
 
 			self.sizer.Add(self.panel, 1, wx.EXPAND|wx.ALL)
 			frame.SetSizerAndFit(self.sizer)

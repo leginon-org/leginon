@@ -383,7 +383,8 @@ class MatrixCalibrationClient(CalibrationClient):
 			caldata = caldatalist[0]
 			return caldata
 		else:
-			raise NoMatrixCalibrationError('HT: %s, mag: %s, cal type: %s' % (ht, mag, caltype))
+			excstr = '%s at HT: %s, mag: %sX' % (caltype, ht, mag)
+			raise NoMatrixCalibrationError(excstr)
 
 	def retrieveMatrix(self, ht, mag, caltype):
 		'''
@@ -499,7 +500,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		t1 = tilts['x']
 		d2 = shifts['y']
 		t2 = tilts['y']
-		print 'STIG', stig
+		#print 'STIG', stig
 		if stig:
 			sol = self.solveEq10(fmatrix,amatrix,bmatrix,d1,t1,d2,t2)
 		else:
@@ -510,7 +511,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		return sol
 
 	def solveEq10(self, F, A, B, d1, t1, d2, t2):
-		print 'SOLVE STIG'
+		#print 'SOLVE STIG'
 		'''
 		This solves Equation 10 from Koster paper
 		 F,A,B are the defocus, stigx, and stigy calibration matrices
@@ -545,7 +546,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		return result
 
 	def solveEq10_nostig(self, F, d1, t1, d2, t2):
-		print 'SOLVE NO STIG'
+		#print 'SOLVE NO STIG'
 		'''
 		This solves Equation 10 from Koster paper
 		 F,A,B are the defocus, stigx, and stigy calibration matrices
@@ -749,14 +750,16 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		pixvect = (pixrow, pixcol)
 
 		matrix = self.retrieveMatrix(ht, mag, par)
+
 		change = Numeric.matrixmultiply(matrix, pixvect)
 		changex = change[0]
 		changey = change[1]
 
 		### take into account effect of alpha tilt on Y stage pos
-		if par == 'stage position' and 'a' in scope[par] and scope[par]['a'] is not None:
-			alpha = scope[par]['a']
-			changey = changey / Numeric.cos(alpha)
+		if par == 'stage position':
+			if 'a' in scope[par] and scope[par]['a'] is not None:
+				alpha = scope[par]['a']
+				changey = changey / Numeric.cos(alpha)
 
 		new = data.ScopeEMData(initializer=scope)
 		## make a copy of this since it will be modified

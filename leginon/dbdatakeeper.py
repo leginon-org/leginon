@@ -12,13 +12,22 @@ import threading
 import logging
 import _mysql_exceptions
 
+class DatabaseError(Exception):
+	pass
+
+class InsertError(DatabaseError):
+	pass
+
+class QueryError(DatabaseError):
+	pass
+
 class DBDataKeeper(object):
 	def __init__(self, logger):
 		self.logger = logger
 		try:
 			self.dbd = sqldict.SQLDict()
 		except _mysql_exceptions.OperationalError, e:
-			raise RuntimeError(e.args[1])
+			raise DatabaseError(e.args[-1])
 		self.lock = threading.RLock()
 
 	def direct_query(self, dataclass, id):
@@ -55,7 +64,10 @@ class DBDataKeeper(object):
 		# idata: instance of a Data class 
 		# results: number of rows wanted
 		queryinfo = self.queryInfo(idata)
-		result  = self.dbd.multipleQueries(queryinfo, readimages=readimages)
+		try:
+			result  = self.dbd.multipleQueries(queryinfo, readimages=readimages)
+		except _mysql_exceptions.OperationalError, e:
+			raise QueryError(e.args[-1])
 
 		if results is not None:
 			myresult = result.fetchmany(results)
@@ -221,7 +233,10 @@ class DBDataKeeper(object):
 
 	def _insert(self, newdata, force=False):
 		#self.flatInsert(newdata)
-		return self.recursiveInsert(newdata, force=force)
+		try:
+			return self.recursiveInsert(newdata, force=force)
+		except _mysql_exceptions.OperationalError, e:
+			raise InsertError(e.args[-1])
 
 	def flatInsert(self, newdata, force=False):
 		table = newdata.__class__.__name__

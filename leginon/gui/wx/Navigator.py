@@ -8,6 +8,16 @@ import gui.wx.Node
 import gui.wx.Settings
 import gui.wx.ToolBar
 
+LocationsEventType = wx.NewEventType()
+
+EVT_LOCATIONS = wx.PyEventBinder(LocationsEventType)
+
+class LocationsEvent(wx.PyCommandEvent):
+	def __init__(self, source, locations):
+		wx.PyCommandEvent.__init__(self, LocationsEventType, source.GetId())
+		self.SetEventObject(source)
+		self.locations = locations
+
 class Panel(gui.wx.Node.Panel):
 	icon = 'navigator'
 	def __init__(self, parent, name):
@@ -36,14 +46,22 @@ class Panel(gui.wx.Node.Panel):
 		self.SetAutoLayout(True)
 		self.SetupScrolling()
 
+		self.Bind(EVT_LOCATIONS, self.onLocations)
+
 	def onNodeInitialized(self):
+		self.locationsdialog = StageLocationsDialog(self.GetParent(), self.node)
+
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
 											id=gui.wx.ToolBar.ID_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onAcquireTool,
 											id=gui.wx.ToolBar.ID_ACQUIRE)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onStageLocationsTool,
 											id=gui.wx.ToolBar.ID_STAGE_LOCATIONS)
-		self.Bind(gui.wx.ImageViewer.EVT_IMAGE_CLICKED, self.onImageClicked)
+		self.Bind(gui.wx.ImageViewer.EVT_IMAGE_CLICKED, self.onImageClicked,
+							self.imagepanel)
+
+	def onSetImage(self, evt):
+		self.imagepanel.setImage(evt.image, scroll=True)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
@@ -57,15 +75,22 @@ class Panel(gui.wx.Node.Panel):
 		self._acquisitionEnable(True)
 
 	def onAcquireTool(self, evt):
+		self._acquisitionEnable(False)
 		threading.Thread(target=self.node.acquireImage).start()
 
 	def onStageLocationsTool(self, evt):
-		dialog = StageLocationsDialog(self.GetParent(), self.node)
-		dialog.ShowModal()
-		dialog.Destroy()
+		self.locationsdialog.ShowModal()
 
 	def onImageClicked(self, evt):
+		self._acquisitionEnable(False)
 		threading.Thread(target=self.node.navigate, args=(evt.xy,)).start()
+
+	def onLocations(self, evt):
+		self.locationsdialog.setLocations(evt.locations)
+
+	def locationsEvent(self, locations):
+		evt = LocationsEvent(self, locations)
+		self.GetEventHandler().AddPendingEvent(evt)
 
 class StageLocationsDialog(wx.Dialog):
 	def __init__(self, parent, node):
@@ -81,14 +106,14 @@ class StageLocationsDialog(wx.Dialog):
 			stposition[a] = wx.StaticText(self, -1, a)
 			self.stposition[a] = wx.StaticText(self, -1, '-')
 			self.sz.Add(stposition[a], (0, i + 1), (1, 1), wx.ALIGN_CENTER)
-			self.sz.Add(self.stposition[a], (1, i + 1), (1, 1),
-														wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+			self.sz.Add(self.stposition[a], (1, i + 1), (1, 1), wx.ALIGN_CENTER)
 
 		label0 = wx.StaticText(self, -1, 'Position:')
 		label1 = wx.StaticText(self, -1, 'Comment:')
 		self.stcomment = wx.StaticText(self, -1, '(No location selected)')
 		label2 = wx.StaticText(self, -1, 'Locations')
-		self.lblocations = wx.ListBox(self, -1, style=wx.LB_SINGLE)
+		choices = self.node.getLocationNames()
+		self.lblocations = wx.ListBox(self, -1, choices=choices, style=wx.LB_SINGLE)
 		self.bnew = wx.Button(self, -1, 'New...')
 		self.btoscope = wx.Button(self, -1, 'To scope')
 		self.bfromscope = wx.Button(self, -1, 'From scope')
@@ -102,11 +127,22 @@ class StageLocationsDialog(wx.Dialog):
 		self.sz.Add(self.stcomment, (2, 1), (1, 5),
 													wx.ALIGN_CENTER_VERTICAL)
 		self.sz.Add(label2, (3, 1), (1, 5), wx.ALIGN_CENTER_VERTICAL)
-		self.sz.Add(self.lblocations, (4, 1), (4, 5), wx.EXPAND)
-		self.sz.Add(self.bnew, (4, 0), (1, 1), wx.ALIGN_CENTER)
-		self.sz.Add(self.btoscope, (5, 0), (1, 1), wx.ALIGN_CENTER)
-		self.sz.Add(self.bfromscope, (6, 0), (1, 1), wx.ALIGN_CENTER)
-		self.sz.Add(self.bremove, (7, 0), (1, 1), wx.ALIGN_CENTER)
+		self.sz.Add(self.lblocations, (4, 1), (1, 5), wx.EXPAND)
+
+		szbuttons = wx.GridBagSizer(5, 5)
+		szbuttons.Add(self.bnew, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		szbuttons.Add(self.btoscope, (1, 0), (1, 1), wx.ALIGN_CENTER)
+		szbuttons.Add(self.bfromscope, (2, 0), (1, 1), wx.ALIGN_CENTER)
+		szbuttons.Add(self.bremove, (3, 0), (1, 1), wx.ALIGN_CENTER)
+		self.sz.Add(szbuttons, (4, 0), (1, 1),
+								wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_TOP)
+
+		self.sz.AddGrowableCol(1)
+		self.sz.AddGrowableCol(2)
+		self.sz.AddGrowableCol(3)
+		self.sz.AddGrowableCol(4)
+		self.sz.AddGrowableCol(5)
+		self.sz.AddGrowableRow(4)
 
 		szdialog = wx.GridBagSizer(5, 5)
 		szdialog.Add(self.sz, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
@@ -117,6 +153,7 @@ class StageLocationsDialog(wx.Dialog):
 		self.Bind(wx.EVT_BUTTON, self.onToScope, self.btoscope)
 		self.Bind(wx.EVT_BUTTON, self.onFromScope, self.bfromscope)
 		self.Bind(wx.EVT_BUTTON, self.onRemove, self.bremove)
+		self.Bind(wx.EVT_LISTBOX, self.onLocationSelected, self.lblocations)
 
 	def onNew(self, evt):
 		dialog = NewLocationDialog(self, self.node)
@@ -133,33 +170,61 @@ class StageLocationsDialog(wx.Dialog):
 		self.node.fromScope(name)
 
 	def onRemove(self, evt):
-		n = self.lblocation.GetSelection()
-		name = self.lblocation.GetString(n)
+		n = self.lblocations.GetSelection()
+		if n < 0:
+			return
+		name = self.lblocations.GetString(n)
 		self.lblocations.Delete(n)
-		# deselect?
 		self.node.removeLocation(name)
 
-	def onLocationSelected(self, evt):
-		l = self.node.getLocation(evt.GetString())
+	def _setLocation(self, l):
 		for a in ['x', 'y', 'z', 'a', 'b']:
-			try:
-				if l[a] is None:
-					self.stposition[a].SetLabel('-')
-				else:
-					self.stposition[a].SetLabel(str(l[a]))
-			except KeyError:
+			if l is None:
 				self.stposition[a].SetLabel('-')
-		if comment is None:
+			else:
+				try:
+					if l[a] is None:
+						self.stposition[a].SetLabel('-')
+					else:
+						self.stposition[a].SetLabel(str(l[a]))
+				except KeyError:
+					self.stposition[a].SetLabel('-')
+
+		if l is None:
+			comment = '(No location selected)'
+		elif l['comment'] is None:
 			comment = ''
 		else:
 			comment = l['comment']
 		self.stcomment.SetLabel(comment)
-		
-		self.btoscope.Enable(True)
-		self.bfromscope.Enable(True)
-		self.bremove.Enable(True)
+
+		if l is None:
+			enable = False
+		else:
+			enable = True
+		self.btoscope.Enable(enable)
+		self.bfromscope.Enable(enable)
+		self.bremove.Enable(enable)
 
 		self.sz.Layout()
+		self.Fit()
+
+	def onLocationSelected(self, evt):
+		if evt.IsSelection():
+			location = self.node.getLocation(evt.GetString())
+		else:
+			location = None
+		self._setLocation(location)
+
+	def setLocations(self, locations):
+		string = self.lblocations.GetStringSelection()
+		self.lblocations.Clear()
+		self.lblocations.AppendItems(locations)
+		if self.lblocations.FindString(string) == wx.NOT_FOUND:
+			self._setLocation(None)
+		else:
+			location = self._setLocation(self.node.getLocation(string))
+			self.lblocations.SetStringSelection(string)
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
