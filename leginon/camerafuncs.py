@@ -136,8 +136,8 @@ class CameraFuncs(object):
 				print '%s unable to get camera state' % (self.node.id,)
 				initstate = {
 					'exposure time': 500,
-					'dimension':{'x':512,'y':512},
-					'binning':{'x':1, 'y':1},
+					'dimension':{'x':1024,'y':1024},
+					'binning':{'x':4, 'y':4},
 					'offset':{'x':0,'y':0}
 				}
 
