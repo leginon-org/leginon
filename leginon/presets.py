@@ -309,7 +309,7 @@ class PresetsManager(node.Node):
 		pnames = self.presetNames()
 		self.uiselectpreset.set(pnames, 0)
 
-	def toScope(self, pname, magonly=False):
+	def toScope(self, pname, magonly=False, outputevent=True):
 		'''
 		'''
 		presetdata = self.presetByName(pname)
@@ -350,7 +350,8 @@ class PresetsManager(node.Node):
 			self.currentpreset = presetdata
 		self.uistatus.set(endmessage)
 		self.logger.info(endmessage)
-		self.outputEvent(event.PresetChangedEvent(name=name, preset=presetdata))
+		if outputevent:
+			self.outputEvent(event.PresetChangedEvent(name=name, preset=presetdata))
 
 	def fromScope(self, name):
 		'''
@@ -437,7 +438,7 @@ class PresetsManager(node.Node):
 		### and force a cycle anyway.
 		if self.currentpreset is None:
 			self.logger.info('First preset change, changing preset and forcing cycle')
-			self.toScope(presetname)
+			self.toScope(presetname, outputevent=False)
 			force = True
 		else:
 			force = False
