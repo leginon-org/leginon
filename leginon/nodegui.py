@@ -7,36 +7,56 @@ import interface
 import TreeWidget
 import os
 
-class NodeGUIArg(Frame):
-	def __init__(self, parent, argname, argalias, argtype, argvalue=None):
+class SpecWidget(Frame):
+	def __init__(self, parent, uiclient, spec):
 		Frame.__init__(self, parent)
-		self.name = argname
-		self.type = argtype
-		self.alias = argalias
-		if argtype == 'boolean':
-			self.arg_boolean(argalias)
-		elif argtype == 'integer':
-			self.arg_integer(argalias)
-		elif argtype == 'float':
-			self.arg_float(argalias)
-		elif argtype == 'string':
-			self.arg_string(argalias)
-		elif argtype == 'array':
-			self.arg_array(argalias)
-		elif type(argtype) == dict:
-			self.arg_struct(argalias, argtype)
-		elif argtype == 'date':
-			self.arg_date(argalias)
-		elif argtype == 'binary':
-			self.arg_binary(argalias)
-		elif type(argtype) in (list,tuple):
-			self.arg_choice(argalias, argtype)
+		self.spec = spec
+		self.uiclient = uiclient
+		self.buildSpec()
+
+	def buildSpec(self):
+		raise NotImplementedError()
+
+
+class Data(SpecWidget):
+	def __init__(self, parent, uiclient, spec):
+		SpecWidget.__init__(self, parent, uiclient, spec)
+
+	def buildSpec(self):
+		name = self.name = self.spec['name']
+		self.type = self.spec['xmlrpctype']
+		self.enum = self.spec['enum']
+		if 'default' in self.spec:
+			self.default = self.spec['default']
 		else:
-			raise RuntimeError('argtype not supported')
+			self.default = None
+
+		if len(self.enum) > 0:
+			self.arg_choice(name, self.enum)
+		elif self.type == 'boolean':
+			self.arg_check(name)
+		elif self.type in ('integer', 'float', 'string'):
+			self.arg_entry(name, self.type)
+		elif self.type == 'array':
+			self.arg_entry(name, self.type)
+		elif self.type == 'struct':
+			self.arg_entry(name, self.type)
+		elif self.type == 'date':
+			self.arg_date(name)
+		elif self.type == 'binary':
+			self.arg_binary(name)
+		else:
+			raise RuntimeError('type not supported')
 
 		## sets the initial value
-		if argvalue is not None:
-			self.tkvar.set(argvalue)
+		if self.default is not None:
+			self.tkvar.set(self.default)
+
+	def set(self, value):
+		if self.type == 'struct':
+			self.struct = value
+		else:
+			self.tkvar.set(value)
 
 	def get(self):
 		if type(self.type) is dict:
@@ -52,25 +72,27 @@ class NodeGUIArg(Frame):
 		cb = Pmw.ComboBox(self, entry_textvariable=self.tkvar)
 		cb.setlist(choices)
 		cb.pack(side=LEFT)
+		self.datawidget = cb
 
-	def arg_boolean(self, name):
-		self.tkvar = IntVar()
-		Checkbutton(self, text=name, variable=self.tkvar).pack(side=LEFT)
+	def arg_check(self, name):
+		self.tkvar = BooleanVar()
+		self.datawidget = Checkbutton(self, text=name, variable=self.tkvar)
+		self.datawidget.pack(side=LEFT)
 
-	def arg_integer(self, name):
-		self.tkvar = IntVar()
+	def arg_entry(self, name, type):
+		if type == 'integer':
+			self.tkvar = IntVar()
+		if type == 'float':
+			self.tkvar = DoubleVar()
+		if type == 'string':
+			self.tkvar = StringVar()
+		if type == 'array':
+			self.tkvar = StringVar()
+		if type == 'struct':
+			self.tkvar = StringVar()
 		Label(self, text=name).pack(side=LEFT)
-		Entry(self, textvariable=self.tkvar, width=10).pack(side=LEFT)
-
-	def arg_float(self, name):
-		self.tkvar = DoubleVar()
-		Label(self, text=name).pack(side=LEFT)
-		Entry(self, textvariable=self.tkvar, width=10).pack(side=LEFT)
-
-	def arg_string(self, name):
-		self.tkvar = StringVar()
-		Label(self, text=name).pack(side=LEFT)
-		Entry(self, textvariable=self.tkvar, width=10).pack(side=LEFT)
+		self.datawidget = Entry(self, textvariable=self.tkvar, width=10)
+		self.datawidget.pack(side=LEFT)
 
 	def arg_array(self, name):
 		raise NotImplementedError
@@ -82,6 +104,7 @@ class NodeGUIArg(Frame):
 		item = StructTreeItem(None, name, self.struct)
 		node = TreeWidget.TreeNode(sc.canvas, None, item)
 		node.expand()
+		self.datawidget = sc
 		
 	def arg_date(self, name):
 		raise NotImplementedError
@@ -169,6 +192,103 @@ class NodeGUIComponent(Frame):
 		else:
 			return None
 
+class Container(SpecWidget):
+	def __init__(self, parent, uiclient, spec):
+		SpecWidget.__init__(self, parent, uiclient, spec)
+
+	def buildSpec(self):
+		self.name = self.spec['name']
+		self.label = Label(self, text = self.name)
+		self.label.pack()
+		for spec in self.spec['content']:
+			spectype = spec['spectype']
+			if spectype == 'container':
+				widget = Container(self, self.uiclient, spec)
+			elif spectype == 'method':
+				widget = Method(self, self.uiclient, spec)
+			elif spectype == 'data':
+				widget = Data(self, self.uiclient, spec)
+			else:
+				raise RuntimeError('invalid spec type')
+			widget.pack()
+
+class Method(SpecWidget):
+	def __init__(self, parent, uiclient, spec):
+		SpecWidget.__init__(self, parent, uiclient, spec)
+
+	def buildSpec(self):
+		self.name = self.spec['name']
+		self.argspec = self.spec['argspec']
+		self.returnspec = self.spec['returnspec']
+
+		self.argwidgets = []
+		for arg in self.argspec:
+			newwidget = Data(self, self.uiclient, spec)
+			newwidget.pack()
+			self.argwidgets.append(newwidget)
+
+		but = Button(self, text=self.name, command=self.butcom)
+		but.pack()
+
+		retwidget = Data(self, self.uiclient, self.returnspec)
+		self.retwidget = retwidget.datawidget
+		if retwidget is not None:
+			retwidget.pack()
+
+	def butcom(self):
+		newargs = []
+		for argwidget in self.argwidgets:
+			newvalue = argwidget.get()
+			newargs.append(newvalue)
+		ret = self.uiclient.execute(self.name, newargs)
+		self.process_return(ret)
+
+	def process_return(self, returnvalue):
+		ret = self.returnspec['xmlrpctype']
+		if ret in ('array','string'):
+			print 'retwidget', self.retwidget
+			self.retwidget['state'] = NORMAL
+			self.retwidget.delete(1.0,END)
+			self.retwidget.insert(1.0, `returnvalue`)
+			self.retwidget['state'] = DISABLED
+		if ret == 'struct':
+			item = StructTreeItem(None, 'Result', returnvalue)
+			node = TreeWidget.TreeNode(self.retwidget.canvas, None, item)
+			node.expand()
+#			self.retwidget['state'] = NORMAL
+#			self.retwidget['height'] = len(returnvalue)
+#			self.retwidget.delete(1.0,END)
+#			for key,value in returnvalue.items():
+#				rowstr = key + ': ' + `value` + '\n'
+#				self.retwidget.insert(END, rowstr)
+#			self.retwidget['state'] = DISABLED
+		else:
+			pass
+
+	def init_return(self, returntype):
+		'''
+		set up for handling return values
+		return a widget if one was created
+		'''
+		self.returntype = returntype
+		if returntype in ('array','string'):
+			wid = Frame(self)
+			widlab = Label(wid, text='Result:')
+			self.retwidget = Text(wid, height=1,width=30,wrap=NONE)
+			self.retwidget['state'] = DISABLED
+			retscroll = Scrollbar(wid, orient=HORIZONTAL)
+			retscroll['command'] = self.retwidget.xview
+			self.retwidget['xscrollcommand'] = retscroll.set
+			widlab.grid(row=0,column=0,rowspan=2)
+			self.retwidget.grid(row=0, column=1)
+			retscroll.grid(row=1,column=1,sticky=EW)
+			return wid
+		if returntype == 'struct':
+			self.retwidget = TreeWidget.ScrolledCanvas(self, bg='white', highlightthickness=0)
+			return self.retwidget.frame
+		else:
+			return None
+
 
 class NodeGUI(Frame):
 	def __init__(self, parent, hostname=None, port=None, node=None):
@@ -182,9 +302,14 @@ class NodeGUI(Frame):
 
 		Frame.__init__(self, parent)
 		self.uiclient = interface.Client(hostname, port)
-		self.id = self.uiclient.execute('ID')
-		self.components = {}
-		self.__build()
+
+		mainframe = Container(self, self.uiclient, self.uiclient.spec)
+		mainframe.pack()
+
+		#self.id = self.uiclient.execute('ID')
+		#print 'ID', self.id
+		#self.components = {}
+		#self.__build()
 
 	def __build(self):
 		f = Frame(self, bd=4, relief=SOLID)
