@@ -33,6 +33,21 @@ class Focuser(acquisition.Acquisition):
 		btilt = self.btilt.get()
 		pub = self.publishimages.get()
 
+		melt_time = self.melt.get()
+		if melt_time:
+			melt_time_ms = int(round(melt_time * 1000))
+			camstate = self.cam.currentCameraEMData()
+			current_exptime = camstate['exposure time']
+			camstate['exposure time'] = melt_time_ms
+			camstate = self.cam.currentCameraEMData(camstate)
+
+			print 'Melting for %s seconds' % (melt_time,)
+			self.cam.acquireCameraImageData()
+			print 'Done melting, resetting exposure time'
+
+			camstate['exposure time'] = current_exptime
+			camstate = self.cam.currentCameraEMData(camstate)
+
 		if self.drifton.get():
 			driftthresh = self.driftthresh.get()
 		else:
@@ -139,18 +154,24 @@ class Focuser(acquisition.Acquisition):
 
 	def defineUserInterface(self):
 		acquisition.Acquisition.defineUserInterface(self)
-		self.btilt = uidata.Float('Beam Tilt', 0.02, 'rw', persist=True)
-		self.stigfocthresh = uidata.Float('Stig Threshold', 1e-6, 'rw', persist=True)
+
+		self.melt = uidata.Float('Melt Time (s) CHANGE ME!!!!!!', 0.0, 'rw', persist=True)
+
 		self.drifton = uidata.Boolean('Check Drift', True, 'rw', persist=True)
 		self.driftthresh = uidata.Float('Drift Threshold (pixels)', 2, 'rw', persist=True)
+
+		self.btilt = uidata.Float('Beam Tilt', 0.02, 'rw', persist=True)
+		self.stigfocthresh = uidata.Float('Stig Threshold', 1e-6, 'rw', persist=True)
+
+
 		focustypes = self.focus_methods.keys()
 		focustypes.sort()
 		self.focustype = uidata.SingleSelectFromList('Focus Correction Type', focustypes, 0, persist=True)
 		self.stigcorrection = uidata.Boolean('Stigmator Correction', False, 'rw', persist=True)
 		self.publishimages = uidata.Boolean('Publish Images', True, 'rw', persist=True)
 		abortfailmethod = uidata.Method('Abort With Failure', self.uiAbortFailure)
-		testmethod = uidata.Method('Test Autofocus', self.uiTest)
+		testmethod = uidata.Method('Test Autofocus (broken)', self.uiTest)
 		container = uidata.MediumContainer('Focuser')
-		container.addObjects((self.btilt, self.stigfocthresh, self.drifton, self.driftthresh, self.focustype, self.stigcorrection, self.publishimages, abortfailmethod, testmethod))
+		container.addObjects((self.melt, self.drifton, self.driftthresh, self.btilt, self.stigfocthresh, self.focustype, self.stigcorrection, self.publishimages, abortfailmethod, testmethod))
 		self.uiserver.addObject(container)
 
