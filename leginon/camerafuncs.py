@@ -28,7 +28,9 @@ class CameraFuncs(object):
 				imdata = self.researchByDataID('normalized image data')
 				imagearray = imdata.content
 			else:
+				print 'researchByDataID'
 				imdata = self.researchByDataID('image data')
+				print 'researchByDataID done'
 				imagearray = imdata.content['image data']
 				print 'type(imagearray)', type(imagearray)
 				imagearray = Numeric.array(imagearray, 'l')

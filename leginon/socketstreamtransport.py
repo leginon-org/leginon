@@ -31,6 +31,7 @@ class Handler(SocketServer.StreamRequestHandler):
 				raise
 			try:
 				# returns exception if error, else None
+				print 'socketstreamserver dumping data', tdiff
 				t1 = time.clock()
 				cPickle.dump(e, self.wfile, 1)
 				t2 = time.clock()
@@ -81,7 +82,9 @@ class Client(leginonobject.LeginonObject):
 		print 'TTTT cPickle.dumps pull idpickle', tdiff
 
 		self.send(idpickle)
+		print 'receive'
 		data = self.receive()
+		print 'receive done'
 		self.close()
 
 		t1 = time.clock()

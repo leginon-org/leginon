@@ -89,6 +89,7 @@ class ImViewer(watcher.Watcher, camerafuncs.CameraFuncs):
 			print 'converting numeric to mrcstr'
 			mrcstr = Mrc.numeric_to_mrcstr(imarray)
 		print 'returning binary mrcstr'
+		mrcstr = ''
 		return xmlrpclib.Binary(mrcstr)
 
 	def uiAcquireCorrected(self):

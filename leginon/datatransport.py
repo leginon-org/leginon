@@ -40,7 +40,10 @@ class Client(Base):
 	def pull(self, idata):
 		for c in self.clients:
 			try:
-				return c.pull(idata)
+				print 'c.pull', c
+				newdata = c.pull(idata)
+				print 'c.pull done'
+				return newdata
 			except IOError:
 				pass
 		self.printerror("IOError, unable to pull data " + str(idata))

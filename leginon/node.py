@@ -217,7 +217,9 @@ class Node(leginonobject.LeginonObject):
 	def researchByLocation(self, loc, dataid):
 		'''Get a piece of data with the specified data ID by the location of a node.'''
 		client = self.clientclass(self.ID(), loc)
+		print 'client.pull'
 		cdata = client.pull(dataid)
+		print 'client.pull done'
 		return cdata
 
 	def researchByDataID(self, dataid):
@@ -231,7 +233,10 @@ class Node(leginonobject.LeginonObject):
 		# should interate over nodes, be crafty, etc.
 		datalocationdata = self.managerclient.pull(nodeiddata.content[-1])
 
-		return self.researchByLocation(datalocationdata.content, dataid)
+		print 'researchByLocation'
+		newdata = self.researchByLocation(datalocationdata.content, dataid)
+		print 'researchByLocation done'
+		return newdata
 
 	# methods for setting up the manager
 
