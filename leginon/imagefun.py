@@ -47,12 +47,17 @@ def toFloat(inputarray):
 	else:
 		return inputarray
 
-def stdev(inputarray):
+def stdev(inputarray, known_mean=None):
 	im = toFloat(inputarray)
 	f = Numeric.ravel(im)
-	inlen = len(f)
-	divisor = Numeric.array(inlen, Numeric.Float32)
-	m = Numeric.sum(f) / divisor
+
+	if known_mean is None:
+		inlen = len(f)
+		divisor = Numeric.array(inlen, Numeric.Float32)
+		m = Numeric.sum(f) / divisor
+	else:
+		m = known_mean
+
 	try:
 		bigsum = Numeric.sum((f - m)**2)
 	except OverflowError:
@@ -77,6 +82,14 @@ def min(inputarray):
 def max(inputarray):
 	f = Numeric.ravel(inputarray)
 	i = Numeric.argmax(f)
+	return float(f[i])
+
+def despike(inputarray, threshold):
+	mn = mean(inputarray)
+	st = stdev(inputarray, mn)
+	thresh = threshold * st
+	result = Numeric.clip(inputarray, mn-thresh, mn+thresh)
+	return result
 	return float(f[i])
 
 def sumSeries(series):
@@ -304,8 +317,7 @@ class Blob(object):
 	'''
 	a Blob instance represets a connected set of pixels
 	'''
-	#neighbor_deltas = Numeric.array(((-1,-1),(-1,0),(-1,1), (0,-1), (0,1), (1,-1), (1,0), (1,1)))
-	neighbor_deltas = Numeric.array(((-1,1), (0,1), (1,-1), (1,0), (1,1)))
+	neighbor_deltas = Numeric.array(((-1,-1),(-1,0),(-1,1), (0,-1), (0,1), (1,-1), (1,0), (1,1)))
 	#maxpoints = 2000
 	def __init__(self, image, mask):
 		self.image = image
