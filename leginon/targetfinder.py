@@ -171,7 +171,7 @@ class ClickTargetFinder(TargetFinder):
 	def getTargetDataList(self, typename, datatype):
 		for imagetarget in self.clickimage.getTargetType(typename):
 			column, row = imagetarget
-			# using self.currentiamge.shape could be bad
+			# using self.numarray.shape could be bad
 			target = {'delta row': row - self.numarray.shape[0]/2,
 								'delta column': column - self.numarray.shape[1]/2}
 			imageinfo = self.imageInfo()
