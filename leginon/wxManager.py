@@ -367,8 +367,7 @@ class ManagerPanel(wx.ScrolledWindow):
 		containerclass = uiclient.SimpleContainerWidget
 		containerclass = uiclient.ClientContainerFactory(containerclass)
 		self.container = containerclass('UI Client', self, self, location, {})
-		self.SetSizer(self.container)
-		self.Fit()
+		self.SetSizerAndFit(self.container)
 
 	def layout(self):
 		pass
@@ -513,7 +512,7 @@ class BindEventDialog(wx.Dialog):
 
 		self.dialogsizer = wx.GridBagSizer()
 
-		sizer = wx.GridBagSizer(5, 5)
+		sizer = wx.GridBagSizer(3, 3)
 
 		sizer.Add(
 				wx.StaticText(self, -1, 'Double click on an event to bind or unbind.'),
@@ -555,6 +554,9 @@ class BindEventDialog(wx.Dialog):
 										wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
 		buttonsizer.AddGrowableCol(0)
 		sizer.Add(buttonsizer, (6, 0), (1, 3), wx.EXPAND)
+
+		for lb in [self.boundeventlistbox, self.unboundeventlistbox]:
+			sizer.SetItemMinSize(lb, (-1, lb.GetSize()[1]/2))
 
 		self.dialogsizer.Add(sizer, (0, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 10)
 		self.SetSizerAndFit(self.dialogsizer)
