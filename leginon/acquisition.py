@@ -122,7 +122,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		If called with targetdata=None, this simulates what occurs at
 		a target (going to presets, acquiring images, etc.)
 		'''
-		if targetdata is None:
+		if targetdata is None or targetdata['type'] == 'simulated':
 			emtarget = None
 		else:
 			try:
@@ -138,7 +138,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		try:
 			presetnames = self.validatePresets()
 		except InvalidPresetsSequence:
-			if targetdata is None:
+			if targetdata is None or targetdata['type'] == 'simulated':
 				self.acquisitionlog.error('correct the invalid presets sequence, then try again')
 				return
 			else:
@@ -325,7 +325,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if imagedata is None:
 			return 'fail'
 
-
 		## convert CameraImageData to AcquisitionImageData
 		imagedata = data.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=target)
 
@@ -494,8 +493,56 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.acquire(p, target=None)
 		self.reportStatus('acquisition', 'Image acquired...')
 
-	def uiTrial(self):
-		self.processTargetData(targetdata=None)
+	def researchSimulatedTargets(self):
+		'''
+		Get a list of all targets in this session that are simulated
+		only want most recent versions of each
+		'''
+		targetquery = data.AcquisitionImageTargetData(session=self.session, type='simulated')
+		targets = self.research(datainstance=targetquery)
+
+		## now filter out only the latest versions
+		# map target number to latest version
+		# assuming query result is ordered by timestamp, this works
+		have = {}
+		for target in targets:
+			targetnum = target['number']
+			if targetnum not in have:
+				have[targetnum] = target
+		havelist = have.values()
+		havelist.sort(self.compareTargetNumber)
+		if havelist:
+			self.logger.info('Found %s simulated targets'
+												% (len(havelist),))
+		return havelist
+
+	def compareTargetNumber(self, first, second):
+		return cmp(first['number'], second['number'])
+
+	def lastSimulatedTargetNumber(self):
+		'''
+		Returns the number of the last target associated with the
+		grid.
+		'''
+		targets = self.researchSimulatedTargets()
+		maxnumber = 0
+		for target in targets:
+			if target['number'] > maxnumber:
+				maxnumber = target['number']
+		return maxnumber
+
+	def createSimulatedTarget(self):
+		lastnumber = self.lastSimulatedTargetNumber()
+		nextnumber = lastnumber + 1
+		newtarget = data.AcquisitionImageTargetData(type='simulated', version=0, number=nextnumber, status='new')
+		self.publish(newtarget, database=True)
+		return newtarget
+
+	def uiSimulateTarget(self):
+		targetdata = self.createSimulatedTarget()
+		## change to 'processing' just like targetwatcher does
+		proctargetdata = data.AcquisitionImageTargetData(initializer=targetdata, status='processing')
+		self.processTargetData(targetdata=proctargetdata)
 
 	def getPresetNames(self):
 		presetnames = self.presetsclient.getPresetNames()
@@ -573,9 +620,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.uicorrectimage = uidata.Boolean('Correct image', True, 'rw',
 																			persist=True)
 
-		self.waitfordone = uidata.Boolean('Wait for another node to process each published image', True, 'rw',
-																				persist=True)
-
+		self.waitfordone = uidata.Boolean('Wait for another node to process each published image', True, 'rw', persist=True)
 		acquirecontainer = uidata.Container('Acquisition')
 		acquirecontainer.addObject(self.uicorrectimage, position={'position':(0,0)})
 		acquirecontainer.addObject(self.displayimageflag, position={'position':(0,1)})
@@ -608,7 +653,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		settingscontainer.addObject(acquirecontainer, position={'expand': 'all'})
 		settingscontainer.addObject(databasecontainer, position={'expand': 'all'})
 
-		trialmethod = uidata.Method('Trial Image', self.uiTrial)
+		trialmethod = uidata.Method('Acquire Simulated Target', self.uiSimulateTarget)
 		self.waitingforimages = uidata.SingleSelectFromList('Waiting For', [], 0)
 		self.stopwaiting = uidata.Method('Stop Waiting', self.stopWaitingForImage)
 		self.stopwaiting.disable()
@@ -617,7 +662,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		controlcontainer.addObject(self.waitingforimages,
 																position={'position': (0, 0)})
 		controlcontainer.addObject(self.stopwaiting, position={'position': (0, 1)})
-		#controlcontainer.addObject(trialmethod)
+		controlcontainer.addObject(trialmethod, position={'position':(1,0)})
 
 		container = uidata.LargeContainer('Acquisition')
 		container.addObject(self.acquisitionlog, position={'position': (0, 0),
