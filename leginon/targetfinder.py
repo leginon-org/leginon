@@ -158,6 +158,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
 		self.confirmEvent(targetlistdoneevent)
 
 class ClickTargetFinder(TargetFinder):
+	targetnames = ['focus', 'acquisition']
 	panelclass = gui.wx.ClickTargetFinder.Panel
 	settingsclass = data.ClickTargetFinderSettingsData
 	defaultsettings = {
@@ -197,13 +198,14 @@ class ClickTargetFinder(TargetFinder):
 		self.userpause.wait()
 		self.setStatus('processing')
 		self.logger.info('User has submitted targets')
-		self.publishTargets(imdata, 'focus', targetlist)
-		self.publishTargets(imdata, 'acquisition', targetlist)
+		for i in self.targetnames:
+			self.publishTargets(imdata, i, targetlist)
 
 	def submitTargets(self):
 		self.userpause.set()
 
 class MosaicClickTargetFinder(ClickTargetFinder):
+	targetnames = ['acquisition']
 	panelclass = gui.wx.MosaicClickTargetFinder.Panel
 	settingsclass = data.MosaicClickTargetFinderSettingsData
 	defaultsettings = {
@@ -293,7 +295,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 	def submitTargets(self):
 		self.logger.info('Submitting targets')
 		self.getTargetDataList('acquisition')
-		self.getTargetDataList('focus')
+		#self.getTargetDataList('focus')
 		try:
 			self.publish(self.targetlist, pubevent=True)
 		except node.PublishError, e:
@@ -397,7 +399,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 					targets.append(vcoord)
 		self.setTargets(targets, 'acquisition')
 		# ...
-		self.setTargets([], 'focus')
+		#self.setTargets([], 'focus')
 		self.setTargets(donetargets, 'done')
 		self.updateCurrentPosition()
 		self.setTargets(self.currentposition, 'position')
