@@ -66,16 +66,31 @@ class MosaicTargetMaker(TargetMaker):
 		self.addEventInput(event.MakeTargetListEvent, self._makeAtlas)
 		self.presetsclient = presets.PresetsClient(self)
 
+		self.publishargs = None
 		self.start()
 
-	def makeAtlas(self):
+	def calculateAtlas(self):
+		self.publishargs = None
 		try:
-			self._makeAtlas()
+			self.publishargs = self._calculateAtlas()
+			if self.publishargs:
+				self.logger.info('Press \'Publish Atlas\' to continue')
 		except AtlasError, e:
 			self.logger.exception('Atlas creation failed: %s' % e)
 		except Exception, e:
 			self.logger.exception('Atlas creation failed: %s' % e)
-		self.panel.atlasCreated()
+		self.panel.atlasCalculated()
+
+	def publishAtlas(self):
+		try:
+			if not self.publishargs:
+				raise AtlasError('no targets calculated')
+			self._publishAtlas(*self.publishargs)
+		except AtlasError, e:
+			self.logger.exception('Atlas creation failed: %s' % e)
+		except Exception, e:
+			self.logger.exception('Atlas creation failed: %s' % e)
+		self.panel.atlasPublished()
 
 	def validateSettings(self):
 		radius = self.settings['radius']
@@ -163,7 +178,11 @@ class MosaicTargetMaker(TargetMaker):
 		self.logger.debug('Target list created')
 		return targetlist, grid
 
-	def _makeAtlas(self, evt=None):
+	def _makeAtlas(self, evt):
+		publishargs = self._calculateAtlas()
+		self._publishAtlas(publishargs, evt=evt)
+
+	def _calculateAtlas(self):
 		self.logger.info('Creating atlas targets...')
 		radius, overlap = self.validateSettings()
 		scope, camera = self.getState()
@@ -172,7 +191,10 @@ class MosaicTargetMaker(TargetMaker):
 		self.updateState(preset, scope, camera)
 		pixelsize = self.getPixelSize(scope)
 		binning, imagesize = self.getCameraParameters(camera)
+		targets = self.makeCircle(radius, overlap, pixelsize, binning, imagesize)
+		return targets, scope, camera, preset
 
+	def _publishAtlas(self, targets, scope, camera, preset, evt=None):
 		targetlist, grid = self.getTargetList(evt)
 
 		# publish to DB so new targets get right reference
@@ -181,10 +203,9 @@ class MosaicTargetMaker(TargetMaker):
 		except node.PublishError:
 			raise AtlasError('unable to publish atlas targets')
 
-		deltas = self.makeCircle(radius, pixelsize, binning, imagesize, overlap)
-		for delta in deltas:
+		for target in targets:
 			targetdata = self.newTargetForGrid(grid,
-																					delta[0], delta[1],
+																					target[0], target[1],
 																					scope=scope, camera=camera,
 																					preset=preset,
 																					list=targetlist,
@@ -195,7 +216,7 @@ class MosaicTargetMaker(TargetMaker):
 		self.publish(targetlist, pubevent=True)
 		self.logger.info('Atlas targets published')
 
-	def makeCircle(self, radius, pixelsize, binning, imagesize, overlap=0.0):
+	def makeCircle(self, radius, overlap, pixelsize, binning, imagesize):
 		maxtargets = self.settings['max targets']
 		maxsize = self.settings['max size']
 
@@ -236,7 +257,11 @@ class MosaicTargetMaker(TargetMaker):
 					targets.append((x, -y))
 			sign = -sign
 
-		self.logger.info('Creating atlas with a radius of %d pixels, from %d target(s)' % (pixelradius, len(targets)))
+		txs, tys = zip(*targets)
+		xsize = max(txs) - min(txs) + imagesize
+		ysize = max(tys) - min(tys) + imagesize
+
+		self.logger.info('Calculated atlas with size %dx%d pixels, from %d target(s)' % (xsize, ysize, len(targets)))
 
 		return targets
 

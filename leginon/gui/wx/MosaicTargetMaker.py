@@ -16,9 +16,13 @@ class Panel(gui.wx.Node.Panel):
 													'settings',
 													shortHelpString='Settings')
 		self.toolbar.AddSeparator()
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_CALCULATE,
+													'calculate',
+													shortHelpString='Calculate Atlas')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY,
 													'play',
-													shortHelpString='Create Atlas')
+													shortHelpString='Publish Atlas')
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
 
 		self.szmain.AddGrowableCol(0)
 
@@ -26,12 +30,15 @@ class Panel(gui.wx.Node.Panel):
 		self.SetAutoLayout(True)
 		self.SetupScrolling()
 
-		self.Bind(gui.wx.Events.EVT_ATLAS_CREATED, self.onAtlasCreated)
+		self.Bind(gui.wx.Events.EVT_ATLAS_CALCULATED, self.onAtlasCalculated)
+		self.Bind(gui.wx.Events.EVT_ATLAS_PUBLISHED, self.onAtlasPublished)
 
 	def onNodeInitialized(self):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
 											id=gui.wx.ToolBar.ID_SETTINGS)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onCreateAtlas,
+		self.toolbar.Bind(wx.EVT_TOOL, self.onCalculateAtlasTool,
+											id=gui.wx.ToolBar.ID_CALCULATE)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onPublishAtlasTool,
 											id=gui.wx.ToolBar.ID_PLAY)
 
 	def onSettingsTool(self, evt):
@@ -39,15 +46,30 @@ class Panel(gui.wx.Node.Panel):
 		dialog.ShowModal()
 		dialog.Destroy()
 
-	def onAtlasCreated(self, evt):
+	def onAtlasCalculated(self, evt):
+		self.toolbar.Enable(True)
+		if self.node.publishargs:
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
+		else:
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
+
+	def onAtlasPublished(self, evt):
 		self.toolbar.Enable(True)
 
-	def onCreateAtlas(self, evt):
+	def onCalculateAtlasTool(self, evt):
 		self.toolbar.Enable(False)
-		threading.Thread(target=self.node.makeAtlas).start()
+		threading.Thread(target=self.node.calculateAtlas).start()
 
-	def atlasCreated(self):
-		evt = gui.wx.Events.AtlasCreatedEvent()
+	def onPublishAtlasTool(self, evt):
+		self.toolbar.Enable(False)
+		threading.Thread(target=self.node.publishAtlas).start()
+
+	def atlasCalculated(self):
+		evt = gui.wx.Events.AtlasCalculatedEvent()
+		self.GetEventHandler().AddPendingEvent(evt)
+
+	def atlasPublished(self):
+		evt = gui.wx.Events.AtlasPublishedEvent()
 		self.GetEventHandler().AddPendingEvent(evt)
 
 class SettingsDialog(gui.wx.Settings.Dialog):
