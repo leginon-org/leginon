@@ -245,10 +245,39 @@ class ImageMosaic(watcher.Watcher):
 class StateImageMosaic(ImageMosaic):
 	def __init__(self, id, nodelocations,
 								watchfor = event.StateImageTilePublishEvent):
+		self.calibration = None
+		self.methods = ['calibration', 'correlation']
+		self.method = self.methods[0]
 		ImageMosaic.__init__(self, id, nodelocations, watchfor)
+		self.addEventInput(event.CalibrationPublishEvent, self.setCalibration)
+
+	def setCalibration(self, ievent):
+		idata = self.researchByDataID(ievent.content)
+		self.calibration = idata.content
+
+	def setProcessingMethod(self, processingmethod):
+		if method in self.methods:
+			self.method = method
+		else:
+			raise ValueError
+
 	def processData(self, idata):
-		ImageMosaic.processData(self, idata)
+		if self.method = 'correlation':
+			self.processDataByCorrelation(idata)
+		elif self.method = 'calibration':
+			self.processDataByCalibration(idata)
 		self.imagemosaic[idata.id]['state'] = idata.content['state']
+
+	def processDataByCalibration(self, idata):
+		if self.calibration is None:
+			self.printerror(
+				'unable to process data %s by calibration, no calibration available'
+					% str(idata.id))
+			return
+		idata.content['state']
+
+	def processDataByCorrelation(self, idata):
+		ImageMosaic.processData(self, idata)
 
 	def uiPublishMosaicImage(self):
 		ImageMosaic.uiPublishMosaicImage(self)
