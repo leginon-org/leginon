@@ -87,7 +87,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## default preset?  would have to rely on presetsmanager
 
 		for presetname in presetnames:
-			presetdata = self.presetsclient.retrievePreset(presetname)
+			presetlist = self.presetsclient.retrievePresets(presetname)
+			presetdata = presetlist[0]
 			### simulated target is easy, real target requires
 			### merge with preset
 			if newtargetemdata is None:
