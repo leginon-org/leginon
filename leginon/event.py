@@ -139,6 +139,9 @@ class DarkImagePublishEvent(CorrectionImagePublishEvent):
 class BrightImagePublishEvent(CorrectionImagePublishEvent):
 	pass
 
+class NormImagePublishEvent(CorrectionImagePublishEvent):
+	pass
+
 class CorrelationImagePublishEvent(ImagePublishEvent):
 	pass
 
