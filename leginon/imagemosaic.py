@@ -165,12 +165,12 @@ class ImageMosaic(watcher.Watcher):
 			position = self.positionmethods[self.positionmethod](idata, None)
 			imagemosaic.addTile(idata.id, tileimage, position)
 			self.imagemosaics.append(imagemosaic)
-			print idata.id, "position =", imagemosaic.getTilePosition(idata.id)
+#			print idata.id, "position =", imagemosaic.getTilePosition(idata.id)
 		else:
 			for imagemosaic in mosaics:
 				position = self.positionmethods[self.positionmethod](idata, imagemosaic)
 				imagemosaic.addTile(idata.id, tileimage, position)
-				print idata.id, "position =", imagemosaic.getTilePosition(idata.id)
+#				print idata.id, "position =", imagemosaic.getTilePosition(idata.id)
 
 	def automaticPosition(self, idata, imagemosaic):
 		for positionmethod in self.automaticpriority:
@@ -472,13 +472,13 @@ class StateImageMosaic(ImageMosaic):
 			position = self.positionmethods[self.positionmethod](idata, None)
 			imagemosaic.addTile(idata.id, tileimage, position, tilescope, tilecamera)
 			self.imagemosaics.append(imagemosaic)
-			print idata.id, "position =", imagemosaic.getTilePosition(idata.id)
+#			print idata.id, "position =", imagemosaic.getTilePosition(idata.id)
 		else:
 			for imagemosaic in mosaics:
 				position = self.positionmethods[self.positionmethod](idata, imagemosaic)
 				imagemosaic.addTile(idata.id, tileimage, position,
 																									tilescope, tilecamera)
-				print idata.id, "position =", imagemosaic.getTilePosition(idata.id)
+#				print idata.id, "position =", imagemosaic.getTilePosition(idata.id)
 
 	def positionByCalibration(self, idata, imagemosaic,
 																					parameter='stage position'):
@@ -496,13 +496,16 @@ class StateImageMosaic(ImageMosaic):
 
 		if len(self.imagemosaics) == 0:
 			return ''
-		odata = data.MosaicImageData(self.ID(),
-							self.imagemosaics[-1].getMosaicImage(), scope=None, camera=None)
-		self.publish(odata, event.MosaicImagePublishEvent)
 
-		statedata = {'image data ID': self.imagemosaics[-1].getTileStates()}
-		self.publish(data.StateMosaicData(self.ID(), statedata),
-																			event.StateMosaicPublishEvent)
+		mosaicimagedata = data.MosaicImageData(self.ID(),
+							self.imagemosaics[-1].getMosaicImage(), scope=None, camera=None)
+		statemosaicdata = data.StateMosaicData(self.ID(),
+									{mosaicimagedata.id: self.imagemosaics[-1].getTileStates()})
+		import time
+		self.publish(statemosaicdata, event.StateMosaicPublishEvent)
+		time.sleep(5.0)
+		self.publish(mosaicimagedata, event.MosaicImagePublishEvent)
+		time.sleep(5.0)
 
 		return ''
 

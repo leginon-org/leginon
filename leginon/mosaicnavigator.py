@@ -21,8 +21,8 @@ class MosaicNavigator(navigator.Navigator):
 		imagedataid = clickevent.content['image id']
 		try:
 			mosaicdata = self.statemosaic[imagedataid]
-		except:
-			self.printerror('unknown image data ID for navigation')
+		except KeyError:
+			self.printerror('unknown data ID for navigation, %s' % str(imagedataid))
 			return
 
 		row = clickevent.content['array row']
@@ -59,5 +59,5 @@ class MosaicNavigator(navigator.Navigator):
 		time.sleep(self.delaydata.get())
 
 		# hmm?
-		self.acquireImage()
+#		self.acquireImage()
 

@@ -475,7 +475,7 @@ class ImageData(Data):
 		return self.iv
 
 	def setWidget(self, value):
-		print 'setWidget'
+#		print 'setWidget'
 		# value must be binary data from xmlrpc
 		if not isinstance(value, xmlbinlib.Binary):
 			raise RuntimeError('value must be instance of Binary')
@@ -492,10 +492,10 @@ class ImageData(Data):
 			t = Timer('converting mrcstr to numeric')
 			numdata = Mrc.mrcstr_to_numeric(mrcstr)
 			t.stop()
-			print 'DISPLAYING', numdata.typecode()
-			print 'import numeric'
+#			print 'DISPLAYING', numdata.typecode()
+#			print 'import numeric'
 			self.iv.import_numeric(numdata)
-			print 'done'
+#			print 'done'
 		
 
 	def getWidget(self):
@@ -558,7 +558,7 @@ class Method(SpecWidget):
 			newvalue = argwidget.getWidget()
 			args.append(newvalue)
 		args = tuple(args)
-		print 'executing %s' % (self.id,)
+#		print 'executing %s' % (self.id,)
 		ret = self.uiclient.execute(self.id, args)
 		if ret is not None:
 			t = Timer('process return')

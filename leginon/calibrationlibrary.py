@@ -11,13 +11,13 @@ class DataHandler(datahandler.DataBinder):
 		self.calnode = calnode
 
 	def query(self, id):
-		print 'query ID', id
+#		print 'query ID', id
 		if type(id) is str:
 			key = None
 		else:
 			key = id[1]
 		cal = self.calnode.getCalibration(key)
-		print 'CAL', cal
+#		print 'CAL', cal
 		result = data.CalibrationData(self.ID(), cal)
 		return result
 

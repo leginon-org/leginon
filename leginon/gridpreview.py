@@ -26,10 +26,10 @@ class GridPreview(node.Node):
 		currentconfig['state']['binning']['x'] = 2
 		currentconfig['state']['exposure time'] = 400
 
-#		currentconfig['state']['binning']['x'] = 1
-#		currentconfig['state']['offset']['x'] = 0
-#		currentconfig['state']['offset']['y'] = 0
-#		currentconfig['auto offset'] = 0
+		currentconfig['state']['binning']['x'] = 1
+		currentconfig['state']['offset']['x'] = 0
+		currentconfig['state']['offset']['y'] = 0
+		currentconfig['auto offset'] = 0
 
 		self.cam.config(currentconfig)
 
@@ -71,7 +71,7 @@ class GridPreview(node.Node):
 				#gonx = center['x'] + point[0] * spacing
 				#gony = center['y'] + point[1] * spacing
 				#self.todo.append( (gonx,gony) )
-			print 'TODO', self.todo
+#			print 'TODO', self.todo
 			self.resetLoop()
 		return self.prefs
 
@@ -85,9 +85,9 @@ class GridPreview(node.Node):
 		return self.researchByDataID('scope').content
 
 	def acquireTarget(self, target):
-		print 'TARGET', target
+#		print 'TARGET', target
 		if self.sim.get():
-			print 'SIMULATED'
+#			print 'SIMULATED'
 			time.sleep(1)
 		else:
 
@@ -96,21 +96,21 @@ class GridPreview(node.Node):
 				center = self.prefs['center']
 				gonpos = {'stage position': {'x':center['x'], 'y':center['y']}}
 				emdata = data.EMData('scope', gonpos)
-				print 'moving to center', center
+#				print 'moving to center', center
 				self.publishRemote(emdata)
 			else:
 				# move to next postion
 				camconfig = self.cam.config()
 				camstate = camconfig['state']
-				print 'camstate', camstate
+#				print 'camstate', camstate
 				scopestate = self.getScope()
 
 				targetrow, targetcol = target
-				print 'targetrow', targetrow
+#				print 'targetrow', targetrow
 				pixelshift = {'row':targetrow, 'col':targetcol}
 				newstate = self.calclient.transform(pixelshift, scopestate, camstate)
 				emdat = data.EMData('scope', newstate)
-				print 'moving to next position'
+#				print 'moving to next position'
 				self.publishRemote(emdat)
 
 			## this should be calibrated
@@ -118,7 +118,7 @@ class GridPreview(node.Node):
 
 			stagepos = self.researchByDataID('stage position')
 			stagepos = stagepos.content
-			print 'gridpreview stagepos', stagepos
+#			print 'gridpreview stagepos', stagepos
 
 			imagedata = self.cam.acquireCameraImageData(camstate=None, correction=1)
 			imarray = imagedata.content['image']
@@ -136,7 +136,7 @@ class GridPreview(node.Node):
 			scope = imagedata.content['scope']
 			camera = imagedata.content['camera']
 			imdata = data.TileImageData(thisid, imarray, scope, camera, neighbortiles)
-			print 'publishing tile'
+#			print 'publishing tile'
 			self.publish(imdata, event.TileImagePublishEvent)
 
 			self.lastid = thisid
@@ -175,8 +175,8 @@ class GridPreview(node.Node):
 		### update target lists
 		self.done.append(target)
 		self.temptodo = self.temptodo[1:]
-		print 'done', self.done
-		print 'temptodo', self.temptodo
+#		print 'done', self.done
+#		print 'temptodo', self.temptodo
 
 	def stopLoop(self):
 		self.stoprunning.set()
@@ -184,7 +184,7 @@ class GridPreview(node.Node):
 
 	def runLoop(self):
 		if self.running.isSet():
-			print 'ALREADY RUNNING'
+			self.printerror('loop is already running')
 			return ''
 		t = threading.Thread(target=self._loop)
 		t.setDaemon(1)
@@ -193,7 +193,7 @@ class GridPreview(node.Node):
 
 	def resetLoop(self):
 		if self.running.isSet():
-			print 'cannot reset while loop is running'
+			self.printerror('cannot reset while loop is running')
 		else:
 			self.temptodo = list(self.todo)
 			self.lastid = None

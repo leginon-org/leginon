@@ -15,7 +15,9 @@ class Wizard(Tkinter.Toplevel):
 		Tkinter.Toplevel.__init__(self, parent)
 		if title is not None:
 			self.title(title)
+
 		buttonframe = Tkinter.Frame(self)
+
 		self.backbutton = Tkinter.Button(buttonframe, text='< Back')
 		self.backbutton.grid(row=0, column=0, padx=5, pady=5)
 		self.backbutton['state'] = Tkinter.DISABLED

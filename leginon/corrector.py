@@ -255,13 +255,13 @@ class Corrector(node.Node):
 		this puts an image through a pipeline of corrections
 		'''
 		key = self.newPlan(camstate)
-		print 'normalize'
+#		print 'normalize'
 		normalized = self.normalize(original, key)
-		print 'touchup'
+#		print 'touchup'
 		touchedup = self.removeBadPixels(normalized, key)
-		print 'clip'
+#		print 'clip'
 		clipped = self.clip(touchedup, key)
-		print 'done'
+#		print 'done'
 		return clipped
 
 	def removeBadPixels(self, image, key):
