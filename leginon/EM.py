@@ -601,6 +601,8 @@ class EM(node.Node):
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
 
+		# status
+
 		self.progresslabel = uidata.String('State', '', 'r')
 		self.progress = uidata.Progress('', 0)
 		self.externalstatusupdate = uidata.Boolean(
@@ -617,78 +619,52 @@ class EM(node.Node):
 		uistatuscontainer.addObject(self.uiprogresslabel)
 		uistatuscontainer.addObject(self.uiprogress)
 
+		# scope
+
 		self.uiscopedict = {}
-		self.uiscopedict['magnification'] = uidata.Float('Magnification', 0.0, 'rw')
-		self.uiscopedict['intensity'] = uidata.Float('Intensity', 0.0, 'rw')
-		self.uiscopedict['defocus'] = uidata.Float('Defocus', 0.0, 'rw')
-		self.uiscopedict['spot size'] = uidata.Integer('Spot Size', 0, 'rw')
-		self.uiscopedict['screen position'] = uidata.String('Main Screen', '', 'r')
+		scopeparameterscontainer = uidata.Container('Parameters')
+
+		parameters = [('magnification', 'Magnification', uidata.Float, 'rw'),
+									('intensity', 'Intensity', uidata.Float, 'rw'),
+									('defocus', 'Defocus', uidata.Float, 'rw'),
+									('spot size', 'Spot Size', uidata.Integer, 'rw'),
+									('screen position', 'Main Screen', uidata.String, 'r')]
+
+		for key, name, datatype, permissions in parameters:
+			self.uiscopedict[key] = datatype(name, '', permissions)
+			scopeparameterscontainer.addObject(self.uiscopedict[key])
 
 		togglemainscreen = uidata.Method('Toggle Main Screen',
 																			self.uiToggleMainScreen)
 		resetdefocus = uidata.Method('Reset Defocus', self.uiResetDefocus)
+		scopeparameterscontainer.addObject(togglemainscreen)
+		scopeparameterscontainer.addObject(resetdefocus)
 
-		self.uiscopedict['stage position'] = {}
-		self.uiscopedict['stage position']['x'] = uidata.Float('x', 0.0, 'rw')
-		self.uiscopedict['stage position']['y'] = uidata.Float('y', 0.0, 'rw')
-		self.uiscopedict['stage position']['z'] = uidata.Float('z', 0.0, 'rw')
-		self.uiscopedict['stage position']['a'] = uidata.Float('a', 0.0, 'rw')
-#		self.uiscopedict['stage position']['b'] = uidata.Float('b', 0.0, 'rw')
-		stagepositioncontainer = uidata.Container('Stage Position')
-		stagepositioncontainer.addObjects((self.uiscopedict['stage position']['x'],
-																			self.uiscopedict['stage position']['y'],
-																			self.uiscopedict['stage position']['z'],
-																			self.uiscopedict['stage position']['a']))
-#																			self.uiscopedict['stage position']['b']))
-
-		self.uiscopedict['image shift'] = {}
-		self.uiscopedict['image shift']['x'] = uidata.Float('x', 0.0, 'rw')
-		self.uiscopedict['image shift']['y'] = uidata.Float('y', 0.0, 'rw')
-		imageshiftcontainer = uidata.Container('Image Shift')
-		imageshiftcontainer.addObjects((self.uiscopedict['image shift']['x'],
-																		self.uiscopedict['image shift']['y']))
-
-		self.uiscopedict['beam tilt'] = {}
-		self.uiscopedict['beam tilt']['x'] = uidata.Float('x', 0.0, 'rw')
-		self.uiscopedict['beam tilt']['y'] = uidata.Float('y', 0.0, 'rw')
-		beamtiltcontainer = uidata.Container('Beam Tilt')
-		beamtiltcontainer.addObjects((self.uiscopedict['beam tilt']['x'],
-																		self.uiscopedict['beam tilt']['y']))
-
-		self.uiscopedict['beam shift'] = {}
-		self.uiscopedict['beam shift']['x'] = uidata.Float('x', 0.0, 'rw')
-		self.uiscopedict['beam shift']['y'] = uidata.Float('y', 0.0, 'rw')
-		beamshiftcontainer = uidata.Container('Beam Shift')
-		beamshiftcontainer.addObjects((self.uiscopedict['beam shift']['x'],
-																		self.uiscopedict['beam shift']['y']))
+		pairs = [('stage position', 'Stage Position',
+								['x', 'y', 'z', 'a'], uidata.Float),
+							('image shift', 'Image Shift', ['x', 'y'], uidata.Float),
+							('beam tilt', 'Beam Tilt', ['x', 'y'], uidata.Float),
+							('beam shift', 'Beam Shift', ['x', 'y'], uidata.Float)]
+		for key, name, axes, datatype in pairs:
+			self.uiscopedict[key] = {}
+			container = uidata.Container(name)
+			for axis in axes:
+				self.uiscopedict[key][axis] = datatype(axis, 0.0, 'rw')
+				container.addObject(self.uiscopedict[key][axis])
+			scopeparameterscontainer.addObject(container)
 
 		self.uiscopedict['stigmator'] = {}
-		self.uiscopedict['stigmator']['condenser'] = {}
-		self.uiscopedict['stigmator']['objective'] = {}
-		self.uiscopedict['stigmator']['diffraction'] = {}
 		stigmatorcontainer = uidata.Container('Stigmators')
 		pairs = [('condenser', 'Condenser'), ('objective', 'Objective'),
 							('diffraction', 'Diffraction')]
 		for key, name in pairs:
-			self.uiscopedict['stigmator'][key]['x'] = uidata.Float('x', 0.0, 'rw')
-			self.uiscopedict['stigmator'][key]['y'] = uidata.Float('y', 0.0, 'rw')
+			self.uiscopedict['stigmator'][key] = {}
 			container = uidata.Container(name)
-			container.addObject(self.uiscopedict['stigmator'][key]['x'])
-			container.addObject(self.uiscopedict['stigmator'][key]['y'])
+			for axis in ['x', 'y']:
+				self.uiscopedict['stigmator'][key][axis] = uidata.Float(axis, 0.0, 'rw')
+				container.addObject(self.uiscopedict['stigmator'][key][axis])
 			stigmatorcontainer.addObject(container)
 
-		scopeparameterscontainer = uidata.Container('Parameters')
-
-		for item in self.uiscopedict.values():
-			if isinstance(item, uidata.Object):
-				scopeparameterscontainer.addObject(item)
-
-		scopeparameterscontainer.addObject(togglemainscreen)
-		scopeparameterscontainer.addObject(resetdefocus)
-		scopeparameterscontainer.addObject(stagepositioncontainer)
-		scopeparameterscontainer.addObject(imageshiftcontainer)
-		scopeparameterscontainer.addObject(beamtiltcontainer)
-		scopeparameterscontainer.addObject(beamshiftcontainer)
 		scopeparameterscontainer.addObject(stigmatorcontainer)
 
 		self.scopecontainer = uidata.MediumContainer('Microscope')
@@ -699,49 +675,34 @@ class EM(node.Node):
 		self.scopecontainer.addObject(refreshscope)
 		self.scopecontainer.addObject(setscope)
 
+		# camera
+
 		self.uicameradict = {}
-		self.uicameradict['exposure time'] = uidata.Integer('Exposure Time',0,'rw')
-
-		self.uicameradict['dimension'] = {}
-		self.uicameradict['dimension']['x'] = uidata.Integer('x', 0, 'rw')
-		self.uicameradict['dimension']['y'] = uidata.Integer('y', 0, 'rw')
-		dimensioncontainer = uidata.Container('Dimension')
-		dimensioncontainer.addObjects((self.uicameradict['dimension']['x'],
-																		self.uicameradict['dimension']['y']))
-
-		self.uicameradict['offset'] = {}
-		self.uicameradict['offset']['x'] = uidata.Integer('x', 0, 'rw')
-		self.uicameradict['offset']['y'] = uidata.Integer('y', 0, 'rw')
-		offsetcontainer = uidata.Container('Offset')
-		offsetcontainer.addObjects((self.uicameradict['offset']['x'],
-																self.uicameradict['offset']['y']))
-
-		self.uicameradict['binning'] = {}
-		self.uicameradict['binning']['x'] = uidata.Integer('x', 0, 'rw')
-		self.uicameradict['binning']['y'] = uidata.Integer('y', 0, 'rw')
-		binningcontainer = uidata.Container('Binning')
-		binningcontainer.addObjects((self.uicameradict['binning']['x'],
-																	self.uicameradict['binning']['y']))
-
 		cameraparameterscontainer = uidata.Container('Parameters')
 
-		for item in self.uicameradict.values():
-			if isinstance(item, uidata.Object):
-				cameraparameterscontainer.addObject(item)
+		parameters = [('exposure time', 'Exposure time', uidata.Integer, 'rw')]
 
-		cameraparameterscontainer.addObject(dimensioncontainer)
-		cameraparameterscontainer.addObject(offsetcontainer)
-		cameraparameterscontainer.addObject(binningcontainer)
+		for key, name, datatype, permissions in parameters:
+			self.uicameradict[key] = datatype(name, 0, permissions)
+			cameraparameterscontainer.addObject(self.uicameradict[key])
+
+		pairs = [('dimension', 'Dimension', ['x', 'y'], uidata.Integer),
+							('offset', 'Offset', ['x', 'y'], uidata.Integer),
+							('binning', 'Binning', ['x', 'y'], uidata.Integer)]
+
+		for key, name, axes, datatype in pairs:
+			self.uicameradict[key] = {}
+			container = uidata.Container(name)
+			for axis in axes:
+				self.uicameradict[key][axis] = datatype(axis, 0, 'rw')
+				container.addObject(self.uicameradict[key][axis])
+			cameraparameterscontainer.addObject(container)
 
 		self.cameracontainer = uidata.MediumContainer('Camera')
 		self.cameracontainer.addObject(cameraparameterscontainer)
 
 		setcamera = uidata.Method('Set', self.uiSetCamera)
 		self.cameracontainer.addObject(setcamera)
-
-#		self.statelock.acquire()
-#		self.uiUpdate()
-#		self.statelock.release()
 
 		container = uidata.MediumContainer('EM')
 		container.addObject(statuscontainer)
