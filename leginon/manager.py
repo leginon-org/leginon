@@ -801,7 +801,7 @@ class ManagerSetup(object):
 			return self.getSession(session_name)
 
 	def getSession(self, session_name):
-		initializer = {'name': session_name, 'user': self.uiGetUser(), 'instrument': self.uiGetInstrument(), 'image path': self.image_path.get()}
+		initializer = {'name': session_name, 'comment': self.session_comment.get(), 'user': self.uiGetUser(), 'instrument': self.uiGetInstrument(), 'image path': self.image_path.get()}
 		return data.SessionData(initializer=initializer)
 
 	def initInstruments(self):
@@ -979,6 +979,8 @@ class ManagerSetup(object):
 		session_name = time.strftime('%Y-%m-%d')
 		self.session_name = uidata.String('Session Name', session_name, 'rw', persist=True)
 		self.container.addObject(self.session_name)
+		self.session_comment = uidata.String('Session Comment', '', 'rw', persist=True)
+		self.container.addObject(self.session_comment)
 		## default path comes from leginonconfig
 		image_path = os.path.join(leginonconfig.IMAGE_PATH,session_name)
 		self.image_path = uidata.String('Image Path', image_path, 'rw', persist=True)
