@@ -6,8 +6,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-#import cPickle as pickle
-import pickle
+import cPickle as pickle
 import data
 import socket
 import SocketServer
