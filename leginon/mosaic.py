@@ -408,8 +408,8 @@ class EMMosaic(object):
 
 		## position of corner and center
 		for tile in self.tiles:
-			corner_pos = mosaic_center[0]+tile.corner_vect[0], mosaic_center[1]+tile.corner_vect[1]
-			center_pos = mosaic_center[0]+tile.center_vect[0], mosaic_center[1]+tile.center_vect[1]
+			corner_pos = tile.corner_vect[0]-mosaic0[0], tile.corner_vect[1]-mosaic0[1]
+			center_pos = tile.center_vect[0]-mosaic0[0], tile.center_vect[1]-mosaic0[1]
 			tile.corner_pos = corner_pos
 			tile.center_pos = center_pos
 
