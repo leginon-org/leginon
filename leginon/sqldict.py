@@ -149,6 +149,7 @@ import MySQLdb.cursors
 import cPickle
 from types import *
 import data
+import strictdict
 
 class SQLDict:
 
@@ -953,12 +954,13 @@ def sqlColumnsDefinition(in_dict, noDefault=None):
 		sqlt = sqltype(value,key)
 		if value is None:
 			in_dict_types=dict(in_dict.typemap())
-			if isinstance(in_dict_types[key](), data.Data) and not isinstance(in_dict_types[key](), data.DataReference):
-				newvalue = in_dict_types[key]()
-				column['Field'] = sep.join(['REF',newvalue.__class__.__name__,key])
-				column['Type'] = 'INT(20)'
-				columns.append(column)
-			
+ 			if not isinstance(in_dict_types[key], strictdict._NumericArrayType):
+				if issubclass(in_dict_types[key], data.Data) and not issubclass(in_dict_types[key], data.DataReference):
+					newvalue = in_dict_types[key]()
+					column['Field'] = sep.join(['REF',newvalue.__class__.__name__,key])
+					column['Type'] = 'INT(20)'
+					columns.append(column)
+				
 		elif sqlt is not None:
 			column['Field']=key
 			column['Type']=sqlt
