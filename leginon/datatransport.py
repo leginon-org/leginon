@@ -20,6 +20,7 @@ class Client(Base):
 #		for t in self.transportmodules:
 #			self.clients[t] = apply(t.Client, (location,))
 
+		# will make manager sort this out soon
 		try:
 			if location['hostname'] == self.location()['hostname']:
 				#if location['PID'] == self.location()['PID']:
@@ -32,13 +33,13 @@ class Client(Base):
 	def pull(self, id):
 		try:
 			return self.clients[localtransport].pull(id)
-		except KeyError:
+		except KeyError, IOError:
 			return self.clients[tcptransport].pull(id)
 
 	def push(self, idata):
 		try:
 			self.clients[localtransport].push(idata)
-		except KeyError:
+		except KeyError, IOError:
 			self.clients[tcptransport].push(idata)
 
 class Server(Base):
