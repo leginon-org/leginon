@@ -33,6 +33,243 @@ class SetCalibrationsEvent(wx.PyCommandEvent):
 		self.SetEventObject(source)
 		self.times = times
 
+class Calibrations(wx.StaticBoxSizer):
+	def __init__(self, parent):
+		sb = wx.StaticBox(parent, -1, 'Calibrations')
+		wx.StaticBoxSizer.__init__(self, sb, wx.VERTICAL)
+
+		self.order = [
+			('pixel size', 'Pixel size'),
+			('image shift', 'Image shift'),
+			('stage', 'Stage'),
+			('beam', 'Beam shift'),
+			('modeled stage', 'Modeled stage'),
+			('modeled stage mag only', 'Modeled stage (mag. only)'),
+		]
+
+		self.sts = {}
+		sz = wx.GridBagSizer(0, 5)
+		for i, (name, label) in enumerate(self.order):
+			stlabel = wx.StaticText(parent, -1, label)
+			self.sts[name] = wx.StaticText(parent, -1, '')
+			sz.Add(stlabel, (i, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+			sz.Add(self.sts[name], (i, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.AddGrowableCol(0)
+		self.Add(sz, 1, wx.EXPAND|wx.ALL, 3)
+
+	def set(self, times):
+		for name, label in self.order:
+			try:
+				self.sts[name].SetLabel(times[name])
+			except (TypeError, KeyError):
+				self.sts[name].SetLabel('None')
+		self.Layout()
+
+class Parameters(wx.Panel):
+	def __init__(self, parent):
+		wx.Panel.__init__(self, parent, -1)
+
+		stmag = wx.StaticText(self, -1, 'Magnification')
+		stdefocus = wx.StaticText(self, -1, 'Defocus')
+		stspotsize = wx.StaticText(self, -1, 'Spot size')
+		stintensity = wx.StaticText(self, -1, 'Intensity')
+		stx = wx.StaticText(self, -1, 'x')
+		sty = wx.StaticText(self, -1, 'y')
+		stimageshift = wx.StaticText(self, -1, 'Image shift')
+		stbeamshift = wx.StaticText(self, -1, 'Beam shift')
+		stdose = wx.StaticText(self, -1, 'Dose:')
+
+		self.femag = FloatEntry(self, -1, chars=9)
+		self.fedefocus = FloatEntry(self, -1, chars=9)
+		self.fespotsize = FloatEntry(self, -1, chars=2)
+		self.feintensity = FloatEntry(self, -1, chars=9)
+		self.feimageshiftx = FloatEntry(self, -1, chars=9)
+		self.feimageshifty = FloatEntry(self, -1, chars=9)
+		self.febeamshiftx = FloatEntry(self, -1, chars=9)
+		self.febeamshifty = FloatEntry(self, -1, chars=9)
+		self.cbfilm = wx.CheckBox(self, -1, 'Film')
+		self.stdose = wx.StaticText(self, -1, '')
+		self.cpcamconfig = gui.wx.Camera.CameraPanel(self)
+
+		sz = wx.GridBagSizer(5, 5)
+		sz.Add(stmag, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.femag, (0, 1), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		sz.Add(stdefocus, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.fedefocus, (1, 1), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		sz.Add(stspotsize, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.fespotsize, (2, 1), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		sz.Add(stintensity, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.feintensity, (3, 1), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		sz.Add(stx, (4, 1), (1, 1), wx.ALIGN_CENTER)
+		sz.Add(sty, (4, 2), (1, 1), wx.ALIGN_CENTER)
+		sz.Add(stimageshift, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.feimageshiftx, (5, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		sz.Add(self.feimageshifty, (5, 2), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		sz.Add(stbeamshift, (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.febeamshiftx, (6, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		sz.Add(self.febeamshifty, (6, 2), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		sz.Add(self.cbfilm, (0, 3), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(stdose, (1, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.stdose, (1, 4), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.cpcamconfig, (2, 3), (5, 2), wx.ALIGN_CENTER)
+
+		sb = wx.StaticBox(self, -1, 'Parameters')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 3)
+
+		self.SetSizerAndFit(sbsz)
+
+	def get(self):
+		parameters = {}
+		parameters['magnification'] = int(self.femag.GetValue())
+		parameters['defocus'] = float(self.fedefocus.GetValue())
+		parameters['spot size'] = int(self.fespotsize.GetValue())
+		parameters['intensity'] = float(self.feintensity.GetValue())
+		parameters['image shift'] = {}
+		parameters['image shift']['x'] = float(self.feimageshiftx.GetValue())
+		parameters['image shift']['y'] = float(self.feimageshifty.GetValue())
+		parameters['beam shift'] = {}
+		parameters['beam shift']['x'] = float(self.febeamshiftx.GetValue())
+		parameters['beam shift']['y'] = float(self.febeamshifty.GetValue())
+		parameters['film'] = self.cbfilm.GetValue()
+		dose = self.stdose.GetLabel()
+		if not dose or dose == 'N/A':
+			dose = None
+		else:
+			# oops
+			dose = float(dose)*1e20
+		parameters.update(self.cpcamconfig.getConfiguration())
+		return parameters
+
+	def set(self, parameters):
+		if parameters is None:
+			self.femag.SetValue(None)
+			self.fedefocus.SetValue(None)
+			self.fespotsize.SetValue(None)
+			self.feintensity.SetValue(None)
+			self.feimageshiftx.SetValue(None)
+			self.feimageshifty.SetValue(None)
+			self.febeamshiftx.SetValue(None)
+			self.febeamshifty.SetValue(None)
+			self.cbfilm.SetValue(False)
+			self.stdose.SetLabel('')
+			self.cpcamconfig.clear()
+		else:
+			self.femag.SetValue(parameters['magnification'])
+			self.fedefocus.SetValue(parameters['defocus'])
+			self.fespotsize.SetValue(parameters['spot size'])
+			self.feintensity.SetValue(parameters['intensity'])
+			self.feimageshiftx.SetValue(parameters['image shift']['x'])
+			self.feimageshifty.SetValue(parameters['image shift']['y'])
+			self.febeamshiftx.SetValue(parameters['beam shift']['x'])
+			self.febeamshifty.SetValue(parameters['beam shift']['y'])
+			self.cbfilm.SetValue(parameters['film'])
+			if parameters['dose'] is None:
+				dose = 'N/A'
+			else:
+				dose = '%.4f' % (parameters['dose']/1e20,)
+			self.stdose.SetLabel(dose)
+
+			try:
+				self.cpcamconfig.setConfiguration(parameters)
+			except ValueError:
+				# cam config bad, do something...
+				pass
+
+	def bind(self, method):
+		self.Bind(EVT_ENTRY, method, self.femag)
+		self.Bind(EVT_ENTRY, method, self.fedefocus)
+		self.Bind(EVT_ENTRY, method, self.fespotsize)
+		self.Bind(EVT_ENTRY, method, self.feintensity)
+		self.Bind(EVT_ENTRY, method, self.feimageshiftx)
+		self.Bind(EVT_ENTRY, method, self.feimageshifty)
+		self.Bind(EVT_ENTRY, method, self.febeamshiftx)
+		self.Bind(EVT_ENTRY, method, self.febeamshifty)
+		self.Bind(wx.EVT_CHECKBOX, method, self.cbfilm)
+		self.Bind(gui.wx.Camera.EVT_CONFIGURATION_CHANGED, method, self.cpcamconfig)
+
+class EditPresets(gui.wx.Presets.PresetOrder):
+	def _widgets(self):
+		gui.wx.Presets.PresetOrder._widgets(self, 'Presets (Cycle Order)')
+		self.btoscope = self._bitmapButton('instrumentset',
+																				'Go to the selected preset')
+		self.bacquire = self._bitmapButton('acquire',
+																	'Acquire dose image for the selected preset')
+		self.bfromscope = self._bitmapButton('instrumentget',
+							'Overwrite the selected preset with the current instrument state')
+		self.bnewfromscope = self._bitmapButton('instrumentgetnew',
+												'Create a new preset from the current instrument state')
+		self.bnewfromscope.Enable(True)
+		self.bimport = self._bitmapButton('import',
+																			'Import presets from another session')
+		self.bimport.Enable(True)
+		self.bremove = self._bitmapButton('minus', 'Remove preset')
+
+	def _sizer(self):
+		sizer = wx.GridBagSizer(3, 3)
+		sizer.Add(self.storder, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL)
+		sizer.Add(self.listbox, (1, 0), (11, 1), wx.EXPAND)
+		sizer.Add(self.upbutton, (1, 1), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.downbutton, (2, 1), (1, 1), wx.ALIGN_CENTER)
+
+		sizer.Add(self.btoscope, (4, 1), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.bacquire, (6, 1), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.bfromscope, (7, 1), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.bnewfromscope, (9, 1), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.bimport, (10, 1), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.bremove, (11, 1), (1, 1), wx.ALIGN_CENTER)
+		self.SetSizerAndFit(sizer)
+
+	def _bind(self):
+		gui.wx.Presets.PresetOrder._bind(self)
+		self.Bind(wx.EVT_BUTTON, self.onRemove, self.bremove)
+
+	def onRemove(self, evt):
+		n = self.listbox.GetSelection()
+		if n >= 0:
+			self.listbox.Delete(n)
+		count = self.listbox.GetCount()
+		if n < count:
+			self.listbox.Select(n)
+			self.updateButtons(n)
+		elif count > 0:
+			self.listbox.Select(n - 1)
+			self.updateButtons(n - 1)
+		else:
+			self.bremove.Enable(False)
+			self._selectEnable(False)
+		self.presetsEditEvent()
+
+	def setChoices(self, choices):
+		gui.wx.Presets.PresetOrder.setChoices(self, choices)
+
+	def onInsert(self, evt):
+		try:
+			string = self.choice.GetStringSelection()
+		except ValueError:
+			return
+		n = self.listbox.GetSelection()
+		if n < 0:
+			self.listbox.Append(string)
+		else:
+			self.listbox.InsertItems([string], n)
+			self.updateButtons(n + 1)
+		self.presetsEditEvent()
+
+	def _selectEnable(self, enable):
+		self.btoscope.Enable(enable)
+		self.bacquire.Enable(enable)
+		self.bfromscope.Enable(enable)
+		self.bremove.Enable(enable)
+
+	def onSelect(self, evt):
+		gui.wx.Presets.PresetOrder.onSelect(self, evt)
+		self._selectEnable(evt.IsSelection())
+
 class Panel(gui.wx.Node.Panel):
 	icon = 'presets'
 	def __init__(self, parent, name):
@@ -43,136 +280,16 @@ class Panel(gui.wx.Node.Panel):
 													shortHelpString='Settings')
 		# presets
 
-		stpixelsize = wx.StaticText(self, -1, 'Pixel size:')
-		stimageshift = wx.StaticText(self, -1, 'Image shift:')
-		ststage = wx.StaticText(self, -1, 'Stage:')
-		stbeamshift = wx.StaticText(self, -1, 'Beam shift:')
-		stmodeled = wx.StaticText(self, -1, 'Modeled stage:')
-		stmodeledmagonly = wx.StaticText(self, -1, 'Modeled stage (mag. only):')
-		self.stpixelsize = wx.StaticText(self, -1, '')
-		self.stimageshift = wx.StaticText(self, -1, '')
-		self.ststage = wx.StaticText(self, -1, '')
-		self.stbeamshift = wx.StaticText(self, -1, '')
-		self.stmodeled = wx.StaticText(self, -1, '')
-		self.stmodeledmagonly = wx.StaticText(self, -1, '')
-
-		szcalibrations = wx.GridBagSizer(0, 5)
-
-		szcalibrations.Add(stpixelsize, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szcalibrations.Add(self.stpixelsize, (0, 1), (1, 1),
-												wx.ALIGN_CENTER_VERTICAL)
-		szcalibrations.Add(stimageshift, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szcalibrations.Add(self.stimageshift, (1, 1), (1, 1),
-												wx.ALIGN_CENTER_VERTICAL)
-		szcalibrations.Add(ststage, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szcalibrations.Add(self.ststage, (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szcalibrations.Add(stbeamshift, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szcalibrations.Add(self.stbeamshift, (3, 1), (1, 1), 
-												wx.ALIGN_CENTER_VERTICAL)
-		szcalibrations.Add(stmodeled, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szcalibrations.Add(self.stmodeled, (4, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szcalibrations.Add(stmodeledmagonly, (5, 0), (1, 1), 
-												wx.ALIGN_CENTER_VERTICAL)
-		szcalibrations.Add(self.stmodeledmagonly, (5, 1), (1, 1), 
-												wx.ALIGN_CENTER_VERTICAL)
-		szcalibrations.AddGrowableCol(0)
-
-		sb = wx.StaticBox(self, -1, 'Calibrations')
-		self.sbszcalibrations = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		self.sbszcalibrations.Add(szcalibrations, 1,
-															wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 3)
-
-		stmagnification = wx.StaticText(self, -1, 'Magnification')
-		self.femagnification = FloatEntry(self, -1, chars=9)
-		stdefocus = wx.StaticText(self, -1, 'Defocus')
-		self.fedefocus = FloatEntry(self, -1, chars=9)
-		stspotsize = wx.StaticText(self, -1, 'Spot size')
-		self.fespotsize = FloatEntry(self, -1, chars=2)
-		stintensity = wx.StaticText(self, -1, 'Intensity')
-		self.feintensity = FloatEntry(self, -1, chars=9)
-		stx = wx.StaticText(self, -1, 'x')
-		sty = wx.StaticText(self, -1, 'y')
-		stimageshift = wx.StaticText(self, -1, 'Image shift')
-		self.feimageshiftx = FloatEntry(self, -1, chars=9)
-		self.feimageshifty = FloatEntry(self, -1, chars=9)
-
-		stbeamshift = wx.StaticText(self, -1, 'Beam shift')
-		self.febeamshiftx = FloatEntry(self, -1, chars=9)
-		self.febeamshifty = FloatEntry(self, -1, chars=9)
-
-		self.cbfilm = wx.CheckBox(self, -1, 'Film')
-		stdose = wx.StaticText(self, -1, 'Dose:')
-		self.stdose = wx.StaticText(self, -1, '')
-
-		self.cpcamconfig = gui.wx.Camera.CameraPanel(self)
-
-		szparameters = wx.GridBagSizer(5, 5)
-		szparameters.Add(stmagnification, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szparameters.Add(self.femagnification, (0, 1), (1, 2),
-											wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		szparameters.Add(stdefocus, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szparameters.Add(self.fedefocus, (1, 1), (1, 2),
-											wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		szparameters.Add(stspotsize, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szparameters.Add(self.fespotsize, (2, 1), (1, 2),
-											wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		szparameters.Add(stintensity, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szparameters.Add(self.feintensity, (3, 1), (1, 2),
-											wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-
-		szparameters.Add(stx, (4, 1), (1, 1), wx.ALIGN_CENTER)
-		szparameters.Add(sty, (4, 2), (1, 1), wx.ALIGN_CENTER)
-		szparameters.Add(stimageshift, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szparameters.Add(self.feimageshiftx, (5, 1), (1, 1),
-											wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		szparameters.Add(self.feimageshifty, (5, 2), (1, 1),
-											wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		szparameters.Add(stbeamshift, (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szparameters.Add(self.febeamshiftx, (6, 1), (1, 1),
-											wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		szparameters.Add(self.febeamshifty, (6, 2), (1, 1),
-											wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-
-		szparameters.Add(self.cbfilm, (7, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
-		szparameters.Add(stdose, (8, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szparameters.Add(self.stdose, (8, 1), (1, 2), wx.ALIGN_CENTER_VERTICAL)
-		szparameters.Add(self.cpcamconfig, (9, 0), (1, 3), wx.ALIGN_CENTER)
-
-		sb = wx.StaticBox(self, -1, 'Parameters')
-		sbszparameters = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		sbszparameters.Add(szparameters, 1, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 3)
-
-		self.cycleorder = gui.wx.Presets.PresetOrder(self, -1)
-		self.btoscope = wx.Button(self, -1, 'To Scope')
-		self.bfromscope = wx.Button(self, -1, 'From Scope')
-		self.bremove = wx.Button(self, -1, 'Remove')
-
-		szbuttons = wx.GridBagSizer(5, 5)
-		szbuttons.Add(self.btoscope, (0, 0), (1, 1), wx.EXPAND)
-		szbuttons.Add(self.bfromscope, (1, 0), (1, 1), wx.EXPAND)
-		szbuttons.Add(self.bremove, (2, 0), (1, 1), wx.EXPAND)
-
-		sz = wx.GridBagSizer(5, 5)
-		sz.Add(self.cycleorder, (0, 0), (1, 1), wx.ALIGN_CENTER)
-		sz.Add(szbuttons, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-
-		szcreate = wx.GridBagSizer(5, 5)
-
-		self.bimport = wx.Button(self, -1, 'Import...')
-		self.bnew = wx.Button(self, -1, 'New...')
-
-		sb = wx.StaticBox(self, -1, 'Create')
-		sbszcreate = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		sbszcreate.Add(szcreate, 1, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 5)
-
-		szcreate.Add(self.bimport, (0, 0), (1, 1), wx.ALIGN_CENTER)
-		szcreate.Add(self.bnew, (1, 0), (1, 1), wx.ALIGN_CENTER)
+		self.calibrations = Calibrations(self)
+		self.calibrations.set({})
+		self.parameters = Parameters(self)
+		self.parameters.Enable(False)
+		self.presets = EditPresets(self, -1)
 
 		self.sz = wx.GridBagSizer(5, 5)
-		self.sz.Add(self.sbszcalibrations, (0, 0), (1, 2), wx.EXPAND|wx.ALL)
-		self.sz.Add(sbszparameters, (1, 1), (2, 1), wx.EXPAND|wx.ALL)
-		self.sz.Add(sz, (1, 0), (1, 1), wx.ALIGN_CENTER)
-		self.sz.Add(sbszcreate, (2, 0), (1, 1), wx.ALIGN_CENTER)
+		self.sz.Add(self.calibrations, (0, 1), (1, 1), wx.EXPAND|wx.ALL)
+		self.sz.Add(self.parameters, (1, 1), (1, 1), wx.EXPAND|wx.ALL)
+		self.sz.Add(self.presets, (0, 0), (2, 1), wx.ALIGN_CENTER)
 		self.szmain.Add(self.sz, (1, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 5)
 
 		# dose image
@@ -200,37 +317,29 @@ class Panel(gui.wx.Node.Panel):
 		self.SetAutoLayout(True)
 		self.SetupScrolling()
 
-		self.Bind(wx.EVT_BUTTON, self.onNew, self.bnew)
-		self.Bind(gui.wx.Presets.EVT_PRESET_ORDER_CHANGED, self.onCycleOrderChanged,
-							self.cycleorder)
+		self.Bind(gui.wx.Presets.EVT_PRESET_ORDER_CHANGED,
+							self.onCycleOrderChanged, self.presets)
 		self.Bind(EVT_SET_PARAMETERS, self.onSetParameters)
 		self.Bind(EVT_SET_CALIBRATIONS, self.onSetCalibrations)
 		self.Bind(EVT_SET_DOSE_VALUE, self.onSetDoseValue)
 
 	def onNodeInitialized(self):
-		self.cpcamconfig.setSize(self.node.session)
-
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
 											id=gui.wx.ToolBar.ID_SETTINGS)
 
+		self.parameters.cpcamconfig.setSize(self.node.session)
+		self.parameters.cpcamconfig.clear()
+		self.parameters.bind(self.onUpdateParameters)
+
+		self.Bind(gui.wx.Presets.EVT_PRESET_SELECTED,
+							self.onPresetSelected, self.presets)
+		self.Bind(wx.EVT_BUTTON, self.onToScope, self.presets.btoscope)
+		self.Bind(wx.EVT_BUTTON, self.onAcquireDoseImage, self.presets.bacquire)
+		self.Bind(wx.EVT_BUTTON, self.onFromScope, self.presets.bfromscope)
+		self.Bind(wx.EVT_BUTTON, self.onNewFromScope, self.presets.bnewfromscope)
+		self.Bind(wx.EVT_BUTTON, self.onImport, self.presets.bimport)
+
 		self.Bind(wx.EVT_BUTTON, self.onAcquireDoseImage, self.bacquire)
-		self.Bind(EVT_ENTRY, self.onUpdateParameters, self.femagnification)
-		self.Bind(EVT_ENTRY, self.onUpdateParameters, self.fedefocus)
-		self.Bind(EVT_ENTRY, self.onUpdateParameters, self.fespotsize)
-		self.Bind(EVT_ENTRY, self.onUpdateParameters, self.feintensity)
-		self.Bind(EVT_ENTRY, self.onUpdateParameters, self.feimageshiftx)
-		self.Bind(EVT_ENTRY, self.onUpdateParameters, self.feimageshifty)
-		self.Bind(EVT_ENTRY, self.onUpdateParameters, self.febeamshiftx)
-		self.Bind(EVT_ENTRY, self.onUpdateParameters, self.febeamshifty)
-		self.Bind(wx.EVT_CHECKBOX, self.onUpdateParameters, self.cbfilm)
-		self.Bind(gui.wx.Camera.EVT_CONFIGURATION_CHANGED, self.onUpdateParameters,
-							self.cpcamconfig)
-		self.Bind(gui.wx.Presets.EVT_PRESET_SELECTED, self.onPresetSelected,
-							self.cycleorder)
-		self.Bind(wx.EVT_BUTTON, self.onToScope, self.btoscope)
-		self.Bind(wx.EVT_BUTTON, self.onFromScope, self.bfromscope)
-		self.Bind(wx.EVT_BUTTON, self.onRemove, self.bremove)
-		self.Bind(wx.EVT_BUTTON, self.onImport, self.bimport)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
@@ -239,11 +348,20 @@ class Panel(gui.wx.Node.Panel):
 
 	def onCycleOrderChanged(self, evt):
 		self.node.setCycleOrder(evt.presets)
+		
+		name = self.presets.getSelectedPreset()
+		if name:
+			self.node.selectPreset(name)
+			self.parameters.Enable(True)
+		else:
+			self.calibrations.set({})
+			self.parameters.Enable(False)
+			self.parameters.set(None)
 
 	def onSetOrder(self, presets, setorder=True):
 		if setorder:
 			evt = gui.wx.Presets.PresetsChangedEvent(presets)
-			self.cycleorder.GetEventHandler().AddPendingEvent(evt)
+			self.presets.GetEventHandler().AddPendingEvent(evt)
 
 	def setDoseValue(self, dosestring):
 		evt = SetDoseValueEvent(dosestring)
@@ -260,96 +378,47 @@ class Panel(gui.wx.Node.Panel):
 		dialog.ShowModal()
 		dialog.Destroy()
 
-	def onNew(self, evt):
+	def onFromScope(self, evt):
+		name = self.presets.getSelectedPreset()
+		self.node.fromScope(name)
+
+	def onNewFromScope(self, evt):
 		dialog = NewDialog(self)
 		if dialog.ShowModal() == wx.ID_OK:
-			self.node.newFromScope(dialog.name)
+			self.node.fromScope(dialog.name)
 		dialog.Destroy()
 
-	def _getParameters(self):
-		parameters = {}
-		parameters['magnification'] = int(self.femagnification.GetValue())
-		parameters['defocus'] = float(self.fedefocus.GetValue())
-		parameters['spot size'] = int(self.fespotsize.GetValue())
-		parameters['intensity'] = float(self.feintensity.GetValue())
-		parameters['image shift'] = {}
-		parameters['image shift']['x'] = float(self.feimageshiftx.GetValue())
-		parameters['image shift']['y'] = float(self.feimageshifty.GetValue())
-		parameters['beam shift'] = {}
-		parameters['beam shift']['x'] = float(self.febeamshiftx.GetValue())
-		parameters['beam shift']['y'] = float(self.febeamshifty.GetValue())
-		parameters['film'] = self.cbfilm.GetValue()
-		dose = self.stdose.GetLabel()
-		if not dose or dose == 'N/A':
-			dose = None
-		else:
-			# oops
-			dose = float(dose)*1e20
-		parameters.update(self.cpcamconfig.getConfiguration())
-		return parameters
-
 	def onUpdateParameters(self, evt=None):
-		if self.cycleorder.getSelectedPreset() is not None:
-			self.node.updateParams(self._getParameters())
-
-	def _setParameters(self, parameters):
-		self.femagnification.SetValue(parameters['magnification'])
-		self.fedefocus.SetValue(parameters['defocus'])
-		self.fespotsize.SetValue(parameters['spot size'])
-		self.feintensity.SetValue(parameters['intensity'])
-		self.feimageshiftx.SetValue(parameters['image shift']['x'])
-		self.feimageshifty.SetValue(parameters['image shift']['y'])
-		self.febeamshiftx.SetValue(parameters['beam shift']['x'])
-		self.febeamshifty.SetValue(parameters['beam shift']['y'])
-		self.cbfilm.SetValue(parameters['film'])
-		if parameters['dose'] is None:
-			dose = 'N/A'
-		else:
-			dose = '%.4f' % (parameters['dose']/1e20,)
-		self.stdose.SetLabel(dose)
-		self.cpcamconfig.setConfiguration(parameters)
+		self.node.updateParams(self.parameters.get())
 
 	def onSetParameters(self, evt):
-		self._setParameters(evt.parameters)
+		self.parameters.set(evt.parameters)
 
 	def setParameters(self, parameters):
 		evt = SetParametersEvent(parameters.toDict(), self)
 		self.GetEventHandler().AddPendingEvent(evt)
 
-	def _setCalibrations(self, times):
-		items = {
-			'pixel size': self.stpixelsize,
-			'image shift': self.stimageshift,
-			'stage': self.ststage,
-			'beam': self.stbeamshift,
-			'modeled stage': self.stmodeled,
-			'modeled stage mag only': self.stmodeledmagonly,
-		}
-		for key, value in items.items():
-			try:
-				value.SetLabel(times[key])
-			except (TypeError, KeyError):
-				value.SetLabel('None')
-		self.sbszcalibrations.Layout()
-
 	def onSetCalibrations(self, evt):
-		self._setCalibrations(evt.times)
+		self.calibrations.set(evt.times)
 
 	def setCalibrations(self, times):
 		evt = SetCalibrationsEvent(times, self)
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onPresetSelected(self, evt):
-		self.node.selectPreset(evt.GetString())
+		selection = evt.GetString()
+		if selection:
+			self.node.selectPreset(selection)
+			self.parameters.Enable(True)
+		else:
+			self.calibrations.set({})
+			self.parameters.Enable(False)
 
 	def onToScope(self, evt):
-		self.node.cycleToScope(self.cycleorder.getSelectedPreset())
-
-	def onFromScope(self, evt):
-		self.node.fromScope(self.cycleorder.getSelectedPreset())
+		self.node.cycleToScope(self.presets.getSelectedPreset())
 
 	def onRemove(self, evt):
-		self.node.removePreset(self.cycleorder.getSelectedPreset())
+		self.node.removePreset(self.presets.getSelectedPreset())
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):

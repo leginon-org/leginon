@@ -71,7 +71,9 @@ class PresetChoice(wx.Choice):
 		selection = self.GetStringSelection()
 		self.Freeze()
 		self.Clear()
-		self.AppendItems(choices)
+		for c in choices:
+			if c:
+				self.Append(c)
 		if choices:
 			n = self.FindString(selection)
 			if n == wx.NOT_FOUND:
@@ -96,11 +98,12 @@ class PresetOrder(wx.Panel):
 		self._sizer()
 		self._bind()
 
-	def _widgets(self):
-		self.storder = wx.StaticText(self, -1, 'Presets Order')
+	def _widgets(self, label='Presets Order'):
+		if label:
+			self.storder = wx.StaticText(self, -1, label)
 		self.listbox = wx.ListBox(self, -1)
-		self.upbutton = self._bitmapButton('up')
-		self.downbutton = self._bitmapButton('down')
+		self.upbutton = self._bitmapButton('up', 'Move preset up in cycle')
+		self.downbutton = self._bitmapButton('down', 'Move preset down in cycle')
 
 	def _sizer(self):
 		sizer = wx.GridBagSizer(3, 3)
@@ -118,11 +121,13 @@ class PresetOrder(wx.Panel):
 		self.Bind(wx.EVT_LISTBOX, self.onSelect, self.listbox)
 		self.Bind(EVT_PRESETS_CHANGED, self.onPresetsChanged)
 
-	def _bitmapButton(self, name):
+	def _bitmapButton(self, name, tooltip=None):
 		bitmap = getBitmap('%s.png' % name)
 		button = wx.lib.buttons.GenBitmapButton(self, -1, bitmap, size=(20, 20))
 		button.SetBezelWidth(1)
 		button.Enable(False)
+		if tooltip is not None:
+			button.SetToolTip(wx.ToolTip(tooltip))
 		return button
 
 	def onUp(self, evt):
@@ -131,7 +136,7 @@ class PresetOrder(wx.Panel):
 			string = self.listbox.GetString(n)
 			self.listbox.Delete(n)
 			self.listbox.InsertItems([string], n - 1)
-			self.listbox.Select(n - 1)
+			self.listbox.SetSelection(n - 1)
 		self.updateButtons(n - 1)
 		self.presetsEditEvent()
 
@@ -141,7 +146,7 @@ class PresetOrder(wx.Panel):
 			string = self.listbox.GetString(n)
 			self.listbox.Delete(n)
 			self.listbox.InsertItems([string], n + 1)
-			self.listbox.Select(n + 1)
+			self.listbox.SetSelection(n + 1)
 		self.updateButtons(n + 1)
 		self.presetsEditEvent()
 
@@ -174,6 +179,11 @@ class PresetOrder(wx.Panel):
 		return values
 
 	def setValues(self, values):
+		filtered = []
+		for v in values:
+			if v:
+				filtered.append(v)
+		values = filtered
 		count = self.listbox.GetCount()
 		if values is None:
 			values = []
@@ -199,7 +209,7 @@ class PresetOrder(wx.Panel):
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onSelect(self, evt):
-		self.updateButtons(evt.GetSelection())
+		self.updateButtons(evt.GetInt())
 		evt = PresetSelectedEvent(self, evt.GetString())
 		self.GetEventHandler().AddPendingEvent(evt)
 
@@ -218,8 +228,8 @@ class EditPresetOrder(PresetOrder):
 		PresetOrder._widgets(self)
 		self.choice = wx.Choice(self, -1)
 		self.choice.Enable(False)
-		self.insertbutton = self._bitmapButton('plus')
-		self.deletebutton = self._bitmapButton('minus')
+		self.insertbutton = self._bitmapButton('plus', 'Insert preset into cycle')
+		self.deletebutton = self._bitmapButton('minus', 'Remove preset from cycle')
 
 	def _sizer(self):
 		sizer = wx.GridBagSizer(3, 3)
@@ -269,10 +279,10 @@ class EditPresetOrder(PresetOrder):
 			self.listbox.Delete(n)
 		count = self.listbox.GetCount()
 		if n < count:
-			self.listbox.Select(n)
+			self.listbox.SetSelection(n)
 			self.updateButtons(n)
 		elif count > 0:
-			self.listbox.Select(n - 1)
+			self.listbox.SetSelection(n - 1)
 			self.updateButtons(n - 1)
 		else:
 			self.deletebutton.Enable(False)

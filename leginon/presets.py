@@ -244,7 +244,7 @@ class PresetsManager(node.Node):
 		an identical set for this session
 		'''
 		## make new presets with this session
-		self.presets = newdict.OrderedDict()
+		#self.presets = newdict.OrderedDict()
 		for name, preset in pdict.items():
 			newp = data.PresetData(initializer=preset, session=self.session)
 			self.presetToDB(newp)
@@ -367,7 +367,7 @@ class PresetsManager(node.Node):
 		if outputevent:
 			self.outputEvent(event.PresetChangedEvent(name=name, preset=presetdata))
 
-	def fromScope(self, name):
+	def _fromScope(self, name):
 		'''
 		create a new preset with name
 		if a preset by this name already exists in my 
@@ -523,8 +523,8 @@ class PresetsManager(node.Node):
 		previndex = index - 1
 		return order[previndex]
 
-	def newFromScope(self, newname):
-		newpreset = self.fromScope(newname)
+	def fromScope(self, newname):
+		newpreset = self._fromScope(newname)
 		self.setOrder()
 		self.panel.setParameters(newpreset)
 		self.logger.info('created new preset: %s' % (newname,))

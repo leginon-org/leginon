@@ -28,6 +28,7 @@ class CameraPanel(wx.Panel):
 		wx.Panel.__init__(self, parent, -1)
 		self.geometry = None
 		self.binnings = {'x': [1,2,4,8,16], 'y': [1,2,4,8,16]}
+		self.defaultexptime = 1000.0
 
 		# geometry
 		std = wx.StaticText(self, -1, 'Dimension:')
@@ -88,7 +89,6 @@ class CameraPanel(wx.Panel):
 		self.Bind(EVT_ENTRY, self.onExposureTime, self.feexposuretime)
 		self.Bind(EVT_SET_CONFIGURATION, self.onSetConfiguration)
 
-
 		self.Enable(False)
 
 	def setSize(self, session):
@@ -97,18 +97,29 @@ class CameraPanel(wx.Panel):
 		size = session['instrument']['camera size']
 		if size is None:
 			return
+		self._setSize(size)
+
+	def _setSize(self, size):
 		self.size = {'x': size, 'y': size}
 
 		self.Freeze()
-		choices, self.common = self.getCenteredGeometries()
+		self.choices, self.common = self.getCenteredGeometries()
 		self.ccommon.Clear()
-		self.ccommon.AppendItems(choices)
+		self.ccommon.AppendItems(self.choices)
 		self.ccommon.SetSelection(0)
 		self.setGeometry(self.common[self.ccommon.GetStringSelection()])
 		if self.feexposuretime.GetValue() is None:
-			self.feexposuretime.SetValue(1000.0)
+			self.feexposuretime.SetValue(self.defaultexptime)
 		self.Enable(True)
 		self.szmain.Layout()
+		self.Thaw()
+
+	def clear(self):
+		self.Freeze()
+		self.ccommon.SetSelection(0)
+		self.setGeometry(self.common[self.ccommon.GetStringSelection()])
+		self.feexposuretime.SetValue(self.defaultexptime)
+		self.Enable(False)
 		self.Thaw()
 
 	def onConfigurationChanged(self):
@@ -282,6 +293,8 @@ class CameraPanel(wx.Panel):
 		self._setExposureTime(value['exposure time'])
 		self.setGeometry(value)
 		self.setCommonChoice()
+		if not self.IsEnabled():
+			self.Enable(True)
 
 	def onSetConfiguration(self, evt):
 		self.setConfiguration(evt.configuration)
