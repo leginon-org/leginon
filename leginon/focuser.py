@@ -200,10 +200,10 @@ class Focuser(acquisition.Acquisition):
 		print 'manual focus loop done'
 
 	def uiFocusUp(self):
-		self.changeDefocus('up')
+		self.changeFocus('up')
 
 	def uiFocusDown(self):
-		self.changeDefocus('down')
+		self.changeFocus('down')
 
 	def uiResetDefocus(self):
 		self.manualchecklock.acquire()
@@ -225,24 +225,34 @@ class Focuser(acquisition.Acquisition):
 		finally:
 			self.manualchecklock.release()
 
-	def changeDefocus(self, direction):
+	def changeFocus(self, direction):
+		parameter = self.manual_parameter.get()
 		delta = self.manual_delta.get()
 		self.manualchecklock.acquire()
-		print 'changing defocus %s %s' % (direction, delta)
+		print 'changing %s %s %s' % (parameter, direction, delta)
 		try:
-			emdata = self.researchByDataID(('defocus',))
-			defocus = emdata['defocus']
+			if parameter == 'Stage Z':
+				emdata = self.researchByDataID(('stage position',))
+				value = emdata['stage position']['z']
+			elif parameter == 'Defocus':
+				emdata = self.researchByDataID(('defocus',))
+				value = emdata['defocus']
 			if direction == 'up':
-				defocus += delta
+				value += delta
 			elif direction == 'down':
-				defocus -= delta
-			newemdata = data.ScopeEMData(id=('scope',), defocus=defocus)
+				value -= delta
+			
+			newemdata = data.ScopeEMData(id=('scope',))
+			if parameter == 'Stage Z':
+				newemdata['stage position'] = {'z':value}
+			elif parameter == 'Defocus':
+				newemdata['defocus'] = value
 			self.publishRemote(newemdata)
 		finally:
 			self.manualchecklock.release()
 
 
-		print 'changed defocus %s %s' % (direction, delta,)
+		print 'changed %s %s %s' % (parameter, direction, delta,)
 
 	def manualDone(self):
 		print 'will quit manual focus loop after this iteration'
@@ -308,13 +318,14 @@ class Focuser(acquisition.Acquisition):
 		manualreset = uidata.Method('Reset Defocus', self.uiResetDefocus)
 		manualtozero = uidata.Method('Change To Zero', self.uiChangeToZero)
 
+		self.manual_parameter = uidata.SingleSelectFromList('Defocus or Stage Z', ['Defocus','Stage Z'], 0)
 		self.manual_delta = uidata.Float('Manual Change Delta', 5e-7, 'rw', persist=True)
 		manchangeup = uidata.Method('Up', self.uiFocusUp)
 		manchangedown = uidata.Method('Down', self.uiFocusDown)
 		self.man_image = uidata.Image('Manual Focus Image', None, 'rw')
 		self.man_power = uidata.Image('Manual Focus Power Spectrum', None, 'rw')
 		mancont = uidata.Container('Manual Focus')
-		mancont.addObjects((self.pre_manual_check, self.post_manual_check, manualmeth, manualdone, manualreset, manualtozero, self.manual_delta, manchangeup, manchangedown, self.man_power, self.man_image))
+		mancont.addObjects((self.pre_manual_check, self.post_manual_check, manualmeth, manualdone, manualreset, manualtozero, self.manual_parameter, self.manual_delta, manchangeup, manchangedown, self.man_power, self.man_image))
 
 		self.acquirefinal = uidata.Boolean('Acquire Final Image', True, 'rw', persist=True)
 		abortfailmethod = uidata.Method('Abort With Failure', self.uiAbortFailure)
