@@ -462,9 +462,25 @@ class TargetImagePanel(ImagePanel):
 			self.panel.SetCursor(wxCROSS_CURSOR)
 			self.UpdateDrawing()
 
+	def setTargetButtonBitmap(self):
+		bitmap = wxEmptyBitmap(16, 16)
+		dc = wxMemoryDC()
+		dc.SelectObject(bitmap)
+		dc.BeginDrawing()
+		dc.Clear()
+		dc.SetPen(wxPen(self.colors[self.target_type], 2))
+		dc.DrawLine(8, 0, 8, 15)
+		dc.DrawLine(0, 8, 15, 8)
+		dc.EndDrawing()
+		dc.SelectObject(wxNullBitmap)
+		bitmap.SetMask(wxMaskColour(bitmap, wxWHITE))
+		self.targetbutton.SetBitmapLabel(bitmap)
+		self.targetbutton.Refresh()
+
 	def initTarget(self):
 		bitmap = self.bitmapTool('targettool.bmp')
 		self.targetbutton = wxGenBitmapToggleButton(self, -1, bitmap, size=(24, 24))
+		self.setTargetButtonBitmap()
 		self.targetbutton.SetBezelWidth(1)
 		self.targetbutton.SetToolTip(wxToolTip('Toggle Target Tool'))
 		EVT_BUTTON(self, self.targetbutton.GetId(), self.OnTargetButton)
@@ -472,7 +488,7 @@ class TargetImagePanel(ImagePanel):
 
 	def apply(self, evt):
 		self.target_type = evt.GetString()
-		self.combobox.SetForegroundColour(self.colors[self.target_type])
+		self.setTargetButtonBitmap()
 
 	def addComboBox(self, name):
 		if self.combobox is None:
@@ -482,7 +498,6 @@ class TargetImagePanel(ImagePanel):
 																							choices=self.targets.keys(),
 																style=wxCB_DROPDOWN | wxCB_READONLY | wxCB_SORT)
 				EVT_COMBOBOX(self, self.combobox.GetId(), self.apply)
-				self.combobox.SetForegroundColour(self.colors[self.target_type])
 #				self.toolsizer.Add(label, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
 				self.toolsizer.Add(self.combobox, 0, wxALIGN_CENTER_VERTICAL | wxALL, 3)
 				self.toolsizer.Layout()
@@ -513,10 +528,10 @@ class TargetImagePanel(ImagePanel):
 			raise ValueError('Target type already exists')
 		try:
 			self.colors[name] = self.colorlist[0]
+			del self.colorlist[0]
 		except IndexError:
 			raise RuntimeError('Not enough colors for addition target types')
-		del self.colorlist[0]
-		self.targets[name] = value
+		self.targets[name] = list(value)
 		self.addComboBox(name)
 
 	def deleteTargetType(self, name):
@@ -539,7 +554,7 @@ class TargetImagePanel(ImagePanel):
 		if name not in self.targets:
 			self.addTargetType(name, value)
 		else:
-			self.targets[name] = value
+			self.targets[name] = list(value)
 		self.UpdateDrawing()
 
 	def clearTargets(self):
@@ -594,6 +609,7 @@ class TargetImagePanel(ImagePanel):
 		for target_type in self.targets:
 			if target in self.targets[target_type]:
 				color = self.colors[target_type]
+				break
 		if target == self.closest_target:
 			color = wxColor(color.Red()/2, color.Green()/2, color.Blue()/2)
 		pen = wxPen(color, 1)
@@ -653,6 +669,8 @@ if __name__ == '__main__':
 			frame = wxFrame(NULL, -1, 'Image Viewer')
 			self.SetTopWindow(frame)
 			self.panel = TargetImagePanel(frame, -1)
+			self.panel.addTargetType('foo')
+			self.panel.addTargetType('bar')
 			frame.Fit()
 			frame.Show(true)
 			return true
