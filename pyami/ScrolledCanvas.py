@@ -67,13 +67,19 @@ class ScrolledCanvas(Frame):
 			self.vscroll_state(ON)
 
 			
-	def resize(self, width, height):
+	def resize(self, x1, y1, x2, y2):
+		width = x2 - x1
+		height = y2 - y1
 		self.canvas['width'] = width
 		self.canvas['height'] = height
-		self.canvas['scrollregion'] = (0,0,width,height)
+		self.canvas['scrollregion'] = (x1,y1,x2,y2)
 
 if __name__ == '__main__':
-	mycan = ScrolledCanvas()
+	mycan = ScrolledCanvas(bg='darkgrey')
 	mycan.pack(expand=YES,fill=BOTH)
-	mycan.resize(300,100)
+
+	mycan.canvas.create_oval(0,0,50,50, fill='green')
+	mycan.canvas.create_oval(-50,-50,0,0, fill='red')
+
+	mycan.resize(-100,-100,100,100)
 	mycan.mainloop()

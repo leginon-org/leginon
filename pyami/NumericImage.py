@@ -27,16 +27,19 @@ class NumericImage(ImageTk.PhotoImage):
 
 	def use_array(self, ndata):
 		self.array = ndata
-		self.array_min = min(min(self.array))
-		self.array_max = max(max(self.array))
+		self.array_min = min(Numeric.reshape(self.array,(1,-1))[0])
+		self.array_max = max(Numeric.reshape(self.array,(1,-1))[0])
 
-	def paste_array(self, clip=None):
+	def zoom(self, *args, **kargs):
+		ImageTk.PhotoImage._PhotoImage__photo.zoom(self,*args,**kargs)
+
+	def paste(self, clip=None):
 		"""Paste a Numeric array into photo image.
 		'clip' specifies the min and max values of the array
 		that should be scaled to the display (0-255)
 		If no clip is specified, default is min and max of array"""
 		newim = self.array_to_image(clip)
-		self.paste(newim)
+		ImageTk.PhotoImage.paste(self, newim)
 
 	def array_to_image(self, clip=None):
 		h,w = self.array.shape
@@ -51,9 +54,18 @@ class NumericImage(ImageTk.PhotoImage):
 			minval = self.array_min
 			maxval = self.array_max
 
+		if minval == None:
+			minval = self.array_min
+		if maxval == None:
+			maxval = self.array_max
+
 		range = maxval - minval
-		scl = 255.0 / range
-		off = -255.0 * minval / range
+		try:
+			scl = 255.0 / range
+			off = -255.0 * minval / range
+		except ZeroDivisionError:
+			scl = 0.0
+			off = 0.0
 		newdata = scl * self.array + off
 		
 		type = newdata.typecode()
@@ -79,23 +91,23 @@ if __name__ == '__main__':
 	mode = 'I'
 	size = (128,256)
 	ndata = Numeric.arrayrange(256**2/2)
-	ndata = Numeric.reshape(ndata,size)
+	ndata.shape = size
 
 	numphoto1 = NumericImage(mode, size)
 	numphoto1.use_array(ndata)
-	numphoto1.paste_array((10000,30000))
+	numphoto1.paste((10000,30000))
 
 	numphoto2 = NumericImage(mode, size)
 	numphoto2.use_array(ndata)
-	numphoto2.paste_array()
+	numphoto2.paste()
 
 	numphoto3 = NumericImage(mode, size)
 	numphoto3.use_array(ndata)
-	numphoto3.paste_array()
+	numphoto3.paste()
 
 	numphoto4 = NumericImage(mode, size)
 	numphoto4.use_array(ndata)
-	numphoto4.paste_array()
+	numphoto4.paste()
 
 	can.create_image(0,0,anchor=NW,image=numphoto1)
 	can.create_image(0,256,anchor=NW,image=numphoto2)
