@@ -138,39 +138,6 @@ class ImageMosaicInfo(object):
 		self.lock.release()
 		return {'image': mosaicimage, 'scale': scale}
 
-class StateImageMosaicInfo(ImageMosaicInfo):
-	def addTile(self, dataid, image, position, scope, camera):
-		ImageMosaicInfo.addTile(self, dataid, image, position)
-		self.imageinfo[dataid]['scope'] = scope
-		self.imageinfo[dataid]['camera'] = camera
-		self.imageinfo[dataid]['shape'] = image.shape
-
-	def getTileState(self, dataid):
-		try:
-			tilestatedata = {}
-			tilestatedata['position'] = self.getTilePosition(dataid)
-			tilestatedata['scope'] = self.imageinfo[dataid]['scope']
-			tilestatedata['camera'] = self.imageinfo[dataid]['camera']
-			tilestatedata['shape'] = self.imageinfo[dataid]['shape']
-			limits = self.getMosaicLimits()
-			tilestatedata['offset'] = (-limits['min'][0], -limits['min'][1])
-		except KeyError:
-			raise ValueError
-		return tilestatedata
-
-	def getTileStates(self):
-		tilestatesdata = {}
-		for tiledataid in self.getTileDataIDs():
-			tilestatesdata[tiledataid] = self.getTileState(tiledataid)
-		return tilestatesdata
-
-	def getMosaicImage(self, scale=1.0, autoscale=False, astype=Numeric.Int16):
-		self.lock.acquire()
-		image = ImageMosaicInfo.getMosaicImage(self, scale, autoscale, astype)
-		image['tile states'] = self.getTileStates()
-		self.lock.release()
-		return image
-
 class ImageMosaic(watcher.Watcher):
 	def __init__(self, id, session, nodelocations, watchfor=event.TileImagePublishEvent, **kwargs):
 		# needs own event?
@@ -445,8 +412,10 @@ class ImageMosaic(watcher.Watcher):
 																				callback=self.uiAutoScaleCallback)
 		scalecontainerspec = self.registerUIContainer('Scale',
 																									(scalespec, autoscalespec))
-		return self.registerUISpec('Image Mosaic',
-										(watcherspec, imagespec, getimagespec, scalecontainerspec))
+		spec = self.registerUISpec('Image Mosaic',
+																(imagespec, getimagespec, scalecontainerspec))
+		spec += watcherspec
+		return spec
 
 	def uiScaleCallback(self, value=None):
 		if value is not None and value > 0.0:
@@ -538,13 +507,42 @@ class ImageMosaic(watcher.Watcher):
 			print 'targets'
 			print targetlistdata['targets']
 
+class StateImageMosaicInfo(ImageMosaicInfo):
+	def addTile(self, dataid, image, position, scope, camera):
+		ImageMosaicInfo.addTile(self, dataid, image, position)
+		self.imageinfo[dataid]['scope'] = scope
+		self.imageinfo[dataid]['camera'] = camera
+		self.imageinfo[dataid]['shape'] = image.shape
+
+	def getTileState(self, dataid):
+		try:
+			tilestatedata = {}
+			tilestatedata['position'] = self.getTilePosition(dataid)
+			tilestatedata['scope'] = self.imageinfo[dataid]['scope']
+			tilestatedata['camera'] = self.imageinfo[dataid]['camera']
+			tilestatedata['shape'] = self.imageinfo[dataid]['shape']
+			limits = self.getMosaicLimits()
+			tilestatedata['offset'] = (-limits['min'][0], -limits['min'][1])
+		except KeyError:
+			raise ValueError
+		return tilestatedata
+
+	def getTileStates(self):
+		tilestatesdata = {}
+		for tiledataid in self.getTileDataIDs():
+			tilestatesdata[tiledataid] = self.getTileState(tiledataid)
+		return tilestatesdata
+
+	def getMosaicImage(self, scale=1.0, autoscale=False, astype=Numeric.Int16):
+		self.lock.acquire()
+		image = ImageMosaicInfo.getMosaicImage(self, scale, autoscale, astype)
+		image['tile states'] = self.getTileStates()
+		self.lock.release()
+		return image
+
 class StateImageMosaic(ImageMosaic):
 	def __init__(self, id, session, nodelocations, watchfor = event.TileImagePublishEvent, **kwargs):
-
-		ImageMosaic.__init__(self, id, session, nodelocations, watchfor, **kwargs)
-
 		self.cam = camerafuncs.CameraFuncs(self)
-
 		self.calibrationclients = {}
 		calibrationclasses = [calibrationclient.StageCalibrationClient,
 													calibrationclient.ImageShiftCalibrationClient]
@@ -552,9 +550,7 @@ class StateImageMosaic(ImageMosaic):
 			instance = calibrationclass(self)
 			self.calibrationclients[instance.parameter()] = instance
 
-#		self.positionmethods['pixel size'] = self.positionByPixelSize
-#		self.automaticpriority = ['pixel size', 'calibration', 'correlation']
-#		self.positionmethod = 'pixel size'
+		ImageMosaic.__init__(self, id, session, nodelocations, watchfor, **kwargs)
 
 		self.positionmethods['calibration'] = self.positionByCalibration
 		self.automaticpriority = ['calibration', 'correlation']
@@ -583,6 +579,9 @@ class StateImageMosaic(ImageMosaic):
 		if len(mosaics) == 0:
 			imagemosaic = StateImageMosaicInfo()
 			position = self.positionmethods[self.positionmethod](idata, None)
+			if position is None:
+				self.printerror('tile processing error')
+				return
 			#imagemosaic.addTile(idata.id, tileimage, position, tilescope, tilecamera)
 			imagemosaic.addTile(idata['id'], tileimage, position,
 																			tilescope, tilecamera)
@@ -596,32 +595,38 @@ class StateImageMosaic(ImageMosaic):
 																									tilescope, tilecamera)
 #				print idata.id, "position =", imagemosaic.getTilePosition(idata.id)
 
-	def positionByCalibration(self, idata, imagemosaic,
-																					parameter='stage position'):
-		position = self.calibrationclients[parameter].itransform(
-																		idata['scope'][parameter],
-																		idata['scope'],
-																		idata['camera'])
+	def positionByCalibration(self, idata, imagemosaic):
+		parameter = self.calibrationparameter.get()
+		if parameter == 'all':
+			parameters = self.calibrationclients.keys()
+		else:
+			parameters = [parameter]
+		position = {'row': 0.0, 'col': 0.0}
+		for parameter in parameters:
+			parameterposition = self.calibrationclients[parameter].itransform(
+																						idata['scope'][parameter],
+																						idata['scope'],
+																						idata['camera'])
+			if parameterposition is None:
+				self.printerror('calibration positioning error')
+				return None
+			position['row'] += parameterposition['row']
+			position['col'] += parameterposition['col']
 		# this makes it work with calibration
 		position['row'] *= -1
 		position['col'] *= -1
 		return (position['row'], position['col'])
 
-#	def uiPublishMosaicImage(self):
-#		#ImageMosaic.uiPublishMosaicImage(self)
-#		imageandscale = self.getMosaicImageAndScale()
-#		image = imageandscale['image']
-#		scale = imageandscale['scale']
-#		if image is not None:
-#			mosaicimagedata = data.MosaicImageData(self.ID(), image,
-#																							scope=None, camera=None)
-#			statemosaic = {mosaicimagedata.id: {}}
-#			statemosaic[mosaicimagedata.id]['tile states'] \
-#																			= self.imagemosaics[-1].getTileStates()
-#			statemosaic[mosaicimagedata.id]['scale'] = scale
-#			statemosaicdata = data.StateMosaicData(self.ID(),	statemosaic)
-#			self.publish(statemosaicdata, event.StateMosaicPublishEvent)
-#			self.publish(mosaicimagedata, event.MosaicImagePublishEvent)
-#
-#		return ''
+	def defineUserInterface(self):
+		imagemosaicspec = ImageMosaic.defineUserInterface(self)
+		calibrationparameters = self.calibrationclients.keys() + ['all']
+		calibrationchoices = self.registerUIData('Calibration Choices', 'array',
+																							default=calibrationparameters)
+		self.calibrationparameter = self.registerUIData('Calibration Method',
+																		'string', choices=calibrationchoices,
+																		permissions='rw', default='stage position')
+		spec = self.registerUISpec('State Image Mosaic',
+																(self.calibrationparameter,))
+		spec += imagemosaicspec
+		return spec
 

@@ -98,7 +98,7 @@ class GridPreview(node.Node):
 		return self.researchByDataID(('scope',))['em']
 
 	def acquireTarget(self, target):
-#		print 'TARGET', target
+		print 'TARGET', target
 		if self.sim.get():
 #			print 'SIMULATED'
 			time.sleep(1)
@@ -109,21 +109,23 @@ class GridPreview(node.Node):
 				center = self.prefs['center']
 				gonpos = {'stage position': {'x':center['x'], 'y':center['y']}}
 				emdata = data.EMData(('scope',), em=gonpos)
-#				print 'moving to center', center
+				print 'moving to center', center
 				self.publishRemote(emdata)
 			else:
 				# move to next postion
 				camconfig = self.cam.config()
 				camstate = camconfig['state']
-#				print 'camstate', camstate
+				print 'camstate', camstate
 				scopestate = self.getScope()
 
 				targetrow, targetcol = target
-#				print 'targetrow', targetrow
+				print 'targetrow', targetrow
 				pixelshift = {'row':targetrow, 'col':targetcol}
+				print 'transforming'
 				newstate = self.calclient.transform(pixelshift, scopestate, camstate)
+				print 'done transforming'
 				emdat = data.EMData(('scope',), em=newstate)
-#				print 'moving to next position'
+				print 'moving to next position'
 				self.publishRemote(emdat)
 
 			## this should be calibrated
@@ -131,9 +133,10 @@ class GridPreview(node.Node):
 
 			stagepos = self.researchByDataID(('stage position',))
 			stagepos = stagepos['em']
-#			print 'gridpreview stagepos', stagepos
+			print 'gridpreview stagepos', stagepos
 
-			imagedata = self.cam.acquireCameraImageData(camstate=None, correction=1)
+			imagedata = self.cam.acquireCameraImageData(camstate=None,
+																									correction=False)
 			imarray = imagedata['image']
 			thisid = self.ID()
 			if self.lastid is None:
@@ -227,8 +230,8 @@ class GridPreview(node.Node):
 			while self.temptodo and not self.stoprunning.isSet():
 				self.next_target()
 			self.logPrint()
-		except Exception, detail:
-			print detail
+		except:
+			self.printerror('error while executing loop')
 		self.running.clear()
 		self.stoprunning.clear()
 

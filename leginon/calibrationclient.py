@@ -114,8 +114,11 @@ class MatrixCalibrationClient(CalibrationClient):
 		'''
 		finds the requested matrix using magnification and type
 		'''
-		caldatalist = self.node.research(dataclass=data.MatrixCalibration, magnification=mag, type=caltype)
-		caldata = caldatalist[0]
+		caldatalist = self.node.research(dataclass=data.MatrixCalibrationData, magnification=mag, type=caltype)
+		if len(caldatalist) > 0:
+			caldata = caldatalist[0]
+		else:
+			return None
 		matrix = caldata['matrix']
 		return matrix
 
@@ -364,6 +367,8 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		vect = (shift['x'], shift['y'])
 
 		matrix = self.retrieveMatrix(mag, par)
+		if matrix is None:
+			return None
 		matrix = LinearAlgebra.inverse(matrix)
 
 		pixvect = Numeric.matrixmultiply(matrix, vect)
@@ -371,23 +376,23 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		return {'row':pixvect[0], 'col':pixvect[1]}
 
 
-class ImageShiftCalibrationClient(MatrixCalibrationClient):
+class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 	def __init__(self, node):
-		MatrixCalibrationClient.__init__(self, node)
+		SimpleMatrixCalibrationClient.__init__(self, node)
 
 	def parameter(self):
 		return 'image shift'
 
-class BeamShiftCalibrationClient(MatrixCalibrationClient):
+class BeamShiftCalibrationClient(SimpleMatrixCalibrationClient):
 	def __init__(self, node):
-		MatrixCalibrationClient.__init__(self, node)
+		SimpleMatrixCalibrationClient.__init__(self, node)
 
 	def parameter(self):
 		return 'beam shift'
 
-class StageCalibrationClient(MatrixCalibrationClient):
+class StageCalibrationClient(SimpleMatrixCalibrationClient):
 	def __init__(self, node):
-		MatrixCalibrationClient.__init__(self, node)
+		SimpleMatrixCalibrationClient.__init__(self, node)
 
 	def parameter(self):
 		return 'stage position'

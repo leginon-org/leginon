@@ -375,7 +375,7 @@ class CustomWidget(Tkinter.Frame):
 		nwidgets = len(self.groups[groupname]['widgets'])
 		interior = self.groups[groupname]['group'].interior()
 		widget = self.widgetFromName(interior, uiclient, name)
-		widget.grid(row = nwidgets, column = 0, padx = 10, pady = 10,
+		widget.grid(row = nwidgets, column = 0, padx = 10, pady = 5,
 																		sticky=Tkinter.W+Tkinter.E)
 		self.groups[groupname]['widgets'].append(widget)
 		return widget
@@ -390,6 +390,9 @@ class GridAtlasWidget(CustomWidget):
 		widget = self.addWidget('Settings', stateimagemosaic,
 																			('Scale', 'Auto Scale'))
 		self.arrangeEntry(widget, 4)
+		widget = self.addWidget('Settings', stateimagemosaic,
+																			('Calibration Method',))
+		self.arrangeCombobox(widget, 'Positioning Method')
 
 		self.addWidget('Control', gridpreview, ('Controls', 'Run'))
 		self.addWidget('Control', gridpreview, ('Controls', 'Stop'))

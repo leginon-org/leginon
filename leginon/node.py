@@ -289,8 +289,11 @@ class Node(leginonobject.LeginonObject):
 				try:
 					result += self.datahandlers[dbdatakeeper.DBDataKeeper].query(
 																	datainstance, indices, results - len(result))
-				except KeyError:
-					self.printerror('DBDataKeeper research failed, no DBDataKeeper')
+				except Exception, e: 
+					if isinstance(e, KeyError):
+						self.printerror('DBDataKeeper research failed, no DBDataKeeper')
+					else:
+						self.printerror('DBDataKeeper research failed, %s' % str(e))
 
 		return result
 
