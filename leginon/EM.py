@@ -223,6 +223,7 @@ class EM(node.Node):
 			'defocus': 0.4,
 			'focus': 0.4,
 			'intensity': 0.1,
+			'main screen position': 1.0,
 		}
 
 		self.permissions = {
