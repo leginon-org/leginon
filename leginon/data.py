@@ -842,6 +842,7 @@ class FocuserResultData(InSessionData):
 		  ('pre manual check', bool),
 		  ('post manual check', bool),
 		  ('auto measured', bool),
+		  ('auto status', str),
 		]
 		return t
 	typemap = classmethod(typemap)
