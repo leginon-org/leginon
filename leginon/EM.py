@@ -119,7 +119,7 @@ class EM(node.Node):
 			self.nodelock.release()
 
 	### now this is handled by EMData
-	def OLDpruneEMdict(self, emdict):
+	def pruneEMdict(self, emdict):
 		'''
 		restrict access to certain scope parameters
 		'''
@@ -187,7 +187,7 @@ class EM(node.Node):
 			result.update(self.camera)
 
 		self.lock.release()
-		#self.pruneEMdict(result)
+		self.pruneEMdict(result)
 		result['system time'] = time.time()
 		return result
 
