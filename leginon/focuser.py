@@ -69,7 +69,7 @@ class Focuser(acquisition.Acquisition):
 		self.cortypes = ['cross', 'phase']
 		self.manualchecklock = threading.Lock()
 		self.parameter = 'Defocus'
-		self.maskradius = 0.01
+		self.maskradius = 1.0
 		self.increment = 5e-7
 		self.man_power = None
 		self.man_image = None

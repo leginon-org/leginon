@@ -20,7 +20,7 @@ class FFTMaker(imagewatcher.ImageWatcher):
 	settingsclass = data.FFTMakerSettingsData
 	defaultsettings = {
 		'process': False,
-		'mask radius': 0.01,
+		'mask radius': 1.0,
 		'label': '',
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):

@@ -218,7 +218,7 @@ def linearscale(input, boundfrom, boundto, extrema=None):
 
 # resize and rotate filters:	NEAREST, BILINEAR, BICUBIC
 
-def power(numericarray, mask_radius=0.01, thresh=3):
+def power(numericarray, mask_radius=1.0, thresh=3):
 	fft = ffteng.transform(numericarray)
 	pow = Numeric.absolute(fft)
 	try:
@@ -228,7 +228,7 @@ def power(numericarray, mask_radius=0.01, thresh=3):
 
 	pow = shuffle(pow)
 
-	center_mask(pow, int(mask_radius*pow.shape[0]))
+	center_mask(pow, int(mask_radius / 100.0 * pow.shape[0]))
 
 	m = mean(pow)
 	s = stdev(pow, known_mean=m)
