@@ -791,6 +791,7 @@ class PresetsManager(node.Node):
 		self.currentpreset = self.renewPreset(self.currentpreset)
 		self.currentpreset['dose'] = dose
 		self.presetToDB(self.currentpreset)
+		self.presetparams.set(self.currentpreset)
 		self.displayDose(self.currentpreset)
 
 	def displayDose(self, preset):
