@@ -126,7 +126,7 @@ class Manager(xmlrpcnode.xmlrpcnode):
 	def EXPORT_addNode(self, node):
 
 		id = self.registry.addEntry(
-			registry.RegistryEntry(node['methods'],
+			registry.NodeRegistryEntry(node['methods'],
 				cPickle.loads(node['events pickle']),
 				cPickle.loads(node['location pickle'])))
 		self.addProxy(id, self.registry.entries[id].location.getURI())
