@@ -244,6 +244,12 @@ class NumericImage:
 		photo = ImageTk.PhotoImage(self.image)
 		return photo
 
+	def jpeg(self, filename, quality=100):
+		'Convert numeric -> JPEG [quality]'
+		img = self.update_image()
+		img.convert('L').save(filename, "JPEG", quality=quality)
+
+
 
 if __name__ == '__main__':
 	from Numeric import *
