@@ -16,6 +16,7 @@ class SpecWidget(Frame):
 		self.uiclient = uiclient
 		self['bg'] = '#4488BB'
 		self.buttoncolor = '#7AA6C5'
+		self.entrycolor = '#FFF'
 
 class Container(SpecWidget):
 	def __init__(self, parent, uiclient, spec):
@@ -147,6 +148,8 @@ class Data(SpecWidget):
 
 		### the actual data widget
 		w = self.buildWidget(self)
+		if self.default is not None:
+			self.setWidget(self.default)
 		w.pack(side=TOP, expand=YES, fill=BOTH)
 
 	def setServer(self):
@@ -174,7 +177,7 @@ class EntryData(Data):
 		Data.__init__(self, parent, uiclient, spec)
 
 	def buildWidget(self, parent):
-		self.entry = Entry(parent, width=10)
+		self.entry = Entry(parent, width=10, bg=self.entrycolor)
 		return self.entry
 
 	def setWidget(self, value):
@@ -216,6 +219,7 @@ class ComboboxData(Data):
 	def buildWidget(self, parent):
 		self.tkvar = StringVar()
 		self.combo = Pmw.ComboBox(parent, entry_textvariable=self.tkvar)
+		self.combo.component('entryfield').component('entry')['bg'] = self.entrycolor
 		self.updateList()
 		return self.combo
 
@@ -249,7 +253,7 @@ class TreeData(Data):
 		self.dict = value
 		if self.sc is not None:
 			self.sc.frame.destroy()
-		self.sc = TreeWidget.ScrolledCanvas(self.treeframe, highlightthickness=0)
+		self.sc = TreeWidget.ScrolledCanvas(self.treeframe, highlightthickness=0, bg=self.entrycolor)
 		item = StructTreeItem(None, self.name, self.dict)
 		node = TreeWidget.TreeNode(self.sc.canvas, None, item)
 		node.expand()
@@ -280,7 +284,7 @@ class Method(SpecWidget):
 			newwidget.pack(expand=YES, fill=X)
 			self.argwidgets.append(newwidget)
 
-		but = Button(self, text=self.name, command=self.butcom)
+		but = Button(self, text=self.name, command=self.butcom, bg=self.buttoncolor)
 		but.pack()
 
 		if self.returnspec is not None:
