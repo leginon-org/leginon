@@ -287,6 +287,22 @@ class wxXMLRPCClient(XMLRPCUIClient, wxUIClient):
 		wxUIClient.__init__(self, container)
 		threading.Thread(target=self.addServer, args=()).start()
 
+class UIStatusBar(wxStatusBar):
+	def __init__(self, parent):
+		wxStatusBar.__init__(self, parent, -1)
+		self.SetFieldsCount(1)
+		self.gauge = wxGauge(self, -1, 100)
+		EVT_SIZE(self, self.OnSize)
+		self.update()
+
+	def OnSize(self, evt):
+		self.update()
+
+	def update(self):
+		r = self.GetFieldRect(0)
+		self.gauge.SetPosition(wxPoint(r.x + 3*r.width/4 - 2, r.y+2))
+		self.gauge.SetSize(wxSize(r.width/4, r.height-4))
+
 class UIApp(wxApp):
 	def __init__(self, location, title='UI', containername='UI Client'):
 		self.location = location
@@ -299,6 +315,8 @@ class UIApp(wxApp):
 
 	def OnInit(self):
 		self.frame = wxFrame(NULL, -1, self.title, size=(740, 740))
+#		self.statusbar = UIStatusBar(self.frame)
+#		self.frame.SetStatusBar(self.statusbar)
 		self.panel = wxScrolledWindow(self.frame, -1)
 		self.panel.SetScrollRate(1, 1)		
 		containerclass = wxClientContainerFactory(wxSimpleContainerWidget)
