@@ -228,7 +228,7 @@ class SQLDict(object):
 	    	c = self._cursor()
 		try:
 			# print '-----------------------------------------------'
-			print 'query =', query
+			#print 'query =', query
 			c.execute(query)
 		except MySQLdb.ProgrammingError, e:
 			errno = e.args[0]
