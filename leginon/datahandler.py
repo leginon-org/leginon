@@ -138,7 +138,6 @@ class CachedDictDataKeeper(DataHandler):
 				self.cache(k)
 
 	def cache(self, id):
-		print 'writing out cache...'
 		if not self.datadict[id]['cached']:
 			self.shelf[str(id)] = self.datadict[id]['data']
 			self.datadict[id]['cached'] = 1
