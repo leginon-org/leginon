@@ -15,6 +15,7 @@ import threading
 import emailnotification
 import project
 import EM
+import Image
 
 # ...
 def seconds2str(seconds):
@@ -323,9 +324,17 @@ if sys.platform == 'win32':
 			self.setRobotStatusMessage('Signaled robot to begin extraction')
 
 		def emailGridClear(self):
-			subject = 'Grid #%d failed to be removed from specimen holder properly' % self.gridnumber
+			if self.gridnumber is None:
+				gridnumber = '(unknown)'
+			else:
+				gridnumber = self.gridnumber
+			subject = 'Grid #%s failed to be removed from specimen holder properly' % gridnumber
 			text = 'Reply to this message if grid is no longer in the specimen holder.\nImage of the specimen holder is attached.'
-			imagestring = None
+			try:
+				image = Image.open(self.imagefilename.get())
+				imagestring = emailnotification.PILImage2String(image)
+			except:
+				imagestring = None
 			self.emailclient.sendAndSet(self.gridcleared, subject, text, imagestring)
 
 		def waitForGridClear(self):
@@ -661,16 +670,20 @@ if sys.platform == 'win32':
 			self.uicurrentgridnumber = uidata.Integer('Current grid number',
 																								None, 'r')
 			self.uitimeleft = uidata.String('Estimated time remaining', '', 'r')
+			self.imagefilename = uidata.String('Email image filename', '', 'rw',
+																					persist=True)
 			statuscontainer = uidata.Container('Status')
 			statuscontainer.addObjects((self.uistatusmessage,
 																	self.uiscopestatusmessage,
 																	self.uirobotstatusmessage,
 																	self.uicurrentgridnumber,
-																	self.uitimeleft))
+																	self.uitimeleft,
+																	self.imagefilename))
 
+			testemailmethod = uidata.Method('Test email', self.emailGridClear)
 			self.insertmethod = uidata.Method('Process Grids', self.insert)
 			controlcontainer = uidata.Container('Control')
-			controlcontainer.addObjects((self.insertmethod,))
+			controlcontainer.addObjects((self.insertmethod, testemailmethod))
 
 			rccontainer = uidata.LargeContainer('Robot Control')
 			rccontainer.addObjects((gridcontainer, statuscontainer, controlcontainer))

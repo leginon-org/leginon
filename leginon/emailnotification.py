@@ -184,10 +184,8 @@ class Email(node.Node):
 		settingscontainer.addObjects((addresscontainer, outboundcontainer,
 																	inboundcontainer, testsettingsmethod))
 
-		testmethod = uidata.Method('Test', self.test)
-
 		container = uidata.LargeContainer('Email')
-		container.addObjects((statuscontainer, settingscontainer, testmethod))
+		container.addObjects((statuscontainer, settingscontainer))
 		self.uicontainer.addObject(container)
 
 if __name__ == '__main__':
