@@ -59,12 +59,14 @@ magnificationtable = [
 ]
 
 class Attribute(object):
-	def __init__(self, name, type=None, ranges=[], values=[], unit=None):
+	def __init__(self, name, type=None, ranges=[], values=[], unit=None,
+								length=None):
 		self.name = name
 		self.type = type
 		self.ranges = ranges
 		self.values = values
 		self.unit = unit
+		self.length = length
 
 		if self.hasGet():
 			self.get = self._typeGet
@@ -99,10 +101,13 @@ class Attribute(object):
 
 		for r in self.ranges:
 			if value < r[0] or value > r[1]:
-				raise ValueError('Value %s not in range' % (value,))
+				raise ValueError('%s not in range' % (value,))
 
 		if self.values and value not in self.values:
-			raise ValueError('Value %s not a valid value' % (value,))
+			raise ValueError('%s not a valid value' % (value,))
+
+		if self.length is not None and len(value) > self.length:
+			raise ValueError('Value exceeds maximun length')
 
 	def _validateSet(self, value, **kwargs):
 		self._validate(value, **kwargs)
@@ -895,9 +900,9 @@ class Tecnai(AttributeContainer):
 											self.comobjects['tecnai'].Camera,
 											'MeasuredExposureTime', type=float),
 				COMAttribute('text', self.comobjects['tecnai'].Camera, 'FilmText',
-											type=str),
+											type=str, length=96),
 				COMAttribute('user code', self.comobjects['tecnai'].Camera, 'Usercode',
-											type=str),
+											type=str, length=3),
 				ConstantMappedCOMAttribute('date type',
 																		self.comobjects['tecnai'].Camera,
 																		'PlateLabelDateType',
@@ -1015,12 +1020,6 @@ map = {
 			# pascal
 			'pressure':
 		},
-	},
-	'film': {
-		# max 96 chars
-		'text':
-		# max 3 chars
-		'user code':
 	},
 }
 '''
