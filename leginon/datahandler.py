@@ -29,7 +29,6 @@ class DataHandler(leginonobject.LeginonObject):
 		'''Return data IDs of all stored data.'''
 		raise NotImplementedError
 
-
 class DictDataKeeper(DataHandler):
 	'''Keep data in a dictionary.'''
 	def __init__(self, id, session):
@@ -68,63 +67,64 @@ class DictDataKeeper(DataHandler):
 		self.lock.release()
 		return result
 
-class ShelveDataKeeper(DataHandler):
-	'''Keep data in a shelf (dictionary in a file).'''
-	def __init__(self, id, session, filename = None, path = '.'):
-		DataHandler.__init__(self, id, session)
+class TimeoutDataKeeper(DictDataKeeper):
+	'''Keep remove data after a timeout.'''
+	def __init__(self, id, session, timeout=300.0, interval=30.0):
+		DictDataKeeper.__init__(self, id, session)
+		self.timestampdict = {}
+		self.setTimeout(timeout)
+		self.setInterval(interval)
 
-		self.openshelf(filename, path)
+	def getTimeout(self):
+		return self.timeout
 
-	def openshelf(self, filename, path):
-		if filename is None:
-			randfilename = "shelf.%d" % random.randrange(1024)
-			self.filename = path + '/' + randfilename
-			try:
-				self.shelf = shelve.open(self.filename)
-				self.shelflock = threading.Lock()
-			except:
-				self.openshelf(filename, path)
-		else:
-			self.filename = path + '/' + randfilename
-			self.shelf = shelve.open(self.filename)
-			self.shelflock = threading.Lock()
+	def setTimeout(self, timeout):
+		self.timeout = timeout
 
-	def exit(self):
-		try:
-			os.remove(self.filename)
-		except:
-			print "failed to remove %s" % self.filename
+	def getInterval(self):
+		return self.interval
+
+	def setInterval(self, interval):
+		self.timer = threading.Timer(interval, self.clean)
 
 	def query(self, id):
-		self.shelflock.acquire()
+		self.lock.acquire()
 		try:
-			result = self.shelf[str(id)]
+			result = self.datadict[id]
+			self.timestampdict[id] = time.time()
 		except KeyError:
 			result = None
-		self.shelflock.release()
+		self.lock.release()
 		return result
 
-	def insert(self, idata):
-		if not issubclass(idata.__class__, data.Data):
+	def insert(self, newdata):
+		if not issubclass(newdata.__class__, data.Data):
 			raise TypeError
-		self.shelflock.acquire()
-		#self.shelf[str(idata.id)] = idata
-		self.shelf[str(idata['id'])] = idata
-		self.shelflock.release()
+		self.lock.acquire()
+		self.datadict[newdata['id']] = newdata
+		self.timestampdict[newdata['id']] = time.time()
+		self.lock.release()
 
 	def remove(self, id):
-		self.shelflock.acquire()
+		self.lock.acquire()
 		try:
-			del self.shelf[str(id)]
+			del self.datadict[id]
+			del self.timestampdict[id]
 		except KeyError:
 			pass
-		self.shelflock.release()
+		self.lock.release()
 
 	def ids(self):
-		self.shelflock.acquire()
-		result = self.shelf.keys()
-		self.shelflock.release()
+		self.lock.acquire()
+		result = self.datadict.keys()
+		self.lock.release()
 		return result
+
+	def clean(self):
+		now = time.time()
+		for id, timestamp in self.timestampdict.items():
+			if now - timestamp >= self.timeout:
+				self.remove(id)
 
 # I'm reasonably sure this works, but it hasn't been fully tested
 class CachedDictDataKeeper(DataHandler):
@@ -189,8 +189,9 @@ class CachedDictDataKeeper(DataHandler):
 				del self.shelf[str(newdata['id'])]
 		except KeyError:
 			pass
-		#self.datadict[newdata.id] = {'cached' : 0, 'ts' : time.time(), 'data' : newdata}
-		self.datadict[newdata['id']] = {'cached' : 0, 'ts' : time.time(), 'data' : newdata}
+		self.datadict[newdata['id']] = {'cached' : 0,
+																		'ts' : time.time(),
+																		'data' : newdata}
 		self.lock.release()
 
 	def remove(self, id):
@@ -219,7 +220,7 @@ class CachedDictDataKeeper(DataHandler):
 				self.datadict[id]['cached'] = 1
 				del self.datadict[id]['data']
 			except pickle.PicklingError, detail:
-				print 'Warning:  CashedDictDataKeeper could not pickle data with id: %s' % (id,)
+				print 'Warning: CachedDictDataKeeper could not pickle data: %s' % (id,)
 				print 'PicklingError detail:', detail
 
 	def ids(self):
@@ -227,11 +228,6 @@ class CachedDictDataKeeper(DataHandler):
 		result = self.datadict.keys()
 		self.lock.release()
 		return result
-
-#class SimpleDataKeeper(CachedDictDataKeeper):
-class SimpleDataKeeper(DictDataKeeper):
-	'''Define a basic data keeper with functionality.'''
-	pass
 
 class DataBinder(DataHandler):
 	'''Bind data to a function. Used for mapping Events to handlers.'''

@@ -11,8 +11,18 @@ import copy
 import time
 import dbdatakeeper
 import uidata
+import datahandler
+import leginonobject
 
 class DataHandler(node.DataHandler):
+	def __init__(self, id, session, mynode):
+		leginonobject.LeginonObject.__init__(self, id, session)
+		## giving these all the same id, don't know why
+		self.datakeeper = datahandler.DictDataKeeper(id, session)
+		self.databinder = datahandler.DataBinder(id, session)
+		self.dbdatakeeper = dbdatakeeper.DBDataKeeper(id, session)
+		self.node = mynode
+
 	def insert(self, idata):
 		if isinstance(idata, event.Event):
 			self.databinder.insert(idata)

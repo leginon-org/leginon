@@ -22,7 +22,7 @@ class DataHandler(leginonobject.LeginonObject):
 	def __init__(self, id, session, mynode):
 		leginonobject.LeginonObject.__init__(self, id, session)
 		## giving these all the same id, don't know why
-		self.datakeeper = datahandler.SimpleDataKeeper(id, session)
+		self.datakeeper = datahandler.TimeoutDataKeeper(id, session)
 		self.databinder = datahandler.DataBinder(id, session)
 		self.dbdatakeeper = dbdatakeeper.DBDataKeeper(id, session)
 		self.node = mynode
@@ -370,8 +370,12 @@ class Node(leginonobject.LeginonObject):
 	def researchByLocation(self, loc, dataid):
 		'''Get a piece of data with the specified data ID by the location of a node.'''
 		client = self.clientclass(self.ID(), loc)
-		cdata = client.pull(dataid)
+		try:
+			cdata = client.pull(dataid)
+		except IOError:
+			cdata = None
 		return cdata
+
 
 	def researchByDataID(self, dataid):
 		'''Get a piece of data with the specified data ID. Currently retrieves the data from the last node to publish it.'''
@@ -383,6 +387,21 @@ class Node(leginonobject.LeginonObject):
 		# should interate over nodes, be crafty, etc.
 		datalocationdata = self.managerclient.pull(nodeiddata['location'][-1])
 		newdata = self.researchByLocation(datalocationdata['location'], dataid)
+		return newdata
+
+	def researchPublishedData(self, publishevent):
+		newdata = None
+		if 'dataid' in publishevent:
+			dataid = publishevent['dataid']
+			if dataid is not None:
+				newdata = self.researchByDataID(self, dataid)
+				if newdata is None:
+					if issubclass(publishevent.dataclass, data.Data):
+						initializer = {'id': dataid, 'session': self.session}
+						datainstance = publishevent.dataclass(initializer=initializer)
+						newdatalist = self.research(datainstance=datainstance)
+						if newdatalist:
+							newdata = newdatalist[0]
 		return newdata
 
 	# methods for setting up the manager

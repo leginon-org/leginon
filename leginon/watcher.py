@@ -124,12 +124,12 @@ class Watcher(node.Node):
 			self.getData(pubevent)
 
 	def getData(self, pubevent):
-		dataid = pubevent['dataid']
-		newdata = self.researchByDataID(dataid)
-		if self.uidataqueueflag.get():
-			self.dataqueue.put(newdata)
-		else:
-			self.processData(newdata)
+		newdata = self.researchPublishedData(pubevent)
+		if newdata is not None:
+			if self.uidataqueueflag.get():
+				self.dataqueue.put(newdata)
+			else:
+				self.processData(newdata)
 
 	def processData(self, datainstance):
 		raise NotImplementedError()
