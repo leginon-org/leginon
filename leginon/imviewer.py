@@ -18,11 +18,11 @@ class ImViewer(imagewatcher.ImageWatcher):
 		self.cam = camerafuncs.CameraFuncs(self)
 
 		## default camera config
-		currentconfig = self.cam.config()
+		currentconfig = self.cam.configCameraEMData()
 		currentconfig['state']['dimension']['x'] = 1024
 		currentconfig['state']['binning']['x'] = 4
 		currentconfig['state']['exposure time'] = 500
-		self.cam.config(currentconfig)
+		self.cam.configCameraEMData(currentconfig)
 
 		self.viewer_ready = threading.Event()
 		self.clicklock = threading.Lock()
@@ -104,9 +104,8 @@ class ImViewer(imagewatcher.ImageWatcher):
 			self.ui_image.set(imarray)
 
 	def acquireArray(self, corr=0):
-		camconfig = self.cam.config()
-		camstate = camconfig['state']
-		camdata = data.CameraEMData(id=('camera',), initializer=camstate)
+		camconfig = self.cam.configCameraEMData()
+		camdata = camconfig['state']
 		imdata = self.cam.acquireCameraImageData(camdata, correction=corr)
 		imarray = imdata['image']
 		return imarray
