@@ -7,68 +7,64 @@ import holefinderback
 import convolver
 import peakfinder
 
-class CircleMaskCreator(object):
+class CircleTemplateCreator(object):
 	def __init__(self):
-		self.masks = {}
+		self.templates = {}
 
-	def get(self, shape, center, minradius, maxradius):
+	def wrapped_indices(self, shape):
+		'''
+		creates a set of indices like Numeric.indices, but 
+		includes negative values, which wrap around to the second
+		half of the image
+		'''
+		## These wrap limits are selected such that at least half (odd
+		## shape leads to one more row/col) of the image will remain
+		## the same, and the rest will be the wrapped negative side.
+		# Integer division is intended here.
+		wrap0 = (shape[0]+1)/2
+		wrap1 = (shape[1]+1)/2
+		indices = Numeric.indices(shape)
+		indices[0][wrap0:] -= shape[0]
+		indices[1][:,wrap1:] -= shape[1]
+		return indices
+
+	def get(self, shape, center, minradius, maxradius, value=1):
 		'''
 		create binary mask of a circle centered at 'center'
+		with minradiux and maxradius
 		'''
-
-		## wrap around negative values
-		newcenter = list(center)
-		while newcenter[0] < 0:
-			newcenter[0] += shape[0]
-		while newcenter[1] < 0:
-			newcenter[1] += shape[1]
-		center = tuple(newcenter)
-
 		## use existing circle mask
 		key = (shape, center, minradius, maxradius)
-		if self.masks.has_key(key):
-			return self.masks[key]
+		if self.templates.has_key(key):
+			return self.templates[key]
 
-		## set up shift and wrapping of circle on image
-		halfshape = shape[0] / 2.0, shape[1] / 2.0
-		cutoff = [0.0, 0.0]
-		lshift = [0.0, 0.0]
-		gshift = [0.0, 0.0]
-		for axis in (0,1):
-			if center[axis] < halfshape[axis]:
-				cutoff[axis] = center[axis] + halfshape[axis]
-				lshift[axis] = 0
-				gshift[axis] = -shape[axis]
-			else:
-				cutoff[axis] = center[axis] - halfshape[axis]
-				lshift[axis] = shape[axis]
-				gshift[axis] = 0
 		minradsq = minradius*minradius
 		maxradsq = maxradius*maxradius
 		def circle(indices0,indices1):
-			## this shifts and wraps the indices
-			i0 = Numeric.where(indices0<cutoff[0], indices0-center[0]+lshift[0], indices0-center[0]+gshift[0])
-			i1 = Numeric.where(indices1<cutoff[1], indices1-center[1]+lshift[1], indices1-center[0]+gshift[1])
+			i0 = indices0 - center[0]
+			i1 = indices1 - center[1]
 			rsq = i0*i0+i1*i1
-			c = Numeric.where((rsq>=minradsq)&(rsq<=maxradsq), 1.0, 0.0)
+			c = Numeric.where((rsq>=minradsq)&(rsq<=maxradsq), value, 0)
 			return c.astype(Numeric.Int8)
-		temp = Numeric.fromfunction(circle, shape)
-		self.masks[key] = temp
+		## this is like Numeric.from_function, but I want to create
+		## my own indices
+		indices = self.wrapped_indices(shape)
+		temp = apply(circle, tuple(indices))
+		self.templates[key] = temp
 		return temp
 
-
-circle = CircleMaskCreator()
+circle = CircleTemplateCreator()
 
 class QuantifoilSolver(object):
 	def __init__(self):
 		self.peakfinder = peakfinder.PeakFinder()
-		self.gradient = convolver.Convolver()
+		self.conv = convolver.Convolver()
 
 	def solve(self, image):
 		pass
 
 	def findLatticeVector(self, image, guess, tolerance):
-		edges = self.findEdges(image)
+		edges = self.edges = self.findEdges(image)
 		autocorr = imagefun.cross_correlate(edges,edges)
 
 		shape = square.shape
@@ -85,12 +81,12 @@ class QuantifoilSolver(object):
 		return peak
 
 	def findEdges(self, image):
-		self.gradient.setImage(image)
+		self.conv.setImage(image)
 		# could probably get away with using gradient in only one direction
 		kernel1 = convolver.sobel_row_kernel
 		kernel2 = convolver.sobel_col_kernel
-		edger = self.gradient.convolve(kernel=kernel1)
-		edgec = self.gradient.convolve(kernel=kernel2)
+		edger = self.conv.convolve(kernel=kernel1)
+		edgec = self.conv.convolve(kernel=kernel2)
 		edges = Numeric.hypot(edger,edgec)
 		return edges
 
@@ -98,36 +94,55 @@ class QuantifoilSolver(object):
 		# perpendicular vector
 		vector2 = (-vector[1], vector[0])
 		temp = Numeric.zeros(shape, Numeric.Int8)
-		for i1 in (-1, 0, 1):
+		for i1 in (-3, -2, -1, 0, 1, 2, 3):
 			i1vect = (i1 * vector[0], i1 * vector[1])
-			for i2 in (-1, 0, 1):
+			for i2 in (-3, -2, -1, 0, 1, 2, 3):
 				i2vect = (i2 * vector2[0], i2 * vector2[1])
 				center = (i1vect[0]+i2vect[0], i1vect[1]+i2vect[1])
 				newring = circle.get(shape, center, minrad, maxrad)
-				fname = str(i1) + str(i2) + '.mrc'
-				temp += newring
-		return temp
-		
+				temp = temp | newring
+		return temp.astype(Numeric.Float32)
 
-	def findOffset(self, image, guess, tolerance):
+	def lowPassFilter(self, image, sigma, size=9):
+		k = convolver.gaussian_kernel(size, sigma)
+		smooth = self.conv.convolve(image=image, kernel=k)
+		return smooth
+
+	def findOffset(self, image, guess, tolerance, minrad, maxrad):
+		print 'findLatticeVector'
 		vector = self.findLatticeVector(image, guess, tolerance)
+		print 'VECTOR', vector
+		print 'createTemplate'
+		temp = self.createTemplate(image.shape, vector, minrad, maxrad)
+		#temp = self.lowPassFilter(temp, 1.0)
+		print 'cross_correlate'
+		#cc = imagefun.cross_correlate(self.edges, temp)
+		print 'zscore edges'
+		edges = imagefun.zscore(self.edges)
+		Mrc.numeric_to_mrc(edges, 'edges.mrc')
+		print 'zscore temp'
+		temp = imagefun.zscore(temp)
+		Mrc.numeric_to_mrc(temp, 'temp.mrc')
+		#cc = imagefun.phase_correlate(edges, temp)
+		cc = imagefun.cross_correlate(edges, temp)
+		#cc = self.lowPassFilter(cc, 1.0)
+		Mrc.numeric_to_mrc(cc, 'cc.mrc')
+		print 'subpixelPeak'
+		peak = self.peakfinder.subpixelPeak(cc)
+		return peak
 
 
-		
 if __name__ == '__main__':
 	import sys
-
-	qs = QuantifoilSolver()
-	temp = qs.createTemplate((1024,1024), (40,117), 20, 25)
-	Mrc.numeric_to_mrc(temp, 'temp.mrc')
-	sys.exit()
-
-
 	filename = sys.argv[1]
 	guess = (int(sys.argv[2]), int(sys.argv[3]))
 	tolerance = int(sys.argv[4])
+	minrad = float(sys.argv[5])
+	maxrad = float(sys.argv[6])
+
+	qs = QuantifoilSolver()
 
 	square = Mrc.mrc_to_numeric(filename)
 	
-	vector = qs.findLatticeVector(square, guess, tolerance)
-	print 'VECTOR', vector
+	center = qs.findOffset(square, guess, tolerance, minrad, maxrad)
+	print 'CENTER', center
