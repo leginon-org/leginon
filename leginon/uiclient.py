@@ -3,6 +3,7 @@ import uiserver
 import threading
 import time
 from wxPython.wx import *
+import wxImageViewer
 
 class XMLRPCClient(object):
 	def __init__(self, serverhostname, serverport, port=None):
@@ -170,11 +171,17 @@ class ContainerWidget(Widget):
 			raise ValueError
 
 def WidgetClassFromTypeList(typelist):
-	if typelist[0] == 'object':
-		if typelist[1] == 'container':
+	if typelist and typelist[0] == 'object':
+		if len(typelist) > 1 and typelist[1] == 'container':
 			return wxStaticBoxContainerWidget
-		elif typelist[1] == 'data':
-			return wxEntryWidget
+		elif len(typelist) > 1 and typelist[1] == 'data':
+			if len(typelist) > 2 and typelist[2] == 'binary':
+				if len(typelist) > 3 and typelist[3] == 'image':
+					return wxImageWidget
+				else:
+					return wxEntryWidget
+			else:
+				return wxEntryWidget
 	raise ValueError('invalid type for widget')
 	
 wxEVT_ADD_WIDGET = wxNewEventType()
@@ -264,7 +271,10 @@ class DataWidget(Widget):
 		self.uiclient.setServer(self.namelist, value)
 
 	def set(self, value):
-		self.value = value
+		if isinstance(value, xmlrpclib.Binary):
+			self.value = value.data
+		else:
+			self.value = value
 
 class wxDataWidget(DataWidget):
 	def __init__(self, uiclient, namelist, window, parent):
@@ -319,4 +329,19 @@ class wxEntryWidget(wxDataWidget):
 		DataWidget.set(self, value)
 		self.entry.SetValue(str(self.value))
 		self.applybutton.Enable(false)
+
+class wxImageWidget(wxDataWidget):
+	def __init__(self, uiclient, namelist, window, parent):
+		wxDataWidget.__init__(self, uiclient, namelist, window, parent)
+		self.wxwidget = wxBoxSizer(wxHORIZONTAL)
+		self.imageviewer = wxImageViewer.ImagePanel(self.parent, -1)
+		#self.imageviewer.SetSize(wxSize(512, 512))
+		self.wxwidget.Add(self.imageviewer, 0, wxALIGN_CENTER | wxALL, 5)
+
+	def set(self, value):
+		DataWidget.set(self, value)
+		self.imageviewer.setImage(self.value)
+		self.wxwidget.SetItemMinSize(self.imageviewer,
+																	self.imageviewer.GetSize().GetWidth(),
+																	self.imageviewer.GetSize().GetHeight())
 

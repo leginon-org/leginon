@@ -1,4 +1,5 @@
 import copy
+import xmlrpclib
 
 # Exceptions
 # maybe overdone
@@ -209,6 +210,10 @@ class UIDate(UIData):
 
 class UIBinary(UIData):
 	typelist = UIData.typelist + ('binary',)
+	def __init__(self, name, value, permissions='r', callback=None):
+		if type(value) is str:
+			value = xmlrpclib.Binary(value)
+		UIData.__init__(self, name, value, permissions, callback)
 
 class UIDialog(UIContainer):
 	typelist = UIContainer.typelist + ('dialog',)
