@@ -127,7 +127,7 @@ class CalibrationClient(object):
 			seconds = t1 - t0
 			print 'SECONDS: ', seconds
 			print 'PIXELS: ', drift
-			print 'PIXELS/SECOND: %.4e', float(drift) / seconds
+			print 'PIXELS/SECOND: %.4e' % (float(drift) / seconds,)
 			if drift > drift_threshold:
 				raise Drifting()
 
