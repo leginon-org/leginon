@@ -434,6 +434,7 @@ class PresetsManager(node.Node):
 		magonly = True:  all presets in cycle (except for final) 
 		   will only send magnification to TEM
 		'''
+		errstr = 'Preset cycle failed: %s'
 		if not self.settings['cycle']:
 			if dofinal:
 				try:
@@ -448,7 +449,9 @@ class PresetsManager(node.Node):
 		magshortcut = self.settings['optimize cycle']
 
 		if presetname not in order:
-			raise RuntimeError('final preset %s not in cycle order list' % (presetname,))
+			estr = 'final preset %s not in cycle order list' % (presetname,)
+			self.logger.error(errstr % estr)
+			return
 
 		### check if this is the first time a preset
 		### has been set for this PresetManager instance
@@ -466,7 +469,9 @@ class PresetsManager(node.Node):
 
 		currentname = self.currentpreset['name']
 		if currentname not in order:
-			raise RuntimeError('current preset %s not in cycle order list' % (currentname,))
+			estr = 'current preset %s not in cycle order list' % (currentname,)
+			self.logger.error(errstr % estr)
+			return
 
 		thiscycle = self.createCycleList(currentname, presetname, magshortcut)
 		
@@ -638,7 +643,14 @@ class PresetsManager(node.Node):
 		sessionnamelist = [x['name'] for x in sessionlist]
 		self.sessiondict = dict(zip(sessionnamelist, sessionlist))
 
-	def acquireDoseImage(self):
+	def acquireDoseImage(self, presetname):
+		if self.currentpreset is None or self.currentpreset['name'] != presetname:
+			self.cycleToScope(presetname)
+		if self.currentpreset is None or self.currentpreset['name'] != presetname:
+			return
+		self._acquireDoseImage()
+
+	def _acquireDoseImage(self):
 		if self.currentpreset is None:
 			self.logger.error('Please go to a preset before measuring dose')
 			return
