@@ -506,11 +506,11 @@ class Application(wxObjectCanvas.wxRectangleObject):
 
 		self.popupmenu.Append(101, 'Rename...')
 		self.popupmenu.Append(102, 'Add Launcher...')
-		self.popupmenu.Append(103, 'Delete')
+#		self.popupmenu.Append(103, 'Delete')
 		self.popupmenu.Append(104, 'Arrange')
 		EVT_MENU(self.popupmenu, 101, self.menuRename)
 		EVT_MENU(self.popupmenu, 102, self.menuAddLauncher)
-		EVT_MENU(self.popupmenu, 103, self.menuDelete)
+#		EVT_MENU(self.popupmenu, 103, self.menuDelete)
 		EVT_MENU(self.popupmenu, 104, self.menuArrange)
 
 	def setSize(self, width, height):
@@ -615,6 +615,7 @@ class Application(wxObjectCanvas.wxRectangleObject):
 		return application
 
 	def setApplication(self, application):
+		self.setUpdateDrawing(False)
 		if application['name'] != self.getName():
 			self.setName(application['name'])
 
@@ -686,6 +687,8 @@ class Application(wxObjectCanvas.wxRectangleObject):
 				else:
 					print 'Warning, cannot add binding', bindspec
 		self.arrange()
+		self.setUpdateDrawing(True)
+		self.UpdateDrawing()
 
 class Master(wxObjectCanvas.wxRectangleObject):
 	def __init__(self):

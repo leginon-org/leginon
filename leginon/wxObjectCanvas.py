@@ -248,6 +248,11 @@ class wxShapeObjectEvtHandler(wxEvtHandler):
 		EVT_MOVE_CONNECTION(self, self.OnMoveConnection)
 		EVT_POPUP_MENU(self, self.OnPopupMenu)
 
+		self.updatedrawing = True
+
+	def setUpdateDrawing(self, updatedrawing):
+		self.updatedrawing = updatedrawing
+
 	def ProcessEvent(self, evt):
 		wxEvtHandler.ProcessEvent(self, evt)
 		if evt.GetSkipped():
@@ -256,7 +261,8 @@ class wxShapeObjectEvtHandler(wxEvtHandler):
 				handler.ProcessEvent(evt)
 
 	def OnUpdateDrawing(self, evt):
-		evt.Skip()
+		if self.updatedrawing:
+			evt.Skip()
 
 	def OnLeftClick(self, evt):
 		evt.Skip()
@@ -423,7 +429,7 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 	def SetCursor(self, cursor):
 		self.ProcessEvent(SetCursorEvent(cursor))
 
-	def addShapeObject(self, so, x=0, y=0):
+	def addShapeObject(self, so, x=0, y=0, draw=True):
 		if so not in self.shapeobjects:
 			parent = so.getParent()
 			if parent is not None:
@@ -432,15 +438,17 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 			self.shapeobjects.insert(0, so)
 			self.positions[so] = (x, y)
 			so.SetNextHandler(self)
-			self.UpdateDrawing()
+			if draw:
+				self.UpdateDrawing()
 
-	def removeShapeObject(self, so):
+	def removeShapeObject(self, so, draw=True):
 		if so in self.shapeobjects:
 			so.setParent(None)
 			self.shapeobjects.remove(so)
 			del self.positions[so]
 			# delete handler?
-			self.UpdateDrawing()
+			if draw:
+				self.UpdateDrawing()
 
 	def addInputConnectionPoint(self, cpo):
 		if cpo not in self.inputconnectionpoints:
