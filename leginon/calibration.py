@@ -31,15 +31,38 @@ class Calibration(node.Node):
 		self.range = [0.0000001, 0.00001]
 		####
 
-		self.validpixelshift = {'x': [self.camerastate['dimension']['x']/10,
-															5*self.camerastate['dimension']['x']/10],
-														'y': [self.camerastate['dimension']['y']/10,
-															5*self.camerastate['dimension']['y']/10]}
+		self.validshiftpixel = self.validshiftpercent = \
+			{'x': {'min': None, 'max': None}, 'y': {'min': None, 'max': None}}
+		self.validShiftPercentCallback(
+			{'x': {'min': 10.0, 'max': 50.0}, 'y': {'min': 10.0, 'max': 50.0}})
+
 		self.correlationthreshold = 0.05
 
 		node.Node.__init__(self, id, managerlocation)
 		self.clearStateImages()
 		self.start()
+
+	def validShiftPixelCallback(self, value=None):
+		if value:
+			self.validshiftpixel = value
+			for axis in self.validshiftpercent:
+				for limit in self.validshiftpercent[axis]:
+					self.validshiftpercent[axis][limit] = \
+						self.validshiftpixel[axis][limit] \
+							/ self.camerastate['dimension'][axis] * 100,
+		else:
+			return self.validshiftpixel
+
+	def validShiftPercentCallback(self, value=None):
+		if value:
+			self.validshiftpercent = value
+			for axis in self.validshiftpixel:
+				for limit in self.validshiftpixel[axis]:
+					self.validshiftpixel[axis][limit] = \
+						self.camerastate['dimension'][axis] \
+							* self.validshiftpercent[axis][limit]/100
+		else:
+			return self.validshiftpercent
 
 	def main(self):
 		pass
@@ -273,7 +296,12 @@ class Calibration(node.Node):
 		)
 		rspec = self.registerUIMethod(self.uiSetParameters, 'Set Parameters', argspec)
 
-		self.registerUISpec('Calibration', (nodespec, cspec, rspec))
+		pixelspec = self.registerUIData('Valid Pixel Shift', 'struct', permissions='rw')
+		pixelspec.set(self.validShiftPixelCallback)
+		percentspec = self.registerUIData('Valid Percent Shift', 'struct', permissions='rw')
+		percentspec.set(self.validShiftPercentCallback)
+
+		self.registerUISpec('Calibration', (nodespec, cspec, rspec, pixelspec, percentspec))
 
 	def uiCalibrate(self):
 		self.calibrate()
