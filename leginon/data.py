@@ -436,6 +436,7 @@ class Data(newdict.TypedDict, leginonobject.LeginonObject):
 		self.update(kwargs)
 
 		leginonobject.LeginonObject.__init__(self)
+		self.__setitem__ = self.new__setitem__
 
 	def update(self, other):
 		'''
@@ -526,7 +527,7 @@ class Data(newdict.TypedDict, leginonobject.LeginonObject):
 	def __getitem__(self, key):
 		return self.special_getitem(key, dereference=True)
 
-	def __setitem__(self, key, value, force=False):
+	def new__setitem__(self, key, value, force=False):
 		'''
 		'''
 		if hasattr(self, 'dbid') and self.dbid is not None and not force:
