@@ -52,6 +52,8 @@ def getValue(wxobj):
 		return wxobj.GetValue()
 	elif isinstance(wxobj, wx.Choice):
 		return wxobj.GetStringSelection()
+	elif isinstance(wxobj, wx.Button):
+		return True
 	elif isinstance(wxobj, wx.Event):
 		evtobj = wxobj.GetEventObject()
 		if isinstance(evtobj, wx.CheckBox):
@@ -60,18 +62,22 @@ def getValue(wxobj):
 			return wxobj.GetValue()
 		elif isinstance(evtobj, wx.Choice):
 			return wxobj.GetString()
+		elif isinstance(evtobj, wx.Button):
+			return True
 	else:
 		raise ValueError('Cannot get value for %s' % wxobj.__class__.__name__)
 
 def bindControl(parent, method, control):
-	if isinstance(wxobj, wx.CheckBox):
+	if isinstance(control, wx.CheckBox):
 		binder = wx.EVT_CHECKBOX
-	elif isinstance(wxobj, Entry):
+	elif isinstance(control, Entry):
 		binder = EVT_ENTRY
-	elif isinstance(wxobj, wx.Choice):
+	elif isinstance(control, wx.Choice):
 		binder = wx.EVT_CHOICE
+	elif isinstance(control, wx.Button):
+		binder = wx.EVT_BUTTON
 	else:
-		raise ValueError('Cannot bind event for %s' % wxobj.__class__.__name__)
+		raise ValueError('Cannot bind event for %s' % control.__class__.__name__)
 	parent.Bind(binder, method, control)
 
 InitParametersEventType = wx.NewEventType()
@@ -513,12 +519,38 @@ class Panel(gui.wx.Node.Panel):
 			'low dose mode': self.szlowdose.parameters['Mode'],
 		}
 
+		self.controlmap = self.reverseMap(self.parametermap)
+
 		self.SetSizerAndFit(self.szmain)
 		self.SetupScrolling()
 		self.Enable(False)
 
 		self.Bind(EVT_INIT_PARAMETERS, self.onInitParameters)
 		self.Bind(EVT_SET_PARAMETERS, self.onSetParameters)
+		for control in self.controlmap:
+			try:
+				bindControl(self, self.onControl, control)
+			except ValueError:
+				pass
+
+	def onControl(self, evt):
+		keypath = self.reversemap[evt.GetEventObject()]
+		value = getValue(evt)
+		self.node.uiSetState(self.makeDict(keypath, value))
+
+	def makeDict(self, keypath, value):
+		if len(keypath) == 0:
+			return value
+		else:
+			return {keypath[0]: self.makeDict(keypath[1:], value)}
+
+	def reverseMap(self, map, reversemap={}, keypath=[]):
+		for key, value in map.items():
+			if isinstance(value, dict):
+				self.reverseMap(value, reversemap, keypath + [key])
+			else:
+				reversemap[value] = keypath + [key]
+		return reversemap
 
 	def _initParameter(self, parameter, value):
 		if isinstance(parameter, wx.Choice):
