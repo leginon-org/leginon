@@ -139,8 +139,13 @@ class DataManager(object):
 				raise DataError('persist can only be called on data that is stored in the database')
 			dmid = datainstance.dmid
 			if dmid in self.datadict:
-				self.dm2db[dmid] = dataclass,dbid
-				self.db2dm[dataclass,dbid] = dmid
+				dbkey = dataclass,dbid
+				### map a dmid to a dbid
+				self.dm2db[dmid] = dbkey
+				### map dbkey to possibly many dmids
+				if dbkey not in self.db2dm:
+					self.db2dm[dbkey] = {}
+				self.db2dm[dbkey][dmid] = None
 		finally:
 			self.lock.release()
 
@@ -153,8 +158,10 @@ class DataManager(object):
 			print '****removed something', self.size
 			if dmid in self.dm2db:
 				dbkey = self.dm2db[dmid]
-				del self.db2dm[dbkey]
 				del self.dm2db[dmid]
+				del self.db2dm[dbkey][dmid]
+				if not self.db2dm[dbkey]:
+					del self.db2dm[dbkey]
 			if dmid in self.local2remote:
 				remotekey = self.local2remote[dmid]
 				del self.remote2local[remotekey]
@@ -220,8 +227,11 @@ class DataManager(object):
 		try:
 			## maybe data instance has been reborn from DB
 			## since DataReference object was created
-			if (dataclass,dbid) in self.db2dm:
-				dmid = self.db2dm[dataclass,dbid]
+			dbkey = (dataclass,dbid)
+			if dbkey in self.db2dm:
+				## here we just randomly take one of the dmids
+				## maybe should be more picky
+				dmid = self.db2dm[dbkey].values()[0]
 
 			## maybe data is remote, but we have a local copy
 			if dmid in self.remote2local:
