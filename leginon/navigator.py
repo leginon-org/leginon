@@ -6,11 +6,34 @@ import data
 
 class Navigator(node.Node):
 	def __init__(self, id, nodelocations):
+		self.shift_types = {
+			'image shift': event.ImageShiftPixelShiftEvent,
+			'stage': event.StagePixelShiftEvent,
+			'no preference': event.PixelShiftEvent
+		}
+
+		## by default, use the generic PixelShiftEvent
+		self.shiftType('no preference')
+
 		node.Node.__init__(self, id, nodelocations)
 
 		self.addEventInput(event.ImageClickEvent, self.handleImageClick)
 		self.addEventInput(event.ImageAcquireEvent, self.handleImageAcquire)
 		self.addEventOutput(event.ImagePublishEvent)
+		self.addEventOutput(event.PixelShiftEvent)
+
+	def shiftType(self, shift_type=None):
+		'''
+		this sets the event to be generated for a move
+		it must be a subclass of PixelShiftEvent
+		'''
+		if shift_type is None:
+			return self.current_shift_type
+		
+		if shift_type not in self.shift_types:
+			raise RuntimeError('no such shift type: %s' % shift_type)
+		self.current_shift_type = shift_type
+		self.shiftEventClass = self.shift_types[shift_type]
 
 	def handleImageClick(self, clickevent):
 		clickinfo = clickevent.content
@@ -22,21 +45,19 @@ class Navigator(node.Node):
 		## calculate delta from image center
 		deltarow = clickrow - clickshape[0] / 2
 		deltacol = clickcol - clickshape[1] / 2
-		deltarowcol = (deltarow,deltacol)
+		deltarowcol = {'row':deltarow, 'column':deltacol}
 		print 'deltarowcol', deltarowcol
 
-		## move scope parameter
-		self.move(deltarowcol)
+		## do pixel shift
+		e = self.shiftEventClass(self.ID(), deltarowcol)
+		print 'e', e
+		self.outputEvent(e)
 
 		## acquire image
 		self.acquireImage()
 
 	def handleImageAcquire(self, acqevent):
 		self.acquireImage()
-
-	def move(self, deltarowcol):
-		'''deltarowcol is shift in rows and columns'''
-		raise NotImplementedError()
 
 	def acquireImage(self):
 		print 'acquiring image'
@@ -47,68 +68,15 @@ class Navigator(node.Node):
 		self.publish(imagedata, event.ImagePublishEvent)
 		print 'image published'
 
+	def defineUserInterface(self):
+		nodeui = node.Node.defineUserInterface(self)
 
-class StageNavigator(Navigator):
-	def __init__(self, id, nodelocations): 
-		Navigator.__init__(self, id, nodelocations)
+		shift_types = self.shift_types.keys()
+		temparam = self.registerUIData('temparam', 'array', default=shift_types)
+		movetype = self.registerUIData('TEM Parameter', 'string', choices=temparam, permissions='rw')
+		movetype.set(self.shiftType)
 
-	def move(self, deltarowcol):
-		deltax,deltay = self.image2stage(deltarowcol)
-
-		print 'deltaxy', deltax, deltay
-		stagepos = self.researchByDataID('stage position').content
-		print 'stagepos', stagepos
-		curx = stagepos['stage position']['x']
-		cury = stagepos['stage position']['y']
-		print 'xy', curx, cury
-		newx = curx + deltax
-		newy = cury + deltay
-		print 'newxy', newx, newy
-
-		state = {'stage position': {'x':newx, 'y':newy}}
-		print 'state', state
-		emdata = data.EMData('scope', state)
-		print 'emdata', emdata
-		self.publishRemote(emdata)
-
-	def image2stage(self, deltarowcol):
-		### this is fake for now, without using calibration
-		rows = deltarowcol[0]
-		cols = deltarowcol[1]
-		stagex = 8e-9 * rows
-		stagey = 8e-9 * cols
-		return (stagex, stagey)
-
-class ImageShiftNavigator(Navigator):
-	def __init__(self, id, nodelocations): 
-		Navigator.__init__(self, id, nodelocations)
-
-	def move(self, deltarowcol):
-		deltax,deltay = self.image2imageshift(deltarowcol)
-
-		print 'deltaxy', deltax, deltay
-		imageshift = self.researchByDataID('image shift').content
-		print 'image shift', imageshift
-		curx = imageshift['image shift']['x']
-		cury = imageshift['image shift']['y']
-		print 'xy', curx, cury
-		newx = curx + deltax
-		newy = cury + deltay
-		print 'newxy', newx, newy
-
-		state = {'image shift': {'x':newx, 'y':newy}}
-		print 'state', state
-		emdata = data.EMData('scope', state)
-		print 'emdata', emdata
-		self.publishRemote(emdata)
-
-	def image2imageshift(self, deltarowcol):
-		### this is fake for now, without using calibration
-		rows = deltarowcol[0]
-		cols = deltarowcol[1]
-		isx = 8e-9 * rows
-		isy = 8e-9 * cols
-		return (isx, isy)
+		self.registerUISpec('Navigator', (movetype, nodeui))
 
 
 if __name__ == '__main__':

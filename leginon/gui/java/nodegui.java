@@ -289,6 +289,11 @@ class GuiData {
 				new AddButton ("Get", xmlrpcclient, "GET", args, mainPanel);
 			if (permissions.equals("w")) 
 				new AddButton ("Set", xmlrpcclient, "SET", args, mainPanel);
+			if (permissions.equals("rw")) {
+
+				new AddButton ("Get", xmlrpcclient, "GET", args, mainPanel);
+				new AddButton ("Set", xmlrpcclient, "SET", args, mainPanel);
+			}
 		}
 
 		Object defaultval = null;
