@@ -93,8 +93,11 @@ class CameraFuncs(object):
 		camconfig must be a CameraConfigData instance
 		camconfig['offset'] will be set to new value
 		'''
-		if not self.camsize:
+		if self.camsize is None:
 			camsize = self.node.session['instrument']['camera size']
+			if not camsize:
+				camconfig['offset'] = {'x': 0, 'y': 0}
+				return
 			self.camsize = {'x':camsize, 'y':camsize}
 
 		sizex = self.camsize['x']
