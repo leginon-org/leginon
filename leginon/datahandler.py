@@ -150,7 +150,6 @@ class TimeoutDataKeeper(DictDataKeeper):
 		self.timer.start()
 
 	def clean(self):
-		print 'clean'
 		now = time.time()
 		for id, timestamp in self.timestampdict.items():
 			if now - timestamp >= self.timeout:
