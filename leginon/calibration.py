@@ -292,7 +292,8 @@ class Calibration(node.Node):
 		self.registerUIData('Parameter', 'string', choices=paramchoices, default='image shift'),
 		self.registerUIData('Minimum', 'float', default=self.range[0]),
 		self.registerUIData('Maximum', 'float', default=self.range[1]),
-		self.registerUIData('Attempts', 'integer', default=self.attempts)
+		self.registerUIData('Attempts', 'integer', default=self.attempts),
+		self.registerUIData('Camera State', 'struct', default=self.camerastate)
 		)
 		rspec = self.registerUIMethod(self.uiSetParameters, 'Set Parameters', argspec)
 
@@ -307,12 +308,14 @@ class Calibration(node.Node):
 		self.calibrate()
 		return ''
 
-	def uiSetParameters(self, emnode, param, r0, r1, a):
+	def uiSetParameters(self, emnode, param, r0, r1, a, cs):
 		self.emnode = ('manager', emnode)
 		self.parameter = param
 		self.range[0] = r0
 		self.range[1] = r1
 		self.attempts = a
+		self.camerastate = cs
+		self.validShiftPercentCallback(self.validshiftpercent)
 		return ''
 
 #			imageshift = (shiftrange[1] + shiftrange[0])/2
