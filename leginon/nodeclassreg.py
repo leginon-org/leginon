@@ -77,6 +77,7 @@ registerNodeClass('presets', 'PresetsManager', 'Utility')
 registerNodeClass('driftmanager', 'DriftManager', 'Utility')
 registerNodeClass('navigator', 'Navigator', 'Utility')
 registerNodeClass('manualacquisition', 'ManualAcquisition', 'Utility')
+registerNodeClass('atlasviewer', 'AtlasViewer', 'Utility')
 
 registerNodeClass('pixelsizecalibrator', 'PixelSizeCalibrator', 'Calibrations')
 registerNodeClass('dosecalibrator', 'DoseCalibrator', 'Calibrations')

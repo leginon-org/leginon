@@ -42,7 +42,7 @@ unsupported_types = {
 	Numeric.Int:       Numeric.Float32,   # precision loss
 	Numeric.UInt16:    Numeric.Float32,   # 2 bytes wasted
 	Numeric.Int8:      Numeric.Int16,     # 1 byte wasted
-	Numeric.Bool:      Numeric.UInt8,     # 1 byte wasted
+	#Numeric.Bool:      Numeric.UInt8,     # 1 byte wasted
 }
 
 def mrc_to_numeric(filename):

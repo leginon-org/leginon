@@ -104,13 +104,13 @@ else:
 		def __init__(self, planshapes=(), measure=False, *args, **kwargs):
 			_fftEngine.__init__(self)
 			self.measure = measure
-			if planshapes:
-				print 'calculating fftw plans'
+			#if planshapes:
+			#	print 'calculating fftw plans'
 			for mod in fftw_mods:
 				for shape in planshapes:
 					self.timer(self.plan, (shape,mod))
 					self.timer(self.iplan, (shape,mod))
-					print 'fftw plans done'
+					#print 'fftw plans done'
 
 		def _transform(self, im):
 			if im.type() not in complex_real.values():
@@ -148,7 +148,7 @@ else:
 		def plan(self, shape, mod):
 			shapekey = (long(shape[0]), long(shape[1]))
 			if shapekey not in mod.plans:
-				print 'creating %s plan for %s' % (mod.__name__, shapekey)
+				#print 'creating %s plan for %s' % (mod.__name__, shapekey)
 				r,c = shape
 				if self.measure:
 					mod.plans[shapekey] = mod.rfftw2d_create_plan(r,c,mod.FFTW_REAL_TO_COMPLEX, mod.FFTW_MEASURE|mod.FFTW_USE_WISDOM)
@@ -160,7 +160,7 @@ else:
 		def iplan(self, shape, mod):
 			shapekey = (long(shape[0]), long(shape[1]))
 			if shapekey not in mod.iplans:
-				print 'creating %s iplan for %s' % (mod.__name__, shapekey)
+				#print 'creating %s iplan for %s' % (mod.__name__, shapekey)
 				r,c = shape
 				if self.measure:
 					mod.iplans[shapekey] = mod.rfftw2d_create_plan(r,c,mod.FFTW_COMPLEX_TO_REAL, mod.FFTW_MEASURE|mod.FFTW_USE_WISDOM)
