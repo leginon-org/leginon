@@ -58,7 +58,8 @@ class CallLauncher(object):
 		try:
 			apply(callable, args, kwargs)
 		except Exception, detail:
-			print 'Exception while calling %s: %s' % (callable, detail)
+			excinfo = sys.exc_info()
+			apply(sys.excepthook, excinfo)
 			try:
 				self.lock.release()
 			except:
