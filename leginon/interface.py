@@ -130,10 +130,7 @@ class Server(xmlrpcserver.xmlrpcserver):
 		'''this is how a UI client gets a data value'''
 		data = self.uidata[idstr]
 		value = data.get()
-		if value is None:
-			return 'None'
-		else:
-			return value
+		rturn value
 
 	def uiSet(self, idstr, value):
 		'''this is how a UI client sets a data value'''
