@@ -424,6 +424,39 @@ class MatrixCalibrationData(MagDependentCalibrationData):
 		return t
 	typemap = classmethod(typemap)
 
+class MoveTestData(InSessionData):
+	def typemap(cls):
+		t = InSessionData.typemap()
+		t += [
+			('move pixels x', float),
+			('move pixels y', float),
+			('move meters x', float),
+			('move meters y', float),
+			('error pixels x', float),
+			('error pixels y', float),
+			('error meters x', float),
+			('error meters y', float),
+		]
+		return t
+	typemap = classmethod(typemap)
+
+class MatrixMoveTestData(MoveTestData):
+	def typemap(cls):
+		t = MoveTestData.typemap()
+		t += [
+			('calibration', MatrixCalibrationData),
+		]
+	typemap = classmethod(typemap)
+
+class ModeledStageMoveTestData(MoveTestData):
+	def typemap(cls):
+		t = MoveTestData.typemap()
+		t += [
+			('model', StageModelCalibrationData),
+			('mag only', StageModelMagCalibrationData),
+		]
+	typemap = classmethod(typemap)
+
 class StageModelCalibrationData(CalibrationData):
 	def typemap(cls):
 		t = CalibrationData.typemap()
