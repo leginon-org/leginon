@@ -59,7 +59,7 @@ class Focuser(acquisition.Acquisition):
 
 		### validate stig correction
 		# stig is only valid for large defocus
-		if validdefocus and (abs(defoc) > 2e-6):
+		if validdefocus and (abs(defoc) > self.stigfocthresh.get()):
 			validstig = True
 		else:
 			validstig = False
@@ -116,6 +116,7 @@ class Focuser(acquisition.Acquisition):
 	def defineUserInterface(self):
 		acquisition.Acquisition.defineUserInterface(self)
 		self.btilt = uidata.Float('Beam Tilt', 0.02, 'rw')
+		self.stigfocthresh = uidata.Float('Threshold', 1e-6, 'rw')
 		focustypes = self.focus_methods.keys()
 		focustypes.sort()
 		self.focustype = uidata.SingleSelectFromList('Focus Correction Type',
@@ -125,6 +126,6 @@ class Focuser(acquisition.Acquisition):
 		abortfailmethod = uidata.Method('Abort With Failure', self.uiAbortFailure)
 		testmethod = uidata.Method('Test Autofocus', self.uiTest)
 		container = uidata.MediumContainer('Focuser')
-		container.addObjects((self.btilt, self.focustype, self.stigcorrection, self.publishimages, abortfailmethod, testmethod))
+		container.addObjects((self.btilt, self.stigfocthresh, self.focustype, self.stigcorrection, self.publishimages, abortfailmethod, testmethod))
 		self.uiserver.addObject(container)
 
