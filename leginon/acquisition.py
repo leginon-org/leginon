@@ -390,7 +390,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		rootname = self.getRootName(imagedata)
 		## use either data id or target number
 		if imagedata['target'] is None or imagedata['target']['number'] is None:
-			raise RuntimeError('figure out how to create a filename if there is no target number')
+			print 'This image does not have a target number, it would be nice to have an alternative to target number, like an image number.  for now we will use dmid'
+			numberstr = imagedata.dmid[-1]
 		else:
 			numberstr = '%05d' % (imagedata['target']['number'],)
 		if imagedata['preset'] is None:
