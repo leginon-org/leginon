@@ -546,7 +546,7 @@ class StateImageMosaic(ImageMosaic):
 		self.publish(odata, event.MosaicImagePublishEvent)
 
 		statedata = {'image data ID': odata.id}
-		for tiledataid in self.imagemosaics[-1]:
+		for tiledataid in self.imagemosaics[-1].getTileDataIDs():
 			statedata[tiledataid] = {}
 			statedata[tiledataid]['position'] = \
 										self.imagemosaics[-1].getTilePosition(tiledataid)
