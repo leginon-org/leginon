@@ -17,8 +17,7 @@ class Application(object):
 		self.nodespecs = []
 		self.bindingspecs = []
 		self.launchednodes = []
-		self.launcherids = {}
-		self.nodeids = {}
+		self.launchernames = {}
 
 	def clear(self):
 		name = self.getName()
@@ -28,8 +27,7 @@ class Application(object):
 		self.nodespecs = []
 		self.bindingspecs = []
 		self.launchednodes = []
-		self.launcherids = {}
-		self.nodeids = {}
+		self.launchernames = {}
 
 	def getName(self):
 		return self.data['name']
@@ -57,8 +55,8 @@ class Application(object):
 				aliases.append(nodespecdata['launcher alias'])
 		return aliases
 
-	def setLauncherAlias(self, alias, id):
-		self.launcherids[alias] = id
+	def setLauncherAlias(self, alias, name):
+		self.launchernames[alias] = name
 
 	def delNodeSpec(self, alias):
 		for nodespec in self.nodespecs:
@@ -94,51 +92,36 @@ class Application(object):
 			if same:
 				self.bindingspecs.remove(spec)
 
-	def getNodeIDFromAlias(self, alias):
-		try:
-			return self.nodeids[alias]
-		except KeyError:
-			raise ValueError('No such node alias mapped to ID')
-
-	def getLauncherIDFromAlias(self, alias):
-		try:
-			return self.launcherids[alias]
-		except KeyError:
-			raise ValueError('No such launcher alias mapped to ID')
-
 	def nodeSpec2Args(self, ns):
 		try:
-			launcherid = self.getLauncherIDFromAlias(ns['launcher alias'])
-		except ValueError:
-			raise ValueError('Invalid node specification')
-		nodename = ns['alias']
+			launchername = self.launchernames[ns['launcher alias']]
+		except KeyError:
+			raise ValueError('Unmapped launcher alias')
 		dependencies = []
 		for dependency in ns['dependencies']:
 			dependencies.append(dependency)
-		return ns['alias'], (launcherid, ns['class string'], nodename, dependencies)
+		return (launchername, ns['class string'], ns['alias'], dependencies)
 
 	def bindingSpec2Args(self, bs):
-		# i know...
 		try:
-			eventclass = eval('event.' + bs['event class string'])
+			eventclass = getattr(event, bs['event class string'])
 		except:
 			raise ValueError('cannot get event class for binding')
 		try:
-			fromnodeid = self.getNodeIDFromAlias(bs['from node alias'])
-			tonodeid = self.getNodeIDFromAlias(bs['to node alias'])
+			fromnode = bs['from node alias']
+			tonode = bs['to node alias']
 		except ValueError:
 			raise ValueError('Invalid binding specification')
-		return (eventclass, fromnodeid, tonodeid)
+		return (eventclass, fromnode, tonode)
 
 	def launch(self):
 		if not hasattr(self.node, 'addEventDistmap'):
 			raise RuntimeError('Application node unable to launch')
 		threads = []
 		for nodespec in self.nodespecs:
-			alias, args = self.nodeSpec2Args(nodespec)
-			id = self.launchNode(args)
-			self.launchednodes.append(id)
-			self.nodeids[alias] = id
+			args = self.nodeSpec2Args(nodespec)
+			name = self.launchNode(args)
+			self.launchednodes.append(name)
 		for bindingspec in self.bindingspecs:
 			args = self.bindingSpec2Args(bindingspec)
 			#print 'binding %s' % str(args)
@@ -148,20 +131,18 @@ class Application(object):
 		if not hasattr(self.node, 'launchNode'):
 			raise RuntimeError('Application node unable to launch node')
 		#print 'launching %s' % str(args)
-		newid = apply(self.node.launchNode, args)
-		return newid
+		newname = apply(self.node.launchNode, args)
+		return newname
 
 	def kill(self):
 		if not hasattr(self.node, 'killNode'):
 			raise RuntimeError('Application node unable to kill')
 		while self.launchednodes:
-			nodeid = self.launchednodes.pop()
-			#print 'killing %s' % (nodeid,)
+			nodename = self.launchednodes.pop()
 			try:
-				self.node.killNode(nodeid)
+				self.node.killNode(nodename)
 			except:
 				self.printException()
-		self.nodeids = {}
 
 	def save(self):
 		self.data['version'] = self.getNewVersion(self.data['name'])

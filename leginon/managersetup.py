@@ -39,13 +39,13 @@ class ManagerSetup(object):
 					location['TCP transport'] = {}
 					location['TCP transport']['hostname'] = hostname
 					location['TCP transport']['port'] = 55555
-					self.manager.addNode(location, (hostname,))
+					self.manager.addNode(location, hostname)
 			except (IOError, TypeError, socket.error):
 				self.manager.messagelog.warning('Cannot add instrument\'s launcher.')
 		self.selectsessioncontainer.delete()
 
 		self.manager.defineUserInterface()
-		launcher.Launcher((socket.gethostname().lower(),), session=session,
+		launcher.Launcher(socket.gethostname().lower(), session=session,
               					    managerlocation= self.manager.location())
 
 

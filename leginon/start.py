@@ -17,7 +17,7 @@ import uiclient
 #gc.enable()
 #gc.set_debug(gc.DEBUG_LEAK)
 
-m = manager.Manager(('manager',), None)
+m = manager.Manager(None)
 location = m.location()
 #launcher.Launcher((socket.gethostname().lower(),),
 #									nodelocations={'manager': location})

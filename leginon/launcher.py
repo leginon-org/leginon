@@ -17,12 +17,12 @@ import nodeclassreg
 import uiserver
 
 class Launcher(node.Node):
-	def __init__(self, id, session=None, tcpport=None, xmlrpcport=None, **kwargs):
+	def __init__(self, name, session=None, tcpport=None, xmlrpcport=None, **kwargs):
 		self.nodes = []
 
-		self.initializeLogger(id[-1])
+		self.initializeLogger(name)
 
-		node.Node.__init__(self, id, session, tcpport=tcpport, xmlrpcport=xmlrpcport, **kwargs)
+		node.Node.__init__(self, name, session, tcpport=tcpport, xmlrpcport=xmlrpcport, **kwargs)
 
 		#self.datahandler.insert(uicontainer)
 
@@ -46,7 +46,7 @@ class Launcher(node.Node):
 		self.uicontainer.sesssion = self.session
 		node.Node.setManager(self, location)
 		self.publishNodeClasses()
-		self.outputEvent(event.NodeInitializedEvent(node=self.id))
+		self.outputEvent(event.NodeInitializedEvent(node=self.name))
 
 	def exit(self):
 		self.exitNodes()
@@ -63,7 +63,7 @@ class Launcher(node.Node):
 		targetclass = ievent['targetclass']
 		nodeclass = nodeclassreg.getNodeClass(targetclass)
 
-		nodeid = ievent['node']
+		nodename = ievent['node']
 		session = ievent['session']
 		managerlocation = ievent['manager location']
 
@@ -72,7 +72,7 @@ class Launcher(node.Node):
 		kwargs['launcher'] = self
 		kwargs['otherdatabinder'] = self.databinder
 
-		self.nodes.append(nodeclass(nodeid, session, managerlocation, **kwargs))
+		self.nodes.append(nodeclass(nodename, session, managerlocation, **kwargs))
 		self.confirmEvent(ievent)
 
 	def onDestroyNode(self, node):
@@ -85,7 +85,7 @@ if __name__ == '__main__':
 
 	print 'Launcher initializing...',
 	hostname = socket.gethostname().lower()
-	launcherid = (hostname,)
+	launchername = hostname
 
 	managerlocation = {}
 	try:
@@ -95,14 +95,14 @@ if __name__ == '__main__':
 			managerlocation['data binder']['TCP transport'] = {}
 			port = int(sys.argv[2])
 			managerlocation['data binder']['TCP transport']['port'] = port
-			launcher = Launcher(launcherid, managerlocation=managerlocation)
+			launcher = Launcher(launchername, managerlocation=managerlocation)
 		except IndexError:
-			launcher = Launcher(launcherid, tcpport=int(sys.argv[1]))
+			launcher = Launcher(launchername, tcpport=int(sys.argv[1]))
 	except IndexError:
 		try:
-			launcher = Launcher(launcherid, tcpport=55555)
+			launcher = Launcher(launchername, tcpport=55555)
 		except:
-			launcher = Launcher(launcherid)
+			launcher = Launcher(launchername)
 	print 'Done.'
 	print 'Press control-c to exit'
 	launcher.start()

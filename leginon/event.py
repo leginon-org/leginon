@@ -26,7 +26,7 @@ def eventClasses():
 class Event(data.Data):
 	def typemap(cls):
 		t = data.Data.typemap()
-		t += [('node', tuple), ('confirm', tuple), ('destination', tuple)]
+		t += [('node', str), ('confirm', tuple), ('destination', str)]
 		return t
 	typemap = classmethod(typemap)
 

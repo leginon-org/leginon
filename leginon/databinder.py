@@ -93,20 +93,20 @@ class DataBinder(object):
 				except KeyError:
 					pass
 	
-	def addBinding(self, nodeid, dataclass, method):
+	def addBinding(self, nodename, dataclass, method):
 		'method must take data instance as first arg'
 		try:
 			nodes = self.bindings[dataclass]
 			try:
-				nodes[nodeid].append(method)
+				nodes[nodename].append(method)
 			except KeyError:
-				nodes[nodeid] = [method]
+				nodes[nodename] = [method]
 		except KeyError:
-			self.bindings[dataclass] = {nodeid: [method]}
+			self.bindings[dataclass] = {nodename: [method]}
 		self.logger.info('%s binding added for destination %s, method %s'
-															% (dataclass, nodeid, method))
+															% (dataclass, nodename, method))
 
-	def delBinding(self, nodeid, dataclass=None, method=None):
+	def delBinding(self, nodename, dataclass=None, method=None):
 		if dataclass is None:
 			dataclasses = self.bindings.keys()
 		else:
@@ -114,18 +114,18 @@ class DataBinder(object):
 		for dataclass in dataclasses:
 			try:
 				if method is None:
-					del self.bindings[dataclass][nodeid]
+					del self.bindings[dataclass][nodename]
 					if not self.bindings[dataclass]:
 						del self.bindings[dataclass]
 					self.logger.info('%s binding deleted for destination %s'
-															% (dataclass, nodeid))
+															% (dataclass, nodename))
 				else:
-					self.bindings[dataclass][nodeid].remove(method)
+					self.bindings[dataclass][nodename].remove(method)
 					self.logger.info('%s binding deleted for destination %s, method %s'
-															% (dataclass, nodeid, method))
+															% (dataclass, nodename, method))
 			except (KeyError, ValueError):
 					self.logger.warning('%s binding deletion failed for destination %s'
-															% (dataclass, nodeid))
+															% (dataclass, nodename))
 
 
 	def location(self):

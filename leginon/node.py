@@ -53,9 +53,9 @@ class Node(leginonobject.LeginonObject):
 									event.NodeInitializedEvent,
 									event.NodeUninitializedEvent]
 
-	def __init__(self, id, session, managerlocation=None, otherdatabinder=None, otherdbdatakeeper=None, otheruiserver=None, tcpport=None, xmlrpcport=None, launcher=None):
+	def __init__(self, name, session, managerlocation=None, otherdatabinder=None, otherdbdatakeeper=None, otheruiserver=None, tcpport=None, xmlrpcport=None, launcher=None):
 		leginonobject.LeginonObject.__init__(self)
-		self.id = id
+		self.name = name
 		
 		self.initializeLogger()
 
@@ -80,11 +80,11 @@ class Node(leginonobject.LeginonObject):
 		## set up uiserver and uicontainer
 		## Either I own the server, or I use the one given to me
 		if otheruiserver is None:
-			self.uiserver = uiserver.Server(str(id[-1]), xmlrpcport, session=session)
+			self.uiserver = uiserver.Server(self.name, xmlrpcport, session=session)
 			self.uicontainer = self.uiserver
 		else:
 			self.uiserver = otheruiserver
-			self.uicontainer = uidata.LargeContainer(str(self.id[-1]))
+			self.uicontainer = uidata.LargeContainer(self.name)
 			self.uiserver.addObject(self.uicontainer)
 
 		self.confirmationevents = {}
@@ -115,7 +115,7 @@ class Node(leginonobject.LeginonObject):
 		if hasattr(self, 'logger'):
 			return
 		if name is None:
-			name = self.id[-1]
+			name = self.name
 		self.logger = extendedlogging.getLogger(name)
 
 	# main, start/stop methods
@@ -148,7 +148,7 @@ class Node(leginonobject.LeginonObject):
 	def location(self):
 		location = leginonobject.LeginonObject.location(self)
 		if self.launcher is not None:
-			location['launcher'] = self.launcher.id
+			location['launcher'] = self.launcher.name
 		else:
 			location['launcher'] = None
 		location['data binder'] = self.databinder.location()
@@ -177,7 +177,7 @@ class Node(leginonobject.LeginonObject):
 		### send event and cross your fingers
 		try:
 			client.push(ievent)
-			#self.logEvent(ievent, status='%s eventToClient' % (self.id,))
+			#self.logEvent(ievent, status='%s eventToClient' % (self.name,))
 		except Exception, e:
 			# make sure we don't wait for an event that failed
 			if wait:
@@ -208,7 +208,7 @@ class Node(leginonobject.LeginonObject):
 
 	def outputEvent(self, ievent, wait=False, timeout=None):
 		'''output an event to the manager'''
-		ievent['node'] = self.id
+		ievent['node'] = self.name
 		if self.managerclient is not None:
 			return self.eventToClient(ievent, self.managerclient, wait, timeout)
 		else:
@@ -236,17 +236,17 @@ class Node(leginonobject.LeginonObject):
 		self.publish(eventlog, database=True, pubevent=False)
 
 	def logEventReceived(self, ievent):
-		self.logEvent(ievent, 'received by %s' % (self.id,))
+		self.logEvent(ievent, 'received by %s' % (self.name,))
 		## this should not confirm, this is not the primary handler
 		## any event
 
 	def addEventInput(self, eventclass, method):
 		'''Map a function (event handler) to be called when the specified event is received.'''
-		self.databinder.addBinding(self.id, eventclass, method)
+		self.databinder.addBinding(self.name, eventclass, method)
 
 	def delEventInput(self, eventclass=None, method=None):
 		'''Unmap all functions (event handlers) to be called when the specified event is received.'''
-		self.databinder.delBinding(self.id, eventclass, method)
+		self.databinder.delBinding(self.name, eventclass, method)
 
 	# data publish/research methods
 
@@ -290,7 +290,7 @@ class Node(leginonobject.LeginonObject):
 			e = eventclass()
 			e['data'] = idata.reference()
 			if broadcast:
-				e['destination'] = ()
+				e['destination'] = ''
 			return self.outputEvent(e)
 
 	def addSession(self, datainstance):
@@ -390,7 +390,7 @@ class Node(leginonobject.LeginonObject):
 		self.die()
 
 	def defineUserInterface(self):
-		idarray = uidata.String('ID', str(self.id), 'r')
+		name = uidata.String('Name', self.name, 'r')
 		classstring = uidata.String('Class', self.__class__.__name__, 'r')
 		location = self.key2str(self.location())
 		locationstruct = uidata.Struct('Location', location, 'r')
@@ -404,6 +404,6 @@ class Node(leginonobject.LeginonObject):
 																			position={'span': (1,2), 'expand': 'all'})
 
 		container = uidata.LargeContainer('Node')
-		self.uicontainer.addObjects((idarray, classstring, locationstruct,
+		self.uicontainer.addObjects((name, classstring, locationstruct,
 																	self.logger.container, exitmethod))
 

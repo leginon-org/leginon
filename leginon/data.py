@@ -1473,7 +1473,8 @@ class ImageStatData(InSessionData):
 
 class Request(type):
 	def __new__(cls, dataclass):
-		return type.__new__(cls, 'Request' + dataclass.__name__), (Data,), {'datamanager': datamanager}
+		return type.__new__(cls, 'Request' + dataclass.__name__, (Data,),
+												{'datamanager': datamanager})
 
 	def _typePair(cls, typepair):
 		if issubclass(typepair[1], Data):
