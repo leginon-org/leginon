@@ -94,7 +94,7 @@ class Navigator(node.Node):
 
 		movetypes = self.calclients.keys()
 		temparam = self.registerUIData('temparam', 'array', default=movetypes)
-		self.movetype = self.registerUIData('TEM Parameter', 'string', choices=temparam, permissions='rw', default='stage position')
+		self.movetype = self.registerUIData('TEM Parameter', 'string', choices=temparam, permissions='rw', default='image shift')
 
 		self.delaydata = self.registerUIData('Delay (sec)', 'float', default=2.5, permissions='rw')
 

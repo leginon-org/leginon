@@ -70,16 +70,12 @@ class ClickTargetFinder(TargetFinder):
 		Then call publishTargetList in another function
 		'''
 		imagewatcher.ImageWatcher.processData(self, newdata)
-		self.clickimage.set(None)
 		
 	def defineUserInterface(self):
 		tfspec = TargetFinder.defineUserInterface(self)
 
-		self.clickimage = self.registerUIData('Clickable Image', 'binary', callback=self.uiImage, permissions='rw')
-		# this is just a placeholder for the argspec.  The real value
-		# comes from clickimage which is the choices
-
-		myspec = self.registerUISpec('Click Target Finder', (self.clickimage,))
+		clickimage = self.registerUIData('Clickable Image', 'binary', callback=self.uiImage, permissions='rw')
+		myspec = self.registerUISpec('Click Target Finder', (clickimage,))
 		myspec += tfspec
 		return myspec
 
@@ -88,21 +84,25 @@ class ClickTargetFinder(TargetFinder):
 		get next image from queue
 		'''
 		if value is None:
+			### Get image from queue and set current image
 			if self.currentimage is None:
 				if self.processDataFromQueue():
 					self.currentimage = self.numarray
 				else:
 					self.currentimage = None
 
+			### return current image
 			if self.currentimage is None:
 				mrcstr = ''
 			else:
 				mrcstr = Mrc.numeric_to_mrcstr(self.currentimage)
-
 			return xmlbinlib.Binary(mrcstr)
 		else:
+			### submit targets from GUI
 			self.submitTargets(value)
-			return xmlbinlib.Binary('')
+
+			## I don't think this is necessary
+			#return xmlbinlib.Binary('')
 
 	def submitTargets(self, targetlist):
 		self.targetlist = []

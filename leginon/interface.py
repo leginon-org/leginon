@@ -67,11 +67,14 @@ class DataSpec(SpecObject):
 		if self.callback is None:
 			self.uidata = valuecopy
 			self.server.uiServerPush(self.dict()['id'], valuecopy)
-			return copy.deepcopy(self.uidata)
+			ret = copy.deepcopy(self.uidata)
 		else:
 			d = self.callback(valuecopy)
 			self.server.uiServerPush(self.dict()['id'], d)
-			return copy.deepcopy(d)
+			ret = copy.deepcopy(d)
+
+		if ret is not None:
+			self.server.uiServerPush(self.dict()['id'], ret)
 
 	def dict(self):
 		d = SpecObject.dict(self)
@@ -172,8 +175,10 @@ class Server(xmlrpcserver.xmlrpcserver):
 		'''this is how a UI client sets a data value'''
 		data = self.uidata[idstr]
 		data.set(value)
-		#return data.get()
+		print 'uiClientPush returning empty string'
 		return ''
+		### server push replaces this
+		#return data.get()
 
 	def uiServerPush(self, id, value):
 		uiclients = copy.copy(self.uiclients)

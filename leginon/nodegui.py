@@ -258,8 +258,11 @@ class Data(SpecWidget):
 
 	def setServer(self):
 		value = self.getWidget()
-		r = self.uiclient.execute('SET', (self.id, value))
-#		self.setWidget(r)
+		self.uiclient.execute('SET', (self.id, value))
+
+		## replaced by server push
+		#r = self.uiclient.execute('SET', (self.id, value))
+		#self.setWidget(r)
 
 	def getServer(self):
 		r = self.uiclient.execute('GET', (self.id,))

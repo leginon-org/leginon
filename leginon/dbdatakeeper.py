@@ -92,7 +92,7 @@ class DBDataKeeper(datahandler.DataHandler):
 		if numdata is not None:
 			# filename = ???
 			try:
-				filename = os.environ['LEGINONPATH'] + './images/%s-%s.mrc' % (session, idstr)
+				filename = os.environ['LEGINONPATH'] + '/images/%s-%s.mrc' % (session, idstr)
 			except:
 				filename = './images/%s-%s.mrc' % (session, idstr)
 			try:

@@ -6,6 +6,7 @@ import ImageViewer
 
 import watcher
 import event, data
+import copy
 
 
 ###
@@ -34,7 +35,7 @@ class ImageWatcher(watcher.Watcher):
 		if 'preset' in self.imagedata and self.imagedata['preset'] is not None:
 			imageinfo['preset'] = self.imagedata['preset']
 		imageinfo['source'] = 'click'
-		return imageinfo
+		return copy.deepcopy(imageinfo)
 
 	def processData(self, imagedata):
 		if not isinstance(imagedata, data.ImageData):
