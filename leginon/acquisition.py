@@ -267,6 +267,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		emtargetdata['image shift'] = dict(newscope['image shift'])
 		emtargetdata['beam shift'] = dict(newscope['beam shift'])
 		emtargetdata['stage position'] = dict(newscope['stage position'])
+		emtargetdata['target'] = targetdata
 
 		## publish in DB because it will likely be needed later
 		## when returning to the same target,

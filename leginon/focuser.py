@@ -59,7 +59,7 @@ class Focuser(acquisition.Acquisition):
 		self.euclient.publishEucentricFocus(ht, mag, foc)
 		self.logger.info('eucentric focus saved to database, ht=%s, mag=%s, focus=%s' % (ht, mag, foc))
 
-	def autoFocus(self, resultdata, presettarget, target):
+	def autoFocus(self, resultdata, presettarget):
 		## need btilt, pub, driftthresh
 		btilt = self.btilt.get()
 		pub = False
@@ -71,6 +71,7 @@ class Focuser(acquisition.Acquisition):
 		## send the autofocus preset to the scope
 		autofocuspreset = presettarget['preset']
 		self.presetsclient.toScope(autofocuspreset, presettarget['emtarget'])
+		target = presettarget['emtarget']['target']
 
 		## set to eucentric focus if doing Z correction
 		## WARNING:  this assumes that user will not change

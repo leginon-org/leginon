@@ -122,11 +122,14 @@ class DriftManager(watcher.Watcher):
 			## use driftdata to set up scope and camera
 			pname = driftdata['preset']
 			emtarget = driftdata['emtarget']
+			target = emtarget['target']
 			self.presetsclient.toScope(pname, emtarget)
+		else:
+			target = None
 
 		## acquire images, measure drift
 		self.abortevent.clear()
-		self.acquireLoop()
+		self.acquireLoop(target)
 
 		## publish ImageTargetShiftData
 		self.logger.info('DriftManager publishing image shifts...')
@@ -160,7 +163,7 @@ class DriftManager(watcher.Watcher):
 		self.im.set(imagedata['image'])
 		return imagedata
 
-	def acquireLoop(self):
+	def acquireLoop(self, target=None):
 
 		## acquire first image
 		imagedata = self.acquireImage()
@@ -201,7 +204,7 @@ class DriftManager(watcher.Watcher):
 			self.logger.info('Drift rate: %.4e' % (current_drift,))
 			self.driftvalue.set(current_drift)
 
-			d = data.DriftData(session=self.session, rows=rows, cols=cols, interval=seconds, rowmeters=rowmeters, colmeters=colmeters)
+			d = data.DriftData(session=self.session, rows=rows, cols=cols, interval=seconds, rowmeters=rowmeters, colmeters=colmeters, target=target)
 			self.publish(d, database=True, dbforce=True)
 
 			## t0 becomes t1 and t1 will be reset for next image
