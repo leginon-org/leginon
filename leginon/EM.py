@@ -19,14 +19,15 @@ class DataHandler(datahandler.DataBinder):
 
 	def query(self, id):
 		stuff = self.EMnode.getEM([id])
-		result = data.EMData(self.ID(), stuff)
+		result = data.EMData(self.ID(), em=stuff)
 		return result
 
 	def insert(self, idata):
 		if isinstance(idata, event.Event):
 			datahandler.DataBinder.insert(self, idata)
 		else:
-			self.EMnode.setEM(idata.content)
+			#self.EMnode.setEM(idata.content)
+			self.EMnode.setEM(idata)
 
 	# borrowed from NodeDataHandler
 	def setBinding(self, eventclass, func):
@@ -89,13 +90,13 @@ class EM(node.Node):
 		self.camera.exit()
 
 	def doLock(self, ievent):
-		if ievent.id[-1] != self.locknodeid:
+		if ievent['id'][:-1] != self.locknodeid:
 			self.nodelock.acquire()
-			self.locknodeid = ievent.id[-1]
+			self.locknodeid = ievent['id'][:-1]
 		self.confirmEvent(ievent)
 
 	def doUnlock(self, ievent):
-		if ievent.id[-1] == self.locknodeid:
+		if ievent['id'][:-1] == self.locknodeid:
 			self.locknodeid = None
 			self.nodelock.release()
 
