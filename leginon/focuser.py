@@ -97,9 +97,11 @@ class Focuser(acquisition.Acquisition):
 			correction = self.btcalclient.measureDefocusStig(btilt, pub, drift_threshold=driftthresh, image_callback=self.ui_image.set)
 		except calibrationclient.Abort:
 			self.logger.info('measureDefocusStig was aborted')
+			self.autofocusresult.set('aborted')
 			return 'aborted'
 		except calibrationclient.Drifting:
 			self.driftDetected(presettarget)
+			self.autofocusresult.set('drift detected (will try again when drift is done)')
 			return 'repeat'
 
 		self.logger.info('Measured defocus and stig %s' % correction)
@@ -146,7 +148,13 @@ class Focuser(acquisition.Acquisition):
 			else:
 				resultdata['defocus correction'] = focustype
 				focusmethod(defoc)
-
+		if 'defocus correction' in resultdata:
+			resultstring = 'corrected focus by %.3e using %s' % (defoc, focustype,)
+		else:
+			resultstring = 'invalid focus measurement'
+		if resultdata['stig correction']:
+			resultstring = resultstring + ', corrected stig by x,y=%.4f,%.4f' % (stigx, stigy)
+		self.autofocusresult.set(resultstring)
 		return status
 
 	def acquire(self, presetdata, target=None, presettarget=None):
@@ -444,6 +452,7 @@ class Focuser(acquisition.Acquisition):
 		self.stigcorrection = uidata.Boolean('Stig Correction', False, 'rw', persist=True)
 		self.stigfocminthresh = uidata.Float('Stig Defocus Min', 1e-6, 'rw', persist=True)
 		self.stigfocmaxthresh = uidata.Float('Stig Defocus Max', 4e-6, 'rw', persist=True)
+		self.autofocusresult = uidata.String('Last Auto Focus Result', '', 'r')
 
 		autocont.addObject(self.auto_on, position={'position':(0,0)})
 		autocont.addObject(self.btilt, position={'position':(0,1)})
@@ -459,6 +468,7 @@ class Focuser(acquisition.Acquisition):
 		autocont.addObject(self.stigcorrection, position={'position':(5,0)})
 		autocont.addObject(self.stigfocminthresh, position={'position':(5,1)})
 		autocont.addObject(self.stigfocmaxthresh, position={'position':(5,2)})
+		autocont.addObject(self.autofocusresult, position={'position':(6,0), 'span':(1,3)})
 
 		## manual focus check
 		self.pre_manual_check = uidata.Boolean('Before Auto', False, 'rw', persist=True)
