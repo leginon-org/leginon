@@ -1,0 +1,8 @@
+all: radix64module.so
+clean:
+	rm -f radix64_wrap.o radix64module.so
+radix64_wrap.o: radix64_wrap.c
+	gcc -c -fPIC -I/usr/include/python radix64_wrap.c
+radix64module.so: radix64_wrap.o
+	gcc -shared -o radix64module.so radix64_wrap.o
+	strip radix64module.so
