@@ -193,6 +193,7 @@ class EM(node.Node):
 		)
 
 		for key in prunekeys:
+			print 'KEY', key
 			try:
 				del emdict[key]
 			except KeyError:
@@ -247,9 +248,14 @@ class EM(node.Node):
 			result.update(self.scope)
 			result.update(self.camera)
 
-		self.lock.release()
+		## getting defocus no matter what, since it changes if reset
+		## defocus was called
+		result['defocus'] = self.scope['defocus']
 		self.pruneEMdict(result)
 		result['system time'] = time.time()
+
+		self.lock.release()
+		print 'RESULT', result
 		return result
 
 	def sortEMdict(self, emdict):
@@ -283,16 +289,12 @@ class EM(node.Node):
 	def setEM(self, emstate):
 		self.lock.acquire()
 
-#<<<<<<< EM.py
-#		### order the items in EMstate
-#		#ordered = self.sortEMdict(EMstate)
-#=======
-#		# order the items in EMstate
-#		ordered = self.sortEMdict(EMstate)
-#>>>>>>> 1.64.2.4
+		# order the items in EMstate
+		#ordered = self.sortEMdict(EMstate)
 
-		#for EMkey in ordered.keys():
+		#for emkey in ordered.keys():
 		for emkey, emvalue in emstate.items():
+			#emvalue = emstate[emkey]
 			if emvalue is None:
 				continue
 			if emkey in self.scope:
