@@ -32,9 +32,9 @@ class GonModeler(node.Node):
 	# calibrate needs to take a specific value
 	def loop(self, axis, points, interval):
 		## set camera state
-		camconfig = self.cam.config()
-		camstate = camconfig['state']
-		self.cam.state(camstate)
+		camconfig = self.cam.cameraConfig()
+		emdata = self.cam.configToEMData(camconfig)
+		self.cam.currentCameraEMData(camdata=emdata)
 
 		mag = self.getMagnification()
 		self.writeHeader(mag, axis)
