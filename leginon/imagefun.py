@@ -237,15 +237,15 @@ def phase_correlate(im1, im2):
 ## sized blobs.
 import sys
 reclim = sys.getrecursionlimit()
-if reclim < 1000:
-	sys.setrecursionlimit(1000)
+if reclim < 2000:
+	sys.setrecursionlimit(2000)
 
 class Blob(object):
 	'''
 	a Blob instance represets a connected set of pixels
 	'''
 	neighbors = ((-1,-1),(-1,0),(-1,1), (0,-1), (0,1), (1,-1), (1,0), (1,1))
-	maxpoints = 200
+	maxpoints = 2000
 	def __init__(self, image, mask):
 		self.image = image
 		self.mask = mask
@@ -269,7 +269,7 @@ class Blob(object):
 		# abort this blob if too many points
 		# if we don't abort, we will hit a recursion limit
 		if len(self.pixel_list) > self.maxpoints:
-			return
+			return False
 
 		# check neighbors
 		for neighbor in self.neighbors:
@@ -336,7 +336,7 @@ class Blob(object):
 		for stat in ('complete', 'n', 'center', 'size', 'mean', 'stddev'):
 			print '\t%s:\t%s' % (stat, self.stats[stat])
 
-def find_blobs(image, mask, border=0):
+def find_blobs(image, mask, border=0, maxblobsize=50):
 	shape = image.shape
 	blobs = []
 	## create a copy of mask that will be modified
@@ -346,8 +346,11 @@ def find_blobs(image, mask, border=0):
 			if tmpmask[row,col]:
 				newblob = Blob(image, mask)
 				err = newblob.add_point(row, col, tmpmask)
-				if not err:
-					blobs.append(newblob)	
+				if len(newblob.pixel_list) > maxblobsize:
+					continue
+				if err:
+					continue
+				blobs.append(newblob)	
 	print 'Found %s blobs.' % (len(blobs),)
 	print 'Calculating blob stats'
 	for blob in blobs:
