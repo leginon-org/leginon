@@ -133,11 +133,8 @@ class Corrector(node.Node):
 		return ''
 
 	def uiAcquireCorrected(self):
-		camconfig = self.cam.config()
-		camstate = camconfig['state']
-		camdata = data.CameraEMData(id=('camera',), initializer=camstate)
-		self.cam.currentCameraEMData(camdata)
-		imagedata = self.acquireCorrectedArray()
+		camconfig = self.cam.cameraConfig()
+		imagedata = self.acquireCorrectedArray(camconfig)
 		print 'Corrected Stats: %s' % (self.stats(imagedata),)
 		self.ui_image.set(imagedata)
 		return ''
@@ -260,6 +257,14 @@ class Corrector(node.Node):
 				return
 
 		print 'norm 1'
+		print 'BRIGHT'
+		print type(bright)
+		print bright.shape
+		print bright.typecode()
+		print 'DARK'
+		print type(dark)
+		print dark.shape
+		print dark.typecode()
 		norm = bright - dark
 
 		## there may be a better normavg than this
@@ -275,11 +280,11 @@ class Corrector(node.Node):
 		print 'saving'
 		self.storeRef('norm', norm, corstate)
 
-	def acquireCorrectedArray(self):
-		imagedata = self.acquireCorrectedImageData()
+	def acquireCorrectedArray(self, camconfig=None):
+		imagedata = self.acquireCorrectedImageData(camconfig)
 		return imagedata['image']
 
-	def acquireCorrectedImageData(self):
+	def acquireCorrectedImageData(self, camconfig=None):
 		if self.uifakeflag.get():
 			camconfig = self.cam.cameraConfig()
 			camstate = camconfig['state']
@@ -287,7 +292,7 @@ class Corrector(node.Node):
 			corrected = self.correct(numimage, camstate)
 			return data.ImageData(id=self.ID, image=corrected)
 		else:
-			imagedata = self.cam.acquireCameraImageData(correction=0)
+			imagedata = self.cam.acquireCameraImageData(camconfig=camconfig, correction=0)
 			numimage = imagedata['image']
 			camdata = imagedata['camera']
 			corstate = data.CorrectorCamstateData()
