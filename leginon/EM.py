@@ -98,7 +98,6 @@ class EM(node.Node):
 		self.prunekeys = [
 			'gun shift',
 			'gun tilt',
-			'high tension',
 			'beam blank',
 			'dark field mode',
 			'diffraction mode',
@@ -575,6 +574,7 @@ class EM(node.Node):
 									('intensity', 'Intensity', uidata.Float, 'rw'),
 									('defocus', 'Defocus', uidata.Float, 'rw'),
 									('spot size', 'Spot Size', uidata.Integer, 'rw'),
+									('high tension', 'High Tension', uidata.Float, 'r'),
 									('screen current', 'Screen Current', uidata.Float, 'r'),
 									('screen position', 'Main Screen', uidata.String, 'r')]
 
