@@ -109,3 +109,9 @@ class ImageTileData(ImageData):
 		ImageData.__init__(self, id,
 			{'image': image, 'neighbor tiles': neighbortiles})
 
+class EMImageTileData(ImageData):
+	'''Contains a 2-D Numeric array of the image data and a list of neighboring image tile ID's.'''
+	def __init__(self, id, image, state, neighbortiles):
+		ImageData.__init__(self, id,
+			{'image': image, 'neighbor tiles': neighbortiles, 'state': state})
+
