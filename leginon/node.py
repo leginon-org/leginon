@@ -163,7 +163,7 @@ class Node(leginonobject.LeginonObject):
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
 	def setCorrelationImage(self, image, peak):
-		evt = gui.wx.Node.SetImageEvent(image, peak)
+		evt = gui.wx.Node.SetCorrelationImageEvent(image, peak)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
 	def exit(self):

@@ -9,7 +9,7 @@ SetCorrelationImageEventType = wx.NewEventType()
 EVT_NODE_INITIALIZED = wx.PyEventBinder(NodeInitializedEventType)
 EVT_SET_STATUS = wx.PyEventBinder(SetStatusEventType)
 EVT_SET_IMAGE = wx.PyEventBinder(SetImageEventType)
-EVT_SET_CORRELATION_IMAGE = wx.PyEventBinder(SetImageEventType)
+EVT_SET_CORRELATION_IMAGE = wx.PyEventBinder(SetCorrelationImageEventType)
 
 class NodeInitializedEvent(wx.PyEvent):
 	def __init__(self, node):

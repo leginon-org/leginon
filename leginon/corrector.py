@@ -569,7 +569,6 @@ class Corrector(node.Node):
 
 	def displayImage(self, imagedata):
 		self.setImage(imagedata.astype(Numeric.Float32), self.stats(imagedata))
-		self.displayStats(imagedata)
 
 	def retrievePlan(self, corstate):
 		qplan = data.CorrectorPlanData()
@@ -787,7 +786,7 @@ class Corrector(node.Node):
 		final = good.astype(Numeric.Float32)
 		return final
 
-	def removeBadPixels(self, image, plandata):
+	def removeBadPixels(self, image, plan):
 		badrows = plan['rows']
 		badcols = plan['columns']
 

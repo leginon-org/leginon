@@ -4,6 +4,7 @@ from wx.lib.intctrl import IntCtrl, EVT_INT
 import gui.wx.Data
 import gui.wx.Node
 import gui.wx.ImageViewer
+import threading
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'corrector'
@@ -26,22 +27,22 @@ class Panel(gui.wx.Node.Panel):
 		stlmax = wx.StaticText(self, -1, 'Maximum:')
 		stlsigma = wx.StaticText(self, -1, 'Std. Dev.:')
 
-		stvmean = wx.StaticText(self, -1, '')
-		stvmin = wx.StaticText(self, -1, '')
-		stvmax = wx.StaticText(self, -1, '')
-		stvsigma = wx.StaticText(self, -1, '')
+		self.stvmean = wx.StaticText(self, -1, '')
+		self.stvmin = wx.StaticText(self, -1, '')
+		self.stvmax = wx.StaticText(self, -1, '')
+		self.stvsigma = wx.StaticText(self, -1, '')
 
 		self.szstats.Add(stlmean, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.szstats.Add(stvmean, (0, 1), (1, 1),
+		self.szstats.Add(self.stvmean, (0, 1), (1, 1),
 											wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		self.szstats.Add(stlmin, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.szstats.Add(stvmin, (1, 1), (1, 1),
+		self.szstats.Add(self.stvmin, (1, 1), (1, 1),
 											wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		self.szstats.Add(stlmax, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.szstats.Add(stvmax, (2, 1), (1, 1),
+		self.szstats.Add(self.stvmax, (2, 1), (1, 1),
 											wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		self.szstats.Add(stlsigma, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.szstats.Add(stvsigma, (3, 1), (1, 1),
+		self.szstats.Add(self.stvsigma, (3, 1), (1, 1),
 											wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		self.szstats.AddGrowableCol(1)
 
@@ -138,6 +139,8 @@ class Panel(gui.wx.Node.Panel):
 																						wx.EXPAND|wx.ALL)
 		self.imagepanel = gui.wx.ImageViewer.ImagePanel(self, -1)
 		self.szimage.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND|wx.ALL)
+		self.szimage.AddGrowableRow(0)
+		self.szimage.AddGrowableCol(0)
 
 		self.szmain.AddGrowableRow(4)
 		self.szmain.AddGrowableCol(1)
@@ -179,7 +182,7 @@ class Panel(gui.wx.Node.Panel):
 		gui.wx.Data.bindWindowToDB(self.ncthreshold)
 
 	def onSetImage(self, evt):
-		gui.wx.Node.SetImage(self, evt)
+		gui.wx.Node.Panel.onSetImage(self, evt)
 		if 'mean' in evt.statistics:
 			self.stvmean.SetLabel(str(evt.statistics['mean']))
 		if 'min' in evt.statistics:
@@ -188,7 +191,7 @@ class Panel(gui.wx.Node.Panel):
 			self.stvmax.SetLabel(str(evt.statistics['max']))
 		if 'stdev' in evt.statistics:
 			self.stvsigma.SetLabel(str(evt.statistics['stdev']))
-		self.szstats.Layout()
+		self.szmain.Layout()
 
 	def onNAverageInt(self, evt):
 		self.node.naverage = evt.GetValue()
@@ -209,13 +212,14 @@ class Panel(gui.wx.Node.Panel):
 
 	def onAcquire(self, evt):
 		if self.rbdark.GetValue():
-			self.node.acquireDark()
+			method = self.node.acquireDark
 		elif self.rbbright.GetValue():
-			self.node.acquireBright()
+			method = self.node.acquireBright
 		elif self.rbraw.GetValue():
-			self.node.acquireRaw()
+			method = self.node.acquireRaw
 		elif self.rbcorrected.GetValue():
-			self.node.acquireCorrected()
+			method = self.node.acquireCorrected
+		threading.Thread(target=method).start()	
 
 	def setPlan(self, plan):
 		self.stbadrows.SetLabel(self.plan2str(plan['rows']))
