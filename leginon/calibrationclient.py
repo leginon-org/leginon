@@ -667,8 +667,8 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		pixvect = (pixrow, pixcol)
 
 		matrix = self.retrieveMatrix(ht, mag, par)
-		print 'matrix', matrix
-		print 'pixvect', pixvect
+		#print 'matrix', matrix
+		#print 'pixvect', pixvect
 		change = Numeric.matrixmultiply(matrix, pixvect)
 		changex = change[0]
 		changey = change[1]
