@@ -44,17 +44,12 @@ class ImageNode(node.Node):
 		return val
 
 	def uiGetGradientImage(self, mrctype='short', width=256, height=256):
-		print 'mrctype', mrctype
-		print 'width', width
-		print 'height', height
 		if mrctype == 'unsigned byte':
 			typecode = Mrc.mrcmode_typecode[0][1]
 		elif mrctype == 'short':
 			typecode = Mrc.mrcmode_typecode[1][1]
 		elif mrctype == 'float':
 			typecode = Mrc.mrcmode_typecode[2][1]
-
-		print 'typecode', typecode
 
 		self.rows = height
 		self.cols = width
