@@ -36,7 +36,7 @@ class Manager(node.Node):
 		self.addEventClient(newid, hostname, eventport)
 		print self.eventhandler.clients
 
-	def launchNode(self, launcher, nodeid, nodeclass):
+	def launchNode(self, launcher, nodeid, nodeclass, newproc=0):
 		"""
 		launcher is id of launcher node
 		nodeid is the id to assign to the new node
@@ -44,7 +44,7 @@ class Manager(node.Node):
 		     nodeclass should be accessed thorugh self.nodelib...
 		"""
 		print 'launchNode with %s, %s, %s' % (launcher,nodeid,nodeclass)
-		ev = event.LaunchNodeEvent(nodeid, nodeclass)
+		ev = event.LaunchNodeEvent(nodeid, nodeclass, newproc)
 		print 'pushing LaunchNodeEvent', ev
 		self.eventhandler.push(launcher, ev)
 		print 'pushed'

@@ -32,6 +32,7 @@ class NodeLauncher(node.Node):
 		print 'content', launchevent.content
 		nodeid = launchevent.content['id']
 		nodeclass = launchevent.content['class']
+		newproc = launchevent.content['newproc']
 		if issubclass(nodeclass, node.Node):
 			myargs = (nodeid, nodeclass)
 			print 'making thread'

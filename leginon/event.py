@@ -145,8 +145,8 @@ class NumericControlEvent(ControlEvent):
 
 class LaunchNodeEvent(ControlEvent):
 	'ControlEvent sent to a NodeLauncher specifying a node to launch'
-	def __init__(self, nodeid, nodeclass, ):
-		nodeinfo = {'id':nodeid, 'class':nodeclass}
+	def __init__(self, nodeid, nodeclass, newproc=0):
+		nodeinfo = {'id':nodeid, 'class':nodeclass, 'newproc':newproc}
 		Event.__init__(self, content=nodeinfo)
 
 
