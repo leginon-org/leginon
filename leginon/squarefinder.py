@@ -247,9 +247,6 @@ class SquareFinder(targetfinder.TargetFinder):
 		self.uiuserverify = uidata.Boolean('Allow user verification of targets',
 																				True, 'rw', persist=True)
 
-		self.uishowadvanced = uidata.Boolean('Edit advanced settings', False, 'rw',
-																					callback=self.onShowAdvanced,
-																					persist=True)
 		self.uisquaredimension = uidata.Number('Square Dimension', None, 'rw',
 															callback=self.onSetSquareDimension, persist=True)
 
@@ -260,6 +257,9 @@ class SquareFinder(targetfinder.TargetFinder):
 		self.advancedcontainer = uidata.Container('Advanced')
 		self.advancedcontainer.addObjects((lpfcontainer, findblobscontainer,
 																	targetcontainer))
+		self.uishowadvanced = uidata.Boolean('Edit advanced settings', False, 'rw',
+																					callback=self.onShowAdvanced,
+																					persist=True)
 		settingscontainer = uidata.Container('Settings')
 		settingscontainer.addObjects((self.uiuserverify, self.uisquaredimension,
 																	self.uilimittargets, self.uitargetlimit,
