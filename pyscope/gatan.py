@@ -12,8 +12,6 @@ else:
 	class gatan(camera.camera):
 		def __init__(self):
 			self.theCamera = win32com.client.Dispatch("TecnaiCCD.GatanCamera")        
-			self.camerasize = {'x': 4096, 'y': 4096}
-#			self.camerasize = {'x': 1024, 'y': 1024}
 	    
 		def __del__(self):
 			pass
