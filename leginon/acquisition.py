@@ -260,7 +260,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if imagedata is None:
 			return 'fail'
 
-		labelstring = self.labelstring.get()
+		labelstring = str(self.id)
 
 		## convert CameraImageData to AcquisitionImageData
 		imagedata = data.AcquisitionImageData(initializer=imagedata, id=self.ID(), preset=presetdata, label=labelstring, target=target)
@@ -271,7 +271,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 	def retrieveImagesFromDB(self):
 		imagequery = data.AcquisitionImageData()
 		imagequery['session'] = self.session
-		imagequery['label'] = self.labelstring.get()
+		imagequery['label'] = str(self.id)
 		## don't read images because we only need the id
 		images = self.research(datainstance=imagequery, fill=False, readimages=False)
 		imageids = [repr(x['id']) for x in images]
@@ -567,7 +567,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 																	self.uidelay, self.waitfordone))
 
 		self.databaseflag = uidata.Boolean('Publish to Database', True, 'rw')
-		self.labelstring = uidata.String('Label', self.id[-1], 'rw', persist=True)
 		self.dbimages = uidata.SingleSelectFromList('Images In DB', [], 0)
 		updatedbimages = uidata.Method('Refresh', self.uiUpdateDBImages)
 		self.pretendfromdb = uidata.Method('Pretend This Was Just Acquired', self.uiPretendAcquire)
@@ -576,7 +575,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.reacquirefromdb.disable()
 
 		databasecontainer = uidata.Container('Database')
-		databasecontainer.addObjects((self.databaseflag, self.labelstring, self.dbimages, updatedbimages, self.pretendfromdb, self.reacquirefromdb))
+		databasecontainer.addObjects((self.databaseflag, self.dbimages, updatedbimages, self.pretendfromdb, self.reacquirefromdb))
 
 		settingscontainer = uidata.Container('Settings')
 		settingscontainer.addObjects((uicontainer, presetscontainer,
