@@ -1,6 +1,6 @@
 #
 # XML-RPC CLIENT LIBRARY
-# $Id: xmlrpclib.py,v 1.5 2003-08-26 17:59:11 suloway Exp $
+# $Id: xmlrpclib.py,v 1.6 2003-08-26 18:18:05 suloway Exp $
 #
 # an XML-RPC client interface for Python.
 #
@@ -126,7 +126,6 @@ Exported functions:
                  name (None if not present).
 """
 
-import debugleak
 import re, string, time, operator
 from timer import Timer
 import base64
@@ -289,8 +288,6 @@ class Binary:
     Modified decode and encode to use radix64 if available
     """
     def __init__(self, data=None):
-        debugleak.logInstanceCreation(self)
-        debugleak.logInstanceCreation(data)
         self.data = data
 
     def __cmp__(self, other):

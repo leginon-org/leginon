@@ -9,7 +9,6 @@ import random
 import pickle
 import uidata
 import strictdict
-import gc
 import copy
 
 class DataHandler(leginonobject.LeginonObject):
