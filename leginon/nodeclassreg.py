@@ -74,4 +74,5 @@ registerNodeClass('targetfinder', 'MosaicClickTargetFinder')
 registerNodeClass('simpleacquisition', 'SimpleAcquisition')
 registerNodeClass('targetmaker', 'SpiralTargetMaker')
 registerNodeClass('applicationeditor', 'ApplicationEditor')
+registerNodeClass('administration', 'Administration')
 

@@ -263,7 +263,8 @@ class MoreData(Data):
 class GroupData(Data):
 	def typemap(cls):
 		t = Data.typemap()
-		t += [('name', str)]
+		t += [('name', str),
+					('description', str)]
 		return t
 	typemap = classmethod(typemap)
 	
@@ -271,6 +272,7 @@ class UserData(Data):
 	def typemap(cls):
 		t = Data.typemap()
 		t += [('name', str),
+					('full name', str),
 					('group', GroupData)]
 		return t
 	typemap = classmethod(typemap)
