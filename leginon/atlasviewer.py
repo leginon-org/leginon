@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/atlasviewer.py,v $
-# $Revision: 1.5 $
+# $Revision: 1.6 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-09 20:34:23 $
+# $Date: 2005-02-14 21:23:27 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -329,23 +329,24 @@ class AtlasViewer(node.Node, targethandler.TargetWaitHandler):
 			# TODO: tell the robot to insert this grid
 			# TODO: wait for the grid to be inserted
 			for insertion in grid.insertions:
-				# TODO: track acquired images and reuse per insertion
 				for image in insertion.images:
 					if image.targets:
+						griddata = self.getLastGridInsertion(grid.gridid)
+						if griddata is None:
+							self.logger.warning('Failed to get grid insertion, continuing')
+							continue
+
 						# acquire image and align
 						image1 = image.data['image'].read()
-						#image2 = self.reacquireImage(image.data)
-						image2 = image1
+						imagedata = self.reacquireImage(image.data)
+						imagedata['grid'] = griddata
+						self.publish(imagedata, pubevent=True, database=True)
+						image2 = imagedata['image']
 						theta, shift = align.alignImages(image1, image2)
 						infostring = 'Rotation: %g, shift: (%g, %g)' % ((theta,) + shift)
 						self.logger.info(infostring)
 
 						targetlist = self.newTargetList()
-
-						griddata = self.getLastGridInsertion(grid.gridid)
-						if griddata is None:
-							self.logger.warning('Failed to get grid insertion, continuing')
-							continue
 
 						try:
 							scope = self.emclient.getScope()
@@ -367,7 +368,7 @@ class AtlasViewer(node.Node, targethandler.TargetWaitHandler):
 							target = align.alignTarget(target, shape1, shape2, theta, shift)
 							row = target[0] - shape2[0]/2
 							column = target[1] - shape2[1]/2
-							targetdata = self.newTargetForGrid(griddata, row, column,
+							targetdata = self.newTargetForImage(imagedata, row, column,
 																									scope=scope, camera=camera,
 																									preset=presetdata,
 																									list=targetlist,
@@ -401,7 +402,7 @@ class AtlasViewer(node.Node, targethandler.TargetWaitHandler):
 		presetdata = imagedata['preset']
 		targetdata = imagedata['target']
 
-		# user select? should be recorded
+		# TODO: user select? should be in data
 		movetype = 'stage position'
 
 		calibrationclient = self.calibrationclients[movetype]
@@ -437,5 +438,15 @@ class AtlasViewer(node.Node, targethandler.TargetWaitHandler):
 			self.logger.error(errorstring % 'cannot access corrector')
 		if imagedata is None:
 			return None
-		return imagedata['image']
+
+		# Jim says: store to DB to prevent referencing errors
+		self.publish(imagedata['scope'], database=True)
+		self.publish(imagedata['camera'], database=True)
+
+		# TODO: targetdata
+		imagedata = data.AcquisitionImageData(initializer=imagedata,
+																					preset=presetdata,
+																					label=self.name)
+
+		return imagedata
 

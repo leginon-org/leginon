@@ -42,47 +42,23 @@ class Client(Base):
 		if len(self.clients) == 0:
 			raise IOError('no client connections possible')
 
-		self.lock = threading.RLock()
-
 	# these aren't ordering right, dictionary iteration
-	def _pull(self, idata):
-		for c in self.clients:
+	def _send(self, request):
+		for client in self.clients:
 			try:
-				newdata = c.pull(idata)
-				self.logger.info('%s client pulled data' % str(c))
-				return newdata
+				return client.send(request)
 			except IOError:
-				self.logger.warning('%s client pull data failed' % str(c))
-				pass
-		raise IOError('IOError, unable to pull data ' + str(idata))
+				self.logger.warning('%s client send request failed' % str(c))
+		raise IOError('Unable to send request')
 
-	def pull(self, idata):
-		self.lock.acquire()
+	def send(self, request):
 		try:
-			ret = self._pull(idata)
-			self.lock.release()
-			return ret
-		except:
-			self.lock.release()
-			raise
-
-	def _push(self, odata):
-		for c in self.clients:
-			try:
-				ret = c.push(odata)
-				self.logger.info('%s client pushed data' % str(c))
-				return ret
-			except IOError:
-				self.logger.info('%s client push data failed' % str(c))
-		raise IOError('IOError, unable to push data ' + str(odata))
-
-	def push(self, odata):
-		self.lock.acquire()
-		try:
-			ret = self._push(odata)
-		finally:
-			self.lock.release()
-		return ret
+			result = self._send(request)
+		except Exception, e:
+			raise IOError
+		if isinstance(result, Exception):
+			raise result
+		return result
 
 class Server(Base):
 	def __init__(self, dh, logger, tcpport=None):
@@ -103,7 +79,6 @@ class Server(Base):
 		for t in self.transportmodules:
 			self.servers[t].exit()
 			self.logger.info('%s server exited' % t.__name__)
-		#self.datahandler.exit()
 		self.logger.info('Exited')
 
 	def location(self):

@@ -11,13 +11,13 @@ from databinder import DataBinder
 import datatransport
 from dbdatakeeper import DBDataKeeper
 import event
-import leginonobject
 import logging
 import threading
 import gui.wx.Events
 import gui.wx.Logging
 import gui.wx.Node
 import copy
+import socket
 
 import leginonconfig
 import os
@@ -38,7 +38,7 @@ import sys
 if sys.platform == 'win32':
 	import winsound
 
-class Node(leginonobject.LeginonObject):
+class Node(object):
 	'''Atomic operating unit for performing tasks, creating data and events.'''
 	panelclass = None
 	eventinputs = [event.Event,
@@ -52,7 +52,6 @@ class Node(leginonobject.LeginonObject):
 									event.NodeUninitializedEvent]
 
 	def __init__(self, name, session, managerlocation=None, otherdatabinder=None, otherdbdatakeeper=None, tcpport=None, launcher=None, panel=None):
-		leginonobject.LeginonObject.__init__(self)
 		self.name = name
 		self.panel = panel
 		
@@ -176,7 +175,8 @@ class Node(leginonobject.LeginonObject):
 
 	# location method
 	def location(self):
-		location = leginonobject.LeginonObject.location(self)
+		location = {}
+		location['hostname'] = socket.gethostname().lower()
 		if self.launcher is not None:
 			location['launcher'] = self.launcher.name
 		else:
@@ -205,7 +205,7 @@ class Node(leginonobject.LeginonObject):
 
 		### send event and cross your fingers
 		try:
-			client.push(ievent)
+			client.send(ievent)
 			#self.logEvent(ievent, status='%s eventToClient' % (self.name,))
 		except IOError:
 			# make sure we don't wait for an event that failed

@@ -9,6 +9,7 @@
 # defines the Event and EventHandler classes
 
 import data
+import copy
 
 def eventClasses():
 	"""
@@ -79,6 +80,19 @@ class NodeAvailableEvent(NotificationEvent):
 			('nodeclass', str),
 		)
 	typemap = classmethod(typemap)
+
+	def __reduce__(self):
+		klass, args, state = NotificationEvent.__reduce__(self)
+		try:
+			location = args[0]['location']
+			instance = location['data binder']['local transport']['instance']
+			location['data binder']['local transport']['instance'] = None
+			newlocation = copy.deepcopy(location)
+			args[0]['location'] = newlocation
+			location['data binder']['local transport']['instance'] = instance
+		except (TypeError, IndexError, KeyError):
+			pass
+		return klass, args, state
 
 class NodeUnavailableEvent(NotificationEvent):
 	'Event sent by a node to the manager to indicate that it is inaccessible'
@@ -270,6 +284,19 @@ class SetManagerEvent(ControlEvent):
 		)
 	typemap = classmethod(typemap)
 
+	def __reduce__(self):
+		klass, args, state = ControlEvent.__reduce__(self)
+		try:
+			location = args[0]['location']
+			instance = location['data binder']['local transport']['instance']
+			location['data binder']['local transport']['instance'] = None
+			newlocation = copy.deepcopy(location)
+			args[0]['location'] = newlocation
+			location['data binder']['local transport']['instance'] = instance
+		except (TypeError, IndexError, KeyError):
+			pass
+		return klass, args, state
+
 class CreateNodeEvent(ControlEvent):
 	'ControlEvent sent to a NodeLauncher specifying a node to launch'
 	def typemap(cls):
@@ -279,6 +306,19 @@ class CreateNodeEvent(ControlEvent):
 			('manager location', dict),
 		)
 	typemap = classmethod(typemap)
+
+	def __reduce__(self):
+		klass, args, state = ControlEvent.__reduce__(self)
+		try:
+			location = args[0]['manager location']
+			instance = location['data binder']['local transport']['instance']
+			location['data binder']['local transport']['instance'] = None
+			newlocation = copy.deepcopy(location)
+			args[0]['manager location'] = newlocation
+			location['data binder']['local transport']['instance'] = instance
+		except (TypeError, IndexError, KeyError):
+			pass
+		return klass, args, state
 
 class LockEvent(ControlEvent):
 	'Event that signals a lock'

@@ -9,7 +9,6 @@
 #
 
 import leginonconfig
-import leginonobject
 try:
 	import numarray as Numeric
 except:
@@ -166,9 +165,9 @@ class DataManager(object):
 					break
 				if not self.limitreached:
 					self.limitreached = True
-					print '************************************************************************'
-					print '***** DataManager size reached, removing data as needed ******'
-					print '************************************************************************'
+#					print '************************************************************************'
+#					print '***** DataManager size reached, removing data as needed ******'
+#					print '************************************************************************'
 				self.remove(key)
 		finally:
 			self.lock.release()
@@ -203,7 +202,7 @@ class DataManager(object):
 		dmid = datareference.dmid
 		location = {'hostname': dmid[0][0], 'port': dmid[0][1]}
 		client = tcptransport.Client(location)
-		datainstance = client.pull(datareference)
+		datainstance = client.send(datareference)
 		### this is a new instance from a pickle
 		### now register it locally
 		self.insert(datainstance)
@@ -247,7 +246,7 @@ class DataManager(object):
 		return referent
 
 	def query(self, datareference):
-		### this is how tcptransport server accesses this data manager
+		# this is how socketstreamtransport server accesses this data manager
 		datainstance = self.getData(datareference)
 		### in case of getData returning new DataReference:
 		### or should we just return new DataReference and let
@@ -257,6 +256,12 @@ class DataManager(object):
 		if isinstance(datainstance, DataHandler):
 			datainstance = datainstance.getData()
 		return datainstance
+
+	def handle(self, request):
+		if isinstance(request, Data):
+			return self.insert(request)
+		else:
+			return self.query(request)
 
 datamanager = DataManager()
 
@@ -385,7 +390,7 @@ def dict2data(d, datatype):
 			print type(d), d
 	return instance
 
-class Data(newdict.TypedDict, leginonobject.LeginonObject):
+class Data(newdict.TypedDict):
 	'''
 	Combines DataDict and LeginonObject to create the base class
 	for all leginon data.  This can be initialized with keyword args
@@ -451,8 +456,6 @@ class Data(newdict.TypedDict, leginonobject.LeginonObject):
 		# additional keyword arguments also update my values
 		# (overriding anything set by initializer)
 		self.update(kwargs)
-
-		leginonobject.LeginonObject.__init__(self)
 
 	## definining __reduce__ allows unpickler to call __init__ 	 
 	## which is necessary to register data with datamanager 	 
@@ -876,6 +879,19 @@ class NodeLocationData(LocationData):
 			('class string', str),
 		)
 	typemap = classmethod(typemap)
+
+	def __reduce__(self):
+		call, args, state = LocationData.__reduce__(self)
+		try:
+			location = args[0]['location']
+			instance = location['data binder']['local transport']['instance']
+			location['data binder']['local transport']['instance'] = None
+			newlocation = copy.deepcopy(location)
+			args[0]['location'] = newlocation
+			location['data binder']['local transport']['instance'] = instance
+		except (TypeError, IndexError, KeyError):
+			pass
+		return call, args, state
 
 class NodeClassesData(InSessionData):
 	def typemap(cls):

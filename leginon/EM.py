@@ -186,6 +186,7 @@ class EM(node.Node):
 			'diffraction mode',
 			'low dose',
 			#'low dose mode',
+			# comment out below for robot
 			'holder type',
 			'holder status',
 			'stage status',

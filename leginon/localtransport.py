@@ -23,6 +23,9 @@ class Server(object):
 	def exit(self):
 		pass
 
+	def handle(self, request):
+		return self.datahandler.handle(request)
+
 	def location(self):
 		return {'instance': self}
 
@@ -34,23 +37,14 @@ class Client(object):
 			raise ValueError('local client can only connect to local server')
 		self.serverobject = location['instance']
 
-	def push(self, idata):
-		return self._push(idata)
+	def send(self, request):
+		return self._send(request)
 
-	def _push(self, idata):
+	def _send(self, request):
 		try:
-			return self.serverobject.datahandler.insert(idata)
+			return self.serverobject.handle(request)
 		except:
-			raise IOError('Local transport client unable to insert data')
-
-	def pull(self, id):
-		return self._pull(id)
-
-	def _pull(self, id):
-		try:
-			return self.serverobject.datahandler.query(id)
-		except:
-			raise IOError('Local transport client unable to query id')
+			raise IOError('Local transport client send request')
 
 if __name__ == '__main__':
 	pass

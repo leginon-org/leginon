@@ -10,6 +10,7 @@ import Queue
 import newdict
 import threading
 import datatransport
+import data
 
 class ExitException(Exception):
 	pass
@@ -70,6 +71,16 @@ class DataBinder(object):
 					self.logger.info('handled unthreaded')
 			except Exception, e:
 				self.logger.exception('handlerLoop exception')
+
+	def handle(self, request):
+		if isinstance(request, ExitException):
+			return self.insert(request)
+		elif isinstance(request, data.Data):
+			return self.insert(request)
+		else:
+			#return self.query(request)
+			print 'unhandled request: %s' % request
+			return
 
 	def insert(self, newdata):
 		self.queue.put(newdata)

@@ -11,7 +11,6 @@ import socketstreamtransport
 
 locationkey = 'TCP transport'
 
-#class Server(SocketServer.ThreadingTCPServer, socketstreamtransport.Server):
 class Server(socketstreamtransport.Server, SocketServer.ThreadingTCPServer):
 	def __init__(self, dh, port=None):
 		socketstreamtransport.Server.__init__(self, dh)
@@ -54,19 +53,21 @@ class Client(socketstreamtransport.Client):
 	def __init__(self, location):
 		socketstreamtransport.Client.__init__(self, location)
 
-	def connect(self, family = socket.AF_INET, type = socket.SOCK_STREAM):
-		self.socket = socket.socket(family, type)
+	def connect(self, family=socket.AF_INET, type=socket.SOCK_STREAM):
+		s = socket.socket(family, type)
 		try:
-			self.socket.connect((self.serverlocation['hostname'],
-														self.serverlocation['port']))
-		except Exception, var:
-			# socket error, connection refused
-			if (var[0] == 111) or (var[0] == 10061):
-				self.socket = None
-				raise IOError('unable to connect to %s:%s'
-					% (self.serverlocation['hostname'], self.serverlocation['port']))
+			hostname = self.serverlocation['hostname']
+			port = self.serverlocation['port']
+		except KeyError:
+			raise IOError('cannot get location')
+		try:
+			s.connect((hostname, port))
+		except Exception, e:
+			if e[0] in [111, 10061]:
+				raise IOError('unable to connect to %s:%s' % (hostname, port))
 			else:
 				raise
+		return s
 
 Server.clientclass = Client
 Client.serverclass = Server

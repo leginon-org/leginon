@@ -150,8 +150,8 @@ class Application(object):
 			nodename = self.launchednodes.pop()
 			try:
 				self.node.killNode(nodename)
-			except:
-				self.printException()
+			except Exception, e:
+				print e
 
 	def save(self):
 		self.data['version'] = self.getNewVersion(self.data['name'])

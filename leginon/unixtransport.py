@@ -44,19 +44,18 @@ class Client(socketstreamtransport.Client):
 			raise ValueError
 		socketstreamtransport.Client.__init__(self, id, location, buffer_size)
 
-	def connect(self, family = socket.AF_UNIX, type = socket.SOCK_STREAM):
-		self.socket = socket.socket(family, type)
-		# needs error handling
+	def connect(self, family=socket.AF_UNIX, type=socket.SOCK_STREAM):
+		s = socket.socket(family, type)
 		try:
-			self.socket.connect(self.serverlocation['UNIX pipe filename'])
+			filename = self.serverlocation['UNIX pipe filename']
+		except KeyError:
+			raise IOError('cannot get location')
+		try:
+			s.connect(filename)
 		except Exception, e:
-			if isinstance(e, KeyError):
-				raise IOError
-			# socket error, connection refused
-			if (e[0] == 111 or e[0] == 2):
-				self.socket = None
-				raise IOError
+			if e[0] in [2, 111]:
+				raise IOError('unable to connect to %s' % filename)
 			else:
 				raise
-
+		return s
 

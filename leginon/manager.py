@@ -18,7 +18,6 @@ import leginonconfig
 import launcher
 import node
 import threading
-import leginonobject
 import logging
 import copy
 import newdict
@@ -145,16 +144,14 @@ class Manager(node.Node):
 		if hostname == socket.gethostname().lower():
 			return
 		try:
-			location = {}
-			location['TCP transport'] = {}
-			location['TCP transport']['hostname'] = hostname
-			location['TCP transport']['port'] = 55555
-			self.addNode(hostname, location)
+			port = 55555
+			self.addLauncher(hostname, port)
 		except (IOError, TypeError, socket.error):
 			self.logger.warning('Cannot add instrument\'s launcher.')
 
 	def location(self):
-		location = leginonobject.LeginonObject.location(self)
+		location = {}
+		location['hostname'] = socket.gethostname().lower()
 		location['data binder'] = self.databinder.location()
 		return location
 
@@ -242,10 +239,10 @@ class Manager(node.Node):
 			try:
 				eventcopy = copy.copy(ievent)
 				eventcopy['destination'] = to_node
-				self.clients[to_node].push(eventcopy)
+				self.clients[to_node].send(eventcopy)
 			except IOError:
 				### bad client, get rid of it
-				self.logger.error('Cannot push to node ' + str(to_node)
+				self.logger.error('Cannot send to node ' + str(to_node)
 													+ ', unregistering')
 				self.removeNode(to_node)
 				raise
@@ -305,10 +302,10 @@ class Manager(node.Node):
 					## a new dmid, not sure...
 					eventcopy = copy.copy(ievent)
 					eventcopy['destination'] = to_node
-					self.clients[to_node].push(eventcopy)
+					self.clients[to_node].send(eventcopy)
 				except IOError:
 					### bad client, get rid of it
-					self.logger.error('Cannot push to node ' + str(to_node)
+					self.logger.error('Cannot send to node ' + str(to_node)
 														+ ', unregistering')
 					self.removeNode(to_node)
 					raise
@@ -565,7 +562,7 @@ class Manager(node.Node):
 		initializer = {'targetclass': target,
 										'node': name,
 										'session': self.session,
-										'manager location':self.location()}
+										'manager location': self.location()}
 		evt = event.CreateNodeEvent(initializer=initializer)
 		cevt = self.outputEvent(evt, launcher, wait=True)
 		status =  cevt['status']
@@ -613,7 +610,7 @@ class Manager(node.Node):
 		e = event.SetManagerEvent(initializer=initializer)
 		client = datatransport.Client(location, self.clientlogger)
 		try:
-			client.push(e)
+			client.send(e)
 		except (IOError, EOFError):
 			try:
 				hostname = location['TCP transport']['hostname']
@@ -635,7 +632,7 @@ class Manager(node.Node):
 		try:
 			self.outputEvent(ev, nodename)
 		except:
-			self.logger.exception('cannot push KillEvent to ' + nodename
+			self.logger.exception('cannot send KillEvent to ' + nodename
 														+ ', unregistering')
 			# maybe didn't get uninitialized
 			self.setNodeStatus(nodename, False)
