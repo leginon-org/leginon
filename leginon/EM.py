@@ -386,7 +386,13 @@ class EM(node.Node):
 
 		self.panel.initParameters(self.typemap, self.session)
 
-		self.state = self.getEM(self.scope.keys() + self.camera.keys())
+		keys = []
+		if self.scope is not None:
+			keys += self.scope.keys()
+		if self.camera is not None:
+			keys += self.camera.keys()
+		if keys:
+			self.state = self.getEM(keys)
 
 		self.start()
 		self.queueHandler()
