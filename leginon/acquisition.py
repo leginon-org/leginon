@@ -22,7 +22,6 @@ import node
 import EM
 import imagefun
 import gui.wx.Acquisition
-import gui.wx.Node
 import gui.wx.Presets
 
 try:
@@ -41,6 +40,20 @@ class InvalidPresetsSequence(Exception):
 
 class Acquisition(targetwatcher.TargetWatcher):
 	panelclass = gui.wx.Acquisition.Panel
+	settingsclass = data.AcquisitionSettingsData
+	# maybe not a class attribute
+	defaultsettings = {
+		'pause time': 2.5,
+		'move type': 'image shift',
+		'preset order': [],
+		'correct image': True,
+		'display image': True,
+		'save image': True,
+		'wait for process': False,
+		'wait for rejects': False,
+		'duplicate targets': False,
+		'duplicate target type': 'focus',
+	}
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
 								+ [event.DriftDoneEvent,
 										event.ImageProcessDoneEvent] \
@@ -78,39 +91,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		self.duplicatetypes = ['acquisition', 'focus']
 
-		self.initializeSettings()
-
 		self.start()
-
-	def initializeSettings(self):
-		qsession = data.SessionData(initializer={'user': self.session['user']})
-		qdata = data.AcquisitionSettingsData(initializer={'session': qsession,
-																											'name': self.name})
-		try:
-			self.settings = self.research(qdata, results=1)[0]
-		except IndexError:
-			initializer = {
-				'pause time': 2.5,
-				'move type': 'image shift',
-				'preset order': [],
-				'correct image': True,
-				'display image': True,
-				'save image': True,
-				'wait for process': False,
-				'wait for rejects': False,
-				'duplicate targets': False,
-				'duplicate target type': 'focus',
-			}
-			self.settings = data.AcquisitionSettingsData(initializer=initializer)
-
-	def setSettings(self, sd):
-		sd['session'] = self.session
-		sd['name'] = self.name
-		self.publish(sd, database=True, dbforce=True)
-		self.settings = sd
-
-	def getSettings(self):
-		return self.settings
 
 	def onPresetPublished(self, evt):
 		evt = gui.wx.Presets.NewPresetEvent()

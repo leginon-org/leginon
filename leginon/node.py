@@ -110,6 +110,30 @@ class Node(leginonobject.LeginonObject):
 				self.logger.exception('exception in setManager')
 				raise
 
+		self.initializeSettings()
+
+	# settings
+
+	def initializeSettings(self):
+		if not hasattr(self, 'settingsclass'):
+			return
+		qsession = data.SessionData(initializer={'user': self.session['user']})
+		qdata = self.settingsclass(initializer={'session': qsession,
+																						'name': self.name})
+		try:
+			self.settings = self.research(qdata, results=1)[0]
+		except IndexError:
+			self.settings = self.settingsclass(initializer=self.defaultsettings)
+
+	def setSettings(self, sd):
+		sd['session'] = self.session
+		sd['name'] = self.name
+		self.publish(sd, database=True, dbforce=True)
+		self.settings = sd
+
+	def getSettings(self):
+		return self.settings
+
 	def initializeLogger(self, name=None):
 		if hasattr(self, 'logger'):
 			return

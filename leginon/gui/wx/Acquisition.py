@@ -1,7 +1,8 @@
 import data
 import gui.wx.Data
-from gui.wx.Entry import FloatEntry, EVT_ENTRY
 import gui.wx.Node
+import gui.wx.Settings
+from gui.wx.Entry import FloatEntry, EVT_ENTRY
 from gui.wx.Presets import EditPresetOrder, EVT_PRESET_ORDER_CHANGED
 import wx
 import wxImageViewer
@@ -22,8 +23,7 @@ class Panel(gui.wx.Node.Panel):
 		self.szstatus.Add(self.ststatus, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		# controls
-		self.szcontrols = self._getStaticBoxSizer('Controls', (1, 0), (1, 1),
-																								wx.ALIGN_TOP)
+		self.szcontrols = wx.GridBagSizer(5, 5)
 		self.bsettings = wx.Button(self, -1, 'Settings...')
 		self.tbpause = wx.ToggleButton(self, -1, 'Pause')
 		self.tbstop = wx.ToggleButton(self, -1, 'Stop')
@@ -37,6 +37,7 @@ class Panel(gui.wx.Node.Panel):
 		self.imagepanel = wxImageViewer.ImagePanel(self, -1)
 		self.szimage.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND|wx.ALL)
 
+		self.szmain.Add(self.szcontrols, (1, 0), (1, 1), wx.ALIGN_TOP)
 		self.szmain.AddGrowableRow(1)
 		self.szmain.AddGrowableCol(1)
 
@@ -68,17 +69,9 @@ class Panel(gui.wx.Node.Panel):
 		else:
 			self.node.abort = False
 
-class SettingsError(Exception):
-	pass
-
-class SettingsDialog(wx.Dialog):
-	def __init__(self, parent):
-		self.node = parent.node
-
-		title = '%s Settings' % self.node.name
-		wx.Dialog.__init__(self, parent, -1, title) 
-
-		self.widgets = {}
+class SettingsDialog(gui.wx.Settings.Dialog):
+	def initialize(self):
+		gui.wx.Settings.Dialog.initialize(self)
 
 		# move type
 		movetypes = self.node.calclients.keys()
@@ -137,115 +130,28 @@ class SettingsDialog(wx.Dialog):
 										wx.ALIGN_CENTER_VERTICAL)
 
 		# settings sizer
-		sz = wx.GridBagSizer(5, 5)
+		sz = wx.GridBagSizer(10, 5)
 		sz.Add(szmovetype, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szpausetime, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['preset order'], (2, 0), (1, 1), wx.ALIGN_CENTER)
-		sz.Add(self.widgets['correct image'], (3, 0), (1, 1),
+		sz.Add(self.widgets['preset order'], (2, 0), (5, 1), wx.ALIGN_CENTER)
+		sz.Add(self.widgets['correct image'], (0, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['display image'], (4, 0), (1, 1),
+		sz.Add(self.widgets['display image'], (1, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['save image'], (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['wait for process'], (6, 0), (1, 1),
+		sz.Add(self.widgets['save image'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['wait for process'], (3, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['wait for rejects'], (7, 0), (1, 1),
+		sz.Add(self.widgets['wait for rejects'], (4, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szduplicate, (8, 0), (1, 1),
+		sz.Add(szduplicate, (5, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
+		sz.AddGrowableRow(6)
 
-		# buttons
-		self.bok = wx.Button(self, wx.ID_OK, 'OK')
-		self.bcancel = wx.Button(self, wx.ID_CANCEL, 'Cancel')
-		self.bapply = wx.Button(self, wx.ID_APPLY, 'Apply')
-		szbuttons = wx.GridBagSizer(5, 5)
-		szbuttons.Add(self.bok, (0, 0), (1, 1), wx.ALIGN_CENTER)
-		szbuttons.Add(self.bcancel, (0, 1), (1, 1), wx.ALIGN_CENTER)
-		szbuttons.Add(self.bapply, (0, 2), (1, 1), wx.ALIGN_CENTER)
+		sb = wx.StaticBox(self, -1, 'Image Acquisition')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
-		szmain = wx.GridBagSizer(5, 5)
-		szmain.Add(sz, (0, 0), (1, 1),
-								wx.ALIGN_CENTER|wx.ALL, 10)
-		szmain.Add(szbuttons, (1, 0), (1, 1),
-								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 10)
-
-		# set values
-		self.getNodeSettings()
-
-		self.SetSizerAndFit(szmain)
-
-		self.Bind(wx.EVT_BUTTON, self.onSet, self.bok)
-		self.Bind(wx.EVT_BUTTON, self.onSet, self.bapply)
-
-		modifiedevents = {
-			wx.CheckBox: wx.EVT_CHECKBOX,
-			wx.Choice: wx.EVT_CHOICE,
-			FloatEntry: EVT_ENTRY,
-			EditPresetOrder: EVT_PRESET_ORDER_CHANGED,
-		}
-
-		for widget in self.widgets.values():
-			self.Bind(modifiedevents[widget.__class__], self.onModified)
-
-	def onModified(self, evt):
-		if self.getSettings() == self.settings:
-			self.bapply.Enable(False)
-		else:
-			self.bapply.Enable(True)
-		evt.Skip()
-
-	def onSet(self, evt):
-		try:
-			self.setNodeSettings()
-			evt.Skip()
-		except SettingsError:
-			dialog = wx.MessageDialog(self, str(e), 'Settings Error',
-																wx.OK|wx.ICON_ERROR)
-			dialog.ShowModal()
-			dialog.Destroy()
-
-	def getSettings(self):
-		getmethods = {
-			wx.CheckBox: 'GetValue',
-			wx.Choice: 'GetStringSelection',
-			FloatEntry: 'GetValue',
-			EditPresetOrder: 'getValues',
-		}
-		settings = {}
-		for key, widget in self.widgets.items():
-			settings[key] = getattr(widget, getmethods[widget.__class__])()
-		return settings
-
-	def setSettings(self, sd):
-		setmethods = {
-			wx.CheckBox: 'SetValue',
-			wx.Choice: 'SetStringSelection',
-			FloatEntry: 'SetValue',
-			EditPresetOrder: 'setValues',
-		}
-		for key, widget in self.widgets.items():
-			getattr(widget, setmethods[widget.__class__])(sd[key])
-
-	def setNodeSettings(self):
-		node = self.GetParent().node
-		if node is None:
-			return
-		settings = self.getSettings()
-		if settings != self.settings:
-			settingsdata = data.AcquisitionSettingsData(initializer=settings)
-			node.setSettings(settingsdata)
-			self.settings = settings
-			self.bapply.Enable(False)
-
-	def getNodeSettings(self):
-		node = self.GetParent().node
-		if node is None:
-			return
-
-		settingsdata = node.getSettings()
-		self.setSettings(settingsdata)
-
-		self.settings = self.getSettings()
-		self.bapply.Enable(False)
+		return sbsz
 
 if __name__ == '__main__':
 	class App(wx.App):
