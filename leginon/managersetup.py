@@ -5,6 +5,7 @@ import project
 import socket
 import time
 import uidata
+import node
 
 class ManagerSetup(object):
 	def __init__(self, manager):
@@ -42,16 +43,18 @@ class ManagerSetup(object):
 	def uiCreateSession(self):
 		## publish a new session
 		sessiondata = self.buildSessionData()
-		print 'sessiondata', sessiondata
+		# check if session already exists
+		session_name = sessiondata['name']
+		if session_name in self.session_dict:
+			self.build_messages.error('session name already used')
+			node.beep()
+			return
 		projectname = self.projectselection.getSelectedValue()
-		print 'projectname', projectname
 		self.manager.publish(sessiondata, database=True)
-		print 'published'
 		self.linkSessionProject(sessiondata, projectname)
-		print 'linked'
 		# refresh session list
 		self.uiUpdateSessionList()
-		print 'done'
+		self.build_messages.information('session published')
 
 	def linkSessionProject(self, sessiondata, projectname):
 		try:
@@ -250,12 +253,18 @@ class ManagerSetup(object):
 		return index
 
 	def suggestSessionName(self):
-		session_name = time.strftime('%y%b%da').lower()
+		session_name = 'enter unique name here'
+		for suffix in 'abcdefghijklmnopqrstuvwxyz':
+			maybe = time.strftime('%y%b%d'+suffix).lower()
+			if maybe in self.session_dict:
+				continue
+			else:
+				session_name = maybe
+				break
 		return session_name
 
 	def uiSuggestSessionName(self):
-		#session_name = self.suggestSessionName()
-		session_name = 'testaaaa'
+		session_name = self.suggestSessionName()
 		self.build_session_name.set(session_name)
 
 	def uiSessionSelectCallback(self, index):
@@ -287,7 +296,9 @@ class ManagerSetup(object):
 		sessionlist = self.researchSessions()
 		session_names = map(self.getSessionDataName, sessionlist)
 		self.session_dict = dict(zip(session_names, sessionlist))
-		self.sessionselector.set(session_names,0)
+		# XXX This will get into some kind of big loop if session_limit
+		# is too high
+		self.sessionselector.set(session_names[:self.session_limit],0)
 
 	def researchSessions(self):
 		qsession = data.SessionData()
@@ -297,8 +308,12 @@ class ManagerSetup(object):
 	def defineUserInterface(self):
 		self.container = uidata.ExternalContainer('Manager Setup')
 
+		### limit on number of sessions to display
+		### see XXX above
+		self.session_limit = 30
+
 		## there are two main sections:
-		sessionloader = uidata.Container('Session Loader')
+		sessionloader = uidata.Container('Session Loader (last %s sessions)' % (self.session_limit,))
 		sessionbuilder = uidata.Container('Session Builder')
 
 		## components of the loader section:
@@ -367,6 +382,8 @@ class ManagerSetup(object):
 		self.build_image_path = uidata.String('Image Path', image_path, 'rw', persist=True)
 
 		createmethod = uidata.Method('Create Session', self.uiCreateSession)
+		self.build_messages = uidata.MessageLog('Messages')
+
 
 		sessionbuilderobjects = (
 		  suggestnamemethod,
@@ -377,6 +394,7 @@ class ManagerSetup(object):
 		  build_instrumentcontainer,
 		  self.build_image_path,
 		  createmethod,
+		  self.build_messages,
 		)
 		sessionbuilder.addObjects(sessionbuilderobjects)
 
