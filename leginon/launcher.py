@@ -18,12 +18,12 @@ class Launcher(node.Node):
 
 	def addManager(self, loc):
 		'''
-		Node uses NodeReadyEvent 
-		This uses LauncherReadyEvent
+		Node uses NodeAvailableEvent 
+		This uses LauncherAvailableEvent
 		'''
 		self.managerloc = loc
 		self.addEventClient('manager', loc)
-		self.announce(event.LauncherReadyEvent())
+		self.announce(event.LauncherAvailableEvent())
 
 	def main(self):
 		self.interact()

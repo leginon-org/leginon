@@ -21,7 +21,7 @@ class Manager(node.Node):
 
 		## this makes every received event get distributed
 		self.addEventInput(event.Event, self.distribute)
-		self.addEventInput(event.NodeReadyEvent, self.registerNode)
+		self.addEventInput(event.NodeAvailableEvent, self.registerNode)
 		#self.addDistmap(event.PublishEvent, , ):
 
 		self.addEventInput(event.PublishEvent, self.registerData)
@@ -33,9 +33,9 @@ class Manager(node.Node):
 	def main(self):
 		print self.location()
 
-		guithread = threading.Thread(target=self.gui)
-		guithread.setDaemon(1)
-		guithread.start()
+#		guithread = threading.Thread(target=self.gui)
+#		guithread.setDaemon(1)
+#		guithread.start()
 
 		self.interact()
 
@@ -59,7 +59,7 @@ class Manager(node.Node):
 		self.server.datahandler._insert(nodelocationdata)
 
 		## stuff to do if Node is a Launcher
-		if isinstance(readyevent, event.LauncherReadyEvent):
+		if isinstance(readyevent, event.LauncherAvailableEvent):
 			print 'this is a launcher'
 			self.gui_add_launcher(nodeid)
 
@@ -102,6 +102,7 @@ class Manager(node.Node):
 		self.server.datahandler._insert(datalocationdata)
 
 	def unregisterData(self, unpublishevent):
+		print "HERE"
 		if isinstance(unpublishevent, event.UnpublishEvent):
 			id = unpublishevent.content
 			self.unpublishDataLocation(id, unpublishevent.origin['id'])
@@ -110,6 +111,7 @@ class Manager(node.Node):
 
 	# creates/appends list with nodeid of published data
 	def unpublishDataLocation(self, dataid, nodeid):
+		print "THERE"
 		datalocationdata = self.server.datahandler.query(dataid)
 		if datalocationdata:
 			try:
