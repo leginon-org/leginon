@@ -43,13 +43,16 @@ class ManagerSetup(object):
 		self.manager.defineUserInterface()
 
 	def uiCreateSession(self):
+		self.createmethod.disable()
+		self.cancelcreatemethod.disable()
 		## publish a new session
 		sessiondata = self.buildSessionData()
 		# check if session already exists
 		session_name = sessiondata['name']
 		if session_name in self.session_dict:
 			self.build_messages.error('session name already used')
-			node.beep()
+			self.createmethod.enable()
+			self.cancelcreatemethod.enable()
 			return
 		self.manager.publish(sessiondata, database=True)
 		if self.projectdataconnected:
@@ -57,7 +60,13 @@ class ManagerSetup(object):
 			self.linkSessionProject(sessiondata, projectname)
 		# refresh session list
 		self.uiUpdateSessionList()
-		self.build_messages.information('session published')
+		#self.build_messages.information('session published')
+		self.container.deleteObject('Create Session')
+		self.createsessionmethod.enable()
+
+	def onCancelCreateSession(self):
+		self.container.deleteObject('Create Session')
+		self.createsessionmethod.enable()
 
 	def linkSessionProject(self, sessiondata, projectname):
 		try:
@@ -313,6 +322,12 @@ class ManagerSetup(object):
 		sessionlist = self.manager.research(datainstance=qsession)
 		return sessionlist
 
+	def onNewSession(self):
+		self.createsessionmethod.disable()
+		self.container.addObject(self.createsessioncontainer)
+		self.createmethod.enable()
+		self.cancelcreatemethod.enable()
+
 	def defineUserInterface(self):
 		self.container = uidata.ExternalContainer('Manager Setup')
 
@@ -322,7 +337,7 @@ class ManagerSetup(object):
 
 		## there are two main sections:
 		sessionloader = uidata.Container('Session Loader (last %s sessions)' % (self.session_limit,))
-		sessionbuilder = uidata.Container('Session Builder')
+		self.createsessioncontainer = uidata.ExternalContainer('Create Session')
 
 		## components of the loader section:
 		self.load_sessioncomment = uidata.String('Comment', '', 'r')
@@ -335,7 +350,11 @@ class ManagerSetup(object):
 
 		self.skipinstrument = uidata.Boolean('Do Not Connect Instrument Launcher', False, 'rw', persist=True)
 
-		startmethod = uidata.Method('Start', self.start)
+		startmethod = uidata.Method('Start Session', self.start)
+
+		self.createsessionmethod = uidata.Method('Create Session',
+																							self.onNewSession)
+
 
 		sessionloaderobjects = (
 		  self.sessionselector,
@@ -345,6 +364,7 @@ class ManagerSetup(object):
 		  self.load_sessionpath,
 		  self.skipinstrument,
 		  startmethod,
+			self.createsessionmethod,
 		)
 		sessionloader.addObjects(sessionloaderobjects)
 
@@ -390,7 +410,9 @@ class ManagerSetup(object):
 		image_path = os.path.join(leginonconfig.IMAGE_PATH,session_name)
 		self.build_image_path = uidata.String('Image Path', image_path, 'rw', persist=True)
 
-		createmethod = uidata.Method('Create Session', self.uiCreateSession)
+		self.createmethod = uidata.Method('Create Session', self.uiCreateSession)
+		self.cancelcreatemethod = uidata.Method('Cancel',
+																						self.onCancelCreateSession)
 		self.build_messages = uidata.MessageLog('Messages')
 
 
@@ -401,18 +423,18 @@ class ManagerSetup(object):
 		  build_usercontainer,
 		  build_instrumentcontainer,
 		  self.build_image_path,
-		  createmethod,
+		  self.createmethod,
+			self.cancelcreatemethod,
 		  self.build_messages,
 		]
 
 		if self.projectdataconnected:
 			sessionbuilderobjects.insert(4,build_projectcontainer)
 
-		sessionbuilder.addObjects(sessionbuilderobjects)
+		self.createsessioncontainer.addObjects(sessionbuilderobjects)
 
 		mainobjects = (
 		  sessionloader,
-		  sessionbuilder,
 		)
 		self.container.addObjects(mainobjects)
 

@@ -52,11 +52,12 @@ class SetWidgetEvent(wxPyEvent):
 		self.event = event
 
 class RemoveWidgetEvent(wxPyEvent):
-	def __init__(self, namelist, event):
+	def __init__(self, namelist, event, layout):
 		wxPyEvent.__init__(self)
 		self.SetEventType(wxEVT_REMOVE_WIDGET)
 		self.namelist = namelist
 		self.event = event
+		self.layout = layout
 
 class ConfigureWidgetEvent(wxPyEvent):
 	def __init__(self, namelist, configuration, event):
@@ -287,7 +288,7 @@ class wxUIClient(object):
 		if 'block' in properties and properties['block']:
 			if not isinstance(threading.currentThread(), threading._MainThread):
 				threadingevent = threading.Event()
-		evt = RemoveWidgetEvent(namelist, threadingevent)
+		evt = RemoveWidgetEvent(namelist, threadingevent, True)
 		wxPostEvent(self.container.widgethandler, evt)
 		if threadingevent is not None:
 			threadingevent.wait()
@@ -542,22 +543,23 @@ class wxContainerWidget(wxWidget):
 	def onSetWidget(self, evt):
 		self.childEvent(evt)
 
-	def _removeWidget(self, name, widget):
+	def _removeWidget(self, name, widget, layout):
 		del self.children[name]
 		widget.destroy()
 		if self.sizer is not None and not isinstance(widget, self.nosizerclasses):
 			self.sizer.Remove(widget.sizer)
-		self.layout()
+		if layout:
+			self.layout()
 
 	def removeChildren(self):
 		for name, child in self.children.items():
-			self._removeWidget(name, child)
+			self._removeWidget(name, child, False)
 
 	def onRemoveWidget(self, evt):
 		if len(evt.namelist) == 1:
 			for name, child in self.children.items():
 				if name == evt.namelist[0]:
-					self._removeWidget(name, child)
+					self._removeWidget(name, child, evt.layout)
 					if evt.event is not None:
 						evt.event.set()
 			#raise ValueError('No such child to remove widget')

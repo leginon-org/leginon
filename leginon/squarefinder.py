@@ -186,12 +186,17 @@ class BlobFinderPlugin(Plugin):
 		maxblobs = self.maxblobs.get()
 		minblobsize = self.minblobsize.get()
 		maxblobsize = self.maxblobsize.get()
+		scale = int(1.0/self.scale.get())
 		try:
-			blobs = imagefun.find_blobs(input.image, input.mask, border, maxblobs,
-																	maxblobsize, minblobsize) 
+			blobs = imagefun.find_blobs(input.image[::scale, ::scale],
+																	input.mask[::scale, ::scale],
+																	border/scale, maxblobs,
+																	maxblobsize/scale, minblobsize/scale)
 		except (ValueError, imagefun.TooManyBlobs):
 			blobs = []
-		targets = map(lambda b: (b.stats['center'][1], b.stats['center'][0]), blobs)
+		targets = map(lambda b: (scale*b.stats['center'][1],
+															scale*b.stats['center'][0]),
+									blobs)
 		return self.outputclass(input.image, targets)
 
 	def defineUserInterface(self):
@@ -200,7 +205,10 @@ class BlobFinderPlugin(Plugin):
 		self.minblobsize = uidata.Number('Minimum Blob Size', 0, 'rw', persist=True)
 		self.maxblobsize = uidata.Number('Maximum Blob Size', 1000, 'rw',
 																			persist=True)
-		return [self.border, self.maxblobs, self.minblobsize, self.maxblobsize]
+		self.scale = uidata.Number('Scale', 1.0, 'rw', persist=True)
+		return [self.border, self.maxblobs,
+						self.minblobsize, self.maxblobsize,
+						self.scale]
 
 class SquareBlobFinderPlugin(BlobFinderPlugin):
 	name = 'Square Blob Finder'
@@ -320,6 +328,12 @@ class SquareFinder(targetfinder.TargetFinder):
 																												t[0], t[1]),
 													output.targets)
 
+	def onCJTest(self):
+		n = 1000
+		while n <= 4320:
+			self.load('images/04mar08a-bak/Robot 3-8-2004_%04dgrid.mrc' % n)
+			n += 3
+
 	def defineUserInterface(self):
 		targetfinder.TargetFinder.defineUserInterface(self)
 		self.uidataqueueflag.set(False)
@@ -337,8 +351,10 @@ class SquareFinder(targetfinder.TargetFinder):
 		pipelinecontainer = uidata.Container('Pipeline')
 		pipelinecontainer.addObjects(self.pluginpipeline.userinterfaceitems)
 
+		cjtest = uidata.Method('CJ Test', self.onCJTest)
+
 		container = uidata.LargeContainer('Square Finder')
 		container.addObjects((self.messagelog, filecontainer,
-													pipelinecontainer, self.ui_image,))
+													pipelinecontainer, self.ui_image, cjtest))
 		self.uiserver.addObjects((container,))
 
