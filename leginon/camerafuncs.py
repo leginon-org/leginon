@@ -93,6 +93,8 @@ class CameraFuncs(object):
 		pixy = camstate['dimension']['y']
 		offx = sizex / 2 - pixx / 2
 		offy = sizey / 2 - pixy / 2
+		if offx < 0 or offy < 0 or offx > sizex or offy > sizey:
+			raise RuntimeError('invalid dimmension or binning produces invalid offset')
 		camstate['offset'] = {'x': offx, 'y': offy}
 
 	def cameraConfigUIData(self):
