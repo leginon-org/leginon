@@ -54,8 +54,16 @@ class Server(SocketServer.ThreadingTCPServer, leginonobject.LeginonObject):
 					else:
 						raise
 
+class PullServer(Server):
+	def __init__(self, server, port=None):
+		Server.__init__(self, server, PullHandler, port)
+
 	def datafromid(self, data_id):
 		return self.server.datafromid(data_id)
+
+class PushServer(Server):
+	def __init__(self, server, port=None):
+		Server.__init__(self, server, PushHandler, port)
 
 	def datatoid(self, data_id, data):
 		return self.server.datatoid(data_id, data)
@@ -69,6 +77,7 @@ class Client(leginonobject.LeginonObject):
 		self.hostname = hostname
 		self.port = port
 
+class PullClient(Client):
 	def pull(self, data_id):
 		data = ""
 		self.socket.connect((self.hostname, self.port)) # Connect to server
@@ -83,6 +92,7 @@ class Client(leginonobject.LeginonObject):
 		# needs cPickle attempt
 		return pickle.loads(data)
 
+class PushClient(Client):
 	def push(self, data):
 		# needs to account for different data_id datatypes
 		self.socket.connect((self.hostname, self.port)) # Connect to server
@@ -98,8 +108,8 @@ if __name__ == '__main__':
 		def datatoid(self, data_id, data):
 			print `{data_id : data}`
 
-	pullserver = Server(dummyServer(), PullHandler)
-	pushserver = Server(dummyServer(), PushHandler)
+	pullserver = PullServer(dummyServer())
+	pushserver = PushServer(dummyServer())
 	print 'pull server at:', pullserver.server_address
 	print 'push server at:', pushserver.server_address
 	t1 = threading.Thread(None, pullserver.serve_forever, None, (), {})

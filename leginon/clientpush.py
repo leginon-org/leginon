@@ -2,6 +2,7 @@
 ## client/server model in which the client pushes data and server
 ##  handles the data
 import leginonobject
+import datalocal
 import datatcp
 import threading
 
@@ -10,19 +11,21 @@ class Client(leginonobject.LeginonObject):
 	def __init__(self, hostname, port):
 		leginonobject.LeginonObject.__init__(self)
 		self.clients = {}
-		self.clients[datatcp.Client] = datatcp.Client(hostname, port)
+		self.clients[datalocal.PushClient] = datalocal.PushClient()
+		self.clients[datatcp.PushClient] = datatcp.PushClient(hostname, port)
 
 	def push(self, data):
 		# testing, needs to be smart
-		return self.clients[datatcp.Client].push(data)
+		return self.clients[datatcp.PushClient].push(data)
 
 class Server(leginonobject.LeginonObject):
 	def __init__(self):
 		leginonobject.LeginonObject.__init__(self)
 		self.bindings = Bindings()
 		self.servers = {}
-		self.servers[datatcp.Server] = datatcp.Server(self, datatcp.PushHandler)
-		thread = threading.Thread(None, self.servers[datatcp.Server].serve_forever, None, (), {})
+		self.servers[datalocal.PushServer] = datalocal.PushServer(self)
+		self.servers[datatcp.PushServer] = datatcp.PushServer(self)
+		thread = threading.Thread(None, self.servers[datatcp.PushServer].serve_forever, None, (), {})
 		# this isn't working right now
 		#thread.setDaemon(1)
 		thread.start()
@@ -50,5 +53,5 @@ if __name__ == '__main__':
 			print "self.data =", `self.data`
 
 	foo = MyServer()
-	print foo.servers[datatcp.Server].server_address
+	print foo.servers[datatcp.PushServer].server_address
 
