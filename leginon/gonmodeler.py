@@ -20,6 +20,7 @@ import uidata
 import string
 import math
 import EM
+import Numeric
 
 class GonModeler(node.Node):
 	eventinputs = node.Node.eventinputs + EM.EMClient.eventinputs
@@ -93,8 +94,8 @@ class GonModeler(node.Node):
 
 		## acquire image
 		newimagedata = self.cam.acquireCameraImageData(correction=0)
-		self.publish(newimagedata, pubevent=True, dbforce=True)
 		newnumimage = newimagedata['image']
+		self.ui_image.set(newnumimage.astype(Numeric.Float32))
 
 		## insert into correlator
 		self.correlator.insertImage(newnumimage)
@@ -182,6 +183,8 @@ class GonModeler(node.Node):
 	def defineUserInterface(self):
 		nodespec = node.Node.defineUserInterface(self)
 
+		self.ui_image = uidata.Image('GonModeler Image', None, 'rw')
+
 		self.uidatalabel = uidata.String('Label', '', 'rw', persist=True)
 		self.uiaxis = uidata.SingleSelectFromList('Axis',  ['x','y'], 0)
 		self.uipoints = uidata.Integer('Points', 200, 'rw', persist=True)
@@ -205,7 +208,11 @@ class GonModeler(node.Node):
 		camconfig = self.cam.uiSetupContainer()
 
 		maincont = uidata.LargeContainer('GonModeler')
-		maincont.addObjects((measurecont, modelcont, camconfig))
+		maincont.addObject(measurecont, position={'position':(0,0)})
+		maincont.addObject(modelcont, position={'position':(1,0)})
+		maincont.addObject(camconfig, position={'position':(2,0)})
+		maincont.addObject(self.ui_image, position={'position':(0,1), 'span': (3,1)})
+
 		self.uicontainer.addObject(maincont)
 
 	def uiStartLoop(self):
