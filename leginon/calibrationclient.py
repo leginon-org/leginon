@@ -15,13 +15,7 @@ class CalibrationClient(object):
 	'''
 	def __init__(self, node):
 		self.node = node
-
-		self.cam = camerafuncs.CameraFuncs(node)
-		currentconfig = self.cam.config()
-		currentconfig['state']['dimension']['x'] = 1024
-		currentconfig['state']['binning']['x'] = 4
-		currentconfig['state']['exposure time'] = 500
-		self.cam.config(currentconfig)
+		self.cam = node.cam
 
 		ffteng = fftengine.fftNumeric()
 		#ffteng = fftengine.fftFFTW(planshapes=(), estimate=1)
@@ -59,7 +53,8 @@ class CalibrationClient(object):
 		print 'state settling time %s' % (self.settle,)
 		time.sleep(self.settle)
 
-		imagedata = self.cam.acquireCameraImageData(camstate=None, correction=0)
+		print 'XXXXXXXXXXXXXXXXXX', self, self.node
+		imagedata = self.cam.acquireCameraImageData()
 		actual_state = imagedata.content['scope']
 		self.node.publish(imagedata, event.CameraImagePublishEvent)
 
@@ -102,22 +97,11 @@ class CalibrationClient(object):
 		numimage2 = imagecontent2['image']
 
 		self.correlator.insertImage(numimage1)
-
-		## autocorrelation
-		self.correlator.insertImage(numimage1)
-		acimage = self.correlator.phaseCorrelate()
-		acimagedata = data.PhaseCorrelationImageData(self.node.ID(), acimage, imagedata1.id, imagedata1.id)
-		#self.publish(acimagedata, event.PhaseCorrelationImagePublishEvent)
-
-		## phase correlation
 		self.correlator.insertImage(numimage2)
 		print 'correlation'
 		pcimage = self.correlator.phaseCorrelate()
-
-		## subtract autocorrelation
-		pcimage -= acimage
-
 		pcimagedata = data.PhaseCorrelationImageData(self.node.ID(), pcimage, imagedata1.id, imagedata2.id)
+
 		#self.publish(pcimagedata, event.PhaseCorrelationImagePublishEvent)
 
 		## peak finding
@@ -144,7 +128,7 @@ class BeamTiltCalibrationClient(CalibrationClient):
 	def setCalibration(self, key, calibration):
 		dat = data.MatrixCalibrationData(('calibrations',key), calibration)
 		self.node.publishRemote(dat)
-	
+
 	def getMatrix(self, mag, type):
 		key = self.magCalibrationKey(mag, type)
 		matrix = self.getCalibration(key)
