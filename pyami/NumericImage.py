@@ -18,6 +18,18 @@ ntype_itype = {
 	(Numeric.Float64,8) : ('F','F;64NF')
 	}
 
+def numeric_bin(ndata, bin):
+	shape = ndata.shape
+	if len(shape) != 2:
+		raise RuntimeError, 'ndata must be 2-D Numeric array'
+	if len(bin) != 2:
+		raise RuntimeError, 'bin must be 2-tuple'
+	if shape[0] % bin[0] or shape[1] % bin[1]:
+		raise RuntimeError, 'shape must be multiple of bin'
+
+	newshape = shape[0]/bin[0], shape[1]/bin[1]
+
+
 class NumericImage(ImageTk.PhotoImage):
 	"""extends the PIL PhotoImage to take 2D Numeric data, scaled to
 	the clients preference"""
