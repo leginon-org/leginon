@@ -56,7 +56,7 @@ class EM(node.Node):
 		self.addEventInput(event.LockEvent, self.doLock)
 		self.addEventInput(event.UnlockEvent, self.doUnlock)
 
-		self.defineUserInteface()
+		self.defineUserInterface()
 		self.start()
 
 	def setEMclasses(self, scope, camera):
@@ -204,5 +204,5 @@ class EM(node.Node):
 
 		filespec = self.registerUIContainer('File', (savespec, loadspec))
 
-		self.registerUISpec('EM', (nodespec, statespec, filespec))
+		self.registerUISpec('EM', (statespec, filespec, nodespec))
 
