@@ -1246,7 +1246,7 @@ class wxObjectCanvas(wxScrolledWindow):
 
 		self.master = master
 		self.master.SetNextHandler(self)
-		self.SetVirtualSize((self.master.width, self.master.height))
+		self.SetSize((self.master.width, self.master.height))
 		self.SetScrollRate(1, 1)
 
 		self.draginfo = None

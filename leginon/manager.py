@@ -42,7 +42,7 @@ class Manager(node.Node):
 		# maps event id to list of node it was distributed to if event['confirm']
 		self.disteventswaiting = {}
 
-		self.app = application.Application(self.ID(), self)
+		self.application = application.Application(self.ID(), self)
 
 		self.addEventInput(event.NodeAvailableEvent, self.registerNode)
 		self.addEventInput(event.NodeUnavailableEvent, self.unregisterNode)
@@ -125,17 +125,8 @@ class Manager(node.Node):
 			if nodeid in self.disteventswaiting[eventid]:
 				self.disteventswaiting[eventid][nodeid].set()
 
-	def addEventDistmap(self, eventclass, from_node=None, to_node=None,
-											addtoapp=True):
+	def addEventDistmap(self, eventclass, from_node=None, to_node=None):
 		'''Map distribution of an event of eventclass from a node to a node.'''
-		args = (eventclass, from_node, to_node)
-		if addtoapp:
-			try:
-				self.app.addBindingSpec(eventclass.__name__, from_node, to_node)
-			except ValueError:
-				# binding exists in application
-				pass
-
 		if eventclass not in self.distmap:
 			self.distmap[eventclass] = {}
 		if from_node not in self.distmap[eventclass]:
@@ -150,9 +141,6 @@ class Manager(node.Node):
 			self.printerror(str(eventclass) + ': ' + str(fromnodeid) + ' to '
 											+ str(tonodeid) + ' no such binding')
 			return
-
-		args = (eventclass, fromnodeid, tonodeid)
-		self.app.delBindingSpec(eventclass.__name__, fromnodeid, tonodeid)
 
 	def distributeEvents(self, ievent):
 		'''Push event to eventclients based on event class and source.'''
@@ -391,7 +379,7 @@ class Manager(node.Node):
 		for dataid in self.datahandler.ids():
 			self.unpublishDataLocation(dataid, nodeid)
 
-	def launchNode(self, launcher, newproc, target, name, nodeargs=(), dependencies=[], addtoapp=True):
+	def launchNode(self, launcher, newproc, target, name, nodeargs=(), dependencies=[]):
 		'''
 		Launch a node with a launcher node.
 		launcher = id of launcher node
@@ -400,9 +388,6 @@ class Manager(node.Node):
 		dependencies = node dependent on to launch
 		'''
 		args = (launcher, newproc, target, name, nodeargs, dependencies)
-		if addtoapp:
-			self.app.addNodeSpec(target, name, launcher, nodeargs, newproc,
-																													dependencies)
 		t = threading.Thread(target=self.waitNode, args=args)
 		t.start()
 		nodeid = self.id + (name,)
@@ -523,22 +508,36 @@ class Manager(node.Node):
 
 	# application methods
 
-	def saveApp(self, name):
-		'''Calls application.Application.save.'''
-		self.app.setName(name)
-		self.app.save()
-
 	def loadApp(self, name):
 		'''Calls application.Application.load.'''
-		self.app.load(name)
+		if self.uilauncheraliascontainer is not None:
+			self.applicationcontainer.deleteObject('Launcher Aliases')
+		self.application.load(name)
+		aliases = self.application.getLauncherAliases()
+		uialiasselectors = []
+		launchers = self.launcherdict.keys()
+		launchers.sort()
+		for alias in aliases:
+			uialiasselectors.append(uidata.SingleSelectFromList(alias, launchers, 0))
+		self.uilauncheraliascontainer = uidata.Container('Launcher Aliases')
+		self.uilauncheraliascontainer.addObjects(uialiasselectors)
+		self.applicationcontainer.addObject(self.uilauncheraliascontainer)
 
 	def launchApp(self):
 		'''Calls application.Application.launch.'''
-		self.app.launch()
+		if self.uilauncheraliascontainer is None:
+			return
+		for alias in self.uilauncheraliascontainer.getObjects():
+			self.application.setLauncherAlias(alias.getName(),
+																				(alias.getSelectedValue(),))
+		self.application.launch()
 
 	def killApp(self):
 		'''Calls application.Application.kill.'''
-		self.app.kill()
+		if self.uilauncheraliascontainer is not None:
+			self.applicationcontainer.deleteObject('Launcher Aliases')
+		self.uilauncheraliascontainer = None
+		self.application.kill()
 
 	# UI methods
 
@@ -626,11 +625,6 @@ class Manager(node.Node):
 		nodelocations[str(self.id)] = self.location()
 		return nodelocations
 
-	def uiSaveApp(self):
-		'''UI helper for saveApp. See saveApp.'''
-		name = self.uiapplicationname.get()
-		self.saveApp(name)
-
 	def uiLoadApp(self):
 		'''UI helper for loadApp. See loadApp.'''
 		name = self.uiapplicationname.get()
@@ -682,15 +676,14 @@ class Manager(node.Node):
 		nodemanagementcontainer.addObjects(infoobjects + addobjects + killobjects)
 
 		self.uiapplicationname = uidata.String('Name', '', 'rw')
-		applicationsavemethod = uidata.Method('Save', self.uiSaveApp)
 		applicationloadmethod = uidata.Method('Load', self.uiLoadApp)
 		applicationlaunchmethod = uidata.Method('Launch', self.uiLaunchApp)
 		applicationkillmethod = uidata.Method('Kill', self.uiKillApp)
-		applicationobjects = (self.uiapplicationname, applicationsavemethod,
-													applicationloadmethod, applicationlaunchmethod,
-													applicationkillmethod)
-		applicationcontainer = uidata.MediumContainer('Application')
-		applicationcontainer.addObjects(applicationobjects)
+		applicationobjects = (self.uiapplicationname, applicationloadmethod,
+													applicationlaunchmethod, applicationkillmethod)
+		self.uilauncheraliascontainer = None
+		self.applicationcontainer = uidata.MediumContainer('Application')
+		self.applicationcontainer.addObjects(applicationobjects)
 
 		self.uifromnodeselect = uidata.SingleSelectFromList('From Node', [], 0)
 		self.uieventclasses = event.eventClasses()
@@ -707,7 +700,7 @@ class Manager(node.Node):
 
 		container = uidata.MediumContainer('Manager')
 		container.addObjects((launchcontainer, nodemanagementcontainer,
-														eventcontainer, applicationcontainer))
+														eventcontainer, self.applicationcontainer))
 		self.uiserver.addObject(container)
 
 if __name__ == '__main__':

@@ -41,6 +41,9 @@ class BindingConnectionPoint(wxObjectCanvas.wxConnectionPointObject):
 		self.drawtext = 0
 		wxObjectCanvas.wxConnectionPointObject.__init__(self, color)
 
+	def getEventClass(self):
+		return self.eventclass
+
 	def getDrawText(self):
 		if self.drawtext > 0:
 			return True
@@ -103,7 +106,7 @@ class BindingOutput(BindingConnectionPoint):
 
 class Node(wxObjectCanvas.wxRectangleObject):
 	def __init__(self, alias, nodeclass):
-		wxObjectCanvas.wxRectangleObject.__init__(self, 60, 60, wxColor(128,0,128))
+		wxObjectCanvas.wxRectangleObject.__init__(self, 100, 100,wxColor(128,0,128))
 		self.alias = alias 
 		self.nodeclass = nodeclass
 
@@ -130,6 +133,9 @@ class Node(wxObjectCanvas.wxRectangleObject):
 		self.removeText(self.alias)
 		self.alias = alias 
 		self.addText(self.alias)
+
+	def getClass(self):
+		return self.nodeclass
 
 	def menuRename(self, evt):
 		dialog = RenameDialog(None, -1)
@@ -227,6 +233,9 @@ class Binding(wxObjectCanvas.wxConnectionObject):
 		self.label = BindingLabel(self.eventclass)
 		self.addShapeObject(self.label)
 
+	def getEventClass(self):
+		return self.eventclass
+
 	def _crookedLine(self, dc, so1, x, y):
 		x1, y1 = wxObjectCanvas.wxConnectionObject._crookedLine(self, dc, so1, x, y)
 		self.setLabelPosition(x1, y1, x, y)
@@ -241,6 +250,18 @@ class Binding(wxObjectCanvas.wxConnectionObject):
 		lx = (x2 - x1)/2 + x1 - xoffset - self.label.width/2
 		ly = (y2 - y1)/2 + y1 - yoffset - self.label.height/2
 		self.label.setPosition(lx, ly)
+
+	def getFromNode(self):
+		connectionpoint = self.getFromShapeObject()
+		if connectionpoint is not None:
+			return connectionpoint.getParent()
+		return None
+
+	def getToNode(self):
+		connectionpoint = self.getToShapeObject()
+		if connectionpoint is not None:
+			return connectionpoint.getParent()
+		return None
 
 class AddNodeDialog(wxDialog):
 	def __init__(self, parent, id, title='Add Node', pos=wxDefaultPosition,
@@ -293,7 +314,7 @@ class AddNodeDialog(wxDialog):
 class Launcher(wxObjectCanvas.wxRectangleObject):
 	def __init__(self, alias):
 		self.alias = alias
-		wxObjectCanvas.wxRectangleObject.__init__(self, 150, 150, wxColor(0,128,0))
+		wxObjectCanvas.wxRectangleObject.__init__(self, 400, 400, wxColor(0,128,0))
 		self.addText(self.alias)
 
 		self.popupmenu.Append(101, 'Rename...')
@@ -333,6 +354,9 @@ class Launcher(wxObjectCanvas.wxRectangleObject):
 
 	def addShapeObject(self, so, x=0, y=0):
 		if isinstance(so, Node):
+			for node in self.getNodes():
+				if node.getAlias() == so.getAlias():
+					raise ValueError('Node with same alias already exists')
 			wxObjectCanvas.wxRectangleObject.addShapeObject(self, so, x, y)
 		else:
 			raise TypeError('Invalid object type to add')
@@ -427,11 +451,17 @@ class Application(wxObjectCanvas.wxRectangleObject):
 		self.delete()
 
 	def getLaunchers(self):
-		launchers = []
+		return self.getShapeObjectsOfType(Launcher)
+
+	def getBindings(self):
+		return self.getShapeObjectsOfType(Binding)
+
+	def getShapeObjectsOfType(self, shapeobjecttype):
+		shapeobjects = []
 		for shapeobject in self.shapeobjects:
-			if isinstance(shapeobject, Launcher):
-				launchers.append(shapeobject)
-		return launchers
+			if isinstance(shapeobject, shapeobjecttype):
+				shapeobjects.append(shapeobject)
+		return shapeobjects
 
 	def getNodes(self):
 		nodes = []
@@ -445,6 +475,9 @@ class Application(wxObjectCanvas.wxRectangleObject):
 
 	def addShapeObject(self, so, x=0, y=0):
 		if isinstance(so, Launcher):
+			for launcher in self.getLaunchers():
+				if launcher.getAlias() == so.getAlias():
+					raise ValueError('Launcher with same alias already exists')
 			wxObjectCanvas.wxRectangleObject.addShapeObject(self, so, x, y)
 		elif isinstance(so, BindingLabel):
 			wxObjectCanvas.wxRectangleObject.addShapeObject(self, so, x, y)
@@ -480,28 +513,107 @@ class Application(wxObjectCanvas.wxRectangleObject):
 					input.setDrawText(False)
 		wxObjectCanvas.wxRectangleObject.cancelConnection(self)
 
+	def getApplication(self):
+		application = {'name': self.getName(), 'nodes': [], 'bindings': []}
+		for launcher in self.getLaunchers():
+			for node in launcher.getNodes():
+				nodetuple = (node.getClass(), node.getAlias(),
+											launcher.getAlias(), (), 0, [])
+				application['nodes'].append(nodetuple)
+		bindings = {}
+		for binding in self.getBindings():
+			fromnode = binding.getFromNode()
+			tonode = binding.getToNode()
+			if fromnode is not None and tonode is not None:
+				fromalias = fromnode.getAlias()
+				toalias = tonode.getAlias()
+				bindingtuple = (binding.getEventClass(), fromalias, toalias)
+				application['bindings'].append(bindingtuple)
+		return application
+
+	def setApplication(self, application):
+		if application['name'] != self.getName():
+			self.setName(application['name'])
+
+		nodes = []
+		nodespecs = []
+		for node in self.getNodes():
+			for nodespec in application['nodes']:
+				if node.getClass() == nodespec[0]:
+					if node.getAlias() == nodespec[1]:
+						parent = node.getParent()
+						if parent is not None and parent.getAlias() == nodespec[2]:
+							nodes.append(node)
+							nodespecs.append(nodespec)
+
+		for node in self.getNodes():
+			if node not in nodes:
+				node.delete()
+
+		for nodespec in application['nodes']:
+			if nodespec not in nodespecs:
+				launcher = None
+				for l in self.getLaunchers():
+					if l.getAlias() == nodespec[2]:
+						launcher = l
+						break
+					else:
+						launcher = None
+
+				if launcher is None:
+					launcher = Launcher(nodespec[2])
+					self.addShapeObject(launcher)
+			
+				launcher.addShapeObject(Node(nodespec[1], nodespec[0]))
+
+		bindings = []
+		bindspecs = []
+		for binding in self.getBindings():
+			for bindspec in application['bindings']:
+				if binding.getEventClass() == bindspec[0]:
+					fromso = binding.getFromShapeObject()
+					toso = binding.getToShapeObject()
+					if fromso is not None and toso is not None:
+						fromnode = fromso.getParent()
+						tonode = toso.getParent()
+						if fromnode is not None and fromnode.getAlias() == bindspec[1]:
+							if tonode is not None and tonode.getAlias() == bindspec[2]:
+								bindings.append(binding)
+								bindspecs.append(bindspec)
+
+		for binding in self.getBindings():
+			if binding not in bindings:
+				binding.delete()
+
+		for bindspec in application['bindings']:
+			if bindspec not in bindspecs:
+				fromcp = None
+				tocp = None
+				for node in self.getNodes():
+					if node.getAlias() == bindspec[1]:
+						for output in node.connectionoutputs:
+							if output.getEventClass() == bindspec[0]:
+								fromcp = output
+					if node.getAlias() == bindspec[2]:
+						for input in node.connectioninputs:
+							if input.getEventClass() == bindspec[0]:
+								tocp = input
+				if fromcp is not None and tocp is not None:
+					binding = Binding(bindspec[0], fromcp, tocp)
+					self.addShapeObject(binding)
+
 class Master(wxObjectCanvas.wxRectangleObject):
 	def __init__(self):
 		wxObjectCanvas.wxRectangleObject.__init__(self, 800, 800)
 		self.addText('Master')
 
+class ApplicationEditorCanvas(wxObjectCanvas.wxObjectCanvas):
+	def __init__(self, parent, id):
+		self.application = Application('New Application')
+		wxObjectCanvas.wxObjectCanvas.__init__(self, parent, id, self.application)
+
 if __name__ == '__main__':
 	import time
-
-	class MasterApp(wxApp):
-		def OnInit(self):
-			self.frame = wxFrame(NULL, -1, 'Master Application')
-			self.SetTopWindow(self.frame)
-			self.panel = wxPanel(self.frame, -1)
-			self.master = Master()
-			self.objectcanvas = wxObjectCanvas.wxObjectCanvas(self.panel, -1,
-																												self.master)
-			self.objectcanvas.SetSize((800, 800))
-			self.panel.Fit()
-			self.panel.Show(true)
-			self.frame.Fit()
-			self.frame.Show(true)
-			return true
 
 	class ApplicationApp(wxApp):
 		def OnInit(self):
@@ -511,56 +623,12 @@ if __name__ == '__main__':
 			self.master = Application('New Application')
 			self.objectcanvas = wxObjectCanvas.wxObjectCanvas(self.panel, -1,
 																												self.master)
-			self.objectcanvas.SetSize((800, 800))
-			self.panel.Fit()
+			self.panel.SetSize(self.objectcanvas.GetSize())
 			self.panel.Show(true)
-			self.frame.Fit()
+			self.frame.SetClientSize(self.panel.GetSize())
 			self.frame.Show(true)
 			return true
 
-	#app = MasterApp(0)
 	app = ApplicationApp(0)
-	app.frame.Fit()
-
-	l0 = Launcher('Launcher 0')
-	l1 = Launcher('Launcher 1')
-	l2 = Launcher('Launcher 2')
-
 	app.MainLoop()
-
-	n0 = Node('Node 0', 'Class 0')
-	n1 = Node('Node 1', 'Class 0')
-	n2 = Node('Node 2', 'Class 0')
-	n3 = Node('Node 3', 'Class 0')
-	n4 = Node('Node 4', 'Class 0')
-	cpo0 = BindingInput('eventclass 0')
-	cpo1 = BindingInput('eventclass 1')
-	cpo2 = BindingInput('eventclass 2')
-	cpo3 = BindingOutput('eventclass 0')
-	cpo4 = BindingOutput('eventclass 1')
-	cpo5 = BindingOutput('eventclass 2')
-	n1.addConnectionInput(cpo0)
-	n2.addConnectionInput(cpo1)
-	n1.addConnectionInput(cpo2)
-	n0.addConnectionOutput(cpo3)
-	n3.addConnectionOutput(cpo4)
-	n3.addConnectionOutput(cpo5)
-
-	app.master.addShapeObject(l1)
-	app.master.addShapeObject(l0)
-	app.master.addShapeObject(l2)
-	l0.addShapeObject(n1)
-	l2.addShapeObject(n2)
-	l0.addShapeObject(n0)
-	l1.addShapeObject(n3)
-	l2.addShapeObject(n4)
-	b0 = Binding('Binding 0', cpo3, cpo0)
-	b1 = Binding('Binding 1', cpo4, cpo1)
-	b2 = Binding('Binding 2', cpo5, cpo2)
-#	app.master.addConnectionObject(b0)
-#	app.master.addConnectionObject(b1)
-#	app.master.addConnectionObject(b2)
-	app.master.addShapeObject(b0)
-	app.master.addShapeObject(b1)
-	app.master.addShapeObject(b2)
 

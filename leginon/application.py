@@ -1,6 +1,3 @@
-'''
-This is an Application manager to be included as a component of Manager
-'''
 import data
 import event
 import time
@@ -8,45 +5,71 @@ import threading
 import leginonobject
 
 class Application(leginonobject.LeginonObject):
-	def __init__(self, id, manager, name=None):
+	def __init__(self, id, node, name=None):
 		leginonobject.LeginonObject.__init__(self, id)
-		self.manager = manager
-		self.data = data.ApplicationData(id=self.ID())
+		self.node = node
+		self.data = data.Application2Data(id=self.ID())
 		if name is not None:
 			self.data['name'] = name
 		self.nodespecs = []
 		self.bindingspecs = []
 		self.launchednodes = []
+		self.launcherids = {}
+		self.nodeids = {}
+
+	def clear(self):
+		name = self.getName()
+		self.data = data.Application2Data(id=self.ID())
+		if name is not None:
+			self.data['name'] = name
+		self.nodespecs = []
+		self.bindingspecs = []
+		self.launchednodes = []
+		self.launcherids = {}
+		self.nodeids = {}
+
+	def getName(self):
+		return self.data['name']
 
 	def setName(self, name):
 		self.data['name'] = name
 
-	def addNodeSpec(self, class_string, name, launcherid,
+	def addNodeSpec(self, class_string, alias, launcheralias,
 									args=(), npf=0, dependencies=[]):
 		for spec in self.nodespecs:
-			if name == spec['name']:
+			if alias == spec['alias']:
 				self.nodespecs.remove(spec)
 				break
-		nodespecdata = data.NodeSpecData()
+		nodespecdata = data.NodeSpec2Data()
 		nodespecdata['class string'] = class_string
-		nodespecdata['name'] = name
-		nodespecdata['launcher ID'] = launcherid
+		nodespecdata['alias'] = alias
+		nodespecdata['launcher alias'] = launcheralias
 		nodespecdata['args'] = args
 		nodespecdata['new process flag'] = npf
 		nodespecdata['dependencies'] = dependencies
 		nodespecdata['application'] = self.data
 		self.nodespecs.append(nodespecdata)
 
-	def delNodeSpec(self, name):
+	def getLauncherAliases(self):
+		aliases = []
+		for nodespecdata in self.nodespecs:
+			if nodespecdata['launcher alias'] not in aliases:
+				aliases.append(nodespecdata['launcher alias'])
+		return aliases
+
+	def setLauncherAlias(self, alias, id):
+		self.launcherids[alias] = id
+
+	def delNodeSpec(self, alias):
 		for nodespec in self.nodespecs:
-			if nodespec['name'] == name:
+			if nodespec['alias'] == alias:
 				self.nodespecs.remove(nodespec)
 
-	def addBindingSpec(self, eventclass_string, fromnodeid, tonodeid):
-		bindingspecdata = data.BindingSpecData()
+	def addBindingSpec(self, eventclass_string, fromnodealias, tonodealias):
+		bindingspecdata = data.BindingSpec2Data()
 		bindingspecdata['event class string'] = eventclass_string
-		bindingspecdata['from node ID'] = fromnodeid
-		bindingspecdata['to node ID'] = tonodeid
+		bindingspecdata['from node alias'] = fromnodealias
+		bindingspecdata['to node alias'] = tonodealias
 		bindingspecdata['application'] = self.data
 		for spec in self.bindingspecs:
 			same = True
@@ -57,11 +80,11 @@ class Application(leginonobject.LeginonObject):
 				raise ValueError('binding already exists in application')
 		self.bindingspecs.append(bindingspecdata)
 
-	def delBindingSpec(self, eventclass_string, fromnodeid, tonodeid):
-		bindingspecdata = data.BindingSpecData()
+	def delBindingSpec(self, eventclass_string, fromnodealias, tonodealias):
+		bindingspecdata = data.BindingSpec2Data()
 		bindingspecdata['event class string'] = eventclass_string
-		bindingspecdata['from node ID'] = fromnodeid
-		bindingspecdata['to node ID'] = tonodeid
+		bindingspecdata['from node alias'] = fromnodealias
+		bindingspecdata['to node alias'] = tonodealias
 		bindingspecdata['application'] = self.data
 		for spec in self.bindingspecs:
 			same = True
@@ -71,15 +94,28 @@ class Application(leginonobject.LeginonObject):
 			if same:
 				self.bindingspecs.remove(spec)
 
-	def getLauncherIDs(self):
-		launcherids = []
-		for spec in self.nodespecs:
-			launcherids.append(spec['launcher ID'])
-		return launcherids
+	def getNodeIDFromAlias(self, alias):
+		try:
+			return self.nodeids[alias]
+		except KeyError:
+			raise ValueError('No such node alias mapped to ID')
+
+	def getLauncherIDFromAlias(self, alias):
+		try:
+			return self.launcherids[alias]
+		except KeyError:
+			raise ValueError('No such launcher alias mapped to ID')
 
 	def nodeSpec2Args(self, ns):
-		return (ns['launcher ID'], ns['new process flag'], ns['class string'],
-						ns['name'], tuple(ns['args']), ns['dependencies'], False)
+		try:
+			launcherid = self.getLauncherIDFromAlias(ns['launcher alias'])
+		except ValueError:
+			raise ValueError('Invalid node specification')
+		nodename = self.getName() + ' ' + ns['alias']
+		args = tuple(ns['args'])
+		return ns['alias'], (launcherid, ns['new process flag'],
+													ns['class string'], nodename, args,
+													ns['dependencies'])
 
 	def bindingSpec2Args(self, bs):
 		# i know...
@@ -87,50 +123,64 @@ class Application(leginonobject.LeginonObject):
 			eventclass = eval('event.' + bs['event class string'])
 		except:
 			raise ValueError('cannot get event class for binding')
-		return (eventclass, bs['from node ID'], bs['to node ID'], False)
+		try:
+			fromnodeid = self.getNodeIDFromAlias(bs['from node alias'])
+			tonodeid = self.getNodeIDFromAlias(bs['to node alias'])
+		except ValueError:
+			raise ValueError('Invalid binding specification')
+		return (eventclass, fromnodeid, tonodeid)
 
 	def launch(self):
+		if not hasattr(self.node, 'addEventDistmap'):
+			raise RuntimeError('Application node unable to launch')
 		threads = []
 		for nodespec in self.nodespecs:
-			args = self.nodeSpec2Args(nodespec)
-			self.launchNode(args)
+			alias, args = self.nodeSpec2Args(nodespec)
+			id = self.launchNode(args)
+			self.launchednodes.append(id)
+			self.nodeids[alias] = id
 		for bindingspec in self.bindingspecs:
 			args = self.bindingSpec2Args(bindingspec)
 			self.printerror('binding %s' % str(args))
-			apply(self.manager.addEventDistmap, args)
+			apply(self.node.addEventDistmap, args)
 
 	def launchNode(self, args):
-			self.printerror('launching %s' % str(args))
-			newid = apply(self.manager.launchNode, args)
-			self.launchednodes.append(newid)
+		if not hasattr(self.node, 'launchNode'):
+			raise RuntimeError('Application node unable to launch node')
+		self.printerror('launching %s' % str(args))
+		newid = apply(self.node.launchNode, args)
+		return newid
 
 	def kill(self):
+		if not hasattr(self.node, 'killNode'):
+			raise RuntimeError('Application node unable to kill')
 		while self.launchednodes:
 			nodeid = self.launchednodes.pop()
 			self.printerror('killing %s' % (nodeid,))
 			try:
-				self.manager.killNode(nodeid)
+				self.node.killNode(nodeid)
 			except:
 				self.printException()
+		self.nodeids = {}
 
 	def save(self):
-		self.manager.publish(self.data, database=True)
+		self.node.publish(self.data, database=True)
 		for nodespecdata in self.nodespecs:
-			self.manager.publish(nodespecdata, database=True)
+			self.node.publish(nodespecdata, database=True)
 		for bindingspecdata in self.bindingspecs:
-			self.manager.publish(bindingspecdata, database=True)
+			self.node.publish(bindingspecdata, database=True)
 
 	def load(self, name):
-		instance = data.ApplicationData(name=name)
-		applicationdatalist = self.manager.research(datainstance=instance)
+		instance = data.Application2Data(name=name)
+		applicationdatalist = self.node.research(datainstance=instance)
 		try:
 			self.data = applicationdatalist[0]
 		except IndexError:
 			raise ValueError('no such application')
 		instance['session'] = self.data['session']
 		instance['id'] = self.data['id']
-		nodeinstance = data.NodeSpecData(application=instance)
-		self.nodespecs = self.manager.research(datainstance=nodeinstance)
-		bindinginstance = data.BindingSpecData(application=instance)
-		self.bindingspecs = self.manager.research(datainstance=bindinginstance)
+		nodeinstance = data.NodeSpec2Data(application=instance)
+		self.nodespecs = self.node.research(datainstance=nodeinstance)
+		bindinginstance = data.BindingSpec2Data(application=instance)
+		self.bindingspecs = self.node.research(datainstance=bindinginstance)
 

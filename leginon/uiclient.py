@@ -8,6 +8,7 @@ from wxPython.wxc import wxPyAssertionError
 import wxImageViewer
 import wxDictTree
 import wxOrderedListBox
+import wxMaster
 
 wxEVT_ADD_WIDGET = wxNewEventType()
 wxEVT_SET_WIDGET = wxNewEventType()
@@ -92,6 +93,9 @@ def WidgetClassFromTypeList(typelist):
 						elif typelist[2] == 'boolean':
 							return wxCheckBoxWidget
 						elif typelist[2] == 'struct':
+							if len(typelist) > 3:
+								if typelist[3] == 'application':
+									return wxApplicationWidget
 							return wxTreeCtrlWidget
 						elif typelist[2] == 'binary':
 							if len(typelist) > 3:
@@ -273,6 +277,10 @@ class wxContainerWidget(wxWidget):
 				if len(evt.namelist) == 1:
 					del self.children[name]
 					child.destroy()
+					if not isinstance(child, wxNotebookContainerWidget):
+						if not isinstance(child, wxDialogContainerWidget):
+							if self.sizer is not None and child.sizer is not None:
+								self.sizer.Remove(child.sizer)
 					return
 				else:
 					evt.namelist = evt.namelist[1:]
@@ -601,6 +609,34 @@ class wxTreeCtrlWidget(wxDataWidget):
 
 	def setWidget(self, value):
 		self.tree.set(self.value)
+
+	def destroy(self):
+		self.tree.Destroy()
+
+class wxApplicationWidget(wxDataWidget):
+	def __init__(self, name, parent, container, value, read, write):
+		wxDataWidget.__init__(self, name, parent, container, value, read, write)
+		self.sizer = wxBoxSizer(wxVERTICAL)
+		# maybe have callback
+		self.applicationeditor = wxMaster.ApplicationEditorCanvas(self.parent, -1)
+
+		self.sizer.Add(self.applicationeditor, 0, wxALIGN_CENTER | wxALL, 5)
+		self.applybutton = wxButton(self.parent, -1, 'Apply')
+		EVT_BUTTON(self.applybutton, self.applybutton.GetId(), self.apply)
+		self.sizer.Add(self.applybutton, 0, wxALIGN_CENTER | wxALL, 5)
+		self.layout()
+
+		self.set(value)
+
+	def apply(self, evt):
+		self.value = self.applicationeditor.application.getApplication()
+		self.setFromWidget()
+
+	def setFromWidget(self):
+		self.setServer(self.value)
+
+	def setWidget(self, value):
+		self.applicationeditor.application.setApplication(self.value)
 
 	def destroy(self):
 		self.tree.Destroy()

@@ -718,33 +718,33 @@ class PixelDriftData(Data):
 		return t
 	typemap = classmethod(typemap)
 
-class ApplicationData(Data):
+class Application2Data(Data):
 	def typemap(cls):
 		t = Data.typemap()
 		t += [('name', str)]
 		return t
 	typemap = classmethod(typemap)
 
-class NodeSpecData(Data):
+class NodeSpec2Data(Data):
 	def typemap(cls):
 		t = Data.typemap()
 		t += [('class string', str),
-					('name', str),
-					('launcher ID', tuple),
+					('alias', str),
+					('launcher alias', str),
 					('args', list),
 					('new process flag', int),
 					('dependencies', list),
-					('application', ApplicationData)]
+					('application', Application2Data)]
 		return t
 	typemap = classmethod(typemap)
 
-class BindingSpecData(Data):
+class BindingSpec2Data(Data):
 	def typemap(cls):
 		t = Data.typemap()
 		t += [('event class string', str),
-					('from node ID', tuple),
-					('to node ID', tuple),
-					('application', ApplicationData)]
+					('from node alias', str),
+					('to node alias', str),
+					('application', Application2Data)]
 		return t
 	typemap = classmethod(typemap)
 

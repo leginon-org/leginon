@@ -29,6 +29,9 @@ class Object(object):
 			raise TypeError('name must be a string')
 		self.parent = None
 
+	def getName(self):
+		return self.name
+
 	def setParent(self, parent):
 		if parent is not None and not isinstance(parent, Container):
 			raise TypeError('parent must be a Container or None')
@@ -47,6 +50,9 @@ class Container(Object):
 		Object.__init__(self, name)
 		self.uiobjectdict = {}
 		self.uiobjectlist = []
+
+	def getObjects(self):
+		return self.uiobjectlist
 
 	def addObject(self, uiobject):
 		if uiobject.name not in self.uiobjectdict:
@@ -73,6 +79,7 @@ class Container(Object):
 			else:
 				raise TypeError('value must be a Object instance')
 		else:
+			print 'uiobject.name =', uiobject.name
 			raise ValueError('name already exists in Object mapping')
 
 	def addObjectsCallback(self):
@@ -273,6 +280,9 @@ class Date(Data):
 
 class Progress(Integer):
 	typelist = Integer.typelist + ('progress',)
+
+class Application(Struct):
+	typelist = Struct.typelist + ('application',)
 
 class SingleSelectFromList(Container):
 	typelist = Container.typelist + ('single select from list',)
