@@ -311,318 +311,6 @@ class wxShapeObjectEvtHandler(wxEvtHandler):
 	def OnPopupMenu(self, evt):
 		evt.Skip()
 
-class wxConnectionObject(object):
-	def __init__(self, so1, so2, text='', color=wxBLACK, style=wxSOLID):
-		self.parent = None
-		self.fromso = so1
-		self.toso = so2
-		self.text = text
-		self.color = color
-		self.style = style
-		self.tempto = None
-
-	def setParent(self, parent):
-		self.parent = parent
-
-	def getParent(self):
-		return self.parent
-
-	def getFromShapeObject(self):
-		return self.fromso
-
-	def setFromShapeObject(self, so):
-		self.fromso = so
-
-	def getToShapeObject(self):
-		return self.toso
-
-	def setToShapeObject(self, so):
-		self.tempto = None
-		self.toso = so
-
-	def setTempTo(self, position):
-		self.tempto = position
-
-	def setText(self, text):
-		self.text = text
-
-	def DrawText(self, dc, x, y, angle):
-		dc.SetFont(wxSWISS_FONT)
-		if not self.text:
-			return
-#		width, height = dc.GetTextExtent(self.text)
-#		x -= width/2
-#		y -= height/2
-		dc.DrawRotatedText(self.text, x, y, angle)
-
-	def DrawArrow(self, dc, p, direction, size=7):
-		oldbrush = dc.GetBrush()
-		dc.SetBrush(wxBLACK_BRUSH)
-		x, y = p
-		if direction == 'n':
-			dc.DrawPolygon([(0, 0), (-3, 7), (3, 7)], x, y)
-		elif direction == 's':
-			dc.DrawPolygon([(0, 0), (-3, -7), (3, -7)], x, y)
-		elif direction == 'e':
-			dc.DrawPolygon([(0, 0), (-7, -3), (-7, 3)], x, y)
-		elif direction == 'w':
-			dc.DrawPolygon([(0, 0), (7, -3), (7, 3)], x, y)
-		dc.SetBrush(oldbrush)
-
-	def straightLine(self, dc, so1, so2):
-		x1, y1 = so1.getCanvasCenter()
-		x2, y2 = so2.getCanvasCenter()
-		n1, e1, s1, w1 = so1.getFaces()
-		n2, e2, s2, w2 = so2.getFaces()
-
-		direction = so1.direction(so2)
-		if direction == 'n':
-			if abs(x1 - x2) > so1.width + so2.width:
-				return False
-			p1, p2 = n1, s2
-			x = (p2[0] - p1[0])/2 + p1[0]
-			p1 = (x, p1[1])
-			p2 = (x, p2[1])
-			self.DrawArrow(dc, p2, 'n')
-		elif direction == 'e':
-			if abs(y1 - y2) > so1.height + so2.height:
-				return False
-			p1, p2 = e1, w2
-			y = (p2[1] - p1[1])/2 + p1[1]
-			p1 = (p1[0], y)
-			p2 = (p2[0], y)
-			self.DrawArrow(dc, p2, 'e')
-		elif direction == 's':
-			if abs(x1 - x2) > so1.width + so2.width:
-				return False
-			p1, p2 = s1, n2
-			x = (p2[0] - p1[0])/2 + p1[0]
-			p1 = (x, p1[1])
-			p2 = (x, p2[1])
-			self.DrawArrow(dc, p2, 's')
-		elif direction == 'w':
-			if abs(y1 - y2) > so1.height + so2.height:
-				return False
-			p1, p2 = w1, e2
-			y = (p2[1] - p1[1])/2 + p1[1]
-			p1 = (p1[0], y)
-			p2 = (p2[0], y)
-			self.DrawArrow(dc, p2, 'w')
-		x1, y1 = p1
-		x2, y2 = p2
-		dc.DrawLine(x1, y1, x2, y2)
-
-		tx = (x2 - x1)/2 + x1
-		ty = (y2 - y1)/2 + y1
-		self.DrawText(dc, tx, ty)
-
-	def crookedLine(self, dc, so1, so2):
-		x1, y1 = so1.getCanvasCenter()
-		x2, y2 = so2.getCanvasCenter()
-		n1, e1, s1, w1 = so1.getFaces()
-		n2, e2, s2, w2 = so2.getFaces()
-
-		direction = so1.direction(so2)
-		if direction == 'n':
-			x1, y1 = n1
-			x2, y2 = s2
-			my = (y1 - y2)/2 + y2
-			l1 = (x1, y1, x1, my)
-			l2 = (x1, my, x2, my)
-			l3 = (x2, my, x2, y2)
-			tx = (x2 - x1)/2 + x1
-			ty = my
-			angle = 180
-			self.DrawArrow(dc, (x2, y2), 'n')
-		elif direction == 'e':
-			x1, y1 = e1
-			x2, y2 = w2
-			mx = (x2 - x1)/2 + x1
-			l1 = (x1, y1, mx, y1)
-			l2 = (mx, y1, mx, y2)
-			l3 = (mx, y2, x2, y2)
-			tx = mx
-			ty = (y2 - y1)/2 + y1
-			angle = 90
-			self.DrawArrow(dc, (x2, y2), 'e')
-		elif direction == 's':
-			x1, y1 = s1
-			x2, y2 = n2
-			my = (y2 - y1)/2 + y1
-			l1 = (x1, y1, x1, my)
-			l2 = (x1, my, x2, my)
-			l3 = (x2, my, x2, y2)
-			tx = (x2 - x1)/2 + x1
-			ty = my
-			angle = 0
-			self.DrawArrow(dc, (x2, y2), 's')
-		elif direction == 'w':
-			x1, y1 = w1
-			x2, y2 = e2
-			mx = (x1 - x2)/2 + x2
-			l1 = (x1, y1, mx, y1)
-			l2 = (mx, y1, mx, y2)
-			l3 = (mx, y2, x2, y2)
-			tx = mx
-			ty = (y2 - y1)/2 + y1
-			angle = -90
-			self.DrawArrow(dc, (x2, y2), 'w')
-		apply(dc.DrawLine, l1)
-		apply(dc.DrawLine, l2)
-		apply(dc.DrawLine, l3)
-		self.DrawText(dc, tx, ty, angle)
-		return x1, y1, x2, y2
-
-	def _crookedLine(self, dc, so1, x2, y2):
-		x1, y1 = so1.getCanvasCenter()
-		n1, e1, s1, w1 = so1.getFaces()
-		direction = so1._direction(x2, y2)
-		if direction == 'n':
-			x1, y1 = n1
-			my = (y1 - y2)/2 + y2
-			l1 = (x1, y1, x1, my)
-			l2 = (x1, my, x2, my)
-			l3 = (x2, my, x2, y2)
-			tx = (x2 - x1)/2 + x1
-			ty = my
-			angle = 180
-			self.DrawArrow(dc, (x2, y2), 'n')
-		elif direction == 'e':
-			x1, y1 = e1
-			mx = (x2 - x1)/2 + x1
-			l1 = (x1, y1, mx, y1)
-			l2 = (mx, y1, mx, y2)
-			l3 = (mx, y2, x2, y2)
-			tx = mx
-			ty = (y2 - y1)/2 + y1
-			angle = 90
-			self.DrawArrow(dc, (x2, y2), 'e')
-		elif direction == 's':
-			x1, y1 = s1
-			my = (y2 - y1)/2 + y1
-			l1 = (x1, y1, x1, my)
-			l2 = (x1, my, x2, my)
-			l3 = (x2, my, x2, y2)
-			tx = (x2 - x1)/2 + x1
-			ty = my
-			angle = 0
-			self.DrawArrow(dc, (x2, y2), 's')
-		elif direction == 'w':
-			x1, y1 = w1
-			mx = (x1 - x2)/2 + x2
-			l1 = (x1, y1, mx, y1)
-			l2 = (mx, y1, mx, y2)
-			l3 = (mx, y2, x2, y2)
-			tx = mx
-			ty = (y2 - y1)/2 + y1
-			angle = -90
-			self.DrawArrow(dc, (x2, y2), 'w')
-		apply(dc.DrawLine, l1)
-		apply(dc.DrawLine, l2)
-		apply(dc.DrawLine, l3)
-		self.DrawText(dc, tx, ty, angle)
-		return x1, y1
-
-	def elbowLine(self, dc, so1, so2):
-		arrowsize = 7
-		x1, y1 = so1.getCanvasCenter()
-		x2, y2 = so2.getCanvasCenter()
-
-		penwidth = dc.GetPen().GetWidth()
-		if so1.width > so2.width:
-			width = so2.width
-		else:
-			width = so1.width
-		if abs(x1 - x2) < width/2 + arrowsize + penwidth + 1:
-			return False
-		if so1.height > so2.height:
-			height = so2.height
-		else:
-			height = so1.height
-		if abs(y1 - y2) < height/2 + arrowsize + penwidth + 1:
-			return False
-
-		n1, e1, s1, w1 = so1.getFaces()
-		n2, e2, s2, w2 = so2.getFaces()
-
-		quadrant = so1.quadrant(so2)
-		if quadrant == 1:
-			if magnitude(n1, w2) < magnitude(e1, s2):
-				p1, p2 = n1, w2
-				reverse = False
-				arrowdirection = 'e'
-			else:
-				p1, p2 = e1, s2
-				reverse = True
-				arrowdirection = 'n'
-		elif quadrant == 2:
-			if magnitude(s1, w2) < magnitude(e1, n2):
-				p1, p2 = s1, w2
-				reverse = False
-				arrowdirection = 'e'
-			else:
-				p1, p2 = e1, n2
-				reverse = True
-				arrowdirection = 's'
-		elif quadrant == 3:
-			if magnitude(s1, e2) < magnitude(w1, n2):
-				p1, p2 = s1, e2
-				reverse = False
-				arrowdirection = 'w'
-			else:
-				p1, p2 = w1, n2
-				reverse = True
-				arrowdirection = 's'
-		elif quadrant == 4:
-			if magnitude(n1, e2) < magnitude(w1, s2):
-				p1, p2 = n1, e2
-				reverse = False
-				arrowdirection = 'w'
-			else:
-				p1, p2 = w1, s2
-				reverse = True
-				arrowdirection = 'n'
-		x1, y1 = p1
-		x2, y2 = p2
-		if reverse:
-			mx = x2
-			my = y1
-		else:
-			mx = x1
-			my = y2
-		dc.DrawLine(x1, y1, mx, my)
-		dc.DrawLine(mx, my, x2, y2)
-		self.DrawArrow(dc, p2, arrowdirection, arrowsize)
-
-		if magnitude((x1, y1), (mx, my)) > magnitude((mx, my), (x2, y2)):
-			tx1, ty1 = x1, y1
-			tx2, ty2 = mx, my
-		else:
-			tx1, ty1 = mx, my
-			tx2, ty2 = x2, y2
-		tx = (tx2 - tx1)/2 + tx1
-		ty = (ty2 - ty1)/2 + ty1
-		self.DrawText(dc, tx, ty)
-
-		return True
-
-	def Draw(self, dc):
-		pen = dc.GetPen()
-		dc.SetPen(wxPen(self.color, 1, self.style))
-		if self.fromso is not None:
-			if self.tempto is not None:
-				x, y = self.tempto
-				self._crookedLine(dc, self.fromso, x, y)
-			elif self.toso is not None:
-				self.crookedLine(dc, self.fromso, self.toso)
-
-#		if self.elbowLine(dc, self.fromso, self.toso):
-#			return
-#		if self.straightLine(dc, self.fromso, self.toso):
-#			return
-
-		dc.SetPen(pen)
-
 class wxShapeObject(wxShapeObjectEvtHandler):
 	def __init__(self, width, height, color=wxBLACK, style=wxSOLID):
 		wxShapeObjectEvtHandler.__init__(self)
@@ -717,6 +405,10 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 	def getParent(self):
 		return self.parent
 
+	def delete(self):
+		if self.parent is not None:
+			self.parent.removeShapeObject(self)
+
 	def UpdateDrawing(self):
 		self.ProcessEvent(UpdateDrawingEvent())
 
@@ -762,29 +454,15 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 			self.connectionoutputs.remove(cpo)
 			self.removeShapeObject(cpo)
 
-	def addConnectionObject(self, connectionobject):
-		if connectionobject not in self.connectionobjects:
-			parent = connectionobject.getParent()
-			if parent is not None:
-				parent.removeConnectionObject(connectionobject)
-			connectionobject.setParent(self)
-			self.connectionobjects.append(connectionobject)
-			self.UpdateDrawing()
-
-	def removeConnectionObject(self, connectionobject):
-		if connectionobject in self.connectionobjects:
-			connectionobject.setParent(None)
-			self.connectionobjects.remove(connectionobject)
-			self.UpdateDrawing()
-
 	def removeConnectionObjects(self, so):
 		removeconnections = []
-		for co in self.connectionobjects:
-			if co.getToShapeObject() == so or co.getFromShapeObject() == so:
-				removeconnections.append(co)
+		for co in self.shapeobjects:
+			if isinstance(co, wxConnectionObject):
+				if co.getToShapeObject() == so or co.getFromShapeObject() == so:
+					removeconnections.append(co)
 
 		for co in removeconnections:
-			self.removeConnectionObject(co)
+			self.removeShapeObject(co)
 
 		if self.parent is not None:
 			self.parent.removeConnectionObjects(so)
@@ -808,10 +486,6 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 			else:
 				return self.parent.getContainingShapeObject(self)
 
-		x, y = shapeobject.getCanvasPosition()
-		w = shapeobject.width
-		h = shapeobject.height
-		cpx, cpy = self.getCanvasPosition()
 		containing = self.getContainingChild(shapeobject)
 		if containing is not None:
 			return containing
@@ -1111,14 +785,12 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 		if evt.shapeobject in self.shapeobjects:
 			self.raiseShapeObject(evt.shapeobject, evt.top)
 			self.ProcessEvent(RaiseEvent(self, True))
-		else:
-			evt.Skip()
+		evt.Skip()
 
 	def OnLower(self, evt):
 		if evt.shapeobject in self.shapeobjects:
 			self.lowerShapeObject(evt.shapeobject, evt.bottom)
-		else:
-			evt.Skip()
+		evt.Skip()
 
 	def OnMenuRaise(self, evt):
 		self.ProcessEvent(RaiseEvent(self, True))
@@ -1128,7 +800,8 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 
 	def OnStartConnection(self, evt):
 		self.connection = evt.connection
-		self.addConnectionObject(self.connection)
+		#self.addConnectionObject(self.connection)
+		self.addShapeObject(self.connection)
 
 	def OnEndConnection(self, evt):
 		if self.connection is not None:
@@ -1147,9 +820,357 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 
 	def cancelConnection(self):
 		if self.connection is not None:
-			self.removeConnectionObject(self.connection)
+			#self.removeConnectionObject(self.connection)
+			self.removeShapeObject(self.connection)
 			self.connection = None
 			self.UpdateDrawing()
+
+class wxConnectionObject(wxShapeObject):
+	def __init__(self, so1, so2, color=wxBLACK, style=wxSOLID):
+		wxShapeObject.__init__(self, None, None, color, style)
+		self.parent = None
+		self.fromso = so1
+		self.toso = so2
+		self.color = color
+		self.style = style
+		self.tempto = None
+
+	def OnLower(self, evt):
+		if evt.shapeobject in self.shapeobjects:
+			self.lowerShapeObject(evt.shapeobject, evt.bottom)
+		evt.Skip()
+
+	def getShapeObjectFromXY(self, x, y, width=None, height=None):
+		for shapeobject in self.shapeobjects:
+			xyobject = shapeobject.getShapeObjectFromXY(x, y, width, height)
+			if xyobject is not None:
+				return xyobject
+		return None
+
+	def getContainingShapeObject(self, shapeobject=None):
+		if shapeobject is None:
+			if self.parent is None:
+				return None
+			else:
+				return self.parent.getContainingShapeObject(self)
+
+		containing = self.getContainingChild(shapeobject)
+		if containing is not None:
+			return containing
+		else:
+			if self.parent is None:
+				return None
+			else:
+				return self.parent.getContainingShapeObject(shapeobject)
+
+	def getContainingChild(self, shapeobject):
+		if shapeobject == self:
+			return None
+
+		for child in self.shapeobjects:
+			childobject = child.getContainingChild(shapeobject)
+			if childobject is not None:
+				return childobject
+
+		x, y = shapeobject.getCanvasPosition()
+		width = shapeobject.width
+		height = shapeobject.height
+
+		return None
+
+	def getFromShapeObject(self):
+		return self.fromso
+
+	def setFromShapeObject(self, so):
+		self.fromso = so
+
+	def getToShapeObject(self):
+		return self.toso
+
+	def setToShapeObject(self, so):
+		self.tempto = None
+		self.toso = so
+
+	def setTempTo(self, position):
+		self.tempto = position
+
+#	def DrawText(self, dc, x, y, angle):
+#		dc.SetFont(wxSWISS_FONT)
+#		if not self.text:
+#			return
+#		width, height = dc.GetTextExtent(self.text)
+#		x -= width/2
+#		y -= height/2
+#		dc.DrawRotatedText(self.text, x, y, angle)
+
+	def DrawArrow(self, dc, p, direction, size=7):
+		oldbrush = dc.GetBrush()
+		dc.SetBrush(wxBLACK_BRUSH)
+		x, y = p
+		if direction == 'n':
+			dc.DrawPolygon([(0, 0), (-3, 7), (3, 7)], x, y)
+		elif direction == 's':
+			dc.DrawPolygon([(0, 0), (-3, -7), (3, -7)], x, y)
+		elif direction == 'e':
+			dc.DrawPolygon([(0, 0), (-7, -3), (-7, 3)], x, y)
+		elif direction == 'w':
+			dc.DrawPolygon([(0, 0), (7, -3), (7, 3)], x, y)
+		dc.SetBrush(oldbrush)
+
+	def straightLine(self, dc, so1, so2):
+		x1, y1 = so1.getCanvasCenter()
+		x2, y2 = so2.getCanvasCenter()
+		n1, e1, s1, w1 = so1.getFaces()
+		n2, e2, s2, w2 = so2.getFaces()
+
+		direction = so1.direction(so2)
+		if direction == 'n':
+			if abs(x1 - x2) > so1.width + so2.width:
+				return False
+			p1, p2 = n1, s2
+			x = (p2[0] - p1[0])/2 + p1[0]
+			p1 = (x, p1[1])
+			p2 = (x, p2[1])
+			self.DrawArrow(dc, p2, 'n')
+		elif direction == 'e':
+			if abs(y1 - y2) > so1.height + so2.height:
+				return False
+			p1, p2 = e1, w2
+			y = (p2[1] - p1[1])/2 + p1[1]
+			p1 = (p1[0], y)
+			p2 = (p2[0], y)
+			self.DrawArrow(dc, p2, 'e')
+		elif direction == 's':
+			if abs(x1 - x2) > so1.width + so2.width:
+				return False
+			p1, p2 = s1, n2
+			x = (p2[0] - p1[0])/2 + p1[0]
+			p1 = (x, p1[1])
+			p2 = (x, p2[1])
+			self.DrawArrow(dc, p2, 's')
+		elif direction == 'w':
+			if abs(y1 - y2) > so1.height + so2.height:
+				return False
+			p1, p2 = w1, e2
+			y = (p2[1] - p1[1])/2 + p1[1]
+			p1 = (p1[0], y)
+			p2 = (p2[0], y)
+			self.DrawArrow(dc, p2, 'w')
+		x1, y1 = p1
+		x2, y2 = p2
+		dc.DrawLine(x1, y1, x2, y2)
+
+		tx = (x2 - x1)/2 + x1
+		ty = (y2 - y1)/2 + y1
+#		self.DrawText(dc, tx, ty)
+
+	def crookedLine(self, dc, so1, so2):
+		x1, y1 = so1.getCanvasCenter()
+		x2, y2 = so2.getCanvasCenter()
+		n1, e1, s1, w1 = so1.getFaces()
+		n2, e2, s2, w2 = so2.getFaces()
+
+		direction = so1.direction(so2)
+		if direction == 'n':
+			x1, y1 = n1
+			x2, y2 = s2
+			my = (y1 - y2)/2 + y2
+			l1 = (x1, y1, x1, my)
+			l2 = (x1, my, x2, my)
+			l3 = (x2, my, x2, y2)
+			tx = (x2 - x1)/2 + x1
+			ty = my
+			angle = 180
+			self.DrawArrow(dc, (x2, y2), 'n')
+		elif direction == 'e':
+			x1, y1 = e1
+			x2, y2 = w2
+			mx = (x2 - x1)/2 + x1
+			l1 = (x1, y1, mx, y1)
+			l2 = (mx, y1, mx, y2)
+			l3 = (mx, y2, x2, y2)
+			tx = mx
+			ty = (y2 - y1)/2 + y1
+			angle = 90
+			self.DrawArrow(dc, (x2, y2), 'e')
+		elif direction == 's':
+			x1, y1 = s1
+			x2, y2 = n2
+			my = (y2 - y1)/2 + y1
+			l1 = (x1, y1, x1, my)
+			l2 = (x1, my, x2, my)
+			l3 = (x2, my, x2, y2)
+			tx = (x2 - x1)/2 + x1
+			ty = my
+			angle = 0
+			self.DrawArrow(dc, (x2, y2), 's')
+		elif direction == 'w':
+			x1, y1 = w1
+			x2, y2 = e2
+			mx = (x1 - x2)/2 + x2
+			l1 = (x1, y1, mx, y1)
+			l2 = (mx, y1, mx, y2)
+			l3 = (mx, y2, x2, y2)
+			tx = mx
+			ty = (y2 - y1)/2 + y1
+			angle = -90
+			self.DrawArrow(dc, (x2, y2), 'w')
+		apply(dc.DrawLine, l1)
+		apply(dc.DrawLine, l2)
+		apply(dc.DrawLine, l3)
+#		self.DrawText(dc, tx, ty, angle)
+		return x1, y1, x2, y2
+
+	def _crookedLine(self, dc, so1, x2, y2):
+		x1, y1 = so1.getCanvasCenter()
+		n1, e1, s1, w1 = so1.getFaces()
+		direction = so1._direction(x2, y2)
+		if direction == 'n':
+			x1, y1 = n1
+			my = (y1 - y2)/2 + y2
+			l1 = (x1, y1, x1, my)
+			l2 = (x1, my, x2, my)
+			l3 = (x2, my, x2, y2)
+			tx = (x2 - x1)/2 + x1
+			ty = my
+			angle = 180
+			self.DrawArrow(dc, (x2, y2), 'n')
+		elif direction == 'e':
+			x1, y1 = e1
+			mx = (x2 - x1)/2 + x1
+			l1 = (x1, y1, mx, y1)
+			l2 = (mx, y1, mx, y2)
+			l3 = (mx, y2, x2, y2)
+			tx = mx
+			ty = (y2 - y1)/2 + y1
+			angle = 90
+			self.DrawArrow(dc, (x2, y2), 'e')
+		elif direction == 's':
+			x1, y1 = s1
+			my = (y2 - y1)/2 + y1
+			l1 = (x1, y1, x1, my)
+			l2 = (x1, my, x2, my)
+			l3 = (x2, my, x2, y2)
+			tx = (x2 - x1)/2 + x1
+			ty = my
+			angle = 0
+			self.DrawArrow(dc, (x2, y2), 's')
+		elif direction == 'w':
+			x1, y1 = w1
+			mx = (x1 - x2)/2 + x2
+			l1 = (x1, y1, mx, y1)
+			l2 = (mx, y1, mx, y2)
+			l3 = (mx, y2, x2, y2)
+			tx = mx
+			ty = (y2 - y1)/2 + y1
+			angle = -90
+			self.DrawArrow(dc, (x2, y2), 'w')
+		apply(dc.DrawLine, l1)
+		apply(dc.DrawLine, l2)
+		apply(dc.DrawLine, l3)
+#		self.DrawText(dc, tx, ty, angle)
+		return x1, y1
+
+	def elbowLine(self, dc, so1, so2):
+		arrowsize = 7
+		x1, y1 = so1.getCanvasCenter()
+		x2, y2 = so2.getCanvasCenter()
+
+		penwidth = dc.GetPen().GetWidth()
+		if so1.width > so2.width:
+			width = so2.width
+		else:
+			width = so1.width
+		if abs(x1 - x2) < width/2 + arrowsize + penwidth + 1:
+			return False
+		if so1.height > so2.height:
+			height = so2.height
+		else:
+			height = so1.height
+		if abs(y1 - y2) < height/2 + arrowsize + penwidth + 1:
+			return False
+
+		n1, e1, s1, w1 = so1.getFaces()
+		n2, e2, s2, w2 = so2.getFaces()
+
+		quadrant = so1.quadrant(so2)
+		if quadrant == 1:
+			if magnitude(n1, w2) < magnitude(e1, s2):
+				p1, p2 = n1, w2
+				reverse = False
+				arrowdirection = 'e'
+			else:
+				p1, p2 = e1, s2
+				reverse = True
+				arrowdirection = 'n'
+		elif quadrant == 2:
+			if magnitude(s1, w2) < magnitude(e1, n2):
+				p1, p2 = s1, w2
+				reverse = False
+				arrowdirection = 'e'
+			else:
+				p1, p2 = e1, n2
+				reverse = True
+				arrowdirection = 's'
+		elif quadrant == 3:
+			if magnitude(s1, e2) < magnitude(w1, n2):
+				p1, p2 = s1, e2
+				reverse = False
+				arrowdirection = 'w'
+			else:
+				p1, p2 = w1, n2
+				reverse = True
+				arrowdirection = 's'
+		elif quadrant == 4:
+			if magnitude(n1, e2) < magnitude(w1, s2):
+				p1, p2 = n1, e2
+				reverse = False
+				arrowdirection = 'w'
+			else:
+				p1, p2 = w1, s2
+				reverse = True
+				arrowdirection = 'n'
+		x1, y1 = p1
+		x2, y2 = p2
+		if reverse:
+			mx = x2
+			my = y1
+		else:
+			mx = x1
+			my = y2
+		dc.DrawLine(x1, y1, mx, my)
+		dc.DrawLine(mx, my, x2, y2)
+		self.DrawArrow(dc, p2, arrowdirection, arrowsize)
+
+		if magnitude((x1, y1), (mx, my)) > magnitude((mx, my), (x2, y2)):
+			tx1, ty1 = x1, y1
+			tx2, ty2 = mx, my
+		else:
+			tx1, ty1 = mx, my
+			tx2, ty2 = x2, y2
+		tx = (tx2 - tx1)/2 + tx1
+		ty = (ty2 - ty1)/2 + ty1
+#		self.DrawText(dc, tx, ty)
+
+		return True
+
+	def Draw(self, dc):
+		pen = dc.GetPen()
+		dc.SetPen(wxPen(self.color, 1, self.style))
+		if self.fromso is not None:
+			if self.tempto is not None:
+				x, y = self.tempto
+				self._crookedLine(dc, self.fromso, x, y)
+			elif self.toso is not None:
+				self.crookedLine(dc, self.fromso, self.toso)
+
+#		if self.elbowLine(dc, self.fromso, self.toso):
+#			return
+#		if self.straightLine(dc, self.fromso, self.toso):
+#			return
+
+		dc.SetPen(pen)
+		wxShapeObject.Draw(self, dc)
 
 class wxRectangleObject(wxShapeObject):
 	def __init__(self, width, height, color=wxBLACK):
@@ -1204,13 +1225,10 @@ class wxRectangleObject(wxShapeObject):
 			self.setChildPosition(co, spacings[i + 1] - co.width/2,
 														-co.height/2 + self.height - 1)
 
-class wxConnectionObjectLabel(wxRectangleObject):
-	def __init__(self, width, height, color=wxBLACK):
-		wxRectangleObject.__init__(self, width, height)
-
 class wxConnectionPointObject(wxRectangleObject):
 	def __init__(self, color=wxBLACK):
 		wxRectangleObject.__init__(self, 7, 7, color)
+		self.connections = []
 
 	def OnMotion(self, evt):
 		self.ProcessEvent(MoveConnectionEvent(evt.m_x, evt.m_y))
@@ -1327,8 +1345,8 @@ if __name__ == '__main__':
 
 	c1 = wxConnectionObject(o2, o3, 'Connection 1')
 	c2 = wxConnectionObject(o3, o2)
-	o1.addConnectionObject(c1)
-	o1.addConnectionObject(c2)
+#	o1.addConnectionObject(c1)
+#	o1.addConnectionObject(c2)
 
 	o4 = wxRectangleObject(50, 50)
 	o4.addText('foo', 10, 10)
