@@ -482,6 +482,8 @@ class Node(leginonobject.LeginonObject):
 	def publishRemote(self, idata):
 		'''Publish a piece of data with the specified data ID, setting all other data with the same data ID to the data value (including other nodes).'''
 		dataid = idata['id']
+		if not dataid:
+			raise RuntimeError('%s data needs an ID to be published' % (idata.__class__.__name__,))
 		nodeiddata = self.researchByLocation(self.nodelocations['manager'], dataid)
 		if nodeiddata is None:
 			# try a partial ID lookup
