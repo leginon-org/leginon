@@ -205,18 +205,18 @@ class ImagePanel(wxPanel):
 		wximage.SetData(image.convert('RGB').tostring())
 		self.setImage(wximage)
 
-	def setImageFromMrcString(self, imagestring):
+	def setImageFromMrcString(self, imagestring, scroll=False):
 		self.clearImage()
 		self.image = Mrc.mrcstr_to_numeric(imagestring)
-		self.setNumericImage()
+		self.setNumericImage(scroll)
 
-	def setNumericImage(self):
+	def setNumericImage(self, scroll=False):
 		n = NumericImage(self.image)
 		n.update_image()
 		wximage = n.wxImage()
-		self.setImage(wximage)
+		self.setImage(wximage, scroll)
 
-	def setImage(self, wximage):
+	def setImage(self, wximage, scroll=False):
 		if self.smallScale():
 			width = wximage.GetWidth()
 			height = wximage.GetHeight()
@@ -225,7 +225,8 @@ class ImagePanel(wxPanel):
 		else:
 			self.bitmap = wxBitmapFromImage(wximage)
 		self.setVirtualSize()
-		self.panel.Scroll(0, 0)
+		if not scroll:
+			self.panel.Scroll(0, 0)
 		bitmapwidth = self.bitmap.GetWidth()
 		bitmapheight = self.bitmap.GetHeight()
 		self.buffer = wxEmptyBitmap(bitmapwidth, bitmapheight)
