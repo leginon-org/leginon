@@ -1,0 +1,16 @@
+COPYRIGHT
+adacom.py
+camera.py
+cameradict.py
+emregistry.py
+gatan.py
+gatancom.py
+gui.py
+ldcom.py
+pythoncom22.dll
+scope.py
+scopedict.py
+tecnai.py
+tecnaicom.py
+tietz.py
+tietzcom.py
