@@ -786,5 +786,6 @@ class MyOtherData(Data):
 	def typemap(cls):
 		t = Data.typemap()
 		t += [('stuff', int)]
+		t += [('encore', str)]
 		return t
 	typemap = classmethod(typemap)

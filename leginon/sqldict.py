@@ -211,8 +211,9 @@ class SQLDict:
 
 	def fetchmany(self, size):
 		cursorresults = {}
+		memo = {}
 		for qikey,cursor in self.cursors.items():
-			cursorresult = self._format(cursor.fetchmany(size), qikey)
+			cursorresult = self._format(cursor.fetchmany(size), qikey, memo)
 			cursor.close()
 			cursorresults[qikey] = cursorresult
 
@@ -220,8 +221,9 @@ class SQLDict:
 
 	def fetchall(self):
 		cursorresults = {}
+		memo = {}
 		for qikey,cursor in self.cursors.items():
-			cursorresult = self._format(cursor.fetchall(), qikey)
+			cursorresult = self._format(cursor.fetchall(), qikey, memo)
 			cursor.close()
 			cursorresults[qikey] = cursorresult
 
@@ -249,27 +251,36 @@ class SQLDict:
                 
                 return rootlist
 
-	def _format(self, sqlresult, qikey):
+	def _format(self, sqlresult, qikey, memo):
+		"""Convert SQL result to data instances. Create a new data class
+		only if it does not exist.
+		"""
 		datalist = []
 		qikeylist = [qikey for i in range(len(sqlresult))]
 		qinfolist = [self.queryinfo for i in range(len(sqlresult))]
 		result = map(sql2data, sqlresult, qikeylist, qinfolist)
 
 		for i in range(len(result)):
+			classname = self.queryinfo[qikey]['class name']
+			memokey = (classname, result[i]['DEF_id'])
 			del result[i]['DEF_id']
 			del result[i]['DEF_timestamp']
-			classname = self.queryinfo[qikey]['class name']
-			dataclass = getattr(data, classname)
-			newdata = dataclass()
 
-			try:
-				newdata.update(result[i])
-			except KeyError, e:
-				raise
+			if memokey in memo:
+				newdata = memo[memokey]
+			else:
+				dataclass = getattr(data, classname)
+				newdata = dataclass()
+				memo[memokey]=newdata
+				try:
+					newdata.update(result[i])
+				except KeyError, e:
+					raise
 
-			### load things from files
-			if hasattr(newdata, 'load'):
-				newdata.load()
+				### load things from files
+				if hasattr(newdata, 'load'):
+					newdata.load()
+
 			datalist.append(newdata)
 
 		return datalist
@@ -394,6 +405,7 @@ class SQLDict:
 	    whereFormat = sqlexpr.AND_EQUAL(zip(whereFormatfields,wherevalues))
 	    # whereFormat = sqlexpr.AND_LIKE(zip(whereFormatfields,wherevalues))
 	    qsel = sqlexpr.SelectAll(self.table, where=whereFormat).sqlRepr()
+	    # print qsel
 	    c.execute(qsel)
 	    result=c.fetchone()
 	    if result is not None and not force:
@@ -405,12 +417,6 @@ class SQLDict:
 		q = sqlexpr.Insert(self.table, v).sqlRepr()
 		c.execute(q)
 		return c.insert_id()
-
-	def insert2(self, v=[]):
-	    c = self.cursor()
-	    q = sqlexpr.Insert(self.table, v).sqlRepr()
-	    c.execute(q)
-	    return c.insert_id()
 
 	def update(self, v, WHERE=''):
 	    """Like select(), only it does an UPDATE. It is not usually
