@@ -310,7 +310,7 @@ class HoleFinder(object):
 			kernel2 = convolver.sobel_col_kernel
 			edger = self.edgefinder.convolve(kernel=kernel1)
 			edgec = self.edgefinder.convolve(kernel=kernel2)
-			edges = Numeric.hypot(edger,edgc)
+			edges = Numeric.hypot(edger,edgec)
 		else:
 			raise RuntimeError('no such filter type: %s' % (filt,))
 
