@@ -54,7 +54,7 @@ class TargetMaker(node.Node):
 #		container.addObjects((publishtargetsmethod,))
 #		self.uicontainer.addObject(container)
 
-class SpiralTargetMaker(TargetMaker):
+class MosaicTargetMaker(TargetMaker):
 	eventinputs = TargetMaker.eventinputs + [event.PublishSpiralEvent]
 	def __init__(self, id, session, managerlocation, **kwargs):
 		TargetMaker.__init__(self, id, session, managerlocation, **kwargs)
