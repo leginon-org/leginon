@@ -190,6 +190,14 @@ class DriftDeclaredEvent(Event):
 	'''
 	pass
 
+class NodeOrderEvent(Event):
+	'ControlEvent sent to a NodeLauncher specifying a node to launch'
+	def typemap(cls):
+		return Event.typemap() + (
+			('order', list),
+		)
+	typemap = classmethod(typemap)
+
 class NodeClassesPublishEvent(PublishEvent):
 	'Event indicating launcher published new list of node classes'
 	dataclass = data.NodeClassesData

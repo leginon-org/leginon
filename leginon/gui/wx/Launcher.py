@@ -10,9 +10,12 @@ import gui.wx.MessageLog
 CreateNodeEventType = wx.NewEventType()
 DestroyNodeEventType = wx.NewEventType()
 CreateNodePanelEventType = wx.NewEventType()
+SetOrderEventType = wx.NewEventType()
+
 EVT_CREATE_NODE = wx.PyEventBinder(CreateNodeEventType)
 EVT_DESTROY_NODE = wx.PyEventBinder(DestroyNodeEventType)
 EVT_CREATE_NODE_PANEL = wx.PyEventBinder(CreateNodePanelEventType)
+EVT_SET_ORDER = wx.PyEventBinder(SetOrderEventType)
 
 class CreateNodeEvent(wx.PyEvent):
 	def __init__(self, node):
@@ -34,6 +37,12 @@ class CreateNodePanelEvent(wx.PyEvent):
 		self.name = name
 		self.event = threading.Event()
 		self.panel = None
+
+class SetOrderEvent(wx.PyCommandEvent):
+	def __init__(self, source, order):
+		wx.PyCommandEvent.__init__(self, SetOrderEventType, source.GetId())
+		self.SetEventObject(source)
+		self.order = order
 
 class App(wx.App):
 	def __init__(self, name, **kwargs):
@@ -106,6 +115,8 @@ class ListCtrlPanel(wx.Panel):
 		self.sashwindow.SetSashVisible(wx.SASH_RIGHT, True)
 		self.sashwindow.SetExtraBorderSize(5)
 
+		self.data = 0
+		self.datatextmap = {}
 		self.listctrl = wx.ListCtrl(self.sashwindow, -1,
 																style=wx.LC_REPORT|wx.LC_NO_HEADER)
 		self.listctrl.InsertColumn(0, 'Panels')
@@ -123,7 +134,10 @@ class ListCtrlPanel(wx.Panel):
 		panel.Show(False)
 		self.panelmap[label] = panel
 		index = self.listctrl.GetItemCount()
-		self.listctrl.InsertImageStringItem(index, label, imageindex)
+		index = self.listctrl.InsertImageStringItem(index, label, imageindex)
+		self.listctrl.SetItemData(index, self.data)
+		self.datatextmap[self.data] = label
+		self.data += 1
 
 	def removePanel(self, panel):
 		for text, p in self.panelmap.items():
@@ -173,6 +187,7 @@ class ListCtrlPanel(wx.Panel):
 class Panel(ListCtrlPanel):
 	def __init__(self, parent, launcher=None):
 		ListCtrlPanel.__init__(self, parent, -1, style=wx.NO_BORDER)
+		self.order = []
 		if launcher is not None:
 			self.setLauncher(launcher)
 		self.statuscolors = {
@@ -183,6 +198,7 @@ class Panel(ListCtrlPanel):
 		}
 		self.initializeImageList()
 		self.Bind(gui.wx.MessageLog.EVT_STATUS_UPDATED, self.onStatusUpdated)
+		self.Bind(EVT_SET_ORDER, self.onSetOrder)
 
 	def onStatusUpdated(self, evt):
 		evtobj = evt.GetEventObject()
@@ -195,6 +211,36 @@ class Panel(ListCtrlPanel):
 					color = wx.BLACK
 				self.listctrl.SetItemTextColour(item, color)
 				return
+
+	def sortOrder(self, x, y):
+		x = self.datatextmap[x]
+		y = self.datatextmap[y]
+		try:
+			i = self.order.index(x)
+		except ValueError:
+			i = None
+		try:
+			j = self.order.index(y)
+		except ValueError:
+			j = None
+		if i == j:
+			return 0
+		if i is None:
+			return -1
+		if j is None:
+			return 1
+		if i > j:
+			return 1
+		else:
+			return -1
+
+	def onSetOrder(self, evt):
+		self.order = evt.order
+		self.listctrl.SortItems(self.sortOrder)
+
+	def setOrder(self, order):
+		evt = SetOrderEvent(self, order)
+		self.GetEventHandler().AddPendingEvent(evt)
 
 	def setLauncher(self, launcher):
 		self.launcher = launcher
@@ -230,6 +276,7 @@ class Panel(ListCtrlPanel):
 		i = self.iconmap[icon]
 
 		self.addPanel(panel, label, i)
+		self.listctrl.SortItems(self.sortOrder)
 
 	def removeNode(self, n):
 		if not hasattr(n, 'panel') or n.panel is None:

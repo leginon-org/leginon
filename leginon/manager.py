@@ -576,6 +576,12 @@ class Manager(node.Node):
 				return False
 		return True
 
+	def updateNodeOrder(self, nodeclasses=[]):
+		nodeorder = self.sortNodes(nodeclasses)
+		evt = event.NodeOrderEvent(order=nodeorder)
+		for launcher in self.launcherdict:
+			self.outputEvent(evt, launcher)
+
 	def addLauncher(self, hostname, port):
 		location = {}
 		location['TCP transport'] = {}
@@ -752,11 +758,12 @@ class Manager(node.Node):
 		except ValueError:
 			self.logger.exception('Unable to import application from "%s"' % filename)
 
-	def sortNodes(self):
+	def sortNodes(self, nodeclasses=[]):
 		# this sucks
 		sortclasses = {}
-		for nodename, location in self.nodelocations.items():
-			clsname = location['class string']
+		nodeclasses += map(lambda l: (l[0], l[1]['class string']),
+												self.nodelocations.items())
+		for nodename, clsname in nodeclasses:
 			priority, sortcls = nodeclassreg.getSortClass(clsname)
 			if sortcls not in sortclasses:
 				sortclasses[sortcls] = []

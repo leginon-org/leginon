@@ -118,14 +118,17 @@ class Application(object):
 		if not hasattr(self.node, 'addEventDistmap'):
 			raise RuntimeError('Application node unable to launch')
 		threads = []
-		for nodespec in self.nodespecs:
-			args = self.nodeSpec2Args(nodespec)
-			name = self.launchNode(args)
-			self.launchednodes.append(name)
 		for bindingspec in self.bindingspecs:
 			args = self.bindingSpec2Args(bindingspec)
 			#print 'binding %s' % str(args)
 			apply(self.node.addEventDistmap, args)
+		nodeclasses = map(lambda ns: (ns['alias'], ns['class string']),
+											self.nodespecs)
+		self.node.updateNodeOrder(nodeclasses)
+		for nodespec in self.nodespecs:
+			args = self.nodeSpec2Args(nodespec)
+			name = self.launchNode(args)
+			self.launchednodes.append(name)
 		return self.launchednodes
 
 	def launchNode(self, args):

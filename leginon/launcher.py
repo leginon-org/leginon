@@ -16,11 +16,14 @@ import nodeclassreg
 import gui.wx.Launcher
 
 class Launcher(node.Node):
+	eventinputs = node.Node.eventinputs + [event.CreateNodeEvent,
+																					event.NodeOrderEvent]
 	def __init__(self, name, session=None, **kwargs):
 		self.nodes = []
 		node.Node.__init__(self, name, session, **kwargs)
 
 		self.addEventInput(event.CreateNodeEvent, self.onCreateNode)
+		self.addEventInput(event.NodeOrderEvent, self.onNodeOrder)
 
 	def start(self):
 		pass
@@ -44,6 +47,9 @@ class Launcher(node.Node):
 		nodeclassnames = nodeclassreg.getNodeClassNames()
 		d = data.NodeClassesData(nodeclasses=nodeclassnames)
 		self.publish(d, pubevent=True)
+
+	def onNodeOrder(self, evt):
+		self.panel.setOrder(evt['order'])
 
 	def onCreateNode(self, ievent):
 		targetclass = ievent['targetclass']
