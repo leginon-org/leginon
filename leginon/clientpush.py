@@ -27,7 +27,7 @@ class Server(leginonobject.LeginonObject):
 		self.servers[datatcp.PushServer] = datatcp.PushServer(self)
 		thread = threading.Thread(None, self.servers[datatcp.PushServer].serve_forever, None, (), {})
 		# this isn't working right now
-		#thread.setDaemon(1)
+		thread.setDaemon(1)
 		thread.start()
 
 	def location(self):
