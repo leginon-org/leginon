@@ -109,9 +109,9 @@ class BitmapWindow(BufferedWindow):
 
 		dc.SetUserScale(self._xscale, self._yscale)
 
+		x = max(int(self._xview/self._xscale), self._xview, 0)
+		y = max(int(self._yview/self._yscale), self._yview, 0)
 		if wx.Platform == '__WXGTK__':
-			x = max(self._xview, 0)
-			y = max(self._yview, 0)
 			width = min(self._bitmapwidth - x, self._clientwidthscaled)
 			height = min(self._bitmapheight - y, self._clientheightscaled)
 			bitmap = self._bitmap.GetSubBitmap((x, y, width, height))
@@ -128,7 +128,7 @@ class BitmapWindow(BufferedWindow):
 			dc.Blit(self._xoffsetscaled, self._yoffsetscaled,
 							self._clientwidthscaled, self._clientheightscaled,
 							memorydc,
-							self._xview, self._yview)
+							x, y)
 		memorydc.SelectObject(wx.NullBitmap)
 
 class ScaledWindow(BitmapWindow):
@@ -206,23 +206,35 @@ class OffsetWindow(ScaledWindow):
 		if self.updateOffset() and wx.Platform != '__WXGTK__':
 			self.Refresh()
 
-	def _setScale(self, x, y, center=None):
+	def clientToImage(self, x, y):
 		xview, yview = self.GetViewStart()
+		xview = max(int(xview/self._xscale), xview)
+		yview = max(int(yview/self._yscale), yview)
+		xscaled = int(round(x/self._xscale))
+		yscaled = int(round(y/self._yscale))
+		xoffset = max(self._xoffsetscaled, self._xoffset)
+		yoffset = max(self._yoffsetscaled, self._yoffset)
+		return xview + xscaled - xoffset, yview + yscaled - yoffset
+
+	def _setScale(self, x, y, center=None):
 		if center is None:
-			xcenter = xview + self._clientwidthscaled/2 - self._xoffsetscaled
-			ycenter = yview + self._clientheightscaled/2 - self._yoffsetscaled
-		else:
-			xcenter = xview + int(center[0]/self._xscale) - self._xoffsetscaled
-			ycenter = yview + int(center[1]/self._yscale) - self._yoffsetscaled
+			center = (self._clientwidth/2.0, self._clientheight/2.0)
+		xcenter, ycenter = self.clientToImage(*center)
 		if ScaledWindow._setScale(self, x, y):
-			xposition = xcenter - self._clientwidthscaled/2
-			yposition = ycenter - self._clientheightscaled/2
+			self.updateOffset()
 			ppux = max(int(self._xscale), 1)
 			ppuy = max(int(self._yscale), 1)
 			nux = min(int(self._bitmapwidth*self._xscale), self._bitmapwidth)
 			nuy = min(int(self._bitmapheight*self._yscale), self._bitmapheight)
+
+			xposition = min(int(xcenter*self._xscale), xcenter)
+			yposition = min(int(ycenter*self._yscale), ycenter)
+			xposition -= min(self._clientwidthscaled/2, self._clientwidth/2)
+			yposition -= min(self._clientheightscaled/2, self._clientheight/2)
+			xposition += min(self._xoffset*self._xscale, self._xoffset)
+			yposition += min(self._yoffset*self._yscale, self._yoffset)
+
 			self.SetScrollbars(ppux, ppuy, nux, nuy, xposition, yposition)
-			self.updateOffset()
 			return True
 		return False
 
@@ -288,10 +300,9 @@ if __name__ == '__main__':
 	app = MyApp(0)
 	if filename is None:
 		import numarray
-		n = numarray.zeros((128, 128))
-		for i in range(n.shape[0]):
-			for j in range(n.shape[1]):
-				n[i, j] = (i + j) * ((i + j) % 2)
+		n = numarray.zeros((2048, 2048))
+		n[:1024, :1024] = numarray.ones((1024, 1024))
+		n[1024:, 1024:] = numarray.ones((1024, 1024))
 		app.panel.setBitmap(wxBitmapFromNumarray(n))
 	else:
 		app.panel.setBitmap(wxBitmapFromMRC(filename, color=True))
