@@ -9,7 +9,7 @@ class Line(object):
 		self.destination = None
 		self.line = None
 #		self.label = None
-		position = self.origin.getPosition()
+		position = self.origin.getOriginPosition()
 		self.createline(position[0], position[1], position[0], position[1])
 
 	def createline(self, x0, y0, x1, y1):
@@ -26,20 +26,20 @@ class Line(object):
 #		self.canvas.coords(self.line2, x0, midpoint, x1, midpoint)
 #		self.canvas.coords(self.line3, x1, midpoint, x1, y1)
 
-	def moveDestination(self, x, y):
-		position = self.origin.getPosition()
+	def setDestinationPosition(self, x, y):
+		position = self.origin.getOriginPosition()
 		self.move(position[0], position[1], x, y)
 
-	def moveToNodeLabel(self, destination):
-		position = destination.getPosition()
-		self.moveDestination(position[0], position[1])
+	def setDestination(self, destination):
+		position = destination.getDestinationPosition()
+		self.setDestinationPosition(position[0], position[1])
 
 	def connect(self, destination):
 		self.destination = destination
-		self.moveToNodeLabel(destination)
+		self.setDestination(destination)
 
 	def refresh(self):
-		self.moveToNodeLabel(self.destination)
+		self.setDestination(self.destination)
 
 	def delete(self):
 		self.canvas.delete(self.line)
@@ -88,7 +88,7 @@ class NodeLabel(object):
 		self.label.bind('<B1-Motion>', self.drag)
 		self.label.bind('<Button-1>', self.startDrag)
 		self.label.bind('<Double-Button-1>', self.handleConnection)
-		self.lines = []
+		self.lines = {'origin': [], 'destination': []}
 		self.editor = editor
 		self.dragoffset = (0, 0)
 
@@ -96,14 +96,29 @@ class NodeLabel(object):
 		info = self.label.place_info()
 		return (int(info['x']), int(info['y']))
 
+	def getOriginPosition(self):
+		if self.lines['destination'] is []:
+			return self.getPosition()
+		else:
+			position = self.getPosition()
+			return (position[0] + 5, position[1] + 5)
+
+	def getDestinationPosition(self):
+		if self.lines['origin'] is []:
+			return self.getPosition()
+		else:
+			position = self.getPosition()
+			return (position[0] - 5, position[1] - 5)
+
 	def move(self, x0, y0):
 		self.label.place(x = x0, y = y0, anchor=Tkinter.CENTER)
-		for i in range(len(self.lines)):
-			self.lines[i].refresh()
+		for i in self.lines:
+			for j in range(len(self.lines[i])):
+				self.lines[i][j].refresh()
 
 	def moveConnection(self, ievent):
 		if self.editor.activeconnection is not None:
-			self.editor.activeconnection.moveToNodeLabel(self)
+			self.editor.activeconnection.setDestination(self)
 
 	def drag(self, ievent):
 		self.abortConnection(ievent)
@@ -125,8 +140,8 @@ class NodeLabel(object):
 
 	def finishConnection(self):
 		self.editor.activeconnection.connect(self)
-		self.lines.append(self.editor.activeconnection)
-		self.editor.activeconnection.origin.lines.append(
+		self.lines['destination'].append(self.editor.activeconnection)
+		self.editor.activeconnection.origin.lines['origin'].append(
 																					self.editor.activeconnection)
 		self.editor.activeconnection = None
 
@@ -148,7 +163,7 @@ class Editor(Tkinter.Frame):
 
 	def moveConnection(self, ievent):
 		if self.activeconnection is not None:
-			self.activeconnection.moveDestination(ievent.x, ievent.y)
+			self.activeconnection.setDestinationPosition(ievent.x, ievent.y)
 
 	def abortConnection(self, ievent):
 		if self.activeconnection is not None:

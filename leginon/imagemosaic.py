@@ -341,6 +341,7 @@ class ImageMosaic(watcher.Watcher):
 		if len(self.imagemosaics) == 0:
 			return
 		self.displayNumericArray(self.imagemosaics[-1].getMosaicImage())
+		return ''
 
 	def start_viewer_thread(self):
 		if self.iv is not None:
