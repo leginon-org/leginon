@@ -689,15 +689,14 @@ class ImagePanel(wx.Panel):
 			xviewoffset, yviewoffset = self.panel.GetViewStart()
 			xsize, ysize = self.panel.GetClientSize()
 
-			dc.Blit((0, 0), (int(xsize/xscale + xscale), int(ysize/yscale + yscale)),
-							bitmapdc, (int(xviewoffset/xscale), int(yviewoffset/yscale)))
+			dc.Blit(0, 0, int(xsize/xscale + xscale), int(ysize/yscale + yscale), bitmapdc, int(xviewoffset/xscale), int(yviewoffset/yscale))
 			bitmapdc.SelectObject(wx.NullBitmap)
 		dc.EndDrawing()
 		dc.SetUserScale(1.0, 1.0)
 
 	def paint(self, fromdc, todc):
 		xsize, ysize = self.panel.GetClientSize()
-		todc.Blit(self.offset, (xsize + 1, ysize + 1), fromdc, (0, 0))
+		todc.Blit(self.offset[0], self.offset[1], xsize + 1, ysize + 1, fromdc, 0, 0)
 
 	def UpdateDrawing(self):
 		if self.buffer is None:
