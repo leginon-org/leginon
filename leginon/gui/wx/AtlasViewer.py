@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/AtlasViewer.py,v $
-# $Revision: 1.2 $
+# $Revision: 1.3 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-01-28 23:40:36 $
+# $Date: 2005-02-01 01:25:35 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -71,7 +71,7 @@ class Panel(gui.wx.Node.Panel):
 		self.listbox.Clear()
 		labels = []
 		self.atlaslistboxmap = {}
-		for gridid, insertion in self.node.getAtlasLabels():
+		for gridid, insertion in self.node.grids.getGridInsertions():
 			label = 'Grid ID #%d, insertion %d' % (gridid, insertion)
 			labels.append(label)
 			self.atlaslistboxmap[label] = (gridid, insertion)
