@@ -16,8 +16,10 @@ class Launcher(node.Node):
 		self.addEventInput(event.UpdateNodeClassesEvent, self.publishNodeClasses)
 		self.addEventOutput(event.NodeClassesPublishEvent)
 		self.caller = calllauncher.CallLauncher()
-		print 'launcher id: %s' % (self.id,)
-		self.print_location()
+		l = self.location()
+		print 'launcher id: %s, at hostname: %s, TCP: %s, UI: %s' % (self.id,
+															l['hostname'], l['TCP port'], l['UI port'])
+		#self.print_location()
 		self.start()
 
 	def addManager(self, loc):
