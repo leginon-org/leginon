@@ -115,14 +115,11 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				self.logger.info('Aborting current target list')
 				targetliststatus = 'aborted'
 				donetarget = data.AcquisitionImageTargetData(initializer=target, status='aborted')
-				#self.publish(donetarget, database=True, dbforce=True)
-				## Why use force????????????
 				self.publish(donetarget, database=True)
 				## continue so that remaining targets are marked as done also
 				continue
 
 			# if this target is done, skip it
-			#'TARGET STATUS', target['status']
 			if target['status'] in ('done', 'aborted'):
 				self.logger.info('Target has been done, processing next target')
 				continue
@@ -138,8 +135,6 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			self.logger.debug('Creating processing target...')
 			adjustedtarget = data.AcquisitionImageTargetData(initializer=target,
 																												status='processing')
-			#self.publish(adjustedtarget, database=True, dbforce=True)
-			## Why force???
 			self.logger.debug('Publishing processing target...')
 			self.publish(adjustedtarget, database=True)
 			self.logger.debug('Processing target published')
@@ -215,6 +210,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			self.publish(donetarget, database=True)
 			self.logger.debug('Done target published')
 
+		self.player.play()
 		self.reportTargetListDone(newdata.dmid, targetliststatus)
 		self.setStatus('idle')
 
