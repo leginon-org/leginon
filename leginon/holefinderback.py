@@ -375,9 +375,9 @@ class HoleFinder(object):
 		template = self.__results['template']
 		cortype = self.correlation_config['cortype']
 		corfilt = self.correlation_config['corfilt']
-		if cortype == 'cross correlation':
+		if cortype == 'cross':
 			cc = imagefun.cross_correlate(edges, template)
-		elif cortype == 'phase correlation':
+		elif cortype == 'phase':
 			cc = imagefun.phase_correlate(edges, template)
 		else:
 			raise RuntimeError('bad correlation type: %s' % (cortype,))

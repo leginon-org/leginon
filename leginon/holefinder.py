@@ -56,6 +56,10 @@ class HoleFinder(targetfinder.TargetFinder):
 			'laplacian5',
 			'laplacian-gaussian'
 		]
+		self.cortypes = [
+			'cross',
+			'phase',
+		]
 		self.userpause = threading.Event()
 
 		#if self.__class__ == ClickTargetFinder:
@@ -76,10 +80,9 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.edgeimage = uidata.Image('Edge Image', None, 'r')
 
 		### Correlate Template
-		cormeth = uidata.Method('Correlate Template', self.correlateTemplate)
 		self.corimage = uidata.Image('Correlation Image', None, 'r')
 		corcont = uidata.LargeContainer('Template Correlation')
-		corcont.addObjects((cormeth, self.corimage))
+		corcont.addObjects((self.corimage,))
 
 		### threshold
 		self.threshvalue = uidata.Number('Threshold Value', 3.0, 'rw', persist=True)

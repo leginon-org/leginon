@@ -4,7 +4,7 @@ import gui.wx.Settings
 import gui.wx.TargetFinder
 import wx.lib.filebrowsebutton as filebrowse
 from gui.wx.Choice import Choice
-from gui.wx.Entry import IntEntry, FloatEntry
+from gui.wx.Entry import Entry, IntEntry, FloatEntry
 
 AddTargetTypesEventType = wx.NewEventType()
 AddTargetsEventType = wx.NewEventType()
@@ -172,20 +172,20 @@ class TemplateSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		tfsbsz = gui.wx.Settings.Dialog.initialize(self)
 
-		self.widgets['edge lpf'] = wx.CheckBox(self, -1, 'Use low pass filter')
-		self.widgets['edge lpf size'] = IntEntry(self, -1, min=1, chars=4)
-		self.widgets['edge lpf sigma'] = FloatEntry(self, -1, min=0.0, chars=4)
+		self.widgets['template lpf'] = wx.CheckBox(self, -1, 'Use low pass filter')
+		self.widgets['template lpf size'] = IntEntry(self, -1, min=1, chars=4)
+		self.widgets['template lpf sigma'] = FloatEntry(self, -1, min=0.0, chars=4)
 
 		szlpf = wx.GridBagSizer(5, 5)
-		szlpf.Add(self.widgets['edge lpf'], (0, 0), (1, 1),
+		szlpf.Add(self.widgets['template lpf'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'Size:')
 		szlpf.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szlpf.Add(self.widgets['edge lpf size'], (1, 1), (1, 1),
+		szlpf.Add(self.widgets['template lpf size'], (1, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		label = wx.StaticText(self, -1, 'Sigma:')
 		szlpf.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szlpf.Add(self.widgets['edge lpf sigma'], (2, 1), (1, 1),
+		szlpf.Add(self.widgets['template lpf sigma'], (2, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		szlpf.AddGrowableCol(1)
 
@@ -193,39 +193,23 @@ class TemplateSettingsDialog(gui.wx.Settings.Dialog):
 		sbszlpf = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszlpf.Add(szlpf, 1, wx.EXPAND|wx.ALL, 5)
 
-		self.widgets['edge'] = wx.CheckBox(self, -1, 'Use edge finding')
-		self.widgets['edge type'] = Choice(self, -1, choices=self.node.filtertypes)
-		self.widgets['edge log size'] = IntEntry(self, -1, min=1, chars=4)
-		self.widgets['edge log sigma'] = FloatEntry(self, -1, min=0.0, chars=4)
-		self.widgets['edge absolute'] = wx.CheckBox(self, -1,
-																					'Take absolute value of edge values')
-		self.widgets['edge threshold'] = FloatEntry(self, -1, chars=9)
+		#self.widgets['template rings'] = Entry(self, -1)
+		self.widgets['template type'] = Choice(self, -1, choices=self.node.cortypes)
 
-		szedge = wx.GridBagSizer(5, 5)
-		szedge.Add(self.widgets['edge'], (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, 'Type:')
-		szedge.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szedge.Add(self.widgets['edge type'], (1, 1), (1, 1),
+		sztemplate = wx.GridBagSizer(5, 5)
+		#sztemplate.Add(self.widgets['template rings'], (0, 0), (1, 3),
+		#						wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'Use')
+		sztemplate.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sztemplate.Add(self.widgets['template type'], (1, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, 'LoG Size:')
-		szedge.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szedge.Add(self.widgets['edge log size'], (2, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'LoG Sigma:')
-		szedge.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szedge.Add(self.widgets['edge log sigma'], (3, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		szedge.Add(self.widgets['edge absolute'], (4, 0), (1, 2),
-								wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, 'Threshold:')
-		szedge.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szedge.Add(self.widgets['edge threshold'], (5, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		szedge.AddGrowableCol(1)
+		label = wx.StaticText(self, -1, 'correlation')
+		sztemplate.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sztemplate.AddGrowableCol(2)
 
-		sb = wx.StaticBox(self, -1, 'Edge Finding')
-		sbszedge = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		sbszedge.Add(szedge, 1, wx.EXPAND|wx.ALL, 5)
+		sb = wx.StaticBox(self, -1, 'Template Correlation')
+		sbsztemplate = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sbsztemplate.Add(sztemplate, 1, wx.EXPAND|wx.ALL, 5)
 
 		self.btest = wx.Button(self, -1, 'Test')
 		szbutton = wx.GridBagSizer(5, 5)
@@ -235,10 +219,10 @@ class TemplateSettingsDialog(gui.wx.Settings.Dialog):
 
 		self.Bind(wx.EVT_BUTTON, self.onTestButton, self.btest)
 
-		return [sbszlpf, sbszedge, szbutton]
+		return [sbsztemplate, sbszlpf, szbutton]
 
 	def onTestButton(self, evt):
-		self.node.findEdges()
+		self.node.correlateTemplate()
 
 class EdgeSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
