@@ -40,6 +40,9 @@ class Object(object):
 		self.enabled = True
 		self.lock = threading.RLock()
 
+	def setServer(self, server):
+		self.server = server
+
 	def getNameList(self):
 		# not thread safe
 		namelist = [self.name,]
@@ -90,28 +93,24 @@ class Container(Object):
 			raise TypeError('value must be a Object instance')
 
 		uiobject.parent = self
+		uiobject.setServer(self.server)
+		self.uiobjectdict[uiobject.name] = uiobject
+		self.uiobjectlist.append(uiobject)
 
 		if self.server is not None:
 			self.server._addObject(uiobject, None, block, thread)
-			if isinstance(uiobject, Container):
-				uiobject.addChildObjects(None, block, thread)
 
-		self.uiobjectdict[uiobject.name] = uiobject
-		self.uiobjectlist.append(uiobject)
 		self.lock.release()
+
+	def setServer(self, server):
+		Object.setServer(self, server)
+		for uiobject in self.uiobjectlist:
+			uiobject.setServer(server)
 
 	def addObjects(self, uiobjects, block=True, thread=False):
 		self.lock.acquire()
 		for uiobject in uiobjects:
 			self.addObject(uiobject, block, thread)
-		self.lock.release()
-
-	def addChildObjects(self, client=None, block=True, thread=False):
-		self.lock.acquire()
-		for uiobject in self.uiobjectlist:
-			self.server._addObject(uiobject, client, block, thread)
-			if isinstance(uiobject, Container):
-				uiobject.addChildObjects(client, block, thread)
 		self.lock.release()
 
 	def deleteObject(self, name, client=None, block=True, thread=False):

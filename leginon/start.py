@@ -32,9 +32,21 @@ try:
 except IndexError:
 	session = time.strftime('%Y-%m-%d-%H-%M')
 
-m = manager.Manager(('manager',), None)
-managerlocation = m.location()
-launcher = launcher.Launcher((socket.gethostname(),),
-															{'manager': managerlocation})
-client = uiclient.UIApp(uiclient.wxLocalClient, (m.uiserver,), 'Leginon II')
+def startManager(location, event):
+	location.update(manager.Manager(('manager',), None).location())
+	event.set()
+
+def startLauncher(location, event):
+	launcher.Launcher((socket.gethostname(),), {'manager': location})
+	event.set()
+
+location = {}
+event = threading.Event()
+threading.Thread(target=startManager, args=(location, event)).start()
+event.wait()
+threading.Thread(target=startLauncher, args=(location, event)).start()
+event.wait()
+
+instance = location['UI']['instance']
+client = uiclient.UIApp(uiclient.wxLocalClient, (instance,), 'Leginon II')
 

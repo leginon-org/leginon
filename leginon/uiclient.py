@@ -228,6 +228,9 @@ class wxUIClient(object):
 		wxPostEvent(self.container.widgethandler, evt)
 		if threadingevent is not None:
 			threadingevent.wait()
+		if 'children' in properties:
+			for childproperties in properties['children']:
+				self.addFromServer(childproperties)
 		return ''
 
 	def setFromServer(self, properties):
