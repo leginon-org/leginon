@@ -417,12 +417,16 @@ class SmartCameraParameters(uidata.Container):
 			for axis in ('y', 'x'):
 				callback = getattr(self, 'onSet' + axis.upper() + parameter)
 				self[parameter][axis].setCallback(callback)
-				if parameter == 'Binning':
-					usercallback = self.userSetBinning
-				else:
-					usercallback = self.onModified
-				self[parameter][axis].setUserCallback(usercallback)
+				# Anchi wants to change binning
+				# without other params updating
+				#if parameter == 'Binning':
+				#	usercallback = self.userSetBinning
+				#else:
+				#	usercallback = self.onModified
+				usercallback = self.onModified
 
+				self[parameter][axis].setUserCallback(usercallback)
+		self.exposuretime.setUserCallback(self.onModified)
 		self.square.setCallback(self.onSquare)
 		self.centered.setCallback(self.onCentered)
 
