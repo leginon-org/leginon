@@ -195,8 +195,9 @@ class LabeledLine(OverlappedLine):
 		self.append(text)
 
 		self.menu = Tkinter.Menu(self.canvas, tearoff=0)
-		self.menu.add_command(label='Edit', command=self.menuEditLabel)
+		self.menu.add_command(label='Edit...', command=self.menuEditLabel)
 		self.menu.add_command(label='Delete', command=self.menuDeleteLabel)
+		self.menu.add_command(label='Cancel', command=self.menu.unpost)
 
 	def menuEditLabel(self):
 		textvariable = self.labeltextvariables[self.selectedlabel]
@@ -457,8 +458,9 @@ class NodeLabel(object):
 		self.label.place(x = position[0], y = position[1], anchor=Tkinter.CENTER)
 
 		self.menu = Tkinter.Menu(self.editor, tearoff=0)
-		self.menu.add_command(label='Edit', command=self.editNode)
+		self.menu.add_command(label='Edit...', command=self.editNode)
 		self.menu.add_command(label='Delete', command=self.deleteNode)
+		self.menu.add_command(label='Cancel', command=self.menu.unpost)
 		self.label.bind('<Button-3>', self.rightClick)
 
 	def argsLabel(self, args):
@@ -587,8 +589,9 @@ class ApplicationEditor(Editor):
 
 		self.newnodeposition = (0, 0)
 		self.popupmenu = Tkinter.Menu(self, tearoff=0)
-		self.popupmenu.add_command(label='New Node', command=self.newNode)
+		self.popupmenu.add_command(label='New Node...', command=self.newNode)
 		self.popupmenu.add_command(label='Arrange Nodes', command=self.circle)
+		self.popupmenu.add_command(label='Cancel', command=self.menu.unpost)
 		self.canvas.bind('<Button-3>', self.rightClick)
 
 	def new(self):
@@ -663,11 +666,53 @@ class ApplicationEditor(Editor):
 																					self.mapping[binding[2]],
 																					binding)
 
-class EventDialog(tkSimpleDialog.Dialog):
+# grab? set? failed?
+class mySimpleDialog(tkSimpleDialog.Dialog):
+	def __init__(self, parent, title, args=None):
+		'''Initialize a dialog.
+
+		Arguments:
+
+			parent -- a parent window (the application window)
+
+			title -- the dialog title
+		'''
+		Tkinter.Toplevel.__init__(self, parent) 
+		self.transient(parent)
+
+		if title:
+			self.title(title)
+
+		self.parent = parent
+
+		self.result = None
+
+		body = Tkinter.Frame(self)
+		self.initial_focus = self.body(body)
+		body.pack(padx=5, pady=5)
+
+		self.buttonbox()
+
+#		self.grab_set()
+
+		if not self.initial_focus:
+			self.initial_focus = self
+
+		self.protocol("WM_DELETE_WINDOW", self.cancel)
+
+		if self.parent is not None:
+			self.geometry("+%d+%d" % (parent.winfo_rootx()+50,
+																parent.winfo_rooty()+50))
+
+		self.initial_focus.focus_set()
+
+		self.wait_window(self)
+
+class EventDialog(mySimpleDialog):
 	def __init__(self, parent, title, args=None):
 		self.args = args
 		self.eventclasses = event.eventClasses()
-		tkSimpleDialog.Dialog.__init__(self, parent, title)
+		mySimpleDialog.__init__(self, parent, title)
 
 	def body(self, master):
 		Tkinter.Label(master, text='Event:').grid(row=0)
@@ -690,11 +735,11 @@ class EventDialog(tkSimpleDialog.Dialog):
 		event = self.eventclasses[self.eventclasses.keys()[int(selection[0])]]
 		self.result = event
 
-class NodeDialog(tkSimpleDialog.Dialog):
+class NodeDialog(mySimpleDialog):
 	def __init__(self, parent, title, args=None):
 		self.args = args
 		self.nodeclasses = nodeclassreg.getNodeClassNames()
-		tkSimpleDialog.Dialog.__init__(self, parent, title)
+		mySimpleDialog.__init__(self, parent, title)
 
 	def body(self, master):
 		Tkinter.Label(master, text='Name:').grid(row=0)
