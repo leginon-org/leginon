@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import watcher
-reload(watcher)
 import correlator, fftengine, peakfinder
 import data, event
 from Mrc import mrc_to_numeric

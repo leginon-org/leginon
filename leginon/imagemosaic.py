@@ -6,9 +6,6 @@ import fftengine
 import correlator
 import peakfinder
 import LinearAlgebra
-reload(fftengine)
-reload(correlator)
-reload(peakfinder)
 
 class ImageMosaic(watcher.Watcher):
 	def __init__(self, id, nodelocations, watchfor = event.ImageTilePublishEvent, **kwargs):
@@ -23,9 +20,6 @@ class ImageMosaic(watcher.Watcher):
 
 		self.defineUserInterface()
 		#self.start()
-
-	def main(self):
-		pass
 
 	def getPeak(self, image1, image2):
 		self.correlator.setImage(0, image1)

@@ -7,6 +7,7 @@ import datahandler
 import interface
 import sys
 import copy
+import time
 
 # False is not defined in early python 2.2
 False = 0
@@ -65,8 +66,6 @@ class Node(leginonobject.LeginonObject):
 
 		self.nodelocations = nodelocations
 		self.launchlock = launchlock
-		print 'SELF.LAUNCHLOCK', self.launchlock
-		print 'SELF', self
 
 		self.eventmapping = {'outputs':[], 'inputs':[]}
 
@@ -122,6 +121,8 @@ class Node(leginonobject.LeginonObject):
 		'''Call to make the node active and react to a call to exit. Calls main.'''
 		#interact_thread = self.interact()
 
+		print '%s sleeping for 2 sec before releasing launcher' % (self.id,)
+		time.sleep(2)
 		self.releaseLauncher()
 		self.main()
 

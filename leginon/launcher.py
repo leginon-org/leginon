@@ -58,9 +58,7 @@ class Launcher(node.Node):
 		if newproc:
 			self.caller.launchCall('fork',nodeclass,self.__launchlock, args,kwargs)
 		else:
-			print 'acquiring lock'
 			ret = self.__launchlock.acquire(1)
-			print 'acquired lock: ', ret
 			### the lock should be released either by the new node
 			### or calllauncher if the node caused an exception
 			self.caller.launchCall('thread',nodeclass,self.__launchlock, args,kwargs)

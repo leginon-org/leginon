@@ -2,7 +2,6 @@
 
 import threading
 import node, event
-reload(node)
 
 class Watcher(node.Node):
 	'''

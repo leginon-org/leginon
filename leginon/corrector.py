@@ -2,14 +2,12 @@
 import node
 import Numeric
 import cameraimage
-reload(cameraimage)
 import data, event
 import cPickle
 import string
 import threading
 import Mrc
 import camerafuncs
-reload(camerafuncs)
 import xmlrpclib
 #import xmlrpclib2 as xmlbinlib
 xmlbinlib = xmlrpclib
@@ -48,9 +46,6 @@ class Corrector(node.Node):
 
 		self.defineUserInterface()
 		self.start()
-
-	def main(self):
-		pass
 
 	def defineUserInterface(self):
 		nodespec = node.Node.defineUserInterface(self)

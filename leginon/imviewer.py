@@ -7,16 +7,12 @@ import Numeric
 import signal
 
 import ImageViewer
-reload(ImageViewer)
 
 import watcher
-reload(watcher)
 import node, event, data
 import Mrc
-reload(Mrc)
 import cameraimage
 import camerafuncs
-reload(camerafuncs)
 import xmlrpclib
 #import xmlrpclib2 as xmlbinlib
 xmlbinlib = xmlrpclib
@@ -177,7 +173,7 @@ class ImViewer(watcher.Watcher):
 		acqcor = self.registerUIMethod(self.uiAcquireCorrected, 'Acquire Corrected', (), returnspec=acqret)
 		acqev = self.registerUIMethod(self.acquireEvent, 'Acquire Event', ())
 
-		popupdefault = xmlrpclib.Boolean(0)
+		popupdefault = xmlrpclib.Boolean(1)
 		popuptoggle = self.registerUIData('Pop-up Viewer', 'boolean', permissions='rw', default=popupdefault)
 		popuptoggle.registerCallback(self.popupCallback)
 

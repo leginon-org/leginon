@@ -11,7 +11,6 @@ import LinearAlgebra
 import cPickle
 import cameraimage
 import camerafuncs
-reload(camerafuncs)
 
 False=0
 True=1
@@ -48,9 +47,6 @@ class Calibration(node.Node):
 				percent[axis][limit] = \
 					pixel[axis][limit] / self.camerastate['size'] * 100
 		return percent
-
-	def main(self):
-		pass
 
 	def state(self, value, axis):
 		raise NotImplementedError()

@@ -3,6 +3,7 @@ This is an Application manager to be included as a component of Manager
 '''
 import shelve
 import leginonobject
+import time
 
 class Application(leginonobject.LeginonObject):
 	def __init__(self, id, manager):
@@ -41,6 +42,9 @@ class Application(leginonobject.LeginonObject):
 		for args in self.launchspec:
 			self.printerror('launching %s' % str(args))
 			newid = apply(self.manager.launchNode, args)
+			print 'application sleep 2'
+			time.sleep(2)
+			print 'application sleep done'
 			#print 'NEWID', newid
 			self.launchednodes.append(newid)
 		for args in self.bindspec:

@@ -24,7 +24,7 @@ class CallLauncher(object):
 		if launchtype not in launchtypes:
 			raise ValueError("allowed launchtypes %s" % launchtypes)
 		if not callable(targetcall):
-			raise TypeError('targetcall must be callable object')
+			raise TypeError('targetcall %s must be callable object' % (targetcall,))
 
 		if launchtype == 'thread':
 			c = self.newCallThread(targetcall, args, kwargs)

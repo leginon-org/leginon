@@ -6,7 +6,6 @@ import data
 import time
 import cameraimage
 import camerafuncs
-reload(camerafuncs)
 
 class Navigator(node.Node):
 	def __init__(self, id, nodelocations, **kwargs):
@@ -20,9 +19,7 @@ class Navigator(node.Node):
 		self.shiftType('stage')
 
 		self.cam = camerafuncs.CameraFuncs(self)
-		print 'init1 Navigator is instance of node.Node?', isinstance(self, node.Node)
 		node.Node.__init__(self, id, nodelocations, **kwargs)
-		print 'init2 Navigator is instance of node.Node?', isinstance(self, node.Node)
 
 		self.addEventInput(event.ImageClickEvent, self.handleImageClick)
 		self.addEventInput(event.ImageAcquireEvent, self.handleImageAcquire)
@@ -36,9 +33,6 @@ class Navigator(node.Node):
 		currentconfig['state']['exposure time'] = 100
 		self.cam.config(currentconfig)
 
-		self.defineUserInterface()
-
-		self.start()
 
 	def shiftType(self, shift_type=None):
 		'''
@@ -129,6 +123,12 @@ class Navigator(node.Node):
 		camspec = self.cam.configUIData()
 
 		self.registerUISpec('Navigator', (prefs, camspec, nodeui))
+
+class SimpleNavigator(Navigator):
+	def __init__(self, id, nodelocations, **kwargs):
+		Navigator.__init__(self, id, nodelocations, **kwargs)
+		self.defineUserInterface()
+		self.start()
 
 
 if __name__ == '__main__':

@@ -4,7 +4,7 @@ import time
 import threading
 import node, event, data
 import camerafuncs
-reload(camerafuncs)
+import cPickle
 
 
 class GridPreview(node.Node):
@@ -15,9 +15,7 @@ class GridPreview(node.Node):
 		self.temptodo = []
 		self.stoprunning = threading.Event()
 		self.running = threading.Event()
-		print 'init1 GridPreview is instance of node.Node?', isinstance(self, node.Node)
 		node.Node.__init__(self, id, nodelocations, **kwargs)
-		print 'init2 GridPreview is instance of node.Node?', isinstance(self, node.Node)
 
 		## default camera config
 		currentconfig = self.cam.config()
@@ -28,9 +26,6 @@ class GridPreview(node.Node):
 
 		self.defineUserInterface()
 		self.start()
-
-	def main(self):
-		pass
 
 	def defineUserInterface(self):
 		#nodespec = node.Node.defineUserInterface(self)
@@ -121,12 +116,40 @@ class GridPreview(node.Node):
 				neighbortiles = []
 			else:
 				neighbortiles = [self.lastid,]
-			#imdata = data.ImageTileData(thisid, imarray, neighbortiles)
+
+			filename = self.tilefilename(thisid)
+			Mrc.numeric_to_mrc(imarray, filename)
+			storedata = {'id':thisid,'image':filename, 'state': stagepos, 'neighbors': neighbortiles}
+			self.logAppend(storedata)
+
 			imdata = data.StateImageTileData(thisid, imarray, stagepos, neighbortiles)
 			print 'publishing tile'
 			self.publish(imdata, event.StateImageTilePublishEvent)
 
 			self.lastid = thisid
+
+	def logAppend(self, data):
+		self.loglist.append(data)
+		self.logSave()
+
+	def logClear(self):
+		self.loglist = []
+		self.logSave()
+
+	def logSave(self):
+		f = open('gp.log', 'w')
+		cPickle.dump(self.loglist, f, 1)
+		f.close()
+
+	def logLoad(self):
+		f = open('gp.log', 'r')
+		self.loglist = cPickle.load(f)
+		f.close()
+
+	def tilefilename(self, id):
+		indexstr = '%04d' % (id[-1],)
+		filename = 'gp' + indexstr + '.mrc'
+		return filename
 
 	def next_target(self):
 		target = self.temptodo[0]
@@ -157,11 +180,13 @@ class GridPreview(node.Node):
 		else:
 			self.temptodo = list(self.todo)
 			self.lastid = None
+			self.logClear()
 		return ''
 
 	def _loop(self):
 		self.stoprunning.clear()
 		self.running.set()
+		self.cam.state(self.cam.config()['state'])
 		try:
 			while self.temptodo and not self.stoprunning.isSet():
 				self.next_target()

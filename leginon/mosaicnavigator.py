@@ -4,11 +4,13 @@ import event
 import math
 import node
 
-class MosaicNavigator(node.Node, navigator.Navigator):
-	def __init__(self, id, nodelocations):
-		navigator.Navigator.__init__(self, id, nodelocations)
+class MosaicNavigator(navigator.Navigator):
+	def __init__(self, id, nodelocations, **kwargs):
 		self.statemosaic = {}
+		navigator.Navigator.__init__(self, id, nodelocations, **kwargs)
 		self.addEventInput(event.StateMosaicPublishEvent, self.addStateMosaic)
+		self.defineUserInterface()
+		self.start()
 
 	def addStateMosaic(self, ievent):
 		idata = self.researchByDataID(ievent.content)

@@ -7,7 +7,6 @@
 
 import Numeric
 import fftengine
-reload(fftengine)
 
 ## create a fft engine for the cross correlations
 ## turning off estimate will optimize, but planning takes longer
