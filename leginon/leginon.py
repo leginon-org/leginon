@@ -146,7 +146,7 @@ class AddChoicesDialog(AddDialog):
 
 class Leginon(Tkinter.Frame):
 	def __init__(self, parent):
-		self.uiclients = {}
+		self.manageruiclient = None
 		self.targets = {}
 		self.manager = None
 		self.remotelauncher = None
@@ -232,7 +232,7 @@ class Leginon(Tkinter.Frame):
 		self.manager = None
 		for page in self.notebook.pagenames():
 			self.notebook.delete(page)
-		self.uiclients = {}
+		self.manageruiclient = None
 		self.windowmenu.delete(0, Tkinter.END)
 		self.targets = {}
 
@@ -277,22 +277,14 @@ class Leginon(Tkinter.Frame):
 
 	def startGUI(self):
 		managerlocation = self.managerLocation()
-		self.uiclients[('manager',)] = interface.Client(managerlocation[0],
+		self.manageruiclient = interface.Client(managerlocation[0],
 																										managerlocation[1])
-		debugpage = self.notebook.add('Debug')
-		self.debugnotebook = Pmw.NoteBook(debugpage)
-		self.windowmenu.add_checkbutton(label='Debug', command=self.windows)
-		self.debugnotebook.pack(fill=Tkinter.BOTH, expand=Tkinter.YES)
-		nodelocations = self.nodeLocations()
-		for node in nodelocations:
-			page = self.debugnotebook.add(eval(node)[-1])
-			gui = nodegui.NodeGUI(page, nodelocations[node]['hostname'],
-																	nodelocations[node]['UI port'], None, True)
-			gui.pack(fill=Tkinter.BOTH, expand=Tkinter.YES)
+		self.debug = Debug(self.manageruiclient, self.notebook,
+																		self.windowmenu, 'Debug')
 
 	def nodeLocations(self):
 		try:
-			return self.uiclients[('manager',)].execute('getNodeLocations')
+			return self.manageruiclient.execute('getNodeLocations')
 		except:
 			return {}
 
@@ -316,20 +308,20 @@ class Leginon(Tkinter.Frame):
 		return (socket.gethostname(),)
 
 	def addGridAtlas(self, name):
-		self.targets[name] = GridAtlas(self.manager, self.uiclients[('manager',)],
+		self.targets[name] = GridAtlas(self.manager, self.manageruiclient,
 																		self.locallauncherid, self.notebook,
-																		self.debugnotebook, self.windowmenu, name)
+																		self.debug, self.windowmenu, name)
 
 	def addTarget(self, name, sourceids=[]):
-		self.targets[name] = Target(self.manager, self.uiclients[('manager',)],
+		self.targets[name] = Target(self.manager, self.manageruiclient,
 																self.locallauncherid, self.notebook,
-																self.debugnotebook, self.windowmenu, name,
+																self.debug, self.windowmenu, name,
 																sourceids)
 
 class CustomWidget(Tkinter.Frame):
-	def __init__(self, parent, ):
+	def __init__(self, parent):
 		Tkinter.Frame.__init__(self, parent)
-		self.uiclients = {}
+#		self.uiclients = {}
 		self.groups = {}
 
 	def widgetFromName(self, parent, uiclient, name, attempts=10):
@@ -423,13 +415,13 @@ class TargetWidget(CustomWidget):
 
 class WidgetWrapper(object):
 	def __init__(self, manager, manageruiclient, launcherid, notebook,
-											debugnotebook, windowmenu, name):
+																			debug, windowmenu, name):
 		self.nodeinfo = {}
 		self.manager = manager
 		self.manageruiclient = manageruiclient
 		self.launcherid = launcherid
 		self.notebook = notebook
-		self.debugnotebook = debugnotebook
+		self.debug = debug
 		self.windowmenu = windowmenu
 		self.name = name
 
@@ -449,18 +441,42 @@ class WidgetWrapper(object):
 			self.nodeinfo[node]['UI info'] = self.uiClient(self.nodeinfo[node]['ID'])
 		self.page = self.notebook.add(self.name)
 
-	def initalizePage(self):
-		self.windowmenu.add_checkbutton(label=self.name)
-		self.widget.pack()
+	def initializeWidget(self):
+		pass
+
+	def initializePage(self):
+		self.menuvariable = Tkinter.IntVar()
+		self.menuvariable.set(1)
+		self.windowmenu.add_checkbutton(label=self.name,
+																		variable=self.menuvariable,
+																		command=self.menuCallback)
+		self.widget.pack(fill=Tkinter.BOTH, expand=Tkinter.YES)
 		self.notebook.setnaturalsize()
 		self.notebook.selectpage(self.name)
 
 	def initializeDebugUIs(self):
 		for node in self.nodeinfo:
-			page = self.debugnotebook.add(self.nodeinfo[node]['name'])
-			gui = nodegui.NodeGUI(page, self.nodeinfo[node]['UI info']['hostname'],
-													self.nodeinfo[node]['UI info']['UI port'], None, True)
-			gui.pack(fill=Tkinter.BOTH, expand=Tkinter.YES)
+			self.debug.addDebugTab(self.nodeinfo[node]['name'],
+															self.nodeinfo[node]['UI info'])
+
+	def menuCallback(self):
+		if self.menuvariable.get() == 1:
+			self.show()
+		else:
+			self.hide()
+
+	# better way in Pmw.NoteBook?
+	def hide(self):
+		self.widget.destroy()
+		self.notebook.delete(self.name)
+		self.page = None
+		self.widget = None
+
+	def show(self):
+		self.page = self.notebook.add(self.name)
+		self.initializeWidget()
+		self.widget.pack()
+		self.notebook.selectpage(self.name)
 
 	def nodeLocations(self):
 		try:
@@ -481,11 +497,37 @@ class WidgetWrapper(object):
 				time.sleep(0.25)
 		return None
 
+# initialize/refresh needs to be optimized
+class Debug(WidgetWrapper):
+	def __init__(self, manageruiclient, notebook, windowmenu, name):
+		WidgetWrapper.__init__(self, None, manageruiclient, None, notebook, None,
+																														windowmenu, name)
+		self.initializeUIs()
+		self.initializeWidget()
+		self.initializePage()
+
+	def initializeWidget(self):
+		self.widget = Pmw.NoteBook(self.page)
+		nodelocations = self.nodeLocations()
+		for node in nodelocations:
+			page = self.widget.add(eval(node)[-1])
+			gui = nodegui.NodeGUI(page, nodelocations[node]['hostname'],
+																	nodelocations[node]['UI port'], None, True)
+			gui.pack(fill=Tkinter.BOTH, expand=Tkinter.YES)
+		self.widget.setnaturalsize()
+
+	def addDebugTab(self, name, ui_info):
+		if self.widget is not None:
+			page = self.widget.add(name)
+			gui = nodegui.NodeGUI(page, ui_info['hostname'],
+																	ui_info['UI port'], None, True)
+			gui.pack(fill=Tkinter.BOTH, expand=Tkinter.YES)
+
 class GridAtlas(WidgetWrapper):
 	def __init__(self, manager, manageruiclient, launcherid, notebook,
-											debugnotebook, windowmenu, name):
+																			debug, windowmenu, name):
 		WidgetWrapper.__init__(self, manager, manageruiclient, launcherid,
-														notebook, debugnotebook, windowmenu, name)
+														notebook, debug, windowmenu, name)
 
 		self.addNodeInfo('gridpreview', self.name + ' Grid Preview', 'GridPreview')
 		self.addNodeInfo('stateimagemosaic', self.name + ' State Image Mosaic',
@@ -499,18 +541,20 @@ class GridAtlas(WidgetWrapper):
 																				self.nodeinfo['stateimagemosaic']['ID'])
 
 		self.initializeUIs()
+		self.initializeWidget()
+		self.initializePage()
+		self.initializeDebugUIs()
 
+	def initializeWidget(self):
 		self.widget = GridAtlasWidget(self.page,
 												self.nodeinfo['gridpreview']['UI info']['client'],
 												self.nodeinfo['stateimagemosaic']['UI info']['client'])
-		self.initalizePage()
-		self.initializeDebugUIs()
 
 class Target(WidgetWrapper):
 	def __init__(self, manager, manageruiclient, launcherid, notebook,
-											debugnotebook, windowmenu, name, targetsourceids):
+											debug, windowmenu, name, targetsourceids):
 		WidgetWrapper.__init__(self, manager, manageruiclient, launcherid,
-														notebook, debugnotebook, windowmenu, name)
+														notebook, debug, windowmenu, name)
 
 		self.addNodeInfo('acquire', self.name + ' Acquisition', 'Acquisition')
 		self.addNodeInfo('target', self.name + ' Click Target Finder',
@@ -529,12 +573,14 @@ class Target(WidgetWrapper):
 																				nodeid, self.nodeinfo['acquire']['ID'])
 
 		self.initializeUIs()
+		self.initializeWidget()
+		self.initializePage()
+		self.initializeDebugUIs()
 
+	def initializeWidget(self):
 		self.widget = TargetWidget(self.page,
 																self.nodeinfo['acquire']['UI info']['client'],
 																self.nodeinfo['target']['UI info']['client'])
-		self.initalizePage()
-		self.initializeDebugUIs()
 
 if __name__ == '__main__':
 

@@ -38,7 +38,6 @@ class DataHandler(datahandler.DataBinder):
 class CalibrationLibrary(node.Node):
 	def __init__(self, id, nodelocations, **kwargs):
 		node.Node.__init__(self, id, nodelocations, DataHandler, (self,), **kwargs)
-		self.publishDataIDList()
 		self.storagedict = {
 			'pickle': PickleStorage(),
 			'db': DBStorage()
@@ -47,6 +46,7 @@ class CalibrationLibrary(node.Node):
 			'db',
 			'pickle'
 		]
+		self.publishDataIDList()
 
 	def publishDataIDList(self):
 		# publish the ids that this node manages
