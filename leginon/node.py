@@ -247,8 +247,8 @@ class Node(leginonobject.LeginonObject):
 		'''
 		Get piece[s] of data.
 		Takes kwargs:
-			id - specify id
-			session - specify session
+			for node's datahandlers specify 'id' and 'session'
+			for DBDataKeeper specify 'dataclass' and keys ('id', 'magnification', ...)
 			[*] - keys in data
 		'''
 		result = []
@@ -260,11 +260,24 @@ class Node(leginonobject.LeginonObject):
 					pass
 
 		try:
-#			result.append(self.datahandlers[dbdatakeeper.DBDataKeeper].query(kwargs))
-			# assumes query yields list of matches
-			result += self.datahandlers[dbdatakeeper.DBDataKeeper].query(kwargs)
-		except KeyError:
-			self.printerror('research failed, no DBDataKeeper')
+			#result += self.datahandlers[dbdatakeeper.DBDataKeeper].query(kwargs)
+			datainstance = dataclass(('dummy ID',))
+			# copy should suffice
+			indices = copy.copy(kwargs)
+			del indices['dataclass']
+			for index in indices:
+				if index not in datainstance:
+					raise ValueError
+			result += self.datahandlers[dbdatakeeper.DBDataKeeper].query(datainstance,
+																																				indices)
+		except (KeyError, ValueError), e:
+			if isinstance(e, KeyError):
+				self.printerror('DBDataKeeper research failed, no DBDataKeeper')
+			elif isinstance(e, ValueError):
+				self.printerror('DBDataKeeper research failed, bad kwarg \'%s\''
+																																	% index)
+			else:
+				self.printerror('DBDataKeeper research failed')
 
 		# first for now
 		try:
