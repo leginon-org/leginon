@@ -85,10 +85,12 @@ class DBDataKeeper(datahandler.DataHandler):
 		numdata = imagedata['image']
 		session = imagedata['session']
 		id = imagedata['id']
+		idstrlist = [str(i) for i in id]
+		idstr = '-'.join(idstrlist)
 
 		if numdata is not None:
 			# filename = ???
-			filename = './images/%s-%s.mrc' % (session, id)
+			filename = './images/%s-%s.mrc' % (session, idstr)
 			try:
 				Mrc.numeric_to_mrc(numdata, filename)
 			except:
