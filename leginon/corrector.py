@@ -137,7 +137,7 @@ class SimpleCorrector(node.Node):
 		correctedimage = self.correctImage(image, cameradata)
 		if correctedimage is None:
 			return None
-		imagedata['image'] = correctedimage
+		imagedata['image'] = correctedimage.astype(image.typecode())
 		return imagedata
 
 	def getImageStats(self, image):
@@ -279,7 +279,7 @@ class SimpleCorrector(node.Node):
 	def acquireReferenceImages(self):
 		naverage = self.imagestoaverage.get()
 		exposuretypestrings = {'dark': 'Dark', 'normal': 'Bright'}
-		binnings = [1, 2, 4, 8]
+		binnings = self.binnings.get()
 		binnings.sort()
 		binnings.reverse()
 		try:
@@ -304,6 +304,8 @@ class SimpleCorrector(node.Node):
 					self.references[binning][exposuretype] = image
 					if self.abortevent.isSet():
 						raise AbortError
+				self.status.set('Calculating normalization image...')
+				self.exposuretype.set('')
 				self.references[binning]['normalization'] = \
 					 self.calculateNormalizationImage(self.references[binning]['dark'],
 																						self.references[binning]['normal'],
@@ -368,11 +370,12 @@ class SimpleCorrector(node.Node):
 		displaycontainer = uidata.Container('Display')
 		displaycontainer.addObjects((self.displayacquire, self.displaymedian,
 																	self.displaynormalization))
+		self.binnings = uidata.Sequence('Binnings', [1, 2, 4, 8], 'rw')
 		self.imagestoaverage = uidata.Integer('Images to average', 3, 'rw',
 																					persist=True)
 
 		referencesettingscontainer = uidata.Container('Reference Acquisition')
-		referencesettingscontainer.addObjects((displaycontainer,
+		referencesettingscontainer.addObjects((displaycontainer, self.binnings,
 																						self.imagestoaverage))
 
 		self.findcounts = uidata.Number('Desired mean', 1000, 'rw', persist=True)

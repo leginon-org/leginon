@@ -1,13 +1,14 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
-#       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#			 The Leginon software is Copyright 2003
+#			 The Scripps Research Institute, La Jolla, CA
+#			 For terms of the license agreement
+#			 see	http://ami.scripps.edu/software/leginon-license
 #
 
 import camerafuncs
 import data
+import imagefun
 import node
 import project
 import threading
@@ -26,6 +27,26 @@ class ManualAcquisition(node.Node):
 		node.Node.__init__(self, id, session, nodelocations, **kwargs)
 		self.defineUserInterface()
 		self.start()
+
+	def getImageStats(self, image):
+		mean = imagefun.mean(image)
+		stdev = imagefun.stdev(image, known_mean=mean)
+		min = imagefun.min(image)
+		max = imagefun.max(image)
+		return {'mean': mean, 'stdev': stdev, 'min': min, 'max': max}
+
+	def displayImageStats(self, image):
+		if image is None:
+			self.mean.set(None)
+			self.min.set(None)
+			self.max.set(None)
+			self.std.set(None)
+		else:
+			stats = self.getImageStats(image)
+			self.mean.set(stats['mean'])
+			self.min.set(stats['min'])
+			self.max.set(stats['max'])
+			self.std.set(stats['stdev'])
 
 	def acquire(self):
 		correct = self.correctimage.get()
@@ -55,6 +76,7 @@ class ManualAcquisition(node.Node):
 			raise AcquireError
 		self.status.set('Displaying image...')
 		self.image.set(imagedata['image'])
+		self.displayImageStats(imagedata['image'])
 		if self.usedatabase.get():
 			self.status.set('Saving image to database...')
 			try:
@@ -252,8 +274,16 @@ class ManualAcquisition(node.Node):
 
 		self.messagelog = uidata.MessageLog('Message Log')
 		self.status = uidata.String('Status', '', 'r')
+
+		self.mean = uidata.Float('Mean', None, 'r')
+		self.min = uidata.Float('Min', None, 'r')
+		self.max = uidata.Float('Max', None, 'r')
+		self.std = uidata.Float('Std. Dev.', None, 'r')
+		statisticscontainer = uidata.Container('Statistics')
+		statisticscontainer.addObjects((self.mean, self.min, self.max, self.std))
+
 		statuscontainer = uidata.Container('Status')
-		statuscontainer.addObjects((self.status,))
+		statuscontainer.addObjects((self.status, statisticscontainer))
 
 		self.image = uidata.Image('Image', None, 'rw')
 
