@@ -91,15 +91,23 @@ class DictTreeCtrlPanel(wxPanel):
 				return True
 		return False
 
+	def nothing(self):
+		pass
+
 	def OnEndEdit(self, evt):
-		if evt.IsEditCancelled():
+		if not callable(self.editcallback) or evt.IsEditCancelled():
+			return
+		newvalue = evt.GetLabel()
+		# apparently under Gtk if you hit enter to set the value two events fire
+		# one of the event value is '', a quick way around is to not let the user
+		# (or anyone) set to ''
+		if not newvalue:
 			return
 		item = evt.GetItem()
 		parentitem = self.tree.GetItemParent(item)
 		parentdata = self.tree.GetPyData(parentitem)
 		grandparentdata = self.tree.GetPyData(self.tree.GetItemParent(parentitem))
 		oldvalue = grandparentdata[parentdata]
-		newvalue = evt.GetLabel()
 		if type(oldvalue) is not str:
 			try:
 				newvalue = eval(newvalue)
@@ -112,6 +120,7 @@ class DictTreeCtrlPanel(wxPanel):
 		self.tree.SetPyData(item, newvalue)
 		grandparentdata[parentdata] = newvalue
 		self.editcallback()
+		evt.Skip()
 
 if __name__ == '__main__':
 	class MyApp(wxApp):

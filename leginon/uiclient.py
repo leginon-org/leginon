@@ -462,6 +462,7 @@ class wxDialogWidget(wxContainerWidget):
 	def Destroy(self):
 		self.dialog.Destroy()
 
+	# not thread safe
 	def Show(self):
 		self.dialog.sizer.SetItemMinSize(self.dialog.message,
 																	self.dialog.message.GetSize().GetWidth(),
@@ -471,21 +472,22 @@ class wxDialogWidget(wxContainerWidget):
 		self.dialog.Show(true)
 
 	def _set(self, value):
-		self.dialog.message.SetLabel(value)
-		self.messageflag = True
+		if value is not None:
+			self.dialog.message.SetLabel(value)
 		if self.messageflag and self.okflag:
 			self.Show()
 
 	def setWidget(self, namelist, value):
 		self.lock.acquire()
 		if namelist == self.namelist + ('Message',):
+			self.messageflag = True
 			evt = SetWidgetEvent(self, value)
 			wxPostEvent(self.window, evt)
 		elif namelist == self.namelist + ('OK',):
 			self.okflag = True
+			evt = SetWidgetEvent(self, None)
+			wxPostEvent(self.window, evt)
 		self.lock.release()
-		if self.messageflag and self.okflag:
-			self.Show()
 
 	def set(self, namelist, value=None):
 		if value is None:
