@@ -11,10 +11,12 @@
 import data
 from imagefun import TooManyBlobs
 import Mrc
+import math
 import squarefinderback
 import targetfinder
 import threading
 import uidata
+import random
 
 class SquareFinder(targetfinder.TargetFinder):
 	def __init__(self, id, session, nodelocations, **kwargs):
@@ -30,51 +32,54 @@ class SquareFinder(targetfinder.TargetFinder):
 	def setImage(self, image):
 		self.image = image
 		self.ui_image.setImage(self.image)
-		if self.image is not None:
+		if self.image is None:
+			self.lpfmethod.disable()
+		else:
 			dimension = self.uisquaredimension.get()
 			if dimension is not None:
 				self.updateMaxBlobs(self.image, dimension)
 			self.lpfmethod.enable()
-		else:
-			self.lpfmethod.disable()
 		self.setLPFImage(None)
-		self.blobs = []
-		self.targets = []
+		self.blobs = None
+		self.targets = None
 		self.squaredimension = None
 
 	def setLPFImage(self, image):
 		self.lpfimage = image
-		if self.lpfimage is not None:
+		if self.lpfimage is None:
+			self.thresholdmethod.disable()
+		else:
 			self.ui_image.setImage(self.lpfimage)
 			self.thresholdmethod.enable()
-		else:
-			self.thresholdmethod.disable()
 		self.setThresholdImage(None)
 
 	def setThresholdImage(self, image):
 		self.thresholdimage = image
-		if self.thresholdimage is not None:
+		if self.thresholdimage is None:
+			self.findblobsmethod.disable()
+		else:
 			self.ui_image.setImage(self.thresholdimage)
 			self.findblobsmethod.enable()
-		else:
-			self.findblobsmethod.disable()
-		self.setBlobs([])
+		self.setBlobs(None)
 
 	def setBlobs(self, blobs):
 		self.blobs = blobs
-		if blobs:
-			self.targetmethod.enable()
-		else:
+		if blobs is None:
 			self.targetmethod.disable()
-		self.setTargets([])
+		else:
+			self.targetmethod.enable()
+		self.setTargets(None)
 
 	def setTargets(self, targets):
 		self.targets = targets
-		self.ui_image.setTargetType('acquisition', self.targets)
-		if self.targets:
-			self.verifymethod.enable()
+		if self.targets is None:
+			self.ui_image.setTargetType('acquisition', [])
 		else:
+			self.ui_image.setTargetType('acquisition', self.targets)
+		if self.targets is None:
 			self.verifymethod.disable()
+		else:
+			self.verifymethod.enable()
 
 	def lowPassFilter(self):
 		size = self.uilpfsize.get()
@@ -115,6 +120,12 @@ class SquareFinder(targetfinder.TargetFinder):
 			if blob[0] >= targetmin[0] and blob[0] <= targetmax[0] \
 					and blob[1] >= targetmin[1] and blob[1] <= targetmax[1]:
 				targets.append(blob)
+		if self.uilimittargets.get():
+			targetlimit = self.uitargetlimit.get()
+			try:
+				targets = random.sample(targets, targetlimit)
+			except ValueError:
+				pass
 		self.setTargets(targets)
 
 	def uiLoad(self):
@@ -147,7 +158,7 @@ class SquareFinder(targetfinder.TargetFinder):
 		if self.image is not None:
 			self.updateMaxBlobs(self.image, value)
 		self.uimaxblobsize.set((value*1.1)**2)
-		self.uitargetborder.set(value/2)
+		self.uitargetborder.set(value*math.sqrt(2))
 		return value
 
 	def updateMaxBlobs(self, image, dimension):
@@ -239,6 +250,10 @@ class SquareFinder(targetfinder.TargetFinder):
 		self.uisquaredimension = uidata.Number('Square Dimension', None, 'rw',
 															callback=self.onSetSquareDimension, persist=True)
 
+		self.uilimittargets = uidata.Boolean('Limit number of targets', False,
+																					'rw', persist=True)
+		self.uitargetlimit = uidata.Number('Target Limit', 0, 'rw', persist=True)
+
 		self.advancedcontainer = uidata.Container('Advanced')
 		self.advancedcontainer.addObjects((lpfcontainer, findblobscontainer,
 																	targetcontainer))
@@ -247,6 +262,7 @@ class SquareFinder(targetfinder.TargetFinder):
 																					persist=True)
 		settingscontainer = uidata.Container('Settings')
 		settingscontainer.addObjects((self.uiuserverify, self.uisquaredimension,
+																	self.uilimittargets, self.uitargetlimit,
 																	self.uishowadvanced, self.advancedcontainer))
 
 		self.verifymethod = uidata.Method('Submit', self.uiVerify)
