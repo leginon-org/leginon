@@ -5,9 +5,8 @@ import event
 import data
 
 class Navigator(node.Node):
-	def __init__(self, id, nodelocations, emnode=('manager','em')):
+	def __init__(self, id, nodelocations):
 		node.Node.__init__(self, id, nodelocations)
-		self.emnode = emnode
 
 		self.addEventInput(event.ImageClickEvent, self.handleImageClick)
 		self.addEventInput(event.ImageAcquireEvent, self.handleImageAcquire)
@@ -50,8 +49,8 @@ class Navigator(node.Node):
 
 
 class StageNavigator(Navigator):
-	def __init__(self, id, nodelocations, emnode=('manager','em')): 
-		Navigator.__init__(self, id, nodelocations, emnode)
+	def __init__(self, id, nodelocations): 
+		Navigator.__init__(self, id, nodelocations)
 
 	def move(self, deltarowcol):
 		deltax,deltay = self.image2stage(deltarowcol)
@@ -68,9 +67,9 @@ class StageNavigator(Navigator):
 
 		state = {'stage position': {'x':newx, 'y':newy}}
 		print 'state', state
-		emdata = data.EMData(self.ID(), state)
+		emdata = data.EMData('scope', state)
 		print 'emdata', emdata
-		self.publishRemote(self.emnode, emdata)
+		self.publishRemote(emdata)
 
 	def image2stage(self, deltarowcol):
 		### this is fake for now, without using calibration
@@ -81,8 +80,8 @@ class StageNavigator(Navigator):
 		return (stagex, stagey)
 
 class ImageShiftNavigator(Navigator):
-	def __init__(self, id, nodelocations, emnode=('manager','em')): 
-		Navigator.__init__(self, id, nodelocations, emnode)
+	def __init__(self, id, nodelocations): 
+		Navigator.__init__(self, id, nodelocations)
 
 	def move(self, deltarowcol):
 		deltax,deltay = self.image2imageshift(deltarowcol)
@@ -99,9 +98,9 @@ class ImageShiftNavigator(Navigator):
 
 		state = {'image shift': {'x':newx, 'y':newy}}
 		print 'state', state
-		emdata = data.EMData(self.ID(), state)
+		emdata = data.EMData('scope', state)
 		print 'emdata', emdata
-		self.publishRemote(self.emnode, emdata)
+		self.publishRemote(emdata)
 
 	def image2imageshift(self, deltarowcol):
 		### this is fake for now, without using calibration

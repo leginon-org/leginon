@@ -55,7 +55,6 @@ def getNodeClassNames():
 ### register Node classes in the order you want them listed publicly
 
 registerNodeClass('EM', 'EM')
-registerNodeClass('emtest', 'EMTest')
 registerNodeClass('calibration', 'Calibration')
 registerNodeClass('calibration', 'StageCalibration')
 registerNodeClass('calibration', 'ImageShiftCalibration')
@@ -68,3 +67,4 @@ registerNodeClass('watcher', 'TestWatch')
 registerNodeClass('timedloop', 'TestLoop')
 registerNodeClass('getdata', 'GetData')
 registerNodeClass('intgen', 'IntGen')
+
