@@ -43,32 +43,6 @@ class EM(node.Node):
 		self.handlerthread.start()
 		#self.handler()
 
-	def refresh(self, name, attributes):
-		self.logger.info('Refreshing parameters for %s...' % name)
-		try:
-			instrument = self.instruments[name]
-		except KeyError:
-			return
-		values = {}
-		instrument.lock(self.name)
-		try:
-			for attribute in attributes:
-				try:
-					value = instrument._execute(self.name, attribute, 'r')
-					if isinstance(value, Exception):
-						raise value
-					else:
-						values[attribute] = value
-				except AttributeError:
-					self.logger.warning('Failed to refresh attribute \'%s\'' % attribute)
-				except TypeError:
-					# in theory this is an invalid execution name
-					pass
-		finally:
-			instrument.unlock(self.name)
-		self.panel.setParameters(name, values)
-		self.logger.info('Refresh completed.')
-
 	def exit(self):
 		node.Node.exit(self)
 		for i in self.instruments:
@@ -180,4 +154,62 @@ class EM(node.Node):
 		self.publish(magnificationsdata, database=True, dbforce=True)
 		self.logger.info('Magnifications saved.')
 		self.panel.onGetMagnificationsDone()
+
+	def refresh(self, name, attributes):
+		# hack
+		self.logger.info('Refreshing parameters for %s...' % name)
+		try:
+			instrument = self.instruments[name]
+		except KeyError:
+			self.logger.info('Refreshing failed.' % name)
+			return
+		values = {}
+		instrument.lock(self.name)
+		try:
+			if isinstance(attributes, list):
+				for attribute in attributes:
+					if attribute is 'resetDefocus':
+						try:
+							value = instrument._execute(self.name, attribute, 'method')
+						except:
+							pass
+						else:
+							continue
+					try:
+						value = instrument._execute(self.name, attribute, 'r')
+						if isinstance(value, Exception):
+							raise
+						else:
+							values[attribute] = value
+					except TypeError:
+						# in theory this is an invalid execution name
+						pass
+					except:
+						self.logger.warning('Failed to refresh attribute \'%s\''
+																% attribute)
+			elif isinstance(attributes, dict):
+				for attribute, value in attributes.items():
+					try:
+						value = instrument._execute(self.name, attribute, 'w', (value,))
+						if isinstance(value, Exception):
+							raise
+						else:
+							values[attribute] = value
+						value = instrument._execute(self.name, attribute, 'r')
+						if isinstance(value, Exception):
+							raise
+						else:
+							values[attribute] = value
+					except TypeError:
+						# in theory this is an invalid execution name
+						pass
+					except AttributeError:
+						self.logger.warning('Failed to refresh attribute \'%s\''
+																% attribute)
+			else:
+				pass
+		finally:
+			instrument.unlock(self.name)
+		self.panel.setParameters(name, values)
+		self.logger.info('Refresh completed.')
 

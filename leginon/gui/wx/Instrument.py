@@ -5,16 +5,16 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Instrument.py,v $
-# $Revision: 1.38 $
+# $Revision: 1.39 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-02 17:10:09 $
+# $Date: 2005-03-02 19:03:06 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
 import wx
 from gui.wx.Camera import CameraPanel, EVT_CONFIGURATION_CHANGED
-from gui.wx.Entry import Entry, IntEntry, FloatEntry, EVT_ENTRY
+from gui.wx.Entry import Entry, IntEntry, FloatEntry, EVT_ENTRY, TypeEntry
 import gui.wx.Events
 import gui.wx.Node
 import gui.wx.ToolBar
@@ -27,25 +27,39 @@ def setControl(control, value):
 	valuetypename = value.__class__.__name__
 
 	if isinstance(control, wx.StaticText):
-
-		try:
-			value = str(value)
-		except:
-			typename = str.__name__
-			raise TypeError(testr % (controlname, typename, valuetypename))
+		if value is None:
+			value = ''
+			control.Enable(False)
+		else:
+			try:
+				value = str(value)
+			except:
+				typename = str.__name__
+				raise TypeError(testr % (controlname, typename, valuetypename))
+			control.Enable(True)
 
 		control.SetLabel(value)
 
-	if isinstance(control, (Entry, wx.TextCtrl, wx.CheckBox)):
+	elif isinstance(control, (Entry, wx.TextCtrl, wx.CheckBox)):
+		if value is None:
+			control.Enable(False)
+		else:
+			control.Enable(True)
 
-		if isinstance(control, Entry):
+		if isinstance(control, TypeEntry):
 			pass
 		elif isinstance(control, wx.TextCtrl) and type(value) is not str:
-			typename = str.__name__
-			raise TypeError(testr % (controlname, typename, valuetypename))
+			if value is None:
+				value = ''
+			else:
+				typename = str.__name__
+				raise TypeError(testr % (controlname, typename, valuetypename))
 		elif isinstance(control, wx.CheckBox) and type(value) is not bool:
-			typename = bool.__name__
-			raise TypeError(testr % (controlname, typename, valuetypename))
+			if value is None:
+				value = False
+			else:
+				typename = bool.__name__
+				raise TypeError(testr % (controlname, typename, valuetypename))
 
 		try:
 			control.SetValue(value)
@@ -53,7 +67,10 @@ def setControl(control, value):
 			raise ValueError(vestr % (value, controlname))
 
 	elif isinstance(control, wx.Choice):
-		if isinstance(value, list):
+		if value is None:
+			control.Clear()
+			control.Enable(False)
+		elif isinstance(value, list):
 			values = [str(v) for v in value]
 			control.Freeze()
 			control.Clear()
@@ -70,9 +87,12 @@ def setControl(control, value):
 				raise ValueError(vestr % (value, controlname))
 			else:
 				control.SetStringSelection(value)
+			control.Enable(True)
 
 	elif isinstance(control, CameraPanel):
-		if isinstance(value, dict):
+		if value is None:
+			control.setSize(None)
+		elif isinstance(value, dict):
 			keys = value.keys()
 			if 'x' in keys and 'y' in keys:
 				control.setSize(value)
@@ -185,7 +205,7 @@ class LensesSizer(wx.StaticBoxSizer):
 		self.sz.Add(self.xy[group][name]['label'], (row, 1), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL)
 		for i, a in enumerate(['x', 'y']):
-			self.xy[group][name][a] = FloatEntry(self.parent, -1, chars=9)
+			self.xy[group][name][a] = FloatEntry(self.parent, -1, chars=9, allownone=True)
 			self.sz.Add(self.xy[group][name][a], (row, i+2), (1, 1),
 									wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 			self.xy[group][name][a].Enable(False)
@@ -214,10 +234,10 @@ class FilmSizer(wx.StaticBoxSizer):
 
 		self.parameters = {
 			'Stock': wx.StaticText(self.parent, -1, ''),
-			'Exposure number': IntEntry(self.parent, -1, chars=5),
+			'Exposure number': IntEntry(self.parent, -1, chars=5, allownone=True),
 			'Exposure type': wx.Choice(self.parent, -1),
 			'Automatic exposure time': wx.StaticText(self.parent, -1, ''),
-			'Manual exposure time': FloatEntry(self.parent, -1, chars=5),
+			'Manual exposure time': FloatEntry(self.parent, -1, chars=5, allownone=True),
 			'User code': Entry(self.parent, -1, chars=3),
 			'Date Type': wx.Choice(self.parent, -1),
 			'Text': Entry(self.parent, -1, chars=20),
@@ -229,7 +249,7 @@ class FilmSizer(wx.StaticBoxSizer):
 		for key in parameterorder:
 			st = wx.StaticText(self.parent, -1, key + ':')
 			self.sz.Add(st, (row, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-			style = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT
+			style = wx.ALIGN_CENTER
 			if isinstance(self.parameters[key], Entry):
 				style |= wx.FIXED_MINSIZE
 			self.sz.Add(self.parameters[key], (row, 1), (1, 1), style)
@@ -249,11 +269,11 @@ class StageSizer(wx.StaticBoxSizer):
 		self.parameters = {
 			'Status': wx.StaticText(self.parent, -1, ''),
 			'Correction': wx.CheckBox(self.parent, -1, 'Correct stage movement'),
-			'x': FloatEntry(self.parent, -1, chars=9),
-			'y': FloatEntry(self.parent, -1, chars=9),
-			'z': FloatEntry(self.parent, -1, chars=9),
-			'a': FloatEntry(self.parent, -1, chars=4),
-			'b': FloatEntry(self.parent, -1, chars=4),
+			'x': FloatEntry(self.parent, -1, chars=9, allownone=True),
+			'y': FloatEntry(self.parent, -1, chars=9, allownone=True),
+			'z': FloatEntry(self.parent, -1, chars=9, allownone=True),
+			'a': FloatEntry(self.parent, -1, chars=4, allownone=True),
+			'b': FloatEntry(self.parent, -1, chars=4, allownone=True),
 		}
 
 		st = wx.StaticText(self.parent, -1, 'Status:')
@@ -406,8 +426,8 @@ class FocusSizer(wx.StaticBoxSizer):
 			'Defocus',
 		]
 		self.parameters = {
-			'Focus': FloatEntry(self.parent, -1, chars=9),
-			'Defocus': FloatEntry(self.parent, -1, chars=9),
+			'Focus': FloatEntry(self.parent, -1, chars=9, allownone=True),
+			'Defocus': FloatEntry(self.parent, -1, chars=9, allownone=True),
 			'Reset Defocus': wx.Button(self.parent, -1, 'Reset Defocus'),
 		}
 
@@ -441,8 +461,8 @@ class MainSizer(wx.StaticBoxSizer):
 		self.parameters = {
 			'High tension': wx.StaticText(self.parent, -1, ''),
 			'Magnification': wx.Choice(self.parent, -1),
-			'Intensity': FloatEntry(self.parent, -1, chars=7),
-			'Spot size': IntEntry(self.parent, -1, chars=2),
+			'Intensity': FloatEntry(self.parent, -1, chars=7, allownone=True),
+			'Spot size': IntEntry(self.parent, -1, chars=2, allownone=True),
 		}
 
 		for i, p in enumerate(parameterorder):
@@ -483,10 +503,10 @@ class CamInfoSizer(wx.StaticBoxSizer):
 		szsize = wx.GridBagSizer(0, 0)
 		st = wx.StaticText(self.parent, -1, 'Size:')
 		self.parameters['Size'] = {}
-		self.parameters['Size']['x'] = wx.StaticText(self.parent, -1, '?')
+		self.parameters['Size']['x'] = wx.StaticText(self.parent, -1, '')
 		#stx = wx.StaticText(self.parent, -1, ' × ')
 		stx = wx.StaticText(self.parent, -1, ' x ')
-		self.parameters['Size']['y'] = wx.StaticText(self.parent, -1, '?')
+		self.parameters['Size']['y'] = wx.StaticText(self.parent, -1, '')
 		szsize.Add(st, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szsize.Add(self.parameters['Size']['x'], (0, 1), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
@@ -498,10 +518,10 @@ class CamInfoSizer(wx.StaticBoxSizer):
 		szpsize = wx.GridBagSizer(0, 0)
 		st = wx.StaticText(self.parent, -1, 'Pixel size:')
 		self.parameters['Pixel size'] = {}
-		self.parameters['Pixel size']['x'] = wx.StaticText(self.parent, -1, '?')
+		self.parameters['Pixel size']['x'] = wx.StaticText(self.parent, -1, '')
 		#stx = wx.StaticText(self.parent, -1, ' × ')
 		stx = wx.StaticText(self.parent, -1, ' x ')
-		self.parameters['Pixel size']['y'] = wx.StaticText(self.parent, -1, '?')
+		self.parameters['Pixel size']['y'] = wx.StaticText(self.parent, -1, '')
 		szpsize.Add(st, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szpsize.Add(self.parameters['Pixel size']['x'], (0, 1), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
@@ -517,7 +537,7 @@ class CamInfoSizer(wx.StaticBoxSizer):
 
 		for i, p in enumerate(parameterorder):
 			st = wx.StaticText(self.parent, -1, p + ':')
-			self.parameters[p] = wx.StaticText(self.parent, -1, 'Not available')
+			self.parameters[p] = wx.StaticText(self.parent, -1, '')
 			self.sz.Add(st, (i+2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 			self.sz.Add(self.parameters[p], (i+2, 1), (1, 1),
 									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
@@ -573,13 +593,13 @@ class CamConfigSizer(wx.StaticBoxSizer):
 		self.parameters = {
 			'Exposure type': wx.Choice(self.parent, -1),
 			'Inserted': wx.CheckBox(self.parent, -1, 'Inserted'),
-			'Gain index': IntEntry(self.parent, -1, chars=2),
-			'Speed index': IntEntry(self.parent, -1, chars=2),
+			'Gain index': IntEntry(self.parent, -1, chars=2, allownone=True),
+			'Speed index': IntEntry(self.parent, -1, chars=2, allownone=True),
 			'Mirror': wx.Choice(self.parent, -1),
 			'Rotation': wx.Choice(self.parent, -1),
-			'Shutter open delay': IntEntry(self.parent, -1, chars=5),
-			'Shutter close delay': IntEntry(self.parent, -1, chars=5),
-			'Preamp delay': IntEntry(self.parent, -1, chars=5),
+			'Shutter open delay': IntEntry(self.parent, -1, chars=5, allownone=True),
+			'Shutter close delay': IntEntry(self.parent, -1, chars=5, allownone=True),
+			'Preamp delay': IntEntry(self.parent, -1, chars=5, allownone=True),
 			'Parallel mode': wx.CheckBox(self.parent, -1, 'Parallel mode'),
 			'Camera configuration': CameraPanel(self.parent),
 		}
@@ -644,10 +664,53 @@ class ParameterMixin(object):
 					self.setParameters(value, parametermap[key])
 				else:
 					setControl(parametermap[key], value)
-					parametermap[key].Enable(True)
 			except KeyError:
 				pass
-		self.sz.Layout()
+
+	def clearParameters(self, parametermap=None):
+		if parametermap is None:
+			parametermap = self.parametermap
+		for key, value in parametermap.items():
+			try:
+				if isinstance(value, dict):
+					self.clearParameters(value)
+				else:
+					setControl(value, None)
+			except KeyError:
+				pass
+
+	def makeDict(self, keypath, value):
+		if len(keypath) == 0:
+			return value
+		else:
+			return {keypath[0]: self.makeDict(keypath[1:], value)}
+
+	def reverseMap(self, map, reversemap={}, keypath=[]):
+		keys = ['Magnifications', 'LowDoseStates', 'LowDoseModes',
+						'ShutterPositions', 'ExternalShutterStates', 'MainScreenPositions',
+						'HolderTypes', 'ColumnValvePositions', 'FilmExposureTypes',
+						'FilmDateTypes', 'ExposureTypes', 'MirrorStates', 'Rotations',
+						'CameraSize']
+		for key, value in map.items():
+			if key in keys:
+				continue
+			if isinstance(value, dict):
+				self.reverseMap(value, reversemap, keypath + [key])
+			else:
+				reversemap[value] = keypath + [key]
+		return reversemap
+
+	def onControl(self, evt):
+		control = evt.GetEventObject()
+		control.Enable(False)
+		keypath = self.controlmap[control]
+		value = getValue(evt)
+		name = self.GetParent().choice.GetStringSelection()
+		if not name:
+			return
+		attributes = self.makeDict(keypath, value)
+		args = (name, attributes)
+		threading.Thread(target=self.GetParent().node.refresh, args=args).start()
 
 class TEMPanel(wx.Panel, ParameterMixin):
 	def __init__(self, *args, **kwargs):
@@ -747,7 +810,7 @@ class TEMPanel(wx.Panel, ParameterMixin):
 			'ExternalShutter': self.szfilm.parameters['External shutter'],
 			'Focus': self.szfocus.parameters['Focus'],
 			'Defocus': self.szfocus.parameters['Defocus'],
-			'ResetDefocus': self.szfocus.parameters['Reset Defocus'],
+			'resetDefocus': self.szfocus.parameters['Reset Defocus'],
 			'ScreenCurrent': self.szscreen.parameters['Current'],
 			'MainScreenPositions': self.szscreen.parameters['Main'],
 			'MainScreenPosition': self.szscreen.parameters['Main'],
@@ -765,6 +828,21 @@ class TEMPanel(wx.Panel, ParameterMixin):
 			'LowDoseModes': self.szlowdose.parameters['Mode'],
 			'LowDoseMode': self.szlowdose.parameters['Mode'],
 		}
+
+		self.controlmap = self.reverseMap(self.parametermap)
+		for control in self.controlmap:
+			try:
+				bindControl(self, self.onControl, control)
+			except ValueError:
+				pass
+
+	def setParameters(self, parameters, parametermap=None):
+		ParameterMixin.setParameters(self, parameters, parametermap)
+		self.parametermap['resetDefocus'].Enable(True)
+
+	def clearParameters(self, parametermap=None):
+		ParameterMixin.clearParameters(self, parametermap)
+		self.parametermap['resetDefocus'].Enable(False)
 
 class CCDCameraPanel(wx.Panel, ParameterMixin):
 	def __init__(self, *args, **kwargs):
@@ -786,6 +864,23 @@ class CCDCameraPanel(wx.Panel, ParameterMixin):
 		self.parametermap = {}
 		self.parametermap.update(self.szcaminfo.parametermap)
 		self.parametermap.update(self.szcamconfig.parametermap)
+
+		self.controlmap = self.reverseMap(self.parametermap)
+		for control in self.controlmap:
+			try:
+				bindControl(self, self.onControl, control)
+			except ValueError:
+				pass
+		self.Bind(EVT_CONFIGURATION_CHANGED, self.onCamConfig,
+							self.szcamconfig.parameters['Camera configuration'])
+
+	def onCamConfig(self, evt):
+		name = self.GetParent().choice.GetStringSelection()
+		if not name:
+			return
+		attributes = {'Configuration': evt.configuration}
+		args = (name, attributes)
+		threading.Thread(target=self.GetParent().node.refresh, args=args).start()
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'instrument'
@@ -810,7 +905,7 @@ class Panel(gui.wx.Node.Panel):
 		label = wx.StaticText(self, -1, 'Instrument')
 		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.choice, (0, 1), (1, 1), wx.ALIGN_CENTER)
-		self.szmain.Add(sz, (0, 0), (1, 1))
+		self.szmain.Add(sz, (0, 0), (1, 1), wx.ALIGN_CENTER)
 
 		self.tempanel = TEMPanel(self, -1)
 		self.tempanel.Show(False)
@@ -818,7 +913,8 @@ class Panel(gui.wx.Node.Panel):
 		self.ccdcamerapanel = CCDCameraPanel(self, -1)
 		self.ccdcamerapanel.Show(False)
 
-		self.szmain.AddGrowableRow(2)
+		self.szmain.AddGrowableRow(1)
+		self.szmain.AddGrowableCol(0)
 
 		self.Enable(False)
 
@@ -848,6 +944,7 @@ class Panel(gui.wx.Node.Panel):
 			self.ccdcameras[evt.name].update(evt.parameters)
 			if self.choice.GetStringSelection() == evt.name:
 				self.ccdcamerapanel.setParameters(evt.parameters)
+		self.szmain.Layout()
 
 	def onRefreshTool(self, evt):
 		name = self.choice.GetStringSelection()
@@ -898,18 +995,30 @@ class Panel(gui.wx.Node.Panel):
 				self.toolbar.EnableTool(gui.wx.ToolBar.ID_CALCULATE, False)
 		except ValueError:
 			pass
-		if string in self.tems and not self.szmain.FindItem(self.tempanel):
-			if self.szmain.FindItem(self.ccdcamerapanel):
-				self.szmain.Detach(self.ccdcamerapanel)
-				self.ccdcamerapanel.Show(False)
-			self.szmain.Add(self.tempanel, (1, 0), (1, 1), wx.ALIGN_CENTER)
-			self.tempanel.Show(True)
-		elif string in self.ccdcameras and not self.szmain.FindItem(self.ccdcamerapanel):
+		if string in self.tems :
 			if self.szmain.FindItem(self.tempanel):
-				self.szmain.Detach(self.tempanel)
-				self.tempanel.Show(False)
-			self.szmain.Add(self.ccdcamerapanel, (1, 0), (1, 1), wx.ALIGN_CENTER)
-			self.ccdcamerapanel.Show(True)
+				self.tempanel.clearParameters()
+				self.tempanel.setParameters(self.tems[string])
+			else:
+				if self.szmain.FindItem(self.ccdcamerapanel):
+					self.szmain.Detach(self.ccdcamerapanel)
+					self.ccdcamerapanel.Show(False)
+					self.ccdcamerapanel.clearParameters()
+				self.tempanel.setParameters(self.tems[string])
+				self.szmain.Add(self.tempanel, (1, 0), (1, 1), wx.ALIGN_CENTER)
+				self.tempanel.Show(True)
+		elif string in self.ccdcameras:
+			if self.szmain.FindItem(self.ccdcamerapanel):
+				self.ccdcamerapanel.clearParameters()
+				self.ccdcamerapanel.setParameters(self.ccdcameras[string])
+			else:
+				if self.szmain.FindItem(self.tempanel):
+					self.szmain.Detach(self.tempanel)
+					self.tempanel.Show(False)
+					self.tempanel.clearParameters()
+				self.ccdcamerapanel.setParameters(self.ccdcameras[string])
+				self.szmain.Add(self.ccdcamerapanel, (1, 0), (1, 1), wx.ALIGN_CENTER)
+				self.ccdcamerapanel.Show(True)
 		self.szmain.Layout()
 
 	def onAddTEM(self, evt):
@@ -1134,11 +1243,9 @@ class OldPanel(gui.wx.Node.Panel):
 		self.node.pause = value
 
 	def onCamConfig(self, evt):
-		return
 		self.node.setState(evt.configuration)
 
 	def onControl(self, evt):
-		return
 		control = evt.GetEventObject()
 		control.Enable(False)
 		keypath = self.controlmap[control]
