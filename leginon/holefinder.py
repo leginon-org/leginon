@@ -264,6 +264,12 @@ class HoleFinder(targetfinder.TargetFinder):
 		# ice
 		self.ice()
 
+	def notifyUserCheck(self):
+		myname = self.id[-1]
+		title = '%s waiting' % (myname,)
+		message = '%s is waiting for you to submit targets' % (myname,)
+		self.outputMessage(title, message)
+
 	def findTargets(self, imdata):
 		## automated part
 		self.hf['original'] = imdata['image']
@@ -271,6 +277,7 @@ class HoleFinder(targetfinder.TargetFinder):
 
 		## user part
 		if self.usercheckon.get():
+			self.notifyUserCheck()
 			self.userpause.clear()
 			self.userpause.wait()
 		self.getTargetDataList('focus')
