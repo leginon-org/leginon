@@ -36,16 +36,12 @@ class TargetFinder(imagewatcher.ImageWatcher):
 	def processData(self, newdata):
 		imagewatcher.ImageWatcher.processData(self, newdata)
 
-		print 'findTargets'
 		self.findTargets(newdata)
-		print 'publishTargets'
 		self.publishTargetList()
-		print 'DONE'
 
 	def publishTargetList(self):
 		if self.targetlist:
 			targetlistdata = data.ImageTargetListData(self.ID(), targets=self.targetlist)
-			print 'TARGETLISTDATA'
 			for targetdata in targetlistdata['targets']:
 				print targetdata['id']
 				
@@ -193,7 +189,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 	def processData(self, newdata):
 		ClickTargetFinder.processData(self, newdata)
-		self.mosaic.addTile(newdata['image'], newdata['scope'], newdata['camera'])
+		self.mosaic.addTile(newdata)
 		self.clickimage.setImage(self.mosaic.getMosaicImage())
 		# needs to update target positions
 		self.clickimage.setTargets([])
@@ -209,8 +205,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			self.targetlist.append(targetdata)
 		return targetlist
 
-	def advanceImage(self):
-		pass
+	#def advanceImage(self):
+	#	pass
 
 	def mosaicClear(self):
 		self.mosaic.clear()
