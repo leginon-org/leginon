@@ -530,13 +530,6 @@ class Node(leginonobject.LeginonObject):
 				if datatype not in memo:
 					self.addEmptyInstances2(datainstance[key], memo)
 
-	def unpublish(self, dataid, eventclass=event.UnpublishEvent):
-		'''Make a piece of data unavailable to other nodes.'''
-		if not issubclass(eventclass, event.UnpublishEvent):
-			raise TypeError('UnpublishEvent subclass required')
-		self.datahandler.remove(dataid)
-		self.outputEvent(eventclass(id=self.ID(), dataid=dataid))
-
 	def getClient(self, location):
 		return self.clientclass(location, loggername=self.logger.name)
 
