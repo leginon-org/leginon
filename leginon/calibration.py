@@ -122,6 +122,7 @@ class Calibration(node.Node):
 
 		print 'hello again from calibrate'
 
+		cal = {}
 		# might reuse value from previous axis
 		for axis in self.axislist:
 			for i in range(self.attempts):
@@ -138,7 +139,7 @@ class Calibration(node.Node):
 				if verdict == 'good':
 					print "good", self.calculate(cdata, value) 
 					self.publishRemote(self.emnode, data.EMData(self.ID(), self.state(0.0, axis)))
-					return self.calculate(cdata, value)
+					cal.update(self.state(self.calculate(cdata, value), axis))
 				elif verdict == 'small shift':
 					print "too small"
 					adjustedrange[0] = value
@@ -149,6 +150,7 @@ class Calibration(node.Node):
 					raise RuntimeError('hung jury')
 
 		self.publishRemote(self.emnode, data.EMData(self.ID(), self.state(0.0, axis)))
+		return cal
 
 	def clearStateImages(self):
 		self.images = []
@@ -213,8 +215,7 @@ class Calibration(node.Node):
 		return shiftinfo
 
 	def calculate(self, cdata, value):
-		return {'image shift': {'x': cdata['shift']['x'] / value,
-			'y': cdata['shift']['y'] / value}}
+		return {'x': cdata['shift']['x'] / value, 'y': cdata['shift']['y'] / value}
 
 
 	### some of this should be put directly in Correlator 
