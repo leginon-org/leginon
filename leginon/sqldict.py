@@ -947,13 +947,13 @@ def sqlColumnsDefinition(in_dict, noDefault=None):
 		columns += defaults
 
 	# get a type map of in_dict into a dictionary
-	in_dict_types=dict(in_dict.typemap())
 	for key in in_dict:
 		column={}
 		value=in_dict[key]
 		sqlt = sqltype(value,key)
 		if value is None:
-			if isinstance(in_dict_types[key](), data.Data):
+			in_dict_types=dict(in_dict.typemap())
+			if isinstance(in_dict_types[key](), data.Data) and not isinstance(in_dict_types[key](), data.DataReference):
 				newvalue = in_dict_types[key]()
 				column['Field'] = sep.join(['REF',newvalue.__class__.__name__,key])
 				column['Type'] = 'INT(20)'
