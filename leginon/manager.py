@@ -560,7 +560,7 @@ class Manager(node.Node):
 		self.uinodesdata = self.registerUIData('Nodes', 'struct', 'r')
 		self.uinodesdata.registerCallback(self.uiNodeDict)
 		argspec = (self.registerUIData('Hostname', 'string'),
-								self.registerUIData('TCP Port', 'integer'))
+								self.registerUIData('TCP Port', 'integer', default=55555))
 		addnodespec = self.registerUIMethod(self.uiAddNode, 'Add Node', (argspec))
 		nodesspec = self.registerUIContainer('Nodes',
 											(self.uinodesdata, addnodespec))
