@@ -24,7 +24,7 @@ from mynode import MyNode
 from intgen import IntGen
 from EM import EM
 from emtest import EMTest
-#from betacalibration import BetaCalibration
+from calibration import Calibration
 try:
 	from imviewer import ImViewer
 except ImportError:
