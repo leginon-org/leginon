@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Acquisition.py,v $
-# $Revision: 1.27 $
+# $Revision: 1.28 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-11 19:43:17 $
-# $Author: suloway $
+# $Date: 2004-12-08 23:40:33 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -165,6 +165,17 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 																				'Wait for a node to process the image')
 		self.widgets['wait for rejects'] = wx.CheckBox(self, -1,
 																				'Publish and wait for rejected targets')
+
+		# preset lock
+		locktypes = self.node.presetlocktypes
+		self.widgets['preset lock'] = Choice(self, -1, choices=locktypes)
+		szlocktype = wx.GridBagSizer(5, 5)
+		szlocktype.Add(wx.StaticText(self, -1, 'Preset Lock Type'),
+										(0, 0), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL)
+		szlocktype.Add(self.widgets['preset lock'],
+										(0, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL)
 #		# duplicate target
 #		self.widgets['duplicate targets'] = wx.CheckBox(self, -1,
 #																				'Duplicate targets with type:')
@@ -190,6 +201,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(self.widgets['wait for process'], (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['wait for rejects'], (4, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szlocktype, (5, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 #		sz.Add(szduplicate, (5, 1), (1, 1),
 #						wx.ALIGN_CENTER_VERTICAL)

@@ -49,6 +49,7 @@ class PresetsClient(object):
 		self.node.addEventInput(event.PresetPublishEvent, self.onPresetPublished)
 		self.pchanged = {}
 		self.currentpreset = None
+		self.havelock = False
 
 	def getPresetsFromDB(self, session=None):
 		'''
@@ -90,6 +91,25 @@ class PresetsClient(object):
 			p = pdict[key]
 			namedict[p['name']] = p
 		return namedict
+
+	def lock(self):
+		'try to acquire lock on presets manager, block until I have it'
+		if self.havelock:
+			return
+		lockevent = event.PresetLockEvent()
+		self.node.logger.info('Acquiring preset lock...')
+		self.node.outputEvent(lockevent, wait=True)
+		self.node.logger.info('Have preset lock')
+		self.havelock = True
+
+	def unlock(self):
+		'release the previously acquiring lock'
+		if not self.havelock:
+			return
+		unlockevent = event.PresetUnlockEvent()
+		self.node.logger.info('Releasing preset lock...')
+		self.node.outputEvent(unlockevent, wait=True)
+		self.havelock = False
 
 	def toScope(self, presetname, emtarget=None):
 		'''
@@ -149,13 +169,15 @@ class PresetsManager(node.Node):
 		'optimize cycle': True,
 		'mag only': True,
 	}
-	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent] + EM.EMClient.eventinputs
+	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent] + EM.EMClient.eventinputs
 	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.PresetPublishEvent] + EM.EMClient.eventoutputs
 
 	def __init__(self, name, session, managerlocation, **kwargs):
 		node.Node.__init__(self, name, session, managerlocation, **kwargs)
 
 		self.addEventInput(event.ChangePresetEvent, self.changePreset)
+		self.addEventInput(event.PresetLockEvent, self.handleLock)
+		self.addEventInput(event.PresetUnlockEvent, self.handleUnlock)
 
 		self.emclient = EM.EMClient(self)
 		self.cam = camerafuncs.CameraFuncs(self)
@@ -169,6 +191,8 @@ class PresetsManager(node.Node):
 		self.dosecal = calibrationclient.DoseCalibrationClient(self)
 
 		self.presetsclient = PresetsClient(self)
+		self.locknode = None
+		self._lock = threading.Lock()
 
 		self.currentselection = None
 		self.currentpreset = None
@@ -180,10 +204,45 @@ class PresetsManager(node.Node):
 		self.getSessionList()
 		self.start()
 
+	def handleLock(self, ievent):
+		requesting = ievent['node']
+		self.lock(requesting)
+		self.confirmEvent(ievent)
+
+	def handleUnlock(self, ievent):
+		n = ievent['node']
+		self.unlock(n)
+		self.confirmEvent(ievent)
+
+	def lock(self, n):
+		'''many nodes could be waiting for a lock.  It is undefined which
+		one will get it first'''
+		self.logger.info('%s requesting lock...' % n)
+		self._lock.acquire()
+		self.locknode = n
+		self.logger.info('%s acquired lock' % self.locknode)
+
+	def unlock(self, n):
+		if n == self.locknode:
+			self.logger.info('%s unlocking' % n)
+			self.locknode = None
+			self._lock.release()
+
 	def changePreset(self, ievent):
 		'''
 		callback for received PresetChangeEvent from client
 		'''
+		### limit access to this function if lock is in place
+		tmplock = False
+		if self.locknode is None:
+			self.lock(ievent['node'])
+			tmplock = True
+		if self.locknode is not None:
+			## only locking node, or node with proper key can proceed
+			if self.locknode not in (ievent['node'], ievent['key']):
+				self.lock(ievent['node'])
+				tmplock = True
+
 		self.setStatus('processing')
 		pname = ievent['name']
 		emtarget = ievent['emtarget']
@@ -200,6 +259,9 @@ class PresetsManager(node.Node):
 		else:
 			self.logger.info('Preset changed to "%s"' % pname)
 			pass
+
+		if tmplock:
+						self.unlock(ievent['node'])
 		## should we confirm if failure?
 		self.confirmEvent(ievent)
 		self.setStatus('idle')

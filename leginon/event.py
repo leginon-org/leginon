@@ -314,11 +314,20 @@ class EmailEvent(Event):
 		)
 	typemap = classmethod(typemap)
 
+class PresetLockEvent(Event):
+	'lock presets manager so only I can change presets'
+	pass
+
+class PresetUnlockEvent(Event):
+	'unlock presets manager'
+	pass
+
 class ChangePresetEvent(Event):
 	def typemap(cls):
 		return Event.typemap() + (
 			('name', str),
 			('emtarget', data.EMTargetData),
+			('key', str),
 		)
 	typemap = classmethod(typemap)
 
