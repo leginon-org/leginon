@@ -135,8 +135,7 @@ class UIClient(XMLRPCClient, uiserver.XMLRPCServer):
 	def __init__(self, serverhostname, serverport, port=None):
 		XMLRPCClient.__init__(self, serverhostname, serverport, port)
 		uiserver.XMLRPCServer.__init__(self, port)
-		self.server.register_function(self.addFromServer, 'ADD OBJECT')
-		self.server.register_function(self.addObjectsFromServer, 'ADD OBJECTS')
+		self.server.register_function(self.addFromServer, 'ADD')
 		self.server.register_function(self.setFromServer, 'SET')
 		self.server.register_function(self.removeFromServer, 'DEL')
 		self.server.register_function(self.settingsFromServer, 'SETTINGS')
@@ -162,9 +161,6 @@ class UIClient(XMLRPCClient, uiserver.XMLRPCServer):
 	def addFromServer(self, dependencies, namelist, typelist, value, settings):
 		raise NotImplementedError
 
-	def addObjectsFromServer(self, objects):
-		raise NotImplementedError
-
 	def setFromServer(self, namelist, value):
 		raise NotImplementedError
 
@@ -185,29 +181,6 @@ class wxUIClient(UIClient):
 		evt = AddWidgetEvent(dependencies, namelist, typelist, value, settings)
 		wxPostEvent(self.container.widgethandler, evt)
 		return ''
-
-	def addObjectsFromServer(self, objects):
-		self.printObjects(objects)
-		for object in objects:
-			if object:
-				try:
-					if type(object[4]) is dict:
-						apply(self.addFromServer, object)
-					else:
-						self.addObjectsFromServer(object)
-				except IndexError:
-					self.addObjectsFromServer(object)
-		return ''
-
-	def printObjects(self, objects, indent=0):
-		for object in objects:
-			try:
-				if type(object[4]) is dict:
-					print '  '*indent + object[1][0]
-				else:
-					self.printObjects(object, indent+1)
-			except IndexError:
-				self.printObjects(object, indent+1)
 
 	def setFromServer(self, namelist, value):
 		#print 'setFromServer', namelist, value
@@ -237,7 +210,7 @@ class UIApp(wxApp):
 	def OnInit(self):
 		self.frame = wxFrame(NULL, -1, self.title)
 		self.panel = wxScrolledWindow(self.frame, -1, size=(600, 700))
-		self.panel.SetScrollRate(5, 5)		
+		self.panel.SetScrollRate(1, 1)		
 #		containerclass = wxClientContainerFactory(wxStaticBoxContainerWidget)
 		containerclass = wxClientContainerFactory(wxSimpleContainerWidget)
 		self.container = containerclass(self.containername, self.panel, self,
@@ -500,7 +473,7 @@ class wxDialogContainerWidget(wxContainerWidget):
 														style=wxCAPTION|wxMINIMIZE_BOX|wxMAXIMIZE_BOX
 																	|wxRESIZE_BORDER)
 		self.panel = wxScrolledWindow(self.dialog, -1)
-		self.panel.SetScrollRate(5, 5)
+		self.panel.SetScrollRate(1, 1)
 		self.sizer = wxBoxSizer(wxVERTICAL)
 		self.panel.SetSizer(self.sizer)
 		self.childparent = self.panel
