@@ -1,5 +1,5 @@
 import acquisition
-import node, data, event
+import node, data
 import calibrationclient
 import camerafuncs
 
@@ -67,25 +67,31 @@ class Focuser(acquisition.Acquisition):
 				focusmethod(defoc)
 
 	def correctStig(self, deltax, deltay):
-		stig = self.researchByDataID('stigmator').content
+		#stig = self.researchByDataID('stigmator').content
+		stig = self.researchByDataID('stigmator')
 		stig['stigmator']['objective']['x'] += deltax
 		stig['stigmator']['objective']['y'] += deltay
+		#emdata = data.EMData('scope', em=stig)
 		emdata = data.EMData('scope', stig)
 		print 'correcting stig by %s,%s' % (deltax,deltay)
 		self.publishRemote(emdata)
 
 	def correctDefocus(self, delta):
-		defocus = self.researchByDataID('defocus').content
+		#defocus = self.researchByDataID('defocus').content
+		defocus = self.researchByDataID('defocus')
 		defocus['defocus'] += delta
-		emdata = data.EMData('scope', defocus)
+		#emdata = data.EMData('scope', defocus)
+		emdata = data.EMData('scope', em=defocus)
 		print 'correcting defocus by %s' % (delta,)
 		self.publishRemote(emdata)
 
 	def correctZ(self, delta):
-		stage = self.researchByDataID('stage position').content
+		#stage = self.researchByDataID('stage position').content
+		stage = self.researchByDataID('stage position')
 		newz = stage['stage position']['z'] + delta
 		newstage = {'stage position': {'z': newz }}
-		emdata = data.EMData('scope', newstage)
+		#emdata = data.EMData('scope', newstage)
+		emdata = data.EMData('scope', em=newstage)
 		print 'correcting stage Z by %s' % (delta,)
 		self.publishRemote(emdata)
 

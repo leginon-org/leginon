@@ -95,7 +95,8 @@ class GridPreview(node.Node):
 		return self.magnification
 
 	def getScope(self):
-		return self.researchByDataID('scope').content
+		#return self.researchByDataID('scope').content
+		return self.researchByDataID('scope')
 
 	def acquireTarget(self, target):
 #		print 'TARGET', target
@@ -108,7 +109,7 @@ class GridPreview(node.Node):
 				# move to center
 				center = self.prefs['center']
 				gonpos = {'stage position': {'x':center['x'], 'y':center['y']}}
-				emdata = data.EMData('scope', gonpos)
+				emdata = data.EMData('scope', em=gonpos)
 #				print 'moving to center', center
 				self.publishRemote(emdata)
 			else:
@@ -122,7 +123,7 @@ class GridPreview(node.Node):
 #				print 'targetrow', targetrow
 				pixelshift = {'row':targetrow, 'col':targetcol}
 				newstate = self.calclient.transform(pixelshift, scopestate, camstate)
-				emdat = data.EMData('scope', newstate)
+				emdat = data.EMData('scope', em=newstate)
 #				print 'moving to next position'
 				self.publishRemote(emdat)
 
@@ -130,11 +131,12 @@ class GridPreview(node.Node):
 			time.sleep(2)
 
 			stagepos = self.researchByDataID('stage position')
-			stagepos = stagepos.content
+#			stagepos = stagepos.content
 #			print 'gridpreview stagepos', stagepos
 
 			imagedata = self.cam.acquireCameraImageData(camstate=None, correction=1)
-			imarray = imagedata.content['image']
+#			imarray = imagedata.content['image']
+			imarray = imagedata['image']
 			thisid = self.ID()
 			if self.lastid is None:
 				neighbortiles = []
@@ -146,9 +148,13 @@ class GridPreview(node.Node):
 			storedata = {'id':thisid,'image':filename, 'state': stagepos, 'neighbors': neighbortiles, 'target':target}
 			self.logAppend(storedata)
 
-			scope = imagedata.content['scope']
-			camera = imagedata.content['camera']
-			imdata = data.TileImageData(thisid, imarray, scope, camera, neighbortiles)
+#			scope = imagedata.content['scope']
+#			camera = imagedata.content['camera']
+#			imdata = data.TileImageData(thisid, imarray, scope, camera, neighbortiles)
+			scope = imagedata['scope']
+			camera = imagedata['camera']
+			imdata = data.TileImageData(thisid, image=imarray, scope=scope,
+																	camera=camera, neighbor_tiles=neighbortiles)
 #			print 'publishing tile'
 			self.publish(imdata, event.TileImagePublishEvent)
 
@@ -218,7 +224,8 @@ class GridPreview(node.Node):
 		self.running.set()
 
 		# will be in presets or something
-		emdata = data.EMData('scope', {'magnification': self.magnification})
+		#emdata = data.EMData('scope', {'magnification': self.magnification})
+		emdata = data.EMData('scope', em={'magnification': self.magnification})
 		self.publishRemote(emdata)
 
 		self.cam.state(self.cam.config()['state'])

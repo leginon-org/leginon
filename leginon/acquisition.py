@@ -40,9 +40,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 			### subtract the old preset from the target, so that
 			### we can apply a new preset
-			print 'targetdata keys', targetdata.content.keys()
-			if 'preset' in targetdata.content:
-				oldpreset = targetdata.content['preset']
+			#print 'targetdata keys', targetdata.content.keys()
+			#if 'preset' in targetdata.content:
+			#	oldpreset = targetdata.content['preset']
+			print 'targetdata keys', targetdata.keys()
+			if 'preset' in targetdata:
+				oldpreset = targetdata['preset']
 
 				## right now, the only thing a target and preset
 				## have in common is image shift
@@ -85,7 +88,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 			print 'NEWTARGET', newtarget
 
 			## set the scope/camera state
-			emdata = data.EMData('scope', newtarget)
+			#emdata = data.EMData('scope', newtarget)
+			emdata = data.EMData('scope', em=newtarget)
 			self.publishRemote(emdata)
 
 			print 'sleeping 2 sec'
@@ -109,7 +113,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 			return
 
 		## attach preset to imagedata
-		imagedata.content['preset'] = dict(preset)
+		#imagedata.content['preset'] = dict(preset)
+		imagedata['preset'] = dict(preset)
 
 		print 'publishing image'
 		self.publish(imagedata, event.CameraImagePublishEvent)
@@ -121,7 +126,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		using chosen move type
 		The result is scope state
 		'''
-		targetinfo = copy.deepcopy(targetdata.content)
+		#targetinfo = copy.deepcopy(targetdata.content)
+		targetinfo = copy.deepcopy(targetdata)
 		## get relavent info from target event
 		targetrow = targetinfo['array row']
 		targetcol = targetinfo['array column']

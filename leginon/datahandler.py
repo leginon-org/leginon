@@ -51,7 +51,8 @@ class DictDataKeeper(DataHandler):
 		if not issubclass(newdata.__class__, data.Data):
 			raise TypeError
 		self.datadictlock.acquire()
-		self.datadict[newdata.id] = newdata
+		#self.datadict[newdata.id] = newdata
+		self.datadict[newdata['id']] = newdata
 		self.datadictlock.release()
 
 	def remove(self, id):
@@ -108,7 +109,8 @@ class ShelveDataKeeper(DataHandler):
 		if not issubclass(idata.__class__, data.Data):
 			raise TypeError
 		self.shelflock.acquire()
-		self.shelf[str(idata.id)] = idata
+		#self.shelf[str(idata.id)] = idata
+		self.shelf[str(idata['id'])] = idata
 		self.shelflock.release()
 
 	def remove(self, id):
@@ -182,11 +184,14 @@ class CachedDictDataKeeper(DataHandler):
 			raise TypeError
 		self.lock.acquire()
 		try:
-			if self.datadict[newdata.id]['cached']:
-				del self.shelf[str(newdata.id)]
+			#if self.datadict[newdata.id]['cached']:
+			#	del self.shelf[str(newdata.id)]
+			if self.datadict[newdata['id']]['cached']:
+				del self.shelf[str(newdata['id'])]
 		except KeyError:
 			pass
-		self.datadict[newdata.id] = {'cached' : 0, 'ts' : time.time(), 'data' : newdata}
+		#self.datadict[newdata.id] = {'cached' : 0, 'ts' : time.time(), 'data' : newdata}
+		self.datadict[newdata['id']] = {'cached' : 0, 'ts' : time.time(), 'data' : newdata}
 		self.lock.release()
 
 	def remove(self, id):

@@ -56,6 +56,7 @@ class Corrector(node.Node):
 		self.addEventOutput(event.ListPublishEvent)
 
 		ids = ['corrected image data',]
+		# XXX unknown XXX
 		e = event.ListPublishEvent(self.ID(), ids)
 		self.outputEvent(e)
 
@@ -169,9 +170,12 @@ class Corrector(node.Node):
 		for i in range(n):
 			print 'acquiring %s of %s' % (i+1, n)
 			imagedata = self.cam.acquireCameraImageData()
-			numimage = imagedata.content['image']
-			camstate = imagedata.content['camera']
-			scopestate = imagedata.content['scope']
+#			numimage = imagedata.content['image']
+#			camstate = imagedata.content['camera']
+#			scopestate = imagedata.content['scope']
+			numimage = imagedata['image']
+			camstate = imagedata['camera']
+			scopestate = imagedata['scope']
 			series.append(numimage)
 		return {'image series': series, 'scope': scopestate, 'camera':camstate}
 
@@ -204,7 +208,7 @@ class Corrector(node.Node):
 
 		self.plans[plankey][typekey] = ref
 
-		imagedata = datatype(self.ID(), ref, seriesscope, seriescam)
+		imagedata = datatype(self.ID(), image=ref, scope=seriesscope, camera=seriescam)
 		self.publish(imagedata, pubtype)
 
 		self.calc_norm(plankey)
@@ -237,7 +241,8 @@ class Corrector(node.Node):
 		
 	def acquireCorrectedArray(self):
 		imagedata = self.acquireCorrectedImageData()
-		return imagedata.content['image']
+#		return imagedata.content['image']
+		return imagedata['image']
 
 	def acquireCorrectedImageData(self):
 		if self.fakeflag.get():
@@ -245,13 +250,16 @@ class Corrector(node.Node):
 			camstate = camconfig['state']
 			numimage = Mrc.mrc_to_numeric('fake.mrc')
 			corrected = self.correct(numimage, camstate)
-			return data.ImageData(self.ID, corrected)
+			return data.ImageData(self.ID, image=corrected)
 		else:
 			imagedata = self.cam.acquireCameraImageData(correction=0)
-			numimage = imagedata.content['image']
-			camstate = imagedata.content['camera']
+			#numimage = imagedata.content['image']
+			#camstate = imagedata.content['camera']
+			numimage = imagedata['image']
+			camstate = imagedata['camera']
 			corrected = self.correct(numimage, camstate)
-			imagedata.content['image'] = corrected
+			#imagedata.content['image'] = corrected
+			imagedata['image'] = corrected
 			return imagedata
 
 	def correct(self, original, camstate):

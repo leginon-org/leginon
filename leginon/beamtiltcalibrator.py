@@ -5,7 +5,7 @@ import calibrator
 import Numeric
 import LinearAlgebra
 import copy
-import data, event
+import data
 import calibrationclient
 
 class BeamTiltCalibrator(calibrator.Calibrator):
@@ -110,12 +110,14 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 	def getDefocus(self):
 		emdata = self.researchByDataID('defocus')
-		defocus = emdata.content
+		#defocus = emdata.content
+		defocus = emdata
 		return defocus
 
 	def getStigmator(self):
 		emdata = self.researchByDataID('stigmator')
-		defocus = emdata.content
+		#defocus = emdata.content
+		defocus = emdata
 		return defocus
 
 	def defineUserInterface(self):
