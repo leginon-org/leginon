@@ -2,6 +2,14 @@ import wx
 from gui.wx.Entry import Entry, IntEntry, FloatEntry, EVT_ENTRY
 import gui.wx.Node
 
+SetParametersEventType = wx.NewEventType()
+EVT_SET_PARAMETERS = wx.PyEventBinder(SetParametersEventType)
+class SetParametersEvent(wx.PyCommandEvent):
+	def __init__(self, source, parameters):
+		wx.PyCommandEvent.__init__(self, SetParametersEventType, source.GetId())
+		self.SetEventObject(source)
+		self.parameters = parameters
+
 class LensesSizer(wx.StaticBoxSizer):
 	def __init__(self, parent, title='Lenses'):
 		self.parent = parent
@@ -100,7 +108,7 @@ class StageSizer(wx.StaticBoxSizer):
 		self.sz = wx.GridBagSizer(0, 5)
 		self.Add(self.sz, 1, wx.EXPAND|wx.ALL, 5)
 
-		parameters = {
+		self.parameters = {
 			'Status': wx.StaticText(self.parent, -1, ''),
 			'Correction': wx.CheckBox(self.parent, -1, 'Correct stage movement'),
 			'x': FloatEntry(self.parent, -1, chars=9),
@@ -112,9 +120,10 @@ class StageSizer(wx.StaticBoxSizer):
 
 		st = wx.StaticText(self.parent, -1, 'Status:')
 		self.sz.Add(st, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.sz.Add(parameters['Status'], (0, 1), (1, 3), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(self.parameters['Status'], (0, 1), (1, 3),
+								wx.ALIGN_CENTER_VERTICAL)
 
-		self.sz.Add(parameters['Correction'], (1, 0), (1, 4), wx.ALIGN_CENTER)
+		self.sz.Add(self.parameters['Correction'], (1, 0), (1, 4), wx.ALIGN_CENTER)
 
 		st = wx.StaticText(self.parent, -1, 'Position:')
 		self.sz.Add(st, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -122,13 +131,13 @@ class StageSizer(wx.StaticBoxSizer):
 		for i, a in enumerate(['x', 'y', 'z']):
 			st = wx.StaticText(self.parent, -1, a)
 			self.sz.Add(st, (2, i+1), (1, 1), wx.ALIGN_CENTER)
-			self.sz.Add(parameters[a], (3, i+1), (1, 1),
+			self.sz.Add(self.parameters[a], (3, i+1), (1, 1),
 									wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 
 		for i, a in enumerate(['a', 'b']):
 			st = wx.StaticText(self.parent, -1, a)
 			self.sz.Add(st, (4, i+1), (1, 1), wx.ALIGN_CENTER)
-			self.sz.Add(parameters[a], (5, i+1), (1, 1),
+			self.sz.Add(self.parameters[a], (5, i+1), (1, 1),
 									wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 
 		st = wx.StaticText(self.parent, -1, 'Angle:')
@@ -331,9 +340,47 @@ class Panel(gui.wx.Node.Panel):
 		self.szparameters.Add(self.szholder, (3, 1), (1, 1), wx.EXPAND)
 		self.szparameters.Add(self.szlowdose, (4, 1), (1, 1), wx.EXPAND)
 
+		self.parametermap = {
+			'stage status': self.szstage.parameters['Status'],
+			'corrected stage position': self.szstage.parameters['Correction'],
+			'stage position': {
+				'x': self.szstage.parameters['x'],
+				'y': self.szstage.parameters['y'],
+				'z': self.szstage.parameters['z'],
+				'a': self.szstage.parameters['a'],
+				'b': self.szstage.parameters['b'],
+			},
+		}
+
 		self.SetSizerAndFit(self.szmain)
 		self.SetupScrolling()
 		self.Enable(False)
+
+		self.Bind(EVT_SET_PARAMETERS, self.onSetParameters)
+
+	def _setParameter(self, parameter, value):
+		if isinstance(parameter, dict):
+			self._setParameters(value, parameter)
+		elif isinstance(parameter, wx.StaticText):
+			parameter.SetLabel(value)
+		elif isinstance(parameter, (Entry, wx.TextCtrl, wx.CheckBox)):
+			parameter.SetValue(value)
+
+	def _setParameters(self, parameters, parametermap=None):
+		if parametermap is None:
+			parametermap = self.parametermap
+		for key, value in parameters.items():
+			try:
+				self._setParameter(parametermap[key], value)
+			except KeyError:
+				pass
+
+	def onSetParameters(self, evt):
+		self._setParameters(evt.parameters, self.parametermap)
+
+	def setParameters(self, parameters):
+		evt = SetParametersEvent(parameters)
+		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onNodeInitialized(self):
 		self.Enable(True)

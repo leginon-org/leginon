@@ -23,6 +23,7 @@ import time
 import uidata
 import unique
 import copy
+import gui.wx.Instrument
 
 watch_set = (
 'magnification',
@@ -51,6 +52,7 @@ class CameraUnavailable(EMUnavailable):
 	pass
 
 class EMClient(object):
+	panelclass = gui.wx.Instrument.Panel
 	eventinputs = [event.ScopeEMPublishEvent,
 									event.CameraEMPublishEvent,
 									event.CameraImageEMPublishEvent]
@@ -387,6 +389,9 @@ class EM(node.Node):
 
 		self.state = self.getEM(self.uiscopedict.keys() + self.uicameradict.keys())
 		self.uiUpdate()
+
+		self.panel.setParameters(self.state)
+
 		self.scopecontainer.enable()
 		self.cameracontainer.enable()
 
