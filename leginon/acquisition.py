@@ -223,6 +223,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 	def uiUpdateDBImages(self):
 		imageids = self.retrieveImagesFromDB()
+		if imageids:
+			self.pretendfromdb.enable()
+			self.reacquirefromdb.enable()
+		else:
+			self.pretendfromdb.disable()
+			self.reacquirefromdb.disable()
 		self.dbimages.setList(imageids)
 
 	def uiPretendAcquire(self):
@@ -362,20 +368,27 @@ class Acquisition(targetwatcher.TargetWatcher):
 		name = self.session['name']
 		return name
 
+	def updateWaitingForImages(self, imageidstrs):
+		self.waitingforimages.setList(imageidstrs)
+		if imageidstrs:
+			self.stopwaiting.enable()
+		else:
+			self.stopwaiting.disable()
+
 	def waitForImageProcessDone(self):
 		imageids = self.doneevents.keys()
 		imageidstrs = map(str, imageids)
-		self.waitingforimages.setList(imageidstrs)
+		self.updateWaitingForImages(imageidstrs)
 		# wait for image processing nodes to complete
 		for id, eventinfo in self.doneevents.items():
-			print '%s WAITING for %s' % (self.id, id,)
+			print '%s waiting for %s to be processing' % (self.id, id,)
 			eventinfo['received'].wait()
 			idstr = str(id)
 			imageidstrs.remove(idstr)
-			self.waitingforimages.setList(imageidstrs)
-			print '%s DONE WAITING for %s' % (self.id, id,)
+			self.updateWaitingForImages(imageidstrs)
+			print '%s processed, %s is done waiting' % (id, self.id,)
 		self.doneevents.clear()
-		print '%s DONE WAITING' % (self.id,)
+		print '%s is done waiting for images to be processed' % (self.id,)
 
 	def stopWaitingForImage(self):
 		imageidstr = self.waitingforimages.getSelectedValue()
@@ -475,11 +488,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.labelstring = uidata.String('Label', self.id[-1], 'rw', persist=True)
 		self.dbimages = uidata.SingleSelectFromList('Images In DB', [], 0)
 		updatedbimages = uidata.Method('Refresh', self.uiUpdateDBImages)
-		pretendfromdb = uidata.Method('Pretend This Was Just Acquired', self.uiPretendAcquire)
-		reacquirefromdb = uidata.Method('Acquire Again', self.uiAcquireTargetAgain)
+		self.pretendfromdb = uidata.Method('Pretend This Was Just Acquired', self.uiPretendAcquire)
+		self.reacquirefromdb = uidata.Method('Acquire Again', self.uiAcquireTargetAgain)
+		self.pretendfromdb.disable()
+		self.reacquirefromdb.disable()
 
 		databasecontainer = uidata.Container('Database')
-		databasecontainer.addObjects((self.databaseflag, self.labelstring, self.dbimages, updatedbimages, pretendfromdb, reacquirefromdb))
+		databasecontainer.addObjects((self.databaseflag, self.labelstring, self.dbimages, updatedbimages, self.pretendfromdb, self.reacquirefromdb))
 
 		settingscontainer = uidata.Container('Settings')
 		settingscontainer.addObjects((uicontainer, presetscontainer,
@@ -489,10 +504,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		trialmethod = uidata.Method('Trial Image', self.uiTrial)
 		self.waitingforimages = uidata.SingleSelectFromList('Waiting For', [], 0)
-		stopwaiting = uidata.Method('Stop Waiting', self.stopWaitingForImage)
+		self.stopwaiting = uidata.Method('Stop Waiting', self.stopWaitingForImage)
+		self.stopwaiting.disable()
 
 		controlcontainer = uidata.Container('Control')
-		controlcontainer.addObjects((self.waitingforimages, stopwaiting,
+		controlcontainer.addObjects((self.waitingforimages, self.stopwaiting,
 																	trialmethod))
 
 		container = uidata.LargeContainer('Acquisition')

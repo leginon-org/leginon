@@ -8,35 +8,37 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import array, base64
+import data
+import event
 import watcher
-import event, data
-import copy
 
 class ImageWatcher(watcher.Watcher):
 	eventinputs = watcher.Watcher.eventinputs + [event.ImagePublishEvent]
 	eventoutputs = watcher.Watcher.eventoutputs + [event.ImageProcessDoneEvent]
 	def __init__(self, id, session, nodelocations, **kwargs):
 		watchfor = [event.ImagePublishEvent]
-		watcher.Watcher.__init__(self, id, session, nodelocations, watchfor, **kwargs)
+		watcher.Watcher.__init__(self, id, session, nodelocations, watchfor,
+															**kwargs)
 
-		self.iv = None
 		self.numarray = None
 		self.currentimagedata = None
 
-	def processData(self, somedata):
-		if not isinstance(somedata, data.ImageData):
-			raise RuntimeError('Data is not ImageData instance')
-		self.currentimagedata = somedata
-		self.numarray = somedata['image']
-		self.processImageData(somedata)
-		self.sendImageProcessDone()
-
-	def sendImageProcessDone(self, status='ok'):
-		imageid = self.currentimagedata['id']
-		ev = event.ImageProcessDoneEvent(id=self.ID(), imageid=imageid, status=status)
-		print '%s sending %s' % (self.id, ev)
-		self.outputEvent(ev)
-
 	def processImageData(self, imagedata):
-		raise NotImplementedError('implement processImageData in subclasses of ImageWatcher')
+		raise NotImplementedError
+
+	def publishImageProcessDone(self, status='ok'):
+		imageid = self.currentimagedata['id']
+		initializer = {'id': self.ID(),
+										'imageid': self.currentimagedata['id'],
+										'status': status}
+		oevent = event.ImageProcessDoneEvent(initializer=initializer)
+		self.outputEvent(oevent)
+
+	def processData(self, idata):
+		if not isinstance(idata, data.ImageData):
+			raise TypeError('data to be processed is not an ImageData instance')
+		self.currentimagedata = idata
+		self.numarray = idata['image']
+		self.processImageData(idata)
+		self.publishImageProcessDone()
+

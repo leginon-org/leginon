@@ -190,21 +190,4 @@ class Watcher(node.Node):
 
 	def uiClearDataQueue(self):
 		self.dataqueue.clear()
-#		while 1:
-#			try:
-#				self.dataqueue.get(0)
-#			except Queue.Empty:
-#				pass
 
-## an example of subclassing Watcher
-
-class TestWatch(Watcher):
-	def __init__(self, id, nodelocations):
-		watchfor = event.PublishEvent
-		lockblocking = 0
-		Watcher.__init__(self, id, nodelocations, watchfor, lockblocking)
-
-	def processData(self, newdata):
-		numarray = newdata.content
-		print 'processing newdata:'
-		print numarray
