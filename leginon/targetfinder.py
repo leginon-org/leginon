@@ -201,7 +201,7 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		# turn off data queuing by default
 		self.uidataqueueflag.set(False)
 
-		self.wait_for_done = uidata.Boolean('Wait for "Done"', True, 'rw', persist=True)
+		self.wait_for_done = uidata.Boolean('Wait for another node to process targets before declaring image process done', True, 'rw', persist=True)
 		self.ignore_images = uidata.Boolean('Ignore Images', False, 'rw', persist=True)
 
 		container = uidata.LargeContainer('Target Finder')
