@@ -12,7 +12,7 @@ def factory(scopeclass):
 
       def __init__(self):
           scopeclass.__init__(self)
-          self.correctedstage = False
+          self.correctedstage = True
 
       def exit(self):
           scopeclass.exit(self)
@@ -146,12 +146,20 @@ def factory(scopeclass):
           return self.correctedstage
 
       def setStagePosition(self, value, type="absolute"):
-          if self.correctedstage:
+          # pre-position x and y (maybe others later)
+          if self.correctedstage and ('x' in value or 'y' in value):
               delta = 1e-6
-              prevalue = dict(value)
+              stagenow = self.getStagePosition()
               # calculate pre-position
-              prevalue['x'] = value['x'] - delta
-              prevalue['y'] = value['y'] - delta
+              prevalue = {}
+              if 'x' in value:
+                  prevalue['x'] = value['x'] - delta
+              else:
+                  prevalue['x'] = stagenow['x'] - delta
+              if 'y' in value:
+                  prevalue['y'] = value['y'] - delta
+              else:
+                  prevalue['y'] = stagenow['y'] - delta
               scopeclass.setStagePosition(self, prevalue, type)
           return scopeclass.setStagePosition(self, value, type)
   
