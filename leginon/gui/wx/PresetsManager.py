@@ -36,15 +36,12 @@ class Panel(gui.wx.Node.Panel):
 	icon = 'presets'
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
-		# settings
-		self.szsettings = self._getStaticBoxSizer('Settings', (1, 0), (1, 1),
-																							wx.EXPAND)
+
+		# buttons
+		self.szbuttons = wx.GridBagSizer(5, 5)
 		self.bsettings = wx.Button(self, -1, 'Settings...')
-		self.cycleorder = gui.wx.Presets.PresetOrder(self, -1)
-		self.szsettings.Add(self.bsettings, (0, 0), (1, 1), wx.ALIGN_CENTER)
-		self.szsettings.Add(self.cycleorder, (0, 1), (1, 1), wx.ALIGN_CENTER)
-		self.szsettings.AddGrowableCol(0)
-		self.szsettings.AddGrowableCol(1)
+		self.szbuttons.Add(self.bsettings, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		self.szmain.Add(self.szbuttons, (1, 0), (1, 1), wx.ALIGN_CENTER)
 
 		# presets
 		self.szpresets = self._getStaticBoxSizer('Presets', (2, 0), (1, 1),
@@ -148,13 +145,13 @@ class Panel(gui.wx.Node.Panel):
 		sbszparameters = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszparameters.Add(szparameters, 1, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 3)
 
-		self.cpreset = gui.wx.Presets.PresetChoice(self, -1)
-		self.btoscope = wx.Button(self, -1, 'To scope')
-		self.bfromscope = wx.Button(self, -1, 'From scope')
+		self.cycleorder = gui.wx.Presets.PresetOrder(self, -1)
+		self.btoscope = wx.Button(self, -1, 'To Scope')
+		self.bfromscope = wx.Button(self, -1, 'From Scope')
 		self.bremove = wx.Button(self, -1, 'Remove')
 
 		sz = wx.GridBagSizer(5, 5)
-		sz.Add(self.cpreset, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		sz.Add(self.cycleorder, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		sz.Add(self.btoscope, (1, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		sz.Add(self.bfromscope, (2, 0), (1, 1),
@@ -175,9 +172,9 @@ class Panel(gui.wx.Node.Panel):
 		szcreate.Add(self.bnew, (1, 0), (1, 1), wx.ALIGN_CENTER)
 
 		self.szpresets.Add(sbszcalibrations, (0, 0), (1, 2), wx.EXPAND|wx.ALL)
-		self.szpresets.Add(sbszparameters, (1, 0), (2, 1), wx.EXPAND|wx.ALL)
-		self.szpresets.Add(sz, (1, 1), (1, 1), wx.ALIGN_CENTER)
-		self.szpresets.Add(sbszcreate, (2, 1), (1, 1), wx.ALIGN_CENTER)
+		self.szpresets.Add(sbszparameters, (1, 1), (2, 1), wx.EXPAND|wx.ALL)
+		self.szpresets.Add(sz, (1, 0), (1, 1), wx.ALIGN_CENTER)
+		self.szpresets.Add(sbszcreate, (2, 0), (1, 1), wx.ALIGN_CENTER)
 
 		# dose image
 		self.szdoseimage = self._getStaticBoxSizer('Dose Image', (1, 1), (3, 1),
@@ -225,8 +222,8 @@ class Panel(gui.wx.Node.Panel):
 		self.Bind(wx.EVT_CHECKBOX, self.onUpdateParameters, self.cbfilm)
 		self.Bind(gui.wx.Camera.EVT_CONFIGURATION_CHANGED, self.onUpdateParameters,
 							self.cpcamconfig)
-		self.Bind(gui.wx.Presets.EVT_PRESET_CHOICE, self.onPresetChoice,
-							self.cpreset)
+		self.Bind(gui.wx.Presets.EVT_PRESET_SELECTED, self.onPresetSelected,
+							self.cycleorder)
 		self.Bind(wx.EVT_BUTTON, self.onToScope, self.btoscope)
 		self.Bind(wx.EVT_BUTTON, self.onFromScope, self.bfromscope)
 		self.Bind(wx.EVT_BUTTON, self.onRemove, self.bremove)
@@ -242,8 +239,6 @@ class Panel(gui.wx.Node.Panel):
 		self.node.setCycleOrder(evt.presets)
 
 	def onSetOrder(self, presets, setorder=True):
-		evt = gui.wx.Presets.PresetsChangedEvent(presets)
-		self.cpreset.GetEventHandler().AddPendingEvent(evt)
 		if setorder:
 			evt = gui.wx.Presets.PresetsChangedEvent(presets)
 			self.cycleorder.GetEventHandler().AddPendingEvent(evt)
@@ -292,7 +287,7 @@ class Panel(gui.wx.Node.Panel):
 		return parameters
 
 	def onUpdateParameters(self, evt=None):
-		if self.cpreset.GetSelection() >= 0:
+		if self.cycleorder.getSelectedPreset() is not None:
 			self.node.updateParams(self._getParameters())
 
 	def _setParameters(self, parameters):
@@ -341,17 +336,17 @@ class Panel(gui.wx.Node.Panel):
 		evt = SetCalibrationsEvent(times, self)
 		self.GetEventHandler().AddPendingEvent(evt)
 
-	def onPresetChoice(self, evt):
+	def onPresetSelected(self, evt):
 		self.node.selectPreset(evt.GetString())
 
 	def onToScope(self, evt):
-		self.node.cycleToScope(self.cpreset.GetStringSelection())
+		self.node.cycleToScope(self.cycleorder.getSelectedPreset())
 
 	def onFromScope(self, evt):
-		self.node.fromScope(self.cpreset.GetStringSelection())
+		self.node.fromScope(self.cycleorder.getSelectedPreset())
 
 	def onRemove(self, evt):
-		self.node.removePreset(self.cpreset.GetStringSelection())
+		self.node.removePreset(self.cycleorder.getSelectedPreset())
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):

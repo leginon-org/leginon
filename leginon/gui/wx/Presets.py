@@ -13,11 +13,13 @@ PresetOrderChangedEventType = wx.NewEventType()
 PresetChoiceEventType = wx.NewEventType()
 PresetsChangedEventType = wx.NewEventType()
 NewPresetEventType = wx.NewEventType()
+PresetSelectedEventType = wx.NewEventType()
 
 EVT_PRESET_ORDER_CHANGED = wx.PyEventBinder(PresetOrderChangedEventType)
 EVT_PRESET_CHOICE = wx.PyEventBinder(PresetChoiceEventType)
 EVT_PRESETS_CHANGED = wx.PyEventBinder(PresetsChangedEventType)
 EVT_NEW_PRESET = wx.PyEventBinder(NewPresetEventType)
+EVT_PRESET_SELECTED = wx.PyEventBinder(PresetSelectedEventType)
 
 class PresetOrderChangedEvent(wx.PyCommandEvent):
 	def __init__(self, presets, source):
@@ -43,6 +45,13 @@ class NewPresetEvent(wx.PyEvent):
 	def __init__(self):
 		wx.PyEvent.__init__(self)
 		self.SetEventType(NewPresetEventType)
+
+class PresetSelectedEvent(wx.PyCommandEvent):
+	def __init__(self, source, presetname):
+		wx.PyCommandEvent.__init__(self, PresetSelectedEventType, source.GetId())
+		self.SetEventObject(source)
+		self.SetString(presetname)
+		self.presetname = presetname
 
 class PresetChoice(wx.Choice):
 	def __init__(self, *args, **kwargs):
@@ -137,6 +146,19 @@ class PresetOrder(wx.Panel):
 		self.updateButtons(n + 1)
 		self.presetsEditEvent()
 
+	def getSelectedPreset(self):
+		presetname = self.listbox.GetStringSelection()
+		if not presetname:
+			presetname = None
+		return presetname
+
+	def setSelectedPreset(self):
+		n = self.listbox.FindString(presetname)
+		if n == wx.NOT_FOUND:
+			return False
+		self.listbox.SetSelection(n)
+		return True
+
 	def onPresetsChanged(self, evt):
 		self.setChoices(evt.presets)
 
@@ -179,6 +201,8 @@ class PresetOrder(wx.Panel):
 
 	def onSelect(self, evt):
 		self.updateButtons(evt.GetSelection())
+		evt = PresetSelectedEvent(self, evt.GetString())
+		self.GetEventHandler().AddPendingEvent(evt)
 
 	def updateButtons(self, n):
 		if n > 0:
