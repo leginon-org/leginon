@@ -256,10 +256,9 @@ class SQLDict:
 		for i in range(len(result)):
 			del result[i]['DEF_id']
 			del result[i]['DEF_timestamp']
-			newid = result[i]['id']
 			classname = self.queryinfo[qikey]['class name']
 			dataclass = getattr(data, classname)
-			newdata = dataclass(newid)
+			newdata = dataclass()
 
 			try:
 				newdata.update(result[i])
