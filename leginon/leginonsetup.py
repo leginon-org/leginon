@@ -197,8 +197,6 @@ class RunWidget(Tkinter.Frame):
 		instructionslabel.grid(row=0, column=0)
 
 	def run(self, remotelaunchers):
-#		setupwizard = SetupWizard(self)
-
 		self.startManager()
 
 		# needs to be execptions

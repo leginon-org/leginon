@@ -6,6 +6,7 @@ import EM
 import Pmw
 import interface
 import nodegui
+import threading
 
 applicationfilename = 'leginon.app'
 
@@ -139,6 +140,9 @@ class GridAtlasWidget(CustomWidget):
 		widget = self.widgetFromName(frame.interior(), 'SIM',
 																	('Image', 'Publish Image'))
 		widget.grid(row = 0, column = 0, padx = 5, pady = 5)
+		widget = self.widgetFromName(frame.interior(), 'SIM',
+																	('Scale',))
+		widget.grid(row = 0, column = 1, padx = 5, pady = 5)
 		frame.grid(row = 1, column = 0, padx = 10, pady = 10)
 
 		frame = Tkinter.Frame(self, bd=1, relief=Tkinter.SOLID)
