@@ -378,7 +378,7 @@ class ScrolledWindow(OffsetWindow):
 		elif orientation == wx.VERTICAL:
 			x = self.GetScrollPos(wx.HORIZONTAL)
 			y = position
-		self.setOffset(x, y)
+		wx.CallAfter(self.setOffset, x, y)
 
 	def _setOffset(self, x, y):
 		x, y = OffsetWindow._setOffset(self, x, y)
@@ -424,7 +424,7 @@ if __name__ == '__main__':
 	def onLeftUp(evt):
 		eventobject = evt.GetEventObject()
 		offset = eventobject.clientToBitmap(evt.m_x, evt.m_y)
-		eventobject.centerOffset(*offset)
+		wx.CallAfter(eventobject.centerOffset, *offset)
 
 	def onRightUp(evt):
 		pass
@@ -433,7 +433,7 @@ if __name__ == '__main__':
 		eventobject = evt.GetEventObject()
 		xscale, yscale = eventobject.getScale()
 		scale = 2.0**(evt.GetWheelRotation()/evt.GetWheelDelta())
-		eventobject.setScale(xscale*scale, yscale*scale)
+		wx.CallAfter(eventobject.setScale, xscale*scale, yscale*scale)
 
 	try:
 		filename = sys.argv[1]
