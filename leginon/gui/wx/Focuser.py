@@ -3,6 +3,7 @@ from gui.wx.Choice import Choice
 from gui.wx.Entry import FloatEntry, EVT_ENTRY
 import wx
 import gui.wx.ImageViewer
+import gui.wx.ToolBar
 
 UpdateImagesEventType = wx.NewEventType()
 ManualCheckEventType = wx.NewEventType()
@@ -29,14 +30,16 @@ class ManualCheckDoneEvent(wx.PyCommandEvent):
 
 class Panel(gui.wx.Acquisition.Panel):
 	icon = 'focuser'
-	tools = gui.wx.Acquisition.Panel.tools + [
-		'auto focus',
-		'manual focus',
-	]
 	def __init__(self, parent, name):
 		gui.wx.Acquisition.Panel.__init__(self, parent, name)
-		self.SetName('%s.pFocuser' % name)
 
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_AUTOFOCUS,
+													'autofocus',
+													isToggle=True,
+													shortHelpString='Autofocus')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_MANUAL_FOCUS,
+													'manualfocus',
+													shortHelpString='Manual Focus')
 		# correlation image
 		szimage = self._getStaticBoxSizer('Correlation Image', (1, 1), (1, 1),
 																						wx.EXPAND|wx.ALL)
@@ -54,12 +57,17 @@ class Panel(gui.wx.Acquisition.Panel):
 
 		gui.wx.Acquisition.Panel.onNodeInitialized(self)
 
-	def onSettingsButton(self, evt):
+		self.toolbar.Bind(wx.EVT_TOOL, self.onAutofocusTool,
+											id=gui.wx.ToolBar.ID_AUTOFOCUS)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onManualFocusTool,
+											id=gui.wx.ToolBar.ID_MANUAL_FOCUS)
+
+	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
 
-	def onAutoFocusTool(self, evt):
+	def onAutofocusTool(self, evt):
 		self.node.autofocus = evt.IsChecked()
 
 	def onManualFocusTool(self, evt):

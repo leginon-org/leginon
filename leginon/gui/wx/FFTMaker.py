@@ -2,25 +2,36 @@ import wx
 from gui.wx.Entry import Entry, FloatEntry, EVT_ENTRY
 import gui.wx.Node
 import gui.wx.Settings
+import gui.wx.ToolBar
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'fftmaker'
-	tools = [
-		'settings',
-		'play',
-		'stop',
-	]
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
 
-		self.toolbar.enable(self, 'stop', False)
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
+													'settings',
+													shortHelpString='Settings')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY,
+													'play',
+													shortHelpString='Process')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_STOP,
+													'stop',
+													shortHelpString='Stop')
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, False)
+		self.toolbar.Realize()
 
 		self.szmain.AddGrowableCol(0)
 		self.SetSizerAndFit(self.szmain)
 		self.SetupScrolling()
 
 	def onNodeInitialized(self):
-		pass
+		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
+											id=gui.wx.ToolBar.ID_SETTINGS)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onPlayTool,
+											id=gui.wx.ToolBar.ID_PLAY)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onStopTool,
+											id=gui.wx.ToolBar.ID_STOP)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
@@ -29,13 +40,13 @@ class Panel(gui.wx.Node.Panel):
 
 	def onPlayTool(self, evt):
 		self.node.onStartPostProcess()
-		self.toolbar.enable(self, 'play', False)
-		self.toolbar.enable(self, 'stop', True)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, True)
 
 	def onStopTool(self, evt):
 		self.node.onStopPostProcess()
-		self.toolbar.enable(self, 'stop', False)
-		self.toolbar.enable(self, 'play', True)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
