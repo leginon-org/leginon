@@ -54,10 +54,14 @@ class CameraPanel(wx.Panel):
 		self.szmain.Add(stb, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.szmain.Add(self.stbinning, (2, 1), (1, 1), wx.ALIGN_CENTER)
 
-		self.szmain.Add(self.ccommon, (3, 0), (1, 1),
-												wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		self.szmain.Add(bcustom, (3, 1), (1, 1),
-												wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz = wx.GridBagSizer(5, 5)
+		sz.Add(self.ccommon, (0, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(bcustom, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.AddGrowableRow(0)
+		sz.AddGrowableCol(0)
+		sz.AddGrowableCol(1)
+		self.szmain.Add(sz, (3, 0), (1, 2), wx.EXPAND)
 
 		# exposure time
 		stet = wx.StaticText(self, -1, 'Exposure time:')
@@ -71,9 +75,11 @@ class CameraPanel(wx.Panel):
 		sz.Add(stms, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.szmain.Add(sz, (4, 1), (1, 1), wx.ALIGN_CENTER)
 
+		self.szmain.AddGrowableCol(1)
+
 		sb = wx.StaticBox(self, -1, 'Camera Configuration')
 		self.sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		self.sbsz.Add(self.szmain, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+		self.sbsz.Add(self.szmain, 0, wx.EXPAND|wx.ALL, 5)
 
 		self.SetSizerAndFit(self.sbsz)
 
@@ -81,6 +87,7 @@ class CameraPanel(wx.Panel):
 		self.Bind(wx.EVT_BUTTON, self.onCustomButton, bcustom)
 		self.Bind(EVT_ENTRY, self.onExposureTime, self.feexposuretime)
 		self.Bind(EVT_SET_CONFIGURATION, self.onSetConfiguration)
+
 
 		self.Enable(False)
 

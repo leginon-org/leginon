@@ -137,6 +137,9 @@ class LensesSizer(wx.StaticBoxSizer):
 		self.addXY('Condenser', 'Stigmator')
 
 		self.sz.AddGrowableCol(0)
+		self.sz.AddGrowableCol(1)
+		self.sz.AddGrowableCol(2)
+		self.sz.AddGrowableCol(3)
 
 	def addXY(self, name, group):
 		row = self.row
@@ -200,6 +203,7 @@ class FilmSizer(wx.StaticBoxSizer):
 			self.parameters[key].Enable(False)
 			self.parameters[key].Enable(False)
 			row += 1
+		self.sz.AddGrowableCol(1)
 
 class StageSizer(wx.StaticBoxSizer):
 	def __init__(self, parent, title='Stage'):
@@ -236,6 +240,7 @@ class StageSizer(wx.StaticBoxSizer):
 			self.sz.Add(self.parameters[a], (3, i+1), (1, 1),
 									wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 			self.parameters[a].Enable(False)
+			self.sz.AddGrowableCol(i+1)
 
 		for i, a in enumerate(['a', 'b']):
 			st = wx.StaticText(self.parent, -1, a)
@@ -328,6 +333,7 @@ class VacuumSizer(wx.StaticBoxSizer):
 			self.sz.Add(self.parameters[p], (i, 1), (1, 1), wx.ALIGN_CENTER)
 			self.sz.AddGrowableRow(i)
 			self.parameters[p].Enable(False)
+		self.sz.AddGrowableCol(1)
 
 class LowDoseSizer(wx.StaticBoxSizer):
 	def __init__(self, parent, title='Low Dose'):
@@ -577,6 +583,8 @@ class CamConfigSizer(wx.StaticBoxSizer):
 			'mirror': self.parameters['Mirror'],
 			'rotation': self.parameters['Rotate'],
 		}
+
+		self.sz.AddGrowableCol(1)
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'instrument'
