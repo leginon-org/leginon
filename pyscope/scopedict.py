@@ -140,7 +140,7 @@ def factory(scopeclass):
 
 	  def setCorrectedStagePosition(self, value):
 		  self.correctedstage = value
-	  return self.correctedstage
+		  return self.correctedstage
 
 	  def getCorrectedStagePosition(self):
 		  return self.correctedstage
