@@ -1941,6 +1941,7 @@ class wxMessageLogWidget(wxContainerWidget):
 				pass
 		self.messages[name] = self.messagelog.addMessage(type, message,
 																											self.onClear)
+		self.layout()
 		evt = AddMessageEvent(type, message)
 		wxPostEvent(self.container.widgethandler, evt)
 
@@ -1970,6 +1971,8 @@ class wxMessageLogWidget(wxContainerWidget):
 
 	def layout(self):
 		self.messagelog.Layout()
+		self.sizer.SetMinSize(self.messagelog.GetSize())
+		self.container.layout()
 
 	def _show(self, show):
 		self.messagelog.Show(show)
