@@ -24,7 +24,18 @@ class CameraFuncs(object):
 		self.camsize = None
 
 	def acquireCameraImageData(self, camconfig=None, correction=None):
-		## configure camera
+		## try to use UI camera config if none was specified
+		if camconfig == 'UI':
+			try:
+				use = self.useconfig.get()
+			except:
+				use = False
+			if use:
+				camconfig = self.cameraConfig()
+			else:
+				camconfig = None
+
+		# now configure the camera if a camera config is available
 		if camconfig is not None:
 			print 'CONFIGURING CAMERA'
 			camdata = self.configToEMData(camconfig)
@@ -155,6 +166,8 @@ class CameraFuncs(object):
 
 		self.uicameradict = {}
 		cameraparameterscontainer = uidata.Container('Camera Configuration')
+		self.useconfig = uidata.Boolean('Use This Configuration', False, permissions='rw', persist=True)
+		cameraparameterscontainer.addObject(self.useconfig)
 
 		parameters = [('exposure time', 'Exposure time', uidata.Float, 500.0, 'rw'),
 									('auto offset', 'Auto offset', uidata.Boolean, True, 'rw'),
@@ -169,12 +182,12 @@ class CameraFuncs(object):
 			self.uicameradict[key] = {}
 			container = uidata.Container(name)
 			for i in range(len(axes)):
-				self.uicameradict[key][axes[i]] = datatype(axes[i], values[i], 'rw')
+				self.uicameradict[key][axes[i]] = datatype(axes[i], values[i], 'rw', persist=True)
 				container.addObject(self.uicameradict[key][axes[i]])
 			cameraparameterscontainer.addObject(container)
 
 		for key, name, datatype, value, permissions in parameters:
-			self.uicameradict[key] = datatype(name, value, permissions)
+			self.uicameradict[key] = datatype(name, value, permissions, persist=True)
 			cameraparameterscontainer.addObject(self.uicameradict[key])
 
 		setmethod = uidata.Method('Set', self.uiSet)
