@@ -1008,8 +1008,10 @@ class TargetImagePanel(ImagePanel):
 
 if __name__ == '__main__':
 	import sys
-#	filename = sys.argv[1]
-	filename = 'test1.mrc'
+	try:
+		filename = sys.argv[1]
+	except IndexError:
+		filename = 'test1.mrc'
 	def bar(xy):
 		print xy
 
