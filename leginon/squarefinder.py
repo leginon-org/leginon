@@ -384,7 +384,7 @@ class SquareFinder(targetfinder.TargetFinder):
 		try:
 			self.pluginpipeline.process(Image(Mrc.mrc_to_numeric(filename)))
 		except IOError:
-			self.messagelog.error('Load file "%s" failed' % filename)
+			self.logger.error('Load file "%s" failed' % filename)
 
 	def findTargets(self, imagedata):
 		output = self.pluginpipeline.process(Image(imagedata['image']))
@@ -395,7 +395,6 @@ class SquareFinder(targetfinder.TargetFinder):
 	def defineUserInterface(self):
 		targetfinder.TargetFinder.defineUserInterface(self)
 
-		self.messagelog = uidata.MessageLog('Message Log')
 		self.ui_image = uidata.TargetImage('Image', None, 'r')
 		self.ui_image.addTargetType('acquisition')
 
@@ -413,10 +412,6 @@ class SquareFinder(targetfinder.TargetFinder):
 				pipelinecontainer.addObject(uiobject, position={'expand': 'all'})
 
 		container = uidata.LargeContainer('Square Finder')
-		container.addObject(self.messagelog, position={'position': (0, 0),
-																										'span': (1, 2),
-																										'expand': 'all',
-																										'justify': ['center']})
 		container.addObject(pipelinecontainer, position={'position': (1, 0),
 																									'justify': ['center']})
 		container.addObject(filecontainer, position={'position': (2, 0),

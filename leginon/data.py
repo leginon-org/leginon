@@ -1615,6 +1615,14 @@ class FFTMakerSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class TargetFinderSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('wait for done', bool),
+			('ignore images', bool),
+		)
+	typemap = classmethod(typemap)
+
 class AcquisitionSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (

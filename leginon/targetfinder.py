@@ -20,8 +20,15 @@ import targethandler
 import convolver
 import imagefun
 import numarray
+import gui.wx.TargetFinder
 
 class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
+	panelclass = gui.wx.TargetFinder.Panel
+	settingsclass = data.TargetFinderSettingsData
+	defaultsettings = {
+		'wait for done': False,
+		'ignore images': False,
+	}
 	eventinputs = imagewatcher.ImageWatcher.eventinputs + [
 																							event.TargetListDoneEvent] + EM.EMClient.eventinputs
 	eventoutputs = imagewatcher.ImageWatcher.eventoutputs + [
@@ -54,7 +61,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
 			self.findTargets(imagedata, targetlist)
 		self.makeTargetListEvent(targetlist)
 		self.publish(targetlist, database=True, dbforce=True, pubevent=True)
-		if self.wait_for_done.get():
+		if self.settings['wait for done']:
 			self.waitForTargetListDone()
 
 	def targetsFromClickImage(self, clickimage, typename, targetlist):
@@ -75,7 +82,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
 		'''
 		Gets and publishes target information of specified image data.
 		'''
-		if self.ignore_images.get():
+		if self.settings['ignore images']:
 			return
 		targetlist = self.newTargetList(image=imagedata)
 		self.findTargets(imagedata, targetlist)
@@ -83,7 +90,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
 		self.logger.debug('publishing targetlist')
 		self.publish(targetlist, database=True, pubevent=True)
 		self.logger.debug('published targetlist %s' % (targetlist.dbid,))
-		if self.wait_for_done.get():
+		if self.settings['wait for done']:
 			self.waitForTargetListDone()
 
 	def makeTargetListEvent(self, targetlistdata):
@@ -108,7 +115,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
 
 	def notifyUserSubmit(self):
 		message = 'waiting for you to submit targets'
-		self.usersubmitmessage = self.messagelog.information(message)
+		self.usersubmitmessage = self.logger.info(message)
 		node.beep()
 
 	def unNotifyUserSubmit(self):
@@ -129,20 +136,6 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
 			self.targetlistevents[targetlistid]['status'] = status
 			self.targetlistevents[targetlistid]['received'].set()
 		self.confirmEvent(targetlistdoneevent)
-
-	def defineUserInterface(self):
-		imagewatcher.ImageWatcher.defineUserInterface(self)
-
-		self.messagelog = uidata.MessageLog('Messages')
-
-		self.wait_for_done = uidata.Boolean('Wait for another node to process targets before declaring image process done', True, 'rw', persist=True)
-		self.ignore_images = uidata.Boolean('Ignore Images', False, 'rw', persist=True)
-
-		container = uidata.LargeContainer('Target Finder')
-		container.addObject(self.messagelog, position={'expand': 'all'})
-		container.addObjects((self.wait_for_done,self.ignore_images))
-
-		self.uicontainer.addObject(container)
 
 class ClickTargetFinder(TargetFinder):
 	def __init__(self, id, session, managerlocation, **kwargs):
@@ -548,7 +541,6 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		if self.mosaicimagedata is None:
 			message = 'You must publish the current mosaic image before finding squares on it.'
 			self.logger.error(message)
-			self.messagelog.error(message)
 			return
 		original_image = self.mosaicimagedata['image']
 
@@ -609,8 +601,6 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 	def defineUserInterface(self):
 		ClickTargetFinder.defineUserInterface(self)
-
-		self.wait_for_done.set(False)
 
 		self.statusmessage = uidata.String('Current status', '', 'r')
 		statuscontainer = uidata.Container('Status')
