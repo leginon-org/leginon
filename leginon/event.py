@@ -155,7 +155,7 @@ class NeedTargetShiftEvent(NotificationEvent):
 	'''notify DriftManager that I want another ImageTargetShift'''
 	def typemap(cls):
 		t = NotificationEvent.typemap()
-		t += [ ('imageid', tuple), ]
+		t += [ ('imageid', int), ]
 		return t
 	typemap = classmethod(typemap)
 
