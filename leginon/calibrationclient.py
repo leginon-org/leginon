@@ -260,12 +260,16 @@ class DoseCalibrationClient(CalibrationClient):
 		camera_pixel_size = inst['camera pixel size']
 		ht = imagedata['scope']['high tension']
 		binning = imagedata['camera']['binning']['x']
-		camera_mag = imagedata['scope']['magnification']
+		mag = imagedata['scope']['magnification']
+		specimen_pixel_size = self.psizecal.retrievePixelSize(mag, instrument=inst)
+		print 'SPECIMEN PIXSIZE', specimen_pixel_size
 		exp_time = imagedata['camera']['exposure time'] / 1000.0
 		numdata = imagedata['image']
 		sensitivity = self.retrieveSensitivity(ht, inst)
+		print 'SENSITIVITY', sensitivity
 		mean_counts = imagefun.mean(numdata) / (binning**2)
-		totaldose = camera_mag**2 * mean_counts / camera_pixel_size**2 / sensitivity
+		print 'MEAN', mean_counts
+		totaldose = mean_counts / specimen_pixel_size**2 / sensitivity
 		return totaldose
 
 
