@@ -125,13 +125,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## figure out scope state that gets to the target
 		movetype = self.uimovetype.getSelectedValue()
 		calclient = self.calclients[movetype]
-		#print 'ORIGINAL', targetscope['image shift']
+		print 'ORIGINAL', targetscope['image shift']
 		try:
 			newscope = calclient.transform(pixelshift, targetscope, targetcamera)
 		except calibrationclient.NoMatrixCalibrationError:
 			self.outputWarning('No calibration for acquisition move to target')
 			return None
-		#print 'WITH TARGET', newscope['image shift']
+		print 'WITH TARGET', newscope['image shift']
 		# create new EMData object to hole this
 		emdata = data.ScopeEMData(id=('scope',), initializer=newscope)
 		return emdata
