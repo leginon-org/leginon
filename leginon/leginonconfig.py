@@ -38,7 +38,8 @@ def unmapPath(path):
 # Here is a replacement for os.mkdirs that won't complain if dir
 # already exists (from Python Cookbook, Recipe 4.17)
 def mkdirs(newdir, mode=0777):
-	try: os.makedirs(newdir, mode)
+	try:
+		os.makedirs(newdir, mode)
 	except OSError, err:
 		if err.errno != errno.EEXIST or not os.path.isdir(newdir):
 			raise
@@ -95,7 +96,7 @@ if not IMAGE_PATH:
 try:
 	mkdirs(mapPath(IMAGE_PATH))
 except:
-	print 'error creating IMAGE_PATH %s' % (IMAGE_PATH,)
+	print 'Error accessing image path: %s' % (IMAGE_PATH,)
 
 # user
 USERNAME = configparser.get('User', 'name')

@@ -167,8 +167,7 @@ class Navigator(node.Node):
 		if self.settings['check calibration']:
 			newshift = self.newShift()
 			if newshift is None:
-				res = 'Error not calculated'
-				self.logger.info(res)
+				res = 'Error calculation failed'
 			else:
 				r_error = pixelshift['row'] - newshift[0]
 				c_error = pixelshift['col'] - newshift[1]
@@ -180,11 +179,10 @@ class Navigator(node.Node):
 				dist = errordist * pixsize * binning
 				umdist = dist * 1000000.0
 
-				res = 'Error: %.3f um (Request (%d, %d), Actual (%.1f, %.1f), Error: %.3f) pixels' % (umdist, pixelshift['col'], pixelshift['row'], newshift[1], newshift[0], errordist)
-				self.logger.info(res)
+				res = 'Error: %.3f microns (%.3f pixels) [requested <%d, %d>, moved <%.2f, %.2f>]' % (umdist, errordist, pixelshift['col'], pixelshift['row'], newshift[1], newshift[0])
 
 				if (abs(pixelshift['row']) > clickshape[0]/4) or (abs(pixelshift['col']) > clickshape[1]/4):
-					self.logger.info('Correlation untrusted due to large requested shift')
+					self.logger.warning('Error calculation untrusted due to large requested move')
 				else:
 					## insert into DB?
 					pass

@@ -248,21 +248,38 @@ class Corrector(node.Node):
 		imagetemp['camstate'] = camstate
 		imagetemp['session'] = data.SessionData()
 		imagetemp['session']['instrument'] = self.session['instrument']
-		self.logger.info('Researching reference image')
 		try:
 			ref = self.research(datainstance=imagetemp, results=1)[0]
 		except node.ResearchError, e:
-			self.logger.warning('Finding reference image failed: %s' % (e,))
+			self.logger.warning('Loading reference image failed: %s' % (e,))
 			ref = None
 		except IndexError:
-			self.logger.warning('Finding reference image failed')
+			self.logger.warning('Loading reference image failed')
 			ref = None
 		except Exception, e:
-			self.logger.error('Error retrieving reference image: %s' % e)
+			self.logger.error('Loading reference image failed: %s' % e)
 			ref = None
 		else:
-			self.logger.info('Reference image researched')
+			self.logger.info('Reference image loaded')
 		return ref
+
+	def formatKey(self, key):
+		try:
+			if key[6] == 'dark':
+				exptype = 'dark reference image'
+			elif key[6] == 'bright':
+				exptype = 'bright reference image'
+			elif key[6] == 'norm':
+				exptype = 'normalization image'
+			else:
+				exptype = key[6]
+		except IndexError:
+			exptype = 'unknown image'
+		s = '%s: %dx%d, offset (%d, %d), binned %dx%d'
+		try:
+			return s % (exptype, key[0], key[1], key[4], key[5], key[2], key[3])
+		except IndexError:
+			return str(key)
 
 	def refKey(self, camstate, type):
 		mylist = []
@@ -285,7 +302,7 @@ class Corrector(node.Node):
 		try:
 			return self.ref_cache[key]
 		except KeyError:
-			self.logger.info('Loading reference image "%s"' % str(key))
+			self.logger.info('Loading %s...' % self.formatKey(key))
 
 		## use reference image from database
 		ref = self.researchRef(camstate, type)
@@ -388,11 +405,11 @@ class Corrector(node.Node):
 			good = self.removeBadPixels(normalized, plan)
 
 		if self.settings['despike']:
-			self.logger.info('Despiking...')
+			self.logger.debug('Despiking...')
 			nsize = self.settings['despike size']
 			thresh = self.settings['despike threshold']
 			imagefun.despike(normalized, nsize, thresh)
-			self.logger.info('Despiked')
+			self.logger.debug('Despiked')
 
 		## this has been commented because original.type()
 		## might be unsigned and causes negative values to wrap
