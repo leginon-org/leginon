@@ -525,6 +525,8 @@ scope_params = [
 	('high tension', int),
 	('main screen position', str),
 	('small screen position', str),
+	('low dose', str),
+	('low dose mode', str),
 	('film stock', int),
 	('film exposure number', int),
 	('film exposure', bool),

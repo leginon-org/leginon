@@ -93,7 +93,7 @@ class ManualAcquisition(node.Node):
 
 	def setScope(self, value):
 		value['id'] = ('scope',)
-		scopedata = data.ScopeEMData(initializer=initializer)
+		scopedata = data.ScopeEMData(initializer=value)
 		try:
 			self.publishRemote(scopedata)
 		except node.PublishError:
@@ -102,46 +102,32 @@ class ManualAcquisition(node.Node):
 			raise RuntimeError('Unable to set instrument parameters')
 
 	def getScope(self, key):
-		value = self.researchByDataID(key)
+		try:
+			value = self.researchByDataID((key,))
+		except node.ResearchError:
+			raise
+			self.messagelog.error('Cannot access EM node')
+			self.status.set('Error getting instrument parameters')
+			raise RuntimeError('Unable to get instrument parameters')
 		return value[key]
 
 	def preExposure(self):
-		value = {}
-		pause = 0.0
+		if self.up.get():
+			self.setScope({'main screen position': 'up'})
 
 		if self.lowdose.get():
 			self.lowdosemode = self.getScope('low dose mode')
-			self.setScope({'beam blank': 'on'})
-			value['low dose mode'] = 'exposure'
-			pause = self.pause.get()
-		else:
-			self.lowdosemode = None
-
-		if self.up.get():
-			value['main screen position'] = 'up'
-
-		if value:
-			self.setScope(value)
-			time.sleep(pause)
+			self.setScope({'low dose mode': 'exposure'})
+			time.sleep(self.pause.get())
 
 	def postExposure(self):
-		value = {}
-		pause = 0.0
+		if self.lowdosemode is not None:
+			self.setScope({'low dose mode': self.lowdosemode})
+			self.lowdosemode = None
+			time.sleep(self.pause.get())
 
 		if self.down.get():
-			value['main screen position'] = 'down'
-
-		if self.lowdosemode is not None:
-			value['low dose mode'] = self.lowdosemode
-			self.lowdosemode = None
-			pause = self.pause.get()
-
-		if value:
-			self.setScope(value)
-			time.sleep(pause)
-
-		if self.lowdose.get():
-			self.setScope({'beam blank': 'off'})
+			self.setScope({'main screen position': 'down'})
 
 	def publishImageData(self, imagedata):
 		acquisitionimagedata = data.AcquisitionImageData(initializer=imagedata)
