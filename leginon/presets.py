@@ -669,12 +669,14 @@ class PresetsManager(node.Node):
 		toscopemethod = uidata.Method('To Scope', self.uiToScope)
 		self.changepause = uidata.Float('Pause', 1.0, 'rw', persist=True)
 		cyclecont = uidata.Container('Cycle')
-		self.usecycle = uidata.Boolean('Cycle On', True, 'rw', persist=True)
-		self.cyclemagshortcut = uidata.Boolean('Cycle Magnification Shortcut', True, 'rw', persist=True)
-		self.cyclemagonly = uidata.Boolean('Cycle Magnification Only', True, 'rw', persist=True)
-		self.orderlist = uidata.Sequence('Cycle Order', [], 'rw', persist=True, callback=self.uiSetOrderCallback)
-		cyclecont.addObjects((self.usecycle, self.cyclemagshortcut,
-													self.cyclemagonly, self.orderlist))
+		self.usecycle = uidata.Boolean('On', True, 'rw', persist=True)
+		self.cyclemagshortcut = uidata.Boolean('Mag Shortcut', True, 'rw', persist=True)
+		self.cyclemagonly = uidata.Boolean('Mag Only', True, 'rw', persist=True)
+		self.orderlist = uidata.Sequence('Order', [], 'rw', callback=self.uiSetOrderCallback)
+		cyclecont.addObject(self.usecycle, position={'position':(0,0)})
+		cyclecont.addObject(self.cyclemagshortcut, position={'position':(0,1)})
+		cyclecont.addObject(self.cyclemagonly, position={'position':(0,2)})
+		cyclecont.addObject(self.orderlist, position={'position':(1,0), 'span':(1,3)})
 
 		fromscopemethod = uidata.Method('From Scope', self.uiSelectedFromScope)
 		removemethod = uidata.Method('Remove', self.uiSelectedRemove)
@@ -686,11 +688,14 @@ class PresetsManager(node.Node):
 		self.uiselectpreset.set(pnames, 0)
 		self.orderlist.set(pnames)
 
-		# acquisition
-		cameraconfigure = self.cam.uiSetupContainer()
+		# acquisition frame
+
+		## goes with Acquire Reference Image and there is not
+		## useful at the moment
+		#cameraconfigure = self.cam.uiSetupContainer()
 		acqdosemeth = uidata.Method('Acquire Dose Image (be sure specimen is not in the field of view)', self.uiAcquireDose)
-		acqrefmeth = uidata.Method('Acquire Preset Reference Image',
-																self.uiAcquireRef)
+		## not useful at the moment
+		#acqrefmeth = uidata.Method('Acquire Preset Reference Image', self.uiAcquireRef)
 
 		#self.statrows = uidata.Sequence('Stats Row Range', [], 'rw', persist=True)
 		#self.statcols = uidata.Sequence('Stats Column Range', [], 'rw',
@@ -700,8 +705,7 @@ class PresetsManager(node.Node):
 		self.ui_image = uidata.Image('Image', None, 'r')
 
 		imagecont = uidata.Container('Acquisition')
-		imagecont.addObjects((cameraconfigure, acqdosemeth, acqrefmeth,
-													self.ui_image,))
+		imagecont.addObjects((acqdosemeth, self.ui_image,))
 
 		# main container
 		container = uidata.LargeContainer('Presets Manager')
