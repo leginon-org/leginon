@@ -511,8 +511,6 @@ def unflatDict(in_dict):
 
 	{'scope':{ 'BShift':{'X': 45.0, 'Y': 18.0}, 'IShift':{'X': 8.0, 'Y': 6.0}}}
 	"""
-	print 'INDICT', in_dict
-
 	items = {}
 	try:
 		keys = in_dict.keys()
@@ -527,10 +525,10 @@ def unflatDict(in_dict):
 			name = a[1]
 			if not allsubdicts.has_key(name):
 				allsubdicts[a[1]]=None
-		else:
+		
+		elif a[0] != 'ARRAY':
 			items.update(datatype({key:value}))
 
-	print 'ITEMS', items
 	for subdict in allsubdicts:
 		dm={}
 		for key,value in in_dict.items():
@@ -576,13 +574,9 @@ def dict2matrix(in_dict):
 
 	# Build the matrix
 	matrix = Numeric.zeros(shape, Numeric.Float64)
-	print 'dict2matrixINDICT', in_dict
 	for m in in_dict:
 		i=eval(re.findall('\d+',m)[0])-1
 		j=eval(re.findall('\d+',m)[1])-1
-		print 'm', m
-		print 'i', i
-		print 'j', j
 		matrix[i][j]=in_dict[m]
 
 	return matrix
@@ -754,10 +748,26 @@ def sql2data(in_dict):
 	"""
 	This function converts any result of an SQL query to an Data type:
 
-	'magnification': 5, 'BShift': {'Y': 18.0, 'X': 45.0}, 'matrix': array([[1, 2],
-	[3, 4]]), 'defocus': -9.9999999999999998e-13, 'MyId': ('MyId', 67543),
-	'float': 12.25, 'type': 'test'}
-
+	>>> d = {'SUBD|camera|exposure time': 1, 'SUBD|camera|SUBD|binning|x': 1,
+                 'SUBD|camera|SUBD|binning|y': 1, 'SUBD|scope|SUBD|gun shift|y': 1,
+                 'SUBD|scope|SUBD|gun shift|x': 1,
+                 'ARRAY|matrix|1_1': 1.9444897985776799e-10,
+                 'SUBD|scope|dark field mode': 1, 'ARRAY|matrix|2_1': -1.24684512082676e-10,
+                 'SEQ|id': "('manager', 'corrector', 49)",
+                 'ARRAY|matrix|2_2': 2.0027370335951399e-10,
+                 'SUBD|camera|SUBD|camera size|y': 1, 'SUBD|camera|SUBD|camera size|x': 1,
+                 'SUBD|camera|SUBD|dimension|y': 1, 'SUBD|camera|SUBD|dimension|x': 1,
+                 'ARRAY|matrix|1_2': 1.2226514813724901e-10, 'SUBD|camera|SUBD|offset|y': 1,
+                 'SUBD|camera|SUBD|offset|x': 1, 'database filename': 1}
+        >>> sql2data(d)
+	{'camera': {'exposure time': 1, 'camera size': {'y': 1, 'x': 1},
+		 'dimension': {'y': 1, 'x': 1}, 'binning': {'y': 1, 'x': 1},
+		 'offset': {'y': 1, 'x': 1}},
+	 'matrix': array([[  1.94448980e-10,   1.22265148e-10], 
+			 [ -1.24684512e-10,   2.00273703e-10]]),
+	 'database filename': 1,
+	 'scope': {'gun shift': {'y': 1, 'x': 1}, 'dark field mode': 1},
+	 'id': ('manager', 'corrector', 49)}
 	"""
 	content={}
 	allsubdicts={}
