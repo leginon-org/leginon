@@ -19,15 +19,13 @@ import os
 #   utility functions and exceptions used in this script    #
 #     (do not change any of this, skip to next section)     #
 #############################################################
-import sys
-if sys.platform == 'win32':
-	pathmapping = {'Z:': '/ami/amishare',
-									'Y:': '/ami/data04',
-									'X:': '/ami/data03',
-									'W:': '/ami/data02',
-									'V:': '/ami/data01'}
-else:
-	pathmapping = {}
+#pathmapping = {'Z:': '/ami/amishare',
+#								'Y:': '/ami/data04',
+#								'X:': '/ami/data03',
+#								'W:': '/ami/data02',
+#								'V:': '/ami/data01'}
+
+pathmapping = {}
 
 def mapPath(path):
 		if not pathmapping:
@@ -57,16 +55,7 @@ class LeginonConfigError(Exception):
 ## This list is used by the Manager when launching nodes.
 ## Add host names where you could potentially be running a launcher.
 ## example:   LAUNCHERS = ['temhost', 'yourhost', 'myhost']
-LAUNCHERS = [
-	'tecnai2',
-	'tecnai',
-	'defcon1',
-	'amilab1',
-	'amilab2',
-	'defcon3',
-	'tecnai2-ssi',
-	'cronus3',
-]
+LAUNCHERS = []
 
 # check if launchers configured
 if not LAUNCHERS:
@@ -76,9 +65,9 @@ if not LAUNCHERS:
 #	Database	#
 #########################
 ## fill in your database and user info
-DB_HOST = 'cronus1'
-DB_NAME = 'dbemdata'
-DB_USER = 'usr_object'
+DB_HOST = ''
+DB_NAME = ''
+DB_USER = ''
 DB_PASS = ''
 
 ## check if DB is configured (DB_PASS can be '')
@@ -87,9 +76,9 @@ if '' in (DB_HOST, DB_NAME, DB_USER):
 
 # This is optional.  If not using a project database, leave DB_PROJECT_HOST
 # set to 'none', and the other DB_PROJECT_ variables blank.
-DB_PROJECT_HOST = 'cronus1'
-DB_PROJECT_NAME = 'project'
-DB_PROJECT_USER = 'usr_object'
+DB_PROJECT_HOST = 'none'
+DB_PROJECT_NAME = ''
+DB_PROJECT_USER = ''
 DB_PROJECT_PASS = ''
 
 #########################
@@ -99,7 +88,7 @@ DB_PROJECT_PASS = ''
 
 ## IMAGE_PATH is a base directory, a session subdirectory will 
 ## automatically be created when the first image is saved
-IMAGE_PATH	= '/ami/amishare/suloway/images'
+IMAGE_PATH	= ''
 HOME_PATH	= os.path.expanduser('~')
 PREFS_PATH	= os.path.join(HOME_PATH, '.leginon', 'prefs')
 ID_PATH		= os.path.join(HOME_PATH, '.leginon', 'ids')
