@@ -6,7 +6,8 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import cPickle
+#import cPickle as pickle
+import pickle
 import data
 import socket
 import SocketServer
@@ -32,14 +33,14 @@ def localHack(obj):
 	except KeyError:
 		uiinstance = None
 
-	pickle = cPickle.dumps(obj, cPickle.HIGHEST_PROTOCOL)
+	p = pickle.dumps(obj, pickle.HIGHEST_PROTOCOL)
 
 	if ltinstance is not None:
 		location['data transport']['local transport']['instance'] = ltinstance
 	if uiinstance is not None:
 		location['UI']['instance'] = uiinstance
 
-	return pickle
+	return p
 
 class ExitException(Exception):
 	pass
@@ -51,8 +52,9 @@ class Handler(SocketServer.StreamRequestHandler):
 
 	def handle(self):
 		try:
-			obj = cPickle.load(self.rfile)
-		except (cPickle.UnpicklingError, EOFError):
+			obj = pickle.load(self.rfile)
+		except (pickle.UnpicklingError, EOFError):
+			raise
 			print 'no data to read, handle socket connection failed'
 			return
 		
@@ -69,20 +71,21 @@ class Handler(SocketServer.StreamRequestHandler):
 				raise
 			try:
 				# returns exception if error, else None
-				cPickle.dump(e, self.wfile, cPickle.HIGHEST_PROTOCOL)
+				pickle.dump(e, self.wfile, pickle.HIGHEST_PROTOCOL)
 			except IOError:
 				print 'write failed when acknowledging push'
 		else:
 			try:
+				o = self.server.datahandler.query(obj)
 				try:
-					self.wfile.write(cPickle.dumps(self.server.datahandler.query(obj),
-																					cPickle.HIGHEST_PROTOCOL))
-				except cPickle.UnpickleableError:
+					p = pickle.dumps(o, pickle.HIGHEST_PROTOCOL)
+				except:
 					try:
 						self.wfile.write(localHack(self.server.datahandler.query(obj)))
 					except:
 						print 'cannot transport unpickleable data'
 						raise IOError
+				self.wfile.write(p)
 			except IOError:
 				print 'write failed when returning requested data'
 
@@ -120,11 +123,11 @@ class Client(object):
 
 	def pull(self, id):
 		self.connect()
-		self.send(cPickle.dumps(id, cPickle.HIGHEST_PROTOCOL))
+		self.send(pickle.dumps(id, pickle.HIGHEST_PROTOCOL))
 		data = self.receive()
 		self.close()
 		try:
-			return cPickle.loads(data)
+			return pickle.loads(data)
 		except:
 			raise IOError
 
@@ -134,13 +137,15 @@ class Client(object):
 		except socket.error, e:
 			raise IOError('connect to server failed')
 		try:
-			self.send(cPickle.dumps(idata, cPickle.HIGHEST_PROTOCOL))
-		except cPickle.UnpickleableError:
+			p = pickle.dumps(idata, pickle.HIGHEST_PROTOCOL)
+			self.send(p)
+		except:
 			try:
 				self.send(localHack(idata))
 			except:
+				raise
 				raise IOError('cannot push unpickleable data')
-		serverexception = cPickle.loads(self.receive())
+		serverexception = pickle.loads(self.receive())
 		self.close()
 		if serverexception is not None:
 			raise IOError('server failed to be pushed')

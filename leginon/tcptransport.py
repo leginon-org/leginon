@@ -40,6 +40,7 @@ class Server(socketstreamtransport.Server, SocketServer.ThreadingTCPServer):
 						raise
 		self.request_queue_size = 15
 		self.port = port
+		print 'PORT', port
 
 	def location(self):
 		location = socketstreamtransport.Server.location(self)
