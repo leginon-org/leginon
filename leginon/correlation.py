@@ -35,8 +35,6 @@ def correlation(image1, image2, ccflag=1, pcflag=1, subpixelflag=1):
 		cc[center[0]:, :center[1]] = uncenteredcc[:center[0], center[1]:]
 		cc[:center[0], center[1]:] = uncenteredcc[center[0]:, :center[1]]
 
-		print "cc =", cc
-
 		if subpixelflag:
 			peak = quadraticPeak(cc)
 			val['cross correlation peak'] = peak
@@ -65,8 +63,6 @@ def correlation(image1, image2, ccflag=1, pcflag=1, subpixelflag=1):
 		pc[:center[0], :center[1]] = uncenteredpc[center[0]:, center[1]:]
 		pc[center[0]:, :center[1]] = uncenteredpc[:center[0], center[1]:]
 		pc[:center[0], center[1]:] = uncenteredpc[center[0]:, :center[1]]
-
-		print "pc =", pc
 
 		if subpixelflag:
 			peak = quadraticPeak(pc)
