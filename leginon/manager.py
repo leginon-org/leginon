@@ -39,7 +39,8 @@ class Manager(node.Node):
 		self.nodelocations['manager'] = self.location()
 
 		# ready nodes, someday 'initialized' nodes
-		self.nodes = []
+		self.initializednodeslock = threading.Lock()
+		self.initializednodes = []
 		self.distmap = {}
 		# maps event id to list of node it was distributed to if event['confirm']
 		self.confirmmap = {}
@@ -280,15 +281,15 @@ class Manager(node.Node):
 		self.delLauncher(nodeid)
 
 	def setNodeStatus(self, ievent):
-		print self.nodes
 		nodeid = ievent['id'][:-1]
+		self.initializednodeslock.acquire()
 		if isinstance(ievent, event.NodeInitializedEvent):
-			if nodeid not in self.nodes:
-				self.nodes.append(nodeid)
+			if nodeid not in self.initializednodes:
+				self.initializednodes.append(nodeid)
 		elif isinstance(ievent, event.NodeUninitializedEvent):
-			if nodeid in self.nodes:
-				self.nodes.remove(nodeid)
-		print self.nodes
+			if nodeid in self.initializednodes:
+				self.initializednodes.remove(nodeid)
+		self.initializednodeslock.release()
 
 	def removeNode(self, nodeid):
 		'''Remove data, event mappings, and client for the node with the specfied node ID.'''
@@ -338,7 +339,6 @@ class Manager(node.Node):
 		# be dependent on the launcher you're launching from by default
 		if launcher not in dependencies:
 			dependencies.append(launcher)
-		print args
 		t = threading.Thread(target=self.waitNode, args=args)
 		t.start()
 
@@ -349,9 +349,12 @@ class Manager(node.Node):
 		# doesn't really account for node uninitialized
 		for nodeid in dependencies:
 			while True:
-				if nodeid not in self.nodes:
+				self.initializednodeslock.acquire()
+				if nodeid not in self.initializednodes:
+					self.initializednodeslock.release()
 					time.sleep(0.5)
 				else:
+					self.initializednodeslock.release()
 					break
 		ev = event.LaunchEvent(self.ID(), newproc=newproc,
 														targetclass=target, args=args)
