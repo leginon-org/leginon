@@ -41,10 +41,10 @@ class ManagerCLI(object):
 		for nodeclass in nodeclasslist:
 			print '\t%s' % nodeclass
 
-	def launch(self, name, launcher, nodeclass, args=(), newproc=0):
+	def launch(self, name, launcher, nodeclass, args='', newproc=0):
 		'''
 		launches a new node
-		usage:  launch(name, launcher, nodeclass, args=(), newproc=0)
+		usage:  launch(name, launcher, nodeclass, args='', newproc=0)
 		'''
 		self.manager.uiLaunch(name, launcher, nodeclass, args, newproc)
 
@@ -58,7 +58,12 @@ class ManagerCLI(object):
 
 	def __raw_input(self, prompt):
 		newprompt = '%s %s' % (self.prompt, prompt)
-		return raw_input(newprompt)
+		raw = raw_input(newprompt)
+		if raw != '':
+			selfish = 'self.' + raw
+		else:
+			selfish = ''
+		return selfish
 
 	def __interact(self):
 		banner = """
@@ -79,6 +84,7 @@ class ManagerCLI(object):
 
 if __name__ == '__main__':
 	import sys, signal, string
+
 	args = (sys.argv[0], 'hostname', 'port')
 	if len(sys.argv) != len(args):
 		print 'usage:   %s' % string.join(args, ' ')
