@@ -40,7 +40,7 @@ class DoseCalibrator(calibrator.Calibrator):
 		dosemeth = uidata.Method('Measure Dose Rate', self.uiMeasureDoseRate)
 		self.ui_beamcurrent = uidata.Float('Beam Current (Amps)', 0.0, 'r')
 		self.ui_screenmag = uidata.Float('Screen Magnification', 0.0, 'r')
-		self.ui_doserate = uidata.Float('Dose Rate (electons / m^2 / s)', 0.0, 'r')
+		self.ui_doserate = uidata.Float('Dose Rate (electrons / m^2 / s)', 0.0, 'r')
 		dosecont.addObjects((self.beamdia, self.beamscale, dosemeth, self.ui_beamcurrent, self.ui_screenmag, self.ui_doserate))
 
 		### camera calibration
