@@ -9,7 +9,7 @@ else:
 	sys.coinit_flags = 0
 	import pythoncom
 	import win32com.client
-#	import gatancom
+	import gatancom
 
 	class Gatan(camera.Camera):
 		def __init__(self):
