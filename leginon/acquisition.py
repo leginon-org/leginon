@@ -42,8 +42,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 									+ [event.LockEvent,
 											event.UnlockEvent,
 											event.AcquisitionImagePublishEvent,
-											event.TrialImagePublishEvent,
-											event.ChangePresetEvent,
+										
+	event.ChangePresetEvent,
 											event.DriftDetectedEvent,
 											event.AcquisitionImageListPublishEvent] \
 									+ EM.EMClient.eventoutputs
