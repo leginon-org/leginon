@@ -126,6 +126,7 @@ class Application(object):
 			args = self.bindingSpec2Args(bindingspec)
 			#print 'binding %s' % str(args)
 			apply(self.node.addEventDistmap, args)
+		return self.launchednodes
 
 	def launchNode(self, args):
 		if not hasattr(self.node, 'launchNode'):

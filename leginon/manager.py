@@ -24,6 +24,7 @@ import uidata
 import leginonobject
 import extendedlogging
 import copy
+import time
 
 class DataBinder(databinder.DataBinder):
 	def handleData(self, newdata):
@@ -556,7 +557,43 @@ class Manager(node.Node):
 		for alias in self.uilauncherselectors.values():
 			aliasvalue = alias.getSelectedValue()
 			self.application.setLauncherAlias(alias.name, aliasvalue)
-		self.application.launch()
+		self.notifyApplicationLaunching()
+		nodenames = self.application.launch()
+		self.waitNodes(nodenames)
+		self.notifyApplicationLaunched()
+
+	def notifyApplicationLaunching(self):
+		### maybe we can have a graphical notification.
+		### Many applications out there would pop up an animated
+		### window displaying a hint of the day or whatever to
+		### divert the user's attention away from the fact that
+		### this is slow software
+		print '''
+		APPLICATION LAUNCHING
+
+		go get some coffee
+
+		Maybe a hint of the day goes here...
+
+		     Did you leave the screen down?  Ha Ha!!
+		   Objective aperture in/out?  better go fix it.
+		      Did you forget to restart the launcher?
+		      then launching this app might be a waste of your time.
+
+		Welcome to the world of automated microscopy,
+		where all your dreams come true, and are magnified by 50000x.
+
+		Anyway, I will let you know when the application
+		has launched...
+		'''
+		self.launchtime = time.time()
+
+	def notifyApplicationLaunched(self):
+		launchtime = time.time() - self.launchtime
+		node.beep()
+		print '************ APPLICATION READY ***************'
+		print '(took %.1f sec, but you are not supposed to be aware of' % (launchtime,)
+		print 'that because you were getting coffee or reading our fun little hints)'
 
 	def killApp(self):
 		'''Calls application.Application.kill.'''
