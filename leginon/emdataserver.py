@@ -54,3 +54,17 @@ class DataServer(dataservernode.DataServerNode):
 
 		dataserver.DataServer.__init__(self, nodeid, managerloc, DataHandler, (self.scope, self.camera, self.lock))
 
+if __name__ == '__main__':
+	import tecnai
+	import tietz
+	import time
+
+	manloc = {}
+	manloc['hostname'] = sys.argv[1]
+	manloc['event port'] = int(sys.argv[2])
+
+	foo = emdataserver.DataServer('em', manloc, tecnai.tecnai, tietz.tietz)
+
+	while(1):
+		time.sleep(0.001)
+
