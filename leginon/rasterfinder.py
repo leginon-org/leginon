@@ -25,7 +25,7 @@ class RasterFinder(targetfinder.TargetFinder):
 	panelclass = gui.wx.RasterFinder.Panel
 	settingsclass = data.RasterFinderSettingsData
 	defaultsettings = {
-		'wait for done': False,
+		'wait for done': True,
 		'ignore images': False,
 		'user check': False,
 		'image filename': '',
@@ -194,6 +194,9 @@ class RasterFinder(targetfinder.TargetFinder):
 		previous = self.researchTargets(image=imdata)
 		if previous:
 			return
+
+		## display image
+		self.setImage(imdata['image'], 'Original')
 
 		## automated part
 		self.original = imdata['image']
