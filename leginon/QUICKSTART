@@ -1,0 +1,27 @@
+- edit leginonconfig.py with you default config options
+
+- run start.py  (the developer's interface)
+  (this automatically starts manager and launcher on local machine)
+  usage:  start.py <session_name>
+  if you don't specify session_name, a default will be generated from the
+  current date and time
+
+- if you need to connect remote launchers, use "Node Management"
+    (launchers must be in leginonconfig.py so they appear on the list)
+
+- now launch nodes and create event bindings as before
+
+- Nodes that are known to work, in a logical order for trying them out:
+   EM
+   Corrector
+   ImViewer
+   PresetsManager
+   MatrixCalibrator
+   BeamTiltCalibrator
+   SimpleNavigator
+   Acquisition
+   SimpleAcquisition
+   Focuser
+   ClickTargetFinder
+   SpiralTargetMaker
+   MosaicClickTargetFinder
