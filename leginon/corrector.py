@@ -34,7 +34,7 @@ class DataHandler(node.DataHandler):
 class Corrector(node.Node, camerafuncs.CameraFuncs):
 	def __init__(self, id, nodelocations):
 
-		self.refs = {}
+		self.plan = {}
 
 		node.Node.__init__(self, id, nodelocations, DataHandler, (self,))
 		self.addEventInput(event.ImageAcquireEvent, self.acquireCorrected)
@@ -74,22 +74,34 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 
 		self.registerUISpec('Corrector', (acq, prefs, nodespec))
 
-	def saveRefs(self, filename, key):
+	def planKey(self, camstate):
+		'''
+		make a hash key from a camera state
+		'''
+		dim = camstate['dimension']
+		bin = camstate['binning']
+		off = camstate['offset']
+		## ignore exposure time for now
+		##camstate['exposure time']
+		key = (dim['x'],dim['y'],bin['x'],bin['y'],off['x'],off['y'])
+		return key
+
+	def savePlan(self, filename, key):
 		strkey = str(key)
 		s = shelve.open(filename)
 		try:
-			s[strkey] = self.refs[key]
+			s[strkey] = self.plan[key]
 		except KeyError:
 			pass
 		s.close()
 
-	def loadRefs(self, filename, key):
+	def loadPlan(self, filename, key):
 		strkey = str(key)
 		s = shelve.open(filename)
-		print 'trying to find %s in refs file' % strkey
+		print 'trying to find %s in plan file' % strkey
 		try:
-			self.refs[key] = s[strkey]
-			print 'got %s in refs file' % (key,)
+			self.plan[key] = s[strkey]
+			print 'got %s in plan file' % (key,)
 		except KeyError:
 			pass
 		s.close()
@@ -105,15 +117,17 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 	def acquireBright(self):
 		camstate = dict(self.camdata.get())
 		self.cameraState(camstate)
+		plankey = self.planKey(camstate)
 
 		navg = self.navgdata.get()
 		series = self.acquireSeries(navg)
 		bright = cameraimage.averageSeries(series)
 
-		key = self.cameraKey(camstate)
-		if key not in self.refs:
-			self.refs[key] = {'dark':None,'bright':None,'norm':None}
-		self.refs[key]['bright'] = bright
+		self.plan[plankey]['bright'] = bright
+
+		if key not in self.plan:
+			self.plan[key] = {'dark':None,'bright':None,'norm':None}
+		self.plan[key]['bright'] = bright
 
 		imagedata = data.BrightImageData(self.ID(), bright)
 		self.publish(imagedata, event.BrightImagePublishEvent)
@@ -131,10 +145,10 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 		series = self.acquireSeries(navg)
 		dark = cameraimage.averageSeries(series)
 
-		key = self.cameraKey(camstate)
-		if key not in self.refs:
-			self.refs[key] = {'dark':None,'bright':None,'norm':None}
-		self.refs[key]['dark'] = dark
+		key = self.planKey(camstate)
+		if key not in self.plan:
+			self.plan[key] = {'dark':None,'bright':None,'norm':None}
+		self.plan[key]['dark'] = dark
 
 		imagedata = data.DarkImageData(self.ID(), dark)
 		self.publish(imagedata, event.DarkImagePublishEvent)
@@ -164,7 +178,7 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 		camstate = self.cameraAcquireCamera()
 		numimage = camstate['image data']
 		#binning = self.researchByDataID('binning').content['binning']
-		key = self.cameraKey(camstate)
+		key = self.planKey(camstate)
 		corrected = self.correct(numimage, key)
 		return data.ImageData(self.ID(), corrected)
 
@@ -186,7 +200,7 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 		numimage = mrc_to_numeric('test1.mrc')
 		camstate = self.camdata.get()
 		print 'camstate', camstate
-		key = self.cameraKey(camstate)
+		key = self.planKey(camstate)
 		print 'key', key
 		corrected = self.correct(numimage, key)
 		return data.ImageData(self.ID(), corrected)
@@ -204,10 +218,10 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 		return {'mean':mean,'stdev':stdev,'min':mn,'max':mx}
 
 	def calc_norm(self, key):
-		if key not in self.refs:
-			self.refs[key] = {'dark':None,'bright':None,'norm':None}
-		bright = self.refs[key]['bright']
-		dark = self.refs[key]['dark']
+		if key not in self.plan:
+			self.plan[key] = {'dark':None,'bright':None,'norm':None}
+		bright = self.plan[key]['bright']
+		dark = self.plan[key]['dark']
 		if bright is not None and dark is not None:
 			norm = bright - dark
 			## there may be a better norm than this
@@ -217,22 +231,22 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 			# so make sure there are no zeros in norm
 			norm = Numeric.clip(norm, 1.0, cameraimage.inf)
 			norm = normavg / norm
-			self.refs[key]['norm'] = norm
+			self.plan[key]['norm'] = norm
 			
-			print 'saving refs'
-			self.saveRefs('refs', key)
+			print 'saving plan'
+			self.saveRefs('correction_plan', key)
 
 	def normalize(self, raw, key):
-		if key not in self.refs:
-			print 'loading refs'
-			self.loadRefs('refs', key)
-		if key not in self.refs:
-			print 'no refs, no correction'
+		if key not in self.plan:
+			print 'loading plan'
+			self.loadRefs('correction_plan', key)
+		if key not in self.plan:
+			print 'no plan, no correction'
 			return raw
 
-		refs = self.refs[key]
-		dark = refs['dark']
-		norm = refs['norm']
+		plan = self.plan[key]
+		dark = plan['dark']
+		norm = plan['norm']
 
 		if dark is not None and norm is not None:
 			diff = raw - dark
@@ -242,17 +256,6 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 		else:
 			return raw
 
-	def cameraKey(self, camstate):
-		'''
-		make a hash key from a camera state
-		'''
-		dim = camstate['dimension']
-		bin = camstate['binning']
-		off = camstate['offset']
-		## ignore exposure time for now
-		##camstate['exposure time']
-		key = (dim['x'],dim['y'],bin['x'],bin['y'],off['x'],off['y'])
-		return key
 
 if __name__ == '__main__':
 	from Numeric import *
