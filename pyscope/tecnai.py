@@ -711,3 +711,20 @@ else:
 			else:
 				raise ValueError
 
+		def getVacuumStatus(self):
+			status = self.theScope.Vacuum.Status
+			if status == win32com.client.constants.vsOff:
+				return 'off'
+			elif status == win32com.client.constants.vsCameraAir:
+				return 'camera'
+			elif status == win32com.client.constants.vsBusy:
+				return 'busy'
+			elif status == win32com.client.constants.vsReady:
+				return 'ready'
+			elif status == win32com.client.constants.vsUnknown:
+				return 'unknown'
+			elif status == win32com.client.constants.vsElse:
+				return 'else'
+			else:
+				return 'unknown'
+
