@@ -78,12 +78,14 @@ class Node(leginonobject.LeginonObject):
 		raise NotImplementedError()
 
 	def announce(self, ievent):
-		self.mark_data(ievent)
-		#print ievent.content
+		## no longer have to mark_data becuase id takes care of it
+		#self.mark_data(ievent)
 		self.clients['manager'].push(ievent)
 
 	def publish(self, idata, eventclass=event.PublishEvent):
-		self.mark_data(idata)
+		## no longer have to mark_data becuase id takes care of it
+		#self.mark_data(idata)
+
 		if not issubclass(eventclass, event.PublishEvent):
 			raise TypeError('PublishEvent subclass required')
 		self.server.datahandler._insert(idata)
@@ -103,9 +105,10 @@ class Node(leginonobject.LeginonObject):
 		self.addEventClient(nodeid, nodelocation)
 		self.clients[nodeid].push(idata)
 
-	def mark_data(self, data):
-		data.origin['id'] = self.nodeid
-		data.origin['location'] = self.location()
+	## no longer have to mark_data becuase id takes care of it
+	#def mark_data(self, data):
+	#	data.origin['id'] = self.nodeid
+	#	data.origin['location'] = self.location()
 
 	def research(self, loc, dataid):
 		# can this determine what to do?
