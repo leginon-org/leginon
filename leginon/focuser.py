@@ -354,18 +354,15 @@ class Focuser(acquisition.Acquisition):
 			self.manualchecklock.acquire()
 			try:
 				if correction:
-					dataclass = data.CorrectedCameraImageData
+					imarray = self.instrument.imagecorrection.Image
 				else:
-					dataclass = data.CameraImageData
-				imagedata = self.instrument.getData(dataclass)
-			finally:
+					imarray = self.instrument.ccdcamera.Image
+			except:
 				self.manualchecklock.release()
-			try:
-				imarray = imagedata['image']
-			except (TypeError, KeyError):
 				self.manualplayer.pause()
 				self.logger.error('Failed to acquire image, pausing...')
 				continue
+			self.manualchecklock.release()
 			pow = imagefun.power(imarray, self.maskradius)
 			self.man_power = pow.astype(Numeric.Float32)
 			self.man_image = imarray.astype(Numeric.Float32)
