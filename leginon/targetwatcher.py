@@ -129,6 +129,7 @@ class TargetWatcher(watcher.Watcher):
 				try:
 					process_status = self.processTargetData(target)
 				except:
+					self.printException()
 					process_status = 'exception'
 	
 				print 'TARGET FINISHED STATUS', process_status
@@ -146,7 +147,7 @@ class TargetWatcher(watcher.Watcher):
 					break
 				print 'not aborted'
 
-				if process_status == 'ok':
+				if process_status != 'repeat':
 					break
 
 		e = event.TargetListDoneEvent(id=self.ID(), targetlistid=newdata['id'], status=targetliststatus)
