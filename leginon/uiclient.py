@@ -1499,6 +1499,7 @@ class wxClickImageWidget(wxContainerWidget):
 
 class wxTargetImageWidget(wxContainerWidget):
 	def __init__(self, name, parent, container, value, configuration):
+		self.targetcolors = {}
 		self.sizer = wxBoxSizer(wxVERTICAL)
 		self.label = wxStaticText(parent, -1, name)
 		self.targetimage = wxImageViewer.TargetImagePanel(parent, -1,
@@ -1525,12 +1526,18 @@ class wxTargetImageWidget(wxContainerWidget):
 		self.sizer.SetItemMinSize(self.targetimage, width, height)
 
 	def setTargets(self, name, value):
-		self.targetimage.setTargetTypeValue(name, value)
+		color = self.targetcolors[name]
+		self.targetimage.setTargetTypeValue(name, value, color)
+
+	def setTargetColor(self, name, value):
+		self.targetcolors[name] = tuple(value)
 
 	def _addWidget(self, name, typelist, value, configuration, children):
 		# should disable until all available
 		if name == 'Image':
 			self.setImage(value)
+		elif name[:5] == 'color':
+			self.setTargetColor(name[5:], value)
 		else:
 			self.setTargets(name, value)
 

@@ -990,11 +990,14 @@ class TargetImagePanel(ImagePanel):
 			raise RuntimeError('Not enough colors for addition target types')
 		return color
 
-	def addTargetType(self, name):
+	def addTargetType(self, name, color=None):
 		if name in self.target_types:
 			raise ValueError('Target type already exists')
-		color = self.removeTargetTypeColor()
-		self.target_types[name] = TargetType(name, color)
+		if color is None:
+			wxcolor = self.removeTargetTypeColor()
+		else:
+			wxcolor = wxColor(*color)
+		self.target_types[name] = TargetType(name, wxcolor)
 
 		for tool in self.tools:
 			if hasattr(tool, 'addTargetType'):
@@ -1021,9 +1024,9 @@ class TargetImagePanel(ImagePanel):
 			raise ValueError('No such target type')
 
 	# compat function
-	def setTargetTypeValue(self, name, value):
+	def setTargetTypeValue(self, name, value, color=None):
 		if name not in self.target_types:
-			self.addTargetType(name)
+			self.addTargetType(name, color)
 		else:
 			self.target_types[name].clearTargets()
 		for position in value:

@@ -591,15 +591,22 @@ class TargetImage(Container):
 	def __init__(self, name, image, permissions='r', persist=False):
 		Container.__init__(self, name)
 		self.targets = {}
+		self.targetcolors = {}
 		self.image = Image('Image', image, 'r', persist=persist)
 		self.persist = persist
 		self.addObject(self.image)
 
-	def addTargetType(self, name, targets=[]):
+	def addTargetType(self, name, targets=[], color=None):
 		if name in self.targets:
 			raise ValueError('Target type already exists')
+
+		colorname = 'color' + name
+		self.targetcolors[name] = Array(colorname, color, 'rw')
+		self.addObject(self.targetcolors[name])
+
 		self.targets[name] = Array(name, targets, 'rw')
 		self.addObject(self.targets[name])
+
 
 	def deleteTargetType(self, name):
 		try:
@@ -614,8 +621,10 @@ class TargetImage(Container):
 		except KeyError:
 			raise ValueError('No such target type')
 
-	def setTargetType(self, name, value):
+	def setTargetType(self, name, value, color=None):
 		try:
+			if color is not None:
+				self.targetcolors[name].set(color)
 			self.targets[name].set(value)
 		except KeyError:
 			raise ValueError('No such target type')
