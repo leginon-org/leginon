@@ -287,7 +287,13 @@ class EM(node.Node):
 		for key in withkeys:
 			if key == 'scope':
 				withkeys.remove(key)
-				withkeys += self.scope.keys()
+				scopekeys = self.scope.keys()
+				for prunekey in prunekeys:
+					try:
+						scopekeys.remove(prunekey)
+					except ValueError:
+						pass
+				withkeys += scopekeys
 			elif key == 'camera':
 				withkeys.remove(key)
 				withkeys += self.camera.keys()

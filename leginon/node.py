@@ -298,8 +298,9 @@ class Node(leginonobject.LeginonObject):
 				idata['session'] = self.session
 			try:
 				self.datahandler.dbInsert(idata)
-			except KeyError:
+			except KeyError, e:
 				self.printerror('no DBDataKeeper to publish: %s' % str(idata['id']))
+				raise
 
 		self.datahandler.insert(idata)
 
@@ -331,7 +332,9 @@ class Node(leginonobject.LeginonObject):
 		#### make some sense out of args
 		### for research by dataclass, use kwargs to find instance
 		if dataclass is not None:
-			raise NotImplementedError('research by data class is not implemented')
+			datainstance = dataclass()
+			self.addEmptyInstances(datainstance)
+			#raise NotImplementedError('research by data class is not implemented')
 
 		### standard search for data by ID
 		#if 'id' in kwargs and 'session' in kwargs and len(kwargs) == 2:
@@ -343,10 +346,25 @@ class Node(leginonobject.LeginonObject):
 
 		### use DBDataKeeper query if not results yet
 		if not resultlist and datainstance is not None:
+			self.addEmptyInstances(datainstance)
 			newresults = self.datahandler.dbQuery(datainstance, results)
 			resultlist += newresults
 
 		return resultlist
+
+	def addEmptyInstances(self, datainstance):
+		for key, datatype in datainstance.types().items():
+			try:
+				if issubclass(datatype, data.Data):
+					if key in datainstance:
+						if datainstance[key] is None:
+							datainstance[key] = datatype()
+							self.addEmptyInstances(datainstance[key])
+					else:
+						datainstance[key] = datatype()
+						self.addEmptyInstances(datainstance[key])
+			except TypeError:
+				pass
 
 	def unpublish(self, dataid, eventclass=event.UnpublishEvent):
 		'''Make a piece of data unavailable to other nodes.'''

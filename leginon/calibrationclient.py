@@ -206,6 +206,7 @@ class PixelSizeCalibrationClient(CalibrationClient):
 		qinst = data.PixelSizeCalibrationData()
 		qinst['magnification'] = mag
 		qinst['em host'] = emhost
+
 		caldatalist = self.node.research(datainstance=qinst, results=1)
 
 		if len(caldatalist) > 0:

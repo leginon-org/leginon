@@ -175,9 +175,9 @@ class KeyedDict(OrderedDict):
 		If this is more useful than the regular update, maybe we 
 		should think about replacing update with friendly_update.
 		'''
-		for key,value in other.items():
+		for key in other.keys():
 			try:
-				self[key] = value
+				self[key] = other[key]
 			except KeyError:
 				pass
 

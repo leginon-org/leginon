@@ -119,12 +119,75 @@ class CameraFuncs(object):
 			self.node.printerror('invalid dimension or binning produces invalid offset')
 		camconfig['offset'] = {'x': offx, 'y': offy}
 
+	def uiGetDictData(self, uidict):
+		uidictdata = {}
+		for key, value in uidict.items():
+			if isinstance(value, uidata.Data):
+				uidictdata[key] = value.get()
+			else:
+				uidictdata[key] = self.uiGetDictData(value)
+		return uidictdata
+
+	def uiSetDictData(self, uidict, dictdata):
+		for key, value in uidict.items():
+			if key in dictdata:
+				if isinstance(value, uidata.Data):
+					value.set(dictdata[key], callback=False)
+				else:
+					self.uiSetDictData(value, dictdata[key])
+
+#	def uiCallback(self, value):
+#		cameraconfig = self.uiGetDictData(self.uicameradict)
+#		print 'cameraconfig =', cameraconfig
+#		try:
+#			cameraconfig = dict(self.cameraConfig(cameraconfig))
+#		except KeyError, e:
+#			print e
+#			pass
+#		self.uiSetDictData(self.uicameradict, cameraconfig)
+#		return None
+
+	def uiSet(self):
+		cameraconfig = self.uiGetDictData(self.uicameradict)
+		cameraconfig = dict(self.cameraConfig(cameraconfig))
+		self.uiSetDictData(self.uicameradict, cameraconfig)
+
 	def configUIData(self):
 		'''
 		returns camera configuration UI object
 		'''
 
-		return uidata.Struct('Camera Configuration', None, 'rw', self.uiConfig)
+		self.uicameradict = {}
+		cameraparameterscontainer = uidata.Container('Camera Configuration')
+
+		parameters = [('exposure time', 'Exposure time', uidata.Integer, 500, 'rw'),
+									('auto offset', 'Auto offset', uidata.Boolean, True, 'rw'),
+									('auto square', 'Auto square', uidata.Boolean, True, 'rw'),
+									('correct', 'Correct image', uidata.Boolean, True, 'rw')]
+
+		pairs = [('dimension', 'Dimension', ['x', 'y'], uidata.Integer, [512, 512]),
+							('offset', 'Offset', ['x', 'y'], uidata.Integer, [0, 0]),
+							('binning', 'Binning', ['x', 'y'], uidata.Integer, [1, 1])]
+
+		for key, name, axes, datatype, values, in pairs:
+			self.uicameradict[key] = {}
+			container = uidata.Container(name)
+			for i in range(len(axes)):
+				self.uicameradict[key][axes[i]] = datatype(axes[i], values[i], 'rw')
+				container.addObject(self.uicameradict[key][axes[i]])
+			cameraparameterscontainer.addObject(container)
+
+		for key, name, datatype, value, permissions in parameters:
+			self.uicameradict[key] = datatype(name, value, permissions)
+			cameraparameterscontainer.addObject(self.uicameradict[key])
+
+		setmethod = uidata.Method('Set', self.uiSet)
+		cameraparameterscontainer.addObject(setmethod)
+
+		self.uiSet()
+		return cameraparameterscontainer
+
+#		return uidata.Struct('Camera Configuration', None, 'rw', self.uiConfig)
 
 	def uiConfig(self, value=None):
 		'''

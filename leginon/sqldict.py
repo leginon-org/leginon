@@ -197,13 +197,14 @@ class SQLDict:
 	    for key,query in self.queries.items():
 	    	c = self._cursor()
 		try:
+			#print 'query =', query
 			c.execute(query)
 		except MySQLdb.ProgrammingError, e:
 			errno = e.args[0]
 			## 1146:  table does not exist
 			## 1054:  column does not exist
 			if errno in (1146, 1054):
-				print "your query failed, but that's ok for now"
+				print 'non-fatal query error:', e
 			else:
 				raise
 		else:

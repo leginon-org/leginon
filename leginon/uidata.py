@@ -241,6 +241,8 @@ class Data(Object):
 				callbackvalue = self.callback(value)
 				if self.validate(callbackvalue):
 					self.value = callbackvalue
+				else:
+					self.value = value
 			else:
 				self.value = value
 			if self.nonevalue is not None and self.value is None:
@@ -279,17 +281,47 @@ class Data(Object):
 class Boolean(Data):
 	typelist = Data.typelist + ('boolean',)
 
+	def validate(self, value):
+		if value is None:	
+			return False
+		else:
+			return True
+
 class Integer(Data):
 	typelist = Data.typelist + ('integer',)
+
+	def validate(self, value):
+		if value is None:	
+			return False
+		else:
+			return True
 
 class Float(Data):
 	typelist = Data.typelist + ('float',)
 
+	def validate(self, value):
+		if value is None:	
+			return False
+		else:
+			return True
+
 class String(Data):
 	typelist = Data.typelist + ('string',)
 
+	def validate(self, value):
+		if value is None:	
+			return False
+		else:
+			return True
+
 class Array(Data):
 	typelist = Data.typelist + ('array',)
+
+	def validate(self, value):
+		if value is None:	
+			return False
+		else:
+			return True
 
 class Struct(Data):
 	typelist = Data.typelist + ('struct',)

@@ -211,6 +211,11 @@ class Corrector(node.Node):
 		else:
 			return None
 
+#		imagetemp['session'] = data.SessionData()
+#		imagetemp['session']['user'] = data.UserData()
+#		imagetemp['session']['user']['group'] = data.GroupData()
+#		imagetemp['session']['instrument'] = data.InstrumentData()
+
 		imagetemp['camstate'] = camstate
 		refs = self.research(datainstance=imagetemp, results=1)
 		if refs:
@@ -227,6 +232,7 @@ class Corrector(node.Node):
 			imagetemp = data.BrightImageData()
 		elif type == 'norm':
 			imagetemp = data.NormImageData()
+		imagetemp['id'] = self.ID()
 		imagetemp['image'] = numdata
 		imagetemp['camstate'] = camstate
 		print 'publishing'
