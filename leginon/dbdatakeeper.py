@@ -16,14 +16,15 @@ class DBDataKeeper(datahandler.DataHandler):
 	def query(self, idata, indices):
 		# idata: instance of a Data class 
 		# indices: {field:value, ... } for the WHERE clause
+		#print 'querying'
 		
 		table = idata.__class__.__name__
 #		select = sqldict.sqlColumnsSelect(idata)
 #		self.dbd.myTable = self.dbd.Table(table,select)
 		self.dbd.myTable = self.dbd.Table(table)
 		sqlindices = sqldict.sqlColumnsFormat(indices)
-		self.dbd.myTable.myIndex = self.dbd.myTable.Index(sqlindices.keys())
-
+		self.dbd.myTable.myIndex = self.dbd.myTable.Index(sqlindices.keys(),
+															orderBy = {'fields':('DEF_timestamp',),'sort':'DESC'})
 		# return a list of dictionnaries for all matching rows
 		result = self.dbd.myTable.myIndex[sqlindices.values()].fetchall()
 		result = map(sqldict.sql2data, result)
@@ -35,8 +36,10 @@ class DBDataKeeper(datahandler.DataHandler):
 			try:
 				result[i] = idata.__class__(newid, result[i])
 			except KeyError, e:
-				print e
+				self.printerror('cannot convert database result to data instance')
+				del result[i]
 		map(self.file2image, result)
+		#print 'querying done'
 		return result
 
 		# return an instance
@@ -98,7 +101,11 @@ class DBDataKeeper(datahandler.DataHandler):
 	def file2image(self, idata):
 		if isinstance(idata, data.ImageData):
 			if idata['database filename'] is not None:
-				idata['image'] = Mrc.mrc_to_numeric(idata['database filename'])
+				try:
+					idata['image'] = Mrc.mrc_to_numeric(idata['database filename'])
+					print idata['image'][100][100]
+				except Exception, e:
+					print e
 				idata['database filename'] = None
 
 		types = idata.types()
