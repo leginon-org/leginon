@@ -1279,6 +1279,7 @@ class wxComboBoxWidget(wxContainerWidget):
 	def _enable(self, enable):
 		if self.value['List'] or not enable:
 			self.combobox.Enable(enable)
+			self.label.Enable(enable)
 		wxContainerWidget._enable(self, enable)
 
 	def setList(self, value):
@@ -1290,6 +1291,7 @@ class wxComboBoxWidget(wxContainerWidget):
 			if self.enabled:
 				self.combobox.Enable(True)
 		else:
+			self.combobox.Append('')
 			self.combobox.Enable(False)
 
 		self.combobox.SetSize(self.combobox.GetBestSize())

@@ -92,6 +92,13 @@ class Object(object):
 		self._enable(True, block, thread)
 		self.lock.release()
 
+	def setToolTip(self, tooltip, block=True, thread=False):
+		self.lock.acquire()
+		self.configuration['tool tip'] = tooltip
+		if self.server is not None:
+			self.server._configureObject(self, None, block, thread)
+		self.lock.release()
+
 class Method(Object):
 	typelist = Object.typelist + ('method',)
 	def __init__(self, name, method):
@@ -400,6 +407,8 @@ class SingleSelectFromList(SelectFromList):
 	def getSelectedValue(self, selected=None):
 		if selected is None:
 			selected = self.getSelected()
+		if selected is None:
+			return None
 		values = self.getSelectedValues([selected])
 		try:
 			return values[0]

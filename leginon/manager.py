@@ -78,14 +78,14 @@ class Manager(node.Node):
 
 	def start(self):
 		'''Overrides node.Node.start'''
-		self.print_location()
-		interact_thread = self.interact()
-
-		self.main()
-
-		# wait until the interact thread terminates
-		interact_thread.join()
-		self.exit()
+#		self.print_location()
+#		interact_thread = self.interact()
+#
+#		self.main()
+#
+#		# wait until the interact thread terminates
+#		interact_thread.join()
+#		self.exit()
 
 	def exit(self):
 		'''Overrides node.Node.exit'''
@@ -239,7 +239,12 @@ class Manager(node.Node):
 		# could check and keep selected if possible
 		launchers = self.launcherdict.keys()
 		launchers.sort()
-		self.uilauncherselect.set(launchers, 0)
+		if launchers:
+			selected = 0
+		else:
+			selected = None
+			self.launchcontainer.disable()
+		self.uilauncherselect.set(launchers, selected)
 
 	def getLauncherNodeClasses(self, dataid, location, launcherid):
 		'''Retrieve a list of launchable classes from a launcher by alias launchername.'''
@@ -277,10 +282,16 @@ class Manager(node.Node):
 		self.confirmEvent(ievent)
 
 	def uiUpdateLauncherInfo(self):
-		launchers = self.launcherdict.keys()
-		launchers.sort()
 		try:
-			self.uilauncherselect.set(launchers, 0)
+			launchers = self.launcherdict.keys()
+			if launchers:
+				self.launchcontainer.enable()
+				launchers.sort()
+				selected = 0
+			else:
+				self.launchcontainer.disable()
+				selected = None
+			self.uilauncherselect.set(launchers, selected)
 		except AttributeError:
 			pass
 
@@ -542,11 +553,15 @@ class Manager(node.Node):
 		'''Calls application.Application.load.'''
 		if self.uilauncheraliascontainer is not None:
 			self.applicationcontainer.deleteObject('Launcher Aliases')
+		launchers = self.launcherdict.keys()
+		if launchers:
+			launchers.sort()
+		else:
+			self.messagelog.error('No available launchers to run application')
+			return
 		self.application.load(name)
 		aliases = self.application.getLauncherAliases()
 		uialiasselectors = []
-		launchers = self.launcherdict.keys()
-		launchers.sort()
 		for alias in aliases:
 			uialiasselectors.append(uidata.SingleSelectFromList(alias, launchers, 0))
 		self.uilauncheraliascontainer = uidata.Container('Launcher Aliases')
@@ -558,7 +573,8 @@ class Manager(node.Node):
 		if self.uilauncheraliascontainer is None:
 			return
 		for alias in self.uilauncheraliascontainer.uiobjectlist:
-			self.application.setLauncherAlias(alias.name, (alias.getSelectedValue(),))
+			aliasvalue = alias.getSelectedValue()
+			self.application.setLauncherAlias(alias.name, (aliasvalue,))
 		self.application.launch()
 
 	def killApp(self):
@@ -608,12 +624,21 @@ class Manager(node.Node):
 
 	def uiUpdateNodeInfo(self):
 		'''Updates nodes lists and info in UI.'''
-		nodes = self.clients.keys()
-		nodes = map(str, nodes)
 		try:
-			self.uikillselect.set(nodes, 0)
-			self.uifromnodeselect.set(nodes, 0)
-			self.uitonodeselect.set(nodes, 0)
+			nodes = self.clients.keys()
+			if nodes:
+				self.killcontainer.enable()
+				self.bindeventcontainer.enable()
+				nodes = map(str, nodes)
+				nodes.sort()
+				selected = 0
+			else:
+				self.killcontainer.disable()
+				self.bindeventcontainer.disable()
+				selected = None
+			self.uikillselect.set(nodes, selected)
+			self.uifromnodeselect.set(nodes, selected)
+			self.uitonodeselect.set(nodes, selected)
 			self.uinodeinfo.set(self.uiNodeDict())
 		except AttributeError:
 			pass
@@ -671,6 +696,9 @@ class Manager(node.Node):
 		self.printerror('binding event %s from %s to %s'
 										% (eventclass_str, fromnodeidstr, tonodeidstr))
 		eventclass = self.uieventclasses[eventclass_str]
+		if fromnodeidstr is None or tonodeidstr is None:
+			self.messagelog.error('Invalid node to bind event')
+			return
 		self.addEventDistmap(eventclass, eval(fromnodeidstr), eval(tonodeidstr))
 
 	def uiDelDistmap(self):
@@ -681,6 +709,9 @@ class Manager(node.Node):
 		self.printerror('unbinding event %s from %s to %s'
 										% (eventclass_str, fromnodeidstr, tonodeidstr))
 		eventclass = self.uieventclasses[eventclass_str]
+		if fromnodeidstr is None or tonodeidstr is None:
+			self.messagelog.error('Invalid node to unbind event')
+			return
 		self.delEventDistmap(eventclass, eval(fromnodeidstr), eval(tonodeidstr))
 
 	def	uiGetNodeLocations(self):
@@ -715,13 +746,18 @@ class Manager(node.Node):
 		self.killApp()
 
 	def uiLauncherSelectCallback(self, value):
-		launchername = self.uilauncherselect.getSelectedValue(value)
+		if value is None:
+			launchername = None
+		else:
+			launchername = self.uilauncherselect.getSelectedValue(value)
 		try:
 			classes = list(self.launcherdict[launchername]['classes'])
+			classes.sort()
+			selected = 0
 		except KeyError:
 			classes = []
-		classes.sort()
-		self.uiclassselect.set(classes, 0)
+			selected = None
+		self.uiclassselect.set(classes, selected)
 		return value
 
 	def uiSubmitDiaryMessage(self):
@@ -746,8 +782,8 @@ class Manager(node.Node):
 											self.uiclassselect,
 											#self.uilaunchargs, self.uilaunchflag,
 											launchmethod)
-		launchcontainer = uidata.Container('Create New Node')
-		launchcontainer.addObjects(launchobjects)
+		self.launchcontainer = uidata.Container('Create New Node')
+		self.launchcontainer.addObjects(launchobjects)
 
 
 		self.uinodeinfo = uidata.Struct('Node Information', {}, 'r')
@@ -762,11 +798,11 @@ class Manager(node.Node):
 		self.uikillselect = uidata.SingleSelectFromList('Node', [], 0)
 		killmethod = uidata.Method('Kill', self.uiKillNode)
 		killobjects = (self.uikillselect, killmethod)
-		killcontainer = uidata.Container('Kill Node')
-		killcontainer.addObjects(killobjects)
+		self.killcontainer = uidata.Container('Kill Node')
+		self.killcontainer.addObjects(killobjects)
 		nodemanagementcontainer = uidata.LargeContainer('Nodes')
-		nodemanagementcontainer.addObjects((self.uinodeinfo, launchcontainer,
-																				addcontainer, killcontainer))
+		nodemanagementcontainer.addObjects((self.uinodeinfo, self.launchcontainer,
+																				addcontainer, self.killcontainer))
 
 		self.uiapplicationlist = uidata.SingleSelectFromList('Application', [], 0)
 		self.uiUpdateApplications()
@@ -802,8 +838,10 @@ class Manager(node.Node):
 		unbindmethod = uidata.Method('Unbind', self.uiDelDistmap)
 		eventobjects = (self.uifromnodeselect, self.uieventselect,
 										self.uitonodeselect, bindmethod, unbindmethod)
+		self.bindeventcontainer = uidata.Container('Bind Events')
+		self.bindeventcontainer.addObjects(eventobjects)
 		eventcontainer = uidata.LargeContainer('Events')
-		eventcontainer.addObjects(eventobjects)
+		eventcontainer.addObjects((self.bindeventcontainer,))
 
 		self.diarymessage = uidata.String('Message', '', 'rw')
 		diarymethod = uidata.Method('Submit', self.uiSubmitDiaryMessage)
