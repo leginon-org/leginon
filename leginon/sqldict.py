@@ -371,10 +371,7 @@ class SQLDict(object):
 				root[key] = target
 				self._connectData(target, pool)
 			elif isinstance(value, strictdict.FileReference):
-				if self.readimages:
-					needpath.append(key)
-				else:
-					root[key] = None
+				needpath.append(key)
 
 		### find the path
 		if needpath:
@@ -383,11 +380,13 @@ class SQLDict(object):
 			except AttributeError:
 				message = '%s object contains file references, needs a path() method' % (root.__class__,)
 				raise AttributeError(message)
-		## now read data using the found path
+		## now set path in FileReferences, read image
 		for key in needpath:
 			fileref = root[key]
-			# replace reference with actual data
-			root[key] = fileref.read(leginonconfig.mapPath(imagepath))
+			fileref.setPath(leginonconfig.mapPath(imagepath))
+			if self.readimages:
+				# replace reference with actual data
+				root[key] = fileref.read()
 
 		## now the object is final, so we can safely set dbid
 		root.setPersistent(root.pending_dbid)
@@ -1355,8 +1354,7 @@ def datatype(in_dict, qikey=None, qinfo=None):
 		elif a[0] == 'MRC':
 			## set up a FileReference, to be used later
 			## when we know the full path
-			content[a[1]] = strictdict.FileReference(value, 'image path',
-																								Mrc.mrc_to_numeric)
+			content[a[1]] = strictdict.FileReference(value, Mrc.mrc_to_numeric)
 		elif a[0] == 'REF':
 			if value == 0:
 				### NULL reference

@@ -68,20 +68,25 @@ class FileReference(object):
 	     returns the data that was read from file.
 	Once you find the path, call read(path) to return the data.
 	'''
-	def __init__(self, filename, pathkey, loader):
+	def __init__(self, filename, loader):
 		self.filename = filename
 		self.loader = loader
-		self.pathkey = pathkey
+		self.path = None
 		self.data = None
 
-	def read(self, path):
+	def read(self):
+		if self.path is None:
+			raise RuntimeError('no path set for %s' % (self.filename,))
 		if self.data is not None:
 			print 'already read', self.filename
 			return self.data
 		print 'reading image', self.filename
-		fullname = os.path.join(path, self.filename)
+		fullname = os.path.join(self.path, self.filename)
 		self.data = self.loader(fullname)
 		return self.data
+
+	def setPath(self, path):
+		self.path = path
 
 ## still missing from these classes: ##   __copy__
 
