@@ -63,7 +63,8 @@ class CallLauncher(object):
 			try:
 				self.lock.release()
 			except:
-				self.printException()
+				excinfo = sys.exc_info()
+				sys.excepthook(*excinfo)
 
 	def newCallFork(self, targetcall, args=(), kwargs={}):
 		"""
