@@ -62,7 +62,6 @@ def getCameraNames():
 
 registerScope('Tecnai', 'tecnai', 'Tecnai', 'Tecnai TEM')
 
-registerCamera('Tietz', 'tietz', 'Tietz', 'Tietz Default CCD Camera')
 registerCamera('Tietz PXL', 'tietz', 'TietzPXL', 'Tietz PXL CCD Camera')
 registerCamera('Tietz Simulation', 'tietz', 'TietzSimulation',
 								'Tietz Simulation CCD Camera')
