@@ -34,7 +34,7 @@ class Focuser(acquisition.Acquisition):
 		self.manual_check_done = threading.Event()
 		acquisition.Acquisition.__init__(self, id, sesison, nodelocations, target_type='focus', **kwargs)
 
-	def acquire(self, presetdata, target=None, trial=False, emtarget=None):
+	def acquire(self, presetdata, target=None, emtarget=None):
 		'''
 		this replaces Acquisition.acquire()
 		Instead of acquiring an image, we do autofocus
@@ -146,14 +146,8 @@ class Focuser(acquisition.Acquisition):
 			print 'pausing for %s sec.' % (delay,)
 			time.sleep(delay)
 
-			## acquire and publish image
-			labelstring = self.labelstring.get()
-			cor = self.uicorrectimage.get()
-			print 'acquiring focus image'
-			imagedata = self.cam.acquireCameraImageData(correction=cor)
-			fid = data.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=labelstring, target=target)
-			self.publish(fid, database=True)
-			print 'focus image published'
+			## acquire and publish image, like superclass does
+			acquisition.Acquisition.acquire(self, presetdata, target, emtarget)
 
 		## add target to this sometime
 		frd = data.FocuserResultData(initializer=info)
