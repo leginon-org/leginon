@@ -606,10 +606,17 @@ class HoleFinder(object):
 			if 'hole_mean' not in hole.stats:
 				## no mean was calculated
 				continue
-			t = self.icecalc.get_thickness(hole.stats['hole_mean'])
-			ts = self.icecalc.get_stdev_thickness(hole.stats['hole_std'], hole.stats['hole_mean'])
-			if (tmin <= t <= tmax) and (ts < tstd):
+			mean = hole.stats['hole_mean']
+			std = hole.stats['hole_std']
+			tm = self.icecalc.get_thickness(mean)
+			hole.stats['thickness-mean'] = tm
+			ts = self.icecalc.get_stdev_thickness(std, mean)
+			hole.stats['thickness-stdev'] = ts
+			if (tmin <= tm <= tmax) and (ts < tstd):
 				holes2.append(hole)
+				hole.stats['good'] = True
+			else:
+				hole.stats['good'] = False
 		self.__update_result('holes2', holes2)
 
 	def find_holes(self):

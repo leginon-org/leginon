@@ -137,6 +137,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		filename = self.testfile.get()
 		orig = Mrc.mrc_to_numeric(filename)
 		self.hf['original'] = orig
+		self.currentimagedata = None
 		self.originalimage.set(orig)
 
 	def acqImage(self):
@@ -250,6 +251,8 @@ class HoleFinder(targetfinder.TargetFinder):
 			focus_points = []
 		self.goodholesimage.setTargetType('acquisition', acq_points)
 		self.goodholesimage.setTargetType('focus', focus_points)
+		hfprefs = self.storeHoleFinderPrefsData(self.currentimagedata)
+		self.storeHoleStatsData(hfprefs)
 
 	def bypass(self):
 		self.goodholesimage.setTargetType('acquisition', [])
@@ -284,9 +287,24 @@ class HoleFinder(targetfinder.TargetFinder):
 		# ice
 		self.ice()
 
+	def storeHoleStatsData(self, prefs):
+		holes = self.hf['holes']
+		for hole in holes:
+			stats = hole.stats
+			holestats = data.HoleStatsData(session=self.session, prefs=prefs)
+			holestats['row'] = stats['center'][0]
+			holestats['column'] = stats['center'][1]
+			holestats['mean'] = stats['hole_mean']
+			holestats['stdev'] = stats['hole_std']
+			holestats['thickness-mean'] = stats['thickness-mean']
+			holestats['thickness-stdev'] = stats['thickness-stdev']
+			holestats['good'] = stats['good']
+			self.publish(holestats, database=True)
+
 	def storeHoleFinderPrefsData(self, imagedata):
 		hfprefs = data.HoleFinderPrefsData()
 		hfprefs.update({
+			'session': self.session,
 			'image': imagedata,
 			'user-check': self.usercheckon.get(),
 			'skip-auto': self.skipauto.get(),
@@ -319,6 +337,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		})
 
 		self.publish(hfprefs, database=True)
+		return hfprefs
 
 	def findTargets(self, imdata, targetlist):
 		## check if targets already found on this image
@@ -326,10 +345,9 @@ class HoleFinder(targetfinder.TargetFinder):
 		if previous:
 			return
 
-		self.storeHoleFinderPrefsData(imdata)
-
 		## auto or not?
 		self.hf['original'] = imdata['image']
+		self.currentimagedata = imdata
 		if self.skipauto.get():
 			self.bypass()
 		else:
