@@ -206,7 +206,7 @@ class ImageClickEvent(Event):
 		  ('scope', dict),
 		  ('camera', dict),
 		  ('source', str),
-		  ('preset', PresetData)
+		  ('preset', data.PresetData)
 		]
 		return t
 	typemap = classmethod(typemap)
