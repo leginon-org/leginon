@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Node.py,v $
-# $Revision: 1.24 $
+# $Revision: 1.25 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-22 18:43:53 $
+# $Date: 2004-10-22 18:49:44 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -34,9 +34,7 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 	def __init__(self, parent, id, tools=None, **kwargs):
 
 		self.node = None
-		kwargs['style'] = 0
 		wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent, id, **kwargs)
-		print self.GetWindowStyle() & wx.TAB_TRAVERSAL
 
 		self.toolbar = parent.getToolBar()
 

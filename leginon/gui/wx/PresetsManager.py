@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.22 $
+# $Revision: 1.23 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
+# $Date: 2004-10-22 18:49:44 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -381,10 +381,10 @@ class Panel(gui.wx.Node.Panel):
 		self.Bind(wx.EVT_BUTTON, self.onFromScope, self.presets.bfromscope)
 		self.Bind(wx.EVT_BUTTON, self.onNewFromScope, self.presets.bnewfromscope)
 
-		self.importdialog = ImportDialog(self.GetParent(), self.node)
+		self.importdialog = ImportDialog(self, self.node)
 		self.Bind(wx.EVT_BUTTON, self.onImport, self.presets.bimport)
 
-		self.dosedialog = DoseDialog(self.GetParent())
+		self.dosedialog = DoseDialog(self)
 		self.Bind(wx.EVT_BUTTON, self.onAcquireDoseImage, self.presets.bacquire)
 
 		self.Bind(EVT_PRESETS, self.onPresets)
@@ -451,7 +451,7 @@ class Panel(gui.wx.Node.Panel):
 		threading.Thread(target=target, args=args).start()
 
 	def onNewFromScope(self, evt):
-		dialog = NewDialog(self.GetParent(), self.node)
+		dialog = NewDialog(self, self.node)
 		if dialog.ShowModal() == wx.ID_OK:
 			self._presetsEnable(False)
 			target = self.node.fromScope

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Focuser.py,v $
-# $Revision: 1.24 $
+# $Revision: 1.25 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
+# $Date: 2004-10-22 18:49:44 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -63,7 +63,7 @@ class Panel(gui.wx.Acquisition.Panel):
 		self.szmain.Layout()
 
 	def onNodeInitialized(self):
-		self.manualdialog = ManualFocusDialog(self.GetParent(), self.node)
+		self.manualdialog = ManualFocusDialog(self, self.node)
 		self.Bind(EVT_MANUAL_CHECK, self.onManualCheck, self)
 		self.Bind(EVT_MANUAL_CHECK_DONE, self.onManualCheckDone, self)
 

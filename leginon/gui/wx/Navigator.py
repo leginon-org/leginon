@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Navigator.py,v $
-# $Revision: 1.23 $
+# $Revision: 1.24 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
+# $Date: 2004-10-22 18:49:44 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -62,7 +62,7 @@ class Panel(gui.wx.Node.Panel):
 		self.Bind(EVT_LOCATIONS, self.onLocations)
 
 	def onNodeInitialized(self):
-		self.locationsdialog = StageLocationsDialog(self.GetParent(), self.node)
+		self.locationsdialog = StageLocationsDialog(self, self.node)
 
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
 											id=gui.wx.ToolBar.ID_SETTINGS)
