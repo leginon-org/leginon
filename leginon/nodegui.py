@@ -12,7 +12,8 @@ class SpecWidget(Frame):
 		Frame.__init__(self, parent, **kwargs)
 		self.spec = spec
 		self.uiclient = uiclient
-		self['bg'] = '#006699'
+		self['bg'] = '#4488BB'
+		self.buttoncolor = '#7AA6C5'
 
 class Container(SpecWidget):
 	def __init__(self, parent, uiclient, spec):
@@ -21,7 +22,7 @@ class Container(SpecWidget):
 
 	def build(self):
 		self.name = self.spec['name']
-		self.label = Label(self, text = self.name)
+		self.label = Label(self, text = self.name, bg=self['bg'])
 		self.label.pack()
 		for spec in self.spec['content']:
 			spectype = spec['spectype']
@@ -43,7 +44,7 @@ class NotebookContainer(SpecWidget):
 
 	def build(self):
 		self.name = self.spec['name']
-		self.label = Label(self, text = self.name)
+		self.label = Label(self, text = self.name, bg=self['bg'])
 		self.label.pack()
 
 		self.notebook = Pmw.NoteBook(self)
@@ -118,15 +119,15 @@ class Data(SpecWidget):
 		headframe = Frame(self)
 
 		### label
-		lab = Label(headframe, text=self.name)
-		lab.pack(side=LEFT)
+		lab = Label(headframe, text=self.name, bg=self['bg'])
+		lab.pack(side=LEFT, fill=BOTH)
 
 		### optional get/set
 		if self.permissions is not None:
 			if 'r' in self.permissions:
-				Button(headframe, text='Get', command=self.getServer).pack(side=LEFT)
+				Button(headframe, text='Get', command=self.getServer, bg=self.buttoncolor).pack(side=LEFT)
 			if 'w' in self.permissions:
-				Button(headframe, text='Set', command=self.setServer).pack(side=LEFT)
+				Button(headframe, text='Set', command=self.setServer, bg=self.buttoncolor).pack(side=LEFT)
 
 		headframe.pack(side=TOP)
 
@@ -182,7 +183,7 @@ class CheckbuttonData(Data):
 
 	def buildWidget(self, parent):
 		self.tkvar = BooleanVar()
-		c = Checkbutton(parent, variable=self.tkvar)
+		c = Checkbutton(parent, variable=self.tkvar, bg=self.buttoncolor)
 		return c
 
 	def setWidget(self, value):
@@ -314,7 +315,7 @@ class Method(SpecWidget):
 		self.returntype = returntype
 		if returntype in ('array','string'):
 			wid = Frame(self)
-			widlab = Label(wid, text='Result:')
+			widlab = Label(wid, text='Result:',bg=self['bg'])
 			self.retwidget = Text(wid, height=1,width=30,wrap=NONE)
 			self.retwidget['state'] = DISABLED
 			retscroll = Scrollbar(wid, orient=HORIZONTAL)
@@ -358,6 +359,8 @@ class NodeGUI(Frame):
 		if self.mainframe is not None:
 			self.mainframe.destroy()
 		self.mainframe = NotebookContainer(self, self.uiclient, self.uiclient.spec)
+		self.name = self.mainframe.name
+		print 'NAME', self.name
 		self.mainframe.pack()
 
 

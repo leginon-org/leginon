@@ -292,7 +292,7 @@ class Manager(node.Node):
 		self.registerUIData('Args', 'string', default=''),
 		self.registerUIData('New Process', 'boolean', default=False)
 		)
-		spec1 = self.registerUIMethod(self.uiLaunch, 'Launch', argspec)
+		spec1 = self.registerUIMethod(self.uiLaunch, 'Launch Node', argspec)
 
 
 		argspec = (
@@ -316,11 +316,11 @@ class Manager(node.Node):
 		)
 		saveapp = self.registerUIMethod(self.saveApp, 'Save', argspec)
 		loadapp = self.registerUIMethod(self.loadApp, 'Load', argspec)
-		launchapp = self.registerUIMethod(self.launchApp, 'Launch', ())
+		launchapp = self.registerUIMethod(self.launchApp, 'Launch Application', ())
 
 		app = self.registerUIContainer('Application', (saveapp, loadapp, launchapp))
 
-		self.registerUISpec('MANAGER', (nodespec, spec1, spec2, spec3, app, nodetree))
+		self.registerUISpec('Manager', (nodespec, spec1, spec2, spec3, app, nodetree))
 
 	def nodeDict(self):
 		"""
@@ -392,7 +392,7 @@ if __name__ == '__main__':
 		import Tkinter
 		tk = Tkinter.Tk()
 		mgui = nodegui.NodeGUI(tk, node=m)
-		#tk.wm_title('Leginon Manager')
+		tk.wm_title('Leginon Manager')
 		mgui.pack()
 #		t = threading.Thread(name = 'Tk GUI thread', target = tk.mainloop)
 #		t.setDaemon(1)
