@@ -119,14 +119,14 @@ class HoleFinder(targetfinder.TargetFinder):
 		orig = Mrc.mrc_to_numeric(filename)
 		self.hf['original'] = orig
 		self.currentimagedata = None
-		self.setImage('Original', orig)
+		self.setImage(orig, 'Original')
 
 	def acqImage(self):
 		self.cam.uiApplyAsNeeded()
 		imdata = self.cam.acquireCameraImageData()
 		orig = imdata['image']
 		self.hf['original'] = orig
-		self.setImage('Original', orig)
+		self.setImage(orig, 'Original')
 
 	def findEdges(self):
 		self.logger.info('find edges')

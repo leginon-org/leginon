@@ -227,13 +227,13 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		'blobs': {
 			'on': True,
 			'border': 0,
-			'max blobs': 100,
-			'min blob size': 10,
-			'max blob size': 10000,
-			'min blob mean': 1000,
-			'max blob mean': 20000,
-			'min blob stdev': 10,
-			'max blob stdev': 500,
+			'max': 100,
+			'min size': 10,
+			'max size': 10000,
+			'min mean': 1000,
+			'max mean': 20000,
+			'min stdev': 10,
+			'max stdev': 500,
 		},
 	}
 
@@ -572,17 +572,17 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 	def storeSquareFinderPrefs(self):
 		prefs = data.SquareFinderPrefsData()
 		prefs['image'] = self.mosaicimagedata
-		prefs['lpf-size'] = self.settings['size']
-		prefs['lpf-sigma'] = self.settings['sigma']
+		prefs['lpf-size'] = self.settings['lpf']['size']
+		prefs['lpf-sigma'] = self.settings['lpf']['sigma']
 		prefs['threshold'] = self.settings['threshold']
-		prefs['border'] = self.settings['border']
-		prefs['maxblobs'] = self.settings['max blobs']
-		prefs['minblobsize'] = self.settings['min blob size']
-		prefs['maxblobsize'] = self.settings['max blob size']
-		prefs['mean-min'] = self.settings['min blob mean']
-		prefs['mean-max'] = self.settings['max blob mean']
-		prefs['std-min'] = self.settings['min blob stdev']
-		prefs['std-max'] = self.settings['max blob stdev']
+		prefs['border'] = self.settings['blobs']['border']
+		prefs['maxblobs'] = self.settings['blobs']['max']
+		prefs['minblobsize'] = self.settings['blobs']['min size']
+		prefs['maxblobsize'] = self.settings['blobs']['max size']
+		prefs['mean-min'] = self.settings['blobs']['min mean']
+		prefs['mean-max'] = self.settings['blobs']['max mean']
+		prefs['std-min'] = self.settings['blobs']['min stdev']
+		prefs['std-max'] = self.settings['blobs']['max stdev']
 		self.publish(prefs, database=True)
 		return prefs
 
@@ -596,8 +596,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		message = 'finding squares'
 		self.logger.info(message)
 
-		size = self.settings['size']
-		sigma = self.settings['sigma']
+		size = self.settings['lpf']['size']
+		sigma = self.settings['lpf']['sigma']
 		kernel = convolver.gaussian_kernel(size, sigma)
 		self.convolver.setKernel(kernel)
 		image = self.convolver.convolve(image=original_image)
@@ -610,16 +610,16 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 		## find blobs
 		blobs = imagefun.find_blobs(original_image, image,
-																self.settings['border'],
-																self.settings['max blobs'],
-																self.settings['min blob size'],
-																self.settings['max blob size'])
+																self.settings['blobs']['border'],
+																self.settings['blobs']['max'],
+																self.settings['blobs']['min size'],
+																self.settings['blobs']['max size'])
 
 		## use stats to find good ones
-		mean_min = self.settings['min blob mean']
-		mean_max = self.settings['max blob mean']
-		std_min = self.settings['min blob stdev']
-		std_max = self.settings['max blob stdev']
+		mean_min = self.settings['blobs']['min mean']
+		mean_max = self.settings['blobs']['max mean']
+		std_min = self.settings['blobs']['min stdev']
+		std_max = self.settings['blobs']['max stdev']
 		targets = []
 		prefs = self.storeSquareFinderPrefs()
 		rows, columns = image.shape

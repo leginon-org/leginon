@@ -1735,13 +1735,13 @@ class BlobFinderSettingsData(Data):
 		return SettingsData.typemap() + (
 			('on', bool),
 			('border', int),
-			('max blobs', int),
-			('min blob size', int),
-			('max blob size', int),
-			('min blob mean', float),
-			('max blob mean', float),
-			('min blob stdev', float),
-			('max blob stdev', float),
+			('max', int),
+			('min size', int),
+			('max size', int),
+			('min mean', float),
+			('max mean', float),
+			('min stdev', float),
+			('max stdev', float),
 		)
 	typemap = classmethod(typemap)
 

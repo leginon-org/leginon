@@ -74,11 +74,11 @@ class Dialog(wx.Dialog):
 	def Show(self, show):
 		if show:
 			self.getNodeSettings()
-		wx.Dialog.Show(self, show)
+		return wx.Dialog.Show(self, show)
 
 	def ShowModal(self):
 		self.getNodeSettings()
-		wx.Dialog.ShowModal(self)
+		return wx.Dialog.ShowModal(self)
 
 	def bindSettings(self, widgets):
 		for widget in widgets.values():
