@@ -192,7 +192,6 @@ class EM(node.Node):
 			'vacuum status',
 			'column valves',
 			'turbo pump',
-			'column pressure',
 			'inserted',
 		]
 
@@ -416,8 +415,7 @@ class EM(node.Node):
 		if keys:
 			self.state = self.getEM(keys, withoutkeys=['image data',
 																									'vacuum status',
-																									'column valves',
-																									'column pressure'])
+																									'column valves'])
 
 		self.start()
 		self.publishData()
