@@ -78,7 +78,14 @@ class DriftManager(watcher.Watcher):
 		imageid = imagedata['id']
 		self.references[nodeid] = {'imageid': imageid, 'image': imagedata, 'shift': {}}
 
+	def uiMonitorDrift(self):
+		## calls monitorDrift in a new thread
+		t = threading.Thread(target=self.monitorDrift)
+		t.setDaemon(1)
+		t.start()
+
 	def monitorDrift(self, emdata=None):
+		print 'DriftManager monitoring drift'
 		if emdata is not None:
 			## use emdata to set up scope and camera
 			emdata['id'] = ('all em',)
@@ -239,7 +246,7 @@ class DriftManager(watcher.Watcher):
 
 		camconfig = self.cam.configUIData()
 		measuremeth = uidata.Method('Measure Drift Once', self.uiMeasureDrift)
-		monitormeth = uidata.Method('Monitor Drift', self.monitorDrift)
+		monitormeth = uidata.Method('Monitor Drift', self.uiMonitorDrift)
 		self.driftvalue = uidata.Float('Drift Rate', 0.0, 'r')
 		
 		self.im = uidata.Image('Drift Image', None, 'r')
