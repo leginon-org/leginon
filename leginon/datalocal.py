@@ -8,12 +8,10 @@ class Server(leginonobject.LeginonObject):
 		self.datahandler = dh
 
 class PullServer(Server):
-	def datafromid(self, data_id):
-		return self.datahandler.query(data_id)
+	pass
 
 class PushServer(Server):
-	def datatoid(self, data_id, newdata):
-		return self.datahandler.insert(newdata)
+	pass
 
 class Client(leginonobject.LeginonObject):
 	def __init__(self, server):
@@ -21,30 +19,12 @@ class Client(leginonobject.LeginonObject):
 		self.server = server
 
 class PullClient(Client):
-	def pull(self, data_id):
-		return copy.deepcopy(self.server.datafromid(data_id))
+	def pull(self, id):
+		return copy.deepcopy(self.server.datahandler.query(id))
 
 class PushClient(Client):
-	def push(self, data_id, data):
-		# copy the data_id?
-		return self.server.datatoid(data_id, copy.deepcopy(data))
+	def push(self, idata):
+		return self.server.datahandler.insert(copy.deepcopy(idata))
 
 if __name__ == '__main__':
-	import threading
-
-	class dummyServer:
-		def datafromid(self, data_id):
-			return {data_id : 'foo bar'}
-		def datatoid(self, data_id, data):
-			print `{data_id : data}`
-
-	pullserver = PullServer(dummyServer())
-	pushserver = PushServer(dummyServer())
-
-	pullclient = PullClient(pullserver)
-	pushclient = PushClient(pushserver)
-	print 'Test pulling:'
-	print pullclient.pull('my data id')
-	print 'Test pushing:'
-	print pushclient.push('my data id', [1,2,3,4])
-
+	pass
