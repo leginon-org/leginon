@@ -40,8 +40,11 @@ class MosaicNavigator(navigator.Navigator):
 		nearesttile = None
 		for tile in mosaicdata:
 			position = mosaicdata[tile]['position']
+			print tile, 'position =', position
 			deltaposition = ((position[0] - row), (position[1] - column))
+			print tile, 'deltaposition =', deltaposition
 			magnitude = math.sqrt((deltaposition[0])**2 + (deltaposition[1])**2)
+			print tile, 'magnitude =', magnitude
 			if magnitude < maxmagnitude:
 				maxmagnitude = magnitude
 				nearestdelta = deltaposition
