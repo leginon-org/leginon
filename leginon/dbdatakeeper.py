@@ -42,7 +42,6 @@ class DBDataKeeper(datahandler.DataHandler):
 				self.printerror('cannot convert database result to data instance')
 				del result[i]
 		map(self.file2image, result)
-		#print 'querying done'
 		return result
 
 		# return an instance
@@ -63,9 +62,8 @@ class DBDataKeeper(datahandler.DataHandler):
 		table = newdatacopy.__class__.__name__
 		definition = sqldict.sqlColumnsDefinition(newdatacopy)
 		formatedData = sqldict.sqlColumnsFormat(newdatacopy)
-		self.dbd.createSQLTable(table,definition)
+		self.dbd.createSQLTable(table, definition)
 		self.dbd.myTable = self.dbd.Table(table)
-		
 		return self.dbd.myTable.insert([formatedData])
 
 		# images with be converted to an mrc file here, the filename will be

@@ -143,11 +143,11 @@ class Corrector(node.Node):
 	def storePlan(self, plandata):
 		self.publish(plandata, database=True)
 
-	def acquireSeries(self, n):
+	def acquireSeries(self, n, correction=True):
 		series = []
 		for i in range(n):
 			print 'acquiring %s of %s' % (i+1, n)
-			imagedata = self.cam.acquireCameraImageData()
+			imagedata = self.cam.acquireCameraImageData(correction=correction)
 			numimage = imagedata['image']
 			camstate = imagedata['camera']
 			scopestate = imagedata['scope']
@@ -172,7 +172,7 @@ class Corrector(node.Node):
 
 		navg = self.navgdata.get()
 
-		seriesinfo = self.acquireSeries(navg)
+		seriesinfo = self.acquireSeries(navg, False)
 		series = seriesinfo['image series']
 		seriescam = seriesinfo['camera']
 		seriesscope = seriesinfo['scope']
