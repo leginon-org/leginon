@@ -81,18 +81,18 @@ class Logger(logging.Logger):
 		self.loglevelselect.setCallback(self.onLevelSelect)
 		self.onLevelSelect(0)
 		self.container.addObject(self.loglevelselect,
-															position={'position': (0, 0), 'span': (2, 1)})
+															position={'position': (0, 1), 'span': (2, 1)})
 
 		self.propagateflag = uidata.Boolean('Propagate', False, 'rw',
 																		callback=self.onPropagate, persist=True,
 																		tooltip='If the log event is not handled,'
 																			+ ' propagate it up to the parent logger')
-		self.container.addObject(self.propagateflag, position={'position': (0, 1)})
+		self.container.addObject(self.propagateflag, position={'position': (0, 0)})
 
 		self.printlog = uidata.Boolean('Print', False, 'rw',
 																		callback=self.onPrintLog, persist=True,
 															tooltip='Print log events to the standard output')
-		self.container.addObject(self.printlog, position={'position': (1, 1)})
+		self.container.addObject(self.printlog, position={'position': (1, 0)})
 
 		filename = os.path.join('log', self.name + '.log')
 		self.filename = uidata.String('Filename', filename, 'rw', persist=True,
@@ -101,8 +101,8 @@ class Logger(logging.Logger):
 																	tooltip='Write log events to a file')
 		self.filename.setCallback(self.onFilename)
 		self.filelog.setCallback(self.onFileLog)
-		self.container.addObject(self.filelog, position={'position': (2, 1)})
-		self.container.addObject(self.filename, position={'position': (3, 1)})
+		self.container.addObject(self.filelog, position={'position': (2, 0)})
+		self.container.addObject(self.filename, position={'position': (2, 1)})
 
 logging.setLoggerClass(Logger)
 

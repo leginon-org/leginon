@@ -58,13 +58,13 @@ class DataHandler(object):
 		self.dbdatakeeper = dbdatakeeperclass(loggername=self.logger.name)
 		if self.datakeeper.logger.container not in self.logger.container.values():
 			self.logger.container.addObject(self.datakeeper.logger.container,
-																			position={'span': (1,2)})
+																			position={'span': (1,2), 'expand': 'all'})
 		if self.databinder.logger.container not in self.logger.container.values():
 			self.logger.container.addObject(self.databinder.logger.container,
-																			position={'span': (1,2)})
+																			position={'span': (1,2), 'expand': 'all'})
 		if self.dbdatakeeper.logger.container not in self.logger.container.values():
 			self.logger.container.addObject(self.dbdatakeeper.logger.container,
-																			position={'span': (1,2)})
+																			position={'span': (1,2), 'expand': 'all'})
 		self.node = mynode
 
 	def exit(self):
@@ -164,10 +164,10 @@ class Node(leginonobject.LeginonObject):
 	def initializeLoggerUserInterface(self):
 		if self.datahandler.logger.container not in self.logger.container.values():
 			self.logger.container.addObject(self.datahandler.logger.container,
-																			position={'span': (1,2)})
+																			position={'span': (1,2), 'expand': 'all'})
 		if self.server.logger.container not in self.logger.container.values():
 			self.logger.container.addObject(self.server.logger.container,
-																			position={'span': (1,2)})
+																			position={'span': (1,2), 'expand': 'all'})
 
 	def initializeLogger(self, name=None):
 		if hasattr(self, 'logger'):
