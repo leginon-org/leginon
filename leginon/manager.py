@@ -119,7 +119,8 @@ class Manager(node.Node):
 
 		# no handle if this is a distributed event getting confirmed
 		eventid = ievent['eventid']
-		nodeid = eventid[:-1]
+		## node that just confirmed, not the original node
+		nodeid = ievent['id'][:-1]
 		if eventid in self.disteventswaiting:
 			if nodeid in self.disteventswaiting[eventid]:
 				self.disteventswaiting[eventid][nodeid].set()
@@ -177,7 +178,6 @@ class Manager(node.Node):
 
 		### distribute event
 		for to_node in do:
-			print 'TONODE', to_node
 			try:
 				### this is a special case of outputEvent
 				### so we don't use outputEvent here
@@ -200,10 +200,9 @@ class Manager(node.Node):
 		### come through this handler
 		if ievent['confirm'] and do:
 			## need confirmation from all nodes
-			print 'WAITING FOR DISTRIB EVENTS TO CONFIRM', ievent
 			for e in ewaits[eventid].values():
 				e.wait()
-			print 'DONE WAITING FOR DISTRIB...'
+			del ewaits[eventid]
 			## now confirm back to original event sender
 			## in this case, don't confirm unless this
 			## event was actually intended for this handler
@@ -404,7 +403,6 @@ class Manager(node.Node):
 		t = threading.Thread(target=self.waitNode, args=args)
 		t.start()
 		nodeid = self.id + (name,)
-		print 'NODEID', nodeid
 		return nodeid
 
 	def waitNode(self, launcher, newproc, target, name, nodeargs, dependencies):
@@ -418,9 +416,7 @@ class Manager(node.Node):
 
 		#self.waitNodes(dependenciescopy)
 		ev = event.LaunchEvent(id=self.ID(), newproc=newproc, targetclass=target, args=args)
-		print 'OUTPUT LaunchEvent', target
 		self.outputEvent(ev, launcher, wait=True)
-		print 'DONE OUTPUT LaunchEvent', target
 
 		#attempts = 5
 		#for i in range(attempts):
