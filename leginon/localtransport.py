@@ -25,7 +25,6 @@ class Server(object):
 
 	def location(self):
 		return {'instance': self}
-		#return {}
 
 class Client(object):
 	def __init__(self, location):
