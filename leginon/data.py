@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import os
+import leginonconfig
 import leginonobject
 import array
 import strictdict
@@ -415,17 +417,16 @@ class ImageData(Data):
 		idstr = '-'.join(idstrlist)
 
 		if numdata is not None:
-			# filename = ???
+			## create a directory to store images
+			impath = leginonconfig.IMAGE_PATH
+			filename = '%s_%s.mrc' % (session, idstr)
+			fullfilename = os.path.join(impath, filename)
 			try:
-				filename = os.environ['LEGINONPATH'] + '/images/%s-%s.mrc' % (session, idstr)
-			except:
-				filename = './images/%s-%s.mrc' % (session, idstr)
-			try:
-				Mrc.numeric_to_mrc(numdata, filename)
+				Mrc.numeric_to_mrc(numdata, fullfilename)
 			except:
 				raise
 				self.printerror('error converting image to file')
-			self['filename'] = filename
+			self['filename'] = fullfilename
 
 	def load(self, filename=None):
 		'''
