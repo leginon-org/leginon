@@ -127,9 +127,6 @@ class Node(leginonobject.LeginonObject):
 		c = self.registerUIContainer('Node Methods', (a,b))
 		return c
 
-	def registerUIFunction(self, func, argspec, alias=None, returntype=None):
-		self.uiserver.registerFunction(func, argspec, alias, returntype)
-
 	def registerUIMethod(self, func, name, argspec, returnspec=None):
 		return self.uiserver.registerMethod(func, name, argspec, returnspec)
 

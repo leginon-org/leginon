@@ -28,6 +28,8 @@ class Data(SpecWidget):
 		name = self.name = self.spec['name']
 		self.type = self.spec['xmlrpctype']
 		self.enum = self.spec['enum']
+		self.permissions = self.spec['permissions']
+
 		if 'default' in self.spec:
 			self.default = self.spec['default']
 		else:
@@ -66,6 +68,15 @@ class Data(SpecWidget):
 		else:
 			return self.tkvar.get()
 
+	def setServer(self):
+		value = self.get()
+		r = self.uiclient.execute('SET', (self.name, value))
+		self.set(r)
+
+	def getServer(self):
+		r = self.uiclient.execute('GET', (self.name,))
+		self.set(r)
+
 # types:
 #('boolean', 'integer', 'float', 'string', 'array', 'struct', 'date', 'binary')
 	def arg_choice(self, name, choices):
@@ -83,6 +94,8 @@ class Data(SpecWidget):
 		self.datawidget.pack(side=LEFT)
 
 	def arg_entry(self, name, type):
+			
+
 		if type == 'integer':
 			self.tkvar = IntVar()
 		if type == 'float':
@@ -94,6 +107,9 @@ class Data(SpecWidget):
 		if type == 'struct':
 			self.tkvar = StringVar()
 		Label(self, text=name, bg=self.bgcolor).pack(side=LEFT)
+		if self.permissions == 'rw':
+			Button(self, text='Set', command=self.setServer).pack()
+			Button(self, text='Get', command=self.getServer).pack()
 		self.datawidget = Entry(self, textvariable=self.tkvar, width=10, bg=self.bgcolor)
 		self.datawidget.pack(side=LEFT)
 
@@ -324,7 +340,7 @@ if __name__ == '__main__':
 	hostname = sys.argv[1]
 	port = sys.argv[2]
 	gui = NodeGUI(tk, sys.argv[1], sys.argv[2])
-	newtitle = 'Interface to %s' % gui.id
-	tk.wm_title(newtitle)
+	#newtitle = 'Interface to %s' % gui.id
+	#tk.wm_title(newtitle)
 	gui.pack()
 	tk.mainloop()

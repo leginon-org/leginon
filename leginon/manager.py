@@ -273,6 +273,7 @@ class Manager(node.Node):
 		self.launcherlist = []
 		self.launcherdict = {}
 
+		test = self.registerUIData('Test', 'string', permissions='rw')
 
 		argspec = (
 		self.registerUIData('Name', 'string', permissions='rw'),
@@ -284,7 +285,7 @@ class Manager(node.Node):
 
 		spec1 = self.registerUIMethod(self.uiLaunch, 'Launch', argspec)
 
-		self.registerUISpec('MANAGER', (nodespec, spec1))
+		self.registerUISpec('MANAGER', (nodespec, test, spec1))
 
 		return
 

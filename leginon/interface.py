@@ -95,10 +95,21 @@ class ContainerSpec(SpecObject):
 class Server(xmlrpcserver.xmlrpcserver):
 	def __init__(self, id=()):
 		xmlrpcserver.xmlrpcserver.__init__(self)
-		self.funcdict = {}
-		self.funclist = []
+		self.data = {}
 		#self.server.register_function(self.uiMethods, 'methods')
 		self.server.register_function(self.uiSpec, 'spec')
+		self.server.register_function(self.uiGet, 'GET')
+		self.server.register_function(self.uiSet, 'SET')
+
+	def uiGet(self, name):
+		if self.data[name] is None:
+			return 'None'
+		else:
+			return self.data[name]
+
+	def uiSet(self, name, value):
+		self.data[name] = value
+		return self.data[name]
 
 	def registerMethod(self, func, name, argspec, returnspec=None):
 		self.server.register_function(func, name)
@@ -106,6 +117,7 @@ class Server(xmlrpcserver.xmlrpcserver):
 		return m
 
 	def registerData(self, name, xmlrpctype, permissions='r', enum=(), default=None):
+		self.data[name] = default
 		d = DataSpec(name, xmlrpctype, permissions, enum, default)
 		return d
 
@@ -116,43 +128,6 @@ class Server(xmlrpcserver.xmlrpcserver):
 	def registerSpec(self, name=None, content=()):
 		self.spec = ContainerSpec(name, content)
 		return self.spec
-
-	def registerFunction(self, func, argspec, alias=None, returntype=None):
-		if alias is None:
-			alias = func.__name__
-
-### I have commented some things until client makes RPC calls with kwargs dict.
-### Until then, there is no need to associate the original arg name
-### with the arg.  Instead calls will depend on positional arguments
-### Therefore, argspec must be ordered properly and argspec['name'] is ignored
-### Also must differentiate between method and function for inspect
-#		argnames = inspect.getargspec(method.im_func)[0]
-		for argdict in argspec:
-			## validate argspec
-			
-#			if argdict['name'] not in argnames:
-#				raise RuntimeError('bad argname in argdict')
-			xmlrpctype = argdict['type']
-			if xmlrpctype not in XMLRPCTYPES:
-				if type(xmlrpctype) not in (dict,tuple,list):
-					raise RuntimeError('bad xmlrpctype')
-
-		self.funcdict[alias] = {'func': func, 'argspec':argspec, 'returntype':returntype}
-		self.funclist.append(alias)
-		self.server.register_function(func, alias)
-
-	def uiMethods(self):
-		'makes some of self.funcdict public to rpc clients'
-		funcstruct = {}
-		fdict = {}
-		for key,value in self.funcdict.items():
-			fdict[key] = {}
-			fdict[key]['argspec'] = value['argspec']
-			if value['returntype'] is not None:
-				fdict[key]['return'] = value['returntype']
-		funcstruct['dict'] = fdict
-		funcstruct['list'] = self.funclist
-		return funcstruct
 
 	def uiSpec(self):
 		return self.spec.dict()
@@ -171,14 +146,7 @@ class Client(object):
 		return self.spec
 
 	def execute(self, funcname, args):
-		#args = self.funcdict[funcname].argvalues()
 		return getattr(self.proxy, funcname)(*args)
-
-	def setarg(self, funcname, argname, value):
-		self.funcdict[funcname].setarg(argname, value)
-
-	def getargtype(self, funcname, argname):
-		return self.funcdict[funcname].type(argname)
 
 
 class TestNode(object):
