@@ -752,6 +752,73 @@ class Manager(node.Node):
 		except ValueError:
 			self.logger.exception('Unable to import application from "%s"' % filename)
 
+	def sortNodes(self):
+		# this sucks
+		sortclasses = {}
+		for nodename, location in self.nodelocations.items():
+			clsname = location['class string']
+			priority, sortcls = nodeclassreg.getSortClass(clsname)
+			if sortcls not in sortclasses:
+				sortclasses[sortcls] = []
+			sortclasses[sortcls].append((priority, nodename))
+
+		for nodes in sortclasses.values():
+			nodes.sort()
+
+		for sortcls, nodes in sortclasses.items():
+			sortclasses[sortcls] = map(lambda n: n[1], nodes)
+
+
+		if 'Pipeline' in sortclasses:
+			froms = {}
+			tos = {}
+			for node in sortclasses['Pipeline']:
+				froms[node] = []
+				tos[node] = []
+			for eventclass, fromnode in self.distmap.items():
+				for node in sortclasses['Pipeline']:
+					if issubclass(eventclass,
+								(event.ImageTargetListPublishEvent, event.ImagePublishEvent)):
+						if node in fromnode:
+							for tonode in sortclasses['Pipeline']:
+								if tonode in fromnode[node]:
+									froms[node].append(tonode)
+									tos[tonode].append(fromnode)
+			starters = []
+			for key, value in tos.items():
+				if not value:
+					starters.append(key)
+
+			sorted = []
+			for starter in starters:
+				sorted += depth(starter, froms)
+			for node in sortclasses['Pipeline']:
+				if node not in sorted:
+					sorted.append(node)
+			sortclasses['Pipeline'] = []
+			for s in sorted:
+				if s not in sortclasses['Pipeline']:
+					sortclasses['Pipeline'].append(s)
+
+		nodeorder = []
+		for sortcls in ['Pipeline', 'Calibrations', 'Utility']:
+			try:
+				nodeorder += sortclasses[sortcls]
+				del sortclasses[sortcls]
+			except KeyError:
+				pass
+
+		for nodes in sortclasses.values():
+			nodeorder += nodes
+
+		return nodeorder
+
+def depth(parent, map):
+	l = [parent]
+	for child in map[parent]:
+		l += depth(child, map)
+	return l
+
 if __name__ == '__main__':
 	import sys
 	import time

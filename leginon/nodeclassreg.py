@@ -12,8 +12,9 @@ import sys
 
 reg_dict = {}
 reg_list = []
+sortclasses = {}
 
-def registerNodeClass(modulename, classname):
+def registerNodeClass(modulename, classname, sortclass=None):
 	### find the module
 	try:
 		modinfo = imp.find_module(modulename)
@@ -46,6 +47,9 @@ def registerNodeClass(modulename, classname):
 	### everything worked, record this in the registry
 	reg_dict[classname] = {'module': mod}
 	reg_list.append(classname)
+	if sortclass not in sortclasses:
+		sortclasses[sortclass] = []
+	sortclasses[sortclass].append(classname)
 
 def getNodeClass(classname):
 	if classname not in reg_dict:
@@ -58,35 +62,47 @@ def getNodeClass(classname):
 def getNodeClassNames():
 	return reg_list
 
+def getSortClass(clsname):
+	for key, value in sortclasses.items():
+		if clsname in value:
+			return value.index(clsname), key
+	return None, None
+
 ### register Node classes in the order you want them listed publicly
-registerNodeClass('corrector', 'Corrector')
-registerNodeClass('matrixcalibrator', 'MatrixCalibrator')
-registerNodeClass('pixelsizecalibrator', 'PixelSizeCalibrator')
-registerNodeClass('beamtiltcalibrator', 'BeamTiltCalibrator')
-#registerNodeClass('intensitycalibrator', 'IntensityCalibrator')
-registerNodeClass('presets', 'PresetsManager')
-registerNodeClass('dosecalibrator', 'DoseCalibrator')
-registerNodeClass('acquisition', 'Acquisition')
-registerNodeClass('focuser', 'Focuser')
-registerNodeClass('driftmanager', 'DriftManager')
-registerNodeClass('gonmodeler', 'GonModeler')
-registerNodeClass('navigator', 'Navigator')
-#registerNodeClass('imviewer', 'ImViewer')
-registerNodeClass('targetfinder', 'ClickTargetFinder')
-registerNodeClass('targetfinder', 'MosaicClickTargetFinder')
-registerNodeClass('holefinder', 'HoleFinder')
-#registerNodeClass('squarefinder', 'SquareFinder')
-#registerNodeClass('squarefinder2', 'SquareFinder2')
-registerNodeClass('rasterfinder', 'RasterFinder')
-registerNodeClass('manualacquisition', 'ManualAcquisition')
-#registerNodeClass('simpleacquisition', 'SimpleAcquisition')
-registerNodeClass('targetmaker', 'MosaicTargetMaker')
-#registerNodeClass('applicationeditor', 'ApplicationEditor')
-#registerNodeClass('administration', 'Administration')
-#registerNodeClass('robot', 'RobotNotification')
-registerNodeClass('EM', 'EM')
+registerNodeClass('EM', 'EM', 'Utility')
+registerNodeClass('corrector', 'Corrector', 'Utility')
+registerNodeClass('presets', 'PresetsManager', 'Utility')
+registerNodeClass('driftmanager', 'DriftManager', 'Utility')
+registerNodeClass('navigator', 'Navigator', 'Utility')
+registerNodeClass('manualacquisition', 'ManualAcquisition', 'Utility')
+
+registerNodeClass('dosecalibrator', 'DoseCalibrator', 'Calibrations')
+registerNodeClass('pixelsizecalibrator', 'PixelSizeCalibrator', 'Calibrations')
+registerNodeClass('matrixcalibrator', 'MatrixCalibrator', 'Calibrations')
+registerNodeClass('beamtiltcalibrator', 'BeamTiltCalibrator', 'Calibrations')
+registerNodeClass('gonmodeler', 'GonModeler', 'Calibrations')
+
+registerNodeClass('targetmaker', 'MosaicTargetMaker', 'Pipeline')
+registerNodeClass('acquisition', 'Acquisition', 'Pipeline')
+registerNodeClass('targetfinder', 'MosaicClickTargetFinder', 'Pipeline')
+registerNodeClass('focuser', 'Focuser', 'Pipeline')
+registerNodeClass('targetfinder', 'ClickTargetFinder', 'Pipeline')
+registerNodeClass('holefinder', 'HoleFinder', 'Pipeline')
+registerNodeClass('rasterfinder', 'RasterFinder', 'Pipeline')
+registerNodeClass('fftmaker', 'FFTMaker', 'Pipeline')
+
+# need new interface
+#registerNodeClass('robot', 'RobotControl', 'Pipeline')
+#registerNodeClass('robot', 'RobotNotification', 'Pipeline')
 #registerNodeClass('emailnotification', 'Email')
-registerNodeClass('fftmaker', 'FFTMaker')
-#registerNodeClass('webcam', 'Webcam')
-#registerNodeClass('robot', 'RobotControl')
+#registerNodeClass('squarefinder', 'SquareFinder', 'Pipeline')
+#registerNodeClass('squarefinder2', 'SquareFinder2', 'Pipeline')
+
+# not fully implemented
+#registerNodeClass('intensitycalibrator', 'IntensityCalibrator', 'Calibrations')
+#registerNodeClass('webcam', 'Webcam', 'Utility')
+
+# depreciated
+#registerNodeClass('imviewer', 'ImViewer')
+#registerNodeClass('simpleacquisition', 'SimpleAcquisition', 'Pipeline')
 
