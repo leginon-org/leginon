@@ -103,7 +103,7 @@ class Server(object):
 		client = self.clientclass(self.location())
 		try:
 			client.push(ExitException())
-		except EOFError:
+		except (IOError, EOFError):
 			pass
 
 class Client(object):
