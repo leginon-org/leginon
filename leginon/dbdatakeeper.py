@@ -15,106 +15,25 @@ class DBDataKeeper(datahandler.DataHandler):
 		# session id = session
 		self.dbd = sqldict.SQLDict()
 
-	def OLDquery(self, idata, indices, results=None):
-		# idata: instance of a Data class 
-		# indices: {field:value, ... } for the WHERE clause
-		#print 'querying'
-		
-		table = idata.__class__.__name__
-#		select = sqldict.sqlColumnsSelect(idata)
-#		self.dbd.myTable = self.dbd.Table(table,select)
-		self.dbd.myTable = self.dbd.Table(table)
-		sqlindices = sqldict.sqlColumnsFormat(indices)
-		self.dbd.myTable.myIndex = self.dbd.myTable.Index(sqlindices.keys(),
-			orderBy = {'fields':('DEF_timestamp',),'sort':'DESC'})
-		# return a list of dictionnaries for all matching rows
-		if results is not None:
-			result = self.dbd.myTable.myIndex[sqlindices.values()].fetchmany(results)
-		else:
-			result = self.dbd.myTable.myIndex[sqlindices.values()].fetchall()
-		result = map(sqldict.sql2data, result)
-		for i in range(len(result)):
-			del result[i]['DEF_id']
-			del result[i]['DEF_timestamp']
-			newid = result[i]['id']
-			del result[i]['id']
-			try:
-				result[i] = idata.__class__(newid, result[i])
-			except KeyError, e:
-				self.printerror('cannot convert database result to data instance')
-				del result[i]
-
-			### load things from files
-			if hasattr(result[i], load):
-				result[i].load()
-
-		return result
-
-		# return an instance
-		# result =  self.dbd.myTable.Index[indices.values()].fetchone()
-		# val = data.update((sqldict.sql2data(result))
-		# return val
-
-		# to return one match only:
-		# result = self.db.myTable.Index[indices.values()].fetchone()
-		# return sqldict.sql2data(result)
-	
-		# images with be converted from an mrc file here, an instance of Data
-		# will have to be created here.
-
 	def query(self, idata, results=None):
 		'''
 		query using a partial Data instance
 		'''
 		# idata: instance of a Data class 
-		# indices: {field:value, ... } for the WHERE clause
-		#print 'querying'
-
+		# results: number of rows wanted
+		
 		queryinfo = self.queryInfo(idata)
-		print 'QUERYINFO'
-		print queryinfo
+		result  = self.dbd.multipleQueries(queryinfo)
 
-		return
-		### now we need to access multiple tables, not just one
-
-		table = self.makeTableName(idata)
-		self.dbd.myTable = self.dbd.Table(table)
-		sqlindices = sqldict.sqlColumnsFormat(indices)
-		self.dbd.myTable.myIndex = self.dbd.myTable.Index(sqlindices.keys(), orderBy = {'fields':('DEF_timestamp',),'sort':'DESC'})
-
-		# return a list of dictionnaries for all matching rows
 		if results is not None:
-			result = self.dbd.myTable.myIndex[sqlindices.values()].fetchmany(results)
+			myresult = result.fetchmany(results)
 		else:
-			result = self.dbd.myTable.myIndex[sqlindices.values()].fetchall()
-		result = map(sqldict.sql2data, result)
-		for i in range(len(result)):
-			del result[i]['DEF_id']
-			del result[i]['DEF_timestamp']
-			newid = result[i]['id']
-			del result[i]['id']
-			try:
-				result[i] = idata.__class__(newid, result[i])
-			except KeyError, e:
-				self.printerror('cannot convert database result to data instance')
-				del result[i]
-			### load things from files
-			if hasattr(result[i], load):
-				result[i].load()
+			myresult = result.fetchall()
 
-		return result
+#		print "MYRESULT", myresult
 
-		# return an instance
-		# result =  self.dbd.myTable.Index[indices.values()].fetchone()
-		# val = data.update((sqldict.sql2data(result))
-		# return val
+		return myresult
 
-		# to return one match only:
-		# result = self.db.myTable.Index[indices.values()].fetchone()
-		# return sqldict.sql2data(result)
-	
-		# images with be converted from an mrc file here, an instance of Data
-		# will have to be created here.
 
 	def makeTableName(self, idata):
 		'''
@@ -155,6 +74,11 @@ class DBDataKeeper(datahandler.DataHandler):
 				wheredict[key] = value
 		info['where'] = wheredict
 		info['join'] = joindict
+		isroot=0
+		if hasattr(mydata, 'isRoot'):
+			isroot = 1
+
+		info['root'] = isroot
 
 		finalinfo = {myid: info}
 
@@ -166,6 +90,7 @@ class DBDataKeeper(datahandler.DataHandler):
 		Items of idata that are DataReferences refer to another Data
 		Other items are normal comparisons for the WHERE clause
 		'''
+		idata.isRoot=1
 		mylist = data.accumulateData(idata, self.datainfo)
 		finaldict = {}
 		for d in mylist:

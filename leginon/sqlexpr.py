@@ -37,6 +37,7 @@ except ImportError:
     from DateTime import DateTimeType
 import re
 import string
+import sqldict
 
 def backquote(inputstr):
         """
@@ -523,6 +524,13 @@ class Update(SQLExpression):
                 else:
                     update += ","
                 update += " %s=%s" % (self.template[i], sqlRepr(self.values[i]))
+	else:
+            for key, value in self.values.items():
+                if first:
+                    first = False
+                else:
+                    update += ","
+                update += " %s=%s" % (key, sqlRepr(value))
         if self.whereClause is not None:
             update += " WHERE %s" % repr(self.whereClause)
         return update
@@ -607,6 +615,41 @@ def _likeQuote(s):
     return s.replace('%', '%%')
 
 ########################################
+## Multiple Table Queries functions
+########################################
+
+
+def selectAllFormat(field):
+	return "SELECT %s.* " % field
+
+def fromFormat(table, alias=None):
+	sqlfrom = "FROM `%s` " % (table)
+	if alias is not None:
+		sqlfrom += "AS %s " % (alias)
+	return sqlfrom
+
+def joinFormat(field, joinTable):
+	sqljoin = " LEFT JOIN %s AS %s ON (%s = %s.`DEF_ID`) " % (joinTable['class name'], joinTable['alias'], field, joinTable['alias'])
+	return sqljoin
+
+def whereFormat(in_dict):
+	first = True
+	whereDict = sqldict.flatDict(in_dict['where'])
+	alias = in_dict['alias']
+	where = ""
+	for key, value in whereDict.items():
+       		if first:
+                    first = False
+                else:
+                    where += " AND "
+		where += " %s.`%s`=%s " % (alias, key, value)
+        return where
+
+def orderFormat(alias):
+	sqlorder = "ORDER BY %s.DEF_timestamp DESC " % (alias)
+	return sqlorder 
+
+########################################
 ## Global initializations
 ########################################
 
@@ -634,8 +677,8 @@ if __name__ == "__main__":
 >>> Select([table.preset.name, const.count(table.preset.Id)], where=LIKE(table.preset.name, "%square%"))
 >>> DropTable(table.preset)
 >>> CreateTable('OBJECT', [{'Field': 'Id', 'Type': 'int(20) unsigned', 'Key': 'PRIMARY', 'Extra':'auto_increment'}, {'Field': 'hash', 'Type': 'VARCHAR(64)', 'Key': 'UNIQUE', 'Index': ['hash']}, {'Field': 'objectKey', 'Type': 'varchar(50)', 'Key': 'UNIQUE', 'Index': ['objectKey(50)'], 'Null' : 'YES', 'Default': 'Denis'}, {'Field': 'object', 'Type': 'longblob'}, {'Field': 'objectKeyString', 'Type': 'text'}, {'Field': 'objectString', 'Type': 'text'},{'Field':'timestamp','Type':'timestamp','Null':'YES', 'Key':'INDEX'}])
->>> Select([table.preset.name, table.preset.Defocus], where=LIKE(table.preset.name, "%square%"), orderBy={'fields':('id', 'name'), 'sort':'DESC'})
 >>> SelectAll(table.PRESET, where=LIKE(table.PRESET.name, "%square%"), orderBy=None)
+>>> Select([table.preset.name, table.preset2.Defocus], where=AND(LIKE(table.preset.name, "%square%"), table.preset.id==table.preset2.id), orderBy={'fields':('id', 'name'), 'sort':'DESC'})
 """
     for expr in tests.split('\n'):
         if not expr.strip(): continue

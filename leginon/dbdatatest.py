@@ -6,6 +6,24 @@ import sys
 
 print 'ORIGINAL'
 
+def printdata(idata):
+	for key,value in idata.items():
+		if isinstance(value, data.Data):
+			print key
+			printdata(value)
+		else:
+			print '%s		%s' % (key, value)
+
+def printcompare(idata1, idata2):
+	idata1items = idata1.items()
+	idata2items = idata2.items()
+	zitems = zip(idata1items, idata2items)
+	for item1, item2 in zitems:
+		key1, value1 = item1
+		key2, value2 = item2
+		if value1 != value2:
+			print 'DIFF:  %s = ( %s, %s )' % (key1, value1, value2)
+
 ###### create two instances of PresetImageData to insert ###########
 
 scopedict = {'magnification': 1501, 'beam tilt': {'x':1.1,'y':2.2}}
@@ -13,7 +31,7 @@ cameradict = {'exposure time': 510, 'binning': {'x': 1, 'y':1}}
 ## PresetData
 pdata = data.NewPresetData(('pdata',1))
 pdata['name'] = 'hole3'
-pdata['magnification'] = 1500
+pdata['magnification'] = 1900
 pdata['spot size'] = 4
 pdata['beam shift'] = {'x': 5.5, 'y': 9.3}
 pdata['exposure time'] = 500
@@ -23,8 +41,6 @@ mydata = data.NewPresetImageData(('pidata', 1))
 mydata['preset'] = pdata
 mydata['scope'] = scopedict
 mydata['camera'] = cameradict
-print 'MYDATA'
-print mydata
 
 scopedict2 = {'magnification': 1801, 'beam tilt': {'x':5.1,'y':7.2}}
 cameradict2 = {'exposure time': 810, 'binning': {'x': 1, 'y':1}}
@@ -41,19 +57,21 @@ mydata2 = data.NewPresetImageData(('pidata', 2))
 mydata2['preset'] = pdata2
 mydata2['scope'] = scopedict2
 mydata2['camera'] = cameradict2
-print 'MYDATA2'
-print mydata2
 
 dbdk = dbdatakeeper.DBDataKeeper(('dbdk',1), 'testsession')
 
-#dbdk.insert(mydata)
-#dbdk.insert(mydata2)
+if 0:
+	dbdk.insert(mydata)
+	dbdk.insert(mydata2)
+	print 'INSERTED:'
+printdata(mydata)
+printdata(mydata2)
 
-#sys.exit()
+# sys.exit()
 
 ##### create another instance of PresetImageData for the query  #####
 
-cameradict3 = {'binning': {'x': 3, 'y':3}}
+cameradict3 = {'binning': {'x': 1, 'y':1}}
 ## PresetData
 pdata3 = data.NewPresetData(('pdata',2))
 pdata3['id'] = None
@@ -63,10 +81,16 @@ mydata3 = data.NewPresetImageData(('pidata', 2))
 mydata3['id'] = None
 mydata3['preset'] = pdata3
 mydata3['camera'] = cameradict3
-print 'MYDATA3'
-print mydata3
 
-mydata4 = dbdk.query(mydata3)
+result = dbdk.query(mydata3)
+print 'RESULT'
+for d in result:
+	printdata(d)
+	print 'compare mydata'
+	printcompare(d, mydata)
+	print 'compare mydata2'
+	printcompare(d, mydata2)
+
 sys.exit()
 
 ## WAS LIKE THIS:

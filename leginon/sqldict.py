@@ -166,6 +166,7 @@ class SQLDict:
 		passwd	= "DB_PASS"
 	By default, this is in the config.py file
 	"""
+
 	self.db = sqldb.connect(**kwargs)
 
     def __del__(self):	self.close()
@@ -178,6 +179,92 @@ class SQLDict:
 	# Get any other interesting attributes from the base class.
 	return getattr(self.db, attr)
 
+    class _multipleQueries:
+
+	def __init__(self, db, queryinfo):
+	    self.db = db
+	    self.queryinfo = queryinfo
+	    self.queries = setQueries(queryinfo)
+	    self.cursors = {}
+	    self.execute()
+
+	def _cursor(self):
+	    return self.db.cursor(cursorclass=MySQLdb.cursors.DictCursor)
+
+	def execute(self):
+	    for key,query in self.queries.items():
+	    	c = self._cursor()
+		c.execute(query)
+		self.cursors[key] = c
+		c.close
+
+	def fetchmany(self, size):
+		cursorresults = {}
+		for qikey,cursor in self.cursors.items():
+			cursorresult = self._format(cursor.fetchmany(size), qikey)
+			cursorresults[qikey] = cursorresult
+
+		return self._joinData(cursorresults)
+
+	def fetchall(self):
+		cursorresults = {}
+		for qikey,cursor in self.cursors.items():
+			cursorresult = self._format(cursor.fetchall(), qikey)
+			cursorresults[qikey] = cursorresult
+
+		return self._joinData(cursorresults)
+
+	def _joinData(self, cursorresults):
+
+		if not cursorresults:
+			return []
+
+		numrows = len(cursorresults.values()[0])
+		all = [{} for i in range(numrows)]
+
+		for i in range(numrows):
+			for qikey, cursorresult in cursorresults.items():
+				all[i][qikey]=cursorresult[i]
+
+		rootlist = []
+                for d in all:
+                        for qikey,v in d.items():
+                                if self.queryinfo[qikey]['root']:
+                                        theroot = v
+                                        self._connectData(v, d)
+                        rootlist.append(theroot)
+                
+                return rootlist
+
+	def _format(self, sqlresult, qikey):
+		datalist = []
+		qikeylist = [qikey for i in range(len(sqlresult))]
+		qinfolist = [self.queryinfo for i in range(len(sqlresult))]
+		result = map(sql2data, sqlresult, qikeylist, qinfolist)
+
+		for i in range(len(result)):
+			del result[i]['DEF_id']
+			del result[i]['DEF_timestamp']
+			newid = result[i]['id']
+			try:
+				classname = self.queryinfo[qikey]['class name']
+				dataclass = getattr(data, classname)
+				newdata = dataclass(newid)
+				newdata.update(result[i])
+				datalist.append(newdata)
+			except KeyError, e:
+				self.printerror('cannot convert database result to data instance')
+			### load things from files
+			if hasattr(result[i], 'load'):
+				result[i].load()
+
+		return datalist
+
+	def _connectData(self, root, pool):
+		for key,value in root.items():
+			if isinstance(value, data.DataReference):
+				root[key] = pool[value['qikey']]
+				self._connectData(root[key], pool)
 
     class _createSQLTable:
 
@@ -379,6 +466,12 @@ class SQLDict:
 	"""
 	return self._createSQLTable(self.db, table, definition)
 
+    def multipleQueries(self, queryinfo):
+	"""
+		Execute a list of queries, it will return a list of dictionaries
+	"""
+	return self._multipleQueries(self.db, queryinfo)
+
 
 class ObjectBuilder:
 
@@ -468,14 +561,70 @@ class ObjectBuilder:
 	    setattr(t, indexname, t.Index(columns, **args))
 	return t
 
-###################################
-# Database insert  tool functions #
-###################################
+#########################################
+# Database insert/query  tool functions #
+#########################################
 
 # default separator is |
 # Note: Check Regular Expression
 # in unFlatDict function if changed
 sep ='|'
+
+def setQueries(in_dict):
+	"""
+	setQueries: Build a list of SQL queries from a queryInfo dictionary.
+	"""
+	queries = {}
+	for key,value in in_dict.items():
+		if type(value) is type({}):
+			select = sqlexpr.selectAllFormat(value['alias'])
+			queries[key]="%s %s" % (select, queryFormat(in_dict))
+	return queries
+
+def queryFormat(in_dict):
+	"""
+	queryFormat: format the 'SQL WHERE' and figure out the tables to join.
+	"""
+	sqlquery = ""
+	sqlfrom = ""
+	sqljoin = []
+	sqlwhere = []
+	for key,value in in_dict.items():
+		if type(value) is type({}):
+			c = value['class name']
+			a = value['alias']
+			j = value['join']
+			r = value['root']
+			if r:
+				sqlfrom = sqlexpr.fromFormat(c,a)
+				sqlorder = sqlexpr.orderFormat(a)
+			if j:
+				for field,id in j.items():
+					joinTable = in_dict[id]
+					joinfield = join2ref(field, joinTable)
+					fieldname = joinFieldName(a, joinfield)
+					sqljoin.append(sqlexpr.joinFormat(fieldname, joinTable))
+			sqlwhere.append(sqlexpr.whereFormat(value))
+	sqljoinstr = ' '.join(sqljoin)
+	sqlwherestr= ' AND '.join(sqlwhere)
+	sqlquery = "%s %s WHERE %s %s" % (sqlfrom, sqljoinstr, sqlwherestr, sqlorder)
+	return sqlquery
+
+def join2ref(key, in_dict):
+	"""
+	figure out the column name if there is a table to join.
+	"""
+	reftable = in_dict['class name']
+	refalias = in_dict['alias']
+	colname = sep.join(['REF',reftable,key])
+	return colname
+
+def joinFieldName (refalias, colname):
+	"""
+	join the fieldname with the right alias.
+	"""
+	fieldname = "%s.`%s`" % (refalias,colname)
+	return fieldname
 
 def flatDict(in_dict):
 	"""
@@ -512,7 +661,7 @@ def flatDict(in_dict):
 			items[key] = value	
 	return items
 
-def unflatDict(in_dict):
+def unflatDict(in_dict, qikey=None, qinfo=None):
 	"""
 	This function unflat a dictionary. For example:
 	>>> d = {'SUBD|scope|SUBD|IShift|Y': 6.0, 'SUBD|scope|SUBD|BShift|Y': 18.0, 'SUBD|scope|SUBD|BShift|X': 45.0, 'SUBD|scope|SUBD|IShift|X': 8.0}
@@ -536,7 +685,7 @@ def unflatDict(in_dict):
 				allsubdicts[a[1]]=None
 		
 		elif a[0] != 'ARRAY':
-			items.update(datatype({key:value}))
+			items.update(datatype({key:value},qikey, qinfo))
 
 	for subdict in allsubdicts:
 		dm={}
@@ -546,7 +695,7 @@ def unflatDict(in_dict):
 				s = re.sub('^SUBD\%s%s\%s' %(sep,subdict,sep),'',key)
 				dm.update({s:value})
 
-		allsubdicts[subdict]=unflatDict(dm)
+		allsubdicts[subdict]=unflatDict(dm, qikey, qinfo)
 
 	allsubdicts.update(items)
 	return allsubdicts
@@ -801,7 +950,7 @@ def sqlColumnsFormat(in_dict):
 
 
 
-def sql2data(in_dict):
+def sql2data(in_dict, qikey=None, qinfo=None):
 	"""
 	This function converts any result of an SQL query to an Data type:
 
@@ -830,21 +979,22 @@ def sql2data(in_dict):
 	allsubdicts={}
 
 	# Convert ARRAY, SEQ, string, int, float
-	content = datatype(in_dict)
+	content = datatype(in_dict, qikey, qinfo)
 
 	# build dictionaries
-	allsubdicts=unflatDict(in_dict)
+	allsubdicts=unflatDict(in_dict, qikey, qinfo)
 
 	content.update(allsubdicts)
 
 	return content
 
 
-def datatype(in_dict):
+def datatype(in_dict, qikey=None, qinfo=None):
 	"""
 	This function converts a specific string or a SQL type to 
 	a python type.
 	"""
+
 	content={}
 	allarrays={}
 	for key,value in in_dict.items():
@@ -858,10 +1008,9 @@ def datatype(in_dict):
 		elif a[0] == 'BIN':
 			content[a[1]] = dict2bin({key:value})
 		elif a[0] == 'REF':
+			jqikey = qinfo[qikey]['join'][a[2]]
 			dr = data.DataReference()
-			dr['id'] = value
-			dr['classname'] = a[1]
-			dr['target'] = None
+			dr['qikey'] = jqikey
 			content[a[2]] = dr
 		elif not a[0] in ['SUBD', ]:
 			content[key]=value
