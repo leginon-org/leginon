@@ -16,7 +16,7 @@ import LinearAlgebra
 False=0
 True=1
 
-class Calibration(node.Node):
+class MatrixCalibrator(node.Node):
 	def __init__(self, id, nodelocations, parameter, **kwargs):
 		self.cam = camerafuncs.CameraFuncs(self)
 		ffteng = fftengine.fftNumeric()
@@ -34,11 +34,9 @@ class Calibration(node.Node):
 		self.clearStateImages()
 
 		node.Node.__init__(self, id, nodelocations, **kwargs)
+
 		self.defineUserInterface()
 		
-	def state(self, value, axis):
-		raise NotImplementedError()
-
 	# calibrate needs to take a specific value
 	def calibrate(self):
 		self.clearStateImages()
@@ -66,9 +64,9 @@ class Calibration(node.Node):
 			newbase = {'x':basex, 'y':basey}
 			baselist.append(newbase)
 
-		mat = {}
+		shifts = {}
 		for axis in self.axislist:
-			mat[axis] = {'row': 0.0, 'col': 0.0}
+			shifts[axis] = {'row': 0.0, 'col': 0.0}
 			for base in baselist:
 				print "axis =", axis
 				basevalue = base[axis]
@@ -93,24 +91,17 @@ class Calibration(node.Node):
 
 				rowpixelsper = rowpix / change
 				colpixelsper = colpix / change
-				mat[axis]['row'] += rowpixelsper
-				mat[axis]['col'] += colpixelsper
-				print 'mat', mat
+				shifts[axis]['row'] += rowpixelsper
+				shifts[axis]['col'] += colpixelsper
+				print 'shifts', shifts
 
-			mat[axis]['row'] /= self.navg
-			mat[axis]['col'] /= self.navg
-
-		matrix = [[mat['x']['row'], mat['y']['row']],
-		          [mat['x']['col'], mat['y']['col']]]
-		matrix = Numeric.array(matrix)
-		invmatrix = LinearAlgebra.inverse(matrix)
+			shifts[axis]['row'] /= self.navg
+			shifts[axis]['col'] /= self.navg
 
 		mag = self.getMagnification()
-
 		self.publish(event.UnlockEvent(self.ID()))
-
 		key = self.calclient.magCalibrationKey(mag, self.parameter)
-		self.saveCalibration(key, invmatrix)
+		self.calclient.setCalibration(key, shifts)
 		print 'CALIBRATE DONE', invmatrix
 
 	def getMagnification(self):
@@ -307,7 +298,7 @@ class Calibration(node.Node):
 			}
 		)
 
-		self.registerUISpec('Calibration', (cspec, rspec, self.validshift, nodespec))
+		self.registerUISpec('Matrix Calibrator', (cspec, rspec, self.validshift, nodespec))
 
 	def uiCalibrate(self):
 		self.calibrate()
@@ -328,53 +319,16 @@ class Calibration(node.Node):
 		return dat.content[self.parameter]
 
 
-class ImageShiftCalibration(Calibration):
+class ImageShiftCalibrator(MatrixCalibrator):
 	def __init__(self, id, nodelocations, **kwargs):
 		param='image shift'
 		self.calclient = calibrationclient.ImageShiftCalibrationClient(self)
-		Calibration.__init__(self, id, nodelocations, parameter=param, **kwargs)
+		MatrixCalibrator.__init__(self, id, nodelocations, parameter=param, **kwargs)
 		self.start()
 
-	def saveCalibration(self, key, cal):
-		self.calclient.setCalibration(key, cal)
-
-class StageShiftCalibration(Calibration):
+class StageShiftCalibrator(MatrixCalibrator):
 	def __init__(self, id, nodelocations, **kwargs):
 		param='stage position'
 		self.calclient = calibrationclient.StageCalibrationClient(self)
-		Calibration.__init__(self, id, nodelocations, parameter=param, **kwargs)
+		MatrixCalibrator.__init__(self, id, nodelocations, parameter=param, **kwargs)
 		self.start()
-
-	def saveCalibration(self, key, cal):
-		self.calclient.setCalibration(key, cal)
-
-
-
-### this will soon include everything in gonmodeler module
-class ModeledStageShiftCalibration(node.Node):
-	def __init__(self, id, nodelocations, **kwargs):
-		node.Node.__init__(self, id, nodelocations, **kwargs)
-		self.addEventInput(event.PixelShiftEvent, self.pixelShift)
-		self.defineUserInterface()
-		self.start()
-
-	def magfilename(self, mag):
-		'''
-		header:
-			magnification
-			axis
-		'''
-		padmagstr = '%06d' % (int(mag),)
-		return padmagstr
-
-	def modfilename(self, axis):
-		filename = 'gon' + axis
-		return filename
-
-	def getStagePosition(self):
-		dat = self.researchByDataID('stage position')
-		return dat.content
-
-	def defineUserInterface(self):
-		nodespec = node.Node.defineUserInterface(self)
-		self.registerUISpec('Modeled Goniometer Calibration', (nodespec,))
