@@ -83,8 +83,6 @@ class EM(node.Node):
 
 		node.Node.__init__(self, id, nodelocations, DataHandler, (self.lock, self.scope, self.camera, self))
 
-		self.makeKnown('EM')
-
 		self.addEventInput(event.LockEvent, self.lock)
 		self.addEventInput(event.UnlockEvent, self.unlock)
 

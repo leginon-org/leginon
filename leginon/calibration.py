@@ -26,7 +26,6 @@ class Calibration(node.Node):
 		self.peakfinder = peakfinder.PeakFinder()
 
 		#### parameters for user to set
-		self.emnode = ''
 		self.attempts = 5
 		self.range = [0.0000001, 0.00001]
 		####
@@ -61,10 +60,6 @@ class Calibration(node.Node):
 		self.axislist = ['x', 'y']
 
 		node.Node.__init__(self, id, nodelocations)
-		try:
-			self.emnode = self.nodelocations['EM']
-		except KeyError:
-			pass
 		self.clearStateImages()
 		self.start()
 
@@ -120,10 +115,9 @@ class Calibration(node.Node):
 		self.clearStateImages()
 
 		adjustedrange = self.range
-		print 'publishing camera state', self.emnode
-		camdata = data.EMData(self.ID(), self.camerastate)
+		camdata = data.EMData('camera', self.camerastate)
 		print 'camdata', camdata
-		self.publishRemote(self.emnode, camdata)
+		self.publishRemote(camdata)
 
 		print 'hello again from calibrate'
 
@@ -143,7 +137,7 @@ class Calibration(node.Node):
 
 				if verdict == 'good':
 					print "good"
-					self.publishRemote(self.emnode, data.EMData(self.ID(), self.state(0.0, axis)))
+					self.publishRemote(data.EMData('scope', self.state(0.0, axis)))
 					cal.update({axis + " pixel shift": {'x': shiftinfo['shift']['x'], 'y': cdata['shift']['y'], 'value': value}})
 				elif verdict == 'small shift':
 					print "too small"
@@ -154,7 +148,7 @@ class Calibration(node.Node):
 				else:
 					raise RuntimeError('hung jury')
 
-		self.publishRemote(self.emnode, data.EMData(self.ID(), self.state(0.0, axis)))
+		self.publishRemote(data.EMData('scope', self.state(0.0, axis)))
 		return cal
 
 	def clearStateImages(self):
@@ -169,9 +163,9 @@ class Calibration(node.Node):
 
 		## acquire image at this state
 		print 'setting state', state
-		emdata = data.EMData(self.ID(), state)
-		print 'publishing state', self.emnode, emdata
-		self.publishRemote(self.emnode, emdata)
+		emdata = data.EMData('scope', state)
+		print 'publishing state', emdata
+		self.publishRemote(emdata)
 		print 'sleeping 1 sec'
 		time.sleep(1.0)
 		print 'getting image data'
@@ -321,7 +315,6 @@ class Calibration(node.Node):
 		paramchoices = self.registerUIData('paramdata', 'array', default=('image shift', 'stage position'))
 
 		argspec = (
-		self.registerUIData('EM Node', 'string', default='em'),
 		self.registerUIData('Minimum', 'float', default=self.range[0]),
 		self.registerUIData('Maximum', 'float', default=self.range[1]),
 		self.registerUIData('Attempts', 'integer', default=self.attempts),
@@ -339,8 +332,7 @@ class Calibration(node.Node):
 		self.calibrate()
 		return ''
 
-	def uiSetParameters(self, emnode, r0, r1, a, ct, cs):
-		self.emnode = ('manager', emnode)
+	def uiSetParameters(self, r0, r1, a, ct, cs):
 		self.range[0] = r0
 		self.range[1] = r1
 		self.attempts = a
@@ -378,15 +370,15 @@ class AutoFocusCalibration(Calibration):
 		return {'beam tilt': {axis: value}}
 
 	def calibrate(self):
-		emdata = data.EMData(self.ID(), {'defocus': self.defocus})
-		self.publishRemote(self.emnode, emdata)
+		emdata = data.EMData('defocus', {'defocus': self.defocus})
+		self.publishRemote(emdata)
 		time.sleep(1.0)
 
 		cal1 = Calibration.calibrate(self)
 
-		emdata = data.EMData(self.ID(),
+		emdata = data.EMData('defocus',
 			{'defocus': self.defocus + self.deltadefocus})
-		self.publishRemote(self.emnode, emdata)
+		self.publishRemote(emdata)
 		time.sleep(1.0)
 
 		cal2 = Calibration.calibrate(self)

@@ -69,16 +69,6 @@ class NodeUnavailableEvent(NotificationEvent):
 	def __init__(self, id, confirm=False):
 		NotificationEvent.__init__(self, id, None, confirm)
 
-class NodeKnownEvent(NotificationEvent):
-	'Event sent to the manager to indicate node should be known by all nodes'
-	def __init__(self, id, knownid, confirm=False):
-		NotificationEvent.__init__(self, id, knownid, confirm)
-
-class NodeUnknownEvent(NotificationEvent):
-	'Event sent to the manager to indicate node should be unknown by all nodes'
-	def __init__(self, id, knownid, confirm=False):
-		NotificationEvent.__init__(self, id, knownid, confirm)
-
 class PublishEvent(NotificationEvent):
 	'Event indicating data was published'
 	def __init__(self, id, dataid, confirm=False):

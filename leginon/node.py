@@ -136,7 +136,8 @@ class Node(leginonobject.LeginonObject):
 		datatree = self.registerUIData('Data', 'struct', permissions='r')
 		datatree.set(self.uiDataDict)
 
-		c = self.registerUIContainer('Node Info', (idspec,classspec,locspec,datatree))
+		c = self.registerUIContainer('Node Info', (idspec, classspec, locspec, datatree))
+
 		return c
 
 	def registerUIMethod(self, func, name, argspec, returnspec=None):
@@ -184,12 +185,6 @@ class Node(leginonobject.LeginonObject):
 		myloc = self.location()
 		available_event = event.NodeAvailableEvent(newid, myloc)
 		self.outputEvent(ievent=available_event, wait=True)
-
-	def makeKnown(self, knownid):
-		self.outputEvent(event.NodeKnownEvent(self.ID(), knownid))
-
-	def makeUnknown(self, knownid):
-		self.outputEvent(event.NodeUnknownEvent(self.ID(), knownid))
 
 	def main(self):
 		raise NotImplementedError()
@@ -247,12 +242,16 @@ class Node(leginonobject.LeginonObject):
 		self.server.datahandler.remove(dataid)
 		self.outputEvent(eventclass(self.ID(), dataid))
 
-	def publishRemote(self, nodeid, idata):
-		# perhaps an event can be generated in this too
-		nodelocation = self.researchByLocation(self.nodelocations['manager'], nodeid).content
-		# should interate over nodes, be crafty, etc.
-		self.addEventClient(nodeid, nodelocation)
-		self.clients[nodeid].push(idata)
+	def publishRemote(self, idata):
+		nodeiddata = self.researchByLocation(self.nodelocations['manager'],idata.id)
+		if nodeiddata is None:
+			print "node, researchByDataID: no such data ID"
+			raise IOError
+		for nodeid in nodeiddata.content:
+			nodelocation = self.researchByLocation(self.nodelocations['manager'],
+				nodeid)
+			self.addEventClient(nodeid, nodelocation.content)
+			self.clients[nodeid].push(idata)
 
 	## no longer have to mark_data becuase id takes care of it
 	#def mark_data(self, data):
