@@ -232,7 +232,7 @@ class DataManager(object):
 					datainstance = None
 
 			if datainstance is None:
-				raise DataAccessError('Referenced data no longer exists')
+				raise DataAccessError('Referenced data can not be found: %s' % (datareference,))
 		finally:
 			self.lock.release()
 		return datainstance
@@ -295,9 +295,11 @@ class DataReference(object):
 				raise AttributeError('not allowed to reset dmid, dbid, or dataclass of a DataReference')
 		super(DataReference, self).__setattr__(name, value)
 
-## Unresolved issue:
-##  It would be nice if you could cast one Data type to another
-##  Right now that will probably result in a key error
+	def __str__(self):
+		s = 'DataReference(%s), class: %s, dmid: %s, dbid: %s' % (id(self), self.dataclass, self.dmid, self.dbid)
+		if self.datahandler:
+			s = s + ' (datahandler)'
+		return s
 
 
 class DataDict(strictdict.TypedDict):
