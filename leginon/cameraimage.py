@@ -1,4 +1,7 @@
 import Numeric
+import fftengine
+
+ffteng = fftengine.fftNumeric()
 
 ## Numeric seems to use infinity as a result of zero
 ## division, but I can find no infinity constant or any other way of 
@@ -63,6 +66,19 @@ def averageSeries(series):
 	divisor = Numeric.array(slen, Numeric.Float32)
 	avg = sum / divisor
 	return avg
+
+def power(numericarray):
+	fft = ffteng.transform(numericarray)
+	pow = Numeric.absolute(fft) ** 2
+	pow = swap(pow)
+	return pow
+
+def swap(numericarray):
+	rows,cols = numericarray.shape
+	newarray = Numeric.array(numericarray)
+	newarray[:rows/2] = numericarray[rows/2:]
+	newarray[rows/2:] = numericarray[:rows/2]
+	return newarray
 
 def zeroRow(inputarray, row):
 	inputarray[row] = 0
