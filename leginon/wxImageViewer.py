@@ -13,7 +13,7 @@ import Mrc
 from NumericImage import NumericImage
 
 class ImagePanel(wxPanel):
-	def __init__(self, parent, id, imagesize=(512, 512):
+	def __init__(self, parent, id, imagesize=(512, 512)):
 		self.image = None
 		self.bitmap = None
 		self.buffer = wxNullBitmap
