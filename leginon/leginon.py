@@ -188,12 +188,12 @@ class Leginon(Tkinter.Frame):
 
 		self.windowmenu = Tkinter.Menu(self.menu, tearoff=0)
 		self.menu.add_cascade(label='Window', menu=self.windowmenu)
-#		self.menu.entryconfigure(2, state=Tkinter.DISABLED)
 
 	def start(self):
 		self.new()
 
 	def menuAddTarget(self):
+		self.menu.entryconfigure(1, state=Tkinter.DISABLED)
 		name = 'Target #%s' % str(len(self.targets) + 1)
 		add_dialog = AddChoicesDialog(self, name,
 											 self.targets.keys() + self.gridatlases.keys(), [])
@@ -205,8 +205,10 @@ class Leginon(Tkinter.Frame):
 				elif source in self.gridatlases:
 					sourceids.append(self.gridatlases[source].targetid)
 			self.addTarget(add_dialog.result[0], sourceids)
+		self.menu.entryconfigure(1, state=Tkinter.NORMAL)
 
 	def menuAddImageCollector(self):
+		self.menu.entryconfigure(1, state=Tkinter.DISABLED)
 		name = 'Viewer #%s' % str(len(self.imagecollectors) + 1)
 		add_dialog = AddChoicesDialog(self, name,
 											 self.targets.keys() + self.gridatlases.keys(), [])
@@ -218,12 +220,15 @@ class Leginon(Tkinter.Frame):
 				elif source in self.gridatlases:
 					sourceids.append(self.gridatlases[source].targetid)
 			self.addImageCollector(add_dialog.result[0], sourceids)
+		self.menu.entryconfigure(1, state=Tkinter.NORMAL)
 
 	def menuAddGridAtlas(self):
+		self.menu.entryconfigure(1, state=Tkinter.DISABLED)
 		name = 'Grid Atlas #%s' % str(len(self.gridatlases) + 1)
 		add_dialog = AddDialog(self, name)
 		if add_dialog.result is not None:
 			self.addGridAtlas(add_dialog.result)
+		self.menu.entryconfigure(1, state=Tkinter.NORMAL)
 
 	def exit(self):
 		self.kill()
@@ -654,7 +659,7 @@ class GridAtlasWidget(CustomWidget):
 		CustomWidget.__init__(self, parent)
 
 		widget = self.addWidget('Settings', gridpreview,
-														('Preferences', 'Magnification'), True)
+														('Preferences', 'Preset Names'), True)
 		self.arrangeEntry(widget, 9, Tkinter.RIGHT, False)
 		widget = self.addWidget('Settings', stateimagemosaic,
 																			('Scale', 'Auto Scale'), True)
