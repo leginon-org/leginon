@@ -754,7 +754,7 @@ class ManagerSetup(object):
 			try:
 				hostname = session['instrument']['hostname']
 				self.manager.addNode(hostname, 55555)
-			except (TypeError, IOError):
+			except (TypeError, IOError), e:
 				if isinstance(e, IOError):
 					self.manager.outputWarning('Cannot add instrument\'s launcher.')
 			parent = self.container.getParent()
@@ -927,6 +927,7 @@ class ManagerSetup(object):
 		return index
 
 	def defineUserInterface(self):
+		self.manager.uiserver.disable()
 		self.container = uidata.ExternalContainer('Manager Setup')
 
 		usercontainer = uidata.Container('User')

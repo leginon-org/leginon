@@ -469,7 +469,10 @@ class Dialog(Container):
 		Container.__init__(self, name)
 
 	def destroy(self):
-		self.parent.deleteObject(self.name)
+		try:
+			self.parent.deleteObject(self.name)
+		except ValueError:
+			pass
 
 class MessageDialog(Dialog):
 	typelist = Dialog.typelist + ('message',)
