@@ -123,6 +123,8 @@ class Tecnai(object):
 			'film text': {'get': 'getFilmText', 'set': 'setFilmText'},
 			'film user code': {'get': 'getFilmUserCode', 'set': 'setFilmUserCode'},
 			'film date type': {'get': 'getFilmDateType', 'set': 'setFilmDateType'},
+			'shutter': {'set': 'setShutter', 'get': 'getShutter'},
+			'external shutter': {'set': 'setExternalShutter', 'get': 'getExternalShutter'},
 		}
 
 		self.typemapping = {
@@ -186,6 +188,8 @@ class Tecnai(object):
 			'film user code': {'type': str},
 			'film date type': {'type': str,
 										'values': ['no date', 'DD-MM-YY', 'MM/DD/YY', 'YY.MM.DD']},
+			'shutter': {'type': str},
+			'external shutter': {'type': str},
 		}
 
 	def setCorrectedStagePosition(self, value):
@@ -691,6 +695,40 @@ class Tecnai(object):
 			raise ValueError
 		
 		return 0
+
+	def setShutter(self, state):
+		if state == 'open':
+			if self.theAda.OpenShutter != 0:
+				raise RuntimeError('Open shutter failed')
+		elif state == 'closed':
+			if self.theAda.CloseShutter != 0:
+				raise RuntimeError('Close shutter failed')
+		else:
+			raise ValueError("setShutter state must be 'open' or 'closed', not %s" % (state,))
+
+	def getShutter(self):
+		status = self.theAda.ShutterStatus
+		if status:
+			return 'closed'
+		else:
+			return 'open'
+
+	def setExternalShutter(self, state):
+		if state == 'connected':
+			if self.theAda.ConnectExternalShutter != 0:
+				raise RuntimeError('Connect shutter failed')
+		elif state == 'disconnected':
+			if self.theAda.DisconnectExternalShutter != 0:
+				raise RuntimeError('Disconnect shutter failed')
+		else:
+			raise ValueError("setExternalShutter state must be 'connected' or 'disconnected', not %s" % (state,))
+		
+	def getExternalShutter(self):
+		status = self.theAda.ExternalShutterStatus
+		if status:
+			return 'connected'
+		else:
+			return 'disconnected'
 
 	def filmExposure(self, value):
 		if not value:
