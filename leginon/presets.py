@@ -29,7 +29,8 @@ class PresetsClient(object):
 		evt = event.ChangePresetEvent()
 		evt['name'] = presetname
 		evt['emtarget'] = emtarget
-		timeout = 30
+		print 'toScope', evt['name']
+		timeout = 40
 		try:
 			self.node.outputEvent(evt, wait=True, timeout=timeout)
 		except node.ConfirmationTimeout:
@@ -141,7 +142,7 @@ class PresetsManager(node.Node):
 		emtarget = ievent['emtarget']
 		if emtarget is None:
 			print 'ToScope'
-			self.toScope(pname)
+			self.toScopeFollowPreset(pname)
 		else:
 			print 'targetToScope'
 			self.targetToScope(pname, emtarget)
