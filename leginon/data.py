@@ -1342,9 +1342,10 @@ class DeviceGetData(Data):
 class DeviceData(Data):
 	pass
 
-class HoleFinderPrefsData(Data):
+
+class HoleFinderPrefsData(InSessionData):
 	def typemap(cls):
-		return Data.typemap() + (
+		return InSessionData.typemap() + (
 			('image', AcquisitionImageData),
 			('user-check', bool),
 			('skip-auto', bool),
@@ -1370,6 +1371,20 @@ class HoleFinderPrefsData(Data):
 			('template-on', bool),
 			('template-focus', tuple),
 			('template-acquisition', tuple),
+		)
+	typemap = classmethod(typemap)
+
+class HoleStatsData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('prefs', HoleFinderPrefsData),
+			('row', int),
+			('column', int),
+			('mean', float),
+			('stdev', float),
+			('thickness-mean', float),
+			('thickness-stdev', float),
+			('good', bool),
 		)
 	typemap = classmethod(typemap)
 
