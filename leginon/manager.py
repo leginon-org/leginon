@@ -770,7 +770,8 @@ class ManagerSetup(object):
 		sessioninstance = data.SessionData(initializer=initializer)
 		sessions = self.manager.research(datainstance=sessioninstance)
 		if sessions:
-			return None
+			return sessions[0]
+			#return None
 		else:
 			return self.getSession(session_name)
 
