@@ -7,4 +7,4 @@ from mynode import MyNode
 from intgen import IntGen
 from EM import EM
 from emtest import EMTest
-from imviewer import ImViewer
+#from imviewer import ImViewer

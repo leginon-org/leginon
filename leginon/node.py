@@ -102,9 +102,10 @@ class Node(leginonobject.LeginonObject):
 		return client.pull(dataid)
 
 	def researchByDataID(self, dataid):
-		locationdata = self.researchByLocation(self.managerloc, dataid)
-		# should interate, etc.
-		return self.researchByLocation(locationdata.content[0], dataid)
+		nodeiddata = self.researchByLocation(self.managerloc, dataid)
+		# should interate over nodes, be crafty, etc.
+		datalocationdata = self.researchByLocation(self.managerloc, nodeiddata.content[0])
+		return self.researchByLocation(datalocationdata.content, dataid)
 
 	def location(self):
 		loc = leginonobject.LeginonObject.location(self)

@@ -25,8 +25,7 @@ class MyNode(node.Node):
 	def print_stuff(self):
 		self.timenow = time.asctime()
 		print 'node %s says %s' % (self.nodeid,self.timenow)
-		print 'testthing', testthing
-		mydata = data.StringData(timenow)
+		mydata = data.StringData(self.timenow)
 		self.publish(mydata, event.PublishEvent)
 
 	def handle_intervalchange(self, controlevent):

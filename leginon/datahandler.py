@@ -15,6 +15,12 @@ class DataHandler(leginonobject.LeginonObject):
 	def insert(self, newdata):
 		raise NotImplementedError
 
+	def remove(self, id):
+		raise NotImplementedError
+
+	def ids(self):
+		raise NotImplementedError
+
 class DictDataKeeper(DataHandler):
 	def __init__(self):
 		DataHandler.__init__(self)
@@ -36,6 +42,20 @@ class DictDataKeeper(DataHandler):
 		self.datadictlock.acquire()
 		self.datadict[newdata.id] = newdata
 		self.datadictlock.release()
+
+	def remove(self, id):
+		self.datadictlock.acquire()
+		try:
+			del self.datadict[id]
+		except KeyError:
+			pass
+		self.datadictlock.release()
+
+	def ids(self):
+		self.datadictlock.acquire()
+		result = self.datadict.keys()
+		self.datadictlock.release()
+		return result
 
 class ShelveDataKeeper(DataHandler):
 	def __init__(self, filename = None, path = '.'):
@@ -76,6 +96,20 @@ class ShelveDataKeeper(DataHandler):
 		self.shelflock.acquire()
 		self.shelf[str(idata.id)] = idata
 		self.shelflock.release()
+
+	def remove(self, id):
+		self.shelflock.acquire()
+		try:
+			del self.shelf[str(id)]
+		except KeyError:
+			pass
+		self.shelflock.release()
+
+	def ids(self):
+		self.shelflock.acquire()
+		result = self.shelf.keys()
+		self.shelflock.release()
+		return result
 
 # I'm reasonably sure this works, but it hasn't been fully tested
 class CachedDictDataKeeper(DataHandler):
@@ -132,6 +166,14 @@ class CachedDictDataKeeper(DataHandler):
 		self.datadict[newdata.id] = {'cached' : 0, 'ts' : time.time(), 'data' : newdata}
 		self.lock.release()
 
+	def remove(self, id):
+		self.lock.acquire()
+		if self.datadict.has_key(id):
+			if self.datadict[id]['cached']:
+				del self.shelf[str(id)]
+			del self.datadict[id]
+		self.lock.release()
+
 	def writeoutcache(self):
 		self.timer = threading.Timer(self.timeout, self.writeoutcache)
 		self.timer.start()
@@ -145,6 +187,12 @@ class CachedDictDataKeeper(DataHandler):
 			self.shelf[str(id)] = self.datadict[id]['data']
 			self.datadict[id]['cached'] = 1
 			del self.datadict[id]['data']
+
+	def ids(self):
+		self.lock.acquire()
+		result = self.datadict.keys()
+		self.lock.release()
+		return result
 
 class SimpleDataKeeper(CachedDictDataKeeper):
 	pass

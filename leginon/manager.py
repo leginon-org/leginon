@@ -39,11 +39,24 @@ class Manager(node.Node):
 
 	def registerNode(self, readyevent):
 		print 'registering node', readyevent.origin
-		self.addEventClient(readyevent.origin['id'], readyevent.origin['location'])
+
+		nodeid = readyevent.origin['id']
+		nodelocation = readyevent.origin['location']
+
+		# for the clients and mapping
+		self.addEventClient(nodeid, nodelocation)
 		print self.clients
 
+		# published data of nodeid mapping to location of node
+		nodelocationdata = self.server.datahandler.query(nodeid)
+		if nodelocationdata == None:
+			nodelocationdata = data.NodeLocationData(nodeid, nodelocation)
+		else:
+			# fools! should do something nifty to unregister, reregister, etc.
+			nodelocationdata = data.NodeLocationData(nodeid, nodelocation)
+		self.server.datahandler._insert(nodelocationdata)
+
 	def registerData(self, publishevent):
-		#print 'registering data, from', publishevent.origin
 		if isinstance(publishevent, event.PublishEvent):
 			id = publishevent.content
 			self.publishDataLocation(id, publishevent.origin['id'])
@@ -53,17 +66,14 @@ class Manager(node.Node):
 		else:
 			raise TypeError
 
-	# I think the data location should be looked up dynamically based on
-	# node ID, I had a ManagerDataHandler, but things didn't quite work out
-	# To keep it simple for now the static location is stored
+	# creates/appends list with nodeid of published data
 	def publishDataLocation(self, dataid, nodeid):
-		locationdata = self.server.datahandler.query(dataid)
-		#print "locationdata =", locationdata
-		if locationdata == None:
-			locationdata = data.LocationData(dataid, [self.clients[nodeid].serverlocation])
+		datalocationdata = self.server.datahandler.query(dataid)
+		if datalocationdata == None:
+			datalocationdata = data.DataLocationData(dataid, [nodeid])
 		else:
-			locationdata.content.append(self.clients[nodeid].serverlocation)
-		self.server.datahandler._insert(locationdata)
+			datalocationdata.content.append(nodeid)
+		self.server.datahandler._insert(datalocationdata)
 
 	def launchNode(self, launcher, newproc, target, newid, nodeargs=()):
 		manloc = self.location()

@@ -28,6 +28,17 @@ class EMData(Data):
 # its noderegistry
 class LocationData(Data):
 	def __init__(self, id, content):
-		Data.__init__(self, list(content))
+		Data.__init__(self, content)
 		self.id = id
+
+# nodeid is the dataid, content is dict with physical location
+class NodeLocationData(LocationData):
+	def __init__(self, id, content):
+		LocationData.__init__(self, id, dict(content))
+
+# real dataid is the dataid, but content is actually a list of nodeids when
+# the real data is located
+class DataLocationData(LocationData):
+	def __init__(self, id, content):
+		LocationData.__init__(self, id, list(content))
 
