@@ -740,7 +740,7 @@ class PresetsManager(node.Node):
 			status = 'N/A'
 		else:
 			fixed = preset['dose'] / 1e20
-			status = '%.2f e/A^2/s' % (fixed,)
+			status = '%.2f e/A^2' % (fixed,)
 		self.dosestatus.set(status)
 
 		## reference image

@@ -266,8 +266,7 @@ class DoseCalibrationClient(CalibrationClient):
 		sensitivity = self.retrieveSensitivity(ht, inst)
 		mean_counts = imagefun.mean(numdata) / (binning**2)
 		totaldose = camera_mag**2 * mean_counts / camera_pixel_size**2 / sensitivity
-		dose = totaldose * exp_time
-		return dose
+		return totaldose
 
 
 class PixelSizeCalibrationClient(CalibrationClient):
