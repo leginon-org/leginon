@@ -420,36 +420,3 @@ class StageShiftCalibration(SimpleCalibration):
 		param='stage position'
 		SimpleCalibration.__init__(self, id, nodelocations, parameter=param)
 
-
-class AutoFocusCalibration(Calibration):
-	def __init__(self, id, nodelocations):
-		Calibration.__init__(self, id, nodelocations)
-		self.axislist = ['x']
-		self.defocus = 0.0001
-		self.deltadefocus
-
-	def state(self, value, axis):
-		return {'beam tilt': {axis: value}}
-
-	def calibrate(self):
-		emdata = data.EMData('defocus', {'defocus': self.defocus})
-		self.publishRemote(emdata)
-		time.sleep(1.0)
-
-		cal1 = Calibration.calibrate(self)
-
-		emdata = data.EMData('defocus',
-			{'defocus': self.defocus + self.deltadefocus})
-		self.publishRemote(emdata)
-		time.sleep(1.0)
-
-		cal2 = Calibration.calibrate(self)
-
-		cal = {'autofocus': {}}
-		cal['autofocus']['x shift'] = cal2['x shift']['x'] - cal1['x shift']['x'] / self.deltadefocus
-		cal['autofocus']['y shift'] = cal2['x shift']['y'] - cal1['x shift']['y'] / self.deltadefocus
-		# calibrate needs to take a specific value
-		cal['autofocus']['beam tilt'] = cal2['x shift']['value']
-
-		return cal
-
