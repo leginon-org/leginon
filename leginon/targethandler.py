@@ -55,7 +55,7 @@ class TargetHandler(object):
 		mosaic is boolean to indicate list of targets will
 		generate a mosaic
 		'''
-		listdata = data.ImageTargetListData(label=label, mosaic=mosaic)
+		listdata = data.ImageTargetListData(session=self.session, label=label, mosaic=mosaic)
 		return listdata
 
 	def newTarget(self, drow, dcol, **kwargs):
