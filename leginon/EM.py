@@ -38,7 +38,10 @@ class DataHandler(node.DataHandler):
 		if emkey == 'scope':
 			result = data.ScopeEMData(id=('scope',), initializer=stuff)
 		elif emkey == 'camera':
-			result = data.CameraEMData(id=('camera',), initializer=stuff)
+			result = data.CameraEMData(id=('camera',))
+			# this is a fix for the bigger problem of always 
+			# setting defocus
+			result.friendly_update(stuff)
 		elif emkey == 'all em':
 			result = data.AllEMData(id=('all em',), initializer=stuff)
 		else:
@@ -193,7 +196,6 @@ class EM(node.Node):
 		)
 
 		for key in prunekeys:
-			print 'KEY', key
 			try:
 				del emdict[key]
 			except KeyError:
@@ -255,7 +257,6 @@ class EM(node.Node):
 		result['system time'] = time.time()
 
 		self.lock.release()
-		print 'RESULT', result
 		return result
 
 	def sortEMdict(self, emdict):
