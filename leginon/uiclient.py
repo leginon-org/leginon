@@ -195,7 +195,11 @@ class LocalUIClient(object):
 		self.uiserver.addLocalClient(self)
 
 	def setServer(self, namelist, value, thread=False):
-		self.uiserver.setFromClient(namelist, value)
+		if thread:
+			threading.Thread(target=self.uiserver.setFromClient,
+												args=(namelist, value)).start()
+		else:
+			self.uiserver.setFromClient(namelist, value)
 
 	def commandServer(self, namelist, args, thread=False):
 		if thread:
@@ -1578,8 +1582,16 @@ class wxTreePanel(wxPanel):
 		self.sashwindow.SetSashVisible(wxSASH_RIGHT, True)
 		self.sashwindow.SetExtraBorderSize(5)
 
+		self.bitmaps = {}
+		for type in wxMessageLog.types:
+			self.bitmaps[type] = wxBitmapFromImage(wxImage('%s/%s.bmp' %
+																								(wxMessageLog.iconsdir, type)))
+			self.bitmapsize = (self.bitmaps[type].GetWidth(),
+													self.bitmaps[type].GetHeight())
+
 		self.tree = wxTreeCtrl(self.sashwindow, -1,
 														style=wxTR_HIDE_ROOT|wxTR_NO_BUTTONS)
+		EVT_PAINT(self.tree, self.onPaint)
 
 		self.root = self.tree.AddRoot('Containers')
 
@@ -1638,10 +1650,35 @@ class wxTreePanel(wxPanel):
 		self.childsizer.Layout()
 		self.childsizer.FitInside(self.childpanel)
 
+	def onPaint(self, evt):
+		self.updateMessage(wxPaintDC(self.tree))
+		evt.Skip()
+
+	def updateMessage(self, dc):
+		dc.BeginDrawing()
+		dc.SetPen(wxPen(self.tree.GetBackgroundColour()))
+		dc.SetBrush(wxBrush(self.tree.GetBackgroundColour()))
+		id = self.tree.GetFirstVisibleItem()
+		while True:
+			try:
+				rect = self.tree.GetBoundingRect(id)
+			except:
+				break
+			message = self.tree.GetPyData(id).message
+			if message is not None:
+				#dc.DrawText(message, rect[0] + rect[2], rect[1])
+				dc.DrawBitmap(self.bitmaps[message], rect[0] + rect[2], rect[1])
+			else:
+				dc.DrawRectangle(rect[0] + rect[2], rect[1],
+													self.bitmapsize[0], self.bitmapsize[1])
+			id = self.tree.GetNextVisible(id)
+		dc.EndDrawing()
+
 class wxTreePanelContainerWidget(wxContainerWidget):
 	def __init__(self, name, parent, container, value, configuration):
 		self.treepanel = container.getTreeContainer()
 		self.sizer = wxBoxSizer(wxVERTICAL)
+		self.message = None
 		self.messages = {}
 		wxContainerWidget.__init__(self, name, parent, container, value,
 																configuration)
@@ -1681,7 +1718,11 @@ class wxTreePanelContainerWidget(wxContainerWidget):
 		#		self.treepanel.setContainerImage(type, self)
 		#		return
 		#self.treepanel.setContainerImage(None, self)
-		pass
+		self.message = None
+		for type in wxMessageLog.types:
+			if type in self.messages:
+				self.message = type
+		self.treepanel.updateMessage(wxClientDC(self.treepanel.tree))
 
 	def onAddMessage(self, evt):
 		try:
@@ -1876,6 +1917,10 @@ class wxMessageLogWidget(wxContainerWidget):
 
 	def layout(self):
 		self.messagelog.Layout()
+
+	def _show(self, show):
+		self.messagelog.Show(show)
+		wxContainerWidget._show(self, show)
 
 if __name__ == '__main__':
 	import sys

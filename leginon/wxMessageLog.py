@@ -1,7 +1,7 @@
 from wxPython.wx import *
 
 iconsdir = 'icons'
-types = ['error', 'warning', 'info']
+types = ['info', 'warning', 'error']
 
 class wxMessage(wxPanel):
 	def __init__(self, parent, type, message, clearcallback=None):
