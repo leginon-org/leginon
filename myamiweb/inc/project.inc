@@ -1,4 +1,14 @@
 <?
+
+/**
+ *	The Leginon software is Copyright 2003 
+ *	The Scripps Research Institute, La Jolla, CA
+ *	For terms of the license agreement
+ *	see  http://ami.scripps.edu/software/leginon-license
+ */
+
+define(DEFAULT_PROJECT, 'all'); 
+
 class project {
 
 	function project(){
@@ -25,6 +35,19 @@ class project {
                 $info = mysql_fetch_array($RgridInfo, MYSQL_ASSOC);
                 return $info;
 	}
+
+	function getProjects($type=""){
+                $projects = array();
+		if ($type=="all")  
+			$projects[] = array(	0 => DEFAULT_PROJECT, 'id' => DEFAULT_PROJECT,
+						1 => DEFAULT_PROJECT, 'name' => DEFAULT_PROJECT);
+                $q='select projectId, name  from projects';
+                $RprojectInfo = $this->mysql->SQLQuery($q);
+                while ($row = mysql_fetch_array($RprojectInfo))
+                        $projects[]=array(0 => $row[projectId], 'id' => $row[projectId],
+                                          1 => $row[name], 'name' => $row[name] );
+                return $projects;
+        }
 
 }
 ?>

@@ -26,8 +26,22 @@ class viewer {
 		$this->sessionId=$sessionId;
 	}
 
+	function setProjectId($projectId) {
+		$this->projectId=$projectId;
+	}
+
 	function setImageId($imageId) {
 		$this->imageId=$imageId;
+	}
+
+	function addProjectSelector($projects=array()) {
+		$projectselector = '<select name="projectId" onchange="newexp()">'.$this->crlf;
+		foreach ($projects as $project) {
+			if ($project[id]==$this->projectId) $s='selected'; else $s='';
+			$projectselector .= '<option value='.$project[id].' '.$s.' >'.$project[name].$this->crlf; 
+		}
+		$projectselector .= '</select>'.$this->crlf;
+		$this->addprojectsel = $projectselector;
 	}
 
 	function addSessionSelector($sessions=array()) {
@@ -197,6 +211,11 @@ class viewer {
 		}
 		if ($this->addsessionsel) {
 			$display .= '<tr>';
+			if ($this->addprojectsel) {
+				$display .= '<td>';
+				$display .= $this->addprojectsel;
+				$display .= '</td>';
+			}
 			$display .= '<td colspan=2>';
 			$display .= $this->addsessionsel;
 			$display .= '</td>';
@@ -307,11 +326,13 @@ class view {
 			.'var '.$this->name.'target_bt_st=false;'.$this->crlf
 			.'var '.$this->name.'scale_bt_st=false;'.$this->crlf
 			.'var '.$this->name.'fft_bt_st=false;'.$this->crlf
+			.'var '.$this->name.'filter_bt_st=false;'.$this->crlf
 			.'var '.$this->name.'close_bt_st=false;'.$this->crlf
 			.'var '.$this->name.'size='.$this->size.';'.$this->crlf
 			.'var jsvfile'.$this->name.'=1;'.$this->crlf
 			.'var jsmin'.$this->name.';'.$this->crlf
 			.'var jsmax'.$this->name.';'.$this->crlf
+			.'var jsfilter'.$this->name.';'.$this->crlf
 			.$this->btinfo->getJavascript().$this->crlf
 			.''.$this->crlf;
 		return $javascript;
@@ -373,6 +394,14 @@ class view {
 			<td width="15">'
 			.$this->btinfo->display().$this->crlf
 			.'
+			</td>
+			<td width="15">
+			<a href="javascript:'.$this->name.'filter_bt_state=toggleimage(\''.$this->name.'filter_bt\', \'filter_bt\');newfile(\''.$name.'\'); "
+				onmouseover="imageonfocus(\''.$this->name.'filter_bt\', \'filter_bt\', \'_over\')" 
+				onmouseout="imageonfocus(\''.$this->name.'filter_bt\', \'filter_bt\', \'\')" 
+				>
+				<img name="'.$this->name.'filter_bt" src="img/filter_bt_off.gif"
+				border="0" height="15" vspace="0"></a>
 			</td>
 			<td width="15">
 			<a href="javascript:toggleimage(\''.$this->name.'fft_bt\', \'fft_bt\');newfile(\''.$name.'\'); "

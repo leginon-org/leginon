@@ -60,11 +60,12 @@ function newfile(view){
 	if (eval(view+"target_bt_st")) tg="&tg=1"; else tg="";
 	if (cmin = eval("jsmin"+view)) np="&np="+cmin; else np="";
 	if (cmax = eval("jsmax"+view)) xp="&xp="+cmax; else xp="";
+	if ((cfilter = eval("jsfilter"+view)) && eval(view+"filter_bt_st")) flt="&flt="+cfilter; else flt="";
 
 	options = "preset="+selpreset+
 		"&session="+jsSessionId+
 		"&id="+jsimgId+
-		"&s="+jssize+"&t=80"+tg+sb+fft+np+xp;
+		"&s="+jssize+"&t=80"+tg+sb+fft+np+xp+flt;
 
 	if (options == lastoptions[vid])
 		return;
@@ -95,6 +96,10 @@ function setminmax(viewname, min,max) {
 	eval("jsmax"+viewname+"="+max);
 }
 
+function setfilter(viewname, filter) {
+	eval("jsfilter"+viewname+"='"+filter+"'");
+}
+
 function popUpMap(URL)
 {
 	window.open(URL, "map", "left=0,top=0,height=256,width=256,toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes");
@@ -103,8 +108,10 @@ function popUpMap(URL)
 function popUpAdjust(URL, view, param){
 	min = eval("jsmin"+view);
 	max = eval("jsmax"+view);
+	filter = eval("jsfilter"+view);
 	min = (min) ? "&pmin="+min : "";
 	max = (max) ? "&pmax="+max : "";
+	filter = (filter) ? "&filter="+filter : "";
 	param = (param) ? param : "left=0,top=0,height=35,width=370";
-	window.open(URL+min+max, view+"adj", param+",toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes");
+	window.open(URL+min+max+filter, view+"adj", param+",toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes");
 }

@@ -7,9 +7,11 @@
 
 <?
 require ('inc/leginon.inc');
+require ('inc/project.inc');
 require ('inc/viewer.inc');
 
 $sessionId = ($_POST[sessionId]) ? $_POST[sessionId] : $_GET[expId];
+$projectId = ($_POST[projectId]) ? $_POST[projectId] : DEFAULT_PROJECT;
 $imageId = $_POST[imageId];
 $preset = $_POST[$_POST[controlpre]];
 
@@ -20,13 +22,18 @@ $sessionId = (empty($sessionId)) ? $lastId : $sessionId;
 // --- Get data type list
 $datatypes = $leginondata->getAllDatatypes($sessionId);
 
-$sessions = $leginondata->getSessions('description');
+$projectdata = new project();
+$projects = $projectdata->getProjects('all');
+
+$sessions = $leginondata->getSessions('description', $projectId);
 $filenames = $leginondata->getFilenames($sessionId, $preset);
 
 $viewer = new viewer();
+$viewer->setProjectId($projectId);
 $viewer->setSessionId($sessionId);
 $viewer->setImageId($imageId);
 $viewer->addSessionSelector($sessions);
+$viewer->addProjectSelector($projects);
 $viewer->addFileSelector($filenames);
 $viewer->setNbViewPerRow('2');
 $javascript = $viewer->getJavascript();

@@ -10,6 +10,7 @@
 require('inc/leginon.inc');
 require('inc/square.inc');
 require('inc/scalebar.inc');
+require('inc/filter.inc');
 
 $g=true;
 if (!$session=stripslashes($_GET[session])) {
@@ -40,9 +41,10 @@ $size = $_GET['s'];
 $displaytarget = ($_GET['tg']==1) ? true : false;
 $displayscalebar = ($_GET['sb']==1) ? true : false;
 $fft = ($_GET['fft']==1) ? true : false;
+if (!$filter=$_GET['flt']) 
+	$filter = 'default';
 
-$displayloadingtime = false;
-
+$displayloadingtime = true;
 
 if ($size) {
 	$new_w = $size;
@@ -77,8 +79,9 @@ if ($g) {
 			$begin=getmicrotime();
 
 		if (READ_MRC == "mrcmod") {
-			$binning = ($dimx < 2048) ? 1 : 4;
-			$img = imageCreateFromMRC($pic,$minpix, $maxpix, $binning);
+			$binning = ($dimx > 1024) ? (($dimx > 2048) ? 4 : 2 ) : 1;
+			$filterdata = new filter($pic, $minpix, $maxpix, $binning);
+			$img = $filterdata->getFilter($filter);
 			if ($size) {
 				$scalefactor = (imagesx($img)) ? $size/imagesx($img) : 1;
 				imagescale($img, $scalefactor);
@@ -116,8 +119,8 @@ if ($g) {
 				$crosscol = $white;
 			}
 			$tn = $targetinfo[parentnumber];
-			$ratioX = ($size) ? $size/$target[dimx] : 1;
-			$ratioY = ($size) ? $size/$target[dimy] : 1;
+			$ratioX = ($size) ? $size/$target[dimx] : (($binning) ? 1/$binning : 1);
+			$ratioY = ($size) ? $size/$target[dimy] : (($binning) ? 1/$binning : 1);
 			$xc = $target[x]*$ratioX;
 			$yc = $target[y]*$ratioY;
 			$square = new square($xc,$yc, $truedim*$ratioX);
@@ -126,18 +129,15 @@ if ($g) {
 			$txc = $squarepoints[0]+1;
 			$tyc = $squarepoints[1]+1;
 			$npoints=count($squarepoints)/2;
-			if ($tId) {
-				imagepolygon($img, $squarepoints, $npoints, $crosscol);
-				imagestring($img, 4, $txc+1, $tyc+1, $tn, $black);
-				imagestring($img, 4, $txc, $tyc, $tn, $col);
-			}
 			
 		}
 		$targets = $leginondata->getImageFocusTargets($id);
 		$line=20;
 		$diam=20;
-		$tn='focus';
+		$myc=0;
 		foreach ($targets as $target) {
+			$tgn=$target[parentnumber];
+			$tn='focus';
 			if (abs($target[x]-$parent[targetx])<5
 				&& abs($target[y]-$parent[targety])<5 ){
 				$col = $blue;
@@ -146,8 +146,8 @@ if ($g) {
 				$col = $white;
 				$crosscol = $white;
 			}
-			$ratioX = ($size) ? $size/$target[dimx] : 1;
-			$ratioY = ($size) ? $size/$target[dimy] : 1;
+			$ratioX = ($size) ? $size/$target[dimx] : (($binning) ? 1/$binning : 1);
+			$ratioY = ($size) ? $size/$target[dimy] : (($binning) ? 1/$binning : 1);
 			$xc = $target[x]*$ratioX;
 			$yc = $target[y]*$ratioY;
 			imagearc($img, ($target[x]*$ratioX), ($target[y]*$ratioY), $diam*$ratioX, $diam*$ratioY, 0, 360, $crosscol);
@@ -155,6 +155,7 @@ if ($g) {
 			imageline($img, $target[x]*$ratioX, ($target[y]-$line)*$ratioY, $target[x]*$ratioX, ($target[y]+$line)*$ratioY, $crosscol); 
 			imagestring($img, 4, $xc+1, $yc+1, $tn, $black);
 			imagestring($img, 4, $xc, $yc, $tn, $col);
+			$myc++;
 		}
 	  }
 
@@ -167,7 +168,7 @@ if ($g) {
 	  /* display scale bar */
 	  if ($displayscalebar) {
 		if ($imginfo) {
-			$size = ($size) ? $size : $imginfo[dimx];
+			$size = ($size) ? $size : (($binning) ? $imginfo[dimx]/$binning : $imginfo[dimx]);
 			$ratio = $imginfo[dimx]/$size ;
 			$value = $imginfo[pixelsize]*$imginfo[binning]*$ratio;
 			$scalebar = new ScaleBar($img, $size, $value);

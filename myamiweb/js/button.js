@@ -42,6 +42,15 @@ fft_bt_over_off.src=path+"fft_bt_over_off.gif";
 fft_bt_over_on=new Image();
 fft_bt_over_on.src=path+"fft_bt_over_on.gif";
 
+filter_bt_off=new Image();
+filter_bt_off.src=path+"filter_bt_off.gif";
+filter_bt_on=new Image();
+filter_bt_on.src=path+"filter_bt_on.gif";
+filter_bt_over_off=new Image();
+filter_bt_over_off.src=path+"filter_bt_over_off.gif";
+filter_bt_over_on=new Image();
+filter_bt_over_on.src=path+"filter_bt_over_on.gif";
+
 function imageon(imagename, name, type) {
 	document.images[eval("\"" + imagename + "\"")].src = eval(name+type+"_on.src");
 	eval(imagename+"_st=true");

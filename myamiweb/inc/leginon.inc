@@ -36,9 +36,23 @@ class leginondata {
 		return $expId;
 	}
 
-	function getSessions($comment="") {
-		$selectcomment = ($comment) ? "if (length(s.comment)>0, concat(s.name,' - ',s.comment), s.name)" : "s.name";
-		$q = "select distinct(s.DEF_id) as `id`, ".$selectcomment." as `name` from AcquisitionImageData a left join SessionData s on (s.`DEF_id` = a.`REF|SessionData|Session`) order by s.DEF_timestamp DESC ";
+	function getSessions($comment="", $projectId=false) {
+		$selectcomment = ($comment) ? 
+				"if (length(s.comment)>0, concat(s.name,' - ',s.comment), s.name)" : "s.name";
+		if (is_numeric($projectId)) {
+			$projectjoin = (is_numeric($projectId)) ? 
+				"left join project.projectexperiments p on (p.name = s.name) " : "";
+			$projectwhere = (is_numeric($projectId)) ? 
+				" and p.projectId='$projectId' " : "";
+		}
+
+		$q="select distinct(s.DEF_id) as `id`, ".$selectcomment." as `name` "
+		."from SessionData s "
+		."left join AcquisitionImageData a on (s.`DEF_id` = a.`REF|SessionData|Session`) "
+		.$projectjoin
+		."where a.`REF|SessionData|Session` <> 'NULL' "
+		.$projectwhere
+		."order by s.DEF_timestamp DESC ";
 		$result = $this->mysql->SQLQuery($q);
 		$sessions = array();
 		if ($result)
@@ -243,9 +257,27 @@ class leginondata {
 		if ($limit)
 			$q .= "limit $limit";
 
-		echo $q;
 		$Rparent = $this->mysql->SQLQuery($q);
 //		$parent = mysql_fetch_array($Rparent);
+		return $Rparent;
+	}
+
+	function getAllMatrixCalibrations() {
+		$q = "select "
+			."date_format(mcal.`DEF_timestamp`, '%Y-%d-%m %T') as `timestamp`,"
+			."mcal.type as type, "
+			."mcal.`ARRAY|matrix|1_1` as `a11`, "
+			."mcal.`ARRAY|matrix|1_2` as `a12`, "
+			."mcal.`ARRAY|matrix|2_1` as `a21`, "
+			."mcal.`ARRAY|matrix|2_2` as `a22`, "
+			."atan2(mcal.`ARRAY|matrix|1_1`, mcal.`ARRAY|matrix|2_1`) as angle "
+			."from MatrixCalibrationData mcal "
+			."where "
+			."1 "
+			."order by mcal.`type`, mcal.`DEF_timestamp` "
+			."";
+
+		$Rparent = $this->mysql->SQLQuery($q);
 		return $Rparent;
 	}
 
@@ -490,7 +522,9 @@ class leginondata {
 			."floor(t.`delta row`+c.`SUBD|dimension|y`/2) as y, "
 			."c.`SUBD|dimension|x` as dimx, "
 			."c.`SUBD|dimension|y` as dimy, "
-			."parent.`DEF_id` as parentId "
+			."parent.`DEF_id` as parentId, "
+			."t.`DEF_id` as tId, "
+			."t.`version` as tversion "
 			."from AcquisitionImageData as a "
 			."left join AcquisitionImageTargetData as t "
 			."on (a.`DEF_id` = t.`REF|AcquisitionImageData|image`) "
@@ -514,7 +548,9 @@ class leginondata {
 			."floor(t.`delta column`+c.`SUBD|dimension|x`/2) as x, "
 			."floor(t.`delta row`+c.`SUBD|dimension|y`/2) as y, "
 			."c.`SUBD|dimension|x` as dimx, "
-			."c.`SUBD|dimension|y` as dimy "
+			."c.`SUBD|dimension|y` as dimy, "
+			."t.`DEF_id` as tId, "
+			."t.`version` as tversion "
 			."from AcquisitionImageData as a "
 			."left join AcquisitionImageTargetData as t "
 			."on (a.`DEF_id` = t.`REF|AcquisitionImageData|image`) "

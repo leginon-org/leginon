@@ -30,6 +30,8 @@ if (!$max=$_GET['pmax'])
 	$max=255;
 if (!$name=$_GET['name'])
 	$name='v';
+if (!$currentfilter=$_GET['filter'])
+	$currentfilter='default';
 
 $arrayurl = explode("/", $PHP_SELF);
 array_pop($arrayurl);
@@ -39,15 +41,28 @@ var jsminpix = $min;
 var jsmaxpix = $max;
 var jsbaseurl = '$baseurl/';
 var jsviewname = '$name';
+var jsfilter = '$currentfilter';
 ";
+require('inc/filter.inc');
+$filterdata = new filter();
+$filtertypes = $filterdata->getFilterTypes();
+$binningtypes = $filterdata->getBinningTypes();
+
 ?>
 function update() {
 //	if (eval("parentwindow.jsmin"+jsviewname))
 //		eval("parentwindow.jsmin"+jsviewname+"="+jsminpix);
 //	if (eval("parentwindow.jsmax"+jsviewname))
 //		eval("parentwindow.jsmax"+jsviewname+"="+jsmaxpix);
+	if (filterlist = document.adjustform.filter)
+		jsfilter=filterlist.options[filterlist.selectedIndex].value;
+	parentwindow.setfilter(jsviewname,jsfilter);
+	if (!eval("parentwindow."+jsviewname+"filter_bt_st"))
+		if (jsfilter!="default")
+			eval("parentwindow.toggleimage('"+jsviewname+"filter_bt', 'filter_bt')");
 	parentwindow.setminmax(jsviewname,jsminpix,jsmaxpix);
 	parentwindow.newfile(jsviewname);
+
 }
 
 function drawSliders() {
@@ -129,6 +144,40 @@ function init(){
   </tr>
  </table>
  </td>
+ </tr>
+ <tr>
+	<td>
+		Filter
+	</td>
+	<td>
+    <table border=0 cellspacing=0 cellpadding=0 >
+	<tr>
+	<td>
+	<select name="filter">
+	<?
+	foreach ($filtertypes as $k=>$filter) {
+		$sel = ($k==$currentfilter) ? 'selected' : '';
+		echo '<option value="'.$k.'"'.$sel.'>'.$filter.'</option>'."\n";
+	}
+	?>
+	</select>
+	</td>
+	<td>
+		Binning
+	</td>
+	<td>
+	<select name="binning">
+	<?
+	foreach ($binningtypes as $k=>$binning) {
+		$sel = ($k==$currentbinning) ? 'selected' : '';
+		echo '<option value="'.$k.'"'.$sel.'>'.$binning.'</option>'."\n";
+	}
+	?>
+	</select>
+	</td>
+	</tr>
+    </table>
+  </td>
  </tr>
  <tr>
  <td>

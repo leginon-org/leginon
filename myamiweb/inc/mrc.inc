@@ -36,13 +36,24 @@ class mrc {
 		return $img;
 	}
 
-	function getSize($file) {
-		$hs = $this->MRC_HEADER_SIZE;
-		$bs = $this->MRC_BYTE_PER_PIX;
-		$fs = filesize($file);
-		$mrcsize = floor(sqrt(($fs-$hs)/$bs));
-		return $mrcsize;
-	}
 }
-$mrc = new mrc
+
+function setBinning($filename) {
+	$binning = 1;
+	$fileinfo = imagemrcinfo($filename);
+	$w = $fileinfo[nx];
+	switch ($w) {
+		case ($w <= 1024):
+			$binning = 1;
+			break;
+		case ($w <= 2048):
+			$binning = 2;
+			break;
+		case ($w <= 4096):
+			$binning = 4;
+			break;
+	
+	}
+	return $binning;
+}
 ?>
