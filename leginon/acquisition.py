@@ -225,7 +225,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.waitingforimages.setList(imageidstrs)
 			print '%s DONE WAITING for %s' % (self.id, id,)
 		self.doneevents.clear()
-		print '%s DONE WAITING' % (self.id)
+		print '%s DONE WAITING' % (self.id,)
 
 	def stopWaitingForImage(self):
 		imageidstr = self.waitingforimages.getSelectedValue()
