@@ -10,6 +10,7 @@
 import ccdcamera
 import numarray
 import sys
+import threading
 
 try:
 	import mmapfile
@@ -26,23 +27,56 @@ except ImportError:
 
 class CameraControl(object):
 	def __init__(self):
+		self.cameralock = threading.RLock()
 		self.camera = None
 		self.cameras = []
 
 	def addCamera(self, camera):
+		self.lock()
 		if camera in self.cameras:
+			self.unlock()
 			raise ValueError
 
 		if not self.cameras:
-			self.initialize()
+			try:
+				self.initialize()
+			except:
+				self.unlock()
+				raise
+
+		try:
+			hr = cameracontrol.camera.Initialize(camera.cameratype, 0)
+		except pywintypes.com_error, e:
+			self.unlock()
+			raise RuntimeError('error initializing camera')
+		except:
+			self.unlock()
+			raise
 
 		self.cameras.append(camera)
+		self.unlock()
 
 	def removeCamera(self, camera):
+		self.lock()
 		self.cameras.remove(camera)
 
 		if not self.cameras:
-			self.uninitialize()
+			try:
+				self.uninitialize()
+			except:
+				self.unlock()
+				raise
+
+		self.unlock()
+
+	def setCamera(self, camera):
+		self.camera.ActiveCamera = camera.cameratype
+
+	def lock(self):
+		self.cameralock.acquire()
+
+	def unlock(self):
+		self.cameralock.release()
 
 	def initialize(self):
 		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
@@ -71,7 +105,7 @@ class CameraControl(object):
 			pass
 
 	def uninitialize(self):
-		cameracontrol.camera.UnlockCAMC()
+		self.camera.UnlockCAMC()
 
 cameracontrol = CameraControl()
 
@@ -135,12 +169,6 @@ class Tietz(object):
 		self.exposuretype = 'normal'
 
 		cameracontrol.addCamera(self)
-
-		try:
-			hr = cameracontrol.camera.Initialize(self.cameratype, 0)
-		except pywintypes.com_error, e:
-			cameracontrol.removeCamera(self)
-			raise RuntimeError('error initializing camera')
 
 		self.methodmapping = {
 			'binning': {'get':'getBinning',
@@ -264,8 +292,10 @@ class Tietz(object):
 			parameter = getattr(win32com.client.constants, parametername)
 		except:
 			return ''
-		cameracontrol.camera.ActiveCamera = self.cameratype
+		cameracontrol.lock()
+		cameracontrol.setCamera(self)
 		value = cameracontrol.camera.QueryParameter(parameter)
+		cameracontrol.unlock()
 		if value in (5, 9):
 			return 'r'
 		elif value in (6, 10):
@@ -279,8 +309,10 @@ class Tietz(object):
 			parameter = getattr(win32com.client.constants, parametername)
 		except:
 			return None
-		cameracontrol.camera.ActiveCamera = self.cameratype
+		cameracontrol.lock()
+		cameracontrol.setCamera(self)
 		value = cameracontrol.camera.QueryParameter(parameter)
+		cameracontrol.unlock()
 		if value in (5, 6, 7):
 			return int
 		elif value in (9, 10, 11):
@@ -295,12 +327,16 @@ class Tietz(object):
 			parameter = getattr(win32com.client.constants, parametername)
 		except:
 			return None
-		cameracontrol.camera.ActiveCamera = self.cameratype
+		cameracontrol.lock()
+		cameracontrol.setCamera(self)
 		if parametertype is int:
-			return cameracontrol.camera.LParam(parameter)
+			result = cameracontrol.camera.LParam(parameter)
 		elif parametertype is str:
-			return cameracontrol.camera.SParam(parameter)
-		return None
+			result = cameracontrol.camera.SParam(parameter)
+		else:
+			result = None
+		cameracontrol.unlock()
+		return result
 
 	def _setParameterValue(self, parametername, value):
 		parametertype = self._getParameterType(parametername)
@@ -310,12 +346,16 @@ class Tietz(object):
 			parameter = getattr(win32com.client.constants, parametername)
 		except:
 			return None
-		cameracontrol.camera.ActiveCamera = self.cameratype
+		cameracontrol.lock()
+		cameracontrol.setCamera(self)
 		if parametertype is int:
-			return cameracontrol.camera.SetLParam(parameter, value)
+			result = cameracontrol.camera.SetLParam(parameter, value)
 		elif parametertype is str:
-			return cameracontrol.camera.SetSParam(parameter, value)
-		return None
+			result = cameracontrol.camera.SetSParam(parameter, value)
+		else:
+			result = None
+		cameracontrol.unlock()
+		return result
 
 	def exit(self):
 		cameracontrol.camera.UnInitialize(self.cameratype)
@@ -411,12 +451,12 @@ class Tietz(object):
 			offset['x'] = offset['y']
 			offset['y'] = camerasize['x']/binning['x'] - offset['x'] - dimension['x']
 
-		cameracontrol.camera.ActiveCamera = self.cameratype
+		cameracontrol.lock()
+		cameracontrol.setCamera(self)
 		hr = cameracontrol.camera.Format(
 														offset['x']*binning['x'], offset['y']*binning['y'],
 														dimension['x'], dimension['y'],
 														binning['x'], binning['y'])
-
 		exposuretype = self.getExposureType()
 		if exposuretype == 'normal':
 			hr = cameracontrol.camera.AcquireImage(self.getExposureTime(), 0)
@@ -427,7 +467,10 @@ class Tietz(object):
 		elif exposuretype == 'readout':
 			hr = cameracontrol.camera.AcquireReadout(0)
 		else:
+			cameracontrol.unlock()
 			raise ValueError('invalid exposure type for image acquisition')
+
+		cameracontrol.unlock()
 
 		imagesize = self.bytesperpixel*dimension['x']*dimension['y']
 
