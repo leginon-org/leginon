@@ -19,7 +19,7 @@ class LeginonObject(object):
 	def location(self):
 		'''Returns a dict describing the location of this object.'''
 		loc = {}
-		loc['hostname'] = socket.gethostname()
+		loc['hostname'] = socket.gethostname().lower()
 #		loc['PID'] = os.getpid()
 #		loc['python ID'] = id(self)
 		return loc

@@ -19,6 +19,7 @@ import uiclient
 #gc.set_debug(gc.DEBUG_LEAK)
 
 location = manager.Manager(('manager',), None).location()
-launcher.Launcher((socket.gethostname(),), nodelocations={'manager': location})
+launcher.Launcher((socket.gethostname().lower(),),
+									nodelocations={'manager': location})
 client = uiclient.UIApp(location['UI'], 'Leginon II')
 

@@ -26,7 +26,7 @@ class XMLRPCServer(object):
 	Sets self.host and self.port accordingly
 	"""
 	def __init__(self, port=None):
-		self.hostname = socket.gethostname()
+		self.hostname = socket.gethostname().lower()
 
 		self.port = port
 		if self.port is not None:

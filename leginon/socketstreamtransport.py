@@ -90,7 +90,7 @@ class Server(object):
 	def __init__(self, dh):
 		self.exitevent = threading.Event()
 		self.datahandler = dh
-		self.hostname = socket.gethostname()
+		self.hostname = socket.gethostname().lower()
 
 	def start(self):
 		self.thread = threading.Thread(name='socket server thread',

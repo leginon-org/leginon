@@ -32,7 +32,7 @@ class xmlrpcserver(leginonobject.LeginonObject):
 		leginonobject.LeginonObject.__init__(self, id)
 		self.object_instance = object_instance 
 		self.port = port
-		self.hostname = socket.gethostname()
+		self.hostname = socket.gethostname().lower()
 		if self.port is not None:
 			# this exception will fall through if __init__ fails
 			self.server = SimpleXMLRPCServer((self.hostname,self.port), logRequests=False)

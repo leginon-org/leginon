@@ -43,7 +43,7 @@ class Server(socketstreamtransport.Server, SocketServer.ThreadingTCPServer):
 
 	def location(self):
 		location = socketstreamtransport.Server.location(self)
-		location['hostname'] = socket.gethostname()
+		location['hostname'] = socket.gethostname().lower()
 		location['port'] = self.port
 		return location
 
