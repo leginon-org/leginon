@@ -945,3 +945,29 @@ class ModeledStageCalibrationClient(CalibrationClient):
 
 		stagedata = data.ScopeEMData(id=('scope',), initializer=current)
 		self.publishRemote(stagedata)
+
+class EucentricFocusClient(CalibrationClient):
+	def __init__(self, node):
+		CalibrationClient.__init__(self, node)
+
+	def researchEucentricFocus(self, ht, mag, instrument=None):
+		if instrument is None:
+			instrument = self.node.session['instrument']
+		query = data.EucentricFocusData()
+		query['session'] = data.SessionData()
+		query['session']['instrument'] = instrument
+		query['high tension'] = ht
+		query['magnification'] = mag
+		datalist = self.node.research(datainstance=query, results=1)
+		if datalist:
+			eucfoc = datalist[0]
+		else:
+			eucfoc = None
+		return eucfoc
+
+	def publishEucentricFocus(self, ht, mag, ef):
+		newdata = data.EucentricFocusData()
+		newdata['high tension'] = ht
+		newdata['magnification'] = mag
+		newdata['focus'] = ef
+		self.node.publish(newdata, database=True, dbforce=True)

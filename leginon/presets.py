@@ -288,6 +288,7 @@ class PresetsManager(node.Node):
 
 		name = presetdata['name']
 		self.uistatus.set('Changing preset to "%s"' % name)
+		print 'Changing preset to "%s"' % (name,)
 
 		## should switch to using AllEMData
 		scopedata = data.ScopeEMData()
@@ -307,6 +308,7 @@ class PresetsManager(node.Node):
 			time.sleep(pause)
 			self.currentpreset = presetdata
 			self.uistatus.set('Preset changed to %s' % (name,))
+			print 'Preset changed to %s' % (name,)
 			self.outputEvent(event.PresetChangedEvent(name=name))
 
 	def fromScope(self, name):
@@ -338,48 +340,6 @@ class PresetsManager(node.Node):
 		node.beep()
 		return newpreset
 
-	def eucToScope(self, pname):
-		'''
-		p is either index, preset, or name
-		'''
-		eucfoc = None
-		for preset in self.presets:
-			if pname == preset['name']:
-				eucfoc = preset['eucentric focus']
-				break
-		if eucfoc is None:
-			self.messagelog.error('No such preset "%s"' % pname)
-			return
-
-		self.uistatus.set('Setting eucentric focus for preset %s' % (pname,))
-
-		scopedata = data.ScopeEMData()
-		scopedata['id'] = ('scope',)
-		scopedata['focus'] = eucfoc
-		try:
-			self.publishRemote(scopedata)
-		except node.PublishError:
-			self.printException()
-			self.messagelog.error('Cannot set instrument parameters')
-
-	def eucFromScope(self, name):
-		'''
-		create a new copy of an existing preset and replace the 
-		value of eucentric focus
-		'''
-
-		## get current value of focus
-		scope = self.researchByDataID(('focus',))
-		focusvalue = scope['focus']
-
-		for p in self.presets:
-			if p['name'] == name:
-				p['eucentric focus'] = focusvalue
-				self.presetToDB(p)
-				self.uistatus.set('Eucentric focus for %s: %s' % (name, focusvalue))
-
-		node.beep()
-
 	def presetNames(self):
 		names = [p['name'] for p in self.presets]
 		return names
@@ -403,7 +363,8 @@ class PresetsManager(node.Node):
 		self.toScopeFollowCycle(new)
 		node.beep()
 
-	def toScopeFollowCycle(self, new):
+	def toScopeFollowCycle(self, new, force_cycle=False):
+		mymessage = self.messagelog.information('Preset Change in Progress')
 		usecycle = self.usecycle.get()
 		if usecycle:
 			order = self.orderlist.get()
@@ -414,7 +375,8 @@ class PresetsManager(node.Node):
 				# then recursive toScopeFollowCylce
 				self.uistatus.set('First preset change, automatically cycling...')
 				self.toScope(new)
-				self.toScopeFollowCycle(new)
+				mymessage.clear()
+				self.toScopeFollowCycle(new, force_cycle=True)
 				return
 			current = self.currentpreset['name']
 			self.uicurrent.set(current)
@@ -442,10 +404,10 @@ class PresetsManager(node.Node):
 					samemag = False
 
 				if samemag:
-					if self.cyclemagchanged.get():
-						self.uistatus.set('Cycling, but magnification will not change')
+					if self.cyclemagchanged.get() or force_cycle:
+						self.uistatus.set('Cycling even though new mag is same as old mag')
 					else:
-						self.uistatus.set('Not cycling, magnification will not change')
+						self.uistatus.set('Not cycling because new mag is same as old mag')
 						cycle = []
 
 				for p in cycle:
@@ -458,11 +420,13 @@ class PresetsManager(node.Node):
 						scopedata = data.ScopeEMData()
 						scopedata['magnification'] = mag
 						scopedata['id'] = ('scope',)
+						print 'changing to %s' % (mag,)
 						try:
 							self.publishRemote(scopedata)
 						except node.PublishError:
 							self.printException()
 							self.messagelog.error('Cannot set instrument parameters')
+						print 'changed to %s' % (mag,)
 						currentmag = mag
 						pause = self.changepause.get()
 						time.sleep(pause)
@@ -472,6 +436,7 @@ class PresetsManager(node.Node):
 
 		self.uistatus.set('Preset "%s" to instrument' % (new,))
 		self.toScope(new)
+		mymessage.clear()
 
 	def createCycleList(self, first, last, order=None):
 		if order is None:
@@ -541,14 +506,6 @@ class PresetsManager(node.Node):
 	def uiSelectedFromScope(self):
 		sel = self.uiselectpreset.getSelectedValue()
 		newpreset = self.fromScope(sel)
-
-	def uiSelectedEucFromScope(self):
-		sel = self.uiselectpreset.getSelectedValue()
-		self.eucFromScope(sel)
-
-	def uiSelectedEucToScope(self):
-		sel = self.uiselectpreset.getSelectedValue()
-		self.eucToScope(sel)
 
 	def uiSelectedRemove(self):
 		sel = self.uiselectpreset.getSelectedValue()
@@ -682,7 +639,6 @@ class PresetsManager(node.Node):
 		# selection
 		self.presetparams = PresetParameters(self)
 		commitmethod = uidata.Method('Commit Parameters', self.uiCommitParams)
-		self.autosquare = uidata.Boolean('Auto Square', True, 'rw')
 		self.uiselectpreset = uidata.SingleSelectFromList('Preset', [], 0,
 																								callback=self.uiSelectCallback)
 		toscopemethod = uidata.Method('To Scope', self.uiToScope)
@@ -698,19 +654,10 @@ class PresetsManager(node.Node):
 													self.cyclemagonly, self.orderlist))
 
 		fromscopemethod = uidata.Method('From Scope', self.uiSelectedFromScope)
-		euctoscopemethod = uidata.Method('To Scope',
-																			self.uiSelectedEucToScope)
-		eucfromscopemethod = uidata.Method('From Scope',
-																				self.uiSelectedEucFromScope)
-		euccontainer = uidata.Container('Eucentric Focus')
-		euccontainer.addObjects((euctoscopemethod, eucfromscopemethod))
 		removemethod = uidata.Method('Remove', self.uiSelectedRemove)
 
 		selectcont = uidata.Container('Selection')
-		selectcont.addObjects((self.uiselectpreset, toscopemethod, fromscopemethod,
-														euccontainer, removemethod, self.changepause,
-														self.presetparams, commitmethod, self.autosquare,
-														statuscont, calcont, cyclecont))
+		selectcont.addObjects((self.uiselectpreset, toscopemethod, fromscopemethod, removemethod, self.changepause, commitmethod, self.presetparams, statuscont, calcont, cyclecont))
 
 		pnames = self.presetNames()
 		self.uiselectpreset.set(pnames, 0)

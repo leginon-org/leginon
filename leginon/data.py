@@ -423,6 +423,13 @@ class PixelSizeCalibrationData(MagDependentCalibrationData):
 		return t
 	typemap = classmethod(typemap)
 
+class EucentricFocusData(MagDependentCalibrationData):
+	def typemap(cls):
+		t = MagDependentCalibrationData.typemap()
+		t += [ ('focus', float)]
+		return t
+	typemap = classmethod(typemap)
+
 class MatrixCalibrationData(MagDependentCalibrationData):
 	def typemap(cls):
 		t = MagDependentCalibrationData.typemap()
@@ -511,7 +518,6 @@ class PresetData(InSessionData):
 			('image shift', dict),
 			('beam shift', dict),
 			('defocus', float),
-			('eucentric focus', float),
 			('dimension', dict),
 			('binning', dict),
 			('offset', dict),

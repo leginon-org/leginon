@@ -23,6 +23,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 
 		self.calclient = calibrationclient.BeamTiltCalibrationClient(self)
+		self.euclient = calibrationclient.EucentricFocusClient(self)
 
 
 		self.defineUserInterface()
@@ -184,8 +185,16 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		measurecontainer = uidata.Container('Measure')
 		measurecontainer.addObjects((self.measuretiltvalue, self.resultvalue, measuremethod, correctdefocusmethod, correctstigmethod, resetdefocusmethod))
 
+		## eucentric focus stuff
+		euc = uidata.Container('Eucentric Focus')
+		eufromscope = uidata.Method('Record Current Focus as Eucentric Focus', self.uiEucFromScope)
+		eutoscope = uidata.Method('Send Recored Eucentric Focus to Scope', self.uiEucToScope)
+		eucstatus = uidata.MessageLog('Status')
+
+		euc.addObjects((eufromscope,eutoscope, eucstatus))
+
 		container = uidata.LargeContainer('Beam Tilt Calibrator')
-		container.addObjects((defocuscontainer, stigcontainer, measurecontainer))
+		container.addObjects((defocuscontainer, stigcontainer, measurecontainer, euc))
 		self.uiserver.addObject(container)
 
 	def uiCalibrateDefocus(self):
@@ -238,3 +247,36 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		stigx = stig['x']
 		stigy = stig['y']
 		return {'defocus':defocus, 'stigx':stigx, 'stigy':stigy}
+
+	def uiEucToScope(self):
+		self.eucToScope()
+
+	def uiEucFromScope(self):
+		self.eucFromScope()
+
+	def eucToScope(self):
+		scope = self.researchByDataID(('scope',))
+		ht = scope['high tension']
+		mag = scope['magnification']
+		eudata = self.euclient.researchEucentricFocus(ht,mag)
+		focus = eudata['focus']
+
+		scopedata = data.ScopeEMData()
+		scopedata['id'] = ('scope',)
+		scopedata['focus'] = focus
+		try:
+			self.publishRemote(scopedata)
+		except node.PublishError:
+			self.printException()
+			self.messagelog.error('Cannot set instrument parameters')
+
+	def eucFromScope(self):
+		## get current value of focus
+		scope = self.researchByDataID(('scope',))
+		ht = scope['high tension']
+		mag = scope['magnification']
+		focus = scope['focus']
+		self.euclient.publishEucentricFocus(ht, mag, focus)
+		self.eustatus.information('published:  HT: %s, Mag: %s, Euc. Focus: %s' % (ht, mag, focus))
+
+
