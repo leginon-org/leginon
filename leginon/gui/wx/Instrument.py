@@ -2,6 +2,9 @@ import wx
 from gui.wx.Entry import Entry, IntEntry, FloatEntry, EVT_ENTRY
 import gui.wx.Node
 
+class IndexChoice(wx.Choice):
+	pass
+
 def setControl(control, value):
 	testr = '%s value must be of type %s (is type %s)'
 	vestr = 'Invalid value %s for instance of %s'
@@ -36,14 +39,19 @@ def setControl(control, value):
 
 	elif isinstance(control, wx.Choice):
 
-		if isinstance(control, wx.TextCtrl) and type(value) is not str:
+		if isinstance(control, IndexChoice):
+			if type(value) is not int:
+				typename = str.__name__
+				raise TypeError(testr % (controlname, typename, valuetypename))
+			control.SetSelection(value)
+		elif type(value) is not str:
 			typename = str.__name__
 			raise TypeError(testr % (controlname, typename, valuetypename))
-
-		if control.FindString(value) == wx.NOT_FOUND:
-			raise ValueError(vestr % (value, controlname))
 		else:
-			control.SetStringSelection(value)
+			if control.FindString(value) == wx.NOT_FOUND:
+				raise ValueError(vestr % (value, controlname))
+			else:
+				control.SetStringSelection(value)
 
 def getValue(wxobj):
 	if isinstance(wxobj, wx.StaticText):
@@ -51,7 +59,10 @@ def getValue(wxobj):
 	elif isinstance(wxobj, (Entry, wx.TextCtrl, wx.CheckBox)):
 		return wxobj.GetValue()
 	elif isinstance(wxobj, wx.Choice):
-		return wxobj.GetStringSelection()
+		if isinstance(wxobj, IndexChoice):
+			return wxobj.GetSelection()
+		else:
+			return wxobj.GetStringSelection()
 	elif isinstance(wxobj, wx.Button):
 		return True
 	elif isinstance(wxobj, wx.Event):
@@ -61,7 +72,10 @@ def getValue(wxobj):
 		elif isinstance(evtobj, (Entry, wx.TextCtrl)):
 			return wxobj.GetValue()
 		elif isinstance(evtobj, wx.Choice):
-			return wxobj.GetString()
+			if isinstance(evtobj, IndexChoice):
+				return wxobj.GetInt()
+			else:
+				return wxobj.GetString()
 		elif isinstance(evtobj, wx.Button):
 			return True
 	else:
@@ -392,7 +406,7 @@ class MainSizer(wx.StaticBoxSizer):
 		]
 		self.parameters = {
 			'High tension': wx.StaticText(self.parent, -1, ''),
-			'Magnification': wx.Choice(self, -1),
+			'Magnification': IndexChoice(self.parent, -1),
 			'Intensity': FloatEntry(self.parent, -1, chars=7),
 			'Spot size': IntEntry(self.parent, -1, chars=2),
 		}
@@ -449,7 +463,7 @@ class Panel(gui.wx.Node.Panel):
 
 		self.parametermap = {
 			'high tension': self.szpmain.parameters['High tension'],
-			'magnification': self.szpmain.parameters['Magnification'],
+			'magnification index': self.szpmain.parameters['Magnification'],
 			'intensity': self.szpmain.parameters['Intensity'],
 			'spot size': self.szpmain.parameters['Spot size'],
 			'stage status': self.szstage.parameters['Status'],
@@ -555,14 +569,17 @@ class Panel(gui.wx.Node.Panel):
 		return reversemap
 
 	def _setMagnifications(self, mags):
-		magchoice = self.parametermap['magnification']
+		magchoice = self.parametermap['magnification index']
 		mags = map(str, mags)
-		n = maghoice.GetCount()
+		n = magchoice.GetCount()
 		if n > 0:
-			for i in magchoice.GetCount():
+			selection = magchoice.GetSelection()
+			for i in range(n):
 				magchoice.SetString(i, mags[i])
+			magchoice.SetSelection(selection)
 		else:
 			magchoice.AppendItems(mags)
+			magchoice.Enable(True)
 
 	def _initParameter(self, parameter, value):
 		if isinstance(parameter, wx.Choice):
@@ -598,8 +615,10 @@ class Panel(gui.wx.Node.Panel):
 		if parametermap is None:
 			parametermap = self.parametermap
 		if 'magnifications' in parameters:
-			self._setMagnifications(self, parameters['magnifications'])
+			self._setMagnifications(parameters['magnifications'])
 		for key, value in parameters.items():
+			if 'magnifications' == key:
+				continue
 			try:
 				self._setParameter(parametermap[key], value)
 			except KeyError:
