@@ -7,7 +7,9 @@ class Data(leginonobject.LeginonObject):
 	def __init__(self, id, content):
 		leginonobject.LeginonObject.__init__(self, id)
 		self.content = content
-		self.origin = {}
+
+		## taking this out until it breaks something
+		#self.origin = {}
 
 class IntData(Data):
 	def __init__(self, id, content):

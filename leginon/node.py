@@ -71,7 +71,9 @@ class Node(leginonobject.LeginonObject):
 	def addManager(self, loc):
 		self.managerloc = loc
 		self.addEventClient('manager', loc)
-		self.announce(event.NodeAvailableEvent(self.ID()))
+		newid = self.ID()
+		myloc = self.location()
+		self.announce(event.NodeAvailableEvent(newid, myloc))
 
 	def main(self):
 		'''this is the node's parent method'''

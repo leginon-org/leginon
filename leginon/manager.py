@@ -42,10 +42,9 @@ class Manager(node.Node):
 		self.interact()
 
 	def registerNode(self, readyevent):
-		print 'registering node', readyevent.origin
-
-		nodeid = readyevent.origin['id']
-		nodelocation = readyevent.origin['location']
+		nodeid = readyevent.id[:-1]
+		print 'registering node', nodeid
+		nodelocation = readyevent.content
 
 		# for the clients and mapping
 		self.addEventClient(nodeid, nodelocation)
@@ -66,8 +65,8 @@ class Manager(node.Node):
 			self.gui_add_launcher(nodeid)
 
 	def unregisterNode(self, unavailable_event):
-		print 'unregistering node', unavailable_event.origin
-		nodeid = unavailable_event.origin['id']
+		nodeid = unavailable_event.id[:-1]
+		print 'unregistering node', nodeid
 
 		#print 'removing data references:'
 		self.removeNodeData(nodeid)
@@ -107,10 +106,10 @@ class Manager(node.Node):
 	def registerData(self, publishevent):
 		if isinstance(publishevent, event.PublishEvent):
 			id = publishevent.content
-			self.publishDataLocation(id, publishevent.origin['id'])
+			self.publishDataLocation(id, publishevent.id[:-1])
 		elif isinstance(publishevent, event.ListPublishEvent):
 			for id in publishevent.content:
-				self.publishDataLocation(id, publishevent.origin['id'])
+				self.publishDataLocation(id, publishevent.id[:-1])
 		else:
 			raise TypeError
 
@@ -126,7 +125,7 @@ class Manager(node.Node):
 	def unregisterData(self, unpublishevent):
 		if isinstance(unpublishevent, event.UnpublishEvent):
 			id = unpublishevent.content
-			self.unpublishDataLocation(id, unpublishevent.origin['id'])
+			self.unpublishDataLocation(id, unpublishevent.id[:-1])
 		else:
 			raise TypeError
 
@@ -169,9 +168,8 @@ class Manager(node.Node):
 
 	def distribute(self, ievent):
 		'''push event to eventclients based on event class and source'''
-		#print 'DIST', event.origin
 		eventclass = ievent.__class__
-		from_node = ievent.origin['id']
+		from_node = ievent.id[:-1]
 		done = []
 		for distclass,fromnodes in self.distmap.items():
 			if issubclass(eventclass, distclass):

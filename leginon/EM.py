@@ -36,8 +36,11 @@ class DataHandler(datahandler.DataBinder):
 				result.content.update(self.camera)
 		else:
 			result = None
-		if result:
-			result.origin['location'] = self.EMnode.location()
+
+		### taking this out until it breaks something
+		#if result:
+		#	result.origin['location'] = self.EMnode.location()
+
 		self.lock.release()
 		return result
 
