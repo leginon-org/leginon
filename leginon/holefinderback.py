@@ -383,8 +383,8 @@ class HoleFinder(object):
 			raise RuntimeError('bad correlation type: %s' % (cortype,))
 		cc = Numeric.absolute(cc)
 
-		if corfilt:
-			kernel = convolver.gaussian_kernel(15, corfilt)
+		if corfilt is not None:
+			kernel = convolver.gaussian_kernel(*corfilt)
 			self.edgefinder.setKernel(kernel)
 			cc = self.edgefinder.convolve(image=cc)
 		#cc = imagefun.zscore(smooth)

@@ -38,6 +38,11 @@ class HoleFinder(targetfinder.TargetFinder):
 		'edge log sigma': 1.4,
 		'edge absolute': False,
 		'edge threshold': 100.0,
+		'template rings': [(30, 40)],
+		'template type': 'cross',
+		'template lpf': False,
+		'template lpf size': 15,
+		'template lpf sigma': 1.0,
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		targetfinder.TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
@@ -45,6 +50,12 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.cam = camerafuncs.CameraFuncs(self)
 		self.icecalc = ice.IceCalculator()
 
+		self.filtertypes = [
+			'sobel',
+			'laplacian3',
+			'laplacian5',
+			'laplacian-gaussian'
+		]
 		self.userpause = threading.Event()
 
 		#if self.__class__ == ClickTargetFinder:
@@ -62,28 +73,13 @@ class HoleFinder(targetfinder.TargetFinder):
 		targetfinder.TargetFinder.defineUserInterface(self)
 
 		self.originalimage = uidata.Image('Original', None, 'r')
-
-		### edge detection
-		self.edgeson = uidata.Boolean('Find Edges On', True, 'rw', persist=True)
-		self.edgethresh = uidata.Number('Threshold', 100.0, 'rw', persist=True)
-		self.filtertype = uidata.SingleSelectFromList('Filter Type', ['sobel', 'laplacian3', 'laplacian5', 'laplacian-gaussian'], 0, persist=True)
-		self.glapsize = uidata.Integer('LoG Size', 9, 'rw', persist=True)
-		self.glapsigma = uidata.Number('LoG Sigma', 1.4, 'rw', persist=True)
-		self.edgeabs = uidata.Boolean('Absolute Value', False, 'rw', persist=True)
-		edgemeth = uidata.Method('Find Edges', self.findEdges)
 		self.edgeimage = uidata.Image('Edge Image', None, 'r')
-		edgecont = uidata.LargeContainer('Edge Finder')
-		edgecont.addObjects((self.edgeson, self.filtertype, self.glapsize, self.glapsigma, self.edgeabs, self.edgethresh, edgemeth, self.edgeimage,))
-
 
 		### Correlate Template
-		self.ringlist = uidata.Sequence('Ring Diameters', [(30,40)], 'rw', persist=True)
-		self.cortype = uidata.SingleSelectFromList('Correlation Type', ['cross correlation', 'phase correlation'], 0, persist=True)
-		self.corfilt = uidata.Number('Low Pass Filter', 0.0, 'rw', persist=True)
 		cormeth = uidata.Method('Correlate Template', self.correlateTemplate)
 		self.corimage = uidata.Image('Correlation Image', None, 'r')
 		corcont = uidata.LargeContainer('Template Correlation')
-		corcont.addObjects((self.ringlist, self.cortype, self.corfilt, cormeth, self.corimage))
+		corcont.addObjects((cormeth, self.corimage))
 
 		### threshold
 		self.threshvalue = uidata.Number('Threshold Value', 3.0, 'rw', persist=True)
@@ -148,7 +144,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		goodholescontainer.addObjects((self.icetmin, self.icetmax, self.icetstd, icemeth, self.goodholes, self.use_target_template, self.foc_target_template, foc_template_limit, self.acq_target_template, self.focus_one_hole, self.goodholesimage, ))
 
 		container = uidata.LargeContainer('Hole Finder')
-		container.addObjects((edgecont,corcont,threshcont, blobcont, goodholescontainer))
+		container.addObjects((corcont,threshcont, blobcont, goodholescontainer))
 		self.uicontainer.addObject(container)
 
 	def readImage(self, filename):
@@ -166,14 +162,14 @@ class HoleFinder(targetfinder.TargetFinder):
 
 	def findEdges(self):
 		self.logger.info('find edges')
-		n = self.glapsize.get()
-		sig = self.glapsigma.get()
-		ab = self.edgeabs.get()
-		filt = self.filtertype.getSelectedValue()
+		n = self.settings['edge log size']
+		sig = self.settings['edge log sigma']
+		ab = self.settings['edge absolute']
+		filt = self.settings['edge type']
 		lowpasson = self.settings['edge lpf']
 		lowpassn = self.settings['edge lpf size']
 		lowpasssig = self.settings['edge lpf sigma']
-		edgethresh = self.edgethresh.get()
+		edgethresh = self.settings['edge threshold']
 		self.hf.configure_edges(filter=filt, size=n, sigma=sig, absvalue=ab, lp=lowpasson, lpn=lowpassn, lpsig=lowpasssig, thresh=edgethresh)
 		self.hf.find_edges()
 		# convert to Float32 to prevent seg fault
@@ -181,7 +177,7 @@ class HoleFinder(targetfinder.TargetFinder):
 
 	def correlateTemplate(self):
 		self.logger.info('correlate ring template')
-		ringlist = self.ringlist.get()
+		ringlist = self.settings['template rings']
 		# convert diameters to radii
 		radlist = []
 		for ring in ringlist:
@@ -189,8 +185,13 @@ class HoleFinder(targetfinder.TargetFinder):
 			radlist.append(radring)
 		self.hf.configure_template(ring_list=radlist)
 		self.hf.create_template()
-		cortype = self.cortype.getSelectedValue()
-		corfilt = self.corfilt.get()
+		cortype = self.settings['template type']
+		if self.settings['template lpf']:
+			corsize = self.settings['template lpf size']
+			corsigma = self.settings['template lpf sigma']
+			corfilt = (corsize, corsigma)
+		else:
+			corfilt = None
 		self.hf.configure_correlation(cortype, corfilt)
 		self.hf.correlate_template()
 		self.corimage.set(self.hf['correlation'].astype(Numeric.Float32))
@@ -439,12 +440,12 @@ class HoleFinder(targetfinder.TargetFinder):
 			'edge-lpf-on': self.settings['edge lpf'],
 			'edge-lpf-size': self.settings['edge lpf size'],
 			'edge-lpf-sigma': self.settings['edge lpf sigma'],
-			'edge-filter-type': self.filtertype.getSelectedValue(),
-			'edge-threshold': self.edgethresh.get(),
+			'edge-filter-type': self.settings['edge type'],
+			'edge-threshold': self.settings['edge threshold'],
 
-			'template-rings': self.ringlist.get(),
-			'template-correlation-type': self.cortype.getSelectedValue(),
-			'template-lpf': self.corfilt.get(),
+			'template-rings': self.settings['template rings'],
+			'template-correlation-type': self.settings['template type'],
+			'template-lpf': self.settings['template lpf sigma'],
 
 			'threshold-value': self.threshvalue.get(),
 			'blob-border': self.blobborder.get(),

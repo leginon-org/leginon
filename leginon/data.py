@@ -1645,6 +1645,11 @@ class HoleFinderSettingsData(TargetFinderSettingsData):
 			('edge log sigma', float),
 			('edge absolute', bool),
 			('edge threshold', float),
+			('template rings', list),
+			('template type', str),
+			('template lpf', bool),
+			('template lpf size', int),
+			('template lpf sigma', float),
 		)
 	typemap = classmethod(typemap)
 
