@@ -14,6 +14,7 @@ mrcmode_typecode = {
 typecode_mrcmode = {
 	Numeric.UnsignedInt8: 0,
 	Numeric.Int16: 1,
+	Numeric.UInt16: 1,
 	Numeric.Float32: 2,
 	Numeric.Float: 2,
 	Numeric.Float64: 2,
@@ -22,23 +23,35 @@ typecode_mrcmode = {
 	}
 
 def mrc_to_numeric(filename):
-	f = open(filename, 'rb')
-	image = mrc_read(f)
-	f.close()
-	return image
+	try:
+		f = open(filename, 'rb')
+		image = mrc_read(f)
+		f.close()
+		return image
+	except Exception, detail:
+		print detail
+		return None
 
 def numeric_to_mrc(ndata, filename):
+	if type(ndata) is not Numeric.ArrayType:
+		raise TypeError('ndata must be Numeric array')
 	f = open(filename, 'wb')
 	mrc_write(f, ndata)
 	f.close()
 
 def mrcstr_to_numeric(mrcstr):
-	f = cStringIO.StringIO(mrcstr)
-	image = mrc_read(f)
-	f.close()
-	return image
+	try:
+		f = cStringIO.StringIO(mrcstr)
+		image = mrc_read(f)
+		f.close()
+		return image
+	except Exception, detail:
+		print detail
+		return None
 
 def numeric_to_mrcstr(ndata):
+	if type(ndata) is not Numeric.ArrayType:
+		raise TypeError('ndata must be Numeric array')
 	f = cStringIO.StringIO()
 	mrc_write(f, ndata)
 	return f.getvalue()
@@ -103,11 +116,9 @@ class MrcData:
 
 	def fromNumeric(self, narray):
 		typecode = narray.typecode()
-		print 'typecode', typecode
 		self.mode = typecode_mrcmode[typecode]
 
 		# cast array to the proper typecode
-		print 'CASTING'
 		newtypecode = mrcmode_typecode[self.mode][1]
 		narray = Numeric.array(narray.tolist(), newtypecode)
 			
