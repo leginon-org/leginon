@@ -269,8 +269,6 @@ class PresetsManager(node.Node):
 			return
 
 		name = presetdata['name']
-		pause = self.changepause.get()
-
 		print 'changing to preset %s' % (name,)
 
 		## should switch to using AllEMData
@@ -287,10 +285,11 @@ class PresetsManager(node.Node):
 			self.printException()
 			print '** Maybe EM is not running?'
 		else:
-			self.currentpreset = presetdata
-			self.outputEvent(event.PresetChangedEvent(name=name))
+			pause = self.changepause.get()
 			time.sleep(pause)
+			self.currentpreset = presetdata
 			print 'preset changed to %s' % (name,)
+			self.outputEvent(event.PresetChangedEvent(name=name))
 
 	def fromScope(self, name):
 		'''
@@ -587,6 +586,9 @@ class PresetsManager(node.Node):
 		except:
 			self.printException()
 		else:
+			pause = self.changepause.get()
+			time.sleep(pause)
 			name = newpreset['name']
 			self.currentpreset = newpreset
+			print 'preset changed to %s' % (name,)
 			self.outputEvent(event.PresetChangedEvent(name=name))
