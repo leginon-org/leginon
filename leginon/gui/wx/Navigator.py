@@ -1,3 +1,4 @@
+import threading
 import wx
 from gui.wx.Entry import FloatEntry, EVT_ENTRY
 import gui.wx.Camera
@@ -24,14 +25,11 @@ class Panel(gui.wx.Node.Panel):
 													'stagelocations',
 													shortHelpString='Stage Locations')
 		# image
-		self.szimage = self._getStaticBoxSizer('Navigation', (1, 0), (2, 1),
-																						wx.EXPAND|wx.ALL)
 		self.imagepanel = gui.wx.ImageViewer.ClickImagePanel(self, -1)
-		self.szimage.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND|wx.ALL)
-		self.szimage.AddGrowableCol(0)
-		self.szimage.AddGrowableRow(0)
 
-		self.szmain.AddGrowableRow(1)
+		self.szmain.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND)
+
+		self.szmain.AddGrowableRow(0)
 		self.szmain.AddGrowableCol(0)
 
 		self.SetSizer(self.szmain)
@@ -52,22 +50,26 @@ class Panel(gui.wx.Node.Panel):
 		dialog.ShowModal()
 		dialog.Destroy()
 
+	def _acquisitionEnable(self, enable):
+		self.toolbar.Enable(enable)
+
+	def onAcquisitionDone(self, evt):
+		self._acquisitionEnable(True)
+
 	def onAcquireTool(self, evt):
-		self.node.acquireImage()
+		threading.Thread(target=self.node.acquireImage).start()
 
 	def onStageLocationsTool(self, evt):
-		dialog = StageLocationsDialog(self)
+		dialog = StageLocationsDialog(self.GetParent(), self.node)
 		dialog.ShowModal()
 		dialog.Destroy()
 
 	def onImageClicked(self, evt):
-		# ...
-		if self.node.shape is not None:
-			self.node.navigate(evt.xy)
+		threading.Thread(target=self.node.navigate, args=(evt.xy,)).start()
 
 class StageLocationsDialog(wx.Dialog):
-	def __init__(self, parent):
-		self.node = parent.node
+	def __init__(self, parent, node):
+		self.node = node
 		wx.Dialog.__init__(self, parent, -1, 'Stage Locations')
 
 		self.sz = wx.GridBagSizer(5, 5)
@@ -117,7 +119,7 @@ class StageLocationsDialog(wx.Dialog):
 		self.Bind(wx.EVT_BUTTON, self.onRemove, self.bremove)
 
 	def onNew(self, evt):
-		dialog = NewLocationDialog(self)
+		dialog = NewLocationDialog(self, self.node)
 		if dialog.ShowModal() == wx.ID_OK:
 			self.node.fromScope(dialog.name, dialog.comment, dialog.xyonly)
 		dialog.Destroy()
@@ -221,7 +223,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		return [sbsz]
 
 class NewLocationDialog(wx.Dialog):
-	def __init__(self, parent):
+	def __init__(self, parent, node):
+		self.node = node
 		wx.Dialog.__init__(self, parent, -1, 'New Location')
 
 		stname = wx.StaticText(self, -1, 'Name:')
@@ -255,7 +258,7 @@ class NewLocationDialog(wx.Dialog):
 
 	def onSave(self, evt):
 		name = self.tcname.GetValue()
-		if not name or name in self.GetParent().node.getLocationNames():
+		if not name or name in self.node.getLocationNames():
 			dialog = wx.MessageDialog(self, 'Invalid location name', 'Error',
 																wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()

@@ -123,6 +123,7 @@ class Navigator(node.Node):
 									+ ' and current high tension') % (movetype, mag)
 			self.logger.error(message)
 			self.beep()
+			self.panel.acquisitionDone()
 			return
 		if not self.settings['complete state']:
 			if movetype == 'modeled stage position':
@@ -140,7 +141,7 @@ class Navigator(node.Node):
 		time.sleep(self.settings['pause time'])
 
 		## acquire image
-		self.acquireImage()
+		self._acquireImage()
 
 		## calibration error checking
 		if self.settings['check calibration']:
@@ -170,17 +171,27 @@ class Navigator(node.Node):
 			self.logger.info(res)
 
 		self.beep()
+		self.panel.acquisitionDone()
 
 	def acquireImage(self):
-		self.cam.setCameraDict(self.settings['camera settings'])
+		self._acquireImage()
+		self.panel.acquisitionDone()
+
+	def _acquireImage(self):
+		errstr = 'Acquire image failed: %s'
+		try:
+			self.cam.setCameraDict(self.settings['camera settings'])
+		except camerafuncs.CameraError, e:
+			self.logger.error(errstr % e)
+			return
 		try:
 			imagedata = self.cam.acquireCameraImageData()
 		except camerafuncs.NoCorrectorError:
-			self.logger.error('No Corrector node, acquisition failed')
+			self.logger.error(errstr % 'unable to get corrected image')
 			return
 
 		if imagedata is None:
-			self.logger.error('acquisition failed')
+			self.logger.error('Acquire image failed')
 			return
 
 		self.scope = imagedata['scope']
@@ -197,7 +208,12 @@ class Navigator(node.Node):
 		list of managed locations, it will be replaced by the new one
 		also returns the new location object
 		'''
-		allstagedata = self.emclient.getScope()['stage position']
+		errstr = 'Location from instrument failed: %s'
+		try:
+			allstagedata = self.emclient.getScope()['stage position']
+		except (EM.ScopeUnavailable, KeyError), e:
+			self.logger.error(errstr % 'unable to get stage position')
+			return
 		stagedata = {}
 		stagedata['x'] = allstagedata['x']
 		stagedata['y'] = allstagedata['y']
