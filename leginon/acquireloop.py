@@ -35,16 +35,16 @@ class AcquireLoop(timedloop.TimedLoop):
 		t.start()
 
 	def process(self, camerastate):
+		## publish image
+		self.publish(camerastate, event.PublishEvent)
+
 		imagearray = array.array(camerastate.content['datatype code'], base64.decodestring(camerastate.content['image data']))
 		print 'image 1...10', imagearray[:10]
 
-		c = copy.copy(camerastate.content)
-		del c['image data']
-		print c
+		del camerastate.content['image data']
+		print camerastate.content
 
 		## acquire image
 		print 'acquiring image %s' % time.asctime()
 
-		## publish image
-		self.publish(camerastate, event.PublishEvent)
 
