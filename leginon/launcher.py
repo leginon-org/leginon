@@ -25,7 +25,8 @@ class Launcher(node.Node):
 		node.Node.__init__(self, name, session, tcpport=tcpport, xmlrpcport=xmlrpcport, **kwargs)
 
 		self.addEventInput(event.CreateNodeEvent, self.onCreateNode)
-		self.frame = wxLauncher.LauncherFrame(self)
+		if session is None:
+			self.frame = wxLauncher.LauncherFrame(self)
 
 	def start(self):
 		pass
