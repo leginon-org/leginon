@@ -59,12 +59,8 @@ class Watcher(node.Node):
 		else:
 			havelock = 0
 
-		try:
-			self.processEvent(pubevent)
-		except Exception, detail:
-			print 'event %s not processed' % (pubevent,)
-			print detail
-			
+		self.processEvent(pubevent)
+
 		## release lock if necessary
 		if havelock:
 			self.handlelock.release()
