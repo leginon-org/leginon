@@ -65,6 +65,7 @@ class Navigator(node.Node):
 
 	def handleImageClick(self, xy):
 		self.logger.info('Handling image click...')
+		self.calerrorresult.set('')
 		## get relavent info from click event
 		clickrow = xy[1]
 		clickcol = xy[0]
@@ -114,9 +115,9 @@ class Navigator(node.Node):
 		if self.calerror.get():
 			newshift = self.newShift()
 			if newshift is None:
-				self.logger.info('Error not calculated')
+				res = 'Error not calculated'
+				self.logger.info(res)
 			else:
-				self.logger.info('Request %s, new shift %s' % (pixelshift, newshift))
 				r_error = pixelshift['row'] - newshift[0]
 				c_error = pixelshift['col'] - newshift[1]
 				error = r_error, c_error
@@ -126,13 +127,16 @@ class Navigator(node.Node):
 				binning = clickcamera['binning']['x']
 				dist = errordist * pixsize * binning
 				umdist = dist * 1000000.0
-				self.logger.info('Error %s pixels, distance %s pixels (%s microns)'
-										% (error, errordist, umdist))
+
+				res = 'Error: %.3f um (Pixels: Request: (%d, %d),  Actual: (%.1f, %.1f),  Error: %.3f)' % (umdist, pixelshift['col'], pixelshift['row'], newshift[1], newshift[0], errordist)
+				self.logger.info(res)
+
 				if (abs(pixelshift['row']) > clickshape[0]/4) or (abs(pixelshift['col']) > clickshape[1]/4):
 					self.logger.info('Correlation untrusted due to large requested shift')
 				else:
 					## insert into DB?
 					pass
+			self.calerrorresult.set(res)
 
 		node.beep()
 
@@ -353,13 +357,13 @@ class Navigator(node.Node):
 		self.messagelog = uidata.MessageLog('Message Log')
 
 		self.calerror = uidata.Boolean('Calibration Error Checking', False, 'rw', persist=True)
+		self.calerrorresult = uidata.String('Result', '', 'r')
 
 		movetypes = self.calclients.keys()
 		self.movetype = uidata.SingleSelectFromList('TEM Parameter', movetypes, 0)
 		self.delaydata = uidata.Float('Delay (sec)', 2.5, 'rw')
 		self.completestate = uidata.Boolean('Complete State', False, 'rw', persist=True)
 
-		#self.usecamconfig = uidata.Boolean('Use This Configuration', True, 'rw', persist=True)
 		cameraconfigure = self.cam.uiSetupContainer()
 
 		settingscontainer = uidata.Container('Settings')
@@ -368,7 +372,10 @@ class Navigator(node.Node):
 		acqmeth = uidata.Method('Acquire', self.acquireImage)
 		self.image = uidata.ClickImage('Navigation', self.handleImageClick, None)
 		controlcontainer = uidata.Container('Control')
-		controlcontainer.addObjects((self.calerror, acqmeth, self.image))
+		controlcontainer.addObject(self.calerror, position={'position':(0,0)})
+		controlcontainer.addObject(self.calerrorresult, position={'position':(0,1)})
+		controlcontainer.addObject(acqmeth, position={'position':(1,0),'span':(1,2)})
+		controlcontainer.addObject(self.image, position={'position':(2,0),'span':(1,2)})
 
 
 		## Location Presets
