@@ -374,12 +374,14 @@ class ImagePanel(wxPanel):
 
 		self.Draw(dc)
 
+
 		for tool in self.tools:
 			tool.OnMotion(evt, dc)
 
 		strings = []
 		x, y = self.view2image((evt.m_x, evt.m_y))
 		value = self.getValue(x, y)
+
 		for tool in self.tools:
 			string = tool.getToolTipString(x, y, value)
 			if string:
@@ -459,19 +461,23 @@ class ImagePanel(wxPanel):
 				xscale, yscale = (1.0, 1.0)
 			else:
 				xscale, yscale = self.getScale()
-				bitmapdc.SetUserScale(1.0/xscale, 1.0/yscale)
+				#bitmapdc.SetUserScale(1.0/xscale, 1.0/yscale)
+				dc.SetUserScale(xscale, yscale)
 
 			xviewoffset, yviewoffset = self.panel.GetViewStart()
 			xsize, ysize = self.panel.GetClientSize()
 
-			dc.Blit(0, 0, xsize, ysize, bitmapdc, xviewoffset, yviewoffset)
+			#dc.Blit(0, 0, xsize, ysize, bitmapdc, xviewoffset, yviewoffset)
+			dc.Blit(0, 0, xsize/xscale + yscale, ysize/yscale + yscale, bitmapdc,
+							xviewoffset/xscale, yviewoffset/xscale)
 			bitmapdc.SelectObject(wxNullBitmap)
 		dc.EndDrawing()
+		dc.SetUserScale(1.0, 1.0)
 
 	def paint(self, fromdc, todc):
 		xsize, ysize = self.panel.GetClientSize()
 		xoffset, yoffset = self.offset
-		todc.Blit(xoffset, yoffset, xsize, ysize, fromdc, 0, 0)
+		todc.Blit(xoffset, yoffset, xsize + 1, ysize + 1, fromdc, 0, 0)
 
 	def UpdateDrawing(self):
 		if self.buffer is None:
