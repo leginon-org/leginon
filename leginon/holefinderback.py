@@ -225,9 +225,9 @@ class HoleFinder(object):
 		self.save_mrc = False
 		self.edges_config = {'filter': 'sobel', 'size': 9, 'sigma': 1.4, 'abs': False, 'lp':True, 'lpsig':1.0, 'thresh':100.0, 'edges': True}
 		self.template_config = {'ring_list': [(25,30)]}
-		self.correlation_config = {'cortype': 'cross correlation', 'corfilt': (1.0,)}
+		self.correlation_config = {'cortype': 'cross', 'corfilt': (1.0,)}
 		self.threshold = 3.0
-		self.blobs_config = {'border': 20, 'maxblobsize': 50}
+		self.blobs_config = {'border': 20, 'maxblobsize': 50, 'maxblobs':100}
 		self.lattice_config = {'tolerance': 0.1, 'vector': 100.0, 'minspace': 20}
 		self.holestats_config = {'radius': 20}
 		self.ice_config = {'i0': None, 'min': 0.0, 'max': 0.1, 'std': 0.05}
