@@ -113,7 +113,11 @@ class SpiralTargetMaker(TargetMaker):
 			self.setStatusMessage('Invalid overlap specified')
 			return
 		magnification = scope['magnification']
-		pixelsize = self.pixelsizecalclient.retrievePixelSize(magnification)
+		try:
+			pixelsize = self.pixelsizecalclient.retrievePixelSize(magnification)
+		except calibrationclient.NoPixelSizeError:
+			print 'No available pixel size'
+			return
 		binning = camera['binning']['x']
 		imagesize = camera['dimension']['x']
 

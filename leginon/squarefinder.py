@@ -13,6 +13,7 @@ from imagefun import TooManyBlobs
 import Mrc
 import squarefinderback
 import targetfinder
+import threading
 import uidata
 
 class SquareFinder(targetfinder.TargetFinder):
@@ -21,6 +22,7 @@ class SquareFinder(targetfinder.TargetFinder):
 																				**kwargs)
 		self.squarefinder = squarefinderback.SquareFinder()
 		self.image = None
+		self.verifyevent = threading.Event()
 		self.defineUserInterface()
 		self.setImage(None)
 		self.start()
@@ -68,7 +70,11 @@ class SquareFinder(targetfinder.TargetFinder):
 
 	def setTargets(self, targets):
 		self.targets = targets
-		self.ui_image.setTargetType('Targets', self.targets)
+		self.ui_image.setTargetType('acquisition', self.targets)
+		if self.targets:
+			self.verifymethod.enable()
+		else:
+			self.verifymethod.disable()
 
 	def lowPassFilter(self):
 		size = self.uilpfsize.get()
@@ -132,6 +138,9 @@ class SquareFinder(targetfinder.TargetFinder):
 	def uiTarget(self):
 		self.target()
 
+	def uiVerify(self):
+		self.verifyevent.set()
+
 	def onSetSquareDimension(self, value):
 		if value is None:
 			return value
@@ -152,6 +161,35 @@ class SquareFinder(targetfinder.TargetFinder):
 			self.advancedcontainer.disable()
 		return value
 
+	def findSquares(self, image):
+		self.setImage(image)
+		self.lowPassFilter()
+		self.threshold()
+		self.findBlobs()
+		self.target()
+
+	def getTargetList(self, imagedata):
+		targettypename = 'acquisition'
+		rows, columns = imagedata['image'].shape
+		targetlist = []
+		for target in self.targets:
+			column, row = target
+			deltarow = row - rows/2
+			deltacolumn = column - columns/2
+			print deltarow, deltacolumn, row, column
+			targetlist.append(self.newTargetData(imagedata, targettypename,
+																						deltarow, deltacolumn))
+		return targetlist
+
+	def findTargets(self, imagedata):
+		self.findSquares(imagedata['image'])
+		if self.uiuserverify.get():
+			self.messagelog.warning('Waiting for user to verify picked squares')
+			self.verifyevent.clear()
+			self.verifyevent.wait()
+		self.targetlist = self.getTargetList(imagedata)
+		self.setImage(None)
+
 	def defineUserInterface(self):
 		targetfinder.TargetFinder.defineUserInterface(self)
 		self.uidataqueueflag.set(False)
@@ -170,15 +208,15 @@ class SquareFinder(targetfinder.TargetFinder):
 																		persist=True)
 		self.uilpfsigma = uidata.Number('Sigma', 1.4, 'rw',
 																		persist=True)
-		self.lpfmethod = uidata.Method('Low Pass Filter', self.uiLowPassFilter)
+		self.lpfmethod = uidata.Method('Smooth', self.uiLowPassFilter)
 		self.lpfmethod.disable()
-		lpfcontainer = uidata.Container('Low Pass Filter')
+		lpfcontainer = uidata.Container('Smoothing')
 		lpfcontainer.addObjects((self.uilpfsize, self.uilpfsigma))
 
 		self.thresholdmethod = uidata.Method('Threshold', self.uiThreshold)
 		self.thresholdmethod.disable()
 
-		self.ui_image.addTargetType('Targets')
+		self.ui_image.addTargetType('acquisition')
 		self.uiborder = uidata.Number('Border', 0, 'rw', persist=True)
 		self.uimaxblobs = uidata.Number('Maximum Blobs', 100, 'rw', persist=True)
 		self.uimaxblobsize = uidata.Number('Maximum Blob Size', 250, 'rw',
@@ -195,6 +233,9 @@ class SquareFinder(targetfinder.TargetFinder):
 		targetcontainer = uidata.Container('Targets')
 		targetcontainer.addObjects((self.uitargetborder,))
 
+		self.uiuserverify = uidata.Boolean('Allow user verification of targets',
+																				True, 'rw', persist=True)
+
 		self.uisquaredimension = uidata.Number('Square Dimension', None, 'rw',
 															callback=self.onSetSquareDimension, persist=True)
 
@@ -205,12 +246,14 @@ class SquareFinder(targetfinder.TargetFinder):
 																					callback=self.onShowAdvanced,
 																					persist=True)
 		settingscontainer = uidata.Container('Settings')
-		settingscontainer.addObjects((self.uisquaredimension, self.uishowadvanced,
-																	self.advancedcontainer))
+		settingscontainer.addObjects((self.uiuserverify, self.uisquaredimension,
+																	self.uishowadvanced, self.advancedcontainer))
 
+		self.verifymethod = uidata.Method('Submit', self.uiVerify)
 		controlcontainer = uidata.Container('Control')
 		controlcontainer.addObjects((self.lpfmethod, self.thresholdmethod,
-																	self.findblobsmethod, self.targetmethod))
+																	self.findblobsmethod, self.targetmethod,
+																	self.verifymethod))
 
 		container = uidata.LargeContainer('Square Finder')
 		container.addObjects((self.messagelog, testfilecontainer,
