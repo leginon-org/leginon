@@ -32,7 +32,12 @@ if __name__ == '__main__':
 				# if its was on this machine, exec it
 				if socket.gethostname() == l[-1]:
 					print "Attempting to create local launcher process..."
-					os.spawnv(os.P_NOWAIT, 'launcher.py', ['launcher.py', '55555'])
+					if sys.platform == 'win32':
+						os.spawnve(os.P_NOWAIT, 'c:\\Python22\\python.exe',
+							['launcher.py', 'c:\\dev\\pyleginon\\launcher.py', '55555'],
+							os.environ)
+					else:
+						os.spawnv(os.P_NOWAIT, 'launcher.py', ['launcher.py', '55555'])
 					while l not in m.clients:
 						try:
 							m.addNode(l[-1], 55555)
@@ -42,7 +47,18 @@ if __name__ == '__main__':
 					print 'Unable to activate launcher %s' % l
 		m.app.launch()
 	except IndexError:
-		pass
+		print "Attempting to create local launcher process..."
+		if sys.platform == 'win32':
+			os.spawnve(os.P_NOWAIT, 'c:\\Python22\\python.exe',
+				['launcher.py', 'c:\\dev\\pyleginon\\launcher.py', '55555'], os.environ)
+		else:
+			os.spawnv(os.P_NOWAIT, 'launcher.py', ['launcher.py', '55555'])
+		l = (socket.gethostname(),)
+		while l not in m.clients:
+			try:
+				m.addNode(l[-1], 55555)
+			except:
+				time.sleep(0.25)
 
 	#m.start()
 

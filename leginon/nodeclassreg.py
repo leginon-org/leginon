@@ -69,4 +69,6 @@ registerNodeClass('getdata', 'GetData')
 registerNodeClass('intgen', 'IntGen')
 registerNodeClass('calibrationtest', 'CalibrationTest')
 registerNodeClass('autofocus', 'AutoFocusCalibration')
+registerNodeClass('imagemosaic', 'ImageMosaic')
+registerNodeClass('testmosaic', 'TestMosaic')
 

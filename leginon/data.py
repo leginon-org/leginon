@@ -103,4 +103,9 @@ class BrightImageData(ReferenceImageData):
 	def __init__(self, id, content):
 		ReferenceImageData.__init__(self, id, content)
 
+class ImageTileData(ImageData):
+	'''Contains a 2-D Numeric array of the image data and a list of neighboring image tile ID's.'''
+	def __init__(self, id, image, neighbortiles):
+		ImageData.__init__(self, id,
+			{'image': image, 'neighbor tiles': neighbortiles})
 

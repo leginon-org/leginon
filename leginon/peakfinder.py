@@ -36,7 +36,7 @@ class PeakFinder(object):
 			pixelpeak = (peakrow, peakcol)
 			self.results['pixel peak'] = pixelpeak
 			self.results['pixel peak value'] = peakvalue
-			print 'pixel peak value', peakvalue
+			#print 'pixel peak value', peakvalue
 
 		return self.results['pixel peak']
 
@@ -118,7 +118,7 @@ class PeakFinder(object):
 		colvalue = colcoeffs[0] + colcoeffs[1] * colzero + colcoeffs[2] * colzero * colzero
 		# average the two to get the peak value
 		peakvalue = (rowvalue + colvalue) / 2.0
-		print 'subpixel peak value', peakvalue
+		#print 'subpixel peak value', peakvalue
 
 		subpixelpeak = (float(rowzero), float(colzero))
 		self.results['subpixel peak'] = subpixelpeak
