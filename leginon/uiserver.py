@@ -115,6 +115,10 @@ class Server(XMLRPCServer, uidata.Container):
 		return ''
 
 	def addXMLRPCClientServer(self, hostname, port):
+		for client in list(self.xmlrpcclients):
+			if client.serverhostname == hostname and client.serverport == port:
+				self.xmlrpcclients.remove(client)
+			
 		from uiclient import XMLRPCClient
 		client = XMLRPCClient(hostname, port)
 		self.xmlrpcclients.append(client)

@@ -24,8 +24,9 @@ class ManagerSetup(object):
 		session = self.session_dict[session_name]
 		self.manager.session = session
 
-		if session['instrument'] is not None and \
-			session['instrument']['hostname'] not in self.manager.launcherdict.keys() and not self.skipinstrument.get():
+		if (session['instrument'] is not None and session['instrument']['hostname']
+				not in self.manager.launcherdict.keys() and
+				not self.skipinstrument.get()):
 			try:
 				hostname = session['instrument']['hostname']
 				if hostname:
@@ -34,9 +35,8 @@ class ManagerSetup(object):
 					location['TCP transport']['hostname'] = hostname
 					location['TCP transport']['port'] = 55555
 					self.manager.addNode(location, (hostname,))
-			except (IOError, TypeError, socket.error), e:
-				if isinstance(e, socket.error):
-					self.build_messages.warning('Cannot add instrument\'s launcher.')
+			except (IOError, TypeError, socket.error):
+				self.manager.messagelog.warning('Cannot add instrument\'s launcher.')
 		if self.container.parent is not None:
 			self.container.parent.deleteObject(self.container.name)
 

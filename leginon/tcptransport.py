@@ -64,9 +64,8 @@ class Client(socketstreamtransport.Client):
 			# socket error, connection refused
 			if (var[0] == 111) or (var[0] == 10061):
 				self.socket = None
-				print 'unable to connect to %s:%s' \
-					% (self.serverlocation['hostname'], self.serverlocation['port'])
-				raise IOError
+				raise IOError('unable to connect to %s:%s'
+					% (self.serverlocation['hostname'], self.serverlocation['port']))
 			else:
 				raise
 

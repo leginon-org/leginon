@@ -93,8 +93,7 @@ class Node(leginonobject.LeginonObject):
 
 	eventinputs = [event.Event,
 									event.KillEvent,
-									event.ConfirmationEvent,
-									event.NodeAvailableEvent]
+									event.ConfirmationEvent]
 
 	eventoutputs = [event.PublishEvent,
 									event.UnpublishEvent,
@@ -107,6 +106,8 @@ class Node(leginonobject.LeginonObject):
 								uicontainer=None, launcher=None,
 								clientclass=datatransport.Client):
 		leginonobject.LeginonObject.__init__(self, id)
+
+		self.managerclient = None
 
 		self.id_count_lock = threading.Lock()
 
@@ -134,13 +135,13 @@ class Node(leginonobject.LeginonObject):
 		#self.addEventInput(event.Event, self.logEventReceived)
 		self.addEventInput(event.KillEvent, self.die)
 		self.addEventInput(event.ConfirmationEvent, self.handleConfirmedEvent)
-		self.addEventInput(event.NodeAvailableEvent, self.handleAddNode)
+		self.addEventInput(event.SetManagerEvent, self.handleSetManager)
 
 		if 'manager' in self.nodelocations:
 			try:
-				self.addManager(self.nodelocations['manager'])
+				self.setManager(self.nodelocations['manager'])
 			except:
-				self.printerror('exception in addManager')
+				self.printerror('exception in setManager')
 				self.printException()
 				raise
 			else:
@@ -199,11 +200,17 @@ class Node(leginonobject.LeginonObject):
 
 	def exit(self):
 		'''Cleans up the node before it dies.'''
-		if self.uicontainer is not None and self.uicontainer.parent is not None:
-			self.uicontainer.parent.deleteObject(self.uicontainer.name)
-		self.outputEvent(event.NodeUninitializedEvent(id=self.ID()), wait=True)
-		self.outputEvent(event.NodeUnavailableEvent(id=self.ID()))
+		if self.uicontainer is not None:
+			self.uicontainer.delete()
+		try:
+			self.outputEvent(event.NodeUninitializedEvent(id=self.ID()), wait=True,
+																										timeout=3.0)
+			self.outputEvent(event.NodeUnavailableEvent(id=self.ID()))
+		except (ConfirmationTimeout, IOError):
+			pass
 		self.delEventInput()
+		if self.launcher is not None:
+			self.launcher.onDestroyNode(self)
 
 	def die(self, ievent=None):
 		'''Tell the node to finish and call exit.'''
@@ -215,7 +222,7 @@ class Node(leginonobject.LeginonObject):
 
 	def location(self):
 		location = leginonobject.LeginonObject.location(self)
-		location['launcher'] = self.launcher
+		location['launcher'] = self.launcher.id
 		return location
 
 	# event input/output/blocking methods
@@ -251,11 +258,12 @@ class Node(leginonobject.LeginonObject):
 		try:
 			client.push(ievent)
 			#self.logEvent(ievent, status='%s eventToClient' % (self.id,))
-		except:
+		except Exception, e:
 			# make sure we don't wait for an event that failed
 			if wait:
 				eventwait.set()
-			self.printException()
+			if not isinstance(e, IOError):
+				self.printException()
 			raise
 
 		confirmationevent = None
@@ -271,7 +279,8 @@ class Node(leginonobject.LeginonObject):
 				del self.confirmationevents[eventid]
 				del self.eventswaiting[eventid]
 			except KeyError:
-				print 'This could be bad to except KeyError'
+				pass
+				#print 'This could be bad to except KeyError'
 			self.ewlock.release()
 			if not notimeout:
 				raise ConfirmationTimeout(str(ievent))
@@ -279,9 +288,9 @@ class Node(leginonobject.LeginonObject):
 		return confirmationevent
 
 	def outputEvent(self, ievent, wait=False, timeout=None):
-		'''
-		output an event to the manager
-		'''
+		'''output an event to the manager'''
+		if self.managerclient is None:
+			raise IOError('Not connnected to manager, output event failed')
 		return self.eventToClient(ievent, self.managerclient, wait, timeout)
 
 	def handleConfirmedEvent(self, ievent):
@@ -530,6 +539,9 @@ class Node(leginonobject.LeginonObject):
 
 	def researchByDataID(self, dataid):
 		'''Get a piece of data with the specified data ID. Currently retrieves the data from the last node to publish it.'''
+		if self.managerclient is None:
+			raise ResearchError('Not connected to manager, research failed')
+
 		nodeiddata = self.managerclient.pull(dataid)
 
 		if nodeiddata is None:
@@ -563,7 +575,7 @@ class Node(leginonobject.LeginonObject):
 
 	# methods for setting up the manager
 
-	def addManager(self, location):
+	def setManager(self, location):
 		'''Set the manager controlling the node and notify said manager this node is available.'''
 		self.managerclient = self.clientclass(location['data transport'])
 		available_event = event.NodeAvailableEvent(id=self.ID(),
@@ -571,10 +583,14 @@ class Node(leginonobject.LeginonObject):
 																							nodeclass=self.__class__.__name__)
 		self.outputEvent(ievent=available_event, wait=True, timeout=10)
 
-	def handleAddNode(self, ievent):
-		'''Event handler calling addManager with event info. See addManager.'''
-		if ievent['nodeclass'] == 'Manager':
-			self.addManager(ievent['location'])
+	def handleSetManager(self, ievent):
+		'''Event handler calling setManager with event info. See setManager.'''
+		if self.session is None:
+			self.session = ievent['session']
+		if ievent['session'] == self.session:
+			self.setManager(ievent['location'])
+		else:
+			print 'Attempt to set manager rejected'
 
 	# utility methods
 

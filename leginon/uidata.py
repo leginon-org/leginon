@@ -99,6 +99,10 @@ class Object(object):
 			self.server._configureObject(self, None, block, thread)
 		self.lock.release()
 
+	def delete(self, block=True, thread=False):
+		if self.parent is not None:
+			self.parent.deleteObject(self, block=block, thread=thread)
+
 class Method(Object):
 	typelist = Object.typelist + ('method',)
 	def __init__(self, name, method):
@@ -290,10 +294,15 @@ class Container(Object):
 			self.addObject(uiobject, block, thread)
 		self.lock.release()
 
-	def deleteObject(self, name, client=None, block=True, thread=False):
+	def deleteObject(self, parameter, client=None, block=True, thread=False):
 		self.lock.acquire()
-		if name in self.uiobjectdict:
-			uiobject = self.uiobjectdict[name]
+		try:
+			if isinstance(parameter, str):
+				name = parameter
+				uiobject = self.uiobjectdict[name]
+			else:
+				uiobject = parameter
+				name = uiobject.name
 			uiobject.lock.acquire()
 			del self.uiobjectdict[name]
 			self.uiobjectlist.remove(uiobject)
@@ -302,10 +311,24 @@ class Container(Object):
 			uiobject.server = None
 			uiobject.parent = None
 			uiobject.lock.release()
-		else:
+		except KeyError:
 			self.lock.release()
 			raise ValueError('cannot delete Object, not in Object mapping')
 		self.lock.release()
+
+	def deleteObjects(self, uiobjects=None, block=True, thread=False):
+		exceptions = []
+		self.lock.acquire()
+		if uiobjects is None:
+			uiobjects = list(self.uiobjectlist)
+		for uiobject in uiobjects:
+			try:
+				self.deleteObject(uiobject, block, thread)
+			except Exception, e:
+				exceptions.append(e)
+		self.lock.release()
+		for exception in exceptions:
+			raise exception
 
 	def _getObjectFromList(self, namelist):
 		if type(namelist) not in (list, tuple):

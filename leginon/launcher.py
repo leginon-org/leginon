@@ -18,9 +18,8 @@ import nodeclassreg
 import uiserver
 
 class Launcher(node.Node):
-	def __init__(self, id, tcpport=None, xmlrpcport=None, **kwargs):
-		initializer = {'name': 'launcher session'}
-		session = data.SessionData(initializer=initializer)
+	def __init__(self, id, session=None, tcpport=None, xmlrpcport=None, **kwargs):
+		self.nodes = []
 
 		self.uicontainer = uiserver.Server(str(id[-1]), xmlrpcport)
 
@@ -38,12 +37,18 @@ class Launcher(node.Node):
 	def start(self):
 		pass
 
-	def addManager(self, location):
-		node.Node.addManager(self, location)
+	def exitNodes(self):
+		for n in list(self.nodes):
+			n.exit()
+
+	def setManager(self, location):
+		self.exitNodes()
+		node.Node.setManager(self, location)
 		self.publishNodeClasses()
 		self.outputEvent(event.NodeInitializedEvent(id=self.ID()))
 
 	def exit(self):
+		self.exitNodes()
 		node.Node.exit(self)
 		self.server.exit()
 
@@ -69,11 +74,14 @@ class Launcher(node.Node):
 
 		kwargs = {}
 		kwargs['uicontainer'] = self.uicontainer
-		kwargs['launcher'] = self.id
+		kwargs['launcher'] = self
 		kwargs['datahandler'] = self.datahandler
 
-		nodeclass(nodeid, session, nodelocations, **kwargs)
+		self.nodes.append(nodeclass(nodeid, session, nodelocations, **kwargs))
 		self.confirmEvent(ievent)
+
+	def onDestroyNode(self, node):
+		self.nodes.remove(node)
 
 if __name__ == '__main__':
 	import socket
@@ -95,17 +103,21 @@ if __name__ == '__main__':
 			launcher = Launcher(launcherid,
 													nodelocations={'manager': managerlocation})
 		except IndexError:
-			launcher = Launcher(launcherid, int(sys.argv[1]))
+			launcher = Launcher(launcherid, tcpport=int(sys.argv[1]))
 	except IndexError:
 		try:
-			launcher = Launcher(launcherid, 55555)
+			launcher = Launcher(launcherid, tcpport=55555)
 		except:
 			launcher = Launcher(launcherid)
 	print 'Done.'
+	print 'Press control-c to exit'
 	launcher.start()
 	try:
 		while True:
 			time.sleep(0.5)
 	except KeyboardInterrupt:
 		pass
+	print 'Launcher exiting...',
+	launcher.exit()
+	print 'Done.'
 

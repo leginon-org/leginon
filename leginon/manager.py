@@ -422,12 +422,10 @@ class Manager(node.Node):
 
 	def removeNode(self, nodeid):
 		'''Remove data, event mappings, and client for the node with the specfied node ID.'''
-#		nodelocationdata = self.server.datahandler.query(nodeid)
 		nodelocationdata = self.datahandler.query(nodeid)
 		if nodelocationdata is not None:
 			self.removeNodeData(nodeid)
 			self.removeNodeDistmaps(nodeid)
-#			self.server.datahandler.remove(nodeid)
 			self.datahandler.remove(nodeid)
 			self.delClient(nodeid)
 #			self.printerror('node ' + str(nodeid) + ' unregistered')
@@ -462,15 +460,19 @@ class Manager(node.Node):
 		target = name of a class in this launchers node class list
 		dependencies = node dependent on to launch
 		'''
-		args = (launcher, target, name, dependencies)
+		nodeid = self.id + (name,)
+		nodelocationdata = self.datahandler.query(nodeid)
+		if nodelocationdata is not None:
+			self.messagelog.warning('Node \'%s\' already exists' % name)
+			return nodeid
+
+		args = (launcher, target, nodeid, dependencies)
 		t = threading.Thread(name='manager wait node thread',
 													target=self.waitNode, args=args)
 		t.start()
-		nodeid = self.id + (name,)
 		return nodeid
 
-	def waitNode(self, launcher, target, name, dependencies):
-		nodeid = self.id + (name,)
+	def waitNode(self, launcher, target, nodeid, dependencies):
 		args = (nodeid, self.session, self.nodelocations)
 		dependencyids = []
 		for dependency in dependencies:
@@ -505,9 +507,9 @@ class Manager(node.Node):
 
 	def addNode(self, location, nodeid):
 		'''Add a running node to the manager. Sends an event to the location.'''
-		e = event.NodeAvailableEvent(id=self.id, destination=nodeid,
+		e = event.SetManagerEvent(id=self.id, destination=nodeid,
 																	location=self.location(),
-																	nodeclass=self.__class__.__name__)
+																	session=self.session)
 		client = self.clientclass(location)
 		try:
 			client.push(e)

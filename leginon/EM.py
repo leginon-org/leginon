@@ -311,6 +311,9 @@ class EM(node.Node):
 		pass
 
 	def exit(self):
+		node.Node.exit(self)
+		self.server.exit()
+		self.requestqueue.put(ExitRequest())
 		try:
 			self.scope.exit()
 		except AttributeError:
@@ -319,9 +322,6 @@ class EM(node.Node):
 			self.camera.exit()
 		except AttributeError:
 			pass
-		node.Node.exit(self)
-		self.server.exit()
-		self.requestqueue.put(ExitRequest())
 
 	def location(self):
 		location = node.Node.location(self)

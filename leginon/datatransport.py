@@ -44,8 +44,7 @@ class Client(Base):
 				return newdata
 			except IOError:
 				pass
-		print "IOError, unable to pull data " + str(idata)
-		raise IOError
+		raise IOError('IOError, unable to pull data ' + str(idata))
 
 	def pull(self, idata):
 		self.lock.acquire()
@@ -66,8 +65,7 @@ class Client(Base):
 				pass
 			except:
 				raise
-		print "IOError, unable to push data " + str(odata)
-		raise IOError()
+		raise IOError('IOError, unable to push data ' + str(odata))
 
 	def push(self, odata):
 		self.lock.acquire()

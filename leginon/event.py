@@ -247,6 +247,14 @@ class KillEvent(ControlEvent):
 	'Event that signals a kill'
 	pass
 
+class SetManagerEvent(ControlEvent):
+	def typemap(cls):
+		t = ControlEvent.typemap()
+		t += [('location', dict),
+					('session', data.SessionData)]
+		return t
+	typemap = classmethod(typemap)
+
 class CreateNodeEvent(ControlEvent):
 	'ControlEvent sent to a NodeLauncher specifying a node to launch'
 	def typemap(cls):

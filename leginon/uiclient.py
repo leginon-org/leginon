@@ -177,6 +177,8 @@ def WidgetClassFromTypeList(typelist):
 	
 class XMLRPCClient(object):
 	def __init__(self, serverhostname, serverport, port=None):
+		self.serverhostname = serverhostname
+		self.serverport = serverport
 		uri = 'http://%s:%s' % (serverhostname, serverport)
 		self.proxy = extendedxmlrpclib.ServerProxy(uri, allow_none=1)
 
