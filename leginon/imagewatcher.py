@@ -75,6 +75,8 @@ class ImageWatcher(watcher.Watcher):
 			clickinfo['image id'] = self.imagedata.id
 			clickinfo['scope'] = self.imagedata.content['scope']
 			clickinfo['camera'] = self.imagedata.content['camera']
+			if 'preset' in self.imagedata.content:
+				clickinfo['preset'] = self.imagedata.content['preset']
 			clickinfo['source'] = 'click'
 			choice = self.uiclickcallback.get()
 			callback = self.clickfuncs[choice]
