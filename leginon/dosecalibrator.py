@@ -31,7 +31,7 @@ class DoseCalibrator(calibrator.Calibrator):
 		calibrator.Calibrator.__init__(self, id, session, managerlocation, **kwargs)
 		self.calclient = calibrationclient.DoseCalibrationClient(self)
 		self.results = {}
-
+		self.sens = None
 		self.start()
 
 	def uiMeasureDoseRate(self):
@@ -74,22 +74,26 @@ class DoseCalibrator(calibrator.Calibrator):
 
 	def acquireImage(self):
 		self.screenUp()
-		self.cam.setCameraDict(self.settings['camera settings'])
-		imdata = self.cam.acquireCameraImageData(correction=True)
-		if imdata is not None:
-			self.updateImage('Image', imdata['image'].astype(Numeric.Float32))
-		return imdata
+		return calibrator.Calibrator.acquireImage(self)
 
 	def uiCalibrateCamera(self):
 		imdata = self.acquireImage()
-		screen_mag = self.results['screen magnification']
-		beam_current = self.results['beam current']
-		beam_diameter = self.settings['beam diameter']
-		dose_rate = self.results['dose rate']
-		sens = self.calclient.sensitivity_from_imagedata(imdata, dose_rate)
+		if 'dose rate' not in self.results or self.results['dose rate'] is None:
+			e = 'Unable to calibrate camera sensitivity: no dose measurement'
+			self.logger.error(e)
+			return
+		try:
+			sens = self.calclient.sensitivity_from_imagedata(imdata,
+																											self.results['dose rate'])
+		except ValueError:
+			e = 'Unable to calibrate camera sensitivity: invalid dose measurement'
+			self.logger.error(e)
+			return
+
 		self.sens = sens
 		ht = imdata['scope']['high tension']
 		self.calclient.storeSensitivity(ht, sens)
 
 	def abortCalibration(self):
 		raise NotImplementedError
+

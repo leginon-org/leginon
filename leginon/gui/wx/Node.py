@@ -4,6 +4,7 @@ import wx
 import wx.lib.scrolledpanel
 import gui.wx.MessageLog
 import gui.wx.ToolBar
+import gui.wx.Events
 
 NodeInitializedEventType = wx.NewEventType()
 SetImageEventType = wx.NewEventType()
@@ -56,6 +57,7 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 		self.Bind(EVT_NODE_INITIALIZED, self._onNodeInitialized)
 		self.Bind(EVT_SET_IMAGE, self.onSetImage)
 		self.Bind(EVT_SET_TARGETS, self.onSetTargets)
+		self.Bind(gui.wx.Events.EVT_ACQUISITION_DONE, self.onAcquisitionDone)
 		self.Bind(gui.wx.MessageLog.EVT_ADD_MESSAGE, self.onAddMessage)
 
 	def onAddMessage(self, evt):
@@ -84,4 +86,11 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 		sbs.Add(gbsz, 1, wx.EXPAND|wx.ALL, 5)
 		self.szmain.Add(sbs, *args)
 		return gbsz
+
+	def onAcquisitionDone(self, evt):
+		pass
+
+	def acquisitionDone(self):
+		evt = gui.wx.Events.AcquisitionDoneEvent()
+		self.GetEventHandler().AddPendingEvent(evt)
 

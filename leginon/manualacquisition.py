@@ -70,19 +70,20 @@ class ManualAcquisition(node.Node):
 		try:
 			self.camerafuncs.setCameraDict(self.settings['camera settings'])
 			imagedata = self.camerafuncs.acquireCameraImageData(correction=correct)
+		except camerafuncs.CameraError, e:
+			self.logger.error('Error acquiring image: %s' % e)
+			raise AcquireError
+		except camerafuncs.NoCorrectorError:
+			self.logger.error('Cannot access Corrector node to correct image')
+			raise AcquireError
 		except Exception, e:
-			if isinstance(e, node.ResearchError):
-				self.logger.error('Cannot access EM node to acquire image')
-			elif isinstance(e, camerafuncs.NoCorrectorError):
-				self.logger.error('Cannot access Corrector node to correct image')
-			else:
-				self.logger.error('Error acquiring image')
+			self.logger.exception('Error acquiring image: %s' % e)
 			raise AcquireError
 		if imagedata is None:
 			if correct:
 				self.logger.error('Corrector failed to acquire corrected image')
 			else:
-				self.logger.error('EM failed to acquire image')
+				self.logger.error('Instrument failed to acquire image')
 			raise AcquireError
 
 		# store EMData to DB

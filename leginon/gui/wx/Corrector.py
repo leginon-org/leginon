@@ -128,7 +128,6 @@ class Panel(gui.wx.Node.Panel):
 		self.node.getPlan()
 		self.setPlan(self.node.plan)
 
-		self.Bind(gui.wx.Events.EVT_ACQUISITION_DONE, self.onAcquisitionDone)
 		self.Bind(wx.EVT_BUTTON, self.onEditPlan, self.beditplan)
 
 	def onSetImage(self, evt):
@@ -158,10 +157,6 @@ class Panel(gui.wx.Node.Panel):
 
 	def onAcquisitionDone(self, evt):
 		self._acquisitionEnable(True)
-
-	def acquisitionDone(self):
-		evt = gui.wx.Events.AcquisitionDoneEvent()
-		self.GetEventHandler().AddPendingEvent(evt)
 
 	def setPlan(self, plan):
 		if plan is None:

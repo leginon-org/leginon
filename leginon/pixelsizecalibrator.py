@@ -31,6 +31,8 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 
 	def acquireImage(self):
 		imagedata = calibrator.Calibrator.acquireImage(self)
+		if imagedata is None:
+			return
 		scope = imagedata['scope']
 		camera = imagedata['camera']
 		self.mag = scope['magnification']

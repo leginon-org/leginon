@@ -59,9 +59,9 @@ class Panel(gui.wx.Node.Panel):
 	def initialize(self):
 		# image
 		self.imagepanel = self.imageclass(self, -1)
-		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND)
+		self.szmain.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND)
 
-		self.szmain.AddGrowableRow(1)
+		self.szmain.AddGrowableRow(0)
 		self.szmain.AddGrowableCol(0)
 
 		self.Bind(EVT_LOOP_STARTED, self.onLoopStarted)
@@ -77,7 +77,6 @@ class Panel(gui.wx.Node.Panel):
 											id=gui.wx.ToolBar.ID_PLAY)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onStopTool,
 											id=gui.wx.ToolBar.ID_STOP)
-		self.Bind(gui.wx.Events.EVT_ACQUISITION_DONE, self.onAcquisitionDone)
 		if self.node.projectdata.isConnected():
 			self.toolbar.Bind(wx.EVT_TOOL, self.onGridTool,
 												id=gui.wx.ToolBar.ID_GRID)
@@ -92,10 +91,6 @@ class Panel(gui.wx.Node.Panel):
 
 	def onAcquisitionDone(self, evt):
 		self._acquisitionEnable(True)
-
-	def acquisitionDone(self):
-		evt = gui.wx.Events.AcquisitionDoneEvent()
-		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onSettingsTool(self, evt):
 		self.settingsdialog.ShowModal()
@@ -132,6 +127,7 @@ class Panel(gui.wx.Node.Panel):
 		self.node.acquisitionLoopStart()
 
 	def onStopTool(self, evt):
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, False)
 		self._acquisitionEnable(False)
 		self.node.acquisitionLoopStop()
 

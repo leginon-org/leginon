@@ -251,10 +251,14 @@ class DoseCalibrationClient(CalibrationClient):
 		return sens
 
 	def sensitivity(self, dose_rate, camera_mag, camera_pixel_size, exposure_time, counts):
+		if camera_mag == 0:
+			raise ValueError('Invalid camera magnification given')
 		camera_dose = float(dose_rate) / float((camera_mag**2))
 		self.node.logger.info('Camera dose %.4e' % camera_dose)
 		dose_per_pixel = camera_dose * (camera_pixel_size**2)
 		electrons_per_pixel = dose_per_pixel * exposure_time
+		if electrons_per_pixel == 0:
+			raise ValueError('Invalid electrons per pixel calculated')
 		self.node.logger.info('electrons/pixel %.4e' % electrons_per_pixel)
 		counts_per_electron = float(counts) / electrons_per_pixel
 		return counts_per_electron
@@ -272,7 +276,8 @@ class DoseCalibrationClient(CalibrationClient):
 		exposure_time = imagedata['camera']['exposure time'] / 1000.0
 		binning = imagedata['camera']['binning']['x']
 		mean_counts = imagefun.mean(imagedata['image']) / (binning**2)
-		return self.sensitivity(dose_rate, camera_mag, camera_pixel_size, exposure_time, mean_counts)
+		return self.sensitivity(dose_rate, camera_mag, camera_pixel_size,
+														exposure_time, mean_counts)
 
 	def dose_from_imagedata(self, imagedata):
 		'''

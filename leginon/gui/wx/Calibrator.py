@@ -1,3 +1,4 @@
+import threading
 import wx
 from gui.wx.Choice import Choice
 import gui.wx.Camera
@@ -5,65 +6,6 @@ import gui.wx.Node
 import gui.wx.Settings
 import gui.wx.ImageViewer
 import gui.wx.ToolBar
-
-class Panel(gui.wx.Node.Panel):
-	imageclass = gui.wx.ImageViewer.TargetImagePanel
-	def __init__(self, parent, name):
-		gui.wx.Node.Panel.__init__(self, parent, -1)
-
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
-													'settings',
-													shortHelpString='Settings')
-		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_CALIBRATE,
-													'play',
-													shortHelpString='Calibrate')
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_ABORT,
-													'stop',
-													shortHelpString='Abort')
-
-		self.initialize()
-
-		self.toolbar.Realize()
-
-		self.SetSizer(self.szmain)
-		self.SetAutoLayout(True)
-		self.SetupScrolling()
-
-	def initialize(self):
-		# image
-		self.imagepanel = self.imageclass(self, -1)
-		self.imagepanel.addTypeTool('Image', display=True)
-		self.imagepanel.addTypeTool('Correlation', display=True)
-		if isinstance(self.imagepanel, gui.wx.ImageViewer.TargetImagePanel):
-			color = wx.Color(255, 128, 0)
-			self.imagepanel.addTargetType('Peak', color, display=True)
-
-		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND|wx.ALL)
-		self.szmain.AddGrowableRow(1)
-		self.szmain.AddGrowableCol(0)
-
-	def onNodeInitialized(self):
-		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
-											id=gui.wx.ToolBar.ID_SETTINGS)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onCalibrateTool,
-											id=gui.wx.ToolBar.ID_CALIBRATE)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onAbortTool,
-											id=gui.wx.ToolBar.ID_ABORT)
-
-	def onAcquireTool(self, evt):
-		self.node.acquireImage()
-
-	def onSettingsTool(self, evt):
-		dialog = SettingsDialog(self)
-		dialog.ShowModal()
-		dialog.Destroy()
-
-	def onCalibrateTool(self, evt):
-		raise NotImplementedError
-
-	def onAbortTool(self, evt):
-		raise NotImplementedError
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -92,6 +34,79 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		return [sbsz]
+
+class Panel(gui.wx.Node.Panel):
+	imageclass = gui.wx.ImageViewer.TargetImagePanel
+	settingsclass = SettingsDialog
+	def __init__(self, parent, name):
+		gui.wx.Node.Panel.__init__(self, parent, -1)
+
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
+													'settings',
+													shortHelpString='Settings')
+		self.toolbar.AddSeparator()
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_ACQUIRE,
+													'acquire',
+													shortHelpString='Acquire')
+		self.toolbar.AddSeparator()
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_CALIBRATE,
+													'play',
+													shortHelpString='Calibrate')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_ABORT,
+													'stop',
+													shortHelpString='Abort')
+
+		self.initialize()
+
+		self.toolbar.Realize()
+
+		self.SetSizer(self.szmain)
+		self.SetAutoLayout(True)
+		self.SetupScrolling()
+
+	def initialize(self):
+		# image
+		self.imagepanel = self.imageclass(self, -1)
+		self.imagepanel.addTypeTool('Image', display=True)
+		self.imagepanel.selectiontool.setDisplayed('Image', True)
+		self.imagepanel.addTypeTool('Correlation', display=True)
+		if isinstance(self.imagepanel, gui.wx.ImageViewer.TargetImagePanel):
+			color = wx.Color(255, 128, 0)
+			self.imagepanel.addTargetType('Peak', color, display=True)
+
+		self.szmain.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND)
+		self.szmain.AddGrowableRow(0)
+		self.szmain.AddGrowableCol(0)
+
+	def onNodeInitialized(self):
+		self.settingsdialog = self.settingsclass(self)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
+											id=gui.wx.ToolBar.ID_SETTINGS)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onAcquireTool,
+											id=gui.wx.ToolBar.ID_ACQUIRE)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onCalibrateTool,
+											id=gui.wx.ToolBar.ID_CALIBRATE)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onAbortTool,
+											id=gui.wx.ToolBar.ID_ABORT)
+
+	def _acquisitionEnable(self, enable):
+		self.toolbar.Enable(enable)
+
+	def onAcquisitionDone(self, evt):
+		self._acquisitionEnable(True)
+	
+	def onAcquireTool(self, evt):
+		self._acquisitionEnable(False)
+		threading.Thread(target=self.node.acquireImage).start()
+
+	def onSettingsTool(self, evt):
+		self.settingsdialog.ShowModal()
+
+	def onCalibrateTool(self, evt):
+		raise NotImplementedError
+
+	def onAbortTool(self, evt):
+		raise NotImplementedError
 
 if __name__ == '__main__':
 	class App(wx.App):

@@ -64,6 +64,8 @@ class Dialog(wx.Dialog):
 		# set values
 		self.SetSizerAndFit(szmain)
 
+		self.szmain = szmain
+
 		self.Bind(wx.EVT_BUTTON, self.onSet, self.bok)
 		self.Bind(wx.EVT_BUTTON, self.onSet, self.bapply)
 
@@ -124,7 +126,11 @@ class Dialog(wx.Dialog):
 						widgetvalue = getattr(widget, attributes[widget.__class__][0])()
 						sd[key] = widgetvalue
 					else:
-						getattr(widget, attributes[widget.__class__][1])(sd[key])
+						try:
+							getattr(widget, attributes[widget.__class__][1])(sd[key])
+						except ValueError:
+							widgetvalue = getattr(widget, attributes[widget.__class__][0])()
+							sd[key] = widgetvalue
 				except ValueError:
 					raise ValueError('Invalid value %s for widget "%s"' % (sd[key], key))
 

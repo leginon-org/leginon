@@ -3,15 +3,18 @@ import wx
 from gui.wx.Entry import IntEntry, FloatEntry
 import gui.wx.Calibrator
 import gui.wx.Settings
+import gui.wx.ToolBar
 
 class Panel(gui.wx.Calibrator.Panel):
+	def initialize(self):
+		gui.wx.Calibrator.Panel.initialize(self)
+		self.toolbar.Realize()
+		self.toolbar.DeleteTool(gui.wx.ToolBar.ID_ABORT)
+
 	def onCalibrateTool(self, evt):
 		dialog = DoseCalibrationDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
-
-	def onAbortTool(self, evt):
-		self.node.abortCalibration()
 
 class DoseCalibrationDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -79,6 +82,8 @@ class DoseCalibrationDialog(gui.wx.Settings.Dialog):
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 0, wx.EXPAND|wx.ALL, 5)
 
+		self.szdose = sz
+
 		self.stsensitivity = wx.StaticText(self, -1, '')
 		self.bcalibratesensitivity = wx.Button(self, -1, 'Calibrate')
 
@@ -116,19 +121,25 @@ class DoseCalibrationDialog(gui.wx.Settings.Dialog):
 		try:
 			self.stbeamcurrent.SetLabel(str(results['beam current']))
 			self.stscreenmag.SetLabel(str(results['screen magnification']))
+			self.stdoserate.SetLabel(str(results['dose rate']))
 		except KeyError:
-			pass
-		try:
-			self.stdoserate.SetLabel(str(self.results['dose rate']))
-		except KeyError:
-			pass
+			self.stbeamcurrent.SetLabel('')
+			self.stscreenmag.SetLabel('')
+			self.stdoserate.SetLabel('')
+		self.szmain.Layout()
+		self.Fit()
 
 	def onMeasureDoseButton(self, evt):
 		self.node.uiMeasureDoseRate()
 		self._setDoseResults(self.node.results)
 
 	def _setSensitivityResults(self, results):
-		self.stsensitivity.SetLabel(str(results))
+		if results is None:
+			self.stsensitivity.SetLabel('')
+		else:
+			self.stsensitivity.SetLabel(str(results))
+		self.szmain.Layout()
+		self.Fit()
 
 	def onCalibrateSensitivityButton(self, evt):
 		self.node.uiCalibrateCamera()

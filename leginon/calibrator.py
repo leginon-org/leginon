@@ -47,17 +47,24 @@ class Calibrator(node.Node):
 		return dat
 
 	def acquireImage(self):
-		self.cam.setCameraDict(self.settings['camera settings'])
 		try:
+			self.cam.setCameraDict(self.settings['camera settings'])
 			imagedata = self.cam.acquireCameraImageData()
-		except camerafuncs.NoCorrectorError:
-			self.messagelog.error('No Corrector node, acquisition failed')
+		except (EM.ScopeUnavailable, camerafuncs.CameraError), e:
+			self.logger.error('Acquisition failed: %s' % e)
+			self.panel.acquisitionDone()
+			return
+		except Exception, e:
+			self.logger.exception('Acquisition failed: %s' % e)
+			self.panel.acquisitionDone()
 			return
 
 		if imagedata is None:
-			self.messagelog.error('acquisition failed')
+			self.messagelog.error('Acquisition failed')
+			self.panel.acquisitionDone()
 			return
 
-		self.setImage(newimage, 'Image')
+		self.setImage(imagedata['image'], 'Image')
+		self.panel.acquisitionDone()
 		return imagedata
 

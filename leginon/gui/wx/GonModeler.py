@@ -5,39 +5,6 @@ from gui.wx.Entry import IntEntry, FloatEntry
 import gui.wx.Calibrator
 import gui.wx.ToolBar
 
-class Panel(gui.wx.Calibrator.Panel):
-	def initialize(self):
-		gui.wx.Calibrator.Panel.initialize(self)
-		self.toolbar.Realize()
-		ctb = self.toolbar.RemoveTool(gui.wx.ToolBar.ID_CALIBRATE)
-		atb = self.toolbar.RemoveTool(gui.wx.ToolBar.ID_ABORT)
-		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_MEASURE,
-													'ruler',
-													shortHelpString='Measure')
-		self.toolbar.AddSeparator()
-		self.toolbar.AddToolItem(atb)
-		self.toolbar.AddToolItem(ctb)
-
-	def onNodeInitialized(self):
-		gui.wx.Calibrator.Panel.onNodeInitialized(self)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureTool,
-											id=gui.wx.ToolBar.ID_MEASURE)
-
-	def onMeasureTool(self, evt):
-		self.node.uiStartLoop()
-
-	def onAbortTool(self, evt):
-		self.node.uiStopLoop()
-
-	def onCalibrateTool(self, evt):
-		self.node.uiFit()
-
-	def onSettingsTool(self, evt):
-		dialog = SettingsDialog(self)
-		dialog.ShowModal()
-		dialog.Destroy()
-
 class SettingsDialog(gui.wx.Calibrator.SettingsDialog):
 	def initialize(self):
 		szcal = gui.wx.Calibrator.SettingsDialog.initialize(self)
@@ -99,6 +66,35 @@ class SettingsDialog(gui.wx.Calibrator.SettingsDialog):
 		sbszmodel.Add(szmodel, 1, wx.EXPAND|wx.ALL, 5)
 
 		return szcal + [sbszmeasure, sbszmodel]
+
+class Panel(gui.wx.Calibrator.Panel):
+	settingsclass = SettingsDialog
+	def initialize(self):
+		gui.wx.Calibrator.Panel.initialize(self)
+		self.toolbar.Realize()
+		ctb = self.toolbar.RemoveTool(gui.wx.ToolBar.ID_CALIBRATE)
+		atb = self.toolbar.RemoveTool(gui.wx.ToolBar.ID_ABORT)
+		self.toolbar.AddSeparator()
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_MEASURE,
+													'ruler',
+													shortHelpString='Measure')
+		self.toolbar.AddSeparator()
+		self.toolbar.AddToolItem(atb)
+		self.toolbar.AddToolItem(ctb)
+
+	def onNodeInitialized(self):
+		gui.wx.Calibrator.Panel.onNodeInitialized(self)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureTool,
+											id=gui.wx.ToolBar.ID_MEASURE)
+
+	def onMeasureTool(self, evt):
+		self.node.uiStartLoop()
+
+	def onAbortTool(self, evt):
+		self.node.uiStopLoop()
+
+	def onCalibrateTool(self, evt):
+		self.node.uiFit()
 
 if __name__ == '__main__':
 	class App(wx.App):
