@@ -27,7 +27,7 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		self.targetlist = []
 		imagewatcher.ImageWatcher.__init__(self, id, session, nodelocations, **kwargs)
 
-	def findTargets(self, numarray):
+	def findTargets(self, imdata):
 		'''
 		this should build self.targetlist, a list of 
 		ImageTargetData items.
