@@ -253,6 +253,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 	def submitTargets(self):
 		self.setStatusMessage('Sumbiting targets')
 		self.getTargetDataList('acquisition')
+		self.getTargetDataList('focus')
 		self.publish(self.targetlist, pubevent=True)
 		self.setStatusMessage('Targets submitted')
 
