@@ -16,6 +16,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 	def __init__(self, id, session, nodelocations, **kwargs):
 		targetwatcher.TargetWatcher.__init__(self, id, session, nodelocations, **kwargs)
 		self.addEventInput(event.ImageClickEvent, self.handleImageClick)
+		self.addEventInput(event.TargetDoneEvent, self.handleTargetDone)
 		self.cam = camerafuncs.CameraFuncs(self)
 
 		self.calclients = {
@@ -24,9 +25,27 @@ class Acquisition(targetwatcher.TargetWatcher):
 			'modeled stage position': calibrationclient.ModeledStageCalibrationClient(self)
 		}
 		self.presetsclient = presets.PresetsClient(self)
+		self.targetevents = {}
 
 		self.defineUserInterface()
 		self.start()
+
+	def handleTargetDone(self, targetevent):
+		targetid = targetevent['targetid']
+		print 'got targetdone event, setting threading event', targetid
+		if targetid in self.targetevents:
+			self.targetevents[targetid].set()
+
+	def focus(self, focustargetdata):
+		targetid = focustargetdata['id']
+		## maybe should check if already waiting on this target?
+		self.targetevents[targetid] = threading.Event()
+		print 'publishing focustargetdata', targetid
+		newtargetlist = data.ImageTargetListData(self.ID(), targets=[focustargetdata,])
+		self.publish(newtargetlist, eventclass=event.ImageTargetListPublishEvent)
+		## maybe should have timeout?
+		print 'waiting for focus to complete'
+		self.targetevents[targetid].wait()
 
 	def processTargetData(self, targetdata):
 		'''
@@ -36,18 +55,36 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'''
 		### should make both target data and preset an option
 
-#		print 'PROCESSING', targetdata
+		## pass focus targets to another node
+		if isinstance(targetdata, data.FocusTargetData):
+			print 'FFFFFFF this is a focus target'
+			self.focus(targetdata)
+			return
 
 		if targetdata is None:
 			newtargetemdata = None
 		else:
+			print 'TARGETDATA'
+			print '   row,col', targetdata['array row'], targetdata['array column']
+			print '   scope image shift', targetdata['scope']['image shift']
+			print '   preset image shift', targetdata['preset']['image shift']
+
 			oldtargetemdata = self.targetToEMData(targetdata)
 			oldpreset = targetdata['preset']
+			print 'OLDPRESET'
+			print '   magnification', oldpreset['magnification']
+			print '   image shift', oldpreset['image shift']
 			if oldpreset is None:
 				# I don't know if this works, but if there is no preset, don't remove
 				newtargetemdata = oldtargetemdata
 			else:
 				newtargetemdata = self.removePreset(oldtargetemdata, oldpreset)
+
+		if newtargetemdata is not None:
+			print 'type', type(newtargetemdata)
+			print 'NEWTARGETEMDATA'
+			print '   magnification', newtargetemdata['em']['magnification']
+			print '   image shift', newtargetemdata['em']['image shift']
 
 		### do each preset for this acquisition
 		presetnames = self.presetnames.get()
@@ -61,11 +98,18 @@ class Acquisition(targetwatcher.TargetWatcher):
 			presetdata = presetlist[0]
 			### simulated target is easy, real target requires
 			### merge with preset
+			print 'PRESETDATA'
+			print '   magnification', presetdata['magnification']
+			print '   image shift', presetdata['image shift']
 			if targetemdata is None:
 				ptargetemdata = self.presetDataToEMData(presetdata)
 			else:
 				## make newtargetemdata with preset applied
 				ptargetemdata = self.addPreset(targetemdata, presetdata)
+				print 'PTARGETEMDATA'
+				print '   magnification', ptargetemdata['em']['magnification']
+				print '   image shift', ptargetemdata['em']['image shift']
+
 			## set the scope/camera state
 			self.publishRemote(ptargetemdata)
 
@@ -106,8 +150,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## figure out scope state that gets to the target
 		movetype = self.movetype.get()
 		calclient = self.calclients[movetype]
+		print 'ORIGINAL', targetscope['image shift']
 		newscope = calclient.transform(pixelshift, targetscope, targetcamera)
-
+		print 'WITH TARGET', newscope['image shift']
 		## create new EMData object to hole this
 		emdata = data.EMData(('scope',), em=newscope)
 		return emdata
@@ -119,13 +164,17 @@ class Acquisition(targetwatcher.TargetWatcher):
 		# like magnification will be updated later.
 
 		# make new EMData object
+		print 'REMOVE PRESET'
 		emdict = emdata['em']
+		print 'TARGET BEFORE', emdict['image shift']
 		newemdict = copy.deepcopy(emdict)
 		newemdata = data.EMData(('scope',), em=newemdict)
+		print 'REMOVING', presetdata['image shift']
 
 		# update its values from PresetData object
 		newemdict['image shift']['x'] -= presetdata['image shift']['x']
 		newemdict['image shift']['y'] -= presetdata['image shift']['y']
+		print 'TARGET AFTER', newemdata['em']['image shift']
 		return newemdata
 
 	def addPreset(self, emdata, presetdata):
@@ -136,20 +185,26 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## because we don't want to interfere with the current
 		## target.
 
+		print 'ADD PRESET'
+
 		# make new EMData object
 		emdict = emdata['em']
+		print 'TARGET BEFORE', emdict['image shift']
 		newemdict = copy.deepcopy(emdict)
 		newemdata = data.EMData(('scope',), em=newemdict)
 
+		print 'ADDING', presetdata['image shift']
 		# image shift is added, other parameter just overwrite
-		newimageshift = copy.deepcopy(newemdict['image shift'])
-		newimageshift['x'] += presetdata['image shift']['x']
-		newimageshift['y'] += presetdata['image shift']['y']
+		ishift = newemdata['em']['image shift']
+		ishift['x'] += presetdata['image shift']['x']
+		ishift['y'] += presetdata['image shift']['y']
+		## save a temp ishift because update() will overwrite it
+		tempishift = copy.deepcopy(ishift)
 
 		# overwrite values from preset into emdict
-		newemdict.update(presetdata)
-		newemdict['image shift'] = newimageshift
-
+		newemdata['em'].update(presetdata)
+		newemdata['em']['image shift'] = tempishift
+		print 'TARGET AFTER', newemdata['em']['image shift']
 		return newemdata
 
 	def presetDataToEMData(self, presetdata):
@@ -171,8 +226,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if imagedata is None:
 			return
 
-#		print 'IMAGEDATA CAMERA', imagedata['camera']
-
 		## attach preset to imagedata and create PresetImageData
 		## use same id as original imagedata
 		dataid = imagedata['id']
@@ -185,7 +238,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 			pimagedata = data.AcquisitionImageData(dataid, initializer=imagedata, preset=presetdata)
 #			print 'publishing image'
 			self.publish(pimagedata, eventclass=event.AcquisitionImagePublishEvent, database=True)
-#		print 'image published'
+			print 'PIMAGEDATA'
+			print '   scope image shift', pimagedata['scope']['image shift']
+			print '   preset image shift', pimagedata['preset']['image shift']
+		print 'image published'
+
 
 	def handleImageClick(self, clickevent):
 		'''
@@ -272,7 +329,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		movetypes = self.calclients.keys()
 		temparam = self.registerUIData('temparam', 'array', default=movetypes)
-		self.movetype = self.registerUIData('TEM Parameter', 'string', choices=temparam, permissions='rw', default='stage position')
+		self.movetype = self.registerUIData('TEM Parameter', 'string', choices=temparam, permissions='rw', default='image shift')
 
 		self.delaydata = self.registerUIData('Delay (sec)', 'float', default=2.5, permissions='rw')
 
@@ -282,7 +339,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		prefs = self.registerUIContainer('Preferences', (self.movetype, self.delaydata, self.acqtype))
 
-		self.presetnames = self.registerUIData('Acquisition Presets', 'array', default=[], permissions='rw')
+		self.presetnames = self.registerUIData('Acquisition Presets', 'array', default=['spread1100'], permissions='rw')
 		self.fromscopename = self.registerUIData('Preset Name', 'string', permissions='rw')
 		fromscope = self.registerUIMethod(self.uiFromScope, 'Create Preset', ())
 		self.presetarg = self.registerUIData('Preset', 'struct', default = {'list': self.presetsNames(), 'selected': []}, permissions='rw', subtype='selected list')
