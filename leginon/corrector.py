@@ -12,6 +12,8 @@ import camerafuncs
 reload(camerafuncs)
 import xmlrpclib
 
+False = 0
+True = 1
 
 class DataHandler(node.DataHandler):
 	def __init__(self, id, inode):
