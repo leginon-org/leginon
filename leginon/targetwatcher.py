@@ -112,11 +112,14 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		# hack to be sure image data is not read, since it's not needed
 		imageref = originaltarget.special_getitem('image', dereference=False)
 		imageid = imageref.dbid
+		self.logger.debug('ADJUSTTARGET, imageid: %s' % (imageid,))
 		imagedata = self.researchDBID(data.AcquisitionImageData, imageid, readimages=False)
 		# image time
 		imagetime = imagedata['scope']['system time']
+		self.logger.debug('ADJUSTTARGET, imagetime: %s' % (imagetime,))
 		# last declared drift
 		lastdeclared = self.research(data.DriftDeclaredData(), results=1)
+		self.logger.debug('ADJUSTTARGET, lastdeclared: %s' % (lastdeclared,))
 		if not lastdeclared:
 			## no drift declared, no adjustment needed
 			return adjustedtarget
