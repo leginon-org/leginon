@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ManualAcquisition.py,v $
-# $Revision: 1.18 $
+# $Revision: 1.19 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-25 22:07:02 $
+# $Date: 2005-02-25 22:51:04 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -37,11 +37,12 @@ class LoopStoppedEvent(wx.PyCommandEvent):
 		wx.PyCommandEvent.__init__(self, LoopStoppedEventType, source.GetId())
 		self.SetEventObject(source)
 
-class Panel(gui.wx.Node.Panel):
+class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 	icon = 'manualacquisition'
 	imageclass = gui.wx.ImageViewer.ImagePanel
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
+		gui.wx.Instrument.SelectionMixin.__init__(self)
 
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
@@ -144,37 +145,6 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, False)
 		self._acquisitionEnable(False)
 		self.node.acquisitionLoopStop()
-
-	def instrumentSelectionEvent(self, evt):
-		try:
-			evthandler = self.settingsdialog.instrumentselection.GetEventHandler()
-			evthandler.AddPendingEvent(evt)
-		except AttributeError:
-			pass
-
-	def setCameraSize(self):
-		try:
-			camerasize = self.node.instrument.camerasize
-			self.settingsdialog.widgets['camera settings'].setSize(camerasize)
-		except AttributeError:
-			pass
-
-	def onSetTEM(self, evt):
-		gui.wx.Node.Panel.onSetTEM(self, evt)
-		self.instrumentSelectionEvent(evt)
-
-	def onSetTEMs(self, evt):
-		gui.wx.Node.Panel.onSetTEMs(self, evt)
-		self.instrumentSelectionEvent(evt)
-
-	def onSetCCDCamera(self, evt):
-		gui.wx.Node.Panel.onSetCCDCamera(self, evt)
-		self.instrumentSelectionEvent(evt)
-		self.setCameraSize()
-
-	def onSetCCDCameras(self, evt):
-		gui.wx.Node.Panel.onSetCCDCameras(self, evt)
-		self.instrumentSelectionEvent(evt)
 
 class GridDialog(wx.Dialog):
 	def __init__(self, parent):

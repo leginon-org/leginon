@@ -11,6 +11,7 @@ import gui.wx.IntensityMonitor
 import imagefun
 import time
 import threading
+import instrument
 
 class IntensityMonitor(node.Node):
 	'''
@@ -25,7 +26,8 @@ class IntensityMonitor(node.Node):
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
-		self.instrument = instrument.Proxy(self.objectservice, self.session)
+		self.instrument = instrument.Proxy(self.objectservice, self.session,
+																				self.panel)
 		self.threadstop = threading.Event()
 		self.start()
 

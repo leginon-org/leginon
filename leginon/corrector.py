@@ -76,7 +76,9 @@ class Corrector(node.Node):
 		self.ref_cache = {}
 		self.plan = None
 
-		self.instrument = instrument.Proxy(self.objectservice, self.session)
+		self.instrument = instrument.Proxy(self.objectservice,
+																				self.session,
+																				self.panel)
 		self.correctionobject = ImageCorrection(self)
 		self.objectservice._addObject('Image Correction', self.correctionobject)
 

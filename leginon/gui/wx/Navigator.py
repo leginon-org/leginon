@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Navigator.py,v $
-# $Revision: 1.29 $
+# $Revision: 1.30 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-25 22:07:02 $
+# $Date: 2005-02-25 22:51:04 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -20,6 +20,7 @@ import gui.wx.ImageViewer
 import gui.wx.Node
 import gui.wx.Settings
 import gui.wx.ToolBar
+import gui.wx.Instrument
 
 LocationsEventType = wx.NewEventType()
 
@@ -31,10 +32,11 @@ class LocationsEvent(wx.PyCommandEvent):
 		self.SetEventObject(source)
 		self.locations = locations
 
-class Panel(gui.wx.Node.Panel):
+class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 	icon = 'navigator'
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
+		gui.wx.Instrument.SelectionMixin.__init__(self)
 
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
@@ -293,6 +295,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 																										'Check calibration error')
 #		self.widgets['complete state'] = wx.CheckBox(self, -1,
 #																								'Set complete instrument state')
+		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self,
+																													self.node.instrument)
 		self.widgets['use camera settings'] = wx.CheckBox(self, -1,
 																								'Use camera configuration')
 		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
@@ -300,16 +304,17 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 
 		# settings sizer
 		sz = wx.GridBagSizer(5, 10)
+		sz.Add(self.instrumentselection, (0, 0), (2, 1), wx.EXPAND)
 #		sz.Add(szmovetype, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szpausetime, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['check calibration'], (1, 0), (1, 1),
+		sz.Add(szpausetime, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['check calibration'], (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 #		sz.Add(self.widgets['complete state'], (3, 0), (1, 1),
 #						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['use camera settings'], (0, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['camera settings'], (1, 1), (4, 1),
-						wx.ALIGN_CENTER)
+		sz.Add(self.widgets['camera settings'], (1, 1), (3, 1),
+						wx.EXPAND)
 		sz.AddGrowableRow(4)
 
 		sb = wx.StaticBox(self, -1, 'Navigation')

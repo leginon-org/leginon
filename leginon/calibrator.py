@@ -28,7 +28,8 @@ class Calibrator(node.Node):
 	def __init__(self, id, session, managerlocation, **kwargs):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 		self.cortypes = ['cross', 'phase']
-		self.instrument = instrument.Proxy(self.objectservice, self.session)
+		self.instrument = instrument.Proxy(self.objectservice, self.session,
+																				self.panel)
 
 	def getMagnification(self):
 		try:

@@ -3,11 +3,13 @@ from gui.wx.Entry import IntEntry, FloatEntry, EVT_ENTRY
 import gui.wx.Node
 import gui.wx.Settings
 import gui.wx.ToolBar
+import gui.wx.Instrument
 
-class Panel(gui.wx.Node.Panel):
+class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 	icon = 'sine'
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
+		gui.wx.Instrument.SelectionMixin.__init__(self)
 
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
@@ -60,6 +62,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 
 		self.widgets['wait time'] = FloatEntry(self, -1, min=0.0, chars=6)
 		self.widgets['iterations'] = IntEntry(self, -1, min=0.0, chars=6)
+		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self,
+																													self.node.instrument)
 		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
 		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
 
@@ -80,7 +84,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(szwaittime, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(sziterations, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['camera settings'], (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.instrumentselection, (2, 0), (1, 1), wx.EXPAND)
+		sz.Add(self.widgets['camera settings'], (3, 0), (1, 1), wx.EXPAND)
 
 		sb = wx.StaticBox(self, -1, 'Loop')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)

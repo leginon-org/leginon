@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Instrument.py,v $
-# $Revision: 1.31 $
+# $Revision: 1.32 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-25 22:07:02 $
+# $Date: 2005-02-25 22:51:03 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -958,6 +958,40 @@ class SelectionPanel(wx.Panel):
 			ccdcamera = string
 		self.cccdcamera.Enable(False)
 		threading.Thread(target=self.proxy.setCCDCamera, args=(ccdcamera,)).start()
+
+class SelectionMixin(object):
+	def __init__(self):
+		self.Bind(gui.wx.Events.EVT_SET_TEM, self.onSetTEM)
+		self.Bind(gui.wx.Events.EVT_SET_TEMS, self.onSetTEMs)
+		self.Bind(gui.wx.Events.EVT_SET_CCDCAMERA, self.onSetCCDCamera)
+		self.Bind(gui.wx.Events.EVT_SET_CCDCAMERAS, self.onSetCCDCameras)
+
+	def instrumentSelectionEvent(self, evt):
+		try:
+			evthandler = self.settingsdialog.instrumentselection.GetEventHandler()
+			evthandler.AddPendingEvent(evt)
+		except AttributeError:
+			pass
+
+	def setCameraSize(self):
+		try:
+			camerasize = self.node.instrument.camerasize
+			self.settingsdialog.widgets['camera settings'].setSize(camerasize)
+		except AttributeError:
+			pass
+
+	def onSetTEM(self, evt):
+		self.instrumentSelectionEvent(evt)
+
+	def onSetTEMs(self, evt):
+		self.instrumentSelectionEvent(evt)
+
+	def onSetCCDCamera(self, evt):
+		self.instrumentSelectionEvent(evt)
+		self.setCameraSize()
+
+	def onSetCCDCameras(self, evt):
+		self.instrumentSelectionEvent(evt)
 
 if __name__ == '__main__':
 	class App(wx.App):

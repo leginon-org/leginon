@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Calibrator.py,v $
-# $Revision: 1.24 $
+# $Revision: 1.25 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-25 19:03:49 $
+# $Date: 2005-02-25 22:51:03 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -20,10 +20,14 @@ import gui.wx.ImageViewer
 import gui.wx.Node
 import gui.wx.Settings
 import gui.wx.ToolBar
+import gui.wx.Instrument
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
+
+		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self,
+																													self.node.instrument)
 
 		self.widgets['use camera settings'] = wx.CheckBox(self, -1,
 																								'Use camera configuration')
@@ -42,10 +46,11 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(szcor, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['use camera settings'], (1, 0), (1, 1),
+		sz.Add(self.instrumentselection, (1, 0), (1, 1), wx.EXPAND)
+		sz.Add(self.widgets['use camera settings'], (2, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['camera settings'], (2, 0), (1, 1),
-						wx.ALIGN_CENTER)
+		sz.Add(self.widgets['camera settings'], (3, 0), (1, 1),
+						wx.EXPAND)
 
 		sb = wx.StaticBox(self, -1, 'Calibration')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
@@ -53,11 +58,12 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 
 		return [sbsz]
 
-class Panel(gui.wx.Node.Panel):
+class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 	imageclass = gui.wx.ImageViewer.TargetImagePanel
 	settingsclass = SettingsDialog
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
+		gui.wx.Instrument.SelectionMixin.__init__(self)
 
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
 													'settings',

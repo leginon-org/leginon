@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Corrector.py,v $
-# $Revision: 1.33 $
+# $Revision: 1.34 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-25 19:03:49 $
+# $Date: 2005-02-25 22:51:03 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -20,6 +20,7 @@ import threading
 import gui.wx.Stats
 import gui.wx.Events
 import gui.wx.ToolBar
+import gui.wx.Instrument
 
 def plan2str(plan):
 	if not plan:
@@ -77,10 +78,11 @@ def str2plan(string):
 	plan.sort()
 	return plan
 
-class Panel(gui.wx.Node.Panel):
+class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 	icon = 'corrector'
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
+		gui.wx.Instrument.SelectionMixin.__init__(self)
 
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
@@ -136,7 +138,7 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onAcquireTool,
 											id=gui.wx.ToolBar.ID_ACQUIRE)
 
-		self.dialog = SettingsDialog(self)
+		self.settingsdialog = SettingsDialog(self)
 
 		self.node.getPlan()
 		self.setPlan(self.node.plan)
@@ -147,7 +149,7 @@ class Panel(gui.wx.Node.Panel):
 		gui.wx.Node.Panel.onSetImage(self, evt)
 
 	def onSettingsTool(self, evt):
-		self.dialog.ShowModal()
+		self.settingsdialog.ShowModal()
 		self.node.getPlan()
 		self.setPlan(self.node.plan)
 
@@ -192,6 +194,9 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
 
+		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self,
+																													self.node.instrument)
+
 		self.widgets['n average'] = IntEntry(self, -1, min=1, max=99, chars=2)
 		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
 		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
@@ -216,11 +221,12 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 
 		sz = wx.GridBagSizer(5, 10)
 		label = wx.StaticText(self, -1, 'Images to average:')
-		sz.Add(self.widgets['camera settings'], (0, 0), (2, 1), wx.ALIGN_CENTER)
+		sz.Add(self.instrumentselection, (0, 0), (1, 1), wx.EXPAND)
+		sz.Add(self.widgets['camera settings'], (1, 0), (1, 1), wx.EXPAND)
 		sz.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['n average'], (0, 2), (1, 1),
 						wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		sz.Add(sbszdespike, (1, 1), (1, 2), wx.ALIGN_CENTER|wx.EXPAND|wx.ALL)
+		sz.Add(sbszdespike, (1, 1), (1, 2), wx.ALIGN_CENTER|wx.ALL)
 
 		sb = wx.StaticBox(self, -1, 'Image Correction')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)

@@ -315,6 +315,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		except:
 			self.logger.exception('Need tiles and mosaic image')
 			return
+		# should get tem from data
 		try:
 			stagepos = self.instrument.tem.StagePosition
 		except:

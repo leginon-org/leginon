@@ -111,6 +111,7 @@ class MosaicTargetMaker(TargetMaker):
 		return radius, overlap
 
 	def getState(self):
+		# tem/camera from preset?
 		self.logger.debug('Getting current instrument state...')
 		try:
 			scope = self.instrument.getData(data.ScopeEMData)

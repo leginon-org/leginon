@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Node.py,v $
-# $Revision: 1.28 $
+# $Revision: 1.29 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-25 22:07:03 $
+# $Date: 2005-02-25 22:51:04 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -48,10 +48,6 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 		self.Bind(gui.wx.Events.EVT_SET_TARGETS, self.onSetTargets)
 		self.Bind(gui.wx.Events.EVT_ACQUISITION_DONE, self.onAcquisitionDone)
 		self.Bind(gui.wx.MessageLog.EVT_ADD_MESSAGE, self.onAddMessage)
-		self.Bind(gui.wx.Events.EVT_SET_TEM, self.onSetTEM)
-		self.Bind(gui.wx.Events.EVT_SET_TEMS, self.onSetTEMs)
-		self.Bind(gui.wx.Events.EVT_SET_CCDCAMERA, self.onSetCCDCamera)
-		self.Bind(gui.wx.Events.EVT_SET_CCDCAMERAS, self.onSetCCDCameras)
 
 	def OnChildFocus(self, evt):
 		evt.Skip()
@@ -114,16 +110,4 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 		level = 'STATUS'
 		evt = gui.wx.Events.StatusUpdatedEvent(self, level, status)
 		self.GetEventHandler().AddPendingEvent(evt)
-
-	def onSetTEM(self, evt):
-		pass
-
-	def onSetTEMs(self, evt):
-		pass
-
-	def onSetCCDCamera(self, evt):
-		pass
-
-	def onSetCCDCameras(self, evt):
-		pass
 
