@@ -26,19 +26,25 @@ class Server(leginonobject.LeginonObject):
 class Client(leginonobject.LeginonObject):
 	def __init__(self, id, location):
 		leginonobject.LeginonObject.__init__(self, id)
-		if location['hostname'] == self.location()['hostname']:
+		if location['hostname'] != self.location()['hostname']:
 			raise ValueError
 		self.serverlocation = location
 
 	def push(self, idata):
-		obj = _id2obj_dict[self.serverlocation['local server python ID']]
+		try:
+			obj = _id2obj_dict[self.serverlocation['local server python ID']]
+		except KeyError:
+			raise IOError
 		if obj is None:
 			raise IOError # err...its sort of an IOError
 		else:
 			return obj.datahandler.insert(copy.deepcopy(idata))
 
 	def pull(self, id):
-		obj = _id2obj_dict[self.serverlocation['local server python ID']]
+		try:
+			obj = _id2obj_dict[self.serverlocation['local server python ID']]
+		except KeyError:
+			raise IOError
 		if obj is None:
 			raise IOError
 		else:

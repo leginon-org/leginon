@@ -23,11 +23,11 @@ class Client(Base):
 	# needs to be transport generalized like server
 	def __init__(self, id, serverlocation):
 		Base.__init__(self, id)
-		self.clients = {}
+		self.clients = []
 
 		for t in self.transportmodules:
 			try:
-				self.clients[t] = apply(t.Client, (self.ID(), serverlocation,))
+				self.clients.append(apply(t.Client, (self.ID(), serverlocation,)))
 			except ValueError:
 				pass
 
@@ -39,7 +39,7 @@ class Client(Base):
 	def pull(self, idata):
 		for c in self.clients:
 			try:
-				return self.clients[c].pull(idata)
+				return c.pull(idata)
 			except IOError:
 				pass
 		print "transport IOError, unable to pull data:", idata
@@ -48,7 +48,7 @@ class Client(Base):
 	def push(self, odata):
 		for c in self.clients:
 			try:
-				return self.clients[c].push(odata)
+				return c.push(odata)
 			except IOError:
 				pass
 		print "transport IOError, unable to push data:", odata
