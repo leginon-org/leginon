@@ -1,22 +1,166 @@
 #!/usr/bin/env python
 
-from wxPython.wx import *
-wxInitAllImageHandlers()
-from wxPython.lib.buttons import wxGenBitmapToggleButton
-#from wxPython.wxc import wxPyAssertionError
 import cStringIO
-import Numeric
-import Image
-import math
-
 import Mrc
+import math
+import Numeric
+from wxPython.wx import *
+from wxPython.lib.buttons import wxGenBitmapToggleButton
 from NumericImage import NumericImage
+
+wxInitAllImageHandlers()
+
+class ImageTool(object):
+	def __init__(self, imagepanel, sizer, bitmap, tooltip='', cursor=None,
+								untoggle=False):
+		self.sizer = sizer
+		self.imagepanel = imagepanel
+		self.cursor = cursor
+		self.button = wxGenBitmapToggleButton(self.imagepanel, -1, bitmap,
+                                          size=(24, 24))
+		self.untoggle = untoggle
+		self.button.SetBezelWidth(1)
+		if tooltip:
+			self.button.SetToolTip(wxToolTip(tooltip))
+		self.sizer.Add(self.button, 0, wxALL, 3)
+		EVT_BUTTON(self.imagepanel, self.button.GetId(), self.OnButton)
+
+	def OnButton(self, evt):
+		if self.button.GetToggle():
+			if self.untoggle:
+				self.untoggle = False
+				self.imagepanel.UntoggleTools()
+				self.untoggle = True
+			if self.cursor is not None:
+				self.imagepanel.panel.SetCursor(self.cursor)
+			self.OnToggle(True)
+		else:
+			self.imagepanel.panel.SetCursor(self.imagepanel.defaultcursor)
+			self.OnToggle(False)
+
+	def OnToggle(self, value):
+		pass
+
+	def getToolBitmap(self, filename):
+		wximage = wxImage('icons/' + filename)
+		bitmap = wxBitmapFromImage(wximage)
+		bitmap.SetMask(wxMaskColour(bitmap, wxWHITE))
+		return bitmap
+
+	def OnLeftClick(self, evt):
+		pass
+
+	def OnRightClick(self, evt):
+		pass
+
+	def OnLeftDoubleClick(self, evt):
+		pass
+
+	def OnRightDoubleClick(self, evt):
+		pass
+
+	def OnMotion(self, evt, dc):
+		pass
+
+	def getToolTipString(self, x, y, value):
+		return ''
+
+class ValueTool(ImageTool):
+	def __init__(self, imagepanel, sizer):
+		bitmap = self.getToolBitmap('valuetool.bmp')
+		tooltip = 'Toggle Show Value'
+		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip)
+		self.button.SetToggle(True)
+
+	def valueString(self, x, y, value):
+		return '(%d, %d) %s' % (x, y, str(value))
+
+	def getToolTipString(self, x, y, value):
+		if self.button.GetToggle():
+			return self.valueString(x, y, value)
+		else:
+			return ''
+
+class RulerTool(ImageTool):
+	def __init__(self, imagepanel, sizer):
+		bitmap = self.getToolBitmap('rulertool.bmp')
+		tooltip = 'Toggle Ruler Tool'
+		cursor = wxCROSS_CURSOR
+		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, True)
+		self.start = None
+
+	def OnLeftClick(self, evt):
+		if self.button.GetToggle():
+			self.start = self.imagepanel.view2image((evt.m_x, evt.m_y))
+
+	def OnRightClick(self, evt):
+		if self.button.GetToggle():
+			self.start = None
+			self.imagepanel.UpdateDrawing()
+
+	def OnToggle(self, value):
+		if not value:
+			self.start = None
+
+	def DrawRuler(self, dc, x, y):
+		dc.SetPen(wxPen(wxRED, 1))
+		x0, y0 = self.imagepanel.image2view(self.start)
+		dc.DrawLine(x0, y0, x, y)
+
+	def OnMotion(self, evt, dc):
+		if self.button.GetToggle() and self.start is not None:
+			self.DrawRuler(dc, evt.m_x, evt.m_y)
+
+	def getToolTipString(self, x, y, value):
+		if self.button.GetToggle() and self.start is not None:
+			x0, y0 = self.start
+			return 'From (%d, %d) x=%d y=%d %.2f' % (x0, y0, x - x0, y - y0,
+																								math.sqrt((x-x0)**2+(y-y0)**2))
+		else:
+			return ''
+
+class ZoomTool(ImageTool):
+	def __init__(self, imagepanel, sizer):
+		bitmap = self.getToolBitmap('zoomtool.bmp')
+		tooltip = 'Toggle Zoom Tool'
+		cursor = wxStockCursor(wxCURSOR_MAGNIFIER)
+		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, True)
+		self.label = wxStaticText(self.imagepanel, -1, '')
+		self.updateLabel()
+		self.sizer.Add(self.label, 0, wxALIGN_CENTER_VERTICAL | wxALL, 3)
+
+	def OnLeftClick(self, evt):
+		if self.button.GetToggle():
+			self.zoomIn(evt.m_x, evt.m_y)
+
+	def OnRightClick(self, evt):
+		if self.button.GetToggle():
+			self.zoomOut(evt.m_x, evt.m_y)
+
+	def updateLabel(self):
+		xscale, yscale = self.imagepanel.getScale()
+		self.label.SetLabel('Zoom: ' + str(xscale) + 'x')
+
+	def zoomIn(self, x, y):
+		xscale, yscale = self.imagepanel.getScale()
+		center = self.imagepanel.view2image((x, y))
+		self.imagepanel.setScale((xscale*2, yscale*2))
+		self.imagepanel.center(center)
+		self.updateLabel()
+
+	def zoomOut(self, x, y):
+		xscale, yscale = self.imagepanel.getScale()
+		center = self.imagepanel.view2image((x, y))
+		self.imagepanel.setScale((xscale/2, yscale/2))
+		self.imagepanel.center(center)
+		self.updateLabel()
 
 class ImagePanel(wxPanel):
 	def __init__(self, parent, id, imagesize=(512, 512)):
-		self.image = None
+		self.numericimage = None
 		self.bitmap = None
-		self.buffer = wxNullBitmap
+		self.buffer = None
+		self.motionbuffer = None
 		self.imagesize = imagesize
 		self.scale = (1.0, 1.0)
 
@@ -28,32 +172,126 @@ class ImagePanel(wxPanel):
 
 		self.toolsizer = wxBoxSizer(wxHORIZONTAL)
 		self.sizer.Add(self.toolsizer)
+		self.tools = []
 
+		height, width = self.imagesize
 		self.initPanel()
-		height, width = self.panel.GetClientSize()
-		self.buffer = wxEmptyBitmap(height, width)
-		self.motionbuffer = wxEmptyBitmap(height, width)
-		self.initValue()
-		self.initZoom()
-		self.initRuler()
 
 		self.Fit()
 
+		EVT_LEFT_UP(self.panel, self.OnLeftUp)
+		EVT_RIGHT_UP(self.panel, self.OnRightUp)
+		EVT_LEFT_DCLICK(self.panel, self.OnLeftDoubleClick)
+		EVT_RIGHT_DCLICK(self.panel, self.OnRightDoubleClick)
 		EVT_PAINT(self.panel, self.OnPaint)
 		EVT_SIZE(self.panel, self.OnSize)
-		EVT_MOTION(self.panel, self.motion)
-		EVT_LEAVE_WINDOW(self.panel, self.leave)
+		EVT_MOTION(self.panel, self.OnMotion)
+		EVT_LEAVE_WINDOW(self.panel, self.OnLeave)
 
-	def leave(self, evt):
+		self.addTool(ValueTool(self, self.toolsizer))
+		self.addTool(RulerTool(self, self.toolsizer))
+		self.addTool(ZoomTool(self, self.toolsizer))
+
+	def addTool(self, tool):
+		self.tools.append(tool)
+
+	def initPanel(self):
+		self.panel = wxScrolledWindow(self, -1, size=self.imagesize)
+		self.panel.SetScrollRate(1,1)
+		self.defaultcursor = wxCROSS_CURSOR
+		self.panel.SetCursor(self.defaultcursor)
+		self.sizer.Add(self.panel)
+		width, height = self.panel.GetSizeTuple()
+		self.sizer.SetItemMinSize(self.panel, width, height)
+
+	# image set functions
+
+	def setBitmap(self):
+		if self.numericimage is None:
+			self.bitmap = None
+			return
+
+		image = NumericImage(self.numericimage)
+		image.update_image()
+		wximage = image.wxImage()
+
+		if self.smallScale():
+			xscale, yscale = self.getScale()
+			width, height = wximage.GetWidth()*xscale, wximage.GetHeight()*yscale
+			self.bitmap = wxBitmapFromImage(wximage.Scale(width, height))
+		else:
+			self.bitmap = wxBitmapFromImage(wximage)
+
+	def setBuffers(self):
+		if self.bitmap is None:
+			self.buffer = None
+			self.motionbuffer = None
+		else:
+			width, height = self.bitmap.GetWidth(), self.bitmap.GetHeight()
+			self.buffer = wxEmptyBitmap(width, height)
+			self.motionbuffer = wxEmptyBitmap(width, height)
+
+	def setVirtualSize(self):
+		if self.bitmap is not None:
+			width, height = self.bitmap.GetWidth(), self.bitmap.GetHeight()
+			if self.smallScale():
+				virtualsize = (width - 1, height - 1)
+			else:
+				xscale, yscale = self.getScale()
+				virtualsize = ((width - 1) * xscale, (height - 1) * yscale)
+			self.panel.SetVirtualSize(virtualsize)
+		else:
+			self.panel.SetVirtualSize((0, 0))
+
+	def setNumericImage(self, numericimage, scroll=False):
+		self.numericimage = numericimage
+		self.setBitmap()
+		self.setBuffers()
+		self.setVirtualSize()
+		if not scroll:
+			self.panel.Scroll(0, 0)
 		self.UpdateDrawing()
+
+	def clearImage(self):
+		self.setNumericImage(None)
+
+	def setImageFromMrcString(self, imagestring, scroll=False):
+		self.setNumericImage(Mrc.mrcstr_to_numeric(imagestring), scroll)
+
+	# scaling functions
+
+	def getScale(self):
+		return self.scale
 
 	def smallScale(self, scale=None):
 		if scale is None:
-			scale = self.scale
+			scale = self.getScale()
 		if scale[0] < 1.0 or scale[1] < 1.0:
 			return True
 		else:
 			return False
+
+	def setScale(self, scale):
+		oldscale = self.getScale()
+		self.scale = scale
+		if self.smallScale() or self.smallScale(oldscale):
+			self.setBitmap()
+			self.setBuffers()
+
+		self.setVirtualSize()
+		self.UpdateDrawing()
+
+	# utility functions
+
+	def getValue(self, x, y):
+		try:
+			return self.numericimage[y, x]
+		except (IndexError, AttributeError), e:
+			return None
+
+	def getClientCenter(self):
+		center = self.panel.GetClientSize()
+		return (center[0]/2, center[1]/2)
 
 	def biggerView(self):
 		size = self.panel.GetVirtualSize()
@@ -63,196 +301,11 @@ class ImagePanel(wxPanel):
 		else:
 			return False
 
-	def initPanel(self):
-		self.panel = wxScrolledWindow(self, -1, size=self.imagesize)
-		self.panel.SetScrollRate(1,1)
-		self.panel.SetCursor(wxCROSS_CURSOR)
-		self.sizer.Add(self.panel)
-		width, height = self.panel.GetSizeTuple()
-		self.sizer.SetItemMinSize(self.panel, width, height)
-
-	def bitmapTool(self, filename):
-		wximage = wxImage('icons/' + filename)
-		bitmap = wxBitmapFromImage(wximage)
-		bitmap.SetMask(wxMaskColour(bitmap, wxWHITE))
-		return bitmap
-
-	def OnValueButton(self, evt):
-		self.UpdateDrawing()
-
-	def initValue(self):
-		bitmap = self.bitmapTool('valuetool.bmp')
-		#valuebutton = wxBitmapButton(self, -1, bitmap)
-		self.valuebutton = wxGenBitmapToggleButton(self, -1, bitmap, size=(24, 24))
-		self.valuebutton.SetBezelWidth(1)
-		self.valuebutton.SetToggle(True)
-		self.valuebutton.SetToolTip(wxToolTip('Toggle Show Value'))
-		EVT_BUTTON(self, self.valuebutton.GetId(), self.OnValueButton)
-		self.toolsizer.Add(self.valuebutton, 0, wxALL, 3)
-
-	def updateZoomLabel(self):
+	def center(self, center):
+		x, y = center
+		xcenter, ycenter = self.getClientCenter()
 		xscale, yscale = self.getScale()
-		self.zoomlabel.SetLabel('Zoom: ' + str(xscale) + 'x')
-
-	def OnZoomIn(self, evt):
-		xscale, yscale = self.getScale()
-		self.setScale((xscale*2, yscale*2), self.view2image((evt.m_x, evt.m_y)))
-		self.updateZoomLabel()
-
-	def OnZoomOut(self, evt):
-		xscale, yscale = self.getScale()
-		self.setScale((xscale/2, yscale/2), self.view2image((evt.m_x, evt.m_y)))
-		self.updateZoomLabel()
-
-	def OnZoomButton(self, evt):
-		if self.zoombutton.GetToggle():
-			self.UntoggleModal(self.zoombutton)
-			self.panel.SetCursor(wxStockCursor(wxCURSOR_MAGNIFIER))
-			EVT_LEFT_UP(self.panel, self.OnZoomIn)
-			EVT_RIGHT_UP(self.panel, self.OnZoomOut)
-		else:
-			self.panel.SetCursor(wxCROSS_CURSOR)
-			EVT_LEFT_UP(self.panel, None)
-			EVT_RIGHT_UP(self.panel, None)
-
-	def initZoom(self):
-		bitmap = self.bitmapTool('zoomtool.bmp')
-		#zoombutton = wxBitmapButton(self, -1, bitmap)
-		self.zoombutton = wxGenBitmapToggleButton(self, -1, bitmap, size=(24, 24))
-		self.zoombutton.SetBezelWidth(1)
-		self.zoombutton.SetToolTip(wxToolTip('Toggle Zoom Tool'))
-		EVT_BUTTON(self, self.zoombutton.GetId(), self.OnZoomButton)
-		self.toolsizer.Add(self.zoombutton, 0, wxALL, 3)
-		self.zoomlabel = wxStaticText(self, -1, '')
-		self.updateZoomLabel()
-		self.toolsizer.Add(self.zoomlabel, 0, wxALIGN_CENTER_VERTICAL | wxALL, 3)
-
-	def UntoggleModal(self, select):
-		if select != self.zoombutton and self.zoombutton.GetToggle():
-			self.zoombutton.SetToggle(False)
-			self.OnZoomButton(None)
-		if select != self.rulerbutton and self.rulerbutton.GetToggle():
-			self.rulerbutton.SetToggle(False)
-			self.OnRulerButton(None)
-
-	def OnRuler(self, evt):
-		self.ruler = self.view2image((evt.m_x, evt.m_y))
-		#self.ruler = (evt.m_x, evt.m_y)
-
-	def OnRulerCancel(self, evt):
-		self.ruler = None
-		self.UpdateDrawing()
-
-	def OnRulerButton(self, evt):
-		if self.rulerbutton.GetToggle():
-			self.UntoggleModal(self.rulerbutton)
-			self.panel.SetCursor(wxCROSS_CURSOR)
-			EVT_LEFT_UP(self.panel, self.OnRuler)
-			EVT_RIGHT_UP(self.panel, self.OnRulerCancel)
-		else:
-			self.ruler = None
-			self.panel.SetCursor(wxCROSS_CURSOR)
-			EVT_LEFT_UP(self.panel, None)
-			EVT_RIGHT_UP(self.panel, None)
-
-	def initRuler(self):
-		self.ruler = None
-		bitmap = self.bitmapTool('rulertool.bmp')
-		self.rulerbutton = wxGenBitmapToggleButton(self, -1, bitmap, size=(24, 24))
-		self.rulerbutton.SetBezelWidth(1)
-		self.rulerbutton.SetToolTip(wxToolTip('Toggle Ruler Tool'))
-		EVT_BUTTON(self, self.rulerbutton.GetId(), self.OnRulerButton)
-		self.toolsizer.Add(self.rulerbutton, 0, wxALL, 3)
-
-	def setVirtualSize(self):
-		if self.smallScale():
-			xscale, yscale = (1.0, 1.0)
-		else:
-			xscale, yscale = self.getScale()
-		if self.bitmap is not None:
-			self.panel.SetVirtualSize(((self.bitmap.GetWidth() - 1)*xscale,
-																	(self.bitmap.GetHeight() - 1)*yscale))
-		else:
-			self.panel.SetVirtualSize((0, 0))
-
-	def getScale(self):
-		return self.scale
-
-	def setScale(self, scale, offset=None):
-		flag = False
-		if self.smallScale():
-			flag = True
-		self.scale = tuple(scale)
-		if self.smallScale():
-			self.setNumericImage()
-		elif flag:
-			self.setNumericImage()
-		else:
-			self.setVirtualSize()
-			self.UpdateDrawing()
-
-		#if self.biggerView():
-		#	height, width = self.panel.GetClientSize()
-		#	self.motionbuffer = wxEmptyBitmap(height, width)
-
-		if offset is not None:
-			xcenter, ycenter = self.getClientCenter()
-			self.panel.Scroll((offset[0])*self.scale[0] - xcenter,
-												(offset[1])*self.scale[1] - ycenter)
-		else:
-			self.panel.Scroll(0, 0)
-		#self.panel.Refresh(0)
-
-	def PILsetImageFromMrcString(self, imagestring):
-		self.clearImage()
-		stream = cStringIO.StringIO(imagestring)
-		self.image = Image.open(stream)
-		min, max = self.image.getextrema()
-		if max > 255.0 or min < 0.0:
-			r = max - min
-			if r:
-				scale = 255.0 / r
-				offset = -255.0 * min / r
-				image = self.image.point(lambda p: p * scale + offset)
-			else:
-				image = self.image
-		else:
-			image = self.image
-		wximage = wxEmptyImage(image.size[0], image.size[1])
-		wximage.SetData(image.convert('RGB').tostring())
-		self.setImage(wximage)
-
-	def setImageFromMrcString(self, imagestring, scroll=False):
-		self.clearImage()
-		self.image = Mrc.mrcstr_to_numeric(imagestring)
-		self.setNumericImage(scroll)
-
-	def setNumericImage(self, scroll=False):
-		n = NumericImage(self.image)
-		n.update_image()
-		wximage = n.wxImage()
-		self.setImage(wximage, scroll)
-
-	def setImage(self, wximage, scroll=False):
-		if self.smallScale():
-			width = wximage.GetWidth()
-			height = wximage.GetHeight()
-			self.bitmap = wxBitmapFromImage(wximage.Scale(width*self.scale[0],
-																										height*self.scale[1]))
-		else:
-			self.bitmap = wxBitmapFromImage(wximage)
-		self.setVirtualSize()
-		if not scroll:
-			self.panel.Scroll(0, 0)
-		bitmapwidth = self.bitmap.GetWidth()
-		bitmapheight = self.bitmap.GetHeight()
-		self.buffer = wxEmptyBitmap(bitmapwidth, bitmapheight)
-		self.UpdateDrawing()
-
-	def clearImage(self):
-		self.image = None
-		self.bitmap = None
-		self.UpdateDrawing()
+		self.panel.Scroll(x * xscale - xcenter, y * yscale - ycenter)
 
 	def view2image(self, xy, viewoffset=None, scale=None):
 		if viewoffset is None:
@@ -270,89 +323,91 @@ class ImagePanel(wxPanel):
 		return (int(round((xy[0] * scale[0]) - viewoffset[0])),
 						int(round((xy[1] * scale[1]) - viewoffset[1])))
 
-	def getClientCenter(self):
-		center = self.panel.GetClientSize()
-		return (center[0]/2, center[1]/2)
+	# tool utility functions
 
-	def motion(self, evt):
-		if self.image is None:
+	def UntoggleTools(self):
+		for tool in self.tools:
+			if tool.untoggle:
+				tool.button.SetToggle(False)
+
+	# eventhandlers
+
+	def getMotionBufferDC(self):
+		dc = wxMemoryDC()
+		dc.SelectObject(self.motionbuffer)
+		dc.BeginDrawing()
+		if self.biggerView():
+			dc.Clear()
+
+		fromdc = wxMemoryDC()
+		fromdc.SelectObject(self.buffer)
+		self.Draw(dc)
+
+		xviewoffset, yviewoffset = self.panel.GetViewStart()
+		xsize, ysize = self.panel.GetClientSize()
+
+		if self.smallScale():
+			dc.Blit(0, 0, xsize, ysize, fromdc, xviewoffset, yviewoffset)
+		else:
+			xscale, yscale = self.getScale()
+			dc.SetUserScale(xscale, yscale)
+			dc.Blit(0, 0, xsize/xscale + 1, ysize/yscale + 1, fromdc,
+							xviewoffset/xscale, yviewoffset/yscale)
+
+		fromdc.SelectObject(wxNullBitmap)
+
+		if not self.smallScale():
+			dc.SetUserScale(1.0, 1.0)
+
+		return dc
+
+	def drawMotionBufferDC(self, dc):
+		dc.EndDrawing()
+		dc.SelectObject(wxNullBitmap)
+
+		clientdc = wxClientDC(self.panel)
+		clientdc.BeginDrawing()
+		clientdc.DrawBitmap(self.motionbuffer, 0, 0)
+		clientdc.EndDrawing()
+
+	def OnMotion(self, evt):
+		if self.buffer is None or self.motionbuffer is None:
 			return
-		if self.valuebutton.GetToggle() or self.ruler is not None:
-			#self.UpdateDrawing()
-			dc = wxMemoryDC()
-			dc.SelectObject(self.motionbuffer)
-			dc.BeginDrawing()
-			if self.biggerView():
-				dc.Clear()
 
-			fromdc = wxMemoryDC()
-			fromdc.SelectObject(self.buffer)
-			self.Draw(dc)
+		dc = self.getMotionBufferDC()
 
-			xviewoffset, yviewoffset = self.panel.GetViewStart()
-			xsize, ysize = self.panel.GetClientSize()
+		for tool in self.tools:
+			tool.OnMotion(evt, dc)
 
-			if self.smallScale():
-				dc.Blit(0, 0, xsize, ysize, fromdc, xviewoffset, yviewoffset)
-			else:
-				xscale, yscale = self.getScale()
-				dc.SetUserScale(xscale, yscale)
-				dc.Blit(0, 0, xsize/xscale + 1, ysize/yscale + 1, fromdc,
-								xviewoffset/xscale, yviewoffset/yscale)
-
-			fromdc.SelectObject(wxNullBitmap)
-
-			if not self.smallScale():
-				dc.SetUserScale(1.0, 1.0)
-
-			string = ''
-			x, y = self.view2image((evt.m_x, evt.m_y))
-			if self.ruler is not None:
-				#self.drawRulerLine(self.ruler, (evt.m_x, evt.m_y), dc)
-				self.drawRulerLine(self.ruler, (x, y), dc)
-				string += self.rulerString(x, y)
-			if self.valuebutton.GetToggle():
-				if self.ruler is not None:
-					string += ', '
-				string += self.valueString(x, y)
+		string = ''
+		x, y = self.view2image((evt.m_x, evt.m_y))
+		value = self.getValue(x, y)
+		for tool in self.tools:
 			if string:
-				self.drawLabel(dc, x, y, string)
-			dc.EndDrawing()
+				string += ' '
+			string += tool.getToolTipString(x, y, value)
+		if string:
+			self.drawToolTip(dc, x, y, string)
 
-#			dc.SelectObject(wxNullBitmap)
-#			self.motionbuffer.SetMask(wxMaskColour(self.motionbuffer, wxWHITE))
-#			dc.SelectObject(self.motionbuffer)
+		self.drawMotionBufferDC(dc)
 
-			clientdc = wxClientDC(self.panel)
-			clientdc.BeginDrawing()
-			clientdc.EndDrawing()
-			dc.SelectObject(wxNullBitmap)
-			clientdc.DrawBitmap(self.motionbuffer, 0, 0)
+	def OnLeftUp(self, evt):
+		for tool in self.tools:
+			tool.OnLeftClick(evt)
 
-			#width, height = self.panel.GetClientSize()
-			#clientdc.Blit(0, 0, width, height, dc, 0, 0, wxCOPY, True)
-			#clientdc.Blit(0, 0, width, height, dc, 0, 0)
-			#clientdc.EndDrawing()
-			#dc.SelectObject(wxNullBitmap)
+	def OnRightUp(self, evt):
+		for tool in self.tools:
+			tool.OnRightClick(evt)
 
-	def drawRulerLine(self, origin, destination, dc):
-		dc.SetPen(wxPen(wxRED, 1))
-		origin = self.image2view(origin)
-		destination = self.image2view(destination)
-		dc.DrawLine(origin[0], origin[1], destination[0], destination[1])
+	def OnLeftDoubleClick(self, evt):
+		for tool in self.tools:
+			tool.OnLeftDoubleClick(evt)
 
-	def rulerString(self, x, y):
-		return 'from (%d, %d): %.2f' % (self.ruler[0], self.ruler[1],
-										math.sqrt((x - self.ruler[0])**2 + (y - self.ruler[1])**2))
+	def OnRightDoubleClick(self, evt):
+		for tool in self.tools:
+			tool.OnRightDoubleClick(evt)
 
-	def valueString(self, x, y):
-		try:
-			value = self.image[y, x]
-			return '(%d, %d): %s' % (x, y, str(value))
-		except IndexError:
-			return 'Invalid index'
-
-	def drawLabel(self, dc, x, y, string):
+	def drawToolTip(self, dc, x, y, string):
 		dc.SetBrush(wxBrush(wxColour(255, 255, 220)))
 		dc.SetPen(wxPen(wxBLACK, 1))
 
@@ -379,34 +434,12 @@ class ImagePanel(wxPanel):
 		dc.DrawText(string, x + 2 , y + 2)
 
 	def Draw(self, dc):
-#		try:
 		dc.BeginDrawing()
 		if self.bitmap is None:
 			dc.Clear()
 		else:
 			dc.DrawBitmap(self.bitmap, 0, 0)
 		dc.EndDrawing()
-#		except wxPyAssertionError:
-#			pass
-
-	def UpdateDrawing(self):
-		dc = wxMemoryDC()
-		dc.SelectObject(self.buffer)
-		self.Draw(dc)
-		self.paint(dc, wxClientDC(self.panel))
-		dc.SelectObject(wxNullBitmap)
-
-	def OnSize(self, evt):
-#		width, height = self.panel.GetClientSize()
-#		self.buffer = wxEmptyBitmap(width, height)
-		self.UpdateDrawing()
-
-	def OnPaint(self, evt):
-		dc = wxMemoryDC()
-		dc.SelectObject(self.buffer)
-		self.Draw(dc)
-		self.paint(dc, wxPaintDC(self.panel))
-		dc.SelectObject(wxNullBitmap)
 
 	def paint(self, fromdc, todc):
 		xviewoffset, yviewoffset = self.panel.GetViewStart()
@@ -420,47 +453,73 @@ class ImagePanel(wxPanel):
 		todc.Blit(0, 0, xsize/xscale + 1, ysize/yscale + 1, fromdc,
 							xviewoffset/xscale, yviewoffset/yscale)
 
-class ClickImagePanel(ImagePanel):
-	def __init__(self, parent, id, callback=None):
+	def UpdateDrawing(self):
+		if self.buffer is not None:
+			dc = wxMemoryDC()
+			dc.SelectObject(self.buffer)
+			self.Draw(dc)
+			self.paint(dc, wxClientDC(self.panel))
+			dc.SelectObject(wxNullBitmap)
+
+	def OnSize(self, evt):
+		self.UpdateDrawing()
+
+	def OnPaint(self, evt):
+		if self.buffer is None:
+			evt.Skip()
+		else:
+			dc = wxMemoryDC()
+			dc.SelectObject(self.buffer)
+			self.Draw(dc)
+			self.paint(dc, wxPaintDC(self.panel))
+			dc.SelectObject(wxNullBitmap)
+
+	def OnLeave(self, evt):
+		self.UpdateDrawing()
+
+class ClickTool(ImageTool):
+	def __init__(self, imagepanel, sizer, callback=None):
+		bitmap = self.getToolBitmap('arrowtool.bmp')
+		tooltip = 'Click Tool'
+		cursor = wxStockCursor(wxCURSOR_BULLSEYE)
+		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, True)
 		self.callback = callback
-		ImagePanel.__init__(self, parent, id)
-		EVT_LEFT_DCLICK(self.panel, self.OnLeftDoubleClick)
 
 	def OnLeftDoubleClick(self, evt):
-		if self.image is not None:
-			xy = self.view2image((evt.m_x, evt.m_y))
+		if self.button.GetToggle():
+			xy = self.imagepanel.view2image((evt.m_x, evt.m_y))
 			if callable(self.callback):
 				self.callback(xy)
 
-class TargetImagePanel(ImagePanel):
+class ClickImagePanel(ImagePanel):
 	def __init__(self, parent, id, callback=None):
-		self.callback = callback
 		ImagePanel.__init__(self, parent, id)
-		self.targets = {}
+		self.addTool(ClickTool(self, self.toolsizer, callback))
+
+class TargetTool(ImageTool):
+	def __init__(self, imagepanel, sizer, callback=None):
+		bitmap = self.getToolBitmap('targettool.bmp')
+		tooltip = 'Toggle Target Tool'
+		cursor = wxStockCursor(wxCURSOR_BULLSEYE)
+		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, True)
+		self.callback = callback
+		self.target_type = None
 		self.closest_target = None
 		self.combobox = None
-		self.target_type = None
-		self.colorlist = [wxRED, wxBLUE, wxColor(255, 0, 255), wxColor(0, 255, 255)]
-		self.colors = {}
 
-	def UntoggleModal(self, select):
-		ImagePanel.UntoggleModal(self, select)
-		if len(self.targets) > 0 and select != self.targetbutton and self.targetbutton.GetToggle():
-			self.targetbutton.SetToggle(False)
-			self.OnTargetButton(None)
+	def addTargetType(self, name):
+		if self.target_type is None:
+			self.target_type = name
+			self.setTargetButtonBitmap()
+		self.addComboBox(name)
 
-	def OnTargetButton(self, evt):
-		if self.targetbutton.GetToggle():
-			self.UntoggleModal(self.targetbutton)
-			EVT_LEFT_DCLICK(self.panel, self.OnLeftDoubleClick)
-			EVT_RIGHT_DCLICK(self.panel, self.OnRightDoubleClick)
-			self.panel.SetCursor(wxStockCursor(wxCURSOR_BULLSEYE))
-		else:
-			self.closest_target = None
-			EVT_LEFT_DCLICK(self.panel, None)
-			EVT_RIGHT_DCLICK(self.panel, None)
-			self.panel.SetCursor(wxCROSS_CURSOR)
-			self.UpdateDrawing()
+	def deleteTargetType(self, name):
+		self.deleteComboBox(name)
+
+	def OnToggle(self, value):
+		if not value:
+			self.imagepanel.closest_target = None
+			self.imagepanel.UpdateDrawing()
 
 	def setTargetButtonBitmap(self):
 		bitmap = wxEmptyBitmap(16, 16)
@@ -468,119 +527,73 @@ class TargetImagePanel(ImagePanel):
 		dc.SelectObject(bitmap)
 		dc.BeginDrawing()
 		dc.Clear()
-		dc.SetPen(wxPen(self.colors[self.target_type], 2))
+		color = self.imagepanel.colors[self.target_type]
+		dc.SetPen(wxPen(color, 2))
 		dc.DrawLine(8, 0, 8, 15)
 		dc.DrawLine(0, 8, 15, 8)
 		dc.EndDrawing()
 		dc.SelectObject(wxNullBitmap)
 		bitmap.SetMask(wxMaskColour(bitmap, wxWHITE))
-		self.targetbutton.SetBitmapLabel(bitmap)
-		self.targetbutton.Refresh()
+		self.button.SetBitmapLabel(bitmap)
+		self.button.Refresh()
 
-	def initTarget(self):
-		bitmap = self.bitmapTool('targettool.bmp')
-		self.targetbutton = wxGenBitmapToggleButton(self, -1, bitmap, size=(24, 24))
-		self.setTargetButtonBitmap()
-		self.targetbutton.SetBezelWidth(1)
-		self.targetbutton.SetToolTip(wxToolTip('Toggle Target Tool'))
-		EVT_BUTTON(self, self.targetbutton.GetId(), self.OnTargetButton)
-		self.toolsizer.Add(self.targetbutton, 0, wxALL, 3)
-
-	def apply(self, evt):
+	def OnComboBoxSelect(self, evt):
 		self.target_type = evt.GetString()
 		self.setTargetButtonBitmap()
 
 	def addComboBox(self, name):
 		if self.combobox is None:
-			if len(self.targets) > 1:
-#				label = wxStaticText(self, -1, 'Target Type:')
-				self.combobox = wxComboBox(self, -1, value=self.target_type,
-																							choices=self.targets.keys(),
-																style=wxCB_DROPDOWN | wxCB_READONLY | wxCB_SORT)
-				EVT_COMBOBOX(self, self.combobox.GetId(), self.apply)
-#				self.toolsizer.Add(label, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
-				self.toolsizer.Add(self.combobox, 0, wxALIGN_CENTER_VERTICAL | wxALL, 3)
-				self.toolsizer.Layout()
-			elif len(self.targets) == 1:
+			if len(self.imagepanel.targets) > 1:
+				self.combobox = wxComboBox(self.imagepanel, -1, value=self.target_type,
+																		choices=self.imagepanel.targets.keys(),
+																		style=wxCB_DROPDOWN|wxCB_READONLY|wxCB_SORT)
+				EVT_COMBOBOX(self.imagepanel, self.combobox.GetId(),
+											self.OnComboBoxSelect)
+				self.sizer.Add(self.combobox, 0, wxALIGN_CENTER_VERTICAL | wxALL, 3)
+				self.sizer.Layout()
+			elif len(self.imagepanel.targets) == 1:
 				self.target_type = name
-				self.initTarget()
-				self.toolsizer.Layout()
+				self.sizer.Layout()
 		else:
 			self.combobox.Append(name)
 			self.combobox.SetSize(self.combobox.GetBestSize())
 			width, height = self.combobox.GetSizeTuple()
-			self.toolsizer.SetItemMinSize(self.combobox, width, height)
-			self.toolsize.Layout()
+			self.sizer.SetItemMinSize(self.combobox, width, height)
+			self.sizer.Layout()
 
 	def deleteComboBox(self, name):
 		if self.combobox is None:
-			if len(self.targets) > 2:
+			if len(self.imagepanel.targets) > 2:
 				self.combobox.Delete(self.combobox.FindString(name))
-			elif len(self.targets) == 2:
-				self.toolsizer.Remove(self.combobox)
-				self.toolsizer.Layout()
-				self.target_type = self.targets.keys()[0]
+			elif len(self.imagepanel.targets) == 2:
+				self.sizer.Remove(self.combobox)
+				self.sizer.Layout()
+				self.target_type = self.imagepanel.targets.keys()[0]
 			else:
-				EVT_BUTTON(self, self.targetbutton.GetId(), None)
-				self.toolsizer.Remove(self.targetbutton)
-				self.toolsizer.Layout()
+				EVT_BUTTON(self.imagepanel, self.button.GetId(), None)
+				self.sizer.Remove(self.button)
+				self.sizer.Layout()
 				self.target_type = None
 
-	def addTargetType(self, name, value=[]):
-		if name in self.targets:
-			raise ValueError('Target type already exists')
-		try:
-			self.colors[name] = self.colorlist[0]
-			del self.colorlist[0]
-		except IndexError:
-			raise RuntimeError('Not enough colors for addition target types')
-		self.targets[name] = list(value)
-		self.addComboBox(name)
+	def OnLeftDoubleClick(self, evt):
+		if self.button.GetToggle() and self.target_type is not None:
+			x, y = self.imagepanel.view2image((evt.m_x, evt.m_y))
+			target = self.imagepanel.addTarget(self.target_type, x, y)
+			if callable(self.callback):
+				targets = self.imagepanel.getTargetTypeValue(self.target_type)
+				self.callback(self.target_type, targets)
 
-	def deleteTargetType(self, name):
-		try:
-			self.colorlist.append[self.colors[name]]
-			del self.colors[name]
-			del self.targets[name]
-		except:
-			raise ValueError('No such target type')
-		self.deleteComboBox(name)
-		self.UpdateDrawing()
-
-	def getTargetType(self, name):
-		try:
-			return self.targets[name]
-		except:
-			raise ValueError('No such target type')
-
-	def setTargetType(self, name, value):
-		if name not in self.targets:
-			self.addTargetType(name, value)
-		else:
-			self.targets[name] = list(value)
-		self.UpdateDrawing()
-
-	def clearTargets(self):
-		self.targets = {}
-		self.UpdateDrawing()
-
-	def addTarget(self, target_type, x, y):
-		target = (x, y)
-		self.targets[target_type].append(target)
-		self.UpdateDrawing()
-		return target
-
-	def motion(self, evt):
-		ImagePanel.motion(self, evt)
-		if len(self.targets) > 0 and self.targetbutton.GetToggle():
-			viewoffset = self.panel.GetViewStart()
-			x, y = self.view2image((evt.m_x, evt.m_y))
-			self.updateClosest(x, y)
+	def OnRightDoubleClick(self, evt):
+		if self.button.GetToggle() and self.closest_target is not None:
+			target_type, value = self.imagepanel.deleteTarget(self.closest_target)
+			self.closest_target = None
+			if callable(self.callback):
+				self.callback(target_type, value)
 
 	def updateClosest(self, x, y):
 		closest_target = None
 		minimum_magnitude = 10
-		for target_type in self.targets.values():
+		for target_type in self.imagepanel.targets.values():
 			for target in target_type:
 				magnitude = math.sqrt((x - target[0])**2 +
 															(y - target[1])**2)
@@ -593,28 +606,94 @@ class TargetImagePanel(ImagePanel):
 			else:
 				old_target = self.closest_target
 				self.closest_target = None
-				self.UpdateDrawing()
+				self.imagepanel.UpdateDrawing()
 		self.closest_target = closest_target
 		if closest_target is not None:
-			self.UpdateDrawing()
+			self.imagepanel.UpdateDrawing()
 
-	def OnLeftDoubleClick(self, evt):
-		if self.target_type is not None:
-			x, y = self.view2image((evt.m_x, evt.m_y))
-			target = self.addTarget(self.target_type, x, y)
-			if callable(self.callback):
-				self.callback(self.target_type, self.targets[self.target_type])
+	def OnMotion(self, evt, dc):
+		if self.button.GetToggle() and  len(self.imagepanel.targets) > 0:
+			viewoffset = self.imagepanel.panel.GetViewStart()
+			x, y = self.imagepanel.view2image((evt.m_x, evt.m_y))
+			self.updateClosest(x, y)
+
+class TargetImagePanel(ImagePanel):
+	def __init__(self, parent, id, callback=None):
+		ImagePanel.__init__(self, parent, id)
+		self.targets = {}
+		self.colorlist = [wxRED, wxBLUE, wxColor(255, 0, 255), wxColor(0, 255, 255)]
+		self.colors = {}
+		self.addTool(TargetTool(self, self.toolsizer, callback))
+
+	def addTargetType(self, name, value=[]):
+		if name in self.targets:
+			raise ValueError('Target type already exists')
+		try:
+			self.colors[name] = self.colorlist[0]
+			del self.colorlist[0]
+		except IndexError:
+			raise RuntimeError('Not enough colors for addition target types')
+		self.targets[name] = list(value)
+		for tool in self.tools:
+			if hasattr(tool, 'addTargetType'):
+				tool.addTargetType(name)
+
+	def deleteTargetType(self, name):
+		try:
+			self.colorlist.append[self.colors[name]]
+			del self.colors[name]
+			del self.targets[name]
+		except:
+			raise ValueError('No such target type')
+		for tool in self.tools:
+			if hasattr(tool, 'addTargetType'):
+				tool.deleteTargetType(name)
+		self.UpdateDrawing()
+
+	def getTargetTypeValue(self, name):
+		try:
+			return self.targets[name]
+		except:
+			raise ValueError('No such target type')
+
+	def setTargetTypeValue(self, name, value):
+		if name not in self.targets:
+			self.addTargetType(name, value)
+		else:
+			self.targets[name] = list(value)
+		self.UpdateDrawing()
+
+	def addTarget(self, target_type, x, y):
+		target = (x, y)
+		self.targets[target_type].append(target)
+		self.UpdateDrawing()
+		return target
+
+	# could be hazardous if more than same target exists in type or multiple type
+	def deleteTarget(self, target):
+		for target_type in self.targets:
+			if target in self.targets[target_type]:
+				self.targets[target_type].remove(target)
+				self.UpdateDrawing()
+				return target_type, self.targets[target_type]
+
+	def clearTargets(self):
+		self.targets = {}
+		self.UpdateDrawing()
 
 	# needs to be stored rather than generated
-	def getTargetBitmap(self, target, color=wxBLACK):
+	def getTargetBitmap(self, target):
 		penwidth = 1
 		length = 15
 		for target_type in self.targets:
 			if target in self.targets[target_type]:
 				color = self.colors[target_type]
 				break
-		if target == self.closest_target:
-			color = wxColor(color.Red()/2, color.Green()/2, color.Blue()/2)
+		# temp
+		for tool in self.tools:
+			if hasattr(tool, 'closest_target'):
+				if target == tool.closest_target:
+					color = wxColor(color.Red()/2, color.Green()/2, color.Blue()/2)
 		pen = wxPen(color, 1)
 		mem = wxMemoryDC()
 		bitmap = wxEmptyBitmap(length, length)
@@ -636,27 +715,13 @@ class TargetImagePanel(ImagePanel):
 		memorydc.SelectObject(bitmap)
 		width = bitmap.GetWidth()
 		height = bitmap.GetHeight()
+		targetx, targety = target
 		if self.smallScale():
-			target = (target[0]*self.scale[0], target[1]*self.scale[1])
-		dc.Blit(target[0] - width/2, target[1] - height/2,
-									width, height, memorydc, 0, 0, wxCOPY, True)
-#		dc.DrawBitmap(bitmap, target[0] - bitmap.GetWidth()/2,
-#													target[1] - bitmap.GetHeight()/2, 1)
-
-	def OnRightDoubleClick(self, evt):
-		if self.closest_target is not None:
-			target_type, value = self.deleteTarget(self.closest_target)
-			self.closest_target = None
-			if callable(self.callback):
-				self.callback(target_type, value)
-
-	# could be hazardous if more than same target exists in type or multiple type
-	def deleteTarget(self, target):
-		for target_type in self.targets:
-			if target in self.targets[target_type]:
-				self.targets[target_type].remove(target)
-				self.UpdateDrawing()
-				return target_type, self.targets[target_type]
+			xscale, yscale = self.getScale()
+			targetx = targetx * xscale
+			targety = targety * yscale
+		dc.Blit(targetx - width/2, targety - height/2, width, height,
+						memorydc, 0, 0, wxCOPY, True)
 
 	def Draw(self, dc):
 		ImagePanel.Draw(self, dc)
@@ -667,19 +732,22 @@ class TargetImagePanel(ImagePanel):
 		dc.EndDrawing()
 
 if __name__ == '__main__':
+	def bar(xy):
+		print xy
+
 	class MyApp(wxApp):
 		def OnInit(self):
 			frame = wxFrame(NULL, -1, 'Image Viewer')
 			self.SetTopWindow(frame)
-			self.panel = TargetImagePanel(frame, -1)
-			self.panel.addTargetType('foo')
-			self.panel.addTargetType('bar')
+#			self.panel = TargetImagePanel(frame, -1)
+			self.panel = ClickImagePanel(frame, -1, bar)
+#			self.panel.addTargetType('foo')
+#			self.panel.addTargetType('bar')
 			frame.Fit()
 			frame.Show(true)
 			return true
 
 	app = MyApp(0)
-	#app.panel.setImage(open('test.jpg', 'rb').read())
 	app.panel.setImageFromMrcString(open('test1.mrc', 'rb').read())
 	app.MainLoop()
 

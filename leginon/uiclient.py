@@ -945,7 +945,7 @@ class wxTargetImageWidget(wxContainerWidget):
 				else:
 					self.targetimage.clearImage()
 			else:
-				self.targetimage.setTargetType(key, value[key])
+				self.targetimage.setTargetTypeValue(key, value[key])
 
 	def setWidget(self, namelist, value):
 		self.lock.acquire()
