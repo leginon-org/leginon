@@ -1,21 +1,161 @@
 #!/usr/bin/env python
-import Tkinter
 import socket
-import leginonsetup
-import EM
+import time
+import Tkinter
+import tkSimpleDialog
 import Pmw
+import event
 import interface
+import leginonsetup
 import nodegui
-import threading
+import acquisition
+import EM
+import targetfinder
 
 applicationfilename = 'leginon.app'
+
+class mySimpleDialog(tkSimpleDialog.Dialog):
+	def __init__(self, parent, title, args=None):
+		'''Initialize a dialog.
+
+		Arguments:
+
+			parent -- a parent window (the application window)
+
+			title -- the dialog title
+		'''
+		Tkinter.Toplevel.__init__(self, parent) 
+		self.transient(parent)
+
+		if title:
+			self.title(title)
+
+		self.parent = parent
+
+		self.result = None
+
+		body = Tkinter.Frame(self)
+		self.initial_focus = self.body(body)
+		body.pack(padx=5, pady=5)
+
+		self.buttonbox()
+
+#		self.grab_set()
+
+		if not self.initial_focus:
+			self.initial_focus = self
+
+		self.protocol("WM_DELETE_WINDOW", self.cancel)
+
+		if self.parent is not None:
+			self.geometry("+%d+%d" % (parent.winfo_rootx()+50,
+																parent.winfo_rooty()+50))
+
+		self.initial_focus.focus_set()
+
+		self.wait_window(self)
+
+class AddDialog(mySimpleDialog):
+	def __init__(self, parent, name, choices, sources=[]):
+		self.name = name
+		self.sources = sources
+		self.sources.sort()
+		self.choices = choices
+		self.choices.sort()
+		for source in self.sources:
+			self.choices.remove(source)
+		mySimpleDialog.__init__(self, parent, 'Add')
+
+	def body(self, master):
+		self.namelabel = Tkinter.Label(master, text='Name:')
+		self.namelabel.grid(row=0, column=0, sticky = Tkinter.W)
+		self.nameentry = Tkinter.Entry(master)
+		self.nameentry.grid(row=1, column=0)
+		self.nameentry.insert(Tkinter.END, self.name)
+
+		self.sourceslabel = Tkinter.Label(master, text='Sources:')
+		self.sourceslabel.grid(row=2, column=0, sticky = Tkinter.W)
+		self.sourceslistbox = Tkinter.Listbox(master)
+		self.sourceslistbox.grid(row=3, column = 0, sticky=Tkinter.N+Tkinter.S,
+															rowspan=2)
+		scrollbar = Tkinter.Scrollbar(master, orient=Tkinter.VERTICAL,
+																	command=self.sourceslistbox.yview)
+		scrollbar.grid(row=3, column=1, sticky=Tkinter.N+Tkinter.S, rowspan=2)
+		self.sourceslistbox.configure(yscrollcommand=scrollbar.set)
+
+		for source in self.sources:
+			self.sourceslistbox.insert(Tkinter.END, source)
+
+		self.addbutton = Tkinter.Button(master, text='< Add  ', command=self.add)
+		self.addbutton.grid(row = 3, column = 2,
+												padx = 5, pady = 5,
+												sticky=Tkinter.W+Tkinter.E)
+		self.deletebutton = Tkinter.Button(master, text='  Delete >',
+																				command=self.delete)
+		self.deletebutton.grid(row = 4, column = 2,
+														padx = 5, pady = 5,
+														sticky=Tkinter.W+Tkinter.E)
+		self.choiceslistbox = Tkinter.Listbox(master)
+		self.choiceslistbox.grid(row=3, column = 3, sticky=Tkinter.N+Tkinter.S,
+															rowspan=2)
+		scrollbar = Tkinter.Scrollbar(master, orient=Tkinter.VERTICAL,
+																	command=self.choiceslistbox.yview)
+		scrollbar.grid(row=3, column=4, sticky=Tkinter.N+Tkinter.S, rowspan=2)
+		self.choiceslistbox.configure(yscrollcommand=scrollbar.set)
+
+		for choice in self.choices:
+			self.choiceslistbox.insert(Tkinter.END, choice)
+
+	def add(self):
+		selections = self.choiceslistbox.curselection()
+		if len(selections) < 1:
+			return
+
+		for selection in selections:
+			self.choiceslistbox.delete(selection)
+			self.sourceslistbox.insert(Tkinter.END, self.choices[int(selection)])
+			self.sources.append(self.choices[int(selection)])
+			self.choices.pop(int(selection))
+
+	def delete(self):
+		selections = self.sourceslistbox.curselection()
+		if len(selections) < 1:
+			return
+
+		for selection in selections:
+			self.sourceslistbox.delete(selection)
+			self.choiceslistbox.insert(Tkinter.END, self.sources[int(selection)])
+			self.choices.append(self.sources[int(selection)])
+			self.sources.pop(int(selection))
+
+	def apply(self):
+		self.result = (self.nameentry.get(), self.sources)
 
 class Leginon(Tkinter.Frame):
 	def __init__(self, parent):
 		Tkinter.Frame.__init__(self, parent)
 		self.uiclients = {}
+		self.acquireandtargets = {}
 		self.notebook = Pmw.NoteBook(self)
 		self.notebook.pack(fill=Tkinter.BOTH, expand=Tkinter.YES)
+
+		self.menu = Tkinter.Menu(parent, tearoff=0)
+		parent.config(menu = self.menu)
+
+		self.editmenu = Tkinter.Menu(self.menu, tearoff=0)
+		self.menu.add_cascade(label='Edit', menu=self.editmenu)
+		self.editmenu.add_command(labe='Add...', command=self.add)
+
+	def add(self):
+		# Grid Atlas in there for now
+		name = 'Acquire and Target #%s' % str(len(self.acquireandtargets))
+		add_dialog = AddDialog(self, name, self.acquireandtargets.keys(), [])
+		if add_dialog.result is not None:
+			sourceids = []
+			for source in add_dialog.result[1]:
+				sourceids.append(self.acquireandtargets[source].targetid)
+			print sourceids
+			self.addAcquireAndTarget(add_dialog.result[0], sourceids)
 
 	# needs to check what got started, the whole lot needs error handling
 	def start(self):
@@ -30,13 +170,13 @@ class Leginon(Tkinter.Frame):
 	def startApplication(self):
 		self.manager.app.load(applicationfilename)
 
-		locallauncherid = self.localLauncherID()
+		self.locallauncherid = self.localLauncherID()
 		replaceargs = {}
 		for args in self.manager.app.launchspec:
 			if args[2] == 'EM' and self.remotelauncher is not None:
 				newlauncherid = self.remotelauncher
 			else:
-				newlauncherid = locallauncherid
+				newlauncherid = self.locallauncherid
 
 			if args[0] != newlauncherid: 
 				replaceargs[args] = (newlauncherid,) + args[1:]
@@ -49,43 +189,42 @@ class Leginon(Tkinter.Frame):
 
 	def startGUI(self):
 		managerlocation = self.managerLocation()
-		self.uiclients['manager'] = interface.Client(managerlocation[0],
-																									managerlocation[1])
+		self.uiclients[('manager',)] = interface.Client(managerlocation[0],
+																										managerlocation[1])
 #		nodelocations = self.nodeLocations()
 #		for node in nodelocations:
 #			page = self.notebook.add(eval(node)[-1])
 #			gui = nodegui.NodeGUI(page, nodelocations[node]['hostname'],
 #																	nodelocations[node]['UI port'], None, True)
 #			gui.pack(fill=Tkinter.BOTH, expand=Tkinter.YES)
+
 		gridatlaspage = self.notebook.add('Grid Atlas')
 		gridatlaswidget = GridAtlasWidget(gridatlaspage,
-														self.nodeLocation('Grid Atlas Grid Preview'),
-														self.nodeLocation('Grid Atlas State Image Mosaic'),
-														self.nodeLocation('Grid Atlas Mosaic Navigator'),
-														self.nodeLocation('Grid Atlas Image Viewer'))
+										self.uiClient(('manager', 'Grid Atlas Grid Preview')),
+										self.uiClient(('manager', 'Grid Atlas State Image Mosaic')),
+										('manager', 'Grid Atlas State Image Mosaic'))
 		gridatlaswidget.pack()
 
-		aatpage = self.notebook.add('Acquire and Target')
-		aatwidget = AcquireAndTargetWidget(aatpage,
-														self.nodeLocation('Acquisition'),
-														self.nodeLocation('Click Target Finder'))
-		aatwidget.pack()
-
+		self.acquireandtargets['Grid Atlas'] = gridatlaswidget
 		self.notebook.setnaturalsize()
 
 	def nodeLocations(self):
 		try:
-			return self.uiclients['manager'].execute('getNodeLocations')
+			return self.uiclients[('manager',)].execute('getNodeLocations')
 		except:
 			return {}
 
-	def nodeLocation(self, name):
-		nodelocations = self.nodeLocations()
-		# not kosher
-		try:
-			return nodelocations[str(('manager', name))]
-		except KeyError:
-			return None
+	def uiClient(self, nodeid, attempts = 10):
+		nodeidstr = str(nodeid)
+		for i in range(attempts):
+			try:
+				nodelocations = self.nodeLocations()
+				hostname = nodelocations[nodeidstr]['hostname']
+				uiport = nodelocations[nodeidstr]['UI port']
+				return interface.Client(hostname, uiport)
+			except KeyError:
+				time.sleep(0.25)
+		return None
 
 	def managerLocation(self):
 		managerlocation = self.manager.location()
@@ -94,30 +233,46 @@ class Leginon(Tkinter.Frame):
 	def localLauncherID(self):
 		return (socket.gethostname(),)
 
+	def addAcquireAndTarget(self, name, sourceids=[]):
+		acquirename = name + ' Acquisition'
+		targetname = name + ' Click Target Finder'
+		acquireid = self.manager.launchNode(self.locallauncherid, 0,
+																				'Acquisition', acquirename)
+		targetid = self.manager.launchNode(self.locallauncherid, 0,
+																				'ClickTargetFinder', targetname)
+		self.manager.addEventDistmap(event.CameraImagePublishEvent,
+																						acquireid, targetid)
+		for nodeid in sourceids:
+			self.manager.addEventDistmap(event.ImageTargetListPublishEvent,
+																										nodeid, acquireid)
+		page = self.notebook.add(name)
+		self.acquireandtargets[name] = AcquireAndTargetWidget(page,
+																									self.uiClient(acquireid),
+																									self.uiClient(targetid),
+																									targetid)
+		self.acquireandtargets[name].pack()
+		self.notebook.setnaturalsize()
+
 class CustomWidget(Tkinter.Frame):
-	def __init__(self, parent):
+	def __init__(self, parent, ):
 		Tkinter.Frame.__init__(self, parent)
 		self.uiclients = {}
 		self.groups = {}
 
-	def uiClient(self, uiclientname, uiclientlocation):
-		self.uiclients[uiclientname] = interface.Client(
-										uiclientlocation['hostname'], uiclientlocation['UI port'])
 
-	def widgetFromName(self, parent, uiclientname, name):
+	def widgetFromName(self, parent, uiclient, name):
 		widget = None
-		spec = self.uiclients[uiclientname].getSpec()
-		return self.widgetFrom(parent, uiclientname, spec, name)
+		spec = uiclient.getSpec()
+		return self.widgetFrom(parent, uiclient, spec, name)
 
-	def widgetFrom(self, parent, uiclientname, spec, name):
+	def widgetFrom(self, parent, uiclient, spec, name):
 		content = spec['content']
 		for subspec in content:
 			if subspec['name'] == name[0]:
 				if len(name) == 1:
-					return nodegui.widgetFromSpec(parent, self.uiclients[uiclientname],
-																															subspec, False)
+					return nodegui.widgetFromSpec(parent, uiclient, subspec, False)
 				else:
-					return self.widgetFrom(parent, uiclientname, subspec, name[1:])
+					return self.widgetFrom(parent, uiclient, subspec, name[1:])
 
 	# kwargs
 	def arrangeEntry(self, widget, width = 10, justify = Tkinter.RIGHT):
@@ -151,36 +306,34 @@ class CustomWidget(Tkinter.Frame):
 
 # maybe the widgets themselves could launch the necessary nodes
 class GridAtlasWidget(CustomWidget):
-	def __init__(self, parent, gridpreview, stateimagemosaic, mosaicnavigator,
-																																	imageviewer):
+	def __init__(self, parent, gridpreview, stateimagemosaic, targetid):
 		CustomWidget.__init__(self, parent)
 
-		self.uiClient('Grid Preview', gridpreview)
-		self.uiClient('State Image Mosaic', stateimagemosaic)
+		self.targetid = targetid
 
-		widget = self.addWidget('Settings', 'Grid Preview',
+		widget = self.addWidget('Settings', gridpreview,
 														('Preferences', 'Magnification'))
 		self.arrangeEntry(widget, 9)
-		widget = self.addWidget('Settings', 'State Image Mosaic',
+		widget = self.addWidget('Settings', stateimagemosaic,
 																			('Scale', 'Auto Scale'))
 		self.arrangeEntry(widget, 4)
 
-		self.addWidget('Control', 'Grid Preview', ('Controls', 'Run'))
-		self.addWidget('Control', 'Grid Preview', ('Controls', 'Stop'))
-		self.addWidget('Control', 'Grid Preview', ('Controls', 'Reset'))
+		self.addWidget('Control', gridpreview, ('Controls', 'Run'))
+		self.addWidget('Control', gridpreview, ('Controls', 'Stop'))
+		self.addWidget('Control', gridpreview, ('Controls', 'Reset'))
 
-		self.addWidget('Image', 'State Image Mosaic', ('Mosaic Image',))
+		self.addWidget('Image', stateimagemosaic, ('Mosaic Image',))
 
 class AcquireAndTargetWidget(CustomWidget):
-	def __init__(self, parent, acquisition, clicktargetfinder):
+	def __init__(self, parent, acquisition, clicktargetfinder, targetid):
 		CustomWidget.__init__(self, parent)
-		self.uiClient('Acquisition', acquisition)
-		self.uiClient('Click Target Finder', clicktargetfinder)
 
-		widget = self.addWidget('Settings', 'Acquisition',
+		self.targetid = targetid
+
+		widget = self.addWidget('Settings', acquisition,
 															('Preferences', 'Preset Names'))
 		self.arrangeEntry(widget, 20, Tkinter.LEFT)
-		self.addWidget('Image', 'Click Target Finder', ('Clickable Image',))
+		self.addWidget('Image', clicktargetfinder, ('Clickable Image',))
 
 if __name__ == '__main__':
 
