@@ -69,6 +69,7 @@ class Corrector(node.Node):
 		imagecontainer.addObjects((rawmethod, correctedmethod))
 		controlcontainer = uidata.Container('Control')
 		controlcontainer.addObjects((referencescontainer, imagecontainer))
+		self.display_flag = uidata.Boolean('Display Image', True, 'rw', persist=True)
 		self.ui_image = uidata.Image('Image', None, 'rw')
 
 		self.uiframestoaverage = uidata.Integer('Frames to Average', 3, 'rw')
@@ -84,7 +85,7 @@ class Corrector(node.Node):
 																	cameraconfigure, self.cliplimits,
 																	self.badrows, self.badcols, setplan))
 		container = uidata.LargeContainer('Corrector')
-		container.addObjects((settingscontainer, controlcontainer, self.ui_image))
+		container.addObjects((settingscontainer, controlcontainer, self.display_flag, self.ui_image))
 		self.uiserver.addObject(container)
 
 	def uiSetPlanParams(self):
@@ -119,7 +120,7 @@ class Corrector(node.Node):
 			self.outputError('Cannot set EM parameter, EM may not be running')
 		else:
 			print 'Dark Stats: %s' % (self.stats(imagedata),)
-			self.ui_image.set(imagedata)
+			self.displayImage(imagedata)
 
 	def uiAcquireBright(self):
 		try:
@@ -128,7 +129,7 @@ class Corrector(node.Node):
 			self.outputError('Cannot set EM parameter, EM may not be running')
 		else:
 			print 'Bright Stats: %s' % (self.stats(imagedata),)
-			self.ui_image.set(imagedata)
+			self.displayImage(imagedata)
 
 	def uiAcquireRaw(self):
 		camconfig = self.cam.cameraConfig()
@@ -140,7 +141,7 @@ class Corrector(node.Node):
 		else:
 			imagearray = imagedata['image']
 			print 'Corrected Stats: %s' % (self.stats(imagearray),)
-			self.ui_image.set(imagearray)
+			self.displayImage(imagearray)
 
 	def uiAcquireCorrected(self):
 		camconfig = self.cam.cameraConfig()
@@ -150,6 +151,10 @@ class Corrector(node.Node):
 			self.outputError('Cannot set EM parameter, EM may not be running')
 		else:
 			print 'Corrected Stats: %s' % (self.stats(imagedata),)
+			self.displayImage(imagedata)
+
+	def displayImage(self, imagedata):
+		if self.display_flag.get():
 			self.ui_image.set(imagedata)
 
 	def newCamstate(self, camdata):
