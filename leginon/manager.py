@@ -479,7 +479,11 @@ class Manager(node.Node):
 				tcp_port = location['TCP transport']['port']
 			except KeyError:
 				tcp_port = '<unknown port>'
-			self.messagelog.error('Failed to add node at '+hostname+':'+str(tcp_port))
+			try:
+				self.messagelog.error('Failed to add node at ' + hostname + ':'
+															+ str(tcp_port))
+			except AttributeError:
+				pass
 
 	def killNode(self, nodeid):
 		'''Attempt telling a node to die and unregister. Unregister if communication with the node fails.'''

@@ -2,6 +2,7 @@ import data
 import leginonconfig
 import os
 import project
+import socket
 import time
 import uidata
 
