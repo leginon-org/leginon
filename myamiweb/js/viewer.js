@@ -69,6 +69,7 @@ function newfile(view){
 	if (options == lastoptions[vid])
 		return;
 
+
 	ni = "getparentimgtarget.php?"+options;
 	nlink = "javascript:popUpMap('map.php?"+options+"')";
 

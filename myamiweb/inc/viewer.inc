@@ -183,6 +183,10 @@ class viewer {
 		$n=1;
 		$display = '<form method="post" name="viewerform"  '.
 				'action="'.$PHP_SELF.'">'.$this->crlf;
+		if ($debug=0) {
+		$display .= '<textarea name=debug rows=10 cols=50></textarea>';
+		$display .= '<input type=button value="clear" onclick="javascript:document.viewerform.debug.value=\'\'">';
+		}
 		$display .= '<table border="0">';
 		if ($this->addloicontrol) {
 			$display .= '<tr>';

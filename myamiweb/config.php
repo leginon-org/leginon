@@ -21,3 +21,19 @@ $DATABASE = "dbemdata";
 $SQL_HOSTS[] = "cronus1";
 $SQL_HOSTS[] = "cronus2";
 $SQL_HOSTS[] = "stratocaster";
+
+// --- Set method to read mrc 
+//	use an external python script to read mrc files
+// $method = "pymrc"; 
+//	use a php extension mrcmodule.so to read mrc files
+//
+//	edit /etc/php.ini the following
+//
+//	[extension section]
+//	extension=mrcmodule.so
+//
+$method = "mrcmod"; 
+
+
+// ------------------------------------------------- //
+define("READ_MRC", $method);

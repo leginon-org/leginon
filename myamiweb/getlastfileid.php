@@ -8,7 +8,6 @@
 require ('inc/leginon.inc');
 $lastfileid = false;
 $session = ($_GET[session]) ? $_GET[session] : $_POST[session];
-echo "DEFR:".$session;
 $lastfileid = $leginondata->getLastFilenameId($session);
 $strfileid = ($lastfileid) ? "=$lastfileid" : "";
 $refresh = ($_POST[refreshstate]) ? $_POST[refreshstate] : "false";

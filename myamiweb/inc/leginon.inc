@@ -836,6 +836,15 @@ class leginondata {
 		$row = mysql_fetch_array($result, MYSQL_ASSOC);
 		return $row;
 	}
+	
+	function getDriftData($Id) {
+		$driftdata=array();
+		$q="SELECT UNIX_TIMESTAMP(`DEF_timestamp`) as timestamp, rowmeters, colmeters, `interval` from DriftData where `REF|SessionData|session` = '".$Id."' order by `DEF_timestamp` ASC";
+		$result = $this->mysql->SQLQuery($q);
+		while ($row= mysql_fetch_array($result, MYSQL_ASSOC))
+			$driftdata[] = $row;
+		return $driftdata;
+	}
 
 	function getMeasurements($label, $axis) {
 		$q = " select m.$axis, 

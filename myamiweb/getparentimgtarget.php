@@ -33,8 +33,8 @@ if ($t=='png') {
 
 
 
-$minpix = $_GET['np'];
-$maxpix = $_GET['xp'];
+$minpix = ($_GET['np']) ? $_GET['np'] : 0;
+$maxpix = ($_GET['xp']) ? $_GET['xp'] : 255;
 $size = $_GET['s'];
 $displaytarget = ($_GET['tg']==1) ? true : false;
 $displayscalebar = ($_GET['sb']==1) ? true : false;
@@ -69,7 +69,10 @@ if ($g) {
 	$pic = $path.$filename;
 	if (is_file($pic)) {
 		$begin=time();
-		$img = $mrc->imagecreatefromMRC($pic,$new_w,$new_h,$minpix, $maxpix, $quality);
+		if (READ_MRC == "mrcmod")
+			$img = imageCreateFromMRC($pic ,$new_w,$new_h,$minpix, $maxpix);
+		else
+			$img = $mrc->imagecreatefromMRC($pic,$new_w,$new_h,$minpix, $maxpix, $quality);
 		$end=time();
 		$white = imagecolorallocate($img, 255, 255, 255);
 		$black = imagecolorallocate($img, 0, 0, 0);
