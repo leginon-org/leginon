@@ -1,300 +1,350 @@
 from wxPython.wx import *
-from wxPython.ogl import *
+import wxObjectCanvas
 
-wxOGLInitialize()
+class AddBindingDialog(wxDialog):
+	def __init__(self, parent, id, title='Add Binding', pos=wxDefaultPosition,
+								size=wxDefaultSize, style=wxDEFAULT_DIALOG_STYLE):
 
-class Node(wxRectangleShape):
+		wxDialog.__init__(self, parent, id, title, pos, size, style)
+		sizer = wxBoxSizer(wxVERTICAL)
+
+		box = wxBoxSizer(wxHORIZONTAL)
+		label = wxStaticText(self, -1, 'Class:')
+		box.Add(label, 0, wxALIGN_CENTER|wxALL, 3)
+		self.classentry = wxTextCtrl(self, -1, '')
+		box.Add(self.classentry, 1, wxALIGN_CENTER|wxALL, 3)
+		sizer.AddSizer(box)
+
+		box = wxBoxSizer(wxHORIZONTAL)
+		button = wxButton(self, wxID_OK, 'Add')
+		button.SetDefault()
+		box.Add(button, 0, wxALIGN_CENTER|wxALL, 5)
+		button = wxButton(self, wxID_CANCEL, 'Cancel')
+		box.Add(button, 0, wxALIGN_CENTER|wxALL, 5)
+		sizer.AddSizer(box)
+
+		self.SetSizer(sizer)
+		self.SetAutoLayout(True)
+		sizer.Fit(self)
+
+	def GetValue(self):
+		return self.classentry.GetValue()
+
+	def SetValue(self, alias, eventclass):
+		self.classentry.SetValue(eventclass)
+
+class Node(wxObjectCanvas.wxRectangleObject):
 	def __init__(self, name):
 		self.name = name
-		self.bindingoutputs = []
-		self.bindinginputs = []
-		self.launcher = None
-		self.application = None
-		self.master = None
+		wxObjectCanvas.wxRectangleObject.__init__(self, 60, 60)
+		self.addText(self.name)
 
-		wxRectangleShape.__init__(self, 50, 50)
+		self.popupmenu = wxMenu()
+		self.popupmenu.Append(101, 'Rename...')
+		self.popupmenu.Append(102, 'Add Binding...')
+		self.popupmenu.Append(103, 'Delete')
+		EVT_MENU(self.popupmenu, 101, self.menuRename)
+		EVT_MENU(self.popupmenu, 102, self.menuAddBinding)
+		EVT_MENU(self.popupmenu, 103, self.menuDelete)
 
-class Binding(object):
+	def getName(self):
+		return self.name
+
+	def setName(self, name):
+		self.removeText(self.name)
+		self.name = name
+		self.addText(self.name)
+
+	def menuRename(self, evt):
+		dialog = wxTextEntryDialog(None, 'New Name')
+		dialog.SetValue(self.getName())
+		if dialog.ShowModal() == wxID_OK:
+			self.setName(dialog.GetValue())
+			self.UpdateDrawing()
+		dialog.Destroy()
+
+	def menuAddBinding(self, evt):
+		if self.parent is not None:
+			dialog = AddBindingDialog(None, -1)
+			if dialog.ShowModal() == wxID_OK:
+				eventclass = dialog.GetValue()
+				self.parent.startAddBinding(eventclass, self)
+			dialog.Destroy()
+
+	def menuDelete(self, evt):
+		if self.parent is not None:
+			self.parent.removeConnectionObjects(self)
+			self.parent.removeShapeObject(self)
+
+	def addShapeObject(self, so, x=0, y=0):
+		raise TypeError('Invalid object type to add')
+
+class Binding(wxObjectCanvas.wxConnectionObject):
 	def __init__(self, name, fromnode=None, tonode=None):
 		self.name = name
-		self.fromnode = fromnode
-		self.tonode = tonode
-		self.application = None
-		self.master = None
+		wxObjectCanvas.wxConnectionObject.__init__(self, fromnode, tonode)
+		self.setText(self.name)
 
-	def setFromNode(self, node):
-		if self.fromnode is not None:
-			self.fromnode.bindingoutputs.remove(self)
-		self.fromnode = node
-		if self.fromnode is not None:
-			self.fromnode.bindingoutputs.append(self)
+class AddNodeDialog(wxDialog):
+	def __init__(self, parent, id, title='Add Node', pos=wxDefaultPosition,
+								size=wxDefaultSize, style=wxDEFAULT_DIALOG_STYLE):
 
-	def setToNode(self, node):
-		if self.tonode is not None:
-			self.tonode.bindinginputs.remove(self)
-		self.tonode = node
-		if self.tonode is not None:
-			self.tonode.bindinginputs.append(self)
+		wxDialog.__init__(self, parent, id, title, pos, size, style)
+		sizer = wxBoxSizer(wxVERTICAL)
 
-class Launcher(wxRectangleShape):
+		box = wxBoxSizer(wxHORIZONTAL)
+		label = wxStaticText(self, -1, 'Alias:')
+		box.Add(label, 0, wxALIGN_CENTER|wxALL, 3)
+		self.aliasentry = wxTextCtrl(self, -1, '')
+		box.Add(self.aliasentry, 1, wxALIGN_CENTER|wxALL, 3)
+		sizer.AddSizer(box)
+
+		box = wxBoxSizer(wxHORIZONTAL)
+		label = wxStaticText(self, -1, 'Class:')
+		box.Add(label, 0, wxALIGN_CENTER|wxALL, 3)
+		self.classentry = wxTextCtrl(self, -1, '')
+		box.Add(self.classentry, 1, wxALIGN_CENTER|wxALL, 3)
+		sizer.AddSizer(box)
+
+		box = wxBoxSizer(wxHORIZONTAL)
+		button = wxButton(self, wxID_OK, 'Add')
+		button.SetDefault()
+		box.Add(button, 0, wxALIGN_CENTER|wxALL, 5)
+		button = wxButton(self, wxID_CANCEL, 'Cancel')
+		box.Add(button, 0, wxALIGN_CENTER|wxALL, 5)
+		sizer.AddSizer(box)
+
+		self.SetSizer(sizer)
+		self.SetAutoLayout(True)
+		sizer.Fit(self)
+
+	def GetValue(self):
+		return self.aliasentry.GetValue(), self.classentry.GetValue()
+
+	def SetValue(self, alias, nodeclass):
+		self.aliasentry.SetValue(alias)
+		self.classentry.SetValue(nodeclass)
+
+class Launcher(wxObjectCanvas.wxRectangleObject):
 	def __init__(self, name):
 		self.name = name
-		self.nodes = []
-		self.application = None
-		self.master = None
+		wxObjectCanvas.wxRectangleObject.__init__(self, 150, 150)
+		self.addText(self.name)
 
-		wxRectangleShape.__init__(self, 100, 100)
+		self.popupmenu = wxMenu()
+		self.popupmenu.Append(101, 'Rename...')
+		self.popupmenu.Append(102, 'Add Node...')
+		self.popupmenu.Append(103, 'Delete')
+		EVT_MENU(self.popupmenu, 101, self.menuRename)
+		EVT_MENU(self.popupmenu, 102, self.menuAddNode)
+		EVT_MENU(self.popupmenu, 103, self.menuDelete)
 
-	def addNode(self, node):
-		if node.launcher is not None:
-			node.launcher.removeNode(node)
-		if node not in self.nodes:
-			self.nodes.append(node)
+	def getName(self):
+		return self.name
+
+	def setName(self, name):
+		self.removeText(self.name)
+		self.name = name
+		self.addText(self.name)
+
+	def menuRename(self, evt):
+		dialog = wxTextEntryDialog(None, 'New Name')
+		dialog.SetValue(self.getName())
+		if dialog.ShowModal() == wxID_OK:
+			self.setName(dialog.GetValue())
+			self.UpdateDrawing()
+		dialog.Destroy()
+
+	def menuAddNode(self, evt):
+		dialog = AddNodeDialog(None, -1)
+		if dialog.ShowModal() == wxID_OK:
+			alias, nodeclass = dialog.GetValue()
+			self.addShapeObject(Node(alias))
+		dialog.Destroy()
+
+	def menuDelete(self, evt):
+		for so in self.shapeobjects:
+			self.removeConnectionObjects(so)
+		if self.parent is not None:
+			self.parent.removeShapeObject(self)
+
+	def startAddBinding(self, eventclass, fromnode):
+		if self.parent is not None:
+			self.parent.startAddBinding(eventclass, fromnode)
+
+	def addShapeObject(self, so, x=0, y=0):
+		if isinstance(so, Node):
+			wxObjectCanvas.wxRectangleObject.addShapeObject(self, so, x, y)
 		else:
-			raise ValueError('node already exists')
-		node.launcher = self
+			raise TypeError('Invalid object type to add')
 
-	def removeNode(self, node):
-		if node.launcher == self:
-			node.launcher = None
-		else:
-			raise ValueError('node launcher attribute not self')
-		if node in self.nodes:
-			self.nodes.remove(node)
-		else:
-			raise ValueError('node does not exist')
+class AddLauncherDialog(wxDialog):
+	def __init__(self, parent, id, title='Add Launcher', pos=wxDefaultPosition,
+								size=wxDefaultSize, style=wxDEFAULT_DIALOG_STYLE):
 
-class Application(wxRectangleShape):
+		wxDialog.__init__(self, parent, id, title, pos, size, style)
+		sizer = wxBoxSizer(wxVERTICAL)
+
+		box = wxBoxSizer(wxHORIZONTAL)
+		label = wxStaticText(self, -1, 'Alias:')
+		box.Add(label, 0, wxALIGN_CENTER|wxALL, 3)
+		self.aliasentry = wxTextCtrl(self, -1, '')
+		box.Add(self.aliasentry, 1, wxALIGN_CENTER|wxALL, 3)
+		sizer.AddSizer(box)
+
+		box = wxBoxSizer(wxHORIZONTAL)
+		button = wxButton(self, wxID_OK, 'Add')
+		button.SetDefault()
+		box.Add(button, 0, wxALIGN_CENTER|wxALL, 5)
+		button = wxButton(self, wxID_CANCEL, 'Cancel')
+		box.Add(button, 0, wxALIGN_CENTER|wxALL, 5)
+		sizer.AddSizer(box)
+
+		self.SetSizer(sizer)
+		self.SetAutoLayout(True)
+		sizer.Fit(self)
+
+	def GetValue(self):
+		return self.aliasentry.GetValue()
+
+	def SetValue(self, alias):
+		self.aliasentry.SetValue(alias)
+
+class Application(wxObjectCanvas.wxRectangleObject):
 	def __init__(self, name):
 		self.name = name
-		self.nodes = []
-		self.bindings = []
-		self.launchers = []
-		self.master = None
+		wxObjectCanvas.wxRectangleObject.__init__(self, 700, 700)
+		self.addText(self.name)
 
-		wxRectangleShape.__init__(self, 200, 200)
+		self.startedbinding = None
 
-	def addNode(self, node):
-		if node.application is not None:
-			node.application.removeNode(node)
-		if node not in self.nodes:
-			self.nodes.append(node)
+		self.popupmenu = wxMenu()
+		self.popupmenu.Append(101, 'Rename...')
+		self.popupmenu.Append(102, 'Add Launcher...')
+		self.popupmenu.Append(103, 'Delete')
+		EVT_MENU(self.popupmenu, 101, self.menuRename)
+		EVT_MENU(self.popupmenu, 102, self.menuAddLauncher)
+		EVT_MENU(self.popupmenu, 103, self.menuDelete)
+
+	def getName(self):
+		return self.name
+
+	def setName(self, name):
+		self.removeText(self.name)
+		self.name = name
+		self.addText(self.name)
+
+	def menuRename(self, evt):
+		dialog = wxTextEntryDialog(None, 'New Name')
+		dialog.SetValue(self.getName())
+		if dialog.ShowModal() == wxID_OK:
+			self.setName(dialog.GetValue())
+			self.UpdateDrawing()
+		dialog.Destroy()
+
+	def menuAddLauncher(self, evt):
+		dialog = AddLauncherDialog(None, -1)
+		if dialog.ShowModal() == wxID_OK:
+			alias = dialog.GetValue()
+			self.addShapeObject(Launcher(alias))
+		dialog.Destroy()
+
+	def menuDelete(self, evt):
+		if self.parent is not None:
+			self.parent.removeShapeObject(self)
+
+	def startAddBinding(self, eventclass, fromnode):
+		self.startedbinding = Binding(eventclass, fromnode, None)
+		self.startedbinding.setParent(self)
+		wxObjectCanvas.EVT_LEFT_CLICK(self, self.finishAddBinding)
+		wxObjectCanvas.EVT_RIGHT_CLICK(self, self.cancelAddBinding)
+
+	def finishAddBinding(self, evt):
+		tonode = evt.shapeobject
+		if self.startedbinding is not None and isinstance(tonode, Node):
+			binding = self.startedbinding
+			self.startedbinding = None
+			binding.setToShapeObject(tonode)
+			self.addConnectionObject(binding)
+		wxObjectCanvas.EVT_LEFT_CLICK(self, self.OnLeftClick)
+		wxObjectCanvas.EVT_RIGHT_CLICK(self, self.OnRightClick)
+
+	def cancelAddBinding(self, evt):
+		self.startedbinding = None
+		wxObjectCanvas.EVT_LEFT_CLICK(self, self.OnLeftClick)
+		wxObjectCanvas.EVT_RIGHT_CLICK(self, self.OnRightClick)
+
+	def addShapeObject(self, so, x=0, y=0):
+		if isinstance(so, Launcher):
+			wxObjectCanvas.wxRectangleObject.addShapeObject(self, so, x, y)
 		else:
-			raise ValueError('node already exists')
-		node.application = self
+			raise TypeError('Invalid object type to add')
 
-	def removeNode(self, node):
-		if node.application == self:
-			node.application = None
-		else:
-			raise ValueError('node application attribute not self')
-		if node in self.nodes:
-			self.nodes.remove(node)
-		else:
-			raise ValueError('node does not exist')
-
-	def addBinding(self, binding):
-		if binding.application is not None:
-			binding.application.removeBinding(binding)
-		if binding not in self.bindings:
-			self.bindings.append(binding)
-		else:
-			raise ValueError('binding already exists')
-		binding.application = self
-
-	def removeBinding(self, binding):
-		if binding.application == self:
-			binding.application = None
-		else:
-			raise ValueError('binding application attribute not self')
-		if binding in self.bindings:
-			self.bindings.remove(binding)
-		else:
-			raise ValueError('binding does not exist')
-
-	def addLauncher(self, launcher):
-		if launcher.application is not None:
-			launcher.application.removeLauncher(launcher)
-		if launcher not in self.launchers:
-			self.launchers.append(launcher)
-		else:
-			raise ValueError('launcher already exists')
-		launcher.application = self
-
-	def removeLauncher(self, launcher):
-		if launcher.application == self:
-			launcher.application = None
-		else:
-			raise ValueError('launcher application attribute not self')
-		if launcher in self.launchers:
-			self.launchers.remove(launcher)
-		else:
-			raise ValueError('launcher does not exist')
-
-class Master(wxShapeCanvas):
-	def __init__(self, parent):
-		self.nodes = []
-		self.bindings = []
-		self.launchers = []
-		self.applications = []
-
-		wxShapeCanvas.__init__(self, parent)
-		self.SetBackgroundColour(wxWHITE)
-		self.diagram = wxDiagram()
-		self.SetDiagram(self.diagram)
-		self.diagram.SetCanvas(self)
-
-	def addShape(self, shape):
-		x = 100
-		y = 100
-		pen = wxBLACK_PEN
-		brush = wxBrush(wxWHITE, wxTRANSPARENT) #wxWHITE_BRUSH
-		text = shape.name
-		shape.SetDraggable(True, True)
-		shape.SetCanvas(self)
-		shape.SetX(x)
-		shape.SetY(y)
-		shape.SetPen(pen)
-		shape.SetBrush(brush)
-		shape.AddText(text)
-		#shape.SetShadowMode(SHADOW_RIGHT)
-		self.diagram.AddShape(shape)
-		shape.Show(True)
-
-	def removeShape(self, shape):
-		shape.Destroy()
-
-	def addNode(self, node):
-		if node.master is not None:
-			node.master.removeNode(node)
-		if node not in self.nodes:
-			self.nodes.append(node)
-		else:
-			raise ValueError('node already exists')
-		node.master = self
-
-		self.addShape(node)
-
-	def removeNode(self, node):
-		if node.master == self:
-			node.master = None
-		else:
-			raise ValueError('node master attribute not self')
-		if node in self.nodes:
-			self.nodes.remove(node)
-		else:
-			raise ValueError('node does not exist')
-
-		self.removeShape(node)
-
-	def addBinding(self, binding):
-		if binding.master is not None:
-			binding.master.removeBinding(binding)
-		if binding not in self.bindings:
-			self.bindings.append(binding)
-		else:
-			raise ValueError('binding already exists')
-		binding.master = self
-
-	def removeBinding(self, binding):
-		if binding.master == self:
-			binding.master = None
-		else:
-			raise ValueError('binding master attribute not self')
-		if binding in self.bindings:
-			self.bindings.remove(binding)
-		else:
-			raise ValueError('binding does not exist')
-
-	def addLauncher(self, launcher):
-		if launcher.master is not None:
-			launcher.master.removeLauncher(launcher)
-		if launcher not in self.launchers:
-			self.launchers.append(launcher)
-		else:
-			raise ValueError('launcher already exists')
-		launcher.master = self
-
-		self.addShape(launcher)
-
-	def removeLauncher(self, launcher):
-		if launcher.master == self:
-			launcher.master = None
-		else:
-			raise ValueError('launcher master attribute not self')
-		if launcher in self.launchers:
-			self.launchers.remove(launcher)
-		else:
-			raise ValueError('launcher does not exist')
-
-		self.removeShape(launcher)
-
-	def addApplication(self, application):
-		if application.master is not None:
-			application.master.removeApplication(application)
-		if application not in self.applications:
-			self.applications.append(application)
-		else:
-			raise ValueError('application already exists')
-		application.master = self
-
-		self.addShape(application)
-
-	def removeApplication(self, application):
-		if application.master == self:
-			application.master = None
-		else:
-			raise ValueError('application master attribute not self')
-		if application in self.applications:
-			self.applications.remove(application)
-		else:
-			raise ValueError('application does not exist')
-
-		self.removeShape(application)
+class Master(wxObjectCanvas.wxRectangleObject):
+	def __init__(self):
+		wxObjectCanvas.wxRectangleObject.__init__(self, 800, 800)
+		self.addText('Master')
 
 if __name__ == '__main__':
 	import time
 
-	class TestApp(wxApp):
+	class MasterApp(wxApp):
 		def OnInit(self):
-			self.frame = wxFrame(NULL, -1, 'Image Viewer')
+			self.frame = wxFrame(NULL, -1, 'Master Application')
 			self.SetTopWindow(self.frame)
 			self.panel = wxPanel(self.frame, -1)
+			self.master = Master()
+			self.objectcanvas = wxObjectCanvas.wxObjectCanvas(self.panel, -1,
+																												self.master)
+			self.objectcanvas.SetSize((800, 800))
+			self.panel.Fit()
+			self.panel.Show(true)
 			self.frame.Fit()
 			self.frame.Show(true)
 			return true
 
-	app = TestApp(0)
-	m = Master(app.panel)
-	m.SetSize((800, 800))
-	app.panel.Fit()
+	class ApplicationApp(wxApp):
+		def OnInit(self):
+			self.frame = wxFrame(NULL, -1, 'Master Application')
+			self.SetTopWindow(self.frame)
+			self.panel = wxPanel(self.frame, -1)
+			self.master = Application('New Application')
+			self.objectcanvas = wxObjectCanvas.wxObjectCanvas(self.panel, -1,
+																												self.master)
+			self.objectcanvas.SetSize((800, 800))
+			self.panel.Fit()
+			self.panel.Show(true)
+			self.frame.Fit()
+			self.frame.Show(true)
+			return true
+
+	#app = MasterApp(0)
+	app = ApplicationApp(0)
 	app.frame.Fit()
 
-	a = Application('foo')
-	l = Launcher('bar')
-	b = Binding('bar None')
-	n = Node('foobar')
+	l0 = Launcher('Launcher 0')
+	l1 = Launcher('Launcher 1')
+	l2 = Launcher('Launcher 2')
+	n0 = Node('Node 0')
+	n1 = Node('Node 1')
+	n2 = Node('Node 2')
+	n3 = Node('Node 3')
+	n4 = Node('Node 4')
 
-	m.addApplication(a)
-	m.addLauncher(l)
-	a.addLauncher(l)
-	m.addBinding(b)
-	a.addBinding(b)
-	m.addNode(n)
-	a.addNode(n)
-	l.addNode(n)
-	b.setFromNode(n)
-	b.setToNode(n)
-	b.setToNode(None)
-	b.setFromNode(None)
-	l.removeNode(n)
-	a.removeNode(n)
-#	m.removeNode(n)
-	a.removeBinding(b)
-#	m.removeBinding(b)
-	a.removeLauncher(l)
-#	m.removeLauncher(l)
-#	m.removeApplication(a)
+	app.master.addShapeObject(l1)
+	app.master.addShapeObject(l0)
+	app.master.addShapeObject(l2)
+	l0.addShapeObject(n1)
+	l2.addShapeObject(n2)
+	l0.addShapeObject(n0)
+	l1.addShapeObject(n3)
+	l2.addShapeObject(n4)
+	b0 = Binding('Binding 0', n0, n1)
+	b1 = Binding('Binding 1', n3, n2)
+	b2 = Binding('Binding 2', n3, n1)
+	app.master.addConnectionObject(b0)
+	app.master.addConnectionObject(b1)
+	app.master.addConnectionObject(b2)
 
 	app.MainLoop()
 

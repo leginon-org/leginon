@@ -37,12 +37,12 @@ class RightClickEvent(wxPyEvent):
 		self.y = y
 
 class LeftDragStartEvent(wxPyEvent):
-	def __init__(self, shapeobject, offsetx, offsety):
+	def __init__(self, shapeobject, xoffset, yoffset):
 		wxPyEvent.__init__(self)
 		self.SetEventType(wxEVT_LEFT_DRAG_START)
 		self.shapeobject = shapeobject
-		self.offsetx = offsetx
-		self.offsety = offsety
+		self.xoffset = xoffset
+		self.yoffset = yoffset
 
 class LeftDragEndEvent(wxPyEvent):
 	def __init__(self, shapeobject, x, y):
@@ -169,9 +169,28 @@ class wxShapeObjectEvtHandler(wxEvtHandler):
 
 class wxConnectionObject(object):
 	def __init__(self, so1, so2, text=''):
+		self.parent = None
 		self.fromso = so1
 		self.toso = so2
 		self.text = text
+
+	def setParent(self, parent):
+		self.parent = parent
+
+	def getParent(self):
+		return self.parent
+
+	def getFromShapeObject(self):
+		return self.fromso
+
+	def setFromShapeObject(self, so):
+		self.fromso = so
+
+	def getToShapeObject(self):
+		return self.toso
+
+	def setToShapeObject(self, so):
+		self.toso = so
 
 	def setText(self, text):
 		self.text = text
@@ -333,6 +352,8 @@ class wxConnectionObject(object):
 		return True
 
 	def Draw(self, dc):
+		if self.fromso is None or self.toso is None:
+			return
 		if self.elbowLine(dc, self.fromso, self.toso):
 			return
 		if self.straightLine(dc, self.fromso, self.toso):
@@ -350,6 +371,8 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 		self.shapeobjects = []
 		self.positions = {}
 		self.connectionobjects = []
+
+		self.popupmenu = None
 
 	def getPosition(self):
 		if self.parent is not None:
@@ -397,6 +420,9 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 
 	def addShapeObject(self, so, x=0, y=0):
 		if so not in self.shapeobjects:
+			parent = so.getParent()
+			if parent is not None:
+				parent.removeShapeObject(so)
 			so.setParent(self)
 			self.shapeobjects.insert(0, so)
 			self.positions[so] = (x, y)
@@ -413,13 +439,30 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 
 	def addConnectionObject(self, connectionobject):
 		if connectionobject not in self.connectionobjects:
+			parent = connectionobject.getParent()
+			if parent is not None:
+				parent.removeConnectionObject(connectionobject)
+			connectionobject.setParent(self)
 			self.connectionobjects.append(connectionobject)
 			self.UpdateDrawing()
 
 	def removeConnectionObject(self, connectionobject):
 		if connectionobject in self.connectionobjects:
+			connectionobject.setParent(None)
 			self.connectionobjects.remove(connectionobject)
 			self.UpdateDrawing()
+
+	def removeConnectionObjects(self, so):
+		removeconnections = []
+		for co in self.connectionobjects:
+			if co.getToShapeObject() == so or co.getFromShapeObject() == so:
+				removeconnections.append(co)
+
+		for co in removeconnections:
+			self.removeConnectionObject(co)
+
+		if self.parent is not None:
+			self.parent.removeConnectionObjects(so)
 
 	def getShapeObjectFromXY(self, x, y):
 		for shapeobject in self.shapeobjects:
@@ -543,13 +586,16 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 	def addText(self, text, x=0, y=0):
 		self.text[text] = (x, y)
 
+	def removeText(self, text):
+		del self.text[text]
+
 	def OnLeftClick(self, evt):
 		self.ProcessEvent(RaiseEvent(self, True))
 		evt.Skip()
 
-	def OnRightClick(self, evt):
-		self.ProcessEvent(LowerEvent(self, False))
-		evt.Skip()
+#	def OnRightClick(self, evt):
+#		self.ProcessEvent(LowerEvent(self, False))
+#		evt.Skip()
 
 	def OnLeftDragStart(self, evt):
 		self.ProcessEvent(RaiseEvent(self, True))
@@ -577,10 +623,12 @@ class wxRectangleObject(wxShapeObject):
 		wxShapeObject.Draw(self, dc)
 
 class DragInfo(object):
-	def __init__(self, shapeobject, xoffset, yoffset):
+	def __init__(self, shapeobject, xoffset, yoffset, startx, starty):
 		self.shapeobject = shapeobject
 		self.xoffset = xoffset
 		self.yoffset = yoffset
+		self.startx = startx
+		self.starty = starty
 
 	def setPosition(self, x, y):
 		xoffset, yoffset = self.shapeobject.getCanvasOffset()
@@ -595,6 +643,7 @@ class wxObjectCanvas(wxScrolledWindow):
 		self.master = master
 		self.master.SetNextHandler(self)
 		self.SetVirtualSize((self.master.width, self.master.height))
+		self.SetScrollRate(1, 1)
 
 		self.draginfo = None
 
@@ -637,16 +686,18 @@ class wxObjectCanvas(wxScrolledWindow):
 		oldparent = shapeobject.getParent()
 		newparent = self.master.getContainingShapeObject(shapeobject)
 		if oldparent is not None and oldparent != newparent:
-			oldparent.removeShapeObject(shapeobject)
-			x, y = newparent.getCanvasPosition()
-			newparent.addShapeObject(shapeobject, cx - x, cy - y)
+			try:
+				x, y = newparent.getCanvasPosition()
+				newparent.addShapeObject(shapeobject, cx - x, cy - y)
+			except TypeError:
+				shapeobject.setPosition(self.draginfo.startx, self.draginfo.starty)
 
 	def OnLeftUp(self, evt):
 		if self.draginfo is not None:
-			self.draginfo.setPosition(evt.m_x, evt.m_y)
+			newevent = LeftDragEndEvent(self.draginfo.shapeobject, evt.m_x, evt.m_y)
+#			self.draginfo.setPosition(evt.m_x, evt.m_y)
 			self.updateParent(self.draginfo.shapeobject)
-			self.draginfo.shapeobject.ProcessEvent(
-									LeftDragEndEvent(self.draginfo.shapeobject, evt.m_x, evt.m_y))
+			self.draginfo.shapeobject.ProcessEvent(newevent)
 			self.draginfo = None
 			self.UpdateDrawing()
 		else:
@@ -656,19 +707,27 @@ class wxObjectCanvas(wxScrolledWindow):
 	def OnRightUp(self, evt):
 		shapeobject = self.master.getShapeObjectFromXY(evt.m_x, evt.m_y)
 		shapeobject.ProcessEvent(RightClickEvent(shapeobject, evt.m_x, evt.m_y))
+		self.popupMenu(evt.m_x, evt.m_y)
 
 	def OnMotion(self, evt):
 		if evt.LeftIsDown():
 			if self.draginfo is None:
 				shapeobject = self.master.getShapeObjectFromXY(evt.m_x, evt.m_y)
 				xoffset, yoffset = shapeobject.getCanvasPosition()
-				self.draginfo = DragInfo(shapeobject, evt.m_x - xoffset,
-																							evt.m_y - yoffset)
+				startx, starty = shapeobject.getPosition()
+				self.draginfo = DragInfo(shapeobject,
+																	evt.m_x - xoffset, evt.m_y - yoffset,
+																	startx, starty)
 				shapeobject.ProcessEvent(LeftDragStartEvent(shapeobject,
 																										evt.m_x, evt.m_y))
 			else:	
 				self.draginfo.setPosition(evt.m_x, evt.m_y)
 				self.UpdateDrawing()
+
+	def popupMenu(self, x, y):
+		shapeobject = self.master.getShapeObjectFromXY(x, y)
+		if shapeobject.popupmenu is not None:
+			self.PopupMenu(shapeobject.popupmenu, (x, y))
 
 if __name__ == '__main__':
 	class MyApp(wxApp):
