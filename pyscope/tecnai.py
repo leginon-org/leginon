@@ -75,6 +75,8 @@ class Tecnai(object):
 			'raw image shift': {'get': 'getRawImageShift', 'set': 'setRawImageShift'},
 			'defocus': {'get': 'getDefocus', 'set': 'setDefocus'},
 			'magnification': {'get': 'getMagnification', 'set': 'setMagnification'},
+			'magnification index': {'get': 'getMagnificationIndex',
+															'set': 'setMagnificationIndex'},
 			'magnifications': {'get': 'getMagnifications'},
 			'stage position': {'get': 'getStagePosition', 'set': 'setStagePosition'},
 			'corrected stage position': {'get': 'getCorrectedStagePosition',
@@ -143,6 +145,7 @@ class Tecnai(object):
 																	{'x': {'type': float}, 'y': {'type': float}}},
 			'defocus': {'type': float},
 			'magnification': {'type': float},
+			'magnification index': {'type': int},
 			'magnifications': {'type': list},
 			# correct for holder type
 			'stage position': {'type': dict, 'values':
@@ -621,6 +624,12 @@ class Tecnai(object):
 			
 		self.theScope.Projection.MagnificationIndex = prevmag['index']
 		return
+
+	def getMagnificationIndex(self):
+		return self.theScope.Projection.MagnificationIndex - 1
+
+	def setMagnificationIndex(self, value):
+		self.theScope.Projection.MagnificationIndex  = value + 1
 
 	def getMagnifications(self):
 		if self.theScope.Camera.MainScreen == win32com.client.constants.spUp:
