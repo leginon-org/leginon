@@ -77,5 +77,7 @@ registerNodeClass('imagemosaic', 'StateImageMosaic')
 registerNodeClass('testmosaic', 'TestMosaic')
 registerNodeClass('mosaicnavigator', 'MosaicNavigator')
 registerNodeClass('targetfinder', 'ClickTargetFinder')
+registerNodeClass('simpleacquisition', 'SimpleAcquisition')
+registerNodeClass('targetwatcher', 'TestTargetWatcher')
 registerNodeClass('imagenode', 'ImageNode')
 
