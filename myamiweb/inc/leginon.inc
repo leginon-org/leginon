@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.24 $
- *	@version $Id: leginon.inc,v 1.24 2004-09-16 17:28:06 dfellman Exp $
+ *	@version $Revision: 1.25 $
+ *	@version $Id: leginon.inc,v 1.25 2004-09-28 18:13:56 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -40,6 +40,7 @@ class leginondata {
 		.'`id` int(11) NOT NULL auto_increment,'
 		.'`timestamp` timestamp(14) NOT NULL,'
 		.'`sessionId` int(11) NOT NULL default "0",'
+		.'`type` enum(\'rt\',\'post\') NOT NULL default \'rt\','
 		.'`imageId` int(11) NOT NULL default "0",'
 		.'`name` text NOT NULL,'
 		.'`comment` text NOT NULL,'
@@ -137,8 +138,22 @@ class leginondata {
 		$Rsummary = $this->mysql->SQLQuery($q) or die ("No data type found");
 		$ndata=mysql_num_rows($Rsummary);
 		while ($row = mysql_fetch_array($Rsummary)) 
-			$summary[]= array('name'=>$row['name'], 'nb'=>$row['nb']); 
+			$summary[] = $row;
 		return $summary;
+	}
+
+	function getComments($sessionId, $type='rt') {
+		$comments = array();
+		$q="select "
+			."date_format(c.`timestamp`, '%Y-%d-%m %T') as `timestamp`,"
+			."c.name, c.comment "
+			."from `viewer_comment` c " 
+			."where `sessionId` = '$sessionId' and `type` = '$type' "
+			." ";
+		$Rcomments = $this->mysql->SQLQuery($q);
+		while ($row = mysql_fetch_assoc($Rcomments)) 
+			$comments[] = $row;
+		return $comments;
 	}
 
 	function getDatatypes($expId) {

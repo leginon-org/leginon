@@ -74,6 +74,7 @@ if ($g) {
 				'filter' => $filter,
 				'minpix' => $minpix,
 				'maxpix' => $maxpix,
+				'binning' => $binning,
 				'scalebar'=>false
 			);
 		
