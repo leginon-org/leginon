@@ -10,12 +10,17 @@ def bar():
 
 server = uiserver.Server()
 print 'UI server location =', server.hostname, server.port
-server2 = uiserver.Server('client test')
 
+foo = uidata.MediumContainer('Foo')
+server.addObject(foo)
+foo.addObject(uidata.Integer('Test Int', 42, 'rw'))
+
+server2 = uiserver.Server('client test')
 #bar1 = uidata.Container('bar 1')
 #bar2 = uidata.Container('bar 2')
 foo = uidata.ClientContainer('client test', (server2.hostname, server2.port))
 server.addObject(foo)
+server.addObject(uidata.Integer('asdf', 39, 'rw'))
 server2.addObject(uidata.String('asdf', 'asdfkjlaksdf', 'rw'))
 bar1 = uidata.MediumContainer('bar 1')
 bar2 = uidata.MediumContainer('bar 2')
@@ -37,13 +42,17 @@ p = uidata.Progress('Progress Bar', 25)
 bar1.addObject(p)
 
 server.addObject(bar2)
+#bar1.addObject(uidata.MessageDialog('MD 1', 'This is a dialog'))
+foo1.addObject(uidata.SingleSelectFromList('List Select 1', [1,2,3], 1))
 
 #image1 = uidata.Image('Image 1', None, 'rw')
+'''
 import Numeric
 import Mrc
 import Image
 image = Mrc.mrc_to_numeric('test2.mrc')
 image1 = uidata.Image('Image 1', image)
+bar2.addObject(image1)
 image2 = uidata.TargetImage('Target Image 1', image)
 
 image2.addTargetType('Foo', [(200, 120)])
@@ -51,18 +60,17 @@ image2.addTargetType('Bar', [])
 image2.addTargetType('Foo Bar', [(120, 200), (50, 78)])
 
 
-#bar2.addObject(image1)
 bar2.addObject(image2)
 
 def gar(foo):
 	print foo
 clickimage = uidata.ClickImage('Click Image', gar, image)
 bar1.addObject(clickimage)
+'''
 
 foo1.addObject(uidata.Method('Method 1', bar))
 foo1.addObject(uidata.Boolean('Boolean 1', 1, 'r'))
 foo1.addObject(uidata.Boolean('Boolean 2', 0, 'rw'))
-foo1.addObject(uidata.SingleSelectFromList('List Select 1', [1,2,3], 1))
 struct = {'a': 1,
 					'b': {'a': 'foo', 'b': 'bar'},
 					'c': 'asdf',
@@ -70,13 +78,8 @@ struct = {'a': 1,
 					'e': 55.7777,
 					'f': {'foo': {'bar': 2, 'foobar': 67.7}}}
 bar1.addObject(uidata.Struct('Struct 1', struct, 'r'))
-#bar1.addObject(uidata.Struct('Struct 2', struct, 'rw'))
+bar1.addObject(uidata.Struct('Struct 2', struct, 'rw'))
 bar1.addObject(uidata.SelectFromStruct('SFT 1', struct, []))
-#bar1.addObject(uidata.MessageDialog('MD 1', 'This is a dialog'))
 
 client = uiclient.UIApp(server.hostname, server.port)
-#import time
-#time.sleep(10.0)
-#server.deleteObject('client test')
-#server2.deleteObject('foo 2')
 

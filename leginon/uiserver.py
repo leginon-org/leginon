@@ -62,6 +62,7 @@ class Server(XMLRPCServer, uidata.Container):
 		return uidata.Container.getObjectFromList(self, namelist)
 
 	def setFromClient(self, namelist, value):
+		#print 'setFromClient', namelist
 		'''this is how a UI client sets a data value'''
 		uidataobject = self.getObjectFromList(namelist)
 		if not isinstance(uidataobject, uidata.Data):
@@ -71,6 +72,7 @@ class Server(XMLRPCServer, uidata.Container):
 		return ''
 
 	def commandFromClient(self, namelist, args):
+		#print 'commandFromClient', namelist, args
 		uimethodobject = self.getObjectFromList(namelist)
 		if not isinstance(uimethodobject, uidata.Method):
 			raise TypeError('name list does not resolve to Method instance')

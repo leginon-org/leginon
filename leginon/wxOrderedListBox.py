@@ -8,7 +8,6 @@ class wxOrderedListBox(wxPanel):
 		self.selected = []
 		self.listmapping = {}
 		self.sizer = wxBoxSizer(wxHORIZONTAL)
-		self.SetAutoLayout(true)
 		self.SetSizer(self.sizer)
 		self.listlistbox = wxListBox(self, -1, style=wxLB_EXTENDED)
 		self.sizer.Add(self.listlistbox, 0, wxALL | wxADJUST_MINSIZE, 3)
