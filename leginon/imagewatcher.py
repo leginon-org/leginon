@@ -28,8 +28,12 @@ class ImageWatcher(watcher.Watcher):
 		imageinfo['source'] = 'click'
 		return copy.deepcopy(imageinfo)
 
-	def processData(self, imagedata):
-		if not isinstance(imagedata, data.ImageData):
+	def processData(self, somedata):
+		if not isinstance(somedata, data.ImageData):
 			raise RuntimeError('Data is not ImageData instance')
 		self.imagedata = imagedata
 		self.numarray = imagedata['image']
+		self.processImageData(somedata)
+
+	def processImageData(self, imagedata):
+		raise NotImplementedError('implement processImageData in subclasses of ImageWatcher')
