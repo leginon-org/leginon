@@ -29,7 +29,6 @@ class DataDict(strictdict.TypedDict):
 	classes.
 	'''
 	def __init__(self, map_or_seq=None):
-		self.__class__.typemap = classmethod(self.__class__.typemap)
 		strictdict.TypedDict.__init__(self, map_or_seq, type_map_or_seq=self.typemap())
 
 	def typemap(cls):
