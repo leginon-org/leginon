@@ -28,6 +28,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.uidataqueueflag.set(False)
 
 		self.usercheckon = uidata.Boolean('User Check', False, 'rw', persist=True)
+		self.usequantifoil = uidata.Boolean('Quantifoil', True, 'rw', persist=True)
 
 		self.testfile = uidata.String('Filename', '', 'rw', persist=True)
 		readmeth = uidata.Method('Read Image', self.readImage)
@@ -54,7 +55,7 @@ class HoleFinder(targetfinder.TargetFinder):
 
 
 		### Correlate Template
-		self.ringlist = uidata.Float('Ring Diameters', [(30,40)], 'rw', persist=True)
+		self.ringlist = uidata.Array('Ring Diameters', [(30,40)], 'rw', persist=True)
 		self.cortype = uidata.SingleSelectFromList('Correlation Type', ['cross correlation', 'phase correlation'], 0, persist=True)
 		cormeth = uidata.Method('Correlate Template', self.correlateTemplate)
 		self.corimage = uidata.Image('Correlation Image', None, 'r')
@@ -79,7 +80,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.latspacing = uidata.Float('Spacing', 150.0, 'rw', persist=True)
 		self.lattol = uidata.Float('Tolerance', 0.1, 'rw', persist=True)
 
-		self.holestatsrad = uidata.Float('Hole Stats Radius', 15, 'rw', persist=True)
+		self.holestatsrad = uidata.Float('Hole Stats Radius', 15.0, 'rw', persist=True)
 		self.icei0 = uidata.Float('Zero Thickness', 1000.0, 'rw', persist=True)
 
 
