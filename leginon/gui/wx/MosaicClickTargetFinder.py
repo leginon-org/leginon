@@ -53,7 +53,7 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 		dialog = TilesDialog(self, choices)
 		result = dialog.ShowModal()
 		if result == wx.ID_OK:
-			selection = self.cmosaic.GetStringSelection()
+			selection = dialog.cmosaic.GetStringSelection()
 			if selection:
 				self.node.loadMosaicTiles(selection)
 		elif result == wx.ID_RESET:
@@ -123,6 +123,9 @@ class TilesDialog(wx.Dialog):
 		self.EndModal(wx.ID_RESET)
 
 class MosaicSettingsDialog(gui.wx.Settings.Dialog):
+	def __init__(self, parent):
+		gui.wx.Settings.Dialog.__init__(self, parent, 'Mosaic Settings')
+
 	def initialize(self):
 		choices = self.node.calclients.keys()
 		self.widgets['calibration parameter'] = Choice(self, -1, choices=choices)

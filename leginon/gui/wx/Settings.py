@@ -34,10 +34,11 @@ attributes = {
 }
 
 class Dialog(wx.Dialog):
-	def __init__(self, parent):
+	def __init__(self, parent, title=None):
 		self.node = parent.node
 
-		title = '%s Settings' % self.node.name
+		if title is None:
+			title = '%s Settings' % self.node.name
 		wx.Dialog.__init__(self, parent, -1, title) 
 
 		self.widgets = {}
