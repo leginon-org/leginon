@@ -59,11 +59,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 			emtarget = data.EMTargetData(scope=oldtargetemdata,preset=oldpreset)
 
 		### do each preset for this acquisition
-		try:
-			presetnames = self.uipresetnames.get()
-		except:
-			self.printException()
-			return
+#		try:
+#			presetnames = self.uipresetnames.get()
+#		except:
+#			self.printException()
+#			return
+
+		presetnames = self.uipresetnames.GetSelectedValues()
 
 		if not presetnames:
 			print 'NO PRESETS SPECIFIED'
@@ -215,6 +217,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 	def uiTrial(self):
 		self.processTargetData(targetdata=None)
 
+	def uiRefreshPresetNames(self):
+		self.uipresetnames.setSelected([])
+		self.uipresetnames.setList(self.presetsclient.getPresets())
+
 	def defineUserInterface(self):
 		targetwatcher.TargetWatcher.defineUserInterface(self)
 		self.uimovetype = uidata.UISingleSelectFromList('Move Type',
@@ -226,13 +232,20 @@ class Acquisition(targetwatcher.TargetWatcher):
 		settingscontainer.addUIObjects((self.uimovetype, self.uidelay,
 																		self.uiacquiretype))
 
-		self.uipresetnames = uidata.UIArray('Sequence', ['yours'], 'rw')
+		presets = self.presetsclient.getPresets()
+		self.uipresetnames = uidata.UISelectFromList('Sequence', presets, [], 'r')
+		refreshpresetnames = uidata.UIMethod('Refresh', self.uiRefreshPresetNames)
+		sequencecontainer = uidata.UIContainer('Presets Sequence')
+		sequencecontainer.addUIObjects((self.uipresetnames, refreshpresetnames))
+
 		pselect = self.presetsclient.uiPresetSelector()
 
 		toscopemethod = uidata.UIMethod('Apply Preset', self.uiToScope)
-		toscopeandacquiremethod = uidata.UIMethod('Apply Preset and Acquire', self.uiToScopeAcquire)
+		toscopeandacquiremethod = uidata.UIMethod('Apply Preset and Acquire',
+																							self.uiToScopeAcquire)
 		presetscontainer = uidata.UIContainer('Presets')
-		presetscontainer.addUIObjects((self.uipresetnames, pselect, toscopemethod, toscopeandacquiremethod))
+		presetscontainer.addUIObjects((sequencecontainer, pselect, toscopemethod,
+																		toscopeandacquiremethod))
 		trialmethod = uidata.UIMethod('Trial', self.uiTrial)
 
 		self.ui_image = uidata.UIImage('Image', None, 'rw')

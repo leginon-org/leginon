@@ -28,8 +28,8 @@ class wxOrderedListBox(wxPanel):
 		self.selectedlistbox = wxListBox(self, -1, style=wxLB_EXTENDED)
 		self.sizer.Add(self.selectedlistbox, 0, wxALL | wxADJUST_MINSIZE, 3)
 		self.sizer.Layout()
-		self.Show(true)
 		self.Fit()
+		self.Show(true)
 
 	def onSelect(self, evt):
 		selection = self.listlistbox.GetSelections()

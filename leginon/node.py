@@ -125,7 +125,8 @@ class Node(leginonobject.LeginonObject):
 	def die(self, ievent=None):
 		'''Tell the node to finish and call exit.'''
 		self.die_event.set()
-		self.confirmEvent(ievent)
+		if ievent is not None:
+			self.confirmEvent(ievent)
 
 	def start(self):
 		'''Call to make the node active and react to a call to exit. Calls main.'''

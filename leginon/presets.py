@@ -41,7 +41,10 @@ class PresetsClient(object):
 		self.node.confirmEvent(ievent)
 
 	def getPresets(self):
-		seqdata = self.node.researchByDataID(('presets',))
+		try:
+			seqdata = self.node.researchByDataID(('presets',))
+		except node.ResearchError:
+			return []
 		if seqdata is None:
 			return []
 		else:
