@@ -30,9 +30,13 @@ def startLauncher(location, event):
 
 location = {}
 event = threading.Event()
-threading.Thread(target=startManager, args=(location, event)).start()
+thread = threading.Thread(target=startManager, args=(location, event))
+thread.setDaemon(True)
+thread.start()
 event.wait()
-threading.Thread(target=startLauncher, args=(location, event)).start()
+thread = threading.Thread(target=startLauncher, args=(location, event))
+thread.setDaemon(True)
+thread.start()
 event.wait()
 
 '''
