@@ -1,6 +1,7 @@
 import leginonobject
 import data
 import threading
+import Queue
 import os
 import shelve
 import time
@@ -221,9 +222,32 @@ class DataBinder(DataHandler):
 		## data class
 		self.bindings = []
 
+		## a queue to hold incoming data, and a thread
+		## to process data from the queue
+		self.queue = Queue.Queue()
+		t = threading.Thread(target=self.handlerLoop)
+		t.setDaemon(1)
+		t.start()
+
+	def handlerLoop(self):
+		'''
+		This executes an infinite loop that calls the callback 
+		function on every item that we dequeue.
+		'''
+		while 1:
+			item = self.queue.get(block=True)
+			try:
+				self.handleData(item)
+			except:
+				self.printException()
+
 	def insert(self, newdata):
-		# this could be threaded, but it would ruin the 'priority' thing
-		# now send data to a type specific handler function
+		self.queue.put(newdata)
+
+	def handleData(self, newdata):
+		'''
+		figure out which callback functions to execute on this data
+		'''
 		dataclass = newdata.__class__
 		args = (newdata,)
 		for bindclass, func in self.bindings:
