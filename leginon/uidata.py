@@ -454,7 +454,7 @@ class Message(Container):
 	def destroy(self):
 		try:
 			self.parent.deleteObject(self.name)
-		except ValueError:
+		except:
 			pass
 
 	def clear(self):
