@@ -1,9 +1,9 @@
 import data
 import time
-import calibration
+import matrixcalibrator
 import node
 
-class AutoFocusCalibration(node.Node, calibration.Calibration):
+class AutoFocusCalibration(node.Node, matrixcalibrator.MatrixCalibrator):
 	def __init__(self, id, nodelocations, **kwargs):
 		calibration.Calibration.__init__(self, id, nodelocations, **kwargs)
 		self.axislist = ['x']
