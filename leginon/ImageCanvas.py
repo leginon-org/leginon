@@ -20,6 +20,9 @@ class ImageCanvas(Frame):
 		self.canvas.bind('<Leave>', self.leave_callback)
 		self.canvas.bind('<Enter>', self.enter_callback)
 
+	def bindCanvas(self, event, func):
+		self.canvas.bind(event, func)
+
 	def __build(self):
 		bgcolor = self['background']
 		can = self.canvas = Canvas(self, bg=bgcolor)
@@ -65,10 +68,10 @@ class ImageCanvas(Frame):
 		else:
 			self.vscroll_state(OFF)
 
-	def getdata(self, numcoord):
+	def getdata(self, col_row):
 		"""returns data value of the numeric array given the 
 		photo image pixel coords"""
-		return self.numimage.get(numcoord)
+		return self.numimage.get_crvalue(col_row)
 
 	def canvasxy_to_imagexy(self, coord):
 		"""
@@ -156,11 +159,40 @@ class ImageCanvas(Frame):
 		self.canvas['cursor'] = 'crosshair'
 
 	def motion_callback(self, event):
-		x = event.x
-		y = event.y
-		canx = int(self.canvas.canvasx(x))
-		cany = int(self.canvas.canvasy(y))
-		self.cursorinfo.query( (canx,cany) )
+		info = self.eventXYInfo(event)
+		self.cursorinfo.set(info)
+
+	def eventXYInfo(self, event):
+		info = {
+			'canvas x': None,
+			'canvas y': None,
+			'image x': None,
+			'image y': None,
+			'array row': None,
+			'array column': None,
+			'array value': None
+		}
+
+		canx = int(self.canvas.canvasx(event.x))
+		cany = int(self.canvas.canvasy(event.y))
+		if (not (0 <= canx < self.canvas['width'])) or (not (0 <= cany < self.canvas['height'])):
+			return info
+
+		info['canvas x'] = canx
+		info['canvas y'] = cany
+		imx,imy = self.canvasxy_to_imagexy( (canx, cany) )
+		info['image x'] = imx
+		info['image y'] = imy
+		if self.numimage is None:
+			return info
+		numrc = self.numimage.imagexy_to_numericrc( (imx, imy) )
+		if numrc is None:
+			return info
+		info['array row'] =  numrc[0]
+		info['array column'] =  numrc[1]
+		info['array value'] = self.getdata((numrc[1],numrc[0]))
+
+		return info
 
 	def cursorinfo_widget(self, parent, *args, **kargs):
 		return self.cursorinfo.widget(parent, *args, **kargs)
@@ -183,22 +215,22 @@ class CursorInfo:
 		self.numy.set('')
 		self.numdata.set('')
 
-	def query(self, cancoord):
+	def set(self, xyinfo):
 		imcan = self.imagecanvas
+		if xyinfo['array column'] is not None:
+			self.numx.set(xyinfo['array column'])
+		else:
+			self.numx.set('')
+		if xyinfo['array row'] is not None:
+			self.numy.set(xyinfo['array row'])
+		else:
+			self.numy.set('')
 
-		imcoord = imcan.canvasxy_to_imagexy( cancoord )
-		if not imcan.numimage:
-			return
-		numcoord = imcan.numimage.imagexy_to_numericxy(imcoord)
-
-		if numcoord:
-			self.numx.set(numcoord[0])
-			self.numy.set(numcoord[1])
-			numdata = imcan.getdata(numcoord)
-			numdata = float(numdata)
+		if xyinfo['array value'] is not None:
+			numdata = xyinfo['array value']
 			self.numdata.set('%.4f' % numdata)
 		else:
-			self.clear()
+			self.numy.set('')
 
 	def widget(self, parent, *args, **kargs):
 		return CursorInfoWidget(parent, self, *args, **kargs)

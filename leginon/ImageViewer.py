@@ -2,8 +2,6 @@
 
 from Tkinter import *
 from ImageCanvas import *
-#from NumericImage import *
-
 
 class ImageViewer(Frame):
 	"""
@@ -14,8 +12,8 @@ class ImageViewer(Frame):
 		in the ImageViewer
 	"""
 
-	def __init__(self, parent, *args, **kargs):
-		Frame.__init__(self, parent, *args, **kargs)
+	def __init__(self, parent, **kwargs):
+		Frame.__init__(self, parent, **kwargs)
 		self._build()
 
 	## put together component widgets
@@ -52,13 +50,29 @@ class ImageViewer(Frame):
 	def zoomout(self):
 		self.canvas.zoom(0.5)
 
+	def bindCanvas(self, event, func):
+		self.canvas.bindCanvas(event, func)
+
+	def eventXYInfo(self, event):
+		return self.canvas.eventXYInfo(event)
+
+
+class TestClickable(ImageViewer):
+	def __init__(self, parent, **kwargs):
+		ImageViewer.__init__(self, parent, **kwargs)
+		self.bindCanvas('<1>', self.click_callback)
+
+	def click_callback(self, event):
+		info = self.eventXYInfo(event)
+		print info
+
 
 if __name__ == '__main__':
 	import sys
 	from mrc import Mrc
 
 	root = Tk()
-	jim = ImageViewer(root, bg='#488')
+	jim = TestClickable(root, bg='#488')
 	jim.pack()
 
 	for filename in sys.argv[1:]:

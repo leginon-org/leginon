@@ -186,24 +186,24 @@ class NumericImage:
 		if not self.transform['clip']:
 			self.transform['clip'] = self.extrema
 
-	def get(self, numcoord):
+	def get_crvalue(self, col_row):
 		try:
-			val = self.orig_array[ numcoord[1], numcoord[0]]
+			val = self.orig_array[ col_row[1], col_row[0]]
 		except IndexError:
 			val = None
 		return val
 
-	def imagexy_to_numericxy(self, coord):
+	def imagexy_to_numericrc(self, coord):
 		if not coord:
 			return None
 		orig_size = self.orig_size
 		output_size = self.transform['output_size']
-		numx = (float(coord[0]) / output_size[0]) * orig_size[0]
-		numy = (float(coord[1]) / output_size[1]) * orig_size[1]
-		if 0 <= numx < orig_size[0] and 0 <= numy < orig_size[1]:
-			numx = int(numx)
-			numy = int(numy)
-			return numx,numy
+		numc = (float(coord[0]) / output_size[0]) * orig_size[0]
+		numr = (float(coord[1]) / output_size[1]) * orig_size[1]
+		if 0 <= numc < orig_size[0] and 0 <= numr < orig_size[1]:
+			numr = int(numr)
+			numc = int(numc)
+			return numr,numc
 		else:
 			return None
 
@@ -228,7 +228,7 @@ class NumericImage:
 		image = Image.fromstring(immode, imsize, nstr, 'raw', rawmode, stride, orientation)
 
 		image = resize(image, self.transform['output_size'])
-		
+
 		self.image = image
 		return self.image
 

@@ -189,6 +189,11 @@ class UnlockEvent(ControlEvent):
 	'Event that signals an unlock'
 	def __init__(self, id, confirm=False):
 		ControlEvent.__init__(self, id)
+
+class ImageClickEvent(Event):
+	def __init__(self, id, content, confirm=False):
+		Event.__init__(self, id, dict(content), confirm)
+
 	
 ###########################################################
 ###########################################################

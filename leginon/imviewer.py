@@ -11,11 +11,14 @@ import watcher
 import node, event
 from Mrc import mrc_to_numeric
 
+
 class ImViewer(watcher.Watcher):
 	def __init__(self, id, managerlocation):
 		watchfor = event.ImagePublishEvent
 		lockblocking = 0
 		watcher.Watcher.__init__(self, id, managerlocation, watchfor, lockblocking)
+
+		self.addEventOutput(event.ImageClickEvent)
 
 		self.iv = None
 		self.viewer_ready = threading.Event()
@@ -31,10 +34,22 @@ class ImViewer(watcher.Watcher):
 		self.viewerthread.start()
 		print 'thread started'
 
+	def publishClickInfo(self, event):
+		clickinfo = self.iv.eventXYInfo(event)
+		clickinfo['image id'] = self.imageid
+		## prepare for xmlrpc
+		c = {}
+		for key,value in clickinfo.items():
+			if value is not None:
+				c[key] = value
+		e = event.ClickImageEvent(self.ID(), c)
+		self.outputEvent(e)
+
 	def open_viewer(self):
 		root = Tk()
 		root.wm_maxsize(800,800)
 		self.iv = ImageViewer(root, bg='#488')
+		self.iv.bindCanvas('<Double-1>', self.publishClickInfo)
 		self.iv.pack()
 		self.viewer_ready.set()
 		root.mainloop()
@@ -54,6 +69,7 @@ class ImViewer(watcher.Watcher):
 		self.start_viewer_thread()
 
 		numarray = imagedata.content
+		self.imageid = imagedata.id
 		self.displayNumericArray(numarray)
 
 	def displayNumericArray(self, numarray):
