@@ -38,6 +38,11 @@ class PublishEvent(Event):
 	def __init__(self, dataid):
 		Event.__init__(self, content=dataid)
 
+class PublishImageEvent(Event):
+	'Event indicating image was published'
+	def __init__(self, dataid):
+		Event.__init__(self, content=dataid)
+
 # this could be a subclass of publish event, but I'm not sure if that
 # would confuse those not looking for a list
 class ListPublishEvent(Event):
