@@ -19,11 +19,14 @@ xmlbinlib = xmlrpclib
 class ImageMosaicInfo(object):
 	def __init__(self):
 		self.imageinfo = {}
+		self.lock = threading.RLock()
 
 	def addTile(self, dataid, image, position):
+		self.lock.acquire()
 		self.imageinfo[dataid] = {}
 		self.imageinfo[dataid]['image'] = image
 		self.imageinfo[dataid]['position'] = position
+		self.lock.release()
 
 	def hasTile(self, dataid):
 		if dataid in self.getTileDataIDs():
@@ -56,6 +59,7 @@ class ImageMosaicInfo(object):
 		return self.getTileImage(dataid).shape
 
 	def getMosaicLimits(self):
+		self.lock.acquire()
 		# could be Inf
 		imagemin = [0, 0]
 		imagemax = [0, 0]
@@ -71,10 +75,12 @@ class ImageMosaicInfo(object):
 				if tilemax[i] > imagemax[i]:
 					imagemax[i] = tilemax[i]
 
+		self.lock.release()
 		return {'min': (int(round(imagemin[0])), int(round(imagemin[1]))), 
 						'max': (int(round(imagemax[0])), int(round(imagemax[1])))}
 
 	def getMosaicImage(self, astype=Numeric.Int16):
+		self.lock.acquire()
 		limits = self.getMosaicLimits()
 		imageshape = (limits['max'][0] - limits['min'][0], 
 									limits['max'][1] - limits['min'][1])
@@ -93,6 +99,7 @@ class ImageMosaicInfo(object):
 									int(round(tileoffset[1])):int(round(tilelimit[1]))] \
 																				= tileimage.astype(astype)
 
+		self.lock.release()
 		return mosaicimage
 
 class StateImageMosaicInfo(ImageMosaicInfo):
@@ -491,6 +498,16 @@ class StateImageMosaic(ImageMosaic):
 		position['col'] *= -1
 		return (position['row'], position['col'])
 
+#	def publish(self, idata, eventclass=event.PublishEvent, confirm=False):
+#		print 'start publish', idata
+#		watcher.Watcher.publish(self, idata, eventclass, confirm=False)
+#		print 'done publish', idata
+
+#	def outputEvent(self, ievent, wait=0):
+#		print 'start outputEvent', ievent
+#		watcher.Watcher.outputEvent(self, ievent, wait)
+#		print 'done outputEvent', ievent
+
 	def uiPublishMosaicImage(self):
 		#ImageMosaic.uiPublishMosaicImage(self)
 
@@ -501,11 +518,8 @@ class StateImageMosaic(ImageMosaic):
 							self.imagemosaics[-1].getMosaicImage(), scope=None, camera=None)
 		statemosaicdata = data.StateMosaicData(self.ID(),
 									{mosaicimagedata.id: self.imagemosaics[-1].getTileStates()})
-		import time
 		self.publish(statemosaicdata, event.StateMosaicPublishEvent)
-		time.sleep(5.0)
 		self.publish(mosaicimagedata, event.MosaicImagePublishEvent)
-		time.sleep(5.0)
 
 		return ''
 
