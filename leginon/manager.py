@@ -78,6 +78,7 @@ class Manager(node.Node):
 		node.Node.__init__(self, self.name, session, otherdatabinder=mydatabinder,
 												**kwargs)
 
+		self.launcher = None
 		self.frame = gui.wx.Manager.Frame(self, self.research, self.publish)
 
 		self.nodelocations = {}
@@ -126,10 +127,10 @@ class Manager(node.Node):
 		self.frame.GetEventHandler().AddPendingEvent(evt)
 
 	def createLauncher(self):
-		l = launcher.Launcher(socket.gethostname().lower(),
-													session=self.session,
-													managerlocation=self.location())
-		self.onAddLauncherPanel(l)
+		self.launcher = launcher.Launcher(socket.gethostname().lower(),
+																			session=self.session,
+																			managerlocation=self.location())
+		self.onAddLauncherPanel(self.launcher)
 
 	def addInstrumentLauncher(self):
 		if self.session['instrument'] is None:
@@ -162,8 +163,7 @@ class Manager(node.Node):
 		pass
 
 	def exit(self):
-		'''Overrides node.Node.exit'''
-		#self.server.exit()
+		pass
 
 	# client methods
 
