@@ -160,7 +160,7 @@ class ClickTargetFinder(TargetFinder):
 	defaultsettings = {
 		'wait for done': False,
 		'ignore images': False,
-		'no resubmit': True,
+		#'no resubmit': True,
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
@@ -176,9 +176,9 @@ class ClickTargetFinder(TargetFinder):
 		if previous:
 			self.logger.warning('There are %s existing targets for this image'
 													% (len(previous),))
-			if self.settings['no resubmit']:
-				self.logger.error('You are not allowed to submit targets again')
-				return
+#			if self.settings['no resubmit']:
+#				self.logger.error('You are not allowed to submit targets again')
+#				return
 
 		# XXX would be nice to display existing targets too
 
@@ -205,7 +205,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 	defaultsettings = {
 		'wait for done': False,
 		'ignore images': False,
-		'no resubmit': True,
+		#'no resubmit': True,
 		# maybe not
 		'calibration parameter': 'stage position',
 		'scale image': True,
@@ -290,8 +290,12 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.logger.info('Sumbiting targets')
 		self.getTargetDataList('acquisition')
 		self.getTargetDataList('focus')
-		self.publish(self.targetlist, pubevent=True)
-		self.logger.info('Targets submitted')
+		try:
+			self.publish(self.targetlist, pubevent=True)
+		except node.PublishError, e:
+			self.logger.error('Submitting targets failed.')
+		else:
+			self.logger.info('Targets submitted')
 
 	def clearTiles(self):
 		self.tilemap = {}
@@ -362,15 +366,15 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.currentposition = [vcoord]
 
 	def displayDatabaseTargets(self):
-		self.logger.info('getting targets from database')
+		self.logger.info('Getting targets from database...')
 		self.targetsFromDatabase()
 		self.displayTargets()
 
 	def displayTargets(self):
 		if self.mosaicimage is None:
-			self.logger.info('create mosaic image before displaying targets')
+			self.logger.error('Create mosaic image before displaying targets')
 			return
-		self.logger.info('displaying targets')
+		self.logger.info('Displaying targets...')
 		targets = []
 		donetargets = []
 		self.displayedtargetdata = {}
@@ -443,9 +447,9 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 	def publishMosaicImage(self):
 		if not self.hasMosaicImage():
-			self.logger.info('generate a mosaic image before publishing')
+			self.logger.info('Generate a mosaic image before saving it')
 			return
-		self.logger.info('Publishing mosaic image data')
+		self.logger.info('Saving mosaic image data')
 		mosaicimagedata = data.MosaicImageData()
 		mosaicimagedata['session'] = self.session
 		mosaicimagedata['list'] = self.mosaicimagelist
@@ -460,7 +464,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		mosaicimagedata['filename'] = filename
 		self.publish(mosaicimagedata, database=True)
 		self.mosaicimagedata = mosaicimagedata
-		self.logger.info('Mosaic published')
+		self.logger.info('Mosaic saved')
 
 	def researchMosaicTileData(self):
 		tilequery = data.MosaicTileData(session=self.session, list=data.ImageListData())
@@ -581,7 +585,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 	def findSquares(self):
 		if self.mosaicimagedata is None:
-			message = 'You must publish the current mosaic image before finding squares on it.'
+			message = 'You must dave the current mosaic image before finding squares on it.'
 			self.logger.error(message)
 			return
 		original_image = self.mosaicimagedata['image']

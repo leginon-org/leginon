@@ -46,6 +46,9 @@ class Panel(gui.wx.TargetFinder.Panel):
 		dialog.Destroy()
 
 class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
+	pass
+
+	'''
 	def initialize(self):
 		tfsbsz = gui.wx.TargetFinder.SettingsDialog.initialize(self)
 
@@ -61,6 +64,7 @@ class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 
 		return tfsbsz + [sbsz]
+	'''
 
 if __name__ == '__main__':
 	class App(wx.App):
