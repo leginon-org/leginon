@@ -39,7 +39,7 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		targetquery['scope'] = data.ScopeEMData()
 		targetquery['camera'] = data.CameraEMData()
 		targetquery['preset'] = data.PresetData()
-		targets = self.research(datainstance=targetquery, fill=False)
+		targets = self.research(datainstance=targetquery)
 
 		## now filter out only the latest versions
 		# map target id to latest version
@@ -503,7 +503,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			inst['camera'] = data.CameraEMData()
 			inst['preset'] = data.PresetData()
 			self.setStatusMessage('Finding image %i of %i' % (i + 1, ntotal))
-			imagedatalist = self.research(datainstance=inst, fill=False)
+			imagedatalist = self.research(datainstance=inst)
 			try:
 				imagedata = imagedatalist[0]
 			except IndexError:

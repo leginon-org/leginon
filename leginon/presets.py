@@ -583,7 +583,7 @@ class PresetsManager(node.Node):
 		queryinst = data.InstrumentData()
 		queryinst['name'] = myinstname
 		querysession['instrument'] = queryinst
-		sessionlist = self.research(datainstance=querysession, fill=False)
+		sessionlist = self.research(datainstance=querysession)
 		sessionnamelist = [x['name'] for x in sessionlist]
 		return sessionnamelist
 

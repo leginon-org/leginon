@@ -199,7 +199,7 @@ class DoseCalibrationClient(CalibrationClient):
 		qdata['session'] = data.SessionData()
 		qdata['session']['instrument'] = instrument
 		qdata['high tension'] = ht
-		results = self.node.research(datainstance=qdata, fill=False, results=1)
+		results = self.node.research(datainstance=qdata, results=1)
 		if results:
 			result = results[0]
 		else:
