@@ -394,6 +394,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.reportStatus('output', 'Publishing image...')
 		self.publish(imagedata, pubevent=True, database=self.databaseflag.get())
 		self.reportStatus('output', 'Image published')
+		self.reportStatus('output', 'Publishing stats...')
+		self.publishStats(imagedata)
+		self.reportStatus('output', 'Stats published...')
 
 		ev = event.DriftWatchEvent(image=imagedata, presettarget=presettarget)
 		self.outputEvent(ev)
