@@ -410,6 +410,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		tilts = {}
 		self.checkAbort()
 		self.node.logger.info('Tilting...')
+		nodrift = False
 		for tiltaxis in ('x','y'):
 			bt1 = dict(tiltcenter)
 			bt1[tiltaxis] -= (tilt_value/2.0)
@@ -419,6 +420,10 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			state2 = data.ScopeEMData()
 			state1['beam tilt'] = bt1
 			state2['beam tilt'] = bt2
+			## if no drift on 'x' axis, then assume we don't 
+			## need to check on 'y' axis
+			if nodrift:
+				drift_threshold = None
 			try:
 				shiftinfo = self.measureStateShift(state1, state2, publish_images, settle=0.5, drift_threshold=drift_threshold, image_callback=image_callback)
 			except Abort:
@@ -429,6 +434,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 				self.node.emclient.setScope(emdata)
 				self.node.logger.info('Returned to tilt center %s' % tiltcenter)
 				raise
+			nodrift = True
 
 			pixshift = shiftinfo['pixel shift']
 
