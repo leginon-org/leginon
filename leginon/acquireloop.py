@@ -7,6 +7,7 @@ import time
 import base64
 import array
 import copy
+import threading
 
 class AcquireLoop(timedloop.TimedLoop):
 	"""
@@ -29,6 +30,11 @@ class AcquireLoop(timedloop.TimedLoop):
 
 		# this is rough, ImageData type, etc. to come soon
 		camerastate = self.researchByDataID('camera')
+		t = threading.Thread(target=self.process, args=(camerastate,))
+		t.setDaemon(1)
+		t.start()
+
+	def process(self, camerastate):
 		imagearray = array.array(camerastate.content['datatype code'], base64.decodestring(camerastate.content['image data']))
 		print 'image 1...10', imagearray[:10]
 

@@ -4,6 +4,7 @@ import event
 import datatransport
 import datahandler
 import sys
+import copy
 if sys.platform == 'win32':
 	sys.coinit_flags = 0
 
@@ -34,7 +35,7 @@ class NodeDataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
 		if isinstance(idata, event.Event):
 			datahandler.DataBinder.insert(self, idata)
 		else:
-			datahandler.SimpleDataKeeper.insert(self, idata)
+			datahandler.SimpleDataKeeper.insert(self, copy.deepcopy(idata))
 
 	# def query(self, id): is inherited from SimpleDataKeeper
 
