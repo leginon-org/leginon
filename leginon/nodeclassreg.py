@@ -53,7 +53,7 @@ def getNodeClassNames():
 
 
 ### register Node classes in the order you want them listed publicly
-registerNodeClass('webcam', 'Webcam')
+#registerNodeClass('webcam', 'Webcam')
 registerNodeClass('EM', 'EM')
 registerNodeClass('corrector', 'Corrector')
 registerNodeClass('calibration', 'StageShiftCalibration')
