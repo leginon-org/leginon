@@ -164,7 +164,7 @@ class XMLApplicationExport:
 			data += '    <sqltable name="%s">%s' % (table,self.crlf)
 			for k,v in result.items():
 				if k=='DEF_timestamp':
-					v = v.Format('%Y%m%d%H%M%S')
+					v = v.strftime('%Y%m%d%H%M%S')
 				data += '        <field name="%s" >%s</field>%s' % (k,v,self.crlf)
 			data += '    </sqltable>%s' % (self.crlf,)
 		return data
