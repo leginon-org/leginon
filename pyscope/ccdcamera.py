@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyScope/ccdcamera.py,v $
-# $Revision: 1.4 $
+# $Revision: 1.5 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-23 23:28:38 $
+# $Date: 2005-02-24 00:12:17 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -17,7 +17,9 @@ class GeometryError(Exception):
 class CCDCamera(object):
 	name = 'CCD Camera'
 
-	def validateGeometry(self, geometry):
+	def validateGeometry(self, geometry=None):
+		if geometry is None:
+			geometry = self.getGeometry()
 		camerasize = self.getCameraSize()
 		for a in ['x', 'y']:
 			if geometry['dimension'][a] < 0 or geometry['offset'][a] < 0:
@@ -41,6 +43,15 @@ class CCDCamera(object):
 		self.setDimension(geometry['dimension'])
 		self.setOffset(geometry['offset'])
 		self.setBinning(geometry['binning'])
+
+	def getSettings(self):
+		settings = self.getGeometry()
+		settings['exposure time'] = self.getExposureTime()
+		return settings
+
+	def setSettings(self, settings):
+		self.setGeometry(settings)
+		self.setExposureTime(settings['exposure time'])
 
 	def getBinning(self):
 		raise NotImplementedError
