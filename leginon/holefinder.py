@@ -6,6 +6,7 @@ import holefinderback
 import uidata
 import Mrc
 import camerafuncs
+import threading
 
 class HoleFinder(targetfinder.TargetFinder):
 	def __init__(self, id, session, nodelocations, **kwargs):
@@ -15,6 +16,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.icecalc = holefinderback.IceCalculator()
 
 		self.currentimage = None
+		self.userpause = threading.Event()
 
 		#if self.__class__ == ClickTargetFinder:
 		#	self.defineUserInterface()
@@ -93,9 +95,10 @@ class HoleFinder(targetfinder.TargetFinder):
 		icemeth = uidata.Method('Analyze Ice', self.ice)
 		self.goodholes = uidata.Sequence('Good Holes', [])
 		self.goodholesimage = uidata.TargetImage('Good Holes Image', None, 'r')
+		submitmeth = uidata.Method('Submit', self.submit)
 		self.goodholesimage.addTargetType('Good Holes')
 		blobcont = uidata.Container('Blobs')
-		blobcont.addObjects((self.blobborder, findblobmeth, self.allblobs, self.allblobsimage, self.latspacing, self.lattol, self.holestatsrad, self.icei0, fitlatmeth, self.latblobs, self.latblobsimage, self.icetmin, self.icetmax, self.icetstd, icemeth, self.goodholes, self.goodholesimage))
+		blobcont.addObjects((self.blobborder, findblobmeth, self.allblobs, self.allblobsimage, self.latspacing, self.lattol, self.holestatsrad, self.icei0, fitlatmeth, self.latblobs, self.latblobsimage, self.icetmin, self.icetmax, self.icetstd, icemeth, self.goodholes, self.goodholesimage, submitmeth))
 
 		container = uidata.MediumContainer('Hole Finder')
 		container.addObjects((self.usercheckon, originalcont,edgecont,corcont,threshcont, blobcont))
@@ -217,27 +220,28 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.ice()
 
 	def findTargets(self, imdata):
+		## automated part
 		self.hf['original'] = imdata['image']
 		self.currentimage = imdata['image']
 		self.everything()
-		# prepare targets for publishing
-		self.buildTargetDataList()
+
+		## user part
 		if self.usercheckon.get():
 			self.userpause.clear()
+			self.userpause.wait()
+		self.getTargetDataList('Good Holes', data.AcquisitionImageTargetData)
 
-	def buildTargetDataList(self):
-		'''
-		loop through a list of blobs and convert them to target data
-		'''
-		holes = self.hf['holes2']
-		for hole in holes:
-			column, row = hole.stats['center']
+	def submit(self):
+		self.userpause.set()
+
+	def getTargetDataList(self, typename, datatype):
+		for imagetarget in self.goodholesimage.getTargetType(typename):
+			column, row = imagetarget
 			# using self.currentiamge.shape could be bad
 			target = {'delta row': row - self.currentimage.shape[0]/2,
 								'delta column': column - self.currentimage.shape[1]/2}
 			imageinfo = self.imageInfo()
 			target.update(imageinfo)
-			targetdata = data.AcquisitionImageTargetData(id=self.ID())
+			targetdata = datatype(id=self.ID())
 			targetdata.friendly_update(target)
 			self.targetlist.append(targetdata)
-
