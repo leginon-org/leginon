@@ -222,6 +222,7 @@ class UIApp(wxApp):
 		return true
 
 	def layout(self):
+		return
 		self.panel.Refresh()
 
 class wxWidget(object):
@@ -382,6 +383,10 @@ class wxStaticBoxContainerWidget(wxContainerWidget):
 	def destroy(self):
 		wxContainerWidget.destroy(self)
 		self.staticbox.Destroy()
+
+	def _addWidget(self, namelist, typelist, value, read, write):
+		wxContainerWidget._addWidget(self, namelist, typelist, value, read, write)
+		self.layout()
 
 class wxNotebookContainerWidget(wxContainerWidget):
 	def __init__(self, name, parent, container):
@@ -606,7 +611,18 @@ class wxEntryWidget(wxDataWidget):
 			entrysize = self.entry.GetSize()
 			self.sizer.SetItemMinSize(self.entry, entrysize.GetWidth(),
 																						entrysize.GetHeight())
-			self.layout()
+			minwidth, minheight = self.sizer.GetMinSize()
+			width, height = self.sizer.GetSize()
+			set = False
+			if minwidth > width:
+				width = minwidth
+				set = True
+			if minheight > height:
+				height = minheight
+				set = True
+			if set:
+				self.sizer.SetMinSize((width, height))
+				self.layout()
 		else:
 			self.entry.SetValue(str(self.value))
 		if hasattr(self, 'applybutton'):
