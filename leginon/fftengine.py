@@ -96,8 +96,6 @@ else:
 			self.measure = measure
 			if planshapes:
 				print 'calculating fftw plans'
-			else:
-				print 'No fftw plan shapes were specified.  Plans will be created as needed.'
 			for mod in fftw_mods:
 				for shape in planshapes:
 					self.timer(self.plan, (shape,mod))
