@@ -263,7 +263,29 @@ class SmartCameraParameters(uidata.Container):
 		return paramdict
 
 	def set(self, paramdict):
-		pass
+		'''
+		this fills in the fields, but also determines if it is
+		possible to use 'square' and 'centered'
+		'''
+		## set the toggle switches
+		centered = self.isCentered(paramdict)
+		self.centeredtoggle.set(centered)
+		square = self.isSquare(paramdict)
+		self.squaretoggle.set(square)
+
+		if square:
+			axes = ('x',)
+		else:
+			axes = ('x','y')
+
+		## fill in the values
+		if not centered:
+			for axis in axes:
+				self.xyvalues['offset'][axis].set(paramdict['offset'][axis])
+		for param in ('dimension','binning'):
+			for axis in axes:
+				self.xyvalues[param][axis].set(paramdict[param][axis])
+		self.exposuretime.set(paramdict['exposure time'])
 
 	def clearXYContainer(self):
 		if not self.xycontainer:
@@ -324,11 +346,11 @@ class SmartCameraParameters(uidata.Container):
 		return True
 
 	def isCentered(self, paramdict):
-		## create a copy and then do aufoOffset on it
+		## create a copy and then do autoOffset on it
 		tmpdict = copy.deepcopy(paramdict)
 		self.autoOffset(tmpdict)
 		## check if it was auto offset to begin with
-		if axis in ('x','y'):
+		for axis in ('x','y'):
 			if tmpdict['offset'][axis] != paramdict['offset'][axis]:
 				return False
 		return True
