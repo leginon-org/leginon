@@ -2,36 +2,6 @@
 Acquisition node is a TargetWatcher, so it receives either an ImageTargetData
 or an ImageTargetListData.  The method processTargetData is called on each
 ImageTargetData.
-
-The sequence of events leading from an ImageTargetData to an acquired image
-of the target is as follows:
-
-
-processTargetData():
-  Takes an ImageTargetData instance and centers that target using the
-  methods below.  Calls acquire() for each preset specified for this node.  
-
-
-cleanTarget():
-   takes an instance of ImageTargetData and produces a preset independent
-   microscope state.  It does this by calling the next two methods...
-
-targetToState(targetdata):
-   Taking the necessary information from the ImageTargetData and
-   also the user specified method of getting to the target 
-   (stage, image shift, etc.), this function produces a valid 
-   miscroscope state capable of centering the target on the camera.
-   This only works if we are at the preset from which the target was 
-   selected.
-
-stripTarget
-
-targetstate (original preset)
-
-
-
-targetstate (no preset)
-targetstate (new preset)
 '''
 
 import targetwatcher
@@ -42,11 +12,10 @@ import camerafuncs
 import presets
 import copy
 
-
 class Acquisition(targetwatcher.TargetWatcher):
 	def __init__(self, id, session, nodelocations, **kwargs):
-		targetwatcher.TargetWatcher.__init__(self, id, session,
-																					nodelocations, **kwargs)
+		targetwatcher.TargetWatcher.__init__(self, id, session, nodelocations, **kwargs)
+		self.addEventInput(event.ImageClickEvent, self.handleImageClick)
 		self.cam = camerafuncs.CameraFuncs(self)
 
 		self.calclients = {
@@ -59,46 +28,40 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.defineUserInterface()
 		self.start()
 
-	def processTargetData(self, targetdata=None):
+	def processTargetData(self, targetdata):
 		'''
 		This is called by TargetWatcher.processData when targets available
 		If called with targetdata=None, this simulates what occurs at
-		a target (going to preset, acquiring image, etc.)
+		a target (going to presets, acquiring images, etc.)
 		'''
 		### should make both target data and preset an option
 
 		print 'PROCESSING', targetdata
 
-		if targetdata is not None:
-			oldtargetemdata = self.targetToEMData(targetdata)
-
-			oldpreset = targetdata['preset']
-
-			newtargetemdata = self.removePreset(oldtargetemdata, oldpreset)
-		else:
+		if targetdata is None:
 			newtargetemdata = None
-		
+		else:
+			oldtargetemdata = self.targetToEMData(targetdata)
+			oldpreset = targetdata['preset']
+			newtargetemdata = self.removePreset(oldtargetemdata, oldpreset)
+
 		### do each preset for this acquisition
 		presetnames = self.presetnames.get()
-
 		if not presetnames:
 			print 'NO PRESETS SPECIFIED'
-		## maybe could acquire anyway at target with no preset?
-		## default preset?  would have to rely on presetsmanager
-
 		for presetname in presetnames:
+			self.acquireTargetAtPreset(presetname, newtargetemdata, trial=False)
+
+	def acquireTargetAtPreset(self, presetname, targetemdata=None, trial=False):
 			presetlist = self.presetsclient.retrievePresets(presetname)
 			presetdata = presetlist[0]
 			### simulated target is easy, real target requires
 			### merge with preset
-			if newtargetemdata is None:
+			if targetemdata is None:
 				ptargetemdata = self.presetDataToEMData(presetdata)
 			else:
 				## make newtargetemdata with preset applied
-				ptargetemdata = self.addPreset(newtargetemdata, presetdata)
-			print 'PRESET NEWTARGET',
-			print ptargetemdata
-
+				ptargetemdata = self.addPreset(targetemdata, presetdata)
 			## set the scope/camera state
 			self.publishRemote(ptargetemdata)
 
@@ -106,7 +69,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			time.sleep(2)
 
 			print 'acquire'
-			self.acquire(presetdata)
+			self.acquire(presetdata, trial)
 
 	def targetToEMData(self, targetdata):
 		'''
@@ -159,7 +122,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		# update its values from PresetData object
 		newemdict['image shift']['x'] -= presetdata['image shift']['x']
 		newemdict['image shift']['y'] -= presetdata['image shift']['y']
-		print 'TARGETSTATE', targetstate
 		return newemdata
 
 	def addPreset(self, emdata, presetdata):
@@ -191,7 +153,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		emdata = data.EMData(('scope',), em=emdict)
 		return emdata
 
-	def acquire(self, presetdata):
+	def acquire(self, presetdata, trial=False):
 		acqtype = self.acqtype.get()
 		if acqtype == 'raw':
 			imagedata = self.cam.acquireCameraImageData(None,0)
@@ -205,30 +167,80 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if imagedata is None:
 			return
 
+		print 'IMAGEDATA CAMERA', imagedata['camera']
+
 		## attach preset to imagedata and create PresetImageData
 		## use same id as original imagedata
 		dataid = imagedata['id']
-		pimagedata = data.PresetImageData(dataid, initializer=imagedata, preset=presetdata)
 
-		print 'publishing image'
-		self.publish(pimagedata, eventclass=event.PresetImagePublishEvent, database=True)
+		if trial:
+			trialimage = data.TrialImageData(dataid, initializer=imagedata, preset=presetdata)
+			print 'publishing trial image'
+			self.publish(trialimage, eventclass=event.TrialImagePublishEvent, database=False)
+		else:
+			pimagedata = data.AcquisitionImageData(dataid, initializer=imagedata, preset=presetdata)
+			print 'publishing image'
+			self.publish(pimagedata, eventclass=event.AcquisitionImagePublishEvent, database=True)
 		print 'image published'
+
+	def handleImageClick(self, clickevent):
+		'''
+		for interaction with and image viewer during preset config
+		'''
+		print 'handling image click'
+		clickinfo = copy.deepcopy(clickevent)
+		## get relavent info from click event
+		clickrow = clickinfo['array row']
+		clickcol = clickinfo['array column']
+		clickshape = clickinfo['array shape']
+		clickscope = clickinfo['scope']
+		clickcamera = clickinfo['camera']
+
+		## calculate delta from image center
+		deltarow = clickrow - clickshape[0] / 2
+		deltacol = clickcol - clickshape[1] / 2
+
+		## to shift clicked point to center...
+		deltarow = -deltarow
+		deltacol = -deltacol
+
+		pixelshift = {'row':deltarow, 'col':deltacol}
+		mag = clickscope['magnification']
+
+		## figure out shift
+		calclient = self.calclients['image shift']
+		newstate = calclient.transform(pixelshift, clickscope, clickcamera)
+		emdat = data.EMData(('scope',), em=newstate)
+		self.publishRemote(emdat)
+
+		# wait for a while
+		time.sleep(2)
+
+		## acquire image
+		#self.acquireTargetAtPreset(self.testpresetname, trial=True)
+		self.acquire(presetdata=None, trial=True)
 
 	def uiToScope(self, presetname):
 		print 'Going to preset %s' % (presetname,)
-		pre = self.presetsclient.getPreset(presetname)
-		self.presetsclient.toScope(pre)
+		presetlist = self.presetsclient.retrievePresets(presetname)
+		presetdata = presetlist[0]
+		self.presetsclient.toScope(presetdata)
+		return ''
+
+	def uiToScopeAcquire(self, presetname):
+		## remember this preset name for when a click event comes back
+		self.testpresetname = presetname
+
+		## acquire a trial image
+		self.acquireTargetAtPreset(presetname, trial=True)
 		return ''
 
 	def uiFromScope(self, presetname):
-		print 'Storing preset %s' % (presetname,)
-		pre = self.presetsclient.fromScope()
-		self.presetsclient.setPreset(presetname, pre)
+		presetdata = self.presetsclient.fromScope(presetname)
+		self.presetsclient.storePreset(presetdata)
 		return ''
 
 	def uiTrial(self):
-		## calling this witout targetdata means test just the preset
-		## and acquire
 		self.processTargetData(targetdata=None)
 		return ''
 
@@ -242,16 +254,17 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.delaydata = self.registerUIData('Delay (sec)', 'float', default=2.5, permissions='rw')
 
 		acqtypes = self.registerUIData('acqtypes', 'array', default=('raw', 'corrected'))
-		self.acqtype = self.registerUIData('Acquisition Type', 'string', default='raw', permissions='rw', choices=acqtypes)
+		self.acqtype = self.registerUIData('Acquisition Type', 'string', default='corrected', permissions='rw', choices=acqtypes)
 
 
 		prefs = self.registerUIContainer('Preferences', (self.movetype, self.delaydata, self.acqtype))
 
-		self.presetnames = self.registerUIData('Preset Names', 'array', default=(), permissions='rw')
+		self.presetnames = self.registerUIData('Preset Names', 'array', default=('spread1100',), permissions='rw')
 		presetarg = self.registerUIData('Preset', 'string', choices=self.presetnames)
-		toscope = self.registerUIMethod(self.uiToScope, 'To Scope', (presetarg,))
 		fromscope = self.registerUIMethod(self.uiFromScope, 'From Scope', (presetarg,))
-		pre = self.registerUIContainer('Presets', (self.presetnames, toscope, fromscope))
+		toscope = self.registerUIMethod(self.uiToScope, 'To Scope', (presetarg,))
+		toscopeacq = self.registerUIMethod(self.uiToScopeAcquire, 'To Scope And Acquire', (presetarg,))
+		pre = self.registerUIContainer('Presets', (self.presetnames, fromscope, toscope, toscopeacq))
 
 		trial = self.registerUIMethod(self.uiTrial, 'Trial', ())
 
