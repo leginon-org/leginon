@@ -272,6 +272,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.tilemap[imid] = newtile
 		self.imagemap[imid] = imagedata
 		targets = self.researchTargets(image=imagedata)
+		if targets and self.targetlist is None:
+			self.targetlist = targets[0]['list']
 		self.targetmap[imid] = targets
 		self.setStatusMessage('Image added to mosaic')
 
