@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ApplicationEditorLite.py,v $
-# $Revision: 1.4 $
+# $Revision: 1.5 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-01 23:18:27 $
+# $Date: 2005-02-09 23:13:02 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -43,12 +43,13 @@ class LauncherMenu(wx.Menu):
 
 	def onAddNode(self, evt):
 		item = self.editor.addNode(None, None, self.name, [])
+		self.editor.EnsureVisible(item)
 		name = self.editor.GetItemText(item)
 		dialog = NodePropertiesDialog(self.editor, name)
 		if dialog.ShowModal() == wx.ID_OK:
-			classname, name = dialog.getValues()
-			self.editor.nodes[name]['class name'] = classname
-			self.editor.SetItemText(item, name)
+			classname, newname = dialog.getValues()
+			self.editor.setNode(name, classname, newname)
+			self.editor.SetItemText(item, newname)
 		else:
 			item = self.editor.removeNode(name)
 		dialog.Destroy()
@@ -594,9 +595,6 @@ if __name__ == '__main__':
 			editor = ApplicationEditorLite(frame)
 			self.SetTopWindow(frame)
 			frame.Show()
-			editor.addLauncher('Tecnai')
-			editor.addNode('EM', 'Instrument', 'Tecnai', [])
-			editor.addEventBinding('PublishEvent', 'Instrument', 'Instrument')
 			return True
 
 	app = App(0)
