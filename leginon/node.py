@@ -351,10 +351,12 @@ class Node(leginonobject.LeginonObject):
 		datatree = self.registerUIData('Data', 'struct', permissions='r')
 		datatree.registerCallback(self.uiDataDict)
 
-		containerspec = self.registerUIContainer('Node',
-								(exitspec, idspec, classspec, locationspec, datatree))
+		cont = self.registerUIContainer('Node', (exitspec, idspec, classspec, locationspec, datatree))
 
-		return containerspec
+		myspec = self.registerUISpec('Node',
+								(cont,))
+
+		return myspec
 
 
 class ResearchError(Exception):
