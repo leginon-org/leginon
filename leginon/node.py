@@ -132,7 +132,10 @@ class Node(leginonobject.LeginonObject):
 		locspec = self.registerUIData('Location', 'struct', permissions='r', default=self.location())
 		#locspec.set(self.location())
 
-		c = self.registerUIContainer('Node Info', (idspec,classspec,locspec))
+		datatree = self.registerUIData('Data', 'struct', permissions='r')
+		datatree.set(self.uiDataDict)
+
+		c = self.registerUIContainer('Node Info', (idspec,classspec,locspec,datatree))
 		return c
 
 	def registerUIMethod(self, func, name, argspec, returnspec=None):
@@ -155,6 +158,22 @@ class Node(leginonobject.LeginonObject):
 	def getUIData(self, name):
 		raise NotImplementedError('should get data directly through data object')
 		#return self.uiserver.getData(name)
+
+	def uiDataDict(self, value=None):
+		if value is None:
+			try:
+				return self.key2str(self.server.datahandler.datadict)
+			except AttributeError:
+				return {}
+
+	def key2str(self, d):
+		if type(d) is dict:
+			newdict = {}
+			for k in d:
+				newdict[str(k)] = self.key2str(d[k])
+			return newdict
+		else:
+			return str(d)
 
 	def addManager(self, loc):
 		print 'addEventClient...'
