@@ -885,10 +885,10 @@ class ImagePanel(wx.Panel):
 			xoffset, yoffset = self.offset
 			width, height = self.virtualsize
 			if evt.m_x < xoffset or evt.m_x > xoffset + width: 
-				#self.UpdateDrawing()
+				self.UpdateDrawing()
 				return
 			if evt.m_y < yoffset or evt.m_y > yoffset + height: 
-				#self.UpdateDrawing()
+				self.UpdateDrawing()
 				return
 
 		dc = wx.MemoryDC()
