@@ -608,7 +608,7 @@ class Application(wxObjectCanvas.wxRectangleObject):
 		for launcher in self.getLaunchers():
 			for node in launcher.getNodes():
 				nodetuple = (node.getClass(), node.getAlias(),
-											launcher.getAlias(), (), 0, node.getDependencies())
+											launcher.getAlias(), node.getDependencies())
 				application['nodes'].append(nodetuple)
 		bindings = {}
 		for binding in self.getBindings():

@@ -24,10 +24,10 @@ class ApplicationEditor(node.Node):
 		self.application.setName(applicationdata['name'])
 		self.application.clear()
 		for nodespec in applicationdata['nodes']:
-			self.logger.info('Adding node spec %s' % nodespec)
+			self.logger.info('Adding node spec %s' % (nodespec,))
 			apply(self.application.addNodeSpec, nodespec)
 		for bindingspec in applicationdata['bindings']:
-			self.logger.info('Adding bind spec %s' % bindspec)
+			self.logger.info('Adding bind spec %s' % (bindingspec,))
 			apply(self.application.addBindingSpec, bindingspec)
 		self.application.save()
 		self.logger.info('Application saved')
