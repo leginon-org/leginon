@@ -364,6 +364,10 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			self.logger.debug('same targets')
 			return self.mosaicimagelist
 		self.logger.debug('new image list data')
+
+		### clear mosaic here
+		self.clearTiles()
+
 		self.mosaicimagelist = data.ImageListData(session=self.session, targets=targetlist)
 		self.logger.debug('publishing new mosaic image list')
 		self.publish(self.mosaicimagelist, database=True, dbforce=True)
