@@ -166,11 +166,38 @@ class LabeledLine(ArrowLine):
 		ArrowLine.__init__(self, canvas, originposition,
 												destinationposition, destination)
 
+		self.selectedlabel = None
+		self.menu = Tkinter.Menu(self.editor, tearoff=0)
+		self.menu.add_command(label='Edit', command=self.editBinding)
+		self.menu.add_command(label='Delete', command=self.deleteBinding)
+
+	def editBinding(self):
+		labels = self.labels.keys()
+		for binding in labels:
+			if self.labels[binding] == self.selectedlabel:
+				eventdialog = EventDialog(self.editor, 'Edit Event', binding[0])
+				if eventdialog.result is not None:
+					newbinding = (eventdialog.result, binding[1], binding[2])
+					self.append(newbinding)
+					self.editor.app.addBindSpec(newbinding)
+					self.removeBinding(binding)
+					self.editor.app.delBindSpec(binding)
+		self.selectedlabel = None
+
+	def deleteBinding(self):
+		labels = self.labels.keys()
+		for binding in labels:
+			if self.labels[binding] == self.selectedlabel:
+				if len(self.labels) == 1:
+					origin = self.editor.mapping[binding[1]]
+					destination = self.editor.mapping[binding[2]]
+					self.editor.connectionmanager.deleteConnection(origin, destination)
+				else:
+					self.removeBinding(binding)
+		self.selectedlabel = None
+
 	def labelText(self, binding):
-		if binding is None:
-			return '<None>'
-		else:
-			return str(binding[0])
+		return str(binding[0])
 		
 	def createline(self, originposition, destinationposition):
 		ArrowLine.createline(self, originposition, destinationposition)
@@ -198,7 +225,7 @@ class LabeledLine(ArrowLine):
 	def delete(self):
 		labels = self.labels.keys()
 		for label in labels:
-			self.deleteBinding(label)
+			self.removeBinding(label)
 
 	def append(self, binding):
 		if binding in self.labels:
@@ -212,11 +239,19 @@ class LabeledLine(ArrowLine):
 		self.placeLabels()
 		self.labels[binding].bind('<Button-1>', self.lift)
 
-	def deleteBinding(self, binding):
+		self.labels[binding].bind('<Button-3>', self.popup)
+
+	def popup(self, ievent):
+		self.selectedlabel = ievent.widget
+		self.menu.post(ievent.x_root, ievent.y_root)
+
+	def removeBinding(self, binding):
 		self.labels[binding].place_forget()
 		del self.labels[binding]
 		if len(self.labels) == 0:
 			ArrowLine.delete(self)
+		else:
+			self.placeLabels()
 		self.editor.app.delBindSpec(binding)
 
 class ConnectionManager(Line):
@@ -305,7 +340,7 @@ class ConnectionManager(Line):
 		if self.activeconnection is None:
 			eventdialog = EventDialog(self.editor, 'New Connection')
 			if eventdialog.result is not None:
-				binding = (eventdialog.result, origin, None)
+				binding = (eventdialog.result, ('manager', origin.args[3]), None)
 				position = origin.getPosition()
 				self.activeconnection = {}
 				self.activeconnection['origin'] = origin
@@ -318,7 +353,8 @@ class ConnectionManager(Line):
 		if self.activeconnection is not None:
 			self.activeconnection['line'].delete()
 			binding = (self.activeconnection['binding'][0],
-									self.activeconnection['binding'][1], None)
+									self.activeconnection['binding'][1],
+									('manager', destination.args[3]))
 			self.addConnection(self.activeconnection['origin'], destination,
 																																binding)
 			self.activeconnection = None
@@ -344,7 +380,7 @@ class NodeLabel(object):
 		self.label.bind('<Double-Button-1>', self.handleConnection)
 		self.label.place(x = position[0], y = position[1], anchor=Tkinter.CENTER)
 
-		self.menu = Tkinter.Menu(self.label, tearoff=0)
+		self.menu = Tkinter.Menu(self.editor, tearoff=0)
 		self.menu.add_command(label='Edit', command=self.editNode)
 		self.menu.add_command(label='Delete', command=self.deleteNode)
 		self.label.bind('<Button-3>', self.rightClick)
@@ -455,9 +491,9 @@ class ApplicationEditor(Editor):
 		self.mapping = {}
 
 		self.newnodeposition = (0, 0)
-		self.menu = Tkinter.Menu(parent, tearoff=0)
+		self.menu = Tkinter.Menu(self, tearoff=0)
 		self.menu.add_command(label='New Node', command=self.newNode)
-		self.menu.add_command(label='Circle', command=self.circle)
+		self.menu.add_command(label='Arrange Nodes', command=self.circle)
 		self.canvas.bind('<Button-3>', self.rightClick)
 
 	def rightClick(self, ievent):
@@ -511,8 +547,8 @@ class EventDialog(tkSimpleDialog.Dialog):
 		self.eventslistbox.grid(row=0, column=1)
 
 		if self.args is not None:
-			self.classlistbox.select_clear(0, Tkinter.END)
-			self.classlistbox.select_set(self.eventclasses.index(self.args))
+			self.eventslistbox.select_clear(0, Tkinter.END)
+			self.eventslistbox.select_set(self.eventclasses.values().index(self.args))
 
 	def apply(self):
 		selection = self.eventslistbox.curselection()
