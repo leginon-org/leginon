@@ -98,8 +98,6 @@ class ImageMosaicInfo(object):
 class StateImageMosaicInfo(ImageMosaicInfo):
 	def addTile(self, dataid, image, position, scope, camera):
 		ImageMosaicInfo.addTile(self, dataid, image, position)
-		self.imageinfo[dataid]['scope'] = state
-		self.imageinfo[dataid]['camera'] = camera
 		self.imageinfo[dataid]['scope'] = scope
 		self.imageinfo[dataid]['camera'] = camera
 
