@@ -30,10 +30,12 @@ class TargetWatcher(watcher.Watcher):
 	def defineUserInterface(self):
 		watcher.Watcher.defineUserInterface(self)
 
+		pausemeth = uidata.Method('Pause Target List', self.pauseTargetListLoop)
+		continuemeth = uidata.Method('Continue Target List', self.continueTargetListLoop)
 		abortmeth = uidata.Method('Abort Target List', self.abortTargetListLoop)
 
 		container = uidata.MediumContainer('Target Watcher')
-		container.addObject(abortmeth)
+		container.addObject(pausemeth, continuemeth, abortmeth)
 
 		self.uiserver.addObject(container)
 
@@ -78,6 +80,13 @@ class TargetWatcher(watcher.Watcher):
 			print 'TARGET FINISHED STATUS', newstatus
 			#e = event.TargetDoneEvent(id=self.ID(), targetid=target['id'], status=newstatus)
 			#self.outputEvent(e)
+			print 'checking pause'
+			if self.pause.isSet():
+				print 'pausing'
+				self.continue.clear()
+				self.continue.wait()
+				self.pause.clear()
+				print 'done pausing'
 			print 'checking abort'
 			if self.abort.isSet():
 				print 'breaking from targetlist loop'
@@ -126,3 +135,11 @@ class TargetWatcher(watcher.Watcher):
 	def abortTargetListLoop(self):
 		print 'will abort target list loop after current target'
 		self.abort.set()
+
+	def pauseTargetListLoop(self):
+		print 'will pause target list loop after current target'
+		self.pause.set()
+
+	def continueTargetListLoop(self):
+		print 'continuing loop'
+		self.continue.set()
