@@ -386,14 +386,13 @@ class EM(node.Node):
 				except KeyError:
 					pass
 
-		self.panel.initParameters(self.typemap)
-
 		self.uistate = {}
 		self.defineUserInterface()
 
 		self.state = self.getEM(self.uiscopedict.keys() + self.uicameradict.keys())
 		self.uiUpdate()
 
+		self.panel.initParameters(self.typemap)
 		self.panel.setParameters(self.state)
 
 		self.scopecontainer.enable()

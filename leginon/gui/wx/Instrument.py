@@ -392,7 +392,7 @@ class MainSizer(wx.StaticBoxSizer):
 		]
 		self.parameters = {
 			'High tension': wx.StaticText(self.parent, -1, ''),
-			'Magnification': FloatEntry(self.parent, -1, chars=7),
+			'Magnification': wx.Choice(self, -1),
 			'Intensity': FloatEntry(self.parent, -1, chars=7),
 			'Spot size': IntEntry(self.parent, -1, chars=2),
 		}
@@ -554,6 +554,16 @@ class Panel(gui.wx.Node.Panel):
 				reversemap[value] = keypath + [key]
 		return reversemap
 
+	def _setMagnifications(self, mags):
+		magchoice = self.parametermap['magnification']
+		mags = map(str, mags)
+		n = maghoice.GetCount()
+		if n > 0:
+			for i in magchoice.GetCount():
+				magchoice.SetString(i, mags[i])
+		else:
+			magchoice.AppendItems(mags)
+
 	def _initParameter(self, parameter, value):
 		if isinstance(parameter, wx.Choice):
 			parameter.Clear()
@@ -587,6 +597,8 @@ class Panel(gui.wx.Node.Panel):
 		self.Freeze()
 		if parametermap is None:
 			parametermap = self.parametermap
+		if 'magnifications' in parameters:
+			self._setMagnifications(self, parameters['magnifications'])
 		for key, value in parameters.items():
 			try:
 				self._setParameter(parametermap[key], value)
