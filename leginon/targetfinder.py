@@ -80,9 +80,9 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
 			self.publish(targetdata, database=True)
 			number += 1
 
-	def publishTargets(self, typename, targetlist):
-		imagearray = self.imagedata['image']
-		lastnumber = self.lastTargetNumber(image=self.imagedata,
+	def publishTargets(self, imagedata, typename, targetlist):
+		imagearray = imagedata['image']
+		lastnumber = self.lastTargetNumber(image=imagedata,
 																				session=self.session)
 		number = lastnumber + 1
 		for imagetarget in self.panel.getTargets(typename):
@@ -90,7 +90,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
 			drow = row - imagearray.shape[0]/2
 			dcol = column - imagearray.shape[1]/2
 
-			targetdata = self.newTargetForImage(self.imagedata,
+			targetdata = self.newTargetForImage(imagedata,
 																					drow, dcol,
 																					type=typename,
 																					list=targetlist,
@@ -192,7 +192,6 @@ class ClickTargetFinder(TargetFinder):
 		map(self.panel.setTargets, zip(self.typenames, [[]]*len(self.typenames)))
 		self.setImage(imdata['image'])
 		#self.clickimage.imagedata = imdata
-		self.imagedata = imdata
 
 		# user now clicks on targets
 		self.notifyUserSubmit()
@@ -201,8 +200,8 @@ class ClickTargetFinder(TargetFinder):
 		self.userpause.wait()
 		self.unNotifyUserSubmit()
 		self.logger.info('Done waiting')
-		self.publishTargets('focus', targetlist)
-		self.publishTargets('acquisition', targetlist)
+		self.publishTargets(imdata, 'focus', targetlist)
+		self.publishTargets(imdata, 'acquisition', targetlist)
 
 	def submitTargets(self):
 		self.userpause.set()

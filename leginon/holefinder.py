@@ -26,6 +26,8 @@ class HoleFinder(targetfinder.TargetFinder):
 	panelclass = gui.wx.HoleFinder.Panel
 	settingsclass = data.HoleFinderSettingsData
 	defaultsettings = {
+		'wait for done': False,
+		'ignore images': False,
 		'user check': False,
 		'skip': False,
 		'image filename': '',
@@ -254,7 +256,6 @@ class HoleFinder(targetfinder.TargetFinder):
 					focus_points.append(fochole)
 
 		self.logger.info('Holes with good ice: %s' % (len(centers),))
-		self.imagedata = self.currentimagedata
 		# takes x,y instead of row,col
 		if self.settings['target template']:
 			newtargets = self.applyTargetTemplate(centers)
@@ -316,7 +317,6 @@ class HoleFinder(targetfinder.TargetFinder):
 
 	def bypass(self):
 		self.updateImage('Final', None, {'acquisition': [], 'focus': []})
-		self.imagedata = self.currentimagedata
 
 	def applyTargetTemplate(self, centers):
 		self.logger.info('apply template')
@@ -451,8 +451,8 @@ class HoleFinder(targetfinder.TargetFinder):
 			self.unNotifyUserSubmit()
 
 		### publish targets from goodholesimage
-		self.publishTargets('focus', targetlist)
-		self.publishTargets('acquisition', targetlist)
+		self.publishTargets(imdata, 'focus', targetlist)
+		self.publishTargets(imdata, 'acquisition', targetlist)
 
 	def submit(self):
 		self.userpause.set()

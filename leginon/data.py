@@ -1673,6 +1673,27 @@ class HoleFinderSettingsData(TargetFinderSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class RasterFinderSettingsData(TargetFinderSettingsData):
+	def typemap(cls):
+		return TargetFinderSettingsData.typemap() + (
+			('user check', bool),
+			('image filename', str),
+			('raster spacing', int),
+			('raster limit', int),
+			('ice box size', float),
+			('ice thickness', float),
+			('ice min mean', float),
+			('ice max mean', float),
+			('ice max std', float),
+			('focus convolve', bool),
+			('focus convolve template', list),
+			('focus constant template', list),
+			('acquisition convolve', bool),
+			('acquisition convolve template', list),
+			('acquisition constant template', list),
+		)
+	typemap = classmethod(typemap)
+
 class LowPassFilterSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (

@@ -20,99 +20,69 @@ try:
 except:
 	import Numeric
 import imagefun
+import gui.wx.RasterFinder
 
 class RasterFinder(targetfinder.TargetFinder):
+	panelclass = gui.wx.RasterFinder.Panel
+	settingsclass = data.RasterFinderSettingsData
+	defaultsettings = {
+		'wait for done': False,
+		'ignore images': False,
+		'user check': False,
+		'image filename': '',
+		'raster spacing': 100,
+		'raster limit': 5,
+		'ice box size': 15.0,
+		'ice thickness': 1000.0,
+		'ice min mean': 0.05,
+		'ice max mean': 0.2,
+		'ice max std': 0.2,
+		'focus convolve': False,
+		'focus convolve template': [(0, 0)],
+		'focus constant template': [(0, 0)],
+		'acquisition convolve': False,
+		'acquisition convolve template': [(0, 0)],
+		'acquisition constant template': [(0, 0)],
+	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		targetfinder.TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
-		self.cam = camerafuncs.CameraFuncs(self)
+		#self.cam = camerafuncs.CameraFuncs(self)
 		self.icecalc = ice.IceCalculator()
 		self.rasterpoints = None
 
 		self.userpause = threading.Event()
+		self.images = {
+			'Original': None,
+		}
+		self.imagetargets = {
+			'Original': {},
+			'Raster': {},
+			'Final': {},
+		}
+		# ...
+		self.typenames = ['acquisition', 'focus', 'Raster']
+		self.panel.addTargetTypes(self.typenames)
 
-		#if self.__class__ == ClickTargetFinder:
-		#	self.defineUserInterface()
-		#	self.start()
-		self.defineUserInterface()
 		self.start()
 
-	def defineUserInterface(self):
-		targetfinder.TargetFinder.defineUserInterface(self)
+	def updateImage(self, name, image, targets={}):
+		self.images[name] = image
+		self.imagetargets[name] = targets
+		self.panel.imageUpdated(name, image, targets)
 
-		self.usercheckon = uidata.Boolean('User Check', False, 'rw', persist=True)
-
-		self.testfile = uidata.String('Filename', '', 'rw', persist=True)
-		readmeth = uidata.Method('Read Image', self.readImage)
-		cameraconfigure = self.cam.uiSetupContainer()
-		acqmeth = uidata.Method('Acquire Image', self.acqImage)
-		testmeth = uidata.Method('Test All', self.everything)
-		self.originalimage = uidata.Image('Original', None, 'r')
-		originalcont = uidata.LargeContainer('Original')
-		originalcont.addObjects((self.testfile, readmeth, cameraconfigure, acqmeth, testmeth, self.originalimage))
-
-		### raster points
-		self.rasterspacing = uidata.Integer('Raster Spacing', 100, 'rw', persist=True)
-		self.rasterlimit = uidata.Integer('Raster Limit', 5, 'rw', persist=True)
-		rastermeth = uidata.Method('Create Raster Points', self.createRaster)
-		self.rasterimage = uidata.TargetImage('Raster Points Image', None, 'r')
-		self.rasterimage.addTargetType('Raster Points')
-		rastercont = uidata.LargeContainer('Raster Points')
-		rastercont.addObjects((self.rasterspacing, self.rasterlimit, rastermeth, self.rasterimage))
-
-		## ice analysis
-		self.boxsize = uidata.Float('Stats Box Size', 15.0, 'rw', persist=True)
-		self.icei0 = uidata.Float('Zero Thickness', 1000.0, 'rw', persist=True)
-		self.icetmin = uidata.Float('Minimum Mean Thickness', 0.05, 'rw', persist=True)
-		self.icetmax = uidata.Float('Maximum Mean Thickness', 0.2, 'rw', persist=True)
-		self.icetstd = uidata.Float('Maximum StdDev Thickness', 0.2, 'rw', persist=True)
-		icemeth = uidata.Method('Analyze Ice', self.ice)
-		self.goodice = uidata.Sequence('Good Ice', [], 'r')
-
-		icecont = uidata.Container('Ice Analysis')
-		icecont.addObjects((self.boxsize, self.icei0, self.icetmin, self.icetmax, self.icetstd, icemeth, self.goodice))
-
-		### post processing of targets
-		focuscont = uidata.Container('Focus Targets')
-		self.conv_foc = uidata.Boolean('Do Convolve', False, 'rw', persist=True)
-		self.conv_foc_template = uidata.Sequence('Convolve Template', [], 'rw', persist=True)
-		self.const_foc_template = uidata.Sequence('Constant Template', [], 'rw', persist=True)
-		focuscont.addObjects((self.conv_foc, self.conv_foc_template, self.const_foc_template))
-
-		acqcont = uidata.Container('Acquisition Targets')
-		self.conv_acq = uidata.Boolean('Do Convolve', False, 'rw', persist=True)
-		self.conv_acq_template = uidata.Sequence('Convolve Template', [], 'rw', persist=True)
-		self.const_acq_template = uidata.Sequence('Constant Template', [], 'rw', persist=True)
-		acqcont.addObjects((self.conv_acq, self.conv_acq_template, self.const_acq_template))
-
-		postcont = uidata.Container('Target Post Processing')
-		postcont.addObjects((focuscont, acqcont))
-
-		## image
-		self.goodiceimage = uidata.TargetImage('Good Ice Image', None, 'r')
-		self.goodiceimage.addTargetType('acquisition', [], (0,255,0))
-		self.goodiceimage.addTargetType('focus', [], (0,0,255))
-
-		submitmeth = uidata.Method('Submit', self.submit)
-
-		goodicecontainer = uidata.LargeContainer('Good Ice')
-		goodicecontainer.addObjects((icecont, postcont, self.goodiceimage, submitmeth))
-
-		container = uidata.LargeContainer('Raster Finder')
-		container.addObjects((self.usercheckon, originalcont, rastercont, goodicecontainer))
-		self.uicontainer.addObject(container)
-
-	def readImage(self):
-		filename = self.testfile.get()
+	def readImage(self, filename):
 		orig = Mrc.mrc_to_numeric(filename)
 		self.original = orig
-		self.originalimage.set(orig)
+		self.updateImage('Original', orig)
 
+	'''
 	def acqImage(self):
-		self.cam.uiApplyAsNeeded()
+		self.cam.setCameraDict(self.settings['camera settings'])
 		imdata = self.cam.acquireCameraImageData()
 		orig = imdata['image']
 		self.original = orig
-		self.originalimage.set(orig)
+		self.updateImage('Original', orig)
+	'''
 
 	def transpose_points(self, points):
 		newpoints = []
@@ -125,8 +95,8 @@ class RasterFinder(targetfinder.TargetFinder):
 		from center of image, generate a raster of points
 		'''
 		imageshape = self.original.shape
-		spacing = self.rasterspacing.get()
-		limit = self.rasterlimit.get()
+		spacing = self.settings['raster spacing']
+		limit = self.settings['raster limit']
 		rcenter = imageshape[0]/2
 		ccenter = imageshape[1]/2
 		points = []
@@ -138,8 +108,7 @@ class RasterFinder(targetfinder.TargetFinder):
 				if c < 0 or c >= imageshape[1]: continue
 				points.append((r,c))
 
-		self.rasterimage.setImage(self.original)
-		self.rasterimage.setTargetType('Raster Points', self.transpose_points(points))
+		self.updateImage('Raster', None, {'Raster': self.transpose_points(points)})
 		self.rasterpoints = points
 		self.logger.info('Full raster has %s points' % (len(points),))
 
@@ -165,11 +134,11 @@ class RasterFinder(targetfinder.TargetFinder):
 		return stats
 
 	def ice(self):
-		i0 = self.icei0.get()
-		tmin = self.icetmin.get()
-		tmax = self.icetmax.get()
-		tstd = self.icetstd.get()
-		boxsize = self.boxsize.get()
+		i0 = self.settings['ice thickness']
+		tmin = self.settings['ice min mean']
+		tmax = self.settings['ice max mean']
+		tstd = self.settings['ice max std']
+		boxsize = self.settings['ice box size']
 
 		self.icecalc.set_i0(i0)
 
@@ -193,35 +162,31 @@ class RasterFinder(targetfinder.TargetFinder):
 		goodpoints = self.transpose_points(goodpoints)
 		self.logger.info('%s points with good ice' % (len(goodpoints),))
 
-		self.goodice.set(mylist)
-		self.goodiceimage.setImage(self.original)
-		self.goodiceimage.imagedata = self.currentimagedata
-
 		### run template convolution
 		# takes x,y instead of row,col
-		if self.conv_foc.get():
+		if self.settings['focus convolve']:
 			focus_points = self.applyTargetTemplate(goodpoints, 'focus')
 		else:
 			focus_points = []
-		if self.conv_acq.get():
+		if self.settings['acquisition convolve']:
 			acq_points = self.applyTargetTemplate(goodpoints, 'acquisition')
 		else:
 			acq_points = goodpoints
 
 		## add constant targets
-		const_foc = self.const_foc_template.get()
+		const_foc = self.settings['focus constant template']
 		focus_points.extend(const_foc)
-		const_acq = self.const_acq_template.get()
+		const_acq = self.settings['acquisition constant template']
 		acq_points.extend(const_acq)
 
-		self.goodiceimage.setTargetType('acquisition', acq_points)
-		self.goodiceimage.setTargetType('focus', focus_points)
+		self.updateImage('Final', None,
+											{'acquisition': acq_points, 'focus': focus_points})
 
 	def applyTargetTemplate(self, centers, type):
 		if type == 'focus':
-			vects = self.conv_foc_template.get()
+			vects = self.settings['focus convolve template']
 		elif type == 'acquisition':
-			vects = self.conv_acq_template.get()
+			vects = self.settings['acquisition convolve template']
 		newtargets = []
 		for center in centers:
 			for vect in vects:
@@ -245,15 +210,15 @@ class RasterFinder(targetfinder.TargetFinder):
 		self.everything()
 
 		## user part
-		if self.usercheckon.get():
+		if self.settings['user check']:
 			self.notifyUserSubmit()
 			self.userpause.clear()
 			self.userpause.wait()
 			self.unNotifyUserSubmit()
 
 		## the new way
-		self.targetsFromClickImage(self.goodiceimage, 'focus', targetlist)
-		self.targetsFromClickImage(self.goodiceimage, 'acquisition', targetlist)
+		self.publishTargets(imdata, 'focus', targetlist)
+		self.publishTargets(imdata, 'acquisition', targetlist)
 
 	def submit(self):
 		self.userpause.set()
