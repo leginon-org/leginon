@@ -198,7 +198,8 @@ class LabeledLine(ArrowLine):
 		self.selectedlabel = None
 
 	def labelText(self, binding):
-		return str(binding[0])
+		#return str(binding[0])
+		return str(binding[0])[14:-2]
 		
 	def createline(self, originposition, destinationposition):
 		ArrowLine.createline(self, originposition, destinationposition)
@@ -387,7 +388,7 @@ class NodeLabel(object):
 		self.label.bind('<Button-3>', self.rightClick)
 
 	def argsLabel(self, args):
-		return "Name: %s\nClass: %s\nLauncher: %s\nProcess: %s\nArgumentss: %s" \
+		return "Name: %s\nClass: %s\nLauncher: %s\nProcess: %s\nArguments: %s" \
 																% (args[3], args[2], args[0], args[1], args[4])
 
 	def rightClick(self, ievent):
