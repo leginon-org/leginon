@@ -296,23 +296,25 @@ class Manager(node.Node):
 		'''Event handler for registering a node with the manager. Initializes a client for the node and adds information regarding the node's location.'''
 		nodeid = readyevent['id'][:-1]
 #		self.printerror('registering node ' + str(nodeid))
+		nodelocationdata = self.datahandler.query(nodeid)
+		if nodelocationdata is not None:
+			self.killNode(nodeid)
 
 		nodelocation = readyevent['location']
+		classstring = readyevent['nodeclass']
 
 		# check if new node is launcher
-		if readyevent['nodeclass'] == 'Launcher':
+		if classstring == 'Launcher':
 			self.addLauncher(nodeid, nodelocation)
 
 		# for the clients and mapping
 		self.addClient(nodeid, nodelocation)
 
 		# published data of nodeid mapping to location of node
-		nodelocationdata = self.datahandler.query(nodeid)
-		if nodelocationdata is None:
-			nodelocationdata = data.NodeLocationData(id=nodeid, location=nodelocation)
-		else:
-			# fools! should do something nifty to unregister, reregister, etc.
-			nodelocationdata = data.NodeLocationData(id=nodeid, location=nodelocation)
+		initializer = {'id': nodeid,
+										'location': nodelocation,
+										'class string': classstring}
+		nodelocationdata = data.NodeLocationData(initializer=initializer)
 		self.datahandler.insert(nodelocationdata)
 
 		self.confirmEvent(readyevent)
@@ -644,6 +646,7 @@ class Manager(node.Node):
 			if nodelocationdata is not None:
 				nodelocation = nodelocationdata['location']
 				nodeinfo[str(nodeid)] = nodelocation
+				nodeinfo[str(nodeid)]['class'] = nodelocationdata['class string']
 		return nodeinfo
 
 	def uiAddNode(self):

@@ -363,6 +363,7 @@ class NodeLocationData(LocationData):
 	def typemap(cls):
 		t = LocationData.typemap()
 		t += [ ('location', dict), ]
+		t += [ ('class string', str), ]
 		return t
 	typemap = classmethod(typemap)
 
