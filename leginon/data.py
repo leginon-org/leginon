@@ -5,10 +5,9 @@ import array
 import Numeric
 import strictdict
 
-## How to define a new leginon data type:
-##   Subclass Data or a subclass of Data.  Override the typemap() class
-## method to define the types of the items contained in the class
-##   
+## Unresolved issue:
+##  It would be nice if you could cast one Data type to another
+##  Right now that will probably result in a key error
 
 class DataDict(strictdict.TypedDict):
 	'''
@@ -30,6 +29,7 @@ class DataDict(strictdict.TypedDict):
 	classes.
 	'''
 	def __init__(self, map_or_seq=None):
+		self.__class__.typemap = classmethod(self.__class__.typemap)
 		strictdict.TypedDict.__init__(self, map_or_seq, type_map_or_seq=self.typemap())
 
 	def typemap(cls):
@@ -44,7 +44,7 @@ class DataDict(strictdict.TypedDict):
 
 class Data(DataDict, leginonobject.LeginonObject):
 	'''
-	Inherits DataDict and LeginonObject to for the base class
+	Combines DataDict and LeginonObject to create the base class
 	for all leginon data.
 	'''
 	def __init__(self, id, initializer=None, **kwargs):
@@ -52,29 +52,75 @@ class Data(DataDict, leginonobject.LeginonObject):
 		leginonobject.LeginonObject.__init__(self, id)
 		# DataDict base class
 		DataDict.__init__(self)
-		# initial values
-		self['id'] = id
+		
+		# initial values come from LeginonObject's attributes
+		self['id'] = self.id
+		self['session'] = self.session
+
+		# if initializer was given, update my values
 		if initializer is not None:
 			self.update(initializer)
+		# additional keyword arguments also update my values
 		self.update(kwargs)
 
 	def typemap(cls):
-		t = DataDict.typemap() + [('id', tuple)]
+		t = DataDict.typemap()
+		t += [
+			('id', tuple),
+			('session', str),
+		]
 		return t
 	typemap = classmethod(typemap)
+
+## How to define a new leginon data type:
+##   - Inherit Data or a subclass of Data.
+##   - do not overload the __init__ method (unless you have a good reason)
+##   - Override the typemap(cls) class method
+##   - make sure typemap is defined as a classmethod:
+##      typemap = classmethod(typemap)
+##   - typemap() should return a sequence mapping, usually a list
+##       of tuples:   [ (key, type), (key, type),... ]
 
 class NewData(Data):
 	'''
 	Example of a new data type
 	'''
-	def __init__(self, id, initializer=None, **kwargs):
-		Data.__init__(self, id, initializer, **kwargs)
-
 	def typemap(cls):
-		t1 = Data.typemap()
-		t2 = [ ('stuff', int) ]
-		return t1 + t2
+		t = Data.typemap()
+		t += [
+			('stuff', int),
+			('thing', float),
+		]
+		return t
 	typemap = classmethod(typemap)
+
+
+class NumericData(Data):
+	'''
+	Example of a new data type
+	'''
+	def typemap(cls):
+		t = Data.typemap()
+		t += [
+			('array', Numeric.ArrayType),
+		]
+		return t
+	typemap = classmethod(typemap)
+
+
+class ImageData(NumericData):
+	'''
+	Example of a new data type
+	'''
+	def typemap(cls):
+		t = NumericData.typemap()
+		t += [
+			('numeric', NumericData),
+		]
+		return t
+	typemap = classmethod(typemap)
+
+
 
 
 class OLDData(leginonobject.LeginonObject):
@@ -83,27 +129,27 @@ class OLDData(leginonobject.LeginonObject):
 		leginonobject.LeginonObject.__init__(self, id)
 		self.content = content
 
-class IntData(Data):
+class OLDIntData(Data):
 	'''Integer data.'''
 	def __init__(self, id, content):
 		Data.__init__(self, id, int(content))
 
-class StringData(Data):
+class OLDStringData(Data):
 	'''String data.'''
 	def __init__(self, id, content):
 		Data.__init__(self, id, str(content))
 
-class EMData(Data):
+class OLDEMData(Data):
 	'''EM data. Dictionary of keys to values.'''
 	def __init__(self, id, content):
 		Data.__init__(self, id, dict(content))
 
-class DBData(Data):
+class OLDDBData(Data):
 	'''Database data.'''
 	def __init__(self, id, content):
 		Data.__init__(self, id, dict(content))
 
-class ImageData(Data):
+class OLDImageData(Data):
 	'''
 	self.content will be a dict with the following keys
 	   'image':  the Numeric array representation of the image
@@ -112,7 +158,7 @@ class ImageData(Data):
 		content = {'image':image}
 		Data.__init__(self, id, content)
 
-class CameraImageData(ImageData):
+class OLDCameraImageData(ImageData):
 	'''
 	ImageData that originates from a camera
 	self.content will be a dict with the following keys
@@ -124,24 +170,24 @@ class CameraImageData(ImageData):
 		ImageData.__init__(self, id, image)
 		self.content.update({'scope':scope, 'camera':camera})
 
-class LocationData(Data):
+class OLDLocationData(Data):
 	'''Has data ID, but content is the location of the real data. Used by Manager.'''
 	def __init__(self, id, content):
 		Data.__init__(self, id, content)
 
-class NodeLocationData(LocationData):
+class OLDNodeLocationData(LocationData):
 	'''Node ID is the data ID, but content is the location of the node. Used by Manager.'''
 	def __init__(self, id, content):
 		LocationData.__init__(self, id, dict(content))
 	def __repr__(self):
 			return "<NodeLocationData for %s> %s" % (self.id, self.content)
 
-class NodeClassesData(Data):
+class OLDNodeClassesData(Data):
 	'''Node Classes data.'''
 	def __init__(self, id, content):
 		Data.__init__(self, id, tuple(content))
 
-class DataLocationData(LocationData):
+class OLDDataLocationData(LocationData):
 	'''Has data ID, but content is a list of node IDs where the data is located. Used by Manager.'''
 	def __init__(self, id, content):
 		LocationData.__init__(self, id, list(content))
@@ -149,13 +195,13 @@ class DataLocationData(LocationData):
 		'''Returns a readable format.'''
 		return "<DataLocationData for %s> %s" % (self.id, self.content)
 
-class NumericData(Data):
+class OLDNumericData(Data):
 	def __init__(self, id, content):
 		if type(content) != Numeric.ArrayType:
 			raise RuntimeError('content must be Numeric array')
 		Data.__init__(self, id, content)
 
-class DBRecordData(Data):
+class OLDDBRecordData(Data):
 	def __init__(self, id, content):
 		Data.__init__(self, id, dict(content))
 		# validate content
@@ -165,28 +211,50 @@ class DBRecordData(Data):
 			raise RuntimeError('invalid content for DBRecordData')
 		# maybe check that 'record' contains a dict
 
-class CalibrationData(Data):
+class OLDCalibrationData(Data):
 	def __init__(self, id, content):
-		Data.__init__(self, id, content)
+		Data.__init__(self, id, dict(content))
 
-class MatrixCalibrationData(CalibrationData):
-	def __init__(self, id, matrix):
+class OLDMatrixCalibrationData(CalibrationData):
+	EXAMPLE = {
+		'magnification': 5,
+		'type': 'test',
+		'matrix': Numeric.array([[1.0,2.0],[3.0,4.0]], Numeric.Float64)
+	}
+	def __init__(self, id, magnification, type, matrix):
 		try:
+			if matrix.shape != (2,2):
+				raise ValueError('matrix must be 2x2')
 			matrixcontent = matrix.astype(Numeric.Float64)
-			CalibrationData.__init__(self, id, matrixcontent)
 		except AttributeError:
 			print 'MatrixCalibrationData requires Numeric array'
-			raise
+			raise TypeError('matrix must be 2x2 Numeric array')
 
-class PresetData(Data):
+		content = {'magnification': int(magnification), 'type': str(type), 'matrix': matrixcontent}
+		CalibrationData.__init__(self, id, content)
+
+class OLDPresetData(Data):
+	EXAMPLE = {
+		'spot size': 5,
+		'magnification': 50,
+		'image shift': {'x': 0.555, 'y': 0.888},
+		'beam shift': {'x': 0.555, 'y': 0.888},
+		'intensity': 0.555,
+		'defocus': -2e-6,
+
+		'dimension': {'x': 512, 'y': 512},
+		'binning': {'x': 2, 'y': 2},
+		'offset': {'x':512, 'y':300},
+		'exposure time': 500
+	}
 	def __init__(self, id, content):
 		Data.__init__(self, id, dict(content))
 
-class CorrelationData(Data):
+class OLDCorrelationData(Data):
 	def __init__(self, id, content):
 		Data.__init__(self, id, dict(content))
 
-class CorrelationImageData(ImageData):
+class OLDCorrelationImageData(ImageData):
 	'''
 	ImageData that results from a correlation of two images
 	content has the following keys:
@@ -198,40 +266,40 @@ class CorrelationImageData(ImageData):
 		ImageData.__init__(self, id, image)
 		self.content.update({'subject1':subject1, 'subject2':subject2})
 
-class CrossCorrelationImageData(CorrelationImageData):
+class OLDCrossCorrelationImageData(CorrelationImageData):
 	def __init__(self, id, image, subject1, subject2):
 		CorrelationImageData.__init__(self, id, image, subject1, subject2)
 
-class PhaseCorrelationImageData(CorrelationImageData):
+class OLDPhaseCorrelationImageData(CorrelationImageData):
 	def __init__(self, id, image, subject1, subject2):
 		CorrelationImageData.__init__(self, id, image, subject1, subject2)
 
-class CorrectionImageData(CameraImageData):
+class OLDCorrectionImageData(CameraImageData):
 	def __init__(self, id, image, scope, camera):
 		CameraImageData.__init__(self, id, image, scope, camera)
 
-class DarkImageData(CorrectionImageData):
+class OLDDarkImageData(CorrectionImageData):
 	def __init__(self, id, image, scope, camera):
 		CorrectionImageData.__init__(self, id, image, scope, camera)
 
-class BrightImageData(CorrectionImageData):
+class OLDBrightImageData(CorrectionImageData):
 	def __init__(self, id, image, scope, camera):
 		CorrectionImageData.__init__(self, id, image, scope, camera)
 
-class TileImageData(CameraImageData):
+class OLDTileImageData(CameraImageData):
 	'''Contains a 2-D Numeric array of the image data and a list of neighboring image tile ID's.'''
 	def __init__(self, id, image, scope, camera, neighbortiles):
 		CameraImageData.__init__(self, id, image, scope, camera)
 		self.content.update({'neighbor tiles':neighbortiles})
 
-class MosaicImageData(CameraImageData):
+class OLDMosaicImageData(CameraImageData):
 	def __init__(self, id, image, scope, camera):
 		CameraImageData.__init__(self, id, image, scope, camera)
 		## scope and camera may not be useful if the mosaic is
 		## mangled too much, maybe something else useful to put
 		## here
 
-class PresetImageData(CameraImageData):
+class OLDPresetImageData(CameraImageData):
 	'''
 	Adds preset to CameraImageData
 	Because of targeting issues, it is necessary to track the preset
@@ -241,16 +309,16 @@ class PresetImageData(CameraImageData):
 		CameraImageData.__init__(self, id, image, scope, camera)
 		self.content.update({'preset':preset})
 
-class StateMosaicData(Data):
+class OLDStateMosaicData(Data):
 	'''Contains data ID of images mapped to their position and state.'''
 	def __init__(self, id, content):
 		Data.__init__(self, id, dict(content))
 
-class ImageTargetData(Data):
+class OLDImageTargetData(Data):
 	def __init__(self, id, content):
 		Data.__init__(self, id, dict(content))
 
-class ImageTargetListData(Data):
+class OLDImageTargetListData(Data):
 	def __init__(self, id, content):
 		Data.__init__(self, id, list(content))
 
