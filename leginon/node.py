@@ -12,7 +12,7 @@ class Client(datatransport.Client):
 		if isinstance(ievent, event.Event):
 			datatransport.Client.push(self, ievent)
 		else:
-			raise InvalidEventError('event must be Event instance')
+			raise event.InvalidEventError('event must be Event instance')
 
 class NodeDataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
 	def __init__(self):
@@ -34,7 +34,7 @@ class NodeDataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
 		if issubclass(eventclass, event.Event):
 			datahandler.DataBinder.setBinding(self, eventclass, func)
 		else:
-			raise InvalidEventError('eventclass must be Event subclass')
+			raise event.InvalidEventError('eventclass must be Event subclass')
 
 class Node(leginonobject.LeginonObject):
 	def __init__(self, nodeid, managerloc = None, dh = NodeDataHandler, dhargs = (), clientclass = Client):
