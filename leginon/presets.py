@@ -118,12 +118,10 @@ class PresetsClient(object):
 	def getPreset(self, key):
 		try:
 			presetdata = self.node.researchByDataID('presets')
-			print 'PRESETS', presetdata.content
 		except:
 			print 'PresetClient unable to use presets.  Is a PresetsManager node running?'
 			raise
 		try:
-			print 'presetkey', key
 			presetdict = presetdata.content[key]
 			dictcopy = copy.deepcopy(presetdict)
 			presetvalue = PresetDict()
@@ -165,7 +163,6 @@ class DataHandler(datahandler.DataBinder):
 	def query(self, id):
 		cal = self.node.getPresets()
 		result = data.PresetData(self.ID(), cal)
-		print 'RESULT', result.content
 		return result
 
 	def insert(self, idata):
@@ -235,7 +232,9 @@ class PresetsManager(node.Node):
 
 		test = self.registerUIContainer('Test', (store, restore))
 
-		self.registerUISpec('Presets Manager', (test, nodespec))
+		myspec = self.registerUISpec('Presets Manager', (test,))
+		myspec += nodespec
+		return myspec
 
 	def uiStoreCurrent(self, name):
 		preset = self.presetsclient.fromScope()
