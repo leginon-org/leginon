@@ -27,7 +27,7 @@ public class GuiContainer {
 		build();
 	}
 
-	public void refresh() {}
+	public void refresh() throws Exception {}
 
 	private void build() throws Exception {
 		JPanel mainPanel =new JPanel();	
@@ -51,14 +51,68 @@ public class GuiContainer {
 	}
 }
 
-class GuiMethod {
+abstract class AbstractDataModel {
+
+	public Object dataClass(XmlRpcClient xmlrpcclient, Hashtable spec, Vector widgets, JPanel mainPanel) throws Exception {
+			String type  = (String)spec.get("spectype");
+			String name = (String)spec.get("name");
+			String xmlrpctype  = (String)spec.get("xmlrpctype");
+			String id = (String)spec.get("id");
+
+			if (spec.containsKey("permissions")) {
+				JPanel permPanel =new JPanel();	
+				permPanel.setLayout(new BoxLayout(permPanel, BoxLayout.X_AXIS));
+				String permissions = (String)spec.get("permissions");
+				if (permissions.matches("^[a-zA-Z]*[rR][a-zA-Z]*"))
+					new AddButton ("Get", xmlrpcclient, "GET", id, widgets, permPanel);
+				if (permissions.matches("^[a-zA-Z]*[wW][a-zA-Z]*"))
+					new AddButton ("Set", xmlrpcclient, "SET", id, widgets, permPanel);
+				mainPanel.add(permPanel);
+			}
+
+			Object defaultval = null;
+			if (spec.containsKey("default")) {
+				defaultval = spec.get("default");
+			}
+
+			if (spec.containsKey("choices")) {
+				Hashtable choices = (Hashtable)spec.get("choices");
+				String choices_type = (String)choices.get("type");
+				String choices_id = (String)choices.get("id");
+				if (choices_type.equals("array"))
+					return new AddComboBox(name, xmlrpcclient, choices_id, widgets, mainPanel);
+				if (choices_type.equals("struct"))
+					return new TreeData(name, xmlrpcclient, choices_id, widgets, mainPanel);
+			} 
+
+			if (xmlrpctype.matches("string|integer|float|array"))
+    				return new AddTextField(20, defaultval, xmlrpctype, widgets, mainPanel);
+
+			if (xmlrpctype.equals("boolean"))
+				return new AddCheckBox(name, widgets, mainPanel);
+
+			if (xmlrpctype.equals("struct")) 
+				return new TreeData(name, xmlrpcclient, id, (Hashtable)defaultval, widgets, mainPanel);
+
+			if (xmlrpctype.equals("binary"))
+		 		return new ImageData(name, xmlrpcclient, id, widgets, mainPanel);
+	
+
+			return Object.class;
+
+	}
+}
+
+class GuiMethod extends AbstractDataModel {
 
 	private XmlRpcClient xmlrpcclient;
 	private Hashtable spec;
 	private Container c;
 	private Vector argspec;
+	private Hashtable returnspec;
 	private Vector widgets;
 	private String name;
+	private JPanel mainPanel;
 
 	public GuiMethod(XmlRpcClient xmlrpcclient, Hashtable specWidget, Container c) throws Exception {
 		this.xmlrpcclient=xmlrpcclient;
@@ -81,58 +135,39 @@ class GuiMethod {
 			}
 	}
 
+
 	private void build() throws Exception {
-		JPanel mainPanel =new JPanel();	
+		mainPanel =new JPanel();	
 		String Mname = (String)spec.get("name");
 		String Mid = (String)spec.get("id");
 		mainPanel.setBorder(new javax.swing.border.TitledBorder(Mname));
                 mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 		argspec = (Vector)spec.get("argspec");
+		returnspec = (Hashtable)spec.get("returnspec");
 		Vector args = new Vector();
 		widgets = new Vector();
 		String xmlrpctype = "";
+		String type  = "";
+		String name = "";
+		String id = "";
+
 		
 		if (argspec instanceof Vector)
-		for (Enumeration e = argspec.elements() ; e.hasMoreElements() ;) {
-			Hashtable o = (Hashtable)e.nextElement();
-			String type  = (String)o.get("spectype");
-			String name = (String)o.get("name");
-			xmlrpctype  = (String)o.get("xmlrpctype");
-			String id = (String)o.get("id");
-
-			Object defaultval = null;
-			if (spec.containsKey("default")) {
-				defaultval = spec.get("default");
+			for (Enumeration e = argspec.elements() ; e.hasMoreElements() ;) {
+				Hashtable o = (Hashtable)e.nextElement();
+				dataClass(xmlrpcclient, o, widgets, mainPanel);
 			}
-
-			if (o.containsKey("choices")) {
-				Hashtable choices = (Hashtable)o.get("choices");
-				String choices_type = (String)choices.get("type");
-				String choices_id = (String)choices.get("id");
-				if (choices_type.equals("array"))
-					new AddComboBox(name, xmlrpcclient, choices_id, widgets, mainPanel);
-				if (choices_type.equals("struct"))
-					new TreeData(name, xmlrpcclient, choices_id, widgets, mainPanel);
-			} else
-
-			if (xmlrpctype.matches("string|integer|float|array"))
-    				new AddTextField(name, 20, defaultval, xmlrpctype, widgets, mainPanel);
-
-			if (xmlrpctype.equals("boolean"))
-				new AddCheckBox(name, widgets, mainPanel);
-
-			if (xmlrpctype.equals("struct")) {
-				new TreeData(name, xmlrpcclient, id, (Hashtable)defaultval, widgets, mainPanel);
-			}
-	
-		}
 
 		new AddButton (Mname, xmlrpcclient, Mid, widgets, mainPanel);
+
+		if (returnspec instanceof Hashtable)
+			dataClass(xmlrpcclient, returnspec, widgets, mainPanel);
+
 		c.add(mainPanel);
 	}
 }
 
-class GuiData {
+class GuiData extends AbstractDataModel {
 	private XmlRpcClient xmlrpcclient;
 	private Hashtable spec;
 	private Container c;
@@ -163,49 +198,15 @@ class GuiData {
 	}
 
 	private void build() throws Exception {
-		name = (String)spec.get("name");
-		xmlrpctype  = (String)spec.get("xmlrpctype");
-		String id = (String)spec.get("id");
 		widgets = new Vector();
-
 		JPanel mainPanel =new JPanel();	
+		name = (String)spec.get("name");
 		mainPanel.setBorder(new javax.swing.border.TitledBorder(name));
                 mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 
-		if (spec.containsKey("permissions")) {
-			JPanel permPanel =new JPanel();	
-                	permPanel.setLayout(new BoxLayout(permPanel, BoxLayout.X_AXIS));
-			String permissions = (String)spec.get("permissions");
-			if (permissions.matches("^[a-zA-Z]*[rR][a-zA-Z]*"))
-				new AddButton ("Get", xmlrpcclient, "GET", id, widgets, permPanel);
-			if (permissions.matches("^[a-zA-Z]*[wW][a-zA-Z]*"))
-				new AddButton ("Set", xmlrpcclient, "SET", id, widgets, permPanel);
-			mainPanel.add(permPanel);
-		}
+		dataClass(xmlrpcclient, spec, widgets, mainPanel);
 
-		Object defaultval = null;
-		if (spec.containsKey("default")) {
-			defaultval = spec.get("default");
-		} 
 
-		if (spec.containsKey("choices")) {
-				Hashtable choices = (Hashtable)spec.get("choices");
-				String choices_type = (String)choices.get("type");
-				String choices_id = (String)choices.get("id");
-				if (choices_type.equals("array"))
-					new AddComboBox(name, xmlrpcclient, choices_id, widgets, mainPanel, true);
-				if (choices_type.equals("struct"))
-					new TreeData(name, xmlrpcclient, choices_id, widgets, mainPanel);
-		} else
-		if (xmlrpctype.matches("string|integer|float|array")) {
-			new AddTextField(20, defaultval, xmlrpctype, widgets, mainPanel);
-		} else
-		if (xmlrpctype.equals("boolean")) {
-			new AddCheckBox(name, widgets, mainPanel);
-		} else
-		if (xmlrpctype.equals("struct")) {
-			new TreeData(name, xmlrpcclient, id, (Hashtable)defaultval, widgets, mainPanel);
-		}
 		c.add(mainPanel,name);
 	}
 }
@@ -326,6 +327,8 @@ class AddTextField {
 	public AddTextField(int size, Object defaultval, String xmlrpctype, Vector widgets, Container c) {
 		this(null, size, defaultval, xmlrpctype, widgets, c);
 	}
+
+	public AddTextField() {}
 	
 	public Object getValue() {
 		String value = textField.getText();
@@ -402,7 +405,7 @@ class AddButton {
 					args = getData(widgets);
 				}
 					// Display xmlRPC command
-					// System.out.println("xmlrpcclient.execute("+cmdxmlrpc+", "+args+");");
+					System.out.println("xmlrpcclient.execute("+cmdxmlrpc+", "+args+");");
 					Object result = xmlrpcclient.execute(cmdxmlrpc, args);
 					
 					refresh(widgets, result);
@@ -429,6 +432,12 @@ class AddButton {
 				AddTextField t = (AddTextField)o;
 				if (result!=null)
 				t.update(""+result);
+			} else if (o instanceof ImageData) {
+				ImageData i = (ImageData)o;
+				if (result!=null)
+					i.update(result);
+				
+				
 			}
 		}
 	}
@@ -473,6 +482,46 @@ class AddButton {
 		}
 		return args;
 	}
+
+}
+
+class ImageData {
+	private String name, id;
+	private XmlRpcClient xmlrpcclient;
+	private Container c;
+	private Vector widgets;
+	private JScrollPane hashPane;
+	private ImageMRCViewer gui;
+
+	public ImageData(String name, XmlRpcClient xmlrpcclient, String id, Vector widgets, Container c) throws Exception  {
+		this.name=name;
+		this.xmlrpcclient=xmlrpcclient;
+		this.id=id;
+		this.widgets=widgets;
+		this.c = c;
+		build();
+	}
+	
+	public void update(Object data) throws Exception {
+		if (data instanceof byte[]) {
+			ImageMRC img = new ImageMRC(b);
+			gui.setImage(img);
+		}
+	}
+
+	private void build() {
+		gui = new ImageMRCViewer();
+        	c.add(gui);
+		widgets.add(this);
+	}
+
+	private void getData(String id) throws Exception {
+		Vector param = new Vector(1);
+		param.add(id);
+		Object data = xmlrpcclient.execute("GET", param);
+		update(data);
+	}
+	
 
 }
 
