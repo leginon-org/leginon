@@ -10,7 +10,7 @@ class wxOrderedListBox(wxPanel):
 		self.sizer = wxBoxSizer(wxHORIZONTAL)
 		self.SetSizer(self.sizer)
 		self.listlistbox = wxListBox(self, -1, style=wxLB_EXTENDED|wxLB_NEEDED_SB)
-		self.sizer.Add(self.listlistbox, 0, wxALL | wxADJUST_MINSIZE, 3)
+		self.sizer.Add(self.listlistbox, 0, wxALL, 3) # | wxADJUST_MINSIZE, 3)
 
 		self.selectbutton = wxButton(self, -1, '>', style=wxBU_EXACTFIT)
 		self.unselectbutton = wxButton(self, -1, '<', style=wxBU_EXACTFIT)
@@ -26,7 +26,7 @@ class wxOrderedListBox(wxPanel):
 
 		self.selectedlistbox = wxListBox(self, -1,
 																			style=wxLB_EXTENDED|wxLB_NEEDED_SB)
-		self.sizer.Add(self.selectedlistbox, 0, wxALL | wxADJUST_MINSIZE, 3)
+		self.sizer.Add(self.selectedlistbox, 0, wxALL, 3) # | wxADJUST_MINSIZE, 3)
 		self.sizer.Layout()
 		self.Fit()
 		self.Show(true)

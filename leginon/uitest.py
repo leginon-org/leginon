@@ -24,7 +24,11 @@ server.addObject(uidata.Integer('asdf', 39, 'rw'))
 server2.addObject(uidata.String('asdf', 'asdfkjlaksdf', 'rw'))
 bar1 = uidata.MediumContainer('bar 1')
 bar2 = uidata.ExternalContainer('bar 2')
-bar2.addObject(uidata.SelectFromList('List Select X', [5,3,'b',2,3,'foo'], [2]))
+ls = uidata.SelectFromList('List Select X', [5,3,'b',2,3,5,6,7], [2])
+bar1.addObject(ls)
+def har():
+	ls.setList(ls.getList() + [1])
+bar1.addObject(uidata.Method('add', har))
 foo1 = uidata.MediumContainer('foo 1')
 foo2 = uidata.MediumContainer('foo 2')
 foo2.addObject(uidata.Integer('Test Int', 42, 'r'))
@@ -41,6 +45,7 @@ testdata.set('set string')
 p = uidata.Progress('Progress Bar', 25)
 bar1.addObject(p)
 
+'''
 server.addObject(bar2)
 #bar1.addObject(uidata.MessageDialog('MD 1', 'This is a dialog'))
 foo1.addObject(uidata.SingleSelectFromList('List Select 1', [1,2,3], 1))
@@ -63,8 +68,11 @@ bar2.addObject(image2)
 
 def gar(foo):
 	print foo
+
+
 clickimage = uidata.ClickImage('Click Image', gar, image)
 bar1.addObject(clickimage)
+'''
 
 foo1.addObject(uidata.Method('Method 1', bar))
 foo1.addObject(uidata.Boolean('Boolean 1', 1, 'r'))
