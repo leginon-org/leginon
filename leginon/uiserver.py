@@ -219,7 +219,7 @@ class Server(XMLRPCServer, uidata.Container):
 		for client in self.uiclients:
 			# delete if fail?
 			try:
-				client.execute('SETTINGS', (namelist, settings))
+				client.execute('CONFIGURE', (namelist, settings))
 			except xmlrpclib.ProtocolError, e:
 				print 'Error setting settings client ' + str(client) + ': ' + str(e)
 

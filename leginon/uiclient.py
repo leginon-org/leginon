@@ -171,7 +171,8 @@ class UIClient(XMLRPCClient, uiserver.XMLRPCServer):
 		else:
 			self.execute('COMMAND', (namelist, args))
 
-	def addFromServer(self, dependencies, namelist, typelist, value, configuration):
+	def addFromServer(self, dependencies, namelist, typelist, value,
+										configuration):
 		raise NotImplementedError
 
 	def setFromServer(self, namelist, value):
@@ -190,7 +191,8 @@ class wxUIClient(UIClient):
 		UIClient.__init__(self, serverhostname, serverport, port)
 		threading.Thread(target=self.addServer, args=()).start()
 
-	def addFromServer(self, dependencies, namelist, typelist, value, configuration):
+	def addFromServer(self, dependencies, namelist, typelist, value,
+										configuration):
 		evt = AddWidgetEvent(dependencies, namelist, typelist, value, configuration)
 		wxPostEvent(self.container.widgethandler, evt)
 		return ''
@@ -359,9 +361,7 @@ class wxContainerWidget(wxWidget):
 				evt.namelist = evt.namelist[1:]
 				wxPostEvent(child.widgethandler, evt)
 				return
-#		print '***adding', evt.namelist, 'type', evt.__class__.__name__, 'to pending children'
 		self.pending.append(evt)
-		#raise ValueError('No such child to add widget')
 
 	def onAddWidget(self, evt):
 		if len(evt.namelist) == 1:
