@@ -42,7 +42,7 @@ class CameraFuncs(object):
 			camdata['image data'] = None
 			dataid = self.node.ID()
 			#print 'creating imdata'
-			imdata = data.CameraImageData(dataid, image=numimage, scope=scopedata, camera=camdata)
+			imdata = data.CameraImageData(id=dataid, image=numimage, scope=scopedata, camera=camdata)
 			#print 'created imdata'
 		return imdata
 
@@ -70,46 +70,60 @@ class CameraFuncs(object):
 		except:
 			return None
 
-	def autoOffset(self, camstate):
+	def autoOffset(self, camdata):
 		'''
 		recalculate the image offset from the dimensions
 		to get an image centered on the camera
-		camstate must be a dict with binning and dimmension
-		camstate['offset'] will be set to new value
+		camdata must be a CameraEMData instance
+		camdata['offset'] will be set to new value
 		'''
-		currentcamstate = self.currentCameraEMData()
-		if currentcamstate is None:
+		currentcamdata = self.currentCameraEMData()
+		if currentcamdata is None:
 			sizex = 4096
 			sizey = 4096
 		else:
-			sizex = currentcamstate['camera size']['x']
-			sizey = currentcamstate['camera size']['y'] 
+			sizex = currentcamdata['camera size']['x']
+			sizey = currentcamdata['camera size']['y'] 
 
-		binx = camstate['binning']['x']
-		biny = camstate['binning']['y']
+		binx = camdata['binning']['x']
+		biny = camdata['binning']['y']
 		sizex /= binx
 		sizey /= biny
-		pixx = camstate['dimension']['x']
-		pixy = camstate['dimension']['y']
+		pixx = camdata['dimension']['x']
+		pixy = camdata['dimension']['y']
 		offx = sizex / 2 - pixx / 2
 		offy = sizey / 2 - pixy / 2
 		if offx < 0 or offy < 0 or offx > sizex or offy > sizey:
 			self.node.printerror('invalid dimension or binning produces invalid offset')
-		camstate['offset'] = {'x': offx, 'y': offy}
+		camdata['offset'] = {'x': offx, 'y': offy}
 
 	def configUIData(self):
 		'''
 		returns camera configuration UI object
 		'''
 
-		return uidata.UIStruct('Camera Configuration', None, 'rw', self.config)
+		return uidata.UIStruct('Camera Configuration', None, 'rw', self.uiConfig)
 
-	def config(self, value=None):
+	def uiConfig(self, value=None):
+		'''
+		wrapper around configCameraEMData() so it works with UI
+		'''
+		camdata = data.CameraEMData(initializer=value['state'])
+		value['state'] = camdata
+		newvalue = self.configCameraEMData(value)
+		camstate = copy.deepcopy(dict(newvalue['state']))
+		del camstate['id']
+		del camstate['session']
+		del camstate['system time']
+		newvalue['state'] = camstate
+		return newvalue
+
+	def configCameraEMData(self, value=None):
 		print 'config, value=', value
 		'''
 		keeps track of a camera configuration
 		not necessarily the current camera state
-		(use state for that)
+		(use currentCameraEMData() for that)
 		'''
 		## we will modify value, so make a deep copy
 		value = copy.deepcopy(value)
@@ -124,8 +138,7 @@ class CameraFuncs(object):
 				state['binning']['y'] = state['binning']['x']
 			if value['auto offset']:
 				self.autoOffset(state)
-			### use the modified state
-			value['state'] = state
+			#value['state'] = state
 			self.cameraconfigvalue = value
 
 		## set default values
