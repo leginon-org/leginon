@@ -140,6 +140,7 @@ class BitmapWindow(BufferedWindow):
 
 class ScaledWindow(BitmapWindow):
 	def __init__(self, parent, id):
+		self.fit2page = False
 		self._xscale = 1.0
 		self._yscale = 1.0
 		self._updatedrawing = False
@@ -173,12 +174,16 @@ class ScaledWindow(BitmapWindow):
 		self._updateBlitGeometry()
 
 	def setScale(self, x, y):
+		self.fit2page = False
 		self._setScale(x, y)
 		if self._updatedrawing:
 			self.updateDrawing()
 		if self._refresh:
 			self.Refresh()
 			self._refresh = False
+
+	def setFitToPage(self, fit2page):
+		self.fit2page = fit2page
 
 	def getScale(self):
 		return (self._xscale, self._yscale)
@@ -187,6 +192,26 @@ class ScaledWindow(BitmapWindow):
 		dc.SetUserScale(self._xscale, self._yscale)
 		BitmapWindow._updateDrawing(self, dc)
 		self._updatedrawing = False
+
+	def _setBitmap(self, bitmap):
+		BitmapWindow._setBitmap(self, bitmap)
+		if self.fit2page:
+			self._fitToPage()
+
+	def _onSize(self, evt):
+		BitmapWindow._onSize(self, evt)
+		if self.fit2page:
+			self._fitToPage()
+
+	def _fitToPage(self):
+		try:
+			x = float(self._clientwidth)/self._bitmaprect.width
+			y = float(self._clientheight)/self._bitmaprect.height
+			x = y = min(x, y)
+			self._setScale(x, y)
+		except ZeroDivisionError:
+			return False
+		return True
 
 class CenteredWindow(ScaledWindow):
 	def __init__(self, parent, id):
@@ -399,8 +424,6 @@ if __name__ == '__main__':
 		n = Mrc.mrcstr_to_numeric(open(filename, 'rb').read())
 		return wxBitmapFromNumarray(n, min, max, color)
 
-	scale = 2.0
-
 	def onLeftUp(evt):
 		eventobject = evt.GetEventObject()
 		offset = eventobject.clientToBitmap(evt.m_x, evt.m_y)
@@ -414,7 +437,6 @@ if __name__ == '__main__':
 		xscale, yscale = eventobject.getScale()
 		scale = 2.0**(evt.GetWheelRotation()/evt.GetWheelDelta())
 		eventobject.setScale(xscale*scale, yscale*scale)
-		#eventobject.setScale(xscale*scale, yscale*scale, (evt.m_x, evt.m_y))
 
 	try:
 		filename = sys.argv[1]
