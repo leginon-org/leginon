@@ -209,7 +209,21 @@ class Tecnai(tem.TEM):
 		except KeyError:
 			pass
 		self.tecnai.Gun.Shift = vec
-	
+
+	def getHighTensionStates(self):
+		return ['off', 'on', 'disabled']
+
+	def getHighTensionState(self):
+		state = self.tecnai.Gun.HTState
+		if state == win32com.client.constants.htOff:
+			return 'off'
+		elif state == win32com.client.constants.htOn:
+			return 'on'
+		elif state == win32com.client.constants.htDisabled:
+			return 'disabled'
+		else:
+			raise RuntimeError('unknown high tension state')
+
 	def getHighTension(self):
 		return float(self.tecnai.Gun.HTValue)
 	
