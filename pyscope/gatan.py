@@ -17,9 +17,8 @@ except:
 	import Numeric
 try:
 	import TecnaiCCDWrapper
-	import gatancom
 except ImportError:
-	from pyScope import TecnaiCCDWrapper, gatancom
+	from pyScope import TecnaiCCDWrapper
 
 class Gatan(object):
 	def __init__(self):
@@ -27,7 +26,7 @@ class Gatan(object):
 
 		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
 		try:
-			self.camera = win32com.client.Dispatch('TecnaiCCD.GatanCamera')        
+			self.camera = win32com.client.dynamic.Dispatch('TecnaiCCD.GatanCamera')        
 		except pywintypes.com_error, e:
 			raise RuntimeError('Unable to initialize Gatan interface')
 

@@ -11,19 +11,20 @@ sys.coinit_flags = 0
 import pythoncom
 import pywintypes
 import win32com.client
+import win32com.server.register
 import array
 import mmapfile
-try:
-	import numarray as Numeric
-except:
-	import Numeric
-try:
-	import tietzcom
-except ImportError:
-	from pyScope import tietzcom
+import numarray as Numeric
 
-class Ping:
-	_typelib_guid_ = tietzcom.CLSID
+CAMC4CameraCLSID = '{4AB9E74C-AC91-43D3-8973-5EE5F4467461}'
+
+try:
+	win32com.client.gencache.EnsureModule(CAMC4CameraCLSID, 0, 1, 0, 0)
+except:
+	raise RuntimeError('Failed to initialize info for CAMC4.Camera')
+
+class Ping(object):
+	_typelib_guid_ = CAMC4CameraCLSID
 	_com_interfaces_ = ['ICAMCCallBack']
 	_public_methods_ = ['LivePing', 'RequestLock']
 	_reg_clsid_ = '{CB1473AA-6F1E-4744-8EFD-68F91CED4294}'
@@ -94,52 +95,39 @@ class Tietz(object):
 		self.exposuretime = 500
 		self.exposuretype = 'normal'
 
-		# ???
-		import win32com.client
-
 		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
+
 		try:
 			self.camera = win32com.client.Dispatch('CAMC4.Camera')		
 		except pywintypes.com_error, e:
-			print 'Error dispatching CAMC4.Camera'
-			print e
-			return
+			raise RuntimeError('Failed to initialize interface CAMC4.Camera')
 
 		try:
 			ping = win32com.client.Dispatch('PythonCAMC4.Ping')
 		except pywintypes.com_error, e:
-			import win32com.server.register
 			win32com.server.register.UseCommandLine(Ping)
 			try:
 				ping = win32com.client.Dispatch('PythonCAMC4.Ping')
 			except pywintypes.com_error, e:
-				print 'Error dispatching callback COM object'
-				print e
-				return
+				raise RuntimeError('Error dispatching callback COM object')
 
 		try:
 			hr = self.camera.RegisterCAMCCallBack(ping, 'EM')
 		except pywintypes.com_error, e:
-			print 'Error registering callback'
-			print e
-			return
+			raise RuntimeError('Error registering callback COM object')
 
 		hr = self.camera.RequestLock()
 		if hr == win32com.client.constants.crDeny:
-			print 'Error locking camera, denied lock'
-			return
+			raise RuntimeError('Error locking camera, denied lock')
 		elif hr == win32com.client.constants.crBusy:
-			print 'Error locking camera, camera busy'
-			return
+			raise RuntimeError('Error locking camera, camera busy')
 		elif hr == win32com.client.constants.crSucceed:
 			pass
 
 		try:
 			hr = self.camera.Initialize(self.cameratype, 0)
 		except pywintypes.com_error, e:
-			print 'Error initializing camera'
-			print e
-			return
+			raise RuntimeError('Error initializing camera')
 
 		self.methodmapping = {
 			'binning': {'get':'getBinning',

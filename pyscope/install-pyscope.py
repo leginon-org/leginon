@@ -18,13 +18,13 @@ pythonfolder = get_python_lib(plat_specific=True)
 pyscopefolder = os.path.join(programsfolder, 'pyScope')
 
 if __name__ == '__main__':
-	try:
-		import pyScope.updatecom
-		pyScope.updatecom.run(os.path.join(pythonfolder, 'pyScope'))
-	except ImportError:
-		print 'Failed to update COM'
 
 	if sys.argv[1] == '-install':
+		try:
+			import pyScope.updatecom
+			pyScope.updatecom.run(os.path.join(pythonfolder, 'pyScope'))
+		except ImportError:
+			print 'Failed to update COM'
 		try:
 			os.mkdir(pyscopefolder)
 			directory_created(pyscopefolder)
