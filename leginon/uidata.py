@@ -32,6 +32,9 @@ class Object(object):
 	def getName(self):
 		return self.name
 
+	def getParent(self):
+		return self.parent
+
 	def setParent(self, parent):
 		if parent is not None and not isinstance(parent, Container):
 			raise TypeError('parent must be a Container or None')

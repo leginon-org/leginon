@@ -8,13 +8,12 @@ import data
 import event
 import sys
 import imp
-import cPickle
-import dbdatakeeper
 import strictdict
 import copy
 import time
 import uidata
 import Queue
+import emregistry
 
 if sys.platform == 'win32':
 	sys.coinit_flags = 0
@@ -173,14 +172,24 @@ class EM(node.Node):
 		self.nodelock = threading.Lock()
 		self.locknodeid = None
 
-		# should have preferences
-		if scope is None:
-			scope = (leginonconfig.TEM, leginonconfig.TEM)
-		if camera is None:
-			camera = (leginonconfig.CCD, leginonconfig.CCD)
-
 		node.Node.__init__(self, id, session, nodelocations,
 												datahandler=DataHandler, **kwargs)
+
+		if scope is None:
+			try:
+				scopename = self.session['instrument']['scope']
+				modulename, classname, d = emregistry.getScopeInfo(scopename)
+				scope = (modulename, classname)
+			except (TypeError, KeyError):
+				scope = (leginonconfig.TEM, leginonconfig.TEM)
+
+		if camera is None:
+			try:
+				cameraname = self.session['instrument']['camera']
+				modulename, classname, d = emregistry.getCameraInfo(cameraname)
+				camera = (modulename, classname)
+			except (TypeError, KeyError):
+				camera = (leginonconfig.CCD, leginonconfig.CCD)
 
 		self.addEventInput(event.LockEvent, self.doLock)
 		self.addEventInput(event.UnlockEvent, self.doUnlock)

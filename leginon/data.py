@@ -287,6 +287,8 @@ class InstrumentData(Data):
 		t = Data.typemap()
 		t += [('name', str),
 					('description', str),
+					('scope', str),
+					('camera', str),
 					('hostname', str)]
 		return t
 	typemap = classmethod(typemap)

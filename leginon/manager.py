@@ -38,7 +38,6 @@ class Manager(node.Node):
 
 		node.Node.__init__(self, id, session, nodelocations={}, datahandler=DataHandler, tcpport=tcpport, xmlrpcport=xmlrpcport, **kwargs)
 
-		self.publish(self.session, database=True)
 		self.uiclientcontainers = {}
 
 		self.checkPythonVersion()
@@ -68,6 +67,7 @@ class Manager(node.Node):
 		self.addEventInput(event.Event, self.distributeEvents)
 
 		self.launcherdict = {}
+		self.managersetup = ManagerSetup(self)
 		self.defineUserInterface()
 		#self.start()
 
@@ -673,6 +673,7 @@ class Manager(node.Node):
 		launchcontainer = uidata.MediumContainer('Launch')
 		launchcontainer.addObjects(launchobjects)
 
+
 		self.uinodeinfo = uidata.Struct('Node Info', {}, 'r')
 		infoobjects = (self.uinodeinfo,)
 		self.uiaddnodehostname = uidata.SingleSelectFromList('Hostname',
@@ -709,10 +710,236 @@ class Manager(node.Node):
 		eventcontainer = uidata.MediumContainer('Event Bindings')
 		eventcontainer.addObjects(eventobjects)
 
+		uimanagersetup = self.managersetup.getUserInterface()
+
 		container = uidata.MediumContainer('Manager')
+
+		container.addObject(uimanagersetup)
 		container.addObjects((launchcontainer, nodemanagementcontainer,
 														eventcontainer, self.applicationcontainer))
 		self.uiserver.addObject(container)
+
+class ManagerSetup(object):
+	def __init__(self, manager):
+		self.manager = manager
+
+		self.defineUserInterface()
+
+		self.initUsers()
+		self.initInstruments()
+
+	def start(self):
+		session = self.uiGetSession()
+		if session is not None:
+			self.manager.session = session
+			self.manager.publish(session, database=True)
+			try:
+				hostname = session['instrument']['hostname']
+				self.manager.addNode(hostname, 55555)
+			except:
+				pass
+			parent = self.container.getParent()
+			if parent is not None:
+				parent.deleteObject(self.container.getName())
+		else:
+			messagestring = 'Session "%s" already exists.' % self.session_name.get()
+			message = uidata.MessageDialog('Error', messagestring)
+			self.container.addObject(message)
+
+	def uiGetSession(self):
+		session_name = self.session_name.get()
+		initializer = {'name': session_name,
+								'user': data.UserData(initializer={'group': data.GroupData()}),
+								'instrument': data.InstrumentData()}
+		sessioninstance = data.SessionData(initializer=initializer)
+		sessions = self.manager.research(datainstance=sessioninstance)
+		if sessions:
+			return None
+		else:
+			return self.getSession(session_name)
+
+	def getSession(self, session_name):
+		initializer = {'name': session_name,
+										'user': self.uiGetUser(),
+										'instrument': self.uiGetInstrument()}
+		return data.SessionData(initializer=initializer)
+
+	def initInstruments(self):
+		instruments = self.getInstruments()
+		self.instruments = self.indexByName(instruments)
+		self.instruments['None'] = None
+		self.uiUpdateInstrument()
+
+	def uiUpdateInstrument(self):
+		instrumentnames = self.instruments.keys()
+		instrumentnames.sort()
+		try:
+			index = instrumentnames.index('None')
+		except ValueError:
+			index = 0
+		self.instrumentselection.set(instrumentnames, index)
+
+	def uiGetInstrument(self):
+		instrumentname = self.instrumentselection.getSelectedValue()
+		if instrumentname in self.instruments:
+			return self.instruments[instrumentname]
+		else:
+			return None
+
+	def getInstruments(self):
+		instrumentinitializer = {}
+		instrumentinstance = data.InstrumentData(initializer=instrumentinitializer)
+		instrumentdatalist = self.manager.research(datainstance=instrumentinstance)
+		return instrumentdatalist
+
+	def initUsers(self):
+		self.initAdmin()
+		users = self.getUsers()
+		self.users = self.indexByName(users)
+		self.uiUpdateUsers()
+
+	def uiUpdateUsers(self):
+		usernames = self.users.keys()
+		usernames.sort()
+		self.userselection.set(usernames, 0)
+
+	def uiGetUser(self):
+		username = self.userselection.getSelectedValue()
+		if username in self.users:
+			return self.users[username]
+		else:
+			return None
+
+	def indexByName(self, datalist):
+		index = {}
+		for indexdata in datalist:
+			try:
+				index[indexdata['name']] = indexdata
+			except (TypeError, IndexError):
+				pass
+		return index
+
+	def getUsers(self):
+		self.initAdmin()
+		groupinstance = data.GroupData()
+		userinitializer = {'group': groupinstance}
+		userinstance = data.UserData(initializer=userinitializer)
+		userdatalist = self.manager.research(datainstance=userinstance)
+		return userdatalist
+
+	def initAdmin(self):
+		adminuser = self.getAdminUser()
+		if adminuser is None:
+			admingroup = self.getAdminGroup()
+			if admingroup is None:
+				admingroup = self.addAdminGroup()
+			adminuser = self.addAdminUser(admingroup)
+
+	def getAdminGroup(self):
+		groupinitializer = {'name': 'administrators'}
+		groupinstance = data.GroupData(initializer=groupinitializer)
+		groupdatalist = self.manager.research(datainstance=groupinstance)
+		try:
+			return groupdatalist[0]
+		except (TypeError, IndexError):
+			return None
+
+	def addAdminGroup(self):
+		groupinitializer = {'name': 'administrators',
+												'description': 'Administrators'}
+		groupinstance = data.GroupData(initializer=groupinitializer)
+		self.manager.publish(groupinstance, database=True)
+		return groupinstance
+
+	def getAdminUser(self):
+		userinitializer = {'name': 'administrator', 'group': data.GroupData()}
+		userinstance = data.UserData(initializer=userinitializer)
+		userdatalist = self.manager.research(datainstance=userinstance)
+		try:
+			return userdatalist[0]
+		except (TypeError, IndexError):
+			return None
+
+	def addAdminUser(self, group):
+		userinitializer = {'name': 'administrator',
+												'full name': 'Administrator',
+												'group': group}
+		userinstance = data.UserData(initializer=userinitializer)
+		self.manager.publish(userinstance, database=True)
+		return userinstance
+
+	def uiUserSelectCallback(self, index):
+		if not hasattr(self, 'userselection'):
+			return index
+		username = self.userselection.getSelectedValue(index)
+		if username in self.users:
+			userdata = self.users[username]
+			try:
+				self.userfullname.set(userdata['full name'])
+			except KeyError:
+				self.userfullname.set('')
+			try:
+				self.usergroup.set(userdata['group']['name'])
+			except KeyError:
+				self.usergroup.set('')
+		else:
+			self.userfullname.set('')
+			self.usergroup.set('')
+		return index
+
+	def uiInstrumentSelectCallback(self, index):
+		if not hasattr(self, 'instrumentselection'):
+			return index
+		instrumentname = self.instrumentselection.getSelectedValue(index)
+		if instrumentname in self.instruments:
+			instrumentdata = self.instruments[instrumentname]
+			try:
+				self.instrumentdescription.set(instrumentdata['description'])
+			except (TypeError, KeyError):
+				self.instrumentdescription.set('')
+			try:
+				self.instrumenthostname.set(instrumentdata['hostname'])
+			except (TypeError, KeyError):
+				self.instrumenthostname.set('')
+		else:
+			self.instrumentdescription.set('')
+			self.instrumenthostname.set('')
+		return index
+
+	def defineUserInterface(self):
+		self.container = uidata.ExternalContainer('Manager Setup')
+
+		usercontainer = uidata.Container('User')
+		self.userselection = uidata.SingleSelectFromList('Name', [], 0,
+																											self.uiUserSelectCallback)
+		self.userfullname = uidata.String('Full Name', '', 'r')
+		self.usergroup = uidata.String('Group Name', '', 'r')
+		usercontainer.addObjects((self.userselection,
+																		self.userfullname,
+																		self.usergroup))
+		self.container.addObject(usercontainer)
+
+		instrumentcontainer = uidata.Container('Instrument')
+		self.instrumentselection = uidata.SingleSelectFromList('Name', [], 0,
+																								self.uiInstrumentSelectCallback)
+		self.instrumentdescription = uidata.String('Description', '', 'r')
+		self.instrumenthostname = uidata.String('Hostname', '', 'r')
+
+		instrumentcontainer.addObjects((self.instrumentselection,
+																		self.instrumentdescription,
+																		self.instrumenthostname))
+
+		self.container.addObject(instrumentcontainer)
+
+		session_name = time.strftime('%Y-%m-%d-%H-%M')
+		self.session_name = uidata.String('Session Name', session_name, 'rw')
+		self.container.addObject(self.session_name)
+
+		startmethod = uidata.Method('Start', self.start)
+		self.container.addObject(startmethod)
+
+	def getUserInterface(self):
+		return self.container
 
 if __name__ == '__main__':
 	import sys

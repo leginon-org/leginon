@@ -13,9 +13,7 @@ try:
 except IndexError:
 	session = time.strftime('%Y-%m-%d-%H-%M')
 
-initializer = {'name': session}
-sessiondata = data.SessionData(initializer=initializer)
-m = manager.Manager(('manager',), sessiondata)
+m = manager.Manager(('manager',), None)
 managerlocation = m.location()
 launcher = launcher.Launcher((socket.gethostname(),),
 															{'manager': managerlocation})

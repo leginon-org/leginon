@@ -1,6 +1,7 @@
 import node
 import data
 import uidata
+import emregistry
 
 class Administration(node.Node):
 	def __init__(self, id, session, nodelocations, **kwargs):
@@ -40,8 +41,17 @@ class Administration(node.Node):
 	def addInstrument(self):
 		name = self.addinstrumentname.get()
 		description = self.addinstrumentdescription.get()
+		scope = self.addinstrumentscope.getSelectedValue()
+		if scope == 'None':
+			scope = None
+		camera = self.addinstrumentcamera.getSelectedValue()
+		if camera == 'None':
+			camera = None
 		hostname = self.addinstrumenthostname.get()
-		initializer = {'name': name, 'description': description,
+		initializer = {'name': name,
+										'description': description,
+										'scope': scope,
+										'camera': camera,
 										'hostname': hostname}
 		instrumentdata = data.InstrumentData(initializer=initializer)
 		self.publish(instrumentdata, database=True)
@@ -66,11 +76,17 @@ class Administration(node.Node):
 
 		self.addinstrumentname = uidata.String('Name', '', 'rw')
 		self.addinstrumentdescription = uidata.String('Description', '', 'rw')
+		self.addinstrumentscope = uidata.SingleSelectFromList('Microscope',
+																			['None'] + emregistry.getScopeNames(), 0)
+		self.addinstrumentcamera = uidata.SingleSelectFromList('Camera',
+																			['None'] + emregistry.getCameraNames(), 0)
 		self.addinstrumenthostname = uidata.String('Hostname', '', 'rw')
 		addinstrument = uidata.Method('Add', self.addInstrument)
 		instrumentcontainer = uidata.Container('Instruments')
 		instrumentcontainer.addObjects((self.addinstrumentname,
 																			self.addinstrumentdescription,
+																			self.addinstrumentscope,
+																			self.addinstrumentcamera,
 																			self.addinstrumenthostname,
 																			addinstrument))
 
