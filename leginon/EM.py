@@ -78,8 +78,10 @@ class EM(node.Node):
 
 		node.Node.__init__(self, id, managerloc, DataHandler, (self.lock, self.scope, self.camera, self))
 
-		self.addEventOutput(event.ListPublishEvent)
+		self.start()
 
+	def main(self):
+		self.addEventOutput(event.ListPublishEvent)
 		ids = []
 		if self.scope:
 			ids.append('scope')
@@ -92,9 +94,6 @@ class EM(node.Node):
 
 		e = event.ListPublishEvent(self.ID(), ids)
 		self.announce(e)
-
-	def main(self):
-		pass
 
 if __name__ == '__main__':
 	import time
