@@ -76,8 +76,8 @@ class DataHandler(leginonobject.LeginonObject):
 	def dbInsert(self, idata, force=False):
 		self.dbdatakeeper.insert(idata, force=force)
 
-	def dbQuery(self, idata, results=None):
-		return self.dbdatakeeper.query(idata, results)
+	def dbQuery(self, idata, results=None, readimages=True):
+		return self.dbdatakeeper.query(idata, results, readimages=readimages)
 
 	def __getattr__(self, attr):
 		return getattr(self.datakeeper, attr)
@@ -375,7 +375,7 @@ class Node(leginonobject.LeginonObject):
 			if isinstance(datainstance[key], data.InSessionData):
 				self.addSession(datainstance[key])
 
-	def research(self, dataclass=None, datainstance=None, results=None, fill=True):
+	def research(self, dataclass=None, datainstance=None, results=None, fill=True, readimages=True):
 		'''
 		How a node finds some data in the leginon system:
 			1) Using a data class and keyword args:
@@ -413,7 +413,7 @@ class Node(leginonobject.LeginonObject):
 				except RuntimeError:
 					self.printerror('RuntimeError, probably exceded recursion limit in addEmptyInsance1.  You should probably set fill=False when calling Node.research(), and instead, construct your own filled instance.')
 					return []
-			newresults = self.datahandler.dbQuery(datainstance, results)
+			newresults = self.datahandler.dbQuery(datainstance, results, readimages=readimages)
 			resultlist += newresults
 
 		return resultlist

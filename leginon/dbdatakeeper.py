@@ -22,22 +22,22 @@ class DBDataKeeper(datahandler.DataHandler):
 		self.dbd = sqldict.SQLDict()
 		self.lock = threading.RLock()
 
-	def query(self, idata, results=None):
+	def query(self, idata, results=None, readimages=True):
 		self.lock.acquire()
 		try:
-			ret = self._query(idata, results)
+			ret = self._query(idata, results, readimages=readimages)
 		finally:
 			self.lock.release()
 		return ret
 
-	def _query(self, idata, results=None):
+	def _query(self, idata, results=None, readimages=True):
 		'''
 		query using a partial Data instance
 		'''
 		# idata: instance of a Data class 
 		# results: number of rows wanted
 		queryinfo = self.queryInfo(idata)
-		result  = self.dbd.multipleQueries(queryinfo)
+		result  = self.dbd.multipleQueries(queryinfo, readimages=readimages)
 
 		if results is not None:
 			myresult = result.fetchmany(results)
