@@ -221,7 +221,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			'Filtered': None,
 			'Thresholded': None
 		}
-		self.mosaic = mosaic.EMMosaic(self.calclients['stage position'])
+		parameter = self.settings['calibration parameter']
+		self.mosaic = mosaic.EMMosaic(self.calclients[parameter])
 		self.mosaicimagelist = None
 		self.mosaicimage = None
 		self.mosaicimagescale = None
@@ -229,7 +230,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.convolver = convolver.Convolver()
 		self.currentposition = []
 
-		self.mosaic.setCalibrationClient(self.calclients['stage position'])
+		self.mosaic.setCalibrationClient(self.calclients[parameter])
 
 		self.existing_targets = {}
 		self.clearTiles()
@@ -516,6 +517,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 	def createMosaicImage(self):
 		self.logger.info('creating mosaic image')
+
+		self.setCalibrationParameter()
 
 		if self.settings['scale image']:
 			maxdim = self.settings['scale size']
