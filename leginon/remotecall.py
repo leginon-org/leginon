@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/remotecall.py,v $
-# $Revision: 1.7 $
+# $Revision: 1.8 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-23 01:00:32 $
+# $Date: 2005-02-23 02:15:50 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -405,10 +405,4 @@ class ManagerObjectService(ObjectService):
 				if 'ObjectService' in t:
 					self._call(nn, n, 'removeNode', 'method', args)
 		ObjectService.removeNode(self, nodename)
-
-class TEM(Locker):
-	pass
-
-class CCDCamera(Locker):
-	pass
 

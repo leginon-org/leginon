@@ -15,6 +15,7 @@ import threading
 import time
 import EM
 import gui.wx.ManualAcquisition
+import instrument
 
 class AcquireError(Exception):
 	pass
@@ -48,6 +49,8 @@ class ManualAcquisition(node.Node):
 		self.gridmapping = {}
 		self.gridbox = None
 		self.grid = None
+
+		self.instrumentproxy = instrument.Proxy(self.objectservice)
 
 		self.start()
 

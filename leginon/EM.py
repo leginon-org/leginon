@@ -7,7 +7,7 @@
 #
 
 import data
-from pyScope import emregistry, methoddict
+from pyScope import registry, methoddict
 import event
 import imp
 import node
@@ -21,7 +21,7 @@ import time
 import unique
 import copy
 import gui.wx.Instrument
-import remotecall
+import instrument
 
 watch_set = (
 'magnification',
@@ -174,6 +174,9 @@ class EM(node.Node):
 	panelclass = gui.wx.Instrument.Panel
 	eventinputs = node.Node.eventinputs + [event.LockEvent, event.UnlockEvent, event.SetScopeEvent, event.SetCameraEvent]
 	def __init__(self, name, session, managerlocation, tcpport=None, **kwargs):
+
+		self.tems = []
+		self.ccdcameras = []
 
 		self.typemap = {}
 
@@ -430,13 +433,13 @@ class EM(node.Node):
 
 	def setScopeType(self, scopename, description):
 		try:
-			scopeclass = emregistry.getScopeClass(scopename)
+			scopeclass = registry.getClass(scopename)
 			if scopeclass is None:
 				raise RuntimeError
-			class ScopeClass(scopeclass, remotecall.TEM):
+			class ScopeClass(scopeclass, instrument.TEM):
 				def __init__(self):
 					scopeclass.__init__(self)
-					remotecall.Object.__init__(self)
+					instrument.TEM.__init__(self)
 			self.scope = methoddict.factory(ScopeClass)()
 			self.typemap.update(self.scope.typemapping)
 			name = '%s on %s' % (scopename, description)
@@ -447,13 +450,13 @@ class EM(node.Node):
 
 	def setCameraType(self, cameraname, description):
 		try:
-			cameraclass = emregistry.getCameraClass(cameraname)
+			cameraclass = registry.getClass(cameraname)
 			if cameraclass is None:
 				raise RuntimeError
-			class CameraClass(cameraclass, remotecall.CCDCamera):
+			class CameraClass(cameraclass, instrument.CCDCamera):
 				def __init__(self):
 					cameraclass.__init__(self)
-					remotecall.Object.__init__(self)
+					instrument.CCDCamera.__init__(self)
 			self.camera = methoddict.factory(CameraClass)()
 			self.typemap.update(self.camera.typemapping)
 			name = '%s on %s' % (cameraname, description)
