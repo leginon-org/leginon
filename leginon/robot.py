@@ -126,11 +126,11 @@ class RobotNode(node.Node):
 				raise ScopeException('parameter is not set to value')
 
 	def getScope(self, key):
-		parameterdata = self.emclient.getScope()
+		parameterdata = self.emclient.getScope(key)
 		if parameterdata is None:
 			raise ScopeException('cannot get parameter value')
-		self.logger.info('Get scope %s, %s' % (key, parameterdata[key]))
-		return parameterdata[key]
+		self.logger.info('Get scope %s, %s' % (key, parameterdata))
+		return parameterdata
 
 	def setScope(self, key, value):
 		scopedata = data.ScopeEMData()
@@ -203,6 +203,7 @@ if sys.platform == 'win32':
 			self.addEventInput(event.ExtractGridEvent, self.handleExtract)
 
 			self.defineUserInterface()
+			self.start()
 
 		def _queueHandler(self):
 			pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
