@@ -557,7 +557,6 @@ class Tietz(object):
 
 	def setShutterOpenDelay(self, value):
 		#	{'type': int, 'range': [0, None]}
-		self._setParameterValue('cpTemperatureSetpoint', int(value*1000))
 		try:
 			self._setParameterValue('cpShutterOpenDelay', value)
 		except pywintypes.com_error:
@@ -578,12 +577,12 @@ class Tietz(object):
 		return self._getParameterValue('cpSerialNumber')
 			
 	def getPreampDelay(self):
-		return self._getParameterValue('cpPreampDelay')/1000.0
+		return self._getParameterValue('cpPreampDelay')
 
 	def setPreampDelay(self, value):
 		#	{'type': int, 'range': [0, None]}
 		try:
-			self._setParameterValue('cpPreampDelay', int(value*1000))
+			self._setParameterValue('cpPreampDelay', value)
 		except pywintypes.com_error:
 			raise ValueError('Invalid preamp delay')
 
