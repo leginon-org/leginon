@@ -9,6 +9,7 @@ from intgen import IntGen
 from EM import EM
 from emtest import EMTest
 #from imviewer import ImViewer
+from getdata import GetData
 
 def nodeClasses():
 	"""

@@ -21,13 +21,15 @@ class Manager(node.Node):
 		self.uiInit()
 
 		## this makes every received event get distributed
-		self.addEventInput(event.Event, self.distribute)
 		self.addEventInput(event.NodeAvailableEvent, self.registerNode)
 		self.addEventInput(event.NodeUnavailableEvent, self.unregisterNode)
 
 		self.addEventInput(event.PublishEvent, self.registerData)
 		self.addEventInput(event.UnpublishEvent, self.unregisterData)
 		self.addEventInput(event.ListPublishEvent, self.registerData)
+
+		# needs to be done after manager handles the event
+		self.addEventInput(event.Event, self.distribute)
 
 		#self.start()
 
@@ -266,9 +268,9 @@ if __name__ == '__main__':
 
 	manager_id = ('manager',)
 	m = Manager(manager_id)
-	
+
 	## GUI
-	gui = 1
+	gui = 0
 	if gui:
 		tk = Tkinter.Tk()
 		mgui = managergui.ManagerGUI(tk, m)

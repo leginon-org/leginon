@@ -16,17 +16,11 @@ class MyNode(node.Node):
 		print self.location()
 		self.start()
 
-	def start(self, startevent=None):
-		self.main()
-
 	def main(self):
-		#while 1:
-		for i in [1, 2, 3]:
+		while 1:
+		#for i in [1, 2, 3]:
 			self.print_stuff()
 			time.sleep(self.interval)
-
-	def unregister(self):
-		self.announce(event.NodeUnavailableEvent(self.ID()))
 
 	def print_stuff(self):
 		self.timenow = time.asctime()
@@ -49,9 +43,6 @@ class MyNode(node.Node):
 
 	def change_interval(self, new_interval):
 		self.interval = new_interval
-
-
-
 
 if __name__ == '__main__':
 	import signal, sys

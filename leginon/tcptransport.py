@@ -15,25 +15,32 @@ class Handler(SocketServer.StreamRequestHandler):
 		try:
 			obj = cPickle.load(self.rfile)
 		except EOFError:
+			print "tcptransport: no data to read, handle TCP connection failed"
 			return
+
 		if isinstance(obj, data.Data):
 			# if is data, then push
-			self.server.datahandler.insert(obj)
+			e = None
+			try:
+				self.server.datahandler.insert(obj)
+			except Exception, e:
+				print "tcptransport: failed to insert pushed data"
+			try:
+				# returns exception if error, else None
+				cPickle.dump(e, self.wfile)
+			except IOError:
+				print "tcptransport: write failed when acknowledging push"
 		else:
-			# (elif when ID has a type) its and ID -> pull (query) by ID
-			#idata = self.server.datahandler.query(obj)
-			#starttime = time.time()
-			#cPickle.dump(idata, self.wfile)
-			#print "tcptransport.py, cPickle dumps", time.time() - starttime, "secs."
 			try:
 				cPickle.dump(self.server.datahandler.query(obj), self.wfile)
 			except IOError:
-				print "tcptransport: write failed"
+				print "tcptransport: write failed when returning requested data"
 
 class Server(SocketServer.ThreadingTCPServer, leginonobject.LeginonObject):
 	def __init__(self, id, dh, port=None):
 		leginonobject.LeginonObject.__init__(self, id)
 		self.datahandler = dh
+
 		# instantiater can choose a port or we'll choose one for them
 		if port:
 			SocketServer.ThreadingTCPServer.__init__(self, ('', port), Handler)
@@ -70,33 +77,59 @@ class Client(leginonobject.LeginonObject):
 		self.buffer_size = buffer_size 
 		leginonobject.LeginonObject.__init__(self, id)
 		self.serverlocation = location
+		self.socket = None
 
 	def pull(self, id, family = socket.AF_INET, type = socket.SOCK_STREAM):
-		data = ""
-		s = socket.socket(family, type)
-		s.connect((self.serverlocation['hostname'],self.serverlocation['TCP port']))
+		self.connect()
 		idpickle = cPickle.dumps(id)
-		s.send(idpickle)
-
-		while 1:
-		  r = s.recv(self.buffer_size) # Receive up to buffer_size bytes
-		  if not r:
-		    break
-		  data += r
-		s.close()
-		# needs cPickle attempt
+		self.send(idpickle)
+		data = self.receive()
+		self.close()
 		return cPickle.loads(data)
 
-	def push(self, idata, family = socket.AF_INET, type = socket.SOCK_STREAM):
-		# needs to account for different data_id datatypes
-		s = socket.socket(family, type)
+	def push(self, idata):
+		self.connect()
+		self.send(cPickle.dumps(idata))
+		serverexception = cPickle.loads(self.receive())
+		self.close()
+		if serverexception != None:
+			raise serverexception
+
+	def connect(self, family = socket.AF_INET, type = socket.SOCK_STREAM):
+		self.socket = socket.socket(family, type)
 		try:
-			s.connect((self.serverlocation['hostname'], self.serverlocation['TCP port']))
+			self.socket.connect((self.serverlocation['hostname'], self.serverlocation['TCP port']))
 		except Exception, var:
 			# socket error, connection refused
 			if (var[0] == 111):
-				print "tcptransport: unable to connect to", self.serverlocation['hostname'], "port", self.serverlocation['TCP port']
+				self.socket = None
+				print "tcptransport, receive: unable to connect to", self.serverlocation['hostname'], "port", self.serverlocation['TCP port']
+				raise IOError
+
+	def send(self, odata):
+		if self.socket:
+			self.socket.send(odata)
 		else:
-			s.send(cPickle.dumps(idata))
-			s.close()
+			print "tcptransport, send: no socket available"
+			raise IOError
+
+	def receive(self):
+		data = ""
+		if self.socket:
+			while 1:
+			  r = self.socket.recv(self.buffer_size) # Receive up to buffer_size bytes
+			  if not r:
+			    break
+			  data += r
+			return data
+		else:
+			print "tcptransport, receive: no socket available"
+			raise IOError
+
+	def close(self):
+		if self.socket:
+			self.socket.close()
+		else:
+			print "tcptransport, close: no socket available"
+			raise IOError
 

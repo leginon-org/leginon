@@ -23,7 +23,8 @@ class Client(Base):
 		# will make manager sort this out soon
 		clientlocation = self.location()
 		if ('hostname' in serverlocation) and ('hostname' in clientlocation) and (serverlocation['hostname'] == clientlocation['hostname']):
-				self.clients[localtransport] = apply(localtransport.Client, (self.ID(), serverlocation,))
+#			if ('PID' in serverlocation) and ('PID' in clientlocation) and (serverlocation['PID'] == clientlocation['PID']):
+			self.clients[localtransport] = apply(localtransport.Client, (self.ID(), serverlocation,))
 		self.clients[tcptransport] = apply(tcptransport.Client, (self.ID(), serverlocation,))
 		self.serverlocation = serverlocation
 
