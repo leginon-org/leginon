@@ -420,7 +420,10 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		MatrixCalibrationClient.__init__(self, node)
 
 	def getBeamTilt(self):
-		bt = self.emclient.getScope()['beam tilt']
+		try:
+			bt = self.emclient.getScope()['beam tilt']
+		except EM.ScopeUnavailable, e:
+			return None
 		return bt
 
 	def measureDefocusStig(self, tilt_value, publish_images=0, drift_threshold=None, image_callback=None, stig=True, target=None):
@@ -606,6 +609,10 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		self.node.logger.debug('State 1 %s, State 2 %s' % (state1, state2))
 		
 		beamtilt = self.getBeamTilt()
+		if beamtilt is None:
+			e = 'unable to get beam tilt'
+			self.node.logger.exception('Calibration measurement failed: %s' % e)
+			return
 
 		### try/finally to be sure we return to original beam tilt
 		try:

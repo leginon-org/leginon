@@ -23,6 +23,7 @@ class Calibrator(node.Node):
 	panelclass = gui.wx.Calibrator.Panel
 	settingsclass = data.CalibratorSettingsData
 	defaultsettings = {
+		'use camera settings': False,
 		'camera settings': None,
 		'correlation type': 'cross',
 	}
@@ -50,16 +51,23 @@ class Calibrator(node.Node):
 		return mag, mags
 
 	def getHighTension(self):
-		ht = self.emclient.getScope()['high tension']
+		try:
+			ht = self.emclient.getScope()['high tension']
+		except EM.ScopeUnavailable:
+			return None
 		return ht
 
 	def currentState(self):
-		dat = self.emclient.getScope()
+		try:
+			dat = self.emclient.getScope()
+		except EM.ScopeUnavailable:
+			return None
 		return dat
 
 	def acquireImage(self):
 		try:
-			self.cam.setCameraDict(self.settings['camera settings'])
+			if self.settings['use camera settings']:
+				self.cam.setCameraDict(self.settings['camera settings'])
 			imagedata = self.cam.acquireCameraImageData()
 		except (EM.ScopeUnavailable, camerafuncs.CameraError), e:
 			self.logger.error('Acquisition failed: %s' % e)

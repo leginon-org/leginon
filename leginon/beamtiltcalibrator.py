@@ -28,6 +28,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 	panelclass = gui.wx.BeamTiltCalibrator.Panel
 	settingsclass = data.BeamTiltCalibratorSettingsData
 	defaultsettings = {
+		'use camera settings': False,
 		'camera settings': None,
 		'correlation type': 'phase',
 		'defocus beam tilt': 0.01,
@@ -49,11 +50,12 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.start()
 
 	def calibrateAlignment(self, tilt_value):
-		try:
-			self.cam.setCameraDict(self.settings['camera settings'])
-		except camerafuncs.CameraError, e:
-			self.logger.error('Calibration failed: %s' % e)
-			return
+		if self.settings['use camera settings']:
+			try:
+				self.cam.setCameraDict(self.settings['camera settings'])
+			except camerafuncs.CameraError, e:
+				self.logger.error('Calibration failed: %s' % e)
+				return
 
 		state1 = {'beam tilt': tilt_value}
 		state2 = {'beam tilt': -tilt_value}
@@ -85,17 +87,21 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		return ''
 
 	def calibrateDefocus(self, tilt_value, defocus1, defocus2):
-		try:
-			self.cam.setCameraDict(self.settings['camera settings'])
-		except camerafuncs.CameraError, e:
-			self.logger.error('Defocus calibration failed: %s' % e)
-			return
+		if self.settings['use camera settings']:
+			try:
+				self.cam.setCameraDict(self.settings['camera settings'])
+			except camerafuncs.CameraError, e:
+				self.logger.error('Defocus calibration failed: %s' % e)
+				return
 		state1 = {'defocus': defocus1}
 		state2 = {'defocus': defocus2}
 		matdict = {}
 		for axis in ('x','y'):
 			self.logger.info('Measuring %s tilt' % (axis,))
-			shift1, shift2 = self.calclient.measureDisplacements(axis, tilt_value, state1, state2)
+			shifts = self.calclient.measureDisplacements(axis, tilt_value, state1, state2)
+			if shifts is None:
+				return
+			shift1, shift2 = shifts
 			matcol = self.calclient.eq11(shift1, shift2, defocus1, defocus2, tilt_value)
 			matdict[axis] = matcol
 		self.logger.debug('Making matrix...')
@@ -122,11 +128,12 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		return ''
 
 	def calibrateStigmators(self, tilt_value, delta):
-		try:
-			self.cam.setCameraDict(self.settings['camera settings'])
-		except camerafuncs.CameraError, e:
-			self.logger.error('Stigmator calibration failed: %s' % e)
-			return
+		if self.settings['use camera settings']:
+			try:
+				self.cam.setCameraDict(self.settings['camera settings'])
+			except camerafuncs.CameraError, e:
+				self.logger.error('Stigmator calibration failed: %s' % e)
+				return
 
 		currentstig = self.getObjectiveStigmator()
 		## set up the stig states
@@ -178,11 +185,12 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		return ''
 
 	def measureDefocusStig(self, btilt, stig=True):
-		try:
-			self.cam.setCameraDict(self.settings['camera settings'])
-		except camerafuncs.CameraError, e:
-			self.logger.error('Measure defocus failed: %s' % e)
-			return
+		if self.settings['use camera settings']:
+			try:
+				self.cam.setCameraDict(self.settings['camera settings'])
+			except camerafuncs.CameraError, e:
+				self.logger.error('Measure defocus failed: %s' % e)
+				return
 		try:
 			ret = self.calclient.measureDefocusStig(btilt, stig=stig)
 		except Exception, e:

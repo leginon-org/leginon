@@ -31,6 +31,7 @@ class GonModeler(calibrator.Calibrator):
 	panelclass = gui.wx.GonModeler.Panel
 	settingsclass = data.GonModelerSettingsData
 	defaultsettings = {
+		'use camera settings': False,
 		'camera settings': None,
 		'correlation type': 'cross',
 		'measure axis': 'x',
@@ -61,15 +62,21 @@ class GonModeler(calibrator.Calibrator):
 	# calibrate needs to take a specific value
 	def loop(self, label, axis, points, interval):
 		## set camera state
-		try:
-			self.cam.setCameraDict(self.settings['camera settings'])
-		except camerafuncs.CameraError, e:
-			self.logger.error('Modeled stage measurement failed: %s' % e)
-			self.panel.measurementDone()
-			return
+		if self.settings['use camera settings']:
+			try:
+				self.cam.setCameraDict(self.settings['camera settings'])
+			except camerafuncs.CameraError, e:
+				self.logger.error('Modeled stage measurement failed: %s' % e)
+				self.panel.measurementDone()
+				return
 
 		mag, mags = self.getMagnification()
 		ht = self.getHighTension()
+		if None in [mag, mags, ht]:
+			e = 'unable to access instrument'
+			self.logger.error('Modeled stage measurement failed: %s' % e)
+			self.panel.measurementDone()
+			return
 		known_pixelsize = self.pcal.retrievePixelSize(mag)
 
 		self.oldimagedata = None

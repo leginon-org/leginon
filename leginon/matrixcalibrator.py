@@ -47,6 +47,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 	panelclass = gui.wx.MatrixCalibrator.Panel
 	settingsclass = data.MatrixCalibratorSettingsData
 	defaultsettings = {
+		'use camera settings': False,
 		'camera settings': None,
 		'correlation type': 'cross',
 		'image shift tolerance': 12.0,
@@ -96,7 +97,8 @@ class MatrixCalibrator(calibrator.Calibrator):
 		calclient = self.parameters[self.parameter]
 
 		## set cam state
-		self.cam.setCameraDict(self.settings['camera settings'])
+		if self.settings['use camera settings']:
+			self.cam.setCameraDict(self.settings['camera settings'])
 
 		basebase = self.getBase()
 		baselist = []

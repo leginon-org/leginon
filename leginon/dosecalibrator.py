@@ -9,6 +9,7 @@ import calibrator
 import calibrationclient
 import event, data
 import node
+import EM
 try:
 	import numarray as Numeric
 except:
@@ -22,6 +23,7 @@ class DoseCalibrator(calibrator.Calibrator):
 	panelclass = gui.wx.DoseCalibrator.Panel
 	settingsclass = data.DoseCalibratorSettingsData
 	defaultsettings = {
+		'use camera settings': False,
 		'camera settings': None,
 		'correlation type': 'cross',
 		'beam diameter': 0.16,
@@ -41,6 +43,10 @@ class DoseCalibrator(calibrator.Calibrator):
 			pass
 		elif status == 'screen':
 			self.logger.error('Cannot measure current with main screen down')
+		elif status == None:
+			e = 'Unable to measure dose rate: unable to access instrument'
+			self.logger.error(e)
+			return
 
 		screen_mag = self.results['screen magnification']
 		beam_current = self.results['beam current']
@@ -61,7 +67,10 @@ class DoseCalibrator(calibrator.Calibrator):
 		self.emclient.setScope(scope)
 
 	def getCurrentAndMag(self):
-		scope = self.emclient.getScope()
+		try:
+			scope = self.emclient.getScope()
+		except EM.ScopeUnavailable, e:
+			return None
 		if scope['main screen position'] == 'down':
 			mag = scope['magnification']
 			current = scope['screen current']

@@ -12,6 +12,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
 
+		self.widgets['use camera settings'] = wx.CheckBox(self, -1,
+																								'Use camera configuration')
 		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
 		self.widgets['camera settings'].setSize(self.node.session)
 		self.widgets['correlation type'] = Choice(self, -1,
@@ -27,7 +29,9 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(szcor, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['camera settings'], (1, 0), (1, 1),
+		sz.Add(self.widgets['use camera settings'], (1, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['camera settings'], (2, 0), (1, 1),
 						wx.ALIGN_CENTER)
 
 		sb = wx.StaticBox(self, -1, 'Calibration')
