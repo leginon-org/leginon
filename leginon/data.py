@@ -310,6 +310,7 @@ camera_params = [
 	('binning', dict),
 	('offset', dict),
 	('exposure time', float),
+	('image type', str),
 	('image data', strictdict.NumericArrayType),
 	('inserted', bool)
 ]
@@ -347,6 +348,7 @@ class CameraConfigData(InSessionData):
 			('binning', dict),
 			('offset', dict),
 			('exposure time', float),
+			('image type', str),
 			('correct', int),
 			('auto square', int),
 			('auto offset', int),

@@ -630,7 +630,8 @@ class EM(node.Node):
 		self.uicameradict = {}
 		cameraparameterscontainer = uidata.Container('Parameters')
 
-		parameters = [('exposure time', 'Exposure time', uidata.Float, 'rw')]
+		parameters = [('exposure time', 'Exposure time', uidata.Float, 'rw'),
+									('image type', 'Image type', uidata.String, 'rw')]
 
 		for key, name, datatype, permissions in parameters:
 			self.uicameradict[key] = datatype(name, None, permissions)
