@@ -357,7 +357,9 @@ class ManagerSetup(object):
 		userselectcontainer.addObjects((self.userselection, self.userfullname,
 																		self.usergroup))
 		self.loginmethod = uidata.Method('Login', self.onLogin)
-		self.logincontainer.addObjects((userselectcontainer, self.loginmethod))
+		self.logincontainer.addObjects((userselectcontainer,))
+		self.logincontainer.addObject(self.loginmethod,
+																	position={'justify': ['center']})
 		self.uiUpdateUsers()
 
 	def addLoginContainer(self):
@@ -455,7 +457,7 @@ class ManagerSetup(object):
 		if self.projectdataconnected:
 			sessionbuilderobjects.insert(4, projectcontainer)
 
-		self.createsessioncontainer = uidata.ExternalContainer('Create Session')
+		self.createsessioncontainer = uidata.ExternalContainer('Create Leginon II Session')
 		self.createsessioncontainer.addObjects(sessionbuilderobjects)
 		self.selectsessioncontainer.addObject(self.createsessioncontainer)
 
