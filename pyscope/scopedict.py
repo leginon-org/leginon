@@ -6,9 +6,14 @@ def factory(scopeclass):
               "high tension", "intensity", "dark field mode",
               "stigmator", "spot size", "beam tilt",
               "beam shift", "image shift", "defocus",
-              "magnification", "stage position", "low dose",
-              "low dose mode", "diffraction mode", 'reset defocus',
-              'screen position', 'holder status', 'holder type', 'stage status']
+              "magnification", "corrected stage position", "stage position", "low dose",
+              "low dose mode", "diffraction mode", "reset defocus",
+              "screen position", "holder status", "holder type", "stage status"]
+
+      def __init__(self):
+          scopeclass.__init__(self)
+          self.correctedstage = False
+
       def exit(self):
           scopeclass.exit(self)
   
@@ -58,6 +63,8 @@ def factory(scopeclass):
               self.setMagnification(val)
           elif key == "stage position":
               self.setStagePosition(val, "absolute")
+          elif key == "corrected stage position":
+              self.setCorrectedStagePosition(val)
           elif key == "low dose":
               self.setLowDose(val)
           elif key == "low dose mode":
@@ -110,6 +117,8 @@ def factory(scopeclass):
               return self.getMagnification()
           elif key == "stage position":
               return self.getStagePosition()
+          elif key == "corrected stage position":
+              return self.getCorrectedStagePosition()
           elif key == "low dose":
               return self.getLowDose()
           elif key == "low dose mode":
@@ -128,6 +137,23 @@ def factory(scopeclass):
               return self.getStageStatus()
           else:
               raise KeyError
+
+      def setCorrectedStagePosition(self, value):
+          self.correctedstage = value
+	  return self.correctedstage
+
+      def getCorrectedStagePosition(self):
+          return self.correctedstage
+
+      def setStagePosition(self, value, type="absolute"):
+          if self.correctedstage:
+              delta = 1e-6
+              prevalue = dict(value)
+              # calculate pre-position
+              prevalue['x'] = value['x'] - delta
+              prevalue['y'] = value['y'] - delta
+              scopeclass.setStagePosition(self, prevalue, type)
+          return scopeclass.setStagePosition(self, value, type)
   
       def keys(self):
           return self.keylist
