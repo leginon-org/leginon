@@ -31,6 +31,7 @@ class LoopStoppedEvent(wx.PyCommandEvent):
 		self.SetEventObject(source)
 
 class Panel(gui.wx.Node.Panel):
+	icon = 'manualacquisition'
 	imageclass = gui.wx.ImageViewer.ImagePanel
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
