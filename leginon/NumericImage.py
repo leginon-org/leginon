@@ -249,7 +249,16 @@ class NumericImage:
 		else:
 			img.convert('L').resize(newsize).save(filename, "JPEG", quality=quality)
 
-
+	def read_jpeg(self, filename):
+                '''
+                read a grey JPEG
+                '''
+                i = Image.open(filename)
+                i.load()
+                s = i.tostring()
+                n = Numeric.fromstring(s, '1')
+                n.shape = i.size
+                self.__use_numeric(n)
 
 if __name__ == '__main__':
 	from Numeric import *

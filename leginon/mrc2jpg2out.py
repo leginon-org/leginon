@@ -105,8 +105,16 @@ def read_mrc(filename):
 	## make info dict
 	info = {}
 	info['array'] = dat.toNumeric()
-	info['min'] = dat.min
-	info['max'] = dat.max
+	if dat.min==0 and dat.max==0:
+		#search min max	
+		newmin = Numeric.argmin(Numeric.ravel(info['array']))
+		info['min'] = Numeric.ravel(info['array'])[newmin]
+		newmax = Numeric.argmax(Numeric.ravel(info['array']))
+		info['max'] = Numeric.ravel(info['array'])[newmax]
+	else:
+		info['min'] = dat.min
+		info['max'] = dat.max
+
 	return info
 
 def write_jpeg(pil_image, filename=None, quality=100):

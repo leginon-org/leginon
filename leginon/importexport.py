@@ -385,6 +385,6 @@ class ImportExport:
 if __name__ == "__main__":
 	app = ImportExport()
 	app.setDBparam(host="stratocaster")
-	app.importApplication('/home/dfellman/03dec15_0.xm')
+	app.importApplication('/home/dfellman/03dec15_0.xml')
 	dump = app.exportApplication('03dec15')
 	print dump

@@ -27,6 +27,7 @@ class ProjectExperiment(sqldict.ObjectBuilder):
 	'''
 	table = "projectexperiments"
 	columns = ['projectId', 'name']
+	indices = [ ('projectId', ['projectId'] )]
 projectexperiments = ProjectExperiment().register(db)
 
 ########################################
@@ -35,12 +36,15 @@ projectexperiments = ProjectExperiment().register(db)
 
 if __name__ == "__main__":
 	# getall projects
-	allprojects = projects.getall()
-	print allprojects
+	#allprojects = projects.getall()
+	#print allprojects
 
 	# getall experiment name with his projectId
-	allprojectexperiments = projectexperiments.getall()
-	print allprojectexperiments
+	#allprojectexperiments = projectexperiments.getall()
+	#print allprojectexperiments
+
+	#getall experiments with projectId=5
+	print projectexperiments.projectId[5].fetchall()
 
 	# insert a new session into the Test  Project database
 	# newsession = ProjectExperiment(5, 'testexp')

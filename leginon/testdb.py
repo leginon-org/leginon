@@ -6,6 +6,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 from sqldict import *
+import sys
 
 db = SQLDict(host='stratocaster')
 
@@ -25,10 +26,15 @@ presetDefinition = [{'Field': 'id', 'Type': 'int(16)', 'Key': 'PRIMARY', 'Extra'
 			{'Field': 'Intensity', 'Type': 'float(10,4)'},
 			{'Field': 'BShiftX', 'Type': 'float(10,4)'},
 			{'Field': 'BShiftY', 'Type': 'float(10,4)'},
-			{'Field': 'IShiftX', 'Type': 'float(10,4)'},
-			{'Field': 'IShiftY', 'Type': 'float(10,4)'}]
+			{'Field': 'IShiftY', 'Type': 'float(10,4)'},
+			{'Field': 'AX', 'Type': 'float(10,4)'},
+			{'Field': 'AZ', 'Type': 'float(10,4)'}]
 
-db.createSQLTable('PRESET', presetDefinition)
+db.createSQLTable('PRESET_TEST', presetDefinition)
+
+sys.exit()
+
+
 
 db.Preset = db.Table('PRESET', [ 'Name', 'Width', 'Height', 'Binning', 'ExpTime', 'Dose',
 		'BeamCurrent', 'LDButton', 'Mag', 'PixelSize', 'Defocus', 'SpotSize',
