@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Master.py,v $
-# $Revision: 1.3 $
+# $Revision: 1.4 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
-# $Author: suloway $
+# $Date: 2004-11-07 03:03:29 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -48,7 +48,7 @@ class RenameDialog(wxDialog):
 		box.Add(label, 0, wxALIGN_CENTER|wxALL, 3)
 		self.name_entry = wxTextCtrl(self, -1, '')
 		box.Add(self.name_entry, 1, wxALIGN_CENTER|wxALL, 3)
-		sizer.AddSizer(box)
+		sizer.Add(box)
 
 		box = wxBoxSizer(wxHORIZONTAL)
 		button = wxButton(self, wxID_OK, 'OK')
@@ -56,7 +56,7 @@ class RenameDialog(wxDialog):
 		box.Add(button, 0, wxALIGN_CENTER|wxALL, 5)
 		button = wxButton(self, wxID_CANCEL, 'Cancel')
 		box.Add(button, 0, wxALIGN_CENTER|wxALL, 5)
-		sizer.AddSizer(box)
+		sizer.Add(box)
 
 		self.SetSizer(sizer)
 		self.SetAutoLayout(True)
@@ -355,7 +355,7 @@ class AddNodeDialog(wxDialog):
 		box.Add(label, 0, wxALIGN_CENTER|wxALL, 3)
 		self.aliasentry = wxTextCtrl(self, -1, '')
 		box.Add(self.aliasentry, 1, wxALIGN_CENTER|wxALL, 3)
-		sizer.AddSizer(box)
+		sizer.Add(box)
 
 		box = wxBoxSizer(wxHORIZONTAL)
 		label = wxStaticText(self, -1, 'Class:')
@@ -368,14 +368,14 @@ class AddNodeDialog(wxDialog):
 		box.Add(self.classcombo, 1, wxALIGN_CENTER|wxALL, 3)
 #		self.classentry = wxTextCtrl(self, -1, '')
 #		box.Add(self.classentry, 1, wxALIGN_CENTER|wxALL, 3)
-		sizer.AddSizer(box)
+		sizer.Add(box)
 
 		box = wxBoxSizer(wxHORIZONTAL)
 		label = wxStaticText(self, -1, 'Dependencies:')
 		box.Add(label, 0, wxALIGN_CENTER|wxALL, 3)
 		self.dependenciesentry = wxTextCtrl(self, -1, '[]')
 		box.Add(self.dependenciesentry, 1, wxALIGN_CENTER|wxALL, 3)
-		sizer.AddSizer(box)
+		sizer.Add(box)
 
 		box = wxBoxSizer(wxHORIZONTAL)
 		box = wxBoxSizer(wxHORIZONTAL)
@@ -384,7 +384,7 @@ class AddNodeDialog(wxDialog):
 		box.Add(button, 0, wxALIGN_CENTER|wxALL, 5)
 		button = wxButton(self, wxID_CANCEL, 'Cancel')
 		box.Add(button, 0, wxALIGN_CENTER|wxALL, 5)
-		sizer.AddSizer(box)
+		sizer.Add(box)
 
 		self.SetSizer(sizer)
 		self.SetAutoLayout(True)
@@ -497,7 +497,7 @@ class AddLauncherDialog(wxDialog):
 		box.Add(label, 0, wxALIGN_CENTER|wxALL, 3)
 		self.aliasentry = wxTextCtrl(self, -1, '')
 		box.Add(self.aliasentry, 1, wxALIGN_CENTER|wxALL, 3)
-		sizer.AddSizer(box)
+		sizer.Add(box)
 
 		box = wxBoxSizer(wxHORIZONTAL)
 		button = wxButton(self, wxID_OK, 'Add')
@@ -505,7 +505,7 @@ class AddLauncherDialog(wxDialog):
 		box.Add(button, 0, wxALIGN_CENTER|wxALL, 5)
 		button = wxButton(self, wxID_CANCEL, 'Cancel')
 		box.Add(button, 0, wxALIGN_CENTER|wxALL, 5)
-		sizer.AddSizer(box)
+		sizer.Add(box)
 
 		self.SetSizer(sizer)
 		self.SetAutoLayout(True)
