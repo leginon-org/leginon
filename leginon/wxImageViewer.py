@@ -33,7 +33,7 @@ def getToolBitmap(filename):
 		iconpath = os.path.join(rundir, 'icons', filename)
 		wximage = wx.Image(iconpath)
 		bitmap = wx.BitmapFromImage(wximage)
-		bitmap.SetMask(wx.MaskColour(bitmap, wx.WHITE))
+		bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
 		toolbitmaps[filename] = bitmap
 		return bitmap
 
@@ -780,7 +780,7 @@ class TargetTool(ImageTool):
 		dc.DrawLine(0, 8, 15, 8)
 		dc.EndDrawing()
 		dc.SelectObject(wx.NullBitmap)
-		bitmap.SetMask(wx.MaskColour(bitmap, wx.WHITE))
+		bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
 		self.button.SetBitmapLabel(bitmap, False)
 		self.button.Refresh()
 
@@ -961,7 +961,7 @@ class TargetType(object):
 		dc.DrawLine(0, length/2, length, length/2)
 		dc.EndDrawing()
 		dc.SelectObject(wx.NullBitmap)
-		bitmap.SetMask(wx.MaskColour(bitmap, wx.WHITE))
+		bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
 		return bitmap
 
 	def setBitmaps(self, color):
