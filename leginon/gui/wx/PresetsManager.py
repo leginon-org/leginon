@@ -377,6 +377,7 @@ class Panel(gui.wx.Node.Panel):
 		self.stimagedose.SetLabel(evt.dosestring)
 
 	def onAcquireDoseImage(self, evt):
+		self.node.cycleToScope(self.presets.getSelectedPreset())
 		self.node.acquireDoseImage()
 
 	def onImport(self, evt):

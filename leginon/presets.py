@@ -44,8 +44,7 @@ class PresetsClient(object):
 	client functions for nodes to access PresetsManager
 	'''
 	eventinputs = [event.PresetChangedEvent, event.PresetPublishEvent]
-	def __init__(self, node, uistatus=None):
-		self.uistatus = uistatus
+	def __init__(self, node):
 		self.node = node
 		self.node.addEventInput(event.PresetChangedEvent, self.presetchanged)
 		self.node.addEventInput(event.PresetPublishEvent, self.onPresetPublished)
@@ -104,14 +103,12 @@ class PresetsClient(object):
 		evt = event.ChangePresetEvent()
 		evt['name'] = presetname
 		evt['emtarget'] = emtarget
-		if self.uistatus is not None:
-			self.uistatus.set('Requesting preset change to %s' % (presetname,))
+		self.node.logger.info('Requesting preset change to %s' % (presetname,))
 		self.pchanged[presetname] = threading.Event()
 		self.node.outputEvent(evt)
 		self.pchanged[presetname].wait()
 
-		if self.uistatus is not None:
-			self.uistatus.set('Preset change to %s completed' % (presetname,))
+		self.node.logger.info('Preset change to %s completed' % (presetname,))
 
 	def presetchanged(self, ievent):
 		self.currentpreset = ievent['preset']
@@ -333,7 +330,7 @@ class PresetsManager(node.Node):
 		'''
 		presetdata = self.presetByName(pname)
 		if presetdata is None:
-			message = 'No such preset %s' % (pname,)
+			message = 'Preset change failed: no such preset %s' % (pname,)
 			self.logger.error(message)
 			raise PresetChangeError(message)
 
@@ -356,7 +353,13 @@ class PresetsManager(node.Node):
 
 		self.logger.info(beginmessage)
 
-		self.emclient.setScope(scopedata)
+		try:
+			self.emclient.setScope(scopedata)
+		except Exception, e:
+			message = 'Preset change failed: unable to set instrument'
+			self.logger.error(message)
+			raise PresetChangeError(message)
+
 		if cameradata is not None:
 			self.emclient.setCamera(cameradata)
 
@@ -380,8 +383,12 @@ class PresetsManager(node.Node):
 		if not name:
 			self.logger.error('Invalid preset name')
 			return
-		scopedata = self.emclient.getScope()
-		cameradata = self.emclient.getCamera()
+		try:
+			scopedata = self.emclient.getScope()
+			cameradata = self.emclient.getCamera()
+		except EM.EMUnavailable, e:
+			self.logger.error('Preset from instrument failed: unable to get instrument parameters')
+			return
 		newpreset = data.PresetData()
 		newpreset.friendly_update(scopedata)
 		newpreset.friendly_update(cameradata)
@@ -429,7 +436,10 @@ class PresetsManager(node.Node):
 		'''
 		if not self.settings['cycle']:
 			if dofinal:
-				self.toScope(presetname)
+				try:
+					self.toScope(presetname)
+				except PresetChangeError:
+					pass
 			self.beep()
 			return
 
@@ -446,7 +456,10 @@ class PresetsManager(node.Node):
 		### and force a cycle anyway.
 		if self.currentpreset is None:
 			self.logger.info('First preset change, changing preset and forcing cycle')
-			self.toScope(presetname, outputevent=False)
+			try:
+				self.toScope(presetname, outputevent=False)
+			except PresetChangeError:
+				return
 			force = True
 		else:
 			force = False
@@ -476,11 +489,17 @@ class PresetsManager(node.Node):
 
 		## go to every preset in thiscycle except the last
 		for pname in thiscycle[:-1]:
-			self.toScope(pname, magonly)
+			try:
+				self.toScope(pname, magonly)
+			except PresetChangeError:
+				return
 
 		## final preset change
 		if dofinal:
-			self.toScope(thiscycle[-1])
+			try:
+				self.toScope(thiscycle[-1])
+			except PresetChangeError:
+				return
 			self.logger.info('Cycle completed')
 		self.beep()
 
@@ -530,9 +549,11 @@ class PresetsManager(node.Node):
 
 	def fromScope(self, newname):
 		newpreset = self._fromScope(newname)
+		if newpreset is None:
+			return
 		self.setOrder()
 		self.panel.setParameters(newpreset)
-		self.logger.info('created new preset: %s' % (newname,))
+		self.logger.info('Preset from instrument: %s' % (newname,))
 
 	def selectPreset(self, pname):
 		self.currentselection = self.presetByName(pname)
@@ -738,8 +759,8 @@ class PresetsManager(node.Node):
 		try:
 			self.emclient.setScope(scopedata)
 			self.emclient.setCamera(cameradata)
-		except:
-			message = 'Cannot set instrument parameters'
+		except Exception, e:
+			message = 'Move to target failed: unable to set instrument'
 			self.logger.error(message)
 			raise PresetChangeError(message)
 
