@@ -71,8 +71,8 @@ class ImageMosaicInfo(object):
 					imagemin[i] = tilemin[i]
 				if tilemax[i] > imagemax[i]:
 					imagemax[i] = tilemax[i]
-		imageshape = (imagemax[0] - imagemin[0], 
-									imagemax[1] - imagemin[1]) 
+		imageshape = (int(round(imagemax[0] - imagemin[0])), 
+									int(round(imagemax[1] - imagemin[1]))) 
 
 		mosaicimage = Numeric.zeros(imageshape, astype)
 
@@ -89,8 +89,9 @@ class ImageMosaicInfo(object):
 			print 'image min =', imagemin
 			print 'image max =', imagemax
 			print 'image shape =', imageshape
-			mosaicimage[tileoffset[0]:tilelimit[0],
-									tileoffset[1]:tilelimit[1]] = tileimage.astype(astype)
+			mosaicimage[int(round(tileoffset[0])):int(round(tilelimit[0])),
+									int(round(tileoffset[1])):int(round(tilelimit[1]))] \
+																				= tileimage.astype(astype)
 
 		return mosaicimage
 
@@ -379,7 +380,7 @@ class ImageMosaic(watcher.Watcher):
 		# publish most recent for now
 		if len(self.imagemosaics) == 0:
 			return ''
-		odata = data.MosaicImageData(self.ID(), self.imagemosaics[-1].getMosaicImage())
+		odata = data.MosaicImageData(self.ID(), self.imagemosaics[-1].getMosaicImage(), scope=None, camera=None)
 		self.publish(odata, event.MosaicImagePublishEvent)
 		return ''
 
@@ -497,6 +498,9 @@ class StateImageMosaic(ImageMosaic):
 																		idata.content['scope'][parameter],
 																		idata.content['scope'],
 																		idata.content['camera'])
+		# this makes it work with calibration
+		position['row'] *= -1
+		position['col'] *= -1
 		return (position['row'], position['col'])
 
 #	def setPixelSizeAndRotation(self, ievent):
@@ -538,7 +542,7 @@ class StateImageMosaic(ImageMosaic):
 
 		if len(self.imagemosaics) == 0:
 			return ''
-		odata = data.MosaicImageData(self.ID(), self.imagemosaics[-1].getMosaicImage())
+		odata = data.MosaicImageData(self.ID(), self.imagemosaics[-1].getMosaicImage(), scope=None, camera=None)
 		self.publish(odata, event.MosaicImagePublishEvent)
 
 		statedata = {'image data ID': odata.id}
