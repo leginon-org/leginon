@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/atlasviewer.py,v $
-# $Revision: 1.13 $
+# $Revision: 1.14 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-22 23:32:12 $
+# $Date: 2005-03-22 23:35:06 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -486,7 +486,7 @@ class AtlasViewer(node.Node, targethandler.TargetWaitHandler):
 			t = 'TEM'
 			self.instrument.setTEM(presetdata['tem']['name'])
 			t = 'CCD Camera'
-			self.instrument.setTEM(presetdata['tem']['name'])
+			self.instrument.setCCDCamera(presetdata['ccdcamera']['name'])
 		except (ValueError, TypeError, AttributeError, KeyError):
 			self.logger.error('Cannot access %s for preset' % t)
 			if test:
