@@ -59,7 +59,7 @@ class Focuser(acquisition.Acquisition):
 		self.euclient.publishEucentricFocus(ht, mag, foc)
 		self.logger.info('eucentric focus saved to database, ht=%s, mag=%s, focus=%s' % (ht, mag, foc))
 
-	def autoFocus(self, resultdata, presettarget):
+	def autoFocus(self, resultdata, presettarget, target):
 		## need btilt, pub, driftthresh
 		btilt = self.btilt.get()
 		pub = False
@@ -99,7 +99,7 @@ class Focuser(acquisition.Acquisition):
 			self.logger.exception('')
 
 		try:
-			correction = self.btcalclient.measureDefocusStig(btilt, pub, drift_threshold=driftthresh, image_callback=self.ui_image.set)
+			correction = self.btcalclient.measureDefocusStig(btilt, pub, drift_threshold=driftthresh, image_callback=self.ui_image.set, target=target)
 		except calibrationclient.Abort:
 			self.logger.info('measureDefocusStig was aborted')
 			self.autofocusresult.set('aborted')
@@ -207,7 +207,7 @@ class Focuser(acquisition.Acquisition):
 		## autofocus
 		if self.auto_on.get():
 			autofocuspreset = self.autofocuspreset.get()
-			autopresettarget = data.PresetTargetData(emtarget=presettarget['emtarget'], preset=autofocuspreset)
+			autopresettarget = data.PresetTargetData(emtarget=presettarget['emtarget'], preset=autofocuspreset, target=target)
 			status = self.autoFocus(resultdata, autopresettarget)
 			resultdata['auto status'] = status
 			if status != 'ok':

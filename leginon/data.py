@@ -865,6 +865,7 @@ class DriftData(InSessionData):
 			('rowmeters', float),
 			('colmeters', float),
 			('interval', float),
+			('target', AcquisitionImageTargetData),
 		)
 	typemap = classmethod(typemap)
 

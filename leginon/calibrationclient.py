@@ -80,7 +80,7 @@ class CalibrationClient(object):
 		info = {'requested state': state, 'imagedata': imagedata, 'image stats': image_stats}
 		return info
 
-	def measureStateShift(self, state1, state2, publish_images=0, settle=0.0, drift_threshold=None, image_callback=None):
+	def measureStateShift(self, state1, state2, publish_images=0, settle=0.0, drift_threshold=None, image_callback=None, target=None):
 		'''
 		Measures the pixel shift between two states
 		 Returned dict has these keys:
@@ -143,7 +143,7 @@ class CalibrationClient(object):
 			shiftrows = shift[0]
 			shiftcols = shift[1]
 			seconds = t1 - t0
-			d = data.DriftData(session=self.node.session, rows=shiftrows, cols=shiftcols, interval=seconds)
+			d = data.DriftData(session=self.node.session, rows=shiftrows, cols=shiftcols, interval=seconds, target=target)
 			self.node.publish(d, database=True, dbforce=True)
 
 			drift = abs(shift[0] + 1j * shift[1])
@@ -406,7 +406,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		bt = self.emclient.getScope()['beam tilt']
 		return bt
 
-	def measureDefocusStig(self, tilt_value, publish_images=0, drift_threshold=None, image_callback=None, stig=True):
+	def measureDefocusStig(self, tilt_value, publish_images=0, drift_threshold=None, image_callback=None, stig=True, target=None):
 		self.abortevent.clear()
 		scopedata = self.emclient.getScope()
 		mag = scopedata['magnification']
@@ -444,7 +444,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			if nodrift:
 				drift_threshold = None
 			try:
-				shiftinfo = self.measureStateShift(state1, state2, publish_images, settle=0.5, drift_threshold=drift_threshold, image_callback=image_callback)
+				shiftinfo = self.measureStateShift(state1, state2, publish_images, settle=0.5, drift_threshold=drift_threshold, image_callback=image_callback, target=target)
 			except Abort:
 				break
 			except Drifting:
