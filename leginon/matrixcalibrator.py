@@ -18,6 +18,7 @@ import Numeric
 import Mrc
 import uidata
 import threading
+import node
 
 class CalibrationError(Exception):
 	pass
