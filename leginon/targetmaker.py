@@ -7,7 +7,6 @@
 #
 import threading
 import node, event, data
-import uidata
 import presets
 import calibrationclient
 import math

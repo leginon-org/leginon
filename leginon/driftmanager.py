@@ -10,7 +10,6 @@
 
 import watcher
 import event, data
-import uidata
 import camerafuncs
 import correlator
 import peakfinder

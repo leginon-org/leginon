@@ -8,7 +8,6 @@
 import calibrator
 import calibrationclient
 import event, data
-import uidata
 import node
 import math
 import EM

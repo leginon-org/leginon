@@ -9,7 +9,6 @@ import acquisition
 import node, data
 import calibrationclient
 import camerafuncs
-import uidata
 import threading
 import event
 import time

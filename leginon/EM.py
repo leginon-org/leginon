@@ -19,7 +19,6 @@ except:
 import Queue
 import threading
 import time
-import uidata
 import unique
 import copy
 import gui.wx.Instrument

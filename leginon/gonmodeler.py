@@ -16,7 +16,6 @@ import camerafuncs
 import threading
 import calibrationclient
 import gonmodel
-import uidata
 import string
 import math
 import EM

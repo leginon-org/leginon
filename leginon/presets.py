@@ -12,7 +12,6 @@ import datatransport
 import event
 import dbdatakeeper
 import copy
-import uidata
 import camerafuncs
 import threading
 import time
@@ -138,29 +137,6 @@ class PresetsClient(object):
 	def getPresetNames(self):
 		presetlist = self.getPresetsFromDB()
 		return presetlist.keys()
-
-class SinglePresetSelector(uidata.Container):
-	def __init__(self, presetsclient, label='', default='', permissions='rw', persist=False):
-		uidata.Container.__init__(self, label)
-		self.presetsclient = presetsclient
-		showavailable = uidata.Method('Show Available Names', self.refreshPresetNames)
-		self.available = uidata.String('Available', '', 'r')
-		self.entry = uidata.String('Preset Name', default, permissions, persist=persist)
-		self.addObjects((showavailable, self.available, self.entry))
-
-	def get(self):
-		return self.entry.get()
-
-	def set(self, value):
-		self.entry.set(value)
-
-	def refreshPresetNames(self):
-		names = self.presetsclient.getPresetNames()
-		if names:
-			availstr = '   '.join(names)
-		else:
-			availstr = 'No Presets Available'
-		self.available.set(availstr)
 
 class PresetsManager(node.Node):
 	panelclass = gui.wx.PresetsManager.Panel

@@ -20,7 +20,6 @@ try:
 except:
 	import Numeric
 import threading
-import uidata
 import EM
 import gui.wx.Corrector
 

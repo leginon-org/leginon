@@ -11,7 +11,6 @@
 import data
 import targetfinder
 import holefinderback
-import uidata
 import Mrc
 import camerafuncs
 import threading
@@ -107,13 +106,6 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.userpause = threading.Event()
 
 		self.start()
-
-	'''
-	def defineUserInterface(self):
-		cameraconfigure = self.cam.uiSetupContainer()
-		acqmeth = uidata.Method('Acquire Image', self.acqImage)
-		testmeth = uidata.Method('Test All', self.everything)
-	'''
 
 	def readImage(self, filename):
 		try:

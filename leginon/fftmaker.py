@@ -11,7 +11,6 @@ import event
 import imagewatcher
 import Mrc
 import threading
-import uidata
 import node
 import imagefun
 import gui.wx.FFTMaker

@@ -18,7 +18,6 @@ try:
 	import numarray as Numeric
 except:
 	import Numeric
-import uidata
 import threading
 import node
 import data

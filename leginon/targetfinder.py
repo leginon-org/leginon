@@ -13,7 +13,6 @@ import imagewatcher
 import mosaic
 import Mrc
 import threading
-import uidata
 import node
 import EM
 import targethandler

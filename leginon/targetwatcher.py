@@ -11,7 +11,6 @@
 import event, data
 import watcher
 import threading
-import uidata
 import targethandler
 import node
 import player

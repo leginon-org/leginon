@@ -13,7 +13,6 @@ import node
 import project
 import threading
 import time
-import uidata
 import EM
 import gui.wx.ManualAcquisition
 

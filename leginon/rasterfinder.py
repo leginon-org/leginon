@@ -10,7 +10,6 @@
 
 import data
 import targetfinder
-import uidata
 import Mrc
 import camerafuncs
 import threading

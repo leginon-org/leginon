@@ -11,7 +11,6 @@ import correlator
 import peakfinder
 import time
 import camerafuncs
-import uidata
 import EM
 import gui.wx.Calibrator
 
