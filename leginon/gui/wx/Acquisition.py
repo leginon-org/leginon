@@ -1,5 +1,5 @@
 import wx
-import wx.lib.masked
+from gui.wx.Entry import FloatEntry, EVT_ENTRY
 import wx.lib.scrolledpanel
 import gui.wx.Data
 import wxImageViewer
@@ -23,34 +23,28 @@ class Panel(gui.wx.Node.Panel):
 
 		# settings
 		self.szsettings = self._getStaticBoxSizer('Settings', (1, 0), (1, 1),
-																							wx.ALL)
+																							wx.EXPAND)
 
-		sz = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Wait')
-		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL)
-		self.ncwait = wx.lib.masked.NumCtrl(self, -1, 2.5,
-																				integerWidth=2,
-																				fractionWidth=1,
-																				allowNone=False,
-																				allowNegative=False,
-																				name='ncWait')
-		gui.wx.Data.bindWindowToDB(self.ncwait)
-		sz.Add(self.ncwait, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL)
-		label = wx.StaticText(self, -1, 'seconds and use')
-		sz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL)
+		label0 = wx.StaticText(self, -1, 'Use')
 		self.cmovetype = wx.Choice(self, -1, name='cMoveType')
-		gui.wx.Data.bindWindowToDB(self.cmovetype)
-		sz.Add(self.cmovetype, (0, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL)
-		label = wx.StaticText(self, -1, 'to move to target')
-		sz.Add(label, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL)
-		self.szsettings.Add(sz, (0, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL)
+		label1 = wx.StaticText(self, -1, 'to move to target')
+		szmovetype = wx.GridBagSizer(5, 5)
+		szmovetype.Add(label0, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szmovetype.Add(self.cmovetype, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szmovetype.Add(label1, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		label0 = wx.StaticText(self, -1, 'Wait')
+		self.fewait = FloatEntry(self, -1, min=0.0, allownone=False, chars=4,
+																				value='2.5', name='feWait')
+		label1 = wx.StaticText(self, -1, 'seconds before acquiring image')
+		szwait = wx.GridBagSizer(5, 5)
+		szwait.Add(label0, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szwait.Add(self.fewait, (0, 1), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		szwait.Add(label1, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		self.presetorder = gui.wx.Presets.EditPresetOrder(self, -1,
 																											name='poPresetOrder')
-		gui.wx.Data.bindWindowToDB(self.presetorder)
-		self.szsettings.Add(self.presetorder, (1, 0), (1, 1),
-													wx.ALIGN_CENTER|wx.EXPAND|wx.ALL)
-
 		self.cbcorrectimage = wx.CheckBox(self, -1, 'Correct image',
 																			name='cbCorrectImage')
 		self.cbdisplayimage = wx.CheckBox(self, -1, 'Display image',
@@ -63,48 +57,51 @@ class Panel(gui.wx.Node.Panel):
 		self.cbwaitrejects = wx.CheckBox(self, -1,
 																			'Publish and wait for rejected targets',
 																			name='cbWaitRejects')
-		gui.wx.Data.bindWindowToDB(self.cbcorrectimage)
-		gui.wx.Data.bindWindowToDB(self.cbdisplayimage)
-		gui.wx.Data.bindWindowToDB(self.cbsaveimage)
-		gui.wx.Data.bindWindowToDB(self.cbwaitimageprocess)
-		gui.wx.Data.bindWindowToDB(self.cbwaitrejects)
-		self.szsettings.Add(self.cbcorrectimage, (2, 0), (1, 1),
-												wx.ALIGN_CENTER_VERTICAL)
-		self.szsettings.Add(self.cbdisplayimage, (3, 0), (1, 1),
-												wx.ALIGN_CENTER_VERTICAL)
-		self.szsettings.Add(self.cbsaveimage, (4, 0), (1, 1),
-												wx.ALIGN_CENTER_VERTICAL)
-		self.szsettings.Add(self.cbwaitimageprocess, (5, 0), (1, 1),
-												wx.ALIGN_CENTER_VERTICAL)
-		self.szsettings.Add(self.cbwaitrejects, (6, 0), (1, 1),
-												wx.ALIGN_CENTER_VERTICAL)
 
-		szduplicate = wx.GridBagSizer(0, 0)
 		self.cbduplicate = wx.CheckBox(self, -1, 'Duplicate targets with type:',
 																		name='cbDuplicate')
-		gui.wx.Data.bindWindowToDB(self.cbduplicate)
 		self.cduplicatetype = wx.Choice(self, -1, name='cDuplicateType')
-		gui.wx.Data.bindWindowToDB(self.cduplicatetype)
+
+		szduplicate = wx.GridBagSizer(0, 0)
 		szduplicate.Add(self.cbduplicate, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szduplicate.Add(self.cduplicatetype, (0, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL)
-		self.szsettings.Add(szduplicate, (7, 0), (1, 1))
+
+		self.szsettings.Add(szmovetype, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.szsettings.Add(szwait, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.szsettings.Add(self.presetorder, (2, 0), (1, 1), wx.ALIGN_CENTER)
+		self.szsettings.Add(self.cbcorrectimage, (3, 0), (1, 1),
+												wx.ALIGN_CENTER_VERTICAL)
+		self.szsettings.Add(self.cbdisplayimage, (4, 0), (1, 1),
+												wx.ALIGN_CENTER_VERTICAL)
+		self.szsettings.Add(self.cbsaveimage, (5, 0), (1, 1),
+												wx.ALIGN_CENTER_VERTICAL)
+		self.szsettings.Add(self.cbwaitimageprocess, (6, 0), (1, 1),
+												wx.ALIGN_CENTER_VERTICAL)
+		self.szsettings.Add(self.cbwaitrejects, (7, 0), (1, 1),
+												wx.ALIGN_CENTER_VERTICAL)
+		self.szsettings.Add(szduplicate, (8, 0), (1, 1))
 
 		# controls
-		self.szcontrols = self._getStaticBoxSizer('Controls', (2, 0), (1, 1),
-																wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_TOP)
+		self.szcontrols = wx.GridBagSizer(5, 5)
 		self.tbpause = wx.ToggleButton(self, -1, 'Pause')
 		self.tbstop = wx.ToggleButton(self, -1, 'Stop')
-		self.szcontrols.Add(self.tbpause, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.szcontrols.Add(self.tbstop, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.szcontrols.Add(self.tbpause, (0, 0), (1, 1),
+												wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		self.szcontrols.Add(self.tbstop, (0, 1), (1, 1),
+												wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
+		self.szcontrols.AddGrowableCol(0)
+		self.szcontrols.AddGrowableCol(1)
+		self.szmain.Add(self.szcontrols, (2, 0), (1, 1),
+										wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_TOP|wx.TOP, 10)
 
 		# image
-		self.szimage = self._getStaticBoxSizer('Image', (1, 1), (2, 1),
+		self.szimage = self._getStaticBoxSizer('Image', (1, 1), (3, 1),
 																						wx.EXPAND|wx.ALL)
 		self.imagepanel = wxImageViewer.ImagePanel(self, -1)
 		self.szimage.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND|wx.ALL)
 
-		self.szmain.AddGrowableRow(2)
+		self.szmain.AddGrowableRow(3)
 		self.szmain.AddGrowableCol(1)
 
 		self.SetSizerAndFit(self.szmain)
@@ -112,7 +109,7 @@ class Panel(gui.wx.Node.Panel):
 
 		self.Bind(gui.wx.Presets.EVT_NEW_PRESET, self.onNewPreset)
 
-		self.Bind(wx.lib.masked.EVT_NUM, self.onWaitNum, self.ncwait)
+		self.Bind(EVT_ENTRY, self.onWaitEntry, self.fewait)
 		self.Bind(wx.EVT_CHOICE, self.onMoveTypeChoice, self.cmovetype)
 		self.Bind(gui.wx.Presets.EVT_PRESET_ORDER_CHANGED,
 								self.onPresetOrderChanged, self.presetorder)
@@ -142,7 +139,7 @@ class Panel(gui.wx.Node.Panel):
 		self.cduplicatetype.AppendItems(duplicatetypes)
 		self.cduplicatetype.SetSelection(0)
 
-		gui.wx.Data.setWindowFromDB(self.ncwait)
+		gui.wx.Data.setWindowFromDB(self.fewait)
 		gui.wx.Data.setWindowFromDB(self.cmovetype)
 		gui.wx.Data.setWindowFromDB(self.presetorder)
 		gui.wx.Data.setWindowFromDB(self.cbcorrectimage)
@@ -153,7 +150,7 @@ class Panel(gui.wx.Node.Panel):
 		gui.wx.Data.setWindowFromDB(self.cbduplicate)
 		gui.wx.Data.setWindowFromDB(self.cduplicatetype)
 
-		self.node.wait = self.ncwait.GetValue()
+		self.node.wait = self.fewait.GetValue()
 		self.node.movetype = self.cmovetype.GetStringSelection()
 		self.node.presetnames = self.presetorder.getValues()
 		self.node.correct = self.cbcorrectimage.GetValue()
@@ -164,6 +161,17 @@ class Panel(gui.wx.Node.Panel):
 		self.node.duplicate = self.cbduplicate.GetValue()
 		self.node.duplicatetype = self.cduplicatetype.GetStringSelection()
 
+		gui.wx.Data.bindWindowToDB(self.cmovetype)
+		gui.wx.Data.bindWindowToDB(self.fewait)
+		gui.wx.Data.bindWindowToDB(self.presetorder)
+		gui.wx.Data.bindWindowToDB(self.cbcorrectimage)
+		gui.wx.Data.bindWindowToDB(self.cbdisplayimage)
+		gui.wx.Data.bindWindowToDB(self.cbsaveimage)
+		gui.wx.Data.bindWindowToDB(self.cbwaitimageprocess)
+		gui.wx.Data.bindWindowToDB(self.cbwaitrejects)
+		gui.wx.Data.bindWindowToDB(self.cbduplicate)
+		gui.wx.Data.bindWindowToDB(self.cduplicatetype)
+
 		self.szmain.Layout()
 
 	def onNewPreset(self, evt=None):
@@ -172,9 +180,8 @@ class Panel(gui.wx.Node.Panel):
 			evt = gui.wx.Presets.PresetsChangedEvent(presets)
 			self.presetorder.GetEventHandler().AddPendingEvent(evt)
 
-	def onWaitNum(self, evt):
-		if self.node is not None:
-			self.node.wait = evt.GetValue()
+	def onWaitEntry(self, evt):
+		self.node.wait = evt.GetValue()
 
 	def onMoveTypeChoice(self, evt):
 		self.node.movetype = evt.GetString()
