@@ -82,7 +82,10 @@ class Correlator(object):
 
 		fft1 = self.getFFT(1)
 		if fft1 is None:
-			fft1 = self.fftengine.transform(im1)
+			if im1 is im0:
+				fft1 = fft0
+			else:
+				fft1 = self.fftengine.transform(im1)
 			self.setFFT(1, fft1)
 
 		ccfft = Numeric.multiply(Numeric.conjugate(fft0), fft1)
