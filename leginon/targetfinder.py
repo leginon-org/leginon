@@ -41,14 +41,14 @@ class TargetFinder(imagewatcher.ImageWatcher):
 
 	def lastTargetIndex(self, imagedata):
 		'''
-		Returns the index of the last target associated with the given image data.
+		Returns the number of the last target associated with the given image data.
 		'''
 		targets = self.researchImageTargets(imagedata)
-		maxindex = 0
+		maxnumber = 0
 		for target in targets:
-			if target['index'] > maxindex:
-				maxindex = target['index']
-		return maxindex
+			if target['number'] > maxnumber:
+				maxnumber = target['number']
+		return maxnumber
 
 	def findTargets(self, imdata):
 		'''
@@ -71,12 +71,12 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		Updates and publishes the target list self.targetlist. Waits for target
 		to be "done" if specified.
 		'''
-		index = 1
+		number = 1
 		for target in self.targetlist:
 			# XXX this might not work for mosaic
 			# XXX need to publish a mosaic image so this will work
-			target['index'] = index
-			index += 1
+			target['number'] = number
+			number += 1
 			print 'TARGET publishing %s' % (target['id'],)
 			self.publish(target, database=True)
 
@@ -394,6 +394,14 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			drow = target['delta row']
 			dcol = target['delta column']
 			targetdata = self.newTargetData(imagedata, typename, drow, dcol)
+
+			## a target on the full mosaic image
+			mtargetdata = data.MosaicTargetData()
+			mtargetdata['row'] = row
+			mtargetdata['column'] = column
+			mtargetdata['target'] = targetdata
+			## now what to do with it?????
+
 			targetlist.append(targetdata)
 		return targetlist
 
