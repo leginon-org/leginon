@@ -169,7 +169,7 @@ class GonModeler(node.Node):
 		return ''
 
 	def uiMagOnly(self):
-		self.calclient.fit(self.uidatafile.get(), self.uiterms.get(), magonly=1)
+		self.calclient.fit(self.uifitlabel.get(), self.uifitmag.get(), self.uifitaxis.getSelectedValue(), self.uiterms.get(), magonly=1)
 		return ''
 
 	def getStagePosition(self):
