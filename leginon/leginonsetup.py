@@ -315,7 +315,7 @@ class RunWidget(Tkinter.Frame):
 #		launcherpath = '\\\\colossus\\amishare\\suloway\\pyleginon\\launcher.py'
 #		launcherpath = '\\\\colossus\\amishare\\suloway\\pyleginon\\launcher.py'
 		try:
-			launcherpath = os.envrion['LEGINONPATH'] + '\\launcher.py'
+			launcherpath = os.environ['LEGINONPATH'] + '\\launcher.py'
 		except:
 			raise RuntimeError('LEGINONPATH environment variable error')
 
@@ -323,7 +323,8 @@ class RunWidget(Tkinter.Frame):
 			process = os.spawnv(os.P_NOWAIT, 'C:\\Python22\\python.exe',
 								['launcher.py', launcherpath])
 		else:
-			process = os.spawnv(os.P_NOWAIT, launcherpath, ['launcher.py'])
+			process = os.spawnv(os.P_WAIT, launcherpath, ['launcher.py'])
+			print process
 
 #		self.locallauncherprocess = process
 
