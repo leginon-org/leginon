@@ -61,7 +61,12 @@ class GonModeler(calibrator.Calibrator):
 	# calibrate needs to take a specific value
 	def loop(self, label, axis, points, interval):
 		## set camera state
-		self.cam.setCameraDict(self.settings['camera settings'])
+		try:
+			self.cam.setCameraDict(self.settings['camera settings'])
+		except camerafuncs.CameraError, e:
+			self.logger.error('Modeled stage measurement failed: %s' % e)
+			self.panel.measurementDone()
+			return
 
 		mag, mags = self.getMagnification()
 		ht = self.getHighTension()
@@ -102,6 +107,7 @@ class GonModeler(calibrator.Calibrator):
 			t.stop()
 		self.logger.info('Loop done')
 		self.threadlock.release()
+		self.panel.measurementDone()
 
 	def acquireNextPosition(self, axis, state=None):
 		## go to state
@@ -186,22 +192,28 @@ class GonModeler(calibrator.Calibrator):
 
 	def uiFit(self):
 		# label, mag, axis, terms,...
-		self.calclient.fit(self.modellabel, self.settings['model magnification'], self.settings['model axis'], self.settings['model terms'], magonly=self.settings['model mag only'])
-		return ''
+		try:
+			self.calclient.fit(self.modellabel,
+													self.settings['model magnification'],
+													self.settings['model axis'],
+													self.settings['model terms'],
+													magonly=self.settings['model mag only'])
+		except Exception, e:
+			self.logger.error('Modeled stage fit failed: %s' % e)
+		self.panel.calibrationDone()
 
 	def uiStartLoop(self):
 		if not self.threadlock.acquire(0):
-			return ''
+			self.panel.measurementDone()
+			return
 		label = self.measurelabel
 		axis = self.settings['measure axis']
 		points = self.settings['measure points']
 		interval = self.settings['measure interval']
 		self.threadstop.clear()
-		t = threading.Thread(target=self.loop, args=(label, axis, points, interval))
-		t.setDaemon(1)
-		t.start()
-		return ''
+		self.loop(label, axis, points, interval)
+		return
 
 	def uiStopLoop(self):
 		self.threadstop.set()
-		return ''
+		return

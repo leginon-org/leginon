@@ -1,4 +1,5 @@
 # -*- coding: iso-8859-1 -*-
+import threading
 import wx
 from gui.wx.Choice import Choice
 from gui.wx.Entry import IntEntry, FloatEntry
@@ -33,7 +34,7 @@ class SettingsDialog(gui.wx.Calibrator.SettingsDialog):
 		szmeasure.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szmeasure.Add(self.widgets['measure tolerance'], (2, 1), (1, 1),
 									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
-		label = wx.StaticText(self, -1, '% of pixel size')
+		label = wx.StaticText(self, -1, '%')
 		szmeasure.Add(label, (2, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'Interval')
 		szmeasure.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -78,23 +79,35 @@ class Panel(gui.wx.Calibrator.Panel):
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_MEASURE,
 													'ruler',
 													shortHelpString='Measure')
-		self.toolbar.AddSeparator()
 		self.toolbar.AddToolItem(atb)
+		self.toolbar.AddSeparator()
 		self.toolbar.AddToolItem(ctb)
+
+		self.Bind(gui.wx.Events.EVT_MEASUREMENT_DONE, self.onMeasurementDone)
 
 	def onNodeInitialized(self):
 		gui.wx.Calibrator.Panel.onNodeInitialized(self)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureTool,
 											id=gui.wx.ToolBar.ID_MEASURE)
 
+	def onMeasurementDone(self, evt):
+		self._calibrationEnable(True)
+
+	def measurementDone(self):
+		evt = gui.wx.Events.MeasurementDoneEvent()
+		self.GetEventHandler().AddPendingEvent(evt)
+
 	def onMeasureTool(self, evt):
-		self.node.uiStartLoop()
+		self._calibrationEnable(False)
+		threading.Thread(target=self.node.uiStartLoop).start()
 
 	def onAbortTool(self, evt):
-		self.node.uiStopLoop()
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
+		threading.Thread(target=self.node.uiStopLoop).start()
 
 	def onCalibrateTool(self, evt):
-		self.node.uiFit()
+		self._calibrationEnable(False)
+		threading.Thread(target=self.node.uiFit).start()
 
 if __name__ == '__main__':
 	class App(wx.App):

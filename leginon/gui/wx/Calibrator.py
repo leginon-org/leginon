@@ -56,6 +56,7 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_ABORT,
 													'stop',
 													shortHelpString='Abort')
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
 
 		self.initialize()
 
