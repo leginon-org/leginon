@@ -40,11 +40,8 @@ class Launcher(node.Node):
 
 	def publishNodeClasses(self):
 		reload(nodeclassreg)
-		print 'publishNodeClasses'
 		nodeclassnames = nodeclassreg.getNodeClassNames()
-		print 'nodeclassnames', nodeclassnames
 		d = data.NodeClassesData(self.ID(), nodeclassnames)
-		print 'DDDD content', d.content
 		self.publish(d, event.NodeClassesPublishEvent)
 
 	def handleLaunch(self, launchevent):

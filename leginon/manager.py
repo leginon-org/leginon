@@ -293,7 +293,6 @@ class Manager(node.Node):
 		return ''
 
 	def uiGetLauncherdict(self):
-		print 'UIGETLAUNCHERDICT'
 		self.updateLauncherDictDataDict()
 		return self.launcherdictdatadict
 		

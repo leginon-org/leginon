@@ -26,7 +26,7 @@ class Calibration(node.Node):
 		self.peakfinder = peakfinder.PeakFinder()
 
 		#### parameters for user to set
-		self.emnode = None
+		self.emnode = 'em'
 		self.attempts = 5
 		self.range = [0.0000001, 0.00001]
 		####
@@ -318,7 +318,6 @@ class Calibration(node.Node):
 
 		argspec = (
 		self.registerUIData('EM Node', 'string', default='em'),
-		self.registerUIData('Parameter', 'string', choices=paramchoices, default='image shift'),
 		self.registerUIData('Minimum', 'float', default=self.range[0]),
 		self.registerUIData('Maximum', 'float', default=self.range[1]),
 		self.registerUIData('Attempts', 'integer', default=self.attempts),
@@ -336,9 +335,8 @@ class Calibration(node.Node):
 		self.calibrate()
 		return ''
 
-	def uiSetParameters(self, emnode, param, r0, r1, a, ct, cs):
+	def uiSetParameters(self, emnode, r0, r1, a, ct, cs):
 		self.emnode = ('manager', emnode)
-		self.parameter = param
 		self.range[0] = r0
 		self.range[1] = r1
 		self.attempts = a
@@ -361,6 +359,6 @@ class ImageShiftCalibration(Calibration):
 	def __init__(self, id, managerlocation):
 		Calibration.__init__(self, id, managerlocation)
 
-	def stage(self, value):
+	def state(self, value):
 		return {'image shift': {'x': value}}
 
