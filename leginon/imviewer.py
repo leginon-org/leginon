@@ -61,25 +61,11 @@ class ImViewer(watcher.Watcher, camerafuncs.CameraFuncs):
 		#root.wm_sizefrom('program')
 		root.wm_geometry('=450x400')
 
-		#print 'acqbut'
-		buttons = Frame(root)
-		self.acqrawbut = Button(buttons, text='Acquire Raw', command=self.acquireRaw)
-		self.acqrawbut.pack(side=LEFT)
-		self.acqcorbut = Button(buttons, text='Acquire Corrected', command=self.acquireCorrected)
-		self.acqcorbut.pack(side=LEFT)
-		self.acqeventbut = Button(buttons, text='Acquire Event', command=self.acquireEvent)
-		self.acqeventbut.pack(side=LEFT)
-		buttons.pack(side=TOP)
-
-		#print 'iv'
 		self.iv = ImageViewer(root, bg='#488')
 		self.iv.bindCanvas('<Double-1>', self.clickEvent)
-		#print 'iv pack'
 		self.iv.pack()
 
-		#print 'viewer_ready.set'
 		self.viewer_ready.set()
-		#print 'mainloop'
 		root.mainloop()
 
 		##clean up if window destroyed
@@ -93,11 +79,6 @@ class ImViewer(watcher.Watcher, camerafuncs.CameraFuncs):
 			### root may not exist or already destroyed
 			pass
 
-	def acquireRaw(self):
-		self.acqrawbut['state'] = DISABLED
-		self.acquireAndDisplay(0)
-		self.acqrawbut['state'] = NORMAL
-
 	def uiAcquireRaw(self):
 		imarray = self.acquireArray(0)
 		if imarray is None:
@@ -105,11 +86,6 @@ class ImViewer(watcher.Watcher, camerafuncs.CameraFuncs):
 		else:
 			mrcstr = Mrc.numeric_to_mrcstr(imarray)
 		return xmlrpclib.Binary(mrcstr)
-
-	def acquireCorrected(self):
-		self.acqcorbut['state'] = DISABLED
-		self.acquireAndDisplay(1)
-		self.acqcorbut['state'] = NORMAL
 
 	def uiAcquireCorrected(self):
 		im = self.acquireArray(1)
@@ -137,13 +113,8 @@ class ImViewer(watcher.Watcher, camerafuncs.CameraFuncs):
 		print 'acquireAndDisplay done'
 
 	def acquireEvent(self):
-		self.acqeventbut['state'] = DISABLED
-		#print 'sending ImageAcquireEvent'
 		e = event.ImageAcquireEvent(self.ID())
-		#print 'e', e
 		self.outputEvent(e)
-		#print 'sent ImageAcquireEvent'
-		self.acqeventbut['state'] = NORMAL
 		return ''
 
 	def processData(self, imagedata):
