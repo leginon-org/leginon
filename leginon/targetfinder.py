@@ -23,9 +23,12 @@ xmlbinlib = xmlrpclib
 
 class TargetFinder(imagewatcher.ImageWatcher):
 	eventoutputs = imagewatcher.ImageWatcher.eventoutputs + [event.ImageTargetListPublishEvent]
+	eventinputs = imagewatcher.ImageWatcher.eventinputs + [event.TargetListDoneEvent]
 	def __init__(self, id, session, nodelocations, **kwargs):
 		self.targetlist = []
 		imagewatcher.ImageWatcher.__init__(self, id, session, nodelocations, **kwargs)
+		self.addEventInput(event.TargetListDoneEvent, self.handleTargetListDone)
+		self.targetlistevents = {}
 
 	def findTargets(self, imdata):
 		'''
@@ -39,6 +42,8 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		self.publishTargetList()
 
 	def publishTargetList(self):
+
+
 		self.targetsToDatabase()
 		if self.targetlist:
 			targetlistdata = data.ImageTargetListData(id=self.ID(), targets=self.targetlist)
@@ -47,8 +52,50 @@ class TargetFinder(imagewatcher.ImageWatcher):
 			for targetdata in targetlistdata['targets']:
 				targetdata['image'] = self.imagedata
 
+			self.targetlistevents[targetlistdata['id']] = {}
+			self.targetlistevents[targetlistdata['id']]['received'] = threading.Event()
+			self.targetlistevents[targetlistdata['id']]['stats'] = 'waiting'
+
 			self.publish(targetlistdata, pubevent=True)
+
+			# wait for target list to be processed by other node
+			if self.wait_for_done.get():
+				self.waitForTargetListDone()
+
 		self.targetlist = []
+
+
+	def waitForTargetListDone(self):
+		for tid, teventinfo in self.targetlistevents.items():
+			print 'waiting for target list %s to complete' % (tid,)
+			teventinfo['received'].wait()
+		self.targetlistevents.clear()
+
+	def passTargets(self, targetlistdata):
+		## create an event watcher for each target we pass
+		#for target in targetlistdata['targets']:
+		#	targetid = target['id']
+		#	## maybe should check if already waiting on this target?
+		#	self.targetevents[targetid] = {}
+		#	self.targetevents[targetid]['received'] = threading.Event()
+		#	self.targetevents[targetid]['status'] = 'waiting'
+
+		self.targetlistevents[targetlistdata['id']] = {}
+		self.targetlistevents[targetlistdata['id']]['received'] = threading.Event()
+		self.targetlistevents[targetlistdata['id']]['stats'] = 'waiting'
+
+		self.publish(targetlistdata, pubevent=True)
+
+
+
+	def handleTargetListDone(self, targetlistdoneevent):
+		targetlistid = targetlistdoneevent['targetlistid']
+		status = targetlistdoneevent['status']
+		print 'got targetlistdone event, setting threading event', targetlistid
+		if targetlistid in self.targetlistevents:
+			self.targetlistevents[targetlistid]['status'] = status
+			self.targetlistevents[targetlistid]['received'].set()
+		self.confirmEvent(targetlistdoneevent)
 
 	def targetsToDatabase(self):
 		for target in self.targetlist:
@@ -56,22 +103,28 @@ class TargetFinder(imagewatcher.ImageWatcher):
 
 	def defineUserInterface(self):
 		imagewatcher.ImageWatcher.defineUserInterface(self)
-		# turn on data queue by default
-		self.uidataqueueflag.set(True)
+		# turn off data queue by default
+		self.uidataqueueflag.set(False)
+
+		self.wait_for_done = uidata.Boolean('Wait for "Done"', True, 'rw', persist=True)
+
+		container = uidata.MediumContainer('Target Finder')
+		container.addObjects((self.wait_for_done,))
+
+		self.uiserver.addObject(container)
+
 
 class ClickTargetFinder(TargetFinder):
 	def __init__(self, id, session, nodelocations, **kwargs):
 		TargetFinder.__init__(self, id, session, nodelocations, **kwargs)
 
-		self.userbusy = threading.Condition()
-		self.processlock = threading.Lock()
-		self.currentimage = None
+		self.userpause = threading.Event()
 
 		if self.__class__ == ClickTargetFinder:
 			self.defineUserInterface()
 			self.start()
 
-	def processImageData(self, imagedata):
+	def OLDprocessImageData(self, imagedata):
 		'''
 		redefined because this is manual target finding
 		We don't want to call findTargets because it is not
@@ -79,19 +132,33 @@ class ClickTargetFinder(TargetFinder):
 		publish targets as a user activated step.
 		'''
 		pass
-		
+
+	def findTargets(self, imdata):
+		## display image
+		self.clickimage.setTargets([])
+		self.clickimage.setImage(imdata['image'])
+
+		## user now clicks on targets
+		self.userpause.clear()
+		self.userpause.wait()
+		self.getTargetDataList('Focus Target', data.FocusTargetData)
+		self.getTargetDataList('Imaging Target', data.AcquisitionImageTargetData)
+
+	def submitTargets(self):
+		self.userpause.set()
+
 	def defineUserInterface(self):
 		TargetFinder.defineUserInterface(self)
 		self.clickimage = uidata.TargetImage('Clickable Image', None, 'rw')
 		self.clickimage.addTargetType('Imaging Target')
 		self.clickimage.addTargetType('Focus Target')
-		advancemethod = uidata.Method('Advance Image', self.advanceImage)
+		#advancemethod = uidata.Method('Advance Image', self.advanceImage)
 		submitmethod = uidata.Method('Submit Targets', self.submitTargets)
 		container = uidata.MediumContainer('Click Target Finder')
-		container.addObjects((advancemethod, submitmethod, self.clickimage))
+		container.addObjects((submitmethod, self.clickimage))
 		self.uiserver.addObject(container)
 
-	def advanceImage(self):
+	def OLDadvanceImage(self):
 		if self.processDataFromQueue():
 			self.currentimage = self.numarray
 		else:
@@ -99,11 +166,11 @@ class ClickTargetFinder(TargetFinder):
 		self.clickimage.setImage(self.currentimage)
 		self.clickimage.setTargets([])
 
-	def submitTargets(self):
+	def OLDsubmitTargets(self):
 		self.processTargets()
 		self.clickimage.setTargets([])
 
-	def processTargets(self):
+	def OLDprocessTargets(self):
 		self.getTargetDataList('Focus Target', data.FocusTargetData)
 		self.getTargetDataList('Imaging Target', data.AcquisitionImageTargetData)
 		self.publishTargetList()
@@ -112,8 +179,8 @@ class ClickTargetFinder(TargetFinder):
 		for imagetarget in self.clickimage.getTargetType(typename):
 			column, row = imagetarget
 			# using self.currentiamge.shape could be bad
-			target = {'delta row': row - self.currentimage.shape[0]/2,
-								'delta column': column - self.currentimage.shape[1]/2}
+			target = {'delta row': row - self.numarray.shape[0]/2,
+								'delta column': column - self.numarray.shape[1]/2}
 			imageinfo = self.imageInfo()
 			target.update(imageinfo)
 			targetdata = datatype(id=self.ID())
