@@ -415,15 +415,15 @@ class ImagePanel(wxPanel):
 		for tool in self.tools:
 			tool.OnMotion(evt, dc)
 
-		string = ''
+		strings = []
 		x, y = self.view2image((evt.m_x, evt.m_y))
 		value = self.getValue(x, y)
 		for tool in self.tools:
+			string = tool.getToolTipString(x, y, value)
 			if string:
-				string += ' '
-			string += tool.getToolTipString(x, y, value)
-		if string:
-			self.drawToolTip(dc, x, y, string)
+				strings.append(string)
+		if strings:
+			self.drawToolTip(dc, x, y, strings)
 
 		self.drawMotionBufferDC(dc)
 
@@ -443,11 +443,18 @@ class ImagePanel(wxPanel):
 		for tool in self.tools:
 			tool.OnRightDoubleClick(evt)
 
-	def drawToolTip(self, dc, x, y, string):
+	def drawToolTip(self, dc, x, y, strings):
 		dc.SetBrush(wxBrush(wxColour(255, 255, 220)))
 		dc.SetPen(wxPen(wxBLACK, 1))
 
-		xextent, yextent, d, e = dc.GetFullTextExtent(string, wxNORMAL_FONT)
+		xextent = 0
+		yextent = 0
+		for string in strings:
+			width, height, d, e = dc.GetFullTextExtent(string, wxNORMAL_FONT)
+			if width > xextent:
+				xextent = width
+			yextent += height
+
 		xcenter, ycenter = self.getClientCenter()
 
 		ix, iy = self.image2view((x, y))
@@ -470,7 +477,10 @@ class ImagePanel(wxPanel):
 		dc.DrawRectangle(x, y, xextent + 4, yextent + 4)
 
 		dc.SetFont(wxNORMAL_FONT)
-		dc.DrawText(string, x + 2 , y + 2)
+		for string in strings:
+			dc.DrawText(string, x + 2 , y + 2)
+			width, height, d, e = dc.GetFullTextExtent(string, wxNORMAL_FONT)
+			y += height
 
 	def Draw(self, dc):
 		dc.BeginDrawing()
@@ -661,6 +671,13 @@ class TargetTool(ImageTool):
 			viewoffset = self.imagepanel.panel.GetViewStart()
 			x, y = self.imagepanel.view2image((evt.m_x, evt.m_y))
 			self.updateClosest(x, y)
+
+	def getToolTipString(self, x, y, value):
+		if self.closest_target is not None:
+			for target_type, targets in self.imagepanel.targets.items():
+				if self.closest_target in targets:
+					return target_type + ' ' + str(self.closest_target)
+		return ''
 
 class TargetImagePanel(ImagePanel):
 	def __init__(self, parent, id, callback=None):
