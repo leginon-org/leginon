@@ -506,8 +506,11 @@ class Tecnai(tem.TEM):
 
 		try:
 			mag = int(round(mag))
-		except:
-			raise TypeError
+		except TypeError:
+			try:
+				mag = int(mag)
+			except:
+				raise TypeError
 	
 		try:
 			index = self.magnifications.index(mag)
@@ -579,14 +582,14 @@ class Tecnai(tem.TEM):
 		except pythoncom.com_error, (hr, msg, exc, arg):
 			print 'Stage.Goto failed with error %d: %s' % (hr, msg)
 			if exc is None:
-				print 'No extended error information, assuming stage limit was hit'
+				raise ValueError('no extended error information, assuming stage limit was hit')
 			else:
 				wcode, source, text, helpFile, helpId, scode = exc
 				if winerror.SUCCEEDED(wcode) and text is None:
-					print 'No extended error information, assuming stage limit was hit'
+					raise ValueError('no extended error information, assuming stage limit was hit')
 				else:
 					# ?
-					pass
+					raise
 
 #		for key in position:
 #			while abs(getattr(self.tecnai.Stage.Position, key.upper())
