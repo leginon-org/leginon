@@ -148,9 +148,9 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 	def defineUserInterface(self):
 		calibrator.Calibrator.defineUserInterface(self)
-		self.defocustiltvalue = uidata.Float('Tilt', 0.01, 'rw')
-		self.defocus1 = uidata.Float('Defocus 1', -1e-6, 'rw')
-		self.defocus2 = uidata.Float('Defocus 2', -2e-6, 'rw')
+		self.defocustiltvalue = uidata.Float('Tilt', 0.01, 'rw', persist=True)
+		self.defocus1 = uidata.Float('Defocus 1', -1e-6, 'rw', persist=True)
+		self.defocus2 = uidata.Float('Defocus 2', -2e-6, 'rw', persist=True)
 		caldefocusmethod = uidata.Method('Calibrate',
 																				self.uiCalibrateDefocus)
 		defocuscontainer = uidata.Container('Defocus')
@@ -158,8 +158,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 																		self.defocus1, self.defocus2,
 																		caldefocusmethod))
 
-		self.stigtiltvalue = uidata.Float('Stigmator Tilt', 0.01, 'rw')
-		self.stigdelta = uidata.Float('Stigmator Delta', 0.01, 'rw')
+		self.stigtiltvalue = uidata.Float('Stigmator Tilt', 0.01, 'rw', persist=True)
+		self.stigdelta = uidata.Float('Stigmator Delta', 0.2, 'rw', persist=True)
 		calstigmethod = uidata.Method('Calibrate Stigmators',
 																		self.uiCalibrateStigmators)
 		stigcontainer = uidata.Container('Stigmator')
