@@ -179,6 +179,16 @@ class SimpleCorrector(node.Node):
 		self.camerafuncs.setCameraEMData(cameradata)
 		return cameradata
 
+	def getCounts(self):
+		cameradata = self.camerafuncs.getCameraEMData()
+		min = 0
+		if ('maximum pixel value' in cameradata and
+				cameradata['maximum pixel value'] is not None):
+			max = cameradata['maximum pixel value']
+		else:
+			pass
+		return (max - min)/2
+
 	def findExposureTime(self, binning, counts):
 		self.findstatus.set('Finding exposure time...')
 		self.findbinning.set(binning)
@@ -274,7 +284,7 @@ class SimpleCorrector(node.Node):
 			# could be less than optimal if retracting camera on darks
 			for binning in [1, 2, 4, 8]:
 				self.status.set('Finding exposure time...')
-				exposuretime = self.findExposureTime(binning, self.counts.get())
+				exposuretime = self.findExposureTime(binning, self.findcounts.get())
 				if exposuretime is None:
 					message = 'Cannot find mean counts for exposure time range'
 					self.messagelog.error(message)
@@ -345,16 +355,21 @@ class SimpleCorrector(node.Node):
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
 
-		self.findmessagelog = uidata.MessageLog('Message Log')
+		self.displayacquire = uidata.Boolean('Acquired images', False,
+																					'rw', persist=True)
+		self.displaymedian = uidata.Boolean('Median images', True,
+																					'rw', persist=True)
+		self.displaynormalization = uidata.Boolean('Normalization images', True,
+																								'rw', persist=True)
+		displaycontainer = uidata.Container('Display')
+		displaycontainer.addObjects((self.displayacquire, self.displaymedian,
+																	self.displaynormalization))
+		self.imagestoaverage = uidata.Integer('Images to average', 3, 'rw',
+																					persist=True)
 
-		self.findstatus = uidata.String('Status', '', 'r')
-		self.findexposuretime = uidata.Number('Exposure time', None, 'r')
-		self.findmean = uidata.Number('Mean', None, 'r')
-		findstatuscontainer = uidata.Container('Status')
-		findstatuscontainer.addObjects((self.findstatus, self.findexposuretime,
-																		self.findmean))
-
-		self.findbinning = uidata.Integer('Binning', 1, 'rw', persist=True)
+		referencesettingscontainer = uidata.Container('Reference Acquisition')
+		referencesettingscontainer.addObjects((displaycontainer,
+																						self.imagestoaverage))
 
 		self.findcounts = uidata.Number('Desired mean', 1000, 'rw', persist=True)
 		self.findtolerance = uidata.Number('Tolerance (% +/-)', 10,
@@ -365,19 +380,35 @@ class SimpleCorrector(node.Node):
 		self.findminexposuretime = uidata.Integer('Minimum', 0, 'rw', persist=True)
 		self.findmaxexposuretime = uidata.Integer('Maximum', 1000, 'rw',
 																							persist=True)
-		findexposurerangecontainer = uidata.Container('Exposure range (ms)')
+		findexposurerangecontainer = uidata.Container('Exposure Search Range (ms)')
 		findexposurerangecontainer.addObjects((self.findminexposuretime,
 																						self.findmaxexposuretime))
-		findsettingscontainer = uidata.Container('Settings')
-		findsettingscontainer.addObjects((findexposurerangecontainer,
-																			self.findbinning, findcountscontainer))
+		autosettingscontainer = uidata.Container('Auto Exposure Time')
+		autosettingscontainer.addObjects((findcountscontainer,
+																			findexposurerangecontainer))
+		advancedsettingscontainer = uidata.LargeContainer('Advanced Settings')
+		advancedsettingscontainer.addObjects((autosettingscontainer,
+																					referencesettingscontainer))
 
-		findexposuretimemethod = uidata.Method('Find',
+		self.findmessagelog = uidata.MessageLog('Message Log')
+
+		self.findstatus = uidata.String('Status', '', 'r')
+		self.findexposuretime = uidata.Number('Exposure time', None, 'r')
+		self.findmean = uidata.Number('Mean', None, 'r')
+		findstatuscontainer = uidata.Container('Status')
+		findstatuscontainer.addObjects((self.findstatus, self.findexposuretime,
+																		self.findmean))
+
+		self.findbinning = uidata.Integer('Binning', 1, 'rw', persist=True)
+		findsettingscontainer = uidata.Container('Settings')
+		findsettingscontainer.addObjects((self.findbinning,))
+
+		findexposuretimemethod = uidata.Method('Search',
 																						self.onFindExposureTime)
 		findcontrolcontainer = uidata.Container('Control')
 		findcontrolcontainer.addObjects((findexposuretimemethod,))
 
-		findcontainer = uidata.LargeContainer('Find Exposure Time')
+		findcontainer = uidata.LargeContainer('Auto Exposure Time')
 		findcontainer.addObjects((self.findmessagelog, findstatuscontainer,
 															findsettingscontainer, findcontrolcontainer))
 
@@ -398,23 +429,6 @@ class SimpleCorrector(node.Node):
 		statuscontainer.addObjects((self.status, self.exposuretype, self.binning,
 																statisticscontainer))
 
-		self.displayacquire = uidata.Boolean('Acquired images', False,
-																					'rw', persist=True)
-		self.displaymedian = uidata.Boolean('Median images', True,
-																					'rw', persist=True)
-		self.displaynormalization = uidata.Boolean('Normalization images', True,
-																								'rw', persist=True)
-		displaycontainer = uidata.Container('Display')
-		displaycontainer.addObjects((self.displayacquire, self.displaymedian,
-																	self.displaynormalization))
-		self.imagestoaverage = uidata.Integer('Images to average', 3, 'rw',
-																					persist=True)
-		self.counts = uidata.Number('Desired mean count per image', 1000, 'rw',
-																					persist=True)
-		settingscontainer = uidata.Container('Settings')
-		settingscontainer.addObjects((displaycontainer, self.imagestoaverage,
-																	self.counts))
-
 		self.image = uidata.Image('Image', None)
 
 		self.automethod = uidata.Method('Auto', self.onAcquireReferenceImages)
@@ -427,10 +441,11 @@ class SimpleCorrector(node.Node):
 		controlcontainer.addObjects((referencescontainer,))
 
 		container = uidata.LargeContainer('Simple Corrector')
-		container.addObjects((self.messagelog, statuscontainer, self.image,
-													settingscontainer, controlcontainer))
+		container.addObjects((self.messagelog, statuscontainer, controlcontainer,
+													self.image))
 
-		self.uiserver.addObjects((findcontainer, container,))
+		self.uiserver.addObjects((advancedsettingscontainer, findcontainer,
+															container,))
 
 class Corrector(node.Node):
 	'''
