@@ -148,6 +148,7 @@ class PresetsManager(node.Node):
 			diffsession = True
 
 		### get presets from database
+		session['image path'] = None
 		pdata = data.PresetData(session=session)
 		presets = self.research(datainstance=pdata)
 
