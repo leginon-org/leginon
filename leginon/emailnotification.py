@@ -104,29 +104,61 @@ class Email(node.Node):
 		self.start()
 
 	def handleEmail(self, ievent):
+		self.statusmessage.set('Incoming email send request')
 		subject = ievent['subject']
 		if subject is None:
 			subject = ''
 		self.sendAndWaitForReply(subject, ievent['text'], ievent['image string'])
+		self.statusmessage.set('Reply received, notifying node')
 		self.confirmEvent(ievent)
+		self.statusmessage.set('Reply received, node notified')
 
 	def sendAndWaitForReply(self, subject, text=None, imagestring=None):
 		fromaddress = self.uifromaddress.get()
 		toaddress = self.uitoaddress.get()
 		message = makeMessage(fromaddress, toaddress, subject, text, imagestring)
 		hostname = self.uioutboundhostname.get()
+		self.statusmessage.set('Sending email...')
 		send(message, hostname)
 		self.waitForReply(message)
+		self.statusmessage.set('Reply received')
 
 	def waitForReply(self, message):
+		self.statusmessage.set('Email sent, waiting for reply...')
+		while True:
+			hostname = self.uiinboundhostname.get()
+			username = self.uiinboundusername.get()
+			password = self.uiinboundpassword.get()
+			interval = self.uiinboundinterval.get()
+			try:
+				messages = receive(hostname, username, password)
+				replies = map(lambda m: m['In-Reply-To'], messages)
+			except Exception, e:
+				self.statusmessage.set('Error in settings: %s' % e)
+			else:
+				self.statusmessage.set('Email sent, waiting for reply...')
+				if message['Message-ID'] in replies:
+					return message['Message-ID']
+			time.sleep(interval)
+		return None
+
+	def testSettings(self):
 		hostname = self.uiinboundhostname.get()
 		username = self.uiinboundusername.get()
 		password = self.uiinboundpassword.get()
-		interval = self.uiinboundinterval.get()
-		return waitForReply(message, hostname, username, password, interval)
+		try:
+			messages = receive(hostname, username, password)
+		except Exception, e:
+			self.statusmessage.set('Error in settings: %s' % e)
+		else:
+			self.statusmessage.set('Settings ok')
 
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
+
+		self.statusmessage = uidata.String('Status', '', 'r')
+		statuscontainer = uidata.Container('Status')
+		statuscontainer.addObjects((self.statusmessage,))
 
 		self.uifromaddress = uidata.String('From', '', 'rw', persist=True)
 		self.uitoaddress = uidata.String('To', '', 'rw', persist=True)
@@ -147,10 +179,15 @@ class Email(node.Node):
 																	self.uiinboundusername,
 																	self.uiinboundpassword,
 																	self.uiinboundinterval))
+		testsettingsmethod = uidata.Method('Confirm', self.testSettings)
+		settingscontainer = uidata.Container('Settings')
+		settingscontainer.addObjects((addresscontainer, outboundcontainer,
+																	inboundcontainer, testsettingsmethod))
+
+		testmethod = uidata.Method('Test', self.test)
 
 		container = uidata.LargeContainer('Email')
-		container.addObjects((addresscontainer, outboundcontainer,
-													inboundcontainer))
+		container.addObjects((statuscontainer, settingscontainer, testmethod))
 		self.uicontainer.addObject(container)
 
 if __name__ == '__main__':
