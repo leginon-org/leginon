@@ -83,12 +83,24 @@ class ConnectionManager(Line):
 		originposition = self.activeconnection['origin'].getPosition()
 		self.activeconnection['line'].move(originposition, position)
 
-	def offsetPosition(self, position, offset):
-		return (position[0] + offset[0], position[1] + offset[1])
-
-	def addConnection(self, origin, destination, text):
+	def offsetPosition(self, origin, destination):
 		originposition = origin.getPosition()
 		destinationposition = destination.getPosition()
+		if self.lines[(origin, destination)]['offset']:
+			offset = 10
+			angle = math.atan2(float(destinationposition[1] - originposition[1]),
+												float(destinationposition[0] - originposition[0]))
+			newangle = math.pi/2 + angle
+			offsetvector = (math.cos(newangle)*offset, math.sin(newangle)*offset)
+			return ((originposition[0] + offsetvector[0],
+								originposition[1] + offsetvector[1]),
+							(destinationposition[0] + offsetvector[0],
+								destinationposition[1] + offsetvector[1]))
+		else:
+			return ((originposition[0], originposition[1]),
+							(destinationposition[0], destinationposition[1]))
+
+	def addConnection(self, origin, destination, text):
 		key = (origin, destination)
 		if key in self.lines:
 			self.lines[key]['line'].append(text)
@@ -96,29 +108,22 @@ class ConnectionManager(Line):
 			self.lines[key] = {}
 			inversekey = (destination, origin)
 			if inversekey in self.lines:
-				self.lines[key]['offset'] = (5, 5)
-				self.lines[inversekey]['offset'] = (-5, -5)
-				offset = self.lines[inversekey]['offset']
-				self.lines[inversekey]['line'].move(
-														self.offsetPosition(destinationposition, offset),
-														self.offsetPosition(originposition, offset))
+				self.lines[key]['offset'] = True
+				self.lines[inversekey]['offset'] = True
+				position = self.offsetPosition(destination, origin)
+				self.lines[inversekey]['line'].move(position[0], position[1])
 			else:
-				self.lines[key]['offset'] = (0, 0)
+				self.lines[key]['offset'] = False
 
-			offset = self.lines[key]['offset']
-			self.lines[key]['line'] = LabeledLine(self.canvas,
-												self.offsetPosition(originposition, offset),
-												self.offsetPosition(destinationposition, offset), text)
+			position = self.offsetPosition(origin, destination)
+			self.lines[key]['line'] = LabeledLine(self.canvas, position[0],
+																						position[1], text)
 
 	def refreshConnections(self, widget):
 		for key in self.lines:
 			if key[0] == widget or key[1] == widget:
-				originposition = key[0].getPosition()
-				destinationposition = key[1].getPosition()
-				offset = self.lines[key]['offset']
-				self.lines[key]['line'].move(
-														self.offsetPosition(destinationposition, offset),
-														self.offsetPosition(originposition, offset))
+				position = self.offsetPosition(key[0], key[1])
+				self.lines[key]['line'].move(position[0], position[1])
 
 	def startConnection(self, origin, text='<None>'):
 		if self.activeconnection is None:
@@ -204,12 +209,12 @@ class Editor(Tkinter.Frame):
 		return node
 
 	def circle(self):
-		radius = 200
+		radius = (250, 200)
 		center = (400, 300)
 		angle = 2*math.pi/len(self.nodes)
 		for i in range(len(self.nodes)):
-			self.nodes[i].move(int(round(math.cos(i*angle)*radius + center[0])),
-													int(round(math.sin(i*angle)*radius + center[1])))
+			self.nodes[i].move(int(round(math.cos(i*angle)*radius[0] + center[0])),
+													int(round(math.sin(i*angle)*radius[1] + center[1])))
 
 class ApplicationEditor(Editor):
 	def __init__(self, parent, **kwargs):
