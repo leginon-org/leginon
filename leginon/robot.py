@@ -39,7 +39,7 @@ class RobotControl(node.Node):
 		self.statusindex = -1
 		self.statuslength = 50
 
-		self.addEventInput(event.ExtractGridEvent, self.handleExtract)
+		self.addEventInput(event.GridExtractEvent, self.handleExtract)
 
 		self.defineUserInterface()
 		self.start()
@@ -212,10 +212,6 @@ class RobotControl(node.Node):
 		self.communication.Signal7 = 0
 		self.setStatus('Robot has completed extraction')
 
-		self.extractlock.acquire()
-		self.extractok = True
-		self.extractlock.release()
-
 		self.insertmethod.enable()
 		self.extractmethod.enable()
 
@@ -223,6 +219,9 @@ class RobotControl(node.Node):
 		self.setStatus('Inserting stage')
 		try:
 			self.insertStage()
+			self.extractlock.acquire()
+			self.extractok = True
+			self.extractlock.release()
 		except RuntimeError:
 			self.setStatus('Error inserting stage')
 
