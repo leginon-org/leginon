@@ -9,6 +9,8 @@
 
 // --- Leginon Viewer Configuration --- //
 
+// --- Set your leginon MySQL database server parameters
+
 $HOSTNAME = "cronus2";
 $DBUSER = "usr_object";
 $DBPASSWORD = "";
@@ -16,5 +18,5 @@ $DATABASE = "dbemdata";
 
 
 // --- Set External SQL server here (use for import/export application)
-$SQL_HOSTS[] = "cronus2";
-$SQL_HOSTS[] = "stratocaster";
+$SQL_HOSTS[] = "localhost";
+$SQL_HOSTS[] = "";
