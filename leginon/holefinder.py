@@ -279,15 +279,17 @@ class HoleFinder(targetfinder.TargetFinder):
 
 	def applyTargetTemplate(self, centers):
 		self.logger.info('apply template')
+		imshape = self.hf['original'].shape
 		acq_vect = self.acq_target_template.get()
 		foc_vect = self.foc_target_template.get()
 		newtargets = {'acquisition':[], 'focus':[]}
 		for center in centers:
+			self.logger.info('applying template to hole at %s' % (center,))
 			for vect in acq_vect:
 				target = center[0]+vect[0], center[1]+vect[1]
 				tarx = target[0]
 				tary = target[1]
-				if tarx < 0 or tarx >= image.shape[1] or tary < 0 or tary >= image.shape[0]:
+				if tarx < 0 or tarx >= imshape[1] or tary < 0 or tary >= imshape[0]:
 					self.logger.info('skipping template point %s: out of image bounds' % (vect,))
 					continue
 				newtargets['acquisition'].append(target)
@@ -295,7 +297,7 @@ class HoleFinder(targetfinder.TargetFinder):
 				target = center[0]+vect[0], center[1]+vect[1]
 				tarx = target[0]
 				tary = target[1]
-				if tarx < 0 or tarx >= image.shape[1] or tary < 0 or tary >= image.shape[0]:
+				if tarx < 0 or tarx >= imshape[1] or tary < 0 or tary >= imshape[0]:
 					self.logger.info('skipping template point %s: out of image bounds' % (vect,))
 					continue
 				## check if target has good thickness
@@ -313,7 +315,7 @@ class HoleFinder(targetfinder.TargetFinder):
 					ts = self.icecalc.get_stdev_thickness(stats['std'], stats['mean'])
 					self.logger.info('template point %s stats:  mean: %s, stdev: %s' % (vect, tm, ts))
 					if (tmin <= tm <= tmax) and (ts < tstd):
-						self.logger.info('template point %s passed thickness test')
+						self.logger.info('template point %s passed thickness test' % (vect,))
 						newtargets['focus'].append(target)
 						break
 				else:
