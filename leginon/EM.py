@@ -22,6 +22,7 @@ import unique
 import copy
 import gui.wx.Instrument
 import instrument
+import socket
 
 watch_set = (
 'magnification',
@@ -401,6 +402,7 @@ class EM(node.Node):
 
 		classes = registry.getClasses()
 		for name, c in classes:
+			objectname = '%s (%s)' % (name, socket.gethostname().lower())
 			if issubclass(c, tem.TEM):
 				class ScopeClass(c, instrument.TEM):
 					def __init__(self):
@@ -411,7 +413,7 @@ class EM(node.Node):
 						self.scope = methoddict.factory(ScopeClass)()
 						self.typemap.update(self.scope.typemapping)
 						self.tems.append(self.scope)
-						self.objectservice._addObject(name, self.scope)
+						self.objectservice._addObject(objectname, self.scope)
 					else:
 						scope = ScopeClass()
 						self.tems.append(scope)
@@ -429,7 +431,7 @@ class EM(node.Node):
 						self.camera = methoddict.factory(CCDCameraClass)()
 						self.typemap.update(self.camera.typemapping)
 						self.tems.append(self.camera)
-						self.objectservice._addObject(name, self.camera)
+						self.objectservice._addObject(objectname, self.camera)
 					else:
 						camera = CCDCameraClass()
 						self.tems.append(camera)
