@@ -8,10 +8,9 @@
 
 import data
 import datatransport
-import emregistry
+from pyScope import emregistry, methoddict
 import event
 import imp
-import methoddict
 import node
 try:
 	import numarray as Numeric
