@@ -127,8 +127,10 @@ class SpiralTargetMaker(TargetMaker):
 											'scope': scope,
 											'camera': camera,
 											'preset': preset}
-			if ievent is not None and 'grid ID' in ievent:
-				initializer['grid ID'] = ievent['grid ID']
+			try:
+				initializer['grid'] = ievent['grid']
+			except (KeyError, AttributeError):
+				pass
 			targetdata = data.AcquisitionImageTargetData(initializer=initializer,
 																										type='acquisition')
 			self.targetlist.append(targetdata)
