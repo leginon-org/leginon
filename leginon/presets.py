@@ -731,10 +731,10 @@ class PresetsManager(node.Node):
 		preset = self.presetByName(presetname)
 		newpreset = self.renewPreset(preset)
 		if 'tem' in parameters:
-			if isinstance(parameters['tem'], str):
+			if isinstance(parameters['tem'], basestring):
 				parameters['tem'] = self.instrument.getTEMData(parameters['tem'])
 		if 'ccdcamera' in parameters:
-			if isinstance(parameters['ccdcamera'], str):
+			if isinstance(parameters['ccdcamera'], basestring):
 				parameters['ccdcamera'] = self.instrument.getCCDCameraData(parameters['ccdcamera'])
 		newpreset.friendly_update(parameters)
 		if update:
