@@ -647,7 +647,7 @@ else:
 			elif self.theAda.SpecimenHolderInserted == adacom.constants.eNotInserted:
 				return 'not inserted'
 			else:
-				raise SystemError
+				return 'unknown'
 
 		def getHolderType(self):
 			if self.theAda.CurrentSpecimenHolderName == u'No Specimen Holder':
