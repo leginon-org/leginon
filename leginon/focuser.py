@@ -169,7 +169,7 @@ class Focuser(acquisition.Acquisition):
 
 	def notifyManualFocus(self):
 		myname = self.id[-1]
-		title = 'manual focus' % (myname,)
+		title = 'manual focus ' + myname
 		message = 'Please confirm defocus in Focuser %s' % (myname,)
 		self.outputMessage(title, message)
 
