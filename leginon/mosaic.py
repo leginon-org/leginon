@@ -365,7 +365,8 @@ class EMMosaic(object):
 		## Maybe could use an actual final image data.
 		someimage = self.tiles[0].imagedata
 		fakescope = data.ScopeEMData(initializer=someimage['scope'])
-		fakescope[param] = center
+		fakescope[param] = dict(someimage['scope'][param])
+		fakescope[param].update(center)
 		## assume the final fake image has same binning as first tile
 		fakecamera = data.CameraEMData(initializer=someimage['camera'])
 		self.fakeimage = data.CameraImageData(scope=fakescope, camera=fakecamera)

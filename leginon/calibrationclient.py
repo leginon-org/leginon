@@ -676,13 +676,6 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		new[par] = dict(scope[par])
 		new[par]['x'] += changex
 		new[par]['y'] += changey
-		print '************ PIXEL SHIFT ', pixelshift
-		print '************ PAR', par
-		print '************ BIN', camera['binning']
-		print '************ MAG', scope['magnification']
-		print '************ OLD', scope[par]
-		print '************ NEW', new[par]
-
 		return new
 
 	def itransform(self, shift, scope, camera):
@@ -695,8 +688,13 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		binx = camera['binning']['x']
 		biny = camera['binning']['y']
 		par = self.parameter()
+		newshift = dict(shift)
 
-		vect = (shift['x'], shift['y'])
+		### take into account effect of alpha tilt on Y stage pos
+		if par == 'stage position' and 'a' in scope[par] and scope[par]['a'] is not None:
+			alpha = scope[par]['a']
+			newshift['y'] = newshift['y'] * Numeric.cos(alpha)
+		vect = (newshift['x'], newshift['y'])
 
 		matrix = self.retrieveMatrix(ht, mag, par)
 		matrix = LinearAlgebra.inverse(matrix)
@@ -913,13 +911,6 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		newscope['stage position'] = dict(scope['stage position'])
 		newscope['stage position']['x'] += delta['x']
 		newscope['stage position']['y'] += delta['y']
-
-		print '************ PIXEL SHIFT ', pixelshift
-		print '************ PAR stage position'
-		print '************ BIN', camera['binning']
-		print '************ MAG', scope['magnification']
-		print '************ OLD', scope['stage position']
-		print '************ NEW', newscope['stage position']
 		return newscope
 
 	def pixtix(self, xmod, ymod, xmagcal, ymagcal, gonx, gony, pixx, pixy):
