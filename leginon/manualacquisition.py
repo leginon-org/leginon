@@ -64,6 +64,14 @@ class ManualAcquisition(node.Node):
 				return	
 		self.status.set('Image acquisition complete')
 
+	def setScreenPosition(self, position):
+		if position not in ['up', 'down']:
+			raise ValueError
+		self.status.set('Moving main screen %s...' % position)
+		initializer = {'id': ('scope',), 'screen position': position}
+		scopedata = data.ScopeEMData(initializer=initializer)
+		self.publishRemote(scopedata)
+
 	def publishImageData(self, imagedata):
 		acquisitionimagedata = data.AcquisitionImageData(initializer=imagedata)
 		acquisitionimagedata['id'] = self.ID()
@@ -86,14 +94,48 @@ class ManualAcquisition(node.Node):
 	def acquireImage(self):
 		self.acquiremethod.disable()
 		self.startmethod.disable()
+		self.status.set('Acquiring image...')
+
+		if self.up.get():
+			try:
+				self.setScreenPosition('up')
+			except node.PublishError:
+				self.messagelog.error('Cannot access EM node to move screen')
+				self.acquiremethod.enable()
+				self.startmethod.enable()
+				return
+
 		try:
 			self.acquire()
 		except AcquireError:
 			pass
+
+		if self.down.get():
+			try:
+				self.setScreenPosition('down')
+			except node.PublishError:
+				self.messagelog.error('Cannot access EM node to move screen')
+				self.acquiremethod.enable()
+				self.startmethod.enable()
+				return
+
+		self.status.set('Image acquired')
 		self.acquiremethod.enable()
 		self.startmethod.enable()
 
 	def acquisitionLoop(self):
+		self.status.set('Starting acquisition loop...')
+
+		if self.up.get():
+			try:
+				self.setScreenPosition('up')
+			except node.PublishError:
+				self.messagelog.error('Cannot access EM node to move screen')
+				self.acquiremethod.enable()
+				self.startmethod.enable()
+				self.stopmethod.disable()
+				return
+
 		self.loopstop.clear()
 		self.status.set('Acquisition loop started')
 		while True:
@@ -108,9 +150,19 @@ class ManualAcquisition(node.Node):
 			if pausetime > 0:
 				self.status.set('Pausing for ' + str(pausetime) + ' seconds...')
 				time.sleep(pausetime)
+
+		if self.down.get():
+			try:
+				self.setScreenPosition('down')
+			except node.PublishError:
+				self.messagelog.error('Cannot access EM node to move screen')
+				self.acquiremethod.enable()
+				self.startmethod.enable()
+				self.stopmethod.disable()
+				return
+
 		self.acquiremethod.enable()
 		self.startmethod.enable()
-		self.stopmethod.disable()
 		self.status.set('Acquisition loop stopped')
 
 	def acquisitionLoopStart(self):
@@ -125,6 +177,7 @@ class ManualAcquisition(node.Node):
 		loopthread.start()
 
 	def acquisitionLoopStop(self):
+		self.stopmethod.disable()
 		self.status.set('Stopping acquisition loop...')
 		self.loopstop.set()
 
@@ -197,6 +250,10 @@ class ManualAcquisition(node.Node):
 		gridcontainer = uidata.Container('Current Grid')
 		gridcontainer.addObjects((self.gridboxselect, self.gridselect,
 															refreshmethod))
+		self.up = uidata.Boolean('Main screen up when acquire', True, 'rw',
+															persist=True)
+		self.down = uidata.Boolean('Main screen down when acquire complete', True,
+																'rw', persist=True)
 
 		self.correctimage = uidata.Boolean('Correct image', True, 'rw',
 																				persist=True)
@@ -206,8 +263,8 @@ class ManualAcquisition(node.Node):
 		self.usedatabase = uidata.Boolean('Save image to database', True, 'rw',
 																			persist=True)
 		settingscontainer = uidata.Container('Settings')
-		settingscontainer.addObjects((gridcontainer, self.correctimage,
-																	camerafuncscontainer,
+		settingscontainer.addObjects((gridcontainer, self.up, self.down,
+																	self.correctimage, camerafuncscontainer,
 																	self.pausetime, self.usedatabase))
 
 		self.acquiremethod = uidata.Method('Acquire', self.acquireImage)
