@@ -16,6 +16,7 @@ from wxPython.wx import *
 from wxPython.lib.buttons import wxGenBitmapToggleButton
 import NumericImage
 import Image
+import imagefun
 
 wxInitAllImageHandlers()
 
@@ -39,9 +40,9 @@ class ContrastTool(object):
 		EVT_SCROLL_THUMBTRACK(self.minslider, self.onMinSlider)
 		EVT_SCROLL_THUMBTRACK(self.maxslider, self.onMaxSlider)
 		self.sizer = wxBoxSizer(wxVERTICAL)
-		self.sizer.Add(self.minslider)
-		self.sizer.Add(self.maxslider)
-		sizer.Add(self.sizer)
+		self.sizer.Add(self.minslider, 0, wxALIGN_BOTTOM, 0)
+		self.sizer.Add(self.maxslider, 0, wxALIGN_TOP, 0)
+		sizer.Add(self.sizer, 0, wxALIGN_CENTER|wxALL, 0)
 
 	def updateNumericImage(self):
 		self.imagepanel.setBitmap() #Numeric.clip(self.imagepanel.numericimage,
@@ -91,7 +92,7 @@ class ImageTool(object):
 		self.button.SetBezelWidth(1)
 		if tooltip:
 			self.button.SetToolTip(wxToolTip(tooltip))
-		self.sizer.Add(self.button, 0, wxALL, 3)
+		self.sizer.Add(self.button, 0, wxALIGN_CENTER|wxALL, 3)
 		EVT_BUTTON(self.imagepanel, self.button.GetId(), self.OnButton)
 
 	def OnButton(self, evt):
@@ -198,9 +199,20 @@ class ZoomTool(ImageTool):
 		tooltip = 'Toggle Zoom Tool'
 		cursor = wxStockCursor(wxCURSOR_MAGNIFIER)
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, True)
-		self.label = wxStaticText(self.imagepanel, -1, '')
-		self.updateLabel()
-		self.sizer.Add(self.label, 0, wxALIGN_CENTER_VERTICAL | wxALL, 3)
+		self.zoomlevels = range(7, -8, -1)
+		self.zoomchoice = wxChoice(self.imagepanel, -1,
+																choices=map(self.log2str, self.zoomlevels))
+		self.zoom(self.zoomlevels.index(0), (0, 0))
+		self.zoomchoice.SetSelection(self.zoomlevel)
+		self.sizer.Add(self.zoomchoice, 0, wxALIGN_CENTER|wxALL, 3)
+
+		EVT_CHOICE(self.zoomchoice, self.zoomchoice.GetId(), self.onChoice)
+
+	def log2str(self, value):
+		if value < 0:
+			return '1/' + str(int(1/2**value)) + 'x'
+		else:
+			return str(int(2**value)) + 'x'
 
 	def OnLeftClick(self, evt):
 		if self.button.GetToggle():
@@ -210,38 +222,37 @@ class ZoomTool(ImageTool):
 		if self.button.GetToggle():
 			self.zoomOut(evt.m_x, evt.m_y)
 
-	def updateLabel(self):
-		xscale, yscale = self.imagepanel.getScale()
-		if xscale < 1.0:
-			zoomstring = 'Zoom: 1/' + str(int(1/xscale)) + 'x'
-		else:
-			zoomstring = 'Zoom: ' + str(int(xscale)) + 'x'
-		self.label.SetLabel(zoomstring)
-		width, height = self.label.GetSizeTuple()
-		self.sizer.SetItemMinSize(self.label, width, height)
-		self.sizer.Layout()
+	def zoom(self, level, viewcenter):
+		self.zoomlevel = level
+		center = self.imagepanel.view2image(viewcenter)
+		scale = 2**self.zoomlevels[self.zoomlevel]
+		self.imagepanel.setScale((scale, scale))
+		self.imagepanel.center(center)
+		self.imagepanel.UpdateDrawing()
 
 	def zoomIn(self, x, y):
-		xscale, yscale = self.imagepanel.getScale()
-		center = self.imagepanel.view2image((x, y))
-		self.imagepanel.setScale((xscale*2, yscale*2))
-		self.imagepanel.center(center)
-		self.imagepanel.UpdateDrawing()
-		self.updateLabel()
+		if self.zoomlevel > 0:
+			self.zoom(self.zoomlevel - 1, (x, y))
+			self.zoomchoice.SetSelection(self.zoomlevel)
 
 	def zoomOut(self, x, y):
-		xscale, yscale = self.imagepanel.getScale()
-		center = self.imagepanel.view2image((x, y))
-		self.imagepanel.setScale((xscale/2, yscale/2))
-		self.imagepanel.center(center)
+		if self.zoomlevel < len(self.zoomlevels) - 1:
+			self.zoom(self.zoomlevel + 1, (x, y))
+			self.zoomchoice.SetSelection(self.zoomlevel)
+
+	def onChoice(self, evt):
+		selection = evt.GetSelection()
+		if selection == self.zoomlevel:
+			return
+		size = self.imagepanel.panel.GetSize()
+		viewcenter = (size[0]/2, size[1]/2)
+		self.zoom(selection, viewcenter)
 		self.imagepanel.UpdateDrawing()
-		self.updateLabel()
 
 class ImagePanel(wxPanel):
 	def __init__(self, parent, id, imagesize=(512, 512)):
 		# initialize image variables
-		self.numericimage = None
-		self.pilimage = None
+		self.imagedata = None
 		self.bitmap = None
 		self.buffer = None
 
@@ -312,20 +323,19 @@ class ImagePanel(wxPanel):
 		'''
 		Set the internal wxBitmap to current Numeric image
 		'''
-		if self.numericimage is not None:
+		if isinstance(self.imagedata, Numeric.arraytype):
 			clip = self.contrasttool.getRange()
-			image = NumericImage.linearscale(Numeric.clip(self.numericimage,
+			image = NumericImage.linearscale(Numeric.clip(self.imagedata,
 																										clip[0], clip[1]),
 																				self.contrasttool.getRange(),
-																				(0, 255), self.numericimageextrema)
+																				(0, 255), self.imagerange)
 			wximage = NumericImage.Numeric2wxImage(image)
-		elif self.pilimage is not None:
-			wximage = wxEmptyImage(self.pilimage.size[0], self.pilimage.size[1])
-			wximage.SetData(self.pilimage.convert('RGB').tostring())
+		elif isinstance(self.imagedata, Image.Image):
+			wximage = wxEmptyImage(self.imagedata.size[0], self.imagedata.size[1])
+			wximage.SetData(self.imagedata.convert('RGB').tostring())
 		else:
 			self.bitmap = None
 			return
-
 
 		if self.smallScale():
 			xscale, yscale = self.getScale()
@@ -367,6 +377,7 @@ class ImagePanel(wxPanel):
 		'''
 		Set size of viewport and offset for scrolling if image is bigger than view
 		'''
+		self.panel.SetVirtualSize((0, 0))
 		if self.bitmap is not None:
 			width, height = self.bitmap.GetWidth(), self.bitmap.GetHeight()
 			if self.smallScale():
@@ -377,7 +388,6 @@ class ImagePanel(wxPanel):
 			self.panel.SetVirtualSize(virtualsize)
 			self.virtualsize = virtualsize
 		else:
-			self.panel.SetVirtualSize((0, 0))
 			self.virtualsize = (0, 0)
 
 		xv, yv = self.biggerView()
@@ -393,11 +403,20 @@ class ImagePanel(wxPanel):
 			yoffset = 0
 		self.offset = (xoffset, yoffset)
 
+	def setImage(self, imagedata, scroll=False):
+		if isinstance(imagedata, Numeric.arraytype):
+			self.setNumericImage(imagedata, scroll)
+		elif isinstance(imagedata, Image.Image):
+			self.setPILImage(imagedata, scroll)
+		elif imagedata is None:
+			self.clearImage()
+		else:
+			raise TypeError('Invalid image data type for setting image')
+
 	def setPILImage(self, pilimage, scroll=False):
-		buffer = cStringIO.StringIO(pilimage)
-		self.pilimage = Image.open(buffer)
-		# Memory leak?
-		#buffer.close()
+		if not isinstance(pilimage, Image.Image):
+			raise TypeError('PIL image must be of Image.Image type')
+		self.imagedata = pilimage
 		self.setBitmap()
 		self.setVirtualSize()
 		self.setBuffer()
@@ -411,10 +430,12 @@ class ImagePanel(wxPanel):
 		scroll, and refresh the screen.
 		'''
 
-		self.numericimage = numericimage
-		if self.numericimage is not None:
-			self.numericimageextrema = NumericImage.extrema(self.numericimage)
-			self.contrasttool.setRange(self.numericimageextrema)
+		if not isinstance(numericimage, Numeric.arraytype):
+			raise TypeErrorr('Numeric image must be of Numeric.arraytype')
+
+		self.imagedata = numericimage
+		self.imagerange = imagefun.minmax(self.imagedata)
+		self.contrasttool.setRange(self.imagerange)
 		self.setBitmap()
 		self.setVirtualSize()
 		self.setBuffer()
@@ -423,16 +444,22 @@ class ImagePanel(wxPanel):
 		self.UpdateDrawing()
 
 	def clearImage(self):
-		'''
-		Set the numeric image to none, clears everything.
-		'''
-		self.setNumericImage(None)
+		self.imagedata = None
+		self.setBitmap()
+		self.setVirtualSize()
+		self.setBuffer()
+		self.panel.Scroll(0, 0)
+		self.UpdateDrawing()
 
 	def setImageFromMrcString(self, imagestring, scroll=False):
-		self.setNumericImage(Mrc.mrcstr_to_numeric(imagestring), scroll)
+		self.setImage(Mrc.mrcstr_to_numeric(imagestring), scroll)
 
 	def setImageFromPILString(self, imagestring, scroll=False):
-		self.setPILImage(imagestring)
+		buffer = cStringIO.StringIO(pilimage)
+		imagedata = Image.open(buffer)
+		self.setImage(imagedata)
+		# Memory leak?
+		#buffer.close()
 
 	# scaling functions
 
@@ -470,10 +497,10 @@ class ImagePanel(wxPanel):
 
 	def getValue(self, x, y):
 		try:
-			if self.numericimage is not None:
-				return self.numericimage[y, x]
-			elif self.pilimage is not None:
-				return self.pilimage.getpixel((x, y))
+			if isinstance(self.imagedata, Numeric.arraytype):
+				return self.imagedata[y, x]
+			elif isinstance(self.imagedata, Image.Image):
+				return self.imagedata.getpixel((x, y))
 			else:
 				return None
 		except (IndexError, TypeError, AttributeError), e:
@@ -1133,10 +1160,12 @@ class TargetImagePanel(ImagePanel):
 
 if __name__ == '__main__':
 	import sys
+
 	try:
 		filename = sys.argv[1]
 	except IndexError:
-		filename = 'test1.mrc'
+		filename = None
+
 #	def bar(xy):
 #		print xy
 
@@ -1144,16 +1173,24 @@ if __name__ == '__main__':
 		def OnInit(self):
 			frame = wxFrame(NULL, -1, 'Image Viewer')
 			self.SetTopWindow(frame)
-#			self.panel = ClickImagePanel(frame, -1, bar)
+
 #			self.panel = TargetImagePanel(frame, -1)
-			self.panel = ImagePanel(frame, -1)
 #			self.panel.addTargetType('foo')
 #			self.panel.addTargetType('bar')
+
+#			self.panel = ClickImagePanel(frame, -1, bar)
+
+			self.panel = ImagePanel(frame, -1)
 			frame.Fit()
 			frame.Show(true)
 			return true
 
 	app = MyApp(0)
-	app.panel.setImageFromMrcString(open(filename, 'rb').read())
+	if filename is None:
+		app.panel.setImage(None)
+	elif filename[-4:] == '.mrc':
+		app.panel.setImageFromMrcString(open(filename, 'rb').read())
+	else:
+		app.panel.setImage(Image.open(filename))
 	app.MainLoop()
 
