@@ -5,6 +5,7 @@ import leginonobject
 import data
 import threading
 import copy
+import time
 
 class Handler(SocketServer.StreamRequestHandler):
 	def __init__(self, request, server_address, server):
@@ -20,6 +21,10 @@ class Handler(SocketServer.StreamRequestHandler):
 			self.server.datahandler.insert(obj)
 		else:
 			# (elif when ID has a type) its and ID -> pull (query) by ID
+			#idata = self.server.datahandler.query(obj)
+			#starttime = time.time()
+			#cPickle.dump(idata, self.wfile)
+			#print "tcptransport.py, cPickle dumps", time.time() - starttime, "secs."
 			cPickle.dump(self.server.datahandler.query(obj), self.wfile)
 
 class Server(SocketServer.ThreadingTCPServer, leginonobject.LeginonObject):
