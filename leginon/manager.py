@@ -96,7 +96,7 @@ class Manager(node.Node):
 				del self.clientdict[name]
 				self.clientlistdata.set(self.clientlist)
 
-	def registerConfirmedEvent(self, ievent):
+	def handleConfirmedEvent(self, ievent):
 		nodeid = ievent.content[:-1]
 		if nodeid == self.id:
 			# this is bad since it will fill up with lots of events

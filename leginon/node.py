@@ -9,7 +9,7 @@ import sys
 import copy
 import time
 
-### False is not defined in early python 2.2
+# False is not defined in early python 2.2
 False = 0
 True = 1
 
@@ -47,7 +47,6 @@ class DataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
 
 	# def query(self, id): is inherited from SimpleDataKeeper
 
-	# used to be 'bind', changed to match datahandler.DataBinder
 	def setBinding(self, eventclass, func):
 		if issubclass(eventclass, event.Event):
 			datahandler.DataBinder.setBinding(self, eventclass, func)
@@ -79,8 +78,8 @@ class Node(leginonobject.LeginonObject):
 		self.addEventOutput(event.NodeUnavailableEvent)
 
 		self.addEventInput(event.KillEvent, self.die)
-		self.addEventInput(event.ConfirmationEvent, self.registerConfirmedEvent)
-		self.addEventInput(event.ManagerAvailableEvent, self.eventAddManager)
+		self.addEventInput(event.ConfirmationEvent, self.handleConfirmedEvent)
+		self.addEventInput(event.ManagerAvailableEvent, self.handleAddManager)
 
 		if 'manager' in self.nodelocations:
 			try:
@@ -92,6 +91,10 @@ class Node(leginonobject.LeginonObject):
 				print '%s connected to manager' % (self.id,)
 		self.die_event = threading.Event()
 
+	# main, start/stop methods
+	def main(self):
+		raise NotImplementedError()
+
 	def exit(self):
 		self.outputEvent(event.NodeUnavailableEvent(self.ID()))
 		self.server.exit()
@@ -100,6 +103,158 @@ class Node(leginonobject.LeginonObject):
 	def die(self, ievent=None):
 		self.die_event.set()
 		return ''
+
+	def start(self):
+		#interact_thread = self.interact()
+
+		self.main()
+
+		# wait until the interact thread terminates
+		#interact_thread.join()
+		self.die_event.wait()
+		self.exit()
+
+	# location method
+
+	def location(self):
+		loc = leginonobject.LeginonObject.location(self)
+		loc.update(self.server.location())
+		loc['UI port'] = self.uiserver.port
+		return loc
+
+	# event input/output/blocking methods
+
+	def outputEvent(self, ievent, wait=0):
+		try:
+			self.managerclient.push(ievent)
+		except KeyError:
+			print 'cannot output event %s to %s' % (ievent,nodeid)
+			return
+		if wait:
+			self.waitEvent(ievent)
+
+	def addEventInput(self, eventclass, func):
+		self.server.datahandler.setBinding(eventclass, func)
+		if eventclass not in self.eventmapping['inputs']:
+			self.eventmapping['inputs'].append(eventclass)
+
+	def delEventInput(self, eventclass):
+		self.server.datahandler.setBinding(eventclass, None)
+		if eventclass in self.eventmapping['inputs']:
+			self.eventmapping['inputs'].remove(eventclass)
+
+	def addEventOutput(self, eventclass):
+		if eventclass not in self.eventmapping['outputs']:
+			self.eventmapping['outputs'].append(eventclass)
+		
+	def delEventOutput(self, eventclass):
+		if eventclass in self.eventmapping['outputs']:
+			self.eventmapping['outputs'].remove(eventclass)
+
+	def confirmEvent(self, ievent):
+		self.outputEvent(event.ConfirmationEvent(self.ID(), ievent.id))
+
+	def waitEvent(self, ievent):
+		if not ievent.id in self.confirmwaitlist:
+			self.confirmwaitlist[ievent.id] = threading.Event()
+		self.confirmwaitlist[ievent.id].wait()
+
+	def handleConfirmedEvent(self, ievent):
+		# this is bad since it will fill up with lots of events
+		if not ievent.content in self.confirmwaitlist:
+			self.confirmwaitlist[ievent.content] = threading.Event()
+		self.confirmwaitlist[ievent.content].set()
+		#del self.confirmwaitlist[ievent.content]
+
+	# data publish/research methods
+	
+	def publish(self, idata, eventclass=event.PublishEvent, confirm=False):
+		if not issubclass(eventclass, event.PublishEvent):
+			raise TypeError('PublishEvent subclass required')
+		self.server.datahandler._insert(idata)
+		# this idata.id is content, I think
+		e = eventclass(self.ID(), idata.id, confirm)
+		self.outputEvent(e)
+		return e
+
+	def unpublish(self, dataid, eventclass=event.UnpublishEvent):
+		if not issubclass(eventclass, event.UnpublishEvent):
+			raise TypeError('UnpublishEvent subclass required')
+		self.server.datahandler.remove(dataid)
+		self.outputEvent(eventclass(self.ID(), dataid))
+
+	def publishRemote(self, idata):
+		dataid = idata.id
+		nodeiddata = self.researchByLocation(self.nodelocations['manager'], dataid)
+		if nodeiddata is None:
+			print "publishRemote: no such data ID %s" % dataid
+			raise IOError
+		for nodeid in nodeiddata.content:
+			nodelocation = self.researchByLocation(self.nodelocations['manager'],
+				nodeid)
+			client = self.clientclass(self.ID(), nodelocation.content)
+			client.push(idata)
+
+	def researchByLocation(self, loc, dataid):
+		client = self.clientclass(self.ID(), loc)
+		cdata = client.pull(dataid)
+		return cdata
+
+	def researchByDataID(self, dataid):
+		nodeiddata = self.managerclient.pull(dataid)
+
+		if nodeiddata is None:
+			print "researchByDataID: no such data ID %s" % dataid
+			raise IOError
+
+		# should interate over nodes, be crafty, etc.
+		datalocationdata = self.managerclient.pull(nodeiddata.content[-1])
+
+		return self.researchByLocation(datalocationdata.content, dataid)
+
+	# methods for setting up the manager
+
+	def addManager(self, loc):
+		self.managerclient = self.clientclass(self.ID(), loc)
+		newid = self.ID()
+		myloc = self.location()
+		available_event = event.NodeAvailableEvent(newid, myloc)
+		self.outputEvent(ievent=available_event, wait=True)
+
+	def handleAddManager(self, ievent):
+		self.addManager(ievent.content)
+
+	# utility methods
+
+	def interact(self):
+		banner = "Starting interpreter for %s" % self.__class__
+		readfunc = self.raw_input
+		local = locals()
+		t = threading.Thread(name='interact thread', target=code.interact,
+													args=(banner, readfunc, local))
+		t.setDaemon(1)
+		t.start()
+		return t
+
+	def raw_input(self, prompt):
+		newprompt = '%s%s' % (str(self.id), prompt)
+		return raw_input(newprompt)
+
+	# UI methods
+
+	def registerUIMethod(self, func, name, argspec, returnspec=None):
+		return self.uiserver.registerMethod(func, name, argspec, returnspec)
+
+	def registerUIData(self, name, xmlrpctype, permissions=None,
+												choices=None, default=None):
+		return self.uiserver.registerData(name, xmlrpctype, permissions,
+																				choices, default)
+
+	def registerUIContainer(self, name=None, content=()):
+		return self.uiserver.registerContainer(name, content)
+
+	def registerUISpec(self, name=None, content=()):
+		return self.uiserver.registerSpec(name, content)
 
 	def defineUserInterface(self):
 		'''
@@ -120,50 +275,24 @@ class Node(leginonobject.LeginonObject):
 		- alias is the alias that should be used by the UI
 		  (defaults to __name__)
 		'''
-		self.uiactive = 1
-		self.clientlist = []
-		self.clientdict = {}
 
-		## this is data for ui to read, but not visible
-		self.clientlistdata = self.registerUIData('clientlist', 'array', permissions='r')
-		self.clientlistdata.set(self.clientlist)
+		self.uiactive = 1
 
 		exitspec = self.registerUIMethod(self.die, 'Exit', ())
 
-		idspec = self.registerUIData('ID', 'array', permissions='r', default=self.id)
-		#idspec.set(self.id)
-		classspec = self.registerUIData('Class', 'string', permissions='r', default=self.__class__.__name__)
-		#classspec.set(self.__class__.__name__)
-		locspec = self.registerUIData('Location', 'struct', permissions='r', default=self.location())
-		#locspec.set(self.location())
+		idspec = self.registerUIData('ID', 'array', 'r', default=self.id)
+		classspec = self.registerUIData('Class', 'string', 'r',
+																		default=self.__class__.__name__)
+		locationspec = self.registerUIData('Location', 'struct', 'r',
+																	default=self.location())
 
 		datatree = self.registerUIData('Data', 'struct', permissions='r')
 		datatree.set(self.uiDataDict)
 
-		c = self.registerUIContainer('Node', (exitspec, idspec, classspec, locspec, datatree))
+		containerspec = self.registerUIContainer('Node',
+								(exitspec, idspec, classspec, locationspec, datatree))
 
-		return c
-
-	def registerUIMethod(self, func, name, argspec, returnspec=None):
-		return self.uiserver.registerMethod(func, name, argspec, returnspec)
-
-	def registerUIData(self, name, xmlrpctype, permissions=None, choices=None, default=None):
-		return self.uiserver.registerData(name, xmlrpctype, permissions, choices, default)
-
-	def registerUIContainer(self, name=None, content=()):
-		return self.uiserver.registerContainer(name, content)
-
-	def registerUISpec(self, name=None, content=()):
-		return self.uiserver.registerSpec(name, content)
-
-	def setUIData(self, name, value):
-		raise NotImplementedError('should set data directly through data object')
-		#self.uiserver.setData(name, value)
-		#return self.uiserver.getData(name)
-
-	def getUIData(self, name):
-		raise NotImplementedError('should get data directly through data object')
-		#return self.uiserver.getData(name)
+		return containerspec
 
 	def uiDataDict(self, value=None):
 		if value is None:
@@ -180,133 +309,4 @@ class Node(leginonobject.LeginonObject):
 			return newdict
 		else:
 			return str(d)
-
-	def eventAddManager(self, ievent):
-		self.addManager(ievent.content)
-
-	def addManager(self, loc):
-		self.managerclient = self.clientclass(self.ID(), loc)
-		newid = self.ID()
-		myloc = self.location()
-		available_event = event.NodeAvailableEvent(newid, myloc)
-		self.outputEvent(ievent=available_event, wait=True)
-
-	def main(self):
-		raise NotImplementedError()
-
-	def start(self):
-		'''this is the node's parent method'''
-		#interact_thread = self.interact()
-
-		self.main()
-
-		# wait until the interact thread terminates
-		#interact_thread.join()
-		self.die_event.wait()
-		self.exit()
-
-	def outputEvent(self, ievent, wait=0):
-		try:
-			self.managerclient.push(ievent)
-		except KeyError:
-			print 'cannot output event %s to %s' % (ievent,nodeid)
-			return
-		if wait:
-			self.waitEvent(ievent)
-
-	def confirmEvent(self, ievent):
-		self.outputEvent(event.ConfirmationEvent(self.ID(), ievent.id))
-
-	def waitEvent(self, ievent):
-		if not ievent.id in self.confirmwaitlist:
-			self.confirmwaitlist[ievent.id] = threading.Event()
-		self.confirmwaitlist[ievent.id].wait()
-
-	def registerConfirmedEvent(self, ievent):
-		# this is bad since it will fill up with lots of events
-		if not ievent.content in self.confirmwaitlist:
-			self.confirmwaitlist[ievent.content] = threading.Event()
-		self.confirmwaitlist[ievent.content].set()
-		#del self.confirmwaitlist[ievent.content]
-
-	def publish(self, idata, eventclass=event.PublishEvent, confirm=False):
-		if not issubclass(eventclass, event.PublishEvent):
-			raise TypeError('PublishEvent subclass required')
-		self.server.datahandler._insert(idata)
-		# this idata.id is content, I think
-		e = eventclass(self.ID(), idata.id, confirm)
-		self.outputEvent(e)
-		return e
-
-	def unpublish(self, dataid, eventclass=event.UnpublishEvent):
-		if not issubclass(eventclass, event.UnpublishEvent):
-			raise TypeError('UnpublishEvent subclass required')
-		self.server.datahandler.remove(dataid)
-		self.outputEvent(eventclass(self.ID(), dataid))
-
-	def publishRemote(self, idata):
-		dataid = idata.id
-		nodeiddata = self.researchByLocation(self.nodelocations['manager'], dataid)
-		if nodeiddata is None:
-			print "publishRemote: no such data ID %s" % (dataid,)
-			raise IOError
-		for nodeid in nodeiddata.content:
-			nodelocation = self.researchByLocation(self.nodelocations['manager'],
-				nodeid)
-			client = self.clientclass(self.ID(), nodelocation.content)
-			client.push(idata)
-
-	def researchByLocation(self, loc, dataid):
-		client = self.clientclass(self.ID(), loc)
-		cdata = client.pull(dataid)
-		return cdata
-
-	def researchByDataID(self, dataid):
-		nodeiddata = self.managerclient.pull(dataid)
-
-		if nodeiddata is None:
-			print "researchByDataID: no such data ID %s" % (dataid,)
-			raise IOError
-
-		# should interate over nodes, be crafty, etc.
-		datalocationdata = self.managerclient.pull(nodeiddata.content[-1])
-
-		return self.researchByLocation(datalocationdata.content, dataid)
-
-	def location(self):
-		loc = leginonobject.LeginonObject.location(self)
-		loc.update(self.server.location())
-		loc['UI port'] = self.uiserver.port
-		return loc
-
-	def interact(self):
-		banner = "Starting interpreter for %s" % self.__class__
-		readfunc = self.raw_input
-		local = locals()
-		t = threading.Thread(name='interact thread', target=code.interact, args=(banner, readfunc, local))
-		t.setDaemon(1)
-		t.start()
-		return t
-
-	def raw_input(self, prompt):
-		newprompt = '%s%s' % (str(self.id), prompt)
-		return raw_input(newprompt)
-
-	def addEventInput(self, eventclass, func):
-		self.server.datahandler.setBinding(eventclass, func)
-		if eventclass not in self.eventmapping['inputs']:
-			self.eventmapping['inputs'].append(eventclass)
-
-	def delEventInput(self, eventclass):
-		self.server.datahandler.setBinding(eventclass, None)
-		if eventclass in self.eventmapping['inputs']:
-			self.eventmapping['inputs'].remove(eventclass)
-
-	def addEventOutput(self, eventclass):
-		if eventclass not in self.eventmapping['outputs']:
-			self.eventmapping['outputs'].append(eventclass)
-		
-	def delEventOutput(self, eventclass):
-		if eventclass in self.eventmapping['outputs']:
-			self.eventmapping['outputs'].remove(eventclass)
 
