@@ -7,6 +7,4 @@ class Data(leginonobject.LeginonObject):
 		leginonobject.LeginonObject.__init__(self)
 		self.creator = creator
 		self.content = None
-    # hack
-		self.data_id = "replace this data_id"
-
+		self.id = id(self)
