@@ -19,6 +19,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 	eventoutputs = targetwatcher.TargetWatcher.eventoutputs + [event.LockEvent, event.UnlockEvent, event.AcquisitionImagePublishEvent, event.TrialImagePublishEvent, event.ChangePresetEvent]
 
 	def __init__(self, id, session, nodelocations, targetclass=data.ImageTargetData, **kwargs):
+
 		targetwatcher.TargetWatcher.__init__(self, id, session, nodelocations, targetclass, **kwargs)
 		self.addEventInput(event.ImageClickEvent, self.handleImageClick)
 		self.addEventOutput(event.LockEvent)
@@ -97,6 +98,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			if ret:
 				return False
 			print 'done'
+
 		return True
 
 	def targetToEMData(self, targetdata):
@@ -163,14 +165,15 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.publish(trialimage, pubevent=True, database=False)
 		else:
 			pimagedata = data.AcquisitionImageData(id=dataid, initializer=imagedata, preset=presetdata, label=labelstring, target=target)
-			self.publish(pimagedata, pubevent=True, database=self.databaseflag.get())
-			print 'PIMAGEDATA'
-			print '   scope image shift', pimagedata['scope']['image shift']
-			print '   preset image shift', pimagedata['preset']['image shift']
-		print 'image published'
-		print 'displaying image'
-		self.ui_image.set(imarray)
 
+			self.publish(pimagedata, pubevent=True, database=self.databaseflag.get())
+
+#			print 'PIMAGEDATA'
+#			print '   scope image shift', pimagedata['scope']['image shift']
+#			print '   preset image shift', pimagedata['preset']['image shift']
+
+		print 'image published, displaying image'
+		self.ui_image.set(imarray)
 
 	def handleImageClick(self, clickevent):
 		'''
