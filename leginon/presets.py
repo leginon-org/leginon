@@ -17,6 +17,7 @@ import strictdict
 import threading
 import time
 import unique
+import calibrationclient
 
 class PresetsClient(object):
 	'''
@@ -111,6 +112,16 @@ class PresetsManager(node.Node):
 		ids = [('presets',), ('current preset',)]
 		e = event.ListPublishEvent(idlist=ids)
 		self.outputEvent(e)
+
+		## camerafuncs not needed, but calclients need it
+		self.cam = None
+		self.calclients = {
+			'pixel size':calibrationclient.PixelSizeCalibrationClient(self),
+			'image':calibrationclient.ImageShiftCalibrationClient(self),
+			'stage':calibrationclient.StageCalibrationClient(self),
+			'beam':calibrationclient.BeamShiftCalibrationClient(self),
+			'modeled stage':calibrationclient.ModeledStageCalibrationClient(self),
+		}
 
 		self.cam = camerafuncs.CameraFuncs(self)
 		self.currentselection = None
@@ -540,7 +551,30 @@ class PresetsManager(node.Node):
 			except KeyError:
 				pass
 			self.presetparams.set(d, callback=False)
+			print 'display'
+			self.displayCalibrations(self.currentselection)
+			print 'done disp'
 		return index
+
+	def getHighTension(self):
+		htdata = self.researchByDataID(('high tension',))
+		return htdata['high tension']
+
+	def displayCalibrations(self, preset):
+		mag = preset['magnification']
+		ht = self.getHighTension()
+
+		pcaltime = self.calclients['pixel size'].time(mag)
+		self.cal_pixelsize.set(str(pcaltime))
+		stagetime = self.calclients['stage'].time(ht, mag, 'stage position')
+		self.cal_stage.set(str(stagetime))
+
+		#imagetime = self.calclients['image'].time(ht, mag, 'image shift')
+		#self.cal_imageshift.set(str(imagetime))
+		#beamtime = self.calclients['beam'].time(ht, mag, 'beam shift')
+		#self.cal_beam.set(str(beamtime))
+		modstagetime = None
+		self.cal_modeledstage.set(str(modstagetime))
 
 	def uiParamsCallback(self, value):
 		if (self.currentselection is None) or (not value):
@@ -589,6 +623,15 @@ class PresetsManager(node.Node):
 		createcont = uidata.Container('Preset Creation')
 		createcont.addObjects((self.enteredname, newfromscopemethod))
 
+		# calibrations
+		calcont = uidata.Container('Calibration Status')
+		self.cal_pixelsize = uidata.String('Pixel Size', '', 'r')
+		self.cal_imageshift = uidata.String('Image Shift Matrix', '', 'r')
+		self.cal_stage = uidata.String('Stage Shift Matrix', '', 'r')
+		self.cal_beam = uidata.String('Beam Shift Matrix', '', 'r')
+		self.cal_modeledstage = uidata.String('Modeled Stage', '', 'r')
+		calcont.addObjects((self.cal_pixelsize, self.cal_imageshift, self.cal_stage, self.cal_beam, self.cal_modeledstage))
+
 		## selection
 		self.autosquare = uidata.Boolean('Auto Square', True, 'rw')
 		self.presetparams = uidata.Struct('Parameters', {}, 'rw', self.uiParamsCallback)
@@ -604,7 +647,7 @@ class PresetsManager(node.Node):
 		self.orderlist = uidata.Array('Cycle Order', [], 'rw', persist=True)
 
 		selectcont = uidata.Container('Selection')
-		selectcont.addObjects((self.uiselectpreset,toscopemethod,fromscopemethod,eucfromscopemethod,euctoscopemethod,removemethod,self.changepause,cyclemethod,self.usecycle,self.orderlist,self.autosquare,self.presetparams))
+		selectcont.addObjects((self.uiselectpreset,toscopemethod,fromscopemethod,eucfromscopemethod,euctoscopemethod,removemethod,self.changepause,cyclemethod,self.usecycle,self.orderlist,self.autosquare,self.presetparams,calcont))
 
 		pnames = self.presetNames()
 		self.uiselectpreset.set(pnames, 0)

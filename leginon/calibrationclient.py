@@ -195,23 +195,41 @@ class PixelSizeCalibrationClient(CalibrationClient):
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)
 
-	def retrievePixelSize(self, mag, instrument=True):
-		'''
-		finds the requested pixel size using magnification
-		'''
+	def researchPixelSizeData(self, mag, instrument=True):
 		queryinstance = data.PixelSizeCalibrationData()
 		queryinstance['magnification'] = mag
 		queryinstance['session'] = data.SessionData()
 		if instrument:
 			queryinstance['session']['instrument'] = self.node.session['instrument']
 		caldatalist = self.node.research(datainstance=queryinstance, results=1)
-
 		if len(caldatalist) > 0:
-			caldata = caldatalist[0]
+			return caldatalist[0]
 		else:
-			raise NoPixelSizeError
+			return None
+
+	def retrievePixelSize(self, mag, instrument=True):
+		'''
+		finds the requested pixel size using magnification
+		'''
+		caldata = self.researchPixelSizeData(mag, instrument)
+		if caldata is None:
+			raise NoPixelSizeError()
 		pixelsize = caldata['pixelsize']
 		return pixelsize
+
+	def time(self, mag, instrument=True):
+		print 'aaa'
+		pdata = self.researchPixelSizeData(mag, instrument)
+		print 'bbb'
+		if pdata is None:
+			print 'fff'
+			timeinfo = None
+			print 'ccc'
+		else:
+			print 'eee'
+			timeinfo = pdata.timestamp
+			print 'ddd'
+		return timeinfo
 
 	def retrieveAllPixelSizes(self):
 		'''
@@ -225,7 +243,6 @@ class PixelSizeCalibrationClient(CalibrationClient):
 		return caldatalist
 
 
-
 class MatrixCalibrationClient(CalibrationClient):
 	'''
 	basic CalibrationClient for accessing a type of calibration involving
@@ -234,22 +251,35 @@ class MatrixCalibrationClient(CalibrationClient):
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)
 
-	def retrieveMatrix(self, ht, mag, caltype):
-		'''
-		finds the requested matrix using magnification and type
-		'''
+	def researchMatrix(self, ht, mag, caltype):
 		queryinstance = data.MatrixCalibrationData(magnification=mag, type=caltype)
 		queryinstance['high tension'] = ht
 		queryinstance['session'] = data.SessionData()
 		queryinstance['session']['instrument'] = self.node.session['instrument']
 		caldatalist = self.node.research(datainstance=queryinstance, results=1)
-
 		if len(caldatalist) > 0:
 			caldata = caldatalist[0]
 		else:
+			caldata = None
+		return caldata
+
+	def retrieveMatrix(self, ht, mag, caltype):
+		'''
+		finds the requested matrix using magnification and type
+		'''
+		caldata = self.researchMatrix(ht, mag, caltype)
+		if caldata is None:
 			raise NoMatrixCalibrationError
 		matrix = caldata['matrix'].copy()
 		return matrix
+
+	def time(self, ht, mag, caltype):
+		caldata = self.researchMatrix(ht, mag, caltype)
+		if caldata is None:
+			timestamp = None
+		else:
+			timestamp = caldata.timestamp
+		return timestamp
 
 	def storeMatrix(self, ht, mag, type, matrix):
 		'''
@@ -275,9 +305,10 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		emdata = self.node.researchByDataID(('magnification',))
 		#mag = emdata.content['magnification']
 		mag = emdata['magnification']
-		fmatrix = self.retrieveMatrix(mag, 'defocus')
-		amatrix = self.retrieveMatrix(mag, 'stigx')
-		bmatrix = self.retrieveMatrix(mag, 'stigy')
+		ht = emdata['high tension']
+		fmatrix = self.retrieveMatrix(ht, mag, 'defocus')
+		amatrix = self.retrieveMatrix(ht, mag, 'stigx')
+		bmatrix = self.retrieveMatrix(ht, mag, 'stigy')
 
 		if None in (fmatrix, amatrix, bmatrix):
 			raise RuntimeError('missing calibration matrix')
@@ -518,11 +549,12 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 
 	def matrixAnglePixsize(self, scope, camera):
 		mag = scope['magnification']
+		ht = scope['high tension']
 		binx = camera['binning']['x']
 		biny = camera['binning']['y']
 		par = self.parameter()
 
-		matrix = self.retrieveMatrix(mag, par)
+		matrix = self.retrieveMatrix(ht, mag, par)
 
 		xvect = matrix[:,0]
 		yvect = matrix[:,1]
@@ -543,6 +575,7 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		from which the pixelshift originates
 		'''
 		mag = scope['magnification']
+		ht = scope['high tension']
 		binx = camera['binning']['x']
 		biny = camera['binning']['y']
 		par = self.parameter()
@@ -551,7 +584,7 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		pixcol = pixelshift['col'] * binx
 		pixvect = (pixrow, pixcol)
 
-		matrix = self.retrieveMatrix(mag, par)
+		matrix = self.retrieveMatrix(ht, mag, par)
 		print 'matrix', matrix
 		print 'pixvect', pixvect
 		change = Numeric.matrixmultiply(matrix, pixvect)
@@ -572,6 +605,7 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		represents the given parameter shift.
 		'''
 		mag = scope['magnification']
+		ht = scope['high tension']
 		binx = camera['binning']['x']
 		biny = camera['binning']['y']
 		par = self.parameter()
@@ -579,7 +613,7 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		vect = (shift['x'], shift['y'])
 
 		try:
-			matrix = self.retrieveMatrix(mag, par)
+			matrix = self.retrieveMatrix(ht, mag, par)
 			if matrix is None:
 				return None
 		except NoMatrixCalibrationError:
@@ -685,9 +719,14 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		qdata['magnification'] = mag
 		qdata['axis'] = axis
 		measurements = self.node.research(datainstance=qdata)
+		if not measurements:
+			raise RuntimeError('no measurements!')
 		print 'LEN(MEASUREMENTS)', len(measurements)
+		ht = measurements[0]['high tension']
 		datapoints = []
 		for measurement in measurements:
+			if measurement['high tension'] != ht:
+				raise RuntimeError('inconsistent high tension in measurements!')
 			datapoint = []
 			datapoint.append(measurement['x'])
 			datapoint.append(measurement['y'])
@@ -695,11 +734,13 @@ class ModeledStageCalibrationClient(CalibrationClient):
 			datapoint.append(measurement['imagex'])
 			datapoint.append(measurement['imagey'])
 			datapoints.append(datapoint)
-		return datapoints
+		return {'datapoints':datapoints, 'ht': ht}
 
 	def fit(self, label, mag, axis, terms, magonly=1):
 		# get data from DB
-		datapoints = self.getLabeledData(label, mag, axis)
+		info = self.getLabeledData(label, mag, axis)
+		datapoints = info['datapoints']
+		ht = info['ht']
 		dat = gonmodel.GonData()
 		dat.import_data(mag, axis, datapoints)
 
@@ -720,7 +761,7 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		a = mod.a
 		b = mod.b
 		
-		self.storeMagCalibration(label, mag, axis, angle, mean)
+		self.storeMagCalibration(label, ht, mag, axis, angle, mean)
 		if magonly:
 			return
 		self.storeModelCalibration(label, axis, period, a, b)
@@ -745,8 +786,8 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		ymod = gonmodel.GonModel()
 		ymod.fromDict(ymodcal)
 
-		xmagcal = self.retrieveMagCalibration(scope['magnification'], 'x')
-		ymagcal = self.retrieveMagCalibration(scope['magnification'], 'y')
+		xmagcal = self.retrieveMagCalibration(scope['high tension'], scope['magnification'], 'x')
+		ymagcal = self.retrieveMagCalibration(scope['high tension'], scope['magnification'], 'y')
 
 
 		delta = self.pixtix(xmod, ymod, xmagcal, ymagcal, curstage['x'], curstage['y'], pixcol, pixrow)

@@ -285,6 +285,7 @@ class SQLDict:
 		for r in result:
 			memokey = (classname, r['DEF_id'])
 			dbid = r['DEF_id']
+			dbtimestamp = r['DEF_timestamp']
 			del r['DEF_id']
 			del r['DEF_timestamp']
 
@@ -305,6 +306,7 @@ class SQLDict:
 				## after all items are set, otherwise __setitem__
 				## will reset dbid
 				newdata.pending_dbid = dbid
+				newdata.timestamp = dbtimestamp
 
 			datalist.append(newdata)
 

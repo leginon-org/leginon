@@ -85,8 +85,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 		## calculate delta based on pixel size and camera config
 		## use 1/4 image width to calculate delta
 		## delta = dimension['x'] * binning['x'] * pixsize / 4
-		emdata = self.researchByDataID(('magnification',))
-		mag = emdata['magnification']
+		mag = self.getMagnification()
 		pixsize = self.pixsizeclient.retrievePixelSize(mag)
 
 		percent = self.shiftpercent.get()
@@ -151,21 +150,20 @@ class MatrixCalibrator(calibrator.Calibrator):
 				# better just fail the whole calibration
 				raise CalibrationError()
 
-
-
 		# return to base
 		emdata = data.ScopeEMData(id=('scope',))
 		emdata[uiparameter] = basebase
 		self.publishRemote(emdata)
 
 		mag = self.getMagnification()
+		ht = self.getHighTension()
 
 		matrix = calclient.measurementToMatrix(shifts)
 		print 'MATRIX', matrix
 		print 'MATRIX shape', matrix.shape
 		print 'MATRIX type', matrix.typecode()
 		print 'MATRIX flat', Numeric.ravel(matrix)
-		calclient.storeMatrix(mag, uiparameter, matrix)
+		calclient.storeMatrix(ht, mag, uiparameter, matrix)
 
 	def defineUserInterface(self):
 		calibrator.Calibrator.defineUserInterface(self)
