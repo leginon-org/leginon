@@ -570,6 +570,8 @@ class HistoryData(Container):
 			value = self.valuecallback(value)
 		if value is not None:
 			history = self.history.get()
+			if history is None:
+				history = []
 			if value in history:
 				history.remove(value)
 			history.insert(0, value)
