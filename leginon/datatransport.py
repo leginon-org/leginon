@@ -38,9 +38,13 @@ class Client(Base):
 
 	# these aren't ordering right, dictionary iteration
 	def pull(self, idata):
+		#print 'client pull', idata
 		for c in self.clients:
+			#print 'client pull client', c
 			try:
+				#print 'pulling'
 				newdata = c.pull(idata)
+				#print 'got newdata'
 				return newdata
 			except IOError:
 				pass

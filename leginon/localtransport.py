@@ -66,7 +66,11 @@ class Client(leginonobject.LeginonObject):
 			localserverdictlock.release()
 			raise IOError
 		else:
-			obj = copy.deepcopy(server.datahandler.query(id))
+			try:
+				obj = copy.deepcopy(server.datahandler.query(id))
+			except Exception, e:
+				localserverdictlock.release()
+				raise IOError
 			localserverdictlock.release()
 			return obj
 

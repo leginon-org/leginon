@@ -31,14 +31,19 @@ class CameraFuncs(object):
 			imdata = self.node.researchByDataID(('corrected image data',))
 		else:
 			### create my own data from acquisition
+			#print 'research'
 			scopedata = self.node.researchByDataID(('scope',))
+			#print 'scopedata =', scopedata
 			camdata = self.node.researchByDataID(('camera',))
+			#print 'camdata =', camdata
 
 			### move image to its own key
 			numimage = camdata['image data']
 			camdata['image data'] = None
 			dataid = self.node.ID()
+			#print 'creating imdata'
 			imdata = data.CameraImageData(dataid, image=numimage, scope=scopedata, camera=camdata)
+			#print 'created imdata'
 		return imdata
 
 	def state(self, camstate=None):

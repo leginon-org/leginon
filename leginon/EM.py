@@ -21,12 +21,18 @@ if sys.platform == 'win32':
 #class DataHandler(datahandler.DataBinder):
 class DataHandler(node.DataHandler):
 	def query(self, id):
-
+		emkey = id[0]
+		print 'EM query: acquiring state lock'
 		self.node.statelock.acquire()
+		print 'EM query: state lock acquired'
 		done_event = threading.Event()
-		self.node.queue.put(Request(done_event, [id[0]]))
+		print 'EM query: putting in request for %s' % str([emkey])
+		self.node.queue.put(Request(done_event, [emkey]))
+		print 'EM query: waiting on request'
 		done_event.wait()
+		print 'EM query: got request'
 		stuff = self.node.state
+		print 'EM query: creating data, (keys = %s)' % str(stuff.keys())
 
 		if emkey == 'scope':
 			result = data.ScopeEMData(self.ID(), initializer=stuff)
@@ -46,70 +52,33 @@ class DataHandler(node.DataHandler):
 				except KeyError:
 					result = None
 
+		print 'EM query: data created, releaseing statelock'
+
 		self.node.statelock.release()
+		print 'EM query: returning'
 		return result
 
-#		emkey = id[0]
-#		stuff = self.node.getEM([emkey])
-
-#<<<<<<< EM.py
-#		if emkey == 'scope':
-#			result = data.ScopeEMData(self.ID(), initializer=stuff)
-#		elif emkey == 'camera':
-#			result = data.CameraEMData(self.ID(), initializer=stuff)
-#		elif emkey == 'all':
-#			result = data.AllEMData(self.ID(), initializer=stuff)
-#		else:
-#			### could be either CameraEMData or ScopeEMData
-#			newid = self.ID()
-#			for dataclass in (data.ScopeEMData,data.CameraEMData):
-#				tryresult = dataclass(newid)
-#				try:
-#					tryresult.update(stuff)
-#					result = tryresult
-#					break
-#				except KeyError:
-#					result = None
-#=======
-#	def query(self, id):
-#		self.EMnode.statelock.acquire()
-#		done_event = threading.Event()
-#		self.EMnode.queue.put(Request(done_event, [id[0]]))
-#		done_event.wait()
-#		#self.EMnode.uiUpdate()
-#		result = data.EMData(self.EMnode.ID(), em=self.EMnode.state)
-#		self.EMnode.statelock.release()
-#>>>>>>> 1.64.2.4
-#		return result
-
 	def insert(self, idata):
+		print 'EM insert: testing instance of EMData'
 		if isinstance(idata, data.EMData):
-			print idata['id'][:-1], 'attempting to set EM'
-#<<<<<<< EM.py
-#			self.node.setEM(idata)
-#=======
-			self.EMnode.statelock.acquire()
+			print 'EM insert: is instance of EMData, acquiring statelock'
+			#print idata['id'][:-1], 'attempting to set EM'
+			self.node.statelock.acquire()
+			print 'EM insert: statelock acquired'
 			done_event = threading.Event()
-			self.EMnode.queue.put(Request(done_event, idata['em']))
+			#self.node.queue.put(Request(done_event, idata['em']))
+			print 'EM insert: requesting set (idata keys = %s)' % str(idata.keys())
+			self.node.queue.put(Request(done_event, idata))
+			print 'EM insert: waiting for request to complete'
 			done_event.wait()
-			self.EMnode.uiUpdate()
-			self.EMnode.statelock.release()
-#>>>>>>> 1.64.2.4
-			print idata['id'][:-1], 'EM set'
-#<<<<<<< EM.py
-#=======
-#
-#	def _insert(self, idata):
-#		pass
-#
-#	# borrowed from NodeDataHandler
-#	def setBinding(self, eventclass, func):
-#		if issubclass(eventclass, event.Event):
-#			datahandler.DataBinder.setBinding(self, eventclass, func)
-#>>>>>>> 1.64.2.4
+			print 'EM insert: updating UI'
+			self.node.uiUpdate()
+			print 'EM insert: releasing state lock'
+			self.node.statelock.release()
 		else:
 			node.DataHandler.insert(self, idata)
-			
+
+		print 'EM insert: done'
 
 class Request(object):
 	def __init__(self, ievent, value):
@@ -146,7 +115,6 @@ class EM(node.Node):
 		self.handlerthread.setDaemon(1)
 		self.handlerthread.start()
 
-		self.defineUserInterface()
 
 		self.start()
 
@@ -170,6 +138,10 @@ class EM(node.Node):
 		ids += self.camera.keys()
 		for i in range(len(ids)):
 			ids[i] = (ids[i],)
+
+		self.uistate = self.getEM(withoutkeys=['image data'])
+		self.defineUserInterface()
+
 		e = event.ListPublishEvent(self.ID(), idlist=ids)
 		self.outputEvent(e, wait=True)
 		self.outputEvent(event.NodeInitializedEvent(self.ID()))
@@ -357,28 +329,33 @@ class EM(node.Node):
 			print "done."
 		return ''
 
+	# needs to have statelock locked
 	def uiUpdate(self):
-		state = copy.copy(self.state)
+		self.uistate.update(self.state)
 		try:
-			del state['image data']
+			del self.uistate['image data']
 		except KeyError:
 			pass
-		uistate = self.statestruct.get()
-		uistate.update(state)
-		self.statestruct.set(uistate)
+		self.statestruct.set(self.uistate)
 
 	def uiCallback(self, value):
+		request = {}
+		for key in value:
+			if self.uistate[key] != value[key]:
+				request[key] = value[key]
+		if not request:
+			return value
 		self.statelock.acquire()
 		done_event = threading.Event()
-		self.queue.put(Request(done_event, value))
+		self.queue.put(Request(done_event, request))
 		done_event.wait()
-		state = copy.copy(self.state)
+		self.uistate.update(self.state)
 		try:
-			del state['image data']
+			del self.uistate['image data']
 		except KeyError:
 			pass
 		self.statelock.release()
-		return state
+		return self.uistate
 
 	def queueHandler(self):
 		while True:
@@ -398,6 +375,7 @@ class EM(node.Node):
 		node.Node.defineUserInterface(self)
 		self.statestruct = uidata.UIStruct('Instrument State', {},
 																				'rw', self.uiCallback)
+		self.statestruct.set(self.uistate, callback=False)
 		unlockmethod = uidata.UIMethod('Unlock', self.uiUnlock)
 		container = uidata.UIMediumContainer('EM')
 		container.addUIObjects((self.statestruct, unlockmethod))

@@ -201,11 +201,11 @@ class UIData(UIObject):
 		else:
 			raise PermissionsError('cannot set, permission denied')
 
-	def set(self, value):
+	def set(self, value, callback=True):
 		value = copy.deepcopy(value)
 		if self.validate(value):
 			# should call in constructor?
-			if self.callback is not None:
+			if callback and self.callback is not None:
 				callbackvalue = self.callback(value)
 				if self.validate(callbackvalue):
 					self.value = callbackvalue
@@ -218,6 +218,7 @@ class UIData(UIObject):
 		if self.parent is not None:
 			self.parent.setUIObjectCallback((self.name,), self.value)
 
+	# needs reversal of _get/get like set
 	def get(self):
 		if self.read:
 			return self._get()

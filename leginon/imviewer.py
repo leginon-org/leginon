@@ -94,9 +94,13 @@ class ImViewer(imagewatcher.ImageWatcher):
 		self.iv.bindCanvas('<Double-1>', '')
 
 	def uiAcquireRaw(self):
+		print 'acquiring raw'
 		imarray = self.acquireArray(0)
+		print 'got imarry'
 		if imarray is not None:
+			print 'setting ui_image'
 			self.ui_image.set(imarray)
+		print 'done'
 
 	def uiAcquireCorrected(self):
 		imarray = self.acquireArray(1)
@@ -104,10 +108,15 @@ class ImViewer(imagewatcher.ImageWatcher):
 			self.ui_image.set(imarray)
 
 	def acquireArray(self, corr=0):
+		print 'camconfig'
 		camconfig = self.cam.config()
+		print 'camstate'
 		camstate = camconfig['state']
+		print 'imdata'
 		imdata = self.cam.acquireCameraImageData(camstate, correction=corr)
+		print 'imarray'
 		imarray = imdata['image']
+		print 'returning'
 		return imarray
 
 #	def acquireAndDisplay(self, corr=0):
