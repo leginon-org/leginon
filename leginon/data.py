@@ -392,7 +392,7 @@ class MagDependentCalibrationData(CalibrationData):
 class PixelSizeCalibrationData(MagDependentCalibrationData):
 	def typemap(cls):
 		t = MagDependentCalibrationData.typemap()
-		t += [ ('pixelsize', float), ]
+		t += [ ('pixelsize', float), ('comment', str)]
 		return t
 	typemap = classmethod(typemap)
 
