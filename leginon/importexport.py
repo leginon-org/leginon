@@ -288,7 +288,11 @@ class ImportExport:
 		
 
 	def importApplication(self, filename):
-		xmlapp = XMLApplicationImport(filename)
+		try:
+			xmlapp = XMLApplicationImport(filename)
+		except IOError,e:
+			print e
+			return
 		# Create SQL tables
 		sqldef = xmlapp.getSQLDefinitionQueries()
 		for q in sqldef:
@@ -364,7 +368,6 @@ class ImportExport:
 						ref_tables.index(tablename)
 					except:
 						ref_tables.append(tablename)
-		print ref_tables
 		xmlexp = XMLApplicationExport(self.db)
 		dump = xmlexp.getXMLheader(name,version,date)
 		dump += xmlexp.getXMLdump(ref_tables,applicationId)
@@ -378,6 +381,6 @@ class ImportExport:
 if __name__ == "__main__":
 	app = ImportExport()
 	app.setDBparam(host="stratocaster")
-	app.importApplication('/home/dfellman/03dec15_0.xml')
+	app.importApplication('/home/dfellman/03dec15_0.xm')
 	dump = app.exportApplication('03dec15')
 	print dump
