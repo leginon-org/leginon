@@ -14,30 +14,27 @@ try:
 	import pythoncom
 	import win32com.client
 	import winerror
-except ImportError:
-	pass
-
-try:
 	try:
-		import tecnaicom
+		try:
+			import tecnaicom
+		except ImportError:
+			from pyScope import tecnaicom
 	except ImportError:
-		from pyScope import tecnaicom
-except ImportError:
-	pass
-
-try:
+		pass
 	try:
-		import ldcom
+		try:
+			import ldcom
+		except ImportError:
+			from pyScope import ldcom
 	except ImportError:
-		from pyScope import ldcom
-except ImportError:
-	pass
-
-try:
+		pass
 	try:
-		import adacom
+		try:
+			import adacom
+		except ImportError:
+			from pyScope import adacom
 	except ImportError:
-		from pyScope import adacom
+		pass
 except ImportError:
 	pass
 
