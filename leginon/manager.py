@@ -310,14 +310,15 @@ class Manager(node.Node):
 		nodetree = self.registerUIData('Node Tree', 'struct', permissions='rw')
 		self.nodeDict()
 
-		self.registerUISpec('MANAGER', (nodespec, spec1, spec2, spec3, nodetree))
-		return
 
 		argspec = (
-			{'name':'filename', 'alias':'Filename', 'type':'string'},)
-		self.registerUIFunction(self.saveApp, argspec, 'Save App')
-		self.registerUIFunction(self.loadApp, argspec, 'Load App')
-		self.registerUIFunction(self.launchApp, (), 'Launch App')
+		self.registerUIData('Filename', 'string'),
+		)
+		saveapp = self.registerUIMethod(self.saveApp, 'Save Application', argspec)
+		loadapp = self.registerUIMethod(self.loadApp, 'Load Application', argspec)
+		launchapp = self.registerUIMethod(self.launchApp, 'Launch Application', ())
+
+		self.registerUISpec('MANAGER', (nodespec, spec1, spec2, spec3, saveapp, loadapp, launchapp, nodetree))
 
 	def nodeDict(self):
 		"""
@@ -383,7 +384,7 @@ if __name__ == '__main__':
 	m = Manager(manager_id)
 
 	## GUI
-	gui = 0
+	gui = 1
 	if gui:
 		import nodegui
 		import Tkinter

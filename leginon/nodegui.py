@@ -12,190 +12,13 @@ class SpecWidget(Frame):
 		Frame.__init__(self, parent, **kwargs)
 		self.spec = spec
 		self.uiclient = uiclient
-		self.buildSpec()
-
-	def buildSpec(self):
-		raise NotImplementedError()
-
-
-### maybe should subclass Data to get specific types:  Combobox, Tree, ...
-class Data(SpecWidget):
-	def __init__(self, parent, uiclient, spec):
-		self.bgcolor = 'cyan'
-		SpecWidget.__init__(self, parent, uiclient, spec, bd=1, relief=SUNKEN, bg=self.bgcolor)
-
-	def buildSpec(self):
-		name = self.name = self.spec['name']
-		self.type = self.spec['xmlrpctype']
-		if 'enum' in self.spec:
-			self.enum = self.spec['enum']
-		else:
-			self.enum = None
-		if 'permissions' in self.spec:
-			self.permissions = self.spec['permissions']
-		else:
-			self.permissions = None
-
-		if 'default' in self.spec:
-			self.default = self.spec['default']
-		else:
-			self.default = None
-
-		if self.enum is not None:
-			self.arg_choice(name, self.enum)
-		elif self.type == 'boolean':
-			self.arg_check(name)
-		elif self.type in ('integer', 'float', 'string'):
-			self.arg_entry(name, self.type)
-		elif self.type == 'array':
-			self.arg_entry(name, self.type)
-		elif self.type == 'struct':
-			self.arg_struct(name)
-		elif self.type == 'date':
-			self.arg_date(name)
-		elif self.type == 'binary':
-			self.arg_binary(name)
-		else:
-			raise RuntimeError('type not supported')
-
-		## sets the initial value
-		if self.default is not None:
-			self.tkvar.set(self.default)
-
-	def set(self, value):
-		if self.type == 'struct':
-			self.update_tree(value)
-		else:
-			self.tkvar.set(value)
-
-	def get(self):
-		if self.type == 'struct':
-			return self.tkvar
-		else:
-			return self.tkvar.get()
-
-	def setServer(self):
-		value = self.get()
-		r = self.uiclient.execute('SET', (self.name, value))
-		self.set(r)
-
-	def getServer(self):
-		r = self.uiclient.execute('GET', (self.name,))
-		self.set(r)
-
-# types:
-#('boolean', 'integer', 'float', 'string', 'array', 'struct', 'date', 'binary')
-	def arg_choice(self, name, enum_name):
-		self.tkvar = StringVar()
-		Label(self, text=name, bg=self.bgcolor).pack(side=LEFT)
-		cb = Pmw.ComboBox(self, entry_textvariable=self.tkvar)
-		##cb['bg'] = self.bgcolor
-		choices = self.uiclient.execute('GET', (enum_name,))
-		cb.setlist(choices)
-		cb.pack(side=LEFT)
-		self.datawidget = cb
-
-	def arg_check(self, name):
-		self.tkvar = BooleanVar()
-		self.datawidget = Checkbutton(self, text=name, variable=self.tkvar, bg=self.bgcolor)
-		self.datawidget.pack(side=LEFT)
-
-	def arg_entry(self, name, type):
-			
-
-		if type == 'integer':
-			self.tkvar = IntVar()
-		if type == 'float':
-			self.tkvar = DoubleVar()
-		if type == 'string':
-			self.tkvar = StringVar()
-		if type == 'array':
-			self.tkvar = StringVar()
-		if type == 'struct':
-			self.tkvar = StringVar()
-		Label(self, text=name, bg=self.bgcolor).pack(side=LEFT)
-		self.datawidget = Entry(self, textvariable=self.tkvar, width=10, bg=self.bgcolor)
-		self.datawidget.pack(side=LEFT)
-
-		if self.permissions is not None:
-			if 'w' in self.permissions:
-				Button(self, text='Set', command=self.setServer).pack(side=LEFT)
-			if 'r' in self.permissions:
-				Button(self, text='Get', command=self.getServer).pack(side=LEFT)
-
-
-	def arg_array(self, name):
-		raise NotImplementedError
-
-	def update_tree(self, treedict):
-		self.tkvar = treedict
-		if self.sc is not None:
-			self.sc.frame.destroy()
-
-		self.sc = TreeWidget.ScrolledCanvas(self.treeframe, highlightthickness=0, bg=self.bgcolor)
-		#sc.frame.pack(side=TOP)
-		item = StructTreeItem(None, self.name, treedict)
-		node = TreeWidget.TreeNode(self.sc.canvas, None, item)
-		node.expand()
-		#self.datawidget = sc
-		self.sc.frame.pack()
-
-	def arg_struct(self, name):
-		self.sc = None
-		self.treeframe = Frame(self)
-		td = self.getServer()
-		self.update_tree(td)
-		self.treeframe.pack(side=TOP)
-
-		if self.permissions is not None:
-			getsetframe = Frame(self)
-			if 'w' in self.permissions:
-				Button(getsetframe, text='Set', command=self.setServer).pack(side=LEFT)
-			if 'r' in self.permissions:
-				Button(getsetframe, text='Get', command=self.getServer).pack(side=LEFT)
-			getsetframe.pack(side=TOP)
-
-		
-	def arg_date(self, name):
-		raise NotImplementedError
-
-	def arg_binary(self, name):
-		raise NotImplementedError
-
-
-class newData(SpecWidget):
-	def __init__(self, parent, uiclient, spec):
-		self.bgcolor = 'cyan'
-		SpecWidget.__init__(self, parent, uiclient, spec, bd=2, relief=SUNKEN, bg=self.bgcolor)
-
-	def buildSpec(self):
-		name = self.name = self.spec['name']
-		self.type = self.spec['xmlrpctype']
-		if 'enum' in self.spec:
-			self.enum = self.spec['enum']
-		else:
-			self.enum = None
-		if 'permissions' in self.spec:
-			self.permissions = self.spec['permissions']
-		else:
-			self.permissions = None
-
-		if 'default' in self.spec:
-			self.default = self.spec['default']
-		else:
-			self.default = None
-
-
-class EntryData(Data):
-	def __init__(self, parent, uiclient, spec):
-		Data.__init__(self, parent, uiclient, spec)
-
 
 class Container(SpecWidget):
 	def __init__(self, parent, uiclient, spec):
-		SpecWidget.__init__(self, parent, uiclient, spec, bg='green')
+		SpecWidget.__init__(self, parent, uiclient, spec, bg='cyan')
+		self.build()
 
-	def buildSpec(self):
+	def build(self):
 		self.name = self.spec['name']
 		self.label = Label(self, text = self.name)
 		self.label.pack()
@@ -206,16 +29,190 @@ class Container(SpecWidget):
 			elif spectype == 'method':
 				widget = Method(self, self.uiclient, spec)
 			elif spectype == 'data':
-				widget = Data(self, self.uiclient, spec)
+				dataclass = whichDataClass(spec)
+				widget = dataclass(self, self.uiclient, spec)
 			else:
 				raise RuntimeError('invalid spec type')
-			widget.pack()
+			widget.pack(side=TOP)
+
+
+def whichDataClass(dataspec):
+	'''this checks a data spec to figure out what Data class to use'''
+	type = dataspec['xmlrpctype']
+	if 'enum' in dataspec:
+		enum = dataspec['enum']
+	else:
+		enum = None
+
+	if enum is not None:
+		return ComboboxData
+
+	elif type == 'boolean':
+		return CheckbuttonData
+	elif type in ('integer', 'float', 'string', 'array'):
+		return EntryData
+	elif type == 'struct':
+		return TreeData
+	else:
+		raise RuntimeError('type not supported')
+
+class Data(SpecWidget):
+	def __init__(self, parent, uiclient, spec):
+		self.bgcolor = None
+
+		SpecWidget.__init__(self, parent, uiclient, spec, bd=2, relief=SUNKEN, bg=self.bgcolor)
+
+		self.name = self.spec['name']
+		self.type = self.spec['xmlrpctype']
+		if 'enum' in self.spec:
+			self.enum = self.spec['enum']
+		else:
+			self.enum = None
+		if 'permissions' in self.spec:
+			self.permissions = self.spec['permissions']
+		else:
+			self.permissions = None
+
+		if 'default' in self.spec:
+			self.default = self.spec['default']
+		else:
+			self.default = None
+
+		headframe = Frame(self)
+
+		### label
+		lab = Label(headframe, text=self.name, bg=self.bgcolor)
+		lab.pack(side=LEFT)
+
+		### optional get/set
+		if self.permissions is not None:
+			if 'r' in self.permissions:
+				Button(headframe, text='Get', command=self.getServer).pack(side=LEFT)
+			if 'w' in self.permissions:
+				Button(headframe, text='Set', command=self.setServer).pack(side=LEFT)
+
+		headframe.pack(side=TOP)
+
+		### the actual data widget
+		w = self.buildWidget(self)
+		w.pack(side=TOP)
+
+	def setServer(self):
+		value = self.getWidget()
+		r = self.uiclient.execute('SET', (self.name, value))
+		self.setWidget(r)
+
+	def getServer(self):
+		r = self.uiclient.execute('GET', (self.name,))
+		self.setWidget(r)
+
+	def buildWidget(self, parent):
+		'''implementation should return a data widget'''
+		raise NotImplementedError()
+
+	def setWidget(self, value):
+		raise NotImplementedError()
+
+	def getWidget(self):
+		raise NotImplementedError()
+
+
+class EntryData(Data):
+	def __init__(self, parent, uiclient, spec):
+		Data.__init__(self, parent, uiclient, spec)
+
+	def buildWidget(self, parent):
+		self.entry = Entry(parent, width=10, bg=self.bgcolor)
+		return self.entry
+
+	def setWidget(self, value):
+		valuestr = str(value)
+		self.entry.delete(0,END)
+		self.entry.insert(0,valuestr)
+
+	def getWidget(self):
+		valuestr = self.entry.get()
+		if self.type == 'string':
+			value = valuestr
+		else:
+			value = eval(valuestr)
+		return value
+
+
+class CheckbuttonData(Data):
+	def __init__(self, parent, uiclient, spec):
+		Data.__init__(self, parent, uiclient, spec)
+
+	def buildWidget(self, parent):
+		self.tkvar = BooleanVar()
+		c = Checkbutton(parent, variable=self.tkvar, bg=self.bgcolor)
+		return c
+
+	def setWidget(self, value):
+		self.tkvar.set(value)
+
+	def getWidget(self):
+		value = self.tkvar.get()
+		return value
+
+class ComboboxData(Data):
+	def __init__(self, parent, uiclient, spec):
+		Data.__init__(self, parent, uiclient, spec)
+		if 'enum' not in self.spec:
+			raise RuntimeError('need enum for ComboboxData')
+
+	def buildWidget(self, parent):
+		self.tkvar = StringVar()
+		self.combo = Pmw.ComboBox(parent, entry_textvariable=self.tkvar)
+		self.updateList()
+		return self.combo
+
+	def updateList(self):
+		newlist = self.uiclient.execute('GET', (self.enum,))
+		self.combo.setlist(newlist)
+
+	def setWidget(self, value):
+		self.tkvar.set(value)
+
+	def getWidget(self):
+		valuestr = self.tkvar.get()
+		if self.type == 'string':
+			value = valuestr
+		else:
+			value = eval(valuestr)
+		return value
+
+class TreeData(Data):
+	def __init__(self, parent, uiclient, spec):
+		Data.__init__(self, parent, uiclient, spec)
+		if self.type != 'struct':
+			raise RuntimeError('TreeData requires struct type')
+
+	def buildWidget(self, parent):
+		self.sc = None
+		self.treeframe = Frame(parent)
+		return self.treeframe
+
+	def setWidget(self, value):
+		if self.sc is not None:
+			self.sc.frame.destroy()
+
+		self.sc = TreeWidget.ScrolledCanvas(self.treeframe, highlightthickness=0, bg=self.bgcolor)
+		item = StructTreeItem(None, self.name, value)
+		node = TreeWidget.TreeNode(self.sc.canvas, None, item)
+		node.expand()
+		self.sc.frame.pack()
+
+	def getWidget(self):
+		raise NotImplementedError()
+
 
 class Method(SpecWidget):
 	def __init__(self, parent, uiclient, spec):
-		SpecWidget.__init__(self, parent, uiclient, spec, bd=3, relief=SOLID, bg='yellow')
+		SpecWidget.__init__(self, parent, uiclient, spec, bd=3, relief=SOLID, bg='green')
+		self.build()
 
-	def buildSpec(self):
+	def build(self):
 		self.name = self.spec['name']
 		self.argspec = self.spec['argspec']
 		
@@ -226,7 +223,8 @@ class Method(SpecWidget):
 
 		self.argwidgets = []
 		for arg in self.argspec:
-			newwidget = Data(self, self.uiclient, arg)
+			dataclass = whichDataClass(arg)
+			newwidget = dataclass(self, self.uiclient, arg)
 			newwidget.pack()
 			self.argwidgets.append(newwidget)
 
@@ -234,7 +232,8 @@ class Method(SpecWidget):
 		but.pack()
 
 		if self.returnspec is not None:
-			retwidget = Data(self, self.uiclient, self.returnspec)
+			dataclass = whichDataClass(self.returnspec)
+			retwidget = dataclass(self, self.uiclient, self.returnspec)
 			self.retwidget = retwidget.datawidget
 			if retwidget is not None:
 				retwidget.pack()
