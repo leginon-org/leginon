@@ -733,6 +733,27 @@ class Tecnai(object):
 		else:
 			return 'disconnected'
 
+	def preFilmExposure(self, value):
+		if not value:
+			return
+
+		if self.getFilmStock() < 1:
+			raise RuntimeError('No film to take exposure')
+
+		if self.theAda.LoadPlate != 0:
+			raise RuntimeError('Load plate failed')
+		if self.theAda.ExposePlateLabel != 0:
+			raise RuntimeError('Expose plate label failed')
+
+	def postFilmExposure(self, value):
+		if not value:
+			return
+
+		if self.theAda.UnloadPlate != 0:
+			raise RuntimeError('Unload plate failed')
+		if self.theAda.UpdateExposureNumber != 0:
+			raise RuntimeError('Update exposure number failed')
+
 	def filmExposure(self, value):
 		if not value:
 			return
