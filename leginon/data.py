@@ -701,6 +701,7 @@ class ImageTargetData(InSessionData):
 		  ('type', str),
 		  ('version', int),
 		  ('number', int),
+		  ('status', str),
 		]
 		return t
 	typemap = classmethod(typemap)
