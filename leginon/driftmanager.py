@@ -88,9 +88,12 @@ class DriftManager(watcher.Watcher):
 		return {'rows':rows,'columns':cols}
 
 	def processData(self, newdata):
+		self.logger.debug('processData')
 		if isinstance(newdata, data.AcquisitionImageData):
+			self.logger.debug('AcquisitionImageData')
 			self.processImageData(newdata)
 		if isinstance(newdata, data.DriftDetectedData):
+			self.logger.debug('DriftDetectedData')
 			self.monitorDrift(newdata)
 
 	def processImageData(self, imagedata):
@@ -100,12 +103,9 @@ class DriftManager(watcher.Watcher):
 		came.  So we are keeping track of the lastest acquisition
 		from each node.
 		'''
-		print 'KEEP AN EYE ON THIS, NOT SURE HOW IT WORKS NOW'
-		print 'SHOULD PROBABLY NOT USE WATCHER'
-		print 'NEED A SPECIAL EVENT FOR PUBLISHING IMAGES TO DRIFTMANAGER'
-		nodeid = imagedata['id'][:-1]
-		imageid = imagedata['id']
-		self.references[nodeid] = {'imageid': imageid, 'image': imagedata, 'shift': {}}
+		label = imagedata['label']
+		imageid = imagedata.dmid
+		self.references[label] = {'imageid': imageid, 'image': imagedata, 'shift': {}}
 
 	def uiMonitorDrift(self):
 		self.cam.uiApplyAsNeeded()
@@ -145,13 +145,16 @@ class DriftManager(watcher.Watcher):
 		self.acquireLoop(mag)
 
 		## publish ImageTargetShiftData
+		self.logger.info('DriftManager publishing image shifts...')
 		self.publishImageShifts(requested=False)
 
 		## DriftDoneEvent
 		## only output if this was called from another node
 		if emdata is not None:
+			self.logger.info('DriftManager sending DriftDoneEvent...')
 			ev = event.DriftDoneEvent()
 			self.outputEvent(ev)
+		self.logger.info('DriftManager done monitoring drift')
 
 	def publishImageShifts(self, requested=False):
 		self.logger.info('Publishing image shifts...')
