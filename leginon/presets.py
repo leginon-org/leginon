@@ -317,7 +317,50 @@ class PresetsManager(node.Node):
 		pnames = self.presetNames()
 		self.uiselectpreset.set(pnames, len(pnames)-1)
 		print 'got preset %s from scope' % (name,)
+		node.beep()
 		return newpreset
+
+	def eucToScope(self, pname):
+		'''
+		p is either index, preset, or name
+		'''
+		eucfoc = None
+		for preset in self.presets:
+			if pname == preset['name']:
+				eucfoc = preset['eucentric focus']
+				break
+		if eucfoc is None:
+			print 'no such preset'
+			return
+
+		print 'setting eucentric focus for preset %s' % (pname,)
+
+		scopedata = data.ScopeEMData()
+		scopedata['id'] = ('scope',)
+		scopedata['focus'] = eucfoc
+		try:
+			self.publishRemote(scopedata)
+		except node.PublishError:
+			self.printException()
+			print '** Maybe EM is not running?'
+
+	def eucFromScope(self, name):
+		'''
+		create a new copy of an existing preset and replace the 
+		value of eucentric focus
+		'''
+
+		## get current value of focus
+		scope = self.researchByDataID(('focus',))
+		focusvalue = scope['focus']
+
+		for p in self.presets:
+			if p['name'] == name:
+				p['eucentric focus'] = focusvalue
+				self.presetToDB(p)
+				print 'got eucentric focus for %s: %s' % (name,focusvalue)
+
+		node.beep()
 
 	def presetNames(self):
 		names = [p['name'] for p in self.presets]
@@ -340,6 +383,7 @@ class PresetsManager(node.Node):
 	def uiToScope(self):
 		new = self.uiselectpreset.getSelectedValue()
 		self.toScopeFollowCycle(new)
+		node.beep()
 
 	def toScopeFollowCycle(self, new):
 		usecycle = self.usecycle.get()
@@ -347,9 +391,14 @@ class PresetsManager(node.Node):
 			order = self.orderlist.get()
 			print 'NEW', new
 			if self.currentpreset is None:
-				current = order[0]
-			else:
-				current = self.currentpreset['name']
+				# first time, we don't know where where
+				# are, so go directly to requested preset
+				# then recursive toScopeFollowCylce
+				print 'First Preset Change... automatically doing complete cycle'
+				self.toScope(new)
+				self.toScopeFollowCycle(new)
+				return
+			current = self.currentpreset['name']
 			print 'CURRENT', current
 
 			## if cycle creation works, then 
@@ -449,10 +498,19 @@ class PresetsManager(node.Node):
 			else:
 				self.toScope(p)
 		print 'Cycle Done'
+		node.beep()
 
 	def uiSelectedFromScope(self):
 		sel = self.uiselectpreset.getSelectedValue()
 		newpreset = self.fromScope(sel)
+
+	def uiSelectedEucFromScope(self):
+		sel = self.uiselectpreset.getSelectedValue()
+		self.eucFromScope(sel)
+
+	def uiSelectedEucToScope(self):
+		sel = self.uiselectpreset.getSelectedValue()
+		self.eucToScope(sel)
 
 	def uiSelectedRemove(self):
 		sel = self.uiselectpreset.getSelectedValue()
@@ -517,7 +575,7 @@ class PresetsManager(node.Node):
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
 
-		self.ignorez = uidata.Boolean('Ignore Target Z', True, 'rw', persist=True)
+		self.xyonly = uidata.Boolean('Target Stage X and Y Only', True, 'rw', persist=True)
 
 		sessionnamelist = self.getSessionNameList()
 		self.othersession = uidata.SingleSelectFromList('Session', sessionnamelist, 0)
@@ -540,11 +598,13 @@ class PresetsManager(node.Node):
 		cyclemethod = uidata.Method('Cycle To Scope', self.uiCycleToScope)
 		self.usecycle = uidata.Boolean('Always Follow Cycle', True, 'rw', persist=True)
 		fromscopemethod = uidata.Method('From Scope', self.uiSelectedFromScope)
+		eucfromscopemethod = uidata.Method('Eucentric Focus From Scope', self.uiSelectedEucFromScope)
+		euctoscopemethod = uidata.Method('Eucentric Focus To Scope', self.uiSelectedEucToScope)
 		removemethod = uidata.Method('Remove', self.uiSelectedRemove)
 		self.orderlist = uidata.Array('Cycle Order', [], 'rw', persist=True)
 
 		selectcont = uidata.Container('Selection')
-		selectcont.addObjects((self.uiselectpreset,toscopemethod,fromscopemethod,removemethod,self.changepause,cyclemethod,self.usecycle,self.orderlist,self.autosquare,self.presetparams))
+		selectcont.addObjects((self.uiselectpreset,toscopemethod,fromscopemethod,eucfromscopemethod,euctoscopemethod,removemethod,self.changepause,cyclemethod,self.usecycle,self.orderlist,self.autosquare,self.presetparams))
 
 		pnames = self.presetNames()
 		self.uiselectpreset.set(pnames, 0)
@@ -568,7 +628,7 @@ class PresetsManager(node.Node):
 
 		## main container
 		container = uidata.LargeContainer('Presets Manager')
-		container.addObjects((self.ignorez,importcont,createcont,selectcont,imagecont))
+		container.addObjects((self.xyonly,importcont,createcont,selectcont,imagecont))
 		self.uiserver.addObject(container)
 
 		return
@@ -620,12 +680,17 @@ class PresetsManager(node.Node):
 
 		emdata = copy.deepcopy(emtargetdata['scope'])
 
-		## ignore Z stage position
-		if self.ignorez.get():
-			try:
-				del emdata['stage position']['z']
-			except KeyError:
-				pass
+		## only set stage x and y
+		if self.xyonly.get():
+			for key in emdata['stage position'].keys():
+				if key not in ('x','y'):
+					del emdata['stage position'][key]
+
+		## always ignore focus (only defocus should be used)
+		try:
+			emdata['focus'] = None
+		except:
+			pass
 
 		scopedata = data.ScopeEMData(id=('scope',), initializer=emdata)
 

@@ -94,6 +94,8 @@ class Mosaic(object):
 				imageshape[i] = int(Numeric.ceil(scale*value))
 #				scaleoffset[i] = int(Numeric.floor((maxdimension - imageshape[i])/2.0))
 
+		if self.tiles:
+			astype = self.tiles[0].image.typecode()
 		mosaicimage = Numeric.zeros(imageshape, astype)
 		for tile in self.tiles:
 			position = self.getTilePosition(tile)

@@ -11,19 +11,13 @@
 import Numeric
 import fftengine
 
-## chose a FFT engine class
-if fftengine.fftFFTW is None:
-	fftclass = fftengine.fftNumeric
-else:
-	fftclass = fftengine.fftFFTW
-
 class Correlator(object):
 	'''
 	Provides correlation handling functions.
 	A buffer of two images is maintained.
 	'''
 	def __init__(self):
-		self.fftengine = fftclass()
+		self.fftengine = fftengine.fftEngine()
 		self.clearBuffer()
 
 	def setImage(self, index, newimage):
@@ -173,11 +167,7 @@ if __name__ == '__main__':
 		im1 = mrc_to_numeric('02dec12a.001.mrc')
 		im2 = mrc_to_numeric('02dec12a.001.post.mrc')
 
-	### set estimate = 0 for optimized fft (but longer planning step)
-	if sys.platform == 'win32':
-		f = fftengine.fftNumeric()
-	else:
-		f = fftengine.fftFFTW(estimate=1)
+	f = fftengine.fftEngine()
 	c = Correlator(f)
 	p = peakfinder.PeakFinder()
 

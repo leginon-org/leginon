@@ -52,7 +52,7 @@ LAUNCHERS = [
 #########################
 #	Database	#
 #########################
-DB_HOST		= 'cronus2'
+DB_HOST		= 'cronus1'
 DB_NAME		= 'dbemdata'
 DB_USER		= 'usr_object'
 DB_PASS		= ''

@@ -122,7 +122,8 @@ class MrcData:
 		try:
 			elementsize = mrcmode_typecode[self.mode][0]
 		except KeyError:
-			raise TypeError('Invalid MRC type')
+			print 'Unknown MRC mode', self.mode
+			raise
 		elements = self.width * self.height * self.depth
 		self.data = fobj.read(elements * elementsize)
 

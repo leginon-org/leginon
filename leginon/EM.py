@@ -19,6 +19,16 @@ import time
 import uidata
 import unique
 
+watch_set = (
+'magnification',
+'focus',
+'defocus',
+'resetdefocus',
+'stigmator',
+'beam tilt',
+'stage position',
+)
+
 class DataHandler(node.DataHandler):
 	def query(self, id):
 		if id == 'UI server':
@@ -121,6 +131,7 @@ class EM(node.Node):
 			'spot size',
 			'image shift',
 			'beam shift',
+			'focus',
 			'defocus',
 			'reset defocus',
 			'intensity',
@@ -139,6 +150,7 @@ class EM(node.Node):
 			'image shift': 0.2,
 			'beam shift': 0.1,
 			'defocus': 0.4,
+			'focus': 0.4,
 			'intensity': 0.1,
 		}
 
@@ -428,8 +440,15 @@ class EM(node.Node):
 		else:
 			camerakeys = []
 
+		if 'focus' in orderedkeys and 'defocus' in orderedkeys:
+			print 'WARNING!!!!:  you are changing focus and defocus at the same time'
+			print 'defocus', state['focus'], 'focus', state['defocus']
+
+		print 'setEM'
 		for key in orderedkeys:
 			value = state[key]
+			if key in watch_set:
+				print '%s\t\t%s' % (key, value)
 			if value is not None:
 				if key in scopekeys:
 					try:
@@ -647,7 +666,7 @@ class EM(node.Node):
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
 
-		self.uipauses = uidata.Boolean('Do Pauses', False, permissions='rw',
+		self.uipauses = uidata.Boolean('Do Pauses', True, permissions='rw',
 																		persist=True)
 
 		# scope

@@ -16,6 +16,7 @@ import imagefun
 import peakfinder
 import LinearAlgebra
 import convolver
+import ice
 
 class CircleMaskCreator(object):
 	def __init__(self):
@@ -155,32 +156,6 @@ class Lattice(object):
 				self.lattice_points_err[closest] = err
 				self.blobs.append(blob)
 
-
-class IceCalculator(object):
-	def __init__(self, i0=None):
-		self.i0 = i0
-
-	def set_i0(self, i0):
-		self.i0 = i0
-
-	def get_intensity(self, thickness):
-		return self.i0 / Numeric.exp(thickness)
-
-	def get_thickness(self, intensity):
-		return Numeric.log(self.i0 / intensity)
-
-	def get_stdev_thickness(self, stdev_intensity, mean_intensity):
-		if stdev_intensity >= mean_intensity:
-			std = imagefun.inf
-		else:
-			std = Numeric.log(mean_intensity / (mean_intensity-stdev_intensity))
-		return std
-
-	def get_stdev_intensity(self, stdev_thickness, mean_thickness):
-		### figure this out later
-		pass
-
-
 ### Note:  we should create a base class ImageProcess
 ### which defines the basic idea of a series of operations on 
 ### an image or a pipeline of operations.
@@ -242,7 +217,7 @@ class HoleFinder(object):
 		self.edgefinder = convolver.Convolver()
 		self.peakfinder = peakfinder.PeakFinder()
 		self.circle = CircleMaskCreator()
-		self.icecalc = IceCalculator()
+		self.icecalc = ice.IceCalculator()
 
 		## some default configuration parameters
 		self.save_mrc = True

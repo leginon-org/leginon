@@ -1,0 +1,26 @@
+import Numeric
+import imagefun
+
+class IceCalculator(object):
+	def __init__(self, i0=None):
+		self.i0 = i0
+
+	def set_i0(self, i0):
+		self.i0 = i0
+
+	def get_intensity(self, thickness):
+		return self.i0 / Numeric.exp(thickness)
+
+	def get_thickness(self, intensity):
+		return Numeric.log(self.i0 / intensity)
+
+	def get_stdev_thickness(self, stdev_intensity, mean_intensity):
+		if stdev_intensity >= mean_intensity:
+			std = imagefun.inf
+		else:
+			std = Numeric.log(mean_intensity / (mean_intensity-stdev_intensity))
+		return std
+
+	def get_stdev_intensity(self, stdev_thickness, mean_thickness):
+		### figure this out later
+		pass

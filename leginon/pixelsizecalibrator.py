@@ -29,17 +29,43 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 		self.uilisting = uidata.Sequence('Pixel Size Calibrations', [])
 		testmethod = uidata.Method('List All For This Instrument', self.uiGetCalibrations)
 
+		# store container
 		self.uimag = uidata.Integer('Magnification', 62000, 'rw')
 		self.uipixsize = uidata.Float('Meters/Pixel', 1e-9, 'rw')
 		self.comment = uidata.String('Comment', '', 'rw')
 		storemethod = uidata.Method('Store', self.uiStore)
+		storecont = uidata.Container('Store')
+		storecont.addObjects((self.uimag,self.uipixsize,self.comment,storemethod))
+
+		# extrapolate container
+		self.extrapfrommags = uidata.Array('Known Mags', [], 'rw')
+		self.extraptomags = uidata.Array('Mags to Extrapolate', [], 'rw')
+		extrapmeth = uidata.Method('Extrapolate', self.extrapolate)
+		extrapcont = uidata.Container('Extrapolate')
+		extrapcont.addObjects((self.extrapfrommags,self.extraptomags,extrapmeth))
+
+
 		mycontainer = uidata.LargeContainer('Pixel Size Calibrator')
-
-		mycontainer.addObjects((self.uilisting, testmethod))
-
-		mycontainer.addObjects((self.uimag, self.uipixsize,
-														self.comment, storemethod))
+		mycontainer.addObjects((self.uilisting, testmethod, storecont, extrapcont))
 		self.uiserver.addObject(mycontainer)
+
+	def extrapolate(self):
+		fmags = self.extrapfrommags.get()
+		tmags = self.extraptomags.get()
+		
+		## get pixel size of known mags from DB to calculate scale
+		scales = []
+		for fmag in fmags:
+			psize = self.calclient.retrievePixelSize(fmag)
+			scales.append(psize*fmag)
+		scale = sum(scales) / len(scales)
+
+		## calculate new pixel sizes
+		for tmag in tmags:
+			psize = scale / tmag
+			print 'Mag:  %s,  psize: %s' % (tmag, psize)
+			comment = 'extrapolated from %s' % (fmags,)
+			self._store(tmag, psize, comment)
 
 	def uiGetCalibrations(self):
 		calibrations = self.calclient.retrieveAllPixelSizes()
@@ -53,8 +79,14 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 		return ''
 
 	def store(self):
+		mag = self.uimag.get()
+		psize = self.uipixsize.get()
+		comment = self.comment.get()
+		self._store(mag, psize, comment)
+		
+	def _store(self, mag, psize, comment):
 		caldata = data.PixelSizeCalibrationData()
-		caldata['magnification'] = self.uimag.get()
-		caldata['pixelsize'] = self.uipixsize.get()
-		caldata['comment'] = self.comment.get()
+		caldata['magnification'] = mag
+		caldata['pixelsize'] = psize
+		caldata['comment'] = comment
 		self.publish(caldata, database=True)

@@ -236,6 +236,7 @@ class CameraFuncs(object):
 			if c['auto square']:
 				c['dimension']['y'] = c['dimension']['x']
 				c['binning']['y'] = c['binning']['x']
+				c['offset']['y'] = c['offset']['x']
 			if c['auto offset']:
 				self.autoOffset(c)
 		return copy.deepcopy(self.__cameraconfig)

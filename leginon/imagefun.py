@@ -8,12 +8,15 @@
 import Numeric
 import fftengine
 
-if fftengine.fftFFTW is None:
-	ffteng = fftengine.fftNumeric()
-#	print 'USING Numeric FFT'
-else:
-	ffteng = fftengine.fftFFTW()
-#	print 'USING FFTW'
+ffteng = fftengine.fftEngine()
+
+try:
+	import numextension
+except ImportError:
+	print '''could not import numextension
+You should use the numextension compiled Numeric extensions to make things 
+faster.  For now you are using slower functions implemented in imagefun'''
+	numextension = None
 
 ## Numeric seems to use infinity as a result of zero
 ## division, but I can find no infinity constant or any other way of 
@@ -47,24 +50,32 @@ def toFloat(inputarray):
 	else:
 		return inputarray
 
-def stdev(inputarray, known_mean=None):
+def stdev_slow(inputarray, known_mean=None):
 	im = toFloat(inputarray)
 	f = Numeric.ravel(im)
 
 	if known_mean is None:
-		inlen = len(f)
-		divisor = Numeric.array(inlen, Numeric.Float32)
-		m = Numeric.sum(f) / divisor
+		m = mean(f)
 	else:
 		m = known_mean
 
 	try:
-		bigsum = Numeric.sum((f - m)**2)
+		bigsum = Numeric.sum(Numeric.power(f,2))
 	except OverflowError:
 		print 'OverflowError:	stdev returning None'
 		return None
-	stdev = Numeric.sqrt(bigsum / (len(f)-1))
+	n = len(f)
+	stdev = Numeric.sqrt(float(bigsum)/n - Numeric.power(m,2))
 	return float(stdev)
+
+def stdev_fast(inputarray, known_mean=None):
+	s = numextension.stdev(inputarray.astype(Numeric.Float32))
+	return float(s)
+
+if numextension is None:
+	stdev = stdev_slow
+else:
+	stdev = stdev_fast
 
 def mean(inputarray):
 	im = toFloat(inputarray)
@@ -84,13 +95,24 @@ def max(inputarray):
 	i = Numeric.argmax(f)
 	return float(f[i])
 
-def despike(inputarray, threshold):
-	mn = mean(inputarray)
-	st = stdev(inputarray, mn)
-	thresh = threshold * st
-	result = Numeric.clip(inputarray, mn-thresh, mn+thresh)
-	return result
-	return float(f[i])
+### wrap some functions that are in numextension
+if numextension is not None:
+	def minmax(image):
+		return numextension.minmax(image.astype(Numeric.Float32))
+
+	def despike(image, size=11, sigma=3.5):
+		'''
+		size is the neighborhood size.  wide spikes require a wider
+		neighborhood.  size = 11 has been shown to work well on spikes
+		up to 3 or 4 pixels wide.
+
+		sigma is the threshold for spike intensity.
+		the mean and std. dev. are calculated in a neighborhood around
+		each pixel.  if the pixel value varies by more than sigma * std
+		dev. then the pixel will be set to the mean value.
+		'''
+		return numextension.despike(image.astype(Numeric.Float32), size, sigma)
+
 
 def sumSeries(series):
 	if len(series) == 0:
@@ -194,10 +216,9 @@ def center_fill(input, size, value=0):
 
 def power(numericarray):
 	fft = ffteng.transform(numericarray)
-	## should I square this?
 	pow = Numeric.absolute(fft)
 	pow = Numeric.log(pow)
-	pow = Numeric.clip(pow, 8, 14)
+	pow = Numeric.clip(pow, 9, 13)
 	pow = shuffle(pow)
 	return pow
 
@@ -414,7 +435,8 @@ class Blob(object):
 class TooManyBlobs(Exception):
 	pass
 
-def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=50):
+def find_blobs_slow(image, mask, border=0, maxblobs=300, maxblobsize=100):
+	print 'slow blobs'
 	shape = image.shape
 	blobs = []
 	## create a copy of mask that will be modified
@@ -436,7 +458,7 @@ def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=50):
 					continue
 				if err:
 					continue
-				blobs.append(newblob)	
+				blobs.append(newblob)
 				if (maxblobs is not None) and (len(blobs) > maxblobs):
 					raise TooManyBlobs('found more than %s blobs' % (maxblobs,))
 
@@ -445,6 +467,47 @@ def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=50):
 	for blob in blobs:
 		blob.calc_stats()
 	return blobs
+
+def find_blobs_fast(image, mask, border=0, maxblobs=300, maxblobsize=100):
+	print 'fast blobs'
+	shape = image.shape
+	tmpmask = mask.astype(Numeric.Int)
+
+	## zero out tmpmask outside of border
+	if border:
+		tmpmask[:border] = 0
+		tmpmask[-border:] = 0
+		tmpmask[:,:border] = 0
+		tmpmask[:,-border:] = 0
+
+	## find blobs the new way
+	blobs = numextension.blobs(image, tmpmask)
+
+	## then fake them into the original blob class
+	fakeblobs = []
+	toobig = 0
+	for blob in blobs:
+		fakeblob = Blob(image, mask)
+		fakeblob.pixel_list = zip(blob['pixelrow'], blob['pixelcol'])
+		fakeblob.value_list = blob['pixelv']
+		fakeblob.calc_stats()
+		if len(fakeblob.pixel_list) >= maxblobsize:
+			toobig += 1
+			continue
+		fakeblobs.append(fakeblob)
+		if (maxblobs is not None) and (len(fakeblobs) > maxblobs):
+			raise TooManyBlobs('found more than %s blobs' % (maxblobs,))
+
+	print 'rejected %s oversized blobs' % (toobig,)
+
+	print 'Found %s blobs.' % (len(fakeblobs),)
+
+	return fakeblobs
+
+if numextension is None:
+	find_blobs = find_blobs_slow
+else:
+	find_blobs = find_blobs_fast
 
 def mark_image(image, coord, value):
 	'''

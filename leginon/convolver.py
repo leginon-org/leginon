@@ -11,12 +11,6 @@
 import Numeric
 import fftengine
 
-## chose a FFT engine class
-if fftengine.fftFFTW is None:
-	fftclass = fftengine.fftNumeric
-else:
-	fftclass = fftengine.fftFFTW
-
 class Convolver(object):
 	'''
 	Provides an efficent convolution calculator.
@@ -43,7 +37,7 @@ class Convolver(object):
 	different kernel.  The FFT of the image does not have to be recomputed.
 	'''
 	def __init__(self, kernel=None, image=None):
-		self.fftengine = fftclass()
+		self.fftengine = fftengine.fftEngine()
 
 		self.kernel = None
 		self.shape = None

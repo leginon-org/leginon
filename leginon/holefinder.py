@@ -15,13 +15,14 @@ import uidata
 import Mrc
 import camerafuncs
 import threading
+import ice
 
 class HoleFinder(targetfinder.TargetFinder):
 	def __init__(self, id, session, nodelocations, **kwargs):
 		targetfinder.TargetFinder.__init__(self, id, session, nodelocations, **kwargs)
 		self.hf = holefinderback.HoleFinder()
 		self.cam = camerafuncs.CameraFuncs(self)
-		self.icecalc = holefinderback.IceCalculator()
+		self.icecalc = ice.IceCalculator()
 
 		self.userpause = threading.Event()
 

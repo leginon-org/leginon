@@ -1,0 +1,9 @@
+#!/bin/bash
+#
+# COPYRIGHT:
+#       The Leginon software is Copyright 2003
+#       The Scripps Research Institute, La Jolla, CA
+#       For terms of the license agreement
+#       see  http://ami.scripps.edu/software/leginon-license
+#
+ps -ef | grep "start.py" | awk '{print$2}' | sort -n | xargs -t -iasdf kill -9 asdf

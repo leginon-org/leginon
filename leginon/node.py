@@ -22,6 +22,10 @@ import cPickle
 import leginonconfig
 import os
 
+def beep():
+	print 'BEEP!'
+	print ''
+
 class DataHandler(object):
 	'''
 	handles data published by the node

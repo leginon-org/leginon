@@ -286,6 +286,7 @@ scope_params = [
 	('image shift', dict),
 	('beam shift', dict),
 	('defocus', float),
+	('focus', float),
 	('reset defocus', int),
 	('screen current', float), 
 	('beam blank', str), 
@@ -455,6 +456,7 @@ class PresetData(InSessionData):
 			('image shift', dict),
 			('beam shift', dict),
 			('defocus', float),
+			('eucentric focus', float),
 			('dimension', dict),
 			('binning', dict),
 			('offset', dict),
@@ -645,6 +647,27 @@ class AcquisitionImageData(PresetImageData):
 		if not self['filename']:
 			raise RuntimeError('no filename set for this image')
 		return self['filename'] + '.mrc'
+
+class ProcessedAcquisitionImageData(ImageData):
+	'''image that results from processing an AcquisitionImageData'''
+	def typemap(cls):
+		t = ImageData.typemap()
+		t += [ ('source', AcquisitionImageData), ]
+		return t
+	typemap = classmethod(typemap)
+
+	def filename(self):
+		if not self['filename']:
+			raise RuntimeError('no filename set for this image')
+		return self['filename'] + '.mrc'
+
+class AcquisitionFFTData(ProcessedAcquisitionImageData):
+	'''Power Spectrum of AcquisitionImageData'''
+	pass
+
+class ScaledAcquisitionImageData(ImageData):
+	'''Small version of AcquisitionImageData'''
+	pass
 
 class TrialImageData(PresetImageData):
 	pass

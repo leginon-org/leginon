@@ -73,17 +73,26 @@ class Corrector(node.Node):
 		correctedmethod = uidata.Method('Acquire Corrected',
 																			self.uiAcquireCorrected)
 
+		self.autobinning = uidata.Integer('Binning', 1, 'rw', persist=True)
+		self.autoexptime = uidata.Integer('Exposure Time', 500, 'rw', persist=True)
+		self.autotarget = uidata.Integer('Target Mean', 2000, 'rw', persist=True)
+		automethod = uidata.Method('Auto References', self.uiAutoAcquireReferences)
+
 		referencescontainer = uidata.Container('References')
 		referencescontainer.addObjects((darkmethod, brightmethod))
+
+		autocontainer = uidata.Container('Auto References')
+		autocontainer.addObjects((self.autobinning, self.autotarget, self.autoexptime, automethod))
 
 		testcontainer = uidata.Container('Test')
 		testcontainer.addObjects((rawmethod, correctedmethod))
 		controlcontainer = uidata.Container('Control')
 
 		self.despikeon = uidata.Boolean('Despike', False, 'rw', persist=True)
-		self.despikevalue = uidata.Float('Despike Threshold', 2.0, 'rw', persist=True)
+		self.despikevalue = uidata.Float('Despike Threshold', 3.5, 'rw', persist=True)
+		self.despikesize = uidata.Integer('Neighborhood Size', 11, 'rw', persist=True)
 
-		controlcontainer.addObjects((self.despikeon, self.despikevalue, referencescontainer, testcontainer))
+		controlcontainer.addObjects((self.despikeon, self.despikesize, self.despikevalue, referencescontainer, autocontainer, testcontainer))
 		self.display_flag = uidata.Boolean('Display Image', True, 'rw', persist=True)
 
 		statscontainer = uidata.Container('Statistics')
@@ -167,10 +176,6 @@ class Corrector(node.Node):
 			self.outputError('Cannot set EM parameter, EM may not be running')
 		else:
 			imagearray = imagedata['image']
-			if self.despikeon.get():
-				print 'despiking'
-				thresh = self.despikevalue.get()
-				imagearray = imagefun.despike(imagearray, thresh)
 			self.displayImage(imagearray)
 
 	def uiAcquireCorrected(self):
@@ -253,11 +258,6 @@ class Corrector(node.Node):
 
 		print 'averaging series'
 		ref = imagefun.averageSeries(series)
-
-		if self.despikeon.get():
-			print 'despiking reference image'
-			thresh = self.despikevalue.get()
-			ref = imagefun.despike(ref, thresh)
 
 		corstate = data.CorrectorCamstateData()
 		corstate['dimension'] = seriescam['dimension']
@@ -392,11 +392,9 @@ class Corrector(node.Node):
 
 	def acquireCorrectedImageData(self, camconfig=None):
 		if self.uifakeflag.get():
-			camconfig = self.cam.cameraConfig()
-			camstate = camconfig['state']
 			numimage = Mrc.mrc_to_numeric('fake.mrc')
 			corrected = self.correct(numimage, camstate)
-			return data.ImageData(id=self.ID, image=corrected)
+			return data.CameraImageData(id=self.ID, image=corrected)
 		else:
 			imagedata = self.cam.acquireCameraImageData(camconfig=camconfig, correction=0)
 			numimage = imagedata['image']
@@ -413,23 +411,21 @@ class Corrector(node.Node):
 		'''
 		this puts an image through a pipeline of corrections
 		'''
-		if self.despikeon.get():
-			print 'despiking'
-			thresh = self.despikevalue.get()
-			original = imagefun.despike(original, thresh)
-
-#		print 'normalize'
 		normalized = self.normalize(original, camstate)
 		plandata = self.retrievePlan(camstate)
 		if plandata is not None:
-#			print 'touchup'
 			touchedup = self.removeBadPixels(normalized, plandata)
-#			print 'clip'
-			clipped = self.clip(touchedup, plandata)
-#			print 'done'
-			return clipped
+			#clipped = self.clip(touchedup, plandata)
+			good = touchedup
 		else:
-			return normalized
+			good = normalized
+
+		if self.despikeon.get():
+			print 'despiking'
+			thresh = self.despikevalue.get()
+			nsize = self.despikesize.get()
+			good = imagefun.despike(good, nsize, thresh)
+		return good
 
 	def removeBadPixels(self, image, plandata):
 		badrows = plandata['bad_rows']
@@ -478,6 +474,55 @@ class Corrector(node.Node):
 		mx = imagefun.max(im)
 		return {'mean':mean,'stdev':stdev,'min':mn,'max':mx}
 
+	def uiAutoAcquireReferences(self):
+		binning = self.autobinning.get()
+		targetmean = self.autotarget.get()
+		self.autoAcquireReferences(binning, targetmean)
+
+	def autoAcquireReferences(self, binning, targetmean, initial_exp):
+		'''
+		for a given binning, figure out the proper exposure time
+		which gives the desired mean pixel value
+		'''
+		config = {
+			'dimension':{'x':256, 'y':256},
+			'binning':{'x':binning, 'y':binning},
+			'auto offset': True,
+			'exposure time': 0,
+		}
+		config = self.cam.cameraConfig(config)
+		imagedata = self.cam.acquireCameraImageData(camconfig=config, correction=False)
+		im = imagedata['image']
+		mean = darkmean = imagefun.mean(im)
+		self.displayImage(im)
+		print 'Dark Mean:', darkmean
+
+		target_exp = 0
+		trial_exp = initial_exp
+		tolerance = 100
+		minmean = targetmean - tolerance
+		maxmean = targetmean + tolerance
+
+		tries = 5
+		for i in range(tries):
+			config = { 'exposure time': trial_exp }
+			config = self.cam.cameraConfig(config)
+			imagedata = self.cam.acquireCameraImageData(camconfig=config, correction=False)
+			im = imagedata['image']
+			mean = imagefun.mean(im)
+			self.displayImage(im)
+			print 'Mean:', mean
+
+			if minmean <= mean <= maxmean:
+				print 'exposure time %s is good'
+				i = -1
+				break
+			else:
+				slope = (mean - darkmean) / trial_exp
+				trial_exp = (targetmean - darkmean) / slope
+
+		if i == tries-1:
+			print 'failed to find target mean after %s tries' % (tries,)
 
 if __name__ == '__main__':
 	from Numeric import *

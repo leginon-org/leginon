@@ -19,6 +19,7 @@ import Numeric
 import time
 import threading
 import presets
+import copy
 
 class DriftManager(watcher.Watcher):
 	eventinputs = watcher.Watcher.eventinputs + [event.DriftDetectedEvent, event.AcquisitionImagePublishEvent, event.NeedTargetShiftEvent]
@@ -59,10 +60,11 @@ class DriftManager(watcher.Watcher):
 		print 'PNAME', pname
 		self.presetsclient.toScope(pname)
 
-		## set the original state of the images
-		emdata = im['scope']
+		## set the original state of the image
+		emdata = copy.deepcopy(im['scope'])
+		newemdata = self.fixEM(emdata)
 		camdata = im['camera']
-		self.publishRemote(emdata)
+		self.publishRemote(newemdata)
 		self.publishRemote(camdata)
 
 		## acquire new image
@@ -107,13 +109,28 @@ class DriftManager(watcher.Watcher):
 		t.setDaemon(1)
 		t.start()
 
+	def fixEM(self, emdata):
+		emcopy = copy.deepcopy(emdata)
+		## only set stage x and y
+		for key in emcopy['stage position'].keys():
+			if key not in ('x','y'):
+				del emcopy['stage position'][key]
+		## do not set focus
+		try:
+			emcopy['focus'] = None
+		except:
+			pass
+		return emcopy
+
 	def monitorDrift(self, emdata=None):
 		print 'DriftManager monitoring drift'
 		if emdata is not None:
 			## use emdata to set up scope and camera
 			emdata['id'] = ('all em',)
-			self.publishRemote(emdata)
-			mag = emdata['magnification']
+
+			newemdata = self.fixEM(emdata)
+			self.publishRemote(newemdata)
+			mag = newemdata['magnification']
 		else:
 			## use current state
 			magdata = self.researchByDataID(('magnification',))
@@ -167,6 +184,7 @@ class DriftManager(watcher.Watcher):
 			## acquire next image
 			imagedata = self.acquireImage()
 			numdata = imagedata['image']
+			binning = imagedata['camera']['binning']['x']
 			t1 = imagedata['scope']['system time']
 			self.correlator.insertImage(numdata)
 
@@ -178,7 +196,7 @@ class DriftManager(watcher.Watcher):
 			print 'DRIFT PIXELS', dist
 
 			## calculate drift 
-			meters = dist * pixsize
+			meters = dist * binning * pixsize
 			# rely on system time of EM node
 			seconds = t1 - t0
 			current_drift = meters / seconds
@@ -261,8 +279,8 @@ class DriftManager(watcher.Watcher):
 		# turn on data queue by default
 		self.uidataqueueflag.set(False)
 
-		self.threshold = uidata.Float('Threshold', 0.2, 'rw', persist=True)
-		self.pausetime = uidata.Float('Pause Time', 2.0, 'rw', persist=True)
+		self.threshold = uidata.Float('Threshold (m)', 2e-10, 'rw', persist=True)
+		self.pausetime = uidata.Float('Pause Time (s)', 2.0, 'rw', persist=True)
 		abortmeth = uidata.Method('Abort', self.abort)
 
 		camconfig = self.cam.configUIData()

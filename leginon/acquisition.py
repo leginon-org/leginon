@@ -56,7 +56,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.doneevents[imageid]['status'] = status
 			self.doneevents[imageid]['received'].set()
 
-	def processTargetData(self, targetdata):
+	def processTargetData(self, targetdata, force=False):
 		'''
 		This is called by TargetWatcher.processData when targets available
 		If called with targetdata=None, this simulates what occurs at
@@ -84,7 +84,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 			stagepos = oldtargetemdata['stage position']
 			for axis,limits in stagelimits.items():
 				if stagepos[axis] < limits[0] or stagepos[axis] > limits[1]:
-					print 'target stage position %s out of range... target aborting' % (stagepos,)
+					message = 'target stage position %s out of range... target aborting' % (stagepos,)
+					print message
+					title = 'stage out of range'
+					self.outputMessage(title, message)
 					return 'invalid'
 
 			oldpreset = targetdata['preset']
@@ -92,14 +95,16 @@ class Acquisition(targetwatcher.TargetWatcher):
 			# now make EMTargetData to hold all this
 			emtarget = data.EMTargetData(scope=oldtargetemdata, preset=oldpreset)
 
-		presetnames = self.uipresetnames.getSelectedValues()
+		#presetnames = self.uipresetnames.getSelectedValues()
+		presetnames = self.uipresetnames.get()
 
 		if not presetnames:
 			self.outputWarning('No presets specified for target acquisition')
 
 		for newpresetname in presetnames:
-			if self.alreadyAcquired(targetdata, newpresetname):
-				continue
+			if force == False:
+				if self.alreadyAcquired(targetdata, newpresetname):
+					continue
 
 			self.presetsclient.toScope(newpresetname, emtarget)
 			print 'getting current preset'
@@ -225,17 +230,38 @@ class Acquisition(targetwatcher.TargetWatcher):
 		idstr = self.dbimages.getSelectedValue()
 		id = eval(idstr)
 		queryimage = data.AcquisitionImageData(session=self.session, id=id)
-		queryimage['session'] = data.SessionData()
 		queryimage['scope'] = data.ScopeEMData()
 		queryimage['camera'] = data.CameraEMData()
 		queryimage['preset'] = data.PresetData()
 		queryimage['target'] = data.AcquisitionImageTargetData()
 
 		result = self.research(datainstance=queryimage, fill=False)
+		if not result:
+			# try image with no target
+			print 'trying with no target'
+			queryimage['target'] = None
+			result = self.research(datainstance=queryimage, fill=False)
+
 		## should be one result only
 		if result:
 			imagedata = result[0]
 			self.publishDisplayWait(imagedata)
+
+	def uiAcquireTargetAgain(self):
+		idstr = self.dbimages.getSelectedValue()
+		id = eval(idstr)
+		queryimage = data.AcquisitionImageData(session=self.session, id=id)
+		queryimage['target'] = data.AcquisitionImageTargetData()
+		queryimage['target']['scope'] = data.ScopeEMData()
+		queryimage['target']['camera'] = data.CameraEMData()
+		queryimage['target']['preset'] = data.PresetData()
+
+		result = self.research(datainstance=queryimage, fill=False)
+		## should be one result only
+		if result:
+			imagedata = result[0]
+			targetdata = imagedata['target']
+			self.processTargetData(targetdata, force=True)
 
 	def publishDisplayWait(self, imagedata):
 		'''
@@ -392,7 +418,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.ui_image.set(None)
 		return value
 
-	def uiRefreshPresetNames(self):
+	def OLDuiRefreshPresetNames(self):
 		self.uipresetnames.setSelected([])
 		self.uipresetnames.setList(self.getPresetNames())
 
@@ -418,11 +444,14 @@ class Acquisition(targetwatcher.TargetWatcher):
 		uicontainer = uidata.Container('User Interface')
 		uicontainer.addObjects((self.displayimageflag,))
 
-		presetnames = self.getPresetNames()
-		self.uipresetnames = uidata.SelectFromList('Sequence', presetnames, [], 'r')
-		refreshpresetnames = uidata.Method('Refresh', self.uiRefreshPresetNames)
 		presetscontainer = uidata.Container('Presets Sequence')
-		presetscontainer.addObjects((self.uipresetnames, refreshpresetnames))
+
+		#presetnames = self.getPresetNames()
+		#self.uipresetnames = uidata.SelectFromList('Sequence', presetnames, [], 'r')
+		#refreshpresetnames = uidata.Method('Refresh', self.uiRefreshPresetNames)
+		#presetscontainer.addObjects((self.uipresetnames, refreshpresetnames))
+		self.uipresetnames = uidata.Array('Presets Sequence', [], 'rw', persist=True)
+		presetscontainer.addObjects((self.uipresetnames,))
 
 		self.uimovetype = uidata.SingleSelectFromList('Move Type',
 																									self.calclients.keys(),
@@ -443,9 +472,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.dbimages = uidata.SingleSelectFromList('Images In DB', [], 0)
 		updatedbimages = uidata.Method('Refresh', self.uiUpdateDBImages)
 		pretendfromdb = uidata.Method('Pretend This Was Just Acquired', self.uiPretendAcquire)
+		reacquirefromdb = uidata.Method('Acquire Again', self.uiAcquireTargetAgain)
 
 		databasecontainer = uidata.Container('Database')
-		databasecontainer.addObjects((self.databaseflag, self.labelstring, self.dbimages, updatedbimages, pretendfromdb))
+		databasecontainer.addObjects((self.databaseflag, self.labelstring, self.dbimages, updatedbimages, pretendfromdb, reacquirefromdb))
 
 		settingscontainer = uidata.Container('Settings')
 		settingscontainer.addObjects((uicontainer, presetscontainer,

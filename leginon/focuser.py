@@ -78,8 +78,22 @@ class Focuser(acquisition.Acquisition):
 			driftthresh = None
 
 		## send the autofocus preset to the scope
-		autofocuspreset = self.presetsclient.uiGetSelectedName()
+		#autofocuspreset = self.presetsclient.uiGetSelectedName()
+		autofocuspreset = self.autofocuspreset.get()
 		self.presetsclient.toScope(autofocuspreset, emtarget)
+		delay = self.uidelay.get()
+		print 'pausing for %s sec.' % (delay,)
+		time.sleep(delay)
+
+		### report the current focus and defocus values
+		print 'before autofocus'
+		try:
+			defocdata = self.researchByDataID(('defocus',))
+			focdata = self.researchByDataID(('focus',))
+			print 'defocus', defocdata['defocus']
+			print 'focus', focdata['focus']
+		except:
+			print 'exception'
 
 		try:
 			correction = self.btcalclient.measureDefocusStig(btilt, pub, drift_threshold=driftthresh, image_callback=self.ui_image.set)
@@ -94,34 +108,26 @@ class Focuser(acquisition.Acquisition):
 		defoc = correction['defocus']
 		stigx = correction['stigx']
 		stigy = correction['stigy']
-		min = correction['min']
+		fitmin = correction['min']
 
-		info.update({'defocus':defoc, 'stigx':stigx, 'stigy':stigy, 'min':min})
+		info.update({'defocus':defoc, 'stigx':stigx, 'stigy':stigy, 'min':fitmin})
 
 		### validate defocus correction
-		# possibly use min (value minimized during least square fit)
-		#   mag: 50000, tilt: 0.02, defoc: 30e-6
-		#     84230 was bad
-		#   mag: 50000, tilt: 0.02, defoc: 25e-6
-		#     5705 was bad
-		#   mag: 50000, tilt: 0.02, defoc: 22e-6
-		#     4928 was maybe
-		#   mag: 50000, tilt: 0.02, defoc: 20e-6
-		#     3135 was maybe
-		#   mag: 50000, tilt: 0.02, defoc: 18e-6
-		#     1955 was maybe
-		#   mag: 50000, tilt: 0.02, defoc: 14e-6
-		#      582 was good
-		# for now, assum it is valid
-		validdefocus = 1
+		fitlimit = self.fitlimit.get()
+		if fitmin < fitlimit:
+			validdefocus = True
+			print 'good focus measurement'
+		else:
+			validdefocus = False
+			print 'focus measurement failed: fitmin = %s (limit = %s)' % (fitmin, fitlimit)
 
 		### validate stig correction
-		# stig is only valid for large defocus
-		if validdefocus and (abs(defoc) > self.stigfocthresh.get()):
+		# stig is only valid in a certain defocus range
+		if validdefocus and (self.stigfocminthresh.get() < abs(defoc) < self.stigfocmaxthresh.get()):
 			validstig = True
 		else:
 			validstig = False
-		
+
 		if validstig and self.stigcorrection.get():
 			print 'Stig correction'
 			self.correctStig(stigx, stigy)
@@ -178,6 +184,7 @@ class Focuser(acquisition.Acquisition):
 		title = 'manual focus ' + myname
 		message = 'Please confirm defocus in Focuser %s' % (myname,)
 		self.outputMessage(title, message)
+		node.beep()
 
 	def manualCheckLoop(self, presetname, emtarget=None):
 		## go to preset and target
@@ -207,7 +214,7 @@ class Focuser(acquisition.Acquisition):
 			self.man_power.set(pow)
 		print 'manual focus loop done'
 
-	def waitForContinue():
+	def waitForContinue(self):
 		print 'manual focus paused'
 		self.manual_continue.wait()
 		self.manual_continue.clear()
@@ -290,6 +297,7 @@ class Focuser(acquisition.Acquisition):
 
 	def correctDefocus(self, delta):
 		defocus = self.researchByDataID(('defocus',))
+		print 'defocus before applying correction', defocus
 		defocus['defocus'] += delta
 		defocus['reset defocus'] = 1
 		emdata = data.ScopeEMData(id=('scope',), initializer=defocus)
@@ -326,17 +334,20 @@ class Focuser(acquisition.Acquisition):
 		self.driftthresh = uidata.Float('Drift Threshold (pixels)', 2.0, 'rw', persist=True)
 
 		self.btilt = uidata.Float('Beam Tilt', 0.02, 'rw', persist=True)
-		self.stigfocthresh = uidata.Float('Stig Threshold', 1e-6, 'rw', persist=True)
+		self.fitlimit = uidata.Float('Fit Limit', 1000, 'rw', persist=True)
+		self.stigfocminthresh = uidata.Float('Stig Defocus Min', 1e-6, 'rw', persist=True)
+		self.stigfocmaxthresh = uidata.Float('Stig Defocus Max', 4e-6, 'rw', persist=True)
 
-		autofocuspreset = self.presetsclient.uiPresetSelector()
+		#autofocuspreset = self.presetsclient.uiPresetSelector()
+		self.autofocuspreset = uidata.String('Auto Focus Preset', '', 'rw', persist=True)
+
 		focustypes = self.focus_methods.keys()
 		focustypes.sort()
 		self.focustype = uidata.SingleSelectFromList('Correction Type', focustypes, 0, persist=True)
 		self.stigcorrection = uidata.Boolean('Stigmator Correction', False, 'rw', persist=True)
 		self.publishimages = uidata.Boolean('Publish Tilt Images', False, 'rw', persist=True)
 
-
-		autocont.addObjects((self.drifton, self.driftthresh, self.btilt, self.publishimages, autofocuspreset, self.focustype, self.stigcorrection, self.stigfocthresh))
+		autocont.addObjects((self.drifton, self.driftthresh, self.btilt, self.publishimages, self.autofocuspreset, self.focustype, self.stigcorrection, self.fitlimit, self.stigfocminthresh, self.stigfocmaxthresh))
 
 		## manual focus check
 		self.pre_manual_check = uidata.Boolean('Manual Check Before Auto', False, 'rw', persist=True)
