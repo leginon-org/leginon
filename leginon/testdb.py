@@ -38,7 +38,7 @@ db.Preset2 = db.Table('PRESET', [ 'Name', 'Mag', 'Defocus', 'Dose'])
 db.Preset2.Name = db.Preset2.Index(['Name'],
 			orderBy = {'fields':('id',),'sort':'DESC'})
 dr = db.Preset2.Name['expo2'].fetchonedict()
-drs = db.Preset2.Name['expo2'].fetchalldict2()
+drs = db.Preset2.Name['expo2'].fetchalldict()
 
 
 

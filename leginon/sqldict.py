@@ -339,15 +339,6 @@ class SQLDict:
 		"""Fetch all object from current cursor context as a
 		   list of  dictionaries."""
 		rows = self.fetchall()
-		alldict=[]
-		for row in rows:
-			alldict.append(self.__2dict(self.columns,row))
-		return alldict
-
-	    def fetchalldict2(self):
-		"""Fetch all object from current cursor context as a
-		   list of  dictionaries."""
-		rows = self.fetchall()
 	    	return list(map(lambda row: self.__2dict(self.columns,row), rows))
 
 	    def __getattr__(self, attr):

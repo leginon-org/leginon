@@ -162,10 +162,9 @@ class BeamTiltCalibrationClient(CalibrationClient):
 		self.setCalibration(key, matrix)
 
 	def getMatrixDB(self, mag, type):
-		result = self.db.beamtiltMatrix.magtype[mag,type]
-		rows = result.fetchall()
-
-		print rows
+		result = self.db.beamtiltMatrix.magtype[mag,type].fetchonedict()
+		matrix = sqldict.dict2matrix(result)
+		print matrix
 
 	def setMatrixDB(self, mag, type, matrix):
 		'''
