@@ -77,3 +77,16 @@ class scope:
         raise NotImplementedError
     def filmExposure(self):
         raise NotImplementedError
+    def getScreen(self):
+        raise NotImplementedError
+    def setScreen(self, mode):
+        raise NotImplementedError
+    def getHolderStatus(self):
+        raise NotImplementedError
+    def getHolderType(self):
+        raise NotImplementedError
+    def setHolderType(self, holdertype):
+        raise NotImplementedError
+    def getStageStatus(self):
+        raise NotImplementedError
+
