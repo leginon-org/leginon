@@ -22,6 +22,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		currentconfig['state']['dimension']['x'] = 1024
 		currentconfig['state']['binning']['x'] = 4
 		currentconfig['state']['exposure time'] = 500
+		currentconfig['correct'] = 1
 		self.cam.config(currentconfig)
 
 
@@ -103,8 +104,9 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 	def measureDefocusStig(self, btilt):
 		conf = self.cam.config()
 		self.cam.state(conf['state'])
-		self.calclient.measureDefocusStig(btilt)
-		return ''
+		ret = self.calclient.measureDefocusStig(btilt)
+		print 'RET', ret
+		return ret
 
 	def getDefocus(self):
 		emdata = self.researchByDataID('defocus')
@@ -137,7 +139,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		argspec = (
 			self.registerUIData('Tilt Value', 'float', default=0.01),
 			)
-		measure = self.registerUIMethod(self.measureDefocusStig, 'Measure Defocus and Astigmatism', argspec)
+		ret = self.registerUIData('Necessary Correction', 'struct')
+		measure = self.registerUIMethod(self.measureDefocusStig, 'Measure Defocus and Astigmatism', argspec, returnspec=ret)
 
 		calcont = self.registerUIContainer('Calibrate', (caldefocus, calstig, measure))
 
