@@ -26,7 +26,7 @@ class Gatan(object):
 			raise RuntimeError('Unable to initialize Gatan interface')
 
 		self.binning = {'x': self.camera.Binning, 'y': self.camera.Binning}
-		self.offset = {'x': self.camera.CameraLeft, 'y': self.camera.CameraRight}
+		self.offset = {'x': self.camera.CameraLeft, 'y': self.camera.CameraTop}
 		self.dimension = {'x': self.camera.CameraRight - self.camera.CameraLeft,
 											'y': self.camera.CameraBottom - self.camera.CameraTop}
 		self.exposuretype = 'normal'
@@ -128,7 +128,10 @@ class Gatan(object):
 				image = self.camera.AcquireRawImage()
 				self.setExposureTime(exposuretime)
 				return image
-		return self.camera.AcquireRawImage()
+		try:
+			return self.camera.AcquireRawImage()
+		except pywintypes.com_error, e:
+			raise ValueError('Invalid image dimensions')
 
 	def getAcquiring(self):
 		if self.camera.IsAcquiring:
