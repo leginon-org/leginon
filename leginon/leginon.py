@@ -53,10 +53,17 @@ class Leginon(Tkinter.Frame):
 																									managerlocation[1])
 		nodelocations = self.nodeLocations()
 		for node in nodelocations:
-			page = self.notebook.add(node)
+			page = self.notebook.add(eval(node)[-1])
 			gui = nodegui.NodeGUI(page, nodelocations[node]['hostname'],
 																	nodelocations[node]['UI port'])
 			gui.pack(fill=Tkinter.BOTH, expand=Tkinter.YES)
+		gridatlaspage = self.notebook.add('Grid Atlas')
+		gridatlaswidget = GridAtlasWidget(gridatlaspage,
+														self.nodeLocation('Grid Atlas Grid Preview'),
+														self.nodeLocation('Grid Atlas State Image Mosaic'),
+														self.nodeLocation('Grid Atlas Mosaic Navigator'),
+														self.nodeLocation('Grid Atlas Image Viewer'))
+		gridatlaswidget.pack()
 
 	def nodeLocations(self):
 		try:
@@ -64,12 +71,53 @@ class Leginon(Tkinter.Frame):
 		except:
 			return {}
 
+	def nodeLocation(self, name):
+		nodelocations = self.nodeLocations()
+		# not kosher
+		try:
+			return nodelocations[str(('manager', name))]
+		except KeyError:
+			return None
+
 	def managerLocation(self):
 		managerlocation = self.manager.location()
 		return (managerlocation['hostname'], managerlocation['UI port'])
 
 	def localLauncherID(self):
 		return (socket.gethostname(),)
+
+class CustomWidget(Tkinter.Frame):
+	def __init__(self, parent):
+		Tkinter.Frame.__init__(self, parent)
+		self.uiclients = {}
+
+	def uiClient(self, uiclientname, uiclientlocation):
+		self.uiclients[uiclientname] = interface.Client(
+										uiclientlocation['hostname'], uiclientlocation['UI port'])
+
+	def widgetFromName(self, uiclientname, name):
+		widget = None
+		spec = self.uiclients[uiclientname].getSpec()
+		content = spec['content']
+		for subspec in content:
+			if subspec['name'] == name:
+				widget = nodegui.widgetFromSpec(self, self.uiclients[uiclientname],
+																																		subspec)
+		return widget
+
+# maybe the widgets themselves could launch the necessary nodes
+class GridAtlasWidget(CustomWidget):
+	def __init__(self, parent, gridpreview, stateimagemosaic, mosaicnavigator,
+																																	imageviewer):
+		CustomWidget.__init__(self, parent)
+
+		self.uiClient('GP', gridpreview)
+		self.uiClient('SIM', stateimagemosaic)
+		self.uiClient('MN', mosaicnavigator)
+		self.uiClient('IV', imageviewer)
+
+		widget = self.widgetFromName('SIM', 'Mosaic Image')
+		widget.pack()
 
 if __name__ == '__main__':
 
