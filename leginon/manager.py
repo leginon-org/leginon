@@ -12,19 +12,21 @@ import signal
 import os
 
 class Manager(node.Node):
-	def __init__(self, id):
+	def __init__(self, id, gui=0):
 		# the id is manager (in a list)
 		node.Node.__init__(self, id, None)
 
-		self.gui_ok = 0
 		self.common = common
 		self.distmap = {}
+
+		self.gui_ok = 0
+		if gui:
+			self.start_gui()
 
 		## this makes every received event get distributed
 		self.addEventInput(event.Event, self.distribute)
 		self.addEventInput(event.NodeAvailableEvent, self.registerNode)
 		self.addEventInput(event.NodeUnavailableEvent, self.unregisterNode)
-		#self.addDistmap(event.PublishEvent, , ):
 
 		self.addEventInput(event.PublishEvent, self.registerData)
 		self.addEventInput(event.UnpublishEvent, self.unregisterData)
@@ -35,11 +37,12 @@ class Manager(node.Node):
 	def main(self):
 		print self.location()
 
-		#guithread = threading.Thread(target=self.gui)
-		#guithread.setDaemon(1)
-		#guithread.start()
 
 		self.interact()
+
+	def nodeID(self, name):
+		'return an id for a new node'
+		return self.id + (name,)
 
 	def registerNode(self, readyevent):
 		nodeid = readyevent.id[:-1]
@@ -184,6 +187,10 @@ class Manager(node.Node):
 										self.clients[to_node].push(ievent)
 										done.append(to_node)
 
+	def start_gui(self):
+		guithread = threading.Thread(target=self.gui)
+		guithread.setDaemon(1)
+		guithread.start()
 
 	def gui(self):
 		"""
@@ -195,7 +202,7 @@ class Manager(node.Node):
 		self.gui_launch_launcher = StringVar()
 		self.gui_launch_target = StringVar()
 		self.gui_launch_newproc = IntVar()
-		self.gui_launch_id = StringVar()
+		self.gui_launch_name = StringVar()
 		self.gui_launch_args = StringVar()
 
 		#### Launch Node Frame
@@ -210,6 +217,7 @@ class Manager(node.Node):
 		self.gui_launcherlist = Listbox(f, height=6)
 
 		self.gui_launcherlist.bind('<Button-1>', self.gui_select_launcherid)
+		self.gui_launcher_str2id = {}
 
 		lab.grid(row=0, column=0, sticky=S)
 		ent.grid(row=1, column=0, sticky=N)
@@ -236,8 +244,8 @@ class Manager(node.Node):
 		f.pack(side=TOP)
 
 		f = Frame(launch_frame)
-		lab = Label(f, text='Node ID')
-		ent = Entry(f, textvariable=self.gui_launch_id)
+		lab = Label(f, text='Node Name')
+		ent = Entry(f, textvariable=self.gui_launch_name)
 		lab.pack(side=LEFT)
 		ent.pack(side=LEFT)
 		f.pack(side=TOP)
@@ -264,7 +272,9 @@ class Manager(node.Node):
 	def gui_add_launcher(self, launcherid):
 		if not self.gui_ok:
 			return
-		self.gui_launcherlist.insert(END, launcherid)
+		str_id = str(launcherid)
+		self.gui_launcherlist.insert(END, str_id)
+		self.gui_launcher_str2id[str_id] = launcherid
 
 	def gui_del_launcher(self, launcherid):
 		if not self.gui_ok:
@@ -287,32 +297,30 @@ class Manager(node.Node):
 
 	def gui_launch_command(self):
 
-		launcher = self.gui_launch_launcher.get()
+		launcher_str = self.gui_launch_launcher.get()
+		launcher_id = self.gui_launcher_str2id[launcher_str]
 		newproc = self.gui_launch_newproc.get()
 
 		target = self.gui_launch_target.get()
 		target = self.nodeclasses[target]
 
-
-		print 'TARGET', target
-
-		newid = self.gui_launch_id.get()
+		newname = self.gui_launch_name.get()
+		newid = self.nodeID(newname)
 
 		args = self.gui_launch_args.get()
 		args = '(%s)' % args
-		print 'args', args
 		try:
 			args = eval(args)
 		except:
 			print 'problem evaluating args'
 			return
 
-		self.launchNode(launcher, newproc, target, newid, args)
+		self.launchNode(launcher_id, newproc, target, newid, args)
 
 
 if __name__ == '__main__':
 	import signal, sys
 
 	manager_id = ('manager',)
-	m = Manager(manager_id)
+	m = Manager(manager_id, gui=1)
 
