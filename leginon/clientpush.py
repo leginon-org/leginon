@@ -11,24 +11,29 @@ class Client(leginonobject.LeginonObject):
 	def __init__(self, hostname, port):
 		leginonobject.LeginonObject.__init__(self)
 		self.clients = {}
-		self.clients[datalocal.PushClient] = datalocal.PushClient()
+		#self.clients[datalocal.PushClient] = datalocal.PushClient()
 		self.clients[datatcp.PushClient] = datatcp.PushClient(hostname, port)
 
 	def push(self, data):
 		# testing, needs to be smart
-		return self.clients[datatcp.PushClient].push(data)
+		self.clients[datatcp.PushClient].push(data)
 
 class Server(leginonobject.LeginonObject):
 	def __init__(self):
 		leginonobject.LeginonObject.__init__(self)
 		self.bindings = Bindings()
 		self.servers = {}
-		self.servers[datalocal.PushServer] = datalocal.PushServer(self)
+		#self.servers[datalocal.PushServer] = datalocal.PushServer(self)
 		self.servers[datatcp.PushServer] = datatcp.PushServer(self)
 		thread = threading.Thread(None, self.servers[datatcp.PushServer].serve_forever, None, (), {})
 		# this isn't working right now
 		#thread.setDaemon(1)
 		thread.start()
+
+	def location(self):
+		loc = leginonobject.LeginonObject.location(self)
+		loc['datatcp port'] = self.servers[datatcp.PushServer].port
+		return loc
 
 	def bind(self, dataclass, func=None):
 		'func must take data instance as first arg'
@@ -37,6 +42,8 @@ class Server(leginonobject.LeginonObject):
 		else:
 			self.bindings[dataclass] = func
 
+	def handle_data(self, newdata):
+		print 'handling %s' % newdata
 
 class Bindings(dict, leginonobject.LeginonObject):
 	def __init__(self, *args):

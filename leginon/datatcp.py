@@ -27,9 +27,11 @@ class PushHandler(SocketServer.StreamRequestHandler, leginonobject.LeginonObject
 	def handle(self):
 		# needs error checking, cPickle attempt
 		# data_id needs to be send with a newline
-		data = pickle.load(self.rfile)
+		newdata = pickle.load(self.rfile)
+		print 'received newdata %s' % newdata
+		self.server.server.handle_data(newdata)
 		# temporarily making data a dictionary w/ actual data and data id
-		self.server.datatoid(data['data id'], data['data'])
+		#self.server.datatoid(data['data id'], data['data'])
 
 class Server(SocketServer.ThreadingTCPServer, leginonobject.LeginonObject):
 	def __init__(self, server, handler, port=None):
@@ -53,6 +55,12 @@ class Server(SocketServer.ThreadingTCPServer, leginonobject.LeginonObject):
 						port += 1
 					else:
 						raise
+			self.port = port
+
+	def location(self):
+		loc = leginonobject.LeginonObject.location(self)
+		loc['port'] = self.port
+		return loc
 
 class PullServer(Server):
 	def __init__(self, server, port=None):
@@ -61,43 +69,44 @@ class PullServer(Server):
 	def datafromid(self, data_id):
 		return self.server.datafromid(data_id)
 
+
 class PushServer(Server):
 	def __init__(self, server, port=None):
 		Server.__init__(self, server, PushHandler, port)
 
-	def datatoid(self, data_id, data):
-		return self.server.datatoid(data_id, data)
 
 # pull is a function for now, until a client class seems reasonable
 class Client(leginonobject.LeginonObject):
 	def __init__(self, hostname, port, buffer_size = 1024):
 		self.buffer_size = buffer_size 
 		leginonobject.LeginonObject.__init__(self)
-		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.hostname = hostname
 		self.port = port
 
 class PullClient(Client):
 	def pull(self, data_id):
 		data = ""
-		self.socket.connect((self.hostname, self.port)) # Connect to server
+		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		s.connect((self.hostname, self.port)) # Connect to server
 		# needs to account for different data_id datatypes
-		self.socket.send("%s\n" % data_id)
+		s.send("%s\n" % data_id)
 		while 1:
-		  r = self.socket.recv(self.buffer_size) # Receive up to buffer_size bytes
+		  r = s.recv(self.buffer_size) # Receive up to buffer_size bytes
 		  if not r:
 		    break
 		  data += r
-		self.socket.close()
+		s.close()
 		# needs cPickle attempt
 		return pickle.loads(data)
 
 class PushClient(Client):
 	def push(self, data):
 		# needs to account for different data_id datatypes
-		self.socket.connect((self.hostname, self.port)) # Connect to server
-		self.socket.send(pickle.dumps(data))
-		self.socket.close()
+		print 'socket connect:  %s %s' % (self.hostname, self.port)
+		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		s.connect((self.hostname, self.port)) # Connect to server
+		s.send(pickle.dumps(data))
+		s.close()
 
 if __name__ == '__main__':
 	import threading

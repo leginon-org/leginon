@@ -11,7 +11,7 @@ class Client(leginonobject.LeginonObject):
 	def __init__(self, hostname, port):
 		leginonobject.LeginonObject.__init__(self)
 		self.clients = {}
-		self.clients[datalocal.PullClient] = datalocal.PullClient()
+		#self.clients[datalocal.PullClient] = datalocal.PullClient()
 		self.clients[datatcp.PullClient] = datatcp.PullClient(hostname, port)
 
 	def pull(self, dataid):
@@ -22,12 +22,17 @@ class Server(leginonobject.LeginonObject):
 	def __init__(self):
 		leginonobject.LeginonObject.__init__(self)
 		self.servers = {}
-		self.servers[datalocal.PullServer] = datalocal.PullServer(self)
+		#self.servers[datalocal.PullServer] = datalocal.PullServer(self)
 		self.servers[datatcp.PullServer] = datatcp.PullServer(self)
 		thread = threading.Thread(None, self.servers[datatcp.PullServer].serve_forever, None, (), {})
 		# this isn't working right now
 		#thread.setDaemon(1)
 		thread.start()
+
+	def location(self):
+		loc = leginonobject.LeginonObject.location(self)
+		loc['datatcp port'] = self.servers[datatcp.PullServer].port
+		return loc
 
 if __name__ == '__main__':
 	class MyServer(Server):
