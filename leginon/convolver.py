@@ -88,7 +88,7 @@ class Convolver(object):
 		self.kernel_fft[self.shape] = kfft
 		return kfft
 
-	def convolve(self, image=None, kernel=None, last_image=False, border='copy'):
+	def convolve(self, image=None, kernel=None, last_image=False, border=None):
 		if image is not None and last_image:
 			raise ValueError('Cannot use both a new image and the last image')
 		imfft = self.image_fft
@@ -105,8 +105,12 @@ class Convolver(object):
 		result = self.fftengine.itransform(self.result_fft)
 
 		# what to do with border?
-		if border == 'copy':
-			pass
+		n = len(self.kernel)
+		if border == 'zero':
+			result[:n] = 0
+			result[:,:n] = 0
+			result[:,-n:] = 0
+			result[-n:] = 0
 
 		return result
 
@@ -128,7 +132,11 @@ def gaussian_kernel(sigma):
 	'''
 	produces gaussian smoothing kernel
 	'''
-	half = int(3 * sigma)
+	if sigma < 0.1:
+		## sigma is very small and probably shouldn't be doing this at all
+		## so just make delta function
+		return Numeric.ones((1,1), Numeric.Float32)
+	half = int(5 * sigma)
 	n = 2 * half + 1
 	k1 = 1.0 / (2.0 * Numeric.pi * sigma**2)
 	def i(rows,cols):
