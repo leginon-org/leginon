@@ -9,6 +9,9 @@ import sys
 import imp
 import cPickle
 import dbdatakeeper
+import strictdict
+import copy
+
 if sys.platform == 'win32':
 	import pythoncom
 
@@ -101,6 +104,28 @@ class EM(node.Node):
 			self.locknodeid = None
 			self.nodelock.release()
 
+	def pruneEMdict(self, emdict):
+		'''
+		restrict access to certain scope parameters
+		'''
+		prunekeys = (
+			'gun shift',
+			'gun tilt',
+			'high tension',
+			'beam blank',
+			'dark field mode',
+			'diffraction mode',
+			'low dose',
+			'low dose mode',
+			'screen current',
+		)
+
+		for key in prunekeys:
+			try:
+				del emdict[key]
+			except KeyError:
+				pass
+
 	def getEM(self, withkeys=None, withoutkeys=None):
 		self.lock.acquire()
 		result = {}
@@ -147,20 +172,52 @@ class EM(node.Node):
 			result.update(self.camera)
 
 		self.lock.release()
+		self.pruneEMdict(result)
 		return result
+
+	def sortEMdict(self, emdict):
+		'''
+		sort items in em dict for proper setting order
+		'''
+		olddict = copy.deepcopy(emdict)
+		newdict = strictdict.OrderedDict()
+
+		### I care about these, the rest don't matter
+		order = (
+			'magnification',
+			'spot size',
+			'image shift',
+			'beam shift',
+			'defocus',
+			'intensity',
+		)
+		for key in order:
+			try:
+				newdict[key] = olddict[key]
+				del olddict[key]
+			except KeyError:
+				pass
+
+		## the rest don't matter
+		newdict.update(olddict)
+		return newdict
 
 	def setEM(self, EMstate):
 		self.lock.acquire()
-		for EMkey in EMstate:
+
+		### order the items in EMstate
+		ordered = self.sortEMdict(EMstate)
+
+		for EMkey in ordered.keys():
 			if EMkey in self.scope:
 				try:
-					self.scope[EMkey] = EMstate[EMkey]
+					self.scope[EMkey] = ordered[EMkey]
 				except:	
 					#print "failed to set '%s' to" % EMkey, EMstate[EMkey]
 					pass
 			elif EMkey in self.camera:
 				try:
-					self.camera[EMkey] = EMstate[EMkey]
+					self.camera[EMkey] = ordered[EMkey]
 				except:	
 					#print "failed to set '%s' to" % EMkey, EMstate[EMkey]
 					pass
