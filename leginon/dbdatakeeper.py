@@ -20,11 +20,9 @@ class DBDataKeeper(datahandler.DataHandler):
 		self.lock.acquire()
 		try:
 			ret = self._query(idata, results)
+		finally:
 			self.lock.release()
-			return ret
-		except:
-			self.lock.release()
-			raise
+		return ret
 
 	def _query(self, idata, results=None):
 		'''
@@ -108,10 +106,8 @@ class DBDataKeeper(datahandler.DataHandler):
 		self.lock.acquire()
 		try:
 			self._insert(newdata)
+		finally:
 			self.lock.release()
-		except:
-			self.lock.release()
-			raise
 
 	def _insert(self, newdata):
 		#self.flatInsert(newdata)
@@ -123,8 +119,8 @@ class DBDataKeeper(datahandler.DataHandler):
 		definition = sqldict.sqlColumnsDefinition(newdatacopy)
 		formatedData = sqldict.sqlColumnsFormat(newdatacopy)
 		self.dbd.createSQLTable(table, definition)
-		self.dbd.myTable = self.dbd.Table(table)
-		return self.dbd.myTable.insert([formatedData])
+		myTable = self.dbd.Table(table)
+		return myTable.insert([formatedData])
 
 	def recursiveInsert(self, newdata):
 		'''
@@ -138,43 +134,19 @@ class DBDataKeeper(datahandler.DataHandler):
 		are references to other data.  Returns a reference to
 		this newly inserted data object.
 		'''
-		## make certain replacements
-		mycopy = self.replacements(newdata)
-
 		### insert the data object and return a DataReference to it
 		dr = data.DataReference()
-		dr['id'] = self.flatInsert(mycopy)
-		dr['target'] = newdata
+		dr.id = self.flatInsert(newdata)
+		dr.target = newdata
 		return dr
 
 	def ref2lastid(self, datareference):
-		return datareference['id']
+		return datareference.id
 
 	def lastid2ref(self, lastid):
 		dr = data.DataReference()
-		dr['id'] = lastid
+		dr.id = lastid
 		return dr
-
-	def replacements(self, newdata):
-		'''
-		Perform certain replacements on the data to prepare it
-		for insertion.  Right now we do these:
-		   - save images and replace with None
-		   - replace instances of DataReference with the sql id
-
-		After replacements, the returned object may not be of the
-		exact same type as the input object.
-		'''
-		## shallow copy!  reassign but don't modify values!
-		mycopy = copy.copy(newdata)
-
-		if isinstance(mycopy, data.ImageData):
-			## save the image to file
-			mycopy.save()
-			## replace image with None
-			mycopy['image'] = None
-
-		return mycopy
 
 	# don't bother with these for now
 	def remove(self, id):

@@ -129,8 +129,14 @@ class DataReference(dict):
 	instances of DataReference can be used in place of the actual data
 	when one Data object references another.
 	'''
-	pass
+	def __init__(self, target=None):
+		self.target = target
 
+	def __getitem__(self, key):
+		return self.target[key]
+
+	def __setitem__(self, key, value):
+		raise NotImplementedError('Maybe setting items through a DataReference is a bad idea.  If you do not agree, implement __setitem__')
 
 class Data(DataDict, leginonobject.LeginonObject):
 	'''
@@ -225,7 +231,7 @@ class Data(DataDict, leginonobject.LeginonObject):
 		return a DataReference to this instance
 		'''
 		dr = DataReference()
-		dr['target'] = self
+		dr.target = self
 		return dr
 
 	def toDict(self, noNone=False):
@@ -535,33 +541,24 @@ class ImageData(InSessionData):
 	def filename(self):
 		'''
 		create a unique filename for this image
-		filename format:  [session]_[class]_[integer].mrc
+		filename format:  [session]_[label]_[nodename]_[integer].mrc
 		'''
-		intwidth = 6
 		impath = leginonconfig.IMAGE_PATH
 
 		# create new directory for session
-		sessionname = self['session']['target']['name']
+		sessionname = self['session']['name']
 		impath = os.path.join(impath, sessionname)
 		leginonconfig.mkdirs(impath)
 
-		basename = '%s_%s_' % (sessionname, self.__class__.__name__)
-		basename = os.path.join(impath, basename)
-		extension = '.mrc'
-		wildcard = intwidth * '?'
-		fileglob = '%s%s%s' % (basename,wildcard,extension)
-		files = glob.glob(fileglob)
-		maxid = -1
-		for file in files:
-			idstr = file[len(basename):-len(extension)]
-			id = int(idstr)
-			if id > maxid:
-				maxid = id
-		newid = maxid + 1
-		newidstrfmt = '%0' + '%dd' % (intwidth,)
-		newidstr = newidstrfmt % (newid,)
-		newname = '%s%s%s' % (basename,newidstr,extension)
-		return newname
+		basename = sessionname
+		if self['label']:
+			basename += '_%s' % (self['label'],)
+		mynode = self['id'][-2]
+		myindex = self['id'][-1]
+		basename += '_%s_%04d.mrc' % (mynode, myindex)
+		fullname = os.path.join(impath, basename)
+
+		return fullname
 
 	def save(self):
 		'''

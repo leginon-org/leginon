@@ -150,6 +150,7 @@ import cPickle
 from types import *
 import data
 import strictdict
+import Mrc
 
 class SQLDict:
 
@@ -291,7 +292,7 @@ class SQLDict:
 	def _connectData(self, root, pool):
 		for key,value in root.items():
 			if isinstance(value, data.DataReference):
-				root[key] = pool[value['qikey']]
+				root[key] = pool[value.qikey]
 				self._connectData(root[key], pool)
 
     class _createSQLTable:
@@ -401,8 +402,12 @@ class SQLDict:
 	    unless force is true. The function returns the last inserted row
 	    id for a new insert or an existing primary key."""
 	    c = self.cursor()
-	    wherefields = v[0].keys()
-	    wherevalues = v[0].values()
+	    wheredict = copy.copy(v[0])
+	    for key in wheredict.keys():
+		    if key[:3] == 'MRC':
+			del wheredict[key]
+	    wherefields = wheredict.keys()
+	    wherevalues = wheredict.values()
 	    whereFormatfields = map(lambda col: sqlexpr.Field(self.table, col), wherefields)
 	    whereFormat = sqlexpr.AND_EQUAL(zip(whereFormatfields,wherevalues))
 	    # whereFormat = sqlexpr.AND_LIKE(zip(whereFormatfields,wherevalues))
@@ -950,6 +955,26 @@ def matrix2dict(matrix, name=None):
 			j+=1
 	return d
 
+def saveMRC(object, name, filename):
+	"""
+	Save Numeric array to MRC file and replace it with filename
+	"""
+	d={}
+	k = sep.join(['MRC',name])
+	if object is not None:
+		Mrc.numeric_to_mrc(object, filename)
+	d[k] = filename
+	return d
+
+def loadMRC(in_dict):
+	'''
+	Load MRC and return Numeric array
+	'''
+	## should be only one item in this dict
+	key,value = in_dict.popitem()
+	narray = Mrc.mrc_to_numeric(value)
+	return narray
+
 def bin2dict(object, name=None):
 	"""
 	Convert a python object in a binary blob
@@ -992,7 +1017,7 @@ def ref2field(key, datareference):
 	'''
 	figure out the column name for a data.DataReference
 	'''
-	reftable = datareference['target'].__class__.__name__
+	reftable = datareference.target.__class__.__name__
 	colname = sep.join(['REF',reftable,key])
 	return colname
 
@@ -1047,8 +1072,12 @@ def sqlColumnsDefinition(in_dict, noDefault=None):
 				nd = sqlColumnsDefinition(arraydict, noDefault=[])
 				nd.sort()
 			else:
-				bindict = bin2dict(value,key)
-				nd = sqlColumnsDefinition(bindict, noDefault=[])
+				filename = in_dict.filename()
+				## value = None means don't really save
+				## MRC in file system, but return filename 
+				## string
+				mrcdict = saveMRC(None,key,filename)
+				nd = sqlColumnsDefinition(mrcdict, noDefault=[])
 			columns += nd
 			# Think about store the filename
 
@@ -1088,9 +1117,9 @@ def sqlColumnsSelect(in_dict):
 				arraydict = matrix2dict(value,key)
 				nd = sqlColumnsSelect(arraydict)
 				nd.sort()
-			else:
-				bindict = bin2dict(value,key)
-				nd = sqlColumnsSelect(bindict)
+			#else:
+				#mrcdict = saveMRC(value=None,key,filename='junk')
+				#nd = sqlColumnsSelect(mrcdict)
 			columns += nd
 		elif type(value) is dict:
 			flatdict = flatDict({key:value})
@@ -1120,14 +1149,15 @@ def sqlColumnsFormat(in_dict):
 			if len(Numeric.ravel(value)) < 10:
 				datadict = matrix2dict(value,key)
 			else:
-				datadict = bin2dict(value,key)
+				filename = in_dict.filename()
+				datadict = saveMRC(value,key,filename)
 			columns.update(datadict)
 		elif type(value) is dict:
 			flatdict = flatDict({key:value})
 			nf = sqlColumnsFormat(flatdict)
 			columns.update(nf)
 		elif isinstance(value, data.DataReference):
-			columns[ref2field(key,value)] = value['id']
+			columns[ref2field(key,value)] = value.id
 		elif type(value) in [tuple, list]:
 			columns[seq2sqlColumn(key)] = repr(value)
 	return columns
@@ -1194,10 +1224,12 @@ def datatype(in_dict, qikey=None, qinfo=None):
 				content[a[1]] = None
 		elif a[0] == 'BIN':
 			content[a[1]] = dict2bin({key:value})
+		elif a[0] == 'MRC':
+			content[a[1]] = loadMRC({key:value})
 		elif a[0] == 'REF':
 			jqikey = qinfo[qikey]['join'][a[2]]
 			dr = data.DataReference()
-			dr['qikey'] = jqikey
+			dr.qikey = jqikey
 			content[a[2]] = dr
 		elif not a[0] in ['SUBD', ]:
 			content[key]=value
