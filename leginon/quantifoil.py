@@ -16,7 +16,7 @@ import convolver
 import peakfinder
 import fftengine
 
-ffteng = fftengine.fftNumeric()
+ffteng = fftengine.fftEngine()
 
 def circle_template(shape, minrad, maxrad):
 	## circle image, to be inserted into template image later
@@ -276,7 +276,7 @@ class QuantifoilSolver(object):
 		return {'mean':mean, 'std': std, 'n':n}
 
 import fftengine
-ffteng = fftengine.fftNumeric()
+ffteng = fftengine.fftEngine()
 def power(numericarray):
 	fft = ffteng.transform(numericarray)
 	amplitude = Numeric.absolute(fft)

@@ -15,6 +15,7 @@ import mosaic
 import Mrc
 import threading
 import uidata
+import node
 
 class TargetFinder(imagewatcher.ImageWatcher):
 	eventoutputs = imagewatcher.ImageWatcher.eventoutputs + [
@@ -167,6 +168,7 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		title = '%s waiting' % (myname,)
 		message = '%s is waiting for you to submit targets' % (myname,)
 		self.outputMessage(title, message)
+		node.beep()
 
 	def handleTargetListDone(self, targetlistdoneevent):
 		'''
@@ -223,8 +225,11 @@ class ClickTargetFinder(TargetFinder):
 		## check if targets already found on this image
 		previous = self.researchImageTargets(imdata)
 		if previous:
+			print 'there are %s existing targets for this image' % (len(previous),)
 			self.targetlist = previous
-			return
+			if self.preventrepeat.get():
+				print 'you are not allowed to submit targets again'
+				return
 
 		# display image
 		self.clickimage.setTargets([])
@@ -234,7 +239,9 @@ class ClickTargetFinder(TargetFinder):
 		# user now clicks on targets
 		self.notifyUserSubmit()
 		self.userpause.clear()
+		print 'waiting for user to select targets'
 		self.userpause.wait()
+		print 'done waiting'
 		self.targetlist += self.getTargetDataList('focus')
 		self.targetlist += self.getTargetDataList('acquisition')
 
@@ -262,9 +269,10 @@ class ClickTargetFinder(TargetFinder):
 		self.clickimage.addTargetType('focus')
 
 		submitmethod = uidata.Method('Submit Targets', self.submitTargets)
+		self.preventrepeat = uidata.Boolean('Do not allow submit if already submitted on this image', True, 'rw', persist=True)
 
 		container = uidata.LargeContainer('Click Target Finder')
-		container.addObjects((self.clickimage, submitmethod))
+		container.addObjects((self.clickimage, submitmethod, self.preventrepeat))
 
 		self.uiserver.addObject(container)
 
@@ -418,12 +426,17 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 	def displayMosaic(self):
 		if self.displayimage.get():
 			self.setStatusMessage('Displaying mosaic image')
+			print 'AAA'
 			self.clickimage.setImage(self.getMosaicImage())
+			print 'BBB'
 			## imagedata would be full mosaic image
 			self.clickimage.imagedata = None
+			print 'CCC'
 		else:
 			self.setStatusMessage('Not diplaying mosaic image')
+		print 'DDD'
 		self.clickimage.setTargets([])
+		print 'EEE'
 
 	def mosaicToFile(self, filename):
 		if filename is None:

@@ -1,0 +1,221 @@
+sfftw_wrap.c
+
+[ Python Module : sfftw ]
+
+
+FFTW_FORWARD = FFTW_FORWARD
+        [ Constant: int  ]
+
+FFTW_BACKWARD = FFTW_BACKWARD
+        [ Constant: int  ]
+
+FFTW_SUCCESS = FFTW_SUCCESS
+        [ Constant: int  ]
+
+FFTW_FAILURE = FFTW_FAILURE
+        [ Constant: int  ]
+
+FFTW_NOTW = FFTW_NOTW
+        [ Constant: int  ]
+
+FFTW_TWIDDLE = FFTW_TWIDDLE
+        [ Constant: int  ]
+
+FFTW_GENERIC = FFTW_GENERIC
+        [ Constant: int  ]
+
+FFTW_RADER = FFTW_RADER
+        [ Constant: int  ]
+
+FFTW_REAL2HC = FFTW_REAL2HC
+        [ Constant: int  ]
+
+FFTW_HC2REAL = FFTW_HC2REAL
+        [ Constant: int  ]
+
+FFTW_HC2HC = FFTW_HC2HC
+        [ Constant: int  ]
+
+FFTW_RGENERIC = FFTW_RGENERIC
+        [ Constant: int  ]
+
+fftw_version = fftw_version
+        [ Constant: char * ]
+
+FFTW_ESTIMATE = (0)
+        [ Constant: int  ]
+
+FFTW_MEASURE = (1)
+        [ Constant: int  ]
+
+FFTW_OUT_OF_PLACE = (0)
+        [ Constant: int  ]
+
+FFTW_IN_PLACE = (8)
+        [ Constant: int  ]
+
+FFTW_USE_WISDOM = (16)
+        [ Constant: int  ]
+        guarantee plan is read-only so that the same plan can be used in
+        parallel by multiple threads 
+
+FFTW_THREADSAFE = (128)
+        [ Constant: int  ]
+        internal, undocumented flag 
+
+FFTWND_FORCE_BUFFERED = (256)
+        [ Constant: int  ]
+
+fftw_create_plan_specific(n,dir,flags,in,istride,out,ostride)
+        [ returns fftw_plan  ]
+
+fftw_create_plan(n,dir,flags)
+        [ returns fftw_plan  ]
+
+fftw_print_plan(plan)
+        [ returns void  ]
+
+fftw_destroy_plan(plan)
+        [ returns void  ]
+
+fftw(plan,howmany,in,istride,idist,out,ostride,odist)
+        [ returns void  ]
+
+fftw_one(plan,in,out)
+        [ returns void  ]
+
+fftw_die(s)
+        [ returns void  ]
+
+fftw_malloc(n)
+        [ returns void * ]
+
+fftw_free(p)
+        [ returns void  ]
+
+fftw_check_memory_leaks()
+        [ returns void  ]
+
+fftw_print_max_memory_usage()
+        [ returns void  ]
+
+fftw_forget_wisdom()
+        [ returns void  ]
+
+fftw_export_wisdom_to_file(output_file)
+        [ returns void  ]
+
+fftw_import_wisdom_from_file(input_file)
+        [ returns fftw_status  ]
+
+fftw_export_wisdom_to_string()
+        [ returns char * ]
+
+fftw_import_wisdom_from_string(input_string)
+        [ returns fftw_status  ]
+
+fftw_fprint_plan(f,plan)
+        [ returns void  ]
+
+fftw2d_create_plan(nx,ny,dir,flags)
+        [ returns fftwnd_plan  ]
+
+fftw3d_create_plan(nx,ny,nz,dir,flags)
+        [ returns fftwnd_plan  ]
+
+fftwnd_create_plan(rank,n,dir,flags)
+        [ returns fftwnd_plan  ]
+
+fftw2d_create_plan_specific(nx,ny,dir,flags,in,istride,out,ostride)
+        [ returns fftwnd_plan  ]
+
+fftw3d_create_plan_specific(nx,ny,nz,dir,flags,in,istride,out,ostride)
+        [ returns fftwnd_plan  ]
+
+fftwnd_create_plan_specific(rank,n,dir,flags,in,istride,out,ostride)
+        [ returns fftwnd_plan  ]
+
+fftwnd_destroy_plan(plan)
+        [ returns void  ]
+
+fftwnd_fprint_plan(f,p)
+        [ returns void  ]
+
+fftwnd_print_plan(p)
+        [ returns void  ]
+
+fftwnd(plan,howmany,in,istride,idist,out,ostride,odist)
+        [ returns void  ]
+
+fftwnd_one(p,in,out)
+        [ returns void  ]
+
+FFTW_REAL_TO_COMPLEX = (FFTW_FORWARD)
+        [ Constant: int  ]
+
+FFTW_COMPLEX_TO_REAL = (FFTW_BACKWARD)
+        [ Constant: int  ]
+
+rfftw(plan,howmany,in,istride,idist,out,ostride,odist)
+        [ returns void  ]
+
+rfftw_one(plan,in,out)
+        [ returns void  ]
+
+rfftw_create_plan_specific(n,dir,flags,in,istride,out,ostride)
+        [ returns rfftw_plan  ]
+
+rfftw_create_plan(n,dir,flags)
+        [ returns rfftw_plan  ]
+
+rfftw_destroy_plan(plan)
+        [ returns void  ]
+
+rfftw_fprint_plan(f,p)
+        [ returns void  ]
+
+rfftw_print_plan(p)
+        [ returns void  ]
+
+rfftw_executor_simple(n,in,out,p,istride,ostride)
+        [ returns void  ]
+
+rfftwnd_create_plan_specific(rank,n,dir,flags,in,istride,out,ostride)
+        [ returns rfftwnd_plan  ]
+
+rfftw2d_create_plan_specific(nx,ny,dir,flags,in,istride,out,ostride)
+        [ returns rfftwnd_plan  ]
+
+rfftw3d_create_plan_specific(nx,ny,nz,dir,flags,in,istride,out,ostride)
+        [ returns rfftwnd_plan  ]
+
+rfftwnd_create_plan(rank,n,dir,flags)
+        [ returns rfftwnd_plan  ]
+
+rfftw2d_create_plan(nx,ny,dir,flags)
+        [ returns rfftwnd_plan  ]
+
+rfftw3d_create_plan(nx,ny,nz,dir,flags)
+        [ returns rfftwnd_plan  ]
+
+rfftwnd_destroy_plan(plan)
+        [ returns void  ]
+
+rfftwnd_fprint_plan(f,plan)
+        [ returns void  ]
+
+rfftwnd_print_plan(plan)
+        [ returns void  ]
+
+rfftwnd_real_to_complex(p,howmany,in,istride,idist,out,ostride,odist)
+        [ returns void  ]
+
+rfftwnd_complex_to_real(p,howmany,in,istride,idist,out,ostride,odist)
+        [ returns void  ]
+
+rfftwnd_one_real_to_complex(p,in,out)
+        [ returns void  ]
+
+rfftwnd_one_complex_to_real(p,in,out)
+        [ returns void  ]
+

@@ -1,0 +1,11 @@
+Notes from Jim:
+
+This was downloaded from:
+http://pylab.sourceforge.net/
+version 0.6.2
+
+To get it to compile under SuSE 8.2, I had to change the Makefile to have 
+the proper locations of the python includes, Numeric includes, and the 
+python config files.
+
+I also changed INSTALLDIR to: ..

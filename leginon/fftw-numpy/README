@@ -1,0 +1,148 @@
+
+**Background***
+
+This is a basic wrapper around the fftw library calls including the
+rfftw library calls.  It is based on fftw-2.1.3  I used swig to make
+the wrapper code, so I've also included the *.i files which are input
+to swig: swig -python -dhtml fftw.i
+
+If you don't have swig, I also included the fftw_wrap.c files which
+contain the C-code for the extension modules.  Swig also generated the
+fftw_wrap.html file which shows how to call each function that is
+included in the module.
+
+There is an sh script called makefftwlibs that makes the fftw
+libraries (shared and static) with both single and double precision.
+This just runs configure a few times with some nice options.
+
+There are two modules sfftw and fftw for doing single (float) and
+double (double) calculations respectively.  These should be linked
+against the appropriately compiled fftw shared library.  Using the
+makefftwlibs script will compile both of them and name them so that
+the Makefile in this directory makes sense.  ***BE CAREFUL IF YOU USE
+THESE LIBRARIES TOGETHER IN THE SAME PYTHON SCRIPT*** The subroutines
+are named the same even though they accept different arguments. You
+might get unpredictable results if both fftw and sfftw are
+loaded at the same time.  FFT2.py just uses sfftw and doesn't include
+real fft support (yet).  FFTW allows a real-to-complex transform which
+you can access using the raw interface.
+
+The functions are called pretty much exactly the way they are in C,
+with NumPy arrays taking the place of input and output arrays.  Many
+constants are also defined (FFTW_ESTIMATE, etc.) and are in the
+namespace of the corresponding module.  Note, these routines will only
+accept NumPy arrays of type 'F' (CFLOAT) or 'D' (CDOUBLE) depending on
+the module you load.  This is a direct translation of the underlying
+fftw type fftw_complex.
+
+
+** Installation **
+
+You must have fftw-2.1.3 installed in order to use this extension. 
+You must install both the single and double precision versions of the 
+library.
+
+I've included the makefile I used to generate the modules from the
+wrapper source or the *.i files.  You should modify it to reflect your
+installation directories.
+
+Once the modules are compiled (please link them against the correct
+fftw binary library (float) or (double)).  The Makefile shows how this
+is done on my system.
+
+*** Use ***
+
+There are two ways to use the library.  The first is with the FFT2.py
+module which follows the same interface as the FFT.py module in the
+Numeric library.  There is a script called bench.py included that is
+an example of using FFT2.py and shows that FFT2 is about 25-30% faster
+than FFT.
+
+Read the information that comes with fftw-2.1 for information on how to call
+the fftw library.  Pay particular attention to how you call the rfftw library.
+The only data-type these routines take is a complex NumPy array.  For the 
+rfftw library, the real numbers are "packed" into complex numbers:
+[1,2,3,4] = [1+2j,3+4j].  Keep this in mind.
+
+Since this is a pretty basic swig wrapper around the C-code, there is very 
+little type-checking or array bounds checking in any of the routines.
+
+All numpy arrays must be either of type 'F' for sfftw or type 'D' for fftw.
+The Numpy arrays must be defined and allocated prior to making the calls
+to these routines.   For in-place-fft's just pass a one-element array.
+
+The plan creation routines return a string that represents a pointer to the 
+plan in memory.  This is the way SWIG handles arbitrary data types.  It 
+is meaningless inside python, but it may be passed to all of the functions in
+the library that need the plan and they will get a pointer to the actual plan 
+in memory.  
+
+**** Examples ***
+
+>>> from Numeric import *
+>>> import sfftw
+
+** 1-D example **
+
+>>> b = array([1,2,3,4,5,6],'F')
+>>> plan = sfftw.fftw_create_plan(len(b),sfftw.FFTW_FORWARD,sfftw.FFTW_ESTIMATE)
+>>> c = zeros(b.shape,'F')   # This is important to get right to avoid core dumps.
+>>> sfftw.fftw(plan,1,b,1,1,c,1,1) 
+>>> print c
+[ 21.+0.j          -3.+5.19615221j  -3.+1.73205078j  -3.+0.j        
+       -3.-1.73205078j  -3.-5.19615221j]
+
+** 2-D example **
+
+>>> b = array([[1,2,3,4],[5,6,7,8],[9,10,11,12]],'F')
+>>> plan2d = sfftw.fftwnd_create_plan(2,b.shape,sfftw.FFTW_FORWARD,sfftw.FFTW_ESTIMATE)
+>>> c = zeros(b.shape,'F')    # Again the size here is important to get right.
+>>> sfftw.fftwnd(plan2d,1,b,1,1,c,1,1)
+>>> print c
+[[ 78. +0.j          -6. +6.j          -6. +0.j        
+        -6. -6.j        ]
+ [-24.+13.85640621j   0. +0.j           0. +0.j        
+         0. +0.j        ]
+ [-24.-13.85640621j   0. +0.j           0. +0.j        
+         0. +0.j        ]]
+
+
+** Now repeat the examples using rfftw (note how we handle the packing of
+       real numbers into the complex array) **
+
+** 1-D example
+
+>>> b = array([1+2j,3+4j,5+6j],'F')
+>>> rplan = sfftw.rfftw_create_plan(2*len(b),sfftw.FFTW_FORWARD,sfftw.FFTW_ESTIMATE,sfftw.REAL_TO_COMPLEX)
+>>> c = zeros((len(b)+1,),'F')      # note it is 1 bigger than b
+>>> sfftw.rfftw(rplan,1,b,1,1,c,1,1)
+>>> print c
+[ 21.+0.j          -3.+5.19615269j  -3.+1.73205078j  -3.+0.j        ]
+
+
+** 2-D example
+
+>>> b = array([[1+2j,3+4j],[5+6j,7+8j],[9+10j,11+12j]],'F')
+>>> rplan2d = sfftw.rfftwnd_create_plan(2,(3,4),sfftw.FFTW_FORWARD,sfftw.FFTW_ESTIMATE,sfftw.REAL_TO_COMPLEX)
+>>> c = zeros((3,3),'F')
+>>> sfftw.rfftwnd(rplan2d,1,b,1,1,c,1,1)
+>>> print c
+[[ 78. +0.j          -6. +6.j          -6. +0.j        ]
+ [-24.+13.85640621j   0. +0.j           0. +0.j        ]
+ [-24.-13.85640621j   0. +0.j           0. +0.j        ]]
+
+
+Let me know if I can answer any questions.
+Send me any improvements you make please.
+
+Have fun,
+
+Travis Oliphant
+Oliphant.Travis@altavista.net
+
+
+
+
+
+
+

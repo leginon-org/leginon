@@ -265,6 +265,7 @@ class Boolean(Data):
 	typelist = Data.typelist + ('boolean',)
 
 	def validate(self, value):
+		return True
 		if type(value) is bool or value is 0 or value is 1:
 			return True
 		else:
@@ -274,6 +275,7 @@ class Number(Data):
 	typelist = Data.typelist + ('number',)
 
 	def validate(self, value):
+		return True
 		if type(value) in (int, float) or value is None:
 			return True
 		else:
@@ -283,6 +285,7 @@ class Integer(Data):
 	typelist = Data.typelist + ('integer',)
 
 	def validate(self, value):
+		return True
 		if type(value) is int or value is None:
 			return True
 		else:
@@ -292,6 +295,7 @@ class Float(Data):
 	typelist = Data.typelist + ('float',)
 
 	def validate(self, value):
+		return True
 		if type(value) is float or value is None:
 			return True
 		else:
@@ -301,6 +305,7 @@ class String(Data):
 	typelist = Data.typelist + ('string',)
 
 	def validate(self, value):
+		return True
 		if type(value) is str or value is None:
 			return True
 		else:
@@ -310,6 +315,7 @@ class Array(Data):
 	typelist = Data.typelist + ('array',)
 
 	def validate(self, value):
+		return True
 		return True
 
 class GridTray(Array):
