@@ -111,22 +111,27 @@ class DBDataKeeper(datahandler.DataHandler):
 
 	def _insert(self, newdata):
 		#self.flatInsert(newdata)
-		self.recursiveInsert(newdata)
+		return self.recursiveInsert(newdata)
 
 	def flatInsert(self, newdata):
+		if newdata.dbid is not None:
+			## this object is already in DB
+			return newdata.dbid
 		newdatacopy = copy.deepcopy(newdata)
 		table = newdatacopy.__class__.__name__
 		definition = sqldict.sqlColumnsDefinition(newdatacopy)
 		formatedData = sqldict.sqlColumnsFormat(newdatacopy)
 		self.dbd.createSQLTable(table, definition)
 		myTable = self.dbd.Table(table)
-		return myTable.insert([formatedData])
+		newid = myTable.insert([formatedData])
+		newdata.dbid = newid
+		return newid
 
 	def recursiveInsert(self, newdata):
 		'''
 		split up and insert newdata and its children individually
 		'''
-		newdata.replaceData(self.insertWithForeignKeys)
+		return newdata.replaceData(self.insertWithForeignKeys)
 
 	def insertWithForeignKeys(self, newdata):
 		'''

@@ -162,6 +162,11 @@ class Data(DataDict, leginonobject.LeginonObject):
 		legid = self['id']
 		leginonobject.LeginonObject.__init__(self, legid)
 
+		## Database ID (primary key)
+		## If this is None, then this data has not
+		## been inserted into the database
+		self.dbid = None
+
 	def __setitem__(self, key, value):
 		'''
 		'''
@@ -174,6 +179,10 @@ class Data(DataDict, leginonobject.LeginonObject):
 			else:
 				super(Data, self).__setattr__(key, value)
 		DataDict.__setitem__(self, key, value)
+		## reset dbid because data no longer matches database
+		## Unfortunately, this does not cover all cases of
+		## modifying the object, just at the top level.
+		self.dbid = None
 
 	def typemap(cls):
 		t = DataDict.typemap()
