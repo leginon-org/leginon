@@ -192,7 +192,7 @@ class Panel(gui.wx.Node.Panel):
 		self.node.naverage = evt.GetValue()
 
 	def onCamConfigChanged(self, evt):
-		self.node.camconfig = self.cpcamconfig.getConfiguration()
+		self.node.camconfig = evt.configuration
 		self.node.getPlan()
 		self.setPlan(self.node.plan)
 

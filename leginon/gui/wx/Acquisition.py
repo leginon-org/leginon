@@ -25,8 +25,9 @@ class Panel(gui.wx.Node.Panel):
 		self.szsettings = self._getStaticBoxSizer('Settings', (1, 0), (1, 1),
 																							wx.ALL)
 
+		sz = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Wait')
-		self.szsettings.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL)
 		self.ncwait = wx.lib.masked.NumCtrl(self, -1, 2.5,
 																				integerWidth=2,
 																				fractionWidth=1,
@@ -34,20 +35,20 @@ class Panel(gui.wx.Node.Panel):
 																				allowNegative=False,
 																				name='ncWait')
 		gui.wx.Data.bindWindowToDB(self.ncwait)
-		self.szsettings.Add(self.ncwait, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.ncwait, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL)
 		label = wx.StaticText(self, -1, 'seconds and use')
-		self.szsettings.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL)
 		self.cmovetype = wx.Choice(self, -1, name='cMoveType')
 		gui.wx.Data.bindWindowToDB(self.cmovetype)
-		self.szsettings.Add(self.cmovetype, (0, 3), (1, 1),
-												wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.cmovetype, (0, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL)
 		label = wx.StaticText(self, -1, 'to move to target')
-		self.szsettings.Add(label, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(label, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL)
+		self.szsettings.Add(sz, (0, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL)
 
 		self.presetorder = gui.wx.Presets.EditPresetOrder(self, -1,
 																											name='poPresetOrder')
 		gui.wx.Data.bindWindowToDB(self.presetorder)
-		self.szsettings.Add(self.presetorder, (1, 0), (1, 5),
+		self.szsettings.Add(self.presetorder, (1, 0), (1, 1),
 													wx.ALIGN_CENTER|wx.EXPAND|wx.ALL)
 
 		self.cbcorrectimage = wx.CheckBox(self, -1, 'Correct image',
@@ -67,15 +68,15 @@ class Panel(gui.wx.Node.Panel):
 		gui.wx.Data.bindWindowToDB(self.cbsaveimage)
 		gui.wx.Data.bindWindowToDB(self.cbwaitimageprocess)
 		gui.wx.Data.bindWindowToDB(self.cbwaitrejects)
-		self.szsettings.Add(self.cbcorrectimage, (2, 0), (1, 5),
+		self.szsettings.Add(self.cbcorrectimage, (2, 0), (1, 1),
 												wx.ALIGN_CENTER_VERTICAL)
-		self.szsettings.Add(self.cbdisplayimage, (3, 0), (1, 5),
+		self.szsettings.Add(self.cbdisplayimage, (3, 0), (1, 1),
 												wx.ALIGN_CENTER_VERTICAL)
-		self.szsettings.Add(self.cbsaveimage, (4, 0), (1, 5),
+		self.szsettings.Add(self.cbsaveimage, (4, 0), (1, 1),
 												wx.ALIGN_CENTER_VERTICAL)
-		self.szsettings.Add(self.cbwaitimageprocess, (5, 0), (1, 5),
+		self.szsettings.Add(self.cbwaitimageprocess, (5, 0), (1, 1),
 												wx.ALIGN_CENTER_VERTICAL)
-		self.szsettings.Add(self.cbwaitrejects, (6, 0), (1, 5),
+		self.szsettings.Add(self.cbwaitrejects, (6, 0), (1, 1),
 												wx.ALIGN_CENTER_VERTICAL)
 
 		szduplicate = wx.GridBagSizer(0, 0)
@@ -87,7 +88,7 @@ class Panel(gui.wx.Node.Panel):
 		szduplicate.Add(self.cbduplicate, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szduplicate.Add(self.cduplicatetype, (0, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL)
-		self.szsettings.Add(szduplicate, (7, 0), (1, 5))
+		self.szsettings.Add(szduplicate, (7, 0), (1, 1))
 
 		# controls
 		self.szcontrols = self._getStaticBoxSizer('Controls', (2, 0), (1, 1),
@@ -214,4 +215,17 @@ class Panel(gui.wx.Node.Panel):
 			self.node.abort = True
 		else:
 			self.node.abort = False
+
+if __name__ == '__main__':
+	class App(wx.App):
+		def OnInit(self):
+			frame = wx.Frame(None, -1, 'Acquisition Test')
+			panel = Panel(frame, 'Test')
+			frame.Fit()
+			self.SetTopWindow(frame)
+			frame.Show()
+			return True
+
+	app = App(0)
+	app.MainLoop()
 
