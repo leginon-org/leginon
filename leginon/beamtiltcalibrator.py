@@ -14,6 +14,7 @@ import LinearAlgebra
 import data
 import calibrationclient
 import uidata
+import node
 
 class BeamTiltCalibrator(calibrator.Calibrator):
 	'''
