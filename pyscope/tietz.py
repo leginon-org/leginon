@@ -11,6 +11,7 @@ else:
 	import mmapfile
 	import array
 	import Numeric
+	import time
 	
 	class tietz(camera.camera):
 		hCam = None
@@ -18,14 +19,23 @@ else:
 		
 		def __init__(self):
 			camera.camera.__init__(self)
-			self.theCamera = win32com.client.Dispatch("CAMC.Camera")		
+			try:
+				self.theCamera = win32com.client.Dispatch("CAMC.Camera")		
+			except:
+				print "Error: cannot dispatch CAMC.Camera"
+				raise
 	
 			self.camType = win32com.client.constants.ctSimulation
 			#self.camType = win32com.client.constants.ctPXL
 			#self.camType = win32com.client.constants.ctPVCam
 			#self.camType = win32com.client.constants.ctFastScan
 	
-			self.hCam = self.theCamera.Initialize(self.camType, 0)
+			try:
+				self.hCam = self.theCamera.Initialize(self.camType, 0)
+			except:
+				print "Error: camera COM object already intialized"
+				raise
+
 			self.arraytypecode = 'H'
 			self.Numerictypecode = Numeric.UInt16
 
