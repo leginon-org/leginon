@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/version.py,v $
-# $Revision: 1.1 $
+# $Revision: 1.2 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-26 20:21:53 $
+# $Date: 2004-10-26 20:46:29 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -19,12 +19,39 @@ def getVersion():
 		return None
 	tokens = name.split('-')
 	version = ''
-	for token in tokens:
+
+	# parse revision
+	count = 0
+	while tokens:
+		token = tokens[0]
 		if token.isdigit():
 			if version:
 				version += '.'
 			version += token
-	if not version:
+			count += 1
+		elif count > 1:
+			break
+		if count > 2:
+			break
+		del tokens[0]
+	if count < 2:
 		return None
+
+	while tokens:
+		token = tokens[0]
+		if token in ['a', 'b']:
+			version += token
+			break
+		del tokens[0]
+
+	while tokens:
+		token = tokens[0]
+		if token.isdigit():
+			version += token
+			break
+		del tokens[0]
+
 	return version
 
+if __name__ == '__main__':
+	print getVersion()
