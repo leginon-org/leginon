@@ -76,7 +76,7 @@ class Focuser(acquisition.Acquisition):
 			driftthresh = None
 
 		## send the autofocus preset to the scope
-		autofocuspreset = self.presetsclient.uiGetSelectedPreset()
+		autofocuspreset = self.presetsclient.uiGetSelectedName()
 		self.presetsclient.toScope(autofocuspreset, emtarget)
 
 		try:
