@@ -20,6 +20,27 @@ from timer import Timer
 class NoCorrectorError(Exception):
 	pass
 
+def autoOffset(camerasize, dimension, binning):
+	'''
+	calculate the image offset from the dimension/binning
+	to get an image centered on the camera
+	'''
+	sizex = camerasize['x']
+	sizey = camerasize['y']
+
+	binx = binning['x']
+	biny = binning['y']
+	sizex /= binx
+	sizey /= biny
+	pixx = dimension['x']
+	pixy = dimension['y']
+	offx = sizex / 2 - pixx / 2
+	offy = sizey / 2 - pixy / 2
+	if offx < 0 or offy < 0 or offx > sizex or offy > sizey:
+		raise RuntimeError('autoOffset: invalid offset calculated')
+	offset = {'x': offx, 'y': offy}
+	return offset
+
 class CameraFuncs(object):
 	'''
 	Useful functions for nodes that use camera data
@@ -28,7 +49,6 @@ class CameraFuncs(object):
 		self.node = node
 		self.__cameraconfig = data.CameraConfigData()
 		self.__cameraconfig.update(leginonconfig.CAMERA_CONFIG)
-		self.camsize = None
 
 	def acquireCameraImageData(self, camconfig=None, correction=None):
 		## try to use UI camera config if none was specified
@@ -111,27 +131,14 @@ class CameraFuncs(object):
 		camconfig must be a CameraConfigData instance
 		camconfig['offset'] will be set to new value
 		'''
-		if self.camsize is None:
-			camsize = self.node.session['instrument']['camera size']
-			if not camsize:
-				camconfig['offset'] = {'x': 0, 'y': 0}
-				return
-			self.camsize = {'x':camsize, 'y':camsize}
-
-		sizex = self.camsize['x']
-		sizey = self.camsize['y']
-
-		binx = camconfig['binning']['x']
-		biny = camconfig['binning']['y']
-		sizex /= binx
-		sizey /= biny
-		pixx = camconfig['dimension']['x']
-		pixy = camconfig['dimension']['y']
-		offx = sizex / 2 - pixx / 2
-		offy = sizey / 2 - pixy / 2
-		if offx < 0 or offy < 0 or offx > sizex or offy > sizey:
-			self.node.printerror('invalid dimension or binning produces invalid offset')
-		camconfig['offset'] = {'x': offx, 'y': offy}
+		camsize = self.node.session['instrument']['camera size']
+		if not camsize:
+			raise RuntimeError('instrument camsize: %s... maybe you are not connected to an instrument')
+		camsize = {'x':camsize, 'y':camsize}
+		bin = camconfig['binning']
+		dim = camconfig['dimension']
+		offset = autoOffset(camsize, dim, bin)
+		camconfig['offset'] = offset
 
 	def uiGetDictData(self, uidict):
 		uidictdata = {}
@@ -163,7 +170,10 @@ class CameraFuncs(object):
 
 	def uiSet(self):
 		cameraconfig = self.uiGetDictData(self.uicameradict)
-		cameraconfig = dict(self.cameraConfig(cameraconfig))
+		try:
+			cameraconfig = dict(self.cameraConfig(cameraconfig))
+		except:
+			cameraconfig = {}
 		self.uiSetDictData(self.uicameradict, cameraconfig)
 
 	def configUIData(self):
