@@ -276,13 +276,16 @@ class Leginon(Tkinter.Frame):
 		setupwizard = leginonsetup.SetupWizard(self)
 		self.manager = setupwizard.manager
 		self.remotelauncher = setupwizard.remotelauncher
-		if self.manager is None:
+		try:
+			if self.manager is None:
+				self.filemenu.entryconfigure(0, state=Tkinter.NORMAL)
+				return
+			self.menu.entryconfigure(1, state=Tkinter.NORMAL)
+			self.startApplication()
+			self.startUI()
 			self.filemenu.entryconfigure(0, state=Tkinter.NORMAL)
+		except:
 			return
-		self.menu.entryconfigure(1, state=Tkinter.NORMAL)
-		self.startApplication()
-		self.startUI()
-		self.filemenu.entryconfigure(0, state=Tkinter.NORMAL)
 
 	def startApplication(self):
 		self.manager.app.load(applicationfilename)
