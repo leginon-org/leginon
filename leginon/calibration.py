@@ -24,46 +24,14 @@ class Calibration(node.Node, camerafuncs.CameraFuncs):
 		self.correlator = correlator.Correlator(ffteng)
 		self.peakfinder = peakfinder.PeakFinder()
 
-
-		# correlation maybe goes into a different node
-
-		# asdf
 		self.axislist = ['x', 'y']
 		self.settle = 2.0
 
 		self.calibration = {}
 		self.clearStateImages()
 
-
 		node.Node.__init__(self, id, nodelocations)
 		
-
-
-	def validShiftCallback(self, value=None):
-		if value:
-			updatelist = []
-			for shift in self.validshift:
-				if self.validshift[shift] != value[shift]:
-					updatelist.append(shift)
-
-			for shift in updatelist:
-				typelist = []
-				for t in self.validshift[shift]:
-					if self.validshift[shift][t] != value[shift][t]:
-						typelist.append(t)
-				if len(typelist) != 1:
-					break
-				for t in typelist:
-					self.validshift[shift][t] = value[shift][t]
-					if t == 'percent':
-						self.validshift[shift]['pixel'] = \
-							self.calculatePixelFromPercent(value[shift][t])
-					elif t == 'pixel':
-						value[shift]['percent'] = \
-							self.calculatePercentFromPixel(value[shift][t])
-		else:
-			return self.validshift
-
 	def calculatePixelFromPercent(self, percent):
 		pixel = {'x': {'min': None, 'max': None}, 'y': {'min': None, 'max': None}}
 		for axis in percent:
@@ -88,12 +56,9 @@ class Calibration(node.Node, camerafuncs.CameraFuncs):
 
 	# calibrate needs to take a specific value
 	def calibrate(self):
-		print 'clearing state images'
 		self.clearStateImages()
-
 		adjustedrange = self.range
 
-		print 'parsing camerastate'
 		size = self.camerastate['size']
 		bin = self.camerastate['binning']
 		exp = self.camerastate['exposure time']
@@ -105,14 +70,10 @@ class Calibration(node.Node, camerafuncs.CameraFuncs):
 			"binning": {'x': bin, 'y': bin},
 			"exposure time": exp
 		}
-		print 'creating camdata'
 		camdata = data.EMData('camera', camstate)
 
-		print 'camdata', camdata
 		self.publish(event.LockEvent(self.ID()))
 		self.publishRemote(camdata)
-
-		print 'hello again from calibrate'
 
 		# might reuse value from previous axis
 		for axis in self.axislist:
@@ -210,6 +171,8 @@ class Calibration(node.Node, camerafuncs.CameraFuncs):
 			acpeakvalue = peak['subpixel peak value']
 			acshift = correlator.wrap_coord(peak['subpixel peak'], acimage.shape)
 			shiftinfo.update({'ac shift':acshift,'ac peak value':acpeakvalue})
+			acimagedata = data.ImageData(self.ID(), acimage)
+			self.publish(acimagedata, event.PhaseCorrelationImagePublishEvent)
 
 		## phase correlation
 		self.correlator.insertImage(image2)
@@ -275,6 +238,9 @@ class Calibration(node.Node, camerafuncs.CameraFuncs):
 			return False
 
 	def correlate(self, image):
+		# might also want to normalize with an autocorrelation of 
+		# image 0, this might remove effects of poor gain normalization
+		# but might also remove the correct peak for small shifts
 		self.correlator.setImage(1, image)
 		## phase correlation with new image
 		try:
@@ -376,8 +342,6 @@ class Calibration(node.Node, camerafuncs.CameraFuncs):
 		self.attempts = a
 		self.correlationthreshold = ct
 		self.camerastate = cs
-		# update valid somehow
-		#self.validShiftCallback(self.validshift)
 		return ''
 
 
