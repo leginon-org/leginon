@@ -149,7 +149,8 @@ class LabeledLine(ArrowLine):
 		del self.labeltextvariables[label]
 		label.place_forget()
 		if len(self.labels) == 0:
-			ArrowLine.delete(self)
+#			ArrowLine.delete(self)
+			pass
 		else:
 			self.placeLabels()
 
@@ -276,7 +277,7 @@ class EventLine(OverlappedLine):
 
 	def menuEditLabel(self):
 		for eventbinding in self.eventbindings.keys():
-			if self.eventbinding[eventbinding] == self.selectedlabel:
+			if self.eventbindings[eventbinding] == self.selectedlabel:
 				eventdialog = EventDialog(self.editor, 'Edit Event', eventbinding[0])
 				if eventdialog.result is not None:
 					editedeventbinding = (eventdialog.result,
@@ -365,7 +366,9 @@ class ConnectionManager(Line):
 		if origin == destination:
 			return
 		key = (origin, destination)
-		if not key in self.lines:
+		if key in self.lines:
+			self.lines[key]['line'].append(binding)
+		else:
 			self.lines[key] = {}
 			inversekey = (destination, origin)
 			if inversekey in self.lines:
