@@ -106,14 +106,22 @@ class PresetsManager(node.Node):
 		self.presets = list(presetlist)
 		self.circle = CircularIter(self.presets)
 
-	def setPresetsFromDB(self):
+	def getPresetsFromDB(self, session=None):
 		'''
 		get list of presets for this session from DB
+		and use them to create self.presets list
 		'''
+		if session is None:
+			session = self.session
 		### get presets from database
-		pdata = data.PresetData(('dummy',), session=self['session'])
-		pdata['id'] = None
-		presets = self.research(pdata)
+		print 'SESSION'
+		print session
+		pdata = data.PresetData(session=session)
+		print 'PDATA'
+		print pdata
+		presets = self.research(datainstance=pdata)
+		print 'PRESETS'
+		print presets
 
 		### only want most recent of each name
 		mostrecent = []
@@ -122,7 +130,19 @@ class PresetsManager(node.Node):
 			if preset['name'] not in names:
 				mostrecent.append(preset)
 				names.append(preset['name'])
+		print 'NAMES'
+		print names
 		self.setPresets(mostrecent)
+
+	def presetToDB(self, presetdata):
+		'''
+		stores a preset in the DB under the current session name
+		'''
+		pdata = copy.copy(presetdata)
+		pdata['session'] = self.session
+		print 'PDATA'
+		print pdata
+		self.publish(pdata, database=True)
 
 	def presetByName(self, name):
 		for p in self.presets:
@@ -164,16 +184,29 @@ class PresetsManager(node.Node):
 
 	def toScope(self, p):
 		'''
-		p is either index or preset
+		p is either index, preset, or name
 		'''
+		presetdata = None
 		if type(p) is int:
 			presetdata = self.presets[p]
-		else:
+		elif type(p) is str:
+			for preset in self.presets:
+				if p == preset['name']:
+					presetdata = preset
+					break
+		elif isinstance(p, data.PresetData):
 			presetdata = p
+		else:
+			print 'Bad arg for toScope'
+			return
+
+		if presetdata is None:
+			print 'no such preset'
+			return
+
 		## should use AllEMData, but that is not working yet
-		## this is really anoying to deal with IDs
-		scopedata = data.ScopeEMData(('scope',))
-		cameradata = data.CameraEMData(('camera',))
+		scopedata = data.ScopeEMData()
+		cameradata = data.CameraEMData()
 		scopedata.friendly_update(presetdata)
 		cameradata.friendly_update(presetdata)
 		scopedata['id'] = ('scope',)
@@ -184,27 +217,114 @@ class PresetsManager(node.Node):
 	def fromScope(self, name):
 		'''
 		create a new preset with name
-		if a preset by this name alread exists in my 
+		if a preset by this name already exists in my 
 		list of managed presets, it will be replaced by the new one
+		also returns the new preset object
 		'''
 		scopedata = self.researchByDataID(('scope',))
 		cameradata = self.researchByDataID(('camera no image data',))
-
-		presetid = self.ID()
-		newpreset = data.PresetData(presetid)
+		newpreset = data.PresetData()
 		newpreset.friendly_update(scopedata)
 		newpreset.friendly_update(cameradata)
-		newpreset['id'] = presetid
+		newpreset['id'] = None
+		newpreset['session'] = self.session
+		newpreset['name'] = name
+
+		for p in self.presets:
+			if p['name'] == name:
+				self.presets.remove(p)
+				break
+		self.presets.append(newpreset)
+
+		print 'NEWPRESET'
+		print newpreset
+		self.presetToDB(newpreset)
+		print 'inDB'
+		pnames = self.presetNames()
+		print 'PNAMES'
+		print pnames
+		self.uiselectpreset.set(pnames,[0])
+		return newpreset
 
 	def presetNames(self):
+		print 'presetNames, presets'
+		print self.presets
 		names = [p['name'] for p in self.presets]
 		return names
 
+	def uiGetPresets(self):
+		self.getPresetsFromDB()
+		pnames = self.presetNames()
+		print 'uiGetP PNAMES'
+		print pnames
+		self.uiselectpreset.set(pnames, [0])
+
+	def uiToScope(self):
+		sel = self.uiselectpreset.getSelectedValue()
+		if sel:
+			self.toScope(sel[0])
+		else:
+			print 'Select a preset name!'
+
+	def uiSelectedFromScope(self):
+		sel = self.uiselectpreset.getSelectedValue()
+		if sel:
+			newpreset = self.fromScope(sel[0])
+		else:
+			print 'Select a preset name!'
+
+	def uiNewFromScope(self):
+		newname = self.enteredname.get()
+		if newname:
+			newpreset = self.fromScope(newname)
+		else:
+			print 'Enter a preset name!'
+
+	def uiSelectCallback(self, value):
+		print 'VALUE'
+		print value
+		if value:
+			index = value[0]
+			self.current = self.presets[index]
+			d = self.current.toDict(noNone=True)
+			print 'D', d
+			self.presetparams.set(d, callback=False)
+		return value
+
+	def uiParamsCallback(self, value):
+		for key in value:
+			self.current[key] = value[key]
+		if self.current is None:
+			return {}
+		else:
+			self.presetToDB(self.current)
+			return self.current.toDict(noNone=True)
+
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
-		self.uiselectpreset = uidata.UISelectFromList('Preset', [], [], 'r')
-		self.uiGetPresets()
+
+		self.uiselectpreset = uidata.UISelectFromList('Preset', [], [], 'r', callback=self.uiSelectCallback)
+
 		getpresetsmethod = uidata.UIMethod('Get Presets', self.uiGetPresets)
+
+		toscopemethod = uidata.UIMethod('To Scope', self.uiToScope)
+		fromscopemethod = uidata.UIMethod('Selected From Scope', self.uiSelectedFromScope)
+
+		self.enteredname = uidata.UIString('New Name', '', 'rw')
+		newfromscopemethod = uidata.UIMethod('New From Scope', self.uiNewFromScope)
+
+		self.presetparams = uidata.UIStruct('Parameters', {}, 'rw', self.uiParamsCallback)
+		#self.presetparams.set(self.current, callback=False)
+
+
+		container = uidata.UIMediumContainer('Presets Manager')
+		container.addUIObjects((self.uiselectpreset, getpresetsmethod, toscopemethod, fromscopemethod, self.enteredname, newfromscopemethod, self.presetparams))
+		self.uiserver.addUIObject(container)
+
+		return
+
+
+
 		toscopemethod = uidata.UIMethod('To Scope', self.uiRestore)
 		toscopecontainer = uidata.UIContainer('Apply Preset')
 		toscopecontainer.addUIObjects((self.uiselectpreset, getpresetsmethod, toscopemethod))
