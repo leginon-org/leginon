@@ -219,6 +219,11 @@ class SQLDict(object):
 
 	def execute(self):
 	    for key,query in self.queries.items():
+	    	if isinstance(query, data.Data):
+			## if we already have a data instance, then there
+			## is no reason to query for it.
+			self.cursors[key] = query
+			continue
 	    	c = self._cursor()
 		try:
 			# print '-----------------------------------------------'
@@ -238,6 +243,11 @@ class SQLDict(object):
 	def fetchmany(self, size):
 		cursorresults = {}
 		for qikey,cursor in self.cursors.items():
+			## if we already have a data instance, then there
+			## is no reason to query for it.
+			if isinstance(cursor, data.Data):
+				cursorresults[qikey] = cursor
+				continue
 			subfetch = cursor.fetchmany(size)
 			cursorresult = self._format(subfetch, qikey)
 			cursor.close()
@@ -248,6 +258,11 @@ class SQLDict(object):
 	def fetchall(self):
 		cursorresults = {}
 		for qikey,cursor in self.cursors.items():
+			## if we already have a data instance, then there
+			## is no reason to query for it.
+			if isinstance(cursor, data.Data):
+				cursorresults[qikey] = cursor
+				continue
 			subfetch = cursor.fetchall()
 			cursorresult = self._format(subfetch, qikey)
 			cursor.close()
@@ -260,16 +275,24 @@ class SQLDict(object):
 		if not cursorresults:
 			return []
 
-		numrows = len(cursorresults.values()[0])
+		## some cursorresults are actually data.Data instances
+		def test(obj):
+			return not isinstance(obj, data.Data)
+		actualresults = filter(test, cursorresults.values())
+		numrows = len(actualresults[0])
 		all = [{} for i in range(numrows)]
 
 		for i in range(numrows):
 			for qikey, cursorresult in cursorresults.items():
-				if cursorresult:
+				if isinstance(cursorresult, data.Data):
+					## cursorresult was known before query
+					all[i][qikey] = cursorresult
+				elif cursorresult:
+					## cursorresult was fetched from query
 					all[i][qikey] = cursorresult[i]
 				else:
+					## does this case ever happen?
 					all[i][qikey] = None
-
 
 		rootlist = []
                 for d in all:
@@ -346,7 +369,6 @@ class SQLDict(object):
 				if isinstance(target, data.SessionData):
 					imagepath = target['image path']
 			elif isinstance(value, strictdict.FileReference):
-				#needpath.append(key)
 				if self.readimages:
 					needpath.append(key)
 				else:
@@ -762,9 +784,16 @@ def setQueries(in_dict):
 	"""
 	queries = {}
 	for key,value in in_dict.items():
-		if type(value) is type({}):
+		if value['known'] is not None:
+			## If we already have a data instance, then there
+			## is no reason to do a query for it.
+			## To indicate that, just set the query to be
+			## the instance.
+			queries[key] = value['known']
+		elif type(value) is type({}):
 			select = sqlexpr.selectAllFormat(value['alias'])
-			queries[key]="%s %s" % (select, queryFormatOptimized(in_dict,value['alias']))
+			query = queryFormatOptimized(in_dict,value['alias'])
+			queries[key]="%s %s" % (select, query)
 	return queries
 
 def queryFormatOptimized(in_dict,tableselect):
@@ -785,37 +814,47 @@ def queryFormatOptimized(in_dict,tableselect):
 	listselect=[]
 	asdf=[]
 	for key,value in in_dict.items():
-		if type(value) is type({}):
-			c = value['class name']
-			a = value['alias']
-			j = value['join']
-			r = value['root']
-			w = value['where']
+		if value['known']:
+			continue
+		if type(value) is not type({}):
+			continue
+		c = value['class name']
+		a = value['alias']
+		j = value['join']
+		r = value['root']
+		w = value['where']
 
-			if w:
-				if not a in optimizedjoinlist:
-					optimizedjoinlist.append(a)
-				
-			if r:
-				sqlfrom = sqlexpr.fromFormat(c,a)
-				sqlorder = sqlexpr.orderFormat(a)
-			if j:
-				for field,id in j.items():
-					joinTable = in_dict[id]
-					joinfield = join2ref(field, joinTable)
-					fieldname = joinFieldName(a, joinfield)
-					joinonalias = joinTable['alias']
-					alljoinon[joinonalias] = sqlexpr.joinFormat(fieldname, joinTable)
-					joinon[joinonalias]=a
-					onjoin[a]=joinonalias
-					if value['where']:
-						if not a in optimizedjoinlist:
-							optimizedjoinlist.append(a)
-						if not joinonalias in optimizedjoinlist:
-							optimizedjoinlist.append(joinonalias)
+		if r:
+			sqlfrom = sqlexpr.fromFormat(c,a)
+			sqlorder = sqlexpr.orderFormat(a)
+
+		for field,id in j.items():
+			joinTable = in_dict[id]
+			joinfield = join2ref(field, joinTable)
+
+			## if data to join is already known, then
+			## we need to convert the join into a where
+			if in_dict[id]['known'] is not None:
+				defid = in_dict[id]['known'].dbid
+				w[joinfield] = defid
+				continue
+
+			fieldname = joinFieldName(a, joinfield)
+			joinonalias = joinTable['alias']
+			alljoinon[joinonalias] = sqlexpr.joinFormat(fieldname, joinTable)
+			joinon[joinonalias]=a
+			onjoin[a]=joinonalias
+			if not joinonalias in optimizedjoinlist:
+				optimizedjoinlist.append(joinonalias)
+
+		if w:
+			if not a in optimizedjoinlist:
+				optimizedjoinlist.append(a)
+
 			sqlexprstr = sqlexpr.whereFormat(value)
 			if sqlexprstr:
 				sqlwhere.append(sqlexprstr)
+
 	if not tableselect in optimizedjoinlist:
 		optimizedjoinlist.append(tableselect)
 
@@ -1050,6 +1089,7 @@ def saveMRC(object, name, path, filename, thumb=False):
 	k = sep.join(['MRC',name])
 	fullname = leginonconfig.mapPath(os.path.join(path,filename))
 	if object is not None:
+		print 'saving MRC', fullname
 		Mrc.numeric_to_mrc(object, fullname)
 	d[k] = filename
 	return d
