@@ -8,7 +8,6 @@
 import acquisition
 import node, data
 import calibrationclient
-import camerafuncs
 import threading
 import event
 import time
@@ -20,7 +19,6 @@ except:
 import copy
 import gui.wx.Focuser
 import player
-import EM
 
 class Focuser(acquisition.Acquisition):
 	panelclass = gui.wx.Focuser.Panel
@@ -81,30 +79,26 @@ class Focuser(acquisition.Acquisition):
 	def eucentricFocusToScope(self):
 		errstr = 'Eucentric focus to instrument failed: %s'
 		try:
-			scope = self.emclient.getScope()
-		except EM.ScopeUnavailable, e:
+			ht = self.instrument.tem.HighTension
+			mag = self.instrument.tem.Magnification
+		except:
 			self.logger.error(errstr % 'unable to access instrument')
 			return
-		ht = scope['high tension']
-		mag = scope['magnification']
 		eufoc = self.euclient.researchEucentricFocus(ht, mag)
 		if eufoc is None:
 			self.logger.error('No eucentric focus found for HT: %s and Mag.: %s' % (ht, mag))
 		else:
-			eufoc = eufoc['focus']
-			emdata = data.ScopeEMData(focus=eufoc)
-			self.emclient.setScope(emdata)
+			self.instrument.tem.Focus = eufoc
 
 	def eucentricFocusFromScope(self):
 		errstr = 'Eucentric focus from instrument failed: %s'
 		try:
-			scope = self.emclient.getScope()
-		except EM.ScopeUnavailable, e:
+			ht = self.instrument.tem.HighTension
+			mag = self.instrument.tem.Magnification
+			foc = self.instrument.tem.Focus
+		except:
 			self.logger.error(errstr % 'unable to access instrument')
 			return
-		ht = scope['high tension']
-		mag = scope['magnification']
-		foc = scope['focus']
 		try:
 			self.euclient.publishEucentricFocus(ht, mag, foc)
 		except node.PublishError, e:
@@ -145,9 +139,8 @@ class Focuser(acquisition.Acquisition):
 		### report the current focus and defocus values
 		self.logger.info('Before autofocus...')
 		try:
-			scope = self.emclient.getScope()
-			defoc = scope['defocus']
-			foc = scope['focus']
+			defoc = self.instrument.tem.Defocus
+			foc = self.instrument.tem.Focus
 			self.logger.info('Defocus: %s, Focus: %s' % (defoc, foc))
 		except Exception, e:
 			self.logger.exception('Autofocus failed: %s' % e)
@@ -229,7 +222,7 @@ class Focuser(acquisition.Acquisition):
 			self.logger.info('Target attempt %s, not melting' % (attempt,))
 		elif melt_time:
 			melt_time_ms = int(round(melt_time * 1000))
-			camstate0 = self.cam.getCameraEMData()
+			camstate0 = self.instrument.getData(data.CameraEMData)
 			camstate1 = copy.copy(camstate0)
 			camstate1['exposure time'] = melt_time_ms
 			## make small image
@@ -239,13 +232,13 @@ class Focuser(acquisition.Acquisition):
 			camstate1['dimension'] = {'x':dim,'y':dim}
 			camstate1['binning'] = {'x':bin,'y':bin}
 			camstate1['offset'] = {'x':0,'y':0}
-			self.cam.setCameraEMData(camstate1)
+			self.instrument.setData(camstate1)
 
 			self.logger.info('Melting for %s seconds...' % (melt_time,))
-			self.cam.acquireCameraImageData(correction=False)
+			self.instrument.ccdcamera.getImage()
 			self.logger.info('Done melting, resetting camera')
 
-			self.cam.setCameraEMData(camstate0)
+			self.instrument.setData(camstate0)
 
 		status = 'unknown'
 
@@ -360,7 +353,11 @@ class Focuser(acquisition.Acquisition):
 			self.logger.debug('Correct image %s' % cor)
 			self.manualchecklock.acquire()
 			try:
-				imagedata = self.cam.acquireCameraImageData(correction=cor)
+				if correction:
+					dataclass = data.CorrectedCameraImageData
+				else:
+					dataclass = data.CameraImageData
+				imagedata = self.instrument.getData(dataclass)
 			finally:
 				self.manualchecklock.release()
 			try:
@@ -397,14 +394,10 @@ class Focuser(acquisition.Acquisition):
 
 	def resetDefocus(self):
 		errstr = 'Reset defocus failed: %s'
-		newemdata = data.ScopeEMData()
-		newemdata['reset defocus'] = True
 		try:
-			self.emclient.setScope(newemdata)
-		except node.PublishError, e:
+			self.instrument.tem.resetDefocus()
+		except:
 			self.logger.error(errstr % 'unable to access instrument')
-		except node.ConfirmationNoBinding, e:
-			self.logger.error(errstr % 'unable to access instrument (not bound)')
 
 	def uiChangeToEucentric(self):
 		self.manualchecklock.acquire()
@@ -424,17 +417,10 @@ class Focuser(acquisition.Acquisition):
 		self.manualchecklock.acquire()
 		self.logger.info('Changing to zero defocus')
 		try:
-			newemdata = data.ScopeEMData()
 			if self.parameter == 'Stage Z':
-				newemdata['stage position'] = {'z': value}
+				self.instrument.tem.StagePosition = {'z': value}
 			elif self.parameter == 'Defocus':
-				newemdata['defocus'] = value
-			try:
-				self.emclient.setScope(newemdata)
-			except node.PublishError, e:
-				self.logger.error(errstr % 'unable to access instrument')
-			except node.ConfirmationNoBinding, e:
-				self.logger.error(errstr % 'unable to access instrument (not bound)')
+				self.instrument.tem.Defocus = value
 		finally:
 			self.manualchecklock.release()
 			self.panel.manualUpdated()
@@ -444,26 +430,19 @@ class Focuser(acquisition.Acquisition):
 		self.manualchecklock.acquire()
 		self.logger.info('Changing %s %s %s' % (self.parameter, direction, delta))
 		try:
-			scope = self.emclient.getScope()
 			if self.parameter == 'Stage Z':
-				value = scope['stage position']['z']
+				value = self.instrument.tem.StagePosition['z']
 			elif self.parameter == 'Defocus':
-				value = scope['defocus']
+				value = self.instrument.tem.Defocus
 			if direction == 'up':
 				value += delta
 			elif direction == 'down':
 				value -= delta
 			
-			newemdata = data.ScopeEMData()
 			if self.parameter == 'Stage Z':
-				newemdata['stage position'] = {'z':value}
+				self.instrument.tem.StagePosition = {'z': value}
 			elif self.parameter == 'Defocus':
-				newemdata['defocus'] = value
-			self.emclient.setScope(newemdata)
-		except EM.ScopeUnavailable, e:
-			self.logger.error('Change focus failed: unable to access instrument')
-			self.manualchecklock.release()
-			return
+				self.instrument.tem.Defocus = value
 		except Exception, e:
 			self.logger.exception('Change focus failed: %s' % e)
 			self.manualchecklock.release()
@@ -474,27 +453,25 @@ class Focuser(acquisition.Acquisition):
 		self.logger.info('Changed %s %s %s' % (self.parameter, direction, delta,))
 
 	def correctStig(self, deltax, deltay):
-		stig = self.emclient.getScope()['stigmator']
+		stig = self.instrument.tem.Stigmator
 		stig['objective']['x'] += deltax
 		stig['objective']['y'] += deltay
-		emdata = data.ScopeEMData(stigmator=stig)
 		self.logger.info('Correcting stig by %s, %s' % (deltax, deltay))
-		self.emclient.setScope(emdata)
+		self.instrument.tem.Stigmator = stig
 
 	def correctDefocus(self, delta):
-		defocus = self.emclient.getScope()['defocus']
+		defocus = self.instrument.tem.Defocus
 		self.logger.info('Defocus before applying correction %s' % defocus)
 		defocus += delta
-		emdata = data.ScopeEMData(defocus=defocus)
-		emdata['reset defocus'] = 1
 		self.logger.info('Correcting defocus by %s' % (delta,))
-		self.emclient.setScope(emdata)
+		self.instrument.tem.Defocus = defocus
+		self.instrument.tem.resetDefocus()
 
 	def correctZ(self, delta):
 		if not self.eucset:
 			self.logger.warning('Eucentric focus was not set before measuring defocus because \'Stage Z\' was not selected then, but is now. Skipping Z correction.')
 			return
-		stage = self.emclient.getScope()['stage position']
+		stage = self.instrument.tem.StagePosition
 		alpha = stage['a']
 		deltaz = delta * Numeric.cos(alpha)
 		newz = stage['z'] + deltaz
@@ -502,7 +479,7 @@ class Focuser(acquisition.Acquisition):
 		newstage['reset defocus'] = 1
 		emdata = data.ScopeEMData(initializer=newstage)
 		self.logger.info('Correcting stage Z by %s (defocus change %s at alpha %s)' % (deltaz,delta,alpha))
-		self.emclient.setScope(emdata)
+		self.instrument.setData(emdata)
 		### this is to notify DriftManager that it is responsible
 		### for updating the X,Y side effect of changing Z
 		if self.settings['drift on z']:

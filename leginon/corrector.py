@@ -18,7 +18,6 @@ try:
 except:
 	import Numeric
 import threading
-import EM
 import gui.wx.Corrector
 import remotecall
 import instrument
@@ -37,8 +36,10 @@ class ImageCorrection(remotecall.Object):
 		self.node = node
 
 	def getImage(self, ccdcameraname=None):
-		if ccdcameraname is not None:
-			self.instrument.setCCDCamera(ccdcameraname)
+		return self.node.acquireCorrectedImage()
+
+	def getImageData(self, ccdcameraname=None):
+		return self.node.acquireCorrectedImageData()
 
 class Corrector(node.Node):
 	'''
@@ -62,22 +63,21 @@ class Corrector(node.Node):
 		'despike threshold': 3.5,
 		'camera settings': None,
 	}
-	eventinputs = node.Node.eventinputs + EM.EMClient.eventinputs
-	eventoutputs = node.Node.eventoutputs + [event.DarkImagePublishEvent, event.BrightImagePublishEvent] + EM.EMClient.eventoutputs
+	eventinputs = node.Node.eventinputs
+	eventoutputs = node.Node.eventoutputs + [event.DarkImagePublishEvent, event.BrightImagePublishEvent]
 	def __init__(self, name, session, managerlocation, **kwargs):
 		node.Node.__init__(self, name, session, managerlocation, **kwargs)
 
-		self.emclient = EM.EMClient(self)
+		self.ref_cache = {}
+		self.plan = None
 
 		self.instrument = instrument.Proxy(self.objectservice)
-
-		self.ref_cache = {}
+		self.correctionobject = ImageCorrection(self)
+		self.objectservice._addObject('Image Correction', self.correctionobject)
 
 		self.imagedata = data.DataHandler(data.CorrectedCameraImageData,
 																			getdata=self.acquireCorrectedImageData)
 		self.publish(self.imagedata, pubevent=True, broadcast=True)
-
-		self.plan = None
 
 		self.start()
 

@@ -10,7 +10,7 @@ import node, event, data
 import presets
 import calibrationclient
 import math
-import EM
+import instrument
 import targethandler
 import gui.wx.MosaicTargetMaker
 import gui.wx.Node
@@ -40,12 +40,12 @@ def sortTargets(targets, start=None):
 	return targets
 
 class TargetMaker(node.Node, targethandler.TargetHandler):
-	eventinputs = node.Node.eventinputs + targethandler.TargetHandler.eventinputs + EM.EMClient.eventinputs
-	eventoutputs = node.Node.eventoutputs + targethandler.TargetHandler.eventoutputs + EM.EMClient.eventoutputs
+	eventinputs = node.Node.eventinputs + targethandler.TargetHandler.eventinputs
+	eventoutputs = node.Node.eventoutputs + targethandler.TargetHandler.eventoutputs
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.targetlist = []
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
-		self.emclient = EM.EMClient(self)
+		self.instrument = instrument.Proxy(self.objectservice)
 
 class MosaicTargetMaker(TargetMaker):
 	panelclass = gui.wx.MosaicTargetMaker.Panel
@@ -111,16 +111,16 @@ class MosaicTargetMaker(TargetMaker):
 		return radius, overlap
 
 	def getState(self):
-		self.logger.debug('Getting current EM state...')
+		self.logger.debug('Getting current instrument state...')
 		try:
-			scope = self.emclient.getScope()
-		except EM.ScopeUnavailable:
+			scope = self.instrument.getData(data.ScopeEMData)
+		except:
 			raise AtlasError('unable to access microscope')
 		try:
-			camera = self.emclient.getCamera()
-		except EM.CameraUnavailable:
+			camera = self.instrument.getData(data.CameraEMData, image=False)
+		except:
 			raise AtlasError('unable to access camera')
-		self.logger.debug('Get current EM state completed')
+		self.logger.debug('Get current instrument state completed')
 		return scope, camera
 
 	def getAlpha(self, scope):

@@ -13,9 +13,9 @@ import event
 import threading
 import emailnotification
 import project
-import EM
 import Image
 import gui.wx.Robot
+import instrument
 
 # ...
 def seconds2str(seconds):
@@ -91,9 +91,6 @@ class GridLoadException(GridException):
 class GridUnloadException(GridException):
 	pass
 
-class ScopeException(Exception):
-	pass
-
 def validateGridNumber(gridnumber):
 	if gridnumber >= 1 and gridnumber <= 96:
 		return True
@@ -101,15 +98,21 @@ def validateGridNumber(gridnumber):
 		return False
 
 class RobotNode(node.Node):
-	eventinputs = node.Node.eventinputs + EM.EMClient.eventinputs
-	eventoutputs = node.Node.eventoutputs + EM.EMClient.eventoutputs
+	eventinputs = node.Node.eventinputs
+	eventoutputs = node.Node.eventoutputs
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.abort = False
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
-		self.emclient = EM.EMClient(self)
+		self.instrument = instrument.Proxy(self.objectservice)
 
 	def waitScope(self, parameter, value, interval=-1.0, timeout=0.0):
-		parametervalue = self.getScope(parameter)
+		if self.instrument.tem.hasAttribute(parameter):
+			o = self.instrument.tem
+		elif self.instrument.ccdcamera.hasAttribute(parameter):
+			o = self.instrument.ccdcamera
+		else:
+			raise ValueError('invalid parameter')
+		parametervalue = getattr(o, parameter)
 		elapsed = 0.0
 		if interval >= 0.0:
 			while parametervalue != value:
@@ -118,25 +121,10 @@ class RobotNode(node.Node):
 					elapsed += interval
 					if elapsed > timeout:
 						raise ScopeException('parameter is not set to value')
-				parametervalue = self.getScope(parameter)
+				parametervalue = getattr(o, parameter)
 		else:
 			if parametervalue != value:
-				raise ScopeException('parameter is not set to value')
-
-	def getScope(self, key):
-		parameterdata = self.emclient.getScope(key)
-		if parameterdata is None:
-			raise ScopeException('cannot get parameter value')
-		self.logger.info('Get scope %s, %s' % (key, parameterdata))
-		return parameterdata
-
-	def setScope(self, key, value):
-		scopedata = data.ScopeEMData()
-		scopedata[key] = value
-		try:
-			self.emclient.setScope(scopedata)
-		except:
-			raise ScopeException('cannot set parameter to value')
+				raise ValueError('parameter is not set to value')
 
 class Request(object):
 	def __init__(self):
@@ -226,48 +214,48 @@ class RobotControl(RobotNode):
 
 	def zeroStage(self):
 		self.logger.info('Zeroing stage position')
-		self.setScope('stage position', {'x': 0.0, 'y': 0.0, 'z': 0.0, 'a': 0.0})
+		self.instrument.tem.StagePosition = {'x': 0.0, 'y': 0.0, 'z': 0.0, 'a': 0.0}
 		self.logger.info('Stage position is zeroed')
 
 	def holderNotInScope(self):
 		self.logger.info('Verifying there is no holder inserted')
-		self.waitScope('holder status', 'not inserted')
+		self.waitScope('HolderStatus', 'not inserted')
 		self.logger.info('No holder currently inserted')
 
 	def holderInScope(self):
 		self.logger.info('Verifying holder is inserted')
-		self.waitScope('holder status', 'inserted')
+		self.waitScope('HolderStatus', 'inserted')
 		self.logger.info('No holder currently inserted')
 
 	def vacuumReady(self):
 		self.logger.info('Verifying vacuum is ready')
-		self.waitScope('vacuum status', 'ready', 0.5, 600)
+		self.waitScope('VacuumStatus', 'ready', 0.5, 600)
 		self.logger.info('Vacuum is ready')
 
 	def closeColumnValves(self):
 		self.logger.info('Closing column valves')
-		self.setScope('column valves', 'closed')
+		self.instrument.tem.ColumnValves = 'closed'
 		self.logger.info('Verifying column valves are closed')
-		self.waitScope('column valves', 'closed', 0.5, 15)
+		self.waitScope('ColumnValves', 'closed', 0.5, 15)
 		self.logger.info('Column valves are closed')
 
 	def turboPumpOn(self):
 		self.logger.info('Turning on turbo pump')
-		self.setScope('turbo pump', 'on')
+		self.instrument.tem.TurboPump = 'on'
 		self.logger.info('Verifying turbo pump is on')
-		self.waitScope('turbo pump', 'on', 0.5, 300)
+		self.waitScope('TurboPump', 'on', 0.5, 300)
 		self.logger.info('Turbo pump is on')
 
 	def stageReady(self):
 		self.logger.info('Waiting for stage to be ready')
-		self.waitScope('stage status', 'ready', 0.5, 600)
+		self.waitScope('StageStatus', 'ready', 0.5, 600)
 		self.logger.info('Stage is ready')
 
 	def setHolderType(self):
 		self.logger.info('Setting holder type to single tilt')
-		self.setScope('holder type', 'single tilt')
+		self.instrument.tem.HolderType = 'single tilt'
 		self.logger.info('Verifying holder type is set to single tilt')
-		self.waitScope('holder type', 'single tilt', 0.5, 60)
+		self.waitScope('HolderType', 'single tilt', 0.5, 60)
 		self.logger.info('Holder type is set to single tilt')
 
 	def scopeReadyForInsertion1(self):
@@ -499,16 +487,18 @@ class RobotControl(RobotNode):
 
 		try:
 			self.scopeReadyForInsertion1()
-		except ScopeException:
+		except Exception, e:
 			#self.insertmethod.enable()
+			self.logger.error('Failed to get scope ready for insertion 1: %s' % e)
 			return
 		self.signalRobotToInsert1()
 		self.waitForRobotToInsert1()
 
 		try:
 			self.scopeReadyForInsertion2()
-		except ScopeException:
+		except Exception, e:
 			#self.insertmethod.enable()
+			self.logger.error('Failed to get scope ready for insertion 2: %s' % e)
 			return
 		self.signalRobotToInsert2()
 		self.waitForRobotToInsert2()
@@ -527,7 +517,8 @@ class RobotControl(RobotNode):
 		self.robotReadyForExtraction()
 		try:
 			self.scopeReadyForExtraction()
-		except ScopeException:
+		except Exception, e:
+			self.logger.error('Failed to get scope ready for extraction: %s' % e)
 			return
 		self.signalRobotToExtract()
 		self.waitForRobotToExtract()
@@ -631,32 +622,30 @@ class RobotNotification(RobotNode):
 
 		self.logger.info('Grid inserted (event received)')
 
+		self.logger.info('Turning off turbo pump')
+		self.instrument.tem.TurboPump = 'off'
+
 		self.logger.info('Checking vacuum')
-		self.waitScope('vacuum status', 'ready', 0.5, 600)
+		self.waitScope('VacuumStatus', 'ready', 0.5, 600)
 		self.logger.info('Vacuum ready')
 
 		self.logger.info('Checking column pressure')
-		while self.getScope('column pressure') > 3.5e-5:
-			time.sleep(2.0)
+		while self.instrument.tem.ColumnPressure > 3.5e-5:
+			time.sleep(0.1)
 		self.logger.info('Column pressure ready')
 
 		self.logger.info('Opening column valves')
 		time.sleep(5.0)
-		self.setScope('column valves', 'open')
+		self.instrument.tem.ColumnValves = 'open'
 		self.logger.info('Column valves open')
 
-		'''
-		self.logger.info('Checking camera is retracted')
-		self.waitScope('inserted', False, 0.5, 60)
-		self.logger.info('Camera is retracted')
+		if self.instrument.ccdcamrea.hasAttribute('Inserted'):
+			self.logger.info('Inserting camera')
+			self.instrument.ccdcamera.Inserted = True
 
-		self.logger.info('Inserting camera')
-		self.setScope('inserted', True)
-
-		self.logger.info('Checking camera is inserted')
-		self.waitScope('inserted', True, 0.5, 600)
-		self.logger.info('Camera is inserted')
-		'''
+			self.logger.info('Checking camera is inserted')
+			self.waitScope('Inserted', True, 0.5, 600)
+			self.logger.info('Camera is inserted')
 
 		self.logger.info('Outputting data collection event')
 		evt = event.MakeTargetListEvent()
@@ -675,21 +664,20 @@ class RobotNotification(RobotNode):
 		self.logger.info('Data collection finished (event received)')
 
 		self.logger.info('Zeroing stage position')
-		self.setScope('stage position', {'x': 0.0, 'y': 0.0, 'z': 0.0, 'a': 0.0})
+		self.instrument.tem.StagePosition = {'x': 0.0, 'y': 0.0, 'z': 0.0, 'a': 0.0}
 		self.logger.info('Stage position zeroed')
 
 		self.logger.info('Closing column valves')
-		self.setScope('column valves', 'closed')
+		self.instrument.tem.ColumnValves = 'closed'
 		self.logger.info('Column valves closed')
 
-		'''
-		self.logger.info('Retracting camera')
-		self.setScope('inserted', False)
+		if self.instrument.ccdcamrea.hasAttribute('Inserted'):
+			self.logger.info('Retracting camera')
+			self.instrument.ccdcamera.Inserted = False
 
-		self.logger.info('Checking camera is retracted')
-		self.waitScope('inserted', False, 0.5, 600)
-		self.logger.info('Camera is retracted')
-		'''
+			self.logger.info('Checking camera is retracted')
+			self.waitScope('Inserted', False, 0.5, 600)
+			self.logger.info('Camera is retracted')
 
 		self.logger.info('Outputting grid extract event')
 		self.outputEvent(event.ExtractGridEvent())

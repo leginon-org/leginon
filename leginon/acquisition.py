@@ -14,12 +14,11 @@ import targetwatcher
 import time
 import data, event
 import calibrationclient
-import camerafuncs
 import presets
 import copy
 import threading
 import node
-import EM
+import instrument
 import imagefun
 import gui.wx.Acquisition
 import gui.wx.Presets
@@ -57,8 +56,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
 								+ [event.DriftDoneEvent,
 										event.ImageProcessDoneEvent] \
-								+ presets.PresetsClient.eventinputs \
-								+ EM.EMClient.eventinputs
+								+ presets.PresetsClient.eventinputs
 	eventoutputs = targetwatcher.TargetWatcher.eventoutputs \
 									+ [event.LockEvent,
 											event.UnlockEvent,
@@ -66,8 +64,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 										
 	event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent,
 											event.DriftDetectedEvent, event.DriftDeclaredEvent,
-											event.ImageListPublishEvent, event.DriftWatchEvent] \
-									+ EM.EMClient.eventoutputs
+											event.ImageListPublishEvent, event.DriftWatchEvent]
 
 	def __init__(self, id, session, managerlocation, target_types=('acquisition',), **kwargs):
 
@@ -76,8 +73,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.addEventInput(event.DriftDoneEvent, self.handleDriftDone)
 		self.addEventInput(event.ImageProcessDoneEvent, self.handleImageProcessDone)
 		self.driftdone = threading.Event()
-		self.emclient = EM.EMClient(self)
-		self.cam = camerafuncs.CameraFuncs(self)
+		self.instrument = instrument.Proxy(self.objectservice)
 
 		self.calclients = newdict.OrderedDict()
 		self.calclients['image shift'] = calibrationclient.ImageShiftCalibrationClient(self)
@@ -307,8 +303,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 	def acquireFilm(self, presetdata, target=None, emtarget=None):
 		## get current film parameters
-		scopebefore = self.emclient.getScope()
-		stock = scopebefore['film stock']
+		stock = self.instrument.tem.FilmStock
 		if stock < 1:
 			self.logger.error('Film stock = %s. Film exposure failed' % (stock,))
 			return
@@ -320,31 +315,24 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## film text
 		self.setImageFilename(filmdata)
 
-		## set film parameters
-		request = data.ScopeEMData()
 		## first three of user name
-		request['film user code'] = self.session['user']['name'][:3]
+		self.instrument.tem.FilmUserCode = self.session['user']['name'][:3]
 		## like filename in regular acquisition (limit 96 chars)
-		request['film text'] = str(filmdata['filename'])
-		request['film date type'] = 'YY.MM.DD'
-		self.emclient.setScope(request)
+		self.instrument.tem.FilmText = str(filmdata['filename'])
+		self.instrument.tem.FilmDateType = 'YY.MM.DD'
 
 		## get scope for database
-		scopebefore = self.emclient.getScope()
+		scopebefore = self.instrument.getData(data.ScopeEMData)
 		filmdata['scope'] = scopebefore
 
 		## insert film
-		request = data.ScopeEMData()
-		request['pre film exposure'] = True
-		self.emclient.setScope(request)
+		self.instrument.tem.preFilmExposure()
 
 		# expose film
-		self.emclient.getImage()
+		self.instrument.ccdcamera.getImage()
 
 		## take out film
-		request = data.ScopeEMData()
-		request['post film exposure'] = True
-		self.emclient.setScope(request)
+		self.instrument.tem.postFilmExposure()
 
 		## record in database
 		self.publish(filmdata, pubevent=True, database=self.settings['save image'])
@@ -357,12 +345,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 		imagedata = None
 		correctimage = self.settings['correct image']
 		try:
-			try:
-				imagedata = self.cam.acquireCameraImageData(correction=correctimage)
-			except node.ResearchError:
-				self.logger.error('Cannot access EM node to acquire image')
-		except camerafuncs.NoCorrectorError:
-			self.logger.error('Cannot access Corrector node to correct image')
+			if correctimage:
+				dataclass = data.CorrectedCameraImageData
+			else:
+				dataclass = data.CameraImageData
+			imagedata = self.instrument.getData(dataclass)
+		except:
+			self.logger.error('Cannot access instrument')
 		if imagedata is None:
 			return 'fail'
 

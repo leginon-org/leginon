@@ -10,7 +10,6 @@
 
 import watcher
 import event, data
-import camerafuncs
 import correlator
 import peakfinder
 import calibrationclient
@@ -24,6 +23,7 @@ import presets
 import copy
 import EM
 import gui.wx.DriftManager
+import instrument
 
 class DriftManager(watcher.Watcher):
 	panelclass = gui.wx.DriftManager.Panel
@@ -50,8 +50,8 @@ class DriftManager(watcher.Watcher):
 				}
 			),
 	}
-	eventinputs = watcher.Watcher.eventinputs + [event.DriftDetectedEvent, event.DriftDeclaredEvent, event.NeedTargetShiftEvent, event.DriftWatchEvent] + EM.EMClient.eventinputs
-	eventoutputs = watcher.Watcher.eventoutputs + [event.DriftDoneEvent, event.ImageTargetShiftPublishEvent, event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent] + EM.EMClient.eventoutputs
+	eventinputs = watcher.Watcher.eventinputs + [event.DriftDetectedEvent, event.DriftDeclaredEvent, event.NeedTargetShiftEvent, event.DriftWatchEvent]
+	eventoutputs = watcher.Watcher.eventoutputs + [event.DriftDoneEvent, event.ImageTargetShiftPublishEvent, event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent]
 	def __init__(self, id, session, managerlocation, **kwargs):
 		watchfor = [event.DriftDetectedEvent]
 		watcher.Watcher.__init__(self, id, session, managerlocation, watchfor, **kwargs)
@@ -66,8 +66,7 @@ class DriftManager(watcher.Watcher):
 
 		self.correlator = correlator.Correlator()
 		self.peakfinder = peakfinder.PeakFinder()
-		self.emclient = EM.EMClient(self)
-		self.cam = camerafuncs.CameraFuncs(self)
+		self.instrument = instrument.Proxy(self.objectservice)
 		self.pixsizeclient = calibrationclient.PixelSizeCalibrationClient(self)
 		self.presetsclient = presets.PresetsClient(self)
 		self.addEventInput(event.NeedTargetShiftEvent, self.handleNeedShift)
@@ -143,7 +142,7 @@ class DriftManager(watcher.Watcher):
 		self.references[label] = {'imageid': imageid, 'image': imagedata, 'shift': {}, 'emtarget': driftwatchevent['presettarget']['emtarget'], 'preset': driftwatchevent['presettarget']['preset']}
 
 	def uiMonitorDrift(self):
-		self.cam.setCameraDict(self.settings['camera settings'])
+		self.instrument.ccdcamera.Settings = self.settings['camera settings']
 		## calls monitorDrift in a new thread
 		t = threading.Thread(target=self.monitorDrift)
 		t.setDaemon(1)
@@ -194,7 +193,7 @@ class DriftManager(watcher.Watcher):
 		self.publish(dat, pubevent=True)
 
 	def acquireImage(self):
-		imagedata = self.cam.acquireCameraImageData()
+		imagedata = self.instrument.getData(data.CorrectedCameraImageData)
 		if imagedata is not None:
 			self.setImage(imagedata['image'])
 		return imagedata
@@ -257,10 +256,6 @@ class DriftManager(watcher.Watcher):
 	def abort(self):
 		self.abortevent.set()
 
-	def getMag(self):
-		mag = self.emclient.getScope()['magnification']
-		return mag
-
 	def peak2shift(self, peak, shape):
 		shift = list(peak)
 		half = shape[0] / 2, shape[1] / 2
@@ -272,8 +267,8 @@ class DriftManager(watcher.Watcher):
 
 	def measureDrift(self):
 		## configure camera
-		self.cam.setCameraDict(self.settings['camera settings'])
-		mag = self.getMag()
+		self.instrument.ccdcamera.Settings = self.settings['camera settings']
+		mag = self.instrument.tem.Magnification
 		pixsize = self.pixsizeclient.retrievePixelSize(mag)
 		self.logger.info('Pixel size %s' % (pixsize,))
 

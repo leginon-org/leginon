@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.12 $
+# $Revision: 1.13 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-24 01:21:57 $
+# $Date: 2005-02-24 07:44:48 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -18,8 +18,10 @@ class Proxy(object):
 	def __init__(self, objectservice):
 		self.tems = {}
 		self.ccdcameras = {}
+		self.imagecorrections = {}
 		self.tem = None
 		self.ccdcamera = None
+		self.imagecorrection = None
 		self.objectservice = objectservice
 		self.objectservice._addDescriptionHandler(add=self.onAddDescription,
 																							remove=self.onRemoveDescription)
@@ -37,6 +39,12 @@ class Proxy(object):
 			if self.ccdcamera is None:
 				self.setCCDCamera(name)
 
+		if 'ImageCorrection' in types:
+			proxy = self.objectservice.getObjectProxy(nodename, name)
+			self.imagecorrections[name] = proxy
+			if self.imagecorrection is None:
+				self.setImageCorrection(name)
+
 	def onRemoveDescription(self, nodename, name):
 		if name in self.tems and self.tem is self.tems[name]:
 			self.tem = None
@@ -44,11 +52,18 @@ class Proxy(object):
 		if name in self.ccdcameras and self.ccdcamera is self.ccdcameras[name]:
 			self.ccdcamera = None
 
+		if name in self.imagecorrections
+			if self.imagecorrection is self.imagecorrections[name]:
+				self.imagecorrection = None
+
 	def getTEMNames(self):
 		return self.tems.keys()
 
 	def getCCDCameraNames(self):
 		return self.ccdcameras.keys()
+
+	def getImageCorrectionNames(self):
+		return self.imagecorrections.keys()
 
 	def setTEM(self, name):
 		if name is None:
@@ -62,7 +77,13 @@ class Proxy(object):
 		else:
 			self.ccdcamera = self.ccdcameras[name]
 
-	def getData(self, dataclass):
+	def setImageCorrection(self, name):
+		if name is None:
+			self.imagecorrection = None
+		else:
+			self.imagecorrection = self.imagecorrections[name]
+
+	def getData(self, dataclass, image=True):
 		if issubclass(dataclass, data.ScopeEMData):
 			proxy = self.tem
 		elif issubclass(dataclass, data.CameraEMData):
@@ -70,10 +91,15 @@ class Proxy(object):
 		elif issubclass(dataclass, data.CameraImageData):
 			instance = dataclass()
 			instance['scope'] = self.getData(data.ScopeEMData)
-			instance['camera'] = self.getData(data.CameraEMData)
-			instance['image'] = instance['camera']['image data']
-			instance['camera']['image data'] = None
+			instance['camera'] = self.getData(data.CameraEMData, image=image)
+			if image:
+				instance['image'] = instance['camera']['image data']
+				instance['camera']['image data'] = None
 			return instance
+		elif issubclass(dataclass, data.CorrectedCameraImageData):
+			if self.imagecorrection is None:
+				raise RuntimeError('no image correction set')
+			return self.imagecorrection.ImageData
 		if proxy is None:
 			raise ValueError('no proxy selected for this data class')
 		instance = dataclass()
@@ -81,6 +107,8 @@ class Proxy(object):
 		attributes = []
 		types = []
 		for key, attribute in parametermapping:
+			if not image and attribute == 'Image':
+				continue
 			if key not in instance:
 				continue
 			attributetypes = proxy.getAttributeTypes(attribute)

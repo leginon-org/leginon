@@ -10,8 +10,6 @@ import calibrationclient
 import event, data
 import node
 import math
-import EM
-import camerafuncs
 import gui.wx.PixelSizeCalibrator
 
 class PixelSizeCalibrator(calibrator.Calibrator):

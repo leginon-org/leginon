@@ -108,6 +108,5 @@ registerNodeClass('fftmaker', 'FFTMaker', 'Pipeline')
 #registerNodeClass('webcam', 'Webcam', 'Utility')
 
 # depreciated
-#registerNodeClass('imviewer', 'ImViewer')
 #registerNodeClass('simpleacquisition', 'SimpleAcquisition', 'Pipeline')
 

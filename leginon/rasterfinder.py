@@ -11,7 +11,6 @@
 import data
 import targetfinder
 import Mrc
-import camerafuncs
 import threading
 import ice
 try:
@@ -45,7 +44,6 @@ class RasterFinder(targetfinder.TargetFinder):
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		targetfinder.TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
-		#self.cam = camerafuncs.CameraFuncs(self)
 		self.icecalc = ice.IceCalculator()
 		self.rasterpoints = None
 
@@ -64,15 +62,6 @@ class RasterFinder(targetfinder.TargetFinder):
 		orig = Mrc.mrc_to_numeric(filename)
 		self.original = orig
 		self.setImage(orig, 'Original')
-
-	'''
-	def acqImage(self):
-		self.cam.setCameraDict(self.settings['camera settings'])
-		imdata = self.cam.acquireCameraImageData()
-		orig = imdata['image']
-		self.original = orig
-		self.setImage(orig, 'Original')
-	'''
 
 	def transpose_points(self, points):
 		newpoints = []

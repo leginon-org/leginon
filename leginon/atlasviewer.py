@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/atlasviewer.py,v $
-# $Revision: 1.6 $
+# $Revision: 1.7 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-14 21:23:27 $
+# $Date: 2005-02-24 07:44:46 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -15,11 +15,10 @@ import math
 import numarray
 import align
 import data
-import EM
+import instrument
 import node
 import presets
 import calibrationclient
-import camerafuncs
 import targethandler
 import gui.wx.AtlasViewer
 
@@ -161,8 +160,7 @@ class AtlasViewer(node.Node, targethandler.TargetWaitHandler):
 
 		targethandler.TargetWaitHandler.__init__(self)
 
-		self.emclient = EM.EMClient(self)
-		self.cameraclient = camerafuncs.CameraFuncs(self)
+		self.instrument = instrument.Proxy(self.objectservice)
 		self.presetsclient = presets.PresetsClient(self)
 
 		calibrationclients = {
@@ -349,13 +347,13 @@ class AtlasViewer(node.Node, targethandler.TargetWaitHandler):
 						targetlist = self.newTargetList()
 
 						try:
-							scope = self.emclient.getScope()
-						except EM.ScopeUnavailable:
+							scope = self.instrument.getData(data.ScopeEMData)
+						except:
 							self.logger.warning('Failed to access microscope, continuing')
 							continue
 						try:
-							camera = self.emclient.getCamera()
-						except EM.CameraUnavailable:
+							camera = self.instrument.getData(data.CameraEMData, image=False)
+						except:
 							self.logger.warning('Failed to access camera, continuing')
 							continue
 
@@ -431,11 +429,9 @@ class AtlasViewer(node.Node, targethandler.TargetWaitHandler):
 
 		errorstring = 'Image acqisition failed: %s'
 		try:
-			imagedata = self.cameraclient.acquireCameraImageData(correction=True)
-		except node.ResearchError:
-			self.logger.error(errorstring % 'cannot access instrument')
-		except camerafuncs.NoCorrectorError:
-			self.logger.error(errorstring % 'cannot access corrector')
+			imagedata = self.instrument.getData(data.CameraImageData)
+		except:
+			self.logger.error(errorstring % 'cannot acquire image')
 		if imagedata is None:
 			return None
 

@@ -12,10 +12,10 @@ import data
 import targetfinder
 import holefinderback
 import Mrc
-import camerafuncs
 import newdict
 import threading
 import ice
+import instrument
 try:
 	import numarray as Numeric
 except:
@@ -69,8 +69,8 @@ class HoleFinder(targetfinder.TargetFinder):
 	def __init__(self, id, session, managerlocation, **kwargs):
 		targetfinder.TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
 		self.hf = holefinderback.HoleFinder()
-		self.cam = camerafuncs.CameraFuncs(self)
 		self.icecalc = ice.IceCalculator()
+		self.instrument = instrument.Proxy(self.objectservice)
 
 		self.images = {
 			'Original': None,
@@ -115,9 +115,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.setImage(orig, 'Original')
 
 	def acqImage(self):
-		self.cam.uiApplyAsNeeded()
-		imdata = self.cam.acquireCameraImageData()
-		orig = imdata['image']
+		orig = self.instrument.imagecorrection.Image
 		self.hf['original'] = orig
 		self.setImage(orig, 'Original')
 

@@ -10,9 +10,8 @@ import fftengine
 import correlator
 import peakfinder
 import time
-import camerafuncs
-import EM
 import gui.wx.Calibrator
+import instrument
 
 class Calibrator(node.Node):
 	'''
@@ -26,18 +25,15 @@ class Calibrator(node.Node):
 		'camera settings': None,
 		'correlation type': 'cross',
 	}
-	eventinputs = node.Node.eventinputs + EM.EMClient.eventinputs
-	eventoutputs = node.Node.eventoutputs + EM.EMClient.eventoutputs
 	def __init__(self, id, session, managerlocation, **kwargs):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 		self.cortypes = ['cross', 'phase']
-		self.emclient = EM.EMClient(self)
-		self.cam = camerafuncs.CameraFuncs(self)
+		self.instrument = instrument.Proxy(self.objectservice)
 
 	def getMagnification(self):
 		try:
-			scopedata = self.emclient.getScope()
-		except EM.ScopeUnavailable:
+			scopedata = self.instrument.getData(data.ScopeEMData)
+		except:
 			return None, None
 		try:
 			mag = scopedata['magnification']
@@ -51,27 +47,23 @@ class Calibrator(node.Node):
 
 	def getHighTension(self):
 		try:
-			ht = self.emclient.getScope()['high tension']
-		except EM.ScopeUnavailable:
+			ht = self.instrument.tem.HighTension
+		except:
 			return None
 		return ht
 
 	def currentState(self):
 		try:
-			dat = self.emclient.getScope()
-		except EM.ScopeUnavailable:
+			dat = self.instrument.getData(data.ScopeEMData)
+		except:
 			return None
 		return dat
 
 	def acquireImage(self):
 		try:
 			if self.settings['use camera settings']:
-				self.cam.setCameraDict(self.settings['camera settings'])
-			imagedata = self.cam.acquireCameraImageData()
-		except (EM.ScopeUnavailable, camerafuncs.CameraError), e:
-			self.logger.error('Acquisition failed: %s' % e)
-			self.panel.acquisitionDone()
-			return
+				self.instrument.ccdcamera.Settings = self.settings['camera settings']
+			imagedata = self.instrument.getData(data.CorrectedCameraImageData)
 		except Exception, e:
 			self.logger.exception('Acquisition failed: %s' % e)
 			self.panel.acquisitionDone()

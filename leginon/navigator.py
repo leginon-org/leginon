@@ -12,15 +12,14 @@ import node
 import event
 import data
 import time
-import camerafuncs
 import calibrationclient
 import copy
 import correlator
 import peakfinder
 import math
-import EM
 import gui.wx.Navigator
 import newdict
+import instrument
 
 class Navigator(node.Node):
 	panelclass = gui.wx.Navigator.Panel
@@ -50,14 +49,12 @@ class Navigator(node.Node):
 				}
 			),
 	}
-	eventinputs = node.Node.eventinputs + EM.EMClient.eventinputs
-	eventoutputs = node.Node.eventoutputs + [event.CameraImagePublishEvent] \
-									+ EM.EMClient.eventoutputs
+	eventinputs = node.Node.eventinputs
+	eventoutputs = node.Node.eventoutputs + [event.CameraImagePublishEvent]
 
 	def __init__(self, id, session, managerlocation, **kwargs):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
-		self.emclient = EM.EMClient(self)
-		self.cam = camerafuncs.CameraFuncs(self)
+		self.instrument = instrument.Proxy(self.objectservice)
 		self.calclients = newdict.OrderedDict()
 		self.calclients['image shift'] = calibrationclient.ImageShiftCalibrationClient(self)
 		self.calclients['stage position'] = calibrationclient.StageCalibrationClient(self)
@@ -148,7 +145,7 @@ class Navigator(node.Node):
 				newstate = {newmovetype: newstate[newmovetype]}
 		emdat = data.ScopeEMData(initializer=newstate)
 		try:
-			self.emclient.setScope(emdat)
+			self.instrument.setData(emdat)
 		except node.PublishError:
 			self.logger.exception(errstr % 'unable to set instrument')
 			return
@@ -198,13 +195,13 @@ class Navigator(node.Node):
 		errstr = 'Acquire image failed: %s'
 		if self.settings['use camera settings']:
 			try:
-				self.cam.setCameraDict(self.settings['camera settings'])
-			except camerafuncs.CameraError, e:
+				self.instrument.ccdcamera.Settings = self.settings['camera settings']
+			except Exception, e:
 				self.logger.error(errstr % e)
 				return
 		try:
-			imagedata = self.cam.acquireCameraImageData()
-		except camerafuncs.NoCorrectorError:
+			imagedata = self.instrument.getData(data.CorrectedCameraImageData)
+		except:
 			self.logger.error(errstr % 'unable to get corrected image')
 			return
 
@@ -228,8 +225,8 @@ class Navigator(node.Node):
 		'''
 		errstr = 'Location from instrument failed: %s'
 		try:
-			allstagedata = self.emclient.getScope()['stage position']
-		except (EM.ScopeUnavailable, KeyError), e:
+			allstagedata = self.instrument.tem.StagePosition
+		except:
 			self.logger.error(errstr % 'unable to get stage position')
 			return
 		stagedata = {}
@@ -367,14 +364,10 @@ class Navigator(node.Node):
 		if not locdata['xy only']:
 			stagedict['z'] = locdata['z']
 			stagedict['a'] = locdata['a']
-		scopedata = data.ScopeEMData()
-		scopedata['stage position'] = stagedict
 		try:
-			self.emclient.setScope(scopedata)
-		except node.PublishError:
+			self.instrument.tem.StagePosition = stagedict
+		except:
 			self.logger.exception(errstr % 'unable to set instrument')
-		except node.ConfirmationNoBinding:
-			self.logger.exception(errstr % 'unable to set instrument (not bound)')
 		else:
 			self.currentlocation = locdata
 			self.logger.info('Moved to location %s' % (name,))

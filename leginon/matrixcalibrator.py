@@ -12,7 +12,6 @@ import correlator
 import peakfinder
 import sys
 import time
-import camerafuncs
 import calibrationclient
 try:
 	import numarray as Numeric
@@ -97,7 +96,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 
 		## set cam state
 		if self.settings['use camera settings']:
-			self.cam.setCameraDict(self.settings['camera settings'])
+			self.instrument.ccdcamera.Settings = self.settings['camera settings']
 
 		basebase = self.getBase()
 		baselist = []
@@ -114,10 +113,9 @@ class MatrixCalibrator(calibrator.Calibrator):
 		## delta = dimension['x'] * binning['x'] * pixsize / 4
 		mag, mags = self.getMagnification()
 		pixsize = self.pixsizeclient.retrievePixelSize(mag)
-		camconfig = self.cam.getCameraEMData()
 
 		percent = self.settings['%s shift fraction' % self.parameter]/100.0
-		delta = percent * camconfig['dimension']['x']*camconfig['binning']['x']*pixsize
+		delta = percent * self.instrument.ccdcamera.Dimension['x']*self.instrument.ccdcamera.Binning['x']*pixsize
 		self.logger.debug('Delta %s' % delta)
 
 		shifts = {}
@@ -185,7 +183,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 		# return to base
 		emdata = data.ScopeEMData()
 		emdata[self.parameter] = basebase
-		self.emclient.setScope(emdata)
+		self.instrument.setData(emdata)
 
 		mag, mags = self.getMagnification()
 		ht = self.getHighTension()
@@ -217,9 +215,6 @@ class MatrixCalibrator(calibrator.Calibrator):
 								'Unable to get pixel size, aborting calibration')
 		except CalibrationError:
 			self.logger.error('Bad calibration measurement, aborting calibration')
-		except camerafuncs.NoCorrectorError:
-			self.logger.error(
-										'Unable to get corrected image, aborting calibration')
 		except Exception, e:
 			self.logger.exception('Calibration failed: %s', e)
 		else:
@@ -232,7 +227,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 		self.panel.calibrationDone()
 
 	def getParameter(self):
-		self.saveparam = self.emclient.getScope()[self.parameter]
+		self.saveparam = self.instrument.getData(data.ScopeEMData)[self.parameter]
 		self.logger.debug('Storing parameter %s, %s'
 											% (self.parameter, self.saveparam))
 
@@ -240,7 +235,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 		self.logger.info('Returning to original state')
 		emdata = data.ScopeEMData()
 		emdata[self.parameter] = self.saveparam
-		self.emclient.setScope(emdata)
+		self.instrument.setData(emdata)
 
 	def uiAbort(self):
 		self.aborted.set()

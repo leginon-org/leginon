@@ -12,13 +12,11 @@ import peakfinder
 import event
 import time
 import timer
-import camerafuncs
 import threading
 import calibrationclient
 import gonmodel
 import string
 import math
-import EM
 import calibrator
 try:
 	import numarray as Numeric
@@ -74,8 +72,8 @@ class GonModeler(calibrator.Calibrator):
 		## set camera state
 		if self.settings['use camera settings']:
 			try:
-				self.cam.setCameraDict(self.settings['camera settings'])
-			except camerafuncs.CameraError, e:
+				self.instrument.ccdcamera.Settings = self.settings['camera settings']
+			except Exception, e:
 				self.logger.error('Modeled stage measurement failed: %s' % e)
 				self.panel.measurementDone()
 				return
@@ -91,7 +89,7 @@ class GonModeler(calibrator.Calibrator):
 
 		self.oldimagedata = None
 		self.acquireNextPosition(axis)
-		currentpos = self.emclient.getScope()['stage position']
+		currentpos = self.instrument.tem.StagePosition
 
 		for i in range(points):
 			self.logger.info('Acquiring Point %s...' % (i,))
@@ -129,15 +127,12 @@ class GonModeler(calibrator.Calibrator):
 	def acquireNextPosition(self, axis, state=None):
 		## go to state
 		if state is not None:
-			newemdata = data.ScopeEMData()
-			newemdata['stage position'] = {axis: state[axis]}
-			debugdict = newemdata.toDict(noNone=True)
-			self.logger.debug('setScope: ' + str(debugdict))
-			self.emclient.setScope(newemdata)
+			self.instrument.tem.StagePosition = {axis: state[axis]}
 			time.sleep(self.settle)
 
 		## acquire image
-		newimagedata = self.cam.acquireCameraImageData(correction=0)
+		newimagedata = self.instrument.getData(data.CameraImageData)
+			
 		newnumimage = newimagedata['image']
 		self.setImage(newnumimage.astype(Numeric.Float32), 'Image')
 

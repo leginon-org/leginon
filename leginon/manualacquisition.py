@@ -6,14 +6,12 @@
 #			 see	http://ami.scripps.edu/software/leginon-license
 #
 
-import camerafuncs
 import data
 import imagefun
 import node
 import project
 import threading
 import time
-import EM
 import gui.wx.ManualAcquisition
 import instrument
 
@@ -34,14 +32,10 @@ class ManualAcquisition(node.Node):
 		'low dose': False,
 		'low dose pause time': 4.0,
 	}
-	eventinputs = node.Node.eventinputs + EM.EMClient.eventinputs
-	eventoutputs = node.Node.eventoutputs + EM.EMClient.eventoutputs
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.loopstop = threading.Event()
 		self.loopstop.set()
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
-		self.emclient = EM.EMClient(self)
-		self.camerafuncs = camerafuncs.CameraFuncs(self)
 
 		self.lowdosemode = None
 
@@ -70,28 +64,28 @@ class ManualAcquisition(node.Node):
 		else:
 			prefix = 'un'
 		self.logger.info('Acquiring %scorrected image...' % prefix)
-		try:
-			self.camerafuncs.setCameraDict(self.settings['camera settings'])
-			imagedata = self.camerafuncs.acquireCameraImageData(correction=correct)
-		except camerafuncs.CameraError, e:
-			self.logger.error('Error acquiring image: %s' % e)
-			raise AcquireError
-		except camerafuncs.NoCorrectorError:
-			self.logger.error('Cannot access Corrector node to correct image')
-			raise AcquireError
-		except Exception, e:
-			self.logger.exception('Error acquiring image: %s' % e)
-			raise AcquireError
-		if imagedata is None:
+		if self.settings['save image']:
+			try:
+				self.instrument.ccdcamera.Settings = self.settings['camera settings']
+				if correct:
+					dataclass = data.CorrectedCameraImageData
+				else:
+					dataclass = data.CameraImageData
+				imagedata = self.instrument.getData(dataclass)
+			except Exception, e:
+				self.logger.exception('Error acquiring image: %s' % e)
+				raise AcquireError
+			image = imagedata['image']
+		else:
 			if correct:
-				self.logger.error('Corrector failed to acquire corrected image')
+				image = self.instrument.imagecorrection.Image
 			else:
-				self.logger.error('Instrument failed to acquire image')
-			raise AcquireError
+				image = self.instrument.ccdcamera.Image
 
 		self.logger.info('Displaying image...')
-		stats = self.getImageStats(imagedata['image'])
-		self.setImage(imagedata['image'], stats=stats)
+		stats = self.getImageStats(image)
+		self.setImage(image, stats=stats)
+
 		if self.settings['save image']:
 			self.logger.info('Saving image to database...')
 			try:
@@ -200,8 +194,6 @@ class ManualAcquisition(node.Node):
 			raise node.PublishError
 
 	def acquireImage(self):
-		print self.instrument.getData(data.ScopeEMData)
-		print self.instrument.getData(data.CameraEMData)
 		try:
 			try:
 				self.preExposure()

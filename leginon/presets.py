@@ -12,13 +12,12 @@ import datatransport
 import event
 import dbdatakeeper
 import copy
-import camerafuncs
 import threading
 import time
 import unique
 import newdict
-import EM
 import gui.wx.PresetsManager
+import instrument
 
 try:
 	import numarray as Numeric
@@ -169,18 +168,13 @@ class PresetsManager(node.Node):
 		'optimize cycle': True,
 		'mag only': True,
 	}
-	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent] + EM.EMClient.eventinputs
-	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.PresetPublishEvent] + EM.EMClient.eventoutputs
+	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent]
+	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.PresetPublishEvent]
 
 	def __init__(self, name, session, managerlocation, **kwargs):
 		node.Node.__init__(self, name, session, managerlocation, **kwargs)
 
-		self.addEventInput(event.ChangePresetEvent, self.changePreset)
-		self.addEventInput(event.PresetLockEvent, self.handleLock)
-		self.addEventInput(event.PresetUnlockEvent, self.handleUnlock)
-
-		self.emclient = EM.EMClient(self)
-		self.cam = camerafuncs.CameraFuncs(self)
+		self.instrument = instrument.Proxy(self.objectservice)
 		self.calclients = {
 			'pixel size':calibrationclient.PixelSizeCalibrationClient(self),
 			'image':calibrationclient.ImageShiftCalibrationClient(self),
@@ -198,6 +192,10 @@ class PresetsManager(node.Node):
 		self.currentpreset = None
 		self.presets = newdict.OrderedDict()
 		self.selectedsessionpresets = None
+
+		self.addEventInput(event.ChangePresetEvent, self.changePreset)
+		self.addEventInput(event.PresetLockEvent, self.handleLock)
+		self.addEventInput(event.PresetUnlockEvent, self.handleUnlock)
 
 		## this will fill in UI with current session presets
 		self.getPresetsFromDB()
@@ -397,14 +395,14 @@ class PresetsManager(node.Node):
 		self.logger.info(beginmessage)
 
 		try:
-			self.emclient.setScope(scopedata)
+			self.instrument.getData(data.ScopeEMData)
 		except Exception, e:
 			message = 'Preset change failed: unable to set instrument'
 			self.logger.error(message)
 			raise PresetChangeError(message)
 
 		if cameradata is not None:
-			self.emclient.setCamera(cameradata)
+			self.instrument.setData(cameradata)
 
 		time.sleep(self.settings['pause time'])
 		if magonly:
@@ -427,9 +425,9 @@ class PresetsManager(node.Node):
 			self.logger.error('Invalid preset name')
 			return
 		try:
-			scopedata = self.emclient.getScope()
-			cameradata = self.emclient.getCamera()
-		except EM.EMUnavailable, e:
+			self.instrument.getData(data.ScopeEMData)
+			self.instrument.getData(data.CameraEMData, image=False)
+		except:
 			self.logger.error('Preset from instrument failed: unable to get instrument parameters')
 			return
 		newpreset = data.PresetData()
@@ -617,8 +615,8 @@ class PresetsManager(node.Node):
 
 	def getHighTension(self):
 		try:
-			return self.emclient.getScope()['high tension']
-		except EM.ScopeUnavailable:
+			return self.instrument.tem.HighTension
+		except:
 			return None
 
 	def displayCalibrations(self, preset):
@@ -730,14 +728,14 @@ class PresetsManager(node.Node):
 				camdata1['offset'][axis] += (change / 2)
 
 		try:
-			self.cam.setCameraEMData(camdata1)
-			imagedata = self.cam.acquireCameraImageData(correction=True)
-		except camerafuncs.CameraError:
+			self.instrument.setData(camdata1)
+			imagedata = self.instrument.getData(data.CorrectedCameraImageData)
+		except:
 			self.logger.error(errstr % 'unable to set camera parameters')
 			return
 		try:
-			self.cam.setCameraEMData(camdata0)
-		except camerafuncs.CameraError:
+			self.instrument.setData(camdata0)
+		except:
 			estr = 'Return to orginial preset camera dimemsion failed: %s'
 			self.logger.error(estr % 'unable to set camera parameters')
 			return
@@ -846,8 +844,8 @@ class PresetsManager(node.Node):
 		cameradata.friendly_update(newpreset)
 
 		try:
-			self.emclient.setScope(scopedata)
-			self.emclient.setCamera(cameradata)
+			self.instrument.setData(scopedata)
+			self.instrument.setData(cameradata)
 		except Exception, e:
 			message = 'Move to target failed: unable to set instrument'
 			self.logger.error(message)

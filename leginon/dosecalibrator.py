@@ -9,7 +9,6 @@ import calibrator
 import calibrationclient
 import event, data
 import node
-import EM
 try:
 	import numarray as Numeric
 except:
@@ -37,7 +36,7 @@ class DoseCalibrator(calibrator.Calibrator):
 		self.start()
 
 	def uiMeasureDoseRate(self):
-		#self.screenDown()
+		# self.instrument.tem.MainScreenPosition = 'down'
 		status = self.getCurrentAndMag()
 		if status == 'ok':
 			pass
@@ -54,22 +53,10 @@ class DoseCalibrator(calibrator.Calibrator):
 		doserate = self.calclient.dose_from_screen(screen_mag, beam_current, beam_diameter)
 		self.results['dose rate'] = doserate
 
-	def screenDown(self):
-		# check if screen is down
-		scope = data.ScopeEMData()
-		scope['main screen position'] = 'down'
-		self.emclient.setScope(scope)
-
-	def screenUp(self):
-		# check if screen is down
-		scope = data.ScopeEMData()
-		scope['main screen position'] = 'up'
-		self.emclient.setScope(scope)
-
 	def getCurrentAndMag(self):
 		try:
-			scope = self.emclient.getScope()
-		except EM.ScopeUnavailable, e:
+			scope = self.instrument.getData(data.ScopeEMData)
+		except:
 			return None
 		if scope['main screen position'] == 'down':
 			mag = scope['magnification']
@@ -82,7 +69,7 @@ class DoseCalibrator(calibrator.Calibrator):
 			return 'screen'
 
 	def acquireImage(self):
-		# self.screenUp()
+		# self.instrument.tem.MainScreenPosition = 'up'
 		return calibrator.Calibrator.acquireImage(self)
 
 	def uiCalibrateCamera(self):

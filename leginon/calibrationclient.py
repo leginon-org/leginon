@@ -20,7 +20,6 @@ import sys
 import threading
 import gonmodel
 import imagefun
-import EM
 
 class Drifting(Exception):
 	pass
@@ -41,14 +40,9 @@ class CalibrationClient(object):
 	def __init__(self, node):
 		self.node = node
 		try:
-			self.cam = node.cam
+			self.instrument = self.node.instrument
 		except AttributeError:
-			self.cam = None
-
-		if hasattr(node, 'emclient'):
-			self.emclient = self.node.emclient
-		else:
-			raise RuntimeError('CalibrationClient node needs emclient')
+			raise RuntimeError('CalibrationClient node needs instrument')
 
 		self.correlator = correlator.Correlator()
 		self.peakfinder = peakfinder.PeakFinder()
@@ -62,10 +56,10 @@ class CalibrationClient(object):
 		self.node.logger.debug('Acquiring image...')
 		## acquire image at this state
 		newemdata = data.ScopeEMData(initializer=state)
-		self.node.emclient.setScope(newemdata)
+		self.instrument.setData(newemdata)
 		time.sleep(settle)
 
-		imagedata = self.cam.acquireCameraImageData()
+		imagedata = self.instrument.getData(data.CorrectedCameraImageData)
 		actual_state = imagedata['scope']
 
 		if publish_image:
@@ -430,14 +424,13 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 
 	def getBeamTilt(self):
 		try:
-			bt = self.emclient.getScope()['beam tilt']
-		except EM.ScopeUnavailable, e:
+			return self.instrument.tem.BeamTilt
+		except:
 			return None
-		return bt
 
 	def measureDefocusStig(self, tilt_value, publish_images=0, drift_threshold=None, image_callback=None, stig=True, target=None):
 		self.abortevent.clear()
-		scopedata = self.emclient.getScope()
+		scopedata = self.instrument.getData(data.ScopeEMData, image=False)
 		mag = scopedata['magnification']
 		ht = scopedata['high tension']
 		fmatrix = self.retrieveMatrix(ht, mag, 'defocus')
@@ -479,8 +472,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 				break
 			except Drifting:
 				## return to original beam tilt
-				emdata = data.ScopeEMData(initializer={'beam tilt':tiltcenter})
-				self.node.emclient.setScope(emdata)
+				self.instrument.tem.BeamTilt = tiltcenter
 				self.node.logger.info('Returned to tilt center %s' % tiltcenter)
 				raise
 			nodrift = True
@@ -500,8 +492,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 				break
 
 		## return to original beam tilt
-		emdata = data.ScopeEMData(initializer={'beam tilt':tiltcenter})
-		self.node.emclient.setScope(emdata)
+		self.instrument.tem.BeamTilt = tiltcenter
 		self.node.logger.info('Returned to tilt center %s' % tiltcenter)
 
 		self.checkAbort()
@@ -653,8 +644,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		except Exception, e:
 			self.node.logger.exception('Calibration measurement failed: %s' % e)
 		## return to original beam tilt
-		emdata = data.ScopeEMData(initializer={'beam tilt':beamtilt})
-		self.node.emclient.setScope(emdata)
+		self.instrument.tem.BeamTilt = beamtilt
 
 		return (pixelshift1, pixelshift2)
 
@@ -697,8 +687,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 														% (pixelshift1, pixelshift2))
 		finally:
 			## return to original beam tilt
-			emdata = data.ScopeEMData(initializer={'beam tilt':beamtilt})
-			self.node.emclient.setScope(emdata)
+			self.instrument.tem.BeamTilt = beamtilt
 
 		pixelshiftdiff = {}
 		pixelshiftdiff['row'] = pixelshift2['row'] - pixelshift1['row']
@@ -1069,8 +1058,7 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		current['stage position']['y'] += deltagon['y']
 		self.node.logger.info('Current position after delta %s' % current)
 
-		stagedata = data.ScopeEMData(initializer=current)
-		self.emclient.setScope(stagedata)
+		self.instrument.tem.StagePosition = current
 
 class EucentricFocusClient(CalibrationClient):
 	def __init__(self, node):

@@ -9,12 +9,12 @@
 import calibrationclient
 import data
 import event
+import instrument
 import imagewatcher
 import mosaic
 import Mrc
 import threading
 import node
-import EM
 import targethandler
 import convolver
 import imagefun
@@ -32,16 +32,14 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 	}
 	eventinputs = imagewatcher.ImageWatcher.eventinputs \
 									+ [event.AcquisitionImagePublishEvent] \
-									+ EM.EMClient.eventinputs \
 									+ targethandler.TargetWaitHandler.eventinputs
 	eventoutputs = imagewatcher.ImageWatcher.eventoutputs \
-									+ EM.EMClient.eventoutputs \
 									+ targethandler.TargetWaitHandler.eventoutputs
 	def __init__(self, id, session, managerlocation, **kwargs):
 		imagewatcher.ImageWatcher.__init__(self, id, session, managerlocation,
 																				**kwargs)
 		targethandler.TargetWaitHandler.__init__(self)
-		self.emclient = EM.EMClient(self)
+		self.instrument = instrument.Proxy(self.objectservice)
 
 	def findTargets(self, imdata, targetlist):
 		'''
@@ -318,8 +316,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			self.logger.exception('Need tiles and mosaic image')
 			return
 		try:
-			stagepos = self.emclient.getScope()['stage position']
-		except EM.ScopeUnavailable:
+			stagepos = self.instrument.tem.StagePosition
+		except:
 			stagepos = None
 
 		if stagepos is None:

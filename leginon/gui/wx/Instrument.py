@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Instrument.py,v $
-# $Revision: 1.28 $
+# $Revision: 1.29 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-22 16:23:35 $
+# $Date: 2005-02-24 07:44:49 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -750,6 +750,7 @@ class Panel(gui.wx.Node.Panel):
 		self.SetupScrolling()
 
 	def onRefreshTool(self, evt):
+		return
 		self.Enable(False)
 		self.node.refresh()
 
@@ -761,9 +762,11 @@ class Panel(gui.wx.Node.Panel):
 		self.node.pause = value
 
 	def onCamConfig(self, evt):
+		return
 		self.node.setState(evt.configuration)
 
 	def onControl(self, evt):
+		return
 		control = evt.GetEventObject()
 		control.Enable(False)
 		keypath = self.controlmap[control]

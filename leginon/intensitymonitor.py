@@ -7,9 +7,7 @@
 #
 import data
 import node
-import EM
 import gui.wx.IntensityMonitor
-import camerafuncs
 import imagefun
 import time
 import threading
@@ -25,32 +23,25 @@ class IntensityMonitor(node.Node):
 		'wait time':  60,
 		'camera settings':  None,
 	}
-	eventinputs = node.Node.eventinputs + EM.EMClient.eventinputs
-	eventoutputs = node.Node.eventoutputs + EM.EMClient.eventoutputs
 	def __init__(self, id, session, managerlocation, **kwargs):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
-		self.emclient = EM.EMClient(self)
-		self.cam = camerafuncs.CameraFuncs(self)
+		self.instrument = instrument.Proxy(self.objectservice)
 		self.threadstop = threading.Event()
 		self.start()
 
 	def screenDown(self):
 		# check if screen is down
-		scope = data.ScopeEMData()
-		scope['main screen position'] = 'down'
-		self.emclient.setScope(scope)
+		self.instrument.MainScreenPosition = 'down'
 		time.sleep(1)
 
 	def screenUp(self):
 		# check if screen is down
-		scope = data.ScopeEMData()
-		scope['main screen position'] = 'up'
-		self.emclient.setScope(scope)
+		self.instrument.MainScreenPosition = 'up'
 		time.sleep(1)
 
 	def acquireData(self):
 		## set camera
-		self.cam.setCameraDict(self.settings['camera settings'])
+		self.instrument.ccdcamera.Settings = self.settings['camera settings']
 
 		## file base name
 		basename = self.session['name'] + '_' + str(int(time.time()))
@@ -58,14 +49,14 @@ class IntensityMonitor(node.Node):
 		## screen down for dark image and screen current
 		self.logger.info('   acquiring dark image and screen current')
 		self.screenDown()
-		darkim = self.cam.acquireCameraImageData(correction=False)
+		darkim = self.instrument.getData(data.CameraImageData)
 		darkim['filename'] = basename + '_d'
 		darkim['label'] = 'dark'
 
 		## screen up for bright image
 		self.logger.info('   acquiring bright image')
 		self.screenUp()
-		brightim = self.cam.acquireCameraImageData(correction=False)
+		brightim = self.instrument.getData(data.CameraImageData)
 		brightim['filename'] = basename + '_b'
 		brightim['label'] = 'bright'
 		## no screen current measured because screen up, so get from dark

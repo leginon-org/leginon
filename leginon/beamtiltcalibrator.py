@@ -19,7 +19,6 @@ import data
 import calibrationclient
 import node
 import gui.wx.BeamTiltCalibrator
-import camerafuncs
 
 class BeamTiltCalibrator(calibrator.Calibrator):
 	'''
@@ -51,8 +50,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 	def calibrateAlignment(self, tilt_value):
 		if self.settings['use camera settings']:
 			try:
-				self.cam.setCameraDict(self.settings['camera settings'])
-			except camerafuncs.CameraError, e:
+				self.instrument.ccdcamera.Settings = self.settings['camera settings']
+			except Exception, e
 				self.logger.error('Calibration failed: %s' % e)
 				return
 
@@ -88,8 +87,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 	def calibrateDefocus(self, tilt_value, defocus1, defocus2):
 		if self.settings['use camera settings']:
 			try:
-				self.cam.setCameraDict(self.settings['camera settings'])
-			except camerafuncs.CameraError, e:
+				self.instrument.ccdcamera.Settings = self.settings['camera settings']
+			except Exception, e
 				self.logger.error('Defocus calibration failed: %s' % e)
 				return
 		state1 = {'defocus': defocus1}
@@ -129,8 +128,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 	def calibrateStigmators(self, tilt_value, delta):
 		if self.settings['use camera settings']:
 			try:
-				self.cam.setCameraDict(self.settings['camera settings'])
-			except camerafuncs.CameraError, e:
+				self.instrument.ccdcamera.Settings = self.settings['camera settings']
+			except Exception, e
 				self.logger.error('Stigmator calibration failed: %s' % e)
 				return
 
@@ -176,9 +175,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			self.logger.info('Calibration stored')
 
 		## return to original stig
-		stigdict = {'stigmator':{'objective':currentstig}}
-		stigdata = data.ScopeEMData(initializer=stigdict)
-		self.emclient.setScope(stigdata)
+		self.instrument.tem.Stigmator = {'objective': currentstig}
 		self.logger.info('Calibration completed')
 		self.beep()
 		return ''
@@ -186,8 +183,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 	def measureDefocusStig(self, btilt, stig=True):
 		if self.settings['use camera settings']:
 			try:
-				self.cam.setCameraDict(self.settings['camera settings'])
-			except camerafuncs.CameraError, e:
+				self.instrument.ccdcamera.Settings = self.settings['camera settings']
+			except Exception, e
 				self.logger.error('Measure defocus failed: %s' % e)
 				return
 		try:
@@ -199,9 +196,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		return ret
 
 	def getObjectiveStigmator(self):
-		emdata = self.emclient.getScope()
-		obj = dict(emdata['stigmator']['objective'])
-		return obj
+		return self.instrument.tem.Stigmator['objective']
 
 	def uiCalibrateDefocus(self):
 		self.calibrateDefocus(self.settings['defocus beam tilt'],
@@ -232,8 +227,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		current = self.getCurrentValues()	
 
 		newdefocus = current['defocus'] + delta['defocus']
-		newdata = data.ScopeEMData(defocus=newdefocus)
-		self.emclient.setScope(newdata)
+		self.instrument.tem.Defocus = newdefocus
 		self.panel.setInstrumentDone()
 
 	def uiCorrectStigmator(self):
@@ -245,24 +239,20 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 		newstigx = current['stigx'] + delta['stigx']
 		newstigy = current['stigy'] + delta['stigy']
-		stigdict = {'stigmator': {'objective': {'x':newstigx,'y':newstigy}}}
-		newdata = data.ScopeEMData(initializer=stigdict)
-		self.emclient.setScope(newdata)
+
+		self.instrument.tem.Stigmator = {'objective': {'x':newstigx,'y':newstigy}}
 		self.panel.setInstrumentDone()
 
 	def uiResetDefocus(self):
-		newemdata = data.ScopeEMData()
-		newemdata['reset defocus'] = True
 		try:
-			self.emclient.setScope(newemdata)
+			self.instrument.tem.resetDefocus()
 		except:
 			self.logger.error('Reset defocus failed: unable to set instrument')
 		self.panel.setInstrumentDone()
 
 	def getCurrentValues(self):
-		emdata = self.emclient.getScope()
-		defocus = emdata['defocus']
-		stig = emdata['stigmator']['objective']
+		defocus = self.instrument.tem.Defocus
+		stig = self.instrument.tem.Stigmator['objective']
 		stigx = stig['x']
 		stigy = stig['y']
 		return {'defocus':defocus, 'stigx':stigx, 'stigy':stigy}
@@ -270,14 +260,13 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 	def eucToScope(self):
 		estr = 'Unable to set eucentric focus: %s'
 		try:
-			scope = self.emclient.getScope()
+			ht = self.instrument.tem.HighTension
+			mag = self.instrument.tem.Magnification
 		except:
 			self.logger.error(estr % 'unable to get instrument state')
 			self.panel.setInstrumentDone()
 			return
-		ht = scope['high tension']
-		mag = scope['magnification']
-		eudata = self.euclient.researchEucentricFocus(ht,mag)
+		eudata = self.euclient.researchEucentricFocus(ht, mag)
 		if eudata is None:
 			e = 'none saved for HT: %s, Mag.: %s' % (ht, mag)
 			self.logger.error(estr % e)
@@ -285,11 +274,9 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			return
 		focus = eudata['focus']
 
-		scopedata = data.ScopeEMData()
-		scopedata['focus'] = focus
 		try:
-			self.emclient.setScope(scopedata)
-		except node.PublishError:
+			self.instrument.tem.Focus = focus
+		except:
 			self.logger.error(estr % 'cannot set instrument parameters')
 		self.panel.setInstrumentDone()
 
@@ -297,14 +284,13 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		## get current value of focus
 		estr = 'Unable to get eucentric focus: %s'
 		try:
-			scope = self.emclient.getScope()
+			ht = self.instrument.tem.HighTension
+			mag = self.instrument.tem.Magnification
+			focus = self.instrument.tem.Focus
 		except:
 			self.logger.error(estr % 'unable to get instrument state')
 			self.panel.getInstrumentDone()
 			return
-		ht = scope['high tension']
-		mag = scope['magnification']
-		focus = scope['focus']
 		self.euclient.publishEucentricFocus(ht, mag, focus)
 		self.logger.info('Publishing HT: %s, Mag.: %s, Euc. Focus: %s'
 											% (ht, mag, focus))
