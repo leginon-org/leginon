@@ -2,6 +2,7 @@
 
 import threading
 import node, event
+import Queue
 
 class Watcher(node.Node):
 	'''
@@ -18,70 +19,85 @@ class Watcher(node.Node):
 		node.Node.__init__(self, id, nodelocations, **kwargs)
 		self.watchfor = watchfor
 		self.lockblocking = lockblocking
-		self.lock = threading.RLock()
+		self.handlelock = threading.Lock()
+		self.datanow = 1
+
+		self.eventqueue = Queue.Queue(0)
+		self.dataqueue = Queue.Queue(0)
 
 		self.addEventInput(self.watchfor, self.handleEvent)
-		self.watchOn()
 
 	def defineUserInterface(self):
 		nui = node.Node.defineUserInterface(self)
 		
-		toggle = self.registerUIData('Watcher On', 'boolean', permissions = 'rw', default=1)
-		toggle.registerCallback(self.uiWatchToggleCallback)
+		self.watchtoggle = self.registerUIData('Watcher On', 'boolean', permissions = 'rw', default=1)
+		self.dataqueuetoggle = self.registerUIData('Data Queue On', 'boolean', permissions='rw', default=0)
+		procdata = self.registerUIMethod(self.uiProcessData, 'Process Data From Queue', ())
 
-		myspec = self.registerUISpec('Watcher', (toggle,))
+		myspec = self.registerUISpec('Watcher', (self.watchtoggle,self.dataqueuetoggle, procdata))
 		myspec += nui
 
 		return myspec
 
-	def uiWatchToggleCallback(self, value=None):
-		if value is not None:
-			self.watchvalue = value
-		if self.watchvalue:
-			self.watchOn()
-		else:
-			self.watchOff()
-		return self.watchvalue
-
 	def die(self, ievent=None):
 		node.Node.die(self)
 
-	def watchOn(self):
-		self.watch = 1
-
-	def watchOff(self):
-		self.watch = 0
-
+	## the event queue could be put in node.py or datahandler.DataBinder
 	def handleEvent(self, pubevent):
-		if not self.watch:
+		if not self.watchtoggle.get():
 			return
+
+		## get lock if necessary
 		if self.lockblocking == 0:
-			if not self.lock.acquire(blocking=0):
+			havelock = self.handlelock.acquire(0)
+			if not havelock:
 				return
-			havelock = 1
 		elif self.lockblocking == 1:
-			self.lock.acquire(blocking=1)
-			havelock = 1
+			havelock = self.handlelock.acquire(1)
 		else:
 			havelock = 0
 
-		newdata = self.getData(pubevent)
-		self.processData(newdata)
-
+		try:
+			self.processEvent(pubevent)
+		except:
+			print 'event %s not processed' % (pubevent,)
+			
+		## release lock if necessary
 		if havelock:
-			self.lock.release()
+			self.handlelock.release()
+
+	def processEvent(self, pubevent):
+		if self.datanow:
+			## get data now
+			self.getData(pubevent)
+		else:
+			## put event in queue and get data later
+			self.eventqueue.put(pubevent)
 
 	def getData(self, pubevent):
 		dataid = pubevent.content
 		newdata = self.researchByDataID(dataid)
-		return newdata
+		if self.dataqueuetoggle.get():
+			self.dataqueue.put(newdata)
+		else:
+			self.processData(newdata)
 
 	def processData(self, datainstance):
 		raise NotImplementedError()
 
-	def aaaa(self):
-		pass
+	def processDataFromQueue(self, blocking=0):
+		if blocking:
+			print 'watcher blocking until data ready in queue'
+		try:
+			newdata = self.dataqueue.get(blocking)
+			self.processData(newdata)
+		except Queue.Empty:
+			print 'Queue is empty, no data processed'
 
+	## maybe this should start a new thread?
+	def uiProcessData(self):
+		self.processDataFromQueue(blocking=0)
+		return ''
 
 ## an example of subclassing Watcher
 
