@@ -3,6 +3,7 @@
 import Tkinter
 import tkSimpleDialog
 import tkFileDialog
+import tkMessageBox
 import math
 import application
 import nodeclassreg
@@ -319,7 +320,6 @@ class ConnectionManager(Line):
 	def deleteConnection(self, origin, destination):
 		key = (origin, destination)
 		if key in self.lines:
-			# needs to LabeledLine to track multiple connections
 			self.lines[key]['line'].delete()
 			del self.lines[key]
 			inversekey = (destination, origin)
@@ -556,8 +556,13 @@ class ApplicationEditor(Editor):
 	def newNode(self):
 		nodedialog = NodeDialog(self, 'New Node')
 		if nodedialog.result is not None:
-			self.app.addLaunchSpec(nodedialog.result)
-			self.displayNode(nodedialog.result)
+			try:
+				self.displayNode(nodedialog.result)
+			except ValueError:
+				tkMessageBox.showerror('New Node',
+											'Node ID \'%s\' already exists' % nodedialog.result[3])
+			else:
+				self.app.addLaunchSpec(nodedialog.result)
 		self.newnodeposition = (0, 0)
 
 	def popup(self, ievent):
@@ -573,6 +578,8 @@ class ApplicationEditor(Editor):
 		self.circle()
 
 	def displayNode(self, args):
+		if ('manager', args[3]) in self.mapping:
+			raise ValueError
 		self.mapping[('manager', args[3])] = Editor.addNode(self, args)
 
 	def displayConnection(self, binding):
