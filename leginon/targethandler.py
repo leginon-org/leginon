@@ -136,9 +136,10 @@ class TargetHandler(object):
 		return targetdata
 
 	def newSimulatedTarget(self):
+		scopedata = self.instrument.getData(data.ScopeEMData)
 		lastnumber = self.lastTargetNumber(session=self.session, type='simulated')
 		nextnumber = lastnumber + 1
-		newtarget = self.newTarget(drow=None, dcol=None, number=nextnumber, type='simulated')
+		newtarget = self.newTarget(drow=0, dcol=0, number=nextnumber, type='simulated', scope=scopedata)
 		return newtarget
 
 class TargetWaitHandler(TargetHandler):
