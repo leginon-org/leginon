@@ -1,22 +1,24 @@
-# Created by makepy.py version 0.4.0
-# By python version 2.2 (#28, Dec 21 2001, 12:21:22) [MSC 32 bit (Intel)]
+# Created by makepy.py version 0.4.4
+# By python version 2.2.3 (#42, May 30 2003, 18:12:08) [MSC 32 bit (Intel)]
 # From type library 'stdscript.dll'
-# On Tue Mar 05 15:13:05 2002
+# On Thu Sep 11 11:17:23 2003
 """Tecnai Scripting"""
-makepy_version = '0.4.0'
-python_version = 0x20200f0
+makepy_version = '0.4.4'
+python_version = 0x20203f0
 
 import win32com.client.CLSIDToClass, pythoncom
+from pywintypes import IID
+from win32com.client import Dispatch
 
 # The following 3 lines may need tweaking for the particular server
 # Candidates are pythoncom.Missing and pythoncom.Empty
-defaultNamedOptArg=pythoncom.Missing
-defaultNamedNotOptArg=pythoncom.Missing
-defaultUnnamedArg=pythoncom.Missing
+defaultNamedOptArg=pythoncom.Empty
+defaultNamedNotOptArg=pythoncom.Empty
+defaultUnnamedArg=pythoncom.Empty
 
-CLSID = pythoncom.MakeIID('{BC0A2B03-10FF-11D3-AE00-00A024CBA50C}')
+CLSID = IID('{BC0A2B03-10FF-11D3-AE00-00A024CBA50C}')
 MajorVersion = 1
-MinorVersion = 0
+MinorVersion = 9
 LibraryFlags = 8
 LCID = 0x0
 
@@ -51,6 +53,12 @@ class constants:
 	dtMMDDYY                      =0x2        # from enum PlateLabelDateFormat
 	dtNoDate                      =0x0        # from enum PlateLabelDateFormat
 	dtYYMMDD                      =0x3        # from enum PlateLabelDateFormat
+	pdsmAlignment                 =0x3        # from enum ProjDetectorShiftMode
+	pdsmAutoIgnore                =0x1        # from enum ProjDetectorShiftMode
+	pdsmManual                    =0x2        # from enum ProjDetectorShiftMode
+	pdsNearAxis                   =0x1        # from enum ProjectionDetectorShift
+	pdsOffAxis                    =0x2        # from enum ProjectionDetectorShift
+	pdsOnAxis                     =0x0        # from enum ProjectionDetectorShift
 	pmDiffraction                 =0x2        # from enum ProjectionMode
 	pmImaging                     =0x1        # from enum ProjectionMode
 	pnmAll                        =0xc        # from enum ProjectionNormalization
@@ -82,9 +90,9 @@ class constants:
 	stNotReady                    =0x2        # from enum StageStatus
 	stReady                       =0x0        # from enum StageStatus
 	stWobbling                    =0x5        # from enum StageStatus
-	E_NOT_OK                      =0x8004ffff # from enum TecnaiError
-	E_OUT_OF_RANGE                =0x8004fffd # from enum TecnaiError
-	E_VALUE_CLIP                  =0x8004fffe # from enum TecnaiError
+	E_NOT_OK                      =-2147155969 # from enum TecnaiError
+	E_OUT_OF_RANGE                =-2147155971 # from enum TecnaiError
+	E_VALUE_CLIP                  =-2147155970 # from enum TecnaiError
 	vsBusy                        =0x4        # from enum VacuumStatus
 	vsCameraAir                   =0x3        # from enum VacuumStatus
 	vsElse                        =0x6        # from enum VacuumStatus
@@ -95,11 +103,12 @@ class constants:
 from win32com.client import DispatchBaseClass
 class Camera(DispatchBaseClass):
 	"""Interface to the camera system"""
-	CLSID = pythoncom.MakeIID('{9851BC41-1B8C-11D3-AE0A-00A024CBA50C}')
+	CLSID = IID('{9851BC41-1B8C-11D3-AE0A-00A024CBA50C}')
+	coclass_clsid = None
 
 	def TakeExposure(self):
 		"""Take a photo (uses current parameter settings)"""
-		return self._oleobj_.InvokeTypes(0x5, LCID, 1, (24, 0), (),)
+		return self._oleobj_.InvokeTypes(5, LCID, 1, (24, 0), (),)
 
 	_prop_map_get_ = {
 		"ExposureNumber": (18, 2, (3, 0), (), "ExposureNumber", None),
@@ -132,11 +141,12 @@ class Camera(DispatchBaseClass):
 
 class Gauge(DispatchBaseClass):
 	"""Utility object: Vacuum system gauge data (pressure)"""
-	CLSID = pythoncom.MakeIID('{52020820-18BF-11D3-86E1-00C04FC126DD}')
+	CLSID = IID('{52020820-18BF-11D3-86E1-00C04FC126DD}')
+	coclass_clsid = None
 
 	def Read(self):
 		"""Read gauge settings"""
-		return self._oleobj_.InvokeTypes(0x1, LCID, 1, (24, 0), (),)
+		return self._oleobj_.InvokeTypes(1, LCID, 1, (24, 0), (),)
 
 	_prop_map_get_ = {
 		"Name": (10, 2, (8, 0), (), "Name", None),
@@ -149,14 +159,16 @@ class Gauge(DispatchBaseClass):
 
 class Gauges(DispatchBaseClass):
 	"""Vacuum system gauges collection"""
-	CLSID = pythoncom.MakeIID('{6E6F03B0-2ECE-11D3-AE79-004095005B07}')
+	CLSID = IID('{6E6F03B0-2ECE-11D3-AE79-004095005B07}')
+	coclass_clsid = None
 
 	# Result is of type Gauge
 	# The method Item is actually a property, but must be used as a method to correctly pass the arguments
 	def Item(self, index=defaultNamedNotOptArg):
 		"""Get individual gauge"""
-		ret = self._oleobj_.InvokeTypes(0x0, LCID, 2, (9, 0), ((12, 0),),index)
-		if ret is not None: ret = win32com.client.Dispatch(ret, 'Item', '{52020820-18BF-11D3-86E1-00C04FC126DD}', UnicodeToString=0)
+		ret = self._oleobj_.InvokeTypes(0, LCID, 2, (9, 0), ((12, 0),),index)
+		if ret is not None:
+			ret = Dispatch(ret, 'Item', '{52020820-18BF-11D3-86E1-00C04FC126DD}', UnicodeToString=0)
 		return ret
 
 	_prop_map_get_ = {
@@ -167,16 +179,19 @@ class Gauges(DispatchBaseClass):
 	# Default method for this class is 'Item'
 	def __call__(self, index=defaultNamedNotOptArg):
 		"""Get individual gauge"""
-		ret = self._oleobj_.InvokeTypes(0x0, LCID, 2, (9, 0), ((12, 0),),index)
-		if ret is not None: ret = win32com.client.Dispatch(ret, '__call__', '{52020820-18BF-11D3-86E1-00C04FC126DD}', UnicodeToString=0)
+		ret = self._oleobj_.InvokeTypes(0, LCID, 2, (9, 0), ((12, 0),),index)
+		if ret is not None:
+			ret = Dispatch(ret, '__call__', '{52020820-18BF-11D3-86E1-00C04FC126DD}', UnicodeToString=0)
 		return ret
 
 	# str(ob) and int(ob) will use __call__
-	def __str__(self, *args):
+	def __unicode__(self, *args):
 		try:
-			return str(apply( self.__call__, args))
+			return unicode(apply( self.__call__, args))
 		except pythoncom.com_error:
 			return repr(self)
+	def __str__(self, *args):
+		return str(apply(self.__unicode__, args))
 	def __int__(self, *args):
 		return int(apply( self.__call__, args))
 	def _NewEnum(self):
@@ -197,7 +212,8 @@ class Gauges(DispatchBaseClass):
 
 class Gun(DispatchBaseClass):
 	"""Gun Interface"""
-	CLSID = pythoncom.MakeIID('{E6F00870-3164-11D3-B4C8-00A024CB9221}')
+	CLSID = IID('{E6F00870-3164-11D3-B4C8-00A024CB9221}')
+	coclass_clsid = None
 
 	_prop_map_get_ = {
 		"HTMaxValue": (12, 2, (5, 0), (), "HTMaxValue", None),
@@ -217,7 +233,8 @@ class Gun(DispatchBaseClass):
 
 class IUserButton(DispatchBaseClass):
 	"""User button"""
-	CLSID = pythoncom.MakeIID('{E6F00871-3164-11D3-B4C8-00A024CB9221}')
+	CLSID = IID('{E6F00871-3164-11D3-B4C8-00A024CB9221}')
+	coclass_clsid = IID('{3A4CE1F0-3A05-11D3-AE81-004095005B07}')
 
 	_prop_map_get_ = {
 		"Assignment": (12, 2, (8, 0), (), "Assignment", None),
@@ -230,11 +247,12 @@ class IUserButton(DispatchBaseClass):
 
 class Illumination(DispatchBaseClass):
 	"""Illumination Interface"""
-	CLSID = pythoncom.MakeIID('{EF960690-1C38-11D3-AE0B-00A024CBA50C}')
+	CLSID = IID('{EF960690-1C38-11D3-AE0B-00A024CBA50C}')
+	coclass_clsid = None
 
 	def Normalize(self, nm=defaultNamedNotOptArg):
 		"""Normalization of illumination system"""
-		return self._oleobj_.InvokeTypes(0x1, LCID, 1, (24, 0), ((3, 0),),nm)
+		return self._oleobj_.InvokeTypes(1, LCID, 1, (24, 0), ((3, 0),),nm)
 
 	_prop_map_get_ = {
 		"BeamBlanked": (16, 2, (11, 0), (), "BeamBlanked", None),
@@ -269,15 +287,16 @@ class Illumination(DispatchBaseClass):
 
 class InstrumentInterface(DispatchBaseClass):
 	"""Instrument Interface"""
-	CLSID = pythoncom.MakeIID('{BC0A2B11-10FF-11D3-AE00-00A024CBA50C}')
+	CLSID = IID('{BC0A2B11-10FF-11D3-AE00-00A024CBA50C}')
+	coclass_clsid = IID('{02CDC9A1-1F1D-11D3-AE11-00A024CBA50C}')
 
 	def NormalizeAll(self):
 		"""Normalize all lenses"""
-		return self._oleobj_.InvokeTypes(0x1, LCID, 1, (24, 0), (),)
+		return self._oleobj_.InvokeTypes(1, LCID, 1, (24, 0), (),)
 
 	def ReturnError(self, TE=defaultNamedNotOptArg):
 		"""Dummy to test error codes"""
-		return self._oleobj_.InvokeTypes(0x3, LCID, 1, (24, 0), ((3, 1),),TE)
+		return self._oleobj_.InvokeTypes(3, LCID, 1, (24, 0), ((3, 1),),TE)
 
 	_prop_map_get_ = {
 		"AutoNormalizeEnabled": (2, 2, (11, 0), (), "AutoNormalizeEnabled", None),
@@ -304,24 +323,27 @@ class InstrumentInterface(DispatchBaseClass):
 
 class Projection(DispatchBaseClass):
 	"""Projection Interface"""
-	CLSID = pythoncom.MakeIID('{B39C3AE1-1E41-11D3-AE0E-00A024CBA50C}')
+	CLSID = IID('{B39C3AE1-1E41-11D3-AE0E-00A024CBA50C}')
+	coclass_clsid = None
 
 	def ChangeProjectionIndex(self, addVal=defaultNamedNotOptArg):
 		"""Change the currently available projection index"""
-		return self._oleobj_.InvokeTypes(0x3, LCID, 1, (24, 0), ((3, 1),),addVal)
+		return self._oleobj_.InvokeTypes(3, LCID, 1, (24, 0), ((3, 1),),addVal)
 
 	def Normalize(self, norm=defaultNamedNotOptArg):
 		"""Normalize lenses of projection system"""
-		return self._oleobj_.InvokeTypes(0x2, LCID, 1, (24, 0), ((3, 1),),norm)
+		return self._oleobj_.InvokeTypes(2, LCID, 1, (24, 0), ((3, 1),),norm)
 
 	def ResetDefocus(self):
 		"""Reset Defocus"""
-		return self._oleobj_.InvokeTypes(0x1, LCID, 1, (24, 0), (),)
+		return self._oleobj_.InvokeTypes(1, LCID, 1, (24, 0), (),)
 
 	_prop_map_get_ = {
 		"CameraLength": (13, 2, (5, 0), (), "CameraLength", None),
 		"CameraLengthIndex": (15, 2, (3, 0), (), "CameraLengthIndex", None),
 		"Defocus": (21, 2, (5, 0), (), "Defocus", None),
+		"DetectorShift": (30, 2, (3, 0), (), "DetectorShift", None),
+		"DetectorShiftMode": (31, 2, (3, 0), (), "DetectorShiftMode", None),
 		# Method 'DiffractionShift' returns object of type 'Vector'
 		"DiffractionShift": (18, 2, (9, 0), (), "DiffractionShift", '{9851BC47-1B8C-11D3-AE0A-00A024CBA50C}'),
 		# Method 'DiffractionStigmator' returns object of type 'Vector'
@@ -348,6 +370,8 @@ class Projection(DispatchBaseClass):
 	_prop_map_put_ = {
 		"CameraLengthIndex": ((15, LCID, 4, 0),()),
 		"Defocus": ((21, LCID, 4, 0),()),
+		"DetectorShift": ((30, LCID, 4, 0),()),
+		"DetectorShiftMode": ((31, LCID, 4, 0),()),
 		"DiffractionShift": ((18, LCID, 4, 0),()),
 		"DiffractionStigmator": ((19, LCID, 4, 0),()),
 		"Focus": ((11, LCID, 4, 0),()),
@@ -362,15 +386,16 @@ class Projection(DispatchBaseClass):
 
 class Stage(DispatchBaseClass):
 	"""Stage Interface"""
-	CLSID = pythoncom.MakeIID('{E7AE1E41-1BF8-11D3-AE0B-00A024CBA50C}')
+	CLSID = IID('{E7AE1E41-1BF8-11D3-AE0B-00A024CBA50C}')
+	coclass_clsid = None
 
 	def Goto(self, newPos=defaultNamedNotOptArg, mask=defaultNamedNotOptArg):
 		"""Goto a position"""
-		return self._oleobj_.InvokeTypes(0x1, LCID, 1, (24, 0), ((9, 0), (3, 0)),newPos, mask)
+		return self._oleobj_.InvokeTypes(1, LCID, 1, (24, 0), ((9, 0), (3, 0)),newPos, mask)
 
 	def MoveTo(self, newPos=defaultNamedNotOptArg, mask=defaultNamedNotOptArg):
 		"""Move to a position"""
-		return self._oleobj_.InvokeTypes(0x2, LCID, 1, (24, 0), ((9, 0), (3, 0)),newPos, mask)
+		return self._oleobj_.InvokeTypes(2, LCID, 1, (24, 0), ((9, 0), (3, 0)),newPos, mask)
 
 	_prop_map_get_ = {
 		"Holder": (12, 2, (3, 0), (), "Holder", None),
@@ -383,15 +408,16 @@ class Stage(DispatchBaseClass):
 
 class StagePosition(DispatchBaseClass):
 	"""Utility object: stage coordinates"""
-	CLSID = pythoncom.MakeIID('{9851BC4A-1B8C-11D3-AE0A-00A024CBA50C}')
+	CLSID = IID('{9851BC4A-1B8C-11D3-AE0A-00A024CBA50C}')
+	coclass_clsid = None
 
 	def GetAsArray(self, pos=defaultNamedNotOptArg):
 		"""Return position in an array"""
-		return self._oleobj_.InvokeTypes(0x1, LCID, 1, (24, 0), ((16389, 0),),pos)
+		return self._oleobj_.InvokeTypes(1, LCID, 1, (24, 0), ((16389, 0),),pos)
 
 	def SetAsArray(self, pos=defaultNamedNotOptArg):
 		"""Set position from an array"""
-		return self._oleobj_.InvokeTypes(0x2, LCID, 1, (24, 0), ((16389, 0),),pos)
+		return self._oleobj_.InvokeTypes(2, LCID, 1, (24, 0), ((16389, 0),),pos)
 
 	_prop_map_get_ = {
 		"A": (13, 2, (5, 0), (), "A", None),
@@ -410,7 +436,8 @@ class StagePosition(DispatchBaseClass):
 
 class UserButtonEvent:
 	"""Standard scripting event interface"""
-	CLSID = CLSID_Sink = pythoncom.MakeIID('{02CDC9A2-1F1D-11D3-AE11-00A024CBA50C}')
+	CLSID = CLSID_Sink = IID('{02CDC9A2-1F1D-11D3-AE11-00A024CBA50C}')
+	coclass_clsid = IID('{3A4CE1F0-3A05-11D3-AE81-004095005B07}')
 	_public_methods_ = [] # For COM Server support
 	_dispid_to_func_ = {
 		        1 : "OnPressed",
@@ -439,7 +466,7 @@ class UserButtonEvent:
 		import win32com.server.util
 		if iid==self.CLSID_Sink: return win32com.server.util.wrap(self)
 
-	# Handlers for the control
+	# Event Handlers
 	# If you create handlers, they should have the following prototypes:
 #	def OnPressed(self):
 #		"""Button pressed event"""
@@ -447,14 +474,16 @@ class UserButtonEvent:
 
 class UserButtons(DispatchBaseClass):
 	"""User buttons collection"""
-	CLSID = pythoncom.MakeIID('{50C21D10-317F-11D3-B4C8-00A024CB9221}')
+	CLSID = IID('{50C21D10-317F-11D3-B4C8-00A024CB9221}')
+	coclass_clsid = None
 
 	# Result is of type IUserButton
 	# The method Item is actually a property, but must be used as a method to correctly pass the arguments
 	def Item(self, index=defaultNamedNotOptArg):
 		"""Get individual Button"""
-		ret = self._oleobj_.InvokeTypes(0x0, LCID, 2, (9, 0), ((12, 0),),index)
-		if ret is not None: ret = win32com.client.Dispatch(ret, 'Item', '{E6F00871-3164-11D3-B4C8-00A024CB9221}', UnicodeToString=0)
+		ret = self._oleobj_.InvokeTypes(0, LCID, 2, (9, 0), ((12, 0),),index)
+		if ret is not None:
+			ret = Dispatch(ret, 'Item', '{E6F00871-3164-11D3-B4C8-00A024CB9221}', UnicodeToString=0)
 		return ret
 
 	_prop_map_get_ = {
@@ -465,16 +494,19 @@ class UserButtons(DispatchBaseClass):
 	# Default method for this class is 'Item'
 	def __call__(self, index=defaultNamedNotOptArg):
 		"""Get individual Button"""
-		ret = self._oleobj_.InvokeTypes(0x0, LCID, 2, (9, 0), ((12, 0),),index)
-		if ret is not None: ret = win32com.client.Dispatch(ret, '__call__', '{E6F00871-3164-11D3-B4C8-00A024CB9221}', UnicodeToString=0)
+		ret = self._oleobj_.InvokeTypes(0, LCID, 2, (9, 0), ((12, 0),),index)
+		if ret is not None:
+			ret = Dispatch(ret, '__call__', '{E6F00871-3164-11D3-B4C8-00A024CB9221}', UnicodeToString=0)
 		return ret
 
 	# str(ob) and int(ob) will use __call__
-	def __str__(self, *args):
+	def __unicode__(self, *args):
 		try:
-			return str(apply( self.__call__, args))
+			return unicode(apply( self.__call__, args))
 		except pythoncom.com_error:
 			return repr(self)
+	def __str__(self, *args):
+		return str(apply(self.__unicode__, args))
 	def __int__(self, *args):
 		return int(apply( self.__call__, args))
 	def _NewEnum(self):
@@ -495,11 +527,12 @@ class UserButtons(DispatchBaseClass):
 
 class Vacuum(DispatchBaseClass):
 	"""Vacuum System interface"""
-	CLSID = pythoncom.MakeIID('{C7646442-1115-11D3-AE00-00A024CBA50C}')
+	CLSID = IID('{C7646442-1115-11D3-AE00-00A024CBA50C}')
+	coclass_clsid = None
 
 	def RunBufferCycle(self):
 		"""Request a buffer cycle"""
-		return self._oleobj_.InvokeTypes(0x3, LCID, 1, (24, 0), (),)
+		return self._oleobj_.InvokeTypes(3, LCID, 1, (24, 0), (),)
 
 	_prop_map_get_ = {
 		"ColumnValvesOpen": (13, 2, (11, 0), (), "ColumnValvesOpen", None),
@@ -509,11 +542,13 @@ class Vacuum(DispatchBaseClass):
 		"Status": (10, 2, (3, 0), (), "Status", None),
 	}
 	_prop_map_put_ = {
+		"ColumnValvesOpen": ((13, LCID, 4, 0),()),
 	}
 
 class Vector(DispatchBaseClass):
 	"""Utility object: Vector"""
-	CLSID = pythoncom.MakeIID('{9851BC47-1B8C-11D3-AE0A-00A024CBA50C}')
+	CLSID = IID('{9851BC47-1B8C-11D3-AE0A-00A024CBA50C}')
+	coclass_clsid = None
 
 	_prop_map_get_ = {
 		"X": (1, 2, (5, 0), (), "X", None),
@@ -524,32 +559,11 @@ class Vector(DispatchBaseClass):
 		"Y": ((2, LCID, 4, 0),()),
 	}
 
-class CoClassBaseClass:
-	def __init__(self, oobj=None):
-		if oobj is None: oobj = pythoncom.new(self.CLSID)
-		self.__dict__["_dispobj_"] = self.default_interface(oobj)
-	def __repr__(self):
-		return "<win32com.gen_py.%s.%s>" % (__doc__, self.__class__.__name__)
-
-	def __getattr__(self, attr):
-		d=self.__dict__["_dispobj_"]
-		if d is not None: return getattr(d, attr)
-		raise AttributeError, attr
-	def __setattr__(self, attr, value):
-		if self.__dict__.has_key(attr): self.__dict__[attr] = value; return
-		try:
-			d=self.__dict__["_dispobj_"]
-			if d is not None:
-				d.__setattr__(attr, value)
-				return
-		except AttributeError:
-			pass
-		self.__dict__[attr] = value
-
+from win32com.client import CoClassBaseClass
 # This CoClass is known by the name 'Tecnai.Instrument.1'
 class Instrument(CoClassBaseClass): # A CoClass
 	# Interface to access all subsystems
-	CLSID = pythoncom.MakeIID("{02CDC9A1-1F1D-11D3-AE11-00A024CBA50C}")
+	CLSID = IID('{02CDC9A1-1F1D-11D3-AE11-00A024CBA50C}')
 	coclass_sources = [
 	]
 	coclass_interfaces = [
@@ -559,7 +573,7 @@ class Instrument(CoClassBaseClass): # A CoClass
 
 class UserButton(CoClassBaseClass): # A CoClass
 	# Tecnai user buttons
-	CLSID = pythoncom.MakeIID("{3A4CE1F0-3A05-11D3-AE81-004095005B07}")
+	CLSID = IID('{3A4CE1F0-3A05-11D3-AE81-004095005B07}')
 	coclass_sources = [
 		UserButtonEvent,
 	]
@@ -570,43 +584,207 @@ class UserButton(CoClassBaseClass): # A CoClass
 	default_interface = IUserButton
 
 Camera_vtables_dispatch_ = 1
-Camera_vtables_ =  [('TakeExposure', 5, (), (3, 0, None), ())]
+Camera_vtables_ = [
+	('TakeExposure', 5, 1, (), (3, 0, None, None), ()),
+	('Stock', 10, 2, ((16387,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('MainScreen', 11, 2, ((16387,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('MainScreen', 11, 4, ((3,1,None, None),), (3, 0, None, None), ('pVal',)),
+	('IsSmallScreenDown', 12, 2, ((16395,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('MeasuredExposureTime', 13, 2, ((16389,10,None, None),), (3, 0, None, None), ('pET',)),
+	('FilmText', 14, 2, ((16392,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('FilmText', 14, 4, ((8,1,None, None),), (3, 0, None, None), ('pVal',)),
+	('ManualExposureTime', 15, 2, ((16389,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('ManualExposureTime', 15, 4, ((5,1,None, None),), (3, 0, None, None), ('pVal',)),
+	('PlateuMarker', 17, 2, ((16395,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('PlateuMarker', 17, 4, ((11,1,None, None),), (3, 0, None, None), ('pVal',)),
+	('ExposureNumber', 18, 2, ((16387,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('ExposureNumber', 18, 4, ((3,1,None, None),), (3, 0, None, None), ('pVal',)),
+	('Usercode', 19, 2, ((16392,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('Usercode', 19, 4, ((8,1,None, None),), (3, 0, None, None), ('pVal',)),
+	('ManualExposure', 21, 2, ((16395,10,None, None),), (3, 0, None, None), ('ps',)),
+	('ManualExposure', 21, 4, ((11,1,None, None),), (3, 0, None, None), ('ps',)),
+	('PlateLabelDateType', 22, 2, ((16387,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('PlateLabelDateType', 22, 4, ((3,1,None, None),), (3, 0, None, None), ('pVal',)),
+	('ScreenDim', 23, 2, ((16395,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('ScreenDim', 23, 4, ((11,1,None, None),), (3, 0, None, None), ('pVal',)),
+	('ScreenDimText', 24, 2, ((16392,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('ScreenDimText', 24, 4, ((8,1,None, None),), (3, 0, None, None), ('pVal',)),
+	('ScreenCurrent', 25, 2, ((16389,10,None, None),), (3, 0, None, None), ('pSC',)),
+]
 
 Gauge_vtables_dispatch_ = 1
-Gauge_vtables_ =  [('Read', 1, (), (3, 0, None), ())]
+Gauge_vtables_ = [
+	('Read', 1, 1, (), (3, 0, None, None), ()),
+	('Name', 10, 2, ((16392,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('Pressure', 11, 2, ((16389,10,None, None),), (3, 0, None, None), ('pPresure',)),
+	('Status', 12, 2, ((16387,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('PressureLevel', 13, 2, ((16387,10,None, None),), (3, 0, None, None), ('pVal',)),
+]
 
 Gauges_vtables_dispatch_ = 1
-Gauges_vtables_ =  [('Item', 0, ((12, 0, None), (16393, 10, None)), (3, 0, None), ('index', 'pG')), ('_NewEnum', -4, ((16397, 10, None),), (3, 0, None), ('pVal',))]
+Gauges_vtables_ = [
+	('Count', 1, 2, ((16387,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('Item', 0, 2, ((12,0,None, None),(16393,10,None, IID('{52020820-18BF-11D3-86E1-00C04FC126DD}')),), (3, 0, None, None), ('index', 'pG')),
+	('_NewEnum', -4, 2, ((16397,10,None, None),), (3, 0, None, None), ('pVal',)),
+]
 
 Gun_vtables_dispatch_ = 1
-Gun_vtables_ =  []
+Gun_vtables_ = [
+	('HTState', 10, 2, ((16387,10,None, None),), (3, 0, None, None), ('ps',)),
+	('HTState', 10, 4, ((3,1,None, None),), (3, 0, None, None), ('ps',)),
+	('HTValue', 11, 2, ((16389,10,None, None),), (3, 0, None, None), ('phtval',)),
+	('HTValue', 11, 4, ((5,1,None, None),), (3, 0, None, None), ('phtval',)),
+	('HTMaxValue', 12, 2, ((16389,10,None, None),), (3, 0, None, None), ('pMaxHT',)),
+	('Shift', 13, 2, ((16393,10,None, IID('{9851BC47-1B8C-11D3-AE0A-00A024CBA50C}')),), (3, 0, None, None), ('pBS',)),
+	('Shift', 13, 4, ((9,1,None, IID('{9851BC47-1B8C-11D3-AE0A-00A024CBA50C}')),), (3, 0, None, None), ('pBS',)),
+	('Tilt', 14, 2, ((16393,10,None, IID('{9851BC47-1B8C-11D3-AE0A-00A024CBA50C}')),), (3, 0, None, None), ('pDFT',)),
+	('Tilt', 14, 4, ((9,1,None, IID('{9851BC47-1B8C-11D3-AE0A-00A024CBA50C}')),), (3, 0, None, None), ('pDFT',)),
+]
 
 IUserButton_vtables_dispatch_ = 1
-IUserButton_vtables_ =  []
+IUserButton_vtables_ = [
+	('Name', 10, 2, ((16392,10,None, None),), (3, 0, None, None), ('pName',)),
+	('Label', 11, 2, ((16392,10,None, None),), (3, 0, None, None), ('pName',)),
+	('Assignment', 12, 2, ((16392,10,None, None),), (3, 0, None, None), ('pas',)),
+	('Assignment', 12, 4, ((8,1,None, None),), (3, 0, None, None), ('pas',)),
+]
 
 Illumination_vtables_dispatch_ = 1
-Illumination_vtables_ =  [('Normalize', 1, ((3, 0, None),), (3, 0, None), ('nm',))]
+Illumination_vtables_ = [
+	('Normalize', 1, 1, ((3,0,None, None),), (3, 0, None, None), ('nm',)),
+	('Mode', 11, 2, ((16387,10,None, None),), (3, 0, None, None), ('pMode',)),
+	('Mode', 11, 4, ((3,1,None, None),), (3, 0, None, None), ('pMode',)),
+	('SpotsizeIndex', 12, 2, ((16387,10,None, None),), (3, 0, None, None), ('pSS',)),
+	('SpotsizeIndex', 12, 4, ((3,1,None, None),), (3, 0, None, None), ('pSS',)),
+	('Intensity', 13, 2, ((16389,10,None, None),), (3, 0, None, None), ('pInt',)),
+	('Intensity', 13, 4, ((5,1,None, None),), (3, 0, None, None), ('pInt',)),
+	('IntensityZoomEnabled', 14, 2, ((16395,10,None, None),), (3, 0, None, None), ('pIZE',)),
+	('IntensityZoomEnabled', 14, 4, ((11,1,None, None),), (3, 0, None, None), ('pIZE',)),
+	('IntensityLimitEnabled', 15, 2, ((16395,10,None, None),), (3, 0, None, None), ('pILE',)),
+	('IntensityLimitEnabled', 15, 4, ((11,1,None, None),), (3, 0, None, None), ('pILE',)),
+	('BeamBlanked', 16, 2, ((16395,10,None, None),), (3, 0, None, None), ('pBB',)),
+	('BeamBlanked', 16, 4, ((11,1,None, None),), (3, 0, None, None), ('pBB',)),
+	('Shift', 17, 2, ((16393,10,None, IID('{9851BC47-1B8C-11D3-AE0A-00A024CBA50C}')),), (3, 0, None, None), ('pBS',)),
+	('Shift', 17, 4, ((9,1,None, IID('{9851BC47-1B8C-11D3-AE0A-00A024CBA50C}')),), (3, 0, None, None), ('pBS',)),
+	('Tilt', 18, 2, ((16393,10,None, IID('{9851BC47-1B8C-11D3-AE0A-00A024CBA50C}')),), (3, 0, None, None), ('pDFT',)),
+	('Tilt', 18, 4, ((9,1,None, IID('{9851BC47-1B8C-11D3-AE0A-00A024CBA50C}')),), (3, 0, None, None), ('pDFT',)),
+	('RotationCenter', 19, 2, ((16393,10,None, IID('{9851BC47-1B8C-11D3-AE0A-00A024CBA50C}')),), (3, 0, None, None), ('pRC',)),
+	('RotationCenter', 19, 4, ((9,1,None, IID('{9851BC47-1B8C-11D3-AE0A-00A024CBA50C}')),), (3, 0, None, None), ('pRC',)),
+	('CondenserStigmator', 20, 2, ((16393,10,None, IID('{9851BC47-1B8C-11D3-AE0A-00A024CBA50C}')),), (3, 0, None, None), ('pCStig',)),
+	('CondenserStigmator', 20, 4, ((9,1,None, IID('{9851BC47-1B8C-11D3-AE0A-00A024CBA50C}')),), (3, 0, None, None), ('pCStig',)),
+	('DFMode', 21, 2, ((16387,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('DFMode', 21, 4, ((3,1,None, None),), (3, 0, None, None), ('pVal',)),
+]
 
 InstrumentInterface_vtables_dispatch_ = 1
-InstrumentInterface_vtables_ =  [('NormalizeAll', 1, (), (3, 0, None), ()), ('ReturnError', 3, ((3, 1, None),), (3, 0, None), ('TE',))]
+InstrumentInterface_vtables_ = [
+	('NormalizeAll', 1, 1, (), (3, 0, None, None), ()),
+	('AutoNormalizeEnabled', 2, 2, ((16395,10,None, None),), (3, 0, None, None), ('pANE',)),
+	('AutoNormalizeEnabled', 2, 4, ((11,1,None, None),), (3, 0, None, None), ('pANE',)),
+	('ReturnError', 3, 1, ((3,1,None, None),), (3, 0, None, None), ('TE',)),
+	('Vector', 11, 2, ((16393,10,None, None),), (3, 0, None, None), ('pVector',)),
+	('StagePosition', 12, 2, ((16393,10,None, None),), (3, 0, None, None), ('pStp',)),
+	('Vacuum', 20, 2, ((16393,10,None, IID('{C7646442-1115-11D3-AE00-00A024CBA50C}')),), (3, 0, None, None), ('pVac',)),
+	('Camera', 21, 2, ((16393,10,None, IID('{9851BC41-1B8C-11D3-AE0A-00A024CBA50C}')),), (3, 0, None, None), ('pCamera',)),
+	('Stage', 22, 2, ((16393,10,None, IID('{E7AE1E41-1BF8-11D3-AE0B-00A024CBA50C}')),), (3, 0, None, None), ('pStage',)),
+	('Illumination', 23, 2, ((16393,10,None, IID('{EF960690-1C38-11D3-AE0B-00A024CBA50C}')),), (3, 0, None, None), ('pI',)),
+	('Projection', 24, 2, ((16393,10,None, IID('{B39C3AE1-1E41-11D3-AE0E-00A024CBA50C}')),), (3, 0, None, None), ('pP',)),
+	('Gun', 25, 2, ((16393,10,None, IID('{E6F00870-3164-11D3-B4C8-00A024CB9221}')),), (3, 0, None, None), ('pG',)),
+	('UserButtons', 26, 2, ((16393,10,None, IID('{50C21D10-317F-11D3-B4C8-00A024CB9221}')),), (3, 0, None, None), ('pUBS',)),
+]
 
 Projection_vtables_dispatch_ = 1
-Projection_vtables_ =  [('ResetDefocus', 1, (), (3, 0, None), ()), ('Normalize', 2, ((3, 1, None),), (3, 0, None), ('norm',)), ('ChangeProjectionIndex', 3, ((3, 1, None),), (3, 0, None), ('addVal',))]
+Projection_vtables_ = [
+	('ResetDefocus', 1, 1, (), (3, 0, None, None), ()),
+	('Normalize', 2, 1, ((3,1,None, None),), (3, 0, None, None), ('norm',)),
+	('ChangeProjectionIndex', 3, 1, ((3,1,None, None),), (3, 0, None, None), ('addVal',)),
+	('Mode', 10, 2, ((16387,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('Mode', 10, 4, ((3,1,None, None),), (3, 0, None, None), ('pVal',)),
+	('Focus', 11, 2, ((16389,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('Focus', 11, 4, ((5,1,None, None),), (3, 0, None, None), ('pVal',)),
+	('Magnification', 12, 2, ((16389,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('CameraLength', 13, 2, ((16389,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('MagnificationIndex', 14, 2, ((16387,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('MagnificationIndex', 14, 4, ((3,1,None, None),), (3, 0, None, None), ('pVal',)),
+	('CameraLengthIndex', 15, 2, ((16387,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('CameraLengthIndex', 15, 4, ((3,1,None, None),), (3, 0, None, None), ('pVal',)),
+	('ImageShift', 16, 2, ((16393,10,None, IID('{9851BC47-1B8C-11D3-AE0A-00A024CBA50C}')),), (3, 0, None, None), ('pVal',)),
+	('ImageShift', 16, 4, ((9,1,None, IID('{9851BC47-1B8C-11D3-AE0A-00A024CBA50C}')),), (3, 0, None, None), ('pVal',)),
+	('ImageBeamShift', 17, 2, ((16393,10,None, IID('{9851BC47-1B8C-11D3-AE0A-00A024CBA50C}')),), (3, 0, None, None), ('pVal',)),
+	('ImageBeamShift', 17, 4, ((9,1,None, IID('{9851BC47-1B8C-11D3-AE0A-00A024CBA50C}')),), (3, 0, None, None), ('pVal',)),
+	('DiffractionShift', 18, 2, ((16393,10,None, IID('{9851BC47-1B8C-11D3-AE0A-00A024CBA50C}')),), (3, 0, None, None), ('pVal',)),
+	('DiffractionShift', 18, 4, ((9,1,None, IID('{9851BC47-1B8C-11D3-AE0A-00A024CBA50C}')),), (3, 0, None, None), ('pVal',)),
+	('DiffractionStigmator', 19, 2, ((16393,10,None, IID('{9851BC47-1B8C-11D3-AE0A-00A024CBA50C}')),), (3, 0, None, None), ('pVal',)),
+	('DiffractionStigmator', 19, 4, ((9,1,None, IID('{9851BC47-1B8C-11D3-AE0A-00A024CBA50C}')),), (3, 0, None, None), ('pVal',)),
+	('ObjectiveStigmator', 20, 2, ((16393,10,None, IID('{9851BC47-1B8C-11D3-AE0A-00A024CBA50C}')),), (3, 0, None, None), ('pVal',)),
+	('ObjectiveStigmator', 20, 4, ((9,1,None, IID('{9851BC47-1B8C-11D3-AE0A-00A024CBA50C}')),), (3, 0, None, None), ('pVal',)),
+	('Defocus', 21, 2, ((16389,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('Defocus', 21, 4, ((5,1,None, None),), (3, 0, None, None), ('pVal',)),
+	('SubModeString', 22, 2, ((16392,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('SubMode', 23, 2, ((16387,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('SubModeMinIndex', 24, 2, ((16387,10,None, None),), (3, 0, None, None), ('pN',)),
+	('SubModeMaxIndex', 25, 2, ((16387,10,None, None),), (3, 0, None, None), ('pN',)),
+	('ObjectiveExcitation', 26, 2, ((16389,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('ProjectionIndex', 27, 2, ((16387,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('ProjectionIndex', 27, 4, ((3,1,None, None),), (3, 0, None, None), ('pVal',)),
+	('LensProgram', 28, 2, ((16387,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('LensProgram', 28, 4, ((3,1,None, None),), (3, 0, None, None), ('pVal',)),
+	('ImageRotation', 29, 2, ((16389,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('DetectorShift', 30, 2, ((16387,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('DetectorShift', 30, 4, ((3,1,None, None),), (3, 0, None, None), ('pVal',)),
+	('DetectorShiftMode', 31, 2, ((16387,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('DetectorShiftMode', 31, 4, ((3,1,None, None),), (3, 0, None, None), ('pVal',)),
+]
 
 Stage_vtables_dispatch_ = 1
-Stage_vtables_ =  [('Goto', 1, ((9, 0, None), (3, 0, None)), (3, 0, None), ('newPos', 'mask')), ('MoveTo', 2, ((9, 0, None), (3, 0, None)), (3, 0, None), ('newPos', 'mask'))]
+Stage_vtables_ = [
+	('Goto', 1, 1, ((9,0,None, IID('{9851BC4A-1B8C-11D3-AE0A-00A024CBA50C}')),(3,0,None, None),), (3, 0, None, None), ('newPos', 'mask')),
+	('MoveTo', 2, 1, ((9,0,None, IID('{9851BC4A-1B8C-11D3-AE0A-00A024CBA50C}')),(3,0,None, None),), (3, 0, None, None), ('newPos', 'mask')),
+	('Status', 10, 2, ((16387,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('Position', 11, 2, ((16393,10,None, IID('{9851BC4A-1B8C-11D3-AE0A-00A024CBA50C}')),), (3, 0, None, None), ('pVal',)),
+	('Holder', 12, 2, ((16387,10,None, None),), (3, 0, None, None), ('pVal',)),
+]
 
 StagePosition_vtables_dispatch_ = 1
-StagePosition_vtables_ =  [('GetAsArray', 1, ((16389, 0, None),), (3, 0, None), ('pos',)), ('SetAsArray', 2, ((16389, 0, None),), (3, 0, None), ('pos',))]
+StagePosition_vtables_ = [
+	('GetAsArray', 1, 1, ((16389,0,None, None),), (3, 0, None, None), ('pos',)),
+	('SetAsArray', 2, 1, ((16389,0,None, None),), (3, 0, None, None), ('pos',)),
+	('X', 10, 2, ((16389,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('X', 10, 4, ((5,1,None, None),), (3, 0, None, None), ('pVal',)),
+	('Y', 11, 2, ((16389,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('Y', 11, 4, ((5,1,None, None),), (3, 0, None, None), ('pVal',)),
+	('Z', 12, 2, ((16389,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('Z', 12, 4, ((5,1,None, None),), (3, 0, None, None), ('pVal',)),
+	('A', 13, 2, ((16389,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('A', 13, 4, ((5,1,None, None),), (3, 0, None, None), ('pVal',)),
+	('B', 14, 2, ((16389,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('B', 14, 4, ((5,1,None, None),), (3, 0, None, None), ('pVal',)),
+]
 
 UserButtons_vtables_dispatch_ = 1
-UserButtons_vtables_ =  [('Item', 0, ((12, 0, None), (16393, 10, None)), (3, 0, None), ('index', 'pUB')), ('_NewEnum', -4, ((16397, 10, None),), (3, 0, None), ('pVal',))]
+UserButtons_vtables_ = [
+	('Count', 1, 2, ((16387,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('Item', 0, 2, ((12,0,None, None),(16393,10,None, IID('{E6F00871-3164-11D3-B4C8-00A024CB9221}')),), (3, 0, None, None), ('index', 'pUB')),
+	('_NewEnum', -4, 2, ((16397,10,None, None),), (3, 0, None, None), ('pVal',)),
+]
 
 Vacuum_vtables_dispatch_ = 1
-Vacuum_vtables_ =  [('RunBufferCycle', 3, (), (3, 0, None), ())]
+Vacuum_vtables_ = [
+	('RunBufferCycle', 3, 1, (), (3, 0, None, None), ()),
+	('Status', 10, 2, ((16387,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('PVPRunning', 11, 2, ((16395,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('Gauges', 12, 2, ((16393,10,None, IID('{6E6F03B0-2ECE-11D3-AE79-004095005B07}')),), (3, 0, None, None), ('pG',)),
+	('ColumnValvesOpen', 13, 2, ((16395,10,None, None),), (3, 0, None, None), ('pO',)),
+	('ColumnValvesOpen', 13, 4, ((11,1,None, None),), (3, 0, None, None), ('pO',)),
+]
 
 Vector_vtables_dispatch_ = 1
-Vector_vtables_ =  []
+Vector_vtables_ = [
+	('X', 1, 2, ((16389,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('X', 1, 4, ((5,1,None, None),), (3, 0, None, None), ('pVal',)),
+	('Y', 2, 2, ((16389,10,None, None),), (3, 0, None, None), ('pVal',)),
+	('Y', 2, 4, ((5,1,None, None),), (3, 0, None, None), ('pVal',)),
+]
 
 RecordMap = {
 }
@@ -633,23 +811,37 @@ CLSIDToPackageMap = {}
 win32com.client.CLSIDToClass.RegisterCLSIDsFromDict( CLSIDToClassMap )
 VTablesToPackageMap = {}
 VTablesToClassMap = {
+	'{6E6F03B0-2ECE-11D3-AE79-004095005B07}' : 'Gauges',
+	'{BC0A2B11-10FF-11D3-AE00-00A024CBA50C}' : 'InstrumentInterface',
+	'{9851BC47-1B8C-11D3-AE0A-00A024CBA50C}' : 'Vector',
+	'{50C21D10-317F-11D3-B4C8-00A024CB9221}' : 'UserButtons',
+	'{9851BC4A-1B8C-11D3-AE0A-00A024CBA50C}' : 'StagePosition',
+	'{C7646442-1115-11D3-AE00-00A024CBA50C}' : 'Vacuum',
+	'{E7AE1E41-1BF8-11D3-AE0B-00A024CBA50C}' : 'Stage',
+	'{E6F00870-3164-11D3-B4C8-00A024CB9221}' : 'Gun',
+	'{E6F00871-3164-11D3-B4C8-00A024CB9221}' : 'IUserButton',
+	'{52020820-18BF-11D3-86E1-00C04FC126DD}' : 'Gauge',
+	'{B39C3AE1-1E41-11D3-AE0E-00A024CBA50C}' : 'Projection',
+	'{EF960690-1C38-11D3-AE0B-00A024CBA50C}' : 'Illumination',
+	'{9851BC41-1B8C-11D3-AE0A-00A024CBA50C}' : 'Camera',
 }
 
 
-VTablesNamesToCLSIDMap = {
+NamesToIIDMap = {
+	'Camera' : '{9851BC41-1B8C-11D3-AE0A-00A024CBA50C}',
+	'Projection' : '{B39C3AE1-1E41-11D3-AE0E-00A024CBA50C}',
 	'Gauges' : '{6E6F03B0-2ECE-11D3-AE79-004095005B07}',
 	'InstrumentInterface' : '{BC0A2B11-10FF-11D3-AE00-00A024CBA50C}',
-	'Vector' : '{9851BC47-1B8C-11D3-AE0A-00A024CBA50C}',
-	'UserButtons' : '{50C21D10-317F-11D3-B4C8-00A024CB9221}',
-	'StagePosition' : '{9851BC4A-1B8C-11D3-AE0A-00A024CBA50C}',
-	'Vacuum' : '{C7646442-1115-11D3-AE00-00A024CBA50C}',
-	'Stage' : '{E7AE1E41-1BF8-11D3-AE0B-00A024CBA50C}',
+	'UserButtonEvent' : '{02CDC9A2-1F1D-11D3-AE11-00A024CBA50C}',
 	'Gun' : '{E6F00870-3164-11D3-B4C8-00A024CB9221}',
 	'IUserButton' : '{E6F00871-3164-11D3-B4C8-00A024CB9221}',
+	'UserButtons' : '{50C21D10-317F-11D3-B4C8-00A024CB9221}',
 	'Gauge' : '{52020820-18BF-11D3-86E1-00C04FC126DD}',
-	'Projection' : '{B39C3AE1-1E41-11D3-AE0E-00A024CBA50C}',
+	'StagePosition' : '{9851BC4A-1B8C-11D3-AE0A-00A024CBA50C}',
+	'Vacuum' : '{C7646442-1115-11D3-AE00-00A024CBA50C}',
 	'Illumination' : '{EF960690-1C38-11D3-AE0B-00A024CBA50C}',
-	'Camera' : '{9851BC41-1B8C-11D3-AE0A-00A024CBA50C}',
+	'Vector' : '{9851BC47-1B8C-11D3-AE0A-00A024CBA50C}',
+	'Stage' : '{E7AE1E41-1BF8-11D3-AE0B-00A024CBA50C}',
 }
 
 win32com.client.constants.__dicts__.append(constants.__dict__)

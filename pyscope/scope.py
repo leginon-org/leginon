@@ -93,3 +93,7 @@ class scope:
         raise NotImplementedError
     def setTurboPump(self, mode):
         raise NotImplementedError
+    def getColumnValves(self):
+        raise NotImplementedError
+    def setColumnValves(self, state):
+        raise NotImplementedError

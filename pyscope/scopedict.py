@@ -82,6 +82,8 @@ def factory(scopeclass):
 			  self.setScreen(val)
 		  elif key == 'holder type':
 			  self.setHolderType(val)
+		  elif key == 'column valves':
+			  self.setColumnValves(val)
 		  else:
 			  raise KeyError
 		  return 0
@@ -135,6 +137,8 @@ def factory(scopeclass):
 			  return self.getHolderStatus()
 		  elif key == 'stage status':
 			  return self.getStageStatus()
+		  elif key == 'column valves':
+			  return self.getColumnValves()
 		  else:
 			  raise KeyError
 

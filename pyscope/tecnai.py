@@ -697,3 +697,17 @@ else:
 			else:
 				raise ValueError
 
+		def getColumnValves(self):
+			if self.theScope.Vacuum.ColumnValvesOpen:
+				return 'open'
+			else:
+				return 'closed'
+
+		def setColumnValves(self, state):
+			if state == 'closed':
+				self.theScope.Vacuum.ColumnValvesOpen = 0
+			elif state == 'open':
+				self.theScope.Vacuum.ColumnValvesOpen = 1
+			else:
+				raise ValueError
+
