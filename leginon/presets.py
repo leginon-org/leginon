@@ -359,7 +359,7 @@ class PresetsManager(node.Node):
 
 		self.presetToDB(newpreset)
 		pnames = self.presetNames()
-		self.uiselectpreset.set(pnames, 0)
+		self.uiselectpreset.set(pnames, -1)
 		return newpreset
 
 
