@@ -374,14 +374,10 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		except:
 			self.logger.exception('Need tiles and mosaic image')
 			return
-		scope = image['scope'].toDict()
-		camera = image['camera'].toDict()
-
 		stagepos = self.emclient.getScope()['stage position']
 		# for testing with mosaic 151 from 04apr02b
 		# this is the center of image 207 (the center of 3 images)
 		#stagepos = {'x': -0.000547287, 'y': 6.08626e-5}
-		scope['stage position'] = stagepos
 
 		center = self.mosaic.getFakeParameter()
 		shift = {}
