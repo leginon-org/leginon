@@ -201,7 +201,7 @@ class Corrector(node.Node):
 		camconfig = self.cam.cameraConfig()
 		camdata = self.cam.configToEMData(camconfig)
 		if dark:
-			camdata['exposure time'] = 0.0
+			camdata['exposure type'] = 'dark'
 			typekey = 'dark'
 		else:
 			typekey = 'bright'
@@ -226,6 +226,15 @@ class Corrector(node.Node):
 
 		print 'got ref, calcnorm'
 		self.calc_norm(refimagedata)
+
+		# since its not in use yet
+		if camdata['exposure type'] == 'dark':
+			print 'reseting camera from dark to normal'
+			camconfig = self.cam.cameraConfig()
+			camdata = self.cam.configToEMData(camconfig)
+			camdata['exposure type'] = 'normal'
+			self.cam.currentCameraEMData(camdata)
+
 		print 'returning ref'
 		return ref
 

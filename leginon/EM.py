@@ -7,7 +7,7 @@
 #
 import node
 import scopedict
-import cameradict
+import methoddict
 import threading
 import data
 import event
@@ -123,6 +123,9 @@ class EM(node.Node):
 			'defocus',
 			'reset defocus',
 			'intensity',
+			'offset'
+			'dimension',
+			'binning',
 		]
 
 		## if any of these are changed, follow up with the specified pause
@@ -244,7 +247,7 @@ class EM(node.Node):
 		modulename, classname, d = emregistry.getCameraInfo(cameraname)
 		try:
 			cameraclass = self.getClass(modulename, classname)
-			self.camera = cameradict.factory(cameraclass)()
+			self.camera = methoddict.factory(cameraclass)()
 		except Exception, e:
 			print 'cannot set camera to type', cameraname
 			print e
@@ -404,7 +407,7 @@ class EM(node.Node):
 					try:
 						self.camera[key] = value
 					except:	
-						print "failed to set '%s' to" % EMkey, EMstate[EMkey]
+						print "failed to set '%s' to" % key, state[key]
 						self.printException()
 
 			if self.uipauses.get() and (key in self.pauses):
@@ -631,7 +634,7 @@ class EM(node.Node):
 		cameraparameterscontainer = uidata.Container('Parameters')
 
 		parameters = [('exposure time', 'Exposure time', uidata.Float, 'rw'),
-									('image type', 'Image type', uidata.String, 'rw')]
+									('exposure type', 'Image type', uidata.String, 'rw')]
 
 		for key, name, datatype, permissions in parameters:
 			self.uicameradict[key] = datatype(name, None, permissions)
