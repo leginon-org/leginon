@@ -265,6 +265,9 @@ class UIStruct(UIData):
 class UIDate(UIData):
 	typelist = UIData.typelist + ('date',)
 
+class UIProgress(UIInteger):
+	typelist = UIInteger.typelist + ('progress',)
+
 class UISelectFromList(UIContainer):
 	typelist = UIContainer.typelist + ('select from list',)
 	# callback

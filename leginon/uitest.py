@@ -32,6 +32,9 @@ testdata.set('set string')
 #bar1.deleteUIObject('Testing 2')
 #bar1.deleteUIObject('foo 2')
 
+p = uidata.UIProgress('Progress Bar', 25)
+bar1.addUIObject(p)
+
 server.addUIObject(bar2)
 
 #image1 = uidata.UIImage('Image 1', None, 'rw')

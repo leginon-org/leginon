@@ -202,7 +202,11 @@ def WidgetClassFromTypeList(typelist):
 					return wxButtonWidget
 				elif typelist[1] == 'data':
 					if len(typelist) > 2:
-						if typelist[2] == 'boolean':
+						if typelist[2] == 'integer':
+							if len(typelist) > 3:
+								if typelist[3] == 'progress':
+									return wxProgressWidget
+						elif typelist[2] == 'boolean':
 							return wxCheckBoxWidget
 						elif typelist[2] == 'struct':
 							return wxTreeCtrlWidget
@@ -510,6 +514,21 @@ class wxDataWidget(DataWidget):
 
 	def Destroy(self):
 		pass
+
+class wxProgressWidget(wxDataWidget):
+	def __init__(self, uiclient, namelist, widgethandler, parent, read, write):
+		wxDataWidget.__init__(self, uiclient, namelist, widgethandler, parent, read, write)
+		self.wxwidget = wxBoxSizer(wxHORIZONTAL)
+		self.label = wxStaticText(self.parent, -1, self.name)
+		self.gauge = wxGauge(self.parent, -1, 100, style=wxGA_HORIZONTAL)
+		size = self.gauge.GetSizeTuple()
+		self.gauge.SetSize((size[0]*4, size[1]))
+		self.wxwidget.Add(self.label, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
+		self.wxwidget.Add(self.gauge, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
+
+	def set(self, value):
+		DataWidget.set(self, value)
+		self.gauge.SetValue(self.value)
 
 class wxEntryWidget(wxDataWidget):
 	def __init__(self, uiclient, namelist, widgethandler, parent, read, write):

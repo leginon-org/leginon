@@ -28,34 +28,42 @@ class SpiralTargetMaker(TargetMaker):
 
 	def defineUserInterface(self):
 		TargetMaker.defineUserInterface(self)
+		publishspiralmethod = uidata.UIMethod('Publish Spiral',
+																						self.publishTargetList)
+		self.progress = uidata.UIProgress('', 0)
 		self.maxtargets = uidata.UIInteger('Maximum Targets', 9, 'rw')
 		self.overlap = uidata.UIInteger('Percent Overlap', 25, 'rw')
 		self.center = uidata.UIStruct('Spiral Center', {'x': 0.0, 'y': 0.0}, 'rw')
 		container = uidata.UIMediumContainer('Spiral Target Maker')
-		container.addUIObjects((self.maxtargets, self.overlap, self.center))
+		container.addUIObjects((self.maxtargets, self.overlap, self.center,
+														self.progress, publishspiralmethod))
 		self.uiserver.addUIObject(container)
 
 	def publishTargetList(self):
+		self.progress.set(0)
 		scope = self.researchByDataID(('scope,'))
 		camera = self.researchByDataID(('camera,'))
+#		scope = {'stage position': {'x': 1.1, 'y': 2.2}}
+#		camera = {'dimension': {'x': 512}}
 		# waiting to revise with presets
 		size = camera['dimension']['x']
 		center = self.center.get()
-		for key in center
+		for key in center:
 			# stage position for now
 			scope['stage position'][key] = center[key]
-		for delta in self.makeSpiral(size):
+		maxtargets = self.maxtargets.get()
+		overlap = self.overlap.get()
+		for delta in self.makeSpiral(maxtargets, overlap, size):
 			initializer = {'id': self.ID(), 'session': self.session,
 											'delta row': delta[0], 'delta column': delta[1],
 											'scope': None, 'camera': None, 'preset': None}
 			self.targetlist.append(data.ImageTargetData(initializer=initializer))
+			self.progress.set(self.progress.get() + 100/maxtargets)
+		self.progress.set(100)
 		TargetMaker.publishTargetList(self)
-		print self.targetlist
 		self.targetlist = []
 
-	def makeSpiral(self, size):
-		maxtargets = self.maxtargets.get()
-		overlap = self.overlap.get()
+	def makeSpiral(self, maxtargets, overlap, size):
 		spacing = size - (overlap / 100.0) * size
 		spiral = self.relativeSpiral(maxtargets)
 		deltalist = []
