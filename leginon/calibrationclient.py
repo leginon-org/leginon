@@ -2,6 +2,7 @@ import data
 import Numeric
 import LinearAlgebra
 import math
+import copy
 
 class CalibrationClient(object):
 	'''
@@ -117,7 +118,7 @@ class MatrixCalibrationClient(CalibrationClient):
 		changex = change[0]
 		changey = change[1]
 
-		new = dict(scope)
+		new = copy.deepcopy(scope)
 		new[par]['x'] += changex
 		new[par]['y'] += changey
 
@@ -202,7 +203,7 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		mag_dict = self.getMagCalibration(scope['magnification'])
 		delta = self.pixtix(xmod_dict, ymod_dict, mag_dict, curstage['x'], curstage['y'], pixcol, pixrow)
 
-		newscope = dict(scope)
+		newscope = copy.deepcopy(scope)
 		newscope['stage position']['x'] += delta['x']
 		newscope['stage position']['y'] += delta['y']
 		return newscope
