@@ -138,7 +138,7 @@ class Dialog(wx.Dialog):
 			if node is None:
 				initializer = {}
 			else:
-				initializer = node.getSettings().toDict()
+				initializer = node.getSettings()
 			initializer.update(settings)
 			settingsdata = node.settingsclass(initializer=initializer)
 			node.setSettings(settingsdata)

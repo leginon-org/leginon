@@ -144,7 +144,7 @@ class DriftManager(watcher.Watcher):
 		self.references[label] = {'imageid': imageid, 'image': imagedata, 'shift': {}, 'emtarget': driftwatchevent['presettarget']['emtarget'], 'preset': driftwatchevent['presettarget']['preset']}
 
 	def uiMonitorDrift(self):
-		self.cam.setCameraDict(self.settings['camera settings'])
+		self.cam.setCameraDict(self.settings['camera settings'].toDict())
 		## calls monitorDrift in a new thread
 		t = threading.Thread(target=self.monitorDrift)
 		t.setDaemon(1)
@@ -271,7 +271,7 @@ class DriftManager(watcher.Watcher):
 
 	def measureDrift(self):
 		## configure camera
-		self.cam.setCameraDict(self.settings['camera settings'])
+		self.cam.setCameraDict(self.settings['camera settings'].toDict())
 		mag = self.getMag()
 		pixsize = self.pixsizeclient.retrievePixelSize(mag)
 		self.logger.info('Pixel size %s' % (pixsize,))

@@ -106,15 +106,17 @@ class Node(leginonobject.LeginonObject):
 		qdata = self.settingsclass(initializer={'session': qsession,
 																						'name': self.name})
 		try:
-			self.settings = self.research(qdata, results=1)[0]
+			settings = self.research(qdata, results=1)[0]
 		except IndexError:
-			self.settings = self.settingsclass(initializer=self.defaultsettings)
+			settings = self.settingsclass(initializer=self.defaultsettings)
+		self.settings = settings.toDict()
 
-	def setSettings(self, sd):
-		sd['session'] = self.session
-		sd['name'] = self.name
+	def setSettings(self, d):
+		d['session'] = self.session
+		d['name'] = self.name
+		sd = self.settingsclass(initializer=d)
 		self.publish(sd, database=True, dbforce=True)
-		self.settings = sd
+		self.settings = d
 
 	def getSettings(self):
 		return self.settings

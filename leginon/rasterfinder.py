@@ -77,7 +77,7 @@ class RasterFinder(targetfinder.TargetFinder):
 
 	'''
 	def acqImage(self):
-		self.cam.setCameraDict(self.settings['camera settings'])
+		self.cam.setCameraDict(self.settings['camera settings'].toDict())
 		imdata = self.cam.acquireCameraImageData()
 		orig = imdata['image']
 		self.original = orig

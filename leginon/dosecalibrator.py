@@ -74,7 +74,7 @@ class DoseCalibrator(calibrator.Calibrator):
 
 	def acquireImage(self):
 		self.screenUp()
-		self.cam.setCameraDict(self.settings['camera settings'])
+		self.cam.setCameraDict(self.settings['camera settings'].toDict())
 		imdata = self.cam.acquireCameraImageData(correction=True)
 		if imdata is not None:
 			self.updateImage('Image', imdata['image'].astype(Numeric.Float32))
