@@ -133,26 +133,28 @@ class ImageMosaic(watcher.Watcher):
 		return (shift0, shift1)
 
 	def processData(self, idata):
-		if len(idata.content['neighbor tiles']) == 0:
+		tileimage = idata.content['image']
+		neighbors = idata.content['neighbor tiles']
+		if len(neighbors) == 0:
 			if len(self.imagemosaic) == 0:
-				self.imagemosaic[idata.id] = {'image': idata.content['image'],
-																'position': (0, 0)}
+				self.imagemosaic[idata.id] = {'image': tileimage, 'position': (0, 0)}
 			else:
 				# it doesn't have and neighbors, start a new mosaic?
-				print 'Error: starting tile already placed'
+				self.printerror('starting tile alread placed')
 		else:
-			newposition = {}
 			positionvotes = ({}, {})
-			peakvalue = 0.0
 			# calculate the tile's position based on shift from each of the neighbors
-			for neighbor in idata.content['neighbor tiles']:
+			for neighbor in neighbors:
 				if neighbor not in self.imagemosaic:
 					# we don't know about its neighbors, wait for them?
-					print 'Error: starting tile already placed'
+					self.printerror('unknown neighbor %s' % str(neighbor))
 					break
+				neighborimage = self.imagemosaic[neighbor]['image']
+				neighborposition = self.imagemosaic[neighbor]['position']
+
 				# phase correlate the tile image with the neighbors
-				self.correlator.setImage(0, idata.content['image'])
-				self.correlator.setImage(1, self.imagemosaic[neighbor]['image'])
+				self.correlator.setImage(0, tileimage)
+				self.correlator.setImage(1, neighborimage)
 				pcimage = self.correlator.phaseCorrelate()
 				self.peakfinder.setImage(pcimage)
 				self.peakfinder.pixelPeak()
@@ -162,22 +164,21 @@ class ImageMosaic(watcher.Watcher):
 				unwrappedshift = peak['pixel peak']
 				wrappedshift = correlator.wrap_coord(peak['pixel peak'], pcimage.shape)
 				shift = self.compareShifts(unwrappedshift, wrappedshift,
-						idata.content['image'], self.imagemosaic[neighbor]['image'])
+						tileimage, neighborimage)
 
 				# use the shift and the neighbor position to get tile position
-				newposition[neighbor] = {}
-				position = (self.imagemosaic[neighbor]['position'][0] + shift[0],
-										self.imagemosaic[neighbor]['position'][1] + shift[1])
+				tileposition = (neighborposition[0] + shift[0],
+										neighborposition[1] + shift[1])
 				peakvalue = peak['pixel peak value']
 
 				# add a vote for this position per axis
 				# add the peak value to the sum of peak values for the position per axis
 				for i in [0, 1]:
-					if position[i] in positionvotes[i]:
-						positionvotes[i][position[i]]['votes'] += 1
-						positionvotes[i][position[i]]['peaks value'] += peakvalue
+					if tileposition[i] in positionvotes[i]:
+						positionvotes[i][tileposition[i]]['votes'] += 1
+						positionvotes[i][tileposition[i]]['peaks value'] += peakvalue
 					else:
-						positionvotes[i][position[i]] = {'votes': 1,
+						positionvotes[i][tileposition[i]] = {'votes': 1,
 							'peaks value': peakvalue}
 
 			# which ever position has the most votes wins per axis
@@ -199,7 +200,7 @@ class ImageMosaic(watcher.Watcher):
 
 			# add the tile image and position to the mosaic
 			self.imagemosaic[idata.id] = {}
-			self.imagemosaic[idata.id]['image'] = idata.content['image']
+			self.imagemosaic[idata.id]['image'] = tileimage
 			self.imagemosaic[idata.id]['position'] = tuple(position)
 
 	def uiShow(self):
