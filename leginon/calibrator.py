@@ -33,16 +33,12 @@ class Calibrator(node.Node):
 
 	def getMagnification(self):
 		try:
-			scopedata = self.instrument.getData(data.ScopeEMData)
+			mag = self.instrument.tem.Magnification
 		except:
-			return None, None
-		try:
-			mag = scopedata['magnification']
-		except KeyError:
 			mag = None
 		try:
-			mags = scopedata['magnifications']
-		except KeyError:
+			mags = self.instrument.tem.Magnifications
+		except:
 			mags = None
 		return mag, mags
 

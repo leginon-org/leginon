@@ -405,32 +405,32 @@ class PresetsManager(node.Node):
 			self.logger.error(message)
 			raise PresetChangeError(message)
 		
-		if presetdata['tem'] in self.instrument.getTEMNames():
+		if presetdata['tem']['name'] in self.instrument.getTEMNames():
 			try:
-				self.instrument.setTEM(presetdata['tem'])
+				self.instrument.setTEM(presetdata['tem']['name'])
 			except Exception, e:
 				msg = 'Preset change failed: %s' % (e,)
 				self.logger.error(msg)
 				raise PresetChangeError(msg)
 		else:
-			if presetdata['tem']:
-				msg = 'Preset change failed: canont set TEM to %s' % presetdata['tem']
+			if presetdata['tem']['name']:
+				msg = 'Preset change failed: canont set TEM to %s' % presetdata['tem']['name']
 			else:
 				msg = 'Preset change failed: no TEM selection for this preset'
 			self.logger.error(msg)
 			raise PresetChangeError(msg)
 
-		if presetdata['ccdcamera'] in self.instrument.getCCDCameraNames():
+		if presetdata['ccdcamera']['name'] in self.instrument.getCCDCameraNames():
 			try:
-				self.instrument.setCCDCamera(presetdata['ccdcamera'])
+				self.instrument.setCCDCamera(presetdata['ccdcamera']['name'])
 			except Exception, e:
 				msg = 'Preset change failed: %s' % (e,)
 				self.logger.error(msg)
 				raise PresetChangeError(msg)
 		else:
-			if presetdata['ccdcamera']:
+			if presetdata['ccdcamera']['name']:
 				msg = 'Preset change failed: canont set CCD camera to %s' \
-								% presetdata['ccdcamera']
+								% presetdata['ccdcamera']['name']
 			else:
 				msg = 'Preset change failed: no CCD camera selection for this preset'
 			self.logger.error(msg)
@@ -655,11 +655,11 @@ class PresetsManager(node.Node):
 	def selectPreset(self, pname):
 		self.currentselection = self.presetByName(pname)
 		try:
-			self.instrument.setTEM(presetdata['tem'])
+			self.instrument.setTEM(presetdata['tem']['name'])
 		except:
 			self.instrument.setTEM(None)
 		try:
-			self.instrument.setCCDCamera(presetdata['ccdcamera'])
+			self.instrument.setCCDCamera(presetdata['ccdcamera']['name'])
 		except:
 			self.instrument.setCCDCamera(None)
 		self.panel.setParameters(self.currentselection)
@@ -729,6 +729,12 @@ class PresetsManager(node.Node):
 				update = True
 		preset = self.presetByName(presetname)
 		newpreset = self.renewPreset(preset)
+		if 'tem' in parameters:
+			if isinstance(parameters['tem'], str):
+				parameters['tem'] = self.instrument.getTEMData(parameters['tem'])
+		if 'ccdcamera' in parameters:
+			if isinstance(parameters['ccdcamera'], str):
+				parameters['ccdcamera'] = self.instrument.getCCDCameraData(parameters['ccdcamera'])
 		newpreset.friendly_update(parameters)
 		if update:
 			self.panel.setParameters(newpreset)
@@ -809,7 +815,15 @@ class PresetsManager(node.Node):
 			return
 
 		## display
-		dose = self.dosecal.dose_from_imagedata(imagedata)
+		try:
+			dose = self.dosecal.dose_from_imagedata(imagedata)
+		except calibrationclient.NoPixelSizeError:
+			self.logger.error('No pixel size for this magnification')
+			return
+		except calibrationclient.NoSensitivityError:
+			self.logger.error('No sensitivity data for this magnification')
+			return
+			
 		if dose is not None:
 			self.panel.setDoseValue(dose)
 			self.setImage(imagedata['image'].astype(Numeric.Float32))

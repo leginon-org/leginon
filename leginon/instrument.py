@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.24 $
+# $Revision: 1.25 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-02 17:10:09 $
+# $Date: 2005-03-10 01:29:27 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -92,13 +92,19 @@ class Proxy(object):
 		tems.sort()
 		return tems
 
-	def getTEMData(self):
-		if self.tem is None:
-			return None
+	def getTEMData(self, name=None):
+		if name is None:
+			if self.tem is None:
+				return None
+			else:
+				name = self.tem._name
+		else:
+			if name not in self.tems:
+				raise RuntimeError('no TEM \'%s\' available' % name)
 		instrumentdata = data.InstrumentData()
-		instrumentdata['name'] = self.tem._name
+		instrumentdata['name'] = name
 		try:
-			instrumentdata['hostname'] = self.tem.Hostname
+			instrumentdata['hostname'] = self.tems[name].Hostname
 		except:
 			raise RuntimeError('unable to get TEM hostname')
 		return instrumentdata
@@ -113,13 +119,19 @@ class Proxy(object):
 		ccdcameras.sort()
 		return ccdcameras
 
-	def getCCDCameraData(self):
-		if self.ccdcamera is None:
-			return None
+	def getCCDCameraData(self, name=None):
+		if name is None:
+			if self.ccdcamera is None:
+				return None
+			else:
+				name = self.ccdcamera._name
+		else:
+			if name not in self.ccdcameras:
+				raise RuntimeError('no CCD camera \'%s\' available' % name)
 		instrumentdata = data.InstrumentData()
-		instrumentdata['name'] = self.ccdcamera._name
+		instrumentdata['name'] = name
 		try:
-			instrumentdata['hostname'] = self.ccdcamera.Hostname
+			instrumentdata['hostname'] = self.ccdcameras[name].Hostname
 		except:
 			raise RuntimeError('unable to get TEM hostname')
 		return instrumentdata
@@ -265,7 +277,6 @@ parametermapping = (
 	('defocus', 'Defocus'),
 	('reset defocus', 'resetDefocus'),
 	('intensity', 'Intensity'),
-	('magnifications', 'Magnifications'),
 	('screen current', 'ScreenCurrent'),
 	('stigmator', 'Stigmator'),
 	('beam tilt', 'BeamTilt'),

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.31 $
+# $Revision: 1.32 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-09 23:17:40 $
+# $Date: 2005-03-10 01:29:27 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -116,8 +116,8 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 
 		self.ctem = wx.Choice(self, -1, choices=[self.nonestring] + self.tems)
 		try:
-			magchoices = [str(int(m)) for m in self.magnifications[parameters['tem']]]
-		except KeyError:
+			magchoices = [str(int(m)) for m in self.magnifications[parameters['tem']['name']]]
+		except (AttributeError, KeyError, TypeError):
 			magchoices = []
 		self.cmag = wx.Choice(self, -1, choices=magchoices)
 		self.fedefocus = FloatEntry(self, -1, chars=9)
@@ -132,10 +132,14 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 		self.cbfilm = wx.CheckBox(self, -1, 'Use film')
 		self.cpcamconfig = gui.wx.Camera.CameraPanel(self)
 
-		if parameters['tem'] is None or self.ctem.FindString(parameters['tem']) == wx.NOT_FOUND:
+		if parameters['tem'] is None:
 			self.ctem.SetStringSelection(self.nonestring)
 		else:
-			self.ctem.SetStringSelection(parameters['tem'])
+			tem = parameters['tem']
+			if self.ctem.FindString(tem['name']) == wx.NOT_FOUND:
+				self.ctem.SetStringSelection(self.nonestring)
+			else:
+				self.ctem.SetStringSelection(tem['name'])
 		mag = str(int(parameters['magnification']))
 		if self.cmag.FindString(mag) == wx.NOT_FOUND:
 			self.cmag.Enable(False)
@@ -149,14 +153,18 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 		self.febeamshiftx.SetValue(parameters['beam shift']['x'])
 		self.febeamshifty.SetValue(parameters['beam shift']['y'])
 
-		if parameters['ccdcamera'] is None or self.cccdcamera.FindString(parameters['ccdcamera']) == wx.NOT_FOUND:
+		if parameters['ccdcamera'] is None:
 			self.cccdcamera.SetStringSelection(self.nonestring)
 		else:
-			self.cccdcamera.SetStringSelection(parameters['ccdcamera'])
+			ccdcamera = parameters['ccdcamera']
+			if self.cccdcamera.FindString(ccdcamera['name']) == wx.NOT_FOUND:
+				self.cccdcamera.SetStringSelection(self.nonestring)
+			else:
+				self.cccdcamera.SetStringSelection(ccdcamera['name'])
 		self.cbfilm.SetValue(parameters['film'])
 
 		try:
-			self.cpcamconfig.setSize(self.camerasizes[parameters['ccdcamera']])
+			self.cpcamconfig.setSize(self.camerasizes[ccdcamera['name']])
 		except:
 			pass
 		self.cpcamconfig.setConfiguration(parameters)
@@ -540,7 +548,7 @@ class Panel(gui.wx.Node.Panel):
 
 	def setParameters(self, parameters):
 		if isinstance(parameters, data.Data):
-			parameters = parameters.toDict()
+			parameters = parameters.toDict(dereference=True)
 		evt = SetParametersEvent(parameters, self)
 		self.GetEventHandler().AddPendingEvent(evt)
 
@@ -579,7 +587,7 @@ class Panel(gui.wx.Node.Panel):
 		if preset is None:
 			return
 		if isinstance(preset, data.Data):
-			preset = preset.toDict()
+			preset = preset.toDict(dereference=True)
 		tems = self.node.instrument.getTEMNames()
 		ccdcameras = self.node.instrument.getCCDCameraNames()
 		magnifications = dict(self.node.instrument.magnifications)
@@ -832,7 +840,11 @@ class Parameters(wx.StaticBoxSizer):
 			self.stexposuretime.SetLabel('')
 			self.stdose.SetLabel('')
 		else:
-			self.sttem.SetLabel(str(parameters['tem']))
+			if parameters['tem'] is None:
+				self.sttem.SetLabel('None')
+			else:
+				tem = parameters['tem']
+				self.sttem.SetLabel(tem['name'])
 			self.stmag.SetLabel(str(parameters['magnification']))
 			self.stdefocus.SetLabel(str(parameters['defocus']))
 			self.stspotsize.SetLabel(str(parameters['spot size']))
@@ -843,7 +855,11 @@ class Parameters(wx.StaticBoxSizer):
 			s = '(%g, %g)' % (parameters['beam shift']['x'],
 												parameters['beam shift']['y'])
 			self.stbeamshift.SetLabel(s)
-			self.stccdcamera.SetLabel(str(parameters['ccdcamera']))
+			if parameters['ccdcamera'] is None:
+				self.stccdcamera.SetLabel('None')
+			else:
+				ccdcamera = parameters['ccdcamera']
+				self.stccdcamera.SetLabel(ccdcamera['name'])
 			if parameters['film']:
 				s = 'Yes'
 			else:

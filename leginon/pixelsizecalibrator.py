@@ -81,7 +81,7 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 		caldata['pixelsize'] = psize
 		caldata['comment'] = comment
 		caldata['session'] = self.session
-		caldata['tem'] = self.instrument.getTEMName()
-		caldata['ccdcamera'] = self.instrument.getCCDCameraName()
+		caldata['tem'] = self.instrument.getTEMData()
+		caldata['ccdcamera'] = self.instrument.getCCDCameraData()
 		self.publish(caldata, database=True)
 

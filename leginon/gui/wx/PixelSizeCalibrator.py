@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PixelSizeCalibrator.py,v $
-# $Revision: 1.13 $
+# $Revision: 1.14 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-04 01:37:04 $
+# $Date: 2005-03-10 01:29:27 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -172,7 +172,7 @@ class EditDialog(wx.Dialog):
 			self.bsave.Enable(True)
 
 	def validate(self, evt):
-		self.mag = float(self.stmag.GetLabel())
+		self.mag = int(self.stmag.GetLabel())
 		self.ps = self.feps.GetValue()
 		if None in [self.mag, self.ps]:
 			dialog = wx.MessageDialog(self, 'Pixel size entry',
@@ -293,7 +293,7 @@ class PixelSizeListCtrl(wx.ListCtrl, ListCtrlAutoWidthMixin):
 		return width, height
 
 	def addPixelSize(self, mag, ps, comment):
-		mag = float(mag)
+		mag = int(mag)
 		if ps is None:
 			psstr = ''
 		else:
@@ -302,7 +302,7 @@ class PixelSizeListCtrl(wx.ListCtrl, ListCtrlAutoWidthMixin):
 		index = 0
 		for i in range(self.GetItemCount()):
 			item = self.GetItem(i)
-			imag = float(item.GetText())
+			imag = int(item.GetText())
 			if mag < imag:
 				index = i
 				break
@@ -321,10 +321,10 @@ class PixelSizeListCtrl(wx.ListCtrl, ListCtrlAutoWidthMixin):
 		for i in range(self.GetItemCount()):
 			if state is not None and not self.GetItemState(i, state):
 				continue
-			mag = float(self.GetItem(i, 0).GetText())
+			mag = int(self.GetItem(i, 0).GetText())
 			text = self.GetItem(i, 1).GetText()
 			try:
-				ps = float(text)
+				ps = int(text)
 			except ValueError:
 				ps = None
 			comment = self.GetItem(i, 2).GetText()

@@ -33,6 +33,9 @@ class NoPixelSizeError(Exception):
 class NoMatrixCalibrationError(Exception):
 	pass
 
+class NoSensitivityError(Exception):
+	pass
+
 class CalibrationClient(object):
 	'''
 	this is a component of a node that needs to use calibrations
@@ -219,16 +222,16 @@ class DoseCalibrationClient(CalibrationClient):
 		newdata['ccdcamera'] = self.instrument.getCCDCameraData()
 		self.node.publish(newdata, database=True, dbforce=True)
 
-	def researchSensitivity(self, ht, instrument):
+	def retrieveSensitivity(self, ht, tem, ccdcamera):
 		qdata = data.CameraSensitivityCalibrationData()
-		qdata['tem'] = self.instrument.getTEMData()
-		qdata['ccdcamera'] = self.instrument.getCCDCameraData()
+		qdata['tem'] = tem
+		qdata['ccdcamera'] = ccdcamera
 		qdata['high tension'] = ht
 		results = self.node.research(datainstance=qdata, results=1)
 		if results:
-			result = results[0]
+			result = results[0]['sensitivity']
 		else:
-			result = None
+			raise NoSensitivityError
 		return result
 
 	def dose_from_screen(self, screen_mag, beam_current, beam_diameter):
@@ -238,13 +241,6 @@ class DoseCalibrationClient(CalibrationClient):
 		## electrons per specimen area per second (dose rate)
 		dose_rate = screen_electrons * (screen_mag**2)
 		return dose_rate
-
-	def retrieveSensitivity(self, ht, instrument):
-		sdata = self.researchSensitivity(ht, instrument)
-		if sdata is None:
-			return None
-		sens = sdata['sensitivity']
-		return sens
 
 	def sensitivity(self, dose_rate, camera_mag, camera_pixel_size, exposure_time, counts):
 		if camera_mag == 0:
@@ -283,7 +279,11 @@ class DoseCalibrationClient(CalibrationClient):
 		imagedata indirectly contains most info needed to calc dose
 		'''
 		tem = imagedata['scope']['tem']
+		if tem is None:
+			tem = self.instrument.getTEMData()
 		ccdcamera = imagedata['camera']['ccdcamera']
+		if ccdcamera is None:
+			ccdcamera = self.instrument.getCCDCameraData()
 		camera_pixel_size = imagedata['camera']['pixel size']['x']
 		ht = imagedata['scope']['high tension']
 		binning = imagedata['camera']['binning']['x']
@@ -293,7 +293,8 @@ class DoseCalibrationClient(CalibrationClient):
 		self.node.logger.info('Specimen pixel size %.4e' % specimen_pixel_size)
 		exp_time = imagedata['camera']['exposure time'] / 1000.0
 		numdata = imagedata['image']
-		sensitivity = self.retrieveSensitivity(ht, inst)
+		sensitivity = self.retrieveSensitivity(ht, tem, ccdcamera)
+		raise No
 		self.node.logger.info('Sensitivity %.2f' % sensitivity)
 		mean_counts = imagefun.mean(numdata) / (binning**2)
 		self.node.logger.info('Mean counts %.1f' % mean_counts)
