@@ -38,8 +38,10 @@ class DataSpec(SpecObject):
 		else:
 			raise RuntimeError('invalid permissions %s' % permissions)
 		self.choices = choices
+		self.uidata = None
 		self.default = default
-		self.uidata = default
+		if self.default is not None:
+			self.set(self.default)
 		self.pyname = pyname
 
 	def get(self):
@@ -121,6 +123,16 @@ class ContainerSpec(SpecObject):
 			d['content'].append(thing.dict())
 		return d
 
+	def __iadd__(self, other):
+		'''
+		ContainerSpec concatenation
+		allows this container to absorb contents of another
+		'''
+		if not isinstance(other, ContainerSpec):
+			raise TypeError('can only concatenate ContainerSpec to ContainerSpec')
+		self.content += other.content
+		return self
+
 class Server(xmlrpcserver.xmlrpcserver):
 	def __init__(self, id, port=None):
 		xmlrpcserver.xmlrpcserver.__init__(self, id, port=port)
@@ -186,12 +198,25 @@ class Client(object):
 		self.proxy = xmlrpclib.ServerProxy(uri)
 
 	def getSpec(self):
-		self.spec = self.proxy.spec()
+		#self.spec = self.proxy.spec()
+		self.spec = self.execute('spec')
 		return self.spec
 
 	def execute(self, funcname, args=()):
-		return getattr(self.proxy, funcname)(*args)
-
+		try:
+			ret = getattr(self.proxy, funcname)(*args)
+		except xmlrpclib.ProtocolError, detail:
+			print 'ProtocolError during XML-RPC call'
+			print 'Note:  this usually means an attempt was made'
+			print ' to send unsupported types, like NoneType or'
+			print ' something other than a string as a dict key.'
+			print ' Check the return value of the remote method.'
+			ret = None
+		except xmlrpclib.Fault, detail:
+			print 'Received the following excepetion from XML-RPC Server:'
+			print detail.faultString
+			ret = None
+		return ret
 
 class TestNode(object):
 	def __init__(self):
