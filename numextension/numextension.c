@@ -594,6 +594,8 @@ static PyObject *nonmaximasuppress(PyObject *self, PyObject *args) {
 			}
 		}
 	}
+	Py_DECREF(inputarray);
+	Py_INCREF(Py_None);
 	return Py_None;
 }
 
@@ -635,6 +637,7 @@ static PyObject *hysteresisthreshold(PyObject *self, PyObject *args) {
 			}
 		}
 	}
+	Py_DECREF(inputarray);
 	return PyArray_Return(outputarray);
 }
 
@@ -712,8 +715,143 @@ static PyObject *houghline(PyObject *self, PyObject *args) {
 															+ j*inputarray->strides[1]);
 				}
 			}
+	Py_DECREF(inputarray);
+	Py_DECREF(gradientarray);
 
 	return PyArray_Return(hough);
+}
+
+void getrange(PyArrayObject *array, float *minresult, float *maxresult) {
+	int length, i;
+	float *iter;
+
+	length = PyArray_Size((PyObject *)array);
+
+	iter = (float *)array->data;
+	if(length % 2) {
+		/* odd length:  initial min and max are first element */
+		*minresult = *maxresult = *iter;
+		iter += 1;
+		length -= 1;
+	} else {
+		/* even length:  min and max from first two elements */
+		if(iter[0] > iter[1]) {
+			*maxresult = iter[0];
+			*minresult = iter[1];
+		} else {
+			*maxresult = iter[1];
+			*minresult = iter[0];
+		}
+		iter += 2;
+		length -= 2;
+	}
+
+	for(i = 0; i < length; i += 2) {
+		if(iter[0] > iter[1]) {
+			if(iter[0] > *maxresult) *maxresult = iter[0];
+			if(iter[1] < *minresult) *minresult = iter[1];
+		} else {
+			if(iter[1] > *maxresult) *maxresult = iter[1];
+			if(iter[0] < *minresult) *minresult = iter[0];
+		}
+		iter += 2;
+	}
+}
+
+static PyObject *linearscale(PyObject *self, PyObject *args) {
+	PyObject *input;
+	PyArrayObject *inputarray, *outputarray;
+	int i, j;
+	float frommin, frommax, fromrange, scale, value;
+
+	if(!PyArg_ParseTuple(args, "Off", &input, &frommin, &frommax))
+		return NULL;
+
+	inputarray = (PyArrayObject *)PyArray_ContiguousFromObject(input,
+																															PyArray_FLOAT,
+																															2, 2);
+
+	/*getrange(inputarray, &frommin, &frommax);*/
+	fromrange = frommax - frommin;
+	if(fromrange == 0.0)
+		scale = 0.0;
+	else
+		scale = 255.0/fromrange;
+
+	outputarray = (PyArrayObject *)PyArray_FromDims(inputarray->nd,
+																									inputarray->dimensions,
+																									PyArray_UBYTE);
+
+	for(i = 0; i < inputarray->dimensions[0]; i++) {
+		for(j = 0; j < inputarray->dimensions[1]; j++) {
+			value = *(float *)(inputarray->data
+												+ i*inputarray->strides[0] + j*inputarray->strides[1]);
+			if(value <= frommin) {
+				*(unsigned char *)(outputarray->data + i*outputarray->strides[0] + j*outputarray->strides[1]) = 0;
+			} else if(value >= frommax) {
+				*(unsigned char *)(outputarray->data + i*outputarray->strides[0] + j*outputarray->strides[1]) = 255;
+			} else {
+				*(unsigned char *)(outputarray->data + i*outputarray->strides[0] + j*outputarray->strides[1]) = (unsigned char)(scale*(value - frommin));
+			}
+		}
+	}
+
+	return PyArray_Return(outputarray);
+}
+
+static PyObject *rgbstring(PyObject *self, PyObject *args) {
+	PyObject *input, *output;
+	PyArrayObject *inputarray;
+	int i, j, size;
+	float frommin, frommax, fromrange, scale, value;
+	unsigned char scaledvalue, *string, *index;
+
+	if(!PyArg_ParseTuple(args, "Off", &input, &frommin, &frommax))
+		return NULL;
+
+	inputarray = (PyArrayObject *)PyArray_ContiguousFromObject(input,
+																															PyArray_FLOAT,
+																															2, 2);
+
+/*	getrange(inputarray, &frommin, &frommax); */
+	fromrange = frommax - frommin;
+	if(fromrange == 0.0)
+		scale = 0.0;
+	else
+		scale = 255.0/fromrange;
+
+	size = inputarray->dimensions[0]*inputarray->dimensions[1]*3;
+	string = (unsigned char *)malloc(size);
+	if(string == NULL) {
+		PyErr_SetString(PyExc_MemoryError, "cannot allocate memory for string");
+		return NULL;
+	}
+
+	index = string;
+	for(i = 0; i < inputarray->dimensions[0]; i++) {
+		for(j = 0; j < inputarray->dimensions[1]; j++) {
+			value = *(float *)(inputarray->data
+												+ i*inputarray->strides[0] + j*inputarray->strides[1]);
+			
+			if(value <= frommin) {
+				scaledvalue = 0;
+			} else if(value >= frommax) {
+				scaledvalue = 255;
+			} else {
+				scaledvalue = (unsigned char)(scale*(value - frommin));
+			}
+			*index = scaledvalue;
+			*(index + 1) = scaledvalue;
+			*(index + 2) = scaledvalue;
+			index += 3;
+		}
+	}
+
+	Py_DECREF(inputarray);
+
+	output = PyString_FromStringAndSize(string, size);
+	free(string);
+	return output;
 }
 
 static struct PyMethodDef numeric_methods[] = {
@@ -727,6 +865,8 @@ static struct PyMethodDef numeric_methods[] = {
 	{"nonmaximasuppress", nonmaximasuppress, METH_VARARGS},
 	{"hysteresisthreshold", hysteresisthreshold, METH_VARARGS},
 	{"houghline", houghline, METH_VARARGS},
+	{"linearscale", linearscale, METH_VARARGS},
+	{"rgbstring", rgbstring, METH_VARARGS},
 	{NULL, NULL}
 };
 
@@ -735,3 +875,4 @@ void initnumextension()
 	(void) Py_InitModule("numextension", numeric_methods);
 	import_array()
 }
+
