@@ -4,7 +4,7 @@ import wx.lib.buttons
 from wx.lib.masked import NumCtrl, EVT_NUM
 import gui.wx.Camera
 import gui.wx.Node
-import wxImageViewer
+import gui.wx.ImageViewer
 
 def getBitmap(filename):
 	iconpath = icons.getPath(filename)
@@ -525,7 +525,7 @@ class Panel(gui.wx.Node.Panel):
 
 		self.bacquire = wx.Button(self, -1, 'Acquire')
 
-		self.imagepanel = wxImageViewer.ImagePanel(self, -1)
+		self.imagepanel = gui.wx.ImageViewer.ImagePanel(self, -1)
 
 		self.szdoseimage.Add(stimagedose, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.szdoseimage.Add(self.stimagedose, (0, 1), (1, 1),

@@ -7,6 +7,7 @@ __all__ = [
 		'Entry',
 		'FFTMaker',
 		'Focuser',
+		'ImageViewer',
 		'Launcher',
 		'Logging',
 		'Manager',

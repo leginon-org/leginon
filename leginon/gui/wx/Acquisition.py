@@ -4,7 +4,7 @@ from gui.wx.Choice import Choice
 from gui.wx.Entry import FloatEntry, EVT_ENTRY
 from gui.wx.Presets import EditPresetOrder, EVT_PRESET_ORDER_CHANGED
 import wx
-import wxImageViewer
+import gui.wx.ImageViewer
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'acquisition'
@@ -33,7 +33,7 @@ class Panel(gui.wx.Node.Panel):
 		# image
 		self.szimage = self._getStaticBoxSizer('Image', (1, 1), (1, 1),
 																						wx.EXPAND|wx.ALL)
-		self.imagepanel = wxImageViewer.ImagePanel(self, -1)
+		self.imagepanel = gui.wx.ImageViewer.ImagePanel(self, -1)
 		self.szimage.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND|wx.ALL)
 
 		self.szmain.Add(self.szcontrols, (1, 0), (1, 1), wx.ALIGN_TOP)

@@ -3,7 +3,7 @@ from wx.lib.masked import NumCtrl, EVT_NUM
 import gui.wx.Camera
 import gui.wx.Data
 import gui.wx.Node
-import wxImageViewer
+import gui.wx.ImageViewer
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'driftmanager'
@@ -69,7 +69,7 @@ class Panel(gui.wx.Node.Panel):
 		# image
 		self.szimage = self._getStaticBoxSizer('Image', (1, 1), (2, 1),
 																						wx.EXPAND|wx.ALL)
-		self.imagepanel = wxImageViewer.ImagePanel(self, -1)
+		self.imagepanel = gui.wx.ImageViewer.ImagePanel(self, -1)
 		self.szimage.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND|wx.ALL)
 
 		self.szmain.AddGrowableCol(1)

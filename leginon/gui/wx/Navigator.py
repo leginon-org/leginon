@@ -3,7 +3,7 @@ from gui.wx.Entry import FloatEntry, EVT_ENTRY
 import gui.wx.Camera
 import gui.wx.Data
 import gui.wx.Node
-import wxImageViewer
+import gui.wx.ImageViewer
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'navigator'
@@ -94,7 +94,7 @@ class Panel(gui.wx.Node.Panel):
 		self.szimage = self._getStaticBoxSizer('Navigation', (1, 1), (2, 1),
 																						wx.EXPAND|wx.ALL)
 		self.bacquire = wx.Button(self, -1, 'Acquire')
-		self.imagepanel = wxImageViewer.ClickImagePanel(self, -1)
+		self.imagepanel = gui.wx.ImageViewer.ClickImagePanel(self, -1)
 		self.szimage.Add(self.bacquire, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		self.szimage.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND|wx.ALL)
 		self.szimage.AddGrowableCol(0)
@@ -145,7 +145,7 @@ class Panel(gui.wx.Node.Panel):
 		self.Bind(wx.EVT_BUTTON, self.onFromScope, self.bfromscope)
 		self.Bind(wx.EVT_BUTTON, self.onRemove, self.bremove)
 		self.Bind(wx.EVT_LISTBOX, self.onLocationSelected, self.lblocations)
-		self.Bind(wxImageViewer.EVT_IMAGE_DOUBLE_CLICKED, self.onImageDoubleClicked,
+		self.Bind(gui.wx.ImageViewer.EVT_IMAGE_DOUBLE_CLICKED, self.onImageDoubleClicked,
 							self.imagepanel)
 
 	def onWaitEntry(self, evt):

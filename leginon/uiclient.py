@@ -12,7 +12,7 @@ import time
 import sys
 sys.coinit_flags = 0
 import wx
-import wxImageViewer
+import gui.wx.ImageViewer
 import wxDictTree
 import wxOrderedListBox
 import wxMaster
@@ -1145,7 +1145,7 @@ class ImageWidget(wx.BoxSizer, DataWidget, ImageMixIn):
 		ImageMixIn.__init__(self)
 		wx.BoxSizer.__init__(self, wx.VERTICAL)
 		self.label = wx.StaticText(parent, -1, name)
-		self.image = wxImageViewer.ImagePanel(parent, -1)
+		self.image = gui.wx.ImageViewer.ImagePanel(parent, -1)
 		DataWidget.__init__(self, name, parent, container, value, configuration)
 		self.set(value)
 		self.Add(self.label, 0, wx.ALIGN_LEFT | wx.ALL, 5)
@@ -1421,7 +1421,7 @@ class ClickImageWidget(wx.BoxSizer, DefinedContainerWidget, ImageMixIn):
 		ImageMixIn.__init__(self)
 		wx.BoxSizer.__init__(self, wx.VERTICAL)
 		self.label = wx.StaticText(parent, -1, name)
-		self.image = wxImageViewer.ClickImagePanel(parent, -1, self.onClick)
+		self.image = gui.wx.ImageViewer.ClickImagePanel(parent, -1, self.onClick)
 		self.namemapping = {'Image': self.setImage,
 												'Coordinates': None,
 												'Click': None}
@@ -1451,7 +1451,7 @@ class TargetImageWidget(wx.BoxSizer, DefinedContainerWidget, ImageMixIn):
 		ImageMixIn.__init__(self)
 		wx.BoxSizer.__init__(self, wx.VERTICAL)
 		self.label = wx.StaticText(parent, -1, name)
-		self.image = wxImageViewer.TargetImagePanel(parent, -1, self.onTarget)
+		self.image = gui.wx.ImageViewer.TargetImagePanel(parent, -1, self.onTarget)
 		self.namemapping = {'Image': self.setImage,
 												None: self.setTarget}
 		DefinedContainerWidget.__init__(self, name, parent, container, value,

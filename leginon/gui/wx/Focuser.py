@@ -2,7 +2,7 @@ import gui.wx.Acquisition
 from gui.wx.Choice import Choice
 from gui.wx.Entry import FloatEntry, EVT_ENTRY
 import wx
-import wxImageViewer
+import gui.wx.ImageViewer
 
 UpdateImagesEventType = wx.NewEventType()
 ManualCheckEventType = wx.NewEventType()
@@ -41,7 +41,7 @@ class Panel(gui.wx.Acquisition.Panel):
 		# correlation image
 		szimage = self._getStaticBoxSizer('Correlation Image', (2, 1), (1, 1),
 																						wx.EXPAND|wx.ALL)
-		self.ipcorrelation = wxImageViewer.TargetImagePanel(self, -1, tool=False)
+		self.ipcorrelation = gui.wx.ImageViewer.TargetImagePanel(self, -1, tool=False)
 		self.ipcorrelation.addTargetType('Peak')
 		szimage.Add(self.ipcorrelation, (0, 0), (1, 1), wx.EXPAND|wx.ALL)
 		self.szmain.AddGrowableRow(2)
@@ -265,7 +265,7 @@ class ManualFocusDialog(wx.Dialog):
 		szimage.Add(szmaskradius, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 		szimage.Add(self.rbimage, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
-		self.ipimage = wxImageViewer.ImagePanel(self, -1)
+		self.ipimage = gui.wx.ImageViewer.ImagePanel(self, -1)
 
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(szef, (0, 0), (1, 2), wx.EXPAND)
