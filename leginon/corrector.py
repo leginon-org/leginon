@@ -15,12 +15,16 @@ import event
 import imagefun
 import node
 import Numeric
+import threading
 import uidata
 
 class CameraError(Exception):
 	pass
 
 class FindExposureTimeError(Exception):
+	pass
+
+class AbortError(Exception):
 	pass
 
 class DataHandler(node.DataHandler):
@@ -40,6 +44,7 @@ class SimpleCorrector(node.Node):
 																						event.ListPublishEvent]
 	def __init__(self, id, session, nodelocations, **kwargs):
 		self.references = {}
+		self.abortevent = threading.Event()
 		self.camerafuncs = camerafuncs.CameraFuncs(self)
 		node.Node.__init__(self, id, session, nodelocations,
 												datahandler=DataHandler, **kwargs)
@@ -208,7 +213,7 @@ class SimpleCorrector(node.Node):
 		counts = self.findcounts.get()
 		try:
 			self.findExposureTime(binning, counts)
-		except CameraError:
+		except (CameraError, node.ResearchError):
 			self.findmessagelog.error('Error configuring camera')
 
 	def getMedianImage(self, naverage):
@@ -283,6 +288,8 @@ class SimpleCorrector(node.Node):
 					if binning not in self.references:
 						self.references[binning] = {}
 					self.references[binning][exposuretype] = image
+					if self.abortevent.isSet():
+						raise AbortError
 				self.references[binning]['normalization'] = \
 					 self.calculateNormalizationImage(self.references[binning]['dark'],
 																						self.references[binning]['normal'],
@@ -291,17 +298,23 @@ class SimpleCorrector(node.Node):
 					del self.references[binning]['normal']
 				except (TypeError, KeyError):
 					pass
-		except (CameraError, node.PublishError, FindExposureTimeError), e:
-			if isinstance(e, CameraError):
-				message = 'Error configuring camera'
+		except (CameraError, node.PublishError, node.ResearchError,
+						FindExposureTimeError, AbortError), e:
+			errormessage = ''
+			statusmessage = 'Error acquiring reference images'
+			if isinstance(e, (CameraError, node.ResearchError)):
+				errormessage = 'Error configuring camera'
 			elif isinstance(e, node.PublishError):
-				message = 'Error saving reference to the database'
+				errormessage = 'Error saving reference to the database'
+			elif isinstance(e, AbortError):
+				statusmessage = 'Acquire references aborted'
 			else:
-				message = 'Error acquiring reference images'
-			if str(e):
-				message += ': %s' % str(e)
-			self.messagelog.error(message)
-			self.status.set('Error acquiring reference images')
+				errormessage = 'Error acquiring reference images'
+			if errormessage:
+				if str(e):
+					errormessage += ': %s' % str(e)
+				self.messagelog.error(errormessage)
+			self.status.set(statusmessage)
 			self.exposuretype.set('')
 			self.binning.set('')
 			self.displayImageStats(None)
@@ -314,12 +327,20 @@ class SimpleCorrector(node.Node):
 
 	def onAcquireReferenceImages(self):
 		self.automethod.disable()
+		self.abortevent.clear()
+		self.abortmethod.enable()
 		try:
 			self.acquireReferenceImages()
 		except:
 			self.automethod.enable()
+			self.abortmethod.disable()
 			raise
 		self.automethod.enable()
+		self.abortmethod.disable()
+
+	def onAbort(self):
+		self.abortmethod.disable()
+		self.abortevent.set()
 
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
@@ -397,8 +418,10 @@ class SimpleCorrector(node.Node):
 		self.image = uidata.Image('Image', None)
 
 		self.automethod = uidata.Method('Auto', self.onAcquireReferenceImages)
+		self.abortmethod = uidata.Method('Abort', self.onAbort)
+		self.abortmethod.disable()
 		referencescontainer = uidata.Container('References')
-		referencescontainer.addObjects((self.automethod,))
+		referencescontainer.addObjects((self.automethod, self.abortmethod))
 
 		controlcontainer = uidata.Container('Control')
 		controlcontainer.addObjects((referencescontainer,))
