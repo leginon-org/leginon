@@ -508,6 +508,9 @@ class TargetImagePanel(ImagePanel):
 		else:
 			self.combobox.Append(name)
 			self.combobox.SetSize(self.combobox.GetBestSize())
+			width, height = self.combobox.GetSizeTuple()
+			self.toolsizer.SetItemMinSize(self.combobox, width, height)
+			self.toolsize.Layout()
 
 	def deleteComboBox(self, name):
 		if self.combobox is None:
