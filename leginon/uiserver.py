@@ -73,8 +73,25 @@ class Server(XMLRPCServer, uidata.Container):
 		# except from this client?
 		uidataobject._set(value)
 		# record new value in a pickle
-		self.updatePickle(namelist, value)
+		if uidataobject.persist:
+			self.updatePickle(namelist, value)
 		return ''
+
+	def addObject(self, uiobject):
+		### calls base class addObject, but then updates
+		### the objects with stored preferences
+		uidata.Container.addObject(self, uiobject)
+		self.usePreferences()
+
+	def setFromPickle(self, namelist, value):
+		'''
+		same as setFromClient, except this does not updatePickle
+		'''
+		uidataobject = self.getObjectFromList(namelist)
+		if not isinstance(uidataobject, uidata.Data):
+			raise TypeError('name list does not resolve to Data instance')
+		# except from this client?
+		uidataobject._set(value)
 
 	### Where should this be called?
 	### and is this just a really bad idea for something like
@@ -82,15 +99,19 @@ class Server(XMLRPCServer, uidata.Container):
 	### I guess things like that are not "preferences", but they are
 	### all treated the same here.  Anything data value in the user
 	### interface is a preference
-	def setFromPickle(self):
+	def usePreferences(self):
 		'''
 		this "replays" the recorded user preferences
 		'''
 		d = self.getPickle()
+		if not d:
+			return
 		for key,value in d.items():
-			print 'key,value', key, value
 			namelist = list(key)
-			self.setFromClient(namelist, value)
+			try:
+				self.setFromPickle(namelist, value)
+			except ValueError:
+				pass
 
 	def getPickle(self, namelist=None):
 		### maybe want a lock on this

@@ -145,7 +145,8 @@ class Container(Object):
 				#for uiobject in self.uiobjectdict.values():
 				for uiobject in self.uiobjectlist:
 					try:
-						return uiobject.getObjectFromList(namelist[1:])
+						obj = uiobject.getObjectFromList(namelist[1:])
+						return obj
 					except ValueError:
 						pass
 				raise ValueError('cannot get object, not in child Object mappings')
@@ -182,7 +183,7 @@ class Data(Object):
 	permissionsvalues = ('r', 'w', 'rw', 'wr')
 	typelist = Object.typelist + ('data',)
 	nonevalue = None
-	def __init__(self, name, value, permissions='r', callback=None):
+	def __init__(self, name, value, permissions='r', callback=None, persist=False):
 		Object.__init__(self, name)
 		if permissions in self.permissionsvalues:
 			if 'r' in permissions:
@@ -197,6 +198,7 @@ class Data(Object):
 			raise ValueError('invalid permissions value')
 
 		self.setCallback(callback)
+		self.persist = persist
 
 		self.set(value)
 
@@ -286,10 +288,11 @@ class Application(Struct):
 
 class SingleSelectFromList(Container):
 	typelist = Container.typelist + ('single select from list',)
-	def __init__(self, name, listvalue, selectedindex, callback=None):
+	def __init__(self, name, listvalue, selectedindex, callback=None, persist=False):
 		Container.__init__(self, name)
-		self.list = Array('List', listvalue, 'r')
-		self.selected = Integer('Selected', selectedindex, 'rw', callback)
+		self.list = Array('List', listvalue, 'r', persist=persist)
+		self.selected = Integer('Selected', selectedindex, 'rw', callback, persist=persist)
+		self.persist = persist
 		self.addObject(self.list)
 		self.addObject(self.selected)
 
@@ -324,10 +327,11 @@ class SingleSelectFromList(Container):
 class SelectFromList(Container):
 	typelist = Container.typelist + ('select from list',)
 	def __init__(self, name, listvalue, selectedvalues, permissions='r',
-								callback=None):
+								callback=None, persist=False):
 		Container.__init__(self, name)
-		self.list = Array('List', listvalue, permissions)
-		self.selected = Array('Selected', selectedvalues, 'rw', callback)
+		self.list = Array('List', listvalue, permissions, persist=persist)
+		self.selected = Array('Selected', selectedvalues, 'rw', callback, persist=persist)
+		self.persist = persist
 		self.addObject(self.list)
 		self.addObject(self.selected)
 
@@ -362,10 +366,11 @@ class SelectFromList(Container):
 class SelectFromStruct(Container):
 	typelist = Container.typelist + ('select from struct',)
 	# callback
-	def __init__(self, name, structvalue, selectedvalue, permissions='r'):
+	def __init__(self, name, structvalue, selectedvalue, permissions='r', persist=False):
 		Container.__init__(self, name)
-		self.struct = Struct('Struct', structvalue, permissions)
-		self.selected = Array('Selected', selectedvalue, 'rw')
+		self.struct = Struct('Struct', structvalue, permissions, persist=persist)
+		self.selected = Array('Selected', selectedvalue, 'rw', persist=persist)
+		self.persist = persist
 		self.addObject(self.struct)
 		self.addObject(self.selected)
 
@@ -387,10 +392,10 @@ class SelectFromStruct(Container):
 
 class Binary(Data):
 	typelist = Data.typelist + ('binary',)
-	def __init__(self, name, value, permissions='r', callback=None):
+	def __init__(self, name, value, permissions='r', callback=None, persist=False):
 #		if type(value) is str:
 #			value = xmlrpclib.Binary(value)
-		Data.__init__(self, name, value, permissions, callback)
+		Data.__init__(self, name, value, permissions, callback, persist)
 
 	def set(self, value):
 		if type(value) is str:
@@ -418,10 +423,10 @@ class MessageDialog(Dialog):
 class Image(Binary):
 	typelist = Binary.typelist + ('image',)
 	nonevalue = ''
-	def __init__(self, name, value, permissions='r', callback=None):
+	def __init__(self, name, value, permissions='r', callback=None, persist=False):
 #		if isinstance(value, Numeric.arraytype):
 #			value = self.array2image(value)
-		Binary.__init__(self, name, value, permissions, callback)
+		Binary.__init__(self, name, value, permissions, callback, persist)
 
 	# needs optimization
 	def array2image(self, a):
@@ -436,12 +441,13 @@ class Image(Binary):
 
 class ClickImage(Container):
 	typelist = Container.typelist + ('click image',)
-	def __init__(self, name, clickcallback, image, permissions='r'):
+	def __init__(self, name, clickcallback, image, permissions='r', persist=False):
 		self.clickcallback = clickcallback
 		Container.__init__(self, name)
-		self.image = Image('Image', image, 'r')
-		self.coordinates = Array('Coordinates', [], 'rw')
+		self.image = Image('Image', image, 'r', persist=persist)
+		self.coordinates = Array('Coordinates', [], 'rw', persist=persist)
 		self.method = Method('Click', self.doClickCallback)
+		self.persist = persist
 		self.addObject(self.coordinates)
 		self.addObject(self.method)
 		self.addObject(self.image)
@@ -455,10 +461,11 @@ class ClickImage(Container):
 class TargetImage(Container):
 	typelist = Container.typelist + ('target image',)
 	# callback
-	def __init__(self, name, image, permissions='r'):
+	def __init__(self, name, image, permissions='r', persist=False):
 		Container.__init__(self, name)
 		self.targets = {}
-		self.image = Image('Image', image, 'r')
+		self.image = Image('Image', image, 'r', persist=persist)
+		self.persist = persist
 		self.addObject(self.image)
 
 	def addTargetType(self, name, targets=[]):
