@@ -53,7 +53,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'wait for rejects': False,
 		'duplicate targets': False,
 		'duplicate target type': 'focus',
-		'preset lock': 'preset',
+		'preset lock': 'acquisition',
 	}
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
 								+ [event.DriftDoneEvent,
@@ -91,7 +91,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.imagelistdata = None
 
 		self.duplicatetypes = ['acquisition', 'focus']
-		self.presetlocktypes = ['preset', 'acquisition', 'target', 'target list']
+		self.presetlocktypes = ['acquisition', 'target', 'target list']
 
 		self.start()
 
