@@ -75,11 +75,12 @@ class SpiralTargetMaker(TargetMaker):
 		statuscontainer = uidata.Container('Status')
 		statuscontainer.addObjects((self.statusmessage,))
 
-		self.presetname = self.presetsclient.uiSinglePresetSelector('Preset', '', 'rw', persist=True)
+		#self.presetname = self.presetsclient.uiSinglePresetSelector('Preset', '', 'rw', persist=True)
+		self.presetname = uidata.String('Preset', '', 'rw', persist=True)
 		self.radius = uidata.Float('Radius (meters)', 1.0e-3, 'rw', persist=True)
 		self.overlap = uidata.Integer('Overlap (percent)', 0, 'rw', persist=True)
 		settingscontainer = uidata.Container('Settings')
-		settingscontainer.addObjects((self.radius, self.overlap))
+		settingscontainer.addObjects((self.presetname, self.radius, self.overlap))
 
 		publishspiralmethod = uidata.Method('Publish Spiral',
 																				self.publishTargetList)
