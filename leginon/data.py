@@ -1342,6 +1342,37 @@ class DeviceGetData(Data):
 class DeviceData(Data):
 	pass
 
+class HoleFinderPrefsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('image', AcquisitionImageData),
+			('user-check', bool),
+			('skip-auto', bool),
+			('edge-lpf-on', bool),
+			('edge-lpf-size', int),
+			('edge-lpf-sigma', float),
+			('edge-filter-type', str),
+			('edge-threshold', float),
+			('template-rings', tuple),
+			('template-correlation-type', str),
+			('template-lpf', float),
+			('threshold-value', float),
+			('blob-border', int),
+			('blob-max-number', int),
+			('blob-max-size', int),
+			('lattice-spacing', float),
+			('lattice-tolerance', float),
+			('stats-radius', float),
+			('ice-zero-thickness', float),
+			('ice-min-thickness', float),
+			('ice-max-thickness', float),
+			('ice-max-stdev', float),
+			('template-on', bool),
+			('template-focus', tuple),
+			('template-acquisition', tuple),
+		)
+	typemap = classmethod(typemap)
+
 # for testing
 class DiaryData(InSessionData):
 	'''
@@ -1379,3 +1410,4 @@ class Request(type):
 		cls.typemap = classmethod(lambda cls: cls._typemap)
 		super(Request, cls).__init__('Request' + dataclass.__name__, (Data,),
 																	{'datamanager': datamanager})
+

@@ -284,11 +284,49 @@ class HoleFinder(targetfinder.TargetFinder):
 		# ice
 		self.ice()
 
+	def storeHoleFinderPrefsData(self, imagedata):
+		hfprefs = data.HoleFinderPrefsData()
+		hfprefs.update({
+			'image': imagedata,
+			'user-check': self.usercheckon.get(),
+			'skip-auto': self.skipauto.get(),
+
+			'edge-lpf-on': self.lowpasson.get(),
+			'edge-lpf-size': self.lowpasssize.get(),
+			'edge-lpf-sigma': self.lowpasssigma.get(),
+			'edge-filter-type': self.filtertype.get(),
+			'edge-threshold': self.edgethresh.get(),
+
+			'template-rings': self.ringlist.get(),
+			'template-correlation-type': self.cortype.get(),
+			'template-lpf': self.corfilt.get(),
+
+			'threshold-value': self.threshvalue.get(),
+			'blob-border': self.blobborder.get(),
+			'blob-max-number': self.maxblobs.get(),
+			'blob-max-size': self.maxblobsize.get(),
+			'lattice-spacing': self.latspacing.get(),
+			'lattice-tolerance': self.lattol.get(),
+			'stats-radius': self.holestatsrad.get(),
+			'ice-zero-thickness': self.icei0.get(),
+
+			'ice-min-thickness': self.icetmin.get(),
+			'ice-max-thickness': self.icetmax.get(),
+			'ice-max-stdev': self.icetstd.get(),
+			'template-on': self.use_target_template.get(),
+			'template-focus': self.foc_target_template.get(),
+			'template-acquisition': self.acq_target_template.get(),
+		})
+
+		self.publish(hfprefs, database=True)
+
 	def findTargets(self, imdata, targetlist):
 		## check if targets already found on this image
 		previous = self.researchTargets(image=imdata)
 		if previous:
 			return
+
+		self.storeHoleFinderPrefsData(imdata)
 
 		## auto or not?
 		self.hf['original'] = imdata['image']
