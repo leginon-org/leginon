@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.9 $
+# $Revision: 1.10 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-23 22:32:18 $
+# $Date: 2005-02-23 22:41:51 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -25,10 +25,18 @@ class Proxy(object):
 																							remove=self.onRemoveDescription)
 
 	def onAddDescription(self, nodename, name, description, types):
-		pass
+		if 'TEM' in types and self.tem is None:
+			self.setTEM(name)
+
+		if 'CCDCamera' in types and self.ccdcamera is None:
+			self.setCCDCamera(name)
 
 	def onRemoveDescription(self, nodename, name):
-		pass
+		if name in self.tems and self.tem is self.tems[name]:
+			self.tem = None
+
+		if name in self.ccdcameras and self.ccdcamera is self.ccdcameras[name]:
+			self.ccdcamera = None
 
 	def getTEMNames(self):
 		objects = self.objectservice.getObjectsByType('TEM')

@@ -400,7 +400,18 @@ class EM(node.Node):
 		self.camera = None
 
 		classes = registry.getClasses()
-		for name, c in classes:
+		tems = []
+		ccdcameras = []
+		fastccdcameras = []
+		for i in classes:
+			name, c = i
+			if issubclass(c, tem.TEM):
+				tems.append(i)
+			elif issubclass(c, ccdcamera.FastCCDCamera):
+				fastccdcameras.append(i)
+			elif issubclass(c, ccdcamera.CCDCamera):
+				ccdcameras.append(i)
+		for name, c in tems + ccdcameras + fastccdcameras:
 			objectname = '%s (%s)' % (name, socket.gethostname().lower())
 			if issubclass(c, tem.TEM):
 				instrumentclass = instrument.TEM
