@@ -1,491 +1,555 @@
 #
 # COPYRIGHT:
-#			 The Leginon software is Copyright 2003
-#			 The Scripps Research Institute, La Jolla, CA
-#			 For terms of the license agreement
-#			 see	http://ami.scripps.edu/software/leginon-license
+#      The Leginon software is Copyright 2003
+#      The Scripps Research Institute, La Jolla, CA
+#      For terms of the license agreement
+#      see  http://ami.scripps.edu/software/leginon-license
 #
-import camera
+
 import sys
+sys.coinit_flags = 0
+import pythoncom
+import pywintypes
+import win32com.client
+import array
+import mmapfile
+import Numeric
+import tietzcom
 
-if sys.platform != 'win32':
-	class Tietz(camera.Camera):
-		def __init__(self):
-			pass
-else:
-	sys.coinit_flags = 0
-	import pythoncom
-	import pywintypes
-	import win32com.client
-	import tietzcom
-	import mmapfile
-	import array
-	import Numeric
-	import time
+class Ping:
+	_typelib_guid_ = tietzcom.CLSID
+	_com_interfaces_ = ['ICAMCCallBack']
+	_public_methods_ = ['LivePing', 'RequestLock']
+	_reg_clsid_ = '{CB1473AA-6F1E-4744-8EFD-68F91CED4294}'
+	_reg_progid_ = 'PythonCAMC4.Ping'
 
-	class Ping:
-		_typelib_guid_ = tietzcom.CLSID
-		_com_interfaces_ = ['ICAMCCallBack']
-		_public_methods_ = ['LivePing', 'RequestLock']
-		_reg_clsid_ = '{CB1473AA-6F1E-4744-8EFD-68F91CED4294}'
-		_reg_progid_ = 'PythonCAMC4.Ping'
+	def LivePing(self):
+		return 0
 
-		def LivePing(self):
-			return 0
+	def RequestLock(self):
+		return False
 
-		def RequestLock(self):
-			print 'RequestLock'
-			return False
+class Tietz(object):
+	dependencymapping = {
+		'getChipName': [('cpChipName', 'r')],
+		'getCameraName': [('cpCameraName', 'r')],
+		'getCameraSize': [('cpTotalDimensionX', 'r'), ('cpTotalDimensionY', 'r')],
+		'getPixelSize': [('cpPixelSizeX', 'r'), ('cpPixelSizeY', 'r')],
+		'getMaximumPixelValue': [('cpDynamic', 'r')],
+		'getNumberOfGains': [('cpNumberOfGains', 'r')],
+		'getGainFactors': [('cpGainFactors', 'r')],
+		'getNumberOfReadoutSpeeds': [('cpNumberOfReadoutSpeeds', 'r')],
+		'getReadoutSpeeds': [('cpReadoutSpeeds', 'r')],
+		'getLiveModeAvailable': [('cpLiveModeAvailable', 'r')],
+		'getNumberOfDeadColumns': [('cpNumberOfDeadColumns', 'r')],
+		'getDeadColumns': [('cpDeadColumns', 'r')],
+		'getSimulationImagePath': [('cpImagePath', 'r')],
+		'getGain': [('cpCurrentGainIndex', 'r'), ('cpGainFactors', 'r')],
+		'getGainIndex': [('cpCurrentGainIndex', 'r')],
+		'setGainIndex': [('cpCurrentGainIndex', 'w')],
+		'getReadoutSpeed': [('cpCurrentSpeedIndex', 'r'), ('cpReadoutSpeeds', 'r')],
+		'getReadoutSpeedIndex': [('cpCurrentSpeedIndex', 'r')],
+		'setReadoutSpeedIndex': [('cpCurrentSpeedIndex', 'w')],
+		'getImageTransform': [('cpImageGeometry', 'r')],
+		'setImageTransform': [('cpImageGeometry', 'w')],
+		'getTemperature': [('cpCurrentTemperature', 'r')],
+		'setTemperature': [('cpTemperatureSetpoint', 'w')],
+		'getShutterOpenDelay': [('cpShutterOpenDelay', 'r')],
+		'setShutterOpenDelay': [('cpShutterOpenDelay', 'w')],
+		'getShutterCloseDelay': [('cpShutterCloseDelay', 'r')],
+		'setShutterCloseDelay': [('cpShutterCloseDelay', 'w')],
+		'getSerialNumber': [('cpSerialNumber', 'r')],
+		'getPreampDelay': [('cpPreampDelay', 'r')],
+		'setPreampDelay': [('cpPreampDelay', 'w')],
+		'getParallelMode': [('cpPMode', 'r')],
+		'setParallelMode': [('cpPMode', 'w')],
+		'getHardwareGainIndex': [('cpHWGainIndex', 'r')],
+		'getHardwareSpeedIndex': [('cpHWSpeedIndex', 'r')],
+		'getRetractable': [('cpIsRetractable', 'r')],
+		'getCameraAxis': [('cpCameraPositionOnTem', 'r')],
+		'setUseSpeedTableForGainSwitch': [('cpUseSpeedtabForGainSwitch', 'w')],
+	}
 
-	class Tietz(camera.Camera):
-		camType = None
+	def __init__(self, cameratypename):
+		self.unsupported = []
+		self.arraytypecode = 'H'
+		self.numerictypecode = Numeric.UInt16
+		self.bytesperpixel = 2
 
-		dependencymapping = {
-			'getChipName': [('cpChipName', 'r')],
-			'getCameraName': [('cpCameraName', 'r')],
-			'getCameraSize': [('cpTotalDimensionX', 'r'),
-														('cpTotalDimensionY', 'r')],
-			'getPixelSize': [('cpPixelSizeX', 'r'),
-													('cpPixelSizeY', 'r')],
-			'getMaximumPixelValue': [('cpDynamic', 'r')],
-			'getNumberOfGains': [('cpNumberOfGains', 'r')],
-			'getGainFactors': [('cpGainFactors', 'r')],
-			'getNumberOfReadoutSpeeds': [('cpNumberOfReadoutSpeeds', 'r')],
-			'getReadoutSpeeds': [('cpReadoutSpeeds', 'r')],
-			'getLiveModeAvailable': [('cpLiveModeAvailable', 'r')],
-			'getNumberOfDeadColumns': [('cpNumberOfDeadColumns', 'r')],
-			'getDeadColumns': [('cpDeadColumns', 'r')],
-			'getSimulationImagePath': [('cpImagePath', 'r')],
-			'getGain': [('cpCurrentGainIndex', 'r'), ('cpGainFactors', 'r')],
-			'getGainIndex': [('cpCurrentGainIndex', 'r')],
-			'setGainIndex': [('cpCurrentGainIndex', 'w')],
-			'getReadoutSpeed': [('cpCurrentSpeedIndex', 'r'),
-															('cpReadoutSpeeds', 'r')],
-			'getReadoutSpeedIndex': [('cpCurrentSpeedIndex', 'r')],
-			'setReadoutSpeedIndex': [('cpCurrentSpeedIndex', 'w')],
-			'getImageTransform': [('cpImageGeometry', 'r')],
-			'setImageTransform': [('cpImageGeometry', 'w')],
-			'getTemperature': [('cpCurrentTemperature', 'r')],
-			'setTemperature': [('cpTemperatureSetpoint', 'w')],
-			'getShutterOpenDelay': [('cpShutterOpenDelay', 'r')],
-			'setShutterOpenDelay': [('cpShutterOpenDelay', 'w')],
-			'getShutterCloseDelay': [('cpShutterCloseDelay', 'r')],
-			'setShutterCloseDelay': [('cpShutterCloseDelay', 'w')],
-			'getSerialNumber': [('cpSerialNumber', 'r')],
-			'getPreampDelay': [('cpPreampDelay', 'r')],
-			'setPreampDelay': [('cpPreampDelay', 'w')],
-			'getParallelMode': [('cpPMode', 'r')],
-			'setParallelMode': [('cpPMode', 'w')],
-			'getHardwareGainIndex': [('cpHWGainIndex', 'r')],
-			'getHardwareSpeedIndex': [('cpHWSpeedIndex', 'r')],
-			'getRetractable': [('cpIsRetractable', 'r')],
-			'getCameraAxis': [('cpCameraPositionOnTem', 'r')],
-			'setUseSpeedtabForGainSwitch': [('cpUseSpeedtabForGainSwitch', 'w')],
-		}
-		
-		def __init__(self, cameratype=None):
-			# ???
-			import win32com.client
-			camera.Camera.__init__(self)
+		self.binning = {'x': 1, 'y': 1}
+		self.offset = {'x': 0, 'y': 0}
+		self.dimension = {'x': 512, 'y': 512}
+		self.exposuretime = 500
+		self.exposuretype = 'normal'
 
-			self.arraytypecode = 'H'
-			self.Numerictypecode = Numeric.UInt16
+		# ???
+		import win32com.client
 
-			pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
-			try:
-				self.theCamera = win32com.client.Dispatch("CAMC4.Camera")		
-			except pywintypes.com_error, e:
-				print "Error dispatching CAMC4.Camera"
-				print e
-				return
+		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
+		try:
+			self.theCamera = win32com.client.Dispatch('CAMC4.Camera')		
+		except pywintypes.com_error, e:
+			print 'Error dispatching CAMC4.Camera'
+			print e
+			return
 
+		try:
+			ping = win32com.client.Dispatch('PythonCAMC4.Ping')
+		except pywintypes.com_error, e:
+			import win32com.server.register
+			win32com.server.register.UseCommandLine(Ping)
 			try:
 				ping = win32com.client.Dispatch('PythonCAMC4.Ping')
 			except pywintypes.com_error, e:
-				import win32com.server.register
-				win32com.server.register.UseCommandLine(Ping)
-				try:
-					ping = win32com.client.Dispatch('PythonCAMC4.Ping')
-				except pywintypes.com_error, e:
-					print 'Error dispatching callback COM object'
-					print e
-					return
-
-			try:
-				hr = self.theCamera.RegisterCAMCCallBack(ping, 'EM')
-			except pywintypes.com_error, e:
-				print 'Error registering callback'
+				print 'Error dispatching callback COM object'
 				print e
 				return
 
-			hr = self.theCamera.RequestLock()
-			if hr == win32com.client.constants.crDeny:
-				print 'Error locking camera, denied lock'
-				return
-			elif hr == win32com.client.constants.crBusy:
-				print 'Error locking camera, camera busy'
-				return
-			elif hr == win32com.client.constants.crSucceed:
-				pass
-	
-			if cameratype is None or cameratype == 'PXL':
-				self.camType = win32com.client.constants.ctPXL
-			elif cameratype == 'Simulation':
-				self.camType = win32com.client.constants.ctSimulation
-			elif cameratype == 'PVCam':
-				self.camType = win32com.client.constants.ctPVCam
-			elif cameratype == 'FastScan':
-				self.camType = win32com.client.constants.ctFastScan
-			elif cameratype == 'FastScanFW':
-				self.camType = win32com.client.constants.ctF114_FW
-			elif cameratype == 'SCX':
-				self.camType = win32com.client.constants.ctSCX
-			else:
-				raise ValueError('Invalid camera type specified')
-	
-			try:
-				hr = self.theCamera.Initialize(self.camType, 0)
-			except pywintypes.com_error, e:
-				print "Error initializing camera"
-				print e
-				return
+		try:
+			hr = self.theCamera.RegisterCAMCCallBack(ping, 'EM')
+		except pywintypes.com_error, e:
+			print 'Error registering callback'
+			print e
+			return
 
-			for methodname, dependencies in self.dependencymapping.items():
-				supported = True
-				for dependency in dependencies:
-					parametername, permission = dependency
-					if permission not in self.getPermissions(parametername):
-						supported = False
-				if not supported:
-					setattr(self, methodname, self.raiseNotImplementedError)
-
-		def raiseNotImplementedError(self, **kwargs):
-			raise NotImplementedError
-
-		def getPermissions(self, parametername):
-			try:
-				parameter = getattr(win32com.client.constants, parametername)
-			except:
-				return ''
-			value = self.theCamera.QueryParameter(parameter)
-			if value == 0:
-				return ''
-			elif value == 5:
-				return 'r'
-			elif value == 6:
-				return 'w'
-			elif value == 7:
-				return 'rw'
-			elif value == 9:
-				return 'r'
-			elif value == 10:
-				return 'w'
-			elif value == 11:
-				return 'rw'
-			else:
-				return ''
-
-		def exit(self):
-			self.theCamera.UnlockCAMC()
-	
-		def mmapImage(self, size):
-			if self.camType == win32com.client.constants.ctSimulation:
-				mmname = "CAM_SIMU_DATA"
-			elif self.camType == win32com.client.constants.ctPXL:
-				mmname = "CAM_PXL_DATA"
-			elif self.camType == win32com.client.constants.ctPVCam:
-				mmname = "CAM_PVCAM_DATA"
-			elif self.camType == win32com.client.constants.ctFastScan:
-				mmname = "CAM_FASTSCAN_DATA"
-			elif self.camType == win32com.client.constants.ctF114_FW:
-				mmname = "CAM_FSFW_DATA"
-			elif self.camType == win32com.client.constants.ctSCX:
-				mmname = "CAM_SCX_DATA"
-			else:
-				raise ValueError
-	
-			map = mmapfile.mmapfile('', mmname, size)
-			result = map.read(size)
-			map.close()
-			return result
-	
-		def getImage(self, offset, dimension, binning, exposure_time, imagetype):	
-			# 0 uses internal flash signal
-			# 1 uses internal exposure signal (PVCam and PXL only)
-			shutter_mode = 1
-			bytes_per_pixel = 2
-	
-			hr = self.theCamera.Format(offset['x'], offset['y'],
-																	dimension['x'], dimension['y'],
-																	binning['x'], binning['y'])
-			if imagetype == 'normal':
-				acquiremethod = self.theCamera.AcquireImage
-			elif imagetype == 'dark':
-				acquiremethod = self.theCamera.AcquireDark
-			else:
-				raise ValueError('Invalid image type')
-
-			hr = acquiremethod(exposure_time, 0)
-
-			a = array.array(self.arraytypecode, self.mmapImage(
-																bytes_per_pixel*dimension['x']*dimension['y']))
-			na = Numeric.array(a, self.Numerictypecode)
-			return Numeric.reshape(na, (dimension['y'], dimension['x']))
-
-		def setInserted(self, value):
+		hr = self.theCamera.RequestLock()
+		if hr == win32com.client.constants.crDeny:
+			print 'Error locking camera, denied lock'
+			return
+		elif hr == win32com.client.constants.crBusy:
+			print 'Error locking camera, camera busy'
+			return
+		elif hr == win32com.client.constants.crSucceed:
 			pass
 
-		def getInserted(self):
+		if cameratypename == 'PXL':
+			cameratype = win32com.client.constants.ctPXL
+			self.mmname = 'CAM_PXL_DATA'
+		elif cameratypename == 'Simulation':
+			cameratype = win32com.client.constants.ctSimulation
+			self.mmname = 'CAM_SIMU_DATA'
+		elif cameratypename == 'PVCam':
+			cameratype = win32com.client.constants.ctPVCam
+			self.mmname = 'CAM_PVCAM_DATA'
+		elif cameratypename == 'FastScan':
+			cameratype = win32com.client.constants.ctFastScan
+			self.mmname = 'CAM_FASTSCAN_DATA'
+		elif cameratypename == 'FastScanFW':
+			cameratype = win32com.client.constants.ctF114_FW
+			self.mmname = 'CAM_FSFW_DATA'
+		elif cameratypename == 'SCX':
+			cameratype = win32com.client.constants.ctSCX
+			self.mmname = 'CAM_SCX_DATA'
+		else:
+			raise ValueError('Invalid camera type specified')
+	
+		try:
+			hr = self.theCamera.Initialize(cameratype, 0)
+		except pywintypes.com_error, e:
+			print 'Error initializing camera'
+			print e
+			return
+
+		self.methodmapping = {
+			'binning': {'get':'getBinning',
+									'set': 'setBinning'},
+			'dimension': {'get':'getDimension',
+										'set': 'setDimension'},
+			'offset': {'get':'getOffset',
+									'set': 'setOffset'},
+			'exposure time': {'get':'getExposureTime',
+												'set': 'setExposureTime'},
+			'exposure type': {'get':'getExposureType',
+												'set': 'setExposureType'},
+			'image data': {'get':'getImage'},
+			'chip name': {'get':'getChipName'},
+			'camera name': {'get':'getCameraName'},
+			'camera size': {'get':'getCameraSize'},
+			'pixel size': {'get':'getPixelSize'},
+			'maximum pixel value': {'get':'getMaximumPixelValue'},
+			'number of gains': {'get':'getNumberOfGains'},
+			'gain factors': {'get':'getGainFactors'},
+			'number of readout speeds': {'get':'getNumberOfReadoutSpeeds'},
+			'readout speeds': {'get':'getReadoutSpeeds'},
+			'live mode available': {'get':'getLiveModeAvailable'},
+			'number of dead columns': {'get':'getNumberOfDeadColumns'},
+			'dead columns': {'get':'getDeadColumns'},
+			'simulation image path': {'get':'getSimulationImagePath'},
+			'gain': {'get':'getGain'},
+			'gain index': {'get':'getGainIndex',
+											'set': 'setGainIndex'},
+			'readout speed': {'get':'getReadoutSpeed'},
+			'readout speed index': {'get':'getReadoutSpeedIndex',
+															'set': 'setReadoutSpeedIndex'},
+			'image transform': {'get':'getImageTransform',
+													'set': 'setImageTransform'},
+			'temperature': {'get':'getTemperature',
+											'set': 'setTemperature'},
+			'shutter open delay': {'get':'getShutterOpenDelay',
+															'set': 'setShutterOpenDelay'},
+			'shutter close delay': {'get':'getShutterCloseDelay',
+															'set': 'setShutterCloseDelay'},
+			'serial number': {'get':'getSerialNumber'},
+			'preamp delay': {'get':'getPreampDelay',
+												'set': 'setPreampDelay'},
+			'parallel mode': {'get':'getParallelMode',
+												'set': 'setParallelMode'},
+			'hardware gain index': {'get':'getHardwareGainIndex'},
+			'hardware speed index': {'get':'getHardwareSpeedIndex'},
+			'retractable': {'get':'getRetractable'},
+			'camera axis': {'get':'getCameraAxis'},
+			'speed table gain switch': {'set': 'setUseSpeedTableForGainSwitch'},
+		}
+
+		for methodname, dependencies in self.dependencymapping.items():
+			supported = True
+			for dependency in dependencies:
+				parametername, permission = dependency
+				if permission not in self._getParameterPermissions(parametername):
+					supported = False
+			if not supported:
+				#object.__getattribute__(self, 'unsupported').append(methodname)
+				self.unsupported.append(methodname)
+				for key, methods in self.methodmapping.items():
+					for methodtype, method in methods.items():
+						if method == methodname:
+							del methods[methodtype]
+
+	def __getattribute__(self, attr_name):
+		if attr_name in object.__getattribute__(self, 'unsupported'):
+			raise AttributeError('attribute not supported')
+		return object.__getattribute__(self, attr_name)
+
+	def _getParameterPermissions(self, parametername):
+		try:
+			parameter = getattr(win32com.client.constants, parametername)
+		except:
+			return ''
+		value = self.theCamera.QueryParameter(parameter)
+		if value in (5, 9):
+			return 'r'
+		elif value in (6, 10):
+			return 'w'
+		elif value in (7, 11):
+			return 'rw'
+		return ''
+
+	def _getParameterType(self, parametername):
+		try:
+			parameter = getattr(win32com.client.constants, parametername)
+		except:
+			return None
+		value = self.theCamera.QueryParameter(parameter)
+		if value in (5, 6, 7):
+			return int
+		elif value in (9, 10, 11):
+			return str
+		return None
+
+	def _getParameterValue(self, parametername):
+		parametertype = self._getParameterType(parametername)
+		if parametertype is None:
+			return None
+		try:
+			parameter = getattr(win32com.client.constants, parametername)
+		except:
+			return None
+		if parametertype is int:
+			return self.theCamera.LParam(parameter)
+		elif parametertype is str:
+			return self.theCamera.SParam(parameter)
+		return None
+
+	def _setParameterValue(self, parametername, value):
+		parametertype = self._getParameterType(parametername)
+		if parametertype is None:
+			return None
+		try:
+			parameter = getattr(win32com.client.constants, parametername)
+		except:
+			return None
+		if parametertype is int:
+			return self.theCamera.SetLParam(parameter, value)
+		elif parametertype is str:
+			return self.theCamera.SetSParam(parameter, value)
+		return None
+
+	def exit(self):
+		self.theCamera.UnlockCAMC()
+	
+	def mmapImage(self, size):
+		map = mmapfile.mmapfile('', self.mmname, size)
+		result = map.read(size)
+		map.close()
+		return result
+
+	def getOffset(self):
+		return self.offset
+
+	def setOffset(self, value):
+		self.offset = value
+
+	def getDimension(self):
+		return self.dimension
+
+	def setDimension(self, value):
+		self.dimension = value
+
+	def getBinning(self):
+		return self.binning
+
+	def setBinning(self, value):
+		self.binning = value
+
+	def getExposureTime(self):
+		return self.exposuretime
+
+	def setExposureTime(self, value):
+		self.exposuretime = value
+
+	def getExposureType(self):
+		return self.exposuretype
+
+	def setExposureType(self, value):
+		self.exposuretype = value
+	
+	def getImage(self):
+		# 0 uses internal flash signal
+		# 1 uses internal exposure signal (PVCam and PXL only)
+		# shutter_mode = 1
+
+		offset = self.getOffset()
+		dimension = self.getDimension()
+		binning = self.getBinning()
+		hr = self.theCamera.Format(offset['x'], offset['y'], dimension['x'],
+																dimension['y'], binning['x'], binning['y'])
+
+		exposuretype = self.getExposureType()
+		if exposuretype == 'normal':
+			acquiremethod = self.theCamera.AcquireImage
+		elif exposuretype == 'dark':
+			acquiremethod = self.theCamera.AcquireDark
+		else:
+			raise RuntimeError('Invalid exposure type')
+
+		hr = acquiremethod(self.getExposureTime(), 0)
+
+		imagesize = self.bytesperpixel*dimension['x']*dimension['y']
+		# Numeric directly?
+		a = array.array(self.arraytypecode, self.mmapImage(imagesize))
+		na = Numeric.array(a, self.numerictypecode)
+		na.shape = (dimension['y'], dimension['x'])
+		return na
+		#return Numeric.reshape(na, (dimension['y'], dimension['x']))
+
+	def getChipName(self):
+		return self._getParameterValue('cpChipName')
+
+	def getCameraName(self):
+		return self._getParameterValue('cpCameraName')
+
+	def getCameraSize(self):
+		x = self._getParameterValue('cpTotalDimensionX')
+		y = self._getParameterValue('cpTotalDimensionY')
+		return {'x': x, 'y': y}
+
+	def getPixelSize(self):
+		x = self._getParameterValue('cpPixelSizeX')/1000000000.0
+		y = self._getParameterValue('cpPixelSizeY')/1000000000.0
+		return {'x': x, 'y': y}
+
+	def getMaximumPixelValue(self):
+		return self._getParameterValue('cpDynamic')
+
+	def getNumberOfGains(self):
+		return self._getParameterValue('cpNumberOfGains')
+
+	# eval...
+	def getGainFactors(self):
+		return eval(self._getParameterValue('cpGainFactors'))
+
+	def getNumberOfReadoutSpeeds(self):
+		return self._getParameterValue('cpNumberOfReadoutSpeeds')
+
+	# eval...
+	def getReadoutSpeeds(self):
+		return eval(self._getParameterValue('cpReadoutSpeeds'))
+
+	def getLiveModeAvailable(self):
+		value = self._getParameterValue('cpLiveModeAvailable')
+		if value == 1:
 			return True
+		elif value == 0:
+			return False
+		raise RuntimeError('Unknown live mode available value')
 
-		def getChipName(self):
-			return self.theCamera.SParam(win32com.client.constants.cpChipName)
+	def getNumberOfDeadColumns(self):
+		return self._getParameterValue('cpNumberOfDeadColumns')
 
-		def getCameraName(self):
-			return self.theCamera.SParam(win32com.client.constants.cpCameraName)
+	# eval...
+	def getDeadColumns(self):
+		return eval(self._getParameterValue('cpDeadColumns'))
 
-		def getCameraSize(self):
-			x = self.theCamera.LParam(win32com.client.constants.cpTotalDimensionX)
-			y = self.theCamera.LParam(win32com.client.constants.cpTotalDimensionY)
-			return {'x': x, 'y': y}
+	def getSimulationImagePath(self):
+		return self._getParameterValue('cpImagePath')
 
-		def getPixelSize(self):
-			x = self.theCamera.LParam(win32com.client.constants.cpPixelSizeX)
-			y = self.theCamera.LParam(win32com.client.constants.cpPixelSizeY)
-			return {'x': x/1000000000.0, 'y': y/1000000000.0}
+	def getGainIndex(self):
+		return self._getParameterValue('cpCurrentGainIndex')
 
-		def getMaximumPixelValue(self):
-			return self.theCamera.LParam(win32com.client.constants.cpDynamic)
+	def getGain(self):
+		return self.getGainFactors()[self.getGainIndex() - 1]
 
-		def getNumberOfGains(self):
-			return self.theCamera.LParam(win32com.client.constants.cpNumberOfGains)
+	def setGainIndex(self, value):
+		try:
+			self._setParameterValue('cpCurrentGainIndex', value)
+		except pywintypes.com_error:
+			raise ValueError('Invalid gain index specified')
 
-		def getGainFactors(self):
-			string = self.theCamera.SParam(win32com.client.constants.cpGainFactors)
-			return eval(string)
+	def getReadoutSpeedIndex(self):
+		return self._getParameterValue('cpCurrentSpeedIndex')
 
-		def getNumberOfReadoutSpeeds(self):
-			return self.theCamera.LParam(
-															win32com.client.constants.cpNumberOfReadoutSpeeds)
+	def getReadoutSpeed(self):
+		return self.getReadoutSpeeds()[self.getReadoutSpeedIndex() - 1]
 
-		def getReadoutSpeeds(self):
-			string = self.theCamera.SParam(win32com.client.constants.cpReadoutSpeeds)
-			return eval(string)
+	def setReadoutSpeedIndex(self, value):
+		try:
+			self._setParameterValue('cpCurrentSpeedIndex', value)
+		except pywintypes.com_error:
+			raise ValueError('Invalid readout speed index specified')
 
-		def getLiveModeAvailable(self):
-			value = self.theCamera.LParam(	
-																	win32com.client.constants.cpLiveModeAvailable)
-			if value == 1:
-				return True
-			elif value == 0:
-				return False
-			raise RuntimeError('Unknown live mode available value')
+	def getImageTransform(self):
+		bitmask = self._getParameterValue('cpImageGeometry')
 
-		def getNumberOfDeadColumns(self):
-			return self.theCamera.LParam(
-																win32com.client.constants.cpNumberOfDeadColumns)
+		mirror = []
+		if bitmask & 1: # mirrored horizontal
+			mirror.append('horizontal')
+		if bitmask & 2: # mirrored vertical
+			mirror.append('vertical')
 
-		def getDeadColumns(self):
-			string = self.theCamera.SParam(win32com.client.constants.cpDeadColumns)
-			return eval(string)
+		rotation = 0
+		if bitmask & 4: # rotated 90 degrees CCW
+			rotation += 90
+		if bitmask & 8: # rotated 180 degrees
+			rotation += 180
+		if bitmask & 16: # rotated 90 degrees CW
+			rotation += 270
+		rotation %= 360
 
-		def getSimulationImagePath(self):
-			return self.theCamera.SParam(win32com.client.constants.cpImagePath)
+		return {'mirror': mirror, 'rotation': rotation}
 
-		def getGainIndex(self):
-			return self.theCamera.LParam(win32com.client.constants.cpCurrentGainIndex)
+	def setImageTransform(self, value):
+		bitmask = 0
 
-		def getGain(self):
-			return self.getGainFactors()[self.getGainIndex() - 1]
+		if 'horizontal' in value['mirror']:
+			bitmask |= 1
+		if 'vertical' in value['mirror']:
+			bitmask |= 2
 
-		def setGainIndex(self, value):
-			try:
-				self.theCamera.SetLParam(win32com.client.constants.cpCurrentGainIndex,
-																	value)
-			except pywintypes.com_error:
-				raise ValueError('Invalid gain index specified')
+		if value['rotation'] == 90:
+			bitmask |= 4
+		if value['rotation'] == 180:
+			bitmask |= 8
+		if value['rotation'] == 270:
+			bitmask |= 16
 
-		def getReadoutSpeedIndex(self):
-			return self.theCamera.LParam(
-																	win32com.client.constants.cpCurrentSpeedIndex)
+		self._setParameterValue('cpImageGeometry', bitmask)
 
-		def getReadoutSpeed(self):
-			return self.getReadoutSpeeds()[self.getReadoutSpeedIndex() - 1]
+	def getTemperature(self):
+		return self._getParameterValue('cpCurrentTemperature')/1000.0
 
-		def setReadoutSpeedIndex(self, value):
-			try:
-				self.theCamera.SetLParam(win32com.client.constants.cpCurrentSpeedIndex,
-																	value)
-			except pywintypes.com_error:
-				raise ValueError('Invalid readout speed index specified')
+	def setTemperature(self, value):
+		self._setParameterValue('cpTemperatureSetpoint', int(value*1000))
 
-		def getImageTransform(self):
-			bitmask = self.theCamera.LParam(win32com.client.constants.cpImageGeometry)
+	def getShutterOpenDelay(self):
+		return self._getParameterValue('cpShutterOpenDelay')
 
-			mirror = []
-			if bitmask & 1:
-				mirror.append('horizontal')
-				# mirrored horizontal
-			if bitmask & 2:
-				# mirrored vertical
-				mirror.append('vertical')
+	def setShutterOpenDelay(self, value):
+		try:
+			self._setParameterValue('cpShutterOpenDelay', value)
+		except pywintypes.com_error:
+			raise ValueError('Invalid shutter open delay')
 
-			rotation = 0
-			if bitmask & 4:
-				# rotated 90 degrees CCW
-				rotation += 90
-			if bitmask & 8:
-				# rotated 180 degrees
-				rotation += 180
-			if bitmask & 16:
-				# rotated 90 degrees CW
-				rotation += 270
-			rotation %= 360
+	def getShutterCloseDelay(self):
+		return self._getParameterValue('cpShutterCloseDelay')
 
-			return {'mirror': mirror, 'rotation': rotation}
+	def setShutterCloseDelay(self, value):
+		try:
+			self._setParameterValue('cpShutterCloseDelay', value)
+		except pywintypes.com_error:
+			raise ValueError('Invalid shutter close delay')
 
-		def setImageTransform(self, value):
-			bitmask = 0
-
-			if 'horizontal' in value['mirror']:
-				bitmask |= 1
-			if 'vertical' in value['mirror']:
-				bitmask |= 2
-
-			if value['rotation'] == 90:
-				bitmask |= 4
-			if value['roration'] == 180:
-				bitmask |= 8
-			if value['rotation'] == 270:
-				bitmask |= 16
-
-			self.theCamera.SetLParam(win32com.client.constants.cpImageGeometry,
-																bitmask)
-
-		def getTemperature(self):
-			value = self.theCamera.LParam(
-																win32com.client.constants.cpCurrentTemperature)
-			return value/1000.0
-
-		def setTemperature(self, value):
-			value = int(value*1000)
-			self.theCamera.SetLParam(win32com.client.constants.cpTemperatureSetpoint,
-																value)
-
-		def getShutterOpenDelay(self):
-			return self.theCamera.LParam(win32com.client.constants.cpShutterOpenDelay)
-
-		def setShutterOpenDelay(self, value):
-			try:
-				self.theCamera.SetLParam(win32com.client.constants.cpShutterOpenDelay,
-															value)
-			except pywintypes.com_error:
-				raise ValueError('Invalid shutter open delay')
-
-		def getShutterCloseDelay(self):
-			return self.theCamera.LParam(
-																	win32com.client.constants.cpShutterCloseDelay)
-
-		def setShutterCloseDelay(self, value):
-			try:
-				self.theCamera.SetLParam(win32com.client.constants.cpShutterCloseDelay,
-															value)
-			except pywintypes.com_error:
-				raise ValueError('Invalid shutter close delay')
-
-		def getSerialNumber(self):
-			return self.theCamera.SParam(win32com.client.constants.cpSerialNumber)
+	def getSerialNumber(self):
+		return self._getParameterValue('cpSerialNumber')
 			
-		def getPreampDelay(self):
-			value = self.theCamera.LParam(win32com.client.constants.cpPreampDelay)
-			return value/1000.0
+	def getPreampDelay(self):
+		return self._getParameterValue('cpPreampDelay')/1000.0
 
-		def setPreampDelay(self, value):
-			value = int(value*1000)
-			try:
-				self.theCamera.SetLParam(win32com.client.constants.cpPreampDelay, value)
-			except pywintypes.com_error:
-				raise ValueError('Invalid preamp delay')
+	def setPreampDelay(self, value):
+		try:
+			self._setParameterValue('cpPreampDelay', int(value*1000))
+		except pywintypes.com_error:
+			raise ValueError('Invalid preamp delay')
 
-		# PMode boolean?
-		def getParallelMode(self):
-			return self.theCamera.LParam(win32com.client.constants.cpPMode)
+	# PMode boolean?
+	def getParallelMode(self):
+		return self._getParameterValue('cpPMode')
 
-		# PMode boolean?
-		def setParallelMode(self, value):
-			try:
-				self.theCamera.SetLParam(win32com.client.constants.cpPMode, value)
-			except pywintypes.com_error:
-				raise ValueError('Invalid parallel mode')
+	def setParallelMode(self, value):
+		try:
+			self._setParameterValue('cpPMode', value)
+		except pywintypes.com_error:
+			raise ValueError('Invalid parallel mode')
 
-		def setUseSpeedtabForGainSwitch(self, value):
-			if value:
-				value = 1
-			else:
-				value = 0
-			self.theCamera.SetLParam(
-									win32com.client.constants.cpUseSpeedtabForGainSwitch, value)
+	def setUseSpeedTableForGainSwitch(self, value):
+		if value:
+			value = 1
+		else:
+			value = 0
+		self._setParameterValue('cpUseSpeedtabForGainSwitch', value)
 
-		def getHardwareGainIndex(self):
-			return self.theCamera.LParam(win32com.client.constants.cpHWGainIndex)
+	def getHardwareGainIndex(self):
+		return self._getParameterValue('cpHWGainIndex')
 
-		def getHardwareSpeedIndex(self):
-			return self.theCamera.LParam(win32com.client.constants.cpHWSpeedIndex)
+	def getHardwareSpeedIndex(self):
+		return self._getParameterValue('cpHWSpeedIndex')
 
-		def getRetractable(self):
-			value = self.theCamera.LParam(win32com.client.constants.cpIsRetractable)
-			if value:
-				return True
-			else:
-				return False
+	def getRetractable(self):
+		value = self._getParameterValue('cpIsRetractable')
+		if value:
+			return True
+		else:
+			return False
 
-		def getCameraAxis(self):
-			value = self.theCamera.LParam(
-																win32com.client.constants.cpCameraPositionOnTem)
-			if value == 0:
-				return 'on'
-			elif value == 1:
-				return 'off'
-			else:
-				return 'unknown'
+	def getCameraAxis(self):
+		value = self._getParameterValue('cpCameraPositionOnTem')
+		if value == 0:
+			return 'on'
+		elif value == 1:
+			return 'off'
+		else:
+			raise RuntimeError('Error getting camera axis')
 
-	class TietzPXL(Tietz):
-		def __init__(self):
-			Tietz.__init__(self, 'PXL')
+class TietzPXL(Tietz):
+	def __init__(self):
+		Tietz.__init__(self, 'PXL')
 	
-	class TietzSimulation(Tietz):
-		def __init__(self):
-			Tietz.__init__(self, 'Simulation')
+class TietzSimulation(Tietz):
+	def __init__(self):
+		Tietz.__init__(self, 'Simulation')
 
-	class TietzPVCam(Tietz):
-		def __init__(self):
-			Tietz.__init__(self, 'PVCam')
+class TietzPVCam(Tietz):
+	def __init__(self):
+		Tietz.__init__(self, 'PVCam')
 	
-	class TietzFastScan(Tietz):
-		def __init__(self):
-			Tietz.__init__(self, 'FastScan')
+class TietzFastScan(Tietz):
+	def __init__(self):
+		Tietz.__init__(self, 'FastScan')
 	
-	class TietzFastScanFW(Tietz):
-		def __init__(self):
-			Tietz.__init__(self, 'FastScanFW')
+class TietzFastScanFW(Tietz):
+	def __init__(self):
+		Tietz.__init__(self, 'FastScanFW')
 	
-	class TietzSCX(Tietz):
-		def __init__(self):
-			Tietz.__init__(self, 'SCX')
-	
-if __name__ == '__main__':
-	foo = TietzSimulation()
-	#foo = TietzSCX()
-	methods = dir(foo)
-	methods.remove('getImage')
-	methods.remove('getPermissions')
-	for i in methods:
-		if i[:3] == 'get':
-			try:
-				print i, getattr(foo, i)()
-			except NotImplementedError:
-				print 'not implemented'
-#	for i in methods:
-#		if i[:3] == 'set':
-#			print i
+class TietzSCX(Tietz):
+	def __init__(self):
+		Tietz.__init__(self, 'SCX')
 

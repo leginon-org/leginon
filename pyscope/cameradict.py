@@ -12,13 +12,6 @@ def factory(cameraclass):
 	class cameradict(cameraclass):
 		def __init__(self, dict=None):
 			cameraclass.__init__(self)
-			self.structure = {'offset': {'x': int, 'y': int},
-										'dimension': {'x': int, 'y': int},
-										'binning': {'x': int, 'y': int},
-										'exposure time' : float,
-										'image data' : Numeric.arraytype,
-										'image type': str,
-										'inserted': bool}
 			self.data = {'offset': {'x': 0, 'y': 0},
 										'dimension': {'x': 512, 'y': 512},
 										'binning': {'x': 1, 'y': 1},
@@ -28,9 +21,6 @@ def factory(cameraclass):
 										'image data' : None}
 			if dict is not None:
 				self.update(dict)
-
-		def getStructure(self):
-			return self.structure
 
 		def exit(self):
 			cameraclass.exit(self)
