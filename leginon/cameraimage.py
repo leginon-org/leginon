@@ -1,7 +1,10 @@
 import Numeric
 
 def centerOffset(camerasize, imagesize):
-	'''determine offset to use image from camera center for 2k camera'''
+	'''
+	determine offset to use image from camera center
+	useful for the 'offset' parameter in camera state
+	'''
 	r = (camerasize[0]/2 - imagesize[0]/2, camerasize[1]/2 - imagesize[1]/2)
 	return r
 
@@ -15,7 +18,7 @@ def stdev(inputarray):
 def mean(inputarray):
 	inlen = len(input.flat)
 	divisor = Numeric.array(inlen, Numeric.Float32)
-	m = Numeric.sum(Numeric.ravel(input)) / divisor
+	m = Numeric.sum(input.flat) / divisor
 	return m
 
 def averageSeries(self, series):

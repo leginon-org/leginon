@@ -120,6 +120,21 @@ class ImagePublishEvent(PublishEvent):
 	def __init__(self, id, content, confirm):
 		PublishEvent.__init__(self, id, content, confirm)
 
+class ReferenceImagePublishEvent(ImagePublishEvent):
+	'Event indicating image was published'
+	def __init__(self, id, content, confirm):
+		ImagePublishEvent.__init__(self, id, content, confirm)
+
+class DarkImagePublishEvent(ReferenceImagePublishEvent):
+	'Event indicating image was published'
+	def __init__(self, id, content, confirm):
+		ReferenceImagePublishEvent.__init__(self, id, content, confirm)
+
+class BrightImagePublishEvent(ReferenceImagePublishEvent):
+	'Event indicating image was published'
+	def __init__(self, id, content, confirm):
+		ReferenceImagePublishEvent.__init__(self, id, content, confirm)
+
 class CorrelationImagePublishEvent(ImagePublishEvent):
 	'Event indicating image was published'
 	def __init__(self, id, content, confirm):

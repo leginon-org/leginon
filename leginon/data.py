@@ -94,3 +94,17 @@ class CrossCorrelationImageData(CorrelationImageData):
 class PhaseCorrelationImageData(CorrelationImageData):
 	def __init__(self, id, content):
 		CorrelationImageData.__init__(self, id, content)
+
+class ReferenceImageData(ImageData):
+	def __init__(self, id, content):
+		ImageData.__init__(self, id, content)
+
+class DarkImageData(ReferenceImageData):
+	def __init__(self, id, content):
+		ReferenceImageData.__init__(self, id, content)
+
+class BrightImageData(ReferenceImageData):
+	def __init__(self, id, content):
+		ReferenceImageData.__init__(self, id, content)
+
+

@@ -9,14 +9,10 @@ import time
 import Numeric
 import LinearAlgebra
 import cPickle
+import cameraimage
 
 False=0
 True=1
-
-def centerOffset(xsize,ysize):
-	'''determine offset to use image from camera center for 2k camera'''
-	offset = {'x': 1024 - xsize/2, 'y': 1024 - ysize/2}
-	return offset
 
 class Calibration(node.Node):
 	def __init__(self, id, nodelocations):
@@ -26,16 +22,6 @@ class Calibration(node.Node):
 		self.correlator = correlator.Correlator(ffteng)
 		self.peakfinder = peakfinder.PeakFinder()
 
-		#### parameters for user to set
-		self.attempts = 5
-		self.range = [1e-7, 1e-6]
-		self.base = {'x': 0.0, 'y':0.0}
-		self.correlationthreshold = 0.05
-		self.camerastate = {"offset": centerOffset(512,512), \
-												"dimension": {'x': 512, 'y': 512}, \
-												"binning": {'x': 1, 'y': 1}, \
-												"exposure time" : 500}
-		####
 
 		# correlation maybe goes into a different node
 
@@ -45,7 +31,10 @@ class Calibration(node.Node):
 		self.calibration = {}
 		self.clearStateImages()
 
+
 		node.Node.__init__(self, id, nodelocations)
+		
+
 
 	def validShiftCallback(self, value=None):
 		if value:
@@ -76,7 +65,7 @@ class Calibration(node.Node):
 		pixel = {'x': {'min': None, 'max': None}, 'y': {'min': None, 'max': None}}
 		for axis in percent:
 			for limit in percent[axis]:
-				pixel[axis][limit] = self.camerastate['dimension'][axis] \
+				pixel[axis][limit] = self.camerastate['size'] \
 						* percent[axis][limit]/100
 		return pixel
 
@@ -85,7 +74,7 @@ class Calibration(node.Node):
 		for axis in pixel:
 			for limit in pixel[axis]:
 				percent[axis][limit] = \
-					pixel[axis][limit] / self.camerastate['dimension'][axis] * 100
+					pixel[axis][limit] / self.camerastate['size'] * 100
 		return percent
 
 	def main(self):
@@ -99,7 +88,21 @@ class Calibration(node.Node):
 		self.clearStateImages()
 
 		adjustedrange = self.range
-		camdata = data.EMData('camera', self.camerastate)
+
+		size = self.camerastate['size']
+		bin = self.camerastate['binning']
+		exp = self.camerastate['exposure time']
+		off = cameraimage.centerOffset(size,size),
+		off = {'x': off[0], 'y': off[1]}
+		camstate = {
+			"offset": off,
+			"dimension": {'x': size, 'y': size},
+			"binning": {'x': bin, 'y': bin},
+			"exposure time": exp
+		}
+
+		camdata = data.EMData('camera', camstate)
+
 		print 'camdata', camdata
 		self.publishRemote(camdata)
 
@@ -130,15 +133,15 @@ class Calibration(node.Node):
 					break
 				elif verdict == 'small shift':
 					print "too small"
-					adjustedrange[0] = value
+					adjustedrange[0] = delta
 				elif verdict == 'big shift':
 					print "too big"
-					adjustedrange[1] = value
+					adjustedrange[1] = delta
 				else:
 					raise RuntimeError('hung jury')
+			basestate = self.state(self.base[axis], axis)
+			self.publishRemote(data.EMData('scope', basestate))
 
-		basestate = self.state(self.base[axis], axis)
-		self.publishRemote(data.EMData('scope', basestate))
 		print 'CALIBRATE DONE', self.calibration
 
 	def clearStateImages(self):
@@ -212,6 +215,9 @@ class Calibration(node.Node):
 		print 'correlation'
 		pcimage = self.correlator.phaseCorrelate()
 
+		pcimagedata = data.ImageData(self.ID(), pcimage)
+		self.publish(pcimagedata, event.PhaseCorrelationImagePublishEvent)
+
 		## peak finding
 		print 'peak finding'
 		self.peakfinder.setImage(pcimage)
@@ -267,6 +273,7 @@ class Calibration(node.Node):
 		### to getting a good calibration, regardless of direction.
 
 		validshiftdict = self.validshift.get()
+		print 'validshiftdict', validshiftdict
 		validshift = []
 		print 'SHIFT', shift
 		print 'PEAK VALUE', peakvalue
@@ -348,9 +355,22 @@ class Calibration(node.Node):
 	def defineUserInterface(self):
 		nodespec = node.Node.defineUserInterface(self)
 
+		#### parameters for user to set
+		self.attempts = 5
+		self.range = [1e-7, 1e-6]
+		self.correlationthreshold = 0.05
+		self.camerastate = {'size': 512, 'binning': 1, 'exposure time': 500}
+		try:
+			isdata = self.researchByDataID('image shift')
+			self.base = isdata.content['image shift']
+		except:
+			self.base = {'x': 0.0, 'y':0.0}
+		####
+
 		cspec = self.registerUIMethod(self.uiCalibrate, 'Calibrate', ())
 
 		paramchoices = self.registerUIData('paramdata', 'array', default=('image shift', 'stage position'))
+
 
 		argspec = (
 		self.registerUIData('Base', 'struct', default=self.base),
