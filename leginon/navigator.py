@@ -53,6 +53,12 @@ class Navigator(node.Node):
 		movetype = self.movetype.getSelectedValue()
 		calclient = self.calclients[movetype]
 		newstate = calclient.transform(pixelshift, clickscope, clickcamera)
+		if not self.completestate.get():
+			if movetype == 'modeled stage position':
+				newmovetype = 'stage position'
+			else:
+				newmovetype = movetype
+			newstate = {newmovetype: newstate[newmovetype]}
 		emdat = data.ScopeEMData(id=('scope',), initializer=newstate)
 		self.publishRemote(emdat)
 
@@ -103,11 +109,12 @@ class Navigator(node.Node):
 		movetypes = self.calclients.keys()
 		self.movetype = uidata.SingleSelectFromList('TEM Parameter', movetypes, 0)
 		self.delaydata = uidata.Float('Delay (sec)', 2.5, 'rw')
+		self.completestate = uidata.Boolean('Complete State', False, 'rw', persist=True)
 
 		cameraconfigure = self.cam.configUIData()
 
 		settingscontainer = uidata.Container('Settings')
-		settingscontainer.addObjects((self.movetype, self.delaydata, cameraconfigure))
+		settingscontainer.addObjects((self.movetype, self.completestate, self.delaydata, cameraconfigure))
 
 		acqmeth = uidata.Method('Acquire', self.acquireImage)
 		self.image = uidata.ClickImage('Navigation', self.handleImageClick2, None)
