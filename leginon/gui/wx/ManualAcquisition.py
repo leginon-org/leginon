@@ -96,7 +96,10 @@ class Panel(gui.wx.Node.Panel):
 		dialog.Destroy()
 
 	def onGridButton(self, evt):
-		raise NotImplementedError
+		dialog = GridDialog(self)
+		if dialog.ShowModal() == wx.ID_OK:
+			print 'ok'
+		dialog.Destroy()
 
 	def onAcquireButton(self, evt):
 		self.node.acquireImage()
@@ -127,6 +130,42 @@ class Panel(gui.wx.Node.Panel):
 			raise RuntimeError
 		self.bacquire.Enable(False)
 		self.bcontinuous.Enable(False)
+
+class GridDialog(wx.Dialog):
+	def __init__(self, parent):
+		wx.Dialog.__init__(self, parent, -1, 'Grid Selection')
+
+		self.cgridbox = wx.Choice(self, -1)
+		self.cgrid = wx.Choice(self, -1)
+
+		szgrid = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Grid box:')
+		szgrid.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szgrid.Add(self.cgridbox, (0, 1), (1, 1), wx.EXPAND)
+		label = wx.StaticText(self, -1, 'Grid:')
+		szgrid.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szgrid.Add(self.cgrid, (1, 1), (1, 1), wx.EXPAND)
+		szgrid.AddGrowableCol(0)
+
+		sb = wx.StaticBox(self, -1, 'Grid')
+		sbszgrid = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sbszgrid.Add(szgrid, 1, wx.EXPAND|wx.ALL, 5)
+
+		self.bselect = wx.Button(self, wx.ID_OK, 'Select')
+		self.bselect.Enable(False)
+		self.bcancel = wx.Button(self, wx.ID_CANCEL, 'Cancel')
+
+		szbutton = wx.GridBagSizer(5, 5)
+		szbutton.Add(self.bselect, (0, 0), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		szbutton.Add(self.bcancel, (0, 1), (1, 1), wx.ALIGN_CENTER)
+		szbutton.AddGrowableCol(0)
+
+		sz = wx.GridBagSizer(5, 5)
+		sz.Add(sbszgrid, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
+		sz.Add(szbutton, (1, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
+
+		self.SetSizerAndFit(sz)
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
