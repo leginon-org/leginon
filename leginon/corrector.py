@@ -607,7 +607,7 @@ class Corrector(node.Node):
 		try:
 			imagedata = self.acquireReference(dark=True)
 		except node.PublishError:
-			self.outputError('Cannot set EM parameter, EM may not be running')
+			print 'Cannot set EM parameter, EM may not be running'
 		else:
 			self.displayImage(imagedata)
 			node.beep()
@@ -616,7 +616,7 @@ class Corrector(node.Node):
 		try:
 			imagedata = self.acquireReference(dark=False)
 		except node.PublishError:
-			self.outputError('Cannot set EM parameter, EM may not be running')
+			print 'Cannot set EM parameter, EM may not be running'
 		else:
 			self.displayImage(imagedata)
 			node.beep()
@@ -626,7 +626,7 @@ class Corrector(node.Node):
 			self.cam.uiApplyAsNeeded()
 			imagedata = self.cam.acquireCameraImageData(correction=False)
 		except node.PublishError:
-			self.outputError('Cannot set EM parameter, EM may not be running')
+			print 'Cannot set EM parameter, EM may not be running'
 		else:
 			imagearray = imagedata['image']
 			self.displayImage(imagearray)
@@ -636,7 +636,7 @@ class Corrector(node.Node):
 			self.cam.uiApplyAsNeeded()
 			imagedata = self.acquireCorrectedArray()
 		except node.PublishError:
-			self.outputError('Cannot set EM parameter, EM may not be running')
+			print 'Cannot set EM parameter, EM may not be running'
 		else:
 			self.displayImage(imagedata)
 

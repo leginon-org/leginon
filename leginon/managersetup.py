@@ -36,7 +36,7 @@ class ManagerSetup(object):
 					self.manager.addNode(location, (hostname,))
 			except (IOError, TypeError, socket.error), e:
 				if isinstance(e, socket.error):
-					self.manager.outputWarning('Cannot add instrument\'s launcher.')
+					self.build_messages.warning('Cannot add instrument\'s launcher.')
 		if self.container.parent is not None:
 			self.container.parent.deleteObject(self.container.name)
 

@@ -36,23 +36,28 @@ class DataBinder(datahandler.DataBinder):
 				except KeyError:
 					pass
 
-	def addBinding(self, dataclass, nodeid, method):
+	def addBinding(self, nodeid, dataclass, method):
 		'method must take data instance as first arg'
 		try:
 			self.bindings[dataclass].append(method)
 		except KeyError:
 			self.bindings[dataclass] = [method]
 
-	def delBinding(self, dataclass, nodeid, method=None):
-		try:
-			if method is None:
-				del self.bindings[dataclass]
-			else:
-				self.bindings[dataclass].remove(method)
-				if not self.bindings[dataclass]:
+	def delBinding(self, nodeid, dataclass=None, method=None):
+		if dataclass is None:
+			dataclasses = self.bindings.keys()
+		else:
+			dataclasses = [dataclass]
+		for dataclass in dataclasses:
+			try:
+				if method is None:
 					del self.bindings[dataclass]
-		except (KeyError, ValueError):
-			pass
+				else:
+					self.bindings[dataclass].remove(method)
+					if not self.bindings[dataclass]:
+						del self.bindings[dataclass]
+			except (KeyError, ValueError):
+				pass
 
 class Manager(node.Node):
 	'''Overlord of the nodes. Handles node communication (data and events).'''
@@ -765,7 +770,7 @@ class Manager(node.Node):
 		if name is not None:
 			self.loadApp(name)
 		else:
-			self.outputError('No application selected')
+			self.messagelog.error('No application selected')
 
 	def uiLaunchApp(self):
 		'''UI helper for launchApp. See launchApp.'''

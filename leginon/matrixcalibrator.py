@@ -205,17 +205,16 @@ class MatrixCalibrator(calibrator.Calibrator):
 		self.getParameter()
 		try:
 			self.calibrate()
-		except (calibrationclient.NoPixelSizeError, CalibrationError, camerafuncs.NoCorrectorError), e:
-			if isinstance(e, calibrationclient.NoPixelSizeError):
-				self.outputError('Cannot get pixel size for current state, halting calibration')
-			elif isinstance(e, CalibrationError):
-				self.outputError('No good measurement, halting calibration')
-			elif isinstance(e, camerafuncs.NoCorrectorError):
-				self.outputError('Cannot get corrected images, Corrector may not be running')
+		except calibrationclient.NoPixelSizeError:
+			print 'Cannot get pixel size for current state, halting calibration'
+		except CalibrationError:
+			print 'No good measurement, halting calibration'
+		except camerafuncs.NoCorrectorError:
+			print 'Cannot get corrected images, Corrector may not be running'
 		except:
 			pass
 		else:
-			self.outputMessage('Calibration', 'Calibration completed successfully')
+			print 'Calibration completed successfully'
 		# return to original state
 		self.setParameter()
 

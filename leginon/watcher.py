@@ -164,7 +164,6 @@ class Watcher(node.Node):
 			self.getData(newevent)
 			return True
 		except Queue.Empty:
-			self.outputWarning('Queue is empty, no event processed')
 			return False
 
 	def processDataFromQueue(self, blocking=0):
@@ -173,10 +172,9 @@ class Watcher(node.Node):
 		try:
 			newdata = self.dataqueue.get(blocking)
 			self.processData(newdata)
-			return 1
+			return True
 		except Queue.Empty:
-			self.outputWarning('Queue is empty, no data processed')
-			return 0
+			return False
 
 	## maybe this should start a new thread?
 	def uiProcessEvent(self):

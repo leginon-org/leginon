@@ -182,7 +182,7 @@ class Navigator(node.Node):
 		try:
 			scopedata = self.researchByDataID(('stage position',))
 		except node.ResearchError:
-			self.outputMessage('Is EM running?', 'Unable to get stage position.  Is EM node running?')
+			self.messagelog.error('Unable to get stage position from EM')
 			return
 		allstagedata = scopedata['stage position']
 		stagedata = {}

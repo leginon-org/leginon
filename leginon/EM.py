@@ -230,7 +230,6 @@ class EM(node.Node):
 		self.handlerthread.setDaemon(1)
 		self.handlerthread.start()
 
-		self.start()
 
 	def handler(self, scopename, cameraname):
 		self.scope = None
@@ -276,8 +275,7 @@ class EM(node.Node):
 			e = event.ListPublishEvent(id=self.ID(), idlist=ids)
 			self.outputEvent(e, wait=True)
 
-		self.outputEvent(event.NodeInitializedEvent(id=self.ID()))
-
+		self.start()
 		self.queueHandler()
 
 	def getClass(self, modulename, classname):
@@ -299,7 +297,7 @@ class EM(node.Node):
 			scopeclass = self.getClass(modulename, classname)
 			self.scope = methoddict.factory(scopeclass)()
 		except Exception, e:
-			self.messagelog.error('cannot set scope to type ' + str(scopename))
+			self.messagelog.error('Cannot set scope to type ' + str(scopename))
 
 	def setCameraType(self, cameraname):
 		modulename, classname, d = emregistry.getCameraInfo(cameraname)
@@ -307,7 +305,7 @@ class EM(node.Node):
 			cameraclass = self.getClass(modulename, classname)
 			self.camera = methoddict.factory(cameraclass)()
 		except Exception, e:
-			self.messagelog.error('cannot set camera to type ' + str(cameraname))
+			self.messagelog.error('Cannot set camera to type ' + str(cameraname))
 
 	def main(self):
 		pass
@@ -472,16 +470,16 @@ class EM(node.Node):
 						self.scope[key] = value
 					except:	
 						self.messagelog.error("failed to set '%s' to %s" % (key, value))
-						print "failed to set '%s' to %s" % (key, value)
-						self.printException()
+						#print "failed to set '%s' to %s" % (key, value)
+						#self.printException()
 				elif key in camerakeys:
 					try:
 						self.camera[key] = value
 					except:	
 						self.messagelog.error("failed to set '%s' to %s"
 																	% (key, state[key]))
-						print "failed to set '%s' to" % key, state[key]
-						self.printException()
+						#print "failed to set '%s' to" % key, state[key]
+						#self.printException()
 
 			if self.uipauses.get() and (key in self.pauses):
 				p = self.pauses[key]

@@ -6,7 +6,6 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-#import copy
 import data
 import datahandler
 import datatransport
@@ -22,13 +21,22 @@ import cPickle
 import leginonconfig
 import os
 
+class ResearchError(Exception):
+	pass
+
+class PublishError(Exception):
+	pass
+
+class ConfirmationTimeout(Exception):
+	pass
+
 import sys
 if sys.platform == 'win32':
 	import winsound
 
 def beep():
 	try:
-		winsound.PlaySound("SystemExclamation", winsound.SND_ALIAS)
+		winsound.PlaySound('SystemExclamation', winsound.SND_ALIAS)
 		print 'BEEP!'
 	except:
 		print '\aBEEP!'
@@ -56,21 +64,20 @@ class DataHandler(object):
 		if isinstance(idata, event.Event):
 			self.databinder.insert(idata)
 		else:
-			#self.datakeeper.insert(copy.deepcopy(idata))
 			self.datakeeper.insert(idata)
 
 	def query(self, id):
 		return self.datakeeper.query(id)
 
-	def addBinding(self, eventclass, nodeid, method):
+	def addBinding(self, nodeid, eventclass, method):
 		'''Overides datahandler.DataBinder, making sure it binds Event type only.'''
 		if issubclass(eventclass, event.Event):
-			self.databinder.addBinding(eventclass, nodeid, method)
+			self.databinder.addBinding(nodeid, eventclass, method)
 		else:
 			raise event.InvalidEventError('eventclass must be Event subclass')
 
-	def delBinding(self, eventclass, nodeid, method):
-		self.databinder.delBinding(eventclass, nodeid, method)
+	def delBinding(self, nodeid, eventclass=None, method=None):
+		self.databinder.delBinding(nodeid, eventclass, method)
 
 	def dbInsert(self, idata, force=False):
 		self.dbdatakeeper.insert(idata, force=force)
@@ -97,8 +104,10 @@ class Node(leginonobject.LeginonObject):
 									event.NodeUninitializedEvent]
 
 	def __init__(self, id, session, nodelocations={}, datahandler=None,
-							tcpport=None, uicontainer=None, launcher=None, clientclass=datatransport.Client):
+								uicontainer=None, launcher=None,
+								clientclass=datatransport.Client):
 		leginonobject.LeginonObject.__init__(self, id)
+
 		self.id_count_lock = threading.Lock()
 
 		if session is None or isinstance(session, data.SessionData):
@@ -112,8 +121,6 @@ class Node(leginonobject.LeginonObject):
 
 		if datahandler is not None:
 			self.datahandler = datahandler
-#		self.datahandler = datahandler(self)
-#		self.server = datatransport.Server(self.datahandler, tcpport)
 		self.clientclass = clientclass
 
 		if uicontainer is not None:
@@ -137,7 +144,6 @@ class Node(leginonobject.LeginonObject):
 				self.printException()
 				raise
 			else:
-#				self.printerror('connected to manager')
 				pass
 
 	# main, start/stop methods
@@ -188,14 +194,16 @@ class Node(leginonobject.LeginonObject):
 			self.id_count_lock.release()
 		return new_count
 
+	def start(self):
+		self.outputEvent(event.NodeInitializedEvent(id=self.ID()))
+
 	def exit(self):
 		'''Cleans up the node before it dies.'''
 		if self.uicontainer is not None and self.uicontainer.parent is not None:
 			self.uicontainer.parent.deleteObject(self.uicontainer.name)
-		self.outputEvent(event.NodeUninitializedEvent(), wait=True)
+		self.outputEvent(event.NodeUninitializedEvent(id=self.ID()), wait=True)
 		self.outputEvent(event.NodeUnavailableEvent(id=self.ID()))
-#		self.server.exit()
-#		self.printerror('exited')
+		self.delEventInput()
 
 	def die(self, ievent=None):
 		'''Tell the node to finish and call exit.'''
@@ -203,14 +211,10 @@ class Node(leginonobject.LeginonObject):
 		if ievent is not None:
 			self.confirmEvent(ievent)
 
-	def start(self):
-		self.outputEvent(event.NodeInitializedEvent(id=self.ID()))
-
 	# location method
 
 	def location(self):
 		location = leginonobject.LeginonObject.location(self)
-#		location['data transport'] = self.server.location()
 		location['launcher'] = self.launcher
 		return location
 
@@ -274,7 +278,6 @@ class Node(leginonobject.LeginonObject):
 
 		return confirmationevent
 
-
 	def outputEvent(self, ievent, wait=False, timeout=None):
 		'''
 		output an event to the manager
@@ -294,7 +297,8 @@ class Node(leginonobject.LeginonObject):
 	def confirmEvent(self, ievent):
 		'''Confirm that an event has been received and/or handled.'''
 		if ievent['confirm']:
-			self.outputEvent(event.ConfirmationEvent(id=self.ID(), eventid=ievent['id']))
+			self.outputEvent(event.ConfirmationEvent(id=self.ID(),
+												eventid=ievent['id']))
 
 	def logEvent(self, ievent, status):
 		eventlog = event.EventLog(id=self.ID(), eventclass=ievent.__class__.__name__, status=status)
@@ -309,11 +313,11 @@ class Node(leginonobject.LeginonObject):
 
 	def addEventInput(self, eventclass, method):
 		'''Map a function (event handler) to be called when the specified event is received.'''
-		self.datahandler.addBinding(eventclass, self.id, method)
+		self.datahandler.addBinding(self.id, eventclass, method)
 
-	def delEventInput(self, eventclass):
+	def delEventInput(self, eventclass=None, method=None):
 		'''Unmap all functions (event handlers) to be called when the specified event is received.'''
-		self.datahandler.delBinding(eventclass, self.id, None)
+		self.datahandler.delBinding(self.id, eventclass, method)
 
 	# data publish/research methods
 
@@ -487,26 +491,22 @@ class Node(leginonobject.LeginonObject):
 		'''Publish a piece of data with the specified data ID, setting all other data with the same data ID to the data value (including other nodes).'''
 		dataid = idata['id']
 		if not dataid:
-			raise RuntimeError('%s data needs an ID to be published' % (idata.__class__.__name__,))
+			raise RuntimeError('%s data needs an ID to be published' %
+													(idata.__class__.__name__,))
 		nodeiddata = self.researchByLocation(self.nodelocations['manager'], dataid)
 		if nodeiddata is None:
 			# try a partial ID lookup
-			nodeiddata = self.researchByLocation(self.nodelocations['manager'], dataid[:1])
+			nodeiddata = self.researchByLocation(self.nodelocations['manager'],
+																						dataid[:1])
 
 		if nodeiddata is None:
 			raise PublishError('No such Data ID: %s' % (dataid,))
 
 		for nodeid in nodeiddata['location']:
-			nodelocation = self.researchByLocation(self.nodelocations['manager'], nodeid)
+			nodelocation = self.researchByLocation(self.nodelocations['manager'],
+																							nodeid)
 			client = self.clientclass(nodelocation['location']['data transport'])
 			client.push(idata)
-
-	def locateDataByID(self, dataid):
-		'''
-		Asks manager to find nodes that are keeping data
-		Returns a list of locations
-		'''
-		pass
 
 	def researchByLocation(self, location, dataid):
 		'''Get a piece of data with the specified data ID by the location of a node.'''
@@ -581,46 +581,15 @@ class Node(leginonobject.LeginonObject):
 	def uiExit(self):
 		'''UI function calling die. See die.'''
 		self.die()
-		return ''
 
 	def defineUserInterface(self):
 		idarray = uidata.String('ID', str(self.id), 'r')
 		classstring = uidata.String('Class', self.__class__.__name__, 'r')
 		location = self.key2str(self.location())
 		locationstruct = uidata.Struct('Location', location, 'r')
-		datakeepercontainer = self.datahandler.datakeeper.UI()
 		exitmethod = uidata.Method('Exit', self.uiExit)
 
 		container = uidata.LargeContainer('Node')
-		if datakeepercontainer is not None:
-			container.addObject(datakeepercontainer)
-		self.uicontainer.addObjects((idarray, classstring, locationstruct, exitmethod))
+		self.uicontainer.addObjects((idarray, classstring, locationstruct,
+																	exitmethod))
 
-	def outputMessage(self, title, message, number=0):
-		# log too maybe
-		if hasattr(self, 'uiserver'):
-			if number > 0:
-				messagedialog = uidata.MessageDialog('%s #%d (%s)' % (title, number, str(self.id[-1])), message)
-			else:
-				messagedialog = uidata.MessageDialog('%s (%s)' % (title, str(self.id[-1])), message)
-			try:
-				self.uicontainer.addObject(messagedialog)
-			except ValueError:
-				self.outputMessage(title, message, number + 1)
-		else:
-			self.printerror(title + ': ' + message)
-
-	def outputWarning(self, warning):
-		self.outputMessage('Warning', warning)
-
-	def outputError(self, error):
-		self.outputMessage('Error', error)
-
-class ResearchError(Exception):
-	pass
-
-class PublishError(Exception):
-	pass
-
-class ConfirmationTimeout(Exception):
-	pass

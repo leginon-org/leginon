@@ -72,9 +72,6 @@ class DictDataKeeper(DataHandler):
 		self.lock.release()
 		return result
 
-	def UI(self):
-		return None
-
 class SizedDataKeeper(DictDataKeeper):
 	def __init__(self, maxsize=256.0):
 		DictDataKeeper.__init__(self)
@@ -203,19 +200,6 @@ class TimeoutDataKeeper(DictDataKeeper):
 			if now - timestamp >= self.timeout:
 				self.remove(id)
 
-	# not so great
-	def UI(self):
-		if not hasattr(self, 'uitimeout'):
-			self.uitimeout = uidata.Integer('Timeout', self.getTimeout(),
-																			'rw', callback=self.timeoutCallback)
-		if not hasattr(self, 'uiinterval'):
-			self.uiinterval = uidata.Integer('Interval', self.getInterval(),
-																				'rw', callback=self.intervalCallback)
-		uiclean = uidata.Method('Clean', self.clean)
-		container = uidata.Container('Data Keeper')
-		container.addObjects((self.uitimeout, self.uiinterval, uiclean))
-		return container
-
 class ExitException(Exception):
 	pass
 
@@ -257,8 +241,8 @@ class DataBinder(DataHandler):
 				break
 			try:
 				if self.threaded:
-					t = threading.Thread(name='data binder handler thread',
-																target=self.handleData, args=(item,))
+					name = 'data binder handler thread'
+					t = threading.Thread(name=name, target=self.handleData, args=(item,))
 					t.setDaemon(1)
 					t.start()
 				else:
@@ -284,7 +268,7 @@ class DataBinder(DataHandler):
 				except KeyError:
 					pass
 	
-	def addBinding(self, dataclass, nodeid, method):
+	def addBinding(self, nodeid, dataclass, method):
 		'method must take data instance as first arg'
 		try:
 			nodes = self.bindings[dataclass]
@@ -295,14 +279,19 @@ class DataBinder(DataHandler):
 		except KeyError:
 			self.bindings[dataclass] = {nodeid: [method]}
 
-	def delBinding(self, dataclass, nodeid, method=None):
-		try:
-			if method is None:
-				del self.bindings[dataclass][nodeid]
-				if not self.bindings[dataclass]:
-					del self.bindings[dataclass]
-			else:
-				self.bindings[dataclass][nodeid].remove(method)
-		except (KeyError, ValueError):
-			pass
+	def delBinding(self, nodeid, dataclass=None, method=None):
+		if dataclass is None:
+			dataclasses = self.bindings.keys()
+		else:
+			dataclasses = [dataclass]
+		for dataclass in dataclasses:
+			try:
+				if method is None:
+					del self.bindings[dataclass][nodeid]
+					if not self.bindings[dataclass]:
+						del self.bindings[dataclass]
+				else:
+					self.bindings[dataclass][nodeid].remove(method)
+			except (KeyError, ValueError):
+				pass
 
