@@ -3,12 +3,10 @@ import math
 import application
 
 class Line(object):
-	def __init__(self, canvas, originwidget):
+	def __init__(self, canvas, origin):
 		self.canvas = canvas
-		self.originwidget = originwidget
-		self.origininfo = self.originwidget.place_info()
-		self.destinationwidget = None
-		self.destinationinfo = None
+		self.origin = origin
+		self.destination = None
 		self.line = None
 		self.label = None
 		self.createline(self.origininfo['x'], self.origininfo['y'],
@@ -29,39 +27,19 @@ class Line(object):
 #		self.canvas.coords(self.line3, x1, midpoint, x1, y1)
 
 	def moveDestination(self, x, y):
-		self.move(self.origininfo['x'], self.origininfo['y'], x, y)
+		position = self.origin.getPostiion()
+		self.move(position[0], position[1], x, y)
 
-	def moveDestinationWidget(self, widget):
-		info = widget.place_info()
-		self.moveDestination(info['x'], info['y'])
+	def moveToNodeLabel(self, destination):
+		position = destination.getPostiion()
+		self.moveDestination(position[0], position[1])
 
-	def connect(self, widget):
-		self.destinationwidget = widget
-		self.destinationinfo = self.destinationwidget.place_info()
-		self.moveDestination(self.destinationinfo['x'], self.destinationinfo['y'])
-
-	def refresh(self):
-		self.origininfo = self.originwidget.place_info()
-		# letting this fall through for now
-
-	def moveDestination(self, x, y):
-		self.move(self.origininfo['x'], self.origininfo['y'], x, y)
-
-	def moveDestinationWidget(self, widget):
-		info = widget.place_info()
-		self.moveDestination(info['x'], info['y'])
-
-	def connect(self, widget):
-		self.destinationwidget = widget
-		self.destinationinfo = self.destinationwidget.place_info()
-		self.moveDestination(self.destinationinfo['x'], self.destinationinfo['y'])
+	def connect(self, destination):
+		self.destination = destination
+		self.moveToNodeLabel(destination)
 
 	def refresh(self):
-		self.origininfo = self.originwidget.place_info()
-		# letting this fall through for now
-		self.destinationinfo = self.destinationwidget.place_info()
-		self.move(self.origininfo['x'], self.origininfo['y'],
-							self.destinationinfo['x'], self.destinationinfo['y'])
+		self.moveToNodeLabel(self.destination)
 
 	def delete(self):
 		self.canvas.delete(self.line)
@@ -92,7 +70,7 @@ class LabeledLine(Line):
 		self.label.place_forget()
 
 class NodeLabel(object):
-	def __init__(self, canvas, itext):
+	def __init__(self, canvas, itext, editor):
 		self.canvas = canvas
 		self.label = Tkinter.Label(self.canvas, text=itext, relief=Tkinter.RAISED,
 												justify=Tkinter.LEFT, bd=1, padx=5, pady=3, bg='white')
@@ -100,22 +78,20 @@ class NodeLabel(object):
 		self.label.bind('<Motion>', self.doLine)
 		self.label.bind('<B1-Motion>', self.drag)
 		self.label.bind('<Double-Button-1>', self.handleConnect)
-		self.activeconnection = None
+		self.lines = []
+		self.editor = editor
+
+	def getPosition(self):
+		info = self.label.place_info()
+		return (int(info['x']), int(info['y']))
 
 	def move(self, x0, y0):
-		lines = []
+		self.label.place(x = x0, y = y0, anchor=Tkinter.CENTER)
 		for i in range(len(self.lines)):
-			if self.lines[i].originwidget is widget or \
-										self.lines[i].destinationwidget is widget:
-				lines.append(self.lines[i])
-
-		self.label.place(x=x0, y=y0, anchor=Tkinter.CENTER)
-
-		for i in range(len(lines)):
-			lines[i].refresh()
+			self.lines[i].refresh()
 
 	def doLine(self, ievent):
-		if self.activeconnection is not None:
+		if self.editor.activeconnection is not None:
 #			if not isinstance(ievent.widget, Tkinter.Label):
 #				self.activeline.moveDestination(ievent.x, ievent.y)
 #			else:
@@ -123,79 +99,50 @@ class NodeLabel(object):
 
 	def drag(self, ievent):
 		self.stopLine(ievent)
-		info = self.label.place_info()
-		self.move(int(info['x']) + ievent.x, int(info['y']) + ievent.y)
+		position = self.getPosition()
+		self.move(position[0] + ievent.x, position[1] + ievent.y)
 
 	def handleConnect(self, ievent):
-		if self.activeline is None:
+		if self.editor.activeconnection is None:
 			self.startConnection()
 		else:
-			self.completeConnection(ievent.widget)
+			self.completeConnection()
 
 	def startConnection(self):
-		self.activeline = LabeledLine(self.canvas, ievent.widget, '<None>')
+		self.activeline = LabeledLine(self.canvas, self, '<None>')
 
-	def completeConnection(self, widget):
-		self.activeline.connect(ievent.widget)
-		self.lines.append(self.activeline)
-		self.activeline = None
+	def completeConnection(self):
+		self.editor.activeconnection.connect(self)
+		self.lines.append(self.editor.activeconnection)
+		self.editor.activeconnection = None
 
 	def stopLine(self, ievent):
-		if self.activeline is not None:
-			self.activeline.delete()
-			self.activeline = None
+		if self.editor.activeconnection is not None:
+			self.editor.activeconnection.delete()
+			self.editor.activeconnection = None
 
 class Editor(Tkinter.Frame):
 	def __init__(self, parent, **kwargs):
 		Tkinter.Frame.__init__(self, parent, **kwargs)
 		self.pack(fill=Tkinter.BOTH, expand=1)
 		self.labels = []
-		self.lines = []
-		self.activeline = None
+		self.activeconnection = None
 		self.canvas = Tkinter.Canvas(self)
-		self.canvas.bind('<Button-3>', self.undoLine)
-		self.canvas.bind('<Motion>', self.doLine)
+		self.canvas.bind('<Button-3>', self.stopLine)
+		self.canvas.bind('<Motion>', self.moveLine)
 		self.canvas.pack(fill=Tkinter.BOTH, expand=1)
 
-	def addConnection(self, originwidget, destinationwidget, text):
-		line = LabeledLine(self.canvas, originwidget, text)
-		line.connect(destinationwidget)
-		self.lines.append(line)
+	def moveLine(self, ievent):
+		if self.activeconnection is not None:
+			self.activeconnection.moveDestination(ievent.x, ievent.y)
 
-	def doLine(self, ievent):
-		if self.activeline is not None:
-			if not isinstance(ievent.widget, Tkinter.Label):
-				self.activeline.moveDestination(ievent.x, ievent.y)
-			else:
-				self.activeline.moveDestinationWidget(ievent.widget)
+	def stopLine(self, ievent):
+		if self.activeconnection is not None:
+			self.activeconnection.delete()
+			self.activeconnection = None
 
-	def undoLine(self, ievent):
-		if self.activeline is not None:
-			self.activeline.delete()
-			self.activeline = None
-
-	def moveLabel(self, widget, x0, y0):
-		lines = []
-		for i in range(len(self.lines)):
-			if self.lines[i].originwidget is widget or \
-										self.lines[i].destinationwidget is widget:
-				lines.append(self.lines[i])
-
-		widget.place(x=x0, y=y0, anchor=Tkinter.CENTER)
-		info = widget.place_info()
-
-		for i in range(len(lines)):
-			lines[i].refresh()
-
-	def dragLabel(self, ievent):
-		self.undoLine(ievent)
-		info = ievent.widget.place_info()
-		self.moveLabel(ievent.widget, int(info['x']) + ievent.x,
-																	int(info['y']) + ievent.y)
-
-	def addNode(self, itext):
-		label = Tkinter.Label(self.canvas, text=itext, relief=Tkinter.RAISED,
-																											bd=2, padx=5, pady=3)
+	def addNode(self, text):
+		label = NodeLabel(self.canvas, text, self)
 		self.labels.append(label)
 		self.circle()
 		return label
@@ -205,33 +152,8 @@ class Editor(Tkinter.Frame):
 		center = 100
 		angle = 2*math.pi/len(self.labels)
 		for i in range(len(self.labels)):
-			self.moveLabel(self.labels[i], 
-											int(round(math.cos(i*angle)*radius + center)),
-											int(round(math.sin(i*angle)*radius + center)))
-			self.labels[i].bind('<Button-3>', self.undoLine)
-			self.labels[i].bind('<Motion>', self.doLine)
-			self.labels[i].bind('<B1-Motion>', self.dragLabel)
-			self.labels[i].bind('<Double-Button-1>', self.handleConnect)
-
-	def handleConnect(self, ievent):
-		if self.activeline is None:
-			self.activeline = LabeledLine(self.canvas, ievent.widget, '<None>')
-		else:
-			self.activeline.connect(ievent.widget)
-			self.lines.append(self.activeline)
-			self.activeline = None
-
-	def doLine(self, ievent):
-		if self.activeline is not None:
-			if not isinstance(ievent.widget, Tkinter.Label):
-				self.activeline.moveDestination(ievent.x, ievent.y)
-			else:
-				self.activeline.moveDestinationWidget(ievent.widget)
-
-	def undoLine(self, ievent):
-		if self.activeline is not None:
-			self.activeline.delete()
-			self.activeline = None
+			self.labels[i].move(int(round(math.cos(i*angle)*radius + center)),
+													int(round(math.sin(i*angle)*radius + center)))
 
 class ApplicationEditor(Editor):
 	def __init__(self, parent, **kwargs):
@@ -249,7 +171,7 @@ class ApplicationEditor(Editor):
 			mapping[('manager', args[3])] = self.addNode(labelstring)
 
 		for binding in self.app.bindspec:
-			self.addConnection(mapping[binding[1]], mapping[binding[2]],
+			mapping[binding[1]], mapping[binding[2]],
 																										str(binding[0]))
 
 if __name__ == '__main__':

@@ -410,10 +410,16 @@ class ImageMosaic(watcher.Watcher):
 
 class StateImageMosaic(ImageMosaic):
 	def __init__(self, id, nodelocations, watchfor = event.TileImagePublishEvent, **kwargs):
-		self.calibrationmatrix = None
+#		self.calibrationmatrix = None
+		self.calibrationclients = {}
+		calibrationclasses = [calibrationclient.StageCalibrationClient,
+													calibrationclient.ImageShiftCalibrationClient]
+		for calibrationclass in calibrationclasses:
+			instance = calibrationclass(self)
+			self.calibrationclients[instance.parameter()] = instance
 
-		self.pixelsize = None
-		self.rotationmatrix = None
+#		self.pixelsize = None
+#		self.rotationmatrix = None
 
 		# testing
 #		self.setPixelSizeAndRotation(None)
@@ -426,7 +432,7 @@ class StateImageMosaic(ImageMosaic):
 		#self.positionmethod = self.positionmethods.keys()[0]
 		self.positionmethod = 'pixel size'
 
-		self.addEventInput(event.CalibrationPublishEvent, self.setCalibration)
+#		self.addEventInput(event.CalibrationPublishEvent, self.setCalibration)
 		self.start()
 
 	def setProcessingMethod(self, positionmethod):
@@ -471,25 +477,28 @@ class StateImageMosaic(ImageMosaic):
 		return matrix
 
 	def positionByCalibration(self, idata, imagemosaic):
-		if self.calibrationmatix is None:
-			self.printerror('cannot process by calibration, no calibration available')
-			raise ValueError
+#		if self.calibrationmatix is None:
+#			self.printerror('cannot process by calibration, no calibration available')
+#			raise ValueError
 
-		row = idata.content['scope']['stage position']['y']
-		column = idata.content['scope']['stage position']['x']
-		matrix = self.calibrationmatrix
-		# bin by 4 hardcoded for now, maybe attach to image data
-		x = -(column * matrix[0, 0] + row * matrix[1, 0])/4
-		y = -(column * matrix[0, 1] + row * matrix[1, 1])/4
-		return (int(round(y)), int(round(x)))
+#		row = idata.content['scope']['stage position']['y']
+#		column = idata.content['scope']['stage position']['x']
+#		matrix = self.calibrationmatrix
+#		# bin by 4 hardcoded for now, maybe attach to image data
+#		x = -(column * matrix[0, 0] + row * matrix[1, 0])/4
+#		y = -(column * matrix[0, 1] + row * matrix[1, 1])/4
+#		return (int(round(y)), int(round(x)))
 
-	def setPixelSizeAndRotation(self, ievent):
-		idata = self.researchByDataID(ievent.content)
-		self.rotationmatrix = self.calculateRotationMatrix(
-																						idata.content['image angle'])
-		self.pixelsize = Numeric.array([idata.content['pixel size']['y'],
-																		idata.content['pixel size']['x']],
-																												Numeric.Float32)
+		return self.calibrationclients['stage position'].itransform(
+															idata.content['scope'], idata.content['camera'])
+
+#	def setPixelSizeAndRotation(self, ievent):
+#		idata = self.researchByDataID(ievent.content)
+#		self.rotationmatrix = self.calculateRotationMatrix(
+#																						idata.content['image angle'])
+#		self.pixelsize = Numeric.array([idata.content['pixel size']['y'],
+#																		idata.content['pixel size']['x']],
+#																												Numeric.Float32)
 		# testing
 #		theta = 2.310 + 1.0 * math.pi / 2.0
 #		pixelsize = (3.56127239707e-07, 3.56127239707e-07)
