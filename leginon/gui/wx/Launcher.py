@@ -5,6 +5,7 @@ import threading
 import wx
 import wx.lib.scrolledpanel
 import gui.wx.Logging
+import gui.wx.MessageLog
 
 CreateNodeEventType = wx.NewEventType()
 DestroyNodeEventType = wx.NewEventType()
@@ -174,7 +175,26 @@ class Panel(ListCtrlPanel):
 		ListCtrlPanel.__init__(self, parent, -1, style=wx.NO_BORDER)
 		if launcher is not None:
 			self.setLauncher(launcher)
+		self.statuscolors = {
+			'INFO': wx.BLUE,
+			'WARNING': wx.Color(255, 255, 0),
+			'ERROR': wx.RED,
+			'PROCESSING': wx.GREEN,
+		}
 		self.initializeImageList()
+		self.Bind(gui.wx.MessageLog.EVT_STATUS_UPDATED, self.onStatusUpdated)
+
+	def onStatusUpdated(self, evt):
+		evtobj = evt.GetEventObject()
+		for name, panel in self.panelmap.items():
+			if panel is evtobj:
+				item = self.listctrl.FindItem(-1, name, False)
+				try:
+					color = self.statuscolors[evt.level]
+				except KeyError:
+					color = wx.BLACK
+				self.listctrl.SetItemTextColour(item, color)
+				return
 
 	def setLauncher(self, launcher):
 		self.launcher = launcher
@@ -229,4 +249,15 @@ class Panel(ListCtrlPanel):
 		evt.panel.Show(False)
 		self.Thaw()
 		evt.event.set()
+
+def getStatusIcon(image, color):
+	bitmap = wx.BitmapFromImage(image)
+	dc = wx.MemoryDC()
+	dc.SelectObject(bitmap)
+	dc.BeginDrawing()
+	dc.SetPen(wx.BLACK_PEN)
+	dc.SetBrush(wx.Brush(color))
+	dc.DrawRectangle(0, 0, 5, 5)
+	dc.EndDrawing()
+	return bitmap
 

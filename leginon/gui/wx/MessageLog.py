@@ -13,6 +13,14 @@ class AddMessageEvent(wx.PyCommandEvent):
 		self.message = message
 		self.secs = secs
 
+StatusUpdatedEventType = wx.NewEventType()
+EVT_STATUS_UPDATED = wx.PyEventBinder(StatusUpdatedEventType)
+class StatusUpdatedEvent(wx.PyCommandEvent):
+	def __init__(self, source, level):
+		wx.PyCommandEvent.__init__(self, StatusUpdatedEventType, source.GetId())
+		self.SetEventObject(source)
+		self.level = level
+
 class MessageLog(wx.ListCtrl, ColumnSorterMixin):
 	def __init__(self, parent):
 		wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT)
@@ -21,6 +29,7 @@ class MessageLog(wx.ListCtrl, ColumnSorterMixin):
 		self.InsertColumn(2, 'Message')
 
 		self.levels = ['ERROR', 'WARNING', 'INFO']
+		self.status = None
 
 		self.imagelist = wx.ImageList(16, 16)
 		self.imagelist.AddWithColourMask(wx.EmptyBitmap(16, 16), wx.BLACK)
@@ -51,12 +60,9 @@ class MessageLog(wx.ListCtrl, ColumnSorterMixin):
 			items.append(self.GetItem(i))
 		return items
 
-	def GetItemIds(self):
-		return map(lambda item: item.GetId(), self.GetItems())
-
 	def GetSelectedIds(self):
 		ids = []
-		for i in self.GetItemIds():
+		for i in range(self.GetItemCount()):
 			if self.GetItemState(i, wx.LIST_STATE_SELECTED):
 				ids.append(i)
 		return ids
@@ -64,15 +70,20 @@ class MessageLog(wx.ListCtrl, ColumnSorterMixin):
 	def onChar(self, evt):
 		keycode = evt.GetKeyCode()
 		if keycode == wx.WXK_DELETE:
-			ids = self.GetSelectedIds()
-			ids.sort()
-			ids.reverse()
-			for i in ids:
-				self.DeleteItem(i)
+			self.deleteSelected()
 		elif keycode == 1:
-			for i in self.GetItemIds():
+			for i in range(self.GetItemCount()):
 				self.SetItemState(i, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
 		evt.Skip()
+
+	def deleteSelected(self):
+		ids = self.GetSelectedIds()
+		ids.reverse()
+		for i in ids:
+			data = self.GetItemData(i)
+			self.DeleteItem(i)
+			del self.itemDataMap[data]
+		self.updateStatus()
 
 	def onListItemActivated(self, evt):
 		pass
@@ -95,6 +106,29 @@ class MessageLog(wx.ListCtrl, ColumnSorterMixin):
 		self.itemDataMap[self.data] = (self.levels.index(level), secs, message)
 		self.data += 1
 		self.arrange()
+		self.updateStatus(level)
+
+	def statusUpdated(self, level):
+		evt = StatusUpdatedEvent(self.GetParent(), level)
+		self.GetEventHandler().AddPendingEvent(evt)
+
+	def updateStatus(self, level=None):
+		if level is None:
+			levels = map(lambda i: i[0], self.itemDataMap.values())
+			if levels:
+				index = min(levels)
+				level = self.levels[index]
+			else:
+				level = None
+		else:
+			if self.status is not None:
+				current = self.levels.index(self.status)
+				new = self.levels.index(level)
+				if new >= current:
+					level = self.status
+		if level != self.status:
+			self.status = level
+			self.statusUpdated(level)
 
 	def arrange(self):
 		self.SetColumnWidth(0, wx.LIST_AUTOSIZE)
@@ -111,6 +145,7 @@ if __name__ == '__main__':
 			panel = wx.Panel(frame, -1)
 
 			ml = MessageLog(panel)
+			ml.addMessage('DEBUG', 'Message 0')
 			ml.addMessage('INFO', 'Message 0')
 			ml.addMessage('WARNING', 'Message 1')
 			ml.addMessage('ERROR', 'Message 2')
