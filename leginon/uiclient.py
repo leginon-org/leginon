@@ -439,6 +439,7 @@ class wxContainerWidget(wxWidget):
 			self.sizer.Add(childsizer, 0, wxALL, 3)
 			self.sizer.Show(childsizer, self.shown)
 		child.show(self.shown)
+		child.layout()
 
 		# hmm...
 		for evt in list(self.pending):
