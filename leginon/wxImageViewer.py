@@ -188,7 +188,7 @@ class RulerTool(ImageTool):
 		x0, y0 = self.imagepanel.image2view(self.start)
 		x0 -= self.imagepanel.offset[0]
 		y0 -= self.imagepanel.offset[1]
-		dc.DrawLine((x0, y0), (x, y))
+		dc.DrawLine(x0, y0, x, y)
 
 	def OnMotion(self, evt, dc):
 		if self.button.GetToggle() and self.start is not None:
@@ -653,11 +653,11 @@ class ImagePanel(wx.Panel):
 		x = int(round((ix + xoffset)))
 		y = int(round((iy + yoffset)))
 
-		dc.DrawRectangle((x, y), (xextent + 4, yextent + 4))
+		dc.DrawRectangle(x, y, xextent + 4, yextent + 4)
 
 		dc.SetFont(wx.NORMAL_FONT)
 		for string in strings:
-			dc.DrawText(string, (x + 2 , y + 2))
+			dc.DrawText(string, x + 2 , y + 2)
 			width, height, d, e = dc.GetFullTextExtent(string, wx.NORMAL_FONT)
 			y += height
 
@@ -776,8 +776,8 @@ class TargetTool(ImageTool):
 		dc.Clear()
 		color = self.imagepanel.target_types[self.target_type].getColor()
 		dc.SetPen(wx.Pen(color, 2))
-		dc.DrawLine((8, 0), (8, 15))
-		dc.DrawLine((0, 8), (15, 8))
+		dc.DrawLine(8, 0, 8, 15)
+		dc.DrawLine(0, 8, 15, 8)
 		dc.EndDrawing()
 		dc.SelectObject(wx.NullBitmap)
 		bitmap.SetMask(wx.MaskColour(bitmap, wx.WHITE))
@@ -957,8 +957,8 @@ class TargetType(object):
 		dc.Clear()
 		dc.SetBrush(wx.Brush(color, wx.TRANSPARENT))
 		dc.SetPen(wx.Pen(color, penwidth))
-		dc.DrawLine((length/2, 0), (length/2, length))
-		dc.DrawLine((0, length/2), (length, length/2))
+		dc.DrawLine(length/2, 0, length/2, length)
+		dc.DrawLine(0, length/2, length, length/2)
 		dc.EndDrawing()
 		dc.SelectObject(wx.NullBitmap)
 		bitmap.SetMask(wx.MaskColour(bitmap, wx.WHITE))
