@@ -37,11 +37,29 @@ def max(inputarray):
 	i = Numeric.argmax(f)
 	return f[i]
 
+def sumSeries(series):
+	if len(series) == 0:
+		return None
+	if len(series) == 1:
+		return series[0]
+	first = series[0]
+	others = series[1:]
+	sum = first.astype(Numeric.Float32)
+	for other in others:
+		sum += other
+	return sum
+
 def averageSeries(series):
 	slen = len(series)
 	if slen == 0:
 		return None
-	sum = Numeric.sum(series)
+	if slen == 1:
+		return series[0]
+
+	## this didn't work if a sum was too big for the type
+	#sum = Numeric.sum(series)
+	sum = sumSeries(series)
+
 	divisor = Numeric.array(slen, Numeric.Float32)
 	avg = sum / divisor
 	return avg
