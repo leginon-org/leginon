@@ -29,17 +29,16 @@ class ManualCheckDoneEvent(wx.PyCommandEvent):
 
 class Panel(gui.wx.Acquisition.Panel):
 	icon = 'focuser'
+	tools = gui.wx.Acquisition.Panel.tools + [
+		'auto focus',
+		'manual focus',
+	]
 	def __init__(self, parent, name):
 		gui.wx.Acquisition.Panel.__init__(self, parent, name)
 		self.SetName('%s.pFocuser' % name)
 
-		self.tbauto = wx.ToggleButton(self, -1, 'Autofocus')
-		self.bmanual = wx.Button(self, -1, 'Manual Focus')
-		self.szcontrols.Add(self.tbauto, (3, 0), (1, 1), wx.EXPAND)
-		self.szcontrols.Add(self.bmanual, (4, 0), (1, 1), wx.EXPAND)
-
 		# correlation image
-		szimage = self._getStaticBoxSizer('Correlation Image', (2, 1), (1, 1),
+		szimage = self._getStaticBoxSizer('Correlation Image', (1, 1), (1, 1),
 																						wx.EXPAND|wx.ALL)
 		self.ipcorrelation = gui.wx.ImageViewer.TargetImagePanel(self, -1, tool=False)
 		self.ipcorrelation.addTargetType('Peak')
@@ -49,11 +48,7 @@ class Panel(gui.wx.Acquisition.Panel):
 		self.szmain.Layout()
 
 	def onNodeInitialized(self):
-		self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggleAuto, self.tbauto)
-		self.Bind(wx.EVT_BUTTON, self.onManualButton, self.bmanual)
-
 		self.manualdialog = ManualFocusDialog(self)
-		self.Bind(wx.EVT_BUTTON, self.onManualButton, self.bmanual)
 		self.Bind(EVT_MANUAL_CHECK, self.onManualCheck, self)
 		self.Bind(EVT_MANUAL_CHECK_DONE, self.onManualCheckDone, self)
 
@@ -64,10 +59,10 @@ class Panel(gui.wx.Acquisition.Panel):
 		dialog.ShowModal()
 		dialog.Destroy()
 
-	def onToggleAuto(self, evt):
+	def onAutoFocusTool(self, evt):
 		self.node.autofocus = evt.IsChecked()
 
-	def onManualButton(self, evt):
+	def onManualFocusTool(self, evt):
 		self.node.manualNow()
 
 	def onManualCheck(self, evt):

@@ -16,6 +16,8 @@ ID_DECLARE_DRIFT = 1012
 ID_CHECK_DRIFT = 1013
 ID_REFRESH = 1014
 ID_PAUSES = 1015
+ID_AUTO_FOCUS = 1016
+ID_MANUAL_FOCUS = 1017
 
 class ToolBar(wx.ToolBar):
 	def __init__(self, parent):
@@ -47,6 +49,10 @@ class ToolBar(wx.ToolBar):
 			('refresh', ID_REFRESH, 'refresh.png', 'Refresh', 'onRefreshTool',),
 			('pauses', ID_PAUSES, 'clock.png', 'Do pauses', 'onPausesTool',
 				self.AddCheckTool),
+			('auto focus', ID_AUTO_FOCUS, 'autofocus.png', 'Autofocus',
+				'onAutoFocusTool', self.AddCheckTool),
+			('manual focus', ID_MANUAL_FOCUS, 'manualfocus.png', 'Manual focus',
+				'onManualFocusTool'),
 		]
 
 		self.order = []
