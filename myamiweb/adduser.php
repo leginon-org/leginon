@@ -222,6 +222,8 @@ group:
 
 </table>
 </form>
+
 <?
+/* footer comment */
 admin_footer();
 ?>
