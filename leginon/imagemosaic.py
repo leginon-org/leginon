@@ -262,10 +262,13 @@ class StateImageMosaic(ImageMosaic):
 			raise ValueError
 
 	def processData(self, idata):
-		if self.method = 'correlation':
+		if self.method == 'correlation':
 			self.processDataByCorrelation(idata)
-		elif self.method = 'calibration':
+		elif self.method == 'calibration':
 			self.processDataByCalibration(idata)
+		else:
+			self.printerror('invalid processing method specified')
+			raise ValueError
 		self.imagemosaic[idata.id]['state'] = idata.content['state']
 
 	def processDataByCalibration(self, idata):
