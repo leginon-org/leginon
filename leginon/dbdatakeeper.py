@@ -1,4 +1,3 @@
-import copy
 import cPickle
 import threading
 import datahandler
@@ -126,19 +125,12 @@ class DBDataKeeper(datahandler.DataHandler):
 		return self.recursiveInsert(newdata)
 
 	def flatInsert(self, newdata):
-		if newdata.dbid is not None:
-			## this object is already in DB
-			print 'Object already in DB', newdata.__class__, newdata.dbid
-			return newdata.dbid
-		#newdatacopy = copy.deepcopy(newdata)
-		newdatacopy = newdata
-		table = newdatacopy.__class__.__name__
-		definition = sqldict.sqlColumnsDefinition(newdatacopy)
-		formatedData = sqldict.sqlColumnsFormat(newdatacopy)
+		table = newdata.__class__.__name__
+		definition = sqldict.sqlColumnsDefinition(newdata)
+		formatedData = sqldict.sqlColumnsFormat(newdata)
 		self.dbd.createSQLTable(table, definition)
 		myTable = self.dbd.Table(table)
 		newid = myTable.insert([formatedData])
-		newdata.dbid = newid
 		return newid
 
 	def insertWithForeignKeys(self, newdata):
