@@ -463,7 +463,11 @@ class ObjectBuilder:
 # Database insert  tool functions #
 ###################################
 
+# default separator is |
+# Note: Check Regular Expression
+# in unFlatDict function if changed
 sep ='|'
+
 def flatDict(in_dict):
 	"""
 	This function returns a flat dictionary. For example:
@@ -492,14 +496,8 @@ def flatDict(in_dict):
 			for nk in d:
 				lfk = ['SUBD',key,nk]
 				fk= sep.join(lfk)
-				
-				# increment a number if key exists already
-				# i=0
-				# while in_dict.has_key(fk):
-				# 	i+=1
-				# 	fk = re.sub('|[0-9]*$','',fk)
-				# 	fk += '|%i' % (i)
 				nd.update({fk:d[nk]})
+
 			items.update(nd)
 		else:
 			items[key] = value	
@@ -528,24 +526,20 @@ def unflatDict(in_dict):
 			name = a[1]
 			if not allsubdicts.has_key(name):
 				allsubdicts[a[1]]=None
+		else:
+			items.update(datatype({key:value}))
 
 	for subdict in allsubdicts:
 		dm={}
 		for key,value in in_dict.items():
-			l = re.findall('^SUBD%s%s' %(sep,subdict,),key)
+			l = re.findall('^SUBD\%s%s' %(sep,subdict,),key)
 			if l:
-				s = re.sub('^SUBD\%s%s' %(sep,subdict,),'',key)
-				a = re.findall('^%sSUBD'%(sep,),s)
-				if a:
-					s = re.sub('^\%s'%(sep),'',s)
+				s = re.sub('^SUBD\%s%s\%s' %(sep,subdict,sep),'',key)
 				dm.update({s:value})
 
-		mdm = unflatDict(dm)
-		if mdm:
-			allsubdicts[subdict]=mdm
-		else:
-			allsubdicts[subdict]=dm
+		allsubdicts[subdict]=unflatDict(dm)
 
+	allsubdicts.update(items)
 	return allsubdicts
 
 	
@@ -626,6 +620,9 @@ def matrix2dict(matrix, name=None):
 	return d
 
 def sqltype(object):
+	"""
+	Convert a python type to an SQL type
+	"""
 	t = type(object)
 	if t is type(""):
 		return "TEXT"
@@ -638,9 +635,16 @@ def sqltype(object):
 
 def sqlColumnsDefinition(in_dict, noDefault=None):
 	"""
-Format a table definition for any Data Class:
+	Format a table definition for any Data Class:
 
-[{'Field': 'magnification', 'Type': 'INT(20)'}, {'Field': 'SUBD|BShift|X', 'Type': 'DOUBLE'}, {'Field': 'SUBD|BShift|Y', 'Type': 'DOUBLE'}, {'Field': 'ARRAY|matrix|1_1', 'Type': 'DOUBLE'}, {'Field': 'ARRAY|matrix|1_2', 'Type': 'DOUBLE'}, {'Field': 'ARRAY|matrix|2_1', 'Type': 'DOUBLE'}, {'Field': 'ARRAY|matrix|2_2', 'Type': 'DOUBLE'}, {'Field': 'defocus', 'Type': 'DOUBLE'}, {'Field': 'float', 'Type': 'DOUBLE'}, {'Field': 'type', 'Type': 'TEXT'}]
+	[{'Field': 'magnification', 'Type': 'INT(20)'}, {'Field': 'SUBD|BShift|X', 'Type': 'DOUBLE'},
+	 {'Field': 'SUBD|BShift|Y', 'Type': 'DOUBLE'},
+	 {'Field': 'ARRAY|matrix|1_1', 'Type': 'DOUBLE'},
+	 {'Field': 'ARRAY|matrix|1_2', 'Type': 'DOUBLE'},
+	 {'Field': 'ARRAY|matrix|2_1', 'Type': 'DOUBLE'},
+	 {'Field': 'ARRAY|matrix|2_2', 'Type': 'DOUBLE'},
+	 {'Field': 'defocus', 'Type': 'DOUBLE'}, {'Field': 'float', 'Type': 'DOUBLE'},
+	 {'Field': 'type', 'Type': 'TEXT'}]
 	"""
 	columns=[]
 	# default columns are listed below
@@ -681,11 +685,16 @@ Format a table definition for any Data Class:
 
 
 def seq2sqlColumn(key):
+	"""
+	Add SEQ|if key is tuple or list
+	"""
 	return "SEQ%s%s"%(sep,key,)
 
 def sqlColumnsSelect(in_dict):
 	"""
-['magnification', 'SUBD|BShift|X', 'SUBD|BShift|Y', 'ARRAY|matrix|1_1', 'ARRAY|matrix|1_2', 'ARRAY|matrix|2_1', 'ARRAY|matrix|2_2', 'defocus', 'float', 'type']
+	['magnification', 'SUBD|BShift|X', 'SUBD|BShift|Y',
+	 'ARRAY|matrix|1_1', 'ARRAY|matrix|1_2', 'ARRAY|matrix|2_1',
+	 'ARRAY|matrix|2_2', 'defocus', 'float', 'type']
 	"""
 	columns=[]
 	for key in in_dict:
@@ -711,10 +720,10 @@ def sqlColumnsSelect(in_dict):
 
 def sqlColumnsFormat(in_dict):
 	"""
-{'ARRAY|matrix|2_1': 3.0, 'magnification': 5, 'ARRAY|matrix|2_2': 4.0,
- 'SUBD|BShift|Y': 18.0, 'SUBD|BShift|X': 45.0, 'ARRAY|matrix|1_1': 1.0,
- 'defocus': -9.9999999999999998e-13, 'ARRAY|matrix|1_2': 2.0,
- 'float': 12.25, 'type': 'test'}
+	{'ARRAY|matrix|2_1': 3.0, 'magnification': 5, 'ARRAY|matrix|2_2': 4.0,
+	 'SUBD|BShift|Y': 18.0, 'SUBD|BShift|X': 45.0, 'ARRAY|matrix|1_1': 1.0,
+	 'defocus': -9.9999999999999998e-13, 'ARRAY|matrix|1_2': 2.0,
+	 'float': 12.25, 'type': 'test'}
 	"""
 	columns={}
 	for key in in_dict:
@@ -733,19 +742,37 @@ def sqlColumnsFormat(in_dict):
 	return columns
 
 
-sqldata = {'defocus': -9.9999999999999998e-13, 'float': 12.25, 'ARRAY|matrix|2_1': 3.0, 'magnification': 5, 'ARRAY|matrix|2_2': 4.0, 'SUBD|BShift|Y': 18.0, 'SUBD|BShift|X': 45.0, 'ARRAY|matrix|1_1': 1.0, 'ARRAY|matrix|1_2': 2.0, 'type': 'test', 'SEQ|MyId': "('MyId', 67543)"}
 
 def sql2data(in_dict):
 	"""
-'magnification': 5, 'BShift': {'Y': 18.0, 'X': 45.0}, 'matrix': array([[1, 2],
-[3, 4]]), 'defocus': -9.9999999999999998e-13, 'MyId': ('MyId', 67543),
-'float': 12.25, 'type': 'test'}
+	This function converts any result of an SQL query to an Data type:
+
+	'magnification': 5, 'BShift': {'Y': 18.0, 'X': 45.0}, 'matrix': array([[1, 2],
+	[3, 4]]), 'defocus': -9.9999999999999998e-13, 'MyId': ('MyId', 67543),
+	'float': 12.25, 'type': 'test'}
 
 	"""
 	content={}
-	allarrays={}
 	allsubdicts={}
-	# group ARRAY 
+
+	# Convert ARRAY, SEQ, string, int, float
+	content = datatype(in_dict)
+
+	# build dictionaries
+	allsubdicts=unflatDict(in_dict)
+
+	content.update(allsubdicts)
+
+	return content
+
+
+def datatype(in_dict):
+	"""
+	This function converts a specific string or a SQL type to 
+	a python type.
+	"""
+	content={}
+	allarrays={}
 	for key,value in in_dict.items():
 		a = re.findall('[^%s]+'%(sep,),key)
 		if a[0] == 'ARRAY':
@@ -756,7 +783,6 @@ def sql2data(in_dict):
 			content[a[1]] = eval(value)
 		elif not a[0] in ['SUBD', ]:
 			content[key]=value
-	# build matrix
 	for matrix in allarrays:
 		dm={}
 		for key,value in in_dict.items():
@@ -765,10 +791,5 @@ def sql2data(in_dict):
 				dm.update({key:value})
 		allarrays[matrix]=dict2matrix(dm)
 
-	# build dictionaries
-	allsubdicts=unflatDict(in_dict)
-
 	content.update(allarrays)
-	content.update(allsubdicts)
-
 	return content
