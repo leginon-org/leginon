@@ -1039,13 +1039,13 @@ class SelectionTool(wx.GridBagSizer):
 	def addTypeTool(self, typetool):
 		n = len(self.typetools)
 		self.typetools.append(typetool)
-		self.Add(typetool.label, (n, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.Add(typetool.label, (n, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		if 'display' in typetool.tb:
-			self.Add(typetool.tb['display'], (n, 1), (1, 1), wx.ALIGN_CENTER)
+			self.Add(typetool.tb['display'], (n, 2), (1, 1), wx.ALIGN_CENTER)
 		if 'target' in typetool.tb:
-			self.Add(typetool.tb['target'], (n, 2), (1, 1), wx.ALIGN_CENTER)
+			self.Add(typetool.tb['target'], (n, 3), (1, 1), wx.ALIGN_CENTER)
 		if 'settings' in typetool.tb:
-			self.Add(typetool.tb['settings'], (n, 3), (1, 1), wx.ALIGN_CENTER)
+			self.Add(typetool.tb['settings'], (n, 4), (1, 1), wx.ALIGN_CENTER)
 
 class Target(object):
 	def __init__(self, x, y, target_type=None):
