@@ -778,7 +778,8 @@ def sqlColumnsFormat(in_dict):
 			columns.update(datadict)
 		elif type(value) is dict:
 			flatdict = flatDict({key:value})
-			columns.update(flatdict)
+			nf = sqlColumnsFormat(flatdict)
+			columns.update(nf)
 		elif type(value) in [tuple, list]:
 			columns[seq2sqlColumn(key)] = repr(value)
 	return columns
