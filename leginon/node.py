@@ -55,7 +55,7 @@ class Node(leginonobject.LeginonObject):
 
 	def addManager(self):
 		managerhost = self.managerloc['hostname']
-		managerport = self.managerloc['port']
+		managerport = self.managerloc['TCP port']
 		self.addEventClient('manager', managerhost, managerport)
 		self.announce(event.NodeReadyEvent())
 
@@ -85,7 +85,7 @@ class Node(leginonobject.LeginonObject):
 
 	def location(self):
 		loc = leginonobject.LeginonObject.location(self)
-		loc['port'] = self.server.location()['tcp port']
+		loc.update(self.server.location())
 		return loc
 
 	def interact(self):

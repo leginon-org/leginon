@@ -50,7 +50,7 @@ class Server(SocketServer.ThreadingTCPServer, leginonobject.LeginonObject):
 
 	def location(self):
 		loc = leginonobject.LeginonObject.location(self)
-		loc['tcp port'] = self.port
+		loc['TCP port'] = self.port
 		return loc
 
 class Client(leginonobject.LeginonObject):

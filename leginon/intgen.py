@@ -29,7 +29,7 @@ if __name__ == '__main__':
 
 	manloc = {}
 	manloc['hostname'] = sys.argv[1]
-	manloc['port'] = int(sys.argv[2])
+	manloc['TCP port'] = int(sys.argv[2])
 
 	m = IntGen(manloc)
 	try:

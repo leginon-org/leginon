@@ -38,7 +38,7 @@ class MyNode(node.Node):
 		dataid = publishevent.content
 		print 'publish event %s dataid %s' % (publishevent, dataid)
 		datahost = publishevent.origin['location']['hostname']
-		dataport = publishevent.origin['location']['port']
+		dataport = publishevent.origin['location']['TCP port']
 		dataserv = (datahost,dataport)
 		new_interval = self.research(dataserv, dataid)
 		print 'new_interval %s is type %s' % (new_interval, type(new_interval))
@@ -55,7 +55,7 @@ if __name__ == '__main__':
 
 	manloc = {}
 	manloc['hostname'] = sys.argv[1]
-	manloc['port'] = int(sys.argv[2])
+	manloc['TCP port'] = int(sys.argv[2])
 
 	m = MyNode(None, manloc)
 	try:

@@ -65,7 +65,7 @@ if __name__ == '__main__':
 	import tecnai
 	import tietz
 
-	foo = EM('myEM', {'hostname' : 'cronus1', 'port' : 49152}, tecnai.tecnai, tietz.tietz)
+	foo = EM('myEM', {'hostname' : 'cronus1', 'TCP port' : 49152}, tecnai.tecnai, tietz.tietz)
 	while(1):
 		time.sleep(.01)
 

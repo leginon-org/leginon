@@ -22,7 +22,7 @@ class Launcher(node.Node):
 		This uses LauncherReadyEvent
 		'''
 		managerhost = self.managerloc['hostname']
-		managerport = self.managerloc['port']
+		managerport = self.managerloc['TCP port']
 		self.addEventClient('manager', managerhost, managerport)
 		self.announce(event.LauncherReadyEvent())
 
@@ -64,7 +64,7 @@ if __name__ == '__main__':
 
 	manloc = {}
 	manloc['hostname'] = sys.argv[1]
-	manloc['port'] = int(sys.argv[2])
+	manloc['TCP port'] = int(sys.argv[2])
 
 	myhost = socket.gethostname()
 
