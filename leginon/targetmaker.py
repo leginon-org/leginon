@@ -35,8 +35,8 @@ class SpiralTargetMaker(TargetMaker):
 		TargetMaker.defineUserInterface(self)
 
 		pselect = self.presetsclient.uiPresetSelector()
-		self.maxtargets = uidata.Integer('Maximum Targets', 2, 'rw')
-		self.overlap = uidata.Integer('Percent Overlap', 50, 'rw')
+		self.maxtargets = uidata.Integer('Maximum Targets', 2, 'rw', persist=True)
+		self.overlap = uidata.Integer('Percent Overlap', 50, 'rw', persist=True)
 		self.center = uidata.Struct('Spiral Center', {'x': 0.0, 'y': 0.0}, 'rw')
 		settingscontainer = uidata.Container('Settings')
 		settingscontainer.addObjects((pselect, self.maxtargets, self.overlap, self.center))
