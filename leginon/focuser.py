@@ -64,7 +64,6 @@ class Focuser(acquisition.Acquisition):
 		}
 
 		self.manualchecklock = threading.Lock()
-		self.abortfail = threading.Event()
 		self.manual_check_done = threading.Event()
 		self.manual_pause = threading.Event()
 		self.manual_continue = threading.Event()
@@ -207,7 +206,6 @@ class Focuser(acquisition.Acquisition):
 		this replaces Acquisition.acquire()
 		Instead of acquiring an image, we do autofocus
 		'''
-		self.abortfail.clear()
 		resultdata = data.FocuserResultData(session=self.session)
 		resultdata['target'] = target
 

@@ -107,3 +107,7 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 		evt = gui.wx.Events.SetInstrumentDoneEvent()
 		self.GetEventHandler().AddPendingEvent(evt)
 
+	def playerEvent(self, state):
+		evt = gui.wx.Events.PlayerEvent(state)
+		self.GetEventHandler().AddPendingEvent(evt)
+

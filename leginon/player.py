@@ -4,10 +4,11 @@ def Player(*args, **kwargs):
 	return _Player(*args, **kwargs)
 
 class _Player(threading._Verbose):
-	def __init__(self, verbose=None):
+	def __init__(self, callback=None, verbose=None):
 		threading._Verbose.__init__(self, verbose)
-		self.__cond = Condition(Lock())
+		self.__cond = threading.Condition(threading.Lock())
 		self.__flag = 'play'
+		self.__callback = callback
 
 	def state(self):
 		return self.__flag
@@ -17,6 +18,8 @@ class _Player(threading._Verbose):
 		try:
 			self.__flag = 'play'
 			self.__cond.notifyAll()
+			if callable(self.__callback):
+				self.__callback(self.__flag)
 		finally:
 			self.__cond.release()
 
@@ -24,6 +27,8 @@ class _Player(threading._Verbose):
 		self.__cond.acquire()
 		try:
 			self.__flag = 'pause'
+			if callable(self.__callback):
+				self.__callback(self.__flag)
 		finally:
 			self.__cond.release()
 
@@ -32,6 +37,8 @@ class _Player(threading._Verbose):
 		try:
 			self.__flag = 'stop'
 			self.__cond.notifyAll()
+			if callable(self.__callback):
+				self.__callback(self.__flag)
 		finally:
 			self.__cond.release()
 

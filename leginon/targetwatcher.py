@@ -14,6 +14,7 @@ import threading
 import uidata
 import targethandler
 import node
+import player
 
 class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 	'''
@@ -37,9 +38,8 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		self.addEventInput(event.ImageTargetShiftPublishEvent,
 												self.handleTargetShift)
 
-		self.abort = False
-		self.pause = threading.Event()
-		self.pause.set()
+		self.player = player.Player(callback=self.panel.playerEvent)
+		self.panel.playerEvent(self.player.state())
 		self.newtargetshift = threading.Event()
 		self.target_types = target_types
 		self.targetlistevents = {}
@@ -104,7 +104,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		for i, target in enumerate(goodtargets):
 			self.logger.debug('target %s status %s' % (i, target['status'],))
 			# abort
-			if self.abort:
+			if self.player.state() == 'stop':
 				self.logger.info('Aborting current target list')
 				targetliststatus = 'aborted'
 				donetarget = data.AcquisitionImageTargetData(initializer=target, status='aborted')
@@ -179,20 +179,20 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 					process_status = self.processTargetData(adjustedtarget, attempt=attempt)
 				except node.PublishError, e:
 					self.logger.info('Pausing...')
+					self.player.pause()
 					self.logger.exception('Saving image failed: %s' % e)
 					process_status = 'repeat'
-					self.pause.clear()
 				except Exception, e:
 					self.logger.exception('Process target failed: %s' % e)
 					process_status = 'exception'
 
 				# pause
-				if not self.pause.isSet():
+				if self.player.state() == 'pause':
 					self.logger.info('Paused')
-					self.pause.wait()
+					self.player.wait()
 
 				# abort
-				if self.abort:
+				if self.player.state() == 'stop':
 					self.logger.info('Aborted')
 					break
 
@@ -259,11 +259,11 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		raise NotImplementedError()
 
 	def abortTargetListLoop(self):
-		self.abort = True
+		self.player.stop()
 
 	def pauseTargetListLoop(self):
-		self.pause.clear()
+		self.player.pause()
 
 	def continueTargetListLoop(self):
-		self.pause.set()
+		self.player.play()
 

@@ -4,6 +4,7 @@ from gui.wx.Choice import Choice
 from gui.wx.Entry import FloatEntry, EVT_ENTRY
 from gui.wx.Presets import EditPresetOrder, EVT_PRESET_ORDER_CHANGED
 import wx
+import gui.wx.Events
 import gui.wx.ImageViewer
 import gui.wx.ToolBar
 
@@ -26,6 +27,9 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_ABORT,
 													'stop',
 													shortHelpString='Abort')
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
 		self.toolbar.Realize()
 
 		# image
@@ -40,6 +44,8 @@ class Panel(gui.wx.Node.Panel):
 		self.SetSizer(self.szmain)
 		self.SetAutoLayout(True)
 		self.SetupScrolling()
+
+		self.Bind(gui.wx.Events.EVT_PLAYER, self.onPlayer)
 
 	def onNodeInitialized(self):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
@@ -57,16 +63,36 @@ class Panel(gui.wx.Node.Panel):
 		dialog.Destroy()
 
 	def onPlayTool(self, evt):
-		self.node.pause.set()
-		self.node.abort = False
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
+		self.node.player.play()
 
 	def onPauseTool(self, evt):
-		self.node.abort = False
-		self.node.pause.clear()
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
+		self.node.player.pause()
 
 	def onStopTool(self, evt):
-		self.node.pause.set()
-		self.node.abort = True
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
+		self.node.player.stop()
+
+	def onPlayer(self, evt):
+		if evt.state == 'play':
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, True)
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, True)
+		elif evt.state == 'pause':
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False) 
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, True)
+		elif evt.state == 'stop':
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, True) 
+			self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):

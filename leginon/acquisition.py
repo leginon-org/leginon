@@ -150,9 +150,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 			return 'invalid'
 		except NoMoveCalibration:
 			self.logger.info('Pausing...')
+			self.player.pause()
 			self.logger.error('Calibrate this move type, then continue')
 			self.beep()
-			self.pause.clear()
 			return 'repeat'
 
 		try:
@@ -166,9 +166,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 				## if there was a targetdata, then 
 				## we assume we are in a target list loop
 				self.logger.info('Pausing...')
+				self.player.pause()
 				self.logger.error(estr + ' and press continue')
 				self.beep()
-				self.pause.clear()
 				return 'repeat'
 
 		for newpresetname in presetnames:

@@ -29,42 +29,13 @@ eventFactory('Get Instrument Done')
 eventFactory('Set Instrument Done')
 eventFactory('Measurement Done')
 
-'''
-AcquisitionDoneEventType = wx.NewEventType()
-AtlasCreatedEventType = wx.NewEventType()
-CalibrationDoneEventType = wx.NewEventType()
-GetInstrumentDoneEventType = wx.NewEventType()
-SetInstrumentDoneEventType = wx.NewEventType()
+PlayerEventType = wx.NewEventType()
 
-EVT_ACQUISITION_DONE = wx.PyEventBinder(AcquisitionDoneEventType)
-EVT_ATLAS_CREATED = wx.PyEventBinder(AtlasCreatedEventType)
-EVT_CALIBRATION_DONE = wx.PyEventBinder(CalibrationDoneEventType)
-EVT_GET_INSTRUMENT_DONE = wx.PyEventBinder(GetInstrumentDoneEventType)
-EVT_SET_INSTRUMENT_DONE = wx.PyEventBinder(SetInstrumentDoneEventType)
+EVT_PLAYER = wx.PyEventBinder(PlayerEventType)
 
-class AcquisitionDoneEvent(wx.PyEvent):
-	def __init__(self):
+class PlayerEvent(wx.PyEvent):
+	def __init__(self, state):
 		wx.PyEvent.__init__(self)
-		self.SetEventType(AcquisitionDoneEventType)
-
-class AtlasCreatedEvent(wx.PyEvent):
-	def __init__(self):
-		wx.PyEvent.__init__(self)
-		self.SetEventType(AtlasCreatedEventType)
-
-class CalibrationDoneEvent(wx.PyEvent):
-	def __init__(self):
-		wx.PyEvent.__init__(self)
-		self.SetEventType(CalibrationDoneEventType)
-
-class GetInstrumentDoneEvent(wx.PyEvent):
-	def __init__(self):
-		wx.PyEvent.__init__(self)
-		self.SetEventType(GetInstrumentDoneEventType)
-
-class SetInstrumentDoneEvent(wx.PyEvent):
-	def __init__(self):
-		wx.PyEvent.__init__(self)
-		self.SetEventType(SetInstrumentDoneEventType)
-'''
+		self.SetEventType(PlayerEventType)
+		self.state = state
 
