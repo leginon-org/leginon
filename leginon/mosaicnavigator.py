@@ -42,7 +42,19 @@ class MosaicNavigator(navigator.Navigator):
 		for tile in mosaicdata:
 			position = mosaicdata[tile]['position']
 			print tile, 'position =', position
-			deltaposition = ((position[0] + row), (position[1] + column))
+
+			offset = mosaicdata[tile]['offset']
+			print tile, 'offset =', offset
+
+			offsetposition = (position[0] + offset[0], position[1] + offset[1])
+			print tile, 'offset position =', offsetposition
+
+			shape = mosaicdata[tile]['shape']
+			print tile, 'shape =', shape
+
+			deltaposition = (-(row - offsetposition[0] - shape[0] / 2),
+												-(column - offsetposition[1] - shape[1] / 2))
+
 			print tile, 'deltaposition =', deltaposition
 			magnitude = math.sqrt((deltaposition[0])**2 + (deltaposition[1])**2)
 			print tile, 'magnitude =', magnitude
@@ -53,11 +65,6 @@ class MosaicNavigator(navigator.Navigator):
 
 		print 'nearest tile position =', mosaicdata[nearesttile]['position']
 		print 'delta row: %s, column: %s' % (nearestdelta[0], nearestdelta[1])
-
-		deltarow = row - shape[0] / 2
-		deltacolumn = column - shape[1] / 2
-		deltarow = -deltarow
-		deltacolumn = -deltacolumn
 
 		self.publishRemote(data.EMData('all', mosaicdata[nearesttile]['scope']))
 #		e = self.shiftEventClass(self.ID(),

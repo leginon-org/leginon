@@ -55,7 +55,7 @@ class ImageMosaicInfo(object):
 	def getTileShape(self, dataid):
 		return self.getTileImage(dataid).shape
 
-	def getMosaicImage(self, astype=Numeric.Int16):
+	def getMosaicSize(self):
 		# could be Inf
 		imagemin = [0, 0]
 		imagemax = [0, 0]
@@ -71,23 +71,31 @@ class ImageMosaicInfo(object):
 					imagemin[i] = tilemin[i]
 				if tilemax[i] > imagemax[i]:
 					imagemax[i] = tilemax[i]
-		imageshape = (int(round(imagemax[0] - imagemin[0])), 
-									int(round(imagemax[1] - imagemin[1]))) 
+
+		return {'min': (int(round(imagemin[0])), int(round(imagemin[1]))), 
+						'max': (int(round(imagemax[0])), int(round(imagemax[1])))}
+
+	def getMosaicImage(self, astype=Numeric.Int16):
+		limits = self.getMosaicSize()
+		imageshape = (limits['max'][0] - limits['min'][0], 
+									limits['max'][1] - limits['min'][0])
 
 		mosaicimage = Numeric.zeros(imageshape, astype)
 
+		tiledataids = self.getTileDataIDs()
 		for tiledataid in tiledataids:
 			tileposition = self.getTilePosition(tiledataid)
 			tileshape = self.getTileShape(tiledataid)
 			tileimage = self.getTileImage(tiledataid)
-			tileoffset = (tileposition[0]-imagemin[0], tileposition[1]-imagemin[1])
+			tileoffset = (tileposition[0] - limits['min'][0],
+										tileposition[1] - limits['min'][1])
 			tilelimit = (tileoffset[0] + tileshape[0], tileoffset[1] + tileshape[1])
 			print 'tileposition =', tileposition
 			print 'tileshape =', tileshape
 			print 'tileoffset =', tileoffset
 			print 'tilelimit =', tilelimit
-			print 'image min =', imagemin
-			print 'image max =', imagemax
+			print 'image min =', limits['min']
+			print 'image max =', limits['max']
 			print 'image shape =', imageshape
 			mosaicimage[int(round(tileoffset[0])):int(round(tilelimit[0])),
 									int(round(tileoffset[1])):int(round(tilelimit[1]))] \
@@ -100,12 +108,14 @@ class StateImageMosaicInfo(ImageMosaicInfo):
 		ImageMosaicInfo.addTile(self, dataid, image, position)
 		self.imageinfo[dataid]['scope'] = scope
 		self.imageinfo[dataid]['camera'] = camera
+		self.imageinfo[dataid]['shape'] = image.shape
 
 #	def getTileState(self, dataid):
 #		try:
 #			return self.imageinfo[dataid]['state']
 #		except KeyError:
 #			raise ValueError
+
 
 class ImageMosaic(watcher.Watcher):
 	def __init__(self, id, nodelocations, watchfor = event.TileImagePublishEvent, **kwargs):
@@ -563,6 +573,13 @@ class StateImageMosaic(ImageMosaic):
 										 self.imagemosaics[-1].imageinfo[tiledataid]['scope']
 			statedata[tiledataid]['camera'] = \
 										 self.imagemosaics[-1].imageinfo[tiledataid]['camera']
+			statedata[tiledataid]['shape'] = \
+										 self.imagemosaics[-1].imageinfo[tiledataid]['shape']
+
+			limits = self.imagemosaics[-1].getMosaicSize()
+			offset = (-limits['min'][0], -limits['min'][1])
+			statedata[tiledataid]['offset'] = offset
+
 		self.publish(data.StateMosaicData(self.ID(), statedata),
 																			event.StateMosaicPublishEvent)
 
