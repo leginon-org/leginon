@@ -296,7 +296,7 @@ class HoleFinder(object):
 			kernel = convolver.laplacian_kernel3
 			self.edgefinder.setKernel(kernel)
 			edges = self.edgefinder.convolve(image=sourceim)
-		if filt == 'laplacian5':
+		elif filt == 'laplacian5':
 			kernel = convolver.laplacian_kernel5
 			self.edgefinder.setKernel(kernel)
 			edges = self.edgefinder.convolve(image=sourceim)
