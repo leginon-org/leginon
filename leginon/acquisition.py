@@ -63,10 +63,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if targetdata is None:
 			emtarget = None
 		else:
-			#### for debugging
-			print 'TARGETDATA'
-			print '   row,col', targetdata['delta row'], targetdata['delta column']
-			print '   scope image shift', targetdata['scope']
 			if targetdata['preset'] is None:
 				print '   preset image shift, no preset in target'
 			else:
@@ -261,7 +257,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 																							self.calclients.keys(), 0)
 		self.uidelay = uidata.Float('Delay (sec)', 2.5, 'rw')
 		self.uiacquiretype = uidata.SingleSelectFromList('Acquisition Type',
-																							['raw', 'corrected'], 0)
+																							['raw', 'corrected'], 0, persist=True)
 		self.databaseflag = uidata.Boolean('Publish to Database', True, 'rw')
 		self.labelstring = uidata.String('Label', self.id[-1], 'rw', persist=True)
 		settingscontainer = uidata.Container('Settings')
