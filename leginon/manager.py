@@ -257,6 +257,11 @@ class Manager(node.Node):
 
 		self.confirmEvent(readyevent)
 		self.uiUpdateNodeInfo()
+		self.addNodeUIClient(nodeid, nodelocation)
+
+	def addNodeUIClient(self, nodeid, nodelocation):
+		if nodeid in self.uiclientcontainers:
+			self.deleteNodeUIClient(nodeid)
 		clientcontainer = uidata.UIClientContainer(str(nodeid[-1]),
 														(nodelocation['hostname'], nodelocation['UI port']))
 		try:
@@ -269,10 +274,12 @@ class Manager(node.Node):
 		'''Event handler for unregistering the node from the manager. Removes all information, event mappings and the client related to the node.'''
 		nodeid = unavailable_event['id'][:-1]
 		self.removeNode(nodeid)
-
-		# also remove from launcher registry
 		self.delLauncher(nodeid)
 		self.uiUpdateNodeInfo()
+		self.deleteNodeUIClient(nodeid)
+
+	def deleteNodeUIClient(self, nodeid):
+		# also remove from launcher registry
 		try:
 			name = self.uiclientcontainers[nodeid].name
 			del self.uiclientcontainers[nodeid]
