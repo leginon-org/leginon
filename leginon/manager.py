@@ -851,10 +851,16 @@ class ManagerSetup(object):
 			return None
 
 	def indexByName(self, datalist):
+		### assuming datalist is ordered by timestamp (default from
+		### a research), this gets the latest instance by each name
 		index = {}
+		namesdone = []
 		for indexdata in datalist:
 			try:
-				index[indexdata['name']] = indexdata
+				name = indexdata['name']
+				if name not in namesdone:
+					index[name] = indexdata
+					namesdone.append(name)
 			except (TypeError, IndexError):
 				pass
 		return index
