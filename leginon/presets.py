@@ -180,10 +180,12 @@ class PresetsManager(node.Node):
 		self.currentselection = None
 		self.currentpreset = None
 		self.presets = strictdict.OrderedDict()
+		self.selectedsessionpresets = None
 
 		self.defineUserInterface()
 		## this will fill in UI with current session presets
 		self.getPresetsFromDB()
+		self.getSessionList()
 		self.start()
 
 	def changePreset(self, ievent):
@@ -206,23 +208,24 @@ class PresetsManager(node.Node):
 		## should we confirm if failure?
 		self.confirmEvent(ievent)
 
-	def getPresetsFromDB(self, session=None):
+	def getPresetsFromDB(self):
 		'''
-		get list of presets for this session from DB
-		and use them to create self.presets OrderedDict
+		get presets from current session out of database
 		'''
-		pdict = self.presetsclient.getPresetsFromDB(session)
+		self.presets = self.presetsclient.getPresetsFromDB()
+		self.setOrder()
 
-		if session is None:
-			self.presets = pdict
-		else:
-			## make new presets with this session
-			self.presets = strictdict.OrderedDict()
-			for name, preset in pdict.items():
-				newp = data.PresetData(initializer=preset, session=self.session)
-				self.presetToDB(newp)
-				self.presets[name] = newp
-		# this will fill in numbers that might be missing
+	def importPresets(self, pdict):
+		'''
+		takes a set of presets from any session and generates 
+		an identical set for this session
+		'''
+		## make new presets with this session
+		self.presets = strictdict.OrderedDict()
+		for name, preset in pdict.items():
+			newp = data.PresetData(initializer=preset, session=self.session)
+			self.presetToDB(newp)
+			self.presets[name] = newp
 		self.setOrder()
 
 	def presetToDB(self, presetdata):
@@ -396,19 +399,25 @@ class PresetsManager(node.Node):
 	def presetNames(self):
 		return self.presets.keys()
 
-	def uiGetPresetsFromDB(self):
-		othersessionname = self.othersession.getSelectedValue()
-		initializer = {'name': othersessionname}
-		othersessiondata = data.SessionData(initializer=initializer)
-		sessions = self.research(datainstance=othersessiondata)
-		try:
-			othersession = sessions[0]
-		except (TypeError, IndexError):
-			self.messagelog.error('Cannot location session: %s', othersessionname)
+	def uiSessionSelectCallback(self, value):
+		sname = self.othersession.getSelectedValue()
+		self.importplist.set('Looking for presets...')
+		sessiondata = self.sessiondict[sname]
+		pdict = self.presetsclient.getPresetsFromDB(sessiondata)
+		self.selectedsessionpresets = pdict
+		## display the names
+		names = pdict.keys()
+		if names:
+			namestr = ' '.join(names)
+		else:
+			namestr = 'None'
+		self.importplist.set(namestr)
+		return value
+
+	def uiImport(self):
+		if self.selectedsessionpresets is None:
 			return
-		self.getPresetsFromDB(othersession)
-		names = self.presetNames()
-		self.uiselectpreset.set(names, 0)
+		self.importPresets(self.selectedsessionpresets)
 
 	def uiToScope(self):
 		new = self.uiselectpreset.getSelectedValue()
@@ -609,7 +618,7 @@ class PresetsManager(node.Node):
 		newpreset.update(presetdict)
 		self.presetToDB(newpreset)
 
-	def getSessionNameList(self):
+	def getSessionList(self):
 		'''
 		get list of session names from this instrument
 		'''
@@ -618,9 +627,12 @@ class PresetsManager(node.Node):
 		queryinst = data.InstrumentData()
 		queryinst['name'] = myinstname
 		querysession['instrument'] = self.session['instrument']
-		sessionlist = self.research(datainstance=querysession)
+		limit = 100
+		sessionlist = self.research(datainstance=querysession, results=limit)
 		sessionnamelist = [x['name'] for x in sessionlist]
-		return sessionnamelist
+		self.sessiondict = dict(zip(sessionnamelist, sessionlist))
+		self.othersession.setList(sessionnamelist)
+		self.importplist.set('Select a session to see available presets')
 
 	def defineUserInterface(self):
 		self.initializeLoggerUserInterface()
@@ -639,12 +651,13 @@ class PresetsManager(node.Node):
 		statuscontainer.addObject(self.uinew, position={'position':(1,2)})
 
 		# from other session
-		sessionnamelist = self.getSessionNameList()
-		self.othersession = uidata.SingleSelectFromList('Session', sessionnamelist, 0)
-		fromdb = uidata.Method('Import', self.uiGetPresetsFromDB)
+		self.othersession = uidata.SingleSelectFromList('Session', [], 0, usercallback=self.uiSessionSelectCallback)
+		importmeth = uidata.Method('Import', self.uiImport)
 		importcont = uidata.Container('Import')
+		self.importplist = uidata.String('Presets', '', 'r')
 		importcont.addObject(self.othersession, position={'position':(0,0)})
-		importcont.addObject(fromdb, position={'position':(0,1)})
+		importcont.addObject(importmeth, position={'position':(0,1)})
+		importcont.addObject(self.importplist, position={'position':(1,0), 'span':(1,2)})
 
 		# from scope
 		newfromscopecont = uidata.Container('New')
