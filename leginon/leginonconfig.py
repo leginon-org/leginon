@@ -15,57 +15,51 @@ be a more standard .ini file thing.
 import errno
 import os
 
-#########################
-#   utility functions   #
-#########################
-
-## replacement for os.mkdirs that won't complain if dir already exists
-##    (from Python Cookbook, Recipe 4.17)
+#############################################################
+#   utility functions and exceptions used in this script    #
+#     (do not change any of this, skip to next section)     #
+#############################################################
+# Here is a replacement for os.mkdirs that won't complain if dir
+# already exists (from Python Cookbook, Recipe 4.17)
 def mkdirs(newdir, mode=0777):
 	try: os.makedirs(newdir, mode)
 	except OSError, err:
 		if err.errno != errno.EEXIST or not os.path.isdir(newdir):
 			raise
-
-###############
-#   hardware  #
-###############
-TEM = 'tecnai'
-#CCD = 'tietz'
-CCD = 'gatan'
-
+### raise this if something is wrong in this config file
+class LeginonConfigError(Exception):
+	pass
 
 #########################
 #       Launchers       #
 #########################
-LAUNCHERS = [
-	'tecnai',
-	'tecnai2',
-	'defcon1',
-	'defcon2',
-	'defcon3',
-	'amilab1',
-	'amilab2',
-	'tecnai2-ssi',
-	'cronus1',
-	'cronus2',
-	'cronus3',
-	'rodin',
-]
+## This list is used by the Manager when launching nodes.
+## Add host names where you could potentially be running a launcher.
+## example:   LAUNCHERS = ['temhost', 'yourhost', 'myhost']
+LAUNCHERS = []
+
+# check if launchers configured
+if not LAUNCHERS:
+	raise LeginonConfigError('need launcher list in leginonconfig.py')
 
 #########################
 #	Database	#
 #########################
-DB_HOST		= 'cronus1'
-DB_NAME		= 'dbemdata'
-DB_USER		= 'usr_object'
-DB_PASS		= ''
+## fill in your database and user info
+DB_HOST = ''
+DB_NAME = ''
+DB_USER = ''
+DB_PASS = ''
 
-# If set, use a project database
-DB_PROJECT_HOST		= 'cronus1'
-DB_PROJECT_NAME		= 'project'
-DB_PROJECT_USER		= 'usr_object'
-DB_PROJECT_PASS		= ''
+## check if DB is configured (DB_PASS can be '')
+if '' in (DB_HOST, DB_NAME, DB_USER):
+	raise LeginonConfigError('need database info in leginonconfig.py')
+
+# This is optional.  If not using a project database, leave blank.
+DB_PROJECT_HOST = ''
+DB_PROJECT_NAME = ''
+DB_PROJECT_USER = ''
+DB_PROJECT_PASS = ''
 
 #########################
 #        Paths          #
@@ -88,11 +82,11 @@ try:
 except:
 	print 'error creating IMAGE_PATH %s' % (IMAGE_PATH,)
 
-
-
 ###################################
 #       Default Camera Config     #
 ###################################
+## this is likely to move in future versions, since it should be dependent
+## on which camera you are using.
 CAMERA_CONFIG = {}
 CAMERA_CONFIG['auto square'] = 1
 CAMERA_CONFIG['auto offset'] = 1
