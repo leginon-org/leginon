@@ -4,13 +4,17 @@ import socket
 import leginonobject
 import data
 import threading
+import copy
 
 class Handler(SocketServer.StreamRequestHandler):
 	def __init__(self, request, server_address, server):
 		SocketServer.StreamRequestHandler.__init__(self, request, server_address, server)
 
 	def handle(self):
-		obj = cPickle.load(self.rfile)
+		try:
+			obj = cPickle.load(self.rfile)
+		except EOFError:
+			return
 		if isinstance(obj, data.Data):
 			# if is data, then push
 			self.server.datahandler.insert(obj)

@@ -1,4 +1,5 @@
-import os, socket, threading, weakref
+import os, socket
+#import threading, weakref
 
 class LeginonObject(object):
 	def __init__(self):

@@ -40,6 +40,9 @@ class DictDataKeeper(DataHandler):
 class ShelveDataKeeper(DataHandler):
 	def __init__(self, filename = None, path = '.'):
 		DataHandler.__init__(self)
+
+		# there is an issue if done too quick, try to open existing file
+		# needs another attempt
 		if filename == None:
 			r = xrange(0, 2**16 - 1)
 			files = os.listdir(path)

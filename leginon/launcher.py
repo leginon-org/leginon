@@ -16,12 +16,13 @@ class Launcher(node.Node):
 		self.caller = calllauncher.CallLauncher()
 		self.main()
 
-	def addManager(self):
+	def addManager(self, loc):
 		'''
 		Node uses NodeReadyEvent 
 		This uses LauncherReadyEvent
 		'''
-		self.addEventClient('manager', self.managerloc)
+		self.managerloc = loc
+		self.addEventClient('manager', loc)
 		self.announce(event.LauncherReadyEvent())
 
 	def main(self):
@@ -46,15 +47,15 @@ class Launcher(node.Node):
 	def launchProcess(self):
 		pass
 
-	def launchNode(self, nodeid, nodeclass, args = None):
-		## new node's manager = launcher's manager
-		print 'launching %s %s' % (nodeid, nodeclass)
-		nodeargs = tuple([nodeid, self.managerloc] + list(args))
-		apply(nodeclass, nodeargs)
-
-	def launchDataServer(self, dataserverclass):
-		print 'launching %s' % nodeclass
-		dataserverclass()
+#	def launchNode(self, nodeid, nodeclass, args = None):
+#		## new node's manager = launcher's manager
+#		print 'launching %s %s' % (nodeid, nodeclass)
+#		nodeargs = tuple([nodeid, self.managerloc] + list(args))
+#		apply(nodeclass, nodeargs)
+#
+#	def launchDataServer(self, dataserverclass):
+#		print 'launching %s' % nodeclass
+#		dataserverclass()
 
 
 if __name__ == '__main__':

@@ -48,12 +48,12 @@ class Node(leginonobject.LeginonObject):
 		self.clientclass = clientclass
 
 		self.nodeid = nodeid
-		self.managerloc = managerloc
 		if managerloc:
-			self.addManager()
+			self.addManager(managerloc)
 
-	def addManager(self):
-		self.addEventClient('manager', self.managerloc)
+	def addManager(self, loc):
+		self.managerloc = loc
+		self.addEventClient('manager', loc)
 		self.announce(event.NodeReadyEvent())
 
 	def main(self):
