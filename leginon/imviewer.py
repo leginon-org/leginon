@@ -99,6 +99,7 @@ class ImViewer(imagewatcher.ImageWatcher):
 		print 'got imarry'
 		if imarray is not None:
 			print 'setting ui_image'
+			print type(imarray), imarray.shape
 			self.ui_image.set(imarray)
 		print 'done'
 

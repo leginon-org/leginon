@@ -52,8 +52,10 @@ class DataHandler(node.DataHandler):
 				except KeyError:
 					result = None
 
-		print 'EM query: data created, releaseing statelock'
 
+		print 'EM query: UI update'
+		self.node.uiUpdate()
+		print 'EM query: data created, releaseing statelock'
 		self.node.statelock.release()
 		print 'EM query: returning'
 		return result
