@@ -24,8 +24,12 @@ class CalibrationClient(object):
 
 	def acquireStateImage(self, state, publish_image=0, settle=0.0):
 		## acquire image at this state
+		print 'creating EM data'
+		print 'state =', state
 		newemdata = data.EMData(('scope',), em=state)
+		print 'publishing lock'
 		self.node.publish(event.LockEvent(self.node.ID()))
+		print 'publishing EM'
 		self.node.publishRemote(newemdata)
 		print 'state settling time %s' % (settle,)
 		time.sleep(settle)
@@ -57,26 +61,27 @@ class CalibrationClient(object):
 
 		print 'acquiring state images'
 		info1 = self.acquireStateImage(state1, publish_images, settle)
-		info2 = self.acquireStateImage(state2, publish_images, settle)
-
 		imagedata1 = info1['imagedata']
-		imagedata2 = info2['imagedata']
-		#imagecontent1 = imagedata1.content
-		#imagecontent2 = imagedata2.content
 		imagecontent1 = imagedata1
-		imagecontent2 = imagedata2
 		stats1 = info1['image stats']
-		stats2 = info2['image stats']
-
 		actual1 = imagecontent1['scope']
-		actual2 = imagecontent2['scope']
-		actual = (actual1, actual2)
+		self.numimage1 = imagecontent1['image']
+#		mrcstr = Mrc.numeric_to_mrcstr(numimage1)
+#		self.ui_image1.set(xmlbinlib.Binary(mrcstr))
 
+		info2 = self.acquireStateImage(state2, publish_images, settle)
+		imagedata2 = info2['imagedata']
+		imagecontent2 = imagedata2
+		stats2 = info2['image stats']
+		actual2 = imagecontent2['scope']
+		self.numimage2 = imagecontent2['image']
+#		mrcstr = Mrc.numeric_to_mrcstr(numimage2)
+#		self.ui_image2.set(xmlbinlib.Binary(mrcstr))
+
+		actual = (actual1, actual2)
 		shiftinfo = {}
 
-		self.numimage1 = imagecontent1['image']
-		self.numimage2 = imagecontent2['image']
-
+		print 'correlation insert'
 		self.correlator.insertImage(self.numimage1)
 		self.correlator.insertImage(self.numimage2)
 		print 'correlation'
@@ -101,6 +106,12 @@ class CalibrationClient(object):
 
 		shiftinfo.update({'actual states': actual, 'pixel shift': unbinned, 'peak value': peakvalue, 'shape':pcimage.shape, 'stats': (stats1, stats2)})
 		return shiftinfo
+
+		def configUIData(self):
+			self.ui_image1 = self.registerUIData('Image 1', 'binary', permissions='r')
+			self.ui_image2 = self.registerUIData('Image 2', 'binary', permissions='r')
+			imagespec = self.registerUIContainer('Images', (self.image1, self.image2))
+			return imagespec
 
 class MatrixCalibrationClient(CalibrationClient):
 	'''

@@ -7,6 +7,9 @@ import time
 import camerafuncs
 import calibrationclient
 import Numeric
+import Mrc
+import xmlrpclib
+xmlbinlib = xmlrpclib
 
 False=0
 True=1
@@ -80,8 +83,10 @@ class MatrixCalibrator(calibrator.Calibrator):
 				state2 = self.makeState(newvalue, axis)
 				print 'states', state1, state2
 				shiftinfo = calclient.measureStateShift(state1, state2, 1, settle=self.settle[self.parameter.get()])
-				self.image1.set(calclient.numimage1)
-				self.image2.set(calclient.numimage2)
+				mrcstr = Mrc.numeric_to_mrcstr(calclient.numimage1)
+				self.image1.set(xmlbinlib.Binary(mrcstr))
+				mrcstr = Mrc.numeric_to_mrcstr(calclient.numimage2)
+				self.image2.set(xmlbinlib.Binary(mrcstr))
 				print 'shiftinfo', shiftinfo
 
 				rowpix = shiftinfo['pixel shift']['row']
@@ -173,5 +178,5 @@ class MatrixCalibrator(calibrator.Calibrator):
 		return self.parametervalue
 
 	def makeState(self, value, axis):
-		return {self.parameter: {axis: value}}
+		return {self.parameter.get(): {axis: value}}
 
