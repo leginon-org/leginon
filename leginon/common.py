@@ -4,7 +4,6 @@
 
 from mynode import MyNode
 from intgen import IntGen
-from EM import EM
 
 import time
 def fun(arg):

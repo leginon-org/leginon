@@ -21,10 +21,10 @@ class Client(Base):
 			self.clients[t] = apply(t.Client, (hostname, port))
 
 	def pull(self, id):
-		return self.clients[tcptransport.Client].pull(id)
+		return self.clients[tcptransport].pull(id)
 
 	def push(self, idata):
-		self.clients[tcptransport.Client].push(idata)
+		self.clients[tcptransport].push(idata)
 
 class Server(Base):
 	def __init__(self, dhclass = datahandler.SimpleDataKeeper, dhargs = ()):
