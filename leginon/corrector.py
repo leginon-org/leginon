@@ -634,7 +634,7 @@ class Corrector(node.Node):
 
 	def displayImage(self, imagedata):
 		if self.displayflag.get():
-			self.ui_image.set(imagedata)
+			self.ui_image.set(imagedata.astype(Numeric.Float32))
 			self.displayStats(imagedata)
 
 	def displayStats(self, imagedata):
