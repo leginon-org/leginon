@@ -28,6 +28,7 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_ACQUIRE,
 													'acquire',
 													shortHelpString='Acquire')
+		self.toolbar.Realize()
 
 		# statistics
 		self.statspanel = gui.wx.Stats.StatsPanel(self)

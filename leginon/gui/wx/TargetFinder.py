@@ -21,6 +21,7 @@ class Panel(gui.wx.Node.Panel):
 													shortHelpString='Settings')
 
 		self.initialize()
+		self.toolbar.Realize()
 
 		self.SetSizerAndFit(self.szmain)
 		self.SetupScrolling()

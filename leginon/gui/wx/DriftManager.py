@@ -7,24 +7,27 @@ import gui.wx.Settings
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'driftmanager'
-	tools = [
-		'settings',
-		'check drift',
-		'measure drift',
-		'declare drift',
-	]
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
+
 		# settings
-
-		self.cbcheckdrift = wx.CheckBox(self, -1, 'Check drift')
-
-		sz = wx.GridBagSizer(5, 5)
-		sz.Add(self.cbcheckdrift, (0, 0), (1, 1), wx.ALIGN_CENTER)
-		self.szmain.Add(sz, (1, 0), (1, 1), wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_TOP)
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
+													'settings',
+													shortHelpString='Settings')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_CHECK_DRIFT,
+													'check',
+													isToggle=True,
+													shortHelpString='Check Drift')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_MEASURE_DRIFT,
+													'ruler',
+													shortHelpString='Measure Drift')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_DECLARE_DRIFT,
+													'declare',
+													shortHelpString='Declare Drift')
+		self.toolbar.Realize()
 
 		# image
-		self.szimage = self._getStaticBoxSizer('Image', (1, 1), (2, 1),
+		self.szimage = self._getStaticBoxSizer('Image', (1, 0), (2, 1),
 																						wx.EXPAND|wx.ALL)
 		self.imagepanel = gui.wx.ImageViewer.ImagePanel(self, -1)
 		self.szimage.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND|wx.ALL)
@@ -36,6 +39,14 @@ class Panel(gui.wx.Node.Panel):
 		self.SetupScrolling()
 
 	def onNodeInitialized(self):
+		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
+											id=gui.wx.ToolBar.ID_SETTINGS)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onCheckDriftTool,
+											id=gui.wx.ToolBar.ID_CHECK_DRIFT)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureDriftTool,
+											id=gui.wx.ToolBar.ID_MEASURE_DRIFT)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onDeclareDriftTool,
+											id=gui.wx.ToolBar.ID_DECLARE_DRIFT)
 		self.onCheckDriftTool()
 
 	def onSettingsTool(self, evt):
@@ -45,7 +56,7 @@ class Panel(gui.wx.Node.Panel):
 
 	def onCheckDriftTool(self, evt=None):
 		if evt is None:
-			check = self.toolbar.getState(self, 'check drift')['toggled']
+			check = self.toolbar.GetToolState(gui.wx.ToolBar.ID_CHECK_DRIFT)
 		else:
 			check = evt.IsChecked()
 		# this doesn't really work

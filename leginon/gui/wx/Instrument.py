@@ -3,6 +3,7 @@ import wx
 from gui.wx.Camera import CameraPanel, EVT_CONFIGURATION_CHANGED
 from gui.wx.Entry import Entry, IntEntry, FloatEntry, EVT_ENTRY
 import gui.wx.Node
+import gui.wx.ToolBar
 
 def setControl(control, value):
 	testr = '%s value must be of type %s (is type %s)'
@@ -588,12 +589,17 @@ class CamConfigSizer(wx.StaticBoxSizer):
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'instrument'
-	tools = [
-		'refresh',
-		'pauses',
-	]
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
+
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_REFRESH,
+													'refresh',
+													shortHelpString='Refresh')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_PAUSES,
+													'clock',
+													isToggle=True,
+													shortHelpString='Do Pauses')
+		self.toolbar.Realize()
 
 		self.szmain.AddGrowableCol(0)
 		self.szmain.AddGrowableCol(1)
@@ -732,7 +738,7 @@ class Panel(gui.wx.Node.Panel):
 
 	def onPausesTool(self, evt=None):
 		if evt is None:
-			value = self.toolbar.getState(self, 'pauses')['toggled']
+			value = self.toolbar.GetToolState(gui.wx.ToolBar.ID_PAUSES)
 		else:
 			value = evt.IsChecked()
 		self.node.pause = value
@@ -823,10 +829,14 @@ class Panel(gui.wx.Node.Panel):
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onNodeInitialized(self):
-		self.toolbar.toggle(self, 'pauses', True)
+		self.toolbar.ToggleTool(gui.wx.ToolBar.ID_PAUSES, True)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onRefreshTool,
+											id=gui.wx.ToolBar.ID_REFRESH)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onPausesTool,
+											id=gui.wx.ToolBar.ID_PAUSES)
+		self.onPausesTool()
 		self.Bind(EVT_CONFIGURATION_CHANGED, self.onCamConfig,
 							self.szcamconfig.parameters['Camera configuration'])
-		self.onPausesTool()
 		self.Enable(True)
 
 if __name__ == '__main__':

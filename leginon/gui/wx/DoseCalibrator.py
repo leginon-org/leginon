@@ -5,12 +5,12 @@ import gui.wx.Calibrator
 import gui.wx.Settings
 
 class Panel(gui.wx.Calibrator.Panel):
-	def onCalibrateButton(self, evt):
+	def onCalibrateTool(self, evt):
 		dialog = DoseCalibrationDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
 
-	def onAbortButton(self, evt):
+	def onAbortTool(self, evt):
 		self.node.abortCalibration()
 
 class DoseCalibrationDialog(gui.wx.Settings.Dialog):
