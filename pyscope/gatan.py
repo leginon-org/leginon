@@ -8,7 +8,6 @@ if sys.platform != 'win32':
 else:
 	import win32com.client
 	import gatancom
-	import Numeric
 
 	class gatan(camera.camera):
 		def __init__(self):
@@ -28,6 +27,4 @@ else:
 			self.theCamera.Binning = binning['x']
 			self.theCamera.ExposureTime = float(exposure_time) / 1000.0
 	
-			imagetuple = self.theCamera.AcquireRawImage()
-			na2 = Numeric.array(imagetuple, Numeric.UInt16)
-			return na2
+			return self.theCamera.AcquireRawImage()
