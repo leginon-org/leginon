@@ -85,6 +85,8 @@ class wxMessageLog(wxScrolledWindow):
 		self.messages = []
 		self.updateEmptyLabel()
 		self.SetSizer(self.sizer)
+		self.updateSize()
+		EVT_SIZE(self, self.updateSize)
 
 	def updateEmptyLabel(self):
 		if len(self.messages) == 0:
@@ -103,6 +105,7 @@ class wxMessageLog(wxScrolledWindow):
 				height += message.GetSize()[1]
 		self.SetSizeHints(-1, height)
 		self.SetSize((-1, height))
+		self.sizer.FitInside(self)
 
 	def addMessage(self, type, message, clearcallback=None):
 		messagewidget = wxMessage(self, type, message, clearcallback)
@@ -111,7 +114,6 @@ class wxMessageLog(wxScrolledWindow):
 		self.updateEmptyLabel()
 		self.sizer.Layout()
 		self.updateSize()
-		self.sizer.FitInside(self)
 		return messagewidget
 
 	def removeMessage(self, messagewidget):
@@ -121,7 +123,6 @@ class wxMessageLog(wxScrolledWindow):
 		self.updateEmptyLabel()
 		self.sizer.Layout()
 		self.updateSize()
-		self.sizer.FitInside(self)
 
 if __name__ == '__main__':
 	class MyApp(wxApp):
