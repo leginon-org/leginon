@@ -3,7 +3,6 @@ adacom.py
 emregistry.py
 gatan.py
 gatancom.py
-gui.py
 ldcom.py
 pythoncom22.dll
 tecnai.py
