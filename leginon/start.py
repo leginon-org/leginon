@@ -10,9 +10,9 @@
 
 import manager
 import launcher
-import uiclient
 import socket
 import threading
+import uiclient
 
 #import gc
 #gc.enable()
@@ -43,5 +43,6 @@ event.wait()
 location = manager.Manager(('manager',), None).location()
 launcher.Launcher((socket.gethostname(),), {'manager': location})
 '''
+
 client = uiclient.UIApp(location['UI'], 'Leginon II')
 

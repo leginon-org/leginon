@@ -28,7 +28,8 @@ class ManagerSetup(object):
 			pass
 		else:
 			projectsession = project.ProjectExperiment(projectid, session['name'])
-			project.projectexperiments.insert([projectsession.dumpdict()])
+			experiments = self.projectdata.getProjectExperiments()
+			experiments.insert([projectsession.dumpdict()])
 
 		if session['instrument'] is not None and \
 			session['instrument']['hostname'] not in self.manager.launcherdict.keys() and not self.skipinstrument.get():
@@ -94,7 +95,9 @@ class ManagerSetup(object):
 		self.uiUpdateUsers()
 
 	def initProjects(self):
-		projects = project.projects.getall()
+		self.projectdata = project.ProjectData()
+		self.projects = self.projectdata.getProjects()
+		projects = self.projects.getall()
 		self.projectmap = {}
 		for p in projects:
 			self.projectmap[p['name']] = p

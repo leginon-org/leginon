@@ -127,7 +127,7 @@ class wxMessageLog(wxScrolledWindow):
 if __name__ == '__main__':
 	class MyApp(wxApp):
 		def OnInit(self):
-			frame = wxFrame(NULL, -1, 'Image Viewer')
+			frame = wxFrame(NULL, -1, 'Message Log')
 			self.SetTopWindow(frame)
 			self.panel = wxPanel(frame, -1)
 			self.sizer = wxBoxSizer(wxVERTICAL)

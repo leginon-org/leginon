@@ -35,20 +35,20 @@ class GridBox(sqldict.ObjectBuilder):
 	columns = ['gridboxId', 'label']
 
 class ProjectData:
-    def __init__(self, **kwargs):
-	self.db = sqldict.SQLDict(**dbparams)
-	self.projects = Project().register(self.db)
-	self.projectexperiments = ProjectExperiment().register(self.db)
-	self.gridboxes = GridBox().register(self.db)
+	def __init__(self, **kwargs):
+		self.db = sqldict.SQLDict(**dbparams)
+		self.projects = Project().register(self.db)
+		self.projectexperiments = ProjectExperiment().register(self.db)
+		self.gridboxes = GridBox().register(self.db)
 
-    def getProjects(self):
-	return self.projects
+	def getProjects(self):
+		return self.projects
 
-    def getProjectsExperiments(self):
-	return self.projectexperiments
+	def getProjectExperiments(self):
+		return self.projectexperiments
 
-    def getGridBox(self):
-	return self.gridboxes
+	def getGridBox(self):
+		return self.gridboxes
 
 ########################################
 ## Testing
@@ -70,7 +70,7 @@ if __name__ == "__main__":
 	print allprojects
 
 	# getall experiment name with his projectId
-	projectexperiments = projectdata.getProjectsExperiments()
+	projectexperiments = projectdata.getProjectExperiments()
 	allprojectexperiments = projectexperiments.getall()
 	print allprojectexperiments
 
@@ -85,3 +85,4 @@ if __name__ == "__main__":
 	# returns the last inserted id for a new insert
 	key = projectexperiments.insert([newsession.dumpdict()])
 	print key
+
