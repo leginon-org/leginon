@@ -28,7 +28,7 @@ class Calibration(node.Node):
 		#### parameters for user to set
 		self.emnode = None
 		self.attempts = 5
-		self.range = [0.000, 0.01]
+		self.range = [0.0000001, 0.00001]
 		####
 
 		self.validpixelshift = {'x': [self.camerastate['dimension']['x']/10,
@@ -38,32 +38,50 @@ class Calibration(node.Node):
 		self.correlationthreshold = 0.05
 
 		node.Node.__init__(self, id, managerlocation)
+		self.clearStateImages()
 		self.start()
 
 	def main(self):
 		pass
 
-	def setting(self, value):
+	def imageshiftState(self, value):
 		return {'image shift': {'x': value}}
 
-	def calibrate(self, EMnodeid):
+	def goniometerState(self, value):
+		return {'stage position': {'x': value}}
+
+	def calibrate(self):
+		self.clearStateImages()
+
+		if self.parameter == 'stage position':
+			setting = self.goniometerState
+		elif self.parameter == 'image shift':
+			setting = self.imageshiftState
+		else:
+			raise RuntimeError('unknown parameter %s' % self.parameter)
+
 		adjustedrange = self.range
-		self.publishRemote(EMnodeid, data.EMData(self.ID(), self.camerastate))
+		print 'publishing camera state', self.emnode
+		camdata = data.EMData(self.ID(), self.camerastate)
+		print 'camdata', camdata
+		self.publishRemote(self.emnode, camdata)
+
+		print 'hello again from calibrate'
 
 		for i in range(self.attempts):
 			value = (adjustedrange[1] - adjustedrange[0]) / 2 + adjustedrange[0]
 
-			state1 = self.setting(0.0)
-			state2 = self.setting(value)
+			state1 = setting(0.0)
+			state2 = setting(value)
+			print 'states', state1, state2
 			shiftinfo = self.measureStateShift(state1, state2)
-
-			shiftinfo = self.correlate(self.image2)
+			print 'shiftinfo', shiftinfo
 
 			verdict = self.validateShift(shiftinfo)
 
 			if verdict == 'good':
 				print "good", self.calculate(cdata, value) 
-				self.publishRemote(EMnodeid, data.EMData(self.ID(), self.setting(0.0)))
+				self.publishRemote(self.emnode, data.EMData(self.ID(), setting(0.0)))
 				return self.calculate(cdata, value)
 			elif verdict == 'small shift':
 				print "too small"
@@ -77,7 +95,7 @@ class Calibration(node.Node):
 
 
 
-		self.publishRemote(EMnodeid, data.EMData(self.ID(), self.setting(0.0)))
+		self.publishRemote(self.emnode, data.EMData(self.ID(), setting(0.0)))
 
 	def clearStateImages(self):
 		self.images = []
@@ -90,10 +108,17 @@ class Calibration(node.Node):
 				return info
 
 		## acquire image at this state
+		print 'setting state', state
 		emdata = data.EMData(self.ID(), state)
+		print 'publishing state', self.emnode, emdata
 		self.publishRemote(self.emnode, emdata)
+		print 'sleeping 1 sec'
 		time.sleep(1.0)
-		image = self.researchByDataID('image data').content['image data']
+		print 'getting image data'
+		imagedata = self.researchByDataID('image data')
+		print 'imagedata type', type(imagedata)
+		image = imagedata.content['image data']
+
 		imagedata = data.ImageData(self.ID(), image)
 		self.publish(imagedata, event.ImagePublishEvent)
 
@@ -108,6 +133,7 @@ class Calibration(node.Node):
 	def measureStateShift(self, state1, state2):
 		'''measures the pixel shift between two states'''
 
+		print 'acquiring state images'
 		info1 = self.acquireStateImage(state1)
 		info2 = self.acquireStateImage(state2)
 
@@ -117,11 +143,14 @@ class Calibration(node.Node):
 		stats2 = info2['image stats']
 
 		## phase correlation
+		print 'inserting into correlator'
 		self.correlator.setImage(0, image1)
 		self.correlator.setImage(1, image2)
+		print 'correlation'
 		pcimage = self.correlator.phaseCorrelate()
 
 		## peak finding
+		print 'peak finding'
 		self.peakfinder.setImage(pcimage)
 		self.peakfinder.subpixelPeak()
 		peak = self.peakfinder.getResults()
@@ -231,21 +260,28 @@ class Calibration(node.Node):
 	def defineUserInterface(self):
 		nodespec = node.Node.defineUserInterface(self)
 
-		argspec = (self.registerUIData('EM Node', 'string', default=''),)
-		cspec = self.registerUIMethod(self.uiCalibrate, 'Calibrate', argspec)
+		cspec = self.registerUIMethod(self.uiCalibrate, 'Calibrate', ())
 
-		argspec = (self.registerUIData('Minimum', 'float', default=self.range[0]),
-								self.registerUIData('Maximum', 'float', default=self.range[1]),
-								self.registerUIData('Attempts', 'integer', default=self.attempts))
+		paramchoices = self.registerUIData('paramdata', 'array', default=('image shift', 'stage position'))
+
+		argspec = (
+		self.registerUIData('EM Node', 'string', default='em'),
+		self.registerUIData('Parameter', 'string', choices=paramchoices, default='image shift'),
+		self.registerUIData('Minimum', 'float', default=self.range[0]),
+		self.registerUIData('Maximum', 'float', default=self.range[1]),
+		self.registerUIData('Attempts', 'integer', default=self.attempts)
+		)
 		rspec = self.registerUIMethod(self.uiSetParameters, 'Set Parameters', argspec)
 
 		self.registerUISpec('Calibration', (nodespec, cspec, rspec))
 
-	def uiCalibrate(self, s):
-		self.calibrate(('manager', s))
+	def uiCalibrate(self):
+		self.calibrate()
 		return ''
 
-	def uiSetParameters(self, r0, r1, a):
+	def uiSetParameters(self, emnode, param, r0, r1, a):
+		self.emnode = ('manager', emnode)
+		self.parameter = param
 		self.range[0] = r0
 		self.range[1] = r1
 		self.attempts = a
