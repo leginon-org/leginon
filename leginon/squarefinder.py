@@ -65,6 +65,7 @@ class PluginPipeline(object):
 		self.imageviewer = imageviewer
 		self.targetviewer = targetviewer
 		self.verifyevent = threading.Event()
+		self.processevent = threading.Event()
 		self.plugins = []
 		for pluginclass in pluginclasses:
 			plugin = pluginclass()
@@ -80,14 +81,15 @@ class PluginPipeline(object):
 		output = self._process(input)
 		for plugin in self.plugins:
 			output = plugin.process(output)
-			if isinstance(output, Image):
-				if isinstance(output, MaskedImage):
-					self.imageviewer.setImage(output.mask)
-				else:
-					self.imageviewer.setImage(output.image)
-			if isinstance(output, Targets):
-				if not isinstance(output, OffsetCenterTargets):
-					self.targetviewer.setTargetType('acquisition', output.targets)
+			if self.display.get():
+				if isinstance(output, Image):
+					if isinstance(output, MaskedImage):
+						self.imageviewer.setImage(output.mask)
+					else:
+						self.imageviewer.setImage(output.image)
+				if isinstance(output, Targets):
+					if not isinstance(output, OffsetCenterTargets):
+						self.targetviewer.setTargetType('acquisition', output.targets)
 			if self.verify[plugin].get():
 				try:
 					self.containers[plugin].addObject(uidata.Message('Verify', 'info',
@@ -96,6 +98,10 @@ class PluginPipeline(object):
 					pass
 				self.verifyevent.clear()
 				self.verifyevent.wait()
+				if self.processevent.isSet():
+					self.processevent.clear()
+					self.verifyevent.clear()
+					return self.process(input)
 				try:
 					self.containers[plugin].deleteObject('Verify')
 				except ValueError:
@@ -111,13 +117,17 @@ class PluginPipeline(object):
 		self.targetviewer = targetviewer
 
 	def onProcess(self):
-		print 'process'
+		self.processevent.set()
+		self.verifyevent.set()
 
 	def onProceed(self):
 		self.verifyevent.set()
 
 	def defineUserInterface(self):
 		userinterfaceitems = []
+
+		self.display = uidata.Boolean('Display', True, 'rw', persist=True)
+		userinterfaceitems.append(self.display)
 
 		self.verify = {}
 		self.containers = {}
@@ -300,7 +310,6 @@ class SquareFinder(targetfinder.TargetFinder):
 		targetfinder.TargetFinder.__init__(self, id, session, nodelocations,
 																				**kwargs)
 		self.image = None
-		self.verifyevent = threading.Event()
 
 		pluginclasses = [LowPassFilterPlugin, ThresholdPlugin,
 											SquareBlobFinderPlugin, TargetBorderPlugin,
