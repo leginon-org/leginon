@@ -600,6 +600,22 @@ class MosaicData(InSessionData):
 		return t
 	typemap = classmethod(typemap)
 
+class StageLocationData(InSessionData):
+	def typemap(cls):
+		t = InSessionData.typemap()
+		t += [
+			('removed', bool),
+			('name', str),
+			('comment', str),
+			('x', float),
+			('y', float),
+			('z', float),
+			('a', float),
+			('xy only', bool),
+		]
+		return t
+	typemap = classmethod(typemap)
+
 class PresetImageData(CameraImageData):
 	'''
 	If an image was acquire using a certain preset, use this class
@@ -611,14 +627,13 @@ class PresetImageData(CameraImageData):
 		return t
 	typemap = classmethod(typemap)
 
-class NewPresetImageData(CameraImageData):
+class PresetReferenceImageData(PresetImageData):
 	'''
-	If an image was acquire using a certain preset, use this class
-	to include the preset with it.
+	This is a reference image for getting stats at different presets
 	'''
 	def typemap(cls):
-		t = CameraImageData.typemap()
-		t += [ ('preset', NewPresetData), ]
+		t = PresetImageData.typemap()
+		t += [ ('comment', str), ]
 		return t
 	typemap = classmethod(typemap)
 
