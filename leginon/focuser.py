@@ -5,6 +5,7 @@ import camerafuncs
 import uidata
 import threading
 import event
+import time
 
 class Focuser(acquisition.Acquisition):
 	eventinputs = acquisition.Acquisition.eventinputs+[event.DriftDoneEvent]
@@ -129,6 +130,7 @@ class Focuser(acquisition.Acquisition):
 
 			## acquire and publish image
 			acqtype = self.uiacquiretype.getSelectedValue()
+			labelstring = self.labelstring.get()
 			if acqtype == 'corrected':
 				cor = True
 			else:
@@ -182,7 +184,7 @@ class Focuser(acquisition.Acquisition):
 	def defineUserInterface(self):
 		acquisition.Acquisition.defineUserInterface(self)
 
-		self.melt = uidata.Float('Melt Time (s) CHANGE ME!!!!!!', 0.0, 'rw', persist=True)
+		self.melt = uidata.Float('Melt Time (s)', 0.0, 'rw', persist=True)
 
 		self.drifton = uidata.Boolean('Check Drift', True, 'rw', persist=True)
 		self.driftthresh = uidata.Float('Drift Threshold (pixels)', 2, 'rw', persist=True)
