@@ -19,6 +19,8 @@ $link->setImagePath('img/');
 $link->addlink('addgroup.php','Groups','', 'group1', '');
 $link->addlink('adduser.php','Users','', 'user', '');
 $link->addlink('addinstrument.php','Instruments','', 'tem_tecnai_icon', '');
+$link->addlink('addcal.php','Calibrations','', 'calibration', '');
+$link->addlink('addapp.php','Applications','', 'application', '');
 
 
 ?>

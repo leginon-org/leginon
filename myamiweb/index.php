@@ -10,10 +10,10 @@
 require('inc/util.inc');
 $link = new iconlink();
 $link->setImagePath('img/');
+$link->cols = 2;
 $link->addlink('imageviewer.php','Image Viewer','', 'viewer');
 $link->addlink('3wviewer.php','3 Way Viewer','', '3wviewer');
 $link->addlink('loi.php','LOI','', 'loi');
-$link->addlink('application.php','Import/Export Application','', 'application');
 $link->addlink('admin.php','Administration','', 'admin');
 
 ?>

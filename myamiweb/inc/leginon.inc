@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.28 $
- *	@version $Id: leginon.inc,v 1.28 2004-10-15 19:19:55 dfellman Exp $
+ *	@version $Revision: 1.29 $
+ *	@version $Id: leginon.inc,v 1.29 2004-10-21 01:31:31 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -134,6 +134,10 @@ class leginondata {
 		."order by a.`DEF_timestamp` DESC limit 1";
 		$sessioninfo = $this->mysql->getSQLResult($q);
 		return $sessioninfo[0];
+	}
+
+	function getInstrumentInfo($id) {
+		return $this->getDataInfo('InstrumentData', $id);
 	}
 
 	function getInstruments() {
@@ -332,18 +336,17 @@ class leginondata {
 		if (!$table)
 			return false;
 		$data = array();
-		$str_fields = '*';
-
+		$formated_fields = array();
 		$acq_fields = $this->mysql->getFields($table); 
-		if (is_array($fields) && !empty($fields)) {	
-			$formated_fields = array();
-			foreach ($fields as $f) {
-				if (!in_array($f, $acq_fields))
-					return false;
-				$formated_fields[] = "`$f`";
+		foreach ($acq_fields as $f) {
+			$f = ($f=='DEF_timestamp') ?  "UNIX_TIMESTAMP(`$f`) as `date`" : "`$f`";
+			if (is_array($fields) && !empty($fields)) { 	
+				if (!in_array($f, $fields))
+					continue;
 			}
-			$str_fields = implode(', ', $formated_fields);
+			$formated_fields[] = $f;
 		}
+		$str_fields = implode(', ', $formated_fields);
 		$q = 'select '.$str_fields.' from `'.$table.'`'
 			.' where `DEF_id`="'.$id.'"';
 		$R = $this->mysql->SQLQuery($q);
@@ -874,7 +877,7 @@ class leginondata {
 	        $schema_create .= "    />$crlf";
 	    }
 	    $schema_create = ereg_replace(",".$crlf."$", "", $schema_create);
-	    $result = $this->mysql->SQLQuery("SHOW KEYS FROM $table") or mysql_die();
+	    $result = $this->mysql->SQLQuery("SHOW KEYS FROM $table") ;
 	    while($row = mysql_fetch_array($result))
 	    {
 	        $kname = ($row['Key_name'] == "PRIMARY") ? 
@@ -915,30 +918,24 @@ class leginondata {
 
 	function getXMLData($table, &$buffer, $where="") {
 	    $add_query = empty($where) ? "" : " WHERE $where";
-	    $crlf = $this->crlf;
-            $local_query = 'SHOW COLUMNS FROM ' . $table ;
-            $result      = $this->mysql->SQLQuery($local_query); 
-	    for ($i = 0; $row = mysql_fetch_array($result, MYSQL_ASSOC); $i++) 
-		$columns[$i] = $row['Field'];
-	    $columns_cnt     = count($columns);
-	    unset($i);
-	    mysql_free_result($result);
-
 	    $local_query = 'SELECT * FROM ' . $table . $add_query;
-	    $result      = $this->mysql->SQLQuery($local_query);
-	    $buffer      .= '  <!-- ' . $GLOBALS['strTable'] . ' ' . $table . ' -->' . $crlf;
-	    while ($record = mysql_fetch_array($result, MYSQL_ASSOC)) {
-		$buffer         .= '    <sqltable name="' . $table . '" >' . $crlf;
-		for ($i = 0; $i < $columns_cnt; $i++) {
-			if (!function_exists('is_null') || !is_null($record[$columns[$i]])) {
-			$buffer .= '        <field name="' . $columns[$i] . '" >' . htmlspecialchars($record[$columns[$i]])
-			.  '</field>' . $crlf;
-			}
-		}
-		$buffer         .= '    </sqltable>' . $crlf;
-	    }
-	    mysql_free_result($result);
+	    $data = $this->mysql->getSQLResult($local_query);
+	    $buffer .= $this->array2XML($data,$table);
 	    return $buffer;
+	}
+	
+	function array2XML($data, $table) {
+		$crlf = $this->crlf;
+		$buffer = '  <!-- ' . $table . ' -->' . $crlf;
+		foreach($data as $d) {
+			$buffer .= '    <sqltable name="' . $table . '" >' . $crlf;
+			foreach ($d as $k=>$v) {
+				$buffer .= '        <field name="'.$k.'" >'.htmlspecialchars($v)
+					.'</field>'.$crlf;
+			}
+			$buffer .= '    </sqltable>'.$crlf;
+		}
+		return $buffer;
 	}
 
 	function dumpDeleteSession($sessionId) {
@@ -969,24 +966,38 @@ class leginondata {
 	    $this->mysql->SQLQueries($queries);
 	}
 
-	function dumpCalibration($tbl_applicationdata) {
-	    $result = $this->mysql->SQLQuery("SHOW TABLES");
-	    while($row = mysql_fetch_row($result))
-		$tables[] = $row[0];
+	function dumpCalibrations($tables, $instrumentId, $limit, $types=array()) {
+		$crlf = $this->crlf;
+		list($info) = $this->getInstrumentInfo($instrumentId);
+		$dump =  '<!--' . $crlf
+			.  '-' . $crlf
+			.  '- Calibrations XML-Dump' . $crlf
+			.  '- http://ami.scripps.edu/ ' . $crlf
+			.  '-' . $crlf
+			.  '- Instrument:' . $info['name']." ".$info['description']. $crlf
+			.  '- Camera:' . $info['camera']. $crlf
+			.  '- Date : ' . date("F j, Y, g:i a").$crlf
+			.  '-' . $crlf
+			.  '- Calibrations: ' . $crlf;
 
-	    $ref_tables=array();
-	    foreach($tables as $table) {
-		echo "<hr>".$table."<br>";
-	    	$result = $this->mysql->SQLQuery("SHOW FIELDS FROM $table"); 
-	    	while($row = mysql_fetch_array($result)) {
-			echo $row[Field]."<br>";
-			if (ereg("^REF\|$tbl_applicationdata", $row[Field]))
-				if(!in_array($table,$ref_tables))
-					$ref_tables[]=$table;
+		foreach($tables as $table) {
+			if (!$this->mysql->SQLTableExists($table))
+				continue;
+			$definition .= $this->getSQLTableDefinitionXML($table);
+			$dump .=  '-	'.$table. $crlf;
+			foreach ($types as $type) {
+				$r = $this->getCalibrations($table, $instrumentId, $limit, $type);
+				if (!$r[0]['type'])
+					continue;
+				$dump .=  '-		'.$type. $crlf;
+				$content .= $this->array2XML($r, $table);
+			}
 		}
-
-	    }
-	return $ref_tables;
+		$dump .=   '-' . $crlf
+			.  '-->' . $crlf . $crlf
+			.  '<calibrationdump>' . $crlf;
+		$this->buildXML($definition, $content, $dump);
+		return $dump;
 	}
 
 	function dumpApplicationData($applicationId) {
@@ -1069,29 +1080,34 @@ class leginondata {
 		} else {
 			$ext       = 'sql';
 		}
-			$mime_type = (USR_BROWSER_AGENT == 'MSIE' || USR_BROWSER_AGENT == 'OPERA')
-			? 'application/octetstream'
-			: 'application/octet-stream';
+		$this->download($filename.'.'.$ext, $dump);
+	    } else {
+		echo "<div><pre>";
+		echo htmlspecialchars($dump);
+		echo "</pre></div>";
+	    }
+
+	}
+
+	function download($filename, $content) {
+
+		$mime_type = (USR_BROWSER_AGENT == 'MSIE' || USR_BROWSER_AGENT == 'OPERA')
+		? 'application/octetstream'
+		: 'application/octet-stream';
 
 		$now = gmdate('D, d M Y H:i:s') . ' GMT';
 
 		header('Content-Type: ' . $mime_type);
 		header('Expires: ' . $now);
 		if (USR_BROWSER_AGENT == 'MSIE') {
-			header('Content-Disposition: inline; filename="' . $filename . '.' . $ext . '"');
+			header('Content-Disposition: inline; filename="' . $filename . '"');
 			header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
 			header('Pragma: public');
 		} else {
-			header('Content-Disposition: attachment; filename="' . $filename . '.' . $ext . '"');
+			header('Content-Disposition: attachment; filename="' . $filename . '"');
 			header('Pragma: no-cache');
 		}
-		echo $dump;
-
-	    } else {
-		echo "<div><pre>";
-		echo htmlspecialchars($dump);
-		echo "</pre></div>";
-	    }
+		echo $content;
 
 	}
 
