@@ -430,7 +430,7 @@ class EM(node.Node):
 
 	def exit(self):
 		node.Node.exit(self)
-		self.server.exit()
+		#self.server.exit()
 		self.requestqueue.put(ExitRequest())
 		try:
 			self.scope.exit()

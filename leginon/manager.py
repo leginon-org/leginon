@@ -97,7 +97,7 @@ class Manager(node.Node):
 		# maps event id to list of node it was distributed to if event['confirm']
 		self.disteventswaiting = {}
 
-		self.application = application.Application(self)
+		self.application = None
 
 		self.addEventInput(event.NodeAvailableEvent, self.registerNode)
 		self.addEventInput(event.NodeUnavailableEvent, self.unregisterNode)
@@ -692,8 +692,12 @@ class Manager(node.Node):
 		evt = wxManager.ApplicationStartedEvent(name)
 		self.frame.GetEventHandler().AddPendingEvent(evt)
 
+	def onApplicationKilled(self):
+		evt = wxManager.ApplicationKilledEvent()
+		self.frame.GetEventHandler().AddPendingEvent(evt)
+
 	def waitApplication(self, app):
-		nodes = app.launch()
+		nodes = list(app.launch())
 		self.initializednodescondition.acquire()
 		while nodes:
 			for node in list(nodes):
@@ -715,6 +719,11 @@ class Manager(node.Node):
 		d = data.LaunchedApplicationData(initializer=initializer)
 		self.publish(d, database=True, dbforce=True)
 		self.onApplicationStarted(name)
+
+	def killApplication(self):
+		self.application.kill()
+		self.application = None
+		self.onApplicationKilled()
 
 	def loadApp(self, name):
 		'''Calls application.Application.load.'''
@@ -738,35 +747,10 @@ class Manager(node.Node):
 		for alias in self.uilauncherselectors.values():
 			aliasvalue = alias.getSelectedValue()
 			self.application.setLauncherAlias(alias.name, aliasvalue)
-		self.notifyApplicationLaunching()
 		nodenames = self.application.launch()
 		self.waitNodes(nodenames)
 		dat = data.LaunchedApplicationData(session=self.session, application=self.application.applicationdata)
 		self.publish(dat, database=True, dbforce=True)
-		self.notifyApplicationLaunched()
-
-	def notifyApplicationLaunching(self):
-		### maybe we can have a graphical notification.
-		### Many applications out there would pop up an animated
-		### window displaying a hint of the day or whatever to
-		### divert the user's attention away from the fact that
-		### this is slow software
-		print '''
-		APPLICATION LAUNCHING
-
-		Maybe a hint of the day goes here...
-		     Did you leave the screen down?
-		   Objective aperture in/out?
-		      Did you forget to restart the launcher?
-
-		I will let you know when the application has launched...
-		'''
-		self.launchtime = time.time()
-
-	def notifyApplicationLaunched(self):
-		launchtime = time.time() - self.launchtime
-		node.beep()
-		print '********** APPLICATION READY (%.1f sec) **********' % (launchtime,)
 
 	def killApp(self):
 		'''Calls application.Application.kill.'''

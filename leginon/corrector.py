@@ -53,9 +53,9 @@ class SimpleCorrector(node.Node):
 		self.defineUserInterface()
 		self.start()
 
-	def exit(self):
-		node.Node.exit(self)
-		self.server.exit()
+#	def exit(self):
+#		node.Node.exit(self)
+#		self.server.exit()
 
 	def getReferenceDataClass(self, referencetype):
 		if referencetype == 'dark':
@@ -499,9 +499,9 @@ class Corrector(node.Node):
 		self.defineUserInterface()
 		self.start()
 
-	def exit(self):
-		node.Node.exit(self)
-		self.server.exit()
+#	def exit(self):
+#		node.Node.exit(self)
+#		self.server.exit()
 
 	def defineUserInterface(self):
 		self.initializeLoggerUserInterface()

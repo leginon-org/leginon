@@ -12,6 +12,7 @@ RemoveLauncherEventType = wx.NewEventType()
 ApplicationStartingEventType = wx.NewEventType()
 ApplicationNodeStartedEventType = wx.NewEventType()
 ApplicationStartedEventType = wx.NewEventType()
+ApplicationKilledEventType = wx.NewEventType()
 EVT_ADD_NODE = wx.PyEventBinder(AddNodeEventType)
 EVT_REMOVE_NODE = wx.PyEventBinder(RemoveNodeEventType)
 EVT_ADD_LAUNCHER = wx.PyEventBinder(AddLauncherEventType)
@@ -19,6 +20,7 @@ EVT_REMOVE_LAUNCHER = wx.PyEventBinder(RemoveLauncherEventType)
 EVT_APPLICATION_STARTING = wx.PyEventBinder(ApplicationStartingEventType)
 EVT_APPLICATION_NODE_STARTED = wx.PyEventBinder(ApplicationNodeStartedEventType)
 EVT_APPLICATION_STARTED = wx.PyEventBinder(ApplicationStartedEventType)
+EVT_APPLICATION_KILLED = wx.PyEventBinder(ApplicationKilledEventType)
 
 class AddNodeEvent(wx.PyEvent):
 	def __init__(self, name):
@@ -63,6 +65,11 @@ class ApplicationStartedEvent(wx.PyEvent):
 		self.SetEventType(ApplicationStartedEventType)
 		self.name = name
 
+class ApplicationKilledEvent(wx.PyEvent):
+	def __init__(self):
+		wx.PyEvent.__init__(self)
+		self.SetEventType(ApplicationKilledEventType)
+
 class ManagerApp(wx.App):
 	def __init__(self, session, tcpport=None, xmlrpcport=None, **kwargs):
 		self.session = session
@@ -103,11 +110,15 @@ class ManagerFrame(wx.Frame):
 
 		# application menu
 		self.applicationmenu = wx.Menu()
-		self.runmenuitem = wx.MenuItem(self.applicationmenu, -1, '&Run')
-		self.Bind(wx.EVT_MENU, self.onMenuRun, self.runmenuitem)
-		self.applicationmenu.AppendItem(self.runmenuitem)
+		self.runappmenuitem = wx.MenuItem(self.applicationmenu, -1, '&Run')
+		self.killappmenuitem = wx.MenuItem(self.applicationmenu, -1, '&Kill')
+		self.Bind(wx.EVT_MENU, self.onMenuRunApplication, self.runappmenuitem)
+		self.Bind(wx.EVT_MENU, self.onMenuKillApplication, self.killappmenuitem)
+		self.applicationmenu.AppendItem(self.runappmenuitem)
+		self.applicationmenu.AppendItem(self.killappmenuitem)
 		self.menubar.Append(self.applicationmenu, '&Application')
-		self.runmenuitem.Enable(False)
+		self.runappmenuitem.Enable(False)
+		self.killappmenuitem.Enable(False)
 
 		# launcher menu
 		self.launchermenu = wx.Menu()
@@ -164,6 +175,7 @@ class ManagerFrame(wx.Frame):
 		self.Bind(EVT_APPLICATION_STARTING, self.onApplicationStarting)
 		self.Bind(EVT_APPLICATION_NODE_STARTED, self.onApplicationNodeStarted)
 		self.Bind(EVT_APPLICATION_STARTED, self.onApplicationStarted)
+		self.Bind(EVT_APPLICATION_KILLED, self.onApplicationKilled)
 
 		self.panel = ManagerPanel(self, self.manager.uicontainer.location())
 
@@ -171,7 +183,7 @@ class ManagerFrame(wx.Frame):
 		self.manager.exit()
 		self.Close()
 
-	def onMenuRun(self, evt):
+	def onMenuRunApplication(self, evt):
 		apps = self.manager.getApplications()
 		launchernames = self.manager.getLauncherNames()
 		dialog = RunApplicationDialog(self, apps, launchernames)
@@ -181,6 +193,10 @@ class ManagerFrame(wx.Frame):
 												target=self.manager.runApplication,
 												args=(app,)).start()
 		dialog.Destroy()
+
+	def onMenuKillApplication(self, evt):
+		threading.Thread(name='wxManager killApplication',
+											target=self.manager.killApplication).start()
 
 	def onMenuCreate(self, evt):
 		launchernames = self.manager.getLauncherNames()
@@ -243,8 +259,9 @@ class ManagerFrame(wx.Frame):
 		if not self.nodecreatemenuitem.IsEnabled():
 			self.nodecreatemenuitem.Enable(True)
 
-		if not self.runmenuitem.IsEnabled():
-			self.runmenuitem.Enable(True)
+		if not self.runappmenuitem.IsEnabled():
+			if self.manager.application is None:
+				self.runappmenuitem.Enable(True)
 
 		item = wx.MenuItem(self.launcherkillmenu, -1, evt.name)
 		self.launcherkillmenu.AppendItem(item)
@@ -255,7 +272,7 @@ class ManagerFrame(wx.Frame):
 	def onRemoveLauncher(self, evt):
 		if self.manager.getLauncherCount() < 1:
 			self.nodecreatemenuitem.Enable(False)
-			self.runmenuitem.Enable(False)
+			self.runappmenuitem.Enable(False)
 
 		item = self.launcherkillmenu.FindItem(evt.name)
 		if item is not wx.NOT_FOUND:
@@ -264,7 +281,8 @@ class ManagerFrame(wx.Frame):
 				self.launcherkillmenuitem.Enable(False)
 
 	def onApplicationStarting(self, evt):
-		dlg = wx.ProgressDialog('Starting %s' % evt.name,
+		self.runappmenuitem.Enable(False)
+		dlg = wx.ProgressDialog('Starting %s...' % evt.name,
 														'Starting application %s' % evt.name,
 														maximum=evt.nnodes, parent=self,
 														style=wx.PD_APP_MODAL)
@@ -278,8 +296,14 @@ class ManagerFrame(wx.Frame):
 			dlg.Update(dlg.count, 'Started %s node' % evt.name)
 
 	def onApplicationStarted(self, evt):
+		self.killappmenuitem.Enable(True)
 		if self.applicationprogressdialog is not None:
 			self.applicationprogressdialog.Destroy()
+
+	def onApplicationKilled(self, evt):
+		self.killappmenuitem.Enable(False)
+		if self.manager.getLauncherCount() > 0:
+			self.runappmenuitem.Enable(True)
 
 class ManagerPanel(wx.ScrolledWindow):
 	def __init__(self, parent, location):
