@@ -36,10 +36,11 @@ class MatrixCalibrator(calibrator.Calibrator):
 		  'beam shift': calibrationclient.BeamShiftCalibrationClient(self),
 		  'stage position': calibrationclient.StageCalibrationClient(self)
 		}
+		self.pixsizeclient = calibrationclient.PixelSizeCalibrationClient(self)
 		self.settle = {
 		  'image shift': 0.25,
 		  'beam shift': 0.25,
-		  'stage position': 1.5
+		  'stage position': 5.0
 		}
 
 		self.axislist = ['x', 'y']
@@ -53,25 +54,39 @@ class MatrixCalibrator(calibrator.Calibrator):
 		calclient = self.parameters[uiparameter]
 
 		## set cam state
+		camconfig = self.cam.cameraConfig()
+		emdata = self.cam.configToEMData(camconfig)
+		self.cam.currentCameraEMData(emdata)
 
-		base = self.getBase()
+		basebase = self.getBase()
 		baselist = []
 		for i in range(self.uinaverage.get()):
 			delta = i * self.ui_interval.get()
-			basex = base['x'] + delta
-			basey = base['y'] + delta
+			basex = basebase['x'] + delta
+			basey = basebase['y'] + delta
 			newbase = {'x':basex, 'y':basey}
 			baselist.append(newbase)
+
+		## calculate delta based on pixel size and camera config
+		## use 1/4 image width to calculate delta
+		## delta = dimension['x'] * binning['x'] * pixsize / 4
+		emdata = self.researchByDataID(('magnification',))
+		mag = emdata['magnification']
+		pixsize = self.pixsizeclient.retrievePixelSize(mag)
+		print 'PIXSIZE', pixsize
+		delta = camconfig['dimension']['x'] * camconfig['binning']['x'] * pixsize / 4
+		print 'DELTA', delta
 
 		shifts = {}
 		for axis in self.axislist:
 			shifts[axis] = {'row': 0.0, 'col': 0.0}
+			n = 0
 			for base in baselist:
 				print "axis =", axis
 				basevalue = base[axis]
 
-				print 'delta', self.uidelta.get()
-				newvalue = basevalue + self.uidelta.get()
+				### 
+				newvalue = basevalue + delta
 				print 'newvalue', newvalue
 
 				state1 = self.makeState(basevalue, axis)
@@ -91,18 +106,33 @@ class MatrixCalibrator(calibrator.Calibrator):
 				perpix = change / totalpix
 				print '**PERPIX', perpix
 
+				## deviation from pixsize should be less than
+				## 12%
+				tol = 0.12
+				err = abs(perpix - pixsize) / pixsize
+				if err > tol:
+					print 'FAILED PIXEL SIZE TOLERANCE'
+					continue
+
 				rowpixelsper = rowpix / change
 				colpixelsper = colpix / change
 				shifts[axis]['row'] += rowpixelsper
 				shifts[axis]['col'] += colpixelsper
+				n += 1
 				print 'shifts', shifts
 
-			shifts[axis]['row'] /= self.uinaverage.get()
-			shifts[axis]['col'] /= self.uinaverage.get()
+			if n:
+				shifts[axis]['row'] /= n
+				shifts[axis]['col'] /= n
+			else:
+				# this axis was a failure
+				# better just fail the whole calibration
+				print 'NO GOOD MEASUREMENTS... ABORTING'
+				return
 
 		# return to base
 		emdata = data.ScopeEMData(id=('scope',))
-		emdata[uiparameter] = base
+		emdata[uiparameter] = basebase
 		self.publishRemote(emdata)
 
 		mag = self.getMagnification()
@@ -118,22 +148,21 @@ class MatrixCalibrator(calibrator.Calibrator):
 
 	def defineUserInterface(self):
 		calibrator.Calibrator.defineUserInterface(self)
-		self.uinaverage = uidata.Integer('N Average', 1, 'rw')
-		self.uicurbase = uidata.Boolean('Current as Base', True, 'rw')
-		self.uibase = uidata.Struct('Base', {'x':0,'y':0}, 'rw')
+
 		parameters = self.parameters.keys()
 		parameters.sort()
 		self.uiparameter = uidata.SingleSelectFromList('Parameter', parameters, 0)
-		self.uidelta = uidata.Float('Delta', 2e-6, 'rw')
+		self.uinaverage = uidata.Integer('N Average', 1, 'rw')
 		self.ui_interval = uidata.Float('Interval', 2e-6, 'rw')
+		self.uicurbase = uidata.Boolean('Current as Base', True, 'rw')
+		self.uibase = uidata.Struct('Base', {'x':0,'y':0}, 'rw')
+		#self.uidelta = uidata.Float('Delta', 2e-6, 'rw')
 		validshift = {'correlation': {'min': 20.0, 'max': 512.0},
   							   'calibration': {'min': 20.0, 'max': 512.0}}
-		self.uivalidshift = uidata.Struct('Valid Shift', validshift, 'rw')
+		#self.uivalidshift = uidata.Struct('Valid Shift', validshift, 'rw')
 
 		settingscontainer = uidata.Container('Settings')
-		settingscontainer.addObjects((self.uinaverage, self.uicurbase, self.uibase,
-																		self.uiparameter, self.uidelta,
-																		self.ui_interval, self.uivalidshift))
+		settingscontainer.addObjects((self.uiparameter, self.uinaverage, self.ui_interval, self.uicurbase, self.uibase))
 
 		calibratemethod = uidata.Method('Calibrate', self.uiCalibrate)
 
