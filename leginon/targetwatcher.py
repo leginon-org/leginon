@@ -111,17 +111,26 @@ class TargetWatcher(watcher.Watcher):
 		targetliststatus = 'success'
 		ntargets = len(goodtargets)
 		for target in goodtargets:
+			## check for abort
+			if self.abort.isSet():
+				print 'breaking from targetlist loop'
+				targetliststatus = 'aborted'
+				break
+
 			print 'STARTING NEW TARGET', target['id']
-			print 'python id', id(target)
-			print 'target id', target['id']
-			print 'target id id', id(target['id'])
+
+			### if this target is done, skip it
+			if target['status'] == 'done':
+				continue
+
 			try:
 				imageid = target['image']['id']
 				print 'TARGET SOURCE IMAGE', imageid
 			except (KeyError, TypeError):
 				imageid = None
 
-			adjustedtarget = data.AcquisitionImageTargetData(initializer=target)
+			adjustedtarget = data.AcquisitionImageTargetData(initializer=target, status='processing')
+			self.publish(adjustedtarget, database=True, dbforce=True)
 
 			### this while loop allows target to repeat
 			process_status = 'repeat'
@@ -141,9 +150,14 @@ class TargetWatcher(watcher.Watcher):
 						print 'GOT ADJUST'
 					adjust = self.driftedimages[imageid]
 					print 'ADJUST', adjust
+				
+					## create new adjusted target from old
+					adjustedtarget = data.AcquisitionImageTargetData(initializer=adjustedtarget)
 					adjustedtarget['version'] += 1
 					adjustedtarget['delta row'] = target['delta row'] + adjust['rows']
 					adjustedtarget['delta column'] = target['delta column'] + adjust['columns']
+					print 'publishing adjustedtarget'
+					self.publish(adjustedtarget, database=True, dbforce=True)
 				else:
 					print 'NOT DRIFTED TARGET'
 
@@ -173,10 +187,8 @@ class TargetWatcher(watcher.Watcher):
 
 				###### end of target repeat loop
 
-			if self.abort.isSet():
-				print 'breaking from targetlist loop'
-				targetliststatus = 'aborted'
-				break
+			donetarget = data.AcquisitionImageTargetData(initializer=adjustedtarget, status='done')
+			self.publish(donetarget, database=True, dbforce=True)
 
 		self.reportTargetListDone(newdata['id'], targetliststatus)
 
