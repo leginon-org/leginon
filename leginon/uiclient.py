@@ -105,7 +105,7 @@ def WidgetClassFromTypeList(typelist):
 						if typelist[2] == 'select from list':
 							if len(typelist) > 3:
 								if typelist[3] == 'single':
-									return wxComboBoxWidget
+									return wxListSelectWidget
 							return wxOrderedListBoxWidget
 						elif typelist[2] == 'select from struct':
 							return wxTreeSelectWidget
@@ -1272,51 +1272,39 @@ class wxMessageDialogWidget(wxContainerWidget):
 	def destroy(self):
 		self.dialog.Destroy()
 
-class wxComboBoxWidget(wxContainerWidget):
+class wxListSelectWidget(wxContainerWidget):
 	def __init__(self, name, parent, container, value, configuration):
 		self.sizer = wxBoxSizer(wxHORIZONTAL)
-		self.combobox = wxComboBox(parent, -1, style=wxCB_DROPDOWN | wxCB_READONLY)
 		self.label = wxStaticText(parent, -1, name + ':')
+		self.listselect = wxList.wxListViewSelect(parent, self.onSelect)
 		self.value = {'List': None, 'Selected': None}
 		wxContainerWidget.__init__(self, name, parent, container, value,
 																configuration)
-		EVT_COMBOBOX(self.parent, self.combobox.GetId(), self.onSelect)
 		self.sizer.Add(self.label, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
-		self.sizer.Add(self.combobox, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
+		self.sizer.Add(self.listselect, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
 		self.layout()
 
-	def onSelect(self, evt):
-		value = evt.GetSelection()
+	def onSelect(self, value):
 		evt = SetServerEvent([self.name, 'Selected'], value)
 		wxPostEvent(self.container.widgethandler, evt)
 
 	def _enable(self, enable):
-		if self.value['List'] or not enable:
-			self.combobox.Enable(enable)
-			self.label.Enable(enable)
+		self.label.Enable(enable)
+		self.listselect.Enable(enable)
 		wxContainerWidget._enable(self, enable)
 
 	def setList(self, value):
 		self.value['List'] = value
-		self.combobox.Clear()
-		if value:
-			for i in value:
-				self.combobox.Append(str(i))
-			if self.enabled:
-				self.combobox.Enable(True)
-		else:
-			self.combobox.Append('')
-			self.combobox.Enable(False)
+		self.listselect.setValues(value)
 
-		self.combobox.SetSize(self.combobox.GetBestSize())
-		width, height = self.combobox.GetSize()
-		self.sizer.SetItemMinSize(self.combobox, width, height)
+		self.listselect.SetSize(self.listselect.GetBestSize())
+		width, height = self.listselect.GetSize()
+		self.sizer.SetItemMinSize(self.listselect, width, height)
 		self.layout()
 
 	def setSelected(self, value):
 		self.value['Selected'] = value
-		if self.value['List']:
-			self.combobox.SetSelection(value)
+		self.listselect.select(value)
 
 	def _addWidget(self, name, typelist, value, configuration, children):
 		if name == 'List':
@@ -1347,7 +1335,7 @@ class wxComboBoxWidget(wxContainerWidget):
 
 	def destroy(self):
 		self.label.Destroy()
-		self.combobox.Destroy()
+		self.listselect.Destroy()
 
 class wxOrderedListBoxWidget(wxContainerWidget):
 	def __init__(self, name, parent, container, value, configuration):
@@ -1460,7 +1448,7 @@ class wxTreeSelectWidget(wxContainerWidget):
 		self.container.layout()
 
 	def destroy(self):
-		self.combobox.Destroy()
+		self.tree.Destroy()
 
 class wxClickImageWidget(wxContainerWidget):
 	def __init__(self, name, parent, container, value, configuration):

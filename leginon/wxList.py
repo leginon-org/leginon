@@ -5,26 +5,8 @@ class wxListView(wxListBox):
 		wxListBox.__init__(self, parent, -1)
 		EVT_LISTBOX(self, self.GetId(), self.onSelect)
 
-	def fromString(self, string):
-		try:
-			return eval(string)
-		except:
-			raise ValueError('Cannot evaluate string to value')
-
 	def toString(self, value):
-		if type(value) is str:
-			return '"%s"' % value
-		else:
-			return str(value)
-
-	def getValues(self):
-		values = []
-		for i in range(self.GetCount()):
-			try:
-				values.append(self.fromString(self.GetString(i)))
-			except ValueError:
-				raise
-		return values
+		return str(value)
 
 	def setValues(self, values):
 		count = self.GetCount()
@@ -34,11 +16,8 @@ class wxListView(wxListBox):
 		else:
 			nsame = n
 		for i in range(nsame):
-			try:
-				if self.fromString(self.GetString(i)) != values[i]:
-					self.SetString(i, self.toString(values[i]))
-			except ValueError:
-				raise
+			if self.GetString(i) != self.toString(values[i]):
+				self.SetString(i, self.toString(values[i]))
 		if count < n:
 			self.InsertItems(map(self.toString, values[nsame:]), nsame)
 		elif count > n:
@@ -50,9 +29,60 @@ class wxListView(wxListBox):
 		if n >= 0:
 			self.Deselect(n)
 
+#class wxListViewSelect(wxComboBox):
+class wxListViewSelect(wxChoice):
+	def __init__(self, parent, selectcallback=None):
+		self.selectcallback = selectcallback
+#		wxComboBox.__init__(self, parent, -1, style=wxCB_DROPDOWN|wxCB_READONLY)
+#		EVT_COMBOBOX(self, self.GetId(), self.onSelect)
+		wxChoice.__init__(self, parent, -1)
+		EVT_CHOICE(self, self.GetId(), self.onSelect)
+
+	def toString(self, value):
+		return str(value)
+
+	def setValues(self, values):
+		if not values:
+			self.Clear()
+			return
+		count = self.GetCount()
+		n = len(values)
+		if count < n:
+			nsame = count
+		else:
+			nsame = n
+		for i in range(nsame):
+			try:
+				if self.GetString(i) != self.toString(values[i]):
+					nsame = i
+					break
+			except ValueError:
+				raise
+		if count > nsame:
+			for i in range(count - 1, nsame - 1, -1):
+				self.Delete(i)
+		if nsame < n:
+			for i in range(nsame, n):
+				self.Append(self.toString(values[i]))
+
+	def select(self, value):
+		if value is None:
+			n = self.GetSelection()
+			if n >= 0:
+				self.SetSelection(-1)
+		else:
+			self.SetSelection(value)
+
+	def onSelect(self, evt):
+		if callable(self.selectcallback):
+			try:
+				self.selectcallback(evt.GetSelection())
+			except ValueError:
+				raise
+
 class wxListEdit(wxPanel):
-	def __init__(self, parent, callback=None):
-		self.callback = callback
+	def __init__(self, parent, editcallback=None):
+		self.editcallback = editcallback
 		wxPanel.__init__(self, parent, -1)
 		sizer = wxBoxSizer(wxVERTICAL)
 		self.entry = wxTextCtrl(self, -1)
@@ -123,8 +153,8 @@ class wxListEdit(wxPanel):
 				self.listbox.Delete(i)
 
 	def doCallback(self):
-		if callable(self.callback):
-			self.callback(self.getValues())
+		if callable(self.editcallback):
+			self.editcallback(self.getValues())
 
 	def onInsert(self, evt):
 		try:
