@@ -220,7 +220,7 @@ class SQLDict(object):
 
 	def execute(self):
 	    for key,query in self.queries.items():
-	    	if isinstance(query, data.Data):
+	    	if isinstance(query, (data.Data,data.DataReference)):
 			## if we already have a data instance, then there
 			## is no reason to query for it.
 			self.cursors[key] = query
@@ -228,7 +228,7 @@ class SQLDict(object):
 	    	c = self._cursor()
 		try:
 			# print '-----------------------------------------------'
-			# print 'query =', query
+			print 'query =', query
 			c.execute(query)
 		except MySQLdb.ProgrammingError, e:
 			errno = e.args[0]
@@ -246,7 +246,7 @@ class SQLDict(object):
 		for qikey,cursor in self.cursors.items():
 			## if we already have a data instance, then there
 			## is no reason to query for it.
-			if isinstance(cursor, data.Data):
+			if isinstance(cursor, (data.Data,data.DataReference)):
 				cursorresults[qikey] = cursor
 				continue
 			subfetch = cursor.fetchmany(size)
@@ -261,7 +261,7 @@ class SQLDict(object):
 		for qikey,cursor in self.cursors.items():
 			## if we already have a data instance, then there
 			## is no reason to query for it.
-			if isinstance(cursor, data.Data):
+			if isinstance(cursor, (data.Data,data.DataReference)):
 				cursorresults[qikey] = cursor
 				continue
 			subfetch = cursor.fetchall()
@@ -278,7 +278,7 @@ class SQLDict(object):
 
 		## some cursorresults are actually data.Data instances
 		def test(obj):
-			return not isinstance(obj, data.Data)
+			return not isinstance(obj, (data.Data,data.DataReference))
 		actualresults = filter(test, cursorresults.values())
 		if actualresults:
 			numrows = len(actualresults[0])
@@ -288,7 +288,7 @@ class SQLDict(object):
 
 		for i in range(numrows):
 			for qikey, cursorresult in cursorresults.items():
-				if isinstance(cursorresult, data.Data):
+				if isinstance(cursorresult, (data.Data,data.DataReference)):
 					## cursorresult was known before query
 					all[i][qikey] = cursorresult
 				elif cursorresult:
@@ -1358,21 +1358,18 @@ def datatype(in_dict, qikey=None, qinfo=None):
 			content[a[1]] = strictdict.FileReference(value, 'image path',
 																								Mrc.mrc_to_numeric)
 		elif a[0] == 'REF':
-			try:
-				## maybe referenced data was in this query
+			if value == 0:
+				### NULL reference
+				content[a[2]] = None
+			elif a[2] in qinfo[qikey]['join']:
+				## referenced data is part of result
 				jqikey = qinfo[qikey]['join'][a[2]]
-			except KeyError:
-				# if qinfo does not have it, then the query
-				# did not request it.  Just set it to None
+				content[a[2]] = data.UnknownData(jqikey)
+			else:
+				## not in result, but create reference
 				dclassname = a[1]
 				dclass = getattr(data, dclassname)
-				if value == 0:
-					content[a[2]] = None
-				else:
-					content[a[2]] = data.DataReference(dataclass=dclass, dbid=value)
-			else:
-				## This references a Data instance
-				content[a[2]] = data.UnknownData(jqikey)
+				content[a[2]] = data.DataReference(dataclass=dclass, dbid=value)
 		elif not a[0] in ['SUBD', ]:
 			content[key]=value
 
