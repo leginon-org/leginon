@@ -43,7 +43,7 @@ class Client(Base):
 				return c.pull(idata)
 			except IOError:
 				pass
-		print "transport IOError, unable to pull data:", idata
+		self.printerror("IOError, unable to pull data " + str(idata))
 		raise IOError
 
 	def push(self, odata):
@@ -53,7 +53,7 @@ class Client(Base):
 				return ret
 			except IOError:
 				pass
-		print "transport IOError, unable to push data:", odata
+		self.printerror("IOError, unable to push data " + str(idata))
 		raise IOError
 
 class Server(Base):

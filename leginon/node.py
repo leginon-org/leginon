@@ -84,10 +84,10 @@ class Node(leginonobject.LeginonObject):
 			try:
 				self.addManager(self.nodelocations['manager'])
 			except:
-				print 'Node: exception in addManager'
+				self.printerror('exception in addManager')
 				raise
 			else:
-				print 'Node: %s connected to manager' % (self.id,)
+				self.printerror('connected to manager')
 		self.die_event = threading.Event()
 
 	# main, start/stop methods
@@ -97,7 +97,7 @@ class Node(leginonobject.LeginonObject):
 	def exit(self):
 		self.outputEvent(event.NodeUnavailableEvent(self.ID()))
 		self.server.exit()
-		print "Node: %s exited" % (self.id,)
+		self.printerror('exited')
 
 	def die(self, ievent=None):
 		self.die_event.set()
@@ -126,7 +126,7 @@ class Node(leginonobject.LeginonObject):
 		try:
 			self.managerclient.push(ievent)
 		except KeyError:
-			print 'Node: cannot output event %s' % ievent
+			self.printerror('cannot output event %s' % ievent)
 			return
 		if wait:
 			self.waitEvent(ievent)
@@ -185,7 +185,7 @@ class Node(leginonobject.LeginonObject):
 		dataid = idata.id
 		nodeiddata = self.researchByLocation(self.nodelocations['manager'], dataid)
 		if nodeiddata is None:
-			print "Node: publishRemote, no such data ID %s" % dataid
+			self.printerror('Node: publishRemote, no such data ID %s' % dataid)
 			raise IOError
 		for nodeid in nodeiddata.content:
 			nodelocation = self.researchByLocation(self.nodelocations['manager'],
@@ -202,7 +202,7 @@ class Node(leginonobject.LeginonObject):
 		nodeiddata = self.managerclient.pull(dataid)
 
 		if nodeiddata is None:
-			print "Node: researchByDataID, no such data ID %s" % dataid
+			self.printerror('Node: researchByDataID, no such data ID %s' % dataid)
 			raise IOError
 
 		# should interate over nodes, be crafty, etc.

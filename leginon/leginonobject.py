@@ -26,3 +26,17 @@ class LeginonObject(object):
 		newid = self.id + (self.idcounter,)
 		self.idcounter += 1
 		return newid
+
+	def printerror(self, errorstring):
+		printstring = ''
+		if self.__module__ != '__main__':
+			printstring += self.__module__ + '.'
+		printstring += self.__class__.__name__
+		try:
+			printstring += ' ' + str(self.id)
+		except AttributeError:
+			printstring += ' (ID unknown)'
+		printstring += ': '
+		printstring += errorstring
+		print printstring
+

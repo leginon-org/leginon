@@ -13,7 +13,7 @@ class Handler(SocketServer.StreamRequestHandler):
 		try:
 			obj = cPickle.load(self.rfile)
 		except EOFError:
-			print "socket transport: no data to read, handle socket connection failed"
+			self.printerror('no data to read, handle socket connection failed')
 			return
 
 		if isinstance(obj, data.Data):
@@ -22,18 +22,18 @@ class Handler(SocketServer.StreamRequestHandler):
 			try:
 				self.server.datahandler.insert(obj)
 			except Exception, e:
-				print "socket transport: failed to insert pushed data"
+				self.printerror('failed to insert pushed data')
 				raise
 			try:
 				# returns exception if error, else None
 				cPickle.dump(e, self.wfile, 1)
 			except IOError:
-				print "socket transport: write failed when acknowledging push"
+				self.printerror('write failed when acknowledging push')
 		else:
 			try:
 				cPickle.dump(self.server.datahandler.query(obj), self.wfile, 1)
 			except IOError:
-				print "socket transport: write failed when returning requested data"
+				self.printerror('write failed when returning requested data')
 
 class Server(leginonobject.LeginonObject):
 	def __init__(self, id, dh):
@@ -73,7 +73,7 @@ class Client(leginonobject.LeginonObject):
 		serverexception = cPickle.loads(r)
 		self.close()
 		if serverexception is not None:
-			print "socket transport, push: server failed to be pushed"
+			self.printerror('server failed to be pushed')
 			raise IOError
 
 	def connect(self, family, type = socket.SOCK_STREAM):
@@ -83,7 +83,7 @@ class Client(leginonobject.LeginonObject):
 		if self.socket is not None:
 			self.socket.send(odata)
 		else:
-			print "socket transport, send: no socket available"
+			self.printerror('no socket available')
 			raise IOError
 
 	def receive(self):
@@ -96,14 +96,14 @@ class Client(leginonobject.LeginonObject):
 			  data += r
 			return data
 		else:
-			print "socket transport, receive: no socket available"
+			self.printeror('no socket available')
 			raise IOError
 
 	def close(self):
 		if self.socket is not None:
 			self.socket.close()
 		else:
-			print "socket transport, close: no socket available"
+			self.printerror('no socket available')
 			raise IOError
 
 

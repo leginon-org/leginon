@@ -74,7 +74,7 @@ class Manager(node.Node):
 		try:
 			self.clients[nodeid].push(ievent)
 		except KeyError:
-			print 'Manager: cannot output event %s to %s' % (ievent, nodeid)
+			self.printerror('cannot output event %s to %s' % (ievent, nodeid))
 			return
 		if wait:
 			self.waitEvent(ievent)
@@ -131,7 +131,8 @@ class Manager(node.Node):
 			try:
 				self.clients[to_node].push(ievent)
 			except IOError:
-				print "Manager: cannot push to node %s, unregistering" % nodeid
+				self.printerror('cannot push to node ' + str(nodeid)
+												+ ', unregistering')
 				# group into another function
 				self.removeNode(to_node)
 				# also remove from launcher registry
@@ -163,7 +164,7 @@ class Manager(node.Node):
 		try:
 			nodeclassesdata = self.researchByLocation(loc, dataid)
 		except IOError:
-			print "Manager: cannot find launcher %s, unregistering" % launcherid
+			self.printerror('cannot find launcher %s, unregistering' % launcherid)
 			# group into another function
 			self.removeNode(launcherid)
 			# also remove from launcher registry
@@ -191,7 +192,7 @@ class Manager(node.Node):
 
 	def registerNode(self, readyevent):
 		nodeid = readyevent.id[:-1]
-		print 'Manager: registering node', nodeid
+		self.printerror('registering node ' + str(nodeid))
 
 		nodelocation = readyevent.content
 
@@ -227,9 +228,9 @@ class Manager(node.Node):
 			self.removeNodeDistmaps(nodeid)
 			self.server.datahandler.remove(nodeid)
 			self.delClient(nodeid)
-			print 'Manager: node', nodeid, 'unregistered'
+			self.printerror('node ' + str(nodeid) + ' unregistered')
 		else:
-			print 'Manager: node', nodeid, 'does not exist'
+			self.printerror('Manager: node ' + nodeid + ' does not exist')
 
 	def removeNodeDistmaps(self, nodeid):
 		# needs to completely cleanup the distmap
@@ -269,7 +270,8 @@ class Manager(node.Node):
 			try:
 				self.clients[nodeid].push(event.KillEvent(self.ID()))
 			except IOError:
-				print "Manager: cannot push KillEvent to %s, unregistering" % nodeid
+				self.printerror('cannot push KillEvent to ' + str(nodeid)
+													+ ', unregistering')
 				# group into another function
 				self.removeNode(nodeid)
 				# also remove from launcher registry
@@ -360,11 +362,11 @@ class Manager(node.Node):
 			client = self.clientclass(self.ID(),
 												{'hostname': hostname, 'TCP port': port})
 		except:
-			print "Manager: cannot connect to specified node"
+			self.printerror('cannot connect to specified node')
 		try:
 			client.push(e)
 		except:
-			print "Manager: cannot push to specified node"
+			self.printerror('cannot connect to specified node')
 		return ''
 
 	def uiLaunchNode(self, name, launchclass, args, newproc=0):
@@ -376,15 +378,15 @@ class Manager(node.Node):
 
 		launcher_str, nodeclass = launchclass
 
-		print 'Manager: launching \'%s\' on \'%s\' (class %s)' \
-								% (name, launcher_str, nodeclass) 
+		self.printerror('launching \'%s\' on \'%s\' (class %s)'
+										% (name, launcher_str, nodeclass))
 		launcher_id = self.uilauncherdict[launcher_str]['id']
 
 		args = '(%s)' % args
 		try:
 			args = eval(args)
 		except:
-			print 'problem evaluating args'
+			self.printerror('problem evaluating args for launch')
 			return
 
 		self.launchNode(launcher_id, newproc, nodeclass, name, args)
@@ -401,8 +403,8 @@ class Manager(node.Node):
 		a user interface to addEventDistmap
 		uses strings to represent event class and node IDs
 		"""
-		print 'Manager: binding event %s from %s to %s' \
-						% (eventclass_str, fromnode_str, tonode_str)
+		self.printerror('binding event %s from %s to %s'
+										% (eventclass_str, fromnode_str, tonode_str))
 		eventclass = self.uieventclasses[eventclass_str]
 		nodedict = self.uiNodeIDMapping()
 		fromnode_id = nodedict[fromnode_str]

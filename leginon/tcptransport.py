@@ -46,7 +46,8 @@ class Client(socketstreamtransport.Client):
 			# socket error, connection refused
 			if (var[0] == 111):
 				self.socket = None
-				print "tcptransport, receive: unable to connect to", self.serverlocation['hostname'], "port", self.serverlocation['TCP port']
+				self.printerror('unable to connect to %s:%s'
+					% (self.serverlocation['hostname'], self.serverlocation['TCP port']))
 				raise IOError
 			else:
 				raise
