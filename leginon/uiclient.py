@@ -1358,7 +1358,8 @@ class wxClickImageWidget(wxContainerWidget):
 
 	def setImage(self, value):
 		if value:
-			self.clickimage.setImageFromMrcString(value.data, True)
+			#self.clickimage.setImageFromMrcString(value.data, True)
+			self.clickimage.setNumericImage(value, True)
 			width, height = self.clickimage.GetSizeTuple()
 			self.sizer.SetItemMinSize(self.clickimage, width, height)
 		else:
