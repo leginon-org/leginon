@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.20 $
+# $Revision: 1.21 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-01 01:22:21 $
+# $Date: 2005-03-01 01:33:28 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -116,7 +116,10 @@ class Proxy(object):
 		if name is None:
 			self.tem = None
 		else:
-			self.tem = self.tems[name]
+			try:
+				self.tem = self.tems[name]
+			except KeyError:
+				raise ValueError('TEM \'%s\' not available' % name)
 		if self.wxeventhandler is not None:
 			evt = gui.wx.Events.SetTEMEvent(self.wxeventhandler, name)
 			self.wxeventhandler.GetEventHandler().AddPendingEvent(evt)
@@ -126,8 +129,11 @@ class Proxy(object):
 			self.ccdcamera = None
 			self.camerasize = None
 		else:
-			self.ccdcamera = self.ccdcameras[name]
-			self.camerasize = self.camerasizes[name]
+			try:
+				self.ccdcamera = self.ccdcameras[name]
+				self.camerasize = self.camerasizes[name]
+			except KeyError:
+				raise ValueError('CCD camera \'%s\' not available' % name)
 		if self.wxeventhandler is not None:
 			evt = gui.wx.Events.SetCCDCameraEvent(self.wxeventhandler, name)
 			self.wxeventhandler.GetEventHandler().AddPendingEvent(evt)

@@ -194,6 +194,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 												'Pausing for %s seconds before acquiring' % pausetime)
 			time.sleep(pausetime)
 
+			try:
+				self.instrument.setTEM(presetdata['tem'])
+				self.instrument.setCCDCamera(presetdata['ccdcamera'])
+			except:
+				self.logger.error('Acquisition failed to set instrument: %s' % (e,))
+				return 'aborted'
+
 			if p['film']:
 				self.reportStatus('acquisition', 'Acquiring film...')
 				try:
