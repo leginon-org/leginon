@@ -553,6 +553,8 @@ class Panel(gui.wx.Node.Panel):
 		gui.wx.Data.setWindowFromDB(self.cbcycleoptimize)
 		gui.wx.Data.setWindowFromDB(self.cbcyclemagonly)
 
+		self.cpcamconfig.setSize(self.node.session)
+
 		self.node.pause = self.ncpause.GetValue()
 		self.node.xyonly = self.cbxyonly.GetValue()
 		self.node.stagealways = self.cbstagealways.GetValue()

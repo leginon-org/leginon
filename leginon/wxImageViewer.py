@@ -727,6 +727,15 @@ class ImagePanel(wx.Panel):
 	def OnLeave(self, evt):
 		self.UpdateDrawing()
 
+ImageDoubleClickedEventType = wx.NewEventType()
+EVT_IMAGE_DOUBLE_CLICKED = wx.PyEventBinder(ImageDoubleClickedEventType)
+class ImageDoubleClickedEvent(wx.PyCommandEvent):
+	def __init__(self, xy, source):
+		wx.PyCommandEvent.__init__(self, ImageDoubleClickedEventType,
+																source.GetId())
+		self.SetEventObject(source)
+		self.xy = xy
+
 class ClickTool(ImageTool):
 	def __init__(self, imagepanel, sizer, callback=None):
 		bitmap = getToolBitmap('arrowtool.bmp')
@@ -740,6 +749,8 @@ class ClickTool(ImageTool):
 			xy = self.imagepanel.view2image((evt.m_x, evt.m_y))
 			if callable(self.callback):
 				self.callback(xy)
+			idcevt = ImageDoubleClickedEvent(xy, self.imagepanel)
+			self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
 
 class ClickImagePanel(ImagePanel):
 	def __init__(self, parent, id, callback=None):

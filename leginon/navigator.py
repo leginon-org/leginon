@@ -20,9 +20,10 @@ import correlator
 import peakfinder
 import math
 import EM
+import gui.wx.Navigator
 
 class Navigator(node.Node):
-
+	panelclass = gui.wx.Navigator.Panel
 	eventinputs = node.Node.eventinputs + EM.EMClient.eventinputs
 	eventoutputs = node.Node.eventoutputs + [event.CameraImagePublishEvent] \
 									+ EM.EMClient.eventoutputs
@@ -39,7 +40,6 @@ class Navigator(node.Node):
 			'modeled stage position': calibrationclient.ModeledStageCalibrationClient(self)
 		}
 		self.pcal = calibrationclient.PixelSizeCalibrationClient(self)
-		self.currentselection = None
 		self.stagelocations = []
 		self.getLocationsFromDB()
 
@@ -47,6 +47,13 @@ class Navigator(node.Node):
 		self.peakfinder = peakfinder.PeakFinder()
 		self.newshape = None
 		self.oldshape = None
+
+		self.wait = None
+		self.movetype = None
+		self.checkerror = None
+		self.completestate = None
+		self.camconfig = None
+		self.shape = None
 
 	def newImage(self, newimage):
 		self.oldshape = self.newshape
@@ -64,9 +71,9 @@ class Navigator(node.Node):
 		delta = correlator.wrap_coord(peak, pc.shape)
 		return delta
 
-	def handleImageClick(self, xy):
+	def navigate(self, xy):
 		self.logger.info('Handling image click...')
-		self.calerrorresult.set('')
+		self.setStatus('')
 		## get relavent info from click event
 		clickrow = xy[1]
 		clickcol = xy[0]
@@ -86,37 +93,35 @@ class Navigator(node.Node):
 		mag = clickscope['magnification']
 
 		## figure out shift
-		movetype = self.movetype.getSelectedValue()
-		calclient = self.calclients[movetype]
+		calclient = self.calclients[self.movetype]
 		try:
 			newstate = calclient.transform(pixelshift, clickscope, clickcamera)
 		except:
 			message = ('Error in transform. Likely missing calibration for %s at %s'
-									+ ' and current high tension') % (movetype, mag)
-			self.messagelog.error(message)
+									+ ' and current high tension') % (self.movetype, mag)
 			self.logger.error(message)
 			node.beep()
 			return
-		if not self.completestate.get():
-			if movetype == 'modeled stage position':
+		if not self.completestate:
+			if self.movetype == 'modeled stage position':
 				newmovetype = 'stage position'
 				newstate = {newmovetype: newstate[newmovetype]}
-			elif movetype == 'image beam shift':
+			elif self.movetype == 'image beam shift':
 				newstate = {'image shift': newstate['image shift'], 'beam shift': newstate['beam shift']}
 			else:
-				newmovetype = movetype
+				newmovetype = self.movetype
 				newstate = {newmovetype: newstate[newmovetype]}
 		emdat = data.ScopeEMData(initializer=newstate)
 		self.emclient.setScope(emdat)
 
 		# wait for a while
-		time.sleep(self.delaydata.get())
+		time.sleep(self.wait)
 
 		## acquire image
 		self.acquireImage()
 
 		## calibration error checking
-		if self.calerror.get():
+		if self.checkerror:
 			newshift = self.newShift()
 			if newshift is None:
 				res = 'Error not calculated'
@@ -140,20 +145,20 @@ class Navigator(node.Node):
 				else:
 					## insert into DB?
 					pass
-			self.calerrorresult.set(res)
+			self.setStatus(res)
 
 		node.beep()
 
 	def acquireImage(self):
-		self.cam.uiApplyAsNeeded()
+		self.cam.setCameraDict(self.camconfig)
 		try:
 			imagedata = self.cam.acquireCameraImageData()
 		except camerafuncs.NoCorrectorError:
-			self.messagelog.error('No Corrector node, acquisition failed')
+			self.logger.error('No Corrector node, acquisition failed')
 			return
 
 		if imagedata is None:
-			self.messagelog.error('acquisition failed')
+			self.logger.error('acquisition failed')
 			return
 
 		self.scope = imagedata['scope']
@@ -161,9 +166,9 @@ class Navigator(node.Node):
 		newimage = imagedata['image']
 		self.shape = newimage.shape
 		self.newImage(newimage)
-		self.image.setImage(newimage)
+		self.setImage(newimage)
 
-	def fromScope(self, name, comment=''):
+	def fromScope(self, name, comment='', xyonly=True):
 		'''
 		create a new location with name
 		if a location by this name already exists in my 
@@ -174,16 +179,20 @@ class Navigator(node.Node):
 		stagedata = {}
 		stagedata['x'] = allstagedata['x']
 		stagedata['y'] = allstagedata['y']
-		xyonly = self.xyonly.get()
 		if not xyonly:
 			stagedata['z'] = allstagedata['z']
 			stagedata['a'] = allstagedata['a']
 
-		newloc = data.StageLocationData()
-		newloc.update(stagedata)
-		newloc['xy only'] = xyonly
+		loc = self.getLocation(name)
+		if loc is None:
+			newloc = data.StageLocationData()
+			newloc['name'] = name
+			newloc['xy only'] = xyonly
+		else:
+			newloc = data.StageLocationData(initializer=loc.toDict())
+
 		newloc['session'] = self.session
-		newloc['name'] = name
+		newloc.update(stagedata)
 
 		## save comment, remove the old location
 		for loc in self.stagelocations:
@@ -199,7 +208,6 @@ class Navigator(node.Node):
 		self.locationToDB(newloc)
 		locnames = self.locationNames()
 		self.logger.info('Location names %s' % (locnames,))
-		self.uiselectlocation.set(locnames, len(locnames)-1)
 		return newloc
 
 	def removeLocation(self, loc):
@@ -224,38 +232,19 @@ class Navigator(node.Node):
 			locremove['removed'] = 1
 			self.locationToDB(locremove)
 		locnames = self.locationNames()
-		self.uiselectlocation.set(locnames, 0)
-
-	def uiSelectedToScope(self):
-		new = self.uiselectlocation.getSelectedValue()
-		self.toScope(new)
-		node.beep()
 
 	def locationNames(self):
 		names = [loc['name'] for loc in self.stagelocations]
 		return names
 
-	def uiSelectedFromScope(self):
-		sel = self.uiselectlocation.getSelectedValue()
-		newlocation = self.fromScope(sel)
+	def getLocation(self, name):
+		for i in self.stagelocations:
+			if i['name'] == name:
+				return i
+		return None
 
-	def uiSelectedRemove(self):
-		sel = self.uiselectlocation.getSelectedValue()
-		self.removeLocation(sel)
-
-	def uiNewFromScope(self):
-		newname = self.enteredname.get()
-		newcomment = self.enteredcomment.get()
-		if newname:
-			newloc = self.fromScope(newname, newcomment)
-
-	def uiSelectCallback(self, index):
-		try:
-			self.currentselection = self.stagelocations[index]
-		except IndexError:
-			self.currentselection = None
-		self.locationToParams(self.currentselection)
-		return index
+	def getLocationNames(self):
+		return map(lambda l: l['name'], self.stagelocations)
 
 	def getLocationsFromDB(self):
 		'''
@@ -327,98 +316,9 @@ class Navigator(node.Node):
 			self.currentlocation = locdata
 			self.logger.info('Moved to location %s' % (name,))
 
-	def locationToDict(self, locationdata):
-		d = {}
-		if locationdata is None:
-			self.locationparams.set(d, callback=False)
-			return d
-
-		for key in ('comment', 'x', 'y'):
-			if locationdata[key] is not None:
-				d[key] = locationdata[key]
-		if not locationdata['xy only']:
-			for key in ('z','a'):
-				if locationdata[key] is not None:
-					d[key] = locationdata[key]
-		return d
-
-	def locationToParams(self, locationdata):
-		d = self.locationToDict(locationdata)
-		self.locationparams.set(d, callback=False)
-
-	def uiParamsCallback(self, value):
-		if (self.currentselection is None) or (not value):
-			return {}
-		else:
-			self.currentselection.update(value)
-			self.locationToDB(self.currentselection)
-			d = self.locationToDict(self.currentselection)
-		return d
-
-	def defineUserInterface(self):
-		node.Node.defineUserInterface(self)
-
-		self.messagelog = uidata.MessageLog('Message Log')
-
-		self.calerror = uidata.Boolean('Calibration Error Checking', False, 'rw', persist=True)
-		self.calerrorresult = uidata.String('Result', '', 'r')
-
-		movetypes = self.calclients.keys()
-		self.movetype = uidata.SingleSelectFromList('TEM Parameter', movetypes, 0)
-		self.delaydata = uidata.Float('Delay (sec)', 2.5, 'rw')
-		self.completestate = uidata.Boolean('Complete State', False, 'rw', persist=True)
-
-		cameraconfigure = self.cam.uiSetupContainer()
-
-		settingscontainer = uidata.Container('Settings')
-		settingscontainer.addObjects((self.movetype, self.completestate, self.delaydata, cameraconfigure))
-
-		acqmeth = uidata.Method('Acquire', self.acquireImage)
-		self.image = uidata.ClickImage('Navigation', self.handleImageClick, None)
-		controlcontainer = uidata.Container('Control')
-		controlcontainer.addObject(self.calerror, position={'position':(0,0)})
-		controlcontainer.addObject(self.calerrorresult, position={'position':(0,1)})
-		controlcontainer.addObject(acqmeth, position={'position':(1,0),'span':(1,2)})
-		controlcontainer.addObject(self.image, position={'position':(2,0),'span':(1,2)})
-
-
-		## Location Presets
-		locationcontainer = uidata.Container('Stage Locations')
-		self.xyonly = uidata.Boolean('From Scope gets X and Y Only', True, 'rw')
-		self.enteredname = uidata.String('New Name', '', 'rw')
-		self.enteredcomment = uidata.String('New Comment', '', 'rw')
-		newfromscopemethod = uidata.Method('New Location From Scope', self.uiNewFromScope)
-		self.locationparams = uidata.Struct('Location Parameters', {}, 'rw', self.uiParamsCallback)
-		self.uiselectlocation = uidata.SingleSelectFromList('Location Selector', [], 0, callback=self.uiSelectCallback)
-		toscopemethod = uidata.Method('To Scope', self.uiSelectedToScope)
-		fromscopemethod = uidata.Method('From Scope', self.uiSelectedFromScope)
-		removemethod = uidata.Method('Remove', self.uiSelectedRemove)
-		obs = (
-			self.xyonly,
-			self.enteredname,
-			self.enteredcomment,
-			newfromscopemethod,
-			self.uiselectlocation,
-			toscopemethod,
-			fromscopemethod,
-			removemethod,
-			self.locationparams,
-		)
-		locationcontainer.addObjects(obs)
-
-		locnames = self.locationNames()
-		self.uiselectlocation.set(locnames, 0)
-
-		## main Navigator container
-		container = uidata.LargeContainer('Navigator')
-		container.addObject(self.messagelog, position={'expand': 'all'})
-		container.addObjects((controlcontainer, settingscontainer, locationcontainer))
-		self.uicontainer.addObject(container)
-
 class SimpleNavigator(Navigator):
 	def __init__(self, id, session, managerlocation, **kwargs):
 		Navigator.__init__(self, id, session, managerlocation, **kwargs)
-		self.defineUserInterface()
 		self.start()
 
 

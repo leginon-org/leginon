@@ -25,7 +25,6 @@ class CameraPanel(wx.Panel):
 	def __init__(self, parent):
 		wx.Panel.__init__(self, parent, -1, name='pCamera')
 		self.geometry = None
-		self.size = {'x': 4096, 'y': 4096}
 		self.binnings = {'x': [1,2,4,8,16], 'y': [1,2,4,8,16]}
 
 		# geometry
@@ -40,8 +39,7 @@ class CameraPanel(wx.Panel):
 
 		bcustom = wx.Button(self, -1, 'Custom...')
 
-		choices, self.common = self.getCenteredGeometries()
-		self.ccommon = wx.Choice(self, -1, choices=choices)
+		self.ccommon = wx.Choice(self, -1)
 
 		self.szmain = wx.GridBagSizer(3, 3)
 
@@ -82,8 +80,22 @@ class CameraPanel(wx.Panel):
 		self.Bind(EVT_INT, self.onExposureTime, self.icexposuretime)
 		self.Bind(EVT_SET_CONFIGURATION, self.onSetConfiguration)
 
+	def setSize(self, session):
+		if session['instrument'] is None:
+			return
+		size = session['instrument']['camera size']
+		if size is None:
+			return
+		self.size = {'x': size, 'y': size}
+
+		self.Freeze()
+		choices, self.common = self.getCenteredGeometries()
+		self.ccommon.Clear()
+		self.ccommon.AppendItems(choices)
 		self.ccommon.SetSelection(0)
 		self.setGeometry(self.common[self.ccommon.GetStringSelection()])
+		self.szmain.Layout()
+		self.Thaw()
 
 	def onConfigurationChanged(self):
 		evt = ConfigurationChangedEvent(self.getConfiguration(), self)

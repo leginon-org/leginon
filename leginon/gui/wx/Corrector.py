@@ -149,6 +149,8 @@ class Panel(gui.wx.Node.Panel):
 		self.Bind(wx.EVT_BUTTON, self.onAcquire, self.bacquire)
 
 	def initializeValues(self):
+		self.cpcamconfig.setSize(self.node.session)
+
 		gui.wx.Data.setWindowFromDB(self.icnaverage)
 		gui.wx.Data.setWindowFromDB(self.cpcamconfig)
 		gui.wx.Data.setWindowFromDB(self.cbdespike)

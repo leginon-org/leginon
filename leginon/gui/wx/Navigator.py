@@ -1,10 +1,9 @@
 import wx
 import wx.lib.masked
-import wx.lib.scrolledpanel
+import gui.wx.Camera
 import gui.wx.Data
-import wxImageViewer
 import gui.wx.Node
-import gui.wx.Presets
+import wxImageViewer
 
 class Panel(gui.wx.Node.Panel):
 	def __init__(self, parent, name):
@@ -78,6 +77,9 @@ class Panel(gui.wx.Node.Panel):
 		self.btoscope = wx.Button(self, -1, 'To scope')
 		self.bfromscope = wx.Button(self, -1, 'From scope')
 		self.bremove = wx.Button(self, -1, 'Remove')
+		self.btoscope.Enable(False)
+		self.bfromscope.Enable(False)
+		self.bremove.Enable(False)
 
 		self.szlocations.Add(label0, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.szlocations.Add(label1, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -99,8 +101,8 @@ class Panel(gui.wx.Node.Panel):
 		self.szimage.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND|wx.ALL)
 		self.szimage.AddGrowableCol(0)
 
-		self.szmain.AddGrowableRow(2)
 		self.szmain.AddGrowableCol(1)
+		self.szmain.AddGrowableRow(2)
 
 		self.SetSizerAndFit(self.szmain)
 		self.SetupScrolling()
@@ -110,6 +112,10 @@ class Panel(gui.wx.Node.Panel):
 		if movetypes:
 			self.cmovetype.AppendItems(movetypes)
 			self.cmovetype.SetSelection(0)
+
+		self.lblocations.AppendItems(self.node.getLocationNames())
+
+		self.cpcamconfig.setSize(self.node.session)
 
 		gui.wx.Data.setWindowFromDB(self.ncwait)
 		gui.wx.Data.setWindowFromDB(self.cmovetype)
@@ -140,6 +146,9 @@ class Panel(gui.wx.Node.Panel):
 		self.Bind(wx.EVT_BUTTON, self.onToScope, self.btoscope)
 		self.Bind(wx.EVT_BUTTON, self.onFromScope, self.bfromscope)
 		self.Bind(wx.EVT_BUTTON, self.onRemove, self.bremove)
+		self.Bind(wx.EVT_LISTBOX, self.onLocationSelected, self.lblocations)
+		self.Bind(wxImageViewer.EVT_IMAGE_DOUBLE_CLICKED, self.onImageDoubleClicked,
+							self.imagepanel)
 
 	def onWaitNum(self, evt):
 		if self.node is not None:
@@ -158,19 +167,99 @@ class Panel(gui.wx.Node.Panel):
 		self.node.camconfig = evt.configuration
 
 	def onAcquire(self, evt):
-		print 'ACQUIRE'
+		self.node.acquireImage()
 
 	def onNew(self, evt):
-		print 'NEW'
+		dialog = NewLocationDialog(self)
+		if dialog.ShowModal() == wx.ID_OK:
+			self.node.fromScope(dialog.name, dialog.comment, dialog.xyonly)
+		dialog.Destroy()
 
 	def onToScope(self, evt):
-		print 'TO SCOPE'
+		name = self.lblocations.GetStringSelection()
+		self.node.toScope(name)
 
 	def onFromScope(self, evt):
-		print 'FROM SCOPE'
+		name = self.lblocations.GetStringSelection()
+		self.node.fromScope(name)
 
 	def onRemove(self, evt):
-		print 'REMOVE'
+		n = self.lblocation.GetSelection()
+		name = self.lblocation.GetString(n)
+		self.lblocations.Delete(n)
+		# deselect?
+		self.node.removeLocation(name)
+
+	def onLocationSelected(self, evt):
+		l = self.node.getLocation(evt.GetString())
+		for a in ['x', 'y', 'z', 'a', 'b']:
+			try:
+				if l[a] is None:
+					self.stposition[a].SetLabel('N/A')
+				else:
+					self.stposition[a].SetLabel(str(l[a]))
+			except KeyError:
+				self.stposition[a].SetLabel('N/A')
+		if comment is None:
+			comment = ''
+		else:
+			comment = l['comment']
+		self.stcomment.SetLabel(comment)
+		
+		self.btoscope.Enable(True)
+		self.bfromscope.Enable(True)
+		self.bremove.Enable(True)
+
+	def onImageDoubleClicked(self, evt):
+		# ...
+		if self.node.shape is not None:
+			self.node.navigate(evt.xy)
+
+class NewLocationDialog(wx.Dialog):
+	def __init__(self, parent):
+		wx.Dialog.__init__(self, parent, -1, 'New Location')
+
+		stname = wx.StaticText(self, -1, 'Name:')
+		stcomment = wx.StaticText(self, -1, 'Comment:')
+		self.tcname = wx.TextCtrl(self, -1, '')
+		self.tccomment = wx.TextCtrl(self, -1, '')
+		self.cbxyonly = wx.CheckBox(self, -1, 'Save x and y only')
+
+		sz = wx.GridBagSizer(5, 5)
+		sz.Add(stname, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.tcname, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		sz.Add(stcomment, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.tccomment, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		sz.Add(self.cbxyonly, (2, 0), (1, 2), wx.ALIGN_CENTER)
+		sz.AddGrowableCol(1)
+
+		bsave = wx.Button(self, wx.ID_OK, 'Save')
+		bcancel = wx.Button(self, wx.ID_CANCEL, 'Cancel')
+
+		szbutton = wx.GridBagSizer(5, 5)
+		szbutton.Add(bsave, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		szbutton.Add(bcancel, (0, 1), (1, 1), wx.ALIGN_CENTER)
+
+		szmain = wx.GridBagSizer(5, 5)
+		szmain.Add(sz, (0, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, border=5)
+		szmain.Add(szbutton, (1, 0), (1, 1), wx.ALIGN_RIGHT|wx.ALL, border=5)
+
+		self.SetSizerAndFit(szmain)
+
+		self.Bind(wx.EVT_BUTTON, self.onSave, bsave)
+
+	def onSave(self, evt):
+		name = self.tcname.GetValue()
+		if not name or name in self.GetParent().node.getLocationNames():
+			dialog = wx.MessageDialog(self, 'Invalid location name', 'Error',
+																wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+		else:
+			self.name = name
+			self.comment = self.tccomment.GetValue()
+			self.xyonly = self.cbxyonly.GetValue()
+			evt.Skip()
 
 if __name__ == '__main__':
 	class App(wx.App):
