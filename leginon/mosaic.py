@@ -290,7 +290,7 @@ class EMMosaic(Mosaic):
 	def __init__(self, calibrationclients):
 		self.calibrationclients = calibrationclients
 		#self.calibration = self.calibrationclients.keys()[0]
-		self.calibration = 'image shift'
+		self.calibration = 'stage position'
 
 		Mosaic.__init__(self)
 
