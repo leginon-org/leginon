@@ -184,9 +184,9 @@ class XMLRPCUIClient(XMLRPCClient, uiserver.XMLRPCServer):
 		#print 'setServer', namelist, value
 		if thread:
 			threading.Thread(target=self.execute,
-												args=('SET', (namelist, value))).start()
+												args=('set', (namelist, value))).start()
 		else:
-			self.execute('SET', (namelist, value))
+			self.execute('set', (namelist, value))
 
 	def commandServer(self, namelist, args, thread=False):
 		if thread:
