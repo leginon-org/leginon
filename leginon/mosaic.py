@@ -9,6 +9,7 @@ import Numeric
 import correlator
 import peakfinder
 import math
+import imagefun
 
 class Tile(object):
 	def __init__(self, image, position):
@@ -71,21 +72,36 @@ class Mosaic(object):
 		return {'min': (int(round(mosaicmin[0])), int(round(mosaicmin[1]))), 
 						'max': (int(round(mosaicmax[0])), int(round(mosaicmax[1])))}
 
-	def getMosaicImage(self, astype=Numeric.Int16):
+	def getMosaicImage(self, maxdimension=None, astype=Numeric.Int16):
 		if not self.tiles:
 			return None
 		bbox = self.getMosaicImageBoundaries()
-		imageshape = (bbox['max'][0] - bbox['min'][0], 
-									bbox['max'][1] - bbox['min'][1])
+		imageshape = [bbox['max'][0] - bbox['min'][0], 
+									bbox['max'][1] - bbox['min'][1]]
+
+		scale = 1.0
+		scaleoffset = [0, 0]
+		if maxdimension is not None:
+			for value in imageshape:
+				newscale = float(maxdimension)/float(value)
+				if newscale < scale:
+					scale = newscale
+
+			for i, value in enumerate(imageshape):
+				imageshape[i] = int(Numeric.ceil(scale*value))
+#				scaleoffset[i] = int(Numeric.floor((maxdimension - imageshape[i])/2.0))
+
 		mosaicimage = Numeric.zeros(imageshape, astype)
 		for tile in self.tiles:
 			position = self.getTilePosition(tile)
 			shape = self.getTileShape(tile)
 			offset = (position[0] - bbox['min'][0], position[1] - bbox['min'][1])
-			limit = (offset[0] + shape[0], offset[1] + shape[1])
-			mosaicimage[int(round(offset[0])):int(round(limit[0])),
-									int(round(offset[1])):int(round(limit[1]))] \
-																					= tile.image.astype(astype)
+			offset = (int(round(offset[0] * scale + scaleoffset[0])),
+									int(round(offset[1] * scale + scaleoffset[1])))
+
+			image = imagefun.scale(tile.image, (scale, scale)).astype(astype)
+			mosaicimage[offset[0]:offset[0] + image.shape[0],
+									offset[1]:offset[1] + image.shape[1]] = image
 		return mosaicimage
 
 	def addTile(self, image, neighbors):
@@ -94,10 +110,7 @@ class Mosaic(object):
 
 	def automaticPosition(self, image, neighbors):
 		for positionmethod in self.automaticpriority:
-#			try:
 			return self.positionmethods[positionmethod](image, neighbors)
-#			except:
-#				pass
 		raise RuntimeError('cannot position tile')
 
 	def getPeak(self, image1, image2):

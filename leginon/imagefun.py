@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
-#       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#			 The Leginon software is Copyright 2003
+#			 The Scripps Research Institute, La Jolla, CA
+#			 For terms of the license agreement
+#			 see	http://ami.scripps.edu/software/leginon-license
 #
 import Numeric
 import fftengine
@@ -42,7 +42,7 @@ def stdev(inputarray):
 	try:
 		bigsum = Numeric.sum((f - m)**2)
 	except OverflowError:
-		print 'OverflowError:  stdev returning None'
+		print 'OverflowError:	stdev returning None'
 		return None
 	stdev = Numeric.sqrt(bigsum / (len(f)-1))
 	return stdev
@@ -92,6 +92,23 @@ def averageSeries(series):
 	avg = sum / divisor
 	return avg
 
+def scaleToShape(array, scaledshape):
+	scale = (float(scaledshape[0])/float(array.shape[0]),
+						float(scaledshape[1])/float(array.shape[1]))
+	return scale(array, scale)
+
+def scale(array, scale):
+	if scale == (1.0, 1.0):
+		return array
+
+	indices = [None, None]
+	for i in range(2):
+		indices[i] = Numeric.arrayrange(int(round(scale[i]*array.shape[i])))
+		indices[i] = indices[i] / scale[i]
+		indices[i] = Numeric.floor(indices[i]+scale[i]/2.0+0.5).astype(Numeric.Int)
+
+	return Numeric.take(Numeric.take(array, indices[0]), indices[1], 1)
+
 def linearscale(input, boundfrom, boundto, extrema=None):
 	"""
 	Rescale the data in the range 'boundfrom' to the range 'boundto'.
@@ -140,7 +157,7 @@ def linearscale(input, boundfrom, boundto, extrema=None):
 
 	return output
 
-# resize and rotate filters:  NEAREST, BILINEAR, BICUBIC
+# resize and rotate filters:	NEAREST, BILINEAR, BICUBIC
 
 def center_fill(input, size, value=0):
 	rows,cols = input.shape
