@@ -25,8 +25,7 @@ class DataHandler(datahandler.DataBinder):
 		if isinstance(idata, event.Event):
 			datahandler.DataBinder.insert(self, idata)
 		else:
-			key = idata.id[1]
-			self.calnode.setCalibration(key, idata)
+			self.calnode.setCalibration(idata)
 
 	# borrowed from NodeDataHandler
 	def setBinding(self, eventclass, func):
@@ -35,42 +34,61 @@ class DataHandler(datahandler.DataBinder):
 		else:
 			raise InvalidEventError('eventclass must be Event subclass')
 
+
 class CalibrationLibrary(node.Node):
 	def __init__(self, id, nodelocations, **kwargs):
 		node.Node.__init__(self, id, nodelocations, DataHandler, (self,), **kwargs)
 		self.publishDataIDList()
+		self.storagedict = {
+			'pickle': PickleStorage(),
+			'db': DBStorage()
+		}
+		self.storagelist = [
+			'db',
+			'pickle'
+		]
 
 	def publishDataIDList(self):
 		# publish the ids that this node manages
-		ids = [('calibrations',)]
-		keys = self.getKeys()
-		for key in keys:
-			id = ('calibrations',key)
-			ids.append(id)
+		ids = [('calibration',)]
+		for value in self.storagedict.values():
+			storageids = value.getIDs()
+			for id in storageids:
+				if id not in ids:
+					ids.append(id)
+
 		e = event.ListPublishEvent(self.ID(), ids)
 		self.outputEvent(e)
 
-	def getKeys(self):
-		raise NotImplementedError()
-
-	def setCalibration(self, key, idata):
+	def setCalibration(self, idata):
 		'''
 		should call self.publishDataIDList() if updated
 		'''
-		raise NotImplementedError()
+		## chose where to store data
+		for key,value in self.storagedict.items():
+			print 'storing in %s' % (key,)
+			value.set(idata)
+		self.publishDataIDList()
 
-	def getCalibration(self, key=None):
-		raise NotImplementedError()
+	def getCalibration(self, id, storage=None):
+		if storage is not None:
+			caldata = self.storagedict[storage].get(id)
+		else:
+			for key in self.storagelist:
+				caldata = self.storagedict[key].get(id)
+				if caldata is not None:
+					break
 
 
-class PickleCalibrationLibrary(CalibrationLibrary):
-	def __init__(self, id, nodelocations, **kwargs):
-		CalibrationLibrary.__init__(self, id, nodelocations, **kwargs)
+class CalibrationStorage(object):
+	def __init__(self):
+		pass
 
-		self.defineUserInterface()
-		self.start()
+class PickleStorage(CalibrationStorage):
+	def __init__(self):
+		CalibrationStorage.__init__(self)
 
-	def getKeys(self):
+	def getIDs(self):
 		try:
 			f = open('CAL', 'rb')
 			cal = cPickle.load(f)
@@ -80,17 +98,19 @@ class PickleCalibrationLibrary(CalibrationLibrary):
 			self.printerror('cannot open calibration file')
 			return ()
 
-	def setCalibration(self, key, idata):
-		cal = self.getCalibration()
+	def set(self, idata):
+		cal = self.get()
+
 		newitem = idata.content
+		key = idata.id
+
 		cal[key] = newitem
 		## should make a backup before doing this
 		f = open('CAL', 'wb')
 		cPickle.dump(cal, f, 1)
 		f.close()
-		self.publishDataIDList()
 
-	def getCalibration(self, key=None):
+	def get(self, id=None):
 		try:
 			f = open('CAL', 'rb')
 			cal = cPickle.load(f)
@@ -98,48 +118,69 @@ class PickleCalibrationLibrary(CalibrationLibrary):
 		except IOError:
 			cal = {}
 
-		if key is None:
+		if id is None:
 			# return whole thing
-			return cal
+			content = cal
 		else:
 			# return just the specified key
 			try:
-				return cal[key]
+				content = cal[id]
 			except KeyError:
-				return None
+				content = None
+		return data.CalibrationData(id, content)
 
-class DBCalibrationLibrary(CalibrationLibrary):
-	def __init__(self, id, nodelocation, **kwargs):
-		CalibrationLibrary.__init__(self, id, nodelocations, **kwargs)
 
-		self.defineUserInterface()
-		self.start()
+class BinaryDBStorage(CalibrationStorage):
+	def __init__(self):
+		CalibrationStorage.__init__(self)
+		self.cal = sqlbindict.SQLBinDict('CAL')
 
-	def getKeys(self):
+	def getIDs(self):
 		try:
-			cal = sqlbindict.SQLBinDict('CAL')
-			return cal.keys()
+			return self.cal.keys()
 		except:
 			return ()
 
-	def setCalibration(self, key, idata):
-		cal = self.getCalibration()
+	def set(self, idata):
 		newitem = idata.content
-		cal[key] = newitem
-		self.publishDataIDList()
+		id = idata.id
+		self.cal[id] = newitem
 
-	def getCalibration(self, key=None):
-		try:
-			cal = sqlbindict.SQLBinDict('CAL')
-		except:
-			cal = {}
-
-		if key is None:
+	def get(self, id=None):
+		if id is None:
 			# return whole table as a dictionary
-			return cal
+			content = cal
 		else:
 			# return just the specified key
 			try:
-				return cal[key]
+				content = cal[id]
 			except KeyError:
-				return None
+				content = None
+
+
+class DBStorage(CalibrationStorage):
+	def __init__(self):
+		CalibrationStorage.__init__(self)
+		#self.cal = sqlbindict.SQLBinDict('CAL')
+
+	def getIDs(self):
+		try:
+			return self.cal.keys()
+		except:
+			return ()
+
+	def set(self, idata):
+		newitem = idata.content
+		id = idata.id
+		self.cal[id] = newitem
+
+	def get(self, id=None):
+		if id is None:
+			# return whole table as a dictionary
+			content = cal
+		else:
+			# return just the specified key
+			try:
+				content = cal[id]
+			except KeyError:
+				content = None
