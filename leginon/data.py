@@ -62,7 +62,7 @@ class DataManager(object):
 	def __init__(self):
 		## will connect to database before first query
 		self.db = None
-		self.startServer()
+		self.server = None
 
 		## this lock should be used on access to everything below
 		self.lock = threading.RLock()
@@ -101,8 +101,14 @@ class DataManager(object):
 	def insert(self, datainstance, hold=False, remote=False):
 		self.lock.acquire()
 		try:
+			if self.server is None:
+				self.startServer()
 			## if it is already persistent, and we already have
 			## it in datadict, then raise an exception
+			## Note:
+			## This actually doesn't work
+			## because for data that is created from the DB
+			## the dbid is not set until after insert is called
 			dbid = datainstance.dbid
 			if dbid is not None and dbid in self.db2dm:
 				raise DataDuplicateError("persistent data %s already exists in DataManager" % (dbid,))
@@ -214,6 +220,8 @@ class DataManager(object):
 		location = {'hostname': dmid[0][0], 'port': dmid[0][1]}
 		client = tcptransport.Client(location)
 		datainstance = client.pull(datareference)
+		### this is a new instance from a pickle
+		### now register it locally
 		self.insert(datainstance, remote=True)
 		return datainstance
 
@@ -1465,8 +1473,7 @@ class ImageStatData(InSessionData):
 
 class Request(type):
 	def __new__(cls, dataclass):
-		return type.__new__(cls, 'Request' + dataclass.__name__), (Data,),
-												{'datamanager': datamanager})
+		return type.__new__(cls, 'Request' + dataclass.__name__), (Data,), {'datamanager': datamanager}
 
 	def _typePair(cls, typepair):
 		if issubclass(typepair[1], Data):
