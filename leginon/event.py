@@ -28,16 +28,19 @@ class Event(data.Data):
 		data.Data.__init__(self, **kwargs)
 
 	def typemap(cls):
-		t = data.Data.typemap()
-		t += [('node', str), ('confirm', tuple), ('destination', str)]
-		return t
+		return data.Data.typemap() + (
+			('node', str),
+			('confirm', tuple),
+			('destination', str),
+		)
 	typemap = classmethod(typemap)
 
 class EventLog(data.Data):
 	def typemap(cls):
-		t = data.Data.typemap()
-		t += [ ('eventclass', str), ('status', str), ]
-		return t
+		return data.Data.typemap() + (
+			('eventclass', str),
+			('status', str),
+		)
 	typemap = classmethod(typemap)
 
 
@@ -71,9 +74,10 @@ class NotificationEvent(Event):
 class NodeAvailableEvent(NotificationEvent):
 	'Event sent by a node to the manager to indicate that it is accessible'
 	def typemap(cls):
-		t = NotificationEvent.typemap()
-		t += [('location', dict), ('nodeclass', str)]
-		return t
+		return NotificationEvent.typemap() + (
+			('location', dict),
+			('nodeclass', str),
+		)
 	typemap = classmethod(typemap)
 
 class NodeUnavailableEvent(NotificationEvent):
@@ -91,41 +95,43 @@ class NodeUninitializedEvent(NotificationEvent):
 class TargetListDoneEvent(NotificationEvent):
 	'Event indicating target list is done'
 	def typemap(cls):
-		t = NotificationEvent.typemap()
-		t += [ ('targetlistid', tuple), ('status', str)]
-		return t
+		return NotificationEvent.typemap() + (
+			('targetlistid', tuple),
+			('status', str),
+		)
 	typemap = classmethod(typemap)
 
 class ImageProcessDoneEvent(NotificationEvent):
 	'Event indicating target list is done'
 	def typemap(cls):
-		t = NotificationEvent.typemap()
-		t += [ ('imageid', int), ('status', str)]
-		return t
+		return NotificationEvent.typemap() + (
+			('imageid', int),
+			('status', str),
+		)
 	typemap = classmethod(typemap)
 
 class DriftDoneEvent(NotificationEvent):
 	'Event indicating that drift has ended'
 	def typemap(cls):
-		t = NotificationEvent.typemap()
-		t += [('status', str)]
-		return t
+		return NotificationEvent.typemap() + (
+			('status', str),
+		)
 	typemap = classmethod(typemap)
 
 class GridInsertedEvent(NotificationEvent):
 	'Event indicating a grid has been inserted'
 	def typemap(cls):
-		t = NotificationEvent.typemap()
-		t += [('grid', data.GridData)]
-		return t
+		return NotificationEvent.typemap() + (
+			('grid', data.GridData),
+		)
 	typemap = classmethod(typemap)
 
 class GridExtractedEvent(NotificationEvent):
 	'Event indicating a grid has been extracted'
 	def typemap(cls):
-		t = NotificationEvent.typemap()
-		t += [('grid', data.GridData)]
-		return t
+		return NotificationEvent.typemap() + (
+			('grid', data.GridData),
+		)
 	typemap = classmethod(typemap)
 
 class MosaicDoneEvent(NotificationEvent):
@@ -137,18 +143,18 @@ class PublishEvent(NotificationEvent):
 	def typemap(cls):
 		if not hasattr(cls, 'dataclass'):
 			raise RuntimeError('need to define "dataclass" for publish event')
-		t = NotificationEvent.typemap()
-		t += [ ('data', cls.dataclass), ]
-		return t
+		return NotificationEvent.typemap() + (
+			('data', cls.dataclass),
+		)
 	typemap = classmethod(typemap)
 
 class ConfirmationEvent(NotificationEvent):
 	'Event sent to confirm event processing'
 	def typemap(cls):
-		t = NotificationEvent.typemap()
-		t += [ ('eventid', tuple), ]
-		t += [ ('status', str), ]
-		return t
+		return NotificationEvent.typemap() + (
+			('eventid', tuple),
+			('status', str),
+		)
 	typemap = classmethod(typemap)
 
 class ImageTargetShiftPublishEvent(PublishEvent):
@@ -157,17 +163,17 @@ class ImageTargetShiftPublishEvent(PublishEvent):
 class NeedTargetShiftEvent(NotificationEvent):
 	'''notify DriftManager that I want another ImageTargetShift'''
 	def typemap(cls):
-		t = NotificationEvent.typemap()
-		t += [ ('imageid', int), ]
-		return t
+		return NotificationEvent.typemap() + (
+			('imageid', int),
+		)
 	typemap = classmethod(typemap)
 
 class DriftWatchEvent(Event):
 	def typemap(cls):
-		t = Event.typemap()
-		t += [ ('presettarget', data.PresetTargetData), ]
-		t += [ ('image', data.AcquisitionImageData), ]
-		return t
+		return Event.typemap() + (
+			('presettarget', data.PresetTargetData),
+			('image', data.AcquisitionImageData),
+		)
 	typemap = classmethod(typemap)
 
 ## this is a PublishEvent because we want to publish the EM state
@@ -239,22 +245,20 @@ class KillEvent(ControlEvent):
 
 class SetManagerEvent(ControlEvent):
 	def typemap(cls):
-		t = ControlEvent.typemap()
-		t += [('location', dict),
-					('session', data.SessionData)]
-		return t
+		return ControlEvent.typemap() + (
+			('location', dict),
+			('session', data.SessionData),
+		)
 	typemap = classmethod(typemap)
 
 class CreateNodeEvent(ControlEvent):
 	'ControlEvent sent to a NodeLauncher specifying a node to launch'
 	def typemap(cls):
-		t = ControlEvent.typemap()
-		t += [
+		return ControlEvent.typemap() + (
 			('targetclass', str),
 			('session', data.SessionData),
-			('manager location', dict)
-		]
-		return t
+			('manager location', dict),
+		)
 	typemap = classmethod(typemap)
 
 class LockEvent(ControlEvent):
@@ -276,34 +280,35 @@ class ExtractGridEvent(ControlEvent):
 class MakeTargetListEvent(ControlEvent):
 	'Event telling target maker to make a target list'
 	def typemap(cls):
-		t = NotificationEvent.typemap()
-		t += [('grid', data.GridData)]
-		return t
+		return NotificationEvent.typemap() + (
+			('grid', data.GridData),
+		)
 	typemap = classmethod(typemap)
 
 class EmailEvent(Event):
 	'Event to send email'
 	def typemap(cls):
-		t = Event.typemap()
-		t += [('subject', str)]
-		t += [('text', str)]
-		t += [('image string', str)]
-		return t
+		return Event.typemap() + (
+			('subject', str),
+			('text', str),
+			('image string', str),
+		)
 	typemap = classmethod(typemap)
 
 class ChangePresetEvent(Event):
 	def typemap(cls):
-		t = Event.typemap()
-		t += [ ('name', str), ('emtarget', data.EMTargetData)]
-		return t
+		return Event.typemap() + (
+			('name', str),
+			('emtarget', data.EMTargetData),
+		)
 	typemap = classmethod(typemap)
 
 class PresetChangedEvent(Event):
 	def typemap(cls):
-		t = Event.typemap()
-		t += [ ('name', str), ]
-		t += [ ('preset', data.PresetData), ]
-		return t
+		return Event.typemap() + (
+			('name', str),
+			('preset', data.PresetData),
+		)
 	typemap = classmethod(typemap)
 
 class SetEMEvent(PublishEvent):
@@ -327,32 +332,32 @@ class DeviceGetPublishEvent(PublishEvent):
 class DevicePublishEvent(PublishEvent):
 	dataclass = data.DeviceData
 	def typemap(cls):
-		t = PublishEvent.typemap()
-		t += [('get data ID', tuple)]
-		return t
+		return PublishEvent.typemap() + (
+			('get data ID', tuple),
+		)
 	typemap = classmethod(typemap)
 
 '''
 class DeviceGetEvent(Event):
 	def typemap(cls):
-		t = Event.typemap()
-		t += [('data ID', tuple),]
-		return t
+		return Event.typemap() + (
+			('data ID', tuple),
+		)
 	typemap = classmethod(typemap)
 
 class DeviceSetEvent(Event):
 	def typemap(cls):
-		t = Event.typemap()
-		t += [('data ID', tuple),]
-		return t
+		return Event.typemap() + (
+			('data ID', tuple),
+		)
 	typemap = classmethod(typemap)
 '''
 
 class DeviceConfirmationEvent(ConfirmationEvent):
 	def typemap(cls):
-		t = ConfirmationEvent.typemap()
-		t += [('data ID', tuple),]
-		return t
+		return ConfirmationEvent.typemap() + (
+			('data ID', tuple),
+		)
 	typemap = classmethod(typemap)
 
 # generate the mapping of data class to publish event class
