@@ -88,7 +88,9 @@ class Corrector(node.Node):
 		getplan = self.registerUIMethod(self.uiGetPlanParams, 'Get Plan Params', (), returnspec=ret)
 		plan = self.registerUISpec('Plan', (getplan, setplan))
 
-		self.registerUISpec('Corrector', (plan, acqdark, acqbright, acqcorr, prefs, nodespec))
+		myspec = self.registerUISpec('Corrector', (plan, acqdark, acqbright, acqcorr, prefs))
+		myspec += nodespec
+		return myspec
 
 	def uiSetPlanParams(self, cliplimits, badrows, badcols):
 		camconfig = self.cam.config()
