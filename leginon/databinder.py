@@ -6,7 +6,6 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import extendedlogging
 import Queue
 import newdict
 import threading
@@ -18,7 +17,8 @@ class ExitException(Exception):
 class DataBinder(object):
 	'''Bind data to a function. Used for mapping Events to handlers.'''
 	def __init__(self, node, threaded=True, queueclass=Queue.Queue, tcpport=None):
-		self.server = datatransport.Server(self, tcpport=tcpport)
+		self.server = datatransport.Server(self, tcpport=tcpport,
+																				loggername=node.name)
 		self.node = node
 		self.node.initializeLogger()
 		self.logger = self.node.logger

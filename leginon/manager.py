@@ -19,7 +19,7 @@ import launcher
 import node
 import threading
 import leginonobject
-import extendedlogging
+import logging
 import copy
 import newdict
 import socket
@@ -65,16 +65,16 @@ class DataBinder(databinder.DataBinder):
 
 class Manager(node.Node):
 	'''Overlord of the nodes. Handles node communication (data and events).'''
-	def __init__(self, session, tcpport=None, xmlrpcport=None, **kwargs):
+	def __init__(self, session, tcpport=None, **kwargs):
 		self.clients = {}
 
-		name = 'Manager'
-		self.initializeLogger(name)
+		self.name = 'Manager'
+		self.initializeLogger(self.name)
 
 		## need a special DataBinder
 		mydatabinder = DataBinder(self, tcpport=tcpport)
-		node.Node.__init__(self, name, session, otherdatabinder=mydatabinder,
-												xmlrpcport=xmlrpcport, **kwargs)
+		node.Node.__init__(self, self.name, session, otherdatabinder=mydatabinder,
+												**kwargs)
 
 		self.frame = gui.wx.Manager.Frame(self, self.research, self.publish)
 

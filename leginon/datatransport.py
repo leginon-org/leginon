@@ -11,7 +11,7 @@
 import localtransport
 import tcptransport
 import threading
-import extendedlogging
+import logging
 import time
 import sys
 
@@ -19,7 +19,8 @@ class Base(object):
 	def __init__(self, loggername=None):
 		# order matters
 		self.transportmodules = [localtransport, tcptransport]
-		self.logger = extendedlogging.getLogger(self.__class__.__name__, loggername)
+		name = loggername + '.' + self.__class__.__name__
+		self.logger = logging.getLogger(name)
 
 class Client(Base):
 	# hostname/port -> location or whatever

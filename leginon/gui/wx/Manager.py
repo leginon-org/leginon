@@ -83,16 +83,14 @@ class AddLauncherPanelEvent(wx.PyEvent):
 		self.launcher = launcher
 
 class App(wx.App):
-	def __init__(self, session, tcpport=None, xmlrpcport=None, **kwargs):
+	def __init__(self, session, tcpport=None, **kwargs):
 		self.session = session
 		self.tcpport = tcpport
-		self.xmlrpcport = xmlrpcport
 		self.kwargs = kwargs
 		wx.App.__init__(self, 0)
 
 	def OnInit(self):
-		self.manager = manager.Manager(self.session, self.tcpport, self.xmlrpcport,
-																		**self.kwargs)
+		self.manager = manager.Manager(self.session, self.tcpport, **self.kwargs)
 		self.SetTopWindow(self.manager.frame)
 		self.manager.frame.Show(True)
 		return True

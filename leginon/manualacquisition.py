@@ -69,7 +69,7 @@ class ManualAcquisition(node.Node):
 			prefix = ''
 		else:
 			prefix = 'un'
-		self.setStatus('Acquiring %scorrected image...' % prefix)
+		self.logger.info('Acquiring %scorrected image...' % prefix)
 		try:
 			self.camerafuncs.setCameraDict(self.settings['camera settings'])
 			imagedata = self.camerafuncs.acquireCameraImageData(correction=correct)
@@ -80,35 +80,35 @@ class ManualAcquisition(node.Node):
 				self.logger.error('Cannot access Corrector node to correct image')
 			else:
 				self.logger.error('Error acquiring image')
-			self.setStatus('Error acquiring image')
+			self.logger.info('Error acquiring image')
 			raise AcquireError
 		if imagedata is None:
 			if correct:
 				self.logger.error('Corrector failed to acquire corrected image')
 			else:
 				self.logger.error('EM failed to acquire image')
-			self.setStatus('Error acquiring image')
+			self.logger.info('Error acquiring image')
 			raise AcquireError
 
 		# store EMData to DB
 		self.publish(imagedata['scope'], database=True)
 		self.publish(imagedata['camera'], database=True)
 
-		self.setStatus('Displaying image...')
+		self.logger.info('Displaying image...')
 		stats = self.getImageStats(imagedata['image'])
 		self.updateImage('Image', imagedata['image'], stats=stats)
 		if self.settings['save image']:
-			self.setStatus('Saving image to database...')
+			self.logger.info('Saving image to database...')
 			try:
 				self.publishImageData(imagedata)
 			except node.PublishError, e:
 				message = 'Error saving image to database'
-				self.setStatus(message)
+				self.logger.info(message)
 				if str(e):
 					message += ' (%s)' % str(e)
 				self.logger.error(message)
 				raise AcquireError
-		self.setStatus('Image acquisition complete')
+		self.logger.info('Image acquisition complete')
 
 	def setScope(self, value):
 		scopedata = data.ScopeEMData(initializer=value)
@@ -116,7 +116,7 @@ class ManualAcquisition(node.Node):
 			self.emclient.setScope(scopedata)
 		except node.PublishError:
 			self.logger.error('Cannot access EM node')
-			self.setStatus('Error setting instrument parameters')
+			self.logger.info('Error setting instrument parameters')
 			raise RuntimeError('Unable to set instrument parameters')
 
 	def getScope(self, key):
@@ -125,7 +125,7 @@ class ManualAcquisition(node.Node):
 		except node.ResearchError:
 			raise
 			self.logger.error('Cannot access EM node')
-			self.setStatus('Error getting instrument parameters')
+			self.logger.info('Error getting instrument parameters')
 			raise RuntimeError('Unable to get instrument parameters')
 		return value
 
@@ -218,7 +218,7 @@ class ManualAcquisition(node.Node):
 			raise node.PublishError
 
 	def acquireImage(self):
-		self.setStatus('Acquiring image...')
+		self.logger.info('Acquiring image...')
 
 		try:
 			self.preExposure()
@@ -235,7 +235,7 @@ class ManualAcquisition(node.Node):
 		except RuntimeError:
 			return
 
-		self.setStatus('Image acquired')
+		self.logger.info('Image acquired')
 
 	def loopStarted(self):
 		self.panel.loopStarted()
@@ -244,7 +244,7 @@ class ManualAcquisition(node.Node):
 		self.panel.loopStopped()
 
 	def acquisitionLoop(self):
-		self.setStatus('Starting acquisition loop...')
+		self.logger.info('Starting acquisition loop...')
 
 		try:
 			self.preExposure()
@@ -253,7 +253,7 @@ class ManualAcquisition(node.Node):
 			return
 
 		self.loopstop.clear()
-		self.setStatus('Acquisition loop started')
+		self.logger.info('Acquisition loop started')
 		self.loopStarted()
 		while True:
 			if self.loopstop.isSet():
@@ -265,7 +265,7 @@ class ManualAcquisition(node.Node):
 				break
 			pausetime = self.settings['loop pause time']
 			if pausetime > 0:
-				self.setStatus('Pausing for ' + str(pausetime) + ' seconds...')
+				self.logger.info('Pausing for ' + str(pausetime) + ' seconds...')
 				time.sleep(pausetime)
 
 		try:
@@ -275,19 +275,19 @@ class ManualAcquisition(node.Node):
 			return
 
 		self.loopStopped()
-		self.setStatus('Acquisition loop stopped')
+		self.logger.info('Acquisition loop stopped')
 
 	def acquisitionLoopStart(self):
 		if not self.loopstop.isSet():
 			self.loopStopped()
 			return
-		self.setStatus('Starting acquisition loop...')
+		self.logger.info('Starting acquisition loop...')
 		loopthread = threading.Thread(target=self.acquisitionLoop)
 		loopthread.setDaemon(1)
 		loopthread.start()
 
 	def acquisitionLoopStop(self):
-		self.setStatus('Stopping acquisition loop...')
+		self.logger.info('Stopping acquisition loop...')
 		self.loopstop.set()
 
 	def onSetPauseTime(self, value):

@@ -1,9 +1,14 @@
 import logging
 import wx
 
-class LoggingConfigurationDialog(wx.Dialog):
+class LoggingConfiguration(object):
+	def __init__(self):
+		self.printhandler = logging.StreamHandler()
+
+class LoggingConfigurationDialog(wx.Dialog, LoggingConfiguration):
 	def __init__(self, parent):
 		wx.Dialog.__init__(self, parent, -1, 'Logging Configuration')
+		LoggingConfiguration.__init__(self)
 
 		self.dialogsizer = wx.GridBagSizer()
 		sizer = wx.GridBagSizer(5, 5)
@@ -68,10 +73,11 @@ class LoggingConfigurationDialog(wx.Dialog):
 
 	def onPrintCheckbox(self, evt):
 		logger = self.tree.GetPyData(self.tree.GetSelection())
+		print logger
 		if evt.IsChecked():
-			logger.addPrintHandler()
+			logger.addHandler(self.printhandler)
 		else:
-			logger.removePrintHandler()
+			logger.removeHandler(self.printhandler)
 
 	def onFormat(self, evt):
 		logger = self.tree.GetPyData(self.tree.GetSelection())
@@ -132,7 +138,7 @@ class LoggingConfigurationDialog(wx.Dialog):
 			level = logging.getLevelName(level)
 		self.clevel.SetStringSelection(level)
 		if enable:
-			self.cbprint.SetValue(logger.hasPrintHandler())
+			self.cbprint.SetValue(self.printhandler in logger.handlers)
 			self.tcformat.SetValue(logger.format)
 			self.tcdateformat.SetValue(logger.dateformat)
 		else:

@@ -12,7 +12,7 @@ import datatransport
 from dbdatakeeper import DBDataKeeper
 import event
 import leginonobject
-import extendedlogging
+import logging
 import threading
 import gui.wx.Node
 
@@ -55,7 +55,7 @@ class Node(leginonobject.LeginonObject):
 									event.NodeInitializedEvent,
 									event.NodeUninitializedEvent]
 
-	def __init__(self, name, session, managerlocation=None, otherdatabinder=None, otherdbdatakeeper=None, tcpport=None, xmlrpcport=None, launcher=None, panel=None):
+	def __init__(self, name, session, managerlocation=None, otherdatabinder=None, otherdbdatakeeper=None, tcpport=None, launcher=None, panel=None):
 		leginonobject.LeginonObject.__init__(self)
 		self.name = name
 		self.panel = panel
@@ -126,10 +126,9 @@ class Node(leginonobject.LeginonObject):
 			return
 		if name is None:
 			name = self.name
-		self.logger = extendedlogging.getLogger(name)
-		clientlogger = extendedlogging.getLogger(self.logger.name + '.'
-																							+ datatransport.Client.__name__)
-
+		self.logger = logging.getLogger(name)
+		clientloggername = self.logger.name + '.' + datatransport.Client.__name__
+		clientlogger = logging.getLogger(clientloggername)
 
 	# main, start/stop methods
 
@@ -357,7 +356,8 @@ class Node(leginonobject.LeginonObject):
 
 	def setManager(self, location):
 		'''Set the manager controlling the node and notify said manager this node is available.'''
-		self.managerclient = datatransport.Client(location['data binder'])
+		self.managerclient = datatransport.Client(location['data binder'],
+																							loggername=self.name)
 		available_event = event.NodeAvailableEvent(location=self.location(),
 																							nodeclass=self.__class__.__name__)
 		self.outputEvent(ievent=available_event, wait=True, timeout=10)

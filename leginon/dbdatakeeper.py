@@ -9,12 +9,12 @@
 import data
 import sqldict
 import threading
-import extendedlogging
+import logging
 import _mysql_exceptions
 
 class DBDataKeeper(object):
 	def __init__(self, loggername=None):
-		self.logger = extendedlogging.getLogger(self.__class__.__name__, loggername)
+		self.logger = logging.getLogger(loggername + '.' + self.__class__.__name__)
 		try:
 			self.dbd = sqldict.SQLDict()
 		except _mysql_exceptions.OperationalError, e:
