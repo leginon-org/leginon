@@ -349,9 +349,10 @@ class Focuser(acquisition.Acquisition):
 			self.manualchecklock.acquire()
 			try:
 				if correction:
-					imarray = self.instrument.imagecorrection.Image
+					imagedata = self.instrument.getData(data.CorrectedCameraImageData)
 				else:
-					imarray = self.instrument.ccdcamera.Image
+					imagedata = self.instrument.getData(data.CameraImageData)
+				imarray = imagedata['image']
 			except:
 				raise
 				self.manualchecklock.release()
