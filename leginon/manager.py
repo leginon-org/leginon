@@ -447,10 +447,7 @@ class Manager(node.Node):
 			print 'problem evaluating args'
 			return
 
-		print 'uiLaunch launchNode...'
 		self.launchNode(launcher_id, newproc, nodeclass, name, args)
-		print 'uiLaunch launchNode... done'
-
 		## just to make xmlrpc happy
 		return ''
 

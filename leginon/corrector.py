@@ -47,9 +47,9 @@ class Corrector(node.Node):
 		self.defaultcamstate = camstate
 		self.camdata = self.registerUIData('Camera', 'struct', default=camstate)
 
-		self.navgdata = self.registerUIData('Frames to Average', 'integer', default=3)
+		self.navgdata = self.registerUIData('Frames to Average', 'integer', default=3, permissions='rw')
 
-		self.registerUISpec('Corrector', (acq, self.camdata, nodespec))
+		self.registerUISpec('Corrector', (acq, self.navgdata, self.camdata, nodespec))
 
 	def saveRefs(self, filename, key):
 		strkey = str(key)
@@ -121,7 +121,7 @@ class Corrector(node.Node):
 		self.calc_norm(key)
 		return ''
 
-	def acquireCorrectedReal(self, ievent=None):
+	def acquireCorrected(self, ievent=None):
 		camdata = self.researchByDataID('camera')
 		camstate = camdata.content
 		numimage = camstate['image data']
@@ -135,7 +135,7 @@ class Corrector(node.Node):
 		print 'done pub correct'
 		return ''
 
-	def acquireCorrected(self, ievent=None):
+	def acquireCorrectedFake(self, ievent=None):
 		numimage = mrc_to_numeric('test1.mrc')
 		camstate = self.defaultcamstate
 		#binning = self.researchByDataID('binning').content['binning']

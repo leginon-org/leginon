@@ -85,14 +85,16 @@ class Calibration(node.Node):
 
 	# calibrate needs to take a specific value
 	def calibrate(self):
+		print 'clearing state images'
 		self.clearStateImages()
 
 		adjustedrange = self.range
 
+		print 'parsing camerastate'
 		size = self.camerastate['size']
 		bin = self.camerastate['binning']
 		exp = self.camerastate['exposure time']
-		off = cameraimage.centerOffset(size,size),
+		off = cameraimage.centerOffset((2048,2048), (size,size))
 		off = {'x': off[0], 'y': off[1]}
 		camstate = {
 			"offset": off,
@@ -100,7 +102,7 @@ class Calibration(node.Node):
 			"binning": {'x': bin, 'y': bin},
 			"exposure time": exp
 		}
-
+		print 'creating camdata'
 		camdata = data.EMData('camera', camstate)
 
 		print 'camdata', camdata
@@ -131,14 +133,13 @@ class Calibration(node.Node):
 					print "good"
 					self.calibration.update({axis + " pixel shift": {'x':shiftinfo['shift'][1], 'y':shiftinfo['shift'][0], 'value': delta}})
 					break
-				elif verdict == 'small shift':
+				elif verdict == 'small':
 					print "too small"
 					adjustedrange[0] = delta
-				elif verdict == 'big shift':
+				elif verdict == 'big':
 					print "too big"
 					adjustedrange[1] = delta
-				else:
-					raise RuntimeError('hung jury')
+
 			basestate = self.state(self.base[axis], axis)
 			self.publishRemote(data.EMData('scope', basestate))
 
@@ -245,35 +246,25 @@ class Calibration(node.Node):
 		## of calculating a hypotenuse without importing math.
 		## It's definietly too late to be working on a Friday.
 		totalshift = abs(shift[0] * 1j + shift[1])
+		print 'totalshift', totalshift
 		peakvalue = shiftinfo['peak value']
 		shape = shiftinfo['shape']
 		stats = shiftinfo['stats']
 
 		validshiftdict = self.validshift.get()
 		print 'validshiftdict', validshiftdict
-		validshift = []
 
-		return 'small shift'
+		## for now I am ignoring percent, only using pixel
+		validshift = validshiftdict['calibration']
+		print 'validshift', validshift
 
-		for dim in (0,1):
-
-			minshift = shape[dim] / 15.0
-			maxshift = 1.0 * shape[dim] / 3.0
-
-			validshift.append( (minshift,maxshift) )
-
-		print 'valid shift', validshift
-
-		if (self.inRange(abs(shift[0]), validshift[0]) and
-			self.inRange(abs(shift[1]), validshift[1])):
-			verdict = 'good'
+		## check if shift too small
+		if (totalshift < validshift['min']):
+			return 'small'
+		elif (totalshift > validshift['max']):
+			return 'big'
 		else:
-			if shiftinfo['peak value'] > self.correlationthreshold:
-				verdict = 'small shift'
-			else:
-				verdict = 'big shift'
-
-		return verdict
+			return 'good'
 
 	def inRange(self, value, r):
 		if (len(r) != 2) or (r[0] > r[1]):
@@ -360,16 +351,10 @@ class Calibration(node.Node):
 
 		self.validshift = self.registerUIData('Valid Shift', 'struct', permissions='rw')
 		self.validshift.set(
-			{'correlation':
-				{'pixel':
-					{'row': {'min': 0.0, 'max': 0.0}, 'col': {'min': 0.0, 'max': 0.0}},
-				'percent':
-					{'row': {'min': 10.0, 'max': 50.0}, 'col': {'min': 10.0, 'max': 50.0}}},
-			'calibration':
-				{'pixel':
-					{'row': {'min': 0.0, 'max': 0.0}, 'col': {'min': 0.0, 'max': 0.0}},
-				'percent':
-					{'row': {'min': 10.0, 'max': 50.0}, 'col': {'min': 10.0, 'max': 50.0}}}}
+			{
+			'correlation': {'min': 20.0, 'max': 200.0},
+			'calibration': {'min': 20.0, 'max': 200.0}
+			}
 		)
 
 		argspec = (self.registerUIData('Filename', 'string'),)
@@ -394,14 +379,6 @@ class Calibration(node.Node):
 		# update valid somehow
 		#self.validShiftCallback(self.validshift)
 		return ''
-
-
-class StageCalibration(Calibration):
-	def __init__(self, id, nodelocations):
-		Calibration.__init__(self, id, nodelocations)
-
-	def state(self, value, axis):
-		return {'stage position': {axis: value}}
 
 
 class ImageShiftCalibration(Calibration):
