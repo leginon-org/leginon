@@ -521,12 +521,20 @@ class PresetsManager(node.Node):
 
 	def uiAcquire(self):
 		print 'acquiring image'
-		imagedata = self.cam.acquireCameraImageData(camconfig='UI')
+		imagedata = self.cam.acquireCameraImageData(camconfig='UI', correction=True)
 		if imagedata is None:
 			return
-		self.scope = imagedata['scope']
-		self.camera = imagedata['camera']
-		self.shape = imagedata['image'].shape
+		
+		## store the CameraImageData as a PresetReferenceImageData
+		ref = data.PresetReferenceImageData(id=self.ID())
+		ref.update(imagedata)
+		if not self.currentpreset['hasref']:
+			self.currentpreset['hasref'] = True
+		ref['preset'] = self.currentpreset
+		self.publish(ref, database=True)
+		print 'published new reference image for %s' % (self.currentpreset['name'],)
+
+		## display
 		self.ui_image.set(imagedata['image'])
 
 	def targetToScope(self, newpresetname, emtargetdata):
