@@ -57,7 +57,7 @@ class Application(leginonobject.LeginonObject):
 				raise ValueError('binding already exists in application')
 		self.bindingspecs.append(bindingspecdata)
 
-	def delBindingSpec(self, eventclass_string, fromnode, tonode):
+	def delBindingSpec(self, eventclass_string, fromnodeid, tonodeid):
 		bindingspecdata = data.BindingSpecData()
 		bindingspecdata['event class string'] = eventclass_string
 		bindingspecdata['from node ID'] = fromnodeid
@@ -69,7 +69,7 @@ class Application(leginonobject.LeginonObject):
 				if bindingspecdata[key] != spec[key]:
 					same = False
 			if same:
-				self.bindingspec.remove(spec)
+				self.bindingspecs.remove(spec)
 
 	def getLauncherIDs(self):
 		launcherids = []

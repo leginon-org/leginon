@@ -130,7 +130,11 @@ class Manager(node.Node):
 		'''Map distribution of an event of eventclass from a node to a node.'''
 		args = (eventclass, from_node, to_node)
 		if addtoapp:
-			self.app.addBindingSpec(eventclass.__name__, from_node, to_node)
+			try:
+				self.app.addBindingSpec(eventclass.__name__, from_node, to_node)
+			except ValueError:
+				# binding exists in application
+				pass
 
 		if eventclass not in self.distmap:
 			self.distmap[eventclass] = {}
@@ -142,12 +146,13 @@ class Manager(node.Node):
 	def delEventDistmap(self, eventclass, fromnodeid, tonodeid=None):
 		try:
 			self.distmap[eventclass][fromnodeid].remove(tonodeid)
-		except:
-			self.printerror(str(eventclass) + ': ' + str(fromnodeid) + ' to ' + str(tonodeid) + ' no such binding')
-			self.printException()
+		except (KeyError, ValueError):
+			self.printerror(str(eventclass) + ': ' + str(fromnodeid) + ' to '
+											+ str(tonodeid) + ' no such binding')
+			return
 
 		args = (eventclass, fromnodeid, tonodeid)
-		self.app.delBindingSpec(eventclass.__name__, fromnodeid, tonoded)
+		self.app.delBindingSpec(eventclass.__name__, fromnodeid, tonodeid)
 
 	def distributeEvents(self, ievent):
 		'''Push event to eventclients based on event class and source.'''
