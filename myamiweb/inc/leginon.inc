@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.34 $
- *	@version $Id: leginon.inc,v 1.34 2004-11-11 21:11:52 dfellman Exp $
+ *	@version $Revision: 1.35 $
+ *	@version $Id: leginon.inc,v 1.35 2004-11-11 21:35:17 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -394,8 +394,8 @@ class leginondata {
 	}
 
 	function getFilenameFromId($id) {
-		list($filename) = $this->getFilename($id);
-		return $filename['filename'];
+			list($filename) = $this->getFilename($id);
+			return $filename['filename'];
 	}
 
 	function getCalibrationIds($calibration, $instrumentId=False, $limit='', $type='') {
@@ -1373,11 +1373,7 @@ class leginondata {
 			left join StageModelMagCalibrationData s 
 			on (s.axis=m.axis and s.label = m.label and s.magnification = m.magnification)  
 			where m.label='$label' and m.axis='$axis'";
-		$result = $this->mysql->SQLQuery($q);
-		$measurements= array();
-		while ($measurement = mysql_fetch_array($result, MYSQL_ASSOC))
-			$measurements[] = $measurement;
-		return $measurements;
+		return $this->mysql->getSQLResult($q);
 	}
 
 	function readDataTree(&$arr_node,$Rq,$refname="",$recursive=true) {

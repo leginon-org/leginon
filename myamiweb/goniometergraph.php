@@ -27,18 +27,13 @@ while(list($k, $v) = each($goniometer)) {
 	if ($k=="label")
 		$label = $v;
 }
-$measurements = $leginondata->getMeasurements($label, $axis);
-foreach($measurements as $m) {
-	$sx[]=$m[$axis];
-	$sy[]=$m[norm];
-}
-
-
-/*
-$T = 6.125e-05;
-$A = array(0.0540763148240747, 0.0306427420578568, 0.00742896133805463, 0.000636961921833448, 7.2870783587459e-05);
-$B = array(0.00543938004167839, -0.00107917575289218, -0.00486174698041159, -0.00287902266502047, 0.000151222236564464);
-*/
+$sx = array();
+$sy = array();
+if ($measurements = $leginondata->getMeasurements($label, $axis))
+	foreach($measurements as $m) {
+		$sx[]=$m[$axis];
+		$sy[]=$m[norm];
+	}
 
 $K = 2*M_PI/$T;
 $x = '$x';
@@ -92,13 +87,16 @@ $lp1 = new LinePlot($ydata,$xdata);
 $lp1->SetColor('blue');
 $lp1->SetWeight(1);
 
-$sp1 = new ScatterPlot($sy,$sx);
-$sp1->mark->SetType(MARK_CIRCLE);
-$sp1->mark->SetColor('red');
-$sp1->mark->SetWidth(4);
-
 $graph->Add($lp1);
-$graph->Add($sp1);
+
+if ($sy && $sy) {
+	$sp1 = new ScatterPlot($sy,$sx);
+	$sp1->mark->SetType(MARK_CIRCLE);
+	$sp1->mark->SetColor('red');
+	$sp1->mark->SetWidth(4);
+	$graph->Add($sp1);
+}
+
 $graph->Stroke();
 
 ?>
