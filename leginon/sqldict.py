@@ -369,14 +369,19 @@ class SQLDict(object):
 				target = pool[value.qikey]
 				root[key] = target
 				self._connectData(target, pool)
-				if isinstance(target, data.SessionData):
-					imagepath = target['image path']
 			elif isinstance(value, strictdict.FileReference):
 				if self.readimages:
 					needpath.append(key)
 				else:
 					root[key] = None
 
+		### find the path
+		if needpath:
+			try:
+				imagepath = root.path()
+			except AttributeError:
+				message = '%s object contains file references, needs a path() method' % (root.__class__,)
+				raise AttributeError(message)
 		## now read data using the found path
 		for key in needpath:
 			fileref = root[key]
