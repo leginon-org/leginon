@@ -6,6 +6,7 @@ import uidata
 import threading
 import event
 import time
+import imagefun
 
 class Focuser(acquisition.Acquisition):
 	eventinputs = acquisition.Acquisition.eventinputs+[event.DriftDoneEvent]
