@@ -662,6 +662,21 @@ class EM(node.Node):
 		beamshiftcontainer.addObjects((self.uiscopedict['beam shift']['x'],
 																		self.uiscopedict['beam shift']['y']))
 
+		self.uiscopedict['stigmator'] = {}
+		self.uiscopedict['stigmator']['condenser'] = {}
+		self.uiscopedict['stigmator']['objective'] = {}
+		self.uiscopedict['stigmator']['diffraction'] = {}
+		stigmatorcontainer = uidata.Container('Stigmators')
+		pairs = [('condenser', 'Condenser'), ('objective', 'Objective'),
+							('diffraction', 'Diffraction')]
+		for key, name in pairs:
+			self.uiscopedict['stigmator'][key]['x'] = uidata.Float('x', 0.0, 'rw')
+			self.uiscopedict['stigmator'][key]['y'] = uidata.Float('y', 0.0, 'rw')
+			container = uidata.Container(name)
+			container.addObject(self.uiscopedict['stigmator'][key]['x'])
+			container.addObject(self.uiscopedict['stigmator'][key]['y'])
+			stigmatorcontainer.addObject(container)
+
 		scopeparameterscontainer = uidata.Container('Parameters')
 
 		for item in self.uiscopedict.values():
@@ -674,6 +689,7 @@ class EM(node.Node):
 		scopeparameterscontainer.addObject(imageshiftcontainer)
 		scopeparameterscontainer.addObject(beamtiltcontainer)
 		scopeparameterscontainer.addObject(beamshiftcontainer)
+		scopeparameterscontainer.addObject(stigmatorcontainer)
 
 		self.scopecontainer = uidata.MediumContainer('Microscope')
 		self.scopecontainer.addObject(scopeparameterscontainer)
