@@ -30,25 +30,9 @@ class Calibrator(node.Node):
 	eventoutputs = node.Node.eventoutputs + EM.EMClient.eventoutputs
 	def __init__(self, id, session, managerlocation, **kwargs):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
-		self.images = {
-			'Image': None,
-			'Correlation': None,
-		}
-		self.imagetargets = {
-			'Image': {},
-			'Correlation': {},
-		}
 		self.cortypes = ['cross', 'phase']
 		self.emclient = EM.EMClient(self)
 		self.cam = camerafuncs.CameraFuncs(self)
-
-		self.typenames = ['Peak']
-		self.panel.addTargetTypes(self.typenames)
-
-	def updateImage(self, name, image, targets={}):
-		self.images[name] = image
-		self.imagetargets[name] = targets
-		self.panel.imageUpdated(name, image, targets)
 
 	def getMagnification(self):
 		mag = self.emclient.getScope()['magnification']
@@ -74,6 +58,6 @@ class Calibrator(node.Node):
 			self.messagelog.error('acquisition failed')
 			return
 
-		self.updateImage('Image', newimage)
+		self.setImage(newimage, 'Image')
 		return imagedata
 

@@ -4,34 +4,6 @@ import gui.wx.Settings
 import gui.wx.TargetFinder
 import gui.wx.ToolBar
 
-AddTargetTypesEventType = wx.NewEventType()
-AddTargetsEventType = wx.NewEventType()
-SetTargetsEventType = wx.NewEventType()
-
-EVT_ADD_TARGET_TYPES = wx.PyEventBinder(AddTargetTypesEventType)
-EVT_ADD_TARGETS = wx.PyEventBinder(AddTargetsEventType)
-EVT_SET_TARGETS = wx.PyEventBinder(SetTargetsEventType)
-
-class AddTargetTypesEvent(wx.PyCommandEvent):
-	def __init__(self, source, typenames):
-		wx.PyCommandEvent.__init__(self, AddTargetTypesEventType, source.GetId())
-		self.SetEventObject(source)
-		self.typenames = typenames
-
-class AddTargetsEvent(wx.PyCommandEvent):
-	def __init__(self, source, typename, targets):
-		wx.PyCommandEvent.__init__(self, AddTargetsEventType, source.GetId())
-		self.SetEventObject(source)
-		self.typename = typename
-		self.targets = targets
-
-class SetTargetsEvent(wx.PyCommandEvent):
-	def __init__(self, source, typename, targets):
-		wx.PyCommandEvent.__init__(self, SetTargetsEventType, source.GetId())
-		self.SetEventObject(source)
-		self.typename = typename
-		self.targets = targets
-
 class Panel(gui.wx.TargetFinder.Panel):
 	def initialize(self):
 		gui.wx.TargetFinder.Panel.initialize(self)
@@ -41,14 +13,12 @@ class Panel(gui.wx.TargetFinder.Panel):
 													'play',
 													shortHelpString='Submit Targets')
 
-		self.targetcolors = {
-			'acquisition': wx.GREEN,
-			'focus': wx.BLUE,
-			'done': wx.RED,
-			'position': wx.Color(255, 255, 0),
-		}
-
 		self.imagepanel = gui.wx.ImageViewer.TargetImagePanel(self, -1)
+		self.imagepanel.addTypeTool('acquisition', target=wx.GREEN, display=True)
+		self.imagepanel.addTypeTool('focus', target=wx.BLUE, display=True)
+		self.imagepanel.addTypeTool('done', target=wx.RED, display=True)
+		self.imagepanel.addTypeTool('position', target=wx.Color(255, 128, 0),
+																	display=True)
 		self.szimage = self._getStaticBoxSizer('Target Image', (1, 1), (3, 1),
 																						wx.EXPAND|wx.ALL)
 		self.szimage.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND)
@@ -56,41 +26,8 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.szimage.AddGrowableCol(0)
 		self.szmain.AddGrowableRow(3)
 
-		self.Bind(EVT_ADD_TARGET_TYPES, self.onAddTargetTypes)
-		self.Bind(EVT_ADD_TARGETS, self.onAddTargets)
-		self.Bind(EVT_SET_TARGETS, self.onSetTargets)
-
-	def onAddTargetTypes(self, evt):
-		for typename in evt.typenames:
-			try:
-				color = self.targetcolors[typename]
-			except KeyError:
-				color = None
-			self.imagepanel.addTargetType(typename, color)
-
-	def onAddTargets(self, evt):
-		for target in evt.targets:
-			x, y = target
-			self.imagepanel.addTarget(evt.typename, x, y)
-
-	def onSetTargets(self, evt):
-		self.imagepanel.clearTargets(evt.typename)
-		self.onAddTargets(evt)
-
-	def addTargetTypes(self, typenames):
-		evt = AddTargetTypesEvent(self, typenames)
-		self.GetEventHandler().AddPendingEvent(evt)
-
-	def addTargets(self, typename, targets):
-		evt = AddTargetsEvent(self, typename, targets)
-		self.GetEventHandler().AddPendingEvent(evt)
-
-	def setTargets(self, typename, targets):
-		evt = SetTargetsEvent(self, typename, targets)
-		self.GetEventHandler().AddPendingEvent(evt)
-
 	def getTargets(self, typename):
-		return self.imagepanel.getTargetTypeValue(typename)
+		return self.imagepanel.getTargets(typename)
 
 	def onNodeInitialized(self):
 		gui.wx.TargetFinder.Panel.onNodeInitialized(self)

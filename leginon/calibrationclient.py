@@ -71,7 +71,7 @@ class CalibrationClient(object):
 		if publish_image:
 			self.node.publish(imagedata, pubevent=True)
 
-		self.node.updateImage('Image', imagedata['image'].astype(Numeric.Float32))
+		self.node.setImage(imagedata['image'].astype(Numeric.Float32), 'Image')
 
 		## should find image stats to help determine validity of image
 		## in correlations
@@ -138,8 +138,8 @@ class CalibrationClient(object):
 			pixelpeak = peak['subpixel peak']
 			pixelpeak = pixelpeak[1],pixelpeak[0]
 
-			self.node.updateImage('Correlation', pcimage.astype(Numeric.Float32),
-														{'Peak': [pixelpeak]})
+			self.node.setImage(pcimage.astype(Numeric.Float32), 'Correlation')
+			self.node.setTargets([pixelpeak], 'Peak')
 
 			peakvalue = peak['subpixel peak value']
 			shift = correlator.wrap_coord(peak['subpixel peak'], pcimage.shape)
@@ -190,8 +190,8 @@ class CalibrationClient(object):
 
 		pixelpeak = peak['subpixel peak']
 		pixelpeak = pixelpeak[1],pixelpeak[0]
-		self.node.updateImage('Correlation', pcimage.astype(Numeric.Float32),
-													{'Peak': [pixelpeak]})
+		self.node.setImage(pcimage.astype(Numeric.Float32), 'Correlation')
+		self.node.setTargets([pixelpeak], 'Peak')
 
 		if hasattr(self.node, 'panel'):
 			self.node.setCorrelationImage(pcimage.astype(Numeric.Float32),

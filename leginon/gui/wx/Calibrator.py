@@ -6,24 +6,6 @@ import gui.wx.Settings
 import gui.wx.ImageViewer
 import gui.wx.ToolBar
 
-AddTargetTypesEventType = wx.NewEventType()
-EVT_ADD_TARGET_TYPES = wx.PyEventBinder(AddTargetTypesEventType)
-class AddTargetTypesEvent(wx.PyCommandEvent):
-	def __init__(self, source, typenames):
-		wx.PyCommandEvent.__init__(self, AddTargetTypesEventType, source.GetId())
-		self.SetEventObject(source)
-		self.typenames = typenames
-
-ImageUpdatedEventType = wx.NewEventType()
-EVT_IMAGE_UPDATED = wx.PyEventBinder(ImageUpdatedEventType)
-class ImageUpdatedEvent(wx.PyCommandEvent):
-	def __init__(self, source, name, image, targets=None):
-		wx.PyCommandEvent.__init__(self, ImageUpdatedEventType, source.GetId())
-		self.SetEventObject(source)
-		self.name = name
-		self.image = image
-		self.targets = targets
-
 class Panel(gui.wx.Node.Panel):
 	imageclass = gui.wx.ImageViewer.TargetImagePanel
 	def __init__(self, parent, name):
@@ -48,26 +30,14 @@ class Panel(gui.wx.Node.Panel):
 		self.SetupScrolling()
 
 	def initialize(self):
-		# settings
-
-		self.targetcolors = {
-			'Peak': wx.Color(255, 128, 0),
-		}
-
-		self.imagetypes = [
-			'None',
-			'Image',
-			'Correlation',
-		]
-
-		self.cdisplay = wx.Choice(self, -1, choices=self.imagetypes)
-		self.cdisplay.SetStringSelection('Image')
-		self.szdisplay = self._getStaticBoxSizer('Display', (2, 0), (1, 1),
-																							wx.ALIGN_CENTER)
-		self.szdisplay.Add(self.cdisplay, (0, 0), (1, 1), wx.ALIGN_CENTER)
-
 		# image
 		self.imagepanel = self.imageclass(self, -1)
+		self.imagepanel.addTypeTool('Image', display=True)
+		self.imagepanel.addTypeTool('Correlation', display=True)
+		if isinstance(self.imagepanel, gui.wx.ImageViewer.TargetImagePanel):
+			color = wx.Color(255, 128, 0)
+			self.imagepanel.addTargetType('Peak', color, display=True)
+
 		self.szimage = self._getStaticBoxSizer('Image', (1, 1), (5, 1),
 																						wx.EXPAND|wx.ALL)
 		self.szimage.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND)
@@ -77,23 +47,6 @@ class Panel(gui.wx.Node.Panel):
 		self.szmain.AddGrowableRow(5)
 		self.szmain.AddGrowableCol(1)
 
-		self.Bind(EVT_ADD_TARGET_TYPES, self.onAddTargetTypes)
-		self.Bind(EVT_IMAGE_UPDATED, self.onImageUpdated)
-
-	def onAddTargetTypes(self, evt):
-		for typename in evt.typenames:
-			try:
-				color = self.targetcolors[typename]
-			except KeyError:
-				color = None
-			# calibrator inheritance broken
-			if hasattr(self.imagepanel, 'addTargetType'):
-				self.imagepanel.addTargetType(typename, color)
-
-	def addTargetTypes(self, typenames):
-		evt = AddTargetTypesEvent(self, typenames)
-		self.GetEventHandler().AddPendingEvent(evt)
-
 	def onNodeInitialized(self):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
 											id=gui.wx.ToolBar.ID_SETTINGS)
@@ -101,40 +54,9 @@ class Panel(gui.wx.Node.Panel):
 											id=gui.wx.ToolBar.ID_CALIBRATE)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onAbortTool,
 											id=gui.wx.ToolBar.ID_ABORT)
-		self.Bind(wx.EVT_CHOICE, self.onDisplayChoice, self.cdisplay)
 
 	def onAcquireTool(self, evt):
 		self.node.acquireImage()
-
-	def onImageUpdated(self, evt):
-		if self.cdisplay.GetStringSelection() == evt.name:
-			self.imagepanel.setImage(evt.image)
-			if evt.targets is not None:
-				self._setTargets(evt.targets)
-
-	def _setTargets(self, targets):
-		for typename, targetlist in targets.items():
-			self.imagepanel.clearTargets(typename)
-			for target in targetlist:
-				x, y = target
-				self.imagepanel.addTarget(typename, x, y)
-
-	def onDisplayChoice(self, evt):
-		key = evt.GetString()
-		try:
-			image = self.node.images[key]
-		except KeyError:
-			image = None
-		self.imagepanel.setImage(image)
-		try:
-			targets = self.node.imagetargets[key]
-		except KeyError:
-			targets = {}
-		self._setTargets(targets)
-
-	def imageUpdated(self, name, image, targets=None):
-		evt = ImageUpdatedEvent(self, name, image, targets)
-		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)

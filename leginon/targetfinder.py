@@ -170,9 +170,6 @@ class ClickTargetFinder(TargetFinder):
 
 		self.userpause = threading.Event()
 
-		self.typenames = ['acquisition', 'focus', 'done', 'position']
-		self.panel.addTargetTypes(self.typenames)
-
 		if self.__class__ == ClickTargetFinder:
 			self.start()
 
@@ -189,7 +186,7 @@ class ClickTargetFinder(TargetFinder):
 		# XXX would be nice to display existing targets too
 
 		# display image
-		map(self.panel.setTargets, zip(self.typenames, [[]]*len(self.typenames)))
+		map(self.setTargets, zip([[]]*len(self.typenames), self.typenames))
 		self.setImage(imdata['image'])
 		#self.clickimage.imagedata = imdata
 
@@ -263,13 +260,6 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		if self.__class__ == MosaicClickTargetFinder:
 			self.start()
 
-	def setImage(self, image):
-		self.updateImage('Original', image)
-
-	def updateImage(self, name, image):
-		self.images[name] = image
-		self.panel.imageUpdated(name, image)
-
 	# not complete
 	def handleTargetListDone(self, targetlistdoneevent):
 		self.logger.info('Target list done')
@@ -337,7 +327,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 	def refreshCurrentPosition(self):
 		self.updateCurrentPosition()
-		self.panel.setTargets('position', self.currentposition)
+		self.setTargets(self.currentposition, 'position')
 
 	def updateCurrentPosition(self):
 		try:
@@ -395,10 +385,10 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 					donetargets.append(vcoord)
 				else:
 					targets.append(vcoord)
-		self.panel.setTargets('acquisition', targets)
-		self.panel.setTargets('done', donetargets)
+		self.setTargets(targets, 'acquisition')
+		self.setTargets(donetargets, 'done')
 		self.updateCurrentPosition()
-		self.panel.setTargets('position', self.currentposition)
+		self.setTargets(self.currentposition, 'position')
 		n = len(targets)
 		ndone = len(donetargets)
 		self.logger.info('displayed %s targets (%s done)' % (n+ndone, ndone))
@@ -551,14 +541,14 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.mosaicimagedata = None
 
 		self.logger.info('Displaying mosaic image')
-		self.setImage(self.mosaicimage)
+		self.setImage(self.mosaicimage, 'Original')
 		## imagedata would be full mosaic image
 		#self.clickimage.imagedata = None
 		self.displayTargets()
 		self.beep()
 
 	def clearMosaicImage(self):
-		self.setImage(None)
+		self.setImage(None, 'Original')
 		self.mosaicimage = None
 		self.mosaicimagescale = None
 		self.mosaicimagedata = None
@@ -602,12 +592,12 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		kernel = convolver.gaussian_kernel(size, sigma)
 		self.convolver.setKernel(kernel)
 		image = self.convolver.convolve(image=original_image)
-		self.updateImage('Filtered', image.astype(numarray.Float32))
+		self.setImage(image.astype(numarray.Float32), 'Filtered')
 
 		## threshold grid bars
 		squares_thresh = self.settings['threshold']
 		image = imagefun.threshold(image, squares_thresh)
-		self.updateImage('Thresholded', image.astype(numarray.Float32))
+		self.setImage(image.astype(numarray.Float32), 'Thresholded')
 
 		## find blobs
 		blobs = imagefun.find_blobs(original_image, image,
@@ -639,7 +629,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			self.publish(stats, database=True)
 
 		## display them
-		self.panel.setTargets('acquisition', targets)
+		self.setTargets(targets, 'acquisition')
 
 		message = 'found %s squares' % (len(targets),)
 		self.logger.info(message)

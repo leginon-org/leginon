@@ -30,47 +30,9 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 													'squarefinder',
 													shortHelpString='Find Squares')
 
-		self.rbdisplay = {}
-		self.rbdisplay['Original'] = wx.RadioButton(self, -1, 'Originial',
-																							style=wx.RB_GROUP)
-		self.rbdisplay['Filtered'] = wx.RadioButton(self, -1, 'Filtered')
-		self.rbdisplay['Thresholded'] = wx.RadioButton(self, -1, 'Thresholded')
-
-		self.blpfsettings = wx.Button(self, -1, 'Settings...')
-		self.bblobsettings = wx.Button(self, -1, 'Settings...')
-
-		sz = self._getStaticBoxSizer('Display', (2, 0), (1, 1), wx.ALIGN_CENTER)
-		sz.Add(self.rbdisplay['Original'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.rbdisplay['Filtered'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.rbdisplay['Thresholded'], (2, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.blpfsettings, (1, 1), (1, 1), wx.ALIGN_CENTER)
-		sz.Add(self.bblobsettings, (2, 1), (1, 1), wx.ALIGN_CENTER)
-		self.Bind(gui.wx.TargetFinder.EVT_IMAGE_UPDATED, self.onImageUpdated)
-
-	def onImageUpdated(self, evt):
-		if self.rbdisplay[evt.name].GetValue():
-			self.imagepanel.setImage(evt.image)
-			if evt.targets is not None:
-				self.imagepanel.clearTargets()
-				for typename, targetlist in evt.targets.items():
-					for target in targetlist:
-						x, y = target
-						self.imagepanel.addTarget(typename, x, y)
-
-	def imageUpdated(self, name, image, targets=None):
-		evt = gui.wx.TargetFinder.ImageUpdatedEvent(self, name, image, targets)
-		self.GetEventHandler().AddPendingEvent(evt)
-
-	def onDisplayRadioButton(self, evt):
-		for key, value in self.rbdisplay.items():
-			if value.GetValue():
-				try:
-					image = self.node.images[key]
-				except KeyError:
-					image = None
-				self.imagepanel.setImage(image)
-				break
+		self.imagepanel.addTypeTool('Originial', display=True)
+		self.imagepanel.addTypeTool('Filtered', display=True, settings=True)
+		self.imagepanel.addTypeTool('Thresholded', display=True, settings=True)
 
 	def onNodeInitialized(self):
 		gui.wx.ClickTargetFinder.Panel.onNodeInitialized(self)
@@ -85,10 +47,8 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onFindSquaresButton,
 											id=gui.wx.ToolBar.ID_FIND_SQUARES)
 
-		self.Bind(wx.EVT_BUTTON, self.onLPFSettingsButton, self.blpfsettings)
-		self.Bind(wx.EVT_BUTTON, self.onBlobSettingsButton, self.bblobsettings)
-		for value in self.rbdisplay.values():
-			self.Bind(wx.EVT_RADIOBUTTON, self.onDisplayRadioButton, value)
+		self.Bind(gui.wx.ImageViewer.EVT_SETTINGS, self.onImageSettings,
+							self.imagepanel)
 
 	def onTilesButton(self, evt):
 		choices = self.node.getMosaicNames()
@@ -113,15 +73,15 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 	def onShowPositionButton(self, evt):
 		self.node.refreshCurrentPosition()
 
-	def onLPFSettingsButton(self, evt):
-		dialog = LPFSettingsDialog(self)
-		dialog.ShowModal()
-		dialog.Destroy()
-
-	def onBlobSettingsButton(self, evt):
-		dialog = BlobSettingsDialog(self)
-		dialog.ShowModal()
-		dialog.Destroy()
+	def onImageSettings(self, evt):
+		if evt.name == 'Filtered':
+			dialog = LPFSettingsDialog(self)
+			dialog.ShowModal()
+			dialog.Destroy()
+		elif evt.name == 'Thresholded':
+			dialog = BlobSettingsDialog(self)
+			dialog.ShowModal()
+			dialog.Destroy()
 
 	def onFindSquaresButton(self, evt):
 		self.node.findSquares()
