@@ -323,11 +323,13 @@ class EM(node.Node):
 			percent = 25
 			increment = (90-percent)/len(withkeys)
 
+		scopekeys = self.scope.keys()
+		camerakeys = self.camera.keys()
 		for key in withkeys:
 			self.uiSetStatus('Requesting ' + key + ' value', None)
-			if key in self.scope:
+			if key in scopekeys:
 				result[key] = self.scope[key]
-			elif key in self.camera:
+			elif key in camerakeys:
 				result[key] = self.camera[key]
 			else:
 				pass
@@ -387,16 +389,18 @@ class EM(node.Node):
 			percent = 20
 			increment = (90-percent)/len(ordered.keys())
 
+		scopekeys = self.scope.keys()
+		camerakeys = self.camera.keys()
 		for emkey, emvalue in ordered.items():
 			self.uiSetStatus('Requesting modification of ' + emkey, None)
 			if emvalue is not None:
-				if emkey in self.scope:
+				if emkey in scopekeys:
 					try:
 						self.scope[emkey] = emvalue
 					except:	
 						print "failed to set '%s' to %s" % (emkey, emvalue)
 						self.printException()
-				elif emkey in self.camera:
+				elif emkey in camerakeys:
 					try:
 						self.camera[emkey] = emvalue
 					except:	
@@ -515,8 +519,8 @@ class EM(node.Node):
 				self.progresslabel.set(message)
 			if percent is not None:
 				self.progress.set(percent)
-			if percent is not None or message is not None:
-				time.sleep(0.25)
+#			if percent is not None or message is not None:
+#				time.sleep(0.25)
 
 	def uiSetScope(self):
 		self.uiSetUIStatus('Setting microscope parameters', 10)
