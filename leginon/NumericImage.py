@@ -212,9 +212,15 @@ class NumericImage:
 		wximage.SetData(self.image.convert('RGB').tostring())
 		return wximage
 
-	def jpeg(self, filename, quality=100):
-		'Convert numeric -> JPEG [quality]'
+	def jpeg(self, filename=None, quality=100):
+		'''
+		Convert numeric -> JPEG [quality]
+		filename defaults to stdout
+		quality defaults to 100
+		'''
 		img = self.update_image()
+		if filename is None:
+			filename = sys.stdout
 		img.convert('L').save(filename, "JPEG", quality=quality)
 
 
