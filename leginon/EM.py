@@ -128,7 +128,8 @@ class EM(node.Node):
 		if scope is None:
 			scope = ('tecnai', 'tecnai')
 		if camera is None:
-			camera = ('gatan', 'gatan')
+			#camera = ('gatan', 'gatan')
+			camera = ('tietz', 'tietz')
 
 		node.Node.__init__(self, id, session, nodelocations, datahandler=DataHandler, **kwargs)
 
