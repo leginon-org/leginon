@@ -34,8 +34,10 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		only want most recent versions of each
 		'''
 
-		imagequery = data.AcquisitionImageData(initializer=imagedata)
-		imagequery['image'] = None
+		print 'researchImageTargets', imagedata['id']
+		imagequery = data.AcquisitionImageData()
+		imagequery['id'] = imagedata['id']
+		imagequery['session'] = imagedata['session']
 
 		targetquery = data.AcquisitionImageTargetData()
 		targetquery['image'] = imagequery
@@ -45,6 +47,7 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		targetquery['camera'] = data.CameraEMData()
 		targetquery['preset'] = data.PresetData()
 		targets = self.research(datainstance=targetquery, fill=False)
+		print 'found %s targets for image %s' % (len(targets), imagedata['id'])
 
 		## now filter out only the latest versions
 		# map target id to latest version
@@ -177,6 +180,21 @@ class TargetFinder(imagewatcher.ImageWatcher):
 			self.targetlistevents[targetlistid]['received'].set()
 		self.confirmEvent(targetlistdoneevent)
 
+	def newTargetData(self, imagedata, type, drow, dcol):
+		'''
+		returns a new target data object with data filled in from the image data
+		'''
+		imagearray = imagedata['image']
+		targetdata = data.AcquisitionImageTargetData(id=self.ID(), type=type, version=0, status='new')
+		targetdata['image'] = imagedata
+		targetdata['scope'] = imagedata['scope']
+		targetdata['camera'] = imagedata['camera']
+		targetdata['preset'] = imagedata['preset']
+		targetdata['type'] = type
+		targetdata['delta row'] = drow
+		targetdata['delta column'] = dcol
+		return targetdata
+
 	def defineUserInterface(self):
 		imagewatcher.ImageWatcher.defineUserInterface(self)
 
@@ -222,21 +240,6 @@ class ClickTargetFinder(TargetFinder):
 
 	def submitTargets(self):
 		self.userpause.set()
-
-	def newTargetData(self, imagedata, type, drow, dcol):
-		'''
-		returns a new target data object with data filled in from the image data
-		'''
-		imagearray = imagedata['image']
-		targetdata = data.AcquisitionImageTargetData(id=self.ID(), type=type, version=0, status='new')
-		targetdata['image'] = imagedata
-		targetdata['scope'] = imagedata['scope']
-		targetdata['camera'] = imagedata['camera']
-		targetdata['preset'] = imagedata['preset']
-		targetdata['type'] = type
-		targetdata['delta row'] = drow
-		targetdata['delta column'] = dcol
-		return targetdata
 
 	def getTargetDataList(self, typename):
 		targetlist = []
@@ -493,7 +496,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 																			parameter,
 																			callback=self.uiSetCalibrationParameter,
 																			persist=True)
-		self.scaleimage = uidata.Boolean('Scale Image', True, 'rw')
+		self.scaleimage = uidata.Boolean('Scale Image', True, 'rw', persist=True)
 		self.maxdimension = uidata.Integer('Maximum Dimension', 512, 'rw')
 		self.displayimage = uidata.Boolean('Display Image', True, 'rw')
 		settingscontainer = uidata.Container('Settings')
