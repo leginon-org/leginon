@@ -26,9 +26,8 @@ def eventClasses():
 class Event(data.Data):
 	def typemap(cls):
 		t = data.Data.typemap()
-		t += [ ('confirm', int), ]
-		t += [ ('destination', tuple), ]
-		return
+		t += [ ('confirm', int), ('destination', tuple)]
+		return t
 	typemap = classmethod(typemap)
 
 class EventLog(data.Data):
@@ -71,7 +70,7 @@ class NodeAvailableEvent(NotificationEvent):
 	'Event sent by a node to the manager to indicate that it is accessible'
 	def typemap(cls):
 		t = NotificationEvent.typemap()
-		t += [ ('location', dict), ('nodeclass', str), ]
+		t += [('location', dict), ('nodeclass', str)]
 		return t
 	typemap = classmethod(typemap)
 

@@ -23,6 +23,37 @@ import uiserver
 import uidata
 import leginonobject
 
+class DataBinder(datahandler.DataBinder):
+	def handleData(self, newdata):
+		dataclass = newdata.__class__
+		args = newdata
+		for bindclass in self.bindings.keys():
+			if issubclass(dataclass, bindclass):
+				try:
+					methods = self.bindings[bindclass]
+					for method in methods:
+						method(args)
+				except KeyError:
+					pass
+
+	def addBinding(self, dataclass, nodeid, method):
+		'method must take data instance as first arg'
+		try:
+			self.bindings[dataclass].append(method)
+		except KeyError:
+			self.bindings[dataclass] = [method]
+
+	def delBinding(self, dataclass, nodeid, method=None):
+		try:
+			if method is None:
+				del self.bindings[dataclass]
+			else:
+				self.bindings[dataclass].remove(method)
+				if not self.bindings[dataclass]:
+					del self.bindings[dataclass]
+		except (KeyError, ValueError):
+			pass
+
 class Manager(node.Node):
 	'''Overlord of the nodes. Handles node communication (data and events).'''
 	def __init__(self, id, session, tcpport=None, xmlrpcport=None, **kwargs):
@@ -31,7 +62,7 @@ class Manager(node.Node):
 		self.clients = {}
 
 		self.uicontainer = uiserver.Server('Manager', xmlrpcport)
-		self.datahandler = node.DataHandler(self)
+		self.datahandler = node.DataHandler(self, databinderclass=DataBinder)
 		self.server = datatransport.Server(self.datahandler, tcpport)
 
 		node.Node.__init__(self, id, session, **kwargs)
@@ -118,6 +149,7 @@ class Manager(node.Node):
 			client = self.clients[nodeid]
 		except KeyError:
 			return
+		ievent['destination'] = nodeid
 		self.eventToClient(ievent, client, wait, timeout)
 
 	def confirmEvent(self, ievent):
@@ -484,9 +516,10 @@ class Manager(node.Node):
 				return False
 		return True
 
-	def addNode(self, location):
+	def addNode(self, location, nodeid):
 		'''Add a running node to the manager. Sends an event to the location.'''
-		e = event.NodeAvailableEvent(id=self.id, location=self.location(),
+		e = event.NodeAvailableEvent(id=self.id, destination=nodeid,
+																	location=self.location(),
 																	nodeclass=self.__class__.__name__)
 		client = self.clientclass(location)
 		try:
@@ -676,7 +709,7 @@ class Manager(node.Node):
 		location['TCP transport'] = {}
 		location['TCP transport']['hostname'] = hostname
 		location['TCP transport']['port'] = port
-		self.addNode(location)
+		self.addNode(location, (hostname,))
 
 	def uiLaunch(self):
 		launchername = self.uilauncherselect.getSelectedValue()

@@ -263,15 +263,15 @@ class DataBinder(DataHandler):
 		figure out which callback methods to execute on this data
 		'''
 		dataclass = newdata.__class__
-		args = (newdata,)
+		args = newdata
 		for bindclass in self.bindings.keys():
 			if issubclass(dataclass, bindclass):
 				try:
 					methods = self.bindings[bindclass][newdata['destination']]
+					for method in methods:
+						method(args)
 				except KeyError:
 					pass
-				for method in methods:
-					method(args)
 	
 	def addBinding(self, dataclass, nodeid, method):
 		'method must take data instance as first arg'
@@ -282,7 +282,7 @@ class DataBinder(DataHandler):
 			except KeyError:
 				nodes[nodeid] = [method]
 		except KeyError:
-			self.bindings = {dataclass: {nodeid: [method]}}
+			self.bindings[dataclass] = {nodeid: [method]}
 
 	def delBinding(self, dataclass, nodeid, method=None):
 		try:

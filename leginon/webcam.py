@@ -11,7 +11,6 @@ import VideoCapture
 import Image
 import time
 import threading
-import device
 
 class Webcam(node.Node):
 	def __init__(self, id, session, nodelocations, **kwargs):
