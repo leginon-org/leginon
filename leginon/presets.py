@@ -351,7 +351,6 @@ class PresetsManager(node.Node):
 			print 'Enter a preset name!'
 
 	def uiSelectCallback(self, index):
-		print 'INDEX', index
 		try:
 			self.currentselection = self.presets[index]
 		except IndexError:
