@@ -61,8 +61,8 @@ class UIClient(XMLRPCClient, uiserver.XMLRPCServer):
 class wxUIClient(UIClient):
 	def __init__(self, container, serverhostname, serverport, port=None):
 		# there are some timing issues to be thought out
-		UIClient.__init__(self, serverhostname, serverport, port)
 		self.container = container
+		UIClient.__init__(self, serverhostname, serverport, port)
 		threading.Thread(target=self.addServer, args=()).start()
 
 	def addFromServer(self, namelist, typelist, value, read, write):
@@ -93,18 +93,13 @@ class UIApp(wxApp):
 
 	def OnInit(self):
 		self.frame = wxFrame(NULL, -1, 'UI')
-#		self.panel = wxPanel(self.frame, -1)
 		self.panel = wxScrolledWindow(self.frame, -1, size=(600, 700))
 		self.panel.SetScrollRate(1, 1)		
-#		self.panel.SetSize(self.frame.GetClientSize())
 		containerclass = wxClientContainerFactory(wxStaticBoxContainerWidget)
 		self.container = containerclass((self.serverhostname, self.serverport),
 																		('UI',), self.panel, self, self.port)
 		self.panel.SetAutoLayout(true)
 		self.panel.SetSizer(self.container.wxwidget)
-#		self.container.wxwidget.Fit(self.frame)
-		size = self.panel.GetSize()
-#		self.container.wxwidget.SetDimension(0, 0, size.GetWidth(), size.GetHeight())
 		self.SetTopWindow(self.frame)
 		self.panel.Show(true)
 		self.frame.Fit()
@@ -440,6 +435,8 @@ def wxClientContainerFactory(wxcontainerwidget):
 				if minsize[0] > size[0] or minsize[1] > size[1]:
 					evt.parent.Fit()
 					evt.container.Fit()
+			# no background set if color values too low or high in GTK?
+			evt.container.parent.Refresh()
 			evt.container.event.set()
 			evt.container.lock.release()
 
