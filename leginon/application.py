@@ -42,8 +42,8 @@ class Application(leginonobject.LeginonObject):
 		for args in self.launchspec:
 			self.printerror('launching %s' % str(args))
 			newid = apply(self.manager.launchNode, args)
-			print 'application sleep 1'
-			time.sleep(1)
+			print 'application sleep 0.5'
+			time.sleep(0.5)
 			print 'application sleep done'
 			#print 'NEWID', newid
 			self.launchednodes.append(newid)
