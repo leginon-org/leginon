@@ -178,9 +178,8 @@ class Corrector(node.Node):
 			self.displayImage(imagearray)
 
 	def uiAcquireCorrected(self):
-		#camconfig = self.cam.cameraConfig()
 		try:
-			imagedata = self.acquireCorrectedArray(camconfig='UI', correction=True)
+			imagedata = self.acquireCorrectedArray()
 		except node.PublishError:
 			self.outputError('Cannot set EM parameter, EM may not be running')
 		else:
@@ -386,7 +385,7 @@ class Corrector(node.Node):
 		self.storeRef('norm', norm, corstate)
 
 	def acquireCorrectedArray(self, camconfig=None):
-		imagedata = self.acquireCorrectedImageData(camconfig)
+		imagedata = self.acquireCorrectedImageData(camconfig='UI')
 		return imagedata['image']
 
 	def acquireCorrectedImageData(self, camconfig=None):
