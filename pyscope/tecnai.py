@@ -18,7 +18,7 @@ class tecnai(scope.scope):
         self.theScope = win32com.client.Dispatch("Tecnai.Instrument.1")        
         self.theLowDose = win32com.client.Dispatch("LDServer.LdSrv")
         self.theFilm = win32com.client.Dispatch("adaExp.TAdaExp")
-                # this was a quick way of doing things, needs to be redone
+        # this was a quick way of doing things, needs to be redone
         self.magTable = [{'index': 1, 'up': 21, 'down': 18.5},
                          {'index': 2, 'up': 28, 'down': 25},
                          {'index': 3, 'up': 38, 'down': 34},
@@ -419,6 +419,7 @@ class tecnai(scope.scope):
             raise ValueError
         
         pos = self.theScope.Stage.Position
+
         try:
             pos.Z = position["z"]
         except KeyError:
