@@ -7,7 +7,8 @@ def factory(scopeclass):
               "stigmator", "spot size", "beam tilt",
               "beam shift", "image shift", "defocus",
               "magnification", "stage position", "low dose",
-              "low dose mode", "diffraction mode"]
+              "low dose mode", "diffraction mode", 'reset defocus',
+              'screen position', 'holder status', 'holder type', 'stage status']
       def exit(self):
           scopeclass.exit(self)
   
@@ -66,10 +67,14 @@ def factory(scopeclass):
           elif key == 'reset defocus':
               if val == 1:
                   self.resetDefocus()
-	      elif val == 0:
-	          pass
+              elif val == 0:
+                  pass
               else:
                   raise ValueError
+          elif key == 'screen position':
+              self.setScreen(val)
+          elif key == 'holder type':
+              self.setHolderType(val)
           else:
               raise KeyError
           return 0
@@ -113,6 +118,14 @@ def factory(scopeclass):
               return self.getDiffractionMode()
           elif key == 'reset defocus':
               return 0
+          elif key == 'screen position':
+              return self.getScreen()
+          elif key == 'holder type':
+              return self.getHolderType()
+          elif key == 'holder status':
+              return self.getHolderStatus()
+          elif key == 'stage status':
+              return self.getStageStatus()
           else:
               raise KeyError
   

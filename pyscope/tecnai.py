@@ -23,7 +23,7 @@ else:
 		def __init__(self):
 			self.theScope = win32com.client.Dispatch("Tecnai.Instrument.1")		
 			self.theLowDose = win32com.client.Dispatch("LDServer.LdSrv")
-			self.theFilm = win32com.client.Dispatch("adaExp.TAdaExp")
+			self.theAda = win32com.client.Dispatch("adaExp.TAdaExp")
 			# this was a quick way of doing things, needs to be redone
 			self.magTable = [{'index': 1, 'up': 21, 'down': 18.5},
 							 {'index': 2, 'up': 28, 'down': 25},
@@ -580,45 +580,101 @@ else:
 				raise ValueError
 			
 			return 0
+
 		def filmExposure(self):
-			hr = self.theFilm.CloseShutter
+			hr = self.theAda.CloseShutter
 			if hr != 0:
 			  return hr
-			hr = self.theFilm.DisconnectExternalShutter
+			hr = self.theAda.DisconnectExternalShutter
 			if hr != 0:
 			  return hr
-			hr = self.theFilm.MainScreenUp
+			hr = self.theAda.MainScreenUp
 			if hr != 0:
 			  return hr
-			hr = self.theFilm.LoadPlate
+			hr = self.theAda.LoadPlate
 			if hr != 0:
 			  return hr
-			hr = self.theFilm.ExposePlateLabel
+			hr = self.theAda.ExposePlateLabel
 			if hr != 0:
 			  return hr
-			hr = self.theFilm.OpenShutter
+			hr = self.theAda.OpenShutter
 			if hr != 0:
 			  return hr
 			
 			self.theScope.Camera.TakeExposure()
 			
-			hr = self.theFilm.CloseShutter
+			hr = self.theAda.CloseShutter
 			if hr != 0:
 			  return hr
-			hr = self.theFilm.UnloadPlate
+			hr = self.theAda.UnloadPlate
 			if hr != 0:
 			  return hr
-			hr = self.theFilm.UpdateExposureNumber
+			hr = self.theAda.UpdateExposureNumber
 			if hr != 0:
 			  return hr
-			hr = self.theFilm.MainScreenDown
+			hr = self.theAda.MainScreenDown
 			if hr != 0:
 			  return hr
-			hr = self.theFilm.ConnectExternalShutter
+			hr = self.theAda.ConnectExternalShutter
 			if hr != 0:
 			  return hr
-			hr = self.theFilm.OpenShutter
+			hr = self.theAda.OpenShutter
 			if hr != 0:
 			  return hr
 	
 			return 0
+
+	def getScreen(self):
+		if self.theAda.MainScreenStatus == 1:
+			return 'up'
+		else:
+			return 'down'
+
+	def setScreen(self, mode):
+		if mode == 'up':
+			self.theAda.MainScreenUp
+		elif mode == 'down':
+			self.theAda.MainScreenDown
+		else:
+			raise ValueError
+
+	def getHolderStatus(self):
+		if self.theAda.SpecimenHolderInserted == adacom.constants.eInserted:
+			return 'inserted'
+		elif self.theAda.SpecimenHolderInserted == adacom.constants.eNotInserted:
+			return 'not inserted'
+		else:
+			raise SystemError
+
+	def getHolderType(self):
+		if self.theAda.CurrentSpecimenHolderName == u'No Specimen Holder':
+			return 'no holder'
+		elif self.theAda.CurrentSpecimenHolderName == u'Single Tilt':
+			return 'single tilt'
+		else:
+			return 'unknown holder'
+
+	def setHolderType(self, holdertype):
+		if holdertype == 'no holder':
+			if self.theAda.SpecimenHolderName(0) == u'No Specimen Holder':
+				self.theAda.SetCurrentSpecimenHolder(0)
+			else:
+				raise SystemError
+		elif holdertype == 'single tilt':
+			if self.theAda.SpecimenHolderName(1) == u'Single Tilt':
+				self.theAda.SetCurrentSpecimenHolder(1)
+			else:
+				raise SystemError
+		elif holdertype == 'unknown holder':
+			pass
+		else:
+			raise ValueError
+
+	def getStageStatus(self):
+		if self.theAda.GonioLedStatus == adacom.constants.eOn:
+			return 'busy'
+		elif self.theAda.GonioLedStatus == adacom.constants.eOff:
+			return 'ready'
+		else:
+			raise SystemError
+
