@@ -4,25 +4,28 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.17 $
+# $Revision: 1.18 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-25 01:34:25 $
+# $Date: 2005-02-25 19:03:20 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
 import data
 import remotecall
+import gui.wx.Events
 
 class Proxy(object):
-	def __init__(self, objectservice, session=None):
+	def __init__(self, objectservice, session=None, wxeventhandler=None):
 		self.tems = {}
 		self.ccdcameras = {}
 		self.imagecorrections = {}
 		self.tem = None
 		self.ccdcamera = None
+		self.camerasize = None
 		self.imagecorrection = None
 		self.session = session
+		self.wxeventhandler = wxeventhandler
 		self.objectservice = objectservice
 		self.objectservice._addDescriptionHandler(add=self.onAddDescription,
 																							remove=self.onRemoveDescription)
@@ -90,8 +93,13 @@ class Proxy(object):
 	def setCCDCamera(self, name):
 		if name is None:
 			self.ccdcamera = None
+			self.camerasize = None
 		else:
 			self.ccdcamera = self.ccdcameras[name]
+			self.camerasize = self.ccdcamera.CameraSize
+		if self.wxeventhandler is not None:
+			evt = gui.wx.Events.SetCCDCameraEvent(self.wxeventhandler, name)
+			self.wxeventhandler.GetEventHandler().AddPendingEvent(evt)
 
 	def setImageCorrection(self, name):
 		if name is None:
