@@ -1,17 +1,21 @@
 #!/usr/bin/env python
 import leginonobject
 import copy
+import threading
 #import weakref
 
 #_id2obj_dict = weakref.WeakValueDictionary()
 localserverdict = {}
+localserverdictlock = threading.RLock()
 
 class Server(leginonobject.LeginonObject):
 	def __init__(self, nid, dh):
 		leginonobject.LeginonObject.__init__(self, nid)
 		self.datahandler = dh
 		self.pythonid = id(self)
+		localserverdictlock.acquire()
 		localserverdict[self.pythonid] = self
+		localserverdictlock.release()
 
 	def start(self):
 		pass
@@ -22,7 +26,9 @@ class Server(leginonobject.LeginonObject):
 		return loc
 
 	def exit(self):
+		localserverdictlock.acquire()
 		del localserverdict[self.pythonid]
+		localserverdictlock.release()
 
 class Client(leginonobject.LeginonObject):
 	def __init__(self, id, location):
@@ -32,24 +38,36 @@ class Client(leginonobject.LeginonObject):
 		self.serverlocation = location
 
 	def push(self, idata):
+		localserverdictlock.acquire()
 		try:
-			obj = localserverdict[self.serverlocation['local server python ID']]
+			server = localserverdict[self.serverlocation['local server python ID']]
 		except KeyError:
+			localserverdictlock.release()
 			raise IOError
-		if obj is None:
+
+		if server is None:
+			localserverdictlock.release()
 			raise IOError # err...its sort of an IOError
 		else:
-			return obj.datahandler.insert(copy.deepcopy(idata))
+			obj = server.datahandler.insert(copy.deepcopy(idata))
+			localserverdictlock.release()
+			return obj
 
 	def pull(self, id):
+		localserverdictlock.acquire()
 		try:
-			obj = localserverdict[self.serverlocation['local server python ID']]
+			server = localserverdict[self.serverlocation['local server python ID']]
 		except KeyError:
+			localserverdictlock.release()
 			raise IOError
-		if obj is None:
+
+		if server is None:
+			localserverdictlock.release()
 			raise IOError
 		else:
-			return copy.deepcopy(obj.datahandler.query(id))
+			obj = copy.deepcopy(server.datahandler.query(id))
+			localserverdictlock.release()
+			return obj
 
 if __name__ == '__main__':
 	pass
