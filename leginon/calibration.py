@@ -31,10 +31,29 @@ class Calibration(node.Node):
 		self.range = [0.0000001, 0.00001]
 		####
 
-		self.validshiftpixel = self.validshiftpercent = \
-			{'x': {'min': None, 'max': None}, 'y': {'min': None, 'max': None}}
-		self.validShiftPercentCallback(
-			{'x': {'min': 10.0, 'max': 50.0}, 'y': {'min': 10.0, 'max': 50.0}})
+		self.validshift = \
+			{'correlation':
+				{'pixel':
+					{'x': {'min': None, 'max': None}, 'y': {'min': None, 'max': None}},
+				'percent':
+					{'x': {'min': None, 'max': None}, 'y': {'min': None, 'max': None}}},
+			'calibration':
+				{'pixel':
+					{'x': {'min': None, 'max': None}, 'y': {'min': None, 'max': None}},
+				'percent':
+					{'x': {'min': None, 'max': None}, 'y': {'min': None, 'max': None}}}}
+
+		self.validShiftCallback(
+			{'correlation':
+				{'pixel':
+					{'x': {'min': None, 'max': None}, 'y': {'min': None, 'max': None}},
+				'percent':
+					{'x': {'min': 10.0, 'max': 50.0}, 'y': {'min': 10.0, 'max': 50.0}}},
+			'calibration':
+				{'pixel':
+					{'x': {'min': None, 'max': None}, 'y': {'min': None, 'max': None}},
+				'percent':
+					{'x': {'min': 10.0, 'max': 50.0}, 'y': {'min': 10.0, 'max': 50.0}}}})
 
 		self.correlationthreshold = 0.05
 
@@ -42,27 +61,48 @@ class Calibration(node.Node):
 		self.clearStateImages()
 		self.start()
 
-	def validShiftPixelCallback(self, value=None):
+	def validShiftCallback(self, value=None):
 		if value:
-			self.validshiftpixel = value
-			for axis in self.validshiftpercent:
-				for limit in self.validshiftpercent[axis]:
-					self.validshiftpercent[axis][limit] = \
-						self.validshiftpixel[axis][limit] \
-							/ self.camerastate['dimension'][axis] * 100,
-		else:
-			return self.validshiftpixel
+			updatelist = []
+			for shift in self.validshift:
+				if self.validshift[shift] != value[shift]:
+					updatelist.append(shift)
 
-	def validShiftPercentCallback(self, value=None):
-		if value:
-			self.validshiftpercent = value
-			for axis in self.validshiftpixel:
-				for limit in self.validshiftpixel[axis]:
-					self.validshiftpixel[axis][limit] = \
-						self.camerastate['dimension'][axis] \
-							* self.validshiftpercent[axis][limit]/100
+			for shift in updatelist:
+				typelist = []
+				for t in self.validshift[shift]:
+					if self.validshift[shift][t] != value[shift][t]:
+						typelist.append(t)
+				print 'in shift', shift, "typelist =", typelist
+				if len(typelist) != 1:
+					break
+				for t in typelist:
+					self.validshift[shift][t] = value[shift][t]
+					print self.validshift[shift][t]
+					if t == 'percent':
+						self.validshift[shift]['pixel'] = \
+							self.calculatePixelFromPercent(value[shift][t])
+					elif t == 'pixel':
+						value[shift]['percent'] = \
+							self.calculatePercentFromPixel(value[shift][t])
 		else:
-			return self.validshiftpercent
+			return self.validshift
+
+	def calculatePixelFromPercent(self, percent):
+		pixel = {'x': {'min': None, 'max': None}, 'y': {'min': None, 'max': None}}
+		for axis in percent:
+			for limit in percent[axis]:
+				pixel[axis][limit] = self.camerastate['dimension'][axis] \
+						* percent[axis][limit]/100
+		return pixel
+
+	def calculatePercentFromPixel(self, pixel):
+		percent = {'x': {'min': None, 'max': None}, 'y': {'min': None, 'max': None}}
+		for axis in pixel:
+			for limit in pixel[axis]:
+				percent[axis][limit] = \
+					pixel[axis][limit] / self.camerastate['dimension'][axis] * 100
+		return percent
 
 	def main(self):
 		pass
@@ -297,12 +337,10 @@ class Calibration(node.Node):
 		)
 		rspec = self.registerUIMethod(self.uiSetParameters, 'Set Parameters', argspec)
 
-		pixelspec = self.registerUIData('Valid Pixel Shift', 'struct', permissions='rw')
-		pixelspec.set(self.validShiftPixelCallback)
-		percentspec = self.registerUIData('Valid Percent Shift', 'struct', permissions='rw')
-		percentspec.set(self.validShiftPercentCallback)
+		vspec = self.registerUIData('Valid Shift', 'struct', permissions='rw')
+		vspec.set(self.validShiftCallback)
 
-		self.registerUISpec('Calibration', (nodespec, cspec, rspec, pixelspec, percentspec))
+		self.registerUISpec('Calibration', (nodespec, cspec, rspec, vspec))
 
 	def uiCalibrate(self):
 		self.calibrate()
@@ -315,7 +353,8 @@ class Calibration(node.Node):
 		self.range[1] = r1
 		self.attempts = a
 		self.camerastate = cs
-		self.validShiftPercentCallback(self.validshiftpercent)
+		# update valid somehow
+		#self.validShiftCallback(self.validshift)
 		return ''
 
 #			imageshift = (shiftrange[1] + shiftrange[0])/2
