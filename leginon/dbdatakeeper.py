@@ -4,10 +4,10 @@ import threading
 import datahandler
 
 class DBDataKeeper(datahandler.DataHandler):
-	def __init__(self, id):
+	def __init__(self, id, session):
 		datahandler.DataHandler.__init__(self, id)
-		# session ID == self.id[0]
-		# leginon object ID == self.id[1:]
+		# leginon object id = id
+		# session id = session
 		# connect?
 
 	def query(self, **kwargs):

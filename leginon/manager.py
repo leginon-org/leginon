@@ -22,15 +22,13 @@ class DataHandler(node.DataHandler):
 
 class Manager(node.Node):
 	'''Overlord of the nodes. Handles node communication (data and events).'''
-	def __init__(self, session, id, tcpport=None, xmlrpcport=None, **kwargs):
+	def __init__(self, id, session, tcpport=None, xmlrpcport=None, **kwargs):
 		# the id is manager (in a list)
 
 		self.clients = {}
 
-		id = (session,) + id
-
-		node.Node.__init__(self, id, nodelocations={}, dh=DataHandler, dhargs=(),
-															tcpport=tcpport, xmlrpcport=xmlrpcport, **kwargs)
+		node.Node.__init__(self, id, session, nodelocations={}, dh=DataHandler,
+										dhargs=(), tcpport=tcpport, xmlrpcport=xmlrpcport, **kwargs)
 
 		self.uiserver.server.register_function(self.uiGetNodeLocations,
 																						'getNodeLocations')
@@ -316,7 +314,7 @@ class Manager(node.Node):
 		self.app.addLaunchSpec(args)
 
 		newid = self.id + (name,)
-		args = (newid, self.nodelocations) + nodeargs
+		args = (newid, self.session, self.nodelocations) + nodeargs
 		ev = event.LaunchEvent(self.ID(), newproc, target, args)
 		self.outputEvent(ev, 0, launcher)
 		return newid

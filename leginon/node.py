@@ -45,11 +45,11 @@ class DataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
 
 class Node(leginonobject.LeginonObject):
 	'''Atomic operating unit for performing tasks, creating data and events.'''
-	def __init__(self, id, nodelocations = {},
+	def __init__(self, id, session, nodelocations = {},
 											dh = DataHandler, dhargs = (),
 											tcpport=None, xmlrpcport=None,
 											clientclass = datatransport.Client, launchlock=None):
-		leginonobject.LeginonObject.__init__(self, id)
+		leginonobject.LeginonObject.__init__(self, id, session)
 
 		self.nodelocations = nodelocations
 		self.launchlock = launchlock
@@ -58,7 +58,8 @@ class Node(leginonobject.LeginonObject):
 
 		self.datahandlers = {}
 		self.datahandlers['node'] = apply(dh, (self.ID(),) + dhargs)
-#		self.datahandlers['database'] = dbdatakeeper.DBDataKeeper(self.ID())
+#		self.datahandlers['database'] = dbdatakeeper.DBDataKeeper(self.ID(),
+																															self.session)
 
 		self.server = datatransport.Server(self.ID(),
 																				self.datahandlers['node'], tcpport)
@@ -186,17 +187,67 @@ class Node(leginonobject.LeginonObject):
 
 	# data publish/research methods
 
-	def publish(self, idata, eventclass=event.PublishEvent, confirm=False):
-		'''Make a piece of data available to other nodes.'''
-		if not issubclass(eventclass, event.PublishEvent):
-			raise TypeError('PublishEvent subclass required')
-#		self.server.datahandler._insert(idata)
-		self.datahandlers['node'].insert(idata)
-#		self.datahandlers['database'].insert(idata)
-		# this idata.id is content, I think
-		e = eventclass(self.ID(), idata.id, confirm)
-		self.outputEvent(e)
-		return e
+	def publish(self, idata, **kwargs):
+		'''
+		Make a piece of data available to other nodes.
+		Arguments:
+			idata - instance of data to publish
+			Takes kwargs:
+				eventclass - PublishEvent subclass to notify with when publishing		
+				confirm - Wait until Event is confirmed to return
+				node - publish data to own datahandler
+				database - publish to database
+				remote - publish to another node's datahandler (may be changed)
+		'''
+		if 'remote' in kwargs and kwargs['remote']:
+			self.publishRemote(idata)
+			return
+
+		if 'database' in kwargs and kwargs['database']:
+			self.datahandlers['database'].insert(idata)
+
+		if 'eventclass' in kwargs:
+			eventclass = kwargs['eventclass']
+			if not issubclass(eventclass, event.PublishEvent):
+				raise TypeError('PublishEvent subclass required')
+		else:
+			eventclass = event.PublishEvent
+
+		if 'confirm' in kwargs:
+			confirm = kwargs['confirm']
+		else:
+			confirm = False
+
+		if 'node' in kwargs and kwargs['node']:
+			self.datahandlers['node'].insert(idata)
+
+			# this idata.id is content, I think
+			e = eventclass(self.ID(), idata.id, confirm)
+			self.outputEvent(e)
+
+	def research(self, **kwargs):
+		'''
+		Get piece[s] of data.
+		Takes kwargs:
+			id - specify id
+			session - specify session
+			[*] - keys in data
+		'''
+		result = []
+		if kwargs.keys() == ['id']:
+			try:
+				result.append(self.researchByID(kwargs['id']))
+			except ResearchError:
+				pass
+
+#		result.append(self.datahandlers['database'].query(kwargs))
+		# assumes query yields list of matches
+		result += self.datahandlers['database'].query(kwargs)
+		# first for now
+		try:
+			return result[0]
+		except:
+			return None
 
 	def unpublish(self, dataid, eventclass=event.UnpublishEvent):
 		'''Make a piece of data unavailable to other nodes.'''
