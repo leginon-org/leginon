@@ -46,7 +46,6 @@ server.addObject(bar2)
 foo1.addObject(uidata.SingleSelectFromList('List Select 1', [1,2,3], 1))
 
 #image1 = uidata.Image('Image 1', None, 'rw')
-'''
 import Numeric
 import Mrc
 import Image
@@ -66,7 +65,6 @@ def gar(foo):
 	print foo
 clickimage = uidata.ClickImage('Click Image', gar, image)
 bar1.addObject(clickimage)
-'''
 
 foo1.addObject(uidata.Method('Method 1', bar))
 foo1.addObject(uidata.Boolean('Boolean 1', 1, 'r'))

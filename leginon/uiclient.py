@@ -39,18 +39,20 @@ class RemoveWidgetEvent(wxPyEvent):
 		self.namelist = namelist
 
 class SetServerEvent(wxPyEvent):
-	def __init__(self, namelist, value):
+	def __init__(self, namelist, value, thread=True):
 		wxPyEvent.__init__(self)
 		self.SetEventType(wxEVT_SET_SERVER)
 		self.namelist = namelist
 		self.value = value
+		self.thread = thread
 
 class CommandServerEvent(wxPyEvent):
-	def __init__(self, namelist, args=()):
+	def __init__(self, namelist, args=(), thread=True):
 		wxPyEvent.__init__(self)
 		self.SetEventType(wxEVT_COMMAND_SERVER)
 		self.namelist = namelist
 		self.args = args
+		self.thread = thread
 
 def WidgetClassFromTypeList(typelist):
 	if typelist:
@@ -122,14 +124,14 @@ class UIClient(XMLRPCClient, uiserver.XMLRPCServer):
 	def addServer(self):
 		self.execute('ADDSERVER', (self.hostname, self.port))
 
-	def setServer(self, namelist, value, thread=False):
+	def setServer(self, namelist, value, thread=True):
 		if thread:
 			threading.Thread(target=self.execute,
 												args=('SET', (namelist, value))).start()
 		else:
 			self.execute('SET', (namelist, value))
 
-	def commandServer(self, namelist, args, thread=False):
+	def commandServer(self, namelist, args, thread=True):
 		if thread:
 			threading.Thread(target=self.execute,
 												args=('COMMAND', (namelist, args))).start()
@@ -364,11 +366,11 @@ def wxClientContainerFactory(wxcontainerwidget):
 
 		def onSetServer(self, evt):
 			evt.namelist.insert(0, self.name)
-			self.uiclient.setServer(evt.namelist, evt.value)
+			self.uiclient.setServer(evt.namelist, evt.value, evt.thread)
 
 		def onCommandServer(self, evt):
 			evt.namelist.insert(0, self.name)
-			self.uiclient.commandServer(evt.namelist, evt.args)
+			self.uiclient.commandServer(evt.namelist, evt.args, evt.thread)
 
 	return wxClientContainer
 
@@ -839,17 +841,24 @@ class wxTreeSelectWidget(wxContainerWidget):
 class wxClickImageWidget(wxContainerWidget):
 	def __init__(self, name, parent, container):
 		wxContainerWidget.__init__(self, name, parent, container)
+		self.condition = threading.Condition()
 		self.sizer = wxBoxSizer(wxVERTICAL)
 		self.clickimage = wxImageViewer.ClickImagePanel(self.parent, -1,
-																											self.clickCallback)
+																											self.foo)
 		self.label = wxStaticText(self.parent, -1, self.name)
 		self.sizer.Add(self.label, 0, wxALIGN_LEFT | wxALL, 5)
 		self.sizer.Add(self.clickimage, 0, wxALIGN_CENTER | wxALL, 5)
 		self.layout()
 
+	def foo(self, coordinate):
+		threading.Thread(target=self.clickCallback, args=(coordinate,)).start()
+
 	def clickCallback(self, coordinate):
+		self.condition.acquire()
 		evt = SetServerEvent([self.name, 'Coordinates'], coordinate)
 		wxPostEvent(self.container.widgethandler, evt)
+		self.condition.wait()
+		self.condition.release()
 		evt = CommandServerEvent([self.name, 'Click'], ())
 		wxPostEvent(self.container.widgethandler, evt)
 
@@ -872,6 +881,10 @@ class wxClickImageWidget(wxContainerWidget):
 	def onSetWidget(self, evt):
 		if evt.namelist == ['Image']:
 			self.setImage(evt.value)
+		else:
+			self.condition.acquire()
+			self.condition.notify()
+			self.condition.release()
 
 	def onRemoveWidget(self, evt):
 		pass
