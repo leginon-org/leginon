@@ -7,6 +7,7 @@ import copy
 
 class ImageWatcher(watcher.Watcher):
 	eventinputs = watcher.Watcher.eventinputs + [event.ImagePublishEvent]
+	eventoutputs = watcher.Watcher.eventoutputs + [event.ImageProcessDoneEvent]
 	def __init__(self, id, session, nodelocations, **kwargs):
 		watchfor = [event.ImagePublishEvent]
 		watcher.Watcher.__init__(self, id, session, nodelocations, watchfor, **kwargs)
@@ -30,9 +31,16 @@ class ImageWatcher(watcher.Watcher):
 	def processData(self, somedata):
 		if not isinstance(somedata, data.ImageData):
 			raise RuntimeError('Data is not ImageData instance')
-		self.imagedata = imagedata
-		self.numarray = imagedata['image']
+		self.imagedata = somedata
+		self.numarray = somedata['image']
 		self.processImageData(somedata)
+		self.sendImageProcessDone()
+
+	def sendImageProcessDone(self, status='ok'):
+		imageid = self.imagedata['id']
+		ev = event.ImageProcessDoneEvent(id=self.ID(), imageid=imageid, status=status)
+		print '%s sending %s' % (self.id, ev)
+		self.outputEvent(ev)
 
 	def processImageData(self, imagedata):
 		raise NotImplementedError('implement processImageData in subclasses of ImageWatcher')
