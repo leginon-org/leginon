@@ -36,7 +36,7 @@ class Focuser(acquisition.Acquisition):
 	def autoFocus(self, emtarget, resultdata):
 		## need btilt, pub, driftthresh
 		btilt = self.btilt.get()
-		pub = self.publishimages.get()
+		pub = False
 		if self.drifton.get():
 			driftthresh = self.driftthresh.get()
 		else:
@@ -349,26 +349,43 @@ class Focuser(acquisition.Acquisition):
 
 		## auto focus
 		autocont = uidata.Container('Auto Focus')
+		self.auto_on = uidata.Boolean('Auto Focus On', True, 'rw', persist=True)
 
 		self.drifton = uidata.Boolean('Check Drift', True, 'rw', persist=True)
-		self.driftthresh = uidata.Float('Drift Threshold (pixels)', 2.0, 'rw', persist=True)
+		self.driftthresh = uidata.Float('Threshold (pixels)', 2.0, 'rw', persist=True)
 
 		self.btilt = uidata.Float('Beam Tilt', 0.02, 'rw', persist=True)
-		self.fitlimit = uidata.Float('Fit Limit', 1000, 'rw', persist=True)
-		self.stigfocminthresh = uidata.Float('Stig Defocus Min', 1e-6, 'rw', persist=True)
-		self.stigfocmaxthresh = uidata.Float('Stig Defocus Max', 4e-6, 'rw', persist=True)
+		#self.publishimages = uidata.Boolean('Publish Tilt Images', False, 'rw', persist=True)
 
 		self.autofocuspreset = self.presetsclient.uiSinglePresetSelector('Auto Focus Preset', '', 'rw', persist=True)
-
+		self.fitlimit = uidata.Float('Fit Limit', 1000, 'rw', persist=True)
 		focustypes = self.focus_methods.keys()
 		focustypes.sort()
 		self.focustype = uidata.SingleSelectFromList('Correction Type', focustypes, 0, persist=True)
-		self.stigcorrection = uidata.Boolean('Stigmator Correction', False, 'rw', persist=True)
-		self.publishimages = uidata.Boolean('Publish Tilt Images', False, 'rw', persist=True)
 
-		self.auto_on = uidata.Boolean('Auto Focus On', True, 'rw', persist=True)
+		# stig
+		self.stigcorrection = uidata.Boolean('Stig Correction', False, 'rw', persist=True)
+		self.stigfocminthresh = uidata.Float('Stig Defocus Min', 1e-6, 'rw', persist=True)
+		self.stigfocmaxthresh = uidata.Float('Stig Defocus Max', 4e-6, 'rw', persist=True)
 
-		autocont.addObjects((self.auto_on, self.drifton, self.driftthresh, self.btilt, self.publishimages, self.autofocuspreset, self.focustype, self.stigcorrection, self.fitlimit, self.stigfocminthresh, self.stigfocmaxthresh))
+
+
+		autocont.addObject(self.auto_on, position={'position':(0,0)})
+		autocont.addObject(self.btilt, position={'position':(0,1)})
+		autocont.addObject(self.drifton, position={'position':(1,0)})
+		autocont.addObject(self.driftthresh, position={'position':(1,1)})
+
+
+
+		autocont.addObject(self.autofocuspreset, position={'position':(3,0), 'span':(1,2)})
+
+
+		autocont.addObject(self.fitlimit, position={'position':(4,0)})
+		autocont.addObject(self.focustype, position={'position':(4,1)})
+
+		autocont.addObject(self.stigcorrection, position={'position':(5,0)})
+		autocont.addObject(self.stigfocminthresh, position={'position':(5,1)})
+		autocont.addObject(self.stigfocmaxthresh, position={'position':(5,2)})
 
 		## manual focus check
 		self.pre_manual_check = uidata.Boolean('Manual Check Before Auto', False, 'rw', persist=True)
