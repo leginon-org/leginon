@@ -1,11 +1,11 @@
-<html>
-<head>
-<link rel="stylesheet" type="text/css" href="css/viewer.css"> 
-<link rel="stylesheet" type="text/css" href="css/view.css">
-<title>Leginon Observer Interface</title>
-
-
 <?
+/**
+ *	The Leginon software is Copyright 2003 
+ *	The Scripps Research Institute, La Jolla, CA
+ *	For terms of the license agreement
+ *	see  http://ami.scripps.edu/software/leginon-license
+ */
+
 require ('inc/leginon.inc');
 require ('inc/viewer.inc');
 
@@ -16,6 +16,7 @@ $sessionId=$_POST[sessionId];
 $lastId = $leginondata->getLastSessionId();
 $sessionId = (empty($sessionId)) ? $lastId : $sessionId;
 
+// --- Get last imageId from the current session
 $imageId= $leginondata->getLastFilenameId($sessionId);
 
 // --- Get data type list
@@ -43,10 +44,15 @@ foreach ($datatypes as $datatype) {
 }
 
 $javascript .= $viewer->getJavascriptInit();
-echo $javascript;
 ?>
+<html>
+<head>
+	<link rel="stylesheet" type="text/css" href="css/viewer.css"> 
+	<link rel="stylesheet" type="text/css" href="css/view.css">
+	<title>Leginon Observer Interface</title>
+	<?=$javascript;?>
 </head>
 <body onload='init();'>
-<?$viewer->display();?>
+	<?$viewer->display();?>
 </body>
 </html>

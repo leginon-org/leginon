@@ -1,0 +1,59 @@
+<?
+/**
+ *	The Leginon software is Copyright 2003 
+ *	The Scripps Research Institute, La Jolla, CA
+ *	For terms of the license agreement
+ *	see  http://ami.scripps.edu/software/leginon-license
+ */
+require ('inc/leginon.inc');
+$lastfileid = false;
+$session = ($_GET[session]) ? $_GET[session] : $_POST[session];
+echo "DEFR:".$session;
+$lastfileid = $leginondata->getLastFilenameId($session);
+$strfileid = ($lastfileid) ? "=$lastfileid" : "";
+$refresh = ($_POST[refreshstate]) ? $_POST[refreshstate] : "false";
+$refreshtime = ($_POST[refreshtime]) ? $_POST[refreshtime] : "1000";
+?>
+<html>
+<head>
+<script>
+var jsfileid <?=$strfileid?>;
+var jstime = <?=time()?>;
+var refresh = <?=$refresh?>;
+var refreshtime = "<?=$refreshtime?>";
+
+function getfileid() {
+	return jsfileid;
+}
+
+function start(refreshtime) {
+	if (refreshtime)
+		document.memo.refreshtime.value=refreshtime;
+	setRefreshState(true);
+}
+
+function setRefreshState(state) {
+	document.memo.refreshstate.value=state;
+	document.memo.submit();
+}
+
+function stop() {
+	setRefreshState(false);
+}
+
+function rl() {
+	if (parent.window.name=="loi") 
+		parent.reset(getfileid());
+	if (refresh)
+		setTimeout("document.memo.submit(); ",refreshtime);
+}
+</script>
+</head>
+<body onload="rl()">
+<form name="memo" method="POST">
+<input type="hidden" name="refreshstate" value="true">
+<input type="hidden" name="refreshtime" value="<?=$refreshtime?>">
+<input type="hidden" name="session" value="<?=$session?>">
+</form>
+</body>
+</html>
