@@ -775,48 +775,42 @@ class ManagerSetup(object):
 		self.initInstruments()
 
 	def start(self):
-		session = self.uiGetSession()
-		if session is not None:
-			self.manager.session = session
-			self.manager.publish(session, database=True)
-			if session['instrument'] is not None and session['instrument']['hostname'] not in self.manager.launcherdict.keys():
-				try:
-					hostname = session['instrument']['hostname']
-					if hostname:
-						self.manager.addNode(hostname, 55555)
-				except (IOError, TypeError, socket.error), e:
-					if isinstance(e, socket.error):
-						self.manager.outputWarning('Cannot add instrument\'s launcher.')
-			parent = self.container.getParent()
-			if parent is not None:
-				parent.deleteObject(self.container.getName())
-		else:
-			messagestring = 'Session "%s" already exists.' % self.session_name.get()
-			message = uidata.MessageDialog('Error', messagestring)
-			self.container.addObject(message)
+		session = self.uiGetSessionData()
+		self.manager.session = session
+		self.manager.publish(session, database=True)
+		if session['instrument'] is not None and \
+			session['instrument']['hostname'] not in self.manager.launcherdict.keys():
+			try:
+				hostname = session['instrument']['hostname']
+				if hostname:
+					location = {}
+					location['TCP transport'] = {}
+					location['TCP transport']['hostname'] = hostname
+					location['TCP transport']['port'] = 55555
+					self.manager.addNode(location)
+			except (IOError, TypeError, socket.error), e:
+				if isinstance(e, socket.error):
+					self.manager.outputWarning('Cannot add instrument\'s launcher.')
+		parent = self.container.getParent()
+		if parent is not None:
+			parent.deleteObject(self.container.getName())
+
 		self.manager.defineUserInterface()
 
-	def uiGetSession(self):
-		session_name = self.session_name.get()
-		initializer = {'name': session_name,
-								'user': data.UserData(initializer={'group': data.GroupData()}),
-								'instrument': data.InstrumentData()}
-		sessioninstance = data.SessionData(initializer=initializer)
-		sessions = self.manager.research(datainstance=sessioninstance)
-		if sessions:
-			return sessions[0]
-			#return None
-		else:
-			return self.getSession(session_name)
-
-	def getSession(self, session_name):
-		initializer = {'name': session_name, 'comment': self.session_comment.get(), 'user': self.uiGetUser(), 'instrument': self.uiGetInstrument(), 'image path': self.image_path.get()}
+	def uiGetSessionData(self):
+		initializer = {'name': self.session_name.get(),
+										'comment': self.session_comment.get(),
+										'user': self.uiGetUser(),
+										'instrument': self.uiGetInstrument(),
+										'image path': self.image_path.get()}
 		return data.SessionData(initializer=initializer)
 
 	def initInstruments(self):
 		instruments = self.getInstruments()
 		self.instruments = self.indexByName(instruments)
-		self.instruments['None'] = data.InstrumentData(name='None',description='No Instrument', hostname=None, scope=None, camera=None)
+		initializer = {'name': 'None',
+										'description': 'No Instrument'}
+		self.instruments['None'] = data.InstrumentData(initializer=initializer)
 		self.uiUpdateInstrument()
 
 	def uiUpdateInstrument(self):
