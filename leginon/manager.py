@@ -22,14 +22,15 @@ class DataHandler(node.DataHandler):
 
 class Manager(node.Node):
 	'''Overlord of the nodes. Handles node communication (data and events).'''
-	def __init__(self, id, tcpport=None, xmlrpcport=None, **kwargs):
+	def __init__(self, session, id, tcpport=None, xmlrpcport=None, **kwargs):
 		# the id is manager (in a list)
 
 		self.clients = {}
 
+		id = (session,) + id
+
 		node.Node.__init__(self, id, nodelocations={}, dh=DataHandler, dhargs=(),
-															tcpport=tcpport, xmlrpcport=xmlrpcport,
-															pdkargs = (time.ctime(),), **kwargs)
+															tcpport=tcpport, xmlrpcport=xmlrpcport, **kwargs)
 
 		self.uiserver.server.register_function(self.uiGetNodeLocations,
 																						'getNodeLocations')
@@ -597,18 +598,11 @@ class Manager(node.Node):
 if __name__ == '__main__':
 	import sys
 
-	m = Manager(('manager',))
-
-	p = False
-
 	try:
-		p = sys.argv[1]
+		session = sys.argv[1]
 	except IndexError:
-		pass
+		session = time.ctime()
 
-	if p:
-		import profile
-		profile.run("m.start()", "%s.profile" % m.id[-1])
-	else:
-		m.start()
+	m = Manager(session, ('manager',))
+	m.start()
 
