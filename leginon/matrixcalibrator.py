@@ -21,6 +21,8 @@ except:
 import uidata
 import threading
 import node
+import data
+import gui.wx.MatrixCalibrator
 
 class CalibrationError(Exception):
 	pass
@@ -42,6 +44,30 @@ class MatrixCalibrator(calibrator.Calibrator):
 	Then 'Calibrate'
 	(Valid Shift is currently being ignored)
 	'''
+	panelclass = gui.wx.MatrixCalibrator.Panel
+	settingsclass = data.MatrixCalibratorSettingsData
+	defaultsettings = {
+		'camera settings': None,
+		'correlation type': 'cross',
+		'image shift tolerance': 12.0,
+		'image shift shift fraction': 25.0,
+		'image shift n average': 1,
+		'image shift interval': 2e-6,
+		'image shift current as base': True,
+		'image shift base': {'x': 0.0, 'y': 0.0},
+		'beam shift tolerance': 12.0,
+		'beam shift shift fraction': 25.0,
+		'beam shift n average': 1,
+		'beam shift interval': 2e-6,
+		'beam shift current as base': True,
+		'beam shift base': {'x': 0.0, 'y': 0.0},
+		'stage position tolerance': 12.0,
+		'stage position shift fraction': 25.0,
+		'stage position n average': 1,
+		'stage position interval': 2e-6,
+		'stage position current as base': True,
+		'stage position base': {'x': 0.0, 'y': 0.0},
+	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		calibrator.Calibrator.__init__(self, id, session, managerlocation, **kwargs)
 
@@ -50,6 +76,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 		  'beam shift': calibrationclient.BeamShiftCalibrationClient(self),
 		  'stage position': calibrationclient.StageCalibrationClient(self)
 		}
+		self.parameter = 'stage position'
 		self.pixsizeclient = calibrationclient.PixelSizeCalibrationClient(self)
 		self.settle = {
 		  'image shift': 0.25,
@@ -65,16 +92,16 @@ class MatrixCalibrator(calibrator.Calibrator):
 
 	# calibrate needs to take a specific value
 	def calibrate(self):
-		uiparameter = self.uiparameter.getSelectedValue()
-		calclient = self.parameters[uiparameter]
+		calclient = self.parameters[self.parameter]
 
 		## set cam state
 		self.cam.setCameraDict(self.settings['camera settings'])
 
 		basebase = self.getBase()
 		baselist = []
-		for i in range(self.uinaverage.get()):
-			delta = i * self.ui_interval.get()
+		naverage = self.settings['%s n average' % self.parameter]
+		for i in range(naverage):
+			delta = i * self.settings['%s interval' % self.parameter]
 			basex = basebase['x'] + delta
 			basey = basebase['y'] + delta
 			newbase = {'x':basex, 'y':basey}
@@ -87,7 +114,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 		pixsize = self.pixsizeclient.retrievePixelSize(mag)
 		camconfig = self.cam.getCameraEMData()
 
-		percent = self.shiftpercent.get()
+		percent = self.settings['%s shift fraction' % self.parameter]/100.0
 		delta = percent * camconfig['dimension']['x']*camconfig['binning']['x']*pixsize
 		self.logger.info('Delta %s' % delta)
 
@@ -108,7 +135,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 				state1 = self.makeState(basevalue, axis)
 				state2 = self.makeState(newvalue, axis)
 				self.logger.info('States %s, %s' % (state1, state2))
-				shiftinfo = calclient.measureStateShift(state1, state2, 1, settle=self.settle[uiparameter])
+				shiftinfo = calclient.measureStateShift(state1, state2, 1, settle=self.settle[self.parameter])
 
 				rowpix = shiftinfo['pixel shift']['row']
 				colpix = shiftinfo['pixel shift']['col']
@@ -116,16 +143,16 @@ class MatrixCalibrator(calibrator.Calibrator):
 				totalpix = abs(rowpix + 1j * colpix)
 
 				actual_states = shiftinfo['actual states']
-				actual1 = actual_states[0][uiparameter][axis]
-				actual2 = actual_states[1][uiparameter][axis]
+				actual1 = actual_states[0][self.parameter][axis]
+				actual2 = actual_states[1][self.parameter][axis]
 				change = actual2 - actual1
 				perpix = change / totalpix
 				self.logger.info('Per pixel %s' % perpix)
 
 				## deviation from pixsize should be less than
 				## 12%
-				#tol = 0.12
-				tol = self.uitolerance.get()
+				#tol = 12/100.0
+				tol = self.settings['%s tolerance' % self.parameter]/100.0
 				err = abs(perpix - pixsize) / pixsize
 				if err > tol:
 					self.logger.warning('Failed pixel size tolerance')
@@ -152,7 +179,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 
 		# return to base
 		emdata = data.ScopeEMData()
-		emdata[uiparameter] = basebase
+		emdata[self.parameter] = basebase
 		self.emclient.setScope(emdata)
 
 		mag = self.getMagnification()
@@ -160,36 +187,18 @@ class MatrixCalibrator(calibrator.Calibrator):
 
 		matrix = calclient.measurementToMatrix(shifts)
 		self.logger.info('Matrix %s' % matrix)
-		calclient.storeMatrix(ht, mag, uiparameter, matrix)
+		calclient.storeMatrix(ht, mag, self.parameter, matrix)
 		node.beep()
 
 	def fakeCalibration(self):
 		ht = self.getHighTension()
 		mag = self.getMagnification()
-		uiparameter = self.uiparameter.getSelectedValue()
 		matrix = Numeric.zeros((2,2))
-		calclient = self.parameters[uiparameter]
-		calclient.storeMatrix(ht, mag, uiparameter, matrix)
+		calclient = self.parameters[self.parameter]
+		calclient.storeMatrix(ht, mag, self.parameter, matrix)
 
 	def defineUserInterface(self):
 		calibrator.Calibrator.defineUserInterface(self)
-
-		self.uitolerance = uidata.Float('Tolerance', 0.12, 'rw', persist=True)
-		self.shiftpercent = uidata.Float('Shift Fraction', 0.25, 'rw', persist=True)
-		parameters = self.parameters.keys()
-		parameters.sort()
-		self.uiparameter = uidata.SingleSelectFromList('Parameter', parameters, 0, persist=True)
-		self.uinaverage = uidata.Integer('N Average', 1, 'rw')
-		self.ui_interval = uidata.Float('Interval', 2e-6, 'rw')
-		self.uicurbase = uidata.Boolean('Current as Base', True, 'rw')
-		self.uibase = uidata.Struct('Base', {'x':0,'y':0}, 'rw')
-		#self.uidelta = uidata.Float('Delta', 2e-6, 'rw')
-		validshift = {'correlation': {'min': 20.0, 'max': 512.0},
-  							   'calibration': {'min': 20.0, 'max': 512.0}}
-		#self.uivalidshift = uidata.Struct('Valid Shift', validshift, 'rw')
-
-		settingscontainer = uidata.Container('Settings')
-		settingscontainer.addObjects((self.uitolerance, self.shiftpercent, self.uiparameter, self.uinaverage, self.ui_interval, self.uicurbase, self.uibase))
 
 		calibratemethod = uidata.Method('Calibrate', self.uiCalibrate)
 		abortmethod = uidata.Method('Abort', self.uiAbort)
@@ -197,8 +206,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 																				self.fakeCalibration)
 
 		container = uidata.LargeContainer('Matrix Calibrator')
-		container.addObjects((settingscontainer, calibratemethod, abortmethod,
-													fakecalibrationmethod))
+		container.addObjects((calibratemethod, abortmethod, fakecalibrationmethod))
 		self.uicontainer.addObject(container)
 
 	def uiCalibrate(self):
@@ -221,30 +229,27 @@ class MatrixCalibrator(calibrator.Calibrator):
 		self.setParameter()
 
 	def getParameter(self):
-		param = self.uiparameter.getSelectedValue()
-		self.saveparam = self.emclient.getScope()[param]
+		self.saveparam = self.emclient.getScope()[self.parameter]
 		self.logger.info('Storing parameter %s, %s'
 											% (param, self.saveparam))
 
 	def setParameter(self):
 		self.logger.info('Returning to original state')
-		param = self.uiparameter.getSelectedValue()
 		emdata = data.ScopeEMData()
-		emdata[param] = self.saveparam
+		emdata[self.parameter] = self.saveparam
 		self.emclient.setScope(emdata)
 
 	def uiAbort(self):
 		self.aborted.set()
 
 	def getBase(self):
-		if self.uicurbase.get():
-			param = self.uiparameter.getSelectedValue()
+		if self.settings['%s current as base' % self.parameter]:
 			emdata = self.currentState()
-			base = emdata[param]
+			base = emdata[self.parameter]
 		else:
-			base = self.uibase.get()
+			base = self.settings['%s base' % self.parameter]
 		return base
 
 	def makeState(self, value, axis):
-		return {self.uiparameter.getSelectedValue(): {axis: value}}
+		return {self.parameter: {axis: value}}
 

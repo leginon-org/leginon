@@ -23,8 +23,8 @@ class Calibrator(node.Node):
 	panelclass = gui.wx.Calibrator.Panel
 	settingsclass = data.CalibratorSettingsData
 	defaultsettings = {
-			'camera settings': None,
-			'correlation type': 'cross',
+		'camera settings': None,
+		'correlation type': 'cross',
 	}
 	eventinputs = node.Node.eventinputs + EM.EMClient.eventinputs
 	eventoutputs = node.Node.eventoutputs + EM.EMClient.eventoutputs

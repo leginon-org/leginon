@@ -74,7 +74,9 @@ class Panel(gui.wx.Node.Panel):
 		self.szimage.AddGrowableRow(0)
 		self.szimage.AddGrowableCol(0)
 		self.szmain.AddGrowableRow(3)
+
 		self.Bind(EVT_ADD_TARGET_TYPES, self.onAddTargetTypes)
+		self.Bind(EVT_IMAGE_UPDATED, self.onImageUpdated)
 
 	def onAddTargetTypes(self, evt):
 		for typename in evt.typenames:
@@ -119,7 +121,7 @@ class Panel(gui.wx.Node.Panel):
 		self._setTargets(targets)
 
 	def imageUpdated(self, name, image, targets=None):
-		evt = gui.wx.TargetFinder.ImageUpdatedEvent(self, name, image, targets)
+		evt = ImageUpdatedEvent(self, name, image, targets)
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onSettingsButton(self, evt):

@@ -67,15 +67,20 @@ class Dialog(wx.Dialog):
 		self.Bind(wx.EVT_BUTTON, self.onSet, self.bok)
 		self.Bind(wx.EVT_BUTTON, self.onSet, self.bapply)
 
-		for widget in self.widgets.values():
-			if attributes[widget.__class__][2] is not None:
+		self.bindSettings(self.widgets)
+
+	def bindSettings(self, widgets):
+		for widget in widgets.values():
+			if widget.__class__ is dict:
+				self.bindSettings(widget)
+			elif attributes[widget.__class__][2] is not None:
 				self.Bind(attributes[widget.__class__][2], self.onModified)
 
 	def initialize(self):
 		return []
 
 	def onModified(self, evt):
-		if self.getSettings() == self.settings:
+		if self.getSettings(self.widgets) == self.settings:
 			self.bapply.Enable(False)
 		else:
 			self.bapply.Enable(True)
@@ -91,24 +96,30 @@ class Dialog(wx.Dialog):
 			dialog.ShowModal()
 			dialog.Destroy()
 
-	def getSettings(self):
+	def getSettings(self, widgets):
 		settings = {}
-		for key, widget in self.widgets.items():
-			settings[key] = getattr(widget, attributes[widget.__class__][0])()
+		for key, widget in widgets.items():
+			if widget.__class__ is dict:
+				settings[key] = self.getSettings(widget)
+			else:
+				settings[key] = getattr(widget, attributes[widget.__class__][0])()
 		return settings
 
-	def setSettings(self, sd):
-		for key, widget in self.widgets.items():
-			try:
-				getattr(widget, attributes[widget.__class__][1])(sd[key])
-			except ValueError:
-				raise ValueError('Invalid value %s for widget "%s"' % (sd[key], key))
+	def setSettings(self, widgets, sd):
+		for key, widget in widgets.items():
+			if widget.__class__ is dict:
+				self.setSettings(widget, sd[key])
+			else:
+				try:
+					getattr(widget, attributes[widget.__class__][1])(sd[key])
+				except ValueError:
+					raise ValueError('Invalid value %s for widget "%s"' % (sd[key], key))
 
 	def setNodeSettings(self):
 		node = self.GetParent().node
 		if node is None:
 			return
-		settings = self.getSettings()
+		settings = self.getSettings(self.widgets)
 		if settings != self.settings:
 			node = self.GetParent().node
 			if node is None:
@@ -127,8 +138,8 @@ class Dialog(wx.Dialog):
 			return
 
 		settingsdata = node.getSettings()
-		self.setSettings(settingsdata)
+		self.setSettings(self.widgets, settingsdata)
 
-		self.settings = self.getSettings()
+		self.settings = self.getSettings(self.widgets)
 		self.bapply.Enable(False)
 

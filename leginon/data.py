@@ -1760,6 +1760,20 @@ class CalibratorSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class MatrixCalibratorSettingsData(CalibratorSettingsData):
+	def typemap(cls):
+		parameters = ['image shift', 'beam shift', 'stage position']
+		parameterstypemap = []
+		for parameter in parameters:
+			parameterstypemap.append(('%s tolerance' % parameter, float))
+			parameterstypemap.append(('%s shift fraction' % parameter, float))
+			parameterstypemap.append(('%s n average' % parameter, int))
+			parameterstypemap.append(('%s interval' % parameter, float))
+			parameterstypemap.append(('%s current as base' % parameter, bool))
+			parameterstypemap.append(('%s base' % parameter, dict))
+		return CalibratorSettingsData.typemap() + tuple(parameterstypemap)
+	typemap = classmethod(typemap)
+
 class Request(type):
 	def __new__(cls, dataclass):
 		return type.__new__(cls, 'Request' + dataclass.__name__, (Data,),
