@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/DriftManager.py,v $
-# $Revision: 1.15 $
+# $Revision: 1.16 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-04 22:00:01 $
+# $Date: 2004-11-06 23:35:08 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -39,7 +39,7 @@ class Panel(gui.wx.Node.Panel):
 													shortHelpString='Check Drift')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_ABORT_DRIFT,
 													'stop',
-													shortHelpString='Abort DriftCheck')
+													shortHelpString='Abort Drift Check')
 		self.toolbar.Realize()
 
 		# image
