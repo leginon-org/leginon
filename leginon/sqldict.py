@@ -285,8 +285,6 @@ class SQLDict:
 					## this is friendly_update because
 					## there could be columns that
 					## are no longer used
-					print 'RESULT I'
-					print result[i]
 					newdata.friendly_update(result[i])
 				except KeyError, e:
 					raise
