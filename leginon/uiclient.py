@@ -890,9 +890,9 @@ class EntryWidget(wx.BoxSizer, DataWidget):
 		self.Add(self.entry, 0, wx.ALIGN_CENTER | wx.LEFT | wx.RIGHT, 3)
 		self.layout()
 
-	def SetToolTip(self, tooltip):
-		self.label.SetToolTip(tooltip)
-		self.entry.SetToolTip(tooltip)
+#	def SetToolTip(self, tooltip):
+#		self.label.SetToolTip(tooltip)
+#		self.entry.SetToolTip(tooltip)
 
 	def setDirty(self, dirty):
 		self.dirty = dirty
@@ -1206,8 +1206,8 @@ class ListWidget(wx.BoxSizer, DataWidget):
 		DataWidget.__init__(self, name, parent, container, value, configuration)
 		self.set(value)
 
-	def SetToolTip(self, tooltip):
-		self.list.SetToolTip(tooltip)
+#	def SetToolTip(self, tooltip):
+#		self.list.SetToolTip(tooltip)
 
 	def _enable(self, enable):
 		self.label.Enable(enable)
@@ -1247,9 +1247,9 @@ class ListSelectWidget(wx.BoxSizer, DefinedContainerWidget):
 		self.Add(self.listselect, 0, wx.ALIGN_CENTER | wx.LEFT | wx.RIGHT, 3)
 		self.layout()
 
-	def SetToolTip(self, tooltip):
-		self.label.SetToolTip(tooltip)
-		self.listselect.SetToolTip(tooltip)
+#	def SetToolTip(self, tooltip):
+#		self.label.SetToolTip(tooltip)
+#		self.listselect.SetToolTip(tooltip)
 
 	def _enable(self, enable):
 		self.label.Enable(enable)
