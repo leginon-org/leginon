@@ -29,7 +29,7 @@ class Logger(logging.Logger):
 
 	def onLevelSelect(self, index):
 		value = self.loglevelselect.getSelectedValue(index)
-		level = logging._levelNames[value]
+		level = logging.getLevelName(value)
 		self.setLevel(level)
 		return index
 

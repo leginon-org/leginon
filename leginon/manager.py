@@ -22,6 +22,7 @@ import threading
 import uiserver
 import uidata
 import leginonobject
+import extendedlogging
 
 class DataBinder(datahandler.DataBinder):
 	def handleData(self, newdata):
@@ -946,6 +947,13 @@ class Manager(node.Node):
 		container = uidata.LargeContainer('Manager')
 
 		self.initializeLoggerUserInterface()
+
+		# cheat a little here
+		clientlogger = extendedlogging.getLogger(self.logger.name + '.'
+																							+ self.clientclass.__name__)
+		if clientlogger.container not in self.logger.container.values():
+			self.logger.container.addObject(clientlogger.container,
+																			position={'span': (1,2), 'expand': 'all'})
 
 #		container.addObject(uimanagersetup)
 		container.addObject(self.messagelog, position={'expand': 'all'})

@@ -49,10 +49,10 @@ class DictDataKeeper(DataHandler):
 		self.lock.acquire()
 		try:
 			result = self.datadict[id]
-			self.logger.info('Queried for data %s' % (id,))
+			self.logger.info('%s queried' % (id,))
 		except KeyError:
 			result = None
-			self.logger.info('Failed query for data %s' % (id,))
+			self.logger.warning('%s query failed' % (id,))
 		self.lock.release()
 		return result
 
@@ -61,16 +61,16 @@ class DictDataKeeper(DataHandler):
 			raise TypeError
 		self.lock.acquire()
 		self.datadict[newdata['id']] = newdata
-		self.logger.info('Data %s inserted' % newdata['id'])
+		self.logger.info('%s inserted' % newdata['id'])
 		self.lock.release()
 
 	def remove(self, id):
 		self.lock.acquire()
 		try:
 			del self.datadict[id]
-			self.logger.info('Deleted data %s' % (id,))
+			self.logger.info('%s deleted' % (id,))
 		except KeyError:
-			self.logger.info('Failed deletion of data %s' % (id,))
+			self.logger.warning('%s deletion failed' % (id,))
 		self.lock.release()
 
 	def ids(self):
@@ -98,8 +98,7 @@ class SizedDataKeeper(DictDataKeeper):
 			self.size += size
 			if newdata['id'] is not None:
 				self.datadict[newdata['id']] = newdata
-				self.logger.info(
-					'Inserted data %s of size %d, data keeper size is now %d'
+				self.logger.info('%s inserted (size %d, data keeper size %d)'
 														% (newdata['id'], size, self.size))
 			self.clean()
 		finally:
@@ -112,7 +111,7 @@ class SizedDataKeeper(DictDataKeeper):
 				size = self.datadict[dataid].size()
 				del self.datadict[dataid]
 				self.size -= size
-				self.logger.info('Removed %s (size %d), data keeper size is now %d'
+				self.logger.info('%s removed, (size %d, data keeper size %d)'
 														% (dataid, size, self.size))
 			except (KeyError, AttributeError):
 				pass
@@ -125,11 +124,8 @@ class SizedDataKeeper(DictDataKeeper):
 			for removekey in self.datadict.keys():
 				if self.size <= self.maxsize:
 					break
-				self.logger.info(
-					'data keeper size is %d, max size is %d, try to remove %s'
-														% (self.size, self.maxsize, removekey))
 				self.remove(removekey)
-			self.logger.info('data keeper cleaned, new size is %d (max size is %d)'
+			self.logger.info('Cleaned, (size %d, max size %d)'
 												% (self.size, self.maxsize))
 		finally:
 			self.lock.release()
@@ -174,17 +170,21 @@ class DataBinder(DataHandler):
 			if isinstance(item, ExitException):
 				self.logger.info('Handler loop exited')
 				break
+			if 'id' in item:
+				id = item['id']
+			else:
+				id = 'Data'
 			try:
 				if self.threaded:
 					name = 'data binder handler thread'
 					t = threading.Thread(name=name, target=self.handleData, args=(item,))
 					t.setDaemon(1)
-					self.logger.info('Handling data threaded')
+					self.logger.info('%s handling threaded' % (id,))
 					t.start()
 				else:
-					self.logger.info('Handling data unthreaded')
+					self.logger.info('%s handling unthreaded' % (id,))
 					self.handleData(item)
-					self.logger.info('Data handled unthreaded')
+					self.logger.info('%s handled unthreaded' % (id,))
 			except Exception, e:
 				print 'handlerLoop exception'
 
@@ -194,7 +194,7 @@ class DataBinder(DataHandler):
 			id = newdata['id']
 		except KeyError:
 			id = ()
-		self.logger.info('Data %s of class %s inserted in queue'
+		self.logger.info('%s inserted in queue (class %s)'
 											% (id, newdata.__class__.__name__))
 
 	def handleData(self, newdata):
@@ -208,8 +208,8 @@ class DataBinder(DataHandler):
 				try:
 					methods = self.bindings[bindclass][newdata['destination']]
 					for method in methods:
-						self.logger.info('Destination %s handling %s with %s'
-															% (newdata['destination'], dataclass, method))
+						self.logger.info('%s handling destination %s, method %s'
+															% (dataclass, newdata['destination'], method))
 						method(args)
 				except KeyError:
 					pass
@@ -224,8 +224,8 @@ class DataBinder(DataHandler):
 				nodes[nodeid] = [method]
 		except KeyError:
 			self.bindings[dataclass] = {nodeid: [method]}
-		self.logger.info('Added binding for %s handling %s with %s'
-															% (nodeid, dataclass, method))
+		self.logger.info('%s binding added for destination %s, method %s'
+															% (dataclass, nodeid, method))
 
 	def delBinding(self, nodeid, dataclass=None, method=None):
 		if dataclass is None:
@@ -238,11 +238,13 @@ class DataBinder(DataHandler):
 					del self.bindings[dataclass][nodeid]
 					if not self.bindings[dataclass]:
 						del self.bindings[dataclass]
+					self.logger.info('%s binding deleted for destination %s'
+															% (dataclass, nodeid))
 				else:
 					self.bindings[dataclass][nodeid].remove(method)
-				self.logger.info('Deleted binding for %s handling %s'
-													% (nodeid, dataclass))
+					self.logger.info('%s binding deleted for destination %s, method %s'
+															% (dataclass, nodeid, method))
 			except (KeyError, ValueError):
-				self.logger.info('Failed to delete binding for %s handling %s'
-													% (nodeid, dataclass))
+					self.logger.warning('%s binding deletion failed for destination %s'
+															% (dataclass, nodeid))
 

@@ -32,14 +32,13 @@ class Client(Base):
 		for t in self.transportmodules:
 			try:
 				self.clients.append(t.Client(serverlocation[t.locationkey],))
-				self.logger.info('Added Client from %s' % str(t))
+				self.logger.info('%s client added' % t.__name__)
 			except (ValueError, KeyError):
-				self.logger.info('Failed to add Client from %s' % str(t))
+				self.logger.warning('%s client add failed' % t.__name__)
 				pass
 
 		self.serverlocation = serverlocation
-		self.logger.info('Set Client server location to %s'
-														% str(self.serverlocation))
+		self.logger.info('server location set to to %s' % str(self.serverlocation))
 		if len(self.clients) == 0:
 			raise IOError('no client connections possible')
 
@@ -50,10 +49,10 @@ class Client(Base):
 		for c in self.clients:
 			try:
 				newdata = c.pull(idata)
-				self.logger.info('Pulled data using Client %s' % str(c))
+				self.logger.info('%s client pulled data' % str(c))
 				return newdata
 			except IOError:
-				self.logger.info('Failed to pull data using Client %s' % str(c))
+				self.logger.warning('%s client pull data failed' % str(c))
 				pass
 		raise IOError('IOError, unable to pull data ' + str(idata))
 
@@ -71,10 +70,10 @@ class Client(Base):
 		for c in self.clients:
 			try:
 				ret = c.push(odata)
-				self.logger.info('Pushed data using Client %s' % str(c))
+				self.logger.info('%s client pushed data' % str(c))
 				return ret
 			except IOError:
-				self.logger.info('Failed to push data using Client %s' % str(c))
+				self.logger.info('%s client push data failed' % str(c))
 				pass
 			except:
 				raise
@@ -102,15 +101,15 @@ class Server(Base):
 				args = (self.datahandler,)
 			self.servers[t] = t.Server(*args)
 			self.servers[t].start()
-			self.logger.info('Created server type %s at %s'
-												% (t, self.servers[t].location()))
+			self.logger.info('%s server created at location %s'
+												% (t.__name__, self.servers[t].location()))
 
 	def exit(self):
 		for t in self.transportmodules:
 			self.servers[t].exit()
-			self.logger.info('Server type %s exited' % t)
+			self.logger.info('%s server exited' % t.__name__)
 		self.datahandler.exit()
-		self.logger.info('Data handler exited')
+		self.logger.info('Exited')
 
 	def location(self):
 		location = {}

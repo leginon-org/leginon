@@ -647,6 +647,13 @@ class Node(leginonobject.LeginonObject):
 		locationstruct = uidata.Struct('Location', location, 'r')
 		exitmethod = uidata.Method('Exit', self.uiExit)
 
+		# cheat a little here
+		clientlogger = extendedlogging.getLogger(self.logger.name + '.'
+																							+ self.clientclass.__name__)
+		if clientlogger.container not in self.logger.container.values():
+			self.logger.container.addObject(clientlogger.container,
+																			position={'span': (1,2), 'expand': 'all'})
+
 		container = uidata.LargeContainer('Node')
 		self.uicontainer.addObjects((idarray, classstring, locationstruct,
 																	self.logger.container, exitmethod))
