@@ -4,18 +4,22 @@ class Registry(object):
         def __init__(self):
                 self.id = -1
                 self.entries = {}
+
         def addEntry(self, entry):
                 id = self.makeUniqueID()
                 entry.id = id
 		entry.time = self.makeTimeStamp()
                 self.entries[id] = entry
                 return id
+
         def delEntry(self, id):
                 del self.entries[id]
+
         def makeUniqueID(self):
                 # placeholder
                 self.id += 1
                 return self.id
+
 	def makeTimeStamp(self):
 		return time.localtime()
 
