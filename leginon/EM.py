@@ -390,12 +390,13 @@ class EM(node.Node):
 
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
+		self.twostep = uidata.Boolean('Two Step Stage Move', False, 'rw', persist=True)
 		self.statestruct = uidata.Struct('Instrument State', {},
 																				'rw', self.uiCallback)
 		self.statestruct.set(self.uistate, callback=False)
 		updatemethod = uidata.Method('Update', self.uiUpdate)
 		unlockmethod = uidata.Method('Unlock', self.uiUnlock)
 		container = uidata.MediumContainer('EM')
-		container.addObjects((self.statestruct, updatemethod, unlockmethod))
+		container.addObjects((self.twostep, self.statestruct, updatemethod, unlockmethod))
 		self.uiserver.addObject(container)
 
