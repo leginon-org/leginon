@@ -75,11 +75,12 @@ class Panel(gui.wx.Node.Panel):
 												wx.ALIGN_CENTER_VERTICAL)
 		szcalibrations.Add(self.stmodeledmagonly, (5, 1), (1, 1), 
 												wx.ALIGN_CENTER_VERTICAL)
-		szcalibrations.AddGrowableCol(1)
+		szcalibrations.AddGrowableCol(0)
 
 		sb = wx.StaticBox(self, -1, 'Calibrations')
-		sbszcalibrations = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		sbszcalibrations.Add(szcalibrations, 1, wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 3)
+		self.sbszcalibrations = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		self.sbszcalibrations.Add(szcalibrations, 1,
+															wx.ALIGN_CENTER|wx.EXPAND|wx.ALL, 3)
 
 		stmagnification = wx.StaticText(self, -1, 'Magnification')
 		self.femagnification = FloatEntry(self, -1, chars=9)
@@ -168,7 +169,7 @@ class Panel(gui.wx.Node.Panel):
 		szcreate.Add(self.bnew, (1, 0), (1, 1), wx.ALIGN_CENTER)
 
 		self.sz = wx.GridBagSizer(5, 5)
-		self.sz.Add(sbszcalibrations, (0, 0), (1, 2), wx.EXPAND|wx.ALL)
+		self.sz.Add(self.sbszcalibrations, (0, 0), (1, 2), wx.EXPAND|wx.ALL)
 		self.sz.Add(sbszparameters, (1, 1), (2, 1), wx.EXPAND|wx.ALL)
 		self.sz.Add(sz, (1, 0), (1, 1), wx.ALIGN_CENTER)
 		self.sz.Add(sbszcreate, (2, 0), (1, 1), wx.ALIGN_CENTER)
@@ -326,8 +327,9 @@ class Panel(gui.wx.Node.Panel):
 		for key, value in items.items():
 			try:
 				value.SetLabel(times[key])
-			except KeyError:
-				pass
+			except (TypeError, KeyError):
+				value.SetLabel('None')
+		self.sbszcalibrations.Layout()
 
 	def onSetCalibrations(self, evt):
 		self._setCalibrations(evt.times)

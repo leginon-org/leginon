@@ -60,6 +60,10 @@ class MosaicTargetMaker(TargetMaker):
 
 		self.start()
 
+	def makeAtlas(self):
+		self.makeMosaicTargetList()
+		self.panel.atlasCreated()
+
 	def makeMosaicTargetList(self, ievent=None):
 		# make targets using current instrument state and selected preset
 		self.logger.info('Getting current EM state...')

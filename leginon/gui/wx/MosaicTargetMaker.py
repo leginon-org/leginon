@@ -1,9 +1,11 @@
+import threading
 import wx
 from gui.wx.Entry import Entry, FloatEntry
 import gui.wx.Node
 from gui.wx.Presets import PresetChoice
 import gui.wx.Settings
 import gui.wx.ToolBar
+import gui.wx.Events
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'atlasmaker'
@@ -23,6 +25,8 @@ class Panel(gui.wx.Node.Panel):
 		self.SetSizerAndFit(self.szmain)
 		self.SetupScrolling()
 
+		self.Bind(gui.wx.Events.EVT_ATLAS_CREATED, self.onAtlasCreated)
+
 	def onNodeInitialized(self):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
 											id=gui.wx.ToolBar.ID_SETTINGS)
@@ -34,8 +38,16 @@ class Panel(gui.wx.Node.Panel):
 		dialog.ShowModal()
 		dialog.Destroy()
 
+	def onAtlasCreated(self, evt):
+		self.toolbar.Enable(True)
+
 	def onCreateAtlas(self, evt):
-		self.node.makeMosaicTargetList()
+		self.toolbar.Enable(False)
+		threading.Thread(target=self.node.makeAtlas).start()
+
+	def atlasCreated(self, evt):
+		evt = gui.wx.Events.AtlasCreatedEvent()
+		self.GetEventHandler().AddPendingEvent(evt)
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):

@@ -98,6 +98,9 @@ class PresetsClient(object):
 		send the named preset to the scope
 		optionally send a target to the scope as well
 		'''
+		if not presetname:
+			self.logger.error('Invalid preset name')
+			return
 		evt = event.ChangePresetEvent()
 		evt['name'] = presetname
 		evt['emtarget'] = emtarget
@@ -371,6 +374,10 @@ class PresetsManager(node.Node):
 		list of managed presets, it will be replaced by the new one
 		also returns the new preset object
 		'''
+
+		if not name:
+			self.logger.error('Invalid preset name')
+			return
 		scopedata = self.emclient.getScope()
 		cameradata = self.emclient.getCamera()
 		newpreset = data.PresetData()
@@ -520,7 +527,7 @@ class PresetsManager(node.Node):
 		newpreset = self.fromScope(newname)
 		self.setOrder()
 		self.panel.setParameters(newpreset)
-		self.logger.information('created new preset: %s' % (newname,))
+		self.logger.info('created new preset: %s' % (newname,))
 
 	def selectPreset(self, pname):
 		self.currentselection = self.presetByName(pname)
@@ -554,9 +561,9 @@ class PresetsManager(node.Node):
 			beamtime = self.calclients['beam'].time(ht, mag, 'beam shift')
 			modmagtimex = self.calclients['modeled stage'].timeMagCalibration(ht,
 																																			mag, 'x')
-			modemagtimey = self.calclients['modeled stage'].timeMagCalibration(ht,
+			modmagtimey = self.calclients['modeled stage'].timeMagCalibration(ht,
 																																			mag, 'y')
-			modmagtime = 'x: %s, y: %s' % (modstagemagtimex, modstagemagtimey)
+			modmagtime = 'x: %s, y: %s' % (modmagtimex, modmagtimey)
 
 		times = {
 			'pixel size': ptime,
