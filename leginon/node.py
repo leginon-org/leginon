@@ -100,6 +100,7 @@ class Node(leginonobject.LeginonObject):
 
 	def __init__(self, id, session, nodelocations = {}, datahandler=DataHandler, tcpport=None, xmlrpcport=None, clientclass = datatransport.Client):
 		leginonobject.LeginonObject.__init__(self, id)
+		self.id_count_lock = threading.Lock()
 
 		if session is None or isinstance(session, data.SessionData):
 			self.session = session
@@ -148,34 +149,39 @@ class Node(leginonobject.LeginonObject):
 		return newid
 
 	def IDCounter(self):
-		# read current ID count value
-		if not hasattr(self, 'idcount'):
-			self.idcount = 0
-		self.idcount += 1
-
-		fname = ''
-		if self.session is not None:
-			session_name = self.session['name']
-			fname = fname + session_name + '_'
-		my_name = self.id[-1]
-		fname = fname + my_name + '.id'
-		fullname = os.path.join(leginonconfig.PREFS_PATH, fname)
+		self.id_count_lock.acquire()
 		try:
-			f = open(fullname, 'r')
-			last_count = cPickle.load(f)
-			f.close()
-		except:
-			last_count = 0
 
-		# create new id count
-		new_count = last_count + 1
-		try:
-			f = open(fullname, 'w')
-			cPickle.dump(new_count, f, 0)
-			f.close()
-		except:
-			print 'error while saving %s to pickle in file %s' % (new_count, fullname)
-			raise
+			# read current ID count value
+			if not hasattr(self, 'idcount'):
+				self.idcount = 0
+			self.idcount += 1
+	
+			fname = ''
+			if self.session is not None:
+				session_name = self.session['name']
+				fname = fname + session_name + '_'
+			my_name = self.id[-1]
+			fname = fname + my_name + '.id'
+			fullname = os.path.join(leginonconfig.PREFS_PATH, fname)
+			try:
+				f = open(fullname, 'r')
+				last_count = cPickle.load(f)
+				f.close()
+			except:
+				last_count = 0
+	
+			# create new id count
+			new_count = last_count + 1
+			try:
+				f = open(fullname, 'w')
+				cPickle.dump(new_count, f, 0)
+				f.close()
+			except:
+				print 'error while saving %s to pickle in file %s' % (new_count, fullname)
+				raise
+		finally:
+			self.id_count_lock.release()
 		return new_count
 
 	def main(self):
@@ -358,8 +364,7 @@ class Node(leginonobject.LeginonObject):
 			self.outputEvent(e)
 
 	def addSession(self, datainstance):
-		## setting an item of datainstance will reset the
-		## dbid, so do it sparingly
+		## setting an item of datainstance will reset the dbid
 		if datainstance['session'] is not self.session:
 			print 'session', datainstance['session']
 			datainstance['session'] = self.session
