@@ -75,8 +75,12 @@ class BitmapWindow(BufferedWindow):
 
 	def _setBitmap(self, bitmap):
 		self._bitmap = bitmap
-		self._bitmapwidth = self._bitmap.GetWidth()
-		self._bitmapheight = self._bitmap.GetHeight()
+		if bitmap is None:
+			self._bitmapwidth = 0
+			self._bitmapheight = 0
+		else:
+			self._bitmapwidth = self._bitmap.GetWidth()
+			self._bitmapheight = self._bitmap.GetHeight()
 
 	def setBitmap(self, bitmap):
 		self._setBitmap(bitmap)
@@ -100,14 +104,14 @@ class BitmapWindow(BufferedWindow):
 			dc.DestroyClippingRegion()
 			dc.SetClippingRegion(0, 0,
 														self._clientwidthscaled, self._clientheightscaled)
-			dc.Blit(self._xoffsetscaled - self._xview, self._yoffsetscaled - self._yview,
+			dc.Blit(self._xoffsetscaled - self._xview,
+							self._yoffsetscaled - self._yview,
 							self._bitmapwidth, self._bitmapheight,
 							memorydc,
 							0, 0)
 		else:
 			dc.Blit(self._xoffsetscaled, self._yoffsetscaled,
 							self._clientwidthscaled, self._clientheightscaled,
-							self._bitmapwidth, self._bitmapheight,
 							memorydc,
 							self._xview, self._yview)
 		memorydc.SelectObject(wx.NullBitmap)
