@@ -29,8 +29,6 @@ class DataHandler(leginonobject.LeginonObject):
 		'''Return data IDs of all stored data.'''
 		raise NotImplementedError
 
-	def exit(self):
-		pass
 
 class DictDataKeeper(DataHandler):
 	'''Keep data in a dictionary.'''

@@ -73,7 +73,6 @@ class Server(Base):
 	def exit(self):
 		for t in self.transportmodules:
 			self.servers[t].exit()
-		self.datahandler.exit()
 
 	def location(self):
 		loc = {}
