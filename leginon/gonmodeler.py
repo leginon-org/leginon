@@ -128,7 +128,7 @@ class GonModeler(calibrator.Calibrator):
 		## acquire image
 		newimagedata = self.cam.acquireCameraImageData(correction=0)
 		newnumimage = newimagedata['image']
-		self.updateImage('Image', newnumimage.astype(Numeric.Float32))
+		self.setImage(newnumimage.astype(Numeric.Float32), 'Image')
 
 		## insert into correlator
 		self.correlator.insertImage(newnumimage)
@@ -137,6 +137,7 @@ class GonModeler(calibrator.Calibrator):
 		if self.oldimagedata is not None:
 			## cross correlation
 			crosscorr = self.correlator.phaseCorrelate()
+			self.node.setImage(crosscorr.astype(Numeric.Float32), 'Correlation')
 			
 			## subtract auto correlation
 			#crosscorr -= self.autocorr
@@ -146,6 +147,7 @@ class GonModeler(calibrator.Calibrator):
 			self.peakfinder.subpixelPeak()
 			peak = self.peakfinder.getResults()
 			peakvalue = peak['subpixel peak value']
+			self.node.setTargets([peakvalue], 'Peak')
 			shift = correlator.wrap_coord(peak['subpixel peak'], crosscorr.shape)
 			binx = newimagedata['camera']['binning']['x']
 			biny = newimagedata['camera']['binning']['y']
