@@ -222,7 +222,10 @@ class EM(node.Node):
 		return None
 
 	def setScopeType(self, scopename):
-		modulename, classname, d = emregistry.getScopeInfo(scopename)
+		scopeinfo = emregistry.getScopeInfo(scopename)
+		if scopeinfo is None:
+			raise RuntimeError('EM node unable to get scope info...  Maybe you are running EM node in the wrong place?...')
+		modulename, classname, d = scopeinfo
 		try:
 			scopeclass = self.getClass(modulename, classname)
 			self.scope = scopedict.factory(scopeclass)()
