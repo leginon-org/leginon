@@ -648,14 +648,11 @@ def whereFormat(in_dict):
 	first = True
 	whereDict = sqldict.flatDict(in_dict['where'])
 	alias = in_dict['alias']
-	where = ""
+	wherelist = []
 	for key, value in whereDict.items():
-       		if first:
-                    first = False
-                else:
-                    where += " AND "
-		where += " %s.`%s`=%s " % (alias, key, value)
-        return where
+		wherelist.append(" %s.`%s`=%s " % (alias, key, value))
+	wherestr = ' AND '.join(wherelist)
+        return wherestr
 
 def orderFormat(alias):
 	sqlorder = "ORDER BY %s.DEF_timestamp DESC " % (alias)
