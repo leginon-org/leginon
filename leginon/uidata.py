@@ -268,6 +268,37 @@ class UIDate(UIData):
 class UIProgress(UIInteger):
 	typelist = UIInteger.typelist + ('progress',)
 
+class UISingleSelectFromList(UIContainer):
+	typelist = UIContainer.typelist + ('single select from list',)
+	def __init__(self, name, listvalue, selectedindex, callback=None):
+		UIContainer.__init__(self, name)
+		self.list = UIArray('List', listvalue, 'r')
+		self.selected = UIInteger('Selected', selectedindex, 'rw', callback)
+		self.addUIObject(self.list)
+		self.addUIObject(self.selected)
+
+	def set(self, listvalue, selectedindex):
+		self.setList(listvalue)
+		self.setSelected(selectedindex)
+
+	def getList(self):
+		return self.list.get()
+
+	def setList(self, listvalue):
+		self.list.set(listvalue)
+
+	def getSelected(self):
+		return self.selected.get()
+
+	def setSelected(self, selectedvalue):
+		self.selected.set(selectedvalue)
+
+	def getSelectedValue(self, selected=None):
+		valuelist = self.getList()
+		if selected is None:
+			selected = self.getSelected()
+		return valuelist[selected]
+
 class UISelectFromList(UIContainer):
 	typelist = UIContainer.typelist + ('select from list',)
 	# callback

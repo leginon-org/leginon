@@ -181,7 +181,7 @@ def WidgetClassFromTypeList(typelist):
 			if len(typelist) > 1:
 				if typelist[1] == 'container':
 					if len(typelist) > 2:
-						if typelist[2] == 'select from list':
+						if typelist[2] == 'single select from list':
 							return wxComboBoxWidget
 						elif typelist[2] == 'select from struct':
 							return wxTreeSelectWidget
@@ -732,7 +732,7 @@ class wxComboBoxWidget(wxContainerWidget):
 		self.value = {'List': None, 'Selected': None}
 
 	def apply(self, evt):
-		value = [evt.GetSelection()]
+		value = evt.GetSelection()
 		self.uiclient.setServer(self.namelist + ('Selected',), value)
 
 	def Destroy(self):
@@ -742,45 +742,54 @@ class wxComboBoxWidget(wxContainerWidget):
 	def add(self, namelist, typelist, value, read, write):
 		self.setWidget(namelist, value)
 
+	def setList(self, value):
+		self.combobox.Clear()
+
+		if value:
+			for i in value:
+				self.combobox.Append(str(i))
+			self.combobox.Enable(true)
+		else:
+			self.combobox.Enable(false)
+
+		self.combobox.SetSize(self.combobox.GetBestSize())
+		width, height = self.combobox.GetSizeTuple()
+		self.wxwidget.SetItemMinSize(self.combobox, width, height)
+
+	def setSelected(self, value):
+		if self.value['List']:
+			if value > len(self.value['List']):
+				value = 0
+			stringvalue = str(self.value['List'][value])
+			self.combobox.SetValue(stringvalue)
+
 	def _set(self, value):
 		if 'List' in value:
-			self.combobox.Clear()
-			for i in range(len(value['List'])):
-				self.combobox.Append(str(value['List'][i]))
-			if value['List']:
-				self.combobox.Enable(true)
-			else:
-				self.combobox.Enable(false)
-			self.combobox.SetSize(self.combobox.GetBestSize())
-			width, height = self.combobox.GetSizeTuple()
-			self.wxwidget.SetItemMinSize(self.combobox, width, height)
-		if 'Selected' in value and value['Selected'] and self.value['List']:
-			i = value['Selected'][0]
-			try:
-				v = str(value['List'][i])
-			except IndexError:
-				pass
-			else:
-				self.combobox.SetValue(v)
+			self.setList(value['List'])
+		if 'Selected' in value:
+			self.setSelected(value['Selected'])
 
 	def setWidget(self, namelist, value):
 		self.lock.acquire()
+
 		if namelist == self.namelist + ('List',):
 			self.value['List'] = value
 		elif namelist == self.namelist + ('Selected',):
 			self.value['Selected'] = value
 		else:
 			self.lock.release()
-			return
+			raise ValueError('Invalid item for combo box widget container')
+
 		if self.value['List'] is not None and self.value['Selected'] is not None:
 			evt = SetWidgetEvent(self, self.value)
 			wxPostEvent(self.widgethandler, evt)
+
 		self.lock.release()
 
-	# container set, should only be called within the container (setWidget)
 	def set(self, namelist, value=None):
 		if value is None:
-			self._set(namelist)
+			value = namelist
+			self._set(value)
 		else:
 			self.setWidget(namelist, value)
 		

@@ -47,7 +47,7 @@ class Navigator(node.Node):
 		mag = clickscope['magnification']
 
 		## figure out shift
-		movetype = self.movetype.getSelectedValue()[0]
+		movetype = self.movetype.getSelectedValue()
 		calclient = self.calclients[movetype]
 		newstate = calclient.transform(pixelshift, clickscope, clickcamera)
 		emdat = data.ScopeEMData(id=('scope',), initializer=newstate)
@@ -98,12 +98,7 @@ class Navigator(node.Node):
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
 		movetypes = self.calclients.keys()
-		if movetypes:
-			selected = [0]
-		else:
-			selected = []
-		self.movetype = uidata.UISelectFromList('TEM Parameter', movetypes,
-																						selected, 'r')
+		self.movetype = uidata.UISingleSelectFromList('TEM Parameter', movetypes, 0)
 		self.delaydata = uidata.UIFloat('Delay (sec)', 2.5, 'rw')
 
 		cameraconfigure = self.cam.configUIData()

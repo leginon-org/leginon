@@ -49,7 +49,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 
 	# calibrate needs to take a specific value
 	def calibrate(self):
-		uiparameter = self.uiparameter.getSelectedValue()[0]
+		uiparameter = self.uiparameter.getSelectedValue()
 		calclient = self.parameters[uiparameter]
 
 		## set cam state
@@ -122,13 +122,8 @@ class MatrixCalibrator(calibrator.Calibrator):
 		self.uicurbase = uidata.UIBoolean('Current as Base', True, 'rw')
 		self.uibase = uidata.UIStruct('Base', {'x':0,'y':0}, 'rw')
 		parameters = self.parameters.keys()
-		if parameters:
-			parameters.sort()
-			selected = [0]
-		else:
-			selected = []
-		self.uiparameter = uidata.UISelectFromList('Parameter', parameters,
-																								selected, 'r')
+		parameters.sort()
+		self.uiparameter = uidata.UISingleSelectFromList('Parameter', parameters, 0)
 		self.uidelta = uidata.UIFloat('Delta', 2e-6, 'rw')
 		self.ui_interval = uidata.UIFloat('Interval', 2e-6, 'rw')
 		validshift = {'correlation': {'min': 20.0, 'max': 512.0},
@@ -152,17 +147,13 @@ class MatrixCalibrator(calibrator.Calibrator):
 
 	def getBase(self):
 		if self.uicurbase.get():
-			choice = self.uiparameter.getSelectedValue()
-			if choice:
-				param = choice[0]
-				emdata = self.currentState()
-				base = emdata[param]
-			else:
-				raise RuntimeError('no parameter choice made')
+			param = self.uiparameter.getSelectedValue()
+			emdata = self.currentState()
+			base = emdata[param]
 		else:
 			base = self.uibase.get()
 		return base
 
 	def makeState(self, value, axis):
-		return {self.uiparameter.getSelectedValue()[0]: {axis: value}}
+		return {self.uiparameter.getSelectedValue(): {axis: value}}
 

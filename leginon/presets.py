@@ -59,7 +59,7 @@ class PresetsClient(object):
 
 	def uiPresetSelector(self):
 		getpresets = uidata.UIMethod('Get Names', self.uiGetPresetNames)
-		self.uiselectpreset = uidata.UISelectFromList('Select Preset', [], [], 'r')
+		self.uiselectpreset = uidata.UISingleSelectFromList('Select Preset', [], 0)
 		container = uidata.UIContainer('Preset Selection')
 		container.addUIObjects((getpresets, self.uiselectpreset))
 		return container
@@ -67,14 +67,10 @@ class PresetsClient(object):
 	def uiGetPresetNames(self):
 		presetlist = self.getPresets()
 		pnames = [p['name'] for p in presetlist]
-		if pnames:
-			sel = [0]
-		else:
-			sel = []
-		self.uiselectpreset.set(pnames, sel) 
+		self.uiselectpreset.set(pnames, 0) 
 
 	def uiGetSelectedName(self):
-		presetname = self.uiselectpreset.getSelectedValue()[0]
+		presetname = self.uiselectpreset.getSelectedValue()
 		return presetname
 
 
@@ -332,7 +328,7 @@ class PresetsManager(node.Node):
 
 		self.presetToDB(newpreset)
 		pnames = self.presetNames()
-		self.uiselectpreset.set(pnames,[0])
+		self.uiselectpreset.set(pnames, 0)
 		return newpreset
 
 	def presetNames(self):
@@ -341,17 +337,11 @@ class PresetsManager(node.Node):
 
 	def uiToScope(self):
 		sel = self.uiselectpreset.getSelectedValue()
-		if sel:
-			self.toScope(sel[0])
-		else:
-			print 'Select a preset name!'
+		self.toScope(sel)
 
 	def uiSelectedFromScope(self):
 		sel = self.uiselectpreset.getSelectedValue()
-		if sel:
-			newpreset = self.fromScope(sel[0])
-		else:
-			print 'Select a preset name!'
+		newpreset = self.fromScope(sel)
 
 	def uiNewFromScope(self):
 		newname = self.enteredname.get()
@@ -393,9 +383,9 @@ class PresetsManager(node.Node):
 		node.Node.defineUserInterface(self)
 
 		self.presetparams = uidata.UIStruct('Parameters', {}, 'rw', self.uiParamsCallback)
-		self.uiselectpreset = uidata.UISelectFromList('Preset', [], [], 'r', callback=self.uiSelectCallback)
+		self.uiselectpreset = uidata.UISingleSelectFromList('Preset', [], 0, callback=self.uiSelectCallback)
 		pnames = self.presetNames()
-		self.uiselectpreset.set(pnames,[0])
+		self.uiselectpreset.set(pnames, 0)
 
 		toscopemethod = uidata.UIMethod('To Scope', self.uiToScope)
 		fromscopemethod = uidata.UIMethod('Selected From Scope', self.uiSelectedFromScope)

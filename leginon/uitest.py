@@ -61,7 +61,7 @@ bar1.addUIObject(clickimage)
 foo1.addUIObject(uidata.UIMethod('Method 1', bar))
 foo1.addUIObject(uidata.UIBoolean('Boolean 1', 1, 'r'))
 foo1.addUIObject(uidata.UIBoolean('Boolean 2', 0, 'rw'))
-foo1.addUIObject(uidata.UISelectFromList('List Select 1', [1,2,3], [1], 'rw'))
+foo1.addUIObject(uidata.UISingleSelectFromList('List Select 1', [1,2,3], 1))
 struct = {'a': 1,
 					'b': {'a': 'foo', 'b': 'bar'},
 					'c': 'asdf',

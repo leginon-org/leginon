@@ -227,12 +227,8 @@ class Manager(node.Node):
 			return
 		# could check and keep selected if possible
 		launchers = self.launcherdict.keys()
-		if launchers:
-			launchers.sort()
-			selected = [0]
-		else:
-			selected = []
-			self.uilauncherselect.set(launchers, selected)
+		launchers.sort()
+		self.uilauncherselect.set(launchers, 0)
 
 	def getLauncherNodeClasses(self, dataid, location, launcherid):
 		'''Retrieve a list of launchable classes from a launcher by alias launchername.'''
@@ -269,7 +265,7 @@ class Manager(node.Node):
 		## update the UI stuff
 		launchers = self.launcherdict.keys()
 		launchers.sort()
-		self.uilauncherselect.set(launchers, [0])
+		self.uilauncherselect.set(launchers, 0)
 
 		self.confirmEvent(ievent)
 
@@ -544,14 +540,10 @@ class Manager(node.Node):
 	def uiUpdateNodeInfo(self):
 		'''Updates nodes lists and info in UI.'''
 		nodes = self.clients.keys()
-		if nodes:
-			nodes = map(str, nodes)
-			selected = [0]
-		else:
-			selected = []
-		self.uikillselect.set(nodes, selected)
-		self.uifromnodeselect.set(nodes, selected)
-		self.uitonodeselect.set(nodes, selected)
+		nodes = map(str, nodes)
+		self.uikillselect.set(nodes, 0)
+		self.uifromnodeselect.set(nodes, 0)
+		self.uitonodeselect.set(nodes, 0)
 
 		self.uinodeinfo.set(self.uiNodeDict())
 
@@ -579,15 +571,15 @@ class Manager(node.Node):
 
 	def uiAddNode(self):
 		'''UI helper calling addNode. See addNode.'''
-		hostname = self.uiaddnodehostname.getSelectedValue()[0]
+		hostname = self.uiaddnodehostname.getSelectedValue()
 		port = self.uiaddnodeport.get()
 		self.addNode(hostname, port)
 
 	def uiLaunch(self):
-		launchername = self.uilauncherselect.getSelectedValue()[0]
+		launchername = self.uilauncherselect.getSelectedValue()
 		launcherid = self.launcherdict[launchername]['ID']
 		process = self.uilaunchflag.get()
-		nodeclass = self.uiclassselect.getSelectedValue()[0]
+		nodeclass = self.uiclassselect.getSelectedValue()
 		name = self.uilaunchname.get()
 		args = '(%s)' % self.uilaunchargs.get()
 		try:
@@ -601,17 +593,13 @@ class Manager(node.Node):
 	def uiKillNode(self):
 		'''UI helper calling killNode, using str node aliases. See killNode.'''
 		value = self.uikillselect.getSelectedValue()
-		if value:
-			self.killNode(eval(value[0]))
+		self.killNode(eval(value))
 
 	def uiAddDistmap(self):
 		'''UI function using addEventDistmap. Strings represent event classes and node IDs.'''
-		try:
-			eventclass_str = self.uieventselect.getSelectedValue()[0]
-			fromnodeidstr = self.uifromnodeselect.getSelectedValue()[0]
-			tonodeidstr = self.uitonodeselect.getSelectedValue()[0]
-		except IndexError:
-			return
+		eventclass_str = self.uieventselect.getSelectedValue()
+		fromnodeidstr = self.uifromnodeselect.getSelectedValue()
+		tonodeidstr = self.uitonodeselect.getSelectedValue()
 		self.printerror('binding event %s from %s to %s'
 										% (eventclass_str, fromnodeidstr, tonodeidstr))
 		eventclass = self.uieventclasses[eventclass_str]
@@ -619,12 +607,9 @@ class Manager(node.Node):
 
 	def uiDelDistmap(self):
 		'''UI function using delEventDistmap. Strings represent event classes and node IDs.'''
-		try:
-			eventclass_str = self.uieventselect.getSelectedValue()[0]
-			fromnodeidstr = self.uifromnodeselect.getSelectedValue()[0]
-			tonodeidstr = self.uitonodeselect.getSelectedValue()[0]
-		except IndexError:
-			return
+		eventclass_str = self.uieventselect.getSelectedValue()
+		fromnodeidstr = self.uifromnodeselect.getSelectedValue()
+		tonodeidstr = self.uitonodeselect.getSelectedValue()
 		self.printerror('unbinding event %s from %s to %s'
 										% (eventclass_str, fromnodeidstr, tonodeidstr))
 		eventclass = self.uieventclasses[eventclass_str]
@@ -656,17 +641,12 @@ class Manager(node.Node):
 
 	def uiLauncherSelectCallback(self, value):
 		try:
-			values = self.uilauncherselect.getSelectedValue(value)
-			launchername = values[0]
+			launchername = self.uilauncherselect.getSelectedValue(value)
 			classes = list(self.launcherdict[launchername]['classes'])
-			if classes:
-				classes.sort()
-				selected = [0]
-			else:
-				selected = []
-			self.uiclassselect.set(classes, selected)
+			classes.sort()
+			self.uiclassselect.set(classes, 0)
 		except:
-			self.uiclassselect.set([], [])
+			self.uiclassselect.set([], 0)
 			self.printException()
 		return value
 
@@ -675,8 +655,8 @@ class Manager(node.Node):
 		node.Node.defineUserInterface(self)
 
 		self.uilaunchname = uidata.UIString('Name', '', 'rw')
-		self.uiclassselect = uidata.UISelectFromList('Node Class', [], [], 'r')
-		self.uilauncherselect = uidata.UISelectFromList('Launcher', [], [], 'r',
+		self.uiclassselect = uidata.UISingleSelectFromList('Node Class', [], 0)
+		self.uilauncherselect = uidata.UISingleSelectFromList('Launcher', [], 0,
 																									self.uiLauncherSelectCallback)
 		self.uilaunchargs = uidata.UIString('Arguments', '()', 'rw')
 		self.uilaunchflag = uidata.UIBoolean('Process', False, 'rw')
@@ -689,11 +669,12 @@ class Manager(node.Node):
 
 		self.uinodeinfo = uidata.UIStruct('Node Info', {}, 'r')
 		infoobjects = (self.uinodeinfo,)
-		self.uiaddnodehostname = uidata.UISelectFromList('Hostname', leginonconfig.LAUNCHERS, [0], 'r')
+		self.uiaddnodehostname = uidata.UISingleSelectFromList('Hostname',
+																										leginonconfig.LAUNCHERS, 0)
 		self.uiaddnodeport = uidata.UIInteger('TCP Port', 55555, 'rw')
 		addmethod = uidata.UIMethod('Add', self.uiAddNode)
 		addobjects = (self.uiaddnodehostname, self.uiaddnodeport, addmethod)
-		self.uikillselect = uidata.UISelectFromList('Kill Node', [], [], 'r')
+		self.uikillselect = uidata.UISingleSelectFromList('Kill Node', [], 0)
 		killmethod = uidata.UIMethod('Kill', self.uiKillNode)
 		killobjects = (self.uikillselect, killmethod)
 		nodemanagementcontainer = uidata.UIMediumContainer('Node Management')
@@ -710,17 +691,12 @@ class Manager(node.Node):
 		applicationcontainer = uidata.UIMediumContainer('Application')
 		applicationcontainer.addUIObjects(applicationobjects)
 
-		self.uifromnodeselect = uidata.UISelectFromList('From Node', [], [], 'r')
+		self.uifromnodeselect = uidata.UISingleSelectFromList('From Node', [], 0)
 		self.uieventclasses = event.eventClasses()
 		eventclasses = self.uieventclasses.keys()
 		eventclasses.sort()
-		if eventclasses:
-			selected = [0]
-		else:
-			selected = []
-		self.uieventselect = uidata.UISelectFromList('Event', eventclasses,
-																									selected, 'r')
-		self.uitonodeselect = uidata.UISelectFromList('To Node', [], [], 'r')
+		self.uieventselect = uidata.UISingleSelectFromList('Event', eventclasses, 0)
+		self.uitonodeselect = uidata.UISingleSelectFromList('To Node', [], 0)
 		bindmethod = uidata.UIMethod('Bind', self.uiAddDistmap)
 		unbindmethod = uidata.UIMethod('Unbind', self.uiDelDistmap)
 		eventobjects = (self.uifromnodeselect, self.uieventselect,

@@ -111,7 +111,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		pixelshift = {'row':deltarow, 'col':deltacol}
 
 		## figure out scope state that gets to the target
-		movetype = self.uimovetype.getSelectedValue()[0]
+		movetype = self.uimovetype.getSelectedValue()
 		calclient = self.calclients[movetype]
 		print 'ORIGINAL', targetscope['image shift']
 		newscope = calclient.transform(pixelshift, targetscope, targetcamera)
@@ -121,7 +121,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		return emdata
 
 	def acquire(self, presetdata, trial=False):
-		acqtype = self.uiacquiretype.getSelectedValue()[0]
+		acqtype = self.uiacquiretype.getSelectedValue()
 		if acqtype == 'corrected':
 			cor = True
 		else:
@@ -212,45 +212,16 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.acquire(p, trial=True)
 		print 'Acquired'
 
-		### why is this here?
-		#presetsnames = self.presetsclient.presetNames()
-		#if presetsnames:
-		#	selected = [0]
-		#else:
-		#	selected = []
-		#self.uiselectpreset.set(presetsnames, selected)
-
-	def uiFromScope(self):
-		raise NotImplementedError('this is not up to date with new presetsclient')
-		presetname = self.uifromscopename.get()
-		presetdata = self.presetsclient.fromScope(presetname)
-		self.presetsclient.storePreset(presetdata)
-		presetsnames = self.presetsclient.presetNames()
-		if presetsnames:
-			selected = [0]
-		else:
-			selected = []
-		self.uiselectpreset.set(presetsnames, selected)
-
 	def uiTrial(self):
 		self.processTargetData(targetdata=None)
 
-	def OLDuiGetPresetNames(self):
-		presetlist = self.presetsclient.getPresets()
-		pnames = [p['name'] for p in presetlist]
-		if pnames:
-			sel = [0]
-		else:
-			sel = []
-		self.uiselectpreset.set(pnames, sel) 
-
 	def defineUserInterface(self):
 		targetwatcher.TargetWatcher.defineUserInterface(self)
-		self.uimovetype = uidata.UISelectFromList('Move Type',
-																							self.calclients.keys(), [0], 'r')
+		self.uimovetype = uidata.UISingleSelectFromList('Move Type',
+																							self.calclients.keys(), 0)
 		self.uidelay = uidata.UIFloat('Delay (sec)', 2.5, 'rw')
-		self.uiacquiretype = uidata.UISelectFromList('Acquisition Type',
-																							['raw', 'corrected'], [0], 'r')
+		self.uiacquiretype = uidata.UISingleSelectFromList('Acquisition Type',
+																							['raw', 'corrected'], 0)
 		settingscontainer = uidata.UIContainer('Settings')
 		settingscontainer.addUIObjects((self.uimovetype, self.uidelay,
 																		self.uiacquiretype))
@@ -258,11 +229,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.uipresetnames = uidata.UIArray('Sequence', ['yours'], 'rw')
 		pselect = self.presetsclient.uiPresetSelector()
 
-		#self.uifromscopename = uidata.UIString('Preset Name', '', 'rw')
-		#fromscopemethod = uidata.UIMethod('Create Preset', self.uiFromScope)
-
-		#getpresets = uidata.UIMethod('Get Names', self.uiGetPresetNames)
-		#self.uiselectpreset = uidata.UISelectFromList('Select Preset', [], [], 'r')
 		toscopemethod = uidata.UIMethod('Apply Preset', self.uiToScope)
 		toscopeandacquiremethod = uidata.UIMethod('Apply Preset and Acquire', self.uiToScopeAcquire)
 		presetscontainer = uidata.UIContainer('Presets')

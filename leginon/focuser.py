@@ -63,7 +63,7 @@ class Focuser(acquisition.Acquisition):
 		if validdefocus:
 			print 'Defocus correction'
 			try:
-				focustype = self.focustype.getSelectedValue()[0]
+				focustype = self.focustype.getSelectedValue()
 				focusmethod = self.focus_methods[focustype]
 			except (IndexError, KeyError):
 				print 'no method selected for correcting defocus'
@@ -105,13 +105,9 @@ class Focuser(acquisition.Acquisition):
 		acquisition.Acquisition.defineUserInterface(self)
 		self.btilt = uidata.UIFloat('Beam Tilt', 0.02, 'rw')
 		focustypes = self.focus_methods.keys()
-		if focustypes:
-			focustypes.sort()
-			selected = [0]
-		else:
-			selected = []
-		self.focustype = uidata.UISelectFromList('Focus Correction Type',
-																							focustypes, selected, 'r')
+		focustypes.sort()
+		self.focustype = uidata.UISingleSelectFromList('Focus Correction Type',
+																							focustypes, 0)
 		self.stigcorrection = uidata.UIBoolean('Stigmator Correction', False, 'rw')
 		self.publishimages = uidata.UIBoolean('Publish Images', True, 'rw')
 		testmethod = uidata.UIMethod('Test Autofocus', self.uiTest)
