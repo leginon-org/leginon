@@ -268,8 +268,8 @@ class Calibration(node.Node):
 
 		if (self.inRange(abs(shift[0]), validshift[0]) and
 			self.inRange(abs(shift[1]), validshift[1])):
-
-
+			verdict = 'good'
+		else:
 			if shiftinfo['peak value'] > self.correlationthreshold:
 				verdict = 'good'
 			else:
