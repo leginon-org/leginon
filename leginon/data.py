@@ -1274,6 +1274,7 @@ class FocuserResultData(InSessionData):
 			('post manual check', bool),
 			('auto measured', bool),
 			('auto status', str),
+			('drift', DriftData),
 		)
 	typemap = classmethod(typemap)
 
