@@ -11,6 +11,64 @@ import Image
 
 wxInitAllImageHandlers()
 
+class ContrastTool(object):
+	def __init__(self, imagepanel, sizer):
+		self.imagepanel = imagepanel
+		self.imagemin = 0
+		self.imagemax = 0
+		self.slidermin = 0
+		self.slidermax = 100
+		self.minslider = wxSlider(self.imagepanel, -1, self.slidermin,
+															self.slidermin, self.slidermax)
+		self.maxslider = wxSlider(self.imagepanel, -1, self.slidermax,
+															self.slidermin, self.slidermax)
+		EVT_SCROLL_THUMBRELEASE(self.minslider, self.onMinSlider)
+		EVT_SCROLL_THUMBRELEASE(self.maxslider, self.onMaxSlider)
+		EVT_SCROLL_ENDSCROLL(self.minslider, self.onMinSlider)
+		EVT_SCROLL_ENDSCROLL(self.maxslider, self.onMaxSlider)
+		EVT_SCROLL_THUMBTRACK(self.minslider, self.onMinSlider)
+		EVT_SCROLL_THUMBTRACK(self.maxslider, self.onMaxSlider)
+		self.sizer = wxBoxSizer(wxVERTICAL)
+		self.sizer.Add(self.minslider)
+		self.sizer.Add(self.maxslider)
+		sizer.Add(self.sizer)
+
+	def updateNumericImage(self):
+		self.imagepanel.setBitmap() #Numeric.clip(self.imagepanel.numericimage,
+																#	self.contrastmin, self.contrastmax))
+		self.imagepanel.setBuffer()
+		self.imagepanel.UpdateDrawing()
+
+	def getRange(self):
+		return self.contrastmin, self.contrastmax
+
+	def getScaledValue(self, position):
+		return (self.imagemax - self.imagemin)*(position - self.slidermin)/(self.slidermax - self.slidermin) + self.imagemin
+
+	def setRange(self, range):
+		self.imagemin = range[0]
+		self.imagemax = range[1]
+		self.contrastmin = self.getScaledValue(self.minslider.GetValue())
+		self.contrastmax = self.getScaledValue(self.maxslider.GetValue())
+
+	def onMinSlider(self, evt):
+		contrastmin = self.getScaledValue(evt.GetPosition())
+		if contrastmin > self.contrastmax:
+			self.contrastmin = self.contrastmax
+			self.minslider.SetValue(self.maxslider.GetValue())
+		else:
+			self.contrastmin = contrastmin
+		self.updateNumericImage()
+
+	def onMaxSlider(self, evt):
+		contrastmax = self.getScaledValue(evt.GetPosition())
+		if contrastmax < self.contrastmin:
+			self.contrastmax = self.contrastmin
+			self.maxslider.SetValue(self.minslider.GetValue())
+		else:
+			self.contrastmax = contrastmax
+		self.updateNumericImage()
+
 class ImageTool(object):
 	def __init__(self, imagepanel, sizer, bitmap, tooltip='', cursor=None,
 								untoggle=False):
@@ -227,6 +285,8 @@ class ImagePanel(wxPanel):
 		self.addTool(RulerTool(self, self.toolsizer))
 		self.addTool(ZoomTool(self, self.toolsizer))
 
+		self.contrasttool = ContrastTool(self, self.toolsizer)
+
 		self.Fit()
 
 	def addTool(self, tool):
@@ -239,15 +299,19 @@ class ImagePanel(wxPanel):
 		Set the internal wxBitmap to current Numeric image
 		'''
 		if self.numericimage is not None:
-			image = NumericImage.NumericImage(self.numericimage)
-			image.update_image()
-			wximage = image.wxImage()
+			clip = self.contrasttool.getRange()
+			image = NumericImage.linearscale(Numeric.clip(self.numericimage,
+																										clip[0], clip[1]),
+																				self.contrasttool.getRange(),
+																				(0, 255), self.numericimageextrema)
+			wximage = NumericImage.Numeric2wxImage(image)
 		elif self.pilimage is not None:
 			wximage = wxEmptyImage(self.pilimage.size[0], self.pilimage.size[1])
 			wximage.SetData(self.pilimage.convert('RGB').tostring())
 		else:
 			self.bitmap = None
 			return
+
 
 		if self.smallScale():
 			xscale, yscale = self.getScale()
@@ -334,6 +398,9 @@ class ImagePanel(wxPanel):
 		'''
 
 		self.numericimage = numericimage
+		if self.numericimage is not None:
+			self.numericimageextrema = NumericImage.extrema(self.numericimage)
+			self.contrasttool.setRange(self.numericimageextrema)
 		self.setBitmap()
 		self.setVirtualSize()
 		self.setBuffer()
@@ -1056,8 +1123,8 @@ if __name__ == '__main__':
 		filename = sys.argv[1]
 	except IndexError:
 		filename = 'test1.mrc'
-	def bar(xy):
-		print xy
+#	def bar(xy):
+#		print xy
 
 	class MyApp(wxApp):
 		def OnInit(self):

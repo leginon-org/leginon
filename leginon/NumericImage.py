@@ -22,6 +22,18 @@ ntype_itype = {
 	(Numeric.Float64,8) : ('F','F;64NF')
 	}
 
+def Numeric2wxImage(numericarray):
+	type = numericarray.typecode()
+	h, w = numericarray.shape
+	imsize = w, h
+	itemsize = numericarray.itemsize()
+	immode = ntype_itype[type,itemsize][0]
+	rawmode = ntype_itype[type,itemsize][1]
+	nstr = numericarray.tostring()
+	image = Image.fromstring(immode, imsize, nstr, 'raw', rawmode, 0, 1)
+	wximage = wxEmptyImage(image.size[0], image.size[1])
+	wximage.SetData(image.convert('RGB').tostring())
+	return wximage
 
 def linearscale(input, boundfrom, boundto, extrema=None):
 	"""
@@ -85,7 +97,7 @@ def resize(pil_image, size):
 
 # 1024x1024:  0.1
 def extrema(numarray):
-		t0 = time.clock()
+#		t0 = time.clock()
 
 		flat = Numeric.ravel(numarray)
 		extmin = Numeric.argmin(flat)
@@ -94,9 +106,9 @@ def extrema(numarray):
 		maxval = flat[extmax]
 		ext = (minval, maxval)
 
-		t1 = time.clock()
-		t = t1 - t0
-		print 'time: %.3f' % (t,)
+#		t1 = time.clock()
+#		t = t1 - t0
+#		print 'time: %.3f' % (t,)
 		return ext
 
 class NumericImage:

@@ -15,6 +15,7 @@ class Webcam(node.Node):
 
 	def exit(self):
 		del self.webcam
+		node.Node.exit(self)
 
 	def uiAcquire(self):
 		if self.continuous.get():
