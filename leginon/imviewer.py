@@ -98,9 +98,7 @@ class ImViewer(watcher.Watcher, camerafuncs.CameraFuncs):
 		return xmlrpclib.Binary(mrcstr)
 
 	def acquireArray(self, corr=0):
-		camstate = self.camconfig.get()
-		self.cameraDefaultOffset(camstate)
-		self.camconfig.set(camstate)
+		camstate = self.camconfigdata.get()
 		imarray = self.cameraAcquireArray(camstate, correction=corr)
 		return imarray
 

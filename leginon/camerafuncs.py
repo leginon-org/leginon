@@ -85,39 +85,31 @@ class CameraFuncs(object):
 		offx = CAMSIZE[1] / 2 - dimx / 2
 		camstate['offset'] = {'x': offx, 'y': offy}
 
-	def cameraConfigUISpec(self):
+	def cameraConfigUIData(self):
 		'''
 		returns a camera configuration Spec object for UI server
 		'''
 
-		### default state will be current state if accessable
-		### otherwise a default is defined here
-		try:
-			#defaultcamstate = self.cameraState()
-			defaultcamstate = None
-		except:
-			defaultcamstate = None
-		if defaultcamstate is None:
-			defaultcamstate = {
-				'exposure time': 500,
-				'binning': {'x': 1, 'y': 1},
-				'dimension': {'x': 512, 'y': 512}
-			}
-			self.cameraDefaultOffset(defaultcamstate)
+		defaultcamstate = {
+			'exposure time': 500,
+			'binning': {'x': 1, 'y': 1},
+			'dimension': {'x': 512, 'y': 512}
+		}
+		self.cameraDefaultOffset(defaultcamstate)
+		camconfigdict = {'state': defaultcamstate, 'auto offset': 1}
 
-		self.defaultoffset = self.registerUIData('Auto Offset (center image on camera)', 'boolean', default=1, permissions='rw')
+		camconfig = self.registerUIData('Camera Configuration', 'struct', permissions='rw', default=camconfigdict, callback=self.cameraConfig)
 
-		self.camconfig = self.registerUIData('Parameters', 'struct', permissions='rw', default=defaultcamstate)
-		self.camconfig.registerCallback(self.cameraConfigCallback)
+		return camconfig
 
-		camcont = self.registerUIContainer('Camera Config', (self.camconfig,self.defaultoffset))
-		return camcont
-
-	def cameraConfigCallback(self, value=None):
+	def cameraConfig(self, value=None):
+		'''
+		keeps track of a camera configuration
+		not necessarily the current camera state
+		(use cameraState for that)
+		'''
 		if value is not None:
-			if self.defaultoffset.get():
-				self.cameraDefaultOffset(value)
-			self.cameraconfigvalue = value
-			print 'value set to', value
-			
-		return self.cameraconfigvalue
+			if value['auto offset']:
+				self.cameraDefaultOffset(value['state'])
+			self.__cameraconfigvalue = value
+		return self.__cameraconfigvalue

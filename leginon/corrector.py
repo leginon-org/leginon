@@ -13,8 +13,6 @@ reload(camerafuncs)
 import xmlrpclib
 
 
-### these should go in a stats node or module
-
 class DataHandler(node.DataHandler):
 	def __init__(self, id, inode):
 		self.node = inode
@@ -63,26 +61,27 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 
 		self.fakeflag = self.registerUIData('Fake', 'boolean', default=False, permissions='rw')
 
-		prefs = self.registerUIContainer('Preferences', (self.navgdata, self.fakeflag))
+		self.camconfigdata = self.cameraConfigUIData()
+		prefs = self.registerUIContainer('Preferences', (self.navgdata, self.fakeflag, self.camconfigdata))
 
-		self.camconfigdata = self.cameraConfigUISpec()
 		argspec = (
-			self.registerUIData('Clip Limits', 'array', default=()),
-			self.registerUIData('Bad Rows', 'array', default=()),
-			self.registerUIData('Bad Cols', 'array', default=())
+			self.registerUIData('clip limits', 'array', default=()),
+			self.registerUIData('bad rows', 'array', default=()),
+			self.registerUIData('bad cols', 'array', default=())
 		)
-		setplan = self.registerUIMethod(self.uiSetPlanParams, 'Set Plan', argspec)
-
-		plan = self.registerUIContainer('Plan', (self.camconfigdata, setplan))
+		plan = self.registerUIMethod(self.uiPlanParams, 'Set Plan Params', argspec)
 
 		self.registerUISpec('Corrector', (plan, acqdark, acqbright, acqcorr, prefs, nodespec))
 
-	def uiSetPlanParams(self, camstate, cliplimits, badrows, badcols):
+	def uiPlanParams(self, cliplimits, badrows, badcols):
+		camconfig = self.cameraConfig()
+		camstate = camconfig['state']
 		key = self.newPlan(camstate)
 		newplan = self.plans[key]
 		newplan['clip limits'] = cliplimits
 		newplan['bad rows'] = badrows
 		newplan['bad cols'] = badcols
+		print 'updated %s to %s' % (key, self.plans[key])
 		return ''
 
 	def uiAcquireDark(self):
@@ -98,7 +97,8 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 		return xmlrpclib.Binary(mrcstr)
 
 	def uiAcquireCorrected(self):
-		camstate = self.camconfigdata.get()
+		camconfig = self.camconfigdata.get()
+		camstate = camconfig['state']
 		self.cameraState(camstate)
 		imdata = self.acquireCorrectedArray()
 		print 'Corrected Stats: %s' % (self.stats(imdata),)
@@ -139,7 +139,8 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 		return series
 
 	def acquireReference(self, dark=False):
-		camstate = self.camconfigdata.get()
+		camconfig = self.camconfigdata.get()
+		camstate = camconfig['state']
 		tempcamstate = self.camconfigdata.get()
 		if dark:
 			tempcamstate['exposure time'] = 0.0

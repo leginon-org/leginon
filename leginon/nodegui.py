@@ -130,7 +130,6 @@ def whichDataClass(dataspec):
 
 class Data(SpecWidget):
 	def __init__(self, parent, uiclient, spec):
-
 		SpecWidget.__init__(self, parent, uiclient, spec, bd=2, relief=SOLID)
 		self.initInfo(spec)
 		self.build()
@@ -433,6 +432,10 @@ class ImageData(Data):
 		if not isinstance(value, xmlrpclib.Binary):
 			raise RuntimeError('value must be instance of xmlrpclib.Binary')
 		mrcstr = value.data
+		print 'length', len(mrcstr)
+		f = open('junkdata', 'w')
+		value.encode(f)
+		f.close()
 		if mrcstr == '':
 			self.iv.displayMessage('NO IMAGE DATA')
 		else:
@@ -455,7 +458,6 @@ class Method(SpecWidget):
 		self.argspec = self.spec['argspec']
 		
 		if 'returnspec' in self.spec:
-			print 'returnspec', self.spec['returnspec']
 			self.returnspec = self.spec['returnspec']
 		else:
 			self.returnspec = None
@@ -493,6 +495,7 @@ class Method(SpecWidget):
 			newvalue = argwidget.getWidget()
 			args.append(newvalue)
 		args = tuple(args)
+		print 'executing %s' % (self.id,)
 		ret = self.uiclient.execute(self.id, args)
 		if ret is not None:
 			self.process_return(ret)

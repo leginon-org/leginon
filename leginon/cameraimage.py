@@ -53,3 +53,26 @@ def zeroRow(inputarray, row):
 def zeroCol(inputarray, col):
 	inputarray[:,col] = 0
 	return inputarray
+
+### This will hopefully be a class that contains a lot of the above
+### functionality.  The name NumericImage is currently being used
+### in the NumericImage module/class.  I would like that class to become
+### something like PILNumericImage and this class will absorb some of
+### its functionality.  PILNumericImage can then become the glue between this
+### NumericImage and the PIL library.
+class NumericImage(object):
+	'''
+	This is a class wrapper around a Numeric array
+	'''
+	def __init__(self, numdata):
+		self.numeric(numdata)
+		self.stats = None
+
+	def init_stats(self):
+		pass
+
+	def numeric(self, numdata=None):
+		if numdata is not None:
+			self.numdata = Numeric.array(numdata)
+		return self.numdata
+

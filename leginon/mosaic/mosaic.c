@@ -73,7 +73,7 @@ num_add_piece(target,source,gxoff,gyoff,theta,sclx,scly,thresh,gxmin,gxmax,gymin
 	float gxmin, gxmax, gymin, gymax;
 {
 
-	double *gimg, *img;
+	float *gimg, *img;
 	int gnx, gny, gnpix, nx, ny;
 	float resx, resy;
 	float gxrnge, gyrnge;
@@ -91,7 +91,7 @@ num_add_piece(target,source,gxoff,gyoff,theta,sclx,scly,thresh,gxmin,gxmax,gymin
 	gyrnge= gymax- gymin;
 	*/
 
-	gimg = (double *)target->data;
+	gimg = (float *)target->data;
  	gnx = target->dimensions[0];
  	gny = target->dimensions[1];
 	gnpix = gnx * gny;
@@ -104,7 +104,7 @@ num_add_piece(target,source,gxoff,gyoff,theta,sclx,scly,thresh,gxmin,gxmax,gymin
 	ny= ss2->nn[1];
 	*/
 
-	img = (double *)source->data;
+	img = (float *)source->data;
 	nx = source->dimensions[0];
 	ny = source->dimensions[1];
 
@@ -143,7 +143,7 @@ add_piece(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "O!Offffffffff", &PyArray_Type, &mosaic, &pieceob,&gxoff,&gyoff,&theta,&sclx,&scly,&thresh,&gxmin,&gxmax,&gymin,&gymax))
 		return NULL;
 
-	if (mosaic->nd != 2 || mosaic->descr->type_num != PyArray_DOUBLE) {
+	if (mosaic->nd != 2 || mosaic->descr->type_num != PyArray_FLOAT) {
 		PyErr_SetString(PyExc_ValueError, "array must be two-dimensional and of type float");
 		return NULL;
 	}
