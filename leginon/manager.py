@@ -755,7 +755,7 @@ class ManagerSetup(object):
 				hostname = session['instrument']['hostname']
 				self.manager.addNode(hostname, 55555)
 			except:
-				pass
+				self.manager.outputWarning('Cannot add instrument\'s launcher.')
 			parent = self.container.getParent()
 			if parent is not None:
 				parent.deleteObject(self.container.getName())

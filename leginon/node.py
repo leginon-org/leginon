@@ -509,11 +509,17 @@ class Node(leginonobject.LeginonObject):
 														exitmethod))
 		self.uiserver.addObject(container)
 
-	def outputMessage(self, title, message):
+	def outputMessage(self, title, message, number=0):
 		# log too maybe
 		if hasattr(self, 'uiserver'):
-			messagedialog = uidata.MessageDialog(title, message)
-			self.uiserver.addObject(messagedialog)
+			if number > 0:
+				messagedialog = uidata.MessageDialog('%s #%d' % (title,number), message)
+			else:
+				messagedialog = uidata.MessageDialog(title, message)
+			try:
+				self.uiserver.addObject(messagedialog)
+			except ValueError:
+				self.outputMessage(title, message, number + 1)
 		else:
 			self.printerror(title + ': ' + message)
 
