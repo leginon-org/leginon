@@ -1,0 +1,195 @@
+#!/usr/bin/env python
+
+import targetfinder
+import holefinderback
+import uidata
+import Mrc
+
+class HoleFinder(targetfinder.TargetFinder):
+	def __init__(self, id, session, nodelocations, **kwargs):
+		targetfinder.TargetFinder.__init__(self, id, session, nodelocations, **kwargs)
+		self.hf = holefinderback.HoleFinder()
+
+		self.currentimage = None
+
+		#if self.__class__ == ClickTargetFinder:
+		#	self.defineUserInterface()
+		#	self.start()
+		self.defineUserInterface()
+		self.start()
+
+	def defineUserInterface(self):
+		targetfinder.TargetFinder.defineUserInterface(self)
+		self.uidataqueueflag.set(False)
+
+		self.testfile = uidata.String('Filename', '', 'rw', persist=True)
+		testmeth = uidata.Method('Test All', self.testAll)
+		readmeth = uidata.Method('Read Image', self.readImage)
+		self.originalimage = uidata.Image('Original', None, 'r')
+		originalcont = uidata.Container('Original')
+		originalcont.addObjects((testmeth, self.testfile, readmeth, self.originalimage))
+
+		### edge detection
+		self.edgeson = uidata.Boolean('Find Edges On', True, 'rw', persist=True)
+		self.filtertype = uidata.SingleSelectFromList('Filter Type', ['laplacian', 'laplacian-gaussian'], 0, persist=True)
+		self.glapsize = uidata.Integer('LoG Size', 9, 'rw', persist=True)
+		self.glapsigma = uidata.Float('LoG Sigma', 1.4, 'rw', persist=True)
+		self.edgeabs = uidata.Boolean('Absolute Value', False, 'rw', persist=True)
+		edgemeth = uidata.Method('Find Edges', self.findEdges)
+		self.edgeimage = uidata.Image('Edge Image', None, 'r')
+		edgecont = uidata.Container('Edge Finder')
+		edgecont.addObjects((self.edgeson, self.filtertype, self.glapsize, self.glapsigma, self.edgeabs, edgemeth, self.edgeimage,))
+
+
+		### Correlate Template
+		self.mindia = uidata.Float('Minimum Diameter', 20.0, 'rw', persist=True)
+		self.maxdia = uidata.Float('Maximum Diameter', 40.0, 'rw', persist=True)
+		self.cortype = uidata.SingleSelectFromList('Correlation Type', ['cross correlation', 'phase correlation'], 0, persist=True)
+		cormeth = uidata.Method('Correlate Template', self.correlateTemplate)
+		self.corimage = uidata.Image('Correlation Image', None, 'r')
+		corcont = uidata.Container('Template Correlation')
+		corcont.addObjects((self.mindia, self.maxdia, self.cortype, cormeth, self.corimage))
+
+		### threshold
+		self.threshvalue = uidata.Float('Threshold Value', 3.0, 'rw', persist=True)
+		threshmeth = uidata.Method('Threshold', self.threshold)
+		self.threshimage = uidata.Image('Thresholded Image', None, 'r')
+		threshcont = uidata.Container('Threshold')
+		threshcont.addObjects((self.threshvalue, threshmeth, self.threshimage))
+
+		### blobs
+		findblobmeth = uidata.Method('Find Blobs', self.findBlobs)
+		self.allblobs = uidata.Sequence('All Blobs', [])
+		self.latspacing = uidata.Float('Spacing', 150.0, 'rw', persist=True)
+		self.lattol = uidata.Float('Tolerance', 0.1, 'rw', persist=True)
+		fitlatmeth = uidata.Method('Fit Lattice', self.fitLattice)
+		self.latblobs = uidata.Sequence('Lattice Blobs', [])
+
+		self.holestatsrad = uidata.Float('Hole Stats Radius', 15, 'rw', persist=True)
+		self.icei0 = uidata.Float('Zero Thickness', 1000.0, 'rw', persist=True)
+		self.icetmin = uidata.Float('Minimum Thickness', 0.05, 'rw', persist=True)
+		self.icetmax = uidata.Float('Maximum Thickness', 0.2, 'rw', persist=True)
+		icemeth = uidata.Method('Analyze Ice', self.ice)
+		self.goodholes = uidata.Sequence('Good Holes', [])
+		self.goodholesimage = uidata.TargetImage('Good Holes Image', None, 'r')
+		self.goodholesimage.addTargetType('Good Holes')
+		blobcont = uidata.Container('Blobs')
+		blobcont.addObjects((findblobmeth, self.allblobs, self.latspacing, self.lattol, fitlatmeth, self.latblobs, self.holestatsrad, self.icei0, self.icetmin, self.icetmax, icemeth, self.goodholes, self.goodholesimage))
+
+		container = uidata.MediumContainer('Hole Finder')
+		container.addObjects((originalcont,edgecont,corcont,threshcont, blobcont))
+		self.uiserver.addObject(container)
+
+	def readImage(self):
+		filename = self.testfile.get()
+		orig = Mrc.mrc_to_numeric(filename)
+		self.hf['original'] = orig
+		self.originalimage.set(orig)
+
+	def findEdges(self):
+		n = self.glapsize.get()
+		sig = self.glapsigma.get()
+		ab = self.edgeabs.get()
+		filt = self.filtertype.getSelectedValue()
+		self.hf.configure_edges(filter=filt, size=n, sigma=sig, absvalue=ab)
+		self.hf.find_edges()
+		self.edgeimage.set(self.hf['edges'])
+
+	def correlateTemplate(self):
+		mindia = self.mindia.get()
+		maxdia = self.maxdia.get()
+		cortype = self.cortype.getSelectedValue()
+		minrad = mindia / 2.0
+		maxrad = maxdia / 2.0
+		self.hf.configure_template(min_radius=minrad, max_radius=maxrad)
+		self.hf.create_template()
+		self.hf.configure_correlation(cortype)
+		self.hf.correlate_template()
+		self.corimage.set(self.hf['correlation'])
+
+	def threshold(self):
+		tvalue = self.threshvalue.get()
+		self.hf.configure_threshold(tvalue)
+		self.hf.threshold_correlation()
+		self.threshimage.set(self.hf['threshold'])
+
+	def blobCenters(self, blobs):
+		centers = []
+		for blob in blobs:
+			centers.append(tuple(blob.stats['center']))
+		return centers
+
+	def findBlobs(self):
+		self.hf.find_blobs()
+		blobs = self.hf['blobs']
+		centers = self.blobCenters(blobs)
+		self.allblobs.set(centers)
+
+	def fitLattice(self):
+		latspace = self.latspacing.get()
+		lattol = self.lattol.get()
+		self.hf.configure_lattice(spacing=latspace, tolerance=lattol)
+		self.hf.blobs_to_lattice()
+		holes = self.hf['holes']
+		centers = self.blobCenters(holes)
+		self.latblobs.set(centers)
+
+	def ice(self):
+		r = self.holestatsrad.get()
+		i0 = self.icei0.get()
+		tmin = self.icetmin.get()
+		tmax = self.icetmax.get()
+		self.hf.configure_holestats(radius=r)
+		self.hf.calc_holestats()
+		self.hf.configure_ice(i0=i0,tmin=tmin,tmax=tmax)
+		self.hf.calc_ice()
+		goodholes = self.hf['holes2']
+		centers = self.blobCenters(goodholes)
+		self.goodholes.set(centers)
+		self.goodholesimage.setImage(self.hf['original'])
+		# takes x,y instead of row,col
+		c2 = []
+		for c in centers:
+			c2.append((c[1],c[0]))
+		self.goodholesimage.setTargetType('Good Holes', c2)
+
+	def everything(self):
+		# find edges
+		self.findEdges()
+		# correlate template
+		self.correlateTemplate()
+		# threshold
+		self.threshold()
+		# find blobs
+		self.findBlobs()
+		# lattice
+		self.fitLattice()
+		# ice
+		self.ice()
+		# prepare targets for publishing
+		self.buildTargetDataList()
+
+	def testAll(self):
+		self.readImage()
+		self.everything()
+
+	def findTargets(self, numarray):
+		self.hf['original'] = numarray
+		self.everything()
+
+	def buildTargetDataList(self):
+		'''
+		loop through a list of blobs and convert them to target data
+		'''
+		holes = self.hf['holes2']
+		for hole in holes:
+			column, row = hole.stats['center']
+			# using self.currentiamge.shape could be bad
+			target = {'delta row': row - self.currentimage.shape[0]/2,
+								'delta column': column - self.currentimage.shape[1]/2}
+			imageinfo = self.imageInfo()
+			target.update(imageinfo)
+			targetdata = AcquisitionImageTargetData(id=self.ID())
+			targetdata.friendly_update(target)
+			self.targetlist.append(targetdata)
+
