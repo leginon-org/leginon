@@ -2,6 +2,7 @@
 Provides high level functions to access camera
 '''
 
+import leginonconfig
 import data
 import cameraimage
 import Numeric
@@ -15,14 +16,17 @@ class CameraFuncs(object):
 	'''
 	def __init__(self, node):
 		self.node = node
+		self.__cameraconfig = data.CameraConfigData()
+		self.__cameraconfig.update(leginonconfig.CAMERA_CONFIG)
 
-	def acquireCameraImageData(self, camdata=None, correction=None):
+	def acquireCameraImageData(self, camconfig=None, correction=None):
 		## configure camera
-		if camdata is not None:
+		if camconfig is not None:
+			camdata = self.configToEMData(camconfig)
 			self.currentCameraEMData(camdata)
 
 		if correction is None:
-			cor = self.config()['correct']
+			cor = self.cameraConfig()['correct']
 		else:
 			cor = correction
 
@@ -57,6 +61,8 @@ class CameraFuncs(object):
 				raise TypeError('camdata not type CameraEMData')
 			t2 = Timer('publish camera state')
 			try:
+				print 'CAMDATA'
+				print camdata
 				self.node.publishRemote(camdata)
 			except Exception, detail:
 				print 'camerafuncs.state: unable to set camera state'
@@ -70,12 +76,12 @@ class CameraFuncs(object):
 		except:
 			return None
 
-	def autoOffset(self, camdata):
+	def autoOffset(self, camconfig):
 		'''
 		recalculate the image offset from the dimensions
 		to get an image centered on the camera
-		camdata must be a CameraEMData instance
-		camdata['offset'] will be set to new value
+		camconfig must be a CameraConfigData instance
+		camconfig['offset'] will be set to new value
 		'''
 		currentcamdata = self.currentCameraEMData()
 		if currentcamdata is None:
@@ -85,17 +91,17 @@ class CameraFuncs(object):
 			sizex = currentcamdata['camera size']['x']
 			sizey = currentcamdata['camera size']['y'] 
 
-		binx = camdata['binning']['x']
-		biny = camdata['binning']['y']
+		binx = camconfig['binning']['x']
+		biny = camconfig['binning']['y']
 		sizex /= binx
 		sizey /= biny
-		pixx = camdata['dimension']['x']
-		pixy = camdata['dimension']['y']
+		pixx = camconfig['dimension']['x']
+		pixy = camconfig['dimension']['y']
 		offx = sizex / 2 - pixx / 2
 		offy = sizey / 2 - pixy / 2
 		if offx < 0 or offy < 0 or offx > sizex or offy > sizey:
 			self.node.printerror('invalid dimension or binning produces invalid offset')
-		camdata['offset'] = {'x': offx, 'y': offy}
+		camconfig['offset'] = {'x': offx, 'y': offy}
 
 	def configUIData(self):
 		'''
@@ -106,71 +112,35 @@ class CameraFuncs(object):
 
 	def uiConfig(self, value=None):
 		'''
-		wrapper around configCameraEMData() so it works with UI
+		wrapper around CameraConfigData so it works with UI
 		'''
-		if value is not None:
-			camdata = data.CameraEMData(initializer=value['state'])
-			value['state'] = camdata
-		newvalue = self.configCameraEMData(value)
-		print 'NEWVALUE'
-		print newvalue
-		camstate = copy.deepcopy(dict(newvalue['state']))
-		print 'CAMSTATE'
-		print camstate
-		for key in ('id', 'session', 'system time'):
+		myconfig = self.cameraConfig(value)
+		d = dict(myconfig)
+		for key in ('id', 'session'):
 			try:
-				del camstate['id']
+				del d[key]
 			except KeyError:
 				pass
-		newvalue['state'] = camstate
-		return newvalue
+		return d
 
-	def configCameraEMData(self, value=None):
-		print 'config, value=', value
+	def configToEMData(self, configdata):
+		newconfig = copy.deepcopy(configdata)
+		newemdata = data.CameraEMData()
+		newemdata.friendly_update(newconfig)
+		newemdata['id'] = ('camera',)
+		return newemdata
+
+	def cameraConfig(self, newconfig=None):
 		'''
-		keeps track of a camera configuration
-		not necessarily the current camera state
-		(use currentCameraEMData() for that)
+		get/set my CameraConfigData
 		'''
-		## we will modify value, so make a deep copy
-		value = copy.deepcopy(value)
-		if value is not None:
-			### make mods to state based on auto settings
-			state = data.CameraEMData(initializer=value['state'])
-			if value['auto square']:
-				### an alternative would be to figure out
-				### if x or y changed and set the other one
-				### instead of just making x the master
-				state['dimension']['y'] = state['dimension']['x']
-				state['binning']['y'] = state['binning']['x']
-			if value['auto offset']:
-				self.autoOffset(state)
-			#value['state'] = state
-			self.cameraconfigvalue = value
-
-		## set default values
-		if not hasattr(self, 'cameraconfigvalue'):
-			self.cameraconfigvalue = {}
-			self.cameraconfigvalue['correct'] = 1
-			self.cameraconfigvalue['auto square'] = 1
-			self.cameraconfigvalue['auto offset'] = 1
-			## attempt to get current camera state or set default
-			camdata = self.currentCameraEMData()
-			initstate = {}
-			if camdata is None:
-				print 'using default camera config'
-				initstate['exposure time'] = 500
-				initstate['dimension'] = {'x':1024, 'y':1024}
-				initstate['binning'] = {'x':4, 'y':4}
-				initstate['offset'] = {'x':0, 'y':0}
-			else:
-				initstate['exposure time'] = camdata['exposure time']
-				initstate['dimension'] = camdata['dimension']
-				initstate['binning'] = camdata['binning']
-				initstate['offset'] = camdata['offset']
-
-			self.autoOffset(initstate)
-			self.cameraconfigvalue['state'] = initstate
-
-		# return a copy of the current config value
-		return copy.deepcopy(self.cameraconfigvalue)
+		if newconfig is not None:
+			newc = copy.deepcopy(newconfig)
+			self.__cameraconfig.update(newc)
+			c = self.__cameraconfig
+			if c['auto square']:
+				c['dimension']['y'] = c['dimension']['x']
+				c['binning']['y'] = c['binning']['x']
+			if c['auto offset']:
+				self.autoOffset(c)
+		return copy.deepcopy(self.__cameraconfig)
