@@ -388,16 +388,8 @@ class NodeGUI(Frame):
 		b=Button(f, text='Refresh', command=self.__refresh_components)
 		b.pack(side=LEFT)
 
-		launchbut = Button(f, text='Launch GUI', command=self.launchgui)
-		launchhostlab = Label(f, text='Host')
-		self.launchhostent = Entry(f, width=15)
-		launchportlab = Label(f, text='Port')
-		self.launchportent = Entry(f, width=15)
-		launchbut.pack(side=LEFT)
-		launchhostlab.pack(side=LEFT)
-		self.launchhostent.pack(side=LEFT)
-		launchportlab.pack(side=LEFT)
-		self.launchportent.pack(side=LEFT)
+		ngl = NodeGUILauncher(f)
+		ngl.pack(side=LEFT)
 
 		f.pack(side=TOP, fill=BOTH)
 		self.mainframe = None
@@ -492,7 +484,6 @@ class StructTreeItem(TreeWidget.TreeItem):
 class NodeGUILauncher(Frame):
 	def __init__(self, parent):
 		#self.parent = parent
-		parent.wm_title('Node GUI Launcher')
 		Frame.__init__(self, parent)
 		self.__build()
 
@@ -505,7 +496,12 @@ class NodeGUILauncher(Frame):
 		defaulthost = socket.gethostname()
 		self.launchhostent.insert(0, defaulthost)
 		launchportlab = Label(f, text='Port')
-		self.launchportent = Entry(f, width=15)
+
+		self.launchportent = Pmw.Counter(f, datatype='integer')
+		portent = self.launchportent.component('entry')
+		portent.insert(0, 49152)
+
+
 		launchbut.pack(side=LEFT)
 		launchhostlab.pack(side=LEFT)
 		self.launchhostent.pack(side=LEFT)
@@ -513,7 +509,7 @@ class NodeGUILauncher(Frame):
 		self.launchportent.pack(side=LEFT)
 
 		self.launchhostent.bind('<KeyPress-Return>', self.launchgui)
-		self.launchportent.bind('<KeyPress-Return>', self.launchgui)
+		portent.bind('<KeyPress-Return>', self.launchgui)
 
 		f.pack(side=TOP, fill=BOTH)
 
@@ -525,17 +521,25 @@ class NodeGUILauncher(Frame):
 	def newGUIWindow(self, host, port):
 		top = Toplevel()
 		top.title('Node GUI')
-		gui = NodeGUI(top, host, port)
-		gui.pack(expand=YES, fill=BOTH)
+		try:
+			gui = NodeGUI(top, host, port)
+			gui.pack(expand=YES, fill=BOTH)
+		except:
+			top.destroy()
 
 if __name__ == '__main__':
-#	import sys
-#	hostname = sys.argv[1]
-#	port = int(sys.argv[2])
+	import sys
 
 	root = Tk()
-	#gui = NodeGUI(root, hostname, port)
-	gui = NodeGUILauncher(root)
+	root.wm_title('Node GUI Launcher')
+
+	if len(sys.argv) == 3:
+		hostname = sys.argv[1]
+		port = int(sys.argv[2])
+		gui = NodeGUI(root, hostname, port)
+	else:
+		gui = NodeGUILauncher(root)
+
 	gui.pack(expand=YES, fill=BOTH)
 	root.mainloop()
 
