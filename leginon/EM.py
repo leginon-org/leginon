@@ -411,39 +411,25 @@ class EM(node.Node):
 		self.publishData()
 		self.queueHandler()
 
-	def getClass(self, modulename, classname):
-		if modulename and classname:
-			fp, pathname, description = imp.find_module(modulename)
-			module = imp.load_module(modulename, fp, pathname, description)
-			try:
-				return module.__dict__[classname]
-			except:
-				pass
-		return None
-
 	def setScopeType(self, scopename):
-		scopeinfo = emregistry.getScopeInfo(scopename)
-		if scopeinfo is None:
-			raise RuntimeError('EM node unable to get scope info')
-		modulename, classname, d = scopeinfo
 		try:
-			scopeclass = self.getClass(modulename, classname)
+			scopeclass = emregistry.getScopeClass(scopename)
+			if scopeclass is None:
+				raise RuntimeError
 			self.scope = methoddict.factory(scopeclass)()
 			self.typemap.update(self.scope.typemapping)
 		except Exception, e:
-			self.logger.error('Cannot set scope to type ' + str(scopename))
+			self.logger.exception('Cannot set scope to type ' + str(scopename))
 
 	def setCameraType(self, cameraname):
-		camerainfo = emregistry.getCameraInfo(cameraname)
-		if camerainfo is None:
-			raise RuntimeError('EM node unable to get camera info')
-		modulename, classname, d = emregistry.getCameraInfo(cameraname)
 		try:
-			cameraclass = self.getClass(modulename, classname)
+			cameraclass = emregistry.getCameraClass(cameraname)
+			if cameraclass is None:
+				raise RuntimeError
 			self.camera = methoddict.factory(cameraclass)()
 			self.typemap.update(self.camera.typemapping)
 		except Exception, e:
-			self.logger.error('Cannot set camera to type ' + str(cameraname))
+			self.logger.exception('Cannot set camera to type ' + str(cameraname))
 
 	def main(self):
 		pass
