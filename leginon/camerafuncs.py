@@ -103,6 +103,7 @@ class CameraFuncs(object):
 		return uidata.UIStruct('Camera Configuration', None, 'rw', self.config)
 
 	def config(self, value=None):
+		print 'config, value=', value
 		'''
 		keeps track of a camera configuration
 		not necessarily the current camera state
@@ -124,6 +125,9 @@ class CameraFuncs(object):
 			### use the modified state
 			value['state'] = state
 			self.cameraconfigvalue = value
+
+		if hasattr(self, 'cameraconfigvalue'):
+			print 'self.cameraconfigvalue=', self.cameraconfigvalue
 
 		## set default values
 		if not hasattr(self, 'cameraconfigvalue'):
@@ -152,6 +156,8 @@ class CameraFuncs(object):
 
 			self.autoOffset(initstate)
 			self.cameraconfigvalue['state'] = initstate
+
+		print 'self.cameraconfigvalue 2 =', self.cameraconfigvalue
 
 		# return a copy of the current config value
 		return copy.deepcopy(self.cameraconfigvalue)

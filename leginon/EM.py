@@ -69,8 +69,8 @@ class DataHandler(node.DataHandler):
 			print 'EM insert: statelock acquired'
 			done_event = threading.Event()
 			#self.node.queue.put(Request(done_event, idata['em']))
-			print 'EM insert: requesting set (idata keys = %s)' % str(idata.keys())
-			self.node.queue.put(Request(done_event, idata))
+			print 'EM insert: requesting set (idata = %s)' % str(idata)
+			self.node.queue.put(Request(done_event, dict(idata)))
 			print 'EM insert: waiting for request to complete'
 			done_event.wait()
 			print 'EM insert: updating UI'

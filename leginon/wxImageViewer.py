@@ -65,8 +65,10 @@ class ImagePanel(wxPanel):
 		if self.image is None:
 			return
 		try:
-			rgb = self.image.getpixel((evt.m_x, evt.m_y))
-			print (evt.m_x, evt.m_y), '=', rgb
+			viewoffset = self.panel.GetViewStart()
+			xy = (viewoffset[0] + evt.m_x, viewoffset[1] + evt.m_y)
+			rgb = self.image.getpixel(xy)
+			print xy, '=', rgb
 		except:
 			pass
 
