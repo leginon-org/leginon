@@ -156,12 +156,14 @@ class EM(node.Node):
 				try:
 					self.scope[EMkey] = EMstate[EMkey]
 				except:	
-					print "failed to set '%s' to" % EMkey, EMstate[EMkey]
+					#print "failed to set '%s' to" % EMkey, EMstate[EMkey]
+					pass
 			elif EMkey in self.camera:
 				try:
 					self.camera[EMkey] = EMstate[EMkey]
 				except:	
-					print "failed to set '%s' to" % EMkey, EMstate[EMkey]
+					#print "failed to set '%s' to" % EMkey, EMstate[EMkey]
+					pass
 		self.lock.release()
 
 	def save(self, filename):
