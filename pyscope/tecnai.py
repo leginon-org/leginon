@@ -700,7 +700,7 @@ class Tecnai(object):
 		if not value:
 			return
 
-		if self.getStock() < 1:
+		if self.getFilmStock() < 1:
 			raise RuntimeError('No film to take exposure')
 
 		if self.theAda.CloseShutter != 0:
