@@ -678,6 +678,7 @@ class Corrector(node.Node):
 		return {'image series': series, 'scope': scopedata, 'camera':camdata}
 
 	def acquireReference(self, dark=False):
+		self.cam.uiApplyAsNeeded()
 		camdata = self.cam.getCameraEMData()
 		if dark:
 			camdata['exposure type'] = 'dark'
