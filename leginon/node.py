@@ -140,11 +140,11 @@ class Node(leginonobject.LeginonObject):
 		self.outputEvent(event.ConfirmationEvent(self.ID(), ievent.id))
 
 	def waitEvent(self, ievent):
-		print "waiting on", ievent.id
+		#print "waiting on", ievent.id
 		if not ievent.id in self.confirmwaitlist:
 			self.confirmwaitlist[ievent.id] = threading.Event()
 		self.confirmwaitlist[ievent.id].wait()
-		print "done for", ievent.id
+		#print "done for", ievent.id
 
 	def registerConfirmedEvent(self, ievent):
 		# this is bad since it will fill up with lots of events
