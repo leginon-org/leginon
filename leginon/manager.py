@@ -247,14 +247,14 @@ class Manager(node.Node):
 
 		# published data of nodeid mapping to location of node
 #		nodelocationdata = self.server.datahandler.query(nodeid)
-		nodelocationdata = self.datahandler.query(nodeid)
+		nodelocationdata = self.datahandlers['node'].query(nodeid)
 		if nodelocationdata is None:
 			nodelocationdata = data.NodeLocationData(nodeid, nodelocation)
 		else:
 			# fools! should do something nifty to unregister, reregister, etc.
 			nodelocationdata = data.NodeLocationData(nodeid, nodelocation)
 #		self.server.datahandler._insert(nodelocationdata)
-		self.datahandler.insert(nodelocationdata)
+		self.datahandlers['node'].insert(nodelocationdata)
 
 		self.confirmEvent(readyevent)
 
@@ -269,12 +269,12 @@ class Manager(node.Node):
 	def removeNode(self, nodeid):
 		'''Remove data, event mappings, and client for the node with the specfied node ID.'''
 #		nodelocationdata = self.server.datahandler.query(nodeid)
-		nodelocationdata = self.datahandler.query(nodeid)
+		nodelocationdata = self.datahandlers['node'].query(nodeid)
 		if nodelocationdata is not None:
 			self.removeNodeData(nodeid)
 			self.removeNodeDistmaps(nodeid)
 #			self.server.datahandler.remove(nodeid)
-			self.datahandler.remove(nodeid)
+			self.datahandlers['node'].remove(nodeid)
 			self.delClient(nodeid)
 			self.printerror('node ' + str(nodeid) + ' unregistered')
 		else:
@@ -298,7 +298,7 @@ class Manager(node.Node):
 		'''Remove data associated with the node of specified node ID.'''
 		# terribly inefficient
 #		for dataid in self.server.datahandler.ids():
-		for dataid in self.datahandler.ids():
+		for dataid in self.datahandlers['node'].ids():
 			self.unpublishDataLocation(dataid, nodeid)
 
 	def launchNode(self, launcher, newproc, target, name, nodeargs=()):
@@ -354,14 +354,14 @@ class Manager(node.Node):
 	def publishDataLocation(self, dataid, nodeid):
 		'''Registers the location of a piece of data by mapping the data's ID to its location. Appends location to list if data ID is already registered.'''
 #		datalocationdata = self.server.datahandler.query(dataid)
-		datalocationdata = self.datahandler.query(dataid)
+		datalocationdata = self.datahandlers['node'].query(dataid)
 		if datalocationdata is None:
 			datalocationdata = data.DataLocationData(dataid, [nodeid])
 		else:
 			if nodeid not in datalocationdata.content:
 				datalocationdata.content.append(nodeid)
 #		self.server.datahandler._insert(datalocationdata)
-		self.datahandler.insert(datalocationdata)
+		self.datahandlers['node'].insert(datalocationdata)
 
 	def unregisterData(self, unpublishevent):
 		'''Event handler unregistering data from the manager. Removes a location mapped to the data ID.'''
@@ -374,16 +374,16 @@ class Manager(node.Node):
 	def unpublishDataLocation(self, dataid, nodeid):
 		'''Unregisters data by unmapping the location from the data ID. If no other location are mapped to the data ID, the data ID is removed.'''
 #		datalocationdata = self.server.datahandler.query(dataid)
-		datalocationdata = self.datahandler.query(dataid)
+		datalocationdata = self.datahandlers['node'].query(dataid)
 		if (datalocationdata is not None) and (type(datalocationdata) == data.DataLocationData):
 			try:
 				datalocationdata.content.remove(nodeid)
 				if len(datalocationdata.content) == 0:
 #					self.server.datahandler.remove(dataid)
-					self.datahandler.remove(dataid)
+					self.datahandlers['node'].remove(dataid)
 				else:
 #					self.server.datahandler._insert(datalocationdata)
-					self.datahandler.insert(datalocationdata)
+					self.datahandlers['node'].insert(datalocationdata)
 			except ValueError:
 				pass
 
@@ -424,7 +424,7 @@ class Manager(node.Node):
 		for nodeidstr in nodelist:
 			nodeid = eval(nodeidstr)
 #			nodelocationdata = self.server.datahandler.query(nodeid)
-			nodelocationdata = self.datahandler.query(nodeid)
+			nodelocationdata = self.datahandlers['node'].query(nodeid)
 			if nodelocationdata is not None:
 				nodeloc = nodelocationdata.content
 				nodeinfo[nodeidstr] = nodeloc

@@ -55,9 +55,11 @@ class Node(leginonobject.LeginonObject):
 
 		self.eventmapping = {'outputs':[], 'inputs':[]}
 
-		self.datahandler = apply(dh, (self.ID(),) + dhargs)
+		self.datahandlers = {}
+		self.datahandlers['node'] = apply(dh, (self.ID(),) + dhargs)
 
-		self.server = datatransport.Server(self.ID(), self.datahandler, tcpport)
+		self.server = datatransport.Server(self.ID(),
+																				self.datahandlers['node'], tcpport)
 		self.clientclass = clientclass
 
 		self.uiserver = interface.Server(self.ID(), xmlrpcport)
@@ -141,14 +143,14 @@ class Node(leginonobject.LeginonObject):
 	def addEventInput(self, eventclass, func):
 		'''Map a function (event handler) to be called when the specified event is received.'''
 #		self.server.datahandler.setBinding(eventclass, func)
-		self.datahandler.setBinding(eventclass, func)
+		self.datahandlers['node'].setBinding(eventclass, func)
 		if eventclass not in self.eventmapping['inputs']:
 			self.eventmapping['inputs'].append(eventclass)
 
 	def delEventInput(self, eventclass):
 		'''Unmap all functions (event handlers) to be called when the specified event is received.'''
 #		self.server.datahandler.setBinding(eventclass, None)
-		self.datahandler.setBinding(eventclass, None)
+		self.datahandlers['node'].setBinding(eventclass, None)
 		if eventclass in self.eventmapping['inputs']:
 			self.eventmapping['inputs'].remove(eventclass)
 
@@ -187,7 +189,7 @@ class Node(leginonobject.LeginonObject):
 		if not issubclass(eventclass, event.PublishEvent):
 			raise TypeError('PublishEvent subclass required')
 #		self.server.datahandler._insert(idata)
-		self.datahandler.insert(idata)
+		self.datahandlers['node'].insert(idata)
 		# this idata.id is content, I think
 		e = eventclass(self.ID(), idata.id, confirm)
 		self.outputEvent(e)
@@ -198,7 +200,7 @@ class Node(leginonobject.LeginonObject):
 		if not issubclass(eventclass, event.UnpublishEvent):
 			raise TypeError('UnpublishEvent subclass required')
 #		self.server.datahandler.remove(dataid)
-		self.datahandler.remove(dataid)
+		self.datahandlers['node'].remove(dataid)
 		self.outputEvent(eventclass(self.ID(), dataid))
 
 	def publishRemote(self, idata):
@@ -293,7 +295,7 @@ class Node(leginonobject.LeginonObject):
 		if value is None:
 			try:
 #				return self.key2str(self.server.datahandler.datadict)
-				return self.key2str(self.datahandler.datadict)
+				return self.key2str(self.datahandlers['node'].datadict)
 #				return self.server.datahandler.datadict
 			except AttributeError:
 				return {}
