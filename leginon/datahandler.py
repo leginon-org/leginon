@@ -85,31 +85,36 @@ class SizedDataKeeper(DictDataKeeper):
 			return
 			#raise TypeError
 		self.lock.acquire()
-		self.size += newdata.size()
-		#self.datadict[newdata['id']] = copy.deepcopy(newdata)
-		self.datadict[newdata['id']] = newdata
-		self.clean()
-		self.lock.release()
+
+		try:
+			self.size += newdata.size()
+			#self.datadict[newdata['id']] = copy.deepcopy(newdata)
+			self.datadict[newdata['id']] = newdata
+			self.clean()
+		finally:
+			self.lock.release()
 
 	def remove(self, dataid):
 		self.lock.acquire()
 		try:
-			size = self.datadict[dataid].size()
-			del self.datadict[dataid]
-			self.size -= size
-		except (KeyError, AttributeError):
-			pass
-		self.lock.release()
+			try:
+				size = self.datadict[dataid].size()
+				del self.datadict[dataid]
+				self.size -= size
+			except (KeyError, AttributeError):
+				pass
+		finally:
+			self.lock.release()
 
 	def clean(self):
 		self.lock.acquire()
-		while self.size > self.maxsize:
-			try:
-				removeid = self.datadict.keys()[0]
-				self.remove(removeid)
-			except IndexError:
-				return
-		self.lock.release()
+		try:
+			for removekey in self.datadict.keys():
+				if self.size <= self.maxsize:
+					break
+				self.remove(removekey)
+		finally:
+			self.lock.release()
 
 class TimeoutDataKeeper(DictDataKeeper):
 	'''Keep remove data after a timeout.'''
