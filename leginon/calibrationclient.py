@@ -189,13 +189,9 @@ class CalibrationClient(object):
 		self.node.logger.info('Peak minsum %f' % peak['minsum'])
 
 		pixelpeak = peak['subpixel peak']
-		pixelpeak = pixelpeak[1],pixelpeak[0]
+		pixelpeak = pixelpeak[1], pixelpeak[0]
 		self.node.setImage(pcimage.astype(Numeric.Float32), 'Correlation')
 		self.node.setTargets([pixelpeak], 'Peak')
-
-		if hasattr(self.node, 'panel'):
-			self.node.setCorrelationImage(pcimage.astype(Numeric.Float32),
-																		pixelpeak)
 
 		peakvalue = peak['subpixel peak value']
 		shift = correlator.wrap_coord(peak['subpixel peak'], pcimage.shape)

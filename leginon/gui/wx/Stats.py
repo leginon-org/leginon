@@ -31,9 +31,9 @@ class Stats(wx.GridBagSizer):
 	def setStats(self, stats):
 		for stat in self.statslist:
 			try:
-				value = stats[self.keymap[stat]]
+				s = str(stats[self.keymap[stat]])
 			except KeyError:
-				value = ''
-			self.values[stat].SetLabel(str(value))
+				s = ''
+			self.values[stat].SetLabel(s)
 		self.Layout()
 

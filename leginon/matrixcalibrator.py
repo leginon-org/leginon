@@ -91,6 +91,8 @@ class MatrixCalibrator(calibrator.Calibrator):
 
 	# calibrate needs to take a specific value
 	def calibrate(self):
+		self.aborted.clear()
+
 		calclient = self.parameters[self.parameter]
 
 		## set cam state
@@ -117,7 +119,6 @@ class MatrixCalibrator(calibrator.Calibrator):
 		delta = percent * camconfig['dimension']['x']*camconfig['binning']['x']*pixsize
 		self.logger.info('Delta %s' % delta)
 
-		self.aborted.clear()
 
 		shifts = {}
 		for axis in self.axislist:
@@ -197,28 +198,38 @@ class MatrixCalibrator(calibrator.Calibrator):
 		calclient.storeMatrix(ht, mag, self.parameter, matrix)
 
 	def uiCalibrate(self):
-		self.getParameter()
+		try:
+			self.getParameter()
+		except Exception, e:
+			self.logger.exception('Unable to get parameter, aborting calibration: %s', e)
+			self.panel.calibrationDone()
+			return
+
 		try:
 			self.calibrate()
 		except calibrationclient.NoPixelSizeError:
 			self.logger.error(
-								'Cannot get pixel size for current state, halting calibration')
+								'Unable to get pixel size, aborting calibration')
 		except CalibrationError:
-			self.logger.error('No good measurement, halting calibration')
+			self.logger.error('Bad calibration measurement, aborting calibration')
 		except camerafuncs.NoCorrectorError:
 			self.logger.error(
-										'Cannot get corrected images, Corrector may not be running')
-		except:
-			self.logger.exception('exception in self.calibrate()')
+										'Unable to get corrected image, aborting calibration')
+		except Exception, e:
+			self.logger.exception('Calibration failed: %s', e)
 		else:
 			self.logger.info('Calibration completed successfully')
 		# return to original state
-		self.setParameter()
+		try:
+			self.setParameter()
+		except Exception, e:
+			self.logger.exception('Could not return to original state: %s', e)
+		self.panel.calibrationDone()
 
 	def getParameter(self):
 		self.saveparam = self.emclient.getScope()[self.parameter]
 		self.logger.info('Storing parameter %s, %s'
-											% (param, self.saveparam))
+											% (self.parameter, self.saveparam))
 
 	def setParameter(self):
 		self.logger.info('Returning to original state')

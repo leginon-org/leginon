@@ -1,3 +1,4 @@
+import threading
 import wx
 from gui.wx.Choice import Choice
 from gui.wx.Entry import IntEntry, FloatEntry
@@ -42,11 +43,21 @@ class Panel(gui.wx.Calibrator.Panel):
 	def onParameterChoice(self, evt):
 		self.node.parameter = evt.GetString().lower()
 
+	def _calibrationEnable(self, enable):
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SETTINGS, enable)
+		self.cparameter.Enable(enable)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PARAMETER_SETTINGS, enable)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ACQUIRE, enable)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_CALIBRATE, enable)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, not enable)
+
 	def onCalibrateTool(self, evt):
-		self.node.uiCalibrate()
+		self._calibrationEnable(False)
+		threading.Thread(target=self.node.uiCalibrate).start()
 
 	def onAbortTool(self, evt):
-		self.node.uiAbort()
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
+		threading.Thread(target=self.node.uiAbort).start()
 
 class MatrixSettingsDialog(gui.wx.Settings.Dialog):
 	def __init__(self, parent, parameter, parametername):

@@ -2,9 +2,10 @@ import threading
 import wx
 from gui.wx.Choice import Choice
 import gui.wx.Camera
+import gui.wx.Events
+import gui.wx.ImageViewer
 import gui.wx.Node
 import gui.wx.Settings
-import gui.wx.ImageViewer
 import gui.wx.ToolBar
 
 class SettingsDialog(gui.wx.Settings.Dialog):
@@ -60,6 +61,8 @@ class Panel(gui.wx.Node.Panel):
 
 		self.toolbar.Realize()
 
+		self.Bind(gui.wx.Events.EVT_CALIBRATION_DONE, self.onCalibrationDone)
+
 		self.SetSizer(self.szmain)
 		self.SetAutoLayout(True)
 		self.SetupScrolling()
@@ -92,9 +95,16 @@ class Panel(gui.wx.Node.Panel):
 	def _acquisitionEnable(self, enable):
 		self.toolbar.Enable(enable)
 
-	def onAcquisitionDone(self, evt):
-		self._acquisitionEnable(True)
-	
+	def _calibrationEnable(self, enable):
+		self.toolbar.Enable(enable)
+
+	def onCalibrationDone(self, evt):
+		self._calibrationEnable(True)
+
+	def calibrationDone(self):
+		evt = gui.wx.Events.CalibrationDoneEvent()
+		self.GetEventHandler().AddPendingEvent(evt)
+
 	def onAcquireTool(self, evt):
 		self._acquisitionEnable(False)
 		threading.Thread(target=self.node.acquireImage).start()

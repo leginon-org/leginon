@@ -78,7 +78,7 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 			self.imagepanel.setImageType(evt.typename, evt.image)
 
 	def onSetTargets(self, evt):
-		self.imagepanel.setTargets(evt.typname, evt.targets)
+		self.imagepanel.setTargets(evt.typename, evt.targets)
 
 	def _getStaticBoxSizer(self, label, *args):
 		sbs = wx.StaticBoxSizer(wx.StaticBox(self, -1, label), wx.VERTICAL)

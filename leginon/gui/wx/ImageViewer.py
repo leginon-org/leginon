@@ -305,9 +305,7 @@ class ImageTool(object):
 	def OnButton(self, evt):
 		if self.button.GetToggle():
 			if self.untoggle:
-				self.untoggle = False
-				self.imagepanel.UntoggleTools()
-				self.untoggle = True
+				self.imagepanel.UntoggleTools(self)
 			if self.cursor is not None:
 				self.imagepanel.panel.SetCursor(self.cursor)
 			self.OnToggle(True)
@@ -626,6 +624,7 @@ class ImagePanel(wx.Panel):
 		#self.setImage(imagedata, **kwargs)
 
 	def setImage(self, imagedata, scroll=False, stats={}):
+		stats = dict(stats)
 		if isinstance(imagedata, Numeric.ArrayType):
 			self.setNumericImage(imagedata, scroll, stats)
 		elif isinstance(imagedata, Image.Image):
@@ -795,10 +794,18 @@ class ImagePanel(wx.Panel):
 
 	# tool utility functions
 
-	def UntoggleTools(self):
-		for tool in self.tools:
-			if tool.untoggle:
-				tool.button.SetToggle(False)
+	def UntoggleTools(self, tool):
+		for t in self.tools:
+			if t is tool:
+				continue
+			if t.untoggle:
+				t.button.SetToggle(False)
+		if tool is None:
+			self.panel.SetCursor(self.defaultcursor)
+		elif self.selectiontool is not None:
+			for name in self.selectiontool.targets:
+				if self.selectiontool.isTargeting(name):
+					self.selectiontool.setTargeting(name, False)
 
 	# eventhandlers
 
@@ -1193,7 +1200,7 @@ class SelectionTool(wx.GridBagSizer):
 		tool = self._getTypeTool(name)
 		tool.targettype.setTargets(targets)
 		if self.isDisplayed(name):
-			self.parent.setDisplayedTargets(tool.targettype, targets)
+			self.parent.setDisplayedTargets(tool.targettype, tool.targettype.targets)
 		if targets is None:
 			if self.isTargeting(name):
 				self.setTargeting(name, False)
@@ -1202,6 +1209,7 @@ class SelectionTool(wx.GridBagSizer):
 		else:
 			tool.tb['target'].SetBezelWidth(1)
 			tool.SetBitmap('green')
+		tool.tb['target'].Refresh()
 
 	def getTargetPositions(self, name):
 		return self._getTypeTool(name).targettype.getTargetPositions()
@@ -1232,6 +1240,9 @@ class SelectionTool(wx.GridBagSizer):
 			self.parent.selectedtype = tool.targettype
 		else:
 			self.parent.selectedtype = None
+
+		if value:
+			self.parent.UntoggleTools(None)
 
 	def onTargeting(self, evt):
 		self._setTargeting(evt.name, evt.value)
@@ -1323,6 +1334,10 @@ class TargetImagePanel(ImagePanel):
 				del self.targets[type]
 				self.order.remove(type)
 		else:
+			targets = list(targets)
+			for t in targets:
+				if not isinstance(t, Target):
+					raise TypeError
 			self.targets[type] = targets
 			if type not in self.order:
 				self.order.append(type)
