@@ -47,8 +47,8 @@ class NodeDataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
 			raise event.InvalidEventError('eventclass must be Event subclass')
 
 class Node(leginonobject.LeginonObject):
-	def __init__(self, nodeid, managerloc = None, dh = NodeDataHandler, dhargs = (), clientclass = Client):
-		leginonobject.LeginonObject.__init__(self)
+	def __init__(self, id, managerloc = None, dh = NodeDataHandler, dhargs = (), clientclass = Client):
+		leginonobject.LeginonObject.__init__(self, id)
 
 		# added from eventhandler
 		self.clients = {}
@@ -57,7 +57,6 @@ class Node(leginonobject.LeginonObject):
 		self.server = datatransport.Server(dh, dhargs)
 		self.clientclass = clientclass
 
-		self.nodeid = nodeid
 		if managerloc:
 			self.addManager(managerloc)
 

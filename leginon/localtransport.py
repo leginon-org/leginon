@@ -6,8 +6,8 @@ import weakref
 _id2obj_dict = weakref.WeakValueDictionary()
 
 class Server(leginonobject.LeginonObject):
-	def __init__(self, dh):
-		leginonobject.LeginonObject.__init__(self)
+	def __init__(self, id, dh):
+		leginonobject.LeginonObject.__init__(self, id)
 		self.datahandler = dh
 		self.pythonid = id(self)
 		_id2obj_dict[self.pythonid] = self
@@ -21,8 +21,8 @@ class Server(leginonobject.LeginonObject):
 		return loc
 
 class Client(leginonobject.LeginonObject):
-	def __init__(self, location):
-		leginonobject.LeginonObject.__init__(self)
+	def __init__(self, id, location):
+		leginonobject.LeginonObject.__init__(self, id)
 		self.serverlocation = location
 
 	def push(self, idata):

@@ -9,8 +9,8 @@ import calllauncher
 
 
 class Launcher(node.Node):
-	def __init__(self, nodeid, managerlocation = None):
-		node.Node.__init__(self, nodeid, managerlocation)
+	def __init__(self, id, managerlocation = None):
+		node.Node.__init__(self, id, managerlocation)
 
 		self.addEventInput(event.LaunchEvent, self.handleLaunch)
 		self.caller = calllauncher.CallLauncher()

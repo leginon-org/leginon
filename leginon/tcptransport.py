@@ -28,8 +28,8 @@ class Handler(SocketServer.StreamRequestHandler):
 			cPickle.dump(self.server.datahandler.query(obj), self.wfile)
 
 class Server(SocketServer.ThreadingTCPServer, leginonobject.LeginonObject):
-	def __init__(self, dh, port=None):
-		leginonobject.LeginonObject.__init__(self)
+	def __init__(self, id, dh, port=None):
+		leginonobject.LeginonObject.__init__(self, id)
 		self.datahandler = dh
 		# instantiater can choose a port or we'll choose one for them
 		if port:
@@ -63,9 +63,9 @@ class Server(SocketServer.ThreadingTCPServer, leginonobject.LeginonObject):
 		return loc
 
 class Client(leginonobject.LeginonObject):
-	def __init__(self, location, buffer_size = 1024):
+	def __init__(self, id, location, buffer_size = 1024):
 		self.buffer_size = buffer_size 
-		leginonobject.LeginonObject.__init__(self)
+		leginonobject.LeginonObject.__init__(self, id)
 		self.serverlocation = location
 
 	def pull(self, id, family = socket.AF_INET, type = socket.SOCK_STREAM):

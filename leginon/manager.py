@@ -13,7 +13,8 @@ import os
 
 class Manager(node.Node):
 	def __init__(self):
-		node.Node.__init__(self, 'manager', None)
+		# the id is manager (in a list)
+		node.Node.__init__(self, ['manager'], None)
 
 		self.gui_ok = 0
 		self.common = common
@@ -34,9 +35,9 @@ class Manager(node.Node):
 	def main(self):
 		print self.location()
 
-		guithread = threading.Thread(target=self.gui)
-		guithread.setDaemon(1)
-		guithread.start()
+		#guithread = threading.Thread(target=self.gui)
+		#guithread.setDaemon(1)
+		#guithread.start()
 
 		self.interact()
 
