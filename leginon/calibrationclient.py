@@ -23,10 +23,9 @@ class CalibrationClient(object):
 		self.correlator = correlator.Correlator(ffteng)
 		self.peakfinder = peakfinder.PeakFinder()
 
-	def getCalibration(self, key):
+	def getCalibration(self, id):
 		try:
-			calkey = ('calibrations', key)
-			cal = self.node.researchByDataID(calkey)
+			cal = self.node.researchByDataID(id)
 		except node.ResearchError:
 			print 'CalibrationClient unable to find calibrations. Maybe CalibrationLibrary is not available.'
 			raise
@@ -35,16 +34,8 @@ class CalibrationClient(object):
 		calvalue = cal
 		return calvalue
 
-	def setCalibration(self, key, calibration):
-		dat = data.CalibrationData(('calibrations',key), calibration)
-		self.node.publishRemote(dat)
-
-	def magCalibrationKey(self, magnification, caltype):
-		'''
-		this determines the key in the main calibrations dict
-		where a magnification dependent calibration is located
-		'''
-		return str(int(magnification)) + caltype
+	def setCalibration(self, id, calibration):
+		raise NotImplementedError()
 
 	def acquireStateImage(self, state, publish_image=0, settle=0.0):
 		## acquire image at this state
@@ -157,12 +148,11 @@ class BeamTiltCalibrationClient(CalibrationClient):
 	def setCalibration(self, key, calibration):
 		#dat = data.MatrixCalibrationData(('calibrations',key), calibration)
 		# ?
-		dat = data.MatrixCalibrationData(magnification=('calibrations',key), matrix=calibration)
+		dat = data.MatrixCalibrationData(('calibration', key), magnification=('calibrations',key), matrix=calibration)
 		self.node.publishRemote(dat)
 
 	def getMatrix(self, mag, type):
-		key = self.magCalibrationKey(mag, type)
-		matrix = self.getCalibration(key)
+		matrix = self.getCalibration(mag, type)
 		return matrix
 
 	def setMatrix(self, mag, type, matrix):
@@ -172,7 +162,7 @@ class BeamTiltCalibrationClient(CalibrationClient):
 	def getMatrixDB(self, mag, type):
 		result = self.db.beamtiltMatrix.magtype[mag,type].fetchonedict()
 		matrix = sqldict.dict2matrix(result)
-		print matrix
+		return matrix
 
 	def setMatrixDB(self, mag, type, matrix):
 		'''
