@@ -44,6 +44,9 @@ class CalibrationClient(object):
 		'''
 		raise NotImplementedError()
 
+	def itransform(self, shift, scope, camera):
+		raise NotImplementedError()
+
 class MatrixCalibrationClient(CalibrationClient):
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)
@@ -54,7 +57,8 @@ class MatrixCalibrationClient(CalibrationClient):
 		'''
 		raise NotImplementedError()
 
-	def setCalibration(self, key, measurement):
+	def setCalibration(self, magnification, measurement):
+		key = self.magCalibrationKey(magnification, self.parameter())
 		mat = self.measurementToMatrix(measurement)
 		CalibrationClient.setCalibration(self, key, mat)
 
@@ -162,27 +166,61 @@ class ModeledStageCalibrationClient(CalibrationClient):
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)
 
-	def transform(deltapixels, scope, camera):
+	def setMagCalibration(self, magnification, mag_dict):
+		key = self.magCalibrationKey(magnification, 'modeled stage position')
+		try:
+			old_mag_dict = self.getCalibration(key)
+		except KeyError:
+			old_mag_dict = {}
+
+		for mag_dict_key in mag_dict:
+			mag_dict[mag_dict_key].update(old_mag_dict[mag_dict_key])
+		self.setCalibration(key, mag_dict)
+
+	def getMagCalibration(self, magnification):
+		key = self.magCalibrationKey(magnification, 'modeled stage position')
+		return self.getCalibration(key)
+
+	def setModel(self, axis, mod_dict):
+		key = axis + ' stage position model'
+		self.setCalibration(key, mod_dict)
+
+	def getModel(self, axis):
+		key = axis + ' stage position model'
+		return self.getCalibration(key)
+
+	def transform(self, pixelshift, scope, camera):
 		curstage = scope['stage position']
 		newstage = dict(curstage)
 
+		binx = camera['binning']['x']
+		biny = camera['binning']['y']
+		pixrow = pixelshift['row'] * biny
+		pixcol = pixelshift['col'] * binx
+
 		## do modifications to newstage here
+		xmod_dict = self.getModel('x')
+		ymod_dict = self.getModel('y')
+		mag_dict = self.getMagCalibration(scope['magnification'])
+		delta = self.pixtix(xmod_dict, ymod_dict, mag_dict, curstage['x'], curstage['y'], pixcol, pixrow)
+		newstage['x'] += delta['x']
+		newstage['y'] += delta['y']
+		return {'stage position': newstage}
 
-		return newstage
-
-	def pixtix(self, xmodfile, ymodfile, magfile, gonx, gony, pixx, pixy):
+	def pixtix(self, xmod_dict, ymod_dict, mag_dict, gonx, gony, pixx, pixy):
 		xmod = gonmodel.GonModel()
 		ymod = gonmodel.GonModel()
-		maginfo = gonmodel.MagInfo(magfile)
 	
-		xmod.read_gonshelve(xmodfile)
-		ymod.read_gonshelve(ymodfile)
+		xmod.fromDict(xmod_dict)
+		ymod.fromDict(ymod_dict)
 	
-		modavgx = maginfo.get('modavgx')
-		modavgy = maginfo.get('modavgy')
+		modavgx = mag_dict['model mean']['x']
+		modavgy = mag_dict['model mean']['y']
+		anglex = mag_dict['data angle']['x']
+		angley = mag_dict['data angle']['y']
 	
-		gonx1 = xmod.rotate(maginfo, pixx, pixy)
-		gony1 = ymod.rotate(maginfo, pixx, pixy)
+		gonx1 = xmod.rotate(anglex, pixx, pixy)
+		gony1 = ymod.rotate(angley, pixx, pixy)
 	
 		gonx1 = gonx1 * modavgx
 		gony1 = gony1 * modavgy
