@@ -43,6 +43,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.imagelist = []
 
 		self.defineUserInterface()
+		self.presetsclient.uistatus = self.uiacquisitionstatus
 		self.start()
 
 	def handleDriftDone(self, ev):
