@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import os
 import glob
 import leginonconfig
 import leginonobject
@@ -202,7 +201,7 @@ class Data(DataDict, leginonobject.LeginonObject):
 		replaceData(mycopy, self.split_appender)
 		print 'SPLIT', self.split_list
 		return self.split_list
-		
+
 	def split_appender(self, datainstance):
 		self.split_list.append(datainstance)
 		return datainstance.reference()
@@ -597,12 +596,15 @@ class ImageData(InSessionData):
 		create a unique filename for this image
 		filename format:  [session]_[label]_[nodename]_[integer].mrc
 		'''
-		basename = sessionname
-		if self['label']:
+		basename = self['session']['name']
+		## use label if available, else use node name
+		if self['label'] is not None:
 			basename += '_%s' % (self['label'],)
-		mynode = self['id'][-2]
+		else:
+			basename += '_%s' % (self['id'][-2],)
+			
 		myindex = self['id'][-1]
-		basename += '_%s_%04d.mrc' % (mynode, myindex)
+		basename += '_%04d.mrc' % (myindex,)
 		return basename
 
 class CorrelationImageData(ImageData):
@@ -733,6 +735,18 @@ class ImageTargetData(InSessionData):
 		return t
 	typemap = classmethod(typemap)
 
+class ImageTargetShiftData(InSessionData):
+	'''
+	This keeps a dict of target shifts for a set of images.
+	'''
+	def typemap(cls):
+		t = InSessionData.typemap()
+		t += [
+			('shifts', dict),
+		]
+		return t
+	typemap = classmethod(typemap)
+
 class AcquisitionImageTargetData(ImageTargetData):
 	def typemap(cls):
 		t = ImageTargetData.typemap()
@@ -781,14 +795,6 @@ class EMTargetData(InSessionData):
 		  ('scope', ScopeEMData),
 		  ('preset', PresetData)
 		]
-		return t
-	typemap = classmethod(typemap)
-
-class PixelDriftData(InSessionData):
-	def typemap(cls):
-		t = InSessionData.typemap()
-		t += [ ('rows', float), ]
-		t += [ ('cols', float), ]
 		return t
 	typemap = classmethod(typemap)
 
