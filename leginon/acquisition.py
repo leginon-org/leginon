@@ -1,5 +1,9 @@
 
 import targetwatcher
+import time
+import data, event
+import calibrationclient
+import camerafuncs
 
 
 class Acquisition(targetwatcher.TargetWatcher):
@@ -11,25 +15,57 @@ class Acquisition(targetwatcher.TargetWatcher):
 			'stage position': calibrationclient.StageCalibrationClient(self),
 			'modeled stage position': calibrationclient.ModeledStageCalibrationClient(self)
 		}
+		self.cam = camerafuncs.CameraFuncs(self)
 
 		self.defineUserInterface()
 		self.start()
 
-	def processTargetData(self, targetlist):
+	def processTargetData(self, targetdata):
 		'''this is called by TargetWatcher.processData when targets available'''
-		print 'PROCESSING', targetlist
-		detailedlist = self.detailedTargetList(self.presetlist, targetlist, self.targetmethod)
-		for target in detailedlist:
-			emdata = data.EMData('scope', target)
-			self.publishRemote(emdata)
-			## maybe some settling time here?
+		print 'PROCESSING', targetdata
+		#detailedlist = self.detailedTargetList(self.presetlist, targetlist, self.targetmethod)
 
-			self.acquire()
+		#for target in detailedlist:
+		movetype = self.movetype.get()
+		scopestate = self.targetToState(targetdata, movetype)
+
+		# for now camera state will be same as target origin
+		camerastate = targetdata.content['camera']
+		scopestate.update(camerastate)
+
+		## set the scope/camera state
+		emdata = data.EMData('scope', scopestate)
+		self.publishRemote(emdata)
+		## maybe some settling time here?
+
+		print 'sleeping 2 sec'
+		time.sleep(2)
+
+		print 'acquire'
+		self.acquire()
+
+	def acquire(self):
+		acqtype = self.acqtype.get()
+		if acqtype == 'raw':
+			imagedata = self.cam.acquireCameraImageData(None,0)
+		elif acqtype == 'corrected':
+			try:
+				imagedata = self.cam.acquireCameraImageData(None,1)
+			except:
+				print 'image not acquired'
+				imagedata = None
+
+		if imagedata is None:
+			return
+		print 'publishing image'
+		self.publish(imagedata, event.CameraImagePublishEvent)
+		print 'image published'
 
 	def targetToState(self, targetdata, movetype):
 		'''
 		convert an ImageTargetData to a scope/camera dict
 		using chosen move type
+		The result is scope state
 		'''
 		targetinfo = targetdata.content
 		## get relavent info from target event
@@ -48,21 +84,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 		deltacol = -deltacol
 
 		pixelshift = {'row':deltarow, 'col':deltacol}
-		mag = targetscope['magnification']
 
-		## figure out shift
+		## figure out scope state that gets to the target
 		calclient = self.calclients[movetype]
-		newstate = calclient.transform(pixelshift, targetscope, targetcamera)
-
-		emdat = data.EMData('scope', newstate)
-		self.publishRemote(emdat)
-
-		# wait for a while
-		time.sleep(self.delaydata.get())
-
-		## acquire image
-		self.acquireImage()
-
+		newscope = calclient.transform(pixelshift, targetscope, targetcamera)
+		return newscope
 
 	def detailedTargetList(self, presetlist, targetlist, targetmethod):
 		'''
@@ -71,4 +97,21 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## add some inteligence here to automatically figure out
 		## with target method to use
 
-		
+		pass
+
+	def defineUserInterface(self):
+		super = targetwatcher.TargetWatcher.defineUserInterface(self)
+
+		movetypes = self.calclients.keys()
+		temparam = self.registerUIData('temparam', 'array', default=movetypes)
+		self.movetype = self.registerUIData('TEM Parameter', 'string', choices=temparam, permissions='rw', default='stage position')
+
+		self.delaydata = self.registerUIData('Delay (sec)', 'float', default=2.5, permissions='rw')
+
+		acqtypes = self.registerUIData('acqtypes', 'array', default=('raw', 'corrected'))
+		self.acqtype = self.registerUIData('Acquisition Type', 'string', default='raw', permissions='rw', choices=acqtypes)
+
+		prefs = self.registerUIContainer('Preferences', (self.movetype, self.delaydata, self.acqtype))
+
+		self.registerUISpec('Acquisition', (prefs, super))
+
