@@ -254,18 +254,20 @@ class EMData(Data):
 class ScopeEMData(EMData):
 	def typemap(cls):
 		t = Data.typemap()
-		t += [ ('screen current', float), 
+		t += [ 
+			('magnification', int),
+			('spot size', int),
+			('image shift', dict),
+			('beam shift', dict),
+			('defocus', float),
+			('reset defocus', int),
+			('screen current', float), 
 			('beam blank', str), 
 			('intensity', float),
 			('stigmator', dict),
-			('spot size', int),
 			('beam tilt', dict),
-			('beam shift', dict),
-			('image shift', dict),
-			('defocus', float),
 			('magnification', int),
 			('stage position', dict),
-			('reset defocus', int),
 		]
 		return t
 	typemap = classmethod(typemap)
