@@ -78,8 +78,6 @@ class MatrixCalibrator(calibrator.Calibrator):
 				state2 = self.makeState(newvalue, axis)
 				print 'states', state1, state2
 				shiftinfo = calclient.measureStateShift(state1, state2, 1, settle=self.settle[uiparameter])
-				self.image1.set(calclient.numimage1)
-				self.image2.set(calclient.numimage2)
 				print 'shiftinfo', shiftinfo
 
 				rowpix = shiftinfo['pixel shift']['row']
@@ -103,7 +101,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 			shifts[axis]['col'] /= self.uinaverage.get()
 
 		# return to base
-		emdata = ScopeEMData(id=('scope',))
+		emdata = data.ScopeEMData(id=('scope',))
 		emdata[uiparameter] = base
 		self.publishRemote(emdata)
 
@@ -145,13 +143,10 @@ class MatrixCalibrator(calibrator.Calibrator):
 
 		calibratemethod = uidata.UIMethod('Calibrate', self.uiCalibrate)
 
-		self.image1 = uidata.UIImage('Image 1', None, 'r')
-		self.image2 = uidata.UIImage('Image 2', None, 'r')
-		imagecontainer = uidata.UIContainer('Images')
-		imagecontainer.addUIObjects((self.image1, self.image2))
+		calimage = self.imageViewer()
 
 		container = uidata.UIMediumContainer('Matrix Calibrator')
-		container.addUIObjects((settingscontainer, calibratemethod, imagecontainer))
+		container.addUIObjects((settingscontainer, calibratemethod, calimage))
 		self.uiserver.addUIObject(container)
 
 	def uiCalibrate(self):
