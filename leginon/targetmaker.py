@@ -47,7 +47,7 @@ class SpiralTargetMaker(TargetMaker):
 #		settingscontainer.addObjects((pselect, self.radius, self.maxtargets, self.overlap, self.center))
 
 		pselect = self.presetsclient.uiPresetSelector()
-		self.radius = uidata.Float('Radius (meters)', 1.0e-3, 'rw')
+		self.radius = uidata.Float('Radius (meters)', 1.0e-3, 'rw', persist=True)
 
 		settingscontainer = uidata.Container('Settings')
 		settingscontainer.addObjects((pselect, self.radius))
