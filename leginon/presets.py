@@ -603,6 +603,8 @@ class PresetsManager(node.Node):
 		### this makes a copy of an existing preset
 		### so that dbid is not set and we can 
 		### edit the values
+		if p.dbid is None:
+			return p
 		newpreset = data.PresetData(initializer=p)
 		self.presets[newpreset['name']] = newpreset
 		if self.currentpreset is p:
@@ -786,6 +788,7 @@ class PresetsManager(node.Node):
 		self.ui_image.set(imagedata['image'].astype(Numeric.Float32))
 		dose = self.dosecal.dose_from_imagedata(imagedata)
 		## store the dose in the current preset
+		self.currentpreset = self.renewPreset(self.currentpreset)
 		self.currentpreset['dose'] = dose
 		self.presetToDB(self.currentpreset)
 
