@@ -308,7 +308,6 @@ class SQLDict:
 		for key,value in root.items():
 			if isinstance(value, data.UnknownData):
 				target = pool[value.qikey]
-				print 'TARGET', target
 				root[key] = target
 				self._connectData(target, pool)
 				if isinstance(target, data.SessionData):
@@ -449,11 +448,7 @@ class SQLDict:
 		except KeyError:
 			raise KeyError('No Primary Key found')
 	    else:
-	    	print 'VVV'
-		print v
 		q = sqlexpr.Insert(self.table, v).sqlRepr()
-		print 'QQQ'
-		print q
 		c.execute(q)
 		return c.insert_id()
 
@@ -1069,12 +1064,14 @@ def sqlColumnsDefinition(in_dict, noDefault=None):
 		columns += defaults
 
 	# get a type map of in_dict into a dictionary
-	in_dict_types=dict(in_dict.typemap())
 	for key in in_dict:
 		column={}
 		value=in_dict[key]
+
 		## create empty instance of Data if value is None
-		if value is None and issubclass(in_dict_types[key], data.Data):
+		if value is None:
+			in_dict_types=dict(in_dict.typemap())
+			if isinstance(in_dict_types[key], data.Data):
 				value = in_dict_types[key]()
 
 		sqlt = sqltype(value,key)
@@ -1182,7 +1179,6 @@ def sqlColumnsFormat(in_dict):
 			nf = sqlColumnsFormat(flatdict)
 			columns.update(nf)
 		elif isinstance(value, data.Data):
-			print 'VALUE DBID', value.dbid
 			columns[ref2field(key,value)] = value.dbid
 		elif type(value) in [tuple, list]:
 			columns[seq2sqlColumn(key)] = repr(value)
