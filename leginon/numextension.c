@@ -269,6 +269,7 @@ blobs(PyObject *self, PyObject *args)
 	PyObject *results, *newblob, *pixelrow, *pixelcol, *pixelv;
 	int rows, cols, r, c, len;
 	int *map_ptr;
+	int i, size;
 
 	if (!PyArg_ParseTuple(args, "O!O!", &PyArray_Type, &image, &PyArray_Type, &inputmap))
 		return NULL;
@@ -316,9 +317,21 @@ blobs(PyObject *self, PyObject *args)
 					Py_DECREF(newblob);
 					return NULL;
 				}
+				//size = PyList_Size(newblob);
+			//	for(i = 0; i < size; i++)
+			//		Py_DECREF(PyList_GetItem(newblob, i));
 				Py_DECREF(newblob);
+				size = PyList_Size(pixelrow);
+				for(i = 0; i < size; i++)
+					Py_DECREF(PyList_GetItem(pixelrow, i));
 				Py_DECREF(pixelrow);
+				size = PyList_Size(pixelcol);
+				for(i = 0; i < size; i++)
+					Py_DECREF(PyList_GetItem(pixelcol, i));
 				Py_DECREF(pixelcol);
+				size = PyList_Size(pixelv);
+				for(i = 0; i < size; i++)
+					Py_DECREF(PyList_GetItem(pixelv, i));
 				Py_DECREF(pixelv);
 			}
 			map_ptr++;
