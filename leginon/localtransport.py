@@ -53,7 +53,7 @@ class Client(object):
 	def _pull(self, id):
 		try:
 			#obj = copy.deepcopy(server.datahandler.query(id))
-			return server.datahandler.query(id)
+			return self.serverobject.datahandler.query(id)
 		except:
 			raise IOError('Local transport client unable to query id')
 

@@ -25,7 +25,8 @@ def startManager(location, event):
 	event.set()
 
 def startLauncher(location, event):
-	launcher.Launcher((socket.gethostname(),), nodelocations={'manager': location}).start()
+	launcher.Launcher((socket.gethostname(),),
+										nodelocations={'manager': location}).start()
 	event.set()
 
 location = {}

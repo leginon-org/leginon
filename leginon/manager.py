@@ -360,6 +360,8 @@ class Manager(node.Node):
 		elif 'launcher' in nodelocation \
 															and nodelocation['launcher'] in self.clients:
 			self.clients[nodeid] = self.clients[nodelocation['launcher']]
+			nodelocation = self.datahandler.query(nodelocation['launcher'])
+			nodelocation = nodelocation['location']
 		else:
 			# weak
 			raise RuntimeError('Cannot connect to node')
