@@ -13,13 +13,13 @@ def makeFile(desc, filename):
 	typelibInfo = getTlbFromDesc(desc)
 
 	if typelibInfo is None:
-		print 'Error: cannot find typelib for "%s"' % desc
+		print 'Error, cannot find typelib for "%s"' % desc
 		return
 
 	try:
 		file = open(filename, 'w')
 	except:
-		print 'Error: cannot open file "%s"' % filename
+		print 'Error, cannot create file "%s"' % filename
 		return
 
 	makepy.GenerateFromTypeLibSpec(typelibInfo, file)
@@ -27,11 +27,14 @@ def makeFile(desc, filename):
 
 if __name__ == '__main__':
 	info = [
-					('adaExp Library', 'adacom.py'),
-					('TecnaiCCD 1.0 Type Library', 'gatancom.py'),
-					('Tecnai Scripting', 'tecnaicom.py'),
-					('CAMC4 1.0 Type Library', 'tietzcom.py')
+					('Tecnai Scripting', 'tecnaicom.py', 'Tecnai Scripting'),
+					('adaExp Library', 'adacom.py', 'Tecnai Exposure Adaptor'),
+					('TecnaiCCD 1.0 Type Library', 'gatancom.py', 'Gatan CCD Camera'),
+					('CAMC4 1.0 Type Library', 'tietzcom.py', 'Tietz CCD Camera')
 					]
-	for desc, filename in info:
+	print 'Generating .py files from type libraries...'
+	for desc, filename, message in info:
+		print message + ':',
 		makeFile(desc, filename)
+	print 'Done.'
 
