@@ -119,6 +119,7 @@ def WidgetClassFromTypeList(typelist):
 							if len(typelist) > 3:
 								if typelist[3] == 'sequence':
 									return wxListBoxWidget
+							return entryWidgetClass([list, tuple])
 					return wxEntryWidget
 	raise ValueError('invalid type for widget')
 	
