@@ -1,0 +1,1664 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet href="file://localhost/home/guerra/L2doc/Morphon_XML-Editor_3.1.2/Examples/docbook/docbook.css" type="text/css"?>
+<!DOCTYPE book SYSTEM "file://localhost/home/guerra/L2doc/Morphon_XML-Editor_3.1.2/Examples/docbook/dtd/docbookx.dtd">
+<book>
+  <title>Leginon II Manual</title>
+  <chapter>
+    <title>Leginon II is Modular</title>
+    <abstract>
+      <para>Leginon II is designed in a modular architecture where nodes can be connected through abstract events. This gives Leginon II the flexibility of application customization at multiple levels. Leginon II interacts with a MySQL database that is dynamically created and updated per session. The database stores the images and other relevant information that Leginon II needs. Because nodes can be launched from different machines, Leginon II's applications can inherently use distributed memory systems. The following diagram depicts a simple application called "simple application" that runs nodes on two different machines with the aliases "local" and "scope." </para>
+      <para></para>
+      <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/simple_application.jpg" format="JPEG"/></para>
+    </abstract>
+  </chapter>
+  <chapter>
+    <title>Complete Installation</title>
+    <para>The complete installation procedure includes installing Leginon II, MySQL, PHP, the Apache Web Server, Python with all the necessary Python libraries not part of the standard Python installation, and the PHP image viewer for web browsers. At the moment, all these packages need to be installed individually on both Windows and Linux machines. In future releases, the complete installation will be more user friendly by using an installation wizard for Windows and possibly RPMs for Linux.</para>
+    <para>Leginon II runs under the Linux Operating system and is integrated with several third party software packages that are necessary for its operation. Leginon II is written in Python and uses a number of Python's libraries. Leginon II is also highly dependent upon the MySQL database. MySQL is the relational SQL database that we have chosen to use, but it not necesarily the one that has to be used. Other relational databases that interpret SQL should be able to work with Leginon II.</para>
+    <para>This installation documentation will describe how to set-up Leginon II and give hints as to how to install and set-up the necessary third-party software. This documentation is not intended to support the additional, but necessary third-party software.</para>
+    <para>Leginon II needs to be installed on every machine that will run Leginon II. Using one directory for pyleginon and pyScope that is cross-mounted between different systems is not advised because the systems may be different and could cause conflicts.</para>
+    <para></para>
+    <section>
+      <title> Linux Installation</title>
+      <section>
+        <title> Leginon II Installation</title>
+        <para>This installation begins with a standard Suse 8.2 Linux installation and ends with the configuration of a Leginon configuration file.</para>
+        <para><orderedlist continuation="restarts" inheritnum="ignore">
+            <listitem>
+              <para> Install Suse Linux 8.2</para>
+              <para><itemizedlist>
+                  <listitem>
+                    <para>Go through the procedure of installing the Standard SuSE 8.2 Linux OS. Use all the defaults in this installation. Since this will reformat the entire hard drive, care should be taken to back up files otherwise they will be lost. </para>
+                    <para>Note: A complete install of SuSE 8.2 is not required, but is recommended. The YaST2 utility can be used to install components that are a part of the Standard SuSE 8.2 installation but that may not have been installed in a Custom SuSE 8.2 installation.</para>
+                  </listitem>
+                  <listitem>
+                    <para> Installing from the SuSE 8.2 DVD is the easiest. The following ftp site can also be used with the YaST2 utility, chuck.ucs.indiana.edu (with the directory "linux/suse/suzse").</para>
+                  </listitem>
+                  <listitem>
+                    <para> Other linux distributions, such as Redhat, have not been tested but should work.</para>
+                  </listitem>
+                </itemizedlist></para>
+            </listitem>
+            <listitem>
+              <para> Download Leginon II</para>
+              <para></para>
+              <itemizedlist>
+                <listitem>
+                  <para> Visit the NRAMM website (<ulink url="http://nramm.scripps.edu">nramm.scripps.edu</ulink>) to download the latest stable release of Leginon II, "leginon-2-0.4-alpha-1.tar.gz."</para>
+                </listitem>
+                <listitem>
+                  <para> Make start.py executable.</para>
+                  <para><programlisting format="linespecific">chmod +x start.py</programlisting></para>
+                </listitem>
+              </itemizedlist>
+            </listitem>
+            <listitem>
+              <para> Use YaST2 to install Python 2.2.x and additional Python libraries.</para>
+              <para>As the user "root," open the YaST2 utility:</para>
+              <programlisting format="linespecific">su - root
+YaST2</programlisting>
+              <para></para>
+              <para>From within YaST2, install the following Python software packages:</para>
+              <para><itemizedlist>
+                  <listitem>
+                    <para> python (2.2.2)</para>
+                  </listitem>
+                  <listitem>
+                    <para> python-numeric</para>
+                  </listitem>
+                  <listitem>
+                    <para> python-mysql</para>
+                  </listitem>
+                  <listitem>
+                    <para> python-egenix-mx-base</para>
+                  </listitem>
+                  <listitem>
+                    <para> python-PIL (python-imaging)</para>
+                  </listitem>
+                  <listitem>
+                    <para> python-GTK</para>
+                  </listitem>
+                </itemizedlist></para>
+            </listitem>
+            <listitem>
+              <para> Set-up the shell environment to run Leginon II</para>
+              <para>The full pyScope path should match the path where pyScope is installed. The path, "/home/leginonuser/leginon/pyScope," below is an example of a path.</para>
+              <para> <emphasis>Bash Shell:</emphasis></para>
+              <programlisting format="linespecific"> export PYTHONPATH=$PYTHONPATH:/home/leginonuser/leginon/pyScope
+ export PATH=$PATH:.</programlisting>
+              <para> </para>
+              <para><emphasis> C Shell:</emphasis></para>
+              <programlisting format="linespecific"> setenv PYTHONPATH $PYTHONPATH:/home/leginonuser/leginon/pyScope
+ set path = ($path .)</programlisting>
+              <para></para>
+            </listitem>
+            <listitem>
+              <para> Edit "leginonconfig.py"</para>
+              <para> This configuration sets a few of the Leginon defaults. The following sections need to be changed for the systems that Leginon II is run on:</para>
+              <para><emphasis>Hardware Section:</emphasis></para>
+              <para> These are the available microscope and CCD types that Leginon II is able to run on. "tecnai," "gatan," and "tietz" are the only choices.</para>
+              <para><programlisting format="linespecific">###############
+#   hardware  #
+###############
+TEM = 'tecnai'
+#CCD = 'tietz'
+CCD = 'gatan'</programlisting></para>
+              <para><emphasis>Launchers:</emphasis></para>
+              <para> This is a list of all the hostnames that the Leginon II launchers will be launched (started) from. A launcher is the part of the Leginon II architecture that allows nodes to be run on different machines. All the names of the launchers are assumed to have the same domain, such as "scripps.edu." Each of the machines in this list should have Leginon II installed on it. At the very least, the host name of the microscope computer and localhost of Leginon II should be in the list.</para>
+              <para><programlisting format="linespecific">#########################
+#       Launchers       #
+#########################
+LAUNCHERS = [
+        'tecnai2',
+        'tecnai',
+        'defcon1',
+        'defcon2',
+]</programlisting></para>
+              <para> <emphasis>DataBase:</emphasis></para>
+              <para> The names is the section describe their function. "DB_HOST" is the name of the host machine with the MySQL database on it. "DB_NAME" is the name of the MySQL database. "DB_USER" and "DB_PASS" are the username ('usr_object') and password ('') for access to the MySQL database. The password is is empty for the standard "usr_object" user. "usr_object" should remain the same with no password.</para>
+              <para><programlisting format="linespecific">#########################
+#       Database        #
+#########################
+DB_HOST         = 'cronus2'
+DB_NAME         = 'dbemdata'
+DB_USER         = 'usr_object'
+DB_PASS         = ''</programlisting></para>
+              <para><emphasis>The rest of leginonconfig.py:</emphasis></para>
+              <para> The rest of the leginon condfiguration file is standard and does not need to be changed. The IMAGES_PATH specifies the directory where Leginon II stores the images. The PREFS_PATH is the directory where a few of the user interface preferences are stored. In the future, this preferences directory will no longer exist. The Default Camera Config section specifies starting settings for the CCD camera.</para>
+            </listitem>
+          </orderedlist></para>
+      </section>
+      <section>
+        <title>Database Installation</title>
+        <para></para>
+        <section>
+          <title> MySQL</title>
+          <para><orderedlist continuation="restarts" inheritnum="ignore">
+              <listitem>
+                <para> Install MySQL-Server 4.0.15</para>
+                <para><itemizedlist>
+                    <listitem>
+                      <para> Download MySQL-server-4.0.15.i386.rpm from <ulink url="http://www.mysql.com">www.mysql.com</ulink></para>
+                    </listitem>
+                    <listitem>
+                      <para> Install the MySQL-server rpm:</para>
+                      <para><programlisting format="linespecific"> rpm -Uvh MySQL-server-4.0.15.i386.rpm</programlisting></para>
+                    </listitem>
+                  </itemizedlist></para>
+              </listitem>
+              <listitem>
+                <para> Install MySQL-Client 4.0.15</para>
+                <para><itemizedlist>
+                    <listitem>
+                      <para> Download MySQL-client-4.0.15.i386.rpm from <ulink url="http://www.mysql.com">www.mysql.com</ulink></para>
+                    </listitem>
+                    <listitem>
+                      <para> Install the MySQL-client rpm:</para>
+                      <para><programlisting format="linespecific"> rpm -Uvh MySQL-client-4.0.15.i386.rpm</programlisting></para>
+                    </listitem>
+                  </itemizedlist></para>
+              </listitem>
+              <listitem>
+                <para> Specify a global scope for the MySQL configuration file specific for a large system with memory.</para>
+                <para><programlisting format="linespecific"> cp /usr/share/doc/packages/MySQL-server/my-large.cnf /etc/my.cnf</programlisting></para>
+                <para>Note: The Database location is: /var/lib/mysql/</para>
+              </listitem>
+              <listitem>
+                <para> start | stop | restart MySQL Server</para>
+                <programlisting format="linespecific"> /usr/share/mysql/mysql.server start
+ /usr/share/mysql/mysql.server stop
+ /usr/share/mysql/mysql.server restart</programlisting>
+                <para></para>
+              </listitem>
+              <listitem>
+                <para> Set a password for the root user</para>
+                <para></para>
+                <programlisting format="linespecific"> mysql -r root mysql
+mysql&gt; set password for root@'localhost' = password('leginon2')
+mysql&gt; set password for root@'yourhost' = password('leginon2')
+mqsql&gt; exit</programlisting>
+              </listitem>
+            </orderedlist></para>
+        </section>
+      </section>
+      <section>
+        <title> Viewer Installation</title>
+        <para> The Leginon II part of the installation is now complete. These additional installations allows the data to be viewed through a web browser. This installation includes PHP, the Apache Web Server, and the PHP image viewer for web browsers. Though a few of these packages may be found on the SuSE Linux 8.2 DVD, the Apache Web Server and PHP on this DVD are the only software packages that are of a new enough version to run properly with Leginon II. MySQL and the Apache Web Server can be downloaded from their respective websites. PHP can be installed through YaST2.</para>
+        <section>
+          <title> PHP</title>
+          <para><orderedlist continuation="restarts" inheritnum="ignore">
+              <listitem>
+                <para> Install PHP</para>
+                <para><itemizedlist>
+                    <listitem>
+                      <para> Use the SuSE Linux 8.2 YaST2 utility to install PHP.</para>
+                    </listitem>
+                  </itemizedlist><itemizedlist>
+                    <listitem>
+                      <para> Install "mod_php4-core-4.3.1-24" and "mod_php-4.3.1-24"</para>
+                    </listitem>
+                  </itemizedlist></para>
+              </listitem>
+              <listitem>
+                <para> Configure php.ini</para>
+                <para>Edit the following two sections in php.ini so that they look like the following:</para>
+                <para><programlisting format="linespecific">; This directive tells PHP whether to declare the argv&amp;argc variables (that
+; would contain the GET information).  If you don't use these variables, you
+; should turn it off for increased performance.
+register_argc_argv = On</programlisting></para>
+                <para><programlisting format="linespecific">;;;;;;;;;;;;;;;;;;;
+; Resource Limits ;
+;;;;;;;;;;;;;;;;;;;
+
+max_execution_time = 300     ; Maximum execution time of each script, in seconds
+max_input_time = 300     ; Maximum amount of time each script may spend parsing request data
+memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</programlisting></para>
+                <para>php.ini can be found in /etc/php.ini on a typical PHP installation.</para>
+              </listitem>
+            </orderedlist></para>
+        </section>
+        <section>
+          <title> Apache Web Server</title>
+          <para> <orderedlist continuation="restarts" inheritnum="ignore">
+              <listitem>
+                <para> Install the Apache Web Server with the YaST2 utility.</para>
+              </listitem>
+              <listitem>
+                <para> Edit the "httpd.conf" configuration file to look like the following:</para>
+                <para><programlisting format="linespecific">&lt;IfModule mod_dir.c&gt;
+    DirectoryIndex index.html index.shtm index.html index.shtml index.php index.php4 index.php3
+&lt;/IfModule&gt;</programlisting></para>
+                <para>httpd.conf can be found in /etc/httpd/httpd.conf on a typical Apache Web Server installation.</para>
+                <para></para>
+                <para></para>
+              </listitem>
+              <listitem>
+                <para> Restart the web server.</para>
+                <para><programlisting format="linespecific">apachectl restart</programlisting></para>
+              </listitem>
+            </orderedlist></para>
+        </section>
+        <section>
+          <title> Leginon II PHP image viewer for web browser</title>
+          <para><orderedlist continuation="restarts" inheritnum="ignore">
+              <listitem>
+                <para> Download the PHP image viewer from <ulink url="http://nramm.scripps.edu">nramm.scripps.edu</ulink>. ****Not yet available for download****</para>
+                <para>Instead, use an image viewimg capable software of choice to browse through the images directory that resides within the pyleginon directory. These image file names have meaning internally within Leginon II.</para>
+              </listitem>
+            </orderedlist></para>
+        </section>
+      </section>
+      <section>
+        <title> Other Tools</title>
+        <para> This section includes tools that may help with Leginon II development. </para>
+        <section>
+          <title> phpMyAdmin</title>
+          <para><orderedlist continuation="restarts" inheritnum="ignore">
+              <listitem>
+                <para> Download phpMyAdmin (phpMyAdmin-2.5.3-php.zip) from <ulink url="http://www.phpmyadmin.net">www.phpmyadmin.net.</ulink></para>
+                <para><itemizedlist>
+                    <listitem>
+                      <para> Download phpMyAdmin into the directory where the web server has been installed.</para>
+                    </listitem>
+                  </itemizedlist></para>
+              </listitem>
+              <listitem>
+                <para> Install phpMyAdmin:</para>
+                <para><programlisting format="linespecific">cd /your_www_directory
+unzip phpMyAdmin-2.5.3-php.zip</programlisting></para>
+              </listitem>
+              <listitem>
+                <para> Edit config.php.inc in the phpMyAdmin-2.5.3 directory:</para>
+                <para><programlisting format="linespecific">cd phpMyAdmin-2.5.3</programlisting></para>
+                <para>replace:</para>
+                <para><programlisting format="linespecific">        $cfg['PmaAbsoluteUri'] = '';</programlisting></para>
+                <para>with:</para>
+                <para><programlisting format="linespecific">        $cfg['PmaAbsoluteUri'] = (!empty($HTTPS) ? 'https' : 'http') . '://'
+                   . $HTTP_HOST . (!empty($SERVER_PORT) ? ':' . $SERVER_PORT : '')
+                   . substr($PHP_SELF, 0, strrpos($PHP_SELF, '/')+1);</programlisting></para>
+                <para>replace:</para>
+                <para><programlisting format="linespecific">        $cfg['Servers'][$i]['auth_type']     = 'config';</programlisting></para>
+                <para>with:</para>
+                <para><programlisting format="linespecific">        $cfg['Servers'][$i]['auth_type']     = 'http';</programlisting></para>
+              </listitem>
+            </orderedlist></para>
+        </section>
+      </section>
+    </section>
+    <section>
+      <title> Windows installation</title>
+      <section>
+        <title> Leginon II installation</title>
+        <para> This installation describes how to install Leginon II, Python, and additional Python libraries on Windows.</para>
+        <para></para>
+        <orderedlist continuation="restarts" inheritnum="ignore">
+          <listitem>
+            <para> Download Leginon II</para>
+            <itemizedlist>
+              <listitem>
+                <para> Visit the NRAMM website (<ulink url="http://nramm.scripps.edu">nramm.scripps.edu</ulink>) to download the latest stable release of Leginon II, "leginon-2-0.4-alpha-1.zip"</para>
+              </listitem>
+            </itemizedlist>
+          </listitem>
+          <listitem>
+            <para> Download Python 2.2.3 (Python-2.2.3.exe) from <ulink url="http://www.python.org">www.python.org</ulink></para>
+          </listitem>
+          <listitem>
+            <para> Install Python 2.2.3. Follow the defaults in the installation. </para>
+          </listitem>
+          <listitem>
+            <para> Download the following Python libraries from their respective websites: </para>
+            <para>Note: Download the packages that are for Python 2.2.x and Windows. Install these packages after Python 2.2.3 has been installed. Follow all the defaults.</para>
+            <para><itemizedlist>
+                <listitem>
+                  <para> Python 2.2 eGenix mx Base Package (<ulink url="http://www.egenix.com">www.egenix.com</ulink>)</para>
+                </listitem>
+                <listitem>
+                  <para> Python 2.2 MySQL-python.exe-0.9.2 (<ulink url="http://sourceforge.net/projects/mysql-python/">http://sourceforge.net/projects/mysql-python/</ulink>)</para>
+                </listitem>
+                <listitem>
+                  <para> Python 2.2 Numeric-22.0 (<ulink url="http://www.numpy.org/">http://www.numpy.org/</ulink>)</para>
+                </listitem>
+                <listitem>
+                  <para> Python 2.2 PIL-1.1.4 (<ulink url="http://www.pythonware.com/products/pil/">http://www.pythonware.com/products/pil/</ulink>)</para>
+                </listitem>
+                <listitem>
+                  <para> Python 2.2 combined Win32 extensions (<ulink url="http://starship.python.net/crew/mhammond/">http://starship.python.net/crew/mhammond</ulink>)</para>
+                </listitem>
+                <listitem>
+                  <para> wxPython 2.4.1.2 for Python 2.2 (<ulink url="http://www.wxpython.org/">http://www.wxpython.org/</ulink>)</para>
+                </listitem>
+              </itemizedlist></para>
+          </listitem>
+          <listitem>
+            <para> Set the PYTHONPATH environment variable.</para>
+            <para><itemizedlist>
+                <listitem>
+                  <para> Open System form within the Control Panel.</para>
+                </listitem>
+                <listitem>
+                  <para> Add the environment variable PYTHONPATH with the full path to the pyScope directory (for example, C:\pyleginon).</para>
+                </listitem>
+              </itemizedlist></para>
+          </listitem>
+          <listitem>
+            <para> Edit "leginonconfig.py"</para>
+            <para> This configuration sets a few of the Leginon defaults. The following sections need to be changed for the systems that Leginon II is run on:</para>
+            <para><emphasis>Hardware Section:</emphasis></para>
+            <para> These are the available microscope and CCD types that Leginon II is able to run on. "tecnai," "gatan," and "tietz" are the only choices.</para>
+            <para><programlisting format="linespecific">###############
+#   hardware  #
+###############
+TEM = 'tecnai'
+#CCD = 'tietz'
+CCD = 'gatan'</programlisting></para>
+            <para><emphasis>Launchers:</emphasis></para>
+            <para> This is a list of all the hostnames that the Leginon II launchers will be launched (started) from. A launcher is the part of the Leginon II architecture that allows nodes to be run on different machines. All the names of the launchers are assumed to have the same domain, such as "scripps.edu." Each of the machines in this list should have Leginon II installed on it. At the very least, the host name of the microscope computer and localhost of Leginon II should be in the list.</para>
+            <para><programlisting format="linespecific">#########################
+#       Launchers       #
+#########################
+LAUNCHERS = [
+        'tecnai2',
+        'tecnai',
+        'defcon1',
+        'defcon2',
+]</programlisting></para>
+            <para> <emphasis>DataBase:</emphasis></para>
+            <para> The names is the section describe their function. "DB_HOST" is the name of the host machine with the MySQL database on it. "DB_NAME" is the name of the MySQL database. "DB_USER" and "DB_PASS" are the username ('usr_object') and password ('') for access to the MySQL database. The password is is empty for the standard "usr_object" user. "usr_object" should remain the same with no password.</para>
+            <para><programlisting format="linespecific">#########################
+#       Database        #
+#########################
+DB_HOST         = 'cronus2'
+DB_NAME         = 'dbemdata'
+DB_USER         = 'usr_object'
+DB_PASS         = ''</programlisting></para>
+            <para><emphasis>The rest of leginonconfig.py:</emphasis></para>
+            <para> The rest of the leginon condfiguration file is standard and does not need to be changed. The IMAGES_PATH specifies the directory where Leginon II stores the images. The PREFS_PATH is the directory where a few of the user interface preferences are stored. In the future, this preferences directory will no longer exist. The Default Camera Config section specifies starting settings for the CCD camera.</para>
+          </listitem>
+        </orderedlist>
+      </section>
+      <section>
+        <title>Database Installation</title>
+        <para></para>
+        <section>
+          <title> MySQL</title>
+          <para><orderedlist continuation="restarts" inheritnum="ignore">
+              <listitem>
+                <para> Install MySQL</para>
+                <para><itemizedlist>
+                    <listitem>
+                      <para> Download mysql-4.0.15-win.zip from <ulink url="http://www.mysql.com">www.mysql.com</ulink></para>
+                    </listitem>
+                    <listitem>
+                      <para> Install MySQL by unzipping and following all the defaults.</para>
+                    </listitem>
+                  </itemizedlist></para>
+              </listitem>
+              <listitem>
+                <para> Specify a global scope for the MySQL configuration file specific for a large system with memory.</para>
+                <para><itemizedlist>
+                    <listitem>
+                      <para> Copy my-large.cnf to my.cnf.</para>
+                    </listitem>
+                  </itemizedlist></para>
+              </listitem>
+              <listitem>
+                <para> Start, stop, and restart the MySQL Server</para>
+              </listitem>
+              <listitem>
+                <para> Set a password for the root user.</para>
+                <para><itemizedlist>
+                    <listitem>
+                      <para> set a password for the "root" user on the "localhost"</para>
+                    </listitem>
+                    <listitem>
+                      <para> set a password for the "root" user on "yourhost":</para>
+                    </listitem>
+                  </itemizedlist></para>
+              </listitem>
+            </orderedlist></para>
+        </section>
+      </section>
+      <section>
+        <title> Viewer Installation</title>
+        <para> The Leginon II part of the installation is now complete. These additional installations allows the data to be viewed through a web browser. This installation includes PHP, the Apache Web Server, and the PHP image viewer for web browsers. </para>
+        <section>
+          <title> PHP</title>
+          <para><orderedlist continuation="restarts" inheritnum="ignore">
+              <listitem>
+                <para> Download PHP 4.3.3 from <ulink url="http://www.php.net">www.php.net</ulink>.</para>
+              </listitem>
+              <listitem>
+                <para> Install PHP. Follow the defaults.</para>
+              </listitem>
+              <listitem>
+                <para> Configure php.ini</para>
+                <para>Edit the following two sections in php.ini so that they look like the following:</para>
+                <para><programlisting format="linespecific">; This directive tells PHP whether to declare the argv&amp;argc variables (that
+; would contain the GET information).  If you don't use these variables, you
+; should turn it off for increased performance.
+register_argc_argv = On</programlisting></para>
+                <para><programlisting format="linespecific">;;;;;;;;;;;;;;;;;;;
+; Resource Limits ;
+;;;;;;;;;;;;;;;;;;;
+
+max_execution_time = 300     ; Maximum execution time of each script, in seconds
+max_input_time = 300     ; Maximum amount of time each script may spend parsing request data
+memory_limit = 256M      ; Maximum amount of memory a script may consume (8MB)</programlisting></para>
+              </listitem>
+            </orderedlist></para>
+        </section>
+        <section>
+          <title> Apache Web Server</title>
+          <para> <orderedlist continuation="restarts" inheritnum="ignore">
+              <listitem>
+                <para> Download the Apache Web Server from <ulink url="http://www.apache.org">www.apache.org</ulink>.</para>
+              </listitem>
+              <listitem>
+                <para> Edit the "httpd.conf" configuration file to look like the following:</para>
+                <para><programlisting format="linespecific">&lt;IfModule mod_dir.c&gt;
+    DirectoryIndex index.html index.shtm index.html index.shtml index.php index.php4 index.php3
+&lt;/IfModule&gt;</programlisting></para>
+                <para></para>
+              </listitem>
+              <listitem>
+                <para> Restart the web server.</para>
+              </listitem>
+            </orderedlist></para>
+        </section>
+        <section>
+          <title> Leginon II PHP image viewer for web browser</title>
+          <para><orderedlist continuation="restarts" inheritnum="ignore">
+              <listitem>
+                <para> Download the PHP image viewer from <ulink url="http://nramm.scripps.edu">nramm.scripps.edu</ulink>. ****Not yet available for download****</para>
+                <para>Instead, use an image viewimg capable software of choice to browse through the images directory that resides within the pyleginon directory. These image file names have meaning internally within Leginon II.</para>
+              </listitem>
+            </orderedlist></para>
+        </section>
+      </section>
+    </section>
+  </chapter>
+  <chapter>
+    <title> Create Applications</title>
+    <section>
+      <title><anchor id="createapp"/> Use the Application Editor to create Leginon II applications</title>
+      <para><orderedlist continuation="restarts" inheritnum="ignore">
+          <listitem>
+            <para> ./start.py (in pyleginon directory on Linux machines)</para>
+            <para>Or Double click start.py (in pyleginon directory on Windows machines)</para>
+          </listitem>
+          <listitem>
+            <para> Enter User, Instrument (microscope), and Session Name (new experiment) in the Manager Setup.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/manager_setup.jpg" format="JPEG"/></para>
+            <para>Click Start.</para>
+            <para></para>
+            <para>Note: Ignore the warning message that may appear (see image). If the warning will not clear by pressing the OK button, just ignore it.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/ignorewarningui.jpg" format="JPEG"/></para>
+          </listitem>
+          <listitem>
+            <para> Click on the Manager tab in the User Interface.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/sim_app_beginui.jpg" format="JPEG"/></para>
+          </listitem>
+          <listitem>
+            <para> Launch the Application Editor node.</para>
+            <para><itemizedlist>
+                <listitem>
+                  <para> Type "app" (or any descriptive name) into Name text box and press Apply.</para>
+                </listitem>
+                <listitem>
+                  <para> Pick the local computer to launch the node in the Launcher pull-down list.</para>
+                </listitem>
+                <listitem>
+                  <para> Pick the ApplicationEditor node class from the Node Class pull-down list.</para>
+                </listitem>
+                <listitem>
+                  <para> Click Launch to launch (start) the Application Editor node.</para>
+                  <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/add_appeditor.jpg" format="JPEG"/></para>
+                </listitem>
+              </itemizedlist></para>
+          </listitem>
+          <listitem>
+            <para> Go to the Application Editor tab under the "app" tab.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/apped_blank.jpg" format="JPEG"/></para>
+          </listitem>
+          <listitem>
+            <para> Name the application.</para>
+            <para><itemizedlist>
+                <listitem>
+                  <para> Right click in the big white window. A dialog box will pop-up with the options, Raise, Lower, Rename, Add Launcher, and Delete.</para>
+                </listitem>
+                <listitem>
+                  <para> Click Rename from the list.</para>
+                </listitem>
+                <listitem>
+                  <para> Enter a name in the text box that pops-up and press OK.</para>
+                  <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/apped_rename.jpg" format="JPEG"/></para>
+                </listitem>
+              </itemizedlist></para>
+          </listitem>
+          <listitem>
+            <para> Add a Launcher.</para>
+            <para><itemizedlist>
+                <listitem>
+                  <para> Right click in the big white window. A dialog box will pop-up with the options, Raise, Lower, Rename, Add Launcher, and Delete.</para>
+                </listitem>
+                <listitem>
+                  <para> Click Add Launcher from the list.</para>
+                </listitem>
+                <listitem>
+                  <para> Enter a descriptive name for the launcher. For example, for the launcher that will operate on the microscope, name it "scope."</para>
+                  <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/apped_addlaunch.jpg" format="JPEG"/></para>
+                </listitem>
+                <listitem>
+                  <para> Click Add.</para>
+                </listitem>
+              </itemizedlist></para>
+          </listitem>
+          <listitem>
+            <para> Add a node within a Launcher.</para>
+            <para><itemizedlist>
+                <listitem>
+                  <para> Right click in the area within the box enclosed by the launcher. A dialog box will pop-up with the options, Raise, Lower, Rename, Add Node, and Delete.</para>
+                </listitem>
+                <listitem>
+                  <para> Click Add Node.</para>
+                </listitem>
+                <listitem>
+                  <para> Enter an descriptive Alias name for the node. For example, use "em" for the "EM" node.</para>
+                </listitem>
+                <listitem>
+                  <para> Choose the Node Class from the pull-down list.</para>
+                </listitem>
+                <listitem>
+                  <para> Dependencies is not a necessity. Enter the alias name of nodes that this node should look for before launching. These alias names should be entered as strings in a python list (e.g. ['em','psm']).</para>
+                </listitem>
+                <listitem>
+                  <para> Click Add.</para>
+                  <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/apped_addnode.jpg" format="JPEG"/></para>
+                </listitem>
+              </itemizedlist></para>
+          </listitem>
+          <listitem>
+            <para> Add Event Bindings between nodes.</para>
+            <para>The red boxes on the top of nodes indicate output events that a node is able to receive. The blue boxes on the bottom edge of nodes indicate event bindings that nodes are able to send. Hovering the mouse over one of these red or blue boxes will display the name of that particular event. A single right click on the blue boxes will open a dialog box that displays "Add Binding." Click "Add Binding" to add a binding from this node (blue box) to another node (a red box). Hovering the mouse over the red boxes of another node once Add Binding has been selected will display only those events that can be bound by the current event. The following is an example of how to create an event binding between an Acquisition node ("acq") and the Presets Manager node ("psm"):</para>
+            <para><itemizedlist>
+                <listitem>
+                  <para> Add an Acquisition node aliased as "acq" in a launcher.</para>
+                </listitem>
+                <listitem>
+                  <para> Add a Presets Manager node aliased as "psm" in the same launcher.</para>
+                </listitem>
+                <listitem>
+                  <para> Right click on the bottom far right blue box in the "acq" node. This will cause the name, "ChangePresetEvent," to display vertically.</para>
+                </listitem>
+                <listitem>
+                  <para> Left click on Add Binding while hovering over the blue box that displays "ChangePresetEvent."</para>
+                </listitem>
+                <listitem>
+                  <para> Left click on the top far right red box in the "psm" node. A line should now connect "acq" and "psm" with the "ChangePresetEvent" enclosed in a box in the path of the connecting line. This line indicates that these two nodes have been bound through the ChangePresetEvent.</para>
+                  <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/apped_binding.jpg" format="JPEG"/></para>
+                </listitem>
+                <listitem>
+                  <para> To delete a binding, right click on the line or event that binds the two nodes. Select Delete.</para>
+                </listitem>
+                <listitem>
+                  <para> To discontinue adding a binding after having clicked on Add Binding, click outside all launchers in empty white area.</para>
+                </listitem>
+              </itemizedlist></para>
+          </listitem>
+          <listitem>
+            <para> Save the application.</para>
+            <para><itemizedlist>
+                <listitem>
+                  <para> Click Apply.</para>
+                </listitem>
+                <listitem>
+                  <para> Click Save. The application will be saved under the name that appears in the top left corner of the white boxed area.</para>
+                </listitem>
+              </itemizedlist></para>
+          </listitem>
+        </orderedlist></para>
+    </section>
+    <section>
+      <title> Create Leginon II "Simple Application"</title>
+      <para> This application is meant to demonstrate how to create applications with event bindings in Leginon II. This application has little functionality other than being able to take one image at a time at a given preset.</para>
+      <para><orderedlist continuation="restarts" inheritnum="ignore">
+          <listitem>
+            <para> Create a blank Leginon II application called "Simple Application." Refer to <link linkend="createapp">Use the Application Editor to create Leginon II applications</link> to create this blank application and for help with the instructions below.</para>
+          </listitem>
+          <listitem>
+            <para> Add two launchers with the aliases "scope" and "local."</para>
+          </listitem>
+          <listitem>
+            <para> Add a EM node with the alias "em" in the "scope" launcher.</para>
+          </listitem>
+          <listitem>
+            <para> Add a Corrector node with the alias "cor" in the "local" launcher.</para>
+          </listitem>
+          <listitem>
+            <para> Add a SimpleAcquisition node with the alias "simple_acq" in the "local" launcher.</para>
+          </listitem>
+          <listitem>
+            <para> Add a PresetsManager node with the alias "psm" in the "local" launcher.</para>
+          </listitem>
+          <listitem>
+            <para> Add a "ChangePresetEvent" event binding from "simple_acq" to "psm." Start the binding by right clicking on the ChangePresetEvent blue box for "simple_acq."</para>
+          </listitem>
+          <listitem>
+            <para> Rename the application "Simple Acquisition."</para>
+          </listitem>
+          <listitem>
+            <para> Click Apply and Save.</para>
+          </listitem>
+        </orderedlist></para>
+    </section>
+    <section>
+      <title> Create Leginon II "cal" Calibration Application</title>
+      <para> This section describes how to create an application, "cal," that can be used to do calibrations for Leginon II. Calibrations are essential for Leginon II; therefore, this application or a similar one(s) with these nodes will need to be used to run Leginon II.</para>
+      <para><orderedlist continuation="restarts" inheritnum="ignore">
+          <listitem>
+            <para> Create a blank Leginon II application called "cal." Refer to <link linkend="createapp">Use the Application Editor to create Leginon II applications</link> to create this blank application and for help with the instructions below.</para>
+          </listitem>
+          <listitem>
+            <para> Add two launchers with the aliases "scope" and "local."</para>
+          </listitem>
+          <listitem>
+            <para> Add a EM node with the alias "em" in the "scope" launcher.</para>
+          </listitem>
+          <listitem>
+            <para> Add the following nodes with the corresponding aliases in the "local" launcher. </para>
+            <table>
+              <title></title>
+              <tgroup cols="2">
+                <colspec colnum="1"/>
+                <colspec colnum="2"/>
+                <tbody>
+                  <row>
+                    <entry><filename moreinfo="none">Node Class:</filename></entry>
+                    <entry><filename moreinfo="none">Alias name:</filename></entry>
+                  </row>
+                  <row>
+                    <entry>SimpleNavigator</entry>
+                    <entry>nav</entry>
+                  </row>
+                  <row>
+                    <entry>ImViewer </entry>
+                    <entry>imv</entry>
+                  </row>
+                  <row>
+                    <entry>BeamTiltCalibrator</entry>
+                    <entry>btcal</entry>
+                  </row>
+                  <row>
+                    <entry>PixelSizeCalibrator</entry>
+                    <entry>pxcal</entry>
+                  </row>
+                  <row>
+                    <entry>MatrixCalibrator</entry>
+                    <entry>mcal</entry>
+                  </row>
+                  <row>
+                    <entry>PresetsManager</entry>
+                    <entry>psm</entry>
+                  </row>
+                  <row>
+                    <entry>Corrector </entry>
+                    <entry>cor</entry>
+                  </row>
+                </tbody>
+              </tgroup>
+            </table>
+            <para></para>
+            <para>Note that event bindings do not need to be created in this "cal" application.</para>
+            <para></para>
+          </listitem>
+          <listitem>
+            <para> Rename the application "cal."</para>
+          </listitem>
+          <listitem>
+            <para> Click Apply and Save.</para>
+          </listitem>
+        </orderedlist></para>
+    </section>
+    <section>
+      <title> Create Leginon II "run" Application</title>
+      <para> This section describes how to create an application, "run," that mimics Leginon I in manual mode.</para>
+      <para><orderedlist continuation="restarts" inheritnum="ignore">
+          <listitem>
+            <para> Create a blank Leginon II application called "run." Refer to <link linkend="createapp">Use the Application Editor to create Leginon II applications</link> to create this blank application and for help with the instructions below.</para>
+          </listitem>
+          <listitem>
+            <para> Add two launchers with the aliases "scope" and "local."</para>
+          </listitem>
+          <listitem>
+            <para> Add a EM node with the alias "em" in the "scope" launcher.</para>
+          </listitem>
+          <listitem>
+            <para> Add the following nodes with the corresponding aliases in the "local" launcher: </para>
+            <table>
+              <title></title>
+              <tgroup cols="2">
+                <colspec colnum="1"/>
+                <colspec colnum="2"/>
+                <tbody>
+                  <row>
+                    <entry><filename moreinfo="none">Node Class:</filename></entry>
+                    <entry><filename moreinfo="none">Alias name:</filename></entry>
+                  </row>
+                  <row>
+                    <entry>Acquisition</entry>
+                    <entry>exp_acq</entry>
+                  </row>
+                  <row>
+                    <entry>Acquisition </entry>
+                    <entry>h_acq</entry>
+                  </row>
+                  <row>
+                    <entry>Acquisition</entry>
+                    <entry>sq_acq</entry>
+                  </row>
+                  <row>
+                    <entry>Acquisition</entry>
+                    <entry>g_acq</entry>
+                  </row>
+                  <row>
+                    <entry>Focuser</entry>
+                    <entry>foc</entry>
+                  </row>
+                  <row>
+                    <entry>PresetsManager</entry>
+                    <entry>psm</entry>
+                  </row>
+                  <row>
+                    <entry>Corrector </entry>
+                    <entry>cor</entry>
+                  </row>
+                  <row>
+                    <entry>ClickTargetFinder </entry>
+                    <entry>sq_targ_clk</entry>
+                  </row>
+                  <row>
+                    <entry>ClickTargetFinder </entry>
+                    <entry>h_targ_clk</entry>
+                  </row>
+                  <row>
+                    <entry>SimpleNavigator </entry>
+                    <entry>nav</entry>
+                  </row>
+                  <row>
+                    <entry>SpiralTargetMaker </entry>
+                    <entry>spr</entry>
+                  </row>
+                  <row>
+                    <entry>MosaicClickTargetFinder </entry>
+                    <entry>g_targ_click</entry>
+                  </row>
+                </tbody>
+              </tgroup>
+            </table>
+            <para></para>
+            <para></para>
+          </listitem>
+          <listitem>
+            <para> Add the following Event Bindings between the following nodes in the "local" launcher: </para>
+            <para>Click Add Binding on the nodes in the Node 1 Alias column.</para>
+            <table>
+              <title></title>
+              <tgroup cols="2">
+                <colspec colnum="1"/>
+                <colspec colnum="2"/>
+                <colspec colname="3"/>
+                <tbody>
+                  <row>
+                    <entry><filename moreinfo="none">Node 1 Alias:</filename></entry>
+                    <entry><filename moreinfo="none">Event Binding:</filename></entry>
+                    <entry><filename moreinfo="none">Node 2 Alias:</filename></entry>
+                  </row>
+                  <row>
+                    <entry>spr</entry>
+                    <entry>ImageTargetListPublishEvent</entry>
+                    <entry>g_acq</entry>
+                  </row>
+                  <row>
+                    <entry>g_acq </entry>
+                    <entry>AcquisitionImagePublishEvent</entry>
+                    <entry>g_targ_click</entry>
+                  </row>
+                  <row>
+                    <entry>g_acq </entry>
+                    <entry>ChangePresetEvent </entry>
+                    <entry>psm</entry>
+                  </row>
+                  <row>
+                    <entry>g_targ_click </entry>
+                    <entry>ImageTargetListPublishEvent</entry>
+                    <entry>sq_acq</entry>
+                  </row>
+                  <row>
+                    <entry>sq_acq </entry>
+                    <entry>AcquisitionImagePublishEvent</entry>
+                    <entry>sq_targ_clk</entry>
+                  </row>
+                  <row>
+                    <entry>sq_acq </entry>
+                    <entry>ChangePresetEvent</entry>
+                    <entry>psm</entry>
+                  </row>
+                  <row>
+                    <entry>sq_targ_clk </entry>
+                    <entry>ImageTargetListPublishEvent </entry>
+                    <entry>h_acq</entry>
+                  </row>
+                  <row>
+                    <entry>h_acq </entry>
+                    <entry>AcquisitionImagePublishEvent</entry>
+                    <entry>h_targ_click</entry>
+                  </row>
+                  <row>
+                    <entry>h_acq </entry>
+                    <entry>ChangePresetEvent</entry>
+                    <entry>psm</entry>
+                  </row>
+                  <row>
+                    <entry>h_targ_clk </entry>
+                    <entry>ImageTargetListPublishEvent</entry>
+                    <entry>exp_acq</entry>
+                  </row>
+                  <row>
+                    <entry>exp_acq </entry>
+                    <entry>ImageTargetListPublishEvent</entry>
+                    <entry>foc</entry>
+                  </row>
+                  <row>
+                    <entry>foc </entry>
+                    <entry>TargetListDoneEvent</entry>
+                    <entry>exp_acq</entry>
+                  </row>
+                  <row>
+                    <entry>foc </entry>
+                    <entry>ChangePresetEvent</entry>
+                    <entry>psm</entry>
+                  </row>
+                  <row>
+                    <entry>exp_acq </entry>
+                    <entry>ChangePresetEvent</entry>
+                    <entry>psm</entry>
+                  </row>
+                </tbody>
+              </tgroup>
+            </table>
+            <para></para>
+            <para>These bindings are diagramed below:</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/create_run.jpg" format="JPEG"/></para>
+            <para></para>
+          </listitem>
+          <listitem>
+            <para> Rename the application "run."</para>
+          </listitem>
+          <listitem>
+            <para> Click Apply and Save.</para>
+          </listitem>
+        </orderedlist></para>
+    </section>
+  </chapter>
+  <chapter>
+    <title>Microscope Set-up</title>
+    <section>
+      <title>Good Alignments Save Time</title>
+      <para>Leginon II relies on a stable microscope. Before or just after the stage is inserted into the microscope, all the gun alignments should be iterated. A poor gun alignment can cause a longer exposure time for the high magnification data that will ultimately affect resolution. The grid should be at eucentric height and the defocus needs to be set for both LM and SA modes. The condensor aperture and stigmator should be aligned and corrected. The objective aperture needs to be centered. At a high magnification of 200kx+, the beam tilt pivot points and rotation center should be corrected. Then, the beam tilt pivot points should be checked again at the magnification that the focusing will take place. First at a high magnification of 200kx+ and then at the focus magnification, the astigmatism should be corrected. Furthermore, the grid must be flat and the stage must not drift. Thin, clean, vitreous ice or a clean stain and a good particle distribution will also greatly aid in the data collection process.</para>
+    </section>
+    <section>
+      <title>Microscope Set-up Checklist</title>
+      <para><itemizedlist>
+          <listitem>
+            <para>Gun Alignments: Gun Tilt, Gun Tilt Pivot Point, Gun Shift, and Spot Size Dependent Gun Shift</para>
+            <para>Load a previous alignment for a better starting point.</para>
+          </listitem>
+          <listitem>
+            <para>Insert the stage.</para>
+          </listitem>
+          <listitem>
+            <para>Adjust the grid to eucentric height using the Alpha Wobbler.</para>
+          </listitem>
+          <listitem>
+            <para>Adjust the condensor aperture and stigmators.</para>
+          </listitem>
+          <listitem>
+            <para>Reset true focus at 62kx, 200kx, and 1100x (at SA and LM modes).</para>
+          </listitem>
+          <listitem>
+            <para>While at true focus, correct the Beam Tilt Pivot Points and Rotation Center at 200kx+ and at 62kx.</para>
+          </listitem>
+          <listitem>
+            <para>In Diffraction Mode, center the image of the objective aperture.</para>
+          </listitem>
+          <listitem>
+            <para>At 200kx+ and 62kx, correct the objective stigmation.</para>
+          </listitem>
+          <listitem>
+            <para>Align the Image Shifts at 62kx, 6500x, and 1100x using the Multfunction knobs and the image at 62kx as a reference.</para>
+          </listitem>
+        </itemizedlist></para>
+    </section>
+  </chapter>
+  <chapter>
+    <title>Leginon II "Simple Application" </title>
+    <section>
+      <title>Run launcher.py on the Microscope Computer</title>
+      <para><orderedlist>
+          <listitem>
+            <para> Open Digital Micrograph</para>
+          </listitem>
+          <listitem>
+            <para> Re-insert the Gatan CCD in Digital Micrograph.</para>
+          </listitem>
+          <listitem>
+            <para> Double click on launcher.py in the pyleginon folder.</para>
+          </listitem>
+        </orderedlist></para>
+    </section>
+    <section>
+      <title>Run start.py on the Remote Computer</title>
+      <para><orderedlist>
+          <listitem>
+            <para> ./start.py (in pyleginon directory on Linux machines)</para>
+            <para>Or Double click start.py (in pyleginon directory on Windows machines)</para>
+          </listitem>
+          <listitem>
+            <para> Enter User, Instrument (microscope), and Session Name (new experiment) in the Manager Setup.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/manager_setup.jpg" format="JPEG"/></para>
+            <para>Click Start.</para>
+            <para></para>
+            <para>Note: Ignore the warning message that may appear (see image). If the warning will not clear by pressing the OK button, just ignore it.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/ignorewarningui.jpg" format="JPEG"/></para>
+          </listitem>
+          <listitem>
+            <para> Click on the Manager tab in the User Interface.<anchor id="sim_app_step3"/></para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/sim_app_beginui.jpg" format="JPEG"/></para>
+          </listitem>
+          <listitem>
+            <para> Click on the Application tab within the Manager tab and choose "simple application" from the Application pull-down list.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/sim_app_preloadapp.jpg" format="JPEG"/></para>
+          </listitem>
+          <listitem>
+            <para> Click Load and choose "tecnai2" (or the name of your microscope) under the scope pull-down list.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/sim_app_loadapp.jpg" format="JPEG"/></para>
+          </listitem>
+          <listitem>
+            <para> Click Launch. The application called "simple application" will launch and the nodes within the application will appear with the approprite bindings.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/sim_app_launchapp.jpg" format="JPEG"/></para>
+          </listitem>
+          <listitem>
+            <para> Open the Presets Manager tab under the tab labeled "sim application psm."</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/sim_app_loadpresets.jpg" format="JPEG"/></para>
+          </listitem>
+          <listitem>
+            <para> Select the session 03aug27c and click Import (in the Presets Manager).</para>
+          </listitem>
+          <listitem>
+            <para> Select the square Preset on the pull-down menu in the Selection section (in the Presets Manager).</para>
+          </listitem>
+          <listitem>
+            <para> Click To Scope to send the square preset to the microscope.</para>
+          </listitem>
+          <listitem>
+            <para> Under the Acquisition tab in "simple application simple_acq," select a "corrected" Acquisition Type.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/sim_app_chsimacqsettings.jpg" format="JPEG"/></para>
+          </listitem>
+          <listitem>
+            <para> Click Refresh, highlight the square preset (in the Presets Sequence section), and send it over to the right box with the "&gt;" button.</para>
+          </listitem>
+          <listitem>
+            <para> Click Acquire under the Simple Acquisition tab in "simple application simple_acq."</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/sim_app_acqsimacq.jpg" format="JPEG"/></para>
+          </listitem>
+          <listitem>
+            <para> Go to the Acquisition tab in "simple application simple_acq" and view the acquired image.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/sim_app_acqdisplay.jpg" format="JPEG"/></para>
+          </listitem>
+        </orderedlist></para>
+    </section>
+  </chapter>
+  <chapter>
+    <title> Leginon II "cal" Calibration Application</title>
+    <section>
+      <title> Importance of making calibrations</title>
+      <para>Leginon II will not function if calibrations have not been done. In essence, this (or a similar combination of nodes) is the first application that should be used if calibrations do not already exist. The term calibrations is an inclusive term that refers to different sets of measurements such as image shift and stage position. The following list are all the calibrations that must be completed for Leginon II to function correctly:</para>
+      <para><itemizedlist>
+          <listitem>
+            <para> Pixel Size calibration (for all the magnifications that will be used... e.g. 38x, 1100x, 6500x, 50kx, 62kx, 80kx)</para>
+          </listitem>
+          <listitem>
+            <para> Bright and Dark image references (for all the image and binning sizes that will be used... 256x256-4096x4096 pixels and 16-1 bin size)</para>
+          </listitem>
+          <listitem>
+            <para> Image Shift Matrix calibration (for all the magnifications that will be used... e.g. 38x, 1100x, 6500x, 50kx, 62kx, 80kx)</para>
+          </listitem>
+          <listitem>
+            <para> Beam Shift Matrix calibration (for all the magnifications that will be used... e.g. 38x, 1100x, 6500x, 50kx, 62kx, 80kx)</para>
+          </listitem>
+          <listitem>
+            <para> Stage Position Matrix calibration (currently only for the lower magnifications that will be used... e.g. 38x, 1100x, 6500x)</para>
+          </listitem>
+          <listitem>
+            <para> Beam Tilt Defocus calibrations (for the magnifications and image sizes focus will be corrected at... e.g. 62kx with a 512 bin by 8 image)</para>
+          </listitem>
+          <listitem>
+            <para> Beam Tilt Stigmator calibrations (for the magnifications focus and astigmatism will be corrected at... e.g. 62kx with a 512 bin by 8 image)</para>
+            <para></para>
+          </listitem>
+          <listitem>
+            <para> Presets importation or creation</para>
+          </listitem>
+        </itemizedlist></para>
+    </section>
+    <section>
+      <title>Run launcher.py on the Microscope Computer</title>
+      <para><orderedlist continuation="restarts" inheritnum="ignore">
+          <listitem>
+            <para> Open Digital Micrograph</para>
+          </listitem>
+          <listitem>
+            <para> Re-insert the Gatan CCD in Digital Micrograph.</para>
+          </listitem>
+          <listitem>
+            <para> Double click on launcher.py in the pyleginon folder.</para>
+          </listitem>
+        </orderedlist></para>
+    </section>
+    <section>
+      <title> Launch the "cal" application</title>
+      <para><orderedlist>
+          <listitem>
+            <para> ./start.py (in pyleginon directory on Linux machine)</para>
+            <para>Or Double click start.py (in pyleginon directory on Windows machine)</para>
+          </listitem>
+          <listitem>
+            <para> Enter User, Instrument (microscope), and Session Name (new experiment) in the Manager Setup.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/manager_setup.jpg" format="JPEG"/></para>
+            <para>Click Start.</para>
+            <para></para>
+            <para>Note: Ignore the warning message that may appear (see image). If the warning will not clear by pressing the OK button, just ignore it.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/ignorewarningui.jpg" format="JPEG"/></para>
+          </listitem>
+          <listitem>
+            <para> Launch the application called "cal" the same way the "simple application" was launched earlier (refer to <link linkend="sim_app_step3">simple application: step 3</link>). </para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/sim_app_launchapp.jpg" format="JPEG"/></para>
+          </listitem>
+        </orderedlist></para>
+    </section>
+    <section>
+      <title> Pixel Size Calibration </title>
+      <para><orderedlist>
+          <listitem>
+            <para> Enter the magnification and the corresponding pixel size in meters/pixel. Click Apply and Store to enter these values into the database.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/cal_app_pxcal.jpg" format="JPEG"/></para>
+          </listitem>
+          <listitem>
+            <para> Repeat the above step for all the magnifications that will be used, e.g. 38x, 1100x, 6500x, 50kx, 62kx, 80kx, and 100kx.</para>
+          </listitem>
+        </orderedlist></para>
+    </section>
+    <section>
+      <title> Bright and Dark reference images</title>
+      <para> Bright and Dark reference images need to be acquired for every camera setting that will be used. The camera settings include image dimension, bin size, offset, and exposure time.</para>
+      <para></para>
+      <para><orderedlist>
+          <listitem>
+            <para> Set the x Dimension of the image and press Apply.</para>
+          </listitem>
+          <listitem>
+            <para> Set the x Binning size and press Apply.</para>
+          </listitem>
+          <listitem>
+            <para> Set the Exposure time and press Apply.</para>
+          </listitem>
+          <listitem>
+            <para> By default, the corrector node is set to average 3 images together to create one reference image. This can be changed in Frames to Average.</para>
+          </listitem>
+          <listitem>
+            <para> Press the Set button. The y image dimension, y bin size, and both x and y offsets will be updated if the corresponding check boxes are enabled.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/cal_app_cor.jpg" format="JPEG"/></para>
+          </listitem>
+          <listitem>
+            <para> Check that the beam at the microscope is centered on the main viewing screen.</para>
+          </listitem>
+          <listitem>
+            <para> Click Acquire Raw to view an image that is not corrected and adjusted exposure time, beam intensity, and other other microscope settings accordingly.</para>
+          </listitem>
+          <listitem>
+            <para> Click Acquire Dark to acquire the Dark reference image for this particular camera configuration.</para>
+          </listitem>
+          <listitem>
+            <para> Click Acquire Bright to acquire the Bright reference image for this particular camera configuration.s</para>
+          </listitem>
+          <listitem>
+            <para> Click Acquire Corrected to view the corrected image.</para>
+          </listitem>
+          <listitem>
+            <para> Repeat steps 1-10 for all the images and bin sizes that will be used:</para>
+            <para><itemizedlist>
+                <listitem>
+                  <para> 256 x 256 pixels binned by 16,8,4,2,1</para>
+                </listitem>
+                <listitem>
+                  <para> 512 x 512 pixels binned by 8,4,2,1</para>
+                </listitem>
+                <listitem>
+                  <para> 1024 x 1024 pixels binned by 4,2,1</para>
+                </listitem>
+                <listitem>
+                  <para> 2048 x 2048 pixels binned by 2,1</para>
+                </listitem>
+                <listitem>
+                  <para> 4096 x 4096 pixels binned by 1</para>
+                </listitem>
+              </itemizedlist></para>
+          </listitem>
+        </orderedlist></para>
+    </section>
+    <section>
+      <title> Image Shift matrix calibration</title>
+      <para>Image shift matrix calibrations are used at each magnification that Leginon II uses. </para>
+      <para><orderedlist>
+          <listitem>
+            <para> Go to the Matrix Calibrator tab under the "cal mcal" tab.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/cal_app_immcal.jpg" format="JPEG"/></para>
+          </listitem>
+          <listitem>
+            <para> Select "image shift" as the Parameter.</para>
+          </listitem>
+          <listitem>
+            <para> Change N Average to a number 1+ (less than 10 for a faster calibration). The value 1 will give a moderate to poor calibration.</para>
+          </listitem>
+          <listitem>
+            <para> Change the Camera Configuation to values that will produce a good image.</para>
+          </listitem>
+          <listitem>
+            <para> Click Calibrate.</para>
+          </listitem>
+        </orderedlist></para>
+    </section>
+    <section>
+      <title> Beam Shift matrix calibration</title>
+      <para>Beam shift matrix calibrations are used at each magnification that Leginon II uses. These calibrations are not absolutely necessary, but can be very helpful to center the beam in the navigator node.</para>
+      <para><orderedlist continuation="restarts" inheritnum="ignore">
+          <listitem>
+            <para> Go to the Matrix Calibrator tab under the "cal mcal" tab.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/cal_app_beammcal.jpg" format="JPEG"/></para>
+          </listitem>
+          <listitem>
+            <para> Select "beam shift" as the Parameter.</para>
+          </listitem>
+          <listitem>
+            <para> Change N Average to a number 1+ (less than 10 for a faster calibration). The value 1 will give a moderate to poor calibration.</para>
+          </listitem>
+          <listitem>
+            <para> Change the Camera Configuation to values that will produce a good image.</para>
+          </listitem>
+          <listitem>
+            <para> Click Calibrate.</para>
+          </listitem>
+        </orderedlist></para>
+    </section>
+    <section>
+      <title> Stage Position matrix calibration</title>
+      <para>Stage Position matrix calibrations are currently used for only the lower magnification that Leginon II uses. These calibrations are used to move across the grid at different magnification.</para>
+      <para><orderedlist continuation="restarts" inheritnum="ignore">
+          <listitem>
+            <para> Go to the Matrix Calibrator tab under the "cal mcal" tab.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/cal_app_stagemcal.jpg" format="JPEG"/></para>
+          </listitem>
+          <listitem>
+            <para> Select "stage position" as the Parameter.</para>
+          </listitem>
+          <listitem>
+            <para> Change N Average to a number 1+ (less than 10 for a faster calibration). The value 1 will give a moderate to poor calibration.</para>
+          </listitem>
+          <listitem>
+            <para> Change the Camera Configuation to values that will produce a good image.</para>
+          </listitem>
+          <listitem>
+            <para> Click Calibrate.</para>
+          </listitem>
+        </orderedlist></para>
+    </section>
+    <section>
+      <title> Beam Tilt Defocus calibration</title>
+      <para>The Beam Tilt Defocus calibration is used by Leginon II to correct the defocus. The default values should work well.</para>
+      <para><orderedlist continuation="restarts" inheritnum="ignore">
+          <listitem>
+            <para> Go to the Beam Tilt Calibrator tab under the "cal btcal" tab.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/cal_app_btcal.jpg" format="JPEG"/></para>
+          </listitem>
+          <listitem>
+            <para> Click Calibrate in the Defocus section.</para>
+          </listitem>
+          <listitem>
+            <para> Click Measure to test the beam tilt defocus calibration.</para>
+          </listitem>
+          <listitem>
+            <para> Add the measured defocus value to the current defocus value in the em node.</para>
+          </listitem>
+          <listitem>
+            <para> Go to the Image Viewer tab under that tab labeled "cal imv." Enable the Do Power check box and click Acquire. The image and its FFT should appear below. If there are not any rings present in the FFT, then the Beam Tilt Defocus calibration worked. If there are rings in the FFT, then steps 1-5 need to be repeated. A well aligned microscope will help greatly at this point.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/cal_app_imv.jpg" format="JPEG"/></para>
+          </listitem>
+        </orderedlist></para>
+    </section>
+    <section>
+      <title> Beam Tilt Stigmator calibration</title>
+      <para>The Beam Tilt Stigmator calibration is used by Leginon II to correct astigmatism. This calibration algorithm could use improvement; it is therefore recommended that astigmatism not be automatically corrected in an application.</para>
+      <para><orderedlist continuation="restarts" inheritnum="ignore">
+          <listitem>
+            <para> Go to the Beam Tilt Calibrator tab under the "cal btcal" tab.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/cal_app_btcal.jpg" format="JPEG"/></para>
+          </listitem>
+          <listitem>
+            <para> Change the Stigmator Delta to 0.2.</para>
+          </listitem>
+          <listitem>
+            <para> Click Calibrate in the Stigmator section.</para>
+          </listitem>
+          <listitem>
+            <para> Click Measure to test the beam tilt stigmator calibration.</para>
+          </listitem>
+          <listitem>
+            <para> Add the measured stigmator x and y values to the current stigmator x and y values in the em node.</para>
+          </listitem>
+          <listitem>
+            <para> Go to the Image Viewer tab under that tab labeled "cal imv." Enable the Do Power check box and click Acquire. The image and its FFT should appear below. If the rings in the FFT are concentric, then the calibration worked. If the rings are not concentric in the FFT, then steps 1-6 need to be repeated. A well aligned microscope will help greatly at this point. This calibration may not function.</para>
+          </listitem>
+        </orderedlist></para>
+    </section>
+    <section>
+      <title> Presets</title>
+      <para>Configuring the Presets can be critical to many different applications. Presets describe camera configurations such as image size and exposure time as well as many other microscope parameters such as magnification and defocus. Different nodes can use these predefined presets to change conditions of the microscope and CCD.</para>
+      <para></para>
+      <section>
+        <title>Import Presets from a previous Session<anchor id="import_presets"/></title>
+        <para><orderedlist>
+            <listitem>
+              <para> Go to the Presets Manager tab under the tab labeled "cal psm."</para>
+            </listitem>
+            <listitem>
+              <para> Select a previous Session from the pull-down menu (e.g. 03aug27c).</para>
+            </listitem>
+            <listitem>
+              <para> Click Import in the Import section. The pull-down menu in the Selection section will update with a list of the presets that were used for the Session called 03aug27c.</para>
+              <para></para>
+              <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/cal_app_psm.jpg" format="JPEG"/></para>
+            </listitem>
+          </orderedlist></para>
+      </section>
+      <section>
+        <title>Create Presets for the current Session</title>
+        <para><orderedlist continuation="restarts" inheritnum="ignore">
+            <listitem>
+              <para> Go to the Presets Manager tab under the tab labeled "cal psm."</para>
+            </listitem>
+            <listitem>
+              <para> Type a descriptive name for a Preset, square for example.</para>
+            </listitem>
+            <listitem>
+              <para> Adjust the microscope settings either at the microscope or in the em node. </para>
+            </listitem>
+            <listitem>
+              <para> Click From Scope to save the current microscope and camera configuration settings for the current preset.</para>
+            </listitem>
+          </orderedlist></para>
+      </section>
+      <section>
+        <title>Sending Presets to the microscope</title>
+        <para><orderedlist continuation="restarts" inheritnum="ignore">
+            <listitem>
+              <para> Select a preset from the Preset pull-down list in the Selection section.</para>
+            </listitem>
+            <listitem>
+              <para> Click To Scope to send the current preset to the microscope.</para>
+            </listitem>
+            <listitem>
+              <para> The following list describes a few of the buttons:</para>
+              <para><itemizedlist>
+                  <listitem>
+                    <para> From Scope will update the current preset with the current microscope and camera configurations</para>
+                  </listitem>
+                  <listitem>
+                    <para> To Scope will send the current preset's microscope and camera configurations to the microscope and CCD.</para>
+                  </listitem>
+                  <listitem>
+                    <para> The Order listed as strings in the python list is the order that presets will be sent to the microscope when the Cycle To Scope button is pressed.</para>
+                  </listitem>
+                  <listitem>
+                    <para> Remove will remove the current preset from the available presets for this session. There is not an undo button for Remove.</para>
+                  </listitem>
+                </itemizedlist></para>
+            </listitem>
+            <listitem>
+              <para> The microscope and camera configurations can be changed in the expandable tree diagram. Clicking To Scope after this is done will send the changes to the microscope and CCD.</para>
+            </listitem>
+          </orderedlist></para>
+      </section>
+    </section>
+    <section>
+      <title> The EM node</title>
+      <para>The EM node or tab is the node that is running on the microscope computer. This node is responsible for communicating to the microscope, CCD, and Leginon. Without the EM node, Leginon II cannot control the microscope. The EM node contains the same information that the Presets pull-down tree contains; the values and labels are displayed in a different format in the user interface. This difference will change in later releases of Leginon II.</para>
+      <section>
+        <title>Microscope paramters </title>
+        <para>The current microscope parameters are displayed in the Microscope tab. </para>
+        <itemizedlist>
+          <listitem>
+            <para> Click Refresh to update the current microscope parameters if they have been manually changed at the microscope.</para>
+          </listitem>
+          <listitem>
+            <para> Click Set to send microscope and camera configuration parameters that have been changed in the user interface.</para>
+            <para></para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/cal_app_emmicrotop.jpg" format="JPEG"/></para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/cal_app_emmicrobottom.jpg" format="JPEG"/></para>
+          </listitem>
+        </itemizedlist>
+      </section>
+      <section>
+        <title>Camera parameters</title>
+        <para>The current camera parameters are displayed in the Camera tab. </para>
+        <itemizedlist>
+          <listitem>
+            <para> Click Refresh to update the current microscope parameters if they have been manually changed at the microscope.</para>
+          </listitem>
+          <listitem>
+            <para> Click Set to send microscope and camera configuration parameters that have been changed in the user interface.</para>
+            <para></para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/cal_app_emcam.jpg" format="JPEG"/></para>
+          </listitem>
+        </itemizedlist>
+      </section>
+    </section>
+  </chapter>
+  <chapter>
+    <title> Leginon II "run" Application</title>
+    <section>
+      <title> A more complex application</title>
+      <para>The "run" Leginon II application shares many similarities with Leginon I in manual selection mode. An atlas of the grid is made and is used to navigate across the grid. Images of squares are made by selecting targets on the atlas image. Images of holes are made by selecting targets on the square images. High magnification images and focus locations are targeted by making selections on images of the holes. All of these images are stored in a database and can be viewed through a web browser. Each image is associated with a particular preset and acquisition node; therefore, each image inherits information about its specific imaging conditions. The above two Leginon II applications, "simple application" and "cal," did not contain many or any event binds between nodes. There are many nodes in this application that are bound together with events that describe specific communication lines.</para>
+    </section>
+    <section>
+      <title>Run launcher.py on the Microscope Computer</title>
+      <para><orderedlist continuation="restarts" inheritnum="ignore">
+          <listitem>
+            <para> Open Digital Micrograph</para>
+          </listitem>
+          <listitem>
+            <para> Re-insert the Gatan CCD in Digital Micrograph.</para>
+          </listitem>
+          <listitem>
+            <para> Double click on launcher.py in the pyleginon folder.</para>
+          </listitem>
+        </orderedlist></para>
+    </section>
+    <section>
+      <title> Launch the "run" application</title>
+      <para><orderedlist continuation="restarts" inheritnum="ignore">
+          <listitem>
+            <para> ./start.py (in pyleginon directory on Linux machine)</para>
+            <para>Or Double click start.py (in pyleginon directory on Windows machine)</para>
+          </listitem>
+          <listitem>
+            <para> Enter User, Instrument (microscope), and Session Name (new experiment) in the Manager Setup.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/manager_setup.jpg" format="JPEG"/></para>
+            <para>Click Start.</para>
+            <para></para>
+            <para>Note: Ignore the warning message that may appear (see image). If the warning will not clear by pressing the OK button, just ignore it.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/ignorewarningui.jpg" format="JPEG"/></para>
+          </listitem>
+          <listitem>
+            <para> Launch the application called "run" the same way the "simple application" was launched earlier (refer to <link linkend="sim_app_step3">simple application: step 3</link>). </para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_launch.jpg" format="JPEG"/></para>
+          </listitem>
+        </orderedlist></para>
+    </section>
+    <section>
+      <title> Import Presets </title>
+      <para><itemizedlist>
+          <listitem>
+            <para> Import Presets from a previous session (refer to <link linkend="import_presets">Import Presets from a previous Session</link>) in the Presets Manager node.</para>
+          </listitem>
+          <listitem>
+            <para> Send the square preset and check that the beam is centered.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_psm.jpg" format="JPEG"/></para>
+          </listitem>
+        </itemizedlist></para>
+    </section>
+    <section>
+      <title> Choose Presets and settings for each Acquisition node</title>
+      <para></para>
+      <section>
+        <title> Exposure Acquisition node</title>
+        <para><orderedlist continuation="restarts" inheritnum="ignore">
+            <listitem>
+              <para> In the Acquisition tab in the acquisition node labeled "run exp_acq," click Refresh in the Presets section.</para>
+            </listitem>
+            <listitem>
+              <para> Highlight the "exp" preset and click the "&gt;" button to assign the exp preset to this acquisition node. Choosing more than one preset will mean that this acquisition node will take images at all the assigned presets.</para>
+            </listitem>
+            <listitem>
+              <para> Choose "image shift" as the Move Type in the Settings section.</para>
+            </listitem>
+            <listitem>
+              <para> Choose corrected as the Acquisition Type in the Settings section. This will cause corrected images to be acquired rather than raw uncorrected ones.</para>
+            </listitem>
+            <listitem>
+              <para> Click the Display Image check box to the disabled (unchecked) position. This greatly improves the speed at which Leginon II operates if the images are 4096x4096.</para>
+              <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_expacq.jpg" format="JPEG"/></para>
+            </listitem>
+          </orderedlist></para>
+      </section>
+      <section>
+        <title> Focus Acquisition node</title>
+        <para><orderedlist continuation="restarts" inheritnum="ignore">
+            <listitem>
+              <para> In the Acquisition tab in the acquisition node labeled "run foc," click Refresh in the Presets section.</para>
+            </listitem>
+            <listitem>
+              <para> Highlight the "focus" preset and click the "&gt;" button to assign the focus preset to this acquisition node. </para>
+            </listitem>
+            <listitem>
+              <para> Choose "image shift" as the Move Type in the Settings section.</para>
+            </listitem>
+            <listitem>
+              <para> Choose corrected as the Acquisition Type in the Settings section. This will cause corrected images to be acquired rather than raw uncorrected ones.</para>
+            </listitem>
+            <listitem>
+              <para> Check that the Beam Tilt in the Focuser tab is set to 0.01 (to the beam tilt value that was used in the Beam Tilt Defocus calibration).</para>
+              <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_focacq.jpg" format="JPEG"/></para>
+            </listitem>
+            <listitem>
+              <para> The Drift Timeout value controls how long drift will be checked during the focusing if drift has not fallen below the predefined threshold.</para>
+            </listitem>
+          </orderedlist></para>
+      </section>
+      <section>
+        <title> Hole Acquisition node</title>
+        <para><orderedlist continuation="restarts" inheritnum="ignore">
+            <listitem>
+              <para> In the Acquisition tab in the acquisition node labeled "run h_acq," click Refresh in the Presets section.</para>
+            </listitem>
+            <listitem>
+              <para> Highlight the "hole" preset and click the "&gt;" button to assign the hole preset to this acquisition node. </para>
+            </listitem>
+            <listitem>
+              <para> Choose "stage position" as the Move Type in the Settings section.</para>
+            </listitem>
+            <listitem>
+              <para> Choose corrected as the Acquisition Type in the Settings section. This will cause corrected images to be acquired rather than raw uncorrected ones.</para>
+              <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_hacq.jpg" format="JPEG"/></para>
+            </listitem>
+          </orderedlist></para>
+      </section>
+      <section>
+        <title> Square Acquisition node</title>
+        <para><orderedlist continuation="restarts" inheritnum="ignore">
+            <listitem>
+              <para> In the Acquisition tab in the acquisition node labeled "run sq_acq," click Refresh in the Presets section.</para>
+            </listitem>
+            <listitem>
+              <para> Highlight the "square" preset and click the "&gt;" button to assign the square preset to this acquisition node. </para>
+            </listitem>
+            <listitem>
+              <para> Choose "stage position" as the Move Type in the Settings section.</para>
+            </listitem>
+            <listitem>
+              <para> Choose corrected as the Acquisition Type in the Settings section. This will cause corrected images to be acquired rather than raw uncorrected ones.</para>
+              <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_sqacq.jpg" format="JPEG"/></para>
+            </listitem>
+          </orderedlist></para>
+      </section>
+      <section>
+        <title> Grid Acquisition node</title>
+        <para><orderedlist continuation="restarts" inheritnum="ignore">
+            <listitem>
+              <para> In the Acquisition tab in the acquisition node labeled "run g_acq," click Refresh in the Presets section.</para>
+            </listitem>
+            <listitem>
+              <para> Highlight the "grid" preset and click the "&gt;" button to assign the grid preset to this acquisition node. </para>
+            </listitem>
+            <listitem>
+              <para> Choose "stage position" as the Move Type in the Settings section.</para>
+            </listitem>
+            <listitem>
+              <para> Choose corrected as the Acquisition Type in the Settings section. This will cause corrected images to be acquired rather than raw uncorrected ones.</para>
+              <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_gacq.jpg" format="JPEG"/></para>
+            </listitem>
+          </orderedlist></para>
+      </section>
+    </section>
+    <section>
+      <title> Configure the Spiral Target Maker</title>
+      <para><orderedlist>
+          <listitem>
+            <para> In the Spiral Target Maker tab in the Spiral Target Maker node labeled "run spr," click Get Names in the Settings section.</para>
+          </listitem>
+          <listitem>
+            <para> Choose the grid preset from the pull-down menu.</para>
+          </listitem>
+          <listitem>
+            <para> Choose the size of the atlas of the grid by entering the number in Maximum Targets: (remember to press Apply after entering the number)</para>
+            <para><itemizedlist>
+                <listitem>
+                  <para> 81 covers most of the grid</para>
+                </listitem>
+              </itemizedlist><itemizedlist>
+                <listitem>
+                  <para> 49, 25, 9, and 1 are other Maximum Target options. Smaller numbers mean less time is spent acquiring an atlas, but less of the grid area is covered.</para>
+                  <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_spr.jpg" format="JPEG"/></para>
+                </listitem>
+              </itemizedlist></para>
+          </listitem>
+        </orderedlist></para>
+    </section>
+    <section>
+      <title> Acquire an Atlas of the grid</title>
+      <para><orderedlist continuation="restarts" inheritnum="ignore">
+          <listitem>
+            <para> In the Spiral Target Maker tab in the Spiral Target Maker node labeled "run spr," click Publish Spiral.</para>
+          </listitem>
+          <listitem>
+            <para> Go to the Click Target Finder tab under the grid Click Target Finder node labeled "run g_targ_click."</para>
+          </listitem>
+          <listitem>
+            <para> Select the magnifying glass and right click on the image to zoom out. A left click will zoom in.</para>
+            <para><itemizedlist>
+                <listitem>
+                  <para> The button labeled "42" causes the x/y pixel value and coordinate to display when the mouse hovers over the image.</para>
+                </listitem>
+              </itemizedlist><itemizedlist>
+                <listitem>
+                  <para> The ruler button will allow distances to be measured on the image.</para>
+                  <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_gtargclick.jpg" format="JPEG"/></para>
+                </listitem>
+              </itemizedlist></para>
+          </listitem>
+        </orderedlist></para>
+    </section>
+    <section>
+      <title> Select square targets on the Atlas</title>
+      <para><orderedlist continuation="restarts" inheritnum="ignore">
+          <listitem>
+            <para> In the Click Target Finder tab in the grid Click Target Finder node labeled "run g_targ_click," click the button with the red cross hairs and choose Imaging Target in the pull-down list.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_tgtargclickcrosshair.jpg" format="JPEG"/></para>
+          </listitem>
+          <listitem>
+            <para> Click on target squares in the Atlas that will be imaged.</para>
+          </listitem>
+          <listitem>
+            <para> Click Submit Targets.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_tgtargclick.jpg" format="JPEG"/></para>
+          </listitem>
+          <listitem>
+            <para> Go the the Acquisition tab under the square Acquisition node labeled "run sq_acq" to watch the images of squares that were targeted.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_tsqacq.jpg" format="JPEG"/></para>
+          </listitem>
+          <listitem>
+            <para> Go to the Click Target Finder tab in the square Click Target Finder node labeled "run sq_targ_clk" and press Advance Image.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_sqtargclick.jpg" format="JPEG"/></para>
+          </listitem>
+        </orderedlist></para>
+    </section>
+    <section>
+      <title> Select hole targets on square images<anchor id="sel_htarg"/></title>
+      <para><orderedlist continuation="restarts" inheritnum="ignore">
+          <listitem>
+            <para> In the Click Target Finder tab in the square Click Target Finder node labeled "run sq_targ_click," click the button with the red cross hairs and choose Imaging Target in the pull-down list.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_tgtargclickcrosshair.jpg" format="JPEG"/></para>
+          </listitem>
+          <listitem>
+            <para> Click on target holes in the image of the square.</para>
+          </listitem>
+          <listitem>
+            <para> Click Submit Targets.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_tsqtargclick.jpg" format="JPEG"/></para>
+          </listitem>
+          <listitem>
+            <para> Go the the Acquisition tab under the hole Acquisition node labeled "run h_acq" to watch the images of holes that were targeted.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_thacq.jpg" format="JPEG"/></para>
+          </listitem>
+          <listitem>
+            <para> Go to the Click Target Finder tab in the hole Click Target Finder node labeled "run h_targ_clk" and press Advance Image.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_htargclick.jpg" format="JPEG"/></para>
+          </listitem>
+        </orderedlist></para>
+    </section>
+    <section>
+      <title> Select exposure and focus targets on hole images<anchor id="sel_exptarg"/></title>
+      <para><orderedlist continuation="restarts" inheritnum="ignore">
+          <listitem>
+            <para> In the Click Target Finder tab in the hole Click Target Finder node labeled "run h_targ_click," click the button with the red cross hairs and choose Imaging Target in the pull-down list.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_tgtargclickcrosshair.jpg" format="JPEG"/></para>
+          </listitem>
+          <listitem>
+            <para> Click on (high magnification) exposure targets in the image of the hole.</para>
+          </listitem>
+          <listitem>
+            <para> Choose Focus Target in the pull-down list. The red cross hair will change to a blue cross hair.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_thtargclickcrosshairblue.jpg" format="JPEG"/></para>
+          </listitem>
+          <listitem>
+            <para> Click on focus targets in the image.</para>
+          </listitem>
+          <listitem>
+            <para> Click Submit Targets.</para>
+            <para><graphic fileref="http://ami.scripps.edu/software/leginon/images/run_app_thtargclick.jpg" format="JPEG"/></para>
+          </listitem>
+          <listitem>
+            <para> The focus images will appear in the focus Acquisition node labeled "run foc." The exposure images will not be displayed in the exposure Acquisition node unless the Display Image check box is enabled. It is not recommended that the exposure acquisition node check box be enabled because it will slow down Leginon II.</para>
+          </listitem>
+        </orderedlist></para>
+    </section>
+    <section>
+      <title> Repeat hole, focus, and exposure target selections</title>
+      <para>Repeat the above steps <link linkend="sel_htarg">"Select hole targets on square images"</link> and <link linkend="sel_exptarg">"Select exposure and focus targets on hole images"</link> for all the squares that were targeted on the atlas.</para>
+    </section>
+    <section>
+      <title> Viewing the images</title>
+      <para>The images are stored in the images directory under the Session name. These names at the moment only have meaning within the Leginon II system. View these images with the Leginon II php image viewer.</para>
+    </section>
+  </chapter>
+</book>
