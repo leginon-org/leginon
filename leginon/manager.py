@@ -380,6 +380,7 @@ class Manager(node.Node):
 	def uiKill(self, nodename):
 		nodeid = self.clientdict[nodename]
 		self.killNode(nodeid)
+		return ''
 
 	def uiAddDistmap(self, eventclass_str, fromnode_str, tonode_str):
 		"""
