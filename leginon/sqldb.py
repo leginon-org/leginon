@@ -53,6 +53,13 @@ class sqlDB(object):
 		'Execute a query to insert data. It returns the last inserted Id.'
 		self.c.execute(strSQL, param)
 		return self.c.insert_id()
+		## try the new lastrowid attribute first,
+		## then try the old insert_id() method
+		try:
+			insert_id = self.lastrowid
+		except:
+			insert_id = self.c.insert_id()
+		return insert_id
 
 	def execute(self, strSQL, param=None):
 		'Execute a query'

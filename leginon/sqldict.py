@@ -558,7 +558,13 @@ class SQLDict(object):
 	    else:
 		q = sqlexpr.Insert(self.table, v).sqlRepr()
 		c.execute(q)
-		return c.insert_id()
+		## try the new lastrowid attribute first,
+		## then try the old insert_id() method
+		try:
+			insert_id = c.lastrowid
+		except:
+			insert_id = c.insert_id()
+		return insert_id
 
 	def update(self, v, WHERE=''):
 	    """Like select(), only it does an UPDATE. It is not usually
