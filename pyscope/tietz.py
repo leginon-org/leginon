@@ -436,22 +436,26 @@ class Tietz(object):
 		dimension = self.getDimension()
 		binning = self.getBinning()
 
-		imagetransform = self.getImageTransform()
-		if imagetransform['mirror']:
-			camerasize = self.getCameraSize()
-		if 'vertical' in imagetransform['mirror']:
+		camerasize = self.getCameraSize()
+
+		mirror = self.getMirror()
+		if mirror == 'vertical':
 			offset['x'] = camerasize['x']/binning['x'] - offset['x'] - dimension['x']
-		if 'horizontal' in imagetransform['mirror']:
+		elif mirror == 'horizontal':
 			offset['y'] = camerasize['y']/binning['y'] - offset['y'] - dimension['y']
+		elif mirror == 'both':
+			offset['x'] = camerasize['x']/binning['x'] - offset['x'] - dimension['x']
+			offset['x'] = camerasize['x']/binning['x'] - offset['x'] - dimension['x']
 
 		# rotation untested
-		if imagetransform['rotation'] == 90:
+		rotation = self.getRotation()
+		if rotation == 90:
 			offset['x'] = camerasize['y']/binning['y'] - offset['y'] - dimension['y']
 			offset['y'] = offset['x']
-		elif imagetransform['rotation'] == 180:
+		elif rotation == 180:
 			offset['x'] = camerasize['x']/binning['x'] - offset['x'] - dimension['x']
 			offset['y'] = camerasize['y']/binning['y'] - offset['y'] - dimension['y']
-		elif imagetransform['rotation'] == 270:
+		elif rotation == 270:
 			offset['x'] = offset['y']
 			offset['y'] = camerasize['x']/binning['x'] - offset['x'] - dimension['x']
 
@@ -579,7 +583,7 @@ class Tietz(object):
 			raise ValueError('invalid speed index specified')
 
 	def getMirrorStates(self):
-		return ['none', 'horizontal', 'vertical', 'none']
+		return ['none', 'horizontal', 'vertical', 'both']
 
 	def getMirror(self):
 		bitmask = self._getParameterValue('cpImageGeometry')
