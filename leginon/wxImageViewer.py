@@ -1170,8 +1170,8 @@ class TargetImagePanel(ImagePanel):
 				width *= xscale
 				height *= yscale
 
-			dc.Blit((int(x - width/2), int(y - height/2)),
-							(int(width), int(height)), memorydc, (0, 0), wx.COPY, True)
+			dc.Blit(int(x - width/2), int(y - height/2),
+							int(width), int(height), memorydc, 0, 0, wx.COPY, True)
 
 			memorydc.SelectObject(wx.NullBitmap)
 
