@@ -1,5 +1,5 @@
 import wx
-import wx.lib.masked
+from wx.lib.masked import NumCtrl, EVT_NUM
 from wx.lib.intctrl import IntCtrl, EVT_INT
 import gui.wx.Data
 import gui.wx.Node
@@ -59,25 +59,25 @@ class Panel(gui.wx.Node.Panel):
 												wx.ALIGN_CENTER|wx.EXPAND|wx.ALL)
 		
 		szdespike = wx.GridBagSizer(5, 5)
-		self.cbdespike = wx.CheckBox(self, -1, 'Despike images')
+		self.cbdespike = wx.CheckBox(self, -1, 'Despike images', name='cbDespike')
 		szdespike.Add(self.cbdespike, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, 'Neighborhood size:')
 		szdespike.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.ncnsize = wx.lib.masked.NumCtrl(self, -1, 11, integerWidth=8,
-																												fractionWidth=0,
-																												allowNone=False,
-																												allowNegative=False,
-																												name='ncNSize')
+		self.ncnsize = NumCtrl(self, -1, 11, integerWidth=8,
+																				fractionWidth=0,
+																				allowNone=False,
+																				allowNegative=False,
+																				name='ncNSize')
 		szdespike.Add(self.ncnsize, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, 'Threshold:')
 		szdespike.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.ncthreshold = wx.lib.masked.NumCtrl(self, -1, 3.5, integerWidth=6,
-																														fractionWidth=2,
-																														allowNone=False,
-																														allowNegative=False,
-																														name='ncNSize')
+		self.ncthreshold = NumCtrl(self, -1, 3.5, integerWidth=6,
+																							fractionWidth=2,
+																							allowNone=False,
+																							allowNegative=False,
+																							name='ncThreshold')
 		szdespike.Add(self.ncthreshold, (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		sb = wx.StaticBox(self, -1, 'Despike')
@@ -90,10 +90,10 @@ class Panel(gui.wx.Node.Panel):
 		self.szcontrols = self._getStaticBoxSizer('Controls', (2, 0), (1, 1),
 																wx.EXPAND|wx.ALL)
 		szrb = wx.GridBagSizer(0, 0)
-		self.rbdark = wx.RadioButton(self, -1, "Dark Reference", style=wx.RB_GROUP)
-		self.rbbright = wx.RadioButton(self, -1, "Bright Reference")
-		self.rbraw = wx.RadioButton(self, -1, "Raw Image")
-		self.rbcorrected = wx.RadioButton(self, -1, "Corrected Image")
+		self.rbdark = wx.RadioButton(self, -1, 'Dark reference', style=wx.RB_GROUP)
+		self.rbbright = wx.RadioButton(self, -1, 'Bright reference')
+		self.rbraw = wx.RadioButton(self, -1, 'Raw image')
+		self.rbcorrected = wx.RadioButton(self, -1, 'Corrected image')
 		szrb.Add(self.rbdark, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szrb.Add(self.rbbright, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szrb.Add(self.rbraw, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -119,6 +119,62 @@ class Panel(gui.wx.Node.Panel):
 		self.SetupScrolling()
 
 		self.Bind(wx.EVT_BUTTON, self.onEditPlan, beditplan)
+		self.Bind(wx.EVT_BUTTON, self.onAcquire, self.bacquire)
+
+	def initializeValues(self):
+		gui.wx.Data.setWindowFromDB(self.icnaverage)
+		gui.wx.Data.setWindowFromDB(self.cpcamconfig)
+		gui.wx.Data.setWindowFromDB(self.cbdespike)
+		gui.wx.Data.setWindowFromDB(self.ncnsize)
+		gui.wx.Data.setWindowFromDB(self.ncthreshold)
+
+		self.node.naverage = self.icnaverage.GetValue()
+		self.node.camconfig = self.icnaverage.getConfiguration()
+		self.node.getPlan()
+		self.setPlan(self.node.plan)
+		self.node.despike = self.cbdespike.GetValue()
+		self.node.nsize = self.ncnsize.GetValue()
+		self.node.threshold = self.ncthreshold.GetValue()
+
+		self.Bind(EVT_INT, self.onNAverageInt, self.icnaverage)
+		self.Bind(gui.wx.Camera.EVT_CONFIGURATION_CHANGED, self.onCamConfigChanged,
+							self.cpcamconfig)
+		self.Bind(wx.EVT_CHECKBOX, self.onDespikeCheck, self.cbdespike)
+		self.Bind(EVT_NUM, self.onNSizeNum, self.ncnsize)
+		self.Bind(EVT_NUM, self.onThresholdNum, self.ncthreshold)
+
+		gui.wx.Data.bindWindowToDB(self.icnaverage)
+		gui.wx.Data.bindWindowToDB(self.cpcamconfig)
+		gui.wx.Data.bindWindowToDB(self.cbdespike)
+		gui.wx.Data.bindWindowToDB(self.ncnsize)
+		gui.wx.Data.bindWindowToDB(self.ncthreshold)
+
+	def onNAverageInt(self, evt):
+		self.node.naverage = evt.GetValue()
+
+	def onCamConfigChanged(self, evt):
+		self.node.camconfig = self.icnaverage.getConfiguration()
+		self.node.getPlan()
+		self.setPlan(self.node.plan)
+
+	def onDespikeCheck(self, evt):
+		self.node.despike = evt.IsChecked()
+
+	def onNSizeNum(self, evt):
+		self.node.size = evt.GetValue()
+
+	def onThresholdNum(self, evt):
+		self.node.threshold = evt.GetValue()
+
+	def onAcquire(self, evt):
+		if dark:
+			self.node.acquireDark()
+		elif bright:
+			self.node.acquireBright()
+		elif raw:
+			self.node.acquireRaw()
+		elif corrected:
+			self.node.acquireCorrected()
 
 	def setPlan(self, plan):
 		self.stbadrows.SetLabel(self.plan2str(plan['rows']))
@@ -129,6 +185,8 @@ class Panel(gui.wx.Node.Panel):
 		dialog = EditPlanDialog(self)
 		if dialog.ShowModal() == wx.ID_OK:
 			self.setPlan(dialog.plan)
+			self.node.plan = self.plan
+			self.node.setPlan()
 		dialog.Destroy()
 
 	def plan2str(self, plan):
