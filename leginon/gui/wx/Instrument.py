@@ -1,5 +1,6 @@
 # -*- coding: iso-8859-1 -*-
 import wx
+from gui.wx.Camera import CameraPanel
 from gui.wx.Entry import Entry, IntEntry, FloatEntry, EVT_ENTRY
 import gui.wx.Node
 
@@ -435,7 +436,7 @@ class CamInfoSizer(wx.StaticBoxSizer):
 		parameterorder = [
 			'Name',
 			'Chip',
-			'Pixel size',
+			'Serial number',
 			'Maximum value',
 			'Live mode',
 			'Simulation image path',
@@ -450,9 +451,9 @@ class CamInfoSizer(wx.StaticBoxSizer):
 		szsize = wx.GridBagSizer(0, 0)
 		st = wx.StaticText(self.parent, -1, 'Size:')
 		self.parameters['Size'] = {}
-		self.parameters['Size']['x'] = wx.StaticText(self.parent, -1, '')
+		self.parameters['Size']['x'] = wx.StaticText(self.parent, -1, '?')
 		stx = wx.StaticText(self.parent, -1, ' × ')
-		self.parameters['Size']['y'] = wx.StaticText(self.parent, -1, '')
+		self.parameters['Size']['y'] = wx.StaticText(self.parent, -1, '?')
 		szsize.Add(st, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szsize.Add(self.parameters['Size']['x'], (0, 1), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
@@ -461,24 +462,40 @@ class CamInfoSizer(wx.StaticBoxSizer):
 								wx.ALIGN_CENTER_VERTICAL)
 		szsize.AddGrowableCol(1)
 
+		szpsize = wx.GridBagSizer(0, 0)
+		st = wx.StaticText(self.parent, -1, 'Pixel size:')
+		self.parameters['Pixel size'] = {}
+		self.parameters['Pixel size']['x'] = wx.StaticText(self.parent, -1, '?')
+		stx = wx.StaticText(self.parent, -1, ' × ')
+		self.parameters['Pixel size']['y'] = wx.StaticText(self.parent, -1, '?')
+		szpsize.Add(st, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szpsize.Add(self.parameters['Pixel size']['x'], (0, 1), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		szpsize.Add(stx, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szpsize.Add(self.parameters['Pixel size']['y'], (0, 3), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL)
+		szpsize.AddGrowableCol(1)
+
 		self.sz.Add(szsize, (0, 0), (1, 2), wx.EXPAND)
 		self.sz.AddGrowableRow(0)
+		self.sz.Add(szpsize, (1, 0), (1, 2), wx.EXPAND)
+		self.sz.AddGrowableRow(1)
+
 		for i, p in enumerate(parameterorder):
 			st = wx.StaticText(self.parent, -1, p + ':')
-			self.parameters[p] = wx.StaticText(self.parent, -1, '')
-			self.sz.Add(st, (i+1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-			self.sz.Add(self.parameters[p], (i+1, 1), (1, 1),
+			self.parameters[p] = wx.StaticText(self.parent, -1, 'Not available')
+			self.sz.Add(st, (i+2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+			self.sz.Add(self.parameters[p], (i+2, 1), (1, 1),
 									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-			self.sz.AddGrowableRow(i+1)
-			self.parameters[p].Enable(False)
+			self.sz.AddGrowableRow(i+2)
 
 		self.sz.AddGrowableCol(1)
 
 		self.parametermap = {
 			'camera name': 'Name',
 			'chip name': 'Chip',
+			'serial number': 'Serial number',
 			'camera size': 'Size',
-			'pixel size': 'Pixel size',
 			'maximum pixel value': 'Maximum value',
 			'live mode available': 'Live mode',
 			'simulation image path': 'Simulation image path',
@@ -494,6 +511,80 @@ class CamInfoSizer(wx.StaticBoxSizer):
 
 		self.parametermap['camera size'] = {'x': self.parameters['Size']['x'],
 																				'y': self.parameters['Size']['y']}
+		self.parametermap['pixel size'] = {'x': self.parameters['Pixel size']['x'],
+																				'y': self.parameters['Pixel size']['y']}
+
+
+class CamConfigSizer(wx.StaticBoxSizer):
+	def __init__(self, parent, title='Camera Settings'):
+		self.parent = parent
+		wx.StaticBoxSizer.__init__(self, wx.StaticBox(self.parent, -1, title),
+																			wx.VERTICAL)
+		self.sz = wx.GridBagSizer(0, 0)
+		self.Add(self.sz, 1, wx.EXPAND|wx.ALL, 5)
+
+		parameterorder = [
+			'Camera configuration',
+			'Exposure type',
+			'Inserted',
+			'Gain index',
+			'Speed index',
+			'Mirror',
+			'Rotate',
+			'Shutter open delay',
+			'Shutter close delay',
+			'Preamp delay',
+			'Parallel mode',
+		]
+
+		self.parameters = {
+			'Exposure type': wx.Choice(self.parent, -1),
+			'Inserted': wx.CheckBox(self.parent, -1, 'Inserted'),
+			'Gain index': IntEntry(self.parent, -1, chars=2),
+			'Speed index': IntEntry(self.parent, -1, chars=2),
+			'Mirror': wx.Choice(self.parent, -1),
+			'Rotate': wx.Choice(self.parent, -1),
+			'Shutter open delay': IntEntry(self.parent, -1, chars=5),
+			'Shutter close delay': IntEntry(self.parent, -1, chars=5),
+			'Preamp delay': IntEntry(self.parent, -1, chars=5),
+			'Parallel mode': wx.CheckBox(self.parent, -1, 'Parallel mode'),
+			'Camera configuration': CameraPanel(self.parent),
+		}
+
+		for i, p in enumerate(parameterorder):
+			if isinstance(self.parameters[p], wx.CheckBox):
+				self.sz.Add(self.parameters[p], (i, 0), (1, 2), wx.ALIGN_CENTER)
+			elif isinstance(self.parameters[p], CameraPanel):
+				print 'asdf'
+				self.sz.Add(self.parameters[p], (i, 0), (1, 2), wx.ALIGN_CENTER|wx.ALL, 5)
+			else:
+				st = wx.StaticText(self.parent, -1, p + ':')
+				self.sz.Add(st, (i, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+				style = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT
+				if isinstance(self.parameters[p], Entry):
+					style |= wx.FIXED_MINSIZE
+				self.sz.Add(self.parameters[p], (i, 1), (1, 1), style)
+			self.parameters[p].Enable(False)
+			self.sz.AddGrowableRow(i)
+
+		self.parametermap = {
+			'exposure type': 'Exposure type',
+			'inserted': 'Inserted',
+			'gain index': 'Gain index',
+			'speed index': 'Speed index',
+			'shutter open delay': 'Shutter open delay',
+			'shutter close delay': 'Shutter close delay',
+			'preamp delay': 'Preamp delay',
+			'parallel mode': 'Parallel mode',
+		}
+
+		for k, v in self.parametermap.items():
+			self.parametermap[k] = self.parameters[v]
+
+		self.parametermap['image transform'] = {
+			'mirror': self.parameters['Mirror'],
+			'rotation': self.parameters['Rotate'],
+		}
 
 class Panel(gui.wx.Node.Panel):
 	def __init__(self, parent, name):
@@ -519,6 +610,7 @@ class Panel(gui.wx.Node.Panel):
 		self.szfocus = FocusSizer(self)
 		self.szpmain = MainSizer(self)
 		self.szcaminfo = CamInfoSizer(self)
+		self.szcamconfig = CamConfigSizer(self)
 
 		self.szparameters.Add(self.szpmain, (0, 0), (1, 1), wx.EXPAND)
 		self.szparameters.Add(self.szstage, (0, 1), (1, 1), wx.EXPAND)
@@ -535,6 +627,7 @@ class Panel(gui.wx.Node.Panel):
 		self.szparameters.Add(self.szlowdose, (4, 1), (1, 1), wx.EXPAND)
 
 		self.szparameters.Add(self.szcaminfo, (5, 0), (1, 1), wx.EXPAND)
+		self.szparameters.Add(self.szcamconfig, (5, 1), (1, 1), wx.EXPAND)
 
 		self.parametermap = {
 			'high tension': self.szpmain.parameters['High tension'],
@@ -676,6 +769,7 @@ class Panel(gui.wx.Node.Panel):
 	def _initParameters(self, parameters, parametermap=None):
 		self.Enable(False)
 		self.Freeze()
+		self.parameters['Camera configuration'].setSize(self.node.session)
 		if parametermap is None:
 			parametermap = self.parametermap
 		for key, value in parameters.items():

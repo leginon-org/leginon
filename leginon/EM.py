@@ -301,7 +301,7 @@ class EM(node.Node):
 		self.addEventInput(event.SetCameraEvent, self.handleSet)
 
 		# the handler thread waits for queue requests and processes them
-		# scope and camera are typically COM objects and need to be intialized
+		# scope and camera are typically COM objects and need to be initialized
 		# in this thread
 		self.handlerthread = threading.Thread(name='EM handler thread',
 																					target=self.handler,
