@@ -15,11 +15,16 @@ class Launcher(node.Node):
 
 		self.addEventInput(event.LaunchEvent, self.handleLaunch)
 		self.addEventInput(event.UpdateNodeClassesEvent, self.publishNodeClasses)
+		self.addEventInput(event.ManagerAvailableEvent, self.eventAddManager)
 		self.addEventOutput(event.NodeClassesPublishEvent)
 		self.caller = calllauncher.CallLauncher()
 		print 'launcher id: %s' % (self.id,)
+		print 'location =', self.location()
 
 		self.start()
+
+	def eventAddManager(self, ievent):
+		self.addManager(ievent.content)
 
 	def addManager(self, loc):
 		'''
@@ -80,12 +85,13 @@ class Launcher(node.Node):
 if __name__ == '__main__':
 	import sys, socket
 
-	managerlocation = {}
-	managerlocation['hostname'] = sys.argv[1]
-	managerlocation['TCP port'] = int(sys.argv[2])
+#	managerlocation = {}
+#	managerlocation['hostname'] = sys.argv[1]
+#	managerlocation['TCP port'] = int(sys.argv[2])
 #	managerlocation['UNIX pipe filename'] = str(sys.argv[3])
 
 	myhost = socket.gethostname()
 	myid = (myhost,)
 
-	m = Launcher(myid, {'manager': managerlocation})
+#	m = Launcher(myid, {'manager': managerlocation})
+	m = Launcher(myid, {})

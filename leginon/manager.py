@@ -296,8 +296,8 @@ class Manager(node.Node):
 
 				
 
-	def spawnLauncher(self, id):
-		t = threading.Thread(name='launcher thread', target=launcher.Launcher, args=(self.id + (id,), self.nodelocations))
+	def newLauncher(self, name):
+		t = threading.Thread(name='launcher thread', target=launcher.Launcher, args=(self.id + (name,), self.nodelocations))
 		t.start()
 		# for XML-RPC
 		return ''
@@ -359,7 +359,13 @@ class Manager(node.Node):
 		app = self.registerUIContainer('Application', (saveapp, loadapp, launchapp))
 
 		argspec = (self.registerUIData('ID', 'string'),)
-		launcherspec = self.registerUIMethod(self.spawnLauncher, 'Spawn Launcher', (argspec))
+		newlauncherspec = self.registerUIMethod(self.newLauncher, 'New Launcher', (argspec))
+
+		argspec = (self.registerUIData('Hostname', 'string'),
+								self.registerUIData('Port', 'integer'))
+		addlauncherspec = self.registerUIMethod(self.uiAddLauncher, 'Add Launcher', (argspec))
+
+		launcherspec = self.registerUIContainer('Launcher', (newlauncherspec, addlauncherspec))
 
 		self.registerUISpec('Manager', (nodespec, spec1, spec2, spec3, app, launcherspec, self.nodetreedata))
 
@@ -375,6 +381,18 @@ class Manager(node.Node):
 				nodeloc = nodelocationdata.content
 				nodeinfo[nodename] = nodeloc
 		return nodeinfo
+
+	def uiAddLauncher(self, hostname, port):
+		e = event.ManagerAvailableEvent(self.id, self.location())
+		try:
+			client = self.clientclass(self.ID(), {'hostname': hostname, 'TCP port': port})
+		except:
+			print "Error: cannot connect to specified launcher"
+		try:
+			client.push(e)
+		except:
+			print "Error: cannot push to specified launcher"
+		return ''
 
 	def uiLaunch(self, name, launchclass, args, newproc=0):
 		"""

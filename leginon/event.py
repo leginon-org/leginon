@@ -64,6 +64,11 @@ class LauncherAvailableEvent(NodeAvailableEvent):
 	def __init__(self, id, nodelocation, confirm=False):
 		NodeAvailableEvent.__init__(self, id, nodelocation, confirm)
 
+class ManagerAvailableEvent(NodeAvailableEvent):
+	'Event sent by a manager to the nodes to indicate that it is accessible'
+	def __init__(self, id, nodelocation, confirm=False):
+		NodeAvailableEvent.__init__(self, id, nodelocation, confirm)
+
 class NodeUnavailableEvent(NotificationEvent):
 	'Event sent by a node to the manager to indicate that it is inaccessible'
 	def __init__(self, id, confirm=False):
