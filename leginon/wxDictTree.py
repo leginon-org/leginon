@@ -39,6 +39,7 @@ class DictTreeCtrlPanel(wxPanel):
 		return self.dict
 
 	def setDict(self, parent, dictvalue):
+		# profiler says this takes too much time, append?
 		for item in dictvalue:
 			child = self.tree.AppendItem(parent, str(item))
 			if type(dictvalue[item]) is dict:

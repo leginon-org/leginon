@@ -60,11 +60,14 @@ class wxListViewSelect(wxChoice):
 			except ValueError:
 				self.Thaw()
 				raise
-		if count > nsame:
-			for i in range(count - 1, nsame - 1, -1):
+		j = nsame
+		for j in range(nsame, min(count, n)):
+			self.SetString(j, self.toString(values[j]))
+		if count > j:
+			for i in range(count - 1, j - 1, -1):
 				self.Delete(i)
-		if nsame < n:
-			for i in range(nsame, n):
+		if j < n:
+			for i in range(j, n):
 				self.Append(self.toString(values[i]))
 		self.Thaw()
 

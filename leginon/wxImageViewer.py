@@ -23,6 +23,20 @@ import numextension
 
 wx.InitAllImageHandlers()
 
+toolbitmaps = {}
+
+def getToolBitmap(filename):
+	try:
+		return toolbitmaps[filename]
+	except KeyError:
+		rundir = sys.path[0]
+		iconpath = os.path.join(rundir, 'icons', filename)
+		wximage = wx.Image(iconpath)
+		bitmap = wx.BitmapFromImage(wximage)
+		bitmap.SetMask(wx.MaskColour(bitmap, wx.WHITE))
+		toolbitmaps[filename] = bitmap
+		return bitmap
+
 class ContrastTool(object):
 	def __init__(self, imagepanel, sizer):
 		self.imagepanel = imagepanel
@@ -113,13 +127,6 @@ class ImageTool(object):
 	def OnToggle(self, value):
 		pass
 
-	def getToolBitmap(self, filename):
-		rundir = sys.path[0]
-		iconpath = os.path.join(rundir, 'icons', filename)
-		wximage = wx.Image(iconpath)
-		bitmap = wx.BitmapFromImage(wximage)
-		bitmap.SetMask(wx.MaskColour(bitmap, wx.WHITE))
-		return bitmap
 
 	def OnLeftClick(self, evt):
 		pass
@@ -141,7 +148,7 @@ class ImageTool(object):
 
 class ValueTool(ImageTool):
 	def __init__(self, imagepanel, sizer):
-		bitmap = self.getToolBitmap('valuetool.bmp')
+		bitmap = getToolBitmap('valuetool.bmp')
 		tooltip = 'Toggle Show Value'
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip)
 		self.button.SetToggle(True)
@@ -157,7 +164,7 @@ class ValueTool(ImageTool):
 
 class RulerTool(ImageTool):
 	def __init__(self, imagepanel, sizer):
-		bitmap = self.getToolBitmap('rulertool.bmp')
+		bitmap = getToolBitmap('rulertool.bmp')
 		tooltip = 'Toggle Ruler Tool'
 		cursor = wx.CROSS_CURSOR
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, True)
@@ -199,7 +206,7 @@ class RulerTool(ImageTool):
 
 class ZoomTool(ImageTool):
 	def __init__(self, imagepanel, sizer):
-		bitmap = self.getToolBitmap('zoomtool.bmp')
+		bitmap = getToolBitmap('zoomtool.bmp')
 		tooltip = 'Toggle Zoom Tool'
 		cursor = wx.StockCursor(wx.CURSOR_MAGNIFIER)
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, True)
@@ -708,7 +715,7 @@ class ImagePanel(wx.Panel):
 
 class ClickTool(ImageTool):
 	def __init__(self, imagepanel, sizer, callback=None):
-		bitmap = self.getToolBitmap('arrowtool.bmp')
+		bitmap = getToolBitmap('arrowtool.bmp')
 		tooltip = 'Click Tool'
 		cursor = wx.StockCursor(wx.CURSOR_BULLSEYE)
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, True)
@@ -729,7 +736,7 @@ class ClickImagePanel(ImagePanel):
 
 class TargetTool(ImageTool):
 	def __init__(self, imagepanel, sizer, callback=None):
-		bitmap = self.getToolBitmap('targettool.bmp')
+		bitmap = getToolBitmap('targettool.bmp')
 		tooltip = 'Toggle Target Tool'
 		cursor = wx.StockCursor(wx.CURSOR_BULLSEYE)
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, True)
@@ -770,7 +777,7 @@ class TargetTool(ImageTool):
 		dc.EndDrawing()
 		dc.SelectObject(wx.NullBitmap)
 		bitmap.SetMask(wx.MaskColour(bitmap, wx.WHITE))
-		self.button.SetBitmapLabel(bitmap)
+		self.button.SetBitmapLabel(bitmap, False)
 		self.button.Refresh()
 
 	def OnComboBoxSelect(self, evt):

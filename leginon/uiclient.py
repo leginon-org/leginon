@@ -20,6 +20,7 @@ import wxGridTray
 import wxMessageLog
 import wxList
 from Numeric import arraytype
+import os
 
 EVT_ADD_WIDGET = wx.NewEventType()
 EVT_SET_WIDGET = wx.NewEventType()
@@ -510,11 +511,13 @@ class ContainerWidget(Widget):
 
 	def _addWidget(self, name, typelist, value, configuration, children,
 									position):
+		'''
 		if self._shown:
 			show = True
 			self._show(False)
 		else:
 			show = False
+		'''
 		childclass = WidgetClassFromTypeList(typelist)
 		child = childclass(name, self.childparent, self, value, configuration)
 		self.children[name] = child
@@ -535,8 +538,10 @@ class ContainerWidget(Widget):
 		child.layout()
 
 		self.handlePendingEvents()
+		'''
 		if show:
 			self._show(True)
+		'''
 
 	def onAddWidget(self, evt):
 		if len(evt.namelist) == 1:
@@ -625,12 +630,13 @@ class ContainerWidget(Widget):
 			self.treecontainer.show(show)
 
 	def layout(self):
-		if self.sizer is not None:
-			self.sizer.Layout()
+#		if self.sizer is not None:
+#			self.sizer.Layout()
+# profiled
 		if isinstance(self.childparent, wx.ScrolledWindow):
 			self.childparent.FitInside()
-		else:
-			self.childparent.Fit()
+#		else:
+#			self.childparent.Fit()
 		self.container.layout()
 
 	def destroy(self):
@@ -693,9 +699,9 @@ class NotebookContainerWidget(wx.Panel, ContainerWidget):
 		self.layout()
 
 	def layout(self):
-		self.sizer.Layout()
+#		self.sizer.Layout()
 		self.childparent.Fit()
-		self.container.notebooksizer.Layout()
+#		self.container.notebooksizer.Layout()
 		self.container.notebooksizer.Fit(self.parentnotebook)
 		self.container.layout()
 
@@ -862,7 +868,7 @@ class ProgressWidget(wx.BoxSizer, DataWidget):
 		self.layout()
 
 	def layout(self):
-		self.Layout()
+#		self.Layout()
 		DataWidget.layout(self)
 
 	def _enable(self, enable):
@@ -891,6 +897,7 @@ class GridTrayWidget(wxGridTray.GridTrayPanel, DataWidget):
 	def setWidget(self, value):
 		self.setQueue(value)
 
+errorimage = wx.Image(os.path.join(wxMessageLog.iconsdir, 'error.png'))
 class EntryWidget(wx.BoxSizer, DataWidget):
 	types = [str]
 	password = False
@@ -920,10 +927,9 @@ class EntryWidget(wx.BoxSizer, DataWidget):
 		DataWidget.__init__(self, name, parent, container, value, configuration)
 
 		if self.write:
-			image = wx.BitmapFromImage(wx.Image('%s/%s.bmp'
-																					% (wxMessageLog.iconsdir, 'error')))
-			self.errorbitmap = wx.StaticBitmap(parent, -1, image,
-																					(image.GetWidth(), image.GetHeight()))
+			errorbitmap = wx.BitmapFromImage(errorimage)
+			self.errorbitmap = wx.StaticBitmap(parent, -1, errorbitmap,
+														(errorbitmap.GetWidth(), errorbitmap.GetHeight()))
 																						
 			wx.EVT_KILL_FOCUS(self.entry, self.onKillFocus)
 			wx.EVT_TEXT_ENTER(self.entry, self.entry.GetId(), self.onEnter)
@@ -1248,7 +1254,7 @@ class MessageDialogWidget(MessageDialog, DefinedContainerWidget):
 	def layout(self):
 		width, height = self.message.GetSizeTuple()
 		self.sizer.SetItemMinSize(self.message, width, height)
-		self.sizer.Layout()
+#		self.sizer.Layout()
 		self.sizer.Fit(self)
 
 class ListWidget(wx.BoxSizer, DataWidget):
@@ -1319,7 +1325,7 @@ class ListSelectWidget(wx.BoxSizer, DefinedContainerWidget):
 		ContainerWidget._show(self, show)
 
 	def layout(self):
-		self.Layout()
+#		self.Layout()
 		DefinedContainerWidget.layout(self)
 
 	def destroy(self):
@@ -1364,7 +1370,7 @@ class OrderedListBoxWidget(wxOrderedListBox.wxOrderedListBox,
 		self._setSelected(value)
 
 	def layout(self):
-		self.Layout()
+#		self.Layout()
 		DefinedContainerWidget.layout(self)
 
 class TreeSelectWidget(wxDictTree.DictTreeCtrlPanel, DefinedContainerWidget):
@@ -1423,7 +1429,7 @@ class ClickImageWidget(wx.BoxSizer, DefinedContainerWidget, ImageMixIn):
 		self.commandServer('Click')
 
 	def layout(self):
-		self.Layout()
+#		self.Layout()
 		DefinedContainerWidget.layout(self)
 
 	def destroy(self):
@@ -1465,7 +1471,7 @@ class TargetImageWidget(wx.BoxSizer, DefinedContainerWidget, ImageMixIn):
 			self.setTargets(name, value)
 
 	def layout(self):
-		self.Layout()
+#		self.Layout()
 		DefinedContainerWidget.layout(self)
 
 	def destroy(self):
@@ -1625,7 +1631,8 @@ class TreePanelContainerWidget(wx.Panel, ContainerWidget):
 
 	def _show(self, show):
 		ContainerWidget._show(self, show)
-		self.Show(show)
+		if self.IsShown() != show:
+			self.Show(show)
 		self.treepanel.childsizer.Show(self, show)
 
 	def show(self, show):
@@ -1643,9 +1650,10 @@ class TreePanelContainerWidget(wx.Panel, ContainerWidget):
 
 	def layout(self):
 		#ContainerWidget.layout(self)
-		self.sizer.Layout()
-		self.Fit()
+#		profiled out
+#		self.sizer.Layout()
 		if self._shown:
+		 	self.Fit()
 			self.treepanel.childsizer.SetMinSize(self.GetSize())
 			self.treepanel.childpanel.FitInside()
 
@@ -1759,7 +1767,7 @@ class MessageWidget(wx.BoxSizer, ContainerWidget):
 		self.messagewidget = wxMessageLog.wxMessage(self.parent, self.type,
 																							self.message, self.onClear)
 		self.Add(self.messagewidget, 0, wx.EXPAND)
-		self.Layout()
+#		self.Layout()
 		evt = AddMessageEvent(self.type, self.message)
 		wx.PostEvent(self.container.widgethandler, evt)
 
@@ -1853,7 +1861,7 @@ class MessageLogWidget(wxMessageLog.wxMessageLog, ContainerWidget):
 			evt.event.set()
 
 	def layout(self):
-		self.Layout()
+#		self.Layout()
 		self.container.layout()
 
 	def _show(self, show):
@@ -1964,7 +1972,7 @@ class HistoryEntryWidget(wx.BoxSizer, DefinedContainerWidget):
 		ContainerWidget._show(self, show)
 
 	def layout(self):
-		self.Layout()
+#		self.Layout()
 		DefinedContainerWidget.layout(self)
 
 if __name__ == '__main__':
