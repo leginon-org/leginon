@@ -327,7 +327,8 @@ class Manager(node.Node):
 
 		newid = self.id + (name,)
 		args = (newid, self.session, self.nodelocations) + nodeargs
-		ev = event.LaunchEvent(self.ID(), newproc=newproc, target=target, args=args)
+		ev = event.LaunchEvent(self.ID(), newproc=newproc,
+														targetclass=target, args=args)
 		self.outputEvent(ev, 0, launcher)
 		return newid
 

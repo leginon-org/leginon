@@ -12,13 +12,12 @@ class DBDataKeeper(datahandler.DataHandler):
 		# connect?
 		self.dbd = sqldict.SQLDict()
 
-	def query(self, **kwargs):
-		# **kwargs should contain:
-		# data: instance of a Data class 
+	def query(self, idata, indices):
+		# idata: instance of a Data class 
 		# indices: {field:value, ... } for the WHERE clause
 		
 		table = data.__class__.__name__
-		select = sqldict.sqlColumnsSelect(data)
+		select = sqldict.sqlColumnsSelect(idata)
 		self.dbd.myTable = self.dbd.Table(table,select)
 		sqlindices = map(sqldict.sqlColumnsFormat, indices.keys())
 		self.dbd.myTable.Index = self.dbd.Table(sqlindices,

@@ -58,7 +58,7 @@ class CallLauncher(object):
 		try:
 			apply(callable, args, kwargs)
 		except Exception, detail:
-			print '***** exception while calling %s: %s' % (callable,detail)
+			print 'Exception while calling %s: %s' % (callable, detail)
 			try:
 				self.lock.release()
 			except:

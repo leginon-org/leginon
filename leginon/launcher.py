@@ -46,7 +46,10 @@ class Launcher(node.Node):
 		newproc = launchevent['newproc']
 		targetclass = launchevent['targetclass']
 		args = launchevent['args']
-		kwargs = launchevent['kwargs']
+		if launchevent['kwargs'] is not None:
+			kwargs = launchevent['kwargs']
+		else:
+			kwargs = {}
 		kwargs['launchlock'] = self.__launchlock
 
 		# get the requested class object

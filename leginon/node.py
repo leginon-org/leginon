@@ -257,7 +257,6 @@ class Node(leginonobject.LeginonObject):
 					pass
 
 		try:
-			#result += self.datahandlers[dbdatakeeper.DBDataKeeper].query(kwargs)
 			datainstance = dataclass(('dummy ID',))
 			# copy should suffice
 			indices = copy.copy(kwargs)
