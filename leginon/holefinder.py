@@ -257,6 +257,6 @@ class HoleFinder(targetfinder.TargetFinder):
 								'delta column': column - self.numarray.shape[1]/2}
 			imageinfo = self.imageInfo()
 			target.update(imageinfo)
-			targetdata = data.AcquisitionImageTargetData(id=self.ID(), type=typename)
+			targetdata = data.AcquisitionImageTargetData(id=self.ID(), type=typename, version=0)
 			targetdata.friendly_update(target)
 			self.targetlist.append(targetdata)
