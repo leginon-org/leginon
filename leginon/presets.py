@@ -92,7 +92,6 @@ class PresetsManager(node.Node):
 	def __init__(self, id, session, nodelocations, **kwargs):
 		node.Node.__init__(self, id, session, nodelocations, **kwargs)
 
-		self.presetsclient = PresetsClient(self)
 		self.current = None
 		self.setPresets([])
 
@@ -107,9 +106,9 @@ class PresetsManager(node.Node):
 		self.presets = list(presetlist)
 		self.circle = CircularIter(self.presets)
 
-	def getSessionPresets(self):
+	def setPresetsFromDB(self):
 		'''
-		get list of presets for this session
+		get list of presets for this session from DB
 		'''
 		### get presets from database
 		pdata = data.PresetData(('dummy',), session=self['session'])
@@ -117,11 +116,13 @@ class PresetsManager(node.Node):
 		presets = self.research(pdata)
 
 		### only want most recent of each name
-		recent = strictdict.OrderedDict()
+		mostrecent = []
+		names = []
 		for preset in presets:
-			if preset['name'] not in recent:
-				recent[preset['name'] = preset
-		return recent
+			if preset['name'] not in names:
+				mostrecent.append(preset)
+				names.append(preset['name'])
+		self.setPresets(mostrecent)
 
 	def presetByName(self, name):
 		for p in self.presets:
@@ -143,28 +144,61 @@ class PresetsManager(node.Node):
 	def insertPreset(self, p, newpreset):
 		'''
 		insert new preset into my set of managed presets
+		p is either the index or item to insert at
 		'''
 		if type(p) is int:
 			i = p
 		else:
-			i = self.index
-		self.presets.insert(position, newpreset)
+			i = self.index(p)
+		self.presets.insert(i, newpreset)
 
 	def removePreset(self, p):
 		'''
 		remove a preset by index or reference
+		p is either a preset, or index of the preset
 		'''
 		if type(p) is int:
 			del self.presets[p]
 		else:
 			self.presets.remove(p)
 
+	def toScope(self, p):
+		'''
+		p is either index or preset
+		'''
+		if type(p) is int:
+			presetdata = self.presets[p]
+		else:
+			presetdata = p
+		## should use AllEMData, but that is not working yet
+		## this is really anoying to deal with IDs
+		scopedata = data.ScopeEMData(('scope',))
+		cameradata = data.CameraEMData(('camera',))
+		scopedata.friendly_update(presetdata)
+		cameradata.friendly_update(presetdata)
+		scopedata['id'] = ('scope',)
+		cameradata['id'] = ('camera',)
+		self.publishRemote(scopedata)
+		self.publishRemote(cameradata)
+
+	def fromScope(self, name):
+		'''
+		create a new preset with name
+		if a preset by this name alread exists in my 
+		list of managed presets, it will be replaced by the new one
+		'''
+		scopedata = self.researchByDataID(('scope',))
+		cameradata = self.researchByDataID(('camera no image data',))
+
+		presetid = self.ID()
+		newpreset = data.PresetData(presetid)
+		newpreset.friendly_update(scopedata)
+		newpreset.friendly_update(cameradata)
+		newpreset['id'] = presetid
+
 	def presetNames(self):
 		names = [p['name'] for p in self.presets]
 		return names
-
-	def newPreset(self, name, position):
-		
 
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
@@ -180,7 +214,7 @@ class PresetsManager(node.Node):
 		self.selecteditpreset = uidata.UISelectFromList('Preset', self.managedPresets(), [], 'r')
 		self.editpresetstruct = uidata.UIStruct('Preset Parameters', {}, 'rw')
 		editcontainer = uidata.UIContainer('Edit Preset')
-		editcontainer.addUIObjects((,))
+		editcontainer.addUIObjects((self.selecteditpreset,self.editpresetstruct))
 
 
 		self.enteredname = uidata.UIString('Name', '', 'rw')
@@ -195,45 +229,4 @@ class PresetsManager(node.Node):
 		container.addUIObjects((toscopecontainer, fromscopecontainer))
 		self.uiserver.addUIObject(container)
 
-	def NEWdefineUserInterface(self):
-		node.Node.defineUserInterface(self)
-		self.statestruct = uidata.UIStruct('Instrument State', {}, 'rw', self.uiCallback)
-		self.statestruct.set(self.uistate, callback=False)
-		unlockmethod = uidata.UIMethod('Unlock', self.uiUnlock)
-		container = uidata.UIMediumContainer('EM')
-		container.addUIObjects((self.statestruct, unlockmethod))
-		self.uiserver.addUIObject(container)
-
-	def managedPresets(self, value=None):
-		'''
-		get and set the list of managed presets for this session
-		'''
-		if value is not None:
-			self.managedpresets = value
-		return self.managedpresets
-
-	def uiGetPresets(self):
-		presetsnames = self.getPresetNames()
-		if presetsnames:
-			presetsnames.sort()
-			selected = [0]
-		else:
-			selected = []
-		self.uiselectpreset.set(presetsnames, selected)
-
-	def uiStoreCurrent(self):
-		presetname = self.uipresetname.get()
-		presetdata = self.presetsclient.fromScope(presetname)
-		self.presetsclient.storePreset(presetdata)
-		self.uiGetPresets()
-
-	def uiRestore(self):
-		try:
-			presetname = self.uiselectpreset.getSelectedValue()[0]
-		except IndexError:
-			self.printerror('no preset to send to instrument')
-			return
-		presetlist = self.presetsclient.retrievePresets(presetname)
-		presetdata = presetlist[0]
-		self.presetsclient.toScope(presetdata)
 
