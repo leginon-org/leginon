@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import node
 import datahandler
 import scopedict
