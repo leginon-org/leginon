@@ -121,8 +121,6 @@ class Manager(node.Node):
 		self.uicontainer.session = setup.session
 		self.uicontainer.getUserPreferencesFromDatabase()
 
-		self.defineUserInterface()
-
 		threading.Thread(name='local launcher thread', target=launcher.Launcher,
 											args=(socket.gethostname().lower(),),
 											kwargs={'session': self.session,
@@ -141,7 +139,7 @@ class Manager(node.Node):
 						location['TCP transport']['port'] = 55555
 						self.addNode(hostname, location)
 				except (IOError, TypeError, socket.error):
-					self.messagelog.warning('Cannot add instrument\'s launcher.')
+					self.logger.warning('Cannot add instrument\'s launcher.')
 
 	def location(self):
 		location = leginonobject.LeginonObject.location(self)
@@ -372,15 +370,6 @@ class Manager(node.Node):
 			del self.launcherdict[name]
 		except KeyError:
 			return
-		# could check and keep selected if possible
-		launchers = self.launcherdict.keys()
-		launchers.sort()
-		if launchers:
-			selected = 0
-		else:
-			selected = None
-			self.launchcontainer.disable()
-		self.uilauncherselect.set(launchers, selected)
 		self.deleteNodeUIClient(name)
 		self.onRemoveLauncher(name)
 
@@ -393,23 +382,7 @@ class Manager(node.Node):
 			del self.launcherdict[launchername]
 		else:
 			self.launcherdict[launchername]['classes'] = nodeclasses
-
-		self.uiUpdateLauncherInfo()
 		self.confirmEvent(ievent)
-
-	def uiUpdateLauncherInfo(self):
-		try:
-			launchers = self.launcherdict.keys()
-			if launchers:
-				self.launchcontainer.enable()
-				launchers.sort()
-				selected = 0
-			else:
-				self.launchcontainer.disable()
-				selected = None
-			self.uilauncherselect.set(launchers, selected)
-		except AttributeError:
-			pass
 
 	# node related methods
 
@@ -485,7 +458,6 @@ class Manager(node.Node):
 		self.nodelocations[name] = data.NodeLocationData(initializer=initializer)
 
 		self.confirmEvent(evt)
-		self.uiUpdateNodeInfo()
 
 		self.onAddNode(name)
 
@@ -512,7 +484,6 @@ class Manager(node.Node):
 		nodename = evt['node']
 		self.removeNode(nodename)
 		self.confirmEvent(evt)
-		self.uiUpdateNodeInfo()
 
 	def deleteNodeUIClient(self, nodename):
 		# also remove from launcher registry
@@ -576,7 +547,7 @@ class Manager(node.Node):
 		dependencies = node dependent on to launch
 		'''
 		if name in self.nodelocations:
-			self.messagelog.warning('Node \'%s\' already exists' % name)
+			self.logger.warning('Node \'%s\' already exists' % name)
 			return name
 
 		args = (launcher, target, name, dependencies)
@@ -642,7 +613,7 @@ class Manager(node.Node):
 			except KeyError:
 				tcp_port = '<unknown port>'
 			try:
-				self.messagelog.error('Failed to add node at ' + hostname + ':'
+				self.logger.error('Failed to add node at ' + hostname + ':'
 															+ str(tcp_port))
 			except AttributeError:
 				pass
@@ -743,7 +714,7 @@ class Manager(node.Node):
 		if launchers:
 			launchers.sort()
 		else:
-			self.messagelog.error('No available launchers to run application')
+			self.logger.error('No available launchers to run application')
 			return
 		self.application.load(name)
 		aliases = self.application.getLauncherAliases()
@@ -769,15 +740,13 @@ class Manager(node.Node):
 		self.application.kill()
 		self.setLauncherSelectors(selectors=None)
 
-	def exportApplication(self, filename, appname=None):
+	def exportApplication(self, filename, appname):
 		if filename is None:
 			return
-		if appname is None:
-			appname = self.uiapplicationlist.getSelectedValue()
 		app = importexport.ImportExport()
 		dump = app.exportApplication(appname)
 		if dump is None:
-			self.messagelog.warning('Select a valid application')
+			self.logger.warning('Application invalid')
 			return
 		try:
 			f = open(filename,'w')
@@ -794,48 +763,13 @@ class Manager(node.Node):
 			app.importApplication(filename)
 			messages = app.getMessageLog()
 			if messages['information']:
-				self.messagelog.information(messages['information'])
+				self.logger.information(messages['information'])
 			if messages['warning']:
-				self.messagelog.warning(messages['warning'])
+				self.logger.warning(messages['warning'])
 		except ValueError:
 			self.logger.exception('Unable to import application from "%s"' % filename)
 
 	# UI methods
-	def uiExportApp(self):
-		try:
-			self.importexportcontainer.addObject(uidata.SaveFileDialog(
-																	'Export Application', self.exportApplication))
-		except ValueError:
-			pass
-
-	def uiImportApp(self):
-		try:
-			self.importexportcontainer.addObject(uidata.LoadFileDialog(
-																	'Import Application', self.importApplication))
-		except ValueError:
-			pass
-
-	def uiUpdateNodeInfo(self):
-		'''Updates nodes lists and info in UI.'''
-		try:
-			nodes = self.clients.keys()
-			if nodes:
-				self.killcontainer.enable()
-				self.bindeventcontainer.enable()
-				nodes = map(str, nodes)
-				nodes.sort()
-				selected = 0
-			else:
-				self.killcontainer.disable()
-				self.bindeventcontainer.disable()
-				selected = None
-			self.uikillselect.set(nodes, selected)
-			self.uifromnodeselect.set(nodes, selected)
-			self.uitonodeselect.set(nodes, selected)
-			self.uinodeinfo.set(self.uiNodeDict())
-		except AttributeError:
-			pass
-
 	def uiNodeDict(self):
 		nodes = self.clients.keys()
 		nodeinfo = {}
@@ -847,325 +781,12 @@ class Manager(node.Node):
 				nodeinfo[nodename]['class'] = nodelocationdata['class string']
 		return nodeinfo
 
-	def uiAddNode(self):
-		'''UI helper calling addNode. See addNode.'''
-		self.addmethod.disable()
-		hostname = self.uiaddnodehostname.get()
-		if not hostname:
-			self.messagelog.error('No hostname entered for adding a node')
-			self.addmethod.enable()
-			return
-		port = self.uiaddnodeport.get()
-		location = {}
-		location['TCP transport'] = {}
-		location['TCP transport']['hostname'] = hostname
-		location['TCP transport']['port'] = port
-		self.addNode(hostname, location)
-		self.addmethod.enable()
-
-	def uiLaunch(self):
-		launchername = self.uilauncherselect.getSelectedValue()
-		nodeclass = self.uiclassselect.getSelectedValue()
-		name = self.uilaunchname.get()
-		if not name:
-			self.messagelog.error('Invalid node name "%s"' % name)
-			return
-		self.launchNode(launchername, nodeclass, name)
-
-	def uiKillNode(self):
-		'''UI helper calling killNode, using str node aliases. See killNode.'''
-		value = self.uikillselect.getSelectedValue()
-		self.killNode(value)
-
-	def uiAddDistmap(self):
-		'''UI function using addEventDistmap. Strings represent event classes and node IDs.'''
-		eventclass_str = self.uieventselect.getSelectedValue()
-		fromnodenamestr = self.uifromnodeselect.getSelectedValue()
-		tonodenamestr = self.uitonodeselect.getSelectedValue()
-		self.logger.info('binding event %s from %s to %s'
-											% (eventclass_str, fromnodenamestr, tonodenamestr))
-		eventclass = self.uieventclasses[eventclass_str]
-		if fromnodenamestr is None or tonodenamestr is None:
-			self.messagelog.error('Invalid node to bind event')
-			return
-		self.addEventDistmap(eventclass, fromnodenamestr, tonodenamestr)
-
-	def uiDelDistmap(self):
-		'''UI function using delEventDistmap. Strings represent event classes and node IDs.'''
-		eventclass_str = self.uieventselect.getSelectedValue()
-		fromnodenamestr = self.uifromnodeselect.getSelectedValue()
-		tonodenamestr = self.uitonodeselect.getSelectedValue()
-		self.logger.info('unbinding event %s from %s to %s'
-											% (eventclass_str, fromnodenamestr, tonodenamestr))
-		eventclass = self.uieventclasses[eventclass_str]
-		if fromnodenamestr is None or tonodenamestr is None:
-			self.messagelog.error('Invalid node to unbind event')
-			return
-		self.delEventDistmap(eventclass, fromnodenamestr, tonodenamestr)
-
 	def uiGetNodeLocations(self):
 		'''UI helper for mapping a node alias to the node's location.'''
 		nodelocations = self.uiNodeDict()
 		nodelocations[self.name] = self.location()
 		return nodelocations
 	
-	def uiUpdateRecentApplications(self):
-		recent = data.LaunchedApplicationData(session=data.SessionData(user=self.session['user']), application=data.ApplicationData())
-		recent = self.research(recent, results=300)
-		names = newdict.OrderedDict()
-		names['(Select an application)'] = None
-		for lapp in recent:
-			name = lapp['application']['name']
-			if name not in names:
-				names[name] = None
-		appnamelist = names.keys()
-		self.uirecentapplicationlist.set(appnamelist, 0)
-
-	def uiUpdateApplications(self):
-		self.applicationlaunchmethod.disable()
-		applicationdatalist = self.research(data.ApplicationData())
-		applicationnamelist = ['(Select an application)']
-		for applicationdata in applicationdatalist:
-			name = applicationdata['name']
-			if name not in applicationnamelist:
-				applicationnamelist.append(name)
-		applicationnamelist.sort()
-		self.uiapplicationlist.set(applicationnamelist, 0)
-		self.uiUpdateRecentApplications()
-
-	def onSelectApplication(self, value):
-		if '(Select an application)' == self.uiapplicationlist.getSelectedValue(0):
-			if value == 0:
-				return value
-			else:
-				self.uiapplicationlist.setList(self.uiapplicationlist.getList()[1:])
-				value -= 1
-				self.applicationlaunchmethod.enable()
-		applicationname = self.uiapplicationlist.getSelectedValue(value)
-		self.loadApp(applicationname)
-		return value
-
-	def onSelectRecentApplication(self, value):
-		if '(Select an application)' == self.uirecentapplicationlist.getSelectedValue(0):
-			if value == 0:
-				return value
-			else:
-				self.uirecentapplicationlist.setList(self.uirecentapplicationlist.getList()[1:])
-				value -= 1
-				self.applicationlaunchmethod.enable()
-		applicationname = self.uirecentapplicationlist.getSelectedValue(value)
-		self.loadApp(applicationname)
-		return value
-
-	def uiLaunchApp(self):
-		'''UI helper for launchApp. See launchApp.'''
-		self.launchApp()
-
-	def uiKillApp(self):
-		'''UI helper for killApp. See killApp.'''
-		self.killApp()
-
-	def uiLauncherSelectCallback(self, value):
-		if value is None:
-			launchername = None
-		else:
-			launchername = self.uilauncherselect.getSelectedValue(value)
-		try:
-			classes = list(self.launcherdict[launchername]['classes'])
-			classes.sort()
-			selected = 0
-		except KeyError:
-			classes = []
-			selected = None
-		self.uiclassselect.set(classes, selected)
-		return value
-
-	def uiSubmitDiaryMessage(self):
-		diarymessage = self.diarymessage.get()
-		diarydata = data.DiaryData(session=self.session, message=diarymessage)
-		self.publish(diarydata, database=True)
-
-	def setLauncherSelectors(self, selectors=None):
-		try:
-			self.uilauncheraliascontainer.deleteObject('Aliases')
-		except:
-			pass
-		if selectors is None:
-			self.have_selectors = False
-			self.uilauncherselectors =  uidata.String('Aliases',
-																								'', 'r')
-		else:
-			self.have_selectors = True
-			self.uilauncherselectors = uidata.Container('Aliases')
-			self.uilauncherselectors.addObjects(selectors)
-		self.uilauncheraliascontainer.addObject(self.uilauncherselectors)
-
-	def defineUserInterface(self):
-		'''See node.Node.defineUserInterface.'''
-		#node.Node.defineUserInterface(self)
-		self.messagelog = uidata.MessageLog('Message Log')
-
-		self.uinodeinfo = uidata.Struct('Node Information', {}, 'r',
-																	tooltip='Information about current running '
-																	+ 'nodes including their class and location')
-
-		self.uilaunchname = uidata.String('Name', '', 'rw',
-															tooltip='Name to assign node when it is created')
-		self.uilauncherselect = uidata.SingleSelectFromList('Launcher', [], 0,
-															tooltip='Launcher to create node on')
-		self.uiclassselect = uidata.SingleSelectFromList('Node Class', [], 0,
-															tooltip='Class of node to be created')
-		self.uilauncherselect.setCallback(self.uiLauncherSelectCallback)
-		launchmethod = uidata.Method('Create', self.uiLaunch,
-																				tooltip='Create a new node')
-		launchobjects = (self.uilaunchname, self.uilauncherselect,
-											self.uiclassselect)
-		self.launchcontainer = uidata.Container('Create New Node')
-		self.launchcontainer.addObjects(launchobjects)
-		self.launchcontainer.addObject(launchmethod,
-																		position={'justify': ['right']})
-
-		self.uiaddnodehostname = uidata.HistoryData(uidata.String, 'Hostname',
-																								None, persist=True)
-		self.uiaddnodeport = uidata.Integer('TCP Port', 55555, 'rw', size=(5, 1))
-		self.addmethod = uidata.Method('Add', self.uiAddNode)
-		addcontainer = uidata.Container('Add Existing Node')
-		addcontainer.addObject(self.uiaddnodehostname,
-														position={'position': (0, 0),
-																			'span': (1, 2)})
-		addcontainer.addObject(self.uiaddnodeport,
-														position={'position': (1, 0)})
-		addcontainer.addObject(self.addmethod, position={'position': (1, 1),
-																											'justify': ['right']})
-
-		self.uikillselect = uidata.SingleSelectFromList('Node', [], 0)
-		killmethod = uidata.Method('Kill', self.uiKillNode)
-		killobjects = (self.uikillselect, killmethod)
-		self.killcontainer = uidata.Container('Kill Node')
-		self.killcontainer.addObjects(killobjects)
-
-		self.killcontainer.positionObject(self.uikillselect, {'position': (0, 0)})
-		self.killcontainer.positionObject(killmethod, {'position': (0, 1)})
-
-		nodemanagementcontainer = uidata.LargeContainer('Nodes')
-		nodemanagementcontainer.addObject(self.launchcontainer,
-																			position={'position': (0, 0),
-																								'expand': 'all'})
-		nodemanagementcontainer.addObject(addcontainer,
-																			position={'position': (1, 0),
-																								'expand': 'all'})
-		nodemanagementcontainer.addObject(self.killcontainer,
-																			position={'position': (2, 0),
-																								'expand': 'all'})
-		nodemanagementcontainer.addObject(self.uinodeinfo,
-																			position={'position': (0, 1),
-																								'span': (3, 1),
-																								'justify': ['center']})
-
-		### Applications
-
-		# import/export container
-		self.importexportcontainer = uidata.Container('Import / Export')
-		applicationexportmethod = uidata.Method('Export', self.uiExportApp)
-		applicationimportmethod = uidata.Method('Import', self.uiImportApp)
-		self.importexportcontainer.addObject(applicationimportmethod,
-																					position={'position': (0, 0)})
-		self.importexportcontainer.addObject(applicationexportmethod,
-																					position={'position': (0, 1)})
-
-
-		launchkillcontainer = uidata.Container('Launch / Kill')
-		applicationrefreshmethod = uidata.Method('Refresh',
-																							self.uiUpdateApplications)
-		# this container is filled by the setLauncherSelectors() method
-		self.uilauncheraliascontainer = uidata.Container('Launcher Selection')
-		self.setLauncherSelectors(selectors=None)
-
-		self.applicationlaunchmethod = uidata.Method('Launch', self.uiLaunchApp)
-		applicationkillmethod = uidata.Method('Kill', self.uiKillApp)
-
-		self.uiapplicationlist = uidata.SingleSelectFromList('All Applications', [], 0)
-		self.uiapplicationlist.setCallback(self.onSelectApplication)
-		self.uirecentapplicationlist = uidata.SingleSelectFromList('Recent Applications', [], 0)
-		self.uirecentapplicationlist.setCallback(self.onSelectRecentApplication)
-		self.uiUpdateApplications()
-
-		launchkillcontainer.addObject(self.uirecentapplicationlist, position={'position': (0, 0)})
-		launchkillcontainer.addObject(self.uiapplicationlist, position={'position': (1, 0)})
-		launchkillcontainer.addObject(applicationrefreshmethod,
-																	position={'position': (0, 1)})
-		launchkillcontainer.addObject(self.uilauncheraliascontainer,
-																	position={'position': (2, 0),
-																						'span': (3, 1), 'expand': 'all'})
-		launchkillcontainer.addObject(self.applicationlaunchmethod,
-																	position={'position': (2, 1)})
-		launchkillcontainer.addObject(applicationkillmethod,
-																	position={'position': (3, 1)})
-
-		applicationobjects = (
-		 launchkillcontainer,
-		 self.importexportcontainer,
-		)
-		self.applicationcontainer = uidata.LargeContainer('Applications')
-		self.applicationcontainer.addObjects(applicationobjects)
-
-		## Events
-		self.uifromnodeselect = uidata.SingleSelectFromList('From Node', [], 0)
-		self.uieventclasses = event.eventClasses()
-		eventclasses = self.uieventclasses.keys()
-		eventclasses.sort()
-		self.uieventselect = uidata.SingleSelectFromList('Event', eventclasses, 0)
-		self.uitonodeselect = uidata.SingleSelectFromList('To Node', [], 0)
-		bindmethod = uidata.Method('Bind', self.uiAddDistmap)
-		unbindmethod = uidata.Method('Unbind', self.uiDelDistmap)
-		eventobjects = (self.uifromnodeselect, self.uieventselect,
-										self.uitonodeselect, bindmethod, unbindmethod)
-		self.bindeventcontainer = uidata.Container('Bind Events')
-		self.bindeventcontainer.addObjects(eventobjects)
-		self.bindeventcontainer.positionObject(self.uifromnodeselect,
-																					{'position': (0, 0), 'span': (1, 2)})
-		self.bindeventcontainer.positionObject(self.uieventselect,
-																					{'position': (1, 0), 'span': (1, 2)})
-		self.bindeventcontainer.positionObject(self.uitonodeselect,
-																					{'position': (2, 0), 'span': (1, 2)})
-		self.bindeventcontainer.positionObject(bindmethod,
-																					{'position': (3, 0),
-																						'justify': ['center', 'right']})
-		self.bindeventcontainer.positionObject(unbindmethod,
-																					{'position': (3, 1),
-																						'justify': ['center', 'left']})
-
-		eventcontainer = uidata.LargeContainer('Events')
-		eventcontainer.addObjects((self.bindeventcontainer,))
-
-		self.diarymessage = uidata.String('Message', '', 'rw')
-		diarymethod = uidata.Method('Submit', self.uiSubmitDiaryMessage)
-		diarycontainer = uidata.LargeContainer('Diary')
-		diarycontainer.addObjects((self.diarymessage, diarymethod))
-
-#		uimanagersetup = self.managersetup.getUserInterface()
-
-		container = uidata.LargeContainer('Manager')
-
-		#self.initializeLoggerUserInterface()
-
-		# cheat a little here
-		clientlogger = extendedlogging.getLogger(self.logger.name + '.'
-																							+ datatransport.Client.__name__)
-		if clientlogger.container not in self.logger.container.values():
-			self.logger.container.addObject(clientlogger.container,
-																			position={'span': (1,2), 'expand': 'all'})
-
-#		container.addObject(uimanagersetup)
-		container.addObject(self.messagelog, position={'expand': 'all'})
-		container.addObjects((self.logger.container, nodemanagementcontainer,
-													eventcontainer, self.applicationcontainer))
-
-		self.uiUpdateNodeInfo()
-		self.uiUpdateLauncherInfo()
-
-		self.uicontainer.addObject(container)
-
 if __name__ == '__main__':
 	import sys
 	import time
