@@ -173,6 +173,16 @@ class MatrixCalibrationClient(CalibrationClient):
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)
 
+	def retrieveGoodTilt(self, mag):
+		qinst = data.GoodTiltCalibrationData(magnification=mag)
+		caldatalist = self.node.research(datainstance=qinst, results=1)
+		if len(caldatalist) > 0:
+			caldata = caldatalist[0]
+		else:
+			return None
+		goodtilt = caldata['tilt']
+		return goodtilt
+
 	def retrieveMatrix(self, mag, caltype):
 		'''
 		finds the requested matrix using magnification and type
@@ -211,6 +221,11 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		fmatrix = self.retrieveMatrix(mag, 'defocus')
 		amatrix = self.retrieveMatrix(mag, 'stigx')
 		bmatrix = self.retrieveMatrix(mag, 'stigy')
+
+		goodtilt = self.retrieveGoodTilt(mag)
+		if goodtilt is not None:
+			tilt_value = goodtilt
+
 		if None in (fmatrix, amatrix, bmatrix):
 			raise RuntimeError('missing calibration matrix')
 
@@ -399,6 +414,13 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		pixelshiftdiff['row'] = pixelshift2['row'] - pixelshift1['row']
 		pixelshiftdiff['col'] = pixelshift2['col'] - pixelshift1['col']
 		return pixelshiftdiff
+
+	def storeGoodTilt(self, mag, goodtilt):
+		'''
+		stores a new good tilt calibration
+		'''
+		caldata = data.GoodTiltCalibrationData(id=self.node.ID(), magnification=mag, tilt=goodtilt)
+		self.node.publish(caldata, database=True)
 
 
 class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
