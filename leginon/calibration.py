@@ -332,7 +332,6 @@ class Calibration(node.Node):
 			f.close()
 		except:
 			print "Error: failed to save calibration"
-			raise
 		return ''
 
 	def load(self, filename):
@@ -342,7 +341,6 @@ class Calibration(node.Node):
 			f.close()
 		except:
 			print "Error: failed to load calibration"
-			raise
 		else:
 			print "loading", self.calibration, "from file:", filename
 		return ''
