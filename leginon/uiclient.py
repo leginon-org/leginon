@@ -94,7 +94,6 @@ class UIApp(wxApp):
 		return true
 
 	def addWidget(self, evt):
-		print 'addingWidget'
 		uiwidget = evt.widget_type(self.uiclient, evt.namelist,
 																			self.frame, evt.parent)
 		evt.container.children[evt.namelist] = uiwidget
@@ -252,7 +251,6 @@ class wxContainerWidget(ContainerWidget):
 		self.event.clear()
 		evt = AddWidgetEvent(namelist, self, typelist, self.parent, value)
 		wxPostEvent(self.window, evt)
-		print threading.currentThread()
 		self.event.wait()
 
 	def setWidget(self, namelist, value):
@@ -430,15 +428,15 @@ class MessageDialog(wxDialog):
 		self.callback = callback
 		panel = wxPanel(self, -1)
 		panel.SetAutoLayout(true)
-		sizer = wxBoxSizer(wxVERTICAL)
-		panel.SetSizer(sizer)
+		self.sizer = wxBoxSizer(wxVERTICAL)
+		panel.SetSizer(self.sizer)
 		self.message = wxStaticText(panel, -1, '')
-		sizer.Add(self.message, 0, wxALIGN_CENTER | wxALL, 10)
+		self.sizer.Add(self.message, 0, wxALIGN_CENTER | wxALL, 10)
 		self.okbutton = wxButton(panel, -1, 'OK')
 		EVT_BUTTON(self, self.okbutton.GetId(), self.OnOK)
-		sizer.Add(self.okbutton, 0, wxALIGN_CENTER | wxALL, 10)
-		sizer.Layout()
-		sizer.Fit(self)
+		self.sizer.Add(self.okbutton, 0, wxALIGN_CENTER | wxALL, 10)
+		self.sizer.Layout()
+		self.sizer.Fit(self)
 		EVT_CLOSE(self, self.OnClose)
 
 	def OnOK(self, evt):
@@ -460,11 +458,19 @@ class wxDialogWidget(wxContainerWidget):
 	def Destroy(self):
 		self.dialog.Destroy()
 
+	def Show(self):
+		self.dialog.sizer.SetItemMinSize(self.dialog.message,
+																	self.dialog.message.GetSize().GetWidth(),
+																	self.dialog.message.GetSize().GetHeight())
+		self.dialog.sizer.Layout()
+		self.dialog.sizer.Fit(self.dialog)
+		self.dialog.Show(true)
+
 	def _set(self, value):
 		self.dialog.message.SetLabel(value)
 		self.messageflag = True
 		if self.messageflag and self.okflag:
-			self.dialog.Show(true)
+			self.Show()
 
 	def setWidget(self, namelist, value):
 		self.lock.acquire()
@@ -475,7 +481,7 @@ class wxDialogWidget(wxContainerWidget):
 			self.okflag = True
 		self.lock.release()
 		if self.messageflag and self.okflag:
-			self.dialog.Show(true)
+			self.Show()
 
 	def set(self, namelist, value=None):
 		if value is None:
@@ -487,9 +493,7 @@ class wxDialogWidget(wxContainerWidget):
 		pass
 
 	def callback(self):
-		print 'callback go'
 		self.uiclient.commandServer(self.namelist + ('OK',), ())
-		print 'callback done'
 
 class wxComboBoxWidget(wxContainerWidget):
 	def __init__(self, uiclient, namelist, window, parent):
