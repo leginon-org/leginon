@@ -16,7 +16,7 @@ try:
 except:
 	import Numeric
 import wx
-from wx.lib.buttons import GenBitmapToggleButton
+from wx.lib.buttons import GenBitmapButton, GenBitmapToggleButton
 import NumericImage
 import Image
 import imagefun
@@ -26,17 +26,39 @@ from gui.wx.Entry import FloatEntry, EVT_ENTRY
 
 wx.InitAllImageHandlers()
 
-toolbitmaps = {}
+bitmaps = {}
 
-def getToolBitmap(filename):
+def getBitmap(filename):
 	try:
-		return toolbitmaps[filename]
+		return bitmaps[filename]
 	except KeyError:
 		iconpath = icons.getPath(filename)
 		wximage = wx.Image(iconpath)
+		wximage.ConvertAlphaToMask()
 		bitmap = wx.BitmapFromImage(wximage)
+		#bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
+		bitmaps[filename] = bitmap
+		return bitmap
+
+targetbitmaps = {}
+
+def getTargetBitmap(color):
+	try:
+		return targetbitmaps[color]
+	except KeyError:
+		bitmap = wx.EmptyBitmap(16, 16)
+		dc = wx.MemoryDC()
+		dc.SelectObject(bitmap)
+		dc.BeginDrawing()
+		dc.Clear()
+		dc.SetPen(wx.Pen(color, 2))
+		dc.DrawLine(8, 1, 8, 14)
+		dc.DrawLine(1, 8, 14, 8)
+		dc.DrawPoint(1, 7)
+		dc.EndDrawing()
+		dc.SelectObject(wx.NullBitmap)
 		bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
-		toolbitmaps[filename] = bitmap
+		targetbitmaps[color] = bitmap
 		return bitmap
 
 # needs to adjust buffer/wximage instead of reseting from numeric image
@@ -237,7 +259,7 @@ class ImageTool(object):
 
 class ValueTool(ImageTool):
 	def __init__(self, imagepanel, sizer):
-		bitmap = getToolBitmap('valuetool.bmp')
+		bitmap = getBitmap('value.png')
 		tooltip = 'Toggle Show Value'
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip)
 		self.button.SetToggle(True)
@@ -253,7 +275,7 @@ class ValueTool(ImageTool):
 
 class RulerTool(ImageTool):
 	def __init__(self, imagepanel, sizer):
-		bitmap = getToolBitmap('rulertool.bmp')
+		bitmap = getBitmap('ruler.png')
 		tooltip = 'Toggle Ruler Tool'
 		cursor = wx.CROSS_CURSOR
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, True)
@@ -295,7 +317,7 @@ class RulerTool(ImageTool):
 
 class ZoomTool(ImageTool):
 	def __init__(self, imagepanel, sizer):
-		bitmap = getToolBitmap('zoomtool.bmp')
+		bitmap = getBitmap('zoom.png')
 		tooltip = 'Toggle Zoom Tool'
 		cursor = wx.StockCursor(wx.CURSOR_MAGNIFIER)
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, True)
@@ -831,7 +853,7 @@ class ImageDoubleClickedEvent(wx.PyCommandEvent):
 
 class ClickTool(ImageTool):
 	def __init__(self, imagepanel, sizer, callback=None):
-		bitmap = getToolBitmap('arrowtool.bmp')
+		bitmap = getBitmap('arrow.png')
 		tooltip = 'Click Tool'
 		cursor = wx.StockCursor(wx.CURSOR_BULLSEYE)
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, True)
@@ -854,7 +876,8 @@ class ClickImagePanel(ImagePanel):
 
 class TargetTool(ImageTool):
 	def __init__(self, imagepanel, sizer, callback=None):
-		bitmap = getToolBitmap('targettool.bmp')
+		bitmap = wx.EmptyBitmap(16, 16)
+		bitmap.SetMask(wx.Mask(bitmap, wx.BLACK))
 		tooltip = 'Toggle Target Tool'
 		cursor = wx.StockCursor(wx.CURSOR_BULLSEYE)
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, True)
@@ -883,18 +906,8 @@ class TargetTool(ImageTool):
 			self.imagepanel.UpdateDrawing()
 
 	def setTargetButtonBitmap(self):
-		bitmap = wx.EmptyBitmap(16, 16)
-		dc = wx.MemoryDC()
-		dc.SelectObject(bitmap)
-		dc.BeginDrawing()
-		dc.Clear()
 		color = self.imagepanel.target_types[self.target_type].getColor()
-		dc.SetPen(wx.Pen(color, 2))
-		dc.DrawLine(8, 0, 8, 15)
-		dc.DrawLine(0, 8, 15, 8)
-		dc.EndDrawing()
-		dc.SelectObject(wx.NullBitmap)
-		bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
+		bitmap = getTargetBitmap(color)
 		self.button.SetBitmapLabel(bitmap, False)
 		self.button.Refresh()
 
@@ -982,6 +995,53 @@ class TargetTool(ImageTool):
 			return name + ' ' + str(position)
 		else:
 			return ''
+
+class TypeTool(object):
+	def __init__(self, parent, name):
+		self.parent = parent
+		self.label = wx.StaticText(parent, -1, name)
+		self.tb = {}
+		self.initButtons()
+		for tb in self.tb.values():
+			tb.SetBezelWidth(1)
+
+	def initButtons(self):
+		bitmap = getBitmap('display.png')
+		self.tb['display'] = GenBitmapToggleButton(self.parent, -1, bitmap,
+																								size=(24, 24))
+		bitmap = getBitmap('settings.png')
+		self.tb['settings'] = GenBitmapButton(self.parent, -1, bitmap,
+																					size=(24, 24))
+
+class ImageTypeTool(TypeTool):
+	pass
+
+class TargetTypeTool(TypeTool):
+	def __init__(self, parent, name, color):
+		self.color = color
+		TypeTool.__init__(self, parent, name)
+
+	def initButtons(self):
+		TypeTool.initButtons(self)
+		bitmap = getTargetBitmap(self.color)
+		self.tb['target'] = GenBitmapToggleButton(self.parent, -1, bitmap,
+																							size=(24, 24))
+
+class SelectionTool(wx.GridBagSizer):
+	def __init__(self):
+		wx.GridBagSizer.__init__(self, 3, 3)
+		self.typetools = []
+
+	def addTypeTool(self, typetool):
+		n = len(self.typetools)
+		self.typetools.append(typetool)
+		self.Add(typetool.label, (n, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		if 'display' in typetool.tb:
+			self.Add(typetool.tb['display'], (n, 1), (1, 1), wx.ALIGN_CENTER)
+		if 'target' in typetool.tb:
+			self.Add(typetool.tb['target'], (n, 2), (1, 1), wx.ALIGN_CENTER)
+		if 'settings' in typetool.tb:
+			self.Add(typetool.tb['settings'], (n, 3), (1, 1), wx.ALIGN_CENTER)
 
 class Target(object):
 	def __init__(self, x, y, target_type=None):
@@ -1314,6 +1374,13 @@ if __name__ == '__main__':
 			self.panel = TargetImagePanel(frame, -1)
 			self.panel.addTargetType('foo')
 			self.panel.addTargetType('bar')
+
+			selectiontool = SelectionTool()
+			self.panel.sizer.Add(selectiontool, 0, wx.ALIGN_CENTER)
+			imagetypetool = ImageTypeTool(self.panel, 'Foo')
+			targettypetool = TargetTypeTool(self.panel, 'Bar', wx.BLUE)
+			selectiontool.addTypeTool(imagetypetool)
+			selectiontool.addTypeTool(targettypetool)
 
 #			self.panel = ClickImagePanel(frame, -1, bar)
 
