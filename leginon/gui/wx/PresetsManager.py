@@ -477,7 +477,8 @@ class Panel(gui.wx.Node.Panel):
 	def onToScope(self, evt):
 		self._presetsEnable(False)
 		target = self.node.cycleToScope
-		args = (self.presets.getSelectedPreset(),)
+		pname = self.node.currentselection['name']
+		args = (pname,)
 		threading.Thread(target=target, args=args).start()
 
 	def onRemove(self, evt):
