@@ -24,12 +24,12 @@ class DataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
 		datahandler.SimpleDataKeeper.__init__(self, id, session)
 		datahandler.DataBinder.__init__(self, id, session)
 
-	def insert(self, idata):
+	def insert(self, idata, override=False):
 		'''Insert data into the datahandler. Only events can be inserted from and external source. Events are bound. See setBinding.'''
 		if isinstance(idata, event.Event):
 			datahandler.DataBinder.insert(self, idata)
 		else:
-			if idata['id'][:-1] == self.id[:-1]:
+			if idata['id'][:-1] == self.id[:-1] or override:
 				datahandler.SimpleDataKeeper.insert(self, copy.deepcopy(idata))
 			else:
 				raise event.InvalidEventError('event must be Event instance')
@@ -241,7 +241,7 @@ class Node(leginonobject.LeginonObject):
 			confirm = False
 
 #		if 'node' in kwargs and kwargs['node']:
-		self.datahandlers[self.datahandler].insert(idata)
+		self.datahandlers[self.datahandler].insert(idata, True)
 		e = eventclass(self.ID(), dataid=idata['id'], confirm=confirm)
 		self.outputEvent(e)
 
