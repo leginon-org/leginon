@@ -77,4 +77,4 @@ CAMERA_CONFIG['correct'] = 1
 CAMERA_CONFIG['offset'] = {'x': 0, 'y': 0}
 CAMERA_CONFIG['dimension'] = {'x': 1024, 'y': 1024}
 CAMERA_CONFIG['binning'] = {'x': 2, 'y': 2}
-CAMERA_CONFIG['exposure time'] = 500
+CAMERA_CONFIG['exposure time'] = 500.0

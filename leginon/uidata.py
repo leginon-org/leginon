@@ -298,29 +298,40 @@ class Boolean(Data):
 		else:
 			return True
 
-class Integer(Data):
-	typelist = Data.typelist + ('integer',)
+class Number(Data):
+	typelist = Data.typelist + ('number',)
+	nonevalue = ''
 
 	def validate(self, value):
-		if value is None:	
+		return True
+
+class Integer(Data):
+	typelist = Data.typelist + ('integer',)
+	nonevalue = ''
+
+	def validate(self, value):
+		if type(value) is not int and value is not None:
 			return False
 		else:
 			return True
 
 class Float(Data):
 	typelist = Data.typelist + ('float',)
+	nonevalue = ''
 
 	def validate(self, value):
-		if value is None:	
+		if type(value) is not float and value is not None:
 			return False
 		else:
 			return True
 
 class String(Data):
 	typelist = Data.typelist + ('string',)
+	# no
+	nonevalue = ''
 
 	def validate(self, value):
-		if value is None:	
+		if type(value) is not str and value is not None:
 			return False
 		else:
 			return True

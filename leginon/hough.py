@@ -1,6 +1,8 @@
 from wxPython.wx import *
 import wxImageViewer
 import Numeric, umath
+import Mrc
+import holefinderback
 
 def circlePoints(numericimage, cx, cy, x, y):
 	if x == 0:
@@ -39,14 +41,8 @@ def circle(numericimage, radius, xcenter, ycenter):
 			p += 2*(x - y) + 1
 		circlePoints(numericimage, xcenter, ycenter, x, y)
 
-def hough(image, threshold, radius=None):
-
+def gradient(image):
 	m, n = image.shape
-
-	if radius is None:
-		R = min(m, n)/2
-		M = Numeric.zeros((m, n, R))
-	M = Numeric.zeros(image.shape)
 
 	J = Numeric.zeros((m+2, n+2), 'd')
 	J[0, 0] = image[0, 0]
@@ -71,20 +67,58 @@ def hough(image, threshold, radius=None):
 
 	I_grad = Numeric.sqrt(Ix*Ix + Iy*Iy)
 
+	return I_grad
+
+def edges(image):
+	hf = holefinderback.HoleFinder()
+	hf['original'] = image
+	hf.configure_edges(filter='sobel',
+											size=9,
+											sigma=1.4,
+											absvalue=False,
+											lp=True,
+											lpn=5,
+											lpsig=1.0)
+	hf.find_edges()
+	return hf['edges']
+
+
+def hough(image, threshold, radius=None, radiusrange=None):
+
+	m, n = image.shape
+
+	if radius is None:
+		if radiusrange is None:
+			R = (0, min(m, n)/2)
+		else:
+			R = radiusrange
+		M = Numeric.zeros((m, n, R[1] - R[0] + 1))
+	else:
+		M = Numeric.zeros(image.shape)
+
+#	e = edges(image)
+#	I_grad = gradient(e)
+#	return e, I_grad
+
+	I_grad = gradient(image)
+
 	for i in range(0, m):
+		print i
 		for j in range(0, n):
 			if I_grad[i, j] > threshold:
 				if radius is None:
-					for radius in range(0, R):
+					for radius in range(R[0], R[1]):
 						for x in range(i-radius, i+radius):
-							vote(M, m, n, i, j, x, radius)
+							vote(M, m, n, i, j, x, radius, 0) #radius-R[0])
 				else:
 					for x in range(i-radius, i+radius):
 						vote(M, m, n, i, j, x, radius)
 
-	return M
+	if len(M.shape) == 3:
+		return I_grad, M[:,:,0]
+	return I_grad, M
 
-def vote(M, m, n, i, j, x, radius):
+def vote(M, m, n, i, j, x, radius, layer=None):
 	y = radius**2 - (x - i)**2
 
 #	y = Numeric.absolute(y)
@@ -96,14 +130,15 @@ def vote(M, m, n, i, j, x, radius):
 	#y = int(Numeric.floor(Numeric.sqrt(radius**2-(x-i)**2)+0.5)+j)
 
 	if x >= 0 and x < m and y >= 0 and y < n:
-		M[x, y] = M[x, y] + 1
+		if layer is not None:
+			M[x, y, layer] = M[x, y, layer] + 1
+		else:
+			M[x, y] = M[x, y] + 1
 
 if __name__=='__main__':
-	m = Numeric.ones((512, 512))
-#	for i in range(32):
-#		circle(m, i, 200, 200)	
-	circle(m, 16, 200, 200)	
-	m2 = hough(m, 0, 16)
+	m = Mrc.mrc_to_numeric('hftest.mrc')[256:768,256:768]
+	m, m2 = hough(m, 100, None, [24,29])
+	m2 = Numeric.clip(m2, 40, 1000)
 
 	class MyApp(wxApp):
 		def OnInit(self):
@@ -127,3 +162,4 @@ if __name__=='__main__':
 	app.iv1.setNumericImage(m)
 	app.iv2.setNumericImage(m2)
 	app.MainLoop()
+

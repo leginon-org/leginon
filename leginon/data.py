@@ -544,7 +544,7 @@ class PresetData(InSessionData):
 			('dimension', dict),
 			('binning', dict),
 			('offset', dict),
-			('exposure time', int),
+			('exposure time', float),
 			('removed', int),
 		]
 		return t
@@ -564,7 +564,7 @@ class NewPresetData(InSessionData):
 			('dimension', dict),
 			('binning', dict),
 			('offset', dict),
-			('exposure time', int),
+			('exposure time', float),
 		]
 		return t
 	typemap = classmethod(typemap)

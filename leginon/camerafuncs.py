@@ -156,7 +156,7 @@ class CameraFuncs(object):
 		self.uicameradict = {}
 		cameraparameterscontainer = uidata.Container('Camera Configuration')
 
-		parameters = [('exposure time', 'Exposure time', uidata.Integer, 500, 'rw'),
+		parameters = [('exposure time', 'Exposure time', uidata.Float, 500.0, 'rw'),
 									('auto offset', 'Auto offset', uidata.Boolean, True, 'rw'),
 									('auto square', 'Auto square', uidata.Boolean, True, 'rw'),
 									('correct', 'Correct image', uidata.Boolean, True, 'rw')]

@@ -100,6 +100,8 @@ def WidgetClassFromTypeList(typelist):
 									return wxProgressWidget
 						elif typelist[2] == 'boolean':
 							return wxCheckBoxWidget
+						elif typelist[2] == 'number':
+							return wxNumberEntryWidget
 						elif typelist[2] == 'struct':
 							if len(typelist) > 3:
 								if typelist[3] == 'application':
@@ -691,6 +693,22 @@ class wxEntryWidget(wxDataWidget):
 				self.applybutton.Enable(True)
 			else:
 				self.applybutton.Enable(False)
+
+class wxNumberEntryWidget(wxEntryWidget):
+	def setFromWidget(self, evt):
+		value = self.entry.GetValue()
+		try:
+			value = eval(value)
+		except:
+			excinfo = sys.exc_info()
+			sys.excepthook(*excinfo)
+			return
+		if type(self.value) is not float or type(self.value) is not int:
+			return
+		self.value = value
+		self.dirty = False
+		self.applybutton.Enable(false)
+		self.setServer(self.value)
 
 class wxCheckBoxWidget(wxDataWidget):
 	def __init__(self, name, parent, container, value, settings):

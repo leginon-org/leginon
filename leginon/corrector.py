@@ -185,7 +185,7 @@ class Corrector(node.Node):
 		camconfig = self.cam.cameraConfig()
 		camdata = self.cam.configToEMData(camconfig)
 		if dark:
-			camdata['exposure time'] = 0
+			camdata['exposure time'] = 0.0
 			typekey = 'dark'
 		else:
 			typekey = 'bright'
