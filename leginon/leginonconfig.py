@@ -38,16 +38,23 @@ DB_PASS		= ''
 #########################
 #        Paths          #
 #########################
-
-## where to store images
 ## use os.getcwd() for current directory
 LEGINON_PATH	= os.getcwd()
-IMAGE_PATH	= os.path.join(LEGINON_PATH, 'images')
 
+IMAGE_PATH	= os.path.join(LEGINON_PATH, 'images')
+PREFS_PATH	= os.path.join(LEGINON_PATH, 'prefs')
+
+## create those paths
 try:
 	mkdirs(IMAGE_PATH)
 except:
 	print 'error creating IMAGE_PATH %s' % (IMAGE_PATH,)
+try:
+	mkdirs(PREFS_PATH)
+except:
+	print 'error creating IMAGE_PATH %s' % (IMAGE_PATH,)
+
+
 
 ###################################
 #       Default Camera Config     #

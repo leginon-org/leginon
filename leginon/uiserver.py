@@ -4,6 +4,9 @@ import socket
 import threading
 import uidata
 import xmlrpclib
+import cPickle
+import leginonconfig
+import os
 
 # range defined by IANA as dynamic/private
 portrange = xrange(49152, 65536)
@@ -69,7 +72,66 @@ class Server(XMLRPCServer, uidata.Container):
 			raise TypeError('name list does not resolve to Data instance')
 		# except from this client?
 		uidataobject._set(value)
+		# record new value in a pickle
+		self.updatePickle(namelist, value)
 		return ''
+
+	def setFromPickle(self):
+		'''
+		this "replays" the recorded user preferences
+		'''
+		d = self.getPickle()
+		for key,value in d.items():
+			print 'key,value', key, value
+			namelist = list(key)
+			self.setFromClient(namelist, value)
+
+	def getPickle(self, namelist=None):
+		### maybe want a lock on this
+		fname = '%s.pref' % (self.name,)
+		fname = os.path.join(leginonconfig.PREFS_PATH, fname)
+		try:
+			f = open(fname, 'r')
+		except IOError:
+			d = {}
+		else:
+			try:
+				d = cPickle.load(f)
+			except:
+				print 'bad pickle in %s' % (fname,)
+				d = {}
+			f.close()
+		if namelist is None:
+			value = d
+		else:
+			try:
+				value = d[tuple(namelist)]
+			except KeyError:
+				value = None
+		return value
+
+	def updatePickle(self, namelist, value):
+		### maybe want a lock on this
+		fname = '%s.pref' % (self.name,)
+		fname = os.path.join(leginonconfig.PREFS_PATH, fname)
+
+		## read current value
+		try:
+			f = open(fname, 'r')
+		except IOError:
+			d = {}
+		else:
+			try:
+				d = cPickle.load(f)
+			except:
+				print 'bad pickle in %s' % (fname,)
+				d = {}
+			f.close()
+		## update and store
+		d[tuple(namelist)] = value
+		f = open(fname, 'w')
+		cPickle.dump(d, f, 1)
+		f.close()
 
 	def commandFromClient(self, namelist, args):
 		#print 'commandFromClient', namelist, args
