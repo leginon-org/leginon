@@ -1,6 +1,7 @@
 import os, socket
 import random
 #import threading, weakref
+import sys
 
 class LeginonObject(object):
 	'''Generic base class for objects. Defines ID and location.'''
@@ -43,6 +44,10 @@ class LeginonObject(object):
 			color = 42
 		else:
 			color = 45
+
+		# hurray for spagetti code
+		if sys.platform == 'win32':
+			color = None
 
 		printstring = ''
 		if color is not None:
