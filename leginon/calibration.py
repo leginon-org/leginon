@@ -328,8 +328,8 @@ class Calibration(node.Node):
 		self.correlationthreshold = 0.05
 		self.camerastate = {'size': 512, 'binning': 1, 'exposure time': 500}
 		try:
-			isdata = self.researchByDataID('image shift')
-			self.base = isdata.content['image shift']
+			isdata = self.researchByDataID(self.parameter)
+			self.base = isdata.content[self.parameter]
 		except:
 			self.base = {'x': 0.0, 'y':0.0}
 		####
@@ -381,14 +381,21 @@ class Calibration(node.Node):
 		return ''
 
 
-class ImageShiftCalibration(Calibration):
-	def __init__(self, id, nodelocations):
+## this is a base class for simple pixel calibrations 
+# for lack of a better name...
+class SimpleCalibration(Calibration):
+	def __init__(self, id, nodelocations, parameter):
 		#self.calibration = {"x pixel shift": {'x': 1.0, 'y': 2.0, 'value': 1.0},
 		#					 "y pixel shift": {'x': 3.0, 'y': 4.0, 'value': 1.0}}
 		#self.pixelShift(event.ImageShiftPixelShiftEvent(-1, {'row': 2.0, 'column': 2.0}))
 		#return
+
+		if parameter not in ('image shift','stage position'):
+			raise RuntimeError('parameter %s not supported' % (parameter,) )
+		self.parameter = parameter
+
 		Calibration.__init__(self, id, nodelocations)
-		self.addEventInput(event.ImageShiftPixelShiftEvent, self.pixelShift)
+		self.addEventInput(event.PixelShiftEvent, self.pixelShift)
 		self.start()
 
 	def main(self):
@@ -396,7 +403,7 @@ class ImageShiftCalibration(Calibration):
 		#self.interact()
 
 	def state(self, value, axis):
-		return {'image shift': {axis: value}}
+		return {self.parameter: {axis: value}}
 
 	def pixelShift(self, ievent):
 		print 'PIXELSHIFT'
@@ -408,19 +415,19 @@ class ImageShiftCalibration(Calibration):
 		#delta_mag = ievent.content['magnification']
 
 		matrix = self.calibration2matrix()
-		print "image shift calibration matrix =", matrix
+		print "%s calibration matrix = %s" % (self.parameter, matrix)
 		determinant = LinearAlgebra.determinant(matrix)
 		deltax = (matrix[1,1] * delta_col -
 							matrix[1,0] * delta_row) / determinant
 		deltay = (matrix[0,0] * delta_row -
 							matrix[0,1] * delta_col) / determinant
 
-		print "calculated image shift change =", deltax, deltay
-		current = self.researchByDataID('image shift')
-		currentx = current.content['image shift']['x']
-		currenty = current.content['image shift']['y']
-		print "current image shift = ", current
-		newimageshift = {'image shift':
+		print "calculated %s change = %s, %s" %  (self.parameter, deltax, deltay)
+		current = self.researchByDataID(self.parameter)
+		currentx = current.content[self.parameter]['x']
+		currenty = current.content[self.parameter]['y']
+		print "current %s = %s" % (self.parameter, current)
+		newimageshift = {self.parameter:
 			{
 				'x': currentx + deltax,
 				'y': currenty + deltay
@@ -439,62 +446,16 @@ class ImageShiftCalibration(Calibration):
 		matrix[1] /= self.calibration['y pixel shift']['value']
 		return matrix
 
-class StageShiftCalibration(Calibration):
+class ImageShiftCalibration(SimpleCalibration):
 	def __init__(self, id, nodelocations):
-		#self.calibration = {"x pixel shift": {'x': 1.0, 'y': 2.0, 'value': 1.0},
-		#					 "y pixel shift": {'x': 3.0, 'y': 4.0, 'value': 1.0}}
-		#self.pixelShift(event.ImageShiftPixelShiftEvent(-1, {'row': 2.0, 'column': 2.0}))
-		#return
-		Calibration.__init__(self, id, nodelocations)
-		self.addEventInput(event.StageShiftPixelShiftEvent, self.pixelShift)
-		self.start()
+		param='image shift'
+		SimpleCalibration.__init__(self, id, nodelocations, parameter=param)
 
-	def main(self):
-		self.interact()
 
-	def state(self, value, axis):
-		return {'stage position': {axis: value}}
-
-	def pixelShift(self, ievent):
-		print 'PIXELSHIFT'
-		print 'calibration =', self.calibration
-		print 'pixel shift =', ievent.content
-		delta_row = ievent.content['row']
-		delta_col = ievent.content['column']
-		### someday, this must calculate a mag dependent calibration
-		#delta_mag = ievent.content['magnification']
-
-		matrix = self.calibration2matrix()
-		print "image shift calibration matrix =", matrix
-		determinant = LinearAlgebra.determinant(matrix)
-		deltax = (matrix[1,1] * delta_col -
-							matrix[1,0] * delta_row) / determinant
-		deltay = (matrix[0,0] * delta_row -
-							matrix[0,1] * delta_col) / determinant
-
-		print "calculated stage shift change =", deltax, deltay
-		current = self.researchByDataID('stage position')
-		currentx = current.content['stage position']['x']
-		currenty = current.content['stage position']['y']
-		print "current stage position = ", current
-		newstageshift = {'stage position':
-			{
-				'x': currentx + deltax,
-				'y': currenty + deltay
-			}
-		}
-
-		stageshiftdata = data.EMData('scope', newstageshift)
-		self.publishRemote(stageshiftdata)
-
-	def calibration2matrix(self):
-		matrix = Numeric.array([[self.calibration['x pixel shift']['x'],
-														self.calibration['x pixel shift']['y']],
-													[self.calibration['y pixel shift']['x'],
-														self.calibration['y pixel shift']['y']]])
-		matrix[0] /= self.calibration['x pixel shift']['value']
-		matrix[1] /= self.calibration['y pixel shift']['value']
-		return matrix
+class StageShiftCalibration(SimpleCalibration):
+	def __init__(self, id, nodelocations):
+		param='stage position'
+		SimpleCalibration.__init__(self, id, nodelocations, parameter=param)
 
 
 class AutoFocusCalibration(Calibration):
