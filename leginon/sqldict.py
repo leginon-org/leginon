@@ -184,9 +184,9 @@ class SQLDict:
 	def __init__(self, db, queryinfo):
 	    self.db = db
 	    self.queryinfo = queryinfo
-	    #print 'querinfo ', self.queryinfo
+	    print 'querinfo ', self.queryinfo
 	    self.queries = setQueries(queryinfo)
-	    #print 'queries ', self.queries
+	    print 'queries ', self.queries
 	    self.cursors = {}
 	    self.execute()
 
@@ -197,7 +197,7 @@ class SQLDict:
 	    for key,query in self.queries.items():
 	    	c = self._cursor()
 		try:
-			#print 'query =', query
+			# print 'query =', query
 			c.execute(query)
 		except MySQLdb.ProgrammingError, e:
 			errno = e.args[0]
@@ -949,7 +949,16 @@ def sqlColumnsDefinition(in_dict, noDefault=None):
 		column={}
 		value=in_dict[key]
 		sqlt = sqltype(value,key)
-		if sqlt is not None:
+		if value is None:
+			if key != "id":
+				for t in in_dict.typemap():
+					if t[0]==key:
+						newvalue=t[1]()
+				column['Field'] = sep.join(['REF',newvalue.__class__.__name__,key])
+				column['Type'] = 'INT(20)'
+				columns.append(column)
+			
+		elif sqlt is not None:
 			column['Field']=key
 			column['Type']=sqlt
 			columns.append(column)
