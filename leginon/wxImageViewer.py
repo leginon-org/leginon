@@ -21,7 +21,7 @@ import NumericImage
 import Image
 import ImageOps
 import imagefun
-import sys, os
+import icons
 import numextension
 
 wx.InitAllImageHandlers()
@@ -32,8 +32,7 @@ def getToolBitmap(filename):
 	try:
 		return toolbitmaps[filename]
 	except KeyError:
-		rundir = sys.path[0]
-		iconpath = os.path.join(rundir, 'icons', filename)
+		iconpath = icons.getPath(filename)
 		wximage = wx.Image(iconpath)
 		bitmap = wx.BitmapFromImage(wximage)
 		bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))

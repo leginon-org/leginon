@@ -1,13 +1,13 @@
+import data
+import icons
+import leginonconfig
+import os.path
+import project
+import time
+import gui.wx.Data
 import wx
 import wx.wizard
 import wx.lib.intctrl
-import leginonconfig
-import os
-import data
-import project
-import time
-import sys
-import gui.wx.Data
 
 class WizardPage(wx.wizard.PyWizardPage):
 	pass
@@ -549,7 +549,7 @@ class SetupWizard(wx.wizard.Wizard):
 		self.setup = Setup(research)
 		self.publish = publish
 		self.session = None
-		image = wx.Image(os.path.join(sys.path[0], 'setup.png'))
+		image = wx.Image(icons.getPath('setup.png'))
 		bitmap = wx.BitmapFromImage(image)
 		wx.wizard.Wizard.__init__(self, parent, -1, 'Leginon Setup', bitmap=bitmap)
 		self.SetName('wLeginonSetup')

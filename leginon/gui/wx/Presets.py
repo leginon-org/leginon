@@ -1,14 +1,13 @@
+import icons
 import wx
 import wx.lib.buttons
 from wx.lib.masked import NumCtrl, EVT_NUM
-import sys, os
 import gui.wx.Camera
 import gui.wx.Node
 import wxImageViewer
 
 def getBitmap(filename):
-	rundir = sys.path[0]
-	iconpath = os.path.join(rundir, 'icons', filename)
+	iconpath = icons.getPath(filename)
 	wximage = wx.Image(iconpath)
 	bitmap = wx.BitmapFromImage(wximage)
 	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))

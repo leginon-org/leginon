@@ -1,10 +1,10 @@
+import icons
 import logging
 import launcher
 import threading
 import wx
 import wx.lib.scrolledpanel
 import gui.wx.Logging
-import os, sys
 
 CreateNodeEventType = wx.NewEventType()
 DestroyNodeEventType = wx.NewEventType()
@@ -182,7 +182,7 @@ class Panel(ListCtrlPanel):
 		self.Bind(EVT_CREATE_NODE_PANEL, self.onCreateNodePanel)
 
 	def addIcon(self, filename):
-		iconpath = os.path.join(sys.path[0], 'icons', filename + '.png')
+		iconpath = icons.getPath(filename + '.png')
 		image = wx.Image(iconpath)
 		bitmap = wx.BitmapFromImage(image)
 		self.iconmap[filename] = self.imagelist.Add(bitmap)
