@@ -253,12 +253,21 @@ class EM(node.Node):
 
 	def uiCallback(self, value=None):
 		if value is not None:
-			self.setEM(value)
-		return self.getEM(withoutkeys=['image data'])
+			if self.uistate is not None:
+				for key in self.uistate.keys():
+					if key in value and value[key] != self.uistate[key]:
+						print 'setting', key
+						self.setEM({key: value[key]})
+			else:
+				self.setEM(value)
+		emdict = self.getEM(withoutkeys=['image data'])
+		self.uistate = self.sortEMdict(emdict)
+		return emdict
 
 	def defineUserInterface(self):
 		nodespec = node.Node.defineUserInterface(self)
 
+		self.uistate = None
 		statespec = self.registerUIData('EM State', 'struct', permissions='rw', callback=self.uiCallback)
 
 		argspec = (self.registerUIData('Filename', 'string'),)
