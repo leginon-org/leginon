@@ -16,6 +16,7 @@ import wxImageViewer
 import wxDictTree
 import wxOrderedListBox
 import wxMaster
+import wxGridTray
 
 wxEVT_ADD_WIDGET = wxNewEventType()
 wxEVT_SET_WIDGET = wxNewEventType()
@@ -132,6 +133,8 @@ def WidgetClassFromTypeList(typelist):
 							if len(typelist) > 3:
 								if typelist[3] == 'sequence':
 									return wxListBoxWidget
+								elif typelist[3] == 'grid tray':
+									return wxGridTrayWidget
 							return entryWidgetClass([list, tuple])
 					return wxEntryWidget
 	raise ValueError('invalid type for widget')
@@ -697,6 +700,25 @@ class wxProgressWidget(wxDataWidget):
 	def destroy(self):
 		self.label.Destroy()
 		self.gauge.Destroy()
+
+class wxGridTrayWidget(wxDataWidget):
+	def __init__(self, name, parent, container, value, configuration):
+		wxDataWidget.__init__(self, name, parent, container, value, configuration)
+		self.sizer = wxBoxSizer(wxHORIZONTAL)
+		self.gridtray = wxGridTray.GridTrayPanel(parent, self.setServer)
+
+		self.set(value)
+
+		self.sizer.Add(self.gridtray)
+		self.sizer.SetItemMinSize(self.gridtray,
+															self.gridtray.gridtraybitmap.GetSize())
+		self.layout()
+
+	def setWidget(self, value):
+		self.gridtray.set(value)
+
+	def destroy(self):
+		self.gridtray.Destroy()
 
 class wxEntryWidget(wxDataWidget):
 	types = [str]

@@ -1,9 +1,9 @@
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
-#       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#			 The Leginon software is Copyright 2003
+#			 The Scripps Research Institute, La Jolla, CA
+#			 For terms of the license agreement
+#			 see	http://ami.scripps.edu/software/leginon-license
 #
 import time
 import sys
@@ -12,7 +12,6 @@ import data
 import uidata
 import event
 import threading
-import Queue
 
 class TestCommunications(object):
 	def __init__(self):
@@ -50,40 +49,6 @@ def validateGridNumber(gridnumber):
 		return True
 	else:
 		return False
-
-class GridQueue(Queue.Queue):
-  def __init__(self, callback, maxsize=0):
-    self.callback = callback
-    Queue.Queue.__init__(self, maxsize)
-
-  def _put(self, item):
-    Queue.Queue._put(self, item)
-    if callable(self.callback):
-      self.callback(self.queue)
-
-  def _get(self):
-    item = Queue.Queue._get(self)
-    if callable(self.callback):
-      self.callback(self.queue)
-    return item
-
-  def pause(self):
-    self.mutex.acquire()
-
-  def resume(self):
-    self.mutex.release()
-
-  def clear(self):
-    if not self.esema.acquire(0):
-      return
-    self.mutex.acquire()
-    was_full = self._full()
-    self.queue = []
-    if callable(self.callback):
-      self.callback(self.queue)
-    if was_full:
-      self.fsema.release()
-    self.mutex.release()
 
 class RobotNode(node.Node):
 	def __init__(self, id, session, nodelocations, **kwargs):
@@ -145,7 +110,7 @@ if sys.platform == 'win32':
 																							event.GridExtractedEvent]
 		def __init__(self, id, session, nodelocations, **kwargs):
 			RobotNode.__init__(self, id, session, nodelocations, **kwargs)
-			self.gridqueue = GridQueue(self.gridQueueCallback)
+			self.gridorder = []
 			self.gridnumber = None
 	
 			#self.communication = TestCommunications()
@@ -297,8 +262,9 @@ if sys.platform == 'win32':
 			gridnumber = -1
 			while not validateGridNumber(gridnumber):
 				try:
-					gridnumber = self.gridqueue.get(block=False)
-				except Queue.Empty:
+					gridnumber = self.gridorder.pop(0)
+					self.uigridtray.set(self.gridorder)
+				except IndexError:
 					raise GridQueueEmpty
 			return gridnumber
 
@@ -400,6 +366,7 @@ if sys.platform == 'win32':
 			self.extract()
 
 		def gridQueueCallback(self, value):
+			'''
 			gridstring = str(value[0])
 			lastvalue = value[0]
 			c = False
@@ -420,11 +387,13 @@ if sys.platform == 'win32':
 				gridstring += str(lastvalue)
 
 			self.uigridstring.set(gridstring)
+			'''
 
-		def uiAddGrid(self):
-			gridnumber = self.uigridnumber.get()
-			if validateGridNumber(gridnumber):
-				self.gridqueue.put(gridnumber)
+			self.uigridtray.set(value)
+
+		def uiGridTrayCallback(self, value):
+			self.gridorder = value
+			return value
 
 		def uiAddGridRange(self):
 			try:
@@ -434,16 +403,19 @@ if sys.platform == 'win32':
 				return
 			for gridnumber in gridrange:
 				if validateGridNumber(gridnumber):
-					self.gridqueue.put(gridnumber)
+					self.gridorder.append(gridnumber)
+			self.uigridtray.set(self.gridorder)
 
 		def uiDeleteGrid(self):
 			try:
-				self.gridqueue.get(block=False)
-			except Queue.Empty:
+				self.gridorder.pop()
+				self.uigridtray.set(self.gridorder)
+			except IndexError:
 				pass
 
 		def uiClearGridQueue(self):
-			self.gridqueue.clear()
+			self.gridorder = []
+			self.uigridtray.set(self.gridorder)
 
 		def setStatusMessage(self, message):
 			self.uistatusmessage.set(message)
@@ -457,21 +429,18 @@ if sys.platform == 'win32':
 		def defineUserInterface(self):
 			RobotNode.defineUserInterface(self)
 
-			self.uigridstring = uidata.String('Grids', [])
+			self.uigridtray = uidata.GridTray('Grids', [], 'rw',
+																				self.uiGridTrayCallback)
 			griddeletemethod = uidata.Method('Delete', self.uiDeleteGrid)
 			gridclearmethod = uidata.Method('Clear', self.uiClearGridQueue)
-
-			self.uigridnumber = uidata.Integer('Grid Number', None, 'rw')
-			gridaddmethod = uidata.Method('Add', self.uiAddGrid)
 
 			self.uigridrangestart = uidata.Integer('From Grid Number', None, 'rw')
 			self.uigridrangestop = uidata.Integer('To Grid Number', None, 'rw')
 			gridaddrangemethod = uidata.Method('Add Range', self.uiAddGridRange)
 
 			gridcontainer = uidata.Container('Grids')
-			gridcontainer.addObjects((self.uigridstring,
+			gridcontainer.addObjects((self.uigridtray,
 																griddeletemethod, gridclearmethod,
-																self.uigridnumber, gridaddmethod,
 																self.uigridrangestart, self.uigridrangestop,
 																gridaddrangemethod))
 

@@ -367,6 +367,9 @@ class Array(Data):
 		else:
 			return True
 
+class GridTray(Array):
+	typelist = Array.typelist + ('grid tray',)
+
 class Struct(Data):
 	typelist = Data.typelist + ('struct',)
 
