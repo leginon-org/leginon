@@ -195,6 +195,7 @@ class EM(node.Node):
 			'image shift',
 			'beam shift',
 			'defocus',
+			'reset defocus',
 			'intensity',
 		)
 		for key in order:
