@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/HoleFinder.py,v $
-# $Revision: 1.33 $
+# $Revision: 1.34 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-01 22:57:05 $
+# $Date: 2005-04-01 23:06:11 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -35,7 +35,7 @@ class Panel(gui.wx.TargetFinder.Panel):
 													'play',
 													shortHelpString='Submit Targets')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SUBMIT_QUEUE,
-													'send_queue',
+													'send_queue_out',
 													shortHelpString='Submit Queued Targets')
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, False)
 
