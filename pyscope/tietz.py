@@ -24,6 +24,57 @@ try:
 except ImportError:
 	pass
 
+class CameraControl(object):
+	def __init__(self):
+		self.camera = None
+		self.cameras = []
+
+	def addCamera(self, camera):
+		if camera in self.cameras:
+			raise ValueError
+
+		if not self.cameras:
+			self.initialize()
+
+		self.cameras.append(camera)
+
+	def removeCamera(self, camera):
+		self.cameras.remove(camera)
+
+		if not self.cameras:
+			self.uninitialize()
+
+	def initialize(self):
+		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
+
+		try:
+			self.camera = win32com.client.Dispatch('CAMC4.Camera')		
+		except pywintypes.com_error, e:
+			raise RuntimeError('failed to initialize interface CAMC4.Camera')
+
+		try:
+			ping = win32com.client.Dispatch('pyScope.CAMCCallBack')
+		except pywintypes.com_error, e:
+			raise RuntimeError('failed to initialize interface pyScope.Ping')
+
+		try:
+			hr = self.camera.RegisterCAMCCallBack(ping, 'EM')
+		except pywintypes.com_error, e:
+			raise RuntimeError('error registering callback COM object')
+
+		hr = self.camera.RequestLock()
+		if hr == win32com.client.constants.crDeny:
+			raise RuntimeError('error locking camera, denied lock')
+		elif hr == win32com.client.constants.crBusy:
+			raise RuntimeError('error locking camera, camera busy')
+		elif hr == win32com.client.constants.crSucceed:
+			pass
+
+	def uninitialize(self):
+		cameracontrol.camera.UnlockCAMC()
+
+cameracontrol = CameraControl()
+
 class Tietz(object):
 	cameratype = None
 	mmname = ''
@@ -83,33 +134,10 @@ class Tietz(object):
 		self.exposuretime = 500
 		self.exposuretype = 'normal'
 
-		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
+		cameracontrol.addCamera(self)
 
 		try:
-			self.camera = win32com.client.Dispatch('CAMC4.Camera')		
-		except pywintypes.com_error, e:
-			raise RuntimeError('failed to initialize interface CAMC4.Camera')
-
-		try:
-			ping = win32com.client.Dispatch('pyScope.CAMCCallBack')
-		except pywintypes.com_error, e:
-			raise RuntimeError('failed to initialize interface pyScope.Ping')
-
-		try:
-			hr = self.camera.RegisterCAMCCallBack(ping, 'EM')
-		except pywintypes.com_error, e:
-			raise RuntimeError('error registering callback COM object')
-
-		hr = self.camera.RequestLock()
-		if hr == win32com.client.constants.crDeny:
-			raise RuntimeError('error locking camera, denied lock')
-		elif hr == win32com.client.constants.crBusy:
-			raise RuntimeError('error locking camera, camera busy')
-		elif hr == win32com.client.constants.crSucceed:
-			pass
-
-		try:
-			hr = self.camera.Initialize(self.cameratype, 0)
+			hr = cameracontrol.camera.Initialize(self.cameratype, 0)
 		except pywintypes.com_error, e:
 			raise RuntimeError('error initializing camera')
 
@@ -162,7 +190,6 @@ class Tietz(object):
 			'retractable': {'get':'getRetractable'},
 			'camera axis': {'get':'getCameraAxis'},
 			'speed table gain switch': {'set': 'setUseSpeedTableForGainSwitch'},
-			'dump': {'set': 'dumpImage', 'get': 'getDump'},
 		}
 
 		self.typemapping = {
@@ -236,7 +263,8 @@ class Tietz(object):
 			parameter = getattr(win32com.client.constants, parametername)
 		except:
 			return ''
-		value = self.camera.QueryParameter(parameter)
+		cameracontrol.camera.ActiveCamera = self.cameratype
+		value = cameracontrol.camera.QueryParameter(parameter)
 		if value in (5, 9):
 			return 'r'
 		elif value in (6, 10):
@@ -250,7 +278,8 @@ class Tietz(object):
 			parameter = getattr(win32com.client.constants, parametername)
 		except:
 			return None
-		value = self.camera.QueryParameter(parameter)
+		cameracontrol.camera.ActiveCamera = self.cameratype
+		value = cameracontrol.camera.QueryParameter(parameter)
 		if value in (5, 6, 7):
 			return int
 		elif value in (9, 10, 11):
@@ -265,10 +294,11 @@ class Tietz(object):
 			parameter = getattr(win32com.client.constants, parametername)
 		except:
 			return None
+		cameracontrol.camera.ActiveCamera = self.cameratype
 		if parametertype is int:
-			return self.camera.LParam(parameter)
+			return cameracontrol.camera.LParam(parameter)
 		elif parametertype is str:
-			return self.camera.SParam(parameter)
+			return cameracontrol.camera.SParam(parameter)
 		return None
 
 	def _setParameterValue(self, parametername, value):
@@ -279,18 +309,20 @@ class Tietz(object):
 			parameter = getattr(win32com.client.constants, parametername)
 		except:
 			return None
+		cameracontrol.camera.ActiveCamera = self.cameratype
 		if parametertype is int:
-			return self.camera.SetLParam(parameter, value)
+			return cameracontrol.camera.SetLParam(parameter, value)
 		elif parametertype is str:
-			return self.camera.SetSParam(parameter, value)
+			return cameracontrol.camera.SetSParam(parameter, value)
 		return None
 
 	def exit(self):
-		self.camera.UnlockCAMC()
+		cameracontrol.camera.UnInitialize(self.cameratype)
+		cameracontrol.removeCamera(self)
 
 	def __del__(self):
 		try:
-			self.camera.UnlockCAMC()
+			self.exit()
 		except:
 			pass
 	
@@ -349,15 +381,6 @@ class Tietz(object):
 			raise ValueError('invalid exposure type')
 		self.exposuretype = value
 
-	def dumpImage(self, value):
-		if not value:
-			return
-		## could this be fast if we force a large binning on it?
-		hr = self.camera.AcquireReadout(0)
-
-	def getDump(self):
-		return False
-	
 	def getImage(self):
 		# {'type': numarray.ArrayType}
 		# 0 uses internal flash signal
@@ -387,19 +410,21 @@ class Tietz(object):
 			offset['x'] = offset['y']
 			offset['y'] = camerasize['x']/binning['x'] - offset['x'] - dimension['x']
 
-		hr = self.camera.Format(offset['x']*binning['x'], offset['y']*binning['y'],
+		cameracontrol.camera.ActiveCamera = self.cameratype
+		hr = cameracontrol.camera.Format(
+														offset['x']*binning['x'], offset['y']*binning['y'],
 														dimension['x'], dimension['y'],
 														binning['x'], binning['y'])
 
 		exposuretype = self.getExposureType()
 		if exposuretype == 'normal':
-			hr = self.camera.AcquireImage(self.getExposureTime(), 0)
+			hr = cameracontrol.camera.AcquireImage(self.getExposureTime(), 0)
 		elif exposuretype == 'dark':
-			hr = self.camera.AcquireDark(self.getExposureTime(), 0)
+			hr = cameracontrol.camera.AcquireDark(self.getExposureTime(), 0)
 		elif exposuretype == 'bias':
-			hr = self.camera.AcquireBias(0)
+			hr = cameracontrol.camera.AcquireBias(0)
 		elif exposuretype == 'readout':
-			hr = self.camera.AcquireReadout(0)
+			hr = cameracontrol.camera.AcquireReadout(0)
 		else:
 			raise ValueError('invalid exposure type for image acquisition')
 
