@@ -8,14 +8,16 @@ import scopedict
 import tecnai
 import cameradict
 import tietz
+import gatan
 import emserver
 import client
 
 if __name__ == '__main__':
-    pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
+#    pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
     rpcscope = emserver.makeserver(scopedict.factory(tecnai.tecnai),
                               socket.gethostname(), 8000)
-    rpccamera = emserver.makeserver(cameradict.factory(tietz.tietz),
+    rpccamera = emserver.makeserver(cameradict.factory(gatan.gatan),
+#    rpccamera = emserver.makeserver(cameradict.factory(tietz.tietz),
                               socket.gethostname(), 8001)
     scopethread = threading.Thread(None, rpcscope.serve_forever, None, (), {})
     camerathread = threading.Thread(None, rpccamera.serve_forever, None, (), {})
