@@ -47,7 +47,7 @@ class CameraFuncs(object):
 		if self.correctedimageref is not None:
 			return self.correctedimageref['data']
 
-	def acquireCameraImageData(self, correction=True):
+	def acquireCameraImageData(self, correction=True, temp=False):
 		'''
 		Acquire data from the camera, optionally corrected
 		'''
@@ -65,7 +65,11 @@ class CameraFuncs(object):
 			### move image to its own key
 			numimage = camdata['image data']
 			camdata['image data'] = None
-			imdata = data.CameraImageData(session=self.node.session, image=numimage, scope=scopedata, camera=camdata)
+			if temp:
+				hold = False
+			else:
+				hold = None
+			imdata = data.CameraImageData(hold=hold, session=self.node.session, image=numimage, scope=scopedata, camera=camdata)
 		return imdata
 
 	def setCameraDict(self, camdict):
