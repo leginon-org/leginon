@@ -1,0 +1,32 @@
+#!/bin/sh 
+
+cmd=`basename $0`
+if [ $# -eq 0 ]; then
+  echo Usage: $cmd [Experiment] 
+  exit 127
+fi
+
+q="SELECT MicroscopeID , SpecimenID , Prefix , Operator , BeginTime , EndTime , Purpose , Results , HighTension , ImagePath , SquareSize , HoleSize , TargetSize , SquareSelected FROM ExperimentInfo WHERE 1 AND Prefix='$1';"
+result=`echo $q | mysql -h cronus1 -N -B -u anonymous leginon` 
+
+if [ "$result" != "" ]; then
+
+#check if experiment already in particle database
+checkquery="SELECT experimentId from experiment where Prefix='$1';"
+check=`echo $checkquery | mysql -h cronus1 -N -B -u anonymous particle` 
+
+	if [ "$check" != "" ]; then
+	  echo "$1 already in particle database"
+	  exit 127
+	else
+	  newquery=`echo $q | mysql -h cronus1 -N -B -u anonymous leginon | sed -e "s/	/MYSEPARATOR/g" | awk -F MYSEPARATOR '{ print "INSERT INTO experiment (MicroscopeID , SpecimenID , Prefix , Operator , BeginTime , EndTime , Purpose , Results , HighTension , ImagePath , SquareSize , HoleSize , TargetSize , SquareSelected) VALUES ("$1", "$2", \""$3"\", \""$4"\", \""$5"\", \""$6"\", \""$7"\", \""$8"\", \""$9"\", \""$10"\", "$11", "$12", "$13", "$14");" }'`
+
+	  expId=`echo $newquery";select LAST_INSERT_ID();" | mysql -h cronus1 -N -B -u anonymous particle`
+	  imagequeries=`dbemlist -i exp2 -f mrc $1 | awk '{print "insert into image (experimentId, name) values ('$expId',\""$1"\");" }'`
+	  echo $imagequeries | mysql -h cronus1 -N -B -u anonymous particle
+	  echo "$1 inserted into particle database"
+	fi
+else
+  echo "$1 is not a valid experiment"
+  exit 127
+fi

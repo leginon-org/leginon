@@ -1,0 +1,136 @@
+#!/bin/sh 
+
+cmd=`basename $0`
+if [ $# -eq 0 ]; then
+  echo Usage: $cmd [option] [Experiment] 
+  echo "'$cmd -h' for more information"
+  exit 127
+fi
+
+while [ "$1" != "" ];    
+ do                                
+   case $1                        
+   in
+     -h)   echo "Usage: $cmd [OPTION] [EXPERIMENT]";
+           echo "";
+           echo "Examples:";
+           echo "   - Count all extracted filament from 00nov28b:";
+           echo "     $cmd 00nov28b -T";
+           echo "   - List all extracted filament from 00nov28b:";
+           echo "     $cmd 00nov28b";
+           echo "   - List all good extracted filament from exp2 images from 00nov28b in mrc format:";
+           echo "     $cmd -f mrc -i exp2 -c good 00nov28b";
+           echo "";
+           echo "Options:";
+           echo "";
+           echo "   -c [VALUE]";
+           echo "           [good]       select good checked images";
+           echo "           [split]      select split checked filament images";
+           echo "           [bad]        select bad checked images";
+           echo "";
+           echo "   -i [IMAGE]";
+           echo "           [exp]     select Exposures 1 & 2 Images";
+           echo "           [exp1]    select Exposures 1 Images";
+           echo "           [exp2]    select Exposures 2 Images";
+           echo "";
+           echo "   -q	   Display the query ";
+           echo "";
+           echo "   -s [Session Number]";
+           echo "           [1]       session 1 extracted filament";
+           echo "";
+           echo "   -T	    return total# of selected image";
+           echo "";
+           echo "";
+           exit;;
+     -i)   img=$2;                      
+              if [ $# -lt 2 ];
+              then shift;
+              else shift 2;
+              fi;;                      
+     -T)   total=1;
+              shift;;
+     -q)   displayq=1;
+              shift;;
+     -c)   checkval=$2;                        
+              if [ $# -lt 2 ];
+              then shift;
+              else shift 2;
+              fi;;                      
+     -s)   session=$2;                        
+              if [ $# -lt 2 ];
+              then shift;
+              else shift 2;
+              fi;;                      
+      *)   experiment=$1;  shift;;                      
+   esac
+ done
+
+q="select ExperimentId from ExperimentInfo where Prefix='$experiment';"
+expId=`echo $q | mysql -h cronus1 -N -B -u anonymous leginon`
+
+if [ "$expId" != "" ]; then
+
+if [ "$experiment" = '' ]; then
+  echo "Usage: $cmd [option] [Experiment]" 
+  echo "$cmd -h for more information"
+  exit 127
+fi
+
+if [ "$img" != "" ]
+ then
+  case $img
+  in
+       exp) cond="and m.specimen<>0 and m.exposure<>0";;
+      exp1) cond="and m.specimen<>0 and m.exposure=1";;
+      exp2) cond="and m.specimen<>0 and m.exposure=2";;
+         *) echo "Option -i [$img] not one of  [exp, exp1, exp2]"; 
+            exit 127;;
+  esac
+else
+            cond=""
+fi
+
+if [ "$checkval" != "" ]
+ then
+  case $checkval
+  in
+       good) check="and c.type=1";;
+       split) check="and c.type=2";;
+       bad) check="and c.type=3";;
+       *) echo "Option -c [$format] not one of  [good, split, bad]"; 
+         exit 127;;
+  esac
+else
+            check=""
+fi
+                        
+if [ "$session" = "" ]
+then session="1"
+fi
+
+if [ "$total" != "" ]
+then
+
+q="select count(f.filamentId) from filament f left join ImageInfo m on (m.filenameId=f.filenameId) left join CheckFilament c on (c.FilamentID=f.FilamentID) where f.ExperimentId='$expId' and f.session='$session' $check $cond ";
+
+ else
+
+q="select f.filamentImg from filament f left join ImageInfo m on (m.filenameId=f.filenameId) left join CheckFilament c on (c.FilamentID=f.FilamentID) where f.ExperimentId='$expId' and f.session='$session' $check $cond order by f.filamentImg DESC ";
+fi
+
+if [ "$displayq" != "" ]
+then
+echo ""
+echo $q 
+echo ""
+fi
+echo $q | mysql -h cronus1 -N -B -u anonymous leginon
+else
+if [ "$experiment" != "" ]
+then
+echo "$experiment is not a valid Experiment"
+else
+echo "Enter a valid Experiment"
+fi
+echo ""
+fi

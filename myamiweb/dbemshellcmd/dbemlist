@@ -1,0 +1,168 @@
+#!/bin/sh 
+
+cmd=`basename $0`
+if [ $# -eq 0 ]; then
+  echo Usage: $cmd [option] [Experiment] 
+  echo "'$cmd -h' for more information"
+  exit 127
+fi
+
+while [ "$1" != "" ];    
+ do                                
+   case $1                        
+   in
+     -h)   echo "Usage: $cmd [OPTION] [EXPERIMENT]";
+           echo "List or count any type of images from EXPERIMENT";
+           echo "Examples:";
+           echo "   - Count all images from 00nov28b:";
+           echo "     $cmd 00nov28b -T";
+           echo "   - List all images from 00nov28b:";
+           echo "     $cmd 00nov28b";
+           echo "   - List all bad exposure 2 images from 00nov28b in mrc format:";
+           echo "     $cmd -f mrc -i exp2 -c bad 00nov28b";
+           echo "";
+           echo "Options:";
+           echo "   -c [VALUE]";
+           echo "           [good]    select 'good' checked images";
+           echo "           [ok]      select 'ok' checked images";
+           echo "           [bad]     select 'bad' checked images";
+           echo "";
+           echo "   -f [FORMAT]";
+           echo "           [all]     select all format Images, DEFAULT value";
+           echo "           [jpg]     select jpg format Images";
+           echo "           [mrc]     select mrc format Images";
+           echo "";
+           echo "   -i [IMAGE]";
+           echo "           [all]     select all Images, DEFAULT value";
+           echo "           [square]  select Square Images";
+           echo "           [hole]    select Hole Images ";
+           echo "           [exp]     select Exposures 1 & 2 Images";
+           echo "           [exp1]    select Exposures 1 Images";
+           echo "           [exp2]    select Exposures 2 Images";
+           echo "";
+           echo "   -q	   Display the query ";
+           echo "";
+           echo "   -t [TYPE]";
+           echo "           [r]       raw images, DEFAULT value";
+           echo "           [f]       focus images";
+           echo "           [p]       power spectrum images";
+           echo "           [fp]      power spectrum from focus images";
+           echo "";
+           echo "   -T	  return total# of selected image";
+           echo "";
+           exit;;
+     -f)   format=$2; 
+              if [ $# -lt 2 ];
+              then shift;
+              else shift 2;
+              fi;;                      
+     -i)   img=$2;                      
+              if [ $# -lt 2 ];
+              then shift;
+              else shift 2;
+              fi;;                      
+     -T)   total=1;
+              shift;;
+     -q)   displayq=1;
+              shift;;
+     -t)   type=$2;
+              if [ $# -lt 2 ];
+              then shift;
+              else shift 2;
+              fi;;                      
+     -c)   checkval=$2;                        
+              if [ $# -lt 2 ];
+              then shift;
+              else shift 2;
+              fi;;                      
+      *)   experiment=$1;  shift;;                      
+   esac
+ done
+
+q="select ExperimentId from ExperimentInfo where Prefix='$experiment';"
+expId=`echo $q | mysql -h cronus1 -N -B -u anonymous leginon`
+
+if [ "$expId" != "" ]; then
+
+if [ "$type" != "" ]
+ then
+  case $type
+  in
+        r) type="";;
+        f) type="foc";;
+        p) type="pow";;
+       fp) type="foc.pow";;
+        *) echo "Option -t [$type] not one of  [r, f, p, fp]"; 
+           exit 127;;
+  esac
+else
+ type=""
+fi
+
+if [ "$format" != "" ]
+ then
+  case $format
+  in
+    all) format="";;
+    jpg) format="and format='jpg'";;
+    mrc) format="and format='mrc'";;
+      *) echo "Option -f [$format] not one of  [all, jpg, mrc]"; 
+         exit 127;;
+  esac
+else
+ format=""
+fi
+
+if [ "$img" != "" ]
+ then
+  case $img
+  in
+       all) cond="";;
+    square) cond="and m.square<>0 and m.hole=0";;
+      hole) cond="and m.square<>0 and m.hole<>0 and m.specimen=0";;
+       exp) cond="and m.specimen<>0 and m.exposure<>0";;
+      exp1) cond="and m.specimen<>0 and m.exposure=1";;
+      exp2) cond="and m.specimen<>0 and m.exposure=2";;
+         *) echo "Option -i [$img] not one of  [all, square, hole, exp, exp1, exp2]"; 
+            exit 127;;
+  esac
+else
+            cond=""
+fi
+
+if [ "$checkval" != "" ]
+ then
+  case $checkval
+  in
+       good) check="and c.type=1";;
+       ok) check="and c.type=2";;
+       bad) check="and c.type=3";;
+       *) echo "Option -c [$format] not one of  [good, ok, bad]"; 
+  esac
+else
+       check=""
+fi
+                        
+if [ "$total" != "" ]
+then
+q="select count(m.filenameId) from ImageInfo m left join Check c on (m.ExperimentId=c.ExperimentId and m.square=c.square and m.hole=c.hole and m.specimen=c.specimen and m.exposure=c.exposure) where m.ExperimentId='$expId' $check and m.type='$type' $format $cond;"
+else
+q="select m.filename from ImageInfo m left join Check c on (m.ExperimentId=c.ExperimentId and m.square=c.square and m.hole=c.hole and m.specimen=c.specimen and m.exposure=c.exposure) where m.ExperimentId='$expId' $check and m.type='$type' $format $cond;"
+fi
+
+if [ "$displayq" != "" ]
+then
+echo ""
+echo $q 
+echo ""
+fi
+echo $q | mysql -h cronus1 -N -B -u anonymous leginon
+else
+if [ "$experiment" != "" ]
+then
+echo "$experiment is not a valid Experiment"
+else
+echo "Enter a valid Experiment"
+fi
+echo ""
+fi

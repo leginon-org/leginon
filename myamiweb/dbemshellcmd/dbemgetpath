@@ -1,0 +1,15 @@
+#!/bin/sh 
+cmd=`basename $0`
+experiment=$1
+
+q="select Prefix from ExperimentInfo where Prefix like '%$experiment';"
+exp=`echo $q | mysql -h cronus1 -N -B -u anonymous leginon`
+
+if [ "$exp" = "" ]; then
+  echo Usage: $cmd [Experiment]
+  echo wild card:'%'  example: $cmd 00nov% 
+  exit 127
+else
+q="select Prefix as Experiment, ImagePath as Path from ExperimentInfo where Prefix like '%$1';"
+echo $q | mysql -h cronus1 -N -B -u anonymous leginon
+fi

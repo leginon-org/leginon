@@ -1,0 +1,98 @@
+#gradientDiv {
+/*/*/
+	position:relative;
+	z-index:"-1";
+	left:0; top:2;
+	height:15; width:255; border-style:solid;
+	border-width:1; border-color:black;
+	background-repeat:no-repeat;
+/* ns4. */
+}
+
+#divstyle{
+/*/*/
+	background-color:white;
+/* ns4. */
+}
+
+#adjust #filenametext{
+/*/*/
+ padding: 3px 4px;
+ border: 0px solid #FFF;
+/*  ns4. */
+}
+
+#adjust #coord {
+/*/*/
+ padding: 3px 4px;
+ border: 1px solid #3366aa;
+ width: 70px;
+/*  ns4. */
+}
+
+#adjust #list {
+/*/*/
+ border: inset 0px #3366aa;
+/*  ns4. */
+}
+
+#adjust #type {
+/*/*/
+ border: 0px solid #3366aa;
+/*  ns4. */
+}
+
+#adjust #min {
+/*/*/
+ padding: 3px 4px;
+ border: 1px solid #3366aa;
+ width: 35px;
+/*  ns4. */
+}
+
+#adjust #max {
+/*/*/
+ padding: 3px 4px;
+ border: 1px solid #3366aa;
+ width: 35px;
+/*  ns4. */
+}
+
+#adjust #updatebutton {
+ background: #3366aa;
+ color: #ffffff;
+ font-weight: bold;
+/*/*/
+ border: 1px outset #bdcebb;
+ font-size: 10px;
+ voice-family: "\"}\"";
+ voice-family: inherit;
+ padding: 3px 4px;
+/*  ns4. */
+}
+
+#adjust #backbutton {
+ background: #3366aa;
+ color: #ffffff;
+ font-weight: bold;
+/*/*/
+ border: 1px outset #bdcebb;
+ font-size: 10px;
+ voice-family: "\"}\"";
+ voice-family: inherit;
+ padding: 3px 4px;
+/*  ns4. */
+}
+
+#adjust #nextbutton {
+ background: #3366aa;
+ color: #ffffff;
+ font-weight: bold;
+/*/*/
+ border: 1px outset #bdcebb;
+ font-size: 10px;
+ voice-family: "\"}\"";
+ voice-family: inherit;
+ padding: 3px 4px;
+/*  ns4. */
+}

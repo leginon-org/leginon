@@ -1,0 +1,13 @@
+#!/bin/sh 
+cmd=`basename $0`
+filename=$1
+
+if [ "$1" = "" ]; then
+  echo Usage: $cmd [Filename]
+  echo wild card:'%'  example: $cmd 00nov28b.001.% 
+  exit 127
+else
+q="select i.filename, p.defocus from ImageInfo i natural left join Presets p where i.format='mrc' and  i.filename like '$1%';"
+echo $q | mysql -h cronus1 -N -B -u anonymous leginon
+fi
+

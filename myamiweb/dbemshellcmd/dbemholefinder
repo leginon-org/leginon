@@ -1,0 +1,77 @@
+#!/bin/sh 
+
+cmd=`basename $0`
+if [ $# -eq 0 ]; then
+  echo Usage: $cmd [option] [filename] 
+  echo "'$cmd -h' for more information"
+  exit 127
+fi
+select=""
+while [ "$1" != "" ];    
+ do                                
+   case $1                        
+   in
+     -h)   echo "Usage: $cmd [option] [filename]";
+           echo "List Holefinder information for a filename";
+           echo "Examples:";
+           echo "     $cmd 02may02b.001";
+           echo "";
+           echo "Options:";
+           echo "   -N	   Hide the Header";
+           echo "";
+           echo "   -b	   Display the Bright value";
+           echo "";
+           echo "   -d	   Display the Dark value";
+           echo "";
+           echo "   -tm	   Display the ThickMin value";
+           echo "";
+           echo "   -tM	   Display the ThickMax value";
+           echo "";
+           echo "   -tdev  Display the ThickStdev value";
+           echo "";
+           echo "";
+           exit;;
+     -N)   header='-N';
+		shift;;
+     -b)   bright='Bright';
+		if [ "$select" != "" ]; then select="$select, Bright"; else select=$bright; fi;
+		shift;;
+     -d)   dark='Dark';
+		if [ "$select" != "" ]; then select="$select, Dark"; else select=$dark; fi;
+		shift;;
+     -tm)  tm='ThickMin';
+		if [ "$select" != "" ]; then select="$select, ThickMin"; else select=$tm; fi;
+		shift;;
+     -tM)  tM='ThickMax';
+		if [ "$select" != "" ]; then select="$select, ThickMax"; else select=$tM; fi;
+		shift;;
+     -tdev)  tdev='ThickStdev';
+		if [ "$select" != "" ]; then select="$select, ThickStdev"; else select=$tdev; fi;
+		shift;;
+      *)   filename=$1;
+		shift;;                      
+   esac
+ done
+
+if [ "$select" = "" ]
+then 
+select='Bright, Dark, ThickMin, ThickMax, ThickStdev'
+fi
+
+q="select distinct experimentId, square from ImageInfo where filename like '$filename%' order by square;"
+info=`echo $q | mysql -h cronus1 -N -B -u anonymous leginon`
+
+expId=`echo $info | awk '{ print $1 }'`
+square=`echo $info | awk '{ print $2 }'`
+prefix=`echo $info | awk '{ print $3 }'`
+
+if [ "$info" != "" ]; then
+	if [ "$square" = "" -o  "$square" = "0" ]; then
+		square="%"
+	fi
+	q="select distinct square, $select from HoleFinder where experimentId='$expId' and square like '$square' order by square;"
+	echo $q | mysql -h cronus1 $header -B -u anonymous leginon
+else
+	echo "Wrong filename"
+fi
+

@@ -1,0 +1,16 @@
+#!/bin/sh
+cmd=`basename $0`
+echo "$cmd: Display the current experiment events"
+echo "'ctrl-c' to quit"
+echo ""
+while [ 0 ]
+do
+q="select Event from Event order by EventId DESC limit 1;"
+result=`echo $q | mysql -h cronus1 -N -B -u anonymous leginon`
+if [ "$oldresult" != "$result" ] 
+then
+oldresult=$result
+echo "$result"
+fi
+sleep 1
+done

@@ -1,0 +1,1330 @@
+#!/usr/bin/perl 
+
+## vim: set fdm=marker: ###
+
+# {{{ header
+# Leginon database archiver
+#
+# $Id: dbem2dmf,v 1.1 2003-10-09 20:58:28 dfellman Exp $
+#
+# @usage@ -- Do not remove this line -- @usage@
+#
+#  Usage: dbem2dmf -p [-d][-n][-f][-q][-c conf] dbpath_1 [dbpath_2 ...]
+#         dbem2dmf -r [-d][-n][-q][-c conf] db_1 path_1 [db_2 path_2 ...]
+#         dbem2dmf -l [-d][-n][-c conf] [db_1 [db_2 ...]]
+#         dbem2dmf -w [-d][-n][-q][-c conf]
+#         dbem2dmf -h|-s|-v [-d][-c conf]
+#
+#  Options:
+#   -c:  Specify alternate config. file (default is /ami/sw/etc/dbem2dmf.conf)
+#   -d:  Include debug information in output (use twice for even more)
+#   -f:  Force archiving even if dataset is not "scheduled" in the database
+#   -h:  Displays this message
+#   -l:  List datasets in DMF, or contents of specified dataset(s)
+#        Use this flag twice to get listing of each tarfile in dataset(s)
+#   -n:  Fake run - report DMF and mysql calls without actually performing them
+#   -p:  Deposit data into DMF
+#   -q:  Run quietly - only report errors
+#   -r:  Retrieve data from DMF
+#   -s:  Display datasets scheduled for archival
+#   -v:  Show version and exit
+#   -w:  "Walk" database list of datasets and archive next scheduled dataset
+#
+# @usage@ -- Do not remove this line -- @usage@
+#
+# @version@ -- Do not remove this line -- @version@
+# Version 1.3.2
+#
+# @format@ -- Do not remove this line -- @format@
+# Format 1.1
+#
+#
+#
+# Requires: DMF  
+# However the hardware may change, pray that the interface 
+# (i.e. the dmf command itself) does not, or this program is a large pile of
+# useless electrons.  Use of this command requires two things besides DMF
+# itself: (1) this command must be run by user 'run_as' (set in configuration
+# file) and (2) this command must be run on host 'run_on' (also set in the
+# configuration file).
+#
+#
+# Requires: MySQL 
+# MySQL host, database and username are specified in the configuration
+# file.  Version 1.0 did not require access to the database, but as of version
+# 1.2 it does, to keep database prefixes and imagepath information correct.
+#
+#
+# Requires: dbemupdatepath
+# Since MySQL is required, dbem2dmf automatically updates the dataset path
+# in the database via this command (dbemupdatepath).  Only when a dataset
+# is taken offline does the path change, and again of course when a dataset
+# which was offline is restored.  Since version 1.2 dbem2dmf requires this 
+# command.
+# }}}
+
+
+##################################  Main  ####################################
+
+# {{{ Initialize
+use POSIX;		# localtime()
+use File::stat;		# stat()
+use DBI;		# MySQL interface
+
+($rundir,$me)   = &parsefilename($0);
+$dftconfig      = "/ami/sw/etc/$me.conf";	# Default configuration file
+$dbemupdatepath = "/ami/sw/bin/dbemupdatepath";
+$dbem2dmf_rlock = "/tmp/$me.restore.lock";
+$dbem2dmf_alock = "/tmp/$me.archive.lock";
+$configfile     = $dftconfig;
+$reportfile     = $me . "_report.txt";		# Our report (long) will be 
+$listfile       = $me . "_list.txt";		# archived, as will our list
+$myversion      = "N/A";
+$myformat       = "N/A";
+$dbstatus       = 0;
+$force          = 0;
+$fake           = 0;
+$list           = 0;
+$debug          = 0;
+$archive        = 0;
+$runsilent      = 0;
+$retrieve       = 0;
+$walk           = 0;
+$zap            = 0;
+
+### Set up a hash of possible comand line arguments
+%options = ( 
+             c => '{ $configfile = shift; }',	# specify a config. file)
+             d => '{ $debug++; }',		# debug, use twice for more info
+             f => '{ $force++; }',		# force archival
+             h => '{ &usage;
+                     exit 1 }',			# usage info
+             l => '{ $list++; }',		# ACTION: list DMF archive(s)
+             n => '{ $fake++; }',		# fake run - no DMF/SQL updates
+             p => '{ $archive++; }',		# ACTION: place into DMF
+             q => '{ $runsilent++; }',		# quiet unless we hit an error
+             r => '{ $retrieve++; }',		# ACTION: retrieve from DMF
+             s => '{ $dbstatus++; }',		# ACTION: database status
+             t => '{ &parse_type(shift); }',	# --- unused for now --
+             v => '{ &get_version;
+                     print "$myversion\n";
+                     exit 1 }',			# ACTION: version information
+             w => '{ $walk++; }',		# ACTION: archive next dataset
+             z => '{ $zap++ }',			# ACTION: zap online dataset
+           );
+
+### Last thing to initialize - remember where we parked!
+chomp($start_dir = `pwd`);
+
+
+# }}}
+# {{{ Parse command line
+if ($#ARGV < 0) {
+   &usage;
+   exit 1;
+}
+
+while ($_ = shift) {				# Examine each command line arg
+   chomp;
+   if (/^-/) {					# Find flags (begin with '-')
+      s/^-//;					# Strip off the leading '-'
+      foreach $a (split '') {			# Split into individual letters
+         if ($options{$a}) {
+            eval $options{$a};			# Evaluate valid option hashes
+         } else {
+            &usage;				# Flag invalid option and exit
+            print "$me: invalid argument '$a'\n";
+            exit 1;
+         }
+      }
+   } else {
+      push @dbname,$_;				# Not a switch, must be a db
+   }
+}
+ 
+if (! $list && ! $walk && ! $dbstatus && $#dbname < 0) {
+   die "$me: You need to specify at least one database path.\n";
+}
+
+# }}}
+# {{{ Get to work
+&get_version;					# Store our version for later
+&load_config;					# Parse configuraton file
+
+# Make sure DMF and MySQL are both available.  
+&dmf_is_ok   || die "$me: Aborting - DMF unavailable\n";
+&mysql_is_ok || die "$me: Aborting - MySQL unavailable\n";
+
+
+# NOTE:  None of these functions return!  It's an "either-or" situation
+$archive  && &archive;
+$retrieve && &retrieve;
+$list     && &archivelist;
+$walk     && &walk;
+$zap      && &zap;
+
+# This one should be last for clarity, since it does return.  It has to 
+# since the walk() subroutine uses it to find valid datasets to archive.  
+# dbstatus() checks the $dbstatus flag (-s command option) and reports on 
+# datasets ready for archiving if true, or pushes them onto a stack if false.  
+# The walk() routine sets dbstatus to 0 explicitly before calling dbstatus();
+$dbstatus && &dbstatus;
+
+exit 0;
+
+# }}}
+
+##############################  Subroutines  #################################
+
+# {{{ archive
+### Archive data to DMF
+sub archive {
+
+   &lockfile("archive", "on");
+
+   # Iterate over each valid dataset
+   foreach $db (@dbname) {
+      my (@tarentries, @fileentries);
+
+      chomp($thedate = `date`);
+      print "*** Archiving $db at $thedate\n" unless $runsilent;
+      my $report = "";		# Long list of files (tarfiles expanded)
+      my $list   = "";		# Short list of files 
+
+      my ($dbpath, $dmfdbname) = &getdbfilename($db);
+      $debug && print "$db located in: $dbpath\n";
+
+      # Skip if it's not in the database, already archived, or whatever
+      if (! ($dmfdbname = &checkdb($dmfdbname)) ) {
+         next;
+      }
+
+      # Parse the dbname to decide where in DMF it goes (toplevel/year/month)
+      my ($year,$month) = &parsedbdate($dmfdbname);
+      my $dmftoplevel = "$dmf{home}/$year/$month/$dmfdbname";
+      my $dmfpathfordb = "$year/$month/$dmfdbname";
+
+      # Make the prerequisite directory
+      my $dmfcmd  = "$dmf{command} mkdir -p $dmftoplevel";
+      &exec_dmf_command($dmfcmd) || die "$me: DMF error $?:\n$retval\n";
+
+      # Error: Can't chdir() to our dataset directory?  Better skip this set
+      if (! chdir $dbpath) { 
+         print "Skipping $db ($dbpath) ($!)\n";
+         next;
+      }
+      chomp(my $toplevel = `pwd`);
+
+      # Build list of directories so we can mirror it in DMF
+      my @dirlist = `find . -type d -print`;
+      my $dmfcmd  = "$dmf{command} mkdir -p $dmftoplevel";
+      foreach $entry (@dirlist) {
+         $skip = 0;
+         chomp $entry;
+         foreach $item (@excludes) {
+            if ($entry =~ /$item/) {
+               $debug > 2 && print "Excluding: $entry (matches $item)\n";
+               $skip++;
+               last;
+            }
+         }
+         next if $skip;
+         my $dmfcmd  = "$dmf{command} mkdir -p $dmftoplevel/$entry";
+         &exec_dmf_command($dmfcmd) || die "$me: DMF error $?:\n$retval\n";
+      }
+
+      # Now build a list of files 
+      my @filelist = `find . -type f -print`;
+      foreach $entry (@filelist) {
+         $skip = 0;
+         chomp $entry;
+         foreach $item (@excludes) {
+            if ($entry =~ /$item/) {
+               $skip = 1;
+               $debug > 2 && print "Excluding: $entry (matches $item)\n";
+               # Matched on exclude list.  Now can we find this on the
+               # include list (which overrides excludes)
+               foreach $incl (@includes) {
+                  if ($entry =~ /$incl/) {
+                     $skip = 0;
+                     $debug > 2 && print "Including: $entry (matches $incl)\n";
+                     last;
+                  }
+               }
+               last;
+            }
+         }
+         next if $skip;
+         my $stat = stat($entry);
+         if ($stat->size < $maxfilesize) {
+            push @tarentries, $entry;
+         } else {
+            push @fileentries, $entry;
+         }
+      }
+
+      @fileentries = sort @fileentries;
+      @tarentries  = sort @tarentries;
+
+      # Korn shell commands on IRIX (our DMF server) croak somewhere above 
+      # about 4040 (4096?) characters.  So we process our list of files to be 
+      # archived in batches of 4000 characters (including dmf command):
+      $n = 1;
+      while ($#tarentries >= 0) {
+         my $archivename = sprintf "archive_%06d.tar", $n;
+         my $dmfcmd  = "$dmf{command} tar c "
+                     . "$dmftoplevel/$archivename ";
+         while (length($dmfcmd) + length($tarentries[0]) < 4000 &&
+                $#tarentries >= 0) {
+            $dmfcmd .= shift @tarentries;
+            $dmfcmd .= " ";
+         }
+         &exec_dmf_command($dmfcmd) || die "$me: DMF err $?:\n$retval\n";
+
+         # Record the tarfile name in our detailed report...
+         $report .= "Tarfile: $archivename\n";
+
+         # ... and add a list of files we just archived
+         $dmfcmd = "$dmf{command} tar tv "
+                 . "$dmftoplevel/$archivename";
+         &exec_dmf_command($dmfcmd) || die "$me: DMF err $?:\n$retval\n";
+         $report .= "$retval\n";
+
+         # Just stuff the tarfile name in the short list
+         $list   .= "./$archivename\n";
+         $n++;
+      }
+
+      $report .= "\n";
+      $report .= "Plain files:\n  ";
+
+      # Now for our larger files - no need (or desire) to tar these up...
+      foreach $entry (@fileentries) {
+
+         # Just archive the files.  In this situation, DMF can get flooded
+         # with "rsh" commands and start rejecting connections.  So again
+         # we build up a list of files to store in the hope that it will
+         # result in much fewer connections.
+         my $dmfcmd  = "$dmf{command} put $entry "
+                     . "$dmftoplevel/$entry";
+         &exec_dmf_command($dmfcmd) || die "$me: DMF error $?:\n$retval\n";
+         sleep 1;
+
+         # Record the name on our list
+         $list   .= "$entry\n";
+
+         # Record the entire list of files in our report
+         my $dmfcmd  = "$dmf{command} ls -l $dmftoplevel/$entry";
+         &exec_dmf_command($dmfcmd) || die "$me: DMF error $?:\n$retval\n";
+         $report .= $retval;
+      }
+
+      # Archive external files, one by one
+      my $dmfcmd  = "$dmf{command} mkdir -p $dmftoplevel/external";
+      &exec_dmf_command($dmfcmd) || die "$me: DMF error $?:\n$retval\n";
+      foreach $entry (@externals) {
+         my ($extern_dir,$extern_file) = &parsefilename($entry);
+
+         # Just archive the files, one by one
+         my $dmfcmd  = "$dmf{command} put $entry "
+                     . "$dmftoplevel/external/$extern_file";
+         &exec_dmf_command($dmfcmd) || die "$me: DMF error $?:\n$retval\n";
+
+         # Record the name on our list
+         $list   .= "./external/$extern_file\n";
+
+         # Record the entire list of files in our report
+         my $dmfcmd  = "$dmf{command} ls -l $dmftoplevel/external/$extern_file";
+         &exec_dmf_command($dmfcmd) || die "$me: DMF error $?:\n$retval\n";
+         $report .= $retval;
+      }
+
+      # As a special case, we need to archive a custom configuration 
+      # file (if used), and not overwrite the original one!
+      if ($configfile ne $dftconfig) {
+         $debug && print "\nArchiving custom configuration ($configfile)...\n";
+         my ($custom_dir,$custom_file) = &parsefilename($configfile);
+
+         # Find wherever we started, so that we can locate a custom config. file
+         chdir($start_dir) || die "$me: Can't chdir('$start_dir'): $!\n";
+         $debug > 1 && print "(CWD is now $start_dir)\n";
+
+         # Make a custum name in case the customized confiuration file
+         # has the same name (although not location) as the default one
+         my $customconfigname = "$custom_file.custom.$dmfdbname";
+
+         # Store the custom configuration
+         $dmfcmd  = "$dmf{command} put $configfile "
+                  . "$dmftoplevel/external/$customconfigname";
+         &exec_dmf_command($dmfcmd) || die "$me: DMF error $?:\n$retval\n";
+
+         # Record the name for our report and list
+         my $dmfcmd  = "$dmf{command} ls -l "
+                     . "$dmftoplevel/external/$customconfigname";
+         &exec_dmf_command($dmfcmd) || die "$me: DMF error $?:\n$retval\n";
+         $report .= $retval;
+         $list   .= "./external/$customconfigname\n";
+         $report .= "\nCustom configuration file:\nexternal/:\n";
+      }
+
+      # Last of all, dump our report and list into two seperate files and
+      # make sure we archive them also.  The -l option to dbem2dmf reads the 
+      # short list, and the -ll (or -l -l) option(s) reads the long report.
+      $debug && print "\n\nStoring file lists in archive...\n";
+      &store_as_textfile($report, "$dmftoplevel/$reportfile");
+      &store_as_textfile($list, "$dmftoplevel/$listfile");
+      $debug > 1 && print "\nComplete list of archived files:\n$list";
+
+      # Get total size of dataset in DMF
+      $dmfcmd  = "$dmf{command} size $dmftoplevel";
+      &exec_dmf_command($dmfcmd) || die "$me: DMF error $?:\n$retval\n";
+      chomp($retval);
+      $retval =~ s/.*\n//g;
+      $retval =~ s/.*Total: //;
+      $dbsize = $retval;
+      $dbsizegig = $retval / (1024 * 1024 * 1024);
+
+      # chdir() back to where we started
+      chdir($start_dir) || die "$me: Can't chdir('$start_dir'): $!\n";
+      $debug > 1 && print "(CWD is now $start_dir)\n";
+
+      # Update Backup table for this dataset (i.e. if we got this far that
+      # means everything worked, so remove the "Scheduled" flag  and set the
+      # "Archived" flag.  If the '-m' flag is in use, updatedb() will do
+      # nothing and return immediately.
+      &updatedb($dmfdbname, $dbsize, $dmfpathfordb);
+      chomp($thedate = `date`);
+      printf "*** $db archive (%.2f Gb) $complete at $thedate\n\n", $dbsizegig
+                                                            unless $runsilent;
+   }
+   &lockfile("archive", "off");
+   exit 0;
+}
+
+# }}}
+# {{{ archivelist
+### List by name any databases in archive
+sub archivelist {
+   my $dmfcmd;
+
+   # If no dataset was specified, just list all the datasets in the archive...
+   if ($#dbname < 0) {
+      $dmfcmd = "$dmf{command} ls -d $dmf{home}/*/*/*";
+      &exec_dmf_command($dmfcmd) || die "$me: DMF error $?:\n$retval\n";
+      print "$retval";
+
+   # ... otherwise, scan the specific dataset in DMF and return the contents
+   # of the short (list) or long (report) file as requested
+   } else {
+      foreach $db (@dbname) {
+         print "Contents of $db:\n";
+         my ($dbpath, $dmfdbname) = &getdbfilename($db);
+
+         # Skip if it's not in the database
+         #if (! ($dmfdbname = &checkdb($dmfdbname)) ) {
+            #next;
+         #}
+
+         my $dmfpathname = &locate_in_dmf($db);
+         if ($dmfpathname eq "none") {
+            my ($year,$month) = &parsedbdate($db);
+            $dmfpathname = "$year/$month/$db";
+         }
+
+         # -l was used more than once - give all the gory details...
+         if ($list > 1) {
+            $dmfcmd = "$dmf{command} cat $dmf{home}/$dmfpathname/$reportfile | sed 's/ \(...\) /  /g'";
+         # ... or in this case, just the short list will do
+         } else {
+            $dmfcmd = "$dmf{command} cat $dmf{home}/$dmfpathname/$listfile";
+         }
+         &exec_dmf_command($dmfcmd) || die "$me: DMF error $?:\n$retval\n";
+         print "$retval";
+      }
+   }
+   exit 0;
+}
+
+# }}}
+# {{{ checkdb
+sub checkdb {
+   # Check the dataset passed in to see if it's valid (i.e. recorded in the
+   # database, not already archived, etc.)
+   my $db = $_[0];
+
+   # Find the dataset if possible
+   $sql = qq{ SELECT ExperimentInfo.ImagePath 
+              FROM   ExperimentInfo
+	      WHERE  ExperimentInfo.Prefix = '$db'
+            };
+   my @result = &sql_query($sql);
+   my $impath = shift @result;
+
+   if (! $impath) {
+      print "$me: $db not in $mysql{db} database!\n";
+      return 0;
+   }
+
+   $sql = qq{ 
+              SELECT ExperimentInfo.ExperimentId,
+                     ExperimentInfo.Prefix,
+                     ExperimentInfo.BeginTime,
+                     Backup.BakId,
+                     Backup.Scheduled,
+                     Backup.Online,
+                     Backup.Archived,
+                     Backup.Version
+              FROM   ExperimentInfo
+              NATURAL LEFT JOIN Backup
+              WHERE  ExperimentInfo.Prefix = '$db'
+            };
+               
+   my @results = &sql_query($sql);
+
+   while ($expid = shift @results) {
+      $impath = shift @results;
+      $time = shift @results;
+      $bakid = shift @results;
+      $stat = shift @results;
+      $onl = shift @results;
+      $arc = shift @results;
+      $vers = shift @results;
+
+      if ($expid && $arc eq "Y") {
+         print "$me: $db already archived with same ImagePath ($impath)\n";
+         return 0;
+      } elsif ($expid && $onl eq "N") {
+         print "$me: Ummm, $db is not online!\n";
+         return 0;
+      } elsif (! $expid) {
+         print "$me: $db not in $mysql{db} database!\n";
+         return 0;
+      } elsif ($expid && ! $bakid && ! $force) {
+         print "$me: $db not scheduled for archival in $mysql{db} database!\n";
+         return 0;
+      } elsif ($expid && ! $bakid && $force) {
+         print "$me: $db not scheduled for achival - overriding...\n";
+         return "$db";
+      }
+   }
+   return "$db";
+}
+
+#}}}
+# {{{ dmf_is_ok
+
+### Check if DMF is available
+sub dmf_is_ok {
+   # Checks if DMF is unavailable.  Not the best way to do it, but this is
+   # the way the DMF command does it.  Good enough for them, good enough for us!
+   my $dmfdownflag = "";
+
+   chomp(my $user = `whoami`);
+   chomp(my $host = `hostname`);
+
+   # Allow author to test on own system (won't affect DMF)
+   unless ($user eq "sheehan") {
+      $run_as eq $user || die "$me: Only $run_as can run this command\n";
+   }
+   $run_on eq $host || die "$me: This command can only be run on $run_on\n";
+
+   open(DMFCMD,$dmf{command}) || die "$me: Can't open $dmf{command}: $!\n";
+   while (<DMFCMD>) {
+      if (/^set\s+dmfdown\s*=/) {
+         chomp;
+         s/\s+//;
+         s/.*=//;
+         $dmfdownflag = $_;
+      }
+   }
+   close DMFCMD;
+
+   if ($dmfdownflag ne "") {
+      if (-r $dmfdownflag) {
+         open(DMFDOWN,$dmfdownflag) || die "$me: Can't open $dmfdownflag: $!\n";
+         while (<DMFDOWN>) {
+            print;
+         }
+         close DMFDOWN;
+         return 0;
+      }
+   }
+   return 1;
+}
+
+# }}}
+# {{{ dbstatus
+sub dbstatus {
+
+   my $cursize = 0;
+   my $total = 0;
+
+   my ($prefix, $impath, $bakid);
+   my $sql = qq{
+                 SELECT ExperimentInfo.Prefix,
+                        ExperimentInfo.ImagePath,
+                        Backup.BakId
+                 FROM ExperimentInfo
+                 NATURAL LEFT JOIN Backup
+                 WHERE Backup.Scheduled = 'Y'
+                 AND   Backup.Archived  = 'N'
+                 AND   Backup.Online    = 'Y'
+                 ORDER BY Backup.BakId
+               };
+
+   my @result = &sql_query($sql);
+
+   # We must ignore any datasets which may have been inadvertently
+   # passed in on the commandline...
+   while ($#dbname >= 0) {
+      pop @dbname;
+   }
+
+   while ($#result > 1) {
+      $prefix = shift(@result);
+      $impath = shift(@result);
+      $bakid  = shift(@result);
+
+      $impath =~ s/data$//;
+      $impath =~ s/dmf://;
+      # We don't let the total amount of data to be archived exceed 
+      # a preset limit, to prevent dumping too much data into DMF at once.
+      if ($dbstatus == 1) {
+         print "$prefix: $impath\n";
+         next;
+      }
+      my $size = `du -sk $impath`;
+      $size *= 1024;
+      $cursize += $size;
+      if ($dbstatus) {
+         printf "$prefix: $impath (%.2f Gb)\n", $size / (1024 * 1024 * 1024);
+         $total++;
+         next;
+      }
+      last if ($cursize > $maxdatasize);
+      push @dbname,$prefix;
+      $total++;
+   }
+
+   if ( (! $dbstatus && $debug) || ($walk && ! $runsilent) ) {
+      printf "Planned: archive (%.2f Gb data) in %d datasets.\n",
+                              $cursize / (1024 * 1024 * 1024), $total;
+   } elsif ($dbstatus > 1 && $total) {
+      printf "Scheduled: %.2f Gb data in %d datasets.\n",
+                              $cursize / (1024 * 1024 * 1024), $total;
+   }
+}
+
+# }}}
+# {{{ exec_dmf_command
+### Execute DMF command, return any error codes; output is placed in retval
+sub exec_dmf_command {
+   my $command;
+   my $errcode = 0;
+
+   $command = "export DMF_USER=$dmf{user}; "
+            . $_[0]
+            . " 2>&1";
+
+   $debug > 1 && print "DMF: $command\n";
+
+   $fake && return 1;
+   $retval = `$command`;
+
+   # Catch dmf commands that don't exit with status 0
+   if ($?) {
+      $? >>= 8;
+      return 0;
+   }
+
+   # Some dmf commands exit status 0 but report an error, always as 
+   # the first word out output.  Catch these too
+   if ($retval =~ /^error/ || $retval =~ /^Error/ || $retval =~ /^ERROR/) {
+      $? >>= 8;
+      return 0;
+   }
+
+   return 1;
+}
+
+# }}}
+# {{{ get_version
+### Print version number from header of this file
+sub get_version {
+   chomp(my $fullname = `which $me`);
+
+   open(MYSELF,$fullname) || die "Ack! Can't read $me: $!\n";
+   while (<MYSELF>) {
+      if (/ \@version\@ / ) {
+         $_ = <MYSELF>;
+         s/^#\s+//;
+         s/Version //;
+         chomp;
+         $myversion = $_;
+         next;
+      }
+      if (/ \@format\@ / ) {
+         $_ = <MYSELF>;
+         s/^#\s+//;
+         s/Format //;
+         chomp;
+         $myformat = $_;
+         last;
+      }
+   }
+   close MYSELF;
+}
+
+# }}}
+# {{{ getdbfilename
+sub getdbfilename {
+   my $db = $_[0];
+
+   # Find the dataset if possible
+   $sql = qq{ 
+              SELECT ExperimentInfo.ExperimentId,
+                     ExperimentInfo.ImagePath
+              FROM   ExperimentInfo
+              WHERE  ExperimentInfo.Prefix = '$db'
+            };
+               
+   my ($expid, $impath) = &sql_query($sql);
+
+   if (! $expid || ! $impath) {
+      print "$me: $db not in $mysql{db} database!\n";
+      return 0;
+   }
+
+   $impath =~ s/\/data$//;
+   return ($impath, $db);
+}
+
+#}}}
+# {{{ load_config
+### Read config. file
+sub load_config {
+   $maxfilesize = 1024;
+   $maxdataszie = parsenumber("50 Gb");
+   $external = "";
+
+   # Valid configuration file constructs
+   %config = (
+              dmfhost     => '{ $_[0] =~ s/dmf//;
+                                $dmf{$_[0]} = $_[1]; }',
+              dmfuser     => '{ $_[0] =~ s/dmf//;
+                                $dmf{$_[0]} = $_[1]; }',
+              dmfhome     => '{ $_[0] =~ s/dmf//;
+                                $dmf{$_[0]} = $_[1]; }',
+              dmfcommand  => '{ $_[0] =~ s/dmf//;
+                                $dmf{$_[0]} = $_[1]; }',
+              mysqlhost   => '{ $_[0] =~ s/mysql//; 
+                                $mysql{$_[0]} = $_[1]; }',
+              mysqluser   => '{ $_[0] =~ s/mysql//;
+                                $mysql{$_[0]} = $_[1]; }',
+              mysqldb     => '{ $_[0] =~ s/mysql//;
+                                $mysql{$_[0]} = $_[1]; }',
+              run_as      => '{ $run_as = $_[1]; }',
+              run_on      => '{ $run_on = $_[1]; }',
+              maxfilesize => '{ $maxfilesize = parsenumber($_[1]); }',
+              maxdatasize => '{ $maxdatasize = parsenumber($_[1]); }',
+              include     => '{ push @includes, split(",", $_[1]); }',
+              exclude     => '{ push @excludes, split(",", $_[1]); }',
+              external    => '{ push @externals,  split(",", $_[1]); }',
+             );
+              
+   $debug && print "\nParsing configuration file: $configfile...\n";
+
+   open(CONFIG,$configfile) || die "Can't read '$configfile': $!\n";
+   while (<CONFIG>) {
+      if (/ \@format\@ / ) {
+         $_ = <CONFIG>;
+         s/^#\s+//;
+         s/Format //;
+         chomp;
+         my $format = $_;
+         if ($debug) {
+            print "$me: expects configuration format: $myformat\n";
+            print "$me: configuration file ($configfile) format: $format\n";
+         }
+         if ($format ne $myformat) {
+            print <<"FORMAT_WARNING_EOF";
+$me: WARNING!  config/program format mismatch!  Compare the headers of 
+this program and the current configuration file $configfile)
+FORMAT_WARNING_EOF
+            exit 1;
+         }
+         next;
+      }
+      /^\s*#/ && next;			# Skip comments
+      /^\s*$/ && next;			# Skip blank lines
+      s/\s+//g;				# Remove all whitespace
+      s/#.*//;				# Remove trailing comments
+      s/\/$//;				# Remove trailing slash
+      @_ = split '=';
+      if ($config{$_[0]}) {
+         eval $config{$_[0]};
+      }
+   }
+   close CONFIG;
+
+   # Turn file glob expression into a regular expression
+   foreach $item (@excludes) {
+      $item =~ s/\./\\./g;		# Preserve dots
+      $item =~ s/\*/.*/g;		# Convert * into .*
+      $item =~ s/\?/./g;		# Convert ? into .
+      $item .= "\$";			# Match should be at end only
+      push @excludes_fixed, $item;
+   }
+   @excludes = @excludes_fixed;		# Use these regular expressions
+
+   # Turn file glob expression into a regular expression
+   foreach $item (@includes) {
+      $item =~ s/\./\\./g;		# Preserve dots
+      $item =~ s/\*/.*/g;		# Convert * into .*
+      $item =~ s/\?/./g;		# Convert ? into .
+      $item .= "\$";			# Match should be at end only
+      push @includes_fixed, $item;
+   }
+   @includes = @includes_fixed;		# Use these regular expressions
+
+   foreach $item (@excludes) {
+      $debug && print "Exclude --> $item\n";
+   }
+   foreach $item (@includes) {
+      $debug && print "Include --> $item\n";
+   }
+
+   $debug && print "Max size for inclusion in tarfile: $maxfilesize bytes\n";
+   $debug && print "Max size for \"one-shot\" archive: $maxdatasize bytes\n";
+}
+
+# }}}
+# {{{ locate_in_dmf
+sub locate_in_dmf {
+   my $db = $_[0];
+
+   my $sql = qq{ SELECT Backup.DmfPath 
+                 FROM   Backup
+                 NATURAL LEFT JOIN ExperimentInfo
+	         WHERE  ExperimentInfo.Prefix = '$db'
+               };
+
+   my @result = &sql_query($sql);
+   my $dbpath = shift @result;
+   if (! $dbpath) {
+      print "\n*** ";
+      print "$me: WARNING - $db has no DMF path info. in $mysql{db} database!";
+      print " ***\n\n";
+      return "none";
+   } else {
+      return "$dbpath";
+   }
+}
+# }}}
+# {{{ lockfile
+sub lockfile {
+   my $type   = $_[0];
+   my $action = $_[1];
+
+   if ($type eq "retrieve") {
+      if ($action eq "on") {
+         while (-r $dbem2dmf_rlock) {
+            print "$me: Retrieval in progress.  Waiting...\n" unless $runsilent;
+            sleep 600;
+         }
+
+         open LOCK,">$dbem2dmf_rlock" || die "$me: Create lock failed: $!\n";
+         close LOCK;
+      }
+
+      if ($action eq "off") {
+         if (-r $dbem2dmf_rlock) {
+            unlink $dbem2dmf_rlock || die "$me: Can't remove lock file: $!\n";
+         }
+      }
+   }
+
+   if ($type eq "archive") {
+      if ($action eq "on") {
+         (-r $dbem2dmf_alock) && die "$me: Archive process already running.\n";
+         open LOCK,">$dbem2dmf_alock" || die "$me: Create lock failed: $!\n";
+         close LOCK;
+      }
+
+      if ($action eq "off") {
+         if (-r $dbem2dmf_alock) {
+            unlink $dbem2dmf_alock || die "$me: Can't remove lock file: $!\n";
+         }
+      }
+   }
+}
+# }}}
+# {{{ mydie
+sub mydie {
+   my $msg = $_[0];
+
+   &lockfile("retrieve", "off");
+   &lockfile("archive", "off");
+   die "$msg";
+}
+# }}}
+# {{{ mysql_is_ok
+
+### Check if MySQL database is available
+sub mysql_is_ok {
+
+   my $sql = qq{ SELECT ExperimentID FROM ExperimentInfo };
+   my @result = &sql_query($sql);
+
+   if ($#result < 0) {
+      return 0;
+   }
+
+   return 1;
+}
+
+# }}}
+# {{{ parsedbdate
+sub parsedbdate {
+   my $dbname = $_[0];
+   my ($year, $month);
+
+   $debug && print "Parsing: $dbname...   ";
+   if ($dbname =~ /^[0-9][0-9]/) {
+      ($year  = $dbname) =~ s/^(..).*/$1/;
+      ($month = $dbname) =~ s/^..(...).*/$1/;
+      $year += 2000;
+   } else {
+      $year  = "old";
+      $month = $dbname;
+   }
+   $debug && print "-> $year/$month\n";
+   return($year, $month);
+}
+# }}}
+# {{{ parsefilename
+### Split a pathname into branch (full) and final leaf
+sub parsefilename {
+   my $filename = $_[0];
+
+   my @parsed = split '/',$filename;
+   my $leaf   = pop @parsed;
+   my $branch = join '/', @parsed;
+
+   return($branch, $leaf);
+}
+
+# }}}
+# {{{ parsenumber
+### Convert free-form number (15 k, 15gbytes, etc.) into integer
+sub parsenumber {
+   my $number = $_[0];
+   my $mult = 1;
+
+   if ($number =~ /k/ || $number =~ /K/) {
+      $mult = 1024;
+      $number =~ s/[Kk].*$//;
+   } elsif ($number =~ /m/ || $number =~ /M/) {
+      $mult = 1024 * 1024;
+      $number =~ s/[Mm].*$//;
+   } elsif ($number =~ /g/ || $number =~ /G/) {
+      $mult = 1024 * 1024 * 1024;
+      $number =~ s/[Gg].*$//;
+   }
+   return ($number * $mult);
+}
+# }}}
+# {{{ retrieve
+sub retrieve {
+   if ($#dbname % 2 != 1) {
+      die "Incomplete arguments: $me -r dbname_1 destination_1 ....\n";
+   }
+
+   &lockfile("retrieve", "on");
+
+   while ($db = shift @dbname) {
+      $dest = shift @dbname;
+      print "Retrieving $db into $dest\n" unless $runsilent;
+
+      my $dmfdbname = $db;
+
+      if (! -d $dest) {
+         mkdir($dest) || mydie "$me: Cannot create $dest: $!\n";
+         chdir($dest) || mydie "$me: Can't chdir('$dest'): $!\n";
+      } else {
+         chdir($dest) || mydie "$me: Can't chdir('$dest'): $!\n";
+      }
+
+      my ($year,$month) = &parsedbdate($db);
+
+      $db = "$dmf{home}/$year/$month/$db";
+      my $dmfcmd = "$dmf{command} cat $db/$listfile";
+      &exec_dmf_command($dmfcmd) || mydie "$me: DMF error $?:\n$retval\n";
+
+      my @files = split('\n',$retval);
+      foreach $recover (@files) {
+         next if ($recover eq "");
+         chdir($dest) || mydie "$me: Can't chdir('$dest'): $!\n";
+         my ($dir, $entry) = &parsefilename($recover);
+         if ($debug) {
+            print "Making directory (only if required) $dest/$dir\n";
+         }
+         # We may "make" the same directory more than once, so we don't
+         # bother checking the exit status of mkdir() here.  Yikes!
+         mkdir("$dest/$dir");
+
+         if ($debug) {
+            print "Retrieving: $recover...\n";
+         }
+         if ($recover =~ /tar$/) {
+            chdir($dir) || mydie "$me: Can't chdir('$dir'): $!\n";
+            $dmfcmd = "$dmf{command} tar x $db/$recover";
+         } else {
+            $dmfcmd = "$dmf{command} get $db/$recover "
+                    . "$dest/$recover ";
+         }
+         &exec_dmf_command($dmfcmd) || mydie "$me: DMF error $?:\n$retval\n";
+
+         $debug && print "$retval\n";
+
+      }
+      &updatedb($dmfdbname);
+      &updatedbpath($dmfdbname, $dest);
+   }
+
+   &lockfile("retrieve", "off");
+   exit 0;
+}
+
+# }}}
+# {{{ sql_query
+sub sql_query {
+   my $sql = $_[0];
+   my ($dbh, $sth);
+   my @result;
+   my @retval;
+
+   $dbh = DBI->connect( "dbi:mysql:$mysql{db}:$mysql{host}",
+                        "$mysql{user}", "") || die "$me: $DBI::errstr\n";
+
+   $debug > 1 && print "SQL: $sql\n";
+
+   $sth = $dbh->prepare($sql) || die "$me: $DBI::errstr\n";
+   $sth->execute();
+
+   if ($sql =~ / SELECT /) {
+      while (@result = $sth->fetchrow()) {
+         push @retval,@result;
+      }
+   } 
+
+   $sth->finish();
+   $dbh->disconnect();
+
+   return @retval;
+}
+
+# }}}
+# {{{ store_as_textfile
+### Store string as textfile on DMF
+sub store_as_textfile {
+   my $string = $_[0];
+   my $file   = $_[1];
+
+   my $temp = "/tmp/$me.result.$$";
+   open(TEMPFILE,">$temp") || die "$me: Can't open $temp: $!\n";
+   print TEMPFILE "$string\n";
+   close TEMPFILE;
+
+   $dmfcmd = "$dmf{command} put $temp $file";
+   &exec_dmf_command($dmfcmd) || die "$me: DMF error $?:\n$retval\n";
+
+   unlink($temp) || die "$me: Can't remove $temp: $!\n";
+}
+
+# }}}
+# {{{ updatedb
+sub updatedb {
+   my $db = $_[0];
+   my $size = $_[1];
+   my $dmfpath = $_[2];
+   my $timesatmp = $_[4];
+
+   my $numargs = $#_;
+
+   $sql = qq{ SELECT ExperimentInfo.ImagePath 
+              FROM   ExperimentInfo
+	      WHERE  ExperimentInfo.Prefix = '$db'
+            };
+   my @result = &sql_query($sql);
+   my $impath = shift @result;
+
+   if (! $impath) {
+      print "$me: $db not in $mysql{db} database!\n";
+      return;
+   }
+
+   $sql = qq{ 
+              SELECT ExperimentInfo.ExperimentId,
+                     ExperimentInfo.Prefix,
+                     ExperimentInfo.BeginTime,
+                     Backup.BakId,
+                     Backup.Size,
+                     Backup.Scheduled,
+                     Backup.Online,
+                     Backup.Version,
+                     Backup.DmfPath,
+                     Backup.ArchiveDate
+              FROM   ExperimentInfo
+              NATURAL LEFT JOIN Backup
+              WHERE  ExperimentInfo.ImagePath = '$impath'
+            };
+               
+   my @results = &sql_query($sql);
+   while ($expid = shift @results) {
+      $prefix = shift @results;
+      $time = shift @results;
+      $bakid = shift @results;
+      $sz = shift @results;
+      $stat = shift @results;
+      $onl = shift @results;
+      $vers = shift @results;
+      $dmfpathold = shift @results;
+      $arcdate = shift @results;
+
+      if (! $size || $size eq "") {
+         $size = $sz;
+      }
+
+      if (! $dmfpath || $dmfpath eq "") {
+         $dmfpath = $dmfpathold;
+      }
+
+      if ($debug > 2) {
+         print "Before updatedb()...\n";
+         print " Experiment ID: $expid\n";
+         print " Exper. Prefix: $prefix\n";
+         print " Image path:    $impath\n";
+         print " Timestamp:     $time\n";
+         print " Backup Id:     $bakid\n";
+         print " Size:          $sz\n";
+         print " Scheduled:     $stat\n";
+         print " Online:        $onl\n";
+         print " Version:       $vers\n";
+         print " DMF path:      $dmfpathold\n";
+         print " Archived on:   $arcdate\n";
+      }
+
+      if (! $expid) {
+         print "$me: WARNING - $db not in $mysql{db} database!\n";
+      } else {
+         if ($bakid) {
+            $sql = qq{ 
+                       REPLACE Backup 
+                       SET BakId = $bakid,
+                           ExperimentId = $expid,
+                           Size = $size,
+                           Scheduled = 'N',
+                           Archived  = 'Y',
+                           Online    = 'Y',
+                           Version = '$myversion',
+                           DmfPath = '$dmfpath',
+                           ArchiveDate = '$arcdate'
+                     };
+         } else {
+            $sql = qq{ 
+                       REPLACE Backup 
+                       SET ExperimentId = $expid,
+                           Size = $size,
+                           Scheduled = 'N',
+                           Archived = 'Y',
+                           Online    = 'Y',
+                           version = '$myversion',
+                           DmfPath = '$dmfpath',
+                           ArchiveDate = '$arcdate'
+                     };
+         }
+
+         if ($fake == 0) {
+            &sql_query($sql);
+
+            # Do this for archives only, not retrievals
+            if ($numargs > 0) {
+               $sql = qq{
+                           UPDATE Backup
+                           SET ArchiveDate = NOW()
+                           WHERE ExperimentId = $expid
+                        };
+               &sql_query($sql);
+            }
+         }
+
+         if ($debug > 2) {
+            print "After updatedb()...\n";
+            print " Experiment ID: $expid\n";
+            print " Exper. Prefix: $prefix\n";
+            print " Image path:    $impath\n";
+            print " Timestamp:     $time\n";
+            print " Backup Id:     $bakid\n";
+            print " Size:          $size\n";
+            print " Scheduled:     'N'\n";
+            print " Online:        'Y'\n";
+            print " Version:       $myversion\n";
+            print " DMF path:      $dmfpath\n";
+            print " Archived on:   $arcdate\n";
+         }
+      }
+   }
+}
+
+#}}}
+# {{{ updatedbpath
+sub updatedbpath {
+   my $db  = $_[0];
+   my $dir = $_[1];
+
+   my $retval = `$dbemupdatepath $db $dir/data`;
+   if ($retval !~ /New Image Path for/) {
+      print "$me: update path failed: $retval\n";
+   }
+
+   $debug && print "$retval\n";
+}
+
+#}}}
+# {{{ usage
+### Print usage information as displayed in header of this file
+sub usage {
+   my $begun = 0;
+   chomp(my $fullname = `which $me`);
+
+   open(MYSELF,$fullname) || die "Ack! Can't read $me: $!\n";
+   while (<MYSELF>) {
+      if (/ \@usage\@ / ) {
+         next unless $begun++;
+         last;
+      }
+      if ($begun) {
+         s/^#//;
+         s/^  //;
+         print;
+      };
+   }
+   close MYSELF;
+}
+
+# }}}
+# {{{ walk
+### "Walk" the database and archive each dataset marked "scheduled" for 
+### archiving.  To prevent dumping too much data into DMF at once, the
+### list has already been prescreened for size by dbstatus();
+sub walk {
+
+   my $impath;
+
+   $dbstatus = 0;
+   &dbstatus;
+
+   &archive;
+
+   my $thedate = `date`;
+   print "$me: Nothing to archive at $thedate" unless $runsilent;
+   exit 0;
+}
+
+# }}}
+# {{{ zap
+### "Zap" the online database by removing the dataset ONLY AFTER verifying
+### that it has already been backed up!
+sub zap {
+
+   my $dbprefix;
+   my $prefix;
+   my $sql;
+   my $id;
+   my ($archived, $online, $scheduled, $impath, $dmfpath, $archivedate);
+
+   foreach $prefix (@dbname) {
+      my $sql = qq{
+                    SELECT ExperimentInfo.ImagePath,
+                           Backup.BakId,
+                           Backup.Archived,
+                           Backup.Scheduled,
+                           Backup.Online,
+                           Backup.DmfPath,
+                           Backup.ArchiveDate
+                    FROM ExperimentInfo
+                    NATURAL LEFT JOIN Backup
+                    WHERE ExperimentInfo.Prefix = '$prefix'
+                  };
+
+      my @result = &sql_query($sql);
+      ($impath, $bakid, $archived, $scheduled, 
+       $online, $dmfpath, $archivedate)         = @result;
+      if (! $bakid || ! $impath) {
+         print "$prefix: no such dataset.... skipping\n";
+         next;
+      }
+
+      if ($debug > 2) {
+         print "$prefix:\n===================\n";
+         print "   PATH      = $impath\n";
+         print "   DMF       = $dmfpath\n";
+         print "   ARCHIVED  = $archived\n";
+         print "   SCHEDULED = $scheduled\n";
+         print "   ONLINE    = $online\n";
+      }
+
+      if ($archived eq "N") {
+         print "$prefix: dataset NOT archived.... skipping\n";
+#      } elsif ($scheduled eq "Y") {
+#         print "$prefix: dataset scheduled for re-archival.... skipping\n";
+      } elsif ($online eq "N") {
+         print "$prefix: dataset already offline.... skipping\n";
+      } elsif ($archived eq "Y" &&
+          $online eq "Y") {
+#          $online eq "Y" &&
+#          $scheduled eq "N") {
+         print "$prefix: deleting...";
+
+         $sql = qq{
+                    SELECT ExperimentId
+                    FROM   ExperimentInfo
+                    WHERE  ImagePath = '$impath'
+                  };
+
+         @results = &sql_query($sql);
+
+         $id       = shift(@results);
+         $sql = qq{
+                    UPDATE Backup
+                    SET    Online = 'N',
+                           ArchiveDate = '$archivedate'
+                    WHERE  ExperimentId ='$id'
+                  };
+         foreach $id (@results) {
+            $sql .= " OR ExperimentId = '$id'"
+         }
+
+         &sql_query($sql);
+
+         $sql = qq{
+                    SELECT Prefix
+                    FROM   ExperimentInfo
+                    WHERE  ImagePath = '$impath'
+                  };
+
+         @results = &sql_query($sql);
+         foreach $dbprefix (@results) {
+            &updatedbpath($dbprefix, "dmf:amidb/$dmfpath");
+         }
+         print " done\n";
+      } else {
+         print "$prefix: dataset can't be removed.... skipping\n";
+      }
+   }
+
+   exit 0;
+}
+
+# }}}

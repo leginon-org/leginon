@@ -1,0 +1,27 @@
+#!/bin/sh 
+
+cmd=`basename $0`
+if [ $# -eq 0 ]; then
+  echo Usage: $cmd [Experiment] [new Image Path]  
+  exit 127
+fi
+
+q="select ImagePath from ExperimentInfo where Prefix='$1';"
+result=`echo $q | mysql -h cronus1 -N -B -u anonymous leginon`
+
+if [ "$result" != "" ]; then
+
+ if [ "$2" != "" ]; then
+  q="update ExperimentInfo set ImagePath='$2'  where Prefix='$1';"
+  result=`echo $q | mysql -h cronus1 -N -B -u tcluser leginon`
+  echo "New Image Path for $1: $2"
+ else
+  echo "Insert a path"
+  exit 127
+ fi
+else
+  echo "$1 is not a valid experiment"
+  exit 127
+fi
+
+
