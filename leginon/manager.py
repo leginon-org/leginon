@@ -102,9 +102,6 @@ class Manager(node.Node):
 
 		self.launcherdict = {}
 		self.managersetup = managersetup.ManagerSetup(self)
-		self.uicontainer.addObject(self.managersetup.getUserInterface())
-		#self.defineUserInterface()
-		#self.start()
 
 	def location(self):
 		location = leginonobject.LeginonObject.location(self)

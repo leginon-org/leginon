@@ -11,16 +11,10 @@ import launcher
 class ManagerSetup(object):
 	def __init__(self, manager):
 		self.manager = manager
-
-		self.initProjectConnection()
-
-		self.defineUserInterface()
-
-		self.initProjects()
 		self.initUsers()
-		self.initInstruments()
+		self.createLoginContainer()
 
-	def start(self):
+	def onStartSession(self):
 		session_name = self.sessionselector.getSelectedValue()
 		session = self.session_dict[session_name]
 		self.manager.session = session
@@ -28,7 +22,7 @@ class ManagerSetup(object):
 
 		if (session['instrument'] is not None and session['instrument']['hostname']
 				not in self.manager.launcherdict.keys() and
-				not self.skipinstrument.get()):
+				self.connectinstrument.get()):
 			try:
 				hostname = session['instrument']['hostname']
 				if hostname:
@@ -39,12 +33,11 @@ class ManagerSetup(object):
 					self.manager.addNode(location, (hostname,))
 			except (IOError, TypeError, socket.error):
 				self.manager.messagelog.warning('Cannot add instrument\'s launcher.')
-		if self.container.parent is not None:
-			self.container.parent.deleteObject(self.container.name)
+		self.selectsessioncontainer.delete()
 
 		self.manager.defineUserInterface()
 		launcher.Launcher((socket.gethostname().lower(),), session=session,
-              			    nodelocations={'manager': self.manager.location()})
+              					    nodelocations={'manager': self.manager.location()})
 
 
 	def uiCreateSession(self):
@@ -55,7 +48,7 @@ class ManagerSetup(object):
 		# check if session already exists
 		session_name = sessiondata['name']
 		if session_name in self.session_dict:
-			self.build_messages.error('session name already used')
+			self.createmessages.error('session name already used')
 			self.createmethod.enable()
 			self.cancelcreatemethod.enable()
 			return
@@ -65,12 +58,11 @@ class ManagerSetup(object):
 			self.linkSessionProject(sessiondata, projectname)
 		# refresh session list
 		self.uiUpdateSessionList()
-		#self.build_messages.information('session published')
-		self.container.deleteObject('Create Session')
+		self.createsessioncontainer.delete()
 		self.createsessionmethod.enable()
 
 	def onCancelCreateSession(self):
-		self.container.deleteObject('Create Session')
+		self.createsessioncontainer.delete()
 		self.createsessionmethod.enable()
 
 	def linkSessionProject(self, sessiondata, projectname):
@@ -84,8 +76,8 @@ class ManagerSetup(object):
 
 	def buildSessionData(self):
 		initializer = {
-		  'name': self.build_session_name.get(),
-		  'comment': self.build_session_comment.get(),
+		  'name': self.createsessionname.get(),
+		  'comment': self.createsessioncomment.get(),
 		  'user': self.uiGetUser(),
 		  'instrument': self.uiGetInstrument(),
 		}
@@ -100,7 +92,6 @@ class ManagerSetup(object):
 		initializer = {'name': 'None',
 										'description': 'No Instrument'}
 		self.instruments['None'] = data.InstrumentData(initializer=initializer)
-		self.uiUpdateInstrument()
 
 	def uiUpdateInstrument(self):
 		instrumentnames = self.instruments.keys()
@@ -128,7 +119,6 @@ class ManagerSetup(object):
 		self.initAdmin()
 		users = self.getUsers()
 		self.users = self.indexByName(users)
-		self.uiUpdateUsers()
 
 	def initProjectConnection(self):
 		self.projectdata = project.ProjectData()
@@ -142,7 +132,6 @@ class ManagerSetup(object):
 		self.projectmap = {}
 		for p in projects:
 			self.projectmap[p['name']] = p
-		self.uiUpdateProjects()
 
 	def uiUpdateProjects(self):
 		projectnames = self.projectmap.keys()
@@ -225,7 +214,7 @@ class ManagerSetup(object):
 		self.manager.publish(userinstance, database=True)
 		return userinstance
 
-	def uiProjectSelectCallback(self, index):
+	def onProjectSelect(self, index):
 		if not hasattr(self, 'projectselection'):
 			return index
 		'''
@@ -257,23 +246,23 @@ class ManagerSetup(object):
 			self.usergroup.set('')
 		return index
 
-	def uiInstrumentSelectCallback(self, index):
-		if not hasattr(self, 'instrumentselection'):
-			return index
+	def onInstrumentSelect(self, index):
 		instrumentname = self.instrumentselection.getSelectedValue(index)
 		if instrumentname in self.instruments:
 			instrumentdata = self.instruments[instrumentname]
 			try:
-				self.build_instrumentdescription.set(instrumentdata['description'])
+				self.createinstrumentdescription.set(instrumentdata['description'],
+																							thread=True)
 			except (TypeError, KeyError):
-				self.build_instrumentdescription.set('')
+				self.createinstrumentdescription.set('', thread=True)
 			try:
-				self.build_instrumenthostname.set(instrumentdata['hostname'])
+				self.createinstrumenthostname.set(instrumentdata['hostname'],
+																					thread=True)
 			except (TypeError, KeyError):
-				self.instrumenthostname.set('')
+				self.instrumenthostname.set('', thread=True)
 		else:
-			self.build_instrumentdescription.set('')
-			self.build_instrumenthostname.set('')
+			self.createinstrumentdescription.set('', thread=True)
+			self.createinstrumenthostname.set('', thread=True)
 		return index
 
 	def suggestSessionName(self):
@@ -287,11 +276,11 @@ class ManagerSetup(object):
 				break
 		return session_name
 
-	def uiSuggestSessionName(self):
+	def onSuggestName(self):
 		session_name = self.suggestSessionName()
-		self.build_session_name.set(session_name)
+		self.createsessionname.set(session_name)
 
-	def uiSessionSelectCallback(self, index):
+	def onSessionSelect(self, index):
 		try:
 			session_name = self.sessionselector.getSelectedValue(index)
 		except AttributeError:
@@ -302,20 +291,21 @@ class ManagerSetup(object):
 
 	def uiShowSessionInfo(self, sessiondata):
 		comment = sessiondata['comment']
-		self.load_sessioncomment.set(comment)
+		self.selectsessioncomment.set(comment)
 
 		user = sessiondata['user']['name']
 
 		inst = sessiondata['instrument']['name']
-		self.load_sessioninstrument.set(inst)
+		self.selectsessioninstrument.set(inst)
 
 		path = leginonconfig.mapPath(sessiondata['image path'])
-		self.load_sessionpath.set(path)
+		self.selectsessionpath.set(path)
 
 	def getSessionDataName(self, sessiondata):
 		return sessiondata['name']
 
 	def uiUpdateSessionList(self):
+		self.session_limit = 30
 		sessionlist = self.researchSessions(self.session_limit)
 		session_names = map(self.getSessionDataName, sessionlist)
 		self.session_dict = dict(zip(session_names, sessionlist))
@@ -327,20 +317,24 @@ class ManagerSetup(object):
 		sessionlist = self.manager.research(datainstance=qsession, results=limit)
 		return sessionlist
 
-	def onNewSession(self):
+	def onCreateSession(self):
 		self.createsessionmethod.disable()
-		self.container.addObject(self.createsessioncontainer)
+		self.initProjectConnection()
+		self.initProjects()
+		self.initInstruments()
+		self.createCreateSessionContainer()
 		self.createmethod.enable()
 		self.cancelcreatemethod.enable()
 
 	def onLogin(self):
-		self.usercontainer.delete()
-		self.uiUpdateSessionList()
-		self.uiSuggestSessionName()
-		self.sessionloader.enable()
+		self.logincontainer.delete()
+		session = data.SessionData(user=self.uiGetUser())
+		self.manager.session = session
+		self.manager.uicontainer.session = session
+		self.createSelectSessionContainer()
 
-	def defineUserInterface(self):
-		self.usercontainer = uidata.ExternalContainer('Leginon II Login')
+	def createLoginContainer(self):
+		self.logincontainer = uidata.ExternalContainer('Leginon II Login')
 		userselectcontainer = uidata.Container('Select User')
 		self.userselection = uidata.SingleSelectFromList('Name', [], 0,
 																						callback=self.uiUserSelectCallback)
@@ -349,97 +343,87 @@ class ManagerSetup(object):
 		userselectcontainer.addObjects((self.userselection, self.userfullname,
 																		self.usergroup))
 		self.loginmethod = uidata.Method('Login', self.onLogin)
-		self.usercontainer.addObjects((userselectcontainer, self.loginmethod))
+		self.logincontainer.addObjects((userselectcontainer, self.loginmethod))
+		self.uiUpdateUsers()
+		self.manager.uicontainer.addObject(self.logincontainer)
 
-		self.container = uidata.ExternalContainer('Leginon II Session')
+	def createSelectSessionContainer(self):
+		self.sessionselector = uidata.SingleSelectFromList('Session', [], 0, 'rw')
+		self.selectsessioncomment = uidata.String('Comment', '', 'r')
+		self.selectsessioninstrument = uidata.String('Instrument', '', 'r')
+		self.selectsessionpath = uidata.String('Image Path', '', 'r')
 
-		### limit on number of sessions to display
-		### see XXX above
-		self.session_limit = 30
+		self.sessionselector.setCallback(self.onSessionSelect)
 
-		## there are two main sections:
-		self.sessionloader = uidata.Container('Session Loader (last %s sessions)' % (self.session_limit,))
-		self.createsessioncontainer = uidata.ExternalContainer('Create Session')
-
-		## components of the loader section:
-		self.load_sessioncomment = uidata.String('Comment', '', 'r')
-		self.load_sessioninstrument = uidata.String('Instrument', '', 'r')
-		self.load_sessionpath = uidata.String('Image Path', '', 'r')
-
-		self.sessionselector = uidata.SingleSelectFromList('Session', [], 0, 'rw', persist=False, callback=self.uiSessionSelectCallback)
-
-		self.skipinstrument = uidata.Boolean('Do Not Connect Instrument Launcher', False, 'rw', persist=True)
-
-		startmethod = uidata.Method('Start Session', self.start)
-
+		self.connectinstrument = uidata.Boolean('Connect to instrument launcher',
+																							True, 'rw', persist=True)
+		self.startsessionmethod = uidata.Method('Start Session',
+																						self.onStartSession)
 		self.createsessionmethod = uidata.Method('Create Session',
-																							self.onNewSession)
+																							self.onCreateSession)
 
-		sessionloaderobjects = (
-		  self.sessionselector,
-		  self.load_sessioncomment,
-		  self.load_sessioninstrument,
-		  self.load_sessionpath,
-		  self.skipinstrument,
-		  startmethod,
-			self.createsessionmethod,
-		)
-		self.sessionloader.addObjects(sessionloaderobjects)
+		selectsessioncontainer = uidata.Container('Select Session')
+		selectsessioncontainer.addObjects((self.sessionselector,
+																					  self.selectsessioncomment,
+																					  self.selectsessioninstrument,
+																					  self.selectsessionpath,
+																					  self.connectinstrument,
+																					  self.startsessionmethod,
+																						self.createsessionmethod))
+		title = 'Leginon II Session'
+		fullname = self.userfullname.get()
+		if fullname:
+			title += ' for %s' % fullname
+		self.selectsessioncontainer = uidata.ExternalContainer(title)
+		self.selectsessioncontainer.addObject(selectsessioncontainer)
+		self.uiUpdateSessionList()
+		self.manager.uicontainer.addObject(self.selectsessioncontainer)
 
-		## components of the builder section:
-		suggestnamemethod = uidata.Method('Suggest A Name', self.uiSuggestSessionName)
-		self.build_session_name = uidata.String('Session Name', '', 'rw', persist=True)
-		self.build_session_comment = uidata.String('Session Comment', '', 'rw', persist=True)
-
-
-
-		build_projectcontainer = uidata.Container('Project')
+	def createCreateSessionContainer(self):
+#		suggestnamemethod = uidata.Method('Suggest A Name', self.onSuggestName)
+		self.createsessionname = uidata.String('Session Name', '', 'rw',
+																						persist=False)
+		self.onSuggestName()
+		self.createsessioncomment = uidata.String('Session Comment', '', 'rw',
+																							persist=False)
 		if self.projectdataconnected:
-						self.projectselection = uidata.SingleSelectFromList('Project', [], 0,
-																				callback=self.uiProjectSelectCallback,
-																				persist=True)
-						build_projectcontainer.addObject(self.projectselection)
+			projectcontainer = uidata.Container('Project')
+			self.projectselection = uidata.SingleSelectFromList('Project', [], 0,
+																													persist=True)
+			self.projectselection.setCallback(self.onProjectSelect)
+			self.uiUpdateProjects()
+			projectcontainer.addObject(self.projectselection)
 
-
-		build_instrumentcontainer = uidata.Container('Instrument')
+		createinstrumentcontainer = uidata.Container('Instrument')
 		self.instrumentselection = uidata.SingleSelectFromList('Name', [], 0,
-																			callback=self.uiInstrumentSelectCallback,
-																			persist=True)
-		self.build_instrumentdescription = uidata.String('Description', '', 'r')
-		self.build_instrumenthostname = uidata.String('Hostname', '', 'r')
+																														persist=True)
+		self.instrumentselection.setCallback(self.onInstrumentSelect)
+		self.createinstrumentdescription = uidata.String('Description', '', 'r')
+		self.createinstrumenthostname = uidata.String('Hostname', '', 'r')
+		self.uiUpdateInstrument()
 
-		build_instrumentcontainer.addObjects((self.instrumentselection,
-																		self.build_instrumentdescription,
-																		self.build_instrumenthostname))
+		createinstrumentcontainer.addObjects((self.instrumentselection,
+																		self.createinstrumentdescription,
+																		self.createinstrumenthostname))
 
 		self.createmethod = uidata.Method('Create Session', self.uiCreateSession)
 		self.cancelcreatemethod = uidata.Method('Cancel',
 																						self.onCancelCreateSession)
-		self.build_messages = uidata.MessageLog('Messages')
-
+		self.createmessages = uidata.MessageLog('Messages')
 
 		sessionbuilderobjects = [
-		  suggestnamemethod,
-		  self.build_session_name,
-		  self.build_session_comment,
-		  build_instrumentcontainer,
+		  self.createmessages,
+		  #suggestnamemethod,
+		  self.createsessionname,
+		  self.createsessioncomment,
+		  createinstrumentcontainer,
 		  self.createmethod,
 			self.cancelcreatemethod,
-		  self.build_messages,
 		]
-
 		if self.projectdataconnected:
-			sessionbuilderobjects.insert(4,build_projectcontainer)
+			sessionbuilderobjects.insert(4, projectcontainer)
 
+		self.createsessioncontainer = uidata.ExternalContainer('Create Session')
 		self.createsessioncontainer.addObjects(sessionbuilderobjects)
-
-		mainobjects = (
-		  self.sessionloader,
-			self.usercontainer
-		)
-		self.sessionloader.disable()
-		self.container.addObjects(mainobjects)
-
-	def getUserInterface(self):
-		return self.container
+		self.selectsessioncontainer.addObject(self.createsessioncontainer)
 
