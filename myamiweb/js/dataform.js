@@ -5,27 +5,27 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-function update_userdata() {
-	document.f_userdata.bt_action.value="get";
-	submit_userdata();
+function update_data() {
+	document.data.bt_action.value="get";
+	submit_data();
 }
 
 function check_name() {
-	document.f_userdata.bt_action.value="";
-	document.f_userdata.submit();
+	document.data.bt_action.value="";
+	document.data.submit();
 }
 
 function confirm_update() {
-	document.f_userdata.bt_action.value="save";
-	document.f_userdata.submit();
+	document.data.bt_action.value="save";
+	document.data.submit();
 }
 function confirm_delete() {
-	document.f_userdata.bt_action.value="remove";
-	document.f_userdata.submit();
+	document.data.bt_action.value="remove";
+	document.data.submit();
 }
 
-function submit_userdata() {
-	document.f_userdata.submit();
+function submit_data() {
+	document.data.submit();
 }
 
 function getStyleObject(objectId) {

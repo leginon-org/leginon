@@ -7,31 +7,29 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require('inc/leginon.inc');
 require('inc/admin.inc');
 
-function mysql2UnixTime($mysqltime) {
-	$year = substr($mysqltime, 0,4);
-	$month  = substr($mysqltime, 4,2);
-	$day = substr($mysqltime, 6,2);
-	$hour = substr($mysqltime, 8,2);
-	$minute = substr($mysqltime, 10,2);
-	$second = substr($mysqltime, 12,2);
-	return mktime($hour, $minute, $second, $month, $day, $year);
-}
 
-$sqlhosts = $SQL_HOSTS;
-$applicationId = $_POST[applicationId];
-$hostId = $_POST[hostId];
-
-$leginondata->mysql->setSQLHost($SQL_HOSTS[$hostId]);
-$instruments = $leginondata->getInstruments2();
-$calibrationtypes = $leginondata->getMatrixCalibrationTypes();
-$applications = $leginondata->getApplications();
 $check_str = 'checked="checked"';
 $limit=1;
-$instrumentid = $_POST['instrument'];
-list($instrumentinfo) = $leginondata->getInstrumentInfo($instrumentid);
+
+$hostkeys = array_keys($SQL_HOSTS);
+
+// --- set import hosts / instruments
+$importhostId = ($_POST[importhostId]) ? $_POST[importhostId] : current($hostkeys);
+$leginondata->mysql->setSQLHost($SQL_HOSTS[$importhostId]);
+$importinstruments = $leginondata->getInstrumentDescriptions();
+$importinstrumentId = $_POST['importinstrument'];
+
+// --- set export hosts / instrumenits
+$hostId = ($_POST[hostId]) ? $_POST[hostId] : current($hostkeys);
+$leginondata->mysql->setSQLHost($SQL_HOSTS[$hostId]);
+$instruments = $leginondata->getInstrumentDescriptions();
+
+$calibrationtypes = $leginondata->getMatrixCalibrationTypes();
+$applications = $leginondata->getApplications();
+$instrumentId = $_POST['instrument'];
+list($instrumentinfo) = $leginondata->getInstrumentInfo($instrumentId);
 $calibrations = is_array($_POST['calibrations']) ? $_POST['calibrations'] : array($_POST['calibrations']);
 $types = $_POST['types'];
 
@@ -43,40 +41,57 @@ if ($_POST[format]) {
 	$xmlradiochecked = $check_str;
 }
 
-if ($_POST[bt_export]) {
+if ($_POST[import_method]=="file") {
+	$browse_disabled = "";
+	$import_disabled = "disabled";
+	$fileradiochecked = $check_str;
+	$hostradiochecked = "";
+} else {
+	$browse_disabled = "disabled";
+	$import_disabled = "";
+	$hostradiochecked = $check_str;
+}
+
+
+if ($_POST[bt_export] || $_POST[import_method]=="host") {
 	if(!empty($_POST['calibrations'])) {
-		$xmlcalibrations = $leginondata->dumpcalibrations($calibrations, $instrumentid, $limit, $types);
+		$xmlcalibrations = $leginondata->dumpcalibrations($calibrations, $instrumentId, $limit, $types);
 		if ($_POST[format]=='xml' && $_POST[saveasfile]) {
 			$filename = $instrumentinfo['name'].'-'.date('Ymd').'.xml';
 			$leginondata->download($filename, $xmlcalibrations);
 			exit;
 		}
 	}
-} else if ($_POST[bt_import]) {
-	if ($filename = $_FILES[import_file][name])
-		$tmpfile = $_FILES[import_file][tmp_name];
+} 
+if ($_POST[bt_import]) {
+	if ($_POST[import_method]=="file") {
+		if ($filename = $_FILES[import_file][name])
+			$xmldata = $_FILES[import_file][tmp_name];
+	} else {
+		$xmldata = $xmlcalibrations;
+	}
 }
 
 admin_header();
 ?>
 <h3>Calibrations Import/Export</h3>
 <form name="data" method="POST" enctype="multipart/form-data" action="<? $PHP_SELF ?>">
-<table border=0 class=tableborder>
+<table border=0>
 <tr valign=top >
 <td>
 From Host:
 	<select name="hostId" onChange="javascript:document.data.submit();">
 		<?
-		foreach($sqlhosts as $id=>$host) {
-			$selected = ($id==$hostId) ? "selected" : "";
-			echo "<option value=$id $selected >$host\n";
+		foreach($hostkeys as $host) {
+			$selected = ($host==$hostId) ? "selected" : "";
+			echo "<option value='$host' $selected >$host\n";
 		}
 		?>
 	</select>
 </td>
 </tr>
 <tr valign=top >
-<td>
+<td nowrap >
 Instrument:
 	<select name="instrument">
 	<? foreach ($instruments as $instrument) {
@@ -88,6 +103,8 @@ Instrument:
 	</select>
 </td>
 </tr>
+</table>
+<table border=0 class=tableborder>
 <tr valign=top >
 <td>
   <table border=0>
@@ -138,8 +155,6 @@ Instrument:
   </td>
   <td class=tablebg width=1>
   </td>
-</tr>
-<tr>
   <td>
    <table border=0>
     <tr>
@@ -149,12 +164,47 @@ Instrument:
     </tr>
     <tr>
       <td>
-	calibration.xml file
+	Methods:
      </td>
     </tr>
     <tr>
      <td>
-	<input type="file" name="import_file" >
+	<input type="radio" name="import_method" value="host" id="radio_import_method_host"  <? echo $hostradiochecked ?> onChange="javascript:document.data.submit();" >
+To Host:
+     </td>
+     <td>
+	<select <?=$import_disabled?> name="importhostId" onChange="javascript:document.data.submit();">
+		<?
+		foreach($hostkeys as $host) {
+			$selected = ($host==$importhostId) ? "selected" : "";
+			echo "<option value='$host' $selected >$host\n";
+		}
+		?>
+	</select>
+</td>
+</tr>
+<tr valign=top >
+<td align=right>
+Instrument:
+</td>
+<td>
+	<select <?=$import_disabled?> name="importinstrument">
+	<? foreach ($importinstruments as $instrument) {
+		$s = ($_POST['importinstrument']==$instrument['id']) ? 'selected' : '';
+		echo "<option value='".$instrument['id']
+			."' $s >".$instrument['fullname']."</option>\n";
+	}
+	?>
+	</select>
+</td>
+    </tr>
+    <tr>
+     <td nowrap>
+	<input type="radio" name="import_method" value="file" id="radio_import_method_file"  <?=$fileradiochecked?>  onChange="javascript:document.data.submit();" >
+	From xml file
+     </td>
+     <td>
+	<input <?=$browse_disabled?> type="file" name="import_file" >
      </td>
     </tr>
     <tr>
@@ -185,55 +235,29 @@ if ($_POST[bt_export]) {
 		if (in_array('type', $calibration_fields) && $types) {
 			foreach ($types as $type) {
 				echo "<div style='margin-left: 2em; margin-top: 1em;'>- ".$type;
-				$r = $leginondata->getCalibrations($calibration, $instrumentid, $limit, $type);
+				$r = $leginondata->getCalibrations($calibration, $instrumentId, $limit, $type);
 				display($r, True);
 				echo "</div>";
 			}
 		} else {
-			$r = $leginondata->getCalibrations($calibration, $instrumentid, $limit, $type);
+			$r = $leginondata->getCalibrations($calibration, $instrumentId, $limit, $type);
 			display($r, True);
 		}
 		echo "<br>";
 	    }
 	}
-} else if ($filename) {
-	echo "$filename <br><br>".$SQL_HOSTS[$hostId];
-	$leginondata->mysql->setSQLHost($SQL_HOSTS[$hostId]);
-	$app = $leginondata->importApplication($tmpfile);
-	echo $app;
+} else if ($xmldata ) {
+	$leginondata->mysql->setSQLHost($SQL_HOSTS[$importhostId]);
+	if(!$leginondata->importCalibrations($xmldata, $importinstrumentId))
+		echo "data not imported";
+	else
+		echo "data imported";
+	echo "<pre>";
+//	print_r($app);
+	echo "<pre>";
 }
 
 
-function display($r, $display_fields=False) {
-	echo "<table border=1 cellspacing=0, cellpadding=5>";
-	if (!is_array($r))
-		return False;
-	$data = $r;
-	if ($display_fields) {
-		if ($r[0]) {
-			$fields = array_keys($r[0]);
-			foreach ($fields as $field)
-				$f[$field] = $field;
-			$data = array_merge(array($f), $r);
-		}
-	}
-	foreach ($data as $row) {
-	echo "<tr>";
-		foreach ($row as $k=>$value) {
-			if (eregi('^DEF_id|^REF\|', $k)) 
-				continue;
-			else if (eregi('^DEF_timestamp$', $k)) {
-				if (!$display_fields)
-					$value = date('D, j M Y G:i:s ', mysql2UnixTime($value));
-				$display_fields = False;
-			}
-			echo "	<td>$value</td>\n";
-		}
-	echo "</tr>";
-	}
-	echo "</table>";
-}
 
 admin_footer();
-exit;
 ?>

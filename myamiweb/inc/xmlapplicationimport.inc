@@ -13,8 +13,7 @@
  *      - SQL statements 
  *      - PHP array
  */
-
-class XMLApplicationImport {
+class XMLImport {
 
     var $definition;
     var $data;
@@ -23,21 +22,13 @@ class XMLApplicationImport {
     var $fieldtypes;
     var $fieldvalues;
 
-    function XMLApplicationImport($filename) {
-	if (!is_file($filename))
-		die("$filename - No such a file") ;
-	$this->importXML($filename);
-	$this->XMLDefinition2SQL();
-	$this->XMLData2SQL();
-    }
-
-    function importXML($filename) {
-        // --- read the xml application file
-        $datafile = implode("",file($filename));
+    function importXML($inputdata) {
+        // --- try to read a XML file or a XML string
+	$data = (@is_file($inputdata)) ? implode("",file($inputdata)) : $inputdata;
         $parser = xml_parser_create();
         xml_parser_set_option($parser,XML_OPTION_CASE_FOLDING,0);
         xml_parser_set_option($parser,XML_OPTION_SKIP_WHITE,1);
-        xml_parse_into_struct($parser,$datafile,$values,$tags);
+        xml_parse_into_struct($parser,$data,$values,$tags);
         xml_parser_free($parser);
     
         // --- Generate an array for the definition,
@@ -82,6 +73,7 @@ class XMLApplicationImport {
 			$this->fieldtypes[$tablename] = $fieldtypes;
 		}
 	}
+
     }
 
     function getFieldTypes() {
@@ -98,6 +90,68 @@ class XMLApplicationImport {
 
     function getSQLDataQueries() {
 	return $this->insertqueries;
+    }
+
+}
+
+class XMLCalibrationImport extends XMLImport {
+
+	function XMLCalibrationImport($xmldata) {
+		$this->importXML($xmldata);
+		$this->XMLDefinition2SQL();
+		$this->XMLData2SQL();
+	}
+
+	function XMLData2SQL() {
+		$data = $this->data;
+		foreach ($data as $d) {
+		    if ($d[tag]=="sqltable" && $d[type]=="open") {
+			$tablename = $d[attributes][name];
+			$sqlinsert = "INSERT INTO $tablename  ";
+			$fields = array();
+			$values = array();
+		    }
+		    if ($d[tag]=="field") {
+			$fname = $d[attributes]['name'];
+			$addfield = true;
+			switch($fname) {
+				//--- Don't include the default primary Key Field into
+				//--- the new query
+				case "DEF_id": 
+					$addfield = false;
+				break;
+				//--- Regenerate a new timestamp
+				case "DEF_timestamp": 
+					$fvalue = "NOW()";
+				break;
+				//--- Update the reference Id with $applicationId
+				case "REF|SessionData|session": 
+					$fvalue = '$sessionId';
+				break;
+				default:
+					$fvalue = '"'.$d[value].'"';
+				break;
+			}
+			if ($addfield) {
+				$fields[] = '`'.$fname.'`';
+				$values[] = $fvalue;
+			}
+		    }
+		    if ($d[tag]=="sqltable" && $d[type]=="close") {
+			$sqlinsert .= ' ('.implode(', ', $fields).') ';
+			$sqlinsert .= ' VALUES ('.implode(', ', $values).') ';
+			$this->insertqueries[$tablename][] = "$sqlinsert;";
+		    }
+		}
+	}
+}
+
+class XMLApplicationImport extends XMLImport {
+
+    function XMLApplicationImport($xmldata) {
+	$this->importXML($xmldata);
+	$this->XMLDefinition2SQL();
+	$this->XMLData2SQL();
     }
 
     function XMLData2SQL() {

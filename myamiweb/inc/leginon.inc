@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.30 $
- *	@version $Id: leginon.inc,v 1.30 2004-10-21 01:53:53 dfellman Exp $
+ *	@version $Revision: 1.31 $
+ *	@version $Id: leginon.inc,v 1.31 2004-10-23 00:11:50 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -18,11 +18,14 @@ require_once("inc/util.inc");
 require_once('inc/xmlapplicationimport.inc');
 require_once('inc/mysql.inc');
 
+define(DB_HOST, $DB_HOST);
+define(DB_USER, $DB_USER);
+define(DB_PASS, $DB_PASS);
+define(DB, $DB);
+
 class leginondata {
 
 	var $crlf = "\n";
-	var $format = "sql";
-	var $saveasfile = false;
 	var $ffttypes = array('focpow', 'fft');
 	var $defaulttypes = array('all'=>'all', 'atlas'=>'atlas');
 	var $manualtype = 'manual';
@@ -34,10 +37,14 @@ class leginondata {
 		'StageModelCalibrationData',
 		'StageModelMagCalibrationData'
 	);
+	var $applicationtables = array (
+		'ApplicationData',
+		'BindingSpecData',
+		'NodeSpecData'
+	);
 
 	function leginondata() {
-		require("config.php");
-		$this->mysql = &new mysql($HOSTNAME, $DBUSER, $DBPASSWORD, $DATABASE);
+		$this->mysql = &new mysql(DB_HOST, DB_USER, DB_PASS, DB);
 		$this->viewer_tables();
 	}
 
@@ -144,7 +151,7 @@ class leginondata {
 		return $this->getAll('InstrumentData');
 	}
 
-	function getInstruments2() {
+	function getInstrumentDescriptions() {
 		$q="select "
 		."`DEF_id` as id, "
 		."`name`, "
@@ -886,17 +893,21 @@ class leginondata {
 	         if(!isset($index[$kname]))
 	             $index[$kname] = array();
 	         $index[$kname][] = $this->addBackquotes($row['Column_name']);
+	         $index[$kname]['type'] = $row['Index_type'];
 	    }
-	
+
 	    while(list($x, $columns) = @each($index))
 	    {
+		if ($type=$columns['type'])
+			unset($columns['type']);
+		$full = ($type=='FULLTEXT') ? 'FULLTEXT ' : '';
 	         $schema_create .= "    <key>";
 	         if($x == "PRIMARY")
 	             $schema_create .= "PRIMARY KEY (" . implode($columns, ", ") . ")";
 	         elseif (substr($x,0,6) == "UNIQUE")
 	            $schema_create .= "UNIQUE ".substr($x,7)." (" . implode($columns, ", ") . ")";
 	         else
-	            $schema_create .= "KEY ".$x." (" . implode($columns, ", ") . ")";
+	            $schema_create .= $full."KEY ".$x." (" . implode($columns, ", ") . ")";
 	         $schema_create .= "</key>$crlf";
 	    }
 	
@@ -965,6 +976,30 @@ class leginondata {
 	    $this->mysql->SQLQueries($queries);
 	}
 
+	function dumpDefaultTables($tables) {
+		$crlf = $this->crlf;
+		$dump =  '<!--' . $crlf
+			.  '-' . $crlf
+			.  '- Default Table XML-Dump' . $crlf
+			.  '- http://ami.scripps.edu/ ' . $crlf
+			.  '-' . $crlf
+			.  '- Tables: ' . $crlf;
+
+		foreach($tables as $table) {
+			if (!$this->mysql->SQLTableExists($table))
+				continue;
+			$definition .= $this->getSQLTableDefinitionXML($table);
+			$dump .=  '-	'.$table. $crlf;
+		}
+
+		$dump .=   '-' . $crlf
+			.  '-->' . $crlf . $crlf
+			.  '<defaulttables>' . $crlf;
+		$this->buildXML($definition, '', $dump);
+		$dump .= "</defaulttables>" . $crlf;
+		return $dump;
+	}
+
 	function dumpCalibrations($tables, $instrumentId, $limit, $types=array()) {
 		$crlf = $this->crlf;
 		list($info) = $this->getInstrumentInfo($instrumentId);
@@ -984,6 +1019,7 @@ class leginondata {
 				continue;
 			$definition .= $this->getSQLTableDefinitionXML($table);
 			$dump .=  '-	'.$table. $crlf;
+			if(is_array($types))
 			foreach ($types as $type) {
 				$r = $this->getCalibrations($table, $instrumentId, $limit, $type);
 				if (!$r[0]['type'])
@@ -996,13 +1032,16 @@ class leginondata {
 			.  '-->' . $crlf . $crlf
 			.  '<calibrationdump>' . $crlf;
 		$this->buildXML($definition, $content, $dump);
+		$dump .= "</calibrationdump>" . $crlf;
 		return $dump;
 	}
 
-	function dumpApplicationData($applicationId) {
+	function getApplicationInfo($id) {
+		return $this->getDataInfo('ApplicationData', $id);
+	}
+
+	function dumpApplicationData($applicationId, $format="xml") {
 	    $crlf = $this->crlf;
-	    $format = $this->format;
-	    $saveasfile = $this->saveasfile;
 	    $tbl_applicationdata="ApplicationData";
 	    $result = $this->mysql->SQLQuery("SHOW TABLES");
 	    while($row = mysql_fetch_row($result))
@@ -1017,13 +1056,15 @@ class leginondata {
 
 	    $ref_tables=array();
 	    foreach($tables as $table) {
+		if ($table=="LaunchedApplicationData")
+			continue;
 	    	$result = $this->mysql->SQLQuery("SHOW FIELDS FROM $table"); 
 	    	while($row = mysql_fetch_array($result))
 			if (ereg("^REF\|$tbl_applicationdata", $row[Field]))
 				if(!in_array($table,$ref_tables))
 					$ref_tables[]=$table;
-
 	    }
+
 	    if ($format=="sql") {
 		$getdefinition="mysql->getSQLTableDefinition";
 		$getdata="mysql->getSQLTableContent";
@@ -1035,7 +1076,7 @@ class leginondata {
                            .  '# Date : ' . $date . $crlf
                            .  '#' . $crlf . $crlf;
 
-	    } else {
+	    } else if ($format="xml") {
 		$getdefinition="getSQLTableDefinitionXML";
 		$getdata="getXMLData";
 		$dump =  '<!--' . $crlf
@@ -1065,26 +1106,15 @@ class leginondata {
 		    eval('$this->'.$getdata.'($table, $buffer, $where);');
 		}
 
-	    if($format=="xml")
+	    if($format=="xml") {
 	    	$this->buildXML($table_def, $buffer, &$dump);
-	    else {
+		$dump .= "</applicationdump>" . $crlf;
+	    } else {
 		$dump .= $table_def;
 		$dump .= $buffer;
 	    }
 
-	    if ($saveasfile) {
-		$filename = $name."_".$version;
-		if ($format == 'xml') {
-			$ext       = 'xml';
-		} else {
-			$ext       = 'sql';
-		}
-		$this->download($filename.'.'.$ext, $dump);
-	    } else {
-		echo "<div><pre>";
-		echo htmlspecialchars($dump);
-		echo "</pre></div>";
-	    }
+		return $dump;
 
 	}
 
@@ -1110,8 +1140,47 @@ class leginondata {
 
 	}
 
-	function importApplication($filename) {
+	function importTables($filename) {
 		$app = new XMLApplicationImport($filename);
+		$sqldef = $app->getSQLDefinitionQueries();
+		$fieldtypes = $app->getFieldTypes();
+		$this->mysql->SQLAlterTables($sqldef, $fieldtypes);
+	}
+
+	function importCalibrations($xmldata, $instrumentId) {
+		if (!$instrumentId)
+			return false;
+		$app = new XMLCalibrationImport($xmldata);
+		$sqldef = $app->getSQLDefinitionQueries();
+		$sqldata = $app->getSQLDataQueries();
+		$fieldtypes = $app->getFieldTypes();
+		$fieldvalues = $app->getFieldValues();
+		if ($changes=$this->mysql->SQLAlterTables($sqldef, $fieldtypes))
+			echo "<br".$changes;
+
+		//--- insert a SessionData to link InstrumentData w/ Calibrations
+		$q = "insert into `SessionData` (`name`, `REF|InstrumentData|instrument`) "
+			. " VALUES "
+			. " (concat('importcal', DATE_FORMAT(now(), '%Y%m%d%H%i%s')), $instrumentId ) ";
+
+		$sessionId = $this->mysql->SQLQuery($q, True);
+		if (!$sessionId)
+			return false;
+
+		//--- insert new Calibrations data;
+		if (is_array($sqldata))
+		foreach ($sqldata as $table=>$queries) {
+			foreach($queries as $query) {
+				eval("\$sqlinsert= \"".addslashes($query)."\";");
+					$this->mysql->SQLQuery($sqlinsert,true);
+			}
+		}
+		return true;
+	}
+		
+
+	function importApplication($data) {
+		$app = new XMLApplicationImport($data);
 		$sqldef = $app->getSQLDefinitionQueries();
 		$sqldata = $app->getSQLDataQueries();
 		$fieldtypes = $app->getFieldTypes();
@@ -1175,13 +1244,7 @@ class leginondata {
 	   	 . " </definition>" . $crlf
 	   	 . " <data>" . $crlf
 	   	 . $content . $crlf
-	   	 . " </data>" . $crlf
-	   	 . "</applicationdump>" . $crlf;
-	}
-
-	function dumpFormat($format, $file="") {
-		$this->format=$format;
-		$this->saveasfile = (empty($file)) ? false : true;
+	   	 . " </data>" . $crlf;
 	}
 
 	function handler($value) {

@@ -1,9 +1,5 @@
 <?
-require('inc/leginon.inc');
 require('inc/admin.inc');
-
-// --- testing
-$leginondata->mysql = new mysql('stratocaster', 'usr_object', '' ,'dbemdata');
 
 $f_sel_name=$_POST['f_sel_name'];
 $f_name=$_POST['f_name'];
@@ -59,17 +55,17 @@ var jsname = "<?=$f_name?>";
 
 function init() {
 	var index=-1;
-	for (var i = 0; i < document.f_userdata.f_sel_name.length; i++) {
-		if (document.f_userdata.f_sel_name.options[i].text == jsname) {
+	for (var i = 0; i < document.data.f_sel_name.length; i++) {
+		if (document.data.f_sel_name.options[i].text == jsname) {
 			index=i;  
 		} 
 	}
 	if (index >=0) {
-		document.f_userdata.f_sel_name.options[index].selected = true;
-		document.f_userdata.f_sel_name.focus();
+		document.data.f_sel_name.options[index].selected = true;
+		document.data.f_sel_name.focus();
 <? if ($_POST['f_name'] && $_POST['bt_action']!='remove') { ?>
 	} else {
-		document.f_userdata.f_description.focus();
+		document.data.f_description.focus();
 	}
 <? } else { echo "}"; } ?>
 }
@@ -77,11 +73,11 @@ function init() {
 <h3>Table: <?=$maintable?></h3>
 Choose a Name in the list or type one, then &lt;Tab&gt;
 <br>
-<form method="POST" name="f_userdata" enctype="multipart/form-data" action="<?=$_SERVER['PHP_SELF']?>">
+<form method="POST" name="data" enctype="multipart/form-data" action="<?=$_SERVER['PHP_SELF']?>">
 <table  border=0 cellspacing=1>
 <tr valign="top">
 <td>
-<select name="f_sel_name"  SIZE=20 onClick="update_userdata();" onchange="update_userdata();">
+<select name="f_sel_name"  SIZE=20 onClick="update_data();" onchange="update_data();">
 <?
 foreach ($groups as $group) {
 	echo "<option value='".$group['DEF_id']."' $s>".stripslashes($group['name'])."</option>\n"; 

@@ -1,9 +1,20 @@
 <?
-require('inc/leginon.inc');
 require('inc/admin.inc');
 
-// --- testing
-$leginondata->mysql = new mysql('stratocaster', 'usr_object', '' ,'dbemdata');
+$hostkeys = array_keys($SQL_HOSTS);
+$hostId = ($_POST[hostId]) ? $_POST[hostId] : current($hostkeys);
+$leginondata->mysql->setSQLHost($SQL_HOSTS[$hostId]);
+$importinstruments = $leginondata->getInstrumentDescriptions();
+$leginondata->mysql->setSQLHost("default");
+if ($_POST['import']) {
+	$leginondata->mysql->setSQLHost($SQL_HOSTS[$hostId]);
+	list($importinfo) = $leginondata->getInstrumentInfo($_POST['importinstrument']);
+	unset($importinfo['DEF_id']);
+	unset($importinfo['date']);
+	$leginondata->mysql->setSQLHost("default");
+	$leginondata->mysql->SQLInsert('InstrumentData', $importinfo);
+} 
+
 
 $f_sel_name=$_POST['f_sel_name'];
 $f_name=$_POST['f_name'];
@@ -80,29 +91,61 @@ var jsid = "<?=$id?>";
 
 function init() {
 	var index=-1;
-	for (var i = 0; i < document.f_userdata.f_sel_name.length; i++) {
-		if (document.f_userdata.f_sel_name.options[i].value == jsid) {
+	for (var i = 0; i < document.data.f_sel_name.length; i++) {
+		if (document.data.f_sel_name.options[i].value == jsid) {
 			index=i;  
 		} 
 	}
 	if (index >=0) {
-		document.f_userdata.f_sel_name.options[index].selected = true;
-		document.f_userdata.f_sel_name.focus();
+		document.data.f_sel_name.options[index].selected = true;
+		document.data.f_sel_name.focus();
 <? if ($_POST['f_name']) { ?>
 	} else {
-		document.f_userdata.f_description.focus();
+		document.data.f_description.focus();
 	}
 <? } else { echo "}"; } ?>
 }
 </script>
 <h3>Table: <?=$maintable?></h3>
-Choose a Name in the list or type one, then &lt;Tab&gt;
-<br>
-<form method="POST" name="f_userdata" enctype="multipart/form-data" action="<?=$_SERVER['PHP_SELF']?>">
+<table  border=0>
+<form method="POST" name="dataimport" enctype="multipart/form-data" action="<?=$_SERVER['PHP_SELF']?>">
+<tr valign=top >
+<td>
+From Host:
+	<select name="hostId" onChange="javascript:document.dataimport.submit();">
+		<?
+		foreach($hostkeys as $host) {
+			$selected = ($host==$hostId) ? "selected" : "";
+			echo "<option value='$host' $selected >$host\n";
+		}
+		?>
+	</select>
+</td>
+<td>
+Instrument:
+	<select name="importinstrument">
+	<? foreach ($importinstruments as $instrument) {
+		$s = ($_POST['importinstrument']==$instrument['id']) ? 'selected' : '';
+		echo "<option value='".$instrument['id']
+			."' $s >".$instrument['fullname']."</option>\n";
+	}
+	?>
+	</select>
+</td>
+</tr>
+<tr>
+<td>
+<input type="submit" name="import" value = "Import" >
+</td>
+</tr>
+</form>
+</table>
+<hr>
 <table  border=0 cellspacing=1>
+<form method="POST" name="data" enctype="multipart/form-data" action="<?=$_SERVER['PHP_SELF']?>">
 <tr valign="top">
 <td>
-<select name="f_sel_name"  SIZE=20 onClick="update_userdata();" onchange="update_userdata();">
+<select name="f_sel_name"  SIZE=20 onClick="update_data();" onchange="update_data();">
 <?
 foreach ($instruments as $instrument) {
 	echo "<option value='".$instrument['DEF_id']."' $s>".stripslashes($instrument['name'])."</option>\n"; 
@@ -115,6 +158,8 @@ foreach ($instruments as $instrument) {
 <table>
 <tr valign="top">
 <td colspan=2>
+Choose a Name in the list or type one, then &lt;Tab&gt;
+<br>
 <font color="red">*: required fields</font>
 </td>
 </tr>
@@ -201,8 +246,8 @@ camera pixel size:
 </td>
 </tr>
 
-</table>
 </form>
+</table>
 <?
 admin_footer();
 ?>

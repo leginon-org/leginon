@@ -180,3 +180,15 @@ INPUT.button {
         color:                  #777777;
 	font-weight: bold;
 }
+
+.tablebg 
+{
+	background-color: #D4D0C8;
+}
+
+.tableborder
+{
+	border:		 solid;
+	border-collapse: collapse;
+	border-color:    #D4D0C8;
+}

@@ -1,7 +1,7 @@
 <?
 /**
- *	@version $Revision: 1.8 $
- *	@version $Id: image.inc,v 1.8 2004-10-21 01:53:53 dfellman Exp $
+ *	@version $Revision: 1.9 $
+ *	@version $Id: image.inc,v 1.9 2004-10-23 00:11:50 dfellman Exp $
  */
 /**
  *	Tools to display images / mosaic
@@ -13,6 +13,8 @@ require_once("inc/util.inc");
 require_once('inc/filter.inc');
 require_once('inc/graphutil.inc');
 require_once('inc/scalebar.inc');
+
+define(READ_MRC, $IMG_METHOD);
 
 function getImage($sessionId, $imageId, $preset, $params = array()) {
 

@@ -10,40 +10,49 @@
 
 class mysql {
 
-	var $hostname;
+	var $db_host;
 	var $db_user;
 	var $db_pass;
-	var $database;
+	var $db;
 	var $format = "sql";
 	var $saveasfile = false;
+	var $sqldefault = array();
 	var $SQL = array ( 
 		'showcolumns'=>1,
 		'where'=>" WHERE 1 "
 		);
 	var $crlf = "\n";
 
-	function mysql ($hostname, $db_user, $db_pass, $database) {
-		$this->hostname = $hostname;
-		$this->db_user  = $db_user;
-		$this->db_pass  = $db_pass;
-		$this->database = $database;
+	function mysql ($db_host, $db_user, $db_pass, $db) {
+		$this->db_host	= $db_host;
+		$this->db_user	= $db_user;
+		$this->db_pass	= $db_pass;
+		$this->db	= $db;
+		$this->sqldefault['db_host'] = $db_host;
+		$this->sqldefault['db_user'] = $db_user;
+		$this->sqldefault['db_pass'] = $db_pass;
+		$this->sqldefault['db'] = $db;
 	}
 
 	function getDBInfo() {
 		return "
-			hostname: ".$this->hostname."
-			database: ".$this->database."
-			user: ".$this->user;
+			hostname: ".$this->db_host."
+			database: ".$this->db."
+			user: ".$this->db_user;
 	}
 
 	function connect_db($host="") {
-		$host = (empty($host)) ? $this->hostname : $host;
+		$host = (empty($host)) ? $this->db_host : $host;
 		$link = @mysql_connect($host, $this->db_user, $this->db_pass);
-		if (!$link)
-			return mysql_error();
-		$db = mysql_select_db($this->database, $link);
-		if(!$db)
-			return mysql_error();
+		if (!$link) {
+			$this->mysqlerror = "Error: ".mysql_error();
+			return False;
+		}
+		$db = mysql_select_db($this->db, $link);
+		if(!$db) {
+			$this->mysqlerror = "Error: ".mysql_error();
+			return False;
+		}
 		return $link;
 	}
 
@@ -162,13 +171,23 @@ class mysql {
 	    return (true);
 	}
 
-	function setSQLHost($host) {
-		$this->new_sqlhost = $host;
+	function setSQLHost($sqlhost) {
+
+		if (!is_array($sqlhost))
+			$sqlhost = array();
+		$this->db_host	= (array_key_exists('db_host', $sqlhost)) 
+					? $sqlhost['db_host'] : $this->sqldefault['db_host'];
+		$this->db_user	= (array_key_exists('db_user', $sqlhost)) 
+					? $sqlhost['db_user'] : $this->sqldefault['db_user'];
+		$this->db_pass	= (array_key_exists('db_pass', $sqlhost)) 
+					? $sqlhost['db_pass'] : $this->sqldefault['db_pass'];
+		$this->db	= (array_key_exists('db', $sqlhost)) 
+					? $sqlhost['db'] : $this->sqldefault['db'];
+		return true;
 	}
 
 	function getSQLHost() {
-		$host = (empty($this->new_sqlhost)) ? $this->hostname : $this->new_sqlhost;
-		return $host;
+		return $this->host;
 	}
 
 	function getError() {
@@ -181,7 +200,10 @@ class mysql {
 
 	function SQLQuery($query, $insert=false) {
 		$this->sqlquery = $query;
-		$this->connect_db($this->new_sqlhost);
+		if (!$this->connect_db($this->db_host)) {
+			echo $this->mysqlerror;
+			return False;
+		}
 		$result = mysql_query($query); 
 		if (!$result) {
 			$this->mysqlerror = "Error: ".mysql_error();
@@ -207,10 +229,11 @@ class mysql {
 	}
 
 	function SQLQueries($queries) {
-		$this->connect_db($this->new_sqlhost);
+		$this->connect_db($this->db_host);
 		$q = (is_array($queries)) ? $queries : array($queries);
-		foreach($q as $v)
-			mysql_query($v) or die("Error: ".mysql_error());
+		foreach($q as $v) {
+			mysql_query($v) or die("Error: $v".mysql_error());
+		}
 		$this->close_db();
 		return(true);
 	}
@@ -232,7 +255,6 @@ class mysql {
 			if (!is_numeric($v))
 				$data[$k] = "'".addslashes($v)."'";
 		$q = "INSERT INTO `$table` (".implode(', ',$fields).") VALUES (".implode(', ',$data).")";
-		// echo $q;
 		return $this->SQLQuery($q,true);
 	}
 
@@ -276,6 +298,34 @@ class mysql {
 			return False;
 		return true;
 	}
+
+	function SQLAlterTables($sqldef, $fieldtypes) {
+		if (!is_array($fieldtypes) || !is_array($sqldef))
+			return False;
+		$changes = "";
+		foreach ($fieldtypes as $table=>$fieldtype) {
+			if ($this->SQLTableExists($table)) {
+				$orgfieldtype = $this->getFieldTypes($table);
+				foreach ($fieldtype as $f=>$t) {
+					if (!$orgfieldtype[$f]) {
+						$q[] = "ALTER TABLE `$table` ADD `$f` $t";
+						$changes .= "ADD $table $f  => $t <br>";
+					} else if ($orgfieldtype[$f]!=$t) {
+						$q[] = "ALTER TABLE `$table` CHANGE `$f` `$f` $t";
+						$changes .= "CHANGE $table $f  => $t <br>";
+					}
+				}
+			} else {
+				$q[] = $sqldef[$table];
+				$changes .= "CREATE $table <br>";
+			}
+		}
+		if ($q)
+			$this->SQLQueries($q);
+		if ($changes)
+			return $changes;
+		return True;
+	}
 	
 	function getFields($table) {
 		$fields = array();
@@ -283,6 +333,16 @@ class mysql {
 			$R = $this->SQLQuery("SHOW FIELDS FROM `$table`");
 			while ($r = mysql_fetch_array($R))
 				$fields[] = $r[Field];
+		}
+		return $fields;
+	}
+
+	function getFieldTypes($table) {
+		$fields = array();
+		if ($table) {
+			$R = $this->SQLQuery("SHOW FIELDS FROM `$table`");
+			while ($r = mysql_fetch_array($R))
+				$fields[$r['Field']] = $r['Type'];
 		}
 		return $fields;
 	}

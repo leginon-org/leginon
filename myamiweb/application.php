@@ -9,9 +9,10 @@
 
 require('inc/leginon.inc');
 $sqlhosts = $SQL_HOSTS;
+$hostkeys = array_keys($sqlhosts);
 $applicationId = $_POST[applicationId];
-$ex_hostId = $_POST[export_hostId];
-$im_hostId = $_POST[import_hostId];
+$ex_hostId = ($_POST[export_hostId]) ? $_POST[export_hostId] : current($hostkeys);
+$im_hostId = ($_POST[import_hostId]) ? $_POST[import_hostId] : current($hostkeys);
 
 $leginondata->mysql->setSQLHost($SQL_HOSTS[$ex_hostId]);
 $applications = $leginondata->getApplications();
@@ -67,9 +68,9 @@ if ($_POST[bt_export]) {
      <td>
 	<select name="export_hostId" onChange="javascript:document.data.submit();">
 		<?
-		foreach($sqlhosts as $id=>$host) {
-			$selected = ($id==$ex_hostId) ? "selected" : "";
-			echo "<option value=$id $selected >$host\n";
+		foreach($hostkeys as $host) {
+			$selected = ($host==$ex_hostId) ? "selected" : "";
+			echo "<option value='$host' $selected >$host\n";
 		}
 		?>
 	</select>
@@ -126,9 +127,9 @@ if ($_POST[bt_export]) {
      <td>
 	<select name="import_hostId">
 		<?
-		foreach($sqlhosts as $id=>$host) {
-			$selected = ($id==$im_hostId) ? "selected" : "";
-			echo "<option value=$id $selected >$host\n";
+		foreach($hostkeys as $host) {
+			$selected = ($host==$im_hostId) ? "selected" : "";
+			echo "<option value='$host' $selected >$host\n";
 		}
 		?>
 	</select>

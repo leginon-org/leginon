@@ -8,13 +8,16 @@
  */
 
 define(DEFAULT_PROJECT, 'all'); 
+define(PROJECT_DB_HOST, $PROJECT_DB_HOST);
+define(PROJECT_DB_USER, $PROJECT_DB_USER);
+define(PROJECT_DB_PASS, $PROJECT_DB_PASS);
+define(PROJECT_DB, $PROJECT_DB);
 
 class project {
 
 	function project(){
-		require("config.php");
-		$this->mysql = new mysql(	$PROJECT_HOSTNAME, $PROJECT_DBUSER,
-						$PROJECT_DBPASSWORD, $PROJECT_DATABASE);
+		$this->mysql = new mysql(	PROJECT_DB_HOST, PROJECT_DB_USER,
+						PROJECT_DB_PASS, PROJECT_DB);
         }
 
 	function checkDBConnection() {
