@@ -52,10 +52,6 @@ class Data(DataDict, leginonobject.LeginonObject):
 		leginonobject.LeginonObject.__init__(self, id)
 		# DataDict base class
 		DataDict.__init__(self)
-		
-		# initial values come from LeginonObject's attributes
-		self['id'] = self.id
-		self['session'] = self.session
 
 		# if initializer was given, update my values
 		if initializer is not None:
@@ -64,6 +60,11 @@ class Data(DataDict, leginonobject.LeginonObject):
 			## sure of that
 			validinit = strictdict.OrderedDict(initializer)
 			self.update(validinit)
+
+		# initial values come from LeginonObject's attributes
+		self['id'] = self.id
+		self['session'] = self.session
+
 		# additional keyword arguments also update my values
 		self.update(kwargs)
 
