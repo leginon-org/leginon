@@ -74,7 +74,7 @@ class DataHandler(node.DataHandler):
 			done_event = threading.Event()
 			#self.node.queue.put(Request(done_event, idata['em']))
 			print 'EM insert: requesting set (idata = %s)' % str(idata)
-			self.node.queue.put(Request(done_event, dict(idata)))
+			self.node.queue.put(Request(done_event, idata))
 			print 'EM insert: waiting for request to complete'
 			done_event.wait()
 			print 'EM insert: updating UI'
@@ -296,12 +296,11 @@ class EM(node.Node):
 	def setEM(self, emstate):
 		self.lock.acquire()
 
-		# order the items in EMstate
-		#ordered = self.sortEMdict(EMstate)
+		# order the items in emstate
+		ordered = self.sortEMdict(emstate)
 
-		#for emkey in ordered.keys():
-		for emkey, emvalue in emstate.items():
-			#emvalue = emstate[emkey]
+		#for emkey, emvalue in emstate.items():
+		for emkey, emvalue in ordered.items():
 			if emvalue is None:
 				continue
 			if emkey in self.scope:
@@ -356,12 +355,20 @@ class EM(node.Node):
 		self.statestruct.set(self.uistate)
 
 	def uiCallback(self, value):
+		#request = data.AllEMData()
 		request = {}
 		for key in value:
 			if self.uistate[key] != value[key]:
 				request[key] = value[key]
+
+		#dorequest = False
+		#for value in request.values():
+		#	if value is not None:
+		#		dorequest = True
+		#if not dorequest:
 		if not request:
 			return value
+
 		self.statelock.acquire()
 		done_event = threading.Event()
 		self.queue.put(Request(done_event, request))
@@ -377,7 +384,8 @@ class EM(node.Node):
 	def queueHandler(self):
 		while True:
 			request = self.queue.get()
-			if type(request.value) is dict:
+			#if isinstance(request.value,data.EMData):
+			if isinstance(request.value, dict):
 				self.setEM(request.value)
 				self.state = self.getEM(request.value.keys())
 			else:
