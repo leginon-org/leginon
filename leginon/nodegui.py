@@ -677,6 +677,31 @@ class JimsTreeNode(TreeWidget.TreeNode):
 		return cy
 
 
+class ComboBoxDropdownCallback(Pmw.ComboBox):
+	def __init__(self, parent = None, callback = None, **kw):
+		self.callback = callback
+		INITOPT = Pmw.INITOPT
+		optiondefs = (
+		    ('autoclear',          0,          INITOPT),
+		    ('buttonaspect',       1.0,        INITOPT),
+		    ('dropdown',           1,          INITOPT),
+		    ('fliparrow',          0,          INITOPT),
+		    ('history',            1,          INITOPT),
+		    ('labelmargin',        0,          INITOPT),
+		    ('labelpos',           None,       INITOPT),
+		    ('listheight',         150,        INITOPT),
+		    ('selectioncommand',   '',         None),
+		    ('unique',             1,          INITOPT),
+		)
+		self.defineoptions(kw, optiondefs)
+		Pmw.ComboBox.__init__(self, parent)
+		self.initialiseoptions()
+
+	def _postList(self, event = None):
+		if callable(self.callback):
+			self.callback()
+		Pmw.ComboBox._postList(self, event)
+
 class NodeGUILauncher(Frame):
 	def __init__(self, parent):
 		#self.parent = parent
@@ -684,7 +709,13 @@ class NodeGUILauncher(Frame):
 		self.__build()
 
 	def __build(self):
-		f = Frame(self, bd=4, relief=SOLID)
+		self.notebook = Pmw.NoteBook(self)
+		automaticframe = self.notebook.add('Automatic')
+		manualframe = self.notebook.add('Manual')
+
+		##################################################
+
+		f = Frame(manualframe, bd=4, relief=SOLID)
 
 		launchbut = Button(f, text='Launch GUI', command=self.launchgui)
 		launchhostlab = Label(f, text='Host')
@@ -706,11 +737,11 @@ class NodeGUILauncher(Frame):
 		portent = self.launchportent.component('entry')
 		portent.insert(0, 49153)
 
-		launchbut.pack(side=LEFT)
 		launchhostlab.pack(side=LEFT)
 		self.launchhostent.pack(side=LEFT)
 		launchportlab.pack(side=LEFT)
 		self.launchportent.pack(side=LEFT)
+		launchbut.pack(side=LEFT)
 
 		self.launchhostent.bind('<KeyPress-Return>', self.launchgui)
 		portent.bind('<KeyPress-Return>', self.launchgui)
@@ -719,7 +750,7 @@ class NodeGUILauncher(Frame):
 
 		###############################################
 
-		managerframe = Frame(self, bd=4, relief=SOLID)
+		managerframe = Frame(automaticframe, bd=4, relief=SOLID)
 
 		mllabel = Label(managerframe, text='Manager Location:')
 
@@ -737,7 +768,7 @@ class NodeGUILauncher(Frame):
 		managerportentry.insert(0, 49153)
 		managerportentry.bind('<KeyPress-Return>', self.getNodeLocations)
 
-		refreshbutton = Button(managerframe, text='Refresh', command=self.getNodeLocations)
+		refreshbutton = Button(managerframe, text='Connect', command=self.setManagerLocation)
 
 		mllabel.pack(side=TOP)
 		managerhostnamelabel.pack(side=LEFT)
@@ -748,11 +779,11 @@ class NodeGUILauncher(Frame):
 
 		managerframe.pack(side=TOP, fill=BOTH)
 
-		nodeidframe = Frame(self, bd=4, relief=SOLID)
+		nodeidframe = Frame(automaticframe, bd=4, relief=SOLID)
 
 		nodeidlabel = Label(nodeidframe, text='Node ID')
 		self.nodeidsvar = StringVar()
-		self.nodeidsentry = Pmw.ComboBox(nodeidframe, entry_textvariable=self.nodeidsvar)
+		self.nodeidsentry = ComboBoxDropdownCallback(nodeidframe, self.getNodeLocations, entry_textvariable=self.nodeidsvar)
 		self.nodeidsentry.component('entryfield').component('entry')['width'] = 20
 		launchuibutton = Button(nodeidframe, text='Launch GUI', command=self.launchUIbyNodeID)
 
@@ -762,20 +793,37 @@ class NodeGUILauncher(Frame):
 
 		nodeidframe.pack(side=TOP, fill=BOTH)
 
-	def getNodeLocations(self):
+		self.notebook.pack(fill=BOTH, expand=YES)
+		self.notebook.setnaturalsize()
+
+	def setManagerLocation(self):
 		hostname = self.managerhostnamevar.get()
 		uiport = self.managerportentry.get()
-		uiclient = interface.Client(hostname, uiport)
-		self.nodelocations = uiclient.execute("getNodeLocations")
+		self.uiclient = interface.Client(hostname, uiport)
+		self.getNodeLocations()
+
+	def getNodeLocations(self):
+		try:
+			self.nodelocations = self.uiclient.execute("getNodeLocations")
+		except:
+			self.nodelocations = {}
+
 		self.nodeidsentry.setlist(self.nodelocations.keys())
-		self.nodeidsentry.selectitem(index=0, setentry=1)
+
+		try:
+			self.nodeidsentry.selectitem(index=0, setentry=1)
+		except IndexError:
+			self.nodeidsentry.clear()
 
 	def launchUIbyNodeID(self):
 		nodeid = self.nodeidsvar.get()
-		hostname = self.nodelocations[nodeid]['hostname']
-		uiport = self.nodelocations[nodeid]['UI port']
-		print "Launching interface to \'%s\' on %s:%d" % (nodeid, hostname, uiport)
-		tk = self.newGUIWindow(hostname, uiport)
+		try:
+			hostname = self.nodelocations[nodeid]['hostname']
+			uiport = self.nodelocations[nodeid]['UI port']
+			print "Launching interface to '%s' on %s:%d" % (nodeid, hostname, uiport)
+			tk = self.newGUIWindow(hostname, uiport)
+		except:
+			print "Error: cannot launch '%s' by ID" % nodeid
 
 	def addHostHistory(self, host):
 		if host not in self.hosthistory:
