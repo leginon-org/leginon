@@ -368,7 +368,7 @@ class Focuser(acquisition.Acquisition):
 		manchangeup = uidata.Method('Up', self.uiFocusUp)
 		manchangedown = uidata.Method('Down', self.uiFocusDown)
 		self.man_image = uidata.Image('Manual Focus Image', None, 'rw')
-		self.maskrad = uidata.Integer('Mask Radius', 20, 'rw', persist=True)
+		self.maskrad = uidata.Float('Mask Radius (% of image width)', 0.01, 'rw', persist=True)
 		self.man_power = uidata.Image('Manual Focus Power Spectrum', None, 'rw')
 		mancont = uidata.Container('Manual Focus')
 		mancont.addObjects((self.pre_manual_check, self.post_manual_check, manualmeth, manualpause, manualcontinue, manualdone, manualreset, manualtozero, self.manual_parameter, self.manual_delta, manchangeup, manchangedown, self.maskrad, self.man_power, self.man_image))

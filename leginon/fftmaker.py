@@ -52,7 +52,7 @@ class FFTMaker(imagewatcher.ImageWatcher):
 		self.uidataqueueflag.set(False)
 
 		self.ignore_images = uidata.Boolean('Ignore Images', False, 'rw', persist=True)
-		self.maskrad = uidata.Integer('Mask Radius', 20, 'rw', persist=True)
+		self.maskrad = uidata.Float('Mask Radius (% of imagewidth)', 0.01, 'rw', persist=True)
 
 		container = uidata.LargeContainer('FFT Maker')
 		container.addObjects((self.ignore_images,self.maskrad))

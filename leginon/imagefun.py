@@ -208,33 +208,44 @@ def linearscale(input, boundfrom, boundto, extrema=None):
 
 # resize and rotate filters:	NEAREST, BILINEAR, BICUBIC
 
-def center_fill(input, size, value=0):
-	rows,cols = input.shape
-	center = rows/2, cols/2
-	cenr, cenc = center
-	input[cenr-size/2:cenr+size/2, cenc-size/2:cenc+size/2] = value
-
-def power(numericarray, mask_radius=10):
+def power(numericarray, mask_radius=0.01, thresh=3):
 	fft = ffteng.transform(numericarray)
 	pow = Numeric.absolute(fft)
 	pow = Numeric.log(pow)
+
+	print 'shuffle'
 	pow = shuffle(pow)
-	center_mask(pow, mask_radius)
+
+	center_mask(pow, int(mask_radius*pow.shape[0]))
+
+	m = mean(pow)
+	s = stdev(pow, known_mean=m)
+	print 'clip', m, s
+	pow = Numeric.clip(pow, m-thresh*s, m+thresh*s)
+
+	print 'return'
 	return pow
+
+def filled_circle(shape, radius):
+	r2 = radius*radius
+	center = shape[0]/2,shape[1]/2
+	def func(i0, i1):
+		ii0 = i0 - center[0]
+		ii1 = i1 - center[1]
+		rr2 = Numeric.power(ii0,2) + Numeric.power(ii1,2)
+		c = Numeric.where(rr2<r2, 0.0, 1.0)
+		return c
+	return Numeric.fromfunction(func, shape)
 
 def center_mask(numericarray, mask_radius):
 	shape = numericarray.shape
 	center = shape[0]/2, shape[1]/2
 	center_square = numericarray[center[0]-mask_radius:center[0]+mask_radius, center[1]-mask_radius:center[1]+mask_radius]
-
 	m = mean(numericarray)
 	cs_shape = center_square.shape
 	cs_center = cs_shape[0]/2, cs_shape[1]/2
-	for row in range(cs_shape[0]):
-		for col in range(cs_shape[1]):
-			dist = Numeric.hypot(row-cs_center[0],col-cs_center[1])
-			if dist <= mask_radius:
-				center_square[row,col] = m
+	circ = filled_circle(cs_shape,mask_radius)
+	center_square[:] = center_square * circ.astype(center_square.typecode())
 
 def shuffle(narray):
 	'''
@@ -536,6 +547,9 @@ def mark_image(image, coord, value):
 		if 0 <= c < image.shape[1]:
 			image[row,c] = value
 
+def bin(image, binning):
+	return numextension.bin(image, binning)
+
 ### python implementation of some Viewit functions
 
 def threshold(a, limit):
@@ -543,5 +557,5 @@ def threshold(a, limit):
 
 def zscore(image):
 	m = mean(image)
-	s = stdev(image)
+	s = stdev(image, known_mean=m)
 	return (image - m) / s

@@ -164,7 +164,7 @@ class ImViewer(imagewatcher.ImageWatcher):
 		acqloopmethod = uidata.Method('Acquire Loop', self.uiAcquireLoop)
 		acqstopmethod = uidata.Method('Stop Acquire Loop', self.uiAcquireLoopStop)
 		self.do_pow = uidata.Boolean('Do Power', False, 'rw')
-		self.maskrad = uidata.Integer('Power Mask Radius', 20, 'rw', persist=True)
+		self.maskrad = uidata.Float('Power Mask Radius (% of image width)', 0.01, 'rw', persist=True)
 		self.ui_image = uidata.Image('Image', None, 'r')
 		self.ui_image_pow = uidata.Image('Power Image', None, 'r')
 		eventmethod = uidata.Method('Event Acquire', self.acquireEvent)
