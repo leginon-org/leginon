@@ -3,14 +3,24 @@ import wx
 from gui.wx.Choice import Choice
 from gui.wx.Entry import IntEntry, FloatEntry
 import gui.wx.Calibrator
+import gui.wx.ToolBar
 
 class Panel(gui.wx.Calibrator.Panel):
-	tools = [
-		'settings',
-		'abort',
-		'measure',
-		'model',
-	]
+	def initialize(self):
+		gui.wx.Calibrator.Panel.initialize(self)
+		self.toolbar.Realize()
+		ctb = self.toolbar.RemoveTool(gui.wx.ToolBar.ID_CALIBRATE)
+		atb = self.toolbar.RemoveTool(gui.wx.ToolBar.ID_ABORT)
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_MEASURE,
+													'ruler',
+													shortHelpString='Measure')
+		self.toolbar.AddToolItem(atb)
+		self.toolbar.AddToolItem(ctb)
+
+	def onNodeInitialized(self):
+		gui.wx.Calibrator.Panel.onNodeInitialized(self)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureTool,
+											id=gui.wx.ToolBar.ID_MEASURE)
 
 	def onMeasureTool(self, evt):
 		self.node.uiStartLoop()
@@ -18,7 +28,7 @@ class Panel(gui.wx.Calibrator.Panel):
 	def onAbortTool(self, evt):
 		self.node.uiStopLoop()
 
-	def onModelTool(self, evt):
+	def onCalibrateTool(self, evt):
 		self.node.uiFit()
 
 	def onSettingsTool(self, evt):

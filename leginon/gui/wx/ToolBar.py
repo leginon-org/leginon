@@ -35,3 +35,7 @@ class ToolBar(wx.ToolBar):
 		bitmap = wx.BitmapFromImage(wx.Image(icons.getPath(bitmap)))
 		wx.ToolBar.AddTool(self, id, bitmap, **kwargs)
 
+	def InsertTool(self, pos, id, bitmap, **kwargs):
+		bitmap = '%s.png' % bitmap
+		bitmap = wx.BitmapFromImage(wx.Image(icons.getPath(bitmap)))
+		wx.ToolBar.InsertTool(self, pos, id, bitmap, **kwargs)

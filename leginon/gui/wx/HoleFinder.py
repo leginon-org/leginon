@@ -7,6 +7,7 @@ import gui.wx.Rings
 from gui.wx.Choice import Choice
 from gui.wx.Entry import Entry, IntEntry, FloatEntry
 import gui.wx.TargetTemplate
+import gui.wx.ToolBar
 
 AddTargetTypesEventType = wx.NewEventType()
 AddTargetsEventType = wx.NewEventType()
@@ -38,11 +39,12 @@ class SetTargetsEvent(wx.PyCommandEvent):
 
 class Panel(gui.wx.TargetFinder.Panel):
 	icon = 'holefinder'
-	tools = gui.wx.TargetFinder.Panel.tools + [
-		'submit',
-	]
 	def initialize(self):
 		gui.wx.TargetFinder.Panel.initialize(self)
+
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SUBMIT,
+													'play',
+													shortHelpString='Submit Targets')
 
 		self.targetcolors = {
 			'acquisition': wx.GREEN,
@@ -195,6 +197,9 @@ class Panel(gui.wx.TargetFinder.Panel):
 							self.bhf['Lattice'])
 		self.Bind(wx.EVT_BUTTON, self.onFinalSettingsButton,
 							self.bhf['Final'])
+
+		self.toolbar.Bind(wx.EVT_TOOL, self.onSubmitTool,
+											id=gui.wx.ToolBar.ID_SUBMIT)
 
 	def onSubmitTool(self, evt):
 		self.node.submit()
