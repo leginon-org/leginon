@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Selector.py,v $
-# $Revision: 1.4 $
+# $Revision: 1.5 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-28 00:35:27 $
+# $Date: 2004-10-28 16:52:08 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -43,36 +43,60 @@ class SelectorItem(object):
 		self.data = data
 		self.items = []
 
+		self.panel = wx.Panel(parent, -1)
+		self.panel.SetBackgroundColour(wx.WHITE)
+		self.sz = wx.GridBagSizer(0, 3)
+		self.sz.SetEmptyCellSize((16, 16))
+
 		if icon is not None:
 			bitmap = getBitmap(icon)
-			sb = wx.StaticBitmap(parent, -1, bitmap)
+			sb = wx.StaticBitmap(self.panel, -1, bitmap)
 			self.items.append(sb)
 		else:
-			self.items.append(wx.StaticBitmap(parent, -1))
+			self.items.append(wx.StaticBitmap(self.panel, -1))
 
-		label = wx.StaticText(parent, -1, name)
+		label = wx.StaticText(self.panel, -1, name)
 		self.items.append(label)
 
-		self.items.append(wx.StaticBitmap(parent, -1))
+		self.items.append(wx.StaticBitmap(self.panel, -1))
+
+		for i, additem in enumerate(self.items):
+			if additem is None:
+				continue
+			if isinstance(additem, wx.StaticText):
+				flags = wx.ALIGN_CENTER_VERTICAL
+			else:
+				flags = wx.ALIGN_CENTER
+			self.sz.Add(additem, (0, i), (1, 1), flags)
+
+		self.panel.SetSizerAndFit(self.sz)
 
 		for item in self.items:
 			if item is None:
 				continue
-			item.Bind(wx.EVT_LEFT_DOWN, self.parent.onLeftDown)
+			item.Bind(wx.EVT_LEFT_DOWN, self.onLeftDown)
+		self.panel.Bind(wx.EVT_LEFT_DOWN, self.onLeftDown)
 
-	def destroy(self):
-		while self.items:
-			item = self.items.pop()
-			if item is None:	
-				continue
-			item.Destroy()
+	def onLeftDown(self, evt):
+		evt.SetEventObject(self.panel)
+		#...
+		self.parent.onLeftDown(evt)
+		evt.Skip()
 
 	def setSelected(self, selected):
 		if selected:
-			self.items[1].SetBackgroundColour(wx.Color(49, 106, 197))
+			for item in self.items:
+				if item is None:
+					continue
+				item.SetBackgroundColour(wx.Color(49, 106, 197))
+			self.panel.SetBackgroundColour(wx.Color(49, 106, 197))
 			self.items[1].SetForegroundColour(wx.WHITE)
 		else:
-			self.items[1].SetBackgroundColour(wx.WHITE)
+			for item in self.items:
+				if item is None:
+					continue
+				item.SetBackgroundColour(wx.WHITE)
+			self.panel.SetBackgroundColour(wx.WHITE)
 			self.items[1].SetForegroundColour(wx.BLACK)
 		self.items[1].Refresh()
 
@@ -150,30 +174,17 @@ class Selector(wx.lib.scrolledpanel.ScrolledPanel):
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def addItem(self, row, item):
-		for i, additem in enumerate(item.items):
-			if additem is None:
-				continue
-			if isinstance(additem, wx.StaticText):
-				flags = wx.ALIGN_CENTER_VERTICAL
-			else:
-				flags = wx.ALIGN_CENTER
-			self.sz.Add(additem, (row, i), (1, 1), flags)
+		self.sz.Add(item.panel, (row, 0), (1, 1), wx.EXPAND)
 
 	def moveItem(self, row, item):
-		for column, moveitem in enumerate(item.items):
-			if moveitem is None:
-				continue
-			self.sz.SetItemPosition(moveitem, (row, column))
+		self.sz.SetItemPosition(item.panel, (row, 0))
 
 	def detachItem(self, item):
-		for removeitem in item.items:
-			if removeitem is None:
-				continue
-			self.sz.Detach(removeitem)
+		self.sz.Detach(item.panel)
 
 	def destroyItem(self, item):
 		self.detachItem(item)
-		item.destroy()
+		item.panel.Destroy()
 
 	def insert(self, index, item):
 		rows = range(index, len(self.order))
