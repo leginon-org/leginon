@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import node
 import Numeric
-import cameraimage
+import imagefun
 import data, event
 import cPickle
 import string
@@ -207,7 +207,7 @@ class Corrector(node.Node):
 		seriesscope = seriesinfo['scope']
 
 		print 'averaging series'
-		ref = cameraimage.averageSeries(series)
+		ref = imagefun.averageSeries(series)
 		corstate = data.CorrectorCamstateData()
 		corstate.friendly_update(seriescam)
 
@@ -280,11 +280,11 @@ class Corrector(node.Node):
 		norm = bright - dark
 
 		## there may be a better normavg than this
-		normavg = cameraimage.mean(norm)
+		normavg = imagefun.mean(norm)
 
 		# division may result infinity or zero division
 		# so make sure there are no zeros in norm
-		norm = Numeric.clip(norm, 1.0, cameraimage.inf)
+		norm = Numeric.clip(norm, 1.0, imagefun.inf)
 		norm = normavg / norm
 		print 'saving'
 		self.storeRef('norm', norm, corstate)
@@ -338,14 +338,14 @@ class Corrector(node.Node):
 			if row not in badrows:
 				goodrow = row
 				break
-		cameraimage.fakeRows(image, badrows, goodrow)
+		imagefun.fakeRows(image, badrows, goodrow)
 
 		goodcol = None
 		for col in range(shape[1]):
 			if col not in badcols:
 				goodcol = col
 				break
-		cameraimage.fakeCols(image, badcols, goodcol)
+		imagefun.fakeCols(image, badcols, goodcol)
 
 		return image
 
@@ -368,10 +368,10 @@ class Corrector(node.Node):
 			return raw
 
 	def stats(self, im):
-		mean = cameraimage.mean(im)
-		stdev = cameraimage.stdev(im)
-		mn = cameraimage.min(im)
-		mx = cameraimage.max(im)
+		mean = imagefun.mean(im)
+		stdev = imagefun.stdev(im)
+		mn = imagefun.min(im)
+		mx = imagefun.max(im)
 		return {'mean':mean,'stdev':stdev,'min':mn,'max':mx}
 
 

@@ -5,7 +5,6 @@ Provides high level functions to access camera
 import leginonconfig
 import node
 import data
-import cameraimage
 import Numeric
 import copy
 import uidata

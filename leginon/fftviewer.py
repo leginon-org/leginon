@@ -2,7 +2,7 @@ import imagewatcher
 import fftengine
 import data
 import Numeric
-import cameraimage
+import imagefun
 import uidata
 
 class FFTViewer(imagewatcher.ImageWatcher):
@@ -23,7 +23,7 @@ class FFTViewer(imagewatcher.ImageWatcher):
 
 	def processData(self, imagedata):
 		imagewatcher.ImageWatcher.processData(self, imagedata)
-		self.numarray = cameraimage.power(self.numarray)
+		self.numarray = imagefun.power(self.numarray)
 		self.ui_image.set(self.numarray)
 		if self.popupvalue:
 			self.clearAllTargetCircles()

@@ -4,7 +4,6 @@ import node
 import event
 import data
 import time
-import cameraimage
 import camerafuncs
 import calibrationclient
 import copy

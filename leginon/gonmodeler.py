@@ -6,7 +6,6 @@ import peakfinder
 import event
 import time
 import timer
-import cameraimage
 import camerafuncs
 import threading
 import calibrationclient

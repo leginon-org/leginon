@@ -3,7 +3,6 @@
 import event
 import data
 import time
-import cameraimage
 import camerafuncs
 import presets
 import threading

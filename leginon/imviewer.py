@@ -4,7 +4,7 @@ import imagewatcher
 import Numeric
 import threading
 import camerafuncs
-import cameraimage
+import imagefun
 import Mrc
 import node, data, event
 import uidata
@@ -30,7 +30,7 @@ class ImViewer(imagewatcher.ImageWatcher):
 
 	def doPow(self):
 		if self.numarray is not None and self.do_pow.get():
-			pow = cameraimage.power(self.numarray)
+			pow = imagefun.power(self.numarray)
 			self.ui_image_pow.set(pow)
 
 	def uiAcquireLoop(self):
