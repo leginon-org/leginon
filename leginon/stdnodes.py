@@ -1,8 +1,9 @@
-
+###
+###  This defines some of the common Node types
+###
 
 
 import nodenet
-
 
 
 class ImageAnalyzer(nodenet.Node):

@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+###############
+###############    THIS IS OLD, USE NODENET INSTEAD OF EVENTNET
+###############
 
 import xmlrpcnode
 import xmlrpclib
