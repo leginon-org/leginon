@@ -50,7 +50,7 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 
 		self.szmain = wx.GridBagSizer(5, 5)
 
-		self.messagelog = gui.wx.MessageLog.MessageLog(parent.swmessage)
+		self.messagelog = gui.wx.MessageLog.MessageLog(parent.swmessage, self)
 		self.messagelog.Show(False)
 
 		self.Bind(EVT_NODE_INITIALIZED, self._onNodeInitialized)

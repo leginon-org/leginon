@@ -22,7 +22,8 @@ class StatusUpdatedEvent(wx.PyCommandEvent):
 		self.level = level
 
 class MessageLog(wx.ListCtrl, ColumnSorterMixin):
-	def __init__(self, parent):
+	def __init__(self, parent, evtsrc):
+		self.evtsrc = evtsrc
 		wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT)
 		self.InsertColumn(0, 'Level')
 		self.InsertColumn(1, 'Time', wx.LIST_FORMAT_RIGHT)
@@ -109,8 +110,9 @@ class MessageLog(wx.ListCtrl, ColumnSorterMixin):
 		self.updateStatus(level)
 
 	def statusUpdated(self, level):
-		evt = StatusUpdatedEvent(self.GetParent(), level)
-		self.GetEventHandler().AddPendingEvent(evt)
+		#evt = StatusUpdatedEvent(self.GetParent(), level)
+		evt = StatusUpdatedEvent(self.evtsrc, level)
+		self.evtsrc.GetEventHandler().AddPendingEvent(evt)
 
 	def updateStatus(self, level=None):
 		if level is None:
