@@ -69,20 +69,22 @@ class Corrector(node.Node):
 		self.uiframestoaverage = uidata.UIInteger('Frames to Average', 3, 'rw')
 		self.uifakeflag = uidata.UIBoolean('Fake Image', False, 'rw')
 		cameraconfigure = self.cam.configUIData()
+#			self.registerUIData('clip limits', 'array', default=()),
+#			self.registerUIData('bad rows', 'array', default=()),
+#			self.registerUIData('bad cols', 'array', default=())
+		self.cliplimits = uidata.UIArray('Clip Limits', (), 'rw')
+		self.badrows = uidata.UIArray('Bad Rows', (), 'rw')
+		self.badcols = uidata.UIArray('Bad Cols', (), 'rw')
+#		setplan = self.registerUIMethod(self.uiSetPlanParams, 'Set Plan Params',
+		setplan = uidata.UIMethod('Set Plan', self.uiSetPlanParams)
+
 		preferencescontainer = uidata.UIContainer('Preferences')
-		preferencescontainer.addUIObjects((self.uiframestoaverage, self.uifakeflag,
-																				cameraconfigure))
+		preferencescontainer.addUIObjects((self.uiframestoaverage, self.uifakeflag, cameraconfigure, self.cliplimits, self.badrows, self.badcols, setplan))
 		container = uidata.UIMediumContainer('Corrector')
 		container.addUIObjects((acquirecontainer, self.ui_image,
 														preferencescontainer))
 		self.uiserver.addUIObject(container)
 
-#		argspec = (
-#			self.registerUIData('clip limits', 'array', default=()),
-#			self.registerUIData('bad rows', 'array', default=()),
-#			self.registerUIData('bad cols', 'array', default=())
-#		)
-#		setplan = self.registerUIMethod(self.uiSetPlanParams, 'Set Plan Params',
 #																																			argspec)
 #
 #		ret = self.registerUIData('Current Plan', 'struct')
@@ -94,15 +96,15 @@ class Corrector(node.Node):
 #		myspec += nodespec
 #		return myspec
 
-	def uiSetPlanParams(self, cliplimits, badrows, badcols):
+#	def uiSetPlanParams(self, cliplimits, badrows, badcols):
+	def uiSetPlanParams(self):
 		camconfig = self.cam.config()
 		camstate = camconfig['state']
 		plandata = self.newPlan(camstate)
-		plandata['clip_limits'] = cliplimits
-		plandata['bad_rows'] = badrows
-		plandata['bad_cols'] = badcols
+		plandata['clip_limits'] = self.cliplimits.get()
+		plandata['bad_rows'] = self.badrows.get()
+		plandata['bad_cols'] = self.badcols.get()
 		self.storePlan(plandata)
-		return ''
 
 	def uiGetPlanParams(self):
 		camconfig = self.cam.config()
@@ -126,23 +128,21 @@ class Corrector(node.Node):
 	def uiAcquireCorrected(self):
 		camconfig = self.cam.config()
 		camstate = camconfig['state']
-		self.cam.state(camstate)
+		camdata = data.CameraEMData(('camera',), initializer=camstate)
+		self.cam.currentCameraEMData(camdata)
 		imagedata = self.acquireCorrectedArray()
 		print 'Corrected Stats: %s' % (self.stats(imagedata),)
 		self.ui_image.set(imagedata)
 		return ''
 
 	def newPlan(self, camstate):
-		camdata = data.CameraEMData(('camera',), initializer=camstate)
-		print 'CAMDATA'
-		print camdata
-		camdata['exposure time'] = None
+		camdata = self.camstateToCamdata(camstate)
 		plan = data.CorrectorPlanData(self.ID(), camstate=camdata)
 		return plan
 
 	def retrievePlan(self, camstate):
 		newcamstate = copy.deepcopy(camstate)
-		del newcamstate['exposure time']
+		newcamstate['exposure time'] = None
 		plandatalist = self.research(dataclass=data.CorrectorPlanData, camstate=newcamstate)
 		if not plandatalist:
 			self.printerror('cannot find plan data for camera state')
@@ -151,35 +151,35 @@ class Corrector(node.Node):
 		return plandata
 
 	def storePlan(self, plandata):
-		#self.publish(plandata, database=True)
-		self.publish(plandata, database=False)
+		self.publish(plandata, database=True)
+		#self.publish(plandata, database=False)
 
-	def acquireSeries(self, n, camstate):
+	def acquireSeries(self, n, camdata):
 		series = []
 		for i in range(n):
 			print 'acquiring %s of %s' % (i+1, n)
-			imagedata = self.cam.acquireCameraImageData(camstate=camstate, correction=False)
+			imagedata = self.cam.acquireCameraImageData(camdata=camdata, correction=False)
 			numimage = imagedata['image']
-			camstate = imagedata['camera']
-			scopestate = imagedata['scope']
+			camdata = imagedata['camera']
+			scopedata = imagedata['scope']
 			series.append(numimage)
-		return {'image series': series, 'scope': scopestate, 'camera':camstate}
+		return {'image series': series, 'scope': scopedata, 'camera':camdata}
 
 	def acquireReference(self, dark=False):
 		camconfig = self.cam.config()
 		camstate = camconfig['state']
-		tempcamstate = copy.deepcopy(camstate)
+		camdata = data.CameraEMData(('camera',), initializer=camstate)
 		if dark:
-			tempcamstate['exposure time'] = 0
+			camdata['exposure time'] = 0
 			typekey = 'dark'
 		else:
 			typekey = 'bright'
 
-		self.cam.state(tempcamstate)
+		self.cam.currentCameraEMData(camdata)
 
 		navg = self.uiframestoaverage.get()
 
-		seriesinfo = self.acquireSeries(navg, camstate=tempcamstate)
+		seriesinfo = self.acquireSeries(navg, camdata=camdata)
 		series = seriesinfo['image series']
 		for im in series:
 			print im.shape, im.typecode()
@@ -188,46 +188,62 @@ class Corrector(node.Node):
 
 		print 'averaging series'
 		ref = cameraimage.averageSeries(series)
-		self.storeRef(typekey, ref, camstate)
+		self.storeRef(typekey, ref, camdata)
 
 		print 'got ref, calcnorm'
-		self.calc_norm(camstate)
+		self.calc_norm(camdata)
 		print 'returning ref'
 		return ref
 
 	def retrieveRef(self, camstate, type):
-		newcamstate = copy.deepcopy(camstate)
-		del newcamstate['exposure time']
+		print 'TYPE', type
+		camdata = self.camstateToCamdata(camstate)
 		if type == 'dark':
-			imageclass = data.DarkImageData
+			imagetemp = data.DarkImageData(('temp',))
 		elif type == 'bright':
-			imageclass = data.BrightImageData
+			imagetemp = data.BrightImageData(('temp',))
 		elif type == 'norm':
-			imageclass = data.NormImageData
+			imagetemp = data.NormImageData(('temp',))
 		else:
 			return None
 
-		try:
-			ref = self.research(dataclass=imageclass, camstate=newcamstate)
-			ref = ref[0]
-			return ref['image']
-		except:
-			return None
+		imagetemp['id'] = None
+		imagetemp['camstate'] = camdata
+		print 'IMAGETEMP'
+		print imagetemp
+		refs = self.research(datainstance=imagetemp)
+		if refs:
+			ref = refs[0]
+			image = ref['image']
+		else:
+			image = None
+		return image
+
+	def camstateToCamdata(self, camstate):
+		'''
+		create a proper CameraEMData object from a camstate
+		(bad hack, should be better way)
+		'''
+		camdata = data.CameraEMData(('camera',), initializer=camstate)
+		for key in ('id', 'session', 'system time', 'camera size', 'exposure time'):
+			camdata[key] = None
+		return camdata
 
 	def storeRef(self, type, numdata, camstate):
 		newcamstate = copy.deepcopy(camstate)
-		del newcamstate['exposure time']
+
+		camdata = self.camstateToCamdata(camstate)
+
 		if type == 'dark':
-			imageclass = data.DarkImageData
+			imagetemp = data.DarkImageData(self.ID())
 		elif type == 'bright':
-			imageclass = data.BrightImageData
+			imagetemp = data.BrightImageData(self.ID())
 		elif type == 'norm':
-			imageclass = data.NormImageData
-		
-		imagedata = imageclass(self.ID(), image=numdata, camstate=newcamstate)
+			imagetemp = data.NormImageData(self.ID())
+		imagetemp['image'] = numdata
+		imagetemp['camstate'] = camdata
 		print 'publishing'
-		#self.publish(imagedata, pubevent=True, database=True)
-		self.publish(imagedata, pubevent=True, database=False)
+		self.publish(imagetemp, pubevent=True, database=True)
 
 	def calc_norm(self, camstate):
 		dark = self.retrieveRef(camstate, 'dark')
