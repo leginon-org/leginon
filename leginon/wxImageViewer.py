@@ -433,7 +433,7 @@ class ImagePanel(wxPanel):
 		'''
 
 		if not isinstance(numericimage, Numeric.arraytype):
-			raise TypeErrorr('Numeric image must be of Numeric.arraytype')
+			raise TypeError('Numeric image must be of Numeric.arraytype')
 
 		self.imagedata = numericimage
 		self.imagerange = imagefun.minmax(self.imagedata)
