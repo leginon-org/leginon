@@ -272,44 +272,33 @@ class Node(leginonobject.LeginonObject):
 			not contain two instaces with the same ID.
 		'''
 
+		resultlist = []
+
 		#### make some sense out of args
 		### for research by dataclass, use kwargs to find instance
 		if dataclass is not None:
 			pass
 
-
-		results = []
+		print 'HERE'
 
 		### standard search for data by ID
 		if 'id' in kwargs and 'session' in kwargs and len(kwargs) == 2:
 			if self.session == kwargs['session']:
 				try:
-					result.append(self.researchByDataID(kwargs['id']))
+					resultlist.append(self.researchByDataID(kwargs['id']))
 				except ResearchError:
 					pass
 
-		### DBDataKeeper query
-		if results == 0 or results > len(result):
-			try:
-				datainstance = kwargs['dataclass'](('dummy ID',))
-				# copy should suffice
-				indices = copy.copy(kwargs)
-				del indices['dataclass']
-				for index in indices:
-					if index not in datainstance:
-						raise ValueError
-			except ValueError:
-				self.printerror('DBDataKeeper research failed, bad kwarg \'%s\'' % index)
-			else:
-				try:
-					result += self.datahandler.dbQuery(datainstance, indices, results - len(result))
-				except Exception, e: 
-					if isinstance(e, KeyError):
-						self.printerror('DBDataKeeper research failed, no DBDataKeeper')
-					else:
-						self.printerror('DBDataKeeper research failed, %s' % str(e))
+		print 'NOW HERE'
 
-		return result
+		### use DBDataKeeper query if not results yet
+		if not resultlist and datainstance is not None:
+			print 'DATAINST'
+			print datainstance
+			results = kwargs.get('results', None)
+			resultlist += self.datahandler.dbQuery(datainstance, results)
+
+		return resultlist
 
 	def unpublish(self, dataid, eventclass=event.UnpublishEvent):
 		'''Make a piece of data unavailable to other nodes.'''
