@@ -973,10 +973,10 @@ if __name__ == '__main__':
 		def OnInit(self):
 			frame = wxFrame(NULL, -1, 'Image Viewer')
 			self.SetTopWindow(frame)
-			self.panel = TargetImagePanel(frame, -1)
-#			self.panel = ClickImagePanel(frame, -1, bar)
-			self.panel.addTargetType('foo')
-			self.panel.addTargetType('bar')
+#			self.panel = TargetImagePanel(frame, -1)
+			self.panel = ClickImagePanel(frame, -1, bar)
+#			self.panel.addTargetType('foo')
+#			self.panel.addTargetType('bar')
 			frame.Fit()
 			frame.Show(true)
 			return true
