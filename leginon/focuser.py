@@ -23,7 +23,8 @@ class Focuser(acquisition.Acquisition):
 		'''
 		btilt = self.btilt.get()
 		pub = self.publishimages.get()
-		correction = self.btcalclient.measureDefocusStig(btilt, pub)
+		drift_timeout = 300
+		correction = self.btcalclient.measureDefocusStig(btilt, pub, drift_timeout)
 		print 'MEASURED DEFOCUS AND STIG', correction
 		defoc = correction['defocus']
 		stigx = correction['stigx']
