@@ -52,7 +52,7 @@ $javascript .= $viewer->getJavascriptInit();
 	<title>Leginon Observer Interface</title>
 	<?=$javascript;?>
 </head>
-<body onload='init();'>
+<body onload='initviewer();'>
 	<?$viewer->display();?>
 </body>
 </html>

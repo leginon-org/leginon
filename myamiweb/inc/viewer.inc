@@ -175,7 +175,7 @@ class viewer {
 		}
 		$init .= '}'.$this->crlf;
 		$init .= ''.$this->crlf;
-		$init .= 'function init() { '.$this->crlf;
+		$init .= 'function initviewer() { '.$this->crlf;
 		$init .= $initbuttons.$this->crlf;
 		$init .= '	setimgId();'.$this->crlf;
 		$init .= '	updateviews();'.$this->crlf;
@@ -280,6 +280,14 @@ class view {
 		$this->displayPresets(true);
 		$this->btinfo = new button('info'.$this->name, 'info');
 		$this->btinfo->setLink('imgreport.php','imgreport');
+		$this->displayscaleicon = true;
+		$this->displaytargeticon = true;
+		$this->displayffticon = true;
+		$this->displayfiltericon = true;
+		$this->displayinfoicon = true;
+		$this->displaycloseicon = true;
+		$this->framecolor = ' class="bgcolor1" ';
+		$this->menucolor = ' class="bgcolor1" ';
 	}
 
 	function setSize($size) {
@@ -321,6 +329,34 @@ class view {
 		$this->displaypreset= $state;
 	}
 
+	function displayCloseIcon($state) {
+		$this->displaycloseicon = $state;
+	}
+
+	function displayInfoIcon($state) {
+		$this->displayinfoicon = $state;
+	}
+
+	function displayFilterIcon($state) {
+		$this->displayfiltericon = $state;
+	}
+
+	function displayFFTIcon($state) {
+		$this->displayffticon = $state;
+	}
+
+	function displayTargetIcon($state) {
+		$this->displaytargeticon = $state;
+	}
+
+	function displayScaleIcon($state) {
+		$this->displayscaleicon = $state;
+	}
+
+	function displayAdjustLink($state) {
+		$this->displayadjustlink= $state;
+	}
+
 	function getJavascript() {
 		$javascript = ''.$this->crlf
 			.'var '.$this->name.'target_bt_st=false;'.$this->crlf
@@ -343,8 +379,10 @@ class view {
 		if ($_POST[$this->displayname]=='off')
 			$javascript .= 'toggleimage(\''.$this->name.'close_bt\', \'close_bt\');'.$this->crlf;
 		// --- set Scale, targets buttons on 
-		$javascript .= 'toggleimage(\''.$this->name.'target_bt\', \'target_bt\');'.$this->crlf;
-		$javascript .= 'toggleimage(\''.$this->name.'scale_bt\', \'scale_bt\');'.$this->crlf;
+		if ($this->displaytargeticon)
+			$javascript .= 'toggleimage(\''.$this->name.'target_bt\', \'target_bt\');'.$this->crlf;
+		if ($this->displayscaleicon)
+			$javascript .= 'toggleimage(\''.$this->name.'scale_bt\', \'scale_bt\');'.$this->crlf;
 		return $javascript;
 	}
 
@@ -355,6 +393,14 @@ class view {
 
 	function selectDataType($type) {
 		$this->selecteddatatype = $type;
+	}
+
+	function setFrameColor($color) {
+		$this->framecolor = ' bgcolor="'.$color.'" ';
+	}
+
+	function setMenuColor($color) {
+		$this->menucolor = ' bgcolor="'.$color.'" ';
 	}
 
 	function display() {
@@ -377,8 +423,11 @@ class view {
 		<input type="hidden" name="controlpre" value="'.$prename.'"> 
 			';
 		$htmlframe .= '
-		<table class="bgcolor1" border="0" cellspacing="0" cellpadding="1">
-		 <tr>
+		<table '.$this->framecolor.' border="0" cellspacing="0" cellpadding="1">
+		 <tr '.$this->menucolor.'>
+		';
+		if ($this->displaycloseicon)
+		$htmlframe .= '
 			<td width="15">
 			<a href="javascript:t = toggleimage(\''.$this->name.'close_bt\', \'close_bt\');setview(\''.$displayname.'\',t); newexp() "
 				onmouseover="imageonfocus(\''.$this->name.'close_bt\', \'close_bt\', \'_over\')" 
@@ -387,14 +436,22 @@ class view {
 				<img name="'.$this->name.'close_bt" src="img/close_bt_off.gif"
 				border="0" height="15" vspace="0"></a>
 			</td>
+		';
+		$htmlframe .= '
 			<td nowrap="nowrap" >'.$this->title.'</td>
 			<td align="right">
-			<table class="bgcolor1" border="0" cellspacing="1" cellpadding="0">
+			<table '.$this->menucolor.' border="0" cellspacing="1" cellpadding="0">
 			<tr>
+		';
+		if ($this->displayinfoicon)
+		$htmlframe .= '
 			<td width="15">'
 			.$this->btinfo->display().$this->crlf
 			.'
 			</td>
+		';
+		if ($this->displayfiltericon)
+		$htmlframe .= '
 			<td width="15">
 			<a href="javascript:'.$this->name.'filter_bt_state=toggleimage(\''.$this->name.'filter_bt\', \'filter_bt\');newfile(\''.$name.'\'); "
 				onmouseover="imageonfocus(\''.$this->name.'filter_bt\', \'filter_bt\', \'_over\')" 
@@ -403,6 +460,9 @@ class view {
 				<img name="'.$this->name.'filter_bt" src="img/filter_bt_off.gif"
 				border="0" height="15" vspace="0"></a>
 			</td>
+		';
+		if ($this->displayffticon)
+		$htmlframe .= '
 			<td width="15">
 			<a href="javascript:toggleimage(\''.$this->name.'fft_bt\', \'fft_bt\');newfile(\''.$name.'\'); "
 				onmouseover="imageonfocus(\''.$this->name.'fft_bt\', \'fft_bt\', \'_over\')" 
@@ -411,6 +471,9 @@ class view {
 				<img name="'.$this->name.'fft_bt" src="img/fft_bt_off.gif"
 				border="0" height="15" vspace="0"></a>
 			</td>
+		';
+		if ($this->displaytargeticon)
+		$htmlframe .= '
 			<td width="15">
 			<a href="javascript:toggleimage(\''.$this->name.'target_bt\', \'target_bt\');newfile(\''.$name.'\'); "
 				onmouseover="imageonfocus(\''.$this->name.'target_bt\', \'target_bt\', \'_over\')" 
@@ -419,6 +482,9 @@ class view {
 				<img name="'.$this->name.'target_bt" src="img/target_bt_off.gif"
 				border="0" height="15" vspace="0"></a>
 			</td>
+		';
+		if ($this->displayscaleicon)
+		$htmlframe .= '
 			<td width="15">
 			<a href="javascript:toggleimage(\''.$this->name.'scale_bt\', \'scale_bt\');newfile(\''.$name.'\'); "
 				onmouseover="imageonfocus(\''.$this->name.'scale_bt\', \'scale_bt\', \'_over\')" 
@@ -427,6 +493,8 @@ class view {
 				<img name="'.$this->name.'scale_bt" src="img/scale_bt_off.gif"
 				border="0" height="15" vspace="0"></a>
 			</td>
+		';
+		$htmlframe .= '
 			</tr>
 			</table>
 		 </tr>
@@ -435,20 +503,32 @@ class view {
 		if ($displayview=="on") {
 		$htmlframe .='
 			<table class="bgcolor0" border="0" cellspacing="0" cellpadding="0">
+		';
+		// --- begin option table
+		if (is_array($datatypes) || $this->displayadjustlink || $this->displaypreset ) {
+		$htmlframe .='
 			 <tr>
-				<td height="1" width="'.$this->size.'">
+				<td width="'.$this->size.'">
+		';
+		if (is_array($datatypes)) {
+		$htmlframe .='
 					<select name="'.$prename.'" onchange="newexp()" > 
 		';
-		if (is_array($datatypes))
 		foreach ($datatypes as $k=>$v) {
 			if ($k==$selpre) $s='selected'; else $s=''; 	
 			$htmlframe .= "<option value=\"$v\" $s>$k \n"; 
 		}
-		$param = "left=0,top=".($this->viewnb*100).",height=35,width=370";
-		$url = "adjust.php?name=$name&displayname=$this->title";
 		$htmlframe .='
 					</select>
+		';
+		}
+		$param = "left=0,top=".($this->viewnb*100).",height=35,width=370";
+		$url = "adjust.php?name=$name&displayname=$this->title";
+		if ($this->displayadjustlink)
+		$htmlframe .='
 			<a href="javascript:popUpAdjust(\''.$url.'\',\''.$name.'\',\''.$param.'\');">adjust&raquo;</a>
+		';
+		$htmlframe .= '
 				</td>
 			 </tr>';
 		if ($this->displaypreset) {
@@ -465,8 +545,10 @@ class view {
 			 </tr>
 		';
 		}
+		} // --- end option row
 
-		$htmlframe .= '<tr><td>
+		$htmlframe .= '<tr>
+				<td width="'.$this->size.'">
 			<a href="javascript:void(0)" id="'.$this->name.'href">'.
 			'<img name="'.$this->name.'img" src="img/empty.gif" border="0" hspace="0" vspace="0" width="'.$this->size.'" ></a>'; 
 

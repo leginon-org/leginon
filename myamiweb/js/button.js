@@ -62,7 +62,12 @@ function imageoff(imagename, name, type) {
 }
 
 function toggleimage(imagename, name) {
-	var state=""; 	imagenamestr = document.images[eval("\"" + imagename + "\"")].src;
+	var state=""; 	
+	if (!document.images[eval("\"" + imagename + "\"")])  {
+		eval(imagename+"_st=true");
+		return "on";
+	}
+	imagenamestr = document.images[eval("\"" + imagename + "\"")].src;
 	if (imagenamestr.search("_on") != -1) {
 		imageoff(imagename, name, "");
 		state="off"; 

@@ -233,32 +233,23 @@ class leginondata {
 		return $parent;
 	}
 
-	function getMatrixCalibration($sessionId, $limit="") {
+	function getMatrixCalibration($type) {
 		$q = "select "
+			."unix_timestamp(mcal.`DEF_timestamp`) as `unixtimestamp`,"
+			."date_format(mcal.`DEF_timestamp`, '%Y-%d-%m %T') as `timestamp`,"
+			."mcal.type as type, "
 			."mcal.`ARRAY|matrix|1_1` as `a11`, "
 			."mcal.`ARRAY|matrix|1_2` as `a12`, "
 			."mcal.`ARRAY|matrix|2_1` as `a21`, "
 			."mcal.`ARRAY|matrix|2_2` as `a22`, "
 			."atan2(mcal.`ARRAY|matrix|1_1`, mcal.`ARRAY|matrix|2_1`) as angle "
-			."from AcquisitionImageData a, MatrixCalibrationData mcal "
-			."left join ScopeEMData scope on (scope.`DEF_id`=a.`REF|ScopeEMData|scope`) "
-			."left join SessionData s1 on (s1.`DEF_id`=a.`REF|SessionData|session`) "
-			."left join SessionData s2 on (s2.`DEF_id`=mcal.`REF|SessionData|session`) "
+			."from MatrixCalibrationData mcal "
 			."where "
-			."s1.`REF|InstrumentData|instrument`=s2.`REF|InstrumentData|instrument` "
-			."and "
-			."scope.magnification = mcal.magnification "
-			."and "
-			."mcal.`type`='image shift' "
-			."and "
-			."mcal.`DEF_timestamp` < a.`DEF_timestamp` "
-			."and "
-			."a.`REF|SessionData|session`='".$sessionId."' ";
-		if ($limit)
-			$q .= "limit $limit";
+			."mcal.`DEF_timestamp`>'20040222000000' and "
+			."mcal.`type`='".$type."' "
+			."order by mcal.`DEF_id` ";
 
 		$Rparent = $this->mysql->SQLQuery($q);
-//		$parent = mysql_fetch_array($Rparent);
 		return $Rparent;
 	}
 
@@ -277,6 +268,14 @@ class leginondata {
 			."order by mcal.`type`, mcal.`DEF_timestamp` "
 			."";
 
+		$Rparent = $this->mysql->SQLQuery($q);
+		return $Rparent;
+	}
+
+	function getMatrixTypes() {
+		$q="select "
+		."distinct mcal.`type` "
+		."from MatrixCalibrationData mcal";
 		$Rparent = $this->mysql->SQLQuery($q);
 		return $Rparent;
 	}

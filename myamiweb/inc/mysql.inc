@@ -190,9 +190,8 @@ class mysql {
 	function executeSQLInsert($query) {
 		$this->connect_db();
 		mysql_query($query) or die("Error: ".mysql_error());
-		return mysql_insert_id();
 		$this->close_db();
-		return(true);
+		return mysql_insert_id();
 	}
 
 }

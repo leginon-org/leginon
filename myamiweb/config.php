@@ -16,7 +16,7 @@ $DBUSER = "usr_object";
 $DBPASSWORD = "";
 $DATABASE = "dbemdata";
 
-// --- Project Base URL
+// --- Project database URL
 
 $PROJECT_URL = "http://cronus1.scripps.edu/leginon/project/";
 $PROJECT_HOSTNAME = "cronus1";
@@ -24,6 +24,16 @@ $PROJECT_DBUSER = "usr_object";
 $PROJECT_DBPASSWORD = "";
 $PROJECT_DATABASE = "project";
 
+// --- Particle database
+
+$PARTICLE_HOSTNAME = "cronus1";
+$PARTICLE_DBUSER = "usr_object";
+$PARTICLE_DBPASSWORD = "";
+$PARTICLE_DATABASE = "particledb";
+
+
+$PROJECT_URL = "http://cronus1.scripps.edu/leginon/project/";
+$PROJECT_HOSTNAME = "cronus1";
 
 // --- Set External SQL server here (use for import/export application)
 $SQL_HOSTS[] = "cronus1";
