@@ -10,16 +10,20 @@ wxEVT_LEFT_CLICK = wxNewEventType()
 wxEVT_RIGHT_CLICK = wxNewEventType()
 wxEVT_LEFT_DRAG_START = wxNewEventType()
 wxEVT_LEFT_DRAG_END = wxNewEventType()
+wxEVT_LEFT_DRAG = wxNewEventType()
 wxEVT_RIGHT_DRAG_START = wxNewEventType()
 wxEVT_RIGHT_DRAG_END = wxNewEventType()
+wxEVT_RIGHT_DRAG = wxNewEventType()
 wxEVT_RAISE = wxNewEventType()
 wxEVT_LOWER = wxNewEventType()
 wxEVT_ENTER = wxNewEventType()
 wxEVT_LEAVE = wxNewEventType()
 wxEVT_SET_CURSOR = wxNewEventType()
 wxEVT_START_CONNECTION = wxNewEventType()
-wxEVT_FINISH_CONNECTION = wxNewEventType()
+wxEVT_END_CONNECTION = wxNewEventType()
 wxEVT_CANCEL_CONNECTION = wxNewEventType()
+wxEVT_MOVE_CONNECTION = wxNewEventType()
+wxEVT_POPUP_MENU = wxNewEventType()
 
 class UpdateDrawingEvent(wxPyEvent):
 	def __init__(self):
@@ -43,30 +47,42 @@ class RightClickEvent(wxPyEvent):
 		self.y = y
 
 class LeftDragStartEvent(wxPyEvent):
-	def __init__(self, shapeobject, xoffset, yoffset):
+	def __init__(self, x, y):
 		wxPyEvent.__init__(self)
 		self.SetEventType(wxEVT_LEFT_DRAG_START)
-		self.shapeobject = shapeobject
-		self.xoffset = xoffset
-		self.yoffset = yoffset
+		self.x = x
+		self.y = y
 
 class LeftDragEndEvent(wxPyEvent):
-	def __init__(self, shapeobject, x, y):
+	def __init__(self):
 		wxPyEvent.__init__(self)
 		self.SetEventType(wxEVT_LEFT_DRAG_END)
-		self.shapeobject = shapeobject
+
+class LeftDragEvent(wxPyEvent):
+	def __init__(self, x, y):
+		wxPyEvent.__init__(self)
+		self.SetEventType(wxEVT_LEFT_DRAG)
 		self.x = x
 		self.y = y
 
 class RightDragStartEvent(wxPyEvent):
-	def __init__(self):
+	def __init__(self, x, y):
 		wxPyEvent.__init__(self)
 		self.SetEventType(wxEVT_RIGHT_DRAG_START)
+		self.x = x
+		self.y = y
 
 class RightDragEndEvent(wxPyEvent):
 	def __init__(self):
 		wxPyEvent.__init__(self)
 		self.SetEventType(wxEVT_RIGHT_DRAG_END)
+
+class RightDragEvent(wxPyEvent):
+	def __init__(self, x, y):
+		wxPyEvent.__init__(self)
+		self.SetEventType(wxEVT_RIGHT_DRAG)
+		self.x = x
+		self.y = y
 
 class RaiseEvent(wxPyEvent):
 	def __init__(self, shapeobject, top=False):
@@ -104,16 +120,31 @@ class StartConnectionEvent(wxPyEvent):
 		self.SetEventType(wxEVT_START_CONNECTION)
 		self.connection = connection
 
-class FinishConnectionEvent(wxPyEvent):
+class EndConnectionEvent(wxPyEvent):
 	def __init__(self, toso):
 		wxPyEvent.__init__(self)
-		self.SetEventType(wxEVT_FINISH_CONNECTION)
+		self.SetEventType(wxEVT_END_CONNECTION)
 		self.toso = toso
 
 class CancelConnectionEvent(wxPyEvent):
 	def __init__(self):
 		wxPyEvent.__init__(self)
 		self.SetEventType(wxEVT_CANCEL_CONNECTION)
+
+class MoveConnectionEvent(wxPyEvent):
+	def __init__(self, x, y):
+		wxPyEvent.__init__(self)
+		self.SetEventType(wxEVT_MOVE_CONNECTION)
+		self.x = x
+		self.y = y
+
+class PopupMenuEvent(wxPyEvent):
+	def __init__(self, shapeobject, x, y):
+		wxPyEvent.__init__(self)
+		self.SetEventType(wxEVT_POPUP_MENU)
+		self.shapeobject = shapeobject
+		self.x = x
+		self.y = y
 
 def EVT_UPDATE_DRAWING(window, function):
 	window.Connect(-1, -1, wxEVT_UPDATE_DRAWING, function)
@@ -130,11 +161,17 @@ def EVT_LEFT_DRAG_START(window, function):
 def EVT_LEFT_DRAG_END(window, function):
 	window.Connect(-1, -1, wxEVT_LEFT_DRAG_END, function)
 
+def EVT_LEFT_DRAG(window, function):
+	window.Connect(-1, -1, wxEVT_LEFT_DRAG, function)
+
 def EVT_RIGHT_DRAG_START(window, function):
 	window.Connect(-1, -1, wxEVT_RIGHT_DRAG_START, function)
 
 def EVT_RIGHT_DRAG_END(window, function):
 	window.Connect(-1, -1, wxEVT_RIGHT_DRAG_END, function)
+
+def EVT_RIGHT_DRAG(window, function):
+	window.Connect(-1, -1, wxEVT_RIGHT_DRAG, function)
 
 def EVT_RAISE(window, function):
 	window.Connect(-1, -1, wxEVT_RAISE, function)
@@ -154,11 +191,17 @@ def EVT_SET_CURSOR(window, function):
 def EVT_START_CONNECTION(window, function):
 	window.Connect(-1, -1, wxEVT_START_CONNECTION, function)
 
-def EVT_FINISH_CONNECTION(window, function):
-	window.Connect(-1, -1, wxEVT_FINISH_CONNECTION, function)
+def EVT_END_CONNECTION(window, function):
+	window.Connect(-1, -1, wxEVT_END_CONNECTION, function)
 
 def EVT_CANCEL_CONNECTION(window, function):
 	window.Connect(-1, -1, wxEVT_CANCEL_CONNECTION, function)
+
+def EVT_MOVE_CONNECTION(window, function):
+	window.Connect(-1, -1, wxEVT_MOVE_CONNECTION, function)
+
+def EVT_POPUP_MENU(window, function):
+	window.Connect(-1, -1, wxEVT_POPUP_MENU, function)
 
 def inside(x1, y1, w1, h1, x2, y2, w2=None, h2=None):
 	if x2 < x1 or y2 < y1:
@@ -185,8 +228,10 @@ class wxShapeObjectEvtHandler(wxEvtHandler):
 		EVT_RIGHT_CLICK(self, self.OnRightClick)
 		EVT_LEFT_DRAG_START(self, self.OnLeftDragStart)
 		EVT_LEFT_DRAG_END(self, self.OnLeftDragEnd)
+		EVT_LEFT_DRAG(self, self.OnLeftDrag)
 		EVT_RIGHT_DRAG_START(self, self.OnRightDragStart)
 		EVT_RIGHT_DRAG_END(self, self.OnRightDragEnd)
+		EVT_RIGHT_DRAG(self, self.OnRightDrag)
 		EVT_RAISE(self, self.OnRaise)
 		EVT_LOWER(self, self.OnLower)
 		EVT_MOTION(self, self.OnMotion)
@@ -194,8 +239,10 @@ class wxShapeObjectEvtHandler(wxEvtHandler):
 		EVT_LEAVE(self, self.OnLeave)
 		EVT_SET_CURSOR(self, self.OnSetCursor)
 		EVT_START_CONNECTION(self, self.OnStartConnection)
-		EVT_FINISH_CONNECTION(self, self.OnFinishConnection)
+		EVT_END_CONNECTION(self, self.OnEndConnection)
 		EVT_CANCEL_CONNECTION(self, self.OnCancelConnection)
+		EVT_MOVE_CONNECTION(self, self.OnMoveConnection)
+		EVT_POPUP_MENU(self, self.OnPopupMenu)
 
 	def ProcessEvent(self, evt):
 		wxEvtHandler.ProcessEvent(self, evt)
@@ -219,10 +266,16 @@ class wxShapeObjectEvtHandler(wxEvtHandler):
 	def OnLeftDragEnd(self, evt):
 		evt.Skip()
 
+	def OnLeftEnd(self, evt):
+		evt.Skip()
+
 	def OnRightDragStart(self, evt):
 		evt.Skip()
 
 	def OnRightDragEnd(self, evt):
+		evt.Skip()
+
+	def OnRightDrag(self, evt):
 		evt.Skip()
 
 	def OnRaise(self, evt):
@@ -246,19 +299,26 @@ class wxShapeObjectEvtHandler(wxEvtHandler):
 	def OnStartConnection(self, evt):
 		evt.Skip()
 
-	def OnFinishConnection(self, evt):
+	def OnEndConnection(self, evt):
 		evt.Skip()
 
 	def OnCancelConnection(self, evt):
 		evt.Skip()
 
+	def OnMoveConnection(self, evt):
+		evt.Skip()
+
+	def OnPopupMenu(self, evt):
+		evt.Skip()
+
 class wxConnectionObject(object):
-	def __init__(self, so1, so2, text='', color=wxBLACK):
+	def __init__(self, so1, so2, text='', color=wxBLACK, style=wxSOLID):
 		self.parent = None
 		self.fromso = so1
 		self.toso = so2
 		self.text = text
 		self.color = color
+		self.style = style
 		self.tempto = None
 
 	def setParent(self, parent):
@@ -546,7 +606,7 @@ class wxConnectionObject(object):
 
 	def Draw(self, dc):
 		pen = dc.GetPen()
-		dc.SetPen(wxPen(self.color, 1))
+		dc.SetPen(wxPen(self.color, 1, self.style))
 		if self.fromso is not None:
 			if self.tempto is not None:
 				x, y = self.tempto
@@ -562,11 +622,12 @@ class wxConnectionObject(object):
 		dc.SetPen(pen)
 
 class wxShapeObject(wxShapeObjectEvtHandler):
-	def __init__(self, width, height, color=wxBLACK):
+	def __init__(self, width, height, color=wxBLACK, style=wxSOLID):
 		wxShapeObjectEvtHandler.__init__(self)
 		self.width = width
 		self.height = height
 		self.color = color
+		self.style = style
 		self.parent = None
 
 		self.text = {}
@@ -580,7 +641,11 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 
 		self.connection = None
 
-		self.popupmenu = None
+		self.popupmenu = wxMenu()
+		self.popupmenu.Append(201, 'Raise')
+		self.popupmenu.Append(202, 'Lower')
+		EVT_MENU(self.popupmenu, 201, self.OnMenuRaise)
+		EVT_MENU(self.popupmenu, 202, self.OnMenuLower)
 
 	def getPosition(self):
 		if self.parent is not None:
@@ -795,7 +860,7 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 
 	def Draw(self, dc):
 		pen = dc.GetPen()
-		dc.SetPen(wxPen(self.color, 1))
+		dc.SetPen(wxPen(self.color, 1, self.style))
 		dc.SetFont(wxSWISS_FONT)
 		for text in self.text:
 			x, y = self.getCanvasPosition()
@@ -888,29 +953,6 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 	def removeText(self, text):
 		del self.text[text]
 
-	def OnRightClick(self, evt):
-		if self.connection is not None:
-			self.cancelConnection()
-		else:
-			self.ProcessEvent(LowerEvent(self, False))
-			evt.Skip()
-
-	def OnLeftDragStart(self, evt):
-		self.ProcessEvent(RaiseEvent(self, True))
-
-	def OnRaise(self, evt):
-		if evt.shapeobject in self.shapeobjects:
-			self.raiseShapeObject(evt.shapeobject, evt.top)
-			self.ProcessEvent(RaiseEvent(self, False))
-		else:
-			evt.Skip()
-
-	def OnLower(self, evt):
-		if evt.shapeobject in self.shapeobjects:
-			self.lowerShapeObject(evt.shapeobject, evt.bottom)
-		else:
-			evt.Skip()
-
 	def setCursor(self, evtx, evty):
 		thresh = 5
 		x, y = self.getCanvasPosition()
@@ -937,7 +979,6 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 			self.SetCursor(wxSTANDARD_CURSOR)
 
 	def setDragInfo(self, evtx, evty):
-		self.ProcessEvent(RaiseEvent(self, True))
 		self.draginfo = {}
 		self.draginfo['start'] = self.getPosition()
 		self.draginfo['last'] = (evtx, evty)
@@ -975,48 +1016,75 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 			self.draginfo['type'] = 'move'
 			self.SetCursor(wxStockCursor(wxCURSOR_SIZING))
 
-	def drag(self, evtx, evty):
+	def OnLeftDrag(self, evt):
+		evtx, evty = evt.x, evt.y
 		px, py = self.getPosition()
 		lastx, lasty = self.draginfo['last']
 		self.draginfo['last'] = (evtx, evty)
 
 		w, h = self.getSize()
 		dt = self.draginfo['type']
-		if dt == 'nw':
-			self.setPosition(px + (evtx - lastx), py + (evty - lasty))
-			self.setSize(w - evtx + lastx, h - evty + lasty)
-		elif dt == 'ne':
-			self.setPosition(px, py + (evty - lasty))
-			self.setSize(w + evtx - lastx, h - evty + lasty)
-		elif dt == 'se':
-			self.setSize(w + evtx - lastx, h + evty - lasty)
-		elif dt == 'sw':
-			self.setPosition(px + (evtx - lastx), py)
-			self.setSize(w - evtx + lastx, h + evty - lasty)
-		elif dt == 'n':
-			self.setPosition(px, py + (evty - lasty))
-			self.setSize(None, h - evty + lasty)
-		elif dt == 'e':
-			self.setSize(w + evtx - lastx, None)
-		elif dt == 's':
-			self.setSize(None, h + evty - lasty)
-		elif dt == 'w':
-			self.setPosition(px + (evtx - lastx), py)
-			self.setSize(w - evtx + lastx, None)
-		elif dt == 'move':
+		if dt == 'move':
 			self.setPosition(evtx - lastx + px, evty - lasty + py)
+		else:
+			self.style = wxDOT
+			if dt == 'nw':
+				self.setPosition(px + (evtx - lastx), py + (evty - lasty))
+				self.setSize(w - evtx + lastx, h - evty + lasty)
+			elif dt == 'ne':
+				self.setPosition(px, py + (evty - lasty))
+				self.setSize(w + evtx - lastx, h - evty + lasty)
+			elif dt == 'se':
+				self.setSize(w + evtx - lastx, h + evty - lasty)
+			elif dt == 'sw':
+				self.setPosition(px + (evtx - lastx), py)
+				self.setSize(w - evtx + lastx, h + evty - lasty)
+			elif dt == 'n':
+				self.setPosition(px, py + (evty - lasty))
+				self.setSize(None, h - evty + lasty)
+			elif dt == 'e':
+				self.setSize(w + evtx - lastx, None)
+			elif dt == 's':
+				self.setSize(None, h + evty - lasty)
+			elif dt == 'w':
+				self.setPosition(px + (evtx - lastx), py)
+				self.setSize(w - evtx + lastx, None)
+		self.UpdateDrawing()
+
+	def OnLeftDragStart(self, evt):
+		self.ProcessEvent(RaiseEvent(self, True))
+		self.setDragInfo(evt.x, evt.y)
+
+	def OnLeftDragEnd(self, evt):
+		containingobject = self.getContainingShapeObject()
+		if containingobject is None:
+			x, y = self.draginfo['start']
+			self.setPosition(x, y)
+		elif containingobject != self.parent:
+			try:
+				x, y = self.getCanvasPosition()
+				cox, coy = containingobject.getCanvasPosition()
+				containingobject.addShapeObject(self, x - cox, y - coy)
+			except TypeError:
+				x, y = self.draginfo['start']
+				self.setPosition(x, y)
+		self.SetCursor(wxSTANDARD_CURSOR)
+		self.style = wxSOLID
+		self.draginfo = None
+		self.UpdateDrawing()
 
 	def OnMotion(self, evt):
 		if evt.LeftIsDown():
 			if self.draginfo is None:
-				self.setDragInfo(evt.m_x, evt.m_y)
+				self.ProcessEvent(LeftDragStartEvent(evt.m_x, evt.m_y))
 			else:
-				self.drag(evt.m_x, evt.m_y)
+				self.ProcessEvent(LeftDragEvent(evt.m_x, evt.m_y))
 		else:
-			self.setCursor(evt.m_x, evt.m_y)
-			evt.Skip()
-		if self.connection is not None:
-			self.connection.setTempTo((evt.m_x, evt.m_y))
+			if self.draginfo is None:
+				self.setCursor(evt.m_x, evt.m_y)
+			else:
+				self.ProcessEvent(LeftDragEndEvent())
+		self.ProcessEvent(MoveConnectionEvent(evt.m_x, evt.m_y))
 
 	def OnLeave(self, evt):
 		self.SetCursor(wxSTANDARD_CURSOR)
@@ -1025,28 +1093,38 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 
 	def OnLeftClick(self, evt):
 		if self.draginfo is not None:
-			containingobject = self.getContainingShapeObject()
-			if containingobject is None:
-				x, y = self.draginfo['start']
-				self.setPosition(x, y)
-			elif containingobject != self.parent:
-				try:
-					x, y = self.getCanvasPosition()
-					cox, coy = containingobject.getCanvasPosition()
-					containingobject.addShapeObject(self, x - cox, y - coy)
-					print evt.x - x, evt.y - y
-				except TypeError:
-					x, y = self.draginfo['start']
-					self.setPosition(x, y)
-			self.draginfo = None
-			self.SetCursor(wxSTANDARD_CURSOR)
-		self.UpdateDrawing()
+			self.ProcessEvent(LeftDragEndEvent())
+
+	def OnRightClick(self, evt):
+		if self.connection is not None:
+			self.cancelConnection()
+		elif self.popupmenu is not None:
+			self.ProcessEvent(PopupMenuEvent(self, evt.x, evt.y))
+
+	def OnRaise(self, evt):
+		if evt.shapeobject in self.shapeobjects:
+			self.raiseShapeObject(evt.shapeobject, evt.top)
+			self.ProcessEvent(RaiseEvent(self, True))
+		else:
+			evt.Skip()
+
+	def OnLower(self, evt):
+		if evt.shapeobject in self.shapeobjects:
+			self.lowerShapeObject(evt.shapeobject, evt.bottom)
+		else:
+			evt.Skip()
+
+	def OnMenuRaise(self, evt):
+		self.ProcessEvent(RaiseEvent(self, True))
+
+	def OnMenuLower(self, evt):
+		self.ProcessEvent(LowerEvent(self, False))
 
 	def OnStartConnection(self, evt):
 		self.connection = evt.connection
 		self.addConnectionObject(self.connection)
 
-	def OnFinishConnection(self, evt):
+	def OnEndConnection(self, evt):
 		if self.connection is not None:
 			self.connection.setToShapeObject(evt.toso)
 			self.connection = None
@@ -1054,6 +1132,12 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 
 	def OnCancelConnection(self, evt):
 		self.cancelConnection()
+
+	def OnMoveConnection(self, evt):
+		if self.connection is not None:
+			self.connection.setTempTo((evt.x, evt.y))
+			self.UpdateDrawing()
+		evt.Skip()
 
 	def cancelConnection(self):
 		if self.connection is not None:
@@ -1069,7 +1153,7 @@ class wxRectangleObject(wxShapeObject):
 
 	def Draw(self, dc):
 		pen = dc.GetPen()
-		dc.SetPen(wxPen(self.color, 1))
+		dc.SetPen(wxPen(self.color, 1, self.style))
 		x, y = self.getCanvasPosition()
 		dc.DrawRectangle(x, y, self.width, self.height)
 		dc.SetPen(pen)
@@ -1097,6 +1181,7 @@ class wxRectangleObject(wxShapeObject):
 		self.positionConnectionOutputs()
 
 	def positionConnectionInputs(self):
+		# need to account for running out of room
 		nconnectionpoints = len(self.connectioninputs)
 		spacings = range(0, self.width, self.width/(nconnectionpoints + 1))
 		for i in range(nconnectionpoints):
@@ -1104,6 +1189,8 @@ class wxRectangleObject(wxShapeObject):
 			self.setChildPosition(ci, spacings[i + 1] - ci.width/2, -ci.height/2)
 
 	def positionConnectionOutputs(self):
+		# need to account for running out of room
+		nconnectionpoints = len(self.connectioninputs)
 		nconnectionpoints = len(self.connectionoutputs)
 		spacings = range(0, self.width, self.width/(nconnectionpoints + 1))
 		for i in range(nconnectionpoints):
@@ -1129,7 +1216,7 @@ class wxConnectionPointObject(wxRectangleObject):
 #		self.ProcessEvent(StartConnectionEvent(binding))
 
 	def OnLeftClick(self, evt):
-		self.ProcessEvent(FinishConnectionEvent(self))
+		self.ProcessEvent(EndConnectionEvent(self))
 
 class wxObjectCanvas(wxScrolledWindow):
 	def __init__(self, parent, id, master):
@@ -1151,6 +1238,7 @@ class wxObjectCanvas(wxScrolledWindow):
 
 		EVT_UPDATE_DRAWING(self, self.OnUpdateDrawing)
 		EVT_SET_CURSOR(self, self.OnSetCursor)
+		EVT_POPUP_MENU(self, self.OnPopupMenu)
 
 		self.OnSize(None)
 
@@ -1188,7 +1276,6 @@ class wxObjectCanvas(wxScrolledWindow):
 		shapeobject = self.master.getShapeObjectFromXY(evt.m_x, evt.m_y)
 		if shapeobject is not None:
 			shapeobject.ProcessEvent(RightClickEvent(shapeobject, evt.m_x, evt.m_y))
-			self.popupMenu(shapeobject, evt.m_x, evt.m_y)
 
 	def OnMotion(self, evt):
 		if self.lastshapeobject is None or self.lastshapeobject.draginfo is None:
@@ -1203,11 +1290,10 @@ class wxObjectCanvas(wxScrolledWindow):
 		if self.lastshapeobject is not None:
 			self.lastshapeobject.ProcessEvent(evt)
 
-		self.UpdateDrawing()
+		#self.UpdateDrawing()
 
-	def popupMenu(self, shapeobject, x, y):
-		if shapeobject is not None and shapeobject.popupmenu is not None:
-			self.PopupMenu(shapeobject.popupmenu, (x, y))
+	def OnPopupMenu(self, evt):
+		self.PopupMenu(evt.shapeobject.popupmenu, (evt.x, evt.y))
 
 if __name__ == '__main__':
 	class MyApp(wxApp):

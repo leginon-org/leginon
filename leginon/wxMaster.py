@@ -48,7 +48,7 @@ class BindingConnectionPoint(wxObjectCanvas.wxConnectionPointObject):
 	def OnStartConnection(self, evt):
 		evt.Skip()
 
-	def OnFinishConnection(self, evt):
+	def OnEndConnection(self, evt):
 		evt.Skip()
 
 	def OnCancelConnection(self, evt):
@@ -57,6 +57,7 @@ class BindingConnectionPoint(wxObjectCanvas.wxConnectionPointObject):
 class BindingInput(BindingConnectionPoint):
 	def __init__(self, eventclass):
 		BindingConnectionPoint.__init__(self, eventclass, wxRED)
+		self.popupmenu = None
 
 	def Draw(self, dc):
 		BindingConnectionPoint.Draw(self, dc)
@@ -70,8 +71,8 @@ class BindingOutput(BindingConnectionPoint):
 		BindingConnectionPoint.__init__(self, eventclass, wxBLUE)
 
 		self.popupmenu = wxMenu()
-		self.popupmenu.Append(102, 'Add Binding...')
-		EVT_MENU(self.popupmenu, 102, self.menuAddBinding)
+		self.popupmenu.Append(101, 'Add Binding...')
+		EVT_MENU(self.popupmenu, 101, self.menuAddBinding)
 
 	def menuAddBinding(self, evt):
 		binding = Binding(self.eventclass, self, None)
@@ -91,7 +92,6 @@ class Node(wxObjectCanvas.wxRectangleObject):
 		wxObjectCanvas.wxRectangleObject.__init__(self, 60, 60, wxColor(128,0,128))
 		self.addText(self.name)
 
-		self.popupmenu = wxMenu()
 		self.popupmenu.Append(101, 'Rename...')
 		self.popupmenu.Append(103, 'Delete')
 		EVT_MENU(self.popupmenu, 101, self.menuRename)
@@ -157,7 +157,7 @@ class Node(wxObjectCanvas.wxRectangleObject):
 	def OnStartConnection(self, evt):
 		evt.Skip()
 
-	def OnFinishConnection(self, evt):
+	def OnEndConnection(self, evt):
 		evt.Skip()
 
 	def OnCancelConnection(self, evt):
@@ -215,7 +215,6 @@ class Launcher(wxObjectCanvas.wxRectangleObject):
 		wxObjectCanvas.wxRectangleObject.__init__(self, 150, 150, wxColor(0,128,0))
 		self.addText(self.name)
 
-		self.popupmenu = wxMenu()
 		self.popupmenu.Append(101, 'Rename...')
 		self.popupmenu.Append(102, 'Add Node...')
 		self.popupmenu.Append(103, 'Delete')
@@ -268,7 +267,7 @@ class Launcher(wxObjectCanvas.wxRectangleObject):
 	def OnStartConnection(self, evt):
 		evt.Skip()
 
-	def OnFinishConnection(self, evt):
+	def OnEndConnection(self, evt):
 		evt.Skip()
 
 	def OnCancelConnection(self, evt):
@@ -314,7 +313,6 @@ class Application(wxObjectCanvas.wxRectangleObject):
 
 		self.startedbinding = None
 
-		self.popupmenu = wxMenu()
 		self.popupmenu.Append(101, 'Rename...')
 		self.popupmenu.Append(102, 'Add Launcher...')
 		self.popupmenu.Append(103, 'Delete')
@@ -406,10 +404,10 @@ class Application(wxObjectCanvas.wxRectangleObject):
 		else:
 			raise TypeError('Invalid object type to add')
 
-	def OnFinishConnection(self, evt):
+	def OnEndConnection(self, evt):
 		if self.connection is not None:
 			if self.connection.name == evt.toso.eventclass:
-				wxObjectCanvas.wxRectangleObject.OnFinishConnection(self, evt)
+				wxObjectCanvas.wxRectangleObject.OnEndConnection(self, evt)
 
 class Master(wxObjectCanvas.wxRectangleObject):
 	def __init__(self):
