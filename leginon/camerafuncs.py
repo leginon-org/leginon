@@ -5,6 +5,8 @@ Provides a mix-in class CameraFuncs
 import data
 import cameraimage
 
+CAMSIZE = (2048,2048)
+
 class CameraFuncs(object):
 	'''
 	Useful functions for nodes that use camera data
@@ -72,20 +74,49 @@ class CameraFuncs(object):
 			print 'cameraState: unable to get camera state'
 			return None
 
+	def cameraDefaultOffset(self, camstate):
+		'''
+		recalculate the image offset from the dimmensions
+		to get an image centered on the camera
+		'''
+		dimx = camstate['dimension']['x']
+		dimy = camstate['dimension']['x'] 
+		offy = CAMSIZE[0] / 2 - dimy / 2
+		offx = CAMSIZE[1] / 2 - dimx / 2
+		camstate['offset'] = {'x': offx, 'y': offy}
+
 	def cameraConfigUISpec(self):
 		'''
-		returns a camera configuration Spec object for UI
+		returns a camera configuration Spec object for UI server
 		'''
-		### Camera State Data Spec
-		defaultsize = (512,512)
-		camerasize = (2048,2048)
-		offset = cameraimage.centerOffset(camerasize,defaultsize)
-		defaultcamstate = {
-			'exposure time': 500,
-			'binning': {'x':1, 'y':1},
-			'dimension': {'x':defaultsize[0], 'y':defaultsize[1]},
-			'offset': {'x': offset[0], 'y': offset[1]}
-		}
-		camconfig = self.registerUIData('Camera Config', 'struct', default=defaultcamstate, permissions='rw')
-		return camconfig
 
+		### default state will be current state if accessable
+		### otherwise a default is defined here
+		try:
+			defaultcamstate = self.cameraState()
+		except:
+			defaultcamstate = None
+		if defaultcamstate is None:
+			defaultcamstate = {
+				'exposure time': 500,
+				'binning': {'x': 1, 'y': 1},
+				'dimension': {'x': 512, 'y': 512}
+			}
+			self.cameraDefaultOffset(defaultcamstate)
+
+		self.defaultoffset = self.registerUIData('Auto Offset (center image on camera)', 'boolean', default=1, permissions='rw')
+
+		self.camconfig = self.registerUIData('Parameters', 'struct', permissions='rw', default=defaultcamstate)
+		self.camconfig.set(self.cameraConfigCallback)
+
+		camcont = self.registerUIContainer('Camera Config', (self.camconfig,self.defaultoffset))
+		return camcont
+
+	def cameraConfigCallback(self, value=None):
+		if value is not None:
+			if self.defaultoffset.get():
+				self.cameraDefaultOffset(value)
+			self.cameraconfigvalue = value
+			print 'value set to', value
+			
+		return self.cameraconfigvalue
