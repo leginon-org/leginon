@@ -484,12 +484,22 @@ class Manager(node.Node):
 
 		self.uinodeinfo.set(self.uiNodeDict())
 
+#	def uiNodeDict(self):
+#		nodes = self.clients.keys()
+#		nodeinfo = {}
+#		nodelist = self.uiNodeList()
+#		for nodeidstr in nodelist:
+#			nodeid = eval(nodeidstr)
+#			nodelocationdata = self.datahandler.query(nodeid)
+#			if nodelocationdata is not None:
+#				nodelocation = nodelocationdata['location']
+#				nodeinfo[str(nodeid)] = nodelocation
+#		return nodeinfo
+
 	def uiNodeDict(self):
 		nodes = self.clients.keys()
 		nodeinfo = {}
-		nodelist = self.uiNodeList()
-		for nodeidstr in nodelist:
-			nodeid = eval(nodeidstr)
+		for nodeid in nodes:
 			nodelocationdata = self.datahandler.query(nodeid)
 			if nodelocationdata is not None:
 				nodelocation = nodelocationdata['location']
