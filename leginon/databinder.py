@@ -82,8 +82,7 @@ class DataBinder(object):
 		elif isinstance(request, remotecall.Request):
 			return self.handleRemoteCall(request)
 		else:
-			#return self.query(request)
-			print 'unhandled request: %s' % request
+			self.logger.warning('unhandled request: %s' % request)
 			return
 
 	def handleRemoteCall(self, request):

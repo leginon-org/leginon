@@ -36,10 +36,11 @@ class EM(node.Node):
 		# the handler thread waits for queue requests and processes them
 		# scope and camera are typically COM objects and need to be initialized
 		# in this thread
-		self.handlerthread = threading.Thread(name='EM handler thread',
-																					target=self.handler)
-		self.handlerthread.setDaemon(1)
-		self.handlerthread.start()
+		#self.handlerthread = threading.Thread(name='EM handler thread',
+		#																			target=self.handler)
+		#self.handlerthread.setDaemon(1)
+		#self.handlerthread.start()
+		self.handler()
 
 	def handler(self):
 		classes = registry.getClasses()
