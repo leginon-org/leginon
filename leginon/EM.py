@@ -43,7 +43,6 @@ class DataHandler(node.DataHandler):
 			result.friendly_update(state)
 		else:
 			### could be either CameraEMData or ScopeEMData
-			newid = self.ID()
 			trydatascope = data.ScopeEMData(id=('scope',))
 			trydatacamera = data.CameraEMData(id=('camera',))
 			for trydata in (trydatascope, trydatacamera):
