@@ -253,10 +253,12 @@ class RunWidget(Tkinter.Frame):
 		launcherpath = '\\\\colossus\\amishare\\suloway\\pyleginon\\launcher.py'
 
 		if sys.platform == 'win32':
-			os.spawnv(os.P_NOWAIT, 'C:\\Python22\\python.exe',
+			process = os.spawnv(os.P_NOWAIT, 'C:\\Python22\\python.exe',
 								['launcher.py', launcherpath])
 		else:
-			os.spawnv(os.P_NOWAIT, 'launcher.py', ['launcher.py'])
+			process = os.spawnv(os.P_NOWAIT, 'launcher.py', ['launcher.py'])
+
+#		self.locallauncherprocess = process
 
 		return (socket.gethostname(), defaultlauncherport)
 
@@ -308,6 +310,7 @@ class SetupWizard(Wizard):
 		if self.runwidget.run(launchers):
 			self.setWidget(self.runwidget, None, self.destroy, None)
 			self.manager = self.runwidget.manager
+#			self.locallauncherprocess = self.runwidget.locallauncherprocess
 			if self.launchersetupwidget.getHostnamePort() is not None:
 				self.remotelauncher = (self.launchersetupwidget.getHostname(),)
 			self.nextbutton['text'] = 'Start'

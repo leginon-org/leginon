@@ -1,6 +1,10 @@
 #!/usr/bin/env python
+import copy
+import os
 import socket
+import sys
 import time
+import win32api
 import Tkinter
 import tkSimpleDialog
 import Pmw
@@ -144,6 +148,7 @@ class AddChoicesDialog(AddDialog):
 class Leginon(Tkinter.Frame):
 	def __init__(self, parent):
 		Tkinter.Frame.__init__(self, parent)
+		self.parent = parent
 		self.uiclients = {}
 		self.acquireandtargets = {}
 		self.notebook = Pmw.NoteBook(self)
@@ -151,6 +156,10 @@ class Leginon(Tkinter.Frame):
 
 		self.menu = Tkinter.Menu(parent, tearoff=0)
 		parent.config(menu = self.menu)
+
+		self.filemenu = Tkinter.Menu(self.menu, tearoff=0)
+		self.menu.add_cascade(label='File', menu=self.filemenu)
+		self.filemenu.add_command(label='Exit', command=self.exit)
 
 		self.editmenu = Tkinter.Menu(self.menu, tearoff=0)
 		self.menu.add_cascade(label='Edit', menu=self.editmenu)
@@ -166,10 +175,27 @@ class Leginon(Tkinter.Frame):
 				sourceids.append(self.acquireandtargets[source].targetid)
 			self.addAcquireAndTarget(add_dialog.result[0], sourceids)
 
+	def exit(self):
+		nodeids = copy.copy(self.manager.clients)
+		for nodeid in nodeids:
+			if nodeid != self.remotelauncher:
+				try:
+					self.manager.killNode(nodeid)
+				except:
+					print 'failed to kill', nodeid
+		#if sys.platform == 'win32':
+		#	win32api.TerminateProcess(self.locallauncherprocess, 0)
+		#else:
+		#	os.kill(self.locallauncherprocess)
+		self.manager.exit()
+		time.sleep(5.0)
+		self.parent.destroy()
+
 	# needs to check what got started, the whole lot needs error handling
 	def start(self):
 		setupwizard = leginonsetup.SetupWizard(self)
 		self.manager = setupwizard.manager
+#		self.locallauncherprocess = setupwizard.locallauncherprocess
 		self.remotelauncher = setupwizard.remotelauncher
 		if self.manager is None:
 			return
@@ -350,6 +376,7 @@ if __name__ == '__main__':
 
 	root = Tkinter.Tk()
 	root.wm_title('Leginon')
+	#root.withdraw()
 	ui = Leginon(root)
 	ui.pack(fill=Tkinter.BOTH, expand=Tkinter.YES)
 	ui.start()
