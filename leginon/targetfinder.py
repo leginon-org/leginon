@@ -44,8 +44,9 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		if self.targetlist:
 			targetlistdata = data.ImageTargetListData(id=self.ID(), targets=self.targetlist)
 			## XXX this might not work for mosaic
+			## XXX need to publish a mosaic image so this will work
 			for targetdata in targetlistdata['targets']:
-				targetdata['image id'] = self.imagedata['id']
+				targetdata['image'] = self.imagedata
 
 			self.publish(targetlistdata, pubevent=True)
 
