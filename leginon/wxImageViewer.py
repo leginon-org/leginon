@@ -45,8 +45,7 @@ class ContrastTool(object):
 		sizer.Add(self.sizer, 0, wxALIGN_CENTER|wxALL, 0)
 
 	def updateNumericImage(self):
-		self.imagepanel.setBitmap() #Numeric.clip(self.imagepanel.numericimage,
-																#	self.contrastmin, self.contrastmax))
+		self.imagepanel.setBitmap()
 		self.imagepanel.setBuffer()
 		self.imagepanel.UpdateDrawing()
 
