@@ -797,7 +797,6 @@ class QueueData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
 			('label', str),
-			('status', str),
 		)
 	typemap = classmethod(typemap)
 
@@ -1326,6 +1325,14 @@ class ImageTargetListData(InSessionData):
 			('mosaic', bool),
 			('image', AcquisitionImageData),
 			('queue', QueueData),
+		)
+	typemap = classmethod(typemap)
+
+class DequeuedImageTargetListData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('queue', QueueData),
+			('list', ImageTargetListData),
 		)
 	typemap = classmethod(typemap)
 

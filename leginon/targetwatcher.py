@@ -14,6 +14,7 @@ import threading
 import targethandler
 import node
 import player
+import newdict
 
 class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 	'''
@@ -64,15 +65,25 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			# get targetlists relating to this queue
 			tarlistquery = data.ImageTargetListData(queue=self.targetlistqueue)
 			targetlists = self.research(datainstance=tarlistquery)
-			tarlistquery = data.ImageTargetListData(queue=self.targetlistqueuedone)
-			donetargetlists = self.research(datainstance=tarlistquery)
+			# need FIFO queue (query returns LIFO)
+			targetlists.reverse()
+			self.logger.info('%s target lists' % (len(targetlists),))
+			dequeuedquery = data.DequeuedImageTargetListData(queue=self.targetlistqueue)
+			dequeuedlists = self.research(datainstance=dequeuedquery)
+			self.logger.info('%s target lists done' % (len(dequeuedlists),))
+
+			## these dicts make it easier to figure out which lists are done
+			keys = [targetlist.dbid for targetlist in targetlists]
+			active = newdict.OrderedDict(zip(keys,targetlists))
+			keys = [dequeuedlist.special_getitem('list', dereference=False).dbid for dequeuedlist in dequeuedlists]
+			done = newdict.OrderedDict(zip(keys,keys))
 
 			# process all target lists in the queue
-			for targetlist in targetlists:
-				if targetlist in donetargetlists:
+			for dbid, targetlist in active.items():
+				if dbid in done:
 					continue
 				self.processTargetList(targetlist)
-				donetargetlist = data.ImageTargetListData(initializer=targetlist, queue=self.targetlistqueuedone)
+				donetargetlist = data.DequeuedImageTargetListData(list=targetlist, queue=self.targetlistqueue)
 				self.publish(donetargetlist, database=True)
 
 	def handleTargetShift(self, ev):
@@ -95,8 +106,6 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 	def processTargetListQueue(self, newdata):
 		self.targetlistqueue = newdata
-		label = newdata['label']
-		self.targetlistqueuedone = self.getQueue(status='done', label=label)
 		self.queueupdate.set()
 
 	def processTargetList(self, newdata):

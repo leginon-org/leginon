@@ -118,8 +118,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			self.setStatus('processing')
 
 	def publishQueue(self):
-		if hasattr(self, 'targetlistqueue') and self.targetlistqueue is not None:
-						self.publish(self.targetlistqueue, pubevent=True)
+		queue = self.getQueue()
+		self.publish(queue, pubevent=True)
 
 	def notifyUserSubmit(self):
 		message = 'Waiting for user to submit targets...'
