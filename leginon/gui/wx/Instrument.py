@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Instrument.py,v $
-# $Revision: 1.29 $
+# $Revision: 1.30 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-24 07:44:49 $
+# $Date: 2005-02-24 19:43:50 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -750,8 +750,7 @@ class Panel(gui.wx.Node.Panel):
 		self.SetupScrolling()
 
 	def onRefreshTool(self, evt):
-		return
-		self.Enable(False)
+		#self.Enable(False)
 		self.node.refresh()
 
 	def onPausesTool(self, evt=None):

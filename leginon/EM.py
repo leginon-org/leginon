@@ -13,6 +13,7 @@ import socket
 import threading
 import gui.wx.Instrument
 from pyScope import tem, ccdcamera, registry, methoddict
+import pythoncom
 
 class EM(node.Node):
 	panelclass = gui.wx.Instrument.Panel
@@ -36,11 +37,23 @@ class EM(node.Node):
 		# the handler thread waits for queue requests and processes them
 		# scope and camera are typically COM objects and need to be initialized
 		# in this thread
-		#self.handlerthread = threading.Thread(name='EM handler thread',
-		#																			target=self.handler)
-		#self.handlerthread.setDaemon(1)
-		#self.handlerthread.start()
-		self.handler()
+		self.exitevent = threading.Event()
+		self.handlerthread = threading.Thread(name='EM handler thread',
+																					target=self.handler)
+		self.handlerthread.start()
+		#self.handler()
+
+	def refresh(self):
+		pass
+
+	def exit(self):
+		node.Node.exit(self)
+		for i in self.instruments:
+			try:
+				i.exit()
+			except:
+				pass
+		self.exitevent.set()
 
 	def handler(self):
 		classes = registry.getClasses()
@@ -78,4 +91,7 @@ class EM(node.Node):
 			self.logger.warning('No interfaces could be initiailized')
 
 		self.start()
+
+		# exiting this thread seems to disconnect the COM servers
+		self.exitevent.wait()
 
