@@ -320,7 +320,8 @@ class Manager(node.Node):
 
 	def addNode(self, hostname, port):
 		'''Add a running node to the manager. Sends an event to the location.'''
-		e = event.NodeAvailableEvent(self.id, self.location(), self.__class__.__name__)
+		e = event.NodeAvailableEvent(self.id, self.location(),
+																	self.__class__.__name__)
 		client = self.clientclass(self.ID(),
 												{'hostname': hostname, 'TCP port': port})
 		client.push(e)

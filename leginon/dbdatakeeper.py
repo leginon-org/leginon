@@ -2,40 +2,46 @@ import copy
 import threading
 import datahandler
 
-# poor subsitute for database, making autoincrement type things without one
-# big file (which is bad too) takes some doing.
-# other worries are this is only meant to be opened once a sesssion
-# mainly (read/write) by one manager, node, whatever
+# doens't really lock across processes
+# bad things could happen with have multiple sessions and don't specify session
 
-picklefilename = './datapickle'
+picklefilename = './DataPickle'
 
 class PickleDataKeeper(datahandler.DataHandler):
-	def __init__(self, id, sessionid):
+	def __init__(self, id, session=None):
 		datahandler.DataHandler.__init__(self, id)
 		self.lock = threading.Lock()
 		self.filename = picklefilename
-		self._new()
-		self.data = self.db['data'][sessionid]
-
-	def _new(self, sessionid):
-		try:
+		self.db = {}
+		if session is not None:
+			self.newSession(session)
+		else:
 			self._read()
-			if sessionid in self.db['sessions']:
-				raise ValueError
-		# assuming this is a no such file exists
-		except IOError:
-			self.db = {'sessions': [sessionid], 'data': {sessionid: {}}}
-			self.write()
-		self.sessionid = sessionid
+			self.session = self.db['sessions'][-1]
 
-	# needs to use session id
-	def query(self, id, sessionid):
+	def newSession(self, session):
+		self.lock.acquire()
+		self._read()
+		self.session = session
+		if 'sessions' not in self.db:
+			self.db['sessions'] = []
+		if 'data' not in self.db:
+			self.db['data'] = {}
+		if session not in self.db['sessions']:
+			self.db['sessions'].append(self.session)
+			self.db['data'][self.session] = {}
+		self.data = self.db['data'][self.session]
+		self._write()
+		self.lock.release()
+
+	def query(self, id):
 		self.lock.acquire()
 		# let exception fall through?
+		self._read()
 		try:
 			# does copy happen elsewhere?
 			# taking latest result, need to be able to specify
-			result = copy.deepcopy(self.db['data'][id][-1])
+			result = copy.deepcopy(self.db['data'][self.session][id])
 		except KeyError:
 			result = None
 		self.lock.release()
@@ -43,50 +49,48 @@ class PickleDataKeeper(datahandler.DataHandler):
 	# needs to use session id
 	def insert(self, newdata):
 		self.lock.acquire()
-		if newdata.id not in self.db['data']:
-			self.db['data'][newdata.id] = []
+		self._read()
 		# does copy happen elsewhere?
-		self.db['data'][newdata.id].append(copy.deepcopy(newdata))
+		self.db['data'][self.session][newdata.id] = copy.deepcopy(newdata)
+		self._write()
 		self.lock.release()
 
 	# necessary?
 	def remove(self, id):
 		self.lock.acquire()
 		# all?
-		del self.db['data'][id]
+		self._read()
+		del self.db['data'][self.session][id]
+		self._write()
 		self.lock.release()
 
 	# necessary?
 	def ids(self):
 		self.lock.acquire()
-		return self.db['data'].keys()
+		self._read()
+		return self.db['data'][self.session].keys()
 		self.lock.release()
 
 	def exit(self):
-		self._write()
 		self.lock.acquire()
-		del self.db
 
 	def _read(self):
-		self.lock.acquire()
+		#self.lock.acquire()
 		try:
 			file = open(self.filename, 'rb')
 			self.db = cPickle.load(file)
-			self.db['session id'] += 1
 			file.close()
 		except:
-			self.lock.release()
-			raise
-		self.lock.release()
+			self.printerror('cannot read from %s' % self.filename)
+		#self.lock.release()
 
 	def _write(self):
-		self.lock.acquire()
+		#self.lock.acquire()
 		try:
 			file = open(self.filename, 'wb')
 			cPickle.dump(self.db, file, bin=True)
 			file.close()
 		except IOError:
-			self.lock.release()
-			raise
-		self.lock.release()
+			self.printerror('cannot write to %s' % self.filename)
+		#self.lock.release()
 
