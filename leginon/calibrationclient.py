@@ -31,7 +31,8 @@ class CalibrationClient(object):
 			print 'CalibrationClient unable to find calibrations. Maybe CalibrationLibrary is not available.'
 			raise
 
-		calvalue = cal.content
+		#calvalue = cal.content
+		calvalue = cal
 		return calvalue
 
 	def setCalibration(self, key, calibration):
@@ -47,14 +48,16 @@ class CalibrationClient(object):
 
 	def acquireStateImage(self, state, publish_image=0, settle=0.0):
 		## acquire image at this state
-		newemdata = data.EMData('scope', state)
+		#newemdata = data.EMData('scope', state)
+		newemdata = data.EMData('scope', em=state)
 		self.node.publish(event.LockEvent(self.node.ID()))
 		self.node.publishRemote(newemdata)
 		print 'state settling time %s' % (settle,)
 		time.sleep(settle)
 
 		imagedata = self.cam.acquireCameraImageData()
-		actual_state = imagedata.content['scope']
+		#actual_state = imagedata.content['scope']
+		actual_state = imagedata['scope']
 
 		if publish_image:
 			self.node.publish(imagedata, event.CameraImagePublishEvent)
@@ -83,8 +86,10 @@ class CalibrationClient(object):
 
 		imagedata1 = info1['imagedata']
 		imagedata2 = info2['imagedata']
-		imagecontent1 = imagedata1.content
-		imagecontent2 = imagedata2.content
+		#imagecontent1 = imagedata1.content
+		#imagecontent2 = imagedata2.content
+		imagecontent1 = imagedata1
+		imagecontent2 = imagedata2
 		stats1 = info1['image stats']
 		stats2 = info2['image stats']
 
@@ -101,7 +106,8 @@ class CalibrationClient(object):
 		self.correlator.insertImage(numimage2)
 		print 'correlation'
 		pcimage = self.correlator.phaseCorrelate()
-		pcimagedata = data.PhaseCorrelationImageData(self.node.ID(), pcimage, imagedata1.id, imagedata2.id)
+		#pcimagedata = data.PhaseCorrelationImageData(self.node.ID(), pcimage, imagedata1.id, imagedata2.id)
+		pcimagedata = data.PhaseCorrelationImageData(self.node.ID(), image=pcimage, subject1=imagedata1['id'], subject2=imagedata2['id'])
 
 		#self.publish(pcimagedata, event.PhaseCorrelationImagePublishEvent)
 
@@ -149,7 +155,9 @@ class BeamTiltCalibrationClient(CalibrationClient):
 					   orderBy = {'fields':('timestamp',),'sort':'DESC'})
 
 	def setCalibration(self, key, calibration):
-		dat = data.MatrixCalibrationData(('calibrations',key), calibration)
+		#dat = data.MatrixCalibrationData(('calibrations',key), calibration)
+		# ?
+		dat = data.MatrixCalibrationData(magnification=('calibrations',key), matrix=calibration)
 		self.node.publishRemote(dat)
 
 	def getMatrix(self, mag, type):
@@ -178,12 +186,14 @@ class BeamTiltCalibrationClient(CalibrationClient):
 
 	def getBeamTilt(self):
 		emdata = self.node.researchByDataID('beam tilt')
-		beamtilt = emdata.content
+		#beamtilt = emdata.content
+		beamtilt = emdata
 		return beamtilt
 
 	def measureDefocusStig(self, tilt_value, publish_images=0):
 		emdata = self.node.researchByDataID('magnification')
-		mag = emdata.content['magnification']
+		#mag = emdata.content['magnification']
+		mag = emdata['magnification']
 		fmatrix = self.getMatrix(mag, 'defocus')
 		amatrix = self.getMatrix(mag, 'stigx')
 		bmatrix = self.getMatrix(mag, 'stigy')
@@ -209,7 +219,8 @@ class BeamTiltCalibrationClient(CalibrationClient):
 				tilts[tiltaxis] = (0, tilt_value)
 
 		## return to original beam tilt
-		emdata = data.EMData('scope', tiltcenter)
+		#emdata = data.EMData('scope', tiltcenter)
+		emdata = data.EMData('scope', em=tiltcenter)
 		self.node.publishRemote(emdata)
 
 		print 'TILTS'
@@ -320,7 +331,8 @@ class BeamTiltCalibrationClient(CalibrationClient):
 			print 'PIXELSHIFT2', pixelshift2
 		finally:
 			## return to original beam tilt
-			emdata = data.EMData('scope', beamtilt)
+			#emdata = data.EMData('scope', beamtilt)
+			emdata = data.EMData('scope', em=beamtilt)
 			self.node.publishRemote(emdata)
 
 		return (pixelshift1, pixelshift2)
@@ -338,7 +350,9 @@ class MatrixCalibrationClient(CalibrationClient):
 	def setCalibration(self, magnification, measurement):
 		key = self.magCalibrationKey(magnification, self.parameter())
 		mat = self.measurementToMatrix(measurement)
-		dat = data.MatrixCalibrationData(('calibrations',key), mat)
+		#dat = data.MatrixCalibrationData(('calibrations',key), mat)
+		# ?
+		dat = data.MatrixCalibrationData(magnification=('calibrations',key), matrix=mat)
 		self.node.publishRemote(dat)
 
 	def measurementToMatrix(self, measurement):
@@ -516,6 +530,7 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		return {'x':gonx1, 'y':gony1}
 	
 	def pixelShift(self, ievent):
+		# XXX
 		mag = ievent.content['magnification']
 		delta_row = ievent.content['row']
 		delta_col = ievent.content['column']
@@ -535,5 +550,6 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		current['stage position']['y'] += deltagon['y']
 		print 'current after delta', current
 
-		stagedata = data.EMData('scope', current)
+		#stagedata = data.EMData('scope', current)
+		stagedata = data.EMData('scope', em=current)
 		self.publishRemote(stagedata)

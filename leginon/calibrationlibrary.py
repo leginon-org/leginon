@@ -19,7 +19,7 @@ class DataHandler(datahandler.DataBinder):
 			key = id[1]
 		cal = self.calnode.getCalibration(key)
 #		print 'CAL', cal
-		result = data.CalibrationData(self.ID(), cal)
+		result = data.CalibrationData(self.ID(), type=cal)
 		return result
 
 	def insert(self, idata):
@@ -103,8 +103,10 @@ class PickleStorage(CalibrationStorage):
 	def set(self, idata):
 		cal = self.get()
 
-		newitem = idata.content
+		#newitem = idata.content
 		key = idata.id
+		newitem = idata
+		key = idata['id']
 
 		cal[key] = newitem
 		## should make a backup before doing this
@@ -129,7 +131,9 @@ class PickleStorage(CalibrationStorage):
 				content = cal[id]
 			except KeyError:
 				content = None
-		return data.CalibrationData(id, content)
+		#return data.CalibrationData(id, content)
+		# I don't think this works
+		return data.CalibrationData(id, type=content)
 
 
 class BinaryDBStorage(CalibrationStorage):
@@ -144,8 +148,10 @@ class BinaryDBStorage(CalibrationStorage):
 			return ()
 
 	def set(self, idata):
-		newitem = idata.content
-		id = idata.id
+		#newitem = idata.content
+		#id = idata.id
+		newitem = idata
+		id = idata['id']
 		self.cal[id] = newitem
 
 	def get(self, id=None):
@@ -172,8 +178,10 @@ class DBStorage(CalibrationStorage):
 			return ()
 
 	def set(self, idata):
-		newitem = idata.content
-		id = idata.id
+		#newitem = idata.content
+		#id = idata.id
+		newitem = idata
+		id = idata['id']
 		self.cal[id] = newitem
 
 	def get(self, id=None):
