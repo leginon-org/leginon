@@ -1,2 +1,3 @@
 include config/default.cfg
 include icons/*.png
+include icons/processing/*.png
