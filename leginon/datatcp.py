@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import SocketServer
-import pickle
+import cPickle
 import socket
 import leginonobject
 
@@ -12,12 +12,12 @@ class PullHandler(SocketServer.StreamRequestHandler, leginonobject.LeginonObject
 		SocketServer.StreamRequestHandler.__init__(self, request, server_address, server)
 
 	def handle(self):
-		# needs error checking, cPickle attempt
-		# data_id needs to be send with a newline
-		data_id = self.rfile.readline()
+		# needs error checking
+		data_id = cPickle.load(self.rfile)
+
 		# pickle the data from data_id (w/o the trailing newline char)
-		data = self.server.datahandler.query(data_id[:-1])
-		pickle.dump(data, self.wfile)
+		data = self.server.datahandler.query(data_id)
+		cPickle.dump(data, self.wfile)
 
 class PushHandler(SocketServer.StreamRequestHandler, leginonobject.LeginonObject):
 	def __init__(self, request, server_address, server):
@@ -28,7 +28,7 @@ class PushHandler(SocketServer.StreamRequestHandler, leginonobject.LeginonObject
 	def handle(self):
 		# needs error checking, cPickle attempt
 		# data_id needs to be send with a newline
-		newdata = pickle.load(self.rfile)
+		newdata = cPickle.load(self.rfile)
 		self.server.datahandler.insert(newdata)
 
 class Server(SocketServer.ThreadingTCPServer, leginonobject.LeginonObject):
@@ -78,11 +78,15 @@ class Client(leginonobject.LeginonObject):
 
 class PullClient(Client):
 	def pull(self, data_id):
+		print 'PullClient.pull data_id = %s' % data_id
 		data = ""
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		s.connect((self.hostname, self.port)) # Connect to server
-		# needs to account for different data_id datatypes
-		s.send("%s\n" % data_id)
+
+
+		idpickle = cPickle.dumps(data_id)
+		s.send(idpickle)
+
 		while 1:
 		  r = s.recv(self.buffer_size) # Receive up to buffer_size bytes
 		  if not r:
@@ -90,14 +94,14 @@ class PullClient(Client):
 		  data += r
 		s.close()
 		# needs cPickle attempt
-		return pickle.loads(data)
+		return cPickle.loads(data)
 
 class PushClient(Client):
 	def push(self, data):
 		# needs to account for different data_id datatypes
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		s.connect((self.hostname, self.port)) # Connect to server
-		s.send(pickle.dumps(data))
+		s.send(cPickle.dumps(data))
 		s.close()
 
 if __name__ == '__main__':
