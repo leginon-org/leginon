@@ -49,7 +49,7 @@ class Server(SocketServer.ThreadingTCPServer, leginonobject.LeginonObject):
 					break
 				except Exception, var:
 					# socket error, address already in use
-					if (var[0] == 98 or var[0] == 10048):
+					if (var[0] == 98 or var[0] == 10048 or var[0] == 112):
 						port += 1
 					else:
 						raise

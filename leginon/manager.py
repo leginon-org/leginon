@@ -37,6 +37,7 @@ class Manager(node.Node):
 		pass
 
 	def start(self):
+		self.startRPC()
 		print self.location()
 		interact_thread = self.interact()
 

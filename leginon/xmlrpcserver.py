@@ -33,7 +33,7 @@ class xmlrpcserver(object):
 				self.server = SimpleXMLRPCServer((hostname,self.port))
 				break
 			except Exception, var:
-				if var[0] == 98:
+				if (var[0] == 98 or var[0] == 10048 or var[0] == 112):
 					continue
 				else:
 					raise

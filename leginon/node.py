@@ -72,7 +72,8 @@ class Node(leginonobject.LeginonObject):
 		self.addEventInput(event.KillEvent, self.die)
 
 	def __del__(self):
-		self.exit()
+		#self.exit()
+		pass
 
 	def die(self, ievent):
 		sys.exit()
