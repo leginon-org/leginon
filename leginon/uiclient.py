@@ -558,7 +558,6 @@ class wxContainerWidget(wxWidget):
 					self._removeWidget(name, child)
 					if evt.event is not None:
 						evt.event.set()
-			self.pending.append(evt)
 			#raise ValueError('No such child to remove widget')
 		else:
 			self.childEvent(evt)
@@ -1699,11 +1698,8 @@ class wxTreePanel(wxPanel):
 	def deleteContainer(self, container):
 		id = self.containers[container]
 		self.tree.Delete(id)
-		try:
-			self.childsizer.Remove(container.panel)
-			del self.containers[container]
-		except KeyError:
-			pass
+		self.childsizer.Remove(container.panel)
+		del self.containers[container]
 
 	def OnTreeSelected(self, evt):
 		for container in self.containers:
@@ -1711,8 +1707,6 @@ class wxTreePanel(wxPanel):
 		selectedcontainer = self.tree.GetPyData(self.tree.GetSelection())
 		selectedcontainer.show(True)
 		selectedcontainer.layout()
-		self.childsizer.SetMinSize(selectedcontainer.panel.GetSize())
-		self.childpanel.FitInside()
 
 class wxTreePanelContainerWidget(wxContainerWidget):
 	def __init__(self, name, parent, container, value, configuration):
@@ -1722,9 +1716,8 @@ class wxTreePanelContainerWidget(wxContainerWidget):
 		self.panel.SetSizer(self.sizer)
 		self.message = None
 		self.messages = {}
-		wxContainerWidget.__init__(self, name, parent, container, value,
+		wxContainerWidget.__init__(self, name, self.panel, container, value,
 																configuration)
-		self.childparent = self.panel
 		self.treepanel.addContainer(self)
 
 	def getTreeContainer(self):
@@ -1751,10 +1744,14 @@ class wxTreePanelContainerWidget(wxContainerWidget):
 		wxContainerWidget.layout(self)
 		self.sizer.Layout()
 		self.panel.Fit()
+		if self._shown:
+			self.treepanel.childsizer.SetMinSize(self.panel.GetSize())
+			self.treepanel.childpanel.FitInside()
 
 	def destroy(self):
 		wxContainerWidget.destroy(self)
 		self.treepanel.deleteContainer(self)
+		self.panel.Destroy()
 
 	def updateMessage(self):
 		messagetype = None
