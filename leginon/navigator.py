@@ -87,7 +87,14 @@ class Navigator(node.Node):
 		## figure out shift
 		movetype = self.movetype.getSelectedValue()
 		calclient = self.calclients[movetype]
-		newstate = calclient.transform(pixelshift, clickscope, clickcamera)
+		try:
+			newstate = calclient.transform(pixelshift, clickscope, clickcamera)
+		except:
+			message = 'Error in transform.  Likely missing clibration for %s at %sx and current high tension' % (movetype, mag)
+			print message
+			self.messagelog.error(message)
+			node.beep()
+			return
 		if not self.completestate.get():
 			if movetype == 'modeled stage position':
 				newmovetype = 'stage position'
@@ -114,17 +121,23 @@ class Navigator(node.Node):
 				r_error = pixelshift['row'] - newshift[0]
 				c_error = pixelshift['col'] - newshift[1]
 				error = r_error, c_error
-				print 'ERROR', error
+				print 'ERROR VECTOR (pixels):', error
 				errordist = math.hypot(error[0], error[1])
-				print 'ERROR DIST', errordist
+				print 'ERROR DISTANCE (pixels)', errordist
 
 				pixsize = self.pcal.retrievePixelSize(mag)
 				binning = clickcamera['binning']['x']
 				dist = errordist * pixsize * binning
-				print 'DISTANCE (m)', dist
+				umdist = dist * 1000000.0
+				print 'ERROR DISTANCE (um): %.4e' % (umdist,)
+				if (abs(pixelshift['row']) > clickshape[0]/4) or (abs(pixelshift['col']) > clickshape[1]/4):
+					print 'Correlation untrusted due to large requested shift'
+				else:
+					## insert into DB?
+					pass
 
 
-		## just in case this is a fake click event
+		##just in case this is a fake click event
 		## (which it is now when it comes from navigator's own image
 		if isinstance(clickevent, event.ImageClickEvent):
 			self.confirmEvent(clickevent)
@@ -357,6 +370,8 @@ class Navigator(node.Node):
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
 
+		self.messagelog = uidata.MessageLog('Message Log')
+
 		self.calerror = uidata.Boolean('Calibration Error Checking', False, 'rw', persist=True)
 
 		movetypes = self.calclients.keys()
@@ -405,7 +420,7 @@ class Navigator(node.Node):
 
 		## main Navigator container
 		container = uidata.LargeContainer('Navigator')
-		container.addObjects((controlcontainer, settingscontainer, locationcontainer))
+		container.addObjects((self.messagelog, controlcontainer, settingscontainer, locationcontainer))
 		self.uiserver.addObject(container)
 
 class SimpleNavigator(Navigator):
