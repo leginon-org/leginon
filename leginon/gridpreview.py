@@ -8,7 +8,7 @@ import cPickle
 import Mrc
 import calibrationclient
 import presets
-
+import copy
 
 class GridPreview(node.Node):
 	def __init__(self, id, session, nodelocations, **kwargs):
@@ -31,7 +31,7 @@ class GridPreview(node.Node):
 		self.presetname = self.registerUIData('Preset Name', 'string', default='vlm170', permissions='rw')
 
 		self.sim = self.registerUIData('Simulate TEM/camera', 'boolean', permissions='rw', default=0)
-		defprefs = {'center': {'x':0.0,'y':0.0}, 'overlap': 50, 'maxtargets': 4}
+		defprefs = {'center': {'x':0.0,'y':0.0}, 'overlap': 20, 'maxtargets': 4}
 		spiralprefs = self.registerUIData('Spiral', 'struct', callback=self.uiSpiralPrefs, default=defprefs, permissions='rw')
 		self.sim = self.registerUIData('Simulate TEM/camera', 'boolean', permissions='rw', default=0)
 		prefs = self.registerUIContainer('Preferences', (self.presetname, spiralprefs, self.sim))
@@ -111,10 +111,6 @@ class GridPreview(node.Node):
 			## this should be calibrated
 			time.sleep(2)
 
-			stagepos = self.researchByDataID(('stage position',))
-			stagepos = stagepos['em']
-			print 'gridpreview stagepos', stagepos
-
 			imagedata = self.cam.acquireCameraImageData(camstate=None, correction=True)
 			imarray = imagedata['image']
 			thisid = self.ID()
@@ -123,18 +119,25 @@ class GridPreview(node.Node):
 			else:
 				neighbortiles = [self.lastid,]
 
+			print 'AAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+
 #			filename = self.tilefilename(thisid)
 #			Mrc.numeric_to_mrc(imarray, filename)
 #			storedata = {'id':thisid,'image':filename, 'state': stagepos, 'neighbors': neighbortiles, 'target':target}
 #			self.logAppend(storedata)
 
 			scope = imagedata['scope']
+			print 'SCOPE', scope
 			camera = imagedata['camera']
-			imdata = data.TileImageData(thisid, image=imarray, scope=scope,
-																	camera=camera, neighbor_tiles=neighbortiles)
+			print 'CAMERA', camera
+			pdata = copy.deepcopy(self.presetdata)
+			print 'PDATA', pdata
+			imdata = data.TileImageData(thisid, initializer=imagedata, preset=pdata, neighbor_tiles=neighbortiles)
 #			print 'publishing tile'
+			print 'PUBLISHING'
 			self.publish(imdata, eventclass=event.TileImagePublishEvent)
 
+			print 'BBBBBBBBBBBBBBBBBBBBB'
 			self.lastid = thisid
 
 	def logAppend(self, data):
@@ -209,8 +212,8 @@ class GridPreview(node.Node):
 			while self.temptodo and not self.stoprunning.isSet():
 				self.next_target()
 #			self.logPrint()
-		except:
-			self.printerror('error while executing loop')
+		except Exception, detail:
+			self.printerror('error while executing loop: ' + str(detail))
 		self.outputEvent(event.UnlockEvent(self.ID()))
 		self.running.clear()
 		self.stoprunning.clear()
