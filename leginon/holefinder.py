@@ -16,6 +16,7 @@ import Mrc
 import camerafuncs
 import threading
 import ice
+import Numeric
 
 class HoleFinder(targetfinder.TargetFinder):
 	def __init__(self, id, session, managerlocation, **kwargs):
@@ -153,7 +154,8 @@ class HoleFinder(targetfinder.TargetFinder):
 		edgethresh = self.edgethresh.get()
 		self.hf.configure_edges(filter=filt, size=n, sigma=sig, absvalue=ab, lp=lowpasson, lpn=lowpassn, lpsig=lowpasssig, thresh=edgethresh)
 		self.hf.find_edges()
-		self.edgeimage.set(self.hf['edges'])
+		# convert to Float32 to prevent seg fault
+		self.edgeimage.set(self.hf['edges'].astype(Numeric.Float32))
 
 	def correlateTemplate(self):
 		ringlist = self.ringlist.get()
@@ -168,13 +170,14 @@ class HoleFinder(targetfinder.TargetFinder):
 		corfilt = self.corfilt.get()
 		self.hf.configure_correlation(cortype, corfilt)
 		self.hf.correlate_template()
-		self.corimage.set(self.hf['correlation'])
+		self.corimage.set(self.hf['correlation'].astype(Numeric.Float32))
 
 	def threshold(self):
 		tvalue = self.threshvalue.get()
 		self.hf.configure_threshold(tvalue)
 		self.hf.threshold_correlation()
-		self.threshimage.set(self.hf['threshold'])
+		# convert to Float32 to prevent seg fault
+		self.threshimage.set(self.hf['threshold'].astype(Numeric.Float32))
 
 	def blobCenters(self, blobs):
 		centers = []
