@@ -14,28 +14,20 @@ class CameraFuncs(object):
 		'''
 		acquire an image with optional camstate and correction
 		'''
-		print 'setting camera state'
 		if camstate is not None:
 			self.cameraState(camstate)
-		print 'camstate set'
-
-		print 'researching'
 		try:
 			if correction:
 				imdata = self.researchByDataID('normalized image data')
 				imagearray = imdata.content
 			else:
-				print 'researchByDataID'
 				imdata = self.researchByDataID('image data')
-				print 'researchByDataID done'
 				imagearray = imdata.content['image data']
-				print 'type(imagearray)', type(imagearray)
 				imagearray = Numeric.array(imagearray, 'l')
 		except Exception, detail:
 			print detail
 			print 'cameraAcquireArray: unable to acquire image data'
 			imagearray = None
-		print 'researching done'
 		return imagearray
 
 	def cameraAcquireCamera(self, camstate=None, correction=0):
@@ -58,17 +50,13 @@ class CameraFuncs(object):
 		'''
 		if camstate is not None:
 			try:
-				print 'publishing camera'
 				camdata = data.EMData('camera', camstate)
 				self.publishRemote(camdata)
-				print 'publishing camera done'
 			except Exception, detail:
 				print detail
 				print 'cameraState: unable to set camera state'
 		try:
-			print 'researching camera no image data'
 			newcamstate = self.researchByDataID('camera no image data')
-			print 'done researching camera no image data'
 			return newcamstate
 		except Exception, detail:
 			print detail
@@ -80,12 +68,21 @@ class CameraFuncs(object):
 		recalculate the image offset from the dimmensions
 		to get an image centered on the camera
 		'''
-		dimx = camstate['dimension']['x']
-		dimy = camstate['dimension']['y'] 
-		sizex = camstate['size']['x']
-		sizey = camstate['size']['y'] 
-		offx = sizex / 2 - dimx / 2
-		offy = sizey / 2 - dimy / 2
+
+		currentcamstate = self.cameraState()
+		if currentcamstate is None:
+			sizex = 2048
+			sizey = 2048
+		else:
+			sizex = currentcamstate.content['camera size']['x']
+			sizey = currentcamstate.content['camera size']['y'] 
+
+		binx = camstate['binning']['x']
+		biny = camstate['binning']['y']
+		pixx = camstate['dimension']['x'] * binx
+		pixy = camstate['dimension']['y'] * biny
+		offx = sizex / 2 - pixx / 2
+		offy = sizey / 2 - pixy / 2
 		camstate['offset'] = {'x': offx, 'y': offy}
 
 	def cameraConfigUIData(self):
@@ -93,15 +90,7 @@ class CameraFuncs(object):
 		returns a camera configuration Spec object for UI server
 		'''
 
-		defaultcamstate = {
-			'exposure time': 500,
-			'binning': {'x': 1, 'y': 1},
-			'dimension': {'x': 512, 'y': 512}
-		}
-		self.cameraDefaultOffset(defaultcamstate)
-		camconfigdict = {'state': defaultcamstate, 'auto offset': 1}
-
-		camconfig = self.registerUIData('Camera Configuration', 'struct', permissions='rw', default=camconfigdict, callback=self.cameraConfig)
+		camconfig = self.registerUIData('Camera Configuration', 'struct', permissions='rw', callback=self.cameraConfig)
 
 		return camconfig
 
@@ -114,5 +103,25 @@ class CameraFuncs(object):
 		if value is not None:
 			if value['auto offset']:
 				self.cameraDefaultOffset(value['state'])
-			self.__cameraconfigvalue = value
-		return self.__cameraconfigvalue
+			self.cameraconfigvalue = value
+
+		## initial value is current camera state
+		if not hasattr(self, 'cameraconfigvalue'):
+			self.cameraconfigvalue = {}
+			self.cameraconfigvalue['auto offset'] = 1
+
+			initstate = self.cameraState()
+			if initstate is None:
+				initstate = {
+					'exposure time': 500,
+					'dimension':{'x':512,'y':512},
+					'binning':{'x':1, 'y':1},
+					'offset':{'x':0,'y':0}
+				}
+			else:
+				initstate = initstate.content
+
+			self.cameraDefaultOffset(initstate)
+			self.cameraconfigvalue['state'] = initstate
+
+		return self.cameraconfigvalue
