@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import glob
 import leginonconfig
 import leginonobject
 import array
@@ -443,30 +444,44 @@ class ImageData(Data):
 		return t
 	typemap = classmethod(typemap)
 
+	def filename(self):
+		'''
+		create a unique filename for this image
+		filename format:  [session]_[class]_[integer].mrc
+		'''
+		intwidth = 3
+		impath = leginonconfig.IMAGE_PATH
+		basename = '%s_%s_' % (self['session'], self.__class__.__name__)
+		basename = os.path.join(impath, basename)
+		extension = '.mrc'
+		wildcard = intwidth * '?'
+		fileglob = '%s%s%s' % (basename,wildcard,extension)
+		files = glob.glob(fileglob)
+		maxid = -1
+		for file in files:
+			idstr = file[len(basename):-len(extension)]
+			id = int(idstr)
+			if id > maxid:
+				maxid = id
+		newid = maxid + 1
+		newidstrfmt = '%0' + '%dd' % (intwidth,)
+		newidstr = newidstrfmt % (newid,)
+		newname = '%s%s%s' % (basename,newidstr,extension)
+		return newname
+
 	def save(self):
 		'''
 		saves an image to file and sets 'filename' accordingly
 		'''
-		numdata = self['image']
-		session = self['session']
-		id = self['id']
-		if id is None:
-			idstr = ''
-		else:
-			idstrlist = [str(i) for i in id]
-			idstr = '-'.join(idstrlist)
-
-		if numdata is not None:
+		if self['image'] is not None:
 			## create a directory to store images
-			impath = leginonconfig.IMAGE_PATH
-			filename = '%s_%s.mrc' % (session, idstr)
-			fullfilename = os.path.join(impath, filename)
+			filename = self.filename()
 			try:
-				Mrc.numeric_to_mrc(numdata, fullfilename)
+				Mrc.numeric_to_mrc(self['image'], filename)
 			except:
 				raise
 				self.printerror('error converting image to file')
-			self['filename'] = fullfilename
+			self['filename'] = filename
 
 	def load(self, filename=None):
 		'''
@@ -481,12 +496,6 @@ class ImageData(Data):
 			self['image'] = Mrc.mrc_to_numeric(self['filename'])
 		except:
 			self.printerror('error converting image from file')
-
-		### Should this be done by the original caller or this method?
-		### maybe there are nested ImageData instances in this one
-		for thing in self.values():
-			if isinstance(thing, ImageData):
-				thing.load()
 
 
 class CorrelationImageData(ImageData):
