@@ -663,7 +663,7 @@ class Corrector(node.Node):
 			return None
 
 	def storePlan(self, plandata):
-		self.publish(plandata, database=True)
+		self.publish(plandata, database=True, dbforce=True)
 
 	def acquireSeries(self, n, camdata):
 		series = []

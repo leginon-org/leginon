@@ -308,6 +308,12 @@ class PresetsManager(node.Node):
 
 		## remove from self.presets, store in DB
 		premove = self.presets[pname]
+		if premove is self.currentpreset:
+			message = 'You may not remove the currently set preset, send another preset to scope first'
+			self.messagelog.error(message)
+			self.logger.info(message)
+			return
+
 		del self.presets[pname]
 		pnew = data.PresetData(initializer=premove, removed=1)
 		self.presetToDB(pnew)
@@ -385,6 +391,7 @@ class PresetsManager(node.Node):
 		newpreset['number'] = number
 		self.presets[name] = newpreset
 		self.presetToDB(newpreset)
+		self.currentpreset = newpreset
 
 		## update UI
 		self.uiselectpreset.set(self.presets.keys(), number)

@@ -56,7 +56,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.lowpasssize = uidata.Integer('Low Pass Filter Size', 5, 'rw', persist=True)
 		self.lowpasssigma = uidata.Number('Low Pass Filter Sigma', 1.0, 'rw', persist=True)
 		self.edgethresh = uidata.Number('Threshold', 100.0, 'rw', persist=True)
-		self.filtertype = uidata.SingleSelectFromList('Filter Type', ['laplacian3', 'laplacian5', 'laplacian-gaussian', 'sobel'], 0, persist=True)
+		self.filtertype = uidata.SingleSelectFromList('Filter Type', ['sobel', 'laplacian3', 'laplacian5', 'laplacian-gaussian'], 0, persist=True)
 		self.glapsize = uidata.Integer('LoG Size', 9, 'rw', persist=True)
 		self.glapsigma = uidata.Number('LoG Sigma', 1.4, 'rw', persist=True)
 		self.edgeabs = uidata.Boolean('Absolute Value', False, 'rw', persist=True)

@@ -280,25 +280,33 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		## create FilmData(AcquisitionImageData) which 
 		## will be used to store info about this exposure
-		filmdata = data.FilmData(session=self.session, scope=scopebefore, preset=presetdata, label=self.name, target=target)
+		filmdata = data.FilmData(session=self.session, preset=presetdata, label=self.name, target=target)
 		## no image to store in file, but this provides 'filename' for 
 		## film text
 		self.setImageFilename(filmdata)
 
-		## create a film exposure request
+		## set film parameters
 		request = data.ScopeEMData()
-		request['pre film exposure'] = True
-#		request['film exposure type'] = 'manual'
-#		## convert from ms to s
-#		filmtime = presetdata['exposure time'] / 1000.0
-#		request['film manual exposure time'] = filmtime
 		## first three of user name
 		request['film user code'] = self.session['user']['name'][:3]
 		## like filename in regular acquisition (limit 96 chars)
 		request['film text'] = str(filmdata['filename'])
 		request['film date type'] = 'YY.MM.DD'
 		self.emclient.setScope(request)
+
+		## get scope for database
+		scopebefore = self.emclient.getScope()
+		filmdata['scope'] = scopebefore
+
+		## insert film
+		request = data.ScopeEMData()
+		request['pre film exposure'] = True
+		self.emclient.setScope(request)
+
+		# expose film
 		self.emclient.getImage()
+
+		## take out film
 		request = data.ScopeEMData()
 		request['post film exposure'] = True
 		self.emclient.setScope(request)

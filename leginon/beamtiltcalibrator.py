@@ -141,10 +141,10 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		node.beep()
 		return ''
 
-	def measureDefocusStig(self, btilt):
+	def measureDefocusStig(self, btilt, stig=True):
 		self.cam.uiApplyAsNeeded()
 		try:
-			ret = self.calclient.measureDefocusStig(btilt)
+			ret = self.calclient.measureDefocusStig(btilt, stig=stig)
 		except:
 			self.logger.exception('')
 			ret = {}
@@ -178,12 +178,12 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 		self.measuretiltvalue = uidata.Float('Measure Tilt', 0.01, 'rw')
 		self.resultvalue = uidata.Struct('Necessary Correction', {}, 'r')
-		measuremethod = uidata.Method('Measure', self.uiMeasureDefocusStig)
+		measurefocstigmethod = uidata.Method('Measure Defocus/Stig', self.uiMeasureDefocusStig)
 		correctdefocusmethod = uidata.Method('Correct Defocus', self.uiCorrectDefocus)
 		correctstigmethod = uidata.Method('Correct Stigmator', self.uiCorrectStigmator)
 		resetdefocusmethod = uidata.Method('Reset Defocus', self.uiResetDefocus)
 		measurecontainer = uidata.Container('Measure')
-		measurecontainer.addObjects((self.measuretiltvalue, self.resultvalue, measuremethod, correctdefocusmethod, correctstigmethod, resetdefocusmethod))
+		measurecontainer.addObjects((self.measuretiltvalue, self.resultvalue, measurefocstigmethod, correctdefocusmethod, correctstigmethod, resetdefocusmethod))
 
 		## eucentric focus stuff
 		euc = uidata.Container('Eucentric Focus')
@@ -208,7 +208,11 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 													self.stigdelta.get())
 
 	def uiMeasureDefocusStig(self):
-		result = self.measureDefocusStig(self.measuretiltvalue.get())
+		result = self.measureDefocusStig(self.measuretiltvalue.get(), stig=True)
+		self.resultvalue.set(result)
+
+	def uiMeasureDefocus(self):
+		result = self.measureDefocusStig(self.measuretiltvalue.get(), stig=False)
 		self.resultvalue.set(result)
 
 	def uiCorrectDefocus(self):

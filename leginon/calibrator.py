@@ -39,17 +39,19 @@ class Calibrator(node.Node):
 		dat = self.emclient.getScope()
 		return dat
 
-	def imageViewer(self):
-		if self.ui_image is None:
-			self.ui_image = uidata.Image('Calibrator Image', None, 'r')
-		return self.ui_image
-
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
+
+		self.cortype = uidata.SingleSelectFromList('Correlation Type', ['cross correlation', 'phase correlation'], 1, persist=True)
 		
-		self.ui_image = uidata.Image('Calibrator Image', None, 'r')
+		self.ui_image = uidata.Image('Acquired Image', None, 'r')
+		self.cc_image = uidata.TargetImage('Correlation Image', None, 'r')
+		self.cc_image.addTargetType('peak')
 		camsetup = self.cam.uiSetupContainer()
 
 		container = uidata.LargeContainer('Calibrator')
-		container.addObjects((self.ui_image, camsetup))
+		container.addObject(self.cortype, position={'position':(0,0)})
+		container.addObject(self.ui_image, position={'position':(1,0)})
+		container.addObject(self.cc_image, position={'position':(1,1)})
+		container.addObject(camsetup, position={'position':(2,0)})
 		self.uicontainer.addObject(container)

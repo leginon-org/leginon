@@ -443,10 +443,18 @@ class ImagePanel(wx.Panel):
 			raise TypeError('Numeric image must be of Numeric.arraytype')
 
 		self.imagedata = numericimage
-		#self.imagerange = imagefun.minmax(self.imagedata)
+		mn,mx = imagefun.minmax(self.imagedata)
 		mean = imagefun.mean(self.imagedata)
 		stdev = imagefun.stdev(self.imagedata, known_mean=mean)
-		self.imagerange = (mean - 3*stdev, mean + 3*stdev)
+		dflt_std = 5
+		## use these...
+		dflt_min = mean - dflt_std * stdev
+		dflt_max = mean + dflt_std * stdev
+		## unless they go beyond min and max of image
+		dflt_min = max(dflt_min, mn)
+		dflt_max = min(dflt_max, mx)
+
+		self.imagerange = (dflt_min, dflt_max)
 		self.contrasttool.setRange(self.imagerange)
 		self.setBitmap()
 		self.setVirtualSize()

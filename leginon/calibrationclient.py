@@ -16,7 +16,6 @@ import sys
 import threading
 import gonmodel
 import imagefun
-import Mrc
 import EM
 
 class Drifting(Exception):
@@ -67,8 +66,8 @@ class CalibrationClient(object):
 
 		if publish_image:
 			self.node.publish(imagedata, pubevent=True)
-			if self.node.ui_image is not None:
-				self.node.ui_image.set(imagedata['image'].astype(Numeric.Float32))
+		if hasattr(self.node, 'ui_image') and self.node.ui_image is not None:
+			self.node.ui_image.set(imagedata['image'].astype(Numeric.Float32))
 
 		## should find image stats to help determine validity of image
 		## in correlations
@@ -119,15 +118,24 @@ class CalibrationClient(object):
 			self.correlator.insertImage(self.numimage1)
 
 			self.node.logger.info('Correlation...')
-			pcimage = self.correlator.phaseCorrelate()
-			Mrc.numeric_to_mrc(pcimage, 'pcimage.mrc')
+			if hasattr(self.node, 'cortype') and self.node.cortype.getSelectedValue() == 'cross correlation':
+				pcimage = self.correlator.crossCorrelate()
+			else:
+				pcimage = self.correlator.phaseCorrelate()
+			if hasattr(self.node, 'cc_image') and self.node.cc_image is not None:
+				self.node.cc_image.setImage(pcimage.astype(Numeric.Float32))
 
 			self.node.logger.info('Peak finding...')
 			self.peakfinder.setImage(pcimage)
-			self.peakfinder.subpixelPeak()
+			self.peakfinder.subpixelPeak(npix=9)
 			peak = self.peakfinder.getResults()
+			if hasattr(self.node, 'cc_image') and self.node.cc_image is not None:
+				pixelpeak = peak['subpixel peak']
+				pixelpeak = pixelpeak[1],pixelpeak[0]
+				self.node.cc_image.setTargetType('peak', [pixelpeak])
 			peakvalue = peak['subpixel peak value']
 			shift = correlator.wrap_coord(peak['subpixel peak'], pcimage.shape)
+			self.node.logger.info('pixel shift (row,col): %s' % (shift,))
 			shiftrows = shift[0]
 			shiftcols = shift[1]
 			seconds = t1 - t0
@@ -140,9 +148,6 @@ class CalibrationClient(object):
 			if drift > drift_threshold:
 				raise Drifting()
 
-#		mrcstr = Mrc.numeric_to_mrcstr(numimage1)
-#		self.ui_image1.set(xmlbinlib.Binary(mrcstr))
-
 		self.checkAbort()
 
 		info2 = self.acquireStateImage(state2, publish_images, settle)
@@ -154,8 +159,6 @@ class CalibrationClient(object):
 		if image_callback is not None:
 			apply(image_callback, (self.numimage2,))
 		self.correlator.insertImage(self.numimage2)
-#		mrcstr = Mrc.numeric_to_mrcstr(numimage2)
-#		self.ui_image2.set(xmlbinlib.Binary(mrcstr))
 
 		actual = (actual1, actual2)
 		shiftinfo = {}
@@ -163,16 +166,26 @@ class CalibrationClient(object):
 		self.checkAbort()
 
 		self.node.logger.info('Correlation...')
-		pcimage = self.correlator.phaseCorrelate()
+		if hasattr(self.node, 'cortype') and self.node.cortype.getSelectedValue() == 'cross correlation':
+			pcimage = self.correlator.crossCorrelate()
+		else:
+			pcimage = self.correlator.phaseCorrelate()
+		if hasattr(self.node, 'cc_image') and self.node.cc_image is not None:
+			self.node.cc_image.setImage(pcimage.astype(Numeric.Float32))
 
 		## peak finding
 		self.node.logger.info('Peak finding...')
 		self.peakfinder.setImage(pcimage)
-		self.peakfinder.subpixelPeak()
+		self.peakfinder.subpixelPeak(npix=9)
 		peak = self.peakfinder.getResults()
 		self.node.logger.info('Peak minsum %f' % peak['minsum'])
+		if hasattr(self.node, 'cc_image') and self.node.cc_image is not None:
+			pixelpeak = peak['subpixel peak']
+			pixelpeak = pixelpeak[1],pixelpeak[0]
+			self.node.cc_image.setTargetType('peak', [pixelpeak])
 		peakvalue = peak['subpixel peak value']
 		shift = correlator.wrap_coord(peak['subpixel peak'], pcimage.shape)
+		self.node.logger.info('pixel shift (row,col): %s' % (shift,))
 
 		## need unbinned result
 		binx = imagecontent1['camera']['binning']['x']
@@ -389,17 +402,19 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		bt = self.emclient.getScope()['beam tilt']
 		return bt
 
-	def measureDefocusStig(self, tilt_value, publish_images=0, drift_threshold=None, image_callback=None):
+	def measureDefocusStig(self, tilt_value, publish_images=0, drift_threshold=None, image_callback=None, stig=True):
 		self.abortevent.clear()
 		scopedata = self.emclient.getScope()
 		mag = scopedata['magnification']
 		ht = scopedata['high tension']
 		fmatrix = self.retrieveMatrix(ht, mag, 'defocus')
-		amatrix = self.retrieveMatrix(ht, mag, 'stigx')
-		bmatrix = self.retrieveMatrix(ht, mag, 'stigy')
-
-		if None in (fmatrix, amatrix, bmatrix):
-			raise RuntimeError('missing calibration matrix')
+		if fmatrix is None:
+				raise RuntimeError('missing calibration matrix')
+		if stig:
+			amatrix = self.retrieveMatrix(ht, mag, 'stigx')
+			bmatrix = self.retrieveMatrix(ht, mag, 'stigy')
+			if None in (amatrix, bmatrix):
+				raise RuntimeError('missing calibration matrix')
 
 		tiltcenter = self.getBeamTilt()
 		self.node.logger.info('Tilt center %s' % tiltcenter)
@@ -461,11 +476,17 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		t1 = tilts['x']
 		d2 = shifts['y']
 		t2 = tilts['y']
-		sol = self.solveEq10(fmatrix,amatrix,bmatrix,d1,t1,d2,t2)
+		print 'STIG', stig
+		if stig:
+			sol = self.solveEq10(fmatrix,amatrix,bmatrix,d1,t1,d2,t2)
+		else:
+			sol = self.solveEq10_nostig(fmatrix,d1,t1,d2,t2)
+
 		self.node.logger.info('Solution %s' % sol)
 		return sol
 
 	def solveEq10(self, F, A, B, d1, t1, d2, t2):
+		print 'SOLVE STIG'
 		'''
 		This solves Equation 10 from Koster paper
 		 F,A,B are the defocus, stigx, and stigy calibration matrices
@@ -495,6 +516,37 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			'defocus': solution[0][0],
 			'stigx': solution[0][1],
 			'stigy': solution[0][2],
+			'min': float(solution[1][0])
+			}
+		return result
+
+	def solveEq10_nostig(self, F, d1, t1, d2, t2):
+		print 'SOLVE NO STIG'
+		'''
+		This solves Equation 10 from Koster paper
+		 F,A,B are the defocus, stigx, and stigy calibration matrices
+		   (all must be 2x2 Numeric arrays)
+		 d1,d2 are displacements resulting from beam tilts t1,t2
+		   (all must be 2x1 Numeric arrays)
+		'''
+		## produce the matrix and vector for least squares fit
+		v = Numeric.zeros((4,), Numeric.Float64)
+		v[:2] = d1
+		v[2:] = d2
+
+		## plug calibration matrices and tilt vectors into M
+		M = Numeric.zeros((4,1), Numeric.Float64)
+
+		# t1 on first two rows
+		M[:2,0] = Numeric.matrixmultiply(F,t1)
+		# t2 on second two rows
+		M[2:,0] = Numeric.matrixmultiply(F,t2)
+
+		solution = LinearAlgebra.linear_least_squares(M, v)
+		result = {
+			'defocus': solution[0][0],
+			'stigx': 0,
+			'stigy': 0,
 			'min': float(solution[1][0])
 			}
 		return result
@@ -719,13 +771,6 @@ class ImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
 
 	def parameter(self):
 		return 'image shift'
-
-class RawImageShiftCalibrationClient(SimpleMatrixCalibrationClient):
-	def __init__(self, node):
-		SimpleMatrixCalibrationClient.__init__(self, node)
-
-	def parameter(self):
-		return 'raw image shift'
 
 class BeamShiftCalibrationClient(SimpleMatrixCalibrationClient):
 	def __init__(self, node):
