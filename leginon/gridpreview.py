@@ -9,6 +9,7 @@ class GridPreview(node.Node, camerafuncs.CameraFuncs):
 	def __init__(self, id, nodelocations):
 		self.done = []
 		self.todo = []
+		self.temptodo = []
 		self.stoprunning = threading.Event()
 		self.running = threading.Event()
 		node.Node.__init__(self, id, nodelocations)
@@ -27,7 +28,8 @@ class GridPreview(node.Node, camerafuncs.CameraFuncs):
 
 		start = self.registerUIMethod(self.runLoop, 'Run', ())
 		stop = self.registerUIMethod(self.stopLoop, 'Stop', ())
-		controls = self.registerUIContainer('Controls', (start,stop))
+		reset = self.registerUIMethod(self.resetLoop, 'Reset', ())
+		controls = self.registerUIContainer('Controls', (start,stop,reset))
 
 		self.registerUISpec('Grid Preview', (prefs, controls, nodespec))
 
@@ -53,6 +55,8 @@ class GridPreview(node.Node, camerafuncs.CameraFuncs):
 				#gonx = center['x'] + point[0] * spacing
 				#gony = center['y'] + point[1] * spacing
 				#self.todo.append( (gonx,gony) )
+			print 'TODO', self.todo
+			self.resetLoop()
 		return self.prefs
 
 	def uiCalibrate(self):
@@ -77,7 +81,16 @@ class GridPreview(node.Node, camerafuncs.CameraFuncs):
 				self.publishRemote(emdata)
 			else:
 				# move to next postion
-				deltarowcol = {'row':target[0], 'column':target[1]}
+
+				camconfig = self.cameraConfig()
+				camstate = camconfig['state']
+				binx = camstate['binning']['x']
+				biny = camstate['binning']['y']
+				targetrow = target[0] * biny
+				targetcol = target[1] * binx
+
+				deltarowcol = {'row':targetrow, 'column':targetcol}
+
 				e = event.StagePixelShiftEvent(self.ID(), deltarowcol)
 				print 'moving to next position'
 				self.outputEvent(e)
@@ -93,22 +106,23 @@ class GridPreview(node.Node, camerafuncs.CameraFuncs):
 				neighbortiles = []
 			else:
 				neighbortiles = [self.lastid,]
-			imdata = data.EMImageTileData(thisid, imarray, stagepos, neighbortiles)
+			imdata = data.ImageTileData(thisid, imarray, neighbortiles)
+			#imdata = data.StateImageTileData(thisid, imarray, stagepos, neighbortiles)
 			print 'publishing tile'
-			self.publish(imdata, event.EMImageTilePublishEvent)
+			self.publish(imdata, event.ImageTilePublishEvent)
 
 			self.lastid = thisid
 
 
 	def next_target(self):
-		target = self.todo[0]
+		target = self.temptodo[0]
 		self.acquireTarget(target)
 
 		### update target lists
 		self.done.append(target)
-		self.todo = self.todo[1:]
+		self.temptodo = self.temptodo[1:]
 		print 'done', self.done
-		print 'todo', self.todo
+		print 'temptodo', self.temptodo
 
 	def stopLoop(self):
 		self.stoprunning.set()
@@ -116,17 +130,28 @@ class GridPreview(node.Node, camerafuncs.CameraFuncs):
 
 	def runLoop(self):
 		if self.running.isSet():
+			print 'ALREADY RUNNING'
 			return ''
 		t = threading.Thread(target=self._loop)
 		t.setDaemon(1)
 		t.start()
 		return ''
 
+	def resetLoop(self):
+		if self.running.isSet():
+			print 'cannot reset while loop is running'
+		else:
+			self.temptodo = list(self.todo)
+		return ''
+
 	def _loop(self):
 		self.stoprunning.clear()
 		self.running.set()
-		while self.todo and not self.stoprunning.isSet():
-			self.next_target()
+		try:
+			while self.temptodo and not self.stoprunning.isSet():
+				self.next_target()
+		except Exception, detail:
+			print detail
 		self.running.clear()
 		self.stoprunning.clear()
 
