@@ -20,5 +20,6 @@ setup(
 	package_dir={'pyScope': ''},
 	ext_package=ext_package,
 	ext_modules=ext_modules,
+	scripts=['install-pyscope.py'],
 )
 
