@@ -31,6 +31,9 @@ class SimpleAcquisition(acquisition.Acquisition):
 		self.processTargetData(None)
 		return ''
 
+	def acquireImageOneNoPreset(self):
+		self.acquire(None)
+
 	def alreadyAcquired(self, targetdata, presetname):
 		'''
 		override so that an image is never 'alreadyAcquired'
@@ -63,14 +66,15 @@ class SimpleAcquisition(acquisition.Acquisition):
 	def defineUserInterface(self):
 		acquisition.Acquisition.defineUserInterface(self)
 
-		acq = uidata.Method('Acquire', self.acquireImageOne)
+		acq = uidata.Method('Acquire Using Presets', self.acquireImageOne)
+		acqnopreset = uidata.Method('Acquire - No Presets', self.acquireImageOneNoPreset)
 		self.pausetime = uidata.Float('Pause Time (sec)', 0.0, 'rw', persist=True)
 
 		acqloop = uidata.Method('Acquire Loop', self.acquireImageLoop)
 		acqloopstop = uidata.Method('Stop', self.acquireImageLoopStop)
 
 		acqcont = uidata.Container('Acquire')
-		acqcont.addObjects((acq, acqloop, self.pausetime, acqloopstop))
+		acqcont.addObjects((acq, acqnopreset, acqloop, self.pausetime, acqloopstop))
 
 		container = uidata.LargeContainer('Simple Acquisition')
 		container.addObject(acqcont)
