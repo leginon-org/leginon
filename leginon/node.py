@@ -427,7 +427,7 @@ class Node(leginonobject.LeginonObject):
 			if isinstance(datainstance[key], data.InSessionData):
 				self.addSession(datainstance[key])
 
-	def research(self, dataclass=None, datainstance=None, results=None, fill=True, readimages=True):
+	def research(self, dataclass=None, datainstance=None, results=None, readimages=True):
 		'''
 		How a node finds some data in the leginon system:
 			1) Using a data class and keyword args:
@@ -446,30 +446,11 @@ class Node(leginonobject.LeginonObject):
 		### for research by dataclass, use kwargs to find instance
 		if dataclass is not None:
 			datainstance = dataclass()
-			#self.addEmptyInstances(datainstance)
-			#raise NotImplementedError('research by data class is not implemented')
-
-		### standard search for data by ID
-		#if 'id' in kwargs and 'session' in kwargs and len(kwargs) == 2:
-		#	if self.session == kwargs['session']:
-		#		try:
-		#			resultlist.append(self.researchByDataID(kwargs['id']))
-		#		except ResearchError:
-		#			pass
 
 		### use DBDataKeeper query if not results yet
 		if not resultlist and datainstance is not None:
 			## always fill empty session
 			self.addEmptySession(datainstance)
-			if fill:
-				try:
-					self.addEmptyInstances1(datainstance)
-				except RuntimeError:
-					self.logger.warning(
-					'RuntimeError, possibly exceded recursion limit in addEmptyInsance1.'
-					+ 'Set fill=False when calling Node.research(),'
-					+ ' and construct your own filled instance.')
-					return []
 			try:
 				newresults = self.datahandler.dbQuery(datainstance, results, readimages=readimages)
 			except Exception, e:
@@ -491,44 +472,6 @@ class Node(leginonobject.LeginonObject):
 		for key in datainstance:
 			if isinstance(datainstance[key], data.InSessionData):
 				self.addSession(datainstance[key])
-
-	def addEmptyInstances1(self, datainstance):
-		'''
-		this recursively fills in values of a Data instance with
-		new empty Data instances, but only if they have not already
-		been set to something.
-		'''
-		for key, datatype in datainstance.types().items():
-			try:
-				if issubclass(datatype, data.Data):
-					if key in datainstance:
-						if datainstance[key] is None:
-							datainstance[key] = datatype()
-					else:
-						datainstance[key] = datatype()
-					self.addEmptyInstances1(datainstance[key])
-			except TypeError:
-				pass
-
-	def addEmptyInstances2(self, datainstance, memo={}):
-		'''
-		this is like addEmptyInstances1, but it will not result in
-		infinite recursion, because it keeps a memo of classes
-		that it has already done.
-		'''
-		memo[datainstance.__class__] = None
-		for key, datatype in datainstance.types().items():
-			try:
-				issub = issubclass(datatype, data.Data)
-			except TypeError:
-				## datatype is not a class, so obviously not
-				## a subclass of Data
-				issub = False
-			if issub:
-				if datainstance[key] is None:
-					datainstance[key] = datatype()
-				if datatype not in memo:
-					self.addEmptyInstances2(datainstance[key], memo)
 
 	def getClient(self, location):
 		return self.clientclass(location, loggername=self.logger.name)
