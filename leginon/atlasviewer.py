@@ -4,17 +4,22 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/atlasviewer.py,v $
-# $Revision: 1.3 $
+# $Revision: 1.4 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-01 01:25:35 $
+# $Date: 2005-02-05 00:30:57 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
 import math
 import numarray
+import align
 import data
+import EM
 import node
+import presets
+import calibrationclient
+import camerafuncs
 import targethandler
 import gui.wx.AtlasViewer
 
@@ -144,7 +149,23 @@ class AtlasViewer(node.Node, targethandler.TargetHandler):
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.grids = Grids()
 		self.insertion = None
+
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
+
+		self.emclient = EM.EMClient(self)
+		self.cameraclient = camerafuncs.CameraFuncs(self)
+		self.presetsclient = presets.PresetsClient(self)
+
+		calibrationclients = {
+			'image shift': calibrationclient.ImageShiftCalibrationClient,
+			'stage position': calibrationclient.StageCalibrationClient,
+			'modeled stage position': calibrationclient.ModeledStageCalibrationClient,
+			'image beam shift': calibrationclient.ImageBeamShiftCalibrationClient,
+		}
+		self.calibrationclients = {}
+		for i, clientclass in calibrationclients.items():
+			self.calibrationclients[i] = clientclass(self)
+
 		self.start()
 
 	def getAtlases(self):
@@ -227,8 +248,9 @@ class AtlasViewer(node.Node, targethandler.TargetHandler):
 					l = image.location
 					if (target[0] >= l[0][0] and target[0] <= l[0][1] and
 							target[1] >= l[1][0] and target[1] <= l[1][1]):
-						image.addTarget(target)
 						targets.remove(target)
+						target = (target[0] - l[0][0], target[1] - l[1][0])
+						image.addTarget(target)
 			self.insertion.images.reverse()
 
 	def setAtlas(self, gridid, number):
@@ -238,19 +260,25 @@ class AtlasViewer(node.Node, targethandler.TargetHandler):
 		self.updateAtlasImage()
 		self.panel.setAtlasDone()
 
-	def updateAtlasImage(self):
+	def updateImages(self, images):
+		for image in images:
+			self.updateImage(image)
+
+	def updateImage(self, image):
+		image.width = image.data['preset']['dimension']['x']
+		image.height = image.data['preset']['dimension']['y']
+		targetdata = image.data['target']
+		image.row = targetdata['delta row']
+		image.column = targetdata['delta column']
+		image.halfwidth = int(math.ceil(image.width/2.0))
+		image.halfheight = int(math.ceil(image.height/2.0))
+
+	def getAtlasExtrema(self, images):
 		minrow = None
 		mincolumn = None
 		maxrow = None
 		maxcolumn = None
-		for image in self.insertion.images:
-			image.width = image.data['preset']['dimension']['x']
-			image.height = image.data['preset']['dimension']['y']
-			targetdata = image.data['target']
-			image.row = targetdata['delta row']
-			image.column = targetdata['delta column']
-			image.halfwidth = int(math.ceil(image.width/2.0))
-			image.halfheight = int(math.ceil(image.height/2.0))
+		for image in images:
 			if minrow is None or (image.row - image.halfheight) < minrow:
 				minrow = image.row - image.halfheight
 			if mincolumn is None or (image.column - image.halfwidth) < mincolumn:
@@ -259,18 +287,24 @@ class AtlasViewer(node.Node, targethandler.TargetHandler):
 				maxrow = image.row + image.halfheight
 			if maxcolumn is None or (image.column + image.halfwidth) > maxcolumn:
 				maxcolumn = image.column + image.halfwidth
-		shape = (maxrow - minrow, maxcolumn - mincolumn)
+		return ((minrow, maxrow), (mincolumn, maxcolumn))
+
+	def updateAtlasImage(self):
+		self.updateImages(self.insertion.images)
+		extrema = self.getAtlasExtrema(self.insertion.images)
+		shape = (extrema[0][1] - extrema[0][0], extrema[1][1] - extrema[1][0])
 		atlasimage = numarray.zeros(shape, numarray.Float32)
 		targets = []
 		for image in self.insertion.images:
 			i = image.data['image'].read()
-			l = ((image.row - image.halfheight - minrow,
-						image.row + image.halfheight - minrow),
-					(image.column - image.halfwidth - mincolumn,
-						image.column + image.halfwidth - mincolumn))
+			l = ((image.row - image.halfheight - extrema[0][0],
+						image.row + image.halfheight - extrema[0][0]),
+					(image.column - image.halfwidth - extrema[1][0],
+						image.column + image.halfwidth - extrema[1][0]))
 			atlasimage[l[0][0]:l[0][1], l[1][0]:l[1][1]] = i
 			image.location = l
-			targets += image.targets
+			for target in image.targets:
+				targets.append((target[0] + l[0][0], target[1] + l[1][0]))
 		self.setImage(atlasimage, 'Image')
 		self.setTargets(targets, 'Acquisition')
 
@@ -284,10 +318,63 @@ class AtlasViewer(node.Node, targethandler.TargetHandler):
 				for image in insertion.images:
 					if image.targets:
 						print grid.gridid, insertion.number, image.targets
-				# acquire an image at a stage position in the atlas
-				# align the image to the atlas for the grid targets picked on
-				# check targets again?
-				# rotate and shift targets
-				# submit targets and wait for them to be done
+						image1 = image.data['image'].read()
+						#image2 = self.reacquireImage(image.data)
+						image2 = image1
+						theta, shift = align.alignImages(image1, image2)
+						infostring = 'Rotation: %g, shift: (%g, %g)' % ((theta,) + shift)
+						self.logger.info(infostring)
+						shape1 = image1.shape
+						shape2 = image2.shape
+						targets = []
+						for target in image.targets:
+							target = align.alignTarget(target, shape1, shape2, theta, shift)
+							targets.append(target)
+						print targets
+				
+						# remove, submit targets and wait for them to be done
+
 		self.panel.targetsSubmitted()
+
+	def reacquireImage(self, imagedata):
+		presetdata = imagedata['preset']
+		targetdata = imagedata['target']
+
+		# user select? should be recorded
+		movetype = 'stage position'
+
+		calibrationclient = self.calibrationclients[movetype]
+		target = {'row': -targetdata['delta row'],
+							'col': -targetdata['delta column']}
+
+		try:
+			scopedata = calibrationclient.transform(target,
+																							targetdata['scope'],
+																							targetdata['camera'])
+		except calibrationclient.NoMatrixCalibrationError:
+			self.logger.error('No calibration for reacquisition')
+			return None
+
+		# check stage position
+
+		emtargetdata = data.EMTargetData()
+		emtargetdata['preset'] = presetdata
+		emtargetdata['movetype'] = movetype
+		for i in ['image shift', 'beam shift', 'stage position']:
+			emtargetdata[i] = dict(scopedata[i])
+		emtargetdata['target'] = targetdata
+
+		presetname = presetdata['name']
+		self.presetsclient.toScope(presetname, emtargetdata)
+
+		errorstring = 'Image acqisition failed: %s'
+		try:
+			imagedata = self.cameraclient.acquireCameraImageData(correction=True)
+		except node.ResearchError:
+			self.logger.error(errorstring % 'cannot access instrument')
+		except camerafuncs.NoCorrectorError:
+			self.logger.error(errorstring % 'cannot access corrector')
+		if imagedata is None:
+			return None
+		return imagedata['image']
 

@@ -207,7 +207,7 @@ def alignTarget(target, shape1, shape2, theta, shift):
 	target += shift
 	return tuple(target)
 
-def alignImage(image1, image2):
+def alignImages(image1, image2):
 	image1 = normalize(image1)
 	image2 = normalize(image2)
 	theta = findRotation(image1, image2)
