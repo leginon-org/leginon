@@ -701,6 +701,13 @@ class AcquisitionImageData(PresetImageData):
 		return t
 	typemap = classmethod(typemap)
 
+class FocusImageData(PresetImageData):
+	def typemap(cls):
+		t = PresetImageData.typemap()
+		t += [ ('target', FocusTargetData), ]
+		return t
+	typemap = classmethod(typemap)
+
 class TrialImageData(PresetImageData):
 	pass
 
@@ -789,6 +796,7 @@ class FocuserResultData(InSessionData):
 	def typemap(cls):
 		t = InSessionData.typemap()
 		t += [
+		  ('target', FocusTargetData),
 		  ('defocus', float),
 		  ('stigx', float),
 		  ('stigy', float),
