@@ -108,6 +108,10 @@ class Object(object):
 		if self.parent is not None:
 			self.parent.deleteObject(self, block=block, thread=thread)
 
+	def getPosition(self):
+		if self.parent is not None:
+			return self.parent.getPosition(self)
+
 class Method(Object):
 	typelist = Object.typelist + ('method',)
 	def __init__(self, name, method, tooltip=None):
@@ -335,7 +339,7 @@ class Container(Object, strictdict.OrderedDict):
 				r2 = min(row + rows, p['position'][0] + p['span'][0])
 				c2 = min(column + columns,
 									p['position'][1] + p['span'][1])
- 		   	if not (r2 <= r1 or c2 <= c1):
+				if not (r2 <= r1 or c2 <= c1):
 					raise ValueError('Position overlaps with existing object')
 		else:
 			values = map(lambda p: p['position'][0] + p['span'][0],
@@ -351,6 +355,24 @@ class Container(Object, strictdict.OrderedDict):
 			position['justify'] = ['top', 'left']
 
 		self.positions[uiobject.name] = position
+		return position
+
+	def getPosition(self, parameter):
+		self.lock.acquire()
+		try:
+			if isinstance(parameter, str):
+				name = parameter
+				uiobject = self[name]
+			else:
+				uiobject = parameter
+				name = uiobject.name
+			uiobject.lock.acquire()
+			position = self.positions[name]
+			uiobject.lock.release()
+		except KeyError:
+			self.lock.release()
+			raise ValueError('cannot get position, not in Object mapping')
+		self.lock.release()
 		return position
 
 	def positionObject(self, parameter, position, block=True, thread=False):

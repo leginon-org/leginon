@@ -831,18 +831,20 @@ class Manager(node.Node):
 		launchmethod = uidata.Method('Create', self.uiLaunch,
 																	tooltip='Create a new node')
 		launchobjects = (self.uilaunchname, self.uilauncherselect,
-											self.uiclassselect,
-											launchmethod)
+											self.uiclassselect)
 		self.launchcontainer = uidata.Container('Create New Node')
 		self.launchcontainer.addObjects(launchobjects)
+		self.launchcontainer.addObject(launchmethod,
+																		position={'justify': ['right']})
 
 		self.uiaddnodehostname = uidata.HistoryData(uidata.String, 'Hostname',
 																								None, persist=True)
 		self.uiaddnodeport = uidata.Integer('TCP Port', 55555, 'rw')
 		self.addmethod = uidata.Method('Add', self.uiAddNode)
-		addobjects = (self.uiaddnodehostname, self.uiaddnodeport, self.addmethod)
+		addobjects = (self.uiaddnodehostname, self.uiaddnodeport)
 		addcontainer = uidata.Container('Add Existing Node')
 		addcontainer.addObjects(addobjects)
+		addcontainer.addObject(self.addmethod, position={'justify': ['right']})
 
 		self.uikillselect = uidata.SingleSelectFromList('Node', [], 0)
 		killmethod = uidata.Method('Kill', self.uiKillNode)
@@ -863,8 +865,10 @@ class Manager(node.Node):
 		self.importexportcontainer = uidata.Container('Import / Export')
 		applicationexportmethod = uidata.Method('Export', self.uiExportApp)
 		applicationimportmethod = uidata.Method('Import', self.uiImportApp)
-		importexportobjects = (applicationexportmethod, applicationimportmethod)
-		self.importexportcontainer.addObjects(importexportobjects)
+		self.importexportcontainer.addObject(applicationimportmethod,
+																					position={'position': (0, 0)})
+		self.importexportcontainer.addObject(applicationexportmethod,
+																					position={'position': (0, 1)})
 
 
 		launchkillcontainer = uidata.Container('Launch / Kill')
@@ -879,15 +883,18 @@ class Manager(node.Node):
 
 		applicationlaunchmethod = uidata.Method('Launch', self.uiLaunchApp)
 		applicationkillmethod = uidata.Method('Kill', self.uiKillApp)
-		launchkillobjects = (
-		 applicationrefreshmethod,
-		 self.uiapplicationlist,
-		 applicationloadmethod,
-		 self.uilauncheraliascontainer,
-		 applicationlaunchmethod,
-		 applicationkillmethod
-		)
-		launchkillcontainer.addObjects(launchkillobjects)
+		launchkillcontainer.addObject(self.uiapplicationlist,
+																	position={'position': (0, 0)})
+		launchkillcontainer.addObject(applicationrefreshmethod,
+																	position={'position': (0, 1)})
+		launchkillcontainer.addObject(applicationloadmethod,
+																	position={'position': (1, 1)})
+		launchkillcontainer.addObject(self.uilauncheraliascontainer,
+																	position={'position': (1, 0), 'span': (3, 1)})
+		launchkillcontainer.addObject(applicationlaunchmethod,
+																	position={'position': (2, 1)})
+		launchkillcontainer.addObject(applicationkillmethod,
+																	position={'position': (3, 1)})
 
 		applicationobjects = (
 		 launchkillcontainer,

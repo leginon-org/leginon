@@ -445,19 +445,25 @@ class ManagerSetup(object):
 																						self.onCancelCreateSession)
 		self.createmessages = uidata.MessageLog('Messages')
 
-		sessionbuilderobjects = [
-		  self.createmessages,
-		  #suggestnamemethod,
-		  self.createsessionname,
-		  self.createsessioncomment,
-		  createinstrumentcontainer,
-		  self.createmethod,
-			self.cancelcreatemethod,
-		]
-		if self.projectdataconnected:
-			sessionbuilderobjects.insert(4, projectcontainer)
+		self.createsessioncontainer = uidata.ExternalContainer(
+																										'Create Leginon II Session')
 
-		self.createsessioncontainer = uidata.ExternalContainer('Create Leginon II Session')
-		self.createsessioncontainer.addObjects(sessionbuilderobjects)
+		self.createsessioncontainer.addObject(self.createmessages,
+																					position={'span': (1,2)})
+		self.createsessioncontainer.addObject(self.createsessionname,
+																					position={'span': (1,2)})
+		self.createsessioncontainer.addObject(self.createsessioncomment,
+																					position={'span': (1,2)})
+		self.createsessioncontainer.addObject(createinstrumentcontainer,
+																					position={'span': (1,2)})
+		if self.projectdataconnected:
+			self.createsessioncontainer.addObject(projectcontainer,
+																						position={'span': (1,2)})
+		self.createsessioncontainer.addObject(self.createmethod)
+		position = self.createmethod.getPosition()['position']
+		self.createsessioncontainer.addObject(self.cancelcreatemethod,
+													position={'position': (position[0], position[1] + 1),
+																		'justify': ['right']})
+
 		self.selectsessioncontainer.addObject(self.createsessioncontainer)
 
