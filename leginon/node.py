@@ -257,6 +257,7 @@ class Node(leginonobject.LeginonObject):
 		return self.researchByLocation(loc, dataid)
 
 	def researchByLocation(self, loc, dataid):
+		print 'LOC', loc
 		client = self.clientclass(self.ID(), loc)
 		#print "data ID =", dataid
 		cdata = client.pull(dataid)
@@ -265,7 +266,8 @@ class Node(leginonobject.LeginonObject):
 
 	def researchByDataID(self, dataid):
 		# will change soon
-		nodeiddata = self.researchByLocation(self.managerloc, dataid)
+		loc = self.managerloc
+		nodeiddata = self.researchByLocation(loc, dataid)
 
 		if nodeiddata is None:
 			print "node, researchByDataID: no such data ID"

@@ -106,21 +106,11 @@ class Calibration(node.Node):
 	def main(self):
 		pass
 
-	def imageshiftState(self, value):
-		return {'image shift': {'x': value}}
-
-	def goniometerState(self, value):
-		return {'stage position': {'x': value}}
+	def state(self, value):
+		raise NotImplementedError()
 
 	def calibrate(self):
 		self.clearStateImages()
-
-		if self.parameter == 'stage position':
-			setting = self.goniometerState
-		elif self.parameter == 'image shift':
-			setting = self.imageshiftState
-		else:
-			raise RuntimeError('unknown parameter %s' % self.parameter)
 
 		adjustedrange = self.range
 		print 'publishing camera state', self.emnode
@@ -133,8 +123,8 @@ class Calibration(node.Node):
 		for i in range(self.attempts):
 			value = (adjustedrange[1] - adjustedrange[0]) / 2 + adjustedrange[0]
 
-			state1 = setting(0.0)
-			state2 = setting(value)
+			state1 = self.state(0.0)
+			state2 = self.state(value)
 			print 'states', state1, state2
 			shiftinfo = self.measureStateShift(state1, state2)
 			print 'shiftinfo', shiftinfo
@@ -143,7 +133,7 @@ class Calibration(node.Node):
 
 			if verdict == 'good':
 				print "good", self.calculate(cdata, value) 
-				self.publishRemote(self.emnode, data.EMData(self.ID(), setting(0.0)))
+				self.publishRemote(self.emnode, data.EMData(self.ID(), self.state(0.0)))
 				return self.calculate(cdata, value)
 			elif verdict == 'small shift':
 				print "too small"
@@ -157,7 +147,7 @@ class Calibration(node.Node):
 
 
 
-		self.publishRemote(self.emnode, data.EMData(self.ID(), setting(0.0)))
+		self.publishRemote(self.emnode, data.EMData(self.ID(), self.state(0.0)))
 
 	def clearStateImages(self):
 		self.images = []
@@ -358,43 +348,19 @@ class Calibration(node.Node):
 		#self.validShiftCallback(self.validshift)
 		return ''
 
-#			imageshift = (shiftrange[1] + shiftrange[0])/2
-#			shiftpair = ((shiftrange[1] + shiftrange[0])/4, \
-#										-(shiftrange[1] + shiftrange[0])/4) 
-#			statepair = ({'image shift': {'x': shiftpair[0], 'y': 0.0}}, \
-#										{'image shift': {'x': shiftpair[1], 'y': 0.0}})
-#			imagepair = self.imagePair(EMnodeid, statepair)
-#			correlationdata = correlation.correlation(imagepair[0], \
-#													imagepair[1], 0, 1, 1)
-#			pixelshiftmagnitude = \
-#				math.sqrt(correlationdata['phase correlation peak'][0]**2 \
-#									+ correlationdata['phase correlation peak'][1]**2)
-#
-#			if not self.correlates(correlationdata, correlationthreshold):
-#				# images don't correlate, need smaller shift
-#				shiftrange = (shiftrange[0], imageshift)
-#			else: # images correlate, check if pixel shift is good
-#				if (pixelshiftmagnitude >= pixelshiftrange[0]) \
-#							and (pixelshiftmagnitude <= pixelshiftrange[1]):
-#					return {'pixel shift': correlationdata['phase correlation peak'],
-#									'image shift': imageshift}
-#				elif pixelshiftmagnitude > pixelshiftrange[1]:
-#					shiftrange = (shiftrange[0], imageshift)
-#				elif pixelshiftmagnitude < pixelshiftrange[0]:
-#					shiftrange = (imageshift, shiftrange[1])
 
-#		return None
+class StageCalibration(Calibration):
+	def __init__(self, id, managerlocation):
+		Calibration.__init__(self, id, managerlocation)
 
-#	def correlates(self, correlationdata, correlationthreshold):
-#		if correlationdata['phase correlation image'][correlationdata['phase correlation index']] > correlationthreshold:
-#			return 1
-#		else:
-#			return 0
+	def state(self, value):
+		return {'stage position': {'x': value}}
 
-#	def imagePair(self, EMnodeid, statepair):
-#		self.publishRemote(EMnodeid, data.EMData(self.ID(), statepair[0]))
-#		image1 = self.researchByDataID('image data').content['image data']
-#		self.publishRemote(EMnodeid, data.EMData(self.ID(), statepair[1]))
-#		image2 = self.researchByDataID('image data').content['image data']
-#		return (image1, image2)
+
+class ImageShiftCalibration(Calibration):
+	def __init__(self, id, managerlocation):
+		Calibration.__init__(self, id, managerlocation)
+
+	def stage(self, value):
+		return {'image shift': {'x': value}}
 

@@ -50,6 +50,11 @@ class NodeLocationData(LocationData):
 	def __repr__(self):
 			return "<NodeLocationData for %s> %s" % (self.id, self.content)
 
+class NodeClassesData(Data):
+	def __init__(self, id, content):
+		Data.__init__(self, id, tuple(content))
+
+
 # real dataid is the dataid, but content is actually a list of nodeids when
 # the real data is located
 class DataLocationData(LocationData):

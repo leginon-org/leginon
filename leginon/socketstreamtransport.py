@@ -71,7 +71,8 @@ class Client(leginonobject.LeginonObject):
 	def push(self, idata):
 		self.connect()
 		self.send(cPickle.dumps(idata, 1))
-		serverexception = cPickle.loads(self.receive())
+		r = self.receive()
+		serverexception = cPickle.loads(r)
 		self.close()
 		if serverexception is not None:
 			print "socket transport, push: server failed to be pushed"

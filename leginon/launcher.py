@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
 import signal
-import node
+import node, data
 import event
 import threading
 import nodeclassreg
 import calllauncher
+import time
 
 
 class Launcher(node.Node):
@@ -13,6 +14,8 @@ class Launcher(node.Node):
 		node.Node.__init__(self, id, managerlocation)
 
 		self.addEventInput(event.LaunchEvent, self.handleLaunch)
+		self.addEventInput(event.UpdateNodeClassesEvent, self.publishNodeClasses)
+		self.addEventOutput(event.NodeClassesPublishEvent)
 		self.caller = calllauncher.CallLauncher()
 		print 'launcher id: %s' % (self.id,)
 
@@ -26,15 +29,23 @@ class Launcher(node.Node):
 		self.managerloc = loc
 		self.addEventClient(('manager',), loc)
 
-		launcherinfo = {'location': self.location(), 'node classes': self.getNodeClassNames()}
+		launcherinfo = self.location()
 		e = event.LauncherAvailableEvent(self.ID(), launcherinfo)
 		self.outputEvent(ievent=e, wait=1)
+		time.sleep(1)
+		self.publishNodeClasses()
 
 	def main(self):
 		pass
 
-	def getNodeClassNames(self):
-		return nodeclassreg.getNodeClassNames()
+	def publishNodeClasses(self):
+		reload(nodeclassreg)
+		print 'publishNodeClasses'
+		nodeclassnames = nodeclassreg.getNodeClassNames()
+		print 'nodeclassnames', nodeclassnames
+		d = data.NodeClassesData(self.ID(), nodeclassnames)
+		print 'DDDD content', d.content
+		self.publish(d, event.NodeClassesPublishEvent)
 
 	def handleLaunch(self, launchevent):
 		# unpack event content
@@ -51,6 +62,17 @@ class Launcher(node.Node):
 			self.caller.launchCall('fork',nodeclass,args,kwargs)
 		else:
 			self.caller.launchCall('thread',nodeclass,args,kwargs)
+
+	def defineUserInterface(self):
+		nint = node.Node.defineUserInterface(self)
+
+		ref = self.registerUIMethod(self.uiRefresh, 'Refresh', ())
+
+		self.registerUISpec('Launcher: %s' % self.id, (nint, ref))
+
+	def uiRefresh(self):
+		self.publishNodeClasses()
+		return ''
 
 	def launchThread(self):
 		pass

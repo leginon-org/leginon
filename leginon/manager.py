@@ -25,6 +25,7 @@ class Manager(node.Node):
 		## this makes every received event get distributed
 		self.addEventInput(event.NodeAvailableEvent, self.registerNode)
 		self.addEventInput(event.NodeUnavailableEvent, self.unregisterNode)
+		self.addEventInput(event.NodeClassesPublishEvent, self.handleNodeClassesPublish)
 
 		self.addEventInput(event.PublishEvent, self.registerData)
 		self.addEventInput(event.UnpublishEvent, self.unregisterData)
@@ -73,13 +74,24 @@ class Manager(node.Node):
 				del self.confirmmap[ievent.content]
 				self.outputEvent(ievent, 0, nodeid)
 
-	def addLauncher(self, nodeid, nodeclasses):
+	def addLauncher(self, nodeid, location):
 		name = nodeid[-1]
 		if name not in self.launcherlist:
 			self.launcherlist.append(name)
-		self.launcherdict[name] = {'id':nodeid, 'node classes':nodeclasses}
+		self.launcherdict[name] = {'id':nodeid, 'location':location, 'node classes id':None}
 
-		self.updateLauncherDictData()
+	def getLauncherNodeClasses(self, launchername):
+		dataid = self.launcherdict[launchername]['node classes id']
+		loc = self.launcherdict[launchername]['location']
+		nodeclassesdata = self.researchByLocation(loc, dataid)
+		nodeclasses = nodeclassesdata.content
+		return nodeclasses
+
+	def handleNodeClassesPublish(self, event):
+		launchername = event.id[-2]
+		dataid = event.content
+		self.launcherdict[launchername]['node classes id'] = dataid
+		self.updateLauncherDictDataDict(launchername)
 
 	def delLauncher(self, nodeid):
 		name = nodeid[-1]
@@ -88,27 +100,27 @@ class Manager(node.Node):
 			del self.launcherdict[name]
 		except:
 			pass
-		self.updateLauncherDictData()
+		self.updateLauncherDictDataDict()
 
-	def updateLauncherDictData(self):
-		newdict = {}
-		for name,value in self.launcherdict.items():
-			newdict[name] = value['node classes']
-		self.launcherdictdata.set(newdict)
+	def updateLauncherDictDataDict(self, launchername=None):
+		if launchername is not None:
+			newdict = self.launcherdictdatadict
+			newdict[launchername] = self.getLauncherNodeClasses(launchername)
+		else:
+			newdict = {}
+			for name,value in self.launcherdict.items():
+				newdict[name] = self.getLauncherNodeClasses(name)
+		self.launcherdictdatadict = newdict
 
 	def registerNode(self, readyevent):
 		nodeid = readyevent.id[:-1]
 		print 'registering node', nodeid
 
+		nodelocation = readyevent.content
+
 		# check if new node is launcher
-		## this is kind of stupid, but content is different
-		## between launcher and regular nodes
 		if isinstance(readyevent, event.LauncherAvailableEvent):
-			nodelocation = readyevent.content['location']
-			nodeclasses = readyevent.content['node classes']
-			self.addLauncher(nodeid, nodeclasses)
-		else:
-			nodelocation = readyevent.content
+			self.addLauncher(nodeid, nodelocation)
 
 		# for the clients and mapping
 		self.addEventClient(nodeid, nodelocation)
@@ -280,6 +292,12 @@ class Manager(node.Node):
 		# for XML-RPC
 		return ''
 
+	def uiGetLauncherdict(self):
+		print 'UIGETLAUNCHERDICT'
+		self.updateLauncherDictDataDict()
+		return self.launcherdictdatadict
+		
+
 	def defineUserInterface(self):
 		nodespec = node.Node.defineUserInterface(self)
 
@@ -294,7 +312,8 @@ class Manager(node.Node):
 		self.launcherdict = {}
 
 		## UI data to be used as choices for method args
-		self.launcherdictdata = self.registerUIData('launcherdict', 'struct')
+		self.launcherdictdatadict = {}
+		self.launcherdictdata = self.registerUIData('launcherdict', 'struct', default=self.uiGetLauncherdict)
 		self.eventclasslistdata = self.registerUIData('eventclasslist', 'array', default=eventclass_list)
 
 		argspec = (

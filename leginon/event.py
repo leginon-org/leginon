@@ -100,6 +100,11 @@ class ListPublishEvent(Event):
 		else:
 			raise TypeError
 
+class NodeClassesPublishEvent(PublishEvent):
+	'Event indicating launcher published new list of node classes'
+	def __init__(self, id, content, confirm):
+		PublishEvent.__init__(self, id, content, confirm)
+
 class CorrelationPublishEvent(PublishEvent):
 	'Event indicating cross correlation was published'
 	def __init__(self, id, content, confirm):
@@ -169,6 +174,11 @@ class LaunchEvent(ControlEvent):
 	def __init__(self, id, newproc, targetclass, args=(), kwargs={}, confirm=False):
 		nodeinfo = {'newproc':newproc,'targetclass':targetclass, 'args':args, 'kwargs':kwargs}
 		Event.__init__(self, id, nodeinfo, confirm)
+
+class UpdateNodeClassesEvent(ControlEvent):
+	'ControlEvent sent to a launcher telling it to update node classes'
+	def __init__(self, id):
+		ControlEvent.__init__(self, id)
 
 class LockEvent(ControlEvent):
 	'Event that signals a lock'
