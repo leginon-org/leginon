@@ -611,7 +611,7 @@ class Panel(gui.wx.Node.Panel):
 	def onCycleOrderChanged(self, evt):
 		self.node.setCycleOrder(evt.presets)
 
-	def onSetOrder(self, presets, setorder=False):
+	def onSetOrder(self, presets, setorder=True):
 		evt = PresetsChangedEvent(presets)
 		self.cpreset.GetEventHandler().AddPendingEvent(evt)
 		if setorder:

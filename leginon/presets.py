@@ -260,7 +260,7 @@ class PresetsManager(node.Node):
 		else:
 			return None
 
-	def setOrder(self, names=None, setorder=False):
+	def setOrder(self, names=None, setorder=True):
 		'''
 		set order of self.presets, and set numbers
 		if names given, use that to determine order
@@ -295,7 +295,7 @@ class PresetsManager(node.Node):
 		test2 = list(self.presets.keys())
 		test2.sort()
 		if test1 == test2:
-			self.setOrder(namelist, setorder=True)
+			self.setOrder(namelist, setorder=False)
 		else:
 			namelist = self.presets.keys()
 
@@ -396,7 +396,7 @@ class PresetsManager(node.Node):
 
 		## update UI
 		# ???
-		self.panel.onSetOrder(self.presets.keys(), setorder=False)
+		self.panel.onSetOrder(self.presets.keys())
 		self.setStatus('Set preset "%s" values from instrument' % name)
 		node.beep()
 		return newpreset
