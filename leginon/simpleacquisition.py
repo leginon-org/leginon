@@ -16,6 +16,7 @@ import presets
 import threading
 import acquisition
 import uidata
+import node
 
 class SimpleAcquisition(acquisition.Acquisition):
 	'''
@@ -29,10 +30,12 @@ class SimpleAcquisition(acquisition.Acquisition):
 
 	def acquireImageOne(self):
 		self.processTargetData(None)
+		node.beep()
 		return ''
 
 	def acquireImageOneNoPreset(self):
 		self.acquire(None)
+		node.beep()
 
 	def alreadyAcquired(self, targetdata, presetname):
 		'''
