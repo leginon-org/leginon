@@ -87,7 +87,10 @@ class Navigator(node.Node):
 		self.handleImageClick(click)
 
 	def acquireImage(self):
-		camconfig = self.cam.cameraConfig()
+		if self.usecamconfig.get():
+			camconfig = self.cam.cameraConfig()
+		else:
+			camconfig = None
 
 		print 'acquiring image'
 		imagedata = self.cam.acquireCameraImageData(camconfig)
@@ -111,10 +114,11 @@ class Navigator(node.Node):
 		self.delaydata = uidata.Float('Delay (sec)', 2.5, 'rw')
 		self.completestate = uidata.Boolean('Complete State', False, 'rw', persist=True)
 
+		self.usecamconfig = uidata.Boolean('Use This Configuration', True, 'rw', persist=True)
 		cameraconfigure = self.cam.configUIData()
 
 		settingscontainer = uidata.Container('Settings')
-		settingscontainer.addObjects((self.movetype, self.completestate, self.delaydata, cameraconfigure))
+		settingscontainer.addObjects((self.movetype, self.completestate, self.delaydata, self.usecamconfig, cameraconfigure))
 
 		acqmeth = uidata.Method('Acquire', self.acquireImage)
 		self.image = uidata.ClickImage('Navigation', self.handleImageClick2, None)
