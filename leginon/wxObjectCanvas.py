@@ -221,8 +221,7 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 	def UpdateDrawing(self):
 		self.ProcessEvent(UpdateDrawingEvent())
 
-	#def addShapeObject(self, so, x=0, y=0):
-	def addShapeObject(self, so, x, y):
+	def addShapeObject(self, so, x=0, y=0):
 		if so not in self.shapeobjects:
 			so.setParent(self)
 			self.shapeobjects.insert(0, so)
@@ -305,6 +304,8 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 		return (x + self.width/2, y + self.height/2)
 
 	def DrawArrow(self, dc, p, direction, size=7):
+		oldbrush = dc.GetBrush()
+		dc.SetBrush(wxBLACK_BRUSH)
 		x, y = p
 		if direction == 'n':
 			dc.DrawPolygon([(0, 0), (-3, 7), (3, 7)], x, y)
@@ -314,66 +315,176 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 			dc.DrawPolygon([(0, 0), (-7, -3), (-7, 3)], x, y)
 		elif direction == 'w':
 			dc.DrawPolygon([(0, 0), (7, -3), (7, 3)], x, y)
+		dc.SetBrush(oldbrush)
 
 	def magnitude(self, p1, p2):
 		return math.sqrt((p2[0] - p1[0])**2 + (p2[1] - p1[1])**2)
 
-	def elbowLine(self, dc, so1, so2):
+	def getFaces(self):
+		x, y = self.getCanvasCenter()
+		n = (x, y - self.height/2)
+		e = (x + self.width/2, y)
+		s = (x, y + self.height/2)
+		w = (x - self.width/2, y)
+		return (n, e, s, w)
+
+	def direction(self, so1, so2):
+		# \ n /
+		#  \ /
+		# w \ e
+		#  / \
+		# / s \
 		x1, y1 = so1.getCanvasCenter()
 		x2, y2 = so2.getCanvasCenter()
-		n1 = (x1, y1 - so1.height/2)
-		e1 = (x1 + so1.width/2, y1)
-		s1 = (x1, y1 + so1.height/2)
-		w1 = (x1 - so1.width/2, y1)
-		n2 = (x2, y2 - so2.height/2)
-		e2 = (x2 + so2.width/2, y2)
-		s2 = (x2, y2 + so2.height/2)
-		w2 = (x2 - so2.width/2, y2)
 
-		if x1 > x2:
-			# III and IV quadrants
-			if y1 > y2:
-				# IV quadrant
-				if self.magnitude(n1, e2) < self.magnitude(w1, s2):
-					p1, p2 = n1, e2
-					reverse = False
-					self.DrawArrow(dc, p2, 'w')
-				else:
-					p1, p2 = w1, s2
-					reverse = True
-					self.DrawArrow(dc, p2, 'n')
+		try:
+			slope = float(y2 - y1)/float(x2 - x1)
+		except ZeroDivisionError:
+			# good enough
+			slope = 1.0
+
+		if slope >= -1 and slope < 1:
+			# east or west
+			if x1 > x2:
+				# west
+				return 'w'
 			else:
-				# III quadrant
-				if self.magnitude(s1, e2) < self.magnitude(w1, n2):
-					p1, p2 = s1, e2
-					reverse = False
-					self.DrawArrow(dc, p2, 'w')
-				else:
-					p1, p2 = w1, n2
-					reverse = True
-					self.DrawArrow(dc, p2, 's')
+				# east
+				return 'e'
 		else:
+			# north or south
+			if y1 > y2:
+				# north
+				return 'n'
+			else:
+				# south
+				return 's'
+
+	def quadrant(self, so1, so2):
+		#  IV | I
+		# --------
+		# III | II
+		x1, y1 = so1.getCanvasCenter()
+		x2, y2 = so2.getCanvasCenter()
+		if x1 < x2:
 			# I and II quadrants
 			if y1 > y2:
 				# I quadrant
-				if self.magnitude(n1, w2) < self.magnitude(e1, s2):
-					p1, p2 = n1, w2
-					reverse = False
-					self.DrawArrow(dc, p2, 'e')
-				else:
-					p1, p2 = e1, s2
-					reverse = True
-					self.DrawArrow(dc, p2, 'n')
+				return 1
 			else:
 				# II quadrant
-				if self.magnitude(s1, w2) < self.magnitude(e1, n2):
-					p1, p2 = s1, w2
-					reverse = False
-					self.DrawArrow(dc, p2, 'e')
-				else:
-					p1, p2 = e1, n2
-					reverse = True
-					self.DrawArrow(dc, p2, 's')
+				return 2
+		else:
+			# III and IV quadrants
+			if y1 < y2:
+				# III quadrant
+				return 3
+			else:
+				# IV quadrant
+				return 4
+
+	def straightLine(self, dc, so1, so2):
+		x1, y1 = so1.getCanvasCenter()
+		x2, y2 = so2.getCanvasCenter()
+		n1, e1, s1, w1 = so1.getFaces()
+		n2, e2, s2, w2 = so2.getFaces()
+
+		direction = self.direction(so1, so2)
+		if direction == 'n':
+			if abs(x1 - x2) > so1.width + so2.width:
+				return False
+			p1, p2 = n1, s2
+			x = (p2[0] - p1[0])/2 + p1[0]
+			p1 = (x, p1[1])
+			p2 = (x, p2[1])
+			self.DrawArrow(dc, p2, 'n')
+		elif direction == 'e':
+			if abs(y1 - y2) > so1.height + so2.height:
+				return False
+			p1, p2 = e1, w2
+			y = (p2[1] - p1[1])/2 + p1[1]
+			p1 = (p1[0], y)
+			p2 = (p2[0], y)
+			self.DrawArrow(dc, p2, 'e')
+		elif direction == 's':
+			if abs(x1 - x2) > so1.width + so2.width:
+				return False
+			p1, p2 = s1, n2
+			x = (p2[0] - p1[0])/2 + p1[0]
+			p1 = (x, p1[1])
+			p2 = (x, p2[1])
+			self.DrawArrow(dc, p2, 's')
+		elif direction == 'w':
+			if abs(y1 - y2) > so1.height + so2.height:
+				return False
+			p1, p2 = w1, e2
+			y = (p2[1] - p1[1])/2 + p1[1]
+			p1 = (p1[0], y)
+			p2 = (p2[0], y)
+			self.DrawArrow(dc, p2, 'w')
+		x1, y1 = p1
+		x2, y2 = p2
+		dc.DrawLine(x1, y1, x2, y2)
+
+	def elbowLine(self, dc, so1, so2):
+		arrowsize = 7
+		x1, y1 = so1.getCanvasCenter()
+		x2, y2 = so2.getCanvasCenter()
+
+		penwidth = dc.GetPen().GetWidth()
+		if so1.width > so2.width:
+			width = so2.width
+		else:
+			width = so1.width
+		if abs(x1 - x2) < width/2 + arrowsize + penwidth + 1:
+			return False
+		if so1.height > so2.height:
+			height = so2.height
+		else:
+			height = so1.height
+		if abs(y1 - y2) < height/2 + arrowsize + penwidth + 1:
+			return False
+
+		n1, e1, s1, w1 = so1.getFaces()
+		n2, e2, s2, w2 = so2.getFaces()
+
+		quadrant = self.quadrant(so1, so2)
+		if quadrant == 1:
+			if self.magnitude(n1, w2) < self.magnitude(e1, s2):
+				p1, p2 = n1, w2
+				reverse = False
+				arrowdirection = 'e'
+			else:
+				p1, p2 = e1, s2
+				reverse = True
+				arrowdirection = 'n'
+		elif quadrant == 2:
+			if self.magnitude(s1, w2) < self.magnitude(e1, n2):
+				p1, p2 = s1, w2
+				reverse = False
+				arrowdirection = 'e'
+			else:
+				p1, p2 = e1, n2
+				reverse = True
+				arrowdirection = 's'
+		elif quadrant == 3:
+			if self.magnitude(s1, e2) < self.magnitude(w1, n2):
+				p1, p2 = s1, e2
+				reverse = False
+				arrowdirection = 'w'
+			else:
+				p1, p2 = w1, n2
+				reverse = True
+				arrowdirection = 's'
+		elif quadrant == 4:
+			if self.magnitude(n1, e2) < self.magnitude(w1, s2):
+				p1, p2 = n1, e2
+				reverse = False
+				arrowdirection = 'w'
+			else:
+				p1, p2 = w1, s2
+				reverse = True
+				arrowdirection = 'n'
 		x1, y1 = p1
 		x2, y2 = p2
 		if reverse:
@@ -384,69 +495,17 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 			my = y2
 		dc.DrawLine(x1, y1, mx, my)
 		dc.DrawLine(mx, my, x2, y2)
+		self.DrawArrow(dc, p2, arrowdirection, arrowsize)
+		return True
 
 	def DrawLine(self, dc, so1, so2):
-		oldbrush = dc.GetBrush()
-		dc.SetBrush(wxBLACK_BRUSH)
-		self.elbowLine(dc, so1, so2)
-		dc.SetBrush(oldbrush)
+		if self.elbowLine(dc, so1, so2):
+			return
+		if self.straightLine(dc, so1, so2):
+			return
 
 	def DrawConnection(self, dc, connection):
 		self.DrawLine(dc, self, connection)
-
-	def crookedLine(self, dc, shapeobject1, shapeobject2, offset=0):
-		x1, y1 = shapeobject1.getCanvasPosition()
-		x2, y2 = shapeobject2.getCanvasPosition()
-		x1 += shapeobject1.width/2
-		y1 += shapeobject1.height/2
-		x2 += shapeobject2.width/2
-		y2 += shapeobject2.height/2
-
-		try:
-			slope = float(y2 - y1)/float(x2 - x1)
-		except ZeroDivisionError:
-			# good enough
-			slope = 1
-
-		if slope >= -1 and slope < 1:
-			if x1 > x2:
-				y1 += offset
-				y2 += offset
-				x1 -= shapeobject1.width/2
-				x2 += shapeobject2.width/2
-				dc.DrawPolygon([(0, 0), (7, -3), (7, 3)], x2, y2)
-				mx = x2 + (x1 - x2)/2 + offset
-			else:
-				y1 -= offset
-				y2 -= offset
-				x1 += shapeobject1.width/2
-				x2 -= shapeobject2.width/2
-				dc.DrawPolygon([(0, 0), (-7, -3), (-7, 3)], x2, y2)
-				mx = x2 + (x1 - x2)/2 - offset
-			dc.DrawLine(x1, y1, mx, y1)
-			dc.DrawLine(mx, y1, mx, y2)
-			dc.DrawLine(mx, y2, x2, y2)
-		else:
-			if y1 > y2:
-				x1 += offset
-				x2 += offset
-				y1 -= shapeobject1.height/2
-				y2 += shapeobject2.height/2
-				dc.DrawPolygon([(0, 0), (-3, 7), (3, 7)], x2, y2)
-				my = y2 + (y1 - y2)/2 + offset
-			else:
-				x1 -= offset
-				x2 -= offset
-				y1 += shapeobject1.height/2
-				y2 -= shapeobject2.height/2
-				dc.DrawPolygon([(0, 0), (-3, -7), (3, -7)], x2, y2)
-				my = y2 + (y1 - y2)/2 - offset
-			dc.DrawLine(x1, y1, x1, my)
-			dc.DrawLine(x1, my, x2, my)
-			dc.DrawLine(x2, my, x2, y2)
-		
-#		dc.DrawLine(x1, y1, x2, y2)
-		dc.SetBrush(oldbrush)
 
 	def addText(self, text, x=0, y=0):
 		self.text[text] = (x, y)
