@@ -41,7 +41,8 @@ class DataHandler(leginonobject.LeginonObject):
 			self.databinder.insert(idata)
 		else:
 			if idata['id'][:-1] == self.id[:-1]:
-				self.datakeeper.insert(copy.deepcopy(idata))
+				#self.datakeeper.insert(copy.deepcopy(idata))
+				self.datakeeper.insert(idata)
 			else:
 				raise RuntimeError('local only insert on data not from this node')
 
@@ -49,7 +50,8 @@ class DataHandler(leginonobject.LeginonObject):
 		if isinstance(idata, event.Event):
 			self.databinder.insert(idata)
 		else:
-			self.datakeeper.insert(copy.deepcopy(idata))
+			#self.datakeeper.insert(copy.deepcopy(idata))
+			self.datakeeper.insert(idata)
 
 	def query(self, id):
 		return self.datakeeper.query(id)
@@ -318,7 +320,8 @@ class Node(leginonobject.LeginonObject):
 			return
 
 		if 'database' in kwargs and kwargs['database']:
-			self.addSession(idata)
+			if isinstance(idata, data.InSessionData):
+				self.addSession(idata)
 			try:
 				self.datahandler.dbInsert(idata)
 			except KeyError, e:
@@ -348,10 +351,13 @@ class Node(leginonobject.LeginonObject):
 			self.outputEvent(e)
 
 	def addSession(self, datainstance):
-		if isinstance(datainstance, data.InSessionData):
+		## setting an item of datainstance will reset the
+		## dbid, so do it sparingly
+		if datainstance['session'] is not self.session:
+			print 'session', datainstance['session']
 			datainstance['session'] = self.session
 		for key in datainstance:
-			if isinstance(datainstance[key], data.Data):
+			if isinstance(datainstance[key], data.InSessionData):
 				self.addSession(datainstance[key])
 
 	def research(self, dataclass=None, datainstance=None, results=None, fill=True):
