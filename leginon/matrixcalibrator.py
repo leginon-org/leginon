@@ -3,6 +3,7 @@ import event, data
 import fftengine
 import correlator
 import peakfinder
+import sys
 import time
 import camerafuncs
 import calibrationclient
@@ -43,13 +44,6 @@ class MatrixCalibrator(calibrator.Calibrator):
 
 		self.axislist = ['x', 'y']
 
-		## default camera config
-		currentconfig = self.cam.config()
-		currentconfig['state']['dimension']['x'] = 1024
-		currentconfig['state']['binning']['x'] = 4
-		currentconfig['state']['exposure time'] = 500
-		self.cam.config(currentconfig)
-
 		self.defineUserInterface()
 		self.start()
 
@@ -60,11 +54,12 @@ class MatrixCalibrator(calibrator.Calibrator):
 
 		## set cam state
 
+		base = self.getBase()
 		baselist = []
 		for i in range(self.uinaverage.get()):
 			delta = i * self.ui_interval.get()
-			basex = self.uibase.get()['x'] + delta
-			basey = self.uibase.get()['y'] + delta
+			basex = base['x'] + delta
+			basey = base['y'] + delta
 			newbase = {'x':basex, 'y':basey}
 			baselist.append(newbase)
 
@@ -107,6 +102,11 @@ class MatrixCalibrator(calibrator.Calibrator):
 			shifts[axis]['row'] /= self.uinaverage.get()
 			shifts[axis]['col'] /= self.uinaverage.get()
 
+		# return to base
+		emdata = ScopeEMData(id=('scope',))
+		emdata[uiparameter] = base
+		self.publishRemote(emdata)
+
 		mag = self.getMagnification()
 
 		matrix = calclient.measurementToMatrix(shifts)
@@ -122,7 +122,8 @@ class MatrixCalibrator(calibrator.Calibrator):
 		calibrator.Calibrator.defineUserInterface(self)
 		cameraconfig = self.cam.configUIData()
 		self.uinaverage = uidata.UIInteger('N Average', 1, 'rw')
-		self.uibase = uidata.UIStruct('Base', {}, 'rw')
+		self.uicurbase = uidata.UIBoolean('Current as Base', True, 'rw')
+		self.uibase = uidata.UIStruct('Base', {'x':0,'y':0}, 'rw')
 		parameters = self.parameters.keys()
 		if parameters:
 			parameters.sort()
@@ -130,8 +131,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 		else:
 			selected = []
 		self.uiparameter = uidata.UISelectFromList('Parameter', parameters,
-																								selected, 'r',
-																								self.uiParameterCallback)
+																								selected, 'r')
 		self.uidelta = uidata.UIFloat('Delta', 2e-6, 'rw')
 		self.ui_interval = uidata.UIFloat('Interval', 2e-6, 'rw')
 		validshift = {'correlation': {'min': 20.0, 'max': 512.0},
@@ -139,7 +139,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 		self.uivalidshift = uidata.UIStruct('Valid Shift', validshift, 'rw')
 
 		settingscontainer = uidata.UIContainer('Settings')
-		settingscontainer.addUIObjects((cameraconfig, self.uinaverage, self.uibase,
+		settingscontainer.addUIObjects((cameraconfig, self.uinaverage, self.uicurbase, self.uibase,
 																		self.uiparameter, self.uidelta,
 																		self.ui_interval, self.uivalidshift))
 
@@ -158,13 +158,18 @@ class MatrixCalibrator(calibrator.Calibrator):
 		self.calibrate()
 		return ''
 
-	def uiParameterCallback(self, value):
-		try:
-			curstate = self.currentState()
-			self.uibase.set(curstate[value])
-		except:
-			self.uibase.set({'x': 0.0, 'y':0.0})
-		return value
+	def getBase(self):
+		if self.uicurbase.get():
+			choice = self.uiparameter.getSelectedValue()
+			if choice:
+				param = choice[0]
+				emdata = self.currentState()
+				base = emdata[param]
+			else:
+				raise RuntimeError('no parameter choice made')
+		else:
+			base = self.uibase.get()
+		return base
 
 	def makeState(self, value, axis):
 		return {self.uiparameter.getSelectedValue()[0]: {axis: value}}
