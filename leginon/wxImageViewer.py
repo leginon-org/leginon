@@ -968,6 +968,8 @@ class TargetImagePanel(ImagePanel):
 		dc.EndDrawing()
 
 if __name__ == '__main__':
+	import sys
+	filename = sys.argv[1]
 	def bar(xy):
 		print xy
 
@@ -984,6 +986,6 @@ if __name__ == '__main__':
 			return true
 
 	app = MyApp(0)
-	app.panel.setImageFromMrcString(open('test2.mrc', 'rb').read())
+	app.panel.setImageFromMrcString(open(filename, 'rb').read())
 	app.MainLoop()
 
