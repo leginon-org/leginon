@@ -47,8 +47,8 @@ class SpiralTargetMaker(TargetMaker):
 
 	def publishTargetList(self):
 		self.progress.set(0)
-		scope = self.researchByDataID(('scope,'))
-		camera = self.researchByDataID(('camera,'))
+		scope = self.researchByDataID(('scope',))
+		camera = self.researchByDataID(('camera',))
 #		scope = {'stage position': {'x': 1.1, 'y': 2.2}}
 #		camera = {'dimension': {'x': 512}}
 		# waiting to revise with presets
