@@ -131,7 +131,7 @@ class CalibrationClient(object):
 			shiftrows = shift[0]
 			shiftcols = shift[1]
 			seconds = t1 - t0
-			d = data.DriftData(rows=shiftrows, cols=shiftcols, interval=seconds)
+			d = data.DriftData(session=self.node.session, rows=shiftrows, cols=shiftcols, interval=seconds)
 			self.node.publish(d, database=True, dbforce=True)
 
 			drift = abs(shift[0] + 1j * shift[1])
@@ -363,7 +363,7 @@ class MatrixCalibrationClient(CalibrationClient):
 		stores a new calibration matrix
 		'''
 		newmatrix = Numeric.array(matrix, Numeric.Float64)
-		caldata = data.MatrixCalibrationData(magnification=mag, type=type, matrix=matrix)
+		caldata = data.MatrixCalibrationData(session=self.node.session, magnification=mag, type=type, matrix=matrix)
 		caldata['high tension'] = ht
 		self.node.publish(caldata, database=True, dbforce=True)
 
@@ -717,6 +717,7 @@ class ModeledStageCalibrationClient(CalibrationClient):
 
 	def storeMagCalibration(self, label, ht, mag, axis, angle, mean):
 		caldata = data.StageModelMagCalibrationData()
+		caldata['session'] = self.node.session
 		caldata['label'] = label
 		caldata['high tension'] = ht
 		caldata['magnification'] = mag
@@ -757,6 +758,7 @@ class ModeledStageCalibrationClient(CalibrationClient):
 
 	def storeModelCalibration(self, label, axis, period, a, b):
 		caldata = data.StageModelCalibrationData()
+		caldata['session'] = self.node.session
 		caldata['label'] = label 
 		caldata['axis'] = axis
 		caldata['period'] = period
@@ -952,6 +954,7 @@ class EucentricFocusClient(CalibrationClient):
 
 	def publishEucentricFocus(self, ht, mag, ef):
 		newdata = data.EucentricFocusData()
+		newdata['session'] = self.node.session
 		newdata['high tension'] = ht
 		newdata['magnification'] = mag
 		newdata['focus'] = ef
