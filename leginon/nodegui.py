@@ -677,30 +677,30 @@ class JimsTreeNode(TreeWidget.TreeNode):
 		return cy
 
 
-class ComboBoxDropdownCallback(Pmw.ComboBox):
-	def __init__(self, parent = None, callback = None, **kw):
-		self.callback = callback
-		INITOPT = Pmw.INITOPT
-		optiondefs = (
-		    ('autoclear',          0,          INITOPT),
-		    ('buttonaspect',       1.0,        INITOPT),
-		    ('dropdown',           1,          INITOPT),
-		    ('fliparrow',          0,          INITOPT),
-		    ('history',            1,          INITOPT),
-		    ('labelmargin',        0,          INITOPT),
-		    ('labelpos',           None,       INITOPT),
-		    ('listheight',         150,        INITOPT),
-		    ('selectioncommand',   '',         None),
-		    ('unique',             1,          INITOPT),
-		)
-		self.defineoptions(kw, optiondefs)
-		Pmw.ComboBox.__init__(self, parent)
-		self.initialiseoptions()
-
-	def _postList(self, event = None):
-		if callable(self.callback):
-			self.callback()
-		Pmw.ComboBox._postList(self, event)
+#class ComboBoxDropdownCallback(Pmw.ComboBox):
+#	def __init__(self, parent = None, callback = None, **kw):
+#		self.callback = callback
+#		INITOPT = Pmw.INITOPT
+#		optiondefs = (
+#		    ('autoclear',          0,          INITOPT),
+#		    ('buttonaspect',       1.0,        INITOPT),
+#		    ('dropdown',           1,          INITOPT),
+#		    ('fliparrow',          0,          INITOPT),
+#		    ('history',            1,          INITOPT),
+#		    ('labelmargin',        0,          INITOPT),
+#		    ('labelpos',           None,       INITOPT),
+#		    ('listheight',         150,        INITOPT),
+#		    ('selectioncommand',   '',         None),
+#		    ('unique',             1,          INITOPT),
+#		)
+#		self.defineoptions(kw, optiondefs)
+#		Pmw.ComboBox.__init__(self, parent)
+#		self.initialiseoptions()
+#
+#	def _postList(self, event = None):
+#		if callable(self.callback):
+#			self.callback()
+#		Pmw.ComboBox._postList(self, event)
 
 class NodeGUILauncher(Frame):
 	def __init__(self, parent):
@@ -710,6 +710,7 @@ class NodeGUILauncher(Frame):
 
 	def __build(self):
 		self.notebook = Pmw.NoteBook(self)
+		connectframe = self.notebook.add('Connect')
 		automaticframe = self.notebook.add('Automatic')
 		manualframe = self.notebook.add('Manual')
 
@@ -750,7 +751,7 @@ class NodeGUILauncher(Frame):
 
 		###############################################
 
-		managerframe = Frame(automaticframe, bd=4, relief=SOLID)
+		managerframe = Frame(connectframe, bd=4, relief=SOLID)
 
 		mllabel = Label(managerframe, text='Manager Location:')
 
@@ -768,14 +769,14 @@ class NodeGUILauncher(Frame):
 		managerportentry.insert(0, 49153)
 		managerportentry.bind('<KeyPress-Return>', self.getNodeLocations)
 
-		refreshbutton = Button(managerframe, text='Connect', command=self.setManagerLocation)
+		connectbutton = Button(managerframe, text='Connect', command=self.setManagerLocation)
 
 		mllabel.pack(side=TOP)
 		managerhostnamelabel.pack(side=LEFT)
 		self.managerhostnameentry.pack(side=LEFT)
 		managerportlabel.pack(side=LEFT)
 		self.managerportentry.pack(side=LEFT)
-		refreshbutton.pack(side=LEFT)
+		connectbutton.pack(side=LEFT)
 
 		managerframe.pack(side=TOP, fill=BOTH)
 
@@ -784,14 +785,17 @@ class NodeGUILauncher(Frame):
 		nglabel = Label(nodeidframe, text='Node UI:')
 		nodeidlabel = Label(nodeidframe, text='Node ID')
 		self.nodeidsvar = StringVar()
-		self.nodeidsentry = ComboBoxDropdownCallback(nodeidframe, self.getNodeLocations, entry_textvariable=self.nodeidsvar)
+#		self.nodeidsentry = ComboBoxDropdownCallback(nodeidframe, self.getNodeLocations, entry_textvariable=self.nodeidsvar)
+		self.nodeidsentry = Pmw.ComboBox(nodeidframe, entry_textvariable=self.nodeidsvar)
 		self.nodeidsentry.component('entryfield').component('entry')['width'] = 20
 		launchuibutton = Button(nodeidframe, text='Launch', command=self.launchUIbyNodeID)
+		refreshbutton = Button(nodeidframe, text='Refresh', command=self.getNodeLocations)
 
 		nglabel.pack(side=TOP)
 		nodeidlabel.pack(side=LEFT)
 		self.nodeidsentry.pack(side=LEFT)
 		launchuibutton.pack(side=LEFT)
+		refreshbutton.pack(side=LEFT)
 
 		nodeidframe.pack(side=TOP, fill=BOTH)
 
