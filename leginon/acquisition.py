@@ -431,7 +431,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.uicorrectimage = uidata.Boolean('Correct image', True, 'rw',
 																			persist=True)
 
-		self.waitfordone = uidata.Boolean('Wait for "Done"', True, 'rw',
+		self.waitfordone = uidata.Boolean('Wait for another node to process each published image', True, 'rw',
 																				persist=True)
 
 		acquirecontainer = uidata.Container('Acquisition')
