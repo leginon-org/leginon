@@ -49,6 +49,7 @@ import string
 import sqldict
 import MySQLdb
 import strictdict
+import cPickle
 
 def backquote(inputstr):
         """
@@ -687,8 +688,8 @@ def whereFormat(in_dict):
 		elif type(value) is bool:
 			value = int(value)
 		elif isinstance(value,strictdict.AnyObject):
-			key = sqldict.bin2sqlColumn(key)
-			value = value.getPickledObject()
+			key = sqldict.object2sqlColumn(key)
+			value = cPickle.dumps(value.o, cPickle.HIGHEST_PROTOCOL)
 		evalue = str(value)
 		wherelist.append(''' %s.%s="%s" ''' % (backquote(alias), backquote(key), evalue))
 	wherestr = ' AND '.join(wherelist)
@@ -702,7 +703,7 @@ def whereFormatSimple(in_dict):
 		if type(value) in [tuple, list]:
 			key = sqldict.seq2sqlColumn(key)
 		elif isinstance(value,strictdict.AnyObject):
-			key = sqldict.bin2sqlColumn(key)
+			key = sqldict.object2sqlColumn(key)
 		evalue = str(value)
 		wherelist.append(''' %s="%s" ''' % (backquote(key), evalue))
 	wherestr = ' AND '.join(wherelist)

@@ -251,16 +251,23 @@ class Server(xmlrpc.Server, uidata.Container):
 		## check if same user
 		if userprefs['prefs'] and self.session['user'].dbid == userprefs['user']:
 				return
-		userprefs['user'] = self.session['user'].dbid
+		userdbid = self.session['user'].dbid
+		print 'Loading user preferences (uid: %s)...' % (userdbid,)
+		userprefs['user'] = userdbid
 		sessionquery = data.SessionData(user=self.session['user'])
 		prefquery = data.UIData(session=sessionquery)
 		results = self.dbdatakeeper.query(prefquery)
 		## results are ordered by newest stuff first
 		## so now get the newest stuff into a dict
 		for result in results:
+			value = result['value']
+			## check if this was from a previous version
+			if value.o is None:
+				continue
 			key = tuple(result['object'])
 			if key not in userprefs['prefs']:
 				userprefs['prefs'][key] = result['value']
+		print 'Done loading preferences.'
 
 	def setObjectFromDatabase(self, uiobject):
 		if self.dbdatakeeper is None or self.session is None:

@@ -59,6 +59,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		self.calclients = {
 			'image shift': calibrationclient.ImageShiftCalibrationClient(self),
+			'image beam shift': calibrationclient.ImageBeamShiftCalibrationClient(self),
 			'stage position': calibrationclient.StageCalibrationClient(self),
 			'modeled stage position': calibrationclient.ModeledStageCalibrationClient(self)
 		}
@@ -233,6 +234,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## smart enough to create copies as well)
 		targetscope['stage position'] = dict(origscope['stage position'])
 		targetscope['image shift'] = dict(origscope['image shift'])
+		targetscope['beam shift'] = dict(origscope['beam shift'])
 		targetcamera = targetdata['camera']
 
 		## to shift targeted point to center...
@@ -259,6 +261,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		# now make EMTargetData to hold all this
 		emtargetdata = data.EMTargetData(preset=oldpreset, movetype=movetype)
 		emtargetdata['image shift'] = dict(newscope['image shift'])
+		emtargetdata['beam shift'] = dict(newscope['beam shift'])
 		emtargetdata['stage position'] = dict(newscope['stage position'])
 
 		## publish in DB because it will likely be needed later

@@ -624,7 +624,7 @@ class PresetsManager(node.Node):
 		querysession = data.SessionData()
 		queryinst = data.InstrumentData()
 		queryinst['name'] = myinstname
-		querysession['instrument'] = self.session['instrument']
+		querysession['instrument'] = queryinst
 		limit = 100
 		sessionlist = self.research(datainstance=querysession, results=limit)
 		sessionnamelist = [x['name'] for x in sessionlist]
@@ -835,10 +835,11 @@ class PresetsManager(node.Node):
 		## make copy of target stage and image shift
 		mystage = dict(emtargetdata['stage position'])
 		myimage = dict(emtargetdata['image shift'])
+		mybeam = dict(emtargetdata['beam shift'])
 
 		## decide if moving stage or not, and which axes to move
 		movetype = emtargetdata['movetype']
-		if movetype == 'image shift':
+		if movetype in ('image shift', 'image beam shift'):
 			if not self.alwaysmovestage.get():
 				mystage = None
 
@@ -870,15 +871,24 @@ class PresetsManager(node.Node):
 			myimage['x'] += newpreset['image shift']['x']
 			myimage['y'] -= oldpreset['image shift']['y']
 			myimage['y'] += newpreset['image shift']['y']
+
+			mybeam['x'] -= oldpreset['beam shift']['x']
+			mybeam['x'] += newpreset['beam shift']['x']
+			mybeam['y'] -= oldpreset['beam shift']['y']
+			mybeam['y'] += newpreset['beam shift']['y']
 		else:
 			self.uistatus.set('Using different magnification mode')
 			myimage['x'] = newpreset['image shift']['x']
 			myimage['y'] = newpreset['image shift']['y']
 
+			mybeam['x'] = newpreset['beam shift']['x']
+			mybeam['y'] = newpreset['beam shift']['y']
+
 		### create ScopeEMData with preset and target shift
 		scopedata = data.ScopeEMData()
 		scopedata.friendly_update(newpreset)
 		scopedata['image shift'] = myimage
+		scopedata['beam shift'] = mybeam
 		scopedata['stage position'] = mystage
 		### createCameraEMData with preset
 		cameradata = data.CameraEMData()

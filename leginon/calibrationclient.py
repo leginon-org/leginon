@@ -734,6 +734,18 @@ class BeamShiftCalibrationClient(SimpleMatrixCalibrationClient):
 	def parameter(self):
 		return 'beam shift'
 
+class ImageBeamShiftCalibrationClient(ImageShiftCalibrationClient):
+	def __init__(self, node):
+		ImageShiftCalibrationClient.__init__(self, node)
+		self.beamcal = BeamShiftCalibrationClient(node)
+
+	def transform(self, pixelshift, scope, camera):
+		scope2 = ImageShiftCalibrationClient.transform(self, pixelshift, scope, camera)
+		## do beam shift in oposite direction
+		opposite = {'row': -pixelshift['row'], 'col': -pixelshift['col']}
+		scope3 = self.beamcal.transform(opposite, scope2, camera)
+		return scope3
+
 class StageCalibrationClient(SimpleMatrixCalibrationClient):
 	def __init__(self, node):
 		SimpleMatrixCalibrationClient.__init__(self, node)

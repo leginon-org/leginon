@@ -15,8 +15,10 @@ class ManagerSetup(object):
 		self.createLoginContainer()
 		if (hasattr(leginonconfig, 'USERNAME') and
 				leginonconfig.USERNAME in self.users):
-			self.setUser(leginonconfig.USERNAME)
-			session = data.SessionData(user=self.uiGetUser())
+			username = leginonconfig.USERNAME
+			self.setUser(username)
+			## make up a temporary session just for getUserPref...
+			session = data.SessionData(user=self.users[username])
 			self.manager.session = session
 			self.manager.uicontainer.session = session
 			self.manager.uicontainer.getUserPreferencesFromDatabase()
@@ -347,9 +349,7 @@ class ManagerSetup(object):
 		session = data.SessionData(user=self.uiGetUser())
 		self.manager.session = session
 		self.manager.uicontainer.session = session
-		print 'loading user preferences'
 		self.manager.uicontainer.getUserPreferencesFromDatabase()
-		print 'done loading preferences'
 		self.createSelectSessionContainer()
 
 	def createLoginContainer(self):

@@ -221,7 +221,7 @@ class HoleFinder(object):
 
 		## some default configuration parameters
 		self.save_mrc = False
-		self.edges_config = {'filter': 'laplacian', 'size': 9, 'sigma': 1.4, 'abs': False, 'lp':True, 'lpn':5, 'lpsig':1.0, 'thresh':100.0}
+		self.edges_config = {'filter': 'sobel', 'size': 9, 'sigma': 1.4, 'abs': False, 'lp':True, 'lpn':5, 'lpsig':1.0, 'thresh':100.0}
 		self.template_config = {'ring_list': [(25,30)]}
 		self.correlation_config = {'cortype': 'cross correlation', 'corfilt':0.0}
 		self.threshold = 3.0
@@ -538,10 +538,12 @@ class HoleFinder(object):
 			return None
 
 		subimage = image[rmin:rmax+1, cmin:cmax+1]
-		Mrc.numeric_to_mrc(subimage, 'hole.mrc')
+		if self.save_mrc:
+			Mrc.numeric_to_mrc(subimage, 'hole.mrc')
 		center = subimage.shape[0]/2.0, subimage.shape[1]/2.0
 		mask = self.circle.get(subimage.shape, center, 0, radius)
-		Mrc.numeric_to_mrc(mask, 'holemask.mrc')
+		if self.save_mrc:
+			Mrc.numeric_to_mrc(mask, 'holemask.mrc')
 		im = Numeric.ravel(subimage)
 		mask = Numeric.ravel(mask)
 		roi = Numeric.compress(mask, im)

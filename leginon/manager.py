@@ -25,6 +25,7 @@ import leginonobject
 import extendedlogging
 import copy
 import time
+import strictdict
 
 class DataBinder(databinder.DataBinder):
 	def handleData(self, newdata):
@@ -560,6 +561,8 @@ class Manager(node.Node):
 		self.notifyApplicationLaunching()
 		nodenames = self.application.launch()
 		self.waitNodes(nodenames)
+		dat = data.LaunchedApplicationData(session=self.session, application=self.application.applicationdata)
+		self.publish(dat, database=True, dbforce=True)
 		self.notifyApplicationLaunched()
 
 	def notifyApplicationLaunching(self):
@@ -729,6 +732,18 @@ class Manager(node.Node):
 		nodelocations[self.name] = self.location()
 		return nodelocations
 
+	def uiUpdateRecentApplications(self):
+		recent = data.LaunchedApplicationData(session=data.SessionData(user=self.session['user']), application=data.ApplicationData())
+		recent = self.research(recent, results=300)
+		names = strictdict.OrderedDict()
+		names['(Select an application)'] = None
+		for lapp in recent:
+			name = lapp['application']['name']
+			if name not in names:
+				names[name] = None
+		appnamelist = names.keys()
+		self.uirecentapplicationlist.set(appnamelist, 0)
+
 	def uiUpdateApplications(self):
 		self.applicationlaunchmethod.disable()
 		applicationdatalist = self.research(data.ApplicationData())
@@ -739,6 +754,7 @@ class Manager(node.Node):
 				applicationnamelist.append(name)
 		applicationnamelist.sort()
 		self.uiapplicationlist.set(applicationnamelist, 0)
+		self.uiUpdateRecentApplications()
 
 	def onSelectApplication(self, value):
 		if '(Select an application)' == self.uiapplicationlist.getSelectedValue(0):
@@ -749,6 +765,18 @@ class Manager(node.Node):
 				value -= 1
 				self.applicationlaunchmethod.enable()
 		applicationname = self.uiapplicationlist.getSelectedValue(value)
+		self.loadApp(applicationname)
+		return value
+
+	def onSelectRecentApplication(self, value):
+		if '(Select an application)' == self.uirecentapplicationlist.getSelectedValue(0):
+			if value == 0:
+				return value
+			else:
+				self.uirecentapplicationlist.setList(self.uirecentapplicationlist.getList()[1:])
+				value -= 1
+				self.applicationlaunchmethod.enable()
+		applicationname = self.uirecentapplicationlist.getSelectedValue(value)
 		self.loadApp(applicationname)
 		return value
 
@@ -879,21 +907,23 @@ class Manager(node.Node):
 		self.applicationlaunchmethod = uidata.Method('Launch', self.uiLaunchApp)
 		applicationkillmethod = uidata.Method('Kill', self.uiKillApp)
 
-		self.uiapplicationlist = uidata.SingleSelectFromList('Application', [], 0)
+		self.uiapplicationlist = uidata.SingleSelectFromList('All Applications', [], 0)
 		self.uiapplicationlist.setCallback(self.onSelectApplication)
+		self.uirecentapplicationlist = uidata.SingleSelectFromList('Recent Applications', [], 0)
+		self.uirecentapplicationlist.setCallback(self.onSelectRecentApplication)
 		self.uiUpdateApplications()
 
-		launchkillcontainer.addObject(self.uiapplicationlist,
-																	position={'position': (0, 0)})
+		launchkillcontainer.addObject(self.uirecentapplicationlist, position={'position': (0, 0)})
+		launchkillcontainer.addObject(self.uiapplicationlist, position={'position': (1, 0)})
 		launchkillcontainer.addObject(applicationrefreshmethod,
 																	position={'position': (0, 1)})
 		launchkillcontainer.addObject(self.uilauncheraliascontainer,
-																	position={'position': (1, 0),
+																	position={'position': (2, 0),
 																						'span': (3, 1), 'expand': 'all'})
 		launchkillcontainer.addObject(self.applicationlaunchmethod,
-																	position={'position': (1, 1)})
-		launchkillcontainer.addObject(applicationkillmethod,
 																	position={'position': (2, 1)})
+		launchkillcontainer.addObject(applicationkillmethod,
+																	position={'position': (3, 1)})
 
 		applicationobjects = (
 		 launchkillcontainer,

@@ -79,7 +79,7 @@ class DataManager(object):
 		### end of things that need to be locked
 
 		self.limitreached = False
-		megs = 512
+		megs = 300
 		self.maxsize = megs * 1024 * 1024
 
 	def startServer(self):
@@ -1384,6 +1384,7 @@ class EMTargetData(InSessionData):
 		  ('preset', PresetData),
 		  ('movetype', str),
 		  ('image shift', dict),
+		  ('beam shift', dict),
 		  ('stage position', dict),
 		]
 		return t
@@ -1415,6 +1416,18 @@ class BindingSpecData(Data):
 					('from node alias', str),
 					('to node alias', str),
 					('application', ApplicationData)]
+		return t
+	typemap = classmethod(typemap)
+
+class LaunchedApplicationData(InSessionData):
+	'''
+	created each time an application is launched
+	'''
+	def typemap(cls):
+		t = InSessionData.typemap()
+		t += [
+		  ('application', ApplicationData),
+		]
 		return t
 	typemap = classmethod(typemap)
 

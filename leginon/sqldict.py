@@ -236,7 +236,8 @@ class SQLDict(object):
 			## 1146:  table does not exist
 			## 1054:  column does not exist
 			if errno in (1146, 1054):
-				print 'non-fatal query error:', e
+				pass
+				#print 'non-fatal query error:', e
 			else:
 				raise
 		else:
@@ -1345,6 +1346,10 @@ def datatype(in_dict, qikey=None, qinfo=None):
 		elif a[0] == 'PICKLE':
 			## contains a python pickle string,
 			## convert it to strictdict.AnyObject
+			try:
+				value = value.tostring()
+			except AttributeError:
+				pass
 			try:
 				ob = cPickle.loads(value)
 			except:

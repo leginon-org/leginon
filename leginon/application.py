@@ -175,5 +175,6 @@ class Application(object):
 		self.nodespecs = self.node.research(datainstance=nodeinstance)
 		bindinginstance = data.BindingSpecData(application=appdata)
 		self.bindingspecs = self.node.research(datainstance=bindinginstance)
+		self.applicationdata = appdata
 		## create a copy so we can modify it
 		self.data = data.ApplicationData(initializer=appdata)

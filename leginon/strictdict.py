@@ -29,6 +29,9 @@ class AnyObject(object):
 		else:
 			self.o = new_object
 
+	def __str__(self):
+		return 'AnyObject(%s)' % (self.o,)
+
 ### The type Numeric.ArrayType will not pickle properly, so here I create
 ### an object here to represent it
 class _NumericArrayType:

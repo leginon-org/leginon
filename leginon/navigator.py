@@ -34,6 +34,7 @@ class Navigator(node.Node):
 		self.calclients = {
 			'image shift': calibrationclient.ImageShiftCalibrationClient(self),
 			'beam shift': calibrationclient.BeamShiftCalibrationClient(self),
+			'image beam shift': calibrationclient.ImageBeamShiftCalibrationClient(self),
 			'stage position': calibrationclient.StageCalibrationClient(self),
 			'modeled stage position': calibrationclient.ModeledStageCalibrationClient(self)
 		}
@@ -99,9 +100,12 @@ class Navigator(node.Node):
 		if not self.completestate.get():
 			if movetype == 'modeled stage position':
 				newmovetype = 'stage position'
+				newstate = {newmovetype: newstate[newmovetype]}
+			elif movetype == 'image beam shift':
+				newstate = {'image shift': newstate['image shift'], 'beam shift': newstate['beam shift']}
 			else:
 				newmovetype = movetype
-			newstate = {newmovetype: newstate[newmovetype]}
+				newstate = {newmovetype: newstate[newmovetype]}
 		emdat = data.ScopeEMData(initializer=newstate)
 		self.emclient.setScope(emdat)
 
