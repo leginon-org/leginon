@@ -580,7 +580,7 @@ class Tecnai(tem.TEM):
 		try:
 			self.tecnai.Stage.Goto(pos, axes)
 		except pythoncom.com_error, (hr, msg, exc, arg):
-			print 'Stage.Goto failed with error %d: %s' % (hr, msg)
+			#print 'Stage.Goto failed with error %d: %s' % (hr, msg)
 			if exc is None:
 				raise ValueError('no extended error information, assuming stage limit was hit')
 			else:
