@@ -39,7 +39,7 @@ class Manager(node.Node):
 		self.nodelocations['manager'] = self.location()
 
 		# ready nodes, someday 'initialized' nodes
-		self.initializednodeslock = threading.Lock()
+		self.initializednodescondition = threading.Condition()
 		self.initializednodes = []
 		self.distmap = {}
 		# maps event id to list of node it was distributed to if event['confirm']
@@ -281,15 +281,17 @@ class Manager(node.Node):
 		self.delLauncher(nodeid)
 
 	def setNodeStatus(self, ievent):
+		self.initializednodescondition.acquire()
 		nodeid = ievent['id'][:-1]
-		self.initializednodeslock.acquire()
 		if isinstance(ievent, event.NodeInitializedEvent):
 			if nodeid not in self.initializednodes:
 				self.initializednodes.append(nodeid)
+				self.initializednodescondition.notifyAll()
 		elif isinstance(ievent, event.NodeUninitializedEvent):
 			if nodeid in self.initializednodes:
 				self.initializednodes.remove(nodeid)
-		self.initializednodeslock.release()
+				self.initializednodescondition.notifyAll()
+		self.initializednodescondition.release()
 
 	def removeNode(self, nodeid):
 		'''Remove data, event mappings, and client for the node with the specfied node ID.'''
@@ -345,17 +347,19 @@ class Manager(node.Node):
 	def waitNode(self, launcher, newproc, target, name, nodeargs, dependencies):
 		newid = self.id + (name,)
 		args = (newid, self.session, self.nodelocations) + nodeargs
-		# could be with threading event, but might need locking
-		# doesn't really account for node uninitialized
-		for nodeid in dependencies:
-			while True:
-				self.initializednodeslock.acquire()
-				if nodeid not in self.initializednodes:
-					self.initializednodeslock.release()
-					time.sleep(0.5)
-				else:
-					self.initializednodeslock.release()
-					break
+		dependenciescopy = copy.copy(dependencies)
+
+		self.initializednodescondition.acquire()
+		for nodeid in dependenciescopy:
+			if nodeid in self.initializednodes:
+				dependenciescopy.remove(nodeid)
+		while len(dependenciescopy) > 0:
+			self.initializednodescondition.wait()
+			for nodeid in dependenciescopy:
+				if nodeid in self.initializednodes:
+					dependenciescopy.remove(nodeid)
+		self.initializednodescondition.release()
+
 		ev = event.LaunchEvent(self.ID(), newproc=newproc,
 														targetclass=target, args=args)
 		self.outputEvent(ev, 0, launcher)
