@@ -17,9 +17,7 @@ class DataHandler(datahandler.DataBinder):
 		self.EMnode = EMnode
 
 	def query(self, id):
-		print 'getting stuff'
 		stuff = self.EMnode.getEM([id])
-		print 'done getting stuff'
 		result = data.EMData(self.ID(), stuff)
 		return result
 
