@@ -490,7 +490,9 @@ class StateImageMosaic(ImageMosaic):
 #		return (int(round(y)), int(round(x)))
 
 		return self.calibrationclients['stage position'].itransform(
-															idata.content['scope'], idata.content['camera'])
+																		idata.content['scope']['stage position'],
+																		idata.content['scope'],
+															i			idata.content['camera'])
 
 #	def setPixelSizeAndRotation(self, ievent):
 #		idata = self.researchByDataID(ievent.content)
