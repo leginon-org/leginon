@@ -6,57 +6,53 @@ import Numeric
 import holefinderback
 import convolver
 import peakfinder
+import fftengine
 
-class CircleTemplateCreator(object):
-	def __init__(self):
-		self.templates = {}
-		self.indices = {}
+ffteng = fftengine.fftNumeric()
 
-	def wrapped_indices(self, shape):
-		'''
-		creates a set of indices like Numeric.indices, but 
-		includes negative values, which wrap around to the second
-		half of the image
-		'''
-		## These wrap limits are selected such that at least half (odd
-		## shape leads to one more row/col) of the image will remain
-		## the same, and the rest will be the wrapped negative side.
-		# Integer division is intended here.
-		if shape in self.indices:
-			return self.indices[shape]
+def circle_template(shape, minrad, maxrad):
+	## circle image, to be inserted into template image later
+	cirsize = int(2 * (maxrad + 1))
+	cirshape = (cirsize,cirsize)
+	wrap = (cirsize+1) // 2
+	indices = Numeric.indices(cirshape)
+	indices[0][wrap:] -= cirshape[0]
+	indices[1][:,wrap:] -= cirshape[1]
+	minradsq = minrad ** 2
+	maxradsq = maxrad ** 2
+	rsq = indices[0] ** 2 + indices[1] ** 2
+	c = Numeric.where((rsq>=minradsq)&(rsq<=maxradsq), 1, 0)
+	c = c.astype(Numeric.Int8)
 
-		wrap0 = (shape[0]+1)/2
-		wrap1 = (shape[1]+1)/2
-		indices = Numeric.indices(shape)
-		indices[0][wrap0:] -= shape[0]
-		indices[1][:,wrap1:] -= shape[1]
+	## final template of correct shape
+	temp = Numeric.zeros(shape, Numeric.Int8)
+	temp[:wrap,:wrap] = c[:wrap,:wrap]
+	temp[:wrap,-wrap:] = c[:wrap,-wrap:]
+	temp[-wrap:,-wrap:] = c[-wrap:,-wrap:]
+	temp[-wrap:,:wrap] = c[-wrap:,:wrap]
+	return temp
 
-		self.indices[shape] = indices
-		return indices
+def kernel_image(shape, kernel):
+	im = Numeric.zeros(shape, Numeric.Float32)
+	wrap = kernel.shape[0] / 2
+	im[:wrap+1,:wrap+1] = kernel[wrap:,wrap:]
+	im[:wrap+1,-wrap:] = kernel[wrap:,:wrap]
+	im[-wrap:,-wrap:] = kernel[:wrap,:wrap]
+	im[-wrap:,:wrap+1] = kernel[:wrap,wrap:]
+	return im
 
-	def get(self, shape, center, minradius, maxradius, value=1):
-		'''
-		create binary mask of a circle centered at 'center'
-		with minradiux and maxradius
-		'''
-		minradsq = minradius*minradius
-		maxradsq = maxradius*maxradius
+def gaussian(shape, sigma, n=5):
+	gk = convolver.gaussian_kernel(n, sigma)
+	return kernel_image(shape, gk)
 
-		def circle(indices0,indices1):
-			i0 = indices0 - center[0]
-			i1 = indices0 - center[0]
-			rsq = i0*i0+i1*i1
-			print 'B'
-			c = Numeric.where((rsq>=minradsq)&(rsq<=maxradsq), value, 0)
-			print 'C'
-			return c.astype(Numeric.Int8)
-		## this is like Numeric.from_function, but I want to create
-		## my own indices
-		indices = self.wrapped_indices(shape)
-		temp = apply(circle, tuple(indices))
-		return temp
+def sobel_row(shape):
+	k = convolver.sobel_row_kernel
+	return kernel_image(shape, k)
 
-circle = CircleTemplateCreator()
+def sobel_col(shape):
+	k = convolver.sobel_col_kernel
+	return kernel_image(shape, k)
+
 
 _save_mrc = True
 def save_mrc(image, filename):
@@ -64,12 +60,14 @@ def save_mrc(image, filename):
 		print 'saving ', filename
 		Mrc.numeric_to_mrc(image, filename)
 
+import timer
+
 class QuantifoilSolver(object):
 	def __init__(self):
 		self.peakfinder = peakfinder.PeakFinder()
 		self.conv = convolver.Convolver()
 
-	def solve(self, image, crop1, crop2, vectorguess, tolerance, minrad, maxrad):
+	def solve(self, image, crop1, crop2, vectorguess, tolerance, radius, thickness):
 		## initial crop before vector search
 		if crop1 is not None:
 			print 'cropping image'
@@ -77,7 +75,9 @@ class QuantifoilSolver(object):
 		else:
 			image2 = image
 		print 'finding edges'
+		t = timer.Timer('edge')
 		edges2 = self.findEdges(image2)
+		t.stop()
 		save_mrc(edges2, 'edges.mrc')
 
 		## find the vectors based on guess and tolerance
@@ -97,8 +97,8 @@ class QuantifoilSolver(object):
 
 		print 'creating template from vectors'
 		# should calculate size of template more carefully
-		temp_lattice = self.latticePoints(vectors, (-1,0,1))
-		temp = self.createTemplate(edges3.shape, temp_lattice, minrad, maxrad)
+		temp = self.template(edges3.shape, vectors, radius, thickness)
+
 		print 'finding center'
 		center = self.correlateTemplate(edges3, temp)
 		print 'CENTER', center
@@ -140,20 +140,31 @@ class QuantifoilSolver(object):
 				latticepoints.append(point)
 		return latticepoints
 
-	def createTemplate(self, shape, centers, minrad, maxrad):
-		temp = Numeric.zeros(shape, Numeric.Int8)
-		for center in centers:
-			print 'c', center
-			newring = circle.get(shape, center, minrad, maxrad)
-			temp = temp | newring
-		return temp.astype(Numeric.Float32)
-
 	def template(self, shape, vectors, radius, thickness):
+		## create lattice points image
+		lat_im = Numeric.zeros(shape, Numeric.Float32)
 		temp_lattice = self.latticePoints(vectors, (-1,0,1))
-		temp = self.createTemplate(edges3.shape, temp_lattice, minrad, maxrad)
+		print 'temp_lattice', temp_lattice
+		for point in temp_lattice:
+			p = int(round(point[0])),int(round(point[1]))
+			lat_im[p] = 1.0
+		lat_fft = ffteng.transform(lat_im)
+		Mrc.numeric_to_mrc(lat_im, 'lat_im.mrc')
+
+		## create ring image
+		minrad = radius - thickness / 2.0
+		maxrad = radius + thickness / 2.0
+		cir_im = circle_template(shape, minrad, maxrad)
+		cir_fft = ffteng.transform(cir_im)
+		Mrc.numeric_to_mrc(cir_im, 'cir_im.mrc')
+
+		## convolve
+		temp_fft = Numeric.multiply(lat_fft, cir_fft)
+		temp = ffteng.itransform(temp_fft)
+		return temp
 
 	def findLatticeVectors(self, edges, guess1, tolerance):
-		autocorr = imagefun.cross_correlate(edges,edges)
+		autocorr = imagefun.auto_correlate(edges)
 		shape = edges.shape
 
 		## guess2 perpendicular to guess1
@@ -170,7 +181,6 @@ class QuantifoilSolver(object):
 			save_mrc(roi, 'autocorr%s.mrc' % (i))
 
 			## to be proper, should use a circular mask here
-			#mask = circle.get(shape, guess, 0, tolerance)
 			#autocorr = Numeric.where(mask, autocorr, autocorr[guess[0]+tolerance,guess[1]])
 
 			## find peak
@@ -184,24 +194,24 @@ class QuantifoilSolver(object):
 		return vectors
 
 	def findEdges(self, image):
+		gk = gaussian(image.shape, 1.2)
+		srk = sobel_row(image.shape)
+		sck = sobel_col(image.shape)
 
-		print 'low pass'
-		image = self.lowPassFilter(image, 1.2)
-		#k = convolver.gaussian_kernel(size, sigma)
-		#smooth = self.conv.convolve(image=image, kernel=k)
+		imfft = ffteng.transform(image)
+		gkfft = ffteng.transform(gk)
+		srkfft = ffteng.transform(srk)
+		sckfft = ffteng.transform(sck)
 
-		print 'setImage'
-		self.conv.setImage(image)
-		# could probably get away with using gradient in only one direction
-		print 'kernel setup'
-		kernel1 = convolver.sobel_row_kernel
-		kernel2 = convolver.sobel_col_kernel
-		print 'edger'
-		edger = self.conv.convolve(kernel=kernel1)
-		print 'edgec'
-		edgec = self.conv.convolve(kernel=kernel2)
-		print 'hypot'
-		edges = Numeric.hypot(edger,edgec)
+		smooth = Numeric.multiply(imfft, gkfft)
+
+		refft = Numeric.multiply(smooth, srkfft)
+		cefft = Numeric.multiply(smooth, sckfft)
+
+		re = ffteng.itransform(refft)
+		ce = ffteng.itransform(cefft)
+
+		edges = Numeric.hypot(re,ce)
 
 		## convolution leaves invalid borders
 		# copy rows
@@ -221,6 +231,8 @@ class QuantifoilSolver(object):
 		print 'done'
 		return edges
 
+
+
 	def lowPassFilter(self, image, sigma, size=9):
 		k = convolver.gaussian_kernel(size, sigma)
 		smooth = self.conv.convolve(image=image, kernel=k)
@@ -228,6 +240,7 @@ class QuantifoilSolver(object):
 
 	def correlateTemplate(self, edges, temp):
 		cc = imagefun.cross_correlate(edges, temp)
+		save_mrc(cc, 'cc.mrc')
 		center = self.peakfinder.subpixelPeak(cc)
 		return center
 
@@ -267,10 +280,7 @@ if __name__ == '__main__':
 	vectorguess = (int(sys.argv[2]), int(sys.argv[3]))
 	vectortol = int(sys.argv[4])
 	radguess = float(sys.argv[5])
-	radtol = float(sys.argv[6])
-
-	minrad = radguess - radtol
-	maxrad = radguess + radtol
+	thickness = float(sys.argv[6])
 
 	qs = QuantifoilSolver()
 
@@ -279,4 +289,4 @@ if __name__ == '__main__':
 	#crop1 = (0,0,1024,1024)
 	crop1 = None
 	crop2 = None
-	qs.solve(square, crop1, crop2, vectorguess, vectortol, minrad, maxrad)
+	qs.solve(square, crop1, crop2, vectorguess, vectortol, radguess, thickness)
