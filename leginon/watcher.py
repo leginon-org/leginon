@@ -50,6 +50,9 @@ class Watcher(node.Node):
 	def processData(self, datainstance):
 		raise NotImplementedError()
 
+	def aaaa(self):
+		pass
+
 
 ## an example of subclassing Watcher
 

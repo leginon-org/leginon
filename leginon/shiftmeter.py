@@ -19,7 +19,9 @@ class ShiftMeter(watcher.Watcher):
 		watchfor = event.ImagePublishEvent
 		lockblocking = 0
 		watcher.Watcher.__init__(self, id, managerlocation, watchfor, lockblocking)
-		if sys.platform == 'win32':
+		if 1:
+			ffteng = fftengine.fftNumeric()
+		elif sys.platform == 'win32':
 			ffteng = fftengine.fftNumeric()
 		else:
 			ffteng = fftengine.fftFFTW(planshapes=(),estimate=1)
@@ -56,7 +58,7 @@ class ShiftMeter(watcher.Watcher):
 		corrinfo['phase correlation image'] = pcid
 		corrinfo['phase correlation shift'] = shift
 		corrdata = data.CorrelationData(self.ID(), corrinfo)
-		self.publish(corrdata, eventclass=event.CorrelationPublishEvent)
+		#self.publish(corrdata, eventclass=event.CorrelationPublishEvent)
 
 	def process_numeric(self, numarray, filename):
 		'''mainly for debugging'''
