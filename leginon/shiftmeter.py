@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import watcher
+reload(watcher)
 import correlator, fftengine, peakfinder
 import data, event
 from Mrc import mrc_to_numeric
@@ -35,7 +36,11 @@ class ShiftMeter(watcher.Watcher):
 
 	def processData(self, newdata):
 		## phase correlation with new image
-		newimage = newdata.content
+		if type(newdata.content) is dict:
+			newimage = newdata.content['image']
+		else:
+			newimage = newdata.content
+
 		self.correlator.insertImage(newimage)
 		try:
 			pcim = self.correlator.phaseCorrelate()
