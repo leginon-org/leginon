@@ -30,7 +30,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
 		'wait for done': True,
 		'ignore images': False,
 	}
-	eventinputs = imagewatcher.ImageWatcher.eventinputs + [
+	eventinputs = imagewatcher.ImageWatcher.eventinputs + [event.AcquisitionImagePublishEvent,
 																							event.TargetListDoneEvent] + EM.EMClient.eventinputs
 	eventoutputs = imagewatcher.ImageWatcher.eventoutputs + [
 																							event.ImageTargetListPublishEvent] + EM.EMClient.eventoutputs
