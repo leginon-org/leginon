@@ -477,11 +477,11 @@ class Editor(Tkinter.Frame):
 		if nNodes == 0:
 			return
 		angle = 2*math.pi/nNodes
-		center = (400, 300)
+		center = (self.canvas.winfo_width()/2, self.canvas.winfo_height()/2)
 		if nNodes == 1:
 			radius = (0, 0)
 		else:
-			radius = (250, 200)
+			radius = (center[0] - 100, center[1] - 100)
 		for i in range(nNodes):
 			self.nodes[i].move(int(round(math.cos(i*angle)*radius[0] + center[0])),
 													int(round(math.sin(i*angle)*radius[1] + center[1])))
