@@ -363,10 +363,23 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			self.targetmap[id] = targets
 
 	def displayCurrentPosition(self):
-		s = self.researchByDataID(('stage position',))
-		stage = s['stage position']
-		stagex = stage['x']
-		stagey = stage['y']
+		try:
+			image = self.imagemap.values()[0]
+		except:
+			print 'need tiles and mosaic image'
+			return
+		scope = image['scope'].toDict()
+		camera = image['camera'].toDict()
+
+		#s = self.researchByDataID(('stage position',))
+		#stagepos = s['stage position']
+		stagepos = {'x': 0, 'y': 0}
+		scope['stage position'] = {'x': 0, 'y': 0}
+		print 'stage', scope['stage position']
+
+		mosaicstate = {'scope': scope, 'camera': camera}
+		pos = self.mosaic.positionByCalibration(mosaicstate)
+		print 'POS', pos
 
 	def displayDatabaseTargets(self):
 		self.setStatusMessage('getting targets from database')
