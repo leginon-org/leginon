@@ -626,15 +626,19 @@ class EM(node.Node):
 			request = self.requestqueue.get()
 			if isinstance(request, SetRequest):
 				self.panel.setProcessing(True)
-				self.setEM(request.value)
-				keys = request.value.keys()
-				keys = self.appendDependencies(keys)
-				self.state = self.getEM(keys)
-				self.panel.setProcessing(False)
+				try:
+					self.setEM(request.value)
+					keys = request.value.keys()
+					keys = self.appendDependencies(keys)
+					self.state = self.getEM(keys)
+				finally:
+					self.panel.setProcessing(False)
 			elif isinstance(request, GetRequest):
 				self.panel.setProcessing(True)
-				self.state = self.getEM(request.value)
-				self.panel.setProcessing(False)
+				try:
+					self.state = self.getEM(request.value)
+				finally:
+					self.panel.setProcessing(False)
 			elif isinstance(request, SetInstrumentRequest):
 				pass
 			elif isinstance(request, ExitRequest):
