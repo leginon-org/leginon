@@ -67,10 +67,14 @@ class Focuser(acquisition.Acquisition):
 		self.manual_check_done = threading.Event()
 		self.manual_pause = threading.Event()
 		self.manual_continue = threading.Event()
+		self.parameter = 'Defocus'
+		self.maskradius = 0.01
+		self.increment = 5e-7
+		self.man_power = None
+		self.man_image = None
 		acquisition.Acquisition.__init__(self, id, session, managerlocation, target_types=('focus',), **kwargs)
 		self.btcalclient = calibrationclient.BeamTiltCalibrationClient(self)
 		self.euclient = calibrationclient.EucentricFocusClient(self)
-		self.defineUserInterface()
 
 	def eucentricFocusToScope(self):
 		scope = self.emclient.getScope()
@@ -117,7 +121,7 @@ class Focuser(acquisition.Acquisition):
 		else:
 			self.eucset = False
 
-		delay = self.uidelay.get()
+		delay = self.settings['pause time']
 		self.logger.info('Pausing for %s seconds' % (delay,))
 		time.sleep(delay)
 
@@ -133,7 +137,7 @@ class Focuser(acquisition.Acquisition):
 			self.logger.exception('')
 
 		try:
-			correction = self.btcalclient.measureDefocusStig(btilt, pub, drift_threshold=driftthresh, image_callback=self.ui_image.set, target=target)
+			correction = self.btcalclient.measureDefocusStig(btilt, pub, drift_threshold=driftthresh, image_callback=self.setImage, target=target)
 		except calibrationclient.Abort:
 			self.logger.info('measureDefocusStig was aborted')
 			self.setStatus('aborted')
@@ -264,7 +268,7 @@ class Focuser(acquisition.Acquisition):
 		if self.settings['acquire final']:
 			## go back to focus preset and target
 			self.presetsclient.toScope(presetdata['name'], presettarget['emtarget'])
-			delay = self.uidelay.get()
+			delay = self.settings['pause time']
 			self.logger.info('Pausing for %s seconds' % (delay,))
 			time.sleep(delay)
 
@@ -286,7 +290,6 @@ class Focuser(acquisition.Acquisition):
 			presetname = presetnames[0]
 		except IndexError:
 			message = 'no presets specified for manual focus'
-			self.messagelog.error(message)
 			self.logger.error(message)
 			return
 		self.logger.info('using preset %s for manual check' % (presetname,))
@@ -296,16 +299,25 @@ class Focuser(acquisition.Acquisition):
 		t.setDaemon(1)
 		t.start()
 
+	def onManualCheck(self):
+		evt = gui.wx.Focuser.ManualCheckEvent(self.panel)
+		self.panel.GetEventHandler().AddPendingEvent(evt)
+
+	def onManualCheckDone(self):
+		evt = gui.wx.Focuser.ManualCheckDoneEvent(self.panel)
+		self.panel.GetEventHandler().AddPendingEvent(evt)
+
 	def manualCheckLoop(self, presettarget=None):
 		## go to preset and target
+		self.onManualCheck()
 		if presettarget is not None:
 			self.presetsclient.toScope(presettarget['preset'], presettarget['emtarget'])
-			delay = self.uidelay.get()
+			delay = self.settings['pause time']
 			self.logger.info('Pausing for %s seconds' % (delay,))
 			time.sleep(delay)
 		self.manual_check_done.clear()
 		self.logger.info('Starting manual focus loop...')
-		message = self.messagelog.information('Please confirm defocus')
+		self.logger.info('Please confirm defocus')
 		node.beep()
 		while 1:
 			if self.manual_check_done.isSet():
@@ -318,7 +330,7 @@ class Focuser(acquisition.Acquisition):
 					self.presetsclient.toScope(presettarget['preset'], presettarget['emtarget'])
 			# acquire image, show image and power spectrum
 			# allow user to adjust defocus and stig
-			cor = self.uicorrectimage.get()
+			cor = self.settings['correct image']
 			self.logger.info('Correct image %s' % cor)
 			self.manualchecklock.acquire()
 			try:
@@ -326,23 +338,18 @@ class Focuser(acquisition.Acquisition):
 			finally:
 				self.manualchecklock.release()
 			imarray = imagedata['image']
-			maskrad = self.maskrad.get()
-			pow = imagefun.power(imarray, maskrad)
-			self.man_power.set(pow.astype(Numeric.Float32))
-			self.man_image.set(imarray.astype(Numeric.Float32))
-		try:
-			message.clear()
-		except:
-			pass
+			pow = imagefun.power(imarray, self.maskradius)
+			self.man_power = pow.astype(Numeric.Float32)
+			self.man_image = imarray.astype(Numeric.Float32)
+			self.panel.updateManualImages(self.panel)
+		self.onManualCheckDone()
 		self.logger.info('Manual focus loop done')
 
 	def waitForContinue(self):
 		self.logger.info('Manual focus paused')
-		message = self.messagelog.information('manual focus is paused')
 		self.manual_continue.wait()
 		self.manual_continue.clear()
 		self.manual_pause.clear()
-		message.clear()
 
 	def uiFocusUp(self):
 		self.changeFocus('up')
@@ -385,15 +392,14 @@ class Focuser(acquisition.Acquisition):
 			self.manualchecklock.release()
 
 	def changeFocus(self, direction):
-		parameter = self.manual_parameter.getSelectedValue()
-		delta = self.manual_delta.get()
+		delta = self.increment
 		self.manualchecklock.acquire()
-		self.logger.info('Changing %s %s %s' % (parameter, direction, delta))
+		self.logger.info('Changing %s %s %s' % (self.parameter, direction, delta))
 		try:
 			scope = self.emclient.getScope()
-			if parameter == 'Stage Z':
+			if self.parameter == 'Stage Z':
 				value = scope['stage position']['z']
-			elif parameter == 'Defocus':
+			elif self.parameter == 'Defocus':
 				value = scope['defocus']
 			if direction == 'up':
 				value += delta
@@ -401,16 +407,16 @@ class Focuser(acquisition.Acquisition):
 				value -= delta
 			
 			newemdata = data.ScopeEMData()
-			if parameter == 'Stage Z':
+			if self.parameter == 'Stage Z':
 				newemdata['stage position'] = {'z':value}
-			elif parameter == 'Defocus':
+			elif self.parameter == 'Defocus':
 				newemdata['defocus'] = value
 			self.emclient.setScope(newemdata)
 		finally:
 			self.manualchecklock.release()
 
 
-		self.logger.info('Changed %s %s %s' % (parameter, direction, delta,))
+		self.logger.info('Changed %s %s %s' % (self.parameter, direction, delta,))
 
 	def manualDone(self):
 		self.logger.info('Will quit manual focus loop after this iteration...')
@@ -461,59 +467,4 @@ class Focuser(acquisition.Acquisition):
 
 	def uiAbortFailure(self):
 		self.btcalclient.abortevent.set()
-
-	def defineUserInterface(self):
-		acquisition.Acquisition.defineUserInterface(self)
-		self.messagelog = uidata.MessageLog('Messages')
-
-		## manual focus check
-		manualmeth = uidata.Method('Manual Check Now', self.manualNow)
-		manualpause = uidata.Method('Pause', self.manualPause)
-		manualcontinue = uidata.Method('Continue', self.manualContinue)
-		manualdone = uidata.Method('Done', self.manualDone)
-
-		manualreset = uidata.Method('Reset Defocus', self.uiResetDefocus)
-		euctoscope = uidata.Method('Eucentric Focus To Scope', self.uiChangeToEucentric)
-		eucfromscope = uidata.Method('Eucentric Focus From Scope', self.uiEucentricFromScope)
-		manualtozero = uidata.Method('Change To Defocus = 0', self.uiChangeToZero)
-
-		self.manual_parameter = uidata.SingleSelectFromList('Defocus or Stage Z', ['Defocus','Stage Z'], 0)
-		self.manual_delta = uidata.Float('Manual Change Delta', 5e-7, 'rw', persist=True)
-		manchangeup = uidata.Method('Up', self.uiFocusUp)
-		manchangedown = uidata.Method('Down', self.uiFocusDown)
-		self.man_image = uidata.Image('Manual Focus Image', None, 'rw')
-		self.maskrad = uidata.Float('Mask Radius (% of image width)', 0.01, 'rw', persist=True)
-		self.man_power = uidata.Image('Manual Focus Power Spectrum', None, 'rw')
-		mancont = uidata.Container('Manual Focus')
-
-		# row 0
-		mancont.addObject(manualmeth, position={'position':(0,0)})
-		# row 1
-		mancont.addObject(manualpause, position={'position':(1,0)})
-		mancont.addObject(manualcontinue, position={'position':(1,1)})
-		mancont.addObject(manualdone, position={'position':(1,2)})
-		# row 2
-		mancont.addObject(eucfromscope, position={'position':(2,0)})
-		mancont.addObject(euctoscope, position={'position':(2,1)})
-		mancont.addObject(manualreset, position={'position':(2,2)})
-		# row 3
-		mancont.addObject(self.manual_parameter, position={'position':(3,0), 'span':(1,3)})
-		# row 4
-		mancont.addObject(self.manual_delta, position={'position':(4,0), 'span':(1,3)})
-		# row5
-		mancont.addObject(manchangeup, position={'position':(5,0)})
-		mancont.addObject(manchangedown, position={'position':(5,1)})
-		mancont.addObject(manualtozero, position={'position':(5,2)})
-		# row6
-		mancont.addObject(self.maskrad, position={'position':(6,0), 'span':(1,3)})
-		# row 7
-		mancont.addObject(self.man_power, position={'position':(7,0), 'span':(1,3)})
-		# row8
-		mancont.addObject(self.man_image, position={'position':(8,0), 'span':(1,3)})
-
-		#### other
-		container = uidata.LargeContainer('Focuser')
-		container.addObject(self.messagelog, position={'expand': 'all'})
-		container.addObjects((mancont,))
-		self.uicontainer.addObject(container)
 
