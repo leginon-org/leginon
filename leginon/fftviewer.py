@@ -3,6 +3,8 @@
 import imagewatcher
 import fftengine
 import data
+import Numeric
+import cameraimage
 
 class FFTViewer(imagewatcher.ImageWatcher):
 	def __init__(self, id, nodelocations, **kwargs):
@@ -20,9 +22,6 @@ class FFTViewer(imagewatcher.ImageWatcher):
 		print 'myspec', myspec
 		myspec += imwatch
 
-	def power(self, numericarray):
-		return numericarray
-
 	def processData(self, imagedata):
 		if not isinstance(imagedata, data.ImageData):
 			print 'Data is not ImageData instance'
@@ -32,7 +31,7 @@ class FFTViewer(imagewatcher.ImageWatcher):
 		#numarray = imagedata.content['image']
 		numarray = imagedata['image']
 		### calculate power image
-		self.numarray = self.power(numarray)
+		self.numarray = cameraimage.power(numarray)
 
 		if self.popupvalue:
 			self.clearAllTargetCircles()
