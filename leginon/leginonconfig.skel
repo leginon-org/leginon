@@ -7,6 +7,8 @@
 #
 
 """
+Fill in the values below and rename this file leginonconfig.py
+
 leginonconfig.py: Configuration file for leginon defaults and such
 We could also do this using the ConfigParser module and have this
 be a more standard .ini file thing.
