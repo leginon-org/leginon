@@ -13,10 +13,138 @@ import leginonobject
 import Numeric
 import strictdict
 import warnings
+import weakref
+import threading
+
+class DataError(Exception):
+	pass
+class DataManagerOverflowError(DataError):
+	pass
+class DataAccessError(DataError):
+	pass
+
+class DataManager(object):
+	def __init__(self):
+		self.datadict = strictdict.OrderedDict()
+		self.sizedict = {}
+		self.persistdict = {}
+		megs = 256
+		self.maxsize = megs * 1024 * 1024
+		self.dmid = 0
+		self.size = 0
+		self.lock = threading.RLock()
+
+	def insert(self, datainstance):
+		self.lock.acquire()
+		try:
+			dsize = datainstance.size()
+
+			if dsize > self.maxsize:
+				raise DataManagerOverflowError('new data is too big for DataManager')
+
+			## insert into datadict and sizedict
+			self.dmid += 1
+			self.datadict[self.dmid] = datainstance
+			datainstance.dmid = self.dmid
+			self.size += dsize
+			self.sizedict[self.dmid] = dsize
+
+			self.clean()
+		finally:
+			self.lock.release()
+
+	def persist(self, dmid):
+		self.lock.acquire()
+		try:
+			pass
+		finally:
+			self.lock.release()
+
+	def remove(self, dmid):
+		self.lock.acquire()
+		try:
+			del self.datadict[dmid]
+			self.size -= self.sizedict[dmid]
+			del self.sizedict[dmid]
+			print '****removed something', self.size
+		finally:
+			self.lock.release()
+
+	def resize(self, datainstance):
+		self.lock.acquire()
+		try:
+			dsize = datainstance.size()
+			if dsize > self.maxsize:
+				raise DataManagerOverflowError('new size is too big for DataManager')
+			dmid = datainstance.dmid
+			oldsize = self.sizedict[dmid]
+			self.size -= oldsize
+			self.size += dsize
+			self.sizedict[dmid] = dsize
+
+			## this is odd, because clean() might removed the resized
+			## object, maybe this doesn't matter
+			self.clean()
+		finally:
+			self.lock.release()
+
+	def clean(self):
+		self.lock.acquire()
+		try:
+			while self.size > self.maxsize:
+				first = self.datadict.keys()[0]
+				self.remove(first)
+		finally:
+			self.lock.release()
+
+	def getData(self, dmid):
+		self.lock.acquire()
+		try:
+			try:
+				return self.datadict[dmid]
+			except KeyError:
+				raise RuntimeError('data removed')
+		finally:
+			self.lock.release()
+
+class DataReference(object):
+	def __init__(self, datainstance):
+		### avoid calling __setattr__ here
+		self.__dict__['dmid'] = datainstance.dmid
+		self.__dict__['dbid'] = datainstance.dbid
+		self.__dict__['dataclass'] = datainstance.__class__
+		self.__dict__['proxy'] = weakref.proxy(datainstance)
+
+	def __getattr__(self, name):
+		#if name in ('dmid','dbid','__class__'):
+		#	return self.__dict__[name]
+		try:
+			return getattr(self.proxy, name)
+		except ReferenceError:
+			self.reviveProxy()
+			return getattr(self.proxy, name)
+
+	def __setattr__(self, name, value):
+		try:
+			return setattr(self.proxy, name, value)
+		except ReferenceError:
+			self.reviveProxy()
+			return getattr(self.proxy, name)
+
+	def reviveProxy(self):
+		print 'What do I do????'
+		self.proxy = None
+
+	def getData(self):
+		return datamanager.getData(self.dmid)
+
+datamanager = DataManager()
+
 
 ## Unresolved issue:
 ##  It would be nice if you could cast one Data type to another
 ##  Right now that will probably result in a key error
+
 
 class DataDict(strictdict.TypedDict):
 	'''
@@ -107,7 +235,11 @@ class Data(DataDict, leginonobject.LeginonObject):
 	'''
 	def __init__(self, **kwargs):
 		DataDict.__init__(self)
+		datamanager.insert(self)
 
+		## Database ID (primary key)
+		## If this is None, then this data has not
+		## been inserted into the database
 		self.dbid = None
 
 		# if initializer was given, update my values
@@ -123,13 +255,39 @@ class Data(DataDict, leginonobject.LeginonObject):
 		legid = self['id']
 		leginonobject.LeginonObject.__init__(self, legid)
 
-		## Database ID (primary key)
-		## If this is None, then this data has not
-		## been inserted into the database
+	def items(self):
+		original = super(Data, self).items()
+		deref = []
+		for item in original:
+			if isinstance(item[1], DataReference):
+				val = item[1].getData()
+			else:
+				val = item[1]
+			deref.append((item[0],val))
+		return deref
+
+	def values(self):
+		original = super(Data, self).values()
+		deref = []
+		for value in original:
+			if isinstance(value, DataReference):
+				val = value.getData()
+			else:
+				val = value
+			deref.append(val)
+		return deref
+
+	def __getitem__(self, key):
+		value = super(Data, self).__getitem__(key)
+		if isinstance(value, DataReference):
+			value = value.getData()
+		return value
 
 	def __setitem__(self, key, value):
 		'''
 		'''
+		if self.dbid is not None:
+			raise RuntimeError('persistent data cannot be modified, try to create a new instance instead, or use toDict() if a dict representation will do')
 		### synch with leginonobject attributes
 		if key == 'id':
 			super(Data, self).__setattr__(key, value)
@@ -138,17 +296,10 @@ class Data(DataDict, leginonobject.LeginonObject):
 				super(Data, self).__setattr__(key, value['name'])
 			else:
 				super(Data, self).__setattr__(key, value)
+		elif isinstance(value,Data):
+			value = DataReference(value)
 		DataDict.__setitem__(self, key, value)
-
-		## reset dbid because data no longer matches database
-		## Unfortunately, this does not cover all cases of
-		## modifying the object, just at the top level.
-		## Also, this is called more often than necessary because
-		## of deepcopy, (maybe pickle??), etc, which do not intend
-		## to modify the values, but trigger this anyway
-		if self.dbid is not None:
-			warnings.warn('__setitem__ on %s object that exists in DB...  dbid attribute will be reset' % (self.__class__), stacklevel=2)
-		self.dbid = None
+		datamanager.resize(self)
 
 	def typemap(cls):
 		t = DataDict.typemap()
@@ -164,6 +315,11 @@ class Data(DataDict, leginonobject.LeginonObject):
 
 		if mine:
 			def f(value):
+				if isinstance(value, DataReference):
+					if valuetype is value.dataclass:
+						return value
+					else:
+						raise ValueError('must by type %s' (valutype,))
 				if isinstance(value, valuetype):
 					return value
 				elif isinstance(value, UnknownData):
@@ -187,9 +343,10 @@ class Data(DataDict, leginonobject.LeginonObject):
 
 	def sizeof(self, value, datatype):
 		if datatype == strictdict.NumericArrayType:
-			return len(Numeric.ravel(value)) * value.itemsize()
+			return reduce(Numeric.multiply, value.shape) * value.itemsize()
 		else:
-			return 0
+			## this is my stupid estimate of size for other objects
+			return 8
 
 '''
 
