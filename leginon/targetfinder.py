@@ -67,9 +67,11 @@ class TargetFinder(imagewatcher.ImageWatcher):
 
 	def waitForTargetListDone(self):
 		for tid, teventinfo in self.targetlistevents.items():
-			print 'waiting for target list %s to complete' % (tid,)
+			print '%s WAITING for %s' % (self.id,tid,)
 			teventinfo['received'].wait()
+			print '%s DONE WAITING for %s' % (self.id,tid,)
 		self.targetlistevents.clear()
+		print '%s DONE WAITING' % (self.id,)
 
 	def passTargets(self, targetlistdata):
 		## create an event watcher for each target we pass
@@ -123,15 +125,6 @@ class ClickTargetFinder(TargetFinder):
 		if self.__class__ == ClickTargetFinder:
 			self.defineUserInterface()
 			self.start()
-
-	def OLDprocessImageData(self, imagedata):
-		'''
-		redefined because this is manual target finding
-		We don't want to call findTargets because it is not
-		implemented.  Instead, let user select targets, then
-		publish targets as a user activated step.
-		'''
-		pass
 
 	def findTargets(self, imdata):
 		## display image
@@ -205,8 +198,15 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			self.defineUserInterface()
 			self.start()
 
+	def submitTargets(self):
+		self.getTargetDataList('Imaging Target', data.AcquisitionImageTargetData)
+		self.publishTargetList()
+
 	def processImageData(self, imagedata):
-		ClickTargetFinder.processImageData(self, imagedata)
+		'''
+		different from ClickTargetFinder because findTargets is
+		not per image, instead we have submitTargets.
+		'''
 		self.mosaic.addTile(imagedata)
 		self.mosaicdata['data IDs'].append(imagedata['id'])
 		self.clickimage.setImage(self.mosaic.getMosaicImage())
@@ -295,8 +295,6 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 	def defineUserInterface(self):
 		ClickTargetFinder.defineUserInterface(self)
-		# turn queue off by default
-		self.uidataqueueflag.set(False)
 
 		self.mosaicselection = uidata.SingleSelectFromList('Mosaic', [], 0)
 		self.updateMosaicSelection()
