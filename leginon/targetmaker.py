@@ -120,7 +120,7 @@ class SpiralTargetMaker(TargetMaker):
 											'scope': scope,
 											'camera': camera,
 											'preset': preset}
-			targetdata = data.AcquisitionImageTargetData(initializer=initializer)
+			targetdata = data.AcquisitionImageTargetData(initializer=initializer, type='acquisition')
 			self.targetlist.append(targetdata)
 		TargetMaker.publishTargetList(self)
 		self.targetlist = []

@@ -18,9 +18,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 	eventinputs = targetwatcher.TargetWatcher.eventinputs+[event.ImageClickEvent, event.DriftDoneEvent, event.ImageProcessDoneEvent]
 	eventoutputs = targetwatcher.TargetWatcher.eventoutputs + [event.LockEvent, event.UnlockEvent, event.AcquisitionImagePublishEvent, event.TrialImagePublishEvent, event.ChangePresetEvent, event.DriftDetectedEvent]
 
-	def __init__(self, id, session, nodelocations, targetclass=data.AcquisitionImageTargetData, **kwargs):
+	def __init__(self, id, session, nodelocations, target_type='acquisition', **kwargs):
 
-		targetwatcher.TargetWatcher.__init__(self, id, session, nodelocations, targetclass, **kwargs)
+		targetwatcher.TargetWatcher.__init__(self, id, session, nodelocations, target_type, **kwargs)
 		self.addEventInput(event.ImageClickEvent, self.handleImageClick)
 		self.addEventInput(event.DriftDoneEvent, self.handleDriftDone)
 		self.addEventInput(event.ImageProcessDoneEvent, self.handleImageProcessDone)

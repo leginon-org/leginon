@@ -518,7 +518,10 @@ class PresetsManager(node.Node):
 		'''
 		## first cycle through presets before sending the final one
 		order = self.orderlist.get()
-		currentname = self.currentpreset['name']
+		if self.currentpreset is None:
+			currentname = order[0]
+		else:
+			currentname = self.currentpreset['name']
 		previousname = order[order.index(newpresetname)-1]
 		print 'PREV', previousname
 		print 'CUR', currentname
