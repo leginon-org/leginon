@@ -3,7 +3,6 @@ import os
 import socket
 import sys
 import time
-import win32api
 import Tkinter
 import tkSimpleDialog
 import Pmw
