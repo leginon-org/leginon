@@ -54,10 +54,10 @@ class MosaicTargetMaker(TargetMaker):
 	defaultsettings = {
 		'preset': None,
 		'label': '',
-		'radius': 0.005,
+		'radius': 0.0005,
 		'overlap': 0.0,
-		'max targets': 64,
-		'max size': 8192,
+		'max targets': 128,
+		'max size': 16384,
 	}
 	eventinputs = TargetMaker.eventinputs + [event.MakeTargetListEvent]
 	def __init__(self, id, session, managerlocation, **kwargs):
