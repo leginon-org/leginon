@@ -16,7 +16,7 @@ import leginonobject
 
 class DataHandler(node.DataHandler):
 	def __init__(self, id, session, mynode):
-		leginonobject.LeginonObject.__init__(self, id, session)
+		leginonobject.LeginonObject.__init__(self, id)
 		## giving these all the same id, don't know why
 		self.datakeeper = datahandler.DictDataKeeper(id, session)
 		self.databinder = datahandler.DataBinder(id, session)
@@ -38,6 +38,7 @@ class Manager(node.Node):
 
 		node.Node.__init__(self, id, session, nodelocations={}, datahandler=DataHandler, tcpport=tcpport, xmlrpcport=xmlrpcport, **kwargs)
 
+		self.publish(self.session, database=True)
 		self.uiclientcontainers = {}
 
 		self.checkPythonVersion()
@@ -720,6 +721,7 @@ if __name__ == '__main__':
 	except IndexError:
 		session = time.strftime('%Y-%m-%d-%H-%M')
 
-	m = Manager(('manager',), session)
+	initializer = {'name': session}
+	m = Manager(('manager',), data.SessionData(initializer=initializer))
 	m.start()
 

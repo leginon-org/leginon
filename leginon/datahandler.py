@@ -12,7 +12,11 @@ import uidata
 class DataHandler(leginonobject.LeginonObject):
 	'''Base class for DataHandlers. Defines virtual functions.'''
 	def __init__(self, id, session):
-		leginonobject.LeginonObject.__init__(self, id, session)
+		leginonobject.LeginonObject.__init__(self, id)
+		if isinstance(session, data.SessionData):
+			self.session = session
+		else:
+			raise TypeError('session must be of proper type')
 
 	def query(self, id):
 		'''Returns data with data ID.'''

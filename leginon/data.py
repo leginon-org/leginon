@@ -161,13 +161,18 @@ class Data(DataDict, leginonobject.LeginonObject):
 		'''
 		'''
 		### synch with leginonobject attributes
-		if key in ('id', 'session'):
-			super(Data,self).__setattr__(key, value)
+		if key == 'id':
+			super(Data, self).__setattr__(key, value)
+		elif key == 'session':
+			if isinstance(value, SessionData):
+				super(Data, self).__setattr__(key, value['name'])
+			else:
+				super(Data, self).__setattr__(key, value)
 		DataDict.__setitem__(self, key, value)
 
 	def typemap(cls):
 		t = DataDict.typemap()
-		t += [ ('id', tuple), ('session', str), ]
+		t += [('id', tuple)]
 		return t
 	typemap = classmethod(typemap)
 
@@ -226,6 +231,7 @@ class Data(DataDict, leginonobject.LeginonObject):
 	def toDict(self, noNone=False):
 		return data2dict(self, noNone)
 
+'''
 
 ## How to define a new leginon data type:
 ##   - Inherit Data or a subclass of Data.
@@ -237,9 +243,6 @@ class Data(DataDict, leginonobject.LeginonObject):
 ##       of tuples:   [ (key, type), (key, type),... ]
 ## Examples:
 class NewData(Data):
-	'''
-	Example of a new data type
-	'''
 	def typemap(cls):
 		t = Data.typemap()
 		t += [ ('stuff', int), ('thing', float), ]
@@ -259,6 +262,8 @@ class MoreData(Data):
 		t += [ ('newdata1', NewData), ('newdata2', NewData), ('otherdata', OtherData),]
 		return t
 	typemap = classmethod(typemap)
+
+'''
 
 class GroupData(Data):
 	def typemap(cls):
@@ -295,9 +300,16 @@ class SessionData(Data):
 		return t
 	typemap = classmethod(typemap)
 
-class EMData(Data):
+class InSessionData(Data):
 	def typemap(cls):
 		t = Data.typemap()
+		t += [('session', SessionData)]
+		return t
+	typemap = classmethod(typemap)
+
+class EMData(InSessionData):
+	def typemap(cls):
+		t = InSessionData.typemap()
 		t += [ ('em host', str), ('system time', float)]
 		return t
 	typemap = classmethod(typemap)
@@ -364,9 +376,9 @@ class AllEMData(EMData):
 		return t
 	typemap = classmethod(typemap)
 
-class CameraConfigData(Data):
+class CameraConfigData(InSessionData):
 	def typemap(cls):
-		t = Data.typemap()
+		t = InSessionData.typemap()
 		t += [
 			('dimension', dict),
 			('binning', dict),
@@ -379,7 +391,7 @@ class CameraConfigData(Data):
 		return t
 	typemap = classmethod(typemap)
 
-class LocationData(Data):
+class LocationData(InSessionData):
 	pass
 
 class NodeLocationData(LocationData):
@@ -396,23 +408,23 @@ class DataLocationData(LocationData):
 		return t
 	typemap = classmethod(typemap)
 
-class NodeClassesData(Data):
+class NodeClassesData(InSessionData):
 	def typemap(cls):
-		t = Data.typemap()
+		t = InSessionData.typemap()
 		t += [ ('nodeclasses', tuple), ]
 		return t
 	typemap = classmethod(typemap)
 
-class DriftData(Data):
+class DriftData(InSessionData):
 	def typemap(cls):
-		t = Data.typemap()
+		t = InSessionData.typemap()
 		t += [('rows', float), ('cols', float)]
 		return t
 	typemap = classmethod(typemap)
 
-class CalibrationData(Data):
+class CalibrationData(InSessionData):
 	def typemap(cls):
-		t = Data.typemap()
+		t = InSessionData.typemap()
 		t += [ ('type', str), ('em host', str)]
 		return t
 	typemap = classmethod(typemap)
@@ -445,9 +457,9 @@ class MatrixCalibrationData(MagDependentCalibrationData):
 		return t
 	typemap = classmethod(typemap)
 
-class PresetData(Data):
+class PresetData(InSessionData):
 	def typemap(cls):
-		t = Data.typemap()
+		t = InSessionData.typemap()
 		t += [
 			('name', str),
 			('em host', str),
@@ -466,9 +478,9 @@ class PresetData(Data):
 		return t
 	typemap = classmethod(typemap)
 
-class NewPresetData(Data):
+class NewPresetData(InSessionData):
 	def typemap(cls):
-		t = Data.typemap()
+		t = InSessionData.typemap()
 		t += [
 			('name', str),
 			('magnification', int),
@@ -485,21 +497,21 @@ class NewPresetData(Data):
 		return t
 	typemap = classmethod(typemap)
 
-class PresetSequenceData(Data):
+class PresetSequenceData(InSessionData):
 	def typemap(cls):
-		t = Data.typemap()
+		t = InSessionData.typemap()
 		t += [
 			('sequence', list)
 		]
 		return t
 	typemap = classmethod(typemap)
 
-class CorrelationData(Data):
+class CorrelationData(InSessionData):
 	pass
 
-class ImageData(Data):
+class ImageData(InSessionData):
 	def typemap(cls):
-		t = Data.typemap()
+		t = InSessionData.typemap()
 		t += [ ('image', strictdict.NumericArrayType), ]
 		# for DB
 		t += [ ('filename', str), ('label', str)]
@@ -612,9 +624,9 @@ class MosaicImageData(ImageData):
 	'''
 	pass
 
-class MosaicTileData(Data):
+class MosaicTileData(InSessionData):
 	def typemap(cls):
-		t = Data.typemap()
+		t = InSessionData.typemap()
 		t += [
 			('moaic', MosaicImageData),
 			('image', ImageData),
@@ -654,13 +666,13 @@ class AcquisitionImageData(PresetImageData):
 class TrialImageData(PresetImageData):
 	pass
 
-class CorrectorPlanData(Data):
+class CorrectorPlanData(InSessionData):
 	'''
 	mosaic data contains data ID of images mapped to their 
 	position and state.
 	'''
 	def typemap(cls):
-		t = Data.typemap()
+		t = InSessionData.typemap()
 		t += [
 			('camstate', CorrectorCamstateData),
 			('bad_rows', tuple),
@@ -670,9 +682,9 @@ class CorrectorPlanData(Data):
 		return t
 	typemap = classmethod(typemap)
 
-class CorrectorCamstateData(Data):
+class CorrectorCamstateData(InSessionData):
 	def typemap(cls):
-		t = Data.typemap()
+		t = InSessionData.typemap()
 		t += [
 			('em host', str),
 			('dimension', dict),
@@ -682,9 +694,9 @@ class CorrectorCamstateData(Data):
 		return t
 	typemap = classmethod(typemap)
 
-class ImageTargetData(Data):
+class ImageTargetData(InSessionData):
 	def typemap(cls):
-		t = Data.typemap()
+		t = InSessionData.typemap()
 		t += [
 			# pixel delta to target from state in row, column
 		  ('delta row', int),
@@ -701,19 +713,19 @@ class FocusTargetData(ImageTargetData):
 	pass
 
 ### XXX the list here has variable length
-class ImageTargetListData(Data):
+class ImageTargetListData(InSessionData):
 	def typemap(cls):
-		t = Data.typemap()
+		t = InSessionData.typemap()
 		t += [ ('targets', list), ]
 		return t
 	typemap = classmethod(typemap)
 
-class FocuserResultData(Data):
+class FocuserResultData(InSessionData):
 	'''
 	results of doing autofocus
 	'''
 	def typemap(cls):
-		t = Data.typemap()
+		t = InSessionData.typemap()
 		t += [
 		  ('defocus', float),
 		  ('stigx', float),
@@ -725,12 +737,12 @@ class FocuserResultData(Data):
 		return t
 	typemap = classmethod(typemap)
 
-class EMTargetData(Data):
+class EMTargetData(InSessionData):
 	'''
 	This is an ImageTargetData with deltas converted to new scope
 	'''
 	def typemap(cls):
-		t = Data.typemap()
+		t = InSessionData.typemap()
 		t += [
 			# pixel delta to target from state in row, column
 		  ('scope', ScopeEMData),
@@ -739,9 +751,9 @@ class EMTargetData(Data):
 		return t
 	typemap = classmethod(typemap)
 
-class PixelDriftData(Data):
+class PixelDriftData(InSessionData):
 	def typemap(cls):
-		t = Data.typemap()
+		t = InSessionData.typemap()
 		t += [ ('rows', float), ]
 		t += [ ('cols', float), ]
 		return t
@@ -750,7 +762,8 @@ class PixelDriftData(Data):
 class ApplicationData(Data):
 	def typemap(cls):
 		t = Data.typemap()
-		t += [('name', str)]
+		t += [('name', str),
+					('version', int)]
 		return t
 	typemap = classmethod(typemap)
 
@@ -776,9 +789,6 @@ class BindingSpecData(Data):
 					('application', ApplicationData)]
 		return t
 	typemap = classmethod(typemap)
-
-
-
 
 ########## for testing
 

@@ -10,6 +10,7 @@ import copy
 import time
 import uiserver
 import uidata
+import data
 
 # False is not defined in early python 2.2
 False = 0
@@ -20,7 +21,11 @@ class DataHandler(leginonobject.LeginonObject):
 	handles data published by the node
 	'''
 	def __init__(self, id, session, mynode):
-		leginonobject.LeginonObject.__init__(self, id, session)
+		leginonobject.LeginonObject.__init__(self, id)
+		if isinstance(session, data.SessionData):
+			self.session = session
+		else:
+			raise TypeError('session must be of proper type')
 		## giving these all the same id, don't know why
 		self.datakeeper = datahandler.TimeoutDataKeeper(id, session)
 		self.databinder = datahandler.DataBinder(id, session)
@@ -82,7 +87,12 @@ class Node(leginonobject.LeginonObject):
 									event.NodeUninitializedEvent]
 
 	def __init__(self, id, session, nodelocations = {}, datahandler=DataHandler, tcpport=None, xmlrpcport=None, clientclass = datatransport.Client):
-		leginonobject.LeginonObject.__init__(self, id, session)
+		leginonobject.LeginonObject.__init__(self, id)
+
+		if session is None or isinstance(session, data.SessionData):
+			self.session = session
+		else:
+			raise TypeError('session must be of proper type')
 
 		self.nodelocations = nodelocations
 
@@ -284,8 +294,9 @@ class Node(leginonobject.LeginonObject):
 			return
 
 		if 'database' in kwargs and kwargs['database']:
-			try:
+			if isinstance(idata, data.InSessionData):
 				idata['session'] = self.session
+			try:
 				self.datahandler.dbInsert(idata)
 			except KeyError:
 				self.printerror('no DBDataKeeper to publish: %s' % str(idata['id']))
@@ -397,7 +408,9 @@ class Node(leginonobject.LeginonObject):
 				newdata = self.researchByDataID(dataid)
 				if newdata is None:
 					if issubclass(publishevent.dataclass, data.Data):
-						initializer = {'id': dataid, 'session': self.session}
+						initializer = {'id': dataid}
+						if issubclass(publishevent.dataclass, data.InSessionData):
+							initializer['session'] = self.session
 						datainstance = publishevent.dataclass(initializer=initializer)
 						newdatalist = self.research(datainstance=datainstance)
 						if newdatalist:

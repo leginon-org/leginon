@@ -6,9 +6,8 @@ import copy
 
 class LeginonObject(object):
 	'''Generic base class for objects. Defines ID and location.'''
-	def __init__(self, id, session=None):
+	def __init__(self, id):
 		self.id = id
-		self.session = session
 		self.idcounter = 0
 
 	def location(self):

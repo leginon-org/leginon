@@ -55,7 +55,7 @@ class SpiralTargetMaker(TargetMaker):
 
 		### do targets referenced from current state and prefered preset
 		scope = self.researchByDataID(('scope',))
-		camera = self.researchByDataID(('camera',))
+		camera = self.researchByDataID(('camera no image data',))
 		
 		pname = self.presetsclient.uiGetSelectedName()
 		preset = self.presetsclient.getPresetByName(pname)

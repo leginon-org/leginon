@@ -12,7 +12,9 @@ import sys
 
 class Launcher(node.Node):
 	def __init__(self, id, nodelocations = {}, port = None, **kwargs):
-		node.Node.__init__(self, id, 'launcher session', nodelocations, tcpport=port, **kwargs)
+		initializer = {'name': 'launcher session'}
+		session = data.SessionData(initializer=initializer)
+		node.Node.__init__(self, id, session, nodelocations, tcpport=port, **kwargs)
 		self.checkPythonVersion()
 		self.addEventInput(event.LaunchEvent, self.handleLaunch)
 		self.addEventOutput(event.NodeClassesPublishEvent)

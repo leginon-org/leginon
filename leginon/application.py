@@ -8,7 +8,7 @@ class Application(leginonobject.LeginonObject):
 	def __init__(self, id, node, name=None):
 		leginonobject.LeginonObject.__init__(self, id)
 		self.node = node
-		self.data = data.ApplicationData(id=self.ID())
+		self.data = data.ApplicationData()
 		if name is not None:
 			self.data['name'] = name
 		self.nodespecs = []
@@ -19,7 +19,7 @@ class Application(leginonobject.LeginonObject):
 
 	def clear(self):
 		name = self.getName()
-		self.data = data.ApplicationData(id=self.ID())
+		self.data = data.ApplicationData()
 		if name is not None:
 			self.data['name'] = name
 		self.nodespecs = []
@@ -164,11 +164,21 @@ class Application(leginonobject.LeginonObject):
 		self.nodeids = {}
 
 	def save(self):
+		self.data['version'] = self.getNewVersion(self.data['name'])
 		self.node.publish(self.data, database=True)
 		for nodespecdata in self.nodespecs:
 			self.node.publish(nodespecdata, database=True)
 		for bindingspecdata in self.bindingspecs:
 			self.node.publish(bindingspecdata, database=True)
+
+	def getNewVersion(self, name):
+		instance = data.ApplicationData(name=name)
+		applicationdatalist = self.node.research(datainstance=instance)
+		try:
+			applicationdata = applicationdatalist[0]
+		except IndexError:
+			return 0
+		return applicationdata['version'] + 1
 
 	def load(self, name):
 		instance = data.ApplicationData(name=name)
@@ -177,10 +187,8 @@ class Application(leginonobject.LeginonObject):
 			self.data = applicationdatalist[0]
 		except IndexError:
 			raise ValueError('no such application')
-		instance['session'] = self.data['session']
-		instance['id'] = self.data['id']
-		nodeinstance = data.NodeSpecData(application=instance)
+		nodeinstance = data.NodeSpecData(application=self.data)
 		self.nodespecs = self.node.research(datainstance=nodeinstance)
-		bindinginstance = data.BindingSpecData(application=instance)
+		bindinginstance = data.BindingSpecData(application=self.data)
 		self.bindingspecs = self.node.research(datainstance=bindinginstance)
 
