@@ -2,7 +2,6 @@ import node, data, event
 import Numeric
 import LinearAlgebra
 import math
-import copy
 import camerafuncs
 import correlator
 import peakfinder
@@ -271,7 +270,8 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 
 	def getBeamTilt(self):
 		emdata = self.node.researchByDataID(('beam tilt',))
-		return emdata
+		bt = dict(emdata['beam tilt'])
+		return bt
 
 	def measureDefocusStig(self, tilt_value, publish_images=0, drift_threshold=None, image_callback=None):
 		self.abortevent.clear()
@@ -299,17 +299,21 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		self.checkAbort()
 		print 'TILTING'
 		for tiltaxis in ('x','y'):
-			state1 = copy.deepcopy(tiltcenter)
-			state1['beam tilt'][tiltaxis] -= (tilt_value/2.0)
-			state2 = copy.deepcopy(tiltcenter)
-			state2['beam tilt'][tiltaxis] += (tilt_value/2.0)
+			bt1 = dict(tiltcenter)
+			bt1[tiltaxis] -= (tilt_value/2.0)
+			bt2 = dict(tiltcenter)
+			bt2[tiltaxis] += (tilt_value/2.0)
+			state1 = data.ScopeEMData(id=('scope',))
+			state2 = data.ScopeEMData(id=('scope',))
+			state1['beam tilt'] = bt1
+			state2['beam tilt'] = bt2
 			try:
 				shiftinfo = self.measureStateShift(state1, state2, publish_images, settle=0.5, drift_threshold=drift_threshold, image_callback=image_callback)
 			except Abort:
 				break
 			except Drifting:
 				## return to original beam tilt
-				emdata = data.ScopeEMData(id=('scope',), initializer=tiltcenter)
+				emdata = data.ScopeEMData(id=('scope',), initializer={'beam tilt':tiltcenter})
 				self.node.publishRemote(emdata)
 				print 'RETURNED TO TILT CENTER', tiltcenter
 				raise
@@ -327,7 +331,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 				break
 
 		## return to original beam tilt
-		emdata = data.ScopeEMData(id=('scope',), initializer=tiltcenter)
+		emdata = data.ScopeEMData(id=('scope',), initializer={'beam tilt':tiltcenter})
 		self.node.publishRemote(emdata)
 		print 'RETURNED TO TILT CENTER', tiltcenter
 
@@ -417,18 +421,18 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		### try/finally to be sure we return to original beam tilt
 		try:
 			print 'BEAMTILT', beamtilt
-			beamtilts = (copy.deepcopy(beamtilt),copy.deepcopy(beamtilt))
-			beamtilts[0]['beam tilt'][tilt_axis] += tilt_value
-			beamtilts[1]['beam tilt'][tilt_axis] -= tilt_value
+			beamtilts = (dict(beamtilt),dict(beamtilt))
+			beamtilts[0][tilt_axis] += tilt_value
+			beamtilts[1][tilt_axis] -= tilt_value
 
 			## set up to measure states
-			states1 = (copy.deepcopy(state1), copy.deepcopy(state1))
-			states2 = (copy.deepcopy(state2), copy.deepcopy(state2))
+			states1 = (data.ScopeEMData(state1), data.ScopeEMData(state1))
+			states2 = (data.ScopeEMData(state2), data.ScopeEMData(state2))
 
-			states1[0]['beam tilt'] = beamtilts[0]['beam tilt']
-			states1[1]['beam tilt'] = beamtilts[1]['beam tilt']
-			states2[0]['beam tilt'] = beamtilts[0]['beam tilt']
-			states2[1]['beam tilt'] = beamtilts[1]['beam tilt']
+			states1[0]['beam tilt'] = beamtilts[0]
+			states1[1]['beam tilt'] = beamtilts[1]
+			states2[0]['beam tilt'] = beamtilts[0]
+			states2[1]['beam tilt'] = beamtilts[1]
 
 			print 'STATES1'
 			print states1
@@ -444,7 +448,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		except:
 			self.node.printException()
 		## return to original beam tilt
-		emdata = data.ScopeEMData(id=('scope',), initializer=beamtilt)
+		emdata = data.ScopeEMData(id=('scope',), initializer={'beam tilt':beamtilt})
 		self.node.publishRemote(emdata)
 
 		return (pixelshift1, pixelshift2)
@@ -466,15 +470,16 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			### apply misalignment, this is the base value
 			### from which the two equal and opposite tilts
 			### are made
-			state0 = copy.deepcopy(beamtilt)
-			state0['beam tilt'][tilt_axis] += tilt_m
+			bt0 = dict(beamtilt)
+			bt0[tilt_axis] += tilt_m
+			state0 = data.ScopeEMData(id=('scope',), initializer={'beam tilt':bt0})
 			print 'state0', state0
-
 			### create the two equal and opposite tilted states
-			statepos = copy.deepcopy(state0)
+			statepos = data.ScopeEMData(id=('scope',), initializer={'beam tilt':dict(bt0)})
+			stateneg = data.ScopeEMData(id=('scope',), initializer={'beam tilt':dict(bt0)})
+
 			statepos['beam tilt'][tilt_axis] += tilt_t
 			print 'statepos', statepos
-			stateneg = copy.deepcopy(state0)
 			stateneg['beam tilt'][tilt_axis] -= tilt_t
 			print 'stateneg', stateneg
 
@@ -487,7 +492,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			print 'PIXELSHIFT2', pixelshift2
 		finally:
 			## return to original beam tilt
-			emdata = data.ScopeEMData(id=('scope',), initializer=beamtilt)
+			emdata = data.ScopeEMData(id=('scope',), initializer={'beam tilt':beamtilt})
 			self.node.publishRemote(emdata)
 
 		pixelshiftdiff = {}
@@ -567,7 +572,9 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		changex = change[0]
 		changey = change[1]
 
-		new = copy.deepcopy(scope)
+		new = data.ScopeEMData(scope)
+		## make a copy of this since it will be modified
+		new[par] = dict(scope[par])
 		new[par]['x'] += changex
 		new[par]['y'] += changey
 
@@ -750,7 +757,8 @@ class ModeledStageCalibrationClient(CalibrationClient):
 
 		delta = self.pixtix(xmod, ymod, xmagcal, ymagcal, curstage['x'], curstage['y'], pixcol, pixrow)
 
-		newscope = copy.deepcopy(scope)
+		newscope = data.ScopeEMData(scope)
+		newscope['state position'] = dict(scope['stage position'])
 		newscope['stage position']['x'] += delta['x']
 		newscope['stage position']['y'] += delta['y']
 		return newscope

@@ -4,7 +4,6 @@
 import calibrator
 import Numeric
 import LinearAlgebra
-import copy
 import data
 import calibrationclient
 import uidata
@@ -92,29 +91,31 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 	def calibrateStigmators(self, tilt_value, delta):
 		self.setCamState()
 
-		currentstig = self.getStigmator()
+		currentstig = self.getObjectiveStigmator()
 		## set up the stig states
 		stig = {'x':{}, 'y':{}}
 		for axis in ('x','y'):
 			for sign in ('+','-'):
-				stig[axis][sign] = copy.deepcopy(currentstig)
+				stig[axis][sign] = dict(currentstig)
 				if sign == '+':
-					stig[axis][sign]['stigmator']['objective'][axis] += delta/2.0
+					stig[axis][sign][axis] += delta/2.0
 				elif sign == '-':
-					stig[axis][sign]['stigmator']['objective'][axis] -= delta/2.0
+					stig[axis][sign][axis] -= delta/2.0
 
 		for stigaxis in ('x','y'):
 			print 'calculating matrix for stig %s' % (stigaxis,)
 			matdict = {}
 			for tiltaxis in ('x','y'):
 				print 'measuring %s tilt' % (tiltaxis,)
-				state1 = stig[stigaxis]['+']
-				state2 = stig[stigaxis]['-']
+				stig1 = stig[stigaxis]['+']
+				stig2 = stig[stigaxis]['-']
+				state1 = data.ScopeEMData(id=('scope',),stigmator={'objective':stig1})
+				state2 = data.ScopeEMData(id=('scope',),stigmator={'objective':stig2})
 				shift1, shift2 = self.calclient.measureDisplacements(tiltaxis, tilt_value, state1, state2)
 				print 'shift1', shift1
 				print 'shift2', shift2
-				stigval1 = state1['stigmator']['objective'][stigaxis]
-				stigval2 = state2['stigmator']['objective'][stigaxis]
+				stigval1 = stig1[stigaxis]
+				stigval2 = stig2[stigaxis]
 				matcol = self.calclient.eq11(shift1, shift2, stigval1, stigval2, tilt_value)
 				matdict[tiltaxis] = matcol
 			matrix = Numeric.zeros((2,2), Numeric.Float32)
@@ -142,9 +143,10 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		emdata = self.researchByDataID(('defocus',))
 		return emdata
 
-	def getStigmator(self):
+	def getObjectiveStigmator(self):
 		emdata = self.researchByDataID(('stigmator',))
-		return emdata
+		obj = dict(emdata['stigmator']['objective'])
+		return obj
 
 	def defineUserInterface(self):
 		calibrator.Calibrator.defineUserInterface(self)

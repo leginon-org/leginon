@@ -30,13 +30,12 @@ class Navigator(node.Node):
 
 	def handleImageClick(self, clickevent):
 		print 'handling image click'
-		clickinfo = copy.deepcopy(clickevent)
 		## get relavent info from click event
-		clickrow = clickinfo['array row']
-		clickcol = clickinfo['array column']
-		clickshape = clickinfo['array shape']
-		clickscope = clickinfo['scope']
-		clickcamera = clickinfo['camera']
+		clickrow = clickevent['array row']
+		clickcol = clickevent['array column']
+		clickshape = clickevent['array shape']
+		clickscope = clickevent['scope']
+		clickcamera = clickevent['camera']
 
 		## calculate delta from image center
 		deltarow = clickrow - clickshape[0] / 2

@@ -26,7 +26,7 @@ class ImageWatcher(watcher.Watcher):
 		if 'preset' in self.imagedata and self.imagedata['preset'] is not None:
 			imageinfo['preset'] = self.imagedata['preset']
 		imageinfo['source'] = 'click'
-		return copy.deepcopy(imageinfo)
+		return imageinfo
 
 	def processData(self, somedata):
 		if not isinstance(somedata, data.ImageData):

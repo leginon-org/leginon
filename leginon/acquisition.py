@@ -108,13 +108,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 		necessary, and cause problems if used between different
 		magnification modes (LM, M, SA).
 		'''
-		targetinfo = copy.deepcopy(targetdata)
-
 		# get relavent info from target data
-		targetdeltarow = targetinfo['delta row']
-		targetdeltacolumn = targetinfo['delta column']
-		targetscope = targetinfo['scope']
-		targetcamera = targetinfo['camera']
+		targetdeltarow = targetdata['delta row']
+		targetdeltacolumn = targetdata['delta column']
+		## make new copy because will be modified
+		targetscope = data.ScopeEMData(targetdata['scope'])
+		## camera is just read, not modified
+		targetcamera = targetdata['camera']
 
 		## ignore these fields:
 		ignore = ('beam tilt', 'stigmator', 'holder type', 'holder status', 'stage status', 'vacuum status', 'column valves', 'turbo pump')
