@@ -6,11 +6,13 @@ import node, event, data
 import camerafuncs
 import cPickle
 import Mrc
+import calibrationclient
 
 
 class GridPreview(node.Node):
 	def __init__(self, id, nodelocations, **kwargs):
 		self.cam = camerafuncs.CameraFuncs(self)
+		self.calclient = calibrationclient.StageCalibrationClient(self)
 		self.done = []
 		self.todo = []
 		self.temptodo = []
@@ -22,7 +24,7 @@ class GridPreview(node.Node):
 		currentconfig = self.cam.config()
 		currentconfig['state']['dimension']['x'] = 1024
 		currentconfig['state']['binning']['x'] = 4
-		currentconfig['state']['exposure time'] = 100
+		currentconfig['state']['exposure time'] = 400
 		self.cam.config(currentconfig)
 
 		self.defineUserInterface()
@@ -31,7 +33,7 @@ class GridPreview(node.Node):
 	def defineUserInterface(self):
 		#nodespec = node.Node.defineUserInterface(self)
 		cam = self.cam.configUIData()
-		defprefs = {'center': {'x':0,'y':0}, 'overlap': 75, 'maxtargets': 4}
+		defprefs = {'center': {'x':0,'y':0}, 'overlap': 50, 'maxtargets': 4}
 		spiralprefs = self.registerUIData('Spiral', 'struct', callback=self.uiSpiralPrefs, default=defprefs, permissions='rw')
 		self.sim = self.registerUIData('Simulate TEM/camera', 'boolean', permissions='rw', default=0)
 		prefs = self.registerUIContainer('Preferences', (cam, spiralprefs, self.sim))
@@ -73,6 +75,9 @@ class GridPreview(node.Node):
 	def uiEstimate(self):
 		return ''
 
+	def getScope(self):
+		return self.researchByDataID('scope').content
+
 	def acquireTarget(self, target):
 		print 'TARGET', target
 		if self.sim.get():
@@ -89,19 +94,19 @@ class GridPreview(node.Node):
 				self.publishRemote(emdata)
 			else:
 				# move to next postion
-
 				camconfig = self.cam.config()
 				camstate = camconfig['state']
-				binx = camstate['binning']['x']
-				biny = camstate['binning']['y']
-				targetrow = target[0] * biny
-				targetcol = target[1] * binx
+				print 'camstate', camstate
+				scopestate = self.getScope()
+				print 'SCOPE', scopestate
 
-				deltarowcol = {'row':targetrow, 'column':targetcol}
-
-				e = event.StagePixelShiftEvent(self.ID(), deltarowcol)
+				targetrow, targetcol = target
+				print 'targetrow', targetrow
+				pixelshift = {'row':targetrow, 'col':targetcol}
+				newstate = self.calclient.transform(pixelshift, scopestate, camstate)
+				emdat = data.EMData('scope', newstate)
 				print 'moving to next position'
-				self.outputEvent(e)
+				self.publishRemote(emdat)
 
 			## this should be calibrated
 			time.sleep(2)
@@ -110,7 +115,8 @@ class GridPreview(node.Node):
 			stagepos = stagepos.content
 			print 'gridpreview stagepos', stagepos
 
-			imarray = self.cam.acquireArray(camstate=None, correction=1)
+			imagedata = self.cam.acquireCameraImageData(camstate=None, correction=1)
+			imarray = imagedata.content['image']
 			thisid = self.ID()
 			if self.lastid is None:
 				neighbortiles = []
@@ -122,9 +128,11 @@ class GridPreview(node.Node):
 			storedata = {'id':thisid,'image':filename, 'state': stagepos, 'neighbors': neighbortiles, 'target':target}
 			self.logAppend(storedata)
 
-			imdata = data.StateImageTileData(thisid, imarray, stagepos, neighbortiles)
+			scope = imagedata.content['scope']
+			camera = imagedata.content['camera']
+			imdata = data.TileImageData(thisid, imarray, scope, camera, neighbortiles)
 			print 'publishing tile'
-			self.publish(imdata, event.StateImageTilePublishEvent)
+			self.publish(imdata, event.TileImagePublishEvent)
 
 			self.lastid = thisid
 
