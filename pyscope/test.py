@@ -7,19 +7,25 @@ def testTecnai():
 	except pythoncom.com_error, (hr, msg, exc, arg):
 		print 'Failed to initialize Tecnai interface: %s' % msg
 		return
+	else:
+		print 'Initialized Tecnai interface'
 
 	try:
 		lowdose = win32com.client.Dispatch('LDServer.LdSrv')
 	except pythoncom.com_error, (hr, msg, exc, arg):
-		print 'Failed to initialize low dose interface: %s' % msg
+		print 'Failed to initialize Low Dose interface: %s' % msg
 		return
+	else:
+		print 'Initialized Low Dose interface'
 
 	try:
 		exposure = win32com.client.Dispatch('adaExp.TAdaExp',
 																				clsctx=pythoncom.CLSCTX_LOCAL_SERVER)
 	except pythoncom.com_error, (hr, msg, exc, arg):
-		print 'Failed to initialize exposure adapter: %s' % msg
+		print 'Failed to initialize Exposure Adapter: %s' % msg
 		return
+	else:
+		print 'Initialized Exposure Adapter interface'
 
 	print 'Tecnai test successful'
 
@@ -71,11 +77,36 @@ def testTietz():
 
 	camera.UnlockCAMC()
 
-if __name__ == '__main__':
-	#print 'Testing Tecnai...'
-	#testTecnai()
-	#print
-	print 'Testing Tietz...'
-	testTietz()
-	print 'Tietz test completed.'
+def testGatan():
+	pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
+	camera = None
+	try:
+		camera = win32com.client.dynamic.Dispatch('TecnaiCCD.GatanCamera')
+	except pythoncom.com_error, e:
+		pass
+	else:
+		print 'Initialized Gatan interface (.1)'
 
+	try:
+		camera = win32com.client.dynamic.Dispatch('TecnaiCCD.GatanCamera.2')
+	except pythoncom.com_error, e:
+		pass
+	else:
+		print 'Initialized Gatan interface (.2)'
+
+	if camera is None:
+		print 'Gatan test failed (unable to initialize interfaces)'
+		return
+
+	print 'Gatan test successful'
+
+if __name__ == '__main__':
+	print 'Testing Tecnai...'
+	testTecnai()
+	print 
+	#print 'Testing Tietz...'
+	#testTietz()
+	#print 'Tietz test completed.'
+
+	print 'Testing Gatan...'
+	testGatan()
