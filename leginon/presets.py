@@ -414,6 +414,9 @@ class PresetsManager(node.Node):
 		if (self.currentselection is None) or (not value):
 			return {}
 		else:
+			if self.autosquare.get():
+				for autokey in ('dimension','binning','offset'):
+					self.square(value[autokey])
 			for key in value:
 				self.currentselection[key] = value[key]
 			self.presetToDB(self.currentselection)
@@ -421,12 +424,16 @@ class PresetsManager(node.Node):
 			del d['session']
 		return d
 
+	def square(self, xydict):
+		xydict['y'] = xydict['x']
+
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
 
 		self.othersession = uidata.String('Session', '', 'rw')
 		fromdb = uidata.Method('Import', self.uiGetPresetsFromDB)
 
+		self.autosquare = uidata.Boolean('Auto Square', True, 'rw')
 		self.presetparams = uidata.Struct('Parameters', {}, 'rw', self.uiParamsCallback)
 		self.uiselectpreset = uidata.SingleSelectFromList('Preset', [], 0, callback=self.uiSelectCallback)
 		pnames = self.presetNames()
@@ -440,7 +447,7 @@ class PresetsManager(node.Node):
 		newfromscopemethod = uidata.Method('New From Scope', self.uiNewFromScope)
 
 		container = uidata.MediumContainer('Presets Manager')
-		container.addObjects((self.othersession, fromdb, self.uiselectpreset, toscopemethod, fromscopemethod, removemethod, self.enteredname, newfromscopemethod, self.presetparams))
+		container.addObjects((self.othersession, fromdb, self.uiselectpreset, toscopemethod, fromscopemethod, removemethod, self.enteredname, newfromscopemethod, self.autosquare, self.presetparams))
 		self.uiserver.addObject(container)
 
 		return
