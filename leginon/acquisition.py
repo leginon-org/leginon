@@ -358,8 +358,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 																		toscopeandacquiremethod))
 		trialmethod = uidata.Method('Trial', self.uiTrial)
 
-		self.displayimageflag = uidata.Boolean('Display Image', True, 'rw',
-																				self.setDisplayImage)
+		self.displayimageflag = uidata.Boolean('Display Image', True, 'rw', persist=True)
 		self.ui_image = uidata.Image('Image', None, 'rw')
 
 
