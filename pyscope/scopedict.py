@@ -31,7 +31,7 @@ def factory(scopeclass):
       
       def __len__(self):
           return len(self.keylist)
-  
+
       def __setitem__(self, key, val):
           if key == "screen current":
               pass
@@ -177,8 +177,7 @@ def factory(scopeclass):
           return data.iteritems()
       
       def iterkeys(self):
-          data = self.copy()
-          return data.iterkeys()
+          return iter(self.keylist)
       
       def itervalues(self):
           data = self.copy()
@@ -202,11 +201,9 @@ def factory(scopeclass):
           return 0
       
       def __contains__(self, key):
-          data = self.copy()
-          return key in data
+          return key in self.keylist
       
       def __iter__(self):
-          data = self.copy()
-          return iter(data)
+          return self.iterkeys()
 
   return scopedict
