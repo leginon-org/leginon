@@ -11,7 +11,6 @@ dbparams = {
 		'passwd':leginonconfig.DB_PROJECT_PASS
 	}
 
-db = sqldict.SQLDict(**dbparams)
 
 class Project(sqldict.ObjectBuilder):
 	'''Project: a class object to access the
@@ -19,7 +18,6 @@ class Project(sqldict.ObjectBuilder):
 	'''
 	table = 'projects'
 	columns = ['projectId', 'name', 'short_description']
-projects = Project().register(db)
 
 class ProjectExperiment(sqldict.ObjectBuilder):
 	'''ProjectExperiment: a class object to access the
@@ -28,7 +26,6 @@ class ProjectExperiment(sqldict.ObjectBuilder):
 	table = "projectexperiments"
 	columns = ['projectId', 'name']
 	indices = [ ('projectId', ['projectId'] )]
-projectexperiments = ProjectExperiment().register(db)
 
 class GridBox(sqldict.ObjectBuilder):
 	'''Project: a class object to access the
@@ -36,7 +33,22 @@ class GridBox(sqldict.ObjectBuilder):
 	'''
 	table = 'gridboxes'
 	columns = ['gridboxId', 'label']
-gridboxes = GridBox().register(db)
+
+class ProjectData:
+    def __init__(self, **kwargs):
+	self.db = sqldict.SQLDict(**dbparams)
+	self.projects = Project().register(self.db)
+	self.projectexperiments = ProjectExperiment().register(self.db)
+	self.gridboxes = GridBox().register(self.db)
+
+    def getProjects(self):
+	return self.projects
+
+    def getProjectsExperiments(self):
+	return self.projectexperiments
+
+    def getGridBox(self):
+	return self.gridboxes
 
 ########################################
 ## Testing
@@ -45,20 +57,31 @@ gridboxes = GridBox().register(db)
 if __name__ == "__main__":
 	# getall projects
 	#allprojects = projects.getall()
-	#print allprojects
+	projectdata = ProjectData()
+	projects = projectdata.getProjects()
+	print projects.getall()
+	projectdata1 = ProjectData()
+	projects = projectdata1.getProjects()
+	print projects.getall()
+	projectdata2 = ProjectData()
+	projects = projectdata2.getProjects()
+	allprojects = projects.getall()
+
+	print allprojects
 
 	# getall experiment name with his projectId
-	#allprojectexperiments = projectexperiments.getall()
-	#print allprojectexperiments
+	projectexperiments = projectdata.getProjectsExperiments()
+	allprojectexperiments = projectexperiments.getall()
+	print allprojectexperiments
 
 	#getall experiments with projectId=5
 	print projectexperiments.projectId[5].fetchall()
 
 	# insert a new session into the Test  Project database
-	# newsession = ProjectExperiment(5, 'testexp')
+	newsession = ProjectExperiment(5, 'testexp')
 
 	# if the session already exists, it won't be inserted again,
 	# the existing primary will be returned. The function 
 	# returns the last inserted id for a new insert
-	#key = projectexperiments.insert([newsession.dumpdict()])
-	#print key
+	key = projectexperiments.insert([newsession.dumpdict()])
+	print key
