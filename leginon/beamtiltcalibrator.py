@@ -180,8 +180,9 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		measuremethod = uidata.Method('Measure', self.uiMeasureDefocusStig)
 		correctdefocusmethod = uidata.Method('Correct Defocus', self.uiCorrectDefocus)
 		correctstigmethod = uidata.Method('Correct Stigmator', self.uiCorrectStigmator)
+		resetdefocusmethod = uidata.Method('Reset Defocus', self.uiResetDefocus)
 		measurecontainer = uidata.Container('Measure')
-		measurecontainer.addObjects((self.measuretiltvalue, self.resultvalue, measuremethod, correctdefocusmethod, correctstigmethod))
+		measurecontainer.addObjects((self.measuretiltvalue, self.resultvalue, measuremethod, correctdefocusmethod, correctstigmethod, resetdefocusmethod))
 
 		container = uidata.LargeContainer('Beam Tilt Calibrator')
 		container.addObjects((defocuscontainer, stigcontainer, measurecontainer))
@@ -223,6 +224,11 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		stigdict = {'stigmator': {'objective': {'x':newstigx,'y':newstigy}}}
 		newdata = data.ScopeEMData(id=('scope',), initializer=stigdict)
 		self.publishRemote(newdata)
+
+	def uiResetDefocus(self):
+		newemdata = data.ScopeEMData(id=('scope',))
+		newemdata['reset defocus'] = True
+		self.publishRemote(newemdata)
 
 	def getCurrentValues(self):
 		defocusdata = self.researchByDataID(('defocus',))
