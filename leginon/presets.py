@@ -554,7 +554,7 @@ class PresetsManager(node.Node):
 				pass
 			self.presetparams.set(d, callback=False)
 			print 'displaying calibration info is currently commented out until we fix the problem'
-			#self.displayCalibrations(self.currentselection)
+			self.displayCalibrations(self.currentselection)
 			print 'done disp'
 			self.setStatus(self.currentselection)
 		return index
@@ -565,7 +565,12 @@ class PresetsManager(node.Node):
 
 	def displayCalibrations(self, preset):
 		mag = preset['magnification']
-		ht = self.getHighTension()
+		try:
+			ht = self.getHighTension()
+		except:
+			self.messagelog.error('Cannot get high tension value, calibration display failed')
+			return
+		print 'high tension', ht
 
 		pcaltime = self.calclients['pixel size'].time(mag)
 		self.cal_pixelsize.set(str(pcaltime))
