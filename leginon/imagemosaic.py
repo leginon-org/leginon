@@ -268,12 +268,17 @@ class ImageMosaic(watcher.Watcher):
 		self.publish(odata, event.ImagePublishEvent)
 		return ''
 
+	def uiClearMosaic(self):
+		self.imagemosaic = {}
+
 	def defineUserInterface(self):
 		watcherspec = watcher.Watcher.defineUserInterface(self)
 		showspec = self.registerUIMethod(self.uiShow, 'Show Image', ())
 		publishspec = self.registerUIMethod(self.uiPublishMosaicImage,
 										'Publish Image', ())
-		imagespec = self.registerUIContainer('Image', (showspec, publishspec))
+		clearspec = self.registerUIMethod(self.uiClearMosaic, 'Clear', ())
+		imagespec = self.registerUIContainer('Image',
+																					(showspec, publishspec, clearspec))
 		self.registerUISpec('Image Mosaic', (watcherspec, imagespec))
 
 class StateImageMosaic(ImageMosaic):
