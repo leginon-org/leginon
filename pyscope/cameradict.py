@@ -33,11 +33,11 @@ def factory(cameraclass):
 			return self.data[key]
 	  
 		def __setitem__(self, key, item):
-		setkeys = ["offset", "dimension", "binning", "exposure time"]
-		if key in setkeys:
-			self.data[key] = item
-		else:
-			raise ValueError
+			setkeys = ["offset", "dimension", "binning", "exposure time"]
+			if key in setkeys:
+				self.data[key] = item
+			else:
+				raise ValueError
 		
 		def __delitem__(self, key):
 			pass
@@ -95,7 +95,7 @@ def factory(cameraclass):
 		def __iter__(self):
 			return iter(self.data)
 
-	  def refresh(self):
+		def refresh(self):
 			self.data["image data"] = self.getImage(self.data["offset"], \
 																							self.data["dimension"], \
 																							self.data["binning"], \
