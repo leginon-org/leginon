@@ -12,24 +12,28 @@ class ImViewer(node.Node):
 	def __init__(self, nodeid, managerlocation):
 		node.Node.__init__(self, nodeid, managerlocation)
 
-		self.addEventInput(event.PublishEvent, self.handle_publish)
-
-		self.open_viewer()
+		t = threading.Thread(target=self.open_viewer)
+		t.setDaemon(1)
+		t.start()
 		self.lock = threading.RLock()
+
+		self.addEventInput(event.PublishEvent, self.handle_publish)
 
 
 	def handle_publish(self, pubevent):
+		print 'handling %s' % pubevent
 		### drop any events while another is being processed
 		if not self.lock.acquire(blocking=0):
 			print 'dropping event %s' % pubevent
 			return
 
 		dataid = pubevent.content
-		print 'received publish event %s with dataid %s' % (publishevent, dataid)
+		print 'received publish event %s with dataid %s' % (pubevent, dataid)
 
-		self.im = researchByDataID(dataid)
+		self.im = self.researchByDataID(dataid)
+		print 'research ok'
 		self.display_image()
-
+		print 'image displayed'
 		self.lock.release()
 
 	def open_viewer(self):
@@ -50,6 +54,7 @@ class ImViewer(node.Node):
 
 		## self.im must be 2-d numeric data
 		self.iv.import_numeric(numarray)
+		self.iv.update()
 
 
 if __name__ == '__main__':
