@@ -29,7 +29,7 @@ class DataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
 		if isinstance(idata, event.Event):
 			datahandler.DataBinder.insert(self, idata)
 		else:
-			if idata['id'][:-1] == self['id'][:-1]:
+			if idata['id'][:-1] == self.id[:-1]:
 				datahandler.SimpleDataKeeper.insert(self, copy.deepcopy(idata))
 			else:
 				raise event.InvalidEventError('event must be Event instance')
@@ -235,10 +235,10 @@ class Node(leginonobject.LeginonObject):
 		else:
 			confirm = False
 
-		if 'node' in kwargs and kwargs['node']:
-			self.datahandlers[self.datahandler].insert(idata)
-			e = eventclass(self.ID(), dataid=idata['id'], confirm=confirm)
-			self.outputEvent(e)
+#		if 'node' in kwargs and kwargs['node']:
+		self.datahandlers[self.datahandler].insert(idata)
+		e = eventclass(self.ID(), dataid=idata['id'], confirm=confirm)
+		self.outputEvent(e)
 
 	def research(self, **kwargs):
 		'''

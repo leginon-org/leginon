@@ -80,7 +80,7 @@ class PublishEvent(NotificationEvent):
 	'Event indicating data was published'
 	def typemap(cls):
 		t = NotificationEvent.typemap()
-		t += [ ('dataid', int), ]
+		t += [ ('dataid', tuple), ]
 		return t
 	typemap = classmethod(typemap)
 
@@ -88,7 +88,7 @@ class UnpublishEvent(NotificationEvent):
 	'Event indicating data was unpublished (deleted)'
 	def typemap(cls):
 		t = NotificationEvent.typemap()
-		t += [ ('dataid', int), ]
+		t += [ ('dataid', tuple), ]
 		return t
 	typemap = classmethod(typemap)
 
@@ -96,7 +96,7 @@ class ConfirmationEvent(NotificationEvent):
 	'Event sent to confirm event processing'
 	def typemap(cls):
 		t = NotificationEvent.typemap()
-		t += [ ('eventid', int), ]
+		t += [ ('eventid', tuple), ]
 		return t
 	typemap = classmethod(typemap)
 

@@ -151,7 +151,7 @@ class GridPreview(node.Node):
 			imdata = data.TileImageData(thisid, image=imarray, scope=scope,
 																	camera=camera, neighbor_tiles=neighbortiles)
 #			print 'publishing tile'
-			self.publish(imdata, event.TileImagePublishEvent)
+			self.publish(imdata, eventclass=event.TileImagePublishEvent)
 
 			self.lastid = thisid
 

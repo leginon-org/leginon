@@ -41,7 +41,7 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		if self.targetlist:
 			targetlistdata = data.ImageTargetListData(self.ID(),
 																								targets=self.targetlist)
-			self.publish(targetlistdata, event.ImageTargetListPublishEvent)
+			self.publish(targetlistdata, eventclass=event.ImageTargetListPublishEvent)
 			print 'published targetlistdata', targetlistdata
 			print 'targets'
 			print targetlistdata['targets']

@@ -176,7 +176,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		imagedata['preset'] = dict(preset)
 
 		print 'publishing image'
-		self.publish(imagedata, event.CameraImagePublishEvent)
+		self.publish(imagedata, eventclass=event.CameraImagePublishEvent)
 		print 'image published'
 
 	def targetToState(self, targetdata, movetype):

@@ -208,7 +208,7 @@ class Corrector(node.Node):
 		self.plans[plankey][typekey] = ref
 
 		imagedata = datatype(self.ID(), image=ref, scope=seriesscope, camera=seriescam)
-		self.publish(imagedata, pubtype)
+		self.publish(imagedata, eventclass=pubtype)
 
 		self.calc_norm(plankey)
 		return ref

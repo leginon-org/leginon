@@ -51,7 +51,7 @@ class CalibrationClient(object):
 		actual_state = imagedata['scope']
 
 		if publish_image:
-			self.node.publish(imagedata, event.CameraImagePublishEvent)
+			self.node.publish(imagedata, eventclass=event.CameraImagePublishEvent)
 
 		## should find image stats to help determine validity of image
 		## in correlations

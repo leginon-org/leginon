@@ -261,10 +261,10 @@ class Manager(node.Node):
 #		nodelocationdata = self.server.datahandler.query(nodeid)
 		nodelocationdata = self.datahandlers[self.datahandler].query(nodeid)
 		if nodelocationdata is None:
-			nodelocationdata = data.NodeLocationData(nodeid, nodelocation)
+			nodelocationdata = data.NodeLocationData(nodeid, location=nodelocation)
 		else:
 			# fools! should do something nifty to unregister, reregister, etc.
-			nodelocationdata = data.NodeLocationData(nodeid, nodelocation)
+			nodelocationdata = data.NodeLocationData(nodeid, location=nodelocation)
 #		self.server.datahandler._insert(nodelocationdata)
 		self.datahandlers[self.datahandler].insert(nodelocationdata)
 
@@ -371,7 +371,7 @@ class Manager(node.Node):
 #		datalocationdata = self.server.datahandler.query(dataid)
 		datalocationdata = self.datahandlers[self.datahandler].query(dataid)
 		if datalocationdata is None:
-			datalocationdata = data.DataLocationData(dataid, [nodeid])
+			datalocationdata = data.DataLocationData(dataid, location=[nodeid])
 		else:
 			if nodeid not in datalocationdata['location']:
 				datalocationdata['location'].append(nodeid)

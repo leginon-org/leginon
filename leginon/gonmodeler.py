@@ -65,7 +65,7 @@ class GonModeler(node.Node):
 
 		## acquire image
 		newimagedata = self.cam.acquireCameraImageData(correction=0)
-		self.publish(newimagedata, event.CameraImagePublishEvent)
+		self.publish(newimagedata, eventclass=event.CameraImagePublishEvent)
 		newnumimage = newimagedata['image']
 
 		## insert into correlator
