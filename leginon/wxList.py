@@ -45,6 +45,7 @@ class wxListViewSelect(wxChoice):
 		if not values:
 			self.Clear()
 			return
+		self.Freeze()
 		count = self.GetCount()
 		n = len(values)
 		if count < n:
@@ -57,6 +58,7 @@ class wxListViewSelect(wxChoice):
 					nsame = i
 					break
 			except ValueError:
+				self.Thaw()
 				raise
 		if count > nsame:
 			for i in range(count - 1, nsame - 1, -1):
@@ -64,6 +66,7 @@ class wxListViewSelect(wxChoice):
 		if nsame < n:
 			for i in range(nsame, n):
 				self.Append(self.toString(values[i]))
+		self.Thaw()
 
 	def select(self, value):
 		if value is None:
