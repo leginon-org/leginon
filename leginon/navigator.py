@@ -10,9 +10,8 @@ import calibrationclient
 
 class Navigator(node.Node):
 	def __init__(self, id, nodelocations, **kwargs):
-		self.cam = camerafuncs.CameraFuncs(self)
 		node.Node.__init__(self, id, nodelocations, **kwargs)
-
+		self.cam = camerafuncs.CameraFuncs(self)
 		self.calclients = {
 			'image shift': calibrationclient.ImageShiftCalibrationClient(self),
 			'beam shift': calibrationclient.BeamShiftCalibrationClient(self),
