@@ -64,6 +64,7 @@ class Focuser(acquisition.Acquisition):
 			'Defocus': self.correctDefocus
 		}
 
+		self.autofocus = False
 		self.manualchecklock = threading.Lock()
 		self.parameter = 'Defocus'
 		self.maskradius = 0.01
