@@ -593,6 +593,9 @@ class Tecnai(tem.TEM):
 #								- getattr(pos, key.upper())) > tolerance:
 #				time.sleep(polltime)
 	
+	def getLowDoseStates(self):
+		return ['on', 'off', 'disabled']
+
 	def getLowDose(self):
 		try:
 			if (self.lowdose.IsInitialized == 1) and (self.lowdose.LowDoseActive == win32com.client.constants.IsOn):
@@ -635,6 +638,9 @@ class Tecnai(tem.TEM):
 				else:
 					# ?
 					pass
+
+	def getLowDoseModes(self):
+		return ['exposure', 'focus1', 'focus2', 'search', 'unknown', 'disabled']
 
 	def getLowDoseMode(self):
 		try:
@@ -704,6 +710,9 @@ class Tecnai(tem.TEM):
 		
 		return 0
 
+	def getShutterPositions(self):
+		return ['open', 'closed']
+
 	def setShutter(self, state):
 		if state == 'open':
 			if self.exposure.OpenShutter != 0:
@@ -720,6 +729,9 @@ class Tecnai(tem.TEM):
 			return 'closed'
 		else:
 			return 'open'
+
+	def getExternalShutterStates(self):
+		return ['connected', 'disconnected']
 
 	def setExternalShutter(self, state):
 		if state == 'connected':
@@ -794,6 +806,9 @@ class Tecnai(tem.TEM):
 			raise RuntimeError('Open shutter (post-exposure) failed')
 		'''
 
+	def getMainScreenPositions(self):
+		return ['up', 'down', 'unknown']
+
 	def getMainScreenPosition(self):
 		timeout = 5.0
 		sleeptime = 0.05
@@ -834,6 +849,9 @@ class Tecnai(tem.TEM):
 		else:
 			return 'unknown'
 
+	def getHolderTypes(self):
+		return ['no holder', 'single tilt', 'cryo', 'unknown']
+
 	def getHolderType(self):
 		if self.exposure.CurrentSpecimenHolderName == u'No Specimen Holder':
 			return 'no holder'
@@ -842,7 +860,7 @@ class Tecnai(tem.TEM):
 		elif self.exposure.CurrentSpecimenHolderName == u'ST Cryo Holder':
 			return 'cryo'
 		else:
-			return 'unknown holder'
+			return 'unknown'
 
 	def setHolderType(self, holdertype):
 		if holdertype == 'no holder':
@@ -885,13 +903,16 @@ class Tecnai(tem.TEM):
 		else:
 			raise ValueError
 
-	def getColumnValves(self):
+	def getColumnValvePositions(self):
+		return ['open', 'closed']
+
+	def getColumnValvePosition(self):
 		if self.tecnai.Vacuum.ColumnValvesOpen:
 			return 'open'
 		else:
 			return 'closed'
 
-	def setColumnValves(self, state):
+	def setColumnValvePosition(self, state):
 		if state == 'closed':
 			self.tecnai.Vacuum.ColumnValvesOpen = 0
 		elif state == 'open':
@@ -938,6 +959,9 @@ class Tecnai(tem.TEM):
 		self.tecnai.Camera.ExposureNumber = (self.tecnai.Camera.ExposureNumber
 																										/ 100000) * 100000 + value
 
+	def getFilmExposureTypes(self):
+		return ['manual', 'automatic']
+
 	def getFilmExposureType(self):
 		if self.tecnai.Camera.ManualExposure:
 			return 'manual'
@@ -978,6 +1002,9 @@ class Tecnai(tem.TEM):
 
 	def setFilmUserCode(self, value):
 		self.tecnai.Camera.Usercode = value
+
+	def getFilmDateTypes(self):
+		return ['no date', 'DD-MM-YY', 'MM/DD/YY', 'YY.MM.DD', 'unknown']
 
 	def getFilmDateType(self):
 		filmdatetype = self.tecnai.Camera.PlateLabelDateType

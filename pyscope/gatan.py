@@ -111,6 +111,9 @@ class Gatan(ccdcamera.CCDCamera):
 	def setExposureTime(self, value):
 		self.camera.ExposureTime = float(value)/1000.0
 
+	def getExposureTypes(self):
+		return ['normal', 'dark']
+
 	def getExposureType(self):
 		return self.exposuretype
 

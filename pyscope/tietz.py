@@ -414,6 +414,9 @@ class Tietz(object):
 		# {'type': int, 'range': [0, None]
 		self.exposuretime = value
 
+	def getExposureTypes(self):
+		return ['normal', 'dark', 'bias', 'readout']
+
 	def getExposureType(self):
 		return self.exposuretype
 
@@ -575,14 +578,25 @@ class Tietz(object):
 		except pywintypes.com_error:
 			raise ValueError('invalid speed index specified')
 
-	def getImageTransform(self):
-		bitmask = self._getParameterValue('cpImageGeometry')
+	def getMirrorStates(self):
+		return ['none', 'horizontal', 'vertical', 'none']
 
+	def getMirror(self):
+		bitmask = self._getParameterValue('cpImageGeometry')
 		mirror = []
-		if bitmask & 1: # mirrored horizontal
-			mirror.append('horizontal')
-		if bitmask & 2: # mirrored vertical
-			mirror.append('vertical')
+		if bitmask & 1 and bitmask & 2:
+			return 'both'
+		elif bitmask & 1: # mirrored horizontal
+			return 'horizontal'
+		elif bitmask & 2: # mirrored vertical
+			return 'vertical'
+		return 'none'
+
+	def getRotations(self):
+		return [0, 90, 180, 270]
+
+	def getRotation(self):
+		bitmask = self._getParameterValue('cpImageGeometry')
 
 		rotation = 0
 		if bitmask & 4: # rotated 90 degrees CCW
@@ -593,27 +607,37 @@ class Tietz(object):
 			rotation += 270
 		rotation %= 360
 
-		return {'mirror': mirror, 'rotation': rotation}
+		return rotation
 
-	def setImageTransform(self, value):
-		# {'type': dict,
-		#		'values': {'mirror':
-		#								{'type': str, 'values': ['horizontal', 'vertical']},
-		#							'rotation':
-		#								{'type': int,	'values': [0, 90, 180, 270]}}}
-		bitmask = 0
-
-		if 'horizontal' in value['mirror']:
+	def setMirror(self, value):
+		bitmask = self._getParameterValue('cpImageGeometry')
+		bitmask &= 28
+		if value == 'horizontal':
 			bitmask |= 1
-		if 'vertical' in value['mirror']:
+		elif value == 'vertical':
 			bitmask |= 2
+		elif value == 'both':
+			bitmask |= 3
+		elif value == 'none':
+			pass
+		else:
+			raise ValueError
+		self._setParameterValue('cpImageGeometry', bitmask)
 
-		if value['rotation'] == 90:
+	def setRotation(self, value):
+		bitmask = self._getParameterValue('cpImageGeometry')
+		bitmask &= 3
+
+		if value['rotation'] == 0:
+			pass
+		elif value['rotation'] == 90:
 			bitmask |= 4
-		if value['rotation'] == 180:
+		elif value['rotation'] == 180:
 			bitmask |= 8
-		if value['rotation'] == 270:
+		elif value['rotation'] == 270:
 			bitmask |= 16
+		else:
+			raise ValueError
 
 		self._setParameterValue('cpImageGeometry', bitmask)
 
