@@ -477,23 +477,20 @@ class Manager(node.Node):
 
 if __name__ == '__main__':
 	import sys
+	import time
 
-	manager_id = ('manager',)
-	#manager_id = 'manager'
-	m = Manager(manager_id)
+	m = Manager(('manager',))
 
-	## GUI
-	if sys.platform == 'win32':
-		gui = 0
+	p = False
+
+	try:
+		p = sys.argv[1]
+	except IndexError:
+		pass
+
+	if p:
+		import profile
+		profile.run("m.start()", "%s.profile" % m.id[-1])
 	else:
-		gui = 1
+		m.start()
 
-	gui = 0
-	if gui:
-		import nodegui, Tkinter
-		port = m.location()['UI port']
-		host = m.location()['hostname']
-		root = Tkinter.Tk()
-		gui = nodegui.NodeGUI(root, host, port)
-		gui.pack(expand=Tkinter.YES, fill=Tkinter.BOTH)
-	m.start()
