@@ -206,20 +206,27 @@ class DoseCalibrationClient(CalibrationClient):
 		qdata['session'] = data.SessionData()
 		qdata['session']['instrument'] = instrument
 		qdata['high tension'] = ht
-		results = self.research(datainstance=qdata, fill=False, results=1)
+		results = self.node.research(datainstance=qdata, fill=False, results=1)
 		if results:
 			result = results[0]
 		else:
 			result = None
 		return result
 
+	def dose_from_screen(self, screen_mag, beam_current, beam_diameter):
+		## electrons per screen area per second
+		beam_area = math.pi * (beam_diameter/2.0)**2
+		screen_electrons = beam_current * self.coulomb / beam_area
+		## electrons per specimen area per second (dose rate)
+		dose_rate = screen_electrons * (screen_mag**2)
+		return dose_rate
+
 	def retrieveSensitivity(self, ht, instrument):
 		sdata = self.researchSensitivity(ht, instrument)
 		if sdata is None:
 			return None
-		psize = sdata['pixel size']
 		sens = sdata['sensitivity']
-		return {'pixel size':psize, 'sensitivity':sens}
+		return sens
 
 	def sensitivity(self, dose_rate, camera_mag, camera_pixel_size, exposure_time, counts):
 		camera_dose = float(dose_rate) / float((camera_mag**2))
@@ -254,7 +261,7 @@ class DoseCalibrationClient(CalibrationClient):
 		ht = imagedata['scope']['high tension']
 		binning = imagedata['camera']['binning']['x']
 		camera_mag = imagedata['scope']['magnification']
-		exp_time = imagedata['camera']['exposure time']
+		exp_time = imagedata['camera']['exposure time'] / 1000.0
 		numdata = imagedata['image']
 		sensitivity = self.retrieveSensitivity(ht, inst)
 		mean_counts = imagefun.mean(numdata) / (binning**2)
