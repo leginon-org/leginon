@@ -4,13 +4,17 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyScope/tem.py,v $
-# $Revision: 1.1 $
+# $Revision: 1.2 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-23 02:16:00 $
-# $Author: suloway $
+# $Date: 2005-03-29 22:33:48 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
+
+import time
 
 class TEM(object):
 	name = None
 
+	def getSystemTime(self):
+		return time.time()
