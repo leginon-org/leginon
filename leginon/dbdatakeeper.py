@@ -103,17 +103,19 @@ class DBDataKeeper(datahandler.DataHandler):
 			if idata['database filename'] is not None:
 				try:
 					idata['image'] = Mrc.mrc_to_numeric(idata['database filename'])
-					print idata['image'][100][100]
-				except Exception, e:
-					print e
+				except:
+					self.printerror('error converting image from file')
 				idata['database filename'] = None
 
 		types = idata.types()
 		for key in types:
 			if issubclass(types[key], data.ImageData):
 				if idata[key]['database filename'] is not None:
-					idata[key]['image'] = Mrc.mrc_to_numeric(
+					try:
+						idata[key]['image'] = Mrc.mrc_to_numeric(
 																					idata[key]['database filename'])
+					except:
+						self.printerror('error converting image from file')
 					idata[key]['database filename'] = None
 
 # Ignore for now
