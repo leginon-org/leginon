@@ -636,22 +636,28 @@ def bin2dict(object, name=None):
 	d={}
 	k = sep.join(['BIN',name])
 	pobject = cPickle.dumps(object, 1)
-	d[k]
+	d[k]=pobject
 	return d
 
 def dict2bin(in_dict):
 	"""
 	Convert a binary blob in a  python 
 	"""
-	pass
+	object=None
+	for key, blob  in in_dict.items():
+		object=cPickle.loads(blob)
+	return object
 
-def sqltype(object):
+def sqltype(object,key=None):
 	"""
 	Convert a python type to an SQL type
 	"""
 	t = type(object)
 	if t is type(""):
-		return "TEXT"
+		if key is not None and re.findall('^BIN\%s'%(sep),key):
+			return "LONGBLOB"
+		else:
+			return "TEXT"
 	elif t is float:
 		return "DOUBLE"
 	elif t is int:
@@ -684,7 +690,7 @@ def sqlColumnsDefinition(in_dict, noDefault=None):
 	for key in in_dict:
 		column={}
 		value=in_dict[key]
-		sqlt = sqltype(value)
+		sqlt = sqltype(value,key)
 		if sqlt is not None:
 			column['Field']=key
 			column['Type']=sqlt
@@ -694,7 +700,10 @@ def sqlColumnsDefinition(in_dict, noDefault=None):
 				arraydict = matrix2dict(value,key)
 				nd = sqlColumnsDefinition(arraydict, noDefault=[])
 				nd.sort()
-				columns += nd
+			else:
+				bindict = bin2dict(value,key)
+				nd = sqlColumnsDefinition(bindict, noDefault=[])
+			columns += nd
 			# Think about store the filename
 				
 		elif type(value) is dict:
@@ -728,10 +737,14 @@ def sqlColumnsSelect(in_dict):
 		sqlt = sqltype(value)
 		if sqlt is not None:
 			columns.append(key)
-		elif type(value) is type(Numeric.array([0])):
-			arraydict = matrix2dict(value,key)
-			nd = sqlColumnsSelect(arraydict)
-			nd.sort()
+		elif type(value) is Numeric.ArrayType:
+			if len(Numeric.ravel(value)) < 10:
+				arraydict = matrix2dict(value,key)
+				nd = sqlColumnsSelect(arraydict)
+				nd.sort()
+			else:
+				bindict = bin2dict(value,key)
+				nd = sqlColumnsSelect(bindict)
 			columns += nd
 		elif type(value) is dict:
 			flatdict = flatDict({key:value})
@@ -757,9 +770,12 @@ def sqlColumnsFormat(in_dict):
 		sqlt = sqltype(value)
 		if sqlt is not None:
 			columns[key]=value
-		elif type(value) is type(Numeric.array([0])):
-			arraydict = matrix2dict(value,key)
-			columns.update(arraydict)
+		elif type(value) is Numeric.ArrayType:
+			if len(Numeric.ravel(value)) < 10:
+				datadict = matrix2dict(value,key)
+			else:
+				datadict = bin2dict(value,key)
+			columns.update(datadict)
 		elif type(value) is dict:
 			flatdict = flatDict({key:value})
 			columns.update(flatdict)
@@ -823,6 +839,8 @@ def datatype(in_dict):
 				allarrays[a[1]]=None
 		elif a[0] == 'SEQ':
 			content[a[1]] = eval(value)
+		elif a[0] == 'BIN':
+			content[a[1]] = dict2bin({key:value})
 		elif not a[0] in ['SUBD', ]:
 			content[key]=value
 	for matrix in allarrays:
