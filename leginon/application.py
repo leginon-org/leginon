@@ -170,6 +170,8 @@ class Application(object):
 			self.node.publish(nodespecdata, database=True)
 		for bindingspecdata in self.bindingspecs:
 			self.node.publish(bindingspecdata, database=True)
+		## create a copy so we can modify it
+		self.data = data.ApplicationData(initializer=self.data)
 
 	def getNewVersion(self, name):
 		instance = data.ApplicationData(name=name)
@@ -184,11 +186,12 @@ class Application(object):
 		instance = data.ApplicationData(name=name)
 		applicationdatalist = self.node.research(datainstance=instance)
 		try:
-			self.data = applicationdatalist[0]
+			appdata = applicationdatalist[0]
 		except IndexError:
 			raise ValueError('no such application')
-		nodeinstance = data.NodeSpecData(application=self.data)
+		nodeinstance = data.NodeSpecData(application=appdata)
 		self.nodespecs = self.node.research(datainstance=nodeinstance)
-		bindinginstance = data.BindingSpecData(application=self.data)
+		bindinginstance = data.BindingSpecData(application=appdata)
 		self.bindingspecs = self.node.research(datainstance=bindinginstance)
-
+		## create a copy so we can modify it
+		self.data = ApplicationData(initializer=appdata)
