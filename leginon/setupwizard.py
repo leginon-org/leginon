@@ -6,6 +6,7 @@ import os
 import data
 import project
 import time
+import sys
 
 class WizardPage(wx.wizard.PyWizardPage):
 	def __init__(self, parent, previous=None, next=None):
@@ -32,11 +33,17 @@ class UserPage(WizardPage):
 	def __init__(self, parent):
 		WizardPage.__init__(self, parent)
 		pagesizer = wx.GridBagSizer()
-		sizer = wx.GridBagSizer()
+		sizer = wx.GridBagSizer(5, 5)
+
+		welcometext = wx.StaticText(self, -1, 'Welcome to Leginon')
+		font = welcometext.GetFont()
+		font.SetPointSize(font.GetPointSize()*2)
+		welcometext.SetFont(font)
+		sizer.Add(welcometext, (0, 0), (1, 2))
 
 		sizer.Add(wx.StaticText(self, -1,
-						'Please select your name.'),
-												(0, 0), (1, 2))
+						'Please select your name:'),
+												(2, 0), (1, 2))
 
 		sizer.AddGrowableCol(0)
 		sizer.AddGrowableCol(1)
@@ -45,10 +52,10 @@ class UserPage(WizardPage):
 		choices.sort()
 		self.userchoice = wx.Choice(self, -1, choices=choices)
 		self.userchoice.SetSelection(0)
-		sizer.Add(self.userchoice, (1, 0), (1, 2), wx.ALIGN_CENTER)
+		sizer.Add(self.userchoice, (3, 0), (1, 2), wx.ALIGN_CENTER_HORIZONTAL)
 
 		sizer.Add(wx.StaticText(self, -1,
-									'Then press the "Next" button to continue.'), (3, 0), (1, 2))
+									'then press the "Next" button to continue.'), (4, 0), (1, 2))
 
 		pagesizer.Add(sizer, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		pagesizer.AddGrowableRow(0)
@@ -68,7 +75,7 @@ class SessionTypePage(WizardPage):
 		sizer = wx.GridBagSizer()
 
 		sizer.Add(wx.StaticText(self, -1,
-						'Please indicate whether you would like to create a new session or use an existing session.'),
+						'Please indicate whether you would like to create a new session or use an existing session,'),
 												(0, 0), (1, 2))
 
 		choices = ['Create a new session', 'Return to an existing session']
@@ -78,7 +85,7 @@ class SessionTypePage(WizardPage):
 		sizer.Add(self.sessiontyperadiobox, (1, 0), (1, 2), wx.ALIGN_CENTER)
 
 		sizer.Add(wx.StaticText(self, -1,
-									'Then press the "Next" button to continue.'), (3, 0), (1, 2))
+									'then press the "Next" button to continue.'), (3, 0), (1, 2))
 
 		pagesizer.Add(sizer, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		pagesizer.AddGrowableRow(0)
@@ -262,7 +269,7 @@ class SessionProjectPage(WizardPage):
 		sizer = wx.GridBagSizer()
 
 		sizer.Add(wx.StaticText(self, -1,
-				'Select the project this session will be associated with.'),
+				'Select the project this session will be associated with,'),
 												(0, 0), (1, 2))
 
 		sizer.AddGrowableCol(0)
@@ -278,7 +285,7 @@ class SessionProjectPage(WizardPage):
 														wx.ALIGN_CENTER_VERTICAL)
 
 		sizer.Add(wx.StaticText(self, -1,
-									'Then press the "Next" button to continue.'), (3, 0), (1, 2))
+									'then press the "Next" button to continue.'), (3, 0), (1, 2))
 
 		pagesizer.Add(sizer, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		pagesizer.AddGrowableRow(0)
@@ -293,7 +300,7 @@ class SessionInstrumentPage(WizardPage):
 		sizer = wx.GridBagSizer()
 
 		sizer.Add(wx.StaticText(self, -1,
-				'Select the instrument (if any) to be used in this session.'),
+				'Select the instrument (if any) to be used in this session,'),
 												(0, 0), (1, 2))
 
 		sizer.AddGrowableCol(0)
@@ -310,7 +317,7 @@ class SessionInstrumentPage(WizardPage):
 														wx.ALIGN_CENTER_VERTICAL)
 
 		sizer.Add(wx.StaticText(self, -1,
-									'Then press the "Next" button to continue.'), (3, 0), (1, 2))
+									'then press the "Next" button to continue.'), (3, 0), (1, 2))
 
 		pagesizer.Add(sizer, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		pagesizer.AddGrowableRow(0)
@@ -424,10 +431,9 @@ class SetupWizard(wx.wizard.Wizard):
 		self.setup = Setup(research)
 		self.publish = publish
 		self.session = None
-		wx.wizard.Wizard.__init__(self, parent, -1, 'Leginon Setup')
-
-		self.Bind(wx.wizard.EVT_WIZARD_PAGE_CHANGING, self.onPageChanging, self)
-		self.Bind(wx.wizard.EVT_WIZARD_PAGE_CHANGED, self.onPageChanged, self)
+		image = wx.Image(os.path.join(sys.path[0], 'setup.png'))
+		bitmap = wx.BitmapFromImage(image)
+		wx.wizard.Wizard.__init__(self, parent, -1, 'Leginon Setup', bitmap=bitmap)
 
 		self.users = self.setup.getUsers()
 		if not self.users:
@@ -462,6 +468,9 @@ class SetupWizard(wx.wizard.Wizard):
 			self.namepage.setNext(self.instrumentpage)
 		self.instrumentpage.setNext(self.imagedirectorypage)
 		self.imagedirectorypage.setNext(self.sessioncreatepage)
+
+		self.Bind(wx.wizard.EVT_WIZARD_PAGE_CHANGING, self.onPageChanging, self)
+		self.Bind(wx.wizard.EVT_WIZARD_PAGE_CHANGED, self.onPageChanged, self)
 
 		self.FitToPage(self.userpage)
 
