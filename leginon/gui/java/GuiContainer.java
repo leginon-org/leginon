@@ -504,7 +504,7 @@ class ImageData {
 	
 	public void update(Object data) throws Exception {
 		if (data instanceof byte[]) {
-			ImageMRC img = new ImageMRC(b);
+			ImageMRC img = new ImageMRC((byte[])data);
 			gui.setImage(img);
 		}
 	}
