@@ -367,7 +367,7 @@ class EMMosaic(object):
 		fakescope = data.ScopeEMData(initializer=someimage['scope'])
 		fakescope[param] = center
 		## assume the final fake image has same binning as first tile
-		fakecamera = data.CameraEMData(initializer=someimage['scamera'])
+		fakecamera = data.CameraEMData(initializer=someimage['camera'])
 		self.fakeimage = data.CameraImageData(scope=fakescope, camera=fakecamera)
 		tile0 = self.tiles[0]
 		mosaic0 = mosaic1 = None
