@@ -138,7 +138,6 @@ class Manager(node.Node):
 				self.removeNode(to_node)
 				# also remove from launcher registry
 				self.delLauncher(to_node)
-				self.uinodesdata.set(self.uiNodeDict())
 
 	# launcher related methods
 
@@ -172,7 +171,6 @@ class Manager(node.Node):
 			self.removeNode(launcherid)
 			# also remove from launcher registry
 			self.delLauncher(launcherid)
-			self.uinodesdata.set(self.uiNodeDict())
 		nodeclasses = nodeclassesdata.content
 		return nodeclasses
 
@@ -216,8 +214,6 @@ class Manager(node.Node):
 			nodelocationdata = data.NodeLocationData(nodeid, nodelocation)
 		self.server.datahandler._insert(nodelocationdata)
 
-		self.uinodesdata.set(self.uiNodeDict())
-
 		self.confirmEvent(readyevent)
 
 	def unregisterNode(self, unavailable_event):
@@ -226,7 +222,6 @@ class Manager(node.Node):
 
 		# also remove from launcher registry
 		self.delLauncher(nodeid)
-		self.uinodesdata.set(self.uiNodeDict())
 
 	def removeNode(self, nodeid):
 		nodelocationdata = self.server.datahandler.query(nodeid)
@@ -282,7 +277,6 @@ class Manager(node.Node):
 				self.removeNode(nodeid)
 				# also remove from launcher registry
 				self.delLauncher(nodeid)
-				self.uinodesdata.set(self.uiNodeDict())
 
 	# data methods
 
@@ -509,8 +503,8 @@ class Manager(node.Node):
 		launcherspec = self.registerUIContainer('Launcher', (newlauncherspec,))
 
 		# managing other nodes, information on nodes, adding a node
-		self.uinodesdata = self.registerUIData('Nodes', 'struct', 'r',
-														default=self.uiNodeDict())
+		self.uinodesdata = self.registerUIData('Nodes', 'struct', 'r')
+		self.uinodesdata.set(self.uiNodeDict)
 		argspec = (self.registerUIData('Hostname', 'string'),
 								self.registerUIData('TCP Port', 'integer'))
 		addnodespec = self.registerUIMethod(self.uiAddNode, 'Add Node', (argspec))
