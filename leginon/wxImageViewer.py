@@ -541,6 +541,7 @@ class ClickImagePanel(ImagePanel):
 	def __init__(self, parent, id, callback=None):
 		ImagePanel.__init__(self, parent, id)
 		self.addTool(ClickTool(self, self.toolsizer, callback))
+		self.Fit()
 
 class TargetTool(ImageTool):
 	def __init__(self, imagepanel, sizer, callback=None):
@@ -780,10 +781,13 @@ class TargetType(object):
 class TargetImagePanel(ImagePanel):
 	def __init__(self, parent, id, callback=None):
 		ImagePanel.__init__(self, parent, id)
+
 		self.target_types = {}
 		self.selectedtarget = None
 		self.colorlist = [wxRED, wxBLUE, wxColor(255, 0, 255), wxColor(0, 255, 255)]
+
 		self.addTool(TargetTool(self, self.toolsizer, callback))
+		self.Fit()
 
 	def addTargetTypeColor(self, color):
 		self.colorlist.append(color)
