@@ -73,7 +73,7 @@ class NodeGUIArg(Frame):
 		raise NotImplementedError
 
 	def arg_struct(self, name, struct):
-		sc = TreeWidget.ScrolledCanvas(self, bg='white')
+		sc = TreeWidget.ScrolledCanvas(self, bg='white', highlightthickness=0)
 		sc.frame.pack()
 		item = StructTreeItem(name, struct)
 		node = TreeWidget.TreeNode(sc.canvas, None, item)
@@ -206,9 +206,9 @@ class StructTreeItem(TreeWidget.TreeItem):
 
 	def GetText(self):
 		if self.key:
-			return self.key
+			return str(self.key)
 		else:
-			return self.value
+			return str(self.value)
 
 	def IsEditable(self):
 		if self.key:

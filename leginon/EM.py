@@ -112,8 +112,11 @@ class EM(node.Node):
 
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
+		d = {}
+		d.update(self.scope)
+		#d.update(self.camera)
 		argspec = (
-			{'name': 'parameter', 'alias': 'Parameter', 'type': {'test': 2, 'foo': {'bar': 1}}},)
+			{'name': 'em', 'alias': 'EM', 'type': d},)
 		self.registerUIFunction(self.foo, argspec, 'Foo')
 
 	def foo(self):
