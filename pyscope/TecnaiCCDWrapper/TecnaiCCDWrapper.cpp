@@ -4,7 +4,7 @@
 #define _WIN32_DCOM
 #include <atlbase.h>
 
-#import "tecnaiccd.dll" no_namespace
+#import "c:\tecnai\plugins\tecnaiccd.dll" no_namespace
 
 static PyObject *acquire(PyObject *self, PyObject *args) {
 	PyArrayObject *result;
