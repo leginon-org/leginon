@@ -28,10 +28,13 @@ class Tecnai(object):
 	def __init__(self):
 		self.correctedstage = True
 		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
-		self.theScope = win32com.client.Dispatch('Tecnai.Instrument')		
-		self.theLowDose = win32com.client.Dispatch('LDServer.LdSrv')
-		self.theAda = win32com.client.Dispatch('adaExp.TAdaExp',
-																				clsctx=pythoncom.CLSCTX_LOCAL_SERVER)
+		try:
+			self.theScope = win32com.client.Dispatch('Tecnai.Instrument')		
+			self.theLowDose = win32com.client.Dispatch('LDServer.LdSrv')
+			self.theAda = win32com.client.Dispatch('adaExp.TAdaExp',
+																					clsctx=pythoncom.CLSCTX_LOCAL_SERVER)
+		except pythoncom.com_error:
+			raise RuntimeError('Unable to initialize microscope interface[s]')
 		# this was a quick way of doing things, needs to be redone
 		self.magTable = [{'index': 1, 'up': 21, 'down': 18.5},
 						 {'index': 2, 'up': 28, 'down': 25},

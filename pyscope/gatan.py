@@ -23,9 +23,7 @@ class Gatan(object):
 		try:
 			self.camera = win32com.client.Dispatch('TecnaiCCD.GatanCamera')        
 		except pywintypes.com_error, e:
-			print 'Error dispatching TecnaiCCD.GatanCamera'
-			print e
-			return
+			raise RuntimeError('Unable to initialize Gatan interface')
 
 		self.methodmapping = {
 			'binning': {'get':'getBinning', 'set': 'setBinning'},
@@ -129,7 +127,8 @@ class Gatan(object):
 
 	def getImage(self):
 		if self.getExposureType() == 'dark':
-			if self.getRetractable():
+			if False:
+			#if self.getRetractable():
 				if self.getInserted():
 					self.setInserted(False)
 					image = self.camera.AcquireRawImage()

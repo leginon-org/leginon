@@ -10,7 +10,7 @@ class MethodDictMixin(object):
 	def _getMethods(self, key):
 		try:
 			return self.methodmapping[key]
-		except KeyError:
+		except (KeyError, AttributeError):
 			raise KeyError(key)
 
 	def _getMethodName(self, key, methodtype):
@@ -61,23 +61,32 @@ class MethodDictMixin(object):
 		
 	def readkeys(self):
 		keys = []
-		for key in self.methodmapping.keys():
-			if self.readable(key):
-				keys.append(key)
+		try:
+			for key in self.methodmapping.keys():
+				if self.readable(key):
+					keys.append(key)
+		except AttributeError:
+			pass
 		return keys
 
 	def writekeys(self):
 		keys = []
-		for key in self.methodmapping.keys():
-			if self.writable(key):
-				keys.append(key)
+		try:
+			for key in self.methodmapping.keys():
+				if self.writable(key):
+					keys.append(key)
+		except AttributeError:
+			pass
 		return keys
 
 	def readwritekeys(self):
 		keys = []
-		for key in self.methodmapping.keys():
-			if self.readable(key) and self.writable(key):
-				keys.append(key)
+		try:
+			for key in self.methodmapping.keys():
+				if self.readable(key) and self.writable(key):
+					keys.append(key)
+		except AttributeError:
+			pass
 		return keys
 
 	def keys(self):
