@@ -74,7 +74,7 @@ class CameraFuncs(object):
 			camdata['image data'] = None
 			dataid = self.node.ID()
 			#print 'creating imdata'
-			imdata = data.CameraImageData(id=dataid, image=numimage, scope=scopedata, camera=camdata)
+			imdata = data.CameraImageData(session=self.node.session, id=dataid, image=numimage, scope=scopedata, camera=camdata)
 			#print 'created imdata'
 		return imdata
 
