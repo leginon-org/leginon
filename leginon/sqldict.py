@@ -155,7 +155,7 @@ import Numeric
 import MySQLdb.cursors
 from types import *
 import data
-import strictdict
+import newdict
 import Mrc
 import os
 import leginonconfig
@@ -273,6 +273,29 @@ class SQLDict(object):
 
 		return self._joinData(cursorresults)
 
+	def uniqueFilter(self, results, key):
+		if not results or key is None:
+			return
+		first = results[0]
+		keyfield = None
+		for field in first.keys():
+			parts = field.split('|')
+			field_key = parts[-1]
+			if field_key == key:
+				keyfield = field
+				break
+		if keyfield is None:
+			return
+			
+		havedict = {}
+		filtered = []
+		for result in results:
+			if result[keyfield] in havedict:
+				continue
+			filtered.append(result)
+			havedict[result[keyfield]] = None
+		return filtered
+
 	def _joinData(self, cursorresults):
 		if not cursorresults:
 			return []
@@ -370,7 +393,7 @@ class SQLDict(object):
 				target = pool[value.qikey]
 				root[key] = target
 				self._connectData(target, pool)
-			elif isinstance(value, strictdict.FileReference):
+			elif isinstance(value, newdict.FileReference):
 				needpath.append(key)
 
 		### find the path
@@ -974,7 +997,7 @@ def flatDict(in_dict):
 			items[key] = value	
 	return items
 
-def unflatDict(in_dict, qikey=None, qinfo=None):
+def unflatDict(in_dict, join):
 	"""
 	This function unflat a dictionary. For example:
 	>>> d = {'SUBD|scope|SUBD|IShift|Y': 6.0, 'SUBD|scope|SUBD|BShift|Y': 18.0, 'SUBD|scope|SUBD|BShift|X': 45.0, 'SUBD|scope|SUBD|IShift|X': 8.0}
@@ -998,7 +1021,7 @@ def unflatDict(in_dict, qikey=None, qinfo=None):
 				allsubdicts[a[1]]=None
 		
 		elif a[0] != 'ARRAY':
-			items.update(datatype({key:value},qikey, qinfo))
+			items.update(datatype({key:value},join))
 
 	for subdict in allsubdicts:
 		dm={}
@@ -1008,7 +1031,7 @@ def unflatDict(in_dict, qikey=None, qinfo=None):
 				s = re.sub('^SUBD\%s%s\%s' %(sep,subdict,sep),'',key)
 				dm.update({s:value})
 
-		allsubdicts[subdict]=unflatDict(dm, qikey, qinfo)
+		allsubdicts[subdict]=unflatDict(dm, join)
 
 	allsubdicts.update(items)
 	return allsubdicts
@@ -1174,7 +1197,7 @@ def sqlColumnsDefinition(in_dict, noDefault=None):
 			column['Key'] = 'INDEX'
 			column['Index'] = [column['Field']]
 			columns.append(column)
-		elif isinstance(value, strictdict.AnyObject):
+		elif isinstance(value, newdict.AnyObject):
 			column['Field'] = object2sqlColumn(key)
 			column['Type'] = 'LONGBLOB'
 			columns.append(column)
@@ -1208,7 +1231,7 @@ def sqlColumnsDefinition(in_dict, noDefault=None):
 
 def object2sqlColumn(key):
 	"""
-	Add PICKLE| if value is instance of strictdict.AnyObject
+	Add PICKLE| if value is instance of newdict.AnyObject
 	"""
 	return "PICKLE%s%s"%(sep,key,)
 
@@ -1277,7 +1300,7 @@ def sqlColumnsFormat(in_dict):
 			columns.update(nf)
 		elif isinstance(value, data.Data):
 			columns[ref2field(key,value)] = value.dbid
-		elif isinstance(value, strictdict.AnyObject):
+		elif isinstance(value, newdict.AnyObject):
 			### AnyObject contains an object,
 			### convert it to a pickle string
 			columns[object2sqlColumn(key)] = cPickle.dumps(value.o, cPickle.HIGHEST_PROTOCOL)
@@ -1315,37 +1338,37 @@ def sql2data(in_dict, qikey=None, qinfo=None):
 	content={}
 	allsubdicts={}
 
-	# Convert ARRAY, SEQ, string, int, float
-	content = datatype(in_dict, qikey, qinfo)
-
-	# build dictionaries
-	allsubdicts=unflatDict(in_dict, qikey, qinfo)
-
-	content.update(allsubdicts)
+	if None in (qikey,qinfo):
+		join = None
+	else:
+		join = qinfo[qikey]['join']
+	content = datatype(in_dict, join)
 
 	return content
 
-def datatype(in_dict, qikey=None, qinfo=None):
+def datatype(in_dict, join=None):
 	"""
 	This function converts a specific string or a SQL type to 
 	a python type.
 	"""
 	content={}
 	allarrays={}
+	subditems = {}
 	for key,value in in_dict.items():
 		a = key.split(sep)
-		if a[0] == 'ARRAY':
+		a0 = a[0]
+		if a0 == 'ARRAY':
 			name = a[1]
 			if not allarrays.has_key(name):
-				allarrays[a[1]]=None
-		elif a[0] == 'SEQ':
+				allarrays[name]=None
+		elif a0 == 'SEQ':
 			try:
 				content[a[1]] = eval(value)
 			except SyntaxError:
 				content[a[1]] = None
-		elif a[0] == 'PICKLE':
+		elif a0 == 'PICKLE':
 			## contains a python pickle string,
-			## convert it to strictdict.AnyObject
+			## convert it to newdict.AnyObject
 			try:
 				value = value.tostring()
 			except AttributeError:
@@ -1354,26 +1377,32 @@ def datatype(in_dict, qikey=None, qinfo=None):
 				ob = cPickle.loads(value)
 			except:
 				ob = None
-			content[a[1]] = strictdict.AnyObject(ob)
-		elif a[0] == 'MRC':
+			content[a[1]] = newdict.AnyObject(ob)
+		elif a0 == 'MRC':
 			## set up a FileReference, to be used later
 			## when we know the full path
-			content[a[1]] = strictdict.FileReference(value, Mrc.mrc_to_numeric)
-		elif a[0] == 'REF':
+			content[a[1]] = newdict.FileReference(value, Mrc.mrc_to_numeric)
+		elif a0 == 'REF':
 			if value == 0:
 				### NULL reference
 				content[a[2]] = None
-			elif a[2] in qinfo[qikey]['join']:
+			elif a[2] in join:
 				## referenced data is part of result
-				jqikey = qinfo[qikey]['join'][a[2]]
+				jqikey = join[a[2]]
 				content[a[2]] = data.UnknownData(jqikey)
 			else:
 				## not in result, but create reference
 				dclassname = a[1]
 				dclass = getattr(data, dclassname)
 				content[a[2]] = data.DataReference(dataclass=dclass, dbid=value)
-		elif not a[0] in ['SUBD', ]:
+		elif a0 == 'SUBD':
+			subditems[key] = value
+		else:
 			content[key]=value
+
+	# build dictionaries
+	allsubdicts=unflatDict(subditems, join)
+	content.update(allsubdicts)
 
 	for matrix in allarrays:
 		dm={}
