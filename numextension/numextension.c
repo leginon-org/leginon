@@ -971,7 +971,7 @@ static PyObject *logpolar(PyObject *self, PyObject *args) {
 	base = pow(inputsize, 1.0/n);
 
 	for(i = 0; i < m; i++) {
-		theta = M_PI*(((float)i)/((float)m) - 0.5);
+		theta = M_PI*(((float)i)/((float)m - 1) - 0.5);
 		costheta = cos(theta);
 		sintheta = sin(theta);
 		for(j = 0; j < n; j++) {
