@@ -18,12 +18,15 @@ import gui.wx.FFTMaker
 
 class FFTMaker(imagewatcher.ImageWatcher):
 	panelclass = gui.wx.FFTMaker.Panel
+	settingsclass = data.FFTMakerSettingsData
+	defaultsettings = {
+		'process': True,
+		'mask radius': 0.01,
+	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		imagewatcher.ImageWatcher.__init__(self, id, session, managerlocation, **kwargs)
 
-		self.process = None
 		self.label = None
-		self.maskradius = None
 		self.postprocess = threading.Event()
 		self.start()
 
@@ -31,13 +34,13 @@ class FFTMaker(imagewatcher.ImageWatcher):
 		'''
 		calculate and publish fft of the imagedata
 		'''
-		if self.process:
+		if self.settings['process']:
 			self.publishPowerImage(imagedata)
 
 	def publishPowerImage(self, imagedata):
 		imarray = imagedata['image']
 		self.logger.info('Calculating power spectrum for image')
-		pow = imagefun.power(imarray, self.maskradius)
+		pow = imagefun.power(imarray, self.settings['mask radius'])
 		powdata = data.AcquisitionFFTData(session=self.session, source=imagedata, image=pow)
 
 		# filename

@@ -1,7 +1,8 @@
+import wx
+from gui.wx.Entry import Entry, FloatEntry, EVT_ENTRY
 import gui.wx.Data
 import gui.wx.Node
-import wx
-import wx.lib.masked
+import gui.wx.Settings
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'fftmaker'
@@ -15,35 +16,16 @@ class Panel(gui.wx.Node.Panel):
 		self.ststatus = wx.StaticText(self, -1, '')
 		self.szstatus.Add(self.ststatus, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		self.szincoming = self._getStaticBoxSizer('Incoming Images',
-																							(1, 0), (1, 1), wx.EXPAND|wx.ALL)
-
-		self.cbprocess = wx.CheckBox(self, -1,
-																	'Calculate FFT and save to the database',
-																	name='cbProcess')
-		self.szincoming.Add(self.cbprocess, (0, 0), (1, 3),
-												wx.ALIGN_CENTER_VERTICAL)
-
-		label = wx.StaticText(self, -1, 'Mask radius:')
-		self.szincoming.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.ncmaskradius = wx.lib.masked.NumCtrl(self, -1, 0.01,
-										 													 integerWidth=2,
-										 													 fractionWidth=2,
-										 													 allowNone=False,
-										 													 allowNegative=False,
-										 													 name='ncMaskRadius')
-		self.szincoming.Add(self.ncmaskradius, (1, 1), (1, 1),
-												wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, '% of image width')
-		self.szincoming.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.bsettings = wx.Button(self, -1, 'Settings...')
+		self.szmain.Add(self.bsettings, (1, 0), (1, 1), wx.ALIGN_CENTER)
 
 		self.szdatabase = self._getStaticBoxSizer('Images in Database',
 																							(2, 0), (1, 1), wx.EXPAND|wx.ALL)
 
 		label = wx.StaticText(self, -1, 'Find images in this session with label:')
 		self.szdatabase.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.tclabel = wx.TextCtrl(self, -1, '', name='tcLabel')
-		self.szdatabase.Add(self.tclabel, (0, 1), (1, 1),
+		self.telabel = Entry(self, -1, name='teLabel')
+		self.szdatabase.Add(self.telabel, (0, 1), (1, 1),
 												wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
 
 		self.bstart = wx.Button(self, -1, 'Start')
@@ -57,38 +39,19 @@ class Panel(gui.wx.Node.Panel):
 		self.SetSizerAndFit(self.szmain)
 		self.SetupScrolling()
 
-		self.Bind(gui.wx.Node.EVT_SET_STATUS, self.onSetStatus)
-
 	def onNodeInitialized(self):
-		gui.wx.Data.setWindowFromDB(self.cbprocess)
-		gui.wx.Data.setWindowFromDB(self.ncmaskradius)
-		gui.wx.Data.setWindowFromDB(self.tclabel)
-
-		gui.wx.Data.bindWindowToDB(self.cbprocess)
-		gui.wx.Data.bindWindowToDB(self.ncmaskradius)
-		gui.wx.Data.bindWindowToDB(self.tclabel)
-
-		self.node.process = self.cbprocess.GetValue()
-		self.node.maskradius = self.ncmaskradius.GetValue()
-		self.node.label = self.tclabel.GetValue()
-
-		self.Bind(wx.EVT_CHECKBOX, self.onProcess, self.cbprocess)
-		self.Bind(wx.lib.masked.EVT_NUM, self.onMaskRadius, self.ncmaskradius)
-		self.Bind(wx.EVT_TEXT, self.onLabel, self.tclabel)
+		self.Bind(wx.EVT_BUTTON, self.onSettingsButton, self.bsettings)
+		self.Bind(EVT_ENTRY, self.onLabelEntry, self.telabel)
 		self.Bind(wx.EVT_BUTTON, self.onStart, self.bstart)
 		self.Bind(wx.EVT_BUTTON, self.onStop, self.bstop)
 
-	def onSetStatus(self, evt):
-		self.ststatus.SetLabel(evt.status)
+	def onSettingsButton(self, evt):
+		dialog = SettingsDialog(self)
+		dialog.ShowModal()
+		dialog.Destroy()
 
-	def onProcess(self, evt):
-		self.node.process = evt.IsChecked()
-
-	def onLabel(self, evt):
-		self.node.label = evt.GetString()
-
-	def onMaskRadius(self, evt):
-		self.node.maskradius = evt.GetValue()
+	def onLabelEntry(self, evt):
+		self.node.label = evt.GetValue()
 
 	def onStart(self, evt):
 		self.node.onStartPostProcess()
@@ -99,4 +62,43 @@ class Panel(gui.wx.Node.Panel):
 		self.node.onStopPostProcess()
 		self.bstop.Enable(False)
 		self.bstart.Enable(True)
+
+class SettingsDialog(gui.wx.Settings.Dialog):
+	def initialize(self):
+		gui.wx.Settings.Dialog.initialize(self)
+
+		self.widgets['process'] = wx.CheckBox(self, -1,
+																			'Calculate FFT and save to the database')
+		self.widgets['mask radius'] = FloatEntry(self, -1, min=0.0, chars=6)
+
+		szmaskradius = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Mask radius:')
+		szmaskradius.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szmaskradius.Add(self.widgets['mask radius'], (0, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, '% of image width')
+		szmaskradius.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		sz = wx.GridBagSizer(5, 10)
+		sz.Add(self.widgets['process'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szmaskradius, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		sb = wx.StaticBox(self, -1, 'FFT')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+
+		return sbsz
+
+if __name__ == '__main__':
+	class App(wx.App):
+		def OnInit(self):
+			frame = wx.Frame(None, -1, 'FFT Maker Test')
+			panel = Panel(frame, 'Test')
+			frame.Fit()
+			self.SetTopWindow(frame)
+			frame.Show()
+			return True
+
+	app = App(0)
+	app.MainLoop()
 

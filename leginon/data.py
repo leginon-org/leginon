@@ -1555,6 +1555,14 @@ class DriftManagerSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class FFTMakerSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('process', bool),
+			('mask radius', float),
+		)
+	typemap = classmethod(typemap)
+
 class AcquisitionSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
