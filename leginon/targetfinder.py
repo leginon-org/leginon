@@ -293,6 +293,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.mosaic = mosaic.EMMosaic(self.calclients)
 		initializer = {'id': self.ID(), 'data IDs': []}
 		self.mosaicdata = data.MosaicData(initializer=initializer)
+		self.existing_targets = {}
 
 		if self.__class__ == MosaicClickTargetFinder:
 			self.defineUserInterface()
@@ -393,9 +394,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.setStatusMessage('Finding mosaic images and data')
 		n = len(mosaicdata['data IDs'])
 		nloaded = 0
-		target_coords = []
-		target_coords_done = []
-		self.existing_targets = {}
+		tiles_with_targets = {}
 		for i, dataid in enumerate(mosaicdata['data IDs']):
 			# create an instance model to query
 			inst = data.AcquisitionImageData()
@@ -419,17 +418,24 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 					nloaded += 1
 					# load existing targets for this image
 					targets = self.researchImageTargets(imagedata)
-					# convert targets to mosaic targets
-					for target in targets:
-						coord = self.targetToMosaicCoord(tilepos, target)
-						if target['status'] == 'done':
-							target_coords_done.append(coord)
-						else:
-							target_coords.append(coord)
-							if coord not in self.existing_targets:
-								self.existing_targets[coord] = []
-							self.existing_targets[coord].append(target)
+					if targets:
+						tiles_with_targets[tilepos] = targets
 
+		## now figure out mosaic targets
+		# convert targets to mosaic targets
+		target_coords = []
+		target_coords_done = []
+		self.existing_targets = {}
+		for tilepos, targets in tiles_with_targets.items():
+			for target in targets:
+				coord = self.targetToMosaicCoord(tilepos, target)
+				if target['status'] == 'done':
+					target_coords_done.append(coord)
+				else:
+					target_coords.append(coord)
+					if coord not in self.existing_targets:
+						self.existing_targets[coord] = []
+					self.existing_targets[coord].append(target)
 		self.mosaicdata = mosaicdata
 		self.displayMosaic()
 		self.displayTargets(normal=target_coords, done=target_coords_done)
