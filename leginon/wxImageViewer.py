@@ -52,8 +52,8 @@ class ImagePanel(wxPanel):
 
 	def setImageFromMrcString(self, imagestring):
 		self.clearImage()
-		numimage = Mrc.mrcstr_to_numeric(imagestring)
-		n = NumericImage(numimage)
+		self.image = Mrc.mrcstr_to_numeric(imagestring)
+		n = NumericImage(self.image)
 		n.update_image()
 		wximage = n.wxImage()
 		self.setImage(wximage)
@@ -80,7 +80,8 @@ class ImagePanel(wxPanel):
 		try:
 			viewoffset = self.panel.GetViewStart()
 			xy = (viewoffset[0] + evt.m_x, viewoffset[1] + evt.m_y)
-			rgb = self.image.getpixel(xy)
+			#rgb = self.image.getpixel(xy)
+			rgb = self.image[xy[1], xy[0]]
 			print xy, '=', rgb
 		except:
 			pass
