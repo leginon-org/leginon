@@ -106,9 +106,7 @@ class UIApp(wxApp):
 		return true
 
 	def Fit(self):
-		print 'Fit size =', self.container.wxwidget.GetSize()
-		print 'panel size =', self.panel.GetSize()
-		print 'panel virtual size =', self.panel.GetVirtualSize()
+		pass
 
 class Widget(object):
 	def __init__(self, uiclient, namelist):
@@ -318,7 +316,10 @@ class wxStaticBoxContainerWidget(wxContainerWidget):
 		self.container = container
 
 	def Fit(self):
-		self.wxwidget.FitInside(self.parent)
+		if isinstance(self.parent, wxScrolledWindow):
+			self.wxwidget.FitInside(self.parent)
+		else:
+			self.wxwidget.Fit(self.parent)
 		if self.container is not None:
 			self.container.Fit()
 
@@ -340,11 +341,8 @@ class wxNotebookContainerWidget(wxContainerWidget):
 		self.container = container
 
 	def Fit(self):
-		#self.parent.Fit()
-		self.panel.Fit()
 		if self.container is not None:
 			self.container.Fit()
-		#self.wxwidget.Layout()
 
 	def addWidget(self, namelist, typelist, value, read, write):
 		# needs locking to insure page number, etc.
