@@ -55,8 +55,14 @@ class ManualAcquisition(node.Node):
 	def publishImageData(self, imagedata):
 		acquisitionimagedata = data.AcquisitionImageData(initializer=imagedata)
 		acquisitionimagedata['id'] = self.ID()
+
 		grid = self.gridselect.getSelectedValue()
-		acquisitionimagedata['gridId'] = self.gridmapping[grid]['gridId']
+		gridid = self.gridmapping[grid]['gridId']
+		griddata = data.GridData()
+		griddata['id'] = self.ID()
+		griddata['grid ID'] = gridid
+		acquisitionimagedata['grid'] = griddata
+
 		self.publish(acquisitionimagedata, database=True)
 
 	def acquireImage(self):

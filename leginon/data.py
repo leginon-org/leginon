@@ -622,7 +622,7 @@ class CameraImageData(ImageData):
 	def typemap(cls):
 		t = ImageData.typemap()
 		t += [ ('scope', ScopeEMData), ('camera', CameraEMData), ]
-		t += [('gridId', int)]
+		t += [('grid', GridData)]
 		return t
 	typemap = classmethod(typemap)
 
@@ -779,7 +779,8 @@ class GridData(Data):
 	def typemap(cls):
 		t = Data.typemap()
 		t += [('grid number', int),
-					('grid tray ID', int)]
+					('grid tray ID', int),
+					('grid ID', int)]
 		return t
 	typemap = classmethod(typemap)
 
