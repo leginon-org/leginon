@@ -29,9 +29,6 @@ else:
 			self.hCam = self.theCamera.Initialize(self.camType, 0)
 			self.arraytypecode = 'H'
 
-			self.binnings = [1,2,4,8]
-			self.size = {'x': 2048, 'y': 2048}
-		
 		def __del__(self):
 			self.theCamera.Uninitialize(self.hCam)
 	
@@ -53,21 +50,15 @@ else:
 			return base64.encodestring(result)
 			#return Numeric.array(array.array(self.arraytypecode, result), self.Numerictypecode)
 	
-#		def getImage(self, xOff, yOff, xDim, yDim, xBin, yBin, expTime, type):	
-		def getImage(self, xOff, yOff, xDim, yDim, xBin, yBin, expTime):	
+		def getImage(self, offset, dimension, binning, exposure_time):	
 			# 0 uses internal flash signal
 			# 1 uses internal exposure signal (PVCam and PXL only)
-			shutterMode = 1
-			bytesPerPixel = 2
+			shutter_mode = 1
+			bytes_per_pixel = 2
 	
-			self.theCamera.Format(self.hCam, xOff, yOff, xDim, yDim, xBin, yBin)
-	
-#			if type == "illuminated":
-#				self.theCamera.AcquireImage(self.hCam, expTime, shutterMode, 0)
-#			elif type == "dark":
-#				self.theCamera.AcquireDark(self.hCam, expTime, 0)
-#			else:
-#				raise ValueError
-	
-			return self.mmapImage(bytesPerPixel*xDim*yDim)
+			self.theCamera.Format(self.hCam, offset['x'], offset['y'], \
+														dimension['x'], dimension['y'], \
+														binning['x'], binning['y'])
+			self.theCamera.AcquireImage(self.hCam, exposure_time, shutter_mode, 0)
+			return self.mmapImage(bytes_per_pixel*dimension['x']*dimension['y'])
 		
