@@ -20,9 +20,17 @@ class DataHandler(datahandler.DataBinder):
 	def query(self, id):
 		self.lock.acquire()
 		if self.scope and self.scope.has_key(id):
-			result = self.scope[id]
+			result = data.EMData({id : self.scope[id]})
 		elif self.camera and self.camera.has_key(id):
-		  result = self.camera[id]
+			result = data.EMData({id : self.camera[id]})
+		elif id == 'scope':
+			result = data.EMData({id : self.scope})
+		elif id == 'camera':
+			result = data.EMData({id : self.camera})
+		elif id == 'all':
+			result = data.EMData({})
+			result.content.update(self.scope)
+			result.content.update(self.camera)
 		else:
 			result = None
 		self.lock.release()
