@@ -733,8 +733,9 @@ class Manager(node.Node):
 		return nodelocations
 
 	def uiUpdateApplications(self):
+		self.applicationlaunchmethod.disable()
 		applicationdatalist = self.research(dataclass=data.ApplicationData)
-		applicationnamelist = []
+		applicationnamelist = ['(Select an application)']
 		for applicationdata in applicationdatalist:
 			name = applicationdata['name']
 			if name not in applicationnamelist:
@@ -742,13 +743,17 @@ class Manager(node.Node):
 		applicationnamelist.sort()
 		self.uiapplicationlist.set(applicationnamelist, 0)
 
-	def uiLoadApp(self):
-		'''UI helper for loadApp. See loadApp.'''
-		name = self.uiapplicationlist.getSelectedValue()
-		if name is not None:
-			self.loadApp(name)
-		else:
-			self.messagelog.error('No application selected')
+	def onSelectApplication(self, value):
+		if '(Select an application)' == self.uiapplicationlist.getSelectedValue(0):
+			if value == 0:
+				return value
+			else:
+				self.uiapplicationlist.setList(self.uiapplicationlist.getList()[1:])
+				value -= 1
+				self.applicationlaunchmethod.enable()
+		applicationname = self.uiapplicationlist.getSelectedValue(value)
+		self.loadApp(applicationname)
+		return value
 
 	def uiLaunchApp(self):
 		'''UI helper for launchApp. See launchApp.'''
@@ -785,7 +790,8 @@ class Manager(node.Node):
 			pass
 		if selectors is None:
 			self.have_selectors = False
-			self.uilauncherselectors =  uidata.String('Aliases','Load Application First', 'r')
+			self.uilauncherselectors =  uidata.String('Aliases',
+																								'', 'r')
 		else:
 			self.have_selectors = True
 			self.uilauncherselectors = uidata.Container('Aliases')
@@ -809,7 +815,7 @@ class Manager(node.Node):
 															tooltip='Class of node to be created')
 		self.uilauncherselect.setCallback(self.uiLauncherSelectCallback)
 		launchmethod = uidata.Method('Create', self.uiLaunch,
-																	tooltip='Create a new node')
+																				tooltip='Create a new node')
 		launchobjects = (self.uilaunchname, self.uilauncherselect,
 											self.uiclassselect)
 		self.launchcontainer = uidata.Container('Create New Node')
@@ -867,29 +873,30 @@ class Manager(node.Node):
 
 
 		launchkillcontainer = uidata.Container('Launch / Kill')
-		self.uiapplicationlist = uidata.SingleSelectFromList('Application', [], 0)
-		self.uiUpdateApplications()
-		applicationrefreshmethod = uidata.Method('Refresh', self.uiUpdateApplications)
-		applicationloadmethod = uidata.Method('Load', self.uiLoadApp)
-
+		applicationrefreshmethod = uidata.Method('Refresh',
+																							self.uiUpdateApplications)
 		# this container is filled by the setLauncherSelectors() method
 		self.uilauncheraliascontainer = uidata.Container('Launcher Selection')
 		self.setLauncherSelectors(selectors=None)
 
-		applicationlaunchmethod = uidata.Method('Launch', self.uiLaunchApp)
+		self.applicationlaunchmethod = uidata.Method('Launch', self.uiLaunchApp)
 		applicationkillmethod = uidata.Method('Kill', self.uiKillApp)
+
+		self.uiapplicationlist = uidata.SingleSelectFromList('Application', [], 0)
+		self.uiapplicationlist.setCallback(self.onSelectApplication)
+		self.uiUpdateApplications()
+
 		launchkillcontainer.addObject(self.uiapplicationlist,
 																	position={'position': (0, 0)})
 		launchkillcontainer.addObject(applicationrefreshmethod,
 																	position={'position': (0, 1)})
-		launchkillcontainer.addObject(applicationloadmethod,
-																	position={'position': (1, 1)})
 		launchkillcontainer.addObject(self.uilauncheraliascontainer,
-																	position={'position': (1, 0), 'span': (3, 1)})
-		launchkillcontainer.addObject(applicationlaunchmethod,
-																	position={'position': (2, 1)})
+																	position={'position': (1, 0),
+																						'span': (3, 1), 'expand': 'all'})
+		launchkillcontainer.addObject(self.applicationlaunchmethod,
+																	position={'position': (1, 1)})
 		launchkillcontainer.addObject(applicationkillmethod,
-																	position={'position': (3, 1)})
+																	position={'position': (2, 1)})
 
 		applicationobjects = (
 		 launchkillcontainer,
