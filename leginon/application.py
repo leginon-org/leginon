@@ -131,7 +131,8 @@ class Application(leginonobject.LeginonObject):
 			fromnodeid = self.getNodeIDFromAlias(bs['from node alias'])
 			tonodeid = self.getNodeIDFromAlias(bs['to node alias'])
 		except ValueError:
-			raise ValueError('Invalid binding specification')
+			print 'Invalid binding specification'
+			raise
 		return (eventclass, fromnodeid, tonodeid)
 
 	def launch(self):
