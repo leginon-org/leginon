@@ -51,12 +51,6 @@ class ImageCollector(imagewatcher.ImageWatcher):
 		self.defineUserInterface()
 		self.start()
 
-	def main(self):
-		self.dataqueue.put('foo')
-		self.dataqueue.put('bar')
-		self.dataqueue.put('foobar')
-		self.dataqueue.get()
-
 	def defineUserInterface(self):
 		iwspec = imagewatcher.ImageWatcher.defineUserInterface(self)
 		self.dataqueuetoggle.set(1)

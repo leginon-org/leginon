@@ -823,7 +823,7 @@ class ImageCollector(WidgetWrapper):
 
 	def initializeBindings(self):
 		for nodeid in self.sourceids:
-			self.manager.addEventDistmap(event.CameraImagePublishEvent,
+			self.manager.addEventDistmap(event.AcquisitionImagePublishEvent,
 																	nodeid, self.nodeinfo['imagecollector']['ID'])
 
 class Presets(WidgetWrapper):
@@ -905,7 +905,7 @@ class Target(WidgetWrapper):
 		self.targetid = self.nodeinfo['target']['ID']
 
 	def initializeBindings(self):
-		self.manager.addEventDistmap(event.CameraImagePublishEvent,
+		self.manager.addEventDistmap(event.AcquisitionImagePublishEvent,
 																				self.nodeinfo['acquire']['ID'],
 																				self.nodeinfo['target']['ID'])
 		for nodeid in self.targetsourceids:

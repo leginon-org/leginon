@@ -36,14 +36,18 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'''
 		### should make both target data and preset an option
 
-		print 'PROCESSING', targetdata
+#		print 'PROCESSING', targetdata
 
 		if targetdata is None:
 			newtargetemdata = None
 		else:
 			oldtargetemdata = self.targetToEMData(targetdata)
 			oldpreset = targetdata['preset']
-			newtargetemdata = self.removePreset(oldtargetemdata, oldpreset)
+			if oldpreset is None:
+				# I don't know if this works, but if there is no preset, don't remove
+				newtargetemdata = oldtargetemdata
+			else:
+				newtargetemdata = self.removePreset(oldtargetemdata, oldpreset)
 
 		### do each preset for this acquisition
 		presetnames = self.presetnames.get()
@@ -68,7 +72,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			print 'sleeping 2 sec'
 			time.sleep(2)
 
-			print 'acquire'
+#			print 'acquire'
 			self.acquire(presetdata, trial)
 
 	def targetToEMData(self, targetdata):
@@ -167,7 +171,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if imagedata is None:
 			return
 
-		print 'IMAGEDATA CAMERA', imagedata['camera']
+#		print 'IMAGEDATA CAMERA', imagedata['camera']
 
 		## attach preset to imagedata and create PresetImageData
 		## use same id as original imagedata
@@ -179,9 +183,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.publish(trialimage, eventclass=event.TrialImagePublishEvent, database=False)
 		else:
 			pimagedata = data.AcquisitionImageData(dataid, initializer=imagedata, preset=presetdata)
-			print 'publishing image'
+#			print 'publishing image'
 			self.publish(pimagedata, eventclass=event.AcquisitionImagePublishEvent, database=True)
-		print 'image published'
+#		print 'image published'
 
 	def handleImageClick(self, clickevent):
 		'''

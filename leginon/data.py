@@ -239,13 +239,6 @@ class BrightImageData(CorrectionImageData):
 class NormImageData(CorrectionImageData):
 	pass
 
-class TileImageData(CameraImageData):
-	def typemap(cls):
-		t = CameraImageData.typemap()
-		t += [ ('neighbor_tiles', list), ]
-		return t
-	typemap = classmethod(typemap)
-
 class MosaicImageData(CameraImageData):
 	## scope and camera may not be useful if the mosaic is
 	## mangled too much, maybe something else useful to put
@@ -260,6 +253,13 @@ class PresetImageData(CameraImageData):
 	def typemap(cls):
 		t = CameraImageData.typemap()
 		t += [ ('preset', dict), ]
+		return t
+	typemap = classmethod(typemap)
+
+class TileImageData(PresetImageData):
+	def typemap(cls):
+		t = PresetImageData.typemap()
+		t += [ ('neighbor_tiles', list), ]
 		return t
 	typemap = classmethod(typemap)
 
