@@ -30,14 +30,14 @@ class DBDataKeeper(object):
 			raise DatabaseError(e.args[-1])
 		self.lock = threading.RLock()
 
-	def direct_query(self, dataclass, id):
+	def direct_query(self, dataclass, id, readimages=True):
 		dummy = dataclass()
 		dummy.isRoot = True
 		datainfo = self.datainfo(dummy, dbid=id)
 		queryinfo = datainfo[0]
 		self.lock.acquire()
 		try:
-			result  = self.dbd.multipleQueries(queryinfo)
+			result  = self.dbd.multipleQueries(queryinfo, readimages=readimages)
 			myresult = result.fetchall()
 		finally:
 			self.lock.release()

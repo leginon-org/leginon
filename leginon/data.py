@@ -1216,23 +1216,11 @@ class CorrectorCamstateData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
-class MosaicTargetData(InSessionData):
-	'''
-	this is an alias for an AcquisitionImageTargetData which is used
-	to show a target in a full mosaic image
-	'''
+class GridData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
-			('row', int),
-			('column', int),
-			('target', AcquisitionImageTargetData),
-		)
-	typemap = classmethod(typemap)
-
-class GridData(Data):
-	def typemap(cls):
-		return Data.typemap() + (
 			('grid ID', int),
+			('insertion', int),
 		)
 	typemap = classmethod(typemap)
 

@@ -411,6 +411,13 @@ class RobotControl(RobotNode):
 			self.gridnumber = self.getGridNumber()
 			gridid = self.getGridID(self.gridtrayid, self.gridnumber)
 			initializer = {'grid ID': gridid}
+			querydata = data.GridData(initializer=initializer)
+			griddatalist = self.research(querydata)
+			insertion = 0
+			for griddata in griddatalist:
+				if griddata['insertion'] > insertion:
+					insertion = griddata['insertion']
+			initializer = {'grid ID': gridid, 'insertion': insertion + 1}
 			self.griddata = data.GridData(initializer=initializer)
 		except GridQueueEmpty:
 			raise
