@@ -425,10 +425,10 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			self.setStatusMessage('Not diplaying mosaic image')
 		self.clickimage.setTargets([])
 
-	def mosaicToFile(self):
+	def mosaicToFile(self, filename):
+		if filename is None:
+			return
 		self.setStatusMessage('Saving mosaic image to file')
-		filename = self.uifilename.get()
-		self.setStatusMessage('Creating mosaic image')
 		mosaicnumericarray = self.getMosaicImage()
 		self.setStatusMessage('Mosaic image created')
 		if mosaicnumericarray is not None:
@@ -439,6 +439,13 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			self.setStatusMessage('Mosaic image saved to file')
 		else:
 			self.setStatusMessage('Error saving mosaic image, no mosaic')
+
+	def uiSaveMosaicImage(self):
+		try:
+			self.filecontainer.addObject(uidata.SaveFileDialog(
+																			'Save Mosaic Image', self.mosaicToFile))
+		except ValueError:
+			pass
 
 	def getTargetDataList(self, typename):
 		targetlist = []
@@ -516,16 +523,15 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		publishmosaicmethod = uidata.Method('Publish Mosaic', self.mosaicToDatabase)
 
 
-		self.uifilename = uidata.String('Filename', '', 'rw')
-		saveimagemethod = uidata.Method('Save Image', self.mosaicToFile)
-		filecontainer = uidata.Container('File')
-		filecontainer.addObjects((self.uifilename, saveimagemethod)) 
+		saveimagemethod = uidata.Method('Save Image', self.uiSaveMosaicImage)
+		self.filecontainer = uidata.Container('File')
+		self.filecontainer.addObjects((saveimagemethod,)) 
 
 		clearmethod = uidata.Method('Reset Mosaic', self.mosaicClear)
 
 		controlcontainer = uidata.Container('Control')
 		controlcontainer.addObjects((clearmethod, publishmosaicmethod,
-																	loadcontainer, filecontainer))
+																	loadcontainer, self.filecontainer))
 
 		container = uidata.LargeContainer('Mosaic Click Target Finder')
 		container.addObjects((statuscontainer, settingscontainer, controlcontainer))

@@ -1383,13 +1383,12 @@ class wxTreeSelectWidget(wxContainerWidget):
 
 class wxClickImageWidget(wxContainerWidget):
 	def __init__(self, name, parent, container, value, configuration):
-		wxContainerWidget.__init__(self, name, parent, container, value,
-																configuration)
 		self.condition = threading.Condition()
 		self.sizer = wxBoxSizer(wxVERTICAL)
-		self.clickimage = wxImageViewer.ClickImagePanel(self.parent, -1,
-																											self.foo)
-		self.label = wxStaticText(self.parent, -1, self.name)
+		self.label = wxStaticText(parent, -1, name)
+		self.clickimage = wxImageViewer.ClickImagePanel(parent, -1, self.foo)
+		wxContainerWidget.__init__(self, name, parent, container, value,
+																configuration)
 		self.sizer.Add(self.label, 0, wxALIGN_LEFT | wxALL, 5)
 		self.sizer.Add(self.clickimage, 0, wxALIGN_CENTER | wxALL, 5)
 		self.layout()
@@ -1449,12 +1448,12 @@ class wxClickImageWidget(wxContainerWidget):
 
 class wxTargetImageWidget(wxContainerWidget):
 	def __init__(self, name, parent, container, value, configuration):
+		self.sizer = wxBoxSizer(wxVERTICAL)
+		self.label = wxStaticText(parent, -1, name)
+		self.targetimage = wxImageViewer.TargetImagePanel(parent, -1,
+																											self.targetCallback)
 		wxContainerWidget.__init__(self, name, parent, container, value,
 																configuration)
-		self.sizer = wxBoxSizer(wxVERTICAL)
-		self.targetimage = wxImageViewer.TargetImagePanel(self.parent, -1,
-																											self.targetCallback)
-		self.label = wxStaticText(self.parent, -1, self.name)
 		self.sizer.Add(self.label, 0, wxALIGN_LEFT | wxALL, 5)
 		self.sizer.Add(self.targetimage, 0, wxALIGN_CENTER | wxALL, 5)
 		self.layout()
