@@ -10,6 +10,7 @@ import calibrationclient
 import Numeric
 import time
 import threading
+import presets
 
 class DriftManager(watcher.Watcher):
 	eventinputs = watcher.Watcher.eventinputs + [event.DriftDetectedEvent, event.AcquisitionImagePublishEvent, event.NeedTargetShiftEvent]
@@ -22,6 +23,7 @@ class DriftManager(watcher.Watcher):
 		self.peakfinder = peakfinder.PeakFinder()
 		self.cam = camerafuncs.CameraFuncs(self)
 		self.pixsizeclient = calibrationclient.PixelSizeCalibrationClient(self)
+		self.presetsclient = presets.PresetsClient(self)
 		self.addEventInput(event.NeedTargetShiftEvent, self.handleNeedShift)
 
 		self.references = {}
@@ -43,6 +45,12 @@ class DriftManager(watcher.Watcher):
 		self.confirmEvent(ev)
 
 	def calcShift(self, im):
+		## go through preset manager to ensure we follow the right
+		## cycle
+		pname = im['preset']['name']
+		print 'PNAME', pname
+		self.presetsclient.toScope(pname)
+
 		## set the original state of the images
 		emdata = im['scope']
 		camdata = im['camera']
@@ -51,6 +59,13 @@ class DriftManager(watcher.Watcher):
 
 		## acquire new image
 		newim = self.acquireImage()
+
+		print 'OLD IMAGE'
+		print '  image shift: ', im['scope']['image shift']
+		print '  stage position: ', im['scope']['stage position']
+		print 'NEW IMAGE'
+		print '  image shift: ', newim['scope']['image shift']
+		print '  stage position: ', newim['scope']['stage position']
 
 		## do correlation
 		self.correlator.insertImage(im['image'])
@@ -133,6 +148,7 @@ class DriftManager(watcher.Watcher):
 		t0 = imagedata['scope']['system time']
 		self.correlator.insertImage(numdata)
 		pixsize = self.pixsizeclient.retrievePixelSize(mag)
+		print 'PIXSIZE AT %sx is %s' % (mag, pixsize)
 
 		## ensure that loop executes once
 		current_drift = self.threshold.get() + 1.0
@@ -151,13 +167,14 @@ class DriftManager(watcher.Watcher):
 			peak = self.peakfinder.subpixelPeak(newimage=pc)
 			rows,cols = self.peak2shift(peak, pc.shape)
 			dist = Numeric.hypot(rows,cols)
+			print 'DRIFT PIXELS', dist
 
 			## calculate drift 
 			meters = dist * pixsize
 			# rely on system time of EM node
 			seconds = t1 - t0
 			current_drift = meters / seconds
-			print 'Drift Rate:  %.4e' % (current_drift,)
+			print 'DRIFT RATE:  %.4e' % (current_drift,)
 			self.driftvalue.set(current_drift)
 
 			## t0 becomes t1 and t1 will be reset for next image
