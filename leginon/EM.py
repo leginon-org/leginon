@@ -385,6 +385,9 @@ class EM(node.Node):
 			self.scopemessagelog.error('Cannot set scope to type ' + str(scopename))
 
 	def setCameraType(self, cameraname):
+		camerainfo = emregistry.getCameraInfo(cameraname)
+		if camerainfo is None:
+			raise RuntimeError('EM node unable to get camera info')
 		modulename, classname, d = emregistry.getCameraInfo(cameraname)
 		try:
 			cameraclass = self.getClass(modulename, classname)
