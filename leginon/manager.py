@@ -372,7 +372,7 @@ if __name__ == '__main__':
 		import nodegui
 		import Tkinter
 		tk = Tkinter.Tk()
-		mgui = nodegui2.NodeGUI(tk, node=m)
+		mgui = nodegui.NodeGUI(tk, node=m)
 		#tk.wm_title('Leginon Manager')
 		mgui.pack()
 #		t = threading.Thread(name = 'Tk GUI thread', target = tk.mainloop)
