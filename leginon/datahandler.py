@@ -79,8 +79,12 @@ class ShelveDataKeeper(DataHandler):
 			if filename == None:
 				raise IOError
 		self.filename = path + '/' + filename
-		self.shelf = shelve.open(self.filename)
-		self.shelflock = threading.Lock()
+		try:
+			self.shelf = shelve.open(self.filename)
+			self.shelflock = threading.Lock()
+		except:
+			print 'exception trying to open %s' % (self.filename,)
+			raise
 
 	def exit(self):
 		os.remove(self.filename)
@@ -135,7 +139,11 @@ class CachedDictDataKeeper(DataHandler):
 			if filename == None:
 				raise IOError
 		self.filename = path + '/' + filename
-		self.shelf = shelve.open(self.filename)
+		try:
+			self.shelf = shelve.open(self.filename)
+		except:
+			print 'exception trying to open %s' % (self.filename,)
+			raise
 		self.age = age
 		self.timeout = timeout
 		self.timer = threading.Timer(self.timeout, self.writeoutcache)

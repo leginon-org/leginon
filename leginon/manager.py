@@ -70,8 +70,10 @@ class Manager(node.Node):
 				self.outputEvent(ievent, 0, nodeid)
 
 	def addLauncher(self, nodeid):
-		self.launcherlist.append(nodeid[-1])
-		self.launcherdict[nodeid[-1]] = nodeid
+		name = nodeid[-1]
+		if name not in self.launcherlist:
+			self.launcherlist.append(name)
+		self.launcherdict[name] = nodeid
 
 	def delLauncher(self, nodeid):
 		try:

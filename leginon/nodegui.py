@@ -57,7 +57,7 @@ class NodeGUIArg(Frame):
 		Entry(self, textvariable=self.tkvar, width=10).pack(side=LEFT)
 
 	def arg_float(self, name):
-		self.tkvar = FloatVar()
+		self.tkvar = DoubleVar()
 		Label(self, text=name).pack(side=LEFT)
 		Entry(self, textvariable=self.tkvar, width=10).pack(side=LEFT)
 
@@ -82,7 +82,7 @@ class NodeGUIArg(Frame):
 class NodeGUIComponent(Frame):
 	def __init__(self, parent, clientcomponent):
 		Frame.__init__(self, parent)
-		self['bd'] = 4
+		self['bd'] = 3
 		self['relief'] = SOLID
 		self.client = clientcomponent
 		self.args = {}
@@ -95,6 +95,7 @@ class NodeGUIComponent(Frame):
 		for argname in self.client.argnames():
 			argtype = self.client.argtype(argname)
 			argvalue = self.client.argvaluesdict[argname]
+			print 'ARGVALUE: %s' % (argvalue,)
 			argalias = self.client.argaliasdict[argname]
 			a = NodeGUIArg(self, argname, argalias, argtype, argvalue)
 			a.pack()
@@ -127,8 +128,10 @@ class NodeGUI(Frame):
 		self.__build()
 
 	def __build(self):
-		b=Button(self, text='Refresh', command=self.__build_components)
+		f = Frame(self, bd=4, relief=SOLID)
+		b=Button(f, text='Refresh', command=self.__build_components)
 		b.pack(side=TOP)
+		f.pack(side=TOP, expand=YES, fill=BOTH)
 		self.__build_components()
 
 	def __build_components(self):

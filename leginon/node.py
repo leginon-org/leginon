@@ -9,6 +9,10 @@ import sys
 import copy
 import time
 
+### False is not defined in early python 2.2
+False = 0
+True = 1
+
 if sys.platform == 'win32':
 	sys.coinit_flags = 0
 
@@ -75,8 +79,14 @@ class Node(leginonobject.LeginonObject):
 		self.addEventInput(event.KillEvent, self.die)
 		self.addEventInput(event.ConfirmationEvent, self.registerConfirmedEvent)
 		if self.managerloc:
-			print 'adding manager'
-			self.addManager(self.managerloc)
+			print 'adding manager, %s' % self.managerloc
+			try:
+				self.addManager(self.managerloc)
+			except:
+				print 'exception in addManager'
+				raise
+			else:
+				print 'no exception'
 
 	def exit(self):
 		self.outputEvent(event.NodeUnavailableEvent(self.ID()))
@@ -113,6 +123,7 @@ class Node(leginonobject.LeginonObject):
 		self.uiserver.registerFunction(func, argspec, alias)
 
 	def addManager(self, loc):
+		print 'addEventClient...'
 		self.addEventClient(('manager',), loc)
 		print "self.clients =", self.clients
 		newid = self.ID()

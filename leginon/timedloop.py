@@ -102,6 +102,7 @@ class TimedLoop(node.Node):
 ### an example of subclassing TimedLoop
 import Numeric
 import data
+import time
 
 class TestLoop(TimedLoop):
 	"""
@@ -113,6 +114,7 @@ class TestLoop(TimedLoop):
 	def __init__(self, id, managerlocation=None):
 		TimedLoop.__init__(self, id, managerlocation)
 		print 'TestLoop %s started' % (self.id,)
+		print 'TestLoop location %s' % (self.location(),)
 
 	def action(self):
 		"""
@@ -121,8 +123,10 @@ class TestLoop(TimedLoop):
 		size = 5
 		a = Numeric.arrayrange(size * size)
 		a = Numeric.reshape(a, (size,size)) 
+		a[0,0] = time.time()
 		adata = data.NumericData(self.ID(), a)
-		print 'publishing', adata
+		print 'publishing:'
+		print a
 		self.publish(adata, event.PublishEvent)
 
 	def defineUserInterface(self):
@@ -131,8 +135,9 @@ class TestLoop(TimedLoop):
 		self.registerUIFunction(self.myStart, (), alias='Start')
 		self.registerUIFunction(self.myStop, (), alias='Stop')
 		argspec = (
-			{'name':'new_interval','alias':'Interval','type':'integer'},
+			{'name':'new_interval','alias':'Interval','type':'float','default':self.interval},
 			)
+		print 'ARGSPEC', argspec
 		self.registerUIFunction(self.myChange, argspec, alias='Change')
 
 	def myStart(self):

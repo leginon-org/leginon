@@ -3,6 +3,10 @@
 import leginonobject
 import data
 
+### False is not defined in early python 2.2
+False = 0
+True = 1
+
 def eventClasses():
 	"""
 	returns a dict:   {name: class_object, ...}

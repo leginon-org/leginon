@@ -42,7 +42,7 @@ class Watcher(node.Node):
 		if havelock:
 			self.lock.release()
 
-	def getData(self, publishevent):
+	def getData(self, pubevent):
 		dataid = pubevent.content
 		newdata = self.researchByDataID(dataid)
 		return newdata
@@ -57,7 +57,9 @@ class TestWatch(Watcher):
 	def __init__(self, id, managerlocation):
 		watchfor = event.PublishEvent
 		lockblocking = 0
-		Watcher._init__(self, id, managerlocation, watchfor, lockblocking)
+		Watcher.__init__(self, id, managerlocation, watchfor, lockblocking)
 
 	def processData(self, newdata):
-		print 'processing newdata %s' % newdata
+		numarray = newdata.content
+		print 'processing newdata:'
+		print numarray
