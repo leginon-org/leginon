@@ -114,25 +114,6 @@ class Navigator(node.Node):
 		container.addUIObjects((settingscontainer, controlcontainer))
 		self.uiserver.addUIObject(container)
 
-#		nodeui = node.Node.defineUserInterface(self)
-#
-#		movetypes = self.calclients.keys()
-#		temparam = self.registerUIData('temparam', 'array', default=movetypes)
-#		self.movetype = self.registerUIData('TEM Parameter', 'string', choices=temparam, permissions='rw', default='image shift')
-#
-#		self.delaydata = self.registerUIData('Delay (sec)', 'float', default=2.5, permissions='rw')
-#
-#		acqtypes = self.registerUIData('acqtypes', 'array', default=('raw', 'corrected'))
-#		self.acqtype = self.registerUIData('Acquisition Type', 'string', default='raw', permissions='rw', choices=acqtypes)
-#
-#		prefs = self.registerUIContainer('Preferences', (self.movetype, self.delaydata, self.acqtype))
-#
-#		camspec = self.cam.configUIData()
-#
-#		myui = self.registerUISpec('Navigator', (prefs, camspec))
-#		myui += nodeui
-#		return myui
-
 class SimpleNavigator(Navigator):
 	def __init__(self, id, session, nodelocations, **kwargs):
 		Navigator.__init__(self, id, session, nodelocations, **kwargs)

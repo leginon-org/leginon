@@ -23,6 +23,7 @@ def mkdirs(newdir, mode=0777):
 LAUNCHERS = [
 	'tecnai2',
 	'defcon1',
+	'amilab2',
 ]
 
 #########################

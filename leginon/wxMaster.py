@@ -5,6 +5,7 @@ wxOGLInitialize()
 
 class MasterMixIn(object):
 	def __init__(self, master):
+		self.master = None
 		self._setMaster(master)
 
 	def setMaster(self, master):
@@ -18,6 +19,7 @@ class MasterMixIn(object):
 
 class ApplicationMixIn(object):
 	def __init__(self, application=None):
+		self.application = None
 		self.setApplication(application)
 
 	def setApplication(self, application):
@@ -31,6 +33,7 @@ class ApplicationMixIn(object):
 
 class LauncherMixIn(object):
 	def __init__(self, launcher=None):
+		self.launcher = None
 		self._setLauncher(launcher)
 
 	def _setLauncher(self, launcher):
@@ -126,7 +129,9 @@ class Binding(MasterMixIn):
 		return self.tonode
 
 class Node(MasterMixIn, ApplicationMixIn, LauncherMixIn):
-	def __init__(self, master, application=None, launcher=None, nodeclass=None):
+	def __init__(self, master, name, application=None, launcher=None,
+																											nodeclass=None):
+		self.name = name
 		MasterMixIn.__init__(self, master)
 		ApplicationMixIn.__init__(self, application)
 		LauncherMixIn.__init__(self, launcher)
@@ -136,6 +141,9 @@ class Node(MasterMixIn, ApplicationMixIn, LauncherMixIn):
 #		self.eventinputs = []
 		self.bindingoutputs = []
 		self.bindinginputs = []
+
+	def getName(self):
+		return self.name
 
 	def setMaster(self, master):
 		MasterMixIn.setMaster(self, master)
@@ -148,7 +156,7 @@ class Node(MasterMixIn, ApplicationMixIn, LauncherMixIn):
 		if self.application is not None:
 			self.application._addNode(self)
 
-	def _setNodeClass(self):
+	def _setNodeClass(self, nodeclass):
 		self.nodeclass = nodeclass
 
 	def getNodeClass(self):
@@ -189,10 +197,14 @@ class Node(MasterMixIn, ApplicationMixIn, LauncherMixIn):
 			self.application._addNode(self)
 
 class Launcher(MasterMixIn, ApplicationMixIn, NodesMixIn):
-	def __init__(self, master, application=None):
+	def __init__(self, master, name, application=None):
+		self.name = name
 		MasterMixIn.__init__(self, master)
 		ApplicationMixIn.__init__(self, application)
 		NodesMixIn.__init__(self)
+
+	def getName(self):
+		return self.name
 
 	def setMaster(self, master):
 		MasterMixIn.setMaster(self, master)
@@ -241,10 +253,78 @@ class Master(NodesMixIn, LaunchersMixIn, ApplicationsMixIn):
 		# not implemented
 #		self.bindings = []
 
+class ShapeEvtHandler(wxShapeEvtHandler):
+	def OnLeftClick(self, x, y, keys = 0, attachment = 0):
+		shape = self.GetShape()
+		canvas = shape.GetCanvas()
+		dc = wxClientDC(canvas)
+		canvas.PrepareDC(dc)
+
+		if shape.Selected():
+			shape.Select(False, dc)
+			canvas.Redraw(dc)
+		else:
+			redraw = False
+			shapeList = canvas.GetDiagram().GetShapeList()
+			toUnselect = []
+			for s in shapeList:
+				if s.Selected():
+					# If we unselect it now then some of the objects in
+					# shapeList will become invalid (the control points are
+					# shapes too!) and bad things will happen...
+					toUnselect.append(s)
+
+			shape.Select(True, dc)
+
+			if toUnselect:
+				for s in toUnselect:
+					s.Select(False, dc)
+				canvas.Redraw(dc)
+
+	def OnEndDragLeft(self, x, y, keys = 0, attachment = 0):
+		shape = self.GetShape()
+		self.base_OnEndDragLeft(x, y, keys, attachment)
+		if not shape.Selected():
+			self.OnLeftClick(x, y, keys, attachment)
+
+class wxNode(wxRectangleShape):
+	def __init__(self, node):
+		self.node = node
+		wxRectangleShape.__init__(self, 100, 50)
+
+		evthandler = ShapeEvtHandler()
+		evthandler.SetShape(self)
+		evthandler.SetPreviousHandler(self.GetEventHandler())
+		self.SetEventHandler(evthandler)
+
+	def getName(self):
+		return self.node.getName()
+
+class wxLauncher(wxRectangleShape):
+	def __init__(self, launcher):
+		self.launcher = launcher
+		wxRectangleShape.__init__(self, 200, 100)
+
+		evthandler = ShapeEvtHandler()
+		evthandler.SetShape(self)
+		evthandler.SetPreviousHandler(self.GetEventHandler())
+		self.SetEventHandler(evthandler)
+
+	def getName(self):
+		return self.launcher.getName()
+
 class wxApplication(wxRectangleShape):
 	def __init__(self, application):
 		self.application = application
-		wxRectangleShape.__init__(self, 100, 50)
+		wxRectangleShape.__init__(self, 400, 200)
+
+		evthandler = ShapeEvtHandler()
+		evthandler.SetShape(self)
+		evthandler.SetPreviousHandler(self.GetEventHandler())
+		self.SetEventHandler(evthandler)
+
+	def getName(self):
+		return self.application.getName()
 
 class wxMaster(wxShapeCanvas):
 	def __init__(self, parent, frame):
@@ -279,8 +359,11 @@ class wxMaster(wxShapeCanvas):
 #			# for some reason, the shapes have to be moved for the line to show up...
 #			fromShape.Move(dc, fromShape.GetX(), fromShape.GetY())
 
-	def addApplication(self, application):
-		self.MasterAddShape(application, 100, 100, wxBLACK_PEN, wxWHITE_BRUSH, application.application.getName())
+	def addShape(self, shape):
+		self.MasterAddShape(shape, 300, 300, wxBLACK_PEN, wxWHITE_BRUSH,
+												shape.getName())
+
+	def addBinding(self, binding):
 
 	def MasterAddShape(self, shape, x, y, pen, brush, text):
 		shape.SetDraggable(True, True)
@@ -316,6 +399,8 @@ if __name__ == '__main__':
 			return true
 
 	app = MyApp(0)
-	app.master.addApplication(wxApplication(Application(app.master, 'App 1')))
+	app.master.addShape(wxApplication(Application(app.master, 'App 1')))
+	app.master.addShape(wxLauncher(Launcher(app.master, 'Launcher 1')))
+	app.master.addShape(wxNode(Node(app.master, 'Node 1')))
 	app.MainLoop()
 
