@@ -17,7 +17,7 @@ import event
 import importexport
 import leginonconfig
 import launcher
-import setupdialog
+import setupwizard
 import node
 import threading
 import uiserver
@@ -145,7 +145,7 @@ class Manager(node.Node):
 		self.launcherdict = {}
 		#self.managersetup = managersetup.ManagerSetup(self)
 		# will move, I promise
-		setup = setupdialog.SetupWizard(self.frame, self.research, self.publish)
+		setup = setupwizard.SetupWizard(self.frame, self.research, self.publish)
 
 		# handle better
 		if setup.session is None:
