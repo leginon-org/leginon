@@ -89,7 +89,7 @@ if __name__ == '__main__':
 	import time
 
 	print 'Launcher initializing...',
-	hostname = socket.gethostname()
+	hostname = socket.gethostname().lower()
 	launcherid = (hostname,)
 
 	managerlocation = {}
