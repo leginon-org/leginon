@@ -199,7 +199,7 @@ if sys.platform == 'win32':
 			self.setScopeStatusMessage('No holder currently inserted')
 
 		def holderInScope(self):
-			self.setScopeStatusMessage('Verifying there is no holder inserted')
+			self.setScopeStatusMessage('Verifying holder is inserted')
 			self.waitScope('holder status', 'inserted')
 			self.setScopeStatusMessage('No holder currently inserted')
 

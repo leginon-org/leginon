@@ -48,7 +48,7 @@ class Webcam(node.Node):
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
 
-		self.continuous = uidata.Boolean('Continous', False, 'rw')
+		self.continuous = uidata.Boolean('Continuous', False, 'rw')
 		self.acquiremethod = uidata.Method('Acquire', self.uiAcquire)
 		self.stopmethod = uidata.Method('Stop', self.uiStop)
 
