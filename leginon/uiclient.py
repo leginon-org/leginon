@@ -743,7 +743,7 @@ class wxListBoxWidget(wxDataWidget):
 
 		self.set(value)
 
-		self.sizer.Add(self.label, 0)
+		self.sizer.Add(self.label, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
 		self.sizer.Add(self.listbox, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
 		self.layout()
 
@@ -936,9 +936,11 @@ class wxComboBoxWidget(wxContainerWidget):
 			self.combobox.Enable(true)
 		else:
 			self.combobox.Enable(false)
+
 		self.combobox.SetSize(self.combobox.GetBestSize())
-		width, height = self.combobox.GetSizeTuple()
+		width, height = self.combobox.GetSize()
 		self.sizer.SetItemMinSize(self.combobox, width, height)
+		self.layout()
 
 	def setSelected(self, value):
 		self.value['Selected'] = value
