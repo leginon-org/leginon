@@ -65,16 +65,21 @@ class MosaicTargetMaker(TargetMaker):
 		self.logger.info('Getting current EM state...')
 		try:
 			scope = self.emclient.getScope()
+		except EM.ScopeUnavailable:
+			self.logger.error('Error publishing targets, cannot access microscope')
+			return
+		try:
 			camera = self.emclient.getCamera()
-		except node.ResearchError:
-			self.logger.info('Error publishing targets, cannot find EM')
+		except EM.CameraUnavailable:
+			self.logger.error('Error publishing targets, cannot access camera')
 			return
 		alpha = scope['stage position']['a']
+		alpha = scope['stage position']['a']
 		alphadeg = alpha * 180.0 / 3.14159
-		self.logger.info('using current alpha tilt in targets: %.2f deg' % (alphadeg,))
+		self.logger.info('Using current alpha tilt in targets: %.2f deg' % (alphadeg,))
 		presetname = self.settings['preset']
-		if presetname is None:
-			self.logger.info('Error publishing targets, no preset selected')
+		if not presetname:
+			self.logger.error('Error publishing targets, no preset selected')
 			return
 
 		self.logger.info('Finding preset "%s"' % presetname)
@@ -82,7 +87,7 @@ class MosaicTargetMaker(TargetMaker):
 
 		if preset is None:
 			message = 'Error publishing tagets, cannot find preset "%s"' % presetname
-			self.logger.info(message)
+			self.logger.error(message)
 			return
 
 		self.logger.info('Updating target settings')

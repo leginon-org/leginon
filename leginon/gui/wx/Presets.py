@@ -13,17 +13,11 @@ PresetOrderChangedEventType = wx.NewEventType()
 PresetChoiceEventType = wx.NewEventType()
 PresetsChangedEventType = wx.NewEventType()
 NewPresetEventType = wx.NewEventType()
-SetDoseValueEventType = wx.NewEventType()
-SetParametersEventType = wx.NewEventType()
-SetCalibrationsEventType = wx.NewEventType()
 
 EVT_PRESET_ORDER_CHANGED = wx.PyEventBinder(PresetOrderChangedEventType)
 EVT_PRESET_CHOICE = wx.PyEventBinder(PresetChoiceEventType)
 EVT_PRESETS_CHANGED = wx.PyEventBinder(PresetsChangedEventType)
 EVT_NEW_PRESET = wx.PyEventBinder(NewPresetEventType)
-EVT_SET_DOSE_VALUE = wx.PyEventBinder(SetDoseValueEventType)
-EVT_SET_PARAMETERS = wx.PyEventBinder(SetParametersEventType)
-EVT_SET_CALIBRATIONS = wx.PyEventBinder(SetCalibrationsEventType)
 
 class PresetOrderChangedEvent(wx.PyCommandEvent):
 	def __init__(self, presets, source):
@@ -49,24 +43,6 @@ class NewPresetEvent(wx.PyEvent):
 	def __init__(self):
 		wx.PyEvent.__init__(self)
 		self.SetEventType(NewPresetEventType)
-
-class SetDoseValueEvent(wx.PyEvent):
-	def __init__(self, dosestring):
-		wx.PyEvent.__init__(self)
-		self.SetEventType(SetDoseValueEventType)
-		self.dosestring = dosestring
-
-class SetParametersEvent(wx.PyCommandEvent):
-	def __init__(self, parameters, source):
-		wx.PyCommandEvent.__init__(self, SetParametersEventType, source.GetId())
-		self.SetEventObject(source)
-		self.parameters = parameters
-
-class SetCalibrationsEvent(wx.PyCommandEvent):
-	def __init__(self, times, source):
-		wx.PyCommandEvent.__init__(self, SetCalibrationsEventType, source.GetId())
-		self.SetEventObject(source)
-		self.times = times
 
 class PresetChoice(wx.Choice):
 	def __init__(self, *args, **kwargs):

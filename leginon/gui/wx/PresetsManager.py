@@ -6,6 +6,32 @@ import gui.wx.Node
 import gui.wx.Presets
 import gui.wx.Settings
 
+SetParametersEventType = wx.NewEventType()
+SetDoseValueEventType = wx.NewEventType()
+SetCalibrationsEventType = wx.NewEventType()
+
+EVT_SET_DOSE_VALUE = wx.PyEventBinder(SetDoseValueEventType)
+EVT_SET_CALIBRATIONS = wx.PyEventBinder(SetCalibrationsEventType)
+EVT_SET_PARAMETERS = wx.PyEventBinder(SetParametersEventType)
+
+class SetParametersEvent(wx.PyCommandEvent):
+	def __init__(self, parameters, source):
+		wx.PyCommandEvent.__init__(self, SetParametersEventType, source.GetId())
+		self.SetEventObject(source)
+		self.parameters = parameters
+
+class SetDoseValueEvent(wx.PyEvent):
+	def __init__(self, dosestring):
+		wx.PyEvent.__init__(self)
+		self.SetEventType(SetDoseValueEventType)
+		self.dosestring = dosestring
+
+class SetCalibrationsEvent(wx.PyCommandEvent):
+	def __init__(self, times, source):
+		wx.PyCommandEvent.__init__(self, SetCalibrationsEventType, source.GetId())
+		self.SetEventObject(source)
+		self.times = times
+
 class Panel(gui.wx.Node.Panel):
 	icon = 'presets'
 	def __init__(self, parent, name):
@@ -180,8 +206,9 @@ class Panel(gui.wx.Node.Panel):
 		self.Bind(wx.EVT_BUTTON, self.onNew, self.bnew)
 		self.Bind(gui.wx.Presets.EVT_PRESET_ORDER_CHANGED, self.onCycleOrderChanged,
 							self.cycleorder)
-		self.Bind(gui.wx.Presets.EVT_SET_PARAMETERS, self.onSetParameters)
-		self.Bind(gui.wx.Presets.EVT_SET_CALIBRATIONS, self.onSetCalibrations)
+		self.Bind(EVT_SET_PARAMETERS, self.onSetParameters)
+		self.Bind(EVT_SET_CALIBRATIONS, self.onSetCalibrations)
+		self.Bind(EVT_SET_DOSE_VALUE, self.onSetDoseValue)
 
 	def onNodeInitialized(self):
 		self.cpcamconfig.setSize(self.node.session)
