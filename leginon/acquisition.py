@@ -373,17 +373,16 @@ class Acquisition(targetwatcher.TargetWatcher):
 		publish image data, display it, then wait for something to 
 		process it
 		'''
-		## set up to handle done events
-		dataid = imagedata.dmid
-		self.doneevents[dataid] = {}
-		self.doneevents[dataid]['received'] = threading.Event()
-		self.doneevents[dataid]['status'] = 'waiting'
-
 		## set the 'filename' value
 		self.setImageFilename(imagedata)
 
 		self.reportStatus('output', 'Publishing image...')
 		self.publish(imagedata, pubevent=True, database=self.databaseflag.get())
+		## set up to handle done events
+		dataid = imagedata.dbid
+		self.doneevents[dataid] = {}
+		self.doneevents[dataid]['received'] = threading.Event()
+		self.doneevents[dataid]['status'] = 'waiting'
 		self.reportStatus('output', 'Image published')
 		if self.displayimageflag.get():
 			self.reportStatus('output', 'Displaying image...')

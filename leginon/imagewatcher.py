@@ -29,7 +29,7 @@ class ImageWatcher(watcher.Watcher):
 
 	def publishImageProcessDone(self, imageid=None, status='ok'):
 		if imageid is None:
-			imageid = self.currentimagedata.dmid
+			imageid = self.currentimagedata.dbid
 		initializer = {'imageid': imageid, 'status': status}
 		oevent = event.ImageProcessDoneEvent(initializer=initializer)
 		self.outputEvent(oevent)
