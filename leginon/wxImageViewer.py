@@ -212,7 +212,11 @@ class ZoomTool(ImageTool):
 
 	def updateLabel(self):
 		xscale, yscale = self.imagepanel.getScale()
-		self.label.SetLabel('Zoom: ' + str(xscale) + 'x')
+		if xscale < 1.0:
+			zoomstring = 'Zoom: 1/' + str(int(1/xscale)) + 'x'
+		else:
+			zoomstring = 'Zoom: ' + str(int(xscale)) + 'x'
+		self.label.SetLabel(zoomstring)
 		width, height = self.label.GetSizeTuple()
 		self.sizer.SetItemMinSize(self.label, width, height)
 		self.sizer.Layout()
