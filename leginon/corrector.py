@@ -9,7 +9,7 @@
 #
 
 import camerafuncs
-import copy
+import extendedcopy as copy
 import data
 import datatransport
 import event

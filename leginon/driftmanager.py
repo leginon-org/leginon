@@ -19,7 +19,7 @@ import Numeric
 import time
 import threading
 import presets
-import copy
+import extendedcopy as copy
 
 class DriftManager(watcher.Watcher):
 	eventinputs = watcher.Watcher.eventinputs + [event.DriftDetectedEvent, event.AcquisitionImagePublishEvent, event.NeedTargetShiftEvent]

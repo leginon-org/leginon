@@ -16,7 +16,7 @@ import data, event
 import calibrationclient
 import camerafuncs
 import presets
-import copy
+import extendedcopy as copy
 import threading
 import uidata
 from node import ResearchError
@@ -271,7 +271,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 	def retrieveImagesFromDB(self):
 		imagequery = data.AcquisitionImageData()
 		imagequery['session'] = self.session
-		imagequery['label'] = str(self.id)
+		#imagequery['label'] = str(self.id)
+		imagequery['label'] = self.id[-1]
 		## don't read images because we only need the id
 		images = self.research(datainstance=imagequery, fill=False, readimages=False)
 		imageids = [repr(x['id']) for x in images]

@@ -8,7 +8,6 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-#import copy
 #import socket
 #import threading
 
@@ -41,8 +40,6 @@ class Client(object):
 
 	def _push(self, idata):
 		try:
-			#idatacopy = copy.deepcopy(idata)
-			#return self.serverobjectserver.datahandler.insert(idatacopy)
 			return self.serverobject.datahandler.insert(idata)
 		except:
 			raise IOError('Local transport client unable to insert data')
@@ -52,7 +49,6 @@ class Client(object):
 
 	def _pull(self, id):
 		try:
-			#obj = copy.deepcopy(server.datahandler.query(id))
 			return self.serverobject.datahandler.query(id)
 		except:
 			raise IOError('Local transport client unable to query id')

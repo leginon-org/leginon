@@ -6,7 +6,6 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-#import copy
 import data
 import Queue
 import strictdict
@@ -88,7 +87,6 @@ class SizedDataKeeper(DictDataKeeper):
 
 		try:
 			self.size += newdata.size()
-			#self.datadict[newdata['id']] = copy.deepcopy(newdata)
 			self.datadict[newdata['id']] = newdata
 			self.clean()
 		finally:

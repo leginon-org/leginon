@@ -8,7 +8,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import copy
+import extendedcopy as copy
 import data
 import strictdict
 

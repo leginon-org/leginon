@@ -147,7 +147,7 @@ OR
 
 
 import sqlexpr
-import copy
+import extendedcopy as copy
 import sqldb
 import string
 import re

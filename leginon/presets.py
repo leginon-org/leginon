@@ -11,7 +11,7 @@ import data
 import datatransport
 import event
 import dbdatakeeper
-import copy
+import extendedcopy as copy
 import uidata
 import camerafuncs
 import threading

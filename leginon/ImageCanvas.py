@@ -11,7 +11,7 @@
 from Tkinter import *
 from NumericImage import *
 import time
-import copy
+import extendedcopy as copy
 import threading
 
 class ImageCanvas(Frame):
