@@ -32,8 +32,8 @@ class NotificationEvent(Event):
 
 class NodeAvailableEvent(NotificationEvent):
 	'Event sent by a node to the manager to indicate that it is accessible'
-	def __init__(self, id):
-		NotificationEvent.__init__(self, id, content=None)
+	def __init__(self, id, nodelocation):
+		NotificationEvent.__init__(self, id, nodelocation)
 
 class LauncherAvailableEvent(NodeAvailableEvent):
 	'Event sent by a launcher to the manager to indicate that it is accessible'
