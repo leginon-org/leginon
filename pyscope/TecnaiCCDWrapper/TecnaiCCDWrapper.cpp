@@ -1,0 +1,77 @@
+#include <Python.h>
+#include <numarray/libnumarray.h>
+
+#define _WIN32_DCOM
+#include <atlbase.h>
+
+#import "tecnaiccd.dll" no_namespace
+
+static PyObject *acquire(PyObject *self, PyObject *args) {
+	PyArrayObject *result;
+	NumarrayType type;
+	int *dims;
+
+	HRESULT hr;
+	CComPtr<IGatanCamera> pCamera;
+	SAFEARRAY *psaImage = NULL;
+	_variant_t vTemp;
+	void HUGEP *pbuffer = NULL;
+	VARTYPE vartype;
+
+	if (FAILED(CoInitializeEx(NULL, COINIT_MULTITHREADED)))
+		return NULL;
+
+	hr = pCamera.CoCreateInstance(&(OLESTR("TecnaiCCD.GatanCamera")));
+	if (FAILED(hr))
+		return NULL;
+
+	vTemp = pCamera->AcquireRawImage();
+
+	if (!(vTemp.vt & VT_ARRAY))
+		return NULL;
+	psaImage = vTemp.parray;
+
+	hr = SafeArrayAccessData(psaImage, (void HUGEP* FAR*)&pbuffer);
+	if (FAILED(hr))
+		return NULL;
+
+	SafeArrayGetVartype(psaImage, &vartype);
+
+	switch(vartype) {
+		case VT_I2:
+			type = tInt16;
+			break;
+		case VT_I4:
+			type = tInt32;
+			break;
+		case VT_R4:
+			type = tFloat32;
+			break;
+		case VT_R8:
+			type = tFloat64;
+			break;
+		default:
+			return NULL;
+	}
+
+	dims = new int[psaImage->cDims];
+	for(int i = 0; i < psaImage->cDims; i++)
+		dims[i] = (int)psaImage->rgsabound[i].cElements;
+
+	result = NA_vNewArray(pbuffer, type, psaImage->cDims, dims);
+	SafeArrayUnaccessData(psaImage);
+	delete dims;
+
+	return (PyObject *)result;
+}
+
+static struct PyMethodDef methods[] = {
+	{"acquire", acquire, METH_VARARGS},
+	{NULL, NULL}
+};
+
+void initTecnaiCCDWrapper() {
+	Py_InitModule("TecnaiCCDWrapper", methods);
+	import_libnumarray()
+}
+
