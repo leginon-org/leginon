@@ -169,5 +169,5 @@ class ImViewer(imagewatcher.ImageWatcher):
 		container.addObjects((settingscontainer, self.filecontainer,
 													acquirecontainer))
 
-		self.uiserver.addObject(container)
+		self.uicontainer.addObject(container)
 

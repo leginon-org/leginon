@@ -97,7 +97,7 @@ class RasterFinder(targetfinder.TargetFinder):
 
 		container = uidata.LargeContainer('Raster Finder')
 		container.addObjects((self.usercheckon, originalcont, rastercont, goodicecontainer))
-		self.uiserver.addObject(container)
+		self.uicontainer.addObject(container)
 
 	def readImage(self):
 		filename = self.testfile.get()

@@ -57,7 +57,7 @@ class Webcam(node.Node):
 		container = uidata.LargeContainer('Webcam')
 		container.addObjects((self.uiwebcamimage, self.continuous,
 													self.acquiremethod, self.stopmethod))
-		self.uiserver.addObject(container)
+		self.uicontainer.addObject(container)
 		self.stopmethod.disable()
 
 if __name__ == '__main__':

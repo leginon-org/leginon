@@ -48,4 +48,4 @@ class Calibrator(node.Node):
 
 		container = uidata.LargeContainer('Calibrator')
 		container.addObjects((self.ui_image, camsetup))
-		self.uiserver.addObject(container)
+		self.uicontainer.addObject(container)

@@ -80,5 +80,5 @@ class SimpleAcquisition(acquisition.Acquisition):
 
 		container = uidata.LargeContainer('Simple Acquisition')
 		container.addObject(acqcont)
-		self.uiserver.addObject(container)
+		self.uicontainer.addObject(container)
 

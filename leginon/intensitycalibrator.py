@@ -25,4 +25,4 @@ class IntensityCalibrator(calibrator.Calibrator):
 
 		container = uidata.LargeContainer('Intensity Calibrator')
 		#container.addObjects((cameraconfig, calimage))
-		self.uiserver.addObject(container)
+		self.uicontainer.addObject(container)

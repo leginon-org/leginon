@@ -107,5 +107,5 @@ class Administration(node.Node):
 
 		container = uidata.LargeContainer('Administration')
 		container.addObjects((groupcontainer, usercontainer, instrumentcontainer))
-		self.uiserver.addObject(container)
+		self.uicontainer.addObject(container)
 

@@ -424,7 +424,7 @@ class Navigator(node.Node):
 		## main Navigator container
 		container = uidata.LargeContainer('Navigator')
 		container.addObjects((self.messagelog, controlcontainer, settingscontainer, locationcontainer))
-		self.uiserver.addObject(container)
+		self.uicontainer.addObject(container)
 
 class SimpleNavigator(Navigator):
 	def __init__(self, id, session, nodelocations, **kwargs):

@@ -27,22 +27,13 @@ class CallLauncher(object):
 		else:
 			self.procname = __file__
 
-	def launchCall(self, launchtype, targetcall, args=(), kwargs={}):
-		launchtypes = ('thread', 'fork', 'pipe')
-		if launchtype not in launchtypes:
-			raise ValueError("allowed launchtypes %s" % launchtypes)
+	def launchCall(self, targetcall, args=(), kwargs={}):
 		if not callable(targetcall):
 			raise TypeError('targetcall %s must be callable object' % (targetcall,))
 
-		if launchtype == 'thread':
-			c = self.newCallThread(targetcall, args, kwargs)
-		elif launchtype == 'pipe':
-			c = self.newCallPipe(targetcall, args, kwargs)
-		elif launchtype == 'fork':
-			c = self.newCallFork(targetcall, args, kwargs)
+		c = self.newCallThread(targetcall, args, kwargs)
 
 		callinfo = {}
-		callinfo['type'] = launchtype
 		callinfo['handle'] = c
 		self.calls.append(callinfo)
 		#print 'CALLINFO', callinfo
@@ -56,45 +47,6 @@ class CallLauncher(object):
 		t.setDaemon(1)
 		t.start()
 		return t
-
-	def newCallFork(self, targetcall, args=(), kwargs={}):
-		"""
-		make a call to targetcall in a forked process
-		(unix only)
-		"""
-		pid = os.fork()
-		if pid:
-			#print 'THIS IS PARENT PROCESS, child is %s' % (pid,)
-			return pid
-		else:
-			#print 'THIS IS CHILD PROCESS'
-			#print 'applying targetcall'
-			apply(targetcall, args, kwargs)
-			#print 'apply returned'
-			#sys.exit()
-	
-	def newCallPipe(self, targetcall, args=(), kwargs={}):
-		"""
-		A failed attempt at an alternative to the fork method
-		make a call to targetcall in a popen process
-		(can't figure out how to close the pipe without killing
-		the new process)
-		"""
-		targetinfo = {}
-		targetinfo['targetcall'] = targetcall
-		targetinfo['args'] = args
-		targetinfo['kwargs'] = kwargs
-
-		print 'opening pipe'
-		wpipe = os.popen(self.procname, 'w')
-		print 'dumping pickle'
-		cPickle.dump(targetinfo, wpipe, 1)
-		print 'closing'
-		#wpipe.close()
-		print 'closed'
-		## need to figure out pid of new process
-		newpid = None
-		return newpid
 
 	def acceptCall(self):
 		"""

@@ -85,7 +85,7 @@ class TargetWatcher(watcher.Watcher):
 		container.addObjects((self.targetwatcherlog, statuscontainer,
 													controlcontainer,))
 
-		self.uiserver.addObject(container)
+		self.uicontainer.addObject(container)
 
 	def handleTargetShift(self, ev):
 		#print 'Handling target shift'

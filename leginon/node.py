@@ -57,15 +57,15 @@ class DataHandler(object):
 	def query(self, id):
 		return self.datakeeper.query(id)
 
-	def addBinding(self, eventclass, func):
+	def addBinding(self, eventclass, nodeid, method):
 		'''Overides datahandler.DataBinder, making sure it binds Event type only.'''
 		if issubclass(eventclass, event.Event):
-			self.databinder.addBinding(eventclass, func)
+			self.databinder.addBinding(eventclass, nodeid, method)
 		else:
 			raise event.InvalidEventError('eventclass must be Event subclass')
 
-	def delBinding(self, eventclass, func):
-		self.databinder.delBinding(eventclass, func)
+	def delBinding(self, eventclass, nodeid, method):
+		self.databinder.delBinding(eventclass, nodeid, method)
 
 	def dbInsert(self, idata, force=False):
 		self.dbdatakeeper.insert(idata, force=force)
@@ -91,8 +91,8 @@ class Node(leginonobject.LeginonObject):
 									event.NodeInitializedEvent,
 									event.NodeUninitializedEvent]
 
-	def __init__(self, id, session, nodelocations={}, datahandler=DataHandler,
-							tcpport=None, xmlrpcport=None, clientclass=datatransport.Client):
+	def __init__(self, id, session, nodelocations={}, datahandler=None,
+							tcpport=None, uicontainer=None, launcher=None, clientclass=datatransport.Client):
 		leginonobject.LeginonObject.__init__(self, id)
 		self.id_count_lock = threading.Lock()
 
@@ -101,14 +101,19 @@ class Node(leginonobject.LeginonObject):
 		else:
 			raise TypeError('session must be of proper type')
 
+		self.launcher = launcher
+
 		self.nodelocations = nodelocations
 
-		self.datahandler = datahandler(self)
-		self.server = datatransport.Server(self.datahandler, tcpport)
+		if datahandler is not None:
+			self.datahandler = datahandler
+#		self.datahandler = datahandler(self)
+#		self.server = datatransport.Server(self.datahandler, tcpport)
 		self.clientclass = clientclass
 
-		self.uiserver = uiserver.Server(str(self.id[-1]), xmlrpcport)
-		self.datahandler.insert(self.uiserver)
+		if uicontainer is not None:
+			self.uicontainer = uidata.LargeContainer(str(self.id[-1]))
+			uicontainer.addObject(self.uicontainer)
 
 		self.confirmationevents = {}
 		self.eventswaiting = {}
@@ -186,7 +191,9 @@ class Node(leginonobject.LeginonObject):
 	def exit(self):
 		'''Cleans up the node before it dies.'''
 		self.outputEvent(event.NodeUnavailableEvent(id=self.ID()))
-		self.server.exit()
+		if self.uicontainer is not None and self.uicontainer.parent is not None:
+			self.uicontainer.parent.deleteObject(self.uicontainer.name)
+#		self.server.exit()
 #		self.printerror('exited')
 
 	def die(self, ievent=None):
@@ -207,8 +214,8 @@ class Node(leginonobject.LeginonObject):
 
 	def location(self):
 		location = leginonobject.LeginonObject.location(self)
-		location['data transport'] = self.server.location()
-		location['UI'] = self.uiserver.location()
+#		location['data transport'] = self.server.location()
+		location['launcher'] = self.launcher
 		return location
 
 	# event input/output/blocking methods
@@ -302,13 +309,13 @@ class Node(leginonobject.LeginonObject):
 		## this should not confirm, this is not the primary handler
 		## any event
 
-	def addEventInput(self, eventclass, func):
+	def addEventInput(self, eventclass, method):
 		'''Map a function (event handler) to be called when the specified event is received.'''
-		self.datahandler.addBinding(eventclass, func)
+		self.datahandler.addBinding(eventclass, self.id, method)
 
 	def delEventInput(self, eventclass):
 		'''Unmap all functions (event handlers) to be called when the specified event is received.'''
-		self.datahandler.delBinding(eventclass, None)
+		self.datahandler.delBinding(eventclass, self.id, None)
 
 	# data publish/research methods
 
@@ -590,9 +597,7 @@ class Node(leginonobject.LeginonObject):
 		container = uidata.LargeContainer('Node')
 		if datakeepercontainer is not None:
 			container.addObject(datakeepercontainer)
-#		container.addObjects((idarray, class_string, locationstruct, exitmethod))
-#		self.uiserver.addObject(container)
-		self.uiserver.addObjects((idarray, classstring, locationstruct, exitmethod))
+		self.uicontainer.addObjects((idarray, classstring, locationstruct, exitmethod))
 
 	def outputMessage(self, title, message, number=0):
 		# log too maybe
@@ -602,7 +607,7 @@ class Node(leginonobject.LeginonObject):
 			else:
 				messagedialog = uidata.MessageDialog('%s (%s)' % (title, str(self.id[-1])), message)
 			try:
-				self.uiserver.addObject(messagedialog)
+				self.uicontainer.addObject(messagedialog)
 			except ValueError:
 				self.outputMessage(title, message, number + 1)
 		else:

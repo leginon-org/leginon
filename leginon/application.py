@@ -42,7 +42,7 @@ class Application(leginonobject.LeginonObject):
 		self.data['name'] = name
 
 	def addNodeSpec(self, class_string, alias, launcheralias,
-									args=(), npf=0, dependencies=[]):
+									args=(), dependencies=[]):
 		for spec in self.nodespecs:
 			if alias == spec['alias']:
 				self.nodespecs.remove(spec)
@@ -52,7 +52,6 @@ class Application(leginonobject.LeginonObject):
 		nodespecdata['alias'] = alias
 		nodespecdata['launcher alias'] = launcheralias
 		nodespecdata['args'] = args
-		nodespecdata['new process flag'] = npf
 		nodespecdata['dependencies'] = dependencies
 		nodespecdata['application'] = self.data
 		self.nodespecs.append(nodespecdata)
@@ -124,8 +123,7 @@ class Application(leginonobject.LeginonObject):
 		dependencies = []
 		for dependency in ns['dependencies']:
 			dependencies.append(dependency)
-		return ns['alias'], (launcherid, ns['new process flag'],
-													ns['class string'], nodename, args,
+		return ns['alias'], (launcherid, ns['class string'], nodename, args,
 													dependencies)
 
 	def bindingSpec2Args(self, bs):

@@ -206,7 +206,7 @@ class GonModeler(node.Node):
 
 		maincont = uidata.LargeContainer('GonModeler')
 		maincont.addObjects((measurecont, modelcont, camconfig))
-		self.uiserver.addObject(maincont)
+		self.uicontainer.addObject(maincont)
 
 	def uiStartLoop(self):
 		if not self.threadlock.acquire(0):

@@ -199,7 +199,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 		container = uidata.LargeContainer('Matrix Calibrator')
 		container.addObjects((settingscontainer, calibratemethod, abortmethod,
 													fakecalibrationmethod))
-		self.uiserver.addObject(container)
+		self.uicontainer.addObject(container)
 
 	def uiCalibrate(self):
 		self.getParameter()

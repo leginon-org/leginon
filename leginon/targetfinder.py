@@ -227,7 +227,7 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		container = uidata.LargeContainer('Target Finder')
 		container.addObjects((self.messagelog, self.wait_for_done,self.ignore_images))
 
-		self.uiserver.addObject(container)
+		self.uicontainer.addObject(container)
 
 class ClickTargetFinder(TargetFinder):
 	def __init__(self, id, session, nodelocations, **kwargs):
@@ -294,7 +294,7 @@ class ClickTargetFinder(TargetFinder):
 		container = uidata.LargeContainer('Click Target Finder')
 		container.addObjects((self.clickimage, submitmethod, self.preventrepeat))
 
-		self.uiserver.addObject(container)
+		self.uicontainer.addObject(container)
 
 class MosaicClickTargetFinder(ClickTargetFinder):
 	eventoutputs = ClickTargetFinder.eventoutputs + [event.MosaicDoneEvent]
@@ -621,5 +621,5 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 		container = uidata.LargeContainer('Mosaic Click Target Finder')
 		container.addObjects((statuscontainer, settingscontainer, controlcontainer))
-		self.uiserver.addObject(container)
+		self.uicontainer.addObject(container)
 

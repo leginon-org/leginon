@@ -7,6 +7,7 @@
 #
 
 import data
+import datatransport
 import emregistry
 import event
 import imp
@@ -106,7 +107,7 @@ class SetInstrumentRequest(Request):
 class EM(node.Node):
 	eventinputs = node.Node.eventinputs + [event.LockEvent, event.UnlockEvent]
 	eventoutputs = node.Node.eventoutputs + [event.ListPublishEvent]
-	def __init__(self, id, session, nodelocations, **kwargs):
+	def __init__(self, id, session, nodelocations, tcpport=None, **kwargs):
 
 		self.messagelog = uidata.MessageLog('Message Log')
 
@@ -191,8 +192,11 @@ class EM(node.Node):
 		self.statelock = threading.RLock()
 		self.state = {}
 
-		node.Node.__init__(self, id, session, nodelocations,
-												datahandler=DataHandler, **kwargs)
+		self.datahandler = DataHandler(self)
+		self.server = datatransport.Server(self.datahandler, tcpport)
+		kwargs['datahandler'] = None
+
+		node.Node.__init__(self, id, session, nodelocations, **kwargs)
 
 		# get the scope module and class from the database
 		try:
@@ -315,6 +319,12 @@ class EM(node.Node):
 		except AttributeError:
 			pass
 		node.Node.exit(self)
+		self.server.exit()
+
+	def location(self):
+		location = node.Node.location(self)
+		location['data transport'] = self.server.location()
+		return location
 
 	def doLock(self, ievent):
 		if ievent['id'][:-1] != self.locknodeid:
@@ -708,5 +718,5 @@ class EM(node.Node):
 			container.addObject(self.scopecontainer)
 		if self.camera is not None:
 			container.addObject(self.cameracontainer)
-		self.uiserver.addObject(container)
+		self.uicontainer.addObject(container)
 

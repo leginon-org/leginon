@@ -150,7 +150,7 @@ class Email(node.Node):
 		container = uidata.LargeContainer('Email')
 		container.addObjects((addresscontainer, outboundcontainer,
 													inboundcontainer))
-		self.uiserver.addObject(container)
+		self.uicontainer.addObject(container)
 
 if __name__ == '__main__':
 	import getpass

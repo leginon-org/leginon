@@ -357,5 +357,5 @@ class SquareFinder(targetfinder.TargetFinder):
 		container = uidata.LargeContainer('Square Finder')
 		container.addObjects((self.messagelog, filecontainer,
 													pipelinecontainer, self.ui_image))
-		self.uiserver.addObjects((container,))
+		self.uicontainer.addObjects((container,))
 

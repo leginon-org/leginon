@@ -614,7 +614,7 @@ if sys.platform == 'win32':
 
 			rccontainer = uidata.LargeContainer('Robot Control')
 			rccontainer.addObjects((gridcontainer, statuscontainer, controlcontainer))
-			self.uiserver.addObject(rccontainer)
+			self.uicontainer.addObject(rccontainer)
 
 class RobotNotification(RobotNode):
 	eventinputs = RobotNode.eventinputs + [event.GridInsertedEvent,
@@ -724,5 +724,5 @@ class RobotNotification(RobotNode):
 
 		container = uidata.LargeContainer('Robot Notification')
 		container.addObjects((statuscontainer,))
-		self.uiserver.addObject(container)
+		self.uicontainer.addObject(container)
 

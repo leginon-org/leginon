@@ -49,7 +49,7 @@ class TargetMaker(node.Node):
 #																						self.publishTargetList)
 #		container = uidata.LargeContainer('Target Maker')
 #		container.addObjects((publishtargetsmethod,))
-#		self.uiserver.addObject(container)
+#		self.uicontainer.addObject(container)
 
 class SpiralTargetMaker(TargetMaker):
 	eventinputs = TargetMaker.eventinputs + [event.PublishSpiralEvent]
@@ -85,7 +85,7 @@ class SpiralTargetMaker(TargetMaker):
 
 		container = uidata.LargeContainer('Spiral Target Maker')
 		container.addObjects((statuscontainer, settingscontainer, controlcontainer))
-		self.uiserver.addObject(container)
+		self.uicontainer.addObject(container)
 
 	def setStatusMessage(self, message):
 		self.statusmessage.set(message)

@@ -594,5 +594,5 @@ class Acquisition(targetwatcher.TargetWatcher):
 		container = uidata.LargeContainer('Acquisition')
 		container.addObjects((self.acquisitionlog, statuscontainer, self.ui_image, settingscontainer, controlcontainer))
 
-		self.uiserver.addObject(container)
+		self.uicontainer.addObject(container)
 

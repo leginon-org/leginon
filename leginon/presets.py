@@ -6,18 +6,17 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 import node
+import calibrationclient
 import data
+import datatransport
 import event
 import dbdatakeeper
-import cPickle
 import copy
 import uidata
 import camerafuncs
-import strictdict
 import threading
 import time
 import unique
-import calibrationclient
 
 class PresetsClient(object):
 	'''
@@ -107,8 +106,12 @@ class PresetsManager(node.Node):
 	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent]
 	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.ListPublishEvent]
 
-	def __init__(self, id, session, nodelocations, **kwargs):
-		node.Node.__init__(self, id, session, nodelocations, datahandler=DataHandler, **kwargs)
+	def __init__(self, id, session, nodelocations, tcpport=None, **kwargs):
+		self.datahandler = DataHandler(self)
+		self.server = datatransport.Server(self.datahandler, tcpport)
+		kwargs['datahandler'] = None
+
+		node.Node.__init__(self, id, session, nodelocations, **kwargs)
 
 		self.addEventInput(event.ChangePresetEvent, self.changePreset)
 
@@ -134,6 +137,15 @@ class PresetsManager(node.Node):
 		self.defineUserInterface()
 		self.validateCycleOrder()
 		self.start()
+
+	def exit(self):
+		node.Node.exit(self)
+		self.server.exit()
+
+	def location(self):
+		location = node.Node.location(self)
+		location['data transport'] = self.server.location()
+		return location
 
 	def changePreset(self, ievent):
 		'''
@@ -699,7 +711,7 @@ class PresetsManager(node.Node):
 		container = uidata.LargeContainer('Presets Manager')
 		container.addObjects((self.messagelog, statuscontainer, self.xyonly,
 													importcont, createcont, selectcont, imagecont))
-		self.uiserver.addObject(container)
+		self.uicontainer.addObject(container)
 
 		return
 

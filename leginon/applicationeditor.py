@@ -53,7 +53,6 @@ class ApplicationEditor(node.Node):
 																				nodespecdata['alias'],
 																				nodespecdata['launcher alias'],
 																				nodespecdata['args'],
-																				nodespecdata['new process flag'],
 																				nodespecdata['dependencies']))
 
 		for bindingspecdata in self.application.bindingspecs:
@@ -75,5 +74,5 @@ class ApplicationEditor(node.Node):
 		load = uidata.Method('Load', self.uiLoad)
 		container = uidata.LargeContainer('Application Editor')
 		container.addObjects((self.applicationeditor, save, self.uiapplicationlist, update, load))
-		self.uiserver.addObject(container)
+		self.uicontainer.addObject(container)
 

@@ -11,6 +11,7 @@
 import camerafuncs
 import copy
 import data
+import datatransport
 import event
 import imagefun
 import node
@@ -42,18 +43,31 @@ class SimpleCorrector(node.Node):
 	eventoutputs = node.Node.eventoutputs + [event.DarkImagePublishEvent,
 																						event.BrightImagePublishEvent,
 																						event.ListPublishEvent]
-	def __init__(self, id, session, nodelocations, **kwargs):
+	def __init__(self, id, session, nodelocations, tcpport=None, **kwargs):
 		self.references = {}
 		self.abortevent = threading.Event()
 		self.camerafuncs = camerafuncs.CameraFuncs(self)
-		node.Node.__init__(self, id, session, nodelocations,
-												datahandler=DataHandler, **kwargs)
+
+		self.datahandler = DataHandler(self)
+		self.server = datatransport.Server(self.datahandler, tcpport)
+		kwargs['datahandler'] = None
+
+		node.Node.__init__(self, id, session, nodelocations, **kwargs)
 
 		self.outputEvent(event.ListPublishEvent(id=self.ID(),
 																						idlist=[('corrected image data',)]))
 
 		self.defineUserInterface()
 		self.start()
+
+	def exit(self):
+		node.Node.exit(self)
+		self.server.exit()
+
+	def location(self):
+		location = node.Node.location(self)
+		location['data transport'] = self.server.location()
+		return location
 
 	def getReferenceDataClass(self, referencetype):
 		if referencetype == 'dark':
@@ -451,7 +465,7 @@ class SimpleCorrector(node.Node):
 		container.addObjects((self.messagelog, statuscontainer, controlcontainer,
 													self.image))
 
-		self.uiserver.addObjects((advancedsettingscontainer, findcontainer,
+		self.uicontainer.addObjects((advancedsettingscontainer, findcontainer,
 															container,))
 
 class Corrector(node.Node):
@@ -468,10 +482,14 @@ class Corrector(node.Node):
 	  in the corrections directory.
 	'''
 	eventoutputs = node.Node.eventoutputs + [event.DarkImagePublishEvent, event.BrightImagePublishEvent, event.ListPublishEvent]
-	def __init__(self, id, session, nodelocations, **kwargs):
+	def __init__(self, id, session, nodelocations, tcpport=None, **kwargs):
 		self.cam = camerafuncs.CameraFuncs(self)
 
-		node.Node.__init__(self, id, session, nodelocations, datahandler=DataHandler, **kwargs)
+		self.datahandler = DataHandler(self)
+		self.server = datatransport.Server(self.datahandler, tcpport)
+		kwargs['datahandler'] = None
+
+		node.Node.__init__(self, id, session, nodelocations, **kwargs)
 
 		self.ref_cache = {}
 
@@ -481,6 +499,15 @@ class Corrector(node.Node):
 
 		self.defineUserInterface()
 		self.start()
+
+	def exit(self):
+		node.Node.exit(self)
+		self.server.exit()
+
+	def location(self):
+		location = node.Node.location(self)
+		location['data transport'] = self.server.location()
+		return location
 
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
@@ -548,7 +575,7 @@ class Corrector(node.Node):
 		container = uidata.LargeContainer('Corrector')
 		container.addObjects((statuscontainer, settingscontainer, controlcontainer,
 													statscontainer, self.ui_image))
-		self.uiserver.addObject(container)
+		self.uicontainer.addObject(container)
 
 	def uiSetPlanParams(self):
 		camconfig = self.cam.uiGetParams()

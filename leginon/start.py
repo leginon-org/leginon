@@ -25,7 +25,7 @@ def startManager(location, event):
 	event.set()
 
 def startLauncher(location, event):
-	launcher.Launcher((socket.gethostname(),), {'manager': location}).start()
+	launcher.Launcher((socket.gethostname(),), nodelocations={'manager': location}).start()
 	event.set()
 
 location = {}
@@ -41,7 +41,7 @@ event.wait()
 
 '''
 location = manager.Manager(('manager',), None).location()
-launcher.Launcher((socket.gethostname(),), {'manager': location})
+launcher.Launcher((socket.gethostname(),), nodelocations={'manager': location})
 '''
 
 client = uiclient.UIApp(location['UI'], 'Leginon II')

@@ -8,20 +8,32 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import node
-import data
-import event
-import nodeclassreg
 import calllauncher
+import data
+import datatransport
+import event
+import leginonobject
+import node
+import nodeclassreg
 import time
 import threading
 import sys
+import uiserver
 
 class Launcher(node.Node):
-	def __init__(self, id, nodelocations = {}, port = None, **kwargs):
+	def __init__(self, id, tcpport=None, xmlrpcport=None, **kwargs):
 		initializer = {'name': 'launcher session'}
 		session = data.SessionData(initializer=initializer)
-		node.Node.__init__(self, id, session, nodelocations, tcpport=port, **kwargs)
+
+		self.uicontainer = uiserver.Server(str(id[-1]), xmlrpcport)
+
+		self.datahandler = node.DataHandler(self)
+		self.server = datatransport.Server(self.datahandler, tcpport)
+
+		node.Node.__init__(self, id, session, **kwargs)
+
+		self.datahandler.insert(self.uicontainer)
+
 		self.addEventInput(event.LaunchEvent, self.handleLaunch)
 		self.caller = calllauncher.CallLauncher()
 		self.defineUserInterface()
@@ -40,8 +52,18 @@ class Launcher(node.Node):
 		self.outputEvent(event.NodeUninitializedEvent(id=self.ID()))
 		self.exit()
 
+	def exit(self):
+		node.Node.exit(self)
+		self.server.exit()
+
 	def main(self):
 		pass
+
+	def location(self):
+		location = leginonobject.LeginonObject.location(self)
+		location['data transport'] = self.server.location()
+		location['UI'] = self.uicontainer.location()
+		return location
 
 	def publishNodeClasses(self):
 		#reload(nodeclassreg)
@@ -51,7 +73,6 @@ class Launcher(node.Node):
 
 	def handleLaunch(self, launchevent):
 		# unpack event
-		newproc = launchevent['newproc']
 		targetclass = launchevent['targetclass']
 		args = launchevent['args']
 		if launchevent['kwargs'] is not None:
@@ -59,16 +80,16 @@ class Launcher(node.Node):
 		else:
 			kwargs = {}
 
+		kwargs['uicontainer'] = self.uicontainer
+		kwargs['launcher'] = self.id
+		kwargs['datahandler'] = self.datahandler
+
 		# get the requested class object
 		nodeclass = nodeclassreg.getNodeClass(targetclass)
 
 		#print 'launching', nodeclass
 
-		## thread or process
-		if newproc:
-			self.caller.launchCall('fork',nodeclass, args,kwargs)
-		else:
-			self.caller.launchCall('thread',nodeclass, args,kwargs)
+		self.caller.launchCall(nodeclass, args, kwargs)
 		self.confirmEvent(launchevent)
 
 	def launchThread(self):

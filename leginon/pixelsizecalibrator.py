@@ -47,7 +47,7 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 
 		mycontainer = uidata.LargeContainer('Pixel Size Calibrator')
 		mycontainer.addObjects((self.uilisting, testmethod, storecont, extrapcont))
-		self.uiserver.addObject(mycontainer)
+		self.uicontainer.addObject(mycontainer)
 
 	def extrapolate(self):
 		fmags = self.extrapfrommags.get()

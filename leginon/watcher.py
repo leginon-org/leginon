@@ -110,7 +110,7 @@ class Watcher(node.Node):
 
 		container = uidata.LargeContainer('Watcher')
 		container.addObjects((eventcontainer, datacontainer))
-		self.uiserver.addObject(container)
+		self.uicontainer.addObject(container)
 
 	## the event queue could be put in node.py or datahandler.DataBinder
 	def handleEvent(self, pubevent):

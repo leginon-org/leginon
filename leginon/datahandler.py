@@ -73,7 +73,7 @@ class DictDataKeeper(DataHandler):
 		return None
 
 class SizedDataKeeper(DictDataKeeper):
-	def __init__(self, maxsize=18.0):
+	def __init__(self, maxsize=256.0):
 		DictDataKeeper.__init__(self)
 		self.maxsize = maxsize * 1024 * 1024 * 8
 		self.datadict = strictdict.OrderedDict()
@@ -222,7 +222,7 @@ class DataBinder(DataHandler):
 		## because there may be more than one function for every 
 		## data class
 		self.threaded = threaded
-		self.bindings = []
+		self.bindings = {}
 
 		## a queue to hold incoming data, and a thread
 		## to process data from the queue
@@ -260,39 +260,38 @@ class DataBinder(DataHandler):
 
 	def handleData(self, newdata):
 		'''
-		figure out which callback functions to execute on this data
+		figure out which callback methods to execute on this data
 		'''
 		dataclass = newdata.__class__
 		args = (newdata,)
-		for bindclass, method in self.bindings:
+		for bindclass in self.bindings.keys():
 			if issubclass(dataclass, bindclass):
 				try:
-					apply(method, args)
-				except Exception, e:
-					print 'handleData method error', method, args
-					raise
+					methods = self.bindings[bindclass][newdata['destination']]
+				except KeyError:
+					pass
+				for method in methods:
+					method(args)
+	
+	def addBinding(self, dataclass, nodeid, method):
+		'method must take data instance as first arg'
+		try:
+			nodes = self.bindings[dataclass]
+			try:
+				nodes[nodeid].append(method)
+			except KeyError:
+				nodes[nodeid] = [method]
+		except KeyError:
+			self.bindings = {dataclass: {nodeid: [method]}}
 
-	def addBinding(self, dataclass, func):
-		'func must take data instance as first arg'
-		binding = (dataclass, func)
-		self.bindings.append(binding)
-
-	def delBinding(self, dataclass=None, func=None):
-		'''
-		remove bindings
-		if dataclass and/or func is None, that means wildcard
-		'''
-		# iterate on a copy, so we can delete from the original
-		bindings = list(self.bindings)
-		for binding in bindings:
-			matchclass = matchfunc = False
-			bindclass = binding[0]
-			bindfunc = binding[1]
-			if dataclass is bindclass or dataclass is None:
-				matchclass = True
-			if func is bindfunc or func is None:
-				matchfunc = True
-
-			if matchclass and matchfunc:
-				self.bindings.remove(binding)
+	def delBinding(self, dataclass, nodeid, method=None):
+		try:
+			if method is None:
+				del self.bindings[dataclass][nodeid]
+				if not self.bindings[dataclass]:
+					del self.bindings[dataclass]
+			else:
+				self.bindings[dataclass][nodeid].remove(method)
+		except (KeyError, ValueError):
+			pass
 

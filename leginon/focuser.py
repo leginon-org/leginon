@@ -401,5 +401,5 @@ class Focuser(acquisition.Acquisition):
 		testmethod = uidata.Method('Test Autofocus (broken)', self.uiTest)
 		container = uidata.LargeContainer('Focuser')
 		container.addObjects((self.messagelog, self.melt, autocont, mancont, self.acquirefinal, abortfailmethod, testmethod))
-		self.uiserver.addObject(container)
+		self.uicontainer.addObject(container)
 

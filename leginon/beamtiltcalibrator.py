@@ -195,7 +195,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 		container = uidata.LargeContainer('Beam Tilt Calibrator')
 		container.addObjects((defocuscontainer, stigcontainer, measurecontainer, euc))
-		self.uiserver.addObject(container)
+		self.uicontainer.addObject(container)
 
 	def uiCalibrateDefocus(self):
 		self.calibrateDefocus(self.defocustiltvalue.get(),

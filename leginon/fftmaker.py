@@ -57,7 +57,7 @@ class FFTMaker(imagewatcher.ImageWatcher):
 		container = uidata.LargeContainer('FFT Maker')
 		container.addObjects((self.ignore_images,self.maskrad))
 
-		self.uiserver.addObject(container)
+		self.uicontainer.addObject(container)
 
 	def setImageFilename(self, imagedata):
 		if imagedata['filename']:

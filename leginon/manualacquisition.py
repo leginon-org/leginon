@@ -326,5 +326,5 @@ class ManualAcquisition(node.Node):
 		container = uidata.LargeContainer('Manual Acquisition')
 		container.addObjects((self.messagelog, statuscontainer, self.image,
 													settingscontainer, controlcontainer))
-		self.uiserver.addObject(container)
+		self.uicontainer.addObject(container)
 

@@ -53,7 +53,7 @@ class DoseCalibrator(calibrator.Calibrator):
 
 		mycontainer = uidata.LargeContainer('Dose Calibrator')
 		mycontainer.addObjects((controlcont, dosecont, camcont))
-		self.uiserver.addObject(mycontainer)
+		self.uicontainer.addObject(mycontainer)
 
 	def uiMeasureDoseRate(self):
 		self.screenDown()

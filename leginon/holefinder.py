@@ -127,7 +127,7 @@ class HoleFinder(targetfinder.TargetFinder):
 
 		container = uidata.LargeContainer('Hole Finder')
 		container.addObjects((self.usercheckon, self.skipauto, originalcont,edgecont,corcont,threshcont, blobcont, goodholescontainer))
-		self.uiserver.addObject(container)
+		self.uicontainer.addObject(container)
 
 	def readImage(self):
 		filename = self.testfile.get()

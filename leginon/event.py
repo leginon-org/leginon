@@ -27,7 +27,8 @@ class Event(data.Data):
 	def typemap(cls):
 		t = data.Data.typemap()
 		t += [ ('confirm', int), ]
-		return t
+		t += [ ('destination', tuple), ]
+		return
 	typemap = classmethod(typemap)
 
 class EventLog(data.Data):

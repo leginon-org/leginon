@@ -11,6 +11,7 @@
 import application
 import data
 import datahandler
+import datatransport
 import dbdatakeeper
 import event
 import importexport
@@ -20,6 +21,7 @@ import node
 import threading
 import uiserver
 import uidata
+import leginonobject
 
 class Manager(node.Node):
 	'''Overlord of the nodes. Handles node communication (data and events).'''
@@ -28,13 +30,15 @@ class Manager(node.Node):
 
 		self.clients = {}
 
-		node.Node.__init__(self, id, session, nodelocations={}, tcpport=tcpport,
-												xmlrpcport=xmlrpcport, **kwargs)
+		self.uicontainer = uiserver.Server('Manager', xmlrpcport)
+		self.datahandler = node.DataHandler(self)
+		self.server = datatransport.Server(self.datahandler, tcpport)
+
+		node.Node.__init__(self, id, session, **kwargs)
 
 		self.uiclientcontainers = {}
-
-		self.uiserver.xmlrpcserver.register_function(self.uiGetNodeLocations,
-																									'getNodeLocations')
+		self.uicontainer.xmlrpcserver.register_function(self.uiGetNodeLocations,
+																										'getNodeLocations')
 
 		self.nodelocations['manager'] = self.location()
 
@@ -61,9 +65,15 @@ class Manager(node.Node):
 
 		self.launcherdict = {}
 		self.managersetup = managersetup.ManagerSetup(self)
-		self.uiserver.addObject(self.managersetup.getUserInterface())
+		self.uicontainer.addObject(self.managersetup.getUserInterface())
 		#self.defineUserInterface()
 		#self.start()
+
+	def location(self):
+		location = leginonobject.LeginonObject.location(self)
+		location['data transport'] = self.server.location()
+		location['UI'] = self.uicontainer.location()
+		return location
 
 	# main/start methods
 
@@ -88,9 +98,9 @@ class Manager(node.Node):
 
 	# client methods
 
-	def addClient(self, newid, location):
+	def addClient(self, newid, datatransportlocation):
 		'''Add a client of clientclass to a node keyed by the node ID.'''
-		self.clients[newid] = self.clientclass(location['data transport'])
+		self.clients[newid] = self.clientclass(datatransportlocation)
 
 	def delClient(self, newid):
 		'''Deleted a client to a node by the node ID.'''
@@ -188,6 +198,7 @@ class Manager(node.Node):
 				### this is a special case of outputEvent
 				### so we don't use outputEvent here
 				try:
+					ievent['destination'] = to_node
 					self.clients[to_node].push(ievent)
 				except IOError:
 					### bad client, get rid of it
@@ -223,6 +234,7 @@ class Manager(node.Node):
 		'''Register a launcher with the UI, aliases the launcher to the node ID, location and launchable node classes.'''
 		name = nodeid[-1]
 		self.launcherdict[name] = {'ID': nodeid, 'location': location}
+		self.addNodeUIClient(nodeid, location['UI'])
 
 	def delLauncher(self, nodeid):
 		'''Unregister a launcher from the UI.'''
@@ -240,6 +252,7 @@ class Manager(node.Node):
 			selected = None
 			self.launchcontainer.disable()
 		self.uilauncherselect.set(launchers, selected)
+		self.deleteNodeUIClient(nodeid)
 
 	def getLauncherNodeClasses(self, dataid, location, launcherid):
 		'''Retrieve a list of launchable classes from a launcher by alias launchername.'''
@@ -308,7 +321,16 @@ class Manager(node.Node):
 			self.addLauncher(nodeid, nodelocation)
 
 		# for the clients and mapping
-		self.addClient(nodeid, nodelocation)
+		if 'data transport' in nodelocation \
+															and nodelocation['data transport'] is not None:
+			datatransportlocation = nodelocation['data transport']
+			self.addClient(nodeid, datatransportlocation)
+		elif 'launcher' in nodelocation \
+															and nodelocation['launcher'] in self.clients:
+			self.clients[nodeid] = self.clients[nodelocation['launcher']]
+		else:
+			# weak
+			raise RuntimeError('Cannot connect to node')
 
 		# published data of nodeid mapping to location of node
 		initializer = {'id': nodeid,
@@ -319,7 +341,6 @@ class Manager(node.Node):
 
 		self.confirmEvent(readyevent)
 		self.uiUpdateNodeInfo()
-		self.addNodeUIClient(nodeid, nodelocation['UI'])
 
 		self.confirmEvent(readyevent)
 
@@ -328,7 +349,7 @@ class Manager(node.Node):
 			self.deleteNodeUIClient(nodeid)
 		clientcontainer = uidata.LargeClientContainer(str(nodeid[-1]), uilocation)
 		try:
-			self.uiserver.addObject(clientcontainer)
+			self.uicontainer.addObject(clientcontainer)
 			self.uiclientcontainers[nodeid] = clientcontainer
 		except:
 			self.printerror('cannot add client container for node')
@@ -340,7 +361,6 @@ class Manager(node.Node):
 		self.removeNode(nodeid)
 		self.delLauncher(nodeid)
 		self.uiUpdateNodeInfo()
-		self.deleteNodeUIClient(nodeid)
 		self.confirmEvent(unavailable_event)
 
 	def deleteNodeUIClient(self, nodeid):
@@ -348,7 +368,7 @@ class Manager(node.Node):
 		try:
 			name = self.uiclientcontainers[nodeid].name
 			del self.uiclientcontainers[nodeid]
-			self.uiserver.deleteObject(name)
+			self.uicontainer.deleteObject(name)
 		except:
 			self.printerror('cannot delete client container for node')
 
@@ -407,22 +427,21 @@ class Manager(node.Node):
 		for dataid in self.datahandler.ids():
 			self.unpublishDataLocation(dataid, nodeid)
 
-	def launchNode(self, launcher, newproc, target, name, nodeargs=(), dependencies=[]):
+	def launchNode(self, launcher, target, name, nodeargs=(), dependencies=[]):
 		'''
 		Launch a node with a launcher node.
 		launcher = id of launcher node
-		newproc = flag to indicate new process, else new thread
 		target = name of a class in this launchers node class list
 		dependencies = node dependent on to launch
 		'''
-		args = (launcher, newproc, target, name, nodeargs, dependencies)
+		args = (launcher, target, name, nodeargs, dependencies)
 		t = threading.Thread(name='manager wait node thread',
 													target=self.waitNode, args=args)
 		t.start()
 		nodeid = self.id + (name,)
 		return nodeid
 
-	def waitNode(self, launcher, newproc, target, name, nodeargs, dependencies):
+	def waitNode(self, launcher, target, name, nodeargs, dependencies):
 		newid = self.id + (name,)
 		args = (newid, self.session, self.nodelocations) + nodeargs
 		dependencyids = []
@@ -434,7 +453,7 @@ class Manager(node.Node):
 			dependencyids.append(launcher)
 
 		self.waitNodes(dependencyids)
-		ev = event.LaunchEvent(id=self.ID(), newproc=newproc, targetclass=target, args=args)
+		ev = event.LaunchEvent(id=self.ID(), targetclass=target, args=args)
 		self.outputEvent(ev, launcher, wait=True)
 
 		#attempts = 5
@@ -662,22 +681,13 @@ class Manager(node.Node):
 	def uiLaunch(self):
 		launchername = self.uilauncherselect.getSelectedValue()
 		launcherid = self.launcherdict[launchername]['ID']
-#		process = self.uilaunchflag.get()
-		process = False
 		nodeclass = self.uiclassselect.getSelectedValue()
 		name = self.uilaunchname.get()
 		if not name:
 			self.messagelog.error('Invalid node name "%s"' % name)
 			return
-#		args = '(%s)' % self.uilaunchargs.get()
-#		try:
-#			args = eval(args)
-#		except:
-#			self.printerror('error evaluating args during UI launch')
-#			self.printException()
-#			return
 		args = ()
-		self.launchNode(launcherid, process, nodeclass, name, args)
+		self.launchNode(launcherid, nodeclass, name, args)
 
 	def uiKillNode(self):
 		'''UI helper calling killNode, using str node aliases. See killNode.'''
@@ -785,12 +795,9 @@ class Manager(node.Node):
 		self.uiclassselect = uidata.SingleSelectFromList('Node Class', [], 0)
 		self.uilauncherselect = uidata.SingleSelectFromList('Launcher', [], 0)
 		self.uilauncherselect.setCallback(self.uiLauncherSelectCallback)
-#		self.uilaunchargs = uidata.String('Arguments', '()', 'rw')
-#		self.uilaunchflag = uidata.Boolean('Process', False, 'rw')
 		launchmethod = uidata.Method('Create', self.uiLaunch)
 		launchobjects = (self.uilaunchname, self.uilauncherselect,
 											self.uiclassselect,
-											#self.uilaunchargs, self.uilaunchflag,
 											launchmethod)
 		self.launchcontainer = uidata.Container('Create New Node')
 		self.launchcontainer.addObjects(launchobjects)
@@ -886,7 +893,7 @@ class Manager(node.Node):
 		self.uiUpdateNodeInfo()
 		self.uiUpdateLauncherInfo()
 
-		self.uiserver.addObject(container)
+		self.uicontainer.addObject(container)
 
 if __name__ == '__main__':
 	import sys
