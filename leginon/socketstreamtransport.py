@@ -4,6 +4,7 @@ import socket
 import leginonobject
 import data
 import threading
+import time
 
 class Handler(SocketServer.StreamRequestHandler):
 	def __init__(self, request, server_address, server):
@@ -11,7 +12,11 @@ class Handler(SocketServer.StreamRequestHandler):
 
 	def handle(self):
 		try:
+			t1 = time.clock()
 			obj = cPickle.load(self.rfile)
+			t2 = time.clock()
+			tdiff = t2 - t1
+			print 'TTTT cPickle.load', tdiff
 		except EOFError:
 			print('no data to read, handle socket connection failed')
 			return
@@ -26,12 +31,20 @@ class Handler(SocketServer.StreamRequestHandler):
 				raise
 			try:
 				# returns exception if error, else None
+				t1 = time.clock()
 				cPickle.dump(e, self.wfile, 1)
+				t2 = time.clock()
+				tdiff = t2 - t1
+				print 'TTTT cPickle.dump Data instance', tdiff
 			except IOError:
 				print('write failed when acknowledging push')
 		else:
 			try:
+				t1 = time.clock()
 				cPickle.dump(self.server.datahandler.query(obj), self.wfile, 1)
+				t2 = time.clock()
+				tdiff = t2 - t1
+				print 'TTTT cPickle.dump not Data instance', tdiff
 			except IOError:
 				print('write failed when returning requested data')
 
@@ -60,17 +73,43 @@ class Client(leginonobject.LeginonObject):
 
 	def pull(self, id):
 		self.connect()
+
+		t1 = time.clock()
 		idpickle = cPickle.dumps(id, 1)
+		t2 = time.clock()
+		tdiff = t2 - t1
+		print 'TTTT cPickle.dumps pull idpickle', tdiff
+
 		self.send(idpickle)
 		data = self.receive()
 		self.close()
-		return cPickle.loads(data)
+
+		t1 = time.clock()
+		p = cPickle.loads(data)
+		t2 = time.clock()
+		tdiff = t2 - t1
+		print 'TTTT cPickle.loads pull data', tdiff
+
+		return p
 
 	def push(self, idata):
 		self.connect()
-		self.send(cPickle.dumps(idata, 1))
+
+		t1 = time.clock()
+		p = cPickle.dumps(idata, 1)
+		t2 = time.clock()
+		tdiff = t2 - t1
+		print 'TTTT cPickle.dumps push data', tdiff
+
+		self.send(p)
 		r = self.receive()
+
+		t1 = time.clock()
 		serverexception = cPickle.loads(r)
+		t2 = time.clock()
+		tdiff = t2 - t1
+		print 'TTTT cPickle.loads push data', tdiff
+
 		self.close()
 		if serverexception is not None:
 			self.printerror('server failed to be pushed')
