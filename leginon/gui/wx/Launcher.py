@@ -41,10 +41,9 @@ class App(wx.App):
 		wx.App.__init__(self, 0)
 
 	def OnInit(self):
-		# seperate thread
 		self.launcher = launcher.Launcher(self.name, **self.kwargs)
 		frame = Frame(self.launcher)
-		launcher.panel = frame.panel
+		self.launcher.panel = frame.panel
 		self.launcher.start()
 		self.SetTopWindow(frame)
 		frame.Show(True)
