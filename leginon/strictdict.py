@@ -199,6 +199,23 @@ class OrderedDict(dict):
 	def __repr__(self):
 		return self.__str__()
 
+	def __deepcopy__(self, memo={}):
+		# without this, it will copy the dict
+		# stuff first and then the OrderedDict, but the dict copy
+		# requires __setitem__ which has been redefined here and 
+		# requires OrderedDict to be initialized first
+		# Solution:  deepcopy should do OrderedDict first, then dict
+		y = self.__class__()
+
+		## should really check for __getstate__ and __setstate__
+		y.__dict__.update(copy.deepcopy(self.__dict__, memo))
+
+		## dict deepcopy
+		for key, value in self.items():
+			key = copy.deepcopy(key, memo)
+			value = copy.deepcopy(value, memo)
+			y[key] = value
+		return y
 
 class KeyedDict(OrderedDict):
 	'''
