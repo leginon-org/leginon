@@ -349,6 +349,7 @@ class Manager(node.Node):
 		return self.id + (name,)
 
 	def waitNode(self, launcher, newproc, target, name, nodeargs, dependencies):
+		newid = self.id + (name,)
 		args = (newid, self.session, self.nodelocations) + nodeargs
 		dependenciescopy = copy.copy(dependencies)
 
