@@ -10,15 +10,53 @@ class wxMessage(wxPanel):
 		bitmap = wxBitmapFromImage(image)
 		self.icon = wxStaticBitmap(self, -1, bitmap,
 														size=wxSize(bitmap.GetWidth(), bitmap.GetHeight()))
-		self.text = wxStaticText(self, -1, message)
+		self.message = message
+		self.text = wxStaticText(self, -1, '', style=wxST_NO_AUTORESIZE)
+		self.text.SetLabel(self.message)
+		EVT_SIZE(self.text, self.OnTextSize)
 		self.button = wxButton(self, -1, 'Clear')
 
 		self.sizer = wxBoxSizer(wxHORIZONTAL)
 		self.sizer.Add(self.icon, 0, wxALIGN_CENTER|wxALL, 3)
-		self.sizer.Add(self.text, 0, wxALIGN_CENTER|wxALL, 3)
-		self.sizer.Add(0, 0, 1)
+		self.sizer.Add(self.text, 1, wxALIGN_CENTER|wxALL, 3)
 		self.sizer.Add(self.button, 0, wxALIGN_CENTER|wxALL, 3)
 		self.SetSizerAndFit(self.sizer)
+
+	def OnTextSize(self, evt):
+		self.SetToolTip(wxToolTip(''))
+		size = evt.GetSize()
+		if self.text.GetTextExtent(self.message)[0] < size[0]:
+			self.text.SetLabel(self.message)
+		elif self.text.GetTextExtent('...')[0] > size[0]:
+			self.text.SetLabel('')
+		else:
+			min = 0
+			max = len(self.message) - 1
+			while True:
+				i = (max - min)/2 + min
+				extent = self.text.GetTextExtent(self.message[:i] + '...')
+				if extent[0] < size[0]:
+					if i <= min:
+						break
+					min = i
+				elif extent[0]  > size[0]:
+					max = i
+				else:
+					break
+			self.text.SetLabel(self.message[:i] + '...')
+			self.SetToolTip(wxToolTip(self.message))
+
+	def wordWrap(self, width):
+		start = 0
+		i = 0
+		message = self.message
+		while i < len(message):
+			if self.text.GetTextExtent(message[start:i])[0] > width:
+				message = message[:i - 1] + '\n' + message[i - 1:]
+				i += 1
+				start = i + 1
+			i += 1
+		self.text.SetLabel(message)
 
 class wxMessageLog(wxScrolledWindow):
 	def __init__(self, parent):
@@ -57,6 +95,6 @@ if __name__ == '__main__':
 	app = MyApp(0)
 	app.messagelog.addMessage('error', 'This is an error')
 	app.messagelog.addMessage('warning', 'This is a warning')
-	app.messagelog.addMessage('info', 'This is information')
+	app.messagelog.addMessage('info', 'This is information blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah')
 	app.MainLoop()
 
