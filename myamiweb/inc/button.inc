@@ -20,7 +20,6 @@ class button {
 		.$this->name.'_on.src=path+"'.$this->type.'_on.gif";'.$this->crlf
 		.$this->name.'_over_on=new Image();'.$this->crlf
 		.$this->name.'_over_on.src=path+"'.$this->type.'_over_on.gif";'.$this->crlf
-		.'var '.$this->name.'_bt_st=false;'.$this->crlf
 		.''.$this->crlf;
 		return $javascript;
 	}
@@ -29,7 +28,6 @@ class button {
 		$this->link=$link;
 		$this->target = ($target) ? 'target="'.$target.'"' : "";
 	}
-		//	<a href="javascript:void(0)" id="'.$this->name.'href">'.
 
 	function display() {
 		$iconwidth=15;

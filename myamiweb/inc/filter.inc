@@ -17,7 +17,8 @@ class filter {
 				'default' => 'Default',
 				'smooth1' => 'Smooth 1',
 				'smooth2' => 'Smooth 2',
-				'smooth3' => 'Smooth 3'
+				'smooth3' => 'Smooth 3',
+				'smooth4' => 'Smooth 4'
 			);
 
 	var $binning_types = array (
@@ -111,6 +112,18 @@ class filter {
 				$kernel = 3;
 				$sigma = 1;
 				imagefiltergaussian($img, $kernel, $sigma);
+				break;
+
+			case 'smooth4':
+				$kernel = 5;
+				$sigma = 1;
+				$img = imageFilteredCreateFromMRC (
+						$this->filename, $this->minpix,
+						$this->maxpix, 1,
+						$kernel, $sigma
+						);
+				imagescale($img, .5);
+				break;
 
 		}
 

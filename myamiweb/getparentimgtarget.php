@@ -8,7 +8,7 @@
  */
 
 require('inc/leginon.inc');
-require('inc/square.inc');
+require('inc/graphutil.inc');
 require('inc/scalebar.inc');
 require('inc/filter.inc');
 
@@ -44,7 +44,7 @@ $fft = ($_GET['fft']==1) ? true : false;
 if (!$filter=$_GET['flt']) 
 	$filter = 'default';
 
-$displayloadingtime = true;
+$displayloadingtime = false;
 
 if ($size) {
 	$new_w = $size;
@@ -101,10 +101,9 @@ if ($g) {
 		$yellow= imagecolorallocate($img, 255, 255, 0);
 	  if ($displaytarget) {
 		$targets = $leginondata->getImageTargets($id);
-		$line=20;
-		$diam=20;
+		$targets = $leginondata->matchVersionTargets($targets);
 		foreach ($targets as $target) {
-			$tId=$target[parentId];
+			$tId=$target[childId];
 			$targetinfo = $leginondata->getImageInfo($tId);
 			$targetcal = $leginondata->getImageMatrixCalibration($tId);
 			$parentcal = $leginondata->getImageMatrixCalibration($id);
@@ -118,17 +117,26 @@ if ($g) {
 				$col = $white;
 				$crosscol = $white;
 			}
-			$tn = $targetinfo[parentnumber];
+			$tn = $target[tnumber];
 			$ratioX = ($size) ? $size/$target[dimx] : (($binning) ? 1/$binning : 1);
 			$ratioY = ($size) ? $size/$target[dimy] : (($binning) ? 1/$binning : 1);
-			$xc = $target[x]*$ratioX;
-			$yc = $target[y]*$ratioY;
-			$square = new square($xc,$yc, $truedim*$ratioX);
-			$angle= $targetcal['angle']-$parentcal['angle'];
-			$squarepoints = $square->getRotatedPointCoords($angle);
-			$txc = $squarepoints[0]+1;
-			$tyc = $squarepoints[1]+1;
-			$npoints=count($squarepoints)/2;
+			$cx = $target[x]*$ratioX;
+			$cy = $target[y]*$ratioY;
+
+			if ($tId) {
+				$angle = $targetcal['angle']-$parentcal['angle'];
+				$squarepoints = drawsquare($img, $cx, $cy, $angle, $truedim*$ratioX, $crosscol);
+				$ctx = $squarepoints[0]+1;
+				$cty = $squarepoints[1]+1;
+			} else {
+				$crosssize=20;
+				$ctx = $cx+$crosssize/2;
+				$cty = $cy;
+				drawcross($img, $cx, $cy, $crosssize*$ratioX, $crosscol);
+			}
+
+			imagestring($img, 4, $ctx+1, $cty+1, $tn, $black);
+			imagestring($img, 4, $ctx, $cty, $tn, $col);
 			
 		}
 		$targets = $leginondata->getImageFocusTargets($id);
@@ -136,8 +144,8 @@ if ($g) {
 		$diam=20;
 		$myc=0;
 		foreach ($targets as $target) {
-			$tgn=$target[parentnumber];
-			$tn='focus';
+			$tgn=$target[tnumber];
+			$tn='focus'."  ".$tgn;
 			if (abs($target[x]-$parent[targetx])<5
 				&& abs($target[y]-$parent[targety])<5 ){
 				$col = $blue;
@@ -148,14 +156,18 @@ if ($g) {
 			}
 			$ratioX = ($size) ? $size/$target[dimx] : (($binning) ? 1/$binning : 1);
 			$ratioY = ($size) ? $size/$target[dimy] : (($binning) ? 1/$binning : 1);
-			$xc = $target[x]*$ratioX;
-			$yc = $target[y]*$ratioY;
-			imagearc($img, ($target[x]*$ratioX), ($target[y]*$ratioY), $diam*$ratioX, $diam*$ratioY, 0, 360, $crosscol);
-			imageline($img, ($target[x]-$line)*$ratioX, ($target[y]*$ratioY), ($target[x]+$line)*$ratioX, ($target[y]*$ratioY), $crosscol); 
-			imageline($img, $target[x]*$ratioX, ($target[y]-$line)*$ratioY, $target[x]*$ratioX, ($target[y]+$line)*$ratioY, $crosscol); 
-			imagestring($img, 4, $xc+1, $yc+1, $tn, $black);
-			imagestring($img, 4, $xc, $yc, $tn, $col);
+			$cx = $target[x]*$ratioX;
+			$cy = $target[y]*$ratioY;
+
+			$crosssize=20;
+			$ctx = $cx+$crosssize/2;
+			$cty = $cy;
+			drawcross($img, $cx, $cy, $crosssize*$ratioX, $crosscol);
+
+			imagestring($img, 4, $ctx+1, $cty+1, $tn, $black);
+			imagestring($img, 4, $ctx, $cty, $tn, $col);
 			$myc++;
+			
 		}
 	  }
 

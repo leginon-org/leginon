@@ -267,4 +267,79 @@ function getmicrotime()
    return ((float)$usec + (float)$sec);
 }
 
+function matrix($a11, $a12, $a21, $a22) {
+	return array(
+			array($a11, $a12),
+			array($a21, $a22)
+		);
+}
+
+function displayMatrix($matrix) {
+	$html='
+		<table border="0" cellspacing="0" cellpadding="0">
+			<tr>
+				<td class="bgcolor3" height="1" width="1"></td>
+				<td class="bgcolor3" height="1" width="3"></td>
+				<td class="bgcolor0" height="1" width="20"></td>
+				<td class="bgcolor3" height="1" width="3"></td>
+				<td class="bgcolor3" height="1" width="1"></td>
+			</tr>
+			<tr>
+				<td class="bgcolor3" width="1"></td>
+				<td colspan=3 class="bgcolor0"  >
+				<table cellspacing="5" cellpadding="5">
+	';
+	if (is_array($matrix))
+		foreach ($matrix as $m) {
+			$cells = (is_array($m)) ? $m : array($m);
+			$html .= '			<tr>'."\n";
+			foreach ($cells as $cell) 
+				$html .= '				<td>'.$cell.'</td>'."\n";
+			$html .= '			</tr>'."\n";
+		}
+	$html .= '
+				</table>
+				</td>
+				<td class="bgcolor3" width="1">
+				</td>
+			</tr>
+			<tr>
+				<td class="bgcolor3" height="1" width="1"></td>
+				<td class="bgcolor3" height="1" width="3"></td>
+				<td class="bgcolor0" height="1" width="40"></td>
+				<td class="bgcolor3" height="1" width="3"></td>
+				<td class="bgcolor3" height="1" width="1"></td>
+			</tr>
+		</table>
+	<br>
+	';
+	return $html;
+}
+
+function format_sci_number($data) {
+
+	$decimal = @func_get_arg(1);
+	$neg = ($data<0) ? true : false;
+	if ($neg)
+		$data *= -1;
+	if (!isset($decimal)) { $decimal = 2; }
+	if ($data < 1) {
+		while ($data < 1) {
+			$data *= 10;
+			$power++;
+		}
+		$data = sprintf("%0.".$decimal."fx10<sup>-".$power."</sup>", $data);
+
+	} elseif ($data > 10) {
+		while ($data > 10) {
+			$data /= 10;
+			$power++;
+		}
+		$data = sprintf("%0.".$decimal."fx10<sup>".$power."</sup>", $data);
+	}
+	if ($neg)
+		$data = "-".$data;
+return $data;
+
+}
 ?>

@@ -10,7 +10,9 @@
 require('inc/leginon.inc');
 require ('inc/viewer.inc');
 
-
+// display data tree ?
+$displaytreevalue  = ($_POST) ? (($_POST[datatree]=='on') ? "off" : "on") : "off";
+$displaytree = ($displaytreevalue == 'on') ? true : false;
 
 if(!$imgId=$_GET[id]) {
 	// --- if Id is not set, get the last acquired image from db
@@ -60,19 +62,36 @@ $viewer->add($view1);
 
 $javascript .= $viewer->getJavascriptInit();
 
+if ($displaytree)
+	$jstree = $leginondata->getDataTree('AcquisitionImageData',$imgId);
+
+// --- get Calibrations Data
+$types = $leginondata->getMatrixCalibrationTypes();
+
 ?>
 <html>
 <head>
-<link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 <title>Image Report: <?=$filename?></title>
+<link rel="stylesheet" type="text/css" href="css/viewer.css"> 
+<? if ($displaytree) { ?>
+<link rel="StyleSheet" href="css/tree.css" type="text/css">
+<script src="js/tree.js"></script>
+<? } // --- end if displaytree ?>
 <?=$javascript;?>
 <script>
 function init() {
 	this.focus();
 }
+<?
+if ($displaytree)
+	echo $jstree;
+?>
 </script>
 </head>
 <body onload="init(); initviewer();">
+<form name="tf" method="POST" action="<?=$REQUEST_URI?>">
+<input type="hidden" name="datatree" value="<?=$displaytreevalue?>">
+</form>
 <?
 //--- define information to display
 $fileinfokeys = array (	'nx','ny',
@@ -105,6 +124,7 @@ $imageinfokeys = array (
 	//	'pixelsize',
 	//	'magnification',
 	//	'defocus',
+		'high tension',
 		'gridNb',
 		'trayId'
 		);
@@ -153,8 +173,12 @@ if (is_array($imageinfo)) {
 	echo divtitle("Image Information");
 	echo "<table border='0'>";
 	foreach($imageinfokeys as $k)
-		if (!empty($imageinfo[$k]))
-			echo formatHtmlRow($k,$imageinfo[$k]);
+		if (!empty($imageinfo[$k])) {
+			$v = $imageinfo[$k];
+			if ($k=='high tension')
+				$v = $leginondata->formatHighTension($v);
+			echo formatHtmlRow($k,$v);
+		}
 
 	foreach($presets as $k=>$v) {
 		if ($k=='defocus')
@@ -231,8 +255,66 @@ echo "</table>";
 	</td>
 </tr>
 </table>
-<div style="border: 1px solid #000000; position:absolute; margin: 0px;padding:0px;  background-color: #CCCCFF">
+<table border="0">
+<tr valign=top>
+<td width=300>
+<div style="border: 1px solid #000000; height:290; width:270; margin: 0px;padding:0px;  background-color: #CCCCFF">
 <?$viewer->display();?>
 </div>
+</td>
+<td>
+<?
+$link = ($displaytree) ? "hide" : "view";
+$url = "<a href='#' class='header' onclick='javascript:document.tf.submit()'>".$link." &raquo;</a>"; 
+echo divtitle("Data Tree ".$url);
+
+if ($displaytree) {
+?>
+<br>
+<div id="tree" style="position:absolute">
+<script>
+<!--
+createTree(Tree,0, new Array());
+//-->
+</script>
+</div>
+<? } // --- end if displaytree ?>
+</td>
+</tr>
+<tr valign=top>
+	<td>
+<?
+echo divtitle("Calibrations");
+echo "<table border='0'>";
+/*
+foreach ($types as $type) {
+	$m = $leginondata->getImageMatrixCalibration($imgId, $type);
+	$matrix = displayMatrix(matrix(
+			$leginondata->formatMatrixValue($m[a11]),
+			$leginondata->formatMatrixValue($m[a12]),
+			$leginondata->formatMatrixValue($m[a21]),
+			$leginondata->formatMatrixValue($m[a22]))
+		);
+	echo formatHtmlRow($type, $matrix);
+}
+*/
+echo "</table>";
+?>
+	</td>
+</tr>
+</table>
+<?
+foreach ($types as $type) {
+	$m = $leginondata->getImageMatrixCalibration($imgId, $type);
+	if (!$m) continue;
+	$matrix = displayMatrix(matrix(
+			$leginondata->formatMatrixValue($m[a11]),
+			$leginondata->formatMatrixValue($m[a12]),
+			$leginondata->formatMatrixValue($m[a21]),
+			$leginondata->formatMatrixValue($m[a22]))
+		);
+	echo "<span class='datafield0'>$type</span><br> $matrix";
+}
+?>
 </body>
 </html>

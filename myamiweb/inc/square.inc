@@ -41,7 +41,6 @@ class square {
 	{
 	   $x -= $cx;
 	   $y -= $cy;
-	//   $angle = ($angle / 180) * M_PI;
 
 	   $new_x = $x * cos($angle) - $y * sin($angle);
 	   $new_y = $x * sin($angle) + $y * cos($angle);

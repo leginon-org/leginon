@@ -38,7 +38,8 @@ class viewer {
 		$projectselector = '<select name="projectId" onchange="newexp()">'.$this->crlf;
 		foreach ($projects as $project) {
 			if ($project[id]==$this->projectId) $s='selected'; else $s='';
-			$projectselector .= '<option value='.$project[id].' '.$s.' >'.$project[name].$this->crlf; 
+			$projectselector .= '<option value='.$project[id].' '.$s.' >'
+						.$project[name].'</option>'.$this->crlf; 
 		}
 		$projectselector .= '</select>'.$this->crlf;
 		$this->addprojectsel = $projectselector;
@@ -48,7 +49,8 @@ class viewer {
 		$selector = '<select name="sessionId" onchange="newexp()">'.$this->crlf;
 		foreach ($sessions as $session) {
 			if ($session[id]==$this->sessionId) $s='selected'; else $s='';
-			$selector .= '<option value='.$session[id].' '.$s.' >'.$session[name].$this->crlf; 
+			$selector .= '<option value='.$session[id].' '.$s.' >'
+					.$session[name].'</option>'.$this->crlf; 
 		}
 		$selector .= '</select>';
 		$this->addsessionsel = $selector;
@@ -157,12 +159,15 @@ class viewer {
 	}
 
 	function getJavascriptInit() {
-		$init = '<script>'.$this->crlf;
-		$init .= 'var jsviews = new Array();'.$this->crlf;
 		$initbuttons="";
 		$nv=0;
+		$init = '<script>'.$this->crlf;
+		$init .= 'var jsviews = new Array();'.$this->crlf;
+		foreach ($this->views as $v) 
+			$init .= $v->getJavascriptvar();
+
 		foreach ($this->views as $v) {
-			$init .= $v->getJavaScript().$this->crlf;
+			$init .= $v->getJavascriptButton();
 			$init .= 'jsviews['.$nv.']="'.$v->getName().'";'.$this->crlf;
 			$nv++;
 		}
@@ -171,14 +176,16 @@ class viewer {
 		foreach ($this->views as $v) {
 			$name = $v->getName();
 			$init .= '	newfile("'.$name.'");'.$this->crlf;
-			$initbuttons .= $v->getJavaScriptInit().$this->crlf;
+			if ($v->getJavaScriptInit())
+				$initbuttons .= $v->getJavaScriptInit().$this->crlf;
 		}
 		$init .= '}'.$this->crlf;
 		$init .= ''.$this->crlf;
 		$init .= 'function initviewer() { '.$this->crlf;
-		$init .= $initbuttons.$this->crlf;
-		$init .= '	setimgId();'.$this->crlf;
-		$init .= '	updateviews();'.$this->crlf;
+		if (!empty($initbuttons))
+			$init .= $initbuttons.$this->crlf;
+		$init .= 'setimgId();'.$this->crlf;
+		$init .= 'updateviews();'.$this->crlf;
 		if ($this->addloijavascript)
 			$init .= '	start();'.$this->crlf;
 		$init .= '}'.$this->crlf;
@@ -286,6 +293,7 @@ class view {
 		$this->displayfiltericon = true;
 		$this->displayinfoicon = true;
 		$this->displaycloseicon = true;
+		$this->displayadjustlink = true;
 		$this->framecolor = ' class="bgcolor1" ';
 		$this->menucolor = ' class="bgcolor1" ';
 	}
@@ -357,8 +365,8 @@ class view {
 		$this->displayadjustlink= $state;
 	}
 
-	function getJavascript() {
-		$javascript = ''.$this->crlf
+	function getJavascriptvar() {
+		$javascript = ''
 			.'var '.$this->name.'target_bt_st=false;'.$this->crlf
 			.'var '.$this->name.'scale_bt_st=false;'.$this->crlf
 			.'var '.$this->name.'fft_bt_st=false;'.$this->crlf
@@ -368,14 +376,20 @@ class view {
 			.'var jsvfile'.$this->name.'=1;'.$this->crlf
 			.'var jsmin'.$this->name.';'.$this->crlf
 			.'var jsmax'.$this->name.';'.$this->crlf
-			.'var jsfilter'.$this->name.';'.$this->crlf
-			.$this->btinfo->getJavascript().$this->crlf
-			.''.$this->crlf;
+			.'var jsfilter'.$this->name.';'
+			.$this->crlf;
+		return $javascript;
+	}
+
+	function getJavascriptButton() {
+		$javascript = ''.$this->crlf
+			.$this->btinfo->getJavascript()
+			.$this->crlf;
 		return $javascript;
 	}
 
 	function getJavascriptInit() {
-		$javascript = ''.$this->crlf;
+		$javascript = '';
 		if ($_POST[$this->displayname]=='off')
 			$javascript .= 'toggleimage(\''.$this->name.'close_bt\', \'close_bt\');'.$this->crlf;
 		// --- set Scale, targets buttons on 

@@ -17,8 +17,7 @@ if (!$id=$_GET[id]) {
 
 	
 if($g) {
-	$table='AcquisitionImageData';
-	$arr_node=$leginondata->getDataTree($table,$id);
+	$arr_node=$leginondata->getDataTree('AcquisitionImageData',$id);
 ?>
 <html>
 <head>
@@ -28,33 +27,8 @@ if($g) {
         <script src="js/tree.js"></script>
         <script>
 <?
+	echo $arr_node;
 }
-if ($arr_node) {
-echo "var Tree = new Array; \n";
-while (list($k1, $v1) = each($arr_node)) {
-        $jsvar[]="Tree[".($k1-1)."]";
-        $nodeId[]=$k1;
-        $nodeparent[]=0;
-        $node[]=$v1;
-}
-
-foreach($nodeId as $i) {
-        foreach($nodeId as $l) {
-                if (ereg ("^".$node[$i].".+", $node[$l])) {
-                        $nodeparent[$l]=$nodeId[$i];
-			continue;
-		}
-        }
-
-        $file = ereg_replace ($node[$nodeparent[$i]], "", $node[$i]);
-        $file = ereg_replace ("^\/","", $file);
-	
-		if ($i<>0) {
-                	echo $jsvar[$i],"=\"", $nodeId[$i],"|", $nodeparent[$i],"|",$file,"|","javascript:oc($nodeId[$i], $nodeparent[$i])","\";\n";
-		}
-}
-}
-
 ?>
 </script>
 </head>

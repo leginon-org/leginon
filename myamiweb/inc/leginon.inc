@@ -205,7 +205,7 @@ class leginondata {
 		return $fileInfo[filename];
 	}
 
-	function getImageMatrixCalibration($imgId) {
+	function getImageMatrixCalibration($imgId, $type='image shift') {
 		$q = "select "
 			."mcal.`ARRAY|matrix|1_1` as `a11`,"
 			."mcal.`ARRAY|matrix|1_2` as `a12`,"
@@ -222,7 +222,7 @@ class leginondata {
 			."and "
 			."scope.magnification = mcal.magnification "
 			."and "
-			."mcal.`type`='image shift' "
+			."mcal.`type`='".$type."' "
 			."and "
 			."mcal.`DEF_timestamp` < a.`DEF_timestamp` "
 			."and "
@@ -272,12 +272,15 @@ class leginondata {
 		return $Rparent;
 	}
 
-	function getMatrixTypes() {
+	function getMatrixCalibrationTypes() {
+		$types = array();
 		$q="select "
 		."distinct mcal.`type` "
 		."from MatrixCalibrationData mcal";
 		$Rparent = $this->mysql->SQLQuery($q);
-		return $Rparent;
+		while ($t= mysql_fetch_array($Rparent)) 
+			$types[] = $t[type];
+		return $types;
 	}
 
 	function getImageFFT($imgId) {
@@ -366,6 +369,7 @@ class leginondata {
 			."pi.pixelsize as pixelsize, "
 			."scope.magnification, "
 			."scope.defocus, "
+			."scope.`high tension`, "
 			."grid.`grid ID` as gridId "
 			.$parentselect
 			."from AcquisitionImageData a "
@@ -521,25 +525,77 @@ class leginondata {
 			."floor(t.`delta row`+c.`SUBD|dimension|y`/2) as y, "
 			."c.`SUBD|dimension|x` as dimx, "
 			."c.`SUBD|dimension|y` as dimy, "
-			."parent.`DEF_id` as parentId, "
+			."child.`DEF_id` as childId, "
 			."t.`DEF_id` as tId, "
-			."t.`version` as tversion "
+			."t.`version` as tversion, "
+			."t.`number` as tnumber "
 			."from AcquisitionImageData as a "
 			."left join AcquisitionImageTargetData as t "
 			."on (a.`DEF_id` = t.`REF|AcquisitionImageData|image`) "
 			."left join CameraEMData c on (t.`REF|CameraEMData|camera`=c.`DEF_id`) "
-			."left join AcquisitionImageData as parent "
-			."on (parent.`REF|AcquisitionImageTargetData|target`=t.`DEF_id`) "
+			."left join AcquisitionImageData as child "
+			."on (child.`REF|AcquisitionImageTargetData|target`=t.`DEF_id`) "
 			."where "
-			."t.`version`='0' and "
+		//	."t.`version`='0' and "
 			."t.`type`='acquisition' and "
-			."a.`DEF_id`='".$imgId."'";
+			."a.`DEF_id`='".$imgId."' "
+			."order by t.`tnumber` ";
 
 		$Rtargets = $this->mysql->SQLQuery($q);
 		$targets= array();
 		while ($target = mysql_fetch_array($Rtargets, MYSQL_ASSOC))
 			$targets[] = $target;
 		return $targets;
+		#return $this->matchTargets($targets);
+	}
+
+	function matchVersionTargets($targets) {
+		$grouptargets = array();
+		$ntargets = array();
+		if (!is_array($targets)) 
+			return false;
+
+		foreach ($targets as $target)
+			$grouptargets[$target[tnumber]][] = $target;
+
+		foreach ($grouptargets as $ts) {
+			if (!$this->asChildId($ts)) {
+				$ntargets[] = $ts[0];
+				continue;
+			}
+			$this->joinChildId($ts, $ntargets);
+
+		}
+		return $ntargets;
+	}
+
+	function joinChildId($targets, &$ntargets) {
+		foreach ($targets as $target) {
+
+			if (!$target[childId]) {
+				$tx = $target[x];
+				$ty = $target[y];
+				continue;
+			}
+
+			if ($tx)
+				$target[x] = $tx;
+			if ($ty)
+				$target[y] = $ty;
+
+			$ntargets[] = $target;
+		}
+		return true;
+	}
+
+	function asChildId($targets) {
+		$ret = false;
+		foreach ($targets as $target)
+			if ($target[childId]) {
+				$ret = true;
+				break;
+			}
+		return $ret;
 	}
 
 	function getImageFocusTargets($imgId) {
@@ -978,19 +1034,57 @@ class leginondata {
 		return $dose;
 	}
 
+	function formatHighTension(&$ht) {
+		$ht .= " V";
+		return $ht;
+	}
+
+	function formatMatrixValue(&$val) {
+		$val = (empty($val)) ? $val : format_sci_number($val, 4); 
+		return $val;
+	}
+
 	function getDataTree($table, $id) {
 	/**
 	*	Build a javascript tree from a query result
 	**/
 		// ---  Default node is root
 		$arr_node = array('/');
+		$jsvar = array();
+		$nodeId = array();
+		$node = array();
+		$nodeparent = array();
 		// --- build a tree with '/' as separator
 
 		$q="	select * from $table 
 			where  `DEF_id` = \"$id\" ";
 		$Rq = $this->mysql->SQLQuery($q);
 		$this->readDataTree($arr_node,$Rq); 
-		return $arr_node;
+//		return $arr_node;
+		$tree = "var Tree = new Array; ".$this->crlf;
+		while (list($k1, $v1) = each($arr_node)) {
+			$jsvar[]="Tree[".($k1-1)."]";
+			$nodeId[]=$k1;
+			$nodeparent[]=0;
+			$node[]=$v1;
+		}
+
+		foreach($nodeId as $i) {
+			foreach($nodeId as $l) {
+				if (ereg ("^".$node[$i].".+", $node[$l])) {
+					$nodeparent[$l]=$nodeId[$i];
+					continue;
+				}
+			}
+			$file = ereg_replace ($node[$nodeparent[$i]], "", $node[$i]);
+			$file = ereg_replace ("^\/","", $file);
+			if ($i<>0) 
+				$tree .= $jsvar[$i]."=\"".$nodeId[$i]
+				."|".$nodeparent[$i]."|".$file."|"
+				."javascript:oc($nodeId[$i], $nodeparent[$i])"
+				."\";".$this->crlf;
+		}
+		return $tree;
 	}
 
 }
