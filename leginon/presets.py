@@ -475,6 +475,8 @@ class PresetsManager(node.Node):
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
 
+		self.ignorez = uidata.Boolean('Ignore Target Z', True, 'rw', persist=True)
+
 		sessionnamelist = self.getSessionNameList()
 		self.othersession = uidata.SingleSelectFromList('Session', sessionnamelist, 0)
 		fromdb = uidata.Method('Import', self.uiGetPresetsFromDB)
@@ -524,7 +526,7 @@ class PresetsManager(node.Node):
 
 		## main container
 		container = uidata.LargeContainer('Presets Manager')
-		container.addObjects((importcont,createcont,selectcont,imagecont))
+		container.addObjects((self.ignorez,importcont,createcont,selectcont,imagecont))
 		self.uiserver.addObject(container)
 
 		return
@@ -573,7 +575,16 @@ class PresetsManager(node.Node):
 		## by that same name
 		oldpreset = self.presetByName(emtargetdata['preset']['name'])
 		newpreset = self.presetByName(newpresetname)
-		emdata = emtargetdata['scope']
+
+		emdata = copy.deepcopy(emtargetdata['scope'])
+
+		## ignore Z stage position
+		if self.ignorez.get():
+			try:
+				del emdata['stage position']['z']
+			except KeyError:
+				pass
+
 		scopedata = data.ScopeEMData(id=('scope',), initializer=emdata)
 
 		## figure out how to transform the target image shift
