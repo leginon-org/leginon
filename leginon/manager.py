@@ -846,7 +846,7 @@ class ManagerSetup(object):
 			self.container.parent.deleteObject(self.container.name)
 
 		self.manager.defineUserInterface()
-		self.manager.messagelog.message('info', 'Manager initialized')
+		self.manager.messagelog.information('Manager initialized')
 
 	def uiGetSessionData(self):
 		initializer = {'name': self.session_name.get(),

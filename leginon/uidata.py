@@ -492,6 +492,15 @@ class MessageLog(Container):
 		self.addObject(Message('Message #%d' % self.counter, type, message))
 		self.counter += 1
 
+	def information(self, message):
+		self.message('info', message)
+
+	def warning(self, message):
+		self.message('warning', message)
+
+	def error(self, message):
+		self.message('error', message)
+
 class MessageDialog(Dialog):
 	typelist = Dialog.typelist + ('message',)
 	def __init__(self, name, label):
