@@ -5,6 +5,7 @@ import Numeric
 import fftengine
 import correlator
 import peakfinder
+import LinearAlgebra
 reload(fftengine)
 reload(correlator)
 reload(peakfinder)
