@@ -3,12 +3,16 @@ Provides high level functions to access camera
 '''
 
 import leginonconfig
+import node
 import data
 import cameraimage
 import Numeric
 import copy
 import uidata
 from timer import Timer
+
+class NoCorrectorError(Exception):
+	pass
 
 class CameraFuncs(object):
 	'''
@@ -22,8 +26,10 @@ class CameraFuncs(object):
 	def acquireCameraImageData(self, camconfig=None, correction=None):
 		## configure camera
 		if camconfig is not None:
+			print 'CONFIGURING CAMERA'
 			camdata = self.configToEMData(camconfig)
 			self.currentCameraEMData(camdata)
+			print 'DONE CONFIG'
 
 		if correction is None:
 			cor = self.cameraConfig()['correct']
@@ -32,7 +38,12 @@ class CameraFuncs(object):
 
 		if cor:
 			### get image data from corrector node
-			imdata = self.node.researchByDataID(('corrected image data',))
+			try:
+				print 'TRY'
+				imdata = self.node.researchByDataID(('corrected image data',))
+			except node.ResearchError:
+				print 'EXC'
+				raise NoCorrectorError('maybe corrector node is not running')
 		else:
 			### create my own data from acquisition
 			#print 'research'
