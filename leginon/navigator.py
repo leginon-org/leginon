@@ -6,17 +6,15 @@ import data
 import time
 import cameraimage
 import camerafuncs
+import calibrationclient
 
 class Navigator(node.Node):
 	def __init__(self, id, nodelocations, **kwargs):
-		self.shift_types = {
-			'image shift': event.ImageShiftPixelShiftEvent,
-			'stage': event.StagePixelShiftEvent,
-			'no preference': event.PixelShiftEvent
+		self.calclients = {
+			'image shift': calibrationclient.ImageShiftCalibrationClient(self),
+			'stage': calibrationclient.StageCalibrationClient(self),
+			'modeled stage': calibrationclient.ModeledStageCalibrationClient(self)
 		}
-
-		## by default, use the generic PixelShiftEvent
-		self.shiftType('stage')
 
 		self.cam = camerafuncs.CameraFuncs(self)
 		node.Node.__init__(self, id, nodelocations, **kwargs)
@@ -30,22 +28,8 @@ class Navigator(node.Node):
 		currentconfig = self.cam.config()
 		currentconfig['state']['dimension']['x'] = 1024
 		currentconfig['state']['binning']['x'] = 4
-		currentconfig['state']['exposure time'] = 100
+		currentconfig['state']['exposure time'] = 400
 		self.cam.config(currentconfig)
-
-
-	def shiftType(self, shift_type=None):
-		'''
-		this sets the event to be generated for a move
-		it must be a subclass of PixelShiftEvent
-		'''
-		if shift_type is None:
-			return self.current_shift_type
-		
-		if shift_type not in self.shift_types:
-			raise RuntimeError('no such shift type: %s' % shift_type)
-		self.current_shift_type = shift_type
-		self.shiftEventClass = self.shift_types[shift_type]
 
 	def handleImageClick(self, clickevent):
 		print 'handling image click'
@@ -54,32 +38,26 @@ class Navigator(node.Node):
 		clickrow = clickinfo['array row']
 		clickcol = clickinfo['array column']
 		clickshape = clickinfo['array shape']
+		clickscope = clickinfo['scope']
+		clickcamera = clickinfo['camera']
 
-		print 'clickinfo', clickinfo
 		## calculate delta from image center
 		deltarow = clickrow - clickshape[0] / 2
 		deltacol = clickcol - clickshape[1] / 2
-
-		## binning
-		camconfig = self.cam.config()
-		camstate = camconfig['state']
-		binx = camstate['binning']['x']
-		biny = camstate['binning']['y']
-		deltarow *= biny
-		deltacol *= binx
 
 		## to shift clicked point to center...
 		deltarow = -deltarow
 		deltacol = -deltacol
 
-		deltarowcol = {'row':deltarow, 'column':deltacol}
-		print 'deltarowcol', deltarowcol
+		pixelshift = {'row':deltarow, 'col':deltacol}
+		mag = clickscope['magnification']
 
-		## do pixel shift
-		e = self.shiftEventClass(self.ID(), deltarowcol)
-		print 'e', e
-		self.outputEvent(e)
-		print 'outputEvent done'
+		## figure out shift
+		movetype = self.movetype.get()
+		calclient = self.calclients[movetype]
+		newstate = calclient.transform(pixelshift, clickscope, clickcamera)
+		emdat = data.EMData('scope', newstate)
+		self.publishRemote(emdat)
 
 		# wait for a while
 		time.sleep(self.delaydata.get())
@@ -99,8 +77,14 @@ class Navigator(node.Node):
 		if acqtype == 'raw':
 			imagedata = self.cam.acquireCameraImageData(camstate,0)
 		elif acqtype == 'corrected':
-			imagedata = self.cam.acquireCameraImageData(camstate,1)
+			try:
+				imagedata = self.cam.acquireCameraImageData(camstate,1)
+			except:
+				print 'image not acquired'
+				imagedata = None
 
+		if imagedata is None:
+			return
 		print 'publishing image'
 		self.publish(imagedata, event.CameraImagePublishEvent)
 		print 'image published'
@@ -108,16 +92,16 @@ class Navigator(node.Node):
 	def defineUserInterface(self):
 		nodeui = node.Node.defineUserInterface(self)
 
-		shift_types = self.shift_types.keys()
-		temparam = self.registerUIData('temparam', 'array', default=shift_types)
-		movetype = self.registerUIData('TEM Parameter', 'string', choices=temparam, permissions='rw', callback=self.shiftType)
+		movetypes = self.calclients.keys()
+		temparam = self.registerUIData('temparam', 'array', default=movetypes)
+		self.movetype = self.registerUIData('TEM Parameter', 'string', choices=temparam, permissions='rw', default='stage')
 
 		self.delaydata = self.registerUIData('Delay (sec)', 'float', default=2.5, permissions='rw')
 
 		acqtypes = self.registerUIData('acqtypes', 'array', default=('raw', 'corrected'))
 		self.acqtype = self.registerUIData('Acquisition Type', 'string', default='corrected', permissions='rw', choices=acqtypes)
 
-		prefs = self.registerUIContainer('Preferences', (movetype, self.delaydata, self.acqtype))
+		prefs = self.registerUIContainer('Preferences', (self.movetype, self.delaydata, self.acqtype))
 
 		camspec = self.cam.configUIData()
 

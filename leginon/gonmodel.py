@@ -42,7 +42,7 @@ class GonData:
 		lines = datafile.readlines()
 		datafile.close()
 
-		headlines = lines[:3]
+		headlines = lines[:2]
 		headlines = map(string.split,headlines)
 		self.mag = float(headlines[0][0])
 		self.axis = headlines[1][0]
@@ -50,7 +50,7 @@ class GonData:
 		print 'mag', self.mag
 		print 'axis', self.axis
 
-		datalines = lines[4:]
+		datalines = lines[2:]
 		datalen = len(datalines)
 
 		self.gonpos = Numeric.zeros(datalen,Numeric.Float32)
@@ -69,6 +69,7 @@ class GonData:
 		n = 0
 		self.angle = 0.0
 		self.avg = 0.0
+		print 'len(datalines)', len(datalines)
 		for line in datalines:
 			sp = string.split(line)
 			sp = map(float,sp)
@@ -79,8 +80,11 @@ class GonData:
 				self.avg += self.pixpertick[n]
 				self.angle += math.atan2(sp[4],sp[3])
 				n += 1
+			else:
+				print 'SP', sp
 
 		self.ndata = n
+		print 'NNN', n
 		self.avg /= n
 		self.avg = 1.0 / self.avg
 		self.angle /= n

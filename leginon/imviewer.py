@@ -27,9 +27,10 @@ class ImViewer(watcher.Watcher):
 		self.cam = camerafuncs.CameraFuncs(self)
 		self.iv = None
 		self.numarray = None
-		self.imageid = None
+		self.imagedata = None
 		self.viewer_ready = threading.Event()
 		#self.start_viewer_thread()
+		self.clicklock = threading.Lock()
 
 		## default camera config
 		currentconfig = self.cam.config()
@@ -59,8 +60,12 @@ class ImViewer(watcher.Watcher):
 		#print 'thread started'
 
 	def clickCallback(self, tkevent):
+		if not self.clicklock.acquire(0):
+			return
 		clickinfo = self.iv.eventXYInfo(tkevent)
-		clickinfo['image id'] = self.imageid
+		clickinfo['image id'] = self.imagedata.id
+		clickinfo['scope'] = self.imagedata.content['scope']
+		clickinfo['camera'] = self.imagedata.content['camera']
 
 		choice = self.uiclickcallback.get()
 		if choice == 'event':
@@ -69,6 +74,7 @@ class ImViewer(watcher.Watcher):
 		elif choice == 'target':
 			print 'clickTarget'
 			self.clickTarget(clickinfo)
+		self.clicklock.release()
 
 	def clickTarget(self, clickinfo):
 		'''
@@ -165,11 +171,9 @@ class ImViewer(watcher.Watcher):
 		#numarray = Numeric.array(imarray)
 		#numarray.shape = (height,width)
 
-		c = imagedata.content
-		self.numarray = c['image']
+		self.imagedata = imagedata
+		self.numarray = imagedata.content['image']
 
-		self.imageid = imagedata.id
-		print 'IMVIEWER', self.imageid, self.popupvalue
 		if self.popupvalue:
 			self.displayNumericArray()
 

@@ -2,7 +2,7 @@
 
 import sys
 import gonmodel
-#import pymat
+import pymat
 import Numeric
 
 def scale_model(inval, scale):
@@ -20,7 +20,7 @@ def plot_result(data, model, inc):
 	xmod = Numeric.arrayrange(ran)
 	xmod = xmod * inc + x1
 	ymod = map(model.eval, xmod)
-	a0 = data.maginfo.get('modavg')
+	a0 = data.maginfo.get('modavgx')
 
 	ymod = Numeric.array(ymod)
 	ymod = ymod / a0
@@ -79,4 +79,4 @@ mydat.read_data(datfile)
 mymod = gonmodel.GonModel()
 mymod.fit_data(mydat, terms)
 mymod.write_gonshelve(modfile)
-#plot_result(mydat, mymod, 0.000000500 )
+plot_result(mydat, mymod, 0.000000500 )

@@ -3,51 +3,39 @@ import data
 import fftengine
 import correlator
 import peakfinder
-import sys
 import event
 import time
-import Numeric
-import LinearAlgebra
 import cPickle
 import cameraimage
 import camerafuncs
+import gonmodel
+import calibrationclient
+import Numeric
+import LinearAlgebra
 
 False=0
 True=1
 
 class Calibration(node.Node):
-	def __init__(self, id, nodelocations, **kwargs):
+	def __init__(self, id, nodelocations, parameter, **kwargs):
 		self.cam = camerafuncs.CameraFuncs(self)
 		ffteng = fftengine.fftNumeric()
 		#ffteng = fftengine.fftFFTW(planshapes=(), estimate=1)
 		self.correlator = correlator.Correlator(ffteng)
 		self.peakfinder = peakfinder.PeakFinder()
 
+		if parameter not in ('image shift','stage position'):
+			raise RuntimeError('parameter %s not supported' % (parameter,) )
+		self.parameter = parameter
+
 		self.axislist = ['x', 'y']
 		self.settle = 2.0
 
-		self.calibration = {}
 		self.clearStateImages()
 
 		node.Node.__init__(self, id, nodelocations, **kwargs)
 		self.defineUserInterface()
 		
-	def calculatePixelFromPercent(self, percent):
-		pixel = {'x': {'min': None, 'max': None}, 'y': {'min': None, 'max': None}}
-		for axis in percent:
-			for limit in percent[axis]:
-				pixel[axis][limit] = self.camerastate['size'] \
-						* percent[axis][limit]/100
-		return pixel
-
-	def calculatePercentFromPixel(self, pixel):
-		percent = {'x': {'min': None, 'max': None}, 'y': {'min': None, 'max': None}}
-		for axis in pixel:
-			for limit in pixel[axis]:
-				percent[axis][limit] = \
-					pixel[axis][limit] / self.camerastate['size'] * 100
-		return percent
-
 	def state(self, value, axis):
 		raise NotImplementedError()
 
@@ -78,10 +66,9 @@ class Calibration(node.Node):
 			newbase = {'x':basex, 'y':basey}
 			baselist.append(newbase)
 
-		cal = {}
+		mat = {}
 		for axis in self.axislist:
-			axiskey = axis + ' pixel shift'
-			cal[axiskey] = {'x': 0.0, 'y': 0.0}
+			mat[axis] = {'row': 0.0, 'col': 0.0}
 			for base in baselist:
 				print "axis =", axis
 				basevalue = base[axis]
@@ -96,31 +83,39 @@ class Calibration(node.Node):
 				shiftinfo = self.measureStateShift(state1, state2, axis)
 				print 'shiftinfo', shiftinfo
 
-				xpix = shiftinfo['pixel shift'][1]
-				ypix = shiftinfo['pixel shift'][0]
-				totalpix = abs(xpix + 1j * ypix)
+				rowpix = shiftinfo['pixel shift']['row']
+				colpix = shiftinfo['pixel shift']['col']
+				totalpix = abs(rowpix + 1j * colpix)
 
 				change = shiftinfo['parameter shift']
 				perpix = change / totalpix
 				print '**PERPIX', perpix
 
-				pixelsperx = xpix / change
-				pixelspery = ypix / change
-				cal[axiskey]['x'] += pixelsperx
-				cal[axiskey]['y'] += pixelspery
-				print 'cal', cal
-				
-			cal[axiskey]['x'] = cal[axiskey]['x'] / self.navg
-			cal[axiskey]['y'] = cal[axiskey]['y'] / self.navg
-			cal[axiskey]['value'] = 1.0
+				rowpixelsper = rowpix / change
+				colpixelsper = colpix / change
+				mat[axis]['row'] += rowpixelsper
+				mat[axis]['col'] += colpixelsper
+				print 'mat', mat
 
-		self.calibration = cal
+			mat[axis]['row'] /= self.navg
+			mat[axis]['col'] /= self.navg
+
+		matrix = [[mat['x']['row'], mat['y']['row']],
+		          [mat['x']['col'], mat['y']['col']]]
+		matrix = Numeric.array(matrix)
+		invmatrix = LinearAlgebra.inverse(matrix)
+
+		mag = self.getMagnification()
 
 		self.publish(event.UnlockEvent(self.ID()))
 
-		self.publish(data.CalibrationData(self.ID(), self.calibration),
-									event.CalibrationPublishEvent)
-		print 'CALIBRATE DONE', self.calibration
+		key = self.calclient.magCalibrationKey(mag, self.parameter)
+		self.saveCalibration(key, invmatrix)
+		print 'CALIBRATE DONE', invmatrix
+
+	def getMagnification(self):
+		magdata = self.researchByDataID('magnification')
+		return magdata.content['magnification']
 
 	def clearStateImages(self):
 		self.images = []
@@ -198,7 +193,7 @@ class Calibration(node.Node):
 		## need unbinned result
 		binx = imagecontent1['camera']['binning']['x']
 		biny = imagecontent1['camera']['binning']['y']
-		unbinned = shift[0] * biny, shift[1] * binx
+		unbinned = {'row':shift[0] * biny, 'col': shift[1] * binx}
 
 		shiftinfo.update({'parameter shift': actual_shift, 'pixel shift': unbinned, 'peak value': peakvalue, 'shape':pcimage.shape, 'stats': (stats1, stats2)})
 		return shiftinfo
@@ -275,41 +270,14 @@ class Calibration(node.Node):
 		print 'shift', shift
 		return {'shift': {'x': shift[1], 'y': shift[0]}, 'peak value': peakvalue}
 
-	def save(self, filename):
-		print "saving", self.calibration, "to file:", filename
-		try:
-			f = file(filename, 'w')
-			cPickle.dump(self.calibration, f)
-			f.close()
-		except:
-			print "Error: failed to save calibration"
-		return ''
-
-	def load(self, filename):
-		try:
-			f = file(filename, 'r')
-			self.calibration = cPickle.load(f)
-			f.close()
-		except:
-			print "Error: failed to load calibration"
-		else:
-			print "loading", self.calibration, "from file:", filename
-		dat = data.CalibrationData(self.ID(), self.calibration)
-		print 'data', dat
-		ev = event.CalibrationPublishEvent
-		print 'eventclass', ev
-		self.publish(data.CalibrationData(self.ID(), self.calibration), ev)
-		return ''
-
 	def defineUserInterface(self):
 		nodespec = node.Node.defineUserInterface(self)
 
 		#### parameters for user to set
-		self.navg = 5
-		self.delta = 4e-5
-		self.correlationthreshold = 0.05
+		self.navg = 1
+		self.delta = 5e-5
 
-		self.camerastate = {'size': 1024, 'binning': 4, 'exposure time': 100}
+		self.camerastate = {'size': 1024, 'binning': 4, 'exposure time': 400}
 
 		try:
 			self.base = self.currentState()
@@ -325,7 +293,6 @@ class Calibration(node.Node):
 		self.registerUIData('N Average', 'float', default=self.navg),
 		self.registerUIData('Base', 'struct', default=self.base),
 		self.registerUIData('Delta', 'float', default=self.delta),
-		self.registerUIData('Correlation Threshold', 'integer', default=self.correlationthreshold),
 
 		self.registerUIData('Camera State', 'struct', default=self.camerastate)
 		)
@@ -340,42 +307,18 @@ class Calibration(node.Node):
 			}
 		)
 
-		argspec = (self.registerUIData('Filename', 'string'),)
-		save = self.registerUIMethod(self.save, 'Save', argspec)
-		load = self.registerUIMethod(self.load, 'Load', argspec)
-
-		filespec = self.registerUIContainer('File', (save, load))
-
-		self.registerUISpec('Calibration', (cspec, rspec, self.validshift, filespec, nodespec))
+		self.registerUISpec('Calibration', (cspec, rspec, self.validshift, nodespec))
 
 	def uiCalibrate(self):
 		self.calibrate()
 		return ''
 
-	def uiSetParameters(self, navg, base, delta, ct, cs):
+	def uiSetParameters(self, navg, base, delta, cs):
 		self.navg = navg
 		self.base = base
 		self.delta = delta
-		self.correlationthreshold = ct
 		self.camerastate = cs
 		return ''
-
-
-## this is a base class for simple pixel calibrations 
-# for lack of a better name...
-class SimpleCalibration(Calibration):
-	def __init__(self, id, nodelocations, parameter, **kwargs):
-		#self.calibration = {"x pixel shift": {'x': 1.0, 'y': 2.0, 'value': 1.0},
-		#					 "y pixel shift": {'x': 3.0, 'y': 4.0, 'value': 1.0}}
-		#self.pixelShift(event.ImageShiftPixelShiftEvent(-1, {'row': 2.0, 'column': 2.0}))
-		#return
-
-		if parameter not in ('image shift','stage position'):
-			raise RuntimeError('parameter %s not supported' % (parameter,) )
-		self.parameter = parameter
-
-		Calibration.__init__(self, id, nodelocations, **kwargs)
-		self.addEventInput(event.PixelShiftEvent, self.pixelShift)
 
 	def makeState(self, value, axis):
 		return {self.parameter: {axis: value}}
@@ -384,57 +327,54 @@ class SimpleCalibration(Calibration):
 		dat = self.researchByDataID(self.parameter)
 		return dat.content[self.parameter]
 
-	def pixelShift(self, ievent):
-		print 'PIXELSHIFT'
-		print 'calibration =', self.calibration
-		print 'pixel shift =', ievent.content
-		delta_row = ievent.content['row']
-		delta_col = ievent.content['column']
-		### someday, this must calculate a mag dependent calibration
-		#delta_mag = ievent.content['magnification']
 
-		matrix = self.calibration2matrix()
-		print "%s calibration matrix = %s" % (self.parameter, matrix)
-		determinant = LinearAlgebra.determinant(matrix)
-		deltax = (matrix[1,1] * delta_col -
-							matrix[1,0] * delta_row) / determinant
-		deltay = (matrix[0,0] * delta_row -
-							matrix[0,1] * delta_col) / determinant
-
-		print "calculated %s change = %s, %s" %  (self.parameter, deltax, deltay)
-		current = self.currentState()
-		currentx = current['x']
-		currenty = current['y']
-		print "current %s = %s" % (self.parameter, current)
-		newimageshift = {self.parameter:
-			{
-				'x': currentx + deltax,
-				'y': currenty + deltay
-			}
-		}
-
-		imageshiftdata = data.EMData('scope', newimageshift)
-		self.publishRemote(imageshiftdata)
-
-	def calibration2matrix(self):
-		matrix = Numeric.array([[self.calibration['x pixel shift']['x'],
-														self.calibration['x pixel shift']['y']],
-													[self.calibration['y pixel shift']['x'],
-														self.calibration['y pixel shift']['y']]])
-		matrix[0] /= self.calibration['x pixel shift']['value']
-		matrix[1] /= self.calibration['y pixel shift']['value']
-		return matrix
-
-class ImageShiftCalibration(SimpleCalibration):
+class ImageShiftCalibration(Calibration):
 	def __init__(self, id, nodelocations, **kwargs):
 		param='image shift'
-		SimpleCalibration.__init__(self, id, nodelocations, parameter=param, **kwargs)
+		self.calclient = calibrationclient.ImageShiftCalibrationClient(self)
+		Calibration.__init__(self, id, nodelocations, parameter=param, **kwargs)
 		self.start()
 
+	def saveCalibration(self, key, cal):
+		self.calclient.setCalibration(key, cal)
 
-class StageShiftCalibration(SimpleCalibration):
+class StageShiftCalibration(Calibration):
 	def __init__(self, id, nodelocations, **kwargs):
 		param='stage position'
-		SimpleCalibration.__init__(self, id, nodelocations, parameter=param, **kwargs)
+		self.calclient = calibrationclient.StageCalibrationClient(self)
+		Calibration.__init__(self, id, nodelocations, parameter=param, **kwargs)
 		self.start()
 
+	def saveCalibration(self, key, cal):
+		self.calclient.setCalibration(key, cal)
+
+
+
+### this will soon include everything in gonmodeler module
+class ModeledStageShiftCalibration(node.Node):
+	def __init__(self, id, nodelocations, **kwargs):
+		node.Node.__init__(self, id, nodelocations, **kwargs)
+		self.addEventInput(event.PixelShiftEvent, self.pixelShift)
+		self.defineUserInterface()
+		self.start()
+
+	def magfilename(self, mag):
+		'''
+		header:
+			magnification
+			axis
+		'''
+		padmagstr = '%06d' % (int(mag),)
+		return padmagstr
+
+	def modfilename(self, axis):
+		filename = 'gon' + axis
+		return filename
+
+	def getStagePosition(self):
+		dat = self.researchByDataID('stage position')
+		return dat.content
+
+	def defineUserInterface(self):
+		nodespec = node.Node.defineUserInterface(self)
+		self.registerUISpec('Modeled Goniometer Calibration', (nodespec,))

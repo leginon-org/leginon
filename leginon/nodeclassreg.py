@@ -57,7 +57,10 @@ def getNodeClassNames():
 registerNodeClass('EM', 'EM')
 registerNodeClass('corrector', 'Corrector')
 registerNodeClass('calibration', 'StageShiftCalibration')
+registerNodeClass('calibration', 'ModeledStageShiftCalibration')
 registerNodeClass('calibration', 'ImageShiftCalibration')
+registerNodeClass('calibrationlibrary', 'CalibrationLibrary')
+
 registerNodeClass('gonmodeler', 'GonModeler')
 #registerNodeClass('acquireloop', 'AcquireLoop')
 registerNodeClass('navigator', 'SimpleNavigator')

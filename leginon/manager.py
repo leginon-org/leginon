@@ -341,7 +341,8 @@ class Manager(node.Node):
 		if datalocationdata is None:
 			datalocationdata = data.DataLocationData(dataid, [nodeid])
 		else:
-			datalocationdata.content.append(nodeid)
+			if nodeid not in datalocationdata.content:
+				datalocationdata.content.append(nodeid)
 		self.server.datahandler._insert(datalocationdata)
 
 	def unregisterData(self, unpublishevent):
