@@ -20,6 +20,7 @@ import copy
 import threading
 import uidata
 from node import ResearchError
+import node
 
 class NoMoveCalibration(Exception):
 	pass
