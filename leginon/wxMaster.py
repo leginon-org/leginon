@@ -213,10 +213,14 @@ class Launcher(MasterMixIn, ApplicationMixIn, NodesMixIn):
 			self.application._addLauncher(self)
 
 class Application(MasterMixIn, NodesMixIn, LaunchersMixIn):
-	def __init__(self, master):
+	def __init__(self, master, name):
+		self.name = name
 		MasterMixIn.__init__(self, master)
 		NodesMixIn.__init__(self)
 		LaunchersMixIn.__init__(self)
+
+	def getName(self):
+		return self.name
 
 	def setMaster(self, master):
 		MasterMixIn.setMaster(self, master)
@@ -237,12 +241,15 @@ class Master(NodesMixIn, LaunchersMixIn, ApplicationsMixIn):
 		# not implemented
 #		self.bindings = []
 
-class RectangleLineShape(wxLineShape):
-	pass
+class wxApplication(wxRectangleShape):
+	def __init__(self, application):
+		self.application = application
+		wxRectangleShape.__init__(self, 100, 50)
 
-class MyShapeCanvas(wxShapeCanvas):
+class wxMaster(wxShapeCanvas):
 	def __init__(self, parent, frame):
 		wxShapeCanvas.__init__(self, parent)
+		self.master = Master()
 		self.frame = frame
 		self.SetBackgroundColour(wxWHITE)
 		self.diagram = wxDiagram()
@@ -250,36 +257,32 @@ class MyShapeCanvas(wxShapeCanvas):
 		self.diagram.SetCanvas(self)
 		self.shapes = []
 
-		self.MyAddShape(wxRectangleShape(100, 50), 100, 250,
-										wxBLACK_PEN, wxWHITE_BRUSH, "Rectangle")
-		self.MyAddShape(wxRectangleShape(100, 50), 500, 250,
-										wxBLACK_PEN, wxWHITE_BRUSH, "Rectangle")
-		self.MyAddShape(wxRectangleShape(100, 50), 100, 500,
-										wxBLACK_PEN, wxWHITE_BRUSH, "Rectangle")
+#		dc = wxClientDC(self)
+#		self.PrepareDC(dc)
+#		for x in range(len(self.shapes)):
+#			fromShape = self.shapes[x]
+#			if x+1 == len(self.shapes):
+#				toShape = self.shapes[0]
+#			else:
+#				toShape = self.shapes[x+1]
+#			line = wxLineShape()
+#			line.SetCanvas(self)
+#			line.SetPen(wxBLACK_PEN)
+#			line.SetBrush(wxBLACK_BRUSH)
+#			line.AddArrow(ARROW_ARROW)
+#			line.MakeLineControlPoints(2)
+#			fromShape.AddLine(line, toShape)
+#			self.diagram.AddShape(line)
+#			line.Show(True)
+#			line.Select()
+#
+#			# for some reason, the shapes have to be moved for the line to show up...
+#			fromShape.Move(dc, fromShape.GetX(), fromShape.GetY())
 
-		dc = wxClientDC(self)
-		self.PrepareDC(dc)
-		for x in range(len(self.shapes)):
-			fromShape = self.shapes[x]
-			if x+1 == len(self.shapes):
-				toShape = self.shapes[0]
-			else:
-				toShape = self.shapes[x+1]
-			line = wxLineShape()
-			line.SetCanvas(self)
-			line.SetPen(wxBLACK_PEN)
-			line.SetBrush(wxBLACK_BRUSH)
-			line.AddArrow(ARROW_ARROW)
-			line.MakeLineControlPoints(2)
-			fromShape.AddLine(line, toShape)
-			self.diagram.AddShape(line)
-			line.Show(True)
-			line.Select()
+	def addApplication(self, application):
+		self.MasterAddShape(application, 100, 100, wxBLACK_PEN, wxWHITE_BRUSH, application.application.getName())
 
-			# for some reason, the shapes have to be moved for the line to show up...
-			fromShape.Move(dc, fromShape.GetX(), fromShape.GetY())
-
-	def MyAddShape(self, shape, x, y, pen, brush, text):
+	def MasterAddShape(self, shape, x, y, pen, brush, text):
 		shape.SetDraggable(True, True)
 		shape.SetCanvas(self)
 		shape.SetX(x)
@@ -302,17 +305,17 @@ class MyShapeCanvas(wxShapeCanvas):
 		self.shapes.append(shape)
 		return shape
 
-
 if __name__ == '__main__':
 	class MyApp(wxApp):
 		def OnInit(self):
 			frame = wxFrame(NULL, -1, 'Nodes')
 			self.SetTopWindow(frame)
-			self.panel = MyShapeCanvas(frame, frame) #TargetImagePanel(frame, -1)
+			self.master = wxMaster(frame, frame) #TargetImagePanel(frame, -1)
 			frame.Fit()
 			frame.Show(true)
 			return true
 
 	app = MyApp(0)
+	app.master.addApplication(wxApplication(Application(app.master, 'App 1')))
 	app.MainLoop()
 
