@@ -3,6 +3,7 @@ import os
 from distutils.command.install_data import install_data
 from distutils.core import setup, Extension
 from distutils.sysconfig import get_python_lib
+import version
 
 class InstallData(install_data):
 	def run(self):
@@ -12,7 +13,7 @@ class InstallData(install_data):
 
 setup(
 	name='Leginon',
-	version='0.9',
+	version=version.getVersion(),
 	url='http://nramm.scripps.edu/',
 	description=
 		'Automated data acquisition for transmission electron microscopes',

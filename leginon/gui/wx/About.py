@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/About.py,v $
-# $Revision: 1.1 $
+# $Revision: 1.2 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-22 00:28:25 $
+# $Date: 2004-10-26 20:21:53 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -17,6 +17,7 @@ import wx
 import numarray
 import _mysql
 import Image
+import version
 
 class Dialog(gui.wx.Dialog.Dialog):
 	def __init__(self, parent):
@@ -32,7 +33,9 @@ class Dialog(gui.wx.Dialog.Dialog):
 		label = wx.StaticText(self, -1, 'Automated Data Acquisition Software for Transmission Electron Microscopy')
 		self.sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER)
 
-		version = 'Unknown'
+		version = version.getVersion()
+		if not version:
+			version = '(no version)'
 		label = wx.StaticText(self, -1, 'Version %s' % version)
 		self.sz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER)
 
