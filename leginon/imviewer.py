@@ -28,7 +28,7 @@ class ImViewer(watcher.Watcher):
 
 	def die(self, killevent):
 		self.close_viewer()
-		watcher.Watcher.die(self, killevent)
+		self.exit()
 
 	def start_viewer_thread(self):
 		if self.iv is not None:

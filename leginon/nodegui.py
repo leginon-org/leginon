@@ -395,7 +395,7 @@ class TreeData(Data):
 
 	def buildWidget(self, parent):
 		self.treenode = None
-		self.sc = TreeWidget.ScrolledCanvas(parent, highlightthickness=0, bg=self.entrycolor)
+		self.sc = TreeWidget.ScrolledCanvas(parent, highlightthickness=0, bg=self.entrycolor, height=180, width=200)
 		return self.sc.frame
 
 	def setWidget(self, value):

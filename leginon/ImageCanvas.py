@@ -156,7 +156,8 @@ class ImageCanvas(Frame):
 		self.cursorinfo.clear()
 
 	def enter_callback(self, event):
-		self.canvas['cursor'] = 'crosshair'
+		pass
+		#self.canvas['cursor'] = 'crosshair'
 
 	def motion_callback(self, event):
 		info = self.eventXYInfo(event)

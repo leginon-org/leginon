@@ -13,7 +13,7 @@ class Navigator(node.Node):
 		}
 
 		## by default, use the generic PixelShiftEvent
-		self.shiftType('no preference')
+		self.shiftType('image shift')
 
 		node.Node.__init__(self, id, nodelocations)
 
@@ -21,6 +21,9 @@ class Navigator(node.Node):
 		self.addEventInput(event.ImageAcquireEvent, self.handleImageAcquire)
 		self.addEventOutput(event.ImagePublishEvent)
 		self.addEventOutput(event.PixelShiftEvent)
+
+	def die(self, killevent):
+		self.exit()
 
 	def shiftType(self, shift_type=None):
 		'''
@@ -36,12 +39,14 @@ class Navigator(node.Node):
 		self.shiftEventClass = self.shift_types[shift_type]
 
 	def handleImageClick(self, clickevent):
+		print 'handling image click'
 		clickinfo = clickevent.content
 		## get relavent info from click event
 		clickrow = clickinfo['array row']
 		clickcol = clickinfo['array column']
 		clickshape = clickinfo['array shape']
 
+		print 'clickinfo', clickinfo
 		## calculate delta from image center
 		deltarow = clickrow - clickshape[0] / 2
 		deltacol = clickcol - clickshape[1] / 2
@@ -57,6 +62,7 @@ class Navigator(node.Node):
 		e = self.shiftEventClass(self.ID(), deltarowcol)
 		print 'e', e
 		self.outputEvent(e)
+		print 'outputEvent done'
 
 		## acquire image
 		self.acquireImage()

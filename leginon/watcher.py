@@ -25,6 +25,9 @@ class Watcher(node.Node):
 	def defineUserInterface(self):
 		return node.Node.defineUserInterface(self)
 
+	def die(self):
+		node.Node.die(self)
+
 	def handleEvent(self, pubevent):
 		if self.lockblocking == 0:
 			if not self.lock.acquire(blocking=0):

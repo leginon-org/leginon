@@ -29,7 +29,7 @@ class Calibration(node.Node):
 
 		#### parameters for user to set
 		self.attempts = 5
-		self.range = [0.0000001, 0.00001]
+		self.range = [1e-7, 1e-6]
 		####
 
 		# correlation maybe goes into a different node
@@ -129,6 +129,7 @@ class Calibration(node.Node):
 			for i in range(self.attempts):
 				print "attempt =", i
 				value = (adjustedrange[1] - adjustedrange[0]) / 2 + adjustedrange[0]
+				print 'value', value
 
 				state1 = self.state(0.0, axis)
 				state2 = self.state(value, axis)
@@ -142,6 +143,7 @@ class Calibration(node.Node):
 					print "good"
 					self.publishRemote(data.EMData('scope', self.state(0.0, axis)))
 					self.calibration.update({axis + " pixel shift": {'x':shiftinfo['shift'][1], 'y':shiftinfo['shift'][0], 'value': value}})
+					break
 				elif verdict == 'small shift':
 					print "too small"
 					adjustedrange[0] = value
@@ -152,6 +154,7 @@ class Calibration(node.Node):
 					raise RuntimeError('hung jury')
 
 		self.publishRemote(data.EMData('scope', self.state(0.0, axis)))
+		print 'CALIBRATE DONE', self.calibration
 
 	def clearStateImages(self):
 		self.images = []
@@ -165,19 +168,22 @@ class Calibration(node.Node):
 
 		## acquire image at this state
 		print 'setting state', state
-		emdata = data.EMData('scope', state)
-		print 'publishing state', emdata
-		self.publishRemote(emdata)
+		newemdata = data.EMData('scope', state)
+		print 'publishing state', newemdata
+		self.publishRemote(newemdata)
 		print 'sleeping 1 sec'
 		time.sleep(1.0)
 		print 'getting image data'
-		imagedata = self.researchByDataID('image data')
-		print 'imagedata type', type(imagedata)
-		image = imagedata.content['image data']
 
+		emdata = self.researchByDataID('image data')
+		print 'emdata type', type(emdata)
+		image = emdata.content['image data']
+
+		print 'image type', type(image)
 		imagedata = data.ImageData(self.ID(), image)
+		print 'imagedata type', type(imagedata)
 		self.publish(imagedata, event.ImagePublishEvent)
-
+		print 'published imagedata'
 		## should find image stats to help determine validity of image
 		## in correlations
 		image_stats = None
@@ -261,9 +267,11 @@ class Calibration(node.Node):
 
 		validshift = []
 		for dim in (0,1):
-			minshift = shape[dim] / 10.0
-			maxshift = 5.0 * shape[dim] / 10.0
+			minshift = shape[dim] / 15.0
+			maxshift = 1.0 * shape[dim] / 3.0
 			validshift.append( (minshift,maxshift) )
+
+		print 'valid shift', validshift
 
 		if (self.inRange(abs(shift[0]), validshift[0]) and
 			self.inRange(abs(shift[1]), validshift[1])):
@@ -369,15 +377,16 @@ class ImageShiftCalibration(Calibration):
 		return {'image shift': {axis: value}}
 
 	def pixelShift(self, ievent):
+		print 'PIXELSHIFT'
 		print 'calibration =', self.calibration
 		print 'pixel shift =', ievent.content
 		matrix = self.calibration2matrix()
 		print "image shift calibration matrix =", matrix
 		determinant = LinearAlgebra.determinant(matrix)
 		imageshift = {'image shift': {}}
-		imageshift['x'] = (matrix[1,1] * ievent.content['column'] -
+		imageshift['image shift']['x'] = (matrix[1,1] * ievent.content['column'] -
 							matrix[1,0] * ievent.content['row']) / determinant
-		imageshift['y'] = (matrix[0,0] * ievent.content['row'] -
+		imageshift['image shift']['y'] = (matrix[0,0] * ievent.content['row'] -
 							matrix[0,1] * ievent.content['column']) / determinant
 		print "calculated image shift =", imageshift
 		imageshiftdata = data.EMData('scope', imageshift)
