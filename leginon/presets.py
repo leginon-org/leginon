@@ -626,7 +626,7 @@ class PresetsManager(node.Node):
 		limit = 100
 		sessionlist = self.research(datainstance=querysession, results=limit)
 		sessionnamelist = [x['name'] for x in sessionlist]
-		self.sessiondict = dict(zip(sessionnamelist, sessionlist))
+		self.sessiondict = newdict.OrderedDict(zip(sessionnamelist, sessionlist))
 
 	def acquireDoseImage(self, presetname):
 		errstr = 'Acquire dose image failed: %s'
