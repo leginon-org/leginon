@@ -14,6 +14,7 @@ import event
 import threading
 import emailnotification
 import project
+import EM
 
 # ...
 def seconds2str(seconds):
@@ -93,12 +94,13 @@ def validateGridNumber(gridnumber):
 		return False
 
 class RobotNode(node.Node):
-	def __init__(self, id, session, nodelocations, **kwargs):
+	def __init__(self, id, session, managerlocation, **kwargs):
 		self.statushistory = []
 		self.statusindex = -1
 		self.statuslength = 50
 		self.abort = False
-		node.Node.__init__(self, id, session, nodelocations, **kwargs)
+		node.Node.__init__(self, id, session, managerlocation, **kwargs)
+		self.emclient = EM.EMClient(self)
 
 	def waitScope(self, parameter, value, interval=-1.0, timeout=0.0):
 		parametervalue = self.getScope(parameter)
@@ -116,19 +118,18 @@ class RobotNode(node.Node):
 				raise ScopeException('parameter is not set to value')
 
 	def getScope(self, key):
-		parameterdata = self.researchByDataID((key,))
+		parameterdata = self.emclient.getData()
 		if parameterdata is None:
 			raise ScopeException('cannot get parameter value')
 		self.logger.info('Get scope %s, %s' % (key, parameterdata[key]))
 		return parameterdata[key]
 
 	def setScope(self, key, value):
-		scopedata = data.AllEMData()
-		scopedata['id'] = ('scope',)
+		scopedata = data.ScopeEMData()
 		scopedata[key] = value
 		try:
-			self.publishRemote(scopedata)
-		except node.PublishError:
+			self.emclient.setScope(scopedata)
+		except:
 			raise ScopeException('cannot set parameter to value')
 
 	def setStatus(self, message):
@@ -165,11 +166,11 @@ if sys.platform == 'win32':
 		eventoutputs = RobotNode.eventoutputs + [event.GridInsertedEvent,
 																							event.GridExtractedEvent,
 																							event.EmailEvent]
-		def __init__(self, id, session, nodelocations, **kwargs):
+		def __init__(self, id, session, managerlocation, **kwargs):
 
 			self.simulate = False
 
-			RobotNode.__init__(self, id, session, nodelocations, **kwargs)
+			RobotNode.__init__(self, id, session, managerlocation, **kwargs)
 			self.gridorder = []
 			self.gridnumber = None
 			self.griddata = None
@@ -670,11 +671,11 @@ class RobotNotification(RobotNode):
 	eventoutputs = RobotNode.eventoutputs + [event.ExtractGridEvent,
 																						event.InsertGridEvent,
 																						event.PublishSpiralEvent]
-	def __init__(self, id, session, nodelocations, **kwargs):
+	def __init__(self, id, session, managerlocation, **kwargs):
 
 		self.simulate = False
 
-		RobotNode.__init__(self, id, session, nodelocations, **kwargs)
+		RobotNode.__init__(self, id, session, managerlocation, **kwargs)
 
 		self.addEventInput(event.GridInsertedEvent, self.handleGridInserted)
 		self.addEventInput(event.GridExtractedEvent, self.handleGridExtracted)

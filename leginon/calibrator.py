@@ -12,27 +12,29 @@ import peakfinder
 import time
 import camerafuncs
 import uidata
+import EM
 
 class Calibrator(node.Node):
 	'''
 	Calibrator base class
 	Contains basic functions useful for doing calibrations
 	'''
-	def __init__(self, id, session, nodelocations, **kwargs):
-		node.Node.__init__(self, id, session, nodelocations, **kwargs)
+	def __init__(self, id, session, managerlocation, **kwargs):
+		node.Node.__init__(self, id, session, managerlocation, **kwargs)
+		self.emclient = EM.EMClient(self)
 		self.cam = camerafuncs.CameraFuncs(self)
 		self.ui_image = None
 
 	def getMagnification(self):
-		magdata = self.researchByDataID(('magnification',))
-		return magdata['magnification']
+		mag = self.emclient.getScope()['magnification']
+		return mag
 
 	def getHighTension(self):
-		htdata = self.researchByDataID(('high tension',))
-		return htdata['high tension']
+		ht = self.emclient.getScope()['high tention']
+		return ht
 
 	def currentState(self):
-		dat = self.researchByDataID(('scope',))
+		dat = self.emclient.getScope()
 		return dat
 
 	def imageViewer(self):

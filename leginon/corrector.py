@@ -18,6 +18,7 @@ import node
 import Numeric
 import threading
 import uidata
+import EM
 
 class CameraError(Exception):
 	pass
@@ -28,36 +29,21 @@ class FindExposureTimeError(Exception):
 class AbortError(Exception):
 	pass
 
-class DataHandler(node.DataHandler):
-	def query(self, id):
-		self.lock.acquire()
-		if id == ('corrected image data',):
-			result = self.node.acquireCorrectedImageData()
-			self.lock.release()
-			return result
-		else:
-			self.lock.release()
-			return node.DataHandler.query(self, id)
-
 class SimpleCorrector(node.Node):
 	eventoutputs = node.Node.eventoutputs + [event.DarkImagePublishEvent,
-																						event.BrightImagePublishEvent,
-																						event.ListPublishEvent]
-	def __init__(self, id, session, nodelocations, tcpport=None, **kwargs):
+																						event.BrightImagePublishEvent]
+	def __init__(self, id, session, managerlocation, tcpport=None, **kwargs):
 		self.references = {}
 		self.abortevent = threading.Event()
+		self.emclient = EM.EMClient(self)
 		self.camerafuncs = camerafuncs.CameraFuncs(self)
 
 		self.initializeLogger(id[-1])
-		self.datahandler = DataHandler(self, loggername=self.logger.name)
-		self.server = datatransport.Server(self.datahandler, tcpport,
-																				loggername=self.logger.name)
-		kwargs['datahandler'] = None
 
-		node.Node.__init__(self, id, session, nodelocations, **kwargs)
+		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 
-		self.outputEvent(event.ListPublishEvent(id=self.ID(),
-																						idlist=[('corrected image data',)]))
+		self.imagedata = data.DataHandler(data.CorrectedCameraImageData, getdata=self.acquireCorrectedImageData)
+		self.publish(self.imagedata, pubevent=True, broadcast=True)
 
 		self.defineUserInterface()
 		self.start()
@@ -65,11 +51,6 @@ class SimpleCorrector(node.Node):
 	def exit(self):
 		node.Node.exit(self)
 		self.server.exit()
-
-	def location(self):
-		location = node.Node.location(self)
-		location['data transport'] = self.server.location()
-		return location
 
 	def getReferenceDataClass(self, referencetype):
 		if referencetype == 'dark':
@@ -152,13 +133,15 @@ class SimpleCorrector(node.Node):
 		except camerafuncs.NoEMError:
 			self.messagelog.error('EM not running')
 			return None
+
 		image = imagedata['image']
 		cameradata = imagedata['camera']
 		correctedimage = self.correctImage(image, cameradata)
 		if correctedimage is None:
 			return None
-		imagedata['image'] = correctedimage.astype(image.typecode())
-		return imagedata
+		correctedimage = correctedimage.astype(image.typecode())
+		newdata = data.CorrectedCameraImageData(initializer=imagedata, image=correctedimage)
+		return newdata
 
 	def getImageStats(self, image):
 		mean = imagefun.mean(image)
@@ -185,7 +168,6 @@ class SimpleCorrector(node.Node):
 		if cameradata is None:
 			raise CameraError('cannot get camera settings')
 		camerasize = self.session['instrument']['camera size']
-		cameradata['id'] = ('camera',)
 		for axis in ['x', 'y']:
 			cameradata['offset'][axis] = 0
 			cameradata['binning'][axis] = binning
@@ -264,7 +246,6 @@ class SimpleCorrector(node.Node):
 
 	def publishReference(self, referencetype, image, camerastate):
 		imagedata = self.getReferenceDataClass(referencetype)()
-		imagedata['id'] = self.ID()
 		imagedata['image'] = image
 		correctorcamstatedata = data.CorrectorCamstateData()
 		correctorcamstatedata['dimension'] = camerastate['dimension']
@@ -488,23 +469,19 @@ class Corrector(node.Node):
 	  a dark and bright image for this plan.  These are stored as MRC
 	  in the corrections directory.
 	'''
-	eventoutputs = node.Node.eventoutputs + [event.DarkImagePublishEvent, event.BrightImagePublishEvent, event.ListPublishEvent]
-	def __init__(self, id, session, nodelocations, tcpport=None, **kwargs):
-		self.cam = camerafuncs.CameraFuncs(self)
-
+	eventoutputs = node.Node.eventoutputs + [event.DarkImagePublishEvent, event.BrightImagePublishEvent]
+	def __init__(self, id, session, managerlocation, tcpport=None, **kwargs):
 		self.initializeLogger(id[-1])
-		self.datahandler = DataHandler(self, loggername=self.logger.name)
-		self.server = datatransport.Server(self.datahandler, tcpport,
-																				loggername=self.logger.name)
-		kwargs['datahandler'] = None
 
-		node.Node.__init__(self, id, session, nodelocations, **kwargs)
+		node.Node.__init__(self, id, session, managerlocation, **kwargs)
+
+		self.emclient = EM.EMClient(self)
+		self.cam = camerafuncs.CameraFuncs(self)
 
 		self.ref_cache = {}
 
-		ids = [('corrected image data',)]
-		e = event.ListPublishEvent(id=self.ID(), idlist=ids)
-		self.outputEvent(e)
+		self.imagedata = data.DataHandler(data.CorrectedCameraImageData, getdata=self.acquireCorrectedImageData)
+		self.publish(self.imagedata, pubevent=True, broadcast=True)
 
 		self.defineUserInterface()
 		self.start()
@@ -512,11 +489,6 @@ class Corrector(node.Node):
 	def exit(self):
 		node.Node.exit(self)
 		self.server.exit()
-
-	def location(self):
-		location = node.Node.location(self)
-		location['data transport'] = self.server.location()
-		return location
 
 	def defineUserInterface(self):
 		self.initializeLoggerUserInterface()
@@ -665,14 +637,13 @@ class Corrector(node.Node):
 
 	def newCamstate(self, camdata):
 		camdatacopy = copy.deepcopy(camdata)
-		camstate = data.CorrectorCamstateData(id=self.ID())
+		camstate = data.CorrectorCamstateData()
 		camstate['dimension'] = camdatacopy['dimension']
 		camstate['offset'] = camdatacopy['offset']
 		camstate['binning'] = camdatacopy['binning']
 		return camstate
 
 	def retrievePlan(self, corstate):
-		corstate['id'] = None
 		qplan = data.CorrectorPlanData()
 		qplan['camstate'] = corstate
 		qplan['session'] = data.SessionData()
@@ -737,7 +708,6 @@ class Corrector(node.Node):
 		return ref
 
 	def researchRef(self, camstate, type):
-		camstate['id'] = None
 		if type == 'dark':
 			imagetemp = data.DarkImageData()
 		elif type == 'bright':
@@ -807,7 +777,6 @@ class Corrector(node.Node):
 			imagetemp = data.BrightImageData()
 		elif type == 'norm':
 			imagetemp = data.NormImageData()
-		imagetemp['id'] = self.ID()
 		imagetemp['image'] = numdata
 		imagetemp['camstate'] = camstate
 		self.uistatus.set('Publishing reference image...')
@@ -817,7 +786,6 @@ class Corrector(node.Node):
 
 	def calc_norm(self, corimagedata):
 		corstate = corimagedata['camstate']
-		corstate['id'] = None
 		if isinstance(corimagedata, data.DarkImageData):
 			dark = corimagedata['image']
 			bright = self.retrieveRef(corstate, 'bright')
@@ -859,8 +827,8 @@ class Corrector(node.Node):
 		corstate['offset'] = camdata['offset']
 		corstate['binning'] = camdata['binning']
 		corrected = self.correct(numimage, corstate)
-		imagedata['image'] = corrected
-		return imagedata
+		newdata = data.CorrectedCameraImageData(initializer=imagedata, image=corrected)
+		return newdata
 
 	def correct(self, original, camstate):
 		'''

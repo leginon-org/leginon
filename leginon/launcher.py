@@ -9,12 +9,11 @@
 #
 
 import data
-import datatransport
+from databinder import DataBinder
 import event
 import leginonobject
 import node
 import nodeclassreg
-#import time
 import uiserver
 
 class Launcher(node.Node):
@@ -23,23 +22,16 @@ class Launcher(node.Node):
 
 		self.initializeLogger(id[-1])
 
-		self.datahandler = node.DataHandler(self, loggername=self.logger.name)
-		self.server = datatransport.Server(self.datahandler, tcpport,
-																				loggername=self.logger.name)
-		self.uicontainer = uiserver.Server(str(id[-1]), xmlrpcport,
-																		dbdatakeeper=self.datahandler.dbdatakeeper,
-																		session=session)
+		node.Node.__init__(self, id, session, tcpport=tcpport, xmlrpcport=xmlrpcport, **kwargs)
 
-		node.Node.__init__(self, id, session, **kwargs)
-
-		self.datahandler.insert(self.uicontainer)
+		#self.datahandler.insert(uicontainer)
 
 		self.defineUserInterface()
 		self.addEventInput(event.CreateNodeEvent, self.onCreateNode)
 		self.start()
 
 	def defineUserInterface(self):
-		self.initializeLoggerUserInterface()
+		#self.initializeLoggerUserInterface()
 		node.Node.defineUserInterface(self)
 
 	def start(self):
@@ -54,39 +46,33 @@ class Launcher(node.Node):
 		self.uicontainer.sesssion = self.session
 		node.Node.setManager(self, location)
 		self.publishNodeClasses()
-		self.outputEvent(event.NodeInitializedEvent(id=self.ID()))
+		self.outputEvent(event.NodeInitializedEvent(node=self.id))
 
 	def exit(self):
 		self.exitNodes()
 		node.Node.exit(self)
 		self.server.exit()
 
-	def location(self):
-		location = leginonobject.LeginonObject.location(self)
-		location['data transport'] = self.server.location()
-		location['UI'] = self.uicontainer.location()
-		return location
-
 	def publishNodeClasses(self):
 		#reload(nodeclassreg)
 		nodeclassnames = nodeclassreg.getNodeClassNames()
-		d = data.NodeClassesData(id=self.ID(), nodeclasses=nodeclassnames)
+		d = data.NodeClassesData(nodeclasses=nodeclassnames)
 		self.publish(d, pubevent=True)
 
 	def onCreateNode(self, ievent):
 		targetclass = ievent['targetclass']
 		nodeclass = nodeclassreg.getNodeClass(targetclass)
 
-		nodeid = ievent['node ID']
+		nodeid = ievent['node']
 		session = ievent['session']
-		nodelocations = ievent['node locations']
+		managerlocation = ievent['manager location']
 
 		kwargs = {}
-		kwargs['uicontainer'] = self.uicontainer
+		kwargs['otheruiserver'] = self.uiserver
 		kwargs['launcher'] = self
-		kwargs['datahandler'] = self.datahandler
+		kwargs['otherdatabinder'] = self.databinder
 
-		self.nodes.append(nodeclass(nodeid, session, nodelocations, **kwargs))
+		self.nodes.append(nodeclass(nodeid, session, managerlocation, **kwargs))
 		self.confirmEvent(ievent)
 
 	def onDestroyNode(self, node):
@@ -105,12 +91,11 @@ if __name__ == '__main__':
 	try:
 		managerlocation['hostname'] = sys.argv[1]
 		try:
-			managerlocation['data transport'] = {}
-			managerlocation['data transport']['TCP transport'] = {}
+			managerlocation['data binder'] = {}
+			managerlocation['data binder']['TCP transport'] = {}
 			port = int(sys.argv[2])
-			managerlocation['data transport']['TCP transport']['port'] = port
-			launcher = Launcher(launcherid,
-													nodelocations={'manager': managerlocation})
+			managerlocation['data binder']['TCP transport']['port'] = port
+			launcher = Launcher(launcherid, managerlocation=managerlocation)
 		except IndexError:
 			launcher = Launcher(launcherid, tcpport=int(sys.argv[1]))
 	except IndexError:

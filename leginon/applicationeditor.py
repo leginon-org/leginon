@@ -11,8 +11,8 @@ import uidata
 import data
 
 class ApplicationEditor(node.Node):
-	def __init__(self, id, session, nodelocations, **kwargs):
-		node.Node.__init__(self, id, session, nodelocations, **kwargs)
+	def __init__(self, id, session, managerlocation, **kwargs):
+		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 		self.application = application.Application(self)
 		self.defineUserInterface()
 		self.start()

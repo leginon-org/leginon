@@ -10,7 +10,7 @@
 
 import application
 import data
-import datahandler
+import databinder
 import datatransport
 import dbdatakeeper
 import event
@@ -24,7 +24,7 @@ import uidata
 import leginonobject
 import extendedlogging
 
-class DataBinder(datahandler.DataBinder):
+class DataBinder(databinder.DataBinder):
 	def handleData(self, newdata):
 		dataclass = newdata.__class__
 		args = newdata
@@ -69,21 +69,16 @@ class Manager(node.Node):
 
 		self.initializeLogger(id[-1])
 
-		self.datahandler = node.DataHandler(self,
-																				databinderclass=DataBinder,
-																				loggername=self.logger.name)
-		self.server = datatransport.Server(self.datahandler, tcpport,
-																				loggername=self.logger.name)
-		self.uicontainer = uiserver.Server('Manager', xmlrpcport,
-										dbdatakeeper=self.datahandler.dbdatakeeper, session=session)
+		## need a special DataBinder
+		mydatabinder = DataBinder(tcpport=tcpport, loggername=self.logger.name)
+		node.Node.__init__(self, id, session, otherdatabinder=mydatabinder, xmlrpcport=xmlrpcport, **kwargs)
 
-		node.Node.__init__(self, id, session, **kwargs)
+		self.nodelocations = {}
+		self.broadcast = []
 
 		self.uiclientcontainers = {}
 		self.uicontainer.xmlrpcserver.register_function(self.uiGetNodeLocations,
 																										'getNodeLocations')
-
-		self.nodelocations['manager'] = self.location()
 
 		# ready nodes, someday 'initialized' nodes
 		self.initializednodescondition = threading.Condition()
@@ -100,9 +95,6 @@ class Manager(node.Node):
 															self.handleNodeClassesPublish)
 		self.addEventInput(event.NodeInitializedEvent, self.handleNodeStatus)
 		self.addEventInput(event.NodeUninitializedEvent, self.handleNodeStatus)
-		self.addEventInput(event.PublishEvent, self.registerData)
-		self.addEventInput(event.UnpublishEvent, self.unregisterData)
-		self.addEventInput(event.ListPublishEvent, self.registerData)
 		# this makes every received event get distributed
 		self.addEventInput(event.Event, self.distributeEvents)
 
@@ -111,7 +103,7 @@ class Manager(node.Node):
 
 	def location(self):
 		location = leginonobject.LeginonObject.location(self)
-		location['data transport'] = self.server.location()
+		location['data binder'] = self.databinder.location()
 		location['UI'] = self.uicontainer.location()
 		return location
 
@@ -123,13 +115,13 @@ class Manager(node.Node):
 
 	def exit(self):
 		'''Overrides node.Node.exit'''
-		self.server.exit()
+		#self.server.exit()
 
 	# client methods
 
-	def addClient(self, newid, datatransportlocation):
-		'''Add a client of clientclass to a node keyed by the node ID.'''
-		self.clients[newid] = self.getClient(datatransportlocation)
+	def addClient(self, newid, databinderlocation):
+		'''Add a databinder client for a node keyed by the node ID.'''
+		self.clients[newid] = datatransport.Client(databinderlocation, loggername=self.logger.name)
 
 	def delClient(self, newid):
 		'''Deleted a client to a node by the node ID.'''
@@ -154,9 +146,9 @@ class Manager(node.Node):
 		'''
 		override Node.confirmEvent to send confirmation to a node
 		'''
-		if ievent['confirm']:
-			eventid = ievent['id']
-			nodeid = ievent['id'][:-1]
+		if ievent['confirm'] is not None:
+			eventid = ievent['confirm']
+			nodeid = ievent['node']
 			ev = event.ConfirmationEvent(eventid=eventid)
 			self.outputEvent(ev, nodeid)
 
@@ -168,7 +160,7 @@ class Manager(node.Node):
 		# no handle if this is a distributed event getting confirmed
 		eventid = ievent['eventid']
 		## node that just confirmed, not the original node
-		nodeid = ievent['id'][:-1]
+		nodeid = ievent['node']
 		if eventid in self.disteventswaiting:
 			if nodeid in self.disteventswaiting[eventid]:
 				self.disteventswaiting[eventid][nodeid].set()
@@ -190,13 +182,36 @@ class Manager(node.Node):
 												+ str(tonodeid) + ' no such binding')
 			return
 
+	def broadcastToNode(self, nodeid):
+		to_node = nodeid
+		for ievent in self.broadcast:
+			### this is a special case of outputEvent
+			### so we don't use outputEvent here
+			try:
+				ievent['destination'] = to_node
+				self.clients[to_node].push(ievent)
+			except IOError:
+				### bad client, get rid of it
+				self.logger.error('Cannot push to node ' + str(to_node)
+													+ ', unregistering')
+				self.removeNode(to_node)
+				self.delLauncher(to_node)
+				raise
+			self.logEvent(ievent, 'distributed to %s' % (to_node,))
+
 	def distributeEvents(self, ievent):
 		'''Push event to eventclients based on event class and source.'''
+		if ievent['destination'] is ():
+			if ievent['confirm'] is not None:
+				raise RuntimeError('not allowed to wait for broadcast event')
+			## do every node
+			do = list(self.initializednodes)
+			## save event for future nodes
+			self.broadcast.append(ievent)
+		else:
+			do = []
 		eventclass = ievent.__class__
-		eventid = ievent['id']
-		#from_node = ievent.id[:-1]
-		from_node = eventid[:-1]
-		do = []
+		from_node = ievent['node']
 		for distclass,fromnodes in self.distmap.items():
 			if issubclass(eventclass, distclass):
 				for fromnode in (from_node, None):
@@ -218,7 +233,8 @@ class Manager(node.Node):
 
 		### set up confirmation event waiting
 		ewaits = self.disteventswaiting
-		if ievent['confirm']:
+		eventid = ievent['confirm']
+		if eventid is not None:
 			ewaits[eventid] = {}
 			for to_node in do:
 				ewaits[eventid][to_node] = threading.Event()
@@ -242,14 +258,14 @@ class Manager(node.Node):
 			except:
 				self.logger.exception('')
 				# make sure we don't wait for confirmation
-				if ievent['confirm']:
+				if eventid is not None:
 					ewaits[eventid][to_node].set()
 
 		### wait for all confirmations to come back
-		### the "and do" part make sure we only confirm if events
+		### the "do" part makes sure we only confirm if events
 		### were actually distributed since all events actually
 		### come through this handler
-		if ievent['confirm'] and do:
+		if do and eventid is not None:
 			## need confirmation from all nodes
 			for e in ewaits[eventid].values():
 				e.wait()
@@ -286,33 +302,12 @@ class Manager(node.Node):
 		self.uilauncherselect.set(launchers, selected)
 		self.deleteNodeUIClient(nodeid)
 
-	def getLauncherNodeClasses(self, dataid, location, launcherid):
-		'''Retrieve a list of launchable classes from a launcher by alias launchername.'''
-		try:
-			nodeclassesdata = self.researchByLocation(location, dataid)
-		except:
-			nodeclassesdata = None
-			self.logger.exception('cannot find launcher %s, unregistering'
-														% launcherid)
-			# group into another function
-			self.removeNode(launcherid)
-			# also remove from launcher registry
-			self.delLauncher(launcherid)
-			raise
-
-		if nodeclassesdata is None:
-			nodeclasses = None
-		else:
-			nodeclasses = nodeclassesdata['nodeclasses']
-		return nodeclasses
-
 	def handleNodeClassesPublish(self, ievent):
 		'''Event handler for retrieving launchable classes.'''
-		launchername = ievent['id'][-2]
-		dataid = ievent['dataid']
-		loc = self.launcherdict[launchername]['location']
+		launchername = ievent['node'][-1]
+		nodeclassesdata = ievent['data']
+		nodeclasses = nodeclassesdata['nodeclasses']
 		launcherid = self.launcherdict[launchername]['ID']
-		nodeclasses = self.getLauncherNodeClasses(dataid, loc, launcherid)
 		if nodeclasses is None:
 			del self.launcherdict[launchername]
 		else:
@@ -339,9 +334,8 @@ class Manager(node.Node):
 
 	def registerNode(self, readyevent):
 		'''Event handler for registering a node with the manager. Initializes a client for the node and adds information regarding the node's location.'''
-		nodeid = readyevent['id'][:-1]
-		nodelocationdata = self.datahandler.query(nodeid)
-		if nodelocationdata is not None:
+		nodeid = readyevent['node']
+		if nodeid in self.nodelocations:
 			self.killNode(nodeid)
 
 		nodelocation = readyevent['location']
@@ -352,25 +346,24 @@ class Manager(node.Node):
 			self.addLauncher(nodeid, nodelocation)
 
 		# for the clients and mapping
-		if 'data transport' in nodelocation \
-															and nodelocation['data transport'] is not None:
-			datatransportlocation = nodelocation['data transport']
-			self.addClient(nodeid, datatransportlocation)
+		if 'data binder' in nodelocation \
+															and nodelocation['data binder'] is not None:
+			databinderlocation = nodelocation['data binder']
+			self.addClient(nodeid, databinderlocation)
 		elif 'launcher' in nodelocation \
 															and nodelocation['launcher'] in self.clients:
 			self.clients[nodeid] = self.clients[nodelocation['launcher']]
-			nodelocation = self.datahandler.query(nodelocation['launcher'])
+			nodelocation = self.nodelocations[nodelocation['launcher']]
 			nodelocation = nodelocation['location']
 		else:
 			# weak
 			raise RuntimeError('Cannot connect to node')
 
-		# published data of nodeid mapping to location of node
-		initializer = {'id': nodeid,
-										'location': nodelocation,
+		# add node location to nodelocations dict
+		initializer = {'location': nodelocation,
 										'class string': classstring}
 		nodelocationdata = data.NodeLocationData(initializer=initializer)
-		self.datahandler.insert(nodelocationdata)
+		self.nodelocations[nodeid] = nodelocationdata
 
 		self.confirmEvent(readyevent)
 		self.uiUpdateNodeInfo()
@@ -389,7 +382,7 @@ class Manager(node.Node):
 
 	def unregisterNode(self, unavailable_event):
 		'''Event handler for unregistering the node from the manager. Removes all information, event mappings and the client related to the node.'''
-		nodeid = unavailable_event['id'][:-1]
+		nodeid = unavailable_event['node']
 		self.removeNode(nodeid)
 		self.delLauncher(nodeid)
 		self.uiUpdateNodeInfo()
@@ -405,9 +398,10 @@ class Manager(node.Node):
 			self.logger.exception('cannot delete client container for node')
 
 	def handleNodeStatus(self, ievent):
-		nodeid = ievent['id'][:-1]
+		nodeid = ievent['node']
 		if isinstance(ievent, event.NodeInitializedEvent):
 			self.setNodeStatus(nodeid, True)
+			self.broadcastToNode(nodeid)
 		elif isinstance(ievent, event.NodeUninitializedEvent):
 			self.setNodeStatus(nodeid, False)
 		self.confirmEvent(ievent)
@@ -426,11 +420,9 @@ class Manager(node.Node):
 
 	def removeNode(self, nodeid):
 		'''Remove data, event mappings, and client for the node with the specfied node ID.'''
-		nodelocationdata = self.datahandler.query(nodeid)
-		if nodelocationdata is not None:
-			self.removeNodeData(nodeid)
+		if nodeid in self.nodelocations:
 			self.removeNodeDistmaps(nodeid)
-			self.datahandler.remove(nodeid)
+			del self.nodelocations[nodeid]
 			self.delClient(nodeid)
 		else:
 			self.logger.error('Manager: node ' + str(nodeid) + ' does not exist')
@@ -449,13 +441,6 @@ class Manager(node.Node):
 				except ValueError:
 					pass
 
-	def removeNodeData(self, nodeid):
-		'''Remove data associated with the node of specified node ID.'''
-		# terribly inefficient
-#		for dataid in self.server.datahandler.ids():
-		for dataid in self.datahandler.ids():
-			self.unpublishDataLocation(dataid, nodeid)
-
 	def launchNode(self, launcher, target, name, dependencies=[]):
 		'''
 		Launch a node with a launcher node.
@@ -464,8 +449,7 @@ class Manager(node.Node):
 		dependencies = node dependent on to launch
 		'''
 		nodeid = self.id + (name,)
-		nodelocationdata = self.datahandler.query(nodeid)
-		if nodelocationdata is not None:
+		if nodeid in self.nodelocations:
 			self.messagelog.warning('Node \'%s\' already exists' % name)
 			return nodeid
 
@@ -476,7 +460,6 @@ class Manager(node.Node):
 		return nodeid
 
 	def waitNode(self, launcher, target, nodeid, dependencies):
-		args = (nodeid, self.session, self.nodelocations)
 		dependencyids = []
 		for dependency in dependencies:
 			dependencyids.append(('manager', dependency))
@@ -486,11 +469,10 @@ class Manager(node.Node):
 			dependencyids.append(launcher)
 
 		self.waitNodes(dependencyids)
-		initializer = {'id': self.ID(),
-										'targetclass': target,
-										'node ID': nodeid,
+		initializer = {'targetclass': target,
+										'node': nodeid,
 										'session': self.session,
-										'node locations':self.nodelocations}
+										'manager location':self.location()}
 		ev = event.CreateNodeEvent(initializer=initializer)
 		self.outputEvent(ev, launcher, wait=True)
 
@@ -510,10 +492,10 @@ class Manager(node.Node):
 
 	def addNode(self, location, nodeid):
 		'''Add a running node to the manager. Sends an event to the location.'''
-		e = event.SetManagerEvent(id=self.id, destination=nodeid,
+		e = event.SetManagerEvent(destination=nodeid,
 																	location=self.location(),
 																	session=self.session)
-		client = self.getClient(location)
+		client = datatransport.Client(location, loggername=self.logger.name)
 		try:
 			client.push(e)
 		except (IOError, EOFError):
@@ -545,51 +527,6 @@ class Manager(node.Node):
 			self.removeNode(nodeid)
 			# also remove from launcher registry
 			self.delLauncher(nodeid)
-
-	# data methods
-
-	def registerData(self, publishevent):
-		'''Event handler. Calls publishDataLocation. Operates on singular data IDs or lists of data IDs.'''
-		if isinstance(publishevent, event.PublishEvent):
-			id = publishevent['dataid']
-			self.publishDataLocation(id, publishevent['id'][:-1])
-		elif isinstance(publishevent, event.ListPublishEvent):
-			for id in publishevent['idlist']:
-				self.publishDataLocation(id, publishevent['id'][:-1])
-		else:
-			raise TypeError
-		self.confirmEvent(publishevent)
-
-	def publishDataLocation(self, dataid, nodeid):
-		'''Registers the location of a piece of data by mapping the data's ID to its location. Appends location to list if data ID is already registered.'''
-		datalocationdata = self.datahandler.query(dataid)
-		if datalocationdata is None:
-			datalocationdata = data.DataLocationData(id=dataid, location=[nodeid])
-		else:
-			if nodeid not in datalocationdata['location']:
-				datalocationdata['location'].append(nodeid)
-		self.datahandler.insert(datalocationdata)
-
-	def unregisterData(self, unpublishevent):
-		'''Event handler unregistering data from the manager. Removes a location mapped to the data ID.'''
-		if isinstance(unpublishevent, event.UnpublishEvent):
-			self.unpublishDataLocation(id, unpublishevent['id'][:-1])
-		else:
-			raise TypeError
-		self.confirmEvent(unpublishevent)
-
-	def unpublishDataLocation(self, dataid, nodeid):
-		'''Unregisters data by unmapping the location from the data ID. If no other location are mapped to the data ID, the data ID is removed.'''
-		datalocationdata = self.datahandler.query(dataid)
-		if (datalocationdata is not None) and (type(datalocationdata) == data.DataLocationData):
-			try:
-				datalocationdata['location'].remove(nodeid)
-				if len(datalocationdata['location']) == 0:
-					self.datahandler.remove(dataid)
-				else:
-					self.datahandler.insert(datalocationdata)
-			except ValueError:
-				pass
 
 	# application methods
 
@@ -685,8 +622,8 @@ class Manager(node.Node):
 		nodes = self.clients.keys()
 		nodeinfo = {}
 		for nodeid in nodes:
-			nodelocationdata = self.datahandler.query(nodeid)
-			if nodelocationdata is not None:
+			if nodeid in self.nodelocations:
+				nodelocationdata = self.nodelocations[nodeid]
 				nodelocation = nodelocationdata['location']
 				nodeinfo[str(nodeid)] = nodelocation
 				nodeinfo[str(nodeid)]['class'] = nodelocationdata['class string']
@@ -716,7 +653,6 @@ class Manager(node.Node):
 		if not name:
 			self.messagelog.error('Invalid node name "%s"' % name)
 			return
-		args = ()
 		self.launchNode(launcherid, nodeclass, name)
 
 	def uiKillNode(self):
@@ -750,7 +686,7 @@ class Manager(node.Node):
 			return
 		self.delEventDistmap(eventclass, eval(fromnodeidstr), eval(tonodeidstr))
 
-	def	uiGetNodeLocations(self):
+	def uiGetNodeLocations(self):
 		'''UI helper for mapping a node alias to the node's location.'''
 		nodelocations = self.uiNodeDict()
 		nodelocations[str(self.id)] = self.location()
@@ -960,11 +896,11 @@ class Manager(node.Node):
 
 		container = uidata.LargeContainer('Manager')
 
-		self.initializeLoggerUserInterface()
+		#self.initializeLoggerUserInterface()
 
 		# cheat a little here
 		clientlogger = extendedlogging.getLogger(self.logger.name + '.'
-																							+ self.clientclass.__name__)
+																							+ datatransport.Client.__name__)
 		if clientlogger.container not in self.logger.container.values():
 			self.logger.container.addObject(clientlogger.container,
 																			position={'span': (1,2), 'expand': 'all'})

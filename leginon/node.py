@@ -7,9 +7,9 @@
 #
 
 import data
-import datahandler
+from databinder import DataBinder
 import datatransport
-import dbdatakeeper
+from dbdatakeeper import DBDataKeeper
 import event
 import leginonobject
 import extendedlogging
@@ -17,8 +17,6 @@ import threading
 import uiserver
 import uidata
 
-# for ID counter
-import cPickle
 import leginonconfig
 import os
 
@@ -42,64 +40,6 @@ def beep():
 	except:
 		print '\aBEEP!'
 
-class DataHandler(object):
-	'''
-	handles data published by the node
-	'''
-	def __init__(self, mynode,
-								datakeeperclass=datahandler.SizedDataKeeper,
-								databinderclass=datahandler.DataBinder,
-								dbdatakeeperclass=dbdatakeeper.DBDataKeeper,
-								loggername=None):
-		self.logger = extendedlogging.getLogger(self.__class__.__name__, loggername)
-
-		self.datakeeper = datakeeperclass(loggername=self.logger.name)
-		self.databinder = databinderclass(loggername=self.logger.name)
-		self.dbdatakeeper = dbdatakeeperclass(loggername=self.logger.name)
-		if self.datakeeper.logger.container not in self.logger.container.values():
-			self.logger.container.addObject(self.datakeeper.logger.container,
-																			position={'span': (1,2), 'expand': 'all'})
-		if self.databinder.logger.container not in self.logger.container.values():
-			self.logger.container.addObject(self.databinder.logger.container,
-																			position={'span': (1,2), 'expand': 'all'})
-		if self.dbdatakeeper.logger.container not in self.logger.container.values():
-			self.logger.container.addObject(self.dbdatakeeper.logger.container,
-																			position={'span': (1,2), 'expand': 'all'})
-		self.node = mynode
-
-	def exit(self):
-		self.datakeeper.exit()
-		self.databinder.exit()
-		self.dbdatakeeper.exit()
-
-	def insert(self, idata):
-		if isinstance(idata, event.Event):
-			self.databinder.insert(idata)
-		else:
-			self.datakeeper.insert(idata)
-
-	def query(self, id):
-		return self.datakeeper.query(id)
-
-	def addBinding(self, nodeid, eventclass, method):
-		'''Overides datahandler.DataBinder, making sure it binds Event type only.'''
-		if issubclass(eventclass, event.Event):
-			self.databinder.addBinding(nodeid, eventclass, method)
-		else:
-			raise event.InvalidEventError('eventclass must be Event subclass')
-
-	def delBinding(self, nodeid, eventclass=None, method=None):
-		self.databinder.delBinding(nodeid, eventclass, method)
-
-	def dbInsert(self, idata, force=False):
-		self.dbdatakeeper.insert(idata, force=force)
-
-	def dbQuery(self, idata, results=None, readimages=True):
-		return self.dbdatakeeper.query(idata, results, readimages=readimages)
-
-	def __getattr__(self, attr):
-		return getattr(self.datakeeper, attr)
-
 class Node(leginonobject.LeginonObject):
 	'''Atomic operating unit for performing tasks, creating data and events.'''
 
@@ -108,22 +48,18 @@ class Node(leginonobject.LeginonObject):
 									event.ConfirmationEvent]
 
 	eventoutputs = [event.PublishEvent,
-									event.UnpublishEvent,
 									event.NodeAvailableEvent,
 									event.NodeUnavailableEvent,
 									event.NodeInitializedEvent,
 									event.NodeUninitializedEvent]
 
-	def __init__(self, id, session, nodelocations={}, datahandler=None,
-								uicontainer=None, launcher=None,
-								clientclass=datatransport.Client):
-		leginonobject.LeginonObject.__init__(self, id)
+	def __init__(self, id, session, managerlocation=None, otherdatabinder=None, otherdbdatakeeper=None, otheruiserver=None, tcpport=None, xmlrpcport=None, launcher=None):
+		leginonobject.LeginonObject.__init__(self)
+		self.id = id
 		
 		self.initializeLogger()
 
 		self.managerclient = None
-
-		self.id_count_lock = threading.Lock()
 
 		if session is None or isinstance(session, data.SessionData):
 			self.session = session
@@ -132,15 +68,24 @@ class Node(leginonobject.LeginonObject):
 
 		self.launcher = launcher
 
-		self.nodelocations = nodelocations
+		if otherdatabinder is None:
+			self.databinder = DataBinder(tcpport=tcpport, loggername=self.logger.name)
+		else:
+			self.databinder = otherdatabinder
+		if otherdbdatakeeper is None:
+			self.dbdatakeeper = DBDataKeeper(loggername=self.logger.name)
+		else:
+			self.dbdatakeeper = otherdbdatakeeper
 
-		if datahandler is not None:
-			self.datahandler = datahandler
-		self.clientclass = clientclass
-
-		if uicontainer is not None:
+		## set up uiserver and uicontainer
+		## Either I own the server, or I use the one given to me
+		if otheruiserver is None:
+			self.uiserver = uiserver.Server(str(id[-1]), xmlrpcport, session=session)
+			self.uicontainer = self.uiserver
+		else:
+			self.uiserver = otheruiserver
 			self.uicontainer = uidata.LargeContainer(str(self.id[-1]))
-			uicontainer.addObject(self.uicontainer)
+			self.uiserver.addObject(self.uicontainer)
 
 		self.confirmationevents = {}
 		self.eventswaiting = {}
@@ -151,22 +96,20 @@ class Node(leginonobject.LeginonObject):
 		self.addEventInput(event.ConfirmationEvent, self.handleConfirmedEvent)
 		self.addEventInput(event.SetManagerEvent, self.handleSetManager)
 
-		if 'manager' in self.nodelocations:
+		self.managerlocation = managerlocation
+		if managerlocation is not None:
 			try:
-				self.setManager(self.nodelocations['manager'])
+				self.setManager(self.managerlocation)
 			except:
 				self.logger.exception('exception in setManager')
 				raise
-			else:
-				pass
 
 	def initializeLoggerUserInterface(self):
-		if self.datahandler.logger.container not in self.logger.container.values():
-			self.logger.container.addObject(self.datahandler.logger.container,
+		if self.databinder.logger.container not in self.logger.container.values():
+			self.logger.container.addObject(self.databinder.logger.container,
 																			position={'span': (1,2), 'expand': 'all'})
-		if self.server.logger.container not in self.logger.container.values():
-			self.logger.container.addObject(self.server.logger.container,
-																			position={'span': (1,2), 'expand': 'all'})
+		#if self.server.logger.container not in self.logger.container.values():
+		#	self.logger.container.addObject(self.server.logger.container, position={'span': (1,2), 'expand': 'all'})
 
 	def initializeLogger(self, name=None):
 		if hasattr(self, 'logger'):
@@ -177,69 +120,23 @@ class Node(leginonobject.LeginonObject):
 
 	# main, start/stop methods
 
-	def ID(self):
-		'''
-		this is redefined so that idcounter is persistent
-		'''
-		newid = self.id + (self.IDCounter(),)
-		self.logger.debug('New ID %s generated' % (newid,))
-		return newid
-
-	def IDCounter(self):
-		self.id_count_lock.acquire()
-		try:
-			# read current ID count value
-			if not hasattr(self, 'idcount'):
-				self.idcount = 0
-			self.idcount += 1
-	
-			if self.session is not None:
-				session_name = self.session['name']
-			else:
-				session_name = ''
-
-			my_name = self.id[-1]
-			fname = my_name + '.id'
-			idpath = os.path.join(leginonconfig.ID_PATH, session_name)
-			leginonconfig.mkdirs(idpath)
-			fullname = os.path.join(idpath, fname)
-			try:
-				f = open(fullname, 'r')
-				last_count = cPickle.load(f)
-				f.close()
-			except:
-				last_count = 0
-	
-			# create new id count
-			new_count = last_count + 1
-			try:
-				f = open(fullname, 'w')
-				cPickle.dump(new_count, f, 0)
-				f.close()
-			except:
-				self.logger.exception('Error while saving %s to pickle in file %s'
-															% (new_count, fullname))
-				raise
-		finally:
-			self.id_count_lock.release()
-		return new_count
-
 	def start(self):
-		self.outputEvent(event.NodeInitializedEvent(id=self.ID()))
+		self.outputEvent(event.NodeInitializedEvent())
 
 	def exit(self):
 		'''Cleans up the node before it dies.'''
 		if self.uicontainer is not None:
 			self.uicontainer.delete()
 		try:
-			self.outputEvent(event.NodeUninitializedEvent(id=self.ID()), wait=True,
+			self.outputEvent(event.NodeUninitializedEvent(), wait=True,
 																										timeout=3.0)
-			self.outputEvent(event.NodeUnavailableEvent(id=self.ID()))
+			self.outputEvent(event.NodeUnavailableEvent())
 		except (ConfirmationTimeout, IOError):
 			pass
 		self.delEventInput()
 		if self.launcher is not None:
 			self.launcher.onDestroyNode(self)
+		self.databinder.exit()
 
 	def die(self, ievent=None):
 		'''Tell the node to finish and call exit.'''
@@ -248,12 +145,15 @@ class Node(leginonobject.LeginonObject):
 			self.confirmEvent(ievent)
 
 	# location method
-
 	def location(self):
 		location = leginonobject.LeginonObject.location(self)
-		location['launcher'] = self.launcher.id
+		if self.launcher is not None:
+			location['launcher'] = self.launcher.id
+		else:
+			location['launcher'] = None
+		location['data binder'] = self.databinder.location()
+		location['UI'] = self.uiserver.location()
 		return location
-
 	# event input/output/blocking methods
 
 	def eventToClient(self, ievent, client, wait=False, timeout=None):
@@ -265,22 +165,13 @@ class Node(leginonobject.LeginonObject):
 		timeout - how long (seconds) to wait for confirmation before
 		   raising a ConfirmationTimeout
 		'''
-		## give event an id if it doesn't have one
-		if ievent['id'] is None:
-			eventid = self.ID()
-			ievent['id'] = eventid
-		else:
-			eventid = ievent['id']
-
-		## if we are going to wait for confirmation, label
-		## the event as such
-		ievent['confirm'] = wait
-
 		if wait:
 			## prepare to wait (but don't wait yet)
+			wait_id = ievent.dmid
+			ievent['confirm'] = wait_id
 			self.ewlock.acquire()
-			self.eventswaiting[eventid] = threading.Event()
-			eventwait = self.eventswaiting[eventid]
+			self.eventswaiting[wait_id] = threading.Event()
+			eventwait = self.eventswaiting[wait_id]
 			self.ewlock.release()
 
 		### send event and cross your fingers
@@ -304,9 +195,9 @@ class Node(leginonobject.LeginonObject):
 			notimeout = eventwait.isSet()
 			self.ewlock.acquire()
 			try:
-				confirmationevent = self.confirmationevents[eventid]
-				del self.confirmationevents[eventid]
-				del self.eventswaiting[eventid]
+				confirmationevent = self.confirmationevents[wait_id]
+				del self.confirmationevents[wait_id]
+				del self.eventswaiting[wait_id]
 			except KeyError:
 				self.logger.warning('This could be bad to except KeyError')
 			self.ewlock.release()
@@ -317,9 +208,11 @@ class Node(leginonobject.LeginonObject):
 
 	def outputEvent(self, ievent, wait=False, timeout=None):
 		'''output an event to the manager'''
-		if self.managerclient is None:
-			raise IOError('Not connnected to manager, output event failed')
-		return self.eventToClient(ievent, self.managerclient, wait, timeout)
+		ievent['node'] = self.id
+		if self.managerclient is not None:
+			return self.eventToClient(ievent, self.managerclient, wait, timeout)
+		else:
+			print 'no manager, not sending event: %s' % (ievent,)
 
 	def handleConfirmedEvent(self, ievent):
 		'''Handler for ConfirmationEvents. Unblocks the call waiting for confirmation of the event generated.'''
@@ -333,12 +226,11 @@ class Node(leginonobject.LeginonObject):
 
 	def confirmEvent(self, ievent):
 		'''Confirm that an event has been received and/or handled.'''
-		if ievent['confirm']:
-			self.outputEvent(event.ConfirmationEvent(id=self.ID(),
-												eventid=ievent['id']))
+		if ievent['confirm'] is not None:
+			self.outputEvent(event.ConfirmationEvent(eventid=ievent['confirm']))
 
 	def logEvent(self, ievent, status):
-		eventlog = event.EventLog(id=self.ID(), eventclass=ievent.__class__.__name__, status=status)
+		eventlog = event.EventLog(eventclass=ievent.__class__.__name__, status=status)
 		# pubevent is False by default, but just in case that changes
 		# we don't want infinite recursion here
 		self.publish(eventlog, database=True, pubevent=False)
@@ -350,74 +242,54 @@ class Node(leginonobject.LeginonObject):
 
 	def addEventInput(self, eventclass, method):
 		'''Map a function (event handler) to be called when the specified event is received.'''
-		self.datahandler.addBinding(self.id, eventclass, method)
+		self.databinder.addBinding(self.id, eventclass, method)
 
 	def delEventInput(self, eventclass=None, method=None):
 		'''Unmap all functions (event handlers) to be called when the specified event is received.'''
-		self.datahandler.delBinding(self.id, eventclass, method)
+		self.databinder.delBinding(self.id, eventclass, method)
 
 	# data publish/research methods
 
-	def publish(self, idata, **kwargs):
+	def publish(self, idata, database=False, dbforce=False, pubevent=False, pubeventclass=None, broadcast=False):
 		'''
 		Make a piece of data available to other nodes.
 		Arguments:
 			idata - instance of data to publish
 			Takes kwargs:
-				eventclass - PublishEvent subclass to notify with when publishing		
-				confirm - Wait until Event is confirmed to return
+				pubeventclass - PublishEvent subclass to notify with when publishing		
 				database - publish to database
-				remote - publish to another node's datahandler (may be changed)
 		'''
-		if 'remote' in kwargs and kwargs['remote']:
-			self.publishRemote(idata)
-			return
-
-		if 'database' in kwargs and kwargs['database']:
-			if 'dbforce' in kwargs:
-				dbforce = kwargs['dbforce']
-			else:
-				dbforce = False
+		if database:
 			if isinstance(idata, data.InSessionData):
 				self.addSession(idata)
 			try:
-				self.datahandler.dbInsert(idata, force=dbforce)
+				self.dbdatakeeper.insert(idata, force=dbforce)
 			except Exception, e:
 				if isinstance(e, OSError):
 					message = str(e)
 				elif isinstance(e, IOError):
 					message = str(e)
 				elif isinstance(e, KeyError):
-					message = 'no DBDataKeeper to publish: %s' % str(idata['id'])
+					message = 'no DBDataKeeper to publish'
 				else:
 					raise
 				raise PublishError(message)
 
-		self.datahandler.insert(idata)
-
-		if 'pubeventclass' in kwargs:
-			pubeventclass = kwargs['pubeventclass']
-		else:
-			pubeventclass = None
-
 		### publish event
-		if 'publisheventinstance' in kwargs:
-			return self.outputEvent(kwargs['publisheventinstance'])
-		elif 'pubevent' in kwargs and kwargs['pubevent']:
-			if 'confirm' in kwargs:
-				confirm = kwargs['confirm']
-			else:
-				confirm = False
-			wait = False
-			if confirm and 'wait' in kwargs:
-				wait = kwargs['wait']
-			
+		if pubevent:
 			if pubeventclass is None:
-				eventclass = event.publish_events[idata.__class__]
+				if isinstance(idata, data.DataHandler):
+					dataclass = idata.dataclass
+				else:
+					dataclass = idata.__class__
+				eventclass = event.publish_events[dataclass]
 			else:
 				eventclass = pubeventclass
-			e = eventclass(id=self.ID(), dataid=idata['id'], confirm=confirm)
-			return self.outputEvent(e, wait=wait)
+			e = eventclass()
+			e['data'] = idata.reference()
+			if broadcast:
+				e['destination'] = ()
+			return self.outputEvent(e)
 
 	def addSession(self, datainstance):
 		## setting an item of datainstance will reset the dbid
@@ -439,20 +311,15 @@ class Node(leginonobject.LeginonObject):
 			will be returned in a list.  The result list will
 			not contain two instaces with the same ID.
 		'''
-
-		resultlist = []
-
 		#### make some sense out of args
 		### for research by dataclass, use kwargs to find instance
 		if dataclass is not None:
 			datainstance = dataclass()
 
 		### use DBDataKeeper query if not results yet
-		if not resultlist and datainstance is not None:
-			## always fill empty session
-			self.addEmptySession(datainstance)
+		if datainstance is not None:
 			try:
-				newresults = self.datahandler.dbQuery(datainstance, results, readimages=readimages)
+				resultlist = self.dbdatakeeper.query(datainstance, results, readimages=readimages)
 			except Exception, e:
 				if isinstance(e, OSError):
 					message = str(e)
@@ -461,95 +328,30 @@ class Node(leginonobject.LeginonObject):
 				else:
 					raise
 				raise ResearchError(message)
-			resultlist += newresults
-
+		else:
+			raise RuntimeError('research needs either data instance or data class')
 		return resultlist
 
-	def addEmptySession(self, datainstance):
-		if isinstance(datainstance, data.InSessionData):
-			if datainstance['session'] is None:
-				datainstance['session'] = data.SessionData()
-		for key in datainstance:
-			if isinstance(datainstance[key], data.InSessionData):
-				self.addSession(datainstance[key])
+	def researchDMID(self, dataclass, dbid):
+		print 'WARNING:  researchDMID() IS TEMPORARY WHILE WE ARE STILL STORING LISTS OF DMIDs'
+		return self.dbdatakeeper.direct_query(dataclass, dbid)
 
-	def getClient(self, location):
-		return self.clientclass(location, loggername=self.logger.name)
+	def updateReferencedData(self, datareference, updateinstance):
+		'''
+		using the 'updateinstance',
+		modify the value of an existing data instance, which is
+		referenced by 'datareference'
+		'''
 
-	def publishRemote(self, idata):
-		'''Publish a piece of data with the specified data ID, setting all other data with the same data ID to the data value (including other nodes).'''
-		dataid = idata['id']
-		if not dataid:
-			raise RuntimeError('%s data needs an ID to be published' %
-													(idata.__class__.__name__,))
-		nodeiddata = self.researchByLocation(self.nodelocations['manager'], dataid)
-		if nodeiddata is None:
-			# try a partial ID lookup
-			nodeiddata = self.researchByLocation(self.nodelocations['manager'],
-																						dataid[:1])
-
-		if nodeiddata is None:
-			raise PublishError('No such Data ID: %s' % (dataid,))
-
-		for nodeid in nodeiddata['location']:
-			nodelocation = self.researchByLocation(self.nodelocations['manager'],
-																							nodeid)
-			client = self.getClient(nodelocation['location']['data transport'])
-			client.push(idata)
-
-	def researchByLocation(self, location, dataid):
-		'''Get a piece of data with the specified data ID by the location of a node.'''
-		client = self.getClient(location['data transport'])
-		try:
-			cdata = client.pull(dataid)
-		except IOError:
-			cdata = None
-		return cdata
-
-
-	def researchByDataID(self, dataid):
-		'''Get a piece of data with the specified data ID. Currently retrieves the data from the last node to publish it.'''
-		if self.managerclient is None:
-			raise ResearchError('Not connected to manager, research failed')
-
-		nodeiddata = self.managerclient.pull(dataid)
-
-		if nodeiddata is None:
-			raise ResearchError('No such data ID: %s' % (dataid,))
-
-		# should interate over nodes, be crafty, etc.
-		datalocationdata = self.managerclient.pull(nodeiddata['location'][-1])
-		newdata = self.researchByLocation(datalocationdata['location'], dataid)
-		return newdata
-
-	def researchPublishedDataByID(self, dataid):
-		newdata = self.researchByDataID(dataid)
-		if newdata is None:
-			if issubclass(publishevent.dataclass, data.Data):
-				initializer = {'id': dataid}
-				if issubclass(publishevent.dataclass, data.InSessionData):
-					initializer['session'] = self.session
-				datainstance = publishevent.dataclass(initializer=initializer)
-				newdatalist = self.research(datainstance=datainstance)
-				if newdatalist:
-					newdata = newdatalist[0]
-		return newdata
-
-	def researchPublishedData(self, publishevent):
-		newdata = None
-		if 'dataid' in publishevent:
-			dataid = publishevent['dataid']
-			if dataid is not None:
-				newdata = self.researchPublishedDataByID(dataid)
-		return newdata
+		#client = self.getClient(nodelocation['location']['data transport'])
+		#client.push(idata)
 
 	# methods for setting up the manager
 
 	def setManager(self, location):
 		'''Set the manager controlling the node and notify said manager this node is available.'''
-		self.managerclient = self.getClient(location['data transport'])
-		available_event = event.NodeAvailableEvent(id=self.ID(),
-																							location=self.location(),
+		self.managerclient = datatransport.Client(location['data binder'])
+		available_event = event.NodeAvailableEvent(location=self.location(),
 																							nodeclass=self.__class__.__name__)
 		self.outputEvent(ievent=available_event, wait=True, timeout=10)
 
@@ -587,7 +389,7 @@ class Node(leginonobject.LeginonObject):
 
 		# cheat a little here
 		clientlogger = extendedlogging.getLogger(self.logger.name + '.'
-																							+ self.clientclass.__name__)
+																							+ datatransport.Client.__name__)
 		if clientlogger.container not in self.logger.container.values():
 			self.logger.container.addObject(clientlogger.container,
 																			position={'span': (1,2), 'expand': 'all'})

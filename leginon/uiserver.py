@@ -12,6 +12,7 @@ import extendedxmlrpclib
 import Queue
 import data
 import xmlrpc
+import dbdatakeeper
 
 # preferences
 import cPickle
@@ -24,11 +25,11 @@ class NoValueError(Exception):
 class Server(xmlrpc.Server, uidata.Container):
 	typelist = uidata.Container.typelist + ('server',)
 	def __init__(self, name='UI', port=None, tries=5,
-								dbdatakeeper=None, session=None):
+								session=None):
 		self.xmlrpcclients = []
 		self.localclients = []
 		self.tries = tries
-		self.dbdatakeeper = dbdatakeeper
+		self.dbdatakeeper = dbdatakeeper.DBDataKeeper()
 		self.session = session
 
 		self.pref_lock = threading.Lock()

@@ -61,8 +61,8 @@ class Watcher(node.Node):
 
 	eventinputs = node.Node.eventinputs + [event.PublishEvent]
 
-	def __init__(self, id, session, nodelocations, watchfor=[event.PublishEvent], lockblocking=1, **kwargs):
-		node.Node.__init__(self, id, session, nodelocations, **kwargs)
+	def __init__(self, id, session, managerlocation, watchfor=[event.PublishEvent], lockblocking=1, **kwargs):
+		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 		self.lockblocking = lockblocking
 		self.handlelock = threading.Lock()
 
@@ -76,14 +76,16 @@ class Watcher(node.Node):
 		if hasattr(self, 'uieventqueue'):
 			idlist = []
 			for data in value:
-				idlist.append(str(data['id']))
+				dmid = data.dmid
+				idlist.append(str(dmid))
 			self.uieventqueue.set(idlist)
 
 	def datacallback(self, value):
 		if hasattr(self, 'uidataqueue'):
 			idlist = []
 			for data in value:
-				idlist.append(str(data['id']))
+				dmid = data.dmid
+				idlist.append(str(dmid))
 			self.uidataqueue.set(idlist)
 
 	def defineUserInterface(self):
@@ -146,7 +148,7 @@ class Watcher(node.Node):
 			self.getData(pubevent)
 
 	def getData(self, pubevent):
-		newdata = self.researchPublishedData(pubevent)
+		newdata = pubevent['data']
 		if newdata is not None:
 			if self.uidataqueueflag.get():
 				self.dataqueue.put(newdata)

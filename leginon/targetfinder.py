@@ -15,18 +15,20 @@ import Mrc
 import threading
 import uidata
 import node
+import EM
 
 class TargetFinder(imagewatcher.ImageWatcher):
 	eventoutputs = imagewatcher.ImageWatcher.eventoutputs + [
 																							event.ImageTargetListPublishEvent]
 	eventinputs = imagewatcher.ImageWatcher.eventinputs + [
 																							event.TargetListDoneEvent]
-	def __init__(self, id, session, nodelocations, **kwargs):
+	def __init__(self, id, session, managerlocation, **kwargs):
 		self.targetlist = []
 		self.targetlistevents = {}
-		imagewatcher.ImageWatcher.__init__(self, id, session, nodelocations,
+		imagewatcher.ImageWatcher.__init__(self, id, session, managerlocation,
 																				**kwargs)
 		self.addEventInput(event.TargetListDoneEvent, self.handleTargetListDone)
+		self.emclient = EM.EMClient(self)
 
 	def researchImageTargets(self, imagedata):
 		'''
@@ -34,11 +36,6 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		only want most recent versions of each
 		'''
 		targetquery = data.AcquisitionImageTargetData(image=imagedata)
-		## need these, so use empty instances
-		targetquery['session'] = data.SessionData()
-		targetquery['scope'] = data.ScopeEMData()
-		targetquery['camera'] = data.CameraEMData()
-		targetquery['preset'] = data.PresetData()
 		targets = self.research(datainstance=targetquery)
 
 		## now filter out only the latest versions
@@ -46,15 +43,14 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		# assuming query result is ordered by timestamp, this works
 		have = {}
 		for target in targets:
-			targetid = target['id']
-			if targetid not in have:
-				have[targetid] = target
+			targetnum = target['number']
+			if targetnum not in have:
+				have[targetnum] = target
 		havelist = have.values()
 		havelist.sort(self.compareTargetNumber)
 		if havelist:
-			self.logger.info('Found %s targets for image %s'
-												% (len(havelist), imagedata['id']))
-
+			self.logger.info('Found %s targets for image'
+												% (len(havelist),))
 		return havelist
 
 	def compareTargetNumber(self, first, second):
@@ -78,11 +74,14 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		'''
 		raise NotImplementedError()
 
+	### this needs to be done by linking images to an ImageList object
+	### or something like that,  lists of data need to outlawed to
+	### avoid data referencing problems
 	def processImageListData(self, imagelistdata):
 		if 'images' not in imagelistdata or imagelistdata['images'] is None:
 			return
-		for imagedataid in imagelistdata['images']:
-			imagedata = self.researchPublishedDataByID(imagedataid)
+		for ref in imagelistdata['images']:
+			imagedata = ref.getData()
 			if imagedata is None:
 				continue
 			self.findTargets(imagedata)
@@ -114,9 +113,8 @@ class TargetFinder(imagewatcher.ImageWatcher):
 			# target may have number if it was previously published
 			if target['number'] is None:
 				parentimage = target['image']
-				## would rather do away with id and use dbid, which
-				## is more unique
-				parentid = parentimage['id']
+				## should I use dmid or dbid?
+				parentid = parentimage.dmid
 				if parentid in targetnumbers:
 					last_targetnumber = targetnumbers[parentid]
 				else:
@@ -127,12 +125,9 @@ class TargetFinder(imagewatcher.ImageWatcher):
 				targetnumbers[parentid] += 1
 				target['number'] = targetnumbers[parentid]
 			self.logger.info('Publishing (%s, %s) %s' %
-					(target['delta row'], target['delta column'], target['image']['id']))
-			#self.publish(target, database=True)
+					(target['delta row'], target['delta column'], target['image'].dmid))
 
-#		if self.targetlist:
-		targetlistdata = data.ImageTargetListData(id=self.ID(),
-																							targets=self.targetlist)
+		targetlistdata = data.ImageTargetListData(targets=self.targetlist)
 
 		self.makeTargetListEvent(targetlistdata)
 
@@ -143,14 +138,14 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		if self.wait_for_done.get():
 			self.waitForTargetListDone()
 
-
 	def makeTargetListEvent(self, targetlistdata):
 		'''
 		Creates a threading event to be waited on for target list data.
 		'''
-		self.targetlistevents[targetlistdata['id']] = {}
-		self.targetlistevents[targetlistdata['id']]['received'] = threading.Event()
-		self.targetlistevents[targetlistdata['id']]['stats'] = 'waiting'
+		tlistid = targetlistdata.dmid
+		self.targetlistevents[tlistid] = {}
+		self.targetlistevents[tlistid]['received'] = threading.Event()
+		self.targetlistevents[tlistid]['status'] = 'waiting'
 
 	def waitForTargetListDone(self):
 		'''
@@ -162,13 +157,6 @@ class TargetFinder(imagewatcher.ImageWatcher):
 			self.logger.info('%s done waiting for %s' % (self.id, tid))
 		self.targetlistevents.clear()
 		self.logger.info('%s done waiting' % (self.id,))
-
-	def passTargets(self, targetlistdata):
-		'''
-		???
-		'''
-		self.makeTargetListEvent(targetlistdata)
-		self.publish(targetlistdata, pubevent=True)
 
 	def notifyUserSubmit(self):
 		myname = self.id[-1]
@@ -200,7 +188,7 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		returns a new target data object with data filled in from the image data
 		'''
 		imagearray = imagedata['image']
-		targetdata = data.AcquisitionImageTargetData(id=self.ID(), type=type, version=0, status='new')
+		targetdata = data.AcquisitionImageTargetData(type=type, version=0, status='new')
 		targetdata['image'] = imagedata
 		targetdata['scope'] = imagedata['scope']
 		targetdata['camera'] = imagedata['camera']
@@ -227,8 +215,8 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		self.uicontainer.addObject(container)
 
 class ClickTargetFinder(TargetFinder):
-	def __init__(self, id, session, nodelocations, **kwargs):
-		TargetFinder.__init__(self, id, session, nodelocations, **kwargs)
+	def __init__(self, id, session, managerlocation, **kwargs):
+		TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
 
 		self.userpause = threading.Event()
 
@@ -296,9 +284,9 @@ class ClickTargetFinder(TargetFinder):
 
 class MosaicClickTargetFinder(ClickTargetFinder):
 	eventoutputs = ClickTargetFinder.eventoutputs + [event.MosaicDoneEvent]
-	def __init__(self, id, session, nodelocations, **kwargs):
+	def __init__(self, id, session, managerlocation, **kwargs):
 		self.mosaicselectionmapping = {}
-		ClickTargetFinder.__init__(self, id, session, nodelocations, **kwargs)
+		ClickTargetFinder.__init__(self, id, session, managerlocation, **kwargs)
 		self.calclients = {
 			'image shift': calibrationclient.ImageShiftCalibrationClient(self),
 			'stage position': calibrationclient.StageCalibrationClient(self),
@@ -346,22 +334,25 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			self.clearMosaicImage()
 
 	def addTile(self, imagedata):
-		id = imagedata['id']
-		if id in self.tilemap:
+		print 'THIS SHOULD NOT USE DBID'
+		print 'THIS SHOULD USE A NEW DATA TYPE FOR TILEDATA THAT LINKS TO MOSAICDATA AND IMAGEDATA'
+		print 'MOSAICDATA SHOULD NOT HAVE ID LIST'
+		imid = imagedata.dbid
+		if imid in self.tilemap:
 			self.setStatusMessage('Image already in mosaic')
 			return
 
 		self.setStatusMessage('Adding image to mosaic')
-		self.idlist.append(id)
+		self.idlist.append(imid)
 		newtile = self.mosaic.addTile(imagedata)
-		self.tilemap[id] = newtile
-		self.imagemap[id] = imagedata
+		self.tilemap[imid] = newtile
+		self.imagemap[imid] = imagedata
 		targets = self.researchImageTargets(imagedata)
-		self.targetmap[id] = targets
+		self.targetmap[imid] = targets
 		self.setStatusMessage('Image added to mosaic')
 
 		## generate new MosaicData
-		initializer = {'id': self.ID(), 'data IDs': list(self.idlist)}
+		initializer = {'data IDs': list(self.idlist)}
 		self.mosaicdata = data.MosaicData(initializer=initializer)
 
 	def targetsFromDatabase(self):
@@ -382,8 +373,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		scope = image['scope'].toDict()
 		camera = image['camera'].toDict()
 
-		s = self.researchByDataID(('stage position',))
-		stagepos = s['stage position']
+		stagepos = self.emclient.getScope()['stage position']
 		# for testing with mosaic 151 from 04apr02b
 		# this is the center of image 207 (the center of 3 images)
 		#stagepos = {'x': -0.000547287, 'y': 6.08626e-5}
@@ -460,7 +450,6 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			return
 		self.setStatusMessage('Publishing mosaic image data')
 		mosaicimagedata = data.MosaicImageData()
-		mosaicimagedata['id'] = self.ID()
 		mosaicimagedata['mosaic'] = self.mosaicdata
 		mosaicimagedata['image'] = self.mosaicimage
 		mosaicimagedata['scale'] = self.mosaicimagescale
@@ -473,8 +462,9 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.setStatusMessage('Finding mosaics')
 		mosaics = self.research(datainstance=instance)
 		self.mosaicselectionmapping = {}
+		print 'SHOULD NOT USE DBID, SHOULD USE TIMESTAMP OR SOMETHING'
 		for mosaic in mosaics:
-			key = str(mosaic['session']['name']) + ' ' + str(mosaic['id'])
+			key = str(mosaic['session']['name']) + ' ' + str(mosaic.dbid)
 			self.mosaicselectionmapping[key] = mosaic
 		self.mosaicselection.set(self.mosaicselectionmapping.keys(), 0)
 		self.setStatusMessage('Mosaic selection updated')
@@ -494,22 +484,9 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		ntotal = len(self.mosaicdata['data IDs'])
 		for i, dataid in enumerate(self.mosaicdata['data IDs']):
 			# create an instance model to query
-			inst = data.AcquisitionImageData()
-			# these are known:
-			inst['id'] = dataid
-			inst['session'] = mosaicsession
-			# this are unknown, but we need them:
-			inst['scope'] = data.ScopeEMData()
-			inst['camera'] = data.CameraEMData()
-			inst['preset'] = data.PresetData()
 			self.setStatusMessage('Finding image %i of %i' % (i + 1, ntotal))
-			imagedatalist = self.research(datainstance=inst)
-			try:
-				imagedata = imagedatalist[0]
-			except IndexError:
-				self.setStatusMessage('Cannot find image data referenced by mosaic')
-			else:
-				self.addTile(imagedata)
+			imagedata = self.researchDMID(data.AcquisitionImageData, dataid)
+			self.addTile(imagedata)
 		self.setStatusMessage('Mosaic loaded (%i of %i images loaded successfully)' % (i+1, ntotal))
 		if self.autocreate.get():
 			self.createMosaicImage()

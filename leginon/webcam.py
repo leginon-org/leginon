@@ -13,8 +13,8 @@ import time
 import threading
 
 class Webcam(node.Node):
-	def __init__(self, id, session, nodelocations, **kwargs):
-		node.Node.__init__(self, id, session, nodelocations, **kwargs)
+	def __init__(self, id, session, managerlocation, **kwargs):
+		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 		self.webcam = VideoCapture.Device()
 		self.stop = False
 		self.defineUserInterface()

@@ -22,10 +22,10 @@ class SimpleAcquisition(acquisition.Acquisition):
 	SimpleAcquisition does not take targets, it just acquires images
 	at the users command
 	'''
-	def __init__(self, id, session, nodelocations, **kwargs):
+	def __init__(self, id, session, managerlocation, **kwargs):
 		self.loopstop = threading.Event()
 
-		acquisition.Acquisition.__init__(self, id, session, nodelocations, **kwargs)
+		acquisition.Acquisition.__init__(self, id, session, managerlocation, **kwargs)
 
 	def acquireImageOne(self):
 		self.processTargetData(None)

@@ -16,6 +16,7 @@ import Numeric
 import copy
 import uidata
 from timer import Timer
+import event
 
 class NoCorrectorError(Exception):
 	pass
@@ -32,42 +33,46 @@ class CameraFuncs(object):
 	'''
 	def __init__(self, node):
 		self.node = node
+		if hasattr(node, 'emclient'):
+			self.emclient = self.node.emclient
+		else:
+			raise RuntimeError('CameraFuncs node needs emclient')
+		self.correctedimageref = None
+		self.node.addEventInput(event.CorrectedCameraImagePublishEvent, self.handleCorrectedImagePublish)
+
+	def handleCorrectedImagePublish(self, ievent):
+		self.correctedimageref = ievent
+
+	def getCorrectedImage(self):
+		if self.correctedimageref is not None:
+			return self.correctedimageref['data']
 
 	def acquireCameraImageData(self, correction=True):
 		'''
 		Acquire data from the camera, optionally corrected
-		This returns a CameraImageData object which will have
-		and ID created by this node, even if the data was 
-		originally created by another node (like Corrector)
 		'''
 		if correction:
 			### get image data from corrector node
 			try:
-				imdata = self.node.researchByDataID(('corrected image data',))
+				imdata = self.getCorrectedImage()
 			except node.ResearchError:
 				raise NoCorrectorError('cannot communicate with Corrector')
 		else:
 			### create my own data from acquisition
-			try:
-				scopedata = self.node.researchByDataID(('scope',))
-				camdata = self.node.researchByDataID(('camera',))
-			except node.ResearchError:
-				raise NoEMError('cannot communicate with EM')
+			scopedata = self.emclient.getScope()
+			camdata = self.emclient.getImage()
 
 			### move image to its own key
 			numimage = camdata['image data']
 			camdata['image data'] = None
-			dataid = self.node.ID()
-			imdata = data.CameraImageData(session=self.node.session, id=dataid,
-																		image=numimage, scope=scopedata,
-																		camera=camdata)
+			imdata = data.CameraImageData(session=self.node.session, image=numimage, scope=scopedata, camera=camdata)
 		return imdata
 
 	def setCameraDict(self, camdict):
 		'''
 		configure the camera given a dict similar to CameraEMData
 		'''
-		camdata = data.CameraEMData(id=('camera',))
+		camdata = data.CameraEMData()
 		camdata.friendly_update(camdict)
 		self.setCameraEMData(camdata)
 
@@ -107,9 +112,8 @@ class CameraFuncs(object):
 		if not isinstance(camdata, data.CameraEMData):
 			raise TypeError('camdata not type CameraEMData')
 		self.validateCameraEMData(camdata)
-		camdata['id'] = ('camera',)
 		try:
-			self.node.publishRemote(camdata)
+			self.node.emclient.setCamera(camdata)
 		except Exception, detail:
 			self.node.logger.exception(
 															'camerafuncs.state: unable to set camera state')
@@ -120,7 +124,7 @@ class CameraFuncs(object):
 		return the current camera state as a CameraEMData object
 		'''
 		try:
-			newcamdata = self.node.researchByDataID(('camera no image data',))
+			newcamdata = self.emclient.getCamera()
 			return newcamdata
 		except:
 			self.node.logger.exception(
@@ -441,7 +445,7 @@ class SmartCameraParameters(uidata.Container):
 		square = self.isSquare(parameterdict)
 		self.square.set(square)
 
-		for paramter in ('Binning', 'Dimension', 'Offset'):
+		for parameter in ('Binning', 'Dimension', 'Offset'):
 			for axis, uiobject in self[parameter].items():
 				try:
 					uiobject.set(parameterdict[parameter.lower()][axis])

@@ -17,6 +17,7 @@ import threading
 import gonmodel
 import imagefun
 import Mrc
+import EM
 
 class Drifting(Exception):
 	pass
@@ -41,6 +42,11 @@ class CalibrationClient(object):
 		except AttributeError:
 			self.cam = None
 
+		if hasattr(node, 'emclient'):
+			self.emclient = self.node.emclient
+		else:
+			raise RuntimeError('CalibrationClient node needs emclient')
+
 		self.correlator = correlator.Correlator()
 		self.peakfinder = peakfinder.PeakFinder()
 		self.abortevent = threading.Event()
@@ -52,8 +58,8 @@ class CalibrationClient(object):
 	def acquireStateImage(self, state, publish_image=0, settle=0.0):
 		self.node.logger.info('Acquiring image...')
 		## acquire image at this state
-		newemdata = data.ScopeEMData(id=('scope',), initializer=state)
-		self.node.publishRemote(newemdata)
+		newemdata = data.ScopeEMData(initializer=state)
+		self.node.emclient.setScope(newemdata)
 		time.sleep(settle)
 
 		imagedata = self.cam.acquireCameraImageData()
@@ -125,7 +131,7 @@ class CalibrationClient(object):
 			shiftrows = shift[0]
 			shiftcols = shift[1]
 			seconds = t1 - t0
-			d = data.DriftData(id=self.node.ID(), rows=shiftrows, cols=shiftcols, interval=seconds)
+			d = data.DriftData(rows=shiftrows, cols=shiftcols, interval=seconds)
 			self.node.publish(d, database=True, dbforce=True)
 
 			drift = abs(shift[0] + 1j * shift[1])
@@ -159,7 +165,7 @@ class CalibrationClient(object):
 		self.node.logger.info('Correlation...')
 		pcimage = self.correlator.phaseCorrelate()
 		#pcimagedata = data.PhaseCorrelationImageData(self.node.ID(), pcimage, imagedata1.id, imagedata2.id)
-		pcimagedata = data.PhaseCorrelationImageData(id=self.node.ID(), image=pcimage, subject1=imagedata1, subject2=imagedata2)
+		pcimagedata = data.PhaseCorrelationImageData(image=pcimage, subject1=imagedata1, subject2=imagedata2)
 
 		#self.publish(pcimagedata, pubevent=True)
 
@@ -361,7 +367,7 @@ class MatrixCalibrationClient(CalibrationClient):
 		stores a new calibration matrix
 		'''
 		newmatrix = Numeric.array(matrix, Numeric.Float64)
-		caldata = data.MatrixCalibrationData(id=self.node.ID(), magnification=mag, type=type, matrix=matrix)
+		caldata = data.MatrixCalibrationData(magnification=mag, type=type, matrix=matrix)
 		caldata['high tension'] = ht
 		self.node.publish(caldata, database=True, dbforce=True)
 
@@ -371,16 +377,14 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		MatrixCalibrationClient.__init__(self, node)
 
 	def getBeamTilt(self):
-		emdata = self.node.researchByDataID(('beam tilt',))
-		bt = dict(emdata['beam tilt'])
+		bt = self.emclient.getScope()['beam tilt']
 		return bt
 
 	def measureDefocusStig(self, tilt_value, publish_images=0, drift_threshold=None, image_callback=None):
 		self.abortevent.clear()
-		emdata = self.node.researchByDataID(('magnification',))
-		#mag = emdata.content['magnification']
-		mag = emdata['magnification']
-		ht = emdata['high tension']
+		scopedata = self.emclient.getScope()
+		mag = scopedata['magnification']
+		ht = scopedata['high tension']
 		fmatrix = self.retrieveMatrix(ht, mag, 'defocus')
 		amatrix = self.retrieveMatrix(ht, mag, 'stigx')
 		bmatrix = self.retrieveMatrix(ht, mag, 'stigy')
@@ -402,8 +406,8 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			bt1[tiltaxis] -= (tilt_value/2.0)
 			bt2 = dict(tiltcenter)
 			bt2[tiltaxis] += (tilt_value/2.0)
-			state1 = data.ScopeEMData(id=('scope',))
-			state2 = data.ScopeEMData(id=('scope',))
+			state1 = data.ScopeEMData()
+			state2 = data.ScopeEMData()
 			state1['beam tilt'] = bt1
 			state2['beam tilt'] = bt2
 			try:
@@ -412,8 +416,8 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 				break
 			except Drifting:
 				## return to original beam tilt
-				emdata = data.ScopeEMData(id=('scope',), initializer={'beam tilt':tiltcenter})
-				self.node.publishRemote(emdata)
+				emdata = data.ScopeEMData(initializer={'beam tilt':tiltcenter})
+				self.node.emclient.setScope(emdata)
 				self.node.logger.info('Returned to tilt center %s' % tiltcenter)
 				raise
 
@@ -430,8 +434,8 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 				break
 
 		## return to original beam tilt
-		emdata = data.ScopeEMData(id=('scope',), initializer={'beam tilt':tiltcenter})
-		self.node.publishRemote(emdata)
+		emdata = data.ScopeEMData(initializer={'beam tilt':tiltcenter})
+		self.node.emclient.setScope(emdata)
 		self.node.logger.info('Returned to tilt center %s' % tiltcenter)
 
 		self.checkAbort()
@@ -539,8 +543,8 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		except:
 			self.node.logger.exception('')
 		## return to original beam tilt
-		emdata = data.ScopeEMData(id=('scope',), initializer={'beam tilt':beamtilt})
-		self.node.publishRemote(emdata)
+		emdata = data.ScopeEMData(initializer={'beam tilt':beamtilt})
+		self.node.emclient.setScope(emdata)
 
 		return (pixelshift1, pixelshift2)
 
@@ -563,11 +567,11 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			### are made
 			bt0 = dict(beamtilt)
 			bt0[tilt_axis] += tilt_m
-			state0 = data.ScopeEMData(id=('scope',), initializer={'beam tilt':bt0})
+			state0 = data.ScopeEMData(initializer={'beam tilt':bt0})
 			self.node.logger.info('State 0 %s' % (state0,))
 			### create the two equal and opposite tilted states
-			statepos = data.ScopeEMData(id=('scope',), initializer={'beam tilt':dict(bt0)})
-			stateneg = data.ScopeEMData(id=('scope',), initializer={'beam tilt':dict(bt0)})
+			statepos = data.ScopeEMData(initializer={'beam tilt':dict(bt0)})
+			stateneg = data.ScopeEMData(initializer={'beam tilt':dict(bt0)})
 
 			statepos['beam tilt'][tilt_axis] += tilt_t
 			self.node.logger.info('State positive %s' % (statepos,))
@@ -583,8 +587,8 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 														% (pixelshift1, pixelshift2))
 		finally:
 			## return to original beam tilt
-			emdata = data.ScopeEMData(id=('scope',), initializer={'beam tilt':beamtilt})
-			self.node.publishRemote(emdata)
+			emdata = data.ScopeEMData(initializer={'beam tilt':beamtilt})
+			self.node.emclient.setScope(emdata)
 
 		pixelshiftdiff = {}
 		pixelshiftdiff['row'] = pixelshift2['row'] - pixelshift1['row']
@@ -928,8 +932,8 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		current['stage position']['y'] += deltagon['y']
 		self.node.logger.info('Current position after delta %s' % current)
 
-		stagedata = data.ScopeEMData(id=('scope',), initializer=current)
-		self.publishRemote(stagedata)
+		stagedata = data.ScopeEMData(initializer=current)
+		self.emclient.setScope(stagedata)
 
 class EucentricFocusClient(CalibrationClient):
 	def __init__(self, node):

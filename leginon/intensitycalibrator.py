@@ -9,8 +9,8 @@ import calibrator
 import calibrationclient
 
 class IntensityCalibrator(calibrator.Calibrator):
-	def __init__(self, id, session, nodelocations, **kwargs):
-		calibrator.Calibrator.__init__(self, id, session, nodelocations, **kwargs)
+	def __init__(self, id, session, managerlocation, **kwargs):
+		calibrator.Calibrator.__init__(self, id, session, managerlocation, **kwargs)
 
 
 		self.calclient = calibrationclient.IntensityCalibrationClient(self)

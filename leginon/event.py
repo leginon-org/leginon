@@ -26,7 +26,7 @@ def eventClasses():
 class Event(data.Data):
 	def typemap(cls):
 		t = data.Data.typemap()
-		t += [ ('confirm', int), ('destination', tuple)]
+		t += [('node', tuple), ('confirm', tuple), ('destination', tuple)]
 		return t
 	typemap = classmethod(typemap)
 
@@ -47,7 +47,6 @@ class EventLog(data.Data):
 ##			NodeUnavailableEvent
 ##			PublishEvent
 ##			UnpublishEvent
-##			ListPublishEvent
 ##			ConfirmationEvent
 ##		ControlEvent
 ##			StartEvent
@@ -130,21 +129,13 @@ class MosaicDoneEvent(NotificationEvent):
 	'Event indicating mosaic is done'
 	pass
 
-## could PublishEvent and UnpublishEvent be derived from a common class?
 class PublishEvent(NotificationEvent):
 	'Event indicating data was published'
-	dataclass = data.Data
 	def typemap(cls):
+		if not hasattr(cls, 'dataclass'):
+			raise RuntimeError('need to define "dataclass" for publish event')
 		t = NotificationEvent.typemap()
-		t += [ ('dataid', tuple), ]
-		return t
-	typemap = classmethod(typemap)
-
-class UnpublishEvent(NotificationEvent):
-	'Event indicating data was unpublished (deleted)'
-	def typemap(cls):
-		t = NotificationEvent.typemap()
-		t += [ ('dataid', tuple), ]
+		t += [ ('data', cls.dataclass), ]
 		return t
 	typemap = classmethod(typemap)
 
@@ -153,16 +144,6 @@ class ConfirmationEvent(NotificationEvent):
 	def typemap(cls):
 		t = NotificationEvent.typemap()
 		t += [ ('eventid', tuple), ]
-		return t
-	typemap = classmethod(typemap)
-
-# this could be a subclass of publish event, but I'm not sure if that
-# would confuse those not looking for a list
-class ListPublishEvent(Event):
-	'Event indicating data was published'
-	def typemap(cls):
-		t = Event.typemap()
-		t += [ ('idlist', list), ]
 		return t
 	typemap = classmethod(typemap)
 
@@ -181,7 +162,7 @@ class NeedTargetShiftEvent(NotificationEvent):
 ## that was used to detect the drift, so that we can continue to monitor
 ## drift at this state.
 class DriftDetectedEvent(PublishEvent):
-	dataclass = data.AllEMData
+	dataclass = data.DriftDetectedData
 	
 class NodeClassesPublishEvent(PublishEvent):
 	'Event indicating launcher published new list of node classes'
@@ -194,6 +175,10 @@ class ImagePublishEvent(PublishEvent):
 class CameraImagePublishEvent(ImagePublishEvent):
 	'Event indicating camera image was published'
 	dataclass = data.CameraImageData
+
+class CorrectedCameraImagePublishEvent(CameraImagePublishEvent):
+	'Event indicating camera image was published'
+	dataclass = data.CorrectedCameraImageData
 
 class PresetImagePublishEvent(CameraImagePublishEvent):
 	'Event indicating preset camera image was published'
@@ -239,6 +224,15 @@ class ImageListPublishEvent(PublishEvent):
 class AcquisitionImageListPublishEvent(ImageListPublishEvent):
 	dataclass = data.AcquisitionImageListData
 
+class ScopeEMPublishEvent(PublishEvent):
+	dataclass = data.ScopeEMData
+
+class CameraEMPublishEvent(PublishEvent):
+	dataclass = data.CameraEMData
+
+class CameraImageEMPublishEvent(PublishEvent):
+	dataclass = data.CameraEMData
+
 class ControlEvent(Event):
 	'Event that passes a value with it'
 	pass
@@ -261,9 +255,8 @@ class CreateNodeEvent(ControlEvent):
 		t = ControlEvent.typemap()
 		t += [
 			('targetclass', str),
-			('node ID', tuple),
 			('session', data.SessionData),
-			('node locations', dict)
+			('manager location', dict)
 		]
 		return t
 	typemap = classmethod(typemap)
@@ -339,6 +332,7 @@ class PresetChangedEvent(Event):
 	def typemap(cls):
 		t = Event.typemap()
 		t += [ ('name', str), ]
+		t += [ ('preset', PresetData), ]
 		return t
 	typemap = classmethod(typemap)
 

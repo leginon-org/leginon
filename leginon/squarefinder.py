@@ -327,8 +327,8 @@ class CenterOffsetTargetsPlugin(Plugin):
 		return self.outputclass(targets)
 
 class SquareFinder(targetfinder.TargetFinder):
-	def __init__(self, id, session, nodelocations, **kwargs):
-		targetfinder.TargetFinder.__init__(self, id, session, nodelocations,
+	def __init__(self, id, session, managerlocation, **kwargs):
+		targetfinder.TargetFinder.__init__(self, id, session, managerlocation,
 																				**kwargs)
 		self.image = None
 

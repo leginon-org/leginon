@@ -19,8 +19,8 @@ import Numeric
 import imagefun
 
 class RasterFinder(targetfinder.TargetFinder):
-	def __init__(self, id, session, nodelocations, **kwargs):
-		targetfinder.TargetFinder.__init__(self, id, session, nodelocations, **kwargs)
+	def __init__(self, id, session, managerlocation, **kwargs):
+		targetfinder.TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
 		self.cam = camerafuncs.CameraFuncs(self)
 		self.icecalc = ice.IceCalculator()
 		self.rasterpoints = None

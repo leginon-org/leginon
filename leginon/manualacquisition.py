@@ -14,18 +14,20 @@ import project
 import threading
 import time
 import uidata
+import EM
 
 class AcquireError(Exception):
 	pass
 
 class ManualAcquisition(node.Node):
-	def __init__(self, id, session, nodelocations, **kwargs):
+	def __init__(self, id, session, managerlocation, **kwargs):
 		self.loopstop = threading.Event()
 		self.loopstop.set()
+		self.emclient = EM.EMClient(self)
 		self.camerafuncs = camerafuncs.CameraFuncs(self)
 		self.gridmapping = {'None': None}
 		self.lowdosemode = None
-		node.Node.__init__(self, id, session, nodelocations, **kwargs)
+		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 		self.defineUserInterface()
 		self.start()
 
@@ -92,10 +94,9 @@ class ManualAcquisition(node.Node):
 		self.status.set('Image acquisition complete')
 
 	def setScope(self, value):
-		value['id'] = ('scope',)
 		scopedata = data.ScopeEMData(initializer=value)
 		try:
-			self.publishRemote(scopedata)
+			self.emclient.setScope(scopedata)
 		except node.PublishError:
 			self.messagelog.error('Cannot access EM node')
 			self.status.set('Error setting instrument parameters')
@@ -103,7 +104,7 @@ class ManualAcquisition(node.Node):
 
 	def getScope(self, key):
 		try:
-			value = self.researchByDataID((key,))
+			value = self.emclient.getScope()[key]
 		except node.ResearchError:
 			raise
 			self.messagelog.error('Cannot access EM node')
@@ -131,8 +132,6 @@ class ManualAcquisition(node.Node):
 
 	def publishImageData(self, imagedata):
 		acquisitionimagedata = data.AcquisitionImageData(initializer=imagedata)
-		acquisitionimagedata['id'] = self.ID()
-
 		grid = self.gridselect.getSelectedValue()
 		gridinfo = self.gridmapping[grid]
 		if gridinfo is not None:

@@ -11,6 +11,7 @@ import uidata
 import presets
 import calibrationclient
 import math
+import EM
 
 def magnitude(coordinate, coordinates):
 	return map(lambda c: math.sqrt(sum(map(lambda m, n: (n - m)**2,
@@ -32,14 +33,15 @@ def sortTargets(targets, start=None):
 
 class TargetMaker(node.Node):
 	eventoutputs = node.Node.eventoutputs + [event.ImageTargetListPublishEvent]
-	def __init__(self, id, session, nodelocations, **kwargs):
+	def __init__(self, id, session, managerlocation, **kwargs):
 		self.targetlist = []
-		node.Node.__init__(self, id, session, nodelocations, **kwargs)
+		node.Node.__init__(self, id, session, managerlocation, **kwargs)
+		self.emclient = EM.EMClient(self)
 
 	def publishTargetList(self):
+		print 'DO NOT PUT A LIST OF DATA IN ANOTHER DATA'
 		if self.targetlist:
-			targetlistdata = data.ImageTargetListData(id=self.ID(),
-																								targets=self.targetlist)
+			targetlistdata = data.ImageTargetListData(targets=self.targetlist)
 			self.publish(targetlistdata, pubevent=True)
 			self.targetlist = []
 
@@ -53,8 +55,8 @@ class TargetMaker(node.Node):
 
 class SpiralTargetMaker(TargetMaker):
 	eventinputs = TargetMaker.eventinputs + [event.PublishSpiralEvent]
-	def __init__(self, id, session, nodelocations, **kwargs):
-		TargetMaker.__init__(self, id, session, nodelocations, **kwargs)
+	def __init__(self, id, session, managerlocation, **kwargs):
+		TargetMaker.__init__(self, id, session, managerlocation, **kwargs)
 		self.pixelsizecalclient = calibrationclient.PixelSizeCalibrationClient(self)
 		self.addEventInput(event.PublishSpiralEvent, self.publishTargetList)
 		self.presetsclient = presets.PresetsClient(self)
@@ -90,12 +92,58 @@ class SpiralTargetMaker(TargetMaker):
 	def setStatusMessage(self, message):
 		self.statusmessage.set(message)
 
+	### Next 3 methods are similar to target finder, need to create a common base class
+	def researchGridTargets(self, griddata=None):
+		'''
+		Get a list of all targets that have this do not have a
+		parent image
+		only want most recent versions of each
+		'''
+		targetquery = data.AcquisitionImageTargetData(session=self.session, grid=griddata)
+		targets = self.research(datainstance=targetquery)
+		gridtargets = []
+		for target in targets:
+			## if there is a reference there, then it has an image
+			im = target.special_getitem('image', dereference=False)
+			if im is None:
+				gridtargets.append(target)
+
+		## now filter out only the latest versions
+		# map target id to latest version
+		# assuming query result is ordered by timestamp, this works
+		have = {}
+		for target in gridtargets:
+			targetnum = target['number']
+			if targetnum not in have:
+				have[targetnum] = target
+		havelist = have.values()
+		havelist.sort(self.compareTargetNumber)
+		if havelist:
+			self.logger.info('Found %s targets for image'
+												% (len(havelist),))
+		return havelist
+
+	def compareTargetNumber(self, first, second):
+		return cmp(first['number'], second['number'])
+
+	def lastGridTargetNumber(self, griddata=None):
+		'''
+		Returns the number of the last target associated with the
+		grid.
+		'''
+		targets = self.researchGridTargets(griddata)
+		maxnumber = 0
+		for target in targets:
+			if target['number'] > maxnumber:
+				maxnumber = target['number']
+		return maxnumber
+
 	def publishTargetList(self, ievent=None):
 		# make targets using current instrument state and selected preset
 		self.setStatusMessage('Publishing target list')
 		try:
-			scope = self.researchByDataID(('scope',))
-			camera = self.researchByDataID(('camera no image data',))
+			scope = self.emclient.getScope()
+			camera = self.emclient.getCamera()
 		except node.ResearchError:
 			self.setStatusMessage('Error publishing targets, cannot find EM')
 			return
@@ -139,10 +187,17 @@ class SpiralTargetMaker(TargetMaker):
 		imagesize = camera['dimension']['x']
 
 		self.setStatusMessage('Creating target list')
+		if ievent is None:
+			## get last target number (no grid)
+			lastnumber = self.lastGridTargetNumber()
+		else:
+			## get last target number for this grid
+			lastnumber = self.getLastTargetNumber(ievent['grid'])
+		number = lastnumber + 1
 		for delta in self.makeCircle(radius, pixelsize, binning, imagesize,
 																	overlap):
-			initializer = {'id': self.ID(),
-											'session': self.session,
+			initializer = {'number': number,
+	'session': self.session,
 											'delta row': delta[0],
 											'delta column': delta[1],
 											'scope': scope,
@@ -156,6 +211,7 @@ class SpiralTargetMaker(TargetMaker):
 			targetdata = data.AcquisitionImageTargetData(initializer=initializer,
 																										type='acquisition')
 			self.targetlist.append(targetdata)
+			number += 1
 		self.setStatusMessage('Publishing target list')
 		TargetMaker.publishTargetList(self)
 		self.setStatusMessage('Target list published')

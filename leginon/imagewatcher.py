@@ -16,9 +16,9 @@ class ImageWatcher(watcher.Watcher):
 	eventinputs = watcher.Watcher.eventinputs + [event.ImagePublishEvent,
 																								event.ImageListPublishEvent]
 	eventoutputs = watcher.Watcher.eventoutputs + [event.ImageProcessDoneEvent]
-	def __init__(self, id, session, nodelocations, **kwargs):
+	def __init__(self, id, session, managerlocation, **kwargs):
 		watchfor = [event.ImagePublishEvent, event.ImageListPublishEvent]
-		watcher.Watcher.__init__(self, id, session, nodelocations, watchfor,
+		watcher.Watcher.__init__(self, id, session, managerlocation, watchfor,
 															**kwargs)
 
 		self.numarray = None
@@ -29,10 +29,8 @@ class ImageWatcher(watcher.Watcher):
 
 	def publishImageProcessDone(self, imageid=None, status='ok'):
 		if imageid is None:
-			imageid = self.currentimagedata['id']
-		initializer = {'id': self.ID(),
-										'imageid': self.currentimagedata['id'],
-										'status': status}
+			imageid = self.currentimagedata.dmid
+		initializer = {'imageid': imageid, 'status': status}
 		oevent = event.ImageProcessDoneEvent(initializer=initializer)
 		self.outputEvent(oevent)
 

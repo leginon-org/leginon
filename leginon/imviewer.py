@@ -19,8 +19,8 @@ import uidata
 
 class ImViewer(imagewatcher.ImageWatcher):
 	eventoutputs = imagewatcher.ImageWatcher.eventoutputs + [event.ImageAcquireEvent]
-	def __init__(self, id, session, nodelocations, **kwargs):
-		imagewatcher.ImageWatcher.__init__(self, id, session, nodelocations, **kwargs)
+	def __init__(self, id, session, managerlocation, **kwargs):
+		imagewatcher.ImageWatcher.__init__(self, id, session, managerlocation, **kwargs)
 
 		self.cam = camerafuncs.CameraFuncs(self)
 		self.clicklock = threading.Lock()
@@ -92,7 +92,7 @@ class ImViewer(imagewatcher.ImageWatcher):
 		return imarray
 
 	def acquireEvent(self):
-		e = event.ImageAcquireEvent(id=self.ID())
+		e = event.ImageAcquireEvent()
 		self.outputEvent(e)
 
 	def loadImage(self, filename):

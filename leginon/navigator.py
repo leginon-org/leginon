@@ -19,6 +19,7 @@ import uidata
 import correlator
 import peakfinder
 import math
+import EM
 
 class Navigator(node.Node):
 
@@ -26,8 +27,9 @@ class Navigator(node.Node):
 																					event.ImageAcquireEvent]
 	eventoutputs = node.Node.eventoutputs + [event.CameraImagePublishEvent]
 
-	def __init__(self, id, session, nodelocations, **kwargs):
-		node.Node.__init__(self, id, session, nodelocations, **kwargs)
+	def __init__(self, id, session, managerlocation, **kwargs):
+		node.Node.__init__(self, id, session, managerlocation, **kwargs)
+		self.emclient = EM.EMClient(self)
 		self.cam = camerafuncs.CameraFuncs(self)
 		self.calclients = {
 			'image shift': calibrationclient.ImageShiftCalibrationClient(self),
@@ -102,8 +104,8 @@ class Navigator(node.Node):
 			else:
 				newmovetype = movetype
 			newstate = {newmovetype: newstate[newmovetype]}
-		emdat = data.ScopeEMData(id=('scope',), initializer=newstate)
-		self.publishRemote(emdat)
+		emdat = data.ScopeEMData(initializer=newstate)
+		self.emclient.setScope(emdat)
 
 		# wait for a while
 		time.sleep(self.delaydata.get())
@@ -182,12 +184,7 @@ class Navigator(node.Node):
 		list of managed locations, it will be replaced by the new one
 		also returns the new location object
 		'''
-		try:
-			scopedata = self.researchByDataID(('stage position',))
-		except node.ResearchError:
-			self.messagelog.error('Unable to get stage position from EM')
-			return
-		allstagedata = scopedata['stage position']
+		allstagedata = self.emclient.getScope()['stage position']
 		stagedata = {}
 		stagedata['x'] = allstagedata['x']
 		stagedata['y'] = allstagedata['y']
@@ -199,7 +196,6 @@ class Navigator(node.Node):
 		newloc = data.StageLocationData()
 		newloc.update(stagedata)
 		newloc['xy only'] = xyonly
-		newloc['id'] = None
 		newloc['session'] = self.session
 		newloc['name'] = name
 
@@ -223,7 +219,7 @@ class Navigator(node.Node):
 	def removeLocation(self, loc):
 		'''
 		remove a location by index or reference
-		loc is either a locaiton, or index of the location
+		loc is either a location, or index of the location
 		'''
 		locremove = None
 		if type(loc) is int:
@@ -334,10 +330,10 @@ class Navigator(node.Node):
 		if not locdata['xy only']:
 			stagedict['z'] = locdata['z']
 			stagedict['a'] = locdata['a']
-		scopedata = data.ScopeEMData(id=('scope',))
+		scopedata = data.ScopeEMData()
 		scopedata['stage position'] = stagedict
 		try:
-			self.publishRemote(scopedata)
+			self.emclient.setScope(scopedata)
 		except node.PublishError:
 			self.logger.exception('Maybe EM is not running')
 		else:
@@ -429,8 +425,8 @@ class Navigator(node.Node):
 		self.uicontainer.addObject(container)
 
 class SimpleNavigator(Navigator):
-	def __init__(self, id, session, nodelocations, **kwargs):
-		Navigator.__init__(self, id, session, nodelocations, **kwargs)
+	def __init__(self, id, session, managerlocation, **kwargs):
+		Navigator.__init__(self, id, session, managerlocation, **kwargs)
 		self.defineUserInterface()
 		self.start()
 

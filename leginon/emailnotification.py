@@ -97,8 +97,8 @@ class EmailClient(object):
 
 class Email(node.Node):
 	eventinputs = node.Node.eventinputs + [event.EmailEvent]
-	def __init__(self, id, session, nodelocations, **kwargs):
-		node.Node.__init__(self, id, session, nodelocations, **kwargs)
+	def __init__(self, id, session, managerlocation, **kwargs):
+		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 		self.addEventInput(event.EmailEvent, self.handleEmail)
 		self.defineUserInterface()
 		self.start()

@@ -46,7 +46,7 @@ class ManagerSetup(object):
 
 		self.manager.defineUserInterface()
 		launcher.Launcher((socket.gethostname().lower(),), session=session,
-              					    nodelocations={'manager': self.manager.location()})
+              					    managerlocation= self.manager.location())
 
 
 	def uiCreateSession(self):

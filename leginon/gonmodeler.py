@@ -19,19 +19,21 @@ import gonmodel
 import uidata
 import string
 import math
+import EM
 
 class GonModeler(node.Node):
-	def __init__(self, id, session, nodelocations, **kwargs):
+	def __init__(self, id, session, managerlocation, **kwargs):
 		self.cam = camerafuncs.CameraFuncs(self)
 		self.correlator = correlator.Correlator()
 		self.peakfinder = peakfinder.PeakFinder()
 		self.settle = 5.0
 		self.threadstop = threading.Event()
 		self.threadlock = threading.Lock()
+		self.emclient = EM.EMClient(self)
 		self.calclient = calibrationclient.ModeledStageCalibrationClient(self)
 		self.pcal = calibrationclient.PixelSizeCalibrationClient(self)
 
-		node.Node.__init__(self, id, session, nodelocations, **kwargs)
+		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 		self.defineUserInterface()
 		self.start()
 
@@ -46,7 +48,7 @@ class GonModeler(node.Node):
 
 		self.oldimagedata = None
 		self.acquireNextPosition(axis)
-		currentpos = self.getStagePosition()
+		currentpos = self.emclient.getScope()['stage position']
 
 		for i in range(points):
 			self.logger.info('Acquiring Point %s...' % (i,))
@@ -55,7 +57,7 @@ class GonModeler(node.Node):
 				self.logger.info('Loop breaking before all points done')
 				t.stop()
 				break
-			currentpos['stage position'][axis] += interval
+			currentpos[axis] += interval
 			datalist = self.acquireNextPosition(axis, currentpos)
 			gonx = datalist[0]
 			gony = datalist[1]
@@ -83,8 +85,9 @@ class GonModeler(node.Node):
 	def acquireNextPosition(self, axis, state=None):
 		## go to state
 		if state is not None:
-			newemdata = data.ScopeEMData(id=('scope',), initializer=state)
-			self.publishRemote(newemdata)
+			newemdata = data.ScopeEMData()
+			newemdata['stage position'] = state
+			self.emclient.setScope(newemdata)
 			time.sleep(self.settle)
 
 		## acquire image
@@ -167,16 +170,12 @@ class GonModeler(node.Node):
 		self.calclient.fit(self.uifitlabel.get(), self.uifitmag.get(), self.uifitaxis.getSelectedValue(), self.uiterms.get(), magonly=1)
 		return ''
 
-	def getStagePosition(self):
-		dat = self.researchByDataID(('stage position',))
-		return dat
-
 	def getMagnification(self):
-		dat = self.researchByDataID(('magnification',))
+		dat = self.emclient.getScope()
 		return dat['magnification']
 
 	def getHighTension(self):
-		dat = self.researchByDataID(('high tension',))
+		dat = self.emclient.getScope()
 		return dat['high tension']
 
 	def defineUserInterface(self):

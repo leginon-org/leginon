@@ -18,8 +18,8 @@ import uidata
 class BeamTiltCalibrator(calibrator.Calibrator):
 	'''
 	'''
-	def __init__(self, id, session, nodelocations, **kwargs):
-		calibrator.Calibrator.__init__(self, id, session, nodelocations, **kwargs)
+	def __init__(self, id, session, managerlocation, **kwargs):
+		calibrator.Calibrator.__init__(self, id, session, managerlocation, **kwargs)
 
 
 		self.calclient = calibrationclient.BeamTiltCalibrationClient(self)
@@ -113,8 +113,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 				self.logger.info('Measuring %s tilt' % (tiltaxis,))
 				stig1 = stig[stigaxis]['+']
 				stig2 = stig[stigaxis]['-']
-				state1 = data.ScopeEMData(id=('scope',),stigmator={'objective':stig1})
-				state2 = data.ScopeEMData(id=('scope',),stigmator={'objective':stig2})
+				state1 = data.ScopeEMData(stigmator={'objective':stig1})
+				state2 = data.ScopeEMData(stigmator={'objective':stig2})
 				shift1, shift2 = self.calclient.measureDisplacements(tiltaxis, tilt_value, state1, state2)
 				self.logger.info('Shift 1 %s' % shift1)
 				self.logger.info('Shift 2 %s' % shift2)
@@ -134,8 +134,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 		## return to original stig
 		stigdict = {'stigmator':{'objective':currentstig}}
-		stigdata = data.ScopeEMData(id=('scope',), initializer=stigdict)
-		self.publishRemote(stigdata)
+		stigdata = data.ScopeEMData(initializer=stigdict)
+		self.emclient.setScope(stigdata)
 		return ''
 
 	def measureDefocusStig(self, btilt):
@@ -148,12 +148,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.logger.info('RET %s' % ret)
 		return ret
 
-	def getDefocus(self):
-		emdata = self.researchByDataID(('defocus',))
-		return emdata
-
 	def getObjectiveStigmator(self):
-		emdata = self.researchByDataID(('stigmator',))
+		emdata = self.emclient.getScope()
 		obj = dict(emdata['stigmator']['objective'])
 		return obj
 
@@ -219,8 +215,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		current = self.getCurrentValues()	
 
 		newdefocus = current['defocus'] + delta['defocus']
-		newdata = data.ScopeEMData(id=('scope',), defocus=newdefocus)
-		self.publishRemote(newdata)
+		newdata = data.ScopeEMData(defocus=newdefocus)
+		self.emclient.setScope(newdata)
 
 	def uiCorrectStigmator(self):
 		delta = self.resultvalue.get()
@@ -232,19 +228,18 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		newstigx = current['stigx'] + delta['stigx']
 		newstigy = current['stigy'] + delta['stigy']
 		stigdict = {'stigmator': {'objective': {'x':newstigx,'y':newstigy}}}
-		newdata = data.ScopeEMData(id=('scope',), initializer=stigdict)
-		self.publishRemote(newdata)
+		newdata = data.ScopeEMData(initializer=stigdict)
+		self.emclient.setScope(newdata)
 
 	def uiResetDefocus(self):
-		newemdata = data.ScopeEMData(id=('scope',))
+		newemdata = data.ScopeEMData()
 		newemdata['reset defocus'] = True
-		self.publishRemote(newemdata)
+		self.emclient.setScope(newemdata)
 
 	def getCurrentValues(self):
-		defocusdata = self.researchByDataID(('defocus',))
-		defocus = defocusdata['defocus']
-		stigdata = self.researchByDataID(('stigmator',))
-		stig = stigdata['stigmator']['objective']
+		emdata = self.emclient.getScope()
+		defocusdata = emdata['defocus']
+		stig = emdata['stigmator']['objective']
 		stigx = stig['x']
 		stigy = stig['y']
 		return {'defocus':defocus, 'stigx':stigx, 'stigy':stigy}
@@ -256,24 +251,23 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.eucFromScope()
 
 	def eucToScope(self):
-		scope = self.researchByDataID(('scope',))
+		scope = self.emclient.getScope()
 		ht = scope['high tension']
 		mag = scope['magnification']
 		eudata = self.euclient.researchEucentricFocus(ht,mag)
 		focus = eudata['focus']
 
 		scopedata = data.ScopeEMData()
-		scopedata['id'] = ('scope',)
 		scopedata['focus'] = focus
 		try:
-			self.publishRemote(scopedata)
+			self.emclient.setScope(scopedata)
 		except node.PublishError:
 			self.logger.exception('Cannot set instrument parameters')
 			self.messagelog.error('Cannot set instrument parameters')
 
 	def eucFromScope(self):
 		## get current value of focus
-		scope = self.researchByDataID(('scope',))
+		scope = self.emclient.getScope()
 		ht = scope['high tension']
 		mag = scope['magnification']
 		focus = scope['focus']

@@ -30,61 +30,52 @@ watch_set = (
 'stage position',
 )
 
-class DataHandler(node.DataHandler):
-	def query(self, id):
-		if id == 'UI server':
-			return node.DataHandler.query(self, id)
-		emkey = id[0]
-		self.node.statelock.acquire()
-		try:
-			done_event = threading.Event()
-			self.node.requestqueue.put(GetRequest(done_event, [emkey]))
-			done_event.wait()
-			state = self.node.state
+class SetEMEvent(event.PublishEvent):
+	pass
 
-			if emkey == 'scope':
-				result = data.ScopeEMData(id=('scope',))
-				result.friendly_update(state)
-			elif emkey in ('camera', 'camera no image data'):
-				result = data.CameraEMData(id=('camera',))
-				# this is a fix for the bigger problem of always 
-				# setting defocus
-				result.friendly_update(state)
-			elif emkey == 'all em':
-				result = data.AllEMData(id=('all em',))
-				result.friendly_update(state)
-			else:
-				### could be either CameraEMData or ScopeEMData
-				trydatascope = data.ScopeEMData(id=('scope',))
-				trydatacamera = data.CameraEMData(id=('camera',))
-				for trydata in (trydatascope, trydatacamera):
-					try:
-						trydata.update(state)
-						result = trydata
-						break
-					except KeyError:
-						result = None
-		finally:
-			self.node.statelock.release()
-		return result
+class SetScopeEvent(SetEMEvent):
+	dataclass = data.ScopeEMData
 
-	def insert(self, idata):
-		if isinstance(idata, data.EMData):
-			self.node.statelock.acquire()
-			try:
-				done_event = threading.Event()
-				d = idata.toDict(noNone=True)
-				for key in ['id', 'session', 'system time', 'image data']:
-					try:
-						del d[key]
-					except KeyError:
-						pass
-				self.node.requestqueue.put(SetRequest(done_event, d))
-				done_event.wait()
-			finally:
-				self.node.statelock.release()
-		else:
-			node.DataHandler.insert(self, idata)
+class SetCameraEvent(SetEMEvent):
+	dataclass = data.CameraEMData
+
+class EMClient(object):
+	def __init__(self, node):
+		self.node = node
+		## for referencing the scope and camera
+		## will eventually need to handle multiple scopes/cameras
+		self.scoperef = None
+		self.cameraref = None
+		self.node.addEventInput(event.ScopeEMPublishEvent, self.handleScopePublish)
+		self.node.addEventInput(event.CameraEMPublishEvent, self.handleCameraPublish)
+		self.node.addEventInput(event.CameraImageEMPublishEvent, self.handleCameraImagePublish)
+
+	def handleScopePublish(self, ievent):
+		self.scoperef = ievent
+
+	def handleCameraPublish(self, ievent):
+		self.cameraref = ievent
+
+	def handleCameraImagePublish(self, ievent):
+		self.cameraimageref = ievent
+
+	def getScope(self):
+		return self.scoperef['data']
+
+	def getCamera(self):
+		return self.cameraref['data']
+
+	def getImage(self):
+		return self.cameraimageref['data']
+
+	def setScope(self, value):
+		setevent = SetScopeEvent(data=value)
+		self.node.outputEvent(setevent, wait=True)
+
+	def setScope(self, value):
+		setevent = SetCameraEvent(data=value)
+		self.node.outputEvent(setevent, wait=True)
+
 
 class Request(object):
 	pass
@@ -108,10 +99,8 @@ class ExitRequest(Request):
 	pass
 
 class EM(node.Node):
-	eventinputs = node.Node.eventinputs + [event.LockEvent, event.UnlockEvent]
-	eventoutputs = node.Node.eventoutputs + [event.ListPublishEvent]
-	def __init__(self, id, session, nodelocations, tcpport=None, **kwargs):
-
+	eventinputs = node.Node.eventinputs + [event.LockEvent, event.UnlockEvent, SetScopeEvent, SetCameraEvent]
+	def __init__(self, id, session, managerlocation, tcpport=None, **kwargs):
 		self.messagelog = uidata.MessageLog('Message Log')
 
 		# These keys are not included in a get all parameters
@@ -196,12 +185,18 @@ class EM(node.Node):
 		self.state = {}
 
 		self.initializeLogger(id[-1])
-		self.datahandler = DataHandler(self, loggername=self.logger.name)
-		self.server = datatransport.Server(self.datahandler, tcpport,
-																				loggername=self.logger.name)
-		kwargs['datahandler'] = None
 
-		node.Node.__init__(self, id, session, nodelocations, **kwargs)
+		node.Node.__init__(self, id, session, managerlocation, **kwargs)
+
+		### data handlers that will be hosted here:
+		self.scopedata = data.DataHandler(data.ScopeEMData, getdata=self.getScope)
+		self.publish(self.scopedata, pubevent=True, broadcast=True)
+
+		self.cameradata = data.DataHandler(data.CameraEMData, getdata=self.getCamera)
+		self.publish(self.cameradata, pubevent=True, broadcast=True)
+
+		self.imagedata = data.DataHandler(data.CameraEMData, getdata=self.getImage)
+		self.publish(self.cameradata, pubevent=True, broadcast=True, pubeventclass=event.CameraImageEMPublishEvent)
 
 		# get the scope module and class from the database
 		try:
@@ -223,6 +218,10 @@ class EM(node.Node):
 		self.addEventInput(event.LockEvent, self.doLock)
 		self.addEventInput(event.UnlockEvent, self.doUnlock)
 
+		# watch for SetScopeEvent and SetCameraEvent
+		self.addEventInput(SetScopeEvent, self.handleSet)
+		self.addEventInput(SetCameraEvent, self.handleSet)
+
 		# the handler thread waits for queue requests and processes them
 		# scope and camera are typically COM objects and need to be intialized
 		# in this thread
@@ -232,6 +231,60 @@ class EM(node.Node):
 		self.handlerthread.setDaemon(1)
 		self.handlerthread.start()
 
+	def getScope(self):
+		self.statelock.acquire()
+		try:
+			done_event = threading.Event()
+			self.node.requestqueue.put(GetRequest(done_event, ['scope']))
+			done_event.wait()
+			state = self.node.state
+		finally:
+			self.statelock.release()
+		newdata = data.ScopeEMData()
+		newdata.friendly_update(state)
+		return newdata
+
+	def getCamera(self):
+		self.statelock.acquire()
+		try:
+			done_event = threading.Event()
+			self.node.requestqueue.put(GetRequest(done_event, ['camera no image data']))
+			done_event.wait()
+			state = self.node.state
+		finally:
+			self.statelock.release()
+		newdata = data.CameraEMData()
+		newdata.friendly_update(state)
+		return newdata
+
+	def getImage(self):
+		self.statelock.acquire()
+		try:
+			done_event = threading.Event()
+			self.node.requestqueue.put(GetRequest(done_event, ['camera']))
+			done_event.wait()
+			state = self.node.state
+		finally:
+			self.statelock.release()
+		newdata = data.CameraEMData()
+		newdata.friendly_update(state)
+		return newdata
+
+	def handleSet(self, setevent):
+		scopedata = setevent['data']
+		self.statelock.acquire()
+		try:
+			done_event = threading.Event()
+			d = scopedata.toDict(noNone=True)
+			for key in ['session', 'system time', 'image data']:
+				try:
+					del d[key]
+				except KeyError:
+					pass
+			self.requestqueue.put(SetRequest(done_event, d))
+			done_event.wait()
+		finally:
+			self.statelock.release()
 
 	def handler(self, scopename, cameraname):
 		self.scope = None
@@ -253,18 +306,6 @@ class EM(node.Node):
 				except KeyError:
 					pass
 
-		ids = []
-		if self.scope is not None:
-			ids += ['scope']
-			ids += self.scope.keys()
-		if self.camera is not None:
-			ids += ['camera', 'camera no image data']
-			ids += self.camera.keys()
-		if self.scope is not None and self.camera is not None:
-			ids += ['all em']
-		for i in range(len(ids)):
-			ids[i] = (ids[i],)
-
 		self.uistate = {}
 		self.defineUserInterface()
 
@@ -272,10 +313,6 @@ class EM(node.Node):
 		self.uiUpdate()
 		self.scopecontainer.enable()
 		self.cameracontainer.enable()
-
-		if ids:
-			e = event.ListPublishEvent(id=self.ID(), idlist=ids)
-			self.outputEvent(e, wait=True)
 
 		self.start()
 		self.queueHandler()
@@ -325,28 +362,20 @@ class EM(node.Node):
 		except AttributeError:
 			pass
 
-	def location(self):
-		location = node.Node.location(self)
-		location['data transport'] = self.server.location()
-		return location
-
 	def doLock(self, ievent):
-		if ievent['id'][:-1] != self.locknodeid:
+		if ievent['node'] != self.locknodeid:
 			self.nodelock.acquire()
-			self.locknodeid = ievent['id'][:-1]
+			self.locknodeid = ievent['node']
 		self.confirmEvent(ievent)
 
 	def doUnlock(self, ievent):
-		if ievent['id'][:-1] == self.locknodeid:
+		if ievent['node'] == self.locknodeid:
 			self.locknodeid = None
 			self.nodelock.release()
 		self.confirmEvent(ievent)
 
 	def getEM(self, withkeys=[], withoutkeys=[]):
 		result = {}
-
-		if not withkeys and withoutkeys:
-			withkeys = ['all em']
 
 		for key in withkeys:
 			if key == 'scope':
@@ -372,12 +401,6 @@ class EM(node.Node):
 					except ValueError:
 						pass
 					withkeys += keys
-			elif key == 'all em':
-				withkeys.remove(key)
-				if self.scope is not None:
-					withkeys += self.scope.keys()
-				if self.camera is not None:
-					withkeys += self.camera.keys()
 
 		withkeys = unique.unique(withkeys)
 
@@ -399,12 +422,6 @@ class EM(node.Node):
 					except KeyError:
 						pass
 					withoutkeys += keys
-			elif key == 'all em':
-				withoutkeys.remove(key)
-				if self.scope is not None:
-					withoutkeys += self.scope.keys()
-				if self.camera is not None:
-					withoutkeys += self.camera.keys()
 
 		for key in withoutkeys:
 			try:

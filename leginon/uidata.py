@@ -178,6 +178,7 @@ class Data(Object):
 			try:
 				value = self.callback(value)
 			except Exception, e:
+				raise
 				print 'Exception in callback:', str(e)
 		if self.validate(value):
 			self.value = value

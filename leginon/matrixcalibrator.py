@@ -39,8 +39,8 @@ class MatrixCalibrator(calibrator.Calibrator):
 	Then 'Calibrate'
 	(Valid Shift is currently being ignored)
 	'''
-	def __init__(self, id, session, nodelocations, **kwargs):
-		calibrator.Calibrator.__init__(self, id, session, nodelocations, **kwargs)
+	def __init__(self, id, session, managerlocation, **kwargs):
+		calibrator.Calibrator.__init__(self, id, session, managerlocation, **kwargs)
 
 		self.parameters = {
 		  'image shift': calibrationclient.ImageShiftCalibrationClient(self),
@@ -149,9 +149,9 @@ class MatrixCalibrator(calibrator.Calibrator):
 				raise CalibrationError()
 
 		# return to base
-		emdata = data.ScopeEMData(id=('scope',))
+		emdata = data.ScopeEMData()
 		emdata[uiparameter] = basebase
-		self.publishRemote(emdata)
+		self.emclient.setScope(emdata)
 
 		mag = self.getMagnification()
 		ht = self.getHighTension()
@@ -219,13 +219,16 @@ class MatrixCalibrator(calibrator.Calibrator):
 
 	def getParameter(self):
 		param = self.uiparameter.getSelectedValue()
-		self.saveparam = self.researchByDataID((param,))
+		self.saveparam = self.emclient.getScope()[param]
 		self.logger.info('Storing parameter %s, %s'
-											% (param, self.saveparam[param]))
+											% (param, self.saveparam))
 
 	def setParameter(self):
 		self.logger.info('Returning to original state')
-		self.publishRemote(self.saveparam)
+		param = self.uiparameter.getSelectedValue()
+		emdata = data.ScopeEMData()
+		emdata[param] = self.saveparam
+		self.emclient.setScope(emdata)
 
 	def uiAbort(self):
 		self.aborted.set()

@@ -16,8 +16,8 @@ import node
 import imagefun
 
 class FFTMaker(imagewatcher.ImageWatcher):
-	def __init__(self, id, session, nodelocations, **kwargs):
-		imagewatcher.ImageWatcher.__init__(self, id, session, nodelocations, **kwargs)
+	def __init__(self, id, session, managerlocation, **kwargs):
+		imagewatcher.ImageWatcher.__init__(self, id, session, managerlocation, **kwargs)
 
 		self.defineUserInterface()
 		self.start()
@@ -32,18 +32,17 @@ class FFTMaker(imagewatcher.ImageWatcher):
 
 	def publishPowerImage(self, imagedata):
 		imarray = imagedata['image']
-		imid = imagedata['id']
-		self.logger.info('Calculating power spectrum for image %s' % (imid,))
+		self.logger.info('Calculating power spectrum for image')
 		maskrad = self.maskrad.get()
 		pow = imagefun.power(imarray, maskrad)
-		powdata = data.AcquisitionFFTData(id=self.ID(), source=imagedata, image=pow)
+		powdata = data.AcquisitionFFTData(source=imagedata, image=pow)
 
 		# filename
 		self.setImageFilename(powdata)
 
 		# not raising publish event because there is not one yet
 		self.publish(powdata, database=True)
-		self.logger.info('Published power spectrum for image %s' % (imid,))
+		self.logger.info('Published power spectrum for image')
 
 	def defineUserInterface(self):
 		imagewatcher.ImageWatcher.defineUserInterface(self)

@@ -7,13 +7,13 @@
 #
 
 import data
-import datahandler
 import sqldict
 import threading
+import extendedlogging
 
-class DBDataKeeper(datahandler.DataHandler):
+class DBDataKeeper(object):
 	def __init__(self, loggername=None):
-		datahandler.DataHandler.__init__(self, loggername)
+		self.logger = extendedlogging.getLogger(self.__class__.__name__, loggername)
 		self.dbd = sqldict.SQLDict()
 		self.lock = threading.RLock()
 

@@ -11,8 +11,8 @@ import uidata
 import emregistry
 
 class Administration(node.Node):
-	def __init__(self, id, session, nodelocations, **kwargs):
-		node.Node.__init__(self, id, session, nodelocations, **kwargs)
+	def __init__(self, id, session, managerlocation, **kwargs):
+		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 		self.defineUserInterface()
 		self.groupdatadict = {}
 		self.updateGroupDataDict()

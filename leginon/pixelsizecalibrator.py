@@ -15,8 +15,8 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 	'''
 	calibrate the pixel size for different mags
 	'''
-	def __init__(self, id, session, nodelocations, **kwargs):
-		calibrator.Calibrator.__init__(self, id, session, nodelocations, **kwargs)
+	def __init__(self, id, session, managerlocation, **kwargs):
+		calibrator.Calibrator.__init__(self, id, session, managerlocation, **kwargs)
 		self.calclient = calibrationclient.PixelSizeCalibrationClient(self)
 
 		self.defineUserInterface()

@@ -27,10 +27,10 @@ class TargetWatcher(watcher.Watcher):
 																							event.ImageTargetListPublishEvent,
 																							event.NeedTargetShiftEvent]
 
-	def __init__(self, id, session, nodelocations, target_type='acquisition',
+	def __init__(self, id, session, managerlocation, target_type='acquisition',
 								**kwargs):
 		watchfor = [event.ImageTargetListPublishEvent]
-		watcher.Watcher.__init__(self, id, session, nodelocations, watchfor,
+		watcher.Watcher.__init__(self, id, session, managerlocation, watchfor,
 															**kwargs)
 
 		self.addEventInput(event.TargetListDoneEvent, self.handleTargetListDone)
@@ -88,8 +88,7 @@ class TargetWatcher(watcher.Watcher):
 		self.uicontainer.addObject(container)
 
 	def handleTargetShift(self, ev):
-		dataid = ev['dataid']
-		driftdata = self.researchByDataID(dataid)
+		driftdata = ev['data']
 		self.driftedimages = driftdata['shifts']
 		# may be waiting for a requested image shift
 		req = driftdata['requested']
@@ -100,7 +99,7 @@ class TargetWatcher(watcher.Watcher):
 		if not isinstance(newdata, data.ImageTargetListData):
 			return
 
-		self.uitargetlistid.set(str(newdata['id']))
+		self.uitargetlistid.set(str(newdata.dmid))
 
 		# separate the good targets from the rejects
 		targetlist = newdata['targets']
@@ -118,7 +117,8 @@ class TargetWatcher(watcher.Watcher):
 		# republish the rejects and wait for them to complete
 		if rejects:
 			self.uistatus.set('Publishing passed targets')
-			newtargetlist = data.ImageTargetListData(id=self.ID(), targets=rejects)
+			print 'LIST OF TARGETS... BAD IDEA'
+			newtargetlist = data.ImageTargetListData(targets=rejects)
 			self.passTargets(newtargetlist)
 			self.uistatus.set('Waiting for passed targets to be processed...')
 			rejectstatus = self.waitForRejects()
@@ -131,7 +131,8 @@ class TargetWatcher(watcher.Watcher):
 				## This means if rejects were aborted
 				## then this whole target list was aborted
 				self.uistatus.set('Passed targets not processed, aborted current target list')
-				self.reportTargetListDone(newdata['id'], rejectstatus)
+				print 'DMID WONT WORK HERE BECAUSE DMID MAY NOT BE THE SAME ON THIS DATAMANAGER'
+				self.reportTargetListDone(newdata.dmid, rejectstatus)
 				return
 
 			self.uistatus.set('Passed targets processed, processing current target list')
@@ -144,7 +145,7 @@ class TargetWatcher(watcher.Watcher):
 		for i, target in enumerate(goodtargets):
 			self.uicontrolstatus.set('Normal')
 			# abort
-			self.uitargetid.set(str(target['id']))
+			self.uitargetid.set(target.dmid_orig)
 			self.uitargetnumber.set('%d of %d' % (i + 1, len(goodtargets)))
 			if self.abort.isSet():
 				self.uistatus.set('Aborting current target list')
@@ -163,12 +164,7 @@ class TargetWatcher(watcher.Watcher):
 
 			self.uitargetstatus.set('Processing target')
 
-			try:
-				imageid = target['image']['id']
-				self.uisourceimageid.set(str(imageid))
-			except (KeyError, TypeError):
-				imageid = None
-				self.uisourceimageid.set('None')
+			self.uisourceimageid.set()
 
 			adjustedtarget = data.AcquisitionImageTargetData(initializer=target,
 																												status='processing')
@@ -245,19 +241,19 @@ class TargetWatcher(watcher.Watcher):
 		#self.uitargetnumber.set('')
 		#self.uitargetstatus.set('')
 		#self.uisourceimageid.set('')
-		self.reportTargetListDone(newdata['id'], targetliststatus)
+		self.reportTargetListDone(newdata.dmid, targetliststatus)
 
 	def reportTargetListDone(self, listid, status):
 		self.uistatus.set('Target list processed.')
 		self.logger.info('%s done with target list' % (self.id[-1],))
-		e = event.TargetListDoneEvent(id=self.ID(), targetlistid=listid,
-																	status=status)
+		e = event.TargetListDoneEvent(targetlistid=listid, status=status)
 		self.outputEvent(e)
 
 	def passTargets(self, targetlistdata):
-		self.targetlistevents[targetlistdata['id']] = {}
-		self.targetlistevents[targetlistdata['id']]['received'] = threading.Event()
-		self.targetlistevents[targetlistdata['id']]['status'] = 'waiting'
+		tlistid = targetlistdata.dmid
+		self.targetlistevents[tlistid] = {}
+		self.targetlistevents[tlistid]['received'] = threading.Event()
+		self.targetlistevents[tlistid]['status'] = 'waiting'
 		self.publish(targetlistdata, pubevent=True)
 
 	def waitForRejects(self):

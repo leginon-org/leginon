@@ -16,15 +16,12 @@ import threading
 def localHack(obj):
 	try:
 		location = obj['location']
-	except (KeyError):
-		try:
-			location = obj['node locations']['manager']
-		except (KeyError, IndexError):
-			raise
+	except KeyError:
+		location = obj['manager location']
 
 	try:
-		ltinstance = location['data transport']['local transport']['instance']
-		del location['data transport']['local transport']['instance']
+		ltinstance = location['data binder']['local transport']['instance']
+		del location['data binder']['local transport']['instance']
 	except KeyError:
 		ltinstance = None
 	try:
@@ -36,7 +33,7 @@ def localHack(obj):
 	p = pickle.dumps(obj, pickle.HIGHEST_PROTOCOL)
 
 	if ltinstance is not None:
-		location['data transport']['local transport']['instance'] = ltinstance
+		location['data binder']['local transport']['instance'] = ltinstance
 	if uiinstance is not None:
 		location['UI']['instance'] = uiinstance
 

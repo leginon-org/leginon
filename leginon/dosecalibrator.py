@@ -15,8 +15,8 @@ class DoseCalibrator(calibrator.Calibrator):
 	'''
 	calibrate the camera sensitivity and other dose measurements
 	'''
-	def __init__(self, id, session, nodelocations, **kwargs):
-		calibrator.Calibrator.__init__(self, id, session, nodelocations, **kwargs)
+	def __init__(self, id, session, managerlocation, **kwargs):
+		calibrator.Calibrator.__init__(self, id, session, managerlocation, **kwargs)
 		self.calclient = calibrationclient.DoseCalibrationClient(self)
 		self.results = {}
 
@@ -73,18 +73,18 @@ class DoseCalibrator(calibrator.Calibrator):
 
 	def screenDown(self):
 		# check if screen is down
-		scope = data.ScopeEMData(id=('scope',))
+		scope = data.ScopeEMData()
 		scope['main screen position'] = 'down'
-		self.publishRemote(scope)
+		self.emclient.setScope(scope)
 
 	def screenUp(self):
 		# check if screen is down
-		scope = data.ScopeEMData(id=('scope',))
+		scope = data.ScopeEMData()
 		scope['main screen position'] = 'up'
-		self.publishRemote(scope)
+		self.emclient.setScope(scope)
 
 	def getCurrentAndMag(self):
-		scope = self.researchByDataID(('scope',))
+		scope = self.emclient.getScope()
 		if scope['main screen position'] == 'down':
 			mag = scope['magnification']
 			current = scope['screen current']

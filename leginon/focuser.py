@@ -18,7 +18,7 @@ import imagefun
 class Focuser(acquisition.Acquisition):
 	eventinputs = acquisition.Acquisition.eventinputs+[event.DriftDoneEvent]
 	eventoutputs = acquisition.Acquisition.eventoutputs+[event.DriftDetectedEvent]
-	def __init__(self, id, sesison, nodelocations, **kwargs):
+	def __init__(self, id, sesison, managerlocation, **kwargs):
 		self.focus_methods = {
 			'None': self.correctNone,
 			'Stage Z': self.correctZ,
@@ -34,7 +34,7 @@ class Focuser(acquisition.Acquisition):
 		self.manual_check_done = threading.Event()
 		self.manual_pause = threading.Event()
 		self.manual_continue = threading.Event()
-		acquisition.Acquisition.__init__(self, id, sesison, nodelocations, target_type='focus', **kwargs)
+		acquisition.Acquisition.__init__(self, id, sesison, managerlocation, target_type='focus', **kwargs)
 
 	def autoFocus(self, emtarget, resultdata):
 		## need btilt, pub, driftthresh
@@ -55,10 +55,11 @@ class Focuser(acquisition.Acquisition):
 		### report the current focus and defocus values
 		self.logger.info('Before autofocus...')
 		try:
-			defocdata = self.researchByDataID(('defocus',))
-			focdata = self.researchByDataID(('focus',))
-			self.logger.info('Defocus %s' % defocdata['defocus'])
-			self.logger.info('Focus %s' % focdata['defocus'])
+			scope = self.emclient.getScope()
+			defoc = scope['defocus']
+			foc = scope['focus']
+			self.logger.info('Defocus %s' % defoc)
+			self.logger.info('Focus %s' % foc)
 		except:
 			self.logger.exception('')
 
@@ -253,9 +254,9 @@ class Focuser(acquisition.Acquisition):
 		self.manualchecklock.acquire()
 		self.logger.info('Reset defocus')
 		try:
-			newemdata = data.ScopeEMData(id=('scope',))
+			newemdata = data.ScopeEMData()
 			newemdata['reset defocus'] = True
-			self.publishRemote(newemdata)
+			self.emclient.setScope(newemdata)
 		finally:
 			self.manualchecklock.release()
 
@@ -263,9 +264,9 @@ class Focuser(acquisition.Acquisition):
 		self.manualchecklock.acquire()
 		self.logger.info('Changing to zero defocus')
 		try:
-			newemdata = data.ScopeEMData(id=('scope',))
+			newemdata = data.ScopeEMData()
 			newemdata['defocus'] = 0.0
-			self.publishRemote(newemdata)
+			self.emclient.setScope(newemdata)
 		finally:
 			self.manualchecklock.release()
 
@@ -275,23 +276,22 @@ class Focuser(acquisition.Acquisition):
 		self.manualchecklock.acquire()
 		self.logger.info('Changing %s %s %s' % (parameter, direction, delta))
 		try:
+			scope = self.emclient.getScope()
 			if parameter == 'Stage Z':
-				emdata = self.researchByDataID(('stage position',))
-				value = emdata['stage position']['z']
+				value = scope['stage position']['z']
 			elif parameter == 'Defocus':
-				emdata = self.researchByDataID(('defocus',))
-				value = emdata['defocus']
+				value = scope['defocus']
 			if direction == 'up':
 				value += delta
 			elif direction == 'down':
 				value -= delta
 			
-			newemdata = data.ScopeEMData(id=('scope',))
+			newemdata = data.ScopeEMData()
 			if parameter == 'Stage Z':
 				newemdata['stage position'] = {'z':value}
 			elif parameter == 'Defocus':
 				newemdata['defocus'] = value
-			self.publishRemote(newemdata)
+			self.emclient.setScope(newemdata)
 		finally:
 			self.manualchecklock.release()
 
@@ -311,30 +311,30 @@ class Focuser(acquisition.Acquisition):
 		self.manual_continue.set()
 
 	def correctStig(self, deltax, deltay):
-		stig = self.researchByDataID(('stigmator',))
-		stig['stigmator']['objective']['x'] += deltax
-		stig['stigmator']['objective']['y'] += deltay
-		emdata = data.ScopeEMData(id=('scope',), initializer=stig)
+		stig = self.emclient.getScope()['stigmator']
+		stig['objective']['x'] += deltax
+		stig['objective']['y'] += deltay
+		emdata = data.ScopeEMData(stigmator=stig)
 		self.logger.info('Correcting stig by %s, %s' % (deltax, deltay))
-		self.publishRemote(emdata)
+		self.emclient.setScope(emdata)
 
 	def correctDefocus(self, delta):
-		defocus = self.researchByDataID(('defocus',))
+		defocus = self.emclient.getScope()['defocus']
 		self.logger.info('Defocus before applying correction %s' % defocus)
-		defocus['defocus'] += delta
-		defocus['reset defocus'] = 1
-		emdata = data.ScopeEMData(id=('scope',), initializer=defocus)
+		defocus += delta
+		emdata = data.ScopeEMData(defocus=defocus)
+		emdata['reset defocus'] = 1
 		self.logger.info('Correcting defocus by %s' % (delta,))
-		self.publishRemote(emdata)
+		self.emclient.setScope(emdata)
 
 	def correctZ(self, delta):
-		stage = self.researchByDataID(('stage position',))
-		newz = stage['stage position']['z'] + delta
+		stage = self.emclient.getScope()['stage position']
+		newz = stage['z'] + delta
 		newstage = {'stage position': {'z': newz }}
 		newstage['reset defocus'] = 1
-		emdata = data.ScopeEMData(id=('scope',), initializer=newstage)
+		emdata = data.ScopeEMData(initializer=newstage)
 		self.logger.info('Correcting stage Z by %s' % (delta,))
-		self.publishRemote(emdata)
+		self.emclient.setScope(emdata)
 
 	def correctNone(self, delta):
 		self.logger.info('Not applying defocus correction')

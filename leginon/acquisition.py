@@ -19,8 +19,8 @@ import presets
 import copy
 import threading
 import uidata
-from node import ResearchError
 import node
+import EM
 
 class NoMoveCalibration(Exception):
 	pass
@@ -36,12 +36,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 	eventinputs = targetwatcher.TargetWatcher.eventinputs+[event.ImageClickEvent, event.DriftDoneEvent, event.ImageProcessDoneEvent]
 	eventoutputs = targetwatcher.TargetWatcher.eventoutputs + [event.LockEvent, event.UnlockEvent, event.AcquisitionImagePublishEvent, event.TrialImagePublishEvent, event.ChangePresetEvent, event.DriftDetectedEvent, event.AcquisitionImageListPublishEvent]
 
-	def __init__(self, id, session, nodelocations, target_type='acquisition', **kwargs):
+	def __init__(self, id, session, managerlocation, target_type='acquisition', **kwargs):
 
-		targetwatcher.TargetWatcher.__init__(self, id, session, nodelocations, target_type, **kwargs)
+		targetwatcher.TargetWatcher.__init__(self, id, session, managerlocation, target_type, **kwargs)
 		self.addEventInput(event.DriftDoneEvent, self.handleDriftDone)
 		self.addEventInput(event.ImageProcessDoneEvent, self.handleImageProcessDone)
 		self.driftdone = threading.Event()
+		self.emclient = EM.EMClient(self)
 		self.cam = camerafuncs.CameraFuncs(self)
 
 		self.calclients = {
@@ -72,9 +73,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 	def processData(self, newdata):
 		self.imagelist = []
 		targetwatcher.TargetWatcher.processData(self, newdata)
-		imagelistdata = data.AcquisitionImageListData(id=self.ID(),
-																									images=self.imagelist)
-		self.publish(imagelistdata, pubevent=True, database=self.databaseflag.get())
+		print 'IMAGE LIST SHOULD NOT ACTUALLY CONTAIN A LIST'
+		print 'INSTEAD, IMAGEDATA SHOULD LINK TO IMAGELISTDATA'
+		print 'for now we will make it a list of references'
+		imagelistdata = data.AcquisitionImageListData(images=self.imagelist)
+		print 'cannot publish to database for now because how do data references go in there'
+		print 'this is another reason this should be done differently'
+		self.publish(imagelistdata, pubevent=True)
 		self.imagelist = []
 
 	def validateStagePosition(self, stageposition):
@@ -162,7 +167,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		# seems to have trouple with using original targetdata as
 		# a query, so use a copy with only some of the fields
 		targetquery = data.AcquisitionImageTargetData()
-		for key in ('session','id'):
+		for key in ('session'):
 			targetquery[key] = targetdata[key]
 		presetquery = data.PresetData(name=presetname)
 		imagequery = data.AcquisitionImageData(target=targetquery, preset=presetquery)
@@ -236,7 +241,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.validateStagePosition(newscope['stage position'])
 
 		# create new EMData object to hold this
-		emdata = data.ScopeEMData(id=('scope',), initializer=newscope)
+		emdata = data.ScopeEMData(initializer=newscope)
 
 		oldpreset = targetdata['preset']
 		# now make EMTargetData to hold all this
@@ -252,7 +257,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		try:
 			try:
 				imagedata = self.cam.acquireCameraImageData(correction=cor)
-			except ResearchError:
+			except node.ResearchError:
 				self.acquisitionlog.error('Cannot access EM node to acquire image')
 		except camerafuncs.NoCorrectorError:
 			self.acquisitionlog.error('Cannot access Corrector node to correct image')
@@ -262,10 +267,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		labelstring = str(self.id)
 
 		## convert CameraImageData to AcquisitionImageData
-		imagedata = data.AcquisitionImageData(initializer=imagedata, id=self.ID(), preset=presetdata, label=labelstring, target=target)
+		imagedata = data.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=labelstring, target=target)
 
 		self.publishDisplayWait(imagedata)
-		self.imagelist.append(imagedata['id'])
+		self.imagelist.append(imagedata.reference())
 
 	def retrieveImagesFromDB(self):
 		imagequery = data.AcquisitionImageData()
@@ -274,7 +279,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		imagequery['label'] = str(self.id)
 		## don't read images because we only need the id
 		images = self.research(datainstance=imagequery, readimages=False)
-		imageids = [repr(x['id']) for x in images]
+		imageids = [x.dbid for x in images]
 		return imageids
 
 	def uiUpdateDBImages(self):
@@ -288,39 +293,17 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.dbimages.setList(imageids)
 
 	def uiPretendAcquire(self):
-		idstr = self.dbimages.getSelectedValue()
-		id = eval(idstr)
-		queryimage = data.AcquisitionImageData(session=self.session, id=id)
-		queryimage['scope'] = data.ScopeEMData()
-		queryimage['camera'] = data.CameraEMData()
-		queryimage['preset'] = data.PresetData()
-		queryimage['target'] = data.AcquisitionImageTargetData()
-
-		result = self.research(datainstance=queryimage)
-		if not result:
-			# try image with no target
-			self.reportStatus('acquisition', 'Pretend acquire with no target')
-			queryimage['target'] = None
-			result = self.research(datainstance=queryimage)
-
+		dbid = self.dbimages.getSelectedValue()
+		imagedata = self.researchDBID(data.AcquisitionImageData, dbid)
 		## should be one result only
-		if result:
-			imagedata = result[0]
+		if imagedata is not None:
 			self.publishDisplayWait(imagedata)
 
 	def uiAcquireTargetAgain(self):
-		idstr = self.dbimages.getSelectedValue()
-		id = eval(idstr)
-		queryimage = data.AcquisitionImageData(session=self.session, id=id)
-		queryimage['target'] = data.AcquisitionImageTargetData()
-		queryimage['target']['scope'] = data.ScopeEMData()
-		queryimage['target']['camera'] = data.CameraEMData()
-		queryimage['target']['preset'] = data.PresetData()
-
-		result = self.research(datainstance=queryimage)
+		dbid = self.dbimages.getSelectedValue()
+		imagedata = self.researchDBID(data.AcquisitionImageData, dbid)
 		## should be one result only
-		if result:
-			imagedata = result[0]
+		if imagedata is not None:
 			targetdata = imagedata['target']
 			self.processTargetData(targetdata, force=True)
 
@@ -330,7 +313,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		process it
 		'''
 		## set up to handle done events
-		dataid = imagedata['id']
+		dataid = imagedata.dmid
 		self.doneevents[dataid] = {}
 		self.doneevents[dataid]['received'] = threading.Event()
 		self.doneevents[dataid]['status'] = 'waiting'
@@ -357,7 +340,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		rootname = self.getRootName(imagedata)
 		## use either data id or target number
 		if imagedata['target'] is None or imagedata['target']['number'] is None:
-			numberstr = '%05d' % (imagedata['id'][-1],)
+			raise RuntimeError('figure out how to create a filename if there is no target number')
 		else:
 			numberstr = '%05d' % (imagedata['target']['number'],)
 		if imagedata['preset'] is None:
@@ -380,7 +363,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if parent_target is None:
 			## maybe parent target is in DB
 			imagequery = data.AcquisitionImageData()
-			for key in ('session', 'id'):
+			for key in ('session'):
 				imagequery[key] = imagedata[key]
 			## this is what we really want
 			imagequery['target'] = data.AcquisitionImageTargetData()
@@ -402,7 +385,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if parent_image is None:
 			## maybe parent image is in DB
 			targetquery = data.AcquisitionImageTargetData()
-			for key in ('session', 'id'):
+			for key in ('session'):
 				targetquery[key] = parent_target[key]
 			## this is what we really want
 			targetquery['image'] = data.AcquisitionImageData()
@@ -481,9 +464,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.processTargetData(targetdata=None)
 
 	def getPresetNames(self):
-		presetnames = []
-		for preset in self.presetsclient.getPresets():
-			presetnames.append(preset['name'])
+		presetnames = self.presetsclient.getPresetNames()
 		return presetnames
 
 	def setDisplayImage(self, value):
@@ -500,12 +481,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'''
 		notify DriftManager of drifting
 		'''
-		allemdata = self.researchByDataID(('all em',))
-		self.reportStatus('acquisition', 'Passing beam tilt %s' % str(allemdata['beam tilt']))
-		allemdata['id'] = self.ID()
+		scope = self.emclient.getScope()
+		camera = self.emclient.getCamera()
+		driftdetecteddata = data.DriftDetectedData(scope=scope, camera=camera)
+		self.reportStatus('acquisition', 'Passing beam tilt %s' % str(allemdata['scope']['beam tilt']))
 		self.driftdone.clear()
-		self.publish(allemdata, pubevent=True,
-									pubeventclass=event.DriftDetectedEvent)
+		self.publish(driftdetecteddata, pubevent=True)
 		self.reportStatus('acquisition', 'Waiting for DriftManager...')
 		self.driftdone.wait()
 

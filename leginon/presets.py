@@ -18,6 +18,20 @@ import threading
 import time
 import unique
 import strictdict
+import EM
+
+class PresetChangeError(Exception):
+	pass
+
+class CurrentPresetData(data.Data):
+	def typemap(cls):
+		t = data.Data.typemap()
+		t += [('preset', data.PresetData)]
+		return t
+	typemap = classmethod(typemap)
+
+class CurrentPresetPublishEvent(event.PublishEvent):
+	dataclass = CurrentPresetData
 
 class PresetsClient(object):
 	'''
@@ -28,59 +42,91 @@ class PresetsClient(object):
 		self.node = node
 		self.node.addEventInput(event.PresetChangedEvent, self.presetchanged)
 		self.pchanged = {}
+		self.currentpreset = None
+
+	def getPresetsFromDB(self, session=None):
+		'''
+		get ordered list of presets for this session from DB
+		'''
+		if session is None:
+			session = self.node.session
+
+		## find presets that belong to this session
+		pquery = data.PresetData(session=session)
+		plist = self.node.research(datainstance=pquery)
+		if not plist:
+			return {}
+
+		### only want most recent of each name, none that are removed
+		## index by number so we can sort
+		pdict = {}
+		done = {}
+		for p in plist:
+			pname = p['name']
+			if pname in done:
+				continue
+			done[pname] = None
+			if p['removed']:
+				continue
+			pnumber = p['number']
+			# to be backward compatible
+			# if number was not in DB or number is not unique
+			if pnumber is None or pnumber in pdict:
+				pdict[pname] = p
+			else:
+				pdict[pnumber] = p
+
+		## sort by number (maybe name if old, non-numbered data)
+		keys = pdict.keys()
+		keys.sort()
+		namedict = strictdict.OrderedDict()
+		for key in keys:
+			p = pdict[key]
+			namedict[p['name']] = p
+		return namedict
 
 	def toScope(self, presetname, emtarget=None):
 		'''
 		send the named preset to the scope
 		optionally send a target to the scope as well
 		'''
-		self.pchanged[presetname] = threading.Event()
 		evt = event.ChangePresetEvent()
 		evt['name'] = presetname
 		evt['emtarget'] = emtarget
-		try:
-			if self.uistatus is not None:
-				self.uistatus.set('Requesting preset change to %s' % (presetname,))
-			self.node.outputEvent(evt, wait=True)
-			if self.uistatus is not None:
-				self.uistatus.set('Preset change to %s completed' % (presetname,))
-		except node.ConfirmationTimeout:
-			if self.uistatus is not None:
-				self.uistatus.set('Preset change request timed out')
+		if self.uistatus is not None:
+			self.uistatus.set('Requesting preset change to %s' % (presetname,))
+		self.pchanged[presetname] = threading.Event()
+		self.node.outputEvent(evt)
+		self.pchanged[presetname].wait()
+
+		if self.uistatus is not None:
+			self.uistatus.set('Preset change to %s completed' % (presetname,))
 
 	def presetchanged(self, ievent):
-		name = ievent['name']
+		self.currentpreset = ievent['preset']
+		name = self.currentpreset['name']
+		# if waiting for this event, then set the threading event
 		if name in self.pchanged:
 			self.pchanged[name].set()
 		self.node.confirmEvent(ievent)
 
-	def getPresets(self):
-		try:
-			seqdata = self.node.researchByDataID(('presets',))
-		except node.ResearchError:
-			return []
-		if seqdata is None:
-			return []
-		else:
-			return seqdata['sequence']
-
 	def getCurrentPreset(self):
-		pdata = self.node.researchByDataID(('current preset',))
-		return pdata
+		return self.currentpreset
 
 	def getPresetByName(self, pname):
-		ps = self.getPresets()
-		for p in ps:
-			if p['name'] == pname:
-				return p
+		ps = self.getPresetsFromDB()
+		if pname in ps:
+			return ps[pname]
+		else:
+			return None
 
 	def uiSinglePresetSelector(self, label='', default='', permissions='rw', persist=False):
 		return SinglePresetSelector(self, label, default, permissions, persist)
 
 	def getPresetNames(self):
-		presetlist = self.getPresets()
-		pnames = [p['name'] for p in presetlist]
-		return pnames
+		presetlist = self.getPresetsFromDB()
+		return presetlist.keys()
+
 
 class SinglePresetSelector(uidata.Container):
 	def __init__(self, presetsclient, label='', default='', permissions='rw', persist=False):
@@ -105,40 +151,20 @@ class SinglePresetSelector(uidata.Container):
 			availstr = 'No Presets Available'
 		self.available.set(availstr)
 
-class DataHandler(node.DataHandler):
-	def query(self, id):
-		if id == ('presets',):
-			result = data.PresetSequenceData()
-			result['sequence'] = self.node.presets.values()
-		elif id == ('current preset',):
-			result = self.node.currentpreset
-		else:
-			result = node.DataHandler.query(self, id)
-		return result
-
-class PresetChangeError(Exception):
-	pass
 
 class PresetsManager(node.Node):
 
 	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent]
-	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.ListPublishEvent]
+	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent]
 
-	def __init__(self, id, session, nodelocations, tcpport=None, **kwargs):
+	def __init__(self, id, session, managerlocation, **kwargs):
 		self.initializeLogger(id[-1])
-		self.datahandler = DataHandler(self, loggername=self.logger.name)
-		self.server = datatransport.Server(self.datahandler, tcpport,
-																				loggername=self.logger.name)
-		kwargs['datahandler'] = None
 
-		node.Node.__init__(self, id, session, nodelocations, **kwargs)
+		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 
 		self.addEventInput(event.ChangePresetEvent, self.changePreset)
 
-		ids = [('presets',), ('current preset',)]
-		e = event.ListPublishEvent(idlist=ids)
-		self.outputEvent(e)
-
+		self.emclient = EM.EMClient(self)
 		self.cam = camerafuncs.CameraFuncs(self)
 		self.calclients = {
 			'pixel size':calibrationclient.PixelSizeCalibrationClient(self),
@@ -149,23 +175,15 @@ class PresetsManager(node.Node):
 		}
 		self.dosecal = calibrationclient.DoseCalibrationClient(self)
 
+		self.presetsclient = PresetsClient(self)
+
 		self.currentselection = None
 		self.currentpreset = None
 		self.presets = strictdict.OrderedDict()
 		self.getPresetsFromDB()
 
 		self.defineUserInterface()
-		self.validateCycleOrder()
 		self.start()
-
-	def exit(self):
-		node.Node.exit(self)
-		self.server.exit()
-
-	def location(self):
-		location = node.Node.location(self)
-		location['data transport'] = self.server.location()
-		return location
 
 	def changePreset(self, ievent):
 		'''
@@ -187,36 +205,28 @@ class PresetsManager(node.Node):
 		## should we confirm if failure?
 		self.confirmEvent(ievent)
 
+	def sortPresets(self):
+		### check order
+		self.presets
+
 	def getPresetsFromDB(self, session=None):
 		'''
 		get list of presets for this session from DB
-		and use them to create self.presets list
+		and use them to create self.presets OrderedDict
 		'''
+		pdict = self.presetsclient.getPresetsFromDB(session)
+
 		if session is None:
-			session = self.session
-			diffsession = False
+				self.presets = pdict
 		else:
-			## importing another sessions presets
-			diffsession = True
-
-		### get presets from database
-		pdata = data.PresetData(session=session)
-		presets = self.research(datainstance=pdata)
-
-		### only want most recent of each name
-		self.presets = strictdict.OrderedDict()
-		for preset in presets:
-			pname = preset['name']
-			if pname not in self.presets.keys():
-				if preset['removed'] != 1:
-					if preset['session'] is not self.session:
-						newpreset = data.PresetData(initializer=preset, session=self.session, hasref=False)
-						self.presetToDB(newpreset)
-					else:
-						newpreset = preset
-					self.presets[pname] = newpreset
-
-		self.validateCycleOrder()
+			## make new presets with this session
+			self.presets = strictdict.OrderedDict()
+			for name, preset in pdict.items():
+				newp = data.PresetData(initializer=preset, session=self.session)
+				self.presetToDB(newp)
+				self.presets[name] = newp
+		# this will fill in numbers that might be missing
+		self.setOrder()
 
 	def presetToDB(self, presetdata=None):
 		'''
@@ -236,18 +246,65 @@ class PresetsManager(node.Node):
 		else:
 			return None
 
+	def setOrder(self, names=None, fromcallback=False):
+		'''
+		set order of self.presets, and set numbers
+		if names given, use that to determine order
+		otherwise, current order is ok, just update numbers
+		'''
+		if names is None:
+			names = self.presets.keys()
+
+		newdict = strictdict.OrderedDict()
+		number = 0
+		for name in names:
+			p = self.presets[name]
+			if p['number'] != number:
+				newp = data.PresetData(initializer=p, number=number)
+				self.presetToDB(newp)
+			else:
+				newp = p
+			newdict[name] = newp
+			number += 1
+		self.presets = newdict
+		## only set the UI if this was not from a callback
+		if hasattr(self, 'orderlist') and not fromcallback:
+			self.orderlist.set(self.presets.keys())
+
+	def uiSetOrderCallback(self, namelist):
+		## make sure nothing is added or removed from the list
+		## only order changes are allowed
+		test1 = list(namelist)
+		test2 = list(self.presets.keys())
+		test1.sort()
+		test2.sort()
+		if test1 == test2:
+			self.setOrder(namelist, fromcallback=True)
+		else:
+			namelist = self.presets.keys()
+		return namelist
+
+	def getOrder(self):
+		return self.presets.keys()
+
 	def removePreset(self, pname):
 		'''
 		remove a preset by name
 		'''
-		if pname in self.presets.keys():
-			premove = self.presets[pname]
-			del self.presets[pname]
-			pnew = data.PresetData(initializer=premove, removed=1)
-			self.presetToDB(pnew)
+		if pname not in self.presets.keys():
+			return 
+
+		## remove from self.presets, store in DB
+		premove = self.presets[pname]
+		del self.presets[pname]
+		pnew = data.PresetData(initializer=premove, removed=1)
+		self.presetToDB(pnew)
+
+		## update numbers if necessary
+		self.setOrder()
+
 		pnames = self.presetNames()
 		self.uiselectpreset.set(pnames, 0)
-		self.validateCycleOrder()
 
 	def toScope(self, pname, magonly=False):
 		'''
@@ -270,22 +327,19 @@ class PresetsManager(node.Node):
 			beginmessage = beginmessage + ' (mag only: %s)' % (mag,)
 			endmessage = endmessage + ' (mag only: %s)' % (mag,)
 			scopedata['magnification'] = mag
-			scopedata['id'] = ('scope',)
 			cameradata = None
 		else:
 			scopedata.friendly_update(presetdata)
 			cameradata.friendly_update(presetdata)
-			scopedata['id'] = ('scope',)
-			cameradata['id'] = ('camera',)
 
 		self.uistatus.set(beginmessage)
 		self.logger.info(beginmessage)
 
 		## should switch to using AllEMData
 		try:
-			self.publishRemote(scopedata)
+			self.emclient.setScope(scopedata)
 			if cameradata is not None:
-				self.publishRemote(cameradata)
+				self.emclient.setCamera(cameradata)
 		except node.PublishError:
 			message = 'Cannot set instrument parameters. Maybe EM node is not working'
 			self.messagelog.error(message)
@@ -308,23 +362,28 @@ class PresetsManager(node.Node):
 		list of managed presets, it will be replaced by the new one
 		also returns the new preset object
 		'''
-		scopedata = self.researchByDataID(('scope',))
-		cameradata = self.researchByDataID(('camera no image data',))
+		scopedata = self.emclient.getScope()
+		cameradata = self.emclient.getCamera()
 		newpreset = data.PresetData()
 		newpreset.friendly_update(scopedata)
 		newpreset.friendly_update(cameradata)
-		newpreset['id'] = None
 		newpreset['session'] = self.session
 		newpreset['name'] = name
 
-		# to put preset at end, remove it first
+		# existing preset keeps same number
+		# new preset is put at the end
 		if name in self.presets.keys():
-			del self.presets[name]
-		self.presets[name] = newpreset
+			number = self.presets[name]['number']
+		else:
+			## this is len before new one is added
+			number = len(self.presets)
 
+		newpreset['number'] = number
+		self.presets[name] = newpreset
 		self.presetToDB(newpreset)
-		pnames = self.presetNames()
-		self.uiselectpreset.set(pnames, len(pnames)-1)
+
+		## update UI
+		self.uiselectpreset.set(self.presets.keys(), number)
 		self.uistatus.set('Set preset "%s" values from instrument' % name)
 		node.beep()
 		return newpreset
@@ -368,7 +427,7 @@ class PresetsManager(node.Node):
 				self.toScope(presetname)
 			return
 
-		order = self.orderlist.get()
+		order = self.presets.keys()
 		magonly = self.cyclemagonly.get()
 		magshortcut = self.cyclemagshortcut.get()
 
@@ -419,7 +478,7 @@ class PresetsManager(node.Node):
 			self.logger.info('Cycle completed')
 
 	def createCycleList(self, current, final, magshortcut, reverse=False):
-		order = self.orderlist.get()
+		order = self.presets.keys()
 
 		# start with only final in the reduced list
 		reduced = [final]
@@ -462,40 +521,6 @@ class PresetsManager(node.Node):
 		previndex = index - 1
 		return order[previndex]
 
-	def validateCycleOrder(self):
-		'''
-		checks for missing presets or extra presets in the cycle list
-		'''
-		## this may be called before the user interface is done
-		## so we return in that case
-		if not hasattr(self, 'orderlist'):
-			return
-		cyclepresets = self.orderlist.get()
-		allpresets = self.presetNames()
-
-		missing_in_cycle = []
-		for presetname in allpresets:
-			if presetname not in cyclepresets:
-				missing_in_cycle.append(presetname)
-		extra_in_cycle = []
-		for presetname in cyclepresets:
-			if presetname not in allpresets:
-				extra_in_cycle.append(presetname)
-
-		missing_str = ', '.join(missing_in_cycle)
-		extra_str = ', '.join(extra_in_cycle)
-		problems = []
-		if missing_str:
-			missing_str = 'Presets Missing from cycle:  ' + missing_str
-			problems.append(missing_str)
-		if extra_str:
-			extra_str = 'In Cycle, but no such preset:  ' + extra_str
-			problems.append(extra_str)
-
-		message = ', '.join(problems)
-		if message:
-			self.messagelog.warning(message)
-
 	def uiSelectedFromScope(self):
 		sel = self.uiselectpreset.getSelectedValue()
 		newpreset = self.fromScope(sel)
@@ -508,9 +533,9 @@ class PresetsManager(node.Node):
 		newname = self.enteredname.get()
 		if newname:
 			newpreset = self.fromScope(newname)
+			self.setOrder()
 			self.presetparams.set(newpreset)
 			self.messagelog.information('created new preset: %s' % (newname,))
-			self.validateCycleOrder()
 		else:
 			self.messagelog.error('Invalid name for new preset')
 
@@ -527,14 +552,18 @@ class PresetsManager(node.Node):
 		return index
 
 	def getHighTension(self):
-		htdata = self.researchByDataID(('high tension',))
-		return htdata['high tension']
+		scope = self.emclient.getScope()
+		ht = scope['high tension']
+		return ht
 
 	def displayCalibrations(self, preset):
 		mag = preset['magnification']
 		try:
 			ht = self.getHighTension()
+			if ht is None:
+				raise RuntimeError('high tension unknown')
 		except:
+			print 'could not get high tension'
 			return
 		pcaltime = self.calclients['pixel size'].time(mag)
 		self.cal_pixelsize.set(str(pcaltime))
@@ -645,7 +674,7 @@ class PresetsManager(node.Node):
 		self.usecycle = uidata.Boolean('Cycle On', True, 'rw', persist=True)
 		self.cyclemagshortcut = uidata.Boolean('Cycle Magnification Shortcut', True, 'rw', persist=True)
 		self.cyclemagonly = uidata.Boolean('Cycle Magnification Only', True, 'rw', persist=True)
-		self.orderlist = uidata.Sequence('Cycle Order', [], 'rw', persist=True)
+		self.orderlist = uidata.Sequence('Cycle Order', [], 'rw', persist=True, callback=self.uiSetOrderCallback)
 		cyclecont.addObjects((self.usecycle, self.cyclemagshortcut,
 													self.cyclemagonly, self.orderlist))
 
@@ -672,7 +701,6 @@ class PresetsManager(node.Node):
 
 		self.ui_image = uidata.Image('Image', None, 'r')
 
-
 		imagecont = uidata.Container('Acquisition')
 		imagecont.addObjects((cameraconfigure, acqdosemeth, acqrefmeth,
 													self.ui_image,))
@@ -693,7 +721,7 @@ class PresetsManager(node.Node):
 			return
 
 		## store the CameraImageData as a PresetReferenceImageData
-		ref = data.PresetReferenceImageData(id=self.ID())
+		ref = data.PresetReferenceImageData()
 		ref.update(imagedata)
 		if not self.currentpreset['hasref']:
 			self.currentpreset['hasref'] = True
@@ -777,7 +805,7 @@ class PresetsManager(node.Node):
 		except:
 			pass
 
-		scopedata = data.ScopeEMData(id=('scope',), initializer=emdata)
+		scopedata = data.ScopeEMData(initializer=emdata)
 
 		## figure out how to transform the target image shift
 		## ???
@@ -816,13 +844,10 @@ class PresetsManager(node.Node):
 		cameradata = data.CameraEMData()
 		cameradata.friendly_update(newpreset)
 
-		cameradata['id'] = ('camera',)
-		scopedata['id'] = ('scope',)
-
 		try:
-			self.publishRemote(scopedata)
-			self.publishRemote(cameradata)
-		except node.PublishError:
+			self.emclient.setScope(scopedata)
+			self.emclient.setCamera(cameradata)
+		except:
 			message = 'Cannot set instrument parameters'
 			self.messagelog.error(message)
 			raise PresetChangeError(message)

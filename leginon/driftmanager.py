@@ -20,16 +20,18 @@ import time
 import threading
 import presets
 import copy
+import EM
 
 class DriftManager(watcher.Watcher):
 	eventinputs = watcher.Watcher.eventinputs + [event.DriftDetectedEvent, event.AcquisitionImagePublishEvent, event.NeedTargetShiftEvent]
 	eventoutputs = watcher.Watcher.eventoutputs + [event.DriftDoneEvent, event.ImageTargetShiftPublishEvent, event.ChangePresetEvent]
-	def __init__(self, id, session, nodelocations, **kwargs):
+	def __init__(self, id, session, managerlocation, **kwargs):
 		watchfor = [event.DriftDetectedEvent, event.AcquisitionImagePublishEvent]
-		watcher.Watcher.__init__(self, id, session, nodelocations, watchfor, **kwargs)
+		watcher.Watcher.__init__(self, id, session, managerlocation, watchfor, **kwargs)
 
 		self.correlator = correlator.Correlator()
 		self.peakfinder = peakfinder.PeakFinder()
+		self.emclient = EM.EMClient(self)
 		self.cam = camerafuncs.CameraFuncs(self)
 		self.pixsizeclient = calibrationclient.PixelSizeCalibrationClient(self)
 		self.presetsclient = presets.PresetsClient(self)
@@ -42,6 +44,7 @@ class DriftManager(watcher.Watcher):
 		self.start()
 
 	def handleNeedShift(self, ev):
+		print 'DONT KNOW WHAT TO DO HERE YET'
 		imageid = ev['imageid']
 		for key,value in self.references.items():
 			imid = value['imageid']
@@ -64,8 +67,8 @@ class DriftManager(watcher.Watcher):
 		emdata = copy.deepcopy(im['scope'])
 		newemdata = self.fixEM(emdata)
 		camdata = im['camera']
-		self.publishRemote(newemdata)
-		self.publishRemote(camdata)
+		self.emclient.setScope(newemdata)
+		self.emclient.setCamera(camdata)
 
 		## acquire new image
 		newim = self.acquireImage()
@@ -87,7 +90,7 @@ class DriftManager(watcher.Watcher):
 	def processData(self, newdata):
 		if isinstance(newdata, data.AcquisitionImageData):
 			self.processImageData(newdata)
-		if isinstance(newdata, data.AllEMData):
+		if isinstance(newdata, data.DriftDetectedData):
 			self.monitorDrift(newdata)
 
 	def processImageData(self, imagedata):
@@ -97,6 +100,9 @@ class DriftManager(watcher.Watcher):
 		came.  So we are keeping track of the lastest acquisition
 		from each node.
 		'''
+		print 'KEEP AN EYE ON THIS, NOT SURE HOW IT WORKS NOW'
+		print 'SHOULD PROBABLY NOT USE WATCHER'
+		print 'NEED A SPECIAL EVENT FOR PUBLISHING IMAGES TO DRIFTMANAGER'
 		nodeid = imagedata['id'][:-1]
 		imageid = imagedata['id']
 		self.references[nodeid] = {'imageid': imageid, 'image': imagedata, 'shift': {}}
@@ -121,19 +127,19 @@ class DriftManager(watcher.Watcher):
 			pass
 		return emcopy
 
-	def monitorDrift(self, emdata=None):
+	def monitorDrift(self, driftdata=None):
 		self.logger.info('DriftManager monitoring drift...')
-		if emdata is not None:
-			## use emdata to set up scope and camera
-			emdata['id'] = ('all em',)
-
-			newemdata = self.fixEM(emdata)
-			self.publishRemote(newemdata)
-			mag = newemdata['magnification']
+		if driftdata is not None:
+			## use driftdata to set up scope and camera
+			scopedata = driftdata['scope']
+			scopedata = self.fixEM(scopedata)
+			cameradata = driftdata['camera']
+			self.emclient.setScope(scopedata)
+			self.emclient.setCamera(cameradata)
+			mag = scopedata['magnification']
 		else:
 			## use current state
-			magdata = self.researchByDataID(('magnification',))
-			mag = magdata['magnification']
+			mag = self.emclient.getScope()['magnification']
 
 		## acquire images, measure drift
 		self.abortevent.clear()
@@ -156,9 +162,17 @@ class DriftManager(watcher.Watcher):
 				value['shift'] = {}
 			to_publish[value['imageid']] = value['shift']
 		self.logger.info('to publish %s' % to_publish)
-		dat = data.ImageTargetShiftData(id=self.ID(), shifts=to_publish,
+		dat = data.ImageTargetShiftData(shifts=to_publish,
 																		requested=requested)
-		self.publish(dat, pubevent=True, confirm=True)
+
+		print '''
+			publishing ImageTargetShiftData'
+			this used to have confirm=True, but not wait=True,
+			so I don't know if it was ever waiting anyway
+			Is there any reason to get confirmation if you
+			are not going to wait for it?
+		'''
+		self.publish(dat, pubevent=True)
 
 	def acquireImage(self):
 		imagedata = self.cam.acquireCameraImageData()
@@ -205,7 +219,7 @@ class DriftManager(watcher.Watcher):
 			self.logger.info('Drift rate: %.4e' % (current_drift,))
 			self.driftvalue.set(current_drift)
 
-			d = data.DriftData(id=self.ID(), rows=rows, cols=cols, interval=seconds, rowmeters=rowmeters, colmeters=colmeters)
+			d = data.DriftData(rows=rows, cols=cols, interval=seconds, rowmeters=rowmeters, colmeters=colmeters)
 			self.publish(d, database=True, dbforce=True)
 
 			## t0 becomes t1 and t1 will be reset for next image
@@ -221,8 +235,7 @@ class DriftManager(watcher.Watcher):
 		self.abortevent.set()
 
 	def getMag(self):
-		magdata = self.researchByDataID(('magnification',))
-		mag = magdata['magnification']
+		mag = self.emclient.getScope()['magnification']
 		return mag
 
 	def peak2shift(self, peak, shape):

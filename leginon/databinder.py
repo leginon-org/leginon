@@ -6,137 +6,20 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import data
 import extendedlogging
 import Queue
 import strictdict
 import threading
-import time
-import uidata
-
-class DataHandler(object):
-	def __init__(self, loggername=None):
-		self.logger = extendedlogging.getLogger(self.__class__.__name__, loggername)
-
-	'''Base class for DataHandlers. Defines virtual functions.'''
-	def query(self, id):
-		'''Returns data with data ID.'''
-		raise NotImplementedError
-
-	def insert(self, newdata):
-		'''Stores data.'''
-		raise NotImplementedError
-
-	def remove(self, id):
-		'''Removes data with data ID.'''
-		raise NotImplementedError
-
-	def ids(self):
-		'''Return data IDs of all stored data.'''
-		raise NotImplementedError
-
-	def exit(self):
-		pass
-
-class DictDataKeeper(DataHandler):
-	'''Keep data in a dictionary.'''
-	def __init__(self, loggername=None):
-		DataHandler.__init__(self)
-		self.datadict = {}
-		self.lock = threading.RLock()
-
-	def query(self, id):
-		self.lock.acquire()
-		try:
-			result = self.datadict[id]
-			self.logger.info('%s queried' % (id,))
-		except KeyError:
-			result = None
-			self.logger.warning('%s query failed' % (id,))
-		self.lock.release()
-		return result
-
-	def insert(self, newdata):
-		if not issubclass(newdata.__class__, data.Data):
-			raise TypeError
-		self.lock.acquire()
-		self.datadict[newdata['id']] = newdata
-		self.logger.info('%s inserted' % newdata['id'])
-		self.lock.release()
-
-	def remove(self, id):
-		self.lock.acquire()
-		try:
-			del self.datadict[id]
-			self.logger.info('%s deleted' % (id,))
-		except KeyError:
-			self.logger.warning('%s deletion failed' % (id,))
-		self.lock.release()
-
-	def ids(self):
-		self.lock.acquire()
-		result = self.datadict.keys()
-		self.lock.release()
-		return result
-
-class SizedDataKeeper(DictDataKeeper):
-	def __init__(self, maxsize=256.0, loggername=None):
-		DictDataKeeper.__init__(self, loggername)
-		self.maxsize = maxsize * 1024 * 1024
-		self.datadict = strictdict.OrderedDict()
-		self.size = 0
-
-	def insert(self, newdata):
-		if not issubclass(newdata.__class__, data.Data):
-			self.datadict['UI server'] = newdata
-			return
-			#raise TypeError
-		self.lock.acquire()
-
-		try:
-			size = newdata.size()
-			self.size += size
-			if newdata['id'] is not None:
-				self.datadict[newdata['id']] = newdata
-				self.logger.info('%s inserted (size %d, data keeper size %d)'
-														% (newdata['id'], size, self.size))
-			self.clean()
-		finally:
-			self.lock.release()
-
-	def remove(self, dataid):
-		self.lock.acquire()
-		try:
-			try:
-				size = self.datadict[dataid].size()
-				del self.datadict[dataid]
-				self.size -= size
-				self.logger.info('%s removed, (size %d, data keeper size %d)'
-														% (dataid, size, self.size))
-			except (KeyError, AttributeError):
-				pass
-		finally:
-			self.lock.release()
-
-	def clean(self):
-		self.lock.acquire()
-		try:
-			for removekey in self.datadict.keys():
-				if self.size <= self.maxsize:
-					break
-				self.remove(removekey)
-			self.logger.info('Cleaned, (size %d, max size %d)'
-												% (self.size, self.maxsize))
-		finally:
-			self.lock.release()
+import datatransport
 
 class ExitException(Exception):
 	pass
 
-class DataBinder(DataHandler):
+class DataBinder(object):
 	'''Bind data to a function. Used for mapping Events to handlers.'''
-	def __init__(self, threaded=True, queueclass=Queue.Queue, loggername=None):
-		DataHandler.__init__(self, loggername)
+	def __init__(self, threaded=True, queueclass=Queue.Queue, loggername=None, tcpport=None):
+		self.server = datatransport.Server(self, tcpport=tcpport)
+		self.logger = extendedlogging.getLogger(self.__class__.__name__, loggername)
 		## this is a mapping of data class to function
 		## using list instead of dict to preserve order, and also
 		## because there may be more than one function for every 
@@ -152,8 +35,12 @@ class DataBinder(DataHandler):
 		t.setDaemon(1)
 		t.start()
 
+	def start(self):
+		self.server.start()
+
 	def exit(self):
 		self.queue.put(ExitException())
+		self.server.exit()
 
 	def handlerLoop(self):
 		'''
@@ -170,32 +57,24 @@ class DataBinder(DataHandler):
 			if isinstance(item, ExitException):
 				self.logger.info('Handler loop exited')
 				break
-			if 'id' in item:
-				id = item['id']
-			else:
-				id = 'Data'
 			try:
 				if self.threaded:
 					name = 'data binder handler thread'
 					t = threading.Thread(name=name, target=self.handleData, args=(item,))
 					t.setDaemon(1)
-					self.logger.info('%s handling threaded' % (id,))
+					self.logger.info('handling threaded')
 					t.start()
 				else:
-					self.logger.info('%s handling unthreaded' % (id,))
+					self.logger.info('handling unthreaded')
 					self.handleData(item)
-					self.logger.info('%s handled unthreaded' % (id,))
+					self.logger.info('handled unthreaded')
 			except Exception, e:
 				self.logger.exception('handlerLoop exception')
 
 	def insert(self, newdata):
 		self.queue.put(newdata)
-		try:
-			id = newdata['id']
-		except KeyError:
-			id = ()
-		self.logger.info('%s inserted in queue (class %s)'
-											% (id, newdata.__class__.__name__))
+		self.logger.info('inserted in queue (class %s)'
+											% (newdata.__class__.__name__,))
 
 	def handleData(self, newdata):
 		'''
@@ -248,3 +127,6 @@ class DataBinder(DataHandler):
 					self.logger.warning('%s binding deletion failed for destination %s'
 															% (dataclass, nodeid))
 
+
+	def location(self):
+		return self.server.location()
