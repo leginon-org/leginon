@@ -85,13 +85,15 @@ class GridException(Exception):
 class GridQueueEmpty(GridException):
 	pass
 
-class GridLoadException(GridException):
+class GridLoadError(GridException):
 	pass
 
-class GridUnloadException(GridException):
+class GridUnloadError(GridException):
 	pass
 
 def validateGridNumber(gridnumber):
+	if not isinstance(gridnumber, int):
+		return False
 	if gridnumber >= 1 and gridnumber <= 96:
 		return True
 	else:
@@ -109,6 +111,11 @@ class ExtractRequest(Request):
 
 class ExitRequest(Request):
 	pass
+
+class GridRequest(Request):
+	def __init__(self, number):
+		Request.__init__(self)
+		self.number = number
 
 if sys.platform == 'win32':
 	import pythoncom
@@ -135,11 +142,12 @@ class Robot(node.Node):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 		self.instrument = instrument.Proxy(self.objectservice, self.session)
 
-		self.gridnumber = None
-		self.griddata = None
-
 		self.timings = {}
 
+		self.gridnumber = None
+		self.startevent = threading.Event()
+		self.exitevent = threading.Event()
+		self.extractevent = threading.Event()
 		self.gridcleared = threading.Event()
 
 		self.emailclient = emailnotification.EmailClient(self)
@@ -176,26 +184,63 @@ class Robot(node.Node):
 				self.simulate = True
 				self.communication = TestCommunication()
 				
+		request = None
 
 		while True:
-			request = self.queue.get()
-			if isinstance(request, InsertRequest):
-				self._insert()
-			elif isinstance(request, ExtractRequest):
-				self._extract()
-			elif isinstance(request, ExitRequest):
-				request.event.set()
+			self.startevent.clear()
+			self.startevent.wait()
+			if self.exitevent.isSet():
 				break
-			else:
-				self.logger.error('Invalid request put in queue')
-			request.event.set()
+			while True:
+				try:
+					request = self.queue.get(block=False)
+					if isinstance(request, ExitRequest):
+						break
+				except Queue.Empty:
+					request = self.getUserGridRequest()
+					if request is None:
+						break
+
+				gridnumber = request.number
+				self.selectGrid(gridnumber)
+				self.gridnumber = gridnumber
+
+				try:
+					self.insert()
+				except GridLoadError:
+					self.gridnumber = None
+					continue
+
+				self.extractevent.clear()
+				self.panel.gridInserted()
+				self.extractevent.wait()
+
+				self.extract()
+				self.gridnumber = None
+
+				request.event.set()
+
+			self.panel.gridQueueEmpty()
+
 		del self.communication
 
+	def startProcessing(self):
+		self.startevent.set()
+
 	def exit(self):
-		request = ExitRequest()
-		self.queue.put(request)
-		request.event.wait()
+		self.exitevent.set()
+		self.startevent.set()
 		node.Node.exit(self)
+
+	def lockScope(self):
+		self.logger.info('Locking scope...')
+		self.instrument.tem.lock()
+		self.logger.info('Scope locked.')
+
+	def unlockScope(self):
+		self.logger.info('Unlocking scope...')
+		self.instrument.tem.unlock()
+		self.logger.info('Scope unlocked.')
 
 	def zeroStage(self):
 		self.logger.info('Zeroing stage position...')
@@ -347,11 +392,7 @@ class Robot(node.Node):
 		self.communication.Signal6 = 1
 		self.logger.info('Signaled robot to begin extraction')
 
-	def emailGridClear(self):
-		if self.gridnumber is None:
-			gridnumber = '(unknown)'
-		else:
-			gridnumber = self.gridnumber
+	def emailGridClear(self, gridnumber):
 		m = 'Grid #%s failed to be removed from specimen holder properly'
 		subject = m % gridnumber
 		text = 'Reply to this message if grid is not in the specimen holder.\n' + \
@@ -367,29 +408,24 @@ class Robot(node.Node):
 
 	def waitForGridClear(self):
 		self.gridcleared.clear()
+
 		self.logger.warning('Waiting for confirmation that grid is clear')
 		self.setStatus('user input')
-		self.emailGridClear()
+
+		self.emailGridClear(self.gridnumber)
+
 		self.panel.clearGrid()
+
 		self.gridcleared.wait()
 		self.gridcleared = threading.Event()
+
 		self.setStatus('idle')
 		self.logger.info('Resuming operation')
+
 		self.communication.Signal10 = 1
 
 	def gridCleared(self):
 		self.gridcleared.set()
-
-	def waitForRobotGridLoad(self):
-		self.logger.info('Verifying robot is ready for insertion')
-		while not self.communication.Signal0:
-			if self.communication.Signal8:
-				self.logger.warning('Robot failed to extract grid from tray')
-				self.communication.Signal8 = 0
-				raise GridLoadException
-			time.sleep(0.5)
-		self.communication.Signal0 = 0
-		self.logger.info('Robot is ready for insertion')
 
 	def waitForRobotToInsert1(self):
 		self.logger.info('Waiting for robot to complete insertion step 1')
@@ -423,13 +459,13 @@ class Robot(node.Node):
 		self.communication.Signal7 = 0
 		self.logger.info('Robot has completed extraction')
 
-	def getGridNumber(self):
+	def getUserGridRequest(self):
 		gridnumber = -1
 		while not validateGridNumber(gridnumber):
 			gridnumber = self.panel.getNextGrid()
 			if gridnumber is None:
-				raise GridQueueEmpty
-		return gridnumber
+				return None
+		return GridRequest(gridnumber)
 
 	def newGrid(self, gridboxid, gridnumber):
 		projectdata = project.ProjectData()
@@ -446,48 +482,32 @@ class Robot(node.Node):
 				return gridlocation['gridId']
 		return self.newGrid(gridboxid, gridnumber)
 
-	def selectGrid(self):
-		try:
-			self.gridnumber = self.getGridNumber()
-			gridid = self.getGridID(self.gridtrayid, self.gridnumber)
-			initializer = {'grid ID': gridid}
-			querydata = data.GridData(initializer=initializer)
-			griddatalist = self.research(querydata)
-			insertion = 0
-			for griddata in griddatalist:
-				if griddata['insertion'] > insertion:
-					insertion = griddata['insertion']
-			initializer = {'grid ID': gridid, 'insertion': insertion + 1}
-			self.griddata = data.GridData(initializer=initializer)
-		except GridQueueEmpty:
-			raise
-		else:
-			self.logger.info('Current grid: %d' % self.gridnumber)
-			self.communication.gridNumber = self.gridnumber
+	def makeGridData(self, gridnumber):
+		gridid = self.getGridID(self.gridtrayid, gridnumber)
+		initializer = {'grid ID': gridid}
+		querydata = data.GridData(initializer=initializer)
+		griddatalist = self.research(querydata)
+		insertion = 0
+		for griddata in griddatalist:
+			if griddata['insertion'] > insertion:
+				insertion = griddata['insertion']
+		initializer = {'grid ID': gridid, 'insertion': insertion + 1}
+		return data.GridData(initializer=initializer)
+
+	def selectGrid(self, gridnumber):
+		self.logger.info('Current grid: %d' % gridnumber)
+		self.communication.gridNumber = gridnumber
 
 	def robotReadyForInsertion(self):
-		selectgrid = True
-		while(selectgrid):
-			try:
-				self.selectGrid()
-			except GridQueueEmpty:
-				self.logger.info('Grid queue is empty')
-				raise
-
-			if self.simulate:
-				break
-
-			try:
-				self.waitForRobotGridLoad()
-			except GridLoadException:
-				selectgrid = True
-			else:
-				selectgrid = False
-
-	def gridExtracted(self):
-		self.gridnumber = None
-		self.griddata = None
-		self.insert()
+		self.logger.info('Verifying robot is ready for insertion')
+		while not self.communication.Signal0:
+			if self.communication.Signal8:
+				self.logger.warning('Robot failed to extract grid from tray')
+				self.communication.Signal8 = 0
+				raise GridLoadError
+			time.sleep(0.5)
+		self.communication.Signal0 = 0
+		self.logger.info('Robot is ready for insertion')
 
 	def estimateTimeLeft(self):
 		if 'insert' not in self.timings:
@@ -505,89 +525,68 @@ class Robot(node.Node):
 		if timestring:
 			self.logger.info(timestring + ' remaining')
 
-	def _insert(self):
+	def insert(self):
 		if self.simulate:
-			#self.insertmethod.disable()
 			self.estimateTimeLeft()
-			try:
-				self.robotReadyForInsertion()
-			except GridQueueEmpty:
-				self.panel.gridQueueEmpty()
-				return
 			self.logger.info('Insertion of holder successfully completed')
-			self.gridInserted()
+			self.gridInserted(self.gridnumber)
 			return
 
-		#self.insertmethod.disable()
 		self.estimateTimeLeft()
 
 		self.logger.info('Inserting holder into microscope')
 
-		try:
-			self.robotReadyForInsertion()
-		except GridQueueEmpty:
-			self.panel.gridQueueEmpty()
-			return
+		self.lockScope()
+
+		self.robotReadyForInsertion()
 
 		try:
 			self.scopeReadyForInsertion1()
 		except Exception, e:
+			self.unlockScope()
 			self.logger.error('Failed to get scope ready for insertion 1: %s' % e)
-			return
+			raise
 		self.signalRobotToInsert1()
 		self.waitForRobotToInsert1()
 
 		try:
 			self.scopeReadyForInsertion2()
 		except Exception, e:
+			self.unlockScope()
 			self.logger.error('Failed to get scope ready for insertion 2: %s' % e)
-			return
+			raise
 		self.signalRobotToInsert2()
 		self.waitForRobotToInsert2()
+		self.unlockScope()
 
 		self.logger.info('Insertion of holder successfully completed')
-		self.gridInserted()
+		self.gridInserted(self.gridnumber)
 
-	def _extract(self):
+	def extract(self):
 		if self.simulate:
 			self.logger.info('Extraction of holder successfully completed')
-			self.gridExtracted()
 			return
 
 		self.logger.info('Extracting holder from microscope')
 
+		self.lockScope()
 		self.robotReadyForExtraction()
 		try:
 			self.scopeReadyForExtraction()
 		except Exception, e:
+			self.unlockScope()
 			self.logger.error('Failed to get scope ready for extraction: %s' % e)
-			return
+			raise
 		self.signalRobotToExtract()
 		self.waitForRobotToExtract()
+		self.unlockScope()
 
 		self.logger.info('Extraction of holder successfully completed')
-		self.gridExtracted()
-
-	def insert(self):
-		request = InsertRequest()
-		self.queue.put(request)
-
-	def extract(self):
-		if self.simulate:
-			self.logger.info('Data collection finished')
-			request = ExtractRequest()
-			self.queue.put(request)
-			return
-
-		self.logger.info('Data collection finished')
-
-		request = ExtractRequest()
-		self.queue.put(request)
 
 	def handleGridDataCollectionDone(self, ievent):
 		# ...
 		self.panel.extractingGrid()
-		self.extract()
+		self.extractevent.set()
 
 	def getTrayLabels(self):
 		return self.gridtrayids.keys()
@@ -609,12 +608,11 @@ class Robot(node.Node):
 		gridlocations = gridboxidindex[gridboxid].fetchall()
 		return [int(i['location']) for i in gridlocations]
 
-	def gridInserted(self):
+	def gridInserted(self, gridnumber):
 		if self.simulate:
 			evt = event.MakeTargetListEvent()
-			evt['grid'] = self.griddata
+			evt['grid'] = self.makeGridData(gridnumber)
 			self.outputEvent(evt)
-			self.panel.gridInserted()
 			return
 
 		self.logger.info('Grid inserted.')
@@ -623,10 +621,9 @@ class Robot(node.Node):
 
 		self.logger.info('Outputting data collection event')
 		evt = event.MakeTargetListEvent()
-		evt['grid'] = self.griddata
+		evt['grid'] = self.makeGridData(gridnumber)
 		self.outputEvent(evt)
 		self.logger.info('Data collection event outputted')
-		self.panel.gridInserted()
 
 	def waitScope(self, parameter, value, interval=None, timeout=0.0):
 		if self.instrument.tem.hasAttribute(parameter):

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Robot.py,v $
-# $Revision: 1.5 $
+# $Revision: 1.6 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-03 00:03:41 $
+# $Date: 2005-03-09 18:25:02 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -102,15 +102,15 @@ class Panel(gui.wx.Node.Panel):
 
 	def onPlayTool(self, evt):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
-		threading.Thread(target=self.node.insert).start()
+		self.node.startevent.set()
 
 	def onGridTool(self, evt):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, False)
-		threading.Thread(target=self.node.gridCleared).start()
+		self.node.gridcleared.set()
 
 	def onExtractTool(self, evt):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_EXTRACT, False)
-		threading.Thread(target=self.node.extract).start()
+		self.node.extractevent.set()
 
 	def onGridQueueEmpty(self, evt):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)

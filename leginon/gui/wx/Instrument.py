@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Instrument.py,v $
-# $Revision: 1.39 $
+# $Revision: 1.40 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-02 19:03:06 $
+# $Date: 2005-03-09 18:25:02 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -158,6 +158,54 @@ class SetParametersEvent(wx.PyCommandEvent):
 		self.SetEventObject(source)
 		self.name = name
 		self.parameters = parameters
+
+'''
+class Magnification(wx.Choice):
+	attribute = 'Magnification'
+	choicesattribute = 'Magnifications'
+	def __init__(self, *args, **kwargs):
+		self.value = None
+		self.choices = []
+		wx.Choice.__init__(self, *args, **kwargs)
+		self.Enable(False)
+		self.Bind(wx.EVT_CHOICE, self.onChoice, self)
+
+	def onChoice(self, evt):
+		n = self.GetSelection()
+		self.value = self.choices[n]
+		evt.Skip()
+
+	def get(self):
+		return self.value
+
+	def set(self, value):
+		if value == self.value:
+			return
+		if value not in self.choices:
+			raise ValueError('value not in choices')
+		n = self.choices.index(value)
+		self.SetSelection(n)
+		self.value = value
+
+	def getChoices(self):
+		return list(self.choices)
+
+	def setChoices(self, choices):
+		if choices == self.choices:
+			return
+		self.choices = list(choices)
+		self.Freeze()
+		self.Clear()
+		self.AppendItems([str(i) for i in choices])
+		try:
+			n = self.choices.index(self.value)
+		except ValueError:
+			self.value = None
+			self.Enable(False)
+		else:
+			self.SetSelection(n)
+		self.Thaw()
+'''
 
 class LensesSizer(wx.StaticBoxSizer):
 	def __init__(self, parent, title='Lenses'):
@@ -1077,268 +1125,6 @@ class Panel(gui.wx.Node.Panel):
 	def removeCCDCamera(self, name):
 		evt = gui.wx.Events.RemoveCCDCameraEvent(self, name=name)
 		self.GetEventHandler().AddPendingEvent(evt)
-
-class OldPanel(gui.wx.Node.Panel):
-	icon = 'instrument'
-	def __init__(self, parent, name):
-		gui.wx.Node.Panel.__init__(self, parent, -1)
-
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_REFRESH,
-													'refresh',
-													shortHelpString='Refresh')
-		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_PAUSES,
-													'clock',
-													isToggle=True,
-													shortHelpString='Do Pauses')
-		self.toolbar.Realize()
-
-		self.choice = wx.ListBox(self, -1)
-		self.szmain.Add(self.choice, (0, 0), (1, 1), wx.ALIGN_CENTER)
-
-		'''
-		self.szmain.AddGrowableCol(0)
-		self.szmain.AddGrowableCol(1)
-
-		self.szscope = self._getStaticBoxSizer('Microscope', (1, 0), (1, 1),
-																								wx.EXPAND|wx.ALL)
-		self.szcamera = self._getStaticBoxSizer('Camera', (2, 0), (1, 1),
-																								wx.EXPAND|wx.ALL)
-		self.szlenses = LensesSizer(self)
-		self.szfilm = FilmSizer(self)
-		self.szstage = StageSizer(self)
-		self.szholder = HolderSizer(self)
-		self.szscreen = ScreenSizer(self)
-		self.szvacuum = VacuumSizer(self)
-		self.szlowdose = LowDoseSizer(self)
-		self.szfocus = FocusSizer(self)
-		self.szpmain = MainSizer(self)
-		self.szcaminfo = CamInfoSizer(self)
-		self.szcamconfig = CamConfigSizer(self)
-
-		self.szscope.Add(self.szpmain, (0, 0), (1, 1), wx.EXPAND)
-		self.szscope.Add(self.szstage, (0, 1), (1, 1), wx.EXPAND)
-
-		self.szscope.Add(self.szlenses, (1, 0), (1, 1), wx.EXPAND)
-		self.szscope.Add(self.szfilm, (1, 1), (1, 1), wx.EXPAND)
-
-		self.szscope.Add(self.szfocus, (2, 0), (1, 1), wx.EXPAND)
-		self.szscope.Add(self.szscreen, (2, 1), (1, 1), wx.EXPAND)
-
-		self.szscope.Add(self.szvacuum, (3, 0), (2, 1), wx.EXPAND)
-
-		self.szscope.Add(self.szholder, (3, 1), (1, 1), wx.EXPAND)
-		self.szscope.Add(self.szlowdose, (4, 1), (1, 1), wx.EXPAND)
-
-		self.szscope.AddGrowableCol(0)
-		self.szscope.AddGrowableCol(1)
-
-		self.szcamera.Add(self.szcaminfo, (0, 0), (1, 1), wx.EXPAND)
-		self.szcamera.Add(self.szcamconfig, (0, 1), (1, 1), wx.EXPAND)
-
-		self.szcamera.AddGrowableCol(0)
-		self.szcamera.AddGrowableCol(1)
-
-		self.parametermap = {
-			'high tension': self.szpmain.parameters['High tension'],
-			'magnification': self.szpmain.parameters['Magnification'],
-			'intensity': self.szpmain.parameters['Intensity'],
-			'spot size': self.szpmain.parameters['Spot size'],
-			'stage status': self.szstage.parameters['Status'],
-			'corrected stage position': self.szstage.parameters['Correction'],
-			'stage position': {
-				'x': self.szstage.parameters['x'],
-				'y': self.szstage.parameters['y'],
-				'z': self.szstage.parameters['z'],
-				'a': self.szstage.parameters['a'],
-				'b': self.szstage.parameters['b'],
-			},
-			'image shift': {
-				'x': self.szlenses.xy['Image']['Shift']['x'],
-				'y': self.szlenses.xy['Image']['Shift']['y'],
-			},
-			'raw image shift': {
-				'x': self.szlenses.xy['Image']['Shift (raw)']['x'],
-				'y': self.szlenses.xy['Image']['Shift (raw)']['y'],
-			},
-			'beam shift': {
-				'x': self.szlenses.xy['Beam']['Shift']['x'],
-				'y': self.szlenses.xy['Beam']['Shift']['y'],
-			},
-			'beam tilt': {
-				'x': self.szlenses.xy['Beam']['Tilt']['x'],
-				'y': self.szlenses.xy['Beam']['Tilt']['y'],
-			},
-			'stigmator': {
-				'objective': {
-					'x': self.szlenses.xy['Stigmator']['Objective']['x'],
-					'y': self.szlenses.xy['Stigmator']['Objective']['y'],
-				},
-				'diffraction': {
-					'x': self.szlenses.xy['Stigmator']['Diffraction']['x'],
-					'y': self.szlenses.xy['Stigmator']['Diffraction']['y'],
-				},
-				'condenser': {
-					'x': self.szlenses.xy['Stigmator']['Condenser']['x'],
-					'y': self.szlenses.xy['Stigmator']['Condenser']['y'],
-				},
-			},
-			'film stock': self.szfilm.parameters['Stock'],
-			'film exposure number': self.szfilm.parameters['Exposure number'],
-			'film exposure type': self.szfilm.parameters['Exposure type'],
-			'film automatic exposure time':
-				self.szfilm.parameters['Automatic exposure time'],
-			'film manual exposure time':
-				self.szfilm.parameters['Manual exposure time'],
-			'film user code': self.szfilm.parameters['User code'],
-			'film date type': self.szfilm.parameters['Date Type'],
-			'film text': self.szfilm.parameters['Text'],
-			'shutter': self.szfilm.parameters['Shutter'],
-			'external shutter': self.szfilm.parameters['External shutter'],
-			'focus': self.szfocus.parameters['Focus'],
-			'defocus': self.szfocus.parameters['Defocus'],
-			'reset defocus': self.szfocus.parameters['Reset Defocus'],
-			'screen current': self.szscreen.parameters['Current'],
-			'main screen position': self.szscreen.parameters['Main'],
-			'small screen position': self.szscreen.parameters['Small'],
-			'vacuum status': self.szvacuum.parameters['Status'],
-			'column pressure': self.szvacuum.parameters['Column pressure'],
-			'column valves': self.szvacuum.parameters['Column valves'],
-			'turbo pump': self.szvacuum.parameters['Turbo pump'],
-			'holder status': self.szholder.parameters['Status'],
-			'holder type': self.szholder.parameters['Type'],
-			'low dose': self.szlowdose.parameters['Status'],
-			'low dose mode': self.szlowdose.parameters['Mode'],
-		}
-
-		self.parametermap.update(self.szcaminfo.parametermap)
-		self.parametermap.update(self.szcamconfig.parametermap)
-
-		self.controlmap = self.reverseMap(self.parametermap)
-
-		self.Bind(EVT_INIT_PARAMETERS, self.onInitParameters)
-		self.Bind(EVT_SET_PARAMETERS, self.onSetParameters)
-		for control in self.controlmap:
-			try:
-				bindControl(self, self.onControl, control)
-			except ValueError:
-				pass
-
-		self.Enable(False)
-		'''
-
-		self.SetSizer(self.szmain)
-		self.SetAutoLayout(True)
-		self.SetupScrolling()
-
-	def onRefreshTool(self, evt):
-		#self.Enable(False)
-		self.node.refresh()
-
-	def onPausesTool(self, evt=None):
-		if evt is None:
-			value = self.toolbar.GetToolState(gui.wx.ToolBar.ID_PAUSES)
-		else:
-			value = evt.IsChecked()
-		self.node.pause = value
-
-	def onCamConfig(self, evt):
-		self.node.setState(evt.configuration)
-
-	def onControl(self, evt):
-		control = evt.GetEventObject()
-		control.Enable(False)
-		keypath = self.controlmap[control]
-		value = getValue(evt)
-		self.node.setState(self.makeDict(keypath, value))
-
-	def makeDict(self, keypath, value):
-		if len(keypath) == 0:
-			return value
-		else:
-			return {keypath[0]: self.makeDict(keypath[1:], value)}
-
-	def reverseMap(self, map, reversemap={}, keypath=[]):
-		for key, value in map.items():
-			if isinstance(value, dict):
-				self.reverseMap(value, reversemap, keypath + [key])
-			else:
-				reversemap[value] = keypath + [key]
-		return reversemap
-
-	def _initParameter(self, parameter, value):
-		if isinstance(parameter, wx.Choice):
-			parameter.Clear()
-			values = map(str, value['values'])
-			parameter.AppendItems(values)
-
-	def _setParameter(self, parameter, value):
-		if isinstance(parameter, dict):
-			self._setParameters(value, parameter)
-		else:
-			try:
-				setControl(parameter, value)
-				parameter.Enable(True)
-			except (TypeError, ValueError), e:
-				pass
-
-	def _initParameters(self, parameters, session, parametermap=None):
-		self.szcamconfig.parameters['Camera configuration'].setSize(session)
-		if parametermap is None:
-			parametermap = self.parametermap
-		for key, value in parameters.items():
-			try:
-				self._initParameter(parametermap[key], value)
-			except KeyError:
-				pass
-
-	def _setParameters(self, parameters, parametermap=None):
-		if parametermap is None:
-			parametermap = self.parametermap
-		camconfig = {}
-		for key, value in parameters.items():
-			if key in ['dimension', 'binning', 'offset', 'exposure time']:
-				camconfig[key] = value
-				continue
-			try:
-				self._setParameter(parametermap[key], value)
-			except KeyError:
-				pass
-		if camconfig:
-			self._setParameter(self.szcamconfig.parameters['Camera configuration'],
-													camconfig)
-
-	def onInitParameters(self, evt):
-		self._initParameters(evt.parameters, evt.session, self.parametermap)
-
-	def initParameters(self, parameters, session):
-		evt = InitParametersEvent(self, parameters, session)
-		self.GetEventHandler().AddPendingEvent(evt)
-
-	def onSetParameters(self, evt):
-		self.Enable(False)
-		self._setParameters(evt.parameters)
-		if self.IsShown():
-			self.Layout()
-			self.GetParent().Layout()
-		self.Enable(True)
-
-	def setParameters(self, parameters):
-		evt = SetParametersEvent(self, parameters)
-		self.GetEventHandler().AddPendingEvent(evt)
-
-	def onNodeInitialized(self):
-		self.toolbar.ToggleTool(gui.wx.ToolBar.ID_PAUSES, True)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onRefreshTool,
-											id=gui.wx.ToolBar.ID_REFRESH)
-		self.toolbar.Bind(wx.EVT_TOOL, self.onPausesTool,
-											id=gui.wx.ToolBar.ID_PAUSES)
-		self.onPausesTool()
-		'''
-		self.Bind(EVT_CONFIGURATION_CHANGED, self.onCamConfig,
-							self.szcamconfig.parameters['Camera configuration'])
-		'''
-		self.Enable(True)
 
 class SelectionPanel(wx.Panel):
 	def __init__(self, parent):
