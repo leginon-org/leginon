@@ -28,8 +28,8 @@ class Launcher(node.Node):
 		e = event.LauncherAvailableEvent(self.ID(), self.location())
 		self.announce(e)
 
-	def main(self):
-		self.interact()
+#	def main(self):
+#		self.interact()
 
 	def handleLaunch(self, launchevent):
 		# unpack event content

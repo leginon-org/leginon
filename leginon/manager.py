@@ -12,7 +12,7 @@ import signal
 import os
 
 class Manager(node.Node):
-	def __init__(self, id, gui=0):
+	def __init__(self, id, usegui=0):
 		# the id is manager (in a list)
 		node.Node.__init__(self, id, None)
 
@@ -20,6 +20,7 @@ class Manager(node.Node):
 		self.distmap = {}
 
 		self.gui_ok = 0
+		self.usegui = usegui
 
 		## this makes every received event get distributed
 		self.addEventInput(event.Event, self.distribute)
@@ -34,10 +35,13 @@ class Manager(node.Node):
 
 	def main(self):
 		print self.location()
-		gui = None
-		if gui:
+		if self.usegui:
 			self.start_gui()
 		self.interact()
+		self.exit()
+
+	def exit(self):
+		self.server.exit()
 
 	def nodeID(self, name):
 		'return an id for a new node'
@@ -357,5 +361,6 @@ if __name__ == '__main__':
 	import signal, sys
 
 	manager_id = ('manager',)
-	m = Manager(manager_id, gui=1)
+	m = Manager(manager_id, usegui=1)
+	#m = Manager(manager_id, usegui=0)
 

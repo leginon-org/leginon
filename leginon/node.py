@@ -70,7 +70,7 @@ class Node(leginonobject.LeginonObject):
 		self.addEventInput(event.KillEvent, self.die)
 
 	def __del__(self):
-		self.announce(event.NodeUnavailableEvent(self.ID()))
+		self.exit()
 
 	def die(self, ievent):
 		print "die?"
@@ -86,7 +86,13 @@ class Node(leginonobject.LeginonObject):
 
 	def main(self):
 		'''this is the node's parent method'''
-		raise NotImplementedError()
+		#raise NotImplementedError()
+		self.interact()
+		self.exit()
+
+	def exit(self):
+		self.server.exit()
+		self.announce(event.NodeUnavailableEvent(self.ID()))
 
 	def announce(self, ievent):
 		## no longer have to mark_data becuase id takes care of it

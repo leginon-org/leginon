@@ -50,6 +50,12 @@ class Server(Base):
 			self.servers[t] = apply(t.Server, (self.ID(), self.datahandler,))
 			self.servers[t].start()
 
+	def __del__(self):
+		self.exit()
+
+	def exit(self):
+		self.datahandler.exit()
+
 	def location(self):
 		loc = {}
 		loc.update(leginonobject.LeginonObject.location(self))
