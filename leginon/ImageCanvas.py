@@ -72,10 +72,12 @@ class ImageCanvas(Frame):
 
 	def targetClickerOn(self):
 		self.bindCanvas('<Double-1>', self.targetClickCallback1)
+		self.bindCanvas('<Double-2>', self.targetClickCallback2)
 		self.bindCanvas('<Double-3>', self.targetClickCallback3)
 
 	def targetClickerOff(self):
 		self.bindCanvas('<Double-1>', '')
+		self.bindCanvas('<Double-2>', '')
 		self.bindCanvas('<Double-3>', '')
 
 	def targetClickCallback1(self, tkevent):
@@ -83,7 +85,16 @@ class ImageCanvas(Frame):
 			return
 		try:
 			clickinfo = self.eventXYInfo(tkevent)
-			self.clickAddTarget(clickinfo)
+			self.clickAddTarget(clickinfo, button=1)
+		finally:
+			self.clicklock.release()
+
+	def targetClickCallback2(self, tkevent):
+		if not self.clicklock.acquire(0):
+			return
+		try:
+			clickinfo = self.eventXYInfo(tkevent)
+			self.clickAddTarget(clickinfo, button=2)
 		finally:
 			self.clicklock.release()
 
@@ -96,12 +107,19 @@ class ImageCanvas(Frame):
 		finally:
 			self.clicklock.release()
 
-	def clickAddTarget(self, clickinfo):
+	def clickAddTarget(self, clickinfo, button):
 		c = copy.deepcopy(clickinfo)
-
+		buttonstr = str(button)
 		canvasx = c['canvas x']
 		canvasy = c['canvas y']
-		circleid = self.addCircle(canvasx, canvasy, radius=self.targetradius, canvastags=('target',), color='green')
+		c['button'] = button
+
+		if button == 1:
+			circlecolor='green'
+		else:
+			circlecolor='red'
+
+		circleid = self.addCircle(canvasx, canvasy, radius=self.targetradius, canvastags=('target',), color=circlecolor)
 
 		self.targetlist.append(c)
 		self.targetdict[circleid] = c
