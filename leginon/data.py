@@ -1835,6 +1835,7 @@ class GonModelerSettingsData(CalibratorSettingsData):
 			('model magnification', float),
 			('model terms', int),
 			('model mag only', bool),
+			('model tolerance', float),
 		)
 	typemap = classmethod(typemap)
 
