@@ -140,7 +140,7 @@ class ClickTargetFinder(TargetFinder):
 		for imagetarget in self.clickimage.getTargetType(typename):
 			column, row = imagetarget
 			target = {'array row': row,
-								'array column': column
+								'array column': column,
 								'array shape': self.currentimage.shape}
 			imageinfo = self.imageInfo()
 			target.update(imageinfo)
