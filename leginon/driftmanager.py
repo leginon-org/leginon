@@ -115,17 +115,15 @@ class DriftManager(watcher.Watcher):
 		t.start()
 
 	def fixEM(self, emdata):
+		'''
+		setting scope not necessary because we don't expect to
+		have moved anywhere.
+		'''
 		emcopy = data.ScopeEMData(initializer=emdata)
-		emcopy['stage position'] = copy.deepcopy(emdata['stage position'])
-		## only set stage x and y
-		for key in emcopy['stage position'].keys():
-			if key not in ('x','y'):
-				del emcopy['stage position'][key]
+		## do not set stage
+		emcopy['stage position'] = None
 		## do not set focus
-		try:
-			emcopy['focus'] = None
-		except:
-			pass
+		emcopy['focus'] = None
 		return emcopy
 
 	def monitorDrift(self, driftdata=None):
