@@ -99,7 +99,7 @@ class Navigator(node.Node):
 		self.delaydata = self.registerUIData('Delay (sec)', 'float', default=2.5, permissions='rw')
 
 		acqtypes = self.registerUIData('acqtypes', 'array', default=('raw', 'corrected'))
-		self.acqtype = self.registerUIData('Acquisition Type', 'string', default='corrected', permissions='rw', choices=acqtypes)
+		self.acqtype = self.registerUIData('Acquisition Type', 'string', default='raw', permissions='rw', choices=acqtypes)
 
 		prefs = self.registerUIContainer('Preferences', (self.movetype, self.delaydata, self.acqtype))
 
