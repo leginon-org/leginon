@@ -1463,16 +1463,9 @@ class ImageStatData(InSessionData):
 		return t
 	typemap = classmethod(typemap)
 
-def _name(dataclass):
-	if dataclass.__name__[-4:] == 'Data':
-		name = dataclass.__name__[:-4] + 'RequestData'
-	else:
-		name = dataclass.__name__ + 'Request'
-	return name
-
 class Request(type):
 	def __new__(cls, dataclass):
-		return type.__new__(cls, _name(dataclass), (Data,),
+		return type.__new__(cls, 'Request' + dataclass.__name__), (Data,),
 												{'datamanager': datamanager})
 
 	def _typePair(cls, typepair):
@@ -1486,7 +1479,7 @@ class Request(type):
 		cls._typemap = map(cls._typePair, dataclass.typemap())
 		cls._dataclass = dataclass
 		cls.typemap = classmethod(lambda cls: cls._typemap)
-		super(Request, cls).__init__(_name(dataclass), (Data,),
+		super(Request, cls).__init__('Request' + dataclass.__name__, (Data,),
 																	{'datamanager': datamanager})
 
 ########## for testing
