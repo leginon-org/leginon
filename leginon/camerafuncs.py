@@ -159,8 +159,8 @@ class CameraFuncs(object):
 		container = uidata.Container('Camera Setup')
 
 		self.cameraparams = SmartCameraParameters(self.node)
-		applymeth = uidata.Method('Apply To Camera Now', self.uiApply)
-		self.applyasneeded = uidata.Boolean('Apply As Needed', False, 'rw', persist=True)
+		applymeth = uidata.Method('Apply', self.uiApply)
+		self.applyasneeded = uidata.Boolean('Apply as needed', False, 'rw', persist=True)
 
 		container.addObjects((self.cameraparams, applymeth, self.applyasneeded))
 		return container
@@ -238,8 +238,8 @@ class SmartCameraParameters(uidata.Container):
 		self.xycontainer = uidata.Container('Geometry')
 
 		self.exposuretime = uidata.Integer('Exposure Time (ms)', 500, 'rw', persist=True)
-		self.squaretoggle = uidata.Boolean('Square', self.xyoptions['square'], 'rw', persist=True, callback=self.squareToggleCallback)
-		self.centeredtoggle = uidata.Boolean('Centered', self.xyoptions['centered'], 'rw', persist=True, callback=self.centeredToggleCallback)
+		self.squaretoggle = uidata.Boolean('Square image', self.xyoptions['square'], 'rw', persist=True, callback=self.squareToggleCallback)
+		self.centeredtoggle = uidata.Boolean('Center image', self.xyoptions['centered'], 'rw', persist=True, callback=self.centeredToggleCallback)
 
 		self.addObjects((self.squaretoggle, self.centeredtoggle, self.xycontainer, self.exposuretime))
 
