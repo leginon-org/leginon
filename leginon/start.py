@@ -19,8 +19,8 @@ import uiclient
 #gc.enable()
 #gc.set_debug(gc.DEBUG_LEAK)
 
-m = manager.Manager(None)
-location = m.location()
+#m = manager.Manager(None)
+#location = m.location()
 #launcher.Launcher((socket.gethostname().lower(),),
 #									nodelocations={'manager': location})
 
@@ -33,6 +33,8 @@ stats.sort_stats('time', 'cumulative')
 stats.print_stats(30)
 stats.print_callers(30)
 '''
-uiclient.UIApp(location['UI'], 'Leginon II')
-m.exit()
+#uiclient.UIApp(location['UI'], 'Leginon II')
+#m.exit()
 
+m = manager.ManagerApp(None)
+m.MainLoop()
