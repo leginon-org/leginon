@@ -194,7 +194,6 @@ class ClickTargetFinder(TargetFinder):
 		self.notifyUserSubmit()
 		self.userpause.clear()
 		self.setStatus('user input')
-		print 'userpasue is set', self.userpause.isSet()
 		self.userpause.wait()
 		self.setStatus('processing')
 		self.logger.info('User has submitted targets')
