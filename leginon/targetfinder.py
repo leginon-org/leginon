@@ -561,7 +561,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		try:
 			self.mosaic.setCalibrationParameter(parameter)
 		except ValueError:
-			self.setStatusMessage('invalid calibration parameter specified')
+			self.statusmessage.set('invalid calibration parameter specified',
+															thread=True)
 		return value
 
 	def setStatusMessage(self, message):
