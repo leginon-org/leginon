@@ -191,7 +191,9 @@ class Panel(gui.wx.Node.Panel):
 			self.stvmax.SetLabel(str(evt.statistics['max']))
 		if 'stdev' in evt.statistics:
 			self.stvsigma.SetLabel(str(evt.statistics['stdev']))
-		self.szmain.Layout()
+		#if self.IsShown():
+		#	self.szmain.Layout()
+		#	self.GetParent().Layout()
 
 	def onNAverageInt(self, evt):
 		self.node.naverage = evt.GetValue()

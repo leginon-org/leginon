@@ -210,6 +210,7 @@ class FilmSizer(wx.StaticBoxSizer):
 				style |= wx.FIXED_MINSIZE
 			self.sz.Add(self.parameters[key], (row, 1), (1, 1), style)
 			self.parameters[key].Enable(False)
+			self.parameters[key].Enable(False)
 			row += 1
 
 class StageSizer(wx.StaticBoxSizer):
@@ -726,10 +727,6 @@ class Panel(gui.wx.Node.Panel):
 
 		self.controlmap = self.reverseMap(self.parametermap)
 
-		self.SetSizerAndFit(self.szmain)
-		self.SetupScrolling()
-		self.Enable(False)
-
 		self.Bind(EVT_INIT_PARAMETERS, self.onInitParameters)
 		self.Bind(EVT_SET_PARAMETERS, self.onSetParameters)
 		for control in self.controlmap:
@@ -737,8 +734,10 @@ class Panel(gui.wx.Node.Panel):
 				bindControl(self, self.onControl, control)
 			except ValueError:
 				pass
-		self.Bind(EVT_CONFIGURATION_CHANGED, self.onCamConfig,
-							self.szcamconfig.parameters['Camera configuration'])
+
+		self.Enable(False)
+		self.SetSizerAndFit(self.szmain)
+		self.SetupScrolling()
 
 	def onRefreshButton(self, evt):
 		self.Enable(False)
@@ -804,8 +803,6 @@ class Panel(gui.wx.Node.Panel):
 				pass
 
 	def _initParameters(self, parameters, session, parametermap=None):
-		self.Enable(False)
-		self.Freeze()
 		self.szcamconfig.parameters['Camera configuration'].setSize(session)
 		if parametermap is None:
 			parametermap = self.parametermap
@@ -814,12 +811,8 @@ class Panel(gui.wx.Node.Panel):
 				self._initParameter(parametermap[key], value)
 			except KeyError:
 				pass
-		self.Thaw()
-		self.Enable(True)
 
 	def _setParameters(self, parameters, parametermap=None):
-		self.Enable(False)
-		self.Freeze()
 		if parametermap is None:
 			parametermap = self.parametermap
 		if 'magnifications' in parameters:
@@ -838,8 +831,6 @@ class Panel(gui.wx.Node.Panel):
 		if camconfig:
 			self._setParameter(self.szcamconfig.parameters['Camera configuration'],
 													camconfig)
-		self.Thaw()
-		self.Enable(True)
 
 	def onInitParameters(self, evt):
 		self._initParameters(evt.parameters, evt.session, self.parametermap)
@@ -849,13 +840,20 @@ class Panel(gui.wx.Node.Panel):
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onSetParameters(self, evt):
-		self._setParameters(evt.parameters, self.parametermap)
+		self.Enable(False)
+		self._setParameters(evt.parameters)
+		if self.IsShown():
+			self.Layout()
+			self.GetParent().Layout()
+		self.Enable(True)
 
 	def setParameters(self, parameters):
 		evt = SetParametersEvent(self, parameters)
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onNodeInitialized(self):
+		self.Bind(EVT_CONFIGURATION_CHANGED, self.onCamConfig,
+							self.szcamconfig.parameters['Camera configuration'])
 		self.Bind(wx.EVT_BUTTON, self.onRefreshButton, self.brefresh)
 		self.Bind(wx.EVT_CHECKBOX, self.onPausesCheckBox, self.cbpauses)
 		self.onPausesCheckBox()
