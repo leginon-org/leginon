@@ -788,12 +788,14 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		binx = camera['binning']['x']
 		biny = camera['binning']['y']
 		par = self.parameter()
+		tem = scope['tem']
+		cam = camera['ccdcamera']
 
 		pixrow = pixelshift['row'] * biny
 		pixcol = pixelshift['col'] * binx
 		pixvect = (pixrow, pixcol)
 
-		matrix = self.retrieveMatrix(par, ht, mag)
+		matrix = self.retrieveMatrix(par, ht, mag, tem, ccdcamera)
 
 		change = Numeric.matrixmultiply(matrix, pixvect)
 		changex = change[0]
