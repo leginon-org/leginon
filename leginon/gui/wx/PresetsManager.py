@@ -5,6 +5,7 @@ import gui.wx.ImageViewer
 import gui.wx.Node
 import gui.wx.Presets
 import gui.wx.Settings
+import gui.wx.ToolBar
 
 SetParametersEventType = wx.NewEventType()
 SetDoseValueEventType = wx.NewEventType()
@@ -37,9 +38,9 @@ class Panel(gui.wx.Node.Panel):
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
 
-		# buttons
-		self.bsettings = wx.Button(self, -1, 'Settings...')
-
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
+													'settings',
+													shortHelpString='Settings')
 		# presets
 
 		stpixelsize = wx.StaticText(self, -1, 'Pixel size:')
@@ -167,12 +168,11 @@ class Panel(gui.wx.Node.Panel):
 		szcreate.Add(self.bnew, (1, 0), (1, 1), wx.ALIGN_CENTER)
 
 		self.sz = wx.GridBagSizer(5, 5)
-		self.sz.Add(self.bsettings, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
-		self.sz.Add(sbszcalibrations, (1, 0), (1, 2), wx.EXPAND|wx.ALL)
-		self.sz.Add(sbszparameters, (2, 1), (2, 1), wx.EXPAND|wx.ALL)
-		self.sz.Add(sz, (2, 0), (1, 1), wx.ALIGN_CENTER)
-		self.sz.Add(sbszcreate, (3, 0), (1, 1), wx.ALIGN_CENTER)
-		self.szmain.Add(self.sz, (1, 0), (1, 1), wx.ALIGN_CENTER)
+		self.sz.Add(sbszcalibrations, (0, 0), (1, 2), wx.EXPAND|wx.ALL)
+		self.sz.Add(sbszparameters, (1, 1), (2, 1), wx.EXPAND|wx.ALL)
+		self.sz.Add(sz, (1, 0), (1, 1), wx.ALIGN_CENTER)
+		self.sz.Add(sbszcreate, (2, 0), (1, 1), wx.ALIGN_CENTER)
+		self.szmain.Add(self.sz, (1, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 5)
 
 		# dose image
 		self.szdoseimage = self._getStaticBoxSizer('Dose Image', (1, 1), (3, 1),
@@ -208,6 +208,9 @@ class Panel(gui.wx.Node.Panel):
 	def onNodeInitialized(self):
 		self.cpcamconfig.setSize(self.node.session)
 
+		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
+											id=gui.wx.ToolBar.ID_SETTINGS)
+
 		self.Bind(wx.EVT_BUTTON, self.onAcquireDoseImage, self.bacquire)
 		self.Bind(EVT_ENTRY, self.onUpdateParameters, self.femagnification)
 		self.Bind(EVT_ENTRY, self.onUpdateParameters, self.fedefocus)
@@ -226,9 +229,8 @@ class Panel(gui.wx.Node.Panel):
 		self.Bind(wx.EVT_BUTTON, self.onFromScope, self.bfromscope)
 		self.Bind(wx.EVT_BUTTON, self.onRemove, self.bremove)
 		self.Bind(wx.EVT_BUTTON, self.onImport, self.bimport)
-		self.Bind(wx.EVT_BUTTON, self.onSettingsButton, self.bsettings)
 
-	def onSettingsButton(self, evt):
+	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()

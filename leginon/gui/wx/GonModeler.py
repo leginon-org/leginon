@@ -11,9 +11,11 @@ class Panel(gui.wx.Calibrator.Panel):
 		self.toolbar.Realize()
 		ctb = self.toolbar.RemoveTool(gui.wx.ToolBar.ID_CALIBRATE)
 		atb = self.toolbar.RemoveTool(gui.wx.ToolBar.ID_ABORT)
+		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_MEASURE,
 													'ruler',
 													shortHelpString='Measure')
+		self.toolbar.AddSeparator()
 		self.toolbar.AddToolItem(atb)
 		self.toolbar.AddToolItem(ctb)
 

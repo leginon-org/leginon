@@ -12,6 +12,7 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
 													shortHelpString='Settings')
+		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY,
 													'play',
 													shortHelpString='Process')

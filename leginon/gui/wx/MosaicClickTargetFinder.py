@@ -11,19 +11,22 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 	def initialize(self):
 		gui.wx.ClickTargetFinder.Panel.initialize(self)
 
-		self.toolbar.InsertTool(2, gui.wx.ToolBar.ID_TILES,
+		self.toolbar.InsertSeparator(2)
+		self.toolbar.InsertTool(3, gui.wx.ToolBar.ID_TILES,
 													'tiles',
 													shortHelpString='Tiles')
-		self.toolbar.InsertTool(3, gui.wx.ToolBar.ID_MOSAIC,
+		self.toolbar.InsertTool(4, gui.wx.ToolBar.ID_MOSAIC,
 													'atlasmaker',
 													shortHelpString='Mosaic')
-		self.toolbar.InsertTool(4, gui.wx.ToolBar.ID_REFRESH,
+		self.toolbar.AddSeparator()
+		self.toolbar.InsertTool(5, gui.wx.ToolBar.ID_REFRESH,
 													'refresh',
 													shortHelpString='Refresh')
-		self.toolbar.InsertTool(5, gui.wx.ToolBar.ID_CURRENT_POSITION,
+		self.toolbar.InsertTool(6, gui.wx.ToolBar.ID_CURRENT_POSITION,
 													'currentposition',
 													shortHelpString='Show Position')
-		self.toolbar.InsertTool(6, gui.wx.ToolBar.ID_FIND_SQUARES,
+		self.toolbar.InsertSeparator(7)
+		self.toolbar.InsertTool(8, gui.wx.ToolBar.ID_FIND_SQUARES,
 													'squarefinder',
 													shortHelpString='Find Squares')
 

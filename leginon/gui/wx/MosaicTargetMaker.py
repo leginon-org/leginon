@@ -3,11 +3,21 @@ from gui.wx.Entry import Entry, FloatEntry
 import gui.wx.Node
 from gui.wx.Presets import PresetChoice
 import gui.wx.Settings
+import gui.wx.ToolBar
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'atlasmaker'
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
+
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
+													'settings',
+													shortHelpString='Settings')
+		self.toolbar.AddSeparator()
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY,
+													'play',
+													shortHelpString='Create Atlas')
+
 		self.bsettings = wx.Button(self, -1, 'Settings...')
 		self.bcreate = wx.Button(self, -1, 'Create Atlas')
 		self.szmain.Add(self.bsettings, (1, 0), (1, 1), wx.ALIGN_CENTER)
@@ -18,10 +28,12 @@ class Panel(gui.wx.Node.Panel):
 		self.SetupScrolling()
 
 	def onNodeInitialized(self):
-		self.Bind(wx.EVT_BUTTON, self.onSettingsButton, self.bsettings)
-		self.Bind(wx.EVT_BUTTON, self.onCreateAtlas, self.bcreate)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
+											id=gui.wx.ToolBar.ID_SETTINGS)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onCreateAtlas,
+											id=gui.wx.ToolBar.ID_PLAY)
 
-	def onSettingsButton(self, evt):
+	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()

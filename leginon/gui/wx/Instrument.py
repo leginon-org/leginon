@@ -595,6 +595,7 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_REFRESH,
 													'refresh',
 													shortHelpString='Refresh')
+		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_PAUSES,
 													'clock',
 													isToggle=True,

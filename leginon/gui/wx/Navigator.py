@@ -5,24 +5,70 @@ from gui.wx.Choice import Choice
 import gui.wx.ImageViewer
 import gui.wx.Node
 import gui.wx.Settings
+import gui.wx.ToolBar
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'navigator'
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
-		# settings
-		self.szbuttons = wx.GridBagSizer(5, 5)
-		self.szmain.Add(self.szbuttons, (1, 0), (1, 1), wx.ALIGN_CENTER)
 
-		self.bsettings = wx.Button(self, -1, 'Settings...')
-		self.bacquire = wx.Button(self, -1, 'Acquire')
-		self.szbuttons.Add(self.bsettings, (0, 0), (1, 1), wx.ALIGN_CENTER)
-		self.szbuttons.Add(self.bacquire, (1, 0), (1, 1), wx.ALIGN_CENTER)
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
+													'settings',
+													shortHelpString='Settings')
+		self.toolbar.AddSeparator()
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_ACQUIRE,
+													'acquire',
+													shortHelpString='Acquire')
+		self.toolbar.AddSeparator()
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_STAGE_LOCATIONS,
+													'stagelocations',
+													shortHelpString='Stage Locations')
+		# image
+		self.szimage = self._getStaticBoxSizer('Navigation', (1, 0), (2, 1),
+																						wx.EXPAND|wx.ALL)
+		self.imagepanel = gui.wx.ImageViewer.ClickImagePanel(self, -1)
+		self.szimage.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND|wx.ALL)
+		self.szimage.AddGrowableCol(0)
+		self.szimage.AddGrowableRow(0)
 
-		# controls
-		self.szlocations = self._getStaticBoxSizer('Stage Locations',
-																								(2, 0), (1, 1),
-																			wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_TOP)
+		self.szmain.AddGrowableRow(1)
+		self.szmain.AddGrowableCol(0)
+
+		self.SetSizerAndFit(self.szmain)
+		self.SetupScrolling()
+
+	def onNodeInitialized(self):
+		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
+											id=gui.wx.ToolBar.ID_SETTINGS)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onAcquireTool,
+											id=gui.wx.ToolBar.ID_ACQUIRE)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onStageLocationsTool,
+											id=gui.wx.ToolBar.ID_STAGE_LOCATIONS)
+
+	def onSettingsTool(self, evt):
+		dialog = SettingsDialog(self)
+		dialog.ShowModal()
+		dialog.Destroy()
+
+	def onAcquireTool(self, evt):
+		self.node.acquireImage()
+
+	def onStageLocationsTool(self, evt):
+		dialog = StageLocationsDialog(self)
+		dialog.ShowModal()
+		dialog.Destroy()
+
+	def onImageDoubleClicked(self, evt):
+		# ...
+		if self.node.shape is not None:
+			self.node.navigate(evt.xy)
+
+class StageLocationsDialog(wx.Dialog):
+	def __init__(self, parent):
+		self.node = parent.node
+		wx.Dialog.__init__(self, parent, -1, 'Stage Locations')
+
+		self.sz = wx.GridBagSizer(5, 5)
 
 		stposition = {}
 		self.stposition = {}
@@ -30,8 +76,8 @@ class Panel(gui.wx.Node.Panel):
 		for i, a in enumerate(axes):
 			stposition[a] = wx.StaticText(self, -1, a)
 			self.stposition[a] = wx.StaticText(self, -1, '-')
-			self.szlocations.Add(stposition[a], (0, i + 1), (1, 1), wx.ALIGN_CENTER)
-			self.szlocations.Add(self.stposition[a], (1, i + 1), (1, 1),
+			self.sz.Add(stposition[a], (0, i + 1), (1, 1), wx.ALIGN_CENTER)
+			self.sz.Add(self.stposition[a], (1, i + 1), (1, 1),
 														wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
 		label0 = wx.StaticText(self, -1, 'Position:')
@@ -47,43 +93,26 @@ class Panel(gui.wx.Node.Panel):
 		self.bfromscope.Enable(False)
 		self.bremove.Enable(False)
 
-		self.szlocations.Add(label0, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.szlocations.Add(label1, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.szlocations.Add(self.stcomment, (2, 1), (1, 5),
+		self.sz.Add(label0, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(label1, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(self.stcomment, (2, 1), (1, 5),
 													wx.ALIGN_CENTER_VERTICAL)
-		self.szlocations.Add(label2, (3, 1), (1, 5), wx.ALIGN_CENTER_VERTICAL)
-		self.szlocations.Add(self.lblocations, (4, 1), (4, 5), wx.EXPAND)
-		self.szlocations.Add(self.bnew, (4, 0), (1, 1), wx.ALIGN_CENTER)
-		self.szlocations.Add(self.btoscope, (5, 0), (1, 1), wx.ALIGN_CENTER)
-		self.szlocations.Add(self.bfromscope, (6, 0), (1, 1), wx.ALIGN_CENTER)
-		self.szlocations.Add(self.bremove, (7, 0), (1, 1), wx.ALIGN_CENTER)
+		self.sz.Add(label2, (3, 1), (1, 5), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(self.lblocations, (4, 1), (4, 5), wx.EXPAND)
+		self.sz.Add(self.bnew, (4, 0), (1, 1), wx.ALIGN_CENTER)
+		self.sz.Add(self.btoscope, (5, 0), (1, 1), wx.ALIGN_CENTER)
+		self.sz.Add(self.bfromscope, (6, 0), (1, 1), wx.ALIGN_CENTER)
+		self.sz.Add(self.bremove, (7, 0), (1, 1), wx.ALIGN_CENTER)
 
-		# image
-		self.szimage = self._getStaticBoxSizer('Navigation', (1, 1), (2, 1),
-																						wx.EXPAND|wx.ALL)
-		self.imagepanel = gui.wx.ImageViewer.ClickImagePanel(self, -1)
-		self.szimage.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND|wx.ALL)
-		self.szimage.AddGrowableCol(0)
+		szdialog = wx.GridBagSizer(5, 5)
+		szdialog.Add(self.sz, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
 
-		self.szmain.AddGrowableCol(1)
-		self.szmain.AddGrowableRow(1, 1)
-		self.szmain.AddGrowableRow(2, 4)
+		self.SetSizerAndFit(szdialog)
 
-		self.SetSizerAndFit(self.szmain)
-		self.SetupScrolling()
-
-	def onNodeInitialized(self):
-		self.Bind(wx.EVT_BUTTON, self.onSettingsButton, self.bsettings)
-		self.Bind(wx.EVT_BUTTON, self.onAcquireButton, self.bacquire)
 		self.Bind(wx.EVT_BUTTON, self.onNew, self.bnew)
-
-	def onSettingsButton(self, evt):
-		dialog = SettingsDialog(self)
-		dialog.ShowModal()
-		dialog.Destroy()
-
-	def onAcquireButton(self, evt):
-		self.node.acquireImage()
+		self.Bind(wx.EVT_BUTTON, self.onToScope, self.btoscope)
+		self.Bind(wx.EVT_BUTTON, self.onFromScope, self.bfromscope)
+		self.Bind(wx.EVT_BUTTON, self.onRemove, self.bremove)
 
 	def onNew(self, evt):
 		dialog = NewLocationDialog(self)
@@ -126,12 +155,7 @@ class Panel(gui.wx.Node.Panel):
 		self.bfromscope.Enable(True)
 		self.bremove.Enable(True)
 
-		self.szlocations.Layout()
-
-	def onImageDoubleClicked(self, evt):
-		# ...
-		if self.node.shape is not None:
-			self.node.navigate(evt.xy)
+		self.sz.Layout()
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):

@@ -36,6 +36,7 @@ class Panel(gui.wx.TargetFinder.Panel):
 	def initialize(self):
 		gui.wx.TargetFinder.Panel.initialize(self)
 
+		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SUBMIT,
 													'play',
 													shortHelpString='Submit Targets')

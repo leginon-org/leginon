@@ -5,6 +5,7 @@ import gui.wx.TargetFinder
 import wx.lib.filebrowsebutton as filebrowse
 from gui.wx.Entry import IntEntry, FloatEntry
 import gui.wx.TargetTemplate
+import gui.wx.ToolBar
 
 AddTargetTypesEventType = wx.NewEventType()
 AddTargetsEventType = wx.NewEventType()
@@ -67,8 +68,10 @@ class Panel(gui.wx.TargetFinder.Panel):
 													wx.ALIGN_CENTER_VERTICAL)
 			self.szdisplay.Add(self.bhf[n], (i, 1), (1, 1), wx.ALIGN_CENTER)
 
-		self.bsubmit = wx.Button(self, -1, 'Submit Targets')
-		self.szbuttons.Add(self.bsubmit, (1, 0), (1, 1), wx.EXPAND)
+		self.toolbar.AddSeparator()
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SUBMIT,
+													'play',
+													shortHelpString='Submit Targets')
 
 		self.imagepanel = gui.wx.ImageViewer.TargetImagePanel(self, -1)
 		self.szimage = self._getStaticBoxSizer('Target Image', (1, 1), (3, 1),
@@ -162,7 +165,8 @@ class Panel(gui.wx.TargetFinder.Panel):
 
 	def onNodeInitialized(self):
 		gui.wx.TargetFinder.Panel.onNodeInitialized(self)
-		self.Bind(wx.EVT_BUTTON, self.onSubmitButton, self.bsubmit)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onSubmitTool,
+											id=gui.wx.ToolBar.ID_SUBMIT)
 
 		for k in self.imagecheckboxes:
 			self.Bind(wx.EVT_CHECKBOX, self.onDisplayImageCheckBox, self.rbdisplay[k])
@@ -177,10 +181,10 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.Bind(wx.EVT_BUTTON, self.onFinalSettingsButton,
 							self.bhf['Final'])
 
-	def onSubmitButton(self, evt):
+	def onSubmitTool(self, evt):
 		self.node.submit()
 
-	def onSettingsButton(self, evt):
+	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()

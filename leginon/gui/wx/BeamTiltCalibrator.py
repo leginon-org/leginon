@@ -8,6 +8,7 @@ class Panel(gui.wx.Calibrator.Panel):
 	def initialize(self):
 		gui.wx.Calibrator.Panel.initialize(self)
 
+		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_MEASURE,
 													'ruler',
 													shortHelpString='Measure')

@@ -24,6 +24,8 @@ ID_TILES = 1020
 ID_MOSAIC = 1021
 ID_CURRENT_POSITION = 1022
 ID_FIND_SQUARES = 1023
+ID_ATLAS = 1024
+ID_STAGE_LOCATIONS = 1025
 
 class ToolBar(wx.ToolBar):
 	def __init__(self, parent):

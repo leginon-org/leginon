@@ -2,13 +2,17 @@
 import wx
 from gui.wx.Entry import IntEntry, FloatEntry
 import gui.wx.Calibrator
-import gui.wx.Settings
 import gui.wx.ImageViewer
+import gui.wx.ToolBar
 
 class Panel(gui.wx.Calibrator.Panel):
 	imageclass = gui.wx.ImageViewer.ClickImagePanel
 	def initialize(self):
 		gui.wx.Calibrator.Panel.initialize(self)
+
+		self.toolbar.Realize()
+		self.toolbar.DeleteTool(gui.wx.ToolBar.ID_ABORT)
+
 		self.fromxy = None
 		self.toxy = None
 		self.imagepanel.clicktool.callback = self.onImageClick
@@ -16,13 +20,10 @@ class Panel(gui.wx.Calibrator.Panel):
 	def onNodeInitialized(self):
 		gui.wx.Calibrator.Panel.onNodeInitialized(self)
 
-	def onCalibrateButton(self, evt):
+	def onCalibrateTool(self, evt):
 		dialog = PixelSizeCalibrationDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
-
-	def onAbortButton(self, evt):
-		raise NotImplementedError
 
 	def onImageClick(self, xy):
 		self.fromxy = self.toxy

@@ -33,6 +33,7 @@ class Panel(gui.wx.Acquisition.Panel):
 	def __init__(self, parent, name):
 		gui.wx.Acquisition.Panel.__init__(self, parent, name)
 
+		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_AUTOFOCUS,
 													'autofocus',
 													isToggle=True,
