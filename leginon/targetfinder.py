@@ -446,7 +446,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		for tilepos, targets in tiles_with_targets.items():
 			for target in targets:
 				coord = self.targetToMosaicCoord(tilepos, target)
-				if target['status'] == 'done':
+				if target['status'] in ('done','aborted'):
 					target_coords_done.append(coord)
 				else:
 					target_coords.append(coord)
