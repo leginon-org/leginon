@@ -15,7 +15,8 @@ class Launcher(node.Node):
 		self.addEventInput(event.LaunchEvent, self.handleLaunch)
 		self.caller = calllauncher.CallLauncher()
 		print 'launcher id: %s' % self.id
-		self.main()
+
+		self.start()
 
 	def addManager(self, loc):
 		'''
@@ -28,8 +29,8 @@ class Launcher(node.Node):
 		e = event.LauncherAvailableEvent(self.ID(), self.location())
 		self.announce(e)
 
-#	def main(self):
-#		self.interact()
+	def main(self):
+		pass
 
 	def handleLaunch(self, launchevent):
 		# unpack event content

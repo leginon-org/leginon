@@ -31,13 +31,19 @@ class Manager(node.Node):
 		self.addEventInput(event.UnpublishEvent, self.unregisterData)
 		self.addEventInput(event.ListPublishEvent, self.registerData)
 
-		self.main()
+		self.start()
 
 	def main(self):
+		pass
+
+	def start(self):
 		print self.location()
 		if self.usegui:
 			self.start_gui()
 		interact_thread = self.interact()
+
+		self.main()
+
 		# wait until the interact thread terminates
 		interact_thread.join()
 		self.exit()

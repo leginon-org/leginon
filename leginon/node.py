@@ -84,9 +84,14 @@ class Node(leginonobject.LeginonObject):
 		self.announce(event.NodeAvailableEvent(newid, myloc))
 
 	def main(self):
+		raise NotImplementedError()
+
+	def start(self):
 		'''this is the node's parent method'''
-		#raise NotImplementedError()
 		interact_thread = self.interact()
+
+		self.main()
+
 		# wait until the interact thread terminates
 		interact_thread.join()
 		self.exit()

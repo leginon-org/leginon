@@ -14,14 +14,13 @@ class MyNode(node.Node):
 
 		self.interval = 5
 		print self.location()
-		self.main()
+		self.start()
 
-	def main(self, startevent=None):
-		#for i in [1,2,3]:
-		while 1:
+	def main(self):
+		#while 1:
+		for i in [1, 2, 3]:
 			self.print_stuff()
 			time.sleep(self.interval)
-		#self.unregister()
 
 	def unregister(self):
 		self.announce(event.NodeUnavailableEvent(self.ID()))

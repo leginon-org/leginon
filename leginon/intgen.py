@@ -15,7 +15,7 @@ class IntGen(node.Node):
 		print self.location()
 		print self.id
 
-		self.main()
+		self.start()
 
 	def sendint(self, newint):
 		self.announce(event.NumericControlEvent(self.ID(), newint))
@@ -27,11 +27,7 @@ class IntGen(node.Node):
 		self.announce(event.StopEvent(self.ID()))
 			
 	def main(self):
-		try:
-			self.interact()
-		except:
-			print 'interact quit poorly'
-		print 'interact quit cleanly'
+		pass
 
 if __name__ == '__main__':
 	import signal, sys
