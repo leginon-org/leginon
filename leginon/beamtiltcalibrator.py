@@ -143,7 +143,6 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 	def defineUserInterface(self):
 		calibrator.Calibrator.defineUserInterface(self)
-		cameraconfig = self.cam.configUIData()
 		self.defocustiltvalue = uidata.UIFloat('Tilt', 0.01, 'rw')
 		self.defocus1 = uidata.UIFloat('Defocus 1', -1e-6, 'rw')
 		self.defocus2 = uidata.UIFloat('Defocus 2', -2e-6, 'rw')
@@ -162,18 +161,14 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		stigcontainer.addUIObjects((self.stigtiltvalue, self.stigdelta,
 																calstigmethod))
 
-
-		calimage = self.imageViewer()
-
 		self.measuretiltvalue = uidata.UIFloat('Measure Tilt', 0.01, 'rw')
 		self.resultvalue = uidata.UIStruct('Necessary Correction', {}, 'r')
 		measuremethod = uidata.UIMethod('Measure', self.uiMeasureDefocusStig)
 		measurecontainer = uidata.UIContainer('Measure')
-		measurecontainer.addUIObjects((self.measuretiltvalue, self.resultvalue,
-																		measuremethod))
+		measurecontainer.addUIObjects((self.measuretiltvalue, self.resultvalue, measuremethod))
 
 		container = uidata.UIMediumContainer('Beam Tilt Calibrator')
-		container.addUIObjects((cameraconfig, defocuscontainer, stigcontainer, calimage, measurecontainer))
+		container.addUIObjects((defocuscontainer, stigcontainer, measurecontainer))
 		self.uiserver.addUIObject(container)
 
 	def uiCalibrateDefocus(self):

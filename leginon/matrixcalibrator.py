@@ -118,7 +118,6 @@ class MatrixCalibrator(calibrator.Calibrator):
 
 	def defineUserInterface(self):
 		calibrator.Calibrator.defineUserInterface(self)
-		cameraconfig = self.cam.configUIData()
 		self.uinaverage = uidata.UIInteger('N Average', 1, 'rw')
 		self.uicurbase = uidata.UIBoolean('Current as Base', True, 'rw')
 		self.uibase = uidata.UIStruct('Base', {'x':0,'y':0}, 'rw')
@@ -137,16 +136,14 @@ class MatrixCalibrator(calibrator.Calibrator):
 		self.uivalidshift = uidata.UIStruct('Valid Shift', validshift, 'rw')
 
 		settingscontainer = uidata.UIContainer('Settings')
-		settingscontainer.addUIObjects((cameraconfig, self.uinaverage, self.uicurbase, self.uibase,
+		settingscontainer.addUIObjects((self.uinaverage, self.uicurbase, self.uibase,
 																		self.uiparameter, self.uidelta,
 																		self.ui_interval, self.uivalidshift))
 
 		calibratemethod = uidata.UIMethod('Calibrate', self.uiCalibrate)
 
-		calimage = self.imageViewer()
-
 		container = uidata.UIMediumContainer('Matrix Calibrator')
-		container.addUIObjects((settingscontainer, calibratemethod, calimage))
+		container.addUIObjects((settingscontainer, calibratemethod))
 		self.uiserver.addUIObject(container)
 
 	def uiCalibrate(self):

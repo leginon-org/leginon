@@ -28,3 +28,13 @@ class Calibrator(node.Node):
 		if self.imageviewer is None:
 			self.imageviewer = uidata.UIImage('Calibrator Image', None, 'r')
 		return self.imageviewer
+
+	def defineUserInterface(self):
+		node.Node.defineUserInterface(self)
+		
+		self.imageviewer = uidata.UIImage('Calibrator Image', None, 'r')
+		cameraconfig = self.cam.configUIData()
+
+		container = uidata.UIMediumContainer('Calibrator')
+		container.addUIObjects((self.imageviewer, cameraconfig))
+		self.uiserver.addUIObject(container)
