@@ -45,7 +45,7 @@ class ImageWatcher(watcher.Watcher):
 		currentconfig = self.cam.config()
 		currentconfig['state']['dimension']['x'] = 1024
 		currentconfig['state']['binning']['x'] = 4
-		currentconfig['state']['exposure time'] = 100
+		currentconfig['state']['exposure time'] = 500
 
 		self.clickfuncs = {
 			'event': self.clickEvent,
