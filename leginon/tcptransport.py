@@ -35,6 +35,9 @@ class Server(SocketServer.ThreadingTCPServer, socketstreamtransport.Server):
 		loc['TCP port'] = self.port
 		return loc
 
+	def exit(self):
+		self.server_close()
+
 class Client(socketstreamtransport.Client):
 	def __init__(self, id, location):
 		socketstreamtransport.Client.__init__(self, id, location)
