@@ -37,6 +37,9 @@ class SetTargetsEvent(wx.PyCommandEvent):
 		self.targets = targets
 
 class Panel(gui.wx.TargetFinder.Panel):
+	def __init__(self, parent, name):
+		gui.wx.TargetFinder.Panel.__init__(self, parent, name) 
+
 	def initialize(self):
 		gui.wx.TargetFinder.Panel.initialize(self)
 
@@ -58,13 +61,21 @@ class Panel(gui.wx.TargetFinder.Panel):
 			'Lattice',
 			'Final'
 		]
+		self.imagecheckboxes = [
+			'Original',
+			'Edge',
+			'Template',
+			'Threshold',
+		]
+		self.targetcheckboxes = [
+			'Blobs',
+			'Lattice',
+			'Final'
+		]
 		self.rbdisplay = {}
 		self.bhf = {}
 		for i, n in enumerate(order):
-			if i == 0:
-				self.rbdisplay[n] = wx.RadioButton(self, -1, n, style=wx.RB_GROUP)
-			else:
-				self.rbdisplay[n] = wx.RadioButton(self, -1, n)
+			self.rbdisplay[n] = wx.CheckBox(self, -1, n)
 			self.bhf[n] = wx.Button(self, -1, 'Settings...')
 			self.szdisplay.Add(self.rbdisplay[n], (i, 0), (1, 1),
 													wx.ALIGN_CENTER_VERTICAL)
@@ -88,16 +99,11 @@ class Panel(gui.wx.TargetFinder.Panel):
 
 	def onImageUpdated(self, evt):
 		if self.rbdisplay[evt.name].GetValue():
-			self.imagepanel.setImage(evt.image)
-			if evt.targets is not None:
-				self._setTargets(evt.targets)
-
-	def _setTargets(self, targets):
-		self.imagepanel.clearTargets()
-		for typename, targetlist in targets.items():
-			for target in targetlist:
-				x, y = target
-				self.imagepanel.addTarget(typename, x, y)
+			if evt.name in self.imagecheckboxes:
+				self.imagepanel.setImage(evt.image)
+			if evt.name in self.targetcheckboxes:
+				if evt.targets is not None:
+					self._setTargets(evt.targets)
 
 	def imageUpdated(self, name, image, targets=None):
 		evt = gui.wx.TargetFinder.ImageUpdatedEvent(self, name, image, targets)
@@ -135,26 +141,49 @@ class Panel(gui.wx.TargetFinder.Panel):
 	def getTargets(self, typename):
 		return self.imagepanel.getTargetTypeValue(typename)
 
-	def onDisplayRadioButton(self, evt):
-		for key, value in self.rbdisplay.items():
-			if value.GetValue():
-				try:
-					image = self.node.images[key]
-				except KeyError:
-					image = None
-				self.imagepanel.setImage(image)
-				try:
-					targets = self.node.imagetargets[key]
-				except KeyError:
-					targets = {}
-				self._setTargets(targets)
-				break
+	def onDisplayImageCheckBox(self, evt):
+		key = evt.GetEventObject().GetLabel()
+		for k in self.imagecheckboxes:
+			if k != key:
+				self.rbdisplay[k].SetValue(False)
+		if evt.IsChecked():
+			try:
+				image = self.node.images[key]
+			except KeyError:
+				image = None
+		else:
+			image = None
+		self.imagepanel.setImage(image)
+
+	def _setTargets(self, targets):
+		for typename, targetlist in targets.items():
+			self.imagepanel.clearTargets(typename)
+			for target in targetlist:
+				x, y = target
+				self.imagepanel.addTarget(typename, x, y)
+
+	def onDisplayTargetsCheckBox(self, evt):
+		key = evt.GetEventObject().GetLabel()
+		try:
+			targets = self.node.imagetargets[key]
+		except KeyError:
+			targets = {}
+		if evt.IsChecked():
+			self._setTargets(targets)
+		else:
+			for typename in targets:
+				self.imagepanel.clearTargets(typename)
 
 	def onNodeInitialized(self):
 		gui.wx.TargetFinder.Panel.onNodeInitialized(self)
 		self.Bind(wx.EVT_BUTTON, self.onSubmitButton, self.bsubmit)
-		for value in self.rbdisplay.values():
-			self.Bind(wx.EVT_RADIOBUTTON, self.onDisplayRadioButton, value)
+
+		for k in self.imagecheckboxes:
+			self.Bind(wx.EVT_CHECKBOX, self.onDisplayImageCheckBox, self.rbdisplay[k])
+		for k in self.targetcheckboxes:
+			self.Bind(wx.EVT_CHECKBOX, self.onDisplayTargetsCheckBox,
+								self.rbdisplay[k])
+
 		self.Bind(wx.EVT_BUTTON, self.onOriginalSettingsButton,
 							self.bhf['Original'])
 		self.Bind(wx.EVT_BUTTON, self.onEdgeSettingsButton,
@@ -171,7 +200,7 @@ class Panel(gui.wx.TargetFinder.Panel):
 							self.bhf['Final'])
 
 	def onSubmitButton(self, evt):
-		self.node.submitTargets()
+		self.node.submit()
 
 	def onSettingsButton(self, evt):
 		dialog = SettingsDialog(self)

@@ -134,12 +134,13 @@ class HoleFinder(targetfinder.TargetFinder):
 		n = self.settings['edge log size']
 		sig = self.settings['edge log sigma']
 		ab = self.settings['edge absolute']
+		edges = self.settings['edge']
 		filt = self.settings['edge type']
 		lowpasson = self.settings['edge lpf']
 		lowpassn = self.settings['edge lpf size']
 		lowpasssig = self.settings['edge lpf sigma']
 		edgethresh = self.settings['edge threshold']
-		self.hf.configure_edges(filter=filt, size=n, sigma=sig, absvalue=ab, lp=lowpasson, lpn=lowpassn, lpsig=lowpasssig, thresh=edgethresh)
+		self.hf.configure_edges(filter=filt, size=n, sigma=sig, absvalue=ab, lp=lowpasson, lpn=lowpassn, lpsig=lowpasssig, thresh=edgethresh, edges=edges)
 		self.hf.find_edges()
 		# convert to Float32 to prevent seg fault
 		self.updateImage('Edge', self.hf['edges'].astype(Numeric.Float32))
@@ -190,7 +191,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		blobs = self.hf['blobs']
 		centers = self.blobCenters(blobs)
 		self.logger.info('Blobs: %s' % (len(centers),))
-		self.updateImage('Blobs', self.hf['original'], {'All Blobs': centers})
+		self.updateImage('Blobs', None, {'All Blobs': centers})
 
 	def fitLattice(self):
 		self.logger.info('fit lattice')
@@ -217,7 +218,7 @@ class HoleFinder(targetfinder.TargetFinder):
 			tstd = self.icecalc.get_stdev_thickness(std, mean)
 			center = tuple(hole.stats['center'])
 			mylist.append({'m':mean, 'tm': tmean, 's':std, 'ts': tstd, 'c':center})
-		self.updateImage('Lattice', self.hf['original'], {'Lattice Blobs': centers})
+		self.updateImage('Lattice', None, {'Lattice Blobs': centers})
 
 	def ice(self):
 		self.logger.info('limit thickness')
@@ -262,7 +263,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		else:
 			acq_points = centers
 
-		self.updateImage('Final', self.hf['original'], {'acquisition': acq_points,
+		self.updateImage('Final', None, {'acquisition': acq_points,
 																										'focus': focus_points})
 		self.logger.info('Acquisition Targets: %s' % (len(acq_points),))
 		self.logger.info('Focus Targets: %s' % (len(focus_points),))
@@ -314,8 +315,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		return closest_point
 
 	def bypass(self):
-		self.updateImage('Final', self.hf['original'], {'acquisition': [],
-																										'focus': []})
+		self.updateImage('Final', None, {'acquisition': [], 'focus': []})
 		self.imagedata = self.currentimagedata
 
 	def applyTargetTemplate(self, centers):

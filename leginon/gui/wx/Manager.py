@@ -211,9 +211,8 @@ class Frame(wx.Frame):
 
 	def onAddLauncherPanel(self, evt):
 		# this doesn't really work
-		dialog = wx.Dialog(self, -1, 'Temporary Launcher Window',
-												style=wx.CAPTION|wx.SYSTEM_MENU|wx.CLOSE_BOX|
-															wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.RESIZE_BORDER)
+		style=wx.CAPTION|wx.SYSTEM_MENU|wx.CLOSE_BOX|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.RESIZE_BORDER
+		dialog = wx.Dialog(self, -1, 'Temporary Launcher Window', style=style)
 		#sizer = wx.GridBagSizer(0, 0)
 		panel = gui.wx.Launcher.Panel(dialog, evt.launcher)
 		#sizer.Add(panel, (0, 0), (1, 1), wx.EXPAND|wx.ALL)

@@ -223,7 +223,7 @@ class HoleFinder(object):
 
 		## some default configuration parameters
 		self.save_mrc = False
-		self.edges_config = {'filter': 'sobel', 'size': 9, 'sigma': 1.4, 'abs': False, 'lp':True, 'lpn':5, 'lpsig':1.0, 'thresh':100.0}
+		self.edges_config = {'filter': 'sobel', 'size': 9, 'sigma': 1.4, 'abs': False, 'lp':True, 'lpn':5, 'lpsig':1.0, 'thresh':100.0, 'edges': True}
 		self.template_config = {'ring_list': [(25,30)]}
 		self.correlation_config = {'cortype': 'cross correlation', 'corfilt':0.0}
 		self.threshold = 3.0
@@ -252,7 +252,7 @@ class HoleFinder(object):
 		## update this result
 		self.__results[key] = image
 
-	def configure_edges(self, filter=None, size=None, sigma=None, absvalue=None, lp=None, lpn=None, lpsig=None, thresh=None):
+	def configure_edges(self, filter=None, size=None, sigma=None, absvalue=None, lp=None, lpn=None, lpsig=None, thresh=None, edges=None):
 		if filter is not None:
 			self.edges_config['filter'] = filter
 		if size is not None:
@@ -269,6 +269,8 @@ class HoleFinder(object):
 			self.edges_config['lpsig'] = lpsig
 		if thresh is not None:
 			self.edges_config['thresh'] = thresh
+		if edges is not None:
+			self.edges_config['edges'] = edges
 
 	def find_edges(self):
 		'''
@@ -286,6 +288,7 @@ class HoleFinder(object):
 		lpn = self.edges_config['lpn']
 		lpsig = self.edges_config['lpsig']
 		edgethresh = self.edges_config['thresh']
+		edgesflag = self.edges_config['edges']
 
 		if lp:
 			kernel = convolver.gaussian_kernel(lpn, lpsig)
@@ -294,7 +297,9 @@ class HoleFinder(object):
 		else:
 			smooth = sourceim
 
-		if filt == 'laplacian3':
+		if not edgesflag:
+			edges = smooth
+		elif filt == 'laplacian3':
 			kernel = convolver.laplacian_kernel3
 			self.edgefinder.setKernel(kernel)
 			edges = self.edgefinder.convolve(image=smooth)
@@ -321,10 +326,10 @@ class HoleFinder(object):
 		else:
 			raise RuntimeError('no such filter type: %s' % (filt,))
 
-		if ab:
+		if ab and edgesflag:
 			edges = Numeric.absolute(edges)
 
-		if edgethresh:
+		if edgethresh and edgesflag:
 			edges = imagefun.threshold(edges, edgethresh)
 
 		self.__update_result('edges', edges)
