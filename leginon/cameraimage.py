@@ -1,7 +1,12 @@
 import Numeric
 import fftengine
 
-ffteng = fftengine.fftNumeric()
+if fftengine.fftFFTW is None:
+	ffteng = fftengine.fftNumeric()
+	print 'USING Numeric FFT'
+else:
+	ffteng = fftFFTW()
+	print 'USING FFTW'
 
 ## Numeric seems to use infinity as a result of zero
 ## division, but I can find no infinity constant or any other way of 
@@ -67,15 +72,104 @@ def averageSeries(series):
 	avg = sum / divisor
 	return avg
 
+def linearscale(input, boundfrom, boundto, extrema=None):
+	"""
+	Rescale the data in the range 'boundfrom' to the range 'boundto'.
+	"""
+
+	### check args
+	if len(input) < 1:
+		return input
+	if len(boundfrom) != 2:
+		raise ValueError, 'boundfrom must be length 2'
+	if len(boundto) != 2:
+		raise ValueError, 'boundto must be length 2'
+
+	minfrom,maxfrom = boundfrom
+	minto,maxto = boundto
+
+	### default from bounds are min,max of the input
+	if minfrom is None:
+		if extrema:
+			minfrom = extrema[0]
+		else:
+			minfrom = Numeric.argmin(Numeric.ravel(input))
+			minfrom = Numeric.ravel(input)[minfrom]
+	if maxfrom is None:
+		if extrema:
+			maxfrom = extrema[1]
+		else:
+			maxfrom = Numeric.argmax(Numeric.ravel(input))
+			maxfrom = Numeric.ravel(input)[maxfrom]
+
+	## prepare for fast math
+	rangefrom = Numeric.array((maxfrom - minfrom)).astype('f')
+	rangeto = Numeric.array((maxto - minto)).astype('f')
+	minfrom = Numeric.array(minfrom).astype('f')
+
+	# this is a hack to prevent zero division
+	# is there a better way to do this with some sort of 
+	# float limits module rather than hard coding 1e-99?
+	if not rangefrom:
+		rangefrom = 1e-99
+
+	#output = (input - minfrom) * rangeto / rangefrom
+	scale = rangeto / rangefrom
+	offset = minfrom * scale
+	output = input * scale - offset
+
+	return output
+
+# resize and rotate filters:  NEAREST, BILINEAR, BICUBIC
+
+def center_fill(input, size, value=0):
+	rows,cols = input.shape
+	center = rows/2, cols/2
+	cenr, cenc = center
+	print 'CENTER', center
+	input[cenr-size/2:cenr+size/2, cenc-size/2:cenc+size/2] = value
+
 def power(numericarray):
 	fft = ffteng.transform(numericarray)
-	pow = Numeric.absolute(fft) ** 2
-	pow = swap(pow)
+	#pow = Numeric.absolute(fft) ** 2
+	pow = Numeric.absolute(fft)
+	#pow = swap(pow)
+	pow = shuffle(pow)
+	center_fill(pow, 15, 0)
+	pow = linearscale(pow, (None, None), (1,100))
+	pow = Numeric.clip(pow, 1, 100)
+	print 'type', pow.typecode()
+	print 'min', min(pow)
+	print 'max', max(pow)
+	pow = Numeric.log(pow)
 	return pow
+
+def shuffle(narray):
+	'''
+	take a half fft/power spectrum centered at 0,0
+	and convert to full fft/power centered at center of image
+	'''
+	## create new full size array 
+	r,oldc = narray.shape
+	c = 2*(oldc-1)
+	newshape = r,c
+	new = Numeric.zeros(newshape, narray.typecode())
+
+	## fill in right half
+	new[r/2:,c/2-1:] = narray[:r/2,:]
+	new[:r/2,c/2-1:] = narray[r/2:,:]
+
+	## fill in left half
+	for row in range(1,r):
+		for col in range(c/2-1):
+			new[row,col] = new[-1-row,-2-col]
+
+	new[r/2,c/2-1] = new[r/2,c/2]
+	return new
 
 def swap(numericarray):
 	rows,cols = numericarray.shape
-	newarray = Numeric.array(numericarray)
+	newarray = Numeric.zeros(numericarray.shape, numericarray.typecode())
 	newarray[:rows/2] = numericarray[rows/2:]
 	newarray[rows/2:] = numericarray[:rows/2]
 	return newarray
