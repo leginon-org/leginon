@@ -48,9 +48,9 @@ def linearscale(input, boundfrom, boundto):
 
 	### default from bounds are min,max of the input
 	if minfrom == None:
-		minfrom = min(input.flat)
+		minfrom = min(Numeric.ravel(input))
 	if maxfrom == None:
-		maxfrom = max(input.flat)
+		maxfrom = max(Numeric.ravel(input))
 
 	rangefrom = float(maxfrom - minfrom)
 	rangeto = float(maxto - minto)
@@ -64,35 +64,69 @@ def linearscale(input, boundfrom, boundto):
 	output = (input - minfrom) * rangeto / rangefrom
 	return output
 
+# resize and rotate filters:  NEAREST, BILINEAR, BICUBIC
+
+def resize(pil_image, size):
+	if size:
+		if size != pil_image.size:
+			new_image = pil_image.resize(size, Image.NEAREST)
+		else:
+			new_image = pil_image
+	else:
+		new_image = pil_image
+	return new_image
+
 
 class NumericImage:
 	"""
 	NumericImage couples a Numeric array with a PIL Image instance.
 	"""
-	def __init__(self, orig_array):
-		self.use_numeric(orig_array)
-		self.transform = {'clip':(None,None), 'zoom':1.0}
-		self.update_image()
+	def __init__(self, orig_array, clip=(None,None), output_size=None):
+		self.transform = {'clip':clip, 'output_size':output_size}
+		self.__use_numeric(orig_array)
+		print 'NumericImage initialized:', self.transform['clip']
 
 	def __setitem__(self, key, value):
 		if key not in self.transform.keys():
 			raise KeyError, 'key must be one of: ' + `self.transform.keys()`
 		self.transform[key] = value
 
-	def use_numeric(self, num_data):
+	def __use_numeric(self, num_data):
 		shape = num_data.shape
 		if len(shape) != 2:
 			raise RuntimeError, 'orig_array must be 2-D Numeric array'
 		self.orig_array = num_data
 		h,w = shape  # transpose Numeric array
 		self.orig_size = w,h
-		self.extrema =  min(self.orig_array.flat), max(self.orig_array.flat)
 
-	def get(self, x, y):
-		return self.orig_array[y,x]
+		### if output size and clip are not set, use defaults
+		if not self.transform['output_size']:
+			self.transform['output_size'] = self.orig_size
+		self.extrema =  min(Numeric.ravel(self.orig_array)), max(Numeric.ravel(self.orig_array))
+		print 'numeric extrema set'
+		if not self.transform['clip']:
+			self.transform['clip'] = self.extrema
 
-	def zoom(self):
-		pass
+	def get(self, numcoord):
+		try:
+			val = self.orig_array[ numcoord[1], numcoord[0]]
+		except IndexError:
+			val = None
+		return val
+
+	def imagexy_to_numericxy(self, coord):
+		if not coord:
+			return None
+		orig_size = self.orig_size
+		output_size = self.transform['output_size']
+		numx = (float(coord[0]) / output_size[0]) * orig_size[0]
+		numy = (float(coord[1]) / output_size[1]) * orig_size[1]
+		if 0 <= numx < orig_size[0] and 0 <= numy < orig_size[1]:
+			numx = int(numx)
+			numy = int(numy)
+			return numx,numy
+		else:
+			return None
 
 	def update_image(self):
 		"""
@@ -100,6 +134,7 @@ class NumericImage:
 		"""
 
 		clip = self.transform['clip']
+		print 'UPDATE IMAGE with clip', clip
 		final = linearscale(self.orig_array, clip, (0,255))
 		type = final.typecode()
 		h,w = final.shape
@@ -112,7 +147,11 @@ class NumericImage:
 
 		stride = 0
 		orientation = 1
-		self.image = Image.fromstring(immode, imsize, nstr, 'raw', rawmode, stride, orientation)
+		image = Image.fromstring(immode, imsize, nstr, 'raw', rawmode, stride, orientation)
+
+		image = resize(image, self.transform['output_size'])
+		
+		self.image = image
 		return self.image
 
 	def photoimage(self):
