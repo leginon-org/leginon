@@ -36,14 +36,22 @@ class _fftEngine(object):
 
 ### this attempts to use sfftw to create the fft engine classs
 ### if that fails, it will use Numeric
-try:
-	## until we work out problems with using floats vs. doubles...
-	raise ImportError('sfftw disabled until some problems resolved')
-	import sfftw
-except ImportError:
-	print 'Warning:  you are using Numeric for FFTs.'
-	print 'Compile the sfftw module for faster FFTs.'
+fftw_mods = []
 
+try:
+	print 'importing sfftw...'
+	import sfftw
+	fftw_mods.append(sfftw)
+	print 'importing fftw...'
+	import fftw
+	fftw_mods.append(fftw)
+except ImportError:
+	print 'could not import fftw modules'
+
+if len(fftw_mods) != 2:
+	print 'Warning:  you are using Numeric for FFTs.'
+	print 'Compile the fftw modules for faster FFTs.'
+	### use Numeric if fftw not available
 	class fftEngine(_fftEngine):
 		'''subclass of fftEngine which uses FFT from Numeric module'''
 		def __init__(self, *args, **kwargs):
@@ -58,9 +66,16 @@ except ImportError:
 			return im
 
 else:
-	### for managing fftw plans
-	plans = {}
-	iplans = {}
+	for mod in fftw_mods:
+		mod.plans = {}
+		mod.iplans = {}
+	# mapping Numeric typecode to (fftwmodule, transformed type)
+	type_info = {
+		Numeric.Float32: {'module':sfftw, 'trans':Numeric.Complex32},
+		Numeric.Float64: {'module':fftw, 'trans':Numeric.Complex64},
+		Numeric.Complex32: {'module':sfftw, 'trans':Numeric.Float32},
+		Numeric.Complex64: {'module':fftw, 'trans':Numeric.Float64}
+	}
 
 	class fftEngine(_fftEngine):
 		'''
@@ -83,69 +98,76 @@ else:
 				print 'calculating fftw plans'
 			else:
 				print 'No fftw plan shapes were specified.  Plans will be created as needed.'
-			for shape in planshapes:
-				self.timer(self.plan, (shape,))
-				self.timer(self.iplan, (shape,))
-				print 'fftw plans done'
+			for mod in fftw_mods:
+				for shape in planshapes:
+					self.timer(self.plan, (shape,mod))
+					self.timer(self.iplan, (shape,mod))
+					print 'fftw plans done'
 
 		def _transform(self, im):
-			if im.typecode() != Numeric.Float32:
+			if im.typecode() not in type_info.keys():
 				im = im.astype(Numeric.Float32)
 			fftshape = (im.shape[1], im.shape[0] / 2 + 1)
-			imfft = Numeric.zeros(fftshape, Numeric.Complex32)
-			plan = self.timer(self.plan, (im.shape,))
-			sfftw.rfftwnd_one_real_to_complex(plan, im, imfft)
+			imfft = Numeric.zeros(fftshape, type_info[im.typecode()]['trans'])
+			mod = type_info[im.typecode()]['module']
+			plan = self.timer(self.plan, (im.shape,mod))
+			mod.rfftwnd_one_real_to_complex(plan, im, imfft)
 			return imfft
 
-		def _itransform(self, fftim, normalize=0):
-			if fftim.typecode() != Numeric.Complex32:
-				raise TypeError('input must be Numeric.Complex32')
+		def _itransform(self, fftim):
+			if fftim.typecode() not in type_info.keys():
+				im = im.astype(Numeric.Complex32)
 			imshape = (2*(fftim.shape[1]-1), fftim.shape[0])
-	
-			im = Numeric.zeros(imshape, Numeric.Float32)
-			im.savespace(1)  #prevent upcasting from float32 to float64
-			plan = self.timer(self.iplan, (imshape,))
+
+			im = Numeric.zeros(imshape, type_info[fftim.typecode()]['trans'])
+			#im.savespace(1)  #prevent upcasting from float32 to float64
+			mod = type_info[fftim.typecode()]['module']
+			plan = self.timer(self.iplan, (imshape,mod))
 			### the input image will be destroyed, so make copy
 			fftimcopy = Numeric.array(fftim)
-			sfftw.rfftwnd_one_complex_to_real(plan, fftimcopy, im)
-			if normalize:
-				norm = imshape[0] * imshape[1]
-				im = Numeric.divide(im, norm)
+			mod.rfftwnd_one_complex_to_real(plan, fftimcopy, im)
+			norm = imshape[0] * imshape[1]
+			im = Numeric.divide(im, norm)
 			return im
 
-		def plan(self, shape):
-			if shape not in plans:
-				print 'creating fftw plan for %s' % (shape,)
+		def plan(self, shape, mod):
+			if shape not in mod.plans:
+				print 'creating %s plan for %s' % (mod.__name__, shape)
 				r,c = shape
 				if self.measure:
-					plans[shape] = sfftw.rfftw2d_create_plan(r,c,sfftw.FFTW_REAL_TO_COMPLEX, sfftw.FFTW_MEASURE|sfftw.FFTW_USE_WISDOM)
+					mod.plans[shape] = mod.rfftw2d_create_plan(r,c,mod.FFTW_REAL_TO_COMPLEX, mod.FFTW_MEASURE|mod.FFTW_USE_WISDOM)
 				else:
-					plans[shape] = sfftw.rfftw2d_create_plan(r,c,sfftw.FFTW_REAL_TO_COMPLEX, sfftw.FFTW_ESTIMATE|sfftw.FFTW_USE_WISDOM)
+					mod.plans[shape] = mod.rfftw2d_create_plan(r,c,mod.FFTW_REAL_TO_COMPLEX, mod.FFTW_ESTIMATE|mod.FFTW_USE_WISDOM)
 
-			return plans[shape]
+			return mod.plans[shape]
 
-		def iplan(self, shape):
-			if shape not in iplans:
-				print 'creating fftw iplan for %s' % (shape,)
+		def iplan(self, shape, mod):
+			if shape not in mod.iplans:
+				print 'creating %s iplan for %s' % (mod.__name__, shape)
 				r,c = shape
 				if self.measure:
-					iplans[shape] = sfftw.rfftw2d_create_plan(r,c,sfftw.FFTW_COMPLEX_TO_REAL, sfftw.FFTW_MEASURE|sfftw.FFTW_USE_WISDOM)
+					mod.iplans[shape] = mod.rfftw2d_create_plan(r,c,mod.FFTW_COMPLEX_TO_REAL, mod.FFTW_MEASURE|mod.FFTW_USE_WISDOM)
 				else:
-					iplans[shape] = sfftw.rfftw2d_create_plan(r,c,sfftw.FFTW_COMPLEX_TO_REAL, sfftw.FFTW_ESTIMATE|sfftw.FFTW_USE_WISDOM)
-			return iplans[shape]
+					mod.iplans[shape] = mod.rfftw2d_create_plan(r,c,mod.FFTW_COMPLEX_TO_REAL, mod.FFTW_ESTIMATE|mod.FFTW_USE_WISDOM)
+			return mod.iplans[shape]
 
 if __name__ == '__main__':
 	import Mrc
+	import imagefun
+
+	def stats(im):
+		print '   MEAN', imagefun.mean(im)
+		print '   STD', imagefun.stdev(im)
+		print '   MIN', imagefun.min(im)
+		print '   MAX', imagefun.max(im)
 
 	print 'reading'
-	im = Mrc.mrc_to_numeric('spiketest.mrc')
-	print 'init'
-	ffteng = fftEngine(measure=False, planshapes=((512,512),))
-
-	print 'loop'
-	t0 = time.time()
-	for i in range(30):
-		print 'i', i
-		fft = ffteng.transform(im)
-	t = time.time() - t0
-	print 'T', t
+	im = Mrc.mrc_to_numeric('../test_images/spiketest.mrc')
+	print 'IM TYPE', im.typecode()
+	stats(im)
+	ffteng = fftEngine()
+	fft = ffteng.transform(im)
+	print 'FFT TYPE', fft.typecode()
+	ifft = ffteng.itransform(fft)
+	print 'IFFT TYPE', ifft.typecode()
+	stats(ifft)
