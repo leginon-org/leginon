@@ -60,6 +60,7 @@ class Corrector(node.Node):
 		e = event.ListPublishEvent(self.ID(), idlist=ids)
 		self.outputEvent(e)
 
+		self.imagedatalock = threading.RLock()
 		self.defineUserInterface()
 		self.start()
 
@@ -67,31 +68,40 @@ class Corrector(node.Node):
 		nodespec = node.Node.defineUserInterface(self)
 
 		### Acquire Bright/Dark
-		acqret = self.registerUIData('Image', 'binary')
-		acqdark = self.registerUIMethod(self.uiAcquireDark, 'Acquire Dark', (), returnspec=acqret)
-		acqbright = self.registerUIMethod(self.uiAcquireBright, 'Acquire Bright', (), returnspec=acqret)
-		acqcorr = self.registerUIMethod(self.uiAcquireCorrected, 'Acquire Corrected', (), returnspec=acqret)
+		acqdark = self.registerUIMethod(self.uiAcquireDark, 'Acquire Dark', ())
+		acqbright = self.registerUIMethod(self.uiAcquireBright, 'Acquire Bright',())
+		acqcorr = self.registerUIMethod(self.uiAcquireCorrected,
+																					'Acquire Corrected', ())
+		acquireimage = self.registerUIData('Image', 'binary', permissions='r',
+																				callback = self.uiAcquireImage)
+		acquirecontainer = self.registerUIContainer('Acquire',
+																	(acqdark, acqbright, acqcorr, acquireimage))
 
-		self.navgdata = self.registerUIData('Frames to Average', 'integer', default=3, permissions='rw')
+		self.navgdata = self.registerUIData('Frames to Average', 'integer',
+																						default=3, permissions='rw')
 
 
-		self.fakeflag = self.registerUIData('Fake', 'boolean', default=False, permissions='rw')
+		self.fakeflag = self.registerUIData('Fake', 'boolean', default=False,
+																													permissions='rw')
 
 		camconfigdata = self.cam.configUIData()
-		prefs = self.registerUIContainer('Preferences', (self.navgdata, self.fakeflag, camconfigdata))
+		prefs = self.registerUIContainer('Preferences',
+																	(self.navgdata, self.fakeflag, camconfigdata))
 
 		argspec = (
 			self.registerUIData('clip limits', 'array', default=()),
 			self.registerUIData('bad rows', 'array', default=()),
 			self.registerUIData('bad cols', 'array', default=())
 		)
-		setplan = self.registerUIMethod(self.uiSetPlanParams, 'Set Plan Params', argspec)
+		setplan = self.registerUIMethod(self.uiSetPlanParams, 'Set Plan Params',
+																																			argspec)
 
 		ret = self.registerUIData('Current Plan', 'struct')
-		getplan = self.registerUIMethod(self.uiGetPlanParams, 'Get Plan Params', (), returnspec=ret)
+		getplan = self.registerUIMethod(self.uiGetPlanParams, 'Get Plan Params',
+																													(), returnspec=ret)
 		plan = self.registerUISpec('Plan', (getplan, setplan))
 
-		myspec = self.registerUISpec('Corrector', (plan, acqdark, acqbright, acqcorr, prefs))
+		myspec = self.registerUISpec('Corrector', (plan, acquirecontainer, prefs))
 		myspec += nodespec
 		return myspec
 
@@ -113,24 +123,33 @@ class Corrector(node.Node):
 		return dict(plandata)
 
 	def uiAcquireDark(self):
-		dark = self.acquireReference(dark=True)
-		print 'Dark Stats: %s' % (self.stats(dark),)
-		mrcstr = Mrc.numeric_to_mrcstr(dark)
-		return xmlbinlib.Binary(mrcstr)
+		self.imagedatalock.acquire()
+		self.imagedata = self.acquireReference(dark=True)
+		print 'Dark Stats: %s' % (self.stats(self.imagedata),)
+		self.imagedatalock.release()
+		return ''
 
 	def uiAcquireBright(self):
-		bright = self.acquireReference(dark=False)
-		print 'Bright Stats: %s' % (self.stats(bright),)
-		mrcstr = Mrc.numeric_to_mrcstr(bright)
-		return xmlbinlib.Binary(mrcstr)
+		self.imagedatalock.acquire()
+		self.imagedata = self.acquireReference(dark=False)
+		print 'Bright Stats: %s' % (self.stats(self.imagedata),)
+		self.imagedatalock.release()
+		return ''
 
 	def uiAcquireCorrected(self):
 		camconfig = self.cam.config()
 		camstate = camconfig['state']
 		self.cam.state(camstate)
-		imdata = self.acquireCorrectedArray()
-		print 'Corrected Stats: %s' % (self.stats(imdata),)
-		mrcstr = Mrc.numeric_to_mrcstr(imdata)
+		self.imagedatalock.acquire()
+		self.imagedata = self.acquireCorrectedArray()
+		print 'Corrected Stats: %s' % (self.stats(self.imagedata),)
+		self.imagedatalock.release()
+		return ''
+
+	def uiAcquireImage(self):
+		self.imagedatalock.acquire()
+		mrcstr = Mrc.numeric_to_mrcstr(self.imagedata)
+		self.imagedatalock.release()
 		return xmlbinlib.Binary(mrcstr)
 
 	def newPlan(self, camstate):

@@ -261,8 +261,10 @@ class Leginon(Tkinter.Frame):
 		self.manager.app.load(applicationfilename)
 
 		self.locallauncherid = self.localLauncherID()
+		nodes = []
 		replaceargs = []
 		for args in self.manager.app.launchspec:
+			nodes.append(('manager', args[3]))
 			if args[2] == 'EM' and self.remotelauncher is not None:
 				newlauncherid = self.remotelauncher
 			else:
@@ -276,13 +278,19 @@ class Leginon(Tkinter.Frame):
 			self.manager.app.addLaunchSpec(i[1])
 
 		self.manager.app.launch()
+		print nodes
+		self.manager.waitNodes(nodes)
 
 	def startUI(self):
 		managerlocation = self.managerLocation()
 		self.manageruiclient = interface.Client(managerlocation[0],
-																										managerlocation[1])
+																						managerlocation[1])
 		self.debug = Debug(self.manageruiclient, self.notebook,
 																		self.windowmenu, 'Debug')
+		self.imagecorrection = ImageCorrection(self.manager, self.manageruiclient,
+																		self.locallauncherid, self.notebook,
+																		self.debug, self.windowmenu,
+																		'Image Correction')
 
 	def nodeLocations(self):
 		try:
@@ -379,6 +387,21 @@ class CustomWidget(Tkinter.Frame):
 																		sticky=Tkinter.W+Tkinter.E)
 		self.groups[groupname]['widgets'].append(widget)
 		return widget
+
+class ImageCorrectionWidget(CustomWidget):
+	def __init__(self, parent, corrector):
+		CustomWidget.__init__(self, parent)
+
+		widget = self.addWidget('Settings', corrector,
+														('Preferences', 'Frames to Average'))
+		self.arrangeEntry(widget, 2)
+
+		self.addWidget('Control', corrector, ('Acquire', 'Acquire Dark'))
+		self.addWidget('Control', corrector, ('Acquire', 'Acquire Bright'))
+		self.addWidget('Control', corrector, ('Acquire', 'Acquire Corrected'))
+
+		widget = self.addWidget('Image', corrector, ('Acquire', 'Image'))
+		widget.iv.canvas.resize(0, 0, 512, 512)
 
 class GridAtlasWidget(CustomWidget):
 	def __init__(self, parent, gridpreview, stateimagemosaic):
@@ -537,6 +560,18 @@ class Debug(WidgetWrapper):
 			gui = nodegui.NodeGUI(page, ui_info['hostname'],
 																	ui_info['UI port'], None, True)
 			gui.pack(fill=Tkinter.BOTH, expand=Tkinter.YES)
+
+class ImageCorrection(WidgetWrapper):
+	def __init__(self, manager, manageruiclient, launcherid, notebook,
+																			debug, windowmenu, name):
+		WidgetWrapper.__init__(self, manager, manageruiclient, launcherid,
+														notebook, debug, windowmenu, name)
+		self.addNodeInfo('corrector', self.name + ' Corrector', 'Corrector')
+		self.initialize()
+
+	def initializeWidget(self):
+		self.widget = ImageCorrectionWidget(self.page,
+															self.nodeinfo['corrector']['UI info']['client'])
 
 class GridAtlas(WidgetWrapper):
 	def __init__(self, manager, manageruiclient, launcherid, notebook,
