@@ -35,10 +35,20 @@ class Acquisition(targetwatcher.TargetWatcher):
 		If called with targetdata=None, this simulates what occurs at
 		a target (going to presets, acquiring images, etc.)
 		'''
-		## wait for focus targets to complete
-		for tid,tevent in self.targetevents.items():
+		## wait for all focus targets to complete
+		for tid,teventinfo in self.targetevents.items():
 			print 'waiting for target %s to complete' % (tid,)
-			tevent.wait()
+			teventinfo['received'].wait()
+
+		## check status of all done focus targets
+		abort = True
+		for tid,teventinfo in self.targetevents.items():
+			if teventinfo['status'] == 'success':
+				abort = False
+
+		if abort:
+			print 'Aborting this target because focus failed'
+			return 'failure'
 
 		if targetdata is None:
 			emtarget = None
@@ -77,8 +87,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 			print 'current preset'
 			print p
 			print 'acquire()'
-			self.acquire(p)
+			ret = self.acquire(p)
+			if ret:
+				return 'failure'
 			print 'done'
+		return 'success'
 
 	def targetToEMData(self, targetdata):
 		'''

@@ -46,8 +46,8 @@ class TargetWatcher(watcher.Watcher):
 			print 'python id', id(target)
 			print 'target id', target['id']
 			print 'target id id', id(target['id'])
-			self.processTargetData(target)
-			e = event.TargetDoneEvent(id=self.ID(), targetid=target['id'])
+			newstatus = self.processTargetData(target)
+			e = event.TargetDoneEvent(id=self.ID(), targetid=target['id'], status=newstatus)
 			self.outputEvent(e)
 			print 'checking abort'
 			if self.abort.isSet():
@@ -60,15 +60,19 @@ class TargetWatcher(watcher.Watcher):
 		for target in targetlistdata['targets']:
 			targetid = target['id']
 			## maybe should check if already waiting on this target?
-			self.targetevents[targetid] = threading.Event()
+			self.targetevents[targetid] = {}
+			self.targetevents[targetid]['received'] = threading.Event()
+			self.targetevents[targetid]['status'] = 'waiting'
 			print 'publishing focustargetdata', targetid
 			self.publish(targetlistdata, pubevent=True)
 
 	def handleTargetDone(self, targetdoneevent):
 		targetid = targetdoneevent['targetid']
+		status = targetdoneevent['status']
 		print 'got targetdone event, setting threading event', targetid
 		if targetid in self.targetevents:
-			self.targetevents[targetid].set()
+			self.targetevents[targetid]['status'] = status
+			self.targetevents[targetid]['received'].set()
 		self.confirmEvent(targetdoneevent)
 
 	def processTargetData(self, targetdata):

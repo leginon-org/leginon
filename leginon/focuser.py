@@ -3,6 +3,7 @@ import node, data
 import calibrationclient
 import camerafuncs
 import uidata
+import threading
 
 class Focuser(acquisition.Acquisition):
 	def __init__(self, id, sesison, nodelocations, **kwargs):
@@ -14,6 +15,7 @@ class Focuser(acquisition.Acquisition):
 			'Stage Z': self.correctZ,
 			'Defocus': self.correctDefocus
 		}
+		self.abortfail = threading.Event()
 
 		acquisition.Acquisition.__init__(self, id, sesison, nodelocations, targetclass=data.FocusTargetData, **kwargs)
 
@@ -22,10 +24,15 @@ class Focuser(acquisition.Acquisition):
 		this replaces Acquisition.acquire()
 		Instead of acquiring an image, we do autofocus
 		'''
+		self.abortfail.clear()
 		btilt = self.btilt.get()
 		pub = self.publishimages.get()
 		drift_timeout = 300
-		correction = self.btcalclient.measureDefocusStig(btilt, pub, drift_timeout)
+		try:
+			correction = self.btcalclient.measureDefocusStig(btilt, pub, drift_timeout)
+		except calibrationclient.Abort:
+			print 'measureDefocusStig was aborted'
+			return 1
 		print 'MEASURED DEFOCUS AND STIG', correction
 		defoc = correction['defocus']
 		stigx = correction['stigx']
@@ -69,6 +76,7 @@ class Focuser(acquisition.Acquisition):
 				print 'no method selected for correcting defocus'
 			else:
 				focusmethod(defoc)
+		return 0
 
 	def correctStig(self, deltax, deltay):
 		stig = self.researchByDataID(('stigmator',))
@@ -101,6 +109,9 @@ class Focuser(acquisition.Acquisition):
 	def uiTest(self):
 		self.acquire(None)
 
+	def uiAbortFailure(self):
+		self.btcalclient.abortevent.set()
+
 	def defineUserInterface(self):
 		acquisition.Acquisition.defineUserInterface(self)
 		self.btilt = uidata.Float('Beam Tilt', 0.02, 'rw')
@@ -110,9 +121,9 @@ class Focuser(acquisition.Acquisition):
 																							focustypes, 0)
 		self.stigcorrection = uidata.Boolean('Stigmator Correction', False, 'rw')
 		self.publishimages = uidata.Boolean('Publish Images', True, 'rw')
+		abortfailmethod = uidata.Method('Abort With Failure', self.uiAbortFailure)
 		testmethod = uidata.Method('Test Autofocus', self.uiTest)
 		container = uidata.MediumContainer('Focuser')
-		container.addObjects((self.btilt, self.focustype, self.stigcorrection,
-														self.publishimages, testmethod))
+		container.addObjects((self.btilt, self.focustype, self.stigcorrection, self.publishimages, abortfailmethod, testmethod))
 		self.uiserver.addObject(container)
 

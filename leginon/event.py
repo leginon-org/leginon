@@ -87,7 +87,7 @@ class TargetDoneEvent(NotificationEvent):
 	'Event indicating target is done'
 	def typemap(cls):
 		t = NotificationEvent.typemap()
-		t += [ ('targetid', tuple), ]
+		t += [ ('targetid', tuple), ('status', str)]
 		return t
 	typemap = classmethod(typemap)
 

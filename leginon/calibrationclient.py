@@ -13,6 +13,9 @@ import sys
 class DriftingTimeout(Exception):
 	pass
 
+class Abort(Exception):
+	pass
+
 class CalibrationClient(object):
 	'''
 	this is a component of a node that needs to use calibrations
@@ -25,6 +28,11 @@ class CalibrationClient(object):
 		#ffteng = fftengine.fftFFTW(planshapes=(), estimate=1)
 		self.correlator = correlator.Correlator(ffteng)
 		self.peakfinder = peakfinder.PeakFinder()
+		self.abortevent = threading.Event()
+
+	def checkAbort(self):
+		if self.abortevent.isSet():
+			raise Abort()
 
 	def acquireStateImage(self, state, publish_image=0, settle=0.0):
 		## acquire image at this state
@@ -114,6 +122,8 @@ class CalibrationClient(object):
 					break
 				else:
 					print 'drift', drift
+
+				self.checkAbort()
 				
 				if timelimit and time.time() > timelimit:
 					raise DriftingTimeout()
@@ -121,6 +131,8 @@ class CalibrationClient(object):
 
 #		mrcstr = Mrc.numeric_to_mrcstr(numimage1)
 #		self.ui_image1.set(xmlbinlib.Binary(mrcstr))
+
+		self.checkAbort()
 
 		info2 = self.acquireStateImage(state2, publish_images, settle)
 		imagedata2 = info2['imagedata']
@@ -134,6 +146,8 @@ class CalibrationClient(object):
 
 		actual = (actual1, actual2)
 		shiftinfo = {}
+
+		self.checkAbort()
 
 		print 'correlation'
 		pcimage = self.correlator.phaseCorrelate()
@@ -215,6 +229,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		return emdata
 
 	def measureDefocusStig(self, tilt_value, publish_images=0, drift_timeout=300):
+		self.abortevent.clear()
 		emdata = self.node.researchByDataID(('magnification',))
 		#mag = emdata.content['magnification']
 		mag = emdata['magnification']
@@ -235,12 +250,17 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		### easiest is one on each tilt axis
 		shifts = {}
 		tilts = {}
+		self.checkAbort()
 		for tiltaxis in ('x','y'):
 			state1 = copy.deepcopy(tiltcenter)
 			state1['beam tilt'][tiltaxis] -= (tilt_value/2.0)
 			state2 = copy.deepcopy(tiltcenter)
 			state2['beam tilt'][tiltaxis] += (tilt_value/2.0)
-			shiftinfo = self.measureStateShift(state1, state2, publish_images, settle=0.25, checkdrift=True, timeout=drift_timeout)
+			try:
+				shiftinfo = self.measureStateShift(state1, state2, publish_images, settle=0.25, checkdrift=True, timeout=drift_timeout)
+			except Abort:
+				break
+
 			pixshift = shiftinfo['pixel shift']
 
 			shifts[tiltaxis] = (pixshift['row'], pixshift['col'])
@@ -248,10 +268,16 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 				tilts[tiltaxis] = (tilt_value, 0)
 			else:
 				tilts[tiltaxis] = (0, tilt_value)
+			try:
+				self.checkAbort()
+			except Abort:
+				break
 
 		## return to original beam tilt
 		emdata = data.ScopeEMData(id=('scope',), initializer=tiltcenter)
 		self.node.publishRemote(emdata)
+
+		self.checkAbort()
 
 		print 'TILTS'
 		print tilts
