@@ -748,6 +748,8 @@ class PresetsManager(node.Node):
 		if self.currentpreset is None or self.currentpreset['name'] != newpresetname:
 			self.cycleToScope(newpresetname, dofinal=False)
 
+		print 'going to target and to preset %s' % (newpresetname,)
+
 		oldpreset = emtargetdata['preset']
 		newpreset = self.presetByName(newpresetname)
 
