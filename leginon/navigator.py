@@ -27,7 +27,6 @@ class Navigator(node.Node):
 
 		self.addEventInput(event.ImageClickEvent, self.handleImageClick)
 		self.addEventInput(event.ImageAcquireEvent, self.handleImageAcquire)
-		self.addEventOutput(event.CameraImagePublishEvent)
 
 	def handleImageClick(self, clickevent):
 		print 'handling image click'

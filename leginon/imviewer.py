@@ -14,7 +14,6 @@ class ImViewer(imagewatcher.ImageWatcher):
 	def __init__(self, id, session, nodelocations, **kwargs):
 		imagewatcher.ImageWatcher.__init__(self, id, session, nodelocations, **kwargs)
 
-		self.addEventOutput(event.ImageAcquireEvent)
 		self.cam = camerafuncs.CameraFuncs(self)
 		self.clicklock = threading.Lock()
 		self.looplock = threading.Lock()

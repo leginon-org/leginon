@@ -17,7 +17,6 @@ class Launcher(node.Node):
 		node.Node.__init__(self, id, session, nodelocations, tcpport=port, **kwargs)
 #		self.checkPythonVersion()
 		self.addEventInput(event.LaunchEvent, self.handleLaunch)
-		self.addEventOutput(event.NodeClassesPublishEvent)
 		self.caller = calllauncher.CallLauncher()
 		l = self.location()
 		print 'launcher id: %s, at hostname: %s, TCP: %s, UI: %s' % (self.id,
