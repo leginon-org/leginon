@@ -7,8 +7,19 @@ import Numeric
 from types import NoneType
 import copy
 
-## still missing from these classes:
-##   __copy__
+class NumericArrayType:
+	'''
+	This represents Numeric.ArrayType, since pickle won't accept it
+	'''
+
+def validateNumericArray(obj):
+	try:
+		obj.typecode
+	except AttributeError:
+		raise TypeError()
+	return obj
+
+## still missing from these classes: ##   __copy__
 
 class OrderedDict(dict):
 	'''
@@ -61,16 +72,6 @@ class OrderedDict(dict):
 
 	def items(self):
 		return list(self.__ordered_items)
-
-	def iterkeys(self):
-		return iter(self.keys())
-	__iter__ = iterkeys
-
-	def itervalues(self):
-		return iter(self.values())
-
-	def iteritems(self):
-		return iter(self.items())
 
 	def __setitem__(self, key, value):
 		dict.__setitem__(self, key, value)
@@ -181,7 +182,7 @@ class TypedDict(KeyedDict):
 	   (('aaa', int), ('bbb', float))
 
 	 The type must either double as a factory function, or you must
-	 map a factory function to the type using the factories method.
+	 map a factory function to the type using _factories attribute.
 	'''
 	def __init__(self, map_or_seq=None, type_map_or_seq=None):
 		### create a KeyedDict to hold the types
@@ -229,10 +230,10 @@ class TypedDict(KeyedDict):
 		'''
 		return KeyedDict(self.__types)
 
-	def __validateType(self, valuetype):
-		f = self.factories(valuetype)
+	def __validateType(self, type):
+		f = self.getFactory(type)
 		if f is None:
-			raise TypeError('%s, invalid type for TypedDict item, try overloading the factories method' % (valuetype,))
+			raise TypeError('%s, invalid type for TypedDict item, try added it to the factories dict' % (type,))
 
 	def __validateValue(self, key, value):
 		'''uses a factory function from factories to validate a value'''
@@ -241,7 +242,7 @@ class TypedDict(KeyedDict):
 			return None
 
 		valuetype = self.__types[key]
-		valuefactory = self.factories(valuetype)
+		valuefactory = self.getFactory(valuetype)
 
 		try:
 			newvalue = valuefactory(value)
@@ -259,21 +260,30 @@ class TypedDict(KeyedDict):
 		newvalue = self.__validateValue(key, value)
 		KeyedDict.__setitem__(self, key, newvalue)
 
-	def factories(self, valuetype):
+	def getFactory(self, valuetype):
 		## check for special cases that we know about
-		if valuetype is NoneType:
-			f = lambda x: None
-		elif valuetype is Numeric.ArrayType:
-			f = Numeric.array
-		## these types double as factories
-		elif valuetype in (int,long,float,complex,str,tuple,list,dict):
+		if valuetype in self._factories:
+			f = self._factories[valuetype]
+		elif callable(valuetype):
+			## type object may be a factory function
 			f = valuetype
 		else:
 			f = None
 		return f
 
-	def easyFactory(self, value):
-		return value
+	_factories = {
+		## is None necessary? should factory convert anything to None?
+		## Or raise exception for anything except None?
+		NoneType: lambda x: None,
+
+		## object type can handle anything. Should this use x.copy()?
+		## Probably should, but classes in this module have no copy method.
+		object: lambda x: x,
+
+		## from Numeric
+		NumericArrayType: validateNumericArray,
+	}
+
 
 if __name__ == '__main__':
 	class newtype(object):
