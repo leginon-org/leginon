@@ -36,42 +36,10 @@ class Focuser(acquisition.Acquisition):
 		self.manual_continue = threading.Event()
 		acquisition.Acquisition.__init__(self, id, sesison, nodelocations, target_type='focus', **kwargs)
 
-	def acquire(self, presetdata, target=None, emtarget=None):
-		'''
-		this replaces Acquisition.acquire()
-		Instead of acquiring an image, we do autofocus
-		'''
-		info = {'target':target}
-		self.abortfail.clear()
+	def autoFocus(self, emtarget, resultdata):
+		## need btilt, pub, driftthresh
 		btilt = self.btilt.get()
 		pub = self.publishimages.get()
-
-		## Need to melt only once per target, event though
-		## this method may be called multiple times on the same
-		## target.
-		## To be sure, we flag a target as having been melted.
-		## This is only safe if we can be sure that we don't
-		## use different copies of the same target each time.
-		melt_time = self.melt.get()
-		if melt_time and not target['pre_exposure']:
-			melt_time_ms = int(round(melt_time * 1000))
-			camstate = self.cam.currentCameraEMData()
-			current_exptime = camstate['exposure time']
-			camstate['exposure time'] = melt_time_ms
-			camstate = self.cam.currentCameraEMData(camstate)
-
-			print 'Melting for %s seconds' % (melt_time,)
-			self.cam.acquireCameraImageData()
-			print 'Done melting, resetting exposure time'
-
-			camstate['exposure time'] = current_exptime
-			camstate = self.cam.currentCameraEMData(camstate)
-			target['pre_exposure'] = True
-
-		## pre manual check
-		if self.pre_manual_check.get():
-			self.manualCheckLoop(presetdata['name'], emtarget)
-
 		if self.drifton.get():
 			driftthresh = self.driftthresh.get()
 		else:
@@ -110,14 +78,17 @@ class Focuser(acquisition.Acquisition):
 		stigy = correction['stigy']
 		fitmin = correction['min']
 
-		info.update({'defocus':defoc, 'stigx':stigx, 'stigy':stigy, 'min':fitmin})
+		resultdata.update({'defocus':defoc, 'stigx':stigx, 'stigy':stigy, 'min':fitmin})
+
+		status = 'ok'
 
 		### validate defocus correction
 		fitlimit = self.fitlimit.get()
-		if fitmin < fitlimit:
+		if fitmin <= fitlimit:
 			validdefocus = True
 			print 'good focus measurement'
 		else:
+			status = 'untrusted (%s>%s)' % (fitmin, fitlimit)
 			validdefocus = False
 			print 'focus measurement failed: fitmin = %s (limit = %s)' % (fitmin, fitlimit)
 
@@ -131,9 +102,9 @@ class Focuser(acquisition.Acquisition):
 		if validstig and self.stigcorrection.get():
 			print 'Stig correction'
 			self.correctStig(stigx, stigy)
-			info['stig correction'] = 1
+			resultdata['stig correction'] = 1
 		else:
-			info['stig correction'] = 0
+			resultdata['stig correction'] = 0
 
 		if validdefocus:
 			print 'Defocus correction'
@@ -143,12 +114,65 @@ class Focuser(acquisition.Acquisition):
 			except (IndexError, KeyError):
 				print 'no method selected for correcting defocus'
 			else:
-				info['defocus correction'] = focustype
+				resultdata['defocus correction'] = focustype
 				focusmethod(defoc)
 
-		## manual focus
+		return status
+
+	def acquire(self, presetdata, target=None, emtarget=None):
+		'''
+		this replaces Acquisition.acquire()
+		Instead of acquiring an image, we do autofocus
+		'''
+		self.abortfail.clear()
+		resultdata = data.FocuserResultData()
+		resultdata['target'] = target
+
+		## Need to melt only once per target, event though
+		## this method may be called multiple times on the same
+		## target.
+		## To be sure, we flag a target as having been melted.
+		## This is only safe if we can be sure that we don't
+		## use different copies of the same target each time.
+		melt_time = self.melt.get()
+		if melt_time and not target['pre_exposure']:
+			melt_time_ms = int(round(melt_time * 1000))
+			camstate = self.cam.currentCameraEMData()
+			current_exptime = camstate['exposure time']
+			camstate['exposure time'] = melt_time_ms
+			camstate = self.cam.currentCameraEMData(camstate)
+
+			print 'Melting for %s seconds' % (melt_time,)
+			self.cam.acquireCameraImageData()
+			print 'Done melting, resetting exposure time'
+
+			camstate['exposure time'] = current_exptime
+			camstate = self.cam.currentCameraEMData(camstate)
+			target['pre_exposure'] = True
+
+		## pre manual check
+		if self.pre_manual_check.get():
+			self.manualCheckLoop(presetdata['name'], emtarget)
+			resultdata['pre manual check'] = True
+		else:
+			resultdata['pre manual check'] = False
+
+		## autofocus
+		if self.auto_on.get():
+			status = self.autoFocus(emtarget, resultdata)
+			resultdata['auto status'] = status
+			if status != 'ok':
+				self.publish(resultdata, database=True, dbforce=True)
+				return status
+		else:
+			resultdata['auto status'] = 'skipped'
+
+		## post manual check
 		if self.post_manual_check.get():
 			self.manualCheckLoop(presetdata['name'], emtarget)
+			resultdata['post manual check'] = True
+		else:
+			resultdata['post manual check'] = False
 
 		## aquire and save the focus image
 		if self.acquirefinal.get():
@@ -161,9 +185,8 @@ class Focuser(acquisition.Acquisition):
 			## acquire and publish image, like superclass does
 			acquisition.Acquisition.acquire(self, presetdata, target, emtarget)
 
-		## add target to this sometime
-		frd = data.FocuserResultData(initializer=info)
-		self.publish(frd, database=True)
+		## publish results
+		self.publish(resultdata, database=True, dbforce=True)
 
 		return 'ok'
 
@@ -325,9 +348,7 @@ class Focuser(acquisition.Acquisition):
 
 	def defineUserInterface(self):
 		acquisition.Acquisition.defineUserInterface(self)
-
 		self.messagelog = uidata.MessageLog('Messages')
-
 		self.melt = uidata.Float('Melt Time (s)', 0.0, 'rw', persist=True)
 
 		## auto focus
@@ -350,7 +371,9 @@ class Focuser(acquisition.Acquisition):
 		self.stigcorrection = uidata.Boolean('Stigmator Correction', False, 'rw', persist=True)
 		self.publishimages = uidata.Boolean('Publish Tilt Images', False, 'rw', persist=True)
 
-		autocont.addObjects((self.drifton, self.driftthresh, self.btilt, self.publishimages, self.autofocuspreset, self.focustype, self.stigcorrection, self.fitlimit, self.stigfocminthresh, self.stigfocmaxthresh))
+		self.auto_on = uidata.Boolean('Auto Focus On', True, 'rw', persist=True)
+
+		autocont.addObjects((self.auto_on, self.drifton, self.driftthresh, self.btilt, self.publishimages, self.autofocuspreset, self.focustype, self.stigcorrection, self.fitlimit, self.stigfocminthresh, self.stigfocmaxthresh))
 
 		## manual focus check
 		self.pre_manual_check = uidata.Boolean('Manual Check Before Auto', False, 'rw', persist=True)

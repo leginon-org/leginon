@@ -839,6 +839,9 @@ class FocuserResultData(InSessionData):
 		  ('min', float),
 		  ('stig correction', int),
 		  ('defocus correction', str),
+		  ('pre manual check', bool),
+		  ('post manual check', bool),
+		  ('auto measured', bool),
 		]
 		return t
 	typemap = classmethod(typemap)
