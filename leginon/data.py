@@ -37,19 +37,11 @@ class DataManager(object):
 	def insert(self, datainstance):
 		self.lock.acquire()
 		try:
-			dsize = datainstance.size()
-
-			if dsize > self.maxsize:
-				raise DataManagerOverflowError('new data is too big for DataManager')
-
 			## insert into datadict and sizedict
 			self.dmid += 1
 			self.datadict[self.dmid] = datainstance
 			datainstance.dmid = self.dmid
-			self.size += dsize
-			self.sizedict[self.dmid] = dsize
-
-			self.clean()
+			self.resize(datainstance)
 		finally:
 			self.lock.release()
 
@@ -76,14 +68,15 @@ class DataManager(object):
 			dsize = datainstance.size()
 			if dsize > self.maxsize:
 				raise DataManagerOverflowError('new size is too big for DataManager')
+			## check previous size
 			dmid = datainstance.dmid
-			oldsize = self.sizedict[dmid]
+			if dmid in self.sizedict:
+				oldsize = self.sizedict[dmid]
+			else:
+				oldsize = 0
 			self.size -= oldsize
 			self.size += dsize
 			self.sizedict[dmid] = dsize
-
-			## this is odd, because clean() might removed the resized
-			## object, maybe this doesn't matter
 			self.clean()
 		finally:
 			self.lock.release()
@@ -338,18 +331,20 @@ class Data(DataDict, leginonobject.LeginonObject):
 		size = 0
 		for key, datatype in self.types().items():
 			if key in self and self[key] is not None:
-				size += self.sizeof(self[key], datatype)
+				size += self.sizeof(self[key])
 		return size
 
-	def sizeof(self, value, datatype):
-		if datatype == strictdict.NumericArrayType:
-			return reduce(Numeric.multiply, value.shape) * value.itemsize()
+	def sizeof(self, value):
+		if type(value) is Numeric.ArrayType:
+			size = reduce(Numeric.multiply, value.shape) * value.itemsize()
 		else:
 			## this is my stupid estimate of size for other objects
-			return 8
+			size = 8
+
+		return size
+
 
 '''
-
 ## How to define a new leginon data type:
 ##   - Inherit Data or a subclass of Data.
 ##   - do not overload the __init__ method (unless you have a good reason)
