@@ -95,20 +95,20 @@ class CustomWidget(Tkinter.Frame):
 		self.uiclients[uiclientname] = interface.Client(
 										uiclientlocation['hostname'], uiclientlocation['UI port'])
 
-	def widgetFromName(self, uiclientname, name):
+	def widgetFromName(self, parent, uiclientname, name):
 		widget = None
 		spec = self.uiclients[uiclientname].getSpec()
-		return self.widgetFrom(uiclientname, spec, name)
+		return self.widgetFrom(parent, uiclientname, spec, name)
 
-	def widgetFrom(self, uiclientname, spec, name):
+	def widgetFrom(self, parent, uiclientname, spec, name):
 		content = spec['content']
 		for subspec in content:
 			if subspec['name'] == name[0]:
 				if len(name) == 1:
-					return nodegui.widgetFromSpec(self, self.uiclients[uiclientname],
-																														subspec, False)
+					return nodegui.widgetFromSpec(parent, self.uiclients[uiclientname],
+																															subspec, False)
 				else:
-					return self.widgetFrom(uiclientname, subspec, name[1:])
+					return self.widgetFrom(parent, uiclientname, subspec, name[1:])
 
 # maybe the widgets themselves could launch the necessary nodes
 class GridAtlasWidget(CustomWidget):
@@ -121,17 +121,31 @@ class GridAtlasWidget(CustomWidget):
 		self.uiClient('MN', mosaicnavigator)
 		self.uiClient('IV', imageviewer)
 
-		widget = self.widgetFromName('GP', ('Controls', 'Run'))
-		widget.grid(row = 0, column = 0)
-		widget = self.widgetFromName('GP', ('Controls', 'Stop'))
-		widget.grid(row = 1, column = 0)
-		widget = self.widgetFromName('GP', ('Controls', 'Reset'))
-		widget.grid(row = 2, column = 0)
-		widget = self.widgetFromName('SIM', ('Image', 'Publish Image'))
-		widget.grid(row = 3, column = 0)
+		frame = Pmw.LabeledWidget(self, labelpos = 'nw',
+															label_text = 'Grid Preview')
+		frame.component('hull')['bd'] = 1
+		frame.component('hull')['relief'] = Tkinter.SOLID
+		widget = self.widgetFromName(frame.interior(), 'GP', ('Controls', 'Run'))
+		widget.grid(row = 0, column = 0, padx = 5, pady = 5)
+		widget = self.widgetFromName(frame.interior(), 'GP', ('Controls', 'Stop'))
+		widget.grid(row = 0, column = 1, padx = 5, pady = 5)
+		widget = self.widgetFromName(frame.interior(), 'GP', ('Controls', 'Reset'))
+		widget.grid(row = 0, column = 2, padx = 5, pady = 5)
+		frame.grid(row = 0, column = 0, padx = 10, pady = 10)
 
-		widget = self.widgetFromName('SIM', ['Mosaic Image'])
-		widget.grid(row = 0, column = 1, rowspan = 4)
+		frame = Pmw.LabeledWidget(self, labelpos = 'nw',
+															label_text = 'State Image Mosaic')
+		frame.component('hull')['bd'] = 1
+		frame.component('hull')['relief'] = Tkinter.SOLID
+		widget = self.widgetFromName(frame.interior(), 'SIM',
+																	('Image', 'Publish Image'))
+		widget.grid(row = 0, column = 0, padx = 5, pady = 5)
+		frame.grid(row = 1, column = 0, padx = 10, pady = 10)
+
+		frame = Tkinter.Frame(self, bd=1, relief=Tkinter.SOLID)
+		widget = self.widgetFromName(frame, 'SIM', ['Mosaic Image'])
+		widget.pack()
+		frame.grid(row = 0, column = 1, rowspan = 2, padx = 10, pady = 10)
 
 if __name__ == '__main__':
 
