@@ -752,6 +752,8 @@ class wxComboBoxWidget(wxContainerWidget):
 			else:
 				self.combobox.Enable(false)
 			self.combobox.SetSize(self.combobox.GetBestSize())
+			width, height = self.combobox.GetSizeTuple()
+			self.wxwidget.SetItemMinSize(self.combobox, width, height)
 		if 'Selected' in value and value['Selected'] and self.value['List']:
 			i = value['Selected'][0]
 			try:
