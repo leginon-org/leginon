@@ -391,7 +391,10 @@ class CalibrationData(InSessionData):
 class MagDependentCalibrationData(CalibrationData):
 	def typemap(cls):
 		t = CalibrationData.typemap()
-		t += [ ('magnification', int), ]
+		t += [
+			('magnification', int),
+			('high tension', int),
+		]
 		return t
 	typemap = classmethod(typemap)
 
