@@ -53,7 +53,6 @@ def getNodeClassNames():
 
 
 ### register Node classes in the order you want them listed publicly
-#registerNodeClass('webcam', 'Webcam')
 registerNodeClass('corrector', 'Corrector')
 registerNodeClass('matrixcalibrator', 'MatrixCalibrator')
 registerNodeClass('pixelsizecalibrator', 'PixelSizeCalibrator')
@@ -76,5 +75,6 @@ registerNodeClass('administration', 'Administration')
 registerNodeClass('robot', 'RobotNotification')
 registerNodeClass('EM', 'EM')
 if sys.platform == 'win32':
+	registerNodeClass('webcam', 'Webcam')
 	registerNodeClass('robot', 'RobotControl')
 

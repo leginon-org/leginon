@@ -3,6 +3,7 @@ import xmlrpclib
 import Numeric
 import Mrc
 import threading
+import cStringIO
 
 # Exceptions
 # maybe overdone
@@ -507,6 +508,23 @@ class MessageDialog(Dialog):
 
 	def ok(self):
 		self.destroy()
+
+class PILImage(Binary):
+	typelist = Binary.typelist + ('PIL image',)
+	nonevalue = ''
+	def __init__(self, name, value, permissions='r', callback=None,
+																										persist=False):
+		Binary.__init__(self, name, value, permissions, callback, persist)
+
+	def set(self, value):
+		if value is not None:
+			stream = cStringIO.StringIO()
+			value.save(stream, 'jpeg')
+			value = xmlrpclib.Binary(stream.getvalue())
+			stream.close()
+		else:
+			value = xmlrpclib.Binary(value)
+		Data.set(self, value)
 
 class Image(Binary):
 	typelist = Binary.typelist + ('image',)

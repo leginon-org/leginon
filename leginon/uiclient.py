@@ -121,6 +121,8 @@ def WidgetClassFromTypeList(typelist):
 							if len(typelist) > 3:
 								if typelist[3] == 'image':
 									return wxImageWidget
+								elif typelist[3] == 'PIL image':
+									return wxPILImageWidget
 						elif typelist[2] == 'array':
 							if len(typelist) > 3:
 								if typelist[3] == 'sequence':
@@ -935,6 +937,15 @@ class wxImageWidget(wxDataWidget):
 	def destroy(self):
 		self.label.Destroy()
 		self.imageviewer.Destroy()
+
+class wxPILImageWidget(wxImageWidget):
+	def setWidget(self, value):
+		if value.data:
+			self.imageviewer.setImageFromPILString(value.data)
+			width, height = self.imageviewer.GetSizeTuple()
+			self.sizer.SetItemMinSize(self.imageviewer, width, height)
+		else:
+			self.imageviewer.clearImage()
 
 class MessageDialog(wxDialog):
 	def __init__(self, parent, id, title, callback):

@@ -32,6 +32,7 @@ LAUNCHERS = [
 	'tecnai2',
 	'tecnai',
 	'defcon1',
+	'amilab1',
 	'amilab2',
 	'defcon3',
 	'tecnai2-ssi',

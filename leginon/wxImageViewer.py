@@ -7,6 +7,7 @@ import Numeric
 from wxPython.wx import *
 from wxPython.lib.buttons import wxGenBitmapToggleButton
 import NumericImage
+import Image
 
 wxInitAllImageHandlers()
 
@@ -168,6 +169,7 @@ class ImagePanel(wxPanel):
 	def __init__(self, parent, id, imagesize=(512, 512)):
 		# initialize image variables
 		self.numericimage = None
+		self.pilimage = None
 		self.bitmap = None
 		self.buffer = None
 
@@ -236,13 +238,16 @@ class ImagePanel(wxPanel):
 		'''
 		Set the internal wxBitmap to current Numeric image
 		'''
-		if self.numericimage is None:
+		if self.numericimage is not None:
+			image = NumericImage.NumericImage(self.numericimage)
+			image.update_image()
+			wximage = image.wxImage()
+		elif self.pilimage is not None:
+			wximage = wxEmptyImage(self.pilimage.size[0], self.pilimage.size[1])
+			wximage.SetData(self.pilimage.convert('RGB').tostring())
+		else:
 			self.bitmap = None
 			return
-
-		image = NumericImage.NumericImage(self.numericimage)
-		image.update_image()
-		wximage = image.wxImage()
 
 		if self.smallScale():
 			xscale, yscale = self.getScale()
@@ -310,6 +315,18 @@ class ImagePanel(wxPanel):
 			yoffset = 0
 		self.offset = (xoffset, yoffset)
 
+	def setPILImage(self, pilimage, scroll=False):
+		buffer = cStringIO.StringIO(pilimage)
+		self.pilimage = Image.open(buffer)
+		# Memory leak?
+		#buffer.close()
+		self.setBitmap()
+		self.setVirtualSize()
+		self.setBuffer()
+		if not scroll:
+			self.panel.Scroll(0, 0)
+		self.UpdateDrawing()
+
 	def setNumericImage(self, numericimage, scroll=False):
 		'''
 		Set the numeric image, update bitmap, update buffer, set viewport size,
@@ -332,6 +349,9 @@ class ImagePanel(wxPanel):
 
 	def setImageFromMrcString(self, imagestring, scroll=False):
 		self.setNumericImage(Mrc.mrcstr_to_numeric(imagestring), scroll)
+
+	def setImageFromPILString(self, imagestring, scroll=False):
+		self.setPILImage(imagestring)
 
 	# scaling functions
 
@@ -369,8 +389,13 @@ class ImagePanel(wxPanel):
 
 	def getValue(self, x, y):
 		try:
-			return self.numericimage[y, x]
-		except (IndexError, AttributeError), e:
+			if self.numericimage is not None:
+				return self.numericimage[y, x]
+			elif self.pilimage is not None:
+				return self.pilimage.getpixel((x, y))
+			else:
+				return None
+		except (IndexError, TypeError, AttributeError), e:
 			return None
 
 	def getClientCenter(self):
