@@ -19,8 +19,8 @@ pyscopefolder = os.path.join(programsfolder, 'pyScope')
 
 if __name__ == '__main__':
 	try:
-		import updatecom
-		updatecom.run(os.path.join(pythonfolder, 'pyScope'))
+		import pyScope.updatecom
+		pyScope.updatecom.run(os.path.join(pythonfolder, 'pyScope'))
 	except ImportError:
 		print 'Failed to update COM'
 
