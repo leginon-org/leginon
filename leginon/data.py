@@ -122,34 +122,33 @@ class ImageData(NumericData):
 
 
 
-
 class OLDData(leginonobject.LeginonObject):
 	'''Baseclass for leginon data. Subclasses should implement content.'''
 	def __init__(self, id, content):
 		leginonobject.LeginonObject.__init__(self, id)
 		self.content = content
 
-class OLDIntData(Data):
+class OLDIntData(OLDData):
 	'''Integer data.'''
 	def __init__(self, id, content):
 		Data.__init__(self, id, int(content))
 
-class OLDStringData(Data):
+class OLDStringData(OLDData):
 	'''String data.'''
 	def __init__(self, id, content):
 		Data.__init__(self, id, str(content))
 
-class OLDEMData(Data):
+class OLDEMData(OLDData):
 	'''EM data. Dictionary of keys to values.'''
 	def __init__(self, id, content):
 		Data.__init__(self, id, dict(content))
 
-class OLDDBData(Data):
+class OLDDBData(OLDData):
 	'''Database data.'''
 	def __init__(self, id, content):
 		Data.__init__(self, id, dict(content))
 
-class OLDImageData(Data):
+class OLDImageData(OLDData):
 	'''
 	self.content will be a dict with the following keys
 	   'image':  the Numeric array representation of the image
@@ -158,7 +157,7 @@ class OLDImageData(Data):
 		content = {'image':image}
 		Data.__init__(self, id, content)
 
-class OLDCameraImageData(ImageData):
+class OLDCameraImageData(OLDImageData):
 	'''
 	ImageData that originates from a camera
 	self.content will be a dict with the following keys
@@ -170,24 +169,24 @@ class OLDCameraImageData(ImageData):
 		ImageData.__init__(self, id, image)
 		self.content.update({'scope':scope, 'camera':camera})
 
-class OLDLocationData(Data):
+class OLDLocationData(OLDData):
 	'''Has data ID, but content is the location of the real data. Used by Manager.'''
 	def __init__(self, id, content):
 		Data.__init__(self, id, content)
 
-class OLDNodeLocationData(LocationData):
+class OLDNodeLocationData(OLDLocationData):
 	'''Node ID is the data ID, but content is the location of the node. Used by Manager.'''
 	def __init__(self, id, content):
 		LocationData.__init__(self, id, dict(content))
 	def __repr__(self):
 			return "<NodeLocationData for %s> %s" % (self.id, self.content)
 
-class OLDNodeClassesData(Data):
+class OLDNodeClassesData(OLDData):
 	'''Node Classes data.'''
 	def __init__(self, id, content):
 		Data.__init__(self, id, tuple(content))
 
-class OLDDataLocationData(LocationData):
+class OLDDataLocationData(OLDLocationData):
 	'''Has data ID, but content is a list of node IDs where the data is located. Used by Manager.'''
 	def __init__(self, id, content):
 		LocationData.__init__(self, id, list(content))
@@ -195,13 +194,13 @@ class OLDDataLocationData(LocationData):
 		'''Returns a readable format.'''
 		return "<DataLocationData for %s> %s" % (self.id, self.content)
 
-class OLDNumericData(Data):
+class OLDNumericData(OLDData):
 	def __init__(self, id, content):
 		if type(content) != Numeric.ArrayType:
 			raise RuntimeError('content must be Numeric array')
 		Data.__init__(self, id, content)
 
-class OLDDBRecordData(Data):
+class OLDDBRecordData(OLDData):
 	def __init__(self, id, content):
 		Data.__init__(self, id, dict(content))
 		# validate content
@@ -211,11 +210,11 @@ class OLDDBRecordData(Data):
 			raise RuntimeError('invalid content for DBRecordData')
 		# maybe check that 'record' contains a dict
 
-class OLDCalibrationData(Data):
+class OLDCalibrationData(OLDData):
 	def __init__(self, id, content):
 		Data.__init__(self, id, dict(content))
 
-class OLDMatrixCalibrationData(CalibrationData):
+class OLDMatrixCalibrationData(OLDCalibrationData):
 	EXAMPLE = {
 		'magnification': 5,
 		'type': 'test',
@@ -233,7 +232,7 @@ class OLDMatrixCalibrationData(CalibrationData):
 		content = {'magnification': int(magnification), 'type': str(type), 'matrix': matrixcontent}
 		CalibrationData.__init__(self, id, content)
 
-class OLDPresetData(Data):
+class OLDPresetData(OLDData):
 	EXAMPLE = {
 		'spot size': 5,
 		'magnification': 50,
@@ -250,11 +249,11 @@ class OLDPresetData(Data):
 	def __init__(self, id, content):
 		Data.__init__(self, id, dict(content))
 
-class OLDCorrelationData(Data):
+class OLDCorrelationData(OLDData):
 	def __init__(self, id, content):
 		Data.__init__(self, id, dict(content))
 
-class OLDCorrelationImageData(ImageData):
+class OLDCorrelationImageData(OLDImageData):
 	'''
 	ImageData that results from a correlation of two images
 	content has the following keys:
@@ -266,40 +265,40 @@ class OLDCorrelationImageData(ImageData):
 		ImageData.__init__(self, id, image)
 		self.content.update({'subject1':subject1, 'subject2':subject2})
 
-class OLDCrossCorrelationImageData(CorrelationImageData):
+class OLDCrossCorrelationImageData(OLDCorrelationImageData):
 	def __init__(self, id, image, subject1, subject2):
 		CorrelationImageData.__init__(self, id, image, subject1, subject2)
 
-class OLDPhaseCorrelationImageData(CorrelationImageData):
+class OLDPhaseCorrelationImageData(OLDCorrelationImageData):
 	def __init__(self, id, image, subject1, subject2):
 		CorrelationImageData.__init__(self, id, image, subject1, subject2)
 
-class OLDCorrectionImageData(CameraImageData):
+class OLDCorrectionImageData(OLDCameraImageData):
 	def __init__(self, id, image, scope, camera):
 		CameraImageData.__init__(self, id, image, scope, camera)
 
-class OLDDarkImageData(CorrectionImageData):
+class OLDDarkImageData(OLDCorrectionImageData):
 	def __init__(self, id, image, scope, camera):
 		CorrectionImageData.__init__(self, id, image, scope, camera)
 
-class OLDBrightImageData(CorrectionImageData):
+class OLDBrightImageData(OLDCorrectionImageData):
 	def __init__(self, id, image, scope, camera):
 		CorrectionImageData.__init__(self, id, image, scope, camera)
 
-class OLDTileImageData(CameraImageData):
+class OLDTileImageData(OLDCameraImageData):
 	'''Contains a 2-D Numeric array of the image data and a list of neighboring image tile ID's.'''
 	def __init__(self, id, image, scope, camera, neighbortiles):
 		CameraImageData.__init__(self, id, image, scope, camera)
 		self.content.update({'neighbor tiles':neighbortiles})
 
-class OLDMosaicImageData(CameraImageData):
+class OLDMosaicImageData(OLDCameraImageData):
 	def __init__(self, id, image, scope, camera):
 		CameraImageData.__init__(self, id, image, scope, camera)
 		## scope and camera may not be useful if the mosaic is
 		## mangled too much, maybe something else useful to put
 		## here
 
-class OLDPresetImageData(CameraImageData):
+class OLDPresetImageData(OLDCameraImageData):
 	'''
 	Adds preset to CameraImageData
 	Because of targeting issues, it is necessary to track the preset
@@ -309,16 +308,16 @@ class OLDPresetImageData(CameraImageData):
 		CameraImageData.__init__(self, id, image, scope, camera)
 		self.content.update({'preset':preset})
 
-class OLDStateMosaicData(Data):
+class OLDStateMosaicData(OLDData):
 	'''Contains data ID of images mapped to their position and state.'''
 	def __init__(self, id, content):
 		Data.__init__(self, id, dict(content))
 
-class OLDImageTargetData(Data):
+class OLDImageTargetData(OLDData):
 	def __init__(self, id, content):
 		Data.__init__(self, id, dict(content))
 
-class OLDImageTargetListData(Data):
+class OLDImageTargetListData(OLDData):
 	def __init__(self, id, content):
 		Data.__init__(self, id, list(content))
 
