@@ -211,7 +211,11 @@ def linearscale(input, boundfrom, boundto, extrema=None):
 def power(numericarray, mask_radius=0.01, thresh=3):
 	fft = ffteng.transform(numericarray)
 	pow = Numeric.absolute(fft)
-	pow = Numeric.log(pow)
+	try:
+		pow = Numeric.log(pow)
+	except OverflowError:
+		print 'correcting zeros'
+		pow = Numeric.log(pow+1e-20)
 
 	print 'shuffle'
 	pow = shuffle(pow)
