@@ -61,11 +61,10 @@ class SpiralTargetMaker(TargetMaker):
 		camera.friendly_update(preset)
 		size = camera['dimension']['x']
 
-		### for debugging, always use current position as center
-		#center = self.center.get()
-		#for key in center:
+		center = self.center.get()
+		for key in center:
 			# stage position for now
-			#scope['stage position'][key] = center[key]
+			scope['stage position'][key] = center[key]
 
 		maxtargets = self.maxtargets.get()
 		overlap = self.overlap.get()
