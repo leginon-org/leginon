@@ -260,6 +260,17 @@ echo "</table>";
 </div>
 </td>
 <td>
+<div style="border: 1px solid #000000; height:290; width:270; margin: 0px;padding:0px;  background-color: #CCCCFF">
+<table align="center" >
+<tr>
+<td>
+<img src="imagehistogram.php?Id=<?=$imgId?>">
+</td>
+</tr>
+</table>
+</div>
+</td>
+<td>
 <?
 $link = ($displaytree) ? "hide" : "view";
 $url = "<a href='#' class='header' onclick='javascript:document.tf.submit()'>".$link." &raquo;</a>"; 

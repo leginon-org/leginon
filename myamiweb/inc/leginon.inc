@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.41 $
- *	@version $Id: leginon.inc,v 1.41 2005-02-03 01:16:51 dfellman Exp $
+ *	@version $Revision: 1.42 $
+ *	@version $Id: leginon.inc,v 1.42 2005-03-04 18:11:53 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -1457,7 +1457,8 @@ class leginondata {
 		."left join AcquisitionImageData as a on (a.`DEF_id` = t.`REF|AcquisitionImageData|image`) "
 		."where "
 		.$condition
-		."t.`type`='focus' "
+		." 1 "
+//		."t.`type`='focus' "
 		.$sqlgroup;
 		return $this->mysql->getSQLResult($q);
 	}
@@ -1504,6 +1505,7 @@ class leginondata {
 
 
 		$q="SELECT "
+		."UNIX_TIMESTAMP(`s`.`DEF_timestamp`) as `unix_timestamp` , "
 		."`s`.`DEF_timestamp` as `timestamp` , `s`.`min`, `s`.`max`, "
 		."`s`.`REF|AcquisitionImageData|image` as `imageId`, "
 		."`s`.`stdev`, `s`.`mean` "
