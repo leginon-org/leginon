@@ -544,20 +544,26 @@ bin(PyObject *self, PyObject *args)
 	return PyArray_Return(result);
 }
 
-static PyObject *houghline(PyObject *self, PyObject *args) {
-	PyObject *input;
-	PyArrayObject *inputarray, *hough;
+static PyObject *houghline2(PyObject *self, PyObject *args) {
+	PyObject *input, *gradient = NULL;
+	PyArrayObject *inputarray, *gradientarray, *hough;
 	int dimensions[2];
 	int n;
 	int i, j, theta, r;
 	double rtheta;
+	double gradientvalue;
 	float increment = 1.0;
+	float gradient_tolerance = 1.0;
+	float gradient_tolerances[2];
 
-	if (!PyArg_ParseTuple(args, "O|f", &input, &increment))
+	if (!PyArg_ParseTuple(args, "OO|ff", &input, &gradient, &gradient_tolerance,
+																				&increment))
 		return NULL;
 
 	inputarray = (PyArrayObject *)
 									PyArray_ContiguousFromObject(input, PyArray_DOUBLE, 2, 2);
+	gradientarray = (PyArrayObject *)
+									PyArray_ContiguousFromObject(gradient, PyArray_DOUBLE, 2, 2);
 
 	if(inputarray->dimensions[0] != inputarray->dimensions[1])
 		return NULL;
@@ -565,17 +571,93 @@ static PyObject *houghline(PyObject *self, PyObject *args) {
 	n = inputarray->dimensions[0];
 
 	dimensions[0] = (int)ceil(M_SQRT2*n);
-	dimensions[1] = (int)round(90/increment);
+	dimensions[1] = (int)round(90.0/increment);
 	hough = (PyArrayObject *)PyArray_FromDims(2, dimensions, PyArray_DOUBLE);
 
 	for(i = 0; i < inputarray->dimensions[0]; i++)
 		for(j = 0; j < inputarray->dimensions[1]; j++)
 			if(((double *)inputarray->data)[j * (i + 1)] > 0.0) {
+				gradientvalue = *(double *)(gradientarray->data
+																		+ i*gradientarray->strides[0]
+																		+ j*gradientarray->strides[1]);
+				while(gradientvalue < 0.0)
+					gradientvalue += 2.0*M_PI;
+				while(gradientvalue > M_PI_2)
+					gradientvalue -= M_PI;
+				gradient_tolerances[0] = gradientvalue - gradient_tolerance*M_PI/180.0;
+				gradient_tolerances[1] = gradientvalue + gradient_tolerance*M_PI/180.0;
 				for(theta = 0; theta < dimensions[1]; theta++) {
 					rtheta = theta * increment * M_PI/180;
 					r = (int)(abs(j*cos(rtheta)) + i*sin(rtheta) + 0.5);
+					if(rtheta > gradient_tolerances[0] && rtheta < gradient_tolerances[1])
 					*(double *)(hough->data + r*hough->strides[0]
 											+ theta*hough->strides[1]) +=
+									*(double *)(inputarray->data + i*inputarray->strides[0]
+															+ j*inputarray->strides[1]);
+				}
+			}
+
+	return PyArray_Return(hough);
+}
+
+static PyObject *houghline(PyObject *self, PyObject *args) {
+	PyObject *input, *gradient = NULL;
+	PyArrayObject *inputarray, *gradientarray = NULL, *hough;
+	int dimensions[2];
+	int n;
+	int i, j, k, kmin, kmax, r;
+	double rtheta;
+	double gradientvalue;
+	int ntheta = 90;
+	float gradient_tolerance = M_PI/180.0;
+
+	if (!PyArg_ParseTuple(args, "O|Ofi", &input, &gradient, &gradient_tolerance,
+																				&ntheta))
+		return NULL;
+
+	inputarray = (PyArrayObject *)
+									PyArray_ContiguousFromObject(input, PyArray_DOUBLE, 2, 2);
+	if(gradient != NULL)
+		gradientarray = (PyArrayObject *)
+									PyArray_ContiguousFromObject(gradient, PyArray_DOUBLE, 2, 2);
+
+	if(inputarray->dimensions[0] != inputarray->dimensions[1])
+		return NULL;
+
+	n = inputarray->dimensions[0];
+
+	dimensions[0] = (int)ceil(M_SQRT2*n);
+	dimensions[1] = ntheta;
+	hough = (PyArrayObject *)PyArray_FromDims(2, dimensions, PyArray_DOUBLE);
+
+	for(i = 0; i < inputarray->dimensions[0]; i++)
+		for(j = 0; j < inputarray->dimensions[1]; j++)
+			if(((double *)inputarray->data)[j * (i + 1)] > 0.0) {
+				if(gradientarray != NULL) {
+					gradientvalue = *(double *)(gradientarray->data
+																			+ i*gradientarray->strides[0]
+																			+ j*gradientarray->strides[1]);
+					while(gradientvalue < 0.0)
+						gradientvalue += 2.0*M_PI;
+					while(gradientvalue > M_PI_2)
+						gradientvalue -= M_PI;
+					if(gradientvalue < 0.0 || gradientvalue > M_PI_2)
+						continue;
+					kmin = (int)(ntheta/M_PI_2*(gradientvalue - gradient_tolerance)+0.5);
+					kmax = (int)(ntheta/M_PI_2*(gradientvalue + gradient_tolerance)+1.5);
+					if(kmin < 0)
+						kmin = 0;
+					if(kmax > dimensions[1])
+						kmax = dimensions[1];
+				} else {
+					kmin = 0;
+					kmax = dimensions[1];
+				}
+				for(k = kmin; k < kmax; k++) {
+					rtheta = (k*M_PI_2)/ntheta;
+					r = (int)(abs(j*cos(rtheta)) + i*sin(rtheta) + 0.5);
+					*(double *)(hough->data + r*hough->strides[0]
+											+ k*hough->strides[1]) +=
 									*(double *)(inputarray->data + i*inputarray->strides[0]
 															+ j*inputarray->strides[1]);
 				}
