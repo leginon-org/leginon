@@ -6,6 +6,7 @@ import sqldict
 import data
 import Mrc
 import os
+import strictdict
 
 class DBDataKeeper(datahandler.DataHandler):
 	def __init__(self, id, session):
@@ -58,8 +59,11 @@ class DBDataKeeper(datahandler.DataHandler):
 		# will have to be created here.
 
 	def insert(self, newdata):
+		# self.flatInsert(newdata)
+		self.recursiveInsert(newdata)
+
+	def flatInsert(self, newdata):
 		newdatacopy = copy.deepcopy(newdata)
-		self.image2file(newdatacopy)
 		table = newdatacopy.__class__.__name__
 		definition = sqldict.sqlColumnsDefinition(newdatacopy)
 		formatedData = sqldict.sqlColumnsFormat(newdatacopy)
@@ -67,8 +71,55 @@ class DBDataKeeper(datahandler.DataHandler):
 		self.dbd.myTable = self.dbd.Table(table)
 		return self.dbd.myTable.insert([formatedData])
 
-		# images with be converted to an mrc file here, the filename will be
-		# available. What should the path of the file be?
+	def recursiveInsert(self, newdata):
+		'''
+		split up and insert newdata and its children individually
+		'''
+		newdata.replaceData(self.insertWithForeignKeys)
+
+	def insertWithForeignKeys(self, newdata):
+		'''
+		inserts a data object that may include some items which
+		are references to other data.  Returns a reference to
+		this newly inserted data object.
+		'''
+		## make certain replacements
+		mycopy = self.replacements(newdata)
+
+		### insert the data object and return a DataReference to it
+		dr = data.DataReference()
+		dr['id'] = self.flatInsert(mycopy)
+		dr['target'] = newdata
+		return dr
+
+	def ref2lastid(self, datareference):
+		return datareference['id']
+
+	def lastid2ref(self, lastid):
+		dr = data.DataReference()
+		dr['id'] = lastid
+		return dr
+
+	def replacements(self, newdata):
+		'''
+		Perform certain replacements on the data to prepare it
+		for insertion.  Right now we do these:
+		   - save images and replace with None
+		   - replace instances of DataReference with the sql id
+
+		After replacements, the returned object may not be of the
+		exact same type as the input object.
+		'''
+		## shallow copy!  reassign but don't modify values!
+		mycopy = copy.copy(newdata)
+
+		if isinstance(mycopy, data.ImageData):
+			## save the image to file
+			mycopy.save()
+			## replace image with None
+			mycopy['image'] = None
+
+		return mycopy
 
 	# you can clean up with this if you want
 	def exit(self):
@@ -81,35 +132,6 @@ class DBDataKeeper(datahandler.DataHandler):
 
 	def ids(self):
 		pass
-
-	def saveImage(self, imagedata):
-		numdata = imagedata['image']
-		session = imagedata['session']
-		id = imagedata['id']
-		idstrlist = [str(i) for i in id]
-		idstr = '-'.join(idstrlist)
-
-		if numdata is not None:
-			# filename = ???
-			try:
-				filename = os.environ['LEGINONPATH'] + '/images/%s-%s.mrc' % (session, idstr)
-			except:
-				filename = './images/%s-%s.mrc' % (session, idstr)
-			try:
-				Mrc.numeric_to_mrc(numdata, filename)
-			except:
-				self.printerror('error converting image to file')
-			imagedata['database filename'] = filename
-			imagedata['image'] = None
-
-	def image2file(self, idata):
-		if isinstance(idata, data.ImageData):
-			self.saveImage(idata)
-
-		types = idata.types()
-		for key in types:
-			if issubclass(types[key], data.ImageData):
-				self.saveImage(idata[key])
 
 	def file2image(self, idata):
 		if isinstance(idata, data.ImageData):
