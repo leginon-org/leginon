@@ -31,8 +31,8 @@ class TestMosaic(node.Node):
 		testimage.shape = im.size[1], im.size[0]
 		#print testimage.shape
 
-		ntiles = (4, 4)
-		overlap = 0.30
+		ntiles = (3, 3)
+		overlap = 0.9
 
 		tilesize = (int(math.floor(testimage.shape[0]/(1 + (ntiles[0] - 1)
 									* (1 - overlap)))),
