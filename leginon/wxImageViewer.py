@@ -294,7 +294,13 @@ class ImagePanel(wxPanel):
 		if self.biggerView():
 			xsize, ysize = self.virtualsize
 			xclientsize, yclientsize = self.panel.GetClientSize()
-			self.offset = ((xclientsize - xsize)/2, (yclientsize - ysize)/2)
+			xoffset =(xclientsize - xsize)/2
+			yoffset = (yclientsize - ysize)/2
+			if xoffset < 0:
+				xoffset = 0
+			if yoffset < 0:
+				yoffset = 0
+			self.offset = (xoffset, yoffset)
 		else:
 			self.offset = (0, 0)
 
@@ -520,9 +526,9 @@ class ImagePanel(wxPanel):
 
 			#dc.Blit(0, 0, xsize, ysize, bitmapdc, xviewoffset, yviewoffset)
 			dc.Blit(0, 0,
-							int(xsize/xscale + yscale), int(ysize/yscale + yscale),
+							int(xsize/xscale + xscale), int(ysize/yscale + yscale),
 							bitmapdc,
-							int(xviewoffset/xscale), int(yviewoffset/xscale))
+							int(xviewoffset/xscale), int(yviewoffset/yscale))
 			bitmapdc.SelectObject(wxNullBitmap)
 		dc.EndDrawing()
 		dc.SetUserScale(1.0, 1.0)
