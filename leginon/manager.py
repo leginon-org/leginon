@@ -61,7 +61,6 @@ class Manager(node.Node):
 
 		## stuff to do if Node is a Launcher
 		if isinstance(readyevent, event.LauncherAvailableEvent):
-			print 'this is a launcher'
 			self.gui_add_launcher(nodeid)
 
 	def unregisterNode(self, unavailable_event):

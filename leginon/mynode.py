@@ -9,17 +9,21 @@ class MyNode(node.Node):
 		node.Node.__init__(self, id, managerlocation)
 
 		#self.addEventInput(event.ControlEvent, self.handle_intervalchange)
+		self.addEventInput(event.StartEvent, self.main)
 		self.addEventInput(event.PublishEvent, self.handle_intervalpublished)
 
 		self.interval = 5
 		print self.location()
 		self.main()
 
-	def main(self):
+	def main(self, startevent=None):
 		#while 1:
 		for i in [1,2,3]:
 			self.print_stuff()
 			time.sleep(self.interval)
+		#self.unregister()
+
+	def unregister(self):
 		self.announce(event.NodeUnavailableEvent(self.ID()))
 
 	def print_stuff(self):
