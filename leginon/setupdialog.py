@@ -1,5 +1,6 @@
 import wx
 import wx.wizard
+import wx.lib.intctrl
 
 class WizardPage(wx.wizard.PyWizardPage):
 	def __init__(self, parent, previous=None, next=None):
@@ -29,23 +30,29 @@ class UserPage(WizardPage):
 		sizer = wx.GridBagSizer()
 
 		sizer.Add(wx.StaticText(self, -1,
-												'Please select your name and press the "Next" button.'),
+						'Please select your name.'),
 												(0, 0), (1, 2))
 
 		sizer.AddGrowableCol(0)
 		sizer.AddGrowableCol(1)
 
-		self.userchoice = wx.Choice(self, -1)
+		choices = parent.users.keys()
+		choices.sort()
+		self.userchoice = wx.Choice(self, -1, choices=choices)
+		self.userchoice.SetSelection(0)
 		sizer.Add(self.userchoice, (1, 0), (1, 2), wx.ALIGN_CENTER)
 
-		self.grouptext = wx.StaticText(self, -1, '')
-		sizer.Add(self.grouptext, (2, 0), (1, 2), wx.ALIGN_CENTER)
+		sizer.Add(wx.StaticText(self, -1,
+									'Then press the "Next" button to continue.'), (3, 0), (1, 2))
 
 		pagesizer.Add(sizer, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		pagesizer.AddGrowableRow(0)
 		pagesizer.AddGrowableCol(0)
 
 		self.SetSizerAndFit(pagesizer)
+
+	def GetNext(self):
+		return WizardPage.GetNext(self)
 
 class SessionTypePage(WizardPage):
 	def __init__(self, parent, create=None, ret=None):
@@ -55,11 +62,18 @@ class SessionTypePage(WizardPage):
 		pagesizer = wx.GridBagSizer()
 		sizer = wx.GridBagSizer()
 
+		sizer.Add(wx.StaticText(self, -1,
+						'Please indicate whether you would like to create a new session or use an existing session.'),
+												(0, 0), (1, 2))
+
 		choices = ['Create a new session', 'Return to an existing session']
 		self.sessiontyperadiobox = wx.RadioBox(self, -1, 'Session Type',
 																						choices=choices, majorDimension=1,
 																						style=wx.RA_SPECIFY_COLS)
-		sizer.Add(self.sessiontyperadiobox, (0, 0), (1, 2), wx.ALIGN_CENTER)
+		sizer.Add(self.sessiontyperadiobox, (1, 0), (1, 2), wx.ALIGN_CENTER)
+
+		sizer.Add(wx.StaticText(self, -1,
+									'Then press the "Next" button to continue.'), (3, 0), (1, 2))
 
 		pagesizer.Add(sizer, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		pagesizer.AddGrowableRow(0)
@@ -74,8 +88,9 @@ class SessionTypePage(WizardPage):
 		self.ret = ret
 
 	def GetNext(self):
+		n = self.sessiontyperadiobox.GetSelection()
 		try:
-			page = self.next[self.sessiontyperadiobox.GetSelection()]
+			page = self.next[n]
 		except IndexError:
 			return None
 
@@ -86,44 +101,107 @@ class SessionTypePage(WizardPage):
 class SessionSelectPage(WizardPage):
 	def __init__(self, parent):
 		WizardPage.__init__(self, parent)
-		pagesizer = wx.GridBagSizer()
-		sizer = wx.GridBagSizer()
+		self.pagesizer = wx.GridBagSizer()
+		self.sizer = wx.GridBagSizer()
+
+		self.sizer.Add(wx.StaticText(self, -1,
+			'Please select the session you would like to continue.'),
+							(0, 0), (1, 2))
 
 		self.sessionchoice = wx.Choice(self, -1)
-		sizer.Add(self.sessionchoice, (0, 0), (1, 2), wx.ALIGN_CENTER)
+		self.sizer.Add(self.sessionchoice, (1, 0), (1, 2), wx.ALIGN_CENTER)
 
-		sizer.AddGrowableCol(0)
-		sizer.AddGrowableCol(1)
+		self.sizer.AddGrowableCol(0)
+		self.sizer.AddGrowableCol(1)
+
+		self.limitsizer = wx.GridBagSizer(0, 3)
+		self.limitcheckbox = wx.CheckBox(self, -1, '')
+		self.limitcheckbox.SetValue(True)
+		self.Bind(wx.EVT_CHECKBOX, self.onLimitChange, self.limitcheckbox)
+		self.limitsizer.Add(self.limitcheckbox, (0, 0), (1, 1),
+										wx.ALIGN_CENTER)
+		self.limitsizer.Add(wx.StaticText(self, -1, 'List only last'),
+												(0, 1), (1, 1), wx.ALIGN_CENTER)
+		self.limitintctrl = wx.lib.intctrl.IntCtrl(self, -1, 10, size=(32, -1),
+																								style=wx.TE_CENTER,
+																								min=1, max=99, limited=True)
+		self.limitintctrl.Bind(wx.EVT_TEXT, self.onLimitChange, self.limitintctrl)
+		self.limitsizer.Add(self.limitintctrl, (0, 2), (1, 1), wx.ALIGN_CENTER)
+		self.limitsizer.Add(wx.StaticText(self, -1, 'sessions'), (0, 3), (1, 1),
+												wx.ALIGN_CENTER)
+
+		self.sizer.Add(self.limitsizer, (2, 0), (1, 2), wx.ALIGN_CENTER)
 
 		self.descriptiontext = wx.StaticText(self, -1, '')
-		sizer.Add(self.descriptiontext, (1, 0), (1, 2), wx.ALIGN_CENTER)
+		self.sizer.Add(self.descriptiontext, (4, 0), (1, 2), wx.ALIGN_CENTER)
 
-		sizer.Add(wx.StaticText(self, -1, 'Instrument:'), (2, 0), (1, 1),
+		textsizer = wx.GridBagSizer(0, 3)
+
+		textsizer.Add(wx.StaticText(self, -1, 'Instrument:'), (0, 0), (1, 1),
 														wx.ALIGN_CENTER_VERTICAL)
 		self.instrumenttext = wx.StaticText(self, -1, '')
-		sizer.Add(self.instrumenttext, (2, 1), (1, 1),
+		textsizer.Add(self.instrumenttext, (0, 1), (1, 1),
 														wx.ALIGN_CENTER_VERTICAL)
 
-		sizer.Add(wx.StaticText(self, -1, 'Image Directory:'), (3, 0), (1, 1),
+		textsizer.Add(wx.StaticText(self, -1, 'Image Directory:'), (1, 0), (1, 1),
 														wx.ALIGN_CENTER_VERTICAL)
 		self.imagedirectorytext = wx.StaticText(self, -1, '')
-		sizer.Add(self.imagedirectorytext, (3, 1), (1, 1),
+		textsizer.Add(self.imagedirectorytext, (1, 1), (1, 1),
 														wx.ALIGN_CENTER_VERTICAL)
 
-		sizer.Add(wx.StaticText(self, -1, 'Project:'), (4, 0), (1, 1),
-														wx.ALIGN_CENTER_VERTICAL)
-		self.projecttext = wx.StaticText(self, -1, '')
-		sizer.Add(self.projecttext, (4, 1), (1, 1),
-														wx.ALIGN_CENTER_VERTICAL)
+		self.sizer.Add(textsizer, (5, 0), (1, 2), wx.ALIGN_CENTER)
+
+		self.Bind(wx.EVT_CHOICE, self.onChoice, self.sessionchoice)
 
 		self.connectcheckbox = wx.CheckBox(self, -1, 'Connect to instrument')
-		sizer.Add(self.connectcheckbox, (5, 0), (1, 2), wx.ALIGN_CENTER)
+		self.sizer.Add(self.connectcheckbox, (7, 0), (1, 2), wx.ALIGN_CENTER)
 
-		pagesizer.Add(sizer, (0, 0), (1, 1), wx.ALIGN_CENTER)
-		pagesizer.AddGrowableRow(0)
-		pagesizer.AddGrowableCol(0)
+		self.sizer.Add(wx.StaticText(self, -1,
+							'Finally, press the "Finish" button to begin.'), (9, 0), (1, 2))
 
-		self.SetSizerAndFit(pagesizer)
+		self.pagesizer.Add(self.sizer, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		self.pagesizer.AddGrowableRow(0)
+		self.pagesizer.AddGrowableCol(0)
+
+		self.SetSizerAndFit(self.pagesizer)
+
+	def onLimitChange(self, evt):
+		self.setSessionNames(self.GetParent().sessionnames)
+
+	def onChoice(self, evt):
+		self.updateText(evt.GetSelection())
+
+	def updateText(self, n):
+		parent = self.GetParent()
+		session = parent.sessions[self.sessionchoice.GetString(n)]
+		self.descriptiontext.SetLabel(session['comment'])
+		try:
+			self.instrumenttext.SetLabel(session['instrument']['name'])
+			self.connectcheckbox.Enable(True)
+		except KeyError:
+			self.instrumenttext.SetLabel('(No instrument)')
+			self.connectcheckbox.Enable(False)
+		self.imagedirectorytext.SetLabel(session['image path'])
+		# autoresize on static text gets reset by sizer during layout
+		for i in [self.descriptiontext, self.instrumenttext,
+							self.imagedirectorytext]:
+			# if label is too big for wizard (presized) need to resize or truncate
+			self.sizer.SetItemMinSize(i, i.GetSize())
+		self.pagesizer.Layout()
+
+	def setSessionNames(self, names):
+		self.Freeze()
+		self.sessionchoice.Clear()
+		if self.limitcheckbox.IsChecked():
+			self.sessionchoice.AppendItems(names[:self.limitintctrl.GetValue()])
+		else:
+			self.sessionchoice.AppendItems(names)
+		size = self.sessionchoice.GetBestSize()
+		self.sizer.SetItemMinSize(self.sessionchoice, size.width, size.height)
+		self.pagesizer.Layout()
+		self.sessionchoice.SetSelection(0)
+		self.updateText(0)
+		self.Thaw()
 
 class SessionNamePage(WizardPage):
 	def __init__(self, parent):
@@ -132,7 +210,8 @@ class SessionNamePage(WizardPage):
 		sizer = wx.GridBagSizer()
 
 		sizer.Add(wx.StaticText(self, -1,
-				'You may change the suggested session name if you wish.'),
+				'Please confirm the session name and enter an optional description.\n'+
+				'You may change the suggested session name if needed.'),
 												(0, 0), (1, 2))
 
 		sizer.AddGrowableCol(0)
@@ -140,7 +219,9 @@ class SessionNamePage(WizardPage):
 
 		sizer.Add(wx.StaticText(self, -1, 'Name:'), (1, 0), (1, 1),
 														wx.ALIGN_CENTER_VERTICAL)
-		self.nametextctrl = wx.TextCtrl(self, -1, '')
+		name = parent.setup.suggestSessionName()
+		self.nametextctrl = wx.TextCtrl(self, -1, name, style=wx.TE_PROCESS_ENTER)
+		self.Bind(wx.EVT_TEXT_ENTER, self.onValidateName, self.nametextctrl)
 		sizer.Add(self.nametextctrl, (1, 1), (1, 1), wx.EXPAND|wx.ALL)
 
 		sizer.Add(wx.StaticText(self, -1, 'Description:'), (2, 0), (1, 1),
@@ -148,11 +229,25 @@ class SessionNamePage(WizardPage):
 		self.descriptiontextctrl = wx.TextCtrl(self, -1, '', style=wx.TE_MULTILINE)
 		sizer.Add(self.descriptiontextctrl, (3, 0), (1, 2), wx.EXPAND|wx.ALL)
 
+		sizer.Add(wx.StaticText(self, -1,
+									'Then press the "Next" button to continue.'), (5, 0), (1, 2))
+
 		pagesizer.Add(sizer, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		pagesizer.AddGrowableRow(0)
 		pagesizer.AddGrowableCol(0)
 
 		self.SetSizerAndFit(pagesizer)
+
+	def onValidateName(self, evt):
+		if self.GetParent().setup.existsSessionName(evt.GetString()):
+			self.nameExistsDialog()
+
+	def nameExistsDialog(self):
+		dlg = wx.MessageDialog(self,
+											'A session with this name already exists.',
+											'Invalid Session Name', wx.OK|wx.ICON_ERROR)
+		dlg.ShowModal()
+		dlg.Destroy()
 
 class SessionProjectPage(WizardPage):
 	def __init__(self, parent):
@@ -169,9 +264,15 @@ class SessionProjectPage(WizardPage):
 
 		sizer.Add(wx.StaticText(self, -1, 'Project:'), (1, 0), (1, 1),
 														wx.ALIGN_CENTER_VERTICAL)
-		self.projectchoice = wx.Choice(self, -1)
+		choices = parent.projects.keys()
+		choices.sort()
+		self.projectchoice = wx.Choice(self, -1, choices=choices)
+		self.projectchoice.SetSelection(0)
 		sizer.Add(self.projectchoice, (1, 1), (1, 1),
 														wx.ALIGN_CENTER_VERTICAL)
+
+		sizer.Add(wx.StaticText(self, -1,
+									'Then press the "Next" button to continue.'), (3, 0), (1, 2))
 
 		pagesizer.Add(sizer, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		pagesizer.AddGrowableRow(0)
@@ -194,9 +295,16 @@ class SessionInstrumentPage(WizardPage):
 
 		sizer.Add(wx.StaticText(self, -1, 'Instrument:'), (1, 0), (1, 1),
 														wx.ALIGN_CENTER_VERTICAL)
-		self.instrumentchoice = wx.Choice(self, -1)
+		choices = parent.instruments.keys()
+		choices.sort()
+		choices.insert(0, 'No instrument')
+		self.instrumentchoice = wx.Choice(self, -1, choices=choices)
+		self.instrumentchoice.SetSelection(0)
 		sizer.Add(self.instrumentchoice, (1, 1), (1, 1),
 														wx.ALIGN_CENTER_VERTICAL)
+
+		sizer.Add(wx.StaticText(self, -1,
+									'Then press the "Next" button to continue.'), (3, 0), (1, 2))
 
 		pagesizer.Add(sizer, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		pagesizer.AddGrowableRow(0)
@@ -208,7 +316,7 @@ class SessionImageDirectoryPage(WizardPage):
 	def __init__(self, parent):
 		WizardPage.__init__(self, parent)
 		pagesizer = wx.GridBagSizer()
-		sizer = wx.GridBagSizer()
+		sizer = wx.GridBagSizer(0, 5)
 
 		sizer.Add(wx.StaticText(self, -1,
 				'Select the directory where images from this session will be stored.\n(A subdirectory named after the session will be created for you)'),
@@ -220,12 +328,16 @@ class SessionImageDirectoryPage(WizardPage):
 		sizer.Add(wx.StaticText(self, -1, 'Image Directory:'), (1, 0), (1, 1),
 														wx.ALIGN_CENTER_VERTICAL)
 		self.directorytextctrl = wx.TextCtrl(self, -1, '')
-		sizer.Add(self.directorytextctrl, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.directorytextctrl, (1, 1), (1, 1),
+							wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.LEFT|wx.RIGHT)
 		self.browsebutton = wx.Button(self, -1, 'Browse...')
 		self.Bind(wx.EVT_BUTTON, self.onBrowse, self.browsebutton)
-		sizer.Add(self.browsebutton, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.browsebutton, (1, 2), (1, 1), wx.ALIGN_CENTER)
 
 		sizer.AddGrowableCol(2)
+
+		sizer.Add(wx.StaticText(self, -1,
+									'Then press the "Next" button to continue.'), (3, 0), (1, 2))
 
 		pagesizer.Add(sizer, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		pagesizer.AddGrowableRow(0)
@@ -240,33 +352,179 @@ class SessionImageDirectoryPage(WizardPage):
 			self.directorytextctrl.SetLabel(dlg.GetPath())
 		dlg.Destroy()
 
-class SetupWizard(wx.wizard.Wizard):
+class SessionCreatePage(WizardPage):
 	def __init__(self, parent):
+		WizardPage.__init__(self, parent)
+		self.pagesizer = wx.GridBagSizer()
+		self.sizer = wx.GridBagSizer()
+
+		self.sizer.Add(wx.StaticText(self, -1,
+			'Please select the session you would like to continue.'),
+							(0, 0), (1, 2))
+
+		self.sessiontext = wx.StaticText(self, -1, '')
+		self.sizer.Add(self.sessiontext, (1, 0), (1, 2), wx.ALIGN_CENTER)
+
+		self.sizer.AddGrowableCol(0)
+		self.sizer.AddGrowableCol(1)
+
+		self.descriptiontext = wx.StaticText(self, -1, '')
+		self.sizer.Add(self.descriptiontext, (4, 0), (1, 2), wx.ALIGN_CENTER)
+
+		textsizer = wx.GridBagSizer(0, 3)
+
+		textsizer.Add(wx.StaticText(self, -1, 'Instrument:'), (0, 0), (1, 1),
+														wx.ALIGN_CENTER_VERTICAL)
+		self.instrumenttext = wx.StaticText(self, -1, '')
+		textsizer.Add(self.instrumenttext, (0, 1), (1, 1),
+														wx.ALIGN_CENTER_VERTICAL)
+
+		textsizer.Add(wx.StaticText(self, -1, 'Image Directory:'), (1, 0), (1, 1),
+														wx.ALIGN_CENTER_VERTICAL)
+		self.imagedirectorytext = wx.StaticText(self, -1, '')
+		textsizer.Add(self.imagedirectorytext, (1, 1), (1, 1),
+														wx.ALIGN_CENTER_VERTICAL)
+
+		self.sizer.Add(textsizer, (5, 0), (1, 2), wx.ALIGN_CENTER)
+
+		self.Bind(wx.EVT_CHOICE, self.onChoice, self.sessionchoice)
+
+		self.connectcheckbox = wx.CheckBox(self, -1, 'Connect to instrument')
+		self.sizer.Add(self.connectcheckbox, (7, 0), (1, 2), wx.ALIGN_CENTER)
+
+		self.sizer.Add(wx.StaticText(self, -1,
+							'Finally, press the "Finish" button to begin.'), (9, 0), (1, 2))
+
+		self.pagesizer.Add(self.sizer, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		self.pagesizer.AddGrowableRow(0)
+		self.pagesizer.AddGrowableCol(0)
+
+		self.SetSizerAndFit(self.pagesizer)
+
+class SetupWizard(wx.wizard.Wizard):
+	def __init__(self, parent, research):
+		self.setup = Setup(research)
 		wx.wizard.Wizard.__init__(self, parent, -1, 'Leginon Setup')
-		userpage = UserPage(self)
+
+		self.Bind(wx.wizard.EVT_WIZARD_PAGE_CHANGING, self.onPageChanging, self)
+		self.Bind(wx.wizard.EVT_WIZARD_PAGE_CHANGED, self.onPageChanged, self)
+
+		self.users = self.setup.getUsers()
+		if not self.users:
+			dlg = wx.MessageDialog(self,
+												'Databases with no users are not currently supported',
+												'Fatal Error', wx.OK|wx.ICON_ERROR)
+			dlg.ShowModal()
+			dlg.Destroy()
+			raise RuntimeError('Databases with no users are not current supported')
+		self.userpage = UserPage(self)
+
 		sessiontypepage = SessionTypePage(self)
-		sessionnamepage = SessionNamePage(self)
-		sessionprojectpage = SessionProjectPage(self)
+		self.sessionnamepage = SessionNamePage(self)
+
+		self.projects = self.setup.getProjects()
+		if self.projects:
+			sessionprojectpage = SessionProjectPage(self)
+
+		self.instruments = self.setup.getInstruments()
 		sessioninstrumentpage = SessionInstrumentPage(self)
 		sessionimagedirectorypage = SessionImageDirectoryPage(self)
-		sessionselectpage = SessionSelectPage(self)
+		self.sessionselectpage = SessionSelectPage(self)
 
-		userpage.setNext(sessiontypepage)
-		sessiontypepage.setNext((sessionnamepage, sessionselectpage))
-		sessionnamepage.setNext(sessionprojectpage)
-		sessionprojectpage.setNext(sessioninstrumentpage)
+		self.userpage.setNext(sessiontypepage)
+		sessiontypepage.setNext((self.sessionnamepage, self.sessionselectpage))
+		if self.projects:
+			self.sessionnamepage.setNext(sessionprojectpage)
+			sessionprojectpage.setNext(sessioninstrumentpage)
+		else:
+			self.sessionnamepage.setNext(sessioninstrumentpage)
 		sessioninstrumentpage.setNext(sessionimagedirectorypage)
-		sessionimagedirectorypage.setNext(sessionselectpage)
+		sessionimagedirectorypage.setNext(self.sessionselectpage)
 
-		self.FitToPage(userpage)
-		self.RunWizard(userpage)
+		self.FitToPage(self.userpage)
+		self.RunWizard(self.userpage)
+
+	def onPageChanging(self, evt):
+		if evt.GetPage() is self.sessionnamepage and evt.GetDirection():
+			name = self.sessionnamepage.nametextctrl.GetValue()
+			if self.setup.existsSessionName(name):
+				evt.Veto()
+				self.sessionnamepage.nameExistsDialog()
+
+	def onPageChanged(self, evt):
+		if evt.GetPage() is self.sessionselectpage:
+			userdata = self.users[self.userpage.userchoice.GetStringSelection()]
+			self.sessionnames, self.sessions = self.setup.getSessions(userdata)
+			self.sessionselectpage.setSessionNames(self.sessionnames)
+
+import data
+import project
+import time
+
+class Setup(object):
+	def __init__(self, research):
+		self.research = research
+
+	def _indexBy(self, by, datalist):
+		index = {}
+		bydone = []
+		for indexdata in datalist:
+			try:
+				key = indexdata[by]
+				if key not in bydone:
+					index[key] = indexdata
+					bydone.append(key)
+			except (TypeError, IndexError):
+				pass
+		return index
+
+	def getUsers(self):
+		userdata = data.UserData(initializer={})
+		userdatalist = self.research(datainstance=userdata)
+		return self._indexBy('full name', userdatalist)
+
+	def getSessions(self, userdata, n=None):
+		sessiondata = data.SessionData(initializer={'user': userdata})
+		sessiondatalist = self.research(datainstance=sessiondata, results=n)
+		return (map(lambda d: d['name'], sessiondatalist),
+						self._indexBy('name', sessiondatalist))
+
+	def getProjects(self):
+		projectdata = project.ProjectData()
+		if not projectdata.isConnected():
+			return {}
+		projects = projectdata.getProjects()
+		projectdatalist = projects.getall()
+		return self._indexBy('name', projectdatalist)
+
+	def getInstruments(self):
+		instrumentdata = data.InstrumentData(initializer={})
+		instrumentdatalist = self.research(datainstance=instrumentdata)
+		return self._indexBy('name', instrumentdatalist)
+
+	def suggestSessionName(self):
+		session_name = '<cannot suggest a name>'
+		for suffix in 'abcdefghijklmnopqrstuvwxyz':
+			maybe_name = time.strftime('%y%b%d'+suffix).lower()
+			if self.existsSessionName(maybe_name):
+				continue
+			else:
+				session_name = maybe_name
+				break
+		return session_name
+
+	def existsSessionName(self, name):
+		sessiondata = data.SessionData(name=name)
+		if self.research(datainstance=sessiondata):
+			return True
+		return False
 
 if __name__ == '__main__':
 	class TestApp(wx.App):
 		def OnInit(self):
 			frame = wx.Frame(None, -1, 'Test')
 			self.SetTopWindow(frame)
-			wizard = SetupWizard(frame)
+			wizard = SetupWizard(frame, None)
 			frame.Show(True)
 			return True
 
