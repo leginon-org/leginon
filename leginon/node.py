@@ -141,6 +141,11 @@ class Node(leginonobject.LeginonObject):
 
 	def IDCounter(self):
 		# read current ID count value
+#		if not hasattr(self, 'idcount'):
+#			self.idcount = 0
+#		self.idcount += 1
+#		return self.idcount - 1
+
 		fname = ''
 		if self.session is not None:
 			session_name = self.session['name']

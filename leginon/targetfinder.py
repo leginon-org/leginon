@@ -241,9 +241,9 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		session = data.SessionData(initializer=sessioninitializer)
 		initializer = {'session': session}
 		instance = data.MosaicData(initializer=initializer)
-		print 'INSTANCE', instance
+#		print 'INSTANCE', instance
 		mosaics = self.research(datainstance=instance)
-		print 'MOSAICS', mosaics
+#		print 'MOSAICS', mosaics
 		self.mosaicselectionmapping = {}
 		for mosaic in mosaics:
 			key = str(mosaic['session']['name']) + ' ' + str(mosaic['id'])

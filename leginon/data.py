@@ -616,6 +616,10 @@ class ImageData(InSessionData):
 		basename += '_%04d.mrc' % (myindex,)
 		return basename
 
+class MosaicImageData(ImageData):
+	'''Image of a mosaic'''
+	pass
+
 class CorrelationImageData(ImageData):
 	'''
 	ImageData that results from a correlation of two images

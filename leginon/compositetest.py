@@ -5,7 +5,7 @@ import math
 
 class CompositeImageMaker(object):
 	def __init__(self):
-		self.circleradius = 1.5e-3
+		self.circleradius = 0.5e-3
 		self.pixelsize = 3.2e-7
 		self.binning = 2
 		self.imagesize = 512
@@ -14,7 +14,6 @@ class CompositeImageMaker(object):
 	def imageDiameter(self):
 		imagesize = self.pixelsize*self.binning*self.imagesize
 		imagediameter = self.circleradius*2.0/imagesize
-		print 'imageDiameter =', imagediameter
 		return imagediameter
 
 	def circlePoints(self, numericimage, cx, cy, x, y):
@@ -40,11 +39,10 @@ class CompositeImageMaker(object):
 
 	def circle(self, numericimage):
 		x = 0
-		radius = numericimage.shape[0]/2
-		#radius = int(math.ceil(self.imageDiameter()/2))
+		radius = int(self.circleradius/(self.pixelsize*self.binning*self.scale))
 		y = radius
-		xcenter = radius - 1
-		ycenter = radius - 1
+		ycenter = numericimage.shape[0]/2
+		xcenter = numericimage.shape[1]/2
 		p = (5 - radius*4)/4
 		self.circlePoints(numericimage, xcenter, ycenter, x, y)
 		while x < y:
@@ -56,83 +54,53 @@ class CompositeImageMaker(object):
 				p += 2*(x - y) + 1
 			self.circlePoints(numericimage, xcenter, ycenter, x, y)
 
-	def circlePoints2(self, array, cx, cy, x, y):
-		if x == 0:
-			array[cy + y, cx] = 1
-			array[cy + y, cx] = 1
-			array[cy, cx + y] = 1
-			array[cy, cx - y] = 1
-		elif x == y:
-			array[cy + y, cx + x] = 1
-			array[cy + y, cx - x] = 1
-			array[cy - y, cx + x] = 1
-			array[cy - y, cx - x] = 1
-		elif x < y:
-			array[cy + y, cx + x] = 1
-			array[cy + y, cx - x] = 1
-			array[cy - y, cx + x] = 1
-			array[cy - y, cx - x] = 1
-			array[cy + x, cx + y] = 1
-			array[cy + x, cx - y] = 1
-			array[cy - x, cx + y] = 1
-			array[cy - x, cx - y] = 1
-
-	def circle2(self, array=None):
-		x = 0
-		radius = int(math.ceil(self.imageDiameter()/2))
-		array = Numeric.zeros((radius*2,radius*2), Numeric.Int16)
-		y = radius
-		xcenter = 0
-		ycenter = 0
-		p = (5 - radius*4)/4
-		self.circlePoints2(array, xcenter, ycenter, x, y)
-		while x < y:
-			x += 1
-			if p < 0:
-				p += 2*x + 1
-			else:
-				y -= 1
-				p += 2*(x - y) + 1
-			self.circlePoints2(array, xcenter, ycenter, x, y)
-#		for i in range(array.shape[0]):
-#			set = 0
-#			for j in range(array.shape[1]):
-#				if array[i, j] == 0:
-#					array[i, j] = set
-#				else:
-#					if set == 0:
-#						set = 1
-#					else:
-#						set = 0
-		print array
+	def intersection(self):
+		pixelradius = self.circleradius/(self.pixelsize*self.binning)
+		lines = [self.imagesize/2]
+		while lines[-1] < pixelradius - self.imagesize:
+			lines.append(lines[-1] + self.imagesize)
+		pixels = [pixelradius*2]
+		for i in lines:
+			pixels.append(pixelradius*math.cos(math.asin(i/pixelradius))*2)
+		images = []
+		for i in pixels:
+			images.append(int(math.ceil(i/self.imagesize)))
+		targets = []
+		sign = 1
+		for n, i in enumerate(images):
+			xs = range(-sign*self.imagesize*(i - 1)/2, sign*self.imagesize*(i + 1)/2,
+									sign*self.imagesize)
+			y = n*512
+			for x in xs:
+				targets.insert(0, (x, y))
+				if y > 0:
+					targets.append((x, -y))
+			sign = -sign
+		return targets
 
 	def makeNumericImage(self):
 		imagediameter = math.ceil(self.imageDiameter())
 
 		size = math.ceil(imagediameter*self.imagesize/self.scale)
-		numericimage = Numeric.zeros((size, size), Numeric.Int16)
+		numericimage = Numeric.zeros((size + 256, size + 256), Numeric.Int16)
 
-		self.circle2()
-
-		imagecenters = Numeric.arrayrange(0, imagediameter).astype(Numeric.Int16)
-		imagecenters = imagecenters * self.imagesize
-		imagecenters = imagecenters - self.imagesize/2.0
-		imagecenters = imagecenters / self.scale
-		imagecenters = imagecenters.astype(Numeric.Int16)
-		foo = []
-		for i in imagecenters:
-			for j in imagecenters:
-				foo.append((i, j))
+		imagecenters = self.intersection()
+		for i, j in imagecenters:
+			i = int(i/self.scale) + numericimage.shape[0]/2
+			j = int(j/self.scale) + numericimage.shape[1]/2
+			try:
 				numericimage[i, j] = 256
-				halfimagesize = int(round(self.imagesize/self.scale/2.0))
-				right = halfimagesize - j - 1
-				left = halfimagesize + j + 1
-				bottom = halfimagesize - i - 1
-				top = halfimagesize + i - 1
-				numericimage[bottom:top, left] = 256
-				numericimage[bottom:top, right] = 256
-				numericimage[top, left:right] = 256
-				numericimage[bottom, left:right] = 256
+			except IndexError:
+				print i, j
+			halfimagesize = int(round(self.imagesize/self.scale/2.0))
+			right = halfimagesize - j - 1
+			left = halfimagesize + j + 1
+			bottom = halfimagesize - i - 1
+			top = halfimagesize + i - 1
+#			numericimage[bottom:top, left] = 256
+#			numericimage[bottom:top, right] = 256
+#			numericimage[top, left:right] = 256
+#			numericimage[bottom, left:right] = 256
 
 		self.circle(numericimage)
 

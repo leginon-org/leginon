@@ -753,13 +753,14 @@ class ManagerSetup(object):
 		if session is not None:
 			self.manager.session = session
 			self.manager.publish(session, database=True)
-			try:
-				hostname = session['instrument']['hostname']
-				if hostname:
-					self.manager.addNode(hostname, 55555)
-			except (IOError, TypeError, socket.error), e:
-				if isinstance(e, socket.error):
-					self.manager.outputWarning('Cannot add instrument\'s launcher.')
+			if session['instrument'] is not None and session['instrument']['hostname'] not in self.manager.launcherdict.keys():
+				try:
+					hostname = session['instrument']['hostname']
+					if hostname:
+						self.manager.addNode(hostname, 55555)
+				except (IOError, TypeError, socket.error), e:
+					if isinstance(e, socket.error):
+						self.manager.outputWarning('Cannot add instrument\'s launcher.')
 			parent = self.container.getParent()
 			if parent is not None:
 				parent.deleteObject(self.container.getName())

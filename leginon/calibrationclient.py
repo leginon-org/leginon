@@ -186,14 +186,15 @@ class PixelSizeCalibrationClient(CalibrationClient):
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)
 
-	def retrievePixelSize(self, mag):
+	def retrievePixelSize(self, mag, instrument=True):
 		'''
 		finds the requested pixel size using magnification
 		'''
 		queryinstance = data.PixelSizeCalibrationData()
 		queryinstance['magnification'] = mag
 		queryinstance['session'] = data.SessionData()
-		queryinstance['session']['instrument'] = self.node.session['instrument']
+		if instrument:
+			queryinstance['session']['instrument'] = self.node.session['instrument']
 		caldatalist = self.node.research(datainstance=queryinstance, results=1)
 
 		if len(caldatalist) > 0:
@@ -581,8 +582,11 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 
 		vect = (shift['x'], shift['y'])
 
-		matrix = self.retrieveMatrix(mag, par)
-		if matrix is None:
+		try:
+			matrix = self.retrieveMatrix(mag, par)
+			if matrix is None:
+				return None
+		except NoMatrixCalibrationError:
 			return None
 		matrix = LinearAlgebra.inverse(matrix)
 
