@@ -32,7 +32,7 @@ class Handler(SocketServer.StreamRequestHandler):
 				raise
 			try:
 				# returns exception if error, else None
-				print 'socketstreamserver dumping data', tdiff
+				print 'socketstreamserver dumping 111', tdiff
 				t1 = time.clock()
 				cPickle.dump(e, self.wfile, 1)
 				t2 = time.clock()
@@ -42,9 +42,13 @@ class Handler(SocketServer.StreamRequestHandler):
 				print('write failed when acknowledging push')
 		else:
 			try:
-				print 'SSSS'
+				print 'datahandler query'
+				newdata = self.server.datahandler.query(obj)
+				print 'datahandler query done'
+
+				print 'socketstreamserver dumping 222'
 				t1 = time.clock()
-				cPickle.dump(self.server.datahandler.query(obj), self.wfile, 1)
+				cPickle.dump(newdata, self.wfile, 1)
 				t2 = time.clock()
 				tdiff = t2 - t1
 				print 'TTTT cPickle.dump not Data instance', tdiff
