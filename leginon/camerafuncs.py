@@ -34,9 +34,9 @@ class CameraFuncs(object):
 		else:
 			### create my own data from acquisition
 			scopedata = self.node.researchByDataID('scope')
-			scopedict = dict(scopedata['em'])
+			scopedict = scopedata['em']
 			camdata = self.node.researchByDataID('camera')
-			cameradict = dict(camdata['em'])
+			cameradict = camdata['em']
 			numimage = cameradict['image data']
 			del cameradict['image data']
 			dataid = self.node.ID()

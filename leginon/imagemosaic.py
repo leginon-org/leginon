@@ -197,8 +197,6 @@ class ImageMosaic(watcher.Watcher):
 		#self.start()
 
 	def processData(self, idata):
-		#tileimage = idata.content['image']
-		#neighbors = idata.content['neighbor tiles']
 		tileimage = idata['image']
 		neighbors = idata['neighbor_tiles']
 		mosaics = []
@@ -363,8 +361,6 @@ class ImageMosaic(watcher.Watcher):
 	def positionByCorrelation(self, idata, imagemosaic):
 		if imagemosaic is None:
 			return (0, 0)
-		#tileimage = idata.content['image']
-		#neighbors = idata.content['neighbor tiles']
 		tileimage = idata['image']
 		neighbors = idata['neighbor_tiles']
 		positionvotes = ({}, {})
@@ -539,8 +535,7 @@ class ImageMosaic(watcher.Watcher):
 																								targets=self.targetlist)
 			self.publish(targetlistdata, event.ImageTargetListPublishEvent)
 			print 'published targetlistdata', targetlistdata
-			print 'content'
-			#print targetlistdata.content
+			print 'targets'
 			print targetlistdata['targets']
 
 class StateImageMosaic(ImageMosaic):
@@ -575,10 +570,6 @@ class StateImageMosaic(ImageMosaic):
 			raise ValueError
 
 	def processData(self, idata):
-		#tileimage = idata.content['image']
-		#neighbors = idata.content['neighbor tiles']
-		#tilescope = idata.content['scope']
-		#tilecamera = idata.content['camera']
 		tileimage = idata['image']
 		neighbors = idata['neighbor_tiles']
 		tilescope = idata['scope']
@@ -611,9 +602,6 @@ class StateImageMosaic(ImageMosaic):
 																		idata['scope'][parameter],
 																		idata['scope'],
 																		idata['camera'])
-																		#idata.content['scope'][parameter],
-																		#idata.content['scope'],
-																		#idata.content['camera'])
 		# this makes it work with calibration
 		position['row'] *= -1
 		position['col'] *= -1

@@ -42,7 +42,7 @@ class Launcher(node.Node):
 		self.publish(d, event.NodeClassesPublishEvent)
 
 	def handleLaunch(self, launchevent):
-		# unpack event content
+		# unpack event
 		newproc = launchevent['newproc']
 		targetclass = launchevent['targetclass']
 		args = launchevent['args']

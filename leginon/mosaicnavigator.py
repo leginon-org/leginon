@@ -14,12 +14,10 @@ class MosaicNavigator(navigator.Navigator):
 		self.start()
 
 	def addStateMosaic(self, ievent):
-		idata = self.researchByDataID(ievent.content)
-		#self.statemosaic.update(idata.content)
+		idata = self.researchByDataID(ievent['dataid'])
 		self.statemosaic.update(idata)
 
 	def handleImageClick(self, clickevent):
-		#imagedataid = clickevent.content['image id']
 		imagedataid = clickevent['image id']
 		try:
 			mosaicdata = self.statemosaic[imagedataid]
@@ -27,9 +25,6 @@ class MosaicNavigator(navigator.Navigator):
 			self.printerror('unknown data ID for navigation, %s' % str(imagedataid))
 			return
 
-		#row = clickevent.content['array row']
-		#column = clickevent.content['array column']
-		#shape = clickevent.content['array shape']
 		row = clickevent['array row']
 		column = clickevent['array column']
 		shape = clickevent['array shape']

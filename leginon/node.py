@@ -192,14 +192,12 @@ class Node(leginonobject.LeginonObject):
 	def handleConfirmedEvent(self, ievent):
 		'''Handler for ConfirmationEvents. Unblocks the call waiting for confirmation of the event generated.'''
 		# this is bad since it will fill up with lots of events
-#		if not ievent.content in self.confirmwaitlist:
-#			self.confirmwaitlist[ievent.content] = threading.Event()
-#		self.confirmwaitlist[ievent.content].set()
-		#del self.confirmwaitlist[ievent.content]
 		eventid = ievent['eventid']
 		if not eventid in self.confirmwaitlist:
 			self.confirmwaitlist[eventid] = threading.Event()
 		self.confirmwaitlist[eventid].set()
+
+		#del self.confirmwaitlist[eventid]
 
 	# data publish/research methods
 
@@ -337,10 +335,8 @@ class Node(leginonobject.LeginonObject):
 		self.outputEvent(ievent=available_event, wait=True)
 
 	def handleAddNode(self, ievent):
-		'''Event handler calling adddManager with event content. See addManager.'''
-#		if ievent.content['class'] == 'Manager':
-#			self.addManager(ievent.content['location'])
-		if ievent['class'] == 'Manager':
+		'''Event handler calling adddManager with event info. See addManager.'''
+		if ievent['nodeclass'] == 'Manager':
 			self.addManager(ievent['location'])
 
 	# utility methods

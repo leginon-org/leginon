@@ -28,11 +28,6 @@ class ImageWatcher(watcher.Watcher):
 		add some info to clickinfo to create targetinfo
 		'''
 		imageinfo = {}
-#		imageinfo['image id'] = self.imagedata.id
-#		imageinfo['scope'] = self.imagedata.content['scope']
-#		imageinfo['camera'] = self.imagedata.content['camera']
-#		if 'preset' in self.imagedata.content:
-#			imageinfo['preset'] = self.imagedata.content['preset']
 		imageinfo['image id'] = self.imagedata['id']
 		imageinfo['scope'] = self.imagedata['scope']
 		imageinfo['camera'] = self.imagedata['camera']
@@ -45,5 +40,4 @@ class ImageWatcher(watcher.Watcher):
 		if not isinstance(imagedata, data.ImageData):
 			raise RuntimeError('Data is not ImageData instance')
 		self.imagedata = imagedata
-		#self.numarray = imagedata.content['image']
 		self.numarray = imagedata['image']

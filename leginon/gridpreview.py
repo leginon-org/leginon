@@ -95,8 +95,7 @@ class GridPreview(node.Node):
 		return self.magnification
 
 	def getScope(self):
-		#return self.researchByDataID('scope').content
-		return self.researchByDataID('scope')
+		return self.researchByDataID('scope')['em']
 
 	def acquireTarget(self, target):
 #		print 'TARGET', target
@@ -131,11 +130,10 @@ class GridPreview(node.Node):
 			time.sleep(2)
 
 			stagepos = self.researchByDataID('stage position')
-#			stagepos = stagepos.content
+			stagepos = stagepos['em']
 #			print 'gridpreview stagepos', stagepos
 
 			imagedata = self.cam.acquireCameraImageData(camstate=None, correction=1)
-#			imarray = imagedata.content['image']
 			imarray = imagedata['image']
 			thisid = self.ID()
 			if self.lastid is None:
@@ -148,9 +146,6 @@ class GridPreview(node.Node):
 			storedata = {'id':thisid,'image':filename, 'state': stagepos, 'neighbors': neighbortiles, 'target':target}
 			self.logAppend(storedata)
 
-#			scope = imagedata.content['scope']
-#			camera = imagedata.content['camera']
-#			imdata = data.TileImageData(thisid, imarray, scope, camera, neighbortiles)
 			scope = imagedata['scope']
 			camera = imagedata['camera']
 			imdata = data.TileImageData(thisid, image=imarray, scope=scope,

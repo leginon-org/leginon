@@ -55,7 +55,6 @@ class GonModeler(node.Node):
 		print 'loop done'
 		self.threadlock.release()
 
-
 	def acquireNextPosition(self, axis, state=None):
 		## go to state
 		if state is not None:
@@ -86,8 +85,6 @@ class GonModeler(node.Node):
 			peak = self.peakfinder.getResults()
 			peakvalue = peak['subpixel peak value']
 			shift = correlator.wrap_coord(peak['subpixel peak'], crosscorr.shape)
-			#binx = newimagedata.content['camera']['binning']['x']
-			#biny = newimagedata.content['camera']['binning']['y']
 			binx = newimagedata['camera']['binning']['x']
 			biny = newimagedata['camera']['binning']['y']
 			pixelsyx = biny * shift[0], binx * shift[1]
@@ -97,16 +94,12 @@ class GonModeler(node.Node):
 
 			## calculate stage shift
 			avgpos = {}
-			#pos0 = self.oldimagedata.content['scope']['stage position'][axis]
-			#pos1 = newimagedata.content['scope']['stage position'][axis]
 			pos0 = self.oldimagedata['scope']['stage position'][axis]
 			pos1 = newimagedata['scope']['stage position'][axis]
 			deltapos = pos1 - pos0
 			avgpos[axis] = (pos0 + pos1) / 2.0
 
 			otheraxis = self.otheraxis(axis)
-#			otherpos0 = self.oldimagedata.content['scope']['stage position'][otheraxis]
-#			otherpos1 = newimagedata.content['scope']['stage position'][otheraxis]
 			otherpos0 = self.oldimagedata['scope']['stage position'][otheraxis]
 			otherpos1 = newimagedata['scope']['stage position'][otheraxis]
 			avgpos[otheraxis] = (otherpos0 + otherpos1) / 2.0
@@ -183,13 +176,11 @@ class GonModeler(node.Node):
 
 	def getStagePosition(self):
 		dat = self.researchByDataID('stage position')
-#		return dat.content
-		return dat
+		return dat['em']
 
 	def getMagnification(self):
 		dat = self.researchByDataID('magnification')
-#		return dat.content['magnification']
-		return dat['magnification']
+		return dat['em']['magnification']
 
 	def defineUserInterface(self):
 		nodespec = node.Node.defineUserInterface(self)
