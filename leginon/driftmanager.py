@@ -147,6 +147,9 @@ class DriftManager(watcher.Watcher):
 			print 'Drift Rate:  %.4e' % (current_drift,)
 			self.driftvalue.set(current_drift)
 
+			## t0 becomes t1 and t1 will be reset for next image
+			t0 = t1
+
 			## check for abort
 			if self.abortevent.isSet():
 				return 'abort'
