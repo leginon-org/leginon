@@ -266,7 +266,8 @@ class SQLDict:
 			try:
 				newdata.update(result[i])
 			except KeyError, e:
-				self.printerror('cannot convert database result to data instance')
+				raise
+
 			### load things from files
 			if hasattr(newdata, 'load'):
 				newdata.load()
