@@ -19,6 +19,7 @@ import time
 import unique
 import strictdict
 import EM
+import Numeric
 
 class PresetChangeError(Exception):
 	pass
