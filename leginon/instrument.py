@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.26 $
+# $Revision: 1.27 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-29 22:35:42 $
+# $Date: 2005-04-04 23:17:27 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -183,6 +183,10 @@ class Proxy(object):
 			proxy = self.tem
 		elif issubclass(dataclass, data.CameraEMData):
 			proxy = self.ccdcamera
+		elif issubclass(dataclass, data.CorrectedCameraImageData):
+			if self.imagecorrection is None:
+				raise RuntimeError('no image correction set')
+			return self.imagecorrection.getImageData(self.getCCDCameraName())
 		elif issubclass(dataclass, data.CameraImageData):
 			instance = dataclass()
 			instance['scope'] = self.getData(data.ScopeEMData)
@@ -192,10 +196,6 @@ class Proxy(object):
 				instance['camera']['image data'] = None
 			instance['session'] = self.session
 			return instance
-		elif issubclass(dataclass, data.CorrectedCameraImageData):
-			if self.imagecorrection is None:
-				raise RuntimeError('no image correction set')
-			return self.imagecorrection.getImageData(self.getCCDCameraName())
 		if proxy is None:
 			raise ValueError('no proxy selected for this data class')
 		instance = dataclass()

@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/remotecall.py,v $
-# $Revision: 1.20 $
+# $Revision: 1.21 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-28 18:00:29 $
-# $Author: suloway $
+# $Date: 2005-04-04 23:17:27 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -181,7 +181,7 @@ class ObjectCallProxy(object):
 
 	def __call__(self, *args, **kwargs):
 		args = self.args + (args, kwargs)
-		self.call(*args)
+		return self.call(*args)
 
 class ObjectProxy(object):
 	def __init__(self, objectservice, nodename, name):
