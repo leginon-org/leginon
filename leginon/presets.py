@@ -158,6 +158,6 @@ class PresetsManager(node.Node):
 
 	def uiRestore(self, presetname):
 		presetlist = self.presetsclient.retrievePresets(presetname)
-		presetdata = presetdata[0]
+		presetdata = presetlist[0]
 		self.presetsclient.toScope(presetdata)
 		return ''
