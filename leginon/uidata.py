@@ -224,6 +224,19 @@ class UISelectFromList(UIContainer):
 	def select(self, items):
 		self.selected.set(items)
 
+class UISelectFromStruct(UIContainer):
+	typelist = UIContainer.typelist + ('select from struct',)
+	# callback
+	def __init__(self, name, structvalue, selectedvalue, permissions='r'):
+		UIContainer.__init__(self, name)
+		self.struct = UIStruct('Struct', structvalue, permissions)
+		self.selected = UIArray('Selected', selectedvalue, 'rw')
+		self.addUIObject(self.struct)
+		self.addUIObject(self.selected)
+
+	def select(self, items):
+		self.selected.set(items)
+
 class UIBinary(UIData):
 	typelist = UIData.typelist + ('binary',)
 	def __init__(self, name, value, permissions='r', callback=None):
@@ -248,7 +261,7 @@ class UIMessageDialog(UIDialog):
 	typelist = UIDialog.typelist + ('message',)
 	def __init__(self, name, label):
 		UIDialog.__init__(self, name)
-		self.addUIObject(UIString('label', label, 'r'))
+		self.addUIObject(UIString('Message', label, 'r'))
 		self.addUIObject(UIMethod('OK', self.ok))
 
 	def ok(self):

@@ -94,7 +94,8 @@ class UIApp(wxApp):
 		evt.container.children[evt.namelist] = uiwidget
 		if isinstance(uiwidget, DataWidget):
 			uiwidget.set(evt.value)
-		evt.container.wxwidget.Add(uiwidget.wxwidget)
+		if hasattr(uiwidget, 'wxwidget'):
+			evt.container.wxwidget.Add(uiwidget.wxwidget)
 		# needs to callback
 		self.Layout()
 		evt.container.event.set()
@@ -105,7 +106,8 @@ class UIApp(wxApp):
 
 	def deleteWidget(self, evt):
 		evt.widget.Destroy()
-		evt.container.wxwidget.Remove(evt.widget.wxwidget)
+		if hasattr(evt.widget, 'wxwidget'):
+			evt.container.wxwidget.Remove(evt.widget.wxwidget)
 		self.Layout()
 
 	def Layout(self):
@@ -181,6 +183,8 @@ def WidgetClassFromTypeList(typelist):
 							return wxComboBoxWidget
 						elif typelist[2] == 'target image':
 							return wxTargetImageWidget
+						elif typelist[2] == 'dialog':
+							return wxDialogWidget
 					return wxStaticBoxContainerWidget
 				elif typelist[1] == 'method':
 					return wxButtonWidget
@@ -411,6 +415,73 @@ class wxTreeCtrlWidget(wxDataWidget):
 	def Destroy(self):
 		self.tree.Destroy()
 
+class MessageDialog(wxDialog):
+	def __init__(self, parent, id, title, callback):
+		wxDialog.__init__(self, parent, id, title)
+		self.callback = callback
+		panel = wxPanel(self, -1)
+		panel.SetAutoLayout(true)
+		sizer = wxBoxSizer(wxVERTICAL)
+		panel.SetSizer(sizer)
+		self.message = wxStaticText(panel, -1, '')
+		sizer.Add(self.message, 0, wxALIGN_CENTER | wxALL, 10)
+		self.okbutton = wxButton(panel, -1, 'OK')
+		EVT_BUTTON(self, self.okbutton.GetId(), self.OnOK)
+		sizer.Add(self.okbutton, 0, wxALIGN_CENTER | wxALL, 10)
+		sizer.Layout()
+		sizer.Fit(self)
+		EVT_CLOSE(self, self.OnClose)
+
+	def OnOK(self, evt):
+		self.callback()
+
+	def OnClose(self, evt):
+		self.callback()
+
+class wxDialogWidget(wxContainerWidget):
+	def __init__(self, uiclient, namelist, window, parent):
+		wxContainerWidget.__init__(self, uiclient, namelist, window, parent)
+		self.dialog = MessageDialog(self.parent, -1, self.name, self.callback)
+		self.messageflag = False
+		self.okflag = False
+
+	def add(self, namelist, typelist, value):
+		self.setWidget(namelist, value)
+
+	def Destroy(self):
+		self.dialog.Destroy()
+
+	def _set(self, value):
+		self.dialog.message.SetLabel(value)
+		self.messageflag = True
+		if self.messageflag and self.okflag:
+			self.dialog.Show(true)
+
+	def setWidget(self, namelist, value):
+		self.lock.acquire()
+		if namelist == self.namelist + ('Message',):
+			evt = SetWidgetEvent(self, value)
+			wxPostEvent(self.window, evt)
+		elif namelist == self.namelist + ('OK',):
+			self.okflag = True
+		self.lock.release()
+		if self.messageflag and self.okflag:
+			self.dialog.Show(true)
+
+	def set(self, namelist, value=None):
+		if value is None:
+			self._set(namelist)
+		else:
+			self.setWidget(namelist, value)
+
+	def delete(self, namelist):
+		pass
+
+	def callback(self):
+		print 'callback go'
+		self.uiclient.commandServer(self.namelist + ('OK',), ())
+		print 'callback done'
+
 class wxComboBoxWidget(wxContainerWidget):
 	def __init__(self, uiclient, namelist, window, parent):
 		self.lock = threading.Lock()
@@ -418,6 +489,61 @@ class wxComboBoxWidget(wxContainerWidget):
 		self.wxwidget = wxBoxSizer(wxHORIZONTAL)
 		self.combobox = wxComboBox(self.parent, -1)
 		self.combobox.Enable(false)
+		EVT_COMBOBOX(self.window, self.combobox.GetId(), self.apply)
+		self.wxwidget.Add(self.combobox, 0, wxALIGN_CENTER | wxALL, 5)
+		self.value = {'List': [], 'Selected': None}
+
+	def apply(self, evt):
+		value = [evt.GetSelection()]
+		self.uiclient.setServer(self.namelist + ('Selected',), value)
+
+	def Destroy(self):
+		self.combobox.Destroy()
+
+	def add(self, namelist, typelist, value):
+		self.setWidget(namelist, value)
+
+	def _set(self, value):
+		if 'List' in value:
+			self.combobox.Clear()
+			for i in range(len(value['List'])):
+				self.combobox.Append(str(value['List'][i]))
+		if 'Selected' in value:
+			i = value['Selected'][0]
+			self.combobox.SetValue(str(value['List'][i]))
+		self.combobox.Enable(true)
+
+	def setWidget(self, namelist, value):
+		self.lock.acquire()
+		if namelist == self.namelist + ('List',):
+			self.value['List'] = value
+		elif namelist == self.namelist + ('Selected',):
+			self.value['Selected'] = value
+		else:
+			self.lock.release()
+			return
+		if self.value['List'] and self.value['Selected'] is not None:
+			evt = SetWidgetEvent(self, self.value)
+			wxPostEvent(self.window, evt)
+		self.lock.release()
+
+	# container set, should only be called within the container (setWidget)
+	def set(self, namelist, value=None):
+		if value is None:
+			self._set(namelist)
+		else:
+			self.setWidget(namelist, value)
+		
+	def delete(self, namelist):
+		pass
+
+class wxTreeSelectWidget(wxContainerWidget):
+	def __init__(self, uiclient, namelist, window, parent):
+		self.lock = threading.Lock()
+		wxContainerWidget.__init__(self, uiclient, namelist, window, parent)
+		self.wxwidget = wxBoxSizer(wxHORIZONTAL)
+		self.tree = wxComboBox(self.parent, -1)
+		self.tree.Enable(false)
 		EVT_COMBOBOX(self.window, self.combobox.GetId(), self.apply)
 		self.wxwidget.Add(self.combobox, 0, wxALIGN_CENTER | wxALL, 5)
 		self.value = {'List': [], 'Selected': None}
