@@ -33,9 +33,10 @@ class ImagePanel(wxPanel):
 		size = self.panel.GetSize()
 		self.sizer.SetItemMinSize(self.panel, size.GetWidth(), size.GetHeight())
 
-		self.initValueLabels()
-		self.initScaleEntry()
 		self.initZoom()
+#		self.initScaleEntry()
+#		self.initValueLabels()
+		EVT_MOTION(self.panel, self.motion)
 
 		self.Fit()
 
@@ -60,7 +61,6 @@ class ImagePanel(wxPanel):
 		self.valuesizer.Add(wxStaticText(self, -1, 'Value: '))
 		self.valuesizer.Add(self.valuelabel)
 		self.sizer.Prepend(self.valuesizer)
-		EVT_MOTION(self.panel, self.motion)
 
 	def initZoom(self):
 		self.zoomsizer = wxBoxSizer(wxHORIZONTAL)
@@ -189,17 +189,81 @@ class ImagePanel(wxPanel):
 		return (int(round((viewoffset[0] + xy[0]) / self.scale[0])),
 						int(round((viewoffset[1] + xy[1]) / self.scale[1])))
 
+	def image2view(self, xy):
+		viewoffset = self.panel.GetViewStart()
+		return (int(round((xy[0] * self.scale[0]) - viewoffset[0])),
+						int(round((xy[1] * self.scale[1]) - viewoffset[1])))
+
 	def motion(self, evt):
 		if self.image is None:
 			return
 		try:
 			x, y = self.view2image((evt.m_x, evt.m_y))
-			rgb = self.image[y, x]
-			self.xlabel.SetLabel(str(x))
-			self.ylabel.SetLabel(str(y))
-			self.valuelabel.SetLabel(str(rgb))
+			value = self.image[y, x]
+			self.drawLabel((x, y), value)
+#			self.xlabel.SetLabel(str(x))
+#			self.ylabel.SetLabel(str(y))
+#			self.valuelabel.SetLabel(str(value))
 		except:
 			pass
+
+	def drawLabel(self, xy, value):
+		dc = wxClientDC(self.panel)
+		dc.BeginDrawing()
+
+		dc.SetBrush(wxBrush(wxWHITE))
+		dc.SetPen(wxPen(wxBLACK, 1))
+
+		string = '(%d, %d), %d' % (xy[0], xy[1], value)
+
+		try:
+			apply(self.blit, self.damaged)
+		except AttributeError:
+			pass
+
+		extent = dc.GetFullTextExtent(string, wxNORMAL_FONT)
+
+		center = self.panel.GetClientSize()
+		center = (center[0]/2, center[1]/2)
+
+		xy = self.image2view(xy)
+
+		if xy[0] <= center[0]:
+			xoffset = 10
+		else:
+			xoffset = -(10 + extent[0] + 4)
+		if xy[1] <= center[1]:
+			yoffset = 10
+		else:
+			yoffset = -(10 + extent[1] + 4)
+
+		xy = (int(round((xy[0] + xoffset))),
+					int(round((xy[1] + yoffset))))
+
+		self.damaged = (xy[0], xy[1],
+										extent[0] + 4, extent[1] + 4)
+
+		#dc.DrawRectangle(xy[0], xy[1], 50, 20)
+		apply(dc.DrawRectangle, self.damaged)
+
+		dc.SetFont(wxNORMAL_FONT)
+		dc.DrawText(string, xy[0] + 2 , xy[1] + 2)
+
+		dc.EndDrawing()
+
+	def blit(self, x, y, w, h):
+		dc = wxMemoryDC()
+		dc.SelectObject(self.buffer)
+		#dc.SetUserScale(self.scale[0], self.scale[1])
+		viewoffset = self.panel.GetViewStart()
+		clientdc = wxClientDC(self.panel)
+		size = self.panel.GetClientSize()
+		clientdc.SetUserScale(self.scale[0], self.scale[1])
+		ix, iy = self.view2image((x, y))
+		vx, vy = self.image2view((x, y))
+		#clientdc.Blit(x, y, w, h, dc, ix, iy)
+		clientdc.Blit(x/self.scale[0], y/self.scale[1],
+									w/self.scale[0] + 1, h/self.scale[1] + 1, dc, ix, iy)
 
 	def UpdateDrawing(self):
 		if USE_BUFFERED_DC:
