@@ -7,7 +7,7 @@
 #
 
 import data
-from pyScope import registry, methoddict
+from pyScope import tem, ccdcamera, registry, methoddict
 import event
 import imp
 import node
@@ -399,10 +399,44 @@ class EM(node.Node):
 		self.scope = None
 		self.camera = None
 
-		if scopename is not None:
-			self.setScopeType(scopename, description)
-		if cameraname is not None:
-			self.setCameraType(cameraname, description)
+		classes = registry.getClasses()
+		for name, c in classes:
+			if issubclass(c, tem.TEM):
+				class ScopeClass(c, instrument.TEM):
+					def __init__(self):
+						c.__init__(self)
+						instrument.TEM.__init__(self)
+				try:
+					if name == scopename:
+						self.scope = methoddict.factory(ScopeClass)()
+						self.typemap.update(self.scope.typemapping)
+						self.tems.append(self.scope)
+						self.objectservice._addObject(name, self.scope)
+					else:
+						scope = ScopeClass()
+						self.tems.append(scope)
+						self.objectservice._addObject(name, scope)
+				except Exception, e:
+					self.logger.exception('Initializing scope type %s failed: %s'
+																	% (name, e))
+			elif issubclass(c, ccdcamera.CCDCamera):
+				class CCDCameraClass(c, instrument.CCDCamera):
+					def __init__(self):
+						c.__init__(self)
+						instrument.CCDCamera.__init__(self)
+				try:
+					if name == cameraname:
+						self.camera = methoddict.factory(CCDCameraClass)()
+						self.typemap.update(self.camera.typemapping)
+						self.tems.append(self.camera)
+						self.objectservice._addObject(name, self.camera)
+					else:
+						camera = CCDCameraClass()
+						self.tems.append(camera)
+						self.objectservice._addObject(name, camera)
+				except Exception, e:
+					self.logger.exception('Initializing camera type %s failed: %s'
+																	% (name, e))
 
 		for key, permissions in self.permissions.items():
 			try:
@@ -430,40 +464,6 @@ class EM(node.Node):
 		self.start()
 		self.publishData()
 		self.queueHandler()
-
-	def setScopeType(self, scopename, description):
-		try:
-			scopeclass = registry.getClass(scopename)
-			if scopeclass is None:
-				raise RuntimeError
-			class ScopeClass(scopeclass, instrument.TEM):
-				def __init__(self):
-					scopeclass.__init__(self)
-					instrument.TEM.__init__(self)
-			self.scope = methoddict.factory(ScopeClass)()
-			self.typemap.update(self.scope.typemapping)
-			name = '%s on %s' % (scopename, description)
-			self.objectservice._addObject(name, self.scope)
-		except Exception, e:
-			self.logger.exception('Initializing scope type %s failed: %s'
-															% (scopename, e))
-
-	def setCameraType(self, cameraname, description):
-		try:
-			cameraclass = registry.getClass(cameraname)
-			if cameraclass is None:
-				raise RuntimeError
-			class CameraClass(cameraclass, instrument.CCDCamera):
-				def __init__(self):
-					cameraclass.__init__(self)
-					instrument.CCDCamera.__init__(self)
-			self.camera = methoddict.factory(CameraClass)()
-			self.typemap.update(self.camera.typemapping)
-			name = '%s on %s' % (cameraname, description)
-			self.objectservice._addObject(name, self.camera)
-		except Exception, e:
-			self.logger.exception('Initializing camera type %s failed: %s'
-															% (cameraname, e))
 
 	def main(self):
 		pass
