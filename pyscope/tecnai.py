@@ -103,7 +103,9 @@ class Tecnai(object):
 			'holder status': {'get': 'getHolderStatus'},
 			'stage status': {'get': 'getStageStatus'},
 			'vacuum status': {'get': 'getVacuumStatus'},
-			'column pressure': {'get': 'getColumnPressure'}
+			'column pressure': {'get': 'getColumnPressure'},
+			'objective excitation': {'get': 'getObjectiveExcitation'},
+			'focus': {'get': 'getFocus', 'set': 'setFocus'}
 		}
 
 		self.typemapping = {
@@ -152,7 +154,9 @@ class Tecnai(object):
 			'holder status': {'type': str},
 			'stage status': {'type': str},
 			'vacuum status': {'type': str},
-			'column pressure': {'type': float}
+			'column pressure': {'type': float},
+			'objective excitation': {'type': float},
+			'focus': {'type': float}
 		}
 
 	def setCorrectedStagePosition(self, value):
@@ -889,4 +893,13 @@ class Tecnai(object):
 
 	def getColumnPressure(self):
 		return float(self.theScope.Vacuum.Gauges('P4').Pressure)
+
+	def getObjectiveExcitation(self):
+		return float(self.theScope.Projection.ObjectiveExcitation)
+
+	def getFocus(self):
+		return float(self.theScope.Projection.Focus)
+
+	def setFocus(self, value):
+		self.theScope.Projection.Focus = value
 
