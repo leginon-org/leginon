@@ -4,14 +4,15 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.24 $
+# $Revision: 1.25 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-28 21:31:59 $
-# $Author: suloway $
+# $Date: 2004-10-28 23:36:23 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
 import data
+import newdict
 import threading
 import wx
 from gui.wx.Entry import FloatEntry, EVT_ENTRY
@@ -636,7 +637,7 @@ class ImportDialog(wx.Dialog):
 
 	def onImport(self, evt):
 		self.bimport.Enable(False)
-		presets = {}
+		presets = newdict.OrderedDict()
 		selections = self.lbpresets.GetSelections()
 		for i in selections:
 			name = self.lbpresets.GetString(i)
