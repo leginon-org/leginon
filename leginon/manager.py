@@ -38,7 +38,8 @@ class DataHandler(node.DataHandler):
 		if isinstance(idata, event.Event):
 			self.databinder.insert(idata)
 		else:
-			self.datakeeper.insert(copy.deepcopy(idata))
+			#self.datakeeper.insert(copy.deepcopy(idata))
+			self.datakeeper.insert(idata)
 
 class Manager(node.Node):
 	'''Overlord of the nodes. Handles node communication (data and events).'''
@@ -748,8 +749,7 @@ class Manager(node.Node):
 		container = uidata.LargeContainer('Manager')
 
 		container.addObject(uimanagersetup)
-		container.addObjects((launchcontainer, nodemanagementcontainer,
-														eventcontainer, self.applicationcontainer))
+		container.addObjects((launchcontainer, nodemanagementcontainer, eventcontainer, self.applicationcontainer))
 		self.uiserver.addObject(container)
 
 class ManagerSetup(object):

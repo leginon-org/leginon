@@ -67,8 +67,9 @@ class Client(leginonobject.LeginonObject):
 		if server is None:
 			raise IOError # err...its sort of an IOError
 		else:
-			idatacopy = copy.deepcopy(idata)
-			obj = server.datahandler.insert(idatacopy)
+			#idatacopy = copy.deepcopy(idata)
+			#obj = server.datahandler.insert(idatacopy)
+			obj = server.datahandler.insert(idata)
 			return obj
 
 	def pull(self, id):
@@ -89,7 +90,8 @@ class Client(leginonobject.LeginonObject):
 			raise IOError
 		else:
 			try:
-				obj = copy.deepcopy(server.datahandler.query(id))
+				#obj = copy.deepcopy(server.datahandler.query(id))
+				obj = server.datahandler.query(id)
 			except Exception, e:
 				raise IOError
 			return obj

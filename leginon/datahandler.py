@@ -96,7 +96,8 @@ class SizedDataKeeper(DictDataKeeper):
 			raise TypeError
 		self.lock.acquire()
 		self.size += newdata.size()
-		self.datadict[newdata['id']] = copy.deepcopy(newdata)
+		#self.datadict[newdata['id']] = copy.deepcopy(newdata)
+		self.datadict[newdata['id']] = newdata
 		self.clean()
 		self.lock.release()
 
