@@ -15,7 +15,7 @@ class DataHandler(leginonobject.LeginonObject):
 
 class SimpleDataKeeper(DataHandler):
 	def __init__(self):
-		DataKeeper.__init__(self)
+		DataHandler.__init__(self)
 		self.datadict = {}
 		self.datadictlock = threading.RLock()
 
@@ -38,7 +38,7 @@ class SimpleDataKeeper(DataHandler):
 
 class DataBinder(DataHandler):
 	def __init__(self):
-		DataKeeper.__init__(self)
+		DataHandler.__init__(self)
 		self.bindings = {}
 
 	def insert(self, newdata):
