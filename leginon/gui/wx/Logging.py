@@ -2,6 +2,7 @@ import sys
 import logging
 import wx
 from wx.lib.mixins.listctrl import ColumnSorterMixin
+import gui.wx.MessageLog
 
 class LoggingConfiguration(object):
 	def __init__(self):
@@ -64,15 +65,20 @@ class Dialog(wx.Dialog):
 '''
 
 class EditHandlerDialog(wx.Dialog):
-	def __init__(self, parent, handler=None):
+	def __init__(self, parent, handler=None, window=None):
 		if handler is None:
 			title = 'Add Handler'
 		else:
 			title = 'Edit Handler'
 		wx.Dialog.__init__(self, parent, -1, title)
 
+		self.handler = handler
+		self.window = window
+
 		if handler is None:
 			handlertypes = [logging.StreamHandler]
+			if window is not None:
+				handlertypes.append(MessageLogHandler)
 			self.handlertypes = {}
 			for ht in handlertypes:
 				self.handlertypes[ht.__name__] = ht
@@ -97,7 +103,7 @@ class EditHandlerDialog(wx.Dialog):
 		sz = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Type:')
 		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.ctype, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+		sz.Add(self.ctype, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'Format:')
 		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.tcformat, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
@@ -129,15 +135,23 @@ class EditHandlerDialog(wx.Dialog):
 	def getValues(self):
 		if isinstance(self.ctype, wx.Choice):
 			handlertype = self.handlertypes[self.ctype.GetStringSelection()]
+			if issubclass(handlertype, logging.StreamHandler):
+				args = ()
+			elif issubclass(handlertype, MessageLogHandler):
+				args = (self.window,)
+			else:
+				raise RuntimeError('Unknown handler type')
+			handler = handlertype(*args)
 		else:
-			handlertype = None
+			handler = self.handler
+
 		format = self.tcformat.GetValue()
 		if not format:
 			format = None
 		dateformat = self.tcdateformat.GetValue()
 		if not dateformat:
 			dateformat = None
-		return handlertype, format, dateformat
+		return handler, format, dateformat
 
 class HandlersListCtrl(wx.ListCtrl, ColumnSorterMixin):
 	def __init__(self, parent):
@@ -242,10 +256,13 @@ class HandlersPanel(wx.Panel):
 		self.bremove.Enable(False)
 
 	def onAddButton(self, evt):
-		dialog = EditHandlerDialog(self)
+		if hasattr(self.logger, 'window'):
+			window = self.logger.window
+		else:
+			window = None
+		dialog = EditHandlerDialog(self, window=window)
 		if dialog.ShowModal() == wx.ID_OK:
-			handlertype, format, dateformat = dialog.getValues()
-			handler = handlertype()
+			handler, format, dateformat = dialog.getValues()
 			formatter = logging.Formatter(format, dateformat)
 			handler.setFormatter(formatter)
 			self.logger.addHandler(handler)
@@ -256,7 +273,7 @@ class HandlersPanel(wx.Panel):
 		handler = self.handlers.getSelectedHandler()
 		dialog = EditHandlerDialog(self, handler)
 		if dialog.ShowModal() == wx.ID_OK:
-			handlertype, format, dateformat = dialog.getValues()
+			handler, format, dateformat = dialog.getValues()
 			formatter = logging.Formatter(format, dateformat)
 			handler.setFormatter(formatter)
 			self.handlers.updateHandler(handler)
@@ -372,6 +389,30 @@ class LoggingConfigurationDialog(wx.Dialog, LoggingConfiguration):
 		self.expandAll(self.root)
 		self.tree.SelectItem(self.root)
 		self.tree.EnsureVisible(self.root)
+
+class MessageLogHandler(logging.Handler):
+	def __init__(self, window, level=logging.NOTSET):
+		self.window = window
+		self.levels = {
+			'ERROR': 'error',
+			'WARNING': 'warning',
+			'INFO': 'info',
+		}
+		logging.Handler.__init__(self, level)
+
+	def getLevel(self, record):
+		try:
+			return self.levels[record.levelname]
+		except KeyError:
+			return None
+
+	def emit(self, record):
+		level = self.getLevel(record)
+		if level is None:
+			return
+		message = record.getMessage()
+		evt = gui.wx.MessageLog.AddMessageEvent(self.window, level, message)
+		self.window.GetEventHandler().AddPendingEvent(evt)
 
 if __name__ == '__main__':
 	class App(wx.App):

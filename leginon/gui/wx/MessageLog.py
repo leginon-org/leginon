@@ -3,6 +3,15 @@ import time
 import wx
 from wx.lib.mixins.listctrl import ColumnSorterMixin
 
+AddMessageEventType = wx.NewEventType()
+EVT_ADD_MESSAGE = wx.PyEventBinder(AddMessageEventType)
+class AddMessageEvent(wx.PyCommandEvent):
+	def __init__(self, source, level, message):
+		wx.PyCommandEvent.__init__(self, AddMessageEventType, source.GetId())
+		self.SetEventObject(source)
+		self.level = level
+		self.message = message
+
 class MessageLog(wx.ListCtrl, ColumnSorterMixin):
 	def __init__(self, parent):
 		wx.ListCtrl.__init__(self, parent, -1, style=wx.LC_REPORT)
@@ -26,6 +35,10 @@ class MessageLog(wx.ListCtrl, ColumnSorterMixin):
 
 		self.Bind(wx.EVT_CHAR, self.onChar)
 		self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.onListItemActivated)
+		self.Bind(EVT_ADD_MESSAGE, self.onAddMessage)
+
+	def onAddMessage(self, evt):
+		self.addMessage(evt.level, evt.message)
 
 	def GetListCtrl(self):
 		return self

@@ -127,6 +127,8 @@ class Node(leginonobject.LeginonObject):
 		if name is None:
 			name = self.name
 		self.logger = logging.getLogger(name)
+		if hasattr(self, 'panel') and self.panel is not None:
+			self.logger.window = self.panel
 		clientloggername = self.logger.name + '.' + datatransport.Client.__name__
 		clientlogger = logging.getLogger(clientloggername)
 

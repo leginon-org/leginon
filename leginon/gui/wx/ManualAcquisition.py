@@ -78,6 +78,11 @@ class Panel(gui.wx.Node.Panel):
 		self.Bind(EVT_LOOP_STARTED, self.onLoopStarted)
 		self.Bind(EVT_LOOP_STOPPED, self.onLoopStopped)
 
+		self.Bind(gui.wx.MessageLog.EVT_ADD_MESSAGE, self.onAddMessage)
+
+	def onAddMessage(self, evt):
+		self.messagelog.addMessage(evt.level, evt.message)
+
 	def onNodeInitialized(self):
 		self.Bind(wx.EVT_BUTTON, self.onSettingsButton, self.bsettings)
 		self.Bind(wx.EVT_BUTTON, self.onAcquireButton, self.bacquire)
