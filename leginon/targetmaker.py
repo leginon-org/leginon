@@ -133,7 +133,10 @@ class SpiralTargetMaker(TargetMaker):
 			lines.append(lines[-1] + imagesize)
 		pixels = [pixelradius*2]
 		for i in lines:
-			pixels.append(pixelradius*math.cos(math.asin(i/pixelradius))*2)
+			if i > pixelradius:
+				pixels.append(0.0)
+			else:
+				pixels.append(pixelradius*math.cos(math.asin(i/pixelradius))*2)
 		images = []
 		for i in pixels:
 			images.append(int(math.ceil(i/imagesize)))
