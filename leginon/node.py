@@ -422,6 +422,8 @@ class Node(leginonobject.LeginonObject):
 
 		### use DBDataKeeper query if not results yet
 		if not resultlist and datainstance is not None:
+			## always fill empty session
+			self.addEmptySession(datainstance)
 			if fill:
 				try:
 					self.addEmptyInstances1(datainstance)
@@ -441,6 +443,14 @@ class Node(leginonobject.LeginonObject):
 			resultlist += newresults
 
 		return resultlist
+
+	def addEmptySession(self, datainstance):
+		if isinstance(datainstance, data.InSessionData):
+			if datainstance['session'] is None:
+				datainstance['session'] = data.SessionData()
+		for key in datainstance:
+			if isinstance(datainstance[key], data.InSessionData):
+				self.addSession(datainstance[key])
 
 	def addEmptyInstances1(self, datainstance):
 		'''
