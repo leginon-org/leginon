@@ -289,7 +289,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 	def reportTargetListDone(self, listid, status):
 		self.uistatus.set('Target list processed.')
-		self.logger.info('%s done with target listid: %s, status: %s' % (self.name, listid, status))
+		self.logger.info('%s done with target listid: %s, status: %s' % (self.name, listid, status))
 		e = event.TargetListDoneEvent(targetlistid=listid, status=status)
 		self.outputEvent(e)
 

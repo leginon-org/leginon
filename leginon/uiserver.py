@@ -22,6 +22,8 @@ import cPickle
 class NoValueError(Exception):
 	pass
 
+userprefs = {}
+
 class Server(xmlrpc.Server, uidata.Container):
 	typelist = uidata.Container.typelist + ('server',)
 	def __init__(self, name='UI', port=None, tries=5,
@@ -242,21 +244,21 @@ class Server(xmlrpc.Server, uidata.Container):
 	def getUserPreferencesFromDatabase(self):
 		'''
 		get current user's prefs from DB and put them in 
-		self.userprefs
+		userprefs
 		'''
+		if userprefs:
+			return
 		if self.session is None:
-			self.userprefs = None
 			return
 		sessionquery = data.SessionData(user=self.session['user'])
 		prefquery = data.UIData(session=sessionquery)
 		results = self.dbdatakeeper.query(prefquery)
 		## results are ordered by newest stuff first
 		## so now get the newest stuff into a dict
-		self.userprefs = {}
 		for result in results:
 			key = tuple(result['object'])
-			if key not in self.userprefs:
-				self.userprefs[key] = result['value']
+			if key not in userprefs:
+				userprefs[key] = result['value']
 
 	def setObjectFromDatabase(self, uiobject):
 		if self.dbdatakeeper is None or self.session is None:
@@ -269,7 +271,7 @@ class Server(xmlrpc.Server, uidata.Container):
 		namelist = tuple(uiobject._getNameList())
 		try:
 			try:
-				value = self.userprefs[namelist]
+				value = userprefs[namelist]
 			except KeyError:
 				return False
 			### get object from Object

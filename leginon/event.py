@@ -25,8 +25,6 @@ def eventClasses():
 
 class Event(data.Data):
 	def __init__(self, **kwargs):
-		if 'hold' not in kwargs:
-			kwargs['hold'] = False
 		data.Data.__init__(self, **kwargs)
 
 	def typemap(cls):

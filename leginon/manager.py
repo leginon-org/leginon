@@ -190,7 +190,7 @@ class Manager(node.Node):
 			### this is a special case of outputEvent
 			### so we don't use outputEvent here
 			try:
-				eventcopy = copy.deepcopy(ievent)
+				eventcopy = copy.copy(ievent)
 				eventcopy['destination'] = to_node
 				self.clients[to_node].push(eventcopy)
 			except IOError:
@@ -254,7 +254,7 @@ class Manager(node.Node):
 					## I have a feeling this may cause a problem with
 					## event confirmation since eventcopy will have
 					## a new dmid, not sure...
-					eventcopy = copy.deepcopy(ievent)
+					eventcopy = copy.copy(ievent)
 					eventcopy['destination'] = to_node
 					self.clients[to_node].push(eventcopy)
 				except IOError:

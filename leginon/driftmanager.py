@@ -56,20 +56,19 @@ class DriftManager(watcher.Watcher):
 			imid = value['imageid']
 			if imid == imageid:
 				im = value['image']
-				presettarget = value['presettarget']
-				shift = self.calcShift(im, presettarget)
+				emtarget = value['emtarget']
+				preset = value['preset']
+				shift = self.calcShift(im, preset, emtarget)
 				self.references[key]['shift'] = shift
 				self.publishImageShifts(requested=True)
 				break
 		self.confirmEvent(ev)
 
-	def calcShift(self, im, presettarget):
+	def calcShift(self, im, preset, emtarget):
 		## go through preset manager to ensure we follow the right
 		## cycle
-		pname = presettarget['preset']
-		emtarget = presettarget['emtarget']
-		self.logger.info('Preset name %s' % pname)
-		self.presetsclient.toScope(pname, emtarget)
+		self.logger.info('Preset name %s' % preset)
+		self.presetsclient.toScope(preset, emtarget)
 
 		## acquire new image
 		newim = self.acquireImage()
@@ -105,7 +104,7 @@ class DriftManager(watcher.Watcher):
 		label = imagedata['label']
 		imageid = imagedata.dbid
 		self.logger.debug('handling drift watch event for image %s' % (imageid,))
-		self.references[label] = {'imageid': imageid, 'image': imagedata, 'shift': {}, 'presettarget': driftwatchevent['presettarget']}
+		self.references[label] = {'imageid': imageid, 'image': imagedata, 'shift': {}, 'emtarget': driftwatchevent['presettarget']['emtarget'], 'preset': driftwatchevent['presettarget']['preset']}
 
 	def uiMonitorDrift(self):
 		self.cam.uiApplyAsNeeded()
@@ -154,7 +153,7 @@ class DriftManager(watcher.Watcher):
 		self.publish(dat, pubevent=True)
 
 	def acquireImage(self):
-		imagedata = self.cam.acquireCameraImageData(hold=False)
+		imagedata = self.cam.acquireCameraImageData()
 		self.im.set(imagedata['image'])
 		return imagedata
 

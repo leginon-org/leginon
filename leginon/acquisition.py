@@ -146,7 +146,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		for newpresetname in presetnames:
 			presettarget = data.PresetTargetData(emtarget=emtarget, preset=newpresetname)
-			self.publish(presettarget, database=True)
+			#self.publish(presettarget, database=True)
 			if force == False:
 				if self.alreadyAcquired(targetdata, presettarget):
 					continue
@@ -230,11 +230,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 		targetdeltarow = targetdata['delta row']
 		targetdeltacolumn = targetdata['delta column']
 		origscope = targetdata['scope']
-		targetscope = data.ScopeEMData()
+		targetscope = data.ScopeEMData(initializer=origscope)
+		## deepcopy these because they are dictionaries that could
+		## otherwise be shared (although transform() should be
+		## smart enough to create copies as well)
 		targetscope['stage position'] = copy.deepcopy(origscope['stage position'])
 		targetscope['image shift'] = copy.deepcopy(origscope['image shift'])
-		targetscope['magnification'] = copy.deepcopy(origscope['magnification'])
-		targetscope['high tension'] = copy.deepcopy(origscope['high tension'])
 		targetcamera = targetdata['camera']
 
 		## to shift targeted point to center...
@@ -253,19 +254,21 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.acquisitionlog.error(message)
 			raise NoMoveCalibration(message)
 
-		### remove stage position if this is not a stage move
-		### (unless requested to always move stage)
-		if movetype == 'image shift':
-			if not self.alwaysmovestage.get():
-				newscope['stage position'] = None
-
 		### check if stage position is valid
 		if newscope['stage position']:
 			self.validateStagePosition(newscope['stage position'])
 
+		## publish in DB because it will likely be needed later
+		## when returning to the same target,
+		## even after it is removed from memory
+		self.publish(newscope, database=True)
+
 		oldpreset = targetdata['preset']
 		# now make EMTargetData to hold all this
-		emtargetdata = data.EMTargetData(scope=newscope, preset=oldpreset)
+		emtargetdata = data.EMTargetData(scope=newscope, preset=oldpreset, movetype=movetype)
+		## publish in DB because it will likely be needed later
+		## when returning to the same target,
+		## even after it is removed from memory
 		self.publish(emtargetdata, database=True)
 		return emtargetdata
 
@@ -279,7 +282,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		## create FilmData(AcquisitionImageData) which 
 		## will be used to store info about this exposure
-		filmdata = data.FilmData(scope=scopebefore, preset=presetdata, label=self.name, target=target)
+		filmdata = data.FilmData(session=self.session, scope=scopebefore, preset=presetdata, label=self.name, target=target)
 		## no image to store in file, but this provides 'filename' for 
 		## film text
 		self.setImageFilename(filmdata)
@@ -328,7 +331,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		## convert CameraImageData to AcquisitionImageData
 		imagedata = data.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=target, list=self.imagelistdata)
-
 		if target is not None and 'grid' in target and target['grid'] is not None:
 			imagedata['grid'] = target['grid']
 
@@ -577,7 +579,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.uimovetype = uidata.SingleSelectFromList('Move Type',
 																									self.calclients.keys(),
 																									0, persist=True)
-		self.alwaysmovestage = uidata.Boolean('Reset stage position even when move type is image shift', False, 'rw', persist=True)
 		self.uidelay = uidata.Float('Delay (sec)', 2.5, 'rw', persist=True,
 																	size=(5, 1))
 		self.uicorrectimage = uidata.Boolean('Correct image', True, 'rw',
@@ -589,8 +590,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		acquirecontainer.addObject(self.displayimageflag, position={'position':(0,1)})
 		acquirecontainer.addObject(self.uimovetype, position={'position':(1,0)})
 		acquirecontainer.addObject(self.uidelay, position={'position':(1,1)})
-		acquirecontainer.addObject(self.alwaysmovestage, position={'position':(2,0), 'span':(1,2)})
-		acquirecontainer.addObject(self.waitfordone, position={'position':(3,0), 'span':(1,2)})
+		acquirecontainer.addObject(self.waitfordone, position={'position':(2,0), 'span':(1,2)})
 
 		self.databaseflag = uidata.Boolean('Save images in database', True, 'rw')
 		self.dbimages = uidata.SingleSelectFromList('Image', [], 0)

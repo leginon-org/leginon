@@ -134,16 +134,6 @@ class OrderedDict(dict):
 			self.__ordered_values = [item[1] for item in self.__ordered_items]
 		self.initdone = True
 
-	def XXXiterkeys(self):
-		return iter(self.keys())
-	#__iter__ = iterkeys
-
-	def XXXitervalues(self):
-		return iter(self.values())
-
-	def XXXiteritems(self):
-		return iter(self.items())
-
 	def keys(self):
 		if hasattr(self, 'initdone'):
 			return list(self.__ordered_keys)

@@ -53,7 +53,7 @@ class PresetsClient(object):
 			session = self.node.session
 
 		## find presets that belong to this session
-		pquery = data.PresetData(session=session, hold=False)
+		pquery = data.PresetData(session=session)
 		plist = self.node.research(datainstance=pquery)
 		if not plist:
 			return {}
@@ -214,9 +214,6 @@ class PresetsManager(node.Node):
 		get presets from current session out of database
 		'''
 		self.presets = self.presetsclient.getPresetsFromDB()
-		## make sure we hold on to these
-		for p in self.presets.values():
-			p.addHold()
 		self.setOrder()
 
 	def importPresets(self, pdict):
@@ -227,7 +224,7 @@ class PresetsManager(node.Node):
 		## make new presets with this session
 		self.presets = strictdict.OrderedDict()
 		for name, preset in pdict.items():
-			newp = data.PresetData(initializer=preset, session=self.session, hold=True)
+			newp = data.PresetData(initializer=preset, session=self.session)
 			self.presetToDB(newp)
 			self.presets[name] = newp
 		self.setOrder()
@@ -261,9 +258,7 @@ class PresetsManager(node.Node):
 		for name in names:
 			p = self.presets[name]
 			if p['number'] != number:
-				newp = data.PresetData(initializer=p, number=number, hold=True)
-				p.removeHold()
-
+				newp = data.PresetData(initializer=p, number=number)
 				self.presetToDB(newp)
 			else:
 				newp = p
@@ -317,9 +312,8 @@ class PresetsManager(node.Node):
 		## remove from self.presets, store in DB
 		premove = self.presets[pname]
 		del self.presets[pname]
-		pnew = data.PresetData(initializer=premove, removed=1, hold=False)
+		pnew = data.PresetData(initializer=premove, removed=1)
 		self.presetToDB(pnew)
-		premove.removeHold()
 
 		## update order, selector list, etc.
 		self.setOrder()
@@ -377,7 +371,7 @@ class PresetsManager(node.Node):
 		'''
 		scopedata = self.emclient.getScope()
 		cameradata = self.emclient.getCamera()
-		newpreset = data.PresetData(hold=True)
+		newpreset = data.PresetData()
 		newpreset.friendly_update(scopedata)
 		newpreset.friendly_update(cameradata)
 		newpreset['session'] = self.session
@@ -391,9 +385,6 @@ class PresetsManager(node.Node):
 			## this is len before new one is added
 			number = len(self.presets)
 
-		if name in self.presets:
-			oldpreset = self.presets[name]
-			oldpreset.removeHold()
 		newpreset['number'] = number
 		self.presets[name] = newpreset
 		self.presetToDB(newpreset)
@@ -614,10 +605,7 @@ class PresetsManager(node.Node):
 		### edit the values
 		if p.dbid is None:
 			return p
-		newpreset = data.PresetData(initializer=p, hold=True)
-		p.removeHold()
-		if p['name'] in self.presets:
-			self.presets[p['name']].removeHold()
+		newpreset = data.PresetData(initializer=p)
 		self.presets[newpreset['name']] = newpreset
 		if self.currentpreset is p:
 			self.currentpreset = newpreset
@@ -695,9 +683,11 @@ class PresetsManager(node.Node):
 		## change parameters
 		changecont = uidata.Container('Preset Change Parameters')
 		self.xyonly = uidata.Boolean('Target stage x and y only', True, 'rw', persist=True)
+		self.alwaysmovestage = uidata.Boolean('Set stage position even when target move type is image shift', False, 'rw', persist=True)
 		self.changepause = uidata.Float('Pause', 1.0, 'rw', persist=True)
 		changecont.addObject(self.changepause, position={'position':(0,0)})
 		changecont.addObject(self.xyonly, position={'position':(0,1)})
+		changecont.addObject(self.alwaysmovestage, position={'position':(1,0), 'span':(1,2)})
 
 		# selection
 		selectcont = uidata.Container('Selection')
@@ -780,7 +770,7 @@ class PresetsManager(node.Node):
 		camdata0 = data.CameraEMData()
 		camdata0.friendly_update(self.currentpreset)
 
-		camdata1 = copy.deepcopy(camdata0)
+		camdata1 = copy.copy(camdata0)
 
 		## figure out if we want to cut down to 512x512
 		for axis in ('x','y'):
@@ -846,21 +836,29 @@ class PresetsManager(node.Node):
 		oldpreset = emtargetdata['preset']
 		newpreset = self.presetByName(newpresetname)
 
-		emdata = data.ScopeEMData(initializer=emtargetdata['scope'])
+		origscope = emtargetdata['scope']
+		scopedata = data.ScopeEMData(initializer=origscope)
+		# we will potentially modify stage position, so copy
+		scopedata['stage position'] = copy.deepcopy(origscope['stage position'])
+		movetype = emtargetdata['movetype']
+		if movetype == 'image shift':
+			if not self.alwaysmovestage.get():
+				scopedata['stage position'] = None
 
-		if emdata['stage position'] and self.xyonly.get():
+		if scopedata['stage position'] and self.xyonly.get():
 			## only set stage x and y
-			for key in emdata['stage position'].keys():
+			for key in scopedata['stage position'].keys():
 				if key not in ('x','y'):
-					del emdata['stage position'][key]
+					del scopedata['stage position'][key]
 
 		## always ignore focus (only defocus should be used)
 		try:
-			emdata['focus'] = None
+			scopedata['focus'] = None
 		except:
 			pass
 
-		scopedata = data.ScopeEMData(initializer=emdata)
+		## yet another copy, so we can modify it using preset
+		scopedata = data.ScopeEMData(initializer=scopedata)
 
 		## figure out how to transform the target image shift
 		## ???

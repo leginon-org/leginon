@@ -132,6 +132,59 @@ class ManualAcquisition(node.Node):
 		if self.down.get():
 			self.setScope({'main screen position': 'down'})
 
+	def setImageFilename(self, imagedata):
+		if imagedata['filename']:
+			return
+		rootname = self.getRootName(imagedata)
+		listlabel = ''
+
+		## use either data id or target number
+		if imagedata['target'] is None or imagedata['target']['number'] is None:
+			print 'This image does not have a target number, it would be nice to have an alternative to target number, like an image number.  for now we will use dmid'
+			numberstr = '%05d' % (imagedata.dmid[-1],)
+		else:
+			numberstr = '%05d' % (imagedata['target']['number'],)
+			if imagedata['target']['list'] is not None:
+				listlabel = imagedata['target']['list']['label']
+		if imagedata['preset'] is None:
+			presetstr = ''
+		else:
+			presetstr = imagedata['preset']['name']
+		mystr = numberstr + presetstr
+		sep = '_'
+		if listlabel:
+			parts = (rootname, listlabel, mystr)
+		else:
+			parts = (rootname, mystr)
+		filename = sep.join(parts)
+		imagedata['filename'] = filename
+
+	def getRootName(self, imagedata):
+		'''
+		get the root name of an image from its parent
+		'''
+		parent_target = imagedata['target']
+		if parent_target is None:
+			## there is no parent target
+			## create my own root name
+			return self.newRootName()
+
+		parent_image = parent_target['image']
+		if parent_image is None:
+			## there is no parent image
+			return self.newRootName()
+
+		## use root name from parent image
+		parent_root = parent_image['filename']
+		if parent_root:
+			return parent_root
+		else:
+			return self.newRootName()
+
+	def newRootName(self):
+		name = self.session['name']
+		return name
+
 	def publishImageData(self, imagedata):
 		acquisitionimagedata = data.AcquisitionImageData(initializer=imagedata)
 		grid = self.gridselect.getSelectedValue()
@@ -141,8 +194,9 @@ class ManualAcquisition(node.Node):
 			griddata['grid ID'] = gridinfo['gridId']
 			acquisitionimagedata['grid'] = griddata
 
-		acquisitionimagedata['filename'] = \
-			data.ImageData.filename(acquisitionimagedata)[:-4]
+		self.setImageFilename(acquisitionimagedata)
+		#acquisitionimagedata['filename'] = \
+		#	data.ImageData.filename(acquisitionimagedata)[:-4]
 
 		try:
 			self.publish(acquisitionimagedata, database=True)

@@ -57,6 +57,7 @@ class EMClient(object):
 		## will eventually need to handle multiple scopes/cameras
 		self.scoperef = None
 		self.cameraref = None
+		self.cameraimageref = None
 		self.node.addEventInput(event.ScopeEMPublishEvent, self.handleScopePublish)
 		self.node.addEventInput(event.CameraEMPublishEvent, self.handleCameraPublish)
 		self.node.addEventInput(event.CameraImageEMPublishEvent, self.handleCameraImagePublish)
@@ -68,39 +69,35 @@ class EMClient(object):
 		self.cameraref = ievent
 
 	def handleCameraImagePublish(self, ievent):
+		self.node.logger.debug('handleCameraImagePublish: %s' % (ievent.special_getitem('data', dereference=False),))
 		self.cameraimageref = ievent
 
-	def getScope(self, key=None, hold=None):
+	def getScope(self, key=None):
 		if self.scoperef is None:
 			raise ScopeUnavailable()
 		## still has to get whole ScopeEMData just to get one key
 		dat = self.scoperef['data']
-		dat.remove()
-		dat = data.ScopeEMData(hold=hold, initializer=dat)
 		if key is None:
 			return dat
 		else:
 			return dat[key]
 
-	def getCamera(self, key=None, hold=None):
+	def getCamera(self, key=None):
 		if self.cameraref is None:
 			raise ScopeUnavailable()
 		## still has to get whole CameraEMData just to get one key
 		dat = self.cameraref['data']
-		dat.remove()
-		dat = data.CameraEMData(hold=hold, initializer=dat)
 		self.node.logger.debug('getCamera dat dmid: %s' % (dat.dmid,))
 		if key is None:
 			return dat
 		else:
 			return dat[key]
 
-	def getImage(self, key=None, hold=None):
+	def getImage(self, key=None):
 		if self.cameraimageref is None:
 			raise CameraUnavailable()
+		self.node.logger.debug('GET IMAGE REF: %s' % (self.cameraimageref.special_getitem('data', dereference=False),))
 		dat = self.cameraimageref['data']
-		dat.remove()
-		dat = data.CameraEMData(hold=hold, initializer=dat)
 		if key is None:
 			return dat
 		else:
@@ -108,31 +105,21 @@ class EMClient(object):
 
 	def setScope(self, value):
 		self.node.logger.debug('setScope: %s' % (value, ))
-		# make a copy of Data that will be sure to be here
-		# when EM node gets it
-		newvalue = data.ScopeEMData(initializer=value, hold=True)
-		setevent = event.SetScopeEvent(data=newvalue)
+		setevent = event.SetScopeEvent(data=value)
 		try:
 			self.node.outputEvent(setevent, wait=True)
 		except node.ConfirmationNoBinding:
 			self.node.logger.exception('')
-			newvalue.removeHold()
 			raise
-		newvalue.removeHold()
 
 	def setCamera(self, value):
 		self.node.logger.debug('setCamera: %s' % (value, ))
-		# make a copy of Data that will be sure to be here
-		# when EM node gets it
-		newvalue = data.CameraEMData(initializer=value, hold=True)
-		setevent = event.SetCameraEvent(data=newvalue)
+		setevent = event.SetCameraEvent(data=value)
 		try:
 			self.node.outputEvent(setevent, wait=True)
 		except node.ConfirmationNoBinding:
 			self.node.logger.exception('')
-			newvalue.removeHold()
 			raise
-		newvalue.removeHold()
 
 class Request(object):
 	pass
@@ -298,7 +285,7 @@ class EM(node.Node):
 			state = self.state
 		finally:
 			self.statelock.release()
-		newdata = data.ScopeEMData(hold=False)
+		newdata = data.ScopeEMData()
 		newdata.friendly_update(state)
 		return newdata
 
@@ -311,7 +298,7 @@ class EM(node.Node):
 			state = self.state
 		finally:
 			self.statelock.release()
-		newdata = data.CameraEMData(hold=False)
+		newdata = data.CameraEMData()
 		newdata.friendly_update(state)
 		return newdata
 
@@ -324,7 +311,7 @@ class EM(node.Node):
 			state = self.state
 		finally:
 			self.statelock.release()
-		newdata = data.CameraEMData(hold=False)
+		newdata = data.CameraEMData()
 		newdata.friendly_update(state)
 		return newdata
 

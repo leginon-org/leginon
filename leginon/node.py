@@ -303,22 +303,6 @@ class Node(leginonobject.LeginonObject):
 				e['destination'] = ''
 			return self.outputEvent(e)
 
-	### this is way too slow because it has to traverse an entire tree
-	### of data, which is usually unnecessary when there are only a 
-	### few 'session' values that need to be set.
-	### It is time to stop using this and start setting 'session'
-	### explicitly when data is created rather than when publishing.
-	def addSession(self, datainstance):
-		itemtypes = datainstance.types()
-		sessionname = self.session['name']
-		for key, value in datainstance.items():
-			thistype = itemtypes[key]
-			if thistype is data.SessionData:
-				if value is None or value['name'] != sessionname:
-					datainstance[key] = self.session
-			if isinstance(value, data.InSessionData):
-				self.addSession(value)
-
 	def research(self, dataclass=None, datainstance=None, results=None, readimages=True):
 		'''
 		How a node finds some data in the leginon system:

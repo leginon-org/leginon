@@ -22,8 +22,12 @@ class DBDataKeeper(object):
 		dummy.isRoot = True
 		datainfo = self.datainfo(dummy, dbid=id)
 		queryinfo = datainfo[0]
-		result  = self.dbd.multipleQueries(queryinfo)
-		myresult = result.fetchall()
+		self.lock.acquire()
+		try:
+			result  = self.dbd.multipleQueries(queryinfo)
+			myresult = result.fetchall()
+		finally:
+			self.lock.release()
 		if len(myresult) == 0:
 			return None
 		elif len(myresult) == 1:
@@ -79,6 +83,8 @@ class DBDataKeeper(object):
 				myid = myclassname+str(mydata.dbid)
 			else:
 				mydata = mydata.getData()
+				if isinstance(mydata, data.DataReference):
+					raise RuntimeError('I was not expecting this to happen, so we need to implement handling a replaced DataReference')
 				myid = id(mydata)
 		elif isinstance(mydata, data.Data):
 			myid = id(mydata)
@@ -155,6 +161,8 @@ class DBDataKeeper(object):
 				if isinstance(value, data.DataReference):
 					if value.dbid is None:
 						value = value.getData()
+						if isinstance(value, data.DataReference):
+							value = value.getData()
 					childresult = self.accumulateData(value, memo)
 					if childresult is not None:
 						myresult += childresult
@@ -197,10 +205,11 @@ class DBDataKeeper(object):
 		for value in newdata.values(dereference=False):
 			if isinstance(value, data.DataReference):
 				if value.dbid is None:
-					# what if the reference dbid is None
-					# but the actual data does have dbid.
-					# should I update the reference???
-					self.recursiveInsert(value.getData())
+					dat = value.getData()
+					## check if DataReference replaced
+					if isinstance(dat, data.DataReference):
+						dat = dat.getData()
+					self.recursiveInsert(dat)
 
 		## insert this object
 		dbid = self.flatInsert(newdata, force=force)

@@ -273,7 +273,6 @@ class SQLDict(object):
 		return self._joinData(cursorresults)
 
 	def _joinData(self, cursorresults):
-
 		if not cursorresults:
 			return []
 
@@ -350,7 +349,6 @@ class SQLDict(object):
 				newdata.timestamp = dbtimestamp
 
 			datalist.append(newdata)
-
 		return datalist
 
 	def _connectData(self, root, pool):
@@ -992,7 +990,7 @@ def unflatDict(in_dict, qikey=None, qinfo=None):
 
 	allsubdicts = {}
 	for key,value in in_dict.items():
-		a = re.findall('[^%s]+'%(sep,),key)
+		a = key.split(sep)
 		if a[0] == 'SUBD':
 			name = a[1]
 			if not allsubdicts.has_key(name):
@@ -1334,7 +1332,7 @@ def datatype(in_dict, qikey=None, qinfo=None):
 	content={}
 	allarrays={}
 	for key,value in in_dict.items():
-		a = re.findall('[^%s]+'%(sep,),key)
+		a = key.split(sep)
 		if a[0] == 'ARRAY':
 			name = a[1]
 			if not allarrays.has_key(name):

@@ -179,7 +179,7 @@ class Data(Object):
 				value = self.callback(value)
 			except Exception, e:
 				raise
-				print 'Exception in callback:', str(e)
+				#print 'Exception in callback:', str(e)
 		if self.validate(value):
 			self.value = value
 		else:
@@ -191,7 +191,8 @@ class Data(Object):
 			try:
 				self.usercallback(value)
 			except Exception, e:
-				print 'Exception in user set callback:', str(e)
+				raise
+				#print 'Exception in user set callback:', str(e)
 		self.lock.release()
 
 	def _get(self):

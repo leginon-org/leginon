@@ -17,6 +17,7 @@ import copy
 import uidata
 from timer import Timer
 import event
+import strictdict
 
 class NoCorrectorError(Exception):
 	pass
@@ -41,13 +42,14 @@ class CameraFuncs(object):
 		self.node.addEventInput(event.CorrectedCameraImagePublishEvent, self.handleCorrectedImagePublish)
 
 	def handleCorrectedImagePublish(self, ievent):
+		self.node.logger.debug('handleCorrectedImagePublish: %s' % (ievent.special_getitem('data', dereference=False),))
 		self.correctedimageref = ievent
 
 	def getCorrectedImage(self):
 		if self.correctedimageref is not None:
 			return self.correctedimageref['data']
 
-	def acquireCameraImageData(self, correction=True, hold=None):
+	def acquireCameraImageData(self, correction=True):
 		'''
 		Acquire data from the camera, optionally corrected
 		'''
@@ -60,11 +62,11 @@ class CameraFuncs(object):
 		else:
 			### create my own data from acquisition
 			scopedata = self.emclient.getScope()
-			camdata = self.emclient.getImage(hold=False)
+			camdata = self.emclient.getImage()
 			numimage = camdata['image data']
 			camdata['image data'] = None
 			camdatanoimage = data.CameraEMData(initializer=camdata)
-			imdata = data.CameraImageData(hold=hold, session=self.node.session, image=numimage, scope=scopedata, camera=camdatanoimage)
+			imdata = data.CameraImageData(session=self.node.session, image=numimage, scope=scopedata, camera=camdatanoimage)
 		return imdata
 
 	def setCameraDict(self, camdict):
@@ -119,12 +121,12 @@ class CameraFuncs(object):
 															'camerafuncs.state: unable to set camera state')
 			raise
 
-	def getCameraEMData(self, hold=None):
+	def getCameraEMData(self):
 		'''
 		return the current camera state as a CameraEMData object
 		'''
 		try:
-			newcamdata = self.emclient.getCamera(hold=hold)
+			newcamdata = self.emclient.getCamera()
 			return newcamdata
 		except:
 			self.node.logger.exception(
@@ -145,7 +147,7 @@ class CameraFuncs(object):
 		'''
 		container = uidata.Container('Camera Setup')
 
-		self.cameraparams = SmartCameraParameters(self.node)
+		self.cameraparams = SmartCameraParameters(self.node, persist=True)
 		applymeth = uidata.Method('Apply', self.uiApply)
 		self.applyasneeded = uidata.Boolean('Apply as needed', False, 'rw',
 																				persist=True)
@@ -175,16 +177,39 @@ class CameraFuncs(object):
 		if self.applyasneeded.get():
 			self.uiApply()
 
+def centered_square_offset(camerasize, dimension, binning):
+	'''
+	This calculates an offset, given camsize, dimension, and binning
+	'''
+	binnedcamsize = camerasize / binning
+	offset = (binnedcamsize - dimension) / 2
+	return offset
+
+def centered_square_table(camerasize):
+	table = []
+	for dimension in (4096, 2048, 1024, 512, 256):
+		if dimension > camerasize:
+			continue
+		for binning in (1,2,4,8,16):
+			offset = centered_square_offset(camerasize, dimension, binning)
+			if binning*dimension > camerasize:
+				continue
+			key = (dimension, binning)
+			config = {'dimension':{'x':dimension,'y':dimension}, 'binning':{'x':binning,'y':binning}, 'offset':{'x':offset,'y':offset}}
+			table.append( (key, config) )
+	return table
+
 class SmartCameraParameters(uidata.Container):
 	'''
 	This is a UI data object that packages all the camera parameters.
 	It requires a node instance in the initializer which is used
 	to get the camera size of the current instrument.
 	'''
-	def __init__(self, node, usercallback=None):
+	def __init__(self, node, usercallback=None, persist=False):
 		uidata.Container.__init__(self, 'Camera Configuration')
 		self.node = node
 		self.usercallback = usercallback
+		self.persist = persist
 
 		try:
 			camerasize = self.node.session['instrument']['camera size']
@@ -197,245 +222,93 @@ class SmartCameraParameters(uidata.Container):
 
 		self.camerasize = {'x': camerasize, 'y': camerasize}
 
-		self.binnings = [1, 2, 4, 6, 8, 12, 16]
-		self.binningscale = {'x': None, 'y': None}
-
-		self.defaults = {'binning':{'x': 1,'y': 1},
-										  'dimension': {'x': 512,'y': 512},
-										  'offset':{'x': 0,'y': 0},
-											'square': False,
-											'centered': False}
+		self.defaults = {'binning':{'x': 1,'y': 1}, 'dimension': {'x': 512,'y': 512}, 'offset':{'x': 0,'y': 0}}
 
 		self.defineUserInterface()
 
-	def _onSetBinning(self, value, axis):
-		if value is None:
-			value = self.defaults['binning'][axis]
-
-		if value not in self.binnings:
-			differences = map(lambda x: abs(x - value), self.binnings)
-			value = self.binnings[differences.index(min(differences))]
-
-		for a, uiobject in self['Binning'].items():
-			if self.square.get() or a == axis:
-				previousbinning = uiobject.get()
-				self.binningscale[a] = float(previousbinning) / float(value)
-			else:
-				self.binningscale[a] = None
-
-			if self.square.get() and a != axis:
-				if value != previousbinning:
-					uiobject.set(value, callback=False, thread=True, database=True)
-		return value
-
-	def onSetXBinning(self, value):
-		return self._onSetBinning(value, 'x')
-
-	def onSetYBinning(self, value):
-		return self._onSetBinning(value, 'y')
-
-	def userSetBinning(self, value):
-		for a, scale in self.binningscale.items():
-			if scale is None:
-				continue
-			for parameter in ('Dimension', 'Offset'):
-				parametervalue = self[parameter][a].get()
-				scaledparametervalue = int(round(parametervalue*scale))
-				if parametervalue != scaledparametervalue:
-					self[parameter][a].set(scaledparametervalue,
-																	callback=False, database=True)
-			self.binningscale[a] = None
-		self.onModified(value)
-
-	def _onSetDimension(self, value, axis):
-		if value is None:
-			value = self.defaults['dimension'][axis]
-
-		if value < 0:
-			value = 0
-
-		camerasize = self.camerasize[axis]/self['Binning'][axis].get()
-		if value > camerasize:
-			value = camerasize
-
-		offset = self['Offset'][axis].get()
-		if self.centered.get():
-			centeredoffset = (camerasize - value)/2
-			if centeredoffset != offset:
-				self['Offset'][axis].set(centeredoffset, callback=False,
-																						thread=True, database=True)
-		elif value + offset > camerasize:
-			self['Offset'][axis].set(camerasize - value, callback=False,
-																					thread=True, database=True)
-		if self.square.get():
-			for a, uiobject in self['Dimension'].items():
-				if a == axis:
-					continue
-				dimension = uiobject.get()
-				if dimension != value:
-					uiobject.set(value, callback=False, thread=True, database=True)
-					camerasize = self.camerasize[a]/self['Binning'][a].get()
-					offset = self['Offset'][a].get()
-					if self.centered.get():
-						centeredoffset = (camerasize - value)/2
-						if centeredoffset != offset:
-							self['Offset'][a].set(centeredoffset, callback=False,
-																							thread=True, database=True)
-					elif value + offset > camerasize:
-						self['Offset'][a].set(camerasize - value,
-																						callback=False, thread=True,
-																						database=True)
-
-		return value
-
-	def onSetXDimension(self, value):
-		return self._onSetDimension(value, 'x')
-
-	def onSetYDimension(self, value):
-		return self._onSetDimension(value, 'y')
-
-	def _onSetOffset(self, value, axis):
-		if value is None:
-			value = self.defaults['offset'][axis]
-
-		if value < 0:
-			value = 0
-
-		camerasize = self.camerasize[axis]/self['Binning'][axis].get()
-		if value > camerasize:
-			value = camerasize
-
-		dimension = self['Dimension'][axis].get()
-		if value + dimension > camerasize:
-			self['Dimension'][axis].set(camerasize - value, callback=False,
-																	thread=True, database=True)
-
-			if self.square.get():
-				for a, uiobject in self['Dimension'].items():
-					if a == axis:
-						continue
-					camerasize = self.camerasize[a]/self['Binning'][a].get()
-					dimension = uiobject.get()
-					if dimension != camerasize - value:
-						uiobject.set(camerasize - value, callback=False, thread=True,
-													database=True)
-
-		return value
-
-	def onSetXOffset(self, value):
-		return self._onSetOffset(value, 'x')
-
-	def onSetYOffset(self, value):
-		return self._onSetOffset(value, 'y')
-
-	def onCentered(self, value):
-		if value:
-			self['Offset']['x'].disable(thread=True)
-			self['Offset']['y'].disable(thread=True)
-		else:
-			self['Offset']['x'].enable(thread=True)
-			self['Offset']['y'].enable(thread=True)
-
-		if value:
-			for axis in ('x', 'y'):
-				camerasize = self.camerasize[axis]/self['Binning'][axis].get()
-				dimension = self['Dimension'][axis].get()
-				offset = self['Offset'][axis].get()
-				centeredoffset = (camerasize - dimension)/2
-				if centeredoffset != offset:
-					self['Offset'][axis].set(centeredoffset, callback=False,
-																		thread=True, database=True)
-		return value
-
-	def onSquare(self, value):
-		if value:
-			self['Binning']['y'].disable(thread=True)
-			self['Dimension']['y'].disable(thread=True)
-		else:
-			self['Binning']['y'].enable(thread=True)
-			self['Dimension']['y'].enable(thread=True)
-
-		if value:
-			xbinning = self['Binning']['x'].get()
-			ybinning = self['Binning']['y'].get()
-			if ybinning != xbinning:
-				self['Binning']['y'].set(xbinning, callback=False,
-																	thread=True, database=True)
-#				binningscale = float(ybinning) / float(xbinning)
-#				yoffset = self['Offset']['y'].get()
-#				scaledoffset = int(round(yoffset*binningscale))
-#				if yoffset != scaledoffset:
-#					self['Offset']['y'].set(scaledoffset, callback=False,
-#																	thread=True, database=True)
-
-			xdimension = self['Dimension']['x'].get()
-			ydimension = self['Dimension']['y'].get()
-			if ydimension != xdimension:
-				self['Dimension']['y'].set(xdimension, callback=False,
-																		thread=True, database=True)
-
-				ycamerasize = self.camerasize['y']/self['Binning']['y'].get()
-				yoffset = self['Offset']['y'].get()
-				if self.centered.get():
-					centeredoffset = (ycamerasize - xdimension)/2
-					if centeredoffset != yoffset:
-						self['Offset']['y'].set(centeredoffset, callback=False,
-																		thread=True, database=True)
-				elif xdimension + yoffset > ycamerasize:
-					self['Offset']['y'].set(ycamerasize - xdimension,
-																	callback=False, thread=True, database=True)
-		return value
-
-	def onModified(self, value):
+	def onModified(self, value=None):
 		if self.usercallback is not None:
 			configuration = self.get()
 			self.usercallback(configuration)
 
+	def disableManual(self):
+		for parameter in ('Binning', 'Offset', 'Dimension'):
+			for axis in ('y', 'x'):
+				self[parameter][axis].disable()
+
+	def enableManual(self):
+		for parameter in ('Binning', 'Offset', 'Dimension'):
+			for axis in ('y', 'x'):
+				self[parameter][axis].enable()
+
+	def configSelectedCallback(self, value):
+		if value == 0:
+			self.enableManual()
+		else:
+			self.disableManual()
+			configkey = self.configselectdict.keys()[value]
+			configdict = self.configselectdict[configkey]
+			for parameter in ('Binning', 'Offset', 'Dimension'):
+				lparam = parameter.lower()
+				for axis in ('y', 'x'):
+					self[parameter][axis].set(configdict[lparam][axis])
+		self.onModified()
+		return value
+
+	def initConfigSelector(self):
+		### assume square camera
+		camerasize = self.camerasize['x']
+		self.configselectdict = strictdict.OrderedDict()
+		table = centered_square_table(camerasize)
+		self.configselectdict['Manual'] = None
+		for item in table:
+			dim = item[0][0]
+			bin = item[0][1]
+			key = '%s x %s' % (dim, bin)
+			self.configselectdict[key] = item[1]
+		items = self.configselectdict.keys()
+		configselector = uidata.SingleSelectFromList('Common Configuration', [], 0, persist=self.persist)
+		configselector.setList(items)
+		return configselector
+
 	def defineUserInterface(self):
-		self.square = uidata.Boolean('Square', self.defaults['square'],
-																	'rw', persist=True)
-		self.centered = uidata.Boolean('Center', self.defaults['centered'],
-																		'rw', persist=True)
-		self.addObject(self.square, position={'position': (0, 0)})
-		self.addObject(self.centered, position={'position': (0, 1)})
-
 		size = (len(str(max(self.camerasize.values()))), 1)
-
-		for param in ('binning', 'dimension', 'offset'):
+		for param in ('dimension', 'binning', 'offset'):
+			
 			container = uidata.Container(param[0].upper() + param[1:])
 			for i, axis in ((1, 'y'), (0, 'x')):
 				default = self.defaults[param][axis]
-				uiobject = uidata.Integer(axis, default, 'rw', persist=True, size=size)
+				uiobject = uidata.Integer(axis, default, 'rw', persist=self.persist, size=size)
 				container.addObject(uiobject, position={'position': (0, i)})
-			self.addObject(container, position={'span': (1, 2)})
+			self.addObject(container)
 
-		self.exposuretime = uidata.Integer('Exposure Time (ms)', 500, 'rw',
-																				persist=True, size=(6, 1))
-		self.addObject(self.exposuretime, position={'span': (1, 2)})
+		self.configselector = self.initConfigSelector()
+		self.addObject(self.configselector)
+
+		self.exposuretime = uidata.Integer('Exposure Time (ms)', 500, 'rw', persist=self.persist, size=(6, 1))
+		self.addObject(self.exposuretime)
 
 		for parameter in ('Binning', 'Offset', 'Dimension'):
 			for axis in ('y', 'x'):
-				callback = getattr(self, 'onSet' + axis.upper() + parameter)
-				self[parameter][axis].setCallback(callback)
-				# Anchi wants to change binning
-				# without other params updating
-				#if parameter == 'Binning':
-				#	usercallback = self.userSetBinning
-				#else:
-				#	usercallback = self.onModified
 				usercallback = self.onModified
 
-				self[parameter][axis].setUserCallback(usercallback)
+				self[parameter][axis].setUserCallback(self.onModified)
+		#self.configselector.setCallback(self.configSelectedCallback)
+		self.configselector.setUserCallback(self.configSelectedCallback)
 		self.exposuretime.setUserCallback(self.onModified)
-		self.square.setCallback(self.onSquare)
-		self.centered.setCallback(self.onCentered)
 
 	def get(self):
 		parameterdict = {}
-		for key in ('Binning', 'Dimension', 'Offset'):
-			parameterdict[key.lower()] = {}
-			for axis in ('x', 'y'):
-				parameterdict[key.lower()][axis] = self[key][axis].get()
+		config  = self.configselector.getSelectedValue()
+		if config == 'Manual':
+			for key in ('Binning', 'Dimension', 'Offset'):
+				parameterdict[key.lower()] = {}
+				for axis in ('x', 'y'):
+					parameterdict[key.lower()][axis] = self[key][axis].get()
+		else:
+			configvalue = copy.deepcopy(self.configselectdict[config])
+			parameterdict.update(configvalue)
+
 		parameterdict['exposure time'] = self.exposuretime.get()
 		return parameterdict
 
@@ -446,11 +319,6 @@ class SmartCameraParameters(uidata.Container):
 			self.node.logger.exception('')
 			if hasattr(self.node, 'messagelog'):
 				self.node.messagelog.error(str(e))
-		centered = self.isCentered(parameterdict)
-		self.centered.set(centered)
-
-		square = self.isSquare(parameterdict)
-		self.square.set(square)
 
 		for parameter in ('Binning', 'Dimension', 'Offset'):
 			for axis, uiobject in self[parameter].items():
@@ -458,41 +326,32 @@ class SmartCameraParameters(uidata.Container):
 					uiobject.set(parameterdict[parameter.lower()][axis])
 				except KeyError:
 					pass
+		### select a common config if it matches
+		self.checkCommonConfig(parameterdict)
+
 		try:
 			self.exposuretime.set(parameterdict['exposure time'])
 		except KeyError:
 			pass
 
-	def isSquare(self, parameterdict):
-		for parameter in ('binning', 'dimension'):
-			if parameterdict[parameter]['x'] != parameterdict[parameter]['y']:
-				return False
-		return True
-
-	def isCentered(self, parameterdict):
-		for axis in ('x', 'y'):
-			binning = parameterdict['binning'][axis] 
-			if parameterdict['offset'][axis] != \
-				(self.camerasize[axis]/binning)/2 - parameterdict['dimension'][axis]/2:
-				return False
-		return True
-
-	def autoOffset(self, paramdict):
-		dimension = paramdict['dimension']
-		binning = paramdict['binning']
-		sizex = self.camerasize['x']
-		sizey = self.camerasize['y']
-		binx = binning['x']
-		biny = binning['y']
-		sizex /= binx
-		sizey /= biny
-		pixx = dimension['x']
-		pixy = dimension['y']
-		offx = sizex / 2 - pixx / 2
-		offy = sizey / 2 - pixy / 2
-		if offx < 0 or offy < 0 or offx > sizex or offy > sizey:
-			raise RuntimeError('autoOffset: invalid offset calculated')
-		paramdict['offset'] = {'x': offx, 'y': offy}
+	def checkCommonConfig(self, paramdict):
+		parameterdict = {}
+		for key in ('Binning', 'Dimension', 'Offset'):
+			parameterdict[key.lower()] = {}
+			for axis in ('x', 'y'):
+				parameterdict[key.lower()][axis] = self[key][axis].get()
+		index = 0
+		manual = True
+		for key,value in self.configselectdict.items():
+			if value == parameterdict:
+				self.configselector.setSelected(index)
+				self.disableManual()
+				manual = False
+				break
+			index += 1
+		if manual:
+			self.configselector.setSelected(0)
+			self.enableManual()
 
 	def validate(self, parameterdict):
 		for axis, camerasize in self.camerasize.items():

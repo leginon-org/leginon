@@ -347,7 +347,9 @@ class ManagerSetup(object):
 		session = data.SessionData(user=self.uiGetUser())
 		self.manager.session = session
 		self.manager.uicontainer.session = session
+		print 'loading user preferences'
 		self.manager.uicontainer.getUserPreferencesFromDatabase()
+		print 'done loading preferences'
 		self.createSelectSessionContainer()
 
 	def createLoginContainer(self):
