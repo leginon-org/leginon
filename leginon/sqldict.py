@@ -223,9 +223,9 @@ class SQLDict:
 
 	def fetchmany(self, size):
 		cursorresults = {}
-		memo = {}
 		for qikey,cursor in self.cursors.items():
-			cursorresult = self._format(cursor.fetchmany(size), qikey, memo)
+			subfetch = cursor.fetchmany(size)
+			cursorresult = self._format(subfetch, qikey)
 			cursor.close()
 			cursorresults[qikey] = cursorresult
 
@@ -233,9 +233,9 @@ class SQLDict:
 
 	def fetchall(self):
 		cursorresults = {}
-		memo = {}
 		for qikey,cursor in self.cursors.items():
-			cursorresult = self._format(cursor.fetchall(), qikey, memo)
+			subfetch = cursor.fetchall()
+			cursorresult = self._format(subfetch, qikey)
 			cursor.close()
 			cursorresults[qikey] = cursorresult
 
@@ -267,7 +267,7 @@ class SQLDict:
                 
                 return rootlist
 
-	def _format(self, sqlresult, qikey, memo):
+	def _format(self, sqlresult, qikey, memo={}):
 		"""Convert SQL result to data instances. Create a new data class
 		only if it does not exist.
 		"""
@@ -276,23 +276,25 @@ class SQLDict:
 		qinfolist = [self.queryinfo for i in range(len(sqlresult))]
 		result = map(sql2data, sqlresult, qikeylist, qinfolist)
 
-		for i in range(len(result)):
-			classname = self.queryinfo[qikey]['class name']
-			memokey = (classname, result[i]['DEF_id'])
-			del result[i]['DEF_id']
-			del result[i]['DEF_timestamp']
+		classname = self.queryinfo[qikey]['class name']
+		dataclass = getattr(data, classname)
+
+		for r in result:
+			memokey = (classname, r['DEF_id'])
+			dbid = r['DEF_id']
+			del r['DEF_id']
+			del r['DEF_timestamp']
 
 			if memokey in memo:
 				newdata = memo[memokey]
 			else:
-				dataclass = getattr(data, classname)
 				newdata = dataclass()
 				memo[memokey]=newdata
 				try:
 					## this is friendly_update because
 					## there could be columns that
 					## are no longer used
-					newdata.friendly_update(result[i])
+					newdata.friendly_update(r)
 				except KeyError, e:
 					raise
 
@@ -300,6 +302,10 @@ class SQLDict:
 				if hasattr(newdata, 'load'):
 					newdata.load()
 
+			## add pending dbid for now, actual dbid
+			## after all items are set, otherwise __setitem__
+			## will reset dbid
+			newdata.pending_dbid = dbid
 			datalist.append(newdata)
 
 		return datalist
@@ -311,6 +317,11 @@ class SQLDict:
 		'''
 		if root is None:
 			return
+
+		### already done
+		if root.dbid is not None:
+			return 
+
 		needpath = []
 		for key,value in root.items():
 			if isinstance(value, data.UnknownData):
@@ -328,6 +339,9 @@ class SQLDict:
 			# replace reference with actual data
 			root[key] = fileref.read(imagepath)
 
+		## now the object is final, so we can safely set dbid
+		root.dbid = root.pending_dbid
+		del root.pending_dbid
 
     class _createSQLTable:
 
@@ -989,7 +1003,7 @@ def matrix2dict(matrix, name=None):
 			j+=1
 	return d
 
-def saveMRC(object, name, path, filename):
+def saveMRC(object, name, path, filename, thumb=False):
 	"""
 	Save Numeric array to MRC file and replace it with filename
 	"""
