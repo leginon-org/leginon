@@ -7,6 +7,7 @@ import gui.wx.Node
 import gui.wx.Presets
 
 class Panel(gui.wx.Node.Panel):
+	icon = 'acquisition'
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1, name='%s.pAcquisition' % name)
 

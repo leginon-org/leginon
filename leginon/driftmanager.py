@@ -276,8 +276,6 @@ class DriftManager(watcher.Watcher):
 
 	def defineUserInterface(self):
 		watcher.Watcher.defineUserInterface(self)
-		# turn on data queue by default
-		self.uidataqueueflag.set(False)
 
 		self.threshold = uidata.Float('Threshold (m)', 2e-10, 'rw', persist=True)
 		self.pausetime = uidata.Float('Pause Time (s)', 2.0, 'rw', persist=True)

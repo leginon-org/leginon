@@ -447,7 +447,6 @@ class SquareFinder2(targetfinder.TargetFinder):
 
 	def defineUserInterface(self):
 		targetfinder.TargetFinder.defineUserInterface(self)
-		self.uidataqueueflag.set(False)
 
 		self.messagelog = uidata.MessageLog('Message Log')
 		self.ui_image = uidata.TargetImage('Image', None, 'r')

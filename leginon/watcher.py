@@ -11,7 +11,6 @@
 import threading
 import node, event
 import Queue
-import uidata
 
 class WatcherQueue(Queue.Queue):
 	def __init__(self, callback, maxsize=0):
@@ -72,51 +71,19 @@ class Watcher(node.Node):
 		for eventclass in watchfor:
 			self.addEventInput(eventclass, self.handleEvent)
 
+		self.ignoreevents = False
+		self.queueevents = False
+		self.queuedata = False
+
 	def eventcallback(self, value):
-		if hasattr(self, 'uieventqueue'):
-			idlist = []
-			for data in value:
-				dmid = data.dmid
-				idlist.append(str(dmid))
-			self.uieventqueue.set(idlist)
+		pass
 
 	def datacallback(self, value):
-		if hasattr(self, 'uidataqueue'):
-			idlist = []
-			for data in value:
-				dmid = data.dmid
-				idlist.append(str(dmid))
-			self.uidataqueue.set(idlist)
-
-	def defineUserInterface(self):
-		node.Node.defineUserInterface(self)
-		self.uieventqueue = uidata.Sequence('Event Queue', [], 'r')
-		self.uidataqueue = uidata.Sequence('Data Queue', [], 'r')
-		self.uiignoreflag = uidata.Boolean('Ignore Incoming Events', False, 'rw')
-		self.uieventqueueflag = uidata.Boolean('Queue Events', False, 'rw')
-		processeventsmethod = uidata.Method('Process Event',
-																				self.uiProcessEvent)
-		cleareventsmethod = uidata.Method('Clear Queue', self.uiClearEventQueue)
-		eventcontainer = uidata.Container('Events')
-		eventcontainer.addObjects((self.uiignoreflag, self.uieventqueueflag,
-															self.uieventqueue, processeventsmethod,
-															cleareventsmethod))
-
-		self.uidataqueueflag = uidata.Boolean('Queue Data', False, 'rw')
-		processdatamethod = uidata.Method('Process Data',
-																				self.uiProcessData)
-		cleardatamethod = uidata.Method('Clear Queue', self.uiClearDataQueue)
-		datacontainer = uidata.Container('Data')
-		datacontainer.addObjects((self.uidataqueueflag, self.uidataqueue,
-															processdatamethod, cleardatamethod))
-
-		container = uidata.LargeContainer('Watcher')
-		container.addObjects((eventcontainer, datacontainer))
-		self.uicontainer.addObject(container)
+		pass
 
 	## the event queue could be put in node.py or databinder.DataBinder
 	def handleEvent(self, pubevent):
-		if self.uiignoreflag.get():
+		if self.ignoreevents:
 			return
 
 		## get lock if necessary
@@ -140,7 +107,7 @@ class Watcher(node.Node):
 		self.confirmEvent(pubevent)
 
 	def processEvent(self, pubevent):
-		if self.uieventqueueflag.get():
+		if self.queueevents:
 			## put event in queue and get data later
 			self.eventqueue.put(pubevent)
 		else:
@@ -154,7 +121,7 @@ class Watcher(node.Node):
 			return
 		newdata = pubevent['data']
 		if newdata is not None:
-			if self.uidataqueueflag.get():
+			if self.queuedata:
 				self.dataqueue.put(newdata)
 			else:
 				self.processData(newdata)
@@ -177,17 +144,4 @@ class Watcher(node.Node):
 			return True
 		except Queue.Empty:
 			return False
-
-	## maybe this should start a new thread?
-	def uiProcessEvent(self):
-		self.processEventFromQueue(blocking=0)
-
-	def uiProcessData(self):
-		self.processDataFromQueue(blocking=0)
-
-	def uiClearEventQueue(self):
-		self.eventqueue.clear()
-
-	def uiClearDataQueue(self):
-		self.dataqueue.clear()
 

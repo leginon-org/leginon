@@ -38,7 +38,6 @@ class RasterFinder(targetfinder.TargetFinder):
 
 	def defineUserInterface(self):
 		targetfinder.TargetFinder.defineUserInterface(self)
-		self.uidataqueueflag.set(False)
 
 		self.usercheckon = uidata.Boolean('User Check', False, 'rw', persist=True)
 

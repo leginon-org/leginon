@@ -4,6 +4,7 @@ import threading
 import wx
 import wx.lib.scrolledpanel
 import wxLogging
+import os, sys
 
 CreateNodeEventType = wx.NewEventType()
 DestroyNodeEventType = wx.NewEventType()
@@ -168,14 +169,6 @@ class ListCtrlPanel(wx.Panel):
 	def onSize(self, evt):
 		wx.LayoutAlgorithm().LayoutWindow(self, self.panel)
 
-import os, sys
-import node, acquisition, targetfinder, targetmaker
-
-iconmap = [('acquisition', acquisition.Acquisition),
-						('targetfinder', targetfinder.TargetFinder),
-						('atlasmaker', targetmaker.MosaicTargetMaker),
-						('node', node.Node)]
-
 class Panel(ListCtrlPanel):
 	def __init__(self, parent, launcher):
 		self.launcher = launcher
@@ -188,23 +181,32 @@ class Panel(ListCtrlPanel):
 		self.Bind(EVT_DESTROY_NODE, self.onDestroyNode)
 		self.Bind(EVT_CREATE_NODE_PANEL, self.onCreateNodePanel)
 
+	def addIcon(self, filename):
+		iconpath = os.path.join(sys.path[0], 'icons', filename + '.png')
+		image = wx.Image(iconpath)
+		bitmap = wx.BitmapFromImage(image)
+		self.iconmap[filename] = self.imagelist.Add(bitmap)
+
 	def initializeImageList(self):
-		imagelist = wx.ImageList(16, 16)
-		for filename, nodeclass in iconmap:
-			iconpath = os.path.join(sys.path[0], 'icons', filename + '.png')
-			image = wx.Image(iconpath)
-			bitmap = wx.BitmapFromImage(image)
-			imagelist.Add(bitmap)
-		self.listctrl.AssignImageList(imagelist, wx.IMAGE_LIST_SMALL)
+		self.iconmap = {}
+		self.imagelist = wx.ImageList(16, 16)
+		self.listctrl.AssignImageList(self.imagelist, wx.IMAGE_LIST_SMALL)
 
 	def addNode(self, n):
 		panel = n.panel
 		if panel is None:
 			return
 		label = n.name
-		for i, icon in enumerate(iconmap):
-			if isinstance(n, icon[1]):
-				break
+
+		if hasattr(panel, 'icon'):
+			icon = panel.icon
+		else:
+			icon = 'node'
+
+		if icon not in self.iconmap:
+			self.addIcon(icon)
+		i = self.iconmap[icon]
+
 		self.addPanel(panel, label, i)
 
 	def removeNode(self, n):

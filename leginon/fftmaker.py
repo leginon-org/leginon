@@ -14,28 +14,30 @@ import threading
 import uidata
 import node
 import imagefun
+import gui.wx.FFTMaker
 
 class FFTMaker(imagewatcher.ImageWatcher):
+	panelclass = gui.wx.FFTMaker.Panel
 	def __init__(self, id, session, managerlocation, **kwargs):
 		imagewatcher.ImageWatcher.__init__(self, id, session, managerlocation, **kwargs)
 
-		self.stop_post = threading.Event()
-		self.defineUserInterface()
+		self.process = None
+		self.label = None
+		self.maskradius = None
+		self.postprocess = threading.Event()
 		self.start()
 
 	def processImageData(self, imagedata):
 		'''
 		calculate and publish fft of the imagedata
 		'''
-		if self.ignore_images.get():
-			return
-		self.publishPowerImage(imagedata)
+		if self.process:
+			self.publishPowerImage(imagedata)
 
 	def publishPowerImage(self, imagedata):
 		imarray = imagedata['image']
 		self.logger.info('Calculating power spectrum for image')
-		maskrad = self.maskrad.get()
-		pow = imagefun.power(imarray, maskrad)
+		pow = imagefun.power(imarray, self.maskradius)
 		powdata = data.AcquisitionFFTData(session=self.session, source=imagedata, image=pow)
 
 		# filename
@@ -56,7 +58,7 @@ class FFTMaker(imagewatcher.ImageWatcher):
 		# start with first chronologically
 		images.reverse()
 		for im in images:
-			if self.stop_post.isSet():
+			if self.postprocess.isSet():
 				self.logger.info('stopping post processing')
 				break
 			## find if there is already an FFT
@@ -69,34 +71,14 @@ class FFTMaker(imagewatcher.ImageWatcher):
 			im.__setitem__('image', num, force=True)
 			self.publishPowerImage(im)
 
-	def uiStartPostProcess(self):
-		label = self.postlabel.get()
-		self.stop_post.clear()
+	def onStartPostProcess(self):
+		label = self.label
+		self.postprocess.set()
 		self.processByLabel(label)
 
-	def uiStopPostProcess(self):
+	def onStopPostProcess(self):
 		self.logger.info('will stop after next iteration')
-		self.stop_post.set()
-
-	def defineUserInterface(self):
-		imagewatcher.ImageWatcher.defineUserInterface(self)
-
-		# turn off data queuing by default
-		self.uidataqueueflag.set(False)
-
-		self.ignore_images = uidata.Boolean('Ignore Images', True, 'rw', persist=True)
-		self.maskrad = uidata.Float('Mask Radius (% of imagewidth)', 0.01, 'rw', persist=True)
-
-		postproc = uidata.Container('Post Processing')
-		self.postlabel = uidata.String('Label', '', 'rw', persist=True)
-		poststart = uidata.Method('Start', self.uiStartPostProcess)
-		poststop = uidata.Method('Stop', self.uiStopPostProcess)
-		postproc.addObjects((self.postlabel, poststart, poststop))
-
-		container = uidata.LargeContainer('FFT Maker')
-		container.addObjects((self.ignore_images,self.maskrad, postproc))
-
-		self.uicontainer.addObject(container)
+		self.postprocess.clear()
 
 	def setImageFilename(self, imagedata):
 		if imagedata['filename']:

@@ -38,7 +38,6 @@ class HoleFinder(targetfinder.TargetFinder):
 
 	def defineUserInterface(self):
 		targetfinder.TargetFinder.defineUserInterface(self)
-		self.uidataqueueflag.set(False)
 
 		self.usercheckon = uidata.Boolean('User Check', False, 'rw', persist=True)
 		self.skipauto = uidata.Boolean('Skip Auto Hole Finder', False, 'rw', persist=True)

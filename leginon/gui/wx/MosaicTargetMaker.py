@@ -5,6 +5,7 @@ import wx
 import wx.lib.masked
 
 class Panel(gui.wx.Node.Panel):
+	icon = 'atlasmaker'
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1,
 																name='%s.pMosaicTargetMaker' % name)
