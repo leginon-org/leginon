@@ -31,8 +31,8 @@ class TestMosaic(node.Node):
 		testimage.shape = im.size[1], im.size[0]
 		#print testimage.shape
 
-		ntiles = (3, 3)
-		overlap = 0.90
+		ntiles = (4, 4)
+		overlap = 0.30
 
 		tilesize = (int(math.floor(testimage.shape[0]/(1 + (ntiles[0] - 1)
 									* (1 - overlap)))),
@@ -65,6 +65,7 @@ class TestMosaic(node.Node):
 									pass
 
 				self.publish(data.ImageTileData(idmatrix[i][j], tile, neighbors))
+				time.sleep(1.0)
 				tileoffset = (tileoffset[0], tileoffset[1] + tilesize[1] - pixeloverlap[1])
 			tileoffset = (tileoffset[0] + tilesize[0] - pixeloverlap[0], 0)
 
