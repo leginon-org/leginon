@@ -5,6 +5,7 @@ import correlator
 import peakfinder
 import sys
 import event
+import time
 
 False=0
 True=1
@@ -16,19 +17,21 @@ class Calibration(node.Node):
 												"binning": {'x': 1, 'y': 1}, \
 												"exposure time" : 500}
 
-		if sys.platform == 'win32':
-			ffteng = fftengine.fftNumeric()
-		else:
-			ffteng = fftengine.fftFFTW(planshapes=(), estimate=1)
+		ffteng = fftengine.fftNumeric()
+		#if sys.platform == 'win32':
+		#	ffteng = fftengine.fftNumeric()
+		#else:
+		#	ffteng = fftengine.fftFFTW(planshapes=(), estimate=1)
 		self.correlator = correlator.Correlator(ffteng)
 		self.peakfinder = peakfinder.PeakFinder()
 
 		self.attempts = 5
 		self.range = [0.000, 0.01]
-		self.validpixelshift = {'x': [self.camerastate['dimension']['x']/6,
-															5*self.camerastate['dimension']['x']/6],
-														'y': [self.camerastate['dimension']['y']/6,
-															5*self.camerastate['dimension']['y']/6]}
+		self.validpixelshift = {'x': [self.camerastate['dimension']['x']/10,
+															5*self.camerastate['dimension']['x']/10],
+														'y': [self.camerastate['dimension']['y']/10,
+															5*self.camerastate['dimension']['y']/10]}
+		self.correlationthreshold = 0.05
 
 		node.Node.__init__(self, id, managerlocation)
 		self.start()
@@ -36,30 +39,41 @@ class Calibration(node.Node):
 	def main(self):
 		pass
 
-	def setting(self, i):
-		return {'image shift': {'x': self.settingValue(i)}}
-
-	def settingValue(self, i):
-		return ((self.range[1] - self.range[0]) / self.attempts * i) + self.range[0]
+	def setting(self, value):
+		return {'image shift': {'x': value}}
 
 	def calibrate(self, EMnodeid):
+		adjustedrange = self.range
 		self.publishRemote(EMnodeid, data.EMData(self.ID(), self.camerastate))
-		self.publishRemote(EMnodeid, data.EMData(self.ID(), self.setting(0)))
-		self.image1 = self.researchByDataID('image data').content['image data']
-		#imagedata = data.ImageData(self.ID(), self.image1)
-		#self.publish(imagedata, event.ImagePublishEvent)
-		self.correlator.setImage(0, self.image1)
-		for i in range(1, self.attempts + 1):
-			print "setting", self.setting(i)
-			self.publishRemote(EMnodeid, data.EMData(self.ID(), self.setting(i)))
+
+		for i in range(self.attempts):
+			value = (self.range[1] - self.range[0]) / 2 + self.range[0]
+			self.publishRemote(EMnodeid, data.EMData(self.ID(), self.setting(0.0)))
+			time.sleep(1.0)
+			self.image1 = self.researchByDataID('image data').content['image data']
+			imagedata = data.ImageData(self.ID(), self.image1)
+			self.publish(imagedata, event.ImagePublishEvent)
+			self.correlator.setImage(0, self.image1)
+
+			print "value =", value
+			self.publishRemote(EMnodeid, data.EMData(self.ID(), self.setting(value)))
+			time.sleep(1.0)
 			self.image2 = self.researchByDataID('image data').content['image data']
-			#imagedata = data.ImageData(self.ID(), self.image2)
-			#self.publish(imagedata, event.ImagePublishEvent)
+			imagedata = data.ImageData(self.ID(), self.image2)
+			self.publish(imagedata, event.ImagePublishEvent)
 			cdata = self.correlate(self.image2)
+			self.correlator.clearBuffer()
 			if self.valid(cdata):
-				print "good", self.calculate(cdata, i)
-				self.correlator.clearBuffer()
-				return self.calculate(cdata, i)
+				print "good", self.calculate(cdata, value) 
+				self.publishRemote(EMnodeid, data.EMData(self.ID(), self.setting(0.0)))
+				return self.calculate(cdata, value)
+			elif cdata['peak value'] > self.correlationthreshold * 2:
+				print "too small"
+				adjustedrange[0] = value
+			else:
+				print "too big"
+				adjustedrange[1] = value
+		self.publishRemote(EMnodeid, data.EMData(self.ID(), self.setting(0.0)))
 
 	def calculate(self, cdata, i):
 		return {'image shift': {'x': cdata['shift']['x'] / self.settingValue(i),
@@ -68,7 +82,10 @@ class Calibration(node.Node):
 	def valid(self, cdata):
 		if (self.inRange(abs(cdata['shift']['x']), self.validpixelshift['x']) or
 				self.inRange(abs(cdata['shift']['y']), self.validpixelshift['y'])):
-			return True
+			if cdata['peak value'] > self.correlationthreshold:
+				return True
+			else:
+				return False
 		else:
 			return False
 
@@ -85,21 +102,24 @@ class Calibration(node.Node):
 		## phase correlation with new image
 		try:
 			pcimage = self.correlator.phaseCorrelate()
-			imagedata = data.ImageData(self.ID(), pcimage)
-			self.publish(imagedata, event.ImagePublishEvent)
+			#imagedata = data.ImageData(self.ID(), pcimage)
+			#self.publish(imagedata, event.ImagePublishEvent)
 		except correlator.MissingImageError:
 			print 'missing image, no correlation'
 			return
 
 		## find peak in correlation image
-		peak = self.peakfinder.subpixelPeak(npix=3, newimage=pcimage)
+		self.peakfinder.setImage(pcimage)
+		peak = self.peakfinder.pixelPeak()
+		peak = self.peakfinder.subpixelPeak()
+		peak = self.peakfinder.getResults()
 		print 'peak', peak
-		peakvalue = pcimage[int(peak[0]), int(peak[1])]
+		peakvalue = pcimage[peak['pixel peak'][0], peak['pixel peak'][1]]
 		print 'peak value', peakvalue
 		## interpret as a shift
-		shift = correlator.wrap_coord(peak, pcimage.shape)
+		shift = correlator.wrap_coord(peak['subpixel peak'], pcimage.shape)
 		print 'shift', shift
-		return {'shift': {'x': shift[1], 'y': shift[0]}}
+		return {'shift': {'x': shift[1], 'y': shift[0]}, 'peak value': peakvalue}
 
 	def defineUserInterface(self):
 		nodespec = node.Node.defineUserInterface(self)
@@ -115,7 +135,6 @@ class Calibration(node.Node):
 		self.registerUISpec('Calibration', (nodespec, cspec, rspec))
 
 	def uiCalibrate(self, s):
-		print 'asdkjf'
 		self.calibrate(('manager', s))
 		return ''
 
