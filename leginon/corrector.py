@@ -74,7 +74,7 @@ class Corrector(node.Node):
 		self.start()
 
 	def setPlan(self):
-		self.cam.setCameraDict(self.settings['camera settings'].toDict())
+		self.cam.setCameraDict(self.settings['camera settings'])
 		camconfig = self.cam.getCameraEMData()
 
 		newcamstate = data.CorrectorCamstateData()
@@ -120,7 +120,7 @@ class Corrector(node.Node):
 
 	def acquireRaw(self):
 		try:
-			self.cam.setCameraDict(self.settings['camera settings'].toDict())
+			self.cam.setCameraDict(self.settings['camera settings'])
 			imagedata = self.cam.acquireCameraImageData(correction=False)
 		except (EM.ScopeUnavailable, camerafuncs.NoEMError):
 			self.logger.exception('Cannot set EM parameter, EM may not be running')
@@ -131,7 +131,7 @@ class Corrector(node.Node):
 
 	def acquireCorrected(self):
 		try:
-			self.cam.setCameraDict(self.settings['camera settings'].toDict())
+			self.cam.setCameraDict(self.settings['camera settings'])
 			imagedata = self.acquireCorrectedArray()
 		except node.PublishError:
 			self.logger.exception('Cannot set EM parameter, EM may not be running')
@@ -175,7 +175,7 @@ class Corrector(node.Node):
 		return {'image series': series, 'scope': scopedata, 'camera':camdata}
 
 	def acquireReference(self, dark=False):
-		self.cam.setCameraDict(self.settings['camera settings'].toDict())
+		self.cam.setCameraDict(self.settings['camera settings'])
 		originalcamdata = self.cam.getCameraEMData()
 		tempcamdata = data.CameraEMData(initializer=originalcamdata)
 		if dark:

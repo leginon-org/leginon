@@ -68,7 +68,7 @@ class ManualAcquisition(node.Node):
 			prefix = 'un'
 		self.logger.info('Acquiring %scorrected image...' % prefix)
 		try:
-			self.camerafuncs.setCameraDict(self.settings['camera settings'].toDict())
+			self.camerafuncs.setCameraDict(self.settings['camera settings'])
 			imagedata = self.camerafuncs.acquireCameraImageData(correction=correct)
 		except Exception, e:
 			if isinstance(e, node.ResearchError):

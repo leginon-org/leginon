@@ -61,7 +61,7 @@ class GonModeler(calibrator.Calibrator):
 	# calibrate needs to take a specific value
 	def loop(self, label, axis, points, interval):
 		## set camera state
-		self.cam.setCameraDict(self.settings['camera settings'].toDict())
+		self.cam.setCameraDict(self.settings['camera settings'])
 
 		mag = self.getMagnification()
 		ht = self.getHighTension()

@@ -94,7 +94,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 		calclient = self.parameters[self.parameter]
 
 		## set cam state
-		self.cam.setCameraDict(self.settings['camera settings'].toDict())
+		self.cam.setCameraDict(self.settings['camera settings'])
 
 		basebase = self.getBase()
 		baselist = []

@@ -172,7 +172,7 @@ class Navigator(node.Node):
 		self.beep()
 
 	def acquireImage(self):
-		self.cam.setCameraDict(self.settings['camera settings'].toDict())
+		self.cam.setCameraDict(self.settings['camera settings'])
 		try:
 			imagedata = self.cam.acquireCameraImageData()
 		except camerafuncs.NoCorrectorError:

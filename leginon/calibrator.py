@@ -47,7 +47,7 @@ class Calibrator(node.Node):
 		return dat
 
 	def acquireImage(self):
-		self.cam.setCameraDict(self.settings['camera settings'].toDict())
+		self.cam.setCameraDict(self.settings['camera settings'])
 		try:
 			imagedata = self.cam.acquireCameraImageData()
 		except camerafuncs.NoCorrectorError:
