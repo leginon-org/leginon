@@ -14,6 +14,7 @@ import threading
 import event
 import time
 import imagefun
+import Numeric
 
 class Focuser(acquisition.Acquisition):
 	eventinputs = acquisition.Acquisition.eventinputs
@@ -163,7 +164,7 @@ class Focuser(acquisition.Acquisition):
 		Instead of acquiring an image, we do autofocus
 		'''
 		self.abortfail.clear()
-		resultdata = data.FocuserResultData()
+		resultdata = data.FocuserResultData(session=self.session)
 		resultdata['target'] = target
 
 		## Need to melt only once per target, event though
@@ -277,14 +278,14 @@ class Focuser(acquisition.Acquisition):
 			self.logger.info('Correct image %s' % cor)
 			self.manualchecklock.acquire()
 			try:
-				imagedata = self.cam.acquireCameraImageData(correction=cor, temp=True)
+				imagedata = self.cam.acquireCameraImageData(correction=cor, hold=False)
 			finally:
 				self.manualchecklock.release()
 			imarray = imagedata['image']
 			maskrad = self.maskrad.get()
 			pow = imagefun.power(imarray, maskrad)
-			self.man_power.set(pow)
-			self.man_image.set(imarray)
+			self.man_power.set(pow.astype(Numeric.Float32))
+			self.man_image.set(imarray.astype(Numeric.Float32))
 		try:
 			message.clear()
 		except:
@@ -481,7 +482,7 @@ class Focuser(acquisition.Acquisition):
 		manualreset = uidata.Method('Reset Defocus', self.uiResetDefocus)
 		euctoscope = uidata.Method('Eucentric Focus To Scope', self.uiChangeToEucentric)
 		eucfromscope = uidata.Method('Eucentric Focus From Scope', self.uiEucentricFromScope)
-		manualtozero = uidata.Method('Change To Zero', self.uiChangeToZero)
+		manualtozero = uidata.Method('Change To Defocus = 0', self.uiChangeToZero)
 
 		self.manual_parameter = uidata.SingleSelectFromList('Defocus or Stage Z', ['Defocus','Stage Z'], 0)
 		self.manual_delta = uidata.Float('Manual Change Delta', 5e-7, 'rw', persist=True)

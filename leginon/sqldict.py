@@ -185,6 +185,7 @@ class SQLDict(object):
 		self.db = None
 		self.connected = False
 		self.sqlexception = e
+		raise
 
     def isConnected(self):
 	return self.connected

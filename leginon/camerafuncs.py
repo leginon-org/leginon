@@ -47,7 +47,7 @@ class CameraFuncs(object):
 		if self.correctedimageref is not None:
 			return self.correctedimageref['data']
 
-	def acquireCameraImageData(self, correction=True, temp=False):
+	def acquireCameraImageData(self, correction=True, hold=None):
 		'''
 		Acquire data from the camera, optionally corrected
 		'''
@@ -60,16 +60,11 @@ class CameraFuncs(object):
 		else:
 			### create my own data from acquisition
 			scopedata = self.emclient.getScope()
-			camdata = self.emclient.getImage()
-
-			### move image to its own key
+			camdata = self.emclient.getImage(hold=False)
 			numimage = camdata['image data']
 			camdata['image data'] = None
-			if temp:
-				hold = False
-			else:
-				hold = None
-			imdata = data.CameraImageData(hold=hold, session=self.node.session, image=numimage, scope=scopedata, camera=camdata)
+			camdatanoimage = data.CameraEMData(initializer=camdata)
+			imdata = data.CameraImageData(hold=hold, session=self.node.session, image=numimage, scope=scopedata, camera=camdatanoimage)
 		return imdata
 
 	def setCameraDict(self, camdict):
@@ -124,12 +119,12 @@ class CameraFuncs(object):
 															'camerafuncs.state: unable to set camera state')
 			raise
 
-	def getCameraEMData(self):
+	def getCameraEMData(self, hold=None):
 		'''
 		return the current camera state as a CameraEMData object
 		'''
 		try:
-			newcamdata = self.emclient.getCamera()
+			newcamdata = self.emclient.getCamera(hold=hold)
 			return newcamdata
 		except:
 			self.node.logger.exception(

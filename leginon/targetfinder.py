@@ -267,7 +267,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			self.clearMosaicImage()
 
 	def addTile(self, imagedata):
-		self.logger.debug('I DONT LIKE DBID HERE, WHAT IF NOT IN DB?')
+		self.logger.debug('addTile image: %s' % (imagedata.dbid,))
 		imid = imagedata.dbid
 		if imid in self.tilemap:
 			self.setStatusMessage('Image already in mosaic')
@@ -389,7 +389,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		targets = imagedata['target']['list']
 		imagelist = self.getMosaicImageList(targets)
 		self.setStatusMessage('creating MosaicTileData')
-		self.logger.debug('creating MosaicTileData')
+		self.logger.debug('creating MosaicTileData for image %s' % (imagedata.dbid,))
 		tiledata = data.MosaicTileData(image=imagedata, list=imagelist, session=self.session)
 		self.logger.debug('publishing MosaicTileData')
 		self.publish(tiledata, database=True)
@@ -465,11 +465,13 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		return scaledpos
 
 	def mosaicToTarget(self, typename, row, col):
+		self.logger.debug('mosaicToTarget r %s, c %s' % (row, col))
 		unscaled = self.mosaic.unscaled((row,col))
 		tile, pos = self.mosaic.mosaic2tile(unscaled)
 		shape = tile.image.shape
 		drow,dcol = pos[0]-shape[0]/2, pos[1]-shape[1]/2
 		imagedata = tile.imagedata
+		self.logger.debug('target tile image: %s, pos: %s' % (imagedata.dbid,pos))
 		### create a new target list if we don't have one already
 		if self.targetlist is None:
 			self.targetlist = self.newTargetList()

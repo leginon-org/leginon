@@ -71,8 +71,6 @@ class DataManager(object):
 		self.sizedict = {}
 		self.db2dm = {}
 		self.dm2db = {}
-		self.local2remote = {}
-		self.remote2local = {}
 		## dmid's that should be held forever
 		self.hold = {}
 
@@ -103,51 +101,34 @@ class DataManager(object):
 	def insert(self, datainstance, hold=None, remote=False):
 		self.lock.acquire()
 		try:
-			### if hold false, give it a dmid and return
-			### do not manage it
+			## if datainstance has no dmid, give it one
+			dmid = datainstance.dmid
+			if dmid is None:
+				dmid = self.newid()
+				datainstance.dmid = dmid
+
+			### if hold = False, do not manage it, return now
 			if hold is False:
-				newid = self.newid()
-				datainstance.dmid = newid
+				return
+			### if hold = True, remember to hold it
+			if hold is True:
+				self.hold[dmid] = None
+
+			### if already managing this, then return
+			if dmid in self.datadict:
 				return
 
 			if self.server is None:
 				self.startServer()
-			## if it is already persistent, and we already have
-			## it in datadict, then raise an exception
-			## Note:
-			## This actually doesn't work
-			## because for data that is created from the DB
-			## the dbid is not set until after insert is called
-			dbid = datainstance.dbid
-			if dbid is not None and dbid in self.db2dm:
-				raise DataDuplicateError("persistent data %s already exists in DataManager" % (dbid,))
 
 			## insert into datadict and sizedict
-			newid = self.newid()
-			self.datadict[newid] = datainstance
-			self.sizedict[newid] = 0
+			self.datadict[dmid] = datainstance
+			self.sizedict[dmid] = 0
 
-			## if it is remote, keep mapping to local
-			## copy so we don't need to get it remotely
-			## every time it is referenced
-			## Only good to do this for persistent data
-			## because non persistent data can still be
-			## modified remotely and we would need to get
-			## another copy of it with each dereference
-			if remote and dbid is not None:
-				## do not modify the original dmid
-				## keep link between local and remote dmid
-				self.local2remote[newid] = datainstance.dmid
-				self.remote2local[datainstance.dmid] = newid
-			else:
-				## give new instance its dmid
-				datainstance.dmid = newid
-
-			if hold or isinstance(datainstance, DataHandler):
-				self.hold[newid] = None
 			self.resize(datainstance)
 
 			## insert into persist dicts if it is in database
+			dbid = datainstance.dbid
 			if dbid is not None:
 				self.setPersistent(datainstance)
 		finally:
@@ -175,6 +156,8 @@ class DataManager(object):
 	def remove(self, dmid):
 		self.lock.acquire()
 		try:
+			if dmid not in self.datadict:
+				return
 			del self.datadict[dmid]
 			self.size -= self.sizedict[dmid]
 			del self.sizedict[dmid]
@@ -184,10 +167,8 @@ class DataManager(object):
 				del self.db2dm[dbkey][dmid]
 				if not self.db2dm[dbkey]:
 					del self.db2dm[dbkey]
-			if dmid in self.local2remote:
-				remotekey = self.local2remote[dmid]
-				del self.remote2local[remotekey]
-				del self.local2remote[dmid]
+			if dmid in self.hold:
+				del self.hold[dmid]
 		finally:
 			self.lock.release()
 
@@ -195,9 +176,10 @@ class DataManager(object):
 		self.lock.acquire()
 		try:
 			dmid = datainstance.dmid
+			### XXX for now always keep track of size
 			## do not keep track of size if this is being held
-			if dmid in self.hold:
-				return
+			#if dmid in self.hold:
+			#	return
 			dsize = datainstance.size()
 			if dsize > self.maxsize:
 				raise DataManagerOverflowError('new size is too big for DataManager')
@@ -263,10 +245,6 @@ class DataManager(object):
 				## maybe should be more picky
 				dmid = self.db2dm[dbkey].keys()[0]
 
-			## maybe data is remote, but we have a local copy
-			if dmid in self.remote2local:
-				dmid = self.remote2local[dmid]
-
 			if dmid in self.datadict:
 				## in local memory
 				datainstance = self.datadict[dmid]
@@ -281,7 +259,7 @@ class DataManager(object):
 			if dmid is not None and dmid[0] != self.location:
 				## in remote memory
 				datainstance = self.getRemoteData(datareference)
-			elif dbid is not None:
+			if datainstance is None and dbid is not None:
 				## in database
 				datainstance = self.getDataFromDB(dataclass, dbid)
 		## if datainstance is a DataHandler, get actual instance
@@ -298,6 +276,14 @@ class DataManager(object):
 		### this is how tcptransport server accesses this data manager
 		datainstance = self.getData(datareference)
 		return datainstance
+
+	def removeHold(self, datainstance):
+		dmid = datainstance.dmid
+		if dmid in self.hold:
+			del self.hold[dmid]
+
+	def addHold(self, datainstance):
+		self.insert(datainstance, hold=True)
 
 datamanager = DataManager()
 
@@ -511,6 +497,8 @@ class Data(DataDict, leginonobject.LeginonObject):
 		return y
 
 	def setPersistent(self, dbid):
+		if self.hold is False:
+			raise RuntimeError('setPersistent on unmanaged data')
 		self.dbid = dbid
 		datamanager.setPersistent(self)
 
@@ -577,7 +565,7 @@ class Data(DataDict, leginonobject.LeginonObject):
 			value = value.reference()
 			isdatahandler = True
 		super(Data, self).__setitem__(key, value)
-		if self.resize(key, value):
+		if self.hold is not False and self.resize(key, value):
 			datamanager.resize(self)
 
 		## Keep a record of datahandlers that I am referencing.
@@ -673,6 +661,18 @@ class Data(DataDict, leginonobject.LeginonObject):
 		dr = DataReference(datainstance=self)
 		return dr
 
+	def removeHold(self):
+		'''
+		remove from datamanager, even if being held
+		'''
+		datamanager.removeHold(self)
+
+	def addHold(self):
+		datamanager.addHold(self)
+
+	def remove(self):
+		datamanager.remove(self.dmid)
+
 	def nstr(self, value):
 		if type(value) is Numeric.ArrayType:
 			shape = value.shape
@@ -711,7 +711,7 @@ class DataHandler(object):
 		## been inserted into the DataManager
 		self.dmid = None
 
-		datamanager.insert(self)
+		datamanager.insert(self, hold=True)
 
 	def getData(self):
 		return self._getData()
@@ -722,6 +722,9 @@ class DataHandler(object):
 	def reference(self):
 		dr = DataReference(datahandler=self)
 		return dr
+
+	def size(self):
+		return 0
 
 ## for queries, setting item to None will ignore item in query
 ## setting item to NULL(dataclass) will only return results where the item

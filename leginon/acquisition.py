@@ -84,7 +84,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 	def processData(self, newdata):
 		self.logger.debug('Acquisition.processData')
-		self.imagelistdata = data.ImageListData(targets=newdata)
+		self.imagelistdata = data.ImageListData(session=self.session, targets=newdata)
 		self.publish(self.imagelistdata, database=True)
 		targetwatcher.TargetWatcher.processData(self, newdata)
 		self.publish(self.imagelistdata, pubevent=True)

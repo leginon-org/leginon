@@ -134,7 +134,7 @@ class SimpleCorrector(node.Node):
 
 	def acquireCorrectedImageData(self):
 		try:
-			imagedata = self.camerafuncs.acquireCameraImageData(correction=False)
+			imagedata = self.camerafuncs.acquireCameraImageData(correction=False, hold=False)
 		except camerafuncs.NoEMError:
 			self.messagelog.error('EM not running')
 			return None
@@ -207,7 +207,7 @@ class SimpleCorrector(node.Node):
 		self.findexposuretime.set(exposuretime)
 		while exposuretime > minexposuretime and exposuretime < maxexposuretime:
 			self.setCameraSettings(binning, 'normal', exposuretime)
-			imagedata = self.camerafuncs.acquireCameraImageData(correction=False)
+			imagedata = self.camerafuncs.acquireCameraImageData(correction=False, hold=False)
 			image = imagedata['image']
 			mean = imagefun.mean(image)
 			self.findmean.set(mean)
@@ -237,7 +237,7 @@ class SimpleCorrector(node.Node):
 		images = []
 		for i in range(naverage):
 			self.status.set('Acquiring image %d of %d...' % (i+1, naverage))
-			imagedata = self.camerafuncs.acquireCameraImageData(correction=False)
+			imagedata = self.camerafuncs.acquireCameraImageData(correction=False, hold=False)
 			images.append(imagedata['image'])
 			if self.displayacquire.get():
 				self.displayImageStats(imagedata['image'])
@@ -621,7 +621,7 @@ class Corrector(node.Node):
 	def uiAcquireRaw(self):
 		try:
 			self.cam.uiApplyAsNeeded()
-			imagedata = self.cam.acquireCameraImageData(correction=False)
+			imagedata = self.cam.acquireCameraImageData(correction=False, hold=False)
 		except node.PublishError:
 			self.logger.exception('Cannot set EM parameter, EM may not be running')
 		else:
@@ -675,7 +675,7 @@ class Corrector(node.Node):
 		series = []
 		for i in range(n):
 			self.uistatus.set('Acquiring %s of %s' % (i+1, n))
-			imagedata = self.cam.acquireCameraImageData(correction=False)
+			imagedata = self.cam.acquireCameraImageData(correction=False, hold=False)
 			numimage = imagedata['image']
 			camdata = imagedata['camera']
 			scopedata = imagedata['scope']
@@ -720,6 +720,7 @@ class Corrector(node.Node):
 			self.uistatus.set('Reseting camera exposure type to normal from dark')
 			camdata['exposure type'] = 'normal'
 			self.cam.setCameraEMData(camdata)
+		camdata.removeHold()
 
 		return ref
 
@@ -838,7 +839,7 @@ class Corrector(node.Node):
 
 	def acquireCorrectedImageData(self):
 		try:
-			imagedata = self.cam.acquireCameraImageData(correction=0)
+			imagedata = self.cam.acquireCameraImageData(correction=0, hold=False)
 		except camerafuncs.NoEMError:
 			self.messagelog.error('EM not running')
 			return None
@@ -941,7 +942,7 @@ class Corrector(node.Node):
 
 		raise NotImplementedError('need to work out the details of configuring the camera here')
 
-		imagedata = self.cam.acquireCameraImageData(correction=False)
+		imagedata = self.cam.acquireCameraImageData(correction=False, hold=False)
 		im = imagedata['image']
 		mean = darkmean = imagefun.mean(im)
 		self.displayImage(im)
@@ -957,7 +958,7 @@ class Corrector(node.Node):
 		for i in range(tries):
 			config = { 'exposure time': trial_exp }
 			raise NotImplementedError('need to work out the details of configuring the camera here')
-			imagedata = self.cam.acquireCameraImageData(correction=False)
+			imagedata = self.cam.acquireCameraImageData(correction=False, hold=False)
 			im = imagedata['image']
 			mean = imagefun.mean(im)
 			self.displayImage(im)

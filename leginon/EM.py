@@ -70,30 +70,24 @@ class EMClient(object):
 	def handleCameraImagePublish(self, ievent):
 		self.cameraimageref = ievent
 
-	def getScope(self, key=None, temp=False):
+	def getScope(self, key=None, hold=None):
 		if self.scoperef is None:
 			raise ScopeUnavailable()
 		## still has to get whole ScopeEMData just to get one key
 		dat = self.scoperef['data']
-		if temp:
-			hold = False
-		else:
-			hold = None
+		dat.remove()
 		dat = data.ScopeEMData(hold=hold, initializer=dat)
 		if key is None:
 			return dat
 		else:
 			return dat[key]
 
-	def getCamera(self, key=None, temp=False):
+	def getCamera(self, key=None, hold=None):
 		if self.cameraref is None:
 			raise ScopeUnavailable()
 		## still has to get whole CameraEMData just to get one key
 		dat = self.cameraref['data']
-		if temp:
-			hold = False
-		else:
-			hold = None
+		dat.remove()
 		dat = data.CameraEMData(hold=hold, initializer=dat)
 		self.node.logger.debug('getCamera dat dmid: %s' % (dat.dmid,))
 		if key is None:
@@ -101,14 +95,11 @@ class EMClient(object):
 		else:
 			return dat[key]
 
-	def getImage(self, key=None, temp=False):
+	def getImage(self, key=None, hold=None):
 		if self.cameraimageref is None:
 			raise CameraUnavailable()
 		dat = self.cameraimageref['data']
-		if temp:
-			hold = False
-		else:
-			hold = None
+		dat.remove()
 		dat = data.CameraEMData(hold=hold, initializer=dat)
 		if key is None:
 			return dat
@@ -117,21 +108,31 @@ class EMClient(object):
 
 	def setScope(self, value):
 		self.node.logger.debug('setScope: %s' % (value, ))
-		setevent = event.SetScopeEvent(data=value)
+		# make a copy of Data that will be sure to be here
+		# when EM node gets it
+		newvalue = data.ScopeEMData(initializer=value, hold=True)
+		setevent = event.SetScopeEvent(data=newvalue)
 		try:
 			self.node.outputEvent(setevent, wait=True)
 		except node.ConfirmationNoBinding:
 			self.node.logger.exception('')
+			newvalue.removeHold()
 			raise
+		newvalue.removeHold()
 
 	def setCamera(self, value):
 		self.node.logger.debug('setCamera: %s' % (value, ))
-		setevent = event.SetCameraEvent(data=value)
+		# make a copy of Data that will be sure to be here
+		# when EM node gets it
+		newvalue = data.CameraEMData(initializer=value, hold=True)
+		setevent = event.SetCameraEvent(data=newvalue)
 		try:
 			self.node.outputEvent(setevent, wait=True)
 		except node.ConfirmationNoBinding:
 			self.node.logger.exception('')
+			newvalue.removeHold()
 			raise
+		newvalue.removeHold()
 
 class Request(object):
 	pass

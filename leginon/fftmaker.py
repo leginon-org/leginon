@@ -35,7 +35,7 @@ class FFTMaker(imagewatcher.ImageWatcher):
 		self.logger.info('Calculating power spectrum for image')
 		maskrad = self.maskrad.get()
 		pow = imagefun.power(imarray, maskrad)
-		powdata = data.AcquisitionFFTData(source=imagedata, image=pow)
+		powdata = data.AcquisitionFFTData(session=self.session, source=imagedata, image=pow)
 
 		# filename
 		self.setImageFilename(powdata)

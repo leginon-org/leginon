@@ -12,6 +12,11 @@ class TargetHandler(object):
 	eventoutputs = [event.ImageTargetListPublishEvent]
 
 	def compareTargetNumber(self, first, second):
+		### if come from different images, compare image dbid
+		if 'image' in first and 'image' in second:
+			if None not in (first['image'], second['image']):
+				if first['image'] is not second['image']:
+					return cmp(first['image'].dbid, second['image'].dbid)
 		return cmp(first['number'], second['number'])
 
 	def researchTargets(self, **kwargs):
@@ -28,8 +33,13 @@ class TargetHandler(object):
 		have = {}
 		for target in targets:
 			targetnum = target['number']
-			if targetnum not in have:
-				have[targetnum] = target
+			if 'image' in target and target['image'] is not None:
+				imageid = target['image'].dbid
+			else:
+				imageid = None
+			key = (imageid, targetnum)
+			if key not in have:
+				have[key] = target
 		havelist = have.values()
 		havelist.sort(self.compareTargetNumber)
 		if havelist:

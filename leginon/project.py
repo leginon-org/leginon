@@ -42,9 +42,19 @@ class GridLocation(sqldict.ObjectBuilder):
 class ProjectData:
 	def __init__(self, **kwargs):
 		self.dbprojectconnection = False
-		self.db = sqldict.SQLDict(**dbparams)
+		try:
+			self.db = sqldict.SQLDict(**dbparams)
+		except:
+			print 'No project DB'
+			self.db = None
+			self.dbprojectconnection = False
+			return
+
 		if self.db.isConnected():
 			self.dbprojectconnection = True
+		else:
+			print 'No project DB'
+			return
 
 		self.projects = Project().register(self.db)
 		self.projectexperiments = ProjectExperiment().register(self.db)

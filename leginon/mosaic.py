@@ -454,21 +454,24 @@ class EMMosaic(object):
 
 	def distanceToTile(self, tile, row, col):
 		tilepos = tile.center_pos
+		print 'TILEPOS', tilepos
 		rdist = tilepos[0] - row
 		cdist = tilepos[1] - col
 		dist = Numeric.hypot(rdist, cdist)
 		return dist
 
 	def getNearestTile(self, row, col):
+		print 'GETNEAREST', row, col
 		if not self.tiles:
 			return 
-		row,col = self.scale * row, self.scale * col
-
 		nearest = self.tiles[0]
 		nearestdist = self.distanceToTile(nearest, row, col)
+		print 'TILE0', nearest.imagedata.dbid, nearestdist
 		for tile in self.tiles[1:]:
 			dist = self.distanceToTile(tile, row, col)
+			print 'TILE', tile.imagedata.dbid, dist
 			if dist < nearestdist:
+				print '    NEAREST'
 				nearest = tile
 				nearestdist = dist
 		return nearest

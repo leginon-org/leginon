@@ -154,7 +154,7 @@ class DriftManager(watcher.Watcher):
 		self.publish(dat, pubevent=True)
 
 	def acquireImage(self):
-		imagedata = self.cam.acquireCameraImageData(temp=True)
+		imagedata = self.cam.acquireCameraImageData(hold=False)
 		self.im.set(imagedata['image'])
 		return imagedata
 
@@ -199,7 +199,7 @@ class DriftManager(watcher.Watcher):
 			self.logger.info('Drift rate: %.4e' % (current_drift,))
 			self.driftvalue.set(current_drift)
 
-			d = data.DriftData(rows=rows, cols=cols, interval=seconds, rowmeters=rowmeters, colmeters=colmeters)
+			d = data.DriftData(session=self.session, rows=rows, cols=cols, interval=seconds, rowmeters=rowmeters, colmeters=colmeters)
 			self.publish(d, database=True, dbforce=True)
 
 			## t0 becomes t1 and t1 will be reset for next image

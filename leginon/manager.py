@@ -571,29 +571,19 @@ class Manager(node.Node):
 		print '''
 		APPLICATION LAUNCHING
 
-		go get some coffee
-
 		Maybe a hint of the day goes here...
-
-		     Did you leave the screen down?  Ha Ha!!
-		   Objective aperture in/out?  better go fix it.
+		     Did you leave the screen down?
+		   Objective aperture in/out?
 		      Did you forget to restart the launcher?
-		      then launching this app might be a waste of your time.
 
-		Welcome to the world of automated microscopy,
-		where all your dreams come true, and are magnified by 50000x.
-
-		Anyway, I will let you know when the application
-		has launched...
+		I will let you know when the application has launched...
 		'''
 		self.launchtime = time.time()
 
 	def notifyApplicationLaunched(self):
 		launchtime = time.time() - self.launchtime
 		node.beep()
-		print '************ APPLICATION READY ***************'
-		print '(took %.1f sec, but you are not supposed to be aware of' % (launchtime,)
-		print 'that because you were getting coffee or reading our fun little hints)'
+		print '********** APPLICATION READY (%.1f sec) **********' % (launchtime,)
 
 	def killApp(self):
 		'''Calls application.Application.kill.'''

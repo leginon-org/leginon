@@ -91,7 +91,7 @@ class ImViewer(imagewatcher.ImageWatcher):
 		self.doPow()
 
 	def acquireArray(self):
-		imdata = self.cam.acquireCameraImageData()
+		imdata = self.cam.acquireCameraImageData(hold=False)
 		imarray = imdata['image']
 		return imarray
 

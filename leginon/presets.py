@@ -53,7 +53,7 @@ class PresetsClient(object):
 			session = self.node.session
 
 		## find presets that belong to this session
-		pquery = data.PresetData(session=session)
+		pquery = data.PresetData(session=session, hold=False)
 		plist = self.node.research(datainstance=pquery)
 		if not plist:
 			return {}
@@ -214,6 +214,9 @@ class PresetsManager(node.Node):
 		get presets from current session out of database
 		'''
 		self.presets = self.presetsclient.getPresetsFromDB()
+		## make sure we hold on to these
+		for p in self.presets.values():
+			p.addHold()
 		self.setOrder()
 
 	def importPresets(self, pdict):
@@ -224,7 +227,7 @@ class PresetsManager(node.Node):
 		## make new presets with this session
 		self.presets = strictdict.OrderedDict()
 		for name, preset in pdict.items():
-			newp = data.PresetData(initializer=preset, session=self.session)
+			newp = data.PresetData(initializer=preset, session=self.session, hold=True)
 			self.presetToDB(newp)
 			self.presets[name] = newp
 		self.setOrder()
@@ -258,7 +261,9 @@ class PresetsManager(node.Node):
 		for name in names:
 			p = self.presets[name]
 			if p['number'] != number:
-				newp = data.PresetData(initializer=p, number=number)
+				newp = data.PresetData(initializer=p, number=number, hold=True)
+				p.removeHold()
+
 				self.presetToDB(newp)
 			else:
 				newp = p
@@ -312,8 +317,9 @@ class PresetsManager(node.Node):
 		## remove from self.presets, store in DB
 		premove = self.presets[pname]
 		del self.presets[pname]
-		pnew = data.PresetData(initializer=premove, removed=1)
+		pnew = data.PresetData(initializer=premove, removed=1, hold=False)
 		self.presetToDB(pnew)
+		premove.removeHold()
 
 		## update order, selector list, etc.
 		self.setOrder()
@@ -371,7 +377,7 @@ class PresetsManager(node.Node):
 		'''
 		scopedata = self.emclient.getScope()
 		cameradata = self.emclient.getCamera()
-		newpreset = data.PresetData()
+		newpreset = data.PresetData(hold=True)
 		newpreset.friendly_update(scopedata)
 		newpreset.friendly_update(cameradata)
 		newpreset['session'] = self.session
@@ -385,6 +391,9 @@ class PresetsManager(node.Node):
 			## this is len before new one is added
 			number = len(self.presets)
 
+		if name in self.presets:
+			oldpreset = self.presets[name]
+			oldpreset.removeHold()
 		newpreset['number'] = number
 		self.presets[name] = newpreset
 		self.presetToDB(newpreset)
@@ -605,7 +614,10 @@ class PresetsManager(node.Node):
 		### edit the values
 		if p.dbid is None:
 			return p
-		newpreset = data.PresetData(initializer=p)
+		newpreset = data.PresetData(initializer=p, hold=True)
+		p.removeHold()
+		if p['name'] in self.presets:
+			self.presets[p['name']].removeHold()
 		self.presets[newpreset['name']] = newpreset
 		if self.currentpreset is p:
 			self.currentpreset = newpreset
@@ -834,7 +846,7 @@ class PresetsManager(node.Node):
 		oldpreset = emtargetdata['preset']
 		newpreset = self.presetByName(newpresetname)
 
-		emdata = copy.deepcopy(emtargetdata['scope'])
+		emdata = data.ScopeEMData(initializer=emtargetdata['scope'])
 
 		if emdata['stage position'] and self.xyonly.get():
 			## only set stage x and y
