@@ -186,7 +186,6 @@ class ImagePanel(wxPanel):
 		height, width = self.imagesize
 		self.initPanel()
 
-		self.Fit()
 
 		EVT_LEFT_UP(self.panel, self.OnLeftUp)
 		EVT_RIGHT_UP(self.panel, self.OnRightUp)
@@ -200,6 +199,8 @@ class ImagePanel(wxPanel):
 		self.addTool(ValueTool(self, self.toolsizer))
 		self.addTool(RulerTool(self, self.toolsizer))
 		self.addTool(ZoomTool(self, self.toolsizer))
+
+		self.Fit()
 
 	def addTool(self, tool):
 		self.tools.append(tool)
