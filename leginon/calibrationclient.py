@@ -35,6 +35,7 @@ class CalibrationClient(object):
 		print 'state settling time %s' % (settle,)
 		time.sleep(settle)
 
+		self.cam.state(self.cam.config()['state'])
 		imagedata = self.cam.acquireCameraImageData()
 		#actual_state = imagedata.content['scope']
 		actual_state = imagedata['scope']
@@ -406,6 +407,7 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 
 		matrix = self.retrieveMatrix(mag, par)
 		print 'matrix', matrix
+		print 'pixvect', pixvect
 		change = Numeric.matrixmultiply(matrix, pixvect)
 		changex = change[0]
 		changey = change[1]
@@ -434,7 +436,7 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		matrix = LinearAlgebra.inverse(matrix)
 
 		pixvect = Numeric.matrixmultiply(matrix, vect)
-		pixvect /= (biny, binx)
+		pixvect = pixvect / (biny, binx)
 		return {'row':pixvect[0], 'col':pixvect[1]}
 
 
