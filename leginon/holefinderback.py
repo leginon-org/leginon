@@ -303,6 +303,8 @@ class HoleFinder(object):
 			kernel = convolver.gaussian_kernel(lpn, lpsig)
 			self.edgefinder.setKernel(kernel)
 			smooth = self.edgefinder.convolve(image=sourceim)
+		else:
+			smooth = sourceim
 
 		print 'finding edges'
 
