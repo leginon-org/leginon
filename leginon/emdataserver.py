@@ -52,7 +52,7 @@ class DataServer(dataservernode.DataServerNode):
 		self.scope = scopedict.factory(scopeclass)()
 		self.camera = cameradict.factory(cameraclass)()
 
-		dataserver.DataServer.__init__(self, nodeid, managerloc, DataHandler, (self.scope, self.camera, self.lock))
+		dataservernode.DataServerNode.__init__(self, nodeid, managerloc, DataHandler, (self.scope, self.camera, self.lock))
 
 if __name__ == '__main__':
 	import tecnai
@@ -60,10 +60,10 @@ if __name__ == '__main__':
 	import time
 
 	manloc = {}
-	manloc['hostname'] = sys.argv[1]
-	manloc['event port'] = int(sys.argv[2])
+	manloc['hostname'] = 'cronus1'
+	manloc['push port'] = 49152
 
-	foo = emdataserver.DataServer('em', manloc, tecnai.tecnai, tietz.tietz)
+	foo = DataServer('em', manloc, tecnai.tecnai, tietz.tietz)
 
 	while(1):
 		time.sleep(0.001)

@@ -48,10 +48,11 @@ class Launcher(node.Node):
 	def launchProcess(self):
 		pass
 
-	def launchNode(self, nodeid, nodeclass):
+	def launchNode(self, nodeid, nodeclass, args = None):
 		## new node's manager = launcher's manager
 		print 'launching %s %s' % (nodeid, nodeclass)
-		nodeclass(nodeid, self.managerloc)
+		nodeargs = tuple([nodeid, self.managerloc] + list(args))
+		apply(nodeclass, nodeargs)
 
 	def launchDataServer(self, dataserverclass):
 		print 'launching %s' % nodeclass
