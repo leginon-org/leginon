@@ -74,7 +74,7 @@ class PeakFinder(object):
 
 		return {'row': row0, 'col': col0, 'value': peak, 'minsum': minsum}
 
-	def subpixelPeak(self, npix=5, newimage=None):
+	def subpixelPeak(self, newimage=None, npix=5):
 		if newimage is not None:
 			self.setImage(newimage)
 
