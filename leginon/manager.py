@@ -23,6 +23,7 @@ import uiserver
 import uidata
 import leginonobject
 import extendedlogging
+import copy
 
 class DataBinder(databinder.DataBinder):
 	def handleData(self, newdata):
@@ -188,8 +189,9 @@ class Manager(node.Node):
 			### this is a special case of outputEvent
 			### so we don't use outputEvent here
 			try:
-				ievent['destination'] = to_node
-				self.clients[to_node].push(ievent)
+				eventcopy = copy.deepcopy(ievent)
+				eventcopy['destination'] = to_node
+				self.clients[to_node].push(eventcopy)
 			except IOError:
 				### bad client, get rid of it
 				self.logger.error('Cannot push to node ' + str(to_node)
@@ -245,8 +247,13 @@ class Manager(node.Node):
 				### this is a special case of outputEvent
 				### so we don't use outputEvent here
 				try:
-					ievent['destination'] = to_node
-					self.clients[to_node].push(ievent)
+					## want to keep original ievent
+					## I have a feeling this may cause a problem with
+					## event confirmation since eventcopy will have
+					## a new dmid, not sure...
+					eventcopy = copy.deepcopy(ievent)
+					eventcopy['destination'] = to_node
+					self.clients[to_node].push(eventcopy)
 				except IOError:
 					### bad client, get rid of it
 					self.logger.error('Cannot push to node ' + str(to_node)

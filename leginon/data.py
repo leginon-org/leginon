@@ -447,7 +447,6 @@ class Data(DataDict, leginonobject.LeginonObject):
 		leginonobject.LeginonObject.__init__(self)
 
 	def __deepcopy__(self, memo={}):
-		raise RuntimeError('who is using this???')
 		# without this, it will copy the dict
 		# stuff first and then the OrderedDict, but the dict copy
 		# requires __setitem__ which has been redefined here and 
