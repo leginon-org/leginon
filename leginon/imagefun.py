@@ -219,7 +219,8 @@ def phase_correlate(im1, im2):
 	else:
 		im2fft = ffteng.transform(im2)
 	xcor = Numeric.multiply(Numeric.conjugate(im2fft), im1fft)
-	phasecor = xcor / Numeric.absolute(xcor)
+	xcor_abs = Numeric.absolute(xcor) + 0.00000000000000001
+	phasecor = xcor / xcor_abs
 	pc = ffteng.itransform(phasecor)
 	## average out the artifical peak at 0,0
 	pc[0,0] = (pc[0,1] + pc[0,-1] + pc[1,0] + pc[-1,0]) /4.0
@@ -352,13 +353,10 @@ def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=50):
 				if (maxblobs is not None) and (len(blobs) > maxblobs):
 					raise TooManyBlobs('found more than %s blobs' % (maxblobs,))
 
-	t.stop()
-
 	print 'Found %s blobs.' % (len(blobs),)
 	print 'Calculating blob stats'
 	for blob in blobs:
 		blob.calc_stats()
-	t.stop()
 	return blobs
 
 def mark_image(image, coord, value):
