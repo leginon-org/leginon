@@ -21,8 +21,9 @@ class PresetsClient(object):
 			query['name'] = presetname
 		if session is not None:
 			query['session'] = session
-		else:
-			query['session'] = self.node.session
+		# now default will be get all sessions
+		#else:
+		#	query['session'] = self.node.session
 			
 		presetdatalist = self.node.research(dataclass=data.PresetData, **query)
 		return presetdatalist
@@ -75,6 +76,8 @@ class DataHandler(datahandler.DataBinder):
 			datahandler.DataBinder.insert(self, idata)
 		else:
 			self.node.setPresets(idata)
+
+	_insert = insert
 
 	# borrowed from NodeDataHandler
 	def setBinding(self, eventclass, func):
