@@ -63,21 +63,19 @@ class CircleMaskCreator(object):
 		return temp
 
 class Lattice(object):
-	def __init__(self, firstblob, spacing, tolerance=0.1):
+	def __init__(self, firstblob, spacing=None, vector=None, tolerance=0.1):
 		self.blobs = []
 		self.lattice_points_blob = {}
 		self.lattice_points_err = {}
 		self.center = None
 
 		self.tolerance = tolerance
-		## spacing is either given as a distance or a vector
-		spacingarray = Numeric.array(spacing, Numeric.Float32)
-		if len(spacingarray) == 1:
-			self.spacing = spacingarray
+		## either spacing or vector is given
+		self.spacing = spacing
+		if vector is None:
 			self.vector = None
-		elif len(spacingarray) == 2:
-			self.spacing = None
-			self.vector = spacingarray
+		else:
+			self.vector = Numeric.array(vector, Numeric.Float32)
 
 		self.add_first_blob(firstblob)
 
@@ -488,9 +486,11 @@ class HoleFinder(object):
 		## if spacing is empty vector, fill in vector now
 		if self.lattice_config['spacing'] is ():
 			self.find_lattice_vector()
-			s = self.__results['vector']
+			v = self.__results['vector']
+			s = None
 		else:
 			s = self.lattice_config['spacing']
+			v = None
 			
 		blobs = self.__results['blobs']
 		lattices = []
@@ -498,7 +498,7 @@ class HoleFinder(object):
 
 		# create a lattice for every blob
 		for blob in blobs:
-			lattices.append(Lattice(blob, s, tolerance))
+			lattices.append(Lattice(blob, s, v, tolerance))
 		# see which blobs fit in which lattices
 		for blob in blobs:
 			#found_lattice = False
