@@ -462,9 +462,12 @@ class Node(leginonobject.LeginonObject):
 		locationstruct = uidata.Struct('Location', self.location(), 'r')
 #		self.uidatastruct = uidata.Struct('Data',
 #						self.datahandlers[self.datahandler].datadict, 'rw')
+		datakeepercontainer = self.datahandler.datakeeper.UI()
 		exitmethod = uidata.Method('Exit', self.uiExit)
 
 		container = uidata.MediumContainer('Node')
+		if datakeepercontainer is not None:
+			container.addObject(datakeepercontainer)
 		container.addObjects((idarray, class_string, locationstruct,
 #														self.uidatastruct, exitmethod))
 														exitmethod))

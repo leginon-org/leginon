@@ -7,6 +7,7 @@ import time
 import event
 import random
 import pickle
+import uidata
 
 class DataHandler(leginonobject.LeginonObject):
 	'''Base class for DataHandlers. Defines virtual functions.'''
@@ -67,6 +68,9 @@ class DictDataKeeper(DataHandler):
 		self.lock.release()
 		return result
 
+	def UI(self):
+		return None
+
 class TimeoutDataKeeper(DictDataKeeper):
 	'''Keep remove data after a timeout.'''
 	def __init__(self, id, session, timeout=300.0, interval=30.0):
@@ -79,13 +83,33 @@ class TimeoutDataKeeper(DictDataKeeper):
 		return self.timeout
 
 	def setTimeout(self, timeout):
+		self._setTimeout(timeout)
+		if hasattr(self, 'uitimeout'):
+			self.uitimeout.set(self.getTimeout())
+
+	def _setTimeout(self, timeout):
 		self.timeout = timeout
 
 	def getInterval(self):
 		return self.interval
 
 	def setInterval(self, interval):
-		self.timer = threading.Timer(interval, self.clean)
+		self._setInterval(interval)
+		if hasattr(self, 'uiinterval'):
+			self.uiinterval.set(self.getInterval())
+
+	def _setInterval(self, interval):
+		self.interval = interval
+		self.timer = threading.Timer(self.interval, self.timerCallback)
+		self.timer.start()
+
+	def timeoutCallback(self, value):
+		self._setTimeout(value)
+		return self.getTimeout()
+
+	def intervalCallback(self, value):
+		self._setInterval(value)
+		return self.getInterval()
 
 	def query(self, id):
 		self.lock.acquire()
@@ -120,114 +144,30 @@ class TimeoutDataKeeper(DictDataKeeper):
 		self.lock.release()
 		return result
 
+	def timerCallback(self):
+		self.clean()
+		self.timer = threading.Timer(self.interval, self.timerCallback)
+		self.timer.start()
+
 	def clean(self):
+		print 'clean'
 		now = time.time()
 		for id, timestamp in self.timestampdict.items():
 			if now - timestamp >= self.timeout:
 				self.remove(id)
 
-# I'm reasonably sure this works, but it hasn't been fully tested
-class CachedDictDataKeeper(DataHandler):
-	'''Keep data in a dictionary. Cache data on disk after timeout has elasped.'''
-	def __init__(self, id, session, age = 600.0, timeout = 60.0, filename = None, path = '.'):
-		DataHandler.__init__(self, id, session)
-
-		self.datadict = {}
-		self.lock = threading.Lock()
-
-		self.openshelf(filename, path)
-
-		self.age = age
-		self.timeout = timeout
-		self.timer = threading.Timer(self.timeout, self.writeoutcache)
-		self.timer.setName('cache timer thread')
-		self.timer.setDaemon(1)
-		self.timer.start()
-
-	def openshelf(self, filename, path):
-		if filename is None:
-			randfilename = "shelf.%d" % random.randrange(1024)
-			self.filename = path + '/' + randfilename
-			try:
-				self.shelf = shelve.open(self.filename)
-				self.shelflock = threading.Lock()
-			except:
-				self.openshelf(filename, path)
-		else:
-			self.filename = path + '/' + randfilename
-			self.shelf = shelve.open(self.filename)
-			self.shelflock = threading.Lock()
-
-	def exit(self):
-		try:
-			os.remove(self.filename)
-		except:
-			print "failed to remove %s" % self.filename
-
-	def query(self, id):
-		self.lock.acquire()
-		if self.datadict.has_key(id):
-			if self.datadict[id]['cached']:
-				self.datadict[id]['data'] = self.shelf[str(id)]
-				del self.shelf[str(id)]
-				self.datadict[id]['cached'] = 0
-			self.datadict[id]['ts'] = time.time()
-			result = self.datadict[id]['data']
-		else:
-			result = None
-		self.lock.release()
-		return result
-
-	def insert(self, newdata):
-		if not issubclass(newdata.__class__, data.Data):
-			raise TypeError
-		self.lock.acquire()
-		try:
-			#if self.datadict[newdata.id]['cached']:
-			#	del self.shelf[str(newdata.id)]
-			if self.datadict[newdata['id']]['cached']:
-				del self.shelf[str(newdata['id'])]
-		except KeyError:
-			pass
-		self.datadict[newdata['id']] = {'cached' : 0,
-																		'ts' : time.time(),
-																		'data' : newdata}
-		self.lock.release()
-
-	def remove(self, id):
-		self.lock.acquire()
-		if self.datadict.has_key(id):
-			if self.datadict[id]['cached']:
-				del self.shelf[str(id)]
-			del self.datadict[id]
-		self.lock.release()
-
-	def writeoutcache(self):
-		self.timer = threading.Timer(self.timeout, self.writeoutcache)
-		self.timer.setName('cache timer thread')
-		self.timer.setDaemon(1)
-		self.timer.start()
-		now = time.time()
-		for k in self.datadict.keys():
-			if now - self.datadict[k]['ts'] > self.age:
-				self.cache(k)
-
-	def cache(self, id):
-		if not self.datadict[id]['cached']:
-			# XXX This raises PicklingError for array type
-			try:
-				self.shelf[str(id)] = self.datadict[id]['data']
-				self.datadict[id]['cached'] = 1
-				del self.datadict[id]['data']
-			except pickle.PicklingError, detail:
-				print 'Warning: CachedDictDataKeeper could not pickle data: %s' % (id,)
-				print 'PicklingError detail:', detail
-
-	def ids(self):
-		self.lock.acquire()
-		result = self.datadict.keys()
-		self.lock.release()
-		return result
+	# not so great
+	def UI(self):
+		if not hasattr(self, 'uitimeout'):
+			self.uitimeout = uidata.Integer('Timeout', self.getTimeout(),
+																			'rw', callback=self.timeoutCallback)
+		if not hasattr(self, 'uiinterval'):
+			self.uiinterval = uidata.Integer('Interval', self.getInterval(),
+																				'rw', callback=self.intervalCallback)
+		uiclean = uidata.Method('Clean', self.clean)
+		container = uidata.Container('Data Keeper')
+		container.addObjects((self.uitimeout, self.uiinterval, uiclean))
+		return container
 
 class DataBinder(DataHandler):
 	'''Bind data to a function. Used for mapping Events to handlers.'''
