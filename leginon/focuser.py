@@ -22,6 +22,7 @@ class Focuser(acquisition.Acquisition):
 
 		self.btcalclient = calibrationclient.BeamTiltCalibrationClient(self)
 		self.abortfail = threading.Event()
+		self.manual_check_done = threading.Event()
 		acquisition.Acquisition.__init__(self, id, sesison, nodelocations, targetclass=data.FocusTargetData, **kwargs)
 
 	def acquire(self, presetdata, target=None, trial=False, emtarget=None):
@@ -120,6 +121,20 @@ class Focuser(acquisition.Acquisition):
 				info['defocus correction'] = focustype
 				focusmethod(defoc)
 
+		## manual focus
+		if self.manual_check.get():
+			self.manualCheckLoop(presetdata['name'], emtarget)
+			## go back to focus preset and target
+			self.presetsclient.toScope(presetdata['name'], emtarget)
+			delay = self.uidelay.get()
+			print 'pausing for %s sec.' % (delay,)
+			time.sleep(delay)
+			while 1:
+				if self.manual_check_done.isSet():
+					break
+				# acquire image, show image and power spectrum
+				# allow user to adjust defocus and stig
+
 		## aquire and save the focus image
 		if self.acquirefinal.get():
 			## go back to focus preset and target
@@ -146,6 +161,41 @@ class Focuser(acquisition.Acquisition):
 		self.publish(frd, database=True)
 
 		return 'ok'
+
+	def manualNow(self):
+		presetnames = self.uipresetnames.getSelectedValues()
+		### Warning:  not target is being used, you are exposing
+		### whatever happens to be under the beam
+		self.manualCheckLoop(presetnames[0])
+
+	def manualCheckLoop(self, presetname, emtarget=None):
+		## go to preset and target
+		self.presetsclient.toScope(presetname, emtarget)
+		delay = self.uidelay.get()
+		print 'pausing for %s sec.' % (delay,)
+		time.sleep(delay)
+		self.manual_check_done.clear()
+		print 'starting manual focus loop'
+		while 1:
+			if self.manual_check_done.isSet():
+				break
+			# acquire image, show image and power spectrum
+			# allow user to adjust defocus and stig
+			acqtype = self.uiacquiretype.getSelectedValue()
+			if acqtype == 'corrected':
+				cor = True
+			else:
+				cor = False
+			imagedata = self.cam.acquireCameraImageData(correction=cor)
+			imarray = imagedata['image']
+			pow = imagefun.power(imarray)
+			self.man_image.set(imarray)
+			self.man_power.set(pow)
+		print 'manual focus loop done'
+
+	def manualDone(self):
+		print 'will quit manual focus loop after this iteration'
+		self.manual_check_done.set()
 
 	def correctStig(self, deltax, deltay):
 		stig = self.researchByDataID(('stigmator',))
@@ -192,16 +242,25 @@ class Focuser(acquisition.Acquisition):
 		self.btilt = uidata.Float('Beam Tilt', 0.02, 'rw', persist=True)
 		self.stigfocthresh = uidata.Float('Stig Threshold', 1e-6, 'rw', persist=True)
 
-
 		focustypes = self.focus_methods.keys()
 		focustypes.sort()
 		self.focustype = uidata.SingleSelectFromList('Focus Correction Type', focustypes, 0, persist=True)
 		self.stigcorrection = uidata.Boolean('Stigmator Correction', False, 'rw', persist=True)
 		self.publishimages = uidata.Boolean('Publish Tilt Images', False, 'rw', persist=True)
+
+		## manual focus check
+		self.manual_check = uidata.Boolean('Manual Check After Auto', False, 'rw', persist=True)
+		manualmeth = uidata.Method('Manual Check Now', self.manualNow)
+		manualdone = uidata.Method('Done', self.manualDone)
+		mancont = uidata.Container('Manual Focus')
+		self.man_image = uidata.Image('Manual Focus Image', None, 'rw')
+		self.man_power = uidata.Image('Manual Focus Power Spectrum', None, 'rw')
+		mancont.addObjects((self.manual_check, manualmeth, manualdone, self.man_power, self.man_image))
+
 		self.acquirefinal = uidata.Boolean('Acquire Final Image', True, 'rw', persist=True)
 		abortfailmethod = uidata.Method('Abort With Failure', self.uiAbortFailure)
 		testmethod = uidata.Method('Test Autofocus (broken)', self.uiTest)
 		container = uidata.MediumContainer('Focuser')
-		container.addObjects((self.melt, self.drifton, self.driftthresh, self.btilt, self.stigfocthresh, self.focustype, self.stigcorrection, self.publishimages, self.acquirefinal, abortfailmethod, testmethod))
+		container.addObjects((self.melt, self.drifton, self.driftthresh, self.btilt, self.publishimages, self.focustype, self.stigcorrection, self.stigfocthresh, mancont, self.acquirefinal, abortfailmethod, testmethod))
 		self.uiserver.addObject(container)
 
