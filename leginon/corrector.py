@@ -243,7 +243,7 @@ class Corrector(node.Node):
 			corrected = self.correct(numimage, camstate)
 			return data.ImageData(self.ID, corrected)
 		else:
-			imagedata = self.cam.acquireCameraImageData()
+			imagedata = self.cam.acquireCameraImageData(correction=0)
 			numimage = imagedata.content['image']
 			camstate = imagedata.content['camera']
 			corrected = self.correct(numimage, camstate)
