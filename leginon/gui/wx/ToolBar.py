@@ -37,9 +37,9 @@ class ToolBar(wx.ToolBar):
 #		pre.Create(parent, -1, style=wx.TB_HORIZONTAL|wx.NO_BORDER)
 #		self.this = pre.this
 #		self._setOORInfo(self)
-
 		wx.ToolBar.__init__(self, parent, -1, style=wx.TB_HORIZONTAL|wx.NO_BORDER)
-		self.spacer = wx.StaticText(self, -1, '')
+		#self.spacer = wx.StaticText(self, -1, '')
+		self.spacer = wx.Control(self, -1, style=wx.NO_BORDER)
 		self.AddControl(self.spacer)
 
 	def AddTool(self, id, bitmap, **kwargs):
