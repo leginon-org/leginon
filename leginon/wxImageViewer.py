@@ -169,7 +169,6 @@ class ImagePanel(wxPanel):
 		self.numericimage = None
 		self.bitmap = None
 		self.buffer = None
-		self.motionbuffer = None
 		self.imagesize = imagesize
 		self.scale = (1.0, 1.0)
 		self.offset = (0, 0)
@@ -235,11 +234,9 @@ class ImagePanel(wxPanel):
 	def setBuffers(self):
 		if self.bitmap is None:
 			self.buffer = None
-			self.motionbuffer = None
 		else:
 			width, height = self.bitmap.GetWidth(), self.bitmap.GetHeight()
 			self.buffer = wxEmptyBitmap(width, height)
-			self.motionbuffer = wxEmptyBitmap(width, height)
 
 	def setVirtualSize(self):
 		if self.bitmap is not None:
@@ -357,47 +354,8 @@ class ImagePanel(wxPanel):
 
 	# eventhandlers
 
-	def getMotionBufferDC(self):
-		dc = wxMemoryDC()
-		dc.SelectObject(self.motionbuffer)
-		dc.BeginDrawing()
-		dc.Clear()
-
-		fromdc = wxMemoryDC()
-		fromdc.SelectObject(self.buffer)
-		self.Draw(dc)
-
-		xviewoffset, yviewoffset = self.panel.GetViewStart()
-		xsize, ysize = self.panel.GetClientSize()
-		xoffset, yoffset = self.offset
-
-		if self.smallScale():
-			dc.Blit(0, 0, xsize, ysize, fromdc, xviewoffset, yviewoffset)
-		else:
-			xscale, yscale = self.getScale()
-			dc.SetUserScale(xscale, yscale)
-			dc.Blit(0, 0, xsize/xscale + 1, ysize/yscale + 1, fromdc,
-							xviewoffset/xscale, yviewoffset/yscale)
-
-		fromdc.SelectObject(wxNullBitmap)
-
-		if not self.smallScale():
-			dc.SetUserScale(1.0, 1.0)
-
-		return dc
-
-	def drawMotionBufferDC(self, dc):
-		dc.EndDrawing()
-		dc.SelectObject(wxNullBitmap)
-
-		xoffset, yoffset = self.offset
-		clientdc = wxClientDC(self.panel)
-		clientdc.BeginDrawing()
-		clientdc.DrawBitmap(self.motionbuffer, xoffset, yoffset)
-		clientdc.EndDrawing()
-
 	def OnMotion(self, evt):
-		if self.buffer is None or self.motionbuffer is None:
+		if self.buffer is None:
 			return
 
 		if self.smallScale():
@@ -410,7 +368,11 @@ class ImagePanel(wxPanel):
 				self.UpdateDrawing()
 				return
 
-		dc = self.getMotionBufferDC()
+		dc = wxMemoryDC()
+		dc.SelectObject(self.buffer)
+		dc.BeginDrawing()
+
+		self.Draw(dc)
 
 		for tool in self.tools:
 			tool.OnMotion(evt, dc)
@@ -425,7 +387,10 @@ class ImagePanel(wxPanel):
 		if strings:
 			self.drawToolTip(dc, x, y, strings)
 
-		self.drawMotionBufferDC(dc)
+		dc.EndDrawing()
+
+		self.paint(dc, wxClientDC(self.panel))
+		dc.SelectObject(wxNullBitmap)
 
 	def OnLeftUp(self, evt):
 		for tool in self.tools:
@@ -487,31 +452,36 @@ class ImagePanel(wxPanel):
 		if self.bitmap is None:
 			dc.Clear()
 		else:
-			dc.DrawBitmap(self.bitmap, 0, 0)
+			bitmapdc = wxMemoryDC()
+			bitmapdc.SelectObject(self.bitmap)
+
+			if self.smallScale():
+				xscale, yscale = (1.0, 1.0)
+			else:
+				xscale, yscale = self.getScale()
+				bitmapdc.SetUserScale(1.0/xscale, 1.0/yscale)
+
+			xviewoffset, yviewoffset = self.panel.GetViewStart()
+			xsize, ysize = self.panel.GetClientSize()
+
+			dc.Blit(0, 0, xsize, ysize, bitmapdc, xviewoffset, yviewoffset)
+			bitmapdc.SelectObject(wxNullBitmap)
 		dc.EndDrawing()
 
 	def paint(self, fromdc, todc):
-		xviewoffset, yviewoffset = self.panel.GetViewStart()
 		xsize, ysize = self.panel.GetClientSize()
-
-		if self.smallScale():
-			xscale, yscale = (1.0, 1.0)
-		else:
-			xscale, yscale = self.getScale()
-			todc.SetUserScale(xscale, yscale)
 		xoffset, yoffset = self.offset
-		todc.Blit(xoffset, yoffset, xsize/xscale + 1, ysize/yscale + 1, fromdc,
-							xviewoffset/xscale, yviewoffset/yscale)
+		todc.Blit(xoffset, yoffset, xsize, ysize, fromdc, 0, 0)
 
 	def UpdateDrawing(self):
-		if self.buffer is not None:
+		if self.buffer is None:
+			self.panel.Refresh()
+		else:
 			dc = wxMemoryDC()
 			dc.SelectObject(self.buffer)
 			self.Draw(dc)
 			self.paint(dc, wxClientDC(self.panel))
 			dc.SelectObject(wxNullBitmap)
-		else:
-			self.panel.Refresh()
 
 	def OnSize(self, evt):
 		self.UpdateDrawing()
@@ -525,6 +495,10 @@ class ImagePanel(wxPanel):
 			self.Draw(dc)
 			self.paint(dc, wxPaintDC(self.panel))
 			dc.SelectObject(wxNullBitmap)
+
+#			dc = wxPaintDC(self.panel)
+#			xoffset, yoffset = self.offset
+#			dc.DrawBitmap(self.buffer, xoffset, yoffset)
 
 	def OnLeave(self, evt):
 		self.UpdateDrawing()
@@ -661,10 +635,10 @@ class TargetTool(ImageTool):
 			else:
 				old_target = self.closest_target
 				self.closest_target = None
-				self.imagepanel.UpdateDrawing()
+#				self.imagepanel.UpdateDrawing()
 		self.closest_target = closest_target
-		if closest_target is not None:
-			self.imagepanel.UpdateDrawing()
+#		if closest_target is not None:
+#			self.imagepanel.UpdateDrawing()
 
 	def OnMotion(self, evt, dc):
 		if self.button.GetToggle() and  len(self.imagepanel.targets) > 0:
@@ -777,13 +751,24 @@ class TargetImagePanel(ImagePanel):
 		memorydc.SelectObject(bitmap)
 		width = bitmap.GetWidth()
 		height = bitmap.GetHeight()
-		targetx, targety = target
-		if self.smallScale():
-			xscale, yscale = self.getScale()
-			targetx = targetx * xscale
-			targety = targety * yscale
-		dc.Blit(targetx - width/2, targety - height/2, width, height,
-						memorydc, 0, 0, wxCOPY, True)
+
+		xscale, yscale = self.getScale()
+		if self.biggerView():
+			targetx, targety = target
+			targetx *= xscale
+			targety *= yscale
+		else:
+			targetx, targety = self.image2view(target)
+
+		if not self.smallScale():
+			memorydc.SetUserScale(1.0/xscale, 1.0/yscale)
+			width *= xscale
+			height *= yscale
+
+		dc.Blit(targetx - width/2, targety - height/2,
+						width, height, memorydc, 0, 0, wxCOPY, True)
+
+		memorydc.SelectObject(wxNullBitmap)
 
 	def Draw(self, dc):
 		ImagePanel.Draw(self, dc)
@@ -810,6 +795,6 @@ if __name__ == '__main__':
 			return true
 
 	app = MyApp(0)
-	app.panel.setImageFromMrcString(open('test1.mrc', 'rb').read())
+	app.panel.setImageFromMrcString(open('test2.mrc', 'rb').read())
 	app.MainLoop()
 
