@@ -7,6 +7,7 @@ import Numeric
 from types import NoneType
 import copy
 import time
+import os
 
 ### The type Numeric.ArrayType will not pickle properly, so here I create
 ### an object here to represent it
@@ -24,12 +25,37 @@ NumericArrayType = _NumericArrayType()
 
 ### and here's the validator for it
 def validateNumericArray(obj):
+	'''
+	if obj is a Numeric array or a FileReference, then return obj
+	else raise excpetion.
+	'''
+	if isinstance(obj, FileReference):
+		return obj
+
+	### if it's a Numeric array, it should have the typecode() attribute
 	try:
-		### Numeric array should have this attribute
 		obj.typecode
 	except AttributeError:
 		raise TypeError()
 	return obj
+
+class FileReference(object):
+	'''
+	this is a place holder for data that is stored in a file
+	until we find the full path
+	   'filename' is the filename, without a path.
+	   'loader' is a function that takes the full path filename and
+	     returns the data that was read from file.
+	Once you find the path, call read(path) to return the data.
+	'''
+	def __init__(self, filename, pathkey, loader):
+		self.filename = filename
+		self.loader = loader
+		self.pathkey = pathkey
+
+	def read(self, path):
+		fullname = os.path.join(path, self.filename)
+		return self.loader(fullname)
 
 ## still missing from these classes: ##   __copy__
 
