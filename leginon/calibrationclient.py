@@ -348,7 +348,7 @@ class MatrixCalibrationClient(CalibrationClient):
 		'''
 		caldata = self.researchMatrix(ht, mag, caltype)
 		if caldata is None:
-			raise NoMatrixCalibrationError
+			raise NoMatrixCalibrationError('HT: %s, mag: %s, cal type: %s' % (ht, mag, caltype))
 		matrix = caldata['matrix'].copy()
 		return matrix
 
