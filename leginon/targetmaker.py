@@ -92,7 +92,15 @@ class MosaicTargetMaker(TargetMaker):
 			self.logger.exception('Atlas creation failed: %s' % e)
 		self.panel.atlasPublished()
 
+	def checkLabel(self, label):
+		targetlist = self.newTargetList(mosaic=True, label=label)
+		targets = self.researchTargets(session=self.session, list=targetlist)
+		if targets:
+			raise AtlasError('Label "%s" is already used' % (label,))
+
 	def validateSettings(self):
+		label = self.settings['label']
+		self.checkLabel(label)
 		radius = self.settings['radius']
 		if radius <= 0.0:
 			raise AtlasError('invalid radius specified')

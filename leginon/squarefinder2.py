@@ -31,8 +31,8 @@ def sobel(image):
 	c = c.convolve(kernel=convolver.sobel_col_kernel)
 	return Numeric.hypot(r, c), Numeric.arctan2(r, c)
 
-def canny(image, gaussian=(5, 1.8), nonmaximawindow=7, hysteresis=True):
-	gaussiankernel = convolver.gaussian_kernel(*gaussian)
+def canny(image, sigma=1.8, nonmaximawindow=7, hysteresis=True):
+	gaussiankernel = convolver.gaussian_kernel(sigma)
 	c = convolver.Convolver()
 	c.setImage(image)
 	gaussianimage = c.convolve(kernel=gaussiankernel)

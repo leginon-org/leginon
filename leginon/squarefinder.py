@@ -157,9 +157,8 @@ class LowPassFilterPlugin(Plugin):
 		self.convolver = convolver.Convolver()
 
 	def _process(self, input):
-		size = self.size.get()
 		sigma = self.sigma.get()
-		kernel = convolver.gaussian_kernel(size, sigma)
+		kernel = convolver.gaussian_kernel(sigma)
 		self.convolver.setKernel(kernel)
 		return self.outputclass(self.convolver.convolve(image=input.image))
 
@@ -170,11 +169,8 @@ class LowPassFilterPlugin(Plugin):
 
 	def defineUserInterface(self):
 		Plugin.defineUserInterface(self)
-		self.size = uidata.Number('Size', 5, 'rw', callback=self.onSetSize,
-															persist=True, size=(4, 1))
 		self.sigma = uidata.Number('Sigma', 1.4, 'rw', persist=True, size=(6, 1))
-		self.uicontainer.addObject(self.size, position={'position': (0, 0)})
-		self.uicontainer.addObject(self.sigma, position={'position': (0, 1)})
+		self.uicontainer.addObject(self.sigma, position={'position': (0, 0)})
 
 class ThresholdPlugin(Plugin):
 	name = 'Threshold'

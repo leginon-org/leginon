@@ -33,7 +33,6 @@ class HoleFinder(targetfinder.TargetFinder):
 		'image filename': '',
 		'edge lpf': {
 			'on': True,
-			'size': 5,
 			'sigma': 1.0,
 		},
 		'edge': True,
@@ -46,7 +45,6 @@ class HoleFinder(targetfinder.TargetFinder):
 		'template type': 'cross',
 		'template lpf': {
 			'on': False,
-			'size': 15,
 			'sigma': 1.0,
 		},
 		'threshold': 3.0,
@@ -134,10 +132,9 @@ class HoleFinder(targetfinder.TargetFinder):
 		filt = self.settings['edge type']
 		lpfsettings = self.settings['edge lpf']
 		lowpasson = lpfsettings['on']
-		lowpassn = lpfsettings['size']
 		lowpasssig = lpfsettings['sigma']
 		edgethresh = self.settings['edge threshold']
-		self.hf.configure_edges(filter=filt, size=n, sigma=sig, absvalue=ab, lp=lowpasson, lpn=lowpassn, lpsig=lowpasssig, thresh=edgethresh, edges=edges)
+		self.hf.configure_edges(filter=filt, size=n, sigma=sig, absvalue=ab, lp=lowpasson, lpsig=lowpasssig, thresh=edgethresh, edges=edges)
 		self.hf.find_edges()
 		# convert to Float32 to prevent seg fault
 		self.setImage(self.hf['edges'].astype(Numeric.Float32), 'Edge')
@@ -154,10 +151,9 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.hf.create_template()
 		cortype = self.settings['template type']
 		lpfsettings = self.settings['template lpf']
-		if lpfsettings['on']:
-			corsize = lpfsettings['size']
-			corsigma = lpfsettings['sigma']
-			corfilt = (corsize, corsigma)
+		corsigma = lpfsettings['sigma']
+		if cortype == 'phase' and corsigma:
+			corfilt = (corsigma,)
 		else:
 			corfilt = None
 		self.hf.configure_correlation(cortype, corfilt)
@@ -429,7 +425,6 @@ class HoleFinder(targetfinder.TargetFinder):
 			'skip-auto': self.settings['skip'],
 
 			'edge-lpf-on': self.settings['edge lpf']['on'],
-			'edge-lpf-size': self.settings['edge lpf']['size'],
 			'edge-lpf-sigma': self.settings['edge lpf']['sigma'],
 			'edge-filter-type': self.settings['edge type'],
 			'edge-threshold': self.settings['edge threshold'],

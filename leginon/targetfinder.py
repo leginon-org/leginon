@@ -579,7 +579,6 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 	def storeSquareFinderPrefs(self):
 		prefs = data.SquareFinderPrefsData()
 		prefs['image'] = self.mosaicimagedata
-		prefs['lpf-size'] = self.settings['lpf']['size']
 		prefs['lpf-sigma'] = self.settings['lpf']['sigma']
 		prefs['threshold'] = self.settings['threshold']
 		prefs['border'] = self.settings['blobs']['border']
@@ -603,9 +602,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		message = 'finding squares'
 		self.logger.info(message)
 
-		size = self.settings['lpf']['size']
 		sigma = self.settings['lpf']['sigma']
-		kernel = convolver.gaussian_kernel(size, sigma)
+		kernel = convolver.gaussian_kernel(sigma)
 		self.convolver.setKernel(kernel)
 		image = self.convolver.convolve(image=original_image)
 		self.setImage(image.astype(numarray.Float32), 'Filtered')

@@ -223,9 +223,9 @@ class HoleFinder(object):
 
 		## some default configuration parameters
 		self.save_mrc = False
-		self.edges_config = {'filter': 'sobel', 'size': 9, 'sigma': 1.4, 'abs': False, 'lp':True, 'lpn':5, 'lpsig':1.0, 'thresh':100.0, 'edges': True}
+		self.edges_config = {'filter': 'sobel', 'size': 9, 'sigma': 1.4, 'abs': False, 'lp':True, 'lpsig':1.0, 'thresh':100.0, 'edges': True}
 		self.template_config = {'ring_list': [(25,30)]}
-		self.correlation_config = {'cortype': 'cross correlation', 'corfilt': (1, 1.0)}
+		self.correlation_config = {'cortype': 'cross correlation', 'corfilt': (1.0,)}
 		self.threshold = 3.0
 		self.blobs_config = {'border': 20, 'maxblobsize': 50}
 		self.lattice_config = {'tolerance': 0.1, 'vector': 100.0, 'minspace': 20}
@@ -252,7 +252,7 @@ class HoleFinder(object):
 		## update this result
 		self.__results[key] = image
 
-	def configure_edges(self, filter=None, size=None, sigma=None, absvalue=None, lp=None, lpn=None, lpsig=None, thresh=None, edges=None):
+	def configure_edges(self, filter=None, size=None, sigma=None, absvalue=None, lp=None, lpsig=None, thresh=None, edges=None):
 		if filter is not None:
 			self.edges_config['filter'] = filter
 		if size is not None:
@@ -263,8 +263,6 @@ class HoleFinder(object):
 			self.edges_config['abs'] = absvalue
 		if lp is not None:
 			self.edges_config['lp'] = lp
-		if lpn is not None:
-			self.edges_config['lpn'] = lpn
 		if lpsig is not None:
 			self.edges_config['lpsig'] = lpsig
 		if thresh is not None:
@@ -285,13 +283,12 @@ class HoleFinder(object):
 		sigma = self.edges_config['sigma']
 		ab = self.edges_config['abs']
 		lp = self.edges_config['lp']
-		lpn = self.edges_config['lpn']
 		lpsig = self.edges_config['lpsig']
 		edgethresh = self.edges_config['thresh']
 		edgesflag = self.edges_config['edges']
 
 		if lp:
-			kernel = convolver.gaussian_kernel(lpn, lpsig)
+			kernel = convolver.gaussian_kernel(lpsig)
 			self.edgefinder.setKernel(kernel)
 			smooth = self.edgefinder.convolve(image=sourceim)
 		else:

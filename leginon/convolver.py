@@ -124,13 +124,12 @@ laplacian_kernel5 = -Numeric.ones((5,5), Numeric.Float32)
 laplacian_kernel5[2,2] = 24.0
 
 #### Gaussian
-def gaussian_kernel(n, sigma):
+def gaussian_kernel(sigma):
 	'''
 	produces gaussian smoothing kernel
 	'''
-	if not n % 2:
-		raise RuntimeError('gaussian kernel must have odd size')
-	half = int(n / 2)
+	half = int(3 * sigma)
+	n = 2 * half + 1
 	k1 = 1.0 / (2.0 * Numeric.pi * sigma**2)
 	def i(rows,cols):
 		rows = rows.astype(Numeric.Float32)
@@ -181,7 +180,7 @@ if __name__ == '__main__':
 	sobel_row.shape = (3,3)
 	sobel_col = Numeric.array((1,0,-1,2,0,-2,1,0,-1), Numeric.Float32)
 	sobel_col.shape = (3,3)
-	gauss = imagefun.gaussian_kernel(9, 1.6)
+	gauss = imagefun.gaussian_kernel(1.6)
 
 	c = Convolver()
 
