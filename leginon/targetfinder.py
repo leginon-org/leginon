@@ -107,7 +107,7 @@ class ClickTargetFinder(TargetFinder):
 
 	def processTargets(self):
 		self.getTargetDataList('Focus Target', data.FocusTargetData)
-		self.getTargetDataList('Imaging Target', data.ImageTargetData)
+		self.getTargetDataList('Imaging Target', data.AcquisitionImageTargetData)
 		self.publishTargetList()
 
 	def getTargetDataList(self, typename, datatype):
