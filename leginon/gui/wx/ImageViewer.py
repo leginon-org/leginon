@@ -82,7 +82,6 @@ def getBitmap(filename):
 		wximage = wx.Image(iconpath)
 		wximage.ConvertAlphaToMask()
 		bitmap = wx.BitmapFromImage(wximage)
-		#bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
 		bitmaps[filename] = bitmap
 		return bitmap
 
@@ -329,6 +328,9 @@ class ImageTool(object):
 	def getToolTipString(self, x, y, value):
 		return ''
 
+	def Draw(self, dc):
+		pass
+
 class ValueTool(ImageTool):
 	def __init__(self, imagepanel, sizer):
 		bitmap = getBitmap('value.png')
@@ -353,13 +355,23 @@ class CrosshairTool(ImageTool):
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, False)
 
 	def Draw(self, dc):
+		if not self.button.GetToggle():
+			return
 		dc.SetPen(wx.Pen(wx.BLUE, 1))
 		width = self.imagepanel.bitmap.GetWidth()
 		height = self.imagepanel.bitmap.GetHeight()
+		if self.imagepanel.scaleImage():
+			width /= self.imagepanel.scale[0]
+			height /= self.imagepanel.scale[1]
 		center = width/2, height/2
-		x0, y0 = self.imagepanel.image2view(center)
-		dc.DrawLine(x0, y0, x1, y1)
-		dc.DrawLine(x0, y0, x1, y1)
+		x, y = self.imagepanel.image2view(center)
+		width = self.imagepanel.buffer.GetWidth()
+		height = self.imagepanel.buffer.GetHeight()
+		dc.DrawLine(x, 0, x, height)
+		dc.DrawLine(0, y, width, y)
+
+	def OnToggle(self, value):
+		self.imagepanel.UpdateDrawing()
 
 class RulerTool(ImageTool):
 	def __init__(self, imagepanel, sizer):
@@ -529,7 +541,6 @@ class ImagePanel(wx.Panel):
 		self.sizer.SetItemMinSize(self.panel, width, height)
 
 		self.statspanel = gui.wx.Stats.Stats(self, -1, style=wx.SIMPLE_BORDER)
-		self.statspanel.SetBackgroundColour(wx.WHITE)
 		self.sizer.Add(self.statspanel, (1, 0), (1, 1), wx.ALL, 3)
 
 		# bind panel events
@@ -544,6 +555,7 @@ class ImagePanel(wx.Panel):
 		self.addTool(ValueTool(self, self.toolsizer))
 		self.addTool(RulerTool(self, self.toolsizer))
 		self.addTool(ZoomTool(self, self.toolsizer))
+		self.addTool(CrosshairTool(self, self.toolsizer))
 
 		self.contrasttool = ContrastTool(self, self.toolsizer)
 
@@ -967,9 +979,11 @@ class ImagePanel(wx.Panel):
 			xsize, ysize = self.panel.GetClientSize()
 
 			dc.Blit(self.offset[0], self.offset[1], int(xsize/xscale + xscale), int(ysize/yscale + yscale), bitmapdc, int(xviewoffset/xscale), int(yviewoffset/yscale))
+			dc.SetUserScale(1.0, 1.0)
+			for t in self.tools:
+				t.Draw(dc)
 			bitmapdc.SelectObject(wx.NullBitmap)
 		dc.EndDrawing()
-		dc.SetUserScale(1.0, 1.0)
 
 	def paint(self, fromdc, todc):
 		xsize, ysize = self.panel.GetClientSize()
@@ -1382,11 +1396,11 @@ class TargetImagePanel(ImagePanel):
 
 	def _drawTargets(self, dc, bitmap, targets, scale):
 		memorydc = wx.MemoryDC()
-
+		memorydc.BeginDrawing()
 		memorydc.SelectObject(bitmap)
+
 		width = bitmap.GetWidth()
 		height = bitmap.GetHeight()
-
 		if not self.scaleImage():
 			memorydc.SetUserScale(1.0/scale[0], 1.0/scale[1])
 			width *= scale[0]
@@ -1400,22 +1414,14 @@ class TargetImagePanel(ImagePanel):
 		xv, yv = self.biggerView()
 
 		for target in targets:
-			nx, ny = self.image2view((target.x, target.y))
-			if xv:
-				x = target.x * scale[0]
-			else:
-				x = nx
-			if yv:
-				y = target.y * scale[1]
-			else:
-				y = ny
-
+			x, y = self.image2view((target.x, target.y))
 			dc.Blit(int(x - halfwidth), int(y - halfheight),
 							width, height,
 							memorydc, 0, 0,
 							wx.COPY, True)
 
 		memorydc.SelectObject(wx.NullBitmap)
+		memorydc.EndDrawing()
 
 	def drawTargets(self, dc):
 		scale = self.getScale()
@@ -1494,12 +1500,13 @@ if __name__ == '__main__':
 
 #			self.panel = ImagePanel(frame, -1)
 
-			self.panel = ClickImagePanel(frame, -1)
-			self.panel.Bind(EVT_IMAGE_CLICKED,
-							lambda e: self.panel.setImage(self.panel.imagedata))
+#			self.panel = ClickImagePanel(frame, -1)
+#			self.panel.Bind(EVT_IMAGE_CLICKED,
+#							lambda e: self.panel.setImage(self.panel.imagedata))
 
-#			self.panel = TargetImagePanel(frame, -1)
+			self.panel = TargetImagePanel(frame, -1)
 			self.panel.addTypeTool('Target Practice', display=True, target=wx.RED)
+			self.panel.setTargets('Target Practice', [])
 
 			self.sizer.Add(self.panel, 1, wx.EXPAND|wx.ALL)
 			frame.SetSizerAndFit(self.sizer)

@@ -3,7 +3,7 @@ import wx
 class Stats(wx.Panel):
 	def __init__(self, parent, id, **kwargs):
 		wx.Panel.__init__(self, parent, id, **kwargs)
-		self.SetBackgroundColour(wx.WHITE)
+		self.SetBackgroundColour(wx.Colour(255, 255, 220))
 
 		self.nonestr = '(N/A)'
 
