@@ -319,6 +319,8 @@ function displayMatrix($matrix) {
 function format_sci_number($data) {
 
 	$decimal = @func_get_arg(1);
+	if (!$data) return $data;
+	$data_org = $data;
 	$neg = ($data<0) ? true : false;
 	if ($neg)
 		$data *= -1;
@@ -337,15 +339,26 @@ function format_sci_number($data) {
 		}
 		$data = sprintf("%0.".$decimal."fx10<sup>".$power."</sup>", $data);
 	}
+	if ($power==1)
+		$data = sprintf("%0.".$decimal."f", abs($data_org));
 	if ($neg)
 		$data = "-".$data;
 return $data;
 
 }
 
+function format_micro_number($data) {
+	return number_format(($data/1e-6), 4,'.','').' µm';
+}
+
+function format_nano_number($data) {
+	return number_format(($data/1e-9), 4,'.','').' nm';
+}
+
 function formatHtmlRow($k, $v) {
+	if($k) $k .= ":";
 	return '<tr><td><span class="datafield0">'
-		.$k.':</span></td><td>'
+		.$k.'</span></td><td>'
 		.$v.'</td></tr>'."\n";
 }
 
