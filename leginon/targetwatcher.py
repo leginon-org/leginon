@@ -153,11 +153,14 @@ class TargetWatcher(watcher.Watcher):
 				self.uistatus.set('Aborting current target list')
 				self.uicontrolstatus.set('Aborted')
 				targetliststatus = 'aborted'
-				break
+				donetarget = data.AcquisitionImageTargetData(initializer=target, status='aborted')
+				self.publish(donetarget, database=True, dbforce=True)
+				## continue so that remaining targets are marked as done also
+				continue
 
 			# if this target is done, skip it
 			#'TARGET STATUS', target['status']
-			if target['status'] == 'done':
+			if target['status'] in ('done', 'aborted'):
 				self.uitargetstatus.set('Target has been done, processing next target')
 				continue
 
