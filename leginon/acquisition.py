@@ -23,46 +23,59 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.defineUserInterface()
 		self.start()
 
-	def processTargetData(self, targetdata):
-		'''this is called by TargetWatcher.processData when targets available'''
+	def processTargetData(self, targetdata=None):
+		'''
+		This is called by TargetWatcher.processData when targets available
+		If called with targetdata=None, this simulates what occurs at
+		a target (going to preset, acquiring image, etc.)
+		'''
+		### should make both target data and preset an option
+
 		print 'PROCESSING', targetdata
 		#detailedlist = self.detailedTargetList(self.presetlist, targetlist, self.targetmethod)
 
-		movetype = self.movetype.get()
-		targetstate = self.targetToState(targetdata, movetype)
+		if targetdata is not None:
+			movetype = self.movetype.get()
+			targetstate = self.targetToState(targetdata, movetype)
 
-		### subtract the old preset from the target, so that
-		### we can apply a new preset
-		print 'targetdata keys', targetdata.content.keys()
-		if 'preset' in targetdata.content:
-			oldpreset = targetdata.content['preset']
+			### subtract the old preset from the target, so that
+			### we can apply a new preset
+			print 'targetdata keys', targetdata.content.keys()
+			if 'preset' in targetdata.content:
+				oldpreset = targetdata.content['preset']
 
-			## right now, the only thing a target and preset
-			## have in common is image shift
-			targetstate['image shift']['x'] -= oldpreset['image shift']['x']
-			targetstate['image shift']['y'] -= oldpreset['image shift']['y']
-			print 'TARGETSTATE', targetstate
+				## right now, the only thing a target and preset
+				## have in common is image shift
+				targetstate['image shift']['x'] -= oldpreset['image shift']['x']
+				targetstate['image shift']['y'] -= oldpreset['image shift']['y']
+				print 'TARGETSTATE', targetstate
+		else:
+			targetstate = None
 
 		### do each preset for this acquisition
 		presetnames = self.presetnames.get()
 		for presetname in presetnames:
 			newpreset = self.presetsclient.getPreset(presetname)
-			newtarget = copy.deepcopy(targetstate)
-			## merge the preset and target
-			## every item in preset overides corresponding item
-			## in target, except image shift, which is added
-			## so we can't just use newtarget.update(newpreset)
-			## For the future, make specialized class that
-			## can handle update(), with knowledge of how to 
-			## update different keys
-			for key in newtarget:
-				if key in newpreset:
-					### image shift is special
-					if key == 'image shift':
-						newtarget[key]['x'] += newpreset[key]['x']
-						newtarget[key]['y'] += newpreset[key]['y']
-					else:
-						newtarget[key] = newpreset[key]
+			### simulated target is easy, real target requires
+			### merge with preset
+			if targetstate is None:
+				newtarget = newpreset
+			else:
+				newtarget = copy.deepcopy(targetstate)
+
+## Merge the preset and target.  Every item in preset overides 
+## corresponding item in target, except image shift, which is added.
+## So we can't just use newtarget.update(newpreset).  For the future,
+## make specialized class that can handle update(), with knowledge of 
+## how to update different keys
+				for key in newtarget:
+					if key in newpreset:
+						### image shift is special
+						if key == 'image shift':
+							newtarget[key]['x'] += newpreset[key]['x']
+							newtarget[key]['y'] += newpreset[key]['y']
+						else:
+							newtarget[key] = newpreset[key]
 
 			print 'NEWTARGET', newtarget
 
@@ -135,6 +148,24 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		pass
 
+	def uiToScope(self, presetname):
+		print 'Going to preset %s' % (presetname,)
+		pre = self.presetsclient.getPreset(presetname)
+		self.presetsclient.toScope(pre)
+		return ''
+
+	def uiFromScope(self, presetname):
+		print 'Storing preset %s' % (presetname,)
+		pre = self.presetsclient.fromScope()
+		self.presetsclient.setPreset(presetname, pre)
+		return ''
+
+	def uiTrial(self):
+		## calling this witout targetdata means teset just the preset
+		## and acquire
+		self.processTargetData()
+		return ''
+
 	def defineUserInterface(self):
 		super = targetwatcher.TargetWatcher.defineUserInterface(self)
 
@@ -146,9 +177,19 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		acqtypes = self.registerUIData('acqtypes', 'array', default=('raw', 'corrected'))
 		self.acqtype = self.registerUIData('Acquisition Type', 'string', default='raw', permissions='rw', choices=acqtypes)
-		self.presetnames = self.registerUIData('Preset Names', 'array', default=('p550',), permissions='rw')
 
-		prefs = self.registerUIContainer('Preferences', (self.movetype, self.delaydata, self.acqtype, self.presetnames))
 
-		self.registerUISpec('Acquisition', (prefs, super))
+		prefs = self.registerUIContainer('Preferences', (self.movetype, self.delaydata, self.acqtype))
+
+		self.presetnames = self.registerUIData('Preset Names', 'array', default=(), permissions='rw')
+		presetarg = self.registerUIData('Preset', 'string', choices=self.presetnames)
+		toscope = self.registerUIMethod(self.uiToScope, 'To Scope', (presetarg,))
+		fromscope = self.registerUIMethod(self.uiFromScope, 'From Scope', (presetarg,))
+		pre = self.registerUIContainer('Presets', (self.presetnames, toscope, fromscope))
+
+		trial = self.registerUIMethod(self.uiTrial, 'Trial', ())
+
+		myspec = self.registerUISpec('Acquisition', (prefs, pre, trial))
+		myspec += super
+		return myspec
 
