@@ -178,7 +178,10 @@ class Server(xmlrpcserver.xmlrpcserver):
 			argnames = funcargspec[0][1:]
 		ind = 0
 		for arg in argspec:
-			arg.pyname = argnames[ind]
+			try:
+				arg.pyname = argnames[ind]
+			except:
+				raise RuntimeError('argument problem in %s, %s' % (func, name))
 			ind += 1
 		m = MethodSpec(id, name, argspec, returnspec)
 		return m
