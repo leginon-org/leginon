@@ -211,12 +211,12 @@ class ImageMosaic(watcher.Watcher):
 					maxcoordinate[i] = max
 		imageshape = (maxcoordinate[0] - mincoordinate[0], 
 									maxcoordinate[1] - mincoordinate[1]) 
-		image = Numeric.zeros(imageshape, Numeric.UnsignedInt8)
+		image = Numeric.zeros(imageshape, Numeric.UnsignedInt16)
 		for tileid in mosaic:
 			row = mosaic[tileid]['position'][0] - mincoordinate[0]
 			column = mosaic[tileid]['position'][1] - mincoordinate[1]
 			iti = mosaic[tileid]['image']
-			image[row:row + iti.shape[0], column:column + iti.shape[1]] = iti.astype(Numeric.UnsignedInt8)
+			image[row:row + iti.shape[0], column:column + iti.shape[1]] = iti.astype(Numeric.UnsignedInt16)
 		return image
 
 	def uiShow(self):
