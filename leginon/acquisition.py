@@ -217,9 +217,15 @@ class Acquisition(targetwatcher.TargetWatcher):
 	def uiTrial(self):
 		self.processTargetData(targetdata=None)
 
+	def getPresetNames(self):
+		presetnames = []
+		for preset in self.presetsclient.getPresets():
+			presetnames.append(preset['name'])
+		return presetnames
+
 	def uiRefreshPresetNames(self):
 		self.uipresetnames.setSelected([])
-		self.uipresetnames.setList(self.presetsclient.getPresets())
+		self.uipresetnames.setList(self.getPresetNames())
 
 	def defineUserInterface(self):
 		targetwatcher.TargetWatcher.defineUserInterface(self)
@@ -233,7 +239,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		settingscontainer.addObjects((self.uimovetype, self.uidelay,
 																		self.uiacquiretype, self.databaseflag))
 
-		presets = self.presetsclient.getPresets()
+		presets = self.getPresetNames()
 		self.uipresetnames = uidata.SelectFromList('Sequence', presets, [], 'r')
 		refreshpresetnames = uidata.Method('Refresh', self.uiRefreshPresetNames)
 		sequencecontainer = uidata.Container('Presets Sequence')
