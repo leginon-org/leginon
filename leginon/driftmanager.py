@@ -100,9 +100,9 @@ class DriftManager(watcher.Watcher):
 		## acquire new image
 		newim = self.acquireImage()
 
-		self.logger.info('Old image, image shift %s, stage position %s'
+		self.logger.debug('Old image, image shift %s, stage position %s'
 									% (im['scope']['image shift'], im['scope']['stage position']))
-		self.logger.info('New image, image shift %s, stage position %s'
+		self.logger.debug('New image, image shift %s, stage position %s'
 						% (newim['scope']['image shift'], newim['scope']['stage position']))
 
 		## do correlation
@@ -209,7 +209,9 @@ class DriftManager(watcher.Watcher):
 		t0 = imagedata['scope']['system time']
 		self.correlator.insertImage(numdata)
 		mag = imagedata['scope']['magnification']
-		pixsize = self.pixsizeclient.retrievePixelSize(mag)
+		tem = imagedata['scope']['tem']
+		ccd = imagedata['scope']['ccdcamera']
+		pixsize = self.pixsizeclient.retrievePixelSize(mag, tem, ccd)
 		self.logger.info('Pixel size at %sx is %s' % (mag, pixsize))
 
 		## ensure that loop executes once
@@ -270,7 +272,9 @@ class DriftManager(watcher.Watcher):
 		## configure camera
 		self.instrument.ccdcamera.Settings = self.settings['camera settings']
 		mag = self.instrument.tem.Magnification
-		pixsize = self.pixsizeclient.retrievePixelSize(mag)
+		tem = self.instrument.tem
+		cam = self.instrument.ccdcamera
+		pixsize = self.pixsizeclient.retrievePixelSize(mag, tem, cam)
 		self.logger.info('Pixel size %s' % (pixsize,))
 
 		## acquire first image
