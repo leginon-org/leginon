@@ -59,15 +59,23 @@ class Watcher(node.Node):
 		self.lockblocking = lockblocking
 		self.handlelock = threading.Lock()
 
-		self.uieventqueue = uidata.Sequence('Event Queue', [])
-		self.uidataqueue = uidata.Sequence('Data Queue', [])
-		self.eventqueue = WatcherQueue(self.uieventqueue.set, 0)
-		self.dataqueue = WatcherQueue(self.uidataqueue.set, 0)
+		self.eventqueue = WatcherQueue(self.eventcallback, 0)
+		self.dataqueue = WatcherQueue(self.datacallback, 0)
 
 		self.addEventInput(self.watchfor, self.handleEvent)
 
+	def eventcallback(self, value):
+		if hasattr(self, 'uieventqueue'):
+			self.uieventqueue.set(map(str, value))
+
+	def datacallback(self, value):
+		if hasattr(self, 'uidataqueue'):
+			self.uidataqueue.set(map(str, value))
+
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
+		self.uieventqueue = uidata.Sequence('Event Queue', [])
+		self.uidataqueue = uidata.Sequence('Data Queue', [])
 		self.uiignoreflag = uidata.Boolean('Ignore Incoming Events', False, 'rw')
 		self.uieventqueueflag = uidata.Boolean('Queue Events', False, 'rw')
 		processeventsmethod = uidata.Method('Process Event',
