@@ -15,14 +15,15 @@ True=1
 class Manager(node.Node):
 	def __init__(self, id):
 		# the id is manager (in a list)
+
+		self.clients = {}
+
 		node.Node.__init__(self, id, {})
 
 		self.uiserver.server.register_function(self.uiGetNodeLocations,
 																						'getNodeLocations')
 
 		self.nodelocations['manager'] = self.location()
-
-		self.clients = {}
 
 		self.distmap = {}
 		# maps event id to list of node it was distributed to if event.confirm
@@ -65,24 +66,9 @@ class Manager(node.Node):
 	def addClient(self, newid, loc):
 		self.clients[newid] = self.clientclass(self.ID(), loc)
 
-		## this was added to work with interface server
-		if self.uiactive:
-			name = newid[-1]
-			if name not in self.uiclientlist:
-				self.uiclientlist.append(name)
-			self.uiclientdict[name] = newid
-			self.uiclientlistdata.set(self.uiclientlist)
-
 	def delClient(self, newid):
 		if newid in self.clients:
 			del self.clients[newid]
-
-			## this was added to work with interface server
-			if self.uiactive:
-				name = newid[-1]
-				self.uiclientlist.remove(name)
-				del self.uiclientdict[name]
-				self.uiclientlistdata.set(self.uiclientlist)
 
 	# event methods
 
@@ -157,6 +143,7 @@ class Manager(node.Node):
 	# launcher related methods
 
 	def newLauncher(self, newid):
+		print self.nodelocations
 		t = threading.Thread(name='launcher thread',
 								target=launcher.Launcher, args=(newid, self.nodelocations))
 		t.start()
@@ -367,8 +354,9 @@ class Manager(node.Node):
 		return a dict describing all currently managed nodes
 		"""
 		nodeinfo = {}
-		for nodename in self.uiclientlist:
-			nodeid = self.uiclientdict[nodename]
+		nodedict = self.uiNodeIDMapping()
+		for nodename in nodedict:
+			nodeid = nodedict[nodename]
 			nodelocationdata = self.server.datahandler.query(nodeid)
 			if nodelocationdata is not None:
 				nodeloc = nodelocationdata.content
@@ -412,7 +400,8 @@ class Manager(node.Node):
 		return ''
 
 	def uiKillNode(self, nodename):
-		nodeid = self.uiclientdict[nodename]
+		nodedict = self.uiNodeIDMapping()
+		nodeid = nodedict[nodename]
 		self.killNode(nodeid)
 		return ''
 
@@ -424,8 +413,9 @@ class Manager(node.Node):
 		print 'Manager: binding event %s from %s to %s' \
 						% (eventclass_str, fromnode_str, tonode_str)
 		eventclass = self.uieventclasses[eventclass_str]
-		fromnode_id = self.uiclientdict[fromnode_str]
-		tonode_id = self.uiclientdict[tonode_str]
+		nodedict = self.uiNodeIDMapping()
+		fromnode_id = nodedict[fromnode_str]
+		tonode_id = nodedict[tonode_str]
 		self.addEventDistmap(eventclass, fromnode_id, tonode_id)
 
 		## just to make xmlrpc happy
@@ -452,20 +442,29 @@ class Manager(node.Node):
 		self.killApp()
 		return ''
 
+	def uiNodeListCallback(self):
+		nodelist = []
+		for newid in self.clients:
+			nodelist.append(newid[-1])
+		return nodelist
+
+	def uiNodeIDMapping(self):
+		nodedict = {}
+		for newid in self.clients:
+			nodedict[newid[-1]] = newid
+		return nodedict
+
 	def defineUserInterface(self):
 		nodespec = node.Node.defineUserInterface(self)
 
-		self.uiclientlist = []
-		self.uiclientdict = {}
-
 		# this is data for ui to read, but not visible
-		self.uiclientlistdata = self.registerUIData('uiclientlist', 'array', 'r')
-		self.uiclientlistdata.set(self.uiclientlist)
+		nodelistdata = self.registerUIData('nodelist', 'array', 'r')
+		nodelistdata.set(self.uiNodeListCallback)
 
 		# launch node from tree of launchers
 		self.uilauncherdict = {}
 		self.uilauncherdictdatadict = {}
-		self.uilauncherdictdata = self.registerUIData('uilauncherdict',
+		self.uilauncherdictdata = self.registerUIData('launcherdict',
 												'struct', 'r', default=self.uiGetLauncherDict)
 
 		argspec = (self.registerUIData('Name', 'string'),
@@ -477,7 +476,7 @@ class Manager(node.Node):
 
 		# list active nodes for killing
 		argspec = (self.registerUIData('Node', 'string',
-										choices=self.uiclientlistdata),)
+										choices=nodelistdata),)
 		killspec = self.registerUIMethod(self.uiKillNode, 'Kill', argspec)
 
 		# bind event from one node to another node
@@ -489,9 +488,9 @@ class Manager(node.Node):
 		argspec = (self.registerUIData('Event Class', 'string',
 											choices=self.uieventclasslistdata),
 								self.registerUIData('From Node', 'string',
-											choices=self.uiclientlistdata),
+											choices=nodelistdata),
 								self.registerUIData('To Node', 'string',
-											choices=self.uiclientlistdata))
+											choices=nodelistdata))
 		bindspec = self.registerUIMethod(self.uiAddDistmap, 'Bind', argspec)
 
 		# save/load/killing applications

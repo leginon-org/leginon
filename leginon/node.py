@@ -128,7 +128,7 @@ class Node(leginonobject.LeginonObject):
 		try:
 			self.managerclient.push(ievent)
 		except KeyError:
-			print 'Node: cannot output event %s to %s' % (ievent,nodeid)
+			print 'Node: cannot output event %s' % ievent
 			return
 		if wait:
 			self.waitEvent(ievent)
