@@ -117,10 +117,16 @@ class EM(node.Node):
 		#d.update(self.camera)
 		argspec = (
 			{'name': 'em', 'alias': 'EM', 'type': d},)
-		self.registerUIFunction(self.foo, argspec, 'Foo')
+		self.registerUIFunction(self.uiSetState, argspec, 'Set')
 
-	def foo(self):
-		pass
+	def uiSetState(self, state):
+		for id in state:
+			if self.scope and self.scope.has_key(id):
+				self.scope[id] = state[id]
+			elif self.camera and self.camera.has_key(id):
+				self.camera[id] = state[id]
+		print self.scope
+		return 0
 
 if __name__ == '__main__':
 	import time
