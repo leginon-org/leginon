@@ -365,10 +365,9 @@ class Node(leginonobject.LeginonObject):
 					if key in datainstance:
 						if datainstance[key] is None:
 							datainstance[key] = datatype()
-							self.addEmptyInstances(datainstance[key])
 					else:
 						datainstance[key] = datatype()
-						self.addEmptyInstances(datainstance[key])
+					self.addEmptyInstances(datainstance[key])
 			except TypeError:
 				pass
 
