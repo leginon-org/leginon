@@ -1,16 +1,17 @@
 #!/usr/bin/env python
 import leginonobject
 import copy
-import weakref
+#import weakref
 
-_id2obj_dict = weakref.WeakValueDictionary()
+#_id2obj_dict = weakref.WeakValueDictionary()
+localserverdict = {}
 
 class Server(leginonobject.LeginonObject):
 	def __init__(self, nid, dh):
 		leginonobject.LeginonObject.__init__(self, nid)
 		self.datahandler = dh
 		self.pythonid = id(self)
-		_id2obj_dict[self.pythonid] = self
+		localserverdict[self.pythonid] = self
 
 	def start(self):
 		pass
@@ -21,7 +22,7 @@ class Server(leginonobject.LeginonObject):
 		return loc
 
 	def exit(self):
-		pass
+		del localserverdict[self.pythonid]
 
 class Client(leginonobject.LeginonObject):
 	def __init__(self, id, location):
@@ -32,7 +33,7 @@ class Client(leginonobject.LeginonObject):
 
 	def push(self, idata):
 		try:
-			obj = _id2obj_dict[self.serverlocation['local server python ID']]
+			obj = localserverdict[self.serverlocation['local server python ID']]
 		except KeyError:
 			raise IOError
 		if obj is None:
@@ -42,7 +43,7 @@ class Client(leginonobject.LeginonObject):
 
 	def pull(self, id):
 		try:
-			obj = _id2obj_dict[self.serverlocation['local server python ID']]
+			obj = localserverdict[self.serverlocation['local server python ID']]
 		except KeyError:
 			raise IOError
 		if obj is None:
