@@ -735,7 +735,7 @@ badtypes = ('d', 'l')
 class Image(Binary):
 	typelist = Binary.typelist + ('image',)
 	def set(self, value):
-		if value:
+		if value is not None:
 			if value.typecode() in badtypes:
 				raise RuntimeError('Image type %s is illegal, try Float32 instead' % (value.typecode(),))
 		Binary.set(self, value)
