@@ -13,5 +13,6 @@ class Timer(object):
 
 	def reset(self):
 		print 'Timer Start: %s' % (self.message,)
+		self.stop()
 		self.t0 = time.time()
 

@@ -1,47 +1,9 @@
-from wxPython.wx import *
-import wxImageViewer
-import Numeric, umath
-import Mrc
-import holefinderback
-
-def circlePoints(numericimage, cx, cy, x, y):
-	if x == 0:
-		numericimage[cy + y, cx] = 256
-		numericimage[cy + y, cx] = 256
-		numericimage[cy, cx + y] = 256
-		numericimage[cy, cx - y] = 256
-	elif x == y:
-		numericimage[cy + y, cx + x] = 256
-		numericimage[cy + y, cx - x] = 256
-		numericimage[cy - y, cx + x] = 256
-		numericimage[cy - y, cx - x] = 256
-	elif x < y:
-		numericimage[cy + y, cx + x] = 256
-		numericimage[cy + y, cx - x] = 256
-		numericimage[cy - y, cx + x] = 256
-		numericimage[cy - y, cx - x] = 256
-		numericimage[cy + x, cx + y] = 256
-		numericimage[cy + x, cx - y] = 256
-		numericimage[cy - x, cx + y] = 256
-		numericimage[cy - x, cx - y] = 256
-
-def circle(numericimage, radius, xcenter, ycenter):
-	x = 0
-	y = radius
-	#ycenter = numericimage.shape[0]/2
-	#xcenter = numericimage.shape[1]/2
-	p = (5 - radius*4)/4
-	circlePoints(numericimage, xcenter, ycenter, x, y)
-	while x < y:
-		x += 1
-		if p < 0:
-			p += 2*x + 1
-		else:
-			y -= 1
-			p += 2*(x - y) + 1
-		circlePoints(numericimage, xcenter, ycenter, x, y)
+import Numeric
 
 def gradient(image):
+	'''
+	Simplistic edge finder.
+	'''
 	m, n = image.shape
 
 	J = Numeric.zeros((m+2, n+2), 'd')
@@ -65,80 +27,98 @@ def gradient(image):
 	Iy[0, 0:n+2] = Iy[1, 0:n+2]
 	Iy[m+1, 0:n+2] = Iy[m, 0:n+2]
 
-	I_grad = Numeric.sqrt(Ix*Ix + Iy*Iy)
+	return Numeric.sqrt(Ix*Ix + Iy*Iy)
 
-	return I_grad
+sqrtof2 = Numeric.sqrt(2)
 
-def edges(image):
-	hf = holefinderback.HoleFinder()
-	hf['original'] = image
-	hf.configure_edges(filter='sobel',
-											size=9,
-											sigma=1.4,
-											absvalue=False,
-											lp=True,
-											lpn=5,
-											lpsig=1.0)
-	hf.find_edges()
-	return hf['edges']
+def bresenhamCirclePoints(radius):
+	'''
+	Make a list of points offset by radius (for array indexing) that compose
+	a circle defined by Bresenham's circle rastering algorithm.
+	'''
+	pointlist = []
+	i = radius
+	d = 0.25 - radius
+	for j in range(int(Numeric.ceil(radius/sqrtof2))):
+		for nj in (radius - j, j + radius - 1):
+			for ni in (radius - i, i + radius - 1):
+				pointlist.append((nj, ni))
+				pointlist.append((ni, nj))
+		d += 2*j + 1
+		if d > 0:
+			d += 2 - 2*i
+			i -= 1
+	return pointlist 
 
-
-def hough(image, threshold, radius=None, radiusrange=None):
-
+def hough(image, threshold, radiusrange=None):
+	'''
+	Computes the Hough transform of a circle on the given image on all points
+	with value greater than threshold, for circles with radii in radiusrange.
+	If radiusrange is None, radiusrange is defined as 1 to half the minimum
+	image size.
+	'''
 	m, n = image.shape
 
-	if radius is None:
-		if radiusrange is None:
-			R = (0, min(m, n)/2)
-		else:
-			R = radiusrange
-		M = Numeric.zeros((m, n, R[1] - R[0] + 1))
-	else:
-		M = Numeric.zeros(image.shape)
+	# set radius range to all radii that find on the transform accumulator
+	if radiusrange is None:
+		radiusrange = (1, min(m, n)/2)
 
-#	e = edges(image)
-#	I_grad = gradient(e)
-#	return e, I_grad
+	# give the transform accumulator a buffer since a shifted copy will be added
+	# inplace. this is probably not the best way if the radius is large
+	border = max(radiusrange)
+	houghimage = Numeric.zeros((m + border*2, n + border*2), Numeric.Int16)
 
-	I_grad = gradient(image)
+	# threshold the image, making it a bitmask of above/below threshold
+	thresholdimage = image >= threshold
+	# convert to type to be added to the accumulator
+	thresholdimage = thresholdimage.astype(Numeric.Int16)
 
-	for i in range(0, m):
-		print i
-		for j in range(0, n):
-			if I_grad[i, j] > threshold:
-				if radius is None:
-					for radius in range(R[0], R[1]):
-						for x in range(i-radius, i+radius):
-							vote(M, m, n, i, j, x, radius, 0) #radius-R[0])
-				else:
-					for x in range(i-radius, i+radius):
-						vote(M, m, n, i, j, x, radius)
+	# make a list of all points (offsets) for circles with radii in range
+	shifts = []
+	for radius in range(radiusrange[0], radiusrange[1] + 1):
+		shifts += bresenhamCirclePoints(radius)
 
-	if len(M.shape) == 3:
-		return I_grad, M[:,:,0]
-	return I_grad, M
+	# shift the bitmask of the threshold to each point in each of the circles
+	# and add the value to the accumulator
+	def set(shift):
+		houghimage[shift[0]:shift[0] + m, shift[1]:shift[1] + n] += thresholdimage
+	map(set, shifts)
 
-def vote(M, m, n, i, j, x, radius, layer=None):
-	y = radius**2 - (x - i)**2
-
-#	y = Numeric.absolute(y)
-	if y < 0:
-		return
-
-	y = int(Numeric.floor(Numeric.sqrt(y) + 0.5)) + j
-
-	#y = int(Numeric.floor(Numeric.sqrt(radius**2-(x-i)**2)+0.5)+j)
-
-	if x >= 0 and x < m and y >= 0 and y < n:
-		if layer is not None:
-			M[x, y, layer] = M[x, y, layer] + 1
-		else:
-			M[x, y] = M[x, y] + 1
+	return houghimage[border - 1:border + m - 1, border - 1:border + n - 1]
 
 if __name__=='__main__':
-	m = Mrc.mrc_to_numeric('hftest.mrc')[256:768,256:768]
-	m, m2 = hough(m, 100, None, [24,29])
-	m2 = Numeric.clip(m2, 40, 1000)
+	from wxPython.wx import *
+	import wxImageViewer
+	import Mrc
+	import timer
+	import holefinderback
+
+	def edges(image):
+		hf = holefinderback.HoleFinder()
+		hf['original'] = image
+		hf.configure_edges(filter='sobel',
+												size=9,
+												sigma=1.4,
+												absvalue=False,
+												lp=True,
+												lpn=5,
+												lpsig=1.0)
+		hf.find_edges()
+		return hf['edges']
+
+	image = Mrc.mrc_to_numeric('hftest.mrc')
+
+	t = timer.Timer()
+
+	#edgeimage = gradient(image)
+	edgeimage = edges(image)
+
+	t.reset()
+
+	houghimage = hough(edgeimage, 100, [28,28])
+	#houghimage = Numeric.clip(m2, 400, 30000)
+
+	t.stop()
 
 	class MyApp(wxApp):
 		def OnInit(self):
@@ -159,7 +139,7 @@ if __name__=='__main__':
 			return true
 
 	app = MyApp(0)
-	app.iv1.setNumericImage(m)
-	app.iv2.setNumericImage(m2)
+	app.iv1.setNumericImage(edgeimage)
+	app.iv2.setNumericImage(houghimage)
 	app.MainLoop()
 
