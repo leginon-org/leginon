@@ -3,7 +3,10 @@
 Provides several specialized mapping types derived from the built-in dict type.
 '''
 
-## still missing from this classes:
+import Numeric
+from types import NoneType
+
+## still missing from these classes:
 ##   __copy__
 
 class OrderedDict(dict):
@@ -152,17 +155,24 @@ class TypedDict(KeyedDict):
 	example of a type_map_or_seq:
 	   {'aaa': int, 'bbb': float}
 	   (('aaa', int), ('bbb', float))
+
+	 The type must either double as a factory function, or you must
+	 map a factory function to the type using _factories attribute.
 	'''
 	def __init__(self, map_or_seq=None, type_map_or_seq=None):
 		### create a KeyedDict to hold the types
 		if type_map_or_seq is not None:
 			### already provided
 			self.__types = KeyedDict(type_map_or_seq)
+			for key,valuetype in self.__types.items():
+				self.__validateType(valuetype)
 		elif map_or_seq is not None:
 			### create it from the map_or_seq initializer
 			self.__types = KeyedDict(map_or_seq)
 			for key,value in self.__types.items():
-				self.__types[key] = self.__validateType(type(value))
+				valuetype = type(value)
+				self.__types[key] = valuetype
+				self.__validateType(valuetype)
 		else:
 			### empty
 			self.__types = KeyedDict()
@@ -196,9 +206,9 @@ class TypedDict(KeyedDict):
 		return KeyedDict(self.__types)
 
 	def __validateType(self, type):
-		if type not in factories:
-			raise TypeError('%s, invalid type for TypedDict item' % (type,))
-		return type
+		f = self.getFactory(type)
+		if f is None:
+			raise TypeError('%s, invalid type for TypedDict item, try added it to the factories dict' % (type,))
 
 	def __validateValue(self, key, value):
 		'''uses a factory function from factories to validate a value'''
@@ -207,11 +217,10 @@ class TypedDict(KeyedDict):
 			return None
 
 		valuetype = self.__types[key]
+		valuefactory = self.getFactory(valuetype)
+
 		try:
-			valuefactory = factories[valuetype]
-		except KeyError:
-			raise TypeError('no factory to validate %s' % (value, valuetype))
-		try: newvalue = valuefactory(value)
+			newvalue = valuefactory(value)
 		except ValueError, detail:
 			newdetail = '%s, value for %s must be %s; ' % (value, key,valuetype)
 			newdetail += str(detail)
@@ -226,39 +235,29 @@ class TypedDict(KeyedDict):
 		newvalue = self.__validateValue(key, value)
 		KeyedDict.__setitem__(self, key, newvalue)
 
-### This is the mapping of type to a factory function for that type
-### The factory function should take one argument which 
-### it will attempt to convert to an instance of that type, or raise
-### a ValueError if the argument cannot be converted.
-import Numeric
-import types
-factories = {
-	## these are built in types which double as factories
-	int: int,
-	long: long,
-	float: float,
-	complex: complex,
-	str: str,
-	tuple: tuple,
-	list: list,
-	dict: dict,
+	def getFactory(self, valuetype):
+		## check for special cases that we know about
+		if valuetype in self._factories:
+			f = self._factories[valuetype]
+		elif callable(valuetype):
+			## type object may be a factory function
+			f = valuetype
+		else:
+			f = None
+		return f
 
-	## is None necessary? should factory convert anything to None?
-	## Or raise exception for anything except None?
-	types.NoneType: lambda x: None,
+	_factories = {
+		## is None necessary? should factory convert anything to None?
+		## Or raise exception for anything except None?
+		NoneType: lambda x: None,
 
-	## object type can handle anything. Should this use x.copy()?
-	## Probably should, but classes in this module have no copy method.
-	object: lambda x: x,
+		## object type can handle anything. Should this use x.copy()?
+		## Probably should, but classes in this module have no copy method.
+		object: lambda x: x,
 
-	## from Numeric
-	Numeric.ArrayType: Numeric.array,
-
-	## defined in this module
-	OrderedDict: OrderedDict,
-	KeyedDict: KeyedDict,
-	TypedDict: TypedDict,
-}
+		## from Numeric
+		Numeric.ArrayType: Numeric.array,
+	}
 
 if __name__ == '__main__':
 	class newtype(object):
