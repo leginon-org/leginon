@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Events.py,v $
-# $Revision: 1.16 $
+# $Revision: 1.17 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-01-28 23:40:36 $
+# $Date: 2005-02-25 19:03:56 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -53,11 +53,13 @@ PlayerEventType = wx.NewEventType()
 SetImageEventType = wx.NewEventType()
 SetTargetsEventType = wx.NewEventType()
 StatusUpdatedEventType = wx.NewEventType()
+SetCCDCameraEventType = wx.NewEventType()
 
 EVT_PLAYER = wx.PyEventBinder(PlayerEventType)
 EVT_SET_IMAGE = wx.PyEventBinder(SetImageEventType)
 EVT_SET_TARGETS = wx.PyEventBinder(SetTargetsEventType)
 EVT_STATUS_UPDATED = wx.PyEventBinder(StatusUpdatedEventType)
+EVT_SET_CCDCAMERA = wx.PyEventBinder(SetCCDCameraEventType)
 
 class PlayerEvent(wx.PyEvent):
 	def __init__(self, state):
@@ -86,4 +88,10 @@ class StatusUpdatedEvent(wx.PyCommandEvent):
 		self.SetEventObject(source)
 		self.level = level
 		self.status = status
+
+class SetCCDCameraEvent(wx.PyCommandEvent):
+	def __init__(self, source, name):
+		wx.PyCommandEvent.__init__(self, SetCCDCameraEventType, source.GetId())
+		self.SetEventObject(source)
+		self.name = name
 

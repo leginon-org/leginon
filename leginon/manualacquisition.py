@@ -44,7 +44,9 @@ class ManualAcquisition(node.Node):
 		self.gridbox = None
 		self.grid = None
 
-		self.instrument = instrument.Proxy(self.objectservice, self.session)
+		self.instrument = instrument.Proxy(self.objectservice,
+																				self.session,
+																				self.panel)
 
 		self.start()
 
