@@ -1,10 +1,9 @@
-#!/usr/bin/env python
-
 import imagewatcher
 import fftengine
 import data
 import Numeric
 import cameraimage
+import uidata
 
 class FFTViewer(imagewatcher.ImageWatcher):
 	def __init__(self, id, session, nodelocations, **kwargs):
@@ -16,22 +15,16 @@ class FFTViewer(imagewatcher.ImageWatcher):
 		self.start()
 
 	def defineUserInterface(self):
-		imwatch = imagewatcher.ImageWatcher.defineUserInterface(self)
-		print 'imwatch', imwatch
-		myspec = self.registerUISpec('ImViewer', ())
-		print 'myspec', myspec
-		myspec += imwatch
+		imagewatcher.ImageWatcher.defineUserInterface(self)
+		self.ui_image = uidata.UIImage('FFT Image', None, 'r')
+		container = uidata.UIMediumContainer('FFT Viewer')
+		container.addUIObject(self.ui_image)
+		self.uiserver.addUIObject(container)
 
 	def processData(self, imagedata):
-		if not isinstance(imagedata, data.ImageData):
-			print 'Data is not ImageData instance'
-			return
-		self.imagedata = imagedata
-
-		numarray = imagedata['image']
-		### calculate power image
-		self.numarray = cameraimage.power(numarray)
-
+		imagewatcher.ImageWatcher.processData(self, imagedata)
+		self.numarray = cameraimage.power(self.numarray)
+		self.ui_image.set(self.numarray)
 		if self.popupvalue:
 			self.clearAllTargetCircles()
 			self.displayNumericArray()

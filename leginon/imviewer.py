@@ -24,6 +24,7 @@ class ImViewer(imagewatcher.ImageWatcher):
 
 	def processData(self, imagedata):
 		imagewatcher.ImageWatcher.processData(self, imagedata)
+		self.ui_image.set(self.numarray)
 		if self.uipopupflag.get():
 			self.displayNumericArray()
 
