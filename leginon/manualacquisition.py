@@ -280,51 +280,92 @@ class ManualAcquisition(node.Node):
 		self.max = uidata.Float('Max', None, 'r')
 		self.std = uidata.Float('Std. Dev.', None, 'r')
 		statisticscontainer = uidata.Container('Statistics')
-		statisticscontainer.addObjects((self.mean, self.min, self.max, self.std))
+		statisticscontainer.addObject(self.mean, position={'position': (0, 0),
+																											'justify': ['center']})
+		statisticscontainer.addObject(self.min, position={'position': (0, 1),
+																											'justify': ['center']})
+		statisticscontainer.addObject(self.max, position={'position': (0, 2),
+																											'justify': ['center']})
+		statisticscontainer.addObject(self.std, position={'position': (0, 3),
+																											'justify': ['center']})
 
 		statuscontainer = uidata.Container('Status')
-		statuscontainer.addObjects((self.status, statisticscontainer))
+		statuscontainer.addObject(self.status)
 
 		self.image = uidata.Image('Image', None, 'rw')
+		imagecontainer = uidata.Container('Image')
+		imagecontainer.addObject(statisticscontainer,
+															position={'justify': ['center'], 'expand': 'all'})
+		imagecontainer.addObject(self.image)
 
 		self.gridboxselect = uidata.SingleSelectFromList('Grid Box', None, None,
 																											'rw')
 		self.gridselect = uidata.SingleSelectFromList('Grid', None, None, 'rw')
 		self.gridboxselect.setCallback(self.onGridBoxSelect)
 		self.updateGridBoxSelection()
-		refreshmethod = uidata.Method('Refresh', self.updateGridBoxSelection)
+		refreshmethod = uidata.Method('Refresh', self.updateGridBoxSelection,
+									tooltip='Refresh the grid listing from the project database')
 
 		gridcontainer = uidata.Container('Current Grid')
-		gridcontainer.addObjects((self.gridboxselect, self.gridselect,
-															refreshmethod))
-		self.up = uidata.Boolean('Main screen up when acquire', True, 'rw',
-															persist=True)
-		self.down = uidata.Boolean('Main screen down when acquire complete', True,
-																'rw', persist=True)
+		gridcontainer.addObjects((self.gridboxselect, self.gridselect))
+		gridcontainer.addObject(refreshmethod, position={'justify': ['right']})
+		self.up = uidata.Boolean('Up before acquire', True, 'rw',
+															persist=True,
+						tooltip='Move the main viewing screen up before image acquisition')
+		self.down = uidata.Boolean('Down after acquire', True,
+																'rw', persist=True,
+						tooltip='Move the main viewing screen down after image acquisition'
+											+ ' has completed')
+		mainscreencontainer = uidata.Container('Main Screen Control')
+		mainscreencontainer.addObjects((self.up, self.down))
 
 		self.correctimage = uidata.Boolean('Correct image', True, 'rw',
-																				persist=True)
+																				persist=True,
+																			tooltip='Correct the acquired image data')
 		camerafuncscontainer = self.camerafuncs.uiSetupContainer()
 		self.pausetime = uidata.Number('Loop pause time (seconds)', 0.0, 'rw',
-																		callback=self.onSetPauseTime, persist=True)
+																		callback=self.onSetPauseTime, persist=True,
+										tooltip='Time in seconds to pause between image acquistion'
+														+ ' when continuously acquiring')
 		self.usedatabase = uidata.Boolean('Save image to database', True, 'rw',
-																			persist=True)
+																			persist=True,
+																	tooltip='Save each image and its information'
+																						+ ' to the database when acquired')
 		settingscontainer = uidata.Container('Settings')
-		settingscontainer.addObjects((gridcontainer, self.up, self.down,
+		settingscontainer.addObjects((gridcontainer, mainscreencontainer,
 																	self.correctimage, camerafuncscontainer,
 																	self.pausetime, self.usedatabase))
 
-		self.acquiremethod = uidata.Method('Acquire', self.acquireImage)
-		self.startmethod = uidata.Method('Start', self.acquisitionLoopStart)
-		self.stopmethod = uidata.Method('Stop', self.acquisitionLoopStop)
+		self.acquiremethod = uidata.Method('Acquire', self.acquireImage,
+													tooltip='Acquire an image with the current settings')
+		self.startmethod = uidata.Method('Start', self.acquisitionLoopStart,
+										tooltip='Start acquiring images on the specified interval')
+		self.stopmethod = uidata.Method('Stop', self.acquisitionLoopStop,
+																		tooltip='Stop acquiring images')
 		self.stopmethod.disable()
-		loopcontainer = uidata.Container('Acquisition Loop')
-		loopcontainer.addObjects((self.startmethod, self.stopmethod))
+		loopcontainer = uidata.Container('Continuous Acquisition')
+		loopcontainer.addObject(self.startmethod, position={'position': (0, 0)}) 
+		loopcontainer.addObject(self.stopmethod, position={'position': (1, 0)})
 		controlcontainer = uidata.Container('Control')
-		controlcontainer.addObjects((self.acquiremethod, loopcontainer))
+		controlcontainer.addObject(self.acquiremethod,
+																position={'justify': ['center']})
+		controlcontainer.addObject(loopcontainer,
+																position={'position': (0, 1),
+																					'justify': ['center']})
 
 		container = uidata.LargeContainer('Manual Acquisition')
-		container.addObjects((self.messagelog, statuscontainer, self.image,
-													settingscontainer, controlcontainer))
+		container.addObject(self.messagelog, position={'position': (0, 0),
+																										'span': (1, 2),
+																										'expand': 'all'})
+		container.addObject(statuscontainer, position={'position': (1, 0),
+																										'span': (1, 2),
+																										'expand': 'all'})
+		container.addObject(settingscontainer, position={'position': (2, 0),
+																				'justify': ['bottom', 'left', 'right']})
+		container.addObject(controlcontainer, position={'position': (3, 0),
+																									'justify': ['left', 'right']})
+		container.addObject(imagecontainer, position={'position': (2, 1),
+																							'span': (2, 1)})
+																							#'justify': ['center']})
 		self.uicontainer.addObject(container)
 
