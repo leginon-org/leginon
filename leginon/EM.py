@@ -191,7 +191,7 @@ class EM(node.Node):
 		result['system time'] = time.time()
 		return result
 
-	def OLDsortEMdict(self, emdict):
+	def sortEMdict(self, emdict):
 		'''
 		sort items in em dict for proper setting order
 		'''
