@@ -29,10 +29,10 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 	settingsclass = data.BeamTiltCalibratorSettingsData
 	defaultsettings = {
 		'camera settings': None,
-		'correlation type': 'cross',
+		'correlation type': 'phase',
 		'defocus beam tilt': 0.01,
-		'first defocus': -1e-6,
-		'second defocus': -2e-6,
+		'first defocus': -2e-6,
+		'second defocus': -4e-6,
 		'stig beam tilt': 0.01,
 		'stig delta': 0.2,
 	}
