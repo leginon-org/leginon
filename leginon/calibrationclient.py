@@ -8,6 +8,7 @@ import fftengine
 import correlator
 import peakfinder
 import time
+import sys
 
 class DriftingTimeout(Exception):
 	pass
@@ -44,6 +45,8 @@ class CalibrationClient(object):
 
 		if publish_image:
 			self.node.publish(imagedata, pubevent=True)
+			if self.node.imageviewer is not None:
+				self.node.imageviewer.set(imagedata['image'])
 
 		## should find image stats to help determine validity of image
 		## in correlations
@@ -100,8 +103,8 @@ class CalibrationClient(object):
 				shift = correlator.wrap_coord(peak['subpixel peak'], pcimage.shape)
 				shiftrows = shift[0]
 				shiftcols = shift[1]
-				d = data.DriftData(id=self.ID(), rows=shiftrows, cols=shiftcols)
-				self.publish(d, database=True)
+				d = data.DriftData(id=self.node.ID(), rows=shiftrows, cols=shiftcols)
+				self.node.publish(d, database=True)
 
 				drift = abs(shift[0] + 1j * shift[1])
 				if drift < 1.0:
@@ -309,6 +312,10 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		Each call of this function acquires four images
 		and returns two shift displacements.
 		'''
+		print 'STATE1'
+		print state1
+		print 'STATE2'
+		print state2
 		
 		beamtilt = self.getBeamTilt()
 
@@ -323,11 +330,10 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			states1 = (copy.deepcopy(state1), copy.deepcopy(state1))
 			states2 = (copy.deepcopy(state2), copy.deepcopy(state2))
 
-			states1[0].update(beamtilts[0])
-			states1[1].update(beamtilts[1])
-
-			states2[0].update(beamtilts[0])
-			states2[1].update(beamtilts[1])
+			states1[0]['beam tilt'] = beamtilts[0]['beam tilt']
+			states1[1]['beam tilt'] = beamtilts[1]['beam tilt']
+			states2[0]['beam tilt'] = beamtilts[0]['beam tilt']
+			states2[1]['beam tilt'] = beamtilts[1]['beam tilt']
 
 			print 'STATES1'
 			print states1
@@ -340,10 +346,12 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			pixelshift2 = shiftinfo['pixel shift']
 			print 'PIXELSHIFT1', pixelshift1
 			print 'PIXELSHIFT2', pixelshift2
-		finally:
-			## return to original beam tilt
-			emdata = data.ScopeEMData(id=('scope',), initializer=beamtilt)
-			self.node.publishRemote(emdata)
+		except:
+			excinfo = sys.exc_info()
+			sys.excepthook(*excinfo)
+		## return to original beam tilt
+		emdata = data.ScopeEMData(id=('scope',), initializer=beamtilt)
+		self.node.publishRemote(emdata)
 
 		return (pixelshift1, pixelshift2)
 
