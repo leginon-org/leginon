@@ -82,9 +82,18 @@ class UIServer(XMLRPCServer, uidata.UIContainer):
 	def addServer(self, hostname, port):
 		# mapping to trackable value?
 		import uiclient
-		self.uiclients.append(uiclient.XMLRPCClient(hostname, port))
-		# add accumlulated objects
+		addclient = uiclient.XMLRPCClient(hostname, port)
+		self.uiclients.append(addclient)
+		for uiobject in self.uiobjectdict.values():
+			self.addUIObjects(addclient, uiobject, (self.name, uiobject.name))
 		return ''
+
+	def addUIObjects(self, client, uiobject, namelist):
+		print 'updating', namelist
+		client.execute('ADD', (namelist, uiobject.typename, uiobject.value))
+		if isinstance(uiobject, uidata.UIContainer):
+			for childuiobject in uiobject.uiobjectdict.values():
+				self.addUIObjects(client, childuiobject, namelist+(childuiobject.name,))
 
 	def addUIObjectCallback(self, namelist, typename, value):
 		for client in self.uiclients:
