@@ -25,14 +25,18 @@ class Throbber(wx.lib.throbber.Throbber):
 			self.ToggleOverlay(False)
 
 		if value == 'processing':
+			self.SetToolTip(wx.ToolTip('Processing...'))
 			self.Start()
 		elif value == 'waiting':
+			self.SetToolTip(wx.ToolTip('Waiting...'))
 			self.OnTimer(None)
 			self.Stop()
 		elif value == 'user input':
+			self.SetToolTip(wx.ToolTip('Waiting for user input...'))
 			self.OnTimer(None)
 			self.Stop()
 		elif value == 'idle':
+			self.SetToolTip(None)
 			self.Rest()
 		else:
 			raise TypeError('Invalid value for set')
@@ -51,8 +55,7 @@ if __name__ == '__main__':
 			sizer.AddGrowableRow(0)
 			sizer.AddGrowableCol(0)
 			panel.SetSizerAndFit(sizer)
-			throbber.Start()
-			throbber.ToggleOverlay(True)
+			throbber.set('processing')
 			frame.Fit()
 			self.SetTopWindow(frame)
 			frame.Show()
