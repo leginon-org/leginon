@@ -10,80 +10,67 @@ def correlation(image1, image2, ccflag=1, pcflag=1, subpixelflag=1):
 
 	if image1.shape != image2.shape:
 		raise ValueError('images not same dimensions')
-
 	
 	# FFT of the two images
 	ffts = (FFT.real_fft2d(image1), FFT.real_fft2d(image2))
 
-	# create cross-correlation matrix w/same size
-	ccfft = Numeric.zeros((len(ffts[0]), len(ffts[0][0]))).astype(Numeric.Complex)
-
 	# elementwise cross-correlation = conjugate(ffts[0]) * ffts[1]
-	Numeric.multiply(Numeric.conjugate(ffts[0]), ffts[1], ccfft)
-
-	wraplimit = (image1.shape[0]/2, image1.shape[1]/2)
-
-	## if fitting quadratic to peak, use this many pixels in each direction
-	npix = 9
+	ccfft = Numeric.multiply(Numeric.conjugate(ffts[0]), ffts[1])
 
 	if ccflag:
 		# invert correlation to use
 		cc = FFT.inverse_real_fft2d(ccfft)
 
-		try:
-			if subpixelflag:
-				peak = quadraticPeak(cc, npix)
-			else:
-				peak = matrixMax(cc)
-			val['cross correlation peak'] = peak
-
-			# if peak is past halfway, shift is negative, wrap
-			val['cross correlation shift'] = []
-			for dim in (0,1):
-				if peak[dim] < wraplimit[dim]:
-					wrapped = peak[dim]
-				else:
-					wrapped = peak[dim] - image1.shape[dim]
-				val['cross correlation shift'].append(wrapped)
-		except:
-			val['cross correlation peak'] = None
-			val['cross correlation shift'] = None
-			print 'error finding peak'
-
+		ccdict = findPeak(cc, subpixelflag)
+		val['cross correlation peak'] = ccdict['peak']
+		val['cross correlation shift'] = ccdict['shift']
 		val['cross correlation image'] = cc
 
 	if pcflag:
-		pcfft = Numeric.zeros((len(ffts[0]), \
-			len(ffts[0][0]))).astype(Numeric.Complex)
-
 		# elementwise phase-correlation =
 		# cross-correlation / magnitude(cross-correlation
-		Numeric.divide(ccfft, Numeric.sqrt(Numeric.multiply(Numeric.add(ffts[0], \
-			ffts[1]), Numeric.conjugate(Numeric.add(ffts[0], ffts[1])))), pcfft)
+
+		## why does add return a tuple?
+		fftsum, = Numeric.add(ffts[0], ffts[1]),
+		pcfft = Numeric.divide( \
+			ccfft, \
+			Numeric.sqrt(Numeric.multiply(fftsum, \
+					Numeric.conjugate(fftsum))) \
+			)
 
 		pc = FFT.inverse_real_fft2d(pcfft)
 
-		try:
-			if subpixelflag:
-				peak = quadraticPeak(pc, npix)
-			else:
-				peak = matrixMax(pc)
-			val['phase correlation peak'] = peak
-
-			# if peak is past halfway, shift is negative, wrap
-			val['phase correlation shift'] = []
-			for dim in (0,1):
-				if peak[dim] < wraplimit[dim]:
-					wrapped = peak[dim]
-				else:
-					wrapped = peak[dim] - image1.shape[dim]
-				val['phase correlation shift'].append(wrapped)
-		except:
-			val['phase correlation peak'] = None
-			val['phase correlation shift'] = None
-			print 'error finding peak'
+		pcdict = findPeak(pc, subpixelflag)
+		val['phase correlation peak'] = pcdict['peak']
+		val['phase correlation shift'] = pcdict['shift']
 		val['phase correlation image'] = pc
 
+	return val
+
+def findPeak(image, subpixelflag):
+	wraplimit = (image.shape[0]/2, image.shape[1]/2)
+	val = {}
+	try:
+		if subpixelflag:
+			print 'image shape', image.shape
+			peak = quadraticPeak(image)
+		else:
+			peak = matrixMax(image)
+		val['peak'] = peak
+
+		# if peak is past halfway, shift is negative, wrap
+		val['shift'] = []
+		for dim in (0,1):
+			if peak[dim] < wraplimit[dim]:
+				wrapped = peak[dim]
+			else:
+				wrapped = peak[dim] - image.shape[dim]
+			val['shift'].append(wrapped)
+	except:
+		raise
+		val['peak'] = None
+		val['shift'] = None
+		print 'error finding peak'
 	return val
 
 def matrixMax(m):
@@ -109,8 +96,11 @@ def wrap(value, range):
 	else:
 		return value
 
-def quadraticPeak(m, npix):
+def quadraticPeak(m):
 	from LinearAlgebra import linear_least_squares
+
+	## if fitting quadratic to peak, use this many pixels in each direction
+	npix = 9
 
 	## find the max pixel indices (row,col)
 	peakrow,peakcol = matrixMax(m)
