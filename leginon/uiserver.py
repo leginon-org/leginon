@@ -61,6 +61,8 @@ class XMLRPCServer(object):
 class Server(XMLRPCServer, uidata.Container):
 	def __init__(self, name='UI', port=None):
 		self.uiclients = []
+		self.tries = 5
+		self.failures = []
 		self.pref_lock = threading.Lock()
 		XMLRPCServer.__init__(self, port=port)
 		uidata.Container.__init__(self, name)
@@ -204,6 +206,7 @@ class Server(XMLRPCServer, uidata.Container):
 		import uiclient
 		addclient = uiclient.XMLRPCClient(hostname, port)
 		self.uiclients.append(addclient)
+		self.failures.append(0)
 		self.addObjectsCallback(addclient)
 		return ''
 
@@ -214,35 +217,63 @@ class Server(XMLRPCServer, uidata.Container):
 			except xmlrpclib.ProtocolError, e:
 				print 'Error adding to client ' + str(client) + ': ' + str(e)
 		else:
-			for client in self.uiclients:
-				# delete if fail?
+			failures = []
+			for i, client in enumerate(self.uiclients):
 				try:
 					client.execute('ADD',
 													(dependencies, namelist, typelist, value, settings))
+					self.failures[i] = 0
 				except (xmlrpclib.ProtocolError, socket.error), e:
 					print 'Error adding to client ' + str(client) + ': ' + str(e)
+					self.failures[i] += 1
+					if self.failures[i] >= self.tries:
+						failures.append(i)
+			for i in failures:
+				del self.uiclients[i]
+				del self.failures[i]
 
 	def setObjectCallback(self, namelist, value):
-		for client in self.uiclients:
-			# delete if fail?
+		failures = []
+		for i, client in enumerate(self.uiclients):
 			try:
 				client.execute('SET', (namelist, value))
+				self.failures[i] = 0
 			except (xmlrpclib.ProtocolError, socket.error), e:
 				print 'Error setting client ' + str(client) + ': ' + str(e)
+				self.failures[i] += 1
+				if self.failures[i] >= self.tries:
+					failures.append(i)
+		for i in failures:
+			del self.uiclients[i]
+			del self.failures[i]
 
 	def deleteObjectCallback(self, namelist):
-		for client in self.uiclients:
-			# delete if fail?
+		failures = []
+		for i, client in enumerate(self.uiclients):
 			try:
 				client.execute('DEL', (namelist,))
+				self.failures[i] = 0
 			except (xmlrpclib.ProtocolError, socket.error), e:
 				print 'Error deleting from client ' + str(client) + ': ' + str(e)
+				self.failures[i] += 1
+				if self.failures[i] >= self.tries:
+					failures.append(i)
+		for i in failures:
+			del self.uiclients[i]
+			del self.failures[i]
 
 	def settingsObjectCallback(self, namelist, settings):
-		for client in self.uiclients:
-			# delete if fail?
+		failures = []
+		for i, client in enumerate(self.uiclients):
 			try:
 				client.execute('CONFIGURE', (namelist, settings))
+				self.failures[i] = 0
 			except xmlrpclib.ProtocolError, e:
 				print 'Error setting settings client ' + str(client) + ': ' + str(e)
+				self.failures[i] += 1
+				if self.failures[i] >= self.tries:
+					failures.append(i)
+		for i in failures:
+			del self.uiclients[i]
+			del self.failures[i]
 
