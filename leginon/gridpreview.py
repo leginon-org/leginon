@@ -78,7 +78,7 @@ class GridPreview(node.Node):
 		return ''
 
 	def getScope(self):
-		return self.researchByDataID(('scope',))['em']
+		return self.researchByDataID(('scope',))
 
 	def acquireTarget(self, target):
 		print 'TARGET', target

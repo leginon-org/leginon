@@ -175,11 +175,11 @@ class GonModeler(node.Node):
 
 	def getStagePosition(self):
 		dat = self.researchByDataID(('stage position',))
-		return dat['em']
+		return dat
 
 	def getMagnification(self):
 		dat = self.researchByDataID(('magnification',))
-		return dat['em']['magnification']
+		return dat['magnification']
 
 	def defineUserInterface(self):
 		nodespec = node.Node.defineUserInterface(self)

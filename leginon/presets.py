@@ -1,12 +1,14 @@
 import node
 import data
 import event
-import datahandler
 import dbdatakeeper
 import cPickle
-import copy
 
 class PresetsClient(object):
+	'''
+	methods for accessing presets in the database
+	and for setting/getting a preset to/from the EM node
+	'''
 	def __init__(self, node):
 		self.node = node
 
@@ -24,7 +26,7 @@ class PresetsClient(object):
 		# now default will be get all sessions
 		#else:
 		#	query['session'] = self.node.session
-			
+
 		presetdatalist = self.node.research(dataclass=data.PresetData, **query)
 		return presetdatalist
 
@@ -48,15 +50,12 @@ class PresetsClient(object):
 		return a new PresetData object using the current scope/camera
 		settings
 		'''
-		scope = self.node.researchByDataID(('scope',))
-		camera = self.node.researchByDataID(('camera no image data',))
-		scopedict = scope['em']
-		cameradict = camera['em']
-
+		scopedata = self.node.researchByDataID(('scope',))
+		cameradata = self.node.researchByDataID(('camera no image data',))
 		## create new preset data
 		p = data.PresetData(self.node.ID(), name=presetname)
-		p.friendly_update(scopedict)
-		p.friendly_update(cameradict)
+		p.friendly_update(scopedata)
+		p.friendly_update(cameradata)
 		return p
 
 	def UI(self):
@@ -65,12 +64,33 @@ class PresetsClient(object):
 		self.registerUIData()
 		self.registerUIMethod()
 
+class CircularIter(object):
+	'''
+	creates a circular iterator around an object that supports iteration
+	'''
+	def __init__(self, iterable):
+		self.iterable = iterable
+		self.iterator = iter(self.iterable)
+
+	def next(self):
+		try:
+			return self.iterator.next()
+		except StopIteration:
+			self.iterator = iter(self.iterable)
+			return self.iterator.next()
+
+	def __iter__(self):
+		return self
+
+
 class PresetsManager(node.Node):
 	def __init__(self, id, session, nodelocations, **kwargs):
 		node.Node.__init__(self, id, session, nodelocations, **kwargs)
 
 		self.presetsclient = PresetsClient(self)
-		self.cam = camerafuncs.CameraFuncs(self)
+		self.current = None
+		self.presetdict = OrderedDict()
+		self.presetcircle = CircularIter(self.presetdict)
 
 		self.defineUserInterface()
 		self.start()
@@ -83,6 +103,9 @@ class PresetsManager(node.Node):
 			if presetname not in names:
 				names.append(presetname)
 		return names
+
+	def addToPresetList(self, presetdata):
+		self.presetlist.append(presetdata)
 
 	def defineUserInterface(self):
 		nodespec = node.Node.defineUserInterface(self)

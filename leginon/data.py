@@ -247,7 +247,31 @@ class NumericData(Data):
 class EMData(Data):
 	def typemap(cls):
 		t = Data.typemap()
-		t += [ ('em', dict), ]
+		t += [ ('screen current', float), 
+			('beam blank', str), 
+			('gun tilt', dict),
+			('gun shift', dict),
+			('high tension', float),
+			('intensity', float),
+          		('dark field mode', str),
+			('stigmator', dict),
+			('spot size', int),
+			('beam tilt', dict),
+			('beam shift', dict),
+			('image shift', dict),
+			('defocus', float),
+			('magnification', int),
+			('stage position', dict),
+			('low dose', str),
+			('low dose mode', str),
+			('diffraction mode', str),
+			('reset defocus', int),
+
+			('offset', dict),
+			('dimension', dict),
+			('binning', dict),
+			('exposure time', float),
+		]
 		return t
 	typemap = classmethod(typemap)
 
@@ -435,7 +459,7 @@ class PhaseCorrelationImageData(CorrelationImageData):
 class CameraImageData(ImageData):
 	def typemap(cls):
 		t = ImageData.typemap()
-		t += [ ('scope', dict), ('camera', dict), ]
+		t += [ ('scope', EMData), ('camera', EMData), ]
 		return t
 	typemap = classmethod(typemap)
 

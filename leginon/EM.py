@@ -20,13 +20,14 @@ if sys.platform == 'win32':
 class DataHandler(node.DataHandler):
 	def query(self, id):
 		stuff = self.node.getEM([id[0]])
-		result = data.EMData(self.ID(), em=stuff)
+		result = data.EMData(self.ID())
+		result.update(stuff)
 		return result
 
 	def insert(self, idata):
 		if isinstance(idata, data.EMData):
 			print idata['id'][:-1], 'attempting to set EM'
-			self.node.setEM(idata['em'])
+			self.node.setEM(idata)
 			print idata['id'][:-1], 'EM set'
 		else:
 			node.DataHandler.insert(self, idata)

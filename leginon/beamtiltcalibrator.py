@@ -142,13 +142,11 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 	def getDefocus(self):
 		emdata = self.researchByDataID(('defocus',))
-		defocus = emdata['em']
-		return defocus
+		return emdata
 
 	def getStigmator(self):
 		emdata = self.researchByDataID(('stigmator',))
-		defocus = emdata['em']
-		return defocus
+		return emdata
 
 	def defineUserInterface(self):
 		calspec = calibrator.Calibrator.defineUserInterface(self)

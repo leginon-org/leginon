@@ -66,8 +66,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if newtargetemdata is not None:
 			print 'type', type(newtargetemdata)
 			print 'NEWTARGETEMDATA'
-			print '   magnification', newtargetemdata['em']['magnification']
-			print '   image shift', newtargetemdata['em']['image shift']
+			print '   magnification', newtargetemdata['magnification']
+			print '   image shift', newtargetemdata['image shift']
 
 		### do each preset for this acquisition
 		presetnames = self.presetnames.get()
@@ -90,8 +90,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 				## make newtargetemdata with preset applied
 				ptargetemdata = self.addPreset(targetemdata, presetdata)
 				print 'PTARGETEMDATA'
-				print '   magnification', ptargetemdata['em']['magnification']
-				print '   image shift', ptargetemdata['em']['image shift']
+				print '   magnification', ptargetemdata['magnification']
+				print '   image shift', ptargetemdata['image shift']
 
 			## set the scope/camera state
 			self.outputEvent(event.LockEvent(self.ID()))
@@ -149,17 +149,15 @@ class Acquisition(targetwatcher.TargetWatcher):
 		# like magnification will be updated later.
 
 		# make new EMData object
-		print 'REMOVE PRESET'
-		emdict = emdata['em']
-		print 'TARGET BEFORE', emdict['image shift']
-		newemdict = copy.deepcopy(emdict)
-		newemdata = data.EMData(('scope',), em=newemdict)
+		newemdata = data.EMData(('scope',))
+		newemdata.update(emdata)
+
 		print 'REMOVING', presetdata['image shift']
 
 		# update its values from PresetData object
-		newemdict['image shift']['x'] -= presetdata['image shift']['x']
-		newemdict['image shift']['y'] -= presetdata['image shift']['y']
-		print 'TARGET AFTER', newemdata['em']['image shift']
+		newemdata['image shift']['x'] -= presetdata['image shift']['x']
+		newemdata['image shift']['y'] -= presetdata['image shift']['y']
+		print 'TARGET AFTER', newemdata['image shift']
 		return newemdata
 
 	def addPreset(self, emdata, presetdata):
@@ -173,28 +171,28 @@ class Acquisition(targetwatcher.TargetWatcher):
 		print 'ADD PRESET'
 
 		# make new EMData object
-		emdict = emdata['em']
-		print 'TARGET BEFORE', emdict['image shift']
-		newemdict = copy.deepcopy(emdict)
-		newemdata = data.EMData(('scope',), em=newemdict)
+		newemdata = data.EMData(('scope',))
+		newemdata.update(emdata)
+		print 'TARGET BEFORE', newemdata['image shift']
 
 		print 'ADDING', presetdata['image shift']
 		# image shift is added, other parameter just overwrite
-		ishift = newemdata['em']['image shift']
+		ishift = newemdata['image shift']
 		ishift['x'] += presetdata['image shift']['x']
 		ishift['y'] += presetdata['image shift']['y']
 		## save a temp ishift because update() will overwrite it
 		tempishift = copy.deepcopy(ishift)
 
 		# overwrite values from preset into emdict
-		newemdata['em'].update(presetdata)
-		newemdata['em']['image shift'] = tempishift
-		print 'TARGET AFTER', newemdata['em']['image shift']
+		newemdata.update(presetdata)
+		newemdata['image shift'] = tempishift
+		print 'TARGET AFTER', newemdata['image shift']
 		return newemdata
 
 	def presetDataToEMData(self, presetdata):
-		emdict = dict(presetdata)
-		emdata = data.EMData(('scope',), em=emdict)
+		#emdict = dict(presetdata)
+		emdata = data.EMData(('scope',))
+		emdata.update(presetdata)
 		return emdata
 
 	def acquire(self, presetdata, trial=False):

@@ -3,93 +3,73 @@ import node, data
 import calibrationclient
 import camerafuncs
 
-class DriftChecker(acquisition.Acquisition):
+class Drifter(acquisition.Acquisition):
 	def __init__(self, id, sesison, nodelocations, **kwargs):
 		self.cam = camerafuncs.CameraFuncs(self)
-		self.btcalclient = calibrationclient.BeamTiltCalibrationClient(self)
-		self.focus_methods = {
-			'None': self.correctNone,
-			'Stage Z': self.correctZ,
-			'Defocus': self.correctDefocus
-		}
 
-		acquisition.Acquisition.__init__(self, id, sesison, nodelocations, **kwargs)
+		self.calclient = calibrationclient.CalibrationClient(self)
 
-	def acquire(self, preset):
+		acquisition.Acquisition.__init__(self, id, sesison, nodelocations, targetclass=data.TargetData, **kwargs)
+
+	def acquire(self, preset, trial=False):
 		'''
 		this replaces Acquisition.acquire()
 		Instead of acquiring an image, we do autofocus
 		'''
-		btilt = self.btilt.get()
 		pub = self.publishimages.get()
-		correction = self.btcalclient.measureDefocusStig(btilt, pub)
-		print 'MEASURED DEFOCUS AND STIG', correction
-		defoc = correction['defocus']
-		stigx = correction['stigx']
-		stigy = correction['stigy']
-		min = correction['min']
+		drift_timeout = self.drift_timeout.get()
+		pause_time = self.pause_time.get()
 
-		### validate defocus correction
-		# possibly use min (value minimized during least square fit)
-		#   mag: 50000, tilt: 0.02, defoc: 30e-6
-		#     84230 was bad
-		#   mag: 50000, tilt: 0.02, defoc: 25e-6
-		#     5705 was bad
-		#   mag: 50000, tilt: 0.02, defoc: 22e-6
-		#     4928 was maybe
-		#   mag: 50000, tilt: 0.02, defoc: 20e-6
-		#     3135 was maybe
-		#   mag: 50000, tilt: 0.02, defoc: 18e-6
-		#     1955 was maybe
-		#   mag: 50000, tilt: 0.02, defoc: 14e-6
-		#      582 was good
-		# for now, assum it is valid
-		validdefocus = 1
+		### measure drift until timeout
 
-		### validate stig correction
-		# stig is only valid for large defocus
-		if validdefocus and (abs(defoc) > 1e-6):
-			validstig = 1
-		
-		if validstig and self.stigcorrection.get():
-			print 'Stig correction'
-			self.correctStig(stigx, stigy)
+		info1 = self.acquireStateImage(state1, publish_images, settle)
+		imagedata1 = info1['imagedata']
+		imagecontent1 = imagedata1
+		stats1 = info1['image stats']
+		actual1 = imagecontent1['scope']
+		self.numimage1 = imagecontent1['image']
+		self.correlator.insertImage(self.numimage1)
 
-		if validdefocus:
-			print 'Defocus correction'
-			focustype = self.focustype.get()
-			try:
-				focusmethod = self.focus_methods[focustype]
-			except KeyError:
-				print 'no method selected for correcting defocus'
+		## for drift check, continue to acquire at state1
+		if checkdrift:
+			self.sleep(pause_time)
+
+			print 'checking for drift'
+			if timeout is None:
+				timelimit = None
 			else:
-				focusmethod(defoc)
+				timelimit = time.time() + timeout
+			while 1:
+				info1 = self.acquireStateImage(state1, publish_images, settle)
+				imagedata1 = info1['imagedata']
+				imagecontent1 = imagedata1
+				stats1 = info1['image stats']
+				actual1 = imagecontent1['scope']
+				self.numimage1 = imagecontent1['image']
+				self.correlator.insertImage(self.numimage1)
 
-	def correctStig(self, deltax, deltay):
-		stig = self.researchByDataID(('stigmator',))
-		stig['em']['stigmator']['objective']['x'] += deltax
-		stig['em']['stigmator']['objective']['y'] += deltay
-		emdata = data.EMData(('scope',), stig)
-		print 'correcting stig by %s,%s' % (deltax,deltay)
-		self.publishRemote(emdata)
+				print 'correlation'
+				pcimage = self.correlator.phaseCorrelate()
 
-	def correctDefocus(self, delta):
-		defocus = self.researchByDataID(('defocus',))
-		defocus['em']['defocus'] += delta
-		emdata = data.EMData(('scope',), defocus)
-		print 'correcting defocus by %s' % (delta,)
-		self.publishRemote(emdata)
+				print 'peak finding'
+				self.peakfinder.setImage(pcimage)
+				self.peakfinder.subpixelPeak()
+				peak = self.peakfinder.getResults()
+				peakvalue = peak['subpixel peak value']
+				shift = correlator.wrap_coord(peak['subpixel peak'], pcimage.shape)
+				drift = abs(shift[0] + 1j * shift[1])
+				if drift < 1.0:
+					print 'no drift'
+					break
+				else:
+					print 'drift', drift
+				
+				if timelimit and time.time() > timelimit:
+					raise DriftingTimeout()
 
-	def correctZ(self, delta):
-		stage = self.researchByDataID(('stage position',))
-		newz = stage['em']['stage position']['z'] + delta
-		newstage = {'stage position': {'z': newz }}
-		emdata = data.EMData(('scope',), em=newstage)
-		print 'correcting stage Z by %s' % (delta,)
-		self.publishRemote(emdata)
 
-	def correctNone(self, delta):
-		print 'not applying defocus correction'
+			data.DriftData(self.ID(), 
+
 
 	def uiTest(self):
 		self.acquire(None)
@@ -98,17 +78,13 @@ class DriftChecker(acquisition.Acquisition):
 	def defineUserInterface(self):
 		acqui = acquisition.Acquisition.defineUserInterface(self)
 
-		self.btilt = self.registerUIData('Beam Tilt', 'float', default=0.02, permissions='rw')
-		focustypes = self.registerUIData('focustypes', 'array', default=self.focus_methods.keys())
-		self.focustype = self.registerUIData('Focus Correction Type', 'string', choices=focustypes, permissions='rw', default='None')
-		self.stigcorrection = self.registerUIData('Stigmator Correction', 'boolean', permissions='rw')
-		self.publishimages = self.registerUIData('Publish Images', 'boolean', default=1)
+		self.publishimages = self.registerUIData('Publish Images', 'boolean', default=1, permissions='rw')
 
-		test = self.registerUIMethod(self.uiTest, 'Test Autofocus', ())
+		test = self.registerUIMethod(self.uiTest, 'Test Drifter', ())
 
-		prefs = self.registerUIContainer('Focuser Setup', (self.btilt, self.focustype, self.stigcorrection, self.publishimages, test))
+		prefs = self.registerUIContainer('Drifter Setup', (self.publishimages, test))
 
-		myui = self.registerUISpec('Focuser', (prefs,))
+		myui = self.registerUISpec('Drifter', (prefs,))
 		myui += acqui
 		return myui
 
