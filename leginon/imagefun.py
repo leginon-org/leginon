@@ -111,7 +111,8 @@ if numextension is not None:
 		each pixel.  if the pixel value varies by more than sigma * std
 		dev. then the pixel will be set to the mean value.
 		'''
-		return numextension.despike(image.astype(Numeric.Float32), size, sigma)
+		# last argument is debug flag
+		return numextension.despike(image.astype(Numeric.Float32), size, sigma, 0)
 
 
 def medianSeries(series):
