@@ -1,0 +1,211 @@
+#!/usr/bin/php -q
+<?php
+require('inc/leginon.inc');
+
+function display($data, $withkey=false, $title="", $id=true, $total=false) {
+	if (!is_array($data))
+		$data = array($data);
+	if ($title)
+		echo "$title\n\n";
+	if ($total)
+		echo "total  ".count($data)."\n";
+	echo displayarray($data, $withkey,'',$id);
+}
+
+function displayarray($array, $withkey=false, $offset='',$id) {
+	$output = "";
+	foreach($array as $k=>$v) {
+		if (is_array($v)) {
+			if (!$id)
+				unset($v['id']);
+			$output .= ($withkey) ? $k.":\n".displayarray($v, $withkey, '	',$id) : implode('	',$v)."\n";
+		}
+		else
+		if ($k != $v && $withkey) {
+			$output .="$offset$k:	$v\n";
+		} else {
+			$output .="$offset$v\n";
+		}
+	}
+	return $output;
+}
+
+function displayquery($query) {
+	$output = (is_array($query)) ?  implode(";\n", $query) : $query;
+	echo "\n".$output.";\n";
+}
+
+
+$getpresets = false;
+$displayId = true;
+$displayDesc = true;
+$displaySQL = false;
+$sqlqueries = array();
+$getinfo = false;
+$viewkey = false;
+$preset = "";
+$title = "";
+$total = false;
+
+$cmd = end(explode('/',array_shift($argv)));
+
+while ($arg = array_shift($argv)) {
+	switch ($arg) {
+		case ($arg == '-h' || $arg == '--help'):
+				echo	"Usage: $cmd [OPTIONS] [EXPERIMENT_ID || -f FILE_ID]\n";
+				echo	"List information about the Experiments or Filenames stored in a database.\n";
+				echo	"(all experiments with id and description by default).\n";
+				echo	"[EXPERIMEN_ID] or [FILE_ID] can be represented by:\n";
+				echo	"	- numeric id:		$cmd 1445\n";
+				echo	"				$cmd -f 64905\n";
+				echo	"	- string id:		$cmd 04sep29a\n";
+				echo	"				$cmd -f 04sep29a_00022gr_00001sq_00001hl_00002en.mrc\n";
+				echo	"	- partial string:	$cmd 04sep2%\n";
+				echo	"				$cmd -f 04sep29a_00022gr_00001sq_00001hl_00002%.mrc\n";
+				echo	"	(use % as wild card)\n";
+				echo	"\n";
+				echo	" Options:\n";
+				echo	"  -h,  --help	Display this help and exit.\n";
+				echo	"\n";
+				echo	"  -noid	Numeric Ids are not displayed.\n";
+				echo	"\n";
+				echo	"  -nodesc	Long description are not displayed.\n";
+				echo	"\n";
+				echo	"  -tot		Total rows is displayed.\n";
+				echo	"\n";
+				echo	"  -sql		Display related SQL Query.\n";
+				echo	"\n";
+				echo	"  -f FILE_ID	Id repesentation linked to a file NOT an experiment.\n";
+				echo	"\n";
+				echo	"  -i		Display detailed information of selected Id(s).\n";
+				echo	"\n";
+				echo	"  -p		Display PRESETs used for the selected ExperimentId(s).\n";
+				echo	"		ex: $cmd 1445 -p\n";
+				echo	"\n";
+				echo	"  -t PRESET	List Filenames from selected ExperimentId(s)\n";
+				echo	"		where filenames preset=PRESET.\n";
+				echo	"		(PRESETs are listed with -p option)\n";
+				echo	"		ex: $cmd 04sep29a -t gr\n";
+				echo	"\n";
+				echo	"\n";
+				echo	" Examples:\n";
+				echo	"	List all experiments like '04sep2?a'\n";
+				echo	"		$cmd 04sep2%a \n";
+				echo	"	 - with information:\n";
+				echo	"		$cmd 04sep2%a -i\n";
+				echo	"	 - with presets:\n";
+				echo	"		$cmd 04sep2%a -p\n";
+				echo	"\n";
+				echo	"	List all filenames from ExperimentId 1445\n";
+				echo	"		$cmd 1445 \n";
+				echo	"	 - with total and no numericIds:\n";
+				echo	"		$cmd 1445 -tot -noid\n";
+				echo	"\n";
+				echo	"	List all filenames like:\n";
+				echo	"		$cmd -f 04sep29a_00022gr_00001sq_00001hl_00002%.mrc \n";
+				echo	"	 - with information:\n";
+				echo	"		$cmd 04sep2%a -i\n";
+				echo	"	 - with SQL Query information:\n";
+				echo	"		$cmd 04sep2%a -i -sql\n";
+				echo	"\n";
+				echo	"	Get Filename from id:\n";
+				echo	"		$cmd -f 64905\n";
+				echo	"\n";
+				echo	"Many others combinations...\n";
+				echo	"\n";
+				exit;
+				break;
+		case '-t':
+				$preset = array_shift($argv);
+				break;
+		case '-f':
+				$file = array_shift($argv);
+				break;
+		case '-noid':	$displayId = false;
+				break;
+		case '-sql':	$displaySQL = true;
+				break;
+		case '-nodesc':	$displayDesc = false;
+				break;
+		case '-p':	$getpresets = true;
+				break;
+		case '-i':	$getinfo = true;
+				break;
+		case '-tot':	$total = true;
+				break;
+		default:	$ids[] = $arg;
+				
+		
+	}
+}
+
+switch (count($ids)) {
+
+	case '0':
+		if (!$file) {
+			$data = $leginondata->getSessions($displayDesc);
+		} else {
+			$data = $leginondata->getFilename($file);
+			if ($getinfo) {
+				$viewkey=true;
+				$title = "Image Info for image '$file' $preset";
+				if (is_numeric($file)) {
+					$data = $leginondata->getImageInfo($file);
+				} else {
+					$files = $leginondata->getFilename($file);
+					$data = array();
+					foreach ($files as $file) {
+						$data[$file['filename']] = $leginondata->getImageInfo($file['id']);
+						$sqlqueries[]=$leginondata->mysql->getSQLquery(); 
+					} 
+				}
+			}
+		}
+		break;
+	case '1':
+		$id = $ids[0];
+		if (!is_numeric($id)) {
+			$matched = $leginondata->getSessions(false, false, $id);
+			$data = array();
+		}
+		if ($getpresets) {
+			$title = "Preset Names for id '$id'";
+			$viewkey = true;
+			if ($matched) {
+				foreach ($matched as $match) {
+					$data[$match['name']] = $leginondata->getDatatypes($match['id']);
+					$sqlqueries[]=$leginondata->mysql->getSQLquery(); 
+				}
+			} else {
+				$data = $leginondata->getDatatypes($id, true);
+			}
+		} else if ($getinfo){
+			$title = "Session Info for id '$id'";
+			$viewkey = true;
+			if ($matched) {
+				foreach ($matched as $match) {
+					$data[$match['name']] = $leginondata->getSessionInfo($match['id']);
+					$sqlqueries[]=$leginondata->mysql->getSQLquery(); 
+				}
+			} else {
+				$data = $leginondata->getSessionInfo($id);
+			}
+		} else if ($matched) {
+			$data = $leginondata->getSessions(true, false, $id);
+			if (count($data)==1)
+				$data = $leginondata->getFilenames($id, $preset);
+		} else {
+			$data = $leginondata->getFilenames($id, $preset);
+		}
+		break;
+}
+
+if (!$sqlqueries)
+	$sqlqueries[]=$leginondata->mysql->getSQLquery(); 
+
+if ($data)
+	if ($displaySQL)
+		displayquery($sqlqueries);
+	else 
+		display($data, $viewkey, $title, $displayId, $total);
+?>

@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.27 $
- *	@version $Id: leginon.inc,v 1.27 2004-10-07 22:59:25 dfellman Exp $
+ *	@version $Revision: 1.28 $
+ *	@version $Id: leginon.inc,v 1.28 2004-10-15 19:19:55 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -37,7 +37,7 @@ class leginondata {
 
 	function leginondata() {
 		require("config.php");
-		$this->mysql = new mysql($HOSTNAME, $DBUSER, $DBPASSWORD, $DATABASE);
+		$this->mysql = &new mysql($HOSTNAME, $DBUSER, $DBPASSWORD, $DATABASE);
 		$this->viewer_tables();
 	}
 
@@ -86,7 +86,9 @@ class leginondata {
 		return $sessionId_exists;
 	}
 
-	function getSessions($comment="", $projectId=false) {
+	function getSessions($comment="", $projectId=false, $like="") {
+		if ($like)
+			$wherelike = "and s.`Name` like '$like' ";
 		$selectcomment = ($comment) ? 
 				"if (length(s.comment)>0, concat(s.name,' - ',s.comment), s.name)" : "s.name";
 		if (is_numeric($projectId)) {
@@ -102,20 +104,22 @@ class leginondata {
 		.$projectjoin
 		."where a.`REF|SessionData|Session` <> 'NULL' "
 		.$projectwhere
+		.$wherelike
 		."order by s.DEF_timestamp DESC ";
 
 		return $this->mysql->getSQLResult($q);
 	}
 
-	function getSessionInfo($expId) {
-		$sessioninfo = array();
+	function getSessionInfo($name) {
+		$sqlwhere = (is_numeric($name)) ? "where s.`DEF_id`='$name' " 
+				: "where s.`Name` like '$name' ";
+
 		$q="select "
+		."s.`DEF_id` as SessionId, "
 		."s.Name, "
 		."s.comment as Purpose, "
 		."date_format(s.`DEF_timestamp`, '%Y-%d-%m %T') as `Begin Time`,"
 		."date_format(a.`DEF_timestamp`, '%Y-%d-%m %T') as `End Time`, "
-		."date_format(s.`DEF_timestamp`, '%Y-%m-%d') as `btime`,"
-		."date_format(a.`DEF_timestamp`, '%Y-%m-%d') as `etime`, "
 		."sec_to_time((Dayofyear(a.`DEF_timestamp`)-Dayofyear(s.`DEF_timestamp`))*86400-"
 		."time_to_sec(s.`DEF_timestamp`)+time_to_sec(a.`DEF_timestamp`)) as `Total Duration`, "
 		."s.`Image path`, "
@@ -126,8 +130,8 @@ class leginondata {
 		."left join UserData u on (u.`DEF_id`=s.`REF|UserData|user`) "
 		."left join InstrumentData i on (i.`DEF_id`=s.`REF|InstrumentData|instrument`) "
 		."left join AcquisitionImageData a on (a.`REF|SessionData|session`=s.`DEF_id`) "
-		."where s.`DEF_id`='$expId' "
-		."order by a.`DEF_timestamp` DESC ";
+		.$sqlwhere 
+		."order by a.`DEF_timestamp` DESC limit 1";
 		$sessioninfo = $this->mysql->getSQLResult($q);
 		return $sessioninfo[0];
 	}
@@ -175,11 +179,11 @@ class leginondata {
 		return $this->mysql->getSQLResult($q);
 	}
 
-	function getDatatypes($expId) {
+	function getDatatypes($sessionId) {
 		$q="select distinct name FROM AcquisitionImageData a "
 			." left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
-			." where a.`REF|SessionData|session` = '$expId'";
-		$Rdatatype = $this->mysql->SQLQuery($q) or die ("No data type found");
+			." where a.`REF|SessionData|session` = '$sessionId'";
+		$Rdatatype = $this->mysql->SQLQuery($q);
 		$ndata=mysql_num_rows($Rdatatype);
 		while ($row = mysql_fetch_row($Rdatatype)) 
 			if ($row[0])
@@ -195,21 +199,30 @@ class leginondata {
 		return array_merge($defaulttypes, $types);
 	}
 
-	function getFilenames($expId, $name="", $table="AcquisitionImageData") {
+	function getFilenames($sessionId, $name="", $table="AcquisitionImageData") {
+		$sessionwhere = "a.`REF|SessionData|session`='$sessionId' ";
+		if (!is_numeric($sessionId)) {
+			$sessionwhere = "s.`Name` like '$sessionId' ";
+			$sessionjoin = "left join SessionData s on (s.`DEF_id`=a.`REF|SessionData|session`) ";
+		}
 		$name = (in_array($name, $this->defaulttypes)) ? "" : $name;
 		if (in_array($name, $this->ffttypes)) {
 		$q = "select a.`DEF_id` as `id`, f.`MRC|Image` as `name` "
 		    ." from `$table` a "
 		    ." left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
 		    ." left join AcquisitionFFTData f on (f.`REF|AcquisitionImageData|source`=a.`DEF_id`) "
-		    ." where a.`REF|SessionData|session`='$expId' "
+			.$sessionjoin
+		    ." where "
+			.$sessionwhere 
 		    ." and f.`MRC|Image`<>'NULL' "
 		    ." order by a.`DEF_id` DESC ";
 		} else {
 		$q = "select a.`DEF_id` as `id`, a.`MRC|Image` as `name` "
 		    ." from `$table` a "
 		    ." left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
-		    ." where a.`REF|SessionData|session`='$expId' ";
+			.$sessionjoin
+		    ." where "
+			.$sessionwhere ;
 			if ($name) {
 				if ($name == $this->manualtype)
 					$q .=" and p.name is null ";
@@ -360,12 +373,13 @@ class leginondata {
 				);
 	}
 
-	function getFilename($id, $table="AcquisitionImageData") {
-		$q = "select `MRC|image` as filename from `$table` where "
-		    ." `DEF_Id` =\"$id\"  ";
-		$RfileInfo = $this->mysql->SQLQuery($q);
-		$fileInfo = mysql_fetch_array($RfileInfo);
-		return $fileInfo[filename];
+	function getFilename($name) {
+		$sqlwhere = (is_numeric($name)) ? "where `DEF_id`='$name' " 
+				: "where `MRC|image` like '$name' ";
+		$q = "select `DEF_id` as id, `MRC|image` as filename from `AcquisitionImageData` "
+		    .$sqlwhere;
+		$filenames = $this->mysql->getSQLResult($q);
+		return $filenames;
 	}
 
 	function getCalibrations($calibration, $instrumentId=False, $limit='', $type='') {
@@ -730,6 +744,7 @@ class leginondata {
 			."child.`DEF_id` as childId, "
 			."t.`DEF_id` as tId, "
 			."t.`version` as tversion, "
+			."t.`status` as tstatus, "
 			."t.`number` as tnumber "
 			."from AcquisitionImageData as a "
 			."left join AcquisitionImageTargetData as t "
@@ -799,22 +814,26 @@ class leginondata {
 		return $ret;
 	}
 
-	function getImageFocusTargets($imgId) {
+	function getImageFocusTargets($imgId, $all=false) {
+		if (!$all)
+			$version = "t.`version`='0' and ";
 		$q =	" select "
 			."floor(t.`delta column`+c.`SUBD|dimension|x`/2) as x, "
 			."floor(t.`delta row`+c.`SUBD|dimension|y`/2) as y, "
 			."c.`SUBD|dimension|x` as dimx, "
 			."c.`SUBD|dimension|y` as dimy, "
 			."t.`DEF_id` as tId, "
+			."t.`status` as tstatus, "
 			."t.`version` as tversion "
 			."from AcquisitionImageData as a "
 			."left join AcquisitionImageTargetData as t "
 			."on (a.`DEF_id` = t.`REF|AcquisitionImageData|image`) "
 			."left join CameraEMData c on (t.`REF|CameraEMData|camera`=c.`DEF_id`) "
 			."where (t.`delta row` or t.`delta column`)<>'NULL' and "
-			."t.`version`='0' and "
+			.$version 
 			."t.`type`='focus' and "
 			."a.`DEF_id`='".$imgId."'";
+		echo $q;
 		$Rtargets = $this->mysql->SQLQuery($q);
 		$targets= array();
 		while ($target = mysql_fetch_array($Rtargets, MYSQL_ASSOC))
@@ -1308,6 +1327,23 @@ class leginondata {
 				."\";".$this->crlf;
 		}
 		return $tree;
+	}
+
+	function insertBlob($sessionId, $imageId, $filename)  {
+		$strfilehex = $this->file2hex($filename);
+		$q = 'Insert into `ImageBlob` '
+			.'(`sessionId`, `imageId`, `filename`, `imageBlob`) '
+			.' Values '
+			.'('.$sessionId.', '.$imageId.', "'.$filename.'", '
+			.$strfilehex.');'."\n";
+		return $q; // $this->mysql->SQLQuery($q, True);
+	}
+
+	function file2hex($filename) {
+		if (is_file($filename))
+			return '0x'.bin2hex(file_get_contents($filename));
+		else
+			return False;
 	}
 
 }

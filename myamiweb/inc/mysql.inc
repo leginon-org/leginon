@@ -175,7 +175,12 @@ class mysql {
 		return $this->mysqlerror;
 	}
 
+	function getSQLQuery() {
+		return $this->sqlquery;
+	}
+
 	function SQLQuery($query, $insert=false) {
+		$this->sqlquery = $query;
 		$this->connect_db($this->new_sqlhost);
 		$result = mysql_query($query); 
 		if (!$result) {
