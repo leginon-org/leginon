@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/remotecall.py,v $
-# $Revision: 1.10 $
+# $Revision: 1.11 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-23 20:03:43 $
+# $Date: 2005-02-23 21:17:32 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -201,11 +201,18 @@ class ObjectProxy(object):
 		else:
 			raise TypeError('attribute %s is not readable' % name)
 
-	def hasattr(self, name):
+	def hasAttribute(self, name):
 		d, t = self.__objectservice.descriptions[self.__nodename][self.__name]
 		if name in d:
 			return True
 		return False
+
+	def getAttributeTypes(self, name):
+		d, t = self.__objectservice.descriptions[self.__nodename][self.__name]
+		try:
+			return d[name].keys()
+		except KeyError:
+			return []
 
 	def multiCall(self, names, types, args=None, kwargs=None):
 		args = (self.__nodename, self.__name, names, types, args, kwargs)

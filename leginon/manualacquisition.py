@@ -89,10 +89,6 @@ class ManualAcquisition(node.Node):
 				self.logger.error('Instrument failed to acquire image')
 			raise AcquireError
 
-		# store EMData to DB
-		self.publish(imagedata['scope'], database=True)
-		self.publish(imagedata['camera'], database=True)
-
 		self.logger.info('Displaying image...')
 		stats = self.getImageStats(imagedata['image'])
 		self.setImage(imagedata['image'], stats=stats)
@@ -215,19 +211,19 @@ class ManualAcquisition(node.Node):
 		#	data.ImageData.filename(acquisitionimagedata)[:-4]
 
 		try:
+			self.publish(imagedata['scope'], database=True)
+			self.publish(imagedata['camera'], database=True)
 			self.publish(acquisitionimagedata, database=True)
 		except RuntimeError:
 			raise node.PublishError
 
 	def acquireImage(self):
-		'''
 		temnames = self.instrument.getTEMNames()
 		ccdcameranames = self.instrument.getCCDCameraNames()
 		print temnames
 		print ccdcameranames
 		self.instrument.setTEM(temnames[0])
 		print self.instrument.getData(data.ScopeEMData)
-		'''
 		try:
 			try:
 				self.preExposure()
