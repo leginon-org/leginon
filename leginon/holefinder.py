@@ -121,10 +121,10 @@ class HoleFinder(targetfinder.TargetFinder):
 
 		allblobscontainer = uidata.LargeContainer('All Blobs')
 		allblobscontainer.addObjects((self.blobborder, self.maxblobs, self.maxblobsize, findblobmeth, self.allblobs, self.allblobsimage))
-		laticeblobscontainer = uidata.LargeContainer('Latice Blobs')
-		laticeblobscontainer.addObjects(( self.latspacing, self.lattol, self.holestatsrad, self.icei0, fitlatmeth, self.latblobs, self.latblobsimage))
+		latticeblobscontainer = uidata.LargeContainer('Lattice Blobs')
+		latticeblobscontainer.addObjects(( self.latspacing, self.lattol, self.holestatsrad, self.icei0, fitlatmeth, self.latblobs, self.latblobsimage))
 		blobcont = uidata.LargeContainer('Blobs')
-		blobcont.addObjects((allblobscontainer, laticeblobscontainer))
+		blobcont.addObjects((allblobscontainer, latticeblobscontainer))
 
 		goodholescontainer = uidata.LargeContainer('Good Holes')
 		goodholescontainer.addObjects((self.icetmin, self.icetmax, self.icetstd, icemeth, self.goodholes, self.use_target_template, self.foc_target_template, self.acq_target_template, self.goodholesimage, submitmeth))
