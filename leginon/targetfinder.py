@@ -46,6 +46,7 @@ class TargetFinder(imagewatcher.ImageWatcher):
 				print targetdata['id']
 				
 			self.publish(targetlistdata, pubevent=True)
+		self.targetlist = []
 
 	def defineUserInterface(self):
 		imagewatcher.ImageWatcher.defineUserInterface(self)
