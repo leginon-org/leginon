@@ -155,7 +155,7 @@ class TargetWaitHandler(TargetHandler):
 		'''
 		targetlistid = targetlistdoneevent['targetlistid']
 		status = targetlistdoneevent['status']
-		self.logger.info('Got target list done event, setting threading event %s'
+		self.logger.debug('Got target list done event, setting threading event %s'
 											% (targetlistid,))
 		if targetlistid in self.targetlistevents:
 			self.targetlistevents[targetlistid]['status'] = status
@@ -181,9 +181,9 @@ class TargetWaitHandler(TargetHandler):
 		except AttributeError, KeyError:
 			pass
 		for tid, teventinfo in self.targetlistevents.items():
-			self.logger.info('%s waiting for %s' % (self.name, tid))
+			self.logger.info('Waiting for target ID %s...' % (tid[1],))
 			teventinfo['received'].wait()
-			self.logger.info('%s done waiting for %s' % (self.name, tid))
+			self.logger.info('Target ID %s has been processed.' % (tid[1],))
 		self.targetlistevents.clear()
 		self.logger.info('%s done waiting' % (self.name,))
 

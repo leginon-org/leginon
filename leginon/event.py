@@ -299,6 +299,13 @@ class QueueGridEvent(ControlEvent):
 		)
 	typemap = classmethod(typemap)
 
+class QueueGridsEvent(ControlEvent):
+	def typemap(cls):
+		return ControlEvent.typemap() + (
+			('grid IDs', list),
+		)
+	typemap = classmethod(typemap)
+
 class GridLoadedEvent(NotificationEvent):
 	def typemap(cls):
 		return ControlEvent.typemap() + (

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/atlasviewer.py,v $
-# $Revision: 1.14 $
+# $Revision: 1.15 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-22 23:35:06 $
+# $Date: 2005-03-23 19:18:39 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -23,6 +23,9 @@ import presets
 import calibrationclient
 import targethandler
 import gui.wx.AtlasViewer
+
+class TargetError(Exception):
+	pass
 
 class Grids(object):
 	def __init__(self):
@@ -159,18 +162,13 @@ class AtlasViewer(node.Node, targethandler.TargetWaitHandler):
 		targethandler.TargetWaitHandler.eventoutputs +
 		presets.PresetsClient.eventoutputs +
 		[
-			event.QueueGridEvent,
+			event.QueueGridsEvent,
 			event.UnloadGridEvent,
 		]
 	)
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.grids = Grids()
 		self.insertion = None
-
-		self.waitforgridid = None
-		self.waitforgridevent = threading.Event()
-		self.waitforgridstatus = None
-		self.waitforgriddata = None
 
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 
@@ -198,10 +196,21 @@ class AtlasViewer(node.Node, targethandler.TargetWaitHandler):
 		if evt['request node'] != self.name:
 			return
 
-		if self.waitforgridid == evt['grid']['grid ID']:
-			self.waitforgridstatus = evt['status']
-			self.waitforgriddata = evt['grid']
-			self.waitforgridevent.set()
+		if evt['grid'] is None or evt['grid']['grid ID'] is None:
+			self.logger.warning('Unknown loaded grid')
+			return
+		gridid = evt['grid']['grid ID']
+
+		status = evt['status']
+		if status == 'ok':
+			self.logger.info('Robot loaded grid ID %d' % gridid)
+			self.processGridData(evt['grid'])
+		elif status == 'invalid':
+			self.logger.warning('Grid ID %d not in current tray' % gridid)
+		elif status == 'failed':
+			self.logger.warning('Robot failed to load grid ID %d' % gridid)
+		else:
+			self.logger.warning('Unknown status for grid ID %d' % gridid)
 
 	def getAtlases(self):
 		self.insertion = None
@@ -294,7 +303,7 @@ class AtlasViewer(node.Node, targethandler.TargetWaitHandler):
 			self.insertion.images.reverse()
 
 	def setAtlas(self, gridid, number):
-		#self.updateAtlasTargets()
+		self.updateAtlasTargets()
 		grid = self.grids.getGridByID(gridid)
 		self.insertion = grid.getInsertionByNumber(number)
 		self.updateAtlasImage()
@@ -352,118 +361,108 @@ class AtlasViewer(node.Node, targethandler.TargetWaitHandler):
 		self.setImage(atlasimage, 'Image')
 		self.setTargets(targets, 'Acquisition')
 
-	def submitTargets(self):
-		self.updateAtlasTargets()
+	def hasTargets(self, grid):
+		for insertion in grid.insertions:
+			for image in insertion.images:
+				if image.targets:
+					if not self.reacquireImage(image.data, test=True):
+						raise TargetError('will not be able to acquire image')
+					return True
+		return False
 
+	def getGridsWithTargets(self):
+		self.updateAtlasTargets()
 		grids = []
 		for grid in self.grids.grids:
-			hastargets = False
-			griddata = self.getLastGridInsertion(grid.gridid)
-			if griddata is None:
-				self.logger.error('Failed to get grid insertion, aborting')
-				self.panel.targetsSubmitted()
-				return
-			for insertion in grid.insertions:
-				for image in insertion.images:
-					if image.targets:
-						if not self.reacquireImage(image.data, test=True):
-							self.logger.error('Will not be able to acquire image, aborting')
-							self.panel.targetsSubmitted()
-							return
-						hastargets = True
-			if hastargets:
-				grids.append((grid, griddata))
+			if self.hasTargets(grid):
+				grids.append(grid)
+		return grids
+
+	def queueGrids(self, grids):
+		evt = event.QueueGridsEvent()
+		evt['grid IDs'] = [grid.gridid for grid in grids]
+		self.outputEvent(evt)
+
+	def unloadGrid(self, grid):
+		evt = event.UnloadGridEvent()
+		evt['grid ID'] = grid.gridid
+		self.outputEvent(evt)
+		self.logger.info('Robot notified to unload grid ID %d' % grid.gridid)
+
+	def submitTargets(self):
+		try:
+			grids = self.getGridsWithTargets()
+		except TargetError, e:
+			self.logger.error('Aborting, error determining target: %s' % e)
+			self.panel.targetsSubmitted()
+			return
 
 		if not grids:
 			self.logger.warning('No targets for reacquisition')
 			self.panel.targetsSubmitted()
 			return
 
-		# TODO: lock UI targeting or selectively delete
-		self.setTargets([], 'Acquisition')
-
-		# should sort these properly
-		for grid, griddata in grids:
-			self.logger.info('Waiting for the robot to load grid ID #%d' % grid.gridid)
-			evt = event.QueueGridEvent()
-			evt['grid ID'] = grid.gridid
-			self.outputEvent(evt)
-			self.waitforgridid = grid.gridid
-			self.waitforgridstatus = None
-			self.waitforgridevent.wait()
-			self.waitforgridid = None
-			status = self.waitforgridstatus
-			self.waitforgridstatus = None
-			griddata = self.waitforgriddata
-			self.waitforgriddata = None
-			self.waitforgridevent.clear()
-
-			if status == 'ok':
-				self.logger.info('Robot loaded grid ID %d' % grid.gridid)
-			elif status == 'invalid':
-				self.logger.warning('Robot failed to load grid ID %d, grid not in current tray' % grid.gridid)
-				continue
-			elif status == 'failed':
-				self.logger.warning('Robot failed to load grid ID %d, grid was dropped' % grid.gridid)
-				continue
-			for insertion in grid.insertions:
-				for image in insertion.images:
-					if not image.targets:
-						continue
-					# acquire image and align
-					image1 = image.data['image']
-					imagedata = self.reacquireImage(image.data)
-					if imagedata is None:
-						continue
-					imagedata['grid'] = griddata
-					self.setImageFilename(imagedata)
-					self.publish(imagedata, pubevent=True, database=True)
-					image2 = imagedata['image']
-					theta, shift = align.alignImages(image1, image2)
-					infostring = 'Rotation: %g, shift: (%g, %g)' % ((theta,) + shift)
-					self.logger.info(infostring)
-
-					targetlist = self.newTargetList()
-
-					try:
-						scope = self.instrument.getData(data.ScopeEMData)
-					except:
-						self.logger.warning('Failed to access microscope, continuing')
-						continue
-					try:
-						camera = self.instrument.getData(data.CameraEMData, image=False)
-					except:
-						self.logger.warning('Failed to access camera, continuing')
-						continue
-
-					presetdata = image.data['preset']
-
-					# align targets
-					shape1 = image1.shape
-					shape2 = image2.shape
-					for target in image.targets:
-						target = align.alignTarget(target, shape1, shape2, theta, shift)
-						row = target[0] - shape2[0]/2
-						column = target[1] - shape2[1]/2
-						targetdata = self.newTargetForImage(imagedata, row, column,
-																								type='acquisition',
-																								list=targetlist)
-						self.publish(targetdata, database=True)
-
-					# remove targets for this image
-					image.targets = []
-
-					self.makeTargetListEvent(targetlist)
-					self.publish(targetlist, database=True, dbforce=True, pubevent=True)
-
-					self.waitForTargetListDone()
-
-			evt = event.UnloadGridEvent()
-			evt['grid ID'] = grid.gridid
-			self.outputEvent(evt)
-			self.logger.info('Robot notified to unload grid ID #%d' % grid.gridid)
-
+		self.queueGrids(grids)
 		self.panel.targetsSubmitted()
+
+	def processGridData(self, griddata):
+		self.updateAtlasTargets()
+		grid = self.grids.getGridByID(griddata['grid ID'])
+		for insertion in grid.insertions:
+			if insertion == self.insertion:
+				self.setTargets([], 'Acquisition')
+			for image in insertion.images:
+				if not image.targets:
+					continue
+				# acquire image and align
+				image1 = image.data['image']
+				imagedata = self.reacquireImage(image.data)
+				if imagedata is None:
+					continue
+				imagedata['grid'] = griddata
+				self.setImageFilename(imagedata)
+				self.publish(imagedata, pubevent=True, database=True)
+				image2 = imagedata['image']
+				theta, shift = align.alignImages(image1, image2)
+				infostring = 'Rotation: %g, shift: (%g, %g)' % ((theta,) + shift)
+				self.logger.info(infostring)
+
+				targetlist = self.newTargetList()
+
+				try:
+					scope = self.instrument.getData(data.ScopeEMData)
+				except:
+					self.logger.warning('Failed to access microscope, continuing')
+					continue
+				try:
+					camera = self.instrument.getData(data.CameraEMData, image=False)
+				except:
+					self.logger.warning('Failed to access camera, continuing')
+					continue
+
+				presetdata = image.data['preset']
+
+				# align targets
+				shape1 = image1.shape
+				shape2 = image2.shape
+				for target in image.targets:
+					target = align.alignTarget(target, shape1, shape2, theta, shift)
+					row = target[0] - shape2[0]/2
+					column = target[1] - shape2[1]/2
+					targetdata = self.newTargetForImage(imagedata, row, column,
+																							type='acquisition',
+																							list=targetlist)
+					self.publish(targetdata, database=True)
+
+				# remove targets for this image
+				image.targets = []
+
+				self.makeTargetListEvent(targetlist)
+				self.publish(targetlist, database=True, dbforce=True, pubevent=True)
+
+				self.waitForTargetListDone()
+
+		self.unloadGrid(grid)
 
 	def getLastGridInsertion(self, gridid):
 		initializer = {}
