@@ -21,7 +21,6 @@ class Server(leginonobject.LeginonObject):
 		pass
 
 	def location(self):
-		print 'LOCATION()'
 		loc = leginonobject.LeginonObject.location(self)
 		loc['local server python ID'] = self.pythonid
 		return loc
