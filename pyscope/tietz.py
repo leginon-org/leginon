@@ -3,7 +3,8 @@ import sys
 
 if sys.platform != 'win32':
 	class tietz(camera.camera):
-		pass
+		def __init__(self):
+			pass
 else:
 	import win32com.client
 	import tietzcom
