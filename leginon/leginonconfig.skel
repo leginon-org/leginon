@@ -17,6 +17,8 @@ be a more standard .ini file thing.
 import errno
 import os
 
+logevents = False
+
 #############################################################
 #   utility functions and exceptions used in this script    #
 #     (do not change any of this, skip to next section)     #

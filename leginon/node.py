@@ -237,6 +237,8 @@ class Node(leginonobject.LeginonObject):
 			self.outputEvent(event.ConfirmationEvent(eventid=ievent['confirm'], status=status))
 
 	def logEvent(self, ievent, status):
+		if not leginonconfig.logevents:
+			return
 		eventlog = event.EventLog(eventclass=ievent.__class__.__name__, status=status)
 		# pubevent is False by default, but just in case that changes
 		# we don't want infinite recursion here
