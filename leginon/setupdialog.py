@@ -166,7 +166,7 @@ class SessionSelectPage(WizardPage):
 		self.SetSizerAndFit(self.pagesizer)
 
 	def onLimitChange(self, evt):
-		self.setSessionNames(self.GetParent().sessionnames)
+		self.setSessionNames(self.GetParent().names)
 
 	def onChoice(self, evt):
 		self.updateText(evt.GetSelection())
@@ -359,41 +359,46 @@ class SessionCreatePage(WizardPage):
 		self.sizer = wx.GridBagSizer()
 
 		self.sizer.Add(wx.StaticText(self, -1,
-			'Please select the session you would like to continue.'),
-							(0, 0), (1, 2))
+									'Would you like to create the following session?'),
+									(0, 0), (1, 2))
 
-		self.sessiontext = wx.StaticText(self, -1, '')
-		self.sizer.Add(self.sessiontext, (1, 0), (1, 2), wx.ALIGN_CENTER)
+		self.nametext = wx.StaticText(self, -1, '')
+		self.sizer.Add(self.nametext, (1, 0), (1, 2), wx.ALIGN_CENTER)
 
 		self.sizer.AddGrowableCol(0)
 		self.sizer.AddGrowableCol(1)
 
 		self.descriptiontext = wx.StaticText(self, -1, '')
-		self.sizer.Add(self.descriptiontext, (4, 0), (1, 2), wx.ALIGN_CENTER)
+		self.sizer.Add(self.descriptiontext, (2, 0), (1, 2), wx.ALIGN_CENTER)
 
 		textsizer = wx.GridBagSizer(0, 3)
 
-		textsizer.Add(wx.StaticText(self, -1, 'Instrument:'), (0, 0), (1, 1),
+		textsizer.Add(wx.StaticText(self, -1, 'Project:'), (0, 0), (1, 1),
+														wx.ALIGN_CENTER_VERTICAL)
+		self.projecttext = wx.StaticText(self, -1, '')
+		textsizer.Add(self.projecttext, (0, 1), (1, 1),
+														wx.ALIGN_CENTER_VERTICAL)
+
+		textsizer.Add(wx.StaticText(self, -1, 'Instrument:'), (1, 0), (1, 1),
 														wx.ALIGN_CENTER_VERTICAL)
 		self.instrumenttext = wx.StaticText(self, -1, '')
-		textsizer.Add(self.instrumenttext, (0, 1), (1, 1),
+		textsizer.Add(self.instrumenttext, (1, 1), (1, 1),
 														wx.ALIGN_CENTER_VERTICAL)
 
-		textsizer.Add(wx.StaticText(self, -1, 'Image Directory:'), (1, 0), (1, 1),
+		textsizer.Add(wx.StaticText(self, -1, 'Image Directory:'), (2, 0), (1, 1),
 														wx.ALIGN_CENTER_VERTICAL)
 		self.imagedirectorytext = wx.StaticText(self, -1, '')
-		textsizer.Add(self.imagedirectorytext, (1, 1), (1, 1),
+		textsizer.Add(self.imagedirectorytext, (2, 1), (1, 1),
 														wx.ALIGN_CENTER_VERTICAL)
 
-		self.sizer.Add(textsizer, (5, 0), (1, 2), wx.ALIGN_CENTER)
-
-		self.Bind(wx.EVT_CHOICE, self.onChoice, self.sessionchoice)
+		self.sizer.Add(textsizer, (3, 0), (1, 2), wx.ALIGN_CENTER)
 
 		self.connectcheckbox = wx.CheckBox(self, -1, 'Connect to instrument')
-		self.sizer.Add(self.connectcheckbox, (7, 0), (1, 2), wx.ALIGN_CENTER)
+		self.sizer.Add(self.connectcheckbox, (5, 0), (1, 2), wx.ALIGN_CENTER)
 
 		self.sizer.Add(wx.StaticText(self, -1,
-							'Finally, press the "Finish" button to begin.'), (9, 0), (1, 2))
+					'Please press the "Finish" button if these settings are correct.'),
+									(7, 0), (1, 2))
 
 		self.pagesizer.Add(self.sizer, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		self.pagesizer.AddGrowableRow(0)
@@ -420,42 +425,62 @@ class SetupWizard(wx.wizard.Wizard):
 		self.userpage = UserPage(self)
 
 		sessiontypepage = SessionTypePage(self)
-		self.sessionnamepage = SessionNamePage(self)
+		self.namepage = SessionNamePage(self)
 
 		self.projects = self.setup.getProjects()
 		if self.projects:
-			sessionprojectpage = SessionProjectPage(self)
+			self.projectpage = SessionProjectPage(self)
 
 		self.instruments = self.setup.getInstruments()
-		sessioninstrumentpage = SessionInstrumentPage(self)
-		sessionimagedirectorypage = SessionImageDirectoryPage(self)
+		self.instrumentpage = SessionInstrumentPage(self)
+		self.imagedirectorypage = SessionImageDirectoryPage(self)
 		self.sessionselectpage = SessionSelectPage(self)
+		self.sessioncreatepage = SessionCreatePage(self)
 
 		self.userpage.setNext(sessiontypepage)
-		sessiontypepage.setNext((self.sessionnamepage, self.sessionselectpage))
+		sessiontypepage.setNext((self.namepage, self.sessionselectpage))
 		if self.projects:
-			self.sessionnamepage.setNext(sessionprojectpage)
-			sessionprojectpage.setNext(sessioninstrumentpage)
+			self.namepage.setNext(self.projectpage)
+			self.projectpage.setNext(self.instrumentpage)
 		else:
-			self.sessionnamepage.setNext(sessioninstrumentpage)
-		sessioninstrumentpage.setNext(sessionimagedirectorypage)
-		sessionimagedirectorypage.setNext(self.sessionselectpage)
+			self.namepage.setNext(self.instrumentpage)
+		self.instrumentpage.setNext(self.imagedirectorypage)
+		self.imagedirectorypage.setNext(self.sessioncreatepage)
 
 		self.FitToPage(self.userpage)
 		self.RunWizard(self.userpage)
 
 	def onPageChanging(self, evt):
-		if evt.GetPage() is self.sessionnamepage and evt.GetDirection():
-			name = self.sessionnamepage.nametextctrl.GetValue()
+		if evt.GetPage() is self.namepage and evt.GetDirection():
+			name = self.namepage.nametextctrl.GetValue()
 			if self.setup.existsSessionName(name):
 				evt.Veto()
-				self.sessionnamepage.nameExistsDialog()
+				self.namepage.nameExistsDialog()
 
 	def onPageChanged(self, evt):
-		if evt.GetPage() is self.sessionselectpage:
+		page = evt.GetPage()
+		if page is self.sessionselectpage:
 			userdata = self.users[self.userpage.userchoice.GetStringSelection()]
-			self.sessionnames, self.sessions = self.setup.getSessions(userdata)
-			self.sessionselectpage.setSessionNames(self.sessionnames)
+			self.names, self.sessions = self.setup.getSessions(userdata)
+			self.sessionselectpage.setSessionNames(self.names)
+		elif page is self.sessioncreatepage:
+			name = self.namepage.nametextctrl.GetValue()
+			description = self.namepage.descriptiontextctrl.GetValue()
+			project = self.projectpage.projectchoice.GetStringSelection()
+			instrument = self.instrumentpage.instrumentchoice.GetStringSelection()
+			directory = self.imagedirectorypage.directorytextctrl.GetValue()
+			self.sessioncreatepage.nametext.SetLabel(name)
+			self.sessioncreatepage.descriptiontext.SetLabel(description)
+			self.sessioncreatepage.projecttext.SetLabel(project)
+			self.sessioncreatepage.instrumenttext.SetLabel(instrument)
+			self.sessioncreatepage.imagedirectorytext.SetLabel(directory)
+			# autoresize on static text gets reset by sizer during layout
+			texts = ['name', 'description', 'project', 'instrument', 'imagedirectory']
+			for i in texts:
+				# if label is too big for wizard (presized) need to resize or truncate
+				o = getattr(self.sessioncreatepage, i + 'text')
+				self.sessioncreatepage.sizer.SetItemMinSize(o, o.GetSize())
+			self.sessioncreatepage.pagesizer.Layout()
 
 import data
 import project
