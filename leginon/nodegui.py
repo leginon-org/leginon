@@ -9,6 +9,9 @@ import os
 import threading
 import socket
 
+False=0
+True=1
+
 class SpecWidget(Frame):
 	def __init__(self, parent, uiclient, spec, **kwargs):
 		Frame.__init__(self, parent, **kwargs)

@@ -5,6 +5,9 @@ import correlator
 import peakfinder
 import sys
 
+False=0
+True=1
+
 class Calibration(node.Node):
 	def __init__(self, id, managerlocation):
 		node.Node.__init__(self, id, managerlocation)

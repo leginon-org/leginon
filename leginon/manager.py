@@ -10,6 +10,9 @@ import common
 import event
 import launcher
 
+False=0
+True=1
+
 class Manager(node.Node):
 	def __init__(self, id):
 		# the id is manager (in a list)

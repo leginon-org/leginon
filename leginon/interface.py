@@ -153,7 +153,6 @@ class Server(xmlrpcserver.xmlrpcserver):
 		ind = 0
 		for arg in argspec:
 			arg.pyname = argnames[ind]
-			print 'ARG PYNAME', arg.pyname
 			ind += 1
 		m = MethodSpec(id, name, argspec, returnspec)
 		return m
