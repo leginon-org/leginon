@@ -1032,11 +1032,13 @@ class TypeTool(object):
 			bitmap = getTargetIconBitmap(target)
 			self.tb['target'] = GenBitmapToggleButton(self.parent, -1, bitmap,
 																								size=(24, 24))
+			self.tb['target'].SetBitmapDisabled(bitmap)
 			self.tb['target'].SetToolTip(wx.ToolTip('Add Targets'))
 			self.color = target
 			self.targettype = TargetType(self.name, self.color)
 			self.tb['target'].Bind(wx.EVT_BUTTON, self.onToggleTarget)
 			self.tb['target'].SetBezelWidth(0)
+			self.tb['target'].Enable(False)
 
 		if settings is not None:
 			bitmap = getBitmap('settings.png')
@@ -1205,9 +1207,11 @@ class SelectionTool(wx.GridBagSizer):
 			if self.isTargeting(name):
 				self.setTargeting(name, False)
 			tool.tb['target'].SetBezelWidth(0)
+			tool.tb['target'].Enable(False)
 			tool.SetBitmap('red')
 		else:
 			tool.tb['target'].SetBezelWidth(1)
+			tool.tb['target'].Enable(True)
 			tool.SetBitmap('green')
 		tool.tb['target'].Refresh()
 
@@ -1450,21 +1454,15 @@ if __name__ == '__main__':
 	except IndexError:
 		filename = None
 
-#	def bar(xy):
-#		print xy
-
 	class MyApp(wx.App):
 		def OnInit(self):
 			frame = wx.Frame(None, -1, 'Image Viewer')
 			self.sizer = wx.BoxSizer(wx.VERTICAL)
 
-			self.panel = TargetImagePanel(frame, -1)
-			#self.panel.addTargetType('foo')
-			#self.panel.addTargetType('bar')
-
-#			self.panel = ClickImagePanel(frame, -1, bar)
-
 #			self.panel = ImagePanel(frame, -1)
+#			self.panel = ClickImagePanel(frame, -1, lambda xy: print xy)
+			self.panel = TargetImagePanel(frame, -1)
+			self.panel.addTypeTool('Target Practice', display=True, target=wx.RED)
 
 			self.sizer.Add(self.panel, 1, wx.EXPAND|wx.ALL)
 			frame.SetSizerAndFit(self.sizer)
