@@ -13,7 +13,7 @@ class Handler(SocketServer.StreamRequestHandler):
 	def handle(self):
 		try:
 			obj = cPickle.load(self.rfile)
-		except EOFError:
+		except (cPickle.UnpicklingError, EOFError):
 			print('no data to read, handle socket connection failed')
 			return
 
@@ -87,10 +87,13 @@ class Client(leginonobject.LeginonObject):
 		raise NotImplementedError
 
 	def send(self, odata):
-		if self.socket is not None:
-			self.socket.send(odata)
-		else:
-			self.printerror('no socket available')
+		try:
+			if self.socket is not None:
+				self.socket.send(odata)
+			else:
+				raise Exception('no socket available')
+		except Exception, e:
+			self.printerror('socket send exception: %s' % str(e))
 			raise IOError
 
 	def OLDreceive(self):

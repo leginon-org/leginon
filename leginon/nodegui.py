@@ -319,10 +319,10 @@ class CheckbuttonData(Data):
 	def buildWidget(self, parent):
 		self.tkvar = BooleanVar()
 		if self.styled:
-			c = Checkbutton(parent, variable=self.tkvar, bg=self.buttoncolor)
+			self.cb = Checkbutton(parent, variable=self.tkvar, bg=self.buttoncolor)
 		else:
-			c = Checkbutton(parent, variable=self.tkvar)
-		return c
+			self.cb = Checkbutton(parent, variable=self.tkvar)
+		return self.cb
 
 	def setWidget(self, value):
 		self.tkvar.set(value)

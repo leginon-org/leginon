@@ -44,7 +44,7 @@ class Launcher(node.Node):
 		pass
 
 	def publishNodeClasses(self):
-		reload(nodeclassreg)
+		#reload(nodeclassreg)
 		nodeclassnames = nodeclassreg.getNodeClassNames()
 		d = data.NodeClassesData(self.ID(), nodeclasses=nodeclassnames)
 		self.publish(d, eventclass=event.NodeClassesPublishEvent)

@@ -45,7 +45,7 @@ def getNodeClass(classname):
 		print '%s not in registry' % classname
 		return None
 	mod = reg_dict[classname]['module']
-	reload(mod)
+	#reload(mod)
 	return getattr(mod, classname)
 
 def getNodeClassNames():

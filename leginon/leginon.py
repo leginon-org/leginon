@@ -289,7 +289,6 @@ class Leginon(Tkinter.Frame):
 			nodes.append(('manager', args[3]))
 			if args[2] == 'EM':
 				self.EMid = nodes[-1]
-				print 'self.EMid =', self.EMid
 				if self.remotelauncher is not None:
 					newlauncherid = self.remotelauncher
 				else:
@@ -360,7 +359,7 @@ class Leginon(Tkinter.Frame):
 																	self.debug, self.windowmenu, name, self.EMid)
 
 	def addTarget(self, name, sourceids=[]):
-		self.targets[name] = Target(self.manager, self.manageruiclient,
+		self.targets[name] = FocusTarget(self.manager, self.manageruiclient,
 																self.locallauncherid, self.notebook,
 																self.debug, self.windowmenu, name,
 																sourceids, self.EMid)
@@ -444,11 +443,7 @@ class CustomWidget(Pmw.ScrolledFrame):
 				else:
 					return self.widgetFrom(parent, uiclient, subspec, name[1:])
 
-	# should be kwargs
-	def arrangeEntry(self, widget, width = 10, justify = Tkinter.RIGHT, buttons=True):
-		widget.entry['width'] = width
-		widget.entry['justify'] = justify
-		widget.entry.grid(row = 0, column = 1, padx = 5, pady = 5, columnspan = 1)
+	def arrangeButtons(self, widget, buttons):
 		if buttons:
 			if widget.getbutton is None:
 				widget.setbutton.grid(row = 0, column = 2, padx = 5, pady = 5)
@@ -462,21 +457,24 @@ class CustomWidget(Pmw.ScrolledFrame):
 			if widget.getbutton is not None:
 				widget.getbutton.grid_forget()
 
+	# should be kwargs
+	def arrangeEntry(self, widget, width = 10, justify = Tkinter.RIGHT, buttons=True):
+		widget.entry['width'] = width
+		widget.entry['justify'] = justify
+		widget.entry.grid(row = 0, column = 1, padx = 5, pady = 5, columnspan = 1)
+		self.arrangeButtons(widget, buttons)
+
 	def arrangeCombobox(self, widget, text=None, buttons=True):
 		if text is not None:
 			widget.label.configure(text=text)
 		widget.combo.grid(row = 0, column = 1, padx = 5, pady = 5, columnspan = 1)
-		if buttons:
-			if widget.getbutton is None:
-				widget.setbutton.grid(row = 0, column = 2, padx = 5, pady = 5)
-			else:
-				widget.getbutton.grid(row = 0, column = 2, padx = 5, pady = 5)
-				widget.setbutton.grid(row = 0, column = 3, padx = 5, pady = 5)
-		else:
-			if widget.setbutton is not None:
-				widget.setbutton.grid_forget()
-			if widget.getbutton is not None:
-				widget.getbutton.grid_forget()
+		self.arrangeButtons(widget, buttons)
+
+	def arrangeCheckbutton(self, widget, text=None, buttons=True):
+		if text is not None:
+			widget.label.configure(text=text)
+		widget.cb.grid(row = 0, column = 1, padx = 5, pady = 5, columnspan = 1)
+		self.arrangeButtons(widget, buttons)
 
 	def arrangeTree(self, widget, text=None, buttons=True):
 		if text is not None:
@@ -501,10 +499,13 @@ class CustomWidget(Pmw.ScrolledFrame):
 	def addGroup(self, name):
 		group = WidgetGroup(self.interior(), name)
 		self.groups[name] = group
-		group.grid(row = len(self.groups), column = 0, padx=10, pady=10)
 		# whatever
 		if name == 'Results':
-			group.grid(row = 0, column = 1, rowspan = len(self.groups))
+			group.grid(row = 0, column = 1)
+		else:
+			group.grid(row = len(self.groups), column = 0, padx=10, pady=10)
+		if 'Results' in self.groups:
+			self.groups['Results'].grid_configure(rowspan=len(self.groups))
 
 	def addWidget(self, groupname, info, name, groupset=False):
 		info['server'].nodegui = self
@@ -701,6 +702,23 @@ class TargetWidget(CustomWidget):
 		widget.button.pack()
 
 		widget = self.addWidget('Results', clicktargetfinder, ('Clickable Image',))
+
+class FocusTargetWidget(TargetWidget):
+	def __init__(self, parent, acquisition, focuser, clicktargetfinder):
+		TargetWidget.__init__(self, parent, acquisition, clicktargetfinder)
+
+		widget = self.addWidget('Auto Focus', focuser,
+														('Focuser Setup', 'Beam Tilt'), True)
+		self.arrangeEntry(widget, 7, Tkinter.RIGHT, False)
+		widget = self.addWidget('Auto Focus', focuser,
+														('Focuser Setup', 'Focus Correction Type'), True)
+		self.arrangeCombobox(widget, None, False)
+		widget = self.addWidget('Auto Focus', focuser,
+														('Focuser Setup', 'Stigmator Correction'), True)
+		self.arrangeCheckbutton(widget, None, False)
+		widget = self.addWidget('Auto Focus', focuser,
+														('Focuser Setup', 'Publish Images'), True)
+		self.arrangeCheckbutton(widget, None, False)
 
 class WidgetWrapper(object):
 	def __init__(self, manager, manageruiclient, launcherid, notebook,
@@ -941,13 +959,13 @@ class Target(WidgetWrapper):
 		WidgetWrapper.__init__(self, manager, manageruiclient, launcherid,
 														notebook, debug, windowmenu, name)
 
-		self.EMid = EMid
-
-		self.targetsourceids = targetsourceids
-
 		self.addNodeInfo('acquire', self.name + ' Acquisition', 'Acquisition')
 		self.addNodeInfo('target', self.name + ' Click Target Finder',
 																							'ClickTargetFinder')
+
+		self.EMid = EMid
+
+		self.targetsourceids = targetsourceids
 
 		self.initialize()
 
@@ -968,6 +986,40 @@ class Target(WidgetWrapper):
 
 	def initializeWidget(self):
 		self.widget = TargetWidget(self.page, self.nodeinfo['acquire']['UI info'],
+																					self.nodeinfo['target']['UI info'])
+
+class FocusTarget(Target):
+	def __init__(self, manager, manageruiclient, launcherid, notebook,
+											debug, windowmenu, name, targetsourceids, EMid):
+		WidgetWrapper.__init__(self, manager, manageruiclient, launcherid,
+														notebook, debug, windowmenu, name)
+
+		self.addNodeInfo('acquire', self.name + ' Acquisition', 'Acquisition')
+		self.addNodeInfo('focuser', name + ' Focuser', 'Focuser')
+		self.addNodeInfo('target', self.name + ' Click Target Finder',
+																							'ClickTargetFinder')
+
+		self.EMid = EMid
+
+		self.targetsourceids = targetsourceids
+
+		self.initialize()
+
+		self.targetid = self.nodeinfo['target']['ID']
+
+	def initializeBindings(self):
+		self.manager.addEventDistmap(event.ImageTargetListPublishEvent,
+																				self.nodeinfo['acquire']['ID'],
+																				self.nodeinfo['focuser']['ID'])
+		self.manager.addEventDistmap(event.TargetDoneEvent,
+																				self.nodeinfo['focuser']['ID'],
+																				self.nodeinfo['acquire']['ID'])
+		Target.initializeBindings(self)
+
+	def initializeWidget(self):
+		self.widget = FocusTargetWidget(self.page,
+																					self.nodeinfo['acquire']['UI info'],
+																					self.nodeinfo['focuser']['UI info'],
 																					self.nodeinfo['target']['UI info'])
 
 if __name__ == '__main__':
