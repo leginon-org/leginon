@@ -38,6 +38,7 @@ else:
 
 			self.arraytypecode = 'H'
 			self.Numerictypecode = Numeric.UInt16
+			self.camerasize = {'x': 2048, 'y': 2048}
 
 		def exit(self):
 			self.theCamera.Uninitialize(self.hCam)
