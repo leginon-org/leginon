@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet href="file://localhost/home/guerra/L2doc/Morphon_XML-Editor_3.1.2/Examples/docbook/docbook.css" type="text/css"?>
 <!DOCTYPE book SYSTEM "file://localhost/home/guerra/L2doc/Morphon_XML-Editor_3.1.2/Examples/docbook/dtd/docbookx.dtd">
-<book version="$Revision: 1.3 $">
+<book version="$Revision: 1.4 $">
   <title>Leginon II Manual</title>
   <chapter>
     <title>Leginon II is Modular</title>
@@ -374,6 +374,50 @@ DB_USER         = 'usr_object'
 DB_PASS         = ''</programlisting></para>
             <para><emphasis>The rest of leginonconfig.py:</emphasis></para>
             <para> The rest of the leginon condfiguration file is standard and does not need to be changed. The IMAGES_PATH specifies the directory where Leginon II stores the images. The PREFS_PATH is the directory where a few of the user interface preferences are stored. In the future, this preferences directory will no longer exist. The Default Camera Config section specifies starting settings for the CCD camera.</para>
+            <para></para>
+          </listitem>
+          <listitem>
+            <para> Make additional COM libraries win PythonWin:</para>
+            <para>NOTE: Do this only on the Tecani PC, i.e. the PC that has the Tecnai software that controls the microscope.</para>
+            <para><itemizedlist>
+                <listitem>
+                  <para> In PythonWin (open PythonWin from the Windows Start Menu), select Tools -&gt; COM makepy utility.</para>
+                </listitem>
+                <listitem>
+                  <para> Select the first library to create, rename, and move:</para>
+                  <para>- Choose "Tecnai CCD Type Library (1.0)" and generate this library</para>
+                  <para>- Rename the generated library (it is currently labeled with the name that appears in the PythonWin prompt) to "GatanCOM.py"</para>
+                  <para>- Move the newly created/renamed "GatanCOM.py" to the "pyScope" directory.</para>
+                </listitem>
+                <listitem>
+                  <para> Select the second library to create, rename, and move:</para>
+                  <para>- Choose "Tecnai Scripting (1.9)" and generate this library</para>
+                  <para>- Rename the generated library (it is currently labeled with the name that appears in the PythonWin prompt) to "TecnaiCOM.py"</para>
+                  <para>- Move the newly created/renamed "TecnaiCOM.py" to the "pyScope" directory.</para>
+                </listitem>
+              </itemizedlist></para>
+          </listitem>
+          <listitem>
+            <para> Choose the correct Exposure Adaptor software/library that will run with the installed version of Tecnai software.</para>
+            <para>NOTE: Do this only on the Tecani PC, i.e. the PC that has the Tecnai software that controls the microscope.</para>
+            <para><itemizedlist>
+                <listitem>
+                  <para> In the Tecnai software, under the Help menu, choose "About Tecnai" and identify the version of the Tecnai software that is being used.</para>
+                </listitem>
+                <listitem>
+                  <para> Depending of the version of Tecnai software that is installed, the correct Exposure Adaptor needs to be unzipped and then enabled.</para>
+                  <para>- The following Tecnai software versions with the corresponding Exposure Adaptor versions:</para>
+                  <para>Tecnai 2.0 and 2.01 ==&gt; adaexp20</para>
+                  <para>Tecnai 2.0.2 and 2.0.3 ==&gt; adaexp203</para>
+                </listitem>
+                <listitem>
+                  <para> Unzip the correct Exposure Adaptor (adaexp*) from within the pyScope directory.</para>
+                </listitem>
+                <listitem>
+                  <para> Run the following command at the Run prompt found under the Windows Start menu:</para>
+                  <para><programlisting>c:\....\pyScope/adaExp.exe /regserver</programlisting></para>
+                </listitem>
+              </itemizedlist></para>
           </listitem>
         </orderedlist>
       </section>
