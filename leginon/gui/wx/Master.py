@@ -129,6 +129,8 @@ class Node(wxObjectCanvas.wxRectangleObject):
 		self.dependencies = dependencies
 
 		nc = nodeclassreg.getNodeClass(self.nodeclass)
+		if nc is None:
+			raise RuntimeError
 		input = BindingInput()
 		self.addInputConnectionPoint(input)
 		for outputclass in nc.eventoutputs:
@@ -657,7 +659,10 @@ class Application(wxObjectCanvas.wxRectangleObject):
 					self.addShapeObject(launcher)
 			
 				print nodespec
-				launcher.addShapeObject(Node(nodespec[1], nodespec[0], nodespec[3]))
+				try:
+					launcher.addShapeObject(Node(nodespec[1], nodespec[0], nodespec[3]))
+				except RuntimeError:
+					pass
 
 		bindings = []
 		bindspecs = []

@@ -5,6 +5,7 @@ import os
 import threading
 import wx
 import wx.lib.intctrl
+import gui.wx.ApplicationEditor
 import gui.wx.Launcher
 import gui.wx.Logging
 
@@ -126,20 +127,21 @@ class Frame(wx.Frame):
 		self.applicationmenu = wx.Menu()
 		self.runappmenuitem = wx.MenuItem(self.applicationmenu, -1, '&Run...')
 		self.killappmenuitem = wx.MenuItem(self.applicationmenu, -1, '&Kill')
+		self.editappmenuitem = wx.MenuItem(self.applicationmenu, -1, '&Edit...')
 		self.importappmenuitem = wx.MenuItem(self.applicationmenu, -1, '&Import...')
 		self.exportappmenuitem = wx.MenuItem(self.applicationmenu, -1, '&Export...')
-		self.editappmenuitem = wx.MenuItem(self.applicationmenu, -1, '&Edit...')
 		self.Bind(wx.EVT_MENU, self.onMenuRunApplication, self.runappmenuitem)
 		self.Bind(wx.EVT_MENU, self.onMenuKillApplication, self.killappmenuitem)
+		self.Bind(wx.EVT_MENU, self.onMenuEditApplication, self.editappmenuitem)
 		self.Bind(wx.EVT_MENU, self.onMenuImportApplication, self.importappmenuitem)
 		self.Bind(wx.EVT_MENU, self.onMenuExportApplication, self.exportappmenuitem)
-		self.Bind(wx.EVT_MENU, self.onMenuEditApplication, self.editappmenuitem)
 		self.applicationmenu.AppendItem(self.runappmenuitem)
 		self.applicationmenu.AppendItem(self.killappmenuitem)
 		self.applicationmenu.AppendSeparator()
+		self.applicationmenu.AppendItem(self.editappmenuitem)
+		self.applicationmenu.AppendSeparator()
 		self.applicationmenu.AppendItem(self.importappmenuitem)
 		self.applicationmenu.AppendItem(self.exportappmenuitem)
-		self.applicationmenu.AppendItem(self.editappmenuitem)
 		self.menubar.Append(self.applicationmenu, '&Application')
 		self.runappmenuitem.Enable(False)
 		self.killappmenuitem.Enable(False)
@@ -255,7 +257,8 @@ class Frame(wx.Frame):
 		dialog.Destroy()
 
 	def onMenuEditApplication(self, evt):
-		pass
+		dialog = gui.wx.ApplicationEditor.Frame(self, self.manager)
+		dialog.Show()
 
 	def onMenuCreate(self, evt):
 		launchernames = self.manager.getLauncherNames()
