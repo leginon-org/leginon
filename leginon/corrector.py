@@ -98,16 +98,16 @@ class Corrector(node.Node):
 
 #	def uiSetPlanParams(self, cliplimits, badrows, badcols):
 	def uiSetPlanParams(self):
-		camconfig = self.cam.config()
-		camstate = camconfig['state']
-		plandata = self.newPlan(camstate)
+		camconfig = self.cam.configCameraEMData()
+		state = camconfig['state']
+		plandata = self.newPlan(state)
 		plandata['clip_limits'] = self.cliplimits.get()
 		plandata['bad_rows'] = self.badrows.get()
 		plandata['bad_cols'] = self.badcols.get()
 		self.storePlan(plandata)
 
 	def uiGetPlanParams(self):
-		camconfig = self.cam.config()
+		camconfig = self.cam.configCameraEMData()
 		camstate = camconfig['state']
 		plandata = self.retrievePlan(camstate)
 		print 'plandata', plandata
@@ -128,21 +128,26 @@ class Corrector(node.Node):
 	def uiAcquireCorrected(self):
 		camconfig = self.cam.config()
 		camstate = camconfig['state']
-		camdata = data.CameraEMData(('camera',), initializer=camstate)
+		camdata = data.CameraEMData(id=('camera',), initializer=camstate)
 		self.cam.currentCameraEMData(camdata)
 		imagedata = self.acquireCorrectedArray()
 		print 'Corrected Stats: %s' % (self.stats(imagedata),)
 		self.ui_image.set(imagedata)
 		return ''
 
-	def newPlan(self, camstate):
-		camdata = self.camstateToCamdata(camstate)
-		plan = data.CorrectorPlanData(self.ID(), camstate=camdata)
+	def newCamstate(self, camdata):
+		camdatacopy = copy.deepcopy(camdata)
+		camstate = data.CorrectorCamstateData(id=self.ID())
+		camstate.friendly_update(camdatacopy)
+		return camstate
+
+	def newPlan(self, camdata):
+		camstate = self.newCamstate(camdata)
+		plan = data.CorrectorPlanData(id=self.ID(), camstate=camstate)
 		return plan
 
 	def retrievePlan(self, camstate):
-		newcamstate = copy.deepcopy(camstate)
-		newcamstate['exposure time'] = None
+		newcamstate = self.newCamstate(camstate)
 		plandatalist = self.research(dataclass=data.CorrectorPlanData, camstate=newcamstate)
 		if not plandatalist:
 			self.printerror('cannot find plan data for camera state')
@@ -168,7 +173,7 @@ class Corrector(node.Node):
 	def acquireReference(self, dark=False):
 		camconfig = self.cam.config()
 		camstate = camconfig['state']
-		camdata = data.CameraEMData(('camera',), initializer=camstate)
+		camdata = data.CameraEMData(id=('camera',), initializer=camstate)
 		if dark:
 			camdata['exposure time'] = 0
 			typekey = 'dark'
@@ -197,18 +202,16 @@ class Corrector(node.Node):
 
 	def retrieveRef(self, camstate, type):
 		print 'TYPE', type
-		camdata = self.camstateToCamdata(camstate)
 		if type == 'dark':
-			imagetemp = data.DarkImageData(('temp',))
+			imagetemp = data.DarkImageData()
 		elif type == 'bright':
-			imagetemp = data.BrightImageData(('temp',))
+			imagetemp = data.BrightImageData()
 		elif type == 'norm':
-			imagetemp = data.NormImageData(('temp',))
+			imagetemp = data.NormImageData()
 		else:
 			return None
 
-		imagetemp['id'] = None
-		imagetemp['camstate'] = camdata
+		imagetemp['camstate'] = camstate
 		print 'IMAGETEMP'
 		print imagetemp
 		refs = self.research(datainstance=imagetemp)
@@ -219,29 +222,19 @@ class Corrector(node.Node):
 			image = None
 		return image
 
-	def camstateToCamdata(self, camstate):
-		'''
-		create a proper CameraEMData object from a camstate
-		(bad hack, should be better way)
-		'''
-		camdata = data.CameraEMData(('camera',), initializer=camstate)
-		for key in ('id', 'session', 'system time', 'camera size', 'exposure time'):
-			camdata[key] = None
-		return camdata
-
 	def storeRef(self, type, numdata, camstate):
 		newcamstate = copy.deepcopy(camstate)
 
 		camdata = self.camstateToCamdata(camstate)
 
 		if type == 'dark':
-			imagetemp = data.DarkImageData(self.ID())
+			imagetemp = data.DarkImageData()
 		elif type == 'bright':
-			imagetemp = data.BrightImageData(self.ID())
+			imagetemp = data.BrightImageData()
 		elif type == 'norm':
-			imagetemp = data.NormImageData(self.ID())
+			imagetemp = data.NormImageData()
 		imagetemp['image'] = numdata
-		imagetemp['camstate'] = camdata
+		imagetemp['camstate'] = camstate
 		print 'publishing'
 		self.publish(imagetemp, pubevent=True, database=True)
 
@@ -282,7 +275,7 @@ class Corrector(node.Node):
 			camstate = camconfig['state']
 			numimage = Mrc.mrc_to_numeric('fake.mrc')
 			corrected = self.correct(numimage, camstate)
-			return data.ImageData(self.ID, image=corrected)
+			return data.ImageData(id=self.ID, image=corrected)
 		else:
 			imagedata = self.cam.acquireCameraImageData(correction=0)
 			numimage = imagedata['image']
