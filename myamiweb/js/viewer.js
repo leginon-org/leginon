@@ -65,12 +65,14 @@ function toggleimage(imagename, name) {
 }
 
 function setimgId() {
-	jsindex = document.viewerform.imageId.selectedIndex; 
+	if (obj=document.viewerform.imageId) {
+	jsindex = obj.selectedIndex; 
 	if (jsindex < 0) {
 		jsindex=0; 
-		document.viewerform.imageId.options[0].selected=true; 
+		obj.options[0].selected=true; 
 	} 
-	jsimgId = document.viewerform.imageId.options[jsindex].value; 
+	jsimgId = obj.options[jsindex].value; 
+	}
 }
 
 function imageonfocus(imagename, name, type) {
@@ -126,7 +128,7 @@ function newfile(view){
 		link.href = nlink;
 
 	if (cif=eval("this."+view+"if")) {
-		iflink = "getpreset.php?vf="+jsvfile+"&id="+jsimgId+"preset="+selpreset;
+		iflink = "getpreset.php?vf="+jsvfile+"&id="+jsimgId+"&preset="+selpreset;
 		cif.document.location.replace(iflink);
 	}
 
