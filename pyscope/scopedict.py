@@ -148,7 +148,7 @@ def factory(scopeclass):
       def setStagePosition(self, value, type="absolute"):
           # pre-position x and y (maybe others later)
           if self.correctedstage and ('x' in value or 'y' in value):
-              delta = 1e-6
+              delta = 2e-6
               stagenow = self.getStagePosition()
               # calculate pre-position
               prevalue = {}
