@@ -47,7 +47,8 @@ class Node(xmlrpcnode.xmlrpcnode):
 		nodeinfo = {'location pickle' : locpickle, 'methods' : 'meths', 'events pickle': eventpickle}
 
 		args = (nodeinfo,)
-		self.callProxy('manager', 'addNode', args)
+		id = self.callProxy('manager', 'addNode', args)
+		return id
 
 	def manager_close(self):
 		print 'manager_close'
@@ -60,8 +61,11 @@ class Node(xmlrpcnode.xmlrpcnode):
 	def announce(self, eventinst):
 		### this sends an outgoing event to the manager
 		eventrepr = eventinst.xmlrpc_repr()
-		args = (eventrepr,)
-		self.callProxy('manager', 'notify', args)
+		print 'ANNOUNCEeventrepr', eventrepr
+		args = (self.id, eventrepr)
+		print 'ARGS', args
+		ret = self.callProxy('manager', 'notify', args)
+		print 'return', ret
 
 	def EXPORT_event_dispatch(self, eventrepr):
 		### this decides what to do with incoming events
@@ -120,7 +124,7 @@ class Manager(xmlrpcnode.xmlrpcnode):
 	def __init__(self, *args, **kwargs):
 		xmlrpcnode.xmlrpcnode.__init__(self)
 		self.registry = registry.Registry()
-		self.bindings = {}
+		self.distributor = event.EventDistributor()
 		self.locations = {}
 
 	def EXPORT_addNode(self, node):
@@ -131,7 +135,8 @@ class Manager(xmlrpcnode.xmlrpcnode):
 				cPickle.loads(node['location pickle'])))
 		self.addProxy(id, self.registry.entries[id].location.getURI())
 		print 'node %s has been added' % id
-		self.print_nodes()
+		#self.print_nodes()
+		return id
 
 	def EXPORT_deleteNode(self, id):
 		try:
@@ -141,54 +146,33 @@ class Manager(xmlrpcnode.xmlrpcnode):
 		except KeyError:
 			pass
 
-	def print_nodes(self):
-		print 'NODES:'
-		print self.registry
-
 	def EXPORT_nodes(self):
 		nodes = self.registry.xmlrpc_repr()
 		print 'XMLRPCRPER', nodes
 		return nodes
 
-	def EXPORT_notify(self, source, eventrepr):
-		eventinst = cPickle.loads(eventrepr['event'])
-		eventclass = eventinst.__class__
-		if eventclass in self.bindings:
-			targets = self.bindings[key]
-			for target in targets:
-				args = (eventclass,)
-				self.callProxy(target, 'event_dispatch', args)
+	def EXPORT_notify(self, sourceid, eventrepr):
+		eventinst = cPickle.loads(eventrepr['pickle'])
+		print 'received %s from node %s' % (eventrepr['class'],sourceid)
+		self.distributor.insert(sourceid, eventinst)
+		return 'OK'
+
 
 	def EXPORT_bindings(self):
-		##### not ready yet
-		bindlist = []
-		for key in self.bindings:
-			binditem = (key, self.bindings[key])
-			bindlist.append(binditem)
-		return bindlist
+		return self.distributor.bindings.xmlrpc_repr()
 
-	def EXPORT_addBinding(self, source, event, target, method):
-		##### not ready yet
-		key = (source,event)
-		bindtup = (target, method)
-		if key not in self.bindings:
-			self.bindings[key] = []
-		if bindtup not in self.bindings[key]:
-			self.bindings[key].append(bindtup)
-		print 'bindings', self.bindings
+	def EXPORT_addBinding(self, sourceid, targetid, eventclassrepr):
+		eventclass = cPickle.loads(eventclassrepr['pickle'])
+		self.distributor.addBinding(sourceid, targetid, eventclass)
 
-	def EXPORT_deleteBinding(self, source, event, target, method):
-		###### not ready yet
-		key = (source, event)
-		bindtup = (target, method)
-		if key in self.bindings:
-			self.bindings[key].remove(bindtup)
-			if not self.bindings[key]:
-				del(self.bindings[key])
+	def EXPORT_deleteBinding(self, sourceid, targetid, eventclassrepr):
+		eventclass = cPickle.loads(eventclassrepr['pickle'])
+		self.distributor.deleteBinding(sourceid, targetid, eventclass)
 
 	def EXPORT_locate(self, dataid):
 		######### I think this is replaced by the registry stuff
 		## find the uri of the data referenced by dataid
+
 		location = ''
 		try:
 			location = self.locations[dataid][0]

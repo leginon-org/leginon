@@ -61,6 +61,7 @@ class xmlrpcserver(SimpleXMLRPCServer):
 	def _dispatch(self, method, params):
 		meth = getattr(self, 'EXPORT_' + method)
 
+		print 'DISPATCH', meth
 		## truncate args to the specs of the method
 		argnames = self.argspec(meth)
 		arglen = len(argnames)
@@ -133,6 +134,8 @@ class callerbut(Frame):
 		for argentry in self.argentries:
 			arg = argentry.get()
 			args.append(arg)
+			args = tuple(args)
+		print 'calling %s with args %s' % (self.name, args)
 		ret = getattr(self.proxy, self.name)(*args)
 		print ret
 

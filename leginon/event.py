@@ -1,6 +1,66 @@
 #!/usr/bin/env python
 
-import cPickle
+import cPickle, threading
+
+class EventDistributor(object):
+	def __init__(self, registry):
+		self.bindings = EventBindings()
+		self.registry = registry
+
+	def insert(self, sourceid, eventinst):
+		t = threading.Thread(target=self.distribute, args=(sourceid, eventinst))
+		t.start()
+		
+	def distribute(self, sourceid, eventinst):
+		eventclass = eventinst.__class__
+		key = (sourceid,eventclass)
+		if key in self.bindings:
+			eventrepr = eventinst.xmlrpc_repr()
+			targets = self.bindings[key]
+			for target in targets:
+				args = (eventrepr,)
+				self.callProxy(target, 'event_dispatch', args)
+
+	def addBinding(self, sourceid, targetid, eventclass):
+		## this should probably be moved into event.EventDistributor
+		key = (sourceid,eventclass)
+		if key not in self.bindings:
+			self.bindings[key] = []
+		if targetid not in self.bindings[key]:
+			self.bindings[key].append(targetid)
+
+	def deleteBinding(self, sourceid, targetid, eventclass):
+		## this should probably be moved into event.EventDistributor
+		key = (sourceid, eventclass)
+		if key in self.bindings:
+			try:
+				self.bindings[key].remove(targetid)
+				if not self.bindings[key]:
+					del(self.bindings[key])
+			except ValueError:
+				pass
+
+
+class EventBindings(dict):
+	def __init__(self):
+		dict.__init__(self)
+
+	def xmlrpc_repr(self):
+		## since xmlrpc only allows strings for dict keys, we create
+		## a list representation instead.  Also using the xmlrpc_repr
+		## of the event class
+		bindlist = []
+		for key in self:
+			sourceid, eventclass = key
+			targetlist = self[key]
+
+			eventrepr = eventclass.class_xmlrpc_repr()
+			newkey = sourceid, eventrepr
+
+			binditem = (newkey, targetlist)
+			bindlist.append(binditem)
+		return bindlist
+
 
 class NodeEvents(object):
 	def __init__(self):
@@ -32,8 +92,8 @@ class NodeEvents(object):
 
 
 class Event(object):
-	def __init__(self, source = None):
-		self.source = source
+	def __init__(self, extra=''):
+		self.extra = extra
 
 	def hierarchy(cls):
 		mybasetup = bases_tup(cls)
@@ -45,11 +105,21 @@ class Event(object):
 		thing can be class or instance
 		"""
 
+		if type(thing) != type:
+			extra = thing.extra
+		else:
+			extra = ''
+
+
 		picklestring = cPickle.dumps(thing)
-		xmlrpcdict = {'class':thing.hierarchy(), 'pickle':picklestring}
+		xmlrpcdict = {'class':thing.hierarchy(), 'pickle':picklestring, 'extra':extra}
 		return xmlrpcdict
 
 	class_xmlrpc_repr = classmethod(xmlrpc_repr)
+
+	def __str__(self):
+		ret = `self.hierarchy()`
+		return ret
 
 
 def bases_tup(classobject):
@@ -66,13 +136,13 @@ def bases_tup(classobject):
 
 
 class MyEvent(Event):
-	def __init__(self):
-		Event.__init__(self)
+	def __init__(self, extra=''):
+		Event.__init__(self, extra)
 
 
 class YourEvent(Event):
-	def __init__(self):
-		Event.__init__(self)
+	def __init__(self, extra=''):
+		Event.__init__(self, extra)
 
 
 class DataPublished(Event):
