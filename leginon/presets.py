@@ -143,7 +143,7 @@ class PresetsManager(node.Node):
 		emtarget = ievent['emtarget']
 		if emtarget is None:
 			self.uistatus.set('Changing preset to "%s"' % pname)
-			self.toScopeFollowCycle(pname)
+			self.cycleToScope(pname)
 		else:
 			self.uistatus.set('Changing preset to "%s" and targeting' % pname)
 			self.targetToScope(pname, emtarget)
@@ -267,7 +267,7 @@ class PresetsManager(node.Node):
 				break
 		return presetdata
 
-	def toScope(self, p):
+	def toScope(self, p, magonly=False):
 		'''
 		p is either index, preset, or name
 		'''
@@ -286,29 +286,46 @@ class PresetsManager(node.Node):
 			self.messagelog.error('No such preset')
 			return
 
-		name = presetdata['name']
-		self.uistatus.set('Changing preset to "%s"' % name)
-		print 'Changing preset to "%s"' % (name,)
-
-		## should switch to using AllEMData
 		scopedata = data.ScopeEMData()
 		cameradata = data.CameraEMData()
-		scopedata.friendly_update(presetdata)
-		cameradata.friendly_update(presetdata)
-		scopedata['id'] = ('scope',)
-		cameradata['id'] = ('camera',)
+
+		name = presetdata['name']
+		beginmessage = 'Changing preset to "%s"' % (name,)
+		endmessage = '     Preset changed to "%s"' % (name,)
+
+		if magonly:
+			mag = presetdata['magnification']
+			beginmessage = beginmessage + ' (mag only: %s)' % (mag,)
+			endmessage = endmessage + ' (mag only: %s)' % (mag,)
+			scopedata['magnification'] = mag
+			scopedata['id'] = ('scope',)
+			cameradata = None
+		else:
+			scopedata.friendly_update(presetdata)
+			cameradata.friendly_update(presetdata)
+			scopedata['id'] = ('scope',)
+			cameradata['id'] = ('camera',)
+
+		self.uistatus.set(beginmessage)
+		print beginmessage
+
+		## should switch to using AllEMData
 		try:
 			self.publishRemote(scopedata)
-			self.publishRemote(cameradata)
+			if cameradata is not None:
+				self.publishRemote(cameradata)
 		except node.PublishError:
 			self.printException()
 			self.messagelog.error('Cannot set instrument parameters')
 		else:
 			pause = self.changepause.get()
 			time.sleep(pause)
-			self.currentpreset = presetdata
-			self.uistatus.set('Preset changed to %s' % (name,))
-			print 'Preset changed to %s' % (name,)
+			if magonly:
+				self.currentpreset = None
+			else:
+				self.currentpreset = presetdata
+			self.uistatus.set(endmessage)
+			print endmessage
 			self.outputEvent(event.PresetChangedEvent(name=name))
 
 	def fromScope(self, name):
@@ -360,114 +377,87 @@ class PresetsManager(node.Node):
 
 	def uiToScope(self):
 		new = self.uiselectpreset.getSelectedValue()
-		self.toScopeFollowCycle(new)
+		self.cycleToScope(new)
 		node.beep()
 
-	def toScopeFollowCycle(self, new, force_cycle=False):
-		mymessage = self.messagelog.information('Preset Change in Progress')
-		usecycle = self.usecycle.get()
-		if usecycle:
-			order = self.orderlist.get()
-			self.uinew.set(new)
-			if self.currentpreset is None:
-				# first time, we don't know where where
-				# are, so go directly to requested preset
-				# then recursive toScopeFollowCylce
-				self.uistatus.set('First preset change, automatically cycling...')
-				self.toScope(new)
-				mymessage.clear()
-				self.toScopeFollowCycle(new, force_cycle=True)
-				return
-			current = self.currentpreset['name']
-			self.uicurrent.set(current)
+	def cycleToScope(self, presetname, dofinal=True):
+		'''
+		prestename = target preset
+		force = True:  cycle even if cycling to same preset
+		magrepeat = True:  allow two or more consecutive presets
+		   that have the same magnification
+		magonly = True:  all presets in cycle (except for final) 
+		   will only send magnification to TEM
+		'''
+		if not self.usecycle.get():
+			if dofinal:
+				self.toScope(presetname)
+			return
 
-			## if cycle creation works, then 
-			try:
-				cycle = self.createCycleList(current, new)
-			except RuntimeError:
-				cycle = []
-			self.uistatus.set('Cycle: %s' % str(cycle)[1:-1])
+		order = self.orderlist.get()
+		magonly = self.cyclemagonly.get()
+		magshortcut = self.cyclemagshortcut.get()
 
-			if cycle:
-				self.uistatus.set('Cycling to %s' % (new,))
-				# remove first and last from list
-				try:
-					del cycle[0]
-					del cycle[-1]
-				except IndexError:
-					pass
-				currentmag = self.currentpreset['magnification']
-				newpresetdata = self.presetFromName(new)
-				if currentmag == newpresetdata['magnification']:
-					samemag = True
-				else:
-					samemag = False
+		if presetname not in order:
+			raise RuntimeError('final preset %s not in cycle order list' % (presetname,))
 
-				if samemag:
-					if self.cyclemagchanged.get() or force_cycle:
-						self.uistatus.set('Cycling even though new mag is same as old mag')
-					else:
-						self.uistatus.set('Not cycling because new mag is same as old mag')
-						cycle = []
+		### check if this is the first time a preset
+		### has been set for this PresetManager instance
+		### In that case, immediately go to the requested preset
+		### and force a cycle anyway.
+		if self.currentpreset is None:
+			print 'First preset change, doing initial preset change, then forcing cycle'
+			self.toScope(presetname)
+			force = True
+		else:
+			force = False
 
-				for p in cycle:
-					if self.cyclemagonly.get():
-						presetdata = self.presetFromName(p)
-						mag = presetdata['magnification']
-						if currentmag == mag:
-							continue
-						self.uistatus.set('Magnification is %sx' % (mag,))
-						scopedata = data.ScopeEMData()
-						scopedata['magnification'] = mag
-						scopedata['id'] = ('scope',)
-						print 'changing to %s' % (mag,)
-						try:
-							self.publishRemote(scopedata)
-						except node.PublishError:
-							self.printException()
-							self.messagelog.error('Cannot set instrument parameters')
-						print 'changed to %s' % (mag,)
-						currentmag = mag
-						pause = self.changepause.get()
-						time.sleep(pause)
-					else:
-						self.uistatus.set('Preset "%s" to instrument' % (p,))
-						self.toScope(p)
+		currentname = self.currentpreset['name']
+		if currentname not in order:
+			raise RuntimeError('current preset %s not in cycle order list' % (currentname,))
 
-		self.uistatus.set('Preset "%s" to instrument' % (new,))
-		self.toScope(new)
-		mymessage.clear()
+		thiscycle = self.createCycleList(currentname, presetname, magshortcut)
+		## go to every preset in thiscycle except the last
+		for pname in thiscycle[:-1]:
+			self.toScope(pname, magonly)
 
-	def createCycleList(self, first, last, order=None):
-		if order is None:
-			order = self.orderlist.get()
-		if not order:
-			#print 'no order list specified'
-			raise RuntimeError('no order list specified')
-		self.uistatus.set('Order: %s' % str(order)[1:-1])
-		if last not in order:
-			#print 'last not in order list'
-			raise RuntimeError('last not in order')
-		if first not in order:
-			first = last
-		cycle = []
-		on = False
-		done = False
-		while True:
-			for pname in order:
-				if on:
-					if pname == last:
-						done = True
-					cycle.append(pname)
-				else:
-					if pname == first:
-						on = True
-						cycle.append(pname)
-				if done:
-					break
-			if done:
+		## final preset change
+		if dofinal:
+			self.toScope(thiscycle[-1])
+
+	def createCycleList(self, current, final, magshortcut):
+		order = self.orderlist.get()
+
+		# start with only final in the reduced list
+		reduced = [final]
+
+		## propose adding previous presets one by one
+		name2 = final
+		preset2 = self.presetByName(name2)
+		while 1:
+			name1 = self.previousNameInCycle(name2, order)
+			if name1 == current:
 				break
-		return cycle
+			preset1 = self.presetByName(name1)
+
+			if preset1['magnification'] != preset2['magnification'] or not magshortcut:
+				reduced.insert(0,name1)
+			name2 = name1
+			preset2 = preset1
+
+		return reduced
+
+	def nextNameInCycle(self, currentname, order):
+		index = order.index(currentname)
+		nextindex = index + 1
+		if nextindex == len(order):
+			nextindex = 0
+		return order[nextindex]
+
+	def previousNameInCycle(self, currentname, order):
+		index = order.index(currentname)
+		previndex = index - 1
+		return order[previndex]
 
 	def validateCycleOrder(self):
 		'''
@@ -642,13 +632,11 @@ class PresetsManager(node.Node):
 		toscopemethod = uidata.Method('To Scope', self.uiToScope)
 		self.changepause = uidata.Float('Pause', 1.0, 'rw', persist=True)
 		cyclecont = uidata.Container('Cycle')
-		self.usecycle = uidata.Boolean('Follow cycle', True, 'rw', persist=True)
-		self.cyclemagchanged = uidata.Boolean('Cycle same magnification', True,
-																					'rw', persist=True)
-		self.cyclemagonly = uidata.Boolean('Cycle magnification only', False, 'rw',
-																				persist=True)
+		self.usecycle = uidata.Boolean('Cycle On', True, 'rw', persist=True)
+		self.cyclemagshortcut = uidata.Boolean('Cycle Magnification Shortcut', True, 'rw', persist=True)
+		self.cyclemagonly = uidata.Boolean('Cycle Magnification Only', False, 'rw', persist=True)
 		self.orderlist = uidata.Sequence('Cycle Order', [], 'rw', persist=True)
-		cyclecont.addObjects((self.usecycle, self.cyclemagchanged,
+		cyclecont.addObjects((self.usecycle, self.cyclemagshortcut,
 													self.cyclemagonly, self.orderlist))
 
 		fromscopemethod = uidata.Method('From Scope', self.uiSelectedFromScope)
@@ -757,19 +745,8 @@ class PresetsManager(node.Node):
 		be tightly coupled.
 		'''
 		## first cycle through presets before sending the final one
-		if self.usecycle.get():
-			order = self.orderlist.get()
-			if self.currentpreset is None:
-				currentname = order[0]
-			else:
-				currentname = self.currentpreset['name']
-			previousname = order[order.index(newpresetname)-1]
-			self.uiprevious.set(previousname)
-			self.uicurrent.set(currentname)
-			self.uinew.set(newpresetname)
-			if currentname not in (newpresetname, previousname):
-				self.uistatus.set('Now cycling to %s' % (previousname,))
-				self.toScopeFollowCycle(previousname)
+		if self.currentpreset is None or self.currentpreset['name'] != newpresetname:
+			self.cycleToScope(newpresetname, dofinal=False)
 
 		oldpreset = emtargetdata['preset']
 		newpreset = self.presetByName(newpresetname)
