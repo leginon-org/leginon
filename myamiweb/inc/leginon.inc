@@ -7,62 +7,28 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-require("config.php");
-require("inc/util.inc");
+require_once("config.php");
+require_once("inc/util.inc");
 require_once('inc/xmlapplicationimport.inc');
+require_once('inc/mysql.inc');
 
 class leginondata {
 
-
-	var $hostname;
-	var $db_user;
-	var $db_pass;
-	var $database;
 	var $format = "sql";
 	var $saveasfile = false;
-	var $SQL = array ( 
-		'showcolumns'=>1,
-		'where'=>" WHERE 1 "
-		);
 	var $crlf = "\n";
 
-	function leginondata($hostname, $db_user, $dbpass, $database) {
-		$this->hostname = $hostname;
-		$this->db_user  = $db_user;
-		$this->db_pass  = $db_pass;
-		$this->database = $database;
+	function leginondata() {
+		require("config.php");
+		$this->mysql = new mysql($HOSTNAME, $DBUSER, $DBPASSWORD, $DATABASE);
 	}
 
-	function connect_db($host="") {
-		$host = (empty($host)) ? $this->hostname : $host;
-		$link = mysql_connect($host, $this->db_user, $this->db_pass)  or  die( "Unable  to  connect  to  SQL  server");
-		if (!link)
-			return $this->error[0];
-		$db = mysql_select_db($this->database, $link);
-		if(!$db)
-			return $this->error[1];
-		return $link;
-	}
-
-	function close_db($resource_link="") {
-		if (empty($resource_link))
-			mysql_close();
-		else
-			mysql_close($resource_link);
-	}
-
-	function getDBInfo() {
-		return "
-			hostname: ".$this->hostname."
-			database: ".$this->database."
-			user: ".$this->user;
-	}
 	
 	function getLastSessionId() {
 		$q = "select distinct(s.DEF_id) from AcquisitionImageData a "
 			."left join SessionData s on (s.`DEF_id` = a.`REF|SessionData|Session`) "
 			."order by s.DEF_timestamp DESC limit 1";
-		$RlastId = $this->SQLQuery($q) or die ("No session found");
+		$RlastId = $this->mysql->SQLQuery($q) or die ("No session found");
 		$lastId=mysql_fetch_array($RlastId);
 		$expId=$lastId[0];
 		return $expId;
@@ -70,7 +36,7 @@ class leginondata {
 
 	function getSessions() {
 		$q = "select distinct(s.DEF_id), s.name from AcquisitionImageData a left join SessionData s on (s.`DEF_id` = a.`REF|SessionData|Session`) order by s.DEF_timestamp DESC ";
-		$result = $this->SQLQuery($q);
+		$result = $this->mysql->SQLQuery($q);
 		$ids = array();
 		$sessions = array();
 		if ($result)
@@ -86,7 +52,7 @@ class leginondata {
 		$datatypes = array();
 		$q="select distinct label FROM AcquisitionImageData "
 			." where `REF|SessionData|session` = '$expId'";
-		$Rdatatype = $this->SQLQuery($q) or die ("No data type found");
+		$Rdatatype = $this->mysql->SQLQuery($q) or die ("No data type found");
 		$ndata=mysql_num_rows($Rdatatype);
 		while ($row = mysql_fetch_row($Rdatatype)) 
 			$datatype[]=$row[0]; 
@@ -94,91 +60,31 @@ class leginondata {
 	}
 
 	function getFilenames($expId, $label, $table="AcquisitionImageData") {
-		$q = "select `DEF_id`, filename "
+		$q = "select `DEF_id`, `MRC|Image` as filename "
 		    ." from `$table` "
 		    ." where `REF|SessionData|session`='$expId' and label = '$label' "
 		    ." order by `DEF_id` DESC ";
-		$Rfile=$this->SQLQuery($q);
+		$Rfile=$this->mysql->SQLQuery($q);
 		return $Rfile;
 	}
 
 	function getFilename($id, $table="AcquisitionImageData") {
-		$q = "select `filename` from `$table` where "
+		$q = "select `MRC|Image` as filename from `$table` where "
 		    ." `DEF_Id` =\"$id\"  ";
-		$RfileInfo = $this->SQLQuery($q) or die ("No marked file found");
+		$RfileInfo = $this->mysql->SQLQuery($q) or die ("No marked file found");
 		$fileInfo = mysql_fetch_array($RfileInfo);
 		return $fileInfo[filename];
 	}
 
 	function getApplications() {
 		$applications = array();
-		if ($this->SQLTableExists("ApplicationData")) {
+		if ($this->mysql->SQLTableExists("ApplicationData")) {
 			$q = "select DEF_Id, name, version from ApplicationData order by name,version";
-			$Rapplication = $this->SQLQuery($q);
+			$Rapplication = $this->mysql->SQLQuery($q);
 			while($application = mysql_fetch_array($Rapplication))
 				$applications[] = $application;
 		}
 		return $applications;
-	}
-
-	function SQLTableExists($name) {
-		$table_exists=false;
-		$Rtables = $this->SQLQuery("SHOW TABLES");
-	    	while($table = mysql_fetch_array($Rtables))
-			if ($table[0] == $name) {
-				$table_exists=true;
-				break;
-			}
-		return $table_exists;
-	}
-
-	function getSQLTableDefinition($table) {
-
-	    $crlf = $this->crlf;
-	    $backquotestr='`';
-	
-	    $schema_create = "";
-	
-	    $schema_create .= "CREATE TABLE IF NOT EXISTS $table ($crlf";
-	
-	    $result = $this->SQLQuery("SHOW FIELDS FROM $table") or die("show fields error");
-	    while($row = mysql_fetch_array($result))
-	    {
-	        $schema_create .= "   $backquotestr$row[Field]$backquotestr $row[Type]";
-	
-	        if(isset($row["Default"]) && (!empty($row["Default"]) || $row["Default"] == "0"))
-	            $schema_create .= " DEFAULT '$row[Default]'";
-	        if($row["Null"] != "YES")
-	            $schema_create .= " NOT NULL";
-	        if($row["Extra"] != "")
-	            $schema_create .= " $row[Extra]";
-	        $schema_create .= ",$crlf";
-	    }
-	    $schema_create = ereg_replace(",".$crlf."$", "", $schema_create);
-	    $result = $this->SQLQuery("SHOW KEYS FROM $table") or die(mysql_error());
-	    while($row = mysql_fetch_array($result))
-	    {
-	        $kname=$row['Key_name'];
-	        if(($kname != "PRIMARY") && ($row['Non_unique'] == 0))
-	            $kname="UNIQUE|$kname";
-	         if(!isset($index[$kname]))
-	             $index[$kname] = array();
-	         $index[$kname][] = $row['Column_name'];
-	    }
-	
-	    while(list($x, $columns) = @each($index))
-	    {
-	         $schema_create .= ",$crlf";
-	         if($x == "PRIMARY")
-	             $schema_create .= "   PRIMARY KEY (" . implode($columns, ", ") . ")";
-	         elseif (substr($x,0,6) == "UNIQUE")
-	            $schema_create .= "   UNIQUE ".substr($x,7)." (" . implode($columns, ", ") . ")";
-	         else
-	            $schema_create .= "   KEY $x (" . implode($columns, ", ") . ")";
-	    }
-	
-	    $schema_create .= "$crlf);$crlf";
-	    return (stripslashes($schema_create));
 	}
 
 	function getSQLTableDefinitionXML($table) {
@@ -187,7 +93,7 @@ class leginondata {
 	
 	    $schema_create = "  <sqltable name=\"".$table."\" >$crlf";
 	
-	    $result = $this->SQLQuery("SHOW FIELDS FROM $table"); 
+	    $result = $this->mysql->SQLQuery("SHOW FIELDS FROM $table"); 
 	    while($row = mysql_fetch_array($result))
 	    {
 	        $schema_create .= "    <field $crlf";
@@ -203,7 +109,7 @@ class leginondata {
 	        $schema_create .= "    />$crlf";
 	    }
 	    $schema_create = ereg_replace(",".$crlf."$", "", $schema_create);
-	    $result = $this->SQLQuery("SHOW KEYS FROM $table") or mysql_die();
+	    $result = $this->mysql->SQLQuery("SHOW KEYS FROM $table") or mysql_die();
 	    while($row = mysql_fetch_array($result))
 	    {
 	        $kname=$row['Key_name'];
@@ -234,7 +140,7 @@ class leginondata {
 	    $add_query = empty($where) ? "" : " WHERE $where";
 	    $crlf = $this->crlf;
             $local_query = 'SHOW COLUMNS FROM ' . $table ;
-            $result      = $this->SQLQuery($local_query); 
+            $result      = $this->mysql->SQLQuery($local_query); 
 	    for ($i = 0; $row = mysql_fetch_array($result, MYSQL_ASSOC); $i++) 
 		$columns[$i] = $row['Field'];
 	    $columns_cnt     = count($columns);
@@ -242,7 +148,7 @@ class leginondata {
 	    mysql_free_result($result);
 
 	    $local_query = 'SELECT * FROM ' . $table . $add_query;
-	    $result      = $this->SQLQuery($local_query);
+	    $result      = $this->mysql->SQLQuery($local_query);
 	    $buffer      .= '  <!-- ' . $GLOBALS['strTable'] . ' ' . $table . ' -->' . $crlf;
 	    while ($record = mysql_fetch_array($result, MYSQL_ASSOC)) {
 		$buffer         .= '    <sqltable name="' . $table . '" >' . $crlf;
@@ -258,61 +164,17 @@ class leginondata {
 	    return $buffer;
 	}
 
-	function getSQLTableContent($table, &$content, $where="1") {
-	    $crlf = $this->crlf;
-	    $local_query = "SELECT * FROM $table WHERE $where";
-	    $result = $this->SQLQuery($local_query) or die(mysql_error());
-	    $i = 0;
-	    while($row = mysql_fetch_row($result))
-	    {
-	        set_time_limit(60); // HaRa
-	        $table_list = "(";
-	
-	        for($j=0; $j<mysql_num_fields($result);$j++)
-	            $table_list .= "`".mysql_field_name($result,$j)."`, ";
-	
-	        $table_list = substr($table_list,0,-2);
-	        $table_list .= ")";
-	
-	        if(isset($this->SQL["showcolumns"]))
-	            $schema_insert = "INSERT INTO $table $table_list VALUES (";
-	        else
-	            $schema_insert = "INSERT INTO $table VALUES (";
-	
-	        for($j=0; $j<mysql_num_fields($result);$j++)
-	        {
-	            if(!isset($row[$j]))
-	                $schema_insert .= " NULL,";
-	            elseif($row[$j] != "")
-	                $schema_insert .= " '".addslashes($row[$j])."',";
-	            else
-	                $schema_insert .= " '',";
-	        }
-	        $schema_insert = ereg_replace(",$", "", $schema_insert);
-	        $schema_insert .= ")";
-	        $content .= trim($schema_insert).";$crlf";
-	        $i++;
-	    }
-	    return (true);
-	}
-
-	var $error = array
-		(
-		"Unable  to  connect  to  SQL  server",
-		"Unable  to  select  database"
-		);
-
 	function dumpApplicationData($applicationId) {
 	    $crlf = $this->crlf;
 	    $format = $this->format;
 	    $saveasfile = $this->saveasfile;
 	    $tbl_applicationdata="ApplicationData";
-	    $result = $this->SQLQuery("SHOW TABLES");
+	    $result = $this->mysql->SQLQuery("SHOW TABLES");
 	    while($row = mysql_fetch_row($result))
 		$tables[] = $row[0];
 	    // --- Get Reference Ids
 	    $where = " `DEF_Id` = $applicationId ";
-	    $Rinfo = $this->SQLQuery("SELECT date_format(DEF_timestamp,'%m/%d/%Y') as date, `name`, `version` from $tbl_applicationdata where $where");
+	    $Rinfo = $this->mysql->SQLQuery("SELECT date_format(DEF_timestamp,'%m/%d/%Y') as date, `name`, `version` from $tbl_applicationdata where $where");
 	    $result = mysql_fetch_array($Rinfo);
 	    $name = $result['name'];
 	    $version = $result['version'];
@@ -320,7 +182,7 @@ class leginondata {
 
 	    $ref_tables=array();
 	    foreach($tables as $table) {
-	    	$result = $this->SQLQuery("SHOW FIELDS FROM $table"); 
+	    	$result = $this->mysql->SQLQuery("SHOW FIELDS FROM $table"); 
 	    	while($row = mysql_fetch_array($result))
 			if (ereg("^REF\|$tbl_applicationdata", $row[Field]))
 				if(!in_array($table,$ref_tables))
@@ -328,8 +190,8 @@ class leginondata {
 
 	    }
 	    if ($format=="sql") {
-		$getdefinition="getSQLTableDefinition";
-		$getdata="getSQLTableContent";
+		$getdefinition="mysql->getSQLTableDefinition";
+		$getdata="mysql->getSQLTableContent";
 		$dump      =  '# Leginon Application-SQL-Dump' . $crlf
                            .  '# http://ami.scripps.edu/ ' . $crlf
                            .  '#' . $crlf
@@ -354,20 +216,18 @@ class leginondata {
                              .  '<applicationdump>' . $crlf;
 	    }
 
-
-
-	    $table_def = $this->$getdefinition($tbl_applicationdata);
+	    $table_def = eval('$this->'.$getdefinition.'($tbl_applicationdata);');
 	    foreach($ref_tables as $table) {
-		$table_def .= $this->$getdefinition($table);
+		$table_def .= eval('$this->'.$getdefinition.'($table);');
 	    }
 	    
 
 
-	    $this->$getdata($tbl_applicationdata, $buffer, $where);
+	    eval('$this->'.$getdata.'($tbl_applicationdata, $buffer, $where);');
 
 	    $where = " `REF|ApplicationData|application` = $applicationId";
 	    foreach($ref_tables as $table) { 
-		    $this->$getdata($table, $buffer, $where);
+		    eval('$this->'.$getdata.'($table, $buffer, $where);');
 		}
 
 	    if($format=="xml")
@@ -410,15 +270,6 @@ class leginondata {
 
 	}
 
-	function setSQLHost($host) {
-		$this->new_sqlhost = $host;
-	}
-
-	function getSQLHost() {
-		$host = (empty($this->new_sqlhost)) ? $this->hostname : $this->new_sqlhost;
-		return $host;
-	}
-
 	function importApplication($filename) {
 		$app = new XMLApplicationImport($filename);
 		$sqldef = $app->getSQLDefinitionQueries();
@@ -430,7 +281,7 @@ class leginondata {
 		$this->sqlfieldvalues = $fieldvalues;
 
 		//--- Generate the tables
-		$this->SQLQueries($sqldef);
+		$this->mysql->SQLQueries($sqldef);
 
 		//--- Check if application exits
 		$applicationinfo = $fieldvalues[ApplicationData];
@@ -440,11 +291,11 @@ class leginondata {
 		}
 		$where = implode(" AND ", $sqlwhere);
 		$query = "Select `DEF_id`, name, version from ApplicationData where $where";
-		$Rresult = $this->SQLQuery($query);
+		$Rresult = $this->mysql->SQLQuery($query);
 		$result = mysql_fetch_array($Rresult);
 		if ($result) {
 			$msg = 	 "Application $result[name]-$result[version] exists "
-				."on sql server ".$this->getSQLHost();
+				."on sql server ".$this->mysql->getSQLHost();
 			return $msg;
 		}
 
@@ -452,10 +303,10 @@ class leginondata {
 		foreach ($sqldata as $table=>$queries) {
 			foreach($queries as $query) {
 				if ($table=="ApplicationData")
-					$applicationId = $this->SQLQuery($queries[0], true);
+					$applicationId = $this->mysql->SQLQuery($queries[0], true);
 				else {
 					eval("\$sqlinsert= \"".addslashes($query)."\";");
-					$this->SQLQuery($sqlinsert,true);
+					$this->mysql->SQLQuery($sqlinsert,true);
 				}
 			}
 		}
@@ -465,37 +316,9 @@ class leginondata {
 			."-"
 			.str_replace('"', '', $applicationinfo[version])
 			." imported successfully"
-			." on ".$this->getSQLHost();
+			." on ".$this->mysql->getSQLHost();
 		return $msg;
 
-	}
-
-	function SQLQuery($query, $insert=false) {
-		$this->connect_db($this->new_sqlhost);
-		$result = mysql_query($query) or die("Error: ".mysql_error());
-		if ($insert)
-			$res = mysql_insert_id();
-		else
-			$res = $result;
-		$this->close_db();
-		return $res;
-	}
-
-	function SQLQueries($queries) {
-		$this->connect_db($this->new_sqlhost);
-		$q = (is_array($queries)) ? $queries : array($queries);
-		foreach($q as $v)
-			mysql_query($v) or die("Error: ".mysql_error());
-		$this->close_db();
-		return(true);
-	}
-
-	function executeSQLInsert($query) {
-		$this->connect_db();
-		mysql_query($query) or die("Error: ".mysql_error());
-		return mysql_insert_id();
-		$this->close_db();
-		return(true);
 	}
 
 	function importInfo() {
@@ -566,7 +389,7 @@ class leginondata {
 					$ref .= '|'.ereg_replace("'","",$row[$i]);
 					$refinfo = explode("|", $ref);
 					$qref="select * from `$refinfo[0]` where `DEF_id`=".$refinfo[2];
-					$Rqref = $this->SQLQuery($qref);
+					$Rqref = $this->mysql->SQLQuery($qref);
 					if ($recursive)
 					$this->readDataTree($arr_node,$Rqref,$refname.'|'.$refinfo[1],false);
 				} else if (!ereg("^DEF_",$field)){
@@ -596,14 +419,14 @@ class leginondata {
 
 		$q="	select * from $table 
 			where  `DEF_id` = \"$id\" ";
-		$Rq = $this->SQLQuery($q);
+		$Rq = $this->mysql->SQLQuery($q);
 		$this->readDataTree($arr_node,$Rq); 
 		return $arr_node;
 	}
 
 }
 
-$leginondata = new leginondata($HOSTNAME, $DBUSER, $DBPASSWORD, $DATABASE);
+$leginondata = new leginondata();
 
 
 ?>

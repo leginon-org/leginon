@@ -13,7 +13,7 @@ $applicationId = $_POST[applicationId];
 $ex_hostId = $_POST[export_hostId];
 $im_hostId = $_POST[import_hostId];
 
-$leginondata->setSQLHost($SQL_HOSTS[$ex_hostId]);
+$leginondata->mysql->setSQLHost($SQL_HOSTS[$ex_hostId]);
 $applications = $leginondata->getApplications();
 $check_str = 'checked="checked"';
 
@@ -155,7 +155,7 @@ if ($applicationId && $_POST[bt_export]) {
 	$leginondata->dumpApplicationData($applicationId);
 } else if ($filename) {
 	echo "$filename <br><br>";
-	$leginondata->setSQLHost($SQL_HOSTS[$im_hostId]);
+	$leginondata->mysql->setSQLHost($SQL_HOSTS[$im_hostId]);
 	$app = $leginondata->importApplication($tmpfile);
 	echo $app;
 }

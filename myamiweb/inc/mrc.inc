@@ -19,7 +19,7 @@ class mrc {
 		if ($maxpix)
 			$opts[]="--max=$maxpix";
 			
-		$img_cmd = "python -OO ./py/mrc2jpg2out.py ".implode(" ",$opts)." $file";
+		$img_cmd = "python -OO ./py/mrc2jpg2out.py ".implode(" ",$opts)." \"$file\"";
 		// --- copy $pic into a buffer $imgbuffer
 		ob_start();
 		passthru($img_cmd);
