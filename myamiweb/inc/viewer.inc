@@ -14,6 +14,14 @@ require ('inc/button.inc');
 
 $VIEWNB=0;
 
+/**
+ *	Viewer
+ *
+ *	@example simpleviewer.phps How to use
+ *
+ *
+ */
+
 class viewer {
 
 	var $crlf="\n";

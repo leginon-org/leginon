@@ -3,14 +3,15 @@
 /**
  *	The Leginon software is Copyright 2003 
  *	The Scripps Research Institute, La Jolla, CA
- *	For terms of the license agreement
- *	see  http://ami.scripps.edu/software/leginon-license
+ *	For terms of the license agreement see
+ *	@license http://ami.scripps.edu/software/leginon-license
  */
 
 /**
  *  This class convert a Leginon application.xml file 
- *  into: - SQL statements 
- *        - PHP array
+ *  into:
+ *      - SQL statements 
+ *      - PHP array
  */
 
 class XMLApplicationImport {
