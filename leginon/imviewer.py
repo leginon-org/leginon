@@ -4,6 +4,7 @@ import imagewatcher
 import Numeric
 import threading
 import camerafuncs
+import cameraimage
 import Mrc
 import node, data, event
 import uidata
@@ -19,16 +20,26 @@ class ImViewer(imagewatcher.ImageWatcher):
 	def processData(self, imagedata):
 		imagewatcher.ImageWatcher.processData(self, imagedata)
 		self.ui_image.set(self.numarray)
+		self.doPow()
+
+	def doPow(self):
+		if self.numarray is not None and self.do_pow.get():
+			pow = cameraimage.power(self.numarray)
+			self.ui_image_pow.set(pow)
 
 	def uiAcquireRaw(self):
 		imarray = self.acquireArray(0)
 		if imarray is not None:
+			self.numarray = imarray
 			self.ui_image.set(imarray)
+		self.doPow()
 
 	def uiAcquireCorrected(self):
 		imarray = self.acquireArray(1)
 		if imarray is not None:
+			self.numarray = imarray
 			self.ui_image.set(imarray)
+		self.doPow()
 
 	def acquireArray(self, corr=0):
 		camconfig = self.cam.cameraConfig()
@@ -54,6 +65,7 @@ class ImViewer(imagewatcher.ImageWatcher):
 		filename = self.uifilename.get()
 		self.numarray = Mrc.mrc_to_numeric(filename)
 		self.ui_image.set(self.numarray)
+		self.doPow()
 
 	def uiSaveImage(self):
 		filename = self.uifilename.get()
@@ -68,21 +80,22 @@ class ImViewer(imagewatcher.ImageWatcher):
 		filecontainer = uidata.Container('File')
 		filecontainer.addObjects((self.uifilename, loadmethod, savemethod))
 
-		self.ui_image = uidata.Image('Image', None, 'r')
-		rawmethod = uidata.Method('Acquire Raw', self.uiAcquireRaw)
-		correctedmethod = uidata.Method('Acquire Corrected',
-																			self.uiAcquireCorrected)
-		eventmethod = uidata.Method('Event Acquire', self.acquireEvent)
-		acquirecontainer = uidata.Container('Acquisition')
-		acquirecontainer.addObjects((self.ui_image, rawmethod, correctedmethod,
-																		eventmethod))
-
 		cameraconfigure = self.cam.configUIData()
 		settingscontainer = uidata.Container('Settings')
 		settingscontainer.addObject(cameraconfigure)
 
+		rawmethod = uidata.Method('Acquire Raw', self.uiAcquireRaw)
+		correctedmethod = uidata.Method('Acquire Corrected', self.uiAcquireCorrected)
+		self.do_pow = uidata.Boolean('Do Power', False, 'rw')
+		self.ui_image = uidata.Image('Image', None, 'r')
+		self.ui_image_pow = uidata.Image('Power Image', None, 'r')
+		eventmethod = uidata.Method('Event Acquire', self.acquireEvent)
+		acquirecontainer = uidata.Container('Acquisition')
+		acquirecontainer.addObjects((rawmethod, correctedmethod, eventmethod, self.do_pow, self.ui_image, self.ui_image_pow))
+
+
 		container = uidata.MediumContainer('Image Viewer')
-		container.addObjects((acquirecontainer, settingscontainer, filecontainer))
+		container.addObjects((settingscontainer, filecontainer, acquirecontainer))
 
 		self.uiserver.addObject(container)
 
