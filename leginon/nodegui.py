@@ -394,19 +394,17 @@ class TreeData(Data):
 			raise RuntimeError('TreeData requires struct type')
 
 	def buildWidget(self, parent):
-		self.sc = None
-		self.treeframe = Frame(parent)
-		return self.treeframe
+		self.treenode = None
+		self.sc = TreeWidget.ScrolledCanvas(parent, highlightthickness=0, bg=self.entrycolor)
+		return self.sc.frame
 
 	def setWidget(self, value):
 		self.dict = value
-		if self.sc is not None:
-			self.sc.frame.destroy()
-		self.sc = TreeWidget.ScrolledCanvas(self.treeframe, highlightthickness=0, bg=self.entrycolor)
 		item = StructTreeItem(None, self.name, self.dict)
-		node = TreeWidget.TreeNode(self.sc.canvas, None, item)
-		node.expand()
-		self.sc.frame.pack(expand=YES, fill=BOTH)
+		if self.treenode is not None:
+			del(self.treenode)
+		self.treenode = TreeWidget.TreeNode(self.sc.canvas, None, item)
+		self.treenode.expand()
 
 	def getWidget(self):
 		return self.dict
