@@ -67,6 +67,11 @@ class Corrector(node.Node):
 
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
+
+		self.uistatus = uidata.String('Status', '', 'r')
+		statuscontainer = uidata.Container('Status')
+		statuscontainer.addObjects((self.uistatus,))
+
 		darkmethod = uidata.Method('Acquire Dark', self.uiAcquireDark)
 		brightmethod = uidata.Method('Acquire Bright', self.uiAcquireBright)
 		rawmethod = uidata.Method('Acquire Raw', self.uiAcquireRaw)
@@ -82,25 +87,32 @@ class Corrector(node.Node):
 		referencescontainer.addObjects((darkmethod, brightmethod))
 
 		autocontainer = uidata.Container('Auto References')
-		autocontainer.addObjects((self.autobinning, self.autotarget, self.autoexptime, automethod))
+		autocontainer.addObjects((self.autobinning, self.autotarget,
+															self.autoexptime, automethod))
 
 		testcontainer = uidata.Container('Test')
 		testcontainer.addObjects((rawmethod, correctedmethod))
 		controlcontainer = uidata.Container('Control')
 
 		self.despikeon = uidata.Boolean('Despike', True, 'rw', persist=True)
-		self.despikevalue = uidata.Float('Despike Threshold', 3.5, 'rw', persist=True)
-		self.despikesize = uidata.Integer('Neighborhood Size', 11, 'rw', persist=True)
+		self.despikevalue = uidata.Float('Despike Threshold', 3.5, 'rw',
+																			persist=True)
+		self.despikesize = uidata.Integer('Neighborhood Size', 11, 'rw',
+																			persist=True)
 
-		controlcontainer.addObjects((self.despikeon, self.despikesize, self.despikevalue, referencescontainer, autocontainer, testcontainer))
-		self.display_flag = uidata.Boolean('Display Image', True, 'rw', persist=True)
+		controlcontainer.addObjects((self.despikeon, self.despikesize,
+																	self.despikevalue, referencescontainer,
+																	autocontainer, testcontainer))
+		self.display_flag = uidata.Boolean('Display image', True, 'rw',
+																				persist=True)
 
 		statscontainer = uidata.Container('Statistics')
 		self.statsmean = uidata.Float('Mean', None, 'r')
 		self.statsmin = uidata.Float('Min', None, 'r')
 		self.statsmax = uidata.Float('Max', None, 'r')
 		self.statsstd = uidata.Float('Std. Dev.', None, 'r')
-		statscontainer.addObjects((self.statsmean, self.statsmin, self.statsmax, self.statsstd))
+		statscontainer.addObjects((self.statsmean, self.statsmin, self.statsmax,
+																self.statsstd))
 
 		self.ui_image = uidata.Image('Image', None, 'rw')
 
@@ -118,7 +130,8 @@ class Corrector(node.Node):
 																	cameraconfigure, self.cliplimits,
 																	self.badrows, self.badcols, setplan, getplan))
 		container = uidata.LargeContainer('Corrector')
-		container.addObjects((settingscontainer, controlcontainer, self.display_flag, statscontainer, self.ui_image))
+		container.addObjects((statuscontainer, settingscontainer, controlcontainer,
+													self.display_flag, statscontainer, self.ui_image))
 		self.uiserver.addObject(container)
 
 	def uiSetPlanParams(self):
@@ -192,7 +205,7 @@ class Corrector(node.Node):
 
 	def displayStats(self, imagedata):
 		stats = self.stats(imagedata)
-		print 'STATS', stats
+		#print 'STATS', stats
 		self.statsmean.set(stats['mean'])
 		self.statsmin.set(stats['min'])
 		self.statsmax.set(stats['max'])
@@ -224,7 +237,7 @@ class Corrector(node.Node):
 	def acquireSeries(self, n, camdata):
 		series = []
 		for i in range(n):
-			print 'acquiring %s of %s' % (i+1, n)
+			self.uistatus.set('Acquiring %s of %s' % (i+1, n))
 			imagedata = self.cam.acquireCameraImageData(correction=False)
 			numimage = imagedata['image']
 			camdata = imagedata['camera']
@@ -238,10 +251,10 @@ class Corrector(node.Node):
 		if dark:
 			camdata['exposure type'] = 'dark'
 			typekey = 'dark'
-			print 'DARK'
+			self.uistatus.set('Acquiring dark')
 		else:
 			typekey = 'bright'
-			print 'BRIGHT'
+			self.uistatus.set('Acquiring bright')
 
 		self.cam.currentCameraEMData(camdata)
 
@@ -249,12 +262,12 @@ class Corrector(node.Node):
 
 		seriesinfo = self.acquireSeries(navg, camdata=camdata)
 		series = seriesinfo['image series']
-		for im in series:
-			print im.shape, im.typecode()
+#		for im in series:
+#			print im.shape, im.typecode()
 		seriescam = seriesinfo['camera']
 		seriesscope = seriesinfo['scope']
 
-		print 'averaging series'
+		self.uistatus.set('Averaging series')
 		ref = imagefun.averageSeries(series)
 
 		corstate = data.CorrectorCamstateData()
@@ -264,18 +277,18 @@ class Corrector(node.Node):
 
 		refimagedata = self.storeRef(typekey, ref, corstate)
 
-		print 'got ref, calcnorm'
+		self.uistatus.set('Got reference image, calculating normalization')
 		self.calc_norm(refimagedata)
 
 		# since its not in use yet
 		if camdata['exposure type'] == 'dark':
-			print 'reseting camera from dark to normal'
+			self.uistatus.set('Reseting camera exposure type to normal from dark')
 			camconfig = self.cam.cameraConfig()
 			camdata = self.cam.configToEMData(camconfig)
 			camdata['exposure type'] = 'normal'
 			self.cam.currentCameraEMData(camdata)
 
-		print 'returning ref'
+		#print 'returning ref'
 		return ref
 
 	def researchRef(self, camstate, type):
@@ -292,9 +305,9 @@ class Corrector(node.Node):
 		imagetemp['camstate'] = camstate
 		imagetemp['session'] = data.SessionData()
 		imagetemp['session']['instrument'] = self.session['instrument']
-		print 'researching reference image'
+		self.uistatus.set('Researching reference image')
 		refs = self.research(datainstance=imagetemp, results=1)
-		print 'done researching reference image'
+		self.uistatus.set('Reference image researched')
 		if refs:
 			ref = refs[0]
 		else:
@@ -322,7 +335,7 @@ class Corrector(node.Node):
 		try:
 			return self.ref_cache[key]
 		except KeyError:
-			print 'loading reference image', key
+			self.uistatus.set('Loading reference image "%s"' % str(key))
 
 		## use reference image from database
 		ref = self.researchRef(camstate, type)
@@ -330,7 +343,7 @@ class Corrector(node.Node):
 			image = ref['image']
 			self.ref_cache[key] = image
 		else:
-			print 'No reference image found', camstate, type
+			self.uistatus.set('No reference image found')
 			image = None
 		return image
 
@@ -352,8 +365,9 @@ class Corrector(node.Node):
 		imagetemp['id'] = self.ID()
 		imagetemp['image'] = numdata
 		imagetemp['camstate'] = camstate
-		print 'publishing'
+		self.uistatus.set('Publishing reference image...')
 		self.publish(imagetemp, pubevent=True, database=True)
+		self.uistatus.set('Reference image published')
 		return imagetemp
 
 	def calc_norm(self, corimagedata):
@@ -363,13 +377,13 @@ class Corrector(node.Node):
 			dark = corimagedata['image']
 			bright = self.retrieveRef(corstate, 'bright')
 			if bright is None:
-				print 'NO BRIGHT'
+				self.uistatus.set('No bright reference image')
 				return
 		if isinstance(corimagedata, data.BrightImageData):
 			bright = corimagedata['image']
 			dark = self.retrieveRef(corstate, 'dark')
 			if dark is None:
-				print 'NO DARK'
+				self.uistatus.set('No dark reference image')
 				return
 
 		norm = bright - dark
@@ -381,7 +395,7 @@ class Corrector(node.Node):
 		# so make sure there are no zeros in norm
 		norm = Numeric.clip(norm, 1.0, imagefun.inf)
 		norm = normavg / norm
-		print 'saving'
+		#print 'saving'
 		self.storeRef('norm', norm, corstate)
 
 	def acquireCorrectedArray(self, camconfig=None):
@@ -419,7 +433,7 @@ class Corrector(node.Node):
 			good = normalized
 
 		if self.despikeon.get():
-			print 'despiking'
+			#print 'despiking'
 			thresh = self.despikevalue.get()
 			nsize = self.despikesize.get()
 			good = imagefun.despike(good, nsize, thresh)
@@ -494,7 +508,7 @@ class Corrector(node.Node):
 		im = imagedata['image']
 		mean = darkmean = imagefun.mean(im)
 		self.displayImage(im)
-		print 'Dark Mean:', darkmean
+		self.uistatus.set('Dark reference mean: %s' % str(darkmean))
 
 		target_exp = 0
 		trial_exp = initial_exp
@@ -510,10 +524,10 @@ class Corrector(node.Node):
 			im = imagedata['image']
 			mean = imagefun.mean(im)
 			self.displayImage(im)
-			print 'Mean:', mean
+			self.uistatus.set('Image mean: %s' % str(mean))
 
 			if minmean <= mean <= maxmean:
-				print 'exposure time %s is good'
+				#print 'exposure time %s is good'
 				i = -1
 				break
 			else:
@@ -521,60 +535,5 @@ class Corrector(node.Node):
 				trial_exp = (targetmean - darkmean) / slope
 
 		if i == tries-1:
-			print 'failed to find target mean after %s tries' % (tries,)
+			self.uistatus.set('Failed to find target mean after %s tries' % (tries,))
 
-if __name__ == '__main__':
-	from Numeric import *
-	import Mrc
-	from ImageViewer import ImageViewer
-
-	print 'reading darks'
-	dark1 = Mrc.mrc_to_numeric('/home/pulokas/test_images/dark1.mrc')
-	dark2 = Mrc.mrc_to_numeric('/home/pulokas/test_images/dark2.mrc')
-	print 'averaging darks'
-	dark = numeric_series_average( (dark1,dark2) )
-	print 'reading brights'
-	bright1 = Mrc.mrc_to_numeric('/home/pulokas/test_images/bright1.mrc')
-	bright2 = Mrc.mrc_to_numeric('/home/pulokas/test_images/bright2.mrc')
-	print 'averaging brights'
-	bright = numeric_series_average( (bright1,bright2) )
-	print 'reading raw'
-	raw = Mrc.mrc_to_numeric('/home/pulokas/test_images/raw4.mrc')
-
-	print 'setting up corrector'
-	corrector = FlatCorrector()
-	corrector.set_dark(dark)
-	corrector.set_bright(bright)
-	print 'correcting'
-	good = corrector.normalize(raw)
-
-	#print 'dark', dark
-	#print 'bright', bright
-	#print 'norm', corrector.norm
-	#print 'good', good
-
-
-	print 'prparing raw-dark'
-	rawmdark = raw - dark
-	print 'finding averages of raw-dark and good'
-	rawmdarkavg = numeric_mean(rawmdark)
-	goodavg = numeric_mean(good)
-	print 'rawmdarkavg', rawmdarkavg
-	print 'goodavg', goodavg
-
-	print 'darkstdev', numeric_stdev(dark)
-	goodstdev = numeric_stdev(good)
-	print 'goodstdev', goodstdev
-
-	from Tkinter import *
-	root = Tk()
-	jim = ImageViewer(root, bg='#488')
-	jim.pack()
-	jim.import_numeric(good)
-
-	clip = (goodavg - 3 * goodstdev,   goodavg + 3 * goodstdev)
-	jim.transform['clip'] = clip
-	#jim.transform['output_size'] = (400,400)
-	jim.update_image()
-
-	root.mainloop()
