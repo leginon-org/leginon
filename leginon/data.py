@@ -266,11 +266,13 @@ class ScopeEMData(EMData):
 class CameraEMData(EMData):
 	def typemap(cls):
 		t = EMData.typemap()
-		t += [ ('offset', dict),
+		t += [
 			('dimension', dict),
 			('binning', dict),
+			('offset', dict),
 			('exposure time', float),
 			('image data', strictdict.NumericArrayType),
+			('camera size', dict),
 		]
 		return t
 	typemap = classmethod(typemap)
