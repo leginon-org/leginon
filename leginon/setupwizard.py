@@ -495,7 +495,7 @@ class SetupWizard(wx.wizard.Wizard):
 			self.RunWizard(self.userpage)
 
 	def onPageChanging(self, evt):
-		# this count only for forward
+		# this counts only for forward
 		if not evt.GetDirection():
 			return
 		page = evt.GetPage()
@@ -518,7 +518,8 @@ class SetupWizard(wx.wizard.Wizard):
 			user = self.users[user]
 			name = self.namepage.nametextctrl.GetValue()
 			description = self.namepage.descriptiontextctrl.GetValue()
-			project = self.projectpage.projectchoice.GetStringSelection()
+			if self.projects:
+				project = self.projectpage.projectchoice.GetStringSelection()
 			instrument = self.instrumentpage.instrumentchoice.GetStringSelection()
 			try:
 				instrument = self.instruments[instrument]
@@ -540,7 +541,8 @@ class SetupWizard(wx.wizard.Wizard):
 		elif page is self.sessioncreatepage:
 			name = self.namepage.nametextctrl.GetValue()
 			description = self.namepage.descriptiontextctrl.GetValue()
-			project = self.projectpage.projectchoice.GetStringSelection()
+			if self.projects:
+				project = self.projectpage.projectchoice.GetStringSelection()
 			instrument = self.instrumentpage.instrumentchoice.GetStringSelection()
 			directory = self.imagedirectorypage.directorytextctrl.GetValue()
 			self.sessioncreatepage.nametext.SetLabel(name)
@@ -553,7 +555,10 @@ class SetupWizard(wx.wizard.Wizard):
 			texts = ['name', 'description', 'project', 'instrument', 'imagedirectory']
 			for i in texts:
 				# if label is too big for wizard (presized) need to resize or truncate
-				o = getattr(self.sessioncreatepage, i + 'text')
+				try:
+					o = getattr(self.sessioncreatepage, i + 'text')
+				except AttributeError:
+					pass
 				self.sessioncreatepage.sizer.SetItemMinSize(o, o.GetSize())
 			self.sessioncreatepage.pagesizer.Layout()
 
