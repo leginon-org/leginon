@@ -309,7 +309,7 @@ class ManagerSetup(object):
 		inst = sessiondata['instrument']['name']
 		self.load_sessioninstrument.set(inst)
 
-		path = sessiondata['image path']
+		path = leginonconfig.mapPath(sessiondata['image path'])
 		self.load_sessionpath.set(path)
 
 	def getSessionDataName(self, sessiondata):
