@@ -112,6 +112,7 @@ class arrow extends graphutil {
 
 	function draw() {
 		imageline($this->img, $this->x1, $this->y1, $this->x2, $this->y2, $this->col);
+		imageline($this->img, $this->x1-.5, $this->y1+.5, $this->x2-.5, $this->y2+.5, $this->col);
 		imagefilledpolygon ($this->img, $this->arrow_data, count($this->arrow_data)/2, $this->col);
 	}
 

@@ -7,9 +7,9 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  *
  * $Source: /ami/sw/cvsroot/dbem/config.php,v $
- * $Revision: 1.14 $
+ * $Revision: 1.15 $
  * $Name: not supported by cvs2svn $
- * $Date: 2004-11-11 18:33:36 $
+ * $Date: 2004-12-07 00:30:42 $
  * $Author: dfellman $
  * $State: Exp $
  * $Locker:  $
@@ -20,7 +20,7 @@
 
 // --- Set your leginon MySQL database server parameters
 
-$DB_HOST	= "";
+$DB_HOST	= "cronus1";
 $DB_USER	= "usr_object";
 $DB_PASS	= "";
 $DB		= "dbemdata";

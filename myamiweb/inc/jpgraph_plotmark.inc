@@ -4,7 +4,7 @@
 // Description:	Class file. Handles plotmarks
 // Created: 	2003-03-21
 // Author:	Johan Persson (johanp@aditus.nu)
-// Ver:		$Id: jpgraph_plotmark.inc,v 1.1 2003-10-09 20:58:28 dfellman Exp $
+// Ver:		$Id: jpgraph_plotmark.inc,v 1.2 2004-12-07 00:30:42 dfellman Exp $
 //
 // License:	This code is released under QPL 1.0 
 // Copyright (C) 2003 Johan Persson 
@@ -39,13 +39,34 @@ class ImgData {
 	}
 	else
 	    $idx = $aIdx ;
-	return imagecreatefromstring(base64_decode($this->{$n}[$idx][1]));   
+	return Image::CreateFromString(base64_decode($this->{$n}[$idx][1]));   
     }
     function GetAnchor() {
 	return array($this->anchor_x,$this->anchor_y);
     }
 }
 
+
+// Keep a global flag cache to reduce memory usage
+$_gFlagCache=array(
+    1 => null,
+    2 => null,
+    3 => null,
+    4 => null,
+);
+// Only supposed to b called as statics
+class FlagCache {
+    function GetFlagImgByName($aSize,$aName) {
+	global $_gFlagCache;
+	require_once('jpgraph_flags.php');
+	if( $_gFlagCache[$aSize] === null ) {
+	    $_gFlagCache[$aSize] =& new FlagImages($aSize);
+	}
+	$f =& $_gFlagCache[$aSize];
+	$idx = $f->GetIdxByName($aName,$aFullName);
+	return $f->GetImgByIdx($idx);
+    }
+}
 
 //===================================================
 // CLASS PlotMark
@@ -197,13 +218,13 @@ class PlotMark {
 
 	    if( $this->iFormatCallback != '' ) {
 		$f = $this->iFormatCallback;
-		list($width,$color,$fcolor) = $f($this->yvalue);
+		list($width,$color,$fcolor) = call_user_func($f,$this->yvalue);
 		$filename = $this->iFileName;
 		$imgscale = $this->iScale;
 	    }
 	    else {
 		$f = $this->iFormatCallback2;
-		list($width,$color,$fcolor,$filename,$imgscale) = $f($this->yvalue,$this->xvalue);
+		list($width,$color,$fcolor,$filename,$imgscale) = call_user_func($f,$this->yvalue,$this->xvalue);
 		if( $filename=="" ) $filename = $this->iFileName;
 		if( $imgscale=="" ) $imgscale = $this->iScale;
 	    }
@@ -221,14 +242,22 @@ class PlotMark {
 	    $imgscale = $this->iScale;
 	}
 
-
-	if( $this->type == MARK_IMG || $this->type >= MARK_IMG_PUSHPIN ) {
+	if( $this->type == MARK_IMG ||
+	    ($this->type >= MARK_FLAG1 && $this->type <= MARK_FLAG4 ) ||
+	    $this->type >= MARK_IMG_PUSHPIN ) {
 
 	    // Note: For the builtin images we use the "filename" parameter
 	    // to denote the color
 	    $anchor_x = 0.5;
 	    $anchor_y = 0.5; 
 	    switch( $this->type ) {
+		case MARK_FLAG1:
+		case MARK_FLAG2:
+		case MARK_FLAG3:
+		case MARK_FLAG4:
+		    $this->markimg = FlagCache::GetFlagImgByName($this->type-MARK_FLAG1+1,$filename);
+		    break;
+
 		case MARK_IMG :
 		    // Load an image and use that as a marker
 		    // Small optimization, if we have already read an image don't
@@ -299,8 +328,8 @@ class PlotMark {
 		    break;
 	    }
 
-	    $w = imagesx($this->markimg);
-	    $h = imagesy($this->markimg);
+	    $w = $img->GetWidth($this->markimg);
+	    $h = $img->GetHeight($this->markimg);
 	    
 	    $dw = round($imgscale * $w );
 	    $dh = round($imgscale * $h );
@@ -310,8 +339,7 @@ class PlotMark {
 	    
 	    $this->width = max($dx,$dy);
 	    
-	    $cp = $GLOBALS['copyfunc'] ;
-	    $cp($img->img,$this->markimg,$dx,$dy,0,0,$dw,$dh,$w,$h);
+	    $img->Copy($this->markimg,$dx,$dy,0,0,$dw,$dh,$w,$h);
 	    if( !empty($this->csimtarget) ) {
 		$this->csimareas = "<area shape=\"rect\" coords=\"".
 		    $dx.','.$dy.','.round($dx+$dw).','.round($dy+$dh).'" '.
@@ -413,7 +441,7 @@ class PlotMark {
 	    $img->SetColor($fcolor);		
 	    $img->FilledCircle($x,$y,$width);
 	    $img->SetColor($color);	
-	    $img->Circle($x,$y,$width+1);
+	    $img->Circle($x,$y,$width);
 	    $this->AddCSIMCircle($x,$y,$width);
 	}
 	elseif( $this->type==MARK_CROSS ) {

@@ -80,6 +80,47 @@ if (!empty($summary)) {
 	echo "</td>";
 	
 }
+echo "</td>";
+echo "</tr>";
+echo "<tr>";
+echo "<td colspan='2'>";
+echo divtitle("Drift ");
+echo "<a href='driftreport.php?Id=$expId'>report &raquo;</a>";
+echo "<table border='0'>\n";
+	echo "<tr>";
+		echo "<td>";
+	echo "<a href='avgdriftgraph.php?vd=1&Id=$expId'>[data]</a><br>";
+	echo "<img src='avgdriftgraph.php?w=256&Id=$expId'>";
+		echo "</td>";
+	echo "</tr>";
+echo "</table>\n";
+echo "</td>";
+echo "</tr>";
+$icethicknesspresets = $leginondata->getIceThicknessPresets($expId);
+if (!empty($icethicknesspresets)) {
+	echo "<tr>";
+	echo "<td colspan='2'>";
+	echo divtitle("Ice Thickness");
+	echo "<table border='0'>\n";
+	echo "<tr>";
+		echo "<td>";
+		echo "<a href='densityreport.php?Id=$expId'>report &raquo;</a>";
+		echo "</td>";
+	echo "</tr>";
+	echo "<tr>";
+	foreach($icethicknesspresets as $preset) {
+		echo "<td>";
+		echo "<a href='icegraph.php?Id=$expId&vdata=1&preset=".$preset['name']."'>[data]</a><br>";
+		echo "<a href='icegraph.php?Id=$expId&preset=".$preset['name']."'>";
+		echo "<img border='0' src='icegraph.php?Id=$expId&w=256&preset=".$preset['name']."'>";
+		echo "</a>\n";
+		echo "</td>\n";
+	}
+	echo "</tr>\n";
+	echo "</table>\n";
+	echo "</td>";
+	
+}
 ?>
 </tr>
 <tr>

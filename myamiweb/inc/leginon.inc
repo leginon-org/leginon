@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.38 $
- *	@version $Id: leginon.inc,v 1.38 2004-11-17 08:56:14 dfellman Exp $
+ *	@version $Revision: 1.39 $
+ *	@version $Id: leginon.inc,v 1.39 2004-12-07 00:30:42 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -868,12 +868,6 @@ class leginondata {
 			."order by t.`tnumber` ";
 
 		return $this->mysql->getSQLResult($q);
-		$Rtargets = $this->mysql->SQLQuery($q);
-		$targets= array();
-		while ($target = mysql_fetch_array($Rtargets, MYSQL_ASSOC))
-			$targets[] = $target;
-		return $targets;
-		#return $this->matchTargets($targets);
 	}
 
 	function matchVersionTargets($targets) {
@@ -945,11 +939,6 @@ class leginondata {
 			."t.`type`='focus' and "
 			."a.`DEF_id`='".$imgId."'";
 		return $this->mysql->getSQLResult($q);
-		$Rtargets = $this->mysql->SQLQuery($q);
-		$targets= array();
-		while ($target = mysql_fetch_array($Rtargets, MYSQL_ASSOC))
-			$targets[] = $target;
-		return $targets;
 	}
 
 	function getApplications() {
@@ -1383,14 +1372,85 @@ class leginondata {
 		$row = mysql_fetch_array($result, MYSQL_ASSOC);
 		return $row;
 	}
+
+	function getDriftTime($imageId) {
+		$ids = array();
+		if (is_array($imageId)) {
+			foreach ($imageId as $id) {
+				$ids[] = 't.`REF|AcquisitionImageData|image`='.$id;
+			}
+		} else {
+			$ids[] = 't.`REF|AcquisitionImageData|image`='.$imageId;
+		}
+		$sqlwhere = '('.implode(' OR ', $ids).')';
+		$q="select  "
+		."t.`REF|AcquisitionImageData|image` as imageId, "
+		."t.`DEF_id` as targetId, "
+		."t.`version` as `target version`, "
+		."sum(time_to_sec((DATE_SUB(d2.`DEF_timestamp`, INTERVAL "
+		."date_format(d1.`DEF_timestamp`, '%T') HOUR_SECOND)))) as `total` "
+		."from DriftData d1 , DriftData d2 "
+		."left join AcquisitionImageTargetData as t  "
+		."on (t.`DEF_id` = d1.`REF|AcquisitionImageTargetData|target`)  "
+		."where "
+		."d2.`DEF_id`=d1.`DEF_id`+1 and "
+		."d2.`REF|AcquisitionImageTargetData|target` = d1.`REF|AcquisitionImageTargetData|target` and "
+		.$sqlwhere." and  "
+		."t.`type`='focus'   "
+		."group by t.`REF|AcquisitionImageData|image` ";
+		return $this->mysql->getSQLResult($q);
+	}
+
+	function getDriftedImages($id) {
+		return $this->getDriftData($id, 'session', true);
+	}
+
+	function getDriftDataFromSessionId($id) {
+		return $this->getDriftData($id, 'session');
+	}
+
+	function getDriftDataFromImageId($id) {
+		return $this->getDriftData($id, 'image');
+	}
 	
-	function getDriftData($Id) {
-		$driftdata=array();
-		$q="SELECT UNIX_TIMESTAMP(`DEF_timestamp`) as timestamp, rowmeters, colmeters, `interval` from DriftData where `REF|SessionData|session` = '".$Id."' order by `DEF_timestamp` ASC";
-		$result = $this->mysql->SQLQuery($q);
-		while ($row= mysql_fetch_array($result, MYSQL_ASSOC))
-			$driftdata[] = $row;
-		return $driftdata;
+	function getDriftData($id, $type, $group=false) {
+		switch ($type) {
+			case 'image':
+				$condition = "`t`.`REF|AcquisitionImageData|image`='$id' and  ";
+				break;
+			case 'session':
+				$condition = "`t`.`REF|SessionData|session` = '$id' and ";
+				break;
+		} 
+
+		$select =  "UNIX_TIMESTAMP(d1.`DEF_timestamp`) as `unix_timestamp`, "
+		."date_format(d1.`DEF_timestamp`, '%Y-%d-%m %T') as `timestamp`, "
+		."t.`REF|AcquisitionImageData|image` as imageId, "
+		."t.`DEF_id` as targetId, "
+		."d1.cols as driftx, "
+		."d1.`rows` as drifty, "
+		."@val:=sqrt(d1.`rows`*d1.`rows` + d1.`cols`*d1.`cols`) as driftvalue, "
+		."d1.interval as `interval`, "
+		."@val/d1.interval as `rate` ";
+
+		if ($group) {
+			$select = "UNIX_TIMESTAMP(d1.`DEF_timestamp`) as `timestamp`, "
+			."t.`REF|AcquisitionImageData|image` as imageId, "
+			."t.`DEF_id` as targetId, "
+			."count(t.`DEF_id`) as nb_targetId ";
+			$sqlgroup = "group by t.`REF|AcquisitionImageData|image`  having nb_targetId > 1 ";
+		}
+
+		$q="select  "
+		.$select
+		."from DriftData d1 "
+		."left join AcquisitionImageTargetData as t  "
+		."on (t.`DEF_id` = d1.`REF|AcquisitionImageTargetData|target`)  "
+		."where "
+		.$condition
+		."t.`type`='focus' "
+		.$sqlgroup;
+		return $this->mysql->getSQLResult($q);
 	}
 
 	function getMeasurements($label, $axis) {
@@ -1400,6 +1460,69 @@ class leginondata {
 			left join StageModelMagCalibrationData s 
 			on (s.axis=m.axis and s.label = m.label and s.magnification = m.magnification)  
 			where m.label='$label' and m.axis='$axis'";
+		return $this->mysql->getSQLResult($q);
+	}
+
+
+	function getIceThicknessPresets($sessionId) {
+		$q="SELECT DISTINCT"
+			."`p`.`name`, `h`.`REF|SessionData|session` "
+			."FROM "
+			."`HoleFinderPrefsData` AS `h` "
+			."LEFT JOIN `AcquisitionImageData` AS `a` "
+			."ON (`a`.`DEF_id`=`h`.`REF|AcquisitionImageData|image`) "
+			."LEFT JOIN `PresetData` AS `p` "
+			."ON (`p`.`DEF_id`=`a`.`REF|PresetData|preset`) "
+			."WHERE "
+			."a.`REF|SessionData|session` = '$sessionId' ";
+		return $this->mysql->getSQLResult($q);
+	}
+
+	function getRelatedStats($sessionId, $preset) {
+		$q="SELECT "
+			."`a`.`DEF_id` as `Id`, "
+			."`istats`.`mean`, "
+			."`parent`.`DEF_id` as `parentId`, "
+			."`hstats`.`mean` AS `parent mean`, "
+			."`hstats`.`thickness-mean` AS `parent thickness-mean` "
+			."FROM "
+			."`AcquisitionImageData` AS `a` "
+			."LEFT JOIN `AcquisitionImageTargetData` AS `target` "
+			."ON (`target`.`DEF_id`=`a`.`REF|AcquisitionImageTargetData|target`) "
+			."LEFT JOIN `AcquisitionImageData` AS `parent` "
+			."ON (`parent`.`DEF_id`=`target`.`REF|AcquisitionImageData|image`) "
+			."LEFT JOIN `HoleFinderPrefsData` AS `h` "
+			."ON (`target`.`REF|AcquisitionImageData|image`=`h`.`REF|AcquisitionImageData|image`) "
+			."LEFT JOIN `HoleStatsData` AS `hstats` "
+			."ON (`h`.`DEF_id`=`hstats`.`REF|HoleFinderPrefsData|prefs`) "
+			."LEFT JOIN `PresetData` AS `p` "
+			."ON (`p`.`DEF_id`=`a`.`REF|PresetData|preset`) "
+			."LEFT JOIN `AcquisitionImageStatsData` AS `istats` "
+			."ON (`a`.`DEF_id`=`istats`.`REF|AcquisitionImageData|image`) "
+			."WHERE "
+			."`a`.`REF|SessionData|session` = '$sessionId' "
+			."AND "
+			."`parent`.`DEF_id` is not NULL "
+			."AND "
+			."`p`.`name` = '$preset' "
+			."AND "
+			."`hstats`.`DEF_id` <> 0 ";
+		return $this->mysql->getSQLResult($q);
+	}
+
+	function getIceThickness($sessionId, $preset) {
+		$q = "SELECT "
+			."date_format(h.`DEF_timestamp`, '%Y-%d-%m %T') as `timestamp`, "
+			.'`h`.`thickness-mean` '
+			.'FROM '
+			.'`HoleStatsData` AS `h` '
+			.'LEFT JOIN `HoleFinderPrefsData` AS `pref` ON (`pref`.`DEF_id`=`h`.`REF|HoleFinderPrefsData|prefs`) '
+			.'LEFT JOIN `AcquisitionImageData` AS `a` ON (`a`.`DEF_id`=`pref`.`REF|AcquisitionImageData|image`) '
+			.'LEFT JOIN `PresetData` AS `p` ON (`p`.`DEF_id`=`a`.`REF|PresetData|preset`) '
+			.'WHERE '
+			."a.`REF|SessionData|session` = '$sessionId' "
+			."AND "
+			."`p`.`name`='$preset'";
 		return $this->mysql->getSQLResult($q);
 	}
 

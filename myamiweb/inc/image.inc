@@ -1,7 +1,7 @@
 <?
 /**
- *	@version $Revision: 1.12 $
- *	@version $Id: image.inc,v 1.12 2004-11-17 08:56:14 dfellman Exp $
+ *	@version $Revision: 1.13 $
+ *	@version $Id: image.inc,v 1.13 2004-12-07 00:30:42 dfellman Exp $
  */
 /**
  *	Tools to display images / mosaic
@@ -115,9 +115,9 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 			imagestringshadow($img, 4, $ctx, $cty, $tn, $col);
 			
 		    }
-		    if ($targets = $leginondata->getImageFocusTargets($imageId))
+		    if ($targets = $leginondata->getImageFocusTargets($imageId, true)) 
 		    foreach ($targets as $target) {
-			$tgn=$target[tnumber];
+			$tgn=$target[tversion];
 			$tn='focus'."  ".$tgn;
 			if (abs($target[x]-$parent[targetx])<5
 				&& abs($target[y]-$parent[targety])<5 ){
@@ -138,6 +138,56 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 			drawcross($img, $cx, $cy, $crosssize*$ratioX, $crosscol);
 			imagestringshadow($img, 4, $ctx, $cty, $tn, $col);
 		    }
+		}
+		if ($driftdirection=1) {
+		    if ($targets = $leginondata->getImageFocusTargets($imageId, true)) {
+
+			$ratioX = ($size) ? $size/$target[dimx] : (($binning) ? 1/$binning : 1);
+			$ratioY = ($size) ? $size/$target[dimy] : (($binning) ? 1/$binning : 1);
+			$vert = imagecolorallocate($img, 0, 255,0);
+			$rouge= imagecolorallocate($img, 255,0,0);
+
+		    foreach ($targets as $target) {
+			$tgn=$target[tversion];
+			$cx = $target[x]*$ratioX;
+			$cy = $target[y]*$ratioY;
+			$d[$tgn][] = array('x'=>$cx,'y'=>$cy);
+		}
+			foreach($d as $point) {
+			/*
+				$li = count($d[$n])-1;
+				$cx1 = $d[$n][0]['x'];
+				$cy1 = $d[$n][0]['y'];
+				$cx = $d[$n][$li]['x'];
+				$cy = $d[$n][$li]['y'];
+			*/
+				$li = count($point)-1;
+				$cx1 = $point[0][x];
+				$cy1 = $point[0][y];
+				$cx = $point[$li][x];
+				$cy = $point[$li][y];
+				$arrow = new arrow ($img, $cx1,$cy1, $cx, $cy, $vert);
+				$arrow->draw();
+			}
+
+			if (is_Array($d))
+				foreach($d as $k=>$point) {
+					foreach ($point as $p) 
+						imageline ( $img, $p[x], $p[y], $p[x], $p[y], $rouge);
+				}
+
+
+	//		$t[] = $targets[0];
+	//		$t[] = $targets[count($targets)-1];
+
+		/*
+			$x1 = $t[0][x]+10;
+			$y1 = $t[0][y]+10;
+			$x2 = $t[1][x]-10;
+			$y2 = $t[1][y]-10;
+		*/
+
+			}
 		}
 
 		/* diplay loading time */
@@ -163,8 +213,10 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 
 }
 
-function blankimage() {
-	$blkimg = imagecreate(256,256);
+function blankimage($w=256, $h="") {
+	if (!$h)
+		$h=$w;
+	$blkimg = imagecreate($w, $h);
 	imagecolorallocate($blkimg, 255, 255, 255);
 	return $blkimg;
 }
@@ -179,6 +231,25 @@ function createAltMessage($text, $fontsize=2, $margin=6) {
 	imagerectangle($img, 0,0, $width-1, $height-1, $black);
 	imagestring($img, $fontsize, $margin, $margin, $text, $textcolor);
 	return ($img);
+}
+
+function resample($source, $new_width="", $new_height="") {
+	header("Content-type: image/x-png");
+	$width = imagesx($source);
+	$height = imagesy($source);
+	if ($new_width)
+		$new_height = ($new_height) ? $new_height : $height / $width * $new_width;
+	if ($new_height)
+		$new_width = ($new_width) ? $new_width : $width / $height * $new_height;
+
+	if ($new_width && $new_height) {
+		$dest = imagecreatetruecolor($new_width,$new_height);
+		imagecopyresampled($dest,$source,0,0,0,0,$new_width,$new_height,$width,$height);
+		imagepng($dest);
+		imagedestroy($dest);
+	} else imagepng($source);
+
+	imagedestroy($source);
 }
 
 class Mosaic {
