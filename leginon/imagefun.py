@@ -469,6 +469,31 @@ class Blob(object):
 class TooManyBlobs(Exception):
 	pass
 
+def near_center(shape, blobs, n):
+	'''
+	filter out no more than n blobs that are closest to image center
+	'''
+	
+	# create distance mapping
+	imcenter = shape[0]/2, shape[1]/2
+	distmap = {}
+	for blob in blobs:
+		center = blob.stats['center']
+		distance = Numeric.hypot(center[0]-imcenter[0],center[1]-imcenter[1])
+		distmap[blob] = distance
+	## sort blobs based on distance
+	def dist_cmp(x,y):
+		return cmp(distmap[x],distmap[y])
+	sortedblobs = list(blobs)
+	sortedblobs.sort(dist_cmp)
+	sortedblobs = sortedblobs[:n]
+	## make new list of blobs with n closest, same order as before
+	newblobs = []
+	for blob in blobs:
+		if blob in sortedblobs:
+			newblobs.append(blob)
+	return newblobs
+
 def find_blobs_slow(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize=0):
 	print 'slow blobs'
 	shape = image.shape
@@ -495,13 +520,16 @@ def find_blobs_slow(image, mask, border=0, maxblobs=300, maxblobsize=100, minblo
 				if err:
 					continue
 				blobs.append(newblob)
-				if (maxblobs is not None) and (len(blobs) > maxblobs):
-					raise TooManyBlobs('found more than %s blobs' % (maxblobs,))
+
 
 	print 'Found %s blobs.' % (len(blobs),)
 	print 'Calculating blob stats'
 	for blob in blobs:
 		blob.calc_stats()
+	## limit to maxblobs
+	if (maxblobs is not None) and (len(blobs) > maxblobs):
+		print 'trimming number of blobs to %s closest to center' % (maxblobs,)
+		blobs = near_center(shape, blobs, maxblobs)
 	return blobs
 
 def find_blobs_fast(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize=0):
@@ -535,15 +563,19 @@ def find_blobs_fast(image, mask, border=0, maxblobs=300, maxblobsize=100, minblo
 			toosmall += 1
 			continue
 		fakeblobs.append(fakeblob)
-		if (maxblobs is not None) and (len(fakeblobs) > maxblobs):
-			raise TooManyBlobs('found more than %s blobs' % (maxblobs,))
 
 	print 'rejected %s oversized blobs' % (toobig,)
 	print 'rejected %s undersized blobs' % (toosmall,)
-
 	print 'Found %s blobs.' % (len(fakeblobs),)
 
-	return fakeblobs
+	## limit to maxblobs
+	if (maxblobs is not None) and (len(blobs) > maxblobs):
+		blobs = near_center(shape, fakeblobs, maxblobs)
+		print 'trimming number of blobs to %s closest to center' % (maxblobs,)
+	else:
+		blobs = fakeblobs
+
+	return blobs
 
 if numextension is None:
 	find_blobs = find_blobs_slow
