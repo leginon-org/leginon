@@ -37,7 +37,7 @@ class TargetWatcher(watcher.Watcher):
 
 		### republish the rejects
 		if rejects:
-			newtargetlist = data.ImageTargetListData(self.ID(), targets=rejects)
+			newtargetlist = data.ImageTargetListData(id=self.ID(), targets=rejects)
 			self.passTargets(newtargetlist)
 
 		### process the good ones
