@@ -12,6 +12,7 @@ import threading
 import calibrationclient
 import gonmodel
 import uidata
+import string
 
 class GonModeler(node.Node):
 	def __init__(self, id, session, nodelocations, **kwargs):
@@ -30,14 +31,13 @@ class GonModeler(node.Node):
 		self.start()
 
 	# calibrate needs to take a specific value
-	def loop(self, axis, points, interval):
+	def loop(self, label, axis, points, interval):
 		## set camera state
 		camconfig = self.cam.cameraConfig()
 		emdata = self.cam.configToEMData(camconfig)
 		self.cam.currentCameraEMData(camdata=emdata)
 
 		mag = self.getMagnification()
-		self.writeHeader(mag, axis)
 
 		self.oldimagedata = None
 		self.acquireNextPosition(axis)
@@ -52,7 +52,12 @@ class GonModeler(node.Node):
 				break
 			currentpos['stage position'][axis] += interval
 			datalist = self.acquireNextPosition(axis, currentpos)
-			self.writeData(mag, axis, datalist)
+			gonx = datalist[0]
+			gony = datalist[1]
+			delta = datalist[2]
+			imx = datalist[3]
+			imy = datalist[4]
+			self.writeData(label, mag, axis, gonx, gony, delta, imx, imy)
 			t.stop()
 		print 'loop done'
 		self.threadlock.release()
@@ -124,34 +129,47 @@ class GonModeler(node.Node):
 		if axis == 'y':
 			return 'x'
 
-	def writeHeader(self, mag, axis):
-		'''
-		header:
-			magnification
-			axis
-		'''
-		padmagstr = '%06d' % (int(mag),)
-		magstr = str(int(mag))
-		filename = padmagstr + axis + '.data'
-		f = open(filename, 'a')
-		f.write(magstr + '\n')
-		f.write(axis + '\n')
-		f.close()
+	def uiConvert(self):
+		self.file2db(self.uiconvertfilename.get(), self.uidatalabel.get())
 
-	def writeData(self, mag, axis, datalist):
-		padmagstr = '%06d' % (int(mag),)
-		magstr = str(int(mag))
-		filename = padmagstr + axis + '.data'
-		strdatalist = []
-		for item in datalist:
-			strdatalist.append(str(item))
-		f = open(filename, 'a')
-		datastr = '\t'.join(strdatalist)
-		f.write(datastr + '\n')
-		f.close()
+	def file2db(self, filename, label):
+		datafile = open(filename, 'r')
+		lines = datafile.readlines()
+		datafile.close()
+		headlines = lines[:2]
+		headlines = map(string.split,headlines)
+		mag = float(headlines[0][0])
+		axis = headlines[1][0]
+		print 'mag', mag
+		print 'axis', axis
+
+		datalines = lines[2:]
+		print 'inserting into DB'
+		count = 0
+		for dataline in datalines:
+			strvalues = dataline.split('\t')
+			if len(strvalues) != 5:
+				continue
+			gonx,gony,delta,imagex,imagey = map(float, strvalues)
+			self.writeData(label, mag, axis, gonx, gony, delta, imagex, imagey)
+			count += 1
+		print 'inserted %s data points' % (count,)
+
+	def writeData(self, label, mag, axis, gonx, gony, delta, imx, imy):
+		stagedata = data.StageMeasurementData()
+		stagedata['label'] = label
+		stagedata['magnification'] = mag
+		stagedata['axis'] = axis
+		stagedata['x'] = gonx
+		stagedata['y'] = gony
+		stagedata['delta'] = delta
+		stagedata['imagex'] = imx
+		stagedata['imagey'] = imy
+		self.publish(stagedata, database=True)
 
 	def uiFit(self):
-		self.calclient.fit(self.uidatafile.get(), self.uiterms.get(), magonly=0)
+		# label, mag, axis, terms,...
+		self.calclient.fit(self.uifitlabel.get(), self.uifitmag.get(), self.uifitaxis.getSelectedValue(), self.uiterms.get(), magonly=0)
 		return ''
 
 	def uiMagOnly(self):
@@ -169,22 +187,27 @@ class GonModeler(node.Node):
 	def defineUserInterface(self):
 		nodespec = node.Node.defineUserInterface(self)
 
+		self.uidatalabel = uidata.String('Label', '', 'rw', persist=True)
 		self.uiaxis = uidata.SingleSelectFromList('Axis',  ['x','y'], 0)
 		self.uipoints = uidata.Integer('Points', 200, 'rw', persist=True)
 		self.uiinterval = uidata.Float('Interval', 5e-6, 'rw', persist=True)
 		start = uidata.Method('Start', self.uiStartLoop)
 		stop = uidata.Method('Stop', self.uiStopLoop)
+		self.uiconvertfilename = uidata.String('Data File', '', 'rw')
+		convert = uidata.Method('File->DB', self.uiConvert)
 
 		measurecont = uidata.Container('Measure')
-		measurecont.addObjects((self.uiaxis, self.uipoints, self.uiinterval, start, stop))
+		measurecont.addObjects((self.uiaxis, self.uipoints, self.uiinterval, self.uidatalabel, start, stop, self.uiconvertfilename, convert))
 
-		self.uidatafile = uidata.String('Data File', '', 'rw')
-		self.uiterms = uidata.Integer('Terms', 5, 'rw')
+		self.uifitlabel = uidata.String('Label', '', 'rw', persist=True)
+		self.uifitmag = uidata.Integer('Magnification', '', 'rw', persist=True)
+		self.uifitaxis = uidata.SingleSelectFromList('Axis',  ['x','y'], 0, persist=True)
+		self.uiterms = uidata.Integer('Terms', 5, 'rw', persist=True)
 		fit = uidata.Method('Fit Model', self.uiFit)
 		magonly = uidata.Method('Mag Only', self.uiMagOnly)
 
 		modelcont = uidata.Container('Model')
-		modelcont.addObjects((self.uidatafile, self.uiterms, fit, magonly))
+		modelcont.addObjects((self.uifitlabel, self.uifitmag, self.uifitaxis, self.uiterms, fit, magonly))
 
 		camconfig = self.cam.configUIData()
 
@@ -195,11 +218,12 @@ class GonModeler(node.Node):
 	def uiStartLoop(self):
 		if not self.threadlock.acquire(0):
 			return ''
+		label = self.uidatalabel.get()
 		axis = self.uiaxis.getSelectedValue()
 		points = self.uipoints.get()
 		interval = self.uiinterval.get()
 		self.threadstop.clear()
-		t = threading.Thread(target=self.loop, args=(axis, points, interval))
+		t = threading.Thread(target=self.loop, args=(label, axis, points, interval))
 		t.setDaemon(1)
 		t.start()
 		return ''

@@ -28,17 +28,37 @@ class GonData:
 	A GonData instance holds the data from a goniometer calibration.
 	It is only meant to handle one axis.
 	"""
-	def __init__(self, infile):
+	def __init__(self, infile=None):
 		self.gonpos = None
 		self.othergonpos = None
 		self.pixpertick = None
 		self.datavg = None
 		self.angle = None
 		self.maginfo = {}
-		self.read_data(infile)
+		if infile is not None:
+			self.read_data(infile)
 
 	def dict(self):
 		return self.maginfo
+
+	def import_data(self, mag, axis, datapoints):
+		'''
+		data is a sequence of data points.  each data point is a 5-tuple of floats.
+		'''
+		self.mag = mag
+		self.axis = axis
+		self.process_data(datapoints)
+
+	def datalines2floats(self, datalines):
+		floats = []
+		for dataline in datalines:
+			floatdata = string.split(dataline)
+			if len(floatdata) != 5:
+				continue
+			floatdata = map(float, floatdata)
+			floats.append(floatdata)
+
+		return floats
 
 	def read_data(self,filename):
 		datafile = open(filename, 'r')
@@ -54,8 +74,11 @@ class GonData:
 		print 'axis', self.axis
 
 		datalines = lines[2:]
-		datalen = len(datalines)
+		datapoints = self.datalines2floats(datalines)
+		self.process_data(datapoints)
 
+	def process_data(self, datapoints):
+		datalen = len(datapoints)
 		self.gonpos = Numeric.zeros(datalen,Numeric.Float32)
 		self.othergonpos = Numeric.zeros(datalen,Numeric.Float32)
 		self.pixpertick = Numeric.zeros(datalen,Numeric.Float32)
@@ -72,19 +95,13 @@ class GonData:
 		n = 0
 		self.angle = 0.0
 		self.avg = 0.0
-		print 'len(datalines)', len(datalines)
-		for line in datalines:
-			sp = string.split(line)
-			sp = map(float,sp)
-			if len(sp) == 5:
-				self.gonpos[n] = sp[gonposcol]
-				self.othergonpos[n] = sp[othergonposcol]
-				self.pixpertick[n] = math.sqrt(sp[3] * sp[3] + sp[4] * sp[4]) /  sp[2]
-				self.avg += self.pixpertick[n]
-				self.angle += math.atan2(sp[4],sp[3])
-				n += 1
-			else:
-				print 'SP', sp
+		for point in datapoints:
+			self.gonpos[n] = point[gonposcol]
+			self.othergonpos[n] = point[othergonposcol]
+			self.pixpertick[n] = math.sqrt(point[3] * point[3] + point[4] * point[4]) /  point[2]
+			self.avg += self.pixpertick[n]
+			self.angle += math.atan2(point[4],point[3])
+			n += 1
 
 		self.ndata = n
 		print 'NNN', n
@@ -200,8 +217,6 @@ class GonModel:
 	def design_matrix(self, gondata, terms, period):
 		ma = 2 * terms + 1
 		a = Numeric.zeros((gondata.ndata, ma),Numeric.Float32)
-		print 'gondata.gonpos', gondata.gonpos.shape
-		print 'a.shape', a.shape
 
 		k = 2.0 * math.pi / period
 		
@@ -217,21 +232,38 @@ class GonModel:
 		return a
 
 	def fit_data(self, gondata, terms):
-
 		b = gondata.pixpertick
-		search_periods = 20.0
 
-		best_resids = 1e999
-		precision = 0.1
+		## converge the period of the solution to this precision.
+		## smaller precision means longer execution time.
+		precision = 1e-10
 
-		## minp,maxp work for the Philips CM/Tecnai
-		## other goniometers may vary
-		minp = 0.000035
-		maxp = 0.000070
+		## resolution of search within each search range
+		## From my experience, this does not seem to affect execution too much
+		## it just balances between the inner and outer loop below.
+		search_periods = 10.0
+
+		## Define the search range for the period of the fit function.
+		## Right now, we know that the FEI Tecnai and CM goniometers have
+		## the following theoretical periods (in meters):
+		##     x:  6.24e-5,  y:  4.19e-5
+		## Experimentally, we have found them to be closer to:
+		##     x:  6.19e-5,  y:  ???
+		## Here we use a search range that should include the solution for 
+		## these goniometers.
+		minp = 3.9e-5
+		maxp = 6.5e-5
+
+		## this loop begins a course search and narrows to a fine search which 
+		## terminates when precision is reached.
+		# Make sure incp is initially > precision, so loop goes at least once.
 		incp = precision + 1
+		best_resids = 1e999
 		while incp > precision:
 			incp = (maxp - minp) / search_periods
-			for period in Numeric.arrayrange(minp, maxp, incp):
+			print 'current precision:', incp
+			## this loop searches for the best period in the current range
+			for period in Numeric.arrayrange(minp, maxp+incp, incp):
 				a = self.design_matrix(gondata,terms,period)
 				x,resids,rank,s = LinearAlgebra.linear_least_squares(a,b)
 				if resids < best_resids:
@@ -247,14 +279,22 @@ class GonModel:
 		if 'model mean' not in gondata.maginfo:
 			gondata.maginfo['model mean'] = {}
 		gondata.maginfo['model mean'][gondata.axis] = self.a0
-		print "maginfo set:"
-		print "  modavg" + gondata.axis, self.a0
+		print 'maginfo set:'
+		print '  modavg:  ' + gondata.axis, self.a0
+		print '  period:  ', self.period
+		print '  resids:  ', best_resids
 
-		self.a = Numeric.zeros(terms)
-		self.b = Numeric.zeros(terms)
+		if terms:
+			self.a = Numeric.zeros(terms)
+			self.b = Numeric.zeros(terms)
+		else:
+			self.a = Numeric.zeros(1)
+			self.b = Numeric.zeros(1)
 		for i in range(terms):
 			self.a[i] = best_x[2*i+1]
 			self.b[i] = best_x[2*i+2]
+		print 'A', self.a
+		print 'B', self.b
 
 		## normalize
 		self.a = self.a0 * self.a

@@ -490,7 +490,7 @@ class StageModelCalibrationData(CalibrationData):
 class StageModelMagCalibrationData(MagDependentCalibrationData):
 	def typemap(cls):
 		t = MagDependentCalibrationData.typemap()
-		t += [ ('axis', str), ('angle', float), ('mean',float)]
+		t += [ ('label', str), ('axis', str), ('angle', float), ('mean',float)]
 		return t
 	typemap = classmethod(typemap)
 

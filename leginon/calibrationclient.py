@@ -204,7 +204,6 @@ class PixelSizeCalibrationClient(CalibrationClient):
 		queryinstance['magnification'] = mag
 		queryinstance['session'] = data.SessionData()
 		queryinstance['session']['instrument'] = self.node.session['instrument']
-
 		caldatalist = self.node.research(datainstance=queryinstance, results=1)
 
 		if len(caldatalist) > 0:
@@ -213,6 +212,19 @@ class PixelSizeCalibrationClient(CalibrationClient):
 			raise NoPixelSizeError
 		pixelsize = caldata['pixelsize']
 		return pixelsize
+
+	def retrieveAllPixelSizes(self):
+		'''
+		finds the requested pixel size using magnification
+		'''
+		queryinstance = data.PixelSizeCalibrationData()
+		queryinstance['session'] = data.SessionData()
+		queryinstance['session']['instrument'] = self.node.session['instrument']
+		caldatalist = self.node.research(datainstance=queryinstance)
+
+		return caldatalist
+
+
 
 class MatrixCalibrationClient(CalibrationClient):
 	'''
@@ -605,8 +617,9 @@ class ModeledStageCalibrationClient(CalibrationClient):
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)
 
-	def storeMagCalibration(self, mag, axis, angle, mean):
+	def storeMagCalibration(self, label, mag, axis, angle, mean):
 		caldata = data.StageModelMagCalibrationData()
+		caldata['label'] = label
 		caldata['magnification'] = mag
 		caldata['axis'] = axis
 		caldata['angle'] = angle
@@ -614,15 +627,23 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		self.node.publish(caldata, database=True)
 
 	def retrieveMagCalibration(self, mag, axis):
+		tmpsession = data.SessionData()
+		tmpsession['instrument'] = self.node.session['instrument']
 		qinst = data.StageModelMagCalibrationData(magnification=mag, axis=axis)
+		qinst['session'] = tmpsession
+
 		caldatalist = self.node.research(datainstance=qinst, results=1)
 		if len(caldatalist) > 0:
-			return caldatalist[0]
+			caldata = caldatalist[0]
+			print 'GOT ANGLE', caldata['angle']
+			print 'GOT MEAN', caldata['mean']
+			return caldata
 		else:
 			raise RuntimeError('no mag calibration')
 
-	def storeModelCalibration(self, axis, period, a, b):
+	def storeModelCalibration(self, label, axis, period, a, b):
 		caldata = data.StageModelCalibrationData()
+		caldata['label'] = label 
 		caldata['axis'] = axis
 		caldata['period'] = period
 		## force it to be 2 dimensional so sqldict likes it
@@ -634,15 +655,47 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		self.node.publish(caldata, database=True)
 
 	def retrieveModelCalibration(self, axis):
+		tmpsession = data.SessionData()
+		tmpsession['instrument'] = self.node.session['instrument']
 		qinst = data.StageModelCalibrationData(axis=axis)
+		qinst['session'] = tmpsession
+		print 'QINST'
+		print qinst
 		caldatalist = self.node.research(datainstance=qinst, results=1)
 		if len(caldatalist) > 0:
-			return caldatalist[0]
+			caldata = caldatalist[0]
+			print 'GOT PERIOD', caldata['period']
+			## return it to rank 0 array
+			caldata['a'] = caldata['a'][0]
+			caldata['b'] = caldata['b'][0]
+			return caldata
 		else:
 			raise RuntimeError('no mag calibration')
 
-	def fit(self, datfile, terms, magonly=1):
-		dat = gonmodel.GonData(datfile)
+	def getLabeledData(self, label, mag, axis):
+		qdata = data.StageMeasurementData()
+		qdata['label'] = label
+		qdata['magnification'] = mag
+		qdata['axis'] = axis
+		measurements = self.node.research(datainstance=qdata)
+		print 'LEN(MEASUREMENTS)', len(measurements)
+		datapoints = []
+		for measurement in measurements:
+			datapoint = []
+			datapoint.append(measurement['x'])
+			datapoint.append(measurement['y'])
+			datapoint.append(measurement['delta'])
+			datapoint.append(measurement['imagex'])
+			datapoint.append(measurement['imagey'])
+			datapoints.append(datapoint)
+		return datapoints
+
+	def fit(self, label, mag, axis, terms, magonly=1):
+		# get data from DB
+		datapoints = self.getLabeledData(label, mag, axis)
+		dat = gonmodel.GonData()
+		dat.import_data(mag, axis, datapoints)
+
 		## fit a model to the data
 		mod = gonmodel.GonModel()
 		mod.fit_data(dat, terms)
@@ -660,10 +713,10 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		a = mod.a
 		b = mod.b
 		
-		self.storeMagCalibration(mag, axis, angle, mean)
+		self.storeMagCalibration(label, mag, axis, angle, mean)
 		if magonly:
 			return
-		self.storeModelCalibration(axis, period, a, b)
+		self.storeModelCalibration(label, axis, period, a, b)
 
 	def transform(self, pixelshift, scope, camera):
 		curstage = scope['stage position']
@@ -674,27 +727,33 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		pixcol = pixelshift['col'] * binx
 
 		## do modifications to newstage here
-		xmod_dict = self.getModel('x')
-		ymod_dict = self.getModel('y')
-		mag_dict = self.getMagCalibration(scope['magnification'])
-		delta = self.pixtix(xmod_dict, ymod_dict, mag_dict, curstage['x'], curstage['y'], pixcol, pixrow)
+		xmodcal = self.retrieveModelCalibration('x')
+		ymodcal = self.retrieveModelCalibration('y')
+		print 'xmod a', xmodcal['a']
+		print 'xmod b', xmodcal['b']
+		print 'ymod a shape', ymodcal['a'].shape
+		print 'ymod b shape', ymodcal['b'].shape
+		xmod = gonmodel.GonModel()
+		xmod.fromDict(xmodcal)
+		ymod = gonmodel.GonModel()
+		ymod.fromDict(ymodcal)
+
+		xmagcal = self.retrieveMagCalibration(scope['magnification'], 'x')
+		ymagcal = self.retrieveMagCalibration(scope['magnification'], 'y')
+
+
+		delta = self.pixtix(xmod, ymod, xmagcal, ymagcal, curstage['x'], curstage['y'], pixcol, pixrow)
 
 		newscope = copy.deepcopy(scope)
 		newscope['stage position']['x'] += delta['x']
 		newscope['stage position']['y'] += delta['y']
 		return newscope
 
-	def pixtix(self, xmod_dict, ymod_dict, mag_dict, gonx, gony, pixx, pixy):
-		xmod = gonmodel.GonModel()
-		ymod = gonmodel.GonModel()
-	
-		xmod.fromDict(xmod_dict)
-		ymod.fromDict(ymod_dict)
-	
-		modavgx = mag_dict['model mean']['x']
-		modavgy = mag_dict['model mean']['y']
-		anglex = mag_dict['data angle']['x']
-		angley = mag_dict['data angle']['y']
+	def pixtix(self, xmod, ymod, xmagcal, ymagcal, gonx, gony, pixx, pixy):
+		modavgx = xmagcal['mean']
+		modavgy = ymagcal['mean']
+		anglex = xmagcal['angle']
+		angley = ymagcal['angle']
 	
 		gonx1 = xmod.rotate(anglex, pixx, pixy)
 		gony1 = ymod.rotate(angley, pixx, pixy)
