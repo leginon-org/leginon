@@ -39,7 +39,6 @@ class CameraFuncs(object):
 		if cor:
 			### get image data from corrector node
 			try:
-				print 'TRY'
 				imdata = self.node.researchByDataID(('corrected image data',))
 			except node.ResearchError:
 				print 'EXC'
