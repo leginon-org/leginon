@@ -1,0 +1,48 @@
+The Leginon software is Copyright 2003 The Scripps Research Institute, La 
+Jolla, CA
+For terms of the license agreement
+see  http://ami.scripps.edu/software/leginon-license
+
+The files included with release 0.4 are:
+README.txt
+RPCServer.py
+RPCServerGUI.py
+adacom.py
+camera.py
+cameradict.py
+client.py
+emMatlab/Makefile
+emMatlab/README.txt
+emMatlab/autofocus.m
+emMatlab/client.py
+emMatlab/displayimage.m
+emMatlab/em.c
+emMatlab/em.h
+emMatlab/em.mexglx
+emMatlab/em.so
+emMatlab/emMatlab.c
+emMatlab/emTCL.c
+emMatlab/emTCL.so
+emMatlab/getpixelshift.m
+emMatlab/imageoverlap.m
+emMatlab/magic
+emMatlab/phasecorrelation.m
+emregistry.py
+emserver.py
+example.py
+gatan.py
+gatancom.py
+gui.py
+ldcom.py
+oleargs.cpp
+pythoncom22.dll
+pythoncom23.dll
+pythoncom23_d.dll
+scope.py
+scopedict.py
+tecnai.py
+tecnaiccd.dll
+tecnaicom.py
+tietz.py
+tietzcom.py
+
