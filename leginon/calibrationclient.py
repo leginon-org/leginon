@@ -352,6 +352,15 @@ class PixelSizeCalibrationClient(CalibrationClient):
 
 		return caldatalist
 
+	def retrieveLastPixelSizes(self):
+		caldatalist = self.retrieveAllPixelSizes()
+		last = {}
+		for caldata in caldatalist:
+			mag = caldata['magnification']
+			if mag not in last:
+				last[mag] = caldata
+		return last.values()
+
 
 class MatrixCalibrationClient(CalibrationClient):
 	'''

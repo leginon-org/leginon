@@ -42,23 +42,21 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 	def calculateMeasured(self, pdist, dist):
 		return dist / (self.bin * pdist)
 
-	def extrapolate(self, fmags, tmag):
-		## get pixel size of known mags from DB to calculate scale
+	def extrapolate(self, pixelsizes, mags):
 		scales = []
-		for fmag in fmags:
-			psize = self.calclient.retrievePixelSize(fmag)
-			scales.append(psize*fmag)
-		scale = sum(scales) / len(scales)
+		for mag, pixelsize, comment in pixelsizes:
+			if pixelsize is not None:
+				scales.append(mag*pixelsize)
+		scale = sum(scales)/len(scales)
 
-		## calculate new pixel sizes
-		psize = scale / tmag
-		self.logger.info('Magnification: %sx, pixel size: %s' % (tmag, psize))
-		#comment = 'extrapolated from %s' % (fmags,)
-		#self._store(tmag, psize, comment)
-		return psize
+		pixelsizes = []
+		for mag, pixelsize, comment in mags:
+			pixelsize = scale/mag
+			pixelsizes.append((mag, pixelsize, comment))
+		return pixelsizes
 
 	def getCalibrations(self):
-		calibrations = self.calclient.retrieveAllPixelSizes()
+		calibrations = self.calclient.retrieveLastPixelSizes()
 		pixelsizes = []
 		mag, mags = self.getMagnification()
 		for calibration in calibrations:

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PixelSizeCalibrator.py,v $
-# $Revision: 1.12 $
+# $Revision: 1.13 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-03 21:22:51 $
+# $Date: 2004-11-04 01:37:04 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -40,48 +40,36 @@ class Panel(gui.wx.Calibrator.Panel):
 		dialog.Destroy()
 
 class ExtrapolateDialog(wx.Dialog):
-	def __init__(self, parent, frommags, mags):
+	def __init__(self, parent, fromps, tops):
 		self.node = parent.node
 
 		wx.Dialog.__init__(self, parent, -1, 'Extrapolate Pixel Size')
 
-		self.mags = frommags
-		strmags = str(frommags)[1:-1]
-		self.stmags = wx.StaticText(self, -1, strmags)
-		self.cmag = wx.Choice(self, -1, choices=map(str, mags))
-		self.cmag.SetSelection(0)
+		self.fromps = fromps
+		self.pslc = PixelSizeListCtrl(self, -1)
+		for pixelsize in tops:
+			self.pslc.addPixelSize(*pixelsize)
 		self.stps = wx.StaticText(self, -1, '')
-		self.tccomment = wx.TextCtrl(self, -1, 'Extrapolated from %s' % (strmags,),
+		self.tccomment = wx.TextCtrl(self, -1, '(Extrapolated)',
 																	style=wx.TE_MULTILINE)
 
-		szedit = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'From:')
-		szedit.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szedit.Add(self.stmags, (0, 1), (1, 1),
-								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz = wx.GridBagSizer(5, 5)
 
-		label = wx.StaticText(self, -1, 'Magnification:')
-		szedit.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szedit.Add(self.cmag, (1, 1), (1, 1),
-								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-
-		label = wx.StaticText(self, -1, 'Pixel size:')
-		szedit.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szedit.Add(self.stps, (2, 1), (1, 1),
-								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'm/pixel')
-		szedit.Add(label, (2, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'Pixel Sizes:')
+		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.pslc, (1, 0), (1, 1), wx.EXPAND)
+		sz.SetItemMinSize(self.pslc, self.pslc.getBestSize())
 
 		label = wx.StaticText(self, -1, 'Comment:')
-		szedit.Add(label, (3, 0), (1, 3), wx.ALIGN_CENTER_VERTICAL)
-		szedit.Add(self.tccomment, (4, 0), (1, 3), wx.EXPAND)
+		sz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.tccomment, (3, 0), (1, 1), wx.EXPAND)
 
-		szedit.AddGrowableRow(3)
-		szedit.AddGrowableCol(1)
+		sz.AddGrowableRow(1)
+		sz.AddGrowableCol(0)
 
 		sb = wx.StaticBox(self, -1, 'Extrapolate')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
-		sbsz.Add(szedit, 1, wx.EXPAND|wx.ALL, 5)
+		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 
 		self.bextrapolate = wx.Button(self, -1, 'Extrapolate')
 		self.bsave = wx.Button(self, wx.ID_OK, 'Save')
@@ -103,18 +91,19 @@ class ExtrapolateDialog(wx.Dialog):
 		self.Bind(wx.EVT_BUTTON, self.onExtrapolateButton, self.bextrapolate)
 
 	def onExtrapolateButton(self, evt):
-		mag = float(self.cmag.GetStringSelection())
-		if mag is None:
-			dialog = wx.MessageDialog(self, 'No magnification entered',
-																'Error', wx.OK|wx.ICON_ERROR)
+		selected = self.pslc.getPixelSizes(wx.LIST_STATE_SELECTED)
+		if not selected:
+			dialog = wx.MessageDialog(self,
+										'Please select one or more pixels sizes for extrapolation',
+										'Error', wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
 			dialog.Destroy()
 			return
 
-		self.mag = mag
-		self.ps = self.node.extrapolate(self.mags, mag)
-		self.stps.SetLabel(str(self.ps))
-		self.sz.Layout()
+		comment = self.tccomment.GetValue()
+		pixelsizes = self.node.extrapolate(self.fromps, selected)
+		for m, p, c in pixelsizes:
+			self.pslc.addPixelSize(m, p, comment)
 
 		self.bsave.Enable(True)
 
@@ -122,8 +111,6 @@ class EditDialog(wx.Dialog):
 	def __init__(self, parent, mag, ps, comment):
 		wx.Dialog.__init__(self, parent, -1, 'Edit Pixel Size')
 
-		#self.cmag = wx.Choice(self, -1, choices=map(str, mags))
-		#self.cmag.SetSelection(0)
 		self.stmag = wx.StaticText(self, -1)
 		self.stmag.SetLabel(str(mag))
 		self.feps = FloatEntry(self, -1, min=0.0, chars=9)
@@ -135,8 +122,6 @@ class EditDialog(wx.Dialog):
 		szedit = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Magnification:')
 		szedit.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		#szedit.Add(self.cmag, (0, 1), (1, 1),
-		#						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		szedit.Add(self.stmag, (0, 1), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
@@ -187,7 +172,6 @@ class EditDialog(wx.Dialog):
 			self.bsave.Enable(True)
 
 	def validate(self, evt):
-		#self.mag = float(self.cmag.GetStringSelection())
 		self.mag = float(self.stmag.GetLabel())
 		self.ps = self.feps.GetValue()
 		if None in [self.mag, self.ps]:
@@ -302,6 +286,12 @@ class PixelSizeListCtrl(wx.ListCtrl, ListCtrlAutoWidthMixin):
 		self.InsertColumn(1, 'Pixel size', wx.LIST_FORMAT_RIGHT)
 		self.InsertColumn(2, 'Comment')
 
+	def getBestSize(self):
+		count = self.GetColumnCount()
+		width = sum(map(lambda i: self.GetColumnWidth(i), range(count)))
+		height = self.GetSize().height * 3
+		return width, height
+
 	def addPixelSize(self, mag, ps, comment):
 		mag = float(mag)
 		if ps is None:
@@ -326,18 +316,19 @@ class PixelSizeListCtrl(wx.ListCtrl, ListCtrlAutoWidthMixin):
 		self.SetColumnWidth(0, wx.LIST_AUTOSIZE)
 		self.SetColumnWidth(1, wx.LIST_AUTOSIZE)
 
-	def getSelected(self):
+	def getPixelSizes(self, state=None):
 		selected = []
 		for i in range(self.GetItemCount()):
-			if self.GetItemState(i, wx.LIST_STATE_SELECTED):
-				mag = float(self.GetItem(i, 0).GetText())
-				text = self.GetItem(i, 1).GetText()
-				try:
-					ps = float(text)
-				except ValueError:
-					ps = None
-				comment = self.GetItem(i, 2).GetText()
-				selected.append((mag, ps, comment))
+			if state is not None and not self.GetItemState(i, state):
+				continue
+			mag = float(self.GetItem(i, 0).GetText())
+			text = self.GetItem(i, 1).GetText()
+			try:
+				ps = float(text)
+			except ValueError:
+				ps = None
+			comment = self.GetItem(i, 2).GetText()
+			selected.append((mag, ps, comment))
 		return selected
 
 class PixelSizeCalibrationDialog(wx.Dialog):
@@ -351,16 +342,16 @@ class PixelSizeCalibrationDialog(wx.Dialog):
 		self.mag, self.mags = self.node.getMagnification()
 
 		self.lcpixelsize = PixelSizeListCtrl(self, -1)
-		cals = self.node.getCalibrations()
-		cals.sort()
-		cals.reverse()
-		for ps in cals:
+		self.pixelsizes = self.node.getCalibrations()
+		self.pixelsizes.sort()
+		self.pixelsizes.reverse()
+		for ps in self.pixelsizes:
 			mag, ps, comment = ps
 			self.lcpixelsize.addPixelSize(mag, ps, comment)
 
 		self.bedit = wx.Button(self, -1, 'Edit...')
 		self.bextrapolate = wx.Button(self, -1, 'Extrapolate...')
-		if self.mags is None:
+		if self.pixelsizes is None:
 			self.bedit.Enable(False)
 			self.bextrapolate.Enable(False)
 
@@ -372,12 +363,7 @@ class PixelSizeCalibrationDialog(wx.Dialog):
 
 		szps = wx.GridBagSizer(5, 5)
 		szps.Add(self.lcpixelsize, (0, 0), (1, 3), wx.EXPAND)
-
-		count = self.lcpixelsize.GetColumnCount()
-		width = sum(map(lambda i: self.lcpixelsize.GetColumnWidth(i), range(count)))
-		height = self.lcpixelsize.GetSize().height * 3
-		szps.SetItemMinSize(self.lcpixelsize, (width, height))
-
+		szps.SetItemMinSize(self.lcpixelsize, self.lcpixelsize.getBestSize())
 		szps.Add(self.bedit, (1, 0), (1, 1), wx.ALIGN_CENTER)
 		szps.Add(self.bextrapolate, (1, 1), (1, 1), wx.ALIGN_CENTER)
 		szps.Add(self.bmeasure, (1, 2), (1, 1), wx.ALIGN_CENTER)
@@ -408,7 +394,7 @@ class PixelSizeCalibrationDialog(wx.Dialog):
 		self.Bind(wx.EVT_BUTTON, self.onMeasureButton, self.bmeasure)
 
 	def onEditButton(self, evt):
-		selected = self.lcpixelsize.getSelected()
+		selected = self.lcpixelsize.getPixelSizes(wx.LIST_STATE_SELECTED)
 		if len(selected) > 1:
 			dialog = wx.MessageDialog(self, 'Please select one magnification to edit',
 																'Error', wx.OK|wx.ICON_ERROR)
@@ -434,7 +420,7 @@ class PixelSizeCalibrationDialog(wx.Dialog):
 		dialog.Destroy()
 
 	def onExtrapolateButton(self, evt):
-		selected = self.lcpixelsize.getSelected()
+		selected = self.lcpixelsize.getPixelSizes(wx.LIST_STATE_SELECTED)
 		if not selected:
 			dialog = wx.MessageDialog(self, 'No magnifications selected',
 																'Error', wx.OK|wx.ICON_ERROR)
@@ -442,14 +428,14 @@ class PixelSizeCalibrationDialog(wx.Dialog):
 			dialog.Destroy()
 			return
 
-		mags = map(lambda (m, p, c): m, selected)
-		dialog = ExtrapolateDialog(self, mags, self.mags)
+		dialog = ExtrapolateDialog(self, selected, self.pixelsizes)
 		if dialog.ShowModal() == wx.ID_OK:
-			mag = dialog.mag
-			ps = dialog.ps
-			comment = dialog.tccomment.GetValue()
-			self.node._store(mag, ps, comment)
-			self.lcpixelsize.addPixelSize(mag, ps, comment)
+			extrapolated = dialog.pslc.getPixelSizes()
+			mags = map(lambda (m, p, c): m, self.pixelsizes)
+			for pixelsize in dialog.pslc.getPixelSizes():
+				if pixelsize not in self.pixelsizes:
+					self.node._store(*pixelsize)
+					self.lcpixelsize.addPixelSize(*pixelsize)
 		dialog.Destroy()
 
 	def onMeasureButton(self, evt):
@@ -467,9 +453,12 @@ if __name__ == '__main__':
 	class App(wx.App):
 		def OnInit(self):
 			frame = wx.Frame(None, -1, 'Pixel Size Calibration Test')
-			panel = Panel(frame, 'Test')
+			panel = wx.Panel(frame, -1)
+			frame.node = None
+			dialog = ExtrapolateDialog(frame, [], [])
 			frame.Fit()
 			self.SetTopWindow(frame)
+			dialog.Show()
 			frame.Show()
 			return True
 
