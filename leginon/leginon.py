@@ -383,6 +383,7 @@ class WidgetGroup(Pmw.Group):
 		nwidgets = len(self.widgets)
 		if isinstance(widget, nodegui.ImageData):
 			widget.iv.canvas.resize(0, 0, 512, 512)
+			widget.iv.canvas.resizeflag = False
 			widget.grid(row=0, column=nwidgets, padx=10, pady=5, sticky='nsew')
 			#widget.grid(row=0, column=nwidgets, padx=10, pady=5)
 			#self.rowconfigure(0, weight=0)
@@ -593,10 +594,14 @@ class CalibrationsWidget(CustomWidget):
 		self.addWidget('Control', matrixcalibrator, ('Calibrate',))
 
 		widget = self.addWidget('Results', matrixcalibrator, ('Images', 'Image 1'))
+		widget.iv.canvas.resizeflag = True
 		widget.iv.canvas.resize(0, 0, 350, 350)
+		widget.iv.canvas.resizeflag = False
 
 		widget = self.addWidget('Results', matrixcalibrator, ('Images', 'Image 2'))
+		widget.iv.canvas.resizeflag = True
 		widget.iv.canvas.resize(0, 0, 350, 350)
+		widget.iv.canvas.resizeflag = False
 
 class AutoFocusWidget(CustomWidget):
 	def __init__(self, parent, beamtiltcalibrator):

@@ -19,6 +19,7 @@ class ImageCanvas(Frame):
 		self.clearTargets()
 		self.clicklock = threading.Lock()
 		self.targetradius = 20
+		self.resizeflag = True
 
 	def displayMessage(self, message):
 		self.canvas.itemconfigure(self.canmessage, text=message,state='normal')
@@ -213,10 +214,15 @@ class ImageCanvas(Frame):
 			return None
 
 	def resize(self, x1, y1, x2, y2):
-		newwidth = x2 - x1
-		newheight = y2 - y1
-		self.canvas['width'] = newwidth
-		self.canvas['height'] = newheight
+		# temporary for leginon.py
+		if self.resizeflag:
+			newwidth = x2 - x1
+			newheight = y2 - y1
+			self.canvas['width'] = newwidth
+			self.canvas['height'] = newheight
+		else:
+			self.hscroll_state(ON)
+			self.vscroll_state(ON)
 		self.canvas['scrollregion'] = (x1,y1,x2,y2)
 
 	def use_numeric(self, ndata):
