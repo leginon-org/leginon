@@ -156,7 +156,7 @@ def factory(scopeclass):
           return scopeclass.setStagePosition(self, value, type)
   
       def keys(self):
-          return self.keylist
+          return list(self.keylist)
   
       def values(self):
           data = self.copy()
