@@ -1,6 +1,7 @@
 import math
 import numextension
 import wx
+import time
 
 def getColorMap():
 	b = [0] * 512 + range(256) + [255] * 512 + range(255, -1, -1)
@@ -24,7 +25,8 @@ class BufferedWindow(wx.Window):
 	def __init__(self, parent, id):
 		wx.Window.__init__(self, parent, id)
 
-		self.onSize(None)
+		self._clientwidth, self._clientheight = self.GetClientSizeTuple() 
+		self._buffer = wx.EmptyBitmap(self._clientwidth, self._clientheight)
 
 		self.Bind(wx.EVT_ERASE_BACKGROUND, self.onEraseBackground)
 		self.Bind(wx.EVT_PAINT, self.onPaint)
@@ -62,8 +64,7 @@ class BufferedWindow(wx.Window):
 
 	def _onSize(self, evt):
 		self._clientwidth, self._clientheight = self.GetClientSizeTuple() 
-		# TODO: set buffer size in steps
-		self._buffer = wx.EmptyBitmap(self._clientwidth, self._clientheight) 
+		self._buffer = wx.EmptyBitmap(self._clientwidth, self._clientheight)
 
 	def onSize(self, evt):
 		self._onSize(evt)
@@ -225,11 +226,9 @@ class CenteredWindow(ScaledWindow):
 
 class OffsetWindow(CenteredWindow):
 	def __init__(self, parent, id):
-		self._xoffset = 0
-		self._yoffset = 0
 		CenteredWindow.__init__(self, parent, id)
 
-	def clientToImage(self, x, y):
+	def clientToBitmap(self, x, y):
 		x /= self._xscale
 		y /= self._yscale
 		x -= self._blitrect.x
@@ -238,7 +237,7 @@ class OffsetWindow(CenteredWindow):
 		y += self._bitmaprect.y
 		return x, y
 
-	def imageToClient(self, x, y):
+	def bitmapToClient(self, x, y):
 		x -= self._bitmaprect.x
 		y -= self._bitmaprect.y
 		x += self._blitrect.x
@@ -247,16 +246,9 @@ class OffsetWindow(CenteredWindow):
 		y *= self._yscale
 		return x, y
 
-	def _setScale(self, x, y, center=None):
-		if center is None:
-			center = (self._clientwidth/2.0, self._clientheight/2.0)
-		center = self.clientToImage(*center)
-		CenteredWindow._setScale(self, x, y)
-		self._setOffset(*center)
-
 	def _setOffset(self, x, y):
-		x -= self._clientwidth/(2.0*self._xscale)
-		y -= self._clientheight/(2.0*self._yscale)
+		#x -= self._clientwidth/(2.0*self._xscale)
+		#y -= self._clientheight/(2.0*self._yscale)
 		x = min(x, self._bitmaprect.width - self._clientwidth/self._xscale
 																			- self._blitrect.x*2)
 		y = min(y, self._bitmaprect.height - self._clientheight/self._yscale
@@ -274,18 +266,20 @@ class OffsetWindow(CenteredWindow):
 			self._updatedrawing = True
 			self._refresh = True
 
-	def setScale(self, x, y, center=None):
-		self._setScale(x, y, center)
+	def setOffset(self, x, y):
+		self._setOffset(x, y)
 		if self._updatedrawing:
 			self.updateDrawing()
 		if self._refresh:
 			self.Refresh()
 			self._refresh = False
 
-	def _onSize(self, evt):
-		CenteredWindow._onSize(self, evt)
-		x = min(self._bitmaprect.x, self._bitmaprect.width - self._clientwidth/self._xscale)
-		y = min(self._bitmaprect.y, self._bitmaprect.height - self._clientheight/self._yscale)
+	def _updateBlitGeometry(self):
+		CenteredWindow._updateBlitGeometry(self)
+		x = min(self._bitmaprect.x,
+						self._bitmaprect.width - self._clientwidth/self._xscale)
+		y = min(self._bitmaprect.y,
+						self._bitmaprect.height - self._clientheight/self._yscale)
 		x = max(x, 0)
 		y = max(y, 0)
 		x = int(round(x))
@@ -303,9 +297,21 @@ class OffsetWindow(CenteredWindow):
 
 class ScrolledWindow(OffsetWindow):
 	def __init__(self, parent, id):
-		self._xscroll = 0
-		self._yscroll = 0
 		OffsetWindow.__init__(self, parent, id)
+		self.Bind(wx.EVT_SCROLLWIN, self.onScrollWin)
+
+	def onScrollWin(self, evt):
+		orientation = evt.GetOrientation()
+		position = evt.GetPosition()
+		if orientation == wx.HORIZONTAL:
+			x = position
+			y = self.GetScrollPos(wx.VERTICAL)
+			self.SetScrollPos(wx.HORIZONTAL, position)
+		elif orientation == wx.VERTICAL:
+			x = self.GetScrollPos(wx.HORIZONTAL)
+			y = position
+			self.SetScrollPos(wx.VERTICAL, position)
+		self.setOffset(x, y)
 
 	def updateScrollbars(self, position=None):
 		if position is None:
@@ -318,16 +324,16 @@ class ScrolledWindow(OffsetWindow):
 		if self._bitmap is None:
 			xrange, yrange = 0, 0
 		else:
-			xrange = min(self._bitmaprect.widthscaled, self._bitmaprect.width)
-			yrange = min(self._bitmaprect.heightscaled, self._bitmaprect.height)
+			bitmapwidthscaled = self._bitmaprect.width*self._xscale
+			bitmapheightscaled = self._bitmaprect.height*self._yscale
+			xrange = min(bitmapwidthscaled, self._bitmaprect.width)
+			yrange = min(bitmapheightscaled, self._bitmaprect.height)
 		self.SetScrollbar(wx.HORIZONTAL, xposition, xthumbsize, xrange)
 		self.SetScrollbar(wx.VERTICAL, yposition, ythumbsize, yrange)
-		self._xscroll = self.GetScrollPos(wx.HORIZONTAL)
-		self._yscroll = self.GetScrollPos(wx.VERTICAL)
 
 	def _onSize(self, evt):
 		self.updateScrollbars()
-		OffsetWindow._onSize(self, x, y)
+		OffsetWindow._onSize(self, evt)
 
 if __name__ == '__main__':
 	import sys
@@ -342,14 +348,18 @@ if __name__ == '__main__':
 
 	def onLeftUp(evt):
 		eventobject = evt.GetEventObject()
-		xscale, yscale = eventobject.getScale()
-		eventobject.setScale(xscale*scale, yscale*scale)
+		offset = eventobject.clientToBitmap(evt.m_x, evt.m_y)
+		eventobject.setOffset(*offset)
 
 	def onRightUp(evt):
+		pass
+
+	def onMouseWheel(evt):
 		eventobject = evt.GetEventObject()
 		xscale, yscale = eventobject.getScale()
-		eventobject.setScale(xscale/scale, yscale/scale)
-		#eventobject.setScale(xscale/scale, yscale/scale, (evt.m_x, evt.m_y))
+		scale = 2.0**(evt.GetWheelRotation()/evt.GetWheelDelta())
+		eventobject.setScale(xscale*scale, yscale*scale)
+		#eventobject.setScale(xscale*scale, yscale*scale, (evt.m_x, evt.m_y))
 
 	try:
 		filename = sys.argv[1]
@@ -364,11 +374,13 @@ if __name__ == '__main__':
 			#self.panel = BufferedWindow(frame, -1)
 			#self.panel = BitmapWindow(frame, -1)
 			#self.panel = ScaledWindow(frame, -1)
-			self.panel = CenteredWindow(frame, -1)
+			#self.panel = CenteredWindow(frame, -1)
 			#self.panel = OffsetWindow(frame, -1)
+			self.panel = ScrolledWindow(frame, -1)
 
 			self.panel.Bind(wx.EVT_LEFT_UP, onLeftUp)
 			self.panel.Bind(wx.EVT_RIGHT_UP, onRightUp)
+			self.panel.Bind(wx.EVT_MOUSEWHEEL, onMouseWheel)
 
 			self.sizer.Add(self.panel, 1, wx.EXPAND|wx.ALL)
 			frame.SetSizerAndFit(self.sizer)
