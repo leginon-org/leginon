@@ -13,6 +13,59 @@ import uidata
 import event
 import threading
 
+# ...
+def seconds2str(seconds):
+	seconds = int(seconds)
+	minute = 60
+	hour = 60*minute
+	day = 24*hour
+	week = 7*day
+
+	weeks = seconds / week
+	string = ''
+	if weeks:
+		if weeks == 1:
+			value = ''
+		else:
+			value = 's'
+		string += '%i week%s, ' % (weeks, value)
+	seconds %= week
+
+	days = seconds / day
+	if days or string:
+		if days == 1:
+			value = ''
+		else:
+			value = 's'
+		string += '%i day%s, ' % (days, value)
+	seconds %= day
+
+	hours = seconds / hour
+	if hours or string:
+		if hours == 1:
+			value = ''
+		else:
+			value = 's'
+		string += '%i hour%s, ' % (hours, value)
+	seconds %= hour
+
+	minutes = seconds / minute
+	if minutes or string:
+		if minutes == 1:
+			value = ''
+		else:
+			value = 's'
+		string += '%i minute%s, ' % (minutes, value)
+	seconds %= minute
+
+	if seconds or string:
+		if seconds == 1:
+			value = ''
+		else:
+			value = 's'
+		string += '%i second%s' % (seconds, value)
+	return string
+
 class TestCommunications(object):
 	def __init__(self):
 		self.Signal0 = 1
@@ -24,6 +77,8 @@ class TestCommunications(object):
 		self.Signal6 = 1
 		self.Signal7 = 1
 		self.Signal8 = 1
+		self.Signal9 = 1
+		self.Signal10 = 1
 		self.gridNumber = -1
 
 class RobotException(Exception):
@@ -112,6 +167,8 @@ if sys.platform == 'win32':
 			RobotNode.__init__(self, id, session, nodelocations, **kwargs)
 			self.gridorder = []
 			self.gridnumber = None
+			self.timings = {}
+			self.gridcleared = threading.Event()
 	
 			#self.communication = TestCommunications()
 
@@ -217,6 +274,17 @@ if sys.platform == 'win32':
 			self.communication.Signal6 = 1
 			self.setRobotStatusMessage('Signaled robot to begin extraction')
 
+		def waitForGridClear(self):
+			self.gridcleared.clear()
+			self.setRobotStatusMessage('Waiting for operator to clear grid')
+			self.gridcleared.wait()
+			self.gridcleared.clear()
+			self.setRobotStatusMessage('Resuming operation')
+			self.communication.Signal10 = 1
+
+		def uiGridCleared(self):
+			self.gridcleared.set()
+
 		def waitForRobotGridLoad(self):
 			self.setRobotStatusMessage('Verifying robot is ready for insertion')
 			while not self.communication.Signal0:
@@ -254,6 +322,11 @@ if sys.platform == 'win32':
 		def waitForRobotToExtract(self):
 			self.setRobotStatusMessage('Waiting for robot to complete extraction')
 			while not self.communication.Signal7:
+				if self.communication.Signal9:
+					self.setRobotStatusMessage(
+														'Robot failed to remove grid from specimen holder')
+					self.communication.Signal9 = 0
+					self.waitForGridClear()
 				time.sleep(0.5)
 			self.communication.Signal7 = 0
 			self.setRobotStatusMessage('Robot has completed extraction')
@@ -309,8 +382,25 @@ if sys.platform == 'win32':
 			self.outputEvent(evt)
 			self.setStatusMessage('Sent notification the holder is extracted')
 
+		def estimateTimeLeft(self):
+			if 'insert' not in self.timings:
+				self.timings['insert'] = []
+			self.timings['insert'].append(time.time())
+
+			timestring = ''
+			ntimings = len(self.timings['insert']) - 1
+			if ntimings > 0:
+				first = self.timings['insert'][0]
+				last = self.timings['insert'][-1]
+				ngridsleft = len(self.gridorder)
+				secondsleft = (last - first)/ntimings*ngridsleft
+				timestring = seconds2str(secondsleft)
+			self.uitimeleft.set(timestring)
+
 		def insert(self):
 			self.insertmethod.disable()
+			self.estimateTimeLeft()
+				
 			self.setStatusMessage('Inserting holder into microscope')
 
 			try:
@@ -437,23 +527,26 @@ if sys.platform == 'win32':
 			self.uigridrangestart = uidata.Integer('From Grid Number', None, 'rw')
 			self.uigridrangestop = uidata.Integer('To Grid Number', None, 'rw')
 			gridaddrangemethod = uidata.Method('Add Range', self.uiAddGridRange)
+			gridclearedmethod = uidata.Method('Grid Cleared', self.uiGridCleared)
 
 			gridcontainer = uidata.Container('Grids')
 			gridcontainer.addObjects((self.uigridtray,
 																griddeletemethod, gridclearmethod,
 																self.uigridrangestart, self.uigridrangestop,
-																gridaddrangemethod))
+																gridaddrangemethod, gridclearedmethod))
 
 			self.uistatusmessage = uidata.String('Status', '', 'r')
 			self.uiscopestatusmessage = uidata.String('Microscope Status', '', 'r')
 			self.uirobotstatusmessage = uidata.String('Robot Status', '', 'r')
 			self.uicurrentgridnumber = uidata.Integer('Current grid number',
 																								None, 'r')
+			self.uitimeleft = uidata.String('Estimated time remaining', '', 'r')
 			statuscontainer = uidata.Container('Status')
 			statuscontainer.addObjects((self.uistatusmessage,
 																	self.uiscopestatusmessage,
 																	self.uirobotstatusmessage,
-																	self.uicurrentgridnumber))
+																	self.uicurrentgridnumber,
+																	self.uitimeleft))
 
 			self.insertmethod = uidata.Method('Process Grids', self.insert)
 			controlcontainer = uidata.Container('Control')
