@@ -115,7 +115,6 @@ class EditTree(Tree.Tree):
 		Tree.Tree.move_cursor(self, node)
 		if not node.expandable_flag:
 			self.editvariable.set(str(self.pos.id))
-			print type(self.pos.id), self.pos.id
 
 if __name__ == '__main__':
 
