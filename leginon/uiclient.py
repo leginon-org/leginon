@@ -317,7 +317,7 @@ class wxContainerWidget(wxWidget):
 					self.sizer.Show(childsizer, show)
 			child.show(show)
 
-	def _addWidget(self, name, typelist, value, settings):
+	def _addWidget(self, name, typelist, value, settings, show=True):
 		childclass = WidgetClassFromTypeList(typelist)
 		if issubclass(childclass, wxClientContainerWidget):
 			child = childclass(name, self.childparent, self, value)
@@ -338,6 +338,7 @@ class wxContainerWidget(wxWidget):
 			childsizer = child.sizer
 		if self.sizer is not None and childsizer is not None:
 			self.sizer.Add(childsizer, 0, wxALL, 3)
+			self.sizer.Show(childsizer, show)
 
 #		if isinstance(child, wxClientContainerWidget):
 #			child.uiclient.start()
@@ -1426,7 +1427,7 @@ class wxTreePanel(wxPanel):
 			self.tree.Expand(parentid)
 		self.containers[container] = id
 		self.tree.SetPyData(id, container)
-#		self.tree.SelectItem(id)
+		self.tree.SelectItem(id)
 
 	def deleteContainer(self, container):
 		id = self.containers[container]
@@ -1438,18 +1439,18 @@ class wxTreePanel(wxPanel):
 			pass
 
 	def OnTreeSelected(self, evt):
-		olditem = evt.GetOldItem()
-		item = evt.GetItem()
-		oldcontainer = self.tree.GetPyData(olditem)
-		container = self.tree.GetPyData(item)
-		if oldcontainer is None:
-			pass
-		else:
-			oldcontainer.show(False)
-		if container is None:
-			pass
-		else:
-			container.show(True)
+		for container in self.containers:
+			container.show(False)
+		selectedcontainer = self.tree.GetPyData(self.tree.GetSelection())
+		selectedcontainer.show(True)
+#		olditem = evt.GetOldItem()
+#		item = evt.GetItem()
+#		oldcontainer = self.tree.GetPyData(olditem)
+#		container = self.tree.GetPyData(item)
+#		if oldcontainer is not None:
+#			oldcontainer.show(False)
+#		if container is not None:
+#			container.show(True)
 		self.childsizer.Layout()
 		self.childsizer.FitInside(self.childpanel)
 
@@ -1471,6 +1472,7 @@ class wxTreePanelContainerWidget(wxContainerWidget):
 		self.childparent = self.treepanel.childpanel
 		self.sizer = wxBoxSizer(wxVERTICAL)
 		self.treepanel.addContainer(self)
+		self.shown = False
 
 	def getTreePanel(self):
 		return self.treepanel
@@ -1478,9 +1480,10 @@ class wxTreePanelContainerWidget(wxContainerWidget):
 	def show(self, show):
 		self.treepanel.childsizer.Show(self.sizer, show)
 		wxContainerWidget.show(self, show)
+		self.shown = show
 
 	def _addWidget(self, name, typelist, value, settings):
-		wxContainerWidget._addWidget(self, name, typelist, value, settings)
+		wxContainerWidget._addWidget(self, name, typelist, value, settings, self.shown)
 		self.layout()
 
 	def layout(self):
