@@ -2,7 +2,7 @@
 
 import leginonobject
 import localtransport
-#import unixtransport
+import unixtransport
 import tcptransport
 import datahandler
 import sys
@@ -10,8 +10,7 @@ import sys
 class Base(leginonobject.LeginonObject):
 	def __init__(self, id):
 		leginonobject.LeginonObject.__init__(self, id)
-#		self.transportmodules = [localtransport, unixtransport, tcptransport]
-		self.transportmodules = [localtransport, tcptransport]
+		self.transportmodules = [localtransport, unixtransport, tcptransport]
 
 class Client(Base):
 	# hostname/port -> location or whatever
@@ -32,11 +31,11 @@ class Client(Base):
 			self.clients[localtransport] = \
 				apply(localtransport.Client, (self.ID(), serverlocation,))
 
-#			try:
-#				self.clients[unixtransport] = \
-#					apply(unixtransport.Client, (self.ID(), serverlocation,))
-#			except AttributeError:
-#				del self.clients[unixtransport]
+			try:
+				self.clients[unixtransport] = \
+					apply(unixtransport.Client, (self.ID(), serverlocation,))
+			except AttributeError:
+				del self.clients[unixtransport]
 
 		self.clients[tcptransport] = apply(tcptransport.Client, (self.ID(), serverlocation,))
 
@@ -46,19 +45,19 @@ class Client(Base):
 		try:
 			return self.clients[localtransport].pull(idata)
 		except KeyError, IOError:
-#			try:
-#				return self.clients[unixtransport].pull(idata)
-#			except KeyError, IOError:
-			return self.clients[tcptransport].pull(idata)
+			try:
+				return self.clients[unixtransport].pull(idata)
+			except KeyError, IOError:
+				return self.clients[tcptransport].pull(idata)
 
 	def push(self, odata):
 		try:
 			self.clients[localtransport].push(odata)
 		except KeyError, IOError:
-#			try:
-#				return self.clients[unixtransport].push(odata)
-#			except KeyError, IOError:
-			return self.clients[tcptransport].push(odata)
+			try:
+				return self.clients[unixtransport].push(odata)
+			except KeyError, IOError:
+				return self.clients[tcptransport].push(odata)
 
 class Server(Base):
 	def __init__(self, id, dhclass = datahandler.SimpleDataKeeper, dhargs = ()):

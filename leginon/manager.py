@@ -274,7 +274,7 @@ if __name__ == '__main__':
 	m = Manager(manager_id)
 
 	## GUI
-	gui = 1
+	gui = 0
 	if gui:
 		import managergui
 		import Tkinter

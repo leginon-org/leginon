@@ -154,7 +154,7 @@ class CachedDictDataKeeper(DataHandler):
 		os.remove(self.filename)
 
 	def query(self, id):
-		self.lock.acquire()
+#		self.lock.acquire()
 		if self.datadict.has_key(id):
 			if self.datadict[id]['cached']:
 				self.datadict[id]['data'] = self.shelf[str(id)]
@@ -164,7 +164,7 @@ class CachedDictDataKeeper(DataHandler):
 			result = self.datadict[id]['data']
 		else:
 			result = None
-		self.lock.release()
+#		self.lock.release()
 		return result
 
 	def insert(self, newdata):
@@ -215,12 +215,13 @@ class SimpleDataKeeper(CachedDictDataKeeper):
 class DataBinder(DataHandler):
 	def __init__(self, id):
 		DataHandler.__init__(self, id)
+		self.priority = []
 		self.bindings = {}
 
 	def insert(self, newdata):
 		# now send data to a type specific handler function
 		dataclass = newdata.__class__
-		for bindclass in self.bindings:
+		for bindclass in self.priority:
 			if issubclass(dataclass, bindclass):
 				if self.bindings[bindclass]:
 					args = (newdata,)
@@ -234,9 +235,11 @@ class DataBinder(DataHandler):
 		'func must take data instance as first arg'
 		if func == None:
 			if dataclass in self.bindings:
+				self.priority.remove(dataclass)
 				del self.bindings[dataclass]
 		if dataclass in self.bindings:
 				self.bindings[dataclass].append(func)
 		else:
+			self.priority.append(dataclass)
 			self.bindings[dataclass] = [func]
 
