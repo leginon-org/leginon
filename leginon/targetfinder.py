@@ -33,21 +33,15 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		Get a list of all targets that have this image as their parent.
 		only want most recent versions of each
 		'''
-
-		print 'researchImageTargets', imagedata['id']
-		imagequery = data.AcquisitionImageData()
-		imagequery['id'] = imagedata['id']
-		imagequery['session'] = imagedata['session']
-
-		targetquery = data.AcquisitionImageTargetData()
-		targetquery['image'] = imagequery
+		targetquery = data.AcquisitionImageTargetData(image=imagedata)
 		## need these, so use empty instances
 		targetquery['session'] = data.SessionData()
 		targetquery['scope'] = data.ScopeEMData()
 		targetquery['camera'] = data.CameraEMData()
 		targetquery['preset'] = data.PresetData()
 		targets = self.research(datainstance=targetquery, fill=False)
-		print 'found %s targets for image %s' % (len(targets), imagedata['id'])
+		if targets:
+			print 'found %s targets for image %s' % (len(targets), imagedata['id'])
 
 		## now filter out only the latest versions
 		# map target id to latest version
@@ -475,18 +469,15 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 	def displayMosaic(self):
 		if self.displayimage.get():
 			self.setStatusMessage('Displaying mosaic image')
-			print 'AAA'
+			print 'this takes forever, be patient...'
 			self.clickimage.setImage(self.getMosaicImage())
-			print 'BBB'
+			print 'thank you for waiting'
 			## imagedata would be full mosaic image
 			self.clickimage.imagedata = None
-			print 'CCC'
 			node.beep()
 		else:
 			self.setStatusMessage('Not diplaying mosaic image')
-		print 'DDD'
 		self.clickimage.setTargets([])
-		print 'EEE'
 
 	def mosaicToFile(self, filename):
 		if filename is None:
