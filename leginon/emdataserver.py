@@ -12,12 +12,12 @@ if sys.platform == 'win32':
 	sys.coinit_flags = 0
 	import pythoncom
 
-class DataHandler(datahandler.DataHandler):
+class DataHandler(datahandler.DataBinder):
 	def __init__(self, scope, camera, lock):
-		datahandler.DataHandler.__init__(self)
-		self.lock = lock
+		datahandler.DataBinder.__init__(self)
 		self.scope = scope
 		self.camera = camera
+		self.lock = lock
 
 	def query(self, id):
 		self.lock.acquire()
@@ -31,19 +31,28 @@ class DataHandler(datahandler.DataHandler):
 		return result
 
 	def insert(self, newdata):
-		self.lock.acquire()
-		if(self.scope.has_key(newdata.id)):
-			self.scope[newdata.id] = newdata.content
-		elif(self.camera.has_key(newdata.id)):
-			self.camera[newdata.id] = newdata.content
-		self.lock.release()
+		if isinstance(idata, event.Event):
+			datahandler.DataBinder.insert(self, idata)
+		else:
+			self.lock.acquire()
+			if(self.scope.has_key(newdata.id)):
+				self.scope[newdata.id] = newdata.content
+			elif(self.camera.has_key(newdata.id)):
+				self.camera[newdata.id] = newdata.content
+			self.lock.release()
 
-class DataServer(dataserver.DataServer):
-	def __init__(self, scopeclass, cameraclass):
-		dataserver.DataServer.__init__(self)
+	# borrowed from NodeDataHandler
+	def setBinding(self, eventclass, func):
+		if issubclass(eventclass, event.Event):
+			datahandler.DataBinder.setBinding(self, eventclass, func)
+		else:
+			raise InvalidEventError('eventclass must be Event subclass')
+
+class DataServer(dataservernode.DataServerNode):
+	def __init__(self, nodeid, managerloc, scopeclass, cameraclass):
 		self.lock = threading.Lock()
 		self.scope = scopedict.factory(scopeclass)()
 		self.camera = cameradict.factory(cameraclass)()
-		self.pushserver = clientpush.Server(DataHandler, (self.scope, self.camera, self.lock))
-		self.pullserver = clientpull.Server(DataHandler, (self.scope, self.camera, self.lock))
+
+		dataserver.DataServer.__init__(self, nodeid, managerloc, DataHandler, (self.scope, self.camera, self.lock))
 

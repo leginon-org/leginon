@@ -1,13 +1,7 @@
-import leginonobject
-import clientpush
-import clientpull
+import node
 
-class DataServer(leginonobject.LeginonObject):
-	def __init__(self):
-		leginonobject.LeginonObject.__init__(self)
-		# perhaps better done in child class
-		#self.pushserver = clientpush.Server()
-		#self.pullserver = clientpull.Server()
-		self.pushserver = None
-		self.pullserver = None
+class DataServerNode(node.Node):
+	def __init__(self, nodeid, managerloc, dh, dhargs, pushclientclass, pullclientclass):
+		node.Node.__init__(self, nodeid, managerloc, dh, dhargs
+												pushclientclass, pullclientclass)
 
