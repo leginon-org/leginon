@@ -19,6 +19,7 @@ class ManagerSetup(object):
 			session = data.SessionData(user=self.uiGetUser())
 			self.manager.session = session
 			self.manager.uicontainer.session = session
+			self.manager.uicontainer.getUserPreferencesFromDatabase()
 			self.createSelectSessionContainer()
 		else:
 			self.addLoginContainer()
@@ -345,6 +346,7 @@ class ManagerSetup(object):
 		session = data.SessionData(user=self.uiGetUser())
 		self.manager.session = session
 		self.manager.uicontainer.session = session
+		self.manager.uicontainer.getUserPreferencesFromDatabase()
 		self.createSelectSessionContainer()
 
 	def createLoginContainer(self):

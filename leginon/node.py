@@ -85,6 +85,7 @@ class Node(leginonobject.LeginonObject):
 		if otheruiserver is None:
 			self.uiserver = uiserver.Server(self.name, xmlrpcport, session=session)
 			self.uicontainer = self.uiserver
+			self.uiserver.getUserPreferencesFromDatabase()
 		else:
 			self.uiserver = otheruiserver
 			self.uicontainer = uidata.LargeContainer(self.name)

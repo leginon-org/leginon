@@ -233,6 +233,25 @@ class Server(xmlrpc.Server, uidata.Container):
 
 	# file based preference methods
 
+	def getUserPreferencesFromDatabase(self):
+		'''
+		get current user's prefs from DB and put them in 
+		self.userprefs
+		'''
+		if self.session is None:
+			self.userprefs = None
+			return
+		sessionquery = data.SessionData(user=self.session['user'])
+		prefquery = data.UIData(session=sessionquery)
+		results = self.dbdatakeeper.query(prefquery)
+		## results are ordered by newest stuff first
+		## so now get the newest stuff into a dict
+		self.userprefs = {}
+		for result in results:
+			key = tuple(result['object'])
+			if key not in self.userprefs:
+				self.userprefs[key] = result['value']
+
 	def setObjectFromDatabase(self, uiobject):
 		if self.dbdatakeeper is None or self.session is None:
 			return False
@@ -241,27 +260,21 @@ class Server(xmlrpc.Server, uidata.Container):
 				self.setObjectFromDatabase(childobject)
 		if not isinstance(uiobject, uidata.Data) or not uiobject.persist:
 			return False
-		namelist = uiobject._getNameList()
+		namelist = tuple(uiobject._getNameList())
 		try:
-			session = data.SessionData()
-			session['user'] = self.session['user']
-			initializer = {'session': session,
-											'object': namelist}
-			odata = data.UIData(initializer=initializer)
-			results = self.dbdatakeeper.query(odata, results=1)
-			if results:
-				try:
-					value = results[0]['value']
-					### get object from Object
-					if value is not None:
-						value = value.o
-					uiobject.set(value, server=False)
-					return True
-				except KeyError:
-					return False
+			try:
+				value = self.userprefs[namelist]
+			except KeyError:
+				return False
+			### get object from Object
+			if value is not None:
+				value = value.o
+			uiobject.set(value, server=False)
+			return True
 		except:
 			print 'Error setting preference'
-		return False
+			raise
+			return False
 
 	def setDatabaseFromObject(self, uiobject):
 		if self.dbdatakeeper is None or self.session is None:
