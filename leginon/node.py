@@ -142,6 +142,7 @@ class Node(leginonobject.LeginonObject):
 	def outputEvent(self, ievent, wait=0):
 		'''Send the event to the manager to be routed where necessary.'''
 		try:
+			ievent.confirm = True
 			self.managerclient.push(ievent)
 		except KeyError:
 			self.printerror('cannot output event %s' % ievent)

@@ -75,6 +75,16 @@ class NodeUnavailableEvent(NotificationEvent):
 	def __init__(self, id, confirm=False):
 		NotificationEvent.__init__(self, id, None, confirm)
 
+class NodeInitializedEvent(NotificationEvent):
+	'Event sent by a node to indicate that it is operational'
+	def __init__(self, id, confirm=False):
+		NotificationEvent.__init__(self, id, None, confirm)
+
+class NodeUninitializedEvent(NotificationEvent):
+	'Event sent by a node to indicate that it is no longer operational'
+	def __init__(self, id, confirm=False):
+		NotificationEvent.__init__(self, id, None, confirm)
+
 class PublishEvent(NotificationEvent):
 	'Event indicating data was published'
 	def __init__(self, id, dataid, confirm=False):

@@ -78,7 +78,8 @@ class EM(node.Node):
 		ids += self.scope.keys()
 		ids += self.camera.keys()
 		e = event.ListPublishEvent(self.ID(), ids)
-		self.outputEvent(e)
+		self.outputEvent(e, wait=True)
+		self.outputEvent(event.NodeInitializedEvent(self.ID()))
 
 	def exit(self):
 		node.Node.exit(self)

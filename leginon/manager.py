@@ -334,6 +334,7 @@ class Manager(node.Node):
 				self.publishDataLocation(id, publishevent.id[:-1])
 		else:
 			raise TypeError
+		self.confirmEvent(publishevent)
 
 	def publishDataLocation(self, dataid, nodeid):
 		'''Registers the location of a piece of data by mapping the data's ID to its location. Appends location to list if data ID is already registered.'''
