@@ -117,8 +117,6 @@ class PresetsManager(node.Node):
 		node.Node.__init__(self, id, session, nodelocations, datahandler=DataHandler, **kwargs)
 
 		self.addEventInput(event.ChangePresetEvent, self.changePreset)
-		self.addEventOutput(event.PresetChangedEvent)
-		self.addEventOutput(event.ListPublishEvent)
 
 		ids = [('presets',), ('current preset',)]
 		e = event.ListPublishEvent(idlist=ids)
