@@ -162,7 +162,8 @@ class ManagerFrame(wx.Frame):
 		for name in nodenames:
 			eventio[name] = self.manager.getNodeEventIO(name)
 		eventclasses = event.eventClasses()
-		dialog = BindEventDialog(self, nodenames, eventio, eventclasses)
+		distmap = self.manager.distmap
+		dialog = BindEventDialog(self, nodenames, eventio, eventclasses, distmap)
 		if dialog.ShowModal() == wx.ID_OK:
 			print 'ok!'
 		dialog.Destroy()
@@ -354,90 +355,118 @@ class CreateNodeDialog(wx.Dialog):
 			dlg.Destroy()
 
 class BindEventDialog(wx.Dialog):
-	def __init__(self, parent, nodenames, eventio, eventclasses):
+	def __init__(self, parent, nodenames, eventio, eventclasses, distmap):
 		self.nodenames = nodenames
 		self.eventio = eventio
 		self.eventclasses = eventclasses
-		wx.Dialog.__init__(self, parent, -1, 'Bind Event')
+		self.distmap = distmap
+		wx.Dialog.__init__(self, parent, -1, 'Bind Events')
 
 		self.dialogsizer = wx.GridBagSizer()
 
 		sizer = wx.GridBagSizer(5, 5)
 
-		sizer.Add(wx.StaticText(self, -1, 'From:'), (0, 0), (1, 1),
+		sizer.Add(
+				wx.StaticText(self, -1, 'Double click on an event to bind or unbind.'),
+							(0, 0), (1, 3), wx.ALIGN_CENTER)
+
+		sizer.Add(wx.StaticText(self, -1, 'From:'), (1, 0), (1, 1),
 																									wx.ALIGN_CENTER_VERTICAL)
-		sizer.Add(wx.StaticText(self, -1, 'Event:'), (0, 1), (1, 1),
+		sizer.Add(wx.StaticText(self, -1, 'Events:'), (1, 1), (1, 1),
 																									wx.ALIGN_CENTER_VERTICAL)
-		sizer.Add(wx.StaticText(self, -1, 'To:'), (0, 2), (1, 1),
+		sizer.Add(wx.StaticText(self, -1, 'To:'), (1, 2), (1, 1),
 																									wx.ALIGN_CENTER_VERTICAL)
 
 		self.fromlistbox = wx.ListBox(self, -1, choices=nodenames)
-		self.eventlistbox = wx.ListBox(self, -1, choices=eventclasses.keys())
+		self.unboundeventlistbox = wx.ListBox(self, -1, choices=eventclasses.keys(),
+																					style=wx.LB_SORT)
+		self.boundeventlistbox = wx.ListBox(self, -1, choices=eventclasses.keys(),
+																				style=wx.LB_SORT)
 		self.tolistbox = wx.ListBox(self, -1, choices=nodenames)
-		sizer.Add(self.fromlistbox, (1, 0), (1, 1), wx.EXPAND)
-		sizer.Add(self.eventlistbox, (1, 1), (1, 1), wx.EXPAND)
-		sizer.Add(self.tolistbox, (1, 2), (1, 1), wx.EXPAND)
+		sizer.Add(self.fromlistbox, (2, 0), (4, 1), wx.EXPAND)
+		sizer.Add(wx.StaticText(self, -1, 'Unbound:'), (2, 1), (1, 1),
+																										wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.unboundeventlistbox, (3, 1), (1, 1), wx.EXPAND)
+		sizer.Add(wx.StaticText(self, -1, 'Bound:'), (4, 1), (1, 1),
+																										wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.boundeventlistbox, (5, 1), (1, 1), wx.EXPAND)
+		sizer.Add(self.tolistbox, (2, 2), (4, 1), wx.EXPAND)
 		self.Bind(wx.EVT_LISTBOX, self.onFromSelect, self.fromlistbox)
 		self.Bind(wx.EVT_LISTBOX, self.onToSelect, self.tolistbox)
+
+		self.Bind(wx.EVT_LISTBOX_DCLICK, self.onUnboundDoubleClicked,
+							self.unboundeventlistbox)
+		self.Bind(wx.EVT_LISTBOX_DCLICK, self.onBoundDoubleClicked,
+							self.boundeventlistbox)
 
 		self.dialogsizer.Add(sizer, (0, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 10)
 		self.SetSizerAndFit(self.dialogsizer)
 
+	def onUnboundDoubleClicked(self, evt):
+		fromname = self.fromlistbox.GetStringSelection()
+		toname = self.tolistbox.GetStringSelection()
+		if fromname and toname:
+			eventclass = self.eventclasses[evt.GetString()]
+			self.GetParent().manager.addEventDistmap(eventclass, fromname, toname)
+			self.unboundeventlistbox.Delete(evt.GetSelection())
+			self.boundeventlistbox.Append(evt.GetString())
+
+	def onBoundDoubleClicked(self, evt):
+		fromname = self.fromlistbox.GetStringSelection()
+		toname = self.tolistbox.GetStringSelection()
+		if fromname and toname:
+			eventclass = self.eventclasses[evt.GetString()]
+			self.GetParent().manager.delEventDistmap(eventclass, fromname, toname)
+			self.boundeventlistbox.Delete(evt.GetSelection())
+			self.unboundeventlistbox.Append(evt.GetString())
+
+	def isBound(self, eventclass, fromname, toname):
+		try:
+			if toname in self.distmap[eventclass][fromname]:
+				return True
+			else:
+				return False
+		except KeyError:
+			return False
+
 	def getCommonEvents(self, fromname, toname):
 		outputs = self.eventio[fromname]['outputs']
 		inputs = self.eventio[toname]['inputs']
-		events = []
+		boundevents = []
+		unboundevents = []
 		for output in outputs:
 			if output in inputs:
-				events.append(output.__name__)
-		return events
-
-	def restoreListBox(self, listbox):
-		selection = listbox.GetStringSelection()
-		listbox.Clear()
-		listbox.AppendItems(self.nodenames)
-		if listbox.FindString(selection) is not wx.NOT_FOUND:
-			listbox.SetStringSelection(selection)
+				if self.isBound(output, fromname, toname):
+					boundevents.append(output.__name__)
+				else:
+					unboundevents.append(output.__name__)
+		return boundevents, unboundevents
 
 	def onFromSelect(self, evt):
-		self.restoreListBox(self.tolistbox)
-
 		name = evt.GetString()
 
-		selection = self.eventlistbox.GetStringSelection()
 		toname = self.tolistbox.GetStringSelection()
-		if toname:
-			events = self.getCommonEvents(name, toname)
+		if not toname or name == toname:
+			bound, unbound = [], []
 		else:
-			events = []
+			bound, unbound = self.getCommonEvents(name, toname)
 
-		self.eventlistbox.Clear()
-		self.eventlistbox.AppendItems(events)
-		if self.eventlistbox.FindString(selection) is not wx.NOT_FOUND:
-			self.eventlistbox.SetStringSelection(selection)
-
-		n = self.tolistbox.FindString(name)
-		if n is not wx.NOT_FOUND:
-			self.tolistbox.Delete(n)
+		self.boundeventlistbox.Clear()
+		self.boundeventlistbox.AppendItems(bound)
+		self.unboundeventlistbox.Clear()
+		self.unboundeventlistbox.AppendItems(unbound)
 
 	def onToSelect(self, evt):
-		self.restoreListBox(self.fromlistbox)
-
 		name = evt.GetString()
 
-		selection = self.eventlistbox.GetStringSelection()
 		fromname = self.fromlistbox.GetStringSelection()
-		if fromname:
-			events = self.getCommonEvents(fromname, name)
+		if not fromname or name == fromname:
+			bound, unbound = [], []
 		else:
-			events = []
+			bound, unbound = self.getCommonEvents(fromname, name)
 
-		self.eventlistbox.Clear()
-		self.eventlistbox.AppendItems(events)
-		if self.eventlistbox.FindString(selection) is not wx.NOT_FOUND:
-			self.eventlistbox.SetStringSelection(selection)
-
-		n = self.fromlistbox.FindString(name)
-		if n is not wx.NOT_FOUND:
-			self.fromlistbox.Delete(n)
+		self.boundeventlistbox.Clear()
+		self.boundeventlistbox.AppendItems(bound)
+		self.unboundeventlistbox.Clear()
+		self.unboundeventlistbox.AppendItems(unbound)
 
