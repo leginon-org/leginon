@@ -142,14 +142,14 @@ class Manager(node.Node):
 		ievent['destination'] = nodename
 		self.eventToClient(ievent, client, wait, timeout)
 
-	def confirmEvent(self, ievent):
+	def confirmEvent(self, ievent, status='ok'):
 		'''
 		override Node.confirmEvent to send confirmation to a node
 		'''
 		if ievent['confirm'] is not None:
 			eventid = ievent['confirm']
 			nodename = ievent['node']
-			ev = event.ConfirmationEvent(eventid=eventid)
+			ev = event.ConfirmationEvent(eventid=eventid, status=status)
 			self.outputEvent(ev, nodename)
 
 	def handleConfirmedEvent(self, ievent):
@@ -229,6 +229,9 @@ class Manager(node.Node):
 		## if nothing to do, report a warning and return now
 		if not do:
 			self.logger.debug('%s event from %s is not bound to any nodes' % (eventclass.__name__, from_node))
+			if ievent['confirm'] is not None:
+				## should let sender know about problem
+				self.confirmEvent(ievent, 'no binding')
 			return
 
 		### set up confirmation event waiting
@@ -370,7 +373,7 @@ class Manager(node.Node):
 		self.confirmEvent(readyevent)
 		self.uiUpdateNodeInfo()
 
-		self.confirmEvent(readyevent)
+		#self.confirmEvent(readyevent)
 
 	def addNodeUIClient(self, nodename, uilocation):
 		if nodename in self.uiclientcontainers:

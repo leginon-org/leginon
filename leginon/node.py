@@ -29,6 +29,9 @@ class PublishError(Exception):
 class ConfirmationTimeout(Exception):
 	pass
 
+class ConfirmationNoBinding(Exception):
+	pass
+
 import sys
 if sys.platform == 'win32':
 	import winsound
@@ -203,6 +206,8 @@ class Node(leginonobject.LeginonObject):
 			self.ewlock.release()
 			if not notimeout:
 				raise ConfirmationTimeout(str(ievent))
+			if confirmationevent['status'] == 'no binding':
+				raise ConfirmationNoBinding('%s from %s not bound to any node' % (ievent.__class__.__name__, ievent['node']))
 
 		return confirmationevent
 
@@ -217,6 +222,7 @@ class Node(leginonobject.LeginonObject):
 	def handleConfirmedEvent(self, ievent):
 		'''Handler for ConfirmationEvents. Unblocks the call waiting for confirmation of the event generated.'''
 		eventid = ievent['eventid']
+		status = ievent['status']
 		self.ewlock.acquire()
 		if eventid in self.eventswaiting:
 			self.confirmationevents[eventid] = ievent
@@ -224,10 +230,10 @@ class Node(leginonobject.LeginonObject):
 		self.ewlock.release()
 		## this should not confirm ever, right?
 
-	def confirmEvent(self, ievent):
+	def confirmEvent(self, ievent, status='ok'):
 		'''Confirm that an event has been received and/or handled.'''
 		if ievent['confirm'] is not None:
-			self.outputEvent(event.ConfirmationEvent(eventid=ievent['confirm']))
+			self.outputEvent(event.ConfirmationEvent(eventid=ievent['confirm'], status=status))
 
 	def logEvent(self, ievent, status):
 		eventlog = event.EventLog(eventclass=ievent.__class__.__name__, status=status)

@@ -94,18 +94,22 @@ class EMClient(object):
 			return dat[key]
 
 	def setScope(self, value):
-		## how to we prevent waiting forever when no scope
-		## Maybe manager should return some kind of exception
+		self.node.logger.debug('setScope: %s' % (value, ))
 		setevent = event.SetScopeEvent(data=value)
-		self.node.outputEvent(setevent, wait=True)
+		try:
+			self.node.outputEvent(setevent, wait=True)
+		except node.ConfirmationNoBinding:
+			self.node.logger.exception('')
+			raise
 
 	def setCamera(self, value):
-		## how to we prevent waiting forever when no camera
-		## Maybe manager should return some kind of exception
 		self.node.logger.debug('setCamera: %s' % (value, ))
 		setevent = event.SetCameraEvent(data=value)
-		self.node.outputEvent(setevent, wait=True)
-
+		try:
+			self.node.outputEvent(setevent, wait=True)
+		except node.ConfirmationNoBinding:
+			self.node.logger.exception('')
+			raise
 
 class Request(object):
 	pass

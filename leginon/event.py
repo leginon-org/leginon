@@ -144,6 +144,7 @@ class ConfirmationEvent(NotificationEvent):
 	def typemap(cls):
 		t = NotificationEvent.typemap()
 		t += [ ('eventid', tuple), ]
+		t += [ ('status', str), ]
 		return t
 	typemap = classmethod(typemap)
 
