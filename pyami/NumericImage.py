@@ -2,8 +2,8 @@
 
 from Tkinter import *
 import Numeric
-import Image
-import ImageTk
+#import Image
+#import ImageTk
 import math,sys
 import time
 
