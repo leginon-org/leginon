@@ -4,6 +4,7 @@ import threading
 import time
 from wxPython.wx import *
 import wxImageViewer
+import wxDictTree
 
 class XMLRPCClient(object):
 	def __init__(self, serverhostname, serverport, port=None):
@@ -171,19 +172,27 @@ class ContainerWidget(Widget):
 			raise ValueError
 
 def WidgetClassFromTypeList(typelist):
-	if typelist and typelist[0] == 'object':
-		if len(typelist) > 1 and typelist[1] == 'container':
-			return wxStaticBoxContainerWidget
-		elif len(typelist) > 1 and typelist[1] == 'method':
-			return wxButtonWidget
-		elif len(typelist) > 1 and typelist[1] == 'data':
-			if len(typelist) > 2 and typelist[2] == 'binary':
-				if len(typelist) > 3 and typelist[3] == 'image':
-					return wxImageWidget
-				else:
+	if typelist:
+		if typelist[0] == 'object':
+			if len(typelist) > 1:
+				if typelist[1] == 'container':
+					if len(typelist) > 2:
+						if typelist[2] == 'select from list':
+							return wxComboBoxWidget
+					return wxStaticBoxContainerWidget
+				elif typelist[1] == 'method':
+					return wxButtonWidget
+				elif typelist[1] == 'data':
+					if len(typelist) > 2:
+						if typelist[2] == 'boolean':
+							return wxCheckBoxWidget
+						elif typelist[2] == 'struct':
+							return wxTreeCtrlWidget
+						elif typelist[2] == 'binary':
+							if len(typelist) > 3:
+								if typelist[3] == 'image':
+									return wxImageWidget
 					return wxEntryWidget
-			else:
-				return wxEntryWidget
 	raise ValueError('invalid type for widget')
 	
 wxEVT_ADD_WIDGET = wxNewEventType()
@@ -359,6 +368,103 @@ class wxEntryWidget(wxDataWidget):
 		self.entry.SetValue(str(self.value))
 		self.applybutton.Enable(false)
 
+class wxCheckBoxWidget(wxDataWidget):
+	def __init__(self, uiclient, namelist, window, parent):
+		wxDataWidget.__init__(self, uiclient, namelist, window, parent)
+		self.wxwidget = wxBoxSizer(wxHORIZONTAL)
+		self.checkbox = wxCheckBox(self.parent, -1, self.name)
+		EVT_CHECKBOX(self.window, self.checkbox.GetId(), self.apply)
+		self.wxwidget.Add(self.checkbox, 0, wxALIGN_CENTER | wxALL, 5)
+
+	def apply(self, evt):
+		value = self.checkbox.GetValue()
+		if value:
+			self.value = 1
+		else:
+			self.value = 0
+		self.setServer(self.value)
+
+	def set(self, value):
+		DataWidget.set(self, value)
+		self.checkbox.SetValue(self.value)
+
+	def Destroy(self):
+		self.checkbox.Destroy()
+
+class wxTreeCtrlWidget(wxDataWidget):
+	def __init__(self, uiclient, namelist, window, parent):
+		wxDataWidget.__init__(self, uiclient, namelist, window, parent)
+		self.wxwidget = wxBoxSizer(wxHORIZONTAL)
+		self.tree = wxDictTree.DictTreeCtrlPanel(self.parent, -1,
+																							self.name, self.apply)
+		self.wxwidget.Add(self.tree, 0, wxALIGN_CENTER | wxALL, 5)
+
+	def apply(self):
+		self.setServer(self.value)
+
+	def set(self, value):
+		DataWidget.set(self, value)
+		self.tree.set(self.value)
+
+	def Destroy(self):
+		self.tree.Destroy()
+
+class wxComboBoxWidget(wxContainerWidget):
+	def __init__(self, uiclient, namelist, window, parent):
+		self.lock = threading.Lock()
+		wxContainerWidget.__init__(self, uiclient, namelist, window, parent)
+		self.wxwidget = wxBoxSizer(wxHORIZONTAL)
+		self.combobox = wxComboBox(self.parent, -1)
+		self.combobox.Enable(false)
+		EVT_COMBOBOX(self.window, self.combobox.GetId(), self.apply)
+		self.wxwidget.Add(self.combobox, 0, wxALIGN_CENTER | wxALL, 5)
+		self.value = {'list': [], 'selected': None}
+
+	def apply(self, evt):
+		value = [evt.GetSelection()]
+		self.uiclient.setServer(self.namelist + ('selected',), value)
+
+	def Destroy(self):
+		self.combobox.Destroy()
+
+	def add(self, namelist, typelist, value):
+		self.setWidget(namelist, value)
+
+	def _set(self, value):
+		if 'list' in value:
+			self.combobox.Clear()
+			for i in range(len(value['list'])):
+				self.combobox.Append(str(value['list'][i]))
+		if 'selected' in value:
+			i = value['selected'][0]
+			self.combobox.SetValue(str(value['list'][i]))
+		self.combobox.Enable(true)
+
+	def setWidget(self, namelist, value):
+		self.lock.acquire()
+		newvalue = {}
+		if namelist == self.namelist + ('list',):
+			self.value['list'] = value
+		elif namelist == self.namelist + ('selected',):
+			self.value['selected'] = value
+		else:
+			self.lock.release()
+			return
+		if self.value['list'] and self.value['selected'] is not None:
+			evt = SetWidgetEvent(self, self.value)
+			wxPostEvent(self.window, evt)
+		self.lock.release()
+
+	# container set, should only be called within the container (setWidget)
+	def set(self, namelist, value=None):
+		if value is None:
+			self._set(namelist)
+		else:
+			self.setWidget(namelist, value)
+		
+	def delete(self, namelist):
+		pass
+
 class wxImageWidget(wxDataWidget):
 	def __init__(self, uiclient, namelist, window, parent):
 		wxDataWidget.__init__(self, uiclient, namelist, window, parent)
@@ -373,4 +479,7 @@ class wxImageWidget(wxDataWidget):
 		self.wxwidget.SetItemMinSize(self.imageviewer,
 																	self.imageviewer.GetSize().GetWidth(),
 																	self.imageviewer.GetSize().GetHeight())
+
+	def Destroy(self):
+		self.imageviewer.Destroy()
 

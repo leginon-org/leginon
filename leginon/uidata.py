@@ -211,6 +211,16 @@ class UIStruct(UIData):
 class UIDate(UIData):
 	typelist = UIData.typelist + ('date',)
 
+class UISelectFromList(UIContainer):
+	typelist = UIContainer.typelist + ('select from list',)
+	# callback
+	def __init__(self, name, listvalue, selectedvalue, permissions='r'):
+		UIContainer.__init__(self, name)
+		self.list = UIArray('list', listvalue, permissions)
+		self.selected = UIArray('selected', selectedvalue, 'rw')
+		self.addUIObject(self.list)
+		self.addUIObject(self.selected)
+
 class UIBinary(UIData):
 	typelist = UIData.typelist + ('binary',)
 	def __init__(self, name, value, permissions='r', callback=None):
