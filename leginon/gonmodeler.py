@@ -18,6 +18,7 @@ import calibrationclient
 import gonmodel
 import uidata
 import string
+import math
 
 class GonModeler(node.Node):
 	def __init__(self, id, session, nodelocations, **kwargs):
@@ -28,6 +29,7 @@ class GonModeler(node.Node):
 		self.threadstop = threading.Event()
 		self.threadlock = threading.Lock()
 		self.calclient = calibrationclient.ModeledStageCalibrationClient(self)
+		self.pcal = calibrationclient.PixelSizeCalibrationClient(self)
 
 		node.Node.__init__(self, id, session, nodelocations, **kwargs)
 		self.defineUserInterface()
@@ -40,14 +42,14 @@ class GonModeler(node.Node):
 
 		mag = self.getMagnification()
 		ht = self.getHighTension()
+		known_pixelsize = self.pcal.retrievePixelSize(mag)
 
 		self.oldimagedata = None
 		self.acquireNextPosition(axis)
 		currentpos = self.getStagePosition()
-		print 'CURRENT POS', currentpos
 
 		for i in range(points):
-			print 'Point %s' % (i,)
+			print 'Acquiring Point %s...' % (i,)
 			t = timer.Timer('loop')
 			if self.threadstop.isSet():
 				print 'loop breaking before all points done'
@@ -60,7 +62,20 @@ class GonModeler(node.Node):
 			delta = datalist[2]
 			imx = datalist[3]
 			imy = datalist[4]
-			self.writeData(label, ht, mag, axis, gonx, gony, delta, imx, imy)
+
+			print '    position', gonx, gony
+			print '    delta', delta
+			print '    correlation shift', imx, imy
+
+			measuredpixsize = delta / math.hypot(imx,imy)
+			print '    measured pixel size', measuredpixsize
+			error = abs(measuredpixsize - known_pixsize) / known_pixsize
+			print '    error', error
+			if error > self.tolerance.get():
+				print '  ***REJECTED***'
+			else:
+				print '  writing to DB'
+				self.writeData(label, ht, mag, axis, gonx, gony, delta, imx, imy)
 			t.stop()
 		print 'loop done'
 		self.threadlock.release()
@@ -76,12 +91,10 @@ class GonModeler(node.Node):
 		newimagedata = self.cam.acquireCameraImageData(correction=0)
 		self.publish(newimagedata, pubevent=True, dbforce=True)
 		newnumimage = newimagedata['image']
-		print 'NEWNUMIMAGE shape', newnumimage.shape
 
 		## insert into correlator
 		self.correlator.insertImage(newnumimage)
 
-		print 'INSERTED INTO CORR'
 		## cross correlation if oldimagedata exists
 		if self.oldimagedata is not None:
 			## cross correlation
@@ -132,32 +145,6 @@ class GonModeler(node.Node):
 		if axis == 'y':
 			return 'x'
 
-	def uiConvert(self):
-		self.file2db(self.uiconvertfilename.get(), self.uidatalabel.get())
-
-	def file2db(self, filename, label):
-		datafile = open(filename, 'r')
-		lines = datafile.readlines()
-		datafile.close()
-		headlines = lines[:2]
-		headlines = map(string.split,headlines)
-		mag = float(headlines[0][0])
-		axis = headlines[1][0]
-		print 'mag', mag
-		print 'axis', axis
-
-		datalines = lines[2:]
-		print 'inserting into DB'
-		count = 0
-		for dataline in datalines:
-			strvalues = dataline.split('\t')
-			if len(strvalues) != 5:
-				continue
-			gonx,gony,delta,imagex,imagey = map(float, strvalues)
-			self.writeData(label, mag, axis, gonx, gony, delta, imagex, imagey)
-			count += 1
-		print 'inserted %s data points' % (count,)
-
 	def writeData(self, label, ht, mag, axis, gonx, gony, delta, imx, imy):
 		stagedata = data.StageMeasurementData()
 		stagedata['label'] = label
@@ -169,7 +156,6 @@ class GonModeler(node.Node):
 		stagedata['delta'] = delta
 		stagedata['imagex'] = imx
 		stagedata['imagey'] = imy
-		print 'Writing', stagedata
 		self.publish(stagedata, database=True, dbforce=True)
 
 	def uiFit(self):
@@ -200,13 +186,11 @@ class GonModeler(node.Node):
 		self.uiaxis = uidata.SingleSelectFromList('Axis',  ['x','y'], 0)
 		self.uipoints = uidata.Integer('Points', 200, 'rw', persist=True)
 		self.uiinterval = uidata.Float('Interval', 5e-6, 'rw', persist=True)
+		self.tolerance = uidata.Float('Tolerance (fraction of known pixel size)', 0.25, 'rw', persist=True)
 		start = uidata.Method('Start', self.uiStartLoop)
 		stop = uidata.Method('Stop', self.uiStopLoop)
-		self.uiconvertfilename = uidata.String('Data File', '', 'rw')
-		convert = uidata.Method('File->DB', self.uiConvert)
-
 		measurecont = uidata.Container('Measure')
-		measurecont.addObjects((self.uiaxis, self.uipoints, self.uiinterval, self.uidatalabel, start, stop, self.uiconvertfilename, convert))
+		measurecont.addObjects((self.uiaxis, self.uipoints, self.uiinterval, self.uidatalabel, self.tolerance, start, stop))
 
 		self.uifitlabel = uidata.String('Label', '', 'rw', persist=True)
 		self.uifitmag = uidata.Integer('Magnification', None, 'rw', persist=True)
