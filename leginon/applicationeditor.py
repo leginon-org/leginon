@@ -27,16 +27,137 @@ class Line(object):
 		self.canvas.delete(self.line)
 
 class ArrowLine(Line):
+	def __init__(self, canvas, originposition, destinationpostion, destination=None):
+		self.canvas = canvas
+		self.destination = destination
+		self.createline(originposition, destinationpostion)
+
 	def createline(self, originposition, destinationposition):
 		Line.createline(self, originposition, destinationposition)
+		self.createArrow(originposition, destinationposition)
 
 	def move(self, originposition, destinationposition):
 		Line.move(self, originposition, destinationposition)
+		self.moveArrow(originposition, destinationposition)
+
+	def createArrow(self, originposition, destinationposition):
+		c = self.arrowCoordinates(originposition, destinationposition)
+		self.arrow = self.canvas.create_polygon(c[0], c[1], c[2], c[3], c[4], c[5])
+
+	def moveArrow(self, originposition, destinationposition):
+		c = self.arrowCoordinates(originposition, destinationposition)
+		self.canvas.coords(self.arrow, c[0], c[1], c[2], c[3], c[4], c[5])
+
+	def arrowCoordinates(self, originposition, destinationposition):
+		if self.destination is None:
+			i = destinationposition
+		else:
+			i = self.lineNodeLabelIntersect(originposition,
+																			destinationposition,
+																			self.destination)
+
+		angle = math.atan2(float(destinationposition[1] - originposition[1]),
+												float(destinationposition[0] - originposition[0]))
+		p0 = i
+
+		side = 10
+
+		newangle1 = math.pi/6 + angle + math.pi
+		offset1 = (math.cos(newangle1)*side, math.sin(newangle1)*side)
+		p1 = (p0[0] + offset1[0], p0[1] + offset1[1])
+
+		newangle2 = angle - math.pi/6 + math.pi
+		offset2 = (math.cos(newangle2)*side, math.sin(newangle2)*side)
+		p2 = (p0[0] + offset2[0], p0[1] + offset2[1])
+
+		return (p0[0], p0[1], p1[0], p1[1], p2[0], p2[1])
+
+	def delete(self):
+		Line.delete(self)
+		self.canvas.delete(self.arrow)
+
+	def samesigns(self, a, b):
+		if (a < 0 and b < 0) or (a >= 0 and b >= 0):
+			return True
+		else:
+			return False
+
+	def lineIntersect(self, line1, line2):
+		x1 = line1[0]
+		y1 = line1[1]
+		x2 = line1[2]
+		y2 = line1[3]
+
+		x3 = line2[0]
+		y3 = line2[1]
+		x4 = line2[2]
+		y4 = line2[3]
+
+		a1 = y2 - y1
+		b1 = x1 - x2
+		c1 = x2 * y1 - x1 * y2
+
+		r3 = a1 * x3 + b1 * y3 + c1
+		r4 = a1 * x4 + b1 * y4 + c1
+
+		if r3 != 0 and r4 != 0 and self.samesigns(r3, r4):
+			return None
+
+		a2 = y4 - y3
+		b2 = x3 - x4
+		c2 = x4 * y3 - x3 * y4
+
+		r1 = a2 * x1 + b2 * y1 + c2
+		r2 = a2 * x2 + b2 * y2 + c2
+
+		if r1 != 0 and r2 != 0 and self.samesigns(r1, r2):
+			return None
+
+		denom = a1 * b2 - a2 * b1
+		if denom == 0:
+			# colinear
+			return None
+		if denom < 0:
+			offset = -denom/2
+		else:
+			offset = denom/2
+
+		num = b1 * c2 - b2 * c1
+		if num < 0:
+			x = (num - offset)/ denom
+		else:
+			x = (num + offset)/ denom
+
+		num = a2 * c1 - a1 * c2
+		if num < 0:
+			y = (num - offset)/ denom
+		else:
+			y = (num + offset)/ denom
+
+		return (x, y)
+
+	def lineBoxIntersect(self, line, box):
+		boxlines = [(box[0], box[1], box[2], box[1]),
+								(box[2], box[1], box[2], box[3]),
+								(box[2], box[3], box[0], box[3]),
+								(box[0], box[3], box[0], box[1])]
+
+		for boxline in boxlines:
+			result = self.lineIntersect(line, boxline)
+			if result is not None:
+				return result
+
+		raise ValueError
+
+	def lineNodeLabelIntersect(self, position1, position2, widget):
+		return self.lineBoxIntersect((position1[0], position1[1],
+														position2[0], position2[1]),
+														widget.getBox())
 
 class LabeledLine(ArrowLine):
-	def __init__(self, canvas, originposition, destinationposition, text):
+	def __init__(self, canvas, originposition, destinationposition, destination, text):
 		self.text = text
-		ArrowLine.__init__(self, canvas, originposition, destinationposition)
+		ArrowLine.__init__(self, canvas, originposition, destinationposition, destination)
 
 	def createline(self, originposition, destinationposition):
 		ArrowLine.createline(self, originposition, destinationposition)
@@ -92,13 +213,14 @@ class ConnectionManager(Line):
 												float(destinationposition[0] - originposition[0]))
 			newangle = math.pi/2 + angle
 			offsetvector = (math.cos(newangle)*offset, math.sin(newangle)*offset)
-			return ((originposition[0] + offsetvector[0],
+			line = ((originposition[0] + offsetvector[0],
 								originposition[1] + offsetvector[1]),
 							(destinationposition[0] + offsetvector[0],
 								destinationposition[1] + offsetvector[1]))
 		else:
-			return ((originposition[0], originposition[1]),
+			line = ((originposition[0], originposition[1]),
 							(destinationposition[0], destinationposition[1]))
+		return line
 
 	def addConnection(self, origin, destination, text):
 		key = (origin, destination)
@@ -117,7 +239,7 @@ class ConnectionManager(Line):
 
 			position = self.offsetPosition(origin, destination)
 			self.lines[key]['line'] = LabeledLine(self.canvas, position[0],
-																						position[1], text)
+																						position[1], destination, text)
 
 	def refreshConnections(self, widget):
 		for key in self.lines:
@@ -132,7 +254,7 @@ class ConnectionManager(Line):
 			self.activeconnection['origin'] = origin
 			self.activeconnection['text'] = text
 			self.activeconnection['line'] = LabeledLine(self.canvas, position,
-																													position, text)
+																									position, None, text)
 
 	def finishConnection(self, destination):
 		if self.activeconnection is not None:
@@ -151,14 +273,19 @@ class NodeLabel(object):
 		self.canvas = canvas
 		self.label = Tkinter.Label(self.canvas, text=itext, relief=Tkinter.RAISED,
 												justify=Tkinter.LEFT, bd=1, padx=5, pady=3, bg='white')
-		print self.label.winfo_reqheight()
-		print self.label.winfo_reqwidth()
 		self.editor = editor
 		self.label.bind('<Button-3>', self.editor.connectionmanager.abortConnection)
 		self.label.bind('<Motion>', self.moveConnection)
 		self.label.bind('<B1-Motion>', self.drag)
 		self.label.bind('<Button-1>', self.startDrag)
 		self.label.bind('<Double-Button-1>', self.handleConnection)
+
+	def getBox(self):
+		height = self.label.winfo_reqheight()
+		width = self.label.winfo_reqwidth()
+		position = self.getPosition()
+		return ((position[0]*2 - width)/2, (position[1]*2 - height)/2,
+						(position[0]*2 + width)/2, (position[1]*2 + height)/2)
 
 	def getPosition(self):
 		info = self.label.place_info()
