@@ -13,7 +13,6 @@ import leginonobject
 import Numeric
 import strictdict
 import warnings
-import cPickle
 import types
 import threading
 import dbdatakeeper
@@ -37,7 +36,10 @@ class DataManager(object):
 		self.db = None
 
 		## start server
-		self.startServer()
+		if 1:
+			self.startServer()
+		else:
+			self.location = (None, None)
 
 		## the size of these dicts are maintained by size restriction
 		self.datadict = strictdict.OrderedDict()
@@ -139,7 +141,7 @@ class DataManager(object):
 
 	def getRemoteData(self, datareference):
 		dmid = datareference.dmid
-		location = {'hostname': dmid[0], 'port': dmid[1]}
+		location = {'hostname': dmid[0][0], 'port': dmid[0][1]}
 		client = tcptransport.Client(location)
 		datainstance = client.pull(datareference)
 		return datainstance
@@ -353,6 +355,9 @@ class Data(DataDict, leginonobject.LeginonObject):
 			deref.append((item[0],val))
 		return deref
 
+	def __getstate__(self):
+		return self.__dict__
+
 	def values(self, dereference=True):
 		original = super(Data, self).values()
 		if not dereference:
@@ -380,7 +385,11 @@ class Data(DataDict, leginonobject.LeginonObject):
 	def __setitem__(self, key, value):
 		'''
 		'''
-		if self.dbid is not None:
+		super(Data, self).__setitem__(key, value)
+		if not hasattr(self, 'initdone'):
+			return
+
+		if hasattr(self, 'dbid') and self.dbid is not None:
 			raise RuntimeError('persistent data cannot be modified, try to create a new instance instead, or use toDict() if a dict representation will do')
 		### synch with leginonobject attributes
 		if key == 'id':
@@ -390,15 +399,8 @@ class Data(DataDict, leginonobject.LeginonObject):
 		elif isinstance(value,Data):
 			value = DataReference(value)
 		#DataDict.__setitem__(self, key, value)
-		super(Data, self).__setitem__(key, value)
+		#super(Data, self).__setitem__(key, value)
 		datamanager.resize(self)
-
-	def __getattr__(self, name):
-		### this method can be removed when all uses of the session attribute are gone
-		if name == 'session':
-			raise DataError("I got rid of the session attribute.  You should be using data['session'] instead of data.session")
-		else:
-			return getattr(super(Data, self), name)
 
 	def typemap(cls):
 		t = DataDict.typemap()
