@@ -40,38 +40,49 @@ class Client(leginonobject.LeginonObject):
 	def push(self, idata):
 		localserverdictlock.acquire()
 		try:
+			ret = self._push(idata)
+			localserverdictlock.release()
+			return ret
+		except:
+			localserverdictlock.release()
+			raise
+
+	def _push(self, idata):
+		try:
 			server = localserverdict[self.serverlocation['local server python ID']]
 		except KeyError:
-			localserverdictlock.release()
 			raise IOError
 
-
 		if server is None:
-			localserverdictlock.release()
 			raise IOError # err...its sort of an IOError
 		else:
-			obj = server.datahandler.insert(copy.deepcopy(idata))
-			localserverdictlock.release()
+			idatacopy = copy.deepcopy(idata)
+			obj = server.datahandler.insert(idatacopy)
 			return obj
 
 	def pull(self, id):
 		localserverdictlock.acquire()
 		try:
+			ret = self._pull(id)
+			localserverdictlock.release()
+			return ret
+		except:
+			localserverdictlock.release()
+			raise
+
+	def _pull(self, id):
+		try:
 			server = localserverdict[self.serverlocation['local server python ID']]
 		except KeyError:
-			localserverdictlock.release()
 			raise IOError
 
 		if server is None:
-			localserverdictlock.release()
 			raise IOError
 		else:
 			try:
 				obj = copy.deepcopy(server.datahandler.query(id))
 			except Exception, e:
-				localserverdictlock.release()
 				raise IOError
-			localserverdictlock.release()
 			return obj
 
 if __name__ == '__main__':

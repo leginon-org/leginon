@@ -14,8 +14,19 @@ class DBDataKeeper(datahandler.DataHandler):
 		# leginon object id = id
 		# session id = session
 		self.dbd = sqldict.SQLDict()
+		self.lock = threading.RLock()
 
 	def query(self, idata, results=None):
+		self.lock.acquire()
+		try:
+			ret = self._query(idata, results)
+			self.lock.release()
+			return ret
+		except:
+			self.lock.release()
+			raise
+
+	def _query(self, idata, results=None):
 		'''
 		query using a partial Data instance
 		'''
@@ -94,6 +105,15 @@ class DBDataKeeper(datahandler.DataHandler):
 		return finaldict
 
 	def insert(self, newdata):
+		self.lock.acquire()
+		try:
+			self._insert(newdata)
+			self.lock.release()
+		except:
+			self.lock.release()
+			raise
+
+	def _insert(self, newdata):
 		#self.flatInsert(newdata)
 		self.recursiveInsert(newdata)
 

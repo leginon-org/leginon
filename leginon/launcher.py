@@ -26,10 +26,7 @@ class Launcher(node.Node):
 #		self.start()
 
 	def addManager(self, loc):
-		self.managerclient = self.clientclass(self.ID(), loc)
-		e = event.NodeAvailableEvent(id=self.ID(), location=self.location(),
-					nodeclass=self.__class__.__name__)
-		self.outputEvent(ievent=e, wait=1)
+		node.Node.addManager(self, loc)
 		time.sleep(1)
 		self.publishNodeClasses()
 		self.outputEvent(event.NodeInitializedEvent(id=self.ID()))
@@ -73,6 +70,7 @@ class Launcher(node.Node):
 			### the lock should be released either by the new node
 			### or calllauncher if the node caused an exception
 			self.caller.launchCall('thread',nodeclass,self.__launchlock, args,kwargs)
+		self.confirmEvent(launchevent)
 
 #	def defineUserInterface(self):
 #		nint = node.Node.defineUserInterface(self)

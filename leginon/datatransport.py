@@ -8,6 +8,7 @@ import sys
 import tcptransport
 import datahandler
 import sys
+import threading
 
 class Base(leginonobject.LeginonObject):
 	def __init__(self, id):
@@ -36,30 +37,50 @@ class Client(Base):
 		if len(self.clients) == 0:
 			raise IOError
 
+		self.lock = threading.RLock()
+
 	# these aren't ordering right, dictionary iteration
-	def pull(self, idata):
-		#print 'client pull', idata
+	def _pull(self, idata):
 		for c in self.clients:
-			#print 'client pull client', c
 			try:
-				#print 'pulling'
 				newdata = c.pull(idata)
-				#print 'got newdata'
 				return newdata
 			except IOError:
 				pass
 		self.printerror("IOError, unable to pull data " + str(idata))
 		raise IOError
 
-	def push(self, odata):
+	def pull(self, idata):
+		self.lock.acquire()
+		try:
+			ret = self._pull(idata)
+			self.lock.release()
+			return ret
+		except:
+			self.lock.release()
+			raise
+
+	def _push(self, odata):
 		for c in self.clients:
 			try:
 				ret = c.push(odata)
 				return ret
 			except IOError:
 				pass
+			except:
+				raise
 		self.printerror("IOError, unable to push data " + str(odata))
 		raise IOError()
+
+	def push(self, odata):
+		self.lock.acquire()
+		try:
+			ret = self._push(odata)
+			self.lock.release()
+			return ret
+		except:
+			self.lock.release()
+			raise
 
 class Server(Base):
 	def __init__(self, id, dh, tcpport=None):

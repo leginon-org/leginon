@@ -40,7 +40,7 @@ class Manager(node.Node):
 		self.initializednodes = []
 		self.distmap = {}
 		# maps event id to list of node it was distributed to if event['confirm']
-		self.confirmmap = {}
+		self.disteventswaiting = {}
 
 		self.app = application.Application(self.ID(), self)
 
@@ -94,37 +94,34 @@ class Manager(node.Node):
 
 	# event methods
 
-	def outputEvent(self, ievent, wait, nodeid):
-		'''Overrides node.Node.outputEvent to use the client dictionary.'''
-		try:
-			self.clients[nodeid].push(ievent)
-		except KeyError:
-			self.printerror('cannot output event %s to %s' % (ievent, nodeid))
-			return
-		if wait:
-			self.waitEvent(ievent)
+	def outputEvent(self, ievent, nodeid, wait=False, timeout=None):
+		'''
+		output an event to a node using node id
+		overrides Node.outputEvent, which sends events to manager
+		'''
+		client = self.clients[nodeid]
+		self.eventToClient(ievent, client, wait, timeout)
 
 	def confirmEvent(self, ievent):
-		'''Override node.Node.confirmEvent to distribute a confirmation event to the node waiting for confirmation of the event.'''
-		self.outputEvent(event.ConfirmationEvent(id=self.ID(), eventid=ievent['id']),
-											0, ievent['id'][:-1])
+		'''
+		override Node.confirmEvent to send confirmation to a node
+		'''
+		eventid = ievent['id']
+		nodeid = ievent['id'][:-1]
+		ev = event.ConfirmationEvent(eventid=eventid)
+		self.outputEvent(ev, nodeid)
 
 	def handleConfirmedEvent(self, ievent):
 		'''Event handler for distributing a confirmation event to the node waiting for confirmation of the event.'''
+		# handle if this is my own event that has been confirmed
+		node.Node.handleConfirmedEvent(self, ievent)
+
+		# no handle if this is a distributed event getting confirmed
 		eventid = ievent['eventid']
 		nodeid = eventid[:-1]
-		if nodeid == self.id:
-			# this is bad since it will fill up with lots of events
-			if not eventid in self.confirmwaitlist:
-				self.confirmwaitlist[eventid] = threading.Event()
-				self.confirmwaitlist[eventid].set()
-				#del self.confirmwaitlist[eventid]
-		else:
-			#self.confirmmap[eventid].remove(ievent.id[:-1])
-			self.confirmmap[eventid].remove(ievent['id'][:-1])
-			if len(self.confirmmap[eventid]) == 0:
-				del self.confirmmap[eventid]
-				self.outputEvent(ievent, 0, nodeid)
+		if eventid in self.disteventswaiting:
+			if nodeid in self.disteventswaiting[eventid]:
+				self.disteventswaiting[eventid][nodeid].set()
 
 	def addEventDistmap(self, eventclass, from_node=None, to_node=None,
 											addtoapp=True):
@@ -153,8 +150,9 @@ class Manager(node.Node):
 	def distributeEvents(self, ievent):
 		'''Push event to eventclients based on event class and source.'''
 		eventclass = ievent.__class__
+		eventid = ievent['id']
 		#from_node = ievent.id[:-1]
-		from_node = ievent['id'][:-1]
+		from_node = eventid[:-1]
 		do = []
 		for distclass,fromnodes in self.distmap.items():
 			if issubclass(eventclass, distclass):
@@ -167,20 +165,44 @@ class Manager(node.Node):
 							else:
 								for to_node in self.handler.clients:
 									if to_node not in do:
-										do.append(to_node)
+																				do.append(to_node)
+
+		### set up confirmation event waiting
+		ewaits = self.disteventswaiting
 		if ievent['confirm']:
-			self.confirmmap[ievent['id']] = do
+			ewaits[eventid] = {}
+			for to_node in do:
+				ewaits[eventid][to_node] = threading.Event()
+
+		### distribute event
 		for to_node in do:
-			self.logEvent(ievent, 'distributing to %s' % (to_node,))
+			print 'TONODE', to_node
 			try:
 				self.clients[to_node].push(ievent)
-			except IOError:
-				self.printerror('cannot push to node ' + str(nodeid)
-												+ ', unregistering')
+			except:
+				self.printException()
+				self.printerror('cannot push to node ' + str(nodeid) + ', unregistering')
+				# make sure we don't wait for confirmation
+				if ievent['confirm']:
+					ewaits[eventid][to_node].set()
 				# group into another function
 				self.removeNode(to_node)
 				# also remove from launcher registry
 				self.delLauncher(to_node)
+			self.logEvent(ievent, 'distributed to %s' % (to_node,))
+
+		### wait for all confirmations to come back
+		### the "and do" part make sure we only confirm if events
+		### were actually distributed since all events actually
+		### come through this handler
+		if ievent['confirm'] and do:
+			## need confirmation from all nodes
+			print 'WAITING FOR DISTRIB EVENTS TO CONFIRM', ievent
+			for e in ewaits[eventid].values():
+				e.wait()
+			print 'DONE WAITING FOR DISTRIB...'
+			## now confirm back to original event sender
+			self.confirmEvent(ievent)
 
 	# launcher related methods
 
@@ -209,29 +231,40 @@ class Manager(node.Node):
 		'''Retrieve a list of launchable classes from a launcher by alias launchername.'''
 		try:
 			nodeclassesdata = self.researchByLocation(location, dataid)
-		except IOError:
+		except:
+			nodeclassesdata = None
+			self.printException()
 			self.printerror('cannot find launcher %s, unregistering' % launcherid)
 			# group into another function
 			self.removeNode(launcherid)
 			# also remove from launcher registry
 			self.delLauncher(launcherid)
-		nodeclasses = nodeclassesdata['nodeclasses']
+			raise
+
+		if nodeclassesdata is None:
+			nodeclasses = None
+		else:
+			nodeclasses = nodeclassesdata['nodeclasses']
 		return nodeclasses
 
 	def handleNodeClassesPublish(self, ievent):
 		'''Event handler for retrieving launchable classes.'''
 		launchername = ievent['id'][-2]
 		dataid = ievent['dataid']
-		try:
-			self.launcherdict[launchername]['classes'] = self.getLauncherNodeClasses(
-																	dataid,
-																	self.launcherdict[launchername]['location'],
-																	self.launcherdict[launchername]['ID'])
-			launchers = self.launcherdict.keys()
-			launchers.sort()
-			self.uilauncherselect.set(launchers, [0])
-		except:
-			self.printException()
+		loc = self.launcherdict[launchername]['location']
+		launcherid = self.launcherdict[launchername]['ID']
+		nodeclasses = self.getLauncherNodeClasses(dataid, loc, launcherid)
+		if nodeclasses is None:
+			del self.launcherdict[launchername]
+		else:
+			self.launcherdict[launchername]['classes'] = nodeclasses
+
+		## update the UI stuff
+		launchers = self.launcherdict.keys()
+		launchers.sort()
+		self.uilauncherselect.set(launchers, [0])
+
+		self.confirmEvent(ievent)
 
 	# node related methods
 
@@ -377,8 +410,9 @@ class Manager(node.Node):
 		attempts = 5
 		for i in range(attempts):
 			try:
-				self.outputEvent(ev, 0, launcher)
-			except IOError:
+				self.outputEvent(ev, launcher, wait=True, timeout=1.0)
+			except:
+				self.printException()
 				time.sleep(1.0)
 				if i == attempts - 1:
 					raise
@@ -408,8 +442,9 @@ class Manager(node.Node):
 
 	def killNode(self, nodeid):
 		'''Attempt telling a node to die and unregister. Unregister if communication with the node fails.'''
+		ev = event.KillEvent()
 		try:
-			self.clients[nodeid].push(event.KillEvent(id=self.ID()))
+			self.clients[nodeid].push(ev)
 		except IOError:
 			self.printerror('cannot push KillEvent to ' + str(nodeid)
 												+ ', unregistering')

@@ -85,7 +85,8 @@ class Node(leginonobject.LeginonObject):
 		#self.uiserver = uiserver.UIServer('UI', xmlrpcport)
 		self.uiserver = uiserver.UIServer(str(self.id[-1]), xmlrpcport)
 
-		self.confirmwaitlist = {}
+		self.eventswaiting = {}
+		self.ewlock = threading.Lock()
 
 		self.addEventOutput(event.PublishEvent)
 		self.addEventOutput(event.UnpublishEvent)
@@ -143,7 +144,7 @@ class Node(leginonobject.LeginonObject):
 		# wait until the interact thread terminates
 		#interact_thread.join()
 		self.die_event.wait()
-		self.outputEvent(event.NodeUninitializedEvent(id=self.ID()))
+		self.outputEvent(event.NodeUninitializedEvent(), wait=True)
 		self.exit()
 
 	# location method
@@ -156,20 +157,73 @@ class Node(leginonobject.LeginonObject):
 
 	# event input/output/blocking methods
 
-	def outputEvent(self, ievent, wait=0):
-		'''Send the event to the manager to be routed where necessary.'''
+	def eventToClient(self, ievent, client, wait=False, timeout=None):
+		'''
+		base method for sending events to a client
+		ievent - event instance
+		client - client instance
+		wait - True/False, sould confirmation be sent back
+		timeout - how long (seconds) to wait for confirmation before
+		   raising a ConfirmationTimeout
+		'''
+		## give event an id if it doesn't have one
 		if ievent['id'] is None:
-			ievent['id'] = self.ID()
-		eventstatus = '%s to manager' % (self.id,)
-		self.logEvent(ievent, status=eventstatus)
-		try:
-			ievent['confirm'] = True
-			self.managerclient.push(ievent)
-		except KeyError:
-			self.printerror('cannot output event %s' % ievent)
-			return
+			eventid = self.ID()
+			ievent['id'] = eventid
+		else:
+			eventid = ievent['id']
+
+		## if we are going to wait for confirmation, label
+		## the event as such
+		ievent['confirm'] = wait
+
 		if wait:
-			self.waitEvent(ievent)
+			## prepare to wait (but don't wait yet)
+			self.ewlock.acquire()
+			self.eventswaiting[eventid] = threading.Event()
+			eventwait = self.eventswaiting[eventid]
+			self.ewlock.release()
+
+		### send event and cross your fingers
+		try:
+			client.push(ievent)
+		except:
+			# make sure we don't wait for an event that failed
+			if wait:
+				eventwait.set()
+			self.printException()
+			raise
+
+		## log the event being sent
+		self.logEvent(ievent, status='eventToClient')
+
+		if wait:
+			### this wait should be released 
+			### by handleConfirmedEvent()
+			eventwait.wait(timeout)
+			notimeout = eventwait.isSet()
+			self.ewlock.acquire()
+			del self.eventswaiting[eventid]
+			self.ewlock.release()
+			if not notimeout:
+				raise ConfirmationTimeout(str(ievent))
+
+
+	def outputEvent(self, ievent, wait=False, timeout=None):
+		'''
+		output an event to the manager
+		'''
+		self.eventToClient(ievent, self.managerclient, wait, timeout)
+
+	def handleConfirmedEvent(self, ievent):
+		'''Handler for ConfirmationEvents. Unblocks the call waiting for confirmation of the event generated.'''
+		eventid = ievent['eventid']
+		if eventid in self.eventswaiting:
+			self.eventswaiting[eventid].set()
+
+	def confirmEvent(self, ievent):
+		'''Confirm that an event has been received and/or handled.'''
+		self.outputEvent(event.ConfirmationEvent(id=self.ID(), eventid=ievent['id']))
 
 	def logEvent(self, ievent, status):
 		eventlog = event.EventLog(id=self.ID(), eventclass=ievent.__class__.__name__, status=status)
@@ -205,26 +259,6 @@ class Node(leginonobject.LeginonObject):
 		'''Unregister the ability for the node to output specified event.'''
 		if eventclass in self.eventmapping['outputs']:
 			self.eventmapping['outputs'].remove(eventclass)
-
-	def confirmEvent(self, ievent):
-		'''Confirm that an event has been received and/or handled.'''
-		self.outputEvent(event.ConfirmationEvent(id=self.ID(), eventid=ievent['id']))
-
-	def waitEvent(self, ievent):
-		'''Block for confirmation of a generated event.'''
-		if not ievent['id'] in self.confirmwaitlist:
-			self.confirmwaitlist[ievent['id']] = threading.Event()
-		self.confirmwaitlist[ievent['id']].wait()
-
-	def handleConfirmedEvent(self, ievent):
-		'''Handler for ConfirmationEvents. Unblocks the call waiting for confirmation of the event generated.'''
-		# this is bad since it will fill up with lots of events
-		eventid = ievent['eventid']
-		if not eventid in self.confirmwaitlist:
-			self.confirmwaitlist[eventid] = threading.Event()
-		self.confirmwaitlist[eventid].set()
-
-		#del self.confirmwaitlist[eventid]
 
 	# data publish/research methods
 
@@ -350,9 +384,8 @@ class Node(leginonobject.LeginonObject):
 	def addManager(self, loc):
 		'''Set the manager controlling the node and notify said manager this node is available.'''
 		self.managerclient = self.clientclass(self.ID(), loc)
-		available_event = event.NodeAvailableEvent(id=self.ID(), location=self.location(),
-												nodeclass=self.__class__.__name__)
-		self.outputEvent(ievent=available_event, wait=True)
+		available_event = event.NodeAvailableEvent(id=self.ID(), location=self.location(), nodeclass=self.__class__.__name__)
+		self.outputEvent(ievent=available_event, wait=True, timeout=3)
 
 	def handleAddNode(self, ievent):
 		'''Event handler calling adddManager with event info. See addManager.'''
@@ -410,4 +443,7 @@ class ResearchError(Exception):
 	pass
 
 class PublishError(Exception):
+	pass
+
+class ConfirmationTimeout(Exception):
 	pass
