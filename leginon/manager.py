@@ -453,7 +453,11 @@ class Manager(node.Node):
 		e = event.NodeAvailableEvent(id=self.id, location=self.location(), nodeclass=self.__class__.__name__)
 		client = self.clientclass(self.ID(),
 												{'hostname': hostname, 'TCP port': port})
-		client.push(e)
+
+		try:
+			client.push(e)
+		except EOFError:
+			self.printerror('manager unable to add node')
 
 	def killNode(self, nodeid):
 		'''Attempt telling a node to die and unregister. Unregister if communication with the node fails.'''
