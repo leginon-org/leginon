@@ -23,7 +23,7 @@ class Focuser(acquisition.Acquisition):
 		self.btcalclient = calibrationclient.BeamTiltCalibrationClient(self)
 		self.abortfail = threading.Event()
 		self.manual_check_done = threading.Event()
-		acquisition.Acquisition.__init__(self, id, sesison, nodelocations, targetclass=data.FocusTargetData, **kwargs)
+		acquisition.Acquisition.__init__(self, id, sesison, nodelocations, target_type='focus', **kwargs)
 
 	def acquire(self, presetdata, target=None, trial=False, emtarget=None):
 		'''
@@ -152,7 +152,7 @@ class Focuser(acquisition.Acquisition):
 				cor = False
 			print 'acquiring focus image'
 			imagedata = self.cam.acquireCameraImageData(correction=cor)
-			fid = data.FocusImageData(initializer=imagedata, id=self.ID(), preset=presetdata, label=labelstring, target=target)
+			fid = data.AcquitisionImageData(initializer=imagedata, id=self.ID(), preset=presetdata, label=labelstring, target=target)
 			self.publish(fid, database=True)
 			print 'focus image published'
 

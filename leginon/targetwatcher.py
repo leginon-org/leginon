@@ -15,7 +15,7 @@ class TargetWatcher(watcher.Watcher):
 	eventinputs = watcher.Watcher.eventinputs + [event.TargetListDoneEvent, event.ImageTargetListPublishEvent, event.ImageTargetShiftPublishEvent]
 	eventoutputs = watcher.Watcher.eventoutputs + [event.TargetListDoneEvent, event.ImageTargetListPublishEvent, event.NeedTargetShiftEvent]
 
-	def __init__(self, id, session, nodelocations, targetclass=data.AcquisitionImageTargetData, **kwargs):
+	def __init__(self, id, session, nodelocations, target_type='acquisition', **kwargs):
 		watchfor = [event.ImageTargetListPublishEvent]
 		watcher.Watcher.__init__(self, id, session, nodelocations, watchfor, **kwargs)
 
@@ -27,7 +27,7 @@ class TargetWatcher(watcher.Watcher):
 		self.cont = threading.Event()
 		self.newtargetshift = threading.Event()
 		self.driftedimages = {}
-		self.targetclass = targetclass
+		self.target_type = target_type
 		#self.targetevents = {}
 		self.targetlistevents = {}
 		self.driftedimages = {}
@@ -72,11 +72,11 @@ class TargetWatcher(watcher.Watcher):
 		goodtargets = []
 		rejects = []
 		for target in targetlist:
-			if target.__class__ is self.targetclass:
-				print 'GOOD', target['id'], target.__class__
+			if target['type'] is self.target_type:
+				print 'GOOD', target['id'], target['type']
 				goodtargets.append(target)
 			else:
-				print 'REJECT', target['id'], target.__class__
+				print 'REJECT', target['id'], target['type']
 				rejects.append(target)
 
 		### republish the rejects and wait for them to complete
@@ -132,20 +132,22 @@ class TargetWatcher(watcher.Watcher):
 				else:
 					adjust = {'rows':0, 'columns':0}
 					print 'NOT DRIFTED TARGET', adjust
-	
+
 				## apply updated
 				print 'TARGET WAS R,C', target['delta row'], target['delta column']
+
 				target['delta row'] += adjust['rows']
 				target['delta column'] += adjust['columns']
 
+
 				print 'TARGET IS NOW R,C', target['delta row'], target['delta column']
-	
+
 				try:
 					process_status = self.processTargetData(target)
 				except:
 					self.printException()
 					process_status = 'exception'
-	
+
 				print 'TARGET FINISHED STATUS', process_status
 				print 'checking pause'
 				if self.pause.isSet():
