@@ -9,6 +9,7 @@
 import sys
 sys.coinit_flags = 0
 import pythoncom
+import pywintypes
 import win32com.client
 import gatancom
 
@@ -37,12 +38,18 @@ class Gatan(object):
 	def getOffset(self):
 		return {'x': self.camera.CameraLeft, 'y': self.camera.CameraTop}
 
-	def setOffset(self, value):
+	def _setOffset(self, value):
 		dimension = self.getDimension()
 		self.camera.CameraLeft = value['x']
 		self.camera.CameraTop = value['y']
 		self.camera.CameraRight = value['x'] + dimension['x']
 		self.camera.CameraBottom = value['y'] + dimension['y']
+
+	def setOffset(self, value):
+		try:
+			self._setOffset(value)
+		except pywintypes.com_error, e:
+			pass
 
 	def getDimension(self):
 		offset = self.getOffset()
@@ -50,6 +57,12 @@ class Gatan(object):
 						'y': self.camera.CameraBottom - offset['y']}
 
 	def setDimension(self, value):
+		try:
+			self._setDimension(value)
+		except pywintypes.com_error, e:
+			pass
+
+	def _setDimension(self, value):
 		offset = self.getOffset()
 		self.camera.CameraRight = offset['x'] + value['x']
 		self.camera.CameraBottom = offset['y'] + value['y']
@@ -58,6 +71,12 @@ class Gatan(object):
 		return {'x': self.camera.Binning, 'y': self.camera.Binning}
 
 	def setBinning(self, value):
+		try:
+			self._setBinning(value)
+		except pywintypes.com_error, e:
+			pass
+
+	def _setBinning(self, value):
 		if value['x'] != value['y']:
 			raise ValueError('multiple binning dimesions not supported')
 		self.camera.Binning = value['x']
