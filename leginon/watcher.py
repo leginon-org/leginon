@@ -23,7 +23,7 @@ class Watcher(node.Node):
 		self.addEventInput(self.watchfor, self.handleEvent)
 
 	def defineUserInterface(self):
-		node.Node.defineUserInterface(self)
+		return node.Node.defineUserInterface(self)
 
 	def handleEvent(self, pubevent):
 		if self.lockblocking == 0:

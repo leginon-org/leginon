@@ -63,13 +63,17 @@ class ShiftMeter(watcher.Watcher):
 		self.processData(fakedata)
 
 	def defineUserInterface(self):
-		watcher.Watcher.defineUserInterface(self)
+		watcherspec = watcher.Watcher.defineUserInterface(self)
+
 		argspec = (
-			{'name':'filename', 'alias':'Filename', 'type':'string'},
-			)
-		self.registerUIFunction(self.uiLoadImage, argspec, 'Load')
-		self.registerUIFunction(self.uiClearBuffer, (), 'Clear Buffer')
-		self.registerUIFunction(self.uiGetResult, (), 'Get Result', returntype='array')
+		self.registerUIData('Filename', 'string'),
+		)
+		loadspec = self.registerUIMethod(self.uiLoadImage, 'Load', argspec)
+		clearspec = self.registerUIMethod(self.uiClearBuffer, 'Clear Buffer', ())
+		r = self.registerUIData('Result', 'string')
+		getspec = self.registerUIMethod(self.uiGetResult, 'Get Result', (), returnspec=r)
+
+		self.registerUISpec(`self.id`, (watcherspec, loadspec, clearspec, getspec))
 
 	def uiLoadImage(self, filename):
 		print 'reading %s' % filename
