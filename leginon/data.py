@@ -8,8 +8,6 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-# testing, this is stable
-
 import leginonconfig
 import leginonobject
 import Numeric
