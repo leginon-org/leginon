@@ -198,8 +198,8 @@ class SQLDict:
 	    for key,query in self.queries.items():
 	    	c = self._cursor()
 		try:
-			print '-----------------------------------------------'
-			print 'query =', query
+			#print '-----------------------------------------------'
+			#print 'query =', query
 			c.execute(query)
 		except MySQLdb.ProgrammingError, e:
 			errno = e.args[0]
@@ -673,9 +673,7 @@ def setQueries(in_dict):
 	for key,value in in_dict.items():
 		if type(value) is type({}):
 			select = sqlexpr.selectAllFormat(value['alias'])
-			print "ALIAS SELECT: ",value['alias']
 			queries[key]="%s %s" % (select, queryFormatOptimized(in_dict,value['alias']))
-			print "--------------------NEXT ONE------------------------"
 	return queries
 
 def queryFormatOptimized(in_dict,tableselect):
@@ -690,6 +688,7 @@ def queryFormatOptimized(in_dict,tableselect):
 	optimizedjoinonlist = []
 	alljoin={}
 	joinon={}
+	onjoin={}
 	alljoinon={}
 	wherejoin={}
 	listselect=[]
@@ -711,6 +710,7 @@ def queryFormatOptimized(in_dict,tableselect):
 					joinonalias = joinTable['alias']
 					alljoinon[joinonalias] = sqlexpr.joinFormat(fieldname, joinTable)
 					joinon[joinonalias]=a
+					onjoin[a]=joinonalias
 					if value['where']:
 						if not a in optimizedjoinlist:
 							optimizedjoinlist.append(a)
@@ -721,9 +721,9 @@ def queryFormatOptimized(in_dict,tableselect):
 				sqlwhere.append(sqlexprstr)
 
 	if alljoinon.has_key(tableselect):
-		sqljoin.append(alljoinon[tableselect])
-		if not tableselect in optimizedjoinlist:
-			optimizedjoinlist.append(tableselect)
+		optimizedjoinlist.append(alljoinon[tableselect])
+	if not tableselect in optimizedjoinlist:
+		optimizedjoinlist.append(tableselect)
 
 	for l in optimizedjoinlist:
 		if joinon.has_key(l):
@@ -731,6 +731,10 @@ def queryFormatOptimized(in_dict,tableselect):
 				optimizedjoinlist.append(joinon[l])
 			if not alljoinon[l] in sqljoin:
 				sqljoin.append(alljoinon[l])
+		elif onjoin.has_key(l):
+			if not alljoinon[onjoin[l]] in sqljoin:
+				sqljoin.append(alljoinon[onjoin[l]])
+			
 
 	sqljoinstr = ' '.join(sqljoin)
 	if sqlwhere:
