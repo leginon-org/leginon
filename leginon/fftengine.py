@@ -8,7 +8,7 @@ import time
 class fftEngine(object):
 	'''base class for a FFT engine'''
 	def __init__(self):
-		self.showtime = 1
+		self.showtime = 0
 
 	def transform(self, image):
 		transimage = self.timer(self._transform, (image,))

@@ -1,65 +1,155 @@
-import correlation
+#!/usr/bin/env python
+
+import Numeric
 
 class Correlator(object):
 	'''
 	Provides correlation handling functions.
-	A buffer of exactly two images is maintained.  The buffer can act 
-	as a fifo in which each image inserted causes a correlation with
-	the previous, or each image in the buffer can be set independently
-	and the correlation executed independently.
+	A buffer of two images is maintained.
 	'''
-	def __init__(self, use_phase = 1):
-		self.phase = use_phase
-		self.clear()
+	def __init__(self, ffteng):
+		self.fftengine = ffteng
+		self.clearBuffer()
 
-	def insert(self, imagedata, index=None):
+	def setImage(self, index, newimage):
+		'''put a new image in the buffer'''
+		self.buffer[index]['image'] = newimage
+		self.setFFT(index, None)
+		self.initResults()
+
+	def getImage(self, index):
+		'''retrieve an image from the buffer'''
+		ret = self.buffer[index]['image']
+		return ret
+
+	def setFFT(self, index, newfft):
+		'''put a new fft in the buffer'''
+		self.buffer[index]['fft'] = newfft
+
+	def getFFT(self, index):
+		'''retrieve an image fft from the buffer'''
+		return self.buffer[index]['fft']
+
+	def insertImage(self, newimage):
+		'''Insert a new image into the image buffer, fifo style'''
+		self.buffer[0]['image'] = self.buffer[1]['image']
+		self.buffer[0]['fft'] = self.buffer[1]['fft']
+		self.setImage(1, newimage)
+
+	def clearBuffer(self):
+		self.buffer = [
+			{'image':None, 'fft':None},
+			{'image':None, 'fft':None}
+			]
+		self.initResults()
+
+	def initResults(self):
+		self.results = {
+			'cross correlation fft': None,
+			'cross correlation image': None,
+			'phase correlation fft': None,
+			'phase correlation image': None,
+			}
+
+	def getResults(self, key=None):
+		return self.results
+
+	def crossCorrelationFFT(self):
 		'''
-		Insert a new image into the image buffer.  If index is
-		specified, it determines which buffer slot to fill (0 or 1).
-		If no index is specified, the image is inserted in slot 1, 
-		sliding the existing slot 1 image to slot 0 (fifo mode).
+		produce a cross correlation fft
+		mainly an intermediate step
 		'''
-		#self.buffer.append(image)
-		#del self.buffer[0]
 
-		if index is None:
-			# image1 becomes image0
-			for key,value in self.buffer[1].items():
-				self.buffer[0][key] = value
-			self.buffer[1]['id'] = imagedata.id
-			self.buffer[1]['image'] = imagedata.content
-			try:
-				return self.correlate()
-			except EmptySlot:
-				return {}
-		else:
-			self.buffer[index]['id'] = imagedata.id
-			self.buffer[index]['image'] = imagedata.content
+		if self.results['cross correlation fft']:
+			return
 
-	def clear(self):
-		#self.buffer = [None,None]
-		image0 = {}
-		image1 = {}
-		self.buffer = (image0, image1)
+		im0 = self.getImage(0)
+		if im0 is None:
+			raise RuntimeError('no image in buffer slot 0')
 
-	def correlate(self):
-		if {} in self.buffer:
-			raise EmptySlot('empty slot in buffer')
+		im1 = self.getImage(1)
+		if im1 is None:
+			raise RuntimeError('no image in buffer slot 1')
 
-		im0 = self.buffer[0]['image']
-		im1 = self.buffer[1]['image']
+		if im0.shape != im1.shape:
+			raise RuntimeError('images not same dimensions')
+		
+		## calculate FFTs of subject images, if not already done
+		print 'calculating FFT of 0'
+		fft0 = self.getFFT(0)
+		if fft0 is None:
+			fft0 = self.fftengine.transform(im0)
+			self.setFFT(0, fft0)
 
-		corrdict = {}
-		if self.phase:
-			c = correlation.correlation(im0, im1, 0, 1, 1)
-		else:
-			c = correlation.correlation(im0, im1, 1, 0, 1)
+		print 'calculating FFT of 1'
+		fft1 = self.getFFT(1)
+		if fft1 is None:
+			fft1 = self.fftengine.transform(im1)
+			self.setFFT(1, fft1)
 
-		c['image0 id'] = self.buffer[0]['id']
-		c['image1 id'] = self.buffer[1]['id']
+		ccfft = Numeric.multiply(Numeric.conjugate(fft0), fft1)
+		self.results['cross correlation fft'] = ccfft
+	
+	def crossCorrelate(self):
+		'''calculate the cross correlation image'''
+		# invert correlation to use
+		self.crossCorrelationFFT()
+		ccfft = self.results['cross correlation fft']
+		cc = ffteng.itransform(ccfft)
+		self.results['cross correlation image'] = cc
 
-		return c
+	def phaseCorrelate(self):
+		# elementwise phase-correlation =
+		# cross-correlation / magnitude(cross-correlation
+		self.crossCorrelationFFT()
+		ccfft = self.results['cross correlation fft']
+		pcfft = ccfft / Numeric.absolute(ccfft)
+		self.results['phase correlation fft'] = pcfft
+		pc = self.fftengine.itransform(pcfft)
+		self.results['phase correlation image'] = pc
 
 
-class EmptySlot(Exception):
-	pass
+if __name__ == '__main__':
+	from mrc.Mrc import mrc_to_numeric
+	from Tkinter import *
+	from viewer.ImageViewer import ImageViewer
+	import fftengine, peakfinder
+
+	tk = Tk()
+	iv = ImageViewer(tk)
+	iv.pack()
+
+	if 0:
+		im1 = mrc_to_numeric('test1.mrc')
+		im2 = mrc_to_numeric('test2.mrc')
+	if 1:
+		im1 = mrc_to_numeric('02dec12a.001.mrc')
+		im2 = mrc_to_numeric('02dec12a.001.post.mrc')
+
+	f = fftengine.fftFFTW(estimate=1)
+	c = Correlator(f)
+	p = peakfinder.PeakFinder()
+
+	for im in (im1, im2, im1, im2, im1, im2, im1):
+		c.insertImage(im)
+		print 'PHASE'
+		try:
+			c.phaseCorrelate()
+		except:
+			print 'exception in phaseCorrelate'
+			raw_input('continue')
+			continue
+
+		res = c.getResults()
+		pcim = res['phase correlation image']
+		p.setImage(pcim)
+		p.subpixelPeak()
+		peakres = p.getResults()
+		print peakres
+		#iv.import_numeric(pcim)
+		#iv.update()
+
+		raw_input('continue')
+
+
+
