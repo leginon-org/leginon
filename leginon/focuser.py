@@ -19,7 +19,7 @@ class Focuser(acquisition.Acquisition):
 	def acquire(self, preset):
 		'''
 		this replaces Acquisition.acquire()
-		Instead of acquiring and image, we do autofocus
+		Instead of acquiring an image, we do autofocus
 		'''
 		btilt = self.btilt.get()
 		pub = self.publishimages.get()
