@@ -18,13 +18,13 @@ class Client(Base):
 		self.clients = {}
 
 #		for t in self.transportmodules:
-#			self.clients[t] = apply(t.Client, (serverlocation,))
+#			self.clients[t] = apply(t.Client, (self.ID(), serverlocation,))
 
 		# will make manager sort this out soon
 		clientlocation = self.location()
 		if ('hostname' in serverlocation) and ('hostname' in clientlocation) and (serverlocation['hostname'] == clientlocation['hostname']):
-				self.clients[localtransport] = apply(localtransport.Client, (serverlocation,))
-		self.clients[tcptransport] = apply(tcptransport.Client, (serverlocation,))
+				self.clients[localtransport] = apply(localtransport.Client, (self.ID(), serverlocation,))
+		self.clients[tcptransport] = apply(tcptransport.Client, (self.ID(), serverlocation,))
 		self.serverlocation = serverlocation
 
 	def pull(self, id):
@@ -45,7 +45,7 @@ class Server(Base):
 		self.datahandler = apply(dhclass, dhargs)
 		self.servers = {}
 		for t in self.transportmodules:
-			self.servers[t] = apply(t.Server, (self.datahandler,))
+			self.servers[t] = apply(t.Server, (self.ID(), self.datahandler,))
 			self.servers[t].start()
 
 	def location(self):

@@ -18,13 +18,13 @@ class IntGen(node.Node):
 		self.main()
 
 	def sendint(self, newint):
-		self.announce(event.NumericControlEvent(newint))
+		self.announce(event.NumericControlEvent(self.ID(), newint))
 
 	def sendstart(self):
-		self.announce(event.StartEvent())
+		self.announce(event.StartEvent(self.ID()))
 
 	def sendstop(self):
-		self.announce(event.StopEvent())
+		self.announce(event.StopEvent(self.ID()))
 			
 	def main(self):
 		self.interact()
