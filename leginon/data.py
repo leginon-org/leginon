@@ -938,7 +938,7 @@ class CameraSensitivityCalibrationData(CalibrationData):
 		t = CalibrationData.typemap()
 		t += [
 			('high tension', int),
-			('sensitivity', int),
+			('sensitivity', float),
 		]
 		return t
 	typemap = classmethod(typemap)
