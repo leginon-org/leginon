@@ -152,6 +152,7 @@ class GonModeler(node.Node):
 		print 'inserted %s data points' % (count,)
 
 	def writeData(self, label, mag, axis, gonx, gony, delta, imx, imy):
+		print 'Writing', stagedata
 		stagedata = data.StageMeasurementData()
 		stagedata['label'] = label
 		stagedata['magnification'] = mag
