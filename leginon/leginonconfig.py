@@ -99,5 +99,5 @@ except:
 	print 'Error accessing image path: %s' % (IMAGE_PATH,)
 
 # user
-USERNAME = configparser.get('User', 'name')
+USERNAME = configparser.get('User', 'fullname')
 
