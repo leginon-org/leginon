@@ -1833,7 +1833,7 @@ class wxMessageLogWidget(wxContainerWidget):
 		self.messages = {}
 		self.sizer = wxBoxSizer(wxVERTICAL)
 		self.messagelog = wxMessageLog.wxMessageLog(parent)
-		self.sizer.Add(self.messagelog, 0, wxEXPAND)
+		self.sizer.Add(self.messagelog, 1, wxEXPAND)
 		wxContainerWidget.__init__(self, name, parent, container, value,
 																configuration)
 
