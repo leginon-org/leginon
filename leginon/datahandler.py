@@ -237,29 +237,41 @@ class DataBinder(DataHandler):
 	'''Bind data to a function. Used for mapping Events to handlers.'''
 	def __init__(self, id, session):
 		DataHandler.__init__(self, id, session)
-		self.priority = []
-		self.bindings = {}
+		## this is a mapping of data class to function
+		## using list instead of dict to preserve order, and also
+		## because there may be more than one function for every 
+		## data class
+		self.bindings = []
 
 	def insert(self, newdata):
 		# this could be threaded, but it would ruin the 'priority' thing
 		# now send data to a type specific handler function
 		dataclass = newdata.__class__
-		for bindclass in self.priority:
+		args = (newdata,)
+		for bindclass, func in self.bindings:
 			if issubclass(dataclass, bindclass):
-				if self.bindings[bindclass]:
-					args = (newdata,)
-					for func in self.bindings[bindclass]:
-						apply(func, args)
+				apply(func, args)
 
-	def setBinding(self, dataclass, func=None):
+	def addBinding(self, dataclass, func):
 		'func must take data instance as first arg'
-		if func is None:
-			if dataclass in self.bindings:
-				self.priority.remove(dataclass)
-				del self.bindings[dataclass]
-		if dataclass in self.bindings:
-				self.bindings[dataclass].append(func)
-		else:
-			self.priority.append(dataclass)
-			self.bindings[dataclass] = [func]
+		binding = (dataclass, func)
+		self.bindings.append(binding)
 
+	def delBinding(self, dataclass=None, func=None):
+		'''
+		remove bindings
+		if dataclass and/or func is None, that means wildcard
+		'''
+		# iterate on a copy, so we can delete from the original
+		bindings = list(self.bindings)
+		for binding in bindings:
+			matchclass = matchfunc = False
+			bindclass = binding[0]
+			bindfunc = binding[1]
+			if dataclass is bindclass or dataclass is None:
+				matchclass = True
+			if func is bindfunc or func is None:
+				matchfunc = True
+
+			if matchclass and matchfunc:
+				self.bindings.remove(binding)
