@@ -330,6 +330,7 @@ if sys.platform == 'win32':
 				gridnumber = self.gridnumber
 			subject = 'Grid #%s failed to be removed from specimen holder properly' % gridnumber
 			text = 'Reply to this message if grid is no longer in the specimen holder.\nImage of the specimen holder is attached.'
+			time.sleep(5.0)
 			try:
 				image = Image.open(self.imagefilename.get())
 				imagestring = emailnotification.PILImage2String(image)
