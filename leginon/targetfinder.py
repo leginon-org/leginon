@@ -214,6 +214,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 	def mosaicClear(self):
 		self.mosaic.clear()
+		self.clickimage.setImage(None)
 
 	def defineUserInterface(self):
 		ClickTargetFinder.defineUserInterface(self)
