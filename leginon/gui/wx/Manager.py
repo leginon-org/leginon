@@ -353,6 +353,8 @@ class Frame(wx.Frame):
 		if not self.launcherkillmenuitem.IsEnabled():
 			self.launcherkillmenuitem.Enable(True)
 
+		self.statusbar.SetStatusText('Add launcher \'%s\'' % evt.name)
+
 	def onRemoveLauncher(self, evt):
 		if self.manager.getLauncherCount() < 1:
 			self.nodecreatemenuitem.Enable(False)

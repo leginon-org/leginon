@@ -275,11 +275,11 @@ class PixelSizeListCtrl(wx.ListCtrl):
 				index = i
 				break
 			elif mag == imag:
-				self.SetStringItem(i, 1, str(ps))
+				self.SetStringItem(i, 1, '%g' % ps)
 				self.SetStringItem(i, 2, str(comment))
 				return
 		self.InsertStringItem(index, str(mag))
-		self.SetStringItem(index, 1, str(ps))
+		self.SetStringItem(index, 1, '%g' % ps)
 		self.SetStringItem(index, 2, str(comment))
 
 	def getSelectedMags(self):
