@@ -8,6 +8,7 @@ import camerafuncs
 import presets
 import threading
 import acquisition
+import uidata
 
 class SimpleAcquisition(acquisition.Acquisition):
 	'''
@@ -24,11 +25,11 @@ class SimpleAcquisition(acquisition.Acquisition):
 		self.processTargetData(None)
 		return ''
 
-	def acquireImageLoop(self, pausetime):
+	def acquireImageLoop(self):
 		if not self.looplock.acquire(0):
 			return
 		try:
-			t = threading.Thread(target=self.loop,args=(pausetime,))
+			t = threading.Thread(target=self.loop,args=(self.pausetime.get(),))
 			t.setDaemon(1)
 			t.start()
 		except:
@@ -58,15 +59,17 @@ class SimpleAcquisition(acquisition.Acquisition):
 		return ''
 
 	def defineUserInterface(self):
-		acqspec = acquisition.Acquisition.defineUserInterface(self)
+		acquisition.Acquisition.defineUserInterface(self)
 
-		acq = self.registerUIMethod(self.acquireImageOne, 'Acquire', ())
-		pausetime = self.registerUIData('Pause Time', 'float', default=0)
-		acqloop = self.registerUIMethod(self.acquireImageLoop, 'Acquire Loop', (pausetime,))
-		acqloopstop = self.registerUIMethod(self.acquireImageLoopStop, 'Stop', ())
-		acqcont = self.registerUIContainer('Acquire', (acq, acqloop, acqloopstop))
+		acq = uidata.UIMethod('Acquire', self.acquireImageOne)
+		self.pausetime = uidata.UIFloat('Pause Time', 0.0, 'rw')
 
-		myspec = self.registerUISpec('Simple Acquisition', (acqcont,))
-		myspec += acqspec
-		return myspec
+		acqloop = uidata.UIMethod('Acquire Loop', self.acquireImageLoop)
+		acqloopstop = uidata.UIMethod('Stop', self.acquireImageLoopStop)
 
+		acqcont = uidata.UIMediumContainer('Acquire')
+		acqcont.addUIObjects((acq, acqloop, acqloopstop))
+
+		container = uidata.UIMediumContainer('Simple Acquisition')
+		container.addUIObject(acqcont)
+		self.uiserver.addUIObject(container)
