@@ -18,6 +18,8 @@ static PyObject *acquire(PyObject *self, PyObject *args) {
 	void HUGEP *pbuffer = NULL;
 	VARTYPE vartype;
 
+	// don't initialize com/create instance every acquire, will update
+	// I also meant to set exceptions
 	if (FAILED(CoInitializeEx(NULL, COINIT_MULTITHREADED)))
 		return NULL;
 

@@ -16,6 +16,7 @@ try:
 	import numarray as Numeric
 except:
 	import Numeric
+import TecnaiCCDWrapper
 
 class Gatan(object):
 	def __init__(self):
@@ -121,17 +122,17 @@ class Gatan(object):
 			#if self.getRetractable():
 				if self.getInserted():
 					self.setInserted(False)
-					image = self.camera.AcquireRawImage()
+					image = TecnaiCCDWrapper.acquire()
 					self.setInserted(True)
 					return image
 			else:
 				exposuretime = self.getExposureTime()
 				self.setExposureTime(0)
-				image = self.camera.AcquireRawImage()
+				image = TecnaiCCDWrapper.acquire()
 				self.setExposureTime(exposuretime)
 				return image
 		try:
-			return self.camera.AcquireRawImage()
+			return TecnaiCCDWrapper.acquire()
 		except pywintypes.com_error, e:
 			raise ValueError('Invalid image dimensions')
 
