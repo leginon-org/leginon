@@ -311,7 +311,10 @@ class StateImageMosaic(ImageMosaic):
 		ImageMosaic.processData(self, idata)
 
 	def uiPublishMosaicImage(self):
-		ImageMosaic.uiPublishMosaicImage(self)
+		#ImageMosaic.uiPublishMosaicImage(self)
+
+		odata = data.ImageData(self.ID(), self.makeImage(self.imagemosaic))
+		self.publish(odata, event.ImagePublishEvent)
 
 		statedata = {'image data ID': odata.id}
 		for dataid in self.imagemosaic:
