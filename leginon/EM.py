@@ -144,7 +144,7 @@ class EM(node.Node):
 		self.permissions = {
 			'high tension': 'r',
 			'temperature': 'r',
-			'column valves': 'r',
+#			'column valves': 'r',
 			'gun shift': '',
 			'gun tilt': '',
 			'beam blank': '',
@@ -153,12 +153,12 @@ class EM(node.Node):
 			'low dose': '',
 			'low dose mode': '',
 			'screen current': '',
-			'holder type': '',
-			'holder status': '',
-			'stage status': '',
-			'vacuum status': '',
-			'turbo pump': '',
-			'column pressure': '',
+#			'holder type': '',
+#			'holder status': '',
+#			'stage status': '',
+#			'vacuum status': '',
+#			'turbo pump': '',
+#			'column pressure': '',
 		}
 
 		# the queue of requests to get and set parameters
