@@ -73,10 +73,11 @@ class Tietz(object):
 	}
 
 	def __init__(self):
+		self.unsupported = []
+
 		if self.cameratype is None:
 			raise NotImplementedError('Tietz virtual class')
 
-		self.unsupported = []
 		self.arraytypecode = 'H'
 		self.numerictypecode = Numeric.UInt16
 		self.bytesperpixel = 2
