@@ -243,7 +243,11 @@ class SQLDict:
 
 		for i in range(numrows):
 			for qikey, cursorresult in cursorresults.items():
-				all[i][qikey]=cursorresult[i]
+				if cursorresult:
+					all[i][qikey] = cursorresult[i]
+				else:
+					all[i][qikey] = None
+					
 
 		rootlist = []
                 for d in all:
@@ -290,6 +294,8 @@ class SQLDict:
 		return datalist
 
 	def _connectData(self, root, pool):
+		if root is None:
+			return
 		for key,value in root.items():
 			if isinstance(value, data.DataReference):
 				root[key] = pool[value.qikey]
