@@ -57,6 +57,12 @@ DB_NAME		= 'dbemdata'
 DB_USER		= 'usr_object'
 DB_PASS		= ''
 
+# If set, use a project database
+DB_PROJECT_HOST		= 'cronus1'
+DB_PROJECT_NAME		= 'project'
+DB_PROJECT_USER		= 'usr_object'
+DB_PROJECT_PASS		= ''
+
 #########################
 #        Paths          #
 #########################
