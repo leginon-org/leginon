@@ -103,7 +103,7 @@ class Client(leginonobject.LeginonObject):
 			  data += r
 			return data
 		else:
-			self.printeror('no socket available')
+			self.printerror('no socket available')
 			raise IOError
 
 	def receive(self):
@@ -116,7 +116,7 @@ class Client(leginonobject.LeginonObject):
 			f.close()
 			return data
 		else:
-			self.printeror('no socket available')
+			self.printerror('no socket available')
 			raise IOError
 
 	def close(self):
