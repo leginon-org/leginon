@@ -45,7 +45,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.start()
 
 	def handleDriftDone(self, ev):
-		print 'HANDLING DRIFT DONE'
+		self.uiacquisitionstatus.set('Received notification drift done')
 		self.driftdonestatus = ev['status']
 		self.driftdone.set()
 
@@ -65,10 +65,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if targetdata is None:
 			emtarget = None
 		else:
-#			if targetdata['preset'] is None:
-#				print 'preset image shift, no preset in target'
-#			else:
-#				print 'preset image shift', targetdata['preset']
+			#if targetdata['preset'] is None:
+			#	print 'preset image shift, no preset in target'
+			#else:
+			#	print 'preset image shift', targetdata['preset']
 
 			# this creates ScopeEMData from the ImageTargetData
 			oldtargetemdata = self.targetToEMData(targetdata)
@@ -82,10 +82,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 				'y': (-9.9e-4, 9.9e-4),
 			}
 			stagepos = oldtargetemdata['stage position']
-			for axis,limits in stagelimits.items():
+			for axis, limits in stagelimits.items():
 				if stagepos[axis] < limits[0] or stagepos[axis] > limits[1]:
 					messagestr = 'target stage position %s out of range... target aborting' % (stagepos,)
-					print messagestr
+					#print messagestr
 					self.acquisitionlog.error(messagestr)
 					return 'invalid'
 
@@ -106,18 +106,20 @@ class Acquisition(targetwatcher.TargetWatcher):
 					continue
 
 			self.presetsclient.toScope(newpresetname, emtarget)
-			print 'getting current preset'
+			self.uiprocessingstatus.set('Determining current preset')
 			p = self.presetsclient.getCurrentPreset()
-			print 'current preset', p['name']
+			self.uiprocessingstatus.set('Current preset is "%s"' % p['name'])
 			delay = self.uidelay.get()
-			print 'pausing for %s sec.' % (delay,)
+			self.uiprocessingstatus.set('Pausing for %s seconds before acquiring'
+																	% (delay,))
 			time.sleep(delay)
-			print 'acquire()'
+			self.uiprocessingstatus.set('Acquiring image...')
 			ret = self.acquire(p, target=targetdata, emtarget=emtarget)
 			# in these cases, return immediately
 			if ret in ('aborted', 'repeat'):
 				return ret
-			print 'done'
+
+		self.uiprocessingstatus.set('Done processing')
 
 		return 'ok'
 
@@ -141,11 +143,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		imagequery['camera'] = data.CameraEMData()
 		imagequery['session'] = data.SessionData()
 
-		print 'alreadyAcquired research'
 		datalist = self.research(datainstance=imagequery, fill=False)
 		if datalist:
 			## no need to acquire again, but need to republish
-			print 'image was acquired previously... republishing'
+			self.uioutputstatus.set('Image was acquired previously, republishing')
 			imagedata = datalist[0]
 			self.publishDisplayWait(imagedata)
 			return True
@@ -243,7 +244,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		result = self.research(datainstance=queryimage, fill=False)
 		if not result:
 			# try image with no target
-			print 'trying with no target'
+			self.uiacquisitionstatus.set('Pretend acquire with no target')
 			queryimage['target'] = None
 			result = self.research(datainstance=queryimage, fill=False)
 
@@ -282,15 +283,17 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## set the 'filename' value
 		self.setImageFilename(imagedata)
 
-		print 'publishing image'
+		self.uioutputstatus.set('Publishing image...')
 		self.publish(imagedata, pubevent=True, database=self.databaseflag.get())
-		print 'image published'
+		self.uioutputstatus.set('Image published')
 		if self.displayimageflag.get():
-			print 'displaying image'
+			self.uioutputstatus.set('Displaying image...')
 			self.ui_image.set(imagedata['image'])
+			self.uioutputstatus.set('Image displayed')
 
 		if self.waitfordone.get():
 			self.waitForImageProcessDone()
+		self.uioutputstatus.set('Done')
 		return 'ok'
 
 	def setImageFilename(self, imagedata):
@@ -310,7 +313,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		sep = '_'
 		parts = (rootname, mystr)
 		filename = sep.join(parts)
-		print 'FILENAME', filename
+		self.uioutputstatus.set('Using filename "%s"' % filename)
 		imagedata['filename'] = filename
 
 	def getRootName(self, imagedata):
@@ -330,7 +333,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			results = self.research(datainstance=imagequery, fill=False, readimages=False)
 			if results:
 				if len(results) != 1:
-					print 'WARNING: found more than one image with same session and id'
+					self.acquisitionlog.warning('Found more than one image with same session and ID')
 				myimage = results[0]
 				parent_target = myimage['target']
 
@@ -381,14 +384,16 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.updateWaitingForImages(imageidstrs)
 		# wait for image processing nodes to complete
 		for id, eventinfo in self.doneevents.items():
-			print '%s waiting for %s to be processing' % (self.id, id,)
+			self.uiprocessingstatus.set('Waiting for %s to be processed'
+																		% (id,))
 			eventinfo['received'].wait()
 			idstr = str(id)
 			imageidstrs.remove(idstr)
 			self.updateWaitingForImages(imageidstrs)
-			print '%s processed, %s is done waiting' % (id, self.id,)
+			self.uiprocessingstatus.set('Done waiting for %s to be processed'
+																	% (id,))
 		self.doneevents.clear()
-		print '%s is done waiting for images to be processed' % (self.id,)
+		self.uiprocessingstatus.set('Done waiting for images to be processed')
 
 	def stopWaitingForImage(self):
 		imageidstr = self.waitingforimages.getSelectedValue()
@@ -402,22 +407,23 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 	def uiToScope(self):
 		presetname = self.presetsclient.uiGetSelectedName()
-		print 'Going to preset %s' % (presetname,)
+		self.uiacquisitionstatus.set('Going to preset "%s"' % (presetname,))
 		self.presetsclient.toScope(presetname)
-		print 'done'
+		self.uiacquisitionstatus.set('At preset "%s"' % (presetname,))
 
 	def uiToScopeAcquire(self):
 		presetname = self.presetsclient.uiGetSelectedName()
 		## acquire a trial image
-		print 'Going to preset', presetname
+		self.uiacquisitionstatus.set('Going to preset "%s"' % (presetname,))
 		self.presetsclient.toScope(presetname)
-		print 'Got to preset, getting current preset'
+		self.uiacquisitionstatus.set('At preset "%s", checking preset'
+																	% (presetname,))
 		p = self.presetsclient.getCurrentPreset()
-		print 'CURRENT', p
-		## trial image
-		print 'Acquiring image'
+		self.uiacquisitionstatus.set('Current preset is "%s"' % (p['name'],))
+		# trial image
+		self.uiacquisitionstatus.set('Acquiring image...')
 		self.acquire(p, target=None)
-		print 'Acquired'
+		self.uiacquisitionstatus.set('Image acquired...')
 
 	def uiTrial(self):
 		self.processTargetData(targetdata=None)
@@ -442,17 +448,33 @@ class Acquisition(targetwatcher.TargetWatcher):
 		notify DriftManager of drifting
 		'''
 		allemdata = self.researchByDataID(('all em',))
-		print 'PASSING BEAM TILT', allemdata['beam tilt']
+		self.uiacquisitionstatus.set('Passing beam tilt %s'
+																	% str(allemdata['beam tilt']))
 		allemdata['id'] = self.ID()
 		self.driftdone.clear()
-		self.publish(allemdata, pubevent=True, pubeventclass=event.DriftDetectedEvent)
-		print '%s waiting for DriftManager' % (self.id,)
+		self.publish(allemdata, pubevent=True,
+									pubeventclass=event.DriftDetectedEvent)
+		self.uiacquisitionstatus.set('Waiting for DriftManager...')
 		self.driftdone.wait()
 
 	def defineUserInterface(self):
 		targetwatcher.TargetWatcher.defineUserInterface(self)
 
 		self.acquisitionlog = uidata.MessageLog('Messages')
+
+		self.uiprocessingstatus = uidata.String('Status', '', 'r')
+		processingstatuscontainer = uidata.Container('Processing')
+		processingstatuscontainer.addObjects((self.uiprocessingstatus,))
+		self.uiacquisitionstatus = uidata.String('Status', '', 'r')
+		acquisitionstatuscontainer = uidata.Container('Acquisition')
+		acquisitionstatuscontainer.addObjects((self.uiacquisitionstatus,))
+		self.uioutputstatus = uidata.String('Status', '', 'r')
+		outputstatuscontainer = uidata.Container('Output')
+		outputstatuscontainer.addObjects((self.uioutputstatus,))
+		statuscontainer = uidata.Container('Status')
+		statuscontainer.addObjects((processingstatuscontainer,
+																outputstatuscontainer,
+																acquisitionstatuscontainer))
 
 		self.ui_image = uidata.Image('Image', None, 'rw')
 
@@ -512,7 +534,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 																	trialmethod))
 
 		container = uidata.LargeContainer('Acquisition')
-		container.addObjects((self.acquisitionlog, self.ui_image, settingscontainer, controlcontainer))
+		container.addObjects((self.acquisitionlog, statuscontainer, self.ui_image, settingscontainer, controlcontainer))
 
 		self.uiserver.addObject(container)
 
