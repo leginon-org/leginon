@@ -239,9 +239,10 @@ class Node(leginonobject.LeginonObject):
 		self.outputEvent(eventclass(self.ID(), dataid))
 
 	def publishRemote(self, idata):
-		nodeiddata = self.researchByLocation(self.nodelocations['manager'],idata.id)
+		dataid = idata.id
+		nodeiddata = self.researchByLocation(self.nodelocations['manager'], dataid)
 		if nodeiddata is None:
-			print "node, researchByDataID: no such data ID"
+			print "publishRemote: no such data ID %s" % (dataid,)
 			raise IOError
 		for nodeid in nodeiddata.content:
 			nodelocation = self.researchByLocation(self.nodelocations['manager'],
@@ -269,7 +270,7 @@ class Node(leginonobject.LeginonObject):
 		nodeiddata = self.researchByLocation(loc, dataid)
 
 		if nodeiddata is None:
-			print "node, researchByDataID: no such data ID"
+			print "researchByDataID: no such data ID %s" % (dataid,)
 			raise IOError
 
 		# should interate over nodes, be crafty, etc.

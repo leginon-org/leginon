@@ -4,6 +4,7 @@ import node
 import event
 import data
 import time
+import cameraimage
 
 class Navigator(node.Node):
 	def __init__(self, id, nodelocations):
@@ -75,9 +76,23 @@ class Navigator(node.Node):
 		self.acquireImage()
 
 	def acquireImage(self):
+		print 'setting camera state'
+		camstate = self.camdata.get()
+		camdata = data.EMData('camera', camstate)
+		print 'publishing camera state'
+		self.publishRemote(camdata)
+
 		print 'acquiring image'
-		image = self.researchByDataID('image data')
-		image = image.content['image data']
+		acqtype = self.acqtype.get()
+		if acqtype == 'raw':
+			print 'acquiring raw image'
+			image = self.researchByDataID('image data')
+			image = image.content['image data']
+		elif acqtype == 'corrected':
+			print 'acquiring corrected image'
+			image = self.researchByDataID('normalized image data')
+			image = image.content
+
 		imagedata = data.ImageData(self.ID(), image)
 		print 'publishing image'
 		self.publish(imagedata, event.ImagePublishEvent)
@@ -93,7 +108,25 @@ class Navigator(node.Node):
 
 		self.delaydata = self.registerUIData('Delay (sec)', 'float', default=2.5, permissions='rw')
 
-		self.registerUISpec('Navigator', (movetype, self.delaydata, nodeui))
+		acqtypes = self.registerUIData('acqtypes', 'array', default=('raw', 'corrected'))
+		self.acqtype = self.registerUIData('Acquisition Type', 'string', default='raw', permissions='rw', choices=acqtypes)
+
+		prefs = self.registerUIContainer('Preferences', (movetype, self.delaydata, self.acqtype))
+
+		### Camera State Data Spec
+		defaultsize = (512,512)
+		camerasize = (2048,2048)
+		offset = cameraimage.centerOffset(camerasize,defaultsize)
+		camstate = {
+			'exposure time': 500,
+			'binning': {'x':1, 'y':1},
+			'dimension': {'x':defaultsize[0], 'y':defaultsize[1]},
+			'offset': {'x': offset[0], 'y': offset[1]}
+		}
+		self.defaultcamstate = camstate
+		self.camdata = self.registerUIData('Camera', 'struct', default=camstate)
+
+		self.registerUISpec('Navigator', (prefs, self.camdata, nodeui))
 
 
 if __name__ == '__main__':
