@@ -3,10 +3,15 @@ require('inc/leginon.inc');
 $id=$_GET[id];
 $preset=$_GET[preset];
 $session=$_GET[session];
-$tg = ($_GET[tg]) ? $_GET[tg] : 0;
-$sb = ($_GET[sb]) ? $_GET[sb] : 0;
+$tg = ($_GET[tg]) ? '&tg=1' : '';
+$sb = ($_GET[sb]) ? '&sb=1' : '';
+$minpix = ($_GET[np]) ? '&np='.$_GET[np] : '';
+$maxpix = ($_GET[xp]) ? '&xp='.$_GET[xp] : '';
+$fft = ($_GET[fft]) ? '&fft='.$_GET[fft] : '';
+$options = $tg.$sb.$minpix.$maxpix.$fft;
+
 $filename = $leginondata->getFilename($id);
-$imgsrc = "getparentimgtarget.php?preset=".$preset."&session=".$session."&id=".$id."&t=80&s=256&tg=".$tg."&sb=".$sb;
+$imgsrc = "getparentimgtarget.php?preset=".$preset."&session=".$session."&id=".$id."&t=80&s=256".$options;
 ?>
 <html>
 <head>
@@ -121,7 +126,7 @@ function getIframesize(){
 }
 
 function init() {
-	var URL = 'nw.php?Lv2=1&preset=<?=$preset?>&session=<?=$session?>&id=<?=$id?>&tg=<?=$tg?>&sb=<?=$sb?>';
+	var URL = 'nw.php?preset=<?=$preset?>&session=<?=$session?>&id=<?=$id?><?=$options?>';
 	my1=window.open(URL, 'my1', 'left=300,top=0,height=512,width=512,toolbar=0,scrollbars=1,location=0,statusbar=0,menubar=0,resizable=1,alwaysRaised=yes');
         document.newimgmv.onmousemove=mousemove;
         document.newimgmv.onmousedown=mousedown;

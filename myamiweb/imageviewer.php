@@ -10,7 +10,7 @@
 ?>
 <html>
 <head>
-<title>Leginon2 Data Viewer</title>
+<title>Leginon Data Viewer</title>
 <link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 <link rel="stylesheet" type="text/css" href="css/view.css">
 
@@ -30,69 +30,41 @@ if (browser('b') =='Netscape' && strstr(browser('p'), 'Win')) {
 	$mvtextsize=15;
 	$cvcols=15;
 	$mvcols=31;
-	$v1cols=21;
-	$v2cols=21;
 } else if (browser('b')=='MSIE') { 
 	$cvcols=35;
 	$mvtextsize=30;
 	$mvcols=60;
-	$v1cols=47;
-	$v2cols=47;
 } else if (!(browser('b') =='Netscape' && (browser('v')< 5))) {
 	$cvcols=35;
 	$mvtextsize=30;
 	$mvcols=60;
-	$v1cols=47;
-	$v2cols=47;
 } else { 
 	$cvcols=25;
 	$mvtextsize=35;
 	$mvcols=42;
-	$v1cols=32;
-	$v2cols=32;
 }
 
 // --- Set  experimentId
 $lastId = $leginondata->getLastSessionId();
 $expId = (empty($expId)) ? $lastId : $expId;
+$sessioninfo =  $leginondata->getSessionInfo($expId);
 
 // --- Get all session and session Ids
 $experiment = array();
 $lexpId = array();
-$re = $leginondata->getSessions();
-$i=0;
-foreach ($re['sessions'] as $r){
-	if (!empty($r))
-		if (!in_array($r, $experiment)) {
-			$experiment[] = $r;
-			$lexpId[] = $re['ids'][$i];
-		}
-	$i++;
-}
-$nrexp = sizeof($experiment);
+$sessions = $leginondata->getSessions('description');
 
 
 // --- Get data type list
-$datatypes = $leginondata->getDatatypes($expId);
+$datatypes = $leginondata->getAllDatatypes($expId);
 $def_label = $datatypes[0];
 
 // --- Get current user preferences
-$t1="AcquisitionImageData";
-$mvId=1; 
-$ftemplate='mrc2string.php';
+$ftemplate='getparentimgtarget.php';
 
 if ($mvsel=='' ) $l1=$def_label; else $l1=$mvsel;
 
-$Rfile = $leginondata->getFilenames($expId, $l1);
-
-if($Rfile) {
-	$nrows=mysql_num_rows($Rfile);
-	while ($row = mysql_fetch_row($Rfile)) {
-		$fileId[]=$row[0]; 
-		$r = explode("/",$row[1]);
-		$file[]=$r[sizeof($r)-1]; 
-	}
-}
+$filenames = $leginondata->getFilenames($expId, $l1);
 
 
 ?>
@@ -224,26 +196,15 @@ function drawSliders() {
 
   <?
   $imgmv = trim($ftemplate);
-  $tmv = trim($t1);
-// var URL = 'getinfo.php?id='+jsfexp+'&table='+jstmv+'&session='+jsexpId;
   echo "var jsprefId = \"$prefId\"; \n";
   echo "var jsName = \"$user\"; \n";
   echo "var jsexpId = \"".$expId."\"; \n";
   echo "var path = \"$path\"; \n";
-  echo "var jsfileId = \"$fileId[0]\"; \n";
-  echo "var jsfile = \"$file[0]\"; \n";
+  echo "var jsfileId;  \n";
+  echo "var jsfile; \n";
   echo "var jsimgmv = \"".trim($ftemplate)."\"; \n";
   echo "var jsmvId   = \"".trim($mvId)."\"; \n";
-  echo "var jstmv   = \"".trim($t1)."\"; \n";
-  echo "var jsimgv1 = \"".trim($ftemplatev1)."\"; \n";
-  echo "var jsv1Id   = \"".trim($v1Id)."\"; \n";
-  echo "var jstv1   = \"".trim($t2)."\"; \n";
-  echo "var jsimgv2 = \"".trim($ftemplatev2)."\"; \n";
-  echo "var jsv2Id   = \"".trim($v2Id)."\"; \n";
-  echo "var jstv2   = \"".trim($t3)."\"; \n";
-  echo "var jspremv = \"".trim($mvpre)."\"; \n";
-  echo "var jsprev1   = \"".trim($v1pre)."\"; \n";
-  echo "var jsprev2   = \"".trim($v2pre)."\"; \n";
+  echo "var jspremv = \"".trim($mvsel)."\"; \n";
 
 ?>
 
@@ -276,13 +237,11 @@ function init(){
           document.listform.allfile.options[i].selected=true;
           currentfile=document.listform.allfile.options[document.
           listform.allfile.selectedIndex].text;
-          window.document.listform.filename_text.value=currentfile; 
       } 
      }
      if (currentfile=="") {
           currentfile=document.listform.allfile.options[0].text;
           document.listform.allfile.options[0].selected=true;
-          window.document.listform.filename_text.value=currentfile; 
      }
      newfile();
 <? if ($treeframe!=0) echo "getdata();"; ?>
@@ -300,7 +259,14 @@ function init(){
       <tr>
 	<td vAlign="bottom" height="25" width="150"><b>Session</b></td>
         <td vAlign="bottom" bgColor="#FFFFFF" height="10" >
-	<b>Image Adjust</b>
+		<select name="expId" onchange="newexp()">
+			<?
+			foreach ($sessions as $session) {
+				if ($session[id]==$expId) $s='selected'; else $s='';
+				echo '<option value='.$session[id].' '.$s.' >'.$session[name]; 
+      			} 
+			?>
+		</select>
 	</td>
 	<td rowspan="4">
 <div id="imagemap" style="z-index:99999;position:absolute;visibility:hidden;border:1px solid black"></div>
@@ -308,17 +274,8 @@ function init(){
 	</td>
       </tr>
       <tr>
-	<td>
-		<select name="expId" onchange="newexp()">
-			<?
-			for ($i=0; $i<$nrexp; $i++) {
-				// if ($experiment[$i]==$expId) $s[$i]='selected'; else $s[$i]='';
-				if ($lexpId[$i]==$expId) $s[$i]='selected'; else $s[$i]='';
-         			// echo "<option value=\"$experiment[$i]\" $s[$i]>$experiment[$i] \n"; 
-         			echo "<option value=$lexpId[$i] $s[$i]>$experiment[$i] \n"; 
-      			} 
-			?>
-		</select>
+	<td valign="top">
+	<b>Image Adjust</b>
 	</td>
 	<td>
 
@@ -400,11 +357,12 @@ function init(){
 	</td>
       </tr>
       <tr>
-	<td><b>Filename</b></td>
-	<td>
+	<td valign="top">
+	<b>Filename</b></td>
+	<td valign="top">
 	 <iframe name="ifpmv" 
-                        src="getpreset.php?id=<?=$fileId[0]?>"
-                        frameborder="0" width="100%" height="20"
+                        src="getpreset.php?vf=1&id=<?=$fileId[0]?>"
+                        frameborder="0" width="400" height="35"
                         marginheight="1" marginwidth="5"
                         scrolling="no" ></iframe>
 	</td>
@@ -414,12 +372,12 @@ function init(){
 		<select name="allfile" onchange="newfile();updatemap();getdata();"
 		 size="40">
 			<?
-			for ($i=0; $i<$nrows; $i++) {
-				if ($fileId[$i]==$allfile ) $s[$i]='selected'; else $s[$i]='';
-				$d = $file[$i];
-				// $d = $fileId[$i];
-				echo "<option value=\"$fileId[$i]\" $s[$i]>$d \n"; 
-			} 
+		foreach ($filenames as $filename) {
+			if ($filename[id]==$allfile ) $s='selected'; else $s='';
+			$filestr = ereg_replace($sessioninfo[Name].'+_(.*)\.mrc', '\1', $filename[name]);
+			$filestr = ereg_replace('00', '', $filestr);
+			echo '<option value="'.$filename[id].'" '.$s.' >'.$filestr." \n"; 
+		}
 			?> 
 		</select>
 	</td>

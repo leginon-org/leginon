@@ -7,69 +7,66 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-if ($mvId!=0) { ?>
-
-		<!-- Debut Table Main View -->
-		<table class="bgcolor1" border="0" cellpadding="1" cellspacing="0" >
-		 <tr>
-			<td>Image Type</td>
-			<td align=right>
-			<a href="javascript:toggleimage('mvscale_bt', 'scale_bt'); newfile();"
-					onmouseover="imageonfocus('mvscale_bt', 'scale_bt', '_over')" 
-					onmouseout="imageonfocus('mvscale_bt', 'scale_bt', '')" 
-					><img name="mvscale_bt" src="img/scale_bt_off.gif" border="0" height="15" vspace="0"></a>
-		</td>
-		 </tr>
-		 <tr>
-			<td colspan=2>
-			<table class="bgcolor0" border="0" cellpadding="0" cellspacing="0" >
-			 <tr>
-				<td>
-					<input type="hidden" name = "mvsel" value="">
-					<select name = "mlist" onchange = "setlist(); newexp(); " > 
-<?
-					for ($i=0; $i<count($datatypes); $i++) {
-					if ($mvsel=='') {
-						if ($datatypes[$i]==$mvImg) $s='selected'; else $s=''; 	
-					} else {
-						if ($datatypes[$i]==$mvsel) $s='selected'; else $s=''; 	
-					}
-						echo "<option value=\"$datatypes[$i]\" $s>$datatypes[$i] \n"; 
-					}
 ?>
-					</select>
-				</td>
-				<td>
-					<input id=backbutton type=button name=back value =" Back " onclick = "decIndex(); newfile(); getdata(); updatemap();" > 
-				</td>
-				<td>
-					<input id=nextbutton type=button name=next value =" Next " onclick = "incIndex(); newfile(); getdata(); updatemap();" >
-				</td>
-				<td>
-					<input id="filenametext" type="text" name="filename_text" size="<? echo $mvtextsize ?>" onchange = "newenterfile(); newfile(); <? if ($treeframe!=0) echo " GetData();"; ?> " > 
-				</td>
-			 </tr>
-			 <tr>
-				<td colspan=4 valign=top height=512 width=512 >
+<!-- Debut Table Main View -->
+<table class="bgcolor1" border="0" cellpadding="1" cellspacing="0" >
+ <tr>
+	<td>Image Type</td>
+	<td align=right>
+	<a href="javascript:toggleimage('mvscale_bt', 'scale_bt'); newfile();"
+	onmouseover="imageonfocus('mvscale_bt', 'scale_bt', '_over')" 
+	onmouseout="imageonfocus('mvscale_bt', 'scale_bt', '')" 
+	><img name="mvscale_bt" src="img/scale_bt_off.gif" border="0" height="15" vspace="0"></a>
+	<a href="javascript:toggleimage('mvtarget_bt', 'target_bt'); newfile();"
+	onmouseover="imageonfocus('mvtarget_bt', 'target_bt', '_over')" 
+	onmouseout="imageonfocus('mvtarget_bt', 'target_bt', '')" 
+	><img name="mvtarget_bt" src="img/target_bt_off.gif" border="0" height="15" vspace="0"></a>
+</td>
+ </tr>
+ <tr>
+	<td colspan=2>
+	<table class="bgcolor0" border="0" cellpadding="0" cellspacing="0" >
+	 <tr>
+<td>
+<table border=0 cellpadding="1" cellspacing="0">
+<tr>
+<td>
+	<input type="hidden" name = "mvsel" value="">
+	<select name = "mlist" onchange = "setlist(); newexp(); " > 
+<?
+	if (is_array($datatypes))
+	foreach ($datatypes as $k=>$v) {
+		if ($k==$mlist) $s='selected'; else $s=''; 	
+			echo "<option value=\"$v\" $s>$k \n"; 
+	}
+?>
+	</select>
+</td>
+<td>
+<td>
+	<input id=backbutton type=button name=back value =" Back " onclick = "decIndex(); newfile(); getdata(); updatemap();" > 
+</td>
+<td>
+	<input id=nextbutton type=button name=next value =" Next " onclick = "incIndex(); newfile(); getdata(); updatemap();" >
+</td>
+</tr>
+</table>
+</td>
+<td>
+	&nbsp;
+</td>
+	 </tr>
+	 <tr>
+<td colspan=4 valign=top height=512 width=512 >
 <?
 $iframesize = ($_GET["ifs"]==1) ? 'width=100% height=100% ' : 'width="512" height="512"';
-$src = "src=\"getimage.php?tmpl=$imgmv&table=$tmv&session=$expId&id=".$fileId[0]."&s=1\"";
+$src = 'src="getiframeimage.php"';
 ?>
 <iframe id=iframeimg name="picturebox" <? echo "$iframesize  $src" ?> scrolling="auto" ></iframe>
-<?
- /*
-			<script> <!--   
-			document.writeln(" <A HREF=\"javascript:popUp('nwi.php?Lmv&table="+escape(jstmv)+"');\" >"); 
-			document.writeln(" <IMG  NAME = \"newimgmv\" BORDER=\"0\" "); 
-			document.writeln(" SRC= \""+jsimgmv+"?table="+escape(jstmv)+"&session="+escape(jsexpId)+"&id="+escape(jsfileId)+"&s=1\"></A>"); 
-			document.writeln(" </A>"); 
-			//--> </script>
-*/ ?>
-				</td>
-			 </tr>
-			</table>
-			</td>
+</td>
+	 </tr>
+	</table>
+	</td>
 	 	 </tr>
-		</table>
-		<!-- Fin Table Main View -->
-<? } else echo "&nbsp;"; ?>
+</table>
+<!-- Fin Table Main View -->

@@ -17,7 +17,17 @@ scale_bt_over_off.src=path+"scale_bt_over_off.gif";
 scale_bt_over_on=new Image();
 scale_bt_over_on.src=path+"scale_bt_over_on.gif";
 
+target_bt_off=new Image();
+target_bt_off.src=path+"target_bt_off.gif";
+target_bt_over_off=new Image();
+target_bt_over_off.src=path+"target_bt_over_off.gif";
+target_bt_on=new Image();
+target_bt_on.src=path+"target_bt_on.gif";
+target_bt_over_on=new Image();
+target_bt_over_on.src=path+"target_bt_over_on.gif";
+
 var mvscale_bt=false;
+var mvtarget_bt=false;
 
 
 function imageon(imagename, name, type) {
@@ -60,7 +70,7 @@ function getdata()
 			listform.allfile.selectedIndex].value;
 		var treeif = document.getElementById('treeiframe');
 		var memonodes = parent.infomv.openNodes;
-		treeif.src = 'getdata.php?id='+escape(jsfexp)+'&table='+escape(jstmv)+'&session='+escape(jsexpId)+'&r='+memonodes;
+		treeif.src = 'getdata.php?id='+escape(jsfexp)+'&preset='+escape(jspremv)+'&session='+escape(jsexpId)+'&r='+memonodes;
 	}
 }
 
@@ -80,11 +90,12 @@ function updateGradient() {
 }
 
 function newscale(){
-	jssb=1;
+	if(mvscale_bt) jssb=1; else jssb=0;
+	if(mvtarget_bt) jstg=1; else jstg=0;
 	setQuality();
 	setSize();
 	newimg = new Image();
-	newimg.src= jsbaseurl+jsimgmv+"?table="+escape(jstmv)+"&session="+escape(jsexpId)+"&id="+escape(jsfexp)+"&t="+jsquality+"&s="+jssize+"&np="+jsminpix+"&xp="+jsmaxpix+"&sb="+jssb; 
+	newimg.src= jsbaseurl+jsimgmv+"?preset="+escape(jspremv)+"&session="+escape(jsexpId)+"&id="+escape(jsfexp)+"&t="+jsquality+"&s="+jssize+"&np="+jsminpix+"&xp="+jsmaxpix+"&sb="+jssb+"&tg="+jstg; 
 	img_timer=setInterval('imgIsComplete()',25);	
 }
 
@@ -115,39 +126,19 @@ function setSize(){
 }
 
 function setlist(){
-	if (jsmvId.length != 0){
-		var selm=document.listform.mlist.options[document.listform.mlist.selectedIndex].value;
-		window.document.listform.mvsel.value=selm;
-	} if (jsv2Id.length != 0){
-		var sel2=document.listform.v2list.options[document.listform.v2list.selectedIndex].value;
-		window.document.listform.v2sel.value=sel2;
-	} if (jsv1Id.length != 0){
-		var sel1=document.listform.v1list.options[document.listform.v1list.selectedIndex].value;
-		window.document.listform.v1sel.value=sel1;
-	}
+	var selm=document.listform.mlist.options[document.listform.mlist.selectedIndex].value;
+	window.document.listform.mvsel.value=selm;
 }
 
 function newfile() { 
-     jssb=1;
+	if(mvscale_bt) jssb=1; else jssb=0;
+	if(mvtarget_bt) jstg=1; else jstg=0;
      setQuality();
-     currentfile=document.listform.allfile.options[document.
-     listform.allfile.selectedIndex].text
-     window.document.listform.filename_text.value=currentfile; 
      jsfexp=document.listform.allfile.options[document.
      listform.allfile.selectedIndex].value
 	var lId;
-	if (jsmvId.length != 0){
-		parent.picturebox.document.getElementById('imgmv').src=jsimgmv+"?table="+escape(jstmv)+"&session="+escape(jsexpId)+"&id="+escape(jsfexp)+"&t="+jsquality+"&s="+jssize+"&np="+jsminpix+"&xp="+jsmaxpix+"&sb="+jssb; 
-		// var imgURL="getimage.php?tmpl="+jsimgmv+"&table="+escape(jstmv)+"&session="+escape(jsexpId)+"&id="+escape(jsfexp)+"&t="+jsquality+"&s="+jssize+"&np="+jsminpix+"&xp="+jsmaxpix; 
-		// picturebox.document.location.replace(imgURL);
-		
-//		lId=GetLinkId('Lmv');
-//		if ((lId=GetLinkId('Lmv')) != -1 ) {
-//		url = "nwi.php?Lmv&r=1&s=1&table="+escape(jstmv);
-//		document.links[lId].href="javascript:popUp('"+url+"')"; 
-		// }
-	}
-	var URL="getpreset.php?id="+escape(jsfexp);
+	parent.picturebox.document.getElementById('imgmv').src=jsimgmv+"?preset="+escape(jspremv)+"&session="+escape(jsexpId)+"&id="+escape(jsfexp)+"&t="+jsquality+"&s="+jssize+"&np="+jsminpix+"&xp="+jsmaxpix+"&sb="+jssb+"&tg="+jstg; 
+	var URL="getpreset.php?vf=1&id="+escape(jsfexp);
 	ifpmv.document.location.replace(URL);
 }
 
@@ -240,7 +231,6 @@ function mapmousecoord(e) {
 	}
 	mapmx = parseInt((mapmouseX-mapmxo-imgmapoffsetx)*ratiomap/100*jszoom);
 	mapmy = parseInt((mapmouseY-mapmyo-imgmapoffsety)*ratiomap/100*jszoom);
-//	alert("mapmo"+mapmxo+" "+mapmyo+"\n"+"mapmmouse"+mapmouseX+" "+mapmouseY+"\n"+"mapm "+mapmx+", "+mapmy+" iniit "+initx+", "+inity+ " ratio "+ratiomap+"\n center"+cx+", "+cy +" \n off: "+deoffsetx+", "+deoffsety);
 	parent.picturebox.scrollBy(mapmx-initx-cx-deoffsetx,mapmy-inity-cy-deoffsety);
 }
 
@@ -276,8 +266,10 @@ function inittree() {
 }
 
 function updatemap(){
+	if(mvscale_bt) jssb=1; else jssb=0;
+	if(mvtarget_bt) jstg=1; else jstg=0;
 	if (vmap==true)
-		mapimg.src= jsbaseurl+jsimgmv+"?table="+escape(jstmv)+"&session="+escape(jsexpId)+"&id="+escape(jsfexp)+"&t=80&s=512&np="+jsminpix+"&xp="+jsmaxpix; 
+		mapimg.src= jsbaseurl+jsimgmv+"?preset="+escape(jspremv)+"&session="+escape(jsexpId)+"&id="+escape(jsfexp)+"&t=80&s=512&np="+jsminpix+"&xp="+jsmaxpix+"&sb="+jssb+"&tg="+jstg; 
 }
 
 function viewtreediv() {

@@ -9,6 +9,7 @@
 
 require('inc/leginon.inc');
 require('inc/square.inc');
+require('inc/scalebar.inc');
 $g=true;
 if (!$session=stripslashes($_GET[session])) {
 	$g=false;
@@ -30,11 +31,14 @@ if ($t=='png') {
 	$quality=$t;
 }
 
+
+
 $minpix = $_GET['np'];
 $maxpix = $_GET['xp'];
 $size = $_GET['s'];
 $displaytarget = ($_GET['tg']==1) ? true : false;
 $displayscalebar = ($_GET['sb']==1) ? true : false;
+$fft = ($_GET['fft']==1) ? true : false;
 
 
 if ($size) {
@@ -46,46 +50,27 @@ if ($g) {
 	require_once('inc/mrc.inc');
 	// --- get image path
 	$path = $leginondata->getImagePath($session);
-	// --- get parent image info
-	if (in_array($preset, $leginondata->getTypeFFT())) {
-		$fftimage  = $leginondata->getImageFFT($id);
-		if (!$fftimage) {
-			// --- try to find sibling if preset not a parent
-			if ($preset=='focpow') {
-				$preset='foc';
-			} else {
-				$imageinfo = $leginondata->getImageInfo($id);
-				$preset = $imageinfo[preset];
-			}
-			$relation = $leginondata->getImageRelation($id, $preset,false);
-			$fftimage  = $leginondata->getImageFFT($relation[siblingimageId]);
-		}
-		$filename = $fftimage[fftimage];
-		$fft=true;
+
+	// --- find image
+	$newimage = $leginondata->findImage($id, $preset);
+	$id = $newimage[id];
+	$parent = $leginondata->getImageInfo($newimage[childid]);
+
+	// --- get filename
+	if ($fft) {
 		$displaytarget=false;
 		$displayscalebar=false;
+		$fft = $leginondata->getImageFFT($id);
+		$filename = $fft[fftimage];
 	} else {
-		$parent = $leginondata->getParent($id, $preset);
-		if (!$parent)
-		// --- try to find sibling if preset not a parent
-			$relation = $leginondata->getImageRelation($id, $preset);
-			if (!$relation)
-			// --- try to find sibling if from an other target
-				$relation = $leginondata->getImageRelation($id, $preset, false);
-			
-		if ($relation) {
-			$id = $relation[siblingimageId];
-			$preset = $relation[siblingpreset];
-			$parent = $leginondata->getParent($id, $preset);
-		}
-
-		// --- get filename
-		$id = $parent[parentId];
 		$filename = $leginondata->getFilename($id);
 	}
+
 	$pic = $path.$filename;
-	if (is_file($pic) && ($parent[parentpreset]==$preset || $fft)) {
-		$img = $mrc->imagecreatefromMRC2($pic,$new_w,$new_h,$minpix, $maxpix, $quality);
+	if (is_file($pic)) {
+		$begin=time();
+		$img = $mrc->imagecreatefromMRC($pic,$new_w,$new_h,$minpix, $maxpix, $quality);
+		$end=time();
 		$white = imagecolorallocate($img, 255, 255, 255);
 		$black = imagecolorallocate($img, 0, 0, 0);
 		$blue = imagecolorallocate($img, 0, 255, 255);
@@ -96,8 +81,8 @@ if ($g) {
 		$diam=20;
 		foreach ($targets as $target) {
 			$tId=$target[parentId];
-			$targetinfo = $leginondata->getParentImageInfo($target[parentId]);
-			$targetcal = $leginondata->getImageMatrixCalibration($target[parentId]);
+			$targetinfo = $leginondata->getImageInfo($tId);
+			$targetcal = $leginondata->getImageMatrixCalibration($tId);
 			$parentcal = $leginondata->getImageMatrixCalibration($id);
 			$truediam=$targetinfo[targetdiam];
 			$truedim=$targetinfo[targetdim];
@@ -127,7 +112,10 @@ if ($g) {
 			}
 			
 		}
-
+		if ($displaytime=0) {
+			imagestring($img, 4, 11, 11, "load time: ".($end-$begin), $black);
+			imagestring($img, 4, 10, 10, "load time: ".($end-$begin), $blue);
+		}
 
 		$targets = $leginondata->getImageFocusTargets($id);
 		$line=20;
@@ -153,68 +141,18 @@ if ($g) {
 			imagestring($img, 4, $xc, $yc, $tn, $col);
 		}
 	  }
-	//		imagestring($img, 4, 10, 40, "id: $id", $col);
-	//		imagestring($img, 4, 10, 20, "id: $filename", $col);
 
 	  /* display scale bar */
 	  if ($displayscalebar) {
-		$scales = array (
-			'1nm'  => 1e-9,
-			'2nm'  => 2e-9,
-			'5nm'  => 5e-9,
-			'10nm'  => 10e-9,
-			'20nm'  => 20e-9,
-			'50nm'  => 50e-9,
-			'100nm'  => 100e-9,
-			'200nm'  => 200e-9,
-			'500nm'  => 500e-9,
-			'1um'  => 1e-6,
-			'2um'  => 2e-6,
-			'5um'  => 5e-6,
-			'10um' => 10e-6,
-			'20um' => 20e-6,
-			'50um' => 50e-6,
-			'100um' => 100e-6,
-			'200um' => 200e-6
-		);
-
 		$imginfo = $leginondata->getImageInfo($id);
 		if ($imginfo) {
-			$pixelsize = $imginfo[pixelsize];
-			$binning = $imginfo[binning];
 			$size = ($size) ? $size : $imginfo[dimx];
 			$ratio = $imginfo[dimx]/$size ;
-			$nbpixels = 0;
-			$label = "";
-			foreach ($scales as $label=>$scale) {
-				$nbpixels = $scale/($pixelsize*$binning)/$ratio;
-				$r = $size/$nbpixels;
-				if ($r > 2 && $r <5) 
-					break;
-			}
-
-			$h = ($new_h) ? $new_h : $imginfo[dimy];
-			$labelfontsize=4;
-			$offsetbarX=10;
-			$offsetbarY=20;
-			$offsetbarlabelX=$offsetbarX+$nbpixels/2;
-			$offsetbarlabelY=$h-$offsetbarY-$labelfontsize*4;
-			$barX1 = $offsetbarX;
-			$barX2 = $nbpixels+$offsetbarX;
-			$barY1 = $h-$offsetbarY;
-			$barY2 = $h-$offsetbarY+1;
-
-
-			// --- display label / scale bar
-			imagestring($img, $labelfontsize, $offsetbarlabelX+1,
-				$offsetbarlabelY+1, $label,$black);
-			imagestring($img, $labelfontsize, $offsetbarlabelX,
-				$offsetbarlabelY, $label,$white);
-			ImageRectangle($img,$barX1-1, $barY1, $barX2+1, $barY2+1,$black);
-			ImageRectangle($img,$barX1, $barY1, $barX2, $barY2,$white);
+			$value = $imginfo[pixelsize]*$imginfo[binning]*$ratio;
+			$scalebar = new ScaleBar($img, $size, $value);
+			$scalebar->display();
 		}
 	  }
-
 		Header( "Content-type: $type ");
 		if ($t=='png')
 			imagepng($img);

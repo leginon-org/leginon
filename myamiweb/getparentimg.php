@@ -51,7 +51,7 @@ if ($g) {
 	$filename = $leginondata->getFilename($id);
 	$pic = $path.$filename;
 	if (file_exists($pic) && $parent[parentpreset]==$preset) {
-		$img = $mrc->imagecreatefromMRC2($pic,$new_w,$new_h,$minpix, $maxpix, $quality);
+		$img = $mrc->imagecreatefromMRC($pic,$new_w,$new_h,$minpix, $maxpix, $quality);
 		$white = imagecolorallocate($img, 255, 255, 255);
 		$black = imagecolorallocate($img, 0, 0, 0);
 		$blue = imagecolorallocate($img, 0, 255, 255);

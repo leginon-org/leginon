@@ -14,9 +14,11 @@ require_once('inc/mysql.inc');
 
 class leginondata {
 
+	var $crlf = "\n";
 	var $format = "sql";
 	var $saveasfile = false;
-	var $crlf = "\n";
+	var $ffttypes = array('focpow', 'fft');
+	var $defaulttypes = array('all'=>'all');
 
 	function leginondata() {
 		require("config.php");
@@ -34,28 +36,14 @@ class leginondata {
 		return $expId;
 	}
 
-	function getSessions() {
-		$q = "select distinct(s.DEF_id), s.name from AcquisitionImageData a left join SessionData s on (s.`DEF_id` = a.`REF|SessionData|Session`) order by s.DEF_timestamp DESC ";
+	function getSessions($comment="") {
+		$selectcomment = ($comment) ? "if (length(s.comment)>0, concat(s.name,' - ',s.comment), s.name)" : "s.name";
+		$q = "select distinct(s.DEF_id) as `id`, ".$selectcomment." as `name` from AcquisitionImageData a left join SessionData s on (s.`DEF_id` = a.`REF|SessionData|Session`) order by s.DEF_timestamp DESC ";
 		$result = $this->mysql->SQLQuery($q);
-		$ids = array();
 		$sessions = array();
 		if ($result)
-			while($row = mysql_fetch_array($result))
-			{
-				$ids[] = $row["DEF_id"];
-				$sessions[] = $row["name"];
-			}
-		return array('ids'=>$ids,'sessions'=>$sessions);
-	}
-
-	function getSessions2() {
-		$sessions = array();
-		if ($this->mysql->SQLTableExists("SessionData")) {
-			$q = "select DEF_Id, name from SessionData s order by s.DEF_timestamp DESC ";
-			$Rsession = $this->mysql->SQLQuery($q);
-			while($session = mysql_fetch_array($Rsession))
+			while($session = mysql_fetch_array($result, MYSQL_ASSOC))
 				$sessions[] = $session;
-		}
 		return $sessions;
 	}
 
@@ -99,21 +87,26 @@ class leginondata {
 	}
 
 	function getDatatypes($expId) {
-		$datatypes = array();
-		// select a.`MRC|Image`, concat(a.label,'->',p.name) as name FROM AcquisitionImageData a left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) where a.`REF|SessionData|session`=838 and a.label="exp";
 		$q="select distinct name FROM AcquisitionImageData a "
 			." left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
 			." where a.`REF|SessionData|session` = '$expId'";
 		$Rdatatype = $this->mysql->SQLQuery($q) or die ("No data type found");
 		$ndata=mysql_num_rows($Rdatatype);
 		while ($row = mysql_fetch_row($Rdatatype)) 
-			$datatype[]=$row[0]; 
-		return $datatype;
+			$datatypes[$row[0]]=$row[0]; 
+		return $datatypes;
 	}
 
-	function getFilenames($expId, $name, $table="AcquisitionImageData") {
-		if (in_array($name, $this->typefft)) {
-		$q = "select a.`DEF_id`, f.`MRC|Image` as filename "
+	function getAllDatatypes($sessionId) {
+		$defaulttypes = $this->defaulttypes;
+		$types = $this->getDatatypes($sessionId);
+		return array_merge($defaulttypes, $types);
+	}
+
+	function getFilenames($expId, $name="", $table="AcquisitionImageData") {
+		$name = (in_array($name, $this->defaulttypes)) ? "" : $name;
+		if (in_array($name, $this->ffttypes)) {
+		$q = "select a.`DEF_id` as `id`, f.`MRC|Image` as `name` "
 		    ." from `$table` a "
 		    ." left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
 		    ." left join AcquisitionFFTData f on (f.`REF|AcquisitionImageData|source`=a.`DEF_id`) "
@@ -121,7 +114,7 @@ class leginondata {
 		    ." and f.`MRC|Image`<>'NULL' "
 		    ." order by a.`DEF_id` DESC ";
 		} else {
-		$q = "select a.`DEF_id`, a.`MRC|Image` as filename "
+		$q = "select a.`DEF_id` as `id`, a.`MRC|Image` as `name` "
 		    ." from `$table` a "
 		    ." left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
 		    ." where a.`REF|SessionData|session`='$expId' ";
@@ -129,8 +122,11 @@ class leginondata {
 		    	$q .=" and p.name = '$name' ";
 		    $q .=" order by a.`DEF_id` DESC ";
 		}
+		$filenames = array();
 		$Rfile=$this->mysql->SQLQuery($q);
-		return $Rfile;
+		while ($filename = mysql_fetch_array($Rfile, MYSQL_ASSOC))
+			$filenames[] = $filename;
+		return $filenames;
 	}
 
 	function getPresets($fileId, $presets) {
@@ -227,39 +223,98 @@ class leginondata {
 		return $parent;
 	}
 
+	function getParent($imgId) {
+		$q = " select "
+			."parent.`DEF_id` as parentId, "
+			."parent.`MRC|image` as parentimage, "
+			."pp.`name` as parentpreset, "
+			."parenttarget.`type` as parenttype, "
+			."parenttarget.`number` as parentnumber, "
+			."p.`name` as preset, "
+			."a.`DEF_id` as imageId, "
+			."a.`MRC|image` as image "
+			."from AcquisitionImageData a "
+			."left join PresetData p "
+			."on (p.DEF_id=a.`REF|PresetData|preset`) "
+			."left join AcquisitionImageTargetData parenttarget "
+			."on (parenttarget.`DEF_id`=a.`REF|AcquisitionImageTargetData|target`) "
+			."left join AcquisitionImageData parent "
+			."on (parent.`DEF_id`=parenttarget.`REF|AcquisitionImageData|image`) "
+			."left join PresetData pp "
+			."on (pp.DEF_id=parent.`REF|PresetData|preset`) "
+			."where " 
+			."a.`DEF_id` ='".$imgId."' "; 
+		$Rparent = $this->mysql->SQLQuery($q);
+		$parent = mysql_fetch_array($Rparent, MYSQL_ASSOC);
+		return $parent;
+	}
+
 	function getImageInfo($imgId) {
+		// --- check if image as a parent
+		$parentinfo = $this->getParent($imgId);
+		$parentId = ($parentinfo['parentId']) ? $parentinfo['parentId'] : false;
+		$parentselect = "";
+		$parentjoin = "";
+		if ($parentId) {
+			$parentselect = ", "
+			."parent.`DEF_id` as parentId, "
+			."parent.`MRC|image` as parentimage, "
+			."pp.`name` as parentpreset, "
+			."parenttarget.`type` as parenttype, "
+			."parenttarget.`number` as parentnumber, "
+			."floor(parenttarget.`delta column`+cp.`SUBD|dimension|x`/2) as targetx, "
+			."floor(parenttarget.`delta row`+cp.`SUBD|dimension|y`/2) as targety, "
+			."((c.`SUBD|binning|y`*c.`SUBD|dimension|x`*pi.pixelsize) /  "
+			."(cp.`SUBD|binning|y`* ppi.pixelsize)) as targetdim, "
+			."((c.`SUBD|binning|y`* sqrt(c.`SUBD|dimension|x`*c.`SUBD|dimension|x`  "
+			."+ c.`SUBD|dimension|y`*c.`SUBD|dimension|y`) * pi.pixelsize) /  "
+			."(cp.`SUBD|binning|y`* ppi.pixelsize)) as targetdiam ";
+			$parentjoin = ""
+			."left join AcquisitionImageData parent "
+			."on (parent.`DEF_id`=parenttarget.`REF|AcquisitionImageData|image`) "
+			."left join PresetData pp "
+			."on (pp.DEF_id=parent.`REF|PresetData|preset`) "
+			."left join CameraEMData cp "
+			."on (parenttarget.`REF|CameraEMData|camera`=cp.`DEF_id`) "
+			."left join ScopeEMData pscope on (pscope.`DEF_id`=parent.`REF|ScopeEMData|scope`) "
+			."left join SessionData ps1 on (ps1.`DEF_id`=parent.`REF|SessionData|session`) "
+			."left join SessionData ps2 on (ps2.`DEF_id`=ppi.`REF|SessionData|session`) "
+			."cross join PixelSizeCalibrationData ppi on "
+			."(ps1.`REF|InstrumentData|instrument`=ps2.`REF|InstrumentData|instrument` and "
+			."pscope.magnification = ppi.magnification) ";
+		}
 		$q = "select "
+			."a.`DEF_id` as imageId, "
+			."a.`MRC|image` as filename, "
+			."p.`name` as `preset`, "
 			."c.`SUBD|dimension|x` as dimx, "
 			."c.`SUBD|dimension|y` as dimy, "
 			."c.`SUBD|binning|y` as binning, "
 			."pi.pixelsize as pixelsize, "
-			."a.`DEF_id` as imageId, "
-			."a.`MRC|image` as filename, "
-			."p.`name` as `preset`, "
 			."scope.magnification, "
 			."scope.defocus, "
 			."grid.`grid number` as gridNb, "
 			."grid.`grid tray ID` as trayId "
-			."from AcquisitionImageData a, PixelSizeCalibrationData pi "
+			.$parentselect
+			."from AcquisitionImageData a "
 			."left join ScopeEMData scope on (scope.`DEF_id`=a.`REF|ScopeEMData|scope`) "
 			."left join SessionData s1 on (s1.`DEF_id`=a.`REF|SessionData|session`) "
 			."left join SessionData s2 on (s2.`DEF_id`=pi.`REF|SessionData|session`) "
 			."left join CameraEMData c on (a.`REF|CameraEMData|camera`=c.`DEF_id`) "
 			."left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
-			."left join AcquisitionImageTargetData target "
-			."on (target.`DEF_id`=a.`REF|AcquisitionImageTargetData|target`) "
+			."left join AcquisitionImageTargetData parenttarget "
+			."on (parenttarget.`DEF_id`=a.`REF|AcquisitionImageTargetData|target`) "
 			."left join GridData grid "
-			."on (grid.`DEF_id`=target.`REF|GridData|grid`) "
+			."on (grid.`DEF_id`=parenttarget.`REF|GridData|grid`) "
+			."cross join PixelSizeCalibrationData pi on "
+			."(s1.`REF|InstrumentData|instrument`=s2.`REF|InstrumentData|instrument` and "
+			."scope.magnification = pi.magnification) "
+			.$parentjoin
 			."where "
-			."s1.`REF|InstrumentData|instrument`=s2.`REF|InstrumentData|instrument` "
-			."and "
-			."scope.magnification = pi.magnification "
-			."and "
 			."a.`DEF_id` ='".$imgId."' "; 
 
-	//	echo $q;
 		$Rimageinfo = $this->mysql->SQLQuery($q);
-		$imageinfo = mysql_fetch_array($Rimageinfo);
+		$imageinfo = mysql_fetch_array($Rimageinfo, MYSQL_ASSOC);
 		return $imageinfo;
 	}
 
@@ -283,15 +338,17 @@ class leginondata {
 	function getImageRelation($imgId, $preset='', $matchtargetnb=true) {
 		if ($matchtargetnb) {
 			$targetnbwhere = "siblingtarget.`number`= parenttarget.`number` and ";
+		}
 			$targetnbjoin  = "left join AcquisitionImageTargetData siblingtarget "
 				."on (siblingtarget.`DEF_id`=sibling.`REF|AcquisitionImageTargetData|target`) ";
-		}
 		$q = "select "  
 			."sibling.`DEF_id` as siblingimageId, "
 			."sibling.`MRC|image` as siblingimage, "
+			."siblingtarget.`type` as siblingtype, "
 			."sp.`name` as siblingpreset, "
 			."parent.`DEF_id` as parentId, "
 			."parent.`MRC|image` as parentimage, "
+			."parenttarget.`type` as parenttype, "
 			."pp.`name` as parentpreset, "
 			."a.`DEF_id` as imageId, "
 			."a.`MRC|image` as image, "
@@ -318,129 +375,75 @@ class leginondata {
 			."and "
 			."sibling.`DEF_id` <> a.`DEF_id` ";
 			if ($preset)
-				$q .= "and sp.`name`='".$preset."' ";
+				$q .= "and siblingtarget.`type`='".$preset."' ";
+				#$q .= "and sp.`name`='".$preset."' ";
 			$q .="and "
 			."a.`DEF_id` ='".$imgId."' "; 
 
+			// echo $q;
+
+		$parents = array();
 		$Rparent = $this->mysql->SQLQuery($q);
-		$parent = mysql_fetch_array($Rparent);
-		return $parent;
+		while ($parent = mysql_fetch_array($Rparent, MYSQL_ASSOC))
+			$parents[]=$parent;
+		return $parents;
 	}
 
-	function getParentImageInfo($imgId) {
-		$q = "select  parent.`DEF_id` as parentId, "
-			."floor(parenttarget.`delta column`+c.`SUBD|dimension|x`/2) as targetx, "
-			."floor(parenttarget.`delta row`+c.`SUBD|dimension|y`/2) as targety, "
-			."parent.`MRC|image` as parentimage, "
-			."pp.`name` as parentpreset, "
-			."parenttarget.`type` as parenttype, "
-			."parenttarget.`number` as parentnumber, "
-			."p.`name` as inputpreset, "
-			."a.`DEF_id` as imageId, "
-			."a.`MRC|image` as image, "
-			."c.`SUBD|binning|y` as binning, "
-			."c.`SUBD|dimension|x` as dimx, "
-			."pi.pixelsize as pixelsize, "
-			."((c.`SUBD|binning|y`*c.`SUBD|dimension|x`*pi.pixelsize) / "
-			."(cp.`SUBD|binning|y`* ppi.pixelsize)) as targetdim, "
-			."((c.`SUBD|binning|y`* sqrt(c.`SUBD|dimension|x`*c.`SUBD|dimension|x` + "
-			."c.`SUBD|dimension|y`*c.`SUBD|dimension|y`) * pi.pixelsize) / "
-			."(cp.`SUBD|binning|y`* ppi.pixelsize)) as targetdiam "
-			."from "
-			."AcquisitionImageData a, "
-			."PixelSizeCalibrationData pi, PixelSizeCalibrationData ppi "
-			."left join PresetData p "
-			."on (p.DEF_id=a.`REF|PresetData|preset`) "
-			."left join AcquisitionImageTargetData parenttarget "
-			."on (parenttarget.`DEF_id`=a.`REF|AcquisitionImageTargetData|target`) "
-			."left join AcquisitionImageData parent "
-			."on (parent.`DEF_id`=parenttarget.`REF|AcquisitionImageData|image`) "
-			."left join PresetData pp "
-			."on (pp.DEF_id=parent.`REF|PresetData|preset`) "
-			."left join CameraEMData c "
-			."on (parenttarget.`REF|CameraEMData|camera`=c.`DEF_id`) "
-			."left join CameraEMData cp on (parenttarget.`REF|CameraEMData|camera`=cp.`DEF_id`) "
-			."left join ScopeEMData scope on (scope.`DEF_id`=a.`REF|ScopeEMData|scope`) "
-			."left join SessionData s1 on (s1.`DEF_id`=a.`REF|SessionData|session`) "
-			."left join SessionData s2 on (s2.`DEF_id`=pi.`REF|SessionData|session`) "
-			."left join ScopeEMData pscope on (pscope.`DEF_id`=parent.`REF|ScopeEMData|scope`) "
-			."left join SessionData ps1 on (ps1.`DEF_id`=parent.`REF|SessionData|session`) "
-			."left join SessionData ps2 on (ps2.`DEF_id`=ppi.`REF|SessionData|session`) "
-			."where "
-			."ps1.`REF|InstrumentData|instrument`=ps2.`REF|InstrumentData|instrument` "
-			."and "
-			."pscope.magnification = ppi.magnification "
-			."and "
-			."s1.`REF|InstrumentData|instrument`=s2.`REF|InstrumentData|instrument` "
-			."and "
-			."scope.magnification = pi.magnification "
-			."and "
-			."a.`DEF_id` ='".$imgId."' "; 
-
-		$Rparent = $this->mysql->SQLQuery($q);
-		$parent = mysql_fetch_array($Rparent);
-		return $parent;
-/*
-select          scope.magnification, pi.pixelsize,
-        left join AcquisitionImageTargetData parenttarget 
-        left join AcquisitionImageData parent
-        
-        left join ScopeEMData scope on (scope.`DEF_id`=a.`REF|ScopeE
-MData|scope`)
-        left join SessionData s1 on (s1.`DEF_id`=a.`REF|SessionData|
-session`)
-        left join SessionData s2 on (s2.`DEF_id`=pi.`REF|SessionData|session`)
-        left join ScopeEMData pscope on (pscope.`DEF_id`=parent.`REF|ScopeEMData|scope`)
-        left join SessionData ps1 on (ps1.`DEF_id`=parent.`REF|SessionData|session`)
-        left join SessionData ps2 on (ps2.`DEF_id`=ppi.`REF|SessionData|session`)
-
-        left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`)
-        left join PresetData pp on (pp.DEF_id=parent.`REF|PresetData|preset`)
-        left join CameraEMData c on (a.`REF|CameraEMData|camera`=c.`DEF_id`)
-        left join CameraEMData cp on (parenttarget.`REF|CameraEMData|camera`=cp.`DEF_id`)
-where
-ps1.`REF|InstrumentData|instrument`=ps2.`REF|InstrumentData|instrument`
-and
-pscope.magnification = ppi.magnification
-and
-s1.`REF|InstrumentData|instrument`=s2.`REF|InstrumentData|instrument`
-and
-scope.magnification = pi.magnification
-and
-a.`DEF_id` ='12458'
-
-*/
-	}
-
-	var $typefft = array('focpow');
-	// var $typefft = array('pow', 'focpow');
 
 	function getTypeFFT() {
-		return $this->typefft;
+		return $this->ffttypes;
 	}
 
-	function getParent($imgId, $preset) {
-		$newparent=array();
-		$parentId = $imgId;
-
-
-	//	$relation = $this->getImageRelation($imgId, $preset);
-		// -- check if the current preset correspond to current image Id
-		$parent = $this->getParentImageInfo($parentId);
-		if ($parent[inputpreset]==$preset) 
-			return array	(	parentId=>$imgId,
-						parentpreset=>$preset,
-					);
-		while (!empty($parentId)) {
-			$parent = $this->getParentImageInfo($parentId);
-			$parentId=$parent[parentId];
-			$parentpreset=$parent[parentpreset];
-			if ($parentpreset==$preset) {
-				$newparent = $parent;
+	function findRelation($imgId, $preset, $type='', $matchtargetnb=true) {
+		$newimage = array();
+		$relations = $this->getImageRelation($imgId, $type, $matchtargetnb);
+		foreach ($relations as $relation) {
+			if ($relation[siblingpreset]==$preset && $relation[parentId]) {
+				$newimage[id] = $relation[siblingimageId];
+				$newimage[preset] = $relation[siblingpreset];
 				break;
 			}
 		}
-		return $newparent;
+		return $newimage;
+	}
+
+	function findImage($imgId, $preset="") {
+	// --- find an image related to an image Id and a preset
+		$newimage=array();
+		$imageinfo = $this->getImageInfo($imgId);
+		if (	empty($preset)
+			|| $imageinfo[preset]==$preset 
+			|| in_array($preset, $this->defaulttypes)
+		) { 
+			$newimage[id] = $imageinfo[imageId];
+			$newimage[preset] = $imageinfo[preset];
+			return $newimage;
+		}
+
+		// --- search for a parent
+		$parentId = $imgId;
+		while ($parentId) {
+			$parent = $this->getParent($parentId);
+			$parentId = $parent[parentId];
+			$parentpreset=$parent[parentpreset];
+			if ($parentpreset==$preset) {
+				$newimage[id] = $parent[parentId];
+				$newimage[preset] = $parent[parentpreset];
+				$newimage[childid] = $parent[imageId];
+				break;
+			}
+		}
+
+		// --- search for siblings from a common target
+		if (empty($newimage)) 
+			$newimage = $this->findRelation($imgId, $preset);
+
+		// --- search for focus siblings from a different target
+		if (empty($newimage)) 
+			$newimage = $this->findRelation($imgId, $preset, 'focus', false);
+
+		return $newimage;
+		
 	}
 
 	function getImageTargets($imgId) {
@@ -568,37 +571,6 @@ a.`DEF_id` ='12458'
             $result      = $this->mysql->SQLQuery($local_query); 
 	    for ($i = 0; $row = mysql_fetch_array($result, MYSQL_ASSOC); $i++) 
 		$columns[$i] = $row['Field'];
-	    $columns_cnt     = count($columns);
-	    unset($i);
-	    mysql_free_result($result);
-
-	    $local_query = 'SELECT * FROM ' . $table . $add_query;
-	    $result      = $this->mysql->SQLQuery($local_query);
-	    $buffer      .= '  <!-- ' . $GLOBALS['strTable'] . ' ' . $table . ' -->' . $crlf;
-	    while ($record = mysql_fetch_array($result, MYSQL_ASSOC)) {
-		$buffer         .= '    <sqltable name="' . $table . '" >' . $crlf;
-		for ($i = 0; $i < $columns_cnt; $i++) {
-			if (!function_exists('is_null') || !is_null($record[$columns[$i]])) {
-			$buffer .= '        <field name="' . $columns[$i] . '" >' . htmlspecialchars($record[$columns[$i]])
-			.  '</field>' . $crlf;
-			}
-		}
-		$buffer         .= '    </sqltable>' . $crlf;
-	    }
-	    mysql_free_result($result);
-	    return $buffer;
-	}
-
-	function getXMLData2($table, &$buffer, $where="") {
-	    $add_query = empty($where) ? "" : " WHERE $where";
-	    $crlf = $this->crlf;
-            $local_query = 'SHOW COLUMNS FROM ' . $table ;
-            $result      = $this->mysql->SQLQuery($local_query); 
-	    for ($i = 0; $row = mysql_fetch_array($result, MYSQL_ASSOC); $i++) {
-		$field = $row['Field'];
-		if  (!eregi("^REF\||^DEF_id|^SEQ",$field))
-			$columns[$i] = $field;
-	}
 	    $columns_cnt     = count($columns);
 	    unset($i);
 	    mysql_free_result($result);
@@ -754,85 +726,6 @@ a.`DEF_id` ='12458'
 
 	}
 
-	function dumpApplicationData2($applicationId) {
-	    $crlf = $this->crlf;
-	    $format = $this->format;
-	    $saveasfile = $this->saveasfile;
-	    $tbl_applicationdata="ApplicationData";
-	    $result = $this->mysql->SQLQuery("SHOW TABLES");
-	    while($row = mysql_fetch_row($result))
-		$tables[] = $row[0];
-	    // --- Get Reference Ids
-	    $where = " `DEF_Id` = $applicationId ";
-	    $Rinfo = $this->mysql->SQLQuery("SELECT date_format(DEF_timestamp,'%m/%d/%Y') as date, `name`, `version` from $tbl_applicationdata where $where");
-	    $result = mysql_fetch_array($Rinfo);
-	    $name = $result['name'];
-	    $version = $result['version'];
-	    $date = $result['date'];
-
-	    $ref_tables=array();
-	    foreach($tables as $table) {
-	    	$result = $this->mysql->SQLQuery("SHOW FIELDS FROM $table"); 
-	    	while($row = mysql_fetch_array($result))
-			if (ereg("^REF\|$tbl_applicationdata", $row[Field]))
-				if(!in_array($table,$ref_tables))
-					$ref_tables[]=$table;
-
-	    }
-	    if ($format=="sql") {
-		$getdefinition="mysql->getSQLTableDefinition";
-		$getdata="mysql->getSQLTableContent";
-		$dump      =  '# Leginon Application-SQL-Dump' . $crlf
-                           .  '# http://ami.scripps.edu/ ' . $crlf
-                           .  '#' . $crlf
-                           .  '# Application : ' . $name . $crlf
-                           .  '# Version     : ' . $version . $crlf
-                           .  '# Date : ' . $date . $crlf
-                           .  '#' . $crlf . $crlf;
-
-	    } else {
-		$getdefinition="getSQLTableDefinitionXML";
-		$getdata="getXMLData2";
-		$dump =  '<!--' . $crlf
-                             .  '-' . $crlf
-                             .  '- Application XML-Dump' . $crlf
-                             .  '- http://ami.scripps.edu/ ' . $crlf
-                             .  '-' . $crlf
-                             .  '- Application :' . $name . $crlf
-                             .  '- Version     :' . $version . $crlf
-                             .  '- Date : ' . $date . $crlf
-                             .  '-' . $crlf
-                             .  '-->' . $crlf . $crlf
-                             .  '<applicationdump>' . $crlf;
-	    }
-
-	    //eval('$table_def='.'$this->'.$getdefinition.'($tbl_applicationdata);');
-	    $table_def='';
-	    foreach($ref_tables as $table) {
-	    	//eval('$table_def.='.'$this->'.$getdefinition.'($table);');
-	    }
-	    
-
-
-	    //eval('$this->'.$getdata.'($tbl_applicationdata, $buffer, $where);');
-
-	    $where = " `REF|ApplicationData|application` = $applicationId";
-	    foreach($ref_tables as $table) { 
-		    eval('$this->'.$getdata.'($table, $buffer, $where);');
-		}
-
-	    if($format=="xml")
-	    	$this->buildXML($table_def, $buffer, &$dump);
-	    else {
-//		$dump .= $table_def;
-		$dump .= $buffer;
-	    }
-		echo "<div><pre>";
-		echo htmlspecialchars($dump);
-		echo "</pre></div>";
-
-	}
-
 	function importApplication($filename) {
 		$app = new XMLApplicationImport($filename);
 		$sqldef = $app->getSQLDefinitionQueries();
@@ -964,6 +857,15 @@ a.`DEF_id` ='12458'
 				} else if (!ereg("^DEF_|^filename",$field)){
 					// filename not a field for image anymore
 					$f = $refname.'|'.ereg_replace("SUBD\||ARRAY\||^SEQ\||^MRC\|",'',$field);
+					if (strstr($f,'defocus')) 
+						$this->formatDefocus($row[$i]); 
+
+					if (strstr($f,'pixelsize')) 
+						$this->formatPixelsize($row[$i]); 
+
+					if (strstr($f,'dose')) 
+						$this->formatDose($row[$i]);
+
 					$f .= '|'.ereg_replace("'","",$row[$i]);
 					$nodes= explode("|", $f);
 					$s="";
@@ -977,6 +879,21 @@ a.`DEF_id` ='12458'
 				} else continue;
 			}
 		}
+	}
+
+	function formatDefocus(&$defocus) {
+		$defocus = number_format(($defocus/1e-6), 4,'.','').' µm';
+		return $defocus;
+	}
+
+	function formatPixelsize(&$pixelsize) {
+		$pixelsize = number_format(($pixelsize/1e-9), 4,'.','').' nm';
+		return $pixelsize;
+	}
+
+	function formatDose(&$dose) {
+		$dose = ($dose) ? number_format(($dose/1e20), 4,'.','').' e¯/Å²' : 'none' ;
+		return $dose;
 	}
 
 	function getDataTree($table, $id) {
