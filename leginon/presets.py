@@ -258,6 +258,14 @@ class PresetsManager(node.Node):
 		self.uiselectpreset.set(pnames, 0)
 		self.validateCycleOrder()
 
+	def presetFromName(self, pname):
+		presetdata = None
+		for preset in self.presets:
+			if pname == preset['name']:
+				presetdata = preset
+				break
+		return presetdata
+
 	def toScope(self, p):
 		'''
 		p is either index, preset, or name
@@ -266,10 +274,7 @@ class PresetsManager(node.Node):
 		if type(p) is int:
 			presetdata = self.presets[p]
 		elif type(p) is str:
-			for preset in self.presets:
-				if p == preset['name']:
-					presetdata = preset
-					break
+			presetdata = self.presetFromName(p)
 		elif isinstance(p, data.PresetData):
 			presetdata = p
 		else:
@@ -428,9 +433,42 @@ class PresetsManager(node.Node):
 					del cycle[-1]
 				except IndexError:
 					pass
+				currentmag = self.currentpreset['magnification']
+				newpresetdata = self.presetFromName(new)
+				if currentmag == newpresetdata['magnification']:
+					samemag = True
+				else:
+					samemag = False
+
+				if samemag:
+					if self.cyclemagchanged.get():
+						print 'cycling, even though new preset has the same magnification'
+					else:
+						print 'not cycling because magnification does not change'
+						cycle = []
+
 				for p in cycle:
-					print 'toScope(%s)' % (p,)
-					self.toScope(p)
+					if self.cyclemagonly.get():
+						presetdata = self.presetFromName(p)
+						mag = presetdata['magnification']
+						if currentmag == mag:
+							continue
+						print 'mag: %s' % (mag,)
+						scopedata = data.ScopeEMData()
+						scopedata['magnification'] = mag
+						scopedata['id'] = ('scope',)
+						try:
+							self.publishRemote(scopedata)
+						except node.PublishError:
+							self.printException()
+							print '** Maybe EM is not running?'
+						currentmag = mag
+						pause = self.changepause.get()
+						time.sleep(pause)
+					else:
+						print 'toScope(%s)' % (p,)
+						self.toScope(p)
+
 		print 'toScope(%s)' % (new,)
 		self.toScope(new)
 
@@ -498,17 +536,6 @@ class PresetsManager(node.Node):
 		message = ', '.join(problems)
 		if message:
 			self.messagelog.warning(message)
-
-	def uiCycleToScope(self):
-		print 'Cycling Presets...'
-		for name in self.orderlist.get():
-			p = self.presetByName(name)
-			if p is None:
-				self.printerror('%s not in presets' % (name,))
-			else:
-				self.toScope(p)
-		print 'Cycle Done'
-		node.beep()
 
 	def uiSelectedFromScope(self):
 		sel = self.uiselectpreset.getSelectedValue()
@@ -654,16 +681,21 @@ class PresetsManager(node.Node):
 		self.uiselectpreset = uidata.SingleSelectFromList('Preset', [], 0, callback=self.uiSelectCallback)
 		toscopemethod = uidata.Method('To Scope', self.uiToScope)
 		self.changepause = uidata.Float('Pause', 1.0, 'rw', persist=True)
-		cyclemethod = uidata.Method('Cycle To Scope', self.uiCycleToScope)
-		self.usecycle = uidata.Boolean('Always Follow Cycle', True, 'rw', persist=True)
+		cyclecont = uidata.Container('Cycle')
+		self.usecycle = uidata.Boolean('Follow Cycle', True, 'rw', persist=True)
+		self.cyclemagchanged = uidata.Boolean('Cycle even if going to same magnification', True, 'rw', persist=True)
+		self.cyclemagonly = uidata.Boolean('Cycle Magnification Only', False, 'rw', persist=True)
+		self.orderlist = uidata.Sequence('Cycle Order', [], 'rw', persist=True)
+		cyclecont.addObjects((self.usecycle,self.cyclemagchanged,self.cyclemagonly,self.orderlist))
+
 		fromscopemethod = uidata.Method('From Scope', self.uiSelectedFromScope)
 		eucfromscopemethod = uidata.Method('Eucentric Focus From Scope', self.uiSelectedEucFromScope)
 		euctoscopemethod = uidata.Method('Eucentric Focus To Scope', self.uiSelectedEucToScope)
 		removemethod = uidata.Method('Remove', self.uiSelectedRemove)
-		self.orderlist = uidata.Sequence('Cycle Order', [], 'rw', persist=True)
+
 
 		selectcont = uidata.Container('Selection')
-		selectcont.addObjects((self.uiselectpreset,toscopemethod,fromscopemethod,eucfromscopemethod,euctoscopemethod,removemethod,self.changepause,cyclemethod,self.usecycle,self.orderlist,self.autosquare,self.presetparams,statuscont,calcont))
+		selectcont.addObjects((self.uiselectpreset,toscopemethod,fromscopemethod,eucfromscopemethod,euctoscopemethod,removemethod,self.changepause,cyclecont,self.autosquare,self.presetparams,statuscont,calcont))
 
 		pnames = self.presetNames()
 		self.uiselectpreset.set(pnames, 0)
