@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageViewer.py,v $
-# $Revision: 1.40 $
+# $Revision: 1.41 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-05 19:09:44 $
+# $Date: 2004-11-05 19:19:46 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -1454,6 +1454,7 @@ class TargetImagePanel(ImagePanel):
 	def __init__(self, parent, id, callback=None, tool=True):
 		ImagePanel.__init__(self, parent, id)
 		self.order = []
+		self.reverseorder = []
 		self.targets = {}
 		self.selectedtype = None
 		self.selectedtarget = None
@@ -1499,6 +1500,8 @@ class TargetImagePanel(ImagePanel):
 			self.targets[type] = targets
 			if type not in self.order:
 				self.order.append(type)
+		self.reverseorder = list(self.order)
+		self.reverseorder.reverse()
 		self.UpdateDrawing()
 
 	def _drawTargets(self, dc, bitmap, targets, scale):
@@ -1577,7 +1580,7 @@ class TargetImagePanel(ImagePanel):
 					closest_target = target
 
 		if closest_target is None:
-			for key in self.order:
+			for key in self.reverseorder:
 				if key == type:
 					continue
 				for target in self.targets[key]:
@@ -1585,6 +1588,8 @@ class TargetImagePanel(ImagePanel):
 					if magnitude < minimum_magnitude:
 						minimum_magnitude = magnitude
 						closest_target = target
+				if closest_target is not None:
+					break
 
 		return closest_target
 
