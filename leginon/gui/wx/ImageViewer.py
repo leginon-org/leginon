@@ -991,6 +991,7 @@ class TypeTool(object):
 																									size=(24, 24))
 			self.tb['display'].SetToolTip(wx.ToolTip('Display'))
 			self.tb['display'].Bind(wx.EVT_BUTTON, self.onToggleDisplay)
+			self.tb['display'].SetBezelWidth(1)
 
 		if target is not None:
 			bitmap = getTargetIconBitmap(target)
@@ -1000,6 +1001,7 @@ class TypeTool(object):
 			self.color = target
 			self.targettype = TargetType(self.name, self.color)
 			self.tb['target'].Bind(wx.EVT_BUTTON, self.onToggleTarget)
+			self.tb['target'].SetBezelWidth(0)
 
 		if settings is not None:
 			bitmap = getBitmap('settings.png')
@@ -1007,9 +1009,7 @@ class TypeTool(object):
 																						size=(24, 24))
 			self.tb['settings'].SetToolTip(wx.ToolTip('Settings'))
 			self.tb['settings'].Bind(wx.EVT_BUTTON, self.onSettingsButton)
-
-		for tb in self.tb.values():
-			tb.SetBezelWidth(1)
+			self.tb['settings'].SetBezelWidth(1)
 
 	def SetBitmap(self, name):
 		try:
@@ -1022,6 +1022,9 @@ class TypeTool(object):
 		self.tb['display'].GetEventHandler().AddPendingEvent(evt)
 
 	def onToggleTarget(self, evt):
+		if self.tb['target'].GetBezelWidth() == 0:
+			self.tb['target'].SetValue(False)
+			return
 		evt = TargetingEvent(evt.GetEventObject(), self.name, evt.GetIsDown())
 		self.tb['target'].GetEventHandler().AddPendingEvent(evt)
 
@@ -1049,7 +1052,6 @@ class SelectionTool(wx.GridBagSizer):
 			typetool.tb['display'].Bind(EVT_DISPLAY, self.onDisplay)
 		if 'target' in typetool.tb:
 			self.Add(typetool.tb['target'], (n, 3), (1, 1), wx.ALIGN_CENTER)
-			typetool.tb['target'].Enable(False)
 			self.targets[typetool.name] = None
 			typetool.tb['target'].Bind(EVT_TARGETING, self.onTargeting)
 		else:
@@ -1166,10 +1168,10 @@ class SelectionTool(wx.GridBagSizer):
 		if targets is None:
 			if self.isTargeting(name):
 				self.setTargeting(name, False)
-			tool.tb['target'].Enable(False)
+			tool.tb['target'].SetBezelWidth(0)
 			tool.SetBitmap('red')
 		else:
-			tool.tb['target'].Enable(True)
+			tool.tb['target'].SetBezelWidth(1)
 			tool.SetBitmap('green')
 
 	def getTargetPositions(self, name):
