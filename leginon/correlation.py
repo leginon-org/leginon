@@ -30,13 +30,7 @@ def correlation(image1, image2, ccflag=1, pcflag=1, subpixelflag=1):
 		# elementwise phase-correlation =
 		# cross-correlation / magnitude(cross-correlation
 
-		## why does add return a tuple?
-		fftsum, = Numeric.add(ffts[0], ffts[1]),
-		pcfft = Numeric.divide( \
-			ccfft, \
-			Numeric.sqrt(Numeric.multiply(fftsum, \
-					Numeric.conjugate(fftsum))) \
-			)
+		pcfft = ccfft / Numeric.absolute(ccfft)
 
 		pc = FFT.inverse_real_fft2d(pcfft)
 
@@ -143,7 +137,6 @@ def quadraticPeak(m):
 
 	## fit and find zero
 	rowfit = linear_least_squares(row_dm, rowvals)
-	print 'ROWFIT', rowfit
 	rowcoeffs = rowfit[0]
 	rowzero = -rowcoeffs[1] / 2 / rowcoeffs[2]
 
@@ -157,7 +150,6 @@ def quadraticPeak(m):
 
 	## fit and find zero
 	colfit = linear_least_squares(col_dm, colvals)
-	print 'COLFIT', colfit
 	colcoeffs = colfit[0]
 	colzero = -colcoeffs[1] / 2 / colcoeffs[2]
 
