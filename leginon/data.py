@@ -562,6 +562,11 @@ class ImageData(InSessionData):
 		basename += '_%04d.mrc' % (myindex,)
 		return basename
 
+	def thumb_filename(self):
+		regular = self.filename()
+		thumb = 'thumb_' + regular
+		return thumb
+
 class MosaicImageData(ImageData):
 	'''Image of a mosaic'''
 	pass
@@ -708,6 +713,7 @@ class ImageTargetData(InSessionData):
 		  ('preset', PresetData),
 		  ('type', str),
 		  ('version', int),
+		  ('index', int),
 		]
 		return t
 	typemap = classmethod(typemap)
