@@ -12,10 +12,11 @@ class SpecWidget(Frame):
 		Frame.__init__(self, parent, **kwargs)
 		self.spec = spec
 		self.uiclient = uiclient
+		self['bg'] = '#006699'
 
 class Container(SpecWidget):
 	def __init__(self, parent, uiclient, spec):
-		SpecWidget.__init__(self, parent, uiclient, spec, bg='cyan')
+		SpecWidget.__init__(self, parent, uiclient, spec)
 		self.build()
 
 	def build(self):
@@ -37,7 +38,7 @@ class Container(SpecWidget):
 
 class NotebookContainer(SpecWidget):
 	def __init__(self, parent, uiclient, spec):
-		SpecWidget.__init__(self, parent, uiclient, spec, bg='cyan')
+		SpecWidget.__init__(self, parent, uiclient, spec)
 		self.build()
 
 	def build(self):
@@ -86,9 +87,8 @@ def whichDataClass(dataspec):
 
 class Data(SpecWidget):
 	def __init__(self, parent, uiclient, spec):
-		self.bgcolor = None
 
-		SpecWidget.__init__(self, parent, uiclient, spec, bd=2, relief=SUNKEN, bg=self.bgcolor)
+		SpecWidget.__init__(self, parent, uiclient, spec, bd=2, relief=SOLID)
 
 		self.name = self.spec['name']
 		self.type = self.spec['xmlrpctype']
@@ -109,7 +109,7 @@ class Data(SpecWidget):
 		headframe = Frame(self)
 
 		### label
-		lab = Label(headframe, text=self.name, bg=self.bgcolor)
+		lab = Label(headframe, text=self.name)
 		lab.pack(side=LEFT)
 
 		### optional get/set
@@ -150,7 +150,7 @@ class EntryData(Data):
 		Data.__init__(self, parent, uiclient, spec)
 
 	def buildWidget(self, parent):
-		self.entry = Entry(parent, width=10, bg=self.bgcolor)
+		self.entry = Entry(parent, width=10)
 		return self.entry
 
 	def setWidget(self, value):
@@ -173,7 +173,7 @@ class CheckbuttonData(Data):
 
 	def buildWidget(self, parent):
 		self.tkvar = BooleanVar()
-		c = Checkbutton(parent, variable=self.tkvar, bg=self.bgcolor)
+		c = Checkbutton(parent, variable=self.tkvar)
 		return c
 
 	def setWidget(self, value):
@@ -225,7 +225,7 @@ class TreeData(Data):
 		if self.sc is not None:
 			self.sc.frame.destroy()
 
-		self.sc = TreeWidget.ScrolledCanvas(self.treeframe, highlightthickness=0, bg=self.bgcolor)
+		self.sc = TreeWidget.ScrolledCanvas(self.treeframe, highlightthickness=0)
 		item = StructTreeItem(None, self.name, value)
 		node = TreeWidget.TreeNode(self.sc.canvas, None, item)
 		node.expand()
@@ -237,7 +237,7 @@ class TreeData(Data):
 
 class Method(SpecWidget):
 	def __init__(self, parent, uiclient, spec):
-		SpecWidget.__init__(self, parent, uiclient, spec, bd=3, relief=SOLID, bg='green')
+		SpecWidget.__init__(self, parent, uiclient, spec, bd=3, relief=SOLID)
 		self.build()
 
 	def build(self):
