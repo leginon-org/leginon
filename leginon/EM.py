@@ -117,7 +117,6 @@ class EM(node.Node):
 			'diffraction mode',
 			'low dose',
 			'low dose mode',
-			'screen current',
 			'holder type',
 			'holder status',
 			'stage status',
