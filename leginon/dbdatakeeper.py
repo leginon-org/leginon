@@ -27,7 +27,7 @@ class DBDataKeeper(datahandler.DataHandler):
 		# return a list of dictionnaries for all matching rows
 		result = self.dbd.myTable.Index[indices.values()].fetchalldict()
 		result = map(sqldict.sql2data, result)
-		return map(self.image2file, result)
+		return map(self.file2image, result)
 
 		# return an instance
 		# result =  self.dbd.myTable.Index[indices.values()].fetchonedict()
