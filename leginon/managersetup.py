@@ -13,6 +13,15 @@ class ManagerSetup(object):
 		self.manager = manager
 		self.initUsers()
 		self.createLoginContainer()
+		if (hasattr(leginonconfig, 'USERNAME') and
+				leginonconfig.USERNAME in self.users):
+			self.setUser(leginonconfig.USERNAME)
+			session = data.SessionData(user=self.uiGetUser())
+			self.manager.session = session
+			self.manager.uicontainer.session = session
+			self.createSelectSessionContainer()
+		else:
+			self.addLoginContainer()
 
 	def onStartSession(self):
 		session_name = self.sessionselector.getSelectedValue()
@@ -227,10 +236,7 @@ class ManagerSetup(object):
 		'''
 		return index
 
-	def uiUserSelectCallback(self, index):
-		if not hasattr(self, 'userselection'):
-			return index
-		username = self.userselection.getSelectedValue(index)
+	def setUser(self, username):
 		if username in self.users:
 			self.userdata = self.users[username]
 			try:
@@ -244,6 +250,12 @@ class ManagerSetup(object):
 		else:
 			self.userfullname.set('')
 			self.usergroup.set('')
+
+	def uiUserSelectCallback(self, index):
+		if not hasattr(self, 'userselection'):
+			return index
+		username = self.userselection.getSelectedValue(index)
+		self.setUser(username)
 		return index
 
 	def onInstrumentSelect(self, index):
@@ -345,6 +357,8 @@ class ManagerSetup(object):
 		self.loginmethod = uidata.Method('Login', self.onLogin)
 		self.logincontainer.addObjects((userselectcontainer, self.loginmethod))
 		self.uiUpdateUsers()
+
+	def addLoginContainer(self):
 		self.manager.uicontainer.addObject(self.logincontainer)
 
 	def createSelectSessionContainer(self):

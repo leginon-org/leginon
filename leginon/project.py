@@ -33,7 +33,7 @@ class GridBox(sqldict.ObjectBuilder):
 
 class Grid(sqldict.ObjectBuilder):
 	table = 'grids'
-	columns = ['gridId', 'label']
+	columns = ['gridId', 'label', 'specimenId', 'number', 'boxId']
 
 class GridLocation(sqldict.ObjectBuilder):
 	table = 'gridlocations'
@@ -67,6 +67,12 @@ class ProjectData:
 	def getGrids(self):
 		return self.grids
 
+	def newGrid(self, label, specimenId, number, boxId, location):
+		gridId = self.grids.insert([{'label': label, 'specimenId': specimenId,
+																	'number': number, 'boxId': boxId}])
+		self.gridlocations.insert([{'gridboxId': boxId, 'gridId': gridId,
+																'location': location}])
+
 	def getGridLocations(self):
 		return self.gridlocations
 
@@ -82,6 +88,10 @@ if __name__ == "__main__":
 	if not projectdata.isConnected():
 		print "Project DB not available"
 		sys.exit()
+
+	"""
+	for i in range(1, 97):
+		projectdata.newGrid('Robot Grids 2, #%d' % i, 113, i, 12, i)
 
 	gridboxes = projectdata.getGridBoxes()
 	labelindex = gridboxes.Index(['label'])
@@ -101,7 +111,6 @@ if __name__ == "__main__":
 																	'location': gridlocation['location']}
 	print gridmapping
 
-	"""
 	projectdata1 = ProjectData()
 	projects = projectdata1.getProjects()
 	print projects.getall()

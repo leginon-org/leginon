@@ -83,3 +83,5 @@ try:
 except:
 	print 'error creating IMAGE_PATH %s' % (IMAGE_PATH,)
 
+USERNAME = ''
+
