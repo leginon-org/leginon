@@ -482,6 +482,8 @@ class EM(node.Node):
 		self.nodelock.release()
 
 	def uiResetDefocus(self):
+		self.scopecontainer.disable()
+		self.cameracontainer.disable()
 		self.uiSetUIStatus('Reseting defocus', 10)
 		self.uiSetState({'reset defocus': 1})
 		self.uiSetUIStatus('Defocus reset', 90)
@@ -493,8 +495,12 @@ class EM(node.Node):
 		self.statelock.release()
 		self.uiSetUIStatus('Defocus reset request completed', 100)
 		self.uiSetUIStatus('', 0)
+		self.cameracontainer.enable()
+		self.scopecontainer.enable()
 
 	def uiToggleMainScreen(self):
+		self.scopecontainer.disable()
+		self.cameracontainer.disable()
 		self.uiSetUIStatus('Toggling mainscreen', 10)
 		try:
 			uiscreenposition = self.uiscopedict['screen position'].get()
@@ -508,8 +514,12 @@ class EM(node.Node):
 			self.uiSetState({'screen position': 'down'})
 		self.uiSetUIStatus('Main screen toggled', 100)
 		self.uiSetUIStatus('', 0)
+		self.cameracontainer.enable()
+		self.scopecontainer.enable()
 
 	def uiRefreshScope(self):
+		self.scopecontainer.disable()
+		self.cameracontainer.disable()
 		self.uiSetUIStatus('Getting microscope parameters', 10)
 		self.uiSetUIStatus('Acquiring lock', 20)
 		self.statelock.acquire()
@@ -524,6 +534,8 @@ class EM(node.Node):
 		self.uiSetUIStatus('Lock released', 90)
 		self.uiSetUIStatus('Refreshed microscope parameters', 100)
 		self.uiSetUIStatus('', 0)
+		self.cameracontainer.enable()
+		self.scopecontainer.enable()
 
 	def uiSetUIStatus(self, message, percent):
 		if hasattr(self, 'uiprogresslabel') and hasattr(self, 'uiprogress'):
@@ -544,20 +556,28 @@ class EM(node.Node):
 #				time.sleep(0.25)
 
 	def uiSetScope(self):
+		self.scopecontainer.disable()
+		self.cameracontainer.disable()
 		self.uiSetUIStatus('Setting microscope parameters', 10)
 		scopedict = self.uiGetDictData(self.uiscopedict)
 		self.uiSetUIStatus(None, 20)
 		updatedstate = self.uiSetState(scopedict)
 		self.uiSetUIStatus('Microscope parameter change completed', 90)
 		self.uiSetUIStatus('', 0)
+		self.cameracontainer.enable()
+		self.scopecontainer.enable()
 
 	def uiSetCamera(self):
+		self.scopecontainer.disable()
+		self.cameracontainer.disable()
 		self.uiSetUIStatus('Setting camera parameters', 10)
 		cameradict = self.uiGetDictData(self.uicameradict)
 		self.uiSetUIStatus(None, 20)
 		updatedstate = self.uiSetState(cameradict)
 		self.uiSetUIStatus('Camera parameter change completed', 90)
 		self.uiSetUIStatus('', 0)
+		self.cameracontainer.enable()
+		self.scopecontainer.enable()
 
 	def uiGetDictData(self, uidict):
 		uidictdata = {}
@@ -655,13 +675,13 @@ class EM(node.Node):
 		scopeparameterscontainer.addObject(beamtiltcontainer)
 		scopeparameterscontainer.addObject(beamshiftcontainer)
 
-		scopecontainer = uidata.MediumContainer('Microscope')
-		scopecontainer.addObject(scopeparameterscontainer)
+		self.scopecontainer = uidata.MediumContainer('Microscope')
+		self.scopecontainer.addObject(scopeparameterscontainer)
 
 		refreshscope = uidata.Method('Refresh', self.uiRefreshScope)
 		setscope = uidata.Method('Set', self.uiSetScope)
-		scopecontainer.addObject(refreshscope)
-		scopecontainer.addObject(setscope)
+		self.scopecontainer.addObject(refreshscope)
+		self.scopecontainer.addObject(setscope)
 
 		self.uicameradict = {}
 		self.uicameradict['exposure time'] = uidata.Integer('Exposure Time',0,'rw')
@@ -697,11 +717,11 @@ class EM(node.Node):
 		cameraparameterscontainer.addObject(offsetcontainer)
 		cameraparameterscontainer.addObject(binningcontainer)
 
-		cameracontainer = uidata.MediumContainer('Camera')
-		cameracontainer.addObject(cameraparameterscontainer)
+		self.cameracontainer = uidata.MediumContainer('Camera')
+		self.cameracontainer.addObject(cameraparameterscontainer)
 
 		setcamera = uidata.Method('Set', self.uiSetCamera)
-		cameracontainer.addObject(setcamera)
+		self.cameracontainer.addObject(setcamera)
 
 #		self.statelock.acquire()
 #		self.uiUpdate()
@@ -710,6 +730,6 @@ class EM(node.Node):
 		container = uidata.MediumContainer('EM')
 		container.addObject(statuscontainer)
 		container.addObject(uistatuscontainer)
-		container.addObjects((scopecontainer, cameracontainer))
+		container.addObjects((self.scopecontainer, self.cameracontainer))
 		self.uiserver.addObject(container)
 

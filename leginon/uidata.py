@@ -44,6 +44,16 @@ class Object(object):
 		else:
 			raise ValueError('connect get Object from list, no such Object')
 
+	def disable(self):
+		self._enable(False)
+
+	def enable(self):
+		self._enable(True)
+
+	def _enable(self, enabled):
+		if self.parent is not None:
+			self.parent.enableObjectCallback((self.name,), enabled)
+
 class Container(Object):
 	typelist = Object.typelist + ('container',)
 	def __init__(self, name):
@@ -132,6 +142,10 @@ class Container(Object):
 	def deleteObjectCallback(self, namelist):
 		if self.parent is not None:
 			self.parent.deleteObjectCallback((self.name,) + namelist)
+
+	def enableObjectCallback(self, namelist, enabled):
+		if self.parent is not None:
+			self.parent.enableObjectCallback((self.name,) + namelist, enabled)
 
 	def getObjectFromList(self, namelist):
 		if type(namelist) not in (list, tuple):

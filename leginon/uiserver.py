@@ -221,3 +221,8 @@ class Server(XMLRPCServer, uidata.Container):
 			client.execute('DEL', (namelist,))
 			#threading.Thread(target=client.execute, args=('DEL', (namelist,))).start()
 
+	def enableObjectCallback(self, namelist, enabled):
+		for client in self.uiclients:
+			# delete if fail?
+			client.execute('ENABLE', (namelist, enabled))
+

@@ -46,7 +46,6 @@ testdata.set('set string')
 p = uidata.Progress('Progress Bar', 25)
 bar1.addObject(p)
 
-'''
 server.addObject(bar2)
 #bar1.addObject(uidata.MessageDialog('MD 1', 'This is a dialog'))
 foo1.addObject(uidata.SingleSelectFromList('List Select 1', [1,2,3], 1))
@@ -68,12 +67,11 @@ image2.addTargetType('Foo Bar', [(120, 200), (50, 78)])
 bar2.addObject(image2)
 
 def gar(foo):
-	print foo
+	bar1.disable()
 
 
 clickimage = uidata.ClickImage('Click Image', gar, image)
 bar1.addObject(clickimage)
-'''
 
 foo1.addObject(uidata.Method('Method 1', bar))
 foo1.addObject(uidata.Boolean('Boolean 1', 1, 'r'))

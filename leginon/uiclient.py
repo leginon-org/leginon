@@ -13,6 +13,7 @@ import wxMaster
 wxEVT_ADD_WIDGET = wxNewEventType()
 wxEVT_SET_WIDGET = wxNewEventType()
 wxEVT_REMOVE_WIDGET = wxNewEventType()
+wxEVT_ENABLE_WIDGET = wxNewEventType()
 wxEVT_SET_SERVER = wxNewEventType()
 wxEVT_COMMAND_SERVER = wxNewEventType()
 
@@ -38,6 +39,13 @@ class RemoveWidgetEvent(wxPyEvent):
 		wxPyEvent.__init__(self)
 		self.SetEventType(wxEVT_REMOVE_WIDGET)
 		self.namelist = namelist
+
+class EnableWidgetEvent(wxPyEvent):
+	def __init__(self, namelist, enabled):
+		wxPyEvent.__init__(self)
+		self.SetEventType(wxEVT_ENABLE_WIDGET)
+		self.namelist = namelist
+		self.enabled = enabled
 
 class SetServerEvent(wxPyEvent):
 	def __init__(self, namelist, value, thread=True):
@@ -130,6 +138,7 @@ class UIClient(XMLRPCClient, uiserver.XMLRPCServer):
 		self.server.register_function(self.addFromServer, 'ADD')
 		self.server.register_function(self.setFromServer, 'SET')
 		self.server.register_function(self.removeFromServer, 'DEL')
+		self.server.register_function(self.enableFromServer, 'ENABLE')
 
 	def addServer(self):
 		self.execute('ADDSERVER', (self.hostname, self.port))
@@ -158,6 +167,9 @@ class UIClient(XMLRPCClient, uiserver.XMLRPCServer):
 	def removeFromServer(self, namelist):
 		raise NotImplementedError
 
+	def enableFromServer(self, namelist, enabled):
+		raise NotImplementedError
+
 class wxUIClient(UIClient):
 	def __init__(self, container, serverhostname, serverport, port=None):
 		# there are some timing issues to be thought out
@@ -179,6 +191,11 @@ class wxUIClient(UIClient):
 
 	def removeFromServer(self, namelist):
 		evt = RemoveWidgetEvent(namelist)
+		wxPostEvent(self.container.widgethandler, evt)
+		return ''
+
+	def enableFromServer(self, namelist, enabled):
+		evt = EnableWidgetEvent(namelist, enabled)
 		wxPostEvent(self.container.widgethandler, evt)
 		return ''
 
@@ -214,6 +231,14 @@ class wxWidget(object):
 		self.container = container
 		self.widgethandler = wxEvtHandler()
 		self.sizer = None
+
+		self.widgethandler.Connect(-1, -1, wxEVT_ENABLE_WIDGET, self.onEnableWidget)
+
+	def onEnableWidget(self, evt):
+		self.enable(evt.enabled)
+
+	def enable(self, enabled):
+		pass
 
 	def setServer(self, value):
 		evt = SetServerEvent([self.name], value)
@@ -291,6 +316,23 @@ class wxContainerWidget(wxWidget):
 					wxPostEvent(child.widgethandler, evt)
 					return
 		raise ValueError('No such child to remove widget')
+
+	def onEnableWidget(self, evt):
+		if len(evt.namelist) == 0:
+			self.enable(evt.enabled)
+		else:
+			for name, child in self.children.items():
+				if name == evt.namelist[0]:
+					evt.namelist = evt.namelist[1:]
+					wxPostEvent(child.widgethandler, evt)
+					return
+			raise ValueError('No such child to set widget')
+
+	def enable(self, enabled):
+		wxWidget.enable(self, enabled)
+		for name, child in self.children.items():
+			evt = EnableWidgetEvent([], enabled)
+			wxPostEvent(child.widgethandler, evt)
 
 	def onSetServer(self, evt):
 		evt.namelist.insert(0, self.name)
@@ -440,6 +482,9 @@ class wxButtonWidget(wxMethodWidget):
 		self.sizer.Add(self.button, 0, wxALIGN_CENTER | wxALL, 0)
 		self.layout()
 
+	def enable(self, enabled):
+		self.button.Enable(enabled)
+
 class wxDataWidget(wxWidget):
 	def __init__(self, name, parent, container, value, read, write):
 		if read:
@@ -520,6 +565,7 @@ class wxEntryWidget(wxDataWidget):
 		self.sizer.Add(self.entry, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
 		if hasattr(self, 'applybutton'):
 			self.sizer.Add(self.applybutton, 0, wxALIGN_CENTER|wxLEFT|wxRIGHT, 3)
+			self.dirty = self.applybutton.IsEnabled()
 		self.layout()
 
 	def destroy(self):
@@ -529,6 +575,7 @@ class wxEntryWidget(wxDataWidget):
 		self.label.Destroy()
 
 	def onEdit(self, evt):
+		self.dirty = True
 		self.applybutton.Enable(true)
 
 	def onEnter(self, evt):
@@ -549,6 +596,7 @@ class wxEntryWidget(wxDataWidget):
 		if type(self.value) != type(value):
 			return
 		self.value = value
+		self.dirty = False
 		self.applybutton.Enable(false)
 		self.setServer(self.value)
 
@@ -562,7 +610,17 @@ class wxEntryWidget(wxDataWidget):
 		else:
 			self.entry.SetValue(str(self.value))
 		if hasattr(self, 'applybutton'):
+			self.dirty = False
 			self.applybutton.Enable(false)
+
+	def enable(self, enabled):
+		self.label.Enable(enabled)
+		self.entry.Enable(enabled)
+		if hasattr(self, 'applybutton'):
+			if enabled and self.dirty:
+				self.applybutton.Enable(True)
+			else:
+				self.applybutton.Enable(False)
 
 class wxCheckBoxWidget(wxDataWidget):
 	def __init__(self, name, parent, container, value, read, write):
