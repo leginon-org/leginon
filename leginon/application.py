@@ -194,4 +194,4 @@ class Application(object):
 		bindinginstance = data.BindingSpecData(application=appdata)
 		self.bindingspecs = self.node.research(datainstance=bindinginstance)
 		## create a copy so we can modify it
-		self.data = ApplicationData(initializer=appdata)
+		self.data = data.ApplicationData(initializer=appdata)
