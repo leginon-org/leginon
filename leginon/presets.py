@@ -400,7 +400,10 @@ class PresetsManager(node.Node):
 
 		## import
 #		self.othersession = uidata.String('Session', '', 'rw')
-		sessionlist = self.research(dataclass=data.SessionData)
+		try:
+			sessionlist = self.research(dataclass=data.SessionData)
+		except IndexError:
+			sessionlist = []
 		sessionnamelist = map(lambda x: x['name'], sessionlist)
 		sessionnamelist.sort()
 		self.othersession = uidata.SingleSelectFromList('Session', sessionnamelist, 0)
