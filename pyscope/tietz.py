@@ -108,11 +108,6 @@ class CameraControl(object):
 	def uninitialize(self):
 		self.camera.UnlockCAMC()
 
-	def __del__(self):
-		locked, pingname = self.camera.IsLocked
-		if locked and pingname == self.pingname:
-			self.uninitialize()
-
 cameracontrol = CameraControl()
 
 class Tietz(object):

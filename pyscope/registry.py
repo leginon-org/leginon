@@ -30,7 +30,7 @@ def getClass(name):
 		return None
 
 def getClasses():
-	return self.tems.items() + self.ccdcameras.items()
+	return tems.items() + ccdcameras.items()
 
 import tecnai
 register(tecnai)
