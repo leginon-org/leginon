@@ -197,7 +197,7 @@ class CameraPanel(wx.Panel):
 			for b in self.binnings['x']:
 				if d*b <= self.size['x']:
 					#key = '%d² × %d' % (d, b)
-					key = '%d^2 x %d' % (d, b)
+					key = '%d x %d' % (d, b)
 					geometries[key] = self.getCenteredGeometry(d, b)
 					keys.append(key)
 				else:
