@@ -13,7 +13,7 @@ class DictTreeCtrlPanel(wxPanel):
 		if callable(self.editcallback):
 			style |=wxTR_EDIT_LABELS
 		self.tree = DictTreeCtrl(self, -1, wxDefaultPosition,
-																	wxSize(200, 250), style)
+																	wxSize(180, 200), style)
 		self.root = self.tree.AddRoot(label)
 		EVT_TREE_BEGIN_LABEL_EDIT(self, self.tree.GetId(), self.OnBeginEdit)
 		EVT_TREE_END_LABEL_EDIT(self, self.tree.GetId(), self.OnEndEdit)

@@ -53,27 +53,48 @@ class TargetImagePanel(ImagePanel):
 	def __init__(self, parent, id):
 		ImagePanel.__init__(self, parent, id)
 		self.targets = []
-		EVT_LEFT_DCLICK(self, self.drawTarget)
-		EVT_RIGHT_DCLICK(self, self.eraseTarget)
+		EVT_LEFT_DCLICK(self, self.OnLeftDoubleClick)
+		EVT_RIGHT_DCLICK(self, self.OnRightDoubleClick)
 
-	def clearImage(self):
+	def setImage(self, image):
+#		self.targets = []
+		ImagePanel.setImage(self, image)
+		# lame
+		dc = wxClientDC(self)
+		dc.BeginDrawing()
+		dc.DrawBitmap(self.bitmap, 0, 0)
+		dc.SetBrush(wxBrush('RED', wxTRANSPARENT))
+		dc.SetPen(wxPen('RED', 2))
+		for target in self.targets:
+			dc.DrawCircle(target[0], target[1], 15)
+		dc.EndDrawing()
+
+	def clearTargets(self):
 		self.targets = []
-		ImagePanel.clearImage(self)
+		dc = wxClientDC(self)
+		dc.BeginDrawing()
+		if self.bitmap is not None:
+			dc.DrawBitmap(self.bitmap, 0, 0)
+		dc.EndDrawing()
 
-	def drawTarget(self, evt):
-		if self.image is None:
-			return
-		self.targets.append((evt.m_x, evt.m_y))
+	def OnLeftDoubleClick(self, evt):
+		self.addTarget(evt.m_x, evt.m_y)
+
+	def addTarget(self, x, y):
+		self.targets.append((x, y))
 		dc = wxClientDC(self)
 		dc.BeginDrawing()
 		dc.SetBrush(wxBrush('RED', wxTRANSPARENT))
 		dc.SetPen(wxPen('RED', 2))
-		dc.DrawCircle(evt.m_x, evt.m_y, 15)
+		dc.DrawCircle(x, y, 15)
 		dc.EndDrawing()
 
-	def eraseTarget(self, evt):
+	def OnRightDoubleClick(self, evt):
+		self.deleteTarget(evt.m_x, evt.m_y)
+
+	def deleteTarget(self, x, y):
 		try:
-			self.targets.remove((evt.m_x, evt.m_y))
+			self.targets.remove((x, y))
 		except:
 			return
 		# lame
@@ -87,11 +108,13 @@ class TargetImagePanel(ImagePanel):
 		dc.EndDrawing()
 
 	def OnPaint(self, evt):
-		ImagePanel.OnPaint(self, evt)
+		#ImagePanel.OnPaint(self, evt)
 		dc = wxPaintDC(self)
 		dc.BeginDrawing()
 		dc.SetBrush(wxBrush('RED', wxTRANSPARENT))
 		dc.SetPen(wxPen('RED', 2))
+		if self.bitmap is not None:
+			dc.DrawBitmap(self.bitmap, 0, 0)
 		for target in self.targets:
 			dc.DrawCircle(target[0], target[1], 15)
 		dc.EndDrawing()

@@ -216,10 +216,13 @@ class UISelectFromList(UIContainer):
 	# callback
 	def __init__(self, name, listvalue, selectedvalue, permissions='r'):
 		UIContainer.__init__(self, name)
-		self.list = UIArray('list', listvalue, permissions)
-		self.selected = UIArray('selected', selectedvalue, 'rw')
+		self.list = UIArray('List', listvalue, permissions)
+		self.selected = UIArray('Selected', selectedvalue, 'rw')
 		self.addUIObject(self.list)
 		self.addUIObject(self.selected)
+
+	def select(self, items):
+		self.selected.set(items)
 
 class UIBinary(UIData):
 	typelist = UIData.typelist + ('binary',)
@@ -271,4 +274,14 @@ class UIImage(UIBinary):
 		Image.fromstring(mode, (a.shape[1],a.shape[0]),
 											a.tostring()).save(stream,'PNG')
 		return stream.getvalue()
+
+class UITargetImage(UIContainer):
+	typelist = UIContainer.typelist + ('target image',)
+	# callback
+	def __init__(self, name, image, targets=[]):
+		UIContainer.__init__(self, name)
+		self.image = UIImage('Image', image, 'r')
+		self.targets = UIArray('Targets', targets, 'rw')
+		self.addUIObject(self.image)
+		self.addUIObject(self.targets)
 

@@ -179,6 +179,8 @@ def WidgetClassFromTypeList(typelist):
 					if len(typelist) > 2:
 						if typelist[2] == 'select from list':
 							return wxComboBoxWidget
+						elif typelist[2] == 'target image':
+							return wxTargetImageWidget
 					return wxStaticBoxContainerWidget
 				elif typelist[1] == 'method':
 					return wxButtonWidget
@@ -418,11 +420,11 @@ class wxComboBoxWidget(wxContainerWidget):
 		self.combobox.Enable(false)
 		EVT_COMBOBOX(self.window, self.combobox.GetId(), self.apply)
 		self.wxwidget.Add(self.combobox, 0, wxALIGN_CENTER | wxALL, 5)
-		self.value = {'list': [], 'selected': None}
+		self.value = {'List': [], 'Selected': None}
 
 	def apply(self, evt):
 		value = [evt.GetSelection()]
-		self.uiclient.setServer(self.namelist + ('selected',), value)
+		self.uiclient.setServer(self.namelist + ('Selected',), value)
 
 	def Destroy(self):
 		self.combobox.Destroy()
@@ -431,26 +433,25 @@ class wxComboBoxWidget(wxContainerWidget):
 		self.setWidget(namelist, value)
 
 	def _set(self, value):
-		if 'list' in value:
+		if 'List' in value:
 			self.combobox.Clear()
-			for i in range(len(value['list'])):
-				self.combobox.Append(str(value['list'][i]))
-		if 'selected' in value:
-			i = value['selected'][0]
-			self.combobox.SetValue(str(value['list'][i]))
+			for i in range(len(value['List'])):
+				self.combobox.Append(str(value['List'][i]))
+		if 'Selected' in value:
+			i = value['Selected'][0]
+			self.combobox.SetValue(str(value['List'][i]))
 		self.combobox.Enable(true)
 
 	def setWidget(self, namelist, value):
 		self.lock.acquire()
-		newvalue = {}
-		if namelist == self.namelist + ('list',):
-			self.value['list'] = value
-		elif namelist == self.namelist + ('selected',):
-			self.value['selected'] = value
+		if namelist == self.namelist + ('List',):
+			self.value['List'] = value
+		elif namelist == self.namelist + ('Selected',):
+			self.value['Selected'] = value
 		else:
 			self.lock.release()
 			return
-		if self.value['list'] and self.value['selected'] is not None:
+		if self.value['List'] and self.value['Selected'] is not None:
 			evt = SetWidgetEvent(self, self.value)
 			wxPostEvent(self.window, evt)
 		self.lock.release()
@@ -474,12 +475,69 @@ class wxImageWidget(wxDataWidget):
 		self.wxwidget.Add(self.imageviewer, 0, wxALIGN_CENTER | wxALL, 5)
 
 	def set(self, value):
-		DataWidget.set(self, value)
-		self.imageviewer.setImage(self.value)
+		# not keeping track of image for now
+		#DataWidget.set(self, value)
+		self.imageviewer.setImage(value.data)
 		self.wxwidget.SetItemMinSize(self.imageviewer,
 																	self.imageviewer.GetSize().GetWidth(),
 																	self.imageviewer.GetSize().GetHeight())
 
 	def Destroy(self):
 		self.imageviewer.Destroy()
+
+class wxTargetImageWidget(wxContainerWidget):
+	def __init__(self, uiclient, namelist, window, parent):
+		self.lock = threading.Lock()
+		wxContainerWidget.__init__(self, uiclient, namelist, window, parent)
+		self.wxwidget = wxBoxSizer(wxHORIZONTAL)
+		self.targetimage = wxImageViewer.TargetImagePanel(self.parent, -1)
+		self.wxwidget.Add(self.targetimage, 0, wxALIGN_CENTER | wxALL, 5)
+
+	def apply(self, evt):
+		value = self.targetimage.targets
+		self.uiclient.setServer(self.namelist + ('Targets',), value)
+
+	def Destroy(self):
+		self.targetimage.Destroy()
+
+	def add(self, namelist, typelist, value):
+		self.setWidget(namelist, value)
+
+	def _set(self, value):
+		if 'Image' in value:
+			self.targetimage.setImage(value['Image'])
+			self.wxwidget.SetItemMinSize(self.targetimage,
+																		self.targetimage.GetSize().GetWidth(),
+																		self.targetimage.GetSize().GetHeight())
+		if 'Targets' in value:
+			self.targetimage.clearTargets()
+			for target in value['Targets']:
+				x = target[0]
+				y = target[1]
+				self.targetimage.addTarget(x, y)
+		else:
+			return
+
+	def setWidget(self, namelist, value):
+		self.lock.acquire()
+		newvalue = {}
+		if namelist == self.namelist + ('Image',):
+			newvalue['Image'] = value.data
+		elif namelist == self.namelist + ('Targets',):
+			newvalue['Targets'] = value
+		else:
+			self.lock.release()
+			return
+		evt = SetWidgetEvent(self, newvalue)
+		wxPostEvent(self.window, evt)
+		self.lock.release()
+
+	def set(self, namelist, value=None):
+		if value is None:
+			self._set(namelist)
+		else:
+			self.setWidget(namelist, value)
+		
+	def delete(self, namelist):
+		pass
 
