@@ -5,6 +5,7 @@ import correlator
 import peakfinder
 import event
 import time
+import timer
 import cameraimage
 import camerafuncs
 import threading
@@ -22,6 +23,7 @@ class GonModeler(node.Node):
 
 		node.Node.__init__(self, id, nodelocations, **kwargs)
 		self.defineUserInterface()
+		self.start()
 
 	# calibrate needs to take a specific value
 	def loop(self, axis, points, interval):
@@ -38,14 +40,17 @@ class GonModeler(node.Node):
 		currentpos = self.getStagePosition()
 
 		for i in range(points):
+			t = timer.Timer('loop')
 			if self.threadstop.isSet():
 				print 'loop breaking before all points done'
+				t.stop()
 				break
 			currentpos['stage position'][axis] += interval
 			datalist = self.acquireNextPosition(axis, currentpos)
 			self.writeData(mag, axis, datalist)
-
+			t.stop()
 		print 'loop done'
+		self.threadlock.release()
 
 
 	def acquireNextPosition(self, axis, state=None):
@@ -57,6 +62,7 @@ class GonModeler(node.Node):
 
 		## acquire image
 		newimagedata = self.cam.acquireCameraImageData(correction=0)
+		self.publish(newimagedata, event.CameraImagePublishEvent)
 		newnumimage = newimagedata.content['image']
 
 		## insert into correlator
@@ -65,7 +71,7 @@ class GonModeler(node.Node):
 		## cross correlation if oldimagedata exists
 		if self.oldimagedata is not None:
 			## cross correlation
-			crosscorr = self.correlator.phaseCorrelation()
+			crosscorr = self.correlator.phaseCorrelate()
 			
 			## subtract auto correlation
 			crosscorr -= self.autocorr
@@ -75,12 +81,12 @@ class GonModeler(node.Node):
 			self.peakfinder.subpixelPeak()
 			peak = self.peakfinder.getResults()
 			peakvalue = peak['subpixel peak value']
-			shift = correlator.wrap_coord(peak['subpixel peak'], pcimage.shape)
+			shift = correlator.wrap_coord(peak['subpixel peak'], crosscorr.shape)
 			binx = newimagedata.content['camera']['binning']['x']
 			biny = newimagedata.content['camera']['binning']['y']
 			pixelsyx = biny * shift[0], binx * shift[1]
-			pixelsx = imageyx[1]
-			pixelsy = imageyx[0]
+			pixelsx = pixelsyx[1]
+			pixelsy = pixelsyx[0]
 			pixelsh = abs(pixelsx + 1j * pixelsy)
 
 			## calculate stage shift
@@ -101,7 +107,7 @@ class GonModeler(node.Node):
 			datalist = []
 
 		self.correlator.insertImage(newnumimage)
-		self.autocorr = self.correlator.phaseCorrelation()
+		self.autocorr = self.correlator.phaseCorrelate()
 		self.oldimagedata = newimagedata
 
 		return datalist
@@ -142,57 +148,28 @@ class GonModeler(node.Node):
 		dat = self.researchByDataID('stage position')
 		return dat.content
 
-	def getMagnificaiton(self):
+	def getMagnification(self):
 		dat = self.researchByDataID('magnification')
 		return dat.content['magnification']
 
 	def defineUserInterface(self):
 		nodespec = node.Node.defineUserInterface(self)
 
-		#### parameters for user to set
-		self.attempts = 5
-		self.range = [1e-7, 1e-6]
-		self.correlationthreshold = 0.05
-		self.camerastate = {'size': 512, 'binning': 1, 'exposure time': 500}
-		try:
-			isdata = self.researchByDataID(self.parameter)
-			self.base = isdata.content[self.parameter]
-		except:
-			self.base = {'x': 0.0, 'y':0.0}
-		####
-
-		cspec = self.registerUIMethod(self.uiCalibrate, 'Calibrate', ())
-
-		paramchoices = self.registerUIData('paramdata', 'array', default=('image shift', 'stage position'))
-
-
+		axes = self.registerUIData('axes', 'array', default=('x','y'))
 		argspec = (
-		self.registerUIData('Base', 'struct', default=self.base),
-		self.registerUIData('Minimum', 'float', default=self.range[0]),
-		self.registerUIData('Maximum', 'float', default=self.range[1]),
-		self.registerUIData('Attempts', 'integer', default=self.attempts),
-		self.registerUIData('Correlation Threshold', 'integer', default=self.correlationthreshold),
-		self.registerUIData('Camera State', 'struct', default=self.camerastate)
-		)
-		rspec = self.registerUIMethod(self.uiSetParameters, 'Set Parameters', argspec)
+			self.registerUIData('Axis', 'string', default='x', choices=axes),
+			self.registerUIData('Points', 'integer', default=200),
+			self.registerUIData('Interval', 'float', default=5e-6),
+			)
+		start = self.registerUIMethod(self.uiStartLoop, 'Start', argspec)
+		stop = self.registerUIMethod(self.uiStopLoop, 'Stop', ())
+		measure = self.registerUIContainer('Measure', (start, stop))
 
-		self.validshift = self.registerUIData('Valid Shift', 'struct', permissions='rw')
-		self.validshift.set(
-			{
-			'correlation': {'min': 20.0, 'max': 200.0},
-			'calibration': {'min': 20.0, 'max': 200.0}
-			}
-		)
+		camconfig = self.cam.configUIData()
 
-		argspec = (self.registerUIData('Filename', 'string'),)
-		save = self.registerUIMethod(self.save, 'Save', argspec)
-		load = self.registerUIMethod(self.load, 'Load', argspec)
+		self.registerUISpec('Goniometer Modeler', (measure, camconfig, nodespec))
 
-		filespec = self.registerUIContainer('File', (save, load))
-
-		self.registerUISpec('Calibration', (nodespec, cspec, rspec, self.validshift, filespec))
-
-	def uiStartMeasuring(self):
+	def uiStartLoop(self, axis, points, interval):
 		if not self.threadlock.acquire(0):
 			return ''
 		self.threadstop.clear()
@@ -201,6 +178,6 @@ class GonModeler(node.Node):
 		t.start()
 		return ''
 
-	def uiStopMeasuring(self):
+	def uiStopLoop(self):
 		self.threadstop.set()
 		return ''
