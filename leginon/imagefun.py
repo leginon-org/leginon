@@ -3,10 +3,10 @@ import fftengine
 
 if fftengine.fftFFTW is None:
 	ffteng = fftengine.fftNumeric()
-	print 'USING Numeric FFT'
+#	print 'USING Numeric FFT'
 else:
 	ffteng = fftengine.fftFFTW()
-	print 'USING FFTW'
+#	print 'USING FFTW'
 
 ## Numeric seems to use infinity as a result of zero
 ## division, but I can find no infinity constant or any other way of 

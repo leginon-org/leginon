@@ -112,7 +112,10 @@ class Manager(node.Node):
 		output an event to a node using node id
 		overrides Node.outputEvent, which sends events to manager
 		'''
-		client = self.clients[nodeid]
+		try:
+			client = self.clients[nodeid]
+		except KeyError:
+			return
 		self.eventToClient(ievent, client, wait, timeout)
 
 	def confirmEvent(self, ievent):
@@ -335,7 +338,6 @@ class Manager(node.Node):
 			self.uiserver.deleteObject(name)
 		except:
 			self.printerror('cannot delete client container for node')
-			self.printException()
 
 	def handleNodeStatus(self, ievent):
 		nodeid = ievent['id'][:-1]

@@ -199,18 +199,21 @@ class wxUIClient(UIClient):
 		return ''
 
 class UIApp(wxApp):
-	def __init__(self, serverhostname, serverport):
+	def __init__(self, serverhostname, serverport, title='UI', containername='UI Client'):
 		self.serverhostname = serverhostname
 		self.serverport = serverport
+		self.title = title
+		self.containername = containername
 		wxApp.__init__(self, 0)
 		self.MainLoop()
 
 	def OnInit(self):
-		self.frame = wxFrame(NULL, -1, 'UI')
+		self.frame = wxFrame(NULL, -1, self.title)
 		self.panel = wxScrolledWindow(self.frame, -1, size=(600, 700))
 		self.panel.SetScrollRate(1, 1)		
-		containerclass = wxClientContainerFactory(wxStaticBoxContainerWidget)
-		self.container = containerclass('UI Client', self.panel, self,
+#		containerclass = wxClientContainerFactory(wxStaticBoxContainerWidget)
+		containerclass = wxClientContainerFactory(wxSimpleContainerWidget)
+		self.container = containerclass(self.containername, self.panel, self,
 																		(self.serverhostname, self.serverport))
 #		self.container.uiclient.start()
 		if self.container.sizer is not None:
@@ -404,6 +407,18 @@ class wxContainerWidget(wxWidget):
 		if self.notebook is not None:
 			self.notebook.Destroy()
 			self.sizer.Remove(self.notebooksizer)
+
+class wxSimpleContainerWidget(wxContainerWidget):
+	def __init__(self, name, parent, container):
+		wxContainerWidget.__init__(self, name, parent, container)
+		self.sizer = wxBoxSizer(wxVERTICAL)
+
+	def destroy(self):
+		wxContainerWidget.destroy(self)
+
+	def _addWidget(self, namelist, typelist, value, settings):
+		wxContainerWidget._addWidget(self, namelist, typelist, value, settings)
+		self.layout()
 
 class wxStaticBoxContainerWidget(wxContainerWidget):
 	def __init__(self, name, parent, container):

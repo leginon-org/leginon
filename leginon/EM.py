@@ -217,12 +217,22 @@ class EM(node.Node):
 			fp, pathname, description = imp.find_module(scope[0])
 			scopemodule = imp.load_module(scope[0], fp, pathname, description)
 			if scope[1]:
-				self.scope = scopedict.factory(scopemodule.__dict__[scope[1]])()
+				try:
+					self.scope = scopedict.factory(scopemodule.__dict__[scope[1]])()
+				except:
+					print 'cannot get scope class'
+					self.exit()
+					return
 		if camera[0]:
 			fp, pathname, description = imp.find_module(camera[0])
 			cameramodule = imp.load_module(camera[0], fp, pathname, description)
 			if camera[1]:
-				self.camera = cameradict.factory(cameramodule.__dict__[camera[1]])()
+				try:
+					self.camera = cameradict.factory(cameramodule.__dict__[camera[1]])()
+				except:
+					print 'cannot get camera class'
+					self.exit()
+					return
 
 		ids = ['scope', 'camera', 'camera no image data', 'all em']
 		ids += self.scope.keys()
@@ -246,8 +256,14 @@ class EM(node.Node):
 
 	def exit(self):
 		node.Node.exit(self)
-		self.scope.exit()
-		self.camera.exit()
+		try:
+			self.scope.exit()
+		except AttributeError:
+			pass
+		try:
+			self.camera.exit()
+		except AttributeError:
+			pass
 
 	def doLock(self, ievent):
 		print 'EM do lock'

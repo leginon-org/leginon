@@ -22,5 +22,6 @@ managerlocation = m.location()
 launcher = launcher.Launcher((socket.gethostname(),),
 															{'manager': managerlocation})
 client = uiclient.UIApp(managerlocation['hostname'],
-													managerlocation['UI port'])
+												managerlocation['UI port'],
+												'Leginon II')
 
