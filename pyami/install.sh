@@ -1,5 +1,6 @@
 #!/bin/sh
 
-install ImageViewer.py /usr/lib/python/site-packages
-install ImageCanvas.py /usr/lib/python/site-packages
-install NumericImage.py /usr/lib/python/site-packages
+mkdir /ami/sw/lib/python/viewer
+install ImageViewer.py /ami/sw/lib/python/viewer
+install ImageCanvas.py /ami/sw/lib/python/viewer
+install NumericImage.py /ami/sw/lib/python/viewer

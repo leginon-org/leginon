@@ -3,7 +3,6 @@
 import sys
 from Tkinter import *
 from ImageCanvas import *
-import Mrc
 #from NumericImage import *
 
 
@@ -63,13 +62,15 @@ if __name__ == '__main__':
 	print 'pack ImageViewer'
 	jim.pack()
 
-	print 'read MRC'
-	data1 = Mrc.mrc_to_numeric('test1.mrc')
+	if 0:
+		print 'read MRC'
+		from mrc import Mrc
+		data1 = Mrc.mrc_to_numeric('test1.mrc')
 
-	print 'data into ImageViewer'
-	jim.import_numeric(data1)
-	print 'clip ImageViewer'
-	jim.clip((500,700))
+		print 'data into ImageViewer'
+		jim.import_numeric(data1)
+		print 'clip ImageViewer'
+		jim.clip((500,700))
 
 	print 'mainloop'
 	root.mainloop()

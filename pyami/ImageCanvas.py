@@ -2,6 +2,7 @@
 
 from Tkinter import *
 from NumericImage import *
+import time
 
 class ImageCanvas(Frame):
 	def __init__(self, *args, **kargs):
@@ -95,10 +96,13 @@ class ImageCanvas(Frame):
 		self.canvas['scrollregion'] = (x1,y1,x2,y2)
 
 	def use_numeric(self, ndata):
+		print 'use_numeric start'
 		## use the old value of clip
 		oldclip = self.clip()
 		self.numimage = NumericImage(ndata,clip=oldclip)
 		self.update_scaling_widgets()
+		self.update_canvas()
+		print 'use_numeric end'
 
 	def update_scaling_widgets(self):
 		print 'update_scaling_widgets START'
@@ -108,8 +112,10 @@ class ImageCanvas(Frame):
 
 	def clip(self, newclip=None):
 		if newclip:
+			print 'clipping'
 			self.__set_numimage_clip(newclip)
 			self.update_canvas()
+			print 'done clipping'
 
 		return self.__get_numimage_clip()
 
@@ -135,12 +141,14 @@ class ImageCanvas(Frame):
 		print 'update_canvas DONE'
 
 	def zoom(self, factor):
+		print 'zooming'
 		self.zoomfactor = self.zoomfactor * factor
 		oldsize = self.numimage.orig_size
 		newsizex = int(round(oldsize[0] * self.zoomfactor))
 		newsizey = int(round(oldsize[1] * self.zoomfactor))
 		self.numimage.transform['output_size'] = (newsizex, newsizey)
 		self.update_canvas()
+		print 'done zooming'
 
 	def canvasx(self, *args, **kargs):
 		return self.canvas.canvasx(*args, **kargs)
@@ -186,6 +194,8 @@ class CursorInfo:
 		imcan = self.imagecanvas
 
 		imcoord = imcan.canvasxy_to_imagexy( cancoord )
+		if not imcan.numimage:
+			return
 		numcoord = imcan.numimage.imagexy_to_numericxy(imcoord)
 
 		if numcoord:
@@ -202,7 +212,7 @@ class CursorInfo:
 		
 class CursorInfoWidget(Frame):
 	def __init__(self, parent, cursorinfo, *args, **kargs):
-		Frame.__init__(self, *args, **kargs)
+		Frame.__init__(self,parent, *args, **kargs)
 		self.xlab = Label(self, textvariable=cursorinfo.numx, width=6)
 		self.ylab = Label(self, textvariable=cursorinfo.numy, width=6)
 		self.ilab = Label(self, textvariable=cursorinfo.numdata, width=9)
@@ -222,6 +232,8 @@ class ScalingWidget(Frame):
 		self.rangemax = DoubleVar()
 		self.limit_from = None
 		self.limit_to = None
+		self.minscalevalue = None
+		self.maxscalevalue = None
 		self.__build()
 		self.__callbacks_off()
 
@@ -236,12 +248,13 @@ class ScalingWidget(Frame):
 		self.set_from_imagecanvas()
 
 	def __build(self):
-		#self.minscale = Scale(self, variable=self.rangemin, orient=HORIZONTAL, showvalue=NO, width=8, length=300)
-		#self.maxscale = Scale(self, variable=self.rangemax, orient=HORIZONTAL, showvalue=NO, width=8, length=300)
 		self.minscale = Scale(self, orient=HORIZONTAL, showvalue=NO, width=8, length=300)
 		self.maxscale = Scale(self, orient=HORIZONTAL, showvalue=NO, width=8, length=300)
 		self.minlab = Label(self, textvariable=self.rangemin)
 		self.maxlab = Label(self, textvariable=self.rangemax)
+
+		print 'minrepeatdelay', self.minscale['repeatdelay']
+		print 'maxrepeatdelay', self.maxscale['repeatdelay']
 
 		self.minscale.grid(column=0, row=0)
 		self.maxscale.grid(column=0, row=1)
@@ -273,14 +286,23 @@ class ScalingWidget(Frame):
 		if minmin == None:
 			return
 
+		print 'set_from_imagecanvas extrema', minmin, maxmax
 		self.__set_limits( (minmin, maxmax) )
+		self.update()
 		self.__callbacks_on()
 
 	def __set_limits(self, newlimits):
-		self.minscale['from_'] = newlimits[0]
-		self.maxscale['from_'] = newlimits[0]
-		self.minscale['to'] = newlimits[1]
-		self.maxscale['to'] = newlimits[1]
+		print 'set_limits ', newlimits
+		newmin = newlimits[0]
+		newmax = newlimits[1]
+		newres = (newmax - newmin) / 256.0
+		self.minscale['resolution'] = newres
+		self.maxscale['resolution'] = newres
+		self.minscale['from'] = newmin
+		self.maxscale['from'] = newmin
+		self.minscale['to'] = newmax
+		self.maxscale['to'] = newmax
+		print 'set_limits end', self.minscale['from'], self.minscale['to']
 
 	def __set_values(self, newvalues):
 		self.minscale.set(newvalues[0])
@@ -290,21 +312,40 @@ class ScalingWidget(Frame):
 		print 'callbacks on'
 		self.minscale['command'] = self._minscale_callback
 		self.maxscale['command'] = self._maxscale_callback
+		print 'callbacks on end'
 
 	def __callbacks_off(self):
 		print 'callbacks off'
 		self.minscale['command'] = None
 		self.maxscale['command'] = None
+		print 'callbacks off end'
 
 	def _minscale_callback(self, newval=None):
 		### turn off this callback while it is running
+		self.minscale['command'] = ''
+		if self.minscalevalue == newval:
+			self.minscale['command'] = self._minscale_callback
+			return
+		self.minscalevalue = newval
+		print 'minscale_callback start', newval
 		self.rangemin.set(newval)
 		self.__update_imagecanvas()
+		self.minscale['command'] = self._minscale_callback
+		print 'minscale_callback end'
 
 	def _maxscale_callback(self, newval=None):
 		### turn off this callback while it is running
+		self.maxscale['command'] = ''
+		if self.maxscalevalue == newval:
+			self.maxscale['command'] = self._maxscale_callback
+			return
+		self.maxscalevalue = newval
+
+		print 'maxscale_callback start', newval
 		self.rangemax.set(newval)
 		self.__update_imagecanvas()
+		self.maxscale['command'] = self._maxscale_callback
+		print 'maxscale_callback end'
 
 	def __update_imagecanvas(self):
 		"""update the clipping on the imageitem"""
@@ -320,14 +361,15 @@ if __name__ == '__main__':
 	mycan = ImageCanvas(None,bg='darkgrey')
 	mycan.pack(expand=YES,fill=BOTH)
 
-	from Mrc import *
-	ndata = mrc_to_numeric('test1.mrc')
+	from mrc.Mrc import *
+	ndata = mrc_to_numeric('float.mrc')
 	mycan.use_numeric(ndata)
 	mycan.update_canvas()
 
 	newwin = Toplevel()
 	sw = ScalingWidget(newwin)
 	sw.pack()
+
 	sw.add_imagecanvas(mycan)
 
 	mycan.mainloop()

@@ -2,6 +2,7 @@
 
 from Tkinter import *
 from ImageViewer import *
+from mrc.Mrc import mrc_to_numeric
 import MySQLdb
 
 root = Tk()
@@ -15,7 +16,7 @@ iv.pack()
 def import_mrc(viewer, filename):
 	data = mrc_to_numeric(filename)
 	viewer.import_numeric(data)
-	viewer.show()
+	#viewer.show()
 	viewer.update()
 
 while 1:
