@@ -20,8 +20,11 @@ setup(
 	cmdclass={'install_data': InstallData},
 	packages=['Leginon', 'Leginon.gui', 'Leginon.gui.wx', 'Leginon.icons'],
 	package_dir={'Leginon': ''},
-	data_files=[('Leginon/config', ['config/default.cfg']),
-							('Leginon/icons', glob.glob('icons/*.png'))],
+	data_files=[
+		('Leginon/config', ['config/default.cfg']),
+		('Leginon/icons', glob.glob('icons/*.png')),
+		('Leginon/icons/processing', glob.glob('icons/processing/*.png')),
+	],
 	scripts=['install-leginon.py', 'start-leginon.py'],
 )
 

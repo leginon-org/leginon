@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Selector.py,v $
-# $Revision: 1.6 $
+# $Revision: 1.7 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-29 21:31:21 $
+# $Date: 2004-10-29 21:51:14 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -111,6 +111,7 @@ class SelectorItem(object):
 			self.items[3].Start()
 		elif not value and self.items[3].Running():
 			self.items[3].Rest()
+			self.items[3].Refresh()
 
 class Selector(wx.lib.scrolledpanel.ScrolledPanel):
 	def __init__(self, parent):
