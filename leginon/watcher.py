@@ -60,8 +60,9 @@ class Watcher(node.Node):
 
 		try:
 			self.processEvent(pubevent)
-		except:
+		except Exception, detail:
 			print 'event %s not processed' % (pubevent,)
+			print detail
 			
 		## release lock if necessary
 		if havelock:
