@@ -131,6 +131,7 @@ class PresetsManager(node.Node):
 		e = event.ListPublishEvent(idlist=ids)
 		self.outputEvent(e)
 
+		self.cam = camerafuncs.CameraFuncs(self)
 		self.currentselection = None
 		self.currentpreset = None
 		self.presets = []
@@ -514,12 +515,30 @@ class PresetsManager(node.Node):
 		self.uiselectpreset.set(pnames, 0)
 		self.orderlist.set(pnames)
 
+		## acquisition
+		cameraconfigure = self.cam.configUIData()
+		acqmeth = uidata.Method('Acquire', self.uiAcquire)
+		self.ui_image = uidata.Image('Image', None, 'r')
+
+		imagecont = uidata.Container('Acquisition')
+		imagecont.addObjects((cameraconfigure, acqmeth, self.ui_image,))
+
 		## main container
 		container = uidata.LargeContainer('Presets Manager')
-		container.addObjects((importcont,createcont,selectcont))
+		container.addObjects((importcont,createcont,selectcont,imagecont))
 		self.uiserver.addObject(container)
 
 		return
+
+	def uiAcquire(self):
+		print 'acquiring image'
+		imagedata = self.cam.acquireCameraImageData(camconfig='UI')
+		if imagedata is None:
+			return
+		self.scope = imagedata['scope']
+		self.camera = imagedata['camera']
+		self.shape = imagedata['image'].shape
+		self.ui_image.setImage(imagedata['image'])
 
 	def targetToScope(self, newpresetname, emtargetdata):
 		'''
