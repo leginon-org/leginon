@@ -20,18 +20,20 @@ $defaultpreset='hl';
 $sessionId= ($_GET[Id]) ? $_GET[Id] : $defaultId;
 $preset = ($_GET[preset]) ? $_GET[preset] : $defaultpreset;
 $viewdata = ($_GET['vdata']==1) ? true : false;
+$viewsql = $_GET[vs];
 
 $thicknessdata = $leginondata->getIceThickness($sessionId, $preset);
 foreach($thicknessdata as $t) {
 	$data[] = $t['thickness-mean'];
 }
+if ($viewsql) {
+	$sql = $leginondata->mysql->getSQLQuery();
+	echo $sql;
+	exit;
+}
 if ($viewdata) {
-		echo "<pre>";
-		echo "timestamp	thickness-mean<br>";
-	foreach($thicknessdata as $t) {
-		echo $t['timestamp']."	".$t['thickness-mean']."\n";
-	}
-		echo "</pre>";
+	$keys = array("timestamp", "thickness-mean");
+	echo dumpData($thicknessdata, $keys);
 	exit;
 }
 

@@ -11,6 +11,8 @@ $defaultId= 1445;
 $sessionId= ($_GET[Id]) ? $_GET[Id] : $defaultId;
 $width = $_GET['w'];
 $height = $_GET['h'];
+$viewdata = $_GET[vd];
+$viewsql = $_GET[vs];
 
 
 $data = $leginondata->getDriftedImages($sessionId);
@@ -24,6 +26,15 @@ if ($dt = $leginondata->getDriftTime($ids)) {
 	}
 	if ($total)
 		$total .= " (s)";
+}
+if ($viewsql) {
+	$sql = $leginondata->mysql->getSQLQuery();
+	echo $sql;
+	exit;
+}
+if ($viewdata) {
+	echo dumpData($dt);
+	exit;
 }
 if (!$datay) {
 	$width = 12;

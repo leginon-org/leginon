@@ -368,4 +368,22 @@ function formatHtmlRow($k, $v) {
 		.$v.'</td></tr>'."\n";
 }
 
+function dumpData($data, $keys="") {
+	if (!is_array($data))
+		return;
+	$crlf = "\n";
+	$sep = "	";
+	$dump = "<pre>";
+	$keys = ($keys) ? $keys : array_keys(current($data));
+	$dump .= implode($sep, $keys).$crlf;
+	foreach ($data as $d) {
+		$f=array();
+		foreach ($keys as $k)
+			$f[] = $d[$k];
+		$dump .= implode($sep, $f).$crlf;
+	}
+	$dump .= "</pre>";
+	return $dump;
+}
+
 ?>

@@ -69,7 +69,8 @@ if (!empty($icethicknesspresets)) {
 	foreach($icethicknesspresets as $preset) {
 	echo "<tr>";
 		echo "<td>";
-		echo "<a href='icegraph.php?Id=$sessionId&vdata=1&preset=".$preset['name']."'>[data]</a><br>";
+		echo "<a href='icegraph.php?Id=$sessionId&vdata=1&preset=".$preset['name']."'>[data]</a>";
+		echo "<a href='icegraph.php?Id=$sessionId&vs=1&preset=".$preset['name']."'>[sql]</a><br>";
 		echo "<img border='0' src='icegraph.php?Id=$sessionId&preset=".$preset['name']."'>";
 		echo "</td>\n";
 	echo "</tr>\n";
@@ -93,7 +94,8 @@ if (!$leginondata->getRelatedStats($sessionId, $preset))
 ?>
 <tr>
 <td>
-<a href="statsgraph.php?vdata=1&Id=<?=$sessionId?>&preset=<?=$preset?>">[data]</a><br>
+<a href="statsgraph.php?vdata=1&Id=<?=$sessionId?>&preset=<?=$preset?>">[data]</a>
+<a href="statsgraph.php?vs=1&Id=<?=$sessionId?>&preset=<?=$preset?>">[sql]</a><br>
 <img src="statsgraph.php?Id=<?=$sessionId?>&preset=<?=$preset?>">
 </td>
 </tr>

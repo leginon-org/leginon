@@ -66,6 +66,8 @@ echo "<br>";
 </form>
 <?
 $urlrate = ($maxrate) ? "&maxr=$maxrate" : "";
+echo "<a href='avgdriftgraph.php?vd=1&Id=$sessionId'>[data]</a>";
+echo "<a href='avgdriftgraph.php?vs=1&Id=$sessionId'>[sql]</a><br>";
 echo "<img src='avgdriftgraph.php?Id=$sessionId$urlrate'>";
 echo "<br>";
 echo "<br>";
@@ -80,6 +82,8 @@ echo "</td>\n";
 </tr>
 <tr>
 <td>
+<a href="drifttimegraph.php?vd=1&Id=<?=$sessionId?>">[data]</a>
+<a href="drifttimegraph.php?vs=1&Id=<?=$sessionId?>">[sql]</a><br>
 <img src="drifttimegraph.php?Id=<?=$sessionId?>">
 </td>
 </tr>

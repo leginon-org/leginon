@@ -13,8 +13,14 @@ $histogram = ($_GET[hg]==1) ? true : false;
 $maxrate = $_GET[maxr];
 $minrate = $_GET[minr];
 $viewdata = $_GET[vd];
+$viewsql = $_GET[vs];
 
 $driftdata = $leginondata->getDriftDataFromSessionId($sessionId);
+if ($viewsql) {
+	$sql = $leginondata->mysql->getSQLQuery();
+	echo $sql;
+	exit;
+}
 
 foreach ($driftdata as $drift) {
 	$id = $drift['imageId'];
@@ -22,18 +28,10 @@ foreach ($driftdata as $drift) {
 }
 
 if ($viewdata) {
-$crlf = "\n";
-$sep = "	";
-echo "<pre>";
-echo	"timestamp".$sep."imageId".$sep."targetId".$sep."driftx".$sep
-	."drifty".$sep."driftvalue".$sep."interval".$sep."rate".$crlf;
-foreach ($data as $drift)
-	echo	$drift['timestamp'].$sep.$drift['imageId'].$sep
-		.$drift['targetId'].$sep.$drift['driftx'].$sep
-		.$drift['drifty'].$sep.$drift['driftvalue'].$sep
-		.$drift['interval'].$sep.$drift['rate'].$crlf;
-echo "</pre>";
-exit;
+	$keys = array("timestamp", "imageId", "targetId", "driftx",
+		"drifty", "driftvalue", "interval", "rate");
+	echo dumpData($data, $keys);
+	exit;
 }
 
 function TimeCallback($aVal) {

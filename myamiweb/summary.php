@@ -89,7 +89,8 @@ echo "<a href='driftreport.php?Id=$expId'>report &raquo;</a>";
 echo "<table border='0'>\n";
 	echo "<tr>";
 		echo "<td>";
-	echo "<a href='avgdriftgraph.php?vd=1&Id=$expId'>[data]</a><br>";
+	echo "<a href='avgdriftgraph.php?vd=1&Id=$expId'>[data]</a>";
+	echo "<a href='avgdriftgraph.php?vs=1&Id=$expId'>[sql]</a><br>";
 	echo "<img src='avgdriftgraph.php?w=256&Id=$expId'>";
 		echo "</td>";
 	echo "</tr>";
@@ -110,7 +111,8 @@ if (!empty($icethicknesspresets)) {
 	echo "<tr>";
 	foreach($icethicknesspresets as $preset) {
 		echo "<td>";
-		echo "<a href='icegraph.php?Id=$expId&vdata=1&preset=".$preset['name']."'>[data]</a><br>";
+		echo "<a href='icegraph.php?Id=$expId&vdata=1&preset=".$preset['name']."'>[data]</a>";
+		echo "<a href='icegraph.php?Id=$expId&vs=1&preset=".$preset['name']."'>[sql]</a><br>";
 		echo "<a href='icegraph.php?Id=$expId&preset=".$preset['name']."'>";
 		echo "<img border='0' src='icegraph.php?Id=$expId&w=256&preset=".$preset['name']."'>";
 		echo "</a>\n";

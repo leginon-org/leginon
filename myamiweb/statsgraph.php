@@ -10,23 +10,18 @@ $defaultpreset='en';
 $sessionId= ($_GET[Id]) ? $_GET[Id] : $defaultId;
 $preset = ($_GET[preset]) ? $_GET[preset] : $defaultpreset;
 $viewdata = ($_GET['vdata']==1) ? true : false;
+$viewsql = $_GET[vs];
 
 $stats = $leginondata->getRelatedStats($sessionId, $preset);
 
+if ($viewsql) {
+	$sql = $leginondata->mysql->getSQLQuery();
+	echo $sql;
+	exit;
+}
+
 if ($viewdata) {
-	$sep="	";
-	$crlf="\n";
-	if (!$stats)
-		exit;
-	echo "<pre>";
-	foreach($stats[0] as $k=>$v) {
-		$fields[]=$k;
-	}
-	echo implode($sep, $fields).$crlf;
-	foreach($stats as $stat) {
-		echo implode($sep, $stat).$crlf;
-	}
-		echo "</pre>";
+	echo dumpData($stats);
 	exit;
 }
 
