@@ -75,13 +75,11 @@ class Correlator(object):
 			raise RuntimeError('images not same dimensions')
 		
 		## calculate FFTs of subject images, if not already done
-		print 'calculating FFT of 0'
 		fft0 = self.getFFT(0)
 		if fft0 is None:
 			fft0 = self.fftengine.transform(im0)
 			self.setFFT(0, fft0)
 
-		print 'calculating FFT of 1'
 		fft1 = self.getFFT(1)
 		if fft1 is None:
 			fft1 = self.fftengine.transform(im1)
@@ -108,6 +106,20 @@ class Correlator(object):
 		pc = self.fftengine.itransform(pcfft)
 		self.results['phase correlation image'] = pc
 
+#### this is a utility function to convert an unsigned coordinate
+#### to a +- shift from 0 by wrapping around
+def wrap_coord(coord, shape):
+	wraplimit = (shape[0]/2, shape[1]/2)
+	# if coord is past halfway, shift is negative, wrap
+	if coord[0] < wraplimit[0]:
+		wrapped0 = coord[0]
+	else:
+		wrapped0 = coord[0] - shape[0]
+	if coord[1] < wraplimit[1]:
+		wrapped1 = coord[1]
+	else:
+		wrapped1 = coord[1] - shape[1]
+	return (wrapped0, wrapped1)
 
 if __name__ == '__main__':
 	from mrc.Mrc import mrc_to_numeric
@@ -119,20 +131,20 @@ if __name__ == '__main__':
 	iv = ImageViewer(tk)
 	iv.pack()
 
-	if 0:
+	if 1:
 		im1 = mrc_to_numeric('test1.mrc')
 		im2 = mrc_to_numeric('test2.mrc')
-	if 1:
+	if 0:
 		im1 = mrc_to_numeric('02dec12a.001.mrc')
 		im2 = mrc_to_numeric('02dec12a.001.post.mrc')
 
+	### set estimate = 0 for optimized fft (but longer planning step)
 	f = fftengine.fftFFTW(estimate=1)
 	c = Correlator(f)
 	p = peakfinder.PeakFinder()
 
 	for im in (im1, im2, im1, im2, im1, im2, im1):
 		c.insertImage(im)
-		print 'PHASE'
 		try:
 			c.phaseCorrelate()
 		except:
@@ -144,8 +156,12 @@ if __name__ == '__main__':
 		pcim = res['phase correlation image']
 		p.setImage(pcim)
 		p.subpixelPeak()
-		peakres = p.getResults()
-		print peakres
+		peak = p.getResults()['subpixel peak']
+		print 'peak', peak
+		
+		shift = wrap_coord(peak, pcim.shape)
+		print 'shift', shift
+
 		#iv.import_numeric(pcim)
 		#iv.update()
 

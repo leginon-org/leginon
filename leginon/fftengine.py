@@ -72,7 +72,6 @@ class fftFFTW(fftEngine):
 
 	def _transform(self, im):
 		if im.typecode() != Numeric.Float32:
-			print 'warning: casting image to Float32'
 			im = im.astype(Numeric.Float32)
 		fftshape = (im.shape[0] / 2 + 1, im.shape[1])
 		imfft = Numeric.zeros(fftshape, Numeric.Complex32)
