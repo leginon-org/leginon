@@ -2,7 +2,6 @@
 
 import leginonobject
 import array
-import Numeric
 import strictdict
 import copy
 import Mrc
@@ -231,18 +230,6 @@ class MoreData(Data):
 		return t
 	typemap = classmethod(typemap)
 	
-
-class NumericData(Data):
-	'''
-	Data with one item:  'array'
-	    a Numeric array
-	'''
-	def typemap(cls):
-		t = Data.typemap()
-		t += [ ('array', Numeric.ArrayType), ]
-		return t
-	typemap = classmethod(typemap)
-
 class EMData(Data):
 	def typemap(cls):
 		t = Data.typemap()
@@ -279,7 +266,7 @@ class CameraEMData(EMData):
 			('dimension', dict),
 			('binning', dict),
 			('exposure time', float),
-			('image data', Numeric.ArrayType),
+			('image data', strictdict.NumericArrayType),
 		]
 		return t
 	typemap = classmethod(typemap)
@@ -348,7 +335,7 @@ class PixelSizeCalibrationData(MagDependentCalibrationData):
 class MatrixCalibrationData(MagDependentCalibrationData):
 	def typemap(cls):
 		t = MagDependentCalibrationData.typemap()
-		t += [ ('matrix', Numeric.ArrayType), ]
+		t += [ ('matrix', strictdict.NumericArrayType), ]
 		return t
 	typemap = classmethod(typemap)
 
@@ -405,7 +392,7 @@ class CorrelationData(Data):
 class ImageData(Data):
 	def typemap(cls):
 		t = Data.typemap()
-		t += [ ('image', Numeric.ArrayType), ]
+		t += [ ('image', strictdict.NumericArrayType), ]
 		# for DB
 		t += [ ('filename', str), ]
 		return t
