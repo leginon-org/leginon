@@ -171,7 +171,7 @@ class NumericImage:
 		if len(shape) != 2:
 			raise RuntimeError, 'orig_array must be 2-D Numeric array'
 		## experimenting with clipping to eliminate infinity
-		self.orig_array = Numeric.clip(num_data, -10000, 10000)
+		#self.orig_array = Numeric.clip(num_data, -10000, 10000)
 
 		h,w = shape  # transpose Numeric array
 		self.orig_size = w,h

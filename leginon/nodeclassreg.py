@@ -74,4 +74,5 @@ registerNodeClass('imagemosaic', 'ImageMosaic')
 registerNodeClass('imagemosaic', 'StateImageMosaic')
 registerNodeClass('testmosaic', 'TestMosaic')
 registerNodeClass('imagenode', 'ImageNode')
+registerNodeClass('mosaicnavigator', 'MosaicNavigator')
 

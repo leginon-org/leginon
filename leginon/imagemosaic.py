@@ -231,8 +231,8 @@ class ImageMosaic(watcher.Watcher):
 		return ''
 
 	def uiPublishMosaicImage(self):
-		self.publish(data.ImageData(self.ID(), self.makeImage(self.imagemosaic)),
-			event.ImagePublishEvent)
+		odata = data.ImageData(self.ID(), self.makeImage(self.imagemosaic))
+		self.publish(odata, event.ImagePublishEvent)
 		return ''
 
 	def defineUserInterface(self):
@@ -251,7 +251,7 @@ class StateImageMosaic(ImageMosaic):
 	def uiPublishMosaicImage(self):
 		ImageMosaic.uiPublishMosaicImage(self)
 
-		statedata = {}
+		statedata = {'image data ID': odata.id}
 		for dataid in self.imagemosaic:
 			statedata[dataid]['position'] = self.imagemosaic[dataid]['position']
 			statedata[dataid]['state'] = self.imagemosaic[dataid]['state']
