@@ -229,7 +229,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		emdata = self.node.researchByDataID(('beam tilt',))
 		return emdata
 
-	def measureDefocusStig(self, tilt_value, publish_images=0, drift_timeout=300):
+	def measureDefocusStig(self, tilt_value, publish_images=0, checkdrift=False, drift_timeout=300):
 		self.abortevent.clear()
 		emdata = self.node.researchByDataID(('magnification',))
 		#mag = emdata.content['magnification']
@@ -258,7 +258,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			state2 = copy.deepcopy(tiltcenter)
 			state2['beam tilt'][tiltaxis] += (tilt_value/2.0)
 			try:
-				shiftinfo = self.measureStateShift(state1, state2, publish_images, settle=0.25, checkdrift=True, timeout=drift_timeout)
+				shiftinfo = self.measureStateShift(state1, state2, publish_images, settle=0.25, checkdrift=checkdrift, timeout=drift_timeout)
 			except Abort:
 				break
 
