@@ -24,20 +24,25 @@ Data Production, Pushing, and Pulling
 
    Built-in methods for data handling:
 
-      self.publish(datainstance, eventclass)
+      self.publish(datainstance, eventclass=event.PublishEvent)
             An event of type eventclass is automatically generated after
             the datainstance is published.  The datainstance does not
             leave the node.  It is only available for other nodes
             to pull if they request it.
 
       self.publishRemote(nodeid, datainstance)
-            This publishes datainstance on another node
+            Publishes datainstance on another node
 
+      self.unpublish(dataid, eventclass=event.UnpublishEvent)
+            Unpublishes the data refered to by dataid and generates
+            the specified event.  The data will no longer be available on
+            this node.
 
+      self.researchByDataID(dataid, timeout = 0.5, retries = 10)
+            Attempt to retreive data referenced by dataid.  This 
+            automatically determines where to get the data by 
+            asking the manager.
 
-   Nodes create instances of data classes and then publish the data 
-   so that other nodes have access to it.  After creating an instance 
-   of a data class, call self.publish
 
 Optional User Interface Definition
 
