@@ -324,10 +324,9 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 
 		self.shapeobjects = []
 		self.positions = {}
-		self.connectionobjects = []
 
-		self.connectioninputs = []
-		self.connectionoutputs = []
+		self.inputconnectionpoints = []
+		self.outputconnectionpoints = []
 
 		self.connection = None
 
@@ -406,6 +405,8 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 		return self.parent
 
 	def delete(self):
+		for so in self.shapeobjects:
+			so.delete()
 		if self.parent is not None:
 			self.parent.removeShapeObject(self)
 
@@ -434,38 +435,39 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 			# delete handler?
 			self.UpdateDrawing()
 
-	def addConnectionInput(self, cpo):
-		if cpo not in self.connectioninputs:
-			self.connectioninputs.append(cpo)
+	def addInputConnectionPoint(self, cpo):
+		if cpo not in self.inputconnectionpoints:
+			self.inputconnectionpoints.append(cpo)
 			self.addShapeObject(cpo)
 
-	def removeConnectionInput(self, cpo):
-		if cpo in self.connectioninputs:
-			self.connectioninputs.remove(cpo)
+	def removeInputConnectionPoint(self, cpo):
+		if cpo in self.inputconnectionpoints:
+			self.inputconnectionpoints.remove(cpo)
 			self.removeShapeObject(cpo)
 
-	def addConnectionOutput(self, cpo):
-		if cpo not in self.connectionoutputs:
-			self.connectionoutputs.append(cpo)
+	def addOutputConnectionPoint(self, cpo):
+		if cpo not in self.outputconnectionpoints:
+			self.outputconnectionpoints.append(cpo)
 			self.addShapeObject(cpo)
 
-	def removeConnectionOutput(self, cpo):
+	def removeOutputConnectionPoint(self, cpo):
 		if cpo in self.connectoutputs:
-			self.connectionoutputs.remove(cpo)
+			self.outputconnectionpoints.remove(cpo)
 			self.removeShapeObject(cpo)
 
-	def removeConnectionObjects(self, so):
-		removeconnections = []
-		for co in self.shapeobjects:
-			if isinstance(co, wxConnectionObject):
-				if co.getToShapeObject() == so or co.getFromShapeObject() == so:
-					removeconnections.append(co)
+	def removeConnections(self):
+		removeconnectionpoints = []
+		for so in self.shapeobjects:
+			if isinstance(so, wxConnectionPointObject):
+				removeconnectionpoints.append(so)
 
-		for co in removeconnections:
-			self.removeShapeObject(co)
-
-		if self.parent is not None:
-			self.parent.removeConnectionObjects(so)
+		for cpo in removeconnectionpoints:
+			if cpo in self.inputconnectionpoints:
+				self.inputconnectionpoints.remove(cpo)
+			if cpo in self.outputconnectionpoints:
+				self.outputconnectionpoints.remove(cpo)
+			cpo.removeConnections()
+			cpo.delete()
 
 	def getShapeObjectFromXY(self, x, y, width=None, height=None):
 		for shapeobject in self.shapeobjects:
@@ -549,11 +551,11 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 
 		for i in range(len(self.shapeobjects) - 1, -1, -1):
 			so = self.shapeobjects[i]
-			so.Draw(dc)
-
-		for i in range(len(self.connectionobjects) - 1, -1, -1):
-			connectionobject = self.connectionobjects[i]
-			connectionobject.Draw(dc)
+			if isinstance(so, wxConnectionObject):
+				if so.getTempTo() is not None:
+					so.Draw(dc)
+			else:
+				so.Draw(dc)
 
 		dc.SetPen(pen)
 
@@ -829,11 +831,14 @@ class wxConnectionObject(wxShapeObject):
 	def __init__(self, so1, so2, color=wxBLACK, style=wxSOLID):
 		wxShapeObject.__init__(self, None, None, color, style)
 		self.parent = None
-		self.fromso = so1
-		self.toso = so2
+		self.fromso = None
+		self.toso = None
+		self.tempto = None
+		self.setFromShapeObject(so1)
+		self.setToShapeObject(so2)
 		self.color = color
 		self.style = style
-		self.tempto = None
+		self.drawn = False
 
 	def OnLower(self, evt):
 		if evt.shapeobject in self.shapeobjects:
@@ -882,26 +887,29 @@ class wxConnectionObject(wxShapeObject):
 		return self.fromso
 
 	def setFromShapeObject(self, so):
+		if self.fromso is not None:
+			self.fromso.removeConnectionOutput(self)
 		self.fromso = so
+		if self.fromso is not None:
+			self.fromso.addConnectionOutput(self)
 
 	def getToShapeObject(self):
 		return self.toso
 
 	def setToShapeObject(self, so):
-		self.tempto = None
+		if self.tempto is not None:
+			self.tempto = None
+		if self.toso is not None:
+			self.toso.removeConnectionInput(self)
 		self.toso = so
+		if self.toso is not None:
+			self.toso.addConnectionInput(self)
+
+	def getTempTo(self):
+		return self.tempto
 
 	def setTempTo(self, position):
 		self.tempto = position
-
-#	def DrawText(self, dc, x, y, angle):
-#		dc.SetFont(wxSWISS_FONT)
-#		if not self.text:
-#			return
-#		width, height = dc.GetTextExtent(self.text)
-#		x -= width/2
-#		y -= height/2
-#		dc.DrawRotatedText(self.text, x, y, angle)
 
 	def DrawArrow(self, dc, p, direction, size=7):
 		oldbrush = dc.GetBrush()
@@ -916,53 +924,6 @@ class wxConnectionObject(wxShapeObject):
 		elif direction == 'w':
 			dc.DrawPolygon([(0, 0), (7, -3), (7, 3)], x, y)
 		dc.SetBrush(oldbrush)
-
-	def straightLine(self, dc, so1, so2):
-		x1, y1 = so1.getCanvasCenter()
-		x2, y2 = so2.getCanvasCenter()
-		n1, e1, s1, w1 = so1.getFaces()
-		n2, e2, s2, w2 = so2.getFaces()
-
-		direction = so1.direction(so2)
-		if direction == 'n':
-			if abs(x1 - x2) > so1.width + so2.width:
-				return False
-			p1, p2 = n1, s2
-			x = (p2[0] - p1[0])/2 + p1[0]
-			p1 = (x, p1[1])
-			p2 = (x, p2[1])
-			self.DrawArrow(dc, p2, 'n')
-		elif direction == 'e':
-			if abs(y1 - y2) > so1.height + so2.height:
-				return False
-			p1, p2 = e1, w2
-			y = (p2[1] - p1[1])/2 + p1[1]
-			p1 = (p1[0], y)
-			p2 = (p2[0], y)
-			self.DrawArrow(dc, p2, 'e')
-		elif direction == 's':
-			if abs(x1 - x2) > so1.width + so2.width:
-				return False
-			p1, p2 = s1, n2
-			x = (p2[0] - p1[0])/2 + p1[0]
-			p1 = (x, p1[1])
-			p2 = (x, p2[1])
-			self.DrawArrow(dc, p2, 's')
-		elif direction == 'w':
-			if abs(y1 - y2) > so1.height + so2.height:
-				return False
-			p1, p2 = w1, e2
-			y = (p2[1] - p1[1])/2 + p1[1]
-			p1 = (p1[0], y)
-			p2 = (p2[0], y)
-			self.DrawArrow(dc, p2, 'w')
-		x1, y1 = p1
-		x2, y2 = p2
-		dc.DrawLine(x1, y1, x2, y2)
-
-		tx = (x2 - x1)/2 + x1
-		ty = (y2 - y1)/2 + y1
-#		self.DrawText(dc, tx, ty)
 
 	def crookedLine(self, dc, so1, so2):
 		x1, y1 = so1.getCanvasCenter()
@@ -1018,7 +979,6 @@ class wxConnectionObject(wxShapeObject):
 		apply(dc.DrawLine, l1)
 		apply(dc.DrawLine, l2)
 		apply(dc.DrawLine, l3)
-#		self.DrawText(dc, tx, ty, angle)
 		return x1, y1, x2, y2
 
 	def _crookedLine(self, dc, so1, x2, y2):
@@ -1068,91 +1028,7 @@ class wxConnectionObject(wxShapeObject):
 		apply(dc.DrawLine, l1)
 		apply(dc.DrawLine, l2)
 		apply(dc.DrawLine, l3)
-#		self.DrawText(dc, tx, ty, angle)
 		return x1, y1
-
-	def elbowLine(self, dc, so1, so2):
-		arrowsize = 7
-		x1, y1 = so1.getCanvasCenter()
-		x2, y2 = so2.getCanvasCenter()
-
-		penwidth = dc.GetPen().GetWidth()
-		if so1.width > so2.width:
-			width = so2.width
-		else:
-			width = so1.width
-		if abs(x1 - x2) < width/2 + arrowsize + penwidth + 1:
-			return False
-		if so1.height > so2.height:
-			height = so2.height
-		else:
-			height = so1.height
-		if abs(y1 - y2) < height/2 + arrowsize + penwidth + 1:
-			return False
-
-		n1, e1, s1, w1 = so1.getFaces()
-		n2, e2, s2, w2 = so2.getFaces()
-
-		quadrant = so1.quadrant(so2)
-		if quadrant == 1:
-			if magnitude(n1, w2) < magnitude(e1, s2):
-				p1, p2 = n1, w2
-				reverse = False
-				arrowdirection = 'e'
-			else:
-				p1, p2 = e1, s2
-				reverse = True
-				arrowdirection = 'n'
-		elif quadrant == 2:
-			if magnitude(s1, w2) < magnitude(e1, n2):
-				p1, p2 = s1, w2
-				reverse = False
-				arrowdirection = 'e'
-			else:
-				p1, p2 = e1, n2
-				reverse = True
-				arrowdirection = 's'
-		elif quadrant == 3:
-			if magnitude(s1, e2) < magnitude(w1, n2):
-				p1, p2 = s1, e2
-				reverse = False
-				arrowdirection = 'w'
-			else:
-				p1, p2 = w1, n2
-				reverse = True
-				arrowdirection = 's'
-		elif quadrant == 4:
-			if magnitude(n1, e2) < magnitude(w1, s2):
-				p1, p2 = n1, e2
-				reverse = False
-				arrowdirection = 'w'
-			else:
-				p1, p2 = w1, s2
-				reverse = True
-				arrowdirection = 'n'
-		x1, y1 = p1
-		x2, y2 = p2
-		if reverse:
-			mx = x2
-			my = y1
-		else:
-			mx = x1
-			my = y2
-		dc.DrawLine(x1, y1, mx, my)
-		dc.DrawLine(mx, my, x2, y2)
-		self.DrawArrow(dc, p2, arrowdirection, arrowsize)
-
-		if magnitude((x1, y1), (mx, my)) > magnitude((mx, my), (x2, y2)):
-			tx1, ty1 = x1, y1
-			tx2, ty2 = mx, my
-		else:
-			tx1, ty1 = mx, my
-			tx2, ty2 = x2, y2
-		tx = (tx2 - tx1)/2 + tx1
-		ty = (ty2 - ty1)/2 + ty1
-#		self.DrawText(dc, tx, ty)
-
-		return True
 
 	def Draw(self, dc):
 		pen = dc.GetPen()
@@ -1163,12 +1039,6 @@ class wxConnectionObject(wxShapeObject):
 				self._crookedLine(dc, self.fromso, x, y)
 			elif self.toso is not None:
 				self.crookedLine(dc, self.fromso, self.toso)
-
-#		if self.elbowLine(dc, self.fromso, self.toso):
-#			return
-#		if self.straightLine(dc, self.fromso, self.toso):
-#			return
-
 		dc.SetPen(pen)
 		wxShapeObject.Draw(self, dc)
 
@@ -1191,44 +1061,83 @@ class wxRectangleObject(wxShapeObject):
 		self.positionConnectionInputs()
 		self.positionConnectionOutputs()
 
-	def addConnectionInput(self, cpo):
-		wxShapeObject.addConnectionInput(self, cpo)
+	def addInputConnectionPoint(self, cpo):
+		wxShapeObject.addInputConnectionPoint(self, cpo)
 		self.positionConnectionInputs()
 
-	def removeConnectionInput(self, cpo):
-		wxShapeObject.removeConnectionInput(self, cpo)
+	def removeInputConnectionPoint(self, cpo):
+		wxShapeObject.removeInputConnectionPoint(self, cpo)
 		self.positionConnectionInputs()
 
-	def addConnectionOutput(self, cpo):
-		wxShapeObject.addConnectionOutput(self, cpo)
+	def addOutputConnectionPoint(self, cpo):
+		wxShapeObject.addOutputConnectionPoint(self, cpo)
 		self.positionConnectionOutputs()
 
-	def removeConnectionOutput(self, cpo):
-		wxShapeObject.removeConnectionOutput(self, cpo)
+	def removeOutputConnectionPoint(self, cpo):
+		wxShapeObject.removeOutputConnectionPoint(self, cpo)
 		self.positionConnectionOutputs()
 
 	def positionConnectionInputs(self):
 		# need to account for running out of room
-		nconnectionpoints = len(self.connectioninputs)
+		nconnectionpoints = len(self.inputconnectionpoints)
 		spacings = range(0, self.width, self.width/(nconnectionpoints + 1))
 		for i in range(nconnectionpoints):
-			ci = self.connectioninputs[i]
+			ci = self.inputconnectionpoints[i]
 			self.setChildPosition(ci, spacings[i + 1] - ci.width/2, -ci.height/2)
 
 	def positionConnectionOutputs(self):
 		# need to account for running out of room
-		nconnectionpoints = len(self.connectioninputs)
-		nconnectionpoints = len(self.connectionoutputs)
+		nconnectionpoints = len(self.outputconnectionpoints)
 		spacings = range(0, self.width, self.width/(nconnectionpoints + 1))
 		for i in range(nconnectionpoints):
-			co = self.connectionoutputs[i]
+			co = self.outputconnectionpoints[i]
 			self.setChildPosition(co, spacings[i + 1] - co.width/2,
 														-co.height/2 + self.height - 1)
 
 class wxConnectionPointObject(wxRectangleObject):
 	def __init__(self, color=wxBLACK):
 		wxRectangleObject.__init__(self, 7, 7, color)
-		self.connections = []
+		self.connectioninputs = []
+		self.connectionoutputs = []
+
+	def addConnectionInput(self, connection):
+		if connection not in self.connectioninputs:
+			self.connectioninputs.append(connection)
+		else:
+			raise ValueError('Connection already exists')
+
+	def removeConnectionInput(self, connection):
+		try:
+			self.connectioninputs.remove(connection)
+		except ValueError:
+			raise ValueError('No such connection to remove')
+		connectionoutput = connection.getFromShapeObject()
+		if connectionoutput is not None:
+			connectionoutput.connectionoutputs.remove(connection)
+		connection.delete()
+
+	def addConnectionOutput(self, connection):
+		if connection not in self.connectionoutputs:
+			self.connectionoutputs.append(connection)
+		else:
+			raise ValueError('Connection already exists')
+
+	def removeConnectionOutput(self, connection):
+		try:
+			self.connectionoutputs.remove(connection)
+		except ValueError:
+			raise ValueError('No such connection to remove')
+		connectioninput = connection.getToShapeObject()
+		if connectioninput is not None:
+			connectioninput.connectioninputs.remove(connection)
+		connection.delete()
+
+	def removeConnections(self):
+		wxRectangleObject.removeConnections(self)
+		for input in self.connectioninputs:
+			self.removeConnectionInput(input)
+		for output in self.connectionoutputs:
+			self.removeConnectionOutput(output)
 
 	def OnMotion(self, evt):
 		self.ProcessEvent(MoveConnectionEvent(evt.m_x, evt.m_y))
@@ -1239,6 +1148,25 @@ class wxConnectionPointObject(wxRectangleObject):
 
 	def OnLeftClick(self, evt):
 		self.ProcessEvent(EndConnectionEvent(self))
+
+	def Draw(self, dc):
+		wxRectangleObject.Draw(self, dc)
+		for connection in self.connectioninputs:
+			if not connection.drawn:
+				fromso = connection.getFromShapeObject()
+				if fromso is not None:
+					connection.Draw(dc)
+					connection.drawn = True
+			else:
+				connection.drawn = False
+		for connection in self.connectionoutputs:
+			toso = connection.getToShapeObject()
+			if not connection.drawn:
+				if toso is not None:
+					connection.Draw(dc)
+					connection.drawn = True
+			else:
+				connection.drawn = False
 
 class wxObjectCanvas(wxScrolledWindow):
 	def __init__(self, parent, id, master):

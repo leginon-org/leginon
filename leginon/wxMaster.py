@@ -113,10 +113,10 @@ class Node(wxObjectCanvas.wxRectangleObject):
 		nc = nodeclassreg.getNodeClass(self.nodeclass)
 		for inputclass in nc.eventinputs:
 			input = BindingInput(inputclass.__name__)
-			self.addConnectionInput(input)
+			self.addInputConnectionPoint(input)
 		for outputclass in nc.eventoutputs:
 			output = BindingOutput(outputclass.__name__)
-			self.addConnectionOutput(output)
+			self.addOutputConnectionPoint(output)
 
 		self.addText(self.alias)
 		self.addText(self.nodeclass, 0, 12)
@@ -146,7 +146,7 @@ class Node(wxObjectCanvas.wxRectangleObject):
 		dialog.Destroy()
 
 	def menuDelete(self, evt):
-		self.removeBindings()
+		self.removeConnections()
 		self.delete()
 
 	def addShapeObject(self, so, x=0, y=0):
@@ -155,15 +155,15 @@ class Node(wxObjectCanvas.wxRectangleObject):
 		else:
 			raise TypeError('Invalid object type to add')
 
-	def addConnectionInput(self, cpo):
+	def addInputConnectionPoint(self, cpo):
 		if isinstance(cpo, BindingInput):
-			wxObjectCanvas.wxRectangleObject.addConnectionInput(self, cpo)
+			wxObjectCanvas.wxRectangleObject.addInputConnectionPoint(self, cpo)
 		else:
 			raise TypeError('Invalid object type for input')
 
-	def addConnectionOutput(self, cpo):
+	def addOutputConnectionPoint(self, cpo):
 		if isinstance(cpo, BindingOutput):
-			wxObjectCanvas.wxRectangleObject.addConnectionOutput(self, cpo)
+			wxObjectCanvas.wxRectangleObject.addOutputConnectionPoint(self, cpo)
 		else:
 			raise TypeError('Invalid object type for output')
 
@@ -172,19 +172,15 @@ class Node(wxObjectCanvas.wxRectangleObject):
 		#evt.Skip()
 
 	def OnEnter(self, evt):
-		for i in self.connectioninputs + self.connectionoutputs:
+		for i in self.inputconnectionpoints + self.outputconnectionpoints:
 			i.setDrawText(True)
 		self.UpdateDrawing()
 
 	def OnLeave(self, evt):
 		wxObjectCanvas.wxRectangleObject.OnLeave(self, evt)
-		for i in self.connectioninputs + self.connectionoutputs:
+		for i in self.inputconnectionpoints + self.outputconnectionpoints:
 			i.setDrawText(False)
 		self.UpdateDrawing()
-
-	def removeBindings(self):
-		for so in self.shapeobjects:
-			self.removeConnectionObjects(so)
 
 	def OnStartConnection(self, evt):
 		evt.Skip()
@@ -227,9 +223,10 @@ class BindingLabel(wxObjectCanvas.wxRectangleObject):
 		wxObjectCanvas.wxRectangleObject.Draw(self, dc)
 
 class Binding(wxObjectCanvas.wxConnectionObject):
-	def __init__(self, eventclass, fromnode=None, tonode=None):
+	def __init__(self, eventclass, bindingoutput=None, bindinginput=None):
 		self.eventclass = eventclass
-		wxObjectCanvas.wxConnectionObject.__init__(self, fromnode, tonode)
+		wxObjectCanvas.wxConnectionObject.__init__(self, bindingoutput,
+																											bindinginput)
 		self.label = BindingLabel(self.eventclass)
 		self.addShapeObject(self.label)
 
@@ -262,6 +259,47 @@ class Binding(wxObjectCanvas.wxConnectionObject):
 		if connectionpoint is not None:
 			return connectionpoint.getParent()
 		return None
+
+	def getLineType(self):
+		fromshapobject = self.getFromShapeObject()
+		toshapeobject = self.getToShapeObject()
+
+		if fromshapeobject is None or toshapeobject is None:
+			return
+
+		fromx, fromy = fromshapeobject.getCanvasPosition()
+		tox, toy = toshapeobject.getCanvasPosition()
+
+		fromwidth, fromheight = fromshapeobject.getSize()
+		towidth, toheight = toshapeobject.getSize()
+
+		fromnode = self.getFromNode()
+		tonode = self.getToNode()
+
+		if fromnode is None or tonode is None:
+			return
+
+		fromnodex, fromnodey = fromnode.getCanvasPosition()
+		tonodex, tonodey = tonode.getCanvasPosition()
+
+		fromnodewidth, fromnodeheight = fromnode.getSize()
+		tonodewidth, tonodeheight = tonode.getSize()
+
+		# if from's bottom is higher than to's top
+		if toheight > fromheight + fromwidth:
+			# direct
+			pass
+		else:
+			# indirect
+			if fromnodex > tonodex + tonodewidth:
+				# go in between
+				pass
+			elif tonodex > fromnodex + fromnodewidth:
+				# go in between
+				pass
+			else:
+				# go around
+				pass
 
 class AddNodeDialog(wxDialog):
 	def __init__(self, parent, id, title='Add Node', pos=wxDefaultPosition,
@@ -349,7 +387,7 @@ class Launcher(wxObjectCanvas.wxRectangleObject):
 
 	def menuDelete(self, evt):
 		for node in self.getNodes():
-			node.removeBindings()
+			node.removeConnections()
 		self.delete()
 
 	def addShapeObject(self, so, x=0, y=0):
@@ -489,26 +527,22 @@ class Application(wxObjectCanvas.wxRectangleObject):
 	def OnStartConnection(self, evt):
 		wxObjectCanvas.wxRectangleObject.OnStartConnection(self, evt)
 		for node in self.getNodes():
-			for input in node.connectioninputs:
+			for input in node.inputconnectionpoints:
 				if input.eventclass == self.connection.eventclass:
 					input.setDrawText(True)
 
 	def OnEndConnection(self, evt):
 		if self.connection is not None:
 			if self.connection.eventclass == evt.toso.eventclass:
-				for i in self.connectionobjects:
-					if i.getFromShapeObject() == self.connection.getFromShapeObject():
-						if i.getToShapeObject() == evt.toso:
-							return
 				for node in self.getNodes():
-					for input in node.connectioninputs:
+					for input in node.inputconnectionpoints:
 						if input.eventclass == self.connection.eventclass:
 							input.setDrawText(False)
 				wxObjectCanvas.wxRectangleObject.OnEndConnection(self, evt)
 
 	def cancelConnection(self):
 		for node in self.getNodes():
-			for input in node.connectioninputs:
+			for input in node.inputconnectionpoints:
 				if input.eventclass == self.connection.eventclass:
 					input.setDrawText(False)
 		wxObjectCanvas.wxRectangleObject.cancelConnection(self)
@@ -591,11 +625,11 @@ class Application(wxObjectCanvas.wxRectangleObject):
 				tocp = None
 				for node in self.getNodes():
 					if node.getAlias() == bindspec[1]:
-						for output in node.connectionoutputs:
+						for output in node.outputconnectionpoints:
 							if output.getEventClass() == bindspec[0]:
 								fromcp = output
 					if node.getAlias() == bindspec[2]:
-						for input in node.connectioninputs:
+						for input in node.inputconnectionpoints:
 							if input.getEventClass() == bindspec[0]:
 								tocp = input
 				if fromcp is not None and tocp is not None:
