@@ -742,7 +742,7 @@ class EM(node.Node):
 		self.cameracontainer.disable()
 
 		container = uidata.LargeContainer('EM')
-		container.addObject(self.messagelog)
+		container.addObject(self.messagelog, position={'expand': 'all'})
 		if self.scope is not None:
 			container.addObject(self.scopecontainer)
 		if self.camera is not None:

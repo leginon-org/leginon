@@ -703,7 +703,8 @@ class PresetsManager(node.Node):
 
 		# main container
 		container = uidata.LargeContainer('Presets Manager')
-		container.addObjects((self.messagelog, statuscontainer, self.xyonly,
+		container.addObject(self.messagelog, position={'expand': 'all'})
+		container.addObjects((statuscontainer, self.xyonly,
 													importcont, createcont, selectcont, imagecont))
 		self.uicontainer.addObject(container)
 
