@@ -212,6 +212,15 @@ def cross_correlate(im1, im2):
 	result = ffteng.itransform(xcor)
 	return result
 
+def auto_correlate(image):
+	'''
+	minor speed up over cross_correlate
+	'''
+	imfft = ffteng.transform(image)
+	xcor = Numeric.absolute(imfft) ** 2
+	result = ffteng.itransform(xcor)
+	return result
+
 def phase_correlate(im1, im2):
 	im1fft = ffteng.transform(im1)
 	if im1 is im2:
