@@ -12,7 +12,8 @@ import socketstreamtransport
 
 locationkey = 'TCP transport'
 
-class Server(SocketServer.ThreadingTCPServer, socketstreamtransport.Server):
+#class Server(SocketServer.ThreadingTCPServer, socketstreamtransport.Server):
+class Server(socketstreamtransport.Server, SocketServer.ThreadingTCPServer):
 	def __init__(self, dh, port=None):
 		socketstreamtransport.Server.__init__(self, dh)
 
@@ -41,12 +42,13 @@ class Server(SocketServer.ThreadingTCPServer, socketstreamtransport.Server):
 		self.port = port
 
 	def location(self):
-		location = {}
+		location = socketstreamtransport.Server.location(self)
 		location['hostname'] = socket.gethostname()
 		location['port'] = self.port
 		return location
 
 	def exit(self):
+		socketstreamtransport.Server.exit(self)
 		self.server_close()
 
 class Client(socketstreamtransport.Client):
@@ -67,4 +69,7 @@ class Client(socketstreamtransport.Client):
 				raise IOError
 			else:
 				raise
+
+Server.clientclass = Client
+Client.serverclass = Server
 

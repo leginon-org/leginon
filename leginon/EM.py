@@ -104,6 +104,9 @@ class SetInstrumentRequest(Request):
 		self.type = type
 		self.name = name
 
+class ExitRequest(Request):
+	pass
+
 class EM(node.Node):
 	eventinputs = node.Node.eventinputs + [event.LockEvent, event.UnlockEvent]
 	eventoutputs = node.Node.eventoutputs + [event.ListPublishEvent]
@@ -320,6 +323,7 @@ class EM(node.Node):
 			pass
 		node.Node.exit(self)
 		self.server.exit()
+		self.requestqueue.put(ExitRequest())
 
 	def location(self):
 		location = node.Node.location(self)
@@ -517,6 +521,8 @@ class EM(node.Node):
 				self.state = self.getEM(request.value)
 			elif isinstance(request, SetInstrumentRequest):
 				pass
+			elif isinstance(request, ExitRequest):
+				break
 			else:
 				raise TypeError('invalid EM request')
 			self.uiUpdate()

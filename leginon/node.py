@@ -47,6 +47,11 @@ class DataHandler(object):
 		self.dbdatakeeper = dbdatakeeperclass()
 		self.node = mynode
 
+	def exit(self):
+		self.datakeeper.exit()
+		self.databinder.exit()
+		self.dbdatakeeper.exit()
+
 	def insert(self, idata):
 		if isinstance(idata, event.Event):
 			self.databinder.insert(idata)
@@ -134,7 +139,6 @@ class Node(leginonobject.LeginonObject):
 			else:
 #				self.printerror('connected to manager')
 				pass
-		self.die_event = threading.Event()
 
 	# main, start/stop methods
 
@@ -186,10 +190,10 @@ class Node(leginonobject.LeginonObject):
 
 	def exit(self):
 		'''Cleans up the node before it dies.'''
-		self.outputEvent(event.NodeUnavailableEvent(id=self.ID()))
 		if self.uicontainer is not None and self.uicontainer.parent is not None:
 			self.uicontainer.parent.deleteObject(self.uicontainer.name)
 		self.outputEvent(event.NodeUninitializedEvent(), wait=True)
+		self.outputEvent(event.NodeUnavailableEvent(id=self.ID()))
 #		self.server.exit()
 #		self.printerror('exited')
 
@@ -280,9 +284,11 @@ class Node(leginonobject.LeginonObject):
 	def handleConfirmedEvent(self, ievent):
 		'''Handler for ConfirmationEvents. Unblocks the call waiting for confirmation of the event generated.'''
 		eventid = ievent['eventid']
+		self.ewlock.acquire()
 		if eventid in self.eventswaiting:
 			self.confirmationevents[eventid] = ievent
 			self.eventswaiting[eventid].set()
+		self.ewlock.release()
 		## this should not confirm ever, right?
 
 	def confirmEvent(self, ievent):

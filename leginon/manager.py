@@ -80,7 +80,7 @@ class Manager(node.Node):
 		# maps event id to list of node it was distributed to if event['confirm']
 		self.disteventswaiting = {}
 
-		self.application = application.Application(self.ID(), self)
+		self.application = application.Application(self)
 
 		self.addEventInput(event.NodeAvailableEvent, self.registerNode)
 		self.addEventInput(event.NodeUnavailableEvent, self.unregisterNode)

@@ -7,13 +7,9 @@
 #
 import data
 import event
-import time
-import threading
-import leginonobject
 
-class Application(leginonobject.LeginonObject):
-	def __init__(self, id, node, name=None):
-		leginonobject.LeginonObject.__init__(self, id)
+class Application(object):
+	def __init__(self, node, name=None):
 		self.node = node
 		self.data = data.ApplicationData()
 		if name is not None:
@@ -151,13 +147,13 @@ class Application(leginonobject.LeginonObject):
 			self.nodeids[alias] = id
 		for bindingspec in self.bindingspecs:
 			args = self.bindingSpec2Args(bindingspec)
-			self.printerror('binding %s' % str(args))
+			#print 'binding %s' % str(args)
 			apply(self.node.addEventDistmap, args)
 
 	def launchNode(self, args):
 		if not hasattr(self.node, 'launchNode'):
 			raise RuntimeError('Application node unable to launch node')
-		self.printerror('launching %s' % str(args))
+		#print 'launching %s' % str(args)
 		newid = apply(self.node.launchNode, args)
 		return newid
 
@@ -166,7 +162,7 @@ class Application(leginonobject.LeginonObject):
 			raise RuntimeError('Application node unable to kill')
 		while self.launchednodes:
 			nodeid = self.launchednodes.pop()
-			self.printerror('killing %s' % (nodeid,))
+			#print 'killing %s' % (nodeid,)
 			try:
 				self.node.killNode(nodeid)
 			except:

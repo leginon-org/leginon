@@ -16,7 +16,7 @@ import node
 import nodeclassreg
 import time
 import threading
-import sys
+import uidata
 import uiserver
 
 class Launcher(node.Node):
@@ -38,9 +38,19 @@ class Launcher(node.Node):
 #		l = self.location()
 #		self.start()
 
+	def onThreads(self):
+		threads = threading.enumerate()
+		print '%d running threads:' % len(threads)
+		for thread in threads:
+			print thread
+
+	def defineUserInterface(self):
+		node.Node.defineUserInterface(self)
+		self.uicontainer.addObject(uidata.Method('Threads', self.onThreads))
+
 	def addManager(self, location):
 		node.Node.addManager(self, location)
-		time.sleep(1)
+#		time.sleep(1)
 		self.publishNodeClasses()
 		self.outputEvent(event.NodeInitializedEvent(id=self.ID()))
 

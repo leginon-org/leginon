@@ -32,6 +32,9 @@ class DataHandler(object):
 		'''Return data IDs of all stored data.'''
 		raise NotImplementedError
 
+	def exit(self):
+		pass
+
 class DictDataKeeper(DataHandler):
 	'''Keep data in a dictionary.'''
 	def __init__(self):
@@ -213,6 +216,9 @@ class TimeoutDataKeeper(DictDataKeeper):
 		container.addObjects((self.uitimeout, self.uiinterval, uiclean))
 		return container
 
+class ExitException(Exception):
+	pass
+
 class DataBinder(DataHandler):
 	'''Bind data to a function. Used for mapping Events to handlers.'''
 	def __init__(self, threaded=True, queueclass=Queue.Queue):
@@ -232,6 +238,9 @@ class DataBinder(DataHandler):
 		t.setDaemon(1)
 		t.start()
 
+	def exit(self):
+		self.queue.put(ExitException())
+
 	def handlerLoop(self):
 		'''
 		This executes an infinite loop that dequeues items from
@@ -244,6 +253,8 @@ class DataBinder(DataHandler):
 		'''
 		while True:
 			item = self.queue.get(block=True)
+			if isinstance(item, ExitException):
+				break
 			try:
 				if self.threaded:
 					t = threading.Thread(name='data binder handler thread',

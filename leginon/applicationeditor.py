@@ -13,7 +13,7 @@ import data
 class ApplicationEditor(node.Node):
 	def __init__(self, id, session, nodelocations, **kwargs):
 		node.Node.__init__(self, id, session, nodelocations, **kwargs)
-		self.application = application.Application(self.ID(), self)
+		self.application = application.Application(self)
 		self.defineUserInterface()
 		self.start()
 

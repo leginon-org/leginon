@@ -41,6 +41,9 @@ def localHack(obj):
 
 	return pickle
 
+class ExitException(Exception):
+	pass
+
 class Handler(SocketServer.StreamRequestHandler):
 	def __init__(self, request, server_address, server):
 		SocketServer.StreamRequestHandler.__init__(self, request,
@@ -51,6 +54,9 @@ class Handler(SocketServer.StreamRequestHandler):
 			obj = cPickle.load(self.rfile)
 		except (cPickle.UnpicklingError, EOFError):
 			print 'no data to read, handle socket connection failed'
+			return
+		
+		if isinstance(obj, ExitException):
 			return
 
 		if isinstance(obj, data.Data):
@@ -82,6 +88,7 @@ class Handler(SocketServer.StreamRequestHandler):
 
 class Server(object):
 	def __init__(self, dh):
+		self.exitevent = threading.Event()
 		self.datahandler = dh
 		self.hostname = socket.gethostname()
 
@@ -91,8 +98,20 @@ class Server(object):
 		self.thread.setDaemon(1)
 		self.thread.start()
 
+	def serve_forever(self):
+		while not self.exitevent.isSet():
+			self.handle_request()
+
+	def location(self):
+		return {}
+
 	def exit(self):
-		pass
+		self.exitevent.set()
+		client = self.clientclass(self.location())
+		try:
+			client.push(ExitException())
+		except EOFError:
+			pass
 
 class Client(object):
 	def __init__(self, location):
@@ -158,3 +177,5 @@ class Client(object):
 			print 'no socket available'
 			raise IOError
 
+Server.clientclass = Client
+Client.serverclass = Server
