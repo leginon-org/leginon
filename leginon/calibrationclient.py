@@ -234,11 +234,12 @@ class MatrixCalibrationClient(CalibrationClient):
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)
 
-	def retrieveMatrix(self, mag, caltype):
+	def retrieveMatrix(self, ht, mag, caltype):
 		'''
 		finds the requested matrix using magnification and type
 		'''
 		queryinstance = data.MatrixCalibrationData(magnification=mag, type=caltype)
+		queryinstance['high tension'] = ht
 		queryinstance['session'] = data.SessionData()
 		queryinstance['session']['instrument'] = self.node.session['instrument']
 		caldatalist = self.node.research(datainstance=queryinstance, results=1)
@@ -250,12 +251,13 @@ class MatrixCalibrationClient(CalibrationClient):
 		matrix = caldata['matrix'].copy()
 		return matrix
 
-	def storeMatrix(self, mag, type, matrix):
+	def storeMatrix(self, ht, mag, type, matrix):
 		'''
 		stores a new calibration matrix
 		'''
 		newmatrix = Numeric.array(matrix, Numeric.Float64)
 		caldata = data.MatrixCalibrationData(id=self.node.ID(), magnification=mag, type=type, matrix=matrix)
+		caldata['high tension'] = ht
 		self.node.publish(caldata, database=True)
 
 
@@ -614,19 +616,21 @@ class ModeledStageCalibrationClient(CalibrationClient):
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)
 
-	def storeMagCalibration(self, label, mag, axis, angle, mean):
+	def storeMagCalibration(self, label, ht, mag, axis, angle, mean):
 		caldata = data.StageModelMagCalibrationData()
 		caldata['label'] = label
+		caldata['high tension'] = ht
 		caldata['magnification'] = mag
 		caldata['axis'] = axis
 		caldata['angle'] = angle
 		caldata['mean'] = mean
 		self.node.publish(caldata, database=True)
 
-	def retrieveMagCalibration(self, mag, axis):
+	def retrieveMagCalibration(self, ht, mag, axis):
 		tmpsession = data.SessionData()
 		tmpsession['instrument'] = self.node.session['instrument']
 		qinst = data.StageModelMagCalibrationData(magnification=mag, axis=axis)
+		qinst['high tension'] = ht
 		qinst['session'] = tmpsession
 
 		caldatalist = self.node.research(datainstance=qinst, results=1)
