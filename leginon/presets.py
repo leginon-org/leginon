@@ -582,14 +582,12 @@ class PresetsManager(node.Node):
 		### this makes a copy of an existing preset
 		### so that dbid is not set and we can 
 		### edit the values
-		print 'OLD', id(p['session'])
 		newpreset = data.PresetData(initializer=p)
 		self.presets[newpreset['name']] = newpreset
 		if self.currentpreset is p:
 			self.currentpreset = newpreset
 		if self.currentselection is p:
 			self.currentselection = newpreset
-		print 'NEW', id(newpreset['session'])
 		return newpreset
 
 	def uiCommitParams(self, value):
