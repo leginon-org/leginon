@@ -118,6 +118,82 @@ class Panel(gui.wx.Node.Panel):
 		self.SetSizerAndFit(self.szmain)
 		self.SetupScrolling()
 
+		self.Bind(wx.EVT_BUTTON, self.onEditPlan, beditplan)
+
+	def setPlan(self, plan):
+		self.stbadrows.SetLabel(self.plan2str(plan['rows']))
+		self.stbadcolumns.SetLabel(self.plan2str(plan['columns']))
+		self.plan = plan
+
+	def onEditPlan(self, evt):
+		dialog = EditPlanDialog(self)
+		if dialog.ShowModal() == wx.ID_OK:
+			self.setPlan(dialog.plan)
+		dialog.Destroy()
+
+	def plan2str(self, plan):
+		splan = []
+		for i in plan:
+			if i not in splan:
+				splan.append(i)
+		splan.sort()
+		return str(splan)[1:-1]
+
+	def str2plan(self, string):
+		strings = string.split(',')
+		plan = []
+		for s in strings:
+			try:
+				s = s.strip()
+				if not s:
+					continue
+				i = int(s)
+				if i not in plan:
+					plan.append(i)
+			except ValueError:
+				raise ValueError
+		plan.sort()
+		return plan
+
+class EditPlanDialog(wx.Dialog):
+	def __init__(self, parent):
+		wx.Dialog.__init__(self, parent, -1, 'Edit Plan')
+
+		strows = wx.StaticText(self, -1, 'Bad rows:')
+		stcolumns = wx.StaticText(self, -1, 'Bad columns:')
+		self.tcrows = wx.TextCtrl(self, -1, parent.stbadrows.GetLabel())
+		self.tccolumns = wx.TextCtrl(self, -1, parent.stbadcolumns.GetLabel())
+
+		bsave = wx.Button(self, wx.ID_OK, 'Save')
+		bcancel = wx.Button(self, wx.ID_CANCEL, 'Cancel')
+		szbutton = wx.GridBagSizer(5, 5)
+		szbutton.Add(bsave, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		szbutton.Add(bcancel, (0, 1), (1, 1), wx.ALIGN_CENTER)
+
+		sz = wx.GridBagSizer(5, 5)
+		sz.Add(strows, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.tcrows, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(stcolumns, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.tccolumns, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szbutton, (2, 0), (1, 2), wx.ALIGN_RIGHT|wx.ALL, border=5)
+
+		self.SetSizerAndFit(sz)
+
+		self.Bind(wx.EVT_BUTTON, self.onSave, bsave)
+
+	def onSave(self, evt):
+		try:
+			rows = self.GetParent().str2plan(self.tcrows.GetValue())
+			columns = self.GetParent().str2plan(self.tccolumns.GetValue())
+		except ValueError:
+			dialog = wx.MessageDialog(self, 'Invalid plan', 'Error',
+																wx.OK|wx.ICON_ERROR)
+			dialog.ShowModal()
+			dialog.Destroy()
+		else:
+			self.plan = {'rows': rows, 'columns': columns}
+			evt.Skip()
+
 if __name__ == '__main__':
 	class App(wx.App):
 		def OnInit(self):
