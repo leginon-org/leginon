@@ -441,6 +441,7 @@ class ImagePanel(wxPanel):
 		if not scroll:
 			self.panel.Scroll(0, 0)
 		self.UpdateDrawing()
+		self.panel.Refresh()
 
 	def clearImage(self):
 		self.imagedata = None
