@@ -58,7 +58,12 @@ class Launcher(node.Node):
 		kwargs['otheruiserver'] = self.uiserver
 		kwargs['launcher'] = self
 		kwargs['otherdatabinder'] = self.databinder
-		kwargs['parent'] = self.panel
+
+		if hasattr(nodeclass, 'panelclass'):
+			evt = wxLauncher.CreateNodePanelEvent(nodeclass.panelclass)
+			self.panel.GetEventHandler().AddPendingEvent(evt)
+			evt.event.wait()
+			kwargs['panel'] = evt.panel
 
 		n = nodeclass(nodename, session, managerlocation, **kwargs)
 		self.nodes.append(n)

@@ -1,13 +1,16 @@
 import logging
 import launcher
+import threading
 import wx
 import wx.lib.scrolledpanel
 import wxLogging
 
 CreateNodeEventType = wx.NewEventType()
 DestroyNodeEventType = wx.NewEventType()
+CreateNodePanelEventType = wx.NewEventType()
 EVT_CREATE_NODE = wx.PyEventBinder(CreateNodeEventType)
 EVT_DESTROY_NODE = wx.PyEventBinder(DestroyNodeEventType)
+EVT_CREATE_NODE_PANEL = wx.PyEventBinder(CreateNodePanelEventType)
 
 class CreateNodeEvent(wx.PyEvent):
 	def __init__(self, node):
@@ -20,6 +23,14 @@ class DestroyNodeEvent(wx.PyEvent):
 		wx.PyEvent.__init__(self)
 		self.SetEventType(DestroyNodeEventType)
 		self.node = node
+
+class CreateNodePanelEvent(wx.PyEvent):
+	def __init__(self, panelclass):
+		wx.PyEvent.__init__(self)
+		self.SetEventType(CreateNodePanelEventType)
+		self.panelclass = panelclass
+		self.event = threading.Event()
+		self.panel = None
 
 class LauncherApp(wx.App):
 	def __init__(self, name, **kwargs):
@@ -104,7 +115,9 @@ class ListCtrlPanel(wx.Panel):
 		self.panelmap = {}
 
 		self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.onItemSelected, self.listctrl)
-		self.Bind(wx.EVT_SIZE, self.onSize, self)
+		self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.onItemDeselected, self.listctrl)
+		self.Bind(wx.EVT_SIZE, self.onSize)
+		self.Bind(wx.EVT_SASH_DRAGGED, self.onSashDragged, self.sashwindow)
 
 	def addPanel(self, panel, label, imageindex=0):
 		panel.Show(False)
@@ -142,6 +155,15 @@ class ListCtrlPanel(wx.Panel):
 	def onItemSelected(self, evt):
 		self._setPanel(self.panelmap[evt.GetItem().GetText()])
 
+	def onItemDeselected(self, evt):
+		self._setPanel(self.defaultpanel)
+
+	def onSashDragged(self, evt):
+		if evt.GetDragStatus() == wx.SASH_STATUS_OUT_OF_RANGE:
+			return
+		self.sashwindow.SetDefaultSize((evt.GetDragRect().width, -1))
+		wx.LayoutAlgorithm().LayoutWindow(self, self.panel)
+
 	def onSize(self, evt):
 		wx.LayoutAlgorithm().LayoutWindow(self, self.panel)
 
@@ -161,6 +183,7 @@ class LauncherPanel(ListCtrlPanel):
 
 		self.Bind(EVT_CREATE_NODE, self.onCreateNode)
 		self.Bind(EVT_DESTROY_NODE, self.onDestroyNode)
+		self.Bind(EVT_CREATE_NODE_PANEL, self.onCreateNodePanel)
 
 	def initializeImageList(self):
 		imagelist = wx.ImageList(16, 16)
@@ -172,6 +195,8 @@ class LauncherPanel(ListCtrlPanel):
 		self.listctrl.AssignImageList(imagelist, wx.IMAGE_LIST_SMALL)
 
 	def addNode(self, n):
+		if not hasattr(n, 'panel'):
+			return
 		panel = n.panel
 		label = n.name
 		for i, icon in enumerate(iconmap):
@@ -180,17 +205,20 @@ class LauncherPanel(ListCtrlPanel):
 		self.addPanel(panel, label, i)
 
 	def removeNode(self, n):
+		if not hasattr(n, 'panel'):
+			return
 		self.removePanel(n.panel)
 
 	def onCreateNode(self, evt):
-		try:
-			self.addNode(evt.node)
-		except AttributeError:
-			pass
+		self.addNode(evt.node)
 
 	def onDestroyNode(self, evt):
-		try:
-			self.removeNode(evt.node)
-		except AttributeError:
-			pass
+		self.removeNode(evt.node)
+
+	def onCreateNodePanel(self, evt):
+		self.Freeze()
+		evt.panel = evt.panelclass(self)
+		evt.panel.Show(False)
+		self.Thaw()
+		evt.event.set()
 

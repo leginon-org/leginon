@@ -39,7 +39,7 @@ class InvalidPresetsSequence(Exception):
 	pass
 
 class Acquisition(targetwatcher.TargetWatcher):
-
+	panelclass = wxAcquisition.Panel
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
 								+ [event.DriftDoneEvent,
 										event.ImageProcessDoneEvent] \
@@ -54,9 +54,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 											event.ImageListPublishEvent, event.DriftWatchEvent] \
 									+ EM.EMClient.eventoutputs
 
-	def __init__(self, id, session, managerlocation, target_types=('acquisition',), parent=None, **kwargs):
+	def __init__(self, id, session, managerlocation, target_types=('acquisition',), panel=None, **kwargs):
 
 		targetwatcher.TargetWatcher.__init__(self, id, session, managerlocation, target_types=target_types, **kwargs)
+
+		self.panel = panel
+
 		self.addEventInput(event.DriftDoneEvent, self.handleDriftDone)
 		self.addEventInput(event.ImageProcessDoneEvent, self.handleImageProcessDone)
 		self.driftdone = threading.Event()
@@ -73,9 +76,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.doneevents = {}
 		self.imagelistdata = None
 
-		self.panel = wxAcquisition.Panel(parent, self)
 		self.defineUserInterface()
 		self.presetsclient.uistatus = self.uiacquisitionstatus
+
 		self.start()
 
 	def handleDriftDone(self, ev):

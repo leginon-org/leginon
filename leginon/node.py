@@ -56,7 +56,7 @@ class Node(leginonobject.LeginonObject):
 									event.NodeInitializedEvent,
 									event.NodeUninitializedEvent]
 
-	def __init__(self, name, session, managerlocation=None, otherdatabinder=None, otherdbdatakeeper=None, otheruiserver=None, tcpport=None, xmlrpcport=None, launcher=None, **kwargs):
+	def __init__(self, name, session, managerlocation=None, otherdatabinder=None, otherdbdatakeeper=None, otheruiserver=None, tcpport=None, xmlrpcport=None, launcher=None):
 		leginonobject.LeginonObject.__init__(self)
 		self.name = name
 		
