@@ -2,9 +2,11 @@
 #include <Numeric/arrayobject.h>
 #include <math.h>
 
+#ifdef FORTRAN
 #include "point.h"
 #include "imgbase.h"
 #include "edge.h"
+#endif
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -855,6 +857,7 @@ static PyObject *rgbstring(PyObject *self, PyObject *args) {
 #define MAX_DIM     6
 #endif
 /* #define DEBUG_RESAMPLEARRAY */
+#ifdef FORTRAN
 static PyObject *resamplearray(PyObject *self, PyObject *args) {
 	PyObject *input1, *input2;
 	PyArrayObject *inputarray=NULL, *scalerarray=NULL, *outputarray=NULL;
@@ -1092,6 +1095,7 @@ static PyObject *fitcircle2edges(PyObject *self, PyObject *args)
 	Py_DECREF(inputarray);
 	return crclparams;
 }
+#endif
 
 static struct PyMethodDef numeric_methods[] = {
 	{"min", min, METH_VARARGS},
@@ -1106,11 +1110,12 @@ static struct PyMethodDef numeric_methods[] = {
 	{"houghline", houghline, METH_VARARGS},
 	{"linearscale", linearscale, METH_VARARGS},
 	{"rgbstring", rgbstring, METH_VARARGS},
+#ifdef FORTRAN
 	{"resamplearray", resamplearray, METH_VARARGS},
-        {"cannyedge", cannyedge, METH_VARARGS}, 
         {"cannyedge", cannyedge, METH_VARARGS}, 
         {"componentlabeling", componentlabeling, METH_VARARGS}, 
         {"fitcircle2edges", fitcircle2edges, METH_VARARGS}, 
+#endif
 	{NULL, NULL}
 };
 
