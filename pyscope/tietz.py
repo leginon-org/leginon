@@ -17,7 +17,10 @@ try:
 	import numarray as Numeric
 except:
 	import Numeric
-import tietzcom
+try:
+	import tietzcom
+except ImportError:
+	from pyScope import tietzcom
 
 class Ping:
 	_typelib_guid_ = tietzcom.CLSID

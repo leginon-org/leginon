@@ -11,12 +11,20 @@ registry = {}
 registry['scope'] = {}
 registry['camera'] = {}
 
-def findClass(modulename, classname):
+def getModule(modulename, path=None):
 	try:
-		fp, pathname, description = imp.find_module(modulename)
+		fp, pathname, description = imp.find_module(modulename, path)
 	except ImportError:
 		return None
-	module = imp.load_module(modulename, fp, pathname, description)
+	return imp.load_module(modulename, fp, pathname, description)
+
+def _getClass(modulename, classname):
+	module = getModule('pyScope')
+	if module is None:
+		return None
+	module = getModule(modulename, module.__path__)
+	if module is None:
+		return None
 	try:
 		return module.__dict__[classname]
 	except KeyError:
@@ -48,7 +56,7 @@ def getClass(type, name):
 	if info is None:
 		return None
 	modulename, classname, description = info
-	return findClass(modulename, classname)
+	return _getClass(modulename, classname)
 
 def getScopeClass(name):
 	return getClass('scope', name)

@@ -11,12 +11,15 @@ sys.coinit_flags = 0
 import pythoncom
 import pywintypes
 import win32com.client
-import gatancom
 try:
 	import numarray as Numeric
 except:
 	import Numeric
-import TecnaiCCDWrapper
+try:
+	import TecnaiCCDWrapper
+	import gatancom
+except ImportError:
+	from pyScope import TecnaiCCDWrapper, gatancom
 
 class Gatan(object):
 	def __init__(self):

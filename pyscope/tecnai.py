@@ -10,10 +10,14 @@ sys.coinit_flags = 0
 import pythoncom
 import win32com.client
 import winerror
-import tecnaicom
-import ldcom
-import adacom
 import time
+# dynamic import handling
+try:
+	import tecnaicom
+	import ldcom
+	import adacom
+except ImportError:
+	from pyScope import tecnaicom, ldcom, adacom
 
 defaultmagtable = [
 	21, 28, 38, 56, 75, 97, 120, 170, 220, 330, 420, 550, 800, 1100, 1500, 2100,
