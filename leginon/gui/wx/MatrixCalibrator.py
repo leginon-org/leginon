@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MatrixCalibrator.py,v $
-# $Revision: 1.7 $
+# $Revision: 1.8 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
+# $Date: 2004-10-29 00:24:16 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -43,7 +43,7 @@ class Panel(gui.wx.Calibrator.Panel):
 		gui.wx.Calibrator.Panel.onNodeInitialized(self)
 		self.cparameter.AppendItems(map(capitalize, self.node.parameters.keys()))
 		self.cparameter.SetStringSelection(capitalize(self.node.parameter))
-		self.Bind(wx.EVT_CHOICE, self.onParameterChoice, self.cparameter)
+		self.cparameter.Bind(wx.EVT_CHOICE, self.onParameterChoice, self.cparameter)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onParameterSettingsTool,
 											id=gui.wx.ToolBar.ID_PARAMETER_SETTINGS)
 		self.toolbar.Realize()
