@@ -160,7 +160,11 @@ class IceCalculator(object):
 		return Numeric.log(self.i0 / intensity)
 
 	def get_stdev_thickness(self, stdev_intensity, mean_intensity):
-		return Numeric.log(mean_intensity / (mean_intensity-stdev_intensity))
+		if stdev_intensity >= mean_intensity:
+			std = imagefun.inf
+		else:
+			std = Numeric.log(mean_intensity / (mean_intensity-stdev_intensity))
+		return std
 
 	def get_stdev_intensity(self, stdev_thickness, mean_thickness):
 		### figure this out later
