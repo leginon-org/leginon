@@ -311,16 +311,16 @@ class ManagerSetup(object):
 		return sessiondata['name']
 
 	def uiUpdateSessionList(self):
-		sessionlist = self.researchSessions()
+		sessionlist = self.researchSessions(self.session_limit)
 		session_names = map(self.getSessionDataName, sessionlist)
 		self.session_dict = dict(zip(session_names, sessionlist))
 		# XXX This will get into some kind of big loop if session_limit
 		# is too high
-		self.sessionselector.set(session_names[:self.session_limit],0)
+		self.sessionselector.set(session_names,0)
 
-	def researchSessions(self):
+	def researchSessions(self, limit):
 		qsession = data.SessionData()
-		sessionlist = self.manager.research(datainstance=qsession)
+		sessionlist = self.manager.research(datainstance=qsession, results=limit)
 		return sessionlist
 
 	def onNewSession(self):
