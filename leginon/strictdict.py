@@ -127,6 +127,7 @@ class OrderedDict(dict):
 				self.__ordered_items = list(map_or_seq)
 			self.__ordered_keys = [item[0] for item in self.__ordered_items]
 			self.__ordered_values = [item[1] for item in self.__ordered_items]
+		self.initdone = True
 
 	def iterkeys(self):
 		return iter(self.keys())
@@ -139,17 +140,27 @@ class OrderedDict(dict):
 		return iter(self.items())
 
 	def keys(self):
-		return list(self.__ordered_keys)
+		if hasattr(self, 'initdone'):
+			return list(self.__ordered_keys)
+		else:
+			return super(OrderedDict, self).keys()
 
 	def values(self):
-		return list(self.__ordered_values)
+		if hasattr(self, 'initdone'):
+			return list(self.__ordered_values)
+		else:
+			return super(OrderedDict, self).values()
 
 	def items(self):
-		return list(self.__ordered_items)
+		if hasattr(self, 'initdone'):
+			return list(self.__ordered_items)
+		else:
+			return super(OrderedDict, self).items()
 
 	def __setitem__(self, key, value):
 		dict.__setitem__(self, key, value)
-		self.__setlists(key, value)
+		if hasattr(self, 'initdone'):
+			self.__setlists(key, value)
 
 	def __delitem__(self, key):
 		dict.__delitem__(self, key)
@@ -232,7 +243,7 @@ class KeyedDict(OrderedDict):
 		raise NotImplementedError('All items exist for the life of the object')
 
 	def __setitem__(self, key, value):
-		if key in self.keys():
+		if key in self.keys() or not hasattr(self, 'initdone'):
 			OrderedDict.__setitem__(self, key, value)
 		else:
 			raise KeyError('%s, new items not allowed' % (key,))
@@ -352,8 +363,11 @@ class TypedDict(KeyedDict):
 		return newvalue
 
 	def __setitem__(self, key, value):
-		newvalue = self.__validateValue(key, value)
-		KeyedDict.__setitem__(self, key, newvalue)
+		if hasattr(self, 'initdone'):
+			newvalue = self.__validateValue(key, value)
+			KeyedDict.__setitem__(self, key, newvalue)
+		else:
+			super(TypedDict, self).__setitem__(key, value)
 
 	def getFactory(self, valuetype):
 		## check for special cases that we know about
