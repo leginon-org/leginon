@@ -30,6 +30,15 @@ watch_set = (
 'stage position',
 )
 
+## if a stage position movement is requested that is less than the following,
+## then ignore it
+minimum_stage = {
+	'x': 5e-8,
+	'y': 5e-8,
+	'z': 5e-8,
+	'a': 0.001,
+}
+
 class EMUnavailable(Exception):
 	pass
 class ScopeUnavailable(EMUnavailable):
@@ -500,6 +509,27 @@ class EM(node.Node):
 		elif not ain and not bin:
 			return 0
 
+	def checkStagePosition(self, state):
+		'''
+		ignore small stage movements
+		'''
+		if 'stage position' not in state or state['stage position'] is None:
+			return
+		current = self.scope['stage position']
+		requested = state['stage position']
+		bigenough = {}
+		for axis in ('x','y','z','a'):
+			if axis in requested:
+				delta = abs(requested[axis]-current[axis])
+				if delta > minimum_stage[axis]:
+					bigenough[axis] = requested[axis]
+				else:
+					self.logger.debug('requested stage %s=%s is within %s of current: %s' % (axis, requested[axis], minimum_stage[axis], current[axis]))
+		if bigenough:
+			state['stage position'] = bigenough
+		else:
+			state['stage position'] = None
+
 	def setEM(self, state):
 		orderedkeys = state.keys()
 		orderedkeys.sort(self.cmpEM)
@@ -515,6 +545,7 @@ class EM(node.Node):
 
 		if 'focus' in orderedkeys and 'defocus' in orderedkeys:
 			self.scopemessagelog.warning('Focus and defocus changed at the same time defocus ' + str(state['focus']) +  ' focus ' + str(state['defocus']))
+		self.checkStagePosition(state)
 
 		for key in orderedkeys:
 			value = state[key]
