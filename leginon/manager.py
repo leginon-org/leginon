@@ -79,6 +79,8 @@ class Manager(node.Node):
 		node.Node.__init__(self, self.name, session, otherdatabinder=mydatabinder,
 												**kwargs)
 
+		self.objectservice = self.objectserviceclass(self)
+
 		self.launcher = None
 		self.frame = gui.wx.Manager.Frame(self, self.research, self.publish)
 

@@ -23,7 +23,7 @@ class Handler(SocketServer.StreamRequestHandler):
 	def handle(self):
 		try:
 			request = pickle.load(self.rfile)
-		except:
+		except Exception, e:
 			estr = 'Error reading request'
 			try:
 				self.server.datahandler.logger.exception(estr)

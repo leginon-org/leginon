@@ -29,6 +29,9 @@ class Server(object):
 	def location(self):
 		return {'instance': self}
 
+	def __reduce__(self):
+		return (Server, (None,), {})
+
 class Client(object):
 	def __init__(self, location):
 		if 'instance' not in location:

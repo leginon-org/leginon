@@ -880,19 +880,6 @@ class NodeLocationData(LocationData):
 		)
 	typemap = classmethod(typemap)
 
-	def __reduce__(self):
-		call, args, state = LocationData.__reduce__(self)
-		try:
-			location = args[0]['location']
-			instance = location['data binder']['local transport']['instance']
-			location['data binder']['local transport']['instance'] = None
-			newlocation = copy.deepcopy(location)
-			args[0]['location'] = newlocation
-			location['data binder']['local transport']['instance'] = instance
-		except (TypeError, IndexError, KeyError):
-			pass
-		return call, args, state
-
 class NodeClassesData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (

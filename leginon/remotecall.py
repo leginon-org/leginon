@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/remotecall.py,v $
-# $Revision: 1.2 $
+# $Revision: 1.3 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-17 00:39:56 $
+# $Date: 2005-02-18 01:34:14 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -168,8 +168,6 @@ class ManagerObjectService(ObjectService):
 			if nn == nodename:
 				continue
 			location = self.node.nodelocations[nodename]['location']
-			#if location == self.node.nodelocations[nn]['location']
-			#	location = 'local'
 			for n in self.descriptions[nn]:
 				d, t = self.descriptions[nn][n]
 				if 'ObjectService' in t:

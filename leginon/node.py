@@ -99,8 +99,6 @@ class Node(object):
 				self.logger.exception('exception in setManager')
 				raise
 
-		#self.objectservice = self.objectserviceclass(self)
-
 		self.initializeSettings()
 
 	# settings
@@ -361,6 +359,8 @@ class Node(object):
 		available_event = event.NodeAvailableEvent(location=self.location(),
 																							nodeclass=self.__class__.__name__)
 		self.outputEvent(ievent=available_event, wait=True, timeout=10)
+
+		self.objectservice = self.objectserviceclass(self)
 
 	def handleSetManager(self, ievent):
 		'''Event handler calling setManager with event info. See setManager.'''
