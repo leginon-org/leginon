@@ -70,8 +70,10 @@ def WidgetClassFromTypeList(typelist):
 							return wxClickImageWidget
 						elif typelist[2] == 'target image':
 							return wxTargetImageWidget
-						elif typelist[2] == 'dialog':
-							return wxDialogWidget
+						elif typelist[2] == 'message dialog':
+							return wxMessageDialogWidget
+						elif typelist[2] == 'external':
+							return wxDialogContainerWidget
 						elif typelist[2] == 'medium':
 							return wxNotebookContainerWidget
 						elif typelist[2] == 'large':
@@ -238,8 +240,9 @@ class wxContainerWidget(wxWidget):
 			child = childclass(name, self.childparent, self)
 		self.children[name] = child
 		if not isinstance(child, wxNotebookContainerWidget):
-			if self.sizer is not None and child.sizer is not None:
-				self.sizer.Add(child.sizer, 0, wxALL, 3)
+			if not isinstance(child, wxDialogContainerWidget):
+				if self.sizer is not None and child.sizer is not None:
+					self.sizer.Add(child.sizer, 0, wxALL, 3)
 
 	def _addWidgetToChild(self, evt):
 		for name, child in self.children.items():
@@ -309,8 +312,9 @@ class wxContainerWidget(wxWidget):
 			del self.children[name]
 			child.destroy()
 			if not isinstance(child, wxNotebookContainerWidget):
-				if self.sizer is not None and child.sizer is not None:
-					self.sizer.Remove(child.sizer)
+				if not isinstance(child, wxDialogContainerWidget):
+					if self.sizer is not None and child.sizer is not None:
+						self.sizer.Remove(child.sizer)
 		if self.notebook is not None:
 			self.notebook.Destroy()
 			self.sizer.Remove(self.notebooksizer)
@@ -356,6 +360,29 @@ class wxNotebookContainerWidget(wxContainerWidget):
 		for i in range(self.parentnotebook.GetPageCount()):
 			if self.parentnotebook.GetPage(i) == self.panel:
 				return i
+
+class wxDialogContainerWidget(wxContainerWidget):
+	def __init__(self, name, parent, container):
+		wxContainerWidget.__init__(self, name, parent, container)
+		self.dialog = wxDialog(self.parent, -1, name,
+														style=wxCAPTION|wxMINIMIZE_BOX|wxMAXIMIZE_BOX
+																	|wxRESIZE_BORDER)
+		self.panel = wxScrolledWindow(self.dialog, -1)
+		self.panel.SetScrollRate(1, 1)
+		self.sizer = wxBoxSizer(wxVERTICAL)
+		self.panel.SetSizer(self.sizer)
+		self.childparent = self.panel
+		self.panel.Show(true)
+		self.dialog.Show(true)
+
+	def destroy(self):
+		wxContainerWidget.destroy(self)
+		self.dialog.Destroy()
+
+	def layout(self):
+		self.sizer.Layout()
+		self.sizer.Fit(self.panel)
+		self.dialog.Fit()
 
 class wxClientContainerWidget(object):
 	pass
@@ -628,7 +655,7 @@ class MessageDialog(wxDialog):
 	def OnClose(self, evt):
 		self.callback()
 
-class wxDialogWidget(wxContainerWidget):
+class wxMessageDialogWidget(wxContainerWidget):
 	def __init__(self, name, parent, container):
 		wxContainerWidget.__init__(self, name, parent, container)
 		self.dialog = MessageDialog(self.parent, -1, self.name, self.dialogCallback)

@@ -23,7 +23,7 @@ server.addObject(foo)
 server.addObject(uidata.Integer('asdf', 39, 'rw'))
 server2.addObject(uidata.String('asdf', 'asdfkjlaksdf', 'rw'))
 bar1 = uidata.MediumContainer('bar 1')
-bar2 = uidata.MediumContainer('bar 2')
+bar2 = uidata.ExternalContainer('bar 2')
 bar2.addObject(uidata.SelectFromList('List Select X', [5,3,'b',2,3,'foo'], [2]))
 foo1 = uidata.MediumContainer('foo 1')
 foo2 = uidata.MediumContainer('foo 2')
@@ -49,7 +49,7 @@ foo1.addObject(uidata.SingleSelectFromList('List Select 1', [1,2,3], 1))
 import Numeric
 import Mrc
 import Image
-image = Mrc.mrc_to_numeric('test2.mrc')
+image = Mrc.mrc_to_numeric('test1.mrc')
 image1 = uidata.Image('Image 1', image)
 bar2.addObject(image1)
 image2 = uidata.TargetImage('Target Image 1', image)

@@ -154,6 +154,9 @@ class MediumContainer(Container):
 class LargeContainer(Container):
 	typelist = Container.typelist + ('large',)
 
+class ExternalContainer(Container):
+	typelist = Container.typelist + ('external',)
+
 class ClientContainer(LargeContainer):
 	typelist = LargeContainer.typelist + ('client',)
 	def __init__(self, name, location):
@@ -385,7 +388,7 @@ class Binary(Data):
 		Data.set(self, value)
 
 class Dialog(Container):
-	typelist = Container.typelist + ('dialog',)
+	typelist = Container.typelist + ('message dialog',)
 	def __init__(self, name):
 		Container.__init__(self, name)
 
