@@ -34,6 +34,7 @@ class ImagePanel(wxPanel):
 		self.buffer = wxEmptyBitmap(height, width)
 		self.initValue()
 		self.initZoom()
+		self.initRuler()
 
 		self.Fit()
 
@@ -84,6 +85,7 @@ class ImagePanel(wxPanel):
 
 	def OnZoomButton(self, evt):
 		if self.zoombutton.GetToggle():
+			self.UntoggleModal(self.zoombutton)
 			self.panel.SetCursor(wxStockCursor(wxCURSOR_MAGNIFIER))
 			EVT_LEFT_UP(self.panel, self.OnZoomIn)
 			EVT_RIGHT_UP(self.panel, self.OnZoomOut)
@@ -103,6 +105,43 @@ class ImagePanel(wxPanel):
 		self.zoomlabel = wxStaticText(self, -1, '')
 		self.updateZoomLabel()
 		self.toolsizer.Add(self.zoomlabel, 0, wxALIGN_CENTER_VERTICAL | wxALL, 3)
+
+	def UntoggleModal(self, select):
+		if select != self.zoombutton and self.zoombutton.GetToggle():
+			self.zoombutton.SetToggle(False)
+			self.OnZoomButton(None)
+		if select != self.rulerbutton and self.rulerbutton.GetToggle():
+			self.rulerbutton.SetToggle(False)
+			self.OnRulerButton(None)
+
+	def OnRuler(self, evt):
+		self.ruler = self.view2image((evt.m_x, evt.m_y))
+		#self.ruler = (evt.m_x, evt.m_y)
+
+	def OnRulerCancel(self, evt):
+		self.ruler = None
+		self.UpdateDrawing()
+
+	def OnRulerButton(self, evt):
+		if self.rulerbutton.GetToggle():
+			self.UntoggleModal(self.rulerbutton)
+			self.panel.SetCursor(wxCROSS_CURSOR)
+			EVT_LEFT_UP(self.panel, self.OnRuler)
+			EVT_RIGHT_UP(self.panel, self.OnRulerCancel)
+		else:
+			self.ruler = None
+			self.panel.SetCursor(wxCROSS_CURSOR)
+			EVT_LEFT_UP(self.panel, None)
+			EVT_RIGHT_UP(self.panel, None)
+
+	def initRuler(self):
+		self.ruler = None
+		bitmap = self.bitmapTool('rulertool.bmp')
+		self.rulerbutton = wxGenBitmapToggleButton(self, -1, bitmap, size=(24, 24))
+		self.rulerbutton.SetBezelWidth(1)
+		self.rulerbutton.SetToolTip(wxToolTip('Toggle Ruler Tool'))
+		EVT_BUTTON(self, self.rulerbutton.GetId(), self.OnRulerButton)
+		self.toolsizer.Add(self.rulerbutton, 0, wxALL, 3)
 
 	def setVirtualSize(self):
 		xscale, yscale = self.getScale()
@@ -199,40 +238,53 @@ class ImagePanel(wxPanel):
 	def motion(self, evt):
 		if self.image is None:
 			return
-		if self.valuebutton.GetToggle():
+		if self.valuebutton.GetToggle() or self.ruler is not None:
+			dc = wxMemoryDC()
+			dc.SelectObject(self.buffer)
+			dc.BeginDrawing()
+			self.Draw(dc)
+			string = ''
 			x, y = self.view2image((evt.m_x, evt.m_y))
-			self.drawValueLabel(x, y)
+			if self.ruler is not None:
+				#self.drawRulerLine(self.ruler, (evt.m_x, evt.m_y), dc)
+				self.drawRulerLine(self.ruler, (x, y), dc)
+				string += self.rulerString(x, y)
+			if self.valuebutton.GetToggle():
+				if self.ruler is not None:
+					string += ', '
+				string += self.valueString(x, y)
+			if string:
+				self.drawLabel(dc, x, y, string)
+			dc.EndDrawing()
+			self.paint(dc, wxClientDC(self.panel))
+			dc.SelectObject(wxNullBitmap)
 
-	def drawValueLabel(self, x, y):
+	def drawRulerLine(self, origin, destination, dc):
+		dc.SetPen(wxPen(wxRED, 1))
+		dc.DrawLine(origin[0], origin[1], destination[0], destination[1])
+
+	def rulerString(self, x, y):
+		return 'from (%d, %d): %.2f' % (self.ruler[0], self.ruler[1],
+										math.sqrt((x - self.ruler[0])**2 + (y - self.ruler[1])**2))
+
+	def valueString(self, x, y):
 		value = self.image[y, x]
-		self.drawLabel((x, y), value)
+		return '(%d, %d): %s' % (x, y, str(value))
 
-	def drawLabel(self, xy, value):
-		dc = wxClientDC(self.panel)
-		dc.BeginDrawing()
-
+	def drawLabel(self, dc, x, y, string):
 		dc.SetBrush(wxBrush(wxWHITE))
 		dc.SetPen(wxPen(wxBLACK, 1))
-
-		string = '(%d, %d): %s' % (xy + (str(value),))
-		#tooltip = wxToolTip(string)
-		#self.panel.SetToolTip(tooltip)
-
-		try:
-			apply(self.scaledBlit, self.damaged)
-		except AttributeError:
-			pass
 
 		xextent, yextent, d, e = dc.GetFullTextExtent(string, wxNORMAL_FONT)
 		xcenter, ycenter = self.getClientCenter()
 
-		x, y = self.image2view(xy)
+		ix, iy = self.image2view((x, y))
 
-		if x <= xcenter:
+		if ix <= xcenter:
 			xoffset = 10
 		else:
 			xoffset = -(10 + xextent + 4)
-		if y <= ycenter:
+		if iy <= ycenter:
 			yoffset = 10
 		else:
 			yoffset = -(10 + yextent + 4)
@@ -240,26 +292,10 @@ class ImagePanel(wxPanel):
 		x = int(round((x + xoffset)))
 		y = int(round((y + yoffset)))
 
-		self.damaged = (x, y, xextent + 4, yextent + 4)
-
-		apply(dc.DrawRectangle, self.damaged)
+		dc.DrawRectangle(x, y, xextent + 4, yextent + 4)
 
 		dc.SetFont(wxNORMAL_FONT)
 		dc.DrawText(string, x + 2 , y + 2)
-
-		dc.EndDrawing()
-
-	def scaledBlit(self, x, y, w, h):
-		dc = wxMemoryDC()
-		dc.SelectObject(self.buffer)
-
-		xscale, yscale = self.getScale()
-		ix, iy = self.view2image((x, y))
-		#vx, vy = self.image2view((x, y))
-
-		clientdc = wxClientDC(self.panel)
-		clientdc.SetUserScale(xscale, yscale)
-		clientdc.Blit(x/xscale, y/yscale, w/xscale + 1, h/yscale + 1, dc, ix, iy)
 
 	def Draw(self, dc):
 #		try:
@@ -276,15 +312,8 @@ class ImagePanel(wxPanel):
 		dc = wxMemoryDC()
 		dc.SelectObject(self.buffer)
 		self.Draw(dc)
-
-		xviewoffset, yviewoffset = self.panel.GetViewStart()
-		xscale, yscale = self.getScale()
-		xsize, ysize = self.panel.GetClientSize()
-
-		clientdc = wxClientDC(self.panel)
-		clientdc.SetUserScale(xscale, yscale)
-		clientdc.Blit(0, 0, xsize/xscale + 1, ysize/yscale + 1, dc,
-									xviewoffset/xscale, yviewoffset/yscale)
+		self.paint(dc, wxClientDC(self.panel))
+		dc.SelectObject(wxNullBitmap)
 
 	def OnSize(self, evt):
 #		width, height = self.panel.GetClientSize()
@@ -295,15 +324,17 @@ class ImagePanel(wxPanel):
 		dc = wxMemoryDC()
 		dc.SelectObject(self.buffer)
 		self.Draw(dc)
+		self.paint(dc, wxPaintDC(self.panel))
+		dc.SelectObject(wxNullBitmap)
 
+	def paint(self, fromdc, todc):
 		xviewoffset, yviewoffset = self.panel.GetViewStart()
 		xscale, yscale = self.getScale()
 		xsize, ysize = self.panel.GetClientSize()
 
-		paintdc = wxPaintDC(self.panel)
-		paintdc.SetUserScale(xscale, yscale)
-		paintdc.Blit(0, 0, xsize/xscale + 1, ysize/yscale + 1, dc,
-									xviewoffset/xscale, yviewoffset/yscale)
+		todc.SetUserScale(xscale, yscale)
+		todc.Blit(0, 0, xsize/xscale + 1, ysize/yscale + 1, fromdc,
+							xviewoffset/xscale, yviewoffset/yscale)
 
 class ClickImagePanel(ImagePanel):
 	def __init__(self, parent, id, callback=None):
@@ -328,18 +359,15 @@ class TargetImagePanel(ImagePanel):
 		self.colorlist = [wxRED, wxBLUE, wxColor(255, 0, 255), wxColor(0, 255, 255)]
 		self.colors = {}
 
-	def OnZoomButton(self, evt):
-		if self.zoombutton.GetToggle():
-			if len(self.targets) > 0 and self.targetbutton.GetToggle():
-				self.targetbutton.SetToggle(False)
-				self.OnTargetButton(None)
-		ImagePanel.OnZoomButton(self, evt)
+	def UntoggleModal(self, select):
+		ImagePanel.UntoggleModal(self, select)
+		if len(self.targets) > 0 and select != self.targetbutton and self.targetbutton.GetToggle():
+			self.targetbutton.SetToggle(False)
+			self.OnTargetButton(None)
 
 	def OnTargetButton(self, evt):
 		if self.targetbutton.GetToggle():
-			if self.zoombutton.GetToggle():
-				self.zoombutton.SetToggle(False)
-				self.OnZoomButton(None)
+			self.UntoggleModal(self.targetbutton)
 			EVT_LEFT_DCLICK(self.panel, self.OnLeftDoubleClick)
 			EVT_RIGHT_DCLICK(self.panel, self.OnRightDoubleClick)
 			self.panel.SetCursor(wxStockCursor(wxCURSOR_BULLSEYE))
