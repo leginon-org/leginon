@@ -188,10 +188,10 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		## eucentric focus stuff
 		euc = uidata.Container('Eucentric Focus')
 		eufromscope = uidata.Method('Record Current Focus as Eucentric Focus', self.uiEucFromScope)
-		eutoscope = uidata.Method('Send Recored Eucentric Focus to Scope', self.uiEucToScope)
-		eucstatus = uidata.MessageLog('Status')
+		eutoscope = uidata.Method('Send Recorded Eucentric Focus to Scope', self.uiEucToScope)
+		self.eucstatus = uidata.MessageLog('Status')
 
-		euc.addObjects((eufromscope,eutoscope, eucstatus))
+		euc.addObjects((eufromscope,eutoscope, self.eucstatus))
 
 		container = uidata.LargeContainer('Beam Tilt Calibrator')
 		container.addObjects((defocuscontainer, stigcontainer, measurecontainer, euc))
@@ -277,6 +277,6 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		mag = scope['magnification']
 		focus = scope['focus']
 		self.euclient.publishEucentricFocus(ht, mag, focus)
-		self.eustatus.information('published:  HT: %s, Mag: %s, Euc. Focus: %s' % (ht, mag, focus))
+		self.eucstatus.information('published:  HT: %s, Mag: %s, Euc. Focus: %s' % (ht, mag, focus))
 
 
