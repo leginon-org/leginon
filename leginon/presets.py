@@ -178,7 +178,8 @@ class PresetsManager(node.Node):
 			if preset['name'] not in names:
 				names.append(preset['name'])
 				if preset['removed'] != 1:
-					preset['session'] = self.session
+					if preset['session'] is not self.session:
+						preset['session'] = self.session
 					mostrecent.append(preset)
 		self.presets[:] = mostrecent
 
