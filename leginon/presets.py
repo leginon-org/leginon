@@ -9,7 +9,7 @@ import camerafuncs
 import strictdict
 import threading
 import time
-
+import unique
 
 class PresetsClient(object):
 	'''
@@ -465,12 +465,13 @@ class PresetsManager(node.Node):
 
 		## import
 		try:
-			sessionlist = self.research(dataclass=data.SessionData)
+			presetslist = self.research(dataclass=data.PresetData)
 		except IndexError:
-			print 'INDEX ERROR'
+			print 'Preset session research index error'
 			raise
-			sessionlist = []
-		sessionnamelist = map(lambda x: x['name'], sessionlist)
+			presetslist = []
+		sessionnamelist = map(lambda x: x['session']['name'], presetslist)
+		sessionnamelist = unique.unique(sessionnamelist)
 		sessionnamelist.sort()
 		self.othersession = uidata.SingleSelectFromList('Session', sessionnamelist, 0)
 		fromdb = uidata.Method('Import', self.uiGetPresetsFromDB)
