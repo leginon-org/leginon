@@ -30,6 +30,14 @@ class ProjectExperiment(sqldict.ObjectBuilder):
 	indices = [ ('projectId', ['projectId'] )]
 projectexperiments = ProjectExperiment().register(db)
 
+class GridBox(sqldict.ObjectBuilder):
+	'''Project: a class object to access the
+	`projects` table in the project DB
+	'''
+	table = 'gridboxes'
+	columns = ['gridboxId', 'label']
+gridboxes = GridBox().register(db)
+
 ########################################
 ## Testing
 ########################################

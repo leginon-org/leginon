@@ -13,6 +13,7 @@ import uidata
 import event
 import threading
 import emailnotification
+import project
 
 # ...
 def seconds2str(seconds):
@@ -169,6 +170,7 @@ if sys.platform == 'win32':
 			RobotNode.__init__(self, id, session, nodelocations, **kwargs)
 			self.gridorder = []
 			self.gridnumber = None
+			self.griddata = None
 			self.timings = {}
 			self.gridcleared = threading.Event()
 
@@ -182,6 +184,11 @@ if sys.platform == 'win32':
 																									'RobotCommunications.Signal')
 			except pywintypes.com_error, e:
 				raise RuntimeError('Cannot initialized robot communications')
+
+			# if label is same, kinda screwed
+			self.gridtrayids = {}
+			for i in project.gridboxes.getall():
+				self.gridtrayids[i['label']] = i['gridboxId']
 	
 			self.addEventInput(event.InsertGridEvent, self.handleInsert)
 			self.addEventInput(event.ExtractGridEvent, self.handleExtract)
@@ -355,6 +362,9 @@ if sys.platform == 'win32':
 		def selectGrid(self):
 			try:
 				self.gridnumber = self.getGridNumber()
+				initializer = {'grid number': self.gridnumber,
+												'grid tray ID': self.gridtrayid}
+				self.griddata = data.GridData(initializer=initializer)
 			except GridQueueEmpty:
 				self.uicurrentgridnumber.set(None)
 				raise
@@ -380,15 +390,16 @@ if sys.platform == 'win32':
 		def outputGridInsertedEvent(self):
 			self.setStatusMessage('Sending notification the holder is inserted')
 			evt = event.GridInsertedEvent()
-			evt['grid'] = self.gridnumber
+			evt['grid'] = self.griddata
 			self.outputEvent(evt)
 			self.setStatusMessage('Sent notification the holder is inserted')
 
 		def outputGridExtractedEvent(self):
 			self.setStatusMessage('Sending notification the holder is extracted')
 			evt = event.GridExtractedEvent()
-			evt['grid'] = self.gridnumber
+			evt['grid'] = self.griddata
 			self.gridnumber = None
+			self.griddata = None
 			self.uicurrentgridnumber.set(None)
 			self.outputEvent(evt)
 			self.setStatusMessage('Sent notification the holder is extracted')
@@ -526,9 +537,23 @@ if sys.platform == 'win32':
 
 		def setScopeStatusMessage(self, message):
 			self.uiscopestatusmessage.set(message)
+
+		def onGridTraySelect(self, value):
+			try:
+				label = self.gridtrayselect.getSelectedValue(value)
+				self.gridtrayid = self.gridtrayids[label]
+			except KeyError:
+				self.gridtrayid = None
+			return value
 		
 		def defineUserInterface(self):
 			RobotNode.defineUserInterface(self)
+
+			gridtraylabels = self.gridtrayids.keys()
+			gridtraylabels.sort()
+			self.gridtrayselect = uidata.SingleSelectFromList('Grid Tray',
+																												gridtraylabels, 0, 'rw')
+			self.gridtrayselect.setCallback(self.onGridTraySelect)
 
 			self.uigridtray = uidata.GridTray('Grids', [], 'rw',
 																				self.uiGridTrayCallback)
@@ -541,7 +566,7 @@ if sys.platform == 'win32':
 			gridclearedmethod = uidata.Method('Grid Cleared', self.uiGridCleared)
 
 			gridcontainer = uidata.Container('Grids')
-			gridcontainer.addObjects((self.uigridtray,
+			gridcontainer.addObjects((self.gridtrayselect, #self.uigridtray,
 																griddeletemethod, gridclearmethod,
 																self.uigridrangestart, self.uigridrangestop,
 																gridaddrangemethod, gridclearedmethod))

@@ -730,6 +730,14 @@ class MosaicTargetData(InSessionData):
 		return t
 	typemap = classmethod(typemap)
 
+class GridData(Data):
+	def typemap(cls):
+		t = Data.typemap()
+		t += [('grid number', int),
+					('grid tray ID', int)]
+		return t
+	typemap = classmethod(typemap)
+
 class ImageTargetData(InSessionData):
 	def typemap(cls):
 		t = InSessionData.typemap()
@@ -744,7 +752,7 @@ class ImageTargetData(InSessionData):
 		  ('version', int),
 		  ('number', int),
 		  ('status', str),
-			('grid', int),
+			('grid', GridData),
 		]
 		return t
 	typemap = classmethod(typemap)
