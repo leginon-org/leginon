@@ -32,6 +32,7 @@ class ImagePanel(wxPanel):
 		self.initPanel()
 		height, width = self.panel.GetClientSize()
 		self.buffer = wxEmptyBitmap(height, width)
+		self.motionbuffer = wxEmptyBitmap(height, width)
 		self.initValue()
 		self.initZoom()
 		self.initRuler()
@@ -46,6 +47,14 @@ class ImagePanel(wxPanel):
 		if scale is None:
 			scale = self.scale
 		if scale[0] < 1.0 or scale[1] < 1.0:
+			return True
+		else:
+			return False
+
+	def biggerView(self):
+		size = self.panel.GetVirtualSize()
+		clientsize = self.panel.GetClientSize()
+		if size[0] < clientsize[0] or size[1] < clientsize[1]:
 			return True
 		else:
 			return False
@@ -178,6 +187,10 @@ class ImagePanel(wxPanel):
 			self.setVirtualSize()
 			self.UpdateDrawing()
 
+		#if self.biggerView():
+		#	height, width = self.panel.GetClientSize()
+		#	self.motionbuffer = wxEmptyBitmap(height, width)
+
 		if offset is not None:
 			xcenter, ycenter = self.getClientCenter()
 			self.panel.Scroll((offset[0])*self.scale[0] - xcenter,
@@ -230,7 +243,6 @@ class ImagePanel(wxPanel):
 		bitmapwidth = self.bitmap.GetWidth()
 		bitmapheight = self.bitmap.GetHeight()
 		self.buffer = wxEmptyBitmap(bitmapwidth, bitmapheight)
-		self.motionbuffer = wxEmptyBitmap(bitmapheight, bitmapwidth)
 		self.UpdateDrawing()
 
 	def clearImage(self):
@@ -266,6 +278,8 @@ class ImagePanel(wxPanel):
 			dc = wxMemoryDC()
 			dc.SelectObject(self.motionbuffer)
 			dc.BeginDrawing()
+			if self.biggerView():
+				dc.Clear()
 
 			fromdc = wxMemoryDC()
 			fromdc.SelectObject(self.buffer)
@@ -275,16 +289,17 @@ class ImagePanel(wxPanel):
 			xsize, ysize = self.panel.GetClientSize()
 
 			if self.smallScale():
-				xscale, yscale = (1.0, 1.0)
+				dc.Blit(0, 0, xsize, ysize, fromdc, xviewoffset, yviewoffset)
 			else:
 				xscale, yscale = self.getScale()
 				dc.SetUserScale(xscale, yscale)
-
-			dc.Blit(0, 0, xsize/xscale + 1, ysize/yscale + 1, fromdc,
+				dc.Blit(0, 0, xsize/xscale + 1, ysize/yscale + 1, fromdc,
 								xviewoffset/xscale, yviewoffset/yscale)
+
 			fromdc.SelectObject(wxNullBitmap)
 
-			dc.SetUserScale(1.0, 1.0)
+			if not self.smallScale():
+				dc.SetUserScale(1.0, 1.0)
 
 			string = ''
 			x, y = self.view2image((evt.m_x, evt.m_y))
