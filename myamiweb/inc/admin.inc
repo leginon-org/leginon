@@ -14,7 +14,7 @@ function admin_header($javascriptinit="") {
 
 
 $link = new iconlink();
-$link->align = 'left';
+$link->align = 'center';
 $link->cols = 1;
 $link->onimg = "_on.png";
 $link->offimg = "_off.png";

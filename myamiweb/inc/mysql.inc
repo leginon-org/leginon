@@ -44,13 +44,15 @@ class mysql {
 	function connect_db($host="") {
 		$host = (empty($host)) ? $this->db_host : $host;
 		$link = @mysql_connect($host, $this->db_user, $this->db_pass);
-		if (!$link) {
+		if (!$link || empty($link)) {
 			$this->mysqlerror = "Error: ".mysql_error();
+			$this->mysqlerrornb = mysql_errno();
 			return False;
 		}
 		$db = mysql_select_db($this->db, $link);
 		if(!$db) {
 			$this->mysqlerror = "Error: ".mysql_error();
+			$this->mysqlerrornb = mysql_errno();
 			return False;
 		}
 		return $link;
@@ -194,6 +196,10 @@ class mysql {
 		return $this->mysqlerror;
 	}
 
+	function getErrorNumber() {
+		return $this->mysqlerrornb;
+	}
+
 	function getSQLQuery() {
 		return $this->sqlquery;
 	}
@@ -201,12 +207,14 @@ class mysql {
 	function SQLQuery($query, $insert=false) {
 		$this->sqlquery = $query;
 		if (!$this->connect_db($this->db_host)) {
-			echo $this->mysqlerror;
+			$this->mysqlerror = "Error: ".mysql_error();
+			$this->mysqlerrornb = mysql_errno();
 			return False;
 		}
 		$result = mysql_query($query); 
 		if (!$result) {
 			$this->mysqlerror = "Error: ".mysql_error();
+			$this->mysqlerrornb = mysql_errno();
 			return False;
 		}
 		if ($insert)
@@ -307,6 +315,8 @@ class mysql {
 			if ($this->SQLTableExists($table)) {
 				$orgfieldtype = $this->getFieldTypes($table);
 				foreach ($fieldtype as $f=>$t) {
+					if (ereg('^DEF_', $f))
+						continue;
 					if (!$orgfieldtype[$f]) {
 						$q[] = "ALTER TABLE `$table` ADD `$f` $t";
 						$changes .= "ADD $table $f  => $t <br>";
@@ -324,7 +334,7 @@ class mysql {
 			$this->SQLQueries($q);
 		if ($changes)
 			return $changes;
-		return True;
+		return False;
 	}
 	
 	function getFields($table) {

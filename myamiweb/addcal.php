@@ -12,10 +12,10 @@ require('inc/admin.inc');
 
 $check_str = 'checked="checked"';
 $limit=1;
-
 $hostkeys = array_keys($SQL_HOSTS);
 
 // --- set import hosts / instruments
+$importfilehostId = ($_POST[importfilehostId]) ? $_POST[importfilehostId] : current($hostkeys);
 $importhostId = ($_POST[importhostId]) ? $_POST[importhostId] : current($hostkeys);
 $leginondata->mysql->setSQLHost($SQL_HOSTS[$importhostId]);
 $importinstruments = $leginondata->getInstrumentDescriptions();
@@ -27,33 +27,23 @@ $leginondata->mysql->setSQLHost($SQL_HOSTS[$hostId]);
 $instruments = $leginondata->getInstrumentDescriptions();
 
 $calibrationtypes = $leginondata->getMatrixCalibrationTypes();
-$applications = $leginondata->getApplications();
 $instrumentId = $_POST['instrument'];
 list($instrumentinfo) = $leginondata->getInstrumentInfo($instrumentId);
 $calibrations = is_array($_POST['calibrations']) ? $_POST['calibrations'] : array($_POST['calibrations']);
 $types = $_POST['types'];
 
+// print_r($_POST);
+
 if ($_POST[format]) {
 	$xmlradiochecked = ($_POST[format]=="xml") ? $check_str : '';
 	$tableradiochecked = ($_POST[format]=="table") ? $check_str : '';
+	$hostradiochecked = ($_POST[format]=="host") ? $check_str : '';
 	$filechecked  = ($_POST[saveasfile]) ? 'checked="checked"' : '';
 } else {
 	$xmlradiochecked = $check_str;
 }
 
-if ($_POST[import_method]=="file") {
-	$browse_disabled = "";
-	$import_disabled = "disabled";
-	$fileradiochecked = $check_str;
-	$hostradiochecked = "";
-} else {
-	$browse_disabled = "disabled";
-	$import_disabled = "";
-	$hostradiochecked = $check_str;
-}
-
-
-if ($_POST[bt_export] || $_POST[import_method]=="host") {
+if ($_POST[bt_export]) {
 	if(!empty($_POST['calibrations'])) {
 		$xmlcalibrations = $leginondata->dumpcalibrations($calibrations, $instrumentId, $limit, $types);
 		if ($_POST[format]=='xml' && $_POST[saveasfile]) {
@@ -64,21 +54,28 @@ if ($_POST[bt_export] || $_POST[import_method]=="host") {
 	}
 } 
 if ($_POST[bt_import]) {
-	if ($_POST[import_method]=="file") {
-		if ($filename = $_FILES[import_file][name])
-			$xmldata = $_FILES[import_file][tmp_name];
-	} else {
-		$xmldata = $xmlcalibrations;
-	}
+	if ($filename = $_FILES[import_file][name])
+		$xmldata = $_FILES[import_file][tmp_name];
 }
 
 admin_header();
 ?>
 <h3>Calibrations Import/Export</h3>
-<form name="data" method="POST" enctype="multipart/form-data" action="<? $PHP_SELF ?>">
-<table border=0>
+<form name="data" method="POST" enctype="multipart/form-data" action="<?=$_SERVER['PHP_SELF'] ?>">
+<table border="0" class=tableborder>
 <tr valign=top >
 <td>
+  <table border="0">
+    <tr>
+      <td>
+  	<h3>Export</h3>
+      </td>
+    </tr>
+<tr valign=top >
+<td colspan="2">
+<table border="0">
+ <tr>
+  <td>
 From Host:
 	<select name="hostId" onChange="javascript:document.data.submit();">
 		<?
@@ -90,7 +87,7 @@ From Host:
 	</select>
 </td>
 </tr>
-<tr valign=top >
+<tr valign="top" >
 <td nowrap >
 Instrument:
 	<select name="instrument">
@@ -104,15 +101,8 @@ Instrument:
 </td>
 </tr>
 </table>
-<table border=0 class=tableborder>
-<tr valign=top >
-<td>
-  <table border=0>
-    <tr>
-      <td>
-  	<h3>Export</h3>
-      </td>
-    </tr>
+ </td>
+  </tr>
  <tr valign="bottom">
   <td>
 	<select multiple name="calibrations[]" size="6" >
@@ -135,15 +125,56 @@ Instrument:
 	</select>
   </td>
     </tr>
-    <tr valign=top>
-     <td colspan=2>
+    <tr valign="top">
+     <td colspan="2">
+   <table border="0">
+	<tr>
+		<td>
 	<input type="radio" name="format" value="xml" id="radio_format_xml"  <? echo $xmlradiochecked ?> >
+		</td>
+		<td>
 	<label for="radio_format_xml">Export to XML format</label>
 	<input type="checkbox" name="saveasfile" id="checkbox_file_Id" <? echo $filechecked ?> >
 	<label for="checkbox_file_Id">Save as...</label>
+		</td>
+	</tr>
+	<tr>
+		<td>
+	<input type="radio" name="format" value="host" <? echo $hostradiochecked ?> >
+		</td>
+		<td>
+To Host:
+
+	<select name="importhostId" onChange="javascript:document.data.submit();">
+		<?
+		foreach($hostkeys as $host) {
+			$selected = ($host==$importhostId) ? "selected" : "";
+			echo "<option value='$host' $selected >$host\n";
+		}
+		?>
+	</select>
+Instrument:
 	<br>
+	<select name="importinstrument">
+	<? foreach ($importinstruments as $instrument) {
+		$s = ($_POST['importinstrument']==$instrument['id']) ? 'selected' : '';
+		echo "<option value='".$instrument['id']
+			."' $s >".$instrument['fullname']."</option>\n";
+	}
+	?>
+	</select>
+		</td>
+		</tr>
+	<tr>
+		<td>
 	<input type="radio" name="format" value="table" id="radio_format_Id" <? echo $tableradiochecked ?> >
+		</td>
+		<td>
 	<label for="radio_format_Id">View </label>
+		</td>
+	</tr>
+	</table>
+
      </td>
     </tr>
     <tr>
@@ -156,55 +187,34 @@ Instrument:
   <td class=tablebg width=1>
   </td>
   <td>
-   <table border=0>
+   <table border="0">
     <tr>
       <td>
   	<h3>Import</h3>
       </td>
     </tr>
     <tr>
-      <td>
-	Methods:
+     <td nowrap>
+	From xml file
+     </td>
+     <td>
+	<input type="file" name="import_file" >
      </td>
     </tr>
     <tr>
      <td>
-	<input type="radio" name="import_method" value="host" id="radio_import_method_host"  <? echo $hostradiochecked ?> onChange="javascript:document.data.submit();" >
 To Host:
      </td>
      <td>
-	<select <?=$import_disabled?> name="importhostId" onChange="javascript:document.data.submit();">
+
+	<select name="importfilehostId" >
 		<?
 		foreach($hostkeys as $host) {
-			$selected = ($host==$importhostId) ? "selected" : "";
+			$selected = ($host==$importfilehostId) ? "selected" : "";
 			echo "<option value='$host' $selected >$host\n";
 		}
 		?>
 	</select>
-</td>
-</tr>
-<tr valign=top >
-<td align=right>
-Instrument:
-</td>
-<td>
-	<select <?=$import_disabled?> name="importinstrument">
-	<? foreach ($importinstruments as $instrument) {
-		$s = ($_POST['importinstrument']==$instrument['id']) ? 'selected' : '';
-		echo "<option value='".$instrument['id']
-			."' $s >".$instrument['fullname']."</option>\n";
-	}
-	?>
-	</select>
-</td>
-    </tr>
-    <tr>
-     <td nowrap>
-	<input type="radio" name="import_method" value="file" id="radio_import_method_file"  <?=$fileradiochecked?>  onChange="javascript:document.data.submit();" >
-	From xml file
-     </td>
-     <td>
-	<input <?=$browse_disabled?> type="file" name="import_file" >
      </td>
     </tr>
     <tr>
@@ -228,7 +238,7 @@ if ($_POST[bt_export]) {
 	} else if ($_POST[format]=="table") {
 	   foreach ($calibrations as $calibration) {
 		echo "<b>".$calibration."</b>";
-			if (!$leginondata->mysql->SQLTableExists($table)) {
+			if (!$leginondata->mysql->SQLTableExists($calibration)) {
 				echo " not found <br>";continue;
 			}
 		$calibration_fields = $leginondata->mysql->getFields($calibration); 
@@ -245,16 +255,18 @@ if ($_POST[bt_export]) {
 		}
 		echo "<br>";
 	    }
+	} else if ($_POST[format]=="host") {
+		$xmldata = $xmlcalibrations;
 	}
-} else if ($xmldata ) {
+} 
+if ($xmldata) {
 	$leginondata->mysql->setSQLHost($SQL_HOSTS[$importhostId]);
+	if ($_POST[bt_import])
+		$leginondata->mysql->setSQLHost($SQL_HOSTS[$importfilehostId]);
 	if(!$leginondata->importCalibrations($xmldata, $importinstrumentId))
 		echo "data not imported";
 	else
 		echo "data imported";
-	echo "<pre>";
-//	print_r($app);
-	echo "<pre>";
 }
 
 

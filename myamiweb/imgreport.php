@@ -29,7 +29,7 @@ $imgId = $newimage[id];
 $imageinfo = $leginondata->getImageInfo($imgId);
 $sessionId = $imageinfo[sessionId];
 $path = $leginondata->getImagePath($sessionId);
-$filename = $leginondata->getFilename($imgId);
+$filename = $leginondata->getFilenameFromId($imgId);
 $filesize = getFileSize($path.$filename, 2 );
 $fileinfo = imagemrcinfo($path.$filename);
 $sessioninfo = $leginondata->getSessionInfo($sessionId);
@@ -218,7 +218,7 @@ if (is_array($imageinfo) && $id=$imageinfo[parentId]) {
 	foreach($parentimageinfokeys as $k) {
 		if (in_array($k, $parentlinks))
 			$v = '<a class="header" href="'
-			.$PHP_SELF.'?id='.$id.'&preset='.$imageinfo[parentpreset].'">'
+			.$_SERVER['PHP_SELF'].'?id='.$id.'&preset='.$imageinfo[parentpreset].'">'
 			.$imageinfo[$k].'</a>';
 		else
 			$v = $imageinfo[$k];
@@ -240,9 +240,9 @@ if (is_array($datatypes))
 		$rel = $leginondata->findImage($imgId, $datatype);
 		if ($rel) {
 			$relId = $rel[id];
-			$relfilename = $leginondata->getFilename($relId);
+			$relfilename = $leginondata->getFilenameFromId($relId);
 			echo formatHtmlRow($rel[preset], '<a class="header" href="'
-                                .$PHP_SELF.'?id='.$relId.'&preset='.$rel[preset].'">'
+                                .$_SERVER['PHP_SELF'].'?id='.$relId.'&preset='.$rel[preset].'">'
                                 .$relfilename.'</a>');
 		} else break;
 	}

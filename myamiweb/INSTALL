@@ -6,7 +6,7 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-DBEM - Leginon Database Tools
+DBEM - leginon DataBase tools for Electron Microscopy
 
 
 -------------
@@ -25,8 +25,7 @@ Unpacking:
 
 Unpack the archive into your web server directory:
 	$ cd /yourwwwdir
-	$ tar zxvf dbem.tgz
-	$ cd scheduler                                 
+	$ tar zxvf dbem[version].tgz
 
 --------------
 Configuration:
@@ -36,10 +35,29 @@ Configuration:
 	- edit the file config.php
 	- set your MySQL parameters:
 
-	$HOSTNAME = "[SQL HOST]";
-	$DBUSER = "[SQL USER]";
-	$DBPASSWORD = "[SQL PASS]";
-	$DATABASE = "[database]";
+	$DB_HOST	= "[SQL HOST]";
+	$DB_USER	= "[SQL USER]";
+	$DB_PASSWORD	= "[SQL PASS]";
+	$DB		= "[database]";
+
+----------------------------
+Add mrcmodule.so in php.ini:
+----------------------------
+
+	$ vi /etc/php.ini and locate the extension directory and add
+				mrcmodule.so under [Extension section]:
+
+	; Directory in which the loadable extensions (modules) reside.
+	extension_dir = "./"
+	extension_dir = /usr/lib/php/extensions
+
+	[extension section]
+	extension=mrcmodule.so
+
+	Copy the extension file, and restart the web server
+
+	$ cp ext/mrcmodule.so /usr/lib/php/extensions/
+	$ /etc/init.d/apache restart
 
 --------------
 run:

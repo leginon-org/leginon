@@ -31,6 +31,9 @@ $link->addlink('admin.php','Administration','', 'admin');
 
 <center><h1>Leginon II Database Tools</h1></center>
 <hr/>
+<noscript>
+<?=divtitle("<center>Please enable Javascript in you Browser</center>")?>
+</noscript>
 <?
 $link->Display();
 ?>

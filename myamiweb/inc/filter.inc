@@ -32,7 +32,7 @@ class filter {
 
 	function filter($filename="", $minpix="", $maxpix="", $binning=1) {
 		$this->filename = $filename;
-		$this->minpix = ($minpix) ? $minpix : MIN_PIX_VAL;
+		$this->minpix = ($minpix) ? $minpix : MIN_PIXEL_VAL;
 		$this->maxpix = ($maxpix) ? $maxpix : MAX_PIXEL_VAL;
 		$this->binning = ($binning) ? $binning : 1;
 	}

@@ -13,7 +13,7 @@ if ($fft) {
 	$fftimg = $leginondata->getImageFFT($imgId);
 	$filename = $fftimg[fftimage];
 } else {
-	$filename = $leginondata->getFilename($imgId);
+	$filename = $leginondata->getFilenameFromId($imgId);
 }
 
 

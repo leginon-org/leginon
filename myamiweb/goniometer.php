@@ -17,7 +17,7 @@ $models= $leginondata->getAllGoniometerModels();
 <link rel="stylesheet" type="text/css" href="css/leginon.css"> 
 </head>
 <body>
-<form name="goniometerform" method="POST" action="<?=$PHP_SELF?>">
+<form name="goniometerform" method="POST" action="<?=$_SERVER['PHP_SELF']?>">
 <select name="modelId" onChange="javascript:document.goniometerform.submit()">
 <?
 foreach($models as $model) {

@@ -12,7 +12,8 @@ require('inc/admin.inc');
 $sqlhosts = $SQL_HOSTS;
 $hostkeys = array_keys($sqlhosts);
 $applicationId = $_POST[applicationId];
-$ex_hostId = ($_POST[export_hostId]) ? $_POST[export_hostId] : current($hostkeys);
+$exfromhostId = ($_POST[exportfromhostId]) ? $_POST[exportfromhostId] : current($hostkeys);
+$extohostId = ($_POST[exporttohostId]) ? $_POST[exporttohostId] : current($hostkeys);
 $im_hostId = ($_POST[import_hostId]) ? $_POST[import_hostId] : current($hostkeys);
 
 $leginondata->mysql->setSQLHost($SQL_HOSTS[$ex_hostId]);
@@ -22,27 +23,17 @@ $check_str = 'checked="checked"';
 if ($_POST[format]) {
 	$xmlradiochecked = ($_POST[format]=="xml") ? $check_str : '';
 	$tableradiochecked = ($_POST[format]=="table") ? $check_str : '';
+	$hostradiochecked = ($_POST[format]=="host") ? $check_str : '';
 	$filechecked  = ($_POST[saveasfile]) ? 'checked="checked"' : '';
 } else {
 	$xmlradiochecked = $check_str;
 }
 
-if ($_POST[import_method]=="file") {
-	$browse_disabled = "";
-	$import_disabled = "disabled";
-	$fileradiochecked = $check_str;
-	$hostradiochecked = "";
-} else {
-	$browse_disabled = "disabled";
-	$import_disabled = "";
-	$hostradiochecked = $check_str;
-}
-
-if ($_POST[bt_export] || $_POST[import_method]=="host") {
+if ($_POST[bt_export]) {
 	if ($_POST[applicationId]) {
-		$appinfo = $leginondata->getApplicationInfo($applicationId);
+		list($appinfo) = $leginondata->getApplicationInfo($applicationId);
 		$dumpapplication = $leginondata->dumpApplicationData($applicationId,'xml');
-		if ($_POST[format]=='xml' && $_POST[saveasfile] && $_POST[bt_export]) {
+		if ($_POST[format]=='xml' && $_POST[saveasfile]) {
 			$filename = $appinfo['name'].'_'.$appinfo['version'].'.xml';
 			$leginondata->download($filename, $dumpapplication);
 			exit;
@@ -50,33 +41,14 @@ if ($_POST[bt_export] || $_POST[import_method]=="host") {
 	}
 }
 if ($_POST[bt_import]) {
-	if ($_POST[import_method]=="file") {
-		if ($filename = $_FILES[import_file][name])
-			$xmldata = $_FILES[import_file][tmp_name];
-	} else {
-		$xmldata = $dumpapplication;
-	}
+	if ($filename = $_FILES[import_file][name])
+		$xmldata = $_FILES[import_file][tmp_name];
 }
 
 admin_header();
 ?>
 <h3>Applications Import/Export</h3>
-<form name="data" method="POST" enctype="multipart/form-data" action="<? $PHP_SELF ?>">
-<table border=0>
-<tr valign=top >
-<td>
-From Host:
-	<select name="export_hostId" onChange="javascript:document.data.submit();">
-		<?
-		foreach($hostkeys as $host) {
-			$selected = ($host==$ex_hostId) ? "selected" : "";
-			echo "<option value='$host' $selected >$host\n";
-		}
-		?>
-	</select>
-</td>
-</tr>
-</table>
+<form name="data" method="POST" enctype="multipart/form-data" action="<?=$_SERVER['PHP_SELF'] ?>">
 <table border=0 class=tableborder>
 <tr valign=top >
 <td>
@@ -86,13 +58,26 @@ From Host:
   	<h3>Export</h3>
       </td>
     </tr>
+<tr valign=top >
+<td>
+From Host:
+	<select name="exportfromhostId" onChange="javascript:document.data.submit();">
+		<?
+		foreach($hostkeys as $host) {
+			$selected = ($host==$ex_hostId) ? "selected" : "";
+			echo "<option value='$host' $selected >$host\n";
+		}
+		?>
+	</select>
+</td>
+</tr>
     <tr>
       <td>
 	Application-version 
      </td>
     </tr>
     <tr>
-     <td>
+     <td colspan="2">
 	<select name="applicationId">
 	<?
 	foreach ($applications as $application) {
@@ -110,6 +95,17 @@ From Host:
      <br>
 	<input type="radio" name="format" value="table" id="radio_format_Id" <?=$tableradiochecked ?> >
 	<label for="radio_format_Id">View </label>
+     <br>
+	<input type="radio" name="format" value="host" id="radio_format_host" <?=$hostradiochecked ?> >
+	<label for="radio_format_host">To Host:</label>
+	<select name="exporttohostId" >
+		<?
+		foreach($hostkeys as $host) {
+			$selected = ($host==$extohostId) ? "selected" : "";
+			echo "<option value='$host' $selected >$host\n";
+		}
+		?>
+	</select>
      </td>
      <td>
 	<input type="checkbox" name="saveasfile" id="checkbox_file_Id" <? echo $filechecked ?> >
@@ -133,8 +129,15 @@ From Host:
       </td>
     </tr>
     <tr>
+     <td nowrap>
+	From xml file
+     </td>
+     <td>
+	<input type="file" name="import_file" >
+     </td>
+    </tr>
+    <tr>
       <td>
-	<input type="radio" name="import_method" value="host" id="radio_import_method_host"  <? echo $hostradiochecked ?> onChange="javascript:document.data.submit();" >
 	To Host:
       </td>
       <td>
@@ -146,15 +149,6 @@ From Host:
 		}
 		?>
 	</select>
-     </td>
-    </tr>
-    <tr>
-     <td nowrap>
-	<input type="radio" name="import_method" value="file" id="radio_import_method_file"  <?=$fileradiochecked ?>  onChange="javascript:document.data.submit();" >
-	From xml file
-     </td>
-     <td>
-	<input <?=$browse_disabled?> type="file" name="import_file" >
      </td>
     </tr>
     <tr>
@@ -189,9 +183,14 @@ if ($_POST[bt_export]) {
 		display($r, True);
 	}
 		echo "<br>";
+	} else if ($_POST[format]=="host") {
+		$xmldata=$dumpapplication;
 	}
-} else if ($xmldata) {
-	$leginondata->mysql->setSQLHost($SQL_HOSTS[$im_hostId]);
+} 
+if ($xmldata) {
+	$leginondata->mysql->setSQLHost($SQL_HOSTS[$extohostId]);
+	if ($_POST[bt_import])
+		$leginondata->mysql->setSQLHost($SQL_HOSTS[$im_hostId]);
 	$app = $leginondata->importApplication($xmldata);
 	echo $app;
 }

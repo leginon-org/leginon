@@ -35,7 +35,7 @@ if (!$currentfilter=$_GET['filter'])
 if (!$currentbinning=$_GET['binning'])
 	$currentbinning='auto';
 
-$arrayurl = explode("/", $PHP_SELF);
+$arrayurl = explode("/", $_SERVER['PHP_SELF']);
 array_pop($arrayurl);
 $baseurl=implode("/",$arrayurl);
 echo"

@@ -1,7 +1,7 @@
 <?
 /**
- *	@version $Revision: 1.9 $
- *	@version $Id: image.inc,v 1.9 2004-10-23 00:11:50 dfellman Exp $
+ *	@version $Revision: 1.10 $
+ *	@version $Id: image.inc,v 1.10 2004-11-02 22:38:42 dfellman Exp $
  */
 /**
  *	Tools to display images / mosaic
@@ -13,8 +13,6 @@ require_once("inc/util.inc");
 require_once('inc/filter.inc');
 require_once('inc/graphutil.inc');
 require_once('inc/scalebar.inc');
-
-define(READ_MRC, $IMG_METHOD);
 
 function getImage($sessionId, $imageId, $preset, $params = array()) {
 
@@ -52,8 +50,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		$fft = $leginondata->getImageFFT($imageId);
 		$filename = $fft[fftimage];
 	} else {
-		list($filename) = $leginondata->getFilename($imageId);
-		$filename = $filename['filename'];
+		$filename = $leginondata->getFilenameFromId($imageId);
 	}
 
 	$pic = $path.$filename;
@@ -64,20 +61,15 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		if ($p[loadtime])
 			$begin=getmicrotime();
 
-		if (READ_MRC == "mrcmod") {
-			if ($binning=='auto')
-				$binning = ($dimx > 1024) ? (($dimx > 2048) ? 4 : 2 ) : 1;
-			$filterdata = new filter($pic, $p[minpix], $p[maxpix], $binning);
-			$img = $filterdata->getFilter($p[filter]);
-			if ($size) {
-				$scalefactor = (imagesx($img)) ? $size/imagesx($img) : 1;
-				imagescale($img, $scalefactor);
-			}
-		} else {
-			require_once('inc/mrc.inc');
-			$mrc = new mrc;
-			$img = $mrc->imagecreatefromMRC($pic, $size, $size, $p[minpix], $p[maxpix], $p[quality]);
+		if ($binning=='auto')
+			$binning = ($dimx > 1024) ? (($dimx > 2048) ? 4 : 2 ) : 1;
+		$filterdata = new filter($pic, $p[minpix], $p[maxpix], $binning);
+		$img = $filterdata->getFilter($p[filter]);
+		if ($size) {
+			$scalefactor = (imagesx($img)) ? $size/imagesx($img) : 1;
+			imagescale($img, $scalefactor);
 		}
+
 		if ($p[loadtime])
 			$end=getmicrotime();
 

@@ -13,7 +13,7 @@ $binning = ($_GET[binning]) ? '&binning='.$_GET[binning] : '';
 
 $options = $tg.$sb.$minpix.$maxpix.$fft.$filter.$binning;
 
-$filename = $leginondata->getFilename($id);
+$filename = $leginondata->getFilenameFromId($Id);
 $imgsrc = "getparentimgtarget.php?preset=".$preset."&session=".$session."&id=".$id."&t=80&s=256".$options;
 ?>
 <html>

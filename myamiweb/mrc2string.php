@@ -42,7 +42,7 @@ if ($g) {
 	// --- get image path
 	$path = $leginondata->getImagePath($session);
 	// --- get filename
-	$filename = $leginondata->getFilename($id);
+	$filename = $leginondata->getFilenameFromId($id);
 	$pic = $path.$filename;
 	if (file_exists($pic)) {
 		require_once('inc/mrc.inc');

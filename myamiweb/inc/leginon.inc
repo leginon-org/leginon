@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.31 $
- *	@version $Id: leginon.inc,v 1.31 2004-10-23 00:11:50 dfellman Exp $
+ *	@version $Revision: 1.32 $
+ *	@version $Id: leginon.inc,v 1.32 2004-11-02 22:38:42 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -391,6 +391,12 @@ class leginondata {
 		$filenames = $this->mysql->getSQLResult($q);
 		return $filenames;
 	}
+
+	function getFilenameFromId($id) {
+			list($filename) = $this->getFilename($id);
+			return $filename['filename'];
+	}
+
 
 	function getCalibrations($calibration, $instrumentId=False, $limit='', $type='') {
 		if (!in_array($calibration, $this->calibrationtables))
@@ -1156,7 +1162,7 @@ class leginondata {
 		$fieldtypes = $app->getFieldTypes();
 		$fieldvalues = $app->getFieldValues();
 		if ($changes=$this->mysql->SQLAlterTables($sqldef, $fieldtypes))
-			echo "<br".$changes;
+			echo "<br>".$changes;
 
 		//--- insert a SessionData to link InstrumentData w/ Calibrations
 		$q = "insert into `SessionData` (`name`, `REF|InstrumentData|instrument`) "

@@ -48,7 +48,7 @@ if ($g) {
 	$parent = $leginondata->getParent($id, $preset);
 	// --- get filename
 	$id = $parent[parentId];
-	$filename = $leginondata->getFilename($id);
+	$filename = $leginondata->getFilenameFromId($Id);
 	$pic = $path.$filename;
 	if (file_exists($pic) && $parent[parentpreset]==$preset) {
 		$img = $mrc->imagecreatefromMRC($pic,$new_w,$new_h,$minpix, $maxpix, $quality);
