@@ -393,16 +393,8 @@ if __name__ == '__main__':
 		gui = 1
 	if gui:
 		import nodegui
-		import Tkinter
-		import Pmw
-		tk = Tkinter.Tk()
-		Pmw.initialise(tk)
-		mgui = nodegui.NodeGUI(tk, node=m)
+		port = m.location()['UI port']
+		host = m.location()['hostname']
+		tk = nodegui.newGUIWindow(host,port)
 		tk.wm_title('Leginon Manager')
-		mgui.pack(fill='both', expand='yes')
-#		t = threading.Thread(name = 'Tk GUI thread', target = tk.mainloop)
-#		t.setDaemon(1)
-#		t.start()
-	## interact interface (could be changed to use ui* methods, like GUI)
 	m.start()
-

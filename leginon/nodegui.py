@@ -6,6 +6,7 @@ import interface
 # why doesn't this work? add <python dir>\Tools\idle to your PYTHONPATH
 import TreeWidget
 import os
+import threading
 
 class SpecWidget(Frame):
 	def __init__(self, parent, uiclient, spec, **kwargs):
@@ -276,7 +277,7 @@ class Method(SpecWidget):
 		for arg in self.argspec:
 			dataclass = whichDataClass(arg)
 			newwidget = dataclass(self, self.uiclient, arg)
-			newwidget.pack()
+			newwidget.pack(expand=YES, fill=X)
 			self.argwidgets.append(newwidget)
 
 		but = Button(self, text=self.name, command=self.butcom)
@@ -346,7 +347,19 @@ class NodeGUI(Frame):
 	def __build(self):
 		f = Frame(self, bd=4, relief=SOLID)
 		b=Button(f, text='Refresh', command=self.__build_components)
-		b.pack(side=TOP)
+		b.pack(side=LEFT)
+
+		launchbut = Button(f, text='Launch GUI', command=self.launchgui)
+		launchhostlab = Label(f, text='Host')
+		self.launchhostent = Entry(f, width=15)
+		launchportlab = Label(f, text='Port')
+		self.launchportent = Entry(f, width=15)
+		launchbut.pack(side=LEFT)
+		launchhostlab.pack(side=LEFT)
+		self.launchhostent.pack(side=LEFT)
+		launchportlab.pack(side=LEFT)
+		self.launchportent.pack(side=LEFT)
+
 		f.pack(side=TOP, fill=BOTH)
 		self.mainframe = None
 		self.__build_components()
@@ -358,6 +371,10 @@ class NodeGUI(Frame):
 		self.name = self.mainframe.name
 		self.mainframe.pack(expand=YES, fill=BOTH)
 
+	def launchgui(self):
+		host = self.launchhostent.get()
+		port = self.launchportent.get()
+		tk = newGUIWindow(host, port)
 
 # This was done quickly, should be thought out more I suppose
 class StructTreeItem(TreeWidget.TreeItem):
@@ -413,16 +430,24 @@ class StructTreeItem(TreeWidget.TreeItem):
 		else:
 			return [StructTreeItem(self, None, self.value)]
 
-if __name__ == '__main__':
-	import sys
 
+def newGUIWindow(host, port):
 	tk = Tk()
 	tk.wm_title('Node GUI')
 	Pmw.initialise(tk)
-	hostname = sys.argv[1]
-	port = sys.argv[2]
-	gui = NodeGUI(tk, sys.argv[1], sys.argv[2])
-	#newtitle = 'Interface to %s' % gui.id
-	#tk.wm_title(newtitle)
+	gui = NodeGUI(tk, host, port)
 	gui.pack(expand=YES, fill=BOTH)
-	tk.mainloop()
+
+	t = threading.Thread(target=tk.mainloop)
+	t.setDaemon(1)
+	t.start()
+	return tk
+
+
+if __name__ == '__main__':
+	import sys
+	hostname = sys.argv[1]
+	port = int(sys.argv[2])
+
+	tk = newGUIWindow(hostname, port)
+	tk.wait_window()
