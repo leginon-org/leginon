@@ -633,7 +633,7 @@ class wxTargetImageWidget(wxContainerWidget):
 		self.lock = threading.Lock()
 		wxContainerWidget.__init__(self, uiclient, namelist, window, parent)
 		self.wxwidget = wxBoxSizer(wxHORIZONTAL)
-		self.targetimage = wxImageViewer.TargetImagePanel(self.parent, -1)
+		self.targetimage = wxImageViewer.TargetImagePanel(self.parent, -1, self.callback)
 		self.wxwidget.Add(self.targetimage, 0, wxALIGN_CENTER | wxALL, 5)
 
 	def apply(self, evt):
@@ -645,6 +645,9 @@ class wxTargetImageWidget(wxContainerWidget):
 
 	def add(self, namelist, typelist, value):
 		self.setWidget(namelist, value)
+
+	def callback(self):
+		self.uiclient.setServer(self.namelist + ('Targets',), self.targetimage.targets)
 
 	def _set(self, value):
 		if 'Image' in value:

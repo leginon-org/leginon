@@ -50,7 +50,8 @@ class ImagePanel(wxPanel):
 		dc.EndDrawing()
 
 class TargetImagePanel(ImagePanel):
-	def __init__(self, parent, id):
+	def __init__(self, parent, id, callback=None):
+		self.callback = callback
 		ImagePanel.__init__(self, parent, id)
 		self.targets = []
 		EVT_LEFT_DCLICK(self, self.OnLeftDoubleClick)
@@ -79,6 +80,8 @@ class TargetImagePanel(ImagePanel):
 
 	def OnLeftDoubleClick(self, evt):
 		self.addTarget(evt.m_x, evt.m_y)
+		if callable(self.callback):
+			self.callback()
 
 	def addTarget(self, x, y):
 		self.targets.append((x, y))
@@ -91,6 +94,8 @@ class TargetImagePanel(ImagePanel):
 
 	def OnRightDoubleClick(self, evt):
 		self.deleteTarget(evt.m_x, evt.m_y)
+		if callable(self.callback):
+			self.callback()
 
 	def deleteTarget(self, x, y):
 		try:
