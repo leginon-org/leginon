@@ -137,7 +137,7 @@ class MatrixCalibrationClient(CalibrationClient):
 		matrix = LinearAlgebra.inverse(matrix)
 
 		pixvect = Numeric.matrixmultiply(matrix, vect)
-		pixvect *= (biny, binx)
+		pixvect /= (biny, binx)
 		return {'row':pixvect[0], 'col':pixvect[1]}
 
 
