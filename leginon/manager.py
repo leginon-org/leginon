@@ -106,10 +106,11 @@ class Manager(node.Node):
 		'''
 		override Node.confirmEvent to send confirmation to a node
 		'''
-		eventid = ievent['id']
-		nodeid = ievent['id'][:-1]
-		ev = event.ConfirmationEvent(eventid=eventid)
-		self.outputEvent(ev, nodeid)
+		if ievent['confirm']:
+			eventid = ievent['id']
+			nodeid = ievent['id'][:-1]
+			ev = event.ConfirmationEvent(eventid=eventid)
+			self.outputEvent(ev, nodeid)
 
 	def handleConfirmedEvent(self, ievent):
 		'''Event handler for distributing a confirmation event to the node waiting for confirmation of the event.'''

@@ -132,6 +132,7 @@ class Node(leginonobject.LeginonObject):
 	def die(self, ievent=None):
 		'''Tell the node to finish and call exit.'''
 		self.die_event.set()
+		self.confirmEvent(ievent)
 
 	def start(self):
 		'''Call to make the node active and react to a call to exit. Calls main.'''
@@ -220,10 +221,12 @@ class Node(leginonobject.LeginonObject):
 		eventid = ievent['eventid']
 		if eventid in self.eventswaiting:
 			self.eventswaiting[eventid].set()
+		## this should not confirm ever, right?
 
 	def confirmEvent(self, ievent):
 		'''Confirm that an event has been received and/or handled.'''
-		self.outputEvent(event.ConfirmationEvent(id=self.ID(), eventid=ievent['id']))
+		if ievent['confirm']:
+			self.outputEvent(event.ConfirmationEvent(id=self.ID(), eventid=ievent['id']))
 
 	def logEvent(self, ievent, status):
 		eventlog = event.EventLog(id=self.ID(), eventclass=ievent.__class__.__name__, status=status)
@@ -233,6 +236,8 @@ class Node(leginonobject.LeginonObject):
 
 	def logEventReceived(self, ievent):
 		self.logEvent(ievent, 'received by %s' % (self.id,))
+		## this should not confirm, this is not the primary handler
+		## any event
 
 	def addEventInput(self, eventclass, func):
 		'''Map a function (event handler) to be called when the specified event is received.'''
@@ -391,6 +396,12 @@ class Node(leginonobject.LeginonObject):
 		'''Event handler calling adddManager with event info. See addManager.'''
 		if ievent['nodeclass'] == 'Manager':
 			self.addManager(ievent['location'])
+
+		#self.confirmEvent(ievent)
+		# XXX confirmEvent here seems to break everything
+		# maybe because it is too soon to confirm when the 
+		# node is still being added.  addManager is
+		# basically the 'confirmation' of this event
 
 	# utility methods
 
