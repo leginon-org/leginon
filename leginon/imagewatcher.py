@@ -36,15 +36,17 @@ class ImageWatcher(watcher.Watcher):
 
 	def processData(self, idata):
 		if isinstance(idata, data.ImageData):
+			imageid = idata.dbid
 			self.currentimagedata = idata
 			self.numarray = idata['image']
 			self.processImageData(idata)
-			self.publishImageProcessDone()
+			self.publishImageProcessDone(imageid)
 		elif isinstance(idata, data.ImageListData):
 			# self.currentimagedata, self.numarray not implemented
 			self.processImageListData(idata)
 			if 'images' in idata and idata['images'] is not None:
-				for imageid in idata['images']:
+				for ref in idata['images']:
+					imageid = ref.dbid
 					self.publishImageProcessDone(imageid=imageid)
 		else:
 			raise TypeError('data to be processed is not an ImageData instance')
