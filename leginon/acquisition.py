@@ -543,18 +543,16 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		self.displayimageflag = uidata.Boolean('Display Image', True, 'rw',
 																						persist=True)
-		uicontainer = uidata.Container('User Interface')
-		uicontainer.addObjects((self.displayimageflag,))
 
 		presetscontainer = uidata.Container('Presets Sequence')
 
+		refreshpresetnames = uidata.Method('Show Presets', self.uiRefreshPresetNames)
 		self.uiavailablepresetnames = uidata.String('Preset names', '', 'r')
 		self.uipresetnames = uidata.Sequence('Presets Sequence', [], 'rw', persist=True)
-		refreshpresetnames = uidata.Method('Show Presets', self.uiRefreshPresetNames)
-		presetscontainer.addObject(self.uiavailablepresetnames)
-		presetscontainer.addObject(refreshpresetnames,
-																position={'justify': 'right'})
-		presetscontainer.addObject(self.uipresetnames)
+		presetscontainer.addObject(refreshpresetnames, position={'position':(0,0)})
+		presetscontainer.addObject(self.uiavailablepresetnames, position={'position':(0,1)})
+		presetscontainer.addObject(self.uipresetnames, position={'position':(1,0), 'span':(1,2)})
+
 
 		self.uimovetype = uidata.SingleSelectFromList('Move Type',
 																									self.calclients.keys(),
@@ -569,9 +567,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 																				persist=True)
 
 		acquirecontainer = uidata.Container('Acquisition')
-		acquirecontainer.addObjects((self.uicorrectimage, self.uimovetype,
-																	self.alwaysmovestage, self.uidelay,
-																	self.waitfordone))
+		acquirecontainer.addObject(self.uicorrectimage, position={'position':(0,0)})
+		acquirecontainer.addObject(self.displayimageflag, position={'position':(0,1)})
+		acquirecontainer.addObject(self.uimovetype, position={'position':(1,0)})
+		acquirecontainer.addObject(self.uidelay, position={'position':(1,1)})
+		acquirecontainer.addObject(self.alwaysmovestage, position={'position':(2,0), 'span':(1,2)})
+		acquirecontainer.addObject(self.waitfordone, position={'position':(3,0), 'span':(1,2)})
 
 		self.databaseflag = uidata.Boolean('Save images in database', True, 'rw')
 		self.dbimages = uidata.SingleSelectFromList('Image', [], 0)
@@ -586,19 +587,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.reacquirefromdb.disable()
 
 		databasecontainer = uidata.Container('Database')
-		databasecontainer.addObject(self.databaseflag,
-																position={'position': (0, 0), 'span': (1, 2)})
-		databasecontainer.addObject(self.dbimages,
-																position={'position': (1, 0)})
-		databasecontainer.addObject(updatedbimages,
-																position={'position': (1, 1)})
-		databasecontainer.addObject(self.pretendfromdb,
-																position={'position': (2, 1)})
-		databasecontainer.addObject(self.reacquirefromdb,
-																position={'position': (3, 1)})
+		databasecontainer.addObject(self.databaseflag, position={'position': (0, 0), 'span': (1, 4)})
+		databasecontainer.addObject(updatedbimages, position={'position': (1, 0)})
+		databasecontainer.addObject(self.dbimages, position={'position': (1, 1)})
+		databasecontainer.addObject(self.pretendfromdb, position={'position': (1, 2)})
+		databasecontainer.addObject(self.reacquirefromdb, position={'position': (1, 3)})
 
 		settingscontainer = uidata.Container('Settings')
-		settingscontainer.addObject(uicontainer, position={'expand': 'all'})
 		settingscontainer.addObject(presetscontainer, position={'expand': 'all'})
 		settingscontainer.addObject(acquirecontainer, position={'expand': 'all'})
 		settingscontainer.addObject(databasecontainer, position={'expand': 'all'})
