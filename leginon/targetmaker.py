@@ -28,15 +28,21 @@ class SpiralTargetMaker(TargetMaker):
 
 	def defineUserInterface(self):
 		TargetMaker.defineUserInterface(self)
-		publishspiralmethod = uidata.UIMethod('Publish Spiral',
-																						self.publishTargetList)
-		self.progress = uidata.UIProgress('', 0)
+
 		self.maxtargets = uidata.UIInteger('Maximum Targets', 9, 'rw')
 		self.overlap = uidata.UIInteger('Percent Overlap', 25, 'rw')
 		self.center = uidata.UIStruct('Spiral Center', {'x': 0.0, 'y': 0.0}, 'rw')
+		settingscontainer = uidata.UIContainer('Settings')
+		settingscontainer.addUIObjects((self.maxtargets, self.overlap, self.center))
+
+		publishspiralmethod = uidata.UIMethod('Publish Spiral',
+																						self.publishTargetList)
+		self.progress = uidata.UIProgress('', 0)
+		controlcontainer = uidata.UIContainer('Control')
+		controlcontainer.addUIObjects((self.progress, publishspiralmethod))
+
 		container = uidata.UIMediumContainer('Spiral Target Maker')
-		container.addUIObjects((self.maxtargets, self.overlap, self.center,
-														self.progress, publishspiralmethod))
+		container.addUIObjects((settingscontainer, controlcontainer))
 		self.uiserver.addUIObject(container)
 
 	def publishTargetList(self):
