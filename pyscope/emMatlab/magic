@@ -1,0 +1,2 @@
+mex -v -g CFLAGS='-I/usr/include/python2.2 -I.' LDFLAGS='-shared -L/usr/lib/python2.2/config -Wl,-R,/usr/lib/python2.2/lib-dynload/time.so,-R,/usr/lib/python2.2/lib-dynload/operator.so,-R,/usr/lib/python2.2/lib-dynload/_socket.so,-R,/usr/lib/python2.2/lib-dynload/errno.so,-R,/usr/lib/python2.2/lib-dynload/binascii.so,-R,/usr/lib/python2.2/lib-dynload/array.so' -lpython2.2 -lutil em.c emMatlab.c
+
