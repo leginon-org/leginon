@@ -329,8 +329,18 @@ class MatrixCalibrationClient(CalibrationClient):
 		CalibrationClient.__init__(self, node)
 
 	def researchMatrix(self, ht, mag, caltype):
-		if None in (ht, mag, caltype):
-			raise RuntimeError('need ht, mag, and caltype')
+		missing = []
+		if ht is None:
+			missing.append('ht')
+		if mag is None:
+			missing.append('mag')
+		if caltype is None:
+			missing.append('caltype')
+		if missing:
+			missing = ', '.join(missing)
+			message = 'need to specify %s to find calibration matrix' % (missing,)
+			raise RuntimeError(message)
+
 		queryinstance = data.MatrixCalibrationData(magnification=mag, type=caltype)
 		queryinstance['high tension'] = ht
 		queryinstance['session'] = data.SessionData()
