@@ -288,7 +288,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		request = data.ScopeEMData()
 		request['film exposure'] = True
 		request['film exposure type'] = 'manual'
-		request['film manual exposure time'] = presetdata['exposure time']
+		## convert from ms to s
+		filmtime = presetdata['exposure time'] / 1000.0
+		request['film manual exposure time'] = filmtime
 		## first three of user name
 		request['film user code'] = self.session['user']['name'][:3]
 		## like filename in regular acquisition (limit 96 chars)
