@@ -197,8 +197,6 @@ class SQLDict:
 	    for key,query in self.queries.items():
 	    	c = self._cursor()
 		try:
-			print "THIS ONE: "
-			print query
 			c.execute(query)
 		except MySQLdb.ProgrammingError, e:
 			errno = e.args[0]
