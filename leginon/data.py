@@ -325,7 +325,7 @@ class InSessionData(Data):
 class EMData(InSessionData):
 	def typemap(cls):
 		t = InSessionData.typemap()
-		t += [ ('em host', str), ('system time', float)]
+		t += [ ('system time', float)]
 		return t
 	typemap = classmethod(typemap)
 
@@ -440,7 +440,7 @@ class DriftData(InSessionData):
 class CalibrationData(InSessionData):
 	def typemap(cls):
 		t = InSessionData.typemap()
-		t += [ ('type', str), ('em host', str)]
+		t += [ ('type', str) ]
 		return t
 	typemap = classmethod(typemap)
 
@@ -477,7 +477,6 @@ class PresetData(InSessionData):
 		t = InSessionData.typemap()
 		t += [
 			('name', str),
-			('em host', str),
 			('magnification', int),
 			('spot size', int),
 			('intensity', float),
@@ -609,7 +608,7 @@ class PhaseCorrelationImageData(CorrelationImageData):
 class CameraImageData(ImageData):
 	def typemap(cls):
 		t = ImageData.typemap()
-		t += [ ('em host', str), ('scope', ScopeEMData), ('camera', CameraEMData), ]
+		t += [ ('scope', ScopeEMData), ('camera', CameraEMData), ]
 		return t
 	typemap = classmethod(typemap)
 
@@ -702,7 +701,6 @@ class CorrectorCamstateData(InSessionData):
 	def typemap(cls):
 		t = InSessionData.typemap()
 		t += [
-			('em host', str),
 			('dimension', dict),
 			('binning', dict),
 			('offset', dict),

@@ -15,7 +15,8 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 		self.start()
 
 	def defineUserInterface(self):
-		calibrator.Calibrator.defineUserInterface(self)
+		node.Node.defineUserInterface(self)
+#		calibrator.Calibrator.defineUserInterface(self)
 
 		self.uimag = uidata.Integer('Magnification', 62000, 'rw')
 		self.uipixsize = uidata.Float('Meters/Pixel', 1e-9, 'rw')
@@ -31,8 +32,6 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 
 	def store(self):
 		caldata = data.PixelSizeCalibrationData()
-		emhost = self.calclient.getHost()
-		caldata['em host'] = emhost
 		caldata['magnification'] = self.uimag.get()
 		caldata['pixelsize'] = self.uipixsize.get()
 		caldata['comment'] = self.comment.get()

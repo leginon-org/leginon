@@ -136,7 +136,7 @@ class DataHandler(node.DataHandler):
 			d = idata.toDict(noNone=True)
 			# also delete these, which are not understood by
 			# pyScope, or are read only
-			for key in ('id','session','system time','em host', 'image data'):
+			for key in ('id','session','system time', 'image data'):
 				try:
 					del d[key]
 				except KeyError:
@@ -363,7 +363,6 @@ class EM(node.Node):
 				self.uiSetStatus('Value of ' + key + ' acquired', percent)
 
 		result['system time'] = time.time()
-		result['em host'] = self.location()['hostname']
 
 		if updatestatus:
 			self.uiSetStatus('Releasing Lock', 90)

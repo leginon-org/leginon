@@ -63,10 +63,15 @@ class Corrector(node.Node):
 		darkmethod = uidata.Method('Acquire Dark', self.uiAcquireDark)
 		brightmethod = uidata.Method('Acquire Bright', self.uiAcquireBright)
 		rawmethod = uidata.Method('Acquire Raw', self.uiAcquireRaw)
-		correctedmethod = uidata.Method('Acquire Corrected', self.uiAcquireCorrected)
+		correctedmethod = uidata.Method('Acquire Corrected',
+																			self.uiAcquireCorrected)
 
-		acquirecontainer = uidata.Container('Image Acquisition')
-		acquirecontainer.addObjects((darkmethod, brightmethod, rawmethod, correctedmethod))
+		referencescontainer = uidata.Container('References')
+		referencescontainer.addObjects((darkmethod, brightmethod))
+		imagecontainer = uidata.Container('Image')
+		imagecontainer.addObjects((rawmethod, correctedmethod))
+		controlcontainer = uidata.Container('Control')
+		controlcontainer.addObjects((referencescontainer, imagecontainer))
 		self.ui_image = uidata.Image('Image', None, 'rw')
 
 		self.uiframestoaverage = uidata.Integer('Frames to Average', 3, 'rw')
@@ -77,11 +82,12 @@ class Corrector(node.Node):
 		self.badcols = uidata.Array('Bad Cols', (), 'rw')
 		setplan = uidata.Method('Set Plan', self.uiSetPlanParams)
 
-		preferencescontainer = uidata.Container('Preferences')
-		preferencescontainer.addObjects((self.uiframestoaverage, self.uifakeflag, cameraconfigure, self.cliplimits, self.badrows, self.badcols, setplan))
+		settingscontainer = uidata.Container('Settings')
+		settingscontainer.addObjects((self.uiframestoaverage, self.uifakeflag,
+																	cameraconfigure, self.cliplimits,
+																	self.badrows, self.badcols, setplan))
 		container = uidata.MediumContainer('Corrector')
-		container.addObjects((acquirecontainer, self.ui_image,
-														preferencescontainer))
+		container.addObjects((settingscontainer, controlcontainer, self.ui_image))
 		self.uiserver.addObject(container)
 
 	def uiSetPlanParams(self):

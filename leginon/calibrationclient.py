@@ -34,15 +34,6 @@ class CalibrationClient(object):
 		self.peakfinder = peakfinder.PeakFinder()
 		self.abortevent = threading.Event()
 
-	def getHost(self):
-		'''
-		get the host name of the currently connected EM node
-		'''
-		## just getting something, anything...
-		dat = self.node.researchByDataID(('magnification',))
-		## when all I want is the em host
-		return dat['em host']
-
 	def checkAbort(self):
 		if self.abortevent.isSet():
 			raise Abort()
@@ -205,12 +196,12 @@ class PixelSizeCalibrationClient(CalibrationClient):
 		'''
 		finds the requested pixel size using magnification
 		'''
-		emhost = self.getHost()
-		qinst = data.PixelSizeCalibrationData()
-		qinst['magnification'] = mag
-		qinst['em host'] = emhost
+		queryinstance = data.PixelSizeCalibrationData()
+		queryinstance['magnification'] = mag
+		queryinstance['session'] = data.SessionData()
+		queryinstance['session']['instrument'] = self.node.session['instrument']
 
-		caldatalist = self.node.research(datainstance=qinst, results=1)
+		caldatalist = self.node.research(datainstance=queryinstance, results=1)
 
 		if len(caldatalist) > 0:
 			caldata = caldatalist[0]
@@ -228,10 +219,10 @@ class MatrixCalibrationClient(CalibrationClient):
 		CalibrationClient.__init__(self, node)
 
 	def retrieveGoodTilt(self, mag):
-		qinst = data.GoodTiltCalibrationData(magnification=mag)
-		emhost = self.getHost()
-		qinst['em host'] = emhost
-		caldatalist = self.node.research(datainstance=qinst, results=1)
+		queryinstance = data.GoodTiltCalibrationData(magnification=mag)
+		queryinstance['session'] = data.SessionData()
+		queryinstance['session']['instrument'] = self.node.session['instrument']
+		caldatalist = self.node.research(datainstance=queryinstance, results=1)
 		if len(caldatalist) > 0:
 			caldata = caldatalist[0]
 		else:
@@ -243,10 +234,10 @@ class MatrixCalibrationClient(CalibrationClient):
 		'''
 		finds the requested matrix using magnification and type
 		'''
-		qinst = data.MatrixCalibrationData(magnification=mag, type=caltype)
-		emhost = self.getHost()
-		qinst['em host'] = emhost
-		caldatalist = self.node.research(datainstance=qinst, results=1)
+		queryinstance = data.MatrixCalibrationData(magnification=mag, type=caltype)
+		queryinstance['session'] = data.SessionData()
+		queryinstance['session']['instrument'] = self.node.session['instrument']
+		caldatalist = self.node.research(datainstance=quertinstance, results=1)
 
 		if len(caldatalist) > 0:
 			caldata = caldatalist[0]
@@ -261,8 +252,6 @@ class MatrixCalibrationClient(CalibrationClient):
 		'''
 		newmatrix = Numeric.array(matrix, Numeric.Float64)
 		caldata = data.MatrixCalibrationData(id=self.node.ID(), magnification=mag, type=type, matrix=matrix)
-		emhost = self.getHost()
-		caldata['em host'] = emhost
 		self.node.publish(caldata, database=True)
 
 
@@ -492,10 +481,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		stores a new good tilt calibration
 		'''
 		caldata = data.GoodTiltCalibrationData(id=self.node.ID(), magnification=mag, tilt=goodtilt)
-		emhost = self.getHost()
-		caldata['em host'] = emhost
 		self.node.publish(caldata, database=True)
-
 
 class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 	def __init__(self, node):
