@@ -9,7 +9,7 @@ import cStringIO
 import NumericImage
 import time
 import node
-import uidata
+#import uidata
 import event
 import threading
 
@@ -153,6 +153,7 @@ class Email(node.Node):
 		else:
 			self.statusmessage.set('Settings ok')
 
+	'''
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
 
@@ -187,6 +188,7 @@ class Email(node.Node):
 		container = uidata.LargeContainer('Email')
 		container.addObjects((statuscontainer, settingscontainer))
 		self.uicontainer.addObject(container)
+	'''
 
 if __name__ == '__main__':
 	import getpass

@@ -84,6 +84,8 @@ registerNodeClass('matrixcalibrator', 'MatrixCalibrator', 'Calibrations')
 registerNodeClass('beamtiltcalibrator', 'BeamTiltCalibrator', 'Calibrations')
 registerNodeClass('gonmodeler', 'GonModeler', 'Calibrations')
 
+registerNodeClass('robot', 'RobotControl', 'Pipeline')
+registerNodeClass('robot', 'RobotNotification', 'Pipeline')
 registerNodeClass('targetmaker', 'MosaicTargetMaker', 'Pipeline')
 registerNodeClass('acquisition', 'Acquisition', 'Pipeline')
 registerNodeClass('targetfinder', 'MosaicClickTargetFinder', 'Pipeline')
@@ -94,8 +96,6 @@ registerNodeClass('rasterfinder', 'RasterFinder', 'Pipeline')
 registerNodeClass('fftmaker', 'FFTMaker', 'Pipeline')
 
 # need new interface
-#registerNodeClass('robot', 'RobotControl', 'Pipeline')
-#registerNodeClass('robot', 'RobotNotification', 'Pipeline')
 #registerNodeClass('emailnotification', 'Email')
 #registerNodeClass('squarefinder', 'SquareFinder', 'Pipeline')
 #registerNodeClass('squarefinder2', 'SquareFinder2', 'Pipeline')
