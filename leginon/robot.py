@@ -206,7 +206,7 @@ if sys.platform == 'win32':
 				request = self.queue.get()
 				if isinstance(request, InsertRequest):
 					self._insert()
-				elif isinstance(requst, ExtractRequest):
+				elif isinstance(request, ExtractRequest):
 					self._extract()
 				elif isinstance(request, ExitRequest):
 					request.event.set()
