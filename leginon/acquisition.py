@@ -36,12 +36,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		a target (going to presets, acquiring images, etc.)
 		'''
 		## wait for focus targets to complete
-		print 'AAAAA'
 		for tid,tevent in self.targetevents.items():
 			print 'waiting for target %s to complete' % (tid,)
 			tevent.wait()
 
-		print 'BBBBB'
 		if targetdata is None:
 			emtarget = None
 		else:
@@ -60,16 +58,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 			#### now make EMTargetData to hold all this
 			emtarget = data.EMTargetData(scope=oldtargetemdata,preset=oldpreset)
 
-		print 'CCCCC'
-
 		### do each preset for this acquisition
 		try:
 			presetnames = self.uipresetnames.get()
 		except:
 			self.printException()
 			return
-
-		print 'DDDDD'
 
 		if not presetnames:
 			print 'NO PRESETS SPECIFIED'

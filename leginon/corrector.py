@@ -205,7 +205,6 @@ class Corrector(node.Node):
 
 	def retrieveRef(self, camstate, type):
 		camstate['id'] = None
-		print 'TYPE', type
 		if type == 'dark':
 			imagetemp = data.DarkImageData()
 		elif type == 'bright':
@@ -216,8 +215,6 @@ class Corrector(node.Node):
 			return None
 
 		imagetemp['camstate'] = camstate
-		print 'IMAGETEMP'
-		print imagetemp
 		refs = self.research(datainstance=imagetemp, results=1)
 		if refs:
 			ref = refs[0]
@@ -258,14 +255,11 @@ class Corrector(node.Node):
 		norm = bright - dark
 
 		## there may be a better normavg than this
-		print 'normavg'
 		normavg = cameraimage.mean(norm)
 
 		# division may result infinity or zero division
 		# so make sure there are no zeros in norm
-		print 'norm 2'
 		norm = Numeric.clip(norm, 1.0, cameraimage.inf)
-		print 'norm 3'
 		norm = normavg / norm
 		print 'saving'
 		self.storeRef('norm', norm, corstate)

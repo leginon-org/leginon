@@ -61,8 +61,6 @@ class CameraFuncs(object):
 				raise TypeError('camdata not type CameraEMData')
 			t2 = Timer('publish camera state')
 			try:
-				print 'CAMDATA'
-				print camdata
 				self.node.publishRemote(camdata)
 			except Exception, detail:
 				print 'camerafuncs.state: unable to set camera state'
