@@ -51,6 +51,32 @@ class PresetsClient(object):
 		pdata = self.node.researchByDataID(('current preset',))
 		return pdata
 
+	def getPresetByName(self, pname):
+		ps = self.getPresets()
+		for p in ps:
+			if p['name'] == pname:
+				return p
+
+	def uiPresetSelector(self):
+		getpresets = uidata.UIMethod('Get Names', self.uiGetPresetNames)
+		self.uiselectpreset = uidata.UISelectFromList('Select Preset', [], [], 'r')
+		container = uidata.UIContainer('Preset Selection')
+		container.addUIObjects((getpresets, self.uiselectpreset))
+		return container
+
+	def uiGetPresetNames(self):
+		presetlist = self.getPresets()
+		pnames = [p['name'] for p in presetlist]
+		if pnames:
+			sel = [0]
+		else:
+			sel = []
+		self.uiselectpreset.set(pnames, sel) 
+
+	def uiGetSelectedName(self):
+		presetname = self.uiselectpreset.getSelectedValue()[0]
+		return presetname
+
 
 class OLDPresetsClient(object):
 	'''
@@ -135,14 +161,10 @@ class CircularIter(object):
 class DataHandler(node.DataHandler):
 	def query(self, id):
 		if id == ('presets',):
-			self.lock.acquire()
 			result = data.PresetSequenceData()
 			result['sequence'] = self.node.presets
-			self.lock.release()
 		elif id == ('current preset',):
-			self.lock.acquire()
-			result = self.currentpreset
-			self.lock.release()
+			result = self.node.currentpreset
 		else:
 			result = node.DataHandler.query(self, id)
 		return result
@@ -155,7 +177,7 @@ class PresetsManager(node.Node):
 		self.addEventInput(event.ChangePresetEvent, self.changePreset)
 		self.addEventOutput(event.PresetChangedEvent)
 
-		ids = [('presets',)]
+		ids = [('presets',), ('current preset',)]
 		e = event.ListPublishEvent(idlist=ids)
 		self.outputEvent(e)
 
@@ -357,15 +379,15 @@ class PresetsManager(node.Node):
 		return value
 
 	def uiParamsCallback(self, value):
-		for key in value:
-			self.currentselection[key] = value[key]
-		if self.currentselection is None:
+		if (self.currentselection is None) or (not value):
 			return {}
 		else:
+			for key in value:
+				self.currentselection[key] = value[key]
 			self.presetToDB(self.currentselection)
 			d = self.currentselection.toDict(noNone=True)
 			del d['session']
-			return d
+		return d
 
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
@@ -394,35 +416,39 @@ class PresetsManager(node.Node):
 		be tightly coupled.
 		'''
 		emdata = emtargetdata['scope']
-		oldpreset = self.presetFromName(emtargetdata['preset'])
-		newpreset = self.presetFromName(newpresetname)
+		## XXX this might be dangerous:  I'm taking the original target
+		## preset and using it's name to get the PresetManager's preset
+		## by that same name
+		oldpreset = self.presetByName(emtargetdata['preset']['name'])
+		newpreset = self.presetByName(newpresetname)
 
-		newemdata = data.ScopeEMData(id=('scope',), initializer=emdata)
+		scopedata = data.ScopeEMData(id=('scope',), initializer=emdata)
 
 		# remove influence of old preset from emdata
-		newemdata['image shift']['x'] -= oldpreset['image shift']['x']
-		newemdata['image shift']['y'] -= oldpreset['image shift']['y']
+		scopedata['image shift']['x'] -= oldpreset['image shift']['x']
+		scopedata['image shift']['y'] -= oldpreset['image shift']['y']
 
 		# add influence of new preset
 		newishift = {}
-		newishift['x'] = newemdata['image shift']['x'] + newpreset['image shift']['x']
-		newishift['y'] = newemdata['image shift']['y'] + newpreset['image shift']['y']
-
-		newemdata.update(newpreset)
-		newemdata['image shift'] = newishift
+		newishift['x'] = scopedata['image shift']['x'] + newpreset['image shift']['x']
+		newishift['y'] = scopedata['image shift']['y'] + newpreset['image shift']['y']
 
 		## should use AllEMData, but that is not working yet
+		scopedata.friendly_update(newpreset)
+		scopedata['image shift'] = newishift
 		cameradata = data.CameraEMData()
-		cameradata.friendly_update(presetdata)
+		cameradata.friendly_update(newpreset)
+
 		cameradata['id'] = ('camera',)
+		scopedata['id'] = ('scope',)
 
 		try:
-			self.publishRemote(newemdata)
+			self.publishRemote(scopedata)
 			self.publishRemote(cameradata)
 		except node.PublishError:
 			self.printException()
 			print '** Maybe EM is not running?'
 		else:
-			name = presetdata['name']
+			name = newpreset['name']
 			self.currentpreset = newpreset
 			self.outputEvent(event.PresetChangedEvent(name=name))
