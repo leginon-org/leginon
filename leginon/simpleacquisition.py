@@ -29,8 +29,15 @@ class SimpleAcquisition(acquisition.Acquisition):
 		acquisition.Acquisition.__init__(self, id, session, nodelocations, **kwargs)
 
 	def acquireImageOne(self):
-		self.processTargetData(None, trial=False)
+		self.processTargetData(None)
 		return ''
+
+	def alreadyAcquired(self, targetdata, presetname):
+		'''
+		override so that an image is never 'alreadyAcquired'
+		(because targetdata will always be none)
+		'''
+		return False
 
 	def acquireImageLoop(self):
 		if not self.looplock.acquire(0):
@@ -54,7 +61,7 @@ class SimpleAcquisition(acquisition.Acquisition):
 		while 1:
 			if self.loopstop.isSet():
 				break
-			self.processTargetData(None, trial=False)
+			self.processTargetData(None)
 			time.sleep(pausetime)
 		try:
 			self.looploock.release()
