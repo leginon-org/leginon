@@ -17,45 +17,57 @@ True = 1
 if sys.platform == 'win32':
 	sys.coinit_flags = 0
 
-class DataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
-	'''Overrides SimpleDataKeeper and DataBinder to combine storing data and mapping events for use by Node.'''
-	def __init__(self, id, session):
-		# this will call LeginonObject constructor twice I think
-		datahandler.SimpleDataKeeper.__init__(self, id, session)
-		datahandler.DataBinder.__init__(self, id, session)
+class DataHandler(leginonobject.LeginonObject):
+	'''
+	handles data published by the node
+	'''
+	def __init__(self, id, session, mynode):
+		leginonobject.LeginonObject.__init__(self, id, session)
+		## giving these all the same id, don't know why
+		self.datakeeper = datahandler.SimpleDataKeeper(id, session)
+		self.databinder = datahandler.DataBinder(id, session)
+		self.dbdatakeeper = dbdatakeeper.DBDataKeeper(id, session)
+		self.node = mynode
 
-	def insert(self, idata):
+	def local_only_insert(self, idata):
 		'''Insert data into the datahandler. Only events can be inserted from and external source. Events are bound. See setBinding.'''
 		if isinstance(idata, event.Event):
-			datahandler.DataBinder.insert(self, idata)
+			self.databinder.insert(idata)
 		else:
 			if idata['id'][:-1] == self.id[:-1]:
-				datahandler.SimpleDataKeeper.insert(self, copy.deepcopy(idata))
+				self.datakeeper.insert(copy.deepcopy(idata))
 			else:
-				raise event.InvalidEventError('event must be Event instance')
+				raise RuntimeError('local only insert on data not from this node')
 
-	def _insert(self, idata):
+	def insert(self, idata):
 		if isinstance(idata, event.Event):
-			datahandler.DataBinder.insert(self, idata)
+			self.databinder.insert(idata)
 		else:
-			datahandler.SimpleDataKeeper.insert(self, copy.deepcopy(idata))
+			self.datakeeper.insert(copy.deepcopy(idata))
 
-	# def query(self, id): is inherited from SimpleDataKeeper
+	def query(self, id):
+		return self.datakeeper.query(id)
 
 	def setBinding(self, eventclass, func):
 		'''Overides datahandler.DataBinder, making sure it binds Event type only.'''
 		if issubclass(eventclass, event.Event):
-			datahandler.DataBinder.setBinding(self, eventclass, func)
+			self.databinder.setBinding(eventclass, func)
 		else:
 			raise event.InvalidEventError('eventclass must be Event subclass')
 
+	def dbInsert(self, idata):
+		self.dbdatakeeper.insert(idata)
+
+	def dbQuery(self, idata, results=None):
+		self.dbdatakeeper.query(idata, results)
+
+	def __getattr__(self, attr):
+		return getattr(self.datakeeper, attr)
+
+
 class Node(leginonobject.LeginonObject):
 	'''Atomic operating unit for performing tasks, creating data and events.'''
-	def __init__(self, id, session, nodelocations = {},
-											datahandlers = [(DataHandler, ()),
-																			(dbdatakeeper.DBDataKeeper, ())],
-											tcpport=None, xmlrpcport=None,
-											clientclass = datatransport.Client, launchlock=None):
+	def __init__(self, id, session, nodelocations = {}, datahandler=DataHandler, tcpport=None, xmlrpcport=None, clientclass = datatransport.Client, launchlock=None):
 		leginonobject.LeginonObject.__init__(self, id, session)
 
 		self.nodelocations = nodelocations
@@ -63,19 +75,10 @@ class Node(leginonobject.LeginonObject):
 
 		self.eventmapping = {'outputs':[], 'inputs':[]}
 
-		# manager.launchNode could specify which datahandlers to have
-		self.datahandlers = {}
-		for dh in datahandlers:
-			self.datahandlers[dh[0]] = apply(dh[0], (self.ID(), self.session) + dh[1])
-		# could be in args
-		self.datahandler = datahandlers[0][0]
-
-#		self.datahandlers['node'] = apply(dh, (self.ID(),) + dhargs)
-#		self.datahandlers['database'] = dbdatakeeper.DBDataKeeper(self.ID(),
-#																															self.session)
+		self.datahandler = datahandler(self.ID(), session, self)
 
 		self.server = datatransport.Server(self.ID(),
-																	self.datahandlers[self.datahandler], tcpport)
+																	self.datahandler, tcpport)
 		self.clientclass = clientclass
 
 		self.uiserver = interface.Server(self.ID(), xmlrpcport)
@@ -174,15 +177,17 @@ class Node(leginonobject.LeginonObject):
 
 	def addEventInput(self, eventclass, func):
 		'''Map a function (event handler) to be called when the specified event is received.'''
-#		self.server.datahandler.setBinding(eventclass, func)
-		self.datahandlers[self.datahandler].setBinding(eventclass, func)
+		## simplified this, but is there a reason for the original
+		#self.server.datahandler.setBinding(eventclass, func)
+		self.datahandler.setBinding(eventclass, func)
 		if eventclass not in self.eventmapping['inputs']:
 			self.eventmapping['inputs'].append(eventclass)
 
 	def delEventInput(self, eventclass):
 		'''Unmap all functions (event handlers) to be called when the specified event is received.'''
-#		self.server.datahandler.setBinding(eventclass, None)
-		self.datahandlers[self.datahandler].setBinding(eventclass, None)
+		## simplified this, but is there a reason for the original
+		#self.server.datahandler.setBinding(eventclass, None)
+		self.datahandler.setBinding(eventclass, None)
 		if eventclass in self.eventmapping['inputs']:
 			self.eventmapping['inputs'].remove(eventclass)
 
@@ -230,7 +235,6 @@ class Node(leginonobject.LeginonObject):
 			Takes kwargs:
 				eventclass - PublishEvent subclass to notify with when publishing		
 				confirm - Wait until Event is confirmed to return
-				node - publish data to own datahandler
 				database - publish to database
 				remote - publish to another node's datahandler (may be changed)
 		'''
@@ -241,74 +245,66 @@ class Node(leginonobject.LeginonObject):
 		if 'database' in kwargs and kwargs['database']:
 			try:
 				idata['session'] = self.session
-				self.datahandlers[dbdatakeeper.DBDataKeeper].insert(idata)
+				self.datahandler.dbInsert(idata)
 			except KeyError:
 				self.printerror('no DBDataKeeper to publish: %s' % str(idata['id']))
 
-		if 'pubevent' in kwargs:
-			if kwargs['pubevent']:
-				eventclass = event.publish_events[idata.__class__]
+		self.datahandler.insert(idata)
+
+		### publish event
+		if 'pubevent' in kwargs and kwargs['pubevent']:
+			if 'confirm' in kwargs:
+				confirm = kwargs['confirm']
 			else:
-				eventclass = None
-		else:
-			eventclass = None
-
-		if 'confirm' in kwargs:
-			confirm = kwargs['confirm']
-		else:
-			confirm = False
-
-#		if 'node' in kwargs and kwargs['node']:
-		self.datahandlers[self.datahandler]._insert(idata)
-
-		if eventclass is not None:
+				confirm = False
+			eventclass = event.publish_events[idata.__class__]
 			e = eventclass(self.ID(), dataid=idata['id'], confirm=confirm)
 			self.outputEvent(e)
 
-	def research(self, **kwargs):
+	def research(self, dataclass=None, datainstance=None, **kwargs):
 		'''
-		Get piece[s] of data.
-		Takes kwargs:
-			results for number of results to return 0 means all, default is all
-			for node's datahandlers specify 'id' and 'session'
-			for DBDataKeeper specify 'dataclass' and keys ('id', 'magnification', ...)
-				or
-			specify 'dataclass' and indexinstance with keys set to values to query,
-			and keys set to None for not querying
-			[*] - keys in data
-		'''
-		result = []
-		if 'results' in kwargs:
-			results = kwargs['results']
-		else:
-			results = 0
+		How a node finds some data in the leginon system:
+			1) Using a data class and keyword args:
+				self.research(dataclass=myclass, stuff=4)
+			2) Using a partially filled data instance:
+				self.research(datainstance=mydata)
 
+			In both cases, zero or more results (data instances)
+			will be returned in a list.  The result list will
+			not contain two instaces with the same ID.
+		'''
+
+		#### make some sense out of args
+		### for research by dataclass, use kwargs to find instance
+		if dataclass is not None:
+			pass
+
+
+		results = []
+
+		### standard search for data by ID
 		if 'id' in kwargs and 'session' in kwargs and len(kwargs) == 2:
 			if self.session == kwargs['session']:
 				try:
-					result.append(self.researchByID(kwargs['id']))
+					result.append(self.researchByDataID(kwargs['id']))
 				except ResearchError:
 					pass
 
-		if results == 0 or results - len(result) > 0:
+		### DBDataKeeper query
+		if results == 0 or results > len(result):
 			try:
 				datainstance = kwargs['dataclass'](('dummy ID',))
 				# copy should suffice
-				if 'indexinstance' in kwargs:
-					indices = dict(kwargs['indexinstance'])
-				else:
-					indices = copy.copy(kwargs)
-					del indices['dataclass']
-					for index in indices:
-						if index not in datainstance:
-							raise ValueError
+				indices = copy.copy(kwargs)
+				del indices['dataclass']
+				for index in indices:
+					if index not in datainstance:
+						raise ValueError
 			except ValueError:
-					self.printerror('DBDataKeeper research failed, bad kwarg \'%s\''
-																																		% index)
+				self.printerror('DBDataKeeper research failed, bad kwarg \'%s\'' % index)
 			else:
 				try:
-					result += self.datahandlers[dbdatakeeper.DBDataKeeper].query(
-																	datainstance, indices, results - len(result))
+					result += self.datahandler.dbQuery(datainstance, indices, results - len(result))
 				except Exception, e: 
 					if isinstance(e, KeyError):
 						self.printerror('DBDataKeeper research failed, no DBDataKeeper')
@@ -321,8 +317,7 @@ class Node(leginonobject.LeginonObject):
 		'''Make a piece of data unavailable to other nodes.'''
 		if not issubclass(eventclass, event.UnpublishEvent):
 			raise TypeError('UnpublishEvent subclass required')
-#		self.server.datahandler.remove(dataid)
-		self.datahandlers[self.datahandler].remove(dataid)
+		self.datahandler.remove(dataid)
 		self.outputEvent(eventclass(self.ID(), dataid=dataid))
 
 	def publishRemote(self, idata):
@@ -341,6 +336,13 @@ class Node(leginonobject.LeginonObject):
 				nodeid)
 			client = self.clientclass(self.ID(), nodelocation['location'])
 			client.push(idata)
+
+	def locateDataByID(self, dataid):
+		'''
+		Asks manager to find nodes that are keeping data
+		Returns a list of locations
+		'''
+		pass
 
 	def researchByLocation(self, loc, dataid):
 		'''Get a piece of data with the specified data ID by the location of a node.'''
@@ -416,9 +418,7 @@ class Node(leginonobject.LeginonObject):
 		'''Generate a dictionary of currently published data and attributes in a XML-RPC compatible format.'''
 		if value is None:
 			try:
-#				return self.key2str(self.server.datahandler.datadict)
-				return self.key2str(self.datahandlers[self.datahandler].datadict)
-#				return self.server.datahandler.datadict
+				return self.key2str(self.datahandler.datadict)
 			except AttributeError:
 				return {}
 
