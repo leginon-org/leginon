@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Navigator.py,v $
-# $Revision: 1.30 $
+# $Revision: 1.31 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-25 22:51:04 $
+# $Date: 2005-02-28 22:17:52 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -64,6 +64,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.Bind(EVT_LOCATIONS, self.onLocations)
 
 	def onNodeInitialized(self):
+		gui.wx.Instrument.SelectionMixin.onNodeInitialized(self)
 		self.locationsdialog = StageLocationsDialog(self, self.node)
 
 		movetypes = self.node.calclients.keys()
@@ -295,8 +296,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 																										'Check calibration error')
 #		self.widgets['complete state'] = wx.CheckBox(self, -1,
 #																								'Set complete instrument state')
-		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self,
-																													self.node.instrument)
+		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self)
+		self.GetParent().setInstrumentSelection(self.instrumentselection)
 		self.widgets['use camera settings'] = wx.CheckBox(self, -1,
 																								'Use camera configuration')
 		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)

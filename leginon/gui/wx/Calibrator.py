@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Calibrator.py,v $
-# $Revision: 1.25 $
+# $Revision: 1.26 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-25 22:51:03 $
+# $Date: 2005-02-28 22:17:52 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -26,8 +26,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
 
-		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self,
-																													self.node.instrument)
+		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self)
+		self.GetParent().setInstrumentSelection(self.instrumentselection)
 
 		self.widgets['use camera settings'] = wx.CheckBox(self, -1,
 																								'Use camera configuration')
@@ -106,6 +106,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.szmain.AddGrowableCol(0)
 
 	def onNodeInitialized(self):
+		gui.wx.Instrument.SelectionMixin.onNodeInitialized(self)
 		self.settingsdialog = self.settingsclass(self)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
 											id=gui.wx.ToolBar.ID_SETTINGS)

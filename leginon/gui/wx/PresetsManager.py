@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.28 $
+# $Revision: 1.29 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-25 01:34:26 $
+# $Date: 2005-02-28 22:17:52 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -113,33 +113,35 @@ class Parameters(wx.Panel):
 		self.febeamshifty = FloatEntry(self, -1, chars=9)
 		self.cbfilm = wx.CheckBox(self, -1, 'Film')
 		self.stdose = wx.StaticText(self, -1, '')
+		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self)
 		self.cpcamconfig = gui.wx.Camera.CameraPanel(self)
 
 		sz = wx.GridBagSizer(5, 5)
-		sz.Add(stmag, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.femag, (0, 1), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		sz.Add(stdefocus, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.fedefocus, (1, 1), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		sz.Add(stspotsize, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.fespotsize, (2, 1), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		sz.Add(stintensity, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.feintensity, (3, 1), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		sz.Add(stx, (4, 1), (1, 1), wx.ALIGN_CENTER)
-		sz.Add(sty, (4, 2), (1, 1), wx.ALIGN_CENTER)
-		sz.Add(stimageshift, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.feimageshiftx, (5, 1), (1, 1),
+		sz.Add(self.instrumentselection, (0, 0), (1, 6), wx.EXPAND)
+		sz.Add(stmag, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.femag, (1, 1), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		sz.Add(stdefocus, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.fedefocus, (2, 1), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		sz.Add(stspotsize, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.fespotsize, (3, 1), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		sz.Add(stintensity, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.feintensity, (4, 1), (1, 2), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		sz.Add(stx, (5, 1), (1, 1), wx.ALIGN_CENTER)
+		sz.Add(sty, (5, 2), (1, 1), wx.ALIGN_CENTER)
+		sz.Add(stimageshift, (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.feimageshiftx, (6, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		sz.Add(self.feimageshifty, (5, 2), (1, 1),
+		sz.Add(self.feimageshifty, (6, 2), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		sz.Add(stbeamshift, (6, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.febeamshiftx, (6, 1), (1, 1),
+		sz.Add(stbeamshift, (7, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.febeamshiftx, (7, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		sz.Add(self.febeamshifty, (6, 2), (1, 1),
+		sz.Add(self.febeamshifty, (7, 2), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		sz.Add(self.cbfilm, (0, 3), (1, 2), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(stdose, (1, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.stdose, (1, 4), (1, 2), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.cpcamconfig, (2, 3), (5, 2), wx.ALIGN_CENTER)
+		sz.Add(self.cbfilm, (1, 3), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(stdose, (2, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.stdose, (2, 4), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.cpcamconfig, (3, 3), (5, 2), wx.EXPAND)
 
 		sb = wx.StaticBox(self, -1, 'Parameters')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
@@ -160,6 +162,8 @@ class Parameters(wx.Panel):
 		parameters['beam shift']['x'] = float(self.febeamshiftx.GetValue())
 		parameters['beam shift']['y'] = float(self.febeamshifty.GetValue())
 		parameters['film'] = self.cbfilm.GetValue()
+		parameters['tem'] = self.instrumentselection.getTEM()
+		parameters['ccdcamera'] = self.instrumentselection.getCCDCamera()
 		dose = self.stdose.GetLabel()
 		if not dose or dose == 'N/A':
 			dose = None
@@ -181,6 +185,8 @@ class Parameters(wx.Panel):
 			self.cbfilm.SetValue(False)
 			self.stdose.SetLabel('')
 			self.cpcamconfig.clear()
+			self.instrumentselection.setTEM(None)
+			self.instrumentselection.setCCDCamera(None)
 		else:
 			self.femag.SetValue(parameters['magnification'])
 			self.fedefocus.SetValue(parameters['defocus'])
@@ -196,6 +202,8 @@ class Parameters(wx.Panel):
 			else:
 				dose = '%e' % (parameters['dose']/1e20,)
 			self.stdose.SetLabel(dose)
+			self.instrumentselection.setTEM(parameters['tem'])
+			self.instrumentselection.setCCDCamera(parameters['ccdcamera'])
 
 			try:
 				self.cpcamconfig.setConfiguration(parameters)
@@ -213,6 +221,9 @@ class Parameters(wx.Panel):
 		self.Bind(EVT_ENTRY, method, self.febeamshiftx)
 		self.Bind(EVT_ENTRY, method, self.febeamshifty)
 		self.Bind(wx.EVT_CHECKBOX, method, self.cbfilm)
+		self.Bind(gui.wx.Events.EVT_TEM_CHANGE, method, self.instrumentselection)
+		self.Bind(gui.wx.Events.EVT_CCDCAMERA_CHANGE, method,
+							self.instrumentselection)
 		self.Bind(gui.wx.Camera.EVT_CONFIGURATION_CHANGED, method, self.cpcamconfig)
 
 class EditPresets(gui.wx.Presets.PresetOrder):
@@ -363,13 +374,16 @@ class Panel(gui.wx.Node.Panel):
 		self.Bind(EVT_SET_PARAMETERS, self.onSetParameters)
 		self.Bind(EVT_SET_CALIBRATIONS, self.onSetCalibrations)
 		self.Bind(EVT_SET_DOSE_VALUE, self.onSetDoseValue)
+		self.Bind(gui.wx.Events.EVT_SET_TEMS, self.onSetTEMs)
+		self.Bind(gui.wx.Events.EVT_SET_CCDCAMERAS, self.onSetCCDCameras)
 
 	def onNodeInitialized(self):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
 											id=gui.wx.ToolBar.ID_SETTINGS)
 
 		#self.parameters.cpcamconfig.setSize(self.node.session)
-		self.parameters.cpcamconfig.clear()
+		#self.parameters.cpcamconfig.clear()
+		self.parameters.instrumentselection.setProxy(self.node.instrument)
 		self.parameters.bind(self.onUpdateParameters)
 
 		self.Bind(gui.wx.Presets.EVT_PRESET_SELECTED,
@@ -501,6 +515,14 @@ class Panel(gui.wx.Node.Panel):
 		target = self.node.removePreset
 		args = (evt.presetname,)
 		threading.Thread(target=target, args=args).start()
+
+	def onSetTEMs(self, evt):
+		evthandler = self.parameters.instrumentselection.GetEventHandler()
+		evthandler.AddPendingEvent(evt)
+
+	def onSetCCDCameras(self, evt):
+		evthandler = self.parameters.instrumentselection.GetEventHandler()
+		evthandler.AddPendingEvent(evt)
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):

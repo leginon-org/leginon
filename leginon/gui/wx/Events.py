@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Events.py,v $
-# $Revision: 1.18 $
+# $Revision: 1.19 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-25 22:07:02 $
+# $Date: 2005-02-28 22:17:52 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -57,6 +57,8 @@ SetTEMEventType = wx.NewEventType()
 SetTEMsEventType = wx.NewEventType()
 SetCCDCameraEventType = wx.NewEventType()
 SetCCDCamerasEventType = wx.NewEventType()
+TEMChangeEventType = wx.NewEventType()
+CCDCameraChangeEventType = wx.NewEventType()
 
 EVT_PLAYER = wx.PyEventBinder(PlayerEventType)
 EVT_SET_IMAGE = wx.PyEventBinder(SetImageEventType)
@@ -66,6 +68,8 @@ EVT_SET_TEM = wx.PyEventBinder(SetTEMEventType)
 EVT_SET_TEMS = wx.PyEventBinder(SetTEMsEventType)
 EVT_SET_CCDCAMERA = wx.PyEventBinder(SetCCDCameraEventType)
 EVT_SET_CCDCAMERAS = wx.PyEventBinder(SetCCDCamerasEventType)
+EVT_TEM_CHANGE = wx.PyEventBinder(TEMChangeEventType)
+EVT_CCDCAMERA_CHANGE = wx.PyEventBinder(CCDCameraChangeEventType)
 
 class PlayerEvent(wx.PyEvent):
 	def __init__(self, state):
@@ -118,4 +122,16 @@ class SetCCDCamerasEvent(wx.PyCommandEvent):
 		wx.PyCommandEvent.__init__(self, SetCCDCamerasEventType, source.GetId())
 		self.SetEventObject(source)
 		self.names = names
+
+class TEMChangeEvent(wx.PyCommandEvent):
+	def __init__(self, source, name):
+		wx.PyCommandEvent.__init__(self, TEMChangeEventType, source.GetId())
+		self.SetEventObject(source)
+		self.name = name
+
+class CCDCameraChangeEvent(wx.PyCommandEvent):
+	def __init__(self, source, name):
+		wx.PyCommandEvent.__init__(self, CCDCameraChangeEventType, source.GetId())
+		self.SetEventObject(source)
+		self.name = name
 

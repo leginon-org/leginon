@@ -1040,6 +1040,8 @@ class PresetData(InSessionData):
 			('hasref', bool),
 			('dose', float),
 			('film', bool),
+			('tem', str),
+			('ccdcamera', str),
 		)
 	typemap = classmethod(typemap)
 

@@ -174,7 +174,9 @@ class PresetsManager(node.Node):
 	def __init__(self, name, session, managerlocation, **kwargs):
 		node.Node.__init__(self, name, session, managerlocation, **kwargs)
 
-		self.instrument = instrument.Proxy(self.objectservice, self.session)
+		self.instrument = instrument.Proxy(self.objectservice,
+																				self.session,
+																				self.panel)
 		self.calclients = {
 			'pixel size':calibrationclient.PixelSizeCalibrationClient(self),
 			'image':calibrationclient.ImageShiftCalibrationClient(self),
@@ -394,15 +396,31 @@ class PresetsManager(node.Node):
 
 		self.logger.info(beginmessage)
 
+		if presetdata['tem'] is None:
+			message = 'Preset change failed: no TEM selected for this preset'
+			self.logger.error(message)
+			raise PresetChangeError(message)
+		if presetdata['ccdcamera'] is None:
+			message = 'Preset change failed: no CCD camera selection for this preset'
+			self.logger.error(message)
+			raise PresetChangeError(message)
+		
 		try:
-			self.instrument.getData(data.ScopeEMData)
+			self.instrument.setTEM(presetdata['tem'])
+			self.instrument.setCCDCamera(presetdata['ccdcamera'])
+		except Exception, e:
+			message = 'Preset change failed: %s' % (e,)
+			self.logger.error(message)
+			raise PresetChangeError(message)
+
+		try:
+			self.instrument.setData(scopedata)
+			if cameradata is not None:
+				self.instrument.setData(cameradata)
 		except Exception, e:
 			message = 'Preset change failed: unable to set instrument'
 			self.logger.error(message)
 			raise PresetChangeError(message)
-
-		if cameradata is not None:
-			self.instrument.setData(cameradata)
 
 		time.sleep(self.settings['pause time'])
 		if magonly:
@@ -424,9 +442,13 @@ class PresetsManager(node.Node):
 		if not name:
 			self.logger.error('Invalid preset name')
 			return
+		if self.instrument.getTEMName() is None:
+			self.logger.error('No TEM selected for this preset')
+		if self.instrument.getCCDCameraName() is None:
+			self.logger.error('No CCD camera selected for this preset')
 		try:
-			self.instrument.getData(data.ScopeEMData)
-			self.instrument.getData(data.CameraEMData, image=False)
+			scopedata = self.instrument.getData(data.ScopeEMData)
+			cameradata = self.instrument.getData(data.CameraEMData, image=False)
 		except:
 			self.logger.error('Preset from instrument failed: unable to get instrument parameters')
 			return
@@ -615,6 +637,7 @@ class PresetsManager(node.Node):
 
 	def getHighTension(self):
 		try:
+			# ...
 			return self.instrument.tem.HighTension
 		except:
 			return None

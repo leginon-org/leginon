@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Instrument.py,v $
-# $Revision: 1.32 $
+# $Revision: 1.33 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-25 22:51:03 $
+# $Date: 2005-02-28 22:17:52 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -860,26 +860,13 @@ class Panel(gui.wx.Node.Panel):
 		self.Enable(True)
 
 class SelectionPanel(wx.Panel):
-	def __init__(self, parent, proxy):
+	def __init__(self, parent):
 		wx.Panel.__init__(self, parent, -1)
-		self.proxy = proxy
-		tem = self.proxy.getTEMName()
-		tems = self.proxy.getTEMNames()
-		ccdcamera = self.proxy.getCCDCameraName()
-		ccdcameras = self.proxy.getCCDCameraNames()
 
 		self.nonestring = 'None'
 
-		self.ctem = wx.Choice(self, -1, choices=[self.nonestring] + tems)
-		if tem not in tems:
-			tem = self.nonestring
-		self.ctem.SetStringSelection(tem)
-
-		self.cccdcamera = wx.Choice(self, -1,
-																choices=[self.nonestring] + ccdcameras)
-		if ccdcamera not in ccdcameras:
-			ccdcamera = self.nonestring
-		self.cccdcamera.SetStringSelection(ccdcamera)
+		self.ctem = wx.Choice(self, -1, choices=[self.nonestring])
+		self.cccdcamera = wx.Choice(self, -1, choices=[self.nonestring])
 
 		sz = wx.GridBagSizer(3, 3)
 		label = wx.StaticText(self, -1, 'TEM')
@@ -905,41 +892,86 @@ class SelectionPanel(wx.Panel):
 		self.Bind(gui.wx.Events.EVT_SET_CCDCAMERA, self.onSetCCDCamera)
 		self.Bind(gui.wx.Events.EVT_SET_CCDCAMERAS, self.onSetCCDCameras)
 
-	def onSetTEM(self, evt):
-		string = evt.name
-		if string is None:
-			string = self.nonestring
-		self.ctem.SetStringSelection(string)
+	def setProxy(self, proxy):
+		self.proxy = proxy
+		if self.proxy is None:
+			tem = None
+			ccdcamera = None
+			tems = []
+			ccdcameras = []
+		else:
+			tem = self.proxy.getTEMName()
+			tems = self.proxy.getTEMNames()
+			ccdcamera = self.proxy.getCCDCameraName()
+			ccdcameras = self.proxy.getCCDCameraNames()
+		self.setTEMs(tems)
+		self.setTEM(tem)
+		self.setCCDCameras(ccdcameras)
+		self.setCCDCamera(ccdcamera)
+
+	def getTEM(self):
+		tem = self.ctem.GetStringSelection()
+		if tem == self.nonestring:
+			tem = None
+		return tem
+
+	def setTEM(self, tem):
+		if tem is None:
+			tem = self.nonestring
+		if self.ctem.FindString(tem) == wx.NOT_FOUND:
+			tem = self.nonestring
+		self.ctem.SetStringSelection(tem)
 		if not self.ctem.IsEnabled():
 			self.ctem.Enable(True)
 
-	def onSetTEMs(self, evt):
+	def onSetTEM(self, evt):
+		self.setTEM(evt.name)
+
+	def setTEMs(self, tems):
 		string = self.ctem.GetStringSelection()
 		self.ctem.Freeze()
 		self.ctem.Clear()
-		self.ctem.AppendItems([self.nonestring] + evt.names)
-		if string not in evt.names:
+		self.ctem.AppendItems([self.nonestring] + tems)
+		if self.ctem.FindString(string) == wx.NOT_FOUND:
 			string = self.nonestring
 		self.ctem.SetStringSelection(string)
+		self.sbsz.Layout()
 		self.ctem.Thaw()
 
-	def onSetCCDCamera(self, evt):
-		string = evt.name
-		if string is None:
-			string = self.nonestring
-		self.cccdcamera.SetStringSelection(string)
+	def onSetTEMs(self, evt):
+		self.setTEMs(evt.names)
+
+	def getCCDCamera(self):
+		ccdcamera = self.cccdcamera.GetStringSelection()
+		if ccdcamera == self.nonestring:
+			ccdcamera = None
+		return ccdcamera
+
+	def setCCDCamera(self, ccdcamera):
+		if ccdcamera is None:
+			ccdcamera = self.nonestring
+		if self.cccdcamera.FindString(ccdcamera) == wx.NOT_FOUND:
+			ccdcamera = self.nonestring
+		self.cccdcamera.SetStringSelection(ccdcamera)
 		if not self.cccdcamera.IsEnabled():
 			self.cccdcamera.Enable(True)
 
-	def onSetCCDCameras(self, evt):
+	def onSetCCDCamera(self, evt):
+		self.setCCDCamera(evt.name)
+
+	def setCCDCameras(self, ccdcameras):
 		string = self.cccdcamera.GetStringSelection()
 		self.cccdcamera.Freeze()
 		self.cccdcamera.Clear()
-		self.cccdcamera.AppendItems([self.nonestring] + evt.names)
-		if string not in evt.names:
+		self.cccdcamera.AppendItems([self.nonestring] + ccdcameras)
+		if self.cccdcamera.FindString(string) == wx.NOT_FOUND:
 			string = self.nonestring
 		self.cccdcamera.SetStringSelection(string)
+		self.sbsz.Layout()
 		self.cccdcamera.Thaw()
+
+	def onSetCCDCameras(self, evt):
+		self.setCCDCameras(evt.names)
 
 	def onTEMChoice(self, evt):
 		string = evt.GetString()
@@ -947,8 +979,8 @@ class SelectionPanel(wx.Panel):
 			tem = None
 		else:
 			tem = string
-		self.ctem.Enable(False)
-		threading.Thread(target=self.proxy.setTEM, args=(tem,)).start()
+		evt = gui.wx.Events.TEMChangeEvent(self, tem)
+		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onCCDCameraChoice(self, evt):
 		string = evt.GetString()
@@ -956,26 +988,50 @@ class SelectionPanel(wx.Panel):
 			ccdcamera = None
 		else:
 			ccdcamera = string
-		self.cccdcamera.Enable(False)
-		threading.Thread(target=self.proxy.setCCDCamera, args=(ccdcamera,)).start()
+		evt = gui.wx.Events.CCDCameraChangeEvent(self, ccdcamera)
+		self.GetEventHandler().AddPendingEvent(evt)
 
 class SelectionMixin(object):
 	def __init__(self):
+		self.instrumentselection = None
 		self.Bind(gui.wx.Events.EVT_SET_TEM, self.onSetTEM)
 		self.Bind(gui.wx.Events.EVT_SET_TEMS, self.onSetTEMs)
 		self.Bind(gui.wx.Events.EVT_SET_CCDCAMERA, self.onSetCCDCamera)
 		self.Bind(gui.wx.Events.EVT_SET_CCDCAMERAS, self.onSetCCDCameras)
 
+	def onNodeInitialized(self):
+		self.proxy = self.node.instrument
+		self.Bind(gui.wx.Events.EVT_TEM_CHANGE, self.onTEMChange)
+		self.Bind(gui.wx.Events.EVT_CCDCAMERA_CHANGE, self.onCCDCameraChange)
+
+	def setInstrumentSelection(self, instrumentselection):
+		self.instrumentselection = instrumentselection
+		if self.instrumentselection is None:
+			return
+		tem = self.proxy.getTEMName()
+		tems = self.proxy.getTEMNames()
+		ccdcamera = self.proxy.getCCDCameraName()
+		ccdcameras = self.proxy.getCCDCameraNames()
+		self.instrumentselection.setTEMs(tems)
+		self.instrumentselection.setTEM(tem)
+		self.instrumentselection.setCCDCameras(ccdcameras)
+		self.instrumentselection.setCCDCamera(ccdcamera)
+
+	def onTEMChange(self, evt):
+		threading.Thread(target=self.proxy.setTEM, args=(evt.name,)).start()
+
+	def onCCDCameraChange(self, evt):
+		threading.Thread(target=self.proxy.setCCDCamera, args=(evt.name,)).start()
+
 	def instrumentSelectionEvent(self, evt):
-		try:
-			evthandler = self.settingsdialog.instrumentselection.GetEventHandler()
-			evthandler.AddPendingEvent(evt)
-		except AttributeError:
-			pass
+		if self.instrumentselection is None:
+			return
+		evthandler = self.instrumentselection.GetEventHandler()
+		evthandler.AddPendingEvent(evt)
 
 	def setCameraSize(self):
 		try:
-			camerasize = self.node.instrument.camerasize
+			camerasize = self.proxy.camerasize
 			self.settingsdialog.widgets['camera settings'].setSize(camerasize)
 		except AttributeError:
 			pass

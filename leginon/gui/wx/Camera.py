@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Camera.py,v $
-# $Revision: 1.27 $
+# $Revision: 1.28 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-25 18:36:06 $
+# $Date: 2005-02-28 22:17:52 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -133,18 +133,15 @@ class CameraPanel(wx.Panel):
 			self.szmain.Layout()
 			self.Thaw()
 
-	'''
 	def clear(self):
+		if self.size is None:
+			return
 		self.Freeze()
 		self.ccommon.SetSelection(len(self.choices) - 1)
-		try:
-			self.setGeometry(self.common[self.ccommon.GetStringSelection()])
-		except KeyError:
-			pass
+		self.setGeometry(self.common[self.ccommon.GetStringSelection()])
 		self.feexposuretime.SetValue(self.defaultexptime)
 		self.Enable(False)
 		self.Thaw()
-	'''
 
 	def onConfigurationChanged(self):
 		evt = ConfigurationChangedEvent(self.getConfiguration(), self)

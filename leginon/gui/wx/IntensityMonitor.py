@@ -30,6 +30,7 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 		self.SetupScrolling()
 
 	def onNodeInitialized(self):
+		gui.wx.Instrument.SelectionMixin.onNodeInitialized(self)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
 											id=gui.wx.ToolBar.ID_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onPlayTool,
@@ -62,8 +63,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 
 		self.widgets['wait time'] = FloatEntry(self, -1, min=0.0, chars=6)
 		self.widgets['iterations'] = IntEntry(self, -1, min=0.0, chars=6)
-		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self,
-																													self.node.instrument)
+		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self)
+		self.GetParent().setInstrumentSelection(self.instrumentselection)
 		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
 		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
 
