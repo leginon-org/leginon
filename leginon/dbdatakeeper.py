@@ -17,6 +17,20 @@ class DBDataKeeper(datahandler.DataHandler):
 		self.dbd = sqldict.SQLDict()
 		self.lock = threading.RLock()
 
+	def direct_query(self, dataclass, id):
+		dummy = dataclass()
+		dummy.isRoot = True
+		datainfo = self.datainfo(dummy, dbid=id)
+		queryinfo = datainfo[0]
+		result  = self.dbd.multipleQueries(queryinfo)
+		myresult = result.fetchall()
+		if len(myresult) == 0:
+			return None
+		elif len(myresult) == 1:
+			return myresult[0]
+		else:
+			raise RuntimeError('direct_query should only return a single result')
+
 	def query(self, idata, results=None, readimages=True):
 		self.logger.info('query %s' % idata)
 		self.lock.acquire()
@@ -56,7 +70,7 @@ class DBDataKeeper(datahandler.DataHandler):
 		alias = classname + str(id(idata))
 		return alias
 
-	def datainfo(self, mydata):
+	def datainfo(self, mydata, dbid=None):
 		'''
 		function that should be called in data.accumulateData
 		'''
@@ -69,8 +83,15 @@ class DBDataKeeper(datahandler.DataHandler):
 		info['alias'] = myalias
 		#info['python id'] = myid
 
-		dbid = mydata.dbid
 		if dbid is not None:
+			## force a simple query on DEF_id
+			wheredict = {'DEF_id':dbid}
+			info['where'] = wheredict
+			info['known'] = None
+			info['join'] = {}
+		elif mydata.dbid is not None:
+			## this instance is from the database
+			dbid = mydata.dbid
 			## now I don't think we even need to set wheredict
 			## becuase it will not query if known
 			wheredict = {'DEF_id':dbid}
@@ -78,6 +99,7 @@ class DBDataKeeper(datahandler.DataHandler):
 			info['known'] = mydata
 			info['join'] = {}
 		else:
+			## this instance will be used to create a query
 			wheredict = {}
 			joindict = {}
 			for key,value in mydata.items():
@@ -132,7 +154,8 @@ class DBDataKeeper(datahandler.DataHandler):
 
 		## insert this object if is has never been inserted
 		if newdata.dbid is None:
-			newdata.dbid = self.flatInsert(newdata, force=force)
+			dbid = self.flatInsert(newdata, force=force)
+			newdata.setPersistent(dbid)
 
 	def _insert(self, newdata, force=False):
 		#self.flatInsert(newdata)
