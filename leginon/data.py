@@ -537,7 +537,7 @@ class ImageData(InSessionData):
 		create a unique filename for this image
 		filename format:  [session]_[class]_[integer].mrc
 		'''
-		intwidth = 5
+		intwidth = 6
 		impath = leginonconfig.IMAGE_PATH
 
 		# create new directory for session
