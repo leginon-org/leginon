@@ -27,7 +27,7 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 #		calibrator.Calibrator.defineUserInterface(self)
 
 		self.uilisting = uidata.Sequence('Pixel Size Calibrations', [])
-		testmethod = uidata.Method('Test', self.uiGetCalibrations)
+		testmethod = uidata.Method('List All For This Instrument', self.uiGetCalibrations)
 
 		self.uimag = uidata.Integer('Magnification', 62000, 'rw')
 		self.uipixsize = uidata.Float('Meters/Pixel', 1e-9, 'rw')
@@ -42,7 +42,6 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 		self.uiserver.addObject(mycontainer)
 
 	def uiGetCalibrations(self):
-		calibrations = self.research(dataclass=data.PixelSizeCalibrationData)
 		calibrations = self.calclient.retrieveAllPixelSizes()
 		calibrationstrings = []
 		for calibration in calibrations:
