@@ -197,20 +197,16 @@ class Tecnai(object):
 
 	def setStagePosition(self, value):
 		# pre-position x and y (maybe others later)
-		if self.correctedstage and ('x' in value or 'y' in value):
+		if self.correctedstage:
 			delta = 2e-6
 			stagenow = self.getStagePosition()
 			# calculate pre-position
 			prevalue = {}
-			if 'x' in value:
-				prevalue['x'] = value['x'] - delta
-			else:
-				prevalue['x'] = stagenow['x'] - delta
-			if 'y' in value:
-				prevalue['y'] = value['y'] - delta
-			else:
-				prevalue['y'] = stagenow['y'] - delta
-			self._setStagePosition(prevalue)
+			for axis in ('x','y'):
+				if axis in value:
+					prevalue[axis] = value[axis] - delta
+			if prevalue:
+				self._setStagePosition(prevalue)
 		return self._setStagePosition(value)
 
 	def normalizeLens(self, lens = 'all'):
