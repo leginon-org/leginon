@@ -54,9 +54,15 @@ class HoleFinder(targetfinder.TargetFinder):
 		'ice min mean': 0.05,
 		'ice max mean': 0.2,
 		'ice max std': 0.2,
+		'focus hole': 'Off',
 		'target template': False,
 		'focus template': [(0, 0)],
 		'acquisition template': [(0, 0)],
+		'focus template thickness': False,
+		'focus stats radius': 10,
+		'focus min mean thickness': 0.05,
+		'focus max mean thickness': 0.5,
+		'focus max stdev thickness': 0.5,
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		targetfinder.TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
@@ -70,26 +76,17 @@ class HoleFinder(targetfinder.TargetFinder):
 			'laplacian5',
 			'laplacian-gaussian'
 		]
-		self.cortypes = [
-			'cross',
-			'phase',
-		]
+		self.cortypes = ['cross', 'phase']
+		self.focustypes = ['Off', 'Any Hole', 'Good Hole']
 		self.userpause = threading.Event()
 
-		#if self.__class__ == ClickTargetFinder:
-		#	self.defineUserInterface()
-		#	self.start()
-		self.defineUserInterface()
 		self.start()
 
-	#def defineUserInterface(self):
-		#cameraconfigure = self.cam.uiSetupContainer()
-		#acqmeth = uidata.Method('Acquire Image', self.acqImage)
-		#testmeth = uidata.Method('Test All', self.everything)
-
+	'''
 	def defineUserInterface(self):
-		targetfinder.TargetFinder.defineUserInterface(self)
-
+		cameraconfigure = self.cam.uiSetupContainer()
+		acqmeth = uidata.Method('Acquire Image', self.acqImage)
+		testmeth = uidata.Method('Test All', self.everything)
 		self.originalimage = uidata.Image('Original', None, 'r')
 		self.edgeimage = uidata.Image('Edge Image', None, 'r')
 		self.corimage = uidata.Image('Correlation Image', None, 'r')
@@ -98,29 +95,10 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.allblobsimage.addTargetType('All Blobs')
 		self.latblobsimage = uidata.TargetImage('Lattice Blobs Image', None, 'r')
 		self.latblobsimage.addTargetType('Lattice Blobs')
-
 		self.goodholesimage = uidata.TargetImage('Good Holes Image', None, 'r')
-
-		# target templates
-		# thickness limit on focus template
-		foc_template_limit = uidata.Container('Focus Template Thickness')
-		self.focthickon = uidata.Boolean('On', False, 'rw', persist=True)
-		self.focicerad = uidata.Float('Focus Stats Radius', 10, 'rw', persist=True)
-		self.focicetmin = uidata.Float('Focus Minimum Mean Thickness', 0.05, 'rw', persist=True)
-		self.focicetmax = uidata.Float('Focus Maximum Mean Thickness', 0.5, 'rw', persist=True)
-		self.focicetstd = uidata.Float('Focus Maximum StdDev Thickness', 0.5, 'rw', persist=True)
-		foc_template_limit.addObjects((self.focthickon, self.focicerad, self.focicetmin, self.focicetmax, self.focicetstd))
-
-		self.focus_one_hole = uidata.SingleSelectFromList('Focus One Hole', ['Off', 'Any Hole', 'Good Hole'], 0, permissions='rw', persist=True)
 		self.goodholesimage.addTargetType('acquisition', [], (0,255,0))
 		self.goodholesimage.addTargetType('focus', [], (0,0,255))
-
-		goodholescontainer = uidata.LargeContainer('Good Holes')
-		goodholescontainer.addObjects((foc_template_limit, self.focus_one_hole, self.goodholesimage, ))
-
-		container = uidata.LargeContainer('Hole Finder')
-		container.addObjects((goodholescontainer,))
-		self.uicontainer.addObject(container)
+	'''
 
 	def readImage(self, filename):
 		orig = Mrc.mrc_to_numeric(filename)
@@ -242,7 +220,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		focus_points = []
 
 		## replace an acquisition target with a focus target
-		onehole = self.focus_one_hole.getSelectedValue()
+		onehole = self.settings['focus hole']
 		if centers and onehole != 'Off':
 			## if only one hole, this is useless
 			if len(allcenters) < 2:
@@ -352,11 +330,11 @@ class HoleFinder(targetfinder.TargetFinder):
 					self.logger.info('skipping template point %s: out of image bounds' % (vect,))
 					continue
 				## check if target has good thickness
-				if self.focthickon.get():
-					rad = self.focicerad.get()
-					tmin = self.focicetmin.get()
-					tmax = self.focicetmax.get()
-					tstd = self.focicetstd.get()
+				if self.settings['focus template thickness']:
+					rad = self.settings['focus stats radius']
+					tmin = self.settings['focus min mean thickness']
+					tmax = self.settings['focus max mean thickness']
+					tstd = self.settings['focus max stdev thickness']
 					coord = target[1], target[0]
 					stats = self.hf.get_hole_stats(self.hf['original'], coord, rad)
 					if stats is None:

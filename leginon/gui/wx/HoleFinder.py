@@ -450,12 +450,19 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['ice min mean'] = FloatEntry(self, -1, chars=6)
 		self.widgets['ice max mean'] = FloatEntry(self, -1, chars=6)
 		self.widgets['ice max std'] = FloatEntry(self, -1, chars=6)
+		self.widgets['focus hole'] = Choice(self, -1, choices=self.node.focustypes)
 		self.widgets['target template'] = wx.CheckBox(self, -1,
 																									'Use target template')
 		self.widgets['focus template'] = gui.wx.TargetTemplate.Panel(self,
 																									'Focus Target Template')
 		self.widgets['acquisition template'] = gui.wx.TargetTemplate.Panel(self,
 																									'Acquisition Target Template')
+		self.widgets['focus template thickness'] = wx.CheckBox(self, -1,
+																								'Use focus template thickness')
+		self.widgets['focus stats radius'] = IntEntry(self, -1, chars=6)
+		self.widgets['focus min mean thickness'] = FloatEntry(self, -1, chars=6)
+		self.widgets['focus max mean thickness'] = FloatEntry(self, -1, chars=6)
+		self.widgets['focus max stdev thickness'] = FloatEntry(self, -1, chars=6)
 
 		szice = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Min. mean:')
@@ -470,18 +477,48 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 		szice.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szice.Add(self.widgets['ice max std'], (2, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Focus hole selection:')
+		szice.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szice.Add(self.widgets['focus hole'], (3, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		szice.AddGrowableCol(1)
 
 		sb = wx.StaticBox(self, -1, 'Ice Thickness Threshold')
 		sbszice = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszice.Add(szice, 1, wx.EXPAND|wx.ALL, 5)
 
+		szftt = wx.GridBagSizer(5, 5)
+		szftt.Add(self.widgets['focus template thickness'], (0, 0), (1, 2),
+										wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'Stats. radius:')
+		szftt.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szftt.Add(self.widgets['focus stats radius'], (1, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Min. mean thickness:')
+		szftt.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szftt.Add(self.widgets['focus min mean thickness'], (2, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Max. mean thickness:')
+		szftt.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szftt.Add(self.widgets['focus max mean thickness'], (3, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Max. std. thickness:')
+		szftt.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szftt.Add(self.widgets['focus max stdev thickness'], (4, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		szftt.AddGrowableCol(1)
+
+		sb = wx.StaticBox(self, -1, 'Focus Template Thickness')
+		sbszftt = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sbszftt.Add(szftt, 1, wx.EXPAND|wx.ALL, 5)
+
 		sztt = wx.GridBagSizer(5, 5)
 		sztt.Add(self.widgets['target template'], (0, 0), (1, 1),
 							wx.ALIGN_CENTER_VERTICAL)
-		sztt.Add(self.widgets['focus template'], (1, 0), (1, 1),
+		sztt.Add(sbszftt, (1, 0), (1, 1), wx.EXPAND)
+		sztt.Add(self.widgets['focus template'], (2, 0), (1, 1),
 							wx.ALIGN_CENTER)
-		sztt.Add(self.widgets['acquisition template'], (2, 0), (1, 1),
+		sztt.Add(self.widgets['acquisition template'], (3, 0), (1, 1),
 							wx.ALIGN_CENTER)
 
 		sb = wx.StaticBox(self, -1, 'Target Template')
