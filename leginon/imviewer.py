@@ -128,7 +128,13 @@ class ImViewer(watcher.Watcher, camerafuncs.CameraFuncs):
 
 		## self.im must be 2-d numeric data
 
-		self.numarray = imagedata.content
+		## this hack make ImViewer work with different imagedata types
+		c = imagedata.content
+		if type(c) is dict:
+			self.numarray = c['image']
+		else:
+			self.numarray = c
+
 		self.imageid = imagedata.id
 		print 'IMVIEWER', self.imageid, self.popupvalue
 		if self.popupvalue:
