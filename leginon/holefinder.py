@@ -67,10 +67,11 @@ class HoleFinder(targetfinder.TargetFinder):
 		### Correlate Template
 		self.ringlist = uidata.Array('Ring Diameters', [(30,40)], 'rw', persist=True)
 		self.cortype = uidata.SingleSelectFromList('Correlation Type', ['cross correlation', 'phase correlation'], 0, persist=True)
+		self.corfilt = uidata.Float('Low Pass Filter', 0.0, 'rw', persist=True)
 		cormeth = uidata.Method('Correlate Template', self.correlateTemplate)
 		self.corimage = uidata.Image('Correlation Image', None, 'r')
 		corcont = uidata.LargeContainer('Template Correlation')
-		corcont.addObjects((self.ringlist, self.cortype, cormeth, self.corimage))
+		corcont.addObjects((self.ringlist, self.cortype, self.corfilt, cormeth, self.corimage))
 
 		### threshold
 		self.threshvalue = uidata.Float('Threshold Value', 3.0, 'rw', persist=True)
@@ -162,7 +163,8 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.hf.configure_template(ring_list=radlist)
 		self.hf.create_template()
 		cortype = self.cortype.getSelectedValue()
-		self.hf.configure_correlation(cortype)
+		corfilt = self.corfilt.get()
+		self.hf.configure_correlation(cortype, corfilt)
 		self.hf.correlate_template()
 		self.corimage.set(self.hf['correlation'])
 

@@ -220,10 +220,10 @@ class HoleFinder(object):
 		self.icecalc = ice.IceCalculator()
 
 		## some default configuration parameters
-		self.save_mrc = True
+		self.save_mrc = False
 		self.edges_config = {'filter': 'laplacian', 'size': 9, 'sigma': 1.4, 'abs': False, 'lp':True, 'lpn':5, 'lpsig':1.0, 'thresh':100.0}
 		self.template_config = {'ring_list': [(25,30)]}
-		self.correlation_config = {'cortype': 'cross correlation'}
+		self.correlation_config = {'cortype': 'cross correlation', 'corfilt':0.0}
 		self.threshold = 3.0
 		self.blobs_config = {'border': 20, 'maxblobsize': 50}
 		self.lattice_config = {'tolerance': 0.1, 'vector': 100.0, 'minspace': 20}
@@ -325,7 +325,8 @@ class HoleFinder(object):
 		if ab:
 			edges = Numeric.absolute(edges)
 
-		edges = imagefun.threshold(edges, edgethresh)
+		if edgethresh:
+			edges = imagefun.threshold(edges, edgethresh)
 
 		self.__update_result('edges', edges)
 		if self.save_mrc:
@@ -357,14 +358,16 @@ class HoleFinder(object):
 			temp = self.circle.get(shape, center, ring[0], ring[1])
 			template = template | temp
 		template = template.astype(Numeric.Float32)
-		template = imagefun.zscore(template)
+		#template = imagefun.zscore(template)
 		self.__update_result('template', template)
 		if self.save_mrc:
 			Mrc.numeric_to_mrc(template, 'template.mrc')
 
-	def configure_correlation(self, cortype=None):
+	def configure_correlation(self, cortype=None, corfilt=None):
 		if cortype is not None:
 			self.correlation_config['cortype'] = cortype
+		if corfilt is not None:
+			self.correlation_config['corfilt'] = corfilt
 
 	def correlate_template(self):
 		fromimage = 'edges'
@@ -374,6 +377,7 @@ class HoleFinder(object):
 		edges = self.__results[fromimage]
 		template = self.__results['template']
 		cortype = self.correlation_config['cortype']
+		corfilt = self.correlation_config['corfilt']
 		if cortype == 'cross correlation':
 			cc = imagefun.cross_correlate(edges, template)
 		elif cortype == 'phase correlation':
@@ -381,11 +385,13 @@ class HoleFinder(object):
 		else:
 			raise RuntimeError('bad correlation type: %s' % (cortype,))
 		cc = Numeric.absolute(cc)
-		#kernel = convolver.gaussian_kernel(9, 1.0)
-		#self.edgefinder.setKernel(kernel)
-		#smooth = self.edgefinder.convolve(image=cc)
+
+		if corfilt:
+			kernel = convolver.gaussian_kernel(15, corfilt)
+			self.edgefinder.setKernel(kernel)
+			cc = self.edgefinder.convolve(image=cc)
 		#cc = imagefun.zscore(smooth)
-		cc = imagefun.zscore(cc)
+		#cc = imagefun.zscore(cc)
 		self.__update_result('correlation', cc)
 		if self.save_mrc:
 			Mrc.numeric_to_mrc(cc, 'correlation.mrc')
