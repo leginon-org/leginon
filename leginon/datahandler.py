@@ -6,6 +6,7 @@ import shelve
 import time
 import event
 import random
+import pickle
 
 class DataHandler(leginonobject.LeginonObject):
 	'''Base class for DataHandlers. Defines virtual functions.'''
@@ -214,9 +215,14 @@ class CachedDictDataKeeper(DataHandler):
 
 	def cache(self, id):
 		if not self.datadict[id]['cached']:
-			self.shelf[str(id)] = self.datadict[id]['data']
-			self.datadict[id]['cached'] = 1
-			del self.datadict[id]['data']
+			# XXX This raises PicklingError for array type
+			try:
+				self.shelf[str(id)] = self.datadict[id]['data']
+				self.datadict[id]['cached'] = 1
+				del self.datadict[id]['data']
+			except pickle.PicklingError, detail:
+				print 'Warning:  CashedDictDataKeeper could not pickle data with id: %s' % (id,)
+				print 'PicklingError detail:', detail
 
 	def ids(self):
 		self.lock.acquire()
