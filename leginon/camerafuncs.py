@@ -83,7 +83,8 @@ class CameraFuncs(object):
 #			t.stop()
 			return newcamdata
 		except:
-			self.node.outputWarning('Cannot find current camera settings, EM may not be running.')
+			#self.node.outputWarning('Cannot find current camera settings, EM may not be running.')
+			print('Cannot find current camera settings, EM may not be running.')
 			return None
 
 	def autoOffset(self, camconfig):
