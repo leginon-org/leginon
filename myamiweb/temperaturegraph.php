@@ -52,7 +52,7 @@ if (!$endtime) {
 	$q = "select @nr:=adddate(from_unixtime('$begints'), interval 1 day) as `nt`, unix_timestamp(@nr) as nts, date_format(@nr, '%Y-%d-%m %T') as fnt ";
 	list($r) = $db->getSQLResult($q);
 	$endtime = $r['fnt'];
-	$endts= $r['fnt'];
+	$endts= $r['nts'];
 }
 
 $q = 'SELECT `name` , `description`, `color` '

@@ -198,6 +198,7 @@ class viewer {
 		foreach ($this->views as $v) {
 			$name = $v->getName();
 			$init .= '	newfile("'.$name.'");'.$this->crlf;
+			$init .= '	setImageHistogram("'.$name.'");'.$this->crlf;
 			if ($v->getJavaScriptInit())
 				$initbuttons .= $v->getJavaScriptInit().$this->crlf;
 		}
@@ -498,6 +499,7 @@ class view {
 			.'var jspreset'.$this->name.'="'.$this->preset.'";'.$this->crlf
 			.'var jsquality'.$this->name.'="'.$this->quality.'";'.$this->crlf
 			.'var jscolormap'.$this->name.'="'.$this->colormap.'";'.$this->crlf
+			.'var '.$this->name.'adjw=false;'.$this->crlf
 			.$this->crlf;
 		return $javascript;
 	}
@@ -633,7 +635,7 @@ class view {
 		if ($this->displayffticon)
 		$htmlframe .= '
 			<td width="15">
-			<a href="javascript:toggleButton(\''.$this->name.'fft_bt\', \'fft_bt\');newfile(\''.$name.'\'); "
+			<a href="javascript:toggleButton(\''.$this->name.'fft_bt\', \'fft_bt\');newfile(\''.$name.'\');setImageHistogram(\''.$name.'\')"
 				onmouseover="imageonfocus(\''.$this->name.'fft_bt\', \'fft_bt\', \'_over\')" 
 				onmouseout="imageonfocus(\''.$this->name.'fft_bt\', \'fft_bt\', \'\')" 
 				>
@@ -700,7 +702,7 @@ class view {
 						</td>
 						<td>
 				';
-		$param = "left=0,top=".($this->viewnb*100).",height=35,width=370";
+		$param = "left=0,top=".($this->viewnb*180).",height=170,width=370";
 		$url = "adjust.php?name=$name&displayname=$this->title";
 		$htmlframe .='
 			<a href="javascript:popUpAdjust(\''.$url.'\',\''.$name.'\',\''.$param.'\');">

@@ -115,7 +115,7 @@ $q = 'SELECT `name` , `description`, `color` '
         . ' ORDER BY name ASC '
         . ' LIMIT 8 ';
 $channelinfo = $db->getSQLResult($q);
-$displaychannels = array (0,1,2,4,7);
+$displaychannels = array (0,1,2,4,5,7);
 foreach ($channelinfo as $k=>$a) {
 	$channel = $k; 
 	if (!in_array($k, $displaychannels))

@@ -37,20 +37,17 @@ class histogram {
 	}
 
 	function generateData() {
-		foreach(range(1,$this->nbbars) as $k ) {
-			$classes[$k] = array();
+		for($k=0; $k<$this->nbbars; $k++ ) {
+			$classes[$k] = 0;
 			foreach($this->data as $data) {
 				$i1 = ($this->minval+($k-1)*$this->interval);
 				$i2 = ($this->minval+$k*$this->interval);
 				if ($data > $i1 && $data <= $i2)
-					$classes[$k][] = $data;
+					$classes[$k]++;
 			}
 		}
 		if ($classes)
-			foreach ($classes as $k=>$class ) {
-				$i1 = ($this->minval+($k-1)*$this->interval);
-				$i2 = ($this->minval+$k*$this->interval);
-				$nb = count($class);
+			foreach ($classes as $k=>$nb) {
 				$this->histogramdata['x'][] = $this->minval+$k*$this->interval;
 				$this->histogramdata['y'][] = $nb;
 			}

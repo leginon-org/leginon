@@ -62,6 +62,41 @@ if ($displaytree)
 // --- get Calibrations Data
 $types = $leginondata->getMatrixCalibrationTypes();
 
+// --- getCTF Info, if any
+$user = "usr_object";
+$host = "cronus1";
+$db = "processing";
+$dbc = new mysql($host, $user, "", $db);
+$ctfres = $dbc->SQLQuery('SHOW FIELDS FROM ctf');
+while ($row = mysql_fetch_array($ctfres, MYSQL_ASSOC)) 
+	$ctffields[$row['Field']] = $row;
+$q = 'select `ctf`.*, i.* FROM `ctf` AS `ctf` '
+	.' LEFT JOIN image as `i` on (`i`.imageId = `ctf`.imageId) '
+	.' where i.`DEF_id` = "'.$imgId.'"';
+$ctfdata = $dbc->getSQLResult($q);
+
+$ctf_display_fields = array (
+	'defocus1',
+	'defocus2',
+	'defocusinit',
+	'amplitude_constrast',
+	'angle_astigmatism',
+	'noise1',
+	'noise2',
+	'noise3',
+	'noise4',
+	'envelope1',
+	'envelope2',
+	'envelope3',
+	'envelope4',
+	'lowercutoff',
+	'uppercutoff',
+	'snr',
+	'confidence',
+	'blobgraph1',
+	'blobgraph2',
+);
+
 ?>
 <html>
 <head>
@@ -264,7 +299,7 @@ echo "</table>";
 <table align="center" >
 <tr>
 <td>
-<img src="imagehistogram.php?Id=<?=$imgId?>">
+<img src="imagehistogram.php?tf=1&rp=1&id=<?=$imgId?>">
 </td>
 </tr>
 </table>
@@ -290,23 +325,49 @@ createTree(Tree,0, new Array());
 </td>
 </tr>
 <tr valign=top>
-	<td>
+	<td colspan="2">
 <?
-echo divtitle("Calibrations");
-echo "<table border='0'>";
-/*
-foreach ($types as $type) {
-	$m = $leginondata->getImageMatrixCalibration($imgId, $type);
-	$matrix = displayMatrix(matrix(
-			$leginondata->formatMatrixValue($m[a11]),
-			$leginondata->formatMatrixValue($m[a12]),
-			$leginondata->formatMatrixValue($m[a21]),
-			$leginondata->formatMatrixValue($m[a22]))
-		);
-	echo formatHtmlRow($type, $matrix);
+echo divtitle("CTF");
+
+if (!empty($ctfdata)) {
+	echo "<table border='0'>";
+	foreach($ctfdata as $r) {
+	$f++;
+	$blobs = array();
+	foreach($r as $k=>$v) {
+		if (!in_array($k, $ctf_display_fields))
+			continue;	
+		$type = $ctffields[$k]['Type'];
+		if (eregi('defocus', $k))
+			$display = format_micro_number($v);
+		else if (eregi("blob", $type)) {
+			$blobs[] = "<a href=blob2img.php?id=".$r['ctfId']."&f=".$k.">"
+				."<img border=0 src=blob2img.php?w=280&id=".$r['ctfId']."&f=".$k.">"
+				."</a>";
+			$k="";
+			continue;
+		}
+		else if ($v-floor($v)) 
+			$display = format_sci_number($v,4,2);
+		else
+			$display = $v;
+		echo formatHtmlRow($k,$display);
+	}
+		echo "<tr>";
+	foreach ($blobs as $blob) {
+		echo "<td>";
+		echo $blob;
+		echo "</td>";
+	}
+		echo "</tr>";
+	echo "<tr><td colspan=2><hr></td></tr>";	
+	}
+	echo "</table>";
+	
+} else {
+	echo "No CTF data for this image";
 }
-*/
-echo "</table>";
+echo divtitle("Calibrations");
 ?>
 	</td>
 </tr>

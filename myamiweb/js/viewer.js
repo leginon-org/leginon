@@ -113,6 +113,7 @@ function newfile(view){
 	jssize = eval(view+"size");
 	jsvfile = eval("jsvfile"+view);
 	selpreset = eval("jspreset"+view);
+	if (cbinning = eval("jsbinning"+view)) binning="&binning="+cbinning; else binning="";
 	jsimagescriptcur = eval("jsimagescript"+view);
 	jspresetscriptcur = eval("jspresetscript"+view);
 	vid = getviewindex(view);
@@ -191,6 +192,30 @@ function setImageStatus(viewname) {
 	}
 }
 
+function setImageHistogram(viewname) {
+	if (w=eval(viewname+"adjw")) {
+		jssize = eval(viewname+"size");
+		selpreset = eval("jspreset"+viewname);
+		if (list = eval("document.viewerform."+viewname+"pre"))
+			selpreset=list.options[list.selectedIndex].value;
+		if (eval(viewname+"fft_bt_st")) fft="&fft=1"; else fft="";
+		filter_st = eval(viewname+"filter_bt_st");
+		if ((cfilter = eval("jsfilter"+viewname)) && (filter_st==true || filter_st=="on")) flt="&flt="+cfilter; else flt="";
+		if (ccolormap= eval("jscolormap"+viewname)) colormap="&colormap="+ccolormap; else colormap="";
+		if (cmin = eval("jsmin"+viewname)) np="&np="+cmin; else np="";
+		if (cmax = eval("jsmax"+viewname)) xp="&xp="+cmax; else xp="";
+		if (cbinning = eval("jsbinning"+viewname)) binning="&binning="+cbinning; else binning="";
+
+		options = "preset="+selpreset+
+			"&id="+jsimgId+
+			"&s="+jssize+quality+np+xp+flt+binning+colormap+fft;
+
+		if (!w.closed) {
+			w.document.imghisto.src="imagehistogram.php?tf=1&"+options;
+		}
+	}
+}
+
 function setminmax(viewname, min,max) {
 	eval("jsmin"+viewname+"="+min);
 	eval("jsmax"+viewname+"="+max);
@@ -255,6 +280,6 @@ function popUpAdjust(URL, view, param){
 	binning = (binning) ? "&binning="+binning : "";
 	quality = (quality) ? "&t="+quality : "";
 	colormap= (colormap) ? "&colormap="+colormap : "";
-	param = (param) ? param : "left=0,top=0,height=35,width=370";
-	window.open(URL+min+max+filter+binning+quality+colormap, view+"adj", param+",toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes");
+	param = (param) ? param : "left=0,top=0,height=170,width=370";
+	eval (view+"adjw"+" = window.open('"+URL+min+max+filter+binning+quality+colormap+"', '"+view+"adj', '"+param+"', 'toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes');");
 }

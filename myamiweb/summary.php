@@ -32,9 +32,14 @@ DIV.comment_subsection { text-indent: 2em;
 		margin-bottom: 15px ;
 	}
 </STYLE>
+<script>
+function init() {
+	this.focus();
+}
+</script>
 </head>
 
-<body>
+<body onload="init();" >
 <table border=0 cellpadding=10>
 <tr>
  <td>

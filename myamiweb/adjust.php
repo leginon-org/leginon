@@ -90,7 +90,7 @@ function update() {
 	parentwindow.setquality(jsviewname,jsquality);
 	parentwindow.setImageStatus(jsviewname);
 	parentwindow.newfile(jsviewname);
-
+	parentwindow.setImageHistogram(jsviewname);
 }
 
 function drawSliders() {
@@ -136,6 +136,7 @@ function init(){
   jsminpix = minpix1.valueDefault;
   jsmaxpix = maxpix1.valueDefault;
   document.getElementById('gradientDiv').style.background = 'url('+jsbaseurl+gradient+'?colormap='+jscolormap+'&min='+jsminpix+'&max='+jsmaxpix+')'; 
+  parentwindow.setImageHistogram(jsviewname);
   this.focus();
 } 
 
@@ -149,7 +150,12 @@ function init(){
 <input type="hidden" name="colormap" value="<?=$cmapstr?>">
 <div id="imagemap" style="z-index:99999;position:absolute;visibility:hidden;border:1px solid black"></div>
 <div id="treedata" style="z-index:99999;position:absolute;visibility:hidden;border:1px solid black"></div>
-<table border=0>
+<table border="0">
+  <tr>
+   <td colspan="3" align="center">
+	<img name="imghisto" src="imagehistogram.php?tf=1">
+   </td>
+  </tr>
   <tr>
    <td>
 	<button class="button" type="submit" value="">
