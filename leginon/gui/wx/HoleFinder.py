@@ -129,6 +129,8 @@ class Panel(gui.wx.TargetFinder.Panel):
 							self.bhf['Threshold'])
 		self.Bind(wx.EVT_BUTTON, self.onBlobsSettingsButton,
 							self.bhf['Blobs'])
+		self.Bind(wx.EVT_BUTTON, self.onLatticeSettingsButton,
+							self.bhf['Lattice'])
 
 	def onSubmitButton(self, evt):
 		self.node.submitTargets()
@@ -163,6 +165,11 @@ class Panel(gui.wx.TargetFinder.Panel):
 
 	def onBlobsSettingsButton(self, evt):
 		dialog = BlobsSettingsDialog(self)
+		dialog.ShowModal()
+		dialog.Destroy()
+
+	def onLatticeSettingsButton(self, evt):
+		dialog = LatticeSettingsDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
 
@@ -382,6 +389,51 @@ class BlobsSettingsDialog(gui.wx.Settings.Dialog):
 
 	def onTestButton(self, evt):
 		self.node.findBlobs()
+
+class LatticeSettingsDialog(gui.wx.Settings.Dialog):
+	def initialize(self):
+		gui.wx.Settings.Dialog.initialize(self)
+
+		self.widgets['lattice spacing'] = FloatEntry(self, -1, chars=6)
+		self.widgets['lattice tolerance'] = FloatEntry(self, -1, chars=6)
+		self.widgets['lattice hole radius'] = FloatEntry(self, -1, chars=6)
+		self.widgets['lattice zero thickness'] = FloatEntry(self, -1, chars=6)
+
+		szlattice = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Spacing:')
+		szlattice.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szlattice.Add(self.widgets['lattice spacing'], (0, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Tolerance:')
+		szlattice.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szlattice.Add(self.widgets['lattice tolerance'], (1, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Hole stats. radius:')
+		szlattice.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szlattice.Add(self.widgets['lattice hole radius'], (2, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Zero thickness:')
+		szlattice.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szlattice.Add(self.widgets['lattice zero thickness'], (3, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		szlattice.AddGrowableCol(1)
+
+		sb = wx.StaticBox(self, -1, 'Lattice fitting')
+		sbszlattice = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sbszlattice.Add(szlattice, 1, wx.EXPAND|wx.ALL, 5)
+
+		self.btest = wx.Button(self, -1, 'Test')
+		szbutton = wx.GridBagSizer(5, 5)
+		szbutton.Add(self.btest, (0, 0), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		szbutton.AddGrowableCol(0)
+
+		self.Bind(wx.EVT_BUTTON, self.onTestButton, self.btest)
+
+		return [sbszlattice, szbutton]
+
+	def onTestButton(self, evt):
+		self.node.fitLattice()
 
 class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
 	def initialize(self):

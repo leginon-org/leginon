@@ -47,6 +47,10 @@ class HoleFinder(targetfinder.TargetFinder):
 		'blobs border': 20,
 		'blobs max': 300,
 		'blobs max size': 1000,
+		'lattice spacing': 150.0,
+		'lattice tolerance': 0.1,
+		'lattice hole radius': 15.0,
+		'lattice zero thickness': 1000.0,
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		targetfinder.TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
@@ -86,16 +90,6 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.threshimage = uidata.Image('Thresholded Image', None, 'r')
 		self.allblobsimage = uidata.TargetImage('All Blobs Image', None, 'r')
 		self.allblobsimage.addTargetType('All Blobs')
-
-		self.latspacing = uidata.Number('Spacing', 150.0, 'rw', persist=True)
-		self.lattol = uidata.Number('Tolerance', 0.1, 'rw', persist=True)
-
-		self.holestatsrad = uidata.Number('Hole Stats Radius', 15.0, 'rw', persist=True)
-		self.icei0 = uidata.Number('Zero Thickness', 1000.0, 'rw', persist=True)
-
-
-		fitlatmeth = uidata.Method('Fit Lattice', self.fitLattice)
-		self.latblobs = uidata.Sequence('Lattice Blobs', [], 'r')
 		self.latblobsimage = uidata.TargetImage('Lattice Blobs Image', None, 'r')
 		self.latblobsimage.addTargetType('Lattice Blobs')
 
@@ -124,16 +118,11 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.goodholesimage.addTargetType('acquisition', [], (0,255,0))
 		self.goodholesimage.addTargetType('focus', [], (0,0,255))
 
-		latticeblobscontainer = uidata.LargeContainer('Lattice Blobs')
-		latticeblobscontainer.addObjects(( self.latspacing, self.lattol, self.holestatsrad, self.icei0, fitlatmeth, self.latblobs, self.latblobsimage))
-		blobcont = uidata.LargeContainer('Blobs')
-		blobcont.addObjects((latticeblobscontainer,))
-
 		goodholescontainer = uidata.LargeContainer('Good Holes')
 		goodholescontainer.addObjects((self.icetmin, self.icetmax, self.icetstd, icemeth, self.goodholes, self.use_target_template, self.foc_target_template, foc_template_limit, self.acq_target_template, self.focus_one_hole, self.goodholesimage, ))
 
 		container = uidata.LargeContainer('Hole Finder')
-		container.addObjects((blobcont, goodholescontainer))
+		container.addObjects((goodholescontainer,))
 		self.uicontainer.addObject(container)
 
 	def readImage(self, filename):
@@ -215,10 +204,10 @@ class HoleFinder(targetfinder.TargetFinder):
 
 	def fitLattice(self):
 		self.logger.info('fit lattice')
-		latspace = self.latspacing.get()
-		lattol = self.lattol.get()
-		r = self.holestatsrad.get()
-		i0 = self.icei0.get()
+		latspace = self.settings['lattice spacing']
+		lattol = self.settings['lattice tolerance']
+		r = self.settings['lattice hole radius']
+		i0 = self.settings['hole zero thickness']
 		self.icecalc.set_i0(i0)
 
 		self.hf.configure_lattice(spacing=latspace, tolerance=lattol)
@@ -238,13 +227,12 @@ class HoleFinder(targetfinder.TargetFinder):
 			tstd = self.icecalc.get_stdev_thickness(std, mean)
 			center = tuple(hole.stats['center'])
 			mylist.append({'m':mean, 'tm': tmean, 's':std, 'ts': tstd, 'c':center})
-		self.latblobs.set(mylist)
 		self.latblobsimage.setImage(self.hf['original'])
 		self.latblobsimage.setTargetType('Lattice Blobs', centers)
 
 	def ice(self):
 		self.logger.info('limit thickness')
-		i0 = self.icei0.get()
+		i0 = self.settings['hole zero thickness']
 		tmin = self.icetmin.get()
 		tmax = self.icetmax.get()
 		tstd = self.icetstd.get()
@@ -439,10 +427,10 @@ class HoleFinder(targetfinder.TargetFinder):
 			'blob-border': self.settings['blobs border'],
 			'blob-max-number': self.settings['blobs max'],
 			'blob-max-size': self.settings['blobs max size'],
-			'lattice-spacing': self.latspacing.get(),
-			'lattice-tolerance': self.lattol.get(),
-			'stats-radius': self.holestatsrad.get(),
-			'ice-zero-thickness': self.icei0.get(),
+			'lattice-spacing': self.settings['lattice spacing'],
+			'lattice-tolerance': self.settings['lattice tolerance'],
+			'stats-radius': self.settings['lattice hole radius'],
+			'ice-zero-thickness': self.settings['hole zero thickness'],
 
 			'ice-min-thickness': self.icetmin.get(),
 			'ice-max-thickness': self.icetmax.get(),

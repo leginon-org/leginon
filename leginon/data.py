@@ -1654,6 +1654,10 @@ class HoleFinderSettingsData(TargetFinderSettingsData):
 			('blobs border', int),
 			('blobs max', int),
 			('blobs max size', int),
+			('lattice spacing', float),
+			('lattice tolerance', float),
+			('lattice hole radius', float),
+			('lattice zero thickness', float),
 		)
 	typemap = classmethod(typemap)
 
