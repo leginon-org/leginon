@@ -66,7 +66,7 @@ if (!$filter=$_GET['flt'])
 if (!$binning=$_GET['binning']) 
 	$binning = 'auto';
 
-$displayloadingtime = true;
+$displayloadingtime = false;
 
 if ($g) {
 	$params = array (
@@ -99,6 +99,7 @@ if ($g) {
 				'minpix' => $minpix,
 				'maxpix' => $maxpix,
 				'binning' => $binning,
+				'colormap' => $colormap,
 				'scalebar'=>false
 			);
 		

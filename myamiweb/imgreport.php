@@ -302,7 +302,8 @@ echo "</table>";
 </table>
 <?
 foreach ($types as $type) {
-	$m = $leginondata->getImageMatrixCalibration($imgId, $type);
+	$t = $type['type'];
+	$m = $leginondata->getImageMatrixCalibration($imgId, $t);
 	if (!$m) continue;
 	$matrix = displayMatrix(matrix(
 			$leginondata->formatMatrixValue($m[a11]),
@@ -310,7 +311,7 @@ foreach ($types as $type) {
 			$leginondata->formatMatrixValue($m[a21]),
 			$leginondata->formatMatrixValue($m[a22]))
 		);
-	echo "<span class='datafield0'>$type</span><br> $matrix";
+	echo "<span class='datafield0'>$t</span><br> $matrix";
 }
 ?>
 </body>

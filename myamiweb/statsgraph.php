@@ -1,7 +1,6 @@
 <?php
 require ("inc/jpgraph.php");
 require ("inc/jpgraph_scatter.php");
-require ("inc/jpgraph_log.php");
 require ("inc/image.inc");
 require ("inc/leginon.inc");
 
