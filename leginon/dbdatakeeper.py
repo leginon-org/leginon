@@ -133,16 +133,6 @@ class DBDataKeeper(datahandler.DataHandler):
 		newid = myTable.insert([formatedData])
 		return newid
 
-	def insertWithForeignKeys(self, newdata):
-		'''
-		inserts a data object that may include some items which
-		are references to other data.  Returns a reference to
-		this newly inserted data object.
-		'''
-		insertid = self.flatInsert(newdata)
-		newdata.dbid = insertid
-		return newdata
-
 	# don't bother with these for now
 	def remove(self, id):
 		pass
