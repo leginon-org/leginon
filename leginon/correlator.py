@@ -98,7 +98,8 @@ class Correlator(object):
 			# invert correlation to use
 			self.crossCorrelationFFT()
 			ccfft = self.results['cross correlation fft']
-			cc = ffteng.itransform(ccfft)
+
+			cc = self.fftengine.itransform(ccfft)
 			self.results['cross correlation image'] = cc
 		return cc
 
@@ -107,17 +108,16 @@ class Correlator(object):
 		# cross-correlation / magnitude(cross-correlation
 		#print 'phaseCorrelate start'
 		if self.results['phase correlation image'] is None:
-			#print 'crossCorrelation'
 			self.crossCorrelationFFT()
 			ccfft = self.results['cross correlation fft']
-			#print 'calc pcfft'
+
 			pcfft = ccfft / Numeric.absolute(ccfft)
 			self.results['phase correlation fft'] = pcfft
-			#print 'itransform'
 			pc = self.fftengine.itransform(pcfft)
-			#print 'itransform done'
+			## average out the artifical peak at 0,0
+			pc[0,0] = (pc[0,1] + pc[0,-1] + pc[1,0] + pc[-1,0]) /4.0
+
 			self.results['phase correlation image'] = pc
-		#print 'phastCorrelate returning'
 		return pc
 
 #### this is a utility function to convert an unsigned coordinate
