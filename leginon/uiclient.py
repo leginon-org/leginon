@@ -1710,8 +1710,9 @@ class wxTreePanel(wxPanel):
 			container.show(False)
 		selectedcontainer = self.tree.GetPyData(self.tree.GetSelection())
 		selectedcontainer.show(True)
-		self.childsizer.Layout()
-		self.childsizer.FitInside(self.childpanel)
+		selectedcontainer.layout()
+		self.childsizer.SetMinSize(selectedcontainer.panel.GetSize())
+		self.childpanel.FitInside()
 
 class wxTreePanelContainerWidget(wxContainerWidget):
 	def __init__(self, name, parent, container, value, configuration):
@@ -1749,7 +1750,7 @@ class wxTreePanelContainerWidget(wxContainerWidget):
 	def layout(self):
 		wxContainerWidget.layout(self)
 		self.sizer.Layout()
-		self.treepanel.childsizer.FitInside(self.childparent)
+		self.panel.Fit()
 
 	def destroy(self):
 		wxContainerWidget.destroy(self)
