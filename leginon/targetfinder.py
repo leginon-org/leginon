@@ -71,12 +71,27 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		Updates and publishes the target list self.targetlist. Waits for target
 		to be "done" if specified.
 		'''
-		number = 1
+
+		## map image id to max target number in DB
+		## so we don't have to query DB every iteration of the loop
+		targetnumbers = {}
+
+		## add a 'number' to the target and then publish it
 		for target in self.targetlist:
-			# XXX this might not work for mosaic
-			# XXX need to publish a mosaic image so this will work
-			target['number'] = number
-			number += 1
+			parentimage = target['image']
+			## would rather do away with id and use dbid, which
+			## is more unique
+			parentid = parentimage['id']
+			if parentid in targetnumbers:
+				last_targetnumber = targetnumbers[parentid]
+			else:
+				last_targetnumber = self.lastTargetNumber(parentimage)
+				targetnumbers[parentid] = last_targetnumber
+
+			## increment target number
+			targetnumbers[parentid] += 1
+			target['number'] = targetnumbers[parentid]
+
 			print 'TARGET publishing %s' % (target['id'],)
 			self.publish(target, database=True)
 
