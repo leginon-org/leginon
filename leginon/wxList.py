@@ -136,6 +136,8 @@ class wxListEdit(wxPanel):
 
 	def setValues(self, values):
 		count = self.listbox.GetCount()
+		if values is None:
+			values = []
 		n = len(values)
 		if count < n:
 			nsame = count

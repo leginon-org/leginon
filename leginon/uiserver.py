@@ -192,10 +192,13 @@ class Server(xmlrpc.Server, uidata.Container):
 		self.localExecute('addFromServer', properties, client, block, thread)
 		self.XMLRPCExecute('add', properties, client, block, thread)
 
-	def _setObject(self, uiobject, client=None, block=True, thread=False):
+	def _setObject(self, uiobject, client=None, block=True, thread=False,
+									database=False):
 		properties = {}
 		properties['namelist'] = uiobject._getNameList()
 		properties['value'] = uiobject.value
+		if database:
+			self.setDatabaseFromObject(uiobject)
 
 		if thread:
 			block = False
@@ -251,7 +254,7 @@ class Server(xmlrpc.Server, uidata.Container):
 					### get object from Object
 					if value is not None:
 						value = value.o
-					uiobject.set(value, server=False, postcallback=False)
+					uiobject.set(value, server=False)
 					return True
 				except KeyError:
 					return False
@@ -325,7 +328,7 @@ class Server(xmlrpc.Server, uidata.Container):
 		uidataobject = self._getObjectFromList(namelist)
 		if not isinstance(uidataobject, uidata.Data):
 			raise TypeError('name list does not resolve to Data instance')
-		uidataobject._set(value)
+		uidataobject._set(value, usercallback=False)
 
 	def usePreferences(self):
 		d = self.getPickle()

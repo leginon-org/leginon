@@ -1207,8 +1207,6 @@ class NodeSpecData(Data):
 		t += [('class string', str),
 					('alias', str),
 					('launcher alias', str),
-					('args', list),
-					('new process flag', int),
 					('dependencies', list),
 					('application', ApplicationData)]
 		return t

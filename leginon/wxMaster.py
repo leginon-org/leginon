@@ -656,7 +656,8 @@ class Application(wxObjectCanvas.wxRectangleObject):
 					launcher = Launcher(nodespec[2])
 					self.addShapeObject(launcher)
 			
-				launcher.addShapeObject(Node(nodespec[1], nodespec[0], nodespec[5]))
+				print nodespec
+				launcher.addShapeObject(Node(nodespec[1], nodespec[0], nodespec[3]))
 
 		bindings = []
 		bindspecs = []

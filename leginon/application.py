@@ -37,8 +37,7 @@ class Application(object):
 	def setName(self, name):
 		self.data['name'] = name
 
-	def addNodeSpec(self, class_string, alias, launcheralias,
-									args=(), dependencies=[]):
+	def addNodeSpec(self, class_string, alias, launcheralias, dependencies=[]):
 		for spec in self.nodespecs:
 			if alias == spec['alias']:
 				self.nodespecs.remove(spec)
@@ -47,7 +46,6 @@ class Application(object):
 		nodespecdata['class string'] = class_string
 		nodespecdata['alias'] = alias
 		nodespecdata['launcher alias'] = launcheralias
-		nodespecdata['args'] = args
 		nodespecdata['dependencies'] = dependencies
 		nodespecdata['application'] = self.data
 		self.nodespecs.append(nodespecdata)
@@ -114,7 +112,6 @@ class Application(object):
 		except ValueError:
 			raise ValueError('Invalid node specification')
 		nodename = ns['alias']
-		args = tuple(ns['args'])
 		dependencies = []
 		for dependency in ns['dependencies']:
 			dependencies.append(dependency)

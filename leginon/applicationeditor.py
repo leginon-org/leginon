@@ -52,7 +52,6 @@ class ApplicationEditor(node.Node):
 			applicationdata['nodes'].append((nodespecdata['class string'],
 																				nodespecdata['alias'],
 																				nodespecdata['launcher alias'],
-																				nodespecdata['args'],
 																				nodespecdata['dependencies']))
 
 		for bindingspecdata in self.application.bindingspecs:

@@ -909,6 +909,9 @@ class EntryWidget(wx.BoxSizer, DataWidget):
 			if self.password:
 				style |= wx.TE_PASSWORD
 			self.entry = wx.TextCtrl(parent, -1, size=size, style=style)
+			if 'size' in configuration:
+				size = self.entry.GetTextExtent('W'*configuration['size'][0])
+				self.entry.SetSize((size[0], -1))
 		else:
 			self.entry = wx.StaticText(parent, -1, '')
 

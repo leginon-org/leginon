@@ -636,7 +636,7 @@ class PresetsManager(node.Node):
 												self.cal_modeledstagemod, self.cal_modeledstagemag))
 
 		# selection
-		self.presetparams = PresetParameters(self, postcallback=self.uiCommitParams)
+		self.presetparams = PresetParameters(self, usercallback=self.uiCommitParams)
 		self.uiselectpreset = uidata.SingleSelectFromList('Preset', [], 0,
 																								callback=self.uiSelectCallback)
 		toscopemethod = uidata.Method('To Scope', self.uiToScope)
@@ -837,10 +837,10 @@ class PresetsManager(node.Node):
 		self.outputEvent(event.PresetChangedEvent(name=name))
 
 class PresetParameters(uidata.Container):
-	def __init__(self, node, postcallback=None):
+	def __init__(self, node, usercallback=None):
 		uidata.Container.__init__(self, 'Preset Parameters')
 		self.node = node
-		self.postcallback = postcallback
+		self.usercallback = usercallback
 		self.singles = ('magnification', 'spot size', 'defocus', 'intensity')
 		self.doubles = ('image shift', 'beam shift')
 
@@ -849,15 +849,15 @@ class PresetParameters(uidata.Container):
 	def build(self):
 		self.singlesdict = {}
 		for single in self.singles:
-			self.singlesdict[single] = uidata.Number(single, 0, 'rw', postcallback=self.postcallback)
+			self.singlesdict[single] = uidata.Number(single, 0, 'rw', usercallback=self.usercallback)
 		self.doublesdict = {}
 		for double in self.doubles:
 			self.doublesdict[double] = {}
 			for axis in ('x', 'y'):
 				label = double + ' ' + axis
-				self.doublesdict[double][axis] = uidata.Number(label, 0, 'rw', postcallback=self.postcallback)
+				self.doublesdict[double][axis] = uidata.Number(label, 0, 'rw', usercallback=self.usercallback)
 
-		self.camera = camerafuncs.SmartCameraParameters(self.node, postcallback=self.postcallback)
+		self.camera = camerafuncs.SmartCameraParameters(self.node, usercallback=self.usercallback)
 
 		components = []
 		for single in self.singles:
@@ -872,10 +872,10 @@ class PresetParameters(uidata.Container):
 		presetdict = presetdata.toDict()
 		self.camera.set(presetdict)
 		for single in self.singles:
-			self.singlesdict[single].set(presetdict[single], postcallback=False)
+			self.singlesdict[single].set(presetdict[single], usercallback=False)
 		for double in self.doubles:
 			for axis in ('x','y'):
-				self.doublesdict[double][axis].set(presetdict[double][axis], postcallback=False)
+				self.doublesdict[double][axis].set(presetdict[double][axis], usercallback=False)
 
 	def get(self):
 		presetdict = {}

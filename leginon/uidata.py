@@ -124,7 +124,7 @@ class Data(Object):
 	permissionsvalues = ('r', 'w', 'rw', 'wr')
 	typelist = Object.typelist + ('data',)
 	def __init__(self, name, value, permissions='r', callback=None,
-								postcallback=None, persist=False, tooltip=None):
+								usercallback=None, persist=False, tooltip=None):
 		Object.__init__(self, name, tooltip)
 		if permissions in self.permissionsvalues:
 			if 'r' in permissions:
@@ -139,12 +139,12 @@ class Data(Object):
 			raise ValueError('invalid permissions value')
 
 		self.setCallback(callback)
-		self.setPostCallback(postcallback)
+		self.setUserCallback(usercallback)
 
 		self.persist = persist
 
 		# no callback?
-		self.set(value, postcallback=False)
+		self.set(value)
 
 	def setCallback(self, callback):
 		if not callable(callback) and callback is not None:
@@ -153,24 +153,24 @@ class Data(Object):
 		self.callback = callback
 		self.lock.release()
 
-	def setPostCallback(self, callback):
+	def setUserCallback(self, callback):
 		if not callable(callback) and callback is not None:
 			raise TypeError('callback must be callable or None')
 		self.lock.acquire()
-		self.postcallback = callback
+		self.usercallback = callback
 		self.lock.release()
 
 	def _set(self, value):
 		self.lock.acquire()
 		if self.configuration['write']:
-			self.set(value)
+			self.set(value, usercallback=True)
 		else:
 			self.lock.release()
 			raise PermissionsError('cannot set, permission denied')
 		self.lock.release()
 
-	def set(self, value, callback=True, postcallback=True,
-					block=True, thread=False, server=True):
+	def set(self, value, callback=True, usercallback=False,
+					block=True, thread=False, server=True, database=False):
 		self.lock.acquire()
 		if callback and self.callback is not None:
 			try:
@@ -183,12 +183,12 @@ class Data(Object):
 			self.lock.release()
 			raise TypeError('invalid data value for type')
 		if self.server is not None and server:
-			self.server._setObject(self, None, block, thread)
-		if postcallback and self.postcallback is not None:
+			self.server._setObject(self, None, block, thread, database)
+		if usercallback and self.usercallback is not None:
 			try:
-				self.postcallback(value)
+				self.usercallback(value)
 			except Exception, e:
-				print 'Exception in post set callback:', str(e)
+				print 'Exception in user set callback:', str(e)
 		self.lock.release()
 
 	def _get(self):
@@ -231,6 +231,14 @@ class Number(Data):
 
 class Integer(Data):
 	typelist = Data.typelist + ('integer',)
+	def __init__(self, name, value, permissions='r', callback=None,
+								usercallback=None, persist=False, tooltip=None, size=None):
+		
+		Data.__init__(self, name, value, permissions, callback, usercallback,
+									persist, tooltip)
+		if size is not None:
+			self.configuration['size'] = (size, 1)
+
 	def validate(self, value):
 		return True
 		if type(value) is int or value is None:
@@ -488,11 +496,11 @@ class SelectFromList(Container):
 	typelist = Container.typelist + ('select from list',)
 	selectclass = Array
 	def __init__(self, name, listvalue, selected, permissions='r',
-								callback=None, postcallback=None, persist=False, tooltip=None):
+								callback=None, usercallback=None, persist=False, tooltip=None):
 		Container.__init__(self, name, tooltip)
 		self.list = Array('List', listvalue, permissions, persist=persist)
 		self.selected = self.selectclass('Selected', selected, 'rw', callback,
-																			postcallback, persist)
+																			usercallback, persist)
 		self.persist = persist
 		self.addObject(self.list)
 		self.addObject(self.selected)
@@ -500,8 +508,8 @@ class SelectFromList(Container):
 	def setCallback(self, callback):
 		self.selected.setCallback(callback)
 
-	def setPostCallback(self, callback):
-		self.selected.setPostCallback(callback)
+	def setUserCallback(self, callback):
+		self.selected.setUserCallback(callback)
 
 	def set(self, listvalue, selected):
 		self.setList(listvalue)
@@ -535,9 +543,9 @@ class SingleSelectFromList(SelectFromList):
 	typelist = SelectFromList.typelist + ('single',)
 	selectclass = Integer
 	def __init__(self, name, listvalue, selected, permissions='r',
-								callback=None, postcallback=None, persist=False, tooltip=None):
+								callback=None, usercallback=None, persist=False, tooltip=None):
 		SelectFromList.__init__(self, name, listvalue, selected, permissions,
-														callback, postcallback, persist, tooltip)
+														callback, usercallback, persist, tooltip)
 
 	def getSelectedValue(self, selected=None):
 		if selected is None:
