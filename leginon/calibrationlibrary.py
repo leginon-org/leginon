@@ -73,11 +73,12 @@ class PickleCalibrationLibrary(CalibrationLibrary):
 
 	def getKeys(self):
 		try:
-			f = open('CAL', 'r')
+			f = open('CAL', 'rb')
 			cal = cPickle.load(f)
 			f.close()
 			return cal.keys()
 		except:
+			self.printerror('cannot open calibration file')
 			return ()
 
 	def setCalibration(self, key, idata):
@@ -85,14 +86,14 @@ class PickleCalibrationLibrary(CalibrationLibrary):
 		newitem = idata.content
 		cal[key] = newitem
 		## should make a backup before doing this
-		f = open('CAL', 'w')
+		f = open('CAL', 'wb')
 		cPickle.dump(cal, f, 1)
 		f.close()
 		self.publishDataIDList()
 
 	def getCalibration(self, key=None):
 		try:
-			f = open('CAL', 'r')
+			f = open('CAL', 'rb')
 			cal = cPickle.load(f)
 			f.close()
 		except IOError:

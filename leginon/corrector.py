@@ -375,14 +375,14 @@ class CorrectorPlan(object):
 
 	def save(self):
 		filename = self.planFilename()
-		f = open(filename, 'w')
+		f = open(filename, 'wb')
 		cPickle.dump(self.plan, f, 1)
 		f.close()
 
 	def load(self):
 		filename = self.planFilename()
 		try:
-			f = open(filename, 'r')
+			f = open(filename, 'rb')
 		except IOError:
 			print 'creating plan file: %s' % (filename,)
 			self.save()

@@ -12,19 +12,25 @@ import calibrationclient
 class GridPreview(node.Node):
 	def __init__(self, id, nodelocations, **kwargs):
 		self.cam = camerafuncs.CameraFuncs(self)
-		self.calclient = calibrationclient.StageCalibrationClient(self)
 		self.done = []
 		self.todo = []
 		self.temptodo = []
 		self.stoprunning = threading.Event()
 		self.running = threading.Event()
 		node.Node.__init__(self, id, nodelocations, **kwargs)
+		self.calclient = calibrationclient.StageCalibrationClient(self)
 
 		## default camera config
 		currentconfig = self.cam.config()
 		currentconfig['state']['dimension']['x'] = 1024
 		currentconfig['state']['binning']['x'] = 2
 		currentconfig['state']['exposure time'] = 400
+
+#		currentconfig['state']['binning']['x'] = 1
+#		currentconfig['state']['offset']['x'] = 0
+#		currentconfig['state']['offset']['y'] = 0
+#		currentconfig['auto offset'] = 0
+
 		self.cam.config(currentconfig)
 
 		self.defineUserInterface()

@@ -198,7 +198,7 @@ class PresetsManager(node.Node):
 
 	def getPresets(self):
 		try:
-			f = open('PRESETS', 'r')
+			f = open('PRESETS', 'rb')
 			presetdict = cPickle.load(f)
 			presetdict = copy.deepcopy(presetdict)
 			f.close()
@@ -222,7 +222,7 @@ class PresetsManager(node.Node):
 		presets = self.getPresets()
 		presets.update(preset)
 		## should make a backup before doing this
-		f = open('PRESETS', 'w')
+		f = open('PRESETS', 'wb')
 		cPickle.dump(presets, f, 1)
 		f.close()
 
