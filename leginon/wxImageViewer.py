@@ -167,6 +167,7 @@ class ImagePanel(wxPanel):
 		self.motionbuffer = None
 		self.imagesize = imagesize
 		self.scale = (1.0, 1.0)
+		self.offset = (0, 0)
 
 		wxPanel.__init__(self, parent, id)
 
@@ -291,8 +292,7 @@ class ImagePanel(wxPanel):
 
 		self.setVirtualSize()
 		if self.biggerView():
-			clientdc = wxClientDC(self.panel)
-			clientdc.Clear()
+			self.panel.Refresh()
 		self.UpdateDrawing()
 
 	# utility functions
@@ -481,6 +481,8 @@ class ImagePanel(wxPanel):
 			self.Draw(dc)
 			self.paint(dc, wxClientDC(self.panel))
 			dc.SelectObject(wxNullBitmap)
+		else:
+			self.panel.Refresh()
 
 	def OnSize(self, evt):
 		self.UpdateDrawing()
@@ -614,6 +616,9 @@ class TargetTool(ImageTool):
 	def updateClosest(self, x, y):
 		closest_target = None
 		minimum_magnitude = 10
+		if self.imagepanel.smallScale():
+			xscale, yscale = self.imagepanel.getScale()
+			minimum_magnitude /= xscale
 		for target_type in self.imagepanel.targets.values():
 			for target in target_type:
 				magnitude = math.sqrt((x - target[0])**2 +
