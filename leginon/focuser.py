@@ -203,7 +203,8 @@ class Focuser(acquisition.Acquisition):
 			finally:
 				self.manualchecklock.release()
 			imarray = imagedata['image']
-			pow = imagefun.power(imarray)
+			maskrad = self.maskrad.get()
+			pow = imagefun.power(imarray, maskrad)
 			self.man_image.set(imarray)
 			self.man_power.set(pow)
 		try:
@@ -367,9 +368,10 @@ class Focuser(acquisition.Acquisition):
 		manchangeup = uidata.Method('Up', self.uiFocusUp)
 		manchangedown = uidata.Method('Down', self.uiFocusDown)
 		self.man_image = uidata.Image('Manual Focus Image', None, 'rw')
+		self.maskrad = uidata.Integer('Mask Radius', 20, 'rw', persist=True)
 		self.man_power = uidata.Image('Manual Focus Power Spectrum', None, 'rw')
 		mancont = uidata.Container('Manual Focus')
-		mancont.addObjects((self.pre_manual_check, self.post_manual_check, manualmeth, manualpause, manualcontinue, manualdone, manualreset, manualtozero, self.manual_parameter, self.manual_delta, manchangeup, manchangedown, self.man_power, self.man_image))
+		mancont.addObjects((self.pre_manual_check, self.post_manual_check, manualmeth, manualpause, manualcontinue, manualdone, manualreset, manualtozero, self.manual_parameter, self.manual_delta, manchangeup, manchangedown, self.maskrad, self.man_power, self.man_image))
 
 		self.acquirefinal = uidata.Boolean('Acquire Final Image', True, 'rw', persist=True)
 		abortfailmethod = uidata.Method('Abort With Failure', self.uiAbortFailure)

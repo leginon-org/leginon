@@ -35,8 +35,9 @@ class ImViewer(imagewatcher.ImageWatcher):
 		self.doPow()
 
 	def doPow(self):
+		maskrad = self.maskrad.get()
 		if self.numarray is not None and self.do_pow.get():
-			pow = imagefun.power(self.numarray)
+			pow = imagefun.power(self.numarray, maskrad)
 			self.ui_image_pow.set(pow)
 
 	def uiAcquireLoop(self):
@@ -163,12 +164,13 @@ class ImViewer(imagewatcher.ImageWatcher):
 		acqloopmethod = uidata.Method('Acquire Loop', self.uiAcquireLoop)
 		acqstopmethod = uidata.Method('Stop Acquire Loop', self.uiAcquireLoopStop)
 		self.do_pow = uidata.Boolean('Do Power', False, 'rw')
+		self.maskrad = uidata.Integer('Power Mask Radius', 20, 'rw', persist=True)
 		self.ui_image = uidata.Image('Image', None, 'r')
 		self.ui_image_pow = uidata.Image('Power Image', None, 'r')
 		eventmethod = uidata.Method('Event Acquire', self.acquireEvent)
 		acquirecontainer = uidata.Container('Acquisition')
 		acquirecontainer.addObjects((acqmethod, acqloopmethod, acqstopmethod,
-																	eventmethod, self.do_pow, self.ui_image,
+																	eventmethod, self.do_pow, self.maskrad, self.ui_image,
 																	self.ui_image_pow))
 
 

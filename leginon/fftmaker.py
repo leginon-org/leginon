@@ -34,7 +34,8 @@ class FFTMaker(imagewatcher.ImageWatcher):
 		imarray = imagedata['image']
 		imid = imagedata['id']
 		print 'calculating power spectrum for image', imid
-		pow = imagefun.power(imarray)
+		maskrad = self.maskrad.get()
+		pow = imagefun.power(imarray, maskrad)
 		powdata = data.AcquisitionFFTData(id=self.ID(), source=imagedata, image=pow)
 
 		# filename
@@ -51,9 +52,10 @@ class FFTMaker(imagewatcher.ImageWatcher):
 		self.uidataqueueflag.set(False)
 
 		self.ignore_images = uidata.Boolean('Ignore Images', False, 'rw', persist=True)
+		self.maskrad = uidata.Integer('Mask Radius', 20, 'rw', persist=True)
 
 		container = uidata.LargeContainer('FFT Maker')
-		container.addObjects((self.ignore_images,))
+		container.addObjects((self.ignore_images,self.maskrad))
 
 		self.uiserver.addObject(container)
 
