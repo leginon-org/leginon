@@ -52,14 +52,14 @@ def linearscale(input, boundfrom, boundto, extrema=None):
 		if extrema:
 			minfrom = extrema[0]
 		else:
-			minfrom = Numeric.argmin(input.flat)
-			minfrom = input.flat[minfrom]
+			minfrom = Numeric.argmin(Numeric.ravel(input))
+			minfrom = Numeric.ravel(input)[minfrom]
 	if maxfrom is None:
 		if extrema:
 			maxfrom = extrema[1]
 		else:
-			maxfrom = Numeric.argmax(input.flat)
-			maxfrom = input.flat[maxfrom]
+			maxfrom = Numeric.argmax(Numeric.ravel(input))
+			maxfrom = Numeric.ravel(input)[maxfrom]
 
 	## prepare for fast math
 	rangefrom = Numeric.array((maxfrom - minfrom)).astype('f')
@@ -95,7 +95,7 @@ def resize(pil_image, size):
 def extrema1(numarray):
 		t0 = time.clock()
 
-		flat = numarray.flat
+		flat = Numeric.ravel(numarray)
 		ext =  min(flat), max(flat)
 		t1 = time.clock()
 
@@ -107,7 +107,7 @@ def extrema1(numarray):
 def extrema2(numarray):
 		t0 = time.clock()
 
-		flat = numarray.flat
+		flat = Numeric.ravel(numarray)
 		extmin = Numeric.argmin(flat)
 		extmax = Numeric.argmax(flat)
 		minval = flat[extmin]
@@ -123,7 +123,7 @@ def extrema2(numarray):
 def extrema3(numarray):
 		t0 = time.clock()
 
-		flat = numarray.flat
+		flat = Numeric.ravel(numarray)
 		minval = maxval = flat[0]
 		for val in flat:
 			if val > maxval:
@@ -141,7 +141,7 @@ def extrema3(numarray):
 def extrema4(numarray):
 		t0 = time.clock()
 
-		flat = numarray.flat
+		flat = Numeric.ravel(numarray)
 		sflat = Numeric.sort(flat)
 		minval = sflat[0]
 		maxval = sflat[-1]
@@ -181,7 +181,7 @@ class NumericImage:
 		if not self.transform['output_size']:
 			self.transform['output_size'] = self.orig_size
 
-		flat = self.orig_array.flat
+		flat = Numeric.ravel(self.orig_array)
 		extmin = Numeric.argmin(flat)
 		extmax = Numeric.argmax(flat)
 		minval = flat[extmin]

@@ -598,6 +598,7 @@ def matrix2dict(matrix, name=None):
 	{'m|1_1': 1, 'm|1_2': 2, 'm|2_1': 3, 'm|2_2': 4, ..., 'm|i_j':n}
 
 	"""
+	print 'MATRIX2DICT', name, matrix
 
 	if name is None:
 		name='m'
@@ -665,7 +666,7 @@ def sqlColumnsDefinition(in_dict, noDefault=None):
 			column['Type']=sqlt
 			columns.append(column)
 		elif type(value) is Numeric.ArrayType:
-			if len(value.flat) < 10:
+			if len(Numeric.ravel(value)) < 10:
 				arraydict = matrix2dict(value,key)
 				nd = sqlColumnsDefinition(arraydict, noDefault=[])
 				nd.sort()
