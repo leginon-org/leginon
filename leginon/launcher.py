@@ -21,7 +21,6 @@ class Launcher(node.Node):
 	def __init__(self, id, session=None, tcpport=None, xmlrpcport=None, **kwargs):
 		self.nodes = []
 
-
 		self.datahandler = node.DataHandler(self)
 		self.server = datatransport.Server(self.datahandler, tcpport)
 		self.uicontainer = uiserver.Server(str(id[-1]), xmlrpcport,

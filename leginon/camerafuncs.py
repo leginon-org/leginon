@@ -293,13 +293,13 @@ class SmartCameraParameters(uidata.Container):
 			return
 		for param in self.xyparamkeys:
 			try:
-				self.xycontainer.deleteObject(param)
+				self.xycontainer.deleteObject(param, thread=True)
 			except ValueError:
 				pass
 			for axis in ('x','y'):
 				label = '%s %s' % (param, axis)
 				try:
-					self.xycontainer.deleteObject(label)
+					self.xycontainer.deleteObject(label, thread=True)
 				except ValueError:
 					pass
 
@@ -322,7 +322,7 @@ class SmartCameraParameters(uidata.Container):
 				label = '%s %s' % (param, 'x')
 				default = self.xydefaults[param]['x']
 				i = uidata.Integer(label, default, 'rw', persist=True)
-				self.xycontainer.addObject(i)
+				self.xycontainer.addObject(i, thread=True)
 				self.xyvalues[param]['x'] = i
 				self.xyvalues[param]['y'] = i
 			else:
@@ -330,7 +330,7 @@ class SmartCameraParameters(uidata.Container):
 					label = '%s %s' % (param, axis)
 					default = self.xydefaults[param][axis]
 					i = uidata.Integer(label, default, 'rw', persist=True)
-					self.xycontainer.addObject(i)
+					self.xycontainer.addObject(i, thread=True)
 					self.xyvalues[param][axis] = i
 
 
