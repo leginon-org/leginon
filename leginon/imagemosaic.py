@@ -361,7 +361,7 @@ class StateImageMosaic(ImageMosaic):
 		return matrix
 
 	def processDataByCalibration(self, idata):
-		#tileimage = idata.content['image']
+		tileimage = idata.content['image']
 		neighbors = idata.content['neighbor tiles']
 		if len(neighbors) == 0:
 			self.imagemosaic = {}
@@ -377,7 +377,46 @@ class StateImageMosaic(ImageMosaic):
 		self.imagemosaic[idata.id]['position'] = \
 			self.pixelLocation(idata.content['state']['stage position']['y'],
 														idata.content['state']['stage position']['x']) 
-		print idata.id, "position =", self.imagemosaic[idata.id]['position']
+		print idata.id, "calibrated position =", self.imagemosaic[idata.id]['position']
+
+		ct = self.imagemosaic[idata.id]
+		nt = self.imagemosaic[neighbors[0]]
+
+		self.correlator.setImage(0, ct['image'])
+		self.correlator.setImage(1, nt['image'])
+		pcimage = self.correlator.phaseCorrelate()
+
+		shift = [0, 0]
+		windowsize = [0, 0]
+		percent = 0.15
+		for i in [0, 1]:
+			shift[i] = ct['position'][i] - nt['position'][i]
+			windowsize[i] = ct['image'].shape[i] * percent
+		print 'shift =', shift
+		print 'windowsize =', windowsize
+#			if ct['position'][i] < nt['position'][i]:
+#				if nt['position'][i] < ct['position'][i] + ct['image'].shape[i]]:
+#					overlap[i] = [nt['position'][i], ct['position'][i]
+#																					+ ct['image'].shape[i]]
+#				else:
+#					overlap[i] = 0
+#			else:
+#				if ct['position'][i] < nt['position'][i] + nt['image'].shape[i]]:
+#					overlap[i] = [ct['position'][i], nt['position'][i]
+#																					+ nt['image'].shape[i]]
+#				else:
+#					overlap[i] = 0
+
+		self.peakfinder.setImage(
+				pcimage[shift[0]-windowsize[0]/2:shift[0]+windowsize[0]/2,
+								shift[1]-windowsize[1]/2:shift[1]+windowsize[1]/2])
+		self.peakfinder.pixelPeak()
+		peak = self.peakfinder.getResults()
+		print 'pixel peak value =', peak['pixel peak value']
+		self.imagemosaic[idata.id]['position'] = \
+				(peak['pixel peak value'][0] + shift[0]-windowsize[0]/2,
+					peak['pixel peak value'][1] + shift[1]-windowsize[1]/2)
+		print idata.id, "calibrated position adjusted =", self.imagemosaic[idata.id]['position']
 
 	def processDataByCorrelation(self, idata):
 		ImageMosaic.processData(self, idata)

@@ -17,8 +17,8 @@ def addNode(id, hostname, port):
 def createlauncher(id, hostname, port):
 	if socket.gethostname() != hostname:
 		return False
-	launcherpath = 'c:\\dev\\pyleginon\\launcher.py'
-	#launcherpath = '\\\\colossus\\amishare\\suloway\\pyleginon\\launcher.py'
+	#launcherpath = 'c:\\dev\\pyleginon\\launcher.py'
+	launcherpath = '\\\\colossus\\amishare\\suloway\\pyleginon\\launcher.py'
 
 	print 'Attempting to spawn launcher process'
 	if sys.platform == 'win32':
