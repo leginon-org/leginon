@@ -32,9 +32,18 @@ static PyObject *acquire(PyObject *self, PyObject *args) {
 
 	hr = pIDispatch->GetIDsOfNames(riid, rgszNames, cNames, lcid, rgDispId);
 	delete [] rgszNames;
+	if (FAILED(hr)) {
+		PyErr_SetString(PyExc_RuntimeError, "Failed to get DISPID");
+		delete [] rgDispId;
+		return NULL;
+	}
 
 	hr = pIDispatch->Invoke(rgDispId[0], riid, lcid, DISPATCH_METHOD, &dispParams, &varResult, &excepInfo, &uArgErr);
 	delete [] rgDispId;
+	if (FAILED(hr)) {
+		PyErr_SetString(PyExc_RuntimeError, "Failed to Invoke method");
+		return NULL;
+	}
 
 	PY_INTERFACE_POSTCALL;
 
