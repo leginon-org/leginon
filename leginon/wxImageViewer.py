@@ -946,7 +946,7 @@ class TargetImagePanel(ImagePanel):
 			else:
 				x, y = self.image2view(position)
 
-			memorydc.Clear()
+			#memorydc.Clear()
 			memorydc.SelectObject(bitmap)
 			width = bitmap.GetWidth()
 			height = bitmap.GetHeight()
