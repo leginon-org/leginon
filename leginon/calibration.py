@@ -46,14 +46,15 @@ class Calibration(node.Node):
 		self.publishRemote(EMnodeid, data.EMData(self.ID(), self.camerastate))
 		self.publishRemote(EMnodeid, data.EMData(self.ID(), self.setting(0)))
 		self.image1 = self.researchByDataID('image data').content['image data']
-		imagedata = data.ImageData(self.ID(), self.image1)
-		self.publish(imagedata, event.ImagePublishEvent)
+		#imagedata = data.ImageData(self.ID(), self.image1)
+		#self.publish(imagedata, event.ImagePublishEvent)
 		self.correlator.setImage(0, self.image1)
-		for i in range(1, self.attempts):
+		for i in range(1, self.attempts + 1):
+			print "setting", self.setting(i)
 			self.publishRemote(EMnodeid, data.EMData(self.ID(), self.setting(i)))
 			self.image2 = self.researchByDataID('image data').content['image data']
-			imagedata = data.ImageData(self.ID(), self.image2)
-			self.publish(imagedata, event.ImagePublishEvent)
+			#imagedata = data.ImageData(self.ID(), self.image2)
+			#self.publish(imagedata, event.ImagePublishEvent)
 			cdata = self.correlate(self.image2)
 			if self.valid(cdata):
 				print "good", self.calculate(cdata, i)
@@ -84,6 +85,8 @@ class Calibration(node.Node):
 		## phase correlation with new image
 		try:
 			pcimage = self.correlator.phaseCorrelate()
+			imagedata = data.ImageData(self.ID(), pcimage)
+			self.publish(imagedata, event.ImagePublishEvent)
 		except correlator.MissingImageError:
 			print 'missing image, no correlation'
 			return
@@ -112,6 +115,7 @@ class Calibration(node.Node):
 		self.registerUISpec('Calibration', (nodespec, cspec, rspec))
 
 	def uiCalibrate(self, s):
+		print 'asdkjf'
 		self.calibrate(('manager', s))
 		return ''
 
