@@ -185,6 +185,7 @@ class Tecnai(object):
 		self.parameterdependencies = {
 			'main screen position': ['magnification'],
 			'film exposure type': ['film exposure time'],
+			'defocus': ['focus'],
 			'reset defocus': ['defocus'],
 		}
 
