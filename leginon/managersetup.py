@@ -325,7 +325,8 @@ class ManagerSetup(object):
 		session_names = map(self.getSessionDataName, sessionlist)
 		self.session_dict = dict(zip(session_names, sessionlist))
 		# XXX This will get into some kind of big loop if session_limit is too high
-		self.sessionselector.set(session_names, 0)
+		if session_names:
+			self.sessionselector.set(session_names, 0)
 
 	def researchSessions(self, limit):
 		qsession = data.SessionData(user=self.userdata)
