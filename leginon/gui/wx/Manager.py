@@ -8,6 +8,7 @@ import wx.lib.intctrl
 import gui.wx.ApplicationEditor
 import gui.wx.Launcher
 import gui.wx.Logging
+import gui.wx.ToolBar
 
 AddNodeEventType = wx.NewEventType()
 RemoveNodeEventType = wx.NewEventType()
@@ -192,6 +193,10 @@ class Frame(wx.Frame):
 		self.menubar.Append(self.settingsmenu, '&Settings')
 
 		self.SetMenuBar(self.menubar)
+
+		self.toolbar = gui.wx.ToolBar.ToolBar(self)
+		self.SetToolBar(self.toolbar)
+
 
 		# status bar
 		self.statusbar = StatusBar(self)

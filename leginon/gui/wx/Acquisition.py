@@ -5,58 +5,48 @@ from gui.wx.Entry import FloatEntry, EVT_ENTRY
 from gui.wx.Presets import EditPresetOrder, EVT_PRESET_ORDER_CHANGED
 import wx
 import gui.wx.ImageViewer
+import gui.wx.ToolBar
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'acquisition'
 	def __init__(self, parent, name):
+		self.tools = [
+			'settings',
+			'play',
+			'pause',
+			'stop',
+		]
 		gui.wx.Node.Panel.__init__(self, parent, -1)
 
-		# controls
-		self.szcontrols = wx.GridBagSizer(5, 5)
-		self.bsettings = wx.Button(self, -1, 'Settings...')
-		self.tbpause = wx.ToggleButton(self, -1, 'Pause')
-		self.tbstop = wx.ToggleButton(self, -1, 'Stop')
-		self.szcontrols.Add(self.bsettings, (0, 0), (1, 1), wx.EXPAND)
-		self.szcontrols.Add(self.tbpause, (1, 0), (1, 1), wx.EXPAND)
-		self.szcontrols.Add(self.tbstop, (2, 0), (1, 1), wx.EXPAND)
-
 		# image
-		self.szimage = self._getStaticBoxSizer('Image', (1, 1), (1, 1),
-																						wx.EXPAND|wx.ALL)
 		self.imagepanel = gui.wx.ImageViewer.ImagePanel(self, -1)
-		self.szimage.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND|wx.ALL)
+		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND|wx.ALL, 3)
 
-		self.szmain.Add(self.szcontrols, (1, 0), (1, 1), wx.ALIGN_TOP)
 		self.szmain.AddGrowableRow(1)
-		self.szmain.AddGrowableCol(1)
+		self.szmain.AddGrowableCol(0)
 
 		self.SetSizerAndFit(self.szmain)
 		self.SetupScrolling()
-		self.Enable(False)
 
 	def onNodeInitialized(self):
-		self.Bind(wx.EVT_BUTTON, self.onSettingsButton, self.bsettings)
-		self.Bind(wx.EVT_TOGGLEBUTTON, self.onTogglePause, self.tbpause)
-		self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggleStop, self.tbstop)
+		pass
 
-		self.Enable(True)
-
-	def onSettingsButton(self, evt):
+	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
 
-	def onTogglePause(self, evt):
-		if evt.IsChecked():
-			self.node.pause.clear()
-		else:
-			self.node.pause.set()
+	def onPlayTool(self, evt):
+		self.node.pause.set()
+		self.node.abort = False
 
-	def onToggleStop(self, evt):
-		if evt.IsChecked():
-			self.node.abort = True
-		else:
-			self.node.abort = False
+	def onPauseTool(self, evt):
+		self.node.abort = False
+		self.node.pause.clear()
+
+	def onStopTool(self, evt):
+		self.node.pause.set()
+		self.node.abort = True
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -119,7 +109,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 										wx.ALIGN_CENTER_VERTICAL)
 
 		# settings sizer
-		sz = wx.GridBagSizer(10, 5)
+		sz = wx.GridBagSizer(5, 25)
 		sz.Add(szmovetype, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szpausetime, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['preset order'], (2, 0), (5, 1), wx.ALIGN_CENTER)

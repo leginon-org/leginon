@@ -1,7 +1,9 @@
+import icons
 import threading
 import wx
 import wx.lib.scrolledpanel
 import gui.wx.MessageLog
+import gui.wx.ToolBar
 
 NodeInitializedEventType = wx.NewEventType()
 SetImageEventType = wx.NewEventType()
@@ -32,11 +34,16 @@ class SetCorrelationImageEvent(wx.PyEvent):
 		self.peak
 
 class Panel(wx.lib.scrolledpanel.ScrolledPanel):
-	def __init__(self, *args, **kwargs):
+	def __init__(self, parent, id, tools=None, **kwargs):
 
 		self.node = None
+		if 'style' in kwargs:
+			kwargs['style'] |= wx.SIMPLE_BORDER
+		else:
+			kwargs['style'] = wx.SIMPLE_BORDER
+		wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent, id, **kwargs)
 
-		wx.lib.scrolledpanel.ScrolledPanel.__init__(self, *args, **kwargs)
+		self.toolbar = parent.toolbar
 
 		self.szmain = wx.GridBagSizer(5, 5)
 

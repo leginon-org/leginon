@@ -6,6 +6,7 @@ import wx
 import wx.lib.scrolledpanel
 import gui.wx.Logging
 import gui.wx.MessageLog
+import gui.wx.ToolBar
 
 CreateNodeEventType = wx.NewEventType()
 DestroyNodeEventType = wx.NewEventType()
@@ -88,6 +89,9 @@ class Frame(wx.Frame):
 		self.menubar.Append(self.settingsmenu, '&Settings')
 
 		self.SetMenuBar(self.menubar)
+
+		self.toolbar = gui.wx.ToolBar.ToolBar(self)
+		self.SetToolBar(self.toolbar)
 
 		# status bar
 		self.statusbar = StatusBar(self)
@@ -187,9 +191,15 @@ class ListCtrlPanel(wx.Panel):
 class Panel(ListCtrlPanel):
 	def __init__(self, parent, launcher=None):
 		ListCtrlPanel.__init__(self, parent, -1, style=wx.NO_BORDER)
+
+		self.toolbar = parent.toolbar
+		self.toolbar.setSpacerWidth(self.sashwindow.GetSize().width)
+
 		self.order = []
+
 		if launcher is not None:
 			self.setLauncher(launcher)
+
 		self.statuscolors = {
 			'INFO': wx.BLUE,
 			'WARNING': wx.Color(255, 255, 0),
@@ -197,8 +207,13 @@ class Panel(ListCtrlPanel):
 			'PROCESSING': wx.GREEN,
 		}
 		self.initializeImageList()
+
 		self.Bind(gui.wx.MessageLog.EVT_STATUS_UPDATED, self.onStatusUpdated)
 		self.Bind(EVT_SET_ORDER, self.onSetOrder)
+
+	def _setPanel(self, panel):
+		self.toolbar.setPanel(panel)
+		ListCtrlPanel._setPanel(self, panel)
 
 	def onStatusUpdated(self, evt):
 		evtobj = evt.GetEventObject()
@@ -296,6 +311,10 @@ class Panel(ListCtrlPanel):
 		evt.panel.Show(False)
 		self.Thaw()
 		evt.event.set()
+
+	def Layout(self):
+		ListCtrlPanel.Layout(self)
+		self.toolbar.setSpacerWidth(self.sashwindow.GetSize().width)
 
 def getStatusIcon(image, color):
 	bitmap = wx.BitmapFromImage(image)
