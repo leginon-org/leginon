@@ -36,11 +36,25 @@ class RenameDialog(wxDialog):
 class BindingConnectionPoint(wxObjectCanvas.wxConnectionPointObject):
 	def __init__(self, eventclass):
 		self.eventclass = eventclass
+		self.setDrawText(False)
 		wxObjectCanvas.wxConnectionPointObject.__init__(self)
+
+	def getDrawText(self):
+		return self.drawtext
+
+	def setDrawText(self, value):
+		self.drawtext = value
 
 class BindingInput(BindingConnectionPoint):
 	def __init__(self, eventclass):
 		BindingConnectionPoint.__init__(self, eventclass)
+
+	def Draw(self, dc):
+		BindingConnectionPoint.Draw(self, dc)
+		if self.getDrawText():
+			x, y = self.getCanvasPosition()
+			#y = y - self.height
+			dc.DrawRotatedText(self.eventclass, x, y, 90)
 
 class BindingOutput(BindingConnectionPoint):
 	def __init__(self, eventclass):
@@ -52,6 +66,14 @@ class BindingOutput(BindingConnectionPoint):
 
 	def menuAddBinding(self, evt):
 		self.parent.startAddBinding(self.eventclass, self)
+
+	def Draw(self, dc):
+		BindingConnectionPoint.Draw(self, dc)
+		if self.getDrawText():
+			x, y = self.getCanvasPosition()
+			x = x + self.width
+			y = y + self.height
+			dc.DrawRotatedText(self.eventclass, x, y, -90)
 
 class Node(wxObjectCanvas.wxRectangleObject):
 	def __init__(self, name):
@@ -82,8 +104,8 @@ class Node(wxObjectCanvas.wxRectangleObject):
 		dialog.Destroy()
 
 	def menuDelete(self, evt):
+		self.removeBindings()
 		if self.parent is not None:
-			self.parent.removeConnectionObjects(self)
 			self.parent.removeShapeObject(self)
 
 	def addShapeObject(self, so, x=0, y=0):
@@ -107,6 +129,20 @@ class Node(wxObjectCanvas.wxRectangleObject):
 	def startAddBinding(self, eventclass, fromnode):
 		if self.parent is not None:
 			self.parent.startAddBinding(eventclass, fromnode)
+
+	def OnMotion(self, evt):
+		for i in self.connectioninputs + self.connectionoutputs:
+			i.setDrawText(True)
+		evt.Skip()
+
+	def OnLeave(self, evt):
+		for i in self.connectioninputs + self.connectionoutputs:
+			i.setDrawText(False)
+		evt.Skip()
+
+	def removeBindings(self):
+		for so in self.shapeobjects:
+			self.removeConnectionObjects(so)
 
 class Binding(wxObjectCanvas.wxConnectionObject):
 	def __init__(self, name, fromnode=None, tonode=None):
@@ -192,8 +228,8 @@ class Launcher(wxObjectCanvas.wxRectangleObject):
 		dialog.Destroy()
 
 	def menuDelete(self, evt):
-		for so in self.shapeobjects:
-			self.removeConnectionObjects(so)
+		for node in self.getNodes():
+			node.removeBindings()
 		if self.parent is not None:
 			self.parent.removeShapeObject(self)
 
@@ -206,6 +242,13 @@ class Launcher(wxObjectCanvas.wxRectangleObject):
 			wxObjectCanvas.wxRectangleObject.addShapeObject(self, so, x, y)
 		else:
 			raise TypeError('Invalid object type to add')
+
+	def getNodes(self):
+		nodes = []
+		for node in self.shapeobjects:
+			if isinstance(node, Node):
+				nodes.append(node)
+		return nodes
 
 class AddLauncherDialog(wxDialog):
 	def __init__(self, parent, id, title='Add Launcher', pos=wxDefaultPosition,
@@ -284,12 +327,28 @@ class Application(wxObjectCanvas.wxRectangleObject):
 		if self.parent is not None:
 			self.parent.removeShapeObject(self)
 
+	def getLaunchers(self):
+		launchers = []
+		for shapeobject in self.shapeobjects:
+			if isinstance(shapeobject, Launcher):
+				launchers.append(shapeobject)
+		return launchers
+
+	def getNodes(self):
+		nodes = []
+		for launcher in self.getLaunchers():
+			nodes += launcher.getNodes()
+		return nodes
+
 	def startAddBinding(self, eventclass, fromnode):
 		self.startedbinding = Binding(eventclass, fromnode, None)
 		self.addConnectionObject(self.startedbinding)
+		for node in self.getNodes():
+			for connectioninput in node.connectioninputs:
+				if connectioninput.eventclass == eventclass:
+					connectioninput.setDrawText(True)
 		wxObjectCanvas.EVT_LEFT_CLICK(self, self.finishAddBinding)
 		wxObjectCanvas.EVT_RIGHT_CLICK(self, self.cancelAddBinding)
-		EVT_MOTION(self, self.OnBindingMotion)
 
 	def finishAddBinding(self, evt):
 		tonode = evt.shapeobject
@@ -300,16 +359,14 @@ class Application(wxObjectCanvas.wxRectangleObject):
 			binding.setToShapeObject(tonode)
 			wxObjectCanvas.EVT_LEFT_CLICK(self, self.OnLeftClick)
 			wxObjectCanvas.EVT_RIGHT_CLICK(self, self.OnRightClick)
-			EVT_MOTION(self, self.OnMotion)
-		else:
-			self.cancelAddBinding(None)
 
 	def OnMotion(self, evt):
-		pass
-
-	def OnBindingMotion(self, evt):
 		if self.startedbinding is not None:
 			self.startedbinding.setTempTo((evt.m_x, evt.m_y))
+			for node in self.getNodes():
+				for connectioninput in node.connectioninputs:
+					if connectioninput.eventclass == self.startedbinding.name:
+						connectioninput.setDrawText(True)
 
 	def cancelAddBinding(self, evt):
 		if self.startedbinding is not None:

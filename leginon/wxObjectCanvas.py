@@ -14,6 +14,7 @@ wxEVT_RIGHT_DRAG_START = wxNewEventType()
 wxEVT_RIGHT_DRAG_END = wxNewEventType()
 wxEVT_RAISE = wxNewEventType()
 wxEVT_LOWER = wxNewEventType()
+wxEVT_LEAVE = wxNewEventType()
 
 class UpdateDrawingEvent(wxPyEvent):
 	def __init__(self):
@@ -76,6 +77,11 @@ class LowerEvent(wxPyEvent):
 		self.shapeobject = shapeobject
 		self.bottom = bottom
 
+class LeaveEvent(wxPyEvent):
+	def __init__(self):
+		wxPyEvent.__init__(self)
+		self.SetEventType(wxEVT_LEAVE)
+
 def EVT_UPDATE_DRAWING(window, function):
 	window.Connect(-1, -1, wxEVT_UPDATE_DRAWING, function)
 
@@ -102,6 +108,9 @@ def EVT_RAISE(window, function):
 
 def EVT_LOWER(window, function):
 	window.Connect(-1, -1, wxEVT_LOWER, function)
+
+def EVT_LEAVE(window, function):
+	window.Connect(-1, -1, wxEVT_LEAVE, function)
 
 def inside(x1, y1, w1, h1, x2, y2, w2=None, h2=None):
 	if x2 < x1 or y2 < y1:
@@ -132,6 +141,8 @@ class wxShapeObjectEvtHandler(wxEvtHandler):
 		EVT_RIGHT_DRAG_END(self, self.OnRightDragEnd)
 		EVT_RAISE(self, self.OnRaise)
 		EVT_LOWER(self, self.OnLower)
+		EVT_MOTION(self, self.OnMotion)
+		EVT_LEAVE(self, self.OnLeave)
 
 	def ProcessEvent(self, evt):
 		wxEvtHandler.ProcessEvent(self, evt)
@@ -167,6 +178,12 @@ class wxShapeObjectEvtHandler(wxEvtHandler):
 	def OnLower(self, evt):
 		evt.Skip()
 
+	def OnMotion(self, evt):
+		evt.Skip()
+
+	def OnLeave(self, evt):
+		evt.Skip()
+
 class wxConnectionObject(object):
 	def __init__(self, so1, so2, text=''):
 		self.parent = None
@@ -200,17 +217,14 @@ class wxConnectionObject(object):
 	def setText(self, text):
 		self.text = text
 
-	def DrawText(self, dc, x, y):
+	def DrawText(self, dc, x, y, angle):
+		dc.SetFont(wxSWISS_FONT)
 		if not self.text:
 			return
-		width, height = dc.GetTextExtent(self.text)
-		x -= width/2
-		y -= height/2
-		oldpen = dc.GetPen()
-		dc.SetPen(wxWHITE_PEN)
-		dc.DrawRectangle(x, y, width, height)
-		dc.SetPen(oldpen)
-		dc.DrawText(self.text, x, y)
+#		width, height = dc.GetTextExtent(self.text)
+#		x -= width/2
+#		y -= height/2
+		dc.DrawRotatedText(self.text, x, y, angle)
 
 	def DrawArrow(self, dc, p, direction, size=7):
 		oldbrush = dc.GetBrush()
@@ -287,6 +301,9 @@ class wxConnectionObject(object):
 			l1 = (x1, y1, x1, my)
 			l2 = (x1, my, x2, my)
 			l3 = (x2, my, x2, y2)
+			tx = (x2 - x1)/2 + x1
+			ty = my
+			angle = 180
 			self.DrawArrow(dc, (x2, y2), 'n')
 		elif direction == 'e':
 			x1, y1 = e1
@@ -295,6 +312,9 @@ class wxConnectionObject(object):
 			l1 = (x1, y1, mx, y1)
 			l2 = (mx, y1, mx, y2)
 			l3 = (mx, y2, x2, y2)
+			tx = mx
+			ty = (y2 - y1)/2 + y1
+			angle = 90
 			self.DrawArrow(dc, (x2, y2), 'e')
 		elif direction == 's':
 			x1, y1 = s1
@@ -303,6 +323,9 @@ class wxConnectionObject(object):
 			l1 = (x1, y1, x1, my)
 			l2 = (x1, my, x2, my)
 			l3 = (x2, my, x2, y2)
+			tx = (x2 - x1)/2 + x1
+			ty = my
+			angle = 0
 			self.DrawArrow(dc, (x2, y2), 's')
 		elif direction == 'w':
 			x1, y1 = w1
@@ -311,14 +334,14 @@ class wxConnectionObject(object):
 			l1 = (x1, y1, mx, y1)
 			l2 = (mx, y1, mx, y2)
 			l3 = (mx, y2, x2, y2)
+			tx = mx
+			ty = (y2 - y1)/2 + y1
+			angle = -90
 			self.DrawArrow(dc, (x2, y2), 'w')
 		apply(dc.DrawLine, l1)
 		apply(dc.DrawLine, l2)
 		apply(dc.DrawLine, l3)
-
-		tx = (x2 - x1)/2 + x1
-		ty = (y2 - y1)/2 + y1
-		self.DrawText(dc, tx, ty)
+		self.DrawText(dc, tx, ty, angle)
 
 	def _crookedLine(self, dc, so1, x2, y2):
 		x1, y1 = so1.getCanvasCenter()
@@ -330,6 +353,9 @@ class wxConnectionObject(object):
 			l1 = (x1, y1, x1, my)
 			l2 = (x1, my, x2, my)
 			l3 = (x2, my, x2, y2)
+			tx = (x2 - x1)/2 + x1
+			ty = my
+			angle = 180
 			self.DrawArrow(dc, (x2, y2), 'n')
 		elif direction == 'e':
 			x1, y1 = e1
@@ -337,6 +363,9 @@ class wxConnectionObject(object):
 			l1 = (x1, y1, mx, y1)
 			l2 = (mx, y1, mx, y2)
 			l3 = (mx, y2, x2, y2)
+			tx = mx
+			ty = (y2 - y1)/2 + y1
+			angle = 90
 			self.DrawArrow(dc, (x2, y2), 'e')
 		elif direction == 's':
 			x1, y1 = s1
@@ -344,6 +373,9 @@ class wxConnectionObject(object):
 			l1 = (x1, y1, x1, my)
 			l2 = (x1, my, x2, my)
 			l3 = (x2, my, x2, y2)
+			tx = (x2 - x1)/2 + x1
+			ty = my
+			angle = 0
 			self.DrawArrow(dc, (x2, y2), 's')
 		elif direction == 'w':
 			x1, y1 = w1
@@ -351,14 +383,14 @@ class wxConnectionObject(object):
 			l1 = (x1, y1, mx, y1)
 			l2 = (mx, y1, mx, y2)
 			l3 = (mx, y2, x2, y2)
+			tx = mx
+			ty = (y2 - y1)/2 + y1
+			angle = -90
 			self.DrawArrow(dc, (x2, y2), 'w')
 		apply(dc.DrawLine, l1)
 		apply(dc.DrawLine, l2)
 		apply(dc.DrawLine, l3)
-
-		tx = (x2 - x1)/2 + x1
-		ty = (y2 - y1)/2 + y1
-		self.DrawText(dc, tx, ty)
+		self.DrawText(dc, tx, ty, angle)
 
 	def elbowLine(self, dc, so1, so2):
 		arrowsize = 7
@@ -623,6 +655,7 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 			self.UpdateDrawing()
 
 	def Draw(self, dc):
+		dc.SetFont(wxSWISS_FONT)
 		for text in self.text:
 			x, y = self.getCanvasPosition()
 			tx, ty = self.text[text]
@@ -780,7 +813,7 @@ class wxRectangleObject(wxShapeObject):
 
 class wxConnectionPointObject(wxRectangleObject):
 	def __init__(self):
-		wxRectangleObject.__init__(self, 5, 5)
+		wxRectangleObject.__init__(self, 7, 7)
 
 class DragInfo(object):
 	def __init__(self, shapeobject, xoffset, yoffset, startx, starty):
@@ -806,6 +839,7 @@ class wxObjectCanvas(wxScrolledWindow):
 		self.SetScrollRate(1, 1)
 
 		self.draginfo = None
+		self.lastshapeobject = None
 
 		EVT_PAINT(self, self.OnPaint)
 		EVT_SIZE(self, self.OnSize)
@@ -870,9 +904,13 @@ class wxObjectCanvas(wxScrolledWindow):
 		self.popupMenu(evt.m_x, evt.m_y)
 
 	def OnMotion(self, evt):
+		shapeobject = self.master.getShapeObjectFromXY(evt.m_x, evt.m_y)
+
+		if self.lastshapeobject is not None and shapeobject != self.lastshapeobject:
+			self.lastshapeobject.ProcessEvent(LeaveEvent())
+
 		if evt.LeftIsDown():
 			if self.draginfo is None:
-				shapeobject = self.master.getShapeObjectFromXY(evt.m_x, evt.m_y)
 				xoffset, yoffset = shapeobject.getCanvasPosition()
 				startx, starty = shapeobject.getPosition()
 				self.draginfo = DragInfo(shapeobject,
@@ -883,8 +921,12 @@ class wxObjectCanvas(wxScrolledWindow):
 			else:	
 				self.draginfo.setPosition(evt.m_x, evt.m_y)
 				self.UpdateDrawing()
-		self.master.ProcessEvent(evt)
+
+		shapeobject.ProcessEvent(evt)
+
 		self.UpdateDrawing()
+
+		self.lastshapeobject = shapeobject
 
 	def popupMenu(self, x, y):
 		shapeobject = self.master.getShapeObjectFromXY(x, y)
