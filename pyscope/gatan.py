@@ -12,6 +12,7 @@ import pythoncom
 import pywintypes
 import win32com.client
 import gatancom
+import Numeric
 
 class Gatan(object):
 	def __init__(self):
@@ -39,10 +40,27 @@ class Gatan(object):
 			'image data': {'get':'getImage'}
 		}
 
+		self.typemapping = {
+			'binning': {'type': dict, 'values':
+																		{'x': {'type': int}, 'y': {'type': int}}},
+			'dimension': {'type': dict, 'values':
+																		{'x': {'type': int}, 'y': {'type': int}}},
+			'offset': {'type': dict, 'values':
+																		{'x': {'type': int}, 'y': {'type': int}}},
+			'exposure time': {'type': int},
+			'exposure type': {'type': str, 'values': ['normal', 'dark']},
+			'speed': {'type': int},
+			'inserted': {'type': bool},
+			'retractable': {'type': bool},
+			'acquiring': {'type': bool},
+			'image data': {'type': Numeric.arraytype},
+		}
+
 		if not self.getRetractable():
 			self.unsupported.append('getInserted')
 			self.unsupported.append('setInserted')
 			del self.methodmapping['inserted']
+			del self.typemapping['inserted']
 
 	def __getattribute__(self, attr_name):
 		if attr_name in object.__getattribute__(self, 'unsupported'):
@@ -111,10 +129,17 @@ class Gatan(object):
 
 	def getImage(self):
 		if self.getExposureType() == 'dark':
-			if self.getInserted():
-				self.setInserted(False)
+			if self.getRetractable():
+				if self.getInserted():
+					self.setInserted(False)
+					image = self.camera.AcquireRawImage()
+					self.setInserted(True)
+					return image
+			else:
+				exposuretime = self.getExposureTime()
+				self.setExposureTime(0)
 				image = self.camera.AcquireRawImage()
-				self.setInserted(True)
+				self.setExposureTime(exposuretime)
 				return image
 		return self.camera.AcquireRawImage()
 

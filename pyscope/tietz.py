@@ -201,6 +201,51 @@ class Tietz(object):
 			'speed table gain switch': {'set': 'setUseSpeedTableForGainSwitch'},
 		}
 
+		self.typemapping = {
+			'binning': {'type': dict, 'values':
+																		{'x': {'type': int}, 'y': {'type': int}}},
+			'dimension': {'type': dict, 'values':
+																		{'x': {'type': int}, 'y': {'type': int}}},
+			'offset': {'type': dict, 'values':
+																		{'x': {'type': int}, 'y': {'type': int}}},
+			'exposure time': {'type': int},
+			'exposure type': {'type': str, 'values': ['normal', 'dark']},
+			'image data': {'type': Numeric.arraytype},
+			'chip name': {'type': str},
+			'camera name': {'type': str},
+			'camera size': {'type': dict, 'values':
+																		{'x': {'type': int}, 'y': {'type': int}}},
+			'pixel size': {'type': dict, 'values':
+																	{'x': {'type': float}, 'y': {'type': float}}},
+			'maximum pixel value': {'type': int},
+			'number of gains': {'type': int},
+			'gain factors': {'type': list},
+			'number of speeds': {'type': int},
+			'speeds': {'type': list},
+			'live mode available': {'type': bool},
+			'number of dead columns': {'type': int},
+			'dead columns': {'type': list},
+			'simulation image path': {'type': str},
+			'gain': {'type': int},
+			'gain index': {'type': int},
+			'speed': {'type': int},
+			'speed index': {'type': int},
+			'image transform': {'type': dict, 'values':
+							{'mirror': {'type': str, 'values': ['horizontal', 'vertical']},
+								'rotation': {'type': int,	'values': [0, 90, 180, 270]}}},
+			'temperature': {'type': float},
+			'shutter open delay': {'type': int},
+			'shutter close delay': {'type': int},
+			'serial number': {'type': str},
+			'preamp delay': {'type': int},
+			'parallel mode': {'type': bool},
+			'hardware gain index': {'type': int},
+			'hardware speed index': {'type': int},
+			'retractable': {'type': bool},
+			'camera axis': {'type': str},
+			'speed table gain switch': {'type': bool}
+		}
+
 		for methodname, dependencies in self.dependencymapping.items():
 			supported = True
 			for dependency in dependencies:
@@ -287,35 +332,59 @@ class Tietz(object):
 		return self.offset
 
 	def setOffset(self, value):
+		# {'type': dict,
+		#		'values': {'x':
+		#						{'type': int,
+		#							'range': [0, camerasize['x'] - dimension['x']*binning['x']]},
+		#								'y':
+		#						{'type': int,
+		#							'range': [0, camerasize['y'] - dimension['y']*binning['y']]}}}
 		self.offset = value
 
 	def getDimension(self):
 		return self.dimension
 
 	def setDimension(self, value):
+		# {'type': dict,
+		#		'values': {'x':
+		#						{'type': int,
+		#							'range': [0, (camerasize['x'] - offset['x'])/binning['x']]},
+		#								'y':
+		#						{'type': int,
+		#							'range': [0, (camerasize['y'] - offset['y'])/binning['y']]}}}
 		self.dimension = value
 
 	def getBinning(self):
 		return self.binning
 
 	def setBinning(self, value):
+		# {'type': dict,
+		#		'values': {'x':
+		#					{'type': int,
+		#						'range': [1, (camerasize['x'] - offset['x'])/dimension['x']]},
+		#								'y':
+		#					{'type': int,
+		#						'range': [1, (camerasize['y'] - offset['y'])/dimension['y']]}}}
 		self.binning = value
 
 	def getExposureTime(self):
 		return self.exposuretime
 
 	def setExposureTime(self, value):
+		# {'type': int, 'range': [0, None]
 		self.exposuretime = value
 
 	def getExposureType(self):
 		return self.exposuretype
 
 	def setExposureType(self, value):
+		# {'type': str, 'values': ['normal', 'dark']}
 		if value not in ['normal', 'dark']:
 			raise ValueError('Invalid exposure type')
 		self.exposuretype = value
 	
 	def getImage(self):
+		# {'type': Numeric.arraytype}
 		# 0 uses internal flash signal
 		# 1 uses internal exposure signal (PVCam and PXL only)
 		# shutter_mode = 1
@@ -343,39 +412,49 @@ class Tietz(object):
 		#return Numeric.reshape(na, (dimension['y'], dimension['x']))
 
 	def getChipName(self):
+		# {'type': str}
 		return self._getParameterValue('cpChipName')
 
 	def getCameraName(self):
+		# {'type': str}
 		return self._getParameterValue('cpCameraName')
 
 	def getCameraSize(self):
+		# {'type': dict, 'values': {'x': {'type': int}, 'y': {'type': int}}}}
 		x = self._getParameterValue('cpTotalDimensionX')
 		y = self._getParameterValue('cpTotalDimensionY')
 		return {'x': x, 'y': y}
 
 	def getPixelSize(self):
+		# {'type': dict, 'values': {'x': {'type': float}, 'y': {'type': float}}}}
 		x = self._getParameterValue('cpPixelSizeX')/1000000000.0
 		y = self._getParameterValue('cpPixelSizeY')/1000000000.0
 		return {'x': x, 'y': y}
 
 	def getMaximumPixelValue(self):
+		# {'type': int}
 		return self._getParameterValue('cpDynamic')
 
 	def getNumberOfGains(self):
+		# {'type': int}
 		return self._getParameterValue('cpNumberOfGains')
 
 	# eval...
 	def getGainFactors(self):
-		return eval(self._getParameterValue('cpGainFactors'))
+		# {'type': list}
+		return list(eval(self._getParameterValue('cpGainFactors')))
 
 	def getNumberOfSpeeds(self):
+		# {'type': int}
 		return self._getParameterValue('cpNumberOfSpeeds')
 
 	# eval...
 	def getSpeeds(self):
-		return eval(self._getParameterValue('cpSpeeds'))
+		# {'type': list}
+		return list(eval(self._getParameterValue('cpSpeeds')))
 
 	def getLiveModeAvailable(self):
+		# {'type': bool}
 		value = self._getParameterValue('cpLiveModeAvailable')
 		if value == 1:
 			return True
@@ -384,22 +463,27 @@ class Tietz(object):
 		raise RuntimeError('Unknown live mode available value')
 
 	def getNumberOfDeadColumns(self):
+		# {'type': int}
 		return self._getParameterValue('cpNumberOfDeadColumns')
 
 	# eval...
 	def getDeadColumns(self):
+		# {'type': list}
 		return eval(self._getParameterValue('cpDeadColumns'))
 
 	def getSimulationImagePath(self):
+		# {'type': str}
 		return self._getParameterValue('cpImagePath')
 
 	def getGainIndex(self):
 		return self._getParameterValue('cpCurrentGainIndex')
 
 	def getGain(self):
+		# {'type': int}
 		return self.getGainFactors()[self.getGainIndex() - 1]
 
 	def setGainIndex(self, value):
+		# {'type': int, 'range': [1, self.getNumberOfGains()]}
 		try:
 			self._setParameterValue('cpCurrentGainIndex', value)
 		except pywintypes.com_error:
@@ -409,9 +493,11 @@ class Tietz(object):
 		return self._getParameterValue('cpCurrentSpeedIndex')
 
 	def getSpeed(self):
+		# {'type': int}
 		return self.getSpeeds()[self.getSpeedIndex() - 1]
 
 	def setSpeedIndex(self, value):
+		# {'type': int, 'range': [1, self.getNumberOfSpeeds()]}
 		try:
 			self._setParameterValue('cpCurrentSpeedIndex', value)
 		except pywintypes.com_error:
@@ -438,6 +524,11 @@ class Tietz(object):
 		return {'mirror': mirror, 'rotation': rotation}
 
 	def setImageTransform(self, value):
+		# {'type': dict,
+		#		'values': {'mirror':
+		#								{'type': str, 'values': ['horizontal', 'vertical']},
+		#							'rotation':
+		#								{'type': int,	'values': [0, 90, 180, 270]}}}
 		bitmask = 0
 
 		if 'horizontal' in value['mirror']:
@@ -458,12 +549,15 @@ class Tietz(object):
 		return self._getParameterValue('cpCurrentTemperature')/1000.0
 
 	def setTemperature(self, value):
+		#	{'type': float}
 		self._setParameterValue('cpTemperatureSetpoint', int(value*1000))
 
 	def getShutterOpenDelay(self):
 		return self._getParameterValue('cpShutterOpenDelay')
 
 	def setShutterOpenDelay(self, value):
+		#	{'type': int, 'range': [0, None]}
+		self._setParameterValue('cpTemperatureSetpoint', int(value*1000))
 		try:
 			self._setParameterValue('cpShutterOpenDelay', value)
 		except pywintypes.com_error:
@@ -473,18 +567,21 @@ class Tietz(object):
 		return self._getParameterValue('cpShutterCloseDelay')
 
 	def setShutterCloseDelay(self, value):
+		#	{'type': int, 'range': [0, None]}
 		try:
 			self._setParameterValue('cpShutterCloseDelay', value)
 		except pywintypes.com_error:
 			raise ValueError('Invalid shutter close delay')
 
 	def getSerialNumber(self):
+		# {'type': str}
 		return self._getParameterValue('cpSerialNumber')
 			
 	def getPreampDelay(self):
 		return self._getParameterValue('cpPreampDelay')/1000.0
 
 	def setPreampDelay(self, value):
+		#	{'type': int, 'range': [0, None]}
 		try:
 			self._setParameterValue('cpPreampDelay', int(value*1000))
 		except pywintypes.com_error:
@@ -492,15 +589,23 @@ class Tietz(object):
 
 	# PMode boolean?
 	def getParallelMode(self):
-		return self._getParameterValue('cpPMode')
+		if self._getParameterValue('cpPMode'):
+			return True
+		return False
 
+	# PMode boolean?
 	def setParallelMode(self, value):
+		#	{'type': bool}
 		try:
-			self._setParameterValue('cpPMode', value)
+			if value:
+				self._setParameterValue('cpPMode', 1)
+			else:
+				self._setParameterValue('cpPMode', 0)
 		except pywintypes.com_error:
 			raise ValueError('Invalid parallel mode')
 
 	def setUseSpeedTableForGainSwitch(self, value):
+		#	{'type': bool}
 		if value:
 			value = 1
 		else:
@@ -508,12 +613,15 @@ class Tietz(object):
 		self._setParameterValue('cpUseSpeedtabForGainSwitch', value)
 
 	def getHardwareGainIndex(self):
+		# {'type': int}
 		return self._getParameterValue('cpHWGainIndex')
 
 	def getHardwareSpeedIndex(self):
+		# {'type': int}
 		return self._getParameterValue('cpHWSpeedIndex')
 
 	def getRetractable(self):
+		# {'type': bool}
 		value = self._getParameterValue('cpIsRetractable')
 		if value:
 			return True
@@ -521,6 +629,7 @@ class Tietz(object):
 			return False
 
 	def getCameraAxis(self):
+		# {'type': str}
 		value = self._getParameterValue('cpCameraPositionOnTem')
 		if value == 0:
 			return 'on'
