@@ -483,14 +483,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 	def waitForImageProcessDone(self):
 		imageids = self.doneevents.keys()
 		imageidstrs = map(str, imageids)
-		self.updateWaitingForImages(imageidstrs)
 		# wait for image processing nodes to complete
 		for id, eventinfo in self.doneevents.items():
 			self.reportStatus('processing', 'Waiting for %s to be processed' % (id,))
 			eventinfo['received'].wait()
 			idstr = str(id)
 			imageidstrs.remove(idstr)
-			self.updateWaitingForImages(imageidstrs)
 			self.reportStatus('processing', 'Done waiting for %s to be processed' % (id,))
 		self.doneevents.clear()
 		self.reportStatus('processing', 'Done waiting for images to be processed')
