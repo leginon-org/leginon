@@ -1,3 +1,4 @@
+import leginonconfig
 import node
 import datahandler
 import scopedict
@@ -126,10 +127,9 @@ class EM(node.Node):
 
 		# should have preferences
 		if scope is None:
-			scope = ('tecnai', 'tecnai')
+			scope = (leginonconfig.TEM, leginonconfig.TEM)
 		if camera is None:
-			#camera = ('gatan', 'gatan')
-			camera = ('tietz', 'tietz')
+			camera = (leginonconfig.CCD, leginonconfig.CCD)
 
 		node.Node.__init__(self, id, session, nodelocations, datahandler=DataHandler, **kwargs)
 
