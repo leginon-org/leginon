@@ -133,12 +133,11 @@ class DeviceEventQueue(Queue.Queue):
 
 class DeviceDataBinder(datahandler.DataBinder):
 	def __init__(self, threaded=False, queueclass=DeviceEventQueue):
-		datahandler.DataBinder.__init__(self, id, session, threaded, queueclass)
+		datahandler.DataBinder.__init__(self, threaded, queueclass)
 
 class DeviceDataHandler(node.DataHandler):
 	def __init__(self, mynode, databinderclass=DeviceDataBinder):
-		node.DataHandler.__init__(self, id, session, mynode,
-															databinderclass=databinderclass)
+		node.DataHandler.__init__(self, mynode, databinderclass=databinderclass)
 
 class Device(node.Node):
 	dataclass = data.DeviceData
@@ -214,7 +213,6 @@ class Device(node.Node):
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
 
-'''
 import time
 class TestDeviceClient(node.Node):
 	eventinputs = node.Node.eventinputs + DeviceClient.eventinputs
@@ -253,5 +251,4 @@ class TestDeviceClient(node.Node):
 													testgetmethod, testsetmethod))
 
 		self.uiserver.addObject(container)
-'''
 
