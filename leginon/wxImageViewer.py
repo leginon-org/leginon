@@ -9,29 +9,36 @@ import math
 import Mrc
 from NumericImage import NumericImage
 
+USE_BUFFERED_DC = False
+
 class ImagePanel(wxPanel):
 	def __init__(self, parent, id):
 		self.image = None
 		self.bitmap = None
-		self.buffer = wxEmptyBitmap(1, 1)
-#		wxPanel.__init__(self, parent, id, size=wxSize(256, 256))
-#		wxPanel.__init__(self, parent, id, style=wxNO_FULL_REPAINT_ON_RESIZE)
+		self.buffer = wxNullBitmap
+		self.size = (512, 512)
+		self.scale = (1.0, 1.0)
+
 		wxPanel.__init__(self, parent, id)
+
 		self.sizer = wxBoxSizer(wxVERTICAL)
 		self.SetAutoLayout(true)
 		self.SetSizer(self.sizer)
-		self.panel = wxScrolledWindow(self, -1, size=(512, 512))
+
+		# need "inside" size
+		self.panel = wxScrolledWindow(self, -1, size=self.size)
 		self.panel.SetScrollRate(1,1)
 		self.panel.SetCursor(wxCROSS_CURSOR)
 		self.sizer.Add(self.panel)
 		size = self.panel.GetSize()
 		self.sizer.SetItemMinSize(self.panel, size.GetWidth(), size.GetHeight())
+
 		self.initValueLabels()
-		#self.sizer.Layout()
+
 		self.Fit()
+
 		EVT_PAINT(self.panel, self.OnPaint)
 		EVT_SIZE(self.panel, self.OnSize)
-#		wxInitAllImageHandlers()
 
 	def initValueLabels(self):
 		self.xlabel = wxStaticText(self, -1, '0000',
@@ -82,12 +89,9 @@ class ImagePanel(wxPanel):
 
 	def setImage(self, wximage):
 		self.bitmap = wxBitmapFromImage(wximage)
-		self.panel.SetVirtualSize(wxSize(self.bitmap.GetWidth(), self.bitmap.GetHeight()))
+		self.panel.SetVirtualSize(wxSize(self.bitmap.GetWidth() * self.scale[0],
+																			self.bitmap.GetHeight() * self.scale[1]))
 		self.panel.Scroll(0, 0)
-#		self.panel.SetSize(wxSize(self.bitmap.GetWidth(), self.bitmap.GetHeight()))
-#		size = self.panel.GetSize()
-#		self.sizer.SetItemMinSize(self.panel, size.GetWidth(), size.GetHeight())
-#		self.Fit()
 		self.buffer = wxEmptyBitmap(self.bitmap.GetWidth(), self.bitmap.GetHeight())
 		self.UpdateDrawing()
 
@@ -101,8 +105,10 @@ class ImagePanel(wxPanel):
 			return
 		try:
 			viewoffset = self.panel.GetViewStart()
-			x = viewoffset[0] + evt.m_x
-			y = viewoffset[1] + evt.m_y
+			x = (viewoffset[0] + evt.m_x) / self.scale[0]
+			y = (viewoffset[1] + evt.m_y) / self.scale[1]
+			x = int(round(x))
+			y = int(round(y))
 			rgb = self.image[y, x]
 			self.xlabel.SetLabel(str(x))
 			self.ylabel.SetLabel(str(y))
@@ -111,10 +117,21 @@ class ImagePanel(wxPanel):
 			pass
 
 	def UpdateDrawing(self):
-		clientdc = wxClientDC(self.panel)
-		self.panel.PrepareDC(clientdc)
-		dc = wxBufferedDC(clientdc, self.buffer)
-		self.Draw(dc)
+		if USE_BUFFERED_DC:
+			clientdc = wxClientDC(self.panel)
+			self.panel.PrepareDC(clientdc)
+			dc = wxBufferedDC(clientdc, self.buffer)
+			self.Draw(dc)
+		else:
+			dc = wxMemoryDC()
+			dc.SelectObject(self.buffer)
+			self.Draw(dc)
+			viewoffset = self.panel.GetViewStart()
+			clientdc = wxClientDC(self.panel)
+			clientdc.SetUserScale(self.scale[0], self.scale[1])
+			clientdc.Blit(0, 0, self.size[0]/self.scale[0],
+													self.size[1]/self.scale[1], dc,
+										viewoffset[0]/self.scale[0], viewoffset[1]/self.scale[1])
 
 	def Draw(self, dc):
 		dc.BeginDrawing()
@@ -127,11 +144,21 @@ class ImagePanel(wxPanel):
 	def OnSize(self, evt):
 		width, height = self.panel.GetSizeTuple()
 		self.buffer = wxEmptyBitmap(width, height)
-		dc = wxBufferedDC(wxClientDC(self.panel), self.buffer)
-		self.Draw(dc)
+		self.UpdateDrawing()
 
 	def OnPaint(self, evt):
-		dc = wxBufferedPaintDC(self.panel, self.buffer)
+		if USE_BUFFERED_DC:
+			dc = wxBufferedPaintDC(self.panel, self.buffer)
+		else:
+			dc = wxMemoryDC()
+			dc.SelectObject(self.buffer)
+			self.Draw(dc)
+			viewoffset = self.panel.GetViewStart()
+			paintdc = wxPaintDC(self.panel)
+			paintdc.SetUserScale(self.scale[0], self.scale[1])
+			paintdc.Blit(0, 0, self.size[0]/self.scale[0],
+													self.size[1]/self.scale[1], dc,
+										viewoffset[0]/self.scale[0], viewoffset[1]/self.scale[1])
 
 class TargetImagePanel(ImagePanel):
 	def __init__(self, parent, id, callback=None):
@@ -322,6 +349,6 @@ if __name__ == '__main__':
 
 	app = MyApp(0)
 	#app.panel.setImage(open('test.jpg', 'rb').read())
-	app.panel.setImageFromMrcString(open('test1.mrc', 'rb').read())
+	app.panel.setImageFromMrcString(open('test2.mrc', 'rb').read())
 	app.MainLoop()
 
