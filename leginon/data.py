@@ -119,7 +119,14 @@ class DataManager(object):
 			self.datadict[newid] = datainstance
 			self.sizedict[newid] = 0
 
-			if remote:
+			## if it is remote, keep mapping to local
+			## copy so we don't need to get it remotely
+			## every time it is referenced
+			## Only good to do this for persistent data
+			## because non persistent data can still be
+			## modified remotely and we would need to get
+			## another copy of it with each dereference
+			if remote and dbid is not None:
 				## do not modify the original dmid
 				## keep link between local and remote dmid
 				self.local2remote[newid] = datainstance.dmid
