@@ -111,6 +111,17 @@ def accumulateData(originaldata, func, memo=None):
 	memo[d] = myresult
 	return myresult
 
+def data2dict(idata, noNone=False):
+	d = {}
+	for key,value in idata.items():
+		if isinstance(value, Data):
+			subd = data2dict(value, noNone)
+			if subd:
+				d[key] = subd
+		else:
+			if not noNone or value is not None:
+				d[key] = copy.deepcopy(value)
+	return d
 
 class DataReference(dict):
 	'''
@@ -211,6 +222,10 @@ class Data(DataDict, leginonobject.LeginonObject):
 		dr['target'] = self
 		return dr
 
+	def toDict(self, noNone=False):
+		return data2dict(self, noNone)
+
+
 ## How to define a new leginon data type:
 ##   - Inherit Data or a subclass of Data.
 ##   - do not overload the __init__ method (unless you have a good reason)
@@ -291,6 +306,21 @@ class AllEMData(EMData):
 		t = EMData.typemap()
 		t += [ ('scope', ScopeEMData),
 			('camera', CameraEMData),
+		]
+		return t
+	typemap = classmethod(typemap)
+
+class CameraConfigData(Data):
+	def typemap(cls):
+		t = Data.typemap()
+		t += [
+			('dimension', dict),
+			('binning', dict),
+			('offset', dict),
+			('exposure time', float),
+			('correct', int),
+			('auto square', int),
+			('auto offset', int),
 		]
 		return t
 	typemap = classmethod(typemap)
@@ -420,8 +450,11 @@ class ImageData(Data):
 		numdata = self['image']
 		session = self['session']
 		id = self['id']
-		idstrlist = [str(i) for i in id]
-		idstr = '-'.join(idstrlist)
+		if id is None:
+			idstr = ''
+		else:
+			idstrlist = [str(i) for i in id]
+			idstr = '-'.join(idstrlist)
 
 		if numdata is not None:
 			## create a directory to store images
@@ -488,7 +521,7 @@ class CameraImageData(ImageData):
 class CorrectorImageData(CameraImageData):
 	def typemap(cls):
 		t = CameraImageData.typemap()
-		t += [ ('camstate', CorrectorCamstate), ]
+		t += [ ('camstate', CorrectorCamstateData), ]
 		return t
 	typemap = classmethod(typemap)
 
@@ -550,7 +583,7 @@ class CorrectorPlanData(Data):
 	def typemap(cls):
 		t = Data.typemap()
 		t += [
-			('camstate', CorrectorCamstate),
+			('camstate', CorrectorCamstateData),
 			('bad_rows', tuple),
 			('bad_cols', tuple),
 			('clip_limits', tuple)
