@@ -2,7 +2,7 @@ import data
 import wx
 import wx.lib.intctrl
 import wx.lib.masked
-import wxPresets
+import gui.wx.Presets
 
 getmap = {'string selection': 'GetStringSelection',
 						'value': 'GetValue',
@@ -17,7 +17,7 @@ eventmap = {wx.RadioBox: wx.EVT_RADIOBOX,
 						wx.CheckBox: wx.EVT_CHECKBOX,
 						wx.lib.intctrl.IntCtrl: wx.EVT_TEXT,
 						wx.lib.masked.NumCtrl: wx.lib.masked.EVT_NUM,
-						wxPresets.PresetOrder: wxPresets.EVT_PRESET_ORDER_CHANGED}
+						gui.wx.Presets.PresetOrder: gui.wx.Presets.EVT_PRESET_ORDER_CHANGED}
 
 def getWindowPath(window):
 	parent = window

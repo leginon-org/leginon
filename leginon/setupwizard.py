@@ -7,7 +7,7 @@ import data
 import project
 import time
 import sys
-import wxData
+import gui.wx.Data
 
 class WizardPage(wx.wizard.PyWizardPage):
 	pass
@@ -74,7 +74,7 @@ class UserPage(WizardPage):
 		self.Bind(wx.EVT_CHOICE, self.onUserChoice, self.userchoice)
 
 	def setRootWindowSession(self, userdata):
-		path, root = wxData.getWindowPath(self)
+		path, root = gui.wx.Data.getWindowPath(self)
 		root.session = data.SessionData(user=userdata)
 
 	def onUserChoice(self, evt=None):
@@ -92,12 +92,12 @@ class UserPage(WizardPage):
 		parent.sessionselectpage.setSessionNames(self.names)
 
 		# update database values
-		wxData.setWindowFromDB(parent.sessiontypepage.sessiontyperadiobox)
+		gui.wx.Data.setWindowFromDB(parent.sessiontypepage.sessiontyperadiobox)
 		# set session select page values
-		wxData.setWindowFromDB(parent.sessionselectpage.sessionchoice)
-		wxData.setWindowFromDB(parent.sessionselectpage.limitcheckbox)
-		wxData.setWindowFromDB(parent.sessionselectpage.limitintctrl)
-		wxData.setWindowFromDB(parent.sessionselectpage.connectcheckbox)
+		gui.wx.Data.setWindowFromDB(parent.sessionselectpage.sessionchoice)
+		gui.wx.Data.setWindowFromDB(parent.sessionselectpage.limitcheckbox)
+		gui.wx.Data.setWindowFromDB(parent.sessionselectpage.limitintctrl)
+		gui.wx.Data.setWindowFromDB(parent.sessionselectpage.connectcheckbox)
 		# oops...
 		parent.sessionselectpage.setSessionNames(self.names)
 
@@ -128,7 +128,7 @@ class SessionTypePage(WizardPage):
 																						majorDimension=1,
 																						style=wx.RA_SPECIFY_COLS,
 																						name='rbSessionType')
-		wxData.bindWindowToDB(self.sessiontyperadiobox)
+		gui.wx.Data.bindWindowToDB(self.sessiontyperadiobox)
 		sizer.Add(self.sessiontyperadiobox, (1, 0), (1, 2), wx.ALIGN_CENTER)
 
 		sizer.Add(wx.StaticText(self, -1,
@@ -169,7 +169,7 @@ class SessionSelectPage(WizardPage):
 							(0, 0), (1, 2))
 
 		self.sessionchoice = wx.Choice(self, -1, name='cSession')
-		wxData.bindWindowToDB(self.sessionchoice)
+		gui.wx.Data.bindWindowToDB(self.sessionchoice)
 		self.sizer.Add(self.sessionchoice, (1, 0), (1, 2), wx.ALIGN_CENTER)
 
 		self.sizer.AddGrowableCol(0)
@@ -177,7 +177,7 @@ class SessionSelectPage(WizardPage):
 
 		self.limitsizer = wx.GridBagSizer(0, 3)
 		self.limitcheckbox = wx.CheckBox(self, -1, '', name='cbLimit')
-		wxData.bindWindowToDB(self.limitcheckbox)
+		gui.wx.Data.bindWindowToDB(self.limitcheckbox)
 		self.Bind(wx.EVT_CHECKBOX, self.onLimitChange, self.limitcheckbox)
 		self.limitsizer.Add(self.limitcheckbox, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		label = wx.StaticText(self, -1, 'List only last')
@@ -187,7 +187,7 @@ class SessionSelectPage(WizardPage):
 																								min=1, max=99, limited=True,
 																								name='icLimit')
 		self.limitintctrl.Bind(wx.EVT_TEXT, self.onLimitChange, self.limitintctrl)
-		wxData.bindWindowToDB(self.limitintctrl)
+		gui.wx.Data.bindWindowToDB(self.limitintctrl)
 		self.limitsizer.Add(self.limitintctrl, (0, 2), (1, 1), wx.ALIGN_CENTER)
 		label = wx.StaticText(self, -1, 'sessions')
 		self.limitsizer.Add(label, (0, 3), (1, 1), wx.ALIGN_CENTER)
@@ -213,7 +213,7 @@ class SessionSelectPage(WizardPage):
 
 		self.connectcheckbox = wx.CheckBox(self, -1, 'Connect to instrument',
 																				name='cbConnect')
-		wxData.bindWindowToDB(self.connectcheckbox)
+		gui.wx.Data.bindWindowToDB(self.connectcheckbox)
 		self.sizer.Add(self.connectcheckbox, (7, 0), (1, 2), wx.ALIGN_CENTER)
 
 		self.sizer.Add(wx.StaticText(self, -1,

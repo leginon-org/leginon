@@ -14,7 +14,7 @@ import leginonobject
 import node
 import nodeclassreg
 import uiserver
-import wxLauncher
+import gui.wx.Launcher
 
 class Launcher(node.Node):
 	def __init__(self, name, session=None, **kwargs):
@@ -60,7 +60,7 @@ class Launcher(node.Node):
 		kwargs['otherdatabinder'] = self.databinder
 
 		if hasattr(nodeclass, 'panelclass'):
-			evt = wxLauncher.CreateNodePanelEvent(nodeclass.panelclass, nodename)
+			evt = gui.wx.Launcher.CreateNodePanelEvent(nodeclass.panelclass, nodename)
 			self.panel.GetEventHandler().AddPendingEvent(evt)
 			evt.event.wait()
 			kwargs['panel'] = evt.panel
@@ -68,13 +68,13 @@ class Launcher(node.Node):
 		n = nodeclass(nodename, session, managerlocation, **kwargs)
 		self.nodes.append(n)
 
-		evt = wxLauncher.CreateNodeEvent(n)
+		evt = gui.wx.Launcher.CreateNodeEvent(n)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
 		self.confirmEvent(ievent)
 
 	def onDestroyNode(self, n):
-		evt = wxLauncher.DestroyNodeEvent(n)
+		evt = gui.wx.Launcher.DestroyNodeEvent(n)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
 		try:
@@ -105,6 +105,6 @@ if __name__ == '__main__':
 			args, kwargs = (launchername,), {'tcpport': 55555}
 		except:
 			args, kwargs = (launchername,), {}
-	l = wxLauncher.LauncherApp(*args, **kwargs)
+	l = gui.wx.Launcher.LauncherApp(*args, **kwargs)
 	l.MainLoop()
 

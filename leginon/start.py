@@ -8,7 +8,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import wxManager
+import gui.wx.Manager
 #import launcher
 #import socket
 import uiclient
@@ -37,7 +37,7 @@ stats.print_callers(30)
 #m.exit()
 
 try:
-	m = wxManager.ManagerApp(None)
+	m = gui.wx.Manager.ManagerApp(None)
 except RuntimeError, e:
 	print 'Unable to start Leginon:', str(e)
 else:

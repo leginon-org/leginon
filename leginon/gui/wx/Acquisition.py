@@ -2,9 +2,9 @@ import threading
 import wx
 import wx.lib.masked
 import wx.lib.scrolledpanel
-import wxData
+import gui.wx.Data
 import wxImageViewer
-import wxPresets
+import gui.wx.Presets
 
 NodeInitializedEventType = wx.NewEventType()
 SetStatusEventType = wx.NewEventType()
@@ -68,19 +68,19 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 																				allowNone=False,
 																				allowNegative=False,
 																				name='ncWait')
-		wxData.bindWindowToDB(self.ncwait)
+		gui.wx.Data.bindWindowToDB(self.ncwait)
 		self.szsettings.Add(self.ncwait, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'seconds and use')
 		self.szsettings.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.cmovetype = wx.Choice(self, -1, name='cMoveType')
-		wxData.bindWindowToDB(self.cmovetype)
+		gui.wx.Data.bindWindowToDB(self.cmovetype)
 		self.szsettings.Add(self.cmovetype, (0, 3), (1, 1),
 												wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'to move to target')
 		self.szsettings.Add(label, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		self.presetorder = wxPresets.PresetOrder(self, -1, name='poPresetOrder')
-		wxData.bindWindowToDB(self.presetorder)
+		self.presetorder = gui.wx.Presets.PresetOrder(self, -1, name='poPresetOrder')
+		gui.wx.Data.bindWindowToDB(self.presetorder)
 		self.szsettings.Add(self.presetorder, (1, 0), (1, 5),
 													wx.ALIGN_CENTER|wx.EXPAND|wx.ALL)
 
@@ -96,11 +96,11 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 		self.cbwaitrejects = wx.CheckBox(self, -1,
 																			'Publish and wait for rejected targets',
 																			name='cbWaitRejects')
-		wxData.bindWindowToDB(self.cbcorrectimage)
-		wxData.bindWindowToDB(self.cbdisplayimage)
-		wxData.bindWindowToDB(self.cbsaveimage)
-		wxData.bindWindowToDB(self.cbwaitimageprocess)
-		wxData.bindWindowToDB(self.cbwaitrejects)
+		gui.wx.Data.bindWindowToDB(self.cbcorrectimage)
+		gui.wx.Data.bindWindowToDB(self.cbdisplayimage)
+		gui.wx.Data.bindWindowToDB(self.cbsaveimage)
+		gui.wx.Data.bindWindowToDB(self.cbwaitimageprocess)
+		gui.wx.Data.bindWindowToDB(self.cbwaitrejects)
 		self.szsettings.Add(self.cbcorrectimage, (2, 0), (1, 5),
 												wx.ALIGN_CENTER_VERTICAL)
 		self.szsettings.Add(self.cbdisplayimage, (3, 0), (1, 5),
@@ -115,9 +115,9 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 		szduplicate = wx.GridBagSizer(0, 0)
 		self.cbduplicate = wx.CheckBox(self, -1, 'Duplicate targets with type:',
 																		name='cbDuplicate')
-		wxData.bindWindowToDB(self.cbduplicate)
+		gui.wx.Data.bindWindowToDB(self.cbduplicate)
 		self.cduplicatetype = wx.Choice(self, -1, name='cDuplicateType')
-		wxData.bindWindowToDB(self.cduplicatetype)
+		gui.wx.Data.bindWindowToDB(self.cduplicatetype)
 		szduplicate.Add(self.cbduplicate, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szduplicate.Add(self.cduplicatetype, (0, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL)
@@ -148,7 +148,7 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 
 		self.Bind(wx.lib.masked.EVT_NUM, self.onWaitNum, self.ncwait)
 		self.Bind(wx.EVT_CHOICE, self.onMoveTypeChoice, self.cmovetype)
-		self.Bind(wxPresets.EVT_PRESET_ORDER_CHANGED, self.onPresetOrderChanged,
+		self.Bind(gui.wx.Presets.EVT_PRESET_ORDER_CHANGED, self.onPresetOrderChanged,
 							self.presetorder)
 		self.Bind(wx.EVT_CHECKBOX, self.onCorrectCheckBox, self.cbcorrectimage)
 		self.Bind(wx.EVT_CHECKBOX, self.onDisplayCheckBox, self.cbdisplayimage)
@@ -179,23 +179,23 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 
 		self.onNewPreset()
 		# TODO: handle preset validation
-		wxData.setWindowFromDB(self.presetorder)
-		wxData.bindWindowToDB(self.presetorder)
+		gui.wx.Data.setWindowFromDB(self.presetorder)
+		gui.wx.Data.bindWindowToDB(self.presetorder)
 
 		duplicatetypes = ['focus', 'acquisition']
 		self.cduplicatetype.AppendItems(duplicatetypes)
 		self.cduplicatetype.SetSelection(0)
 
-		wxData.setWindowFromDB(self.ncwait)
-		wxData.setWindowFromDB(self.cmovetype)
-		wxData.setWindowFromDB(self.presetorder)
-		wxData.setWindowFromDB(self.cbcorrectimage)
-		wxData.setWindowFromDB(self.cbdisplayimage)
-		wxData.setWindowFromDB(self.cbsaveimage)
-		wxData.setWindowFromDB(self.cbwaitimageprocess)
-		wxData.setWindowFromDB(self.cbwaitrejects)
-		wxData.setWindowFromDB(self.cbduplicate)
-		wxData.setWindowFromDB(self.cduplicatetype)
+		gui.wx.Data.setWindowFromDB(self.ncwait)
+		gui.wx.Data.setWindowFromDB(self.cmovetype)
+		gui.wx.Data.setWindowFromDB(self.presetorder)
+		gui.wx.Data.setWindowFromDB(self.cbcorrectimage)
+		gui.wx.Data.setWindowFromDB(self.cbdisplayimage)
+		gui.wx.Data.setWindowFromDB(self.cbsaveimage)
+		gui.wx.Data.setWindowFromDB(self.cbwaitimageprocess)
+		gui.wx.Data.setWindowFromDB(self.cbwaitrejects)
+		gui.wx.Data.setWindowFromDB(self.cbduplicate)
+		gui.wx.Data.setWindowFromDB(self.cduplicatetype)
 
 		self.node.wait = self.ncwait.GetValue()
 		self.node.movetype = self.cmovetype.GetStringSelection()

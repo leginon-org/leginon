@@ -6,7 +6,7 @@ import threading
 import uiclient
 import wx
 import wx.lib.intctrl
-import wxLauncher
+import gui.wx.Launcher
 import wxLogging
 
 AddNodeEventType = wx.NewEventType()
@@ -216,7 +216,7 @@ class ManagerFrame(wx.Frame):
 															wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.RESIZE_BORDER,
 												name='')
 		#sizer = wx.GridBagSizer(0, 0)
-		panel = wxLauncher.LauncherPanel(dialog, evt.launcher)
+		panel = gui.wx.Launcher.LauncherPanel(dialog, evt.launcher)
 		#sizer.Add(panel, (0, 0), (1, 1), wx.EXPAND|wx.ALL)
 		#dialog.SetSizerAndFit(sizer)
 
@@ -236,13 +236,13 @@ class ManagerFrame(wx.Frame):
 		dialog = RunApplicationDialog(self, apps, launchernames, history)
 		if dialog.ShowModal() == wx.ID_OK:
 			app = dialog.getValues()
-			threading.Thread(name='wxManager runApplication',
+			threading.Thread(name='wx.manager runApplication',
 												target=self.manager.runApplication,
 												args=(app,)).start()
 		dialog.Destroy()
 
 	def onMenuKillApplication(self, evt):
-		threading.Thread(name='wxManager killApplication',
+		threading.Thread(name='wx.manager killApplication',
 											target=self.manager.killApplication).start()
 
 	def onMenuImportApplication(self, evt):

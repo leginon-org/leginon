@@ -21,7 +21,7 @@ import threading
 import node
 import EM
 import imagefun
-import wxAcquisition
+import gui.wx.Acquisition
 
 try:
 	import numarray as Numeric
@@ -38,7 +38,7 @@ class InvalidPresetsSequence(Exception):
 	pass
 
 class Acquisition(targetwatcher.TargetWatcher):
-	panelclass = wxAcquisition.Panel
+	panelclass = gui.wx.Acquisition.Panel
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
 								+ [event.DriftDoneEvent,
 										event.ImageProcessDoneEvent] \
@@ -91,20 +91,20 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.start()
 
 	def onInitialized(self):
-		evt = wxAcquisition.NodeInitializedEvent(self)
+		evt = gui.wx.Acquisition.NodeInitializedEvent(self)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 		evt.event.wait()
 
 	def setStatus(self, status):
-		evt = wxAcquisiton.SetStatusEvent(status)
+		evt = gui.wx.Acquisition.SetStatusEvent(status)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
 	def displayImage(self, image):
-		evt = wxAcquisiton.SetImageEvent(image)
+		evt = gui.wx.Acquisition.SetImageEvent(image)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
 	def onPresetPublished(self, evt):
-		evt = wxAcquisiton.NewPresetEvent()
+		evt = gui.wx.Acquisition.NewPresetEvent()
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
 	def handleDriftDone(self, ev):

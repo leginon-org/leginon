@@ -27,7 +27,7 @@ import copy
 import uiclient
 import newdict
 import socket
-import wxManager
+import gui.wx.Manager
 import nodeclassreg
 
 class DataBinder(databinder.DataBinder):
@@ -79,7 +79,7 @@ class Manager(node.Node):
 		node.Node.__init__(self, name, session, otherdatabinder=mydatabinder,
 												xmlrpcport=xmlrpcport, **kwargs)
 
-		self.frame = wxManager.ManagerFrame(self, self.research, self.publish)
+		self.frame = gui.wx.Manager.ManagerFrame(self, self.research, self.publish)
 
 		self.nodelocations = {}
 		self.broadcast = []
@@ -128,7 +128,7 @@ class Manager(node.Node):
 			self.addInstrumentLauncher()
 
 	def onAddLauncherPanel(self, l):
-		evt = wxManager.AddLauncherPanelEvent(l)
+		evt = gui.wx.Manager.AddLauncherPanelEvent(l)
 		self.frame.GetEventHandler().AddPendingEvent(evt)
 
 	def createLauncher(self):
@@ -340,11 +340,11 @@ class Manager(node.Node):
 	# launcher related methods
 
 	def onAddLauncher(self, name):
-		evt = wxManager.AddLauncherEvent(name)
+		evt = gui.wx.Manager.AddLauncherEvent(name)
 		self.frame.GetEventHandler().AddPendingEvent(evt)
 
 	def onRemoveLauncher(self, name):
-		evt = wxManager.RemoveLauncherEvent(name)
+		evt = gui.wx.Manager.RemoveLauncherEvent(name)
 		self.frame.GetEventHandler().AddPendingEvent(evt)
 
 	def getLauncherCount(self):
@@ -476,11 +476,11 @@ class Manager(node.Node):
 		self.onAddNode(name)
 
 	def onAddNode(self, name):
-		evt = wxManager.AddNodeEvent(name)
+		evt = gui.wx.Manager.AddNodeEvent(name)
 		self.frame.GetEventHandler().AddPendingEvent(evt)
 
 	def onRemoveNode(self, name):
-		evt = wxManager.RemoveNodeEvent(name)
+		evt = gui.wx.Manager.RemoveNodeEvent(name)
 		self.frame.GetEventHandler().AddPendingEvent(evt)
 
 	def addNodeUIClient(self, nodename, uilocation):
@@ -678,19 +678,19 @@ class Manager(node.Node):
 		return history
 
 	def onApplicationStarting(self, name, nnodes):
-		evt = wxManager.ApplicationStartingEvent(name, nnodes)
+		evt = gui.wx.Manager.ApplicationStartingEvent(name, nnodes)
 		self.frame.GetEventHandler().AddPendingEvent(evt)
 
 	def onApplicationNodeStarted(self, name):
-		evt = wxManager.ApplicationNodeStartedEvent(name)
+		evt = gui.wx.Manager.ApplicationNodeStartedEvent(name)
 		self.frame.GetEventHandler().AddPendingEvent(evt)
 
 	def onApplicationStarted(self, name):
-		evt = wxManager.ApplicationStartedEvent(name)
+		evt = gui.wx.Manager.ApplicationStartedEvent(name)
 		self.frame.GetEventHandler().AddPendingEvent(evt)
 
 	def onApplicationKilled(self):
-		evt = wxManager.ApplicationKilledEvent()
+		evt = gui.wx.Manager.ApplicationKilledEvent()
 		self.frame.GetEventHandler().AddPendingEvent(evt)
 
 	def waitApplication(self, app):
