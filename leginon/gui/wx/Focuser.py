@@ -310,6 +310,9 @@ class ManualFocusDialog(wx.MiniFrame):
 		self.SetToolBar(self.toolbar)
 
 		self.imagepanel = gui.wx.ImageViewer.ImagePanel(self, -1)
+		self.imagepanel.addTypeTool('Image', display=True)
+		self.imagepanel.addTypeTool('Power', display=True)
+		self.imagepanel.selectiontool.setDisplayed('Power', True)
 
 		self.statusbar = wx.StatusBar(self, -1)
 		self.SetStatusBar(self.statusbar)
@@ -403,7 +406,7 @@ class ManualFocusDialog(wx.MiniFrame):
 		self.node.manualplayer.stop()
 
 	def onSetImage(self, evt):
-		self.imagepanel.setImage(evt.image)
+		self.imagepanel.setImageType(evt.typename, evt.image)
 
 if __name__ == '__main__':
 	class App(wx.App):
