@@ -3,6 +3,7 @@ import datahandler
 import scopedict
 import cameradict
 import threading
+import data
 # this is so the COM stuff will work
 # I don't know if this is a good place for it, perhaps the caller is
 import sys
@@ -24,9 +25,9 @@ class DataHandler(datahandler.DataBinder):
 		elif self.camera and self.camera.has_key(id):
 			result = data.EMData({id : self.camera[id]})
 		elif id == 'scope':
-			result = data.EMData({id : self.scope})
+			result = data.EMData(self.scope)
 		elif id == 'camera':
-			result = data.EMData({id : self.camera})
+			result = data.EMData(self.camera)
 		elif id == 'all':
 			result = data.EMData({})
 			result.content.update(self.scope)
