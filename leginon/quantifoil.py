@@ -15,6 +15,7 @@ import holefinderback
 import convolver
 import peakfinder
 import fftengine
+import os
 
 ffteng = fftengine.fftEngine()
 
@@ -66,7 +67,9 @@ _save_mrc = True
 def save_mrc(image, filename):
 	if _save_mrc: 
 		print 'saving ', filename
-		Mrc.numeric_to_mrc(image, filename)
+		p = 'qimages'
+		f = os.path.join(p, filename)
+		Mrc.numeric_to_mrc(image, f)
 
 import timer
 
@@ -172,7 +175,9 @@ class QuantifoilSolver(object):
 		return temp
 
 	def findLatticeVectors(self, edges, guess1, tolerance):
+		print 'edges', edges.typecode()
 		autocorr = imagefun.auto_correlate(edges)
+		save_mrc(autocorr, 'autocorr.mrc')
 		shape = edges.shape
 
 		## guess2 perpendicular to guess1
@@ -234,7 +239,9 @@ class QuantifoilSolver(object):
 		print 'threshold'
 		edges = imagefun.zscore(edges)
 		print 'clip'
-		edges = Numeric.clip(edges, -0.5, 1.0)
+		# works for everything except test_square7
+		#edges = Numeric.clip(edges, -0.5, 1.0)
+		edges = imagefun.threshold(edges, 0.8)
 
 		print 'done'
 		return edges
