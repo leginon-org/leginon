@@ -34,9 +34,17 @@ class Node(xmlrpcnode.xmlrpcnode):
 	def manager_connect(self, uri):
 		self.addProxy('manager', uri)
 		meths = self.EXPORT_methods()
+
+		### still thinking of the best way to pass events to manager
+		### right now just passing nothing
+		inevents = ()
+		outevents = ()
+
 		nodeinfo = {'location pickle' : cPickle.dumps(self.location),
 				'methods' : meths,
-				'events' : self.events}
+				'inevents' : inevents,
+				'outevents': outevents}
+
 		args = (nodeinfo,)
 		self.callProxy('manager', 'addNode', args)
 
