@@ -270,6 +270,8 @@ class SetupWizard(Wizard):
 		self.startwidget = StartWidget(self)
 		self.runwidget = RunWidget(self)
 		self.initialSetup()
+
+		self.transient(parent)
 		self.wait_window(self)
 
 	def initialSetup(self):

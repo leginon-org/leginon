@@ -182,18 +182,18 @@ class Data(SpecWidget):
 
 		### optional get/set
 		if self.permissions is not None:
-			if self.styled:
-				button = Button(headframe, text='', command=self.getServer,
-																								bg=self.buttoncolor)
-			else:
-				button = Button(headframe, text='', command=self.getServer)
-
 			if 'r' in self.permissions:
-				button['text'] = 'Get'
+				if self.styled:
+					Button(headframe, text='Get', command=self.getServer,
+																					bg=self.buttoncolor).pack(side=RIGHT)
+				else:
+					Button(headframe, text='Get', command=self.getServer).pack(side=RIGHT)
 			if 'w' in self.permissions:
-				button['text'] = 'Set'
-
-			button.pack(side=LEFT)
+				if self.styled:
+					Button(headframe, text='Set', command=self.setServer,
+																					bg=self.buttoncolor).pack(side=RIGHT)
+				else:
+					Button(headframe, text='Set', command=self.setServer).pack(side=RIGHT)
 
 		headframe.pack(side=TOP)
 

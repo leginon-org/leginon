@@ -55,7 +55,7 @@ class Leginon(Tkinter.Frame):
 		for node in nodelocations:
 			page = self.notebook.add(eval(node)[-1])
 			gui = nodegui.NodeGUI(page, nodelocations[node]['hostname'],
-																	nodelocations[node]['UI port'], None, False)
+																	nodelocations[node]['UI port'], None, True)
 			gui.pack(fill=Tkinter.BOTH, expand=Tkinter.YES)
 		gridatlaspage = self.notebook.add('Grid Atlas')
 		gridatlaswidget = GridAtlasWidget(gridatlaspage,
