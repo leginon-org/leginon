@@ -35,9 +35,10 @@ class Watcher(node.Node):
 		procdata = self.registerUIMethod(self.uiProcessData, 'Process Data From Queue', ())
 		cleardata = self.registerUIMethod(self.uiClearQueue, 'Clear Data Queue', ())
 
-		myspec = self.registerUISpec('Watcher', (self.watchtoggle,self.dataqueuetoggle, procdata))
-		myspec += nui
+		cont = self.registerUIContainer('Watcher', (self.watchtoggle,self.dataqueuetoggle, procdata))
 
+		myspec = self.registerUISpec('Watcher', (cont,))
+		myspec += nui
 		return myspec
 
 	def die(self, ievent=None):
