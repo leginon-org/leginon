@@ -12,9 +12,10 @@ import math
 import imagefun
 
 class Tile(object):
-	def __init__(self, image, position):
+	def __init__(self, image, position, imagedata):
 		self.image = image
 		self.position = position
+		self.imagedata = imagedata
 
 class Mosaic(object):
 	def __init__(self):
@@ -308,8 +309,8 @@ class Mosaic(object):
 		return nearesttile, nearestdelta, location
 
 class EMTile(Tile):
-	def __init__(self, image, state, position):
-		Tile.__init__(self, image, position)
+	def __init__(self, image, state, position, imagedata):
+		Tile.__init__(self, image, position, imagedata)
 		self.state = state
 
 class EMMosaic(Mosaic):
@@ -342,7 +343,7 @@ class EMMosaic(Mosaic):
 		state['camera'] = imagedata['camera']
 		position = self.positionmethods[self.positionmethod](imagedata)
 
-		self.tiles.append(EMTile(image, state, position))
+		self.tiles.append(EMTile(image, state, position, imagedata))
 
 	def positionByCalibration(self, state):
 		if self.calibration == 'all':
@@ -369,5 +370,5 @@ class EMMosaic(Mosaic):
 		return {'delta row': deltaposition[0],
 						'delta column': deltaposition[1],
 						'scope': tile.state['scope'],
-						'camera': tile.state['camera']}
+						'camera': tile.state['camera'], 'imagedata': tile.imagedata}
 
