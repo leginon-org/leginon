@@ -58,9 +58,13 @@ try:
 	configparser.readfp(open(defaultfilename), defaultfilename)
 except IOError:
 	raise LeginonConfigError('Cannot find configuration file default.cfg')
-configparser.read(['leginon.cfg',
-										os.path.join(HOME, 'leginon.cfg'),
-										os.path.join(MODULE, 'config', 'leginon.cfg')])
+## process configs in this order (later ones overwrite earlier ones)
+config_locations = [
+	'leginon.cfg',
+	os.path.join(MODULE, 'config', 'leginon.cfg'),
+	os.path.join(HOME, 'leginon.cfg'),
+]
+configparser.read(config_locations)
 
 # Main leginon database
 section = 'Database'
