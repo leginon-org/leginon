@@ -10,13 +10,24 @@ except IndexError:
 	print 'No file name specified.'
 	sys.exit(1)
 
-try:
-	buildfiles = open('buildfiles.txt')
-except:
-	print 'Cannot open buildfiles.txt'
-	sys.exit(1)
+buildfiles = []
+for directory in sys.argv[2:]:
+	directory += '/'
+	print directory
+	try:
+		files = open(directory + 'buildfiles.txt')
+	except:
+		pass
+	buildfiles += map(lambda x: directory + x[:-1], files.readlines())
 
-buildfiles = map(lambda x: x[:-1], buildfiles.readlines())
+if not buildfiles:
+	print 'Building in local directory'
+	try:
+		buildfiles = open('buildfiles.txt')
+		buildfiles = map(lambda x: x[:-1], buildfiles.readlines())
+	except:
+		print 'Cannot open buildfiles.txt'
+		sys.exit(1)
 
 print 'Building %s.tar.gz...' % sys.argv[1],
 try:
