@@ -11,6 +11,8 @@ import Mrc
 import camerafuncs
 reload(camerafuncs)
 import xmlrpclib
+#import xmlrpclib2 as xmlbinlib
+xmlbinlib = xmlrpclib
 
 False = 0
 True = 1
@@ -107,13 +109,13 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 		dark = self.acquireReference(dark=True)
 		print 'Dark Stats: %s' % (self.stats(dark),)
 		mrcstr = Mrc.numeric_to_mrcstr(dark)
-		return xmlrpclib.Binary(mrcstr)
+		return xmlbinlib.Binary(mrcstr)
 
 	def uiAcquireBright(self):
 		bright = self.acquireReference(dark=False)
 		print 'Bright Stats: %s' % (self.stats(bright),)
 		mrcstr = Mrc.numeric_to_mrcstr(bright)
-		return xmlrpclib.Binary(mrcstr)
+		return xmlbinlib.Binary(mrcstr)
 
 	def uiAcquireCorrected(self):
 		camconfig = self.cameraConfig()
@@ -122,7 +124,7 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 		imdata = self.acquireCorrectedArray()
 		print 'Corrected Stats: %s' % (self.stats(imdata),)
 		mrcstr = Mrc.numeric_to_mrcstr(imdata)
-		return xmlrpclib.Binary(mrcstr)
+		return xmlbinlib.Binary(mrcstr)
 
 	def newPlan(self, camstate):
 		key = self.planKey(camstate)
@@ -220,7 +222,7 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 		if self.fakeflag.get():
 			camconfig = self.cameraConfig()
 			camstate = camconfig['state']
-			numimage = Mrc.mrc_to_numeric('test1.mrc')
+			numimage = Mrc.mrc_to_numeric('fake.mrc')
 		else:
 			camstate = self.cameraAcquireCamera()
 			numimage = camstate['image data']

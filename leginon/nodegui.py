@@ -11,6 +11,8 @@ import socket
 from ImageViewer import ImageViewer
 import Mrc
 import xmlrpclib
+#import xmlrpclib2 as xmlbinlib
+xmlbinlib = xmlrpclib
 
 False=0
 True=1
@@ -430,8 +432,8 @@ class ImageData(Data):
 	def setWidget(self, value):
 		print 'setWidget'
 		# value must be binary data from xmlrpc
-		if not isinstance(value, xmlrpclib.Binary):
-			raise RuntimeError('value must be instance of xmlrpclib.Binary')
+		if not isinstance(value, xmlbinlib.Binary):
+			raise RuntimeError('value must be instance of Binary')
 		mrcstr = value.data
 
 		#print 'length', len(mrcstr)

@@ -17,6 +17,8 @@ import cameraimage
 import camerafuncs
 reload(camerafuncs)
 import xmlrpclib
+#import xmlrpclib2 as xmlbinlib
+xmlbinlib = xmlrpclib
 
 class ImViewer(watcher.Watcher, camerafuncs.CameraFuncs):
 	def __init__(self, id, nodelocations):
@@ -88,8 +90,9 @@ class ImViewer(watcher.Watcher, camerafuncs.CameraFuncs):
 		else:
 			print 'converting numeric to mrcstr'
 			mrcstr = Mrc.numeric_to_mrcstr(imarray)
+			print 'mrcstr length', len(mrcstr)
 		print 'returning binary mrcstr'
-		return xmlrpclib.Binary(mrcstr)
+		return xmlbinlib.Binary(mrcstr)
 
 	def uiAcquireCorrected(self):
 		im = self.acquireArray(1)
@@ -97,7 +100,7 @@ class ImViewer(watcher.Watcher, camerafuncs.CameraFuncs):
 			mrcstr = ''
 		else:
 			mrcstr = Mrc.numeric_to_mrcstr(im)
-		return xmlrpclib.Binary(mrcstr)
+		return xmlbinlib.Binary(mrcstr)
 
 	def acquireArray(self, corr=0):
 		camconfig = self.cameraConfig()
