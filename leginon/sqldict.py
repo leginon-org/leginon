@@ -153,7 +153,6 @@ import string
 import re
 import Numeric
 import MySQLdb.cursors
-import cPickle
 from types import *
 import data
 import strictdict
@@ -210,7 +209,7 @@ class SQLDict(object):
 	    self.readimages = readimages
 	    #print 'querinfo ', self.queryinfo
 	    self.queries = setQueries(queryinfo)
-	    # print 'queries ', self.queries
+	    #print 'queries ', self.queries
 	    self.cursors = {}
 	    self.execute()
 
@@ -812,7 +811,6 @@ def queryFormatOptimized(in_dict,tableselect):
 	alljoinon={}
 	wherejoin={}
 	listselect=[]
-	asdf=[]
 	for key,value in in_dict.items():
 		if value['known']:
 			continue
@@ -1094,18 +1092,6 @@ def saveMRC(object, name, path, filename, thumb=False):
 	d[k] = filename
 	return d
 
-def bin2dict(object, name=None):
-	"""
-	Convert a python object in a binary blob
-	"""
-	if name is None:
-		name='blob'
-	d={}
-	k = sep.join(['BIN',name])
-	pobject = cPickle.dumps(object, cPickle.HIGHEST_PROTOCOL)
-	d[k]=pobject
-	return d
-
 def dict2bin(in_dict):
 	"""
 	Convert a binary blob in a  python 
@@ -1189,6 +1175,10 @@ def sqlColumnsDefinition(in_dict, noDefault=None):
 			column['Key'] = 'INDEX'
 			column['Index'] = [column['Field']]
 			columns.append(column)
+		elif isinstance(value, data.Binary):
+			column['Field'] = bin2sqlColumn(key)
+			column['Type'] = 'LONGBLOB'
+			columns.append(column)
 		elif type(value) is Numeric.ArrayType:
 			### Numeric array
 			if len(Numeric.ravel(value)) < 10:
@@ -1217,6 +1207,11 @@ def sqlColumnsDefinition(in_dict, noDefault=None):
 			
 	return columns
 
+def bin2sqlColumn(key):
+	"""
+	Add BIN| if value is instance of data.binary
+	"""
+	return "BIN%s%s"%(sep,key,)
 
 def seq2sqlColumn(key):
 	"""
@@ -1283,6 +1278,8 @@ def sqlColumnsFormat(in_dict):
 			columns.update(nf)
 		elif isinstance(value, data.Data):
 			columns[ref2field(key,value)] = value.dbid
+		elif isinstance(value, data.Binary):
+			columns[bin2sqlColumn(key)] = value.getPickledObject()
 		elif type(value) in [tuple, list]:
 			columns[seq2sqlColumn(key)] = repr(value)
 	return columns
@@ -1346,7 +1343,9 @@ def datatype(in_dict, qikey=None, qinfo=None):
 			except SyntaxError:
 				content[a[1]] = None
 		elif a[0] == 'BIN':
-			content[a[1]] = dict2bin({key:value})
+			po = data.Binary(data.Pickle(value))
+			content[a[1]] = po.getObject()
+
 		elif a[0] == 'MRC':
 			## set up a FileReference, to be used later
 			## when we know the full path

@@ -247,12 +247,9 @@ class Server(xmlrpc.Server, uidata.Container):
 			results = self.dbdatakeeper.query(odata, results=1)
 			if results:
 				try:
-					pickledvalue = results[0]['pickled value']
-					try:
-						value = cPickle.loads(pickledvalue)
-					except:
-						print 'Error unpickling UI value'
-						return False
+					value = results[0]['pickled value']
+					if isinstance(value, data.Binary):
+						value = value.getObject()
 					uiobject.set(value, server=False, postcallback=False)
 					return True
 				except KeyError:
@@ -272,10 +269,9 @@ class Server(xmlrpc.Server, uidata.Container):
 			return
 		namelist = uiobject._getNameList()
 		value = uiobject.get()
-		pickledvalue = cPickle.dumps(value, cPickle.HIGHEST_PROTOCOL)
 		initializer = {'session': self.session,
 										'object': namelist,
-										'pickled value': pickledvalue}
+										'pickled value': value}
 		odata = data.UIData(initializer=initializer)
 		self.dbdatakeeper.insert(odata, force=True)
 

@@ -13,7 +13,8 @@ import leginonobject
 import Numeric
 import strictdict
 import warnings
-#import weakref
+import cPickle
+
 import threading
 import dbdatakeeper
 
@@ -173,7 +174,6 @@ class DataReference(object):
 			self.dmid = datainstance.dmid
 			self.dbid = datainstance.dbid
 		return datainstance
-
 
 ## Unresolved issue:
 ##  It would be nice if you could cast one Data type to another
@@ -1175,13 +1175,57 @@ class DiaryData(InSessionData):
 		return t
 	typemap = classmethod(typemap)
 
+## to store binary blob in database
+class Pickle(str):
+	pass
+
+class Binary(object):
+	def __init__(self, new_o):
+		if isinstance(new_o, Binary):
+			self.o = new_o.o
+		else:
+			self.o = new_o
+
+	def getPickledObject(self):
+		if type(self.o) is not Pickle:
+			self.o = Pickle(cPickle.dumps(self.o, True))
+		return str(self.o)
+
+	def getObject(self):
+		if type(self.o) is Pickle:
+			po = cPickle.loads(self.o)
+			self.o = cPickle.loads(self.o)
+		return self.o
+
+	def __str__(self):
+		return str(self.o)
+
+	def __repr__(self):
+		return repr(self.o)
+
 class UIData(InSessionData):
 	def typemap(cls):
 		t = InSessionData.typemap()
 		t += [('object', tuple),
-					('pickled value', str)]
+					('pickled value', Binary)]
 		return t
 	typemap = classmethod(typemap)
+
+class ImageStatData(InSessionData):
+	def typemap(cls):
+		t = InSessionData.typemap()
+		t += [('nx', int),
+					('ny', int),
+					('nz', int),
+					('mode', int),
+					('amin', float),
+					('amax', float),
+					('amean', float),
+					('stdev', float),
+					('image', AcquisitionImageData)]
+		return t
+	typemap = classmethod(typemap)
+
 
 ########## for testing
 

@@ -48,6 +48,7 @@ import re
 import string
 import sqldict
 import MySQLdb
+import data
 
 def backquote(inputstr):
         """
@@ -683,6 +684,9 @@ def whereFormat(in_dict):
 	for key, value in whereDict.items():
 		if type(value) in [tuple, list]:
 			key = sqldict.seq2sqlColumn(key)
+		elif isinstance(value,data.Binary):
+			key = sqldict.bin2sqlColumn(key)
+			value = value.getPickledObject()
 		evalue = str(value)
 		wherelist.append(''' %s.%s="%s" ''' % (backquote(alias), backquote(key), evalue))
 	wherestr = ' AND '.join(wherelist)
@@ -695,6 +699,8 @@ def whereFormatSimple(in_dict):
 	for key, value in whereDict.items():
 		if type(value) in [tuple, list]:
 			key = sqldict.seq2sqlColumn(key)
+		elif isinstance(value,data.Binary):
+			key = sqldict.bin2sqlColumn(key)
 		evalue = str(value)
 		wherelist.append(''' %s="%s" ''' % (backquote(key), evalue))
 	wherestr = ' AND '.join(wherelist)

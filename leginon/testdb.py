@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 #
 # COPYRIGHT:
 #       The Leginon software is Copyright 2003
@@ -5,8 +7,48 @@
 #       For terms of the license agreement
 #       see  http://ami.scripps.edu/software/leginon-license
 #
-from sqldict import *
 import sys
+import data
+import cPickle
+import dbdatakeeper
+
+initializer = {'name': 'voici'}
+session = data.SessionData(initializer=initializer)
+dk = dbdatakeeper.DBDataKeeper()
+# d = dbdatakeeper.DBDataKeeper(('fake',), session)
+value = {"denis":68}
+namelist = ('ufer', 'Presets Manager', 'Selection', 'Cycle', 'Cycle On')
+bin = data.Binary(value)
+# bin = data.AnyType(value)
+
+initializer = {'session': session,
+		'object': namelist,
+		'pickled value': bin }
+
+odata = data.UIData(initializer=initializer)
+#dk.insert(odata)
+print odata
+
+#sys.exit()
+
+
+result = dk.query(odata)
+print "----------------------"
+print "Result: ",result
+
+d = result[0]['pickled value'].getObject()
+if isinstance(value, data.Binary):
+	d = value.getObject()
+print "object: %s, %s " % (d, type(d))
+
+
+
+
+
+sys.exit()
+
+from sqldict import *
+
 
 db = SQLDict(host='stratocaster')
 
@@ -32,7 +74,6 @@ presetDefinition = [{'Field': 'id', 'Type': 'int(16)', 'Key': 'PRIMARY', 'Extra'
 
 db.createSQLTable('PRESET_TEST', presetDefinition)
 
-sys.exit()
 
 
 
