@@ -161,7 +161,7 @@ class Corrector(node.Node):
 		camstate = camconfig['state']
 		tempcamstate = copy.deepcopy(camstate)
 		if dark:
-			tempcamstate['exposure time'] = 0.0
+			tempcamstate['exposure time'] = 0
 			typekey = 'dark'
 		else:
 			typekey = 'bright'
