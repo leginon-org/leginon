@@ -1,27 +1,32 @@
-
 import xmlrpcnode
 import dataserver
 import urllib
 import cPickle
-
+import location
+import register
 
 class Node(xmlrpcnode.xmlrpcnode):
-	def __init__(self, id, manageraddress):
+	def __init__(self, manageraddress):
 		xmlrpcnode.xmlrpcnode.__init__(self)
 
-		self.id = id
 		self.datahandler = DataHandler(self)
-		self.dataport = self.datahandler.port
 
-		## eventmap and outevents should be initialized by subclass before this
-		## __init__ is called, but if not, they are initialize here
-		self.eventmap = getattr(self, 'eventmap', {})
-		self.outevents = getattr(self, 'outevents', [])
-		
+		# it might be better to change NodeLocation to take
+		# and instance of Location as part of the constructor
+		# or the whole thing could be a dictionary
+		self.location = location.NodeLocation(self.location.hostname,
+							self.location.port,
+							self.location.pid,
+							-1, # not implemented?
+							self.datahandler.port)
+
+		## events should be initialized by subclass before this
+		self.events = getattr(self, 'events', [])
+
 		if manageraddress:
-			managerhost, managerport = manageraddress
-			manager_uri = 'http://' + managerhost + ':' + `managerport`
-			self.manager_connect(manager_uri)
+			manager_location = location.Location(manageraddress[0],
+							manageraddress[1], None)
+			self.id = self.manager_connect(manager_location.getURI())
 
 	def __del__(self):
 		self.manager_close()
@@ -29,8 +34,9 @@ class Node(xmlrpcnode.xmlrpcnode):
 	def manager_connect(self, uri):
 		self.addProxy('manager', uri)
 		meths = self.EXPORT_methods()
-		dataport = self.dataport
-		nodeinfo = {'id':self.id, 'host':self.host, 'port':self.port, 'dataport':dataport, 'methods':meths, 'events':self.events}
+		nodeinfo = {'location pickle' : cPickle.dumps(self.location),
+				'methods' : meths,
+				'events' : self.events}
 		args = (nodeinfo,)
 		self.callProxy('manager', 'addNode', args)
 
@@ -64,7 +70,6 @@ class Node(xmlrpcnode.xmlrpcnode):
 		data = self.datahandler.get(dataid)
 		return data
 
-
 class DataHandler(object):
 	def __init__(self, mynode):
 		self.mynode = mynode
@@ -90,7 +95,7 @@ class DataHandler(object):
 
 
 		## notify manager of the new location
-		location = 'http://' + self.mynode.host + ':' + `self.port` + '/' + dataid
+		location = self.mynode.location.getURI() + '/' + dataid
 		args = (dataid, location)
 		self.mynode.callProxy('manager', 'addLocation', args)
 
@@ -105,24 +110,23 @@ class DataHandler(object):
 class Manager(xmlrpcnode.xmlrpcnode):
 	def __init__(self, *args, **kwargs):
 		xmlrpcnode.xmlrpcnode.__init__(self)
-		self.nodes = {}
+		self.register = register.Register()
 		self.bindings = {}
 		self.locations = {}
 
 	def EXPORT_addNode(self, node):
-		nodeid = node['id']
-		self.nodes[nodeid] = node
-		host = node['host']
-		port = node['port']
-		uri = 'http://' + host + ':' + `port`
-		self.addProxy(nodeid, uri)
-		print 'node %s has been added' % nodeid
-		print 'nodes: %s' % self.nodes
+		id = self.register.addEntry(
+			register.RegisterEntry(node['methods'],
+				node['events'],
+				cPickle.loads(node['location pickle'])))
+		self.addProxy(id, self.register.entries[id].location.getURI())
+		print 'node %s has been added' % id
+		#print 'nodes: %s' % self.nodes
 
-	def EXPORT_deleteNode(self, nodeid):
+	def EXPORT_deleteNode(self, id):
 		try:
-			del(self.clients[nodeid])
-			self.delProxy(nodeid)
+			#del(self.clients[nodeid])
+			self.delProxy(id)
 			print 'node %s has been deleted' % id
 		except KeyError:
 			pass

@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-
 from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
-import threading, xmlrpclib, os, inspect
+import threading, xmlrpclib, os, socket, inspect
 from Tkinter import *
+import location
 
 ## range defined by IANA as dynamic/private
 portrange = range(49152,65536)
@@ -15,30 +15,32 @@ class xmlrpcserver(SimpleXMLRPCServer):
 	Also defines a _dispatch method that only exposes methods
 	prefixed with EXPORT_
 	"""
+	# is there some way to handle unmarshalable data by catching an
+	# exception and then pickling? there would have to be something
+	# client side mabye
 	def __init__(self, port=None):
-		self.host = hostname = os.environ['HOSTNAME']
-
+		hostname = socket.gethostname()
 		if port:
+			# this exception will fall through if __init__ fails
 			SimpleXMLRPCServer.__init__(self,(hostname,port))
-			self.port = port
 			self._start_serving()
 			return
 
 		## find a port in range defined by IANA as dynamic/private
-		self.port = None
 		for port in portrange:
 			try:
 				SimpleXMLRPCServer.__init__(self,(hostname,port))
-				self.port = port
 				break
 			except Exception, var:
 				if var[0] == 98:
 					continue
 				else:
 					raise
-		if not self.port:
+		if not port:
 			raise RuntimeError('no ports available')
-
+		self.location = location.Location(hostname,
+						port,
+						os.getpid())
 		self._start_serving()
 
 	def _start_serving(self):
