@@ -145,7 +145,8 @@ class Focuser(acquisition.Acquisition):
 
 			camstate['exposure time'] = current_exptime
 			self.cam.setCameraEMData(camstate)
-			target['pre_exposure'] = True
+			# is this any good?
+			#target['pre_exposure'] = True
 
 		## pre manual check
 		if self.pre_manual_check.get():
