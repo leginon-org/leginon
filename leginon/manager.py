@@ -550,8 +550,6 @@ class Manager(node.Node):
 
 	def loadApp(self, name):
 		'''Calls application.Application.load.'''
-		if self.uilauncheraliascontainer is not None:
-			self.applicationcontainer.deleteObject('Launcher Aliases')
 		launchers = self.launcherdict.keys()
 		if launchers:
 			launchers.sort()
@@ -563,25 +561,21 @@ class Manager(node.Node):
 		uialiasselectors = []
 		for alias in aliases:
 			uialiasselectors.append(uidata.SingleSelectFromList(alias, launchers, 0))
-		self.uilauncheraliascontainer = uidata.Container('Launcher Aliases')
-		self.uilauncheraliascontainer.addObjects(uialiasselectors)
-		self.applicationcontainer.addObject(self.uilauncheraliascontainer)
+		self.setLauncherSelectors(uialiasselectors)
 
 	def launchApp(self):
 		'''Calls application.Application.launch.'''
-		if self.uilauncheraliascontainer is None:
+		if not self.have_selectors:
 			return
-		for alias in self.uilauncheraliascontainer.uiobjectlist:
+		for alias in self.uilauncherselectors.uiobjectlist:
 			aliasvalue = alias.getSelectedValue()
 			self.application.setLauncherAlias(alias.name, (aliasvalue,))
 		self.application.launch()
 
 	def killApp(self):
 		'''Calls application.Application.kill.'''
-		if self.uilauncheraliascontainer is not None:
-			self.applicationcontainer.deleteObject('Launcher Aliases')
-		self.uilauncheraliascontainer = None
 		self.application.kill()
+		self.setLauncherSelectors(selectors=None)
 
 	def exportApplication(self, filename):
 		if filename is None:
@@ -764,6 +758,20 @@ class Manager(node.Node):
 		diarydata = data.DiaryData(session=self.session, message=diarymessage)
 		self.publish(diarydata, database=True)
 
+	def setLauncherSelectors(self, selectors=None):
+		try:
+			self.uilauncheraliascontainer.deleteObject('Aliases')
+		except:
+			pass
+		if selectors is None:
+			self.have_selectors = False
+			self.uilauncherselectors =  uidata.String('Aliases','Load Application First', 'r')
+		else:
+			self.have_selectors = True
+			self.uilauncherselectors = uidata.Container('Aliases')
+			self.uilauncherselectors.addObjects(selectors)
+		self.uilauncheraliascontainer.addObject(self.uilauncherselectors)
+
 	def defineUserInterface(self):
 		'''See node.Node.defineUserInterface.'''
 #		node.Node.defineUserInterface(self)
@@ -803,30 +811,46 @@ class Manager(node.Node):
 		nodemanagementcontainer.addObjects((self.uinodeinfo, self.launchcontainer,
 																				addcontainer, self.killcontainer))
 
-		self.uiapplicationlist = uidata.SingleSelectFromList('Application', [], 0)
-		self.uiUpdateApplications()
-		applicationrefreshmethod = uidata.Method('Refresh',
-																							self.uiUpdateApplications)
-		applicationloadmethod = uidata.Method('Load', self.uiLoadApp)
-		applicationlaunchmethod = uidata.Method('Launch', self.uiLaunchApp)
-		applicationkillmethod = uidata.Method('Kill', self.uiKillApp)
+		### Applications
 
+		# import/export container
 		self.importexportcontainer = uidata.Container('Import / Export')
-#		self.importexportfilename = uidata.String('Filename', '', 'rw')
 		applicationexportmethod = uidata.Method('Export', self.uiExportApp)
 		applicationimportmethod = uidata.Method('Import', self.uiImportApp)
-#		importexportobjects = (self.importexportfilename,
-#														applicationexportmethod, applicationimportmethod)
 		importexportobjects = (applicationexportmethod, applicationimportmethod)
 		self.importexportcontainer.addObjects(importexportobjects)
 
-		applicationobjects = (self.uiapplicationlist, applicationrefreshmethod,
-				applicationloadmethod, applicationlaunchmethod,
-				applicationkillmethod, self.importexportcontainer)
-		self.uilauncheraliascontainer = None
+
+		launchkillcontainer = uidata.Container('Launch / Kill')
+		self.uiapplicationlist = uidata.SingleSelectFromList('Application', [], 0)
+		self.uiUpdateApplications()
+		applicationrefreshmethod = uidata.Method('Refresh', self.uiUpdateApplications)
+		applicationloadmethod = uidata.Method('Load', self.uiLoadApp)
+
+		# this container is filled by the setLauncherSelectors() method
+		self.uilauncheraliascontainer = uidata.Container('Launcher Selection')
+		self.setLauncherSelectors(selectors=None)
+
+		applicationlaunchmethod = uidata.Method('Launch', self.uiLaunchApp)
+		applicationkillmethod = uidata.Method('Kill', self.uiKillApp)
+		launchkillobjects = (
+		 applicationrefreshmethod,
+		 self.uiapplicationlist,
+		 applicationloadmethod,
+		 self.uilauncheraliascontainer,
+		 applicationlaunchmethod,
+		 applicationkillmethod
+		)
+		launchkillcontainer.addObjects(launchkillobjects)
+
+		applicationobjects = (
+		 launchkillcontainer,
+		 self.importexportcontainer,
+		)
 		self.applicationcontainer = uidata.LargeContainer('Applications')
 		self.applicationcontainer.addObjects(applicationobjects)
 
+		## Events
 		self.uifromnodeselect = uidata.SingleSelectFromList('From Node', [], 0)
 		self.uieventclasses = event.eventClasses()
 		eventclasses = self.uieventclasses.keys()
