@@ -3,7 +3,6 @@ import uiserver
 import threading
 import time
 from wxPython.wx import *
-from wxPython.wxc import wxPyAssertionError
 import wxImageViewer
 import wxDictTree
 
@@ -345,27 +344,18 @@ class wxNotebookContainerWidget(wxContainerWidget):
 
 	def addWidget(self, namelist, typelist, value, read, write):
 		# needs locking to insure page number, etc.
-		pagenumber = self.getPageNumber()
-		if pagenumber > 0:
-			evt = NotebookSelectPageEvent(self.parentnotebook, pagenumber)
-			wxPostEvent(self.widgethandler, evt)
+		evt = NotebookSelectPageEvent(self.parentnotebook, self.getPageNumber())
+		wxPostEvent(self.widgethandler, evt)
 		wxContainerWidget.addWidget(self, namelist, typelist, value, read, write)
 
 	def Destroy(self):
 		wxContainerWidget.Destroy(self)
-		pagenumber = self.getPageNumber()
-		if pagenumber > 0:
-			self.parentnotebook.DeletePage(pagenumber)
-		else:
-			raise RuntimeError('cannot delete notebook page, invalid page number')
+		self.parentnotebook.DeletePage(self.getPageNumber())
 
 	def getPageNumber(self):
-		try:
-			for i in range(self.parentnotebook.GetPageCount()):
-				if self.parentnotebook.GetPage(i) == self.panel:
-					return i
-		except wxPyAssertionError:
-			return -1
+		for i in range(self.parentnotebook.GetPageCount()):
+			if self.parentnotebook.GetPage(i) == self.panel:
+				return i
 
 class wxClientContainerWidget(object):
 	pass
