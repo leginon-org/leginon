@@ -14,8 +14,10 @@ class Server(leginonobject.LeginonObject):
 		self.datahandler = dh
 		self.pythonid = id(self)
 		localserverdictlock.acquire()
-		localserverdict[self.pythonid] = self
-		localserverdictlock.release()
+		try:
+			localserverdict[self.pythonid] = self
+		finally:
+			localserverdictlock.release()
 
 	def start(self):
 		pass
@@ -27,8 +29,10 @@ class Server(leginonobject.LeginonObject):
 
 	def exit(self):
 		localserverdictlock.acquire()
-		del localserverdict[self.pythonid]
-		localserverdictlock.release()
+		try:
+			del localserverdict[self.pythonid]
+		finally:
+			localserverdictlock.release()
 
 class Client(leginonobject.LeginonObject):
 	def __init__(self, id, location):
@@ -41,11 +45,9 @@ class Client(leginonobject.LeginonObject):
 		localserverdictlock.acquire()
 		try:
 			ret = self._push(idata)
+		finally:
 			localserverdictlock.release()
-			return ret
-		except:
-			localserverdictlock.release()
-			raise
+		return ret
 
 	def _push(self, idata):
 		try:
@@ -64,11 +66,9 @@ class Client(leginonobject.LeginonObject):
 		localserverdictlock.acquire()
 		try:
 			ret = self._pull(id)
+		finally:
 			localserverdictlock.release()
-			return ret
-		except:
-			localserverdictlock.release()
-			raise
+		return ret
 
 	def _pull(self, id):
 		try:
