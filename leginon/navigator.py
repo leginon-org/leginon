@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 
 import node
-reload(node)
 import event
-reload(event)
 
 class Navigator(node.Node):
 	def __init__(self, id, nodelocations, emnode='em'):
