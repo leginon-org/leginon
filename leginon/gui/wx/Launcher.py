@@ -186,6 +186,8 @@ class ListCtrlPanel(wx.Panel):
 		self.panel = panel
 		self.panel.Show(True)
 		self.Layout()
+		if hasattr(panel, 'messagelog'):
+			panel.messagelog.Layout()
 		self.Thaw()
 
 	def onItemSelected(self, evt):
@@ -361,7 +363,12 @@ class Panel(ListCtrlPanel):
 			tb.Realize()
 	
 	def getToolBar(self):
-		return gui.wx.ToolBar.ToolBar(self.GetParent())
+		parent = self.GetParent()
+		parent.Freeze()
+		toolbar = gui.wx.ToolBar.ToolBar(parent)
+		toolbar.Show(False)
+		parent.Thaw()
+		return toolbar
 
 def getStatusIcon(image, color):
 	bitmap = wx.BitmapFromImage(image)

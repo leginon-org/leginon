@@ -106,7 +106,7 @@ class MessageLog(wx.ListCtrl, ColumnSorterMixin):
 		self.SetItemData(index, self.data)
 		self.itemDataMap[self.data] = (self.levels.index(level), secs, message)
 		self.data += 1
-		self.arrange()
+		self.Layout()
 		self.updateStatus(level)
 
 	def statusUpdated(self, level):
@@ -132,7 +132,7 @@ class MessageLog(wx.ListCtrl, ColumnSorterMixin):
 			self.status = level
 			self.statusUpdated(level)
 
-	def arrange(self):
+	def Layout(self):
 		self.SetColumnWidth(0, wx.LIST_AUTOSIZE)
 		self.SetColumnWidth(1, wx.LIST_AUTOSIZE)
 		width, height = self.GetClientSize()

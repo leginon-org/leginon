@@ -91,7 +91,10 @@ class App(wx.App):
 		wx.App.__init__(self, 0)
 
 	def OnInit(self):
-		self.manager = manager.Manager(self.session, self.tcpport, **self.kwargs)
+		try:
+			self.manager = manager.Manager(self.session, self.tcpport, **self.kwargs)
+		except Exception, e:
+			raise RuntimeError(e)
 		self.SetTopWindow(self.manager.frame)
 		self.manager.frame.Show(True)
 		return True
@@ -397,16 +400,6 @@ class Frame(wx.Frame):
 		self.killappmenuitem.Enable(False)
 		if self.manager.getLauncherCount() > 0:
 			self.runappmenuitem.Enable(True)
-
-class Panel(wx.ScrolledWindow):
-	def __init__(self, parent, location):
-		self._enabled = True
-		self._shown = True
-		wx.ScrolledWindow.__init__(self, parent, -1)
-		self.SetScrollRate(5, 5)
-
-	def layout(self):
-		pass
 
 class AddNodeDialog(wx.Dialog):
 	def __init__(self, parent):
