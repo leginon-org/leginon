@@ -112,8 +112,19 @@ class HoleFinder(targetfinder.TargetFinder):
 		icemeth = uidata.Method('Analyze Ice', self.ice)
 		self.goodholes = uidata.Sequence('Good Holes', [], 'r')
 		self.goodholesimage = uidata.TargetImage('Good Holes Image', None, 'r')
+
+		# target templates
 		self.use_target_template = uidata.Boolean('Use Target Template', False, 'rw', persist=True)
 		self.foc_target_template = uidata.Sequence('Focus Template', [], 'rw', persist=True)
+		# thickness limit on focus template
+		foc_template_limit = uidata.Container('Focus Template Thickness')
+		self.focthickon = uidata.Boolean('On', False, 'rw', persist=True)
+		self.focicerad = uidata.Float('Focus Stats Radius', 10, 'rw', persist=True)
+		self.focicetmin = uidata.Float('Focus Minimum Mean Thickness', 0.05, 'rw', persist=True)
+		self.focicetmax = uidata.Float('Focus Maximum Mean Thickness', 0.5, 'rw', persist=True)
+		self.focicetstd = uidata.Float('Focus Maximum StdDev Thickness', 0.5, 'rw', persist=True)
+		foc_template_limit.addObjects((self.focthickon, self.focicerad, self.focicetmin, self.focicetmax, self.focicetstd))
+
 		self.acq_target_template = uidata.Sequence('Acqusition Template', [], 'rw', persist=True)
 		submitmeth = uidata.Method('Submit', self.submit)
 		self.goodholesimage.addTargetType('acquisition', [], (0,255,0))
@@ -127,7 +138,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		blobcont.addObjects((allblobscontainer, latticeblobscontainer))
 
 		goodholescontainer = uidata.LargeContainer('Good Holes')
-		goodholescontainer.addObjects((self.icetmin, self.icetmax, self.icetstd, icemeth, self.goodholes, self.use_target_template, self.foc_target_template, self.acq_target_template, self.goodholesimage, submitmeth))
+		goodholescontainer.addObjects((self.icetmin, self.icetmax, self.icetstd, icemeth, self.goodholes, self.use_target_template, self.foc_target_template, foc_template_limit, self.acq_target_template, self.goodholesimage, submitmeth))
 
 		container = uidata.LargeContainer('Hole Finder')
 		container.addObjects((self.usercheckon, self.skipauto, originalcont,edgecont,corcont,threshcont, blobcont, goodholescontainer))
@@ -270,7 +281,21 @@ class HoleFinder(targetfinder.TargetFinder):
 				newtargets['acquisition'].append(target)
 			for vect in foc_vect:
 				target = center[0]+vect[0], center[1]+vect[1]
-				newtargets['focus'].append(target)
+				## check if target has good thickness
+				if self.focthickon.get():
+					rad = self.focicerad.get()
+					tmin = self.focicetmin.get()
+					tmax = self.focicetmax.get()
+					tstd = self.focicetstd.get()
+					coord = target[1], target[0]
+					stats = self.hf.get_hole_stats(self.hf['original'], coord, rad)
+					tm = self.icecalc.get_thickness(stats['mean'])
+					ts = self.icecalc.get_stdev_thickness(stats['std'], stats['mean'])
+					if (tmin <= tm <= tmax) and (ts < tstd):
+						newtargets['focus'].append(target)
+						break
+				else:
+					newtargets['focus'].append(target)
 		return newtargets
 
 	def everything(self):
