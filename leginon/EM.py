@@ -35,23 +35,23 @@ class DataHandler(node.DataHandler):
 		print 'EM query: creating data, (keys = %s)' % str(stuff.keys())
 
 		if emkey == 'scope':
-			result = data.ScopeEMData(('scope',), initializer=stuff)
+			result = data.ScopeEMData(id=('scope',), initializer=stuff)
 		elif emkey == 'camera':
-			result = data.CameraEMData(('camera',), initializer=stuff)
+			result = data.CameraEMData(id=('camera',), initializer=stuff)
 		elif emkey == 'all em':
-			result = data.AllEMData(('all em',), initializer=stuff)
+			result = data.AllEMData(id=('all em',), initializer=stuff)
 		else:
 			### could be either CameraEMData or ScopeEMData
 			newid = self.ID()
-			for dataclass in (data.ScopeEMData,data.CameraEMData):
-				tryresult = dataclass(newid)
+			trydatascope = data.ScopeEMData(id=('scope',))
+			trydatacamera = data.CameraEMData(id=('camera',))
+			for trydata in (trydatascope, trydatacamera):
 				try:
-					tryresult.update(stuff)
-					result = tryresult
+					trydata.update(stuff)
+					result = trydata
 					break
 				except KeyError:
 					result = None
-
 
 		print 'EM query: UI update'
 		self.node.uiUpdate()
