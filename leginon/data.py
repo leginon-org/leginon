@@ -243,17 +243,20 @@ class NumericData(Data):
 		return t
 	typemap = classmethod(typemap)
 
-### maybe split this up into scope and camera?
 class EMData(Data):
+	def typemap(cls):
+		t = Data.typemap()
+		t += [ ('system time', float), ]
+		return t
+	typemap = classmethod(typemap)
+
+### maybe split this up into scope and camera?
+class ScopeEMData(EMData):
 	def typemap(cls):
 		t = Data.typemap()
 		t += [ ('screen current', float), 
 			('beam blank', str), 
-			('gun tilt', dict),
-			('gun shift', dict),
-			('high tension', float),
 			('intensity', float),
-          		('dark field mode', str),
 			('stigmator', dict),
 			('spot size', int),
 			('beam tilt', dict),
@@ -262,15 +265,28 @@ class EMData(Data):
 			('defocus', float),
 			('magnification', int),
 			('stage position', dict),
-			('low dose', str),
-			('low dose mode', str),
-			('diffraction mode', str),
 			('reset defocus', int),
+		]
+		return t
+	typemap = classmethod(typemap)
 
-			('offset', dict),
+class CameraEMData(EMData):
+	def typemap(cls):
+		t = Data.typemap()
+		t += [ ('offset', dict),
 			('dimension', dict),
 			('binning', dict),
 			('exposure time', float),
+			('image data', Numeric.ArrayType),
+		]
+		return t
+	typemap = classmethod(typemap)
+
+class AllEMData(EMData):
+	def typemap(cls):
+		t = Data.typemap()
+		t += [ ('scope', ScopeEMData),
+			('camera', CameraEMData),
 		]
 		return t
 	typemap = classmethod(typemap)

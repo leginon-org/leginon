@@ -19,9 +19,26 @@ if sys.platform == 'win32':
 #class DataHandler(datahandler.DataBinder):
 class DataHandler(node.DataHandler):
 	def query(self, id):
-		stuff = self.node.getEM([id[0]])
-		result = data.EMData(self.ID())
-		result.update(stuff)
+		emkey = id[0]
+		stuff = self.node.getEM([emkey])
+
+		if emkey == 'scope':
+			result = data.ScopeEMData(self.ID(), initializer=stuff)
+		elif emkey == 'camera':
+			result = data.CameraEMData(self.ID(), initializer=stuff)
+		elif emkey == 'all':
+			result = data.AllEMData(self.ID(), initializer=stuff)
+		else:
+			### could be either CameraEMData or ScopeEMData
+			newid = self.ID()
+			for dataclass in (data.ScopeEMData,data.CameraEMData):
+				tryresult = dataclass(newid)
+				try:
+					tryresult.update(stuff)
+					result = tryresult
+					break
+				except KeyError:
+					result = None
 		return result
 
 	def insert(self, idata):
@@ -101,7 +118,8 @@ class EM(node.Node):
 			self.locknodeid = None
 			self.nodelock.release()
 
-	def pruneEMdict(self, emdict):
+	### now this is handled by EMData
+	def OLDpruneEMdict(self, emdict):
 		'''
 		restrict access to certain scope parameters
 		'''
@@ -169,11 +187,11 @@ class EM(node.Node):
 			result.update(self.camera)
 
 		self.lock.release()
-		self.pruneEMdict(result)
+		#self.pruneEMdict(result)
 		result['system time'] = time.time()
 		return result
 
-	def sortEMdict(self, emdict):
+	def OLDsortEMdict(self, emdict):
 		'''
 		sort items in em dict for proper setting order
 		'''
@@ -201,22 +219,25 @@ class EM(node.Node):
 		newdict.update(olddict)
 		return newdict
 
-	def setEM(self, EMstate):
+	def setEM(self, emstate):
 		self.lock.acquire()
 
 		### order the items in EMstate
-		ordered = self.sortEMdict(EMstate)
+		#ordered = self.sortEMdict(EMstate)
 
-		for EMkey in ordered.keys():
-			if EMkey in self.scope:
+		#for EMkey in ordered.keys():
+		for emkey, emvalue in emstate.items():
+			if emvalue is None:
+				continue
+			if emkey in self.scope:
 				try:
-					self.scope[EMkey] = ordered[EMkey]
+					self.scope[emkey] = emvalue
 				except:	
-					#print "failed to set '%s' to" % EMkey, EMstate[EMkey]
+					print "failed to set '%s' to %s" % (emkey, emvalue)
 					pass
-			elif EMkey in self.camera:
+			elif emkey in self.camera:
 				try:
-					self.camera[EMkey] = ordered[EMkey]
+					self.camera[emkey] = emvalue
 				except:	
 					#print "failed to set '%s' to" % EMkey, EMstate[EMkey]
 					pass

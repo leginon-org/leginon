@@ -18,6 +18,7 @@ class CameraFuncs(object):
 	def acquireCameraImageData(self, camstate=None, correction=None):
 		## configure camera
 		if camstate is not None:
+			print 'CAMSTATE', camstate
 			self.state(camstate)
 
 		if correction is None:
@@ -34,8 +35,8 @@ class CameraFuncs(object):
 			camdata = self.node.researchByDataID(('camera',))
 
 			### move image to its own key
-			numimage = cameradict['image data']
-			cameradict['image data'] = None
+			numimage = camdata['image data']
+			camdata['image data'] = None
 			dataid = self.node.ID()
 			imdata = data.CameraImageData(dataid, image=numimage, scope=scopedata, camera=camdata)
 		return imdata
@@ -49,11 +50,12 @@ class CameraFuncs(object):
 		if camstate is not None:
 			t2 = Timer('publish camera state')
 			try:
-				camdata = data.EMData(('camera',), em=camstate)
+				camdata = data.EMData(('camera',), initializer=camstate)
+				print 'CAMDATA', camdata
 				self.node.publishRemote(camdata)
 			except Exception, detail:
-				print detail
 				print 'camerafuncs.state: unable to set camera state'
+				raise
 			t2.stop()
 
 		try:

@@ -90,7 +90,7 @@ class Focuser(acquisition.Acquisition):
 		newz = stage['stage position']['z'] + delta
 		newstage = {'stage position': {'z': newz }}
 		newstage['reset defocus'] = 1
-		emdata = data.EMData(('scope',), em=newstage)
+		emdata = data.EMData(('scope',), initializer=newstage)
 		print 'correcting stage Z by %s' % (delta,)
 		self.publishRemote(emdata)
 

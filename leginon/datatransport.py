@@ -55,7 +55,7 @@ class Client(Base):
 			except IOError:
 				pass
 		self.printerror("IOError, unable to push data " + str(odata))
-		raise IOError
+		raise IOError()
 
 class Server(Base):
 	def __init__(self, id, dh, tcpport=None):

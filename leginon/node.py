@@ -323,19 +323,32 @@ class Node(leginonobject.LeginonObject):
 	def publishRemote(self, idata):
 		'''Publish a piece of data with the specified data ID, setting all other data with the same data ID to the data value (including other nodes).'''
 		dataid = idata['id']
+		print 'AAAAAAAAAAA'
 		nodeiddata = self.researchByLocation(self.nodelocations['manager'], dataid)
+		print 'BBBBBBBBBB'
 		if nodeiddata is None:
+			print 'CCCCCCCCCCCC'
 			# try a partial ID lookup
 			nodeiddata = self.researchByLocation(self.nodelocations['manager'], dataid[:1])
+		print 'DDDDDDDDDDDDDDD'
 
 		if nodeiddata is None:
+			print 'EEEEEEEEEEE'
 			raise PublishError('No such Data ID: %s' % (dataid,))
 
+		print 'FFFFFFFFFFFF'
 		for nodeid in nodeiddata['location']:
-			nodelocation = self.researchByLocation(self.nodelocations['manager'],
-				nodeid)
+			print 'GGGGGGGGGGGGGG'
+			print 'self.nodelocations[manager]', self.nodelocations['manager']
+			print 'nodeid', nodeid
+			nodelocation = self.researchByLocation(self.nodelocations['manager'], nodeid)
+			print 'nodelocation[location]', nodelocation['location']
 			client = self.clientclass(self.ID(), nodelocation['location'])
+			print 'client', client
+			print 'idata', idata
 			client.push(idata)
+
+		print 'HHHHHHHHHHHHHHH'
 
 	def locateDataByID(self, dataid):
 		'''

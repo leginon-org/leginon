@@ -21,6 +21,7 @@ class Server(leginonobject.LeginonObject):
 		pass
 
 	def location(self):
+		print 'LOCATION()'
 		loc = leginonobject.LeginonObject.location(self)
 		loc['local server python ID'] = self.pythonid
 		return loc
@@ -44,6 +45,7 @@ class Client(leginonobject.LeginonObject):
 		except KeyError:
 			localserverdictlock.release()
 			raise IOError
+
 
 		if server is None:
 			localserverdictlock.release()
