@@ -38,6 +38,25 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		self.addEventInput(event.TargetListDoneEvent, self.handleTargetListDone)
 		self.targetlistevents = {}
 
+	def researchImageTargets(self, imagedata):
+		'''
+		get a list of all targets that have this image as parent
+		'''
+		targetquery = data.AcquisitionImageTargetData()
+		imagequery = data.AcquisitionImageData(initializer=imagedata)
+		imagequery['image'] = None
+		targetquery['image'] = imagequery
+		targets = self.research(datainstance=targetquery, fill=False)
+		return targets
+
+	def lastTargetIndex(self, imagedata):
+		targets = self.researchImageTargets(imagedata)
+		maxindex = 0
+		for target in targets:
+			if target['index'] > maxindex:
+				maxindex = target['index']
+		return maxindex
+
 	def findTargets(self, imdata):
 		'''
 		this should build self.targetlist, a list of 
