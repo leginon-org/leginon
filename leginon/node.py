@@ -141,13 +141,16 @@ class Node(leginonobject.LeginonObject):
 				self.idcount = 0
 			self.idcount += 1
 	
-			fname = ''
 			if self.session is not None:
 				session_name = self.session['name']
-				fname = fname + session_name + '_'
+			else:
+				session_name = ''
+
 			my_name = self.id[-1]
-			fname = fname + my_name + '.id'
-			fullname = os.path.join(leginonconfig.PREFS_PATH, fname)
+			fname = my_name + '.id'
+			idpath = os.path.join(leginonconfig.ID_PATH, session_name)
+			leginonconfig.mkdirs(idpath)
+			fullname = os.path.join(idpath, fname)
 			try:
 				f = open(fullname, 'r')
 				last_count = cPickle.load(f)

@@ -70,7 +70,9 @@ DB_PROJECT_PASS		= ''
 ## use os.getcwd() for current directory
 LEGINON_PATH	= os.getcwd()
 IMAGE_PATH	= os.path.join(LEGINON_PATH, 'images')
-PREFS_PATH	= os.path.join(LEGINON_PATH, 'prefs')
+HOME_PATH	= os.path.expanduser('~')
+PREFS_PATH	= os.path.join(HOME_PATH, '.leginon', 'prefs')
+ID_PATH		= os.path.join(HOME_PATH, '.leginon', 'ids')
 
 ## create those paths
 try:
