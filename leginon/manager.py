@@ -14,6 +14,7 @@ import uidata
 import datahandler
 import leginonobject
 import socket
+import os
 
 class DataHandler(node.DataHandler):
 	def __init__(self, id, session, mynode):
@@ -780,9 +781,7 @@ class ManagerSetup(object):
 			return self.getSession(session_name)
 
 	def getSession(self, session_name):
-		initializer = {'name': session_name,
-										'user': self.uiGetUser(),
-										'instrument': self.uiGetInstrument()}
+		initializer = {'name': session_name, 'user': self.uiGetUser(), 'instrument': self.uiGetInstrument(), 'image path': self.image_path.get()}
 		return data.SessionData(initializer=initializer)
 
 	def initInstruments(self):
@@ -956,6 +955,10 @@ class ManagerSetup(object):
 		session_name = time.strftime('%Y-%m-%d-%H-%M')
 		self.session_name = uidata.String('Session Name', session_name, 'rw')
 		self.container.addObject(self.session_name)
+		## default path comes from leginonconfig
+		image_path = os.path.join(leginonconfig.IMAGE_PATH,session_name)
+		self.image_path = uidata.String('Image Path', image_path, 'rw')
+		self.container.addObject(self.image_path)
 
 		startmethod = uidata.Method('Start', self.start)
 		self.container.addObject(startmethod)
