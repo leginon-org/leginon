@@ -16,6 +16,7 @@ import uidata
 import Queue
 
 if sys.platform == 'win32':
+	sys.coinit_flags = 0
 	import pythoncom
 
 #class DataHandler(datahandler.DataBinder):

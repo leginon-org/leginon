@@ -725,9 +725,7 @@ class wxComboBoxWidget(wxContainerWidget):
 		self.combobox.Enable(false)
 		EVT_COMBOBOX(self.parent, self.combobox.GetId(), self.apply)
 		self.label = wxStaticText(self.parent, -1, self.name + ':')
-		#self.wxwidget.Add(self.label, 0, wxALIGN_CENTER | wxALL, 5)
 		self.wxwidget.Add(self.label, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
-		#self.wxwidget.Add(self.combobox, 0, wxALIGN_CENTER | wxALL, 5)
 		self.wxwidget.Add(self.combobox, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
 		self.value = {'List': None, 'Selected': None}
 

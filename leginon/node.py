@@ -15,9 +15,6 @@ import uidata
 False = 0
 True = 1
 
-#if sys.platform == 'win32':
-#	sys.coinit_flags = 0
-
 class DataHandler(leginonobject.LeginonObject):
 	'''
 	handles data published by the node

@@ -310,18 +310,20 @@ class UISingleSelectFromList(UIContainer):
 
 class UISelectFromList(UIContainer):
 	typelist = UIContainer.typelist + ('select from list',)
-	# callback
-	def __init__(self, name, listvalue, selectedvalue,
-											permissions='r', callback=None):
+	def __init__(self, name, listvalue, selectedvalues, permissions='r',
+								callback=None):
 		UIContainer.__init__(self, name)
 		self.list = UIArray('List', listvalue, permissions)
-		self.selected = UIArray('Selected', selectedvalue, 'rw', callback)
+		self.selected = UIArray('Selected', selectedvalues, 'rw', callback)
 		self.addUIObject(self.list)
 		self.addUIObject(self.selected)
 
-	def set(self, listvalue, selectedvalue):
+	def setCallback(self, callback):
+		self.selected.setCallback(callback)
+
+	def set(self, listvalue, selectedvalues):
 		self.setList(listvalue)
-		self.setSelected(selectedvalue)
+		self.setSelected(selectedvalues)
 
 	def getList(self):
 		return self.list.get()
@@ -332,10 +334,10 @@ class UISelectFromList(UIContainer):
 	def getSelected(self):
 		return self.selected.get()
 
-	def setSelected(self, selectedvalue):
-		self.selected.set(selectedvalue)
+	def setSelected(self, selectedvalues):
+		self.selected.set(selectedvalues)
 
-	def getSelectedValue(self, selected=None):
+	def getSelectedValues(self, selected=None):
 		value = []
 		valuelist = self.getList()
 		if selected is None:
