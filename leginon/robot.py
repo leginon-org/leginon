@@ -271,7 +271,7 @@ class Robot(node.Node):
 			threshold = self.getColumnPressureThreshold()
 		self.logger.info('Column pressure is below threshold.')
 
-	def highTensionOn(self):
+	def checkHighTensionOn(self):
 		self.logger.info('Checking high tension state...')
 		self.waitScope('HighTensionState', 'on', 0.25)
 		self.logger.info('High tension is on.')
@@ -326,7 +326,7 @@ class Robot(node.Node):
 		self.logger.info('Readying microscope for imaging...')
 		self.turboPumpOff()
 		self.insertCameras()
-		self.highTensionOn()
+		self.checkHighTensionOn()
 		self.vacuumReady()
 		self.checkColumnPressure()
 		self.openColumnValves()
