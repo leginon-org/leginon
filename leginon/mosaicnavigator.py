@@ -50,7 +50,7 @@ class MosaicNavigator(navigator.Navigator):
 		print 'nearest tile position =', mosaicdata[nearesttile]['position']
 		print 'delta row: %s, column: %s' % (nearestdelta[0], nearestdelta[1])
 
-		self.publishRemote(data.EMData('all', mosaicdata[nearesttile]['state']))
+		self.publishRemote(data.EMData('all', mosaicdata[nearesttile]['scope']))
 #		e = self.shiftEventClass(self.ID(),
 #									{'row': nearestdelta[0], 'column': nearestdelta[1]})
 #		self.outputEvent(e)
