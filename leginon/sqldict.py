@@ -384,24 +384,30 @@ class SQLDict:
 	    c.execute(q)
 	    return c
 
-	def insert2(self, v=[]):
+	def insert(self, v=[], force=0):
+	    """Insert a list of dictionaries into a SQL table. If the data
+	    already exist, they won't be inserted again in the SQL table, 
+	    unless force is true. The function returns the last inserted table
+	    id for a new insert or an existing primary key."""
 	    c = self.cursor()
-	    print 'V'
-	    print v
-	    wherelist = sqlexpr.whereFormatSimple(v[0])
-	    print 'WHERELIST'
-	    print wherelist
-	    qsel = sqlexpr.SelectAll(self.table, where=wherelist).sqlRepr()
-	    print 'QSEL'
-	    print qsel
+	    wherefields = v[0].keys()
+	    wherevalues = v[0].values()
+	    whereFormatfields = map(lambda id: sqlexpr.Field(self.table, id), wherefields)
+	    whereFormat = sqlexpr.AND_EQUAL(zip(whereFormatfields,wherevalues))
+	    qsel = sqlexpr.SelectAll(self.table, where=whereFormat).sqlRepr()
 	    c.execute(qsel)
-	    print 'cursor after query'
-	    print c.fetchall()
-	    q = sqlexpr.Insert(self.table, v).sqlRepr()
-	    c.execute(q)
-	    return c.insert_id()
+	    result=c.fetchone()
+	    if result is not None and not force:
+		try:
+			return result['DEF_id']
+		except KeyError:
+			raise KeyError('No Primary Key found')
+	    else:
+		q = sqlexpr.Insert(self.table, v).sqlRepr()
+		c.execute(q)
+		return c.insert_id()
 
-	def insert(self, v=[]):
+	def insert2(self, v=[]):
 	    c = self.cursor()
 	    q = sqlexpr.Insert(self.table, v).sqlRepr()
 	    c.execute(q)
