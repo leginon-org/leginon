@@ -80,7 +80,7 @@ class TargetWatcher(watcher.Watcher):
 		goodtargets = []
 		rejects = []
 		for target in targetlist:
-			if target['type'] is self.target_type:
+			if target['type'] == self.target_type:
 				print 'GOOD', target['id'], target['type']
 				goodtargets.append(target)
 			else:
@@ -96,7 +96,7 @@ class TargetWatcher(watcher.Watcher):
 
 			# decide whether or not to continue doing the
 			# good targets based on result of reject targets
-			if rejectstatus is not 'success':
+			if rejectstatus != 'success':
 				## report my status as reject status
 				## may not be a good idea all the time
 				## This means if rejects were aborted
@@ -120,7 +120,9 @@ class TargetWatcher(watcher.Watcher):
 			print 'STARTING NEW TARGET', target['id']
 
 			### if this target is done, skip it
+			print 'TARGET STATUS', target['status']
 			if target['status'] == 'done':
+				print 'target already done'
 				continue
 
 			try:
