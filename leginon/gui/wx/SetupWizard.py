@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/SetupWizard.py,v $
-# $Revision: 1.11 $
+# $Revision: 1.12 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-10 19:42:35 $
-# $Author: suloway $
+# $Date: 2005-03-18 00:07:39 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -743,7 +743,7 @@ class Setup(object):
 						_indexBy('name', sessiondatalist))
 
 	def getProjects(self):
-		if not self.projectdata is None:
+		if self.projectdata is None:
 			return {}
 		projects = self.projectdata.getProjects()
 		projectdatalist = projects.getall()
