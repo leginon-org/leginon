@@ -51,7 +51,6 @@ class PresetsClient(object):
 		if session is None:
 			session = self.node.session
 
-		print 'GETPRESETFROMDB', id(session)
 		## find presets that belong to this session
 		pquery = data.PresetData(session=session)
 		plist = self.node.research(datainstance=pquery)
@@ -76,7 +75,6 @@ class PresetsClient(object):
 				pdict[pname] = p
 			else:
 				pdict[pnumber] = p
-			print 'PSESSION', pname, id(p['session'])
 
 		## sort by number (maybe name if old, non-numbered data)
 		keys = pdict.keys()
@@ -216,18 +214,13 @@ class PresetsManager(node.Node):
 
 		if session is None:
 			self.presets = pdict
-			print 'ASDFASDF'
-			for p in self.presets.values():
-				'PM P SES', id(p['session'])
 		else:
-			print 'PM SESSION', id(self.session)
 			## make new presets with this session
 			self.presets = strictdict.OrderedDict()
 			for name, preset in pdict.items():
 				newp = data.PresetData(initializer=preset, session=self.session)
 				self.presetToDB(newp)
 				self.presets[name] = newp
-				print 'PM P SES', id(newp['session'])
 		# this will fill in numbers that might be missing
 		self.setOrder()
 
@@ -259,14 +252,12 @@ class PresetsManager(node.Node):
 		number = 0
 		for name in names:
 			p = self.presets[name]
-			print 'OR', id(p['session'])
 			if p['number'] != number:
 				newp = data.PresetData(initializer=p, number=number)
 				self.presetToDB(newp)
 			else:
 				newp = p
 			newdict[name] = newp
-			print 'ORNEW', id(newp['session'])
 			number += 1
 		self.presets = newdict
 		## only set the UI if this was not from a callback
@@ -723,10 +714,7 @@ class PresetsManager(node.Node):
 		container = uidata.LargeContainer('Presets Manager')
 		container.addObject(self.messagelog, position={'expand': 'all'})
 		container.addObjects((statuscontainer, changecont, importcont, newfromscopecont, selectcont, imagecont))
-		print 'THIS IS SLOW'
 		self.uicontainer.addObject(container)
-		print 'SEE HOW SLOW IT WAS'
-
 		return
 
 	def XXXuiAcquireRef(self):
