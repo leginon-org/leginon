@@ -415,15 +415,16 @@ class Panel(gui.wx.Node.Panel):
 			if self.dosedialog.ShowModal() == wx.ID_OK:
 				self.node.saveDose(self.dosedialog.dose,
 														self.presets.getSelectedPreset())
-			self.setImage(None)
+			self.dosedialog.image.setImage(None)
 
 	def onSetDoseValue(self, evt):
 		self.dosedialog.setDose(evt.dose)
 
 	def onAcquireDoseImage(self, evt):
+		presetname = self.presets.getSelectedPreset()
 		self._presetsEnable(False)
 		target = self.node.acquireDoseImage
-		args = (self.presets.getSelectedPreset(),)
+		args = (presetname,)
 		threading.Thread(target=target, args=args).start()
 
 	def onImport(self, evt):

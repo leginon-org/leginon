@@ -653,20 +653,30 @@ class PresetsManager(node.Node):
 		self.sessiondict = dict(zip(sessionnamelist, sessionlist))
 
 	def acquireDoseImage(self, presetname):
-		if self.currentpreset is None or self.currentpreset['name'] != presetname:
-			self._cycleToScope(presetname)
-		if self.currentpreset is None or self.currentpreset['name'] != presetname:
+		errstr = 'Acquire dose image failed: %s'
+
+		if not presetname:
+			e = 'invalid preset \'%s\'' % presetname
+			self.logger.error(errstr % e)
 			self.panel.presetsEvent()
 			return
+
+		if self.currentpreset is None or self.currentpreset['name'] != presetname:
+			self._cycleToScope(presetname)
+
+		if self.currentpreset is None or self.currentpreset['name'] != presetname:
+			e = 'cannot go to preset \'%s\'' % presetname
+			self.logger.error(errstr % e)
+			self.panel.presetsEvent()
+			return
+
 		self._acquireDoseImage()
+
 		self.panel.presetsEvent()
 
 	def _acquireDoseImage(self):
 		errstr = 'Acquire dose image failed: %s'
-		if self.currentpreset is None:
-			self.logger.error('Please go to a preset before measuring dose')
-			return
-		self.logger.info('Acquiring dose image using preset config at 512x512')
+		self.logger.info('Acquiring dose image at 512x512')
 		camdata0 = data.CameraEMData()
 		camdata0.friendly_update(self.currentpreset)
 
