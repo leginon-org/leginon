@@ -7,10 +7,13 @@ import leginonobject
 class Application(leginonobject.LeginonObject):
 	def __init__(self, id, manager):
 		leginonobject.LeginonObject.__init__(self, id)
-
 		self.manager = manager
+		self.initApp()
+
+	def initApp(self):
 		self.launchspec = []
 		self.bindspec = []
+		self.launchednodes = []
 
 	def addLaunchSpec(self, args):
 		if args not in self.launchspec:
@@ -28,13 +31,19 @@ class Application(leginonobject.LeginonObject):
 
 	def launch(self):
 		for args in self.launchspec:
-			print 'ARGS', args
-			apply(self.manager.launchNode, args)
+			print 'LAUNCH ARGS', args
+			newid = apply(self.manager.launchNode, args)
+			print 'NEWID', newid
+			self.launchednodes.append(newid)
 		for args in self.bindspec:
+			print 'BIND ARGS', args
 			apply(self.manager.addEventDistmap, args)
 
 	def kill(self):
-		pass
+		while self.launchednodes:
+			nodeid = self.launchednodes.pop()
+			print 'KILLING %s' % (nodeid,)
+			self.manager.killNode(nodeid)
 
 	def save(self, filename):
 		s = shelve.open(filename)

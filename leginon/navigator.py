@@ -3,6 +3,7 @@
 import node
 import event
 import data
+import time
 
 class Navigator(node.Node):
 	def __init__(self, id, nodelocations):
@@ -64,6 +65,9 @@ class Navigator(node.Node):
 		self.outputEvent(e)
 		print 'outputEvent done'
 
+		# wait for a while
+		time.sleep(self.delaydata.get())
+
 		## acquire image
 		self.acquireImage()
 
@@ -87,7 +91,9 @@ class Navigator(node.Node):
 		movetype = self.registerUIData('TEM Parameter', 'string', choices=temparam, permissions='rw')
 		movetype.set(self.shiftType)
 
-		self.registerUISpec('Navigator', (movetype, nodeui))
+		self.delaydata = self.registerUIData('Delay (sec)', 'float', default=2.5, permissions='rw')
+
+		self.registerUISpec('Navigator', (movetype, self.delaydata, nodeui))
 
 
 if __name__ == '__main__':

@@ -102,13 +102,19 @@ class Correlator(object):
 	def phaseCorrelate(self):
 		# elementwise phase-correlation =
 		# cross-correlation / magnitude(cross-correlation
+		print 'phaseCorrelate start'
 		if self.results['phase correlation image'] is None:
+			print 'crossCorrelation'
 			self.crossCorrelationFFT()
 			ccfft = self.results['cross correlation fft']
+			print 'calc pcfft'
 			pcfft = ccfft / Numeric.absolute(ccfft)
 			self.results['phase correlation fft'] = pcfft
+			print 'itransform'
 			pc = self.fftengine.itransform(pcfft)
+			print 'itransform done'
 			self.results['phase correlation image'] = pc
+		print 'phastCorrelate returning'
 		return pc
 
 #### this is a utility function to convert an unsigned coordinate

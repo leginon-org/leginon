@@ -54,29 +54,48 @@ class ImViewer(watcher.Watcher):
 		print 'sent ImageClickEvent'
 
 	def open_viewer(self):
+		print 'root...'
 		root = self.root = Tk()
 		root.wm_maxsize(800,800)
+		print 'iv'
 		self.iv = ImageViewer(root, bg='#488')
 		self.iv.bindCanvas('<Double-1>', self.clickEvent)
+		print 'iv pack'
 		self.iv.pack()
-		self.acqbut = Button(root, text='Acquire', command=self.acquireEvent)
+		print 'acqbut'
+		self.acqeventbut = Button(root, text='Acquire Event', command=self.acquireEvent)
+		self.acqeventbut.pack()
+		self.acqbut = Button(root, text='Acquire', command=self.acquire)
 		self.acqbut.pack()
+		print 'viewer_ready.set'
 		self.viewer_ready.set()
+		print 'mainloop'
 		root.mainloop()
+		print 'viewer_ready.clear'
 		self.viewer_ready.clear()
+		print 'viewer_ready.cleared'
 		self.iv = None
 
 	def close_viewer(self):
-		self.root.destroy()
+		try:
+			self.root.destroy()
+		except TclError:
+			pass
+
+	def acquire(self):
+		self.acqbut['state'] = DISABLED
+		imdata = self.researchByDataID('image data')
+		self.displayNumericArray(imdata['image data'])
+		self.acqbut['state'] = NORMAL
 
 	def acquireEvent(self):
-		self.acqbut['state'] = DISABLED
+		self.acqeventbut['state'] = DISABLED
 		print 'sending ImageAcquireEvent'
 		e = event.ImageAcquireEvent(self.ID())
 		print 'e', e
 		self.outputEvent(e)
 		print 'sent ImageAcquireEvent'
-		self.acqbut['state'] = NORMAL
+		self.acqeventbut['state'] = NORMAL
 	
 	def processData(self, imagedata):
 		#camdict = imagedata.content

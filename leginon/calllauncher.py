@@ -36,6 +36,7 @@ class CallLauncher(object):
 		callinfo['type'] = launchtype
 		callinfo['handle'] = c
 		self.calls.append(callinfo)
+		print 'CALLINFO', callinfo
 	
 	def newCallThread(self, targetcall, args=(), kwargs={}):
 		"""
@@ -53,10 +54,14 @@ class CallLauncher(object):
 		"""
 		pid = os.fork()
 		if pid:
+			print 'THIS IS PARENT PROCESS, child is %s' % (pid,)
 			return pid
 		else:
+			print 'THIS IS CHILD PROCESS'
+			print 'applying targetcall'
 			apply(targetcall, args, kwargs)
-			sys.exit()
+			print 'apply returned'
+			#sys.exit()
 	
 	def newCallPipe(self, targetcall, args=(), kwargs={}):
 		"""

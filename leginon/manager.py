@@ -135,7 +135,7 @@ class Manager(node.Node):
 
 		# for the clients and mapping
 		self.addEventClient(nodeid, nodelocation)
-		print self.clients
+		print 'REGISTER NODE clients', self.clients
 
 		# published data of nodeid mapping to location of node
 		nodelocationdata = self.server.datahandler.query(nodeid)
@@ -235,7 +235,10 @@ class Manager(node.Node):
 
 		newid = self.nodeID(name)
 		args = (newid, self.nodelocations) + nodeargs
+		print 'LAUNCHNODE'
 		self.launch(launcher, newproc, target, args)
+		print 'LAUNCHNODE launch(...'
+		return newid
 
 	def launch(self, launcher, newproc, target, args=(), kwargs={}):
 		"""
@@ -244,8 +247,13 @@ class Manager(node.Node):
 		target = name of a class in this launchers node class list
 		args, kwargs = args for callable object
 		"""
+		print 'MANAGER LAUNCH'
 		ev = event.LaunchEvent(self.ID(), newproc, target, args, kwargs)
-		self.clients[launcher].push(ev)
+		print 'EV', ev
+		#self.clients[launcher].push(ev)
+		print 'CLIENTS', self.clients
+		self.outputEvent(ev, nodeid=launcher)
+		print 'MANAGER LAUNCH DONE'
 
 	def killNode(self, nodeid):
 			try:
@@ -280,6 +288,10 @@ class Manager(node.Node):
 
 	def launchApp(self):
 		self.app.launch()
+		return ''
+
+	def killApp(self):
+		self.app.kill()
 		return ''
 
 	def distribute(self, ievent):
@@ -374,8 +386,9 @@ class Manager(node.Node):
 		saveapp = self.registerUIMethod(self.saveApp, 'Save', argspec)
 		loadapp = self.registerUIMethod(self.loadApp, 'Load', argspec)
 		launchapp = self.registerUIMethod(self.launchApp, 'Launch', ())
+		killapp = self.registerUIMethod(self.killApp, 'Kill', ())
 
-		app = self.registerUIContainer('Application', (saveapp, loadapp, launchapp))
+		app = self.registerUIContainer('Application', (saveapp, loadapp, launchapp, killapp))
 
 		argspec = (self.registerUIData('ID', 'string'),)
 		newlauncherspec = self.registerUIMethod(self.newLauncher, 'New Launcher', (argspec))
@@ -433,7 +446,9 @@ class Manager(node.Node):
 			print 'problem evaluating args'
 			return
 
+		print 'uiLaunch launchNode...'
 		self.launchNode(launcher_id, newproc, nodeclass, name, args)
+		print 'uiLaunch launchNode... done'
 
 		## just to make xmlrpc happy
 		return ''

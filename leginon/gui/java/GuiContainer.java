@@ -96,6 +96,10 @@ class GuiMethod {
 
 			if (xmlrpctype.equals("string"))
     				new AddTextField(name, 20, defaultval, widgets, mainPanel);
+			if (xmlrpctype.equals("integer"))
+    				new AddTextField(name, 20, defaultval, widgets, mainPanel);
+			if (xmlrpctype.equals("float"))
+    				new AddTextField(name, 20, defaultval, widgets, mainPanel);
 
 			if (xmlrpctype.equals("boolean"))
 				new AddCheckBox(name, widgets, mainPanel);

@@ -22,7 +22,9 @@ class Client(datatransport.Client):
 
 	def push(self, idata):
 #		if isinstance(idata, event.Event):
+		print 'node.Client.push...'
 		datatransport.Client.push(self, idata)
+		print 'node.Client.push... datatrans... returned'
 #		else:
 #			raise event.InvalidEventError('event must be Event instance')
 
@@ -202,8 +204,10 @@ class Node(leginonobject.LeginonObject):
 		self.exit()
 
 	def outputEvent(self, ievent, wait=0, nodeid=('manager',)):
+		print 'trying self.clients[nodeid].push(ievent)'
 		try:
 			self.clients[nodeid].push(ievent)
+			print 'successful'
 		except KeyError:
 			#print 'cannot output event %s to %s' % (ievent,nodeid)
 			return
@@ -230,10 +234,14 @@ class Node(leginonobject.LeginonObject):
 	def publish(self, idata, eventclass=event.PublishEvent, confirm=False):
 		if not issubclass(eventclass, event.PublishEvent):
 			raise TypeError('PublishEvent subclass required')
+		print 'datahandler._insert'
 		self.server.datahandler._insert(idata)
 		# this idata.id is content, I think
+		print 'publish event class', eventclass
 		e = eventclass(self.ID(), idata.id, confirm)
+		print 'publish event', e
 		self.outputEvent(e)
+		print 'done output event'
 		return e
 
 	def unpublish(self, dataid, eventclass=event.UnpublishEvent):

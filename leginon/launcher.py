@@ -60,10 +60,13 @@ class Launcher(node.Node):
 		nodeclass = nodeclassreg.getNodeClass(targetclass)
 
 		## thread or process
+		print 'newproc', newproc
 		if newproc:
 			self.caller.launchCall('fork',nodeclass,args,kwargs)
 		else:
 			self.caller.launchCall('thread',nodeclass,args,kwargs)
+		print 'DONE with launchCall'
+
 
 	def defineUserInterface(self):
 		nint = node.Node.defineUserInterface(self)

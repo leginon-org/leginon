@@ -12,58 +12,39 @@ import LinearAlgebra
 False=0
 True=1
 
+def centerOffset(xsize,ysize):
+	'''determine offset to use image from camera center for 2k camera'''
+	offset = {'x': 1024 - xsize/2, 'y': 1024 - ysize/2}
+	return offset
+
 class Calibration(node.Node):
 	def __init__(self, id, nodelocations):
-		self.camerastate = {"offset": {'x': 0, 'y': 0}, \
-												"dimension": {'x': 512, 'y': 512}, \
-												"binning": {'x': 1, 'y': 1}, \
-												"exposure time" : 500}
 
 		ffteng = fftengine.fftNumeric()
-		#if sys.platform == 'win32':
-		#	ffteng = fftengine.fftNumeric()
-		#else:
-		#	ffteng = fftengine.fftFFTW(planshapes=(), estimate=1)
+		#ffteng = fftengine.fftFFTW(planshapes=(), estimate=1)
 		self.correlator = correlator.Correlator(ffteng)
 		self.peakfinder = peakfinder.PeakFinder()
 
 		#### parameters for user to set
 		self.attempts = 5
 		self.range = [1e-7, 1e-6]
+		self.base = {'x': 0.0, 'y':0.0}
+		self.correlationthreshold = 0.05
+		self.camerastate = {"offset": centerOffset(512,512), \
+												"dimension": {'x': 512, 'y': 512}, \
+												"binning": {'x': 1, 'y': 1}, \
+												"exposure time" : 500}
 		####
 
 		# correlation maybe goes into a different node
-		self.validshift = \
-			{'correlation':
-				{'pixel':
-					{'x': {'min': None, 'max': None}, 'y': {'min': None, 'max': None}},
-				'percent':
-					{'x': {'min': None, 'max': None}, 'y': {'min': None, 'max': None}}},
-			'calibration':
-				{'pixel':
-					{'x': {'min': None, 'max': None}, 'y': {'min': None, 'max': None}},
-				'percent':
-					{'x': {'min': None, 'max': None}, 'y': {'min': None, 'max': None}}}}
 
-		self.validShiftCallback(
-			{'correlation':
-				{'pixel':
-					{'x': {'min': None, 'max': None}, 'y': {'min': None, 'max': None}},
-				'percent':
-					{'x': {'min': 10.0, 'max': 50.0}, 'y': {'min': 10.0, 'max': 50.0}}},
-			'calibration':
-				{'pixel':
-					{'x': {'min': None, 'max': None}, 'y': {'min': None, 'max': None}},
-				'percent':
-					{'x': {'min': 10.0, 'max': 50.0}, 'y': {'min': 10.0, 'max': 50.0}}}})
-
-		self.correlationthreshold = 0.05
 		# asdf
 		self.axislist = ['x', 'y']
+
 		self.calibration = {}
+		self.clearStateImages()
 
 		node.Node.__init__(self, id, nodelocations)
-		self.clearStateImages()
 
 	def validShiftCallback(self, value=None):
 		if value:
@@ -109,7 +90,7 @@ class Calibration(node.Node):
 	def main(self):
 		pass
 
-	def state(self, value):
+	def state(self, value, axis):
 		raise NotImplementedError()
 
 	# calibrate needs to take a specific value
@@ -126,13 +107,16 @@ class Calibration(node.Node):
 		# might reuse value from previous axis
 		for axis in self.axislist:
 			print "axis =", axis
+			basevalue = self.base[axis]
 			for i in range(self.attempts):
 				print "attempt =", i
-				value = (adjustedrange[1] - adjustedrange[0]) / 2 + adjustedrange[0]
-				print 'value', value
+				delta = (adjustedrange[1] - adjustedrange[0]) / 2 + adjustedrange[0]
+				print 'delta', delta
+				newvalue = basevalue + delta
+				print 'newvalue', newvalue
 
-				state1 = self.state(0.0, axis)
-				state2 = self.state(value, axis)
+				state1 = self.state(basevalue, axis)
+				state2 = self.state(newvalue, axis)
 				print 'states', state1, state2
 				shiftinfo = self.measureStateShift(state1, state2)
 				print 'shiftinfo', shiftinfo
@@ -141,8 +125,7 @@ class Calibration(node.Node):
 
 				if verdict == 'good':
 					print "good"
-					self.publishRemote(data.EMData('scope', self.state(0.0, axis)))
-					self.calibration.update({axis + " pixel shift": {'x':shiftinfo['shift'][1], 'y':shiftinfo['shift'][0], 'value': value}})
+					self.calibration.update({axis + " pixel shift": {'x':shiftinfo['shift'][1], 'y':shiftinfo['shift'][0], 'value': delta}})
 					break
 				elif verdict == 'small shift':
 					print "too small"
@@ -153,7 +136,8 @@ class Calibration(node.Node):
 				else:
 					raise RuntimeError('hung jury')
 
-		self.publishRemote(data.EMData('scope', self.state(0.0, axis)))
+		basestate = self.state(self.base[axis], axis)
+		self.publishRemote(data.EMData('scope', basestate))
 		print 'CALIBRATE DONE', self.calibration
 
 	def clearStateImages(self):
@@ -182,6 +166,8 @@ class Calibration(node.Node):
 		print 'image type', type(image)
 		imagedata = data.ImageData(self.ID(), image)
 		print 'imagedata type', type(imagedata)
+		print 'imagedata', imagedata
+		print 'imagedata location', imagedata.location()
 		self.publish(imagedata, event.ImagePublishEvent)
 		print 'published imagedata'
 		## should find image stats to help determine validity of image
@@ -204,10 +190,24 @@ class Calibration(node.Node):
 		stats1 = info1['image stats']
 		stats2 = info2['image stats']
 
+		shiftinfo = {}
+
+		self.correlator.insertImage(image1)
+
+		## could autocorrelation here help also?
+		autocorr = 0
+		if autocorr:
+			self.correlator.insertImage(image1)
+			acimage = self.correlator.phaseCorrelate()
+			self.peakfinder.setImage(acimage)
+			self.peakfinder.subpixelPeak()
+			peak = self.peakfinder.getResults()
+			acpeakvalue = peak['subpixel peak value']
+			acshift = correlator.wrap_coord(peak['subpixel peak'], acimage.shape)
+			shiftinfo.update({'ac shift':acshift,'ac peak value':acpeakvalue})
+
 		## phase correlation
-		print 'inserting into correlator'
-		self.correlator.setImage(0, image1)
-		self.correlator.setImage(1, image2)
+		self.correlator.insertImage(image2)
 		print 'correlation'
 		pcimage = self.correlator.phaseCorrelate()
 
@@ -216,9 +216,9 @@ class Calibration(node.Node):
 		self.peakfinder.setImage(pcimage)
 		self.peakfinder.subpixelPeak()
 		peak = self.peakfinder.getResults()
-		peakvalue = peak['pixel peak value']
+		peakvalue = peak['subpixel peak value']
 		shift = correlator.wrap_coord(peak['subpixel peak'], pcimage.shape)
-		shiftinfo = {'shift': shift, 'peak value': peakvalue, 'shape':pcimage.shape, 'stats': (stats1, stats2)}
+		shiftinfo.update({'shift': shift, 'peak value': peakvalue, 'shape':pcimage.shape, 'stats': (stats1, stats2)})
 		return shiftinfo
 
 
@@ -265,10 +265,17 @@ class Calibration(node.Node):
 		### We care about total shift distance when it comes 
 		### to getting a good calibration, regardless of direction.
 
+		validshiftdict = self.validshift.get()
 		validshift = []
+		print 'SHIFT', shift
+		print 'PEAK VALUE', peakvalue
+		return 'small shift'
+
 		for dim in (0,1):
+
 			minshift = shape[dim] / 15.0
 			maxshift = 1.0 * shape[dim] / 3.0
+
 			validshift.append( (minshift,maxshift) )
 
 		print 'valid shift', validshift
@@ -324,6 +331,7 @@ class Calibration(node.Node):
 		paramchoices = self.registerUIData('paramdata', 'array', default=('image shift', 'stage position'))
 
 		argspec = (
+		self.registerUIData('Base', 'struct', default=self.base),
 		self.registerUIData('Minimum', 'float', default=self.range[0]),
 		self.registerUIData('Maximum', 'float', default=self.range[1]),
 		self.registerUIData('Attempts', 'integer', default=self.attempts),
@@ -332,16 +340,28 @@ class Calibration(node.Node):
 		)
 		rspec = self.registerUIMethod(self.uiSetParameters, 'Set Parameters', argspec)
 
-		vspec = self.registerUIData('Valid Shift', 'struct', permissions='rw')
-		vspec.set(self.validShiftCallback)
+		self.validshift = self.registerUIData('Valid Shift', 'struct', permissions='rw')
+		self.validshift.set(
+			{'correlation':
+				{'pixel':
+					{'row': {'min': 0.0, 'max': 0.0}, 'col': {'min': 0.0, 'max': 0.0}},
+				'percent':
+					{'row': {'min': 10.0, 'max': 50.0}, 'col': {'min': 10.0, 'max': 50.0}}},
+			'calibration':
+				{'pixel':
+					{'row': {'min': 0.0, 'max': 0.0}, 'col': {'min': 0.0, 'max': 0.0}},
+				'percent':
+					{'row': {'min': 10.0, 'max': 50.0}, 'col': {'min': 10.0, 'max': 50.0}}}}
+		)
 
-		self.registerUISpec('Calibration', (nodespec, cspec, rspec, vspec))
+		self.registerUISpec('Calibration', (nodespec, cspec, rspec, self.validshift))
 
 	def uiCalibrate(self):
 		self.calibrate()
 		return ''
 
-	def uiSetParameters(self, r0, r1, a, ct, cs):
+	def uiSetParameters(self, base, r0, r1, a, ct, cs):
+		self.base = base
 		self.range[0] = r0
 		self.range[1] = r1
 		self.attempts = a
@@ -371,7 +391,8 @@ class ImageShiftCalibration(Calibration):
 		self.start()
 
 	def main(self):
-		self.interact()
+		pass
+		#self.interact()
 
 	def state(self, value, axis):
 		return {'image shift': {axis: value}}
@@ -380,16 +401,32 @@ class ImageShiftCalibration(Calibration):
 		print 'PIXELSHIFT'
 		print 'calibration =', self.calibration
 		print 'pixel shift =', ievent.content
+		delta_row = ievent.content['row']
+		delta_col = ievent.content['column']
+		### someday, this must calculate a mag dependent calibration
+		#delta_mag = ievent.content['magnification']
+
 		matrix = self.calibration2matrix()
 		print "image shift calibration matrix =", matrix
 		determinant = LinearAlgebra.determinant(matrix)
-		imageshift = {'image shift': {}}
-		imageshift['image shift']['x'] = (matrix[1,1] * ievent.content['column'] -
-							matrix[1,0] * ievent.content['row']) / determinant
-		imageshift['image shift']['y'] = (matrix[0,0] * ievent.content['row'] -
-							matrix[0,1] * ievent.content['column']) / determinant
-		print "calculated image shift =", imageshift
-		imageshiftdata = data.EMData('scope', imageshift)
+		deltax = (matrix[1,1] * delta_col -
+							matrix[1,0] * delta_row) / determinant
+		deltay = (matrix[0,0] * delta_row -
+							matrix[0,1] * delta_col) / determinant
+
+		print "calculated image shift change =", deltax, deltay
+		current = self.researchByDataID('image shift')
+		currentx = current.content['image shift']['x']
+		currenty = current.content['image shift']['y']
+		print "current image shift = ", current
+		newimageshift = {'image shift':
+			{
+				'x': currentx + deltax,
+				'y': currenty + deltay
+			}
+		}
+
+		imageshiftdata = data.EMData('scope', newimageshift)
 		self.publishRemote(imageshiftdata)
 
 	def calibration2matrix(self):
@@ -400,6 +437,64 @@ class ImageShiftCalibration(Calibration):
 		matrix[0] /= self.calibration['x pixel shift']['value']
 		matrix[1] /= self.calibration['y pixel shift']['value']
 		return matrix
+
+class StageShiftCalibration(Calibration):
+	def __init__(self, id, nodelocations):
+		#self.calibration = {"x pixel shift": {'x': 1.0, 'y': 2.0, 'value': 1.0},
+		#					 "y pixel shift": {'x': 3.0, 'y': 4.0, 'value': 1.0}}
+		#self.pixelShift(event.ImageShiftPixelShiftEvent(-1, {'row': 2.0, 'column': 2.0}))
+		#return
+		Calibration.__init__(self, id, nodelocations)
+		self.addEventInput(event.StageShiftPixelShiftEvent, self.pixelShift)
+		self.start()
+
+	def main(self):
+		self.interact()
+
+	def state(self, value, axis):
+		return {'stage position': {axis: value}}
+
+	def pixelShift(self, ievent):
+		print 'PIXELSHIFT'
+		print 'calibration =', self.calibration
+		print 'pixel shift =', ievent.content
+		delta_row = ievent.content['row']
+		delta_col = ievent.content['column']
+		### someday, this must calculate a mag dependent calibration
+		#delta_mag = ievent.content['magnification']
+
+		matrix = self.calibration2matrix()
+		print "image shift calibration matrix =", matrix
+		determinant = LinearAlgebra.determinant(matrix)
+		deltax = (matrix[1,1] * delta_col -
+							matrix[1,0] * delta_row) / determinant
+		deltay = (matrix[0,0] * delta_row -
+							matrix[0,1] * delta_col) / determinant
+
+		print "calculated stage shift change =", deltax, deltay
+		current = self.researchByDataID('stage position')
+		currentx = current.content['stage position']['x']
+		currenty = current.content['stage position']['y']
+		print "current stage position = ", current
+		newstageshift = {'stage position':
+			{
+				'x': currentx + deltax,
+				'y': currenty + deltay
+			}
+		}
+
+		stageshiftdata = data.EMData('scope', newstageshift)
+		self.publishRemote(stageshiftdata)
+
+	def calibration2matrix(self):
+		matrix = Numeric.array([[self.calibration['x pixel shift']['x'],
+														self.calibration['x pixel shift']['y']],
+													[self.calibration['y pixel shift']['x'],
+														self.calibration['y pixel shift']['y']]])
+		matrix[0] /= self.calibration['x pixel shift']['value']
+		matrix[1] /= self.calibration['y pixel shift']['value']
+		return matrix
+
 
 class AutoFocusCalibration(Calibration):
 	def __init__(self, id, nodelocations):
