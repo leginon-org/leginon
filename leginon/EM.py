@@ -535,6 +535,8 @@ class EM(node.Node):
 			else:
 				pass
 
+		self.panel.setParameters(result)
+
 		result['system time'] = time.time()
 		result['session'] = self.session
 
