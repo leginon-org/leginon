@@ -840,6 +840,11 @@ class wxConnectionObject(wxShapeObject):
 		self.style = style
 		self.drawn = False
 
+	def delete(self):
+		self.setFromShapeObject(None)
+		self.setToShapeObject(None)
+		wxShapeObject.delete(self)
+
 	def OnLower(self, evt):
 		if evt.shapeobject in self.shapeobjects:
 			self.lowerShapeObject(evt.shapeobject, evt.bottom)
@@ -1111,10 +1116,6 @@ class wxConnectionPointObject(wxRectangleObject):
 			self.connectioninputs.remove(connection)
 		except ValueError:
 			raise ValueError('No such connection to remove')
-		connectionoutput = connection.getFromShapeObject()
-		if connectionoutput is not None:
-			connectionoutput.connectionoutputs.remove(connection)
-		connection.delete()
 
 	def addConnectionOutput(self, connection):
 		if connection not in self.connectionoutputs:
@@ -1127,17 +1128,11 @@ class wxConnectionPointObject(wxRectangleObject):
 			self.connectionoutputs.remove(connection)
 		except ValueError:
 			raise ValueError('No such connection to remove')
-		connectioninput = connection.getToShapeObject()
-		if connectioninput is not None:
-			connectioninput.connectioninputs.remove(connection)
-		connection.delete()
 
 	def removeConnections(self):
 		wxRectangleObject.removeConnections(self)
-		for input in self.connectioninputs:
-			self.removeConnectionInput(input)
-		for output in self.connectionoutputs:
-			self.removeConnectionOutput(output)
+		for connection in self.connectioninputs + self.connectionoutputs:
+			connection.delete()
 
 	def OnMotion(self, evt):
 		self.ProcessEvent(MoveConnectionEvent(evt.m_x, evt.m_y))
