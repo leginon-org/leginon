@@ -74,6 +74,7 @@ class CameraFuncs(object):
 			t.stop()
 			return newcamdata
 		except:
+			self.node.printException()
 			return None
 
 	def autoOffset(self, camconfig):

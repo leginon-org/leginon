@@ -104,6 +104,7 @@ class Node(leginonobject.LeginonObject):
 				self.addManager(self.nodelocations['manager'])
 			except:
 				self.printerror('exception in addManager')
+				self.printException()
 				raise
 			else:
 				self.printerror('connected to manager')

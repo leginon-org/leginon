@@ -347,8 +347,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			print 'PIXELSHIFT1', pixelshift1
 			print 'PIXELSHIFT2', pixelshift2
 		except:
-			excinfo = sys.exc_info()
-			sys.excepthook(*excinfo)
+			self.node.printException()
 		## return to original beam tilt
 		emdata = data.ScopeEMData(id=('scope',), initializer=beamtilt)
 		self.node.publishRemote(emdata)

@@ -206,11 +206,13 @@ class EM(node.Node):
 						result[EMkey] = self.scope[EMkey]
 					except:	
 						print "failed to get '%s'" % EMkey
+						self.printException()
 				elif EMkey in self.camera:
 					try:
 						result[EMkey] = self.camera[EMkey]
 					except:	
 						print "failed to get '%s'" % EMkey
+						self.printException()
 				elif EMkey == 'scope':
 					result.update(self.scope)
 				elif EMkey == 'camera no image data':
@@ -230,6 +232,7 @@ class EM(node.Node):
 							result[EMkey] = self.scope[EMkey]
 						except:	
 							print "failed to get '%s'" % EMkey
+							self.printException()
 			if not ('camera' in withoutkeys or 'all em' in withoutkeys):
 				for EMkey in self.camera:
 					if not EMkey in withoutkeys:
@@ -237,6 +240,7 @@ class EM(node.Node):
 							result[EMkey] = self.camera[EMkey]
 						except:	
 							print "failed to get '%s'" % EMkey
+							self.printException()
 		else:
 			result.update(self.scope)
 			result.update(self.camera)
@@ -294,13 +298,13 @@ class EM(node.Node):
 					self.scope[emkey] = emvalue
 				except:	
 					print "failed to set '%s' to %s" % (emkey, emvalue)
-					pass
+					self.printException()
 			elif emkey in self.camera:
 				try:
 					self.camera[emkey] = emvalue
 				except:	
 					#print "failed to set '%s' to" % EMkey, EMstate[EMkey]
-					pass
+					self.printException()
 		self.lock.release()
 
 	def save(self, filename):

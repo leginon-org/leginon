@@ -2,6 +2,7 @@ import xmlrpclib
 import uiserver
 import threading
 import time
+import sys
 from wxPython.wx import *
 from wxPython.wxc import wxPyAssertionError
 import wxImageViewer
@@ -551,6 +552,8 @@ class wxEntryWidget(wxDataWidget):
 			try:
 				value = eval(value)
 			except:
+				excinfo = sys.exc_info()
+				sys.excepthook(*excinfo)
 				return
 		if type(self.value) != type(value):
 			return
@@ -731,7 +734,12 @@ class wxComboBoxWidget(wxContainerWidget):
 				self.combobox.Enable(false)
 		if 'Selected' in value and value['Selected'] and self.value['List']:
 			i = value['Selected'][0]
-			self.combobox.SetValue(str(value['List'][i]))
+			try:
+				v = str(value['List'][i])
+			except IndexError:
+				pass
+			else:
+				self.combobox.SetValue(v)
 
 	def setWidget(self, namelist, value):
 		self.lock.acquire()

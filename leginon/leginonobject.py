@@ -69,7 +69,7 @@ class LeginonObject(object):
 
 	def printException(self):
 		excinfo = sys.exc_info()
-		sys.excepthook(excinfo)
+		sys.excepthook(*excinfo)
 
 	def checkPythonVersion(self):
 		message = '''

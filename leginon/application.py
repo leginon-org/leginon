@@ -122,7 +122,7 @@ class Application(leginonobject.LeginonObject):
 			try:
 				self.manager.killNode(nodeid)
 			except:
-				print 'error while killing %s' % (nodeid,)
+				self.printException()
 		self.launchednodeslock.release()
 
 	def save(self):

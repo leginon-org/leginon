@@ -144,8 +144,8 @@ class Manager(node.Node):
 		try:
 			self.distmap[eventclass][fromnodeid].remove(tonodeid)
 		except:
-			self.printerror(str(eventclass) + ': ' + str(fromnodeid)
-											+ ' to ' + str(tonodeid) + ' no such binding')
+			self.printerror(str(eventclass) + ': ' + str(fromnodeid) + ' to ' + str(tonodeid) + ' no such binding')
+			self.printException()
 
 		args = (eventclass, fromnodeid, tonodeid)
 		self.app.delBindingSpec(eventclass.__name__, fromnodeid, tonoded)
@@ -194,16 +194,16 @@ class Manager(node.Node):
 		name = nodeid[-1]
 		try:
 			del self.launcherdict[name]
-			# could check and keep selected if possible
-			launchers = self.launcherdict.keys()
-			if launchers:
-				launchers.sort()
-				selected = [0]
-			else:
-				selected = []
+		except KeyError:
+			return
+		# could check and keep selected if possible
+		launchers = self.launcherdict.keys()
+		if launchers:
+			launchers.sort()
+			selected = [0]
+		else:
+			selected = []
 			self.uilauncherselect.set(launchers, selected)
-		except:
-			pass
 
 	def getLauncherNodeClasses(self, dataid, location, launcherid):
 		'''Retrieve a list of launchable classes from a launcher by alias launchername.'''
@@ -231,7 +231,7 @@ class Manager(node.Node):
 			launchers.sort()
 			self.uilauncherselect.set(launchers, [0])
 		except:
-			pass
+			self.printException()
 
 	# node related methods
 
@@ -272,6 +272,7 @@ class Manager(node.Node):
 			self.uiclientcontainers[nodeid] = clientcontainer
 		except:
 			self.printerror('cannot add client container for node')
+			self.printException()
 
 	def unregisterNode(self, unavailable_event):
 		'''Event handler for unregistering the node from the manager. Removes all information, event mappings and the client related to the node.'''
@@ -289,6 +290,7 @@ class Manager(node.Node):
 			self.uiserver.deleteUIObject(name)
 		except:
 			self.printerror('cannot delete client container for node')
+			self.printException()
 
 	def handleNodeStatus(self, ievent):
 		nodeid = ievent['id'][:-1]
@@ -536,6 +538,7 @@ class Manager(node.Node):
 			args = eval(args)
 		except:
 			self.printerror('error evaluating args during UI launch')
+			self.printException()
 			return
 		self.launchNode(launcherid, process, nodeclass, name, args)
 
@@ -608,6 +611,7 @@ class Manager(node.Node):
 			self.uiclassselect.set(classes, selected)
 		except:
 			self.uiclassselect.set([], [])
+			self.printException()
 		return value
 
 	def defineUserInterface(self):

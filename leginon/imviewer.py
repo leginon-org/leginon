@@ -64,7 +64,7 @@ class ImViewer(imagewatcher.ImageWatcher):
 			self.root.destroy()
 		except:
 			### root may not exist or already destroyed
-			pass
+			self.printException()
 
 	def clickEventCallback(self, tkevent):
 		if not self.clicklock.acquire(0):

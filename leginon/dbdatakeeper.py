@@ -260,6 +260,7 @@ class PickleDataKeeper(datahandler.DataHandler):
 			file.close()
 		except:
 			self.printerror('cannot read from %s' % self.filename)
+			self.printException()
 		#self.lock.release()
 
 	def _write(self):
