@@ -32,6 +32,8 @@ class Focuser(acquisition.Acquisition):
 		self.btcalclient = calibrationclient.BeamTiltCalibrationClient(self)
 		self.abortfail = threading.Event()
 		self.manual_check_done = threading.Event()
+		self.manual_pause = threading.Event()
+		self.manual_continue = threading.Event()
 		acquisition.Acquisition.__init__(self, id, sesison, nodelocations, target_type='focus', **kwargs)
 
 	def acquire(self, presetdata, target=None, emtarget=None):
@@ -189,6 +191,8 @@ class Focuser(acquisition.Acquisition):
 		while 1:
 			if self.manual_check_done.isSet():
 				break
+			if self.manual_pause.isSet():
+				self.waitForContinue()
 			# acquire image, show image and power spectrum
 			# allow user to adjust defocus and stig
 			cor = self.uicorrectimage.get()
@@ -202,6 +206,12 @@ class Focuser(acquisition.Acquisition):
 			self.man_image.set(imarray)
 			self.man_power.set(pow)
 		print 'manual focus loop done'
+
+	def waitForContinue():
+		print 'manual focus paused'
+		self.manual_continue.wait()
+		self.manual_continue.clear()
+		self.manual_pause.clear()
 
 	def uiFocusUp(self):
 		self.changeFocus('up')
@@ -261,6 +271,14 @@ class Focuser(acquisition.Acquisition):
 	def manualDone(self):
 		print 'will quit manual focus loop after this iteration'
 		self.manual_check_done.set()
+
+	def manualPause(self):
+		print 'will pause manual focus loop after this iteration'
+		self.manual_pause.set()
+
+	def manualContinue(self):
+		print 'continuing manual focus'
+		self.manual_continue.set()
 
 	def correctStig(self, deltax, deltay):
 		stig = self.researchByDataID(('stigmator',))
@@ -324,6 +342,8 @@ class Focuser(acquisition.Acquisition):
 		self.pre_manual_check = uidata.Boolean('Manual Check Before Auto', False, 'rw', persist=True)
 		self.post_manual_check = uidata.Boolean('Manual Check After Auto', False, 'rw', persist=True)
 		manualmeth = uidata.Method('Manual Check Now', self.manualNow)
+		manualpause = uidata.Method('Pause', self.manualPause)
+		manualcontinue = uidata.Method('Continue', self.manualContinue)
 		manualdone = uidata.Method('Done', self.manualDone)
 
 		manualreset = uidata.Method('Reset Defocus', self.uiResetDefocus)
@@ -336,7 +356,7 @@ class Focuser(acquisition.Acquisition):
 		self.man_image = uidata.Image('Manual Focus Image', None, 'rw')
 		self.man_power = uidata.Image('Manual Focus Power Spectrum', None, 'rw')
 		mancont = uidata.Container('Manual Focus')
-		mancont.addObjects((self.pre_manual_check, self.post_manual_check, manualmeth, manualdone, manualreset, manualtozero, self.manual_parameter, self.manual_delta, manchangeup, manchangedown, self.man_power, self.man_image))
+		mancont.addObjects((self.pre_manual_check, self.post_manual_check, manualmeth, manualpause, manualcontinue, manualdone, manualreset, manualtozero, self.manual_parameter, self.manual_delta, manchangeup, manchangedown, self.man_power, self.man_image))
 
 		self.acquirefinal = uidata.Boolean('Acquire Final Image', True, 'rw', persist=True)
 		abortfailmethod = uidata.Method('Abort With Failure', self.uiAbortFailure)
