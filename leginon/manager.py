@@ -326,7 +326,7 @@ class Manager(node.Node):
 		spec3 = self.registerUIMethod(self.uiAddDistmap, 'Bind', argspec)
 
 		ndict = self.nodeDict()
-		self.nodetreedata = self.registerUIData('Node Tree', 'struct', permissions='r', default=ndict)
+		self.nodetreedata = self.registerUIData('Nodes', 'struct', permissions='r', default=ndict)
 
 		argspec = (
 		self.registerUIData('Filename', 'string'),

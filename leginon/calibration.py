@@ -4,13 +4,13 @@ import fftengine
 import correlator
 import peakfinder
 import sys
+import event
 
 False=0
 True=1
 
 class Calibration(node.Node):
 	def __init__(self, id, managerlocation):
-		node.Node.__init__(self, id, managerlocation)
 		self.camerastate = {"offset": {'x': 0, 'y': 0}, \
 												"dimension": {'x': 512, 'y': 512}, \
 												"binning": {'x': 1, 'y': 1}, \
@@ -30,6 +30,7 @@ class Calibration(node.Node):
 														'y': [self.camerastate['dimension']['y']/6,
 															5*self.camerastate['dimension']['y']/6]}
 
+		node.Node.__init__(self, id, managerlocation)
 		self.start()
 
 	def main(self):
@@ -45,10 +46,14 @@ class Calibration(node.Node):
 		self.publishRemote(EMnodeid, data.EMData(self.ID(), self.camerastate))
 		self.publishRemote(EMnodeid, data.EMData(self.ID(), self.setting(0)))
 		self.image1 = self.researchByDataID('image data').content['image data']
+		imagedata = data.ImageData(self.ID(), self.image1)
+		self.publish(imagedata, event.ImagePublishEvent)
 		self.correlator.setImage(0, self.image1)
 		for i in range(1, self.attempts):
 			self.publishRemote(EMnodeid, data.EMData(self.ID(), self.setting(i)))
 			self.image2 = self.researchByDataID('image data').content['image data']
+			imagedata = data.ImageData(self.ID(), self.image2)
+			self.publish(imagedata, event.ImagePublishEvent)
 			cdata = self.correlate(self.image2)
 			if self.valid(cdata):
 				print "good", self.calculate(cdata, i)
@@ -97,12 +102,23 @@ class Calibration(node.Node):
 		nodespec = node.Node.defineUserInterface(self)
 
 		argspec = (self.registerUIData('EM Node', 'string', default=''),)
-		spec = self.registerUIMethod(self.uiCalibrate, 'Calibrate', argspec)
+		cspec = self.registerUIMethod(self.uiCalibrate, 'Calibrate', argspec)
 
-		self.registerUISpec('Calibration', (nodespec, spec))
+		argspec = (self.registerUIData('Minimum', 'float', default=self.range[0]),
+								self.registerUIData('Maximum', 'float', default=self.range[1]),
+								self.registerUIData('Attempts', 'integer', default=self.attempts))
+		rspec = self.registerUIMethod(self.uiSetParameters, 'Set Parameters', argspec)
+
+		self.registerUISpec('Calibration', (nodespec, cspec, rspec))
 
 	def uiCalibrate(self, s):
 		self.calibrate(('manager', s))
+		return ''
+
+	def uiSetParameters(self, r0, r1, a):
+		self.range[0] = r0
+		self.range[1] = r1
+		self.attempts = a
 		return ''
 
 #			imageshift = (shiftrange[1] + shiftrange[0])/2
