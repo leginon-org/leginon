@@ -69,7 +69,7 @@ class GonModeler(node.Node):
 
 			measuredpixsize = delta / math.hypot(imx,imy)
 			print '    measured pixel size', measuredpixsize
-			error = abs(measuredpixsize - known_pixsize) / known_pixsize
+			error = abs(measuredpixsize - known_pixelsize) / known_pixelsize
 			print '    error', error
 			if error > self.tolerance.get():
 				print '  ***REJECTED***'
