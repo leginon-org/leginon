@@ -43,9 +43,10 @@ class ProjectData:
 	def __init__(self, **kwargs):
 		self.dbprojectconnection = False
 		try:
+			if not dbparams['host']:
+				raise Exception
 			self.db = sqldict.SQLDict(**dbparams)
 		except:
-			print 'No project DB'
 			self.db = None
 			self.dbprojectconnection = False
 			return

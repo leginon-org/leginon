@@ -225,6 +225,11 @@ class Frame(wx.Frame):
 
 	def onMenuRunApplication(self, evt):
 		apps = self.manager.getApplications()
+		if not apps:
+			dialog = wx.MessageDialog(self, 'No applications in the database', 'Application Error', wx.ICON_ERROR|wx.OK)
+			dialog.ShowModal()
+			dialog.Destroy()
+			return
 		launchernames = self.manager.getLauncherNames()
 		history = self.manager.getApplicationHistory()
 		dialog = RunApplicationDialog(self, apps, launchernames, history)

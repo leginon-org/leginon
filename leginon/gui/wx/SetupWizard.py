@@ -336,9 +336,9 @@ class SessionProjectPage(WizardPage):
 
 		sizer.Add(wx.StaticText(self, -1, 'Project:'), (1, 0), (1, 1),
 														wx.ALIGN_CENTER_VERTICAL)
-		self.projects = parent.setup.getProjects()
-		if not self.projects:
+		if not parent.setup.projectdata.isConnected():
 			raise NoProjectDatabaseError
+		self.projects = parent.setup.getProjects()
 		choices = self.projects.keys()
 		choices.sort()
 		self.projectchoice = wx.Choice(self, -1, choices=choices)
