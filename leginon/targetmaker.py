@@ -39,9 +39,9 @@ class TargetMaker(node.Node):
 		self.emclient = EM.EMClient(self)
 
 	def publishTargetList(self):
-		print 'DO NOT PUT A LIST OF DATA IN ANOTHER DATA'
 		if self.targetlist:
-			targetlistdata = data.ImageTargetListData(targets=self.targetlist)
+			refs = map(lambda x: x.reference(), self.targetlist)
+			targetlistdata = data.ImageTargetListData(targets=refs)
 			self.publish(targetlistdata, pubevent=True)
 			self.targetlist = []
 

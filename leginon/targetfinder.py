@@ -126,8 +126,12 @@ class TargetFinder(imagewatcher.ImageWatcher):
 				target['number'] = targetnumbers[parentid]
 			self.logger.info('Publishing (%s, %s) %s' %
 					(target['delta row'], target['delta column'], target['image'].dmid))
+			self.publish(target, database=True)
+			targetrefs.append(target.reference())
 
-		targetlistdata = data.ImageTargetListData(targets=self.targetlist)
+		## make a list of references to the targets
+		refs = map(lambda x: x.reference(), self.targetlist)
+		targetlistdata = data.ImageTargetListData(targets=refs)
 
 		self.makeTargetListEvent(targetlistdata)
 
@@ -462,7 +466,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.setStatusMessage('Finding mosaics')
 		mosaics = self.research(datainstance=instance)
 		self.mosaicselectionmapping = {}
-		print 'SHOULD NOT USE DBID, SHOULD USE TIMESTAMP OR SOMETHING'
+		print 'SHOULD NOT USE DBID, SHOULD USE TIMESTAMP OR SOMETHING PEOPLE CAN UNDERSTAND'
 		for mosaic in mosaics:
 			key = str(mosaic['session']['name']) + ' ' + str(mosaic.dbid)
 			self.mosaicselectionmapping[key] = mosaic

@@ -105,11 +105,15 @@ class TargetWatcher(watcher.Watcher):
 		targetlist = newdata['targets']
 		goodtargets = []
 		rejects = []
-		for target in targetlist:
+		for targetref in targetlist:
+			## I was hoping we wouldn't have to getData until
+			## we actually process the target, but we need to
+			## know 'type' right now
+			target = targetref.getData()
 			if target['type'] == self.target_type:
 				goodtargets.append(target)
 			else:
-				rejects.append(target)
+				rejects.append(targetref)
 
 		self.uintargets.set('%d process, %d pass, %d total' %
 													(len(goodtargets), len(rejects), len(targetlist)))
@@ -117,7 +121,6 @@ class TargetWatcher(watcher.Watcher):
 		# republish the rejects and wait for them to complete
 		if rejects:
 			self.uistatus.set('Publishing passed targets')
-			print 'LIST OF TARGETS... BAD IDEA'
 			newtargetlist = data.ImageTargetListData(targets=rejects)
 			self.passTargets(newtargetlist)
 			self.uistatus.set('Waiting for passed targets to be processed...')
@@ -131,7 +134,6 @@ class TargetWatcher(watcher.Watcher):
 				## This means if rejects were aborted
 				## then this whole target list was aborted
 				self.uistatus.set('Passed targets not processed, aborted current target list')
-				print 'DMID WONT WORK HERE BECAUSE DMID MAY NOT BE THE SAME ON THIS DATAMANAGER'
 				self.reportTargetListDone(newdata.dmid, rejectstatus)
 				return
 
