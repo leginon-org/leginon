@@ -125,6 +125,8 @@ class Panel(gui.wx.TargetFinder.Panel):
 							self.bhf['Edge'])
 		self.Bind(wx.EVT_BUTTON, self.onTemplateSettingsButton,
 							self.bhf['Template'])
+		self.Bind(wx.EVT_BUTTON, self.onThresholdSettingsButton,
+							self.bhf['Threshold'])
 
 	def onSubmitButton(self, evt):
 		self.node.submitTargets()
@@ -149,6 +151,11 @@ class Panel(gui.wx.TargetFinder.Panel):
 
 	def onTemplateSettingsButton(self, evt):
 		dialog = TemplateSettingsDialog(self)
+		dialog.ShowModal()
+		dialog.Destroy()
+
+	def onThresholdSettingsButton(self, evt):
+		dialog = ThresholdSettingsDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
 
@@ -298,6 +305,36 @@ class EdgeSettingsDialog(gui.wx.Settings.Dialog):
 
 	def onTestButton(self, evt):
 		self.node.findEdges()
+
+class ThresholdSettingsDialog(gui.wx.Settings.Dialog):
+	def initialize(self):
+		tfsbsz = gui.wx.Settings.Dialog.initialize(self)
+
+		self.widgets['threshold'] = FloatEntry(self, -1, chars=9)
+
+		szthreshold = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Threshold:')
+		szthreshold.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szthreshold.Add(self.widgets['threshold'], (0, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		szthreshold.AddGrowableCol(1)
+
+		sb = wx.StaticBox(self, -1, 'Threshold')
+		sbszthreshold = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sbszthreshold.Add(szthreshold, 1, wx.EXPAND|wx.ALL, 5)
+
+		self.btest = wx.Button(self, -1, 'Test')
+		szbutton = wx.GridBagSizer(5, 5)
+		szbutton.Add(self.btest, (0, 0), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		szbutton.AddGrowableCol(0)
+
+		self.Bind(wx.EVT_BUTTON, self.onTestButton, self.btest)
+
+		return [sbszthreshold, szbutton]
+
+	def onTestButton(self, evt):
+		self.node.threshold()
 
 class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
 	def initialize(self):

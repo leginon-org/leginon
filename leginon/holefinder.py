@@ -43,6 +43,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		'template lpf': False,
 		'template lpf size': 15,
 		'template lpf sigma': 1.0,
+		'threshold': 3.0,
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		targetfinder.TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
@@ -81,11 +82,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.corimage = uidata.Image('Correlation Image', None, 'r')
 
 		### threshold
-		self.threshvalue = uidata.Number('Threshold Value', 3.0, 'rw', persist=True)
-		threshmeth = uidata.Method('Threshold', self.threshold)
 		self.threshimage = uidata.Image('Thresholded Image', None, 'r')
-		threshcont = uidata.LargeContainer('Threshold')
-		threshcont.addObjects((self.threshvalue, threshmeth, self.threshimage))
 
 		### blobs
 		self.blobborder = uidata.Integer('Border', 20, 'rw', persist=True)
@@ -143,7 +140,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		goodholescontainer.addObjects((self.icetmin, self.icetmax, self.icetstd, icemeth, self.goodholes, self.use_target_template, self.foc_target_template, foc_template_limit, self.acq_target_template, self.focus_one_hole, self.goodholesimage, ))
 
 		container = uidata.LargeContainer('Hole Finder')
-		container.addObjects((threshcont, blobcont, goodholescontainer))
+		container.addObjects((blobcont, goodholescontainer))
 		self.uicontainer.addObject(container)
 
 	def readImage(self, filename):
@@ -197,7 +194,7 @@ class HoleFinder(targetfinder.TargetFinder):
 
 	def threshold(self):
 		self.logger.info('threshold')
-		tvalue = self.threshvalue.get()
+		tvalue = self.settings['threshold']
 		self.hf.configure_threshold(tvalue)
 		self.hf.threshold_correlation()
 		# convert to Float32 to prevent seg fault
@@ -446,7 +443,7 @@ class HoleFinder(targetfinder.TargetFinder):
 			'template-correlation-type': self.settings['template type'],
 			'template-lpf': self.settings['template lpf sigma'],
 
-			'threshold-value': self.threshvalue.get(),
+			'threshold-value': self.settings['threshold'],
 			'blob-border': self.blobborder.get(),
 			'blob-max-number': self.maxblobs.get(),
 			'blob-max-size': self.maxblobsize.get(),
