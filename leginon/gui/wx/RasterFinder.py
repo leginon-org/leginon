@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RasterFinder.py,v $
-# $Revision: 1.8 $
+# $Revision: 1.9 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-12-06 21:15:26 $
+# $Date: 2004-12-06 22:30:36 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -34,12 +34,15 @@ class Panel(gui.wx.TargetFinder.Panel):
 
 		self.imagepanel = gui.wx.ImageViewer.TargetImagePanel(self, -1)
 		self.imagepanel.addTypeTool('Original', display=True, settings=True)
+		self.imagepanel.selectiontool.setDisplayed('Original', True)
 		self.imagepanel.addTargetTool('Raster', wx.Color(0, 255, 255),
 																	settings=True)
 		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True,
 																	settings=True)
+		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
 		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True,
 																	settings=True)
+		self.imagepanel.selectiontool.setDisplayed('focus', True)
 		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND)
 		self.szmain.AddGrowableCol(0)
 		self.szmain.AddGrowableRow(1)
@@ -187,9 +190,9 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 		szft.Add(self.widgets['focus convolve'], (0, 0), (1, 2),
 										wx.ALIGN_CENTER_VERTICAL)
 		szft.Add(self.widgets['focus convolve template'], (1, 0), (1, 1),
-							wx.ALIGN_CENTER)
+							wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 		szft.Add(self.widgets['focus constant template'], (2, 0), (1, 1),
-							wx.ALIGN_CENTER)
+							wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 		szft.AddGrowableCol(0)
 
 		sb = wx.StaticBox(self, -1, 'Focus Targets')
@@ -200,9 +203,9 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 		szat.Add(self.widgets['acquisition convolve'], (0, 0), (1, 2),
 										wx.ALIGN_CENTER_VERTICAL)
 		szat.Add(self.widgets['acquisition convolve template'], (1, 0), (1, 1),
-							wx.ALIGN_CENTER)
+							wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 		szat.Add(self.widgets['acquisition constant template'], (2, 0), (1, 1),
-							wx.ALIGN_CENTER)
+							wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 		szat.AddGrowableCol(0)
 
 		sb = wx.StaticBox(self, -1, 'Acquisition Targets')
@@ -215,9 +218,13 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		szbutton.AddGrowableCol(0)
 
+		szt = wx.GridBagSizer(5, 5)
+		szt.Add(sbszft, (0, 0), (1, 1), wx.EXPAND|wx.ALL)
+		szt.Add(sbszat, (0, 1), (1, 1), wx.EXPAND|wx.ALL)
+
 		self.Bind(wx.EVT_BUTTON, self.onAnalyzeIceButton, self.bice)
 
-		return [sbszice, sbszft, sbszat, szbutton]
+		return [sbszice, szt, szbutton]
 
 	def onAnalyzeIceButton(self, evt):
 		self.setNodeSettings()
