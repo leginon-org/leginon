@@ -107,7 +107,6 @@ class Manager(node.Node):
 		self.addEventInput(event.Event, self.distributeEvents)
 
 		self.launcherdict = {}
-		#self.managersetup = managersetup.ManagerSetup(self)
 		# will move, I promise
 		setup = setupwizard.SetupWizard(self.frame, self.research, self.publish)
 
