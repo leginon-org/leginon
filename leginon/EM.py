@@ -97,6 +97,7 @@ class DataHandler(node.DataHandler):
 			del d['id']
 			del d['session']
 			del d['system time']
+			del d['em host']
 			self.node.queue.put(Request(done_event, d))
 			print 'EM insert: waiting for request to complete'
 			done_event.wait()
@@ -280,11 +281,8 @@ class EM(node.Node):
 			self.weird_update(self.scope, result)
 			self.weird_update(self.camera, result)
 
-		## getting defocus no matter what, since it changes if reset
-		## defocus was called
-		#result['defocus'] = self.scope['defocus']
-		#self.pruneEMdict(result)
 		result['system time'] = time.time()
+		result['em host'] = self.id[-1]
 
 		self.lock.release()
 		return result
