@@ -588,21 +588,19 @@ class CamConfigSizer(wx.StaticBoxSizer):
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'instrument'
+	tools = [
+		'refresh',
+		'pauses',
+	]
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
 
-		self.brefresh = wx.Button(self, -1, 'Refresh')
-		self.cbpauses = wx.CheckBox(self, -1,
-																	'Use pauses between parameter changes')
-		self.cbpauses.SetValue(True)
-		self.szmain.Add(self.brefresh, (1, 0), (1, 1), wx.ALIGN_CENTER)
-		self.szmain.Add(self.cbpauses, (1, 1), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 		self.szmain.AddGrowableCol(0)
 		self.szmain.AddGrowableCol(1)
 
-		self.szscope = self._getStaticBoxSizer('Microscope', (2, 0), (1, 2),
+		self.szscope = self._getStaticBoxSizer('Microscope', (1, 0), (1, 2),
 																								wx.EXPAND|wx.ALL)
-		self.szcamera = self._getStaticBoxSizer('Camera', (3, 0), (1, 2),
+		self.szcamera = self._getStaticBoxSizer('Camera', (2, 0), (1, 2),
 																								wx.EXPAND|wx.ALL)
 		self.szlenses = LensesSizer(self)
 		self.szfilm = FilmSizer(self)
@@ -728,13 +726,13 @@ class Panel(gui.wx.Node.Panel):
 		self.SetSizerAndFit(self.szmain)
 		self.SetupScrolling()
 
-	def onRefreshButton(self, evt):
+	def onRefreshTool(self, evt):
 		self.Enable(False)
 		self.node.refresh()
 
-	def onPausesCheckBox(self, evt=None):
+	def onPausesTool(self, evt=None):
 		if evt is None:
-			value = self.cbpauses.GetValue()
+			value = self.toolbar.getState(self, 'pauses')['toggled']
 		else:
 			value = evt.IsChecked()
 		self.node.pause = value
@@ -825,11 +823,10 @@ class Panel(gui.wx.Node.Panel):
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onNodeInitialized(self):
+		self.toolbar.toggle(self, 'pauses', True)
 		self.Bind(EVT_CONFIGURATION_CHANGED, self.onCamConfig,
 							self.szcamconfig.parameters['Camera configuration'])
-		self.Bind(wx.EVT_BUTTON, self.onRefreshButton, self.brefresh)
-		self.Bind(wx.EVT_CHECKBOX, self.onPausesCheckBox, self.cbpauses)
-		self.onPausesCheckBox()
+		self.onPausesTool()
 		self.Enable(True)
 
 if __name__ == '__main__':

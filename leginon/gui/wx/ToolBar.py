@@ -14,6 +14,8 @@ ID_ACQUISITION_TYPE = 1010
 ID_MEASURE_DRIFT = 1011
 ID_DECLARE_DRIFT = 1012
 ID_CHECK_DRIFT = 1013
+ID_REFRESH = 1014
+ID_PAUSES = 1015
 
 class ToolBar(wx.ToolBar):
 	def __init__(self, parent):
@@ -42,6 +44,9 @@ class ToolBar(wx.ToolBar):
 				'onDeclareDriftTool',),
 			('measure', ID_MEASURE, 'ruler.png', 'Measure', 'onMeasureTool',),
 			('submit', ID_SUBMIT, 'play.png', 'Submit', 'onSubmitTool',),
+			('refresh', ID_REFRESH, 'refresh.png', 'Refresh', 'onRefreshTool',),
+			('pauses', ID_PAUSES, 'clock.png', 'Do pauses', 'onPausesTool',
+				self.AddCheckTool),
 		]
 
 		self.order = []
