@@ -643,7 +643,11 @@ class NewPresetImageData(CameraImageData):
 	typemap = classmethod(typemap)
 
 class AcquisitionImageData(PresetImageData):
-	pass
+	def typemap(cls):
+		t = PresetImageData.typemap()
+		t += [ ('target', ImageTargetData), ]
+		return t
+	typemap = classmethod(typemap)
 
 class TrialImageData(PresetImageData):
 	pass
