@@ -136,15 +136,15 @@ class MosaicTargetMaker(TargetMaker):
 
 		return preset
 
-	def updateState(self, preset, scope, camera):
+	def updateState(self, preset, scope, camera, center=None):
 		self.logger.debug('Updating target settings...')
 
 		scope.friendly_update(preset)
 		camera.friendly_update(preset)
 
-		center = {'x': 0.0, 'y': 0.0}
-		for key in center:
-			scope['stage position'][key] = center[key]
+		if center is not None:
+						for key in center:
+							scope['stage position'][key] = center[key]
 		self.logger.debug('Target settings updated')
 
 	def getPixelSize(self, scope):
@@ -189,7 +189,10 @@ class MosaicTargetMaker(TargetMaker):
 		alpha = self.getAlpha(scope)
 		preset = self.getPreset()
 		if self.settings['mosaic center'] == 'stage center':
-			self.updateState(preset, scope, camera)
+			center = {'x':0.0, 'y':0.0}
+		else:
+			center = None
+		self.updateState(preset, scope, camera, center)
 		pixelsize = self.getPixelSize(scope)
 		binning, imagesize = self.getCameraParameters(camera)
 		targets = self.makeCircle(radius, overlap, pixelsize, binning, imagesize)
