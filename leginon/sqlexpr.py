@@ -579,6 +579,12 @@ class DropTable(SQLExpression):
 ## SQL Builtins
 ########################################
 
+def AND_LIKE(list_args):
+    e = 'LIKE(arg[0], arg[1])'
+    new_args = []
+    for arg in list_args:
+	new_args.append(eval(e))
+    return AND(*new_args)
 
 def AND_EQUAL(list_args):
     return AND_OP(list_args, '==')

@@ -386,14 +386,15 @@ class SQLDict:
 
 	def insert(self, v=[], force=0):
 	    """Insert a list of dictionaries into a SQL table. If the data
-	    already exist, they won't be inserted again in the SQL table, 
-	    unless force is true. The function returns the last inserted table
+	    already exist, they won't be inserted again in the table, 
+	    unless force is true. The function returns the last inserted row
 	    id for a new insert or an existing primary key."""
 	    c = self.cursor()
 	    wherefields = v[0].keys()
 	    wherevalues = v[0].values()
-	    whereFormatfields = map(lambda id: sqlexpr.Field(self.table, id), wherefields)
+	    whereFormatfields = map(lambda col: sqlexpr.Field(self.table, col), wherefields)
 	    whereFormat = sqlexpr.AND_EQUAL(zip(whereFormatfields,wherevalues))
+	    # whereFormat = sqlexpr.AND_LIKE(zip(whereFormatfields,wherevalues))
 	    qsel = sqlexpr.SelectAll(self.table, where=whereFormat).sqlRepr()
 	    c.execute(qsel)
 	    result=c.fetchone()
