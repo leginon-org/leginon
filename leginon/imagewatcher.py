@@ -8,9 +8,8 @@ import copy
 class ImageWatcher(watcher.Watcher):
 	eventinputs = watcher.Watcher.eventinputs + [event.ImagePublishEvent]
 	def __init__(self, id, session, nodelocations, **kwargs):
-		watchfor = event.ImagePublishEvent
-		lockblocking = 0
-		watcher.Watcher.__init__(self, id, session, nodelocations, watchfor, lockblocking, **kwargs)
+		watchfor = [event.ImagePublishEvent]
+		watcher.Watcher.__init__(self, id, session, nodelocations, watchfor, **kwargs)
 
 		self.iv = None
 		self.numarray = None
