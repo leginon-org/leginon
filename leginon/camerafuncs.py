@@ -113,6 +113,7 @@ class CameraFuncs(object):
 			raise TypeError('camdata not type CameraEMData')
 		self.validateCameraEMData(camdata)
 		try:
+			self.node.logger.debug('setCameraEMData: %s' % (camdata,))
 			self.node.emclient.setCamera(camdata)
 		except Exception, detail:
 			self.node.logger.exception(
