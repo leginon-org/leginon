@@ -505,7 +505,7 @@ class ImagePanel(wx.Panel):
 		self.defaultcursor = wx.CROSS_CURSOR
 		self.panel.SetCursor(self.defaultcursor)
 		self.sizer.Add(self.panel, (1, 1), (3, 1), wx.EXPAND)
-		self.sizer.AddGrowableRow(4)
+		self.sizer.AddGrowableRow(3)
 		self.sizer.AddGrowableCol(1)
 		width, height = self.panel.GetSizeTuple()
 		self.sizer.SetItemMinSize(self.panel, width, height)
