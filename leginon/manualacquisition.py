@@ -24,6 +24,7 @@ class ManualAcquisition(node.Node):
 		self.loopstop.set()
 		self.camerafuncs = camerafuncs.CameraFuncs(self)
 		self.gridmapping = {'None': None}
+		self.lowdosemode = None
 		node.Node.__init__(self, id, session, nodelocations, **kwargs)
 		self.defineUserInterface()
 		self.start()
@@ -90,13 +91,57 @@ class ManualAcquisition(node.Node):
 				raise AcquireError
 		self.status.set('Image acquisition complete')
 
-	def setScreenPosition(self, position):
-		if position not in ['up', 'down']:
-			raise ValueError
-		self.status.set('Moving main screen %s...' % position)
-		initializer = {'id': ('scope',), 'main screen position': position}
+	def setScope(self, value):
+		value['id'] = ('scope',)
 		scopedata = data.ScopeEMData(initializer=initializer)
-		self.publishRemote(scopedata)
+		try:
+			self.publishRemote(scopedata)
+		except node.PublishError:
+			self.messagelog.error('Cannot access EM node')
+			self.status.set('Error setting instrument parameters')
+			raise RuntimeError('Unable to set instrument parameters')
+
+	def getScope(self, key):
+		value = self.researchByDataID(key)
+		return value[key]
+
+	def preExposure(self):
+		value = {}
+		pause = 0.0
+
+		if self.lowdose.get():
+			self.lowdosemode = self.getScope('low dose mode')
+			self.setScope({'beam blank': 'on'})
+			value['low dose mode'] = 'exposure'
+			pause = self.pause.get()
+		else:
+			self.lowdosemode = None
+
+		if self.up.get():
+			value['main screen position'] = 'up'
+
+		if value:
+			self.setScope(value)
+			time.sleep(pause)
+
+	def postExposure(self):
+		value = {}
+		pause = 0.0
+
+		if self.down.get():
+			value['main screen position'] = 'down'
+
+		if self.lowdosemode is not None:
+			value['low dose mode'] = self.lowdosemode
+			self.lowdosemode = None
+			pause = self.pause.get()
+
+		if value:
+			self.setScope(value)
+			time.sleep(pause)
+
+		if self.lowdose.get():
+			self.setScope({'beam blank': 'off'})
 
 	def publishImageData(self, imagedata):
 		acquisitionimagedata = data.AcquisitionImageData(initializer=imagedata)
@@ -122,15 +167,12 @@ class ManualAcquisition(node.Node):
 		self.startmethod.disable()
 		self.status.set('Acquiring image...')
 
-		if self.up.get():
-			try:
-				self.setScreenPosition('up')
-			except node.PublishError:
-				self.messagelog.error('Cannot access EM node to move screen')
-				self.status.set('Error moving screen up')
-				self.acquiremethod.enable()
-				self.startmethod.enable()
-				return
+		try:
+			self.preExposure()
+		except RuntimeError:
+			self.acquiremethod.enable()
+			self.startmethod.enable()
+			return
 
 		try:
 			self.acquire()
@@ -139,14 +181,12 @@ class ManualAcquisition(node.Node):
 			self.startmethod.enable()
 			return
 
-		if self.down.get():
-			try:
-				self.setScreenPosition('down')
-			except node.PublishError:
-				self.messagelog.error('Cannot access EM node to move screen')
-				self.status.set('Error moving screen down')
-				self.acquiremethod.enable()
-				self.startmethod.enable()
+		try:
+			self.postExposure()
+		except RuntimeError:
+			self.acquiremethod.enable()
+			self.startmethod.enable()
+			return
 
 		self.status.set('Image acquired')
 		self.acquiremethod.enable()
@@ -155,16 +195,13 @@ class ManualAcquisition(node.Node):
 	def acquisitionLoop(self):
 		self.status.set('Starting acquisition loop...')
 
-		if self.up.get():
-			try:
-				self.setScreenPosition('up')
-			except node.PublishError:
-				self.messagelog.error('Cannot access EM node to move screen')
-				self.status.set('Error moving screen up')
-				self.acquiremethod.enable()
-				self.startmethod.enable()
-				self.stopmethod.disable()
-				return
+		try:
+			self.preExposure()
+		except RuntimeError:
+			self.acquiremethod.enable()
+			self.startmethod.enable()
+			self.stopmethod.disable()
+			return
 
 		self.loopstop.clear()
 		self.status.set('Acquisition loop started')
@@ -181,16 +218,13 @@ class ManualAcquisition(node.Node):
 				self.status.set('Pausing for ' + str(pausetime) + ' seconds...')
 				time.sleep(pausetime)
 
-		if self.down.get():
-			try:
-				self.setScreenPosition('down')
-			except node.PublishError:
-				self.messagelog.error('Cannot access EM node to move screen')
-				self.status.set('Error moving screen down')
-				self.acquiremethod.enable()
-				self.startmethod.enable()
-				self.stopmethod.disable()
-				return
+		try:
+			self.postExposure()
+		except RuntimeError:
+			self.acquiremethod.enable()
+			self.startmethod.enable()
+			self.stopmethod.disable()
+			return
 
 		self.acquiremethod.enable()
 		self.startmethod.enable()
@@ -309,6 +343,13 @@ class ManualAcquisition(node.Node):
 		gridcontainer = uidata.Container('Current Grid')
 		gridcontainer.addObjects((self.gridboxselect, self.gridselect))
 		gridcontainer.addObject(refreshmethod, position={'justify': ['right']})
+
+		self.lowdose = uidata.Boolean('Low dose', False, 'rw', persist=True,
+							tooltip='Switch to low dose exposure mode before acquiring, and'
+								+ ' switch back to previous mode when acquisition is completed')
+		self.pause = uidata.Number('Low dose pause (seconds)', 5.0, 'rw',
+																persist=True,
+						tooltip='Number of seconds to pause after switching low dose modes')
 		self.up = uidata.Boolean('Up before acquire', True, 'rw',
 															persist=True,
 						tooltip='Move the main viewing screen up before image acquisition')
@@ -334,7 +375,8 @@ class ManualAcquisition(node.Node):
 		settingscontainer = uidata.Container('Settings')
 		settingscontainer.addObjects((gridcontainer, mainscreencontainer,
 																	self.correctimage, camerafuncscontainer,
-																	self.pausetime, self.usedatabase))
+																	self.pausetime, self.usedatabase,
+																	self.lowdose, self.pause))
 
 		self.acquiremethod = uidata.Method('Acquire', self.acquireImage,
 													tooltip='Acquire an image with the current settings')

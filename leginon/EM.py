@@ -168,7 +168,7 @@ class EM(node.Node):
 #			'column valves': 'r',
 			'gun shift': '',
 			'gun tilt': '',
-			'beam blank': '',
+#			'beam blank': '',
 			'dark field mode': '',
 			'diffraction mode': '',
 			'low dose': '',
