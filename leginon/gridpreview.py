@@ -4,6 +4,7 @@ import time
 import threading
 import node, event, data
 import camerafuncs
+reload(camerafuncs)
 
 class GridPreview(node.Node, camerafuncs.CameraFuncs):
 	def __init__(self, id, nodelocations):
@@ -21,7 +22,7 @@ class GridPreview(node.Node, camerafuncs.CameraFuncs):
 	def defineUserInterface(self):
 		nodespec = node.Node.defineUserInterface(self)
 		cam = self.cameraConfigUIData()
-		defprefs = {'center': {'x':0,'y':0}, 'overlap': 20, 'maxtargets': 9}
+		defprefs = {'center': {'x':0,'y':0}, 'overlap': 75, 'maxtargets': 9}
 		spiralprefs = self.registerUIData('Spiral', 'struct', callback=self.uiSpiralPrefs, default=defprefs, permissions='rw')
 		self.sim = self.registerUIData('Simulate TEM/camera', 'boolean', permissions='rw', default=0)
 		prefs = self.registerUIContainer('Preferences', (cam, spiralprefs, self.sim))
@@ -43,7 +44,6 @@ class GridPreview(node.Node, camerafuncs.CameraFuncs):
 			maxtargets = value['maxtargets']
 			spacing = size - (overlap / 100.0) * size
 			sp = self.spiral2(maxtargets)
-			self.lastid = None
 			self.todo = []
 			for point in sp:
 				if point[0] == 0 and point[1] == 0:
@@ -106,13 +106,12 @@ class GridPreview(node.Node, camerafuncs.CameraFuncs):
 				neighbortiles = []
 			else:
 				neighbortiles = [self.lastid,]
-			imdata = data.ImageTileData(thisid, imarray, neighbortiles)
-			#imdata = data.StateImageTileData(thisid, imarray, stagepos, neighbortiles)
+			#imdata = data.ImageTileData(thisid, imarray, neighbortiles)
+			imdata = data.StateImageTileData(thisid, imarray, stagepos, neighbortiles)
 			print 'publishing tile'
-			self.publish(imdata, event.ImageTilePublishEvent)
+			self.publish(imdata, event.StateImageTilePublishEvent)
 
 			self.lastid = thisid
-
 
 	def next_target(self):
 		target = self.temptodo[0]
@@ -142,6 +141,7 @@ class GridPreview(node.Node, camerafuncs.CameraFuncs):
 			print 'cannot reset while loop is running'
 		else:
 			self.temptodo = list(self.todo)
+			self.lastid = None
 		return ''
 
 	def _loop(self):
