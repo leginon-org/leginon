@@ -145,7 +145,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 	def measureDefocusStig(self, tilt_value, publish_images=0):
 		emdata = self.node.researchByDataID(('magnification',))
 		#mag = emdata.content['magnification']
-		mag = emdata['magnification']
+		mag = emdata['em']['magnification']
 		fmatrix = self.retrieveMatrix(mag, 'defocus')
 		amatrix = self.retrieveMatrix(mag, 'stigx')
 		bmatrix = self.retrieveMatrix(mag, 'stigy')
@@ -218,7 +218,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			'defocus': solution[0][0],
 			'stigx': solution[0][1],
 			'stigy': solution[0][2],
-			'min': solution[1]
+			'min': float(solution[1])
 			}
 		return result
 
