@@ -1,4 +1,5 @@
 import os, socket
+import random
 #import threading, weakref
 
 class LeginonObject(object):
@@ -27,8 +28,20 @@ class LeginonObject(object):
 		self.idcounter += 1
 		return newid
 
-	def printerror(self, errorstring):
+	def printerror(self, errorstring, color=None):
+
+		if self.__class__.__name__ == 'Manager':
+			color = 41
+		elif self.__class__.__name__ == 'Launcher':
+			color = 44
+		elif self.__class__.__base__.__name__ == 'Node':
+			color = 42
+		else:
+			color = 45
+
 		printstring = ''
+		if color is not None:
+			printstring += '\033[%sm' % color	
 		if self.__module__ != '__main__':
 			printstring += self.__module__ + '.'
 		printstring += self.__class__.__name__
@@ -38,5 +51,7 @@ class LeginonObject(object):
 			printstring += ' (ID unknown)'
 		printstring += ': '
 		printstring += errorstring
+		if color is not None:
+			printstring += '\033[0m'
 		print printstring
 
