@@ -5,7 +5,7 @@ if fftengine.fftFFTW is None:
 	ffteng = fftengine.fftNumeric()
 	print 'USING Numeric FFT'
 else:
-	ffteng = fftFFTW()
+	ffteng = fftengine.fftFFTW()
 	print 'USING FFTW'
 
 ## Numeric seems to use infinity as a result of zero
