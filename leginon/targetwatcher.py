@@ -23,6 +23,8 @@ class TargetWatcher(watcher.Watcher):
 		self.addEventInput(event.TargetListDoneEvent, self.handleTargetListDone)
 
 		self.abort = threading.Event()
+		self.pause = threading.Event()
+		self.continue = threading.Event()
 		self.targetclass = targetclass
 		#self.targetevents = {}
 		self.targetlistevents = {}
@@ -69,6 +71,8 @@ class TargetWatcher(watcher.Watcher):
 
 		### process the good ones
 		self.abort.clear()
+		self.pause.clear()
+		self.continue.clear()
 		print self.id, 'PROCESSING GOOD', len(goodtargets)
 		targetliststatus = 'success'
 		for target in goodtargets:
