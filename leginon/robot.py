@@ -166,8 +166,8 @@ class RobotControl(RobotNode):
 																						event.EmailEvent]
 	def __init__(self, id, session, managerlocation, **kwargs):
 
-		#self.simulate = False
-		self.simulate = True
+		self.simulate = False
+		#self.simulate = True
 
 		RobotNode.__init__(self, id, session, managerlocation, **kwargs)
 		self.gridnumber = None
