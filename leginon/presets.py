@@ -59,91 +59,35 @@ class PresetsClient(object):
 		p.friendly_update(cameradict)
 		return p
 
-
-class DataHandler(datahandler.DataBinder):
-	def __init__(self, id, session, node):
-		datahandler.DataBinder.__init__(self, id, session)
-		self.node = node
-
-	def query(self, id):
-		cal = self.node.getPresets()
-		# assume this is a dict
-		result = data.PresetData(self.ID(), cal)
-		return result
-
-	def insert(self, idata):
-		if isinstance(idata, event.Event):
-			datahandler.DataBinder.insert(self, idata)
-		else:
-			self.node.setPresets(idata)
-
-	_insert = insert
-
-	# borrowed from NodeDataHandler
-	def setBinding(self, eventclass, func):
-		if issubclass(eventclass, event.Event):
-			datahandler.DataBinder.setBinding(self, eventclass, func)
-		else:
-			raise event.InvalidEventError('eventclass must be Event subclass')
-
+	def UI(self):
+		### this is just a start
+		### will be similar to camerafuncs configUIData
+		self.registerUIData()
+		self.registerUIMethod()
 
 class PresetsManager(node.Node):
 	def __init__(self, id, session, nodelocations, **kwargs):
-		node.Node.__init__(self, id, session, nodelocations,
-												[(DataHandler, (self,)),
-													(dbdatakeeper.DBDataKeeper, ())], **kwargs)
+		node.Node.__init__(self, id, session, nodelocations, **kwargs)
 
-		ids = [('presets',),]
-		e = event.ListPublishEvent(self.ID(), idlist=ids)
-		self.outputEvent(e)
-		
 		self.presetsclient = PresetsClient(self)
-		self.current = None
+		self.cam = camerafuncs.CameraFuncs(self)
 
 		self.defineUserInterface()
 		self.start()
 
-	def getPresets(self):
-		try:
-			f = open('PRESETS', 'rb')
-			presetdict = cPickle.load(f)
-			presetdict = copy.deepcopy(presetdict)
-			f.close()
-		except IOError:
-			print 'unable to open PRESETS'
-			presetdict = {}
-		except EOFError:
-			print 'bad pickle in PRESETS'
-			presetdict = {}
-		return presetdict
-
-	def getPreset(self, name):
-		presets = self.getPresets()
-		return copy.deepcopy(presets[name])
-
-	def setPreset(self, name, preset):
-		newdict = {name: preset}
-		self.setPresets(newdict)
-
-	def setPresets(self, preset):
-		presets = self.getPresets()
-		presets.update(preset)
-		## should make a backup before doing this
-		f = open('PRESETS', 'wb')
-		cPickle.dump(presets, f, 1)
-		f.close()
-
-	def getSessionPresetNames(self, value=None):
+	def getPresetNames(self, value=None):
 		presets = self.presetsclient.retrievePresets()
 		names = []
 		for preset in presets:
-			names.append(preset['name'])
+			presetname = preset['name']
+			if presetname not in names:
+				names.append(presetname)
 		return names
 
 	def defineUserInterface(self):
 		nodespec = node.Node.defineUserInterface(self)
 
-		presetchoices = self.registerUIData('presetchoices', 'array', callback=self.getSessionPresetNames, permissions='r')
+		presetchoices = self.registerUIData('presetchoices', 'array', callback=self.getPresetNames, permissions='r')
 		presetname = self.registerUIData('Name', 'string', choices=presetchoices)
 		store = self.registerUIMethod(self.uiStoreCurrent, 'From Scope', (presetname,))
 		restore = self.registerUIMethod(self.uiRestore, 'To Scope', (presetname,))
