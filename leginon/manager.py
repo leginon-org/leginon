@@ -369,7 +369,7 @@ if __name__ == '__main__':
 	## GUI
 	gui = 1
 	if gui:
-		import nodegui2
+		import nodegui
 		import Tkinter
 		tk = Tkinter.Tk()
 		mgui = nodegui2.NodeGUI(tk, node=m)
