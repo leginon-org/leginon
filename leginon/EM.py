@@ -176,8 +176,7 @@ class EM(node.Node):
 	eventinputs = node.Node.eventinputs + [event.LockEvent, event.UnlockEvent, event.SetScopeEvent, event.SetCameraEvent]
 	def __init__(self, name, session, managerlocation, tcpport=None, **kwargs):
 
-		self.tems = []
-		self.ccdcameras = []
+		self.instruments = []
 
 		self.typemap = {}
 
@@ -404,39 +403,29 @@ class EM(node.Node):
 		for name, c in classes:
 			objectname = '%s (%s)' % (name, socket.gethostname().lower())
 			if issubclass(c, tem.TEM):
-				class ScopeClass(c, instrument.TEM):
-					def __init__(self):
-						c.__init__(self)
-						instrument.TEM.__init__(self)
-				try:
-					if name == scopename:
-						self.scope = methoddict.factory(ScopeClass)()
-						self.typemap.update(self.scope.typemapping)
-						self.tems.append(self.scope)
-						self.objectservice._addObject(objectname, self.scope)
-					else:
-						scope = ScopeClass()
-						self.tems.append(scope)
-						self.objectservice._addObject(name, scope)
-				except Exception, e:
-					self.logger.debug('Initializing scope type %s failed: %s' % (name, e))
+				instrumentclass = instrument.TEM
+			elif issubclass(c, ccdcamera.FastCCDCamera):
+				instrumentclass = instrument.FastCCDCamera
 			elif issubclass(c, ccdcamera.CCDCamera):
-				class CCDCameraClass(c, instrument.CCDCamera):
-					def __init__(self):
-						c.__init__(self)
-						instrument.CCDCamera.__init__(self)
-				try:
-					if name == cameraname:
-						self.camera = methoddict.factory(CCDCameraClass)()
-						self.typemap.update(self.camera.typemapping)
-						self.tems.append(self.camera)
-						self.objectservice._addObject(objectname, self.camera)
-					else:
-						camera = CCDCameraClass()
-						self.tems.append(camera)
-						self.objectservice._addObject(name, camera)
-				except Exception, e:
-					self.logger.debug('Initializing camera type %s failed: %s' % (name, e))
+				instrumentclass = instrument.CCDCamera
+			class ObjectClass(c, instrumentclass):
+				def __init__(self):
+					c.__init__(self)
+					instrument.TEM.__init__(self)
+			try:
+				if name in [scopename, cameraname]:
+					instance = methoddict.factory(ObjectClass)()
+					self.typemap.update(instance.typemapping)
+				else:
+					instance = ObjectClass()
+				self.instruments.append(instance)
+				self.objectservice._addObject(name, instance)
+				if name == scopename:
+					self.scope = instance
+				elif name == cameraname:
+					self.camera = instance
+			except Exception, e:
+				self.logger.debug('Initialization of %s failed: %s' % (name, e))
 
 		for key, permissions in self.permissions.items():
 			try:
@@ -674,14 +663,9 @@ class EM(node.Node):
 			elif isinstance(request, SetInstrumentRequest):
 				pass
 			elif isinstance(request, ExitRequest):
-				for tem in self.tems:
+				for instrument in self.instruments:
 					try:
-						tem.exit()
-					except AttributeError:
-						pass
-				for camera in self.ccdcameras:
-					try:
-						camera.exit()
+						instrument.exit()
 					except AttributeError:
 						pass
 				break

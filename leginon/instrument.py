@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.7 $
+# $Revision: 1.8 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-23 21:17:32 $
+# $Date: 2005-02-23 22:24:07 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -128,6 +128,9 @@ class TEM(remotecall.Locker):
 	pass
 
 class CCDCamera(remotecall.Locker):
+	pass
+
+class FastCCDCamera(CCDCamera):
 	pass
 
 parametermapping = (
