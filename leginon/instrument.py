@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.10 $
+# $Revision: 1.11 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-23 22:41:51 $
+# $Date: 2005-02-23 22:52:34 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -25,11 +25,17 @@ class Proxy(object):
 																							remove=self.onRemoveDescription)
 
 	def onAddDescription(self, nodename, name, description, types):
-		if 'TEM' in types and self.tem is None:
-			self.setTEM(name)
+		if 'TEM' in types:
+			proxy = self.objectservice.getObjectProxy(nodename, name)
+			self.tems[name] = proxy
+			if self.tem is None:
+				self.setTEM(name)
 
-		if 'CCDCamera' in types and self.ccdcamera is None:
-			self.setCCDCamera(name)
+		if 'CCDCamera' in types:
+			proxy = self.objectservice.getObjectProxy(nodename, name)
+			self.ccdcameras[name] = proxy
+			if self.ccdcamera is None:
+				self.setCCDCamera(name)
 
 	def onRemoveDescription(self, nodename, name):
 		if name in self.tems and self.tem is self.tems[name]:
@@ -39,19 +45,9 @@ class Proxy(object):
 			self.ccdcamera = None
 
 	def getTEMNames(self):
-		objects = self.objectservice.getObjectsByType('TEM')
-		self.tems = {}
-		for nodename, name in objects:
-			proxy = self.objectservice.getObjectProxy(nodename, name)
-			self.tems[name] = proxy
 		return self.tems.keys()
 
 	def getCCDCameraNames(self):
-		objects = self.objectservice.getObjectsByType('CCDCamera')
-		self.ccdcameras = {}
-		for nodename, name in objects:
-			proxy = self.objectservice.getObjectProxy(nodename, name)
-			self.ccdcameras[name] = proxy
 		return self.ccdcameras.keys()
 
 	def setTEM(self, name):
@@ -141,7 +137,7 @@ class FastCCDCamera(CCDCamera):
 
 parametermapping = (
 	# ScopeEM
-	('magnification', 'Magnifiction'),
+	('magnification', 'Magnification'),
 	('spot size', 'SpotSize'),
 	('image shift', 'ImageShift'),
 	('beam shift', 'BeamShift'),
