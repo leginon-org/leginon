@@ -117,8 +117,7 @@ class MatrixCalibrationClient(CalibrationClient):
 		changex = change[0]
 		changey = change[1]
 
-		new = {}
-		new[par] = dict(scope[par])
+		new = dict(scope)
 		new[par]['x'] += changex
 		new[par]['y'] += changey
 
@@ -191,7 +190,6 @@ class ModeledStageCalibrationClient(CalibrationClient):
 
 	def transform(self, pixelshift, scope, camera):
 		curstage = scope['stage position']
-		newstage = dict(curstage)
 
 		binx = camera['binning']['x']
 		biny = camera['binning']['y']
@@ -203,9 +201,11 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		ymod_dict = self.getModel('y')
 		mag_dict = self.getMagCalibration(scope['magnification'])
 		delta = self.pixtix(xmod_dict, ymod_dict, mag_dict, curstage['x'], curstage['y'], pixcol, pixrow)
-		newstage['x'] += delta['x']
-		newstage['y'] += delta['y']
-		return {'stage position': newstage}
+
+		newscope = dict(scope)
+		newscope['stage position']['x'] += delta['x']
+		newscope['stage position']['y'] += delta['y']
+		return newscope
 
 	def pixtix(self, xmod_dict, ymod_dict, mag_dict, gonx, gony, pixx, pixy):
 		xmod = gonmodel.GonModel()
