@@ -33,9 +33,9 @@ class CameraFuncs(object):
 			imdata = self.node.researchByDataID('corrected image data')
 		else:
 			### create my own data from acquisition
-			scopedata = self.node.researchByDataID('scope')
+			scopedata = self.node.researchByDataID(('scope',))
 			scopedict = scopedata['em']
-			camdata = self.node.researchByDataID('camera')
+			camdata = self.node.researchByDataID(('camera',))
 			cameradict = camdata['em']
 			numimage = cameradict['image data']
 			del cameradict['image data']
@@ -53,7 +53,7 @@ class CameraFuncs(object):
 		if camstate is not None:
 			t2 = Timer('publish camera state')
 			try:
-				camdata = data.EMData('camera', em=camstate)
+				camdata = data.EMData(('camera',), em=camstate)
 				self.node.publishRemote(camdata)
 			except Exception, detail:
 				print detail

@@ -317,7 +317,7 @@ class Node(leginonobject.LeginonObject):
 		nodeiddata = self.managerclient.pull(dataid)
 
 		if nodeiddata is None:
-			raise ResearchError('No such Data ID: %s' % (dataid,))
+			raise ResearchError('No such data ID: %s' % (dataid,))
 
 		# should interate over nodes, be crafty, etc.
 		datalocationdata = self.managerclient.pull(nodeiddata['location'][-1])

@@ -18,7 +18,7 @@ class DataHandler(datahandler.DataBinder):
 		self.EMnode = EMnode
 
 	def query(self, id):
-		stuff = self.EMnode.getEM([id])
+		stuff = self.EMnode.getEM([id[0]])
 		result = data.EMData(self.ID(), em=stuff)
 		return result
 
@@ -79,6 +79,8 @@ class EM(node.Node):
 		ids = ['scope', 'camera', 'camera no image data', 'all']
 		ids += self.scope.keys()
 		ids += self.camera.keys()
+		for i in range(len(ids)):
+			ids[i] = (ids[i],)
 		e = event.ListPublishEvent(self.ID(), idlist=ids)
 		self.outputEvent(e, wait=True)
 		self.outputEvent(event.NodeInitializedEvent(self.ID()))
