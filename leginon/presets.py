@@ -29,10 +29,11 @@ class PresetsClient(object):
 		evt = event.ChangePresetEvent()
 		evt['name'] = presetname
 		evt['emtarget'] = emtarget
+		timeout = 30
 		try:
-			self.node.outputEvent(evt, wait=True, timeout=10)
+			self.node.outputEvent(evt, wait=True, timeout=timeout)
 		except node.ConfirmationTimeout:
-			print 'no response from PresetsManager after 10s'
+			print 'no response from PresetsManager after % s' % (timeout,)
 
 	def presetchanged(self, ievent):
 		name = ievent['name']
@@ -268,10 +269,11 @@ class PresetsManager(node.Node):
 			return
 
 		name = presetdata['name']
+		pause = self.changepause.get()
 
 		print 'changing to preset %s' % (name,)
 
-		## should use AllEMData, but that is not working yet
+		## should switch to using AllEMData
 		scopedata = data.ScopeEMData()
 		cameradata = data.CameraEMData()
 		scopedata.friendly_update(presetdata)
@@ -287,6 +289,7 @@ class PresetsManager(node.Node):
 		else:
 			self.currentpreset = presetdata
 			self.outputEvent(event.PresetChangedEvent(name=name))
+			time.sleep(pause)
 			print 'preset changed to %s' % (name,)
 
 	def fromScope(self, name):
@@ -335,19 +338,81 @@ class PresetsManager(node.Node):
 		self.uiselectpreset.set(names, 0)
 
 	def uiToScope(self):
-		sel = self.uiselectpreset.getSelectedValue()
-		self.toScope(sel)
+		new = self.uiselectpreset.getSelectedValue()
+		self.toScopeFollowCycle(new)
+
+	def toScopeFollowCycle(self, new):
+		order = self.orderlist.get()
+		print 'NEW', new
+		if self.currentpreset is None:
+			current = order[0]
+		else:
+			current = self.currentpreset['name']
+		print 'CURRENT', current
+
+		## if cycle creation works, then 
+		try:
+			cycle = self.createCycleList(current, new)
+		except RuntimeError:
+			cycle = []
+		print 'CYCLE', cycle
+
+		usecycle = self.usecycle.get() and bool(cycle)
+		print 'USECYCLE', usecycle
+
+		if usecycle:
+			print 'following cycle to %s' % (new,)
+			# remove first and last from list
+			try:
+				del cycle[0]
+				del cycle[-1]
+			except IndexError:
+				pass
+			for p in cycle:
+				print 'toScope(%s)' % (p,)
+				self.toScope(p)
+		print 'toScope(%s)' % (new,)
+		self.toScope(new)
+
+	def createCycleList(self, first, last, order=None):
+		if order is None:
+			order = self.orderlist.get()
+		if not order:
+			print 'no order list specified'
+			raise RuntimeError('no order list specified')
+		print 'ORDER', order
+		if last not in order:
+			print 'last not in order list'
+			raise RuntimeError('last not in order')
+		if first not in order:
+			first = last
+		cycle = []
+		on = False
+		done = False
+		while True:
+			for pname in order:
+				if on:
+					if pname == last:
+						done = True
+					cycle.append(pname)
+				else:
+					if pname == first:
+						on = True
+						cycle.append(pname)
+				if done:
+					break
+			if done:
+				break
+		return cycle
 
 	def uiCycleToScope(self):
 		print 'Cycling Presets...'
-		pause = self.cyclepause.get()
 		for name in self.orderlist.get():
 			p = self.presetByName(name)
 			if p is None:
 				self.printerror('%s not in presets' % (name,))
 			else:
 				self.toScope(p)
-				time.sleep(pause)
 		print 'Cycle Done'
 
 	def uiSelectedFromScope(self):
@@ -424,14 +489,15 @@ class PresetsManager(node.Node):
 		self.presetparams = uidata.Struct('Parameters', {}, 'rw', self.uiParamsCallback)
 		self.uiselectpreset = uidata.SingleSelectFromList('Preset', [], 0, callback=self.uiSelectCallback)
 		toscopemethod = uidata.Method('To Scope', self.uiToScope)
-		self.cyclepause = uidata.Float('Cycle Pause', 1.0, 'rw', persist=True)
+		self.changepause = uidata.Float('Pause', 1.0, 'rw', persist=True)
 		cyclemethod = uidata.Method('Cycle To Scope', self.uiCycleToScope)
+		self.usecycle = uidata.Boolean('Always Follow Cycle', True, 'rw', persist=True)
 		fromscopemethod = uidata.Method('From Scope', self.uiSelectedFromScope)
 		removemethod = uidata.Method('Remove', self.uiSelectedRemove)
-		self.orderlist = uidata.Array('Order', [], 'rw', persist=True)
+		self.orderlist = uidata.Array('Cycle Order', [], 'rw', persist=True)
 
 		selectcont = uidata.Container('Selection')
-		selectcont.addObjects((self.uiselectpreset,toscopemethod,fromscopemethod,removemethod,self.cyclepause,cyclemethod,self.orderlist,self.autosquare,self.presetparams))
+		selectcont.addObjects((self.uiselectpreset,toscopemethod,fromscopemethod,removemethod,self.changepause,cyclemethod,self.usecycle,self.orderlist,self.autosquare,self.presetparams))
 
 		pnames = self.presetNames()
 		self.uiselectpreset.set(pnames, 0)
@@ -450,6 +516,17 @@ class PresetsManager(node.Node):
 		by client nodes which request that presets and targets
 		be tightly coupled.
 		'''
+		## first cycle through presets before sending the final one
+		order = self.orderlist.get()
+		currentname = self.currentpreset['name']
+		previousname = order[order.index(newpresetname)-1]
+		print 'PREV', previousname
+		print 'CUR', currentname
+		print 'NEW', newpresetname
+		if currentname not in (newpresetname, previousname):
+			print 'now cycling to %s' % (previousname,)
+			self.toScopeFollowCycle(previousname)
+
 		## XXX this might be dangerous:  I'm taking the original target
 		## preset and using it's name to get the PresetManager's preset
 		## by that same name
@@ -504,6 +581,8 @@ class PresetsManager(node.Node):
 		except node.PublishError:
 			self.printException()
 			print '** Maybe EM is not running?'
+		except:
+			self.printException()
 		else:
 			name = newpreset['name']
 			self.currentpreset = newpreset
