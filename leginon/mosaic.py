@@ -75,7 +75,7 @@ class Mosaic(object):
 		return {'min': (int(round(mosaicmin[0])), int(round(mosaicmin[1]))), 
 						'max': (int(round(mosaicmax[0])), int(round(mosaicmax[1])))}
 
-	def getMosaicImage(self, maxdimension=None, astype=Numeric.Int16):
+	def getMosaicImage(self, maxdimension=None, astype=Numeric.UInt16):
 		if not self.tiles:
 			return None
 		bbox = self.getMosaicImageBoundaries()
