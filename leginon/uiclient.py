@@ -1589,7 +1589,7 @@ class wxBitmapTreeCtrl(wxTreeCtrl):
 			self.drawBitmaps(wxClientDC(self))
 		else:
 			if self.IsVisible(id):
-				rect = self.GetBoundingRect(id)
+				rect = self.GetBoundingRect(id, True)
 				dc = wxClientDC(self)
 				dc.BeginDrawing()
 				dc.SetPen(wxPen(self.GetBackgroundColour()))
@@ -1598,8 +1598,12 @@ class wxBitmapTreeCtrl(wxTreeCtrl):
 				dc.EndDrawing()
 
 	def OnPaint(self, evt):
-		#wxTreeCtrl.OnPaint(self, evt)
-		self.drawBitmaps(wxPaintDC(self))
+		dc = wxPaintDC(self)
+		try:
+			wxTreeCtrl.OnPaint(self, evt)
+		except AttributeError:
+			pass
+		self.drawBitmaps(dc)
 		evt.Skip()
 
 	def drawBitmaps(self, dc):
@@ -1607,7 +1611,7 @@ class wxBitmapTreeCtrl(wxTreeCtrl):
 		for bitmap in self.bitmaps:
 			for id in self.bitmaps[bitmap]:
 				if self.IsVisible(id):
-					rect = self.GetBoundingRect(id)
+					rect = self.GetBoundingRect(id, True)
 					dc.DrawBitmap(bitmap, rect[0] + rect[2], rect[1])
 		dc.EndDrawing()
 
