@@ -1602,7 +1602,7 @@ class wxTreePanel(wxPanel):
 		self.tree = wxTreeCtrl(self.sashwindow, -1,
 														style=wxTR_HIDE_ROOT|wxTR_NO_BUTTONS)
 
-		self.tree.SetImageList(self.imagelist)
+		self.tree.AssignImageList(self.imagelist)
 		self.root = self.tree.AddRoot('Containers')
 
 		self.childpanel = wxScrolledWindow(self, -1, size=(512, 512),
