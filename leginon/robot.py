@@ -141,7 +141,6 @@ if sys.platform == 'win32':
 
 		def insertStage(self):
 			self.insertmethod.disable()
-			self.extractmethod.disable()
 
 			gridnumber = -1
 
@@ -150,10 +149,12 @@ if sys.platform == 'win32':
 					gridnumber = self.gridqueue.get(block=False)
 				except Queue.Empty:
 					self.setStatus('Grid queue empty')
+					self.uicurrentgridnumber.set(None)
 					self.insertmethod.enable()
-					self.extractmethod.enable()
 					return
 
+			self.gridnumber = gridnumber
+			self.uicurrentgridnumber.set(gridnumber)
 			self.communication.gridNumber = gridnumber
 
 			self.setStatus('Verifying robot is ready for insertion')
@@ -221,10 +222,9 @@ if sys.platform == 'win32':
 			self.communication.Signal4 = 0
 			self.setStatus('Robot has completed insertion step 2')
 			self.insertmethod.enable()
-			self.extractmethod.enable()
 			self.setStatus('Outputting inserted event')
 			evt = event.GridInsertedEvent()
-			evt['grid number'] = gridnumber
+			evt['grid number'] = self.gridnumber
 			self.outputEvent(evt)
 			self.setStatus('Robot has completed insertion')
 
@@ -236,7 +236,6 @@ if sys.platform == 'win32':
 
 		def extractStage(self):
 			self.insertmethod.disable()
-			self.extractmethod.disable()
 			self.setStatus('Verifying robot is ready for extraction')
 			while not self.communication.Signal5:
 				time.sleep(0.5)
@@ -273,11 +272,12 @@ if sys.platform == 'win32':
 			self.communication.Signal7 = 0
 
 			self.insertmethod.enable()
-			self.extractmethod.enable()
 
 			self.setStatus('Outputting extracted event')
 			evt = event.GridExtractedEvent()
-			evt['grid number'] = -1
+			evt['grid number'] = self.gridnumber
+			self.gridnumber = -1
+			self.uicurrentgridnumber.set(None)
 			self.outputEvent(evt)
 			self.setStatus('Robot has completed extraction')
 
@@ -326,13 +326,14 @@ if sys.platform == 'win32':
 																gridaddmethod))
 
 			self.statuslabel = uidata.String('Current Operation', '', 'r')
+			self.uicurrentgridnumber = uidata.Integer('Current grid number',
+																								None, 'r')
 			statuscontainer = uidata.Container('Status')
-			statuscontainer.addObjects((self.statuslabel,))
+			statuscontainer.addObjects((self.statuslabel, self.uicurrentgridnumber))
 
-			self.insertmethod = uidata.Method('Insert', self.insert)
-			self.extractmethod = uidata.Method('Extract', self.extract)
+			self.insertmethod = uidata.Method('Process Grids', self.insert)
 			controlcontainer = uidata.Container('Control')
-			controlcontainer.addObjects((self.insertmethod, self.extractmethod))
+			controlcontainer.addObjects((self.insertmethod,))
 	
 			rccontainer = uidata.LargeContainer('Robot Control')
 			rccontainer.addObjects((gridcontainer, statuscontainer, controlcontainer))
@@ -426,84 +427,4 @@ class RobotNotification(RobotNode):
 		container = uidata.LargeContainer('Robot Notification')
 		container.addObjects((statuscontainer,))
 		self.uiserver.addObject(container)
-
-class RobotTest(node.Node):
-	eventinputs = RobotNode.eventinputs + [event.ExtractGridEvent,
-																					event.InsertGridEvent,]
-	eventoutputs = RobotNode.eventoutputs + [event.GridInsertedEvent,
-																						event.GridExtractedEvent,
-																						event.MosaicDoneEvent]
-	def __init__(self, id, session, nodelocations, **kwargs):
-		node.Node.__init__(self, id, session, nodelocations, **kwargs)
-
-		self.addEventInput(event.ExtractGridEvent, self.handleExtract)
-		self.addEventInput(event.InsertGridEvent, self.handleInsert)
-
-		self.defineUserInterface()
-		self.start()
-
-	def insertStage(self):
-		print 'insertStage'
-		self.insertmethod.disable()
-		self.extractmethod.disable()
-
-		self.insertmethod.enable()
-		self.extractmethod.enable()
-		print 'insertStage outputting event'
-		evt = event.GridInsertedEvent()
-		evt['grid number'] = -1
-		self.outputEvent(evt)
-		print 'insertStage Done'
-
-	def handleInsert(self, ievent):
-		self.insert()
-
-	def handleExtract(self, ievent):
-		self.extract()
-
-	def extractStage(self):
-		print 'extractStage'
-		self.insertmethod.disable()
-		self.extractmethod.disable()
-
-		self.insertmethod.enable()
-		self.extractmethod.enable()
-
-		print 'extractStage, outputting extracted event'
-		evt = event.GridExtractedEvent()
-		evt['grid number'] = -1
-		self.outputEvent(evt)
-		print 'extractStage done'
-
-	def insert(self):
-		print 'robot insert'
-		try:
-			self.insertStage()
-		except RuntimeError:
-			pass
-
-	def extract(self):
-		print 'robot extract'
-		try:
-			self.extractStage()
-		except RuntimeError:
-			pass
-
-	def mosaicDone(self):
-		evt = event.MosaicDoneEvent()
-		self.outputEvent(evt)
-
-	def defineUserInterface(self):
-		node.Node.defineUserInterface(self)
-
-		self.insertmethod = uidata.Method('Insert', self.insert)
-		self.extractmethod = uidata.Method('Extract', self.extract)
-		self.mosaicmethod = uidata.Method('Mosaic Done', self.mosaicDone)
-		controlcontainer = uidata.Container('Control')
-		controlcontainer.addObjects((self.insertmethod, self.extractmethod,
-																										self.mosaicmethod))
-
-		rccontainer = uidata.LargeContainer('Robot Test')
-		rccontainer.addObjects((controlcontainer,))
-		self.uiserver.addObject(rccontainer)
 
