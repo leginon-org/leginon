@@ -8,7 +8,7 @@ import event
 
 class Node(xmlrpcserver.xmlrpcserver):
 	def __init__(self, manageraddress):
-		xmlrpcserver.xmlrpcserver.__init__(self)
+		self.server = xmlrpcserver(self)
 
 		self.datahandler = DataHandler(self)
 

@@ -13,12 +13,13 @@ class xmlrpcserver(SimpleXMLRPCServer):
 	A SimpleXMLRPCServer that figures out its own host and port
 	Sets self.host and self.port accordingly
 	Also defines a _dispatch method that only exposes methods
-	prefixed with EXPORT_
+	prefixed with the string self.prefix_name
 	"""
 	# is there some way to handle unmarshalable data by catching an
 	# exception and then pickling? there would have to be something
 	# client side mabye
-	def __init__(self, port=None):
+	def __init__(self,  object_instance, port=None):
+		self.object_instance = object_instance 
 		hostname = socket.gethostname()
 		if port:
 			# this exception will fall through if __init__ fails
@@ -41,6 +42,7 @@ class xmlrpcserver(SimpleXMLRPCServer):
 		self.location = location.Location(hostname,
 						port,
 						os.getpid())
+		self.prefix_name = "EXPORT_"
 		self._start_serving()
 
 	def _start_serving(self):
@@ -49,7 +51,7 @@ class xmlrpcserver(SimpleXMLRPCServer):
 		print 'xml-rpc server %s:%s' % (hostname,port)
 		self.register_instance(self)
 		th = threading.Thread(target=self.serve_forever)
-		th.setDaemon(1)
+		#th.setDaemon(1)
 		th.start()
 		self.serverthread = th
 
@@ -59,9 +61,12 @@ class xmlrpcserver(SimpleXMLRPCServer):
 		return argnames
 
 	def _dispatch(self, method, params):
-		meth = getattr(self, 'EXPORT_' + method)
+		try:
+			meth = getattr(self.object_instance,
+					self.prefix_name + method)
+		except AttributeError:
+			meth = getattr(self, self.prefix_name + method)
 
-		print 'DISPATCH', meth
 		## truncate args to the specs of the method
 		argnames = self.argspec(meth)
 		arglen = len(argnames)
@@ -79,13 +84,14 @@ class xmlrpcserver(SimpleXMLRPCServer):
 
 	def EXPORT_methods(self):
 		methlist = inspect.getmembers(self, inspect.ismethod)
+		methlist += inspect.getmembers(self.object_instance,
+						inspect.ismethod)
 		rpcmethdict = {}
 		for methtup in methlist:
 			methname = methtup[0]
 			meth = methtup[1]
-			if methname[:7] == 'EXPORT_':
-				shortname = methname[7:]
-
+			if methname[:len(self.prefix_name)] == self.prefix_name:
+				shortname = methname[len(self.prefix_name):]
 				methargs = self.argspec(meth)
 				rpcmethdict[shortname] = {'args':methargs}
 
@@ -135,23 +141,21 @@ class xmlrpcgui(Frame):
 if __name__ == '__main__':
 	import signal
 
-	class mynode(xmlrpcserver):
+	class mynode(object):
 		def __init__(self):
-			xmlrpcserver.__init__(self)
+			self.server = xmlrpcserver(self)
 
 		def EXPORT_test(self, jim, bob):
 			print 'this is a test', jim, bob
 
 
 	m = mynode()
-	print 'started mynode on port %s' % m.port
+
+#	top = Tk()
+#	mgui = xmlrpcgui(top, m.host, m.port)
+#	mgui.pack()
 
 
-	top = Tk()
-	mgui = xmlrpcgui(top, m.host, m.port)
-	mgui.pack()
-
-
-	top.mainloop()
+#	top.mainloop()
 
 
