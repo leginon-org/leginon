@@ -403,7 +403,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.setStatusMessage('Publishing mosaic data')
 		initializer = {'id': self.ID(), 'data IDs': list(self.idlist)}
 		newmosaic = data.MosaicData(initializer=initializer)
-		self.publish(mosaicdata, database=True)
+		self.publish(newmosaic, database=True)
 
 	def mosaicImageToDatabase(self, mosaicdata, mosaicimage, scale):
 		self.setStatusMessage('Publishing mosaic image data')
