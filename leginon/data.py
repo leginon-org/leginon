@@ -529,7 +529,7 @@ class Data(newdict.TypedDict, leginonobject.LeginonObject):
 	def __setitem__(self, key, value, force=False):
 		'''
 		'''
-		if self.dbid is not None and not force:
+		if hasattr(self, 'dbid') and self.dbid is not None and not force:
 			raise RuntimeError('persistent data cannot be modified, try to create a new instance instead, or use toDict() if a dict representation will do')
 		if isinstance(value,Data):
 			value = value.reference()
