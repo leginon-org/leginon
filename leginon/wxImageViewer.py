@@ -153,6 +153,7 @@ class ZoomTool(ImageTool):
 		center = self.imagepanel.view2image((x, y))
 		self.imagepanel.setScale((xscale*2, yscale*2))
 		self.imagepanel.center(center)
+		self.imagepanel.UpdateDrawing()
 		self.updateLabel()
 
 	def zoomOut(self, x, y):
@@ -160,6 +161,7 @@ class ZoomTool(ImageTool):
 		center = self.imagepanel.view2image((x, y))
 		self.imagepanel.setScale((xscale/2, yscale/2))
 		self.imagepanel.center(center)
+		self.imagepanel.UpdateDrawing()
 		self.updateLabel()
 
 class ImagePanel(wxPanel):
