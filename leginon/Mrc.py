@@ -23,6 +23,23 @@ typecode_mrcmode = {
 	Numeric.Int32: 2
 	}
 
+def min(inputarray):
+	f = Numeric.ravel(inputarray)
+	i = Numeric.argmin(f)
+	return f[i]
+
+def max(inputarray):
+	f = Numeric.ravel(inputarray)
+	i = Numeric.argmax(f)
+	return f[i]
+
+def mean(inputarray):
+	f = Numeric.ravel(inputarray)
+	inlen = len(f)
+	divisor = Numeric.array(inlen, Numeric.Float32)
+	m = Numeric.sum(f) / divisor
+	return m
+
 def mrc_to_numeric(filename):
 	try:
 		f = open(filename, 'rb')
@@ -80,15 +97,21 @@ class MrcData:
 		self.width = None
 		self.height = None
 		self.depth = None
+		self.min = None
+		self.max = None
+		self.mean = None
 
 	def useheader(self, head):
-		self.describe(head['width'], head['height'], head['depth'], head['mode'])
+		self.describe(head['width'], head['height'], head['depth'], head['mode'], head['min'], head['max'], head['mean'])
 
-	def describe(self, width, height, depth, mode):
+	def describe(self, width, height, depth, mode, min, max, mean):
 		self.mode = mode
 		self.width = width
 		self.height = height
 		self.depth = depth
+		self.min = min
+		self.max = max
+		self.mean = mean
 
 	def fromfile(self, fobj):
 		elementsize = mrcmode_typecode[self.mode][0]
@@ -144,6 +167,12 @@ class MrcData:
 		else:
 			raise 'unsupported'
 
+		## these are defined previously in this module
+		## (not Python built-ins)
+		self.min = min(narray)
+		self.max = max(narray)
+		self.mean = mean(narray)
+
 		## for now, using little endian as standard
 		if sys.byteorder != 'little':
 			narray = narray.byteswapped()
@@ -173,6 +202,9 @@ class MrcHeader:
 		self['height'] = mrcdata.height
 		self['depth'] = mrcdata.depth
 		self['mode'] = mrcdata.mode
+		self['min'] = mrcdata.min
+		self['max'] = mrcdata.max
+		self['mean'] = mrcdata.mean
 
 	def fromstring(self, headstr):
 		"get data from a string representation of MRC header"
@@ -191,6 +223,14 @@ class MrcHeader:
 		self['nxstart'] = nxstart
 		self['nystart'] = nystart
 		self['nzstart'] = nzstart
+
+		## after skipping some fields, here are image stats
+		chunk = headstr[76:88]
+		datamin,datamax,datamean = struct.unpack('3f', chunk)
+		self['min'] = datamin
+		self['max'] = datamax
+		self['mean'] = datamean
+
 		## rest of headstr ignored for now
 
 	def tostring(self):
@@ -198,14 +238,22 @@ class MrcHeader:
 
 		#### create a struct format string
 		# first 16 byte chunk includes width,height,depth,mode
-		fmtstr = '<4i'
-		# pad the rest
-		padbytes = self.headerlen - 16
-		fmtstr = fmtstr + `padbytes` + 'x'
+		dims = '<4i'
+		# some padding, then the stats
+		pad1 = '60x'
+		stats = '3f'
+		## already done 16 + 60 + 12 = 88 bytes
+		## pad the rest 1024 - 88 = 936
+		pad2 = '936x'
 
+		fmtstr = dims + pad1 + stats + pad2
+
+		print 'FMT'
+		print fmtstr
 		headstr = struct.pack(fmtstr, 
 			self['width'], self['height'],
-			self['depth'], self['mode'] )
+			self['depth'], self['mode'] ,
+			self['min'], self['max'], self['mean'])
 		return headstr
 
 	def fromfile(self, fobj):
