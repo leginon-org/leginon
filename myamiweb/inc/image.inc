@@ -1,7 +1,7 @@
 <?
 /**
- *	@version $Revision: 1.10 $
- *	@version $Id: image.inc,v 1.10 2004-11-02 22:38:42 dfellman Exp $
+ *	@version $Revision: 1.11 $
+ *	@version $Id: image.inc,v 1.11 2004-11-12 17:17:32 dfellman Exp $
  */
 /**
  *	Tools to display images / mosaic
@@ -54,7 +54,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 	}
 
 	$pic = $path.$filename;
-	if (is_file($pic)) {
+	if (@is_file($pic)) {
 		$imginfo = $leginondata->getImageInfo($imageId);
 		$dimx = $imginfo[dimx];
 
@@ -78,7 +78,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		$yellow= imagecolorallocate($img, 255, 255, 0);
 		if ($p[displaytargets]) {
 		    $targets = $leginondata->getImageTargets($imageId);
-		    $targets = $leginondata->matchVersionTargets($targets);
+		    if ($targets = $leginondata->matchVersionTargets($targets))
 		    foreach ($targets as $target) {
 			$tId=$target[childId];
 			$targetinfo = $leginondata->getImageInfo($tId);
@@ -115,7 +115,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 			imagestringshadow($img, 4, $ctx, $cty, $tn, $col);
 			
 		    }
-		    $targets = $leginondata->getImageFocusTargets($imageId);
+		    if ($targets = $leginondata->getImageFocusTargets($imageId))
 		    foreach ($targets as $target) {
 			$tgn=$target[tnumber];
 			$tn='focus'."  ".$tgn;

@@ -339,7 +339,7 @@ class mysql {
 	
 	function getFields($table) {
 		$fields = array();
-		if ($table) {
+		if ($table && $this->SQLTableExists($table)) {
 			$R = $this->SQLQuery("SHOW FIELDS FROM `$table`");
 			while ($r = mysql_fetch_array($R))
 				$fields[] = $r[Field];

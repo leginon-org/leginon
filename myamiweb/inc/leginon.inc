@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.35 $
- *	@version $Id: leginon.inc,v 1.35 2004-11-11 21:35:17 dfellman Exp $
+ *	@version $Revision: 1.36 $
+ *	@version $Id: leginon.inc,v 1.36 2004-11-12 17:17:32 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -251,6 +251,7 @@ class leginondata {
 	}
 
 	function getPresets($fileId, $presets=array('mag','defocus','pixelsize','dose')) {
+		$presetfields = $this->mysql->getFields('PresetData');
 		if (!is_array($presets) || !$fileId)
 			return false;
 		if (in_array('mag', $presets))
@@ -259,7 +260,7 @@ class leginondata {
 			$sqlselect[]="scope.defocus";
 		if (in_array('pixelsize', $presets))
 			$sqlselect[]="pi.pixelsize";
-		if (in_array('dose', $presets))
+		if (in_array('dose', $presets) && in_array('dose', $presetfields))
 			$sqlselect[]="p.dose";
 		$sqlselectstr=implode(', ',$sqlselect);
 		$q='
@@ -268,8 +269,9 @@ class leginondata {
 			left join ScopeEMData scope on (scope.`DEF_id`=a.`REF|ScopeEMData|scope`) 
 			left join SessionData s1 on (s1.`DEF_id`=a.`REF|SessionData|session`) 
 			left join SessionData s2 on (s2.`DEF_id`=pi.`REF|SessionData|session`) 
-			left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) 
-		where s1.`REF|InstrumentData|instrument`=s2.`REF|InstrumentData|instrument`
+		'
+		.' left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) '
+		.' where s1.`REF|InstrumentData|instrument`=s2.`REF|InstrumentData|instrument`
 				and scope.magnification = pi.magnification 
 				and a.`DEF_id` = '.$fileId.'
 		order by pi.`DEF_timestamp` desc limit 1
@@ -606,6 +608,7 @@ class leginondata {
 			."on (pp.DEF_id=parent.`REF|PresetData|preset`) "
 			."where " 
 			."a.`DEF_id` ='".$imgId."' "; 
+		return $this->mysql->getSQLResult($q);
 		$Rparent = $this->mysql->SQLQuery($q);
 		$parent = mysql_fetch_array($Rparent, MYSQL_ASSOC);
 		return $parent;
@@ -618,6 +621,13 @@ class leginondata {
 		$parentselect = "";
 		$parentjoin = "";
 		$gridtable = $this->mysql->isTable('GridData');
+		$parenttargetfields = $this->mysql->getFields('AcquisitionImageTargetData');
+		$parenttargetjoin = (in_array('REF|CameraEMData|camera', $parenttargetfields)) ?  
+			"left join AcquisitionImageTargetData parenttarget "
+			."on (parenttarget.`DEF_id`=a.`REF|AcquisitionImageTargetData|target`) "
+			."left join CameraEMData cp "
+			."on (parenttarget.`REF|CameraEMData|camera`=cp.`DEF_id`) " : "";
+		$parenttargetjoin = "";
 		$gridselect = ($gridtable) ?
 			"grid.`grid ID` as gridId, " : "";
 		$gridjoin = ($gridtable) ?
@@ -664,21 +674,18 @@ class leginondata {
 			."pi.pixelsize as pixelsize, "
 			."scope.magnification, "
 			."scope.defocus, "
-			."scope.`high tension`, "
-			."parenttarget.`delta column`, "
-			."parenttarget.`delta row`, "
-			."floor(parenttarget.`delta column`+cp.`SUBD|dimension|x`/2) as targetx, "
-			."floor(parenttarget.`delta row`+cp.`SUBD|dimension|y`/2) as targety "
+			."scope.`high tension` "
+	//		."parenttarget.`delta column`, "
+	//		."parenttarget.`delta row`, "
+	//		."floor(parenttarget.`delta column`+cp.`SUBD|dimension|x`/2) as targetx, "
+	//		."floor(parenttarget.`delta row`+cp.`SUBD|dimension|y`/2) as targety "
 			."from AcquisitionImageData a "
 			."left join ScopeEMData scope on (scope.`DEF_id`=a.`REF|ScopeEMData|scope`) "
 			."left join SessionData s1 on (s1.`DEF_id`=a.`REF|SessionData|session`) "
 			."left join SessionData s2 on (s2.`DEF_id`=pi.`REF|SessionData|session`) "
 			."left join CameraEMData c on (a.`REF|CameraEMData|camera`=c.`DEF_id`) "
 			."left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
-			."left join AcquisitionImageTargetData parenttarget "
-			."on (parenttarget.`DEF_id`=a.`REF|AcquisitionImageTargetData|target`) "
-			."left join CameraEMData cp "
-			."on (parenttarget.`REF|CameraEMData|camera`=cp.`DEF_id`) "
+			.$parenttargetjoin
 			.$gridjoin
 			."cross join PixelSizeCalibrationData pi on "
 			."(s1.`REF|InstrumentData|instrument`=s2.`REF|InstrumentData|instrument` and "
@@ -686,7 +693,6 @@ class leginondata {
 			.$parentjoin
 			."where "
 			."a.`DEF_id` ='".$imgId."' "; 
-
 		$Rimageinfo = $this->mysql->SQLQuery($q);
 		$imageinfo = mysql_fetch_array($Rimageinfo, MYSQL_ASSOC);
 		return $imageinfo;
@@ -842,6 +848,7 @@ class leginondata {
 			."a.`DEF_id`='".$imgId."' "
 			."order by t.`tnumber` ";
 
+		return $this->mysql->getSQLResult($q);
 		$Rtargets = $this->mysql->SQLQuery($q);
 		$targets= array();
 		while ($target = mysql_fetch_array($Rtargets, MYSQL_ASSOC))
@@ -918,6 +925,7 @@ class leginondata {
 			.$version 
 			."t.`type`='focus' and "
 			."a.`DEF_id`='".$imgId."'";
+		return $this->mysql->getSQLResult($q);
 		$Rtargets = $this->mysql->SQLQuery($q);
 		$targets= array();
 		while ($target = mysql_fetch_array($Rtargets, MYSQL_ASSOC))
