@@ -130,7 +130,11 @@ class ManualAcquisition(node.Node):
 			self.setScope({'main screen position': 'up'})
 
 		if self.settings['low dose']:
-			self.lowdosemode = self.getScope('low dose mode')
+			state = self.getScope('low dose mode')
+			try:
+				self.lowdosemode = state['low dose mode']
+			except KeyError:
+				self.logger.warning('Failed to get low dose mode, will not return to previous low dose state post exposure')
 			self.setScope({'low dose mode': 'exposure'})
 			time.sleep(self.settings['low dose pause time'])
 
