@@ -15,26 +15,31 @@ import sys
 import cStringIO
 import imagefun
 
+## MRC supported types
 mrcmode_typecode = {
 	0: (1, Numeric.UnsignedInt8),
 	1: (2, Numeric.Int16),
 	2: (4, Numeric.Float32),
-	## UInt16 is supported in the new JMRC standard (Jim's MRC, hahaha):
-	7: (2, Numeric.UInt16)
-	}
-
+	3: (8, Numeric.Complex32),
+}
 typecode_mrcmode = {
 	Numeric.UnsignedInt8: 0,
 	Numeric.Int16: 1,
-	## UInt16 is supported in the new JMRC standard (Jim's MRC, hahaha):
-	Numeric.UInt16: 7,
 	Numeric.Float32: 2,
-	Numeric.Float: 2,
-	Numeric.Float64: 2,
-	Numeric.Int: 2,
-	Numeric.Int32: 2,
-	Numeric.Int8: 1
-	}
+	Numeric.Complex32: 3,
+}
+
+## MRC is lame because it only supports a few of the C types
+## The following allows other C types to be converted to 
+## MRC supported types by up/down casting.
+unsupported_typecodes = {
+	Numeric.Complex64: Numeric.Complex32, # precision loss
+	Numeric.Float64:   Numeric.Float32,   # precision loss
+	Numeric.Int32:     Numeric.Float32,   # precision loss
+	Numeric.Int:       Numeric.Float32,   # precision loss
+	Numeric.UInt16:    Numeric.Float32,   # 2 bytes wasted
+	Numeric.Int8:      Numeric.Int16,     # 1 byte wasted
+}
 
 def mrc_to_numeric(filename):
 	f = open(filename, 'rb')
@@ -176,16 +181,18 @@ class MrcData:
 	def fromNumeric(self, narray):
 		if not isinstance(narray, Numeric.arraytype):
 			raise TypeError('Value must be a Numeric array')
-		typecode = narray.typecode()
-		try:
-			self.mode = typecode_mrcmode[typecode]
-		except KeyError:
+
+		t = narray.typecode()
+		if t in typecode_mrcmode:
+			typecode = t
+		elif t in unsupported_typecodes:
+			typecode = unsupported_typecodes[t]
+			narray = narray.astype(typecode)
+		else:
 			raise TypeError('Invalid Numeric array type for MRC conversion')
 
-		# array to the proper typecode
-		newtypecode = mrcmode_typecode[self.mode][1]
-		narray = narray.astype(newtypecode)
-			
+		self.mode = typecode_mrcmode[typecode]
+
 		## get my description from Numeric shape
 		shape = narray.shape
 		if len(shape) == 1:
