@@ -27,6 +27,10 @@ class Calibrator(node.Node):
 		magdata = self.researchByDataID(('magnification',))
 		return magdata['magnification']
 
+	def getHighTension(self):
+		htdata = self.researchByDataID(('high tension',))
+		return htdata['high tension']
+
 	def currentState(self):
 		dat = self.researchByDataID(('scope',))
 		return dat
