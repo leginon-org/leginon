@@ -96,6 +96,7 @@ class DataReference(dict):
 	'''
 	pass
 
+
 class Data(DataDict, leginonobject.LeginonObject):
 	'''
 	Combines DataDict and LeginonObject to create the base class
@@ -130,10 +131,28 @@ class Data(DataDict, leginonobject.LeginonObject):
 
 	def replaceData(self, func):
 		'''
-
+		return a copy of self where all child Data instances
+		have recursively been replaced by calling func on them
+		and then func is called on the parent.
 		'''
 		mycopy = copy.deepcopy(self)
 		return replaceData(mycopy, func)
+
+	def split(self):
+		'''
+		return a list containing copies of self and all self's
+		children Data instances.  The copies have had all contained
+		Data instances replaced with DataReferences.
+		'''
+		self.split_list = []
+		mycopy = copy.deepcopy(self)
+		replaceData(mycopy, self.split_appender)
+		print 'SPLIT', self.split_list
+		return self.split_list
+		
+	def split_appender(self, datainstance):
+		self.split_list.append(datainstance)
+		return datainstance.reference()
 
 	def factories(self, valuetype):
 		if issubclass(valuetype, Data):
@@ -149,6 +168,14 @@ class Data(DataDict, leginonobject.LeginonObject):
 		else:
 			f = DataDict.factories(self, valuetype)
 		return f
+
+	def reference(self):
+		'''
+		return a DataReference to this instance
+		'''
+		dr = DataReference()
+		dr['target'] = self
+		return dr
 
 ## How to define a new leginon data type:
 ##   - Inherit Data or a subclass of Data.
@@ -186,7 +213,8 @@ class MoreData(Data):
 
 class NumericData(Data):
 	'''
-	Example of a new data type
+	Data with one item:  'array'
+	    a Numeric array
 	'''
 	def typemap(cls):
 		t = Data.typemap()
