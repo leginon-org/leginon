@@ -1,3 +1,4 @@
+# -*- coding: iso-8859-1 -*-
 import wx
 from gui.wx.Entry import Entry, IntEntry, FloatEntry, EVT_ENTRY
 import gui.wx.Node
@@ -428,15 +429,14 @@ class CamInfoSizer(wx.StaticBoxSizer):
 		self.parent = parent
 		wx.StaticBoxSizer.__init__(self, wx.StaticBox(self.parent, -1, title),
 																			wx.VERTICAL)
-		self.sz = wx.GridBagSizer(5, 5)
+		self.sz = wx.GridBagSizer(0, 0)
 		self.Add(self.sz, 1, wx.EXPAND|wx.ALL, 5)
 
 		parameterorder = [
 			'Name',
 			'Chip',
-			'Size',
 			'Pixel size',
-			'Max value',
+			'Maximum value',
 			'Live mode',
 			'Simulation image path',
 			'Temperature',
@@ -446,13 +446,30 @@ class CamInfoSizer(wx.StaticBoxSizer):
 			'Axis',
 		]
 		self.parameters = {}
-		for i, p in parameterorder:
+
+		szsize = wx.GridBagSizer(0, 0)
+		st = wx.StaticText(self.parent, -1, 'Size:')
+		self.parameters['Size'] = {}
+		self.parameters['Size']['x'] = wx.StaticText(self.parent, -1, '')
+		stx = wx.StaticText(self.parent, -1, ' × ')
+		self.parameters['Size']['y'] = wx.StaticText(self.parent, -1, '')
+		szsize.Add(st, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szsize.Add(self.parameters['Size']['x'], (0, 1), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		szsize.Add(stx, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szsize.Add(self.parameters['Size']['y'], (0, 3), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL)
+		szsize.AddGrowableCol(1)
+
+		self.sz.Add(szsize, (0, 0), (1, 2), wx.EXPAND)
+		self.sz.AddGrowableRow(0)
+		for i, p in enumerate(parameterorder):
 			st = wx.StaticText(self.parent, -1, p + ':')
 			self.parameters[p] = wx.StaticText(self.parent, -1, '')
-			self.sz.Add(st, (i, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-			self.sz.Add(self.parameters[p], (i, 1), (1, 1),
+			self.sz.Add(st, (i+1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+			self.sz.Add(self.parameters[p], (i+1, 1), (1, 1),
 									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-			self.sz.AddGrowableRow(i)
+			self.sz.AddGrowableRow(i+1)
 			self.parameters[p].Enable(False)
 
 		self.sz.AddGrowableCol(1)
@@ -471,6 +488,12 @@ class CamInfoSizer(wx.StaticBoxSizer):
 			'retractable': 'Retractable',
 			'camera axis': 'Axis',
 		}
+
+		for k, v in self.parametermap.items():
+			self.parametermap[k] = self.parameters[v]
+
+		self.parametermap['camera size'] = {'x': self.parameters['Size']['x'],
+																				'y': self.parameters['Size']['y']}
 
 class Panel(gui.wx.Node.Panel):
 	def __init__(self, parent, name):
