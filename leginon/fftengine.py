@@ -47,12 +47,15 @@ class fftNumeric(fftEngine):
 		return im
 
 
-if sys.platform != 'win32':
+#if sys.platform != 'win32':
+try:
 	import sfftw
+except ImportError:
+	fftFFTW = None
+else:
 	### for managing fftFFTW plans
 	plans = {}
 	iplans = {}
-
 
 	class fftFFTW(fftEngine):
 		'''
