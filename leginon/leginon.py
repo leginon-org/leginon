@@ -294,6 +294,11 @@ class Leginon(Tkinter.Frame):
 																		self.locallauncherid, self.notebook,
 																		self.debug, self.windowmenu,
 																		'Calibrations')
+		self.autofocus = AutoFocus(self.manager, self.manageruiclient,
+																		self.locallauncherid, self.notebook,
+																		self.debug, self.windowmenu,
+																		'Auto Focus')
+
 
 	def nodeLocations(self):
 		try:
@@ -408,7 +413,8 @@ class CustomWidget(Tkinter.Frame):
 				widget.setbutton.grid(row = 0, column = 2, padx = 5, pady = 5)
 			else:
 				widget.getbutton.grid(row = 0, column = 2, padx = 5, pady = 5)
-				widget.setbutton.grid(row = 0, column = 3, padx = 5, pady = 5)
+				if widget.setbutton is not None:
+					widget.setbutton.grid(row = 0, column = 3, padx = 5, pady = 5)
 		else:
 			if widget.setbutton is not None:
 				widget.setbutton.grid_forget()
@@ -466,7 +472,7 @@ class CustomWidget(Tkinter.Frame):
 			self.addGroup(groupname)
 		interior = self.groups[groupname].interior()
 		widget = self.widgetFromName(interior, uiclient, name)
-		if groupset:
+		if groupset and widget.setbutton is not None:
 			self.groups[groupname].addWidget(widget, widget.setbutton.invoke)
 		else:
 			self.groups[groupname].addWidget(widget)
@@ -491,7 +497,7 @@ class ImageCorrectionWidget(CustomWidget):
 		widget.iv.canvas.resize(0, 0, 512, 512)
 
 class CalibrationsWidget(CustomWidget):
-	def __init__(self, parent, matrixcalibrator, beamtiltcalibrator):
+	def __init__(self, parent, matrixcalibrator):
 		CustomWidget.__init__(self, parent)
 
 		widget = self.addWidget('Settings', matrixcalibrator,
@@ -520,6 +526,44 @@ class CalibrationsWidget(CustomWidget):
 
 		widget = self.addWidget('Image', matrixcalibrator, ('Images', 'Image 2'))
 		widget.iv.canvas.resize(0, 0, 512, 512)
+
+class AutoFocusWidget(CustomWidget):
+	def __init__(self, parent, beamtiltcalibrator):
+		CustomWidget.__init__(self, parent)
+
+#		widget = self.addWidget('Settings', matrixcalibrator,
+#														('Parameters', 'Parameter'), True)
+#		self.arrangeCombobox(widget, 'Type', False)
+#		widget = self.addWidget('Settings', matrixcalibrator,
+#														('Parameters', 'Base'), True)
+#		self.arrangeTree(widget, 'Base Position', False)
+#		widget = self.addWidget('Settings', matrixcalibrator,
+#														('Parameters', 'N Average'), True)
+#		self.arrangeEntry(widget, 2, Tkinter.RIGHT, False)
+#		widget = self.addWidget('Settings', matrixcalibrator,
+#														('Parameters', 'Delta'), True)
+#		self.arrangeEntry(widget, 10, Tkinter.RIGHT, False)
+#		widget = self.addWidget('Settings', matrixcalibrator,
+#														('Parameters', 'Interval'), True)
+#		self.arrangeEntry(widget, 10, Tkinter.RIGHT, False)
+#		widget = self.addWidget('Settings', beamtiltcalibrator,
+#												('Calibrate', 'Tilt Value'), True)
+#		self.arrangeEntry(widget, 7, Tkinter.RIGHT, False)
+		widget = self.addWidget('Settings', beamtiltcalibrator,
+														('Camera Configuration',), True)
+		self.arrangeTree(widget, None, False)
+		widget = self.addWidget('Results', beamtiltcalibrator,
+														('Calibrate', 'Measure', 'Necessary Correction'),
+																																				True)
+		self.arrangeTree(widget, None, False)
+#
+#		self.addWidget('Control', matrixcalibrator, ('Calibrate',))
+#
+#		widget = self.addWidget('Image', matrixcalibrator, ('Images', 'Image 1'))
+#		widget.iv.canvas.resize(0, 0, 512, 512)
+#
+#		widget = self.addWidget('Image', matrixcalibrator, ('Images', 'Image 2'))
+#		widget.iv.canvas.resize(0, 0, 512, 512)
 
 class GridAtlasWidget(CustomWidget):
 	def __init__(self, parent, gridpreview, stateimagemosaic):
@@ -701,13 +745,23 @@ class Calibrations(WidgetWrapper):
 														notebook, debug, windowmenu, name)
 		self.addNodeInfo('matrixcalibrator', self.name + ' Matrix Calibrator',
 																												'MatrixCalibrator')
+		self.initialize()
+
+	def initializeWidget(self):
+		self.widget = CalibrationsWidget(self.page,
+															self.nodeinfo['matrixcalibrator']['UI info'])
+
+class AutoFocus(WidgetWrapper):
+	def __init__(self, manager, manageruiclient, launcherid, notebook,
+																			debug, windowmenu, name):
+		WidgetWrapper.__init__(self, manager, manageruiclient, launcherid,
+														notebook, debug, windowmenu, name)
 		self.addNodeInfo('beamtiltcalibrator', self.name + ' Beam Tilt Calibrator',
 																													'BeamTiltCalibrator')
 		self.initialize()
 
 	def initializeWidget(self):
-		self.widget = CalibrationsWidget(self.page,
-															self.nodeinfo['matrixcalibrator']['UI info'],
+		self.widget = AutoFocusWidget(self.page,
 															self.nodeinfo['beamtiltcalibrator']['UI info'])
 
 class GridAtlas(WidgetWrapper):
