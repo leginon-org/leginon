@@ -30,7 +30,7 @@ CCD = 'tietz'
 #########################
 LAUNCHERS = [
 	'tecnai2',
-	'tecnai1',
+	'tecnai',
 	'defcon1',
 	'amilab2',
 	'defcon3',
