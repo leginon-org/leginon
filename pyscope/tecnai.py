@@ -844,10 +844,11 @@ class Tecnai(object):
 		return self.theScope.Camera.Stock
 
 	def getFilmExposureNumber(self):
-		return self.theScope.Camera.ExposureNumber
+		return self.theScope.Camera.ExposureNumber % 100000
 
 	def setFilmExposureNumber(self, value):
-		self.theScope.Camera.ExposureNumber = value
+		self.theScope.Camera.ExposureNumber = (self.theScope.Camera.ExposureNumber
+																										/ 100000) * 100000 + value
 
 	def getFilmExposureType(self):
 		if self.theScope.Camera.ManualExposure:
