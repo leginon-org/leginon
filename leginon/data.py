@@ -571,7 +571,7 @@ class Data(DataDict, leginonobject.LeginonObject):
 					if valuetype == value.dataclass:
 						return value
 					else:
-						raise ValueError('must by type %s' (valuetype,))
+						raise ValueError('must by type %s' % (valuetype,))
 				if isinstance(value, valuetype):
 					return value
 				elif isinstance(value, UnknownData):
@@ -585,7 +585,7 @@ class Data(DataDict, leginonobject.LeginonObject):
 				if isinstance(value, valuetype):
 					return value
 				else:
-					raise ValueError('must by type %s' (valuetype,))
+					raise ValueError('must by type %s' % (valuetype,))
 		else:
 			f = DataDict.getFactory(self, valuetype)
 		return f
@@ -637,6 +637,14 @@ class Data(DataDict, leginonobject.LeginonObject):
 		## for those who request it?
 		dr = DataReference(datainstance=self)
 		return dr
+
+	def __str__(self):
+		items = self.items(dereference=False)
+		items = map(lambda x: (str(x[0]), str(x[1])), items)
+		items = map(': '.join, items)
+		s = ', '.join(items)
+		s = '{%s}' % (s,)
+		return s
 
 class DataHandler(object):
 	'''
