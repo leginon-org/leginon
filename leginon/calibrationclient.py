@@ -51,8 +51,6 @@ class CalibrationClient(object):
 		print 'state settling time %s' % (settle,)
 		time.sleep(settle)
 
-		#myconfig = self.cam.cameraConfig()
-		#imagedata = self.cam.acquireCameraImageData(camconfig=myconfig)
 		imagedata = self.cam.acquireCameraImageData()
 		actual_state = imagedata['scope']
 
