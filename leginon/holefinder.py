@@ -438,6 +438,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		## auto or not?
 		self.hf['original'] = imdata['image']
 		self.currentimagedata = imdata
+		self.setImage(imdata['image'], 'Original')
 		if self.settings['skip']:
 			self.bypass()
 		else:

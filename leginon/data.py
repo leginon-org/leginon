@@ -1666,7 +1666,7 @@ class LowPassFilterSettingsData(Data):
 		return Data.typemap() + (
 			('on', bool),
 			('size', int),
-			('sigma', foat),
+			('sigma', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -1727,14 +1727,6 @@ class RasterFinderSettingsData(TargetFinderSettingsData):
 			('acquisition convolve', bool),
 			('acquisition convolve template', list),
 			('acquisition constant template', list),
-		)
-	typemap = classmethod(typemap)
-
-class LowPassFilterSettingsData(SettingsData):
-	def typemap(cls):
-		return SettingsData.typemap() + (
-			('size', int),
-			('sigma', float),
 		)
 	typemap = classmethod(typemap)
 

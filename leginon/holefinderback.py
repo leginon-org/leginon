@@ -225,7 +225,7 @@ class HoleFinder(object):
 		self.save_mrc = False
 		self.edges_config = {'filter': 'sobel', 'size': 9, 'sigma': 1.4, 'abs': False, 'lp':True, 'lpn':5, 'lpsig':1.0, 'thresh':100.0, 'edges': True}
 		self.template_config = {'ring_list': [(25,30)]}
-		self.correlation_config = {'cortype': 'cross correlation', 'corfilt':0.0}
+		self.correlation_config = {'cortype': 'cross correlation', 'corfilt': (1, 1.0)}
 		self.threshold = 3.0
 		self.blobs_config = {'border': 20, 'maxblobsize': 50}
 		self.lattice_config = {'tolerance': 0.1, 'vector': 100.0, 'minspace': 20}
@@ -369,8 +369,7 @@ class HoleFinder(object):
 	def configure_correlation(self, cortype=None, corfilt=None):
 		if cortype is not None:
 			self.correlation_config['cortype'] = cortype
-		if corfilt is not None:
-			self.correlation_config['corfilt'] = corfilt
+		self.correlation_config['corfilt'] = corfilt
 
 	def correlate_template(self):
 		fromimage = 'edges'

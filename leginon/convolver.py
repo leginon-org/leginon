@@ -129,7 +129,7 @@ def gaussian_kernel(n, sigma):
 	produces gaussian smoothing kernel
 	'''
 	if not n % 2:
-		raise RuntimeError('guassian kernel must have odd size')
+		raise RuntimeError('gaussian kernel must have odd size')
 	half = int(n / 2)
 	k1 = 1.0 / (2.0 * Numeric.pi * sigma**2)
 	def i(rows,cols):

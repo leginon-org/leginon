@@ -85,7 +85,10 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
 		lastnumber = self.lastTargetNumber(image=imagedata,
 																				session=self.session)
 		number = lastnumber + 1
-		for imagetarget in self.panel.getTargets(typename):
+		imagetargets = self.panel.getTargets(typename)
+		if not imagetargets:
+			return
+		for imagetarget in imagetargets:
 			column, row = imagetarget
 			drow = row - imagearray.shape[0]/2
 			dcol = column - imagearray.shape[1]/2
