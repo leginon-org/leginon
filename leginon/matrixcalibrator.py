@@ -53,15 +53,15 @@ class MatrixCalibrator(calibrator.Calibrator):
 
 	# calibrate needs to take a specific value
 	def calibrate(self):
-		calclient = self.parameters[self.parameter]
+		calclient = self.parameters[self.parameter.get()]
 
 		## set cam state
 
 		baselist = []
-		for i in range(self.navg):
-			delta = i * self.interval
-			basex = self.base['x'] + delta
-			basey = self.base['y'] + delta
+		for i in range(self.navg.get()):
+			delta = i * self.interval.get()
+			basex = self.base.get()['x'] + delta
+			basey = self.base.get()['y'] + delta
 			newbase = {'x':basex, 'y':basey}
 			baselist.append(newbase)
 
@@ -72,14 +72,16 @@ class MatrixCalibrator(calibrator.Calibrator):
 				print "axis =", axis
 				basevalue = base[axis]
 
-				print 'delta', self.delta
-				newvalue = basevalue + self.delta
+				print 'delta', self.delta.get()
+				newvalue = basevalue + self.delta.get()
 				print 'newvalue', newvalue
 
 				state1 = self.makeState(basevalue, axis)
 				state2 = self.makeState(newvalue, axis)
 				print 'states', state1, state2
-				shiftinfo = calclient.measureStateShift(state1, state2, 1, settle=self.settle[self.parameter])
+				shiftinfo = calclient.measureStateShift(state1, state2, 1, settle=self.settle[self.parameter.get()])
+				self.image1.set(calclient.numimage1)
+				self.image2.set(calclient.numimage2)
 				print 'shiftinfo', shiftinfo
 
 				rowpix = shiftinfo['pixel shift']['row']
@@ -87,8 +89,8 @@ class MatrixCalibrator(calibrator.Calibrator):
 				totalpix = abs(rowpix + 1j * colpix)
 
 				actual_states = shiftinfo['actual states']
-				actual1 = actual_states[0][self.parameter][axis]
-				actual2 = actual_states[1][self.parameter][axis]
+				actual1 = actual_states[0][self.parameter.get()][axis]
+				actual2 = actual_states[1][self.parameter.get()][axis]
 				change = actual2 - actual1
 				perpix = change / totalpix
 				print '**PERPIX', perpix
@@ -99,8 +101,8 @@ class MatrixCalibrator(calibrator.Calibrator):
 				shifts[axis]['col'] += colpixelsper
 				print 'shifts', shifts
 
-			shifts[axis]['row'] /= self.navg
-			shifts[axis]['col'] /= self.navg
+			shifts[axis]['row'] /= self.navg.get()
+			shifts[axis]['col'] /= self.navg.get()
 
 		mag = self.getMagnification()
 
@@ -109,7 +111,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 		print 'MATRIX shape', matrix.shape
 		print 'MATRIX type', matrix.typecode()
 		print 'MATRIX flat', Numeric.ravel(matrix)
-		calclient.storeMatrix(mag, self.parameter, matrix)
+		calclient.storeMatrix(mag, self.parameter.get(), matrix)
 
 		print 'CALIBRATE DONE', shifts
 
@@ -118,35 +120,33 @@ class MatrixCalibrator(calibrator.Calibrator):
 
 		camspec = self.cam.configUIData()
 
-		#### parameters for user to set
-		self.navg = 1
-		self.delta = 2e-6
-		self.interval = 2e-6
-
-
-		try:
-			curstate = self.currentState()
-			self.base = curstate[self.parameter]
-		except:
-			self.base = {'x': 0.0, 'y':0.0}
-		####
 
 		cspec = self.registerUIMethod(self.uiCalibrate, 'Calibrate', ())
 
-		parameters = self.registerUIData('paramdata', 'array', default=self.parameters.keys())
+		parameters = self.registerUIData('paramdata', 'array',	
+																			default=self.parameters.keys())
+		self.navg = self.registerUIData('N Average', 'float', permissions='rw',
+																																	default=1)
 
-		argspec = (
-		self.registerUIData('Parameter', 'string', choices=parameters, default='stage position'),
-		self.registerUIData('N Average', 'float', default=self.navg),
-		self.registerUIData('Base', 'struct', default=self.base),
-		self.registerUIData('Delta', 'float', default=self.delta),
-		self.registerUIData('Interval', 'float', default=self.interval),
+		self.base = self.registerUIData('Base', 'struct', permissions='rw')
+		self.parameter = self.registerUIData('Parameter', 'string',
+																					choices=parameters, permissions='rw',
+																					default='stage position',
+																					callback=self.uiParameterCallback)
+		self.delta = self.registerUIData('Delta', 'float', permissions='rw',
+																														default=2e-6)
+		self.interval = self.registerUIData('Interval', 'float', permissions='rw',
+																																	default=2e-6)
 
-		)
+		argspec = (self.parameter, self.navg, self.base, self.delta, self.interval)
+		rspec = self.registerUIContainer('Parameters', argspec)
 
-		rspec = self.registerUIMethod(self.uiSetParameters, 'Set Parameters', argspec)
+		self.image1 = self.registerUIData('Image 1', 'binary', permissions='r')
+		self.image2 = self.registerUIData('Image 2', 'binary', permissions='r')
+		imagespec = self.registerUIContainer('Images', (self.image1, self.image2))
 
-		self.validshift = self.registerUIData('Valid Shift', 'struct', permissions='rw')
+		self.validshift = self.registerUIData('Valid Shift', 'struct',
+																									permissions='rw')
 		self.validshift.set(
 			{
 			'correlation': {'min': 20.0, 'max': 512.0},
@@ -154,7 +154,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 			}
 		)
 
-		myspec = self.registerUISpec('Matrix Calibrator', (cspec, rspec, camspec))
+		myspec = self.registerUISpec('Matrix Calibrator', (cspec, rspec, camspec, imagespec))
 		myspec += nodespec
 		return nodespec
 
@@ -162,13 +162,15 @@ class MatrixCalibrator(calibrator.Calibrator):
 		self.calibrate()
 		return ''
 
-	def uiSetParameters(self, parameter, navg, base, delta, interval):
-		self.parameter = parameter
-		self.navg = navg
-		self.base = base
-		self.delta = delta
-		self.interval = interval
-		return ''
+	def uiParameterCallback(self, value=None):
+		if value is not None:
+			self.parametervalue = value
+			try:
+				curstate = self.currentState()
+				self.base.set(curstate[self.parametervalue])
+			except:
+				self.base.set({'x': 0.0, 'y':0.0})
+		return self.parametervalue
 
 	def makeState(self, value, axis):
 		return {self.parameter: {axis: value}}

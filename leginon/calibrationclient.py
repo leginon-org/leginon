@@ -74,11 +74,11 @@ class CalibrationClient(object):
 
 		shiftinfo = {}
 
-		numimage1 = imagecontent1['image']
-		numimage2 = imagecontent2['image']
+		self.numimage1 = imagecontent1['image']
+		self.numimage2 = imagecontent2['image']
 
-		self.correlator.insertImage(numimage1)
-		self.correlator.insertImage(numimage2)
+		self.correlator.insertImage(self.numimage1)
+		self.correlator.insertImage(self.numimage2)
 		print 'correlation'
 		pcimage = self.correlator.phaseCorrelate()
 		#pcimagedata = data.PhaseCorrelationImageData(self.node.ID(), pcimage, imagedata1.id, imagedata2.id)

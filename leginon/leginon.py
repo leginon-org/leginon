@@ -290,6 +290,10 @@ class Leginon(Tkinter.Frame):
 																		self.locallauncherid, self.notebook,
 																		self.debug, self.windowmenu,
 																		'Image Correction')
+		self.calibrations = Calibrations(self.manager, self.manageruiclient,
+																		self.locallauncherid, self.notebook,
+																		self.debug, self.windowmenu,
+																		'Calibrations')
 
 	def nodeLocations(self):
 		try:
@@ -336,8 +340,12 @@ class WidgetGroup(Pmw.Group):
 
 	def addWidget(self, widget, setcommand=None):
 		nwidgets = len(self.widgets)
-		widget.grid(row = nwidgets, column = 0, padx = 10, pady = 5,
-																		sticky=Tkinter.W+Tkinter.E)
+		if isinstance(widget, nodegui.ImageData):
+			widget.grid(row = 0, column = nwidgets, padx = 10, pady = 5,
+																			sticky='nsew')
+		else:
+			widget.grid(row = nwidgets, column = 0, padx = 10, pady = 5,
+																			sticky=Tkinter.W+Tkinter.E)
 		if setcommand is not None:
 			self.addSetCommand(setcommand)
 		if self.applybutton is not None:
@@ -482,6 +490,37 @@ class ImageCorrectionWidget(CustomWidget):
 		widget = self.addWidget('Image', corrector, ('Acquire', 'Image'))
 		widget.iv.canvas.resize(0, 0, 512, 512)
 
+class CalibrationsWidget(CustomWidget):
+	def __init__(self, parent, matrixcalibrator, beamtiltcalibrator):
+		CustomWidget.__init__(self, parent)
+
+		widget = self.addWidget('Settings', matrixcalibrator,
+														('Parameters', 'Parameter'), True)
+		self.arrangeCombobox(widget, 'Type', False)
+		widget = self.addWidget('Settings', matrixcalibrator,
+														('Parameters', 'Base'), True)
+		self.arrangeTree(widget, 'Base Position', False)
+		widget = self.addWidget('Settings', matrixcalibrator,
+														('Parameters', 'N Average'), True)
+		self.arrangeEntry(widget, 2, Tkinter.RIGHT, False)
+		widget = self.addWidget('Settings', matrixcalibrator,
+														('Parameters', 'Delta'), True)
+		self.arrangeEntry(widget, 10, Tkinter.RIGHT, False)
+		widget = self.addWidget('Settings', matrixcalibrator,
+														('Parameters', 'Interval'), True)
+		self.arrangeEntry(widget, 10, Tkinter.RIGHT, False)
+		widget = self.addWidget('Settings', matrixcalibrator,
+														('Camera Configuration',), True)
+		self.arrangeTree(widget, None, False)
+
+		self.addWidget('Control', matrixcalibrator, ('Calibrate',))
+
+		widget = self.addWidget('Image', matrixcalibrator, ('Images', 'Image 1'))
+		widget.iv.canvas.resize(0, 0, 512, 512)
+
+		widget = self.addWidget('Image', matrixcalibrator, ('Images', 'Image 2'))
+		widget.iv.canvas.resize(0, 0, 512, 512)
+
 class GridAtlasWidget(CustomWidget):
 	def __init__(self, parent, gridpreview, stateimagemosaic):
 		CustomWidget.__init__(self, parent)
@@ -594,7 +633,7 @@ class WidgetWrapper(object):
 	def show(self):
 		self.page = self.notebook.add(self.name)
 		self.initializeWidget()
-		self.widget.pack()
+		self.widget.pack(fill=Tkinter.BOTH, expand=Tkinter.YES)
 		self.notebook.selectpage(self.name)
 
 	def nodeLocations(self):
@@ -654,6 +693,22 @@ class ImageCorrection(WidgetWrapper):
 	def initializeWidget(self):
 		self.widget = ImageCorrectionWidget(self.page,
 															self.nodeinfo['corrector']['UI info'])
+
+class Calibrations(WidgetWrapper):
+	def __init__(self, manager, manageruiclient, launcherid, notebook,
+																			debug, windowmenu, name):
+		WidgetWrapper.__init__(self, manager, manageruiclient, launcherid,
+														notebook, debug, windowmenu, name)
+		self.addNodeInfo('matrixcalibrator', self.name + ' Matrix Calibrator',
+																												'MatrixCalibrator')
+		self.addNodeInfo('beamtiltcalibrator', self.name + ' Beam Tilt Calibrator',
+																													'BeamTiltCalibrator')
+		self.initialize()
+
+	def initializeWidget(self):
+		self.widget = CalibrationsWidget(self.page,
+															self.nodeinfo['matrixcalibrator']['UI info'],
+															self.nodeinfo['beamtiltcalibrator']['UI info'])
 
 class GridAtlas(WidgetWrapper):
 	def __init__(self, manager, manageruiclient, launcherid, notebook,
