@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/robotscreening.py,v $
-# $Revision: 1.2 $
+# $Revision: 1.3 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-04-06 18:04:28 $
+# $Date: 2005-04-06 18:05:15 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -447,8 +447,6 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 				shape1 = image1.shape
 				shape2 = image2.shape
 				m, im = align.getMatrices(angles, scales)
-				print m
-				print im
 				for target in image.targets:
 					target = numarray.matrixmultiply(m, target)
 					target = target + shift
