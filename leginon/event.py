@@ -292,6 +292,13 @@ class UnlockEvent(ControlEvent):
 	'Event that signals an unlock'
 	pass
 
+class QueueGridEvent(ControlEvent):
+	def typemap(cls):
+		return ControlEvent.typemap() + (
+			('number', int),
+		)
+	typemap = classmethod(typemap)
+
 class InsertGridEvent(ControlEvent):
 	'Event that signals a grid to be inserted'
 	pass

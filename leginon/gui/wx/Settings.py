@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Settings.py,v $
-# $Revision: 1.18 $
+# $Revision: 1.19 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-02 23:32:57 $
+# $Date: 2005-03-09 22:45:37 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -83,6 +83,10 @@ class Dialog(wx.Dialog):
 
 		self.Bind(wx.EVT_BUTTON, self.onSet, self.bok)
 		self.Bind(wx.EVT_BUTTON, self.onSet, self.bapply)
+
+		# work around event prop.
+		self.Bind(gui.wx.Events.EVT_TEM_CHANGE, self.onPropagateEvent)
+		self.Bind(gui.wx.Events.EVT_CCDCAMERA_CHANGE, self.onPropagateEvent)
 
 		self.bindSettings(self.widgets)
 
@@ -175,4 +179,7 @@ class Dialog(wx.Dialog):
 
 		self.settings = self.getSettings(self.widgets)
 		self.bapply.Enable(False)
+
+	def onPropagateEvent(self, evt):
+		self.GetParent().GetEventHandler().AddPendingEvent(evt)
 

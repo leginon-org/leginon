@@ -103,12 +103,6 @@ class Request(object):
 	def __init__(self):
 		self.event = threading.Event()
 
-class InsertRequest(Request):
-	pass
-
-class ExtractRequest(Request):
-	pass
-
 class ExitRequest(Request):
 	pass
 
@@ -126,6 +120,7 @@ if sys.platform == 'win32':
 class Robot(node.Node):
 	panelclass = gui.wx.Robot.Panel
 	eventinputs = node.Node.eventinputs + [event.TargetListDoneEvent,
+																					event.QueueGridEvent,
 																					event.MosaicDoneEvent]
 	eventoutputs = node.Node.eventoutputs + [event.MakeTargetListEvent,
 																						event.EmailEvent]
@@ -166,8 +161,17 @@ class Robot(node.Node):
 		self.addEventInput(event.MosaicDoneEvent, self.handleGridDataCollectionDone)
 		self.addEventInput(event.TargetListDoneEvent,
 												self.handleGridDataCollectionDone)
+		self.addEventInput(event.QueueGridEvent,
+												self.handleQueueGrid)
+
 
 		self.start()
+
+	def handleQueueGrid(self, ievent):
+		request = GridRequest(ievent['number'])
+		self.queue.put(request)
+		request.event.wait()
+		self.confirmEvent(ievent)
 
 	def _queueHandler(self):
 		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
@@ -211,14 +215,14 @@ class Robot(node.Node):
 					self.gridnumber = None
 					continue
 
+				request.event.set()
+
 				self.extractevent.clear()
 				self.panel.gridInserted()
 				self.extractevent.wait()
 
 				self.extract()
 				self.gridnumber = None
-
-				request.event.set()
 
 			self.panel.gridQueueEmpty()
 
