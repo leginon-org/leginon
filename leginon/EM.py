@@ -108,6 +108,7 @@ class EM(node.Node):
 			'inserted',
 		]
 
+		## if many of these are changed in one call, do them in this order
 		self.order = [
 			'magnification',
 			'spot size',
@@ -117,6 +118,16 @@ class EM(node.Node):
 			'reset defocus',
 			'intensity',
 		]
+
+		## if any of these are changed, follow up with the specified pause
+		self.pauses = {
+			'magnification':  0.8,
+			'spot size': 0.4,
+			'image shift': 0.2,
+			'beam shift': 0.1,
+			'defocus': 0.5,
+			'intensity': 0.1,
+		}
 
 		# the queue of requests to get and set parameters
 		self.requestqueue = Queue.Queue()
@@ -386,6 +397,10 @@ class EM(node.Node):
 						print "failed to set '%s' to" % EMkey, EMstate[EMkey]
 						self.printException()
 
+			if self.uipauses.get() and (key in self.pauses):
+				p = self.pauses[key]
+				time.sleep(p)
+
 	# needs to have statelock locked
 	def uiUpdate(self):
 		self.uiSetDictData(self.uiscopedict, self.state)
@@ -539,6 +554,8 @@ class EM(node.Node):
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
 
+		self.uipauses = uidata.Boolean('Do Pauses', False, permissions='rw', persist=True)
+
 		# scope
 
 		self.uiscopedict = {}
@@ -589,6 +606,7 @@ class EM(node.Node):
 		scopeparameterscontainer.addObject(stigmatorcontainer)
 
 		self.scopecontainer = uidata.LargeContainer('Microscope')
+		self.scopecontainer.addObject(self.uipauses)
 		self.scopecontainer.addObject(scopeparameterscontainer)
 
 		refreshscope = uidata.Method('Refresh', self.uiRefreshScope)
