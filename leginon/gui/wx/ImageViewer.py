@@ -400,13 +400,12 @@ class ImagePanel(wx.Panel):
 		wx.Panel.__init__(self, parent, id)
 
 		# create main sizer, will contain tool sizer and imagepanel
-		self.sizer = wx.BoxSizer(wx.VERTICAL)
-		self.SetAutoLayout(True)
-		self.SetSizer(self.sizer)
+		self.sizer = wx.GridBagSizer(3, 3)
+		self.sizer.SetEmptyCellSize((0, 0))
 
 		# create tool size to contain individual tools
 		self.toolsizer = wx.BoxSizer(wx.HORIZONTAL)
-		self.sizer.Add(self.toolsizer)
+		self.sizer.Add(self.toolsizer, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.tools = []
 
 		# create image panel, set cursor
@@ -414,7 +413,9 @@ class ImagePanel(wx.Panel):
 		self.panel.SetScrollRate(1, 1)
 		self.defaultcursor = wx.CROSS_CURSOR
 		self.panel.SetCursor(self.defaultcursor)
-		self.sizer.Add(self.panel, 1, wx.EXPAND|wx.ALL)
+		self.sizer.Add(self.panel, (1, 0), (1, 1), wx.EXPAND)
+		self.sizer.AddGrowableRow(1)
+		self.sizer.AddGrowableCol(0)
 		width, height = self.panel.GetSizeTuple()
 		self.sizer.SetItemMinSize(self.panel, width, height)
 
@@ -435,7 +436,7 @@ class ImagePanel(wx.Panel):
 
 		self.contrasttool = ContrastTool(self, self.toolsizer)
 
-		self.Fit()
+		self.SetSizerAndFit(self.sizer)
 
 	def addTool(self, tool):
 		self.tools.append(tool)
@@ -1009,9 +1010,11 @@ class TypeTool(object):
 		bitmap = getBitmap('display.png')
 		self.tb['display'] = GenBitmapToggleButton(self.parent, -1, bitmap,
 																								size=(24, 24))
+		self.tb['display'].SetToolTip(wx.ToolTip('Display'))
 		bitmap = getBitmap('settings.png')
 		self.tb['settings'] = GenBitmapButton(self.parent, -1, bitmap,
 																					size=(24, 24))
+		self.tb['settings'].SetToolTip(wx.ToolTip('Settings'))
 
 class ImageTypeTool(TypeTool):
 	pass
@@ -1026,6 +1029,7 @@ class TargetTypeTool(TypeTool):
 		bitmap = getTargetBitmap(self.color)
 		self.tb['target'] = GenBitmapToggleButton(self.parent, -1, bitmap,
 																							size=(24, 24))
+		self.tb['target'].SetToolTip(wx.ToolTip('Add Targets'))
 
 class SelectionTool(wx.GridBagSizer):
 	def __init__(self):
@@ -1375,12 +1379,14 @@ if __name__ == '__main__':
 			self.panel.addTargetType('foo')
 			self.panel.addTargetType('bar')
 
+			'''
 			selectiontool = SelectionTool()
-			self.panel.sizer.Add(selectiontool, 0, wx.ALIGN_CENTER)
+			self.panel.sizer.Add(selectiontool, (1, 0), (1, 1), wx.ALIGN_CENTER)
 			imagetypetool = ImageTypeTool(self.panel, 'Foo')
 			targettypetool = TargetTypeTool(self.panel, 'Bar', wx.BLUE)
 			selectiontool.addTypeTool(imagetypetool)
 			selectiontool.addTypeTool(targettypetool)
+			'''
 
 #			self.panel = ClickImagePanel(frame, -1, bar)
 
