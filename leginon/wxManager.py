@@ -95,10 +95,13 @@ class ManagerStatusBar(wx.StatusBar):
 		wx.StatusBar.__init__(self, parent, -1)
 
 class ManagerFrame(wx.Frame):
-	def __init__(self, manager):
+	def __init__(self, manager, research, publish):
 		self.manager = manager
+		self.research = research
+		self.publish = publish
+		self.session = None
 
-		wx.Frame.__init__(self, None, -1, 'Manager', size=(750, 750))
+		wx.Frame.__init__(self, None, -1, 'Leginon', size=(750, 750), name='fLeginon')
 
 		# menu
 		self.menubar = wx.MenuBar()

@@ -12,7 +12,6 @@ import application
 import data
 import databinder
 import datatransport
-import dbdatakeeper
 import event
 import importexport
 import leginonconfig
@@ -25,7 +24,6 @@ import uidata
 import leginonobject
 import extendedlogging
 import copy
-import time
 import uiclient
 import newdict
 import socket
@@ -81,7 +79,7 @@ class Manager(node.Node):
 		node.Node.__init__(self, name, session, otherdatabinder=mydatabinder,
 												xmlrpcport=xmlrpcport, **kwargs)
 
-		self.frame = wxManager.ManagerFrame(self)
+		self.frame = wxManager.ManagerFrame(self, self.research, self.publish)
 
 		self.nodelocations = {}
 		self.broadcast = []
@@ -118,6 +116,7 @@ class Manager(node.Node):
 			raise RuntimeError('Setup cancelled')
 
 		self.session = setup.session
+		self.frame.session = self.session
 		self.uicontainer.session = setup.session
 		self.uicontainer.getUserPreferencesFromDatabase()
 

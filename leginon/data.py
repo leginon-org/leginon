@@ -1407,42 +1407,38 @@ class UIData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
-class wxRadioBoxData(Data):
+class wxData(InSessionData):
 	def typemap(cls):
-		return Data.typemap() + (
+		return InSessionData.typemap() + (
+			('path', str),
+		)
+	typemap = classmethod(typemap)
+
+class wxRadioBoxData(wxData):
+	def typemap(cls):
+		return wxData.typemap() + (
 			('string selection', str),
 		)
 	typemap = classmethod(typemap)
 
-class wxChoiceData(Data):
+class wxChoiceData(wxData):
 	def typemap(cls):
-		return Data.typemap() + (
+		return wxData.typemap() + (
 			('string selection', str),
 		)
 	typemap = classmethod(typemap)
 
-class wxCheckBoxData(Data):
+class wxCheckBoxData(wxData):
 	def typemap(cls):
-		return Data.typemap() + (
+		return wxData.typemap() + (
 			('value', bool),
 		)
 	typemap = classmethod(typemap)
 
-class wxIntCtrlData(Data):
+class wxIntCtrlData(wxData):
 	def typemap(cls):
-		return Data.typemap() + (
+		return wxData.typemap() + (
 			('value', int),
-		)
-	typemap = classmethod(typemap)
-
-class wxSetupWizardData(InSessionData):
-	def typemap(cls):
-		return InSessionData.typemap() + (
-			('session type', wxRadioBoxData),
-			('session', wxChoiceData),
-			('limit', wxCheckBoxData),
-			('limit number', wxIntCtrlData),
-			('connect', wxCheckBoxData),
 		)
 	typemap = classmethod(typemap)
 
