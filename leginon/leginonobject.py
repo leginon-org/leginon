@@ -50,7 +50,6 @@ class LeginonObject(object):
 		else:
 			color = 45
 
-		# hurray for spagetti code
 		if sys.platform == 'win32':
 			color = None
 

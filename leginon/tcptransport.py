@@ -10,14 +10,16 @@ import socket
 import leginonobject
 import socketstreamtransport
 
+locationkey = 'TCP transport'
+
 class Server(SocketServer.ThreadingTCPServer, socketstreamtransport.Server):
 	def __init__(self, dh, port=None):
 		socketstreamtransport.Server.__init__(self, dh)
 
 		# instantiater can choose a port or we'll choose one for them
 		if port is not None:
-			SocketServer.ThreadingTCPServer.__init__(self, ('', port), \
-				socketstreamtransport.Handler)
+			SocketServer.ThreadingTCPServer.__init__(self, ('', port),
+																								socketstreamtransport.Handler)
 		else:
 			# range define by IANA as dynamic/private or so says Jim
 			portrange = (49152,65536)
@@ -26,7 +28,8 @@ class Server(SocketServer.ThreadingTCPServer, socketstreamtransport.Server):
 			# iterate to the top or until unused port is found
 			while port <= portrange[1]:
 				try:
-					SocketServer.ThreadingTCPServer.__init__(self, ('', port), socketstreamtransport.Handler)
+					SocketServer.ThreadingTCPServer.__init__(self, ('', port),
+																									socketstreamtransport.Handler)
 					break
 				except Exception, var:
 					# socket error, address already in use
@@ -38,9 +41,10 @@ class Server(SocketServer.ThreadingTCPServer, socketstreamtransport.Server):
 		self.port = port
 
 	def location(self):
-		loc = socketstreamtransport.Server.location(self)
-		loc['TCP port'] = self.port
-		return loc
+		location = {}
+		location['hostname'] = socket.gethostname()
+		location['port'] = self.port
+		return location
 
 	def exit(self):
 		self.server_close()
@@ -52,13 +56,15 @@ class Client(socketstreamtransport.Client):
 	def connect(self, family = socket.AF_INET, type = socket.SOCK_STREAM):
 		self.socket = socket.socket(family, type)
 		try:
-			self.socket.connect((self.serverlocation['hostname'], self.serverlocation['TCP port']))
+			self.socket.connect((self.serverlocation['hostname'],
+														self.serverlocation['port']))
 		except Exception, var:
 			# socket error, connection refused
 			if (var[0] == 111) or (var[0] == 10061):
 				self.socket = None
-				self.printerror('unable to connect to %s:%s'
-					% (self.serverlocation['hostname'], self.serverlocation['TCP port']))
+				print 'unable to connect to %s:%s' \
+					% (self.serverlocation['hostname'], self.serverlocation['port'])
 				raise IOError
 			else:
 				raise
+

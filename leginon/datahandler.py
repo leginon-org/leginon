@@ -246,7 +246,7 @@ class DataBinder(DataHandler):
 				else:
 					self.handleData(item)
 			except Exception, e:
-				print e
+				print 'handlerLoop exception'
 
 	def insert(self, newdata):
 		self.queue.put(newdata)
@@ -262,7 +262,8 @@ class DataBinder(DataHandler):
 				try:
 					apply(method, args)
 				except Exception, e:
-					print e
+					print 'handleData method error', method, args
+					raise
 
 	def addBinding(self, dataclass, func):
 		'func must take data instance as first arg'

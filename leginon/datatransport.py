@@ -26,13 +26,13 @@ class Client(Base):
 
 		for t in self.transportmodules:
 			try:
-				self.clients.append(apply(t.Client, (serverlocation,)))
-			except ValueError:
+				self.clients.append(apply(t.Client, (serverlocation[t.locationkey],)))
+			except (ValueError, KeyError):
 				pass
 
 		self.serverlocation = serverlocation
 		if len(self.clients) == 0:
-			raise IOError
+			raise IOError('no client connections possible')
 
 		self.lock = threading.RLock()
 
@@ -44,7 +44,7 @@ class Client(Base):
 				return newdata
 			except IOError:
 				pass
-		self.printerror("IOError, unable to pull data " + str(idata))
+		print "IOError, unable to pull data " + str(idata)
 		raise IOError
 
 	def pull(self, idata):
@@ -66,7 +66,7 @@ class Client(Base):
 				pass
 			except:
 				raise
-		self.printerror("IOError, unable to push data " + str(odata))
+		print "IOError, unable to push data " + str(odata)
 		raise IOError()
 
 	def push(self, odata):
@@ -99,7 +99,7 @@ class Server(Base):
 	def location(self):
 		location = {}
 		for t in self.transportmodules:
-			location.update(self.servers[t].location())
+			location[t.locationkey] = (self.servers[t].location())
 		return location
 
 if __name__ == '__main__':

@@ -9,90 +9,54 @@
 #
 
 #import copy
-import socket
-import threading
+#import socket
+#import threading
 
-localserverdict = {}
-localserverdictlock = threading.RLock()
+locationkey = 'local transport'
 
 class Server(object):
 	def __init__(self, dh):
 		self.datahandler = dh
-		self.hostname = socket.gethostname()
-		self.pythonid = id(self)
-		localserverdictlock.acquire()
-		try:
-			localserverdict[self.pythonid] = self
-		finally:
-			localserverdictlock.release()
 
 	def start(self):
 		pass
 
-	def location(self):
-		location = {}
-		location['hostname'] = self.hostname
-		location['local server python ID'] = self.pythonid
-		return location
-
 	def exit(self):
-		localserverdictlock.acquire()
-		try:
-			del localserverdict[self.pythonid]
-		finally:
-			localserverdictlock.release()
+		pass
+
+	def location(self):
+		return {'instance': self}
+		#return {}
 
 class Client(object):
 	def __init__(self, location):
-		if location['hostname'] != socket.gethostname():
-			raise ValueError('local client cannot connect to different host')
-		self.serverlocation = location
+		if 'instance' not in location:
+			raise ValueError('local client can only connect within a process')
+		if not isinstance(location['instance'], Server):
+			raise ValueError('local client can only connect to local server')
+		self.serverobject = location['instance']
 
 	def push(self, idata):
-		localserverdictlock.acquire()
-		try:
-			ret = self._push(idata)
-		finally:
-			localserverdictlock.release()
-		return ret
+		return self._push(idata)
 
 	def _push(self, idata):
 		try:
-			server = localserverdict[self.serverlocation['local server python ID']]
-		except KeyError:
-			raise IOError
-
-		if server is None:
-			raise IOError # err...its sort of an IOError
-		else:
 			#idatacopy = copy.deepcopy(idata)
-			#obj = server.datahandler.insert(idatacopy)
-			obj = server.datahandler.insert(idata)
-			return obj
+			#return self.serverobjectserver.datahandler.insert(idatacopy)
+			return self.serverobject.datahandler.insert(idata)
+		except:
+			raise IOError('Local transport client unable to insert data')
 
 	def pull(self, id):
-		localserverdictlock.acquire()
-		try:
-			ret = self._pull(id)
-		finally:
-			localserverdictlock.release()
-		return ret
+		return self._pull(id)
 
 	def _pull(self, id):
 		try:
-			server = localserverdict[self.serverlocation['local server python ID']]
-		except KeyError:
-			raise IOError
-
-		if server is None:
-			raise IOError
-		else:
-			try:
-				#obj = copy.deepcopy(server.datahandler.query(id))
-				obj = server.datahandler.query(id)
-			except Exception, e:
-				raise IOError
-			return obj
+			#obj = copy.deepcopy(server.datahandler.query(id))
+			return server.datahandler.query(id)
+		except:
+			raise IOError('Local transport client unable to query id')
 
 if __name__ == '__main__':
 	pass
+

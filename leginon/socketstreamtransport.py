@@ -12,6 +12,27 @@ import socket
 import SocketServer
 import threading
 
+def localHack(obj):
+	try:
+		location = obj['location']
+	except (KeyError):
+		try:
+			location = obj['args'][2]['manager']
+		except (KeyError, IndexError):
+			raise
+
+	ltinstance = location['data transport']['local transport']['instance']
+	uiinstance = location['UI']['instance']
+	del location['data transport']['local transport']['instance']
+	del location['UI']['instance']
+
+	pickle = cPickle.dumps(obj, True)
+
+	location['data transport']['local transport']['instance'] = ltinstance
+	location['UI']['instance'] = uiinstance
+
+	return pickle
+
 class Handler(SocketServer.StreamRequestHandler):
 	def __init__(self, request, server_address, server):
 		SocketServer.StreamRequestHandler.__init__(self, request,
@@ -21,7 +42,7 @@ class Handler(SocketServer.StreamRequestHandler):
 		try:
 			obj = cPickle.load(self.rfile)
 		except (cPickle.UnpicklingError, EOFError):
-			print('no data to read, handle socket connection failed')
+			print 'no data to read, handle socket connection failed'
 			return
 
 		if isinstance(obj, data.Data):
@@ -30,19 +51,26 @@ class Handler(SocketServer.StreamRequestHandler):
 			try:
 				self.server.datahandler.insert(obj)
 			except Exception, e:
-				print('failed to insert pushed data')
+				print 'failed to insert pushed data'
 				raise
 			try:
 				# returns exception if error, else None
 				cPickle.dump(e, self.wfile, True)
 			except IOError:
-				print('write failed when acknowledging push')
+				print 'write failed when acknowledging push'
 		else:
 			try:
-				self.wfile.write(cPickle.dumps(self.server.datahandler.query(obj),
-																				True))
+				try:
+					self.wfile.write(cPickle.dumps(self.server.datahandler.query(obj),
+																					True))
+				except cPickle.UnpickleableError:
+					try:
+						self.wfile.write(localHack(self.server.datahandler.query(obj)))
+					except:
+						print 'cannot transport unpickleable data'
+						raise IOError
 			except IOError:
-				print('write failed when returning requested data')
+				print 'write failed when returning requested data'
 
 class Server(object):
 	def __init__(self, dh):
@@ -54,9 +82,6 @@ class Server(object):
 																		target=self.serve_forever)
 		self.thread.setDaemon(1)
 		self.thread.start()
-
-	def location(self):
-		return {'hostname': self.hostname}
 
 	def exit(self):
 		pass
@@ -71,15 +96,25 @@ class Client(object):
 		self.send(cPickle.dumps(id, True))
 		data = self.receive()
 		self.close()
-		return cPickle.loads(data)
+		try:
+			return cPickle.loads(data)
+		except:
+			raise IOError
 
 	def push(self, idata):
 		self.connect()
-		self.send(cPickle.dumps(idata, 1))
+		try:
+			self.send(cPickle.dumps(idata, True))
+		except cPickle.UnpickleableError:
+			try:
+				self.send(localHack(idata))
+			except:
+				print 'cannot push unpickleable data'
+				raise IOError
 		serverexception = cPickle.loads(self.receive())
 		self.close()
 		if serverexception is not None:
-			self.printerror('server failed to be pushed')
+			print 'server failed to be pushed'
 			raise IOError
 
 	def connect(self, family, type=socket.SOCK_STREAM):
@@ -92,7 +127,7 @@ class Client(object):
 			else:
 				raise Exception('no socket available')
 		except Exception, e:
-			self.printerror('socket send exception: %s' % str(e))
+			print 'socket send exception: %s' % str(e)
 			raise IOError
 
 	def receive(self):
@@ -105,13 +140,13 @@ class Client(object):
 			f.close()
 			return data
 		else:
-			self.printerror('no socket available')
+			print 'no socket available'
 			raise IOError
 
 	def close(self):
 		if self.socket is not None:
 			self.socket.close()
 		else:
-			self.printerror('no socket available')
+			print 'no socket available'
 			raise IOError
 

@@ -90,9 +90,9 @@ class Manager(node.Node):
 
 	# client methods
 
-	def addClient(self, newid, loc):
+	def addClient(self, newid, location):
 		'''Add a client of clientclass to a node keyed by the node ID.'''
-		self.clients[newid] = self.clientclass(loc)
+		self.clients[newid] = self.clientclass(location['data transport'])
 
 	def delClient(self, newid):
 		'''Deleted a client to a node by the node ID.'''
@@ -304,19 +304,14 @@ class Manager(node.Node):
 
 		self.confirmEvent(readyevent)
 		self.uiUpdateNodeInfo()
-		self.addNodeUIClient(nodeid, nodelocation)
+		self.addNodeUIClient(nodeid, nodelocation['UI'])
 
 		self.confirmEvent(readyevent)
 
-	def addNodeUIClient(self, nodeid, nodelocation):
+	def addNodeUIClient(self, nodeid, uilocation):
 		if nodeid in self.uiclientcontainers:
 			self.deleteNodeUIClient(nodeid)
-		if nodelocation['hostname'] == self.location()['hostname']:
-			nodeuiserver = self.researchByLocation(nodelocation, 'UI server')
-		else:
-			nodeuiserver = None
-		clientcontainer = uidata.LargeClientContainer(str(nodeid[-1]), nodeuiserver,
-														(nodelocation['hostname'], nodelocation['UI port']))
+		clientcontainer = uidata.LargeClientContainer(str(nodeid[-1]), uilocation)
 		try:
 			self.uiserver.addObject(clientcontainer)
 			self.uiclientcontainers[nodeid] = clientcontainer
@@ -455,13 +450,16 @@ class Manager(node.Node):
 				return False
 		return True
 
-	def addNode(self, hostname, port):
+	def addNode(self, location):
 		'''Add a running node to the manager. Sends an event to the location.'''
-		e = event.NodeAvailableEvent(id=self.id, location=self.location(), nodeclass=self.__class__.__name__)
-		client = self.clientclass({'hostname': hostname, 'TCP port': port})
-
+		e = event.NodeAvailableEvent(id=self.id, location=self.location(),
+																	nodeclass=self.__class__.__name__)
+		print 'addNode location =', location
+		client = self.clientclass(location)
 		try:
+			print 'addNode client push'
 			client.push(e)
+			print 'addNode client push done'
 		except EOFError:
 			self.printerror('manager unable to add node')
 
@@ -597,7 +595,11 @@ class Manager(node.Node):
 		'''UI helper calling addNode. See addNode.'''
 		hostname = self.uiaddnodehostname.getSelectedValue()
 		port = self.uiaddnodeport.get()
-		self.addNode(hostname, port)
+		location = {}
+		location['TCP transport'] = {}
+		location['TCP transport']['hostname'] = hostname
+		location['TCP transport']['port'] = port
+		self.addNode(location)
 
 	def uiLaunch(self):
 		launchername = self.uilauncherselect.getSelectedValue()

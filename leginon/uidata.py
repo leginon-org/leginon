@@ -193,9 +193,15 @@ class ExternalContainer(Container):
 def clientContainerFactory(containerclass):
 	class ClientContainer(containerclass):
 		typelist = containerclass.typelist + ('client',)
-		def __init__(self, name, uiserver, location):
-			self.value = uiserver
-			self.xmlrpclocation = location
+		def __init__(self, name, location):
+			try:
+				self.xmlrpclocation = (location['hostname'], location['XML-RPC port'])
+			except KeyError:
+				self.xmlrpclocation = None
+			try:
+				self.value = location['instance']
+			except KeyError:
+				self.value = self.xmlrpclocation
 			containerclass.__init__(self, name)
 
 		def toXMLRPC(self, value):
@@ -263,7 +269,10 @@ class Data(Object):
 		###     Only if we intend to modify value.  Probably should 
 		### figure out where value may be modified and do the deepcopy
 		### locally in that place.
-		value = copy.deepcopy(value)
+		try:
+			value = copy.deepcopy(value)
+		except copy.Error:
+			return
 		if self.validate(value):
 			# should call in constructor?
 			if callback and self.callback is not None:

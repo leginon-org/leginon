@@ -72,11 +72,19 @@ class Server(XMLRPCServer, uidata.Container):
 		self.pref_lock = threading.Lock()
 
 		XMLRPCServer.__init__(self, port=port)
+
 		uidata.Container.__init__(self, name)
 
 		self.server.register_function(self.setFromClient, 'set')
 		self.server.register_function(self.commandFromClient, 'command')
 		self.server.register_function(self.addXMLRPCClientServer, 'add client')
+
+	def location(self):
+		location = {}
+		location['hostname'] = self.hostname
+		location['XML-RPC port'] = self.port
+		location['instance'] = self
+		return location
 
 	def queueHandler(self):
 		while True:

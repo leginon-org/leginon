@@ -191,10 +191,10 @@ class Node(leginonobject.LeginonObject):
 	# location method
 
 	def location(self):
-		loc = leginonobject.LeginonObject.location(self)
-		loc.update(self.server.location())
-		loc['UI port'] = self.uiserver.port
-		return loc
+		location = leginonobject.LeginonObject.location(self)
+		location['data transport'] = self.server.location()
+		location['UI'] = self.uiserver.location()
+		return location
 
 	# event input/output/blocking methods
 
@@ -461,7 +461,7 @@ class Node(leginonobject.LeginonObject):
 
 		for nodeid in nodeiddata['location']:
 			nodelocation = self.researchByLocation(self.nodelocations['manager'], nodeid)
-			client = self.clientclass(nodelocation['location'])
+			client = self.clientclass(nodelocation['location']['data transport'])
 			client.push(idata)
 
 	def locateDataByID(self, dataid):
@@ -471,9 +471,9 @@ class Node(leginonobject.LeginonObject):
 		'''
 		pass
 
-	def researchByLocation(self, loc, dataid):
+	def researchByLocation(self, location, dataid):
 		'''Get a piece of data with the specified data ID by the location of a node.'''
-		client = self.clientclass(loc)
+		client = self.clientclass(location['data transport'])
 		try:
 			cdata = client.pull(dataid)
 		except IOError:
@@ -512,22 +512,18 @@ class Node(leginonobject.LeginonObject):
 
 	# methods for setting up the manager
 
-	def addManager(self, loc):
+	def addManager(self, location):
 		'''Set the manager controlling the node and notify said manager this node is available.'''
-		self.managerclient = self.clientclass(loc)
-		available_event = event.NodeAvailableEvent(id=self.ID(), location=self.location(), nodeclass=self.__class__.__name__)
+		self.managerclient = self.clientclass(location['data transport'])
+		available_event = event.NodeAvailableEvent(id=self.ID(),
+																							location=self.location(),
+																							nodeclass=self.__class__.__name__)
 		self.outputEvent(ievent=available_event, wait=True, timeout=10)
 
 	def handleAddNode(self, ievent):
-		'''Event handler calling adddManager with event info. See addManager.'''
+		'''Event handler calling addManager with event info. See addManager.'''
 		if ievent['nodeclass'] == 'Manager':
 			self.addManager(ievent['location'])
-
-		#self.confirmEvent(ievent)
-		# XXX confirmEvent here seems to break everything
-		# maybe because it is too soon to confirm when the 
-		# node is still being added.  addManager is
-		# basically the 'confirmation' of this event
 
 	# utility methods
 
@@ -549,7 +545,8 @@ class Node(leginonobject.LeginonObject):
 	def defineUserInterface(self):
 		idarray = uidata.Array('ID', self.id, 'r')
 		class_string = uidata.String('Class', self.__class__.__name__, 'r')
-		locationstruct = uidata.Struct('Location', self.location(), 'r')
+		location = self.location()
+		locationstruct = uidata.Struct('Location', location, 'r')
 		datakeepercontainer = self.datahandler.datakeeper.UI()
 		exitmethod = uidata.Method('Exit', self.uiExit)
 

@@ -26,14 +26,12 @@ class Launcher(node.Node):
 		self.addEventInput(event.LaunchEvent, self.handleLaunch)
 		self.caller = calllauncher.CallLauncher()
 		l = self.location()
-		print 'launcher id: %s, at hostname: %s, TCP: %s, UI: %s' % (self.id,
-															l['hostname'], l['TCP port'], l['UI port'])
-		#self.print_location()
+		print 'launcher initialized'
 		self.defineUserInterface()
 #		self.start()
 
-	def addManager(self, loc):
-		node.Node.addManager(self, loc)
+	def addManager(self, location):
+		node.Node.addManager(self, location)
 		time.sleep(1)
 		self.publishNodeClasses()
 		self.outputEvent(event.NodeInitializedEvent(id=self.ID()))
@@ -91,8 +89,10 @@ if __name__ == '__main__':
 	try:
 		managerlocation['hostname'] = sys.argv[1]
 		try:
-			managerlocation['TCP port'] = int(sys.argv[2])
-			#managerlocation['UNIX pipe filename'] = str(sys.argv[3])
+			managerlocation['data transport'] = {}
+			managerlocation['data transport']['TCP transport'] = {}
+			port = int(sys.argv[2])
+			managerlocation['data transport']['TCP transport']['port'] = port
 			m = Launcher(myid, {'manager': managerlocation})
 		except IndexError:
 			m = Launcher(myid, {}, int(sys.argv[1]))
