@@ -215,7 +215,7 @@ class DriftManager(watcher.Watcher):
 		## ensure that loop executes once
 		threshold = self.settings['threshold']
 		current_drift = threshold + 1.0
-		while current_drift > threshold:
+		while current_drift > self.settings['threshold']:
 			## wait for interval
 			time.sleep(self.settings['pause time'])
 
