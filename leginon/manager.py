@@ -8,7 +8,6 @@ import application
 import data
 import common
 import event
-import signal
 
 class Manager(node.Node):
 	def __init__(self, id):
@@ -381,14 +380,17 @@ class Manager(node.Node):
 
 
 if __name__ == '__main__':
-	import signal, sys, time
+	import sys
 
 	manager_id = ('manager',)
 	#manager_id = 'manager'
 	m = Manager(manager_id)
 
 	## GUI
-	gui = 1
+	if sys.platform == 'win32':
+		gui = 0
+	else:
+		gui = 1
 	if gui:
 		import nodegui
 		import Tkinter
