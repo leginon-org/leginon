@@ -239,9 +239,6 @@ class Node(leginonobject.LeginonObject):
 		#print "data ID =", dataid
 		cdata = client.pull(dataid)
 
-		print 'cdata type', type(cdata)
-		time.sleep(1)
-
 		return cdata
 
 	def researchByDataID(self, dataid):
