@@ -310,7 +310,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		presetsdata = self.presetsclient.retrievePresets()
 		presetsnames = []
 		for data in presetsdata:
-			presetsnames.append(data['name'])
+			if data['name'] not in presetsnames:
+				presetsnames.append(data['name'])
 		return presetsnames
 
 	def defineUserInterface(self):
