@@ -185,7 +185,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 		settingscontainer = uidata.Container('Settings')
 		settingscontainer.addObjects((self.uitolerance, self.shiftpercent, self.uiparameter, self.uinaverage, self.ui_interval, self.uicurbase, self.uibase))
 
-		calibratemethod = uidata.Method('Calibrate', self.uiCalibrate)
+		calibratemethod = uidata.Method('Calibrate (be sure to configure camera first)', self.uiCalibrate)
 		abortmethod = uidata.Method('Abort', self.uiAbort)
 
 		container = uidata.LargeContainer('Matrix Calibrator')
