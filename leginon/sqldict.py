@@ -1081,8 +1081,8 @@ def sqlColumnsDefinition(in_dict, noDefault=None):
 	if noDefault is None:
 		defaults = [	{'Field': 'DEF_id', 'Type': 'int(16)',
 				'Key': 'PRIMARY', 'Extra':'auto_increment'},
-				{'Field':'DEF_timestamp','Type':'timestamp',
-				'Null':'YES', 'Key':'INDEX'}
+				{'Field':'DEF_timestamp', 'Type':'timestamp',
+				'Key':'INDEX', 'Index':['DEF_timestamp'] }
 				]
 		columns += defaults
 
@@ -1108,6 +1108,7 @@ def sqlColumnsDefinition(in_dict, noDefault=None):
 			column['Field'] = ref2field(key,value)
 			column['Type'] = 'INT(20)'
 			column['Key'] = 'INDEX'
+			column['Index'] = [column['Field']]
 			columns.append(column)
 		elif type(value) is Numeric.ArrayType:
 			### Numeric array
