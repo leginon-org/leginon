@@ -46,6 +46,8 @@ class Corrector(node.Node):
 
 		node.Node.__init__(self, id, session, nodelocations, datahandler=DataHandler, **kwargs)
 
+		self.ref_cache = {}
+
 		ids = [('corrected image data',)]
 		e = event.ListPublishEvent(id=self.ID(), idlist=ids)
 		self.outputEvent(e)
@@ -213,7 +215,7 @@ class Corrector(node.Node):
 		print 'returning ref'
 		return ref
 
-	def retrieveRef(self, camstate, type):
+	def researchRef(self, camstate, type):
 		camstate['id'] = None
 		if type == 'dark':
 			imagetemp = data.DarkImageData()
@@ -224,27 +226,52 @@ class Corrector(node.Node):
 		else:
 			return None
 
-#		imagetemp['session'] = data.SessionData()
-#		imagetemp['session']['user'] = data.UserData()
-#		imagetemp['session']['user']['group'] = data.GroupData()
-#		imagetemp['session']['instrument'] = data.InstrumentData()
-
 		imagetemp['camstate'] = camstate
-		## somehow session is being set to the current session
-		## don't want to query based on that.
 		imagetemp['session'] = data.SessionData()
 		imagetemp['session']['instrument'] = self.session['instrument']
-		print 'researching reference images'
+		print 'researching reference image'
 		refs = self.research(datainstance=imagetemp, results=1)
 		print 'done researching reference image'
 		if refs:
 			ref = refs[0]
-			image = ref['image']
 		else:
+			ref = None
+		return ref
+
+	def retrieveRef(self, camstate, type):
+		key = (camstate, type)
+		print '***KEY', hash(key)
+
+		## another way to do the cache would be to use the local
+		##   data keeper
+
+		## try to use reference image from cache
+		print 'KEYS', map(hash,self.ref_cache.keys())
+		try:
+			return self.ref_cache[key]
+		except KeyError:
+			print hash(key), 'is not in', map(hash,self.ref_cache.keys())
+			pass
+
+		## use reference image from database
+		ref = self.researchRef(camstate, type)
+		if ref:
+			image = ref['image']
+			self.ref_cache[key] = image
+		else:
+			print 'No reference image found', camstate, type
 			image = None
 		return image
 
 	def storeRef(self, type, numdata, camstate):
+		## another way to do the cache would be to use the local
+		## data keeper
+
+		## store in cache
+		key = (camstate, type)
+		self.ref_cache[key] = numdata
+
+		## store in database
 		if type == 'dark':
 			imagetemp = data.DarkImageData()
 		elif type == 'bright':
