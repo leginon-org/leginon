@@ -93,12 +93,11 @@ def quadraticPeak(m):
 
 	## find the max pixel indices (row,col)
 	peakrow,peakcol = matrixMax(m)
-	print 'peak', peakrow, peakcol
 
 	rows,cols = m.shape
 
 	## fit quadratic to range of pixels centered on peak pixel
-	npix = 3  # could this be 5 or 7 for better accuracy?
+	npix = 7  # could this be 5 or 7 for better accuracy?
 
 	rowrange = (peakrow-npix/2, peakrow+npix/2+1)
 	rowinds = Numeric.arrayrange(rowrange[0], rowrange[1])
@@ -122,9 +121,6 @@ def quadraticPeak(m):
 			colvals.append(m[peakrow, col])
 	colvals = Numeric.array(colvals)
 
-	print 'fit data indices', rowinds, colinds
-	print 'fit data values', rowvals, colvals
-
 	## create quadratic design matrix for row data
 	row_dm = Numeric.zeros(npix * 3)
 	row_dm.shape = (npix, 3)
@@ -132,14 +128,11 @@ def quadraticPeak(m):
 	for row in rowinds:
 		row_dm[i] = (1,row,row*row)
 		i += 1
-	print 'row_dm', row_dm
 
 	## fit and find zero
 	rowfit = linear_least_squares(row_dm, rowvals)
-	print 'rowfit', rowfit
 	rowcoeffs = rowfit[0]
 	rowzero = -rowcoeffs[1] / 2 / rowcoeffs[2]
-	print 'rowzero', rowzero
 
 	## create quadratic design matrix for col data
 	col_dm = Numeric.zeros(npix * 3)
@@ -153,6 +146,5 @@ def quadraticPeak(m):
 	colfit = linear_least_squares(col_dm, colvals)
 	colcoeffs = colfit[0]
 	colzero = -colcoeffs[1] / 2 / colcoeffs[2]
-	print 'colzero', colzero
 
 	return (rowzero, colzero)
