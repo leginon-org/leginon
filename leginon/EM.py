@@ -61,20 +61,34 @@ class EMClient(object):
 	def handleCameraImagePublish(self, ievent):
 		self.cameraimageref = ievent
 
-	def getScope(self):
+	def getScope(self, key=None):
 		if self.scoperef is None:
 			raise ScopeUnavailable()
-		return self.scoperef['data']
+		## still has to get whole ScopeEMData just to get one key
+		dat = self.scoperef['data']
+		if key is None:
+			return dat
+		else:
+			return dat[key]
 
-	def getCamera(self):
+	def getCamera(self, key=None):
 		if self.cameraref is None:
 			raise ScopeUnavailable()
-		return self.cameraref['data']
+		## still has to get whole CameraEMData just to get one key
+		dat = self.cameraref['data']
+		if key is None:
+			return dat
+		else:
+			return dat[key]
 
-	def getImage(self):
+	def getImage(self, key=None):
 		if self.cameraimageref is None:
 			raise CameraUnavailable()
-		return self.cameraimageref['data']
+		dat = self.cameraimageref['data']
+		if key is None:
+			return dat
+		else:
+			return dat[key]
 
 	def setScope(self, value):
 		## how to we prevent waiting forever when no scope
