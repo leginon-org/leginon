@@ -549,46 +549,45 @@ class PresetsManager(node.Node):
 		return index
 
 	def getHighTension(self):
-		scope = self.emclient.getScope()
-		ht = scope['high tension']
-		return ht
+		try:
+			return self.emclient.getScope()['high tension']
+		except EM.ScopeUnavailable:
+			return None
 
 	def displayCalibrations(self, preset):
 		mag = preset['magnification']
-		try:
-			ht = self.getHighTension()
-			if ht is None:
-				raise RuntimeError('high tension unknown')
-		except:
-			print 'could not get high tension'
-			return
+		ht = self.getHighTension()
+
+		## not dependent on HT
 		pcaltime = self.calclients['pixel size'].time(mag)
 		self.cal_pixelsize.set(str(pcaltime))
-		stagetime = self.calclients['stage'].time(ht, mag, 'stage position')
-		self.cal_stage.set(str(stagetime))
-
-		imagetime = self.calclients['image'].time(ht, mag, 'image shift')
-		self.cal_imageshift.set(str(imagetime))
-		beamtime = self.calclients['beam'].time(ht, mag, 'beam shift')
-		self.cal_beam.set(str(beamtime))
 		modstagemodtimex = self.calclients['modeled stage'].timeModelCalibration('x')
 		modstagemodtimey = self.calclients['modeled stage'].timeModelCalibration('y')
 		tmpstr = 'x: %s, y: %s' % (modstagemodtimex,modstagemodtimey)
 		self.cal_modeledstagemod.set(tmpstr)
-		modstagemagtimex = self.calclients['modeled stage'].timeMagCalibration(ht, mag, 'x')
-		modstagemagtimey = self.calclients['modeled stage'].timeMagCalibration(ht, mag, 'y')
-		tmpstr = 'x: %s, y: %s' % (modstagemagtimex,modstagemagtimey)
-		self.cal_modeledstagemag.set(tmpstr)
+
+		## dependent on HT
+		if ht is None:
+			message = 'unknown high tension'
+			modmagstr = beamtime = imagetime = stagetime = message
+		else:
+			stagetime = self.calclients['stage'].time(ht, mag, 'stage position')
+			imagetime = self.calclients['image'].time(ht, mag, 'image shift')
+			beamtime = self.calclients['beam'].time(ht, mag, 'beam shift')
+			modstagemagtimex = self.calclients['modeled stage'].timeMagCalibration(ht, mag, 'x')
+			modstagemagtimey = self.calclients['modeled stage'].timeMagCalibration(ht, mag, 'y')
+			modmagstr = 'x: %s, y: %s' % (modstagemagtimex,modstagemagtimey)
+
+		self.cal_stage.set(str(stagetime))
+		self.cal_imageshift.set(str(imagetime))
+		self.cal_beam.set(str(beamtime))
+		self.cal_modeledstagemag.set(modmagstr)
 
 	def uiCommitParams(self, value):
 		oldpreset = self.currentselection
-		pname = oldpreset['name']
+		newpreset = data.PresetData(initializer=oldpreset)
 		presetdict = self.presetparams.get()
-		newpreset = data.PresetData(initializer=presetdict, session=self.session, name=pname)
-
-		# to put preset at end, remove it first
-		del self.presets[pname]
-		self.presets[pname] = newpreset
+		newpreset.update(presetdict)
 
 		### make sure other pointers go to this new preset
 		if self.currentpreset is oldpreset:
