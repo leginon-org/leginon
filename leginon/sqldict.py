@@ -729,7 +729,6 @@ def sqlColumnsDefinition(in_dict, noDefault=None):
 			nd = sqlColumnsDefinition({seq2sqlColumn(key):repr(value)}, noDefault=[])
 			columns += nd
 			
-	print 'COLUMNS', columns
 	return columns
 
 
