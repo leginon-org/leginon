@@ -491,7 +491,10 @@ class HoleFinder(object):
 				best_lattice = lat
 		print 'best lattice has %s blobs' % (maxblobs,)
 		self.__update_result('lattice', best_lattice)
-		self.__update_result('holes', best_lattice.blobs)
+		if best_lattice is None:
+			self.__update_result('holes', [])
+		else:
+			self.__update_result('holes', best_lattice.blobs)
 
 	def mark_holes(self):
 		if None in (self.__results['holes'], self.__results['original']):
