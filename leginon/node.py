@@ -67,7 +67,7 @@ class Node(leginonobject.LeginonObject):
 		self.addEventOutput(event.NodeAvailableEvent)
 		self.addEventOutput(event.NodeUnavailableEvent)
 
-	def __del__(self, id):
+	def __del__(self):
 		self.announce(event.NodeUnavailableEvent(self.ID()))
 
 	def addManager(self, loc):
