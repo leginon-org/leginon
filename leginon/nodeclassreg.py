@@ -57,7 +57,7 @@ def getNodeClassNames():
 registerNodeClass('EM', 'EM')
 registerNodeClass('corrector', 'Corrector')
 registerNodeClass('calibration', 'Calibration')
-registerNodeClass('calibration', 'StageCalibration')
+#registerNodeClass('calibration', 'StageCalibration')
 registerNodeClass('calibration', 'ImageShiftCalibration')
 registerNodeClass('acquireloop', 'AcquireLoop')
 registerNodeClass('navigator', 'Navigator')
