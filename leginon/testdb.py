@@ -30,6 +30,8 @@ db.Preset = db.Table('PRESET', [ 'Name', 'Width', 'Height', 'Binning', 'ExpTime'
 db.Preset.Name= db.Preset.Index(['Name'])
 db.Preset.Name['expo2']
 
+db.Preset.NoInd= db.Preset.Index([])
+
 presetdata1 = ['focus2', 256, 256, 1, 0.3000, 41.6200, 0,'search', 66000, 0.2994, -2000, 3, 42414.5117, 106.9400, 28.7300, 198.0000, 4542.0000]
 
 
@@ -53,7 +55,7 @@ class Preset(ObjectBuilder):
 myp1 = Preset().register(db)
 p1 = Preset('foc', 66000, -20,0.67543)
 
-d= myp1.Name['expo1']
-myp1.Name['expo1'] = {'Mag': 66000}
-myp1.NameMag['expo1', '6600']
-p1d = p1.dumpdict()
+# d= myp1.Name['expo1']
+# myp1.Name['expo1'] = {'Mag': 66000}
+# myp1.NameMag['expo1', '6600']
+# p1d = p1.dumpdict()

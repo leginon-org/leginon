@@ -24,7 +24,7 @@ class DBDataKeeper(datahandler.DataHandler):
 		self.dbd.myTable = self.dbd.Table(table)
 		sqlindices = sqldict.sqlColumnsFormat(indices)
 		self.dbd.myTable.myIndex = self.dbd.myTable.Index(sqlindices.keys(),
-															orderBy = {'fields':('DEF_timestamp',),'sort':'DESC'})
+			orderBy = {'fields':('DEF_timestamp',),'sort':'DESC'})
 		# return a list of dictionnaries for all matching rows
 		if results > 0:
 			result = self.dbd.myTable.myIndex[sqlindices.values()].fetchmany(results)

@@ -146,6 +146,7 @@ import string
 import re
 import Numeric
 import MySQLdb.cursors
+import cPickle
 from types import *
 
 class SQLDict:
@@ -267,7 +268,10 @@ class SQLDict:
 	    def __init__(self, table, indices, **kwargs):
 		self.table = table
 		self.kwargs= kwargs
-		ind = map(lambda id: sqlexpr.Field(self.table.table, id), indices)
+		if indices:
+			ind = map(lambda id: sqlexpr.Field(self.table.table, id), indices)
+		else:
+			ind=None
 		self.fields = ind
 
 	    def __setitem__(self, i=(), v=None):
@@ -275,14 +279,18 @@ class SQLDict:
 		with the value v."""
 		if type(i) == ListType: i = tuple(i)
 		elif type(i) != TupleType: i = (i,)
-		w = sqlexpr.AND_EQUAL(zip(self.fields,i))
+		if self.fields is not None:
+			w = sqlexpr.AND_EQUAL(zip(self.fields,i))
+		else: w=1
 		self.table.update(v, WHERE=w)
 
 	    def __getitem__(self, i=()):
 		"""Select items in the database matching i."""
 		if type(i) == ListType: i = tuple(i)
 		elif type(i) != TupleType: i = (i,)
-		w = sqlexpr.AND_EQUAL(zip(self.fields,i))
+		if self.fields is not None:
+			w = sqlexpr.AND_EQUAL(zip(self.fields,i))
+		else: w=1
 		return self.table.select(where=w, **self.kwargs)
 
 	    def __delitem__(self, i):
@@ -613,12 +621,29 @@ def matrix2dict(matrix, name=None):
 		i+=1
 		j=1
 		for col in row:
-			# k = "ARRAY|%s|%s_%s" % (name,i,j)
 			k = sep.join(['ARRAY',name,'%s_%s'%(i,j)])
 			v = float(matrix[i-1,j-1])
 			d[k]=v
 			j+=1
 	return d
+
+def bin2dict(object, name=None):
+	"""
+	Convert a python object in a binary blob
+	"""
+	if name is None:
+		name='blob'
+	d={}
+	k = sep.join(['BIN',name])
+	pobject = cPickle.dumps(object, 1)
+	d[k]
+	return d
+
+def dict2bin(in_dict):
+	"""
+	Convert a binary blob in a  python 
+	"""
+	pass
 
 def sqltype(object):
 	"""
