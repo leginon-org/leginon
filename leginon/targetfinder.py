@@ -138,14 +138,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
 
 	def notifyUserSubmit(self):
 		message = 'waiting for you to submit targets'
-		self.usersubmitmessage = self.logger.info(message)
+		self.logger.info(message)
 		self.beep()
-
-	def unNotifyUserSubmit(self):
-		try:
-			self.usersubmitmessage.clear()
-		except:
-			pass
 
 	def handleTargetListDone(self, targetlistdoneevent):
 		'''
@@ -198,7 +192,6 @@ class ClickTargetFinder(TargetFinder):
 		self.userpause.clear()
 		self.logger.info('Waiting for user to select targets...')
 		self.userpause.wait()
-		self.unNotifyUserSubmit()
 		self.logger.info('Done waiting')
 		self.publishTargets(imdata, 'focus', targetlist)
 		self.publishTargets(imdata, 'acquisition', targetlist)

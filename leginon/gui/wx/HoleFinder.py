@@ -18,6 +18,7 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SUBMIT,
 													'play',
 													shortHelpString='Submit Targets')
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, False)
 
 		self.imagepanel = gui.wx.ImageViewer.TargetImagePanel(self, -1)
 		self.imagepanel.addTypeTool('Original', display=True, settings=True)
@@ -37,6 +38,23 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.szmain.AddGrowableRow(1)
 		self.szmain.AddGrowableCol(0)
 
+		self.Bind(gui.wx.Events.EVT_SUBMIT_TARGETS, self.onSubmitTargets)
+		self.Bind(gui.wx.Events.EVT_TARGETS_SUBMITTED, self.onTargetsSubmitted)
+
+	def onSubmitTargets(self, evt):
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, True)
+
+	def onTargetsSubmitted(self, evt):
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, False)
+
+	def submitTargets(self):
+		evt = gui.wx.Events.SubmitTargetsEvent()
+		self.GetEventHandler().AddPendingEvent(evt)
+
+	def targetsSubmitted(self):
+		evt = gui.wx.Events.TargetsSubmittedEvent()
+		self.GetEventHandler().AddPendingEvent(evt)
+
 	def getTargetPositions(self, typename):
 		return self.imagepanel.getTargetPositions(typename)
 
@@ -47,6 +65,7 @@ class Panel(gui.wx.TargetFinder.Panel):
 											id=gui.wx.ToolBar.ID_SUBMIT)
 
 	def onSubmitTool(self, evt):
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, False)
 		self.node.submit()
 
 	def onSettingsTool(self, evt):

@@ -28,6 +28,8 @@ eventFactory('Calibration Done')
 eventFactory('Get Instrument Done')
 eventFactory('Set Instrument Done')
 eventFactory('Measurement Done')
+eventFactory('Submit Targets')
+eventFactory('Targets Submitted')
 
 PlayerEventType = wx.NewEventType()
 SetImageEventType = wx.NewEventType()

@@ -116,7 +116,11 @@ class HoleFinder(targetfinder.TargetFinder):
 	'''
 
 	def readImage(self, filename):
-		orig = Mrc.mrc_to_numeric(filename)
+		try:
+			orig = Mrc.mrc_to_numeric(filename)
+		except Exception, e:
+			self.logger.exception('Read image failed: %s' % e[-1])
+			return
 		self.hf['original'] = orig
 		self.currentimagedata = None
 		self.setImage(orig, 'Original')
@@ -446,11 +450,13 @@ class HoleFinder(targetfinder.TargetFinder):
 
 		## user part
 		if self.settings['user check']:
-			self.notifyUserSubmit()
+			self.logger.info('Waiting for user to check targets...')
+			self.panel.submitTargets()
 			self.userpause.clear()
 			self.userpause.wait()
-			self.unNotifyUserSubmit()
+			self.panel.targetsSubmitted()
 
+		self.logger.info('Publising targets...')
 		### publish targets from goodholesimage
 		self.publishTargets(imdata, 'focus', targetlist)
 		self.publishTargets(imdata, 'acquisition', targetlist)
