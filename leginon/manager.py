@@ -399,7 +399,7 @@ if __name__ == '__main__':
 		Pmw.initialise(tk)
 		mgui = nodegui.NodeGUI(tk, node=m)
 		tk.wm_title('Leginon Manager')
-		mgui.pack()
+		mgui.pack(fill='both', expand='yes')
 #		t = threading.Thread(name = 'Tk GUI thread', target = tk.mainloop)
 #		t.setDaemon(1)
 #		t.start()

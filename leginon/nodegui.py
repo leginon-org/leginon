@@ -27,6 +27,7 @@ class Container(SpecWidget):
 		self.label.pack()
 		for spec in self.spec['content']:
 			spectype = spec['spectype']
+			istree = 0
 			if spectype == 'container':
 				widget = Container(self, self.uiclient, spec)
 			elif spectype == 'method':
@@ -34,9 +35,14 @@ class Container(SpecWidget):
 			elif spectype == 'data':
 				dataclass = whichDataClass(spec)
 				widget = dataclass(self, self.uiclient, spec)
+				if dataclass == TreeData:
+					istree = 1
 			else:
 				raise RuntimeError('invalid spec type')
-			widget.pack(side=TOP)
+			if istree:
+				widget.pack(side=TOP, expand=YES, fill=BOTH)
+			else:
+				widget.pack(side=TOP)
 
 class NotebookContainer(SpecWidget):
 	def __init__(self, parent, uiclient, spec):
@@ -54,6 +60,7 @@ class NotebookContainer(SpecWidget):
 			name = spec['name']
 			spectype = spec['spectype']
 			newframe = self.notebook.add(name)
+			istree = 0
 
 			### add the width of this tab to total
 			tabname = name + '-tab'
@@ -67,9 +74,14 @@ class NotebookContainer(SpecWidget):
 			elif spectype == 'data':
 				dataclass = whichDataClass(spec)
 				widget = dataclass(newframe, self.uiclient, spec)
+				if dataclass == TreeData:
+					istree = 1
 			else:
 				raise RuntimeError('invalid spec type')
-			widget.pack(side=TOP)
+			if istree:
+				widget.pack(side=TOP, expand=YES, fill=BOTH)
+			else:
+				widget.pack(side=TOP)
 
 		self.notebook.pack(fill=BOTH, expand=YES)
 		self.notebook.setnaturalsize()
@@ -134,7 +146,7 @@ class Data(SpecWidget):
 
 		### the actual data widget
 		w = self.buildWidget(self)
-		w.pack(side=TOP)
+		w.pack(side=TOP, expand=YES, fill=BOTH)
 
 	def setServer(self):
 		value = self.getWidget()
@@ -207,8 +219,6 @@ class ComboboxData(Data):
 		return self.combo
 
 	def updateList(self):
-		print 'COMBO', self.name
-		print 'UPDATE LIST', self.enum
 		newlist = self.uiclient.execute('GET', (self.enum,))
 		self.combo.setlist(newlist)
 
@@ -242,7 +252,7 @@ class TreeData(Data):
 		item = StructTreeItem(None, self.name, self.dict)
 		node = TreeWidget.TreeNode(self.sc.canvas, None, item)
 		node.expand()
-		self.sc.frame.pack()
+		self.sc.frame.pack(expand=YES, fill=BOTH)
 
 	def getWidget(self):
 		return self.dict
@@ -337,7 +347,7 @@ class NodeGUI(Frame):
 		f = Frame(self, bd=4, relief=SOLID)
 		b=Button(f, text='Refresh', command=self.__build_components)
 		b.pack(side=TOP)
-		f.pack(side=TOP, expand=YES, fill=BOTH)
+		f.pack(side=TOP, fill=BOTH)
 		self.mainframe = None
 		self.__build_components()
 
@@ -346,8 +356,7 @@ class NodeGUI(Frame):
 			self.mainframe.destroy()
 		self.mainframe = NotebookContainer(self, self.uiclient, self.uiclient.spec)
 		self.name = self.mainframe.name
-		print 'NAME', self.name
-		self.mainframe.pack()
+		self.mainframe.pack(expand=YES, fill=BOTH)
 
 
 # This was done quickly, should be thought out more I suppose
@@ -408,11 +417,12 @@ if __name__ == '__main__':
 	import sys
 
 	tk = Tk()
+	tk.wm_title('Node GUI')
 	Pmw.initialise(tk)
 	hostname = sys.argv[1]
 	port = sys.argv[2]
 	gui = NodeGUI(tk, sys.argv[1], sys.argv[2])
 	#newtitle = 'Interface to %s' % gui.id
 	#tk.wm_title(newtitle)
-	gui.pack()
+	gui.pack(expand=YES, fill=BOTH)
 	tk.mainloop()
