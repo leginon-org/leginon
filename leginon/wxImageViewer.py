@@ -17,6 +17,7 @@ from wxPython.lib.buttons import wxGenBitmapToggleButton
 import NumericImage
 import Image
 import imagefun
+import sys, os
 
 wxInitAllImageHandlers()
 
@@ -111,7 +112,9 @@ class ImageTool(object):
 		pass
 
 	def getToolBitmap(self, filename):
-		wximage = wxImage('icons/' + filename)
+		rundir = sys.path[0]
+		iconpath = os.path.join(rundir, 'icons', filename)
+		wximage = wxImage(iconpath)
 		bitmap = wxBitmapFromImage(wximage)
 		bitmap.SetMask(wxMaskColour(bitmap, wxWHITE))
 		return bitmap
