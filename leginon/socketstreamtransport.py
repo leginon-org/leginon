@@ -12,6 +12,7 @@ class Handler(SocketServer.StreamRequestHandler):
 
 	def handle(self):
 		try:
+			print 'SSSS'
 			t1 = time.clock()
 			obj = cPickle.load(self.rfile)
 			t2 = time.clock()
@@ -41,6 +42,7 @@ class Handler(SocketServer.StreamRequestHandler):
 				print('write failed when acknowledging push')
 		else:
 			try:
+				print 'SSSS'
 				t1 = time.clock()
 				cPickle.dump(self.server.datahandler.query(obj), self.wfile, 1)
 				t2 = time.clock()
@@ -75,6 +77,7 @@ class Client(leginonobject.LeginonObject):
 	def pull(self, id):
 		self.connect()
 
+		print 'SSSS'
 		t1 = time.clock()
 		idpickle = cPickle.dumps(id, 1)
 		t2 = time.clock()
@@ -87,6 +90,7 @@ class Client(leginonobject.LeginonObject):
 		print 'receive done'
 		self.close()
 
+		print 'SSSS'
 		t1 = time.clock()
 		p = cPickle.loads(data)
 		t2 = time.clock()
@@ -98,6 +102,7 @@ class Client(leginonobject.LeginonObject):
 	def push(self, idata):
 		self.connect()
 
+		print 'SSSS'
 		t1 = time.clock()
 		p = cPickle.dumps(idata, 1)
 		t2 = time.clock()
@@ -107,6 +112,7 @@ class Client(leginonobject.LeginonObject):
 		self.send(p)
 		r = self.receive()
 
+		print 'SSSS'
 		t1 = time.clock()
 		serverexception = cPickle.loads(r)
 		t2 = time.clock()
