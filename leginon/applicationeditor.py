@@ -10,24 +10,17 @@ class Line(object):
 	def createline(self, position1, position2):
 		self.line = self.canvas.create_line(position1[0], position1[1],
 																				position2[0], position2[1])
-#		midpoint = (int(y1) + int(y0))/2
-#		self.line1 = self.canvas.create_line(x0, y0, x0, midpoint)
-#		self.line2 = self.canvas.create_line(x0, midpoint, x1, midpoint)
-#		self.line3 = self.canvas.create_line(x1, midpoint, x1, y1)
 
 	def move(self, position1, position2):
 		self.canvas.coords(self.line, position1[0], position1[1],
 																	position2[0], position2[1])
-#		midpoint = (int(y1) + int(y0))/2
-#		self.canvas.coords(self.line1, x0, y0, x0, midpoint)
-#		self.canvas.coords(self.line2, x0, midpoint, x1, midpoint)
-#		self.canvas.coords(self.line3, x1, midpoint, x1, y1)
 
 	def delete(self):
 		self.canvas.delete(self.line)
 
 class ArrowLine(Line):
-	def __init__(self, canvas, originposition, destinationpostion, destination=None):
+	def __init__(self, canvas, originposition, destinationpostion,
+																								destination=None):
 		self.canvas = canvas
 		self.destination = destination
 		self.createline(originposition, destinationpostion)
@@ -36,41 +29,49 @@ class ArrowLine(Line):
 		Line.createline(self, originposition, destinationposition)
 		self.createArrow(originposition, destinationposition)
 
-	def move(self, originposition, destinationposition):
+	def move(self, originposition, destinationposition, destination=None):
 		Line.move(self, originposition, destinationposition)
-		self.moveArrow(originposition, destinationposition)
+		self.moveArrow(originposition, destinationposition, destination)
 
 	def createArrow(self, originposition, destinationposition):
 		c = self.arrowCoordinates(originposition, destinationposition)
 		self.arrow = self.canvas.create_polygon(c[0], c[1], c[2], c[3], c[4], c[5])
 
-	def moveArrow(self, originposition, destinationposition):
-		c = self.arrowCoordinates(originposition, destinationposition)
+	def moveArrow(self, originposition, destinationposition, destination=None):
+		c = self.arrowCoordinates(originposition, destinationposition, destination)
 		self.canvas.coords(self.arrow, c[0], c[1], c[2], c[3], c[4], c[5])
 
-	def arrowCoordinates(self, originposition, destinationposition):
-		if self.destination is None:
-			i = destinationposition
-		else:
-			i = self.lineNodeLabelIntersect(originposition,
-																			destinationposition,
-																			self.destination)
-
-		angle = math.atan2(float(destinationposition[1] - originposition[1]),
-												float(destinationposition[0] - originposition[0]))
-		p0 = i
-
+	def arrowCoordinates(self, originposition, destinationposition,
+																									destination=None):
 		side = 10
 
-		newangle1 = math.pi/6 + angle + math.pi
-		offset1 = (math.cos(newangle1)*side, math.sin(newangle1)*side)
-		p1 = (p0[0] + offset1[0], p0[1] + offset1[1])
+		if destination is not None:
+			head = self.lineNodeLabelIntersect(originposition, destinationposition,
+																																	destination)
+			if head is None:
+				head = destinationposition
+		elif self.destination is not None:
+			head = self.lineNodeLabelIntersect(originposition, destinationposition,
+																														self.destination)
+			if head is None:
+				head = destinationposition
+		else:
+			head = destinationposition
+		angle = math.atan2(float(destinationposition[1] - originposition[1]),
+								float(destinationposition[0] - originposition[0])) + math.pi
 
-		newangle2 = angle - math.pi/6 + math.pi
-		offset2 = (math.cos(newangle2)*side, math.sin(newangle2)*side)
-		p2 = (p0[0] + offset2[0], p0[1] + offset2[1])
+		x0 = head[0]
+		y0 = head[1]
 
-		return (p0[0], p0[1], p1[0], p1[1], p2[0], p2[1])
+		newangle = angle + math.pi/6
+		x1 = x0 + math.cos(newangle)*side
+		y1 = y0 + math.sin(newangle)*side
+
+		newangle = angle - math.pi/6
+		x2 = x0 + math.cos(newangle)*side
+		y2 = y0 + math.sin(newangle)*side
+
+		return (x0, y0, x1, y1, x2, y2)
 
 	def delete(self):
 		Line.delete(self)
@@ -147,7 +148,7 @@ class ArrowLine(Line):
 			if result is not None:
 				return result
 
-		raise ValueError
+		return None
 
 	def lineNodeLabelIntersect(self, position1, position2, widget):
 		return self.lineBoxIntersect((position1[0], position1[1],
@@ -173,8 +174,8 @@ class LabeledLine(ArrowLine):
 							y = (int(destinationposition[1]) + int(originposition[1]))/2,
 							anchor=Tkinter.CENTER)
 
-	def move(self, originposition, destinationposition):
-		ArrowLine.move(self, originposition, destinationposition)
+	def move(self, originposition, destinationposition, destination=None):
+		ArrowLine.move(self, originposition, destinationposition, destination)
 		self.label.place(
 							x = (int(destinationposition[0]) + int(originposition[0]))/2,
 							y = (int(destinationposition[1]) + int(originposition[1]))/2,
@@ -198,7 +199,8 @@ class ConnectionManager(Line):
 		if self.activeconnection is not None:
 			originposition = self.activeconnection['origin'].getPosition()
 			destinationposition = destination.getPosition()
-			self.activeconnection['line'].move(originposition, destinationposition)
+			self.activeconnection['line'].move(originposition, destinationposition,
+																																	destination)
 
 	def setActiveConnectionPositionRaw(self, position):
 		originposition = self.activeconnection['origin'].getPosition()
