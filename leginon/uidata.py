@@ -115,7 +115,7 @@ class Data(Object):
 	permissionsvalues = ('r', 'w', 'rw', 'wr')
 	typelist = Object.typelist + ('data',)
 	def __init__(self, name, value, permissions='r', callback=None,
-								persist=False):
+								postcallback=None, persist=False):
 		Object.__init__(self, name)
 		if permissions in self.permissionsvalues:
 			if 'r' in permissions:
@@ -130,6 +130,7 @@ class Data(Object):
 			raise ValueError('invalid permissions value')
 
 		self.setCallback(callback)
+		self.setPostCallback(postcallback)
 
 		self.persist = persist
 
@@ -143,6 +144,13 @@ class Data(Object):
 		self.callback = callback
 		self.lock.release()
 
+	def setPostCallback(self, callback):
+		if not callable(callback) and callback is not None:
+			raise TypeError('callback must be callable or None')
+		self.lock.acquire()
+		self.postcallback = callback
+		self.lock.release()
+
 	def _set(self, value):
 		self.lock.acquire()
 		if self.configuration['write']:
@@ -152,7 +160,8 @@ class Data(Object):
 			raise PermissionsError('cannot set, permission denied')
 		self.lock.release()
 
-	def set(self, value, callback=True, block=True, thread=False, server=True):
+	def set(self, value, callback=True, postcallback=True,
+					block=True, thread=False, server=True):
 		self.lock.acquire()
 		if callback and self.callback is not None:
 			try:
@@ -166,6 +175,11 @@ class Data(Object):
 			raise TypeError('invalid data value for type')
 		if self.server is not None and server:
 			self.server._setObject(self, None, block, thread)
+		if postcallback and self.postcallback is not None:
+			try:
+				self.postcallback(value)
+			except Exception, e:
+				print 'Exception in post set callback:', str(e)
 		self.lock.release()
 
 	def _get(self):
@@ -388,17 +402,20 @@ class SelectFromList(Container):
 	typelist = Container.typelist + ('select from list',)
 	selectclass = Array
 	def __init__(self, name, listvalue, selected, permissions='r',
-								callback=None, persist=False):
+								callback=None, postcallback=None, persist=False):
 		Container.__init__(self, name)
 		self.list = Array('List', listvalue, permissions, persist=persist)
 		self.selected = self.selectclass('Selected', selected, 'rw', callback,
-																			persist=persist)
+																			postcallback, persist)
 		self.persist = persist
 		self.addObject(self.list)
 		self.addObject(self.selected)
 
 	def setCallback(self, callback):
 		self.selected.setCallback(callback)
+
+	def setPostCallback(self, callback):
+		self.selected.setPostCallback(callback)
 
 	def set(self, listvalue, selected):
 		self.setList(listvalue)
@@ -432,9 +449,9 @@ class SingleSelectFromList(SelectFromList):
 	typelist = SelectFromList.typelist + ('single',)
 	selectclass = Integer
 	def __init__(self, name, listvalue, selected, permissions='r',
-								callback=None, persist=False):
+								callback=None, postcallback=None, persist=False):
 		SelectFromList.__init__(self, name, listvalue, selected, permissions,
-														callback, persist)
+														callback, postcallback, persist)
 
 	def getSelectedValue(self, selected=None):
 		if selected is None:
