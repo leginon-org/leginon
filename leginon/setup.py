@@ -24,6 +24,7 @@ setup(
 		('Leginon/config', ['config/default.cfg']),
 		('Leginon/icons', glob.glob('icons/*.png')),
 		('Leginon/icons/processing', glob.glob('icons/processing/*.png')),
+		('Leginon.pth', ['legpath']),
 	],
 	scripts=['install-leginon.py', 'start-leginon.py'],
 )
