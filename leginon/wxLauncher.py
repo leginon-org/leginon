@@ -97,8 +97,8 @@ class LauncherFrame(wx.Frame):
 		dialog.Destroy()
 
 class ListCtrlPanel(wx.Panel):
-	def __init__(self, parent):
-		wx.Panel.__init__(self, parent, -1, style=wx.NO_BORDER)
+	def __init__(self, *args, **kwargs):
+		wx.Panel.__init__(self, *args, **kwargs)
 
 		self.sashwindow = wx.SashLayoutWindow(self, -1, style=wx.NO_BORDER)
 		self.sashwindow.SetDefaultSize((100, -1))
@@ -178,7 +178,8 @@ iconmap = [('acquisition', acquisition.Acquisition),
 class LauncherPanel(ListCtrlPanel):
 	def __init__(self, parent, launcher):
 		self.launcher = launcher
-		ListCtrlPanel.__init__(self, parent)
+		ListCtrlPanel.__init__(self, parent, -1, style=wx.NO_BORDER,
+														name='pLauncher')
 
 		self.initializeImageList()
 

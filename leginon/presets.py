@@ -45,6 +45,8 @@ class PresetsClient(object):
 		self.uistatus = uistatus
 		self.node = node
 		self.node.addEventInput(event.PresetChangedEvent, self.presetchanged)
+		self.node.addEventInput(event.PresetChangedEvent, self.presetchanged)
+		self.node.addEventInput(event.PresetPublishEvent, self.onPresetPublished)
 		self.pchanged = {}
 		self.currentpreset = None
 
@@ -114,6 +116,10 @@ class PresetsClient(object):
 			self.pchanged[name].set()
 		self.node.confirmEvent(ievent)
 
+	def onPresetPublished(self, evt):
+		if hasattr(self.node, 'onPresetPublished'):
+			self.node.onPresetPublished(evt)
+
 	def getCurrentPreset(self):
 		return self.currentpreset
 
@@ -159,7 +165,7 @@ class SinglePresetSelector(uidata.Container):
 class PresetsManager(node.Node):
 
 	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent] + EM.EMClient.eventinputs
-	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent] + EM.EMClient.eventoutputs
+	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.PresetPublishEvent] + EM.EMClient.eventoutputs
 
 	def __init__(self, name, session, managerlocation, **kwargs):
 		self.initializeLogger(name)
@@ -207,8 +213,10 @@ class PresetsManager(node.Node):
 				self.targetToScope(pname, emtarget)
 		except PresetChangeError:
 			self.uistatus.set('preset request to "%s" failed' % pname)
+			pass
 		else:
 			self.uistatus.set('Preset changed to "%s"' % pname)
+			pass
 		## should we confirm if failure?
 		self.confirmEvent(ievent)
 
@@ -236,7 +244,7 @@ class PresetsManager(node.Node):
 		'''
 		stores a preset in the DB under the current session name
 		'''
-		self.publish(presetdata, database=True, dbforce=True)
+		self.publish(presetdata, database=True, dbforce=True, pubevent=True)
 
 	def presetByName(self, name):
 		if name in self.presets.keys():

@@ -213,7 +213,8 @@ class ManagerFrame(wx.Frame):
 		# this doesn't really work
 		dialog = wx.Dialog(self, -1, 'Temporary Launcher Window',
 												style=wx.CAPTION|wx.SYSTEM_MENU|wx.CLOSE_BOX|
-															wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.RESIZE_BORDER)
+															wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.RESIZE_BORDER,
+												name='')
 		#sizer = wx.GridBagSizer(0, 0)
 		panel = wxLauncher.LauncherPanel(dialog, evt.launcher)
 		#sizer.Add(panel, (0, 0), (1, 1), wx.EXPAND|wx.ALL)

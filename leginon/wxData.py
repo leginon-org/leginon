@@ -25,7 +25,8 @@ def getWindowPath(window):
 	while parent:
 		w = parent
 		name = w.GetName()
-		path += name + '.'
+		if name:
+			path += name + '.'
 		if name == 'fLeginon':
 			break
 		parent = w.GetParent()
@@ -44,7 +45,6 @@ def setWindowFromData(window, d):
 
 def onEvent(evt):
 	window = evt.GetEventObject()
-	#print window.GetName()
 	setDBFromWindow(window)
 	evt.Skip()
 

@@ -235,6 +235,9 @@ class CameraEMPublishEvent(PublishEvent):
 class CameraImageEMPublishEvent(PublishEvent):
 	dataclass = data.CameraEMData
 
+class PresetPublishEvent(PublishEvent):
+	dataclass = data.PresetData
+
 class ControlEvent(Event):
 	'Event that passes a value with it'
 	pass

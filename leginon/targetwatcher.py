@@ -38,9 +38,9 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		self.addEventInput(event.ImageTargetShiftPublishEvent,
 												self.handleTargetShift)
 
-		self.abort = threading.Event()
+		self.abort = False
 		self.pause = threading.Event()
-		self.cont = threading.Event()
+		self.pause.set()
 		self.newtargetshift = threading.Event()
 		self.target_types = target_types
 		self.targetlistevents = {}
@@ -139,7 +139,11 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		self.logger.debug('%d process, %d pass, %d total' % (len(goodtargets), len(rejects), len(targetlist)))
 
 		# republish the rejects and wait for them to complete
-		if rejects and self.publishrejects.get():
+		if not hasattr(self, 'waitrejects'):
+			waitrejects = rejects and self.publishrejects.get()
+		else:
+			waitrejects = rejects and self.waitrejects
+		if waitrejects:
 			rejectstatus = self.rejectTargets(rejects)
 			if rejectstatus != 'success':
 				## report my status as reject status
@@ -153,9 +157,6 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			self.uistatus.set('Passed targets processed, processing current target list')
 
 		# process the good ones
-		self.abort.clear()
-		self.pause.clear()
-		self.cont.clear()
 		targetliststatus = 'success'
 		for i, target in enumerate(goodtargets):
 			self.logger.debug('target %s status %s' % (i, target['status'],))
@@ -164,7 +165,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			## not sure what this should be
 			#self.uitargetid.set(target.dmid_orig)
 			self.uitargetnumber.set('%d of %d' % (i + 1, len(goodtargets)))
-			if self.abort.isSet():
+			if self.abort:
 				self.uistatus.set('Aborting current target list')
 				self.uicontrolstatus.set('Aborted')
 				targetliststatus = 'aborted'
@@ -182,13 +183,21 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				continue
 
 			### generate a focus target
-			if self.autogenerate.get():
-				gentype = self.autogeneratetype.get()
-				focustarget = data.AcquisitionImageTargetData(initializer=target)
-				focustarget['type'] = gentype
-				self.publish(focustarget, database=True)
-				tlist = [focustarget]
-				self.rejectTargets(tlist)
+			if not hasattr(self, 'duplicate'):
+				if self.autogenerate.get():
+					gentype = self.autogeneratetype.get()
+					focustarget = data.AcquisitionImageTargetData(initializer=target)
+					focustarget['type'] = gentype
+					self.publish(focustarget, database=True)
+					tlist = [focustarget]
+					self.rejectTargets(tlist)
+			else:
+				if self.duplicate:
+					focustarget = data.AcquisitionImageTargetData(initializer=target)
+					focustarget['type'] = self.duplicatetype
+					self.publish(focustarget, database=True)
+					tlist = [focustarget]
+					self.rejectTargets(tlist)
 
 			self.uitargetstatus.set('Processing target')
 
@@ -255,19 +264,17 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 																% process_status)
 
 				# pause
-				if self.pause.isSet():
+				if not self.pause.isSet():
 					messagestr = 'Pausing current target list...'
 					# messagestr
 					message = self.targetwatcherlog.information(messagestr)
-					self.cont.clear()
 					self.uicontrolstatus.set('Paused')
-					self.cont.wait()
-					self.pause.clear()
+					self.pause.wait()
 					self.uicontrolstatus.set('Normal')
 					message.clear()
 
 				# abort
-				if self.abort.isSet():
+				if self.abort:
 					self.uistatus.set('Aborting target list processing')
 					self.uicontrolstatus.set('Aborted')
 					break
@@ -341,13 +348,13 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 	def abortTargetListLoop(self):
 		self.uicontrolstatus.set('Aborting (after current target)...')
-		self.abort.set()
+		self.abort = True
 
 	def pauseTargetListLoop(self):
 		self.uicontrolstatus.set('Pausing (after current target)...')
-		self.pause.set()
+		self.pause.clear()
 
 	def continueTargetListLoop(self):
 		self.uicontrolstatus.set('Normal')
-		self.cont.set()
+		self.pause.set()
 

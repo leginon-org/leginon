@@ -1,3 +1,4 @@
+import threading
 import wx
 import wx.lib.masked
 import wx.lib.scrolledpanel
@@ -5,21 +6,45 @@ import wxData
 import wxImageViewer
 import wxPresets
 
-'''
-CreateNodeEventType = wx.NewEventType()
-EVT_CREATE_NODE = wx.PyEventBinder(CreateNodeEventType)
+NodeInitializedEventType = wx.NewEventType()
+SetStatusEventType = wx.NewEventType()
+SetImageEventType = wx.NewEventType()
+NewPresetEventType = wx.NewEventType()
+EVT_SET_STATUS = wx.PyEventBinder(SetStatusEventType)
+EVT_SET_IMAGE = wx.PyEventBinder(SetImageEventType)
+EVT_NODE_INITIALIZED = wx.PyEventBinder(NodeInitializedEventType)
+EVT_NEW_PRESET = wx.PyEventBinder(NewPresetEventType)
 
-class CreateNodeEvent(wx.PyEvent):
+class NodeInitializedEvent(wx.PyEvent):
 	def __init__(self, node):
 		wx.PyEvent.__init__(self)
-		self.SetEventType(CreateNodeEventType)
+		self.SetEventType(NodeInitializedEventType)
 		self.node = node
-'''
+		self.event = threading.Event()
+
+class SetStatusEvent(wx.PyEvent):
+	def __init__(self, status):
+		wx.PyEvent.__init__(self)
+		self.SetEventType(SetStatusEventType)
+		self.status = status
+
+class SetImageEvent(wx.PyEvent):
+	def __init__(self, image):
+		wx.PyEvent.__init__(self)
+		self.SetEventType(SetImageEventType)
+		self.image = image
+
+class NewPresetEvent(wx.PyEvent):
+	def __init__(self):
+		wx.PyEvent.__init__(self)
+		self.SetEventType(NewPresetEventType)
 
 class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 	def __init__(self, parent, name):
 		wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent, -1,
 																								name='%s.pAcquisition' % name)
+
+		self.node = None
 
 		self.szmain = wx.GridBagSizer(5, 5)
 
@@ -37,11 +62,12 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 
 		label = wx.StaticText(self, -1, 'Wait')
 		self.szsettings.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.ncwait = wx.lib.masked.NumCtrl(self, -1, 0, integerWidth=2,
-																											fractionWidth=1,
-																											allowNone=False,
-																											allowNegative=False,
-																											name='ncWait')
+		self.ncwait = wx.lib.masked.NumCtrl(self, -1, 2.5,
+																				integerWidth=2,
+																				fractionWidth=1,
+																				allowNone=False,
+																				allowNegative=False,
+																				name='ncWait')
 		wxData.bindWindowToDB(self.ncwait)
 		self.szsettings.Add(self.ncwait, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'seconds and use')
@@ -100,11 +126,10 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 		# controls
 		self.szcontrols = self._getStaticBoxSizer('Controls', (2, 0), (1, 1),
 																wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_TOP)
-		self.bpauseplay = wx.Button(self, -1, 'Pause')
-		self.bstop = wx.Button(self, -1, 'Stop')
-		self.szcontrols.Add(self.bpauseplay, (0, 0), (1, 1),
-												wx.ALIGN_CENTER_VERTICAL)
-		self.szcontrols.Add(self.bstop, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.tbpause = wx.ToggleButton(self, -1, 'Pause')
+		self.tbstop = wx.ToggleButton(self, -1, 'Stop')
+		self.szcontrols.Add(self.tbpause, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.szcontrols.Add(self.tbstop, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		# image
 		self.szimage = self._getStaticBoxSizer('Image', (1, 1), (2, 1),
@@ -118,10 +143,130 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 		self.SetSizerAndFit(self.szmain)
 		self.SetupScrolling()
 
+		self.Bind(EVT_NODE_INITIALIZED, self.onNodeInitialized)
+		self.Bind(EVT_NEW_PRESET, self.onNewPreset)
+
+		self.Bind(wx.lib.masked.EVT_NUM, self.onWaitNum, self.ncwait)
+		self.Bind(wx.EVT_CHOICE, self.onMoveTypeChoice, self.cmovetype)
+		self.Bind(wxPresets.EVT_PRESET_ORDER_CHANGED, self.onPresetOrderChanged,
+							self.presetorder)
+		self.Bind(wx.EVT_CHECKBOX, self.onCorrectCheckBox, self.cbcorrectimage)
+		self.Bind(wx.EVT_CHECKBOX, self.onDisplayCheckBox, self.cbdisplayimage)
+		self.Bind(wx.EVT_CHECKBOX, self.onSaveCheckBox, self.cbsaveimage)
+		self.Bind(wx.EVT_CHECKBOX, self.onWaitCheckBox, self.cbwaitimageprocess)
+		self.Bind(wx.EVT_CHECKBOX, self.onWaitRejectsCheckBox, self.cbwaitrejects)
+		self.Bind(wx.EVT_CHECKBOX, self.onDuplicateCheckBox, self.cbduplicate)
+		self.Bind(wx.EVT_CHOICE, self.onDuplicateTypeChoice, self.cduplicatetype)
+
+		self.Bind(wx.EVT_TOGGLEBUTTON, self.onTogglePause, self.tbpause)
+		self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggleStop, self.tbstop)
+
+		self.Bind(EVT_SET_STATUS, self.onSetStatus)
+		self.Bind(EVT_SET_IMAGE, self.onSetImage)
+
 	def _getStaticBoxSizer(self, label, *args):
 		sbs = wx.StaticBoxSizer(wx.StaticBox(self, -1, label), wx.VERTICAL)
 		gbsz = wx.GridBagSizer(5, 5)
 		sbs.Add(gbsz, 1, wx.EXPAND|wx.ALL, 5)
 		self.szmain.Add(sbs, *args)
 		return gbsz
+
+	def initializeValues(self):
+		movetypes = self.node.calclients.keys()
+		if movetypes:
+			self.cmovetype.AppendItems(movetypes)
+			self.cmovetype.SetSelection(0)
+
+		self.onNewPreset()
+		# TODO: handle preset validation
+		wxData.setWindowFromDB(self.presetorder)
+		wxData.bindWindowToDB(self.presetorder)
+
+		duplicatetypes = ['focus', 'acquisition']
+		self.cduplicatetype.AppendItems(duplicatetypes)
+		self.cduplicatetype.SetSelection(0)
+
+		wxData.setWindowFromDB(self.ncwait)
+		wxData.setWindowFromDB(self.cmovetype)
+		wxData.setWindowFromDB(self.presetorder)
+		wxData.setWindowFromDB(self.cbcorrectimage)
+		wxData.setWindowFromDB(self.cbdisplayimage)
+		wxData.setWindowFromDB(self.cbsaveimage)
+		wxData.setWindowFromDB(self.cbwaitimageprocess)
+		wxData.setWindowFromDB(self.cbwaitrejects)
+		wxData.setWindowFromDB(self.cbduplicate)
+		wxData.setWindowFromDB(self.cduplicatetype)
+
+		self.node.wait = self.ncwait.GetValue()
+		self.node.movetype = self.cmovetype.GetStringSelection()
+		self.node.presetnames = self.presetorder.getValues()
+		self.node.correct = self.cbcorrectimage.GetValue()
+		self.node.display = self.cbdisplayimage.GetValue()
+		self.node.save = self.cbsaveimage.GetValue()
+		self.node.wait = self.cbwaitimageprocess.GetValue()
+		self.node.waitrejects = self.cbwaitrejects.GetValue()
+		self.node.duplicate = self.cbduplicate.GetValue()
+		self.node.duplicatetype = self.cduplicatetype.GetStringSelection()
+
+		self.szmain.Layout()
+
+	def onNewPreset(self, evt=None):
+		presets = self.node.presetsclient.getPresetNames()
+		if presets:
+			self.presetorder.setChoices(presets)
+
+	def onNodeInitialized(self, evt):
+		self.node = evt.node
+		self.initializeValues()
+		evt.event.set()
+
+	def onWaitNum(self, evt):
+		if self.node is not None:
+			self.node.wait = evt.GetValue()
+
+	def onMoveTypeChoice(self, evt):
+		self.node.movetype = evt.GetString()
+
+	def onPresetOrderChanged(self, evt):
+		if self.node is not None:
+			self.node.presetnames = evt.presets
+
+	def onCorrectCheckBox(self, evt):
+		self.node.correct = evt.IsChecked()
+
+	def onDisplayCheckBox(self, evt):
+		self.node.display = evt.IsChecked()
+
+	def onSaveCheckBox(self, evt):
+		self.node.save = evt.IsChecked()
+
+	def onWaitCheckBox(self, evt):
+		self.node.wait = evt.IsChecked()
+
+	def onWaitRejectsCheckBox(self, evt):
+		self.node.waitrejects = evt.IsChecked()
+
+	def onDuplicateCheckBox(self, evt):
+		self.node.duplicate = evt.IsChecked()
+
+	def onDuplicateTypeChoice(self, evt):
+		self.node.duplicatetype = evt.GetString()
+
+	def onTogglePause(self, evt):
+		if evt.IsChecked():
+			self.node.pause.clear()
+		else:
+			self.node.pause.set()
+
+	def onToggleStop(self, evt):
+		if evt.IsChecked():
+			self.node.abort = True
+		else:
+			self.node.abort = False
+
+	def onSetStatus(self, evt):
+		self.ststatus.SetLabel(evt.status)
+
+	def onSetImage(self, evt):
+		self.imagepanel.setNumericImage(evt.image)
 

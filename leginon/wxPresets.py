@@ -16,10 +16,12 @@ PresetsChangedEventType = wx.NewEventType()
 EVT_PRESET_ORDER_CHANGED = wx.PyEventBinder(PresetOrderChangedEventType)
 EVT_PRESETS_CHANGED = wx.PyEventBinder(PresetsChangedEventType)
 
-class PresetOrderChangedEvent(wx.PyEvent):
-	def __init__(self, presets):
-		wx.PyEvent.__init__(self)
-		self.SetEventType(PresetOrderChangedEventType)
+class PresetOrderChangedEvent(wx.PyCommandEvent):
+	def __init__(self, presets, source):
+		wx.PyCommandEvent.__init__(self, PresetOrderChangedEventType,
+																source.GetId())
+		#self.SetEventType(PresetOrderChangedEventType)
+		self.SetEventObject(source)
 		self.presets = presets
 
 class PresetsChangedEvent(wx.PyEvent):
@@ -91,6 +93,8 @@ class PresetOrder(wx.Panel):
 		self.Freeze()
 		self.choice.Clear()
 		self.choice.AppendItems(choices)
+		if choices:
+			self.choice.SetSelection(0)
 		self.choice.Enable(choices)
 		self.insertbutton.Enable(choices)
 		self.Thaw()
@@ -126,7 +130,7 @@ class PresetOrder(wx.Panel):
 				self.listbox.Delete(i)
 
 	def presetsEditEvent(self):
-		evt = PresetEditEvent(self.getValues())
+		evt = PresetOrderChangedEvent(self.getValues(), self)
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onInsert(self, evt):
