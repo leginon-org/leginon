@@ -42,19 +42,13 @@ if ($viewdata) {
 
 
 foreach ($stats as $stat) {
-//	if ($stat['parent thickness-mean'] > 0.5)
-//		continue;
 	$prefId = $stat['prefId'];
-//	$datay[] = $stat['mean'];
-//	$datax[] = $stat['parent mean'];
 	$datay[$prefId][] = $stat['mean'];
         $datax[$prefId][] = $stat['parent mean'];
-
-//	$datax[] = $stat['parent thickness-mean'];
 	
 }
 $keys = (array_keys($datax));
-if (empty($keys[0])) { // && !$datax && !$datay) {
+if (empty($keys[0])) { 
 	$width = 12;
 	$height = 12;
 	$source = blankimage($width,$height);
@@ -71,7 +65,6 @@ if (empty($keys[0])) { // && !$datax && !$datay) {
 	$graph->yaxis->SetTitlemargin(35);
 	$graph->yaxis->title->Set("density ".$parentinfo['parentpreset']);
 
-//	$sp1 = new ScatterPlot($datay,$datax);
 	foreach ($keys as $k=>$v) {
                 $sp[$k] = new ScatterPlot($datay[$v],$datax[$v]);
         	$color = '#'.dechex(getColorMap($k));
