@@ -59,7 +59,7 @@ class GonModeler(node.Node):
 	def acquireNextPosition(self, axis, state=None):
 		## go to state
 		if state is not None:
-			newemdata = data.ScopeEMData(('scope',), initializer=state)
+			newemdata = data.ScopeEMData(id=('scope',), initializer=state)
 			self.publishRemote(newemdata)
 			time.sleep(self.settle)
 
@@ -148,31 +148,12 @@ class GonModeler(node.Node):
 		f.close()
 
 	def uiFit(self):
-		self.fit(self.uidatfile, self.uiterms, magonly=0)
+		self.calclient.fit(self.uidatfile, self.uiterms, magonly=0)
 		return ''
 
 	def uiMagOnly(self):
-		self.fit(self.uidatfile, self.uiterms, magonly=1)
+		self.calclient.fit(self.uidatfile, self.uiterms, magonly=1)
 		return ''
-
-	def fit(self, datfile, terms, magonly=1):
-		magfile = None
-		# modfile  -> moddict
-		# magfile => magdict
-		dat = gonmodel.GonData(datfile)
-		axis = dat.axis
-		mag = dat.mag
-
-		mod = gonmodel.GonModel()
-		mod.fit_data(dat, terms)
-
-		mod_dict = mod.toDict()
-		mag_dict = dat.dict()
-
-		self.calclient.setMagCalibration(mag, mag_dict)
-		if magonly:
-			return
-		self.calclient.setModel(axis, mod_dict)
 
 	def getStagePosition(self):
 		dat = self.researchByDataID(('stage position',))
