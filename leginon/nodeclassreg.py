@@ -74,7 +74,6 @@ registerNodeClass('targetmaker', 'SpiralTargetMaker')
 registerNodeClass('applicationeditor', 'ApplicationEditor')
 registerNodeClass('administration', 'Administration')
 registerNodeClass('robot', 'RobotNotification')
-registerNodeClass('robot', 'RobotTest')
 registerNodeClass('EM', 'EM')
 if sys.platform == 'win32':
 	registerNodeClass('robot', 'RobotControl')
