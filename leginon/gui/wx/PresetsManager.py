@@ -38,14 +38,9 @@ class Panel(gui.wx.Node.Panel):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
 
 		# buttons
-		self.szbuttons = wx.GridBagSizer(5, 5)
 		self.bsettings = wx.Button(self, -1, 'Settings...')
-		self.szbuttons.Add(self.bsettings, (0, 0), (1, 1), wx.ALIGN_CENTER)
-		self.szmain.Add(self.szbuttons, (1, 0), (1, 1), wx.ALIGN_CENTER)
 
 		# presets
-		self.szpresets = self._getStaticBoxSizer('Presets', (2, 0), (1, 1),
-																							wx.EXPAND|wx.ALL)
 
 		stpixelsize = wx.StaticText(self, -1, 'Pixel size:')
 		stimageshift = wx.StaticText(self, -1, 'Image shift:')
@@ -171,10 +166,13 @@ class Panel(gui.wx.Node.Panel):
 		szcreate.Add(self.bimport, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		szcreate.Add(self.bnew, (1, 0), (1, 1), wx.ALIGN_CENTER)
 
-		self.szpresets.Add(sbszcalibrations, (0, 0), (1, 2), wx.EXPAND|wx.ALL)
-		self.szpresets.Add(sbszparameters, (1, 1), (2, 1), wx.EXPAND|wx.ALL)
-		self.szpresets.Add(sz, (1, 0), (1, 1), wx.ALIGN_CENTER)
-		self.szpresets.Add(sbszcreate, (2, 0), (1, 1), wx.ALIGN_CENTER)
+		self.sz = wx.GridBagSizer(5, 5)
+		self.sz.Add(self.bsettings, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		self.sz.Add(sbszcalibrations, (1, 0), (1, 2), wx.EXPAND|wx.ALL)
+		self.sz.Add(sbszparameters, (2, 1), (2, 1), wx.EXPAND|wx.ALL)
+		self.sz.Add(sz, (2, 0), (1, 1), wx.ALIGN_CENTER)
+		self.sz.Add(sbszcreate, (3, 0), (1, 1), wx.ALIGN_CENTER)
+		self.szmain.Add(self.sz, (1, 0), (1, 1), wx.ALIGN_CENTER)
 
 		# dose image
 		self.szdoseimage = self._getStaticBoxSizer('Dose Image', (1, 1), (3, 1),

@@ -606,7 +606,7 @@ class PresetsManager(node.Node):
 
 	def acquireDoseImage(self):
 		if self.currentpreset is None:
-			self.logger.error('You go to a preset before measuring dose')
+			self.logger.error('Please go to a preset before measuring dose')
 			return
 		self.logger.info('Acquiring dose image using preset config at 512x512')
 		camdata0 = data.CameraEMData()
