@@ -109,6 +109,8 @@ class Calibration(node.Node, camerafuncs.CameraFuncs):
 
 		self.publish(event.UnlockEvent(self.ID()))
 
+		self.publish(data.CalibrationData(self.ID(), self.calibration),
+									event.CalibrationPublishEvent)
 		print 'CALIBRATE DONE', self.calibration
 
 	def clearStateImages(self):
@@ -280,6 +282,8 @@ class Calibration(node.Node, camerafuncs.CameraFuncs):
 			print "Error: failed to load calibration"
 		else:
 			print "loading", self.calibration, "from file:", filename
+		self.publish(data.CalibrationData(self.ID(), self.calibration),
+									event.CalibrationPublishEvent)
 		return ''
 
 	def defineUserInterface(self):
