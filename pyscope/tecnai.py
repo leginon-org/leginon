@@ -9,7 +9,7 @@ else:
 	import pythoncom
 	import win32com.client
 	import pywintypes
-#	import tecnaicom
+	import tecnaicom
 	import ldcom
 	import adacom
 	import time
