@@ -122,6 +122,7 @@ class PresetsManager(node.Node):
 			'beam':calibrationclient.BeamShiftCalibrationClient(self),
 			'modeled stage':calibrationclient.ModeledStageCalibrationClient(self),
 		}
+		self.dosecal = calibrationclient.DoseCalibrationClient(self)
 
 		self.cam = camerafuncs.CameraFuncs(self)
 		self.currentselection = None
@@ -498,7 +499,8 @@ class PresetsManager(node.Node):
 		if message:
 			title = 'Inconsistencies in Cycle Order List'
 			message = 'Inconsistencies in Cycle Order List:\n' + message
-			self.outputMessage(title, message)
+			#self.outputMessage(title, message)
+			self.messagelog.warning(message)
 
 	def uiCycleToScope(self):
 		print 'Cycling Presets...'
@@ -554,6 +556,7 @@ class PresetsManager(node.Node):
 			print 'displaying calibration info is currently commented out until we fix the problem'
 			#self.displayCalibrations(self.currentselection)
 			print 'done disp'
+			self.setStatus(self.currentselection)
 		return index
 
 	def getHighTension(self):
@@ -609,6 +612,8 @@ class PresetsManager(node.Node):
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
 
+		self.messagelog = uidata.MessageLog('Message Log')
+
 		self.xyonly = uidata.Boolean('Target Stage X and Y Only', True, 'rw', persist=True)
 
 		sessionnamelist = self.getSessionNameList()
@@ -623,7 +628,13 @@ class PresetsManager(node.Node):
 		createcont = uidata.Container('Preset Creation')
 		createcont.addObjects((self.enteredname, newfromscopemethod))
 
-		# calibrations
+		# preset status
+		statuscont = uidata.Container('Preset Status')
+		self.dosestatus = uidata.String('Dose', '', 'r')
+		self.refstatus = uidata.String('Reference Image', '', 'r')
+		statuscont.addObjects((self.dosestatus, self.refstatus))
+
+		# calibrations status
 		calcont = uidata.Container('Calibration Status')
 		self.cal_pixelsize = uidata.String('Pixel Size', '', 'r')
 		self.cal_imageshift = uidata.String('Image Shift Matrix', '', 'r')
@@ -647,7 +658,7 @@ class PresetsManager(node.Node):
 		self.orderlist = uidata.Array('Cycle Order', [], 'rw', persist=True)
 
 		selectcont = uidata.Container('Selection')
-		selectcont.addObjects((self.uiselectpreset,toscopemethod,fromscopemethod,eucfromscopemethod,euctoscopemethod,removemethod,self.changepause,cyclemethod,self.usecycle,self.orderlist,self.autosquare,self.presetparams,calcont))
+		selectcont.addObjects((self.uiselectpreset,toscopemethod,fromscopemethod,eucfromscopemethod,euctoscopemethod,removemethod,self.changepause,cyclemethod,self.usecycle,self.orderlist,self.autosquare,self.presetparams,statuscont,calcont))
 
 		pnames = self.presetNames()
 		self.uiselectpreset.set(pnames, 0)
@@ -655,7 +666,8 @@ class PresetsManager(node.Node):
 
 		## acquisition
 		cameraconfigure = self.cam.configUIData()
-		acqmeth = uidata.Method('Acquire', self.uiAcquire)
+		acqdosemeth = uidata.Method('Acquire Dose Image', self.uiAcquireDose)
+		acqrefmeth = uidata.Method('Acquire Preset Reference Image', self.uiAcquireRef)
 
 		#self.statrows = uidata.Array('Stats Row Range', [], 'rw', persist=True)
 		#self.statcols = uidata.Array('Stats Column Range', [], 'rw', persist=True)
@@ -666,22 +678,22 @@ class PresetsManager(node.Node):
 
 
 		imagecont = uidata.Container('Acquisition')
-		imagecont.addObjects((cameraconfigure, acqmeth, self.ui_image,))
+		imagecont.addObjects((cameraconfigure, acqdosemeth, acqrefmeth, self.ui_image,))
 
 
 		## main container
 		container = uidata.LargeContainer('Presets Manager')
-		container.addObjects((self.xyonly,importcont,createcont,selectcont,imagecont))
+		container.addObjects((self.messagelog,self.xyonly,importcont,createcont,selectcont,imagecont))
 		self.uiserver.addObject(container)
 
 		return
 
-	def uiAcquire(self):
-		print 'acquiring image'
+	def uiAcquireRef(self):
+		print 'acquiring ref image'
 		imagedata = self.cam.acquireCameraImageData(camconfig='UI', correction=True)
 		if imagedata is None:
 			return
-		
+
 		## store the CameraImageData as a PresetReferenceImageData
 		ref = data.PresetReferenceImageData(id=self.ID())
 		ref.update(imagedata)
@@ -693,6 +705,42 @@ class PresetsManager(node.Node):
 
 		## display
 		self.ui_image.set(imagedata['image'])
+		self.setStatus(self.currentpreset)
+
+	def uiAcquireDose(self):
+		print 'acquiring dose image (using preset config, but 512x512)'
+		config = data.CameraConfigData()
+		config.friendly_update(self.currentpreset)
+		config['dimension'] = {'x':512,'y':512}
+		config['auto offset'] = True
+		config = self.cam.cameraConfig(config)
+		imagedata = self.cam.acquireCameraImageData(camconfig=config, correction=True)
+		if imagedata is None:
+			return
+
+		## display
+		self.ui_image.set(imagedata['image'])
+		dose = self.dosecal.dose_from_imagedata(imagedata)
+		## store the dose in the current preset
+		self.currentpreset['dose'] = dose
+		self.presetToDB(self.currentpreset)
+		self.setStatus(self.currentpreset)
+
+	def setStatus(self, preset):
+		## dose
+		if preset['dose'] is None:
+			status = 'N/A'
+		else:
+			fixed = preset['dose'] / 1e20
+			status = '%.2f e/A^2/s' % (fixed,)
+		self.dosestatus.set(status)
+
+		## reference image
+		if preset['hasref']:
+			status = 'Done (would like a timestamp here)'
+		else:
+			status = 'N/A'
+		self.refstatus.set(status)
 
 	def targetToScope(self, newpresetname, emtargetdata):
 		'''
