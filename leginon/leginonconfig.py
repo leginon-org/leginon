@@ -65,13 +65,17 @@ DB_PROJECT_PASS = ''
 #########################
 #        Paths          #
 #########################
-## These are defaults, but can be changed per session configuration.
 ## use os.getcwd() for current directory
-LEGINON_PATH	= os.getcwd()
-IMAGE_PATH	= os.path.join(LEGINON_PATH, 'images')
+
+## IMAGE_PATH is a base directory, a session subdirectory will 
+## automatically be created when the first image is saved
+IMAGE_PATH	= ''
 HOME_PATH	= os.path.expanduser('~')
 PREFS_PATH	= os.path.join(HOME_PATH, '.leginon', 'prefs')
 ID_PATH		= os.path.join(HOME_PATH, '.leginon', 'ids')
+
+if not IMAGE_PATH:
+	raise LeginonConfigError('set IMAGE_PATH in leginonconfig.py')
 
 ## create those paths
 try:

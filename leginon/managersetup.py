@@ -83,8 +83,9 @@ class ManagerSetup(object):
 		  'comment': self.build_session_comment.get(),
 		  'user': self.uiGetUser(),
 		  'instrument': self.uiGetInstrument(),
-		  'image path': self.build_image_path.get()
 		}
+		imagepath = os.path.join(leginonconfig.IMAGE_PATH, initializer['name'])
+		initializer['image path'] = imagepath
 		return data.SessionData(initializer=initializer)
 
 	def initInstruments(self):
@@ -408,7 +409,6 @@ class ManagerSetup(object):
 
 		## default path comes from leginonconfig
 		image_path = os.path.join(leginonconfig.IMAGE_PATH,session_name)
-		self.build_image_path = uidata.String('Image Path', image_path, 'rw', persist=True)
 
 		self.createmethod = uidata.Method('Create Session', self.uiCreateSession)
 		self.cancelcreatemethod = uidata.Method('Cancel',
@@ -422,7 +422,6 @@ class ManagerSetup(object):
 		  self.build_session_comment,
 		  build_usercontainer,
 		  build_instrumentcontainer,
-		  self.build_image_path,
 		  self.createmethod,
 			self.cancelcreatemethod,
 		  self.build_messages,
