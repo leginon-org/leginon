@@ -425,9 +425,6 @@ class Data(newdict.TypedDict, leginonobject.LeginonObject):
 		self.sync()
 
 		# if initializer was given, update my values
-		#if 'initializer' in kwargs:
-		#	self.update(kwargs['initializer'])
-		#	del kwargs['initializer']
 		if initializer is not None:
 			self.update(initializer)
 
@@ -436,7 +433,20 @@ class Data(newdict.TypedDict, leginonobject.LeginonObject):
 		self.update(kwargs)
 
 		leginonobject.LeginonObject.__init__(self)
-		self.__setitem__ = self.new__setitem__
+
+	## definining __reduce__ allows unpickler to call __init__ 	 
+	## which is necessary to register data with datamanager 	 
+	## After calling __init__, __dict__ will be updated, so we 	 
+	## have to remove dmid since that has already been set in __init__
+	def __reduce__(self): 	 
+		state = dict(self.__dict__) 	 
+		del state['dmid'] 	 
+		## giving the new object an initializer has a lot of 	 
+		## duplicate information to what is given in the 	 
+		## state dict, but it is necessary to get the dict 	 
+		## base class to have its items set 	 
+		initializer = dict(self.items(dereference=False)) 	 
+		return (self.__class__, (initializer,), state)
 
 	def update(self, other):
 		'''
@@ -446,7 +456,9 @@ class Data(newdict.TypedDict, leginonobject.LeginonObject):
 			for k in other.keys():
 				self[k] = other.special_getitem(k, dereference=False)
 		else:
-			super(Data, self).update(other)
+			for k in other.keys():
+				self[k] = other[k]
+			#super(Data, self).update(other)
 
 	def friendly_update(self, other):
 		if isinstance(other, Data):
@@ -527,7 +539,7 @@ class Data(newdict.TypedDict, leginonobject.LeginonObject):
 	def __getitem__(self, key):
 		return self.special_getitem(key, dereference=True)
 
-	def new__setitem__(self, key, value, force=False):
+	def __setitem__(self, key, value, force=False):
 		'''
 		'''
 		if hasattr(self, 'dbid') and self.dbid is not None and not force:

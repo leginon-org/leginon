@@ -38,9 +38,8 @@ class OrderedDict(dict):
 			items = list(initializer)
 		self.__keys = [i[0] for i in items]
 		dict.__init__(self, initializer)
-		self.__setitem__ = self.new__setitem__
 
-	def new__setitem__(self, key, value):
+	def __setitem__(self, key, value):
 		if not dict.__contains__(self, key):
 			self.__keys.append(key)
 		dict.__setitem__(self, key, value)
@@ -105,9 +104,8 @@ class TypedDict(OrderedDict):
 			if key not in initializer:
 				complete_init[key] = None
 		super(TypedDict,self).__init__(complete_init)
-		self.__setitem__ = self.new__setitem__
 
-	def new__setitem__(self, key, value):
+	def __setitem__(self, key, value):
 		## validate value	
 		if value is not None:
 			t = self.__types[key]
