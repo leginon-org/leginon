@@ -138,10 +138,16 @@ class Acquisition(targetwatcher.TargetWatcher):
 		try:
 			presetnames = self.validatePresets()
 		except InvalidPresetsSequence:
-			self.acquisitionlog.error('correct the invalid presets sequence, then continue')
-			node.beep()
-			self.pause.set()
-			return 'repeat'
+			if targetdata is None:
+				self.acquisitionlog.error('correct the invalid presets sequence, then try again')
+				return
+			else:
+				## if there was a targetdata, then 
+				## we assume we are in a target list loop
+				self.acquisitionlog.error('Paused... correct the invalid presets sequence, then continue')
+				node.beep()
+				self.pause.set()
+				return 'repeat'
 
 		for newpresetname in presetnames:
 			if force == False:
