@@ -1,0 +1,23 @@
+Installation of the java version of nodegui.
+
+Requirement:
+	JavaTM 2 Platform, Standard Edition (J2SETM) 1.4.1
+	http://java.sun.com/j2se/1.4.1/download.html
+
+
+Compile:
+
+   Linux:
+	javac -classpath ./class/xmlrpc-1.1.jar:./class/JTreeTable.jar:. nodegui.java
+
+   Microsoft Windows:
+	javac -classpath .\class\xmlrpc-1.1.jar;.\class\JTreeTable.jar;. nodegui.java
+
+Run:
+
+   Linux:
+	java -classpath ./class/xmlrpc-1.1.jar:./class/JTreeTable.jar:. nodegui http://host:port
+
+   Microsoft Windows:
+	java -classpath .\class\xmlrpc-1.1.jar;.\class\JTreeTable.jar;. nodegui http://host:port
+
