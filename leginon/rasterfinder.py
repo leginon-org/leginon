@@ -202,7 +202,7 @@ class RasterFinder(targetfinder.TargetFinder):
 			self.setStatus('processing')
 
 		## the new way
-		self.logger.info('Publising targets...')
+		self.logger.info('Publishing targets...')
 		self.publishTargets(imdata, 'focus', targetlist)
 		self.publishTargets(imdata, 'acquisition', targetlist)
 

@@ -470,7 +470,7 @@ class HoleFinder(targetfinder.TargetFinder):
 			self.panel.targetsSubmitted()
 			self.setStatus('processing')
 
-		self.logger.info('Publising targets...')
+		self.logger.info('Publishing targets...')
 		### publish targets from goodholesimage
 		self.publishTargets(imdata, 'focus', targetlist)
 		self.publishTargets(imdata, 'acquisition', targetlist)
