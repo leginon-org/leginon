@@ -373,6 +373,6 @@ class Node(leginonobject.LeginonObject):
 		try:
 			winsound.PlaySound('SystemExclamation', winsound.SND_ALIAS)
 		except:
-			print '\a',
+			print '\a'
 		self.logger.info('[beep]')
 
