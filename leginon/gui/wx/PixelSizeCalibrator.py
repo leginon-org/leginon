@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PixelSizeCalibrator.py,v $
-# $Revision: 1.15 $
+# $Revision: 1.16 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-10 19:42:35 $
-# $Author: suloway $
+# $Date: 2005-03-14 19:30:15 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -67,11 +67,11 @@ class ExtrapolateDialog(wx.Dialog):
 		sz.AddGrowableRow(1)
 		sz.AddGrowableCol(0)
 
-		sb = wx.StaticBox(self, -1, 'Extrapolate')
+		sb = wx.StaticBox(self, -1, 'Select Magnifications to Calculate')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
 
-		self.bextrapolate = wx.Button(self, -1, 'Extrapolate')
+		self.bextrapolate = wx.Button(self, -1, 'Calculate Selected')
 		self.bsave = wx.Button(self, wx.ID_OK, 'Save')
 		self.bsave.Enable(False)
 		self.bcancel = wx.Button(self, wx.ID_CANCEL, 'Cancel')
@@ -350,7 +350,7 @@ class PixelSizeCalibrationDialog(wx.Dialog):
 			self.lcpixelsize.addPixelSize(mag, ps, comment)
 
 		self.bedit = wx.Button(self, -1, 'Edit...')
-		self.bextrapolate = wx.Button(self, -1, 'Extrapolate...')
+		self.bextrapolate = wx.Button(self, -1, 'Extrapolate From Selected...')
 		if self.pixelsizes is None:
 			self.bedit.Enable(False)
 			self.bextrapolate.Enable(False)
