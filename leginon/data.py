@@ -650,30 +650,6 @@ class StateMosaicData(Data):
 		return t
 	typemap = classmethod(typemap)
 
-## this stuff came from ImageCanvas.eventXYInfo and ImageWatcher.imageInfo
-## XXX preset may not always be set
-class OldImageTargetData(Data):
-	def typemap(cls):
-		t = Data.typemap()
-		t += [
-		  ('canvas x', int),
-		  ('canvas y', int),
-		  ('image x', int),
-		  ('image y', int),
-		  ('array shape', tuple),
-		  ('array row', int),
-		  ('array column', int),
-		  ('array value', float),
-
-		  ('image id', tuple),
-		  ('scope', ScopeEMData),
-		  ('camera', CameraEMData),
-		  ('source', str),
-		  ('preset', PresetData)
-		]
-		return t
-	typemap = classmethod(typemap)
-
 class ImageTargetData(Data):
 	def typemap(cls):
 		t = Data.typemap()
@@ -684,7 +660,7 @@ class ImageTargetData(Data):
 		  ('scope', ScopeEMData),
 		  ('camera', CameraEMData),
 		  ('preset', PresetData),
-		  ('image id', tuple)
+		  ('image', ImageData)
 		]
 		return t
 	typemap = classmethod(typemap)
