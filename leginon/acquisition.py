@@ -1,3 +1,38 @@
+'''
+Acquisition node is a TargetWatcher, so it receives either an ImageTargetData
+or an ImageTargetListData.  The method processTargetData is called on each
+ImageTargetData.
+
+The sequence of events leading from an ImageTargetData to an acquired image
+of the target is as follows:
+
+
+processTargetData():
+  Takes an ImageTargetData instance and centers that target using the
+  methods below.  Calls acquire() for each preset specified for this node.  
+
+
+cleanTarget():
+   takes an instance of ImageTargetData and produces a preset independent
+   microscope state.  It does this by calling the next two methods...
+
+targetToState(targetdata):
+   Taking the necessary information from the ImageTargetData and
+   also the user specified method of getting to the target 
+   (stage, image shift, etc.), this function produces a valid 
+   miscroscope state capable of centering the target on the camera.
+   This only works if we are at the preset from which the target was 
+   selected.
+
+stripTarget
+
+targetstate (original preset)
+
+
+
+targetstate (no preset)
+targetstate (new preset)
+'''
 
 import targetwatcher
 import time
@@ -23,6 +58,31 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.defineUserInterface()
 		self.start()
 
+	def replacePreset(self, targetstate, oldpreset, newpreset):
+		'''
+		Takes a target state (assumed to be at oldpreset) and 
+		replaces oldpreset with new preset, creating a new
+		target state.  For most parameters, this just overwrites
+		targetstate's values with the newpreset values, but for
+		image shift, we must subtract oldpreset and add newpreset
+		(since target image shift)
+		'''
+		### generate a microscope state from the targetdata
+		targetstate = self.targetToState(targetdata)
+
+		### subtract the old preset from the target, so that
+		### we can apply a new preset
+		print 'targetdata keys', targetdata.content.keys()
+		if 'preset' in targetdata.content:
+			oldpreset = targetdata.content['preset']
+
+			## right now, the only thing a target and preset
+			## have in common is image shift
+			targetstate['image shift']['x'] -= oldpreset['image shift']['x']
+			targetstate['image shift']['y'] -= oldpreset['image shift']['y']
+			print 'TARGETSTATE', targetstate
+		return targetstate
+
 	def processTargetData(self, targetdata=None):
 		'''
 		This is called by TargetWatcher.processData when targets available
@@ -32,11 +92,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		### should make both target data and preset an option
 
 		print 'PROCESSING', targetdata
-		#detailedlist = self.detailedTargetList(self.presetlist, targetlist, self.targetmethod)
 
 		if targetdata is not None:
-			movetype = self.movetype.get()
-			targetstate = self.targetToState(targetdata, movetype)
+			targetstate = self.targetToState(targetdata)
 
 			### subtract the old preset from the target, so that
 			### we can apply a new preset
@@ -54,6 +112,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 				print 'TARGETSTATE', targetstate
 		else:
 			targetstate = None
+		
 
 		### do each preset for this acquisition
 		presetnames = self.presetnames.get()
@@ -123,8 +182,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 	def targetToState(self, targetdata, movetype):
 		'''
 		convert an ImageTargetData to a scope/camera dict
-		using chosen move type
-		The result is scope state
+		using chosen move type.
+		The result is a valid scope state that will center
+		the target on the camera, but not necessarily at the
+		desired preset
 		'''
 		#targetinfo = copy.deepcopy(targetdata.content)
 		targetinfo = copy.deepcopy(targetdata)
@@ -146,6 +207,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		pixelshift = {'row':deltarow, 'col':deltacol}
 
 		## figure out scope state that gets to the target
+		movetype = self.movetype.get()
 		calclient = self.calclients[movetype]
 		newscope = calclient.transform(pixelshift, targetscope, targetcamera)
 		return newscope
