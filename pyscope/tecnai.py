@@ -36,7 +36,6 @@ class Tecnai(object):
 
 		try:
 			self.tecnai = win32com.client.Dispatch('Tecnai.Instrument')
-			print dir(self.tecnai)
 		except pythoncom.com_error, (hr, msg, exc, arg):
 			raise RuntimeError('unable to initialize Tecnai interface: %s' % msg)
 
@@ -642,7 +641,7 @@ class Tecnai(object):
 			axes |= getattr(win32com.client.constants, 'axis' + key.upper())
 
 		try:
-			print self.tecnai.Stage.Goto(pos, axes)
+			self.tecnai.Stage.Goto(pos, axes)
 		except pythoncom.com_error, (hr, msg, exc, arg):
 			print 'Stage.Goto failed with error %d: %s' % (hr, msg)
 			if exc is None:
