@@ -1,21 +1,11 @@
 #!/usr/bin/env python
 
-from Tkinter import *
 import array, base64
-import threading
-import Numeric
-import signal
 
 import ImageViewer
 
 import watcher
-import node, event, data
-import Mrc
-import cameraimage
-import camerafuncs
-import xmlrpclib
-#import xmlrpclib2 as xmlbinlib
-xmlbinlib = xmlrpclib
+import event, data
 
 
 ###
@@ -30,257 +20,48 @@ class ImageWatcher(watcher.Watcher):
 		watcher.Watcher.__init__(self, id, nodelocations, watchfor, lockblocking, **kwargs)
 		self.addEventOutput(event.ImageClickEvent)
 
-		self.cam = camerafuncs.CameraFuncs(self)
 		self.iv = None
 		self.numarray = None
 		self.imagedata = None
-		self.viewer_ready = threading.Event()
 		#self.start_viewer_thread()
-		self.clicklock = threading.Lock()
-		self.targetradius = 20
-		self.targetlist = []
-		self.targetdict = {}
 
-		## default camera config
-		currentconfig = self.cam.config()
-		currentconfig['state']['dimension']['x'] = 1024
-		currentconfig['state']['binning']['x'] = 4
-		currentconfig['state']['exposure time'] = 500
+		self.clickactions = ('ImageClickEvent', 'Target Editor')
 
-		self.clickfuncs = {
-			'event': self.clickEvent,
-			'add target': self.clickAddTarget,
-			'instant target': self.clickPublishTarget
-		}
-
-		self.cam.config(currentconfig)
-
-	def die(self, ievent=None):
-		self.close_viewer()
-		watcher.Watcher.die(self)
-
-	def start_viewer_thread(self):
-		if self.iv is not None:
-			return
-		self.viewerthread = threading.Thread(name=`self.id`, target=self.open_viewer)
-		self.viewerthread.setDaemon(1)
-		self.viewerthread.start()
-		#print 'thread started'
-
-	def leftclickCallback(self, tkevent):
-		if not self.clicklock.acquire(0):
-			return
-		try:
-			clickinfo = self.iv.eventXYInfo(tkevent)
-			clickinfo['image id'] = self.imagedata.id
-			clickinfo['scope'] = self.imagedata.content['scope']
-			clickinfo['camera'] = self.imagedata.content['camera']
-			if 'preset' in self.imagedata.content:
-				clickinfo['preset'] = self.imagedata.content['preset']
-			clickinfo['source'] = 'click'
-			choice = self.uiclickcallback.get()
-			callback = self.clickfuncs[choice]
-			apply(callback, (clickinfo,))
-		finally:
-			self.clicklock.release()
-
-	def rightclickCallback(self, tkevent):
-		if not self.clicklock.acquire(0):
-			return
-		try:
-			clickinfo = self.iv.eventXYInfo(tkevent)
-			self.clickDelTarget(clickinfo)
-		finally:
-			self.clicklock.release()
-
-	def clickPublishTarget(self, clickinfo):
+	def imageInfo(self):
 		'''
-		publish target when image clicked
+		add some info to clickinfo to create targetinfo
 		'''
-		c = dict(clickinfo)
-		targetdata = data.ImageTargetData(self.ID(), c)
-
-		self.publish(targetdata, event.ImageTargetPublishEvent)
-
-	def clickAddTarget(self, clickinfo):
-		c = dict(clickinfo)
-		targetdata = data.ImageTargetData(self.ID(), c)
-		self.targetlist.append(targetdata)
-
-		canvasx = clickinfo['canvas x']
-		canvasy = clickinfo['canvas y']
-		circleid = self.drawTargetCircle(canvasx, canvasy, 'green')
-
-		self.targetdict[circleid] = targetdata
-		print 'ADD TARGETLIST', self.targetlist
-
-	def clickDelTarget(self, clickinfo):
-		canvasx = clickinfo['canvas x']
-		canvasy = clickinfo['canvas y']
-		circleids = self.clearTargetCircle(canvasx, canvasy)
-		for id in circleids:
-			targetdata = self.targetdict[id]
-			self.targetlist.remove(targetdata)
-			del(self.targetdict[id])
-		print 'DEL TARGETLIST', self.targetlist
-
-	def clickEvent(self, clickinfo):
-		'''
-		generate ImageClickEvent when image clicked
-		'''
-		c = {}
-		for key,value in clickinfo.items():
-			if value is not None:
-				c[key] = value
-		e = event.ImageClickEvent(self.ID(), c)
-		self.outputEvent(e)
-
-	def drawTargetCircle(self, canvasx, canvasy, color):
-		return self.iv.canvas.addCircle(canvasx, canvasy, radius=self.targetradius, canvastags=('target',), color=color)
-
-	def clearTargetCircle(self, canvasx, canvasy):
-		radius = self.targetradius + 8
-		return self.iv.canvas.delCircle(canvasx, canvasy, radius, canvastags=('target',))
-
-	def clearAllTargetCircles(self):
-		self.iv.canvas.delItem('target')
-
-	def open_viewer(self):
-		#print 'root...'
-		root = self.root = Toplevel()
-		## this gets rid of the root window
-		root._root().withdraw()
-		
-		#root.wm_sizefrom('program')
-		root.wm_geometry('=450x400')
-
-		self.iv = ImageViewer.ImageViewer(root, bg='#488')
-		self.iv.bindCanvas('<Double-1>', self.leftclickCallback)
-		self.iv.bindCanvas('<Double-3>', self.rightclickCallback)
-		self.iv.pack()
-
-		self.viewer_ready.set()
-		root.mainloop()
-
-		##clean up if window destroyed
-		self.viewer_ready.clear()
-		self.iv = None
-
-	def close_viewer(self):
-		try:
-			self.root.destroy()
-		except:
-			### root may not exist or already destroyed
-			pass
-
-	def uiAcquireRaw(self):
-		imarray = self.acquireArray(0)
-		if imarray is None:
-			mrcstr = ''
-		else:
-			mrcstr = Mrc.numeric_to_mrcstr(imarray)
-		return xmlbinlib.Binary(mrcstr)
-
-	def uiAcquireCorrected(self):
-		im = self.acquireArray(1)
-		if im is None:
-			mrcstr = ''
-		else:
-			mrcstr = Mrc.numeric_to_mrcstr(im)
-		return xmlbinlib.Binary(mrcstr)
-
-	def acquireArray(self, corr=0):
-		camconfig = self.cam.config()
-		camstate = camconfig['state']
-		imdata = self.cam.acquireCameraImageData(camstate, correction=corr)
-		imarray = imdata.content['image']
-		return imarray
-
-	def acquireAndDisplay(self, corr=0):
-		print 'acquireArray'
-		imarray = self.acquireArray(corr)
-		print 'displayNumericArray'
-		if imarray is None:
-			self.iv.displayMessage('NO IMAGE ACQUIRED')
-		else:
-			self.displayNumericArray(imarray)
-		print 'acquireAndDisplay done'
-
-	def acquireEvent(self):
-		e = event.ImageAcquireEvent(self.ID())
-		self.outputEvent(e)
-		return ''
+		imageinfo = {}
+		imageinfo['image id'] = self.imagedata.id
+		imageinfo['scope'] = self.imagedata.content['scope']
+		imageinfo['camera'] = self.imagedata.content['camera']
+		if 'preset' in self.imagedata.content:
+			imageinfo['preset'] = self.imagedata.content['preset']
+		imageinfo['source'] = 'click'
+		return imageinfo
 
 	def processData(self, imagedata):
 		if not isinstance(imagedata, data.ImageData):
-			print 'Data is not ImageData instance'
-			return
+			raise RuntimeError('Data is not ImageData instance')
 		self.imagedata = imagedata
 		self.numarray = imagedata.content['image']
 
-		if self.popupvalue:
-			self.clearAllTargetCircles()
-			self.displayNumericArray()
+	def OLDselectClickAction(self, value=None):
+		if value is not None:
+			self.clickaction = value
 
-	def displayNumericArray(self):
-		self.start_viewer_thread()
-		self.viewer_ready.wait()
-		if self.numarray is not None:
-			self.iv.import_numeric(self.numarray)
-			self.iv.update()
+		## turn off callbacks
+		self.iv.canvas.targetClickerOff()
+		self.clickEventOff()
+
+		## choose new callback to turn on
+		if self.clickaction == 'ImageClickEvent':
+			self.clickEventOn()
+		elif self.clickaction == 'Target Editor':
+			self.iv.canvas.targetClickerOn()
+			
+		return self.clickaction
 
 	def defineUserInterface(self):
-		watcherspec = watcher.Watcher.defineUserInterface(self)
-
-		argspec = (
-		self.registerUIData('Filename', 'string', default='test1.mrc'),
-		)
-		loadspec = self.registerUIMethod(self.uiLoadImage, 'Load MRC', argspec)
-		savespec = self.registerUIMethod(self.uiSaveImage, 'Save MRC', argspec)
-		filespec = self.registerUIContainer('File', (loadspec,savespec))
-
-		acqret = self.registerUIData('Image', 'binary')
-
-		acqraw = self.registerUIMethod(self.uiAcquireRaw, 'Acquire Raw', (), returnspec=acqret)
-		acqcor = self.registerUIMethod(self.uiAcquireCorrected, 'Acquire Corrected', (), returnspec=acqret)
-		acqev = self.registerUIMethod(self.acquireEvent, 'Acquire Event', ())
-
-		popupdefault = xmlrpclib.Boolean(1)
-		popuptoggle = self.registerUIData('Pop-up Viewer', 'boolean', permissions='rw', default=popupdefault)
-		popuptoggle.registerCallback(self.popupCallback)
-
-		clickchoices = self.registerUIData('clickfuncs', 'array', default=self.clickfuncs.keys())
-		self.uiclickcallback = self.registerUIData('Click Callback', 'string', choices=clickchoices, default='add target', permissions='rw')
-
-		camconfig = self.cam.configUIData()
-		prefs = self.registerUIContainer('Preferences', (popuptoggle, camconfig, self.uiclickcallback))
-
-		return self.registerUIContainer(`self.id`, (acqraw, acqcor, acqev, prefs, filespec, watcherspec))
-
-	def popupCallback(self, value=None):
-		if value is not None:
-			self.popupvalue = value
-
-		if self.popupvalue:
-			self.displayNumericArray()
-		
-		return self.popupvalue
-
-	def uiLoadImage(self, filename):
-		self.numarray = Mrc.mrc_to_numeric(filename)
-		self.displayNumericArray()
-		return ''
-
-	def uiSaveImage(self, filename):
-		numarray = Numeric.array(self.iv.imagearray)
-		Mrc.numeric_to_mrc(numarray, filename)
-		return ''
-
-
-
-if __name__ == '__main__':
-	id = ('ImViewer',)
-	i = ImViewer(id, {})
-	signal.pause()
-
+		return watcher.Watcher.defineUserInterface(self)
 

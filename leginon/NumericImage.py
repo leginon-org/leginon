@@ -193,6 +193,7 @@ class NumericImage:
 	def get_crvalue(self, col_row):
 		try:
 			val = self.orig_array[ col_row[1], col_row[0]]
+			val = float(val)
 		except IndexError:
 			val = None
 		return val

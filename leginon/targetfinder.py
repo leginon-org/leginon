@@ -4,6 +4,11 @@ import threading
 import imagewatcher
 import node, event, data
 import Queue
+import Mrc
+
+import xmlrpclib
+#import xmlrpclib2 as xmlbinlib
+xmlbinlib = xmlrpclib
 
 # TO DO:
 #  - every TargetFinder should have optional target editing before publishing
@@ -25,9 +30,6 @@ class TargetFinder(imagewatcher.ImageWatcher):
 	def processData(self, newdata):
 		imagewatcher.ImageWatcher.processData(self, newdata)
 
-		self.targetlist = []
-		self.targetdict = {}
-
 		print 'findTargets'
 		self.findTargets(newdata)
 		print 'publishTargets'
@@ -35,11 +37,13 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		print 'DONE'
 
 	def publishTargetList(self):
+
 		if self.targetlist:
 			targetlistdata = data.ImageTargetListData(self.ID(), self.targetlist)
 			self.publish(targetlistdata, event.ImageTargetListPublishEvent)
-		self.targetlist = []
-		self.targetdict = {}
+			print 'published targetlistdata', targetlistdata
+			print 'content'
+			print targetlistdata.content
 
 	def defineUserInterface(self):
 		imwatch = imagewatcher.ImageWatcher.defineUserInterface(self)
@@ -54,37 +58,63 @@ class ClickTargetFinder(TargetFinder):
 
 		self.userbusy = threading.Condition()
 		self.processlock = threading.Lock()
+		self.currentimage = None
 
 		self.defineUserInterface()
 		self.start()
 
-	def findTargets(self, newdata):
+	def processData(self, newdata):
 		'''
-		wait for the user to finish editing the targets
+		redefined because this is manual target finding
+		Instead of calling findTargets, let uiImage get the image
+		Then call publishTargetList in another function
 		'''
-		print 'waiting'
-		self.userbusy.acquire()
-		self.userbusy.wait()
-		self.userbusy.release()
-
+		imagewatcher.ImageWatcher.processData(self, newdata)
+		
 	def defineUserInterface(self):
 		tfspec = TargetFinder.defineUserInterface(self)
 
-		next = self.registerUIMethod(self.uiNext, 'Next', ())
-		done = self.registerUIMethod(self.uiDone, 'Done', ())
-		cont = self.registerUIContainer('Controls', (next, done))
+		clickimage = self.registerUIData('Clickable Image', 'binary', callback=self.uiImage, permissions='rw')
+		# this is just a placeholder for the argspec.  The real value
+		# comes from clickimage which is the choices
 
-		myspec = self.registerUISpec('Click Target Finder', (cont,))
+		myspec = self.registerUISpec('Click Target Finder', (clickimage,))
 		myspec += tfspec
 
-	def processNext(self):
-		try:
-			self.processDataFromQueue()
-		except Exception, detail:
-			print 'DETAIL', detail
-			raise
+	def uiImage(self, value=None):
+		'''
+		get next image from queue
+		'''
+		if value is None:
+			if self.currentimage is None:
+				if self.processDataFromQueue():
+					self.currentimage = self.numarray
+				else:
+					self.currentimage = None
 
-	def uiNext(self):
+			if self.currentimage is None:
+				mrcstr = ''
+			else:
+				mrcstr = Mrc.numeric_to_mrcstr(self.currentimage)
+
+			return xmlbinlib.Binary(mrcstr)
+		else:
+			self.submitTargets(value)
+			return xmlbinlib.Binary('')
+
+	def submitTargets(self, targetlist):
+		self.targetlist = []
+		for target in targetlist:
+			### attach some image info about this one
+			imageinfo = self.imageInfo()
+			target.update(imageinfo)
+			print 'TARGET', target
+			targetdata = data.ImageTargetData(self.ID(), target)
+			self.targetlist.append(targetdata)
+		self.publishTargetList()
+		self.currentimage = None
+
+	def OLDuiNext(self):
 		if not self.processlock.acquire(0):
 			return
 		try:
@@ -94,10 +124,4 @@ class ClickTargetFinder(TargetFinder):
 		finally:
 			self.processlock.release()
 
-		return ''
-
-	def uiDone(self):
-		self.userbusy.acquire()
-		self.userbusy.notify()
-		self.userbusy.release()
 		return ''

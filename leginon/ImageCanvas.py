@@ -3,6 +3,8 @@
 from Tkinter import *
 from NumericImage import *
 import time
+import copy
+import threading
 
 class ImageCanvas(Frame):
 	def __init__(self, parent, *args, **kargs):
@@ -14,6 +16,9 @@ class ImageCanvas(Frame):
 		self.scalingwidget = None
 		self.zoomingwidget = None
 		self.numimage = None
+		self.clearTargets()
+		self.clicklock = threading.Lock()
+		self.targetradius = 20
 
 	def displayMessage(self, message):
 		self.canvas.itemconfigure(self.canmessage, text=message,state='normal')
@@ -62,9 +67,63 @@ class ImageCanvas(Frame):
 		print 'DELITEMS:', delitems
 		return delitems
 
-
 	def delItem(self, item):
 		self.canvas.delete(item)
+
+	def targetClickerOn(self):
+		self.bindCanvas('<Double-1>', self.targetClickCallback1)
+		self.bindCanvas('<Double-3>', self.targetClickCallback3)
+
+	def targetClickerOff(self):
+		self.bindCanvas('<Double-1>', '')
+		self.bindCanvas('<Double-3>', '')
+
+	def targetClickCallback1(self, tkevent):
+		if not self.clicklock.acquire(0):
+			return
+		try:
+			clickinfo = self.eventXYInfo(tkevent)
+			self.clickAddTarget(clickinfo)
+		finally:
+			self.clicklock.release()
+
+	def targetClickCallback3(self, tkevent):
+		if not self.clicklock.acquire(0):
+			return
+		try:
+			clickinfo = self.eventXYInfo(tkevent)
+			self.clickDelTarget(clickinfo)
+		finally:
+			self.clicklock.release()
+
+	def clickAddTarget(self, clickinfo):
+		c = copy.deepcopy(clickinfo)
+
+		canvasx = c['canvas x']
+		canvasy = c['canvas y']
+		circleid = self.addCircle(canvasx, canvasy, radius=self.targetradius, canvastags=('target',), color='green')
+
+		self.targetlist.append(c)
+		self.targetdict[circleid] = c
+
+	def clickDelTarget(self, clickinfo):
+		canvasx = clickinfo['canvas x']
+		canvasy = clickinfo['canvas y']
+		radius = self.targetradius + 8
+		circleids = self.delCircle(canvasx, canvasy, radius, canvastags=('target',))
+		for id in circleids:
+			targetdata = self.targetdict[id]
+			self.targetlist.remove(targetdata)
+			del(self.targetdict[id])
+		return circleids
+
+	def clearTargets(self):
+		self.delItem('target')
+		self.targetlist = []
+		self.targetdict = {}
+
+	def getTargets(self):
+		return copy.deepcopy(self.targetlist)
 
 	def __build(self):
 		bgcolor = self['background']
@@ -143,6 +202,9 @@ class ImageCanvas(Frame):
 		self.canvas['scrollregion'] = (x1,y1,x2,y2)
 
 	def use_numeric(self, ndata):
+		## clear targets
+		self.clearTargets()
+
 		## use the old value of clip
 		oldclip = self.clip()
 		if ndata is None:
@@ -268,6 +330,11 @@ class ImageCanvas(Frame):
 		self.zoomingwidget = wid
 		return wid
 
+	def targets_widget(self, parent, *args, **kwargs):
+		wid = TargetsWidget(parent, self, bg=self['bg'], *args, **kwargs)
+		self.targetswidget = wid
+		return wid
+
 
 class CursorInfo:
 	"""
@@ -311,13 +378,28 @@ class CursorInfoWidget(Frame):
 		Frame.__init__(self,parent, *args, **kargs)
 		self.xlab = Label(self, textvariable=cursorinfo.numx, width=6)
 		self.ylab = Label(self, textvariable=cursorinfo.numy, width=6)
-		self.ilab = Label(self, textvariable=cursorinfo.numdata, width=9)
+		self.ilab = Label(self, textvariable=cursorinfo.numdata, width=15)
 		self.xlab['bg'] = self['bg']
 		self.ylab['bg'] = self['bg']
 		self.ilab['bg'] = self['bg']
 		self.xlab.pack(side=LEFT)
 		self.ylab.pack(side=LEFT)
 		self.ilab.pack(side=LEFT)
+
+class TargetsWidget(Frame):
+	def __init__(self, parent, imagecanvas, *args, **kwargs):
+		Frame.__init__(self, parent, *args, **kwargs)
+		self.imagecanvas = imagecanvas
+		self.__build()
+
+	def __build(self):
+		getbut = Button(self, text='Print Targets', command=self.printtargets)
+		getbut.pack()
+
+	def printtargets(self):
+		tar = self.imagecanvas.getTargets()
+		print 'TARGETS'
+		print tar
 
 class ZoomingWidget(Frame):
 	def __init__(self, parent, imagecanvas, *args, **kargs):

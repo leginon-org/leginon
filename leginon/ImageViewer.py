@@ -27,6 +27,10 @@ class ImageViewer(Frame):
 		self.cursorinfowid = self.canvas.cursorinfo_widget(zframe)
 		self.zoomer = self.canvas.zooming_widget(zframe)
 
+		#tarframe = Toplevel(self)
+		#self.targets = self.canvas.targets_widget(tarframe)
+		#self.targets.pack()
+
 		self.cursorinfowid.pack(side=LEFT)
 		self.zoomer.pack(side=LEFT)
 
@@ -59,6 +63,12 @@ class ImageViewer(Frame):
 	def eventXYInfo(self, event):
 		return self.canvas.eventXYInfo(event)
 
+	def targetClickerOn(self):
+		self.canvas.targetClickerOn()
+
+	def targetClickerOff(self):
+		self.canvas.targetClickerOff()
+
 
 class TestClickable(ImageViewer):
 	def __init__(self, parent, **kwargs):
@@ -78,30 +88,21 @@ if __name__ == '__main__':
 	screenh = root.winfo_screenheight()
 	print 'screenh', screenh
 	root.wm_maxsize(0,0)
-	jim = TestClickable(root, bg='#acf')
+	jim = ImageViewer(root, bg='#acf')
+	jim.targetClickerOn()
 	#jim = ImageViewer(root, bg='#488')
 	jim.pack()
 	
-	#for filename in sys.argv[1:]:
-	#	data1 = Mrc.mrc_to_numeric(filename)
-	#	jim.import_numeric(data1)
-	#	raw_input('return to continue')
+	if 1:
+		for filename in sys.argv[1:]:
+			data1 = Mrc.mrc_to_numeric(filename)
+			jim.import_numeric(data1)
+			raw_input('return to continue')
+			root.update()
 
-	screenw = root.winfo_reqwidth()
-	screenh = root.winfo_reqheight()
-	print 'wh', screenw, screenh
+	if 0:
+		filename = sys.argv[1]
+		data1 = Mrc.mrc_to_numeric(filename)
+		jim.import_numeric(data1)
 
-	filename = sys.argv[1]
-	data1 = Mrc.mrc_to_numeric(filename)
-	jim.import_numeric(data1)
-
-	screenw = root.winfo_width()
-	screenh = root.winfo_height()
-	print 'wh', screenw, screenh
-
-	root.mainloop()
-	
-	#print 'clip ImageViewer'
-	#jim.clip((500,700))
-	#print 'mainloop'
 	#root.mainloop()
