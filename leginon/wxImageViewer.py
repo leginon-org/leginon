@@ -86,16 +86,17 @@ class ImagePanel(wxPanel):
 		self.toolsizer.Add(valuebutton, 0, wxALL, 3)
 
 	def updateZoomLabel(self):
-		self.zoomlabel.SetLabel(str(self.scale[0]) + 'x')
+		xscale, yscale = self.getScale()
+		self.zoomlabel.SetLabel('Zoom: ' + str(xscale) + 'x')
 
 	def OnZoomIn(self, evt):
-		self.setScale((self.scale[0]*2, self.scale[1]*2),
-									self.view2image((evt.m_x, evt.m_y)))
+		xscale, yscale = self.getScale()
+		self.setScale((xscale*2, yscale*2), self.view2image((evt.m_x, evt.m_y)))
 		self.updateZoomLabel()
 
 	def OnZoomOut(self, evt):
-		self.setScale((self.scale[0]/2, self.scale[1]/2),
-									self.view2image((evt.m_x, evt.m_y)))
+		xscale, yscale = self.getScale()
+		self.setScale((xscale/2, yscale/2), self.view2image((evt.m_x, evt.m_y)))
 		self.updateZoomLabel()
 
 	def OnZoomButton(self, evt):
@@ -116,63 +117,67 @@ class ImagePanel(wxPanel):
 		zoombutton.SetToolTip(wxToolTip('Toggle Zoom Tool'))
 		EVT_BUTTON(self, zoombutton.GetId(), self.OnZoomButton)
 		self.toolsizer.Add(zoombutton, 0, wxALL, 3)
-		self.toolsizer.Add(wxStaticText(self, -1, 'Zoom:'), 0, wxALL, 3)
 		self.zoomlabel = wxStaticText(self, -1, '')
 		self.updateZoomLabel()
 		self.toolsizer.Add(self.zoomlabel, 0, wxALL, 3)
 
 	def getEntryScale(self):
-		scale = list(self.scale)
-		for i in range(len(self.scale)):
+		scale = list(self.getScale())
+		for i in range(len(scale)):
 			try:
 				scale[i] = float(self.scale_entry[i].GetValue())
 			except:
-				self.scale_entry[i].SetValue(str(self.scale[i]))
+				self.scale_entry[i].SetValue(str(scale[i]))
 		return scale
+
+	def getScale(self):
+		return self.scale
+
+	def setVirtualSize(self):
+		xscale, yscale = self.getScale()
+		if self.bitmap is not None:
+			self.panel.SetVirtualSize(((self.bitmap.GetWidth() - 1)*xscale,
+																	(self.bitmap.GetHeight() - 1)*yscale))
+		else:
+			self.panel.SetVirtualSize((0, 0))
 
 	def setScale(self, scale, offset=None):
 		self.scale = tuple(scale)
-		if self.bitmap is not None:
-			self.panel.SetVirtualSize((self.bitmap.GetWidth()*self.scale[0],
-																	self.bitmap.GetHeight()*self.scale[1]))
+		self.setVirtualSize()
+
 		dc = wxClientDC(self.panel)
 		dc.BeginDrawing()
 		dc.Clear()
 		dc.EndDrawing()
+
 		self.UpdateDrawing()
+
 		if offset is not None:
-			center = self.panel.GetClientSize()
-			center = (center[0]/2, center[1]/2)
-			self.panel.Scroll((offset[0])*self.scale[0] - center[0],
-												(offset[1])*self.scale[1] - center[1])
+			xcenter, ycenter = self.getClientCenter()
+			self.panel.Scroll((offset[0])*self.scale[0] - xcenter,
+												(offset[1])*self.scale[1] - ycenter)
 		else:
 			self.panel.Scroll(0, 0)
 		#self.panel.Refresh(0)
 
-	def getViewCenter(self):
-		center = self.panel.GetClientSize()
-		center = (center[0]/2, center[1]/2)
-		return self.view2image(center)
-
-	def OnScale(self, evt):
-		self.setScale(self.getEntryScale(), self.getViewCenter())
+	def OnScaleEntry(self, evt):
+		self.setScale(self.getEntryScale(), self.view2image(self.getClientCenter()))
 
 	def initScaleEntry(self):
-		self.scalesizer = wxBoxSizer(wxHORIZONTAL)
 		self.scale_entry = {}
+		scale = self.getScale()
 		for axis, i in [('x', 0), ('y', 1)]:
-			self.scalesizer.Add(wxStaticText(self, -1, axis + ':'),
+			self.toolsizer.Add(wxStaticText(self, -1, axis + ':'),
 													0, wxCENTER | wxALL, 5)
-			self.scale_entry[i] = wxTextCtrl(self, -1, value=str(self.scale[i]))
+			self.scale_entry[i] = wxTextCtrl(self, -1, value=str(scale[i]))
 			size = self.scale_entry[i].GetSize()
 			size = (size[0]/2, size[1])
 			self.scale_entry[i].SetSize(size)
 			self.scale_entry[i].SetMaxLength(6)
-			self.scalesizer.Add(self.scale_entry[i], 0, wxCENTER | wxALL, 3)
+			self.toolsizer.Add(self.scale_entry[i], 0, wxCENTER | wxALL, 3)
 		scalebutton = wxButton(self, -1, 'Scale')
-		self.scalesizer.Add(scalebutton, 0, wxCENTER | wxALL, 3)
-		EVT_BUTTON(self, scalebutton.GetId(), self.OnScale)
-		self.sizer.Prepend(self.scalesizer)
+		self.toolsizer.Add(scalebutton, 0, wxCENTER | wxALL, 3)
+		EVT_BUTTON(self, scalebutton.GetId(), self.OnScaleEntry)
 
 	def PILsetImageFromMrcString(self, imagestring):
 		self.clearImage()
@@ -203,10 +208,11 @@ class ImagePanel(wxPanel):
 
 	def setImage(self, wximage):
 		self.bitmap = wxBitmapFromImage(wximage)
-		self.panel.SetVirtualSize(wxSize(self.bitmap.GetWidth() * self.scale[0],
-																			self.bitmap.GetHeight() * self.scale[1]))
+		self.setVirtualSize()
 		self.panel.Scroll(0, 0)
-		self.buffer = wxEmptyBitmap(self.bitmap.GetWidth(), self.bitmap.GetHeight())
+		bitmapwidth = self.bitmap.GetWidth()
+		bitmapheight = self.bitmap.GetHeight()
+		self.buffer = wxEmptyBitmap(bitmapwidth, bitmapheight)
 		self.UpdateDrawing()
 
 	def clearImage(self):
@@ -214,27 +220,41 @@ class ImagePanel(wxPanel):
 		self.bitmap = None
 		self.UpdateDrawing()
 
-	def view2image(self, xy):
-		viewoffset = self.panel.GetViewStart()
-		return (int(round((viewoffset[0] + xy[0]) / self.scale[0])),
-						int(round((viewoffset[1] + xy[1]) / self.scale[1])))
+	def view2image(self, xy, viewoffset=None, scale=None):
+		if viewoffset is None:
+			viewoffset = self.panel.GetViewStart()
+		if scale is None:
+			scale = self.getScale()
+		return (int(round((viewoffset[0] + xy[0]) / scale[0])),
+						int(round((viewoffset[1] + xy[1]) / scale[1])))
 
-	def image2view(self, xy):
-		viewoffset = self.panel.GetViewStart()
-		return (int(round((xy[0] * self.scale[0]) - viewoffset[0])),
-						int(round((xy[1] * self.scale[1]) - viewoffset[1])))
+	def image2view(self, xy, viewoffset=None, scale=None):
+		if viewoffset is None:
+			viewoffset = self.panel.GetViewStart()
+		if scale is None:
+			scale = self.getScale()
+		return (int(round((xy[0] * scale[0]) - viewoffset[0])),
+						int(round((xy[1] * scale[1]) - viewoffset[1])))
+
+
+	def getClientCenter(self):
+		center = self.panel.GetClientSize()
+		return (center[0]/2, center[1]/2)
 
 	def motion(self, evt):
 		if self.image is None:
 			return
 		if self.valueflag:
 			x, y = self.view2image((evt.m_x, evt.m_y))
-			value = self.image[y, x]
-			self.drawLabel((x, y), value)
+			self.drawValueLabel(x, y)
 #		if self.valuelabelflag:
 #			self.xlabel.SetLabel(str(x))
 #			self.ylabel.SetLabel(str(y))
 #			self.valuelabel.SetLabel(str(value))
+
+	def drawValueLabel(self, x, y):
+		value = self.image[y, x]
+		self.drawLabel((x, y), value)
 
 	def drawLabel(self, xy, value):
 		dc = wxClientDC(self.panel)
@@ -243,7 +263,7 @@ class ImagePanel(wxPanel):
 		dc.SetBrush(wxBrush(wxWHITE))
 		dc.SetPen(wxPen(wxBLACK, 1))
 
-		string = '(%d, %d): %d' % (xy[0], xy[1], value)
+		string = '(%d, %d): %d' % (xy + (value,))
 		#tooltip = wxToolTip(string)
 		#self.panel.SetToolTip(tooltip)
 
@@ -252,48 +272,46 @@ class ImagePanel(wxPanel):
 		except AttributeError:
 			pass
 
-		extent = dc.GetFullTextExtent(string, wxNORMAL_FONT)
+		xextent, yextent, d, e = dc.GetFullTextExtent(string, wxNORMAL_FONT)
+		xcenter, ycenter = self.getClientCenter()
 
-		center = self.panel.GetClientSize()
-		center = (center[0]/2, center[1]/2)
+		x, y = self.image2view(xy)
 
-		xy = self.image2view(xy)
-
-		if xy[0] <= center[0]:
+		if x <= xcenter:
 			xoffset = 10
 		else:
-			xoffset = -(10 + extent[0] + 4)
-		if xy[1] <= center[1]:
+			xoffset = -(10 + xextent + 4)
+		if y <= ycenter:
 			yoffset = 10
 		else:
-			yoffset = -(10 + extent[1] + 4)
+			yoffset = -(10 + yextent + 4)
 
-		xy = (int(round((xy[0] + xoffset))),
-					int(round((xy[1] + yoffset))))
+		x = int(round((x + xoffset)))
+		y = int(round((y + yoffset)))
 
-		self.damaged = (xy[0], xy[1],
-										extent[0] + 4, extent[1] + 4)
+		self.damaged = (x, y, xextent + 4, yextent + 4)
 
 		apply(dc.DrawRectangle, self.damaged)
 
 		dc.SetFont(wxNORMAL_FONT)
-		dc.DrawText(string, xy[0] + 2 , xy[1] + 2)
+		dc.DrawText(string, x + 2 , y + 2)
 
 		dc.EndDrawing()
 
 	def scaledBlit(self, x, y, w, h):
 		if self.buffer == wxNullBitmap:
 			return
+
 		dc = wxMemoryDC()
 		dc.SelectObject(self.buffer)
-		viewoffset = self.panel.GetViewStart()
-		clientdc = wxClientDC(self.panel)
-		size = self.panel.GetClientSize()
-		clientdc.SetUserScale(self.scale[0], self.scale[1])
+
+		xscale, yscale = self.getScale()
 		ix, iy = self.view2image((x, y))
-		vx, vy = self.image2view((x, y))
-		clientdc.Blit(x/self.scale[0], y/self.scale[1],
-									w/self.scale[0] + 1, h/self.scale[1] + 1, dc, ix, iy)
+		#vx, vy = self.image2view((x, y))
+
+		clientdc = wxClientDC(self.panel)
+		clientdc.SetUserScale(xscale, yscale)
+		clientdc.Blit(x/xscale, y/yscale, w/xscale + 1, h/yscale + 1, dc, ix, iy)
 
 	def Draw(self, dc):
 #		try:
@@ -309,38 +327,41 @@ class ImagePanel(wxPanel):
 	def UpdateDrawing(self):
 		if self.buffer == wxNullBitmap:
 			return
+
 		dc = wxMemoryDC()
 		dc.SelectObject(self.buffer)
 		self.Draw(dc)
-		viewoffset = self.panel.GetViewStart()
+
+		xviewoffset, yviewoffset = self.panel.GetViewStart()
+		xscale, yscale = self.getScale()
+		xsize, ysize = self.panel.GetClientSize()
+
 		clientdc = wxClientDC(self.panel)
-		clientdc.SetUserScale(self.scale[0], self.scale[1])
-		size = self.panel.GetClientSize()
-		clientdc.Blit(0, 0, size[0]/self.scale[0] + 1,
-												size[1]/self.scale[1] + 1, dc,
-												viewoffset[0]/self.scale[0],
-												viewoffset[1]/self.scale[1])
+		clientdc.SetUserScale(xscale, yscale)
+		clientdc.Blit(0, 0, xsize/xscale + 1, ysize/yscale + 1, dc,
+									xviewoffset/xscale, yviewoffset/yscale)
 
 	def OnSize(self, evt):
-		width, height = self.panel.GetClientSize()
-		self.buffer = wxEmptyBitmap(width, height)
+#		width, height = self.panel.GetClientSize()
+#		self.buffer = wxEmptyBitmap(width, height)
 		self.UpdateDrawing()
 
 	def OnPaint(self, evt):
 		if self.buffer == wxNullBitmap:
 			return
+
 		dc = wxMemoryDC()
 		dc.SelectObject(self.buffer)
 		self.Draw(dc)
-		viewoffset = self.panel.GetViewStart()
+
+		xviewoffset, yviewoffset = self.panel.GetViewStart()
+		xscale, yscale = self.getScale()
+		xsize, ysize = self.panel.GetClientSize()
+
 		paintdc = wxPaintDC(self.panel)
-		paintdc.SetUserScale(self.scale[0], self.scale[1])
-		size = self.panel.GetClientSize()
-		# not quite working
-		paintdc.Blit(0, 0, Numeric.ceil(size[0]/self.scale[0]),
-												Numeric.ceil(size[1]/self.scale[1]), dc,
-												viewoffset[0]/self.scale[0],
-												viewoffset[1]/self.scale[1])
+		paintdc.SetUserScale(xscale, yscale)
+		paintdc.Blit(0, 0, xsize/xscale + 1, ysize/yscale + 1, dc,
+									xviewoffset/xscale, yviewoffset/yscale)
 
 class TargetImagePanel(ImagePanel):
 	def __init__(self, parent, id, callback=None):
