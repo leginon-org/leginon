@@ -42,6 +42,7 @@ class GonModeler(node.Node):
 		self.oldimagedata = None
 		self.acquireNextPosition(axis)
 		currentpos = self.getStagePosition()
+		print 'CURRENT POS', currentpos
 
 		for i in range(points):
 			t = timer.Timer('loop')
@@ -67,17 +68,19 @@ class GonModeler(node.Node):
 		newimagedata = self.cam.acquireCameraImageData(correction=0)
 		self.publish(newimagedata, pubevent=True)
 		newnumimage = newimagedata['image']
+		print 'NEWNUMIMAGE shape', newnumimage.shape
 
 		## insert into correlator
 		self.correlator.insertImage(newnumimage)
 
+		print 'INSERTED INTO CORR'
 		## cross correlation if oldimagedata exists
 		if self.oldimagedata is not None:
 			## cross correlation
 			crosscorr = self.correlator.phaseCorrelate()
 			
 			## subtract auto correlation
-			crosscorr -= self.autocorr
+			#crosscorr -= self.autocorr
 
 			## peak finding
 			self.peakfinder.setImage(crosscorr)
@@ -109,8 +112,8 @@ class GonModeler(node.Node):
 		else:
 			datalist = []
 
-		self.correlator.insertImage(newnumimage)
-		self.autocorr = self.correlator.phaseCorrelate()
+		#self.correlator.insertImage(newnumimage)
+		#self.autocorr = self.correlator.phaseCorrelate()
 		self.oldimagedata = newimagedata
 
 		return datalist
@@ -148,11 +151,11 @@ class GonModeler(node.Node):
 		f.close()
 
 	def uiFit(self):
-		self.calclient.fit(self.uidatfile, self.uiterms, magonly=0)
+		self.calclient.fit(self.uidatafile.get(), self.uiterms.get(), magonly=0)
 		return ''
 
 	def uiMagOnly(self):
-		self.calclient.fit(self.uidatfile, self.uiterms, magonly=1)
+		self.calclient.fit(self.uidatafile.get(), self.uiterms.get(), magonly=1)
 		return ''
 
 	def getStagePosition(self):
@@ -167,7 +170,7 @@ class GonModeler(node.Node):
 		nodespec = node.Node.defineUserInterface(self)
 
 		self.uiaxis = uidata.SingleSelectFromList('Axis',  ['x','y'], 0)
-		self.uipoints = uidata.String('Points', 200, 'rw')
+		self.uipoints = uidata.Integer('Points', 200, 'rw', persist=True)
 		self.uiinterval = uidata.Float('Interval', 5e-6, 'rw', persist=True)
 		start = uidata.Method('Start', self.uiStartLoop)
 		stop = uidata.Method('Stop', self.uiStopLoop)
@@ -192,9 +195,9 @@ class GonModeler(node.Node):
 	def uiStartLoop(self):
 		if not self.threadlock.acquire(0):
 			return ''
-		axis = self.uiaxis
-		points = self.uipoints
-		interval = self.uiinterval
+		axis = self.uiaxis.getSelectedValue()
+		points = self.uipoints.get()
+		interval = self.uiinterval.get()
 		self.threadstop.clear()
 		t = threading.Thread(target=self.loop, args=(axis, points, interval))
 		t.setDaemon(1)
