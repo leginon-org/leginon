@@ -15,7 +15,11 @@ import EM
 import targetfinder
 
 try:
-	applicationfilename = os.environ['LEGINONPATH'] + '\\leginon.app'
+	if sys.platform == 'win32':
+		applicationfilename = os.environ['LEGINONPATH'] + '\\leginon.app'
+	else:
+		applicationfilename = os.environ['LEGINONPATH'] + '/leginon-linux.app'
+	print applicationfilename
 except Exception, e:
 	print e
 	raise RuntimeError('LEGINONPATH environment variable error')
