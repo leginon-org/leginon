@@ -282,84 +282,60 @@ class EMData(InSessionData):
 		return t
 	typemap = classmethod(typemap)
 
-### maybe split this up into scope and camera?
+scope_params = [
+	('magnification', int),
+	('spot size', int),
+	('intensity', float),
+	('image shift', dict),
+	('beam shift', dict),
+	('defocus', float),
+	('reset defocus', int),
+	('screen current', float), 
+	('beam blank', str), 
+	('stigmator', dict),
+	('beam tilt', dict),
+	('corrected stage position', int),
+	('stage position', dict),
+	('holder type', str),
+	('holder status', str),
+	('stage status', str),
+	('vacuum status', str),
+	('column valves', str),
+	('column pressure', float),
+	('turbo pump', str),
+	('high tension', float),
+]
+camera_params = [
+	('dimension', dict),
+	('binning', dict),
+	('offset', dict),
+	('exposure time', float),
+	('image data', strictdict.NumericArrayType),
+	('inserted', bool)
+]
+
 class ScopeEMData(EMData):
 	def typemap(cls):
 		t = EMData.typemap()
-		t += [
-			('magnification', int),
-			('spot size', int),
-			('intensity', float),
-			('image shift', dict),
-			('beam shift', dict),
-			('defocus', float),
-			('reset defocus', int),
-			('screen current', float), 
-			('beam blank', str), 
-			('stigmator', dict),
-			('beam tilt', dict),
-			('corrected stage position', int),
-			('stage position', dict),
-			('holder type', str),
-			('holder status', str),
-			('stage status', str),
-			('vacuum status', str),
-			('column valves', str),
-			('column pressure', float),
-			('turbo pump', str),
-		]
+		t += scope_params
 		return t
 	typemap = classmethod(typemap)
 
 class CameraEMData(EMData):
 	def typemap(cls):
 		t = EMData.typemap()
-		t += [
-			('dimension', dict),
-			('binning', dict),
-			('offset', dict),
-			('exposure time', float),
-			('image data', strictdict.NumericArrayType),
-			('inserted', bool)
-		]
+		t += camera_params
 		return t
 	typemap = classmethod(typemap)
 
-### I would like to have a way to inherit typemap from both ScopeEMData
-### and CameraEMData.  Could use them both as base classes, but how do 
-### we orgainize.
 class AllEMData(EMData):
+	'''
+	this includes everything from scope and camera
+	'''
 	def typemap(cls):
 		t = EMData.typemap()
-		t += [
-			('magnification', int),
-			('spot size', int),
-			('intensity', float),
-			('image shift', dict),
-			('beam shift', dict),
-			('defocus', float),
-			('reset defocus', int),
-			('screen current', float), 
-			('beam blank', str), 
-			('stigmator', dict),
-			('beam tilt', dict),
-			('corrected stage position', int),
-			('stage position', dict),
-			('holder type', str),
-			('holder status', str),
-			('stage status', str),
-			('vacuum status', str),
-			('column valves', str),
-			('column pressure', float),
-			('turbo pump', str),
-
-			('dimension', dict),
-			('binning', dict),
-			('offset', dict),
-			('exposure time', float),
-			('image data', strictdict.NumericArrayType),
-			('inserted', bool)
-		]
+		t += scope_params
+		t += camera_params
 		return t
 	typemap = classmethod(typemap)
 
