@@ -23,7 +23,6 @@ class ImageWatcher(watcher.Watcher):
 		self.iv = None
 		self.numarray = None
 		self.imagedata = None
-		#self.start_viewer_thread()
 
 		self.clickactions = ('ImageClickEvent', 'Target Editor')
 
@@ -61,7 +60,3 @@ class ImageWatcher(watcher.Watcher):
 			self.iv.canvas.targetClickerOn()
 			
 		return self.clickaction
-
-	def defineUserInterface(self):
-		return watcher.Watcher.defineUserInterface(self)
-
