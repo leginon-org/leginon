@@ -90,6 +90,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 						% (matrix, matrix.shape, matrix.typecode(), Numeric.ravel(matrix)))
 		self.calclient.storeMatrix(ht, mag, 'defocus', matrix)
 		self.logger.info('Calibration stored')
+		node.beep()
 		return ''
 
 	def calibrateStigmators(self, tilt_value, delta):
@@ -136,6 +137,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		stigdict = {'stigmator':{'objective':currentstig}}
 		stigdata = data.ScopeEMData(initializer=stigdict)
 		self.emclient.setScope(stigdata)
+		node.beep()
 		return ''
 
 	def measureDefocusStig(self, btilt):

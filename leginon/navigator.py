@@ -245,6 +245,7 @@ class Navigator(node.Node):
 	def uiSelectedToScope(self):
 		new = self.uiselectlocation.getSelectedValue()
 		self.toScope(new)
+		node.beep()
 
 	def locationNames(self):
 		names = [loc['name'] for loc in self.stagelocations]
