@@ -16,7 +16,7 @@ class PullHandler(SocketServer.StreamRequestHandler, leginonobject.LeginonObject
 		# data_id needs to be send with a newline
 		data_id = self.rfile.readline()
 		# pickle the data from data_id (w/o the trailing newline char)
-		data = self.server.server.querydatacenter(data_id[:-1])
+		data = self.server.datakeeper.query(data_id)
 		pickle.dump(data, self.wfile)
 
 class PushHandler(SocketServer.StreamRequestHandler, leginonobject.LeginonObject):
@@ -30,15 +30,15 @@ class PushHandler(SocketServer.StreamRequestHandler, leginonobject.LeginonObject
 		# data_id needs to be send with a newline
 		newdata = pickle.load(self.rfile)
 		print 'received newdata %s' % newdata
-		self.server.server.insertdatacenter(newdata)
+		self.server.datakeeper.insert(newdata)
 		#self.server.server.handle_data(newdata)
 		# temporarily making data a dictionary w/ actual data and data id
 		#self.server.datatoid(data['data id'], data['data'])
 
 class Server(SocketServer.ThreadingTCPServer, leginonobject.LeginonObject):
-	def __init__(self, server, handler, port=None):
+	def __init__(self, dk, handler, port=None):
 		leginonobject.LeginonObject.__init__(self)
-		self.server = server
+		self.datakeeper = dk
 		# instantiater can choose a port or we'll choose one for them
 		if port:
 			SocketServer.ThreadingTCPServer.__init__(self, ('', port), handler)
@@ -68,14 +68,9 @@ class PullServer(Server):
 	def __init__(self, server, port=None):
 		Server.__init__(self, server, PullHandler, port)
 
-	def datafromid(self, data_id):
-		return self.server.datafromid(data_id)
-
-
 class PushServer(Server):
 	def __init__(self, server, port=None):
 		Server.__init__(self, server, PushHandler, port)
-
 
 # pull is a function for now, until a client class seems reasonable
 class Client(leginonobject.LeginonObject):

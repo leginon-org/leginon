@@ -5,6 +5,7 @@ import leginonobject
 import datalocal
 import datatcp
 import threading
+import datakeeper
 
 class Client(leginonobject.LeginonObject):
   # hostname/port -> location or whatever
@@ -19,31 +20,16 @@ class Client(leginonobject.LeginonObject):
 		return self.clients[datatcp.PullClient].pull(dataid)
 
 class Server(leginonobject.LeginonObject):
-	def __init__(self):
+	def __init__(self, dkclass = datakeeper.SimpleDataKeeper):
 		leginonobject.LeginonObject.__init__(self)
-		self.datacenter = {}
-		self.datacenter_rlock = threading.RLock()
+		self.datakeeper = dkclass()
 		self.servers = {}
-		#self.servers[datalocal.PullServer] = datalocal.PullServer(self)
-		self.servers[datatcp.PullServer] = datatcp.PullServer(self)
+		#self.servers[datalocal.PullServer] = datalocal.PullServer(self.datakeeper)
+		self.servers[datatcp.PullServer] = datatcp.PullServer(self.datakeeper)
 		thread = threading.Thread(None, self.servers[datatcp.PullServer].serve_forever, None, (), {})
 		# this isn't working right now
 		thread.setDaemon(1)
 		thread.start()
-
-	def querydatacenter(self, data_id):
-		self.datacenter_rlock.acquire()
-		try:
-			data = self.datacenter[data_id]
-		except KeyError:
-			data = None
-		self.datacenter_rlock.release()
-		return data
-
-	def insertdatacenter(self, data):
-		self.datacenter_rlock.acquire()
-		self.datacenter[data.data_id] = data
-		self.datacenter_rlock.release()
 
 	def location(self):
 		loc = leginonobject.LeginonObject.location(self)
