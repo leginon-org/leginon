@@ -1363,7 +1363,10 @@ def datatype(in_dict, qikey=None, qinfo=None):
 				# did not request it.  Just set it to None
 				dclassname = a[1]
 				dclass = getattr(data, dclassname)
-				content[a[2]] = data.DataReference(dataclass=dclass, dbid=value)
+				if value == 0:
+					content[a[2]] = None
+				else:
+					content[a[2]] = data.DataReference(dataclass=dclass, dbid=value)
 			else:
 				## This references a Data instance
 				content[a[2]] = data.UnknownData(jqikey)
