@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.29 $
- *	@version $Id: leginon.inc,v 1.29 2004-10-21 01:31:31 dfellman Exp $
+ *	@version $Revision: 1.30 $
+ *	@version $Id: leginon.inc,v 1.30 2004-10-21 01:53:53 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -836,7 +836,6 @@ class leginondata {
 			.$version 
 			."t.`type`='focus' and "
 			."a.`DEF_id`='".$imgId."'";
-		echo $q;
 		$Rtargets = $this->mysql->SQLQuery($q);
 		$targets= array();
 		while ($target = mysql_fetch_array($Rtargets, MYSQL_ASSOC))

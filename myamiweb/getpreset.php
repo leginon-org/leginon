@@ -36,7 +36,7 @@ if ($id) {
 				if ($gridId)
 					echo '<a class="header" target="gridinfo" href="'.$PROJECT_URL.'getgrid.php?gridId='.$gridId.'">grid# '.$gridinfo[number].' info&raquo;</a>';
 			}
-			$filename = $leginondata->getFilename($id);
+			list($filename) = $leginondata->getFilename($id);
 			$presets = $leginondata->getPresets($id, $p);
 			if (is_array($presets))
 			foreach($presets as $k=>$v)
@@ -51,7 +51,7 @@ if ($id) {
 				else
 					echo " <b>$k:</b> $v";
 	if ($viewfilename)
-		echo " <br>$filename</font>";
+		echo " <br>".$filename['filename']."</font>";
 
 }
 ?>

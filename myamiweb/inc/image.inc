@@ -1,7 +1,7 @@
 <?
 /**
- *	@version $Revision: 1.7 $
- *	@version $Id: image.inc,v 1.7 2004-10-04 19:06:47 dfellman Exp $
+ *	@version $Revision: 1.8 $
+ *	@version $Id: image.inc,v 1.8 2004-10-21 01:53:53 dfellman Exp $
  */
 /**
  *	Tools to display images / mosaic
@@ -50,7 +50,8 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		$fft = $leginondata->getImageFFT($imageId);
 		$filename = $fft[fftimage];
 	} else {
-		$filename = $leginondata->getFilename($imageId);
+		list($filename) = $leginondata->getFilename($imageId);
+		$filename = $filename['filename'];
 	}
 
 	$pic = $path.$filename;
