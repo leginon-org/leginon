@@ -3,8 +3,10 @@ require('inc/leginon.inc');
 $id=$_GET[id];
 $preset=$_GET[preset];
 $session=$_GET[session];
+$tg = ($_GET[tg]) ? $_GET[tg] : 0;
+$sb = ($_GET[sb]) ? $_GET[sb] : 0;
 $filename = $leginondata->getFilename($id);
-$imgsrc = "getparentimg.php?preset=".$preset."&session=".$session."&id=".$id."&t=80&s=256&tg=1";
+$imgsrc = "getparentimgtarget.php?preset=".$preset."&session=".$session."&id=".$id."&t=80&s=256&tg=".$tg."&sb=".$sb;
 ?>
 <html>
 <head>
@@ -119,7 +121,7 @@ function getIframesize(){
 }
 
 function init() {
-	var URL = 'nw.php?Lv2&preset=<?=$preset?>&session=<?=$session?>&id=<?=$id?>';
+	var URL = 'nw.php?Lv2=1&preset=<?=$preset?>&session=<?=$session?>&id=<?=$id?>&tg=<?=$tg?>&sb=<?=$sb?>';
 	my1=window.open(URL, 'my1', 'left=300,top=0,height=512,width=512,toolbar=0,scrollbars=1,location=0,statusbar=0,menubar=0,resizable=1,alwaysRaised=yes');
         document.newimgmv.onmousemove=mousemove;
         document.newimgmv.onmousedown=mousedown;

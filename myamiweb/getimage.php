@@ -25,7 +25,7 @@ $maxpix=$_GET['xp'];
 $targets = $leginondata->getImageTargets($id);
 $focustargets = $leginondata->getImageFocusTargets($id);
 
-$src = "$template?table=$table&session=$session&id=$id&t=$quality&s=$size&np=$minpix&xp=$maxpix";
+$src = "$template?table=$table&session=$session&id=$id&t=$quality&s=$size&np=$minpix&xp=$maxpix&sb=1";
 ?>
 
 <body leftmargin="0" topmargin="0" bottommargin="0" marginwidth="0" marginheight="0" >

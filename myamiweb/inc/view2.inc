@@ -5,22 +5,30 @@
 		 <tr>
 
 			<td width="16"><a href="javascript:newexp();"
-					onmouseover="imageon('v2close', 'close')"
-					onmouseout="imageoff('v2close', 'close')" 
+					onmouseover="imageon('v2close', 'close', '')"
+					onmouseout="imageoff('v2close', 'close', '')" 
 					onclick="setview('v2', 'off');"
 					><img name="v2close" src="img/close_off.gif" border="0" height="16" vspace="0"></a></td>
 			<td width="16"><a href="javascript:newexp();"
-					onmouseover="imageon('v2open', 'open')" 
-					onmouseout="imageoff('v2open', 'open')" 
+					onmouseover="imageon('v2open', 'open', '')" 
+					onmouseout="imageoff('v2open', 'open', '')" 
 					onclick="setview('v2', 'on');"
 					><img name="v2open" src="img/open_off.gif" border="0" height="16" vspace="0"></a></td>
-	<td width="224" nowrap="nowrap">View 2</td>
+	<td width="193" nowrap="nowrap">View 2</td>
+			<td width="15"><a href="javascript:toggleimage('v2target_bt', 'target_bt'); newfile();"
+					onmouseover="imageonfocus('v2target_bt', 'target_bt', '_over')" 
+					onmouseout="imageonfocus('v2target_bt', 'target_bt', '')" 
+					><img name="v2target_bt" src="img/target_bt_off.gif" border="0" height="15" vspace="0"></a></td>
+			<td width="15"><a href="javascript:toggleimage('v2scale_bt', 'scale_bt'); newfile();"
+					onmouseover="imageonfocus('v2scale_bt', 'scale_bt', '_over')" 
+					onmouseout="imageonfocus('v2scale_bt', 'scale_bt', '')" 
+					><img name="v2scale_bt" src="img/scale_bt_off.gif" border="0" height="15" vspace="0"></a></td>
 <? /*
 			<td><a href="javacript:void(0)"><img src="img/close_off.gif" border="0" height="16" vspace="0"></a> <a href="javacript:void(0)"><img src="img/open_off.gif" border="0" height="16" vspace="0"></a></td><td>View 1</td>
 */ ?>
 		 </tr>
 		 <tr>
-			<td colspan="3">	
+			<td colspan="5">	
 			<input type="hidden" name = "v2sel" value="<?=$v2sel?>">
 			<table class="bgcolor0" border="0" cellspacing="0" cellpadding="0">
 <? if ($v2view=='on') { ?>

@@ -1,8 +1,10 @@
 <?
 require('inc/leginon.inc');
 $id=$_GET[id];
+$tg = ($_GET[tg]) ? '&tg=1' : '';
+$sb = ($_GET[sb]) ? '&sb=1' : '';
 $filename = $leginondata->getFilename($id);
-$imgsrc = "getparentimg.php?preset=".$_GET[preset]."&session=".$_GET[session]."&id=".$id."&t=png&s=&tg=1";
+$imgsrc = "getparentimgtarget.php?preset=".$_GET[preset]."&session=".$_GET[session]."&id=".$id."&t=png&s=0".$tg.$sb;
 ?>
 <html>
 <head>

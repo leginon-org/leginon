@@ -22,7 +22,7 @@ class mysql {
 		);
 	var $crlf = "\n";
 
-	function mysql ($hostname, $db_user, $dbpass, $database) {
+	function mysql ($hostname, $db_user, $db_pass, $database) {
 		$this->hostname = $hostname;
 		$this->db_user  = $db_user;
 		$this->db_pass  = $db_pass;

@@ -26,8 +26,11 @@ if ($id) {
 	$id = $parent[parentId];
 	$filename = $leginondata->getFilename($id);
 	$presets = $leginondata->getPresets($id, $p);
+	if (is_array($presets))
 	foreach($presets as $k=>$v)
-		if ($k=='defocus' or $k=='pixelsize')
+		if ($k=='defocus')
+			printf(" <b>$k:</b> %1.4f &micro;m",($v/1e-6));
+		else if ($k=='pixelsize')
 			printf(" <b>$k:</b> %1.4f nm",($v/1e-9));
 		else
 			echo " <b>$k:</b> $v";

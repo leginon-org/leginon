@@ -17,12 +17,57 @@ close_off.src=path+"close_off.gif";
 close_on=new Image();
 close_on.src=path+"close_on.gif";
 
-function imageon(imagename, name) {
- document.images[eval("\"" + imagename + "\"")].src = eval(name+"_on.src");
+target_bt_off=new Image();
+target_bt_off.src=path+"target_bt_off.gif";
+target_bt_over_off=new Image();
+target_bt_over_off.src=path+"target_bt_over_off.gif";
+target_bt_on=new Image();
+target_bt_on.src=path+"target_bt_on.gif";
+target_bt_over_on=new Image();
+target_bt_over_on.src=path+"target_bt_over_on.gif";
+
+scale_bt_off=new Image();
+scale_bt_off.src=path+"scale_bt_off.gif";
+scale_bt_on=new Image();
+scale_bt_on.src=path+"scale_bt_on.gif";
+scale_bt_over_off=new Image();
+scale_bt_over_off.src=path+"scale_bt_over_off.gif";
+scale_bt_over_on=new Image();
+scale_bt_over_on.src=path+"scale_bt_over_on.gif";
+
+var v1target_bt=false;
+var v2target_bt=false;
+var mvtarget_bt=false;
+
+var v1scale_bt=false;
+var v2scale_bt=false;
+var mvscale_bt=false;
+
+
+function imageon(imagename, name, type) {
+	document.images[eval("\"" + imagename + "\"")].src = eval(name+type+"_on.src");
+	eval(imagename+'=true');
 }
 
-function imageoff(imagename, name) {
- document.images[eval("\"" + imagename + "\"")].src = eval(name+"_off.src");
+function imageoff(imagename, name, type) {
+	document.images[eval("\"" + imagename + "\"")].src = eval(name+type+"_off.src");
+	eval(imagename+'=false');
+}
+
+function toggleimage(imagename, name) {
+	imagenamestr = document.images[eval("\"" + imagename + "\"")].src;
+	if (imagenamestr.search('_on') != -1)
+		imageoff(imagename, name, '');
+	else if (imagenamestr.search('_off') != -1)
+		imageon(imagename, name, '');
+}
+
+function imageonfocus(imagename, name, type) {
+	imagenamestr = document.images[eval("\"" + imagename + "\"")].src;
+	if (imagenamestr.search('_on') != -1)
+		imageon(imagename, name, type);
+	else if (imagenamestr.search('_off') != -1)
+		imageoff(imagename, name, type);
 }
 
 function MsgBox (textstring) {
@@ -220,24 +265,30 @@ function newfile()
      listform.allfile.selectedIndex].value
 	var lId;
 	if (jsmvId.length != 0){
+		if (mvscale_bt) mvsb="&sb=1"; else mvsb="";
+		if (mvtarget_bt) mvtg="&tg=1"; else mvtg="";
 		var mvpre=document.listform.mlist.options[document.listform.mlist.selectedIndex].value;
-		document.newimgmv.src=jsimgmv+"?Lmv=1&preset="+mvpre+"&session="+jsexpId+"&id="+jsfexp+"&s=512&t=80&tg=1"; 
+		document.newimgmv.src=jsimgmv+"?Lmv=1&preset="+mvpre+"&session="+jsexpId+"&id="+jsfexp+"&s=512&t=80"+mvtg+mvsb; 
 		
 		lId=GetLinkId('Lmv');
 		if ((lId=GetLinkId('Lmv')) != -1 ) {
-		document.links[lId].href="javascript:popUpMap('map.php?Lmv&preset="+mvpre+"&session="+jsexpId+"&id="+jsfexp+"')"; 
+		document.links[lId].href="javascript:popUpMap('map.php?Lmv=1&preset="+mvpre+"&session="+jsexpId+"&id="+jsfexp+mvtg+mvsb+"')"; 
 		}
 	} if (window.document.listform.v1view.value=='on') {
+		if (v1scale_bt) v1sb="&sb=1"; else v1sb="";
+		if (v1target_bt) v1tg="&tg=1"; else v1tg="";
 		var v1pre=document.listform.v1list.options[document.listform.v1list.selectedIndex].value;
-		document.newimgview1.src=jsimgv1+"?Lv1=1&preset="+v1pre+"&session="+jsexpId+"&id="+jsfexp+"&s=256&t=80&tg=1"; 
+		document.newimgview1.src=jsimgv1+"?Lv1=1&preset="+v1pre+"&session="+jsexpId+"&id="+jsfexp+"&s=256&t=80"+v1tg+v1sb; 
 		if ((lId=GetLinkId('Lv1')) != -1 ) {
-		document.links[lId].href="javascript:popUpMap('map.php?Lv1&preset="+v1pre+"&session="+jsexpId+"&id="+jsfexp+"')"; 
+		document.links[lId].href="javascript:popUpMap('map.php?Lv1=1&preset="+v1pre+"&session="+jsexpId+"&id="+jsfexp+v1tg+v1sb+"')"; 
 		}
 	} if (window.document.listform.v2view.value=='on') {
+		if (v2scale_bt) v2sb="&sb=1"; else v2sb="";
+		if (v2target_bt) v2tg="&tg=1"; else v2tg="";
 		var v2pre=document.listform.v2list.options[document.listform.v2list.selectedIndex].value;
-		document.newimgview2.src=jsimgv2+"?Lv2=1&preset="+v2pre+"&session="+jsexpId+"&id="+jsfexp+"&s=256&t=80&tg=1"; 
+		document.newimgview2.src=jsimgv2+"?Lv2=1&preset="+v2pre+"&session="+jsexpId+"&id="+jsfexp+"&s=256&t=80"+v2tg+v2sb; 
 		if ((lId=GetLinkId('Lv2')) != -1 ) {
-		document.links[lId].href="javascript:popUpMap('map.php?Lv2&preset="+v2pre+"&session="+jsexpId+"&id="+jsfexp+"')"; 
+		document.links[lId].href="javascript:popUpMap('map.php?Lv2=1&preset="+v2pre+"&session="+jsexpId+"&id="+jsfexp+v2tg+v2sb+"')"; 
 		}
 	}
 }

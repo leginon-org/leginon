@@ -46,6 +46,7 @@ class mrc {
 			$opts[]="--quality=$quality";
 			
 		$img_cmd = "python -OO ./py/mrc2jpg2out_new.py ".implode(" ",$opts)." \"$file\"";
+
 		// --- copy $pic into a buffer $imgbuffer
 		ob_start();
 		passthru($img_cmd);

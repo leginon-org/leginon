@@ -11,12 +11,13 @@
 
 // --- Set your leginon MySQL database server parameters
 
-$HOSTNAME = "cronus2";
+$HOSTNAME = "cronus1";
 $DBUSER = "usr_object";
 $DBPASSWORD = "";
 $DATABASE = "dbemdata";
 
 
 // --- Set External SQL server here (use for import/export application)
+$SQL_HOSTS[] = "cronus1";
 $SQL_HOSTS[] = "cronus2";
 $SQL_HOSTS[] = "stratocaster";

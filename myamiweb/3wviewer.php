@@ -96,7 +96,7 @@ if($Rfile) {
 
 
 // --- Get images type list
-$db = new mysql ('cronus2', 'anonymous', '' ,'dbemdata');
+$db = new mysql ('cronus1', 'anonymous', '' ,'dbemdata');
 $db->connect_db();
 
 // if ($mvsel=='' ) $t1=$mvImg; else $t1=$mvsel;
@@ -122,9 +122,9 @@ mysql_close();
 $v1Id=1;
 $v2Id=1;
 $mvId=1;
-$imgv1='getparentimg.php';
-$imgv2='getparentimg.php';
-$imgmv='getparentimg.php';
+$imgv1='getparentimgtarget.php';
+$imgv2='getparentimgtarget.php';
+$imgmv='getparentimgtarget.php';
 // $imgmv='mrc2string.php';
 
 // --- $view presets
@@ -181,6 +181,12 @@ function init() {
           document.listform.allfile.options[0].selected=true;
           window.document.listform.filename_text.value=currentfile; 
      }
+     toggleimage('v1target_bt', 'target_bt');
+     toggleimage('v2target_bt', 'target_bt');
+     toggleimage('mvtarget_bt', 'target_bt');
+     toggleimage('v1scale_bt', 'scale_bt');
+     toggleimage('v2scale_bt', 'scale_bt');
+     toggleimage('mvscale_bt', 'scale_bt');
      newfile();
      GetPresets();
  } 
@@ -197,7 +203,10 @@ function init() {
       <tr>
 	<td vAlign="bottom" height="25" ><b>Experiment</b></td>
         <td vAlign="bottom" bgColor="#FFFFFF" colSpan="2" rowSpan="3" height="10" >
-	[comment]
+	<?
+	$sessioninfo = $leginondata->getSessionInfo($expId);
+	echo $sessioninfo['Purpose'];
+	?>
 	</td>
       </tr>
       <tr>

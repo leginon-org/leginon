@@ -2,10 +2,19 @@
 		<!-- Debut Table Main View -->
 		<table class="bgcolor1" border="0" cellpadding="1" cellspacing="0" >
 		 <tr>
-			<td>Main View</td>
+			<td nowrap="nowrap">Main View</td>
+			<td width="35" nowrap="nowrap"><a href="javascript:toggleimage('mvtarget_bt', 'target_bt'); newfile();"
+					onmouseover="imageonfocus('mvtarget_bt', 'target_bt', '_over')" 
+					onmouseout="imageonfocus('mvtarget_bt', 'target_bt', '')" 
+					><img name="mvtarget_bt" src="img/target_bt_off.gif" border="0" height="15" vspace="0" hspace="0"></a>
+			<a href="javascript:toggleimage('mvscale_bt', 'scale_bt'); newfile();"
+					onmouseover="imageonfocus('mvscale_bt', 'scale_bt', '_over')" 
+					onmouseout="imageonfocus('mvscale_bt', 'scale_bt', '')" 
+					><img name="mvscale_bt" src="img/scale_bt_off.gif" border="0" height="15" vspace="0" hspace="0"></a></td>
+			<td width="400">&nbsp;</td>
 		 </tr>
 		 <tr>
-			<td>
+			<td colspan="3">
 			<table class="bgcolor0" border="0" cellpadding="0" cellspacing="0" >
 			 <tr>
 				<td>
