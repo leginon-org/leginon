@@ -63,6 +63,7 @@ class PeakFinder(object):
 		## fit quadratic
 		fit = linear_least_squares(dm, v)
 		coeffs = fit[0]
+		minsum = fit[1][0]
 
 		## find root
 		row0 = -coeffs[1] / 2.0 / coeffs[0]
@@ -71,7 +72,7 @@ class PeakFinder(object):
 		## find peak value
 		peak = coeffs[0] * row0**2 + coeffs[1] * row0 + coeffs[2] * col0**2 + coeffs[3] * col0 + coeffs[4]
 
-		return {'row': row0, 'col': col0, 'value': peak}
+		return {'row': row0, 'col': col0, 'value': peak, 'minsum': minsum}
 
 	def subpixelPeak(self, npix=5, newimage=None):
 		if newimage is not None:
@@ -108,10 +109,12 @@ class PeakFinder(object):
 		srow = peakrow + roipeak['row'] - npix/2
 		scol = peakcol + roipeak['col'] - npix/2
 		peakvalue = roipeak['value']
+		peakminsum = roipeak['minsum']
 
 		subpixelpeak = (srow, scol)
 		self.results['subpixel peak'] = subpixelpeak
 		self.results['subpixel peak value'] = peakvalue
+		self.results['minsum'] = peakminsum
 		return subpixelpeak
 
 
