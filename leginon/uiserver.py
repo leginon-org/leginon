@@ -208,21 +208,32 @@ class Server(XMLRPCServer, uidata.Container):
 	def addObjectCallback(self, namelist, typelist, value, read, write):
 		for client in self.uiclients:
 			# delete if fail?
-			client.execute('ADD', (namelist, typelist, value, read, write))
+			try:
+				client.execute('ADD', (namelist, typelist, value, read, write))
+			except xmlrpclib.ProtocolError, e:
+				print 'Error adding to client ' + str(client) + ': ' + e
 
 	def setObjectCallback(self, namelist, value):
 		for client in self.uiclients:
 			# delete if fail?
-			client.execute('SET', (namelist, value))
+			try:
+				client.execute('SET', (namelist, value))
+			except xmlrpclib.ProtocolError, e:
+				print 'Error setting client ' + str(client) + ': ' + e
 
 	def deleteObjectCallback(self, namelist):
 		for client in self.uiclients:
 			# delete if fail?
-			client.execute('DEL', (namelist,))
-			#threading.Thread(target=client.execute, args=('DEL', (namelist,))).start()
+			try:
+				client.execute('DEL', (namelist,))
+			except xmlrpclib.ProtocolError, e:
+				print 'Error deleting from client ' + str(client) + ': ' + e
 
 	def enableObjectCallback(self, namelist, enabled):
 		for client in self.uiclients:
 			# delete if fail?
-			client.execute('ENABLE', (namelist, enabled))
+			try:
+				client.execute('ENABLE', (namelist, enabled))
+			except xmlrpclib.ProtocolError, e:
+				print 'Error enabling client ' + str(client) + ': ' + e
 
