@@ -391,35 +391,53 @@ class CustomWidget(Tkinter.Frame):
 					return self.widgetFrom(parent, uiclient, subspec, name[1:])
 
 	# should be kwargs
-	def arrangeEntry(self, widget, width = 10, justify = Tkinter.RIGHT):
+	def arrangeEntry(self, widget, width = 10, justify = Tkinter.RIGHT, buttons=True):
 		widget.entry['width'] = width
 		widget.entry['justify'] = justify
 		widget.entry.grid(row = 0, column = 1, padx = 5, pady = 5, columnspan = 1)
-		if widget.getbutton is None:
-			widget.setbutton.grid(row = 0, column = 2, padx = 5, pady = 5)
+		if buttons:
+			if widget.getbutton is None:
+				widget.setbutton.grid(row = 0, column = 2, padx = 5, pady = 5)
+			else:
+				widget.getbutton.grid(row = 0, column = 2, padx = 5, pady = 5)
+				widget.setbutton.grid(row = 0, column = 3, padx = 5, pady = 5)
 		else:
-			widget.getbutton.grid(row = 0, column = 2, padx = 5, pady = 5)
-			widget.setbutton.grid(row = 0, column = 3, padx = 5, pady = 5)
+			if widget.setbutton is not None:
+				widget.setbutton.grid_forget()
+			if widget.getbutton is not None:
+				widget.getbutton.grid_forget()
 
-	def arrangeCombobox(self, widget, text=None):
+	def arrangeCombobox(self, widget, text=None, buttons=True):
 		if text is not None:
 			widget.label.configure(text=text)
 		widget.combo.grid(row = 0, column = 1, padx = 5, pady = 5, columnspan = 1)
-		if widget.getbutton is None:
-			widget.setbutton.grid(row = 0, column = 2, padx = 5, pady = 5)
+		if buttons:
+			if widget.getbutton is None:
+				widget.setbutton.grid(row = 0, column = 2, padx = 5, pady = 5)
+			else:
+				widget.getbutton.grid(row = 0, column = 2, padx = 5, pady = 5)
+				widget.setbutton.grid(row = 0, column = 3, padx = 5, pady = 5)
 		else:
-			widget.getbutton.grid(row = 0, column = 2, padx = 5, pady = 5)
-			widget.setbutton.grid(row = 0, column = 3, padx = 5, pady = 5)
+			if widget.setbutton is not None:
+				widget.setbutton.grid_forget()
+			if widget.getbutton is not None:
+				widget.getbutton.grid_forget()
 
-	def arrangeTree(self, widget, text=None):
+	def arrangeTree(self, widget, text=None, buttons=True):
 		if text is not None:
 			widget.label.configure(text=text)
 		widget.label.grid(row = 0, column = 0, sticky='w', padx = 5, pady = 5)
-		if widget.getbutton is None:
-			widget.setbutton.grid(row = 0, column = 1, padx = 5, pady = 5)
+		if buttons:
+			if widget.getbutton is None:
+				widget.setbutton.grid(row = 0, column = 1, padx = 5, pady = 5)
+			else:
+				widget.getbutton.grid(row = 0, column = 1, padx = 5, pady = 5)
+				widget.setbutton.grid(row = 0, column = 2, padx = 5, pady = 5)
 		else:
-			widget.getbutton.grid(row = 0, column = 1, padx = 5, pady = 5)
-			widget.setbutton.grid(row = 0, column = 2, padx = 5, pady = 5)
+			if widget.setbutton is not None:
+				widget.setbutton.grid_forget()
+			if widget.getbutton is not None:
+				widget.getbutton.grid_forget()
 #		widget.sc.frame.grid(row = 1, column = 0, padx = 5, pady = 5,
 #																											columnspan = 2)
 #		widget.sc.frame.configure(bd=1, relief=Tkinter.SUNKEN)
@@ -452,10 +470,10 @@ class ImageCorrectionWidget(CustomWidget):
 
 		widget = self.addWidget('Settings', corrector,
 														('Preferences', 'Frames to Average'), True)
-		self.arrangeEntry(widget, 2)
+		self.arrangeEntry(widget, 2, Tkinter.RIGHT, False)
 		widget = self.addWidget('Settings', corrector,
 														('Preferences', 'Camera Configuration'), True)
-		self.arrangeTree(widget)
+		self.arrangeTree(widget, None, False)
 
 		self.addWidget('Control', corrector, ('Acquire', 'Acquire Dark'))
 		self.addWidget('Control', corrector, ('Acquire', 'Acquire Bright'))
@@ -469,14 +487,14 @@ class GridAtlasWidget(CustomWidget):
 		CustomWidget.__init__(self, parent)
 
 		widget = self.addWidget('Settings', gridpreview,
-														('Preferences', 'Magnification'))
-		self.arrangeEntry(widget, 9)
+														('Preferences', 'Magnification'), True)
+		self.arrangeEntry(widget, 9, Tkinter.RIGHT, False)
 		widget = self.addWidget('Settings', stateimagemosaic,
-																			('Scale', 'Auto Scale'))
-		self.arrangeEntry(widget, 4)
+																			('Scale', 'Auto Scale'), True)
+		self.arrangeEntry(widget, 4, Tkinter.RIGHT, False)
 		widget = self.addWidget('Settings', stateimagemosaic,
-																			('Calibration Method',))
-		self.arrangeCombobox(widget, 'Positioning Method')
+																			('Calibration Method',), True)
+		self.arrangeCombobox(widget, 'Positioning Method', False)
 
 		self.addWidget('Control', gridpreview, ('Controls', 'Run'))
 		self.addWidget('Control', gridpreview, ('Controls', 'Stop'))
@@ -490,14 +508,14 @@ class TargetWidget(CustomWidget):
 		CustomWidget.__init__(self, parent)
 
 		widget = self.addWidget('Settings', acquisition,
-															('Presets', 'Preset Names'))
-		self.arrangeEntry(widget, 20, Tkinter.LEFT)
+															('Presets', 'Preset Names'), True)
+		self.arrangeEntry(widget, 20, Tkinter.LEFT, False)
 		widget = self.addWidget('Settings', acquisition,
-															('Preferences', 'TEM Parameter'))
-		self.arrangeCombobox(widget, 'Positioning Method')
+															('Preferences', 'TEM Parameter'), True)
+		self.arrangeCombobox(widget, 'Positioning Method', False)
 		widget = self.addWidget('Settings', acquisition,
-															('Preferences', 'Acquisition Type'))
-		self.arrangeCombobox(widget)
+															('Preferences', 'Acquisition Type'), True)
+		self.arrangeCombobox(widget, None, False)
 
 		widget = self.addWidget('Image', clicktargetfinder, ('Clickable Image',))
 		widget.iv.canvas.resize(0, 0, 512, 512)
