@@ -59,7 +59,7 @@ registerNodeClass('corrector', 'Corrector')
 registerNodeClass('matrixcalibrator', 'StageShiftCalibrator')
 registerNodeClass('matrixcalibrator', 'ImageShiftCalibrator')
 registerNodeClass('calibrationlibrary', 'CalibrationLibrary')
-
+registerNodeClass('presets', 'PresetsManager')
 registerNodeClass('gonmodeler', 'GonModeler')
 #registerNodeClass('acquireloop', 'AcquireLoop')
 registerNodeClass('navigator', 'SimpleNavigator')
