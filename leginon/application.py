@@ -114,6 +114,11 @@ class Application(object):
 			raise ValueError('Invalid binding specification')
 		return (eventclass, fromnode, tonode)
 
+	def getNodeNames(self):
+		if self.nodespecs is None:
+			return []
+		return map(lambda nsd: nsd['alias'], self.nodespecs)
+
 	def launch(self):
 		if not hasattr(self.node, 'addEventDistmap'):
 			raise RuntimeError('Application node unable to launch')

@@ -695,15 +695,16 @@ class Manager(node.Node):
 	def runApplication(self, app):
 		name = app.applicationdata['name']
 		nnodes = len(app.nodespecs)
+		self.applicationevent.clear()
 		self.onApplicationStarting(name, nnodes)
 		self.application = app
 		initializer = {}
 		initializer['session'] = self.session
 		initializer['application'] = app.applicationdata
 		initializer['launchers'] = app.launchernames.items()
-		self.appnodes = list(app.launch())
+		self.appnodes = app.getNodeNames()
+		app.launch()
 		self.applicationevent.wait()
-		self.applicationevent.clear()
 		d = data.LaunchedApplicationData(initializer=initializer)
 		self.publish(d, database=True, dbforce=True)
 		self.onApplicationStarted(name)
