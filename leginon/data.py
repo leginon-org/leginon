@@ -762,7 +762,6 @@ class SessionData(Data):
 		return Data.typemap() + (
 			('name', str),
 			('user', UserData),
-			('instrument', InstrumentData),
 			('image path', str),
 			('comment', str),
 		)
