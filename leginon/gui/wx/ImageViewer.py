@@ -1038,8 +1038,10 @@ class ImagePanel(wx.Panel):
 	def addTypeTool(self, name, **kwargs):
 		if self.selectiontool is None:
 			self.selectiontool = SelectionTool(self)
-			self.sizer.Add(self.selectiontool, (2, 0), (1, 1), wx.EXPAND|wx.ALL, 3)
+			self.sizer.Add(self.selectiontool, (2, 0), (1, 1),
+											wx.ALIGN_CENTER|wx.ALL, 3)
 		self.selectiontool.addTypeTool(name, **kwargs)
+		self.sizer.SetItemMinSize(self.selectiontool, self.selectiontool.GetSize())
 		self.sizer.Layout()
 
 class ClickTool(ImageTool):
@@ -1129,41 +1131,50 @@ class TypeTool(object):
 		evt = SettingsEvent(evt.GetEventObject(), self.name)
 		self.tb['settings'].GetEventHandler().AddPendingEvent(evt)
 
-class SelectionTool(wx.GridBagSizer):
+class SelectionTool(wx.Panel):
 	def __init__(self, parent):
+		wx.Panel.__init__(self, parent, -1, style=wx.SIMPLE_BORDER)
+		self.SetBackgroundColour(wx.Colour(255, 255, 220))
+
 		self.parent = parent
-		wx.GridBagSizer.__init__(self, 3, 3)
-		self.AddGrowableCol(1)
-		self.SetEmptyCellSize((0, 24))
+
+		self.sz = wx.GridBagSizer(3, 3)
+		self.sz.AddGrowableCol(1)
+		self.sz.SetEmptyCellSize((0, 24))
+
 		self.order = []
 		self.tools = {}
 		self.images = {}
 		self.targets = {}
 
+		self.SetSizerAndFit(self.sz)
+
 	def _addTypeTool(self, typetool):
 		n = len(self.tools)
-		self.Add(typetool.bitmap, (n, 0), (1, 1), wx.ALIGN_CENTER)
-		self.Add(typetool.label, (n, 1), (1, 1),
+		self.sz.Add(typetool.bitmap, (n, 0), (1, 1), wx.ALIGN_CENTER)
+		self.sz.Add(typetool.label, (n, 1), (1, 1),
 							wx.ALIGN_CENTER_VERTICAL|wx.RIGHT, 5)
 		if 'display' in typetool.tb:
-			self.Add(typetool.tb['display'], (n, 2), (1, 1), wx.ALIGN_CENTER)
+			self.sz.Add(typetool.tb['display'], (n, 2), (1, 1), wx.ALIGN_CENTER)
 			typetool.tb['display'].Bind(EVT_DISPLAY, self.onDisplay)
 		if 'target' in typetool.tb:
-			self.Add(typetool.tb['target'], (n, 3), (1, 1), wx.ALIGN_CENTER)
+			self.sz.Add(typetool.tb['target'], (n, 3), (1, 1), wx.ALIGN_CENTER)
 			self.targets[typetool.name] = None
 			typetool.tb['target'].Bind(EVT_TARGETING, self.onTargeting)
 		else:
 			self.images[typetool.name] = None
 		if 'settings' in typetool.tb:
-			self.Add(typetool.tb['settings'], (n, 4), (1, 1), wx.ALIGN_CENTER)
+			self.sz.Add(typetool.tb['settings'], (n, 4), (1, 1), wx.ALIGN_CENTER)
 
 	def addTypeTool(self, name, **kwargs):
 		if name in self.tools:
 			raise ValueError('Type \'%s\' already exists' % name)
-		typetool = TypeTool(self.parent, name, **kwargs)
+		typetool = TypeTool(self, name, **kwargs)
 		self._addTypeTool(typetool)
 		self.order.append(name)
 		self.tools[name] = typetool
+		self.sz.Layout()
+		self.Fit()
 
 	def hasType(self, name):
 		if name in self.tools:
@@ -1373,6 +1384,8 @@ class TargetImagePanel(ImagePanel):
 	def addTargetType(self, name, color, **kwargs):
 		kwargs['target'] = color
 		self._getSelectionTool().addTypeTool(name, **kwargs)
+		self.sizer.SetItemMinSize(self.selectiontool, self.selectiontool.GetSize())
+		self.sizer.Layout()
 
 	def getTargets(self, name):
 		return self._getSelectionTool().getTargets(name)
