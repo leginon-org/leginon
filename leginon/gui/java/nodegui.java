@@ -86,7 +86,7 @@ public class nodegui extends JFrame {
 	} else {
         nodegui window = new nodegui(args[0]);
 
-	window.setBounds(100,100,800,600);
+	window.setBounds(100,100,800,500);
         window.show();
 	}
     }
@@ -98,7 +98,7 @@ class GuiJIFContainer {
 	Vector content;
 	Container c;
 	String name, spectype;
-	int width=400, height=350;
+	int width=300, height=200;
 
 	public GuiJIFContainer(XmlRpcClient xmlrpcclient, Hashtable specWidget, Container c) throws Exception {
 		this.xmlrpcclient=xmlrpcclient;
@@ -285,6 +285,11 @@ class GuiData {
 			JPanel permPanel =new JPanel();	
                 	permPanel.setLayout(new BoxLayout(permPanel, BoxLayout.X_AXIS));
 			String permissions = (String)spec.get("permissions");
+			if (permissions.matches("[r]"))
+				new AddButton ("Get", xmlrpcclient, "GET", id, widgets, permPanel);
+			if (permissions.matches("[w]")) 
+				new AddButton ("Set", xmlrpcclient, "SET", id, widgets, permPanel);
+			mainPanel.add(permPanel);
 		}
 
 		Object defaultval = null;
