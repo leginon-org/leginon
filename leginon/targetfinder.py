@@ -33,10 +33,17 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		Get a list of all targets that have this image as their parent.
 		only want most recent versions of each
 		'''
-		targetquery = data.AcquisitionImageTargetData()
+
 		imagequery = data.AcquisitionImageData(initializer=imagedata)
 		imagequery['image'] = None
+
+		targetquery = data.AcquisitionImageTargetData()
 		targetquery['image'] = imagequery
+		## need these, so use empty instances
+		targetquery['session'] = data.SessionData()
+		targetquery['scope'] = data.ScopeEMData()
+		targetquery['camera'] = data.CameraEMData()
+		targetquery['preset'] = data.PresetData()
 		targets = self.research(datainstance=targetquery, fill=False)
 
 		## now filter out only the latest versions
@@ -48,7 +55,11 @@ class TargetFinder(imagewatcher.ImageWatcher):
 			if targetid not in have:
 				have[targetid] = target
 		havelist = have.values()
+		havelist.sort(self.compareTargetNumber)
 		return havelist
+
+	def compareTargetNumber(self, first, second):
+		return cmp(first['number'], second['number'])
 
 	def lastTargetNumber(self, imagedata):
 		'''
