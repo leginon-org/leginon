@@ -423,7 +423,8 @@ class Navigator(node.Node):
 
 		## main Navigator container
 		container = uidata.LargeContainer('Navigator')
-		container.addObjects((self.messagelog, controlcontainer, settingscontainer, locationcontainer))
+		container.addObject(self.messagelog, position={'expand': 'all'})
+		container.addObjects((controlcontainer, settingscontainer, locationcontainer))
 		self.uicontainer.addObject(container)
 
 class SimpleNavigator(Navigator):
