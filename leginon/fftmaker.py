@@ -20,7 +20,7 @@ class FFTMaker(imagewatcher.ImageWatcher):
 	panelclass = gui.wx.FFTMaker.Panel
 	settingsclass = data.FFTMakerSettingsData
 	defaultsettings = {
-		'process': True,
+		'process': False,
 		'mask radius': 0.01,
 		'label': '',
 	}
