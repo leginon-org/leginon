@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/matlabtargetfinder.py,v $
-# $Revision: 1.1 $
+# $Revision: 1.2 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-01-18 23:33:10 $
+# $Date: 2005-01-19 00:00:47 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -40,11 +40,7 @@ class MatlabTargetFinder(targetfinder.TargetFinder):
 			self.logger.error('Loading Python Matlab interface (pymat) failed')
 		self.start()
 
-	def matlab(self, image):
-		if handle is None:
-			handle = pymat.open()
-
-		pymat.put(handle, 'image', image)
+	def matlabFindTargets(self):
 		pymat.put(handle, 'focus', [])
 		pymat.put(handle, 'acquisition', [])
 
@@ -61,10 +57,6 @@ class MatlabTargetFinder(targetfinder.TargetFinder):
 		focus = pymat.get(handle, 'focus')
 		acquisition = pymat.get(handle, 'acquisition')
 
-		pymat.put(handle, 'image', [])
-		pymat.put(handle, 'focus', [])
-		pymat.put(handle, 'acquisition', [])
-
 		self.setTargets(acquisition, 'acquisition')
 		self.setTargets(focus, 'focus')
 
@@ -73,18 +65,30 @@ class MatlabTargetFinder(targetfinder.TargetFinder):
 
 		self.setImage(image, 'Image')
 
-		self.matlab(image)
+		if handle is None:
+			handle = pymat.open()
+		pymat.put(handle, 'image', image)
+
+		self.matlabFindTargets()
 
 		if self.settings['user check']:
 			# user now clicks on targets
+			self.panel.foundTargets()
 			self.notifyUserSubmit()
 			self.userpause.clear()
 			self.setStatus('user input')
 			self.userpause.wait()
+
 		self.setStatus('processing')
-		self.logger.info('Targets have been submitted')
+
+		pymat.put(handle, 'image', [])
+		pymat.put(handle, 'focus', [])
+		pymat.put(handle, 'acquisition', [])
+
 		self.publishTargets(imdata, 'focus', targetlist)
 		self.publishTargets(imdata, 'acquisition', targetlist)
+
+		self.logger.info('Targets have been submitted')
 
 	def submitTargets(self):
 		self.userpause.set()

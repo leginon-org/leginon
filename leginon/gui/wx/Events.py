@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Events.py,v $
-# $Revision: 1.14 $
+# $Revision: 1.15 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-12-11 00:52:21 $
+# $Date: 2005-01-19 00:00:47 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -45,6 +45,7 @@ eventFactory('Submit Targets')
 eventFactory('Targets Submitted')
 eventFactory('Manual Updated')
 eventFactory('Update Drawing')
+eventFactory('Found Targets')
 
 PlayerEventType = wx.NewEventType()
 SetImageEventType = wx.NewEventType()
