@@ -5,7 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.16 $
+ *	@version $Revision: 1.17 $
+ *	@version $Id: leginon.inc,v 1.17 2004-05-17 21:15:37 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
