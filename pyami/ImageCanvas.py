@@ -96,26 +96,20 @@ class ImageCanvas(Frame):
 		self.canvas['scrollregion'] = (x1,y1,x2,y2)
 
 	def use_numeric(self, ndata):
-		print 'use_numeric start'
 		## use the old value of clip
 		oldclip = self.clip()
 		self.numimage = NumericImage(ndata,clip=oldclip)
 		self.update_scaling_widgets()
 		self.update_canvas()
-		print 'use_numeric end'
 
 	def update_scaling_widgets(self):
-		print 'update_scaling_widgets START'
 		for sw in self.scalingwidget:
 			sw.set_from_imagecanvas()
-		print 'update_scaling_widgets DONE'
 
 	def clip(self, newclip=None):
 		if newclip:
-			print 'clipping'
 			self.__set_numimage_clip(newclip)
 			self.update_canvas()
-			print 'done clipping'
 
 		return self.__get_numimage_clip()
 
@@ -130,7 +124,6 @@ class ImageCanvas(Frame):
 			return None
 
 	def update_canvas(self):
-		print 'update_canvas START'
 		self.numimage.update_image()
 		self.photo = self.numimage.photoimage()
 		newwidth = self.photo.width()
@@ -138,17 +131,14 @@ class ImageCanvas(Frame):
 		self.resize(0,0,newwidth,newheight)
 		self.canvas.itemconfig(self.canimage, image=self.photo)
 		self.update()
-		print 'update_canvas DONE'
 
 	def zoom(self, factor):
-		print 'zooming'
 		self.zoomfactor = self.zoomfactor * factor
 		oldsize = self.numimage.orig_size
 		newsizex = int(round(oldsize[0] * self.zoomfactor))
 		newsizey = int(round(oldsize[1] * self.zoomfactor))
 		self.numimage.transform['output_size'] = (newsizex, newsizey)
 		self.update_canvas()
-		print 'done zooming'
 
 	def canvasx(self, *args, **kargs):
 		return self.canvas.canvasx(*args, **kargs)
@@ -286,13 +276,11 @@ class ScalingWidget(Frame):
 		if minmin == None:
 			return
 
-		print 'set_from_imagecanvas extrema', minmin, maxmax
 		self.__set_limits( (minmin, maxmax) )
 		self.update()
 		self.__callbacks_on()
 
 	def __set_limits(self, newlimits):
-		print 'set_limits ', newlimits
 		newmin = newlimits[0]
 		newmax = newlimits[1]
 		newres = (newmax - newmin) / 256.0
@@ -302,23 +290,18 @@ class ScalingWidget(Frame):
 		self.maxscale['from'] = newmin
 		self.minscale['to'] = newmax
 		self.maxscale['to'] = newmax
-		print 'set_limits end', self.minscale['from'], self.minscale['to']
 
 	def __set_values(self, newvalues):
 		self.minscale.set(newvalues[0])
 		self.maxscale.set(newvalues[1])
 
 	def __callbacks_on(self):
-		print 'callbacks on'
 		self.minscale['command'] = self._minscale_callback
 		self.maxscale['command'] = self._maxscale_callback
-		print 'callbacks on end'
 
 	def __callbacks_off(self):
-		print 'callbacks off'
 		self.minscale['command'] = None
 		self.maxscale['command'] = None
-		print 'callbacks off end'
 
 	def _minscale_callback(self, newval=None):
 		### turn off this callback while it is running
@@ -327,11 +310,9 @@ class ScalingWidget(Frame):
 			self.minscale['command'] = self._minscale_callback
 			return
 		self.minscalevalue = newval
-		print 'minscale_callback start', newval
 		self.rangemin.set(newval)
 		self.__update_imagecanvas()
 		self.minscale['command'] = self._minscale_callback
-		print 'minscale_callback end'
 
 	def _maxscale_callback(self, newval=None):
 		### turn off this callback while it is running
@@ -341,21 +322,17 @@ class ScalingWidget(Frame):
 			return
 		self.maxscalevalue = newval
 
-		print 'maxscale_callback start', newval
 		self.rangemax.set(newval)
 		self.__update_imagecanvas()
 		self.maxscale['command'] = self._maxscale_callback
-		print 'maxscale_callback end'
 
 	def __update_imagecanvas(self):
 		"""update the clipping on the imageitem"""
-		print 'update_imagecanvas START'
 		rangemin = self.minscale.get()
 		rangemax = self.maxscale.get()
 		newrange = (rangemin, rangemax)
 		for ic in self.imagecanvas:
 			ic.clip(newrange)
-		print 'update_imagecanvas DONE'
 
 if __name__ == '__main__':
 	mycan = ImageCanvas(None,bg='darkgrey')
