@@ -218,7 +218,6 @@ def power(numericarray, mask_radius=10):
 	fft = ffteng.transform(numericarray)
 	pow = Numeric.absolute(fft)
 	pow = Numeric.log(pow)
-	#pow = Numeric.clip(pow, clipmin, clipmax)
 	pow = shuffle(pow)
 	center_mask(pow, mask_radius)
 	return pow
