@@ -8,7 +8,7 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import manager
+import wxManager
 #import launcher
 #import socket
 import uiclient
@@ -36,5 +36,5 @@ stats.print_callers(30)
 #uiclient.UIApp(location['UI'], 'Leginon II')
 #m.exit()
 
-m = manager.ManagerApp(None)
+m = wxManager.ManagerApp(None)
 m.MainLoop()

@@ -27,9 +27,9 @@ import extendedlogging
 import copy
 import time
 import uiclient
-import wx
 import newdict
 import socket
+import wxManager
 
 class DataBinder(databinder.DataBinder):
 	def handleData(self, newdata):
@@ -67,41 +67,6 @@ class DataBinder(databinder.DataBinder):
 			except (KeyError, ValueError):
 				pass
 
-class ManagerApp(wx.App):
-	def __init__(self, session, tcpport=None, xmlrpcport=None, **kwargs):
-		self.session = session
-		self.tcpport = tcpport
-		self.xmlrpcport = xmlrpcport
-		self.kwargs = kwargs
-		wx.App.__init__(self, 0)
-
-	def OnInit(self):
-		self.manager = Manager(self.session, self.tcpport, self.xmlrpcport,
-														**self.kwargs)
-		self.SetTopWindow(self.manager.frame)
-		self.manager.frame.Show(True)
-		return True
-
-class ManagerFrame(wx.Frame):
-	def __init__(self, location):
-		wx.Frame.__init__(self, None, -1, 'Manager', size=(750, 750))
-		self.panel = ManagerPanel(self, location)
-
-class ManagerPanel(wx.ScrolledWindow):
-	def __init__(self, parent, location):
-		self._enabled = True
-		self._shown = True
-		wx.ScrolledWindow.__init__(self, parent, -1)
-		self.SetScrollRate(5, 5)
-		containerclass = uiclient.SimpleContainerWidget
-		containerclass = uiclient.ClientContainerFactory(containerclass)
-		self.container = containerclass('UI Client', self, self, location, {})
-		self.SetSizer(self.container)
-		self.Fit()
-
-	def layout(self):
-		pass
-
 class Manager(node.Node):
 	'''Overlord of the nodes. Handles node communication (data and events).'''
 	def __init__(self, session, tcpport=None, xmlrpcport=None, **kwargs):
@@ -115,7 +80,7 @@ class Manager(node.Node):
 		node.Node.__init__(self, name, session, otherdatabinder=mydatabinder,
 												xmlrpcport=xmlrpcport, **kwargs)
 
-		self.frame = ManagerFrame(self.uicontainer.location())
+		self.frame = wxManager.ManagerFrame(self)
 
 		self.nodelocations = {}
 		self.broadcast = []
@@ -151,7 +116,8 @@ class Manager(node.Node):
 		if setup.session is None:
 			raise RuntimeError('Setup cancelled')
 
-		self.uicontainer.session = self.session = setup.session
+		self.session = setup.session
+		self.uicontainer.session = setup.session
 		self.uicontainer.getUserPreferencesFromDatabase()
 
 		self.defineUserInterface()
@@ -175,7 +141,6 @@ class Manager(node.Node):
 						self.addNode(location, hostname)
 				except (IOError, TypeError, socket.error):
 					self.messagelog.warning('Cannot add instrument\'s launcher.')
-
 
 	def location(self):
 		location = leginonobject.LeginonObject.location(self)
