@@ -165,7 +165,9 @@ class TargetWatcher(watcher.Watcher):
 				self.uicontrolstatus.set('Aborted')
 				targetliststatus = 'aborted'
 				donetarget = data.AcquisitionImageTargetData(initializer=target, status='aborted')
-				self.publish(donetarget, database=True, dbforce=True)
+				#self.publish(donetarget, database=True, dbforce=True)
+				## Why use force????????????
+				self.publish(donetarget, database=True)
 				## continue so that remaining targets are marked as done also
 				continue
 
@@ -181,7 +183,9 @@ class TargetWatcher(watcher.Watcher):
 
 			adjustedtarget = data.AcquisitionImageTargetData(initializer=target,
 																												status='processing')
-			self.publish(adjustedtarget, database=True, dbforce=True)
+			#self.publish(adjustedtarget, database=True, dbforce=True)
+			## Why force???
+			self.publish(adjustedtarget, database=True)
 
 			# this while loop allows target to repeat
 			process_status = 'repeat'
@@ -212,7 +216,9 @@ class TargetWatcher(watcher.Watcher):
 					adjustedtarget['delta row'] = target['delta row'] + adjust['rows']
 					adjustedtarget['delta column'] = target['delta column'] \
 																														+ adjust['columns']
-					self.publish(adjustedtarget, database=True, dbforce=True)
+					#self.publish(adjustedtarget, database=True, dbforce=True)
+					## Why force???
+					self.publish(adjustedtarget, database=True )
 					# 'done.'
 				#else:
 				#	 'NOT DRIFTED TARGET'
@@ -248,7 +254,9 @@ class TargetWatcher(watcher.Watcher):
 
 			donetarget = data.AcquisitionImageTargetData(initializer=adjustedtarget,
 																										status='done')
-			self.publish(donetarget, database=True, dbforce=True)
+			#self.publish(donetarget, database=True, dbforce=True)
+			## Why force???
+			self.publish(donetarget, database=True)
 
 		#self.uitargetid.set('')
 		#self.uitargetnumber.set('')
