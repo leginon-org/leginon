@@ -23,17 +23,16 @@ import EM
 
 class GonModeler(node.Node):
 	def __init__(self, id, session, managerlocation, **kwargs):
-		self.cam = camerafuncs.CameraFuncs(self)
 		self.correlator = correlator.Correlator()
 		self.peakfinder = peakfinder.PeakFinder()
 		self.settle = 5.0
 		self.threadstop = threading.Event()
 		self.threadlock = threading.Lock()
+		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 		self.emclient = EM.EMClient(self)
+		self.cam = camerafuncs.CameraFuncs(self)
 		self.calclient = calibrationclient.ModeledStageCalibrationClient(self)
 		self.pcal = calibrationclient.PixelSizeCalibrationClient(self)
-
-		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 		self.defineUserInterface()
 		self.start()
 

@@ -23,11 +23,11 @@ class ManualAcquisition(node.Node):
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.loopstop = threading.Event()
 		self.loopstop.set()
+		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 		self.emclient = EM.EMClient(self)
 		self.camerafuncs = camerafuncs.CameraFuncs(self)
 		self.gridmapping = {'None': None}
 		self.lowdosemode = None
-		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 		self.defineUserInterface()
 		self.start()
 

@@ -148,6 +148,10 @@ class Watcher(node.Node):
 			self.getData(pubevent)
 
 	def getData(self, pubevent):
+		# need to ignore datahandlers, so check reference first
+		ref = newdata.speical_getitem('data', dereference=False)
+		if ref.datahandler:
+			return
 		newdata = pubevent['data']
 		if newdata is not None:
 			if self.uidataqueueflag.get():

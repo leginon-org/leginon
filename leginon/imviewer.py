@@ -16,12 +16,14 @@ import imagefun
 import Mrc
 import node, data, event
 import uidata
+import EM
 
 class ImViewer(imagewatcher.ImageWatcher):
 	eventoutputs = imagewatcher.ImageWatcher.eventoutputs + [event.ImageAcquireEvent]
 	def __init__(self, id, session, managerlocation, **kwargs):
 		imagewatcher.ImageWatcher.__init__(self, id, session, managerlocation, **kwargs)
 
+		self.emclient = EM.EMClient(self)
 		self.cam = camerafuncs.CameraFuncs(self)
 		self.clicklock = threading.Lock()
 		self.looplock = threading.Lock()

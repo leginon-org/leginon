@@ -32,15 +32,15 @@ class AbortError(Exception):
 class SimpleCorrector(node.Node):
 	eventoutputs = node.Node.eventoutputs + [event.DarkImagePublishEvent,
 																						event.BrightImagePublishEvent]
-	def __init__(self, id, session, managerlocation, tcpport=None, **kwargs):
+	def __init__(self, id, session, managerlocation, **kwargs):
 		self.references = {}
 		self.abortevent = threading.Event()
+		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 		self.emclient = EM.EMClient(self)
 		self.camerafuncs = camerafuncs.CameraFuncs(self)
 
 		self.initializeLogger(id[-1])
 
-		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 
 		self.imagedata = data.DataHandler(data.CorrectedCameraImageData, getdata=self.acquireCorrectedImageData)
 		self.publish(self.imagedata, pubevent=True, broadcast=True)
@@ -470,7 +470,7 @@ class Corrector(node.Node):
 	  in the corrections directory.
 	'''
 	eventoutputs = node.Node.eventoutputs + [event.DarkImagePublishEvent, event.BrightImagePublishEvent]
-	def __init__(self, id, session, managerlocation, tcpport=None, **kwargs):
+	def __init__(self, id, session, managerlocation, **kwargs):
 		self.initializeLogger(id[-1])
 
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
