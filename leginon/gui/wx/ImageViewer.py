@@ -776,7 +776,7 @@ class TargetTool(ImageTool):
 		self.setTargetButtonBitmap()
 
 	def addTargetType(self, name):
-		if self.getTargetType is None:
+		if self.getTargetType() is None:
 			self.setTargetType(name)
 		self.addComboBox(name)
 
@@ -817,7 +817,8 @@ class TargetTool(ImageTool):
 				self.sizer.Add(self.combobox, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 3)
 				self.sizer.Layout()
 			elif len(self.imagepanel.target_types) == 1:
-				self.target_type = name
+				#self.target_type = name
+				self.setTargetType(self.target_type)
 				self.sizer.Layout()
 		else:
 			self.combobox.Append(name)
