@@ -9,6 +9,11 @@ import gui.wx.Events
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'corrector'
+	tools = [
+		'settings',
+		'acquisition type',
+		'acquire',
+	]
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
 
@@ -38,30 +43,8 @@ class Panel(gui.wx.Node.Panel):
 		self.szplan.Add(self.beditplan, (2, 1), (1, 2),
 												wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
-		self.bsettings = wx.Button(self, -1, 'Settings...')
 		self.szbuttons = wx.GridBagSizer(5, 5)
-		self.szbuttons.Add(self.bsettings, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		self.szmain.Add(self.szbuttons, (3, 0), (1, 1), wx.ALIGN_CENTER)
-
-		# controls
-		self.szcontrols = self._getStaticBoxSizer('Controls', (4, 0), (1, 1),
-																wx.EXPAND|wx.ALL)
-		szrb = wx.GridBagSizer(0, 0)
-		self.rbdark = wx.RadioButton(self, -1, 'Dark reference', style=wx.RB_GROUP)
-		self.rbbright = wx.RadioButton(self, -1, 'Bright reference')
-		self.rbraw = wx.RadioButton(self, -1, 'Raw image')
-		self.rbcorrected = wx.RadioButton(self, -1, 'Corrected image')
-		szrb.Add(self.rbdark, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szrb.Add(self.rbbright, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szrb.Add(self.rbraw, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szrb.Add(self.rbcorrected, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.szcontrols.Add(szrb, (0, 0), (1, 1), wx.ALIGN_CENTER)
-
-		self.bacquire = wx.Button(self, -1, 'Acquire')
-		self.szcontrols.Add(self.bacquire, (1, 0), (1, 1), wx.ALIGN_CENTER)
-		self.szcontrols.AddGrowableRow(0)
-		self.szcontrols.AddGrowableRow(1)
-		self.szcontrols.AddGrowableCol(0)
 
 		# image
 		self.szimage = self._getStaticBoxSizer('Image', (1, 1), (5, 1),
@@ -78,43 +61,54 @@ class Panel(gui.wx.Node.Panel):
 		self.SetupScrolling()
 
 	def onNodeInitialized(self):
+		choices = [
+			'Dark reference',
+			'Bright reference',
+			'Raw image',
+			'Corrected image'
+		]
+		selection = 0
+		self.toolbar.setChoices(self, 'acquisition type', choices)
+		self.toolbar.setSelection(self, 'acquisition type', selection)
+		self.acquisitiontype = choices[selection]
+
 		self.dialog = SettingsDialog(self)
+
 		self.node.getPlan()
 		self.setPlan(self.node.plan)
+
 		self.Bind(gui.wx.Events.EVT_ACQUISITION_DONE, self.onAcquisitionDone)
-		self.Bind(wx.EVT_BUTTON, self.onSettingsButton, self.bsettings)
 		self.Bind(wx.EVT_BUTTON, self.onEditPlan, self.beditplan)
-		self.Bind(wx.EVT_BUTTON, self.onAcquire, self.bacquire)
 
 	def onSetImage(self, evt):
 		gui.wx.Node.Panel.onSetImage(self, evt)
 		self.statspanel.setStats(evt.statistics)
 
-	def onSettingsButton(self, evt):
+	def onSettingsTool(self, evt):
 		self.dialog.ShowModal()
 		self.node.getPlan()
 		self.setPlan(self.node.plan)
 
 	def _acquisitionEnable(self, enable):
 		self.beditplan.Enable(enable)
-		self.bsettings.Enable(enable)
-		self.rbdark.Enable(enable)
-		self.rbbright.Enable(enable)
-		self.rbraw.Enable(enable)
-		self.rbcorrected.Enable(enable)
-		self.bacquire.Enable(enable)
+		self.toolbar.enable(self, 'settings', enable)
+		self.toolbar.enable(self, 'acquisition type', enable)
+		self.toolbar.enable(self, 'acquire', enable)
 
-	def onAcquire(self, evt):
+	def onAcquireTool(self, evt):
 		self._acquisitionEnable(False)
-		if self.rbdark.GetValue():
+		if self.acquisitiontype == 'Dark reference':
 			method = self.node.acquireDark
-		elif self.rbbright.GetValue():
+		elif self.acquisitiontype == 'Bright reference':
 			method = self.node.acquireBright
-		elif self.rbraw.GetValue():
+		elif self.acquisitiontype == 'Raw image':
 			method = self.node.acquireRaw
-		elif self.rbcorrected.GetValue():
+		elif self.acquisitiontype == 'Corrected image':
 			method = self.node.acquireCorrected
 		threading.Thread(target=method).start()	
+
+	def onAcqTypeChoice(self, evt):
+		self.acquisitiontype = evt.GetString()
 
 	def onAcquisitionDone(self, evt):
 		self._acquisitionEnable(True)

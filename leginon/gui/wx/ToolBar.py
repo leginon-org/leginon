@@ -10,6 +10,7 @@ ID_CALIBRATE = 1006
 ID_MEASURE = 1007
 ID_ABORT = 1008
 ID_SUBMIT = 1009
+ID_ACQUISITION_TYPE = 1010
 
 class ToolBar(wx.ToolBar):
 	def __init__(self, parent):
@@ -21,6 +22,8 @@ class ToolBar(wx.ToolBar):
 
 		tools = [
 			('settings', ID_SETTINGS, 'settings.png', 'Settings', 'onSettingsTool'),
+			('acquisition type', ID_ACQUISITION_TYPE, wx.Choice,
+				'Acquisition type', 'onAcqTypeChoice'),
 			('acquire', ID_ACQUIRE, 'acquire.png', 'Acquire', 'onAcquireTool',),
 			('calibrate', ID_CALIBRATE, 'play.png', 'Calibrate',
 				'onCalibrateTool',),
@@ -36,26 +39,37 @@ class ToolBar(wx.ToolBar):
 		self.ids = {}
 		self.methods = {}
 		self.tools = {}
+		self.names = {}
 		for tool in tools:
 			self.order.append(tool[0])
 			self.ids[tool[0]] = tool[1]
+			self.names[tool[1]] = tool[0]
 			self.methods[tool[1]] = tool[4]
-			if tool[2]:
-				bitmap = wx.BitmapFromImage(wx.Image(icons.getPath(tool[2])))
-			else:
-				bitmap = wx.EmptyBitmap(16, 16)
 			tooltip = tool[3]
-			self.AddSimpleTool(tool[1], bitmap, tooltip)
+			if isinstance(tool[2], type) and issubclass(tool[2], wx.Control):
+				control = tool[2](self, tool[1])
+				control.SetToolTip(wx.ToolTip(tooltip))
+				self.tools[tool[0]] = control
+				self.AddControl(control)
+			else:
+				if tool[2]:
+					bitmap = wx.BitmapFromImage(wx.Image(icons.getPath(tool[2])))
+				else:
+					bitmap = wx.EmptyBitmap(16, 16)
+				self.tools[tool[0]] = self.AddSimpleTool(tool[1], bitmap, tooltip)
 
 		self.Realize()
 
 		for tool in self.order:
 			toolid = self.ids[tool]
-			self.tools[tool] = self.RemoveTool(toolid)
+			if not isinstance(self.tools[tool], wx.ToolBarToolBase):
+				self.tools[tool].Show(False)
+			self.RemoveTool(toolid)
 
-		self.states = {}
+		self.settings = {}
 
-		self.Bind(wx.EVT_TOOL, self.onTool)
+		self.Bind(wx.EVT_TOOL, self.onEvent)
+		self.Bind(wx.EVT_CHOICE, self.onEvent)
 
 	def setSpacerWidth(self, width):
 		self.spacer.SetSize((width, -1))
@@ -74,22 +88,37 @@ class ToolBar(wx.ToolBar):
 			toolid = self.ids[tool]
 			if self.FindById(toolid) is None:
 				if tool in tools:
-					self.AddToolItem(self.tools[tool])
+					if isinstance(self.tools[tool], wx.ToolBarToolBase):
+						self.AddToolItem(self.tools[tool])
+					else:
+						self.AddControl(self.tools[tool])
+						self.tools[tool].Show(True)
 			else:
 				if tool not in tools:
+					if not isinstance(self.tools[tool], wx.ToolBarToolBase):
+						self.tools[tool].Show(False)
 					self.RemoveTool(toolid)
 		if tools:
 			self._setStates(self.panel)
 		self.Realize()
 		self.Enable(True)
 
-	def onTool(self, evt):
+	def onEvent(self, evt):
 		if self.panel is None:
 			return
+
+		if isinstance(evt.GetEventObject(), wx.Choice):
+			try:
+				name = self.names[evt.GetId()]
+			except KeyError:
+				raise RuntimeError
+			self.settings[self.panel][name]['selection'] = evt.GetInt()
+
 		try:
 			name = self.methods[evt.GetId()]
 		except KeyError:
 			raise RuntimeError
+
 		try:
 			method = getattr(self.panel, name)
 		except AttributeError:
@@ -97,30 +126,62 @@ class ToolBar(wx.ToolBar):
 		method(evt)
 
 	def _initializeStates(self, panel):
-		if panel in self.states:
+		if panel in self.settings:
 			return
-		self.states[panel] = {}
+		self.settings[panel] = {}
 		for tool in panel.tools:
-			self.states[panel][tool] = {'enabled': True, 'toggled': False}
+			self.settings[panel][tool] = {}
+			self.settings[panel][tool]['enabled'] = True
+			if isinstance(self.tools[tool], wx.ToolBarToolBase):
+				self.settings[panel][tool]['toggled'] = False
+			elif isinstance(self.tools[tool], wx.Choice):
+				self.settings[panel][tool]['choices'] = []
+				self.settings[panel][tool]['selection'] = -1
 
 	def _setStates(self, panel):
 		self._initializeStates(panel)
-		for tool, toolid in self.ids.items():
-			if self.FindById(toolid) is not None:
-				self.ToggleTool(toolid, self.states[panel][tool]['toggled'])
-				self.EnableTool(toolid, self.states[panel][tool]['enabled'])
+		for tool in panel.tools:
+			toolid = self.ids[tool]
+			if isinstance(self.tools[tool], wx.ToolBarToolBase):
+				self.EnableTool(toolid, self.settings[panel][tool]['enabled'])
+				self.ToggleTool(toolid, self.settings[panel][tool]['toggled'])
+			elif isinstance(self.tools[tool], wx.Choice):
+				self.tools[tool].Enable(self.settings[panel][tool]['enabled'])
+				self.tools[tool].Clear()
+				choices = self.settings[panel][tool]['choices']
+				if choices:
+					self.tools[tool].AppendItems(choices)
+				selection = self.settings[panel][tool]['selection']
+				if choices and selection >= 0:
+					self.tools[tool].SetSelection(selection)
 
 	def toggle(self, panel, tool, value):
 		self._initializeStates(panel)
-		self.states[panel][tool]['toggled'] = value
+		self.settings[panel][tool]['toggled'] = value
 		if self.panel is panel:
 			toolid = self.ids[tool]
 			self.ToggleTool(toolid, value)
 
-	def enabled(self, panel, tool, value):
+	def enable(self, panel, tool, value):
 		self._initializeStates(panel)
-		self.states[panel][tool]['enabled'] = value
+		self.settings[panel][tool]['enabled'] = value
 		if self.panel is panel:
 			toolid = self.ids[tool]
 			self.EnableTool(toolid, value)
+
+	def setChoices(self, panel, tool, choices):
+		self._initializeStates(panel)
+		self.settings[panel][tool]['choices'] = choices
+		if self.panel is panel:
+			self.tools[tool].Clear()
+			if choices:
+				self.tools[tool].AppendItems(choices)
+
+	def setSelection(self, panel, tool, selection):
+		self._initializeStates(panel)
+		self.settings[panel][tool]['selection'] = selection
+		if self.panel is panel:
+			count = self.tools[tool].GetCount()
+			if count > 0 and selection >= 0:
+				self.tools[tool].SetSelection(selection)
 

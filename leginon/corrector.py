@@ -120,7 +120,7 @@ class Corrector(node.Node):
 		try:
 			self.cam.setCameraDict(self.settings['camera settings'])
 			imagedata = self.cam.acquireCameraImageData(correction=False)
-		except node.PublishError:
+		except (EM.ScopeUnavailable, camerafuncs.NoEMError):
 			self.logger.exception('Cannot set EM parameter, EM may not be running')
 		else:
 			imagearray = imagedata['image']
@@ -134,11 +134,15 @@ class Corrector(node.Node):
 		except node.PublishError:
 			self.logger.exception('Cannot set EM parameter, EM may not be running')
 		else:
-			self.displayImage(imagedata)
+			if imagedata is not None:
+				self.displayImage(imagedata)
 		self.panel.acquisitionDone()
 
 	def displayImage(self, imagedata):
-		self.setImage(imagedata.astype(Numeric.Float32), self.stats(imagedata))
+		if imagedata is None:
+			self.setImage(None, {})
+		else:
+			self.setImage(imagedata.astype(Numeric.Float32), self.stats(imagedata))
 
 	def retrievePlan(self, corstate):
 		qplan = data.CorrectorPlanData()
@@ -323,13 +327,15 @@ class Corrector(node.Node):
 
 	def acquireCorrectedArray(self):
 		imagedata = self.acquireCorrectedImageData()
+		if imagedata is None:
+			return None
 		return imagedata['image']
 
 	def acquireCorrectedImageData(self):
 		try:
 			imagedata = self.cam.acquireCameraImageData(correction=0)
-		except camerafuncs.NoEMError:
-			self.logger.error('EM not running')
+		except (EM.ScopeUnavailable, camerafuncs.NoEMError):
+			self.logger.exception('Cannot set EM parameter, EM may not be running')
 			return None
 		numimage = imagedata['image']
 		camdata = imagedata['camera']
