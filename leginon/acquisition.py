@@ -205,12 +205,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if imagedata is None:
 			return
 
-		## attach preset to imagedata
-		#imagedata.content['preset'] = dict(preset)
-		imagedata['preset'] = presetdata
+		## attach preset to imagedata and create PresetImageData
+		## use same id as original imagedata
+		dataid = imagedata['id']
+		pimagedata = data.PresetImageData(dataid, initializer=imagedata, preset=presetdata)
 
 		print 'publishing image'
-		self.publish(imagedata, eventclass=event.CameraImagePublishEvent)
+		self.publish(pimagedata, eventclass=event.PresetImagePublishEvent, database=True)
 		print 'image published'
 
 	def uiToScope(self, presetname):
