@@ -20,20 +20,43 @@ class Grid(object):
 											position[1] - bitmapoffset[1])
 		self.bitmap = wxStaticBitmap(parent, -1, bitmap, bitmapposition, bitmapsize)
 
-		labelposition = (position[0] - 20, position[1] + 6)
-		self.label = wxStaticText(parent, -1, str(self.number), labelposition)
+		labelposition = (position[0] - 14, position[1] - 16)
+		self.label = wxStaticText(parent, -1, str(self.number),
+																		labelposition)
+		font = self.label.GetFont()
+		font.SetPointSize(6)
+		self.label.SetFont(font)
 		self.label.SetBackgroundColour(wxWHITE)
 
 		EVT_LEFT_UP(self.bitmap, self.onLeftUp)
+
+	def makeBitmap(self):
+		mask = wxEmptyBitmap(11, 11)
+		dc = wxMemoryDC()
+		dc.SelectObject(mask)
+		dc.SetPen(wxWHITE_PEN)
+		dc.DrawEllipse(0, 0, 11, 11)
+		dc.SelectObject(wxNullBitmap)
+
+		bitmap = wxEmptyBitmap(11, 11)
+		bitmap.SetMask(wxMaskColour(mask, wxBLACK))
+		return bitmap
 
 	def onLeftUp(self, evt):
 		self.callback(self.number)
 
 	def setOrder(self, order):
-		self.label.SetLabel(str(self.number) + ' ' + str(order))
+		order.sort()
+		label = ''
+		if order:
+			label += '[' + str(order[0])
+			if len(order) > 1:
+				label += ',...'
+			label += ']'
+		self.label.SetLabel(str(self.number) + ' ' + label)
 
 class GridTrayPanel(wxPanel):
-	def __init__(self, parent, callback):
+	def __init__(self, parent, callback=None):
 		wxPanel.__init__(self, parent, -1)
 		self.callback = callback
 
@@ -57,7 +80,8 @@ class GridTrayPanel(wxPanel):
 																self.gridCallback))
 
 	def gridCallback(self, number):
-		self.callback(self.queue + [number])
+		if callable(self.callback):
+			self.callback(self.queue + [number])
 
 	def set(self, queue):
 		self.queue = queue
@@ -86,6 +110,6 @@ if __name__ == '__main__':
 			return true
 
 	app = MyApp(0)
-	app.panel.setGrids([1,4,5,32,87,7,5,2,2,4,5,6,7,8])
+	app.panel.set([1,4,5,53,32,87,7,5,2,2,4,53,5,6,7,8])
 	app.MainLoop()
 

@@ -464,7 +464,7 @@ class Blob(object):
 class TooManyBlobs(Exception):
 	pass
 
-def find_blobs_slow(image, mask, border=0, maxblobs=300, maxblobsize=100):
+def find_blobs_slow(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize=0):
 	print 'slow blobs'
 	shape = image.shape
 	blobs = []
@@ -485,6 +485,8 @@ def find_blobs_slow(image, mask, border=0, maxblobs=300, maxblobsize=100):
 				err = newblob.add_point(row, col, tmpmask)
 				if (maxblobsize is not None) and (len(newblob.pixel_list) > maxblobsize):
 					continue
+				if (minblobsize is not None) and (len(newblob.pixel_list) < minblobsize):
+					continue
 				if err:
 					continue
 				blobs.append(newblob)
@@ -497,7 +499,7 @@ def find_blobs_slow(image, mask, border=0, maxblobs=300, maxblobsize=100):
 		blob.calc_stats()
 	return blobs
 
-def find_blobs_fast(image, mask, border=0, maxblobs=300, maxblobsize=100):
+def find_blobs_fast(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize=0):
 	print 'fast blobs'
 	shape = image.shape
 	tmpmask = mask.astype(Numeric.Int)
@@ -515,6 +517,7 @@ def find_blobs_fast(image, mask, border=0, maxblobs=300, maxblobsize=100):
 	## then fake them into the original blob class
 	fakeblobs = []
 	toobig = 0
+	toosmall = 0
 	for blob in blobs:
 		fakeblob = Blob(image, mask)
 		fakeblob.pixel_list = zip(blob['pixelrow'], blob['pixelcol'])
@@ -523,11 +526,15 @@ def find_blobs_fast(image, mask, border=0, maxblobs=300, maxblobsize=100):
 		if len(fakeblob.pixel_list) >= maxblobsize:
 			toobig += 1
 			continue
+		if len(fakeblob.pixel_list) < minblobsize:
+			toosmall += 1
+			continue
 		fakeblobs.append(fakeblob)
 		if (maxblobs is not None) and (len(fakeblobs) > maxblobs):
 			raise TooManyBlobs('found more than %s blobs' % (maxblobs,))
 
 	print 'rejected %s oversized blobs' % (toobig,)
+	print 'rejected %s undersized blobs' % (toosmall,)
 
 	print 'Found %s blobs.' % (len(fakeblobs),)
 
