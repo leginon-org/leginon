@@ -7,7 +7,7 @@ import uiclient
 import wx
 import wx.lib.intctrl
 import gui.wx.Launcher
-import wxLogging
+import gui.wx.Logging
 
 AddNodeEventType = wx.NewEventType()
 RemoveNodeEventType = wx.NewEventType()
@@ -301,7 +301,7 @@ class Frame(wx.Frame):
 		dialog.Destroy()
 
 	def onMenuLogging(self, evt):
-		dialog = wxLogging.LoggingConfigurationDialog(self)
+		dialog = gui.wx.Logging.LoggingConfigurationDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
 

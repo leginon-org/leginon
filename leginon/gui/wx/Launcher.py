@@ -3,7 +3,7 @@ import launcher
 import threading
 import wx
 import wx.lib.scrolledpanel
-import wxLogging
+import gui.wx.Logging
 import os, sys
 
 CreateNodeEventType = wx.NewEventType()
@@ -93,7 +93,7 @@ class Frame(wx.Frame):
 		self.Close()
 
 	def onMenuLogging(self, evt):
-		dialog = wxLogging.LoggingConfigurationDialog(self)
+		dialog = gui.wx.Logging.LoggingConfigurationDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
 

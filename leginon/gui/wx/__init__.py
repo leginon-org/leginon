@@ -8,6 +8,7 @@ __all__ = [
 		'FFTMaker',
 		'Focuser',
 		'Launcher',
+		'Logging',
 		'Manager',
 		'MosaicTargetFinder',
 		'Navigator'
