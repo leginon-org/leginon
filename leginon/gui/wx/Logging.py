@@ -285,6 +285,8 @@ class LoggingConfigurationDialog(wx.Dialog, LoggingConfiguration):
 
 		self.handlerspanel = HandlersPanel(self)
 
+		self.btest = wx.Button(self, -1, 'Test')
+
 		donebutton = wx.Button(self, wx.ID_OK, 'Done')
 		donebutton.SetDefault()
 		buttonsizer = wx.GridBagSizer(0, 0)
@@ -293,14 +295,15 @@ class LoggingConfigurationDialog(wx.Dialog, LoggingConfiguration):
 		buttonsizer.AddGrowableCol(0)
 
 		sizer = wx.GridBagSizer(5, 5)
-		sizer.Add(self.tree, (0, 0), (3, 1), wx.EXPAND)
+		sizer.Add(self.tree, (0, 0), (4, 1), wx.EXPAND)
 		sizer.SetItemMinSize(self.tree, (self.tree.GetSize()[0]*2, -1))
 		sizer.Add(self.cbpropagate, (0, 1), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'Level:')
 		sizer.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sizer.Add(self.clevel, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sizer.Add(self.handlerspanel, (2, 1), (1, 2), wx.EXPAND)
-		sizer.Add(buttonsizer, (3, 1), (1, 3), wx.EXPAND)
+		sizer.Add(self.btest, (3, 1), (1, 2), wx.ALIGN_CENTER)
+		sizer.Add(buttonsizer, (4, 1), (1, 3), wx.EXPAND)
 		sizer.AddGrowableRow(2)
 		sizer.AddGrowableCol(0)
 		sizer.AddGrowableCol(1)
@@ -311,6 +314,7 @@ class LoggingConfigurationDialog(wx.Dialog, LoggingConfiguration):
 		self.Bind(wx.EVT_CHECKBOX, self.onPropagateCheckbox, self.cbpropagate)
 		self.Bind(wx.EVT_CHOICE, self.onLevelChoice, self.clevel)
 		self.Bind(wx.EVT_TREE_SEL_CHANGED, self.onTreeSelectionChanged, self.tree)
+		self.Bind(wx.EVT_BUTTON, self.onTestButton, self.btest)
 
 		self.dialogsizer = wx.GridBagSizer(5, 5)
 		self.dialogsizer.Add(sizer, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
@@ -318,13 +322,17 @@ class LoggingConfigurationDialog(wx.Dialog, LoggingConfiguration):
 		self.dialogsizer.AddGrowableCol(0)
 		self.SetSizerAndFit(self.dialogsizer)
 
+	def onTestButton(self, evt):
+		logger = self.tree.GetPyData(self.tree.GetSelection())
+		logger.info('This a test, it is only a test.')
+
 	def onPropagateCheckbox(self, evt):
 		logger = self.tree.GetPyData(self.tree.GetSelection())
 		logger.propagate = evt.IsChecked()
 
 	def onLevelChoice(self, evt):
 		logger = self.tree.GetPyData(self.tree.GetSelection())
-		logger.setLevel(evt.GetString())
+		logger.setLevel(logging._levelNames[evt.GetString()])
 
 	def onTreeSelectionChanged(self, evt=None):
 		if evt is None:
@@ -374,6 +382,8 @@ if __name__ == '__main__':
 			f = logging.Formatter()
 			h.setFormatter(f)
 			l.addHandler(h)
+			l.setLevel(logging.INFO)
+			l.info('Initialized...')
 
 			frame = wx.Frame(None, -1, 'Message Log Test')
 
