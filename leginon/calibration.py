@@ -62,14 +62,13 @@ class Calibration(node.Node, camerafuncs.CameraFuncs):
 		size = self.camerastate['size']
 		bin = self.camerastate['binning']
 		exp = self.camerastate['exposure time']
-		off = cameraimage.centerOffset((2048,2048), (size,size))
-		off = {'x': off[0], 'y': off[1]}
 		camstate = {
-			"offset": off,
 			"dimension": {'x': size, 'y': size},
 			"binning": {'x': bin, 'y': bin},
 			"exposure time": exp
 		}
+		self.cameraDefaultOffset(camstate)
+
 		camdata = data.EMData('camera', camstate)
 
 		self.publish(event.LockEvent(self.ID()))
