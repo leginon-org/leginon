@@ -25,7 +25,8 @@ class Application(leginonobject.LeginonObject):
 									args=(), npf=0, dependencies=[]):
 		for spec in self.nodespecs:
 			if name == spec['name']:
-				raise ValueError('node already exists in application')
+				self.nodespecs.remove(spec)
+				break
 		nodespecdata = data.NodeSpecData()
 		nodespecdata['class string'] = class_string
 		nodespecdata['name'] = name
