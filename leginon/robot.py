@@ -68,21 +68,6 @@ def seconds2str(seconds):
 		string += '%i second%s' % (seconds, value)
 	return string
 
-class TestCommunications(object):
-	def __init__(self):
-		self.Signal0 = 1
-		self.Signal1 = 1
-		self.Signal2 = 1
-		self.Signal3 = 1
-		self.Signal4 = 1
-		self.Signal5 = 1
-		self.Signal6 = 1
-		self.Signal7 = 1
-		self.Signal8 = 1
-		self.Signal9 = 1
-		self.Signal10 = 1
-		self.gridNumber = -1
-
 class RobotException(Exception):
 	pass
 
@@ -155,10 +140,25 @@ class RobotNode(node.Node):
 				pass
 		self.statuslabel.set(message)
 
+class Request(object):
+	def __init__(self):
+		self.event = threading.Event()
+
+class InsertRequest(Request):
+	pass
+
+class ExtractRequest(Request):
+	pass
+
+class ExitRequest(Request):
+	pass
+
 if sys.platform == 'win32':
 	import pythoncom
 	import win32com.client
 	import pywintypes
+	import Queue
+
 	class RobotControl(RobotNode):
 		eventinputs = RobotNode.eventinputs + [event.ExtractGridEvent,
 																						event.InsertGridEvent,]
@@ -178,8 +178,23 @@ if sys.platform == 'win32':
 
 			self.emailclient = emailnotification.EmailClient(self)
 	
-			#self.communication = TestCommunications()
+			# if label is same, kinda screwed
+			self.gridtrayids = {}
+			projectdata = project.ProjectData()
+			gridboxes = projectdata.getGridBoxes()
+			for i in gridboxes.getall():
+				self.gridtrayids[i['label']] = i['gridboxId']
 
+			self.queue = Queue.Queue()
+			threading.Thread(name='robot control queue handler thread',
+												target=self._queueHandler).start()
+	
+			self.addEventInput(event.InsertGridEvent, self.handleInsert)
+			self.addEventInput(event.ExtractGridEvent, self.handleExtract)
+
+			self.defineUserInterface()
+
+		def _queueHandler(self):
 			pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
 			try:
 				self.communication = win32com.client.Dispatch(
@@ -187,21 +202,25 @@ if sys.platform == 'win32':
 			except pywintypes.com_error, e:
 				raise RuntimeError('Cannot initialized robot communications')
 
-			# if label is same, kinda screwed
-			self.gridtrayids = {}
-			projectdata = project.ProjectData()
-			gridboxes = projectdata.getGridBoxes()
-			for i in gridboxes.getall():
-				self.gridtrayids[i['label']] = i['gridboxId']
-	
-			self.addEventInput(event.InsertGridEvent, self.handleInsert)
-			self.addEventInput(event.ExtractGridEvent, self.handleExtract)
+			while True:
+				request = self.queue.get()
+				if isinstance(request, InsertRequest):
+					self._insert()
+				elif isinstance(requst, ExtractRequest):
+					self._extract()
+				elif isinstance(request, ExitRequest):
+					request.event.set()
+					break
+				else:
+					self.logger.error('Invalid request put in queue')
+				request.event.set()
+			del self.communication
 
-			self.defineUserInterface()
-			self.start()
-
-		def __del__(self):
-			self.communication = None
+		def exit(self):
+			request = ExitRequest()
+			self.queue.put(request)
+			request.event.wait()
+			RobotNode.exit(self)
 
 		def zeroStage(self):
 			self.setScopeStatusMessage('Zeroing stage position')
@@ -440,7 +459,7 @@ if sys.platform == 'win32':
 				timestring = seconds2str(secondsleft)
 			self.uitimeleft.set(timestring)
 
-		def insert(self):
+		def _insert(self):
 			if self.simulate:
 				self.insertmethod.disable()
 				self.estimateTimeLeft()
@@ -486,7 +505,7 @@ if sys.platform == 'win32':
 			self.setStatusMessage('Insertion of holder successfully completed')
 			#self.insertmethod.enable()
 
-		def extract(self):
+		def _extract(self):
 			if self.simulate:
 				self.outputGridExtractedEvent()
 				return
@@ -506,6 +525,16 @@ if sys.platform == 'win32':
 			self.setScopeStatusMessage('')
 			self.setRobotStatusMessage('')
 			self.setStatusMessage('Extraction of holder successfully completed')
+
+		def insert(self):
+			request = InsertRequest()
+			self.queue.put(request)
+			request.event.wait()
+
+		def extract(self):
+			request = ExtractRequest()
+			self.queue.put(request)
+			request.event.wait()
 
 		def handleInsert(self, ievent):
 			self.insert()
@@ -566,12 +595,15 @@ if sys.platform == 'win32':
 			self.uigridtray.set(self.gridorder)
 
 		def setStatusMessage(self, message):
+			self.logger.info(message)
 			self.uistatusmessage.set(message)
 
 		def setRobotStatusMessage(self, message):
+			self.logger.info(message)
 			self.uirobotstatusmessage.set(message)
 
 		def setScopeStatusMessage(self, message):
+			self.logger.info(message)
 			self.uiscopestatusmessage.set(message)
 
 		def onGridTraySelect(self, value):
