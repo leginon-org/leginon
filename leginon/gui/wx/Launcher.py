@@ -157,6 +157,9 @@ class ListCtrlPanel(wx.Panel):
 		self.listctrl.SetItemData(index, self.data)
 		self.datatextmap[self.data] = label
 		self.data += 1
+		#print (self.listctrl.GetColumnWidth(0), -1)
+		#self.swselect.SetDefaultSize((self.listctrl.GetColumnWidth(0), -1))
+		#self.Layout()
 
 	def removePanel(self, panel):
 		for text, p in self.panelmap.items():

@@ -231,26 +231,27 @@ class CameraPanel(wx.Panel):
 				return False
 		return True
 
+	def cmpGeometry(self, geometry):
+		if self.geometry == geometry:
+			return True
+		for g in ['dimension', 'offset', 'binning']:
+			try:
+				for a in ['x', 'y']:
+					if self.geometry[g][a] != geometry[g][a]:
+						return False
+			except (KeyError, TypeError):
+				return False
+		return True
+
 	def setGeometry(self, geometry):
-		if geometry == self.geometry:
+		if self.cmpGeometry(geometry):
 			return False
+
 		if not self.validateGeometry(geometry):
 			raise ValueError
-		#dimension = '%d × %d' % (geometry['dimension']['x'],
-		dimension = '%d x %d' % (geometry['dimension']['x'],
-														geometry['dimension']['y'])
-		self.stdimension.SetLabel(dimension)
-		offset = '(%d, %d)' % (geometry['offset']['x'],
-															geometry['offset']['y'])
-		self.stoffset.SetLabel(offset)
-		#binning = '%d × %d' % (geometry['binning']['x'],
-		binning = '%d x %d' % (geometry['binning']['x'],
-														geometry['binning']['y'])
-		self.stbinning.SetLabel(binning)
-		self.geometry = geometry
-		self.Freeze()
-		self.szmain.Layout()
-		self.Thaw()
+
+		self._setGeometry(geometry)
+
 		return True
 
 	def getGeometry(self):
@@ -265,12 +266,15 @@ class CameraPanel(wx.Panel):
 		return g
 
 	def _setGeometry(self, geometry):
-		self.geometry = copy.deepcopy(self.geometry)
+		if self.geometry is None:
+			self.geometry = {}
+		else:
+			self.geometry = copy.deepcopy(self.geometry)
 		for g in ['dimension', 'offset', 'binning']:
 			if g not in self.geometry:
 				self.geometry[g] = {}
 			try:
-				self.geometry[g].update(geometry[g])
+				self.geometry[g].update(dict(geometry[g]))
 				if g == 'offset':
 					label = '(%d, %d)'
 				else:
