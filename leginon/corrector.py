@@ -20,6 +20,9 @@ import uidata
 class CameraError(Exception):
 	pass
 
+class FindExposureTimeError(Exception):
+	pass
+
 class DataHandler(node.DataHandler):
 	def query(self, id):
 		self.lock.acquire()
@@ -152,7 +155,7 @@ class SimpleCorrector(node.Node):
 			self.max.set(stats['max'])
 			self.std.set(stats['stdev'])
 
-	def getCameraSettings(self, binning, exposuretype):
+	def getCameraSettings(self, binning, exposuretype, exposuretime=None):
 		cameradata = self.camerafuncs.getCameraEMData()
 		if cameradata is None:
 			raise CameraError('cannot get camera settings')
@@ -163,12 +166,50 @@ class SimpleCorrector(node.Node):
 			cameradata['binning'][axis] = binning
 			cameradata['dimension'][axis] = camerasize/binning
 		cameradata['exposure type'] = exposuretype
+		cameradata['exposure time'] = exposuretime
 		return cameradata
 
-	def setCameraSettings(self, binning, exposuretype):
-		cameradata = self.getCameraSettings(binning, exposuretype)
+	def setCameraSettings(self, binning, exposuretype, exposuretime=None):
+		cameradata = self.getCameraSettings(binning, exposuretype, exposuretime)
 		self.camerafuncs.setCameraEMData(cameradata)
 		return cameradata
+
+	def findExposureTime(self, binning, counts):
+		self.findstatus.set('Finding exposure time...')
+		self.findbinning.set(binning)
+		self.findcounts.set(counts)
+		minexposuretime = self.findminexposuretime.get()
+		maxexposuretime = self.findmaxexposuretime.get()
+		tolerance = self.findtolerance.get()/100.0 * counts
+		exposuretime = (maxexposuretime - minexposuretime)/2 + minexposuretime
+		self.findexposuretime.set(exposuretime)
+		while exposuretime > minexposuretime and exposuretime < maxexposuretime:
+			self.setCameraSettings(binning, 'normal', exposuretime)
+			imagedata = self.camerafuncs.acquireCameraImageData(correction=False)
+			image = imagedata['image']
+			mean = imagefun.mean(image)
+			self.findmean.set(mean)
+			if mean - tolerance <= counts and mean + tolerance >= counts:
+				self.findstatus.set('Exposure time for mean count value found')
+				return exposuretime
+			if mean > counts:
+				maxexposuretime = exposuretime
+			elif mean < counts:
+				minexposuretime = exposuretime
+			exposuretime = (maxexposuretime - minexposuretime)/2 + minexposuretime
+			self.findexposuretime.set(exposuretime)
+		self.findstatus.set('Cannot find mean counts for exposure time range')
+		self.findexposuretime.set(None)
+		self.findmean.set(None)
+		return None
+
+	def onFindExposureTime(self):
+		binning = self.findbinning.get()
+		counts = self.findcounts.get()
+		try:
+			self.findExposureTime(binning, counts)
+		except CameraError:
+			self.findmessagelog.error('Error configuring camera')
 
 	def getMedianImage(self, naverage):
 		images = []
@@ -200,9 +241,10 @@ class SimpleCorrector(node.Node):
 		self.publish(imagedata, pubevent=True, database=True)
 		self.status.set('Reference image published')
 
-	def acquireReferenceImage(self, binning, exposuretype, naverage):
+	def acquireReferenceImage(self, binning, exposuretype, naverage,
+														exposuretime):
 		self.status.set('Setting up camera...')
-		camerastate = self.setCameraSettings(binning, exposuretype)
+		camerastate = self.setCameraSettings(binning, exposuretype, exposuretime)
 		image = self.getMedianImage(naverage)
 		self.publishReference(exposuretype, image, camerastate)
 		return image, camerastate
@@ -226,11 +268,18 @@ class SimpleCorrector(node.Node):
 			# invert binning/exposure type for calculating normalizations
 			# could be less than optimal if retracting camera on darks
 			for binning in [1, 2, 4, 8]:
+				self.status.set('Finding exposure time...')
+				exposuretime = self.findExposureTime(binning, self.counts.get())
+				if exposuretime is None:
+					message = 'Cannot find mean counts for exposure time range'
+					self.messagelog.error(message)
+					raise FindExposureTimeError(message)
 				for exposuretype in ['dark', 'normal']:
 					self.exposuretype.set(exposuretypestrings[exposuretype])
 					self.binning.set(str(binning))
 					image, camerastate = \
-						self.acquireReferenceImage(binning, exposuretype, naverage)
+						self.acquireReferenceImage(binning, exposuretype, naverage,
+																				exposuretime)
 					if binning not in self.references:
 						self.references[binning] = {}
 					self.references[binning][exposuretype] = image
@@ -242,7 +291,7 @@ class SimpleCorrector(node.Node):
 					del self.references[binning]['normal']
 				except (TypeError, KeyError):
 					pass
-		except (CameraError, node.PublishError), e:
+		except (CameraError, node.PublishError, FindExposureTimeError), e:
 			if isinstance(e, CameraError):
 				message = 'Error configuring camera'
 			elif isinstance(e, node.PublishError):
@@ -275,6 +324,42 @@ class SimpleCorrector(node.Node):
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
 
+		self.findmessagelog = uidata.MessageLog('Message Log')
+
+		self.findstatus = uidata.String('Status', '', 'r')
+		self.findexposuretime = uidata.Number('Exposure time', None, 'r')
+		self.findmean = uidata.Number('Mean', None, 'r')
+		findstatuscontainer = uidata.Container('Status')
+		findstatuscontainer.addObjects((self.findstatus, self.findexposuretime,
+																		self.findmean))
+
+		self.findbinning = uidata.Integer('Binning', 1, 'rw', persist=True)
+
+		self.findcounts = uidata.Number('Desired mean', 1000, 'rw', persist=True)
+		self.findtolerance = uidata.Number('Tolerance (% +/-)', 10,
+																				'rw', persist=True)
+		findcountscontainer = uidata.Container('Counts')
+		findcountscontainer.addObjects((self.findcounts, self.findtolerance))
+
+		self.findminexposuretime = uidata.Integer('Minimum', 0, 'rw', persist=True)
+		self.findmaxexposuretime = uidata.Integer('Maximum', 1000, 'rw',
+																							persist=True)
+		findexposurerangecontainer = uidata.Container('Exposure range (ms)')
+		findexposurerangecontainer.addObjects((self.findminexposuretime,
+																						self.findmaxexposuretime))
+		findsettingscontainer = uidata.Container('Settings')
+		findsettingscontainer.addObjects((findexposurerangecontainer,
+																			self.findbinning, findcountscontainer))
+
+		findexposuretimemethod = uidata.Method('Find',
+																						self.onFindExposureTime)
+		findcontrolcontainer = uidata.Container('Control')
+		findcontrolcontainer.addObjects((findexposuretimemethod,))
+
+		findcontainer = uidata.LargeContainer('Find Exposure Time')
+		findcontainer.addObjects((self.findmessagelog, findstatuscontainer,
+															findsettingscontainer, findcontrolcontainer))
+
 		self.messagelog = uidata.MessageLog('Message Log')
 
 		self.status = uidata.String('Status', '', 'r')
@@ -303,8 +388,11 @@ class SimpleCorrector(node.Node):
 																	self.displaynormalization))
 		self.imagestoaverage = uidata.Integer('Images to average', 3, 'rw',
 																					persist=True)
+		self.counts = uidata.Number('Desired mean count per image', 1000, 'rw',
+																					persist=True)
 		settingscontainer = uidata.Container('Settings')
-		settingscontainer.addObjects((displaycontainer, self.imagestoaverage))
+		settingscontainer.addObjects((displaycontainer, self.imagestoaverage,
+																	self.counts))
 
 		self.image = uidata.Image('Image', None)
 
@@ -319,7 +407,7 @@ class SimpleCorrector(node.Node):
 		container.addObjects((self.messagelog, statuscontainer, self.image,
 													settingscontainer, controlcontainer))
 
-		self.uiserver.addObjects((container,))
+		self.uiserver.addObjects((findcontainer, container,))
 
 class Corrector(node.Node):
 	'''
