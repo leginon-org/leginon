@@ -32,6 +32,11 @@ class MatrixCalibrator(calibrator.Calibrator):
 		  'beam shift': calibrationclient.BeamShiftCalibrationClient(self),
 		  'stage position': calibrationclient.StageCalibrationClient(self)
 		}
+		self.settle = {
+		  'image shift': 0.25,
+		  'beam shift': 0.25,
+		  'stage position': 1.5
+		}
 
 		self.axislist = ['x', 'y']
 
@@ -78,7 +83,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 				state1 = self.makeState(basevalue, axis)
 				state2 = self.makeState(newvalue, axis)
 				print 'states', state1, state2
-				shiftinfo = calclient.measureStateShift(state1, state2)
+				shiftinfo = calclient.measureStateShift(state1, state2, 1, settle=self.settle[self.parameter])
 				print 'shiftinfo', shiftinfo
 
 				rowpix = shiftinfo['pixel shift']['row']
@@ -148,7 +153,9 @@ class MatrixCalibrator(calibrator.Calibrator):
 			}
 		)
 
-		self.registerUISpec('Matrix Calibrator', (cspec, rspec, self.validshift, nodespec))
+		myspec = self.registerUISpec('Matrix Calibrator', (cspec, rspec, self.validshift))
+		myspec += nodespec
+		return nodespec
 
 	def uiCalibrate(self):
 		self.calibrate()
