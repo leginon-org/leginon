@@ -147,7 +147,8 @@ class TargetWatcher(watcher.Watcher):
 		for i, target in enumerate(goodtargets):
 			self.uicontrolstatus.set('Normal')
 			# abort
-			self.uitargetid.set(target.dmid_orig)
+			## not sure what this should be
+			#self.uitargetid.set(target.dmid_orig)
 			self.uitargetnumber.set('%d of %d' % (i + 1, len(goodtargets)))
 			if self.abort.isSet():
 				self.uistatus.set('Aborting current target list')
