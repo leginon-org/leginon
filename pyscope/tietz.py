@@ -84,30 +84,30 @@ class Tietz(object):
 		try:
 			self.camera = win32com.client.Dispatch('CAMC4.Camera')		
 		except pywintypes.com_error, e:
-			raise RuntimeError('Failed to initialize interface CAMC4.Camera')
+			raise RuntimeError('failed to initialize interface CAMC4.Camera')
 
 		try:
 			ping = win32com.client.Dispatch('pyScope.CAMCCallBack')
 		except pywintypes.com_error, e:
-			raise RuntimeError('Failed to initialize interface pyScope.Ping')
+			raise RuntimeError('failed to initialize interface pyScope.Ping')
 
 		try:
 			hr = self.camera.RegisterCAMCCallBack(ping, 'EM')
 		except pywintypes.com_error, e:
-			raise RuntimeError('Error registering callback COM object')
+			raise RuntimeError('error registering callback COM object')
 
 		hr = self.camera.RequestLock()
 		if hr == win32com.client.constants.crDeny:
-			raise RuntimeError('Error locking camera, denied lock')
+			raise RuntimeError('error locking camera, denied lock')
 		elif hr == win32com.client.constants.crBusy:
-			raise RuntimeError('Error locking camera, camera busy')
+			raise RuntimeError('error locking camera, camera busy')
 		elif hr == win32com.client.constants.crSucceed:
 			pass
 
 		try:
 			hr = self.camera.Initialize(self.cameratype, 0)
 		except pywintypes.com_error, e:
-			raise RuntimeError('Error initializing camera')
+			raise RuntimeError('error initializing camera')
 
 		self.methodmapping = {
 			'binning': {'get':'getBinning',
@@ -341,7 +341,7 @@ class Tietz(object):
 	def setExposureType(self, value):
 		# {'type': str, 'values': ['normal', 'dark', 'bias', 'readout']}
 		if value not in ['normal', 'dark', 'bias', 'readout']:
-			raise ValueError('Invalid exposure type')
+			raise ValueError('invalid exposure type')
 		self.exposuretype = value
 
 	def dumpImage(self, value):
@@ -396,7 +396,7 @@ class Tietz(object):
 		elif exposuretype == 'readout':
 			hr = self.camera.AcquireReadout(0)
 		else:
-			raise ValueError('Invalid exposure type for image acquisition')
+			raise ValueError('invalid exposure type for image acquisition')
 
 		imagesize = self.bytesperpixel*dimension['x']*dimension['y']
 
@@ -458,7 +458,7 @@ class Tietz(object):
 			return True
 		elif value == 0:
 			return False
-		raise RuntimeError('Unknown live mode available value')
+		raise RuntimeError('unknown live mode available value')
 
 	def getNumberOfDeadColumns(self):
 		# {'type': int}
@@ -485,7 +485,7 @@ class Tietz(object):
 		try:
 			self._setParameterValue('cpCurrentGainIndex', value)
 		except pywintypes.com_error:
-			raise ValueError('Invalid gain index specified')
+			raise ValueError('invalid gain index specified')
 
 	def getSpeedIndex(self):
 		return self._getParameterValue('cpCurrentSpeedIndex')
@@ -499,7 +499,7 @@ class Tietz(object):
 		try:
 			self._setParameterValue('cpCurrentSpeedIndex', value)
 		except pywintypes.com_error:
-			raise ValueError('Invalid speed index specified')
+			raise ValueError('invalid speed index specified')
 
 	def getImageTransform(self):
 		bitmask = self._getParameterValue('cpImageGeometry')
@@ -558,7 +558,7 @@ class Tietz(object):
 		try:
 			self._setParameterValue('cpShutterOpenDelay', value)
 		except pywintypes.com_error:
-			raise ValueError('Invalid shutter open delay')
+			raise ValueError('invalid shutter open delay')
 
 	def getShutterCloseDelay(self):
 		return self._getParameterValue('cpShutterCloseDelay')
@@ -568,17 +568,17 @@ class Tietz(object):
 		try:
 			self._setParameterValue('cpShutterCloseDelay', value)
 		except pywintypes.com_error:
-			raise ValueError('Invalid shutter close delay')
+			raise ValueError('invalid shutter close delay')
 
 	def setShutter(self, state):
 		if state == 'open':
 			if self.theAda.OpenShutter != 0:
-				raise RuntimeError('Open shutter failed')
+				raise RuntimeError('open shutter failed')
 		elif state == 'closed':
 			if self.theAda.CloseShutter != 0:
-				raise RuntimeError('Close shutter failed')
+				raise RuntimeError('close shutter failed')
 		else:
-			raise ValueError("setShutter state must be 'open' or 'closed', not %s" % (state,))
+			raise ValueError('setShutter state must be \'open\' or \'closed\', not %s' % (state,))
 
 	def getShutter(self):
 		status = self.theAda.ShutterStatus
@@ -599,7 +599,7 @@ class Tietz(object):
 		try:
 			self._setParameterValue('cpPreampDelay', value)
 		except pywintypes.com_error:
-			raise ValueError('Invalid preamp delay')
+			raise ValueError('invalid preamp delay')
 
 	# PMode boolean?
 	def getParallelMode(self):
@@ -616,7 +616,7 @@ class Tietz(object):
 			else:
 				self._setParameterValue('cpPMode', 0)
 		except pywintypes.com_error:
-			raise ValueError('Invalid parallel mode')
+			raise ValueError('invalid parallel mode')
 
 	def setUseSpeedTableForGainSwitch(self, value):
 		#	{'type': bool}
@@ -650,7 +650,7 @@ class Tietz(object):
 		elif value == 1:
 			return 'off'
 		else:
-			raise RuntimeError('Error getting camera axis')
+			raise RuntimeError('error getting camera axis')
 
 class TietzPXL(Tietz):
 	cameratype = win32com.client.constants.ctPXL

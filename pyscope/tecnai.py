@@ -42,18 +42,18 @@ class Tecnai(object):
 		try:
 			self.tecnai = win32com.client.Dispatch('Tecnai.Instrument')
 		except pythoncom.com_error, (hr, msg, exc, arg):
-			raise RuntimeError('unable to initialize Tecnai interface: %s' % msg)
+			raise RuntimeError('unable to initialize Tecnai interface, %s' % msg)
 
 		try:
 			self.lowdose = win32com.client.Dispatch('LDServer.LdSrv')
 		except pythoncom.com_error, (hr, msg, exc, arg):
-			raise RuntimeError('unable to initialize low dose interface: %s' % msg)
+			raise RuntimeError('unable to initialize low dose interface, %s' % msg)
 
 		try:
 			self.exposure = win32com.client.Dispatch('adaExp.TAdaExp',
 																					clsctx=pythoncom.CLSCTX_LOCAL_SERVER)
 		except pythoncom.com_error, (hr, msg, exc, arg):
-			raise RuntimeError('unable to initialize exposure adapter: %s' % msg)
+			raise RuntimeError('unable to initialize exposure adapter, %s' % msg)
 
 		self.magnifications = map(float, self.magtable)
 		self.sortedmagnifications = list(self.magnifications)

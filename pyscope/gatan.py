@@ -28,7 +28,7 @@ class Gatan(object):
 		try:
 			self.camera = win32com.client.dynamic.Dispatch('TecnaiCCD.GatanCamera')        
 		except pywintypes.com_error, e:
-			raise RuntimeError('Unable to initialize Gatan interface')
+			raise RuntimeError('unable to initialize Gatan interface')
 
 		self.binning = {'x': self.camera.Binning, 'y': self.camera.Binning}
 		self.offset = {'x': self.camera.CameraLeft, 'y': self.camera.CameraTop}
@@ -107,7 +107,7 @@ class Gatan(object):
 
 	def setExposureType(self, value):
 		if value not in ['normal', 'dark']:
-			raise ValueError('Invalid exposure type')
+			raise ValueError('invalid exposure type')
 		self.exposuretype = value
 
 	def getImage(self):
@@ -118,7 +118,7 @@ class Gatan(object):
 			self.camera.CameraRight = self.dimension['x'] + self.camera.CameraLeft
 			self.camera.CameraBottom = self.dimension['y'] + self.camera.CameraTop
 		except pywintypes.com_error, e:
-			raise ValueError('Invalid image dimensions')
+			raise ValueError('invalid image dimensions')
 		if self.getExposureType() == 'dark':
 			if False:
 			#if self.getRetractable():
@@ -136,7 +136,7 @@ class Gatan(object):
 		try:
 			return TecnaiCCDWrapper.acquire(self.camera._oleobj_)
 		except pywintypes.com_error, e:
-			raise ValueError('Invalid image dimensions')
+			raise ValueError('invalid image dimensions')
 
 	def getAcquiring(self):
 		if self.camera.IsAcquiring:
@@ -151,7 +151,7 @@ class Gatan(object):
 		try:
 			self.camera.Speed = value
 		except pywintypes.com_error, e:
-			raise ValueError('Invalid speed')
+			raise ValueError('invalid speed')
 
 	def getRetractable(self):
 		if self.camera.IsRetractable:
