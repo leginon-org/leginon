@@ -20,7 +20,11 @@ class XMLRPCClient(object):
 
 class UIWidget(object):
 	def __init__(self, name, parent, tkparent):
+		if type(name) is not str:
+			raise TypeError('UIWidget name must be a string')
 		self.name = name
+		if parent is not None and not isinstance(parent, UIContainerWidget):
+			raise TypeError('UIWidget parent must be a UIContainer or None')
 		self.parent = parent
 		self.tkparent = tkparent
 
@@ -76,9 +80,10 @@ class UIContainerWidget(UIWidget, Pmw.Group):
 						return uiwidget.getWidgetFromList(namelist[1:])
 					except ValueError:
 						pass
-				raise ValueError('incorrect widget')
+				raise ValueError(	
+										'widget with specified name does not exists in container')
 		else:
-			raise ValueError('incorrect widget')
+			raise ValueError('specfied name does not match widget name')
 			
 	def add(self, namelist, typename, value):
 		container = self.getWidgetFromList(namelist[:-1])

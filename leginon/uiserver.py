@@ -26,8 +26,9 @@ class XMLRPCServer(object):
 		# find a port in range defined by IANA as dynamic/private
 		for self.port in portrange:
 			try:
-				self.server = SimpleXMLRPCServer.SimpleXMLRPCServer((self.hostname, 
-																									self.port), logRequests=False)
+				self.server = SimpleXMLRPCServer.SimpleXMLRPCServer(
+																										(self.hostname, self.port),
+																										logRequests=False)
 				break
 			except Exception, var:
 				if (var[0] == 98 or var[0] == 10048 or var[0] == 112):
