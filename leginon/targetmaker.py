@@ -55,11 +55,11 @@ class TargetMaker(node.Node):
 #		self.uicontainer.addObject(container)
 
 class MosaicTargetMaker(TargetMaker):
-	eventinputs = TargetMaker.eventinputs + [event.PublishSpiralEvent]
+	eventinputs = TargetMaker.eventinputs + [event.MakeTargetListEvent]
 	def __init__(self, id, session, managerlocation, **kwargs):
 		TargetMaker.__init__(self, id, session, managerlocation, **kwargs)
 		self.pixelsizecalclient = calibrationclient.PixelSizeCalibrationClient(self)
-		self.addEventInput(event.PublishSpiralEvent, self.publishTargetList)
+		self.addEventInput(event.MakeTargetListEvent, self.publishTargetList)
 		self.presetsclient = presets.PresetsClient(self)
 		self.defineUserInterface()
 		self.start()
@@ -67,27 +67,22 @@ class MosaicTargetMaker(TargetMaker):
 	def defineUserInterface(self):
 		TargetMaker.defineUserInterface(self)
 
-#		self.maxtargets = uidata.Integer('Maximum Targets', 2, 'rw', persist=True)
-#		self.center = uidata.Struct('Spiral Center', {'x': 0.0, 'y': 0.0}, 'rw')
-#		settingscontainer.addObjects((pselect, self.radius, self.maxtargets, self.overlap, self.center))
-
 		self.statusmessage = uidata.String('Current status', '', 'r')
 		statuscontainer = uidata.Container('Status')
 		statuscontainer.addObjects((self.statusmessage,))
 
-		#self.presetname = self.presetsclient.uiSinglePresetSelector('Preset', '', 'rw', persist=True)
 		self.presetname = uidata.String('Preset', '', 'rw', persist=True)
 		self.radius = uidata.Float('Radius (meters)', 1.0e-3, 'rw', persist=True)
 		self.overlap = uidata.Integer('Overlap (percent)', 0, 'rw', persist=True)
 		settingscontainer = uidata.Container('Settings')
 		settingscontainer.addObjects((self.presetname, self.radius, self.overlap))
 
-		publishspiralmethod = uidata.Method('Publish Spiral',
+		publishtargetlistmethod = uidata.Method('Publish Target List',
 																				self.publishTargetList)
 		controlcontainer = uidata.Container('Control')
-		controlcontainer.addObjects((publishspiralmethod,))
+		controlcontainer.addObjects((publishtargetlistmethod,))
 
-		container = uidata.LargeContainer('Spiral Target Maker')
+		container = uidata.LargeContainer('Mosaic Target Maker')
 		container.addObjects((statuscontainer, settingscontainer, controlcontainer))
 		self.uicontainer.addObject(container)
 

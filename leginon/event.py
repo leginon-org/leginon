@@ -269,8 +269,8 @@ class ExtractGridEvent(ControlEvent):
 	'Event that signals a grid to be extracted'
 	pass
 
-class PublishSpiralEvent(ControlEvent):
-	'Event telling sprial target maker to publish a spiral '
+class MakeTargetListEvent(ControlEvent):
+	'Event telling target maker to make a target list'
 	def typemap(cls):
 		t = NotificationEvent.typemap()
 		t += [('grid', data.GridData)]

@@ -697,7 +697,7 @@ class RobotNotification(RobotNode):
 																					event.TargetListDoneEvent]
 	eventoutputs = RobotNode.eventoutputs + [event.ExtractGridEvent,
 																						event.InsertGridEvent,
-																						event.PublishSpiralEvent]
+																						event.MakeTargetListEvent]
 	def __init__(self, id, session, managerlocation, **kwargs):
 
 		self.simulate = False
@@ -716,7 +716,7 @@ class RobotNotification(RobotNode):
 
 	def handleGridInserted(self, ievent):
 		if self.simulate:
-			evt = event.PublishSpiralEvent()
+			evt = event.MakeTargetListEvent()
 			evt['grid'] = ievent['grid']
 			self.outputEvent(evt)
 			return
@@ -751,7 +751,7 @@ class RobotNotification(RobotNode):
 		'''
 
 		self.setStatus('Outputting data collection event')
-		evt = event.PublishSpiralEvent()
+		evt = event.MakeTargetListEvent()
 		evt['grid'] = ievent['grid']
 		self.outputEvent(evt)
 		self.setStatus('Data collection event outputted')
