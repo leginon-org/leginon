@@ -9,18 +9,15 @@
 #
 
 import cStringIO
-import Mrc
+import Image
 import math
+import Mrc
 import Numeric
+import numextension
+import os
+import sys
 import wx
 from wx.lib.buttons import GenBitmapToggleButton
-import NumericImage
-import Image
-import ImageOps
-import imagefun
-import sys, os
-import numextension
-import time
 
 wx.InitAllImageHandlers()
 
@@ -436,7 +433,7 @@ class ImagePanel(wx.Panel):
 			raise TypeError('Numeric image must be of Numeric.arraytype')
 
 		self.imagedata = numericimage
-		self.imagerange = imagefun.minmax(self.imagedata)
+		self.imagerange = numextension.minmax(self.imagedata)
 		self.contrasttool.setRange(self.imagerange)
 		self.setBitmap()
 		self.setVirtualSize()
