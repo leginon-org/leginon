@@ -102,7 +102,7 @@ class Panel(wx.Panel):
 		enable = self.lbtemplate.GetSelection() >= 0 and self.lbtemplate.GetCount() > 1
 		self.bdelete.Enable(enable)
 		if evt:
-			e = TemplateUpdatedEvent(self, self._template)
+			e = TemplateUpdatedEvent(self, list(self._template))
 			self.GetEventHandler().AddPendingEvent(e)
 
 	def onTemplateListBox(self, evt):

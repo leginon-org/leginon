@@ -101,7 +101,7 @@ class Panel(wx.Panel):
 		enable = self.lbrings.GetSelection() >= 0 and self.lbrings.GetCount() > 1
 		self.bdelete.Enable(enable)
 		if evt:
-			e = RingsUpdatedEvent(self, self._rings)
+			e = RingsUpdatedEvent(self, list(self._rings))
 			self.GetEventHandler().AddPendingEvent(e)
 
 	def onRingsListBox(self, evt):
