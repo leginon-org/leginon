@@ -67,21 +67,21 @@ class CameraFuncs(object):
 		Sets the camera state using camdata.
 		If called without camdata, return the current camera state
 		'''
-		t = Timer('camerafuncs state')
+#		t = Timer('camerafuncs state')
 		if camdata is not None:
 			if not isinstance(camdata, data.CameraEMData):
 				raise TypeError('camdata not type CameraEMData')
-			t2 = Timer('publish camera state')
+#			t2 = Timer('publish camera state')
 			try:
 				self.node.publishRemote(camdata)
 			except Exception, detail:
 				print 'camerafuncs.state: unable to set camera state'
 				raise
-			t2.stop()
+#			t2.stop()
 
 		try:
 			newcamdata = self.node.researchByDataID(('camera no image data',))
-			t.stop()
+#			t.stop()
 			return newcamdata
 		except:
 			self.node.outputWarning('Cannot find current camera settings, EM may not be running.')
