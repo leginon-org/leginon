@@ -151,11 +151,10 @@ class Corrector(node.Node):
 		qplan['camstate'] = corstate
 		qplan['id'] = None
 		plandatalist = self.research(datainstance=qplan)
-		if not plandatalist:
-			self.printerror('cannot find plan data for camera state')
+		if plandatalist:
+			return plandatalist[0]
+		else:
 			return None
-		plandata = plandatalist[0]
-		return plandata
 
 	def storePlan(self, plandata):
 		self.publish(plandata, database=True)
@@ -244,27 +243,18 @@ class Corrector(node.Node):
 		corstate = corimagedata['camstate']
 		corstate['id'] = None
 		if isinstance(corimagedata, data.DarkImageData):
-			dark = corimagedata
+			dark = corimagedata['image']
 			bright = self.retrieveRef(corstate, 'bright')
 			if bright is None:
 				print 'NO BRIGHT'
 				return
 		if isinstance(corimagedata, data.BrightImageData):
-			bright = corimagedata
+			bright = corimagedata['image']
 			dark = self.retrieveRef(corstate, 'dark')
 			if dark is None:
 				print 'NO DARK'
 				return
 
-		print 'norm 1'
-		print 'BRIGHT'
-		print type(bright)
-		print bright.shape
-		print bright.typecode()
-		print 'DARK'
-		print type(dark)
-		print dark.shape
-		print dark.typecode()
 		norm = bright - dark
 
 		## there may be a better normavg than this
