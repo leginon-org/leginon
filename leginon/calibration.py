@@ -64,7 +64,6 @@ class Calibration(node.Node):
 
 		node.Node.__init__(self, id, nodelocations)
 		self.clearStateImages()
-		self.start()
 
 	def validShiftCallback(self, value=None):
 		if value:
@@ -361,12 +360,15 @@ class ImageShiftCalibration(Calibration):
 		#return
 		Calibration.__init__(self, id, nodelocations)
 		self.addEventInput(event.ImageShiftPixelShiftEvent, self.pixelShift)
+		self.start()
+
+	def main(self):
+		self.interact()
 
 	def state(self, value, axis):
 		return {'image shift': {axis: value}}
 
 	def pixelShift(self, ievent):
-		print 'foooooooooo'
 		print 'calibration =', self.calibration
 		print 'pixel shift =', ievent.content
 		matrix = self.calibration2matrix()

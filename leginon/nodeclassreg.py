@@ -66,4 +66,5 @@ registerNodeClass('watcher', 'TestWatch')
 registerNodeClass('timedloop', 'TestLoop')
 registerNodeClass('getdata', 'GetData')
 registerNodeClass('intgen', 'IntGen')
+registerNodeClass('calibrationtest', 'CalibrationTest')
 
