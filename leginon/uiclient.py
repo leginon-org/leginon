@@ -18,7 +18,7 @@ wxEVT_SET_SERVER = wxNewEventType()
 wxEVT_COMMAND_SERVER = wxNewEventType()
 
 class AddWidgetEvent(wxPyEvent):
-	def __init__(self, dependencies,  namelist, typelist, value, settings):
+	def __init__(self, dependencies, namelist, typelist, value, settings):
 		wxPyEvent.__init__(self)
 		self.SetEventType(wxEVT_ADD_WIDGET)
 		self.namelist = namelist
@@ -84,11 +84,15 @@ def WidgetClassFromTypeList(typelist):
 						elif typelist[2] == 'external':
 							return wxDialogContainerWidget
 						elif typelist[2] == 'medium':
+							if len(typelist) > 3:
+								if typelist[3] == 'client':
+									return wxClientContainerFactory(wxNotebookContainerWidget)
 							return wxNotebookContainerWidget
 						elif typelist[2] == 'large':
 							if len(typelist) > 3:
 								if typelist[3] == 'client':
-									return wxClientContainerFactory(wxNotebookContainerWidget)
+									return wxClientContainerFactory(wxListBoxPanelContainerWidget)
+							return wxListBoxPanelContainerWidget
 					return wxStaticBoxContainerWidget
 				elif typelist[1] == 'method':
 					return wxButtonWidget
@@ -218,16 +222,15 @@ class UIApp(wxApp):
 		self.frame = wxFrame(NULL, -1, self.title)
 		self.panel = wxScrolledWindow(self.frame, -1, size=(600, 700))
 		self.panel.SetScrollRate(1, 1)		
-#		containerclass = wxClientContainerFactory(wxStaticBoxContainerWidget)
 		containerclass = wxClientContainerFactory(wxSimpleContainerWidget)
 		self.container = containerclass(self.containername, self.panel, self,
 																		(self.serverhostname, self.serverport))
-#		self.container.uiclient.start()
 		if self.container.sizer is not None:
 			self.panel.SetSizer(self.container.sizer)
 		self.SetTopWindow(self.frame)
 		self.panel.Show(true)
-		self.frame.Fit()
+		self.panel.Fit()
+		#self.frame.Fit()
 		self.frame.Show(true)
 		return true
 
@@ -251,6 +254,9 @@ class wxWidget(object):
 	def enable(self, enabled):
 		pass
 
+	def show(self, show):
+		pass
+
 	def setServer(self, value):
 		evt = SetServerEvent([self.name], value)
 		wxPostEvent(self.container.widgethandler, evt)
@@ -267,6 +273,7 @@ class wxContainerWidget(wxWidget):
 		self.pending = []
 
 		self.notebook = None
+		self.listboxcontainer = None
 
 		self.widgethandler.Connect(-1, -1, wxEVT_ADD_WIDGET, self.onAddWidget)
 		self.widgethandler.Connect(-1, -1, wxEVT_SET_WIDGET, self.onSetWidget)
@@ -274,6 +281,25 @@ class wxContainerWidget(wxWidget):
 		self.widgethandler.Connect(-1, -1, wxEVT_SET_SERVER, self.onSetServer)
 		self.widgethandler.Connect(-1, -1, wxEVT_COMMAND_SERVER,
 																self.onCommandServer)
+
+	def show(self, show):
+		if self.notebook is not None:
+			self.notebook.Show(show)
+		if self.listboxcontainer is not None:	
+			self.listboxcontainer.Show(show)
+		for child in self.children.values():
+			if self.sizer is not None:
+				if isinstance(child, wxNotebookContainerWidget):
+					childsizer = None
+				elif isinstance(child, wxDialogContainerWidget):
+					childsizer = None
+				elif isinstance(child, wxListBoxPanelContainerWidget):
+					childsizer = None
+				else:
+					childsizer = child.sizer
+				if childsizer is not None:
+					self.sizer.Show(childsizer, show)
+			child.show(show)
 
 	def _addWidget(self, name, typelist, value, settings):
 		childclass = WidgetClassFromTypeList(typelist)
@@ -284,10 +310,16 @@ class wxContainerWidget(wxWidget):
 		else:
 			child = childclass(name, self.childparent, self)
 		self.children[name] = child
-		if not isinstance(child, wxNotebookContainerWidget):
-			if not isinstance(child, wxDialogContainerWidget):
-				if self.sizer is not None and child.sizer is not None:
-					self.sizer.Add(child.sizer, 0, wxALL, 3)
+		if isinstance(child, wxNotebookContainerWidget):
+			childsizer = None
+		elif isinstance(child, wxDialogContainerWidget):
+			childsizer = None
+		elif isinstance(child, wxListBoxPanelContainerWidget):
+			childsizer = None
+		else:
+			childsizer = child.sizer
+		if self.sizer is not None and childsizer is not None:
+			self.sizer.Add(childsizer, 0, wxALL, 3)
 
 #		if isinstance(child, wxClientContainerWidget):
 #			child.uiclient.start()
@@ -345,10 +377,16 @@ class wxContainerWidget(wxWidget):
 				if len(evt.namelist) == 1:
 					del self.children[name]
 					child.destroy()
-					if not isinstance(child, wxNotebookContainerWidget):
-						if not isinstance(child, wxDialogContainerWidget):
-							if self.sizer is not None and child.sizer is not None:
-								self.sizer.Remove(child.sizer)
+					if isinstance(child, wxNotebookContainerWidget):
+						childsizer = None
+					elif isinstance(child, wxDialogContainerWidget):
+						childsizer = None
+					elif isinstance(child, wxListBoxPanelContainerWidget):
+						childsizer = None
+					else:
+						childsizer = child.sizer
+					if self.sizer is not None and childsizer is not None:
+						self.sizer.Remove(childsizer)
 					return
 				else:
 					evt.namelist = evt.namelist[1:]
@@ -389,10 +427,19 @@ class wxContainerWidget(wxWidget):
 			self.notebook = wxNotebook(self.childparent, -1)#, style=wxCLIP_CHILDREN)
 			self.notebooksizer = wxNotebookSizer(self.notebook)
 			if self.sizer is not None:
-				self.sizer.Add(self.notebooksizer, 0,
+				self.sizer.Add(self.notebooksizer, 1,
 												wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALL, 5)
 			self.layout()
 		return self.notebook
+
+	def getListBoxPanel(self):
+		if self.listboxcontainer is None:
+			self.listboxcontainer = wxListBoxPanel(self.childparent)
+			if self.sizer is not None:
+				self.sizer.Add(self.listboxcontainer.sizer, 1,
+												wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALL, 5)
+			self.layout()
+		return self.listboxcontainer
 
 	def layout(self):
 		if self.sizer is not None:
@@ -407,13 +454,27 @@ class wxContainerWidget(wxWidget):
 		for name, child in self.children.items():
 			del self.children[name]
 			child.destroy()
-			if not isinstance(child, wxNotebookContainerWidget):
-				if not isinstance(child, wxDialogContainerWidget):
-					if self.sizer is not None and child.sizer is not None:
-						self.sizer.Remove(child.sizer)
+			if isinstance(child, wxNotebookContainerWidget):
+				childsizer = None
+			elif isinstance(child, wxDialogContainerWidget):
+				childsizer = None
+			elif isinstance(child, wxListBoxPanelContainerWidget):
+				childsizer = None
+			else:
+				childsizer = self.sizer
+			if self.sizer is not None and childsizer is not None:
+				self.sizer.Remove(childsizer)
 		if self.notebook is not None:
 			self.notebook.Destroy()
+			self.notebook = None
 			self.sizer.Remove(self.notebooksizer)
+			self.notebooksizer = None
+
+	def show(self, value):
+		if self.notebook is not None:
+			self.notebook.Show(value)
+		if self.listboxcontainer is not None:
+			self.listboxcontainer.sizer.Show(value)
 
 class wxSimpleContainerWidget(wxContainerWidget):
 	def __init__(self, name, parent, container):
@@ -432,6 +493,10 @@ class wxStaticBoxContainerWidget(wxContainerWidget):
 		wxContainerWidget.__init__(self, name, parent, container)
 		self.staticbox = wxStaticBox(self.parent, -1, self.name)
 		self.sizer = wxStaticBoxSizer(self.staticbox, wxVERTICAL)
+
+	def show(self, show):
+		self.staticbox.show(show)
+		wxContainerWidget.show(self, show)
 
 	def destroy(self):
 		wxContainerWidget.destroy(self)
@@ -486,6 +551,12 @@ class wxDialogContainerWidget(wxContainerWidget):
 		self.childparent = self.panel
 		self.panel.Show(true)
 		self.dialog.Show(true)
+
+	def show(self, show):
+		print 'show =', show
+		self.panel.Show(show)
+		self.dialog.Show(show)
+		self.sizer.Show(show)
 
 	def destroy(self):
 		wxContainerWidget.destroy(self)
@@ -874,7 +945,7 @@ class wxMessageDialogWidget(wxContainerWidget):
 	def setMessage(self, value):
 		self.dialog.message.SetLabel(value)
 
-	def show(self):
+	def display(self):
 		width, height = self.dialog.message.GetSizeTuple()
 		self.dialog.sizer.SetItemMinSize(self.dialog.message, width, height)
 		self.dialog.sizer.Layout()
@@ -890,7 +961,7 @@ class wxMessageDialogWidget(wxContainerWidget):
 		elif name == 'OK':
 			self.okflag = True
 		if self.messageflag and self.okflag:
-			self.show()
+			self.display()
 
 	def onSetWidget(self, evt):
 		if evt.namelist == ['Message']:
@@ -1181,6 +1252,84 @@ class wxTargetImageWidget(wxContainerWidget):
 	def destroy(self):
 		self.label.Destroy()
 		self.targetimage.Destroy()
+
+class wxListBoxPanel(object):
+	def __init__(self, parent):
+		self.sizer = wxBoxSizer(wxHORIZONTAL)
+		self.listbox = wxListBox(parent, -1, style=wxLB_MULTIPLE)
+		EVT_LISTBOX(self.listbox, self.listbox.GetId(), self.OnListBox)
+		self.sizer.Add(self.listbox, 0, wxEXPAND|wxALL, 25)
+		self.childpanel = wxScrolledWindow(parent, -1, size=(512, 512),
+																	style=wxSUNKEN_BORDER)
+		self.childpanel.SetScrollRate(10, 10)
+		#self.childpanel.SetBackgroundColour(wxWHITE)
+		self.sizer.Add(self.childpanel, 1, wxEXPAND|wxALL, 5)
+		self.childsizer = wxBoxSizer(wxVERTICAL)
+		self.childpanel.SetSizer(self.childsizer)
+		self.containers = {}
+
+	def show(self, show):
+		self.listbox.Show(show)
+		self.childpanel.Show(show)
+		self.sizer.Show(show)
+
+	def addContainer(self, name, container):
+		self.containers[name] = container
+		self.childsizer.Add(container.sizer, 1, wxEXPAND)
+		self.listbox.Append(name)
+		self.listbox.SetStringSelection(name)
+		self.OnListBox(None)
+
+	def deleteContainer(self, name):
+		n = self.listbox.FindString(name)
+		if n is not wxNOT_FOUND:
+			self.listbox.Deselect(n)
+			self.listbox.Delete(n)
+		try:
+			self.childsizer.Remove(self.containers[name].sizer)
+			del self.containers[name]
+		except KeyError:
+			pass
+		self.OnListBox(None)
+
+	def OnListBox(self, evt):
+		selections = self.listbox.GetSelections()
+		selectionstrings = []
+		for selection in selections:
+			selectionstrings.append(self.listbox.GetString(selection))
+
+		for name, container in self.containers.items():
+			if name in selectionstrings:
+				show = true
+			else:
+				show = false
+			container.show(show)
+		self.childsizer.Layout()
+		self.childsizer.FitInside(self.childpanel)
+
+class wxListBoxPanelContainerWidget(wxContainerWidget):
+	def __init__(self, name, parent, id):
+		wxContainerWidget.__init__(self, name, parent, id)
+		self.listboxpanel = self.container.getListBoxPanel()
+		self.childparent = self.listboxpanel.childpanel
+		self.sizer = wxBoxSizer(wxVERTICAL)
+		self.listboxpanel.addContainer(name, self)
+
+	def show(self, show):
+		self.listboxpanel.childsizer.Show(self.sizer, show)
+		wxContainerWidget.show(self, show)
+
+	def _addWidget(self, name, typelist, value, settings):
+		wxContainerWidget._addWidget(self, name, typelist, value, settings)
+		self.layout()
+
+	def layout(self):
+		wxContainerWidget.layout(self)
+		self.listboxpanel.childsizer.FitInside(self.childparent)
+
+	def destroy(self):
+		wxContainerWidget.destroy(self)
+		self.listboxpanel.deleteContainer(self.name)
 
 if __name__ == '__main__':
 	import sys

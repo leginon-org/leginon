@@ -180,11 +180,17 @@ class LargeContainer(Container):
 class ExternalContainer(Container):
 	typelist = Container.typelist + ('external',)
 
-class ClientContainer(LargeContainer):
-	typelist = LargeContainer.typelist + ('client',)
-	def __init__(self, name, location):
-		self.value = location
-		LargeContainer.__init__(self, name)
+def clientContainerFactory(containerclass):
+	class ClientContainer(containerclass):
+		typelist = containerclass.typelist + ('client',)
+		def __init__(self, name, location):
+			self.value = location
+			containerclass.__init__(self, name)
+	return ClientContainer
+
+SmallClientContainer = clientContainerFactory(SmallContainer)
+MediumClientContainer = clientContainerFactory(MediumContainer)
+LargeClientContainer = clientContainerFactory(LargeContainer)
 
 class Method(Object):
 	typelist = Object.typelist + ('method',)

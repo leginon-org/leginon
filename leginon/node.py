@@ -105,7 +105,6 @@ class Node(leginonobject.LeginonObject):
 																	self.datahandler, tcpport)
 		self.clientclass = clientclass
 
-		#self.uiserver = uiserver.UIServer('UI', xmlrpcport)
 		self.uiserver = uiserver.Server(str(self.id[-1]), xmlrpcport)
 
 #		if not isinstance(self.session, data.SessionData):

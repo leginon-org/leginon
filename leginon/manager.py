@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import uiserver
 import threading
 import leginonconfig
 import node
@@ -38,7 +39,9 @@ class Manager(node.Node):
 
 		self.clients = {}
 
-		node.Node.__init__(self, id, session, nodelocations={}, datahandler=DataHandler, tcpport=tcpport, xmlrpcport=xmlrpcport, **kwargs)
+		node.Node.__init__(self, id, session, nodelocations={},
+												datahandler=DataHandler, tcpport=tcpport,
+												xmlrpcport=xmlrpcport, **kwargs)
 
 		self.uiclientcontainers = {}
 
@@ -312,7 +315,7 @@ class Manager(node.Node):
 	def addNodeUIClient(self, nodeid, nodelocation):
 		if nodeid in self.uiclientcontainers:
 			self.deleteNodeUIClient(nodeid)
-		clientcontainer = uidata.ClientContainer(str(nodeid[-1]),
+		clientcontainer = uidata.LargeClientContainer(str(nodeid[-1]),
 														(nodelocation['hostname'], nodelocation['UI port']))
 		try:
 			self.uiserver.addObject(clientcontainer)
@@ -676,7 +679,7 @@ class Manager(node.Node):
 
 	def defineUserInterface(self):
 		'''See node.Node.defineUserInterface.'''
-		node.Node.defineUserInterface(self)
+#		node.Node.defineUserInterface(self)
 
 		self.uilaunchname = uidata.String('Name', '', 'rw')
 		self.uiclassselect = uidata.SingleSelectFromList('Node Class', [], 0)
@@ -734,7 +737,7 @@ class Manager(node.Node):
 
 		uimanagersetup = self.managersetup.getUserInterface()
 
-		container = uidata.MediumContainer('Manager')
+		container = uidata.LargeContainer('Manager')
 
 		container.addObject(uimanagersetup)
 		container.addObjects((launchcontainer, nodemanagementcontainer,
@@ -931,7 +934,7 @@ class ManagerSetup(object):
 		return index
 
 	def defineUserInterface(self):
-		self.manager.uiserver.disable()
+#		self.manager.uiserver.disable()
 		self.container = uidata.ExternalContainer('Manager Setup')
 
 		usercontainer = uidata.Container('User')

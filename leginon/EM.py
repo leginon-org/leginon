@@ -1,44 +1,20 @@
-import leginonconfig
 import node
-import datahandler
 import scopedict
 import cameradict
 import threading
 import data
 import event
-import sys
 import imp
-import strictdict
 import copy
 import time
 import uidata
 import Queue
 import emregistry
 
+#import sys
 #if sys.platform == 'win32':
 #	sys.coinit_flags = 0
 #	import pythoncom
-
-# These keys are not included in a get all parameters
-prunekeys = (
-	'gun shift',
-	'gun tilt',
-	'high tension',
-	'beam blank',
-	'dark field mode',
-	'diffraction mode',
-	'low dose',
-	'low dose mode',
-	'screen current',
-	'holder type',
-	'holder status',
-	'stage status',
-	'vacuum status',
-	'column valves',
-	'turbo pump',
-	'column pressure',
-	'inserted',
-)
 
 def unique(s):
 	n = len(s)
@@ -81,21 +57,21 @@ class DataHandler(node.DataHandler):
 		emkey = id[0]
 		self.node.statelock.acquire()
 		done_event = threading.Event()
-		self.node.requestqueue.put(Request(done_event, [emkey]))
+		self.node.requestqueue.put(GetRequest(done_event, [emkey]))
 		done_event.wait()
-		stuff = self.node.state
+		state = self.node.state
 
 		if emkey == 'scope':
 			result = data.ScopeEMData(id=('scope',))
-			result.friendly_update(stuff)
+			result.friendly_update(state)
 		elif emkey in ('camera', 'camera no image data'):
 			result = data.CameraEMData(id=('camera',))
 			# this is a fix for the bigger problem of always 
 			# setting defocus
-			result.friendly_update(stuff)
+			result.friendly_update(state)
 		elif emkey == 'all em':
 			result = data.AllEMData(id=('all em',))
-			result.friendly_update(stuff)
+			result.friendly_update(state)
 		else:
 			### could be either CameraEMData or ScopeEMData
 			newid = self.ID()
@@ -103,13 +79,12 @@ class DataHandler(node.DataHandler):
 			trydatacamera = data.CameraEMData(id=('camera',))
 			for trydata in (trydatascope, trydatacamera):
 				try:
-					trydata.update(stuff)
+					trydata.update(state)
 					result = trydata
 					break
 				except KeyError:
 					result = None
 
-		self.node.uiUpdate()
 		self.node.statelock.release()
 		return result
 
@@ -117,37 +92,72 @@ class DataHandler(node.DataHandler):
 		if isinstance(idata, data.EMData):
 			self.node.statelock.acquire()
 			done_event = threading.Event()
-			#self.node.requestqueue.put(Request(done_event, idata['em']))
-			# this converts Data to a dict, and deletes items
-			# that are None.  This saves us some time because
-			# queueHandler will not only setEM, but getEM on
-			# all keys we give it, even if values are None
 			d = idata.toDict(noNone=True)
-			# also delete these, which are not understood by
-			# pyScope, or are read only
-			for key in ('id','session','system time', 'image data'):
+			for key in ['id', 'session', 'system time', 'image data']:
 				try:
 					del d[key]
 				except KeyError:
 					pass
-
-			self.node.requestqueue.put(Request(done_event, d))
+			self.node.requestqueue.put(SetRequest(done_event, d))
 			done_event.wait()
-			self.node.uiUpdate()
 			self.node.statelock.release()
 		else:
 			node.DataHandler.insert(self, idata)
 
-
 class Request(object):
+	pass
+
+class GetRequest(Request):
 	def __init__(self, ievent, value):
 		self.event = ievent
 		self.value = value
+
+class SetRequest(Request):
+	def __init__(self, ievent, value):
+		self.event = ievent
+		self.value = value
+
+class SetInstrumentRequest(Request):
+	def __init__(self, type, name):
+		self.type = type
+		self.name = name
 
 class EM(node.Node):
 	eventinputs = node.Node.eventinputs + [event.LockEvent, event.UnlockEvent]
 	eventoutputs = node.Node.eventoutputs + [event.ListPublishEvent]
 	def __init__(self, id, session, nodelocations, **kwargs):
+
+		# These keys are not included in a get all parameters
+		self.prunekeys = [
+			'gun shift',
+			'gun tilt',
+			'high tension',
+			'beam blank',
+			'dark field mode',
+			'diffraction mode',
+			'low dose',
+			'low dose mode',
+			'screen current',
+			'holder type',
+			'holder status',
+			'stage status',
+			'vacuum status',
+			'column valves',
+			'turbo pump',
+			'column pressure',
+			'inserted',
+		]
+
+		self.order = [
+			'magnification',
+			'spot size',
+			'image shift',
+			'beam shift',
+			'defocus',
+			'reset defocus',
+			'intensity',
+		]
+
 		# the queue of requests to get and set parameters
 		self.requestqueue = Queue.Queue()
 
@@ -196,17 +206,23 @@ class EM(node.Node):
 		self.start()
 
 	def handler(self, scopename, cameraname):
-		self.scope = {}
-		self.camera = {}
+		self.scope = None
+		self.camera = None
 
 		if scopename is not None:
 			self.setScopeType(scopename)
 		if cameraname is not None:
 			self.setCameraType(cameraname)
 
-		ids = ['scope', 'camera', 'camera no image data', 'all em']
-		ids += self.scope.keys()
-		ids += self.camera.keys()
+		ids = []
+		if self.scope is not None:
+			ids += ['scope']
+			ids += self.scope.keys()
+		if self.camera is not None:
+			ids += ['camera', 'camera no image data']
+			ids += self.camera.keys()
+		if self.scope is not None and self.camera is not None:
+			ids += ['all em']
 		for i in range(len(ids)):
 			ids[i] = (ids[i],)
 
@@ -216,8 +232,10 @@ class EM(node.Node):
 		self.state = self.getEM(self.uiscopedict.keys() + self.uicameradict.keys())
 		self.uiUpdate()
 
-		e = event.ListPublishEvent(id=self.ID(), idlist=ids)
-		self.outputEvent(e, wait=True)
+		if ids:
+			e = event.ListPublishEvent(id=self.ID(), idlist=ids)
+			self.outputEvent(e, wait=True)
+
 		self.outputEvent(event.NodeInitializedEvent(id=self.ID()))
 
 		self.queueHandler()
@@ -285,50 +303,60 @@ class EM(node.Node):
 		for key in withkeys:
 			if key == 'scope':
 				withkeys.remove(key)
-				scopekeys = self.scope.keys()
-				for prunekey in prunekeys:
-					try:
-						scopekeys.remove(prunekey)
-					except ValueError:
-						pass
-				withkeys += scopekeys
+				if self.scope is not None:
+					scopekeys = self.scope.keys()
+					for prunekey in self.prunekeys:
+						try:
+							scopekeys.remove(prunekey)
+						except ValueError:
+							pass
+					withkeys += scopekeys
 			elif key == 'camera':
 				withkeys.remove(key)
-				withkeys += self.camera.keys()
+				if self.camera is not None:
+					withkeys += self.camera.keys()
 			elif key == 'camera no image data':
 				withkeys.remove(key)
 				keys = self.camera.keys()
-				try:
-					keys.remove('image data')
-				except ValueError:
-					pass
-				withkeys += keys
+				if self.camera is not None:
+					try:
+						keys.remove('image data')
+					except ValueError:
+						pass
+					withkeys += keys
 			elif key == 'all em':
 				withkeys.remove(key)
-				withkeys += self.scope.keys()
-				withkeys += self.camera.keys()
+				if self.scope is not None:
+					withkeys += self.scope.keys()
+				if self.camera is not None:
+					withkeys += self.camera.keys()
 
 		withkeys = unique(withkeys)
 
 		for key in withoutkeys:
 			if key == 'scope':
 				withoutkeys.remove(key)
-				withoutkeys += self.scope.keys()
+				if self.scope is not None:
+					withoutkeys += self.scope.keys()
 			elif key == 'camera':
 				withoutkeys.remove(key)
-				withoutkeys += self.camera.keys()
+				if self.camera is not None:
+					withoutkeys += self.camera.keys()
 			elif key == 'camera no image data':
 				withoutkeys.remove(key)
-				keys = self.camera.keys()
-				try:
-					keys.remove('image data')
-				except KeyError:
-					pass
-				withoutkeys += keys
+				if self.camera is not None:
+					keys = self.camera.keys()
+					try:
+						keys.remove('image data')
+					except KeyError:
+						pass
+					withoutkeys += keys
 			elif key == 'all em':
 				withoutkeys.remove(key)
-				withoutkeys += self.scope.keys()
-				withoutkeys += self.camera.keys()
+				if self.scope is not None:
+					withoutkeys += self.scope.keys()
+				if self.camera is not None:
+					withoutkeys += self.camera.keys()
 
 		for key in withoutkeys:
 			try:
@@ -336,8 +364,14 @@ class EM(node.Node):
 			except ValueError:
 				pass
 
-		scopekeys = self.scope.keys()
-		camerakeys = self.camera.keys()
+		if self.scope is not None:
+			scopekeys = self.scope.keys()
+		else:
+			scopekeys = []
+		if self.camera is not None:
+			camerakeys = self.camera.keys()
+		else:
+			camerakeys = []
 		for key in withkeys:
 			if key in scopekeys:
 				result[key] = self.scope[key]
@@ -350,51 +384,44 @@ class EM(node.Node):
 
 		return result
 
-	def sortEMdict(self, emdict):
-		'''
-		sort items in em dict for proper setting order
-		'''
-		olddict = copy.deepcopy(emdict)
-		newdict = strictdict.OrderedDict()
+	def cmpEM(self, a, b):
+		ain = a in self.order
+		bin = b in self.order
 
-		# The order of the following keys matters
-		order = (
-			'magnification',
-			'spot size',
-			'image shift',
-			'beam shift',
-			'defocus',
-			'reset defocus',
-			'intensity',
-		)
-		for key in order:
-			try:
-				newdict[key] = olddict[key]
-				del olddict[key]
-			except KeyError:
-				pass
+		if ain and bin:
+			return cmp(self.order.index(a), self.order.index(b))
+		elif ain and not bin:
+			return -1
+		elif not ain and bin:
+			return 1
+		elif not ain and not bin:
+			return 0
 
-		# the rest don't matter
-		newdict.update(olddict)
-		return newdict
+	def setEM(self, state):
+		orderedkeys = state.keys()
+		orderedkeys.sort(self.cmpEM)
 
-	def setEM(self, emstate):
-		# order the items in emstate
-		ordered = self.sortEMdict(emstate)
+		if self.scope is not None:
+			scopekeys = self.scope.keys()
+		else:
+			scopekeys = []
+		if self.camera is not None:
+			camerakeys = self.camera.keys()
+		else:
+			camerakeys = []
 
-		scopekeys = self.scope.keys()
-		camerakeys = self.camera.keys()
-		for emkey, emvalue in ordered.items():
-			if emvalue is not None:
-				if emkey in scopekeys:
+		for key in orderedkeys:
+			value = state[key]
+			if value is not None:
+				if key in scopekeys:
 					try:
-						self.scope[emkey] = emvalue
+						self.scope[key] = value
 					except:	
-						print "failed to set '%s' to %s" % (emkey, emvalue)
+						print "failed to set '%s' to %s" % (key, value)
 						self.printException()
-				elif emkey in camerakeys:
+				elif key in camerakeys:
 					try:
-						self.camera[emkey] = emvalue
+						self.camera[key] = value
 					except:	
 						print "failed to set '%s' to" % EMkey, EMstate[EMkey]
 						self.printException()
@@ -417,18 +444,22 @@ class EM(node.Node):
 
 		self.statelock.acquire()
 		done_event = threading.Event()
-		self.requestqueue.put(Request(done_event, request))
+		self.requestqueue.put(SetRequest(done_event, request))
 		done_event.wait()
 		self.statelock.release()
 
 	def queueHandler(self):
 		while True:
 			request = self.requestqueue.get()
-			if isinstance(request.value, dict):
+			if isinstance(request, SetRequest):
 				self.setEM(request.value)
 				self.state = self.getEM(request.value.keys())
-			else:
+			elif isinstance(request, GetRequest):
 				self.state = self.getEM(request.value)
+			elif isinstance(request, SetInstrumentRequest):
+				pass
+			else:
+				raise TypeError('invalid EM request')
 			self.uiUpdate()
 			request.event.set()
 
@@ -442,7 +473,7 @@ class EM(node.Node):
 		self.uiSetState({'reset defocus': 1})
 		self.statelock.acquire()
 		done_event = threading.Event()
-		self.requestqueue.put(Request(done_event, ['defocus']))
+		self.requestqueue.put(GetRequest(done_event, ['defocus']))
 		done_event.wait()
 		self.statelock.release()
 		self.cameracontainer.enable()
@@ -459,6 +490,10 @@ class EM(node.Node):
 			self.uiSetState({'screen position': 'up'})
 		elif uiscreenposition == 'up':
 			self.uiSetState({'screen position': 'down'})
+		self.statelock.acquire()
+		done_event = threading.Event()
+		self.requestqueue.put(GetRequest(done_event, ['magnification']))
+		done_event.wait()
 		self.cameracontainer.enable()
 		self.scopecontainer.enable()
 
@@ -468,7 +503,7 @@ class EM(node.Node):
 		self.statelock.acquire()
 		done_event = threading.Event()
 		request = self.uiGetDictData(self.uiscopedict).keys()
-		self.requestqueue.put(Request(done_event, request))
+		self.requestqueue.put(GetRequest(done_event, request))
 		done_event.wait()
 		self.statelock.release()
 		self.cameracontainer.enable()
@@ -556,7 +591,6 @@ class EM(node.Node):
 									('screen position', 'Main Screen', uidata.String, 'r')]
 
 		for key, name, datatype, permissions in parameters:
-			print key, name, datatype
 			self.uiscopedict[key] = datatype(name, None, permissions)
 			scopeparameterscontainer.addObject(self.uiscopedict[key])
 

@@ -11,50 +11,68 @@ def bar():
 server = uiserver.Server()
 print 'UI server location =', server.hostname, server.port
 
-foo = uidata.MediumContainer('Foo')
-server.addObject(foo)
-foo.addObject(uidata.Integer('Test Int', 42, 'rw'))
+largecontainer0 = uidata.LargeContainer('Large Container 0')
+server.addObject(largecontainer0)
 
-server2 = uiserver.Server('client test')
+largecontainer0.addObject(uidata.Integer('Integer 0', 42, 'rw'))
+largecontainer0.addObject(uidata.Integer('Integer 1', 24, 'rw'))
+
+container0 = uidata.Container('Container 0')
+largecontainer0.addObject(container0)
+
+container0.addObject(uidata.Integer('Integer 3', 24, 'rw'))
+
+import Mrc
+numericimage = Mrc.mrc_to_numeric('test1.mrc')
+
+image0 = uidata.Image('Image 0', numericimage)
+container0.addObject(image0)
+
+largecontainer1 = uidata.LargeContainer('Large Container 1')
+server.addObject(largecontainer1)
+largecontainer1.addObject(uidata.String('String 0', 'string 0 text', 'rw'))
+
+#server2 = uiserver.Server('client test')
 #bar1 = uidata.Container('bar 1')
 #bar2 = uidata.Container('bar 2')
-foo = uidata.ClientContainer('client test', (server2.hostname, server2.port))
-server.addObject(foo)
-server.addObject(uidata.Integer('asdf', 39, 'rw'))
-server2.addObject(uidata.String('asdf', 'asdfkjlaksdf', 'rw'))
-bar1 = uidata.MediumContainer('bar 1')
-bar2 = uidata.ExternalContainer('bar 2')
-ls = uidata.SelectFromList('List Select X', [5,3,'b',2,3,5,6,7], [2])
-bar1.addObject(ls)
-def har():
-	ls.setList(ls.getList() + [1])
-bar1.addObject(uidata.Method('add', har))
-foo1 = uidata.MediumContainer('foo 1')
-foo2 = uidata.MediumContainer('foo 2')
-foo2.addObject(uidata.Integer('Test Int', 42, 'r'))
-foo2.addObject(uidata.Sequence('Test Seq', ['asdf', 1, 5.6, 'asdf2', 2, 4, 5]))
-server2.addObject(foo1)
-server2.addObject(foo2)
-server.addObject(bar1)
-testdata = uidata.String('Testing 1', 'this is a test string', 'rw')
-bar1.addObject(testdata)
-bar1.addObject(uidata.String('Testing 2', 'this is a test string', 'rw'))
-testdata.set('set string')
+#foo = uidata.LargeClientContainer('client test',
+#																		(server2.hostname, server2.port))
+#server.addObject(foo)
+#server.addObject(uidata.Integer('asdf', 39, 'rw'))
+#server2.addObject(uidata.String('asdf', 'asdfkjlaksdf', 'rw'))
+#bar1 = uidata.MediumContainer('bar 1')
+#bar2 = uidata.ExternalContainer('bar 2')
+#bar2 = uidata.MediumContainer('bar 2')
+#bar2 = uidata.LargeContainer('bar 2')
+#ls = uidata.SelectFromList('List Select X', [5,3,'b',2,3,5,6,7], [2])
+#bar1.addObject(ls)
+#def har():
+#	ls.setList(ls.getList() + [1])
+#bar1.addObject(uidata.Method('add', har))
+#foo1 = uidata.MediumContainer('foo 1')
+#foo2 = uidata.MediumContainer('foo 2')
+#foo2.addObject(uidata.Integer('Test Int', 42, 'r'))
+#foo2.addObject(uidata.Sequence('Test Seq', ['asdf', 1, 5.6, 'asdf2', 2, 4, 5]))
+#server2.addObject(foo1)
+#server2.addObject(foo2)
+#server.addObject(bar1)
+#testdata = uidata.String('Testing 1', 'this is a test string', 'rw')
+#bar1.addObject(testdata)
+#bar1.addObject(uidata.String('Testing 2', 'this is a test string', 'rw'))
+#testdata.set('set string')
 #bar1.deleteObject('Testing 2')
 #bar1.deleteObject('foo 2')
 
-p = uidata.Progress('Progress Bar', 25)
-bar1.addObject(p)
+#p = uidata.Progress('Progress Bar', 25)
+#bar1.addObject(p)
 
-server.addObject(bar2)
+#server.addObject(bar2)
 #bar1.addObject(uidata.MessageDialog('MD 1', 'This is a dialog'))
-foo1.addObject(uidata.SingleSelectFromList('List Select 1', [1,2,3], 1))
+#foo1.addObject(uidata.SingleSelectFromList('List Select 1', [1,2,3], 1))
 
 #image1 = uidata.Image('Image 1', None, 'rw')
-import Numeric
-import Mrc
-import Image
-image = Mrc.mrc_to_numeric('test1.mrc')
+
+'''
 image1 = uidata.Image('Image 1', image)
 bar2.addObject(image1)
 image2 = uidata.TargetImage('Target Image 1', image)
@@ -85,6 +103,7 @@ struct = {'a': 1,
 bar1.addObject(uidata.Struct('Struct 1', struct, 'r'))
 bar1.addObject(uidata.Struct('Struct 2', struct, 'rw'))
 bar1.addObject(uidata.SelectFromStruct('SFT 1', struct, []))
+'''
 
 client = uiclient.UIApp(server.hostname, server.port)
 
