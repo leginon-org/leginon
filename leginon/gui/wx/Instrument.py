@@ -4,9 +4,6 @@ from gui.wx.Camera import CameraPanel, EVT_CONFIGURATION_CHANGED
 from gui.wx.Entry import Entry, IntEntry, FloatEntry, EVT_ENTRY
 import gui.wx.Node
 
-class IndexChoice(wx.Choice):
-	pass
-
 def setControl(control, value):
 	testr = '%s value must be of type %s (is type %s)'
 	vestr = 'Invalid value %s for instance of %s'
@@ -41,19 +38,16 @@ def setControl(control, value):
 
 	elif isinstance(control, wx.Choice):
 
-		if isinstance(control, IndexChoice):
-			if type(value) is not int:
-				typename = str.__name__
-				raise TypeError(testr % (controlname, typename, valuetypename))
-			control.SetSelection(value)
-		elif type(value) is not str:
+		try:
+			value = str(value)
+		except:
 			typename = str.__name__
 			raise TypeError(testr % (controlname, typename, valuetypename))
+
+		if control.FindString(value) == wx.NOT_FOUND:
+			raise ValueError(vestr % (value, controlname))
 		else:
-			if control.FindString(value) == wx.NOT_FOUND:
-				raise ValueError(vestr % (value, controlname))
-			else:
-				control.SetStringSelection(value)
+			control.SetStringSelection(value)
 
 	elif isinstance(control, CameraPanel):
 		control._setConfiguration(value)
@@ -64,10 +58,7 @@ def getValue(wxobj):
 	elif isinstance(wxobj, (Entry, wx.TextCtrl, wx.CheckBox)):
 		return wxobj.GetValue()
 	elif isinstance(wxobj, wx.Choice):
-		if isinstance(wxobj, IndexChoice):
-			return wxobj.GetSelection()
-		else:
-			return wxobj.GetStringSelection()
+		return wxobj.GetStringSelection()
 	elif isinstance(wxobj, wx.Button):
 		return True
 	elif isinstance(wxobj, wx.Event):
@@ -77,10 +68,7 @@ def getValue(wxobj):
 		elif isinstance(evtobj, (Entry, wx.TextCtrl)):
 			return wxobj.GetValue()
 		elif isinstance(evtobj, wx.Choice):
-			if isinstance(evtobj, IndexChoice):
-				return wxobj.GetInt()
-			else:
-				return wxobj.GetString()
+			return wxobj.GetString()
 		elif isinstance(evtobj, wx.Button):
 			return True
 	else:
@@ -413,7 +401,7 @@ class MainSizer(wx.StaticBoxSizer):
 		]
 		self.parameters = {
 			'High tension': wx.StaticText(self.parent, -1, ''),
-			'Magnification': IndexChoice(self.parent, -1),
+			'Magnification': wx.Choice(self.parent, -1),
 			'Intensity': FloatEntry(self.parent, -1, chars=7),
 			'Spot size': IntEntry(self.parent, -1, chars=2),
 		}
@@ -652,7 +640,7 @@ class Panel(gui.wx.Node.Panel):
 
 		self.parametermap = {
 			'high tension': self.szpmain.parameters['High tension'],
-			'magnification index': self.szpmain.parameters['Magnification'],
+			'magnification': self.szpmain.parameters['Magnification'],
 			'intensity': self.szpmain.parameters['Intensity'],
 			'spot size': self.szpmain.parameters['Spot size'],
 			'stage status': self.szstage.parameters['Status'],
@@ -774,23 +762,11 @@ class Panel(gui.wx.Node.Panel):
 				reversemap[value] = keypath + [key]
 		return reversemap
 
-	def _setMagnifications(self, mags):
-		magchoice = self.parametermap['magnification index']
-		mags = map(str, mags)
-		n = magchoice.GetCount()
-		if n > 0:
-			selection = magchoice.GetSelection()
-			for i in range(n):
-				magchoice.SetString(i, mags[i])
-			magchoice.SetSelection(selection)
-		else:
-			magchoice.AppendItems(mags)
-			magchoice.Enable(True)
-
 	def _initParameter(self, parameter, value):
 		if isinstance(parameter, wx.Choice):
 			parameter.Clear()
-			parameter.AppendItems(value['values'])
+			values = map(str, value['values'])
+			parameter.AppendItems(values)
 
 	def _setParameter(self, parameter, value):
 		if isinstance(parameter, dict):
@@ -815,12 +791,8 @@ class Panel(gui.wx.Node.Panel):
 	def _setParameters(self, parameters, parametermap=None):
 		if parametermap is None:
 			parametermap = self.parametermap
-		if 'magnifications' in parameters:
-			self._setMagnifications(parameters['magnifications'])
 		camconfig = {}
 		for key, value in parameters.items():
-			if 'magnifications' == key:
-				continue
 			if key in ['dimension', 'binning', 'offset', 'exposure time']:
 				camconfig[key] = value
 				continue
