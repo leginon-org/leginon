@@ -21,6 +21,8 @@ class Client(leginonobject.LeginonObject):
 class Server(leginonobject.LeginonObject):
 	def __init__(self):
 		leginonobject.LeginonObject.__init__(self)
+		self.datacenter = {}
+		self.datacenter_rlock = threading.RLock()
 		self.servers = {}
 		#self.servers[datalocal.PullServer] = datalocal.PullServer(self)
 		self.servers[datatcp.PullServer] = datatcp.PullServer(self)
@@ -28,6 +30,20 @@ class Server(leginonobject.LeginonObject):
 		# this isn't working right now
 		thread.setDaemon(1)
 		thread.start()
+
+	def querydatacenter(self, data_id):
+		self.datacenter_rlock.acquire()
+		try:
+			data = self.datacenter[data_id]
+		except KeyError:
+			data = None
+		self.datacenter_rlock.release()
+		return data
+
+	def insertdatacenter(self, data):
+		self.datacenter_rlock.acquire()
+		self.datacenter[data.data_id] = data
+		self.datacenter_rlock.release()
 
 	def location(self):
 		loc = leginonobject.LeginonObject.location(self)

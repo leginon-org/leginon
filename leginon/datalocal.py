@@ -9,11 +9,11 @@ class Server(leginonobject.LeginonObject):
 
 class PullServer(Server):
 	def datafromid(self, data_id):
-		return self.server.datafromid(data_id)
+		return self.server.querydatacenter(data_id)
 
 class PushServer(Server):
 	def datatoid(self, data_id, data):
-		return self.server.datatoid(data_id, data)
+		return self.server.insertdatacenter(data)
 
 class Client(leginonobject.LeginonObject):
 	def __init__(self, server):

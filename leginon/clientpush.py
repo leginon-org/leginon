@@ -22,6 +22,8 @@ class Server(leginonobject.LeginonObject):
 	def __init__(self):
 		leginonobject.LeginonObject.__init__(self)
 		self.bindings = Bindings()
+		self.datacenter = {}
+		self.datacenter_rlock = threading.RLock()
 		self.servers = {}
 		#self.servers[datalocal.PushServer] = datalocal.PushServer(self)
 		self.servers[datatcp.PushServer] = datatcp.PushServer(self)
@@ -44,6 +46,20 @@ class Server(leginonobject.LeginonObject):
 
 	def handle_data(self, newdata):
 		print 'handling %s' % newdata
+
+	def querydatacenter(self, data_id):
+		self.datacenter_rlock.acquire()
+		try:
+			data = self.datacenter[data_id]
+		except KeyError:
+			data = None
+		self.datacenter_rlock.release()
+		return data
+
+	def insertdatacenter(self, data):
+		self.datacenter_rlock.acquire()
+		self.datacenter[data.data_id] = data
+		self.datacenter_rlock.release()
 
 class Bindings(dict, leginonobject.LeginonObject):
 	def __init__(self, *args):

@@ -16,7 +16,8 @@ class PullHandler(SocketServer.StreamRequestHandler, leginonobject.LeginonObject
 		# data_id needs to be send with a newline
 		data_id = self.rfile.readline()
 		# pickle the data from data_id (w/o the trailing newline char)
-		pickle.dump(self.server.datafromid(data_id[:-1]), self.wfile)
+		data = self.server.server.querydatacenter(data_id[:-1])
+		pickle.dump(data, self.wfile)
 
 class PushHandler(SocketServer.StreamRequestHandler, leginonobject.LeginonObject):
 	def __init__(self, request, server_address, server):
@@ -29,7 +30,8 @@ class PushHandler(SocketServer.StreamRequestHandler, leginonobject.LeginonObject
 		# data_id needs to be send with a newline
 		newdata = pickle.load(self.rfile)
 		print 'received newdata %s' % newdata
-		self.server.server.handle_data(newdata)
+		self.server.server.insertdatacenter(newdata)
+		#self.server.server.handle_data(newdata)
 		# temporarily making data a dictionary w/ actual data and data id
 		#self.server.datatoid(data['data id'], data['data'])
 
