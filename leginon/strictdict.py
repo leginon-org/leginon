@@ -134,7 +134,11 @@ class OrderedDict(dict):
 		'''
 		itemlist = []
 		for key,value in self.__ordered_items:
-			itemstr = "%s: %s" % (repr(key), repr(value))
+			if type(value) is Numeric.ArrayType:
+				valuestr = '(NumericArray,shape=%s)' % (value.shape,)
+			else:
+				valuestr = str(value)
+			itemstr = "%s: %s" % (str(key), valuestr)
 			itemlist.append(itemstr)
 		joinedstr = ', '.join(itemlist)
 		finalstr = '{%s}' % (joinedstr,)
