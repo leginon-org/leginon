@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
 from wxPython.wx import *
-from Tkinter import *
-import Numeric
+## commenting this while Tk is broken
+#from Tkinter import *
+#import ImageTk
 import Image
-import ImageTk
+import Numeric
 import math,sys
 import time
 

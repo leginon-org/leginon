@@ -1,18 +1,9 @@
 #!/usr/bin/env python
 
 import array, base64
-
-import ImageViewer
-
 import watcher
 import event, data
 import copy
-
-
-###
-### this is very unorganized,  need to separate the ImageViewer stuff into
-### another class or into ImageViewer itself
-###
 
 class ImageWatcher(watcher.Watcher):
 	def __init__(self, id, session, nodelocations, **kwargs):

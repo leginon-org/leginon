@@ -4,8 +4,6 @@ import watcher
 import correlator, fftengine, peakfinder
 import data, event
 from Mrc import mrc_to_numeric
-from Tkinter import *
-from ImageViewer import ImageViewer
 import threading
 import sys
 
