@@ -1089,20 +1089,15 @@ class wxImageWidget(wxDataWidget):
 		pass
 
 	def setWidget(self, value):
-		if isinstance(value, extendedxmlrpclib.Binary):
-			if value.data:
-				self.imageviewer.setImageFromMrcString(value.data)
-				width, height = self.imageviewer.GetSizeTuple()
-				self.sizer.SetItemMinSize(self.imageviewer, width, height)
-			else:
-				self.imageviewer.clearImage()
+		if isinstance(value, arraytype):
+			self.imageviewer.setNumericImage(value)
+		elif isinstance(value, extendedxmlrpclib.Binary):
+			self.imageviewer.setImageFromMrcString(value.data)
 		else:
-			if isinstance(value, arraytype):
-				self.imageviewer.setNumericImage(value)
-				width, height = self.imageviewer.GetSizeTuple()
-				self.sizer.SetItemMinSize(self.imageviewer, width, height)
-			else:
-				self.imageviewer.clearImage()
+			self.imageviewer.clearImage()
+			return
+		width, height = self.imageviewer.GetSizeTuple()
+		self.sizer.SetItemMinSize(self.imageviewer, width, height)
 
 	def destroy(self):
 		self.label.Destroy()
@@ -1406,13 +1401,15 @@ class wxClickImageWidget(wxContainerWidget):
 		wxPostEvent(self.container.widgethandler, evt)
 
 	def setImage(self, value):
-		if value:
-			#self.clickimage.setImageFromMrcString(value.data, True)
+		if isinstance(value, arraytype):
 			self.clickimage.setNumericImage(value, True)
-			width, height = self.clickimage.GetSizeTuple()
-			self.sizer.SetItemMinSize(self.clickimage, width, height)
+		elif isinstance(value, extendedxmlrpclib.Binary):
+			self.clickimage.setImageFromMrcString(value.data, True)
 		else:
 			self.clickimage.clearImage()
+			return
+		width, height = self.clickimage.GetSizeTuple()
+		self.sizer.SetItemMinSize(self.clickimage, width, height)
 
 	def _addWidget(self, name, typelist, value, configuration, children):
 		# should disable until all available
@@ -1463,12 +1460,15 @@ class wxTargetImageWidget(wxContainerWidget):
 		wxPostEvent(self.container.widgethandler, evt)
 
 	def setImage(self, value):
-		if value:
+		if isinstance(value, arraytype):
+			self.targetimage.setNumericImage(value, True)
+		elif isinstance(value, extendedxmlrpclib.Binary):
 			self.targetimage.setImageFromMrcString(value.data, True)
-			width, height = self.targetimage.GetSizeTuple()
-			self.sizer.SetItemMinSize(self.targetimage, width, height)
 		else:
 			self.targetimage.clearImage()
+			return
+		width, height = self.targetimage.GetSizeTuple()
+		self.sizer.SetItemMinSize(self.targetimage, width, height)
 
 	def setTargets(self, name, value):
 		self.targetimage.setTargetTypeValue(name, value)

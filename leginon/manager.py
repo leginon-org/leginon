@@ -24,6 +24,7 @@ import leginonobject
 import socket
 import os
 import importexport
+import project
 
 class Manager(node.Node):
 	'''Overlord of the nodes. Handles node communication (data and events).'''
@@ -808,6 +809,7 @@ class ManagerSetup(object):
 
 		self.defineUserInterface()
 
+		self.initProjects()
 		self.initUsers()
 		self.initInstruments()
 
@@ -815,6 +817,16 @@ class ManagerSetup(object):
 		session = self.uiGetSessionData()
 		self.manager.session = session
 		self.manager.publish(session, database=True)
+
+		projectname = self.projectselection.getSelectedValue()
+		try:
+			projectid = self.projectmap[projectname]['projectId']
+		except KeyError:
+			pass
+		else:
+			projectsession = project.ProjectExperiment(projectid, session['name'])
+			project.projectexperiments.insert([projectsession.dumpdict()])
+
 		if session['instrument'] is not None and \
 			session['instrument']['hostname'] not in self.manager.launcherdict.keys():
 			try:
@@ -876,6 +888,18 @@ class ManagerSetup(object):
 		users = self.getUsers()
 		self.users = self.indexByName(users)
 		self.uiUpdateUsers()
+
+	def initProjects(self):
+		projects = project.projects.getall()
+		self.projectmap = {}
+		for p in projects:
+			self.projectmap[p['name']] = p
+		self.uiUpdateProjects()
+
+	def uiUpdateProjects(self):
+		projectnames = self.projectmap.keys()
+		projectnames.sort()
+		self.projectselection.set(projectnames, 0)
 
 	def uiUpdateUsers(self):
 		usernames = self.users.keys()
@@ -953,6 +977,19 @@ class ManagerSetup(object):
 		self.manager.publish(userinstance, database=True)
 		return userinstance
 
+	def uiProjectSelectCallback(self, index):
+		if not hasattr(self, 'projectselection'):
+			return index
+		'''
+		projectname = self.projectselection.getSelectedValue(index)
+		try:
+			# show description
+			print self.projectmap[projectname]
+		except KeyError:
+			pass
+		'''
+		return index
+
 	def uiUserSelectCallback(self, index):
 		if not hasattr(self, 'userselection'):
 			return index
@@ -993,6 +1030,12 @@ class ManagerSetup(object):
 
 	def defineUserInterface(self):
 		self.container = uidata.ExternalContainer('Manager Setup')
+
+		projectcontainer = uidata.Container('Project')
+		self.projectselection = uidata.SingleSelectFromList('Project', [], 0,
+																		self.uiProjectSelectCallback, persist=True)
+		projectcontainer.addObject(self.projectselection)
+		self.container.addObject(projectcontainer)
 
 		usercontainer = uidata.Container('User')
 		self.userselection = uidata.SingleSelectFromList('Name', [], 0,

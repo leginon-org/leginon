@@ -21,7 +21,7 @@ class ProjectExperiment(sqldict.ObjectBuilder):
 	columns = ['projectId', 'name']
 projectexperiments = ProjectExperiment().register(db)
 
-
+'''
 # getall projects
 allprojects = projects.getall()
 print allprojects
@@ -35,3 +35,4 @@ newsession = ProjectExperiment(5, 'testexp')
 # returns the last inserted id for a new insert
 key = projectexperiments.insert([newsession.dumpdict()])
 print key
+'''
