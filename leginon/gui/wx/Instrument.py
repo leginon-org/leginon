@@ -1,6 +1,6 @@
 # -*- coding: iso-8859-1 -*-
 import wx
-from gui.wx.Camera import CameraPanel
+from gui.wx.Camera import CameraPanel, EVT_CONFIGURATION_CHANGED
 from gui.wx.Entry import Entry, IntEntry, FloatEntry, EVT_ENTRY
 import gui.wx.Node
 
@@ -55,6 +55,9 @@ def setControl(control, value):
 			else:
 				control.SetStringSelection(value)
 
+	elif isinstance(control, CameraPanel):
+		control._setConfiguration(value)
+
 def getValue(wxobj):
 	if isinstance(wxobj, wx.StaticText):
 		return wxobj.GetLabel()
@@ -103,10 +106,11 @@ EVT_INIT_PARAMETERS = wx.PyEventBinder(InitParametersEventType)
 EVT_SET_PARAMETERS = wx.PyEventBinder(SetParametersEventType)
 
 class InitParametersEvent(wx.PyCommandEvent):
-	def __init__(self, source, parameters):
+	def __init__(self, source, parameters, session):
 		wx.PyCommandEvent.__init__(self, InitParametersEventType, source.GetId())
 		self.SetEventObject(source)
 		self.parameters = parameters
+		self.session = session
 
 class SetParametersEvent(wx.PyCommandEvent):
 	def __init__(self, source, parameters):
@@ -426,7 +430,7 @@ class MainSizer(wx.StaticBoxSizer):
 		self.sz.AddGrowableCol(1)
 
 class CamInfoSizer(wx.StaticBoxSizer):
-	def __init__(self, parent, title='Camera Infomration'):
+	def __init__(self, parent, title='Information'):
 		self.parent = parent
 		wx.StaticBoxSizer.__init__(self, wx.StaticBox(self.parent, -1, title),
 																			wx.VERTICAL)
@@ -516,11 +520,11 @@ class CamInfoSizer(wx.StaticBoxSizer):
 
 
 class CamConfigSizer(wx.StaticBoxSizer):
-	def __init__(self, parent, title='Camera Settings'):
+	def __init__(self, parent, title='Settings'):
 		self.parent = parent
 		wx.StaticBoxSizer.__init__(self, wx.StaticBox(self.parent, -1, title),
 																			wx.VERTICAL)
-		self.sz = wx.GridBagSizer(0, 0)
+		self.sz = wx.GridBagSizer(5, 5)
 		self.Add(self.sz, 1, wx.EXPAND|wx.ALL, 5)
 
 		parameterorder = [
@@ -555,7 +559,6 @@ class CamConfigSizer(wx.StaticBoxSizer):
 			if isinstance(self.parameters[p], wx.CheckBox):
 				self.sz.Add(self.parameters[p], (i, 0), (1, 2), wx.ALIGN_CENTER)
 			elif isinstance(self.parameters[p], CameraPanel):
-				print 'asdf'
 				self.sz.Add(self.parameters[p], (i, 0), (1, 2), wx.ALIGN_CENTER|wx.ALL, 5)
 			else:
 				st = wx.StaticText(self.parent, -1, p + ':')
@@ -598,7 +601,18 @@ class Panel(gui.wx.Node.Panel):
 		self.ststatus = wx.StaticText(self, -1, '')
 		self.szstatus.Add(self.ststatus, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
-		self.szparameters = self._getStaticBoxSizer('Microscope', (1, 0), (1, 2),
+		self.brefresh = wx.Button(self, -1, 'Refresh')
+		self.cbpauses = wx.CheckBox(self, -1,
+																	'Use pauses between parameter changes')
+		self.cbpauses.SetValue(True)
+		self.szmain.Add(self.brefresh, (1, 0), (1, 1), wx.ALIGN_CENTER)
+		self.szmain.Add(self.cbpauses, (1, 1), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		self.szmain.AddGrowableCol(0)
+		self.szmain.AddGrowableCol(1)
+
+		self.szscope = self._getStaticBoxSizer('Microscope', (2, 0), (1, 2),
+																								wx.EXPAND|wx.ALL)
+		self.szcamera = self._getStaticBoxSizer('Camera', (3, 0), (1, 2),
 																								wx.EXPAND|wx.ALL)
 		self.szlenses = LensesSizer(self)
 		self.szfilm = FilmSizer(self)
@@ -612,22 +626,28 @@ class Panel(gui.wx.Node.Panel):
 		self.szcaminfo = CamInfoSizer(self)
 		self.szcamconfig = CamConfigSizer(self)
 
-		self.szparameters.Add(self.szpmain, (0, 0), (1, 1), wx.EXPAND)
-		self.szparameters.Add(self.szstage, (0, 1), (1, 1), wx.EXPAND)
+		self.szscope.Add(self.szpmain, (0, 0), (1, 1), wx.EXPAND)
+		self.szscope.Add(self.szstage, (0, 1), (1, 1), wx.EXPAND)
 
-		self.szparameters.Add(self.szlenses, (1, 0), (1, 1), wx.EXPAND)
-		self.szparameters.Add(self.szfilm, (1, 1), (1, 1), wx.EXPAND)
+		self.szscope.Add(self.szlenses, (1, 0), (1, 1), wx.EXPAND)
+		self.szscope.Add(self.szfilm, (1, 1), (1, 1), wx.EXPAND)
 
-		self.szparameters.Add(self.szfocus, (2, 0), (1, 1), wx.EXPAND)
-		self.szparameters.Add(self.szscreen, (2, 1), (1, 1), wx.EXPAND)
+		self.szscope.Add(self.szfocus, (2, 0), (1, 1), wx.EXPAND)
+		self.szscope.Add(self.szscreen, (2, 1), (1, 1), wx.EXPAND)
 
-		self.szparameters.Add(self.szvacuum, (3, 0), (2, 1), wx.EXPAND)
+		self.szscope.Add(self.szvacuum, (3, 0), (2, 1), wx.EXPAND)
 
-		self.szparameters.Add(self.szholder, (3, 1), (1, 1), wx.EXPAND)
-		self.szparameters.Add(self.szlowdose, (4, 1), (1, 1), wx.EXPAND)
+		self.szscope.Add(self.szholder, (3, 1), (1, 1), wx.EXPAND)
+		self.szscope.Add(self.szlowdose, (4, 1), (1, 1), wx.EXPAND)
 
-		self.szparameters.Add(self.szcaminfo, (5, 0), (1, 1), wx.EXPAND)
-		self.szparameters.Add(self.szcamconfig, (5, 1), (1, 1), wx.EXPAND)
+		self.szscope.AddGrowableCol(0)
+		self.szscope.AddGrowableCol(1)
+
+		self.szcamera.Add(self.szcaminfo, (0, 0), (1, 1), wx.EXPAND)
+		self.szcamera.Add(self.szcamconfig, (0, 1), (1, 1), wx.EXPAND)
+
+		self.szcamera.AddGrowableCol(0)
+		self.szcamera.AddGrowableCol(1)
 
 		self.parametermap = {
 			'high tension': self.szpmain.parameters['High tension'],
@@ -702,6 +722,7 @@ class Panel(gui.wx.Node.Panel):
 		}
 
 		self.parametermap.update(self.szcaminfo.parametermap)
+		self.parametermap.update(self.szcamconfig.parametermap)
 
 		self.controlmap = self.reverseMap(self.parametermap)
 
@@ -716,6 +737,22 @@ class Panel(gui.wx.Node.Panel):
 				bindControl(self, self.onControl, control)
 			except ValueError:
 				pass
+		self.Bind(EVT_CONFIGURATION_CHANGED, self.onCamConfig,
+							self.szcamconfig.parameters['Camera configuration'])
+
+	def onRefreshButton(self, evt):
+		self.Enable(False)
+		self.node.refresh()
+
+	def onPausesCheckBox(self, evt=None):
+		if evt is None:
+			value = self.cbpauses.GetValue()
+		else:
+			value = evt.IsChecked()
+		self.node.pause = value
+
+	def onCamConfig(self, evt):
+		self.node.setState(evt.configuration)
 
 	def onControl(self, evt):
 		control = evt.GetEventObject()
@@ -766,10 +803,10 @@ class Panel(gui.wx.Node.Panel):
 			except (TypeError, ValueError), e:
 				pass
 
-	def _initParameters(self, parameters, parametermap=None):
+	def _initParameters(self, parameters, session, parametermap=None):
 		self.Enable(False)
 		self.Freeze()
-		self.parameters['Camera configuration'].setSize(self.node.session)
+		self.szcamconfig.parameters['Camera configuration'].setSize(session)
 		if parametermap is None:
 			parametermap = self.parametermap
 		for key, value in parameters.items():
@@ -787,21 +824,28 @@ class Panel(gui.wx.Node.Panel):
 			parametermap = self.parametermap
 		if 'magnifications' in parameters:
 			self._setMagnifications(parameters['magnifications'])
+		camconfig = {}
 		for key, value in parameters.items():
 			if 'magnifications' == key:
+				continue
+			if key in ['dimension', 'binning', 'offset', 'exposure time']:
+				camconfig[key] = value
 				continue
 			try:
 				self._setParameter(parametermap[key], value)
 			except KeyError:
 				pass
+		if camconfig:
+			self._setParameter(self.szcamconfig.parameters['Camera configuration'],
+													camconfig)
 		self.Thaw()
 		self.Enable(True)
 
 	def onInitParameters(self, evt):
-		self._initParameters(evt.parameters, self.parametermap)
+		self._initParameters(evt.parameters, evt.session, self.parametermap)
 
-	def initParameters(self, parameters):
-		evt = InitParametersEvent(self, parameters)
+	def initParameters(self, parameters, session):
+		evt = InitParametersEvent(self, parameters, session)
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onSetParameters(self, evt):
@@ -812,6 +856,9 @@ class Panel(gui.wx.Node.Panel):
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onNodeInitialized(self):
+		self.Bind(wx.EVT_BUTTON, self.onRefreshButton, self.brefresh)
+		self.Bind(wx.EVT_CHECKBOX, self.onPausesCheckBox, self.cbpauses)
+		self.onPausesCheckBox()
 		self.Enable(True)
 
 if __name__ == '__main__':

@@ -1,4 +1,5 @@
 # -*- coding: iso-8859-1 -*-
+import copy
 import wx
 from gui.wx.Entry import IntEntry, FloatEntry, EVT_ENTRY
 
@@ -229,6 +230,34 @@ class CameraPanel(wx.Panel):
 		c = dict(g)
 		g['exposure time'] = self._getExposureTime()
 		return g
+
+	def _setGeometry(self, geometry):
+		self.geometry = copy.deepcopy(self.geometry)
+		for g in ['dimension', 'offset', 'binning']:
+			if g not in self.geometry:
+				self.geometry[g] = {}
+			try:
+				self.geometry[g].update(geometry[g])
+				if g == 'offset':
+					label = '(%d, %d)'
+				else:
+					label = '%d × %d'
+				label = label % (self.geometry[g]['x'], self.geometry[g]['y'])
+				getattr(self, 'st' + g).SetLabel(label)
+			except KeyError:
+				pass
+		self.Freeze()
+		self.szmain.Layout()
+		self.Thaw()
+		return True
+
+	def _setConfiguration(self, value):
+		try:
+			self._setExposureTime(value['exposure time'])
+		except KeyError:
+			pass
+		self._setGeometry(value)
+		self.setCommonChoice()
 
 	def setConfiguration(self, value):
 		self._setExposureTime(value['exposure time'])

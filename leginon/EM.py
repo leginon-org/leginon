@@ -176,8 +176,6 @@ class EM(node.Node):
 	panelclass = gui.wx.Instrument.Panel
 	eventinputs = node.Node.eventinputs + [event.LockEvent, event.UnlockEvent, event.SetScopeEvent, event.SetCameraEvent]
 	def __init__(self, name, session, managerlocation, tcpport=None, **kwargs):
-		self.scopemessagelog = uidata.MessageLog('Scope Message Log')
-		self.cameramessagelog = uidata.MessageLog('Camera Message Log')
 
 		self.typemap = {}
 
@@ -281,7 +279,7 @@ class EM(node.Node):
 			scopename = self.session['instrument']['scope']
 		except (TypeError, KeyError):
 			# no scope is associated with this session
-			self.scopemessagelog.warning('no scope is associated with this session')
+			self.logger.warning('no scope is associated with this session')
 			scopename = None
 
 		# get the camera module and class from the database
@@ -289,7 +287,7 @@ class EM(node.Node):
 			cameraname = self.session['instrument']['camera']
 		except (TypeError, KeyError):
 			# no camera is associated with this session
-			self.cameramessagelog.warning('no camera is associated with this session')
+			self.logger.warning('no camera is associated with this session')
 			cameraname = None
 
 		# add event inputs for locking and unlocking EM from a node
@@ -386,17 +384,9 @@ class EM(node.Node):
 				except KeyError:
 					pass
 
-		self.uistate = {}
-		self.defineUserInterface()
+		self.panel.initParameters(self.typemap, self.session)
 
-		self.state = self.getEM(self.uiscopedict.keys() + self.uicameradict.keys())
-		self.uiUpdate()
-
-		self.panel.initParameters(self.typemap)
-		self.panel.setParameters(self.state)
-
-		self.scopecontainer.enable()
-		self.cameracontainer.enable()
+		self.state = self.getEM(self.scope.keys() + self.camera.keys())
 
 		self.start()
 		self.queueHandler()
@@ -421,7 +411,7 @@ class EM(node.Node):
 			self.scope = methoddict.factory(scopeclass)()
 			self.typemap.update(self.scope.typemapping)
 		except Exception, e:
-			self.scopemessagelog.error('Cannot set scope to type ' + str(scopename))
+			self.logger.error('Cannot set scope to type ' + str(scopename))
 
 	def setCameraType(self, cameraname):
 		camerainfo = emregistry.getCameraInfo(cameraname)
@@ -433,7 +423,7 @@ class EM(node.Node):
 			self.camera = methoddict.factory(cameraclass)()
 			self.typemap.update(self.camera.typemapping)
 		except Exception, e:
-			self.cameramessagelog.error('Cannot set camera to type ' + str(cameraname))
+			self.logger.error('Cannot set camera to type ' + str(cameraname))
 
 	def main(self):
 		pass
@@ -589,7 +579,7 @@ class EM(node.Node):
 			camerakeys = []
 
 		if 'focus' in orderedkeys and 'defocus' in orderedkeys:
-			self.scopemessagelog.warning('Focus and defocus changed at the same time defocus ' + str(state['focus']) +  ' focus ' + str(state['defocus']))
+			self.logger.warning('Focus and defocus changed at the same time defocus ' + str(state['focus']) +  ' focus ' + str(state['defocus']))
 		self.checkStagePosition(state)
 
 		for key in orderedkeys:
@@ -601,48 +591,22 @@ class EM(node.Node):
 					try:
 						self.scope[key] = value
 					except:	
-						self.scopemessagelog.error('Failed to set \'%s\' to %s' % (key, value))
 						self.logger.exception('Set \'%s\' %s failed' % (key, value))
 				elif key in camerakeys:
 					try:
 						self.camera[key] = value
 					except:	
-						self.cameramessagelog.error('Failed to set \'%s\' to %s' % (key, value))
 						self.logger.exception('Set \'%s\' %s failed' % (key, value))
 
-			if self.uipauses.get() and (key in self.pauses):
+			if self.pause and (key in self.pauses):
 				p = self.pauses[key]
 				time.sleep(p)
-
-	# needs to have statelock locked
-	def uiUpdate(self):
-		self.uiSetDictData(self.uiscopedict, self.state)
-		self.uistate.update(self.uiGetDictData(self.uiscopedict))
-		self.uiSetDictData(self.uicameradict, self.state)
-		self.uistate.update(self.uiGetDictData(self.uicameradict))
 
 	def setState(self, setdict):
 		self.statelock.acquire()
 		try:
 			done_event = threading.Event()
 			self.requestqueue.put(SetRequest(done_event, setdict))
-		finally:
-			self.statelock.release()
-
-	def uiSetState(self, setdict):
-		request = {}
-		for key in setdict:
-			if key not in self.uistate or self.uistate[key] != setdict[key]:
-				request[key] = setdict[key]
-
-		if not request:
-			return
-
-		self.statelock.acquire()
-		try:
-			done_event = threading.Event()
-			self.requestqueue.put(SetRequest(done_event, request))
-			done_event.wait()
 		finally:
 			self.statelock.release()
 
@@ -664,215 +628,22 @@ class EM(node.Node):
 				break
 			else:
 				raise TypeError('invalid EM request')
-			self.uiUpdate()
 			request.event.set()
 
-	def uiUnlock(self):
-		self.locknode = None
-		self.nodelock.release()
-
-	def uiRefreshScope(self):
-		self.scopecontainer.disable()
-		self.cameracontainer.disable()
+	def refresh(self):
 		self.statelock.acquire()
 		try:
-			done_event = threading.Event()
-			request = self.uiGetDictData(self.uiscopedict).keys()
-			self.requestqueue.put(GetRequest(done_event, request))
-			done_event.wait()
+			request = []
+			if self.scope is not None:
+				request += self.scope.keys()
+			if self.camera is not None:
+				request += self.camera.keys()
+			if request:
+				done_event = threading.Event()
+				self.requestqueue.put(GetRequest(done_event, request))
 		finally:
 			self.statelock.release()
-			self.cameracontainer.enable()
-			self.scopecontainer.enable()
-
-	def uiRefreshCamera(self):
-		self.scopecontainer.disable()
-		self.cameracontainer.disable()
-		self.statelock.acquire()
-		try:
-			done_event = threading.Event()
-			request = self.uiGetDictData(self.uicameradict).keys()
-			self.requestqueue.put(GetRequest(done_event, request))
-			done_event.wait()
-		finally:
-			self.statelock.release()
-			self.cameracontainer.enable()
-			self.scopecontainer.enable()
-
-	def uiSetScope(self):
-		self.scopecontainer.disable()
-		self.cameracontainer.disable()
-		try:
-			scopedict = self.uiGetDictData(self.uiscopedict)
-			updatedstate = self.uiSetState(scopedict)
-		finally:
-			self.cameracontainer.enable()
-			self.scopecontainer.enable()
-
-	def uiSetCamera(self):
-		self.scopecontainer.disable()
-		self.cameracontainer.disable()
-		try:
-			cameradict = self.uiGetDictData(self.uicameradict)
-			updatedstate = self.uiSetState(cameradict)
-		finally:
-			self.cameracontainer.enable()
-			self.scopecontainer.enable()
-
-	def uiGetDictData(self, uidict):
-		uidictdata = {}
-		for key, value in uidict.items():
-			if isinstance(value, uidata.Data):
-				uidictdata[key] = value.get()
-#			elif isinstance(value, dict):
-			else:
-				uidictdata[key] = self.uiGetDictData(value)
-		return uidictdata
-
-	def uiSetDictData(self, uidict, dictdata):
-		for key, value in uidict.items():
-			if key in dictdata:
-				if isinstance(value, uidata.Data):
-					value.set(dictdata[key])
-#				elif isinstance(value, dict):
-				else:
-					self.uiSetDictData(value, dictdata[key])
 
 	def getDictStructure(self, dictionary):
 		return self.keys()
-
-	def interfaceObjectFromKey(self, obj, key):
-		try:
-			permissions = ''
-			if obj.readable(key):
-				permissions += 'r'
-			if obj.writable(key):
-				permissions += 'w'
-		except (KeyError, AttributeError):
-			raise ValueError('cannot get permission for "%s" from object' % key)
-		if not permissions:
-			raise ValueError('permissions of "%s" do not allow object creation' % key)
-		try:
-			return self.interfaceObjectFromTypeInfo(key, obj.typemapping[key],
-																								permissions)
-		except (AttributeError, KeyError):
-			raise ValueError('no typemap for "%s"' % key)
-
-	def interfaceObjectFromTypeInfo(self, key, typeinfodict, permissions):
-		datatype = typeinfodict['type']
-		if datatype == int:
-			interfaceclass = uidata.Integer
-			value = None
-		elif datatype == float:
-			interfaceclass = uidata.Float
-			value = None
-		elif datatype == str:
-			interfaceclass = uidata.String
-			value = ''
-		elif datatype == list:
-			interfaceclass = uidata.Sequence
-			value = []
-		elif datatype == bool:
-			interfaceclass = uidata.Boolean
-			value = False
-		elif datatype == Numeric.ArrayType:
-			raise ValueError('currently not displaying images')
-			interfaceclass = uidata.Image
-			value = None
-		elif datatype == dict:
-			interfaceclass = uidata.Container
-
-		try:
-			range = typeinfodict['range']
-		except KeyError:
-			pass
-
-		try:
-			values = typeinfodict['values']
-			if datatype == dict:
-				mapping = {}
-				objects = []
-				for subkey in values:
-					try:
-						subinterface, submapping = self.interfaceObjectFromTypeInfo(subkey,
-																														values[subkey],
-																														permissions)
-						objects.append(subinterface)
-						if submapping is None:
-							mapping[subkey] = subinterface
-						else:
-							mapping[subkey] = submapping
-					except (AttributeError, KeyError, ValueError):
-						pass
-				interface = interfaceclass(key)
-				interface.addObjects(objects)
-				return interface, mapping
-		except KeyError:
-			if datatype == dict:
-				return interfaceclass(key), None
-
-		return interfaceclass(key, value, permissions=permissions), None
-
-	def interfaceFromObject(self, obj):
-		if obj is None:
-			return uidata.Container('Parameters'), {}
-		orderedkeys = obj.keys()
-		orderedkeys.sort(self.cmpEM)
-		interfaceobjects = []
-		mapping = {}
-		for key in orderedkeys:
-			try:
-				interfaceobject, submapping = self.interfaceObjectFromKey(obj, key)
-				interfaceobjects.append(interfaceobject)
-				if submapping is None:
-					mapping[key] = interfaceobject
-				else:
-					mapping[key] = submapping
-			except ValueError, e:
-				pass
-		container = uidata.Container('Parameters')
-		container.addObjects(interfaceobjects)
-		return container, mapping
-
-	def defineUserInterface(self):
-		node.Node.defineUserInterface(self)
-
-		self.uipauses = uidata.Boolean('Do Pauses', True, permissions='rw',
-																		persist=True)
-
-		# scope
-		scopeinterface, self.uiscopedict = self.interfaceFromObject(self.scope)
-		refreshscope = uidata.Method('Refresh', self.uiRefreshScope)
-		setscope = uidata.Method('Set', self.uiSetScope)
-		self.scopecontainer = uidata.LargeContainer('Microscope')
-		self.scopecontainer.addObject(self.scopemessagelog,
-																	position={'expand': 'all',
-																						'position': (0, 0),
-																						'span': (1, 2)})
-		self.scopecontainer.addObject(self.uipauses, position={'position': (1, 0),
-																														'span': (1, 2)})
-		self.scopecontainer.addObject(scopeinterface, position={'position': (2, 0),
-																														'span': (1, 2)})
-		self.scopecontainer.addObject(setscope, position={'position': (3, 0)})
-		self.scopecontainer.addObject(refreshscope, position={'position': (3, 1)})
-		self.scopecontainer.disable()
-
-		# camera
-		camerainterface, self.uicameradict = self.interfaceFromObject(self.camera)
-		self.cameracontainer = uidata.LargeContainer('Camera')
-		refreshcamera = uidata.Method('Refresh', self.uiRefreshCamera)
-		setcamera = uidata.Method('Set', self.uiSetCamera)
-		self.cameracontainer.addObject(self.cameramessagelog,
-																		position={'expand': 'all',
-																						'position': (0, 0),
-																						'span': (1, 2)})
-		self.cameracontainer.addObject(camerainterface, position={
-																														'position': (1, 0),
-																														'span': (1, 2)})
-		self.cameracontainer.addObject(setcamera, position={'position': (2, 0)})
-		self.cameracontainer.addObject(refreshcamera, position={'position': (2, 1)})
-		self.cameracontainer.disable()
-
-		self.uicontainer.addObject(self.scopecontainer)
-		self.uicontainer.addObject(self.cameracontainer)
 
