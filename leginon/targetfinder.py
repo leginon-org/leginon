@@ -35,11 +35,9 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		print 'DONE'
 
 	def publishTargetList(self):
-		print 'AAA'
-		targetlistdata = data.ImageTargetListData(self.ID(), self.targetlist)
-		print 'BBB', targetlistdata, event.ImageTargetListPublishEvent
-		self.publish(targetlistdata, event.ImageTargetListPublishEvent)
-		print 'CCC'
+		if self.targetlist:
+			targetlistdata = data.ImageTargetListData(self.ID(), self.targetlist)
+			self.publish(targetlistdata, event.ImageTargetListPublishEvent)
 		self.targetlist = []
 		self.targetdict = {}
 
