@@ -238,7 +238,10 @@ class DataBinder(DataHandler):
 			item = self.queue.get(block=True)
 			print self.id, 'DEQUEUED', item
 			try:
-				self.handleData(item)
+				t = threading.Thread(target=self.handleData, args=(item,))
+				t.setDaemon(1)
+				t.start()
+				#self.handleData(item)
 			except:
 				self.printException()
 
