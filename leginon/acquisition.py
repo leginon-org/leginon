@@ -4,6 +4,8 @@ import time
 import data, event
 import calibrationclient
 import camerafuncs
+import presets
+import copy
 
 
 class Acquisition(targetwatcher.TargetWatcher):
@@ -16,6 +18,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			'modeled stage position': calibrationclient.ModeledStageCalibrationClient(self)
 		}
 		self.cam = camerafuncs.CameraFuncs(self)
+		self.presetsclient = presets.PresetsClient(self)
 
 		self.defineUserInterface()
 		self.start()
@@ -25,26 +28,55 @@ class Acquisition(targetwatcher.TargetWatcher):
 		print 'PROCESSING', targetdata
 		#detailedlist = self.detailedTargetList(self.presetlist, targetlist, self.targetmethod)
 
-		#for target in detailedlist:
 		movetype = self.movetype.get()
-		scopestate = self.targetToState(targetdata, movetype)
+		targetstate = self.targetToState(targetdata, movetype)
 
-		# for now camera state will be same as target origin
-		camerastate = targetdata.content['camera']
-		scopestate.update(camerastate)
+		### subtract the old preset from the target, so that
+		### we can apply a new preset
+		print 'targetdata keys', targetdata.content.keys()
+		if 'preset' in targetdata.content:
+			oldpreset = targetdata.content['preset']
 
-		## set the scope/camera state
-		emdata = data.EMData('scope', scopestate)
-		self.publishRemote(emdata)
-		## maybe some settling time here?
+			## right now, the only thing a target and preset
+			## have in common is image shift
+			targetstate['image shift']['x'] -= oldpreset['image shift']['x']
+			targetstate['image shift']['y'] -= oldpreset['image shift']['y']
+			print 'TARGETSTATE', targetstate
 
-		print 'sleeping 2 sec'
-		time.sleep(2)
+		### do each preset for this acquisition
+		presetnames = self.presetnames.get()
+		for presetname in presetnames:
+			newpreset = self.presetsclient.getPreset(presetname)
+			newtarget = copy.deepcopy(targetstate)
+			## merge the preset and target
+			## every item in preset overides corresponding item
+			## in target, except image shift, which is added
+			## so we can't just use newtarget.update(newpreset)
+			## For the future, make specialized class that
+			## can handle update(), with knowledge of how to 
+			## update different keys
+			for key in newtarget:
+				if key in newpreset:
+					### image shift is special
+					if key == 'image shift':
+						newtarget[key]['x'] += newpreset[key]['x']
+						newtarget[key]['y'] += newpreset[key]['y']
+					else:
+						newtarget[key] = newpreset[key]
 
-		print 'acquire'
-		self.acquire()
+			print 'NEWTARGET', newtarget
 
-	def acquire(self):
+			## set the scope/camera state
+			emdata = data.EMData('scope', newtarget)
+			self.publishRemote(emdata)
+
+			print 'sleeping 2 sec'
+			time.sleep(2)
+
+			print 'acquire'
+			self.acquire(newpreset)
+
+	def acquire(self, preset):
 		acqtype = self.acqtype.get()
 		if acqtype == 'raw':
 			imagedata = self.cam.acquireCameraImageData(None,0)
@@ -57,6 +89,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		if imagedata is None:
 			return
+
+		## attach preset to imagedata
+		imagedata.content['preset'] = dict(preset)
+
 		print 'publishing image'
 		self.publish(imagedata, event.CameraImagePublishEvent)
 		print 'image published'
@@ -67,7 +103,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		using chosen move type
 		The result is scope state
 		'''
-		targetinfo = targetdata.content
+		targetinfo = copy.deepcopy(targetdata.content)
 		## get relavent info from target event
 		targetrow = targetinfo['array row']
 		targetcol = targetinfo['array column']
@@ -110,8 +146,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		acqtypes = self.registerUIData('acqtypes', 'array', default=('raw', 'corrected'))
 		self.acqtype = self.registerUIData('Acquisition Type', 'string', default='raw', permissions='rw', choices=acqtypes)
+		self.presetnames = self.registerUIData('Preset Names', 'array', default=('p550',), permissions='rw')
 
-		prefs = self.registerUIContainer('Preferences', (self.movetype, self.delaydata, self.acqtype))
+		prefs = self.registerUIContainer('Preferences', (self.movetype, self.delaydata, self.acqtype, self.presetnames))
 
 		self.registerUISpec('Acquisition', (prefs, super))
 
