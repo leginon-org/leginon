@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.37 $
- *	@version $Id: leginon.inc,v 1.37 2004-11-16 08:05:30 dfellman Exp $
+ *	@version $Revision: 1.38 $
+ *	@version $Id: leginon.inc,v 1.38 2004-11-17 08:56:14 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -196,12 +196,15 @@ class leginondata {
 			." left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
 			." where a.`REF|SessionData|session` = '$sessionId'";
 		$Rdatatype = $this->mysql->SQLQuery($q);
-		$ndata=mysql_num_rows($Rdatatype);
+		if ($Rdatatype && mysql_num_rows($Rdatatype)) {
 		while ($row = mysql_fetch_row($Rdatatype)) 
 			if ($row[0])
 				$datatypes[$row[0]]=$row[0]; 
-			else
+					else
 				$datatypes[$this->manualtype]=$this->manualtype; 
+		} else {
+				$datatypes[$this->manualtype]=$this->manualtype; 
+		}
 		return $datatypes;
 	}
 
@@ -251,7 +254,8 @@ class leginondata {
 	}
 
 	function getPresets($fileId, $presets=array('mag','defocus','pixelsize','dose')) {
-		$presetfields = $this->mysql->getFields('PresetData');
+		if (!$presetfields = $this->mysql->getFields('PresetData'))
+			return array();
 		if (!is_array($presets) || !$fileId)
 			return false;
 		if (in_array('mag', $presets))
@@ -566,11 +570,12 @@ class leginondata {
 	}
 
 	function getMatrixCalibrationTypes() {
-		$types = array();
 		$q="select "
 		."distinct mcal.`type` "
 		."from MatrixCalibrationData mcal";
-		return $this->mysql->getSQLResult($q);
+		if (!$types=$this->mysql->getSQLResult($q))
+			$types = array();
+		return $types;
 	}
 
 	function getImageFFT($imgId) {
@@ -582,8 +587,7 @@ class leginondata {
 			."where "
 			."fft.`REF|AcquisitionImageData|source` ='".$imgId."' "; 
 
-		$Rparent = $this->mysql->SQLQuery($q);
-		$parent = mysql_fetch_array($Rparent);
+		list($parent) = $this->mysql->getSQLResult($q);
 		return $parent;
 	}
 
@@ -616,6 +620,18 @@ class leginondata {
 	}
 
 	function getImageInfo($imgId) {
+		if (!$this->mysql->isTable('PresetData')) {
+			$q = ""
+			."select a.`DEF_id` as imageId, "
+			."date_format(a.`DEF_timestamp`, '%Y-%d-%m %T') as `timestamp`,"
+			."a.`REF|SessionData|session` as `sessionId`,"
+			."a.`MRC|image` as filename "
+			."from AcquisitionImageData a "
+			."where "
+			."a.`DEF_id` ='".$imgId."' "; 
+			list($result) = $this->mysql->getSQLResult($q);
+			return $result;
+		}
 		// --- check if image as a parent
 		$parentinfo = $this->getParent($imgId);
 		$parentId = ($parentinfo['parentId']) ? $parentinfo['parentId'] : false;
@@ -623,6 +639,10 @@ class leginondata {
 		$parentjoin = "";
 		$gridtable = $this->mysql->isTable('GridData');
 		$parenttargetfields = $this->mysql->getFields('AcquisitionImageTargetData');
+		$parentcoords .= (in_array('delta column', $parenttargetfields)) ?  
+			"parenttarget.`delta column`, " : "";
+		$parentcoords .= (in_array('delta row', $parenttargetfields)) ?  
+			"parenttarget.`delta row`, " : "";
 		$parenttargetjoin = 
 			"left join AcquisitionImageTargetData parenttarget "
 			."on (parenttarget.`DEF_id`=a.`REF|AcquisitionImageTargetData|target`) ";
@@ -663,6 +683,7 @@ class leginondata {
 		$q = "select "
 			.$gridselect
 			.$parentselect
+			.$parentcoords
 			."a.`DEF_id` as imageId, "
 			."date_format(a.`DEF_timestamp`, '%Y-%d-%m %T') as `timestamp`,"
 			."a.`REF|SessionData|session` as `sessionId`,"
@@ -682,6 +703,7 @@ class leginondata {
 			."left join SessionData s2 on (s2.`DEF_id`=pi.`REF|SessionData|session`) "
 			."left join CameraEMData c on (a.`REF|CameraEMData|camera`=c.`DEF_id`) "
 			."left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
+
 			.$parenttargetjoin
 			.$gridjoin
 			."cross join PixelSizeCalibrationData pi on "
@@ -756,8 +778,6 @@ class leginondata {
 			$q .="and "
 			."a.`DEF_id` ='".$imgId."' "; 
 
-			// echo $q;
-
 		$parents = array();
 		$Rparent = $this->mysql->SQLQuery($q);
 		while ($parent = mysql_fetch_array($Rparent, MYSQL_ASSOC))
@@ -785,6 +805,8 @@ class leginondata {
 
 	function findImage($imgId, $preset="") {
 	// --- find an image related to an image Id and a preset
+		if (!$this->mysql->isTable('PresetData'))
+			return array('id'=>$imgId);
 		$newimage=array();
 		$imageinfo = $this->getImageInfo($imgId);
 		if (	empty($preset)

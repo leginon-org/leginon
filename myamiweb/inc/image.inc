@@ -1,7 +1,7 @@
 <?
 /**
- *	@version $Revision: 1.11 $
- *	@version $Id: image.inc,v 1.11 2004-11-12 17:17:32 dfellman Exp $
+ *	@version $Revision: 1.12 $
+ *	@version $Id: image.inc,v 1.12 2004-11-17 08:56:14 dfellman Exp $
  */
 /**
  *	Tools to display images / mosaic
@@ -148,6 +148,8 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		if ($p[scalebar]) {
 		    if ($imginfo) {
 			$size = ($size) ? $size : (($binning) ? $imginfo[dimx]/$binning : $imginfo[dimx]);
+			if (!$size)
+				$size=1;
 			$ratio = $imginfo[dimx]/$size ;
 			$value = $imginfo[pixelsize]*$imginfo[binning]*$ratio;
 			$scalebar = new ScaleBar($img, $size, $value);
