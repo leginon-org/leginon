@@ -1093,43 +1093,6 @@ class wxTreeCtrlWidget(wxDataWidget):
 	def destroy(self):
 		self.tree.Destroy()
 
-class wxListWidget(wxDataWidget):
-	def __init__(self, name, parent, container, value, configuration):
-		self.label = wxStaticText(parent, -1, name)
-		self.sizer = wxBoxSizer(wxVERTICAL)
-		if 'write' in configuration and configuration['write']:
-			self.list = wxList.wxListEdit(parent, self.onSetFromWidget)
-		else:
-			self.list = wxList.wxListView(parent)
-		self.sizer.Add(self.label, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
-		self.sizer.Add(self.list, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
-		wxDataWidget.__init__(self, name, parent, container, value, configuration)
-		self.set(value)
-
-	def _enable(self, enable):
-		self.label.Enable(enable)
-		self.list.Enable(enable)
-		wxDataWidget._enable(self, enable)
-
-	def _show(self, show):
-		self.label.Show(show)
-		self.list.Show(show)
-		wxDataWidget._show(self, show)
-
-	def setFromWidget(self):
-		self.setServer(self.value)
-
-	def onSetFromWidget(self, values):
-		self.value = values
-		self.setFromWidget()
-
-	def setWidget(self, value):
-		self.list.setValues(value)
-
-	def destroy(self):
-		self.label.Destroy()
-		#self.list.Destroy()
-
 class wxApplicationWidget(wxDataWidget):
 	def __init__(self, name, parent, container, value, configuration):
 		self.sizer = wxBoxSizer(wxVERTICAL)
@@ -1272,6 +1235,43 @@ class wxMessageDialogWidget(wxContainerWidget):
 	def destroy(self):
 		self.dialog.Destroy()
 
+class wxListWidget(wxDataWidget):
+	def __init__(self, name, parent, container, value, configuration):
+		self.label = wxStaticText(parent, -1, name)
+		self.sizer = wxBoxSizer(wxVERTICAL)
+		if 'write' in configuration and configuration['write']:
+			self.list = wxList.wxListEdit(parent, self.onSetFromWidget)
+		else:
+			self.list = wxList.wxListView(parent)
+		self.sizer.Add(self.label, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
+		self.sizer.Add(self.list, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
+		wxDataWidget.__init__(self, name, parent, container, value, configuration)
+		self.set(value)
+
+	def _enable(self, enable):
+		self.label.Enable(enable)
+		self.list.Enable(enable)
+		wxDataWidget._enable(self, enable)
+
+	def _show(self, show):
+		self.label.Show(show)
+		self.list.Show(show)
+		wxDataWidget._show(self, show)
+
+	def setFromWidget(self):
+		self.setServer(self.value)
+
+	def onSetFromWidget(self, values):
+		self.value = values
+		self.setFromWidget()
+
+	def setWidget(self, value):
+		self.list.setValues(value)
+
+	def destroy(self):
+		self.label.Destroy()
+		#self.list.Destroy()
+
 class wxListSelectWidget(wxContainerWidget):
 	def __init__(self, name, parent, container, value, configuration):
 		self.sizer = wxBoxSizer(wxHORIZONTAL)
@@ -1284,27 +1284,23 @@ class wxListSelectWidget(wxContainerWidget):
 		self.sizer.Add(self.listselect, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
 		self.layout()
 
-	def onSelect(self, value):
-		evt = SetServerEvent([self.name, 'Selected'], value)
-		wxPostEvent(self.container.widgethandler, evt)
-
 	def _enable(self, enable):
 		self.label.Enable(enable)
 		self.listselect.Enable(enable)
 		wxContainerWidget._enable(self, enable)
 
-	def setList(self, value):
-		self.value['List'] = value
-		self.listselect.setValues(value)
+	def _show(self, show):
+		self.label.Show(show)
+		self.listselect.Show(show)
+		wxContainerWidget._show(self, show)
 
-		self.listselect.SetSize(self.listselect.GetBestSize())
-		width, height = self.listselect.GetSize()
-		self.sizer.SetItemMinSize(self.listselect, width, height)
-		self.layout()
+	def layout(self):
+		self.sizer.Layout()
+		self.container.layout()
 
-	def setSelected(self, value):
-		self.value['Selected'] = value
-		self.listselect.select(value)
+	def destroy(self):
+		self.label.Destroy()
+		self.listselect.Destroy()
 
 	def _addWidget(self, name, typelist, value, configuration, children):
 		if name == 'List':
@@ -1329,13 +1325,21 @@ class wxListSelectWidget(wxContainerWidget):
 		if evt.event is not None:
 			evt.event.set()
 
-	def layout(self):
-		self.sizer.Layout()
-		self.container.layout()
+	def onSelect(self, value):
+		evt = SetServerEvent([self.name, 'Selected'], value)
+		wxPostEvent(self.container.widgethandler, evt)
 
-	def destroy(self):
-		self.label.Destroy()
-		self.listselect.Destroy()
+	def setList(self, value):
+		self.value['List'] = value
+		self.listselect.setValues(value)
+		self.listselect.SetSize(self.listselect.GetBestSize())
+		width, height = self.listselect.GetSize()
+		self.sizer.SetItemMinSize(self.listselect, width, height)
+		self.layout()
+
+	def setSelected(self, value):
+		self.value['Selected'] = value
+		self.listselect.select(value)
 
 class wxOrderedListBoxWidget(wxContainerWidget):
 	def __init__(self, name, parent, container, value, configuration):
