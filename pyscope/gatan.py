@@ -14,12 +14,13 @@ try:
 	import pythoncom
 	import pywintypes
 	import win32com.client
+except ImportError:
+	pass
+else:
 	try:
 		import TecnaiCCDWrapper
 	except ImportError:
 		from pyScope import TecnaiCCDWrapper
-except ImportError:
-	pass
 
 class Gatan(ccdcamera.CCDCamera):
 	name = 'Gatan'
