@@ -187,6 +187,80 @@ class CalibrationClient(object):
 #		imagespec = self.registerUIContainer('Images', (self.image1, self.image2))
 #		return imagespec
 
+class DoseCalibrationClient(CalibrationClient):
+	coulomb = 6.2414e18
+	def __init__(self, node):
+		CalibrationClient.__init__(self, node)
+		self.psizecal = PixelSizeCalibrationClient(node)
+
+	def storeSensitivity(self, ht, sensitivity):
+		newdata = data.CameraSensitivityCalibrationData()
+		newdata['session'] = self.node.session
+		newdata['high tension'] = ht
+		newdata['sensitivity'] = sensitivity
+		self.node.publish(newdata, database=True, force=True)
+
+	def researchSensitivity(self, ht, instrument):
+		qdata = data.CameraSensitivityCalibrationData()
+		qdata['session'] = data.SessionData()
+		qdata['session']['instrument'] = instrument
+		qdata['high tension'] = ht
+		results = self.research(datainstance=qdata, fill=False, results=1)
+		if results:
+			result = results[0]
+		else:
+			result = None
+		return result
+
+	def retrieveSensitivity(self, ht, instrument):
+		sdata = self.researchSensitivity(ht, instrument)
+		if sdata is None:
+			return None
+		psize = sdata['pixel size']
+		sens = sdata['sensitivity']
+		return {'pixel size':psize, 'sensitivity':sens}
+
+	def dose_from_screen(self, screen_mag, beam_current, beam_diameter):
+		## electrons per screen area per second
+		beam_area = math.pi * (beam_diameter/2.0)**2
+		screen_electrons = beam_current * self.coulomb / beam_area
+		## electrons per specimen area per second (dose rate)
+		dose_rate = screen_electrons * (screen_mag**2)
+		return dose_rate
+
+	def sensitivity(self, dose_rate, camera_mag, camera_pixel_size, exposure_time, counts):
+		camera_dose = float(dose_rate) / float((camera_mag**2))
+		dose_per_pixel = camera_dose * (camera_pixel_size**2)
+		electrons_per_pixel = dose_per_pixel * exposure_time
+		counts_per_electron = float(counts) / electrons_per_pixel
+		return counts_per_electron
+
+	def sensitivity_from_imagedata(self, imagedata, dose_rate):
+		inst = imagedata['session']['instrument']
+		mag = imagedata['scope']['magnification']
+		specimen_pixel_size = self.psizecal.retrievePixelSize(mag, instrument=inst)
+		camera_pixel_size = inst['camera pixel size']
+		camera_mag = camera_pixel_size / specimen_pixel_size
+		return self.sensitivity(dose_rate, camera_mag, camera_pixelsize, exposure_time, counts)
+
+	def dose_from_imagedata(self, imagedata):
+		'''
+		imagedata indirectly contains most info needed to calc dose
+		'''
+		inst = imagedata['session']['instrument']
+		camera_pixel_size = inst['camera pixel size']
+		ht = imagedata['scope']['high tension']
+		binning = imagedata['camera']['binning']['x']
+		camera_mag = imagedata['scope']['magnification']
+		exp_time = imagedata['camera']['exposure time']
+		numdata = imagedata['image']
+		sensitivity = self.retrieveSensitivity(ht, inst)
+		mean_counts = imagefun.mean(numdata) / (binning**2)
+		totaldose = camera_mag**2 * mean_counts / camera_pixel_size**2 / sensitivity
+		dose = totaldose * exp_time
+		return dose
+
+
 class PixelSizeCalibrationClient(CalibrationClient):
 	'''
 	basic CalibrationClient for accessing a type of calibration involving
@@ -195,19 +269,21 @@ class PixelSizeCalibrationClient(CalibrationClient):
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)
 
-	def researchPixelSizeData(self, mag, instrument=True):
+	def researchPixelSizeData(self, mag, instrument=None):
 		queryinstance = data.PixelSizeCalibrationData()
 		queryinstance['magnification'] = mag
 		queryinstance['session'] = data.SessionData()
-		if instrument:
+		if instrument is None:
 			queryinstance['session']['instrument'] = self.node.session['instrument']
+		else:
+			queryinstance['session']['instrument'] = instrument
 		caldatalist = self.node.research(datainstance=queryinstance, results=1)
 		if len(caldatalist) > 0:
 			return caldatalist[0]
 		else:
 			return None
 
-	def retrievePixelSize(self, mag, instrument=True):
+	def retrievePixelSize(self, mag, instrument=None):
 		'''
 		finds the requested pixel size using magnification
 		'''
@@ -217,7 +293,7 @@ class PixelSizeCalibrationClient(CalibrationClient):
 		pixelsize = caldata['pixelsize']
 		return pixelsize
 
-	def time(self, mag, instrument=True):
+	def time(self, mag, instrument=None):
 		print 'aaa'
 		pdata = self.researchPixelSizeData(mag, instrument)
 		print 'bbb'
