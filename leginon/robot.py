@@ -149,6 +149,7 @@ if sys.platform == 'win32':
 				try:
 					gridnumber = self.gridqueue.get(block=False)
 				except Queue.Empty:
+					self.setStatus('Grid queue empty')
 					self.insertmethod.enable()
 					self.extractmethod.enable()
 					return
@@ -157,6 +158,11 @@ if sys.platform == 'win32':
 
 			self.setStatus('Verifying robot is ready for insertion')
 			while not self.communication.Signal0:
+				if self.communication.Signal8:
+					self.setStatus('Robot failed to extract grid from tray')
+					self.communication.Signal8 = 0
+					self.insertStage()
+					return
 				time.sleep(0.5)
 			self.communication.Signal0 = 0
 			self.setStatus('Robot is ready for insertion')
