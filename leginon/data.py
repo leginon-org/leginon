@@ -212,13 +212,22 @@ class CameraImageData(ImageData):
 		return t
 	typemap = classmethod(typemap)
 
+## the camstate key is redundant (it's a subset of 'camera')
+## but for now it helps to query the same way we used to
 class CorrectionImageData(CameraImageData):
-	pass
+	def typemap(cls):
+		t = CameraImageData.typemap()
+		t += [ ('camstate', dict), ]
+		return t
+	typemap = classmethod(typemap)
 
 class DarkImageData(CorrectionImageData):
 	pass
 
 class BrightImageData(CorrectionImageData):
+	pass
+
+class NormImageData(CorrectionImageData):
 	pass
 
 class TileImageData(CameraImageData):
@@ -242,6 +251,22 @@ class PresetImageData(CameraImageData):
 	def typemap(cls):
 		t = CameraImageData.typemap()
 		t += [ ('preset', PresetData), ]
+		return t
+	typemap = classmethod(typemap)
+
+class CorrectorPlanData(Data):
+	'''
+	mosaic data contains data ID of images mapped to their 
+	position and state.
+	'''
+	def typemap(cls):
+		t = Data.typemap()
+		t += [
+			('camstate', dict),
+			('bad_rows', tuple),
+			('bad_cols', tuple),
+			('clip_limits', tuple)
+		]
 		return t
 	typemap = classmethod(typemap)
 
