@@ -620,7 +620,7 @@ class ImportDialog(wx.Dialog):
 			self.bimport.Enable(False)
 
 	def onImport(self, evt):
-		self.Enable(False)
+		self.bimport.Enable(False)
 		presets = {}
 		selections = self.lbpresets.GetSelections()
 		for i in selections:
