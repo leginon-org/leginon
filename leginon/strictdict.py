@@ -6,15 +6,26 @@ Provides several specialized mapping types derived from the built-in dict type.
 import Numeric
 from types import NoneType
 import copy
+import time
 
+### The type Numeric.ArrayType will not pickle properly, so here I create
+### an object here to represent it
 class _NumericArrayType:
 	'''
-	This represents Numeric.ArrayType, since pickle won't accept it
+	This represents Numeric.ArrayType, which is not acceptable to pickle
 	'''
+	### this makes sure all instances are compared equal
+	def __eq__(self, other):
+		return isinstance(other, _NumericArrayType)
+	### this makes sure all instances hash the same
+	def __hash__(self):
+		return hash(_NumericArrayType)
 NumericArrayType = _NumericArrayType()
 
+### and here's the validator for it
 def validateNumericArray(obj):
 	try:
+		### Numeric array should have this attribute
 		obj.typecode
 	except AttributeError:
 		raise TypeError()
@@ -254,6 +265,8 @@ class TypedDict(KeyedDict):
 
 		valuetype = self.__types[key]
 		valuefactory = self.getFactory(valuetype)
+		if valuefactory is None:
+			raise TypeError('unable to validate type %s' % (valuetype,))
 
 		try:
 			newvalue = valuefactory(value)
