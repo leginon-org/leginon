@@ -193,7 +193,7 @@ class EM(node.Node):
 		nodespec = node.Node.defineUserInterface(self)
 
 		statespec = self.registerUIData('EM State', 'struct', permissions='rw')
-		statespec.set(self.uiCallback)
+		statespec.registerCallback(self.uiCallback)
 
 		argspec = (self.registerUIData('Filename', 'string'),)
 		savespec = self.registerUIMethod(self.save, 'Save', argspec)
