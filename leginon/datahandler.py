@@ -156,17 +156,21 @@ class DataBinder(DataHandler):
 		dataclass = newdata.__class__
 		for bindclass in self.bindings:
 			if issubclass(dataclass, bindclass):
-				func = self.bindings[bindclass]
-				args = (newdata,)
-				try:
-					apply(func, args)
-				except:
-					pass
+				if self.bindings[bindclass]:
+					args = (newdata,)
+					for func in self.bindings[bindclass]:
+						try:
+							apply(func, args)
+						except:
+							pass
 
 	def setBinding(self, dataclass, func=None):
 		'func must take data instance as first arg'
 		if func == None:
 			if dataclass in self.bindings:
 				del self.bindings[dataclass]
+		if dataclass in self.bindings:
+				self.bindings[dataclass].append(func)
 		else:
-			self.bindings[dataclass] = func
+			self.bindings[dataclass] = [func]
+

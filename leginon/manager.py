@@ -13,11 +13,15 @@ class Manager(node.Node):
 		node.Node.__init__(self, 'manager', managerloc=None)
 
 		self.common = common
+		self.distmap = {}
+		self.dataregistry = {}
 
 		## this makes every received event get distributed
 		self.addEventInput(event.Event, self.distribute)
 		self.addEventInput(event.NodeReadyEvent, self.registerNode)
 		#self.addDistmap(event.PublishEvent, , ):
+
+		self.addEventInput(event.PublishEvent, self.registerData)
 
 		self.main()
 
@@ -33,6 +37,11 @@ class Manager(node.Node):
 		print 'registering node', readyevent.origin
 		self.addEventClient(readyevent.origin['id'], readyevent.origin['location'])
 		print self.clients
+
+	def registerData(self, publishevent):
+		#print 'registering data', publishevent.origin
+		self.dataregistry[publishevent.content] = publishevent.origin['id']
+		#print self.dataregistry
 
 	def launchNode(self, launcher, newproc, target, newid):
 		manloc = self.location()

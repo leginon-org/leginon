@@ -42,7 +42,6 @@ class Node(leginonobject.LeginonObject):
 
 		# added from eventhandler
 		self.clients = {}
-		self.distmap = {}
 		self.registry = {'outputs':[], 'inputs':[]}
 
 		self.server = datatransport.Server(dh, dhargs)
