@@ -58,7 +58,11 @@ class Navigator(node.Node):
 
 		## acquire image
 		self.acquireImage()
-		self.confirmEvent(clickevent)
+
+		## just in case this is a fake click event
+		## (which it is now when it comes from navigator's own image
+		if isinstance(clickevent, event.ImageClickEvent):
+			self.confirmEvent(clickevent)
 
 	def handleImageAcquire(self, acqevent):
 		self.acquireImage()
