@@ -8,7 +8,6 @@ import fftengine
 import correlator
 import peakfinder
 import time
-import sqldict
 
 class CalibrationClient(object):
 	'''
@@ -22,20 +21,6 @@ class CalibrationClient(object):
 		#ffteng = fftengine.fftFFTW(planshapes=(), estimate=1)
 		self.correlator = correlator.Correlator(ffteng)
 		self.peakfinder = peakfinder.PeakFinder()
-
-	def getCalibration(self, id):
-		try:
-			cal = self.node.researchByDataID(id)
-		except node.ResearchError:
-			print 'CalibrationClient unable to find calibrations. Maybe CalibrationLibrary is not available.'
-			raise
-
-		#calvalue = cal.content
-		calvalue = cal
-		return calvalue
-
-	def setCalibration(self, id, calibration):
-		raise NotImplementedError()
 
 	def acquireStateImage(self, state, publish_image=0, settle=0.0):
 		## acquire image at this state
@@ -117,61 +102,33 @@ class CalibrationClient(object):
 		shiftinfo.update({'actual states': actual, 'pixel shift': unbinned, 'peak value': peakvalue, 'shape':pcimage.shape, 'stats': (stats1, stats2)})
 		return shiftinfo
 
-
-class BeamTiltCalibrationClient(CalibrationClient):
+class MatrixCalibrationClient(CalibrationClient):
+	'''
+	basic CalibrationClient for accessing a type of calibration involving
+	a matrix at a certain magnification
+	'''
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)
-		self.db = sqldict.SQLDict()
-		self.createDBTable()
 
-	def createDBTable(self):
-		columns = [
-			{'Field': 'id', 'Type': 'int(16)', 'Key': 'PRIMARY', 'Extra':'auto_increment'},
-			{'Field': 'time', 'Type': 'timestamp', 'Null': 'YES', 'Key': 'INDEX'},
-			{'Field': 'magnification', 'Type': 'mediumint unsigned'},
-			{'Field': 'type', 'Type': 'varchar(50)'},
-			{'Field': 'm1_1', 'Type': 'float'},
-			{'Field': 'm1_2', 'Type': 'float'},
-			{'Field': 'm2_1', 'Type': 'float'},
-			{'Field': 'm2_2', 'Type': 'float'}
-		]
-		self.db.createSQLTable('beamtilt', columns)
-		self.db.beamtilt = self.db.Table('beamtilt', ['magnification', 'type', 'm1_1', 'm1_2', 'm2_1', 'm2_2'])
-		self.db.beamtilt.magtype = self.db.beamtilt.Index(['magnification', 'type'],
-					   orderBy = {'fields':('timestamp',),'sort':'DESC'})
-
-		self.db.beamtiltMatrix = self.db.Table('beamtilt', ['m1_1', 'm1_2', 'm2_1', 'm2_2'])
-		self.db.beamtiltMatrix.magtype = self.db.beamtilt.Index(['magnification', 'type'],
-					   orderBy = {'fields':('timestamp',),'sort':'DESC'})
-
-	def setCalibration(self, key, calibration):
-		#dat = data.MatrixCalibrationData(('calibrations',key), calibration)
-		# ?
-		dat = data.MatrixCalibrationData(('calibration', key), magnification=('calibrations',key), matrix=calibration)
-		self.node.publishRemote(dat)
-
-	def getMatrix(self, mag, type):
-		matrix = self.getCalibration(mag, type)
+	def retrieveMatrix(self, mag, caltype):
+		'''
+		finds the requested matrix using magnification and type
+		'''
+		caldata = self.node.research(dataclass=data.MatrixCalibration, magnification=mag, type=caltype)
+		matrix = caldata['matrix']
 		return matrix
 
-	def setMatrix(self, mag, type, matrix):
-		key = self.magCalibrationKey(mag, type)
-		self.setCalibration(key, matrix)
-
-	def getMatrixDB(self, mag, type):
-		result = self.db.beamtiltMatrix.magtype[mag,type].fetchonedict()
-		matrix = sqldict.dict2matrix(result)
-		return matrix
-
-	def setMatrixDB(self, mag, type, matrix):
+	def storeMatrix(self, mag, type, matrix):
 		'''
-		This stores a calibration matrix in the DB
-		   mag:  magnification (int)
-		   type:  calibration type (str)
-		   matrix:  calibration matrix (Numeric 2x2 matrix)
+		stores a newly calibration matrix
 		'''
-		mydict = {'magnification':  mag, 'type': type, 'm1_1': float(matrix[0,0]), 'm1_2': float(matrix[0,1]), 'm2_1': float(matrix[1,0]), 'm2_2': float(matrix[1,1])}
-		self.db.beamtilt.insert([mydict,])
+		caldata = data.MatrixCalibrationData(self.ID, magnification=mag, type=type, matrix=matrix)
+		self.publish(caldata, database=True)
+
+
+class BeamTiltCalibrationClient(MatrixCalibrationClient):
+	def __init__(self, node):
+		MatrixCalibrationClient.__init__(self, node)
 
 	def getBeamTilt(self):
 		emdata = self.node.researchByDataID(('beam tilt',))
@@ -183,9 +140,9 @@ class BeamTiltCalibrationClient(CalibrationClient):
 		emdata = self.node.researchByDataID(('magnification',))
 		#mag = emdata.content['magnification']
 		mag = emdata['magnification']
-		fmatrix = self.getMatrix(mag, 'defocus')
-		amatrix = self.getMatrix(mag, 'stigx')
-		bmatrix = self.getMatrix(mag, 'stigy')
+		fmatrix = self.retrieveMatrix(mag, 'defocus')
+		amatrix = self.retrieveMatrix(mag, 'stigx')
+		bmatrix = self.retrieveMatrix(mag, 'stigy')
 
 		tiltcenter = self.getBeamTilt()
 
@@ -324,23 +281,15 @@ class BeamTiltCalibrationClient(CalibrationClient):
 
 		return (pixelshift1, pixelshift2)
 
-class MatrixCalibrationClient(CalibrationClient):
+class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 	def __init__(self, node):
-		CalibrationClient.__init__(self, node)
+		MatrixCalibrationClient.__init__(self, node)
 
 	def parameter(self):
 		'''
 		returns a scope key for the calibrated parameter
 		'''
 		raise NotImplementedError()
-
-	def setCalibration(self, magnification, measurement):
-		key = self.magCalibrationKey(magnification, self.parameter())
-		mat = self.measurementToMatrix(measurement)
-		#dat = data.MatrixCalibrationData(('calibrations',key), mat)
-		# ?
-		dat = data.MatrixCalibrationData(magnification=('calibrations',key), matrix=mat)
-		self.node.publishRemote(dat)
 
 	def measurementToMatrix(self, measurement):
 		'''
@@ -361,8 +310,7 @@ class MatrixCalibrationClient(CalibrationClient):
 		biny = camera['binning']['y']
 		par = self.parameter()
 
-		key = self.magCalibrationKey(mag, par)
-		matrix = self.getCalibration(key)
+		matrix = self.retrieveMatrix(mag, par)
 
 		xvect = matrix[:,0]
 		yvect = matrix[:,1]
@@ -391,8 +339,7 @@ class MatrixCalibrationClient(CalibrationClient):
 		pixcol = pixelshift['col'] * binx
 		pixvect = (pixrow, pixcol)
 
-		key = self.magCalibrationKey(mag, par)
-		matrix = self.getCalibration(key)
+		matrix = self.retrieveMatrix(mag, par)
 		change = Numeric.matrixmultiply(matrix, pixvect)
 		changex = change[0]
 		changey = change[1]
@@ -415,8 +362,7 @@ class MatrixCalibrationClient(CalibrationClient):
 
 		vect = (shift['x'], shift['y'])
 
-		key = self.magCalibrationKey(mag, par)
-		matrix = self.getCalibration(key)
+		matrix = self.retrieveMatrix(mag, par)
 		matrix = LinearAlgebra.inverse(matrix)
 
 		pixvect = Numeric.matrixmultiply(matrix, vect)
@@ -445,8 +391,8 @@ class StageCalibrationClient(MatrixCalibrationClient):
 	def parameter(self):
 		return 'stage position'
 
-
 import gonmodel
+# XXX Not up to date with new calibration data research methods
 class ModeledStageCalibrationClient(CalibrationClient):
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)

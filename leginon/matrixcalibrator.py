@@ -108,7 +108,9 @@ class MatrixCalibrator(calibrator.Calibrator):
 
 		mag = self.getMagnification()
 		self.publish(event.UnlockEvent(self.ID()))
-		calclient.setCalibration(mag, shifts)
+
+		matrix = calclient.measurementToMatrix(shifts)
+		calclient.storeMatrix(mag, self.parameter, matrix)
 
 		print 'CALIBRATE DONE', shifts
 

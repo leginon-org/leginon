@@ -58,7 +58,6 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		print 'storing calibration'
 		mag = self.getMagnification()
 		self.calclient.setMatrix(mag, 'defocus', matrix)
-		self.calclient.setMatrixDB(mag, 'defocus', matrix)
 		return ''
 
 	def calibrateStigmators(self, tilt_value, delta):
@@ -97,7 +96,6 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			mag = self.getMagnification()
 			type = 'stig' + stigaxis
 			self.calclient.setMatrix(mag, type, matrix)
-			self.calclient.setMatrixDB(mag, type, matrix)
 
 		return ''
 
