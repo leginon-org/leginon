@@ -6,7 +6,7 @@ import math
 import Numeric
 from wxPython.wx import *
 from wxPython.lib.buttons import wxGenBitmapToggleButton
-from NumericImage import NumericImage
+import NumericImage
 
 wxInitAllImageHandlers()
 
@@ -240,13 +240,14 @@ class ImagePanel(wxPanel):
 			self.bitmap = None
 			return
 
-		image = NumericImage(self.numericimage)
+		image = NumericImage.NumericImage(self.numericimage)
 		image.update_image()
 		wximage = image.wxImage()
 
 		if self.smallScale():
 			xscale, yscale = self.getScale()
-			width, height = int(wximage.GetWidth()*xscale), int(wximage.GetHeight()*yscale)
+			width = int(wximage.GetWidth()*xscale)
+			height = int(wximage.GetHeight()*yscale)
 			self.bitmap = wxBitmapFromImage(wximage.Scale(width, height))
 		else:
 			self.bitmap = wxBitmapFromImage(wximage)
@@ -261,6 +262,11 @@ class ImagePanel(wxPanel):
 			bitmapwidth = self.bitmap.GetWidth()
 			bitmapheight = self.bitmap.GetHeight()
 			clientwidth, clientheight = self.panel.GetClientSize()
+
+			xscale, yscale = self.scale
+			if not self.smallScale():
+				bitmapwidth = int(bitmapwidth * xscale)
+				bitmapheight = int(bitmapwidth * yscale)
 
 			if bitmapwidth < clientwidth:
 				width = bitmapwidth
@@ -291,28 +297,29 @@ class ImagePanel(wxPanel):
 			self.panel.SetVirtualSize((0, 0))
 			self.virtualsize = (0, 0)
 
-		if self.biggerView():
-			xsize, ysize = self.virtualsize
-			xclientsize, yclientsize = self.panel.GetClientSize()
-			xoffset =(xclientsize - xsize)/2
-			yoffset = (yclientsize - ysize)/2
-			if xoffset < 0:
-				xoffset = 0
-			if yoffset < 0:
-				yoffset = 0
-			self.offset = (xoffset, yoffset)
+		xv, yv = self.biggerView()
+		xsize, ysize = self.virtualsize
+		xclientsize, yclientsize = self.panel.GetClientSize()
+		if xv:
+			xoffset = (xclientsize - xsize)/2
 		else:
-			self.offset = (0, 0)
+			xoffset = 0
+		if yv:
+			yoffset = (yclientsize - ysize)/2
+		else:
+			yoffset = 0
+		self.offset = (xoffset, yoffset)
 
 	def setNumericImage(self, numericimage, scroll=False):
 		'''
 		Set the numeric image, update bitmap, update buffer, set viewport size,
 		scroll, and refresh the screen.
 		'''
+
 		self.numericimage = numericimage
 		self.setBitmap()
-		self.setBuffer()
 		self.setVirtualSize()
+		self.setBuffer()
 		if not scroll:
 			self.panel.Scroll(0, 0)
 		self.UpdateDrawing()
@@ -348,15 +355,15 @@ class ImagePanel(wxPanel):
 			if n > 128.0 or n < 0.002:
 				return
 		oldscale = self.getScale()
-		self.scale = scale
+		self.scale = (float(scale[0]), float(scale[1]))
 		if self.smallScale() or self.smallScale(oldscale):
 			self.setBitmap()
-			self.setBuffer()
 
 		self.setVirtualSize()
-		if self.biggerView():
+		self.setBuffer()
+		xv, yv = self.biggerView()
+		if xv or yv:
 			self.panel.Refresh()
-		#self.UpdateDrawing()
 
 	# utility functions
 
@@ -373,10 +380,12 @@ class ImagePanel(wxPanel):
 	def biggerView(self):
 		size = self.virtualsize
 		clientsize = self.panel.GetClientSize()
-		if size[0] < clientsize[0] or size[1] < clientsize[1]:
-			return True
-		else:
-			return False
+		value = [False, False]
+		if size[0] < clientsize[0]:
+			value[0] = True
+		if size[1] < clientsize[1]:
+			value[1] = True
+		return tuple(value)
 
 	def center(self, center):
 		x, y = center
@@ -518,17 +527,13 @@ class ImagePanel(wxPanel):
 				xscale, yscale = (1.0, 1.0)
 			else:
 				xscale, yscale = self.getScale()
-				#bitmapdc.SetUserScale(1.0/xscale, 1.0/yscale)
 				dc.SetUserScale(xscale, yscale)
 
 			xviewoffset, yviewoffset = self.panel.GetViewStart()
 			xsize, ysize = self.panel.GetClientSize()
 
-			#dc.Blit(0, 0, xsize, ysize, bitmapdc, xviewoffset, yviewoffset)
-			dc.Blit(0, 0,
-							int(xsize/xscale + xscale), int(ysize/yscale + yscale),
-							bitmapdc,
-							int(xviewoffset/xscale), int(yviewoffset/yscale))
+			dc.Blit(0, 0, int(xsize/xscale + xscale), int(ysize/yscale + yscale),
+							bitmapdc, int(xviewoffset/xscale), int(yviewoffset/yscale))
 			bitmapdc.SelectObject(wxNullBitmap)
 		dc.EndDrawing()
 		dc.SetUserScale(1.0, 1.0)
@@ -955,12 +960,16 @@ class TargetImagePanel(ImagePanel):
 
 		xscale, yscale = self.getScale()
 		position = target.getPosition()
-		if self.biggerView():
-			x, y = position
-			x *= xscale
-			y *= yscale
+		xv, yv = self.biggerView()
+		nx, ny = self.image2view(position)
+		if xv:
+			x = position[0] * xscale
 		else:
-			x, y = self.image2view(position)
+			x = nx
+		if yv:
+			y = position[1] * yscale
+		else:
+			y = ny
 
 		if not self.smallScale():
 			memorydc.SetUserScale(1.0/xscale, 1.0/yscale)
@@ -984,12 +993,16 @@ class TargetImagePanel(ImagePanel):
 				bitmap = target.target_type.getDefaultBitmap()
 
 			position = target.getPosition()
-			if self.biggerView():
-				x, y = position
-				x *= xscale
-				y *= yscale
+			xv, yv = self.biggerView()
+			nx, ny = self.image2view(position)
+			if xv:
+				x = position[0] * xscale
 			else:
-				x, y = self.image2view(position)
+				x = nx
+			if yv:
+				y = position[1] * yscale
+			else:
+				y = ny
 
 			#memorydc.Clear()
 			memorydc.SelectObject(bitmap)
@@ -1026,9 +1039,10 @@ if __name__ == '__main__':
 			frame = wxFrame(NULL, -1, 'Image Viewer')
 			self.SetTopWindow(frame)
 #			self.panel = ClickImagePanel(frame, -1, bar)
-			self.panel = TargetImagePanel(frame, -1)
-			self.panel.addTargetType('foo')
-			self.panel.addTargetType('bar')
+#			self.panel = TargetImagePanel(frame, -1)
+			self.panel = ImagePanel(frame, -1)
+#			self.panel.addTargetType('foo')
+#			self.panel.addTargetType('bar')
 			frame.Fit()
 			frame.Show(true)
 			return true

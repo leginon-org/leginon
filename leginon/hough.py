@@ -1,4 +1,6 @@
 import Numeric
+import LinearAlgebra
+import FFT
 
 def gradient(image):
 	'''
@@ -50,7 +52,75 @@ def bresenhamCirclePoints(radius):
 			i -= 1
 	return pointlist 
 
-def hough(image, threshold, radiusrange=None):
+def period(image):
+	fftimage = Numeric.zeros(image.shape, 'd')
+	m = image.shape[0]
+	for j in range(image.shape[1]):
+		fft = FFT.fft(image[:, j]).real
+		fft[0] = 0
+		fftimage[:m/2, j] = fft[m/2 + 1:]
+		fftimage[m/2 + 1:, j] = fft[:m/2]
+	return fftimage
+
+def findPeak(image):
+	for n in range(image.shape[1]):
+		a = Numeric.zeros((image.shape[0], 3))
+		b = image[:, n]
+		a[:, 0] = Numeric.arrayrange(image.shape[0])
+		a[:, 0] **= 2
+		a[:, 1] = Numeric.arrayrange(image.shape[0])
+		a[:, 2] = Numeric.ones(image.shape[0])
+		fit = LinearAlgebra.linear_least_squares(a, b)
+		c = fit[0]
+		row = -c[1] / (2.0 * c[0])
+
+def houghLine(image, threshold):
+	m, n = image.shape
+
+	r = int(Numeric.ceil(Numeric.sqrt(((m/2.0)**2 + (n/2.0)**2))))
+	houghimage = Numeric.zeros((r, 90))
+
+	offset = r/2
+
+	hm = int(Numeric.ceil(m/2.0))
+	i = Numeric.arrayrange(-hm, hm)
+	i.shape = (m, 1)
+	hn = int(Numeric.ceil(n/2.0))
+	j = Numeric.arrayrange(-hn, hn)
+	j.shape = (n, 1)
+	conversion = Numeric.pi*2/houghimage.shape[1]
+	cos = Numeric.cos(Numeric.arrayrange(houghimage.shape[1])*conversion)
+	cos.shape = (1, houghimage.shape[1])
+	sin = Numeric.sin(Numeric.arrayrange(houghimage.shape[1])*conversion)
+	sin.shape = (1, houghimage.shape[1])
+
+	icos = Numeric.matrixmultiply(i, cos)
+	jsin = Numeric.matrixmultiply(j, sin)
+
+#	i = Numeric.transpose(Numeric.array([Numeric.arrayrange(n)]*m)).astype('d')
+#	j = Numeric.array([Numeric.arrayrange(m)]*n).astype('d')
+#
+#	i *= Numeric.cos(theta)
+#	j *= Numeric.sin(theta)
+#
+#	r = i + j + offset
+
+	mrange = range(m)
+	nrange = range(n)
+	for i in mrange:
+		for j in nrange:
+			if image[i, j] > threshold: 
+				for theta in range(houghimage.shape[1]):
+					try:
+						r = int(round(icos[i - m, theta] + jsin[j - n, theta]))
+					except:
+						print 'hough image shape =', houghimage.shape
+						print 'r =', r
+					houghimage[r, theta] = houghimage[r, theta] + 1
+
+	return houghimage
+
+def houghCircle(image, threshold, radiusrange=None):
 	'''
 	Computes the Hough transform of a circle on the given image on all points
 	with value greater than threshold, for circles with radii in radiusrange.
@@ -115,8 +185,12 @@ if __name__=='__main__':
 
 	t.reset()
 
-	houghimage = hough(edgeimage, 300, [28,28])
-	#houghimage = Numeric.clip(houghimage, 150, 30000)
+	houghcircleimage = houghCircle(edgeimage, 300, [28,28])
+	houghcircleimage = Numeric.clip(houghcircleimage, 100, 30000)
+	t.reset()
+	houghlineimage = houghLine(houghcircleimage, 101)
+	t.reset()
+	fftimage = period(houghlineimage)
 
 	t.stop()
 
@@ -126,11 +200,19 @@ if __name__=='__main__':
 			self.SetTopWindow(frame)
 			self.panel = wxScrolledWindow(frame, -1)
 			self.panel.SetScrollRate(5, 5)
-			self.sizer = wxBoxSizer(wxHORIZONTAL)
-			self.iv1 = wxImageViewer.ImagePanel(frame, -1)
-			self.sizer.Add(self.iv1)
-			self.iv2 = wxImageViewer.ImagePanel(frame, -1)
-			self.sizer.Add(self.iv2)
+			self.sizer = wxFlexGridSizer(2, 2, 0, 0)
+			self.iv1 = wxImageViewer.ImagePanel(self.panel, -1)
+			self.iv2 = wxImageViewer.ImagePanel(self.panel, -1)
+			self.iv3 = wxImageViewer.ImagePanel(self.panel, -1)
+			self.iv4 = wxImageViewer.ImagePanel(self.panel, -1)
+			self.sizer.AddMany([(self.iv1,),
+													(self.iv2,),
+													(self.iv3,),
+													(self.iv4,)])
+			self.sizer.AddGrowableRow(0)
+			self.sizer.AddGrowableRow(1)
+			self.sizer.AddGrowableCol(0)
+			self.sizer.AddGrowableCol(1)
 			self.sizer.Layout()
 			self.panel.SetSizer(self.sizer)
 			self.panel.Show(true)
@@ -140,6 +222,8 @@ if __name__=='__main__':
 
 	app = MyApp(0)
 	app.iv1.setNumericImage(edgeimage)
-	app.iv2.setNumericImage(houghimage)
+	app.iv2.setNumericImage(houghcircleimage)
+	app.iv3.setNumericImage(houghlineimage)
+	app.iv4.setNumericImage(fftimage)
 	app.MainLoop()
 
