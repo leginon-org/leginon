@@ -201,6 +201,7 @@ class ImageMosaic(watcher.Watcher):
 		# could be Inf
 		mincoordinate = [0, 0]
 		maxcoordinate = [0, 0]
+		self.printerror('bar 1')
 		for tileid in mosaic:
 			for i in [0, 1]:
 				min = mosaic[tileid]['position'][i]
@@ -209,14 +210,17 @@ class ImageMosaic(watcher.Watcher):
 					mincoordinate[i] = min
 				if max > maxcoordinate[i]:
 					maxcoordinate[i] = max
+		self.printerror('bar 2')
 		imageshape = (maxcoordinate[0] - mincoordinate[0], 
 									maxcoordinate[1] - mincoordinate[1]) 
+		self.printerror('bar 3')
 		image = Numeric.zeros(imageshape, Numeric.UnsignedInt16)
 		for tileid in mosaic:
 			row = mosaic[tileid]['position'][0] - mincoordinate[0]
 			column = mosaic[tileid]['position'][1] - mincoordinate[1]
 			iti = mosaic[tileid]['image']
 			image[row:row + iti.shape[0], column:column + iti.shape[1]] = iti.astype(Numeric.UnsignedInt16)
+		self.printerror('bar 4')
 		return image
 
 	def uiShow(self):
