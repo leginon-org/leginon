@@ -5,27 +5,23 @@ from gui.wx.Entry import IntEntry, FloatEntry
 import gui.wx.Calibrator
 
 class Panel(gui.wx.Calibrator.Panel):
-	def initialize(self):
-		gui.wx.Calibrator.Panel.initialize(self)
-		self.bcalibrate.SetLabel('Measure')
+	tools = [
+		'settings',
+		'abort',
+		'measure',
+		'model',
+	]
 
-		self.bmodel = wx.Button(self, -1, 'Model')
-		self.szbuttons.Add(self.bmodel, (4, 0), (1, 1), wx.EXPAND)
-
-	def onNodeInitialized(self):
-		gui.wx.Calibrator.Panel.onNodeInitialized(self)
-		self.Bind(wx.EVT_BUTTON, self.onModelButton, self.bmodel)
-
-	def onCalibrateButton(self, evt):
+	def onMeasureTool(self, evt):
 		self.node.uiStartLoop()
 
-	def onAbortButton(self, evt):
+	def onAbortTool(self, evt):
 		self.node.uiStopLoop()
 
-	def onModelButton(self, evt):
+	def onModelTool(self, evt):
 		self.node.uiFit()
 
-	def onSettingsButton(self, evt):
+	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()

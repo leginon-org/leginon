@@ -18,6 +18,7 @@ ID_REFRESH = 1014
 ID_PAUSES = 1015
 ID_AUTO_FOCUS = 1016
 ID_MANUAL_FOCUS = 1017
+ID_MODEL = 1018
 
 class ToolBar(wx.ToolBar):
 	def __init__(self, parent):
@@ -53,6 +54,7 @@ class ToolBar(wx.ToolBar):
 				'onAutoFocusTool', self.AddCheckTool),
 			('manual focus', ID_MANUAL_FOCUS, 'manualfocus.png', 'Manual focus',
 				'onManualFocusTool'),
+			('model', ID_MODEL, 'play.png', 'Model', 'onModelTool',),
 		]
 
 		self.order = []
