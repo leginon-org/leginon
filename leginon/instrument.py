@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.22 $
+# $Revision: 1.23 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-01 18:59:08 $
+# $Date: 2005-03-01 21:22:20 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -39,7 +39,7 @@ class Proxy(object):
 			self.magnifications[name] = proxy.Magnifications
 			if self.wxeventhandler is not None:
 				names = self.getTEMNames()
-				evt = gui.wx.Events.SetTEMsEvent(self.wxeventhandler, names)
+				evt = gui.wx.Events.SetTEMsEvent(self.wxeventhandler, names=names)
 				self.wxeventhandler.GetEventHandler().AddPendingEvent(evt)
 			if self.tem is None:
 				self.setTEM(name)
@@ -50,7 +50,7 @@ class Proxy(object):
 			self.camerasizes[name] = proxy.CameraSize
 			if self.wxeventhandler is not None:
 				names = self.getCCDCameraNames()
-				evt = gui.wx.Events.SetCCDCamerasEvent(self.wxeventhandler, names)
+				evt = gui.wx.Events.SetCCDCamerasEvent(self.wxeventhandler, names=names)
 				self.wxeventhandler.GetEventHandler().AddPendingEvent(evt)
 			if self.ccdcamera is None:
 				self.setCCDCamera(name)
@@ -143,7 +143,7 @@ class Proxy(object):
 			except KeyError:
 				raise ValueError('TEM \'%s\' not available' % name)
 		if self.wxeventhandler is not None:
-			evt = gui.wx.Events.SetTEMEvent(self.wxeventhandler, name)
+			evt = gui.wx.Events.SetTEMEvent(self.wxeventhandler, name=name)
 			self.wxeventhandler.GetEventHandler().AddPendingEvent(evt)
 
 	def setCCDCamera(self, name):
@@ -157,7 +157,7 @@ class Proxy(object):
 			except KeyError:
 				raise ValueError('CCD camera \'%s\' not available' % name)
 		if self.wxeventhandler is not None:
-			evt = gui.wx.Events.SetCCDCameraEvent(self.wxeventhandler, name)
+			evt = gui.wx.Events.SetCCDCameraEvent(self.wxeventhandler, name=name)
 			self.wxeventhandler.GetEventHandler().AddPendingEvent(evt)
 
 	def setImageCorrection(self, name):

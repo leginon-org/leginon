@@ -71,10 +71,14 @@ class EM(node.Node):
 		for name, c in tems + ccdcameras + fastccdcameras:
 			if issubclass(c, tem.TEM):
 				instrumentclass = instrument.TEM
+				wxaddmethod = self.panel.addTEM
 			elif issubclass(c, ccdcamera.FastCCDCamera):
 				instrumentclass = instrument.FastCCDCamera
+				wxaddmethod = self.panel.addCCDCamera
 			elif issubclass(c, ccdcamera.CCDCamera):
 				instrumentclass = instrument.CCDCamera
+				wxaddmethod = self.panel.addCCDCamera
+
 			class ObjectClass(c, instrumentclass):
 				def __init__(self):
 					self._hostname = socket.gethostname().lower()
@@ -91,6 +95,8 @@ class EM(node.Node):
 				self.logger.info('Added interface for %s' % name)
 			except Exception, e:
 				self.logger.debug('Initialization of %s failed: %s' % (name, e))
+				continue
+			wxaddmethod(name)
 		if not self.instruments:
 			self.logger.warning('No interfaces could be initiailized')
 

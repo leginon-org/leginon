@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Events.py,v $
-# $Revision: 1.19 $
+# $Revision: 1.20 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-28 22:17:52 $
+# $Date: 2005-03-01 21:22:20 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -15,11 +15,29 @@ import wx
 
 class FactoryEvent(wx.PyEvent):
 	_eventtype = None
-	def __init__(self):
+	def __init__(self, **kwargs):
 		wx.PyEvent.__init__(self)
 		self.SetEventType(self._eventtype)
+		for name in self._attributes:
+			if name in kwargs:
+				value = kwargs[name]
+			else:
+				value = None
+			setattr(self, name, value)
 
-def eventFactory(name):
+class FactoryCommandEvent(wx.PyCommandEvent):
+	_eventtype = None
+	def __init__(self, source, **kwargs):
+		wx.PyCommandEvent.__init__(self, self._eventtype, source.GetId())
+		self.SetEventObject(source)
+		for name in self._attributes:
+			if name in kwargs:
+				value = kwargs[name]
+			else:
+				value = None
+			setattr(self, name, value)
+
+def eventFactory(name, attributes=[], command=False):
 	toks = name.split()
 	basename = ''
 	bindername = ''
@@ -27,12 +45,17 @@ def eventFactory(name):
 		basename += tok
 		bindername += tok.upper() + '_'
 	eventname = basename + 'Event'
+	if command:
+		bases = (FactoryCommandEvent,)
+	else:
+		bases = (FactoryEvent,)
 	typename = eventname + 'Type'
 	bindername = 'EVT_' + bindername[:-1]
 	g = globals()
 	g[typename] = wx.NewEventType()
 	g[bindername] = wx.PyEventBinder(g[typename])
-	g[eventname] = type(eventname, (FactoryEvent,), {'_eventtype': g[typename]})
+	g[eventname] = type(eventname, bases, {'_eventtype': g[typename],
+																					'_attributes': attributes})
 
 eventFactory('Acquisition Done')
 eventFactory('Atlas Calculated')
@@ -48,28 +71,25 @@ eventFactory('Update Drawing')
 eventFactory('Found Targets')
 eventFactory('Get Atlases Done')
 eventFactory('Set Atlas Done')
+eventFactory('Add TEM', attributes=['name'], command=True)
+eventFactory('Remove TEM', attributes=['name'], command=True)
+eventFactory('Set TEMs', attributes=['names'], command=True)
+eventFactory('TEM Change', attributes=['name'], command=True)
+eventFactory('Add CCDCamera', attributes=['name'], command=True)
+eventFactory('Remove CCDCamera', attributes=['name'], command=True)
+eventFactory('Set CCDCamera', attributes=['name'], command=True)
+eventFactory('Set CCDCameras', attributes=['names'], command=True)
+eventFactory('CCDCamera Change', attributes=['name'], command=True)
 
 PlayerEventType = wx.NewEventType()
 SetImageEventType = wx.NewEventType()
 SetTargetsEventType = wx.NewEventType()
 StatusUpdatedEventType = wx.NewEventType()
-SetTEMEventType = wx.NewEventType()
-SetTEMsEventType = wx.NewEventType()
-SetCCDCameraEventType = wx.NewEventType()
-SetCCDCamerasEventType = wx.NewEventType()
-TEMChangeEventType = wx.NewEventType()
-CCDCameraChangeEventType = wx.NewEventType()
 
 EVT_PLAYER = wx.PyEventBinder(PlayerEventType)
 EVT_SET_IMAGE = wx.PyEventBinder(SetImageEventType)
 EVT_SET_TARGETS = wx.PyEventBinder(SetTargetsEventType)
 EVT_STATUS_UPDATED = wx.PyEventBinder(StatusUpdatedEventType)
-EVT_SET_TEM = wx.PyEventBinder(SetTEMEventType)
-EVT_SET_TEMS = wx.PyEventBinder(SetTEMsEventType)
-EVT_SET_CCDCAMERA = wx.PyEventBinder(SetCCDCameraEventType)
-EVT_SET_CCDCAMERAS = wx.PyEventBinder(SetCCDCamerasEventType)
-EVT_TEM_CHANGE = wx.PyEventBinder(TEMChangeEventType)
-EVT_CCDCAMERA_CHANGE = wx.PyEventBinder(CCDCameraChangeEventType)
 
 class PlayerEvent(wx.PyEvent):
 	def __init__(self, state):
@@ -98,40 +118,4 @@ class StatusUpdatedEvent(wx.PyCommandEvent):
 		self.SetEventObject(source)
 		self.level = level
 		self.status = status
-
-class SetTEMEvent(wx.PyCommandEvent):
-	def __init__(self, source, name):
-		wx.PyCommandEvent.__init__(self, SetTEMEventType, source.GetId())
-		self.SetEventObject(source)
-		self.name = name
-
-class SetTEMsEvent(wx.PyCommandEvent):
-	def __init__(self, source, names):
-		wx.PyCommandEvent.__init__(self, SetTEMsEventType, source.GetId())
-		self.SetEventObject(source)
-		self.names = names
-
-class SetCCDCameraEvent(wx.PyCommandEvent):
-	def __init__(self, source, name):
-		wx.PyCommandEvent.__init__(self, SetCCDCameraEventType, source.GetId())
-		self.SetEventObject(source)
-		self.name = name
-
-class SetCCDCamerasEvent(wx.PyCommandEvent):
-	def __init__(self, source, names):
-		wx.PyCommandEvent.__init__(self, SetCCDCamerasEventType, source.GetId())
-		self.SetEventObject(source)
-		self.names = names
-
-class TEMChangeEvent(wx.PyCommandEvent):
-	def __init__(self, source, name):
-		wx.PyCommandEvent.__init__(self, TEMChangeEventType, source.GetId())
-		self.SetEventObject(source)
-		self.name = name
-
-class CCDCameraChangeEvent(wx.PyCommandEvent):
-	def __init__(self, source, name):
-		wx.PyCommandEvent.__init__(self, CCDCameraChangeEventType, source.GetId())
-		self.SetEventObject(source)
-		self.name = name
 

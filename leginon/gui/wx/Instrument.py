@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Instrument.py,v $
-# $Revision: 1.35 $
+# $Revision: 1.36 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-01 19:17:54 $
+# $Date: 2005-03-01 21:22:20 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -444,7 +444,7 @@ class CamInfoSizer(wx.StaticBoxSizer):
 		self.parent = parent
 		wx.StaticBoxSizer.__init__(self, wx.StaticBox(self.parent, -1, title),
 																			wx.VERTICAL)
-		self.sz = wx.GridBagSizer(0, 0)
+		self.sz = wx.GridBagSizer(5, 5)
 		self.Add(self.sz, 1, wx.EXPAND|wx.ALL, 5)
 
 		parameterorder = [
@@ -603,7 +603,168 @@ class CamConfigSizer(wx.StaticBoxSizer):
 
 		self.sz.AddGrowableCol(1)
 
+class TEMPanel(wx.Panel):
+	def __init__(self, *args, **kwargs):
+		wx.Panel.__init__(self, *args, **kwargs)
+
+		self.sz = wx.GridBagSizer(5, 5)
+
+		self.szlenses = LensesSizer(self)
+		self.szfilm = FilmSizer(self)
+		self.szstage = StageSizer(self)
+		self.szholder = HolderSizer(self)
+		self.szscreen = ScreenSizer(self)
+		self.szvacuum = VacuumSizer(self)
+		self.szlowdose = LowDoseSizer(self)
+		self.szfocus = FocusSizer(self)
+		self.szpmain = MainSizer(self)
+
+		self.sz.Add(self.szpmain, (0, 0), (1, 1), wx.EXPAND)
+		self.sz.Add(self.szstage, (0, 1), (1, 1), wx.EXPAND)
+
+		self.sz.Add(self.szlenses, (1, 0), (1, 1), wx.EXPAND)
+		self.sz.Add(self.szfilm, (1, 1), (1, 1), wx.EXPAND)
+
+		self.sz.Add(self.szfocus, (2, 0), (1, 1), wx.EXPAND)
+		self.sz.Add(self.szscreen, (2, 1), (1, 1), wx.EXPAND)
+
+		self.sz.Add(self.szvacuum, (3, 0), (2, 1), wx.EXPAND)
+
+		self.sz.Add(self.szholder, (3, 1), (1, 1), wx.EXPAND)
+		self.sz.Add(self.szlowdose, (4, 1), (1, 1), wx.EXPAND)
+
+		self.sz.AddGrowableCol(0)
+		self.sz.AddGrowableCol(1)
+
+		self.SetSizer(self.sz)
+
+class CCDCameraPanel(wx.Panel):
+	def __init__(self, *args, **kwargs):
+		wx.Panel.__init__(self, *args, **kwargs)
+
+		self.sz = wx.GridBagSizer(5, 5)
+
+		self.szcaminfo = CamInfoSizer(self)
+		self.szcamconfig = CamConfigSizer(self)
+
+		self.sz.Add(self.szcaminfo, (0, 0), (1, 1), wx.EXPAND)
+		self.sz.Add(self.szcamconfig, (0, 1), (1, 1), wx.EXPAND)
+
+		self.sz.AddGrowableCol(0)
+		self.sz.AddGrowableCol(1)
+
+		self.SetSizer(self.sz)
+
 class Panel(gui.wx.Node.Panel):
+	icon = 'instrument'
+	def __init__(self, parent, name):
+		gui.wx.Node.Panel.__init__(self, parent, -1)
+
+		#self.toolbar.AddTool(gui.wx.ToolBar.ID_REFRESH,
+		#											'refresh',
+		#											shortHelpString='Refresh')
+		#self.toolbar.Realize()
+
+		self.tems = []
+		self.ccdcameras = []
+
+		self.choice = wx.Choice(self, -1)
+		self.choice.Enable(False)
+		sz = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Instrument')
+		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.choice, (0, 1), (1, 1), wx.ALIGN_CENTER)
+		self.szmain.Add(sz, (0, 0), (1, 1))
+
+		self.tempanel = TEMPanel(self, -1)
+		self.szmain.Add(self.tempanel, (1, 0), (1, 1), wx.ALIGN_CENTER)
+
+		self.ccdcamerapanel = CCDCameraPanel(self, -1)
+		self.szmain.Add(self.ccdcamerapanel, (2, 0), (1, 1), wx.ALIGN_CENTER)
+
+		self.szmain.AddGrowableRow(2)
+
+		self.Enable(False)
+
+		self.SetSizer(self.szmain)
+		self.SetAutoLayout(True)
+		self.SetupScrolling()
+
+		self.Bind(gui.wx.Events.EVT_ADD_TEM, self.onAddTEM)
+		self.Bind(gui.wx.Events.EVT_REMOVE_TEM, self.onRemoveTEM)
+		self.Bind(gui.wx.Events.EVT_ADD_CCDCAMERA, self.onAddCCDCamera)
+		self.Bind(gui.wx.Events.EVT_REMOVE_CCDCAMERA, self.onRemoveCCDCamera)
+		self.Bind(wx.EVT_CHOICE, self.onChoice, self.choice)
+
+	def onNodeInitialized(self):
+		#self.toolbar.Bind(wx.EVT_TOOL, self.onRefreshTool,
+		#									id=gui.wx.ToolBar.ID_REFRESH)
+		self.Enable(True)
+
+	def onChoice(self, evt=None):
+		if evt is None:
+			string = self.choice.GetStringSelection()
+		else:
+			string = evt.GetString()
+
+	def onAddTEM(self, evt):
+		self.tems.append(evt.name)
+		self.onAdd(evt)
+
+	def onAddCCDCamera(self, evt):
+		self.ccdcameras.append(evt.name)
+		self.onAdd(evt)
+
+	def onRemoveTEM(self, evt):
+		try:
+			self.tems.remove(evt.name)
+		except ValueError:
+			pass
+		self.onRemove(evt)
+
+	def onRemoveCCDCamera(self, evt):
+		try:
+			self.ccdcameras.remove(evt.name)
+		except ValueError:
+			pass
+		self.onRemove(evt)
+
+	def onAdd(self, evt):
+		empty = self.choice.IsEmpty()
+		self.choice.Append(evt.name)
+		if empty:
+			self.choice.Enable(True)
+			self.choice.SetSelection(0)
+			self.onChoice()
+
+	def onRemove(self, evt):
+		n = self.choice.FindString(evt.name)
+		if n == wx.NOT_FOUND:
+			return
+		self.choice.Delete(n)
+		if self.choice.IsEmpty():
+			self.choice.Enable(False)
+
+	def onSetCCDCameras(self, evt):
+		self.choice.AppendItems(evt.names)
+
+	def addTEM(self, name):
+		evt = gui.wx.Events.AddTEMEvent(self, name=name)
+		self.GetEventHandler().AddPendingEvent(evt)
+
+	def removeTEM(self, name):
+		evt = gui.wx.Events.RemoveTEMEvent(self, name=name)
+		self.GetEventHandler().AddPendingEvent(evt)
+
+	def addCCDCamera(self, name):
+		evt = gui.wx.Events.AddCCDCameraEvent(self, name=name)
+		self.GetEventHandler().AddPendingEvent(evt)
+
+	def removeCCDCamera(self, name):
+		evt = gui.wx.Events.RemoveCCDCameraEvent(self, name=name)
+		self.GetEventHandler().AddPendingEvent(evt)
+
+class OldPanel(gui.wx.Node.Panel):
 	icon = 'instrument'
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
@@ -618,8 +779,8 @@ class Panel(gui.wx.Node.Panel):
 													shortHelpString='Do Pauses')
 		self.toolbar.Realize()
 
-		self.listbox = wx.ListBox(self, -1)
-		self.szmain.Add(self.listbox, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		self.choice = wx.ListBox(self, -1)
+		self.szmain.Add(self.choice, (0, 0), (1, 1), wx.ALIGN_CENTER)
 
 		'''
 		self.szmain.AddGrowableCol(0)
@@ -987,7 +1148,7 @@ class SelectionPanel(wx.Panel):
 			tem = None
 		else:
 			tem = string
-		evt = gui.wx.Events.TEMChangeEvent(self, tem)
+		evt = gui.wx.Events.TEMChangeEvent(self, name=tem)
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onCCDCameraChoice(self, evt):
@@ -996,7 +1157,7 @@ class SelectionPanel(wx.Panel):
 			ccdcamera = None
 		else:
 			ccdcamera = string
-		evt = gui.wx.Events.CCDCameraChangeEvent(self, ccdcamera)
+		evt = gui.wx.Events.CCDCameraChangeEvent(self, name=ccdcamera)
 		self.GetEventHandler().AddPendingEvent(evt)
 
 class SelectionMixin(object):
