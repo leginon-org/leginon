@@ -35,6 +35,7 @@ LAUNCHERS = [
 	'amilab2',
 	'defcon3',
 	'tecnai2-ssi',
+	'cronus3',
 ]
 
 #########################
