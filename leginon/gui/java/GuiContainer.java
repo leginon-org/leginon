@@ -67,6 +67,7 @@ abstract class AbstractDataModel {
 					new AddButton ("Get", xmlrpcclient, "GET", id, widgets, permPanel);
 				if (permissions.matches("^[a-zA-Z]*[wW][a-zA-Z]*"))
 					new AddButton ("Set", xmlrpcclient, "SET", id, widgets, permPanel);
+        			permPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 				mainPanel.add(permPanel);
 			}
 
@@ -111,6 +112,7 @@ class GuiMethod extends AbstractDataModel {
 	private Vector argspec;
 	private Hashtable returnspec;
 	private Vector widgets;
+	private Vector widgetsReturn;
 	private String name;
 	private JPanel mainPanel;
 
@@ -142,10 +144,12 @@ class GuiMethod extends AbstractDataModel {
 		String Mid = (String)spec.get("id");
 		mainPanel.setBorder(new javax.swing.border.TitledBorder(Mname));
                 mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        	mainPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		argspec = (Vector)spec.get("argspec");
 		returnspec = (Hashtable)spec.get("returnspec");
 		Vector args = new Vector();
 		widgets = new Vector();
+		widgetsReturn = new Vector();
 		String xmlrpctype = "";
 		String type  = "";
 		String name = "";
@@ -158,10 +162,10 @@ class GuiMethod extends AbstractDataModel {
 				dataClass(xmlrpcclient, o, widgets, mainPanel);
 			}
 
-		new AddButton (Mname, xmlrpcclient, Mid, widgets, mainPanel);
+		new AddButton (Mname, xmlrpcclient, Mid, widgets, widgetsReturn, mainPanel);
 
 		if (returnspec instanceof Hashtable)
-			dataClass(xmlrpcclient, returnspec, widgets, mainPanel);
+			dataClass(xmlrpcclient, returnspec, widgetsReturn, mainPanel);
 
 		c.add(mainPanel);
 	}
@@ -203,6 +207,7 @@ class GuiData extends AbstractDataModel {
 		name = (String)spec.get("name");
 		mainPanel.setBorder(new javax.swing.border.TitledBorder(name));
                 mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        	mainPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
 		dataClass(xmlrpcclient, spec, widgets, mainPanel);
 
@@ -286,7 +291,13 @@ class AddComboBox {
 		getData(id);
 		cb = new JComboBox(items);
 		cb.setEditable(editable);
+		cb.setMinimumSize(new java.awt.Dimension(200, 25));
+		cb.setMaximumSize(new java.awt.Dimension(275, 25));
+        	cb.setAlignmentX(Component.LEFT_ALIGNMENT);
+		
 		JLabel lbl = new JLabel(text);
+        	lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+
 		aPanel.add(lbl);
 		aPanel.add(cb);
 		aPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -357,11 +368,17 @@ class AddTextField {
 		aPanel.setLayout(new BoxLayout(aPanel, BoxLayout.Y_AXIS));
 		if (defaultval==null)
 			defaultval="";
-		textField = new JTextField(""+defaultval, size);
 		JLabel lbl = new JLabel(text);
-        	aPanel.add(lbl);
+		if (text!=null)
+        		aPanel.add(lbl);
+
+		textField = new JTextField(""+defaultval, size);
+		textField.setMinimumSize(new java.awt.Dimension(200, 20));
+		textField.setMaximumSize(new java.awt.Dimension(100, 20));
+        	textField.setAlignmentX(Component.LEFT_ALIGNMENT);
+        	lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
         	aPanel.add(textField);
-        	aPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        	aPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		c.add(aPanel);
 		widgets.add(this);
 
@@ -371,26 +388,35 @@ class AddTextField {
 class AddButton {
 	private String name, id, cmd, cmdxmlrpc;
 	private XmlRpcClient xmlrpcclient;
-	private Vector args, widgets;
+	private Vector args, widgets, widgetsReturn;
 	private Container c;
 
-	public AddButton (String name, XmlRpcClient xmlrpcclient, String cmd, String id, Vector widgets, Container c) throws Exception  {
+	public AddButton (String name, XmlRpcClient xmlrpcclient, String cmd, String id, Vector widgets, Vector widgetsReturn, Container c) throws Exception  {
 		this.name=name;
 		this.xmlrpcclient=xmlrpcclient;
 		this.cmd=cmd;
 		this.id=id;
 		this.widgets=widgets;
+		this.widgetsReturn=widgetsReturn;
 		this.c = c;
 		build();
 	}
 
-	public AddButton (String name, XmlRpcClient xmlrpcclient, String id, Vector widgets, Container c) throws Exception  {
-		this(name,xmlrpcclient,null,id,widgets,c);
+	public AddButton (String name, XmlRpcClient xmlrpcclient, String cmd, String id, Vector widgets, Container c) throws Exception  {
+		this(name,xmlrpcclient,cmd,id,widgets,null,c);
 	}
 
+	public AddButton (String name, XmlRpcClient xmlrpcclient, String id, Vector widgets, Container c) throws Exception  {
+		this(name,xmlrpcclient,null,id,widgets,null,c);
+	}
+
+	public AddButton (String name, XmlRpcClient xmlrpcclient, String id, Vector widgets, Vector widgetsReturn, Container c) throws Exception  {
+		this(name,xmlrpcclient,null,id,widgets,widgetsReturn,c);
+	}
 
 	private void build() throws Exception {
         	JButton button = new JButton(name);
+        	button.setAlignmentX(Component.LEFT_ALIGNMENT);
 		c.add(button);
                 button.addActionListener(new ActionListener() {
                         public void actionPerformed(ActionEvent event) {
@@ -408,8 +434,13 @@ class AddButton {
 					System.out.println("xmlrpcclient.execute("+cmdxmlrpc+", "+args+");");
 					Object result = xmlrpcclient.execute(cmdxmlrpc, args);
 					
-					refresh(widgets, result);
+					if (widgetsReturn!=null)
+						refresh(widgetsReturn, result);
+					else
+						refresh(widgets, result);
 
+					System.out.println("w: "+widgets);
+					System.out.println("wR: "+widgetsReturn);
 
 				} catch (Exception e) {
 					System.err.println("Exception: "+e);
@@ -466,6 +497,7 @@ class AddButton {
 		Vector args = new Vector();
 		for (Enumeration enumwidget = widgets.elements() ; enumwidget.hasMoreElements() ;) {
 			Object o = enumwidget.nextElement();
+		System.out.println("Object "+o);
 			if (o instanceof AddTextField) {
 				AddTextField t = (AddTextField)o;
 				args.add(t.getValue());
@@ -480,6 +512,7 @@ class AddButton {
 				args.add(c.getValue());
 			}
 		}
+		System.out.println("ARGS2: "+args);
 		return args;
 	}
 
@@ -511,6 +544,7 @@ class ImageData {
 
 	private void build() {
 		gui = new ImageMRCViewer();
+        	gui.setAlignmentX(Component.LEFT_ALIGNMENT);
         	c.add(gui);
 		widgets.add(this);
 	}
@@ -577,6 +611,7 @@ class TreeData {
 
 		treeTable.setBackground(new Color(255, 255, 255));
                 hashPane.setPreferredSize(new Dimension(300,300));
+        	hashPane.setAlignmentX(Component.LEFT_ALIGNMENT);
 		c.add(hashPane);
 
 

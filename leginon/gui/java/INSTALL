@@ -1,4 +1,6 @@
+-------------------------------------------------------------------------------
 Installation of the java version of nodegui.
+-------------------------------------------------------------------------------
 
 Requirement:
 	JavaTM 2 Platform, Standard Edition (J2SETM) 1.4.1
@@ -8,23 +10,32 @@ Requirement:
 Compile:
 
    Linux:
-	javac -classpath ./class/xmlrpc-1.1.jar:./class/JTreeTable.jar:. nodegui.java
+	javac -classpath ./class/nodeclass.jar:. nodegui.java
 
-   Microsoft Windows:
-	javac -classpath .\class\xmlrpc-1.1.jar;.\class\JTreeTable.jar;. nodegui.java
+   Windows:
+	javac -classpath .\class\nodeclass.jar;. nodegui.java
 
 Run:
 
    Linux:
-	java -classpath ./class/xmlrpc-1.1.jar:./class/JTreeTable.jar:. nodegui http://host:port
+	java -classpath ./class/nodeclass.jar:. nodegui http://host:port
 
-   Microsoft Windows:
-	java -classpath .\class\xmlrpc-1.1.jar;.\class\JTreeTable.jar;. nodegui http://host:port
+   Windows:
+	java -classpath .\class\nodeclass.jar;. nodegui http://host:port
 
+   If [http://host:port] is not specified, a GUI launcher will appear.
+
+-------------------------------------------------------------------------------
 Install nodegui as Applet
+-------------------------------------------------------------------------------
 
 Compile:
-	javac -classpath ./class/nodeapplet.jar:. nodeapplet.java
+
+   Linux:
+	javac -classpath ./class/nodeclass.jar:. nodeapplet.java
+
+   Windows:
+	javac -classpath .\class\nodeclass.jar;. nodeapplet.java
 
 Edit Policy file:
 	[$HOMEJAVA]/jre/lib/security/java.policy

@@ -11,7 +11,7 @@ public class GuiJIFContainer {
 	private Vector content;
 	private NodeDesktop dtp;
 	private String name, spectype;
-	int width=350, height=300;
+	int width=550, height=300;
 
 	public GuiJIFContainer(XmlRpcClient xmlrpcclient, Hashtable specWidget, NodeDesktop dtp) throws Exception {
 		this.xmlrpcclient=xmlrpcclient;
@@ -42,6 +42,8 @@ public class GuiJIFContainer {
 			String s = (String)o.get("spectype");
 			String n = (String)o.get("name");
 			JPanel framePanel = new JPanel();
+			framePanel.setLayout(new java.awt.BorderLayout());
+
     			JScrollPane scrollPane = new JScrollPane(framePanel);
                 	scrollPane.setPreferredSize(new Dimension(width,height));
 
