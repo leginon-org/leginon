@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageViewer.py,v $
-# $Revision: 1.38 $
+# $Revision: 1.39 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-02 23:08:51 $
+# $Date: 2004-11-02 23:23:38 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -1227,12 +1227,14 @@ class SelectionTool(wx.Panel):
 			typetool.togglebuttons['display'].Bind(EVT_DISPLAY, self.onDisplay)
 		if 'target' in typetool.togglebuttons:
 			self.sz.Add(typetool.togglebuttons['target'], (n, 3), (1, 1), wx.ALIGN_CENTER)
-			self.targets[typetool.name] = None
 			typetool.togglebuttons['target'].Bind(EVT_TARGETING, self.onTargeting)
-		else:
-			self.images[typetool.name] = None
 		if 'settings' in typetool.togglebuttons:
 			self.sz.Add(typetool.togglebuttons['settings'], (n, 4), (1, 1), wx.ALIGN_CENTER)
+
+		if isinstance(typetool, TargetTypeTool):
+			self.targets[typetool.name] = None
+		else:
+			self.images[typetool.name] = None
 
 	def addTypeTool(self, name, toolclass=TypeTool, **kwargs):
 		if name in self.tools:
@@ -1360,7 +1362,10 @@ class SelectionTool(wx.Panel):
 
 	def isTargeting(self, name):
 		tool = self._getTypeTool(name)
-		return tool.togglebuttons['target'].GetValue()
+		try:
+			return tool.togglebuttons['target'].GetValue()
+		except KeyError:
+			return False
 
 	def _setTargeting(self, name, value):
 		tool = self._getTypeTool(name)
