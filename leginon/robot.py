@@ -127,7 +127,7 @@ if sys.platform == 'win32':
 			self.setStatus('Turning on turbo pump')
 			self.setScope('turbo pump', 'on')
 			self.setStatus('Verifying turbo pump is on')
-			self.waitScope('turbo pump', 'on', 0.5, 15)
+			self.waitScope('turbo pump', 'on', 0.5, 300)
 			self.setStatus('Turbo pump is on')
 
 			self.setStatus('Waiting for stage to be ready')
