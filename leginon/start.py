@@ -12,8 +12,8 @@ import manager
 #import launcher
 #import socket
 import uiclient
-#import profile
-#import pstats
+import profile
+import pstats
 
 #import gc
 #gc.enable()
@@ -24,7 +24,6 @@ location = m.location()
 #launcher.Launcher((socket.gethostname().lower(),),
 #									nodelocations={'manager': location})
 
-'''
 profiler = profile.Profile()
 profiler.run("uiclient.UIApp(location['UI'], 'Leginon II')")
 profiler.dump_stats('start.profile')
@@ -34,5 +33,6 @@ stats.print_stats(30)
 stats.print_callers(30)
 '''
 uiclient.UIApp(location['UI'], 'Leginon II')
+'''
 m.exit()
 

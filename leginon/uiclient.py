@@ -363,6 +363,9 @@ class Widget(object):
 		self.name = name
 		self.parent = parent
 		self.container = container
+		if not hasattr(self, 'shown'):
+			self.shown = True
+		self._shown = self.shown
 		self.widgethandler = wx.EvtHandler()
 		if 'enabled' not in configuration:
 			configuration['enabled'] = True
@@ -402,11 +405,12 @@ class Widget(object):
 #			self.container._showWidget(self, show)
 
 	def show(self, show):
-		self.shown = show
-		if self.container is not None and not self.container._shown:
-			self._show(False)
-		else:
-			self._show(self.shown)
+		if self.shown != show:
+			self.shown = show
+			if self.container is not None and not self.container._shown:
+				self._show(False)
+			else:
+				self._show(self.shown)
 
 	def setServer(self, value):
 		evt = SetServerEvent([self.name], value)
@@ -671,7 +675,8 @@ class StaticBoxContainerWidget(wx.StaticBoxSizer, ContainerWidget):
 																configuration)
 
 	def _show(self, show):
-		self.staticbox.Show(show)
+		if self.staticbox.IsShown() != show:
+			self.staticbox.Show(show)
 		ContainerWidget._show(self, show)
 
 	def destroy(self):
@@ -730,6 +735,7 @@ class DialogContainerWidget(wx.Dialog, ContainerWidget):
 		self.sizer = wx.GridBagSizer(1, 1)
 		self.sizer.SetEmptyCellSize((0, 0))
 		self.panel.SetSizer(self.sizer)
+		self.shown = False
 		ContainerWidget.__init__(self, name, parent, container, value,
 																configuration)
 		self.childparent = self.panel
