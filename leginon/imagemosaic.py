@@ -26,13 +26,11 @@ class ImageMosaic(watcher.Watcher):
 		pass
 
 	def processData(self, idata):
-		#print idata.content['neighbor tiles']
 		if len(idata.content['neighbor tiles']) == 0:
 			self.imagemosaic[idata.id] = {'image': idata.content['image'],
 																'position': {'x': 0.0, 'y': 0.0}}
 		else:
 			newtileposition = {}
-			#print idata.id
 			self.correlator.setImage(0, idata.content['image'])
 			for neighbor in idata.content['neighbor tiles']:
 				# correlate
@@ -40,9 +38,8 @@ class ImageMosaic(watcher.Watcher):
 				pcimage = self.correlator.phaseCorrelate()
 				# find peak
 				self.peakfinder.setImage(pcimage)
-				self.peakfinder.subpixelPeak()
+				self.peakfinder.pixelPeak()
 				peak = self.peakfinder.getResults()
-				#shift = peak['pixel peak']
 				shift = correlator.wrap_coord(peak['pixel peak'], pcimage.shape)
 				newtileposition[neighbor] = {
 					'x': self.imagemosaic[neighbor]['position']['x'] + shift[1],
@@ -50,19 +47,20 @@ class ImageMosaic(watcher.Watcher):
 					'peak': peak['pixel peak value']
 				}
 
-			self.imagemosaic[idata.id] = {'position': {'x': 0, 'y': 0}, 'peak': 0.0}
+			position = {'x': 0, 'y': 0}
+			peakvalue = 0.0
 
 			for neighbor in newtileposition:
 				for c in ['x', 'y']:
 					if newtileposition[neighbor][c] > 0:
-						if abs(newtileposition[neighbor][c]
-									- self.imagemosaic[idata.id]['position'][c]) > 1:
-							if self.imagemosaic[idata.id]['peak'] \
-									< newtileposition[neighbor]['peak']:
-								self.imagemosaic[idata.id]['position'][c] \
-									= newtileposition[neighbor][c]
+						if abs(newtileposition[neighbor][c] - position[c]) > 1:
+							if peakvalue < newtileposition[neighbor]['peak']:
+								position[c]  = newtileposition[neighbor][c]
+								peakvalue = newtileposition[neighbor]['peak'] 
 
+			self.imagemosaic[idata.id] = {}
 			self.imagemosaic[idata.id]['image'] = idata.content['image']
+			self.imagemosaic[idata.id]['position'] = position
 
 	def uiShow(self):
 		import Image
