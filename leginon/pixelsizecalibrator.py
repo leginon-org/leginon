@@ -63,14 +63,19 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 		mag, mags = self.getMagnification()
 		for calibration in calibrations:
 			if mags is None or calibration['magnification'] in mags:
-				pixelsizes.append((calibration['magnification'],
-														calibration['pixelsize'],
-														calibration['comment']))
+				mag = calibration['magnification']
+				if mag is None:
+					continue
+				ps = calibration['pixelsize']
+				comment = calibration['comment']
+				if comment is None:
+					comment = ''
+				pixelsizes.append((mag, ps, comment))
 		if mags is not None:
 			pixelsizemags = map(lambda (mag, ps, c): mag, pixelsizes)
 			for m in mags:
 				if m not in pixelsizemags:
-					pixelsizes.append((mag, None, None))
+					pixelsizes.append((m, None, ''))
 			
 		return pixelsizes
 
