@@ -41,6 +41,8 @@ $baseurl=implode("/",$arrayurl);
 echo"
 var jsminpix = $min;
 var jsmaxpix = $max;
+var jsmingradpix = 0;
+var jsmaxgradpix = 255;
 var jsbaseurl = '$baseurl/';
 var jsviewname = '$name';
 var jsfilter = '$currentfilter';

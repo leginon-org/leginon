@@ -41,6 +41,8 @@ class ScaleBar {
 	function findScale() {
 		$this->nbpixels = 0;
 		$label = "";
+		if (!$this->value)
+			$this->value = 1;
 		foreach ($this->scales as $this->label=>$scale) {
 			$this->nbpixels = $scale/$this->value;
 			$r = $this->size/$this->nbpixels;
@@ -75,7 +77,6 @@ class ScaleBar {
 		$barX2 = $this->nbpixels+$this->offsetbarX;
 		$barY1 = $h-$this->offsetbarY;
 		$barY2 = $h-$this->offsetbarY+1;
-
 
 		$black = imagecolorallocate($this->img, 0, 0, 0);
 		imagestring($this->img, $this->labelfontsize, $offsetbarlabelX+1,

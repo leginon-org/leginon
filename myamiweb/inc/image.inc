@@ -10,6 +10,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		'minpix' => 0,
 		'maxpix' => 255,
 		'filter' => 'default',
+		'fft' => false,
 		'binning' => 'auto',
 		'scalebar' => true,
 		'displaytargets' => true,
@@ -32,15 +33,11 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 	$parent = $leginondata->getImageInfo($newimage[childid]);
 
 	// --- get filename
-	if ($fft) {
+	if ($p[fft]) {
 		$p[displaytargets]=false;
 		$p[scalebar]=false;
 		$fft = $leginondata->getImageFFT($imageId);
 		$filename = $fft[fftimage];
-	} else if ($preset=='atlas') {
-		$p[displaytargets]=false;
-		$p[scalebar]=false;
-		$filename = $leginondata->getImageAtlas($sessionId);
 	} else {
 		$filename = $leginondata->getFilename($imageId);
 	}
@@ -100,7 +97,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 			if ($tId) {
 				$angle = $targetcal['angle']-$parentcal['angle'];
 				$squarepoints = getsquarepoints($cx, $cy, $angle, $truedim*$ratioX);
-				drawsquare($img, $squarepoints, $col);
+				drawsquare($img, $squarepoints, $crosscol);
 				$ctx = $squarepoints[0]+1;
 				$cty = $squarepoints[1]+1;
 			} else {
@@ -158,11 +155,12 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 
 class Mosaic {
 
-	var $gridIds = array();
+	var $imageIds = array();
 	var $ratio  = 4;
-	var $margin = 5;
+	var $margin = 50;
 	var $displayframe = true;
 	var $displayscalebar = true;
+	var $loadtime = false;
 	var $framecolor = 0x00FF00;
 	var $params = array('scalebar'=>false);
 
@@ -170,8 +168,12 @@ class Mosaic {
 		
 	}
 
-	function setGridIds($gridIds) {
-		$this->gridIds = $gridIds;
+	function setImageIds($imageIds) {
+		$this->imageIds = $imageIds;
+	}
+
+	function setCurrentImageId($cId) {
+		$this->cId = $cId;
 	}
 
 	function displayFrame($bool) {
@@ -182,24 +184,34 @@ class Mosaic {
 		$this->displayscalebar = $bool;
 	}
 
-	function setFrameColor($hexcol) {
-		$this->framecolor = $hexcol;
+	function displayLoadtime($bool) {
+		$this->loadtime = $bool;
+	}
+
+	function setFrameColor($r, $g, $b) {
+		$this->framecolor = (($r << 16) + ($g << 8) + $b);
 	}
 
 	function setRatio($ratio) {
 		$this->ratio = $ratio;
 	}
 	
+	function setSize($size) {
+		$this->size = $size;
+	}
+	
 	function setMargin($margin) {
 		$this->margin = $margin;
 	}
 
-	function setGridImageParams($params) {
+	function setImageParams($params) {
 		if (is_array($params))
 			$this->params = $params;
 	}
 
 	function getMosaic() {
+		if ($this->loadtime) 
+			$begin=getmicrotime();
 		$leginondata = new leginondata();
 		$imageinfo = array();
 		$drows = array();
@@ -213,36 +225,51 @@ class Mosaic {
 		$ratio = ($this->ratio) ? $this->ratio : 1;
 		$margin = $this->margin;
 
-		foreach($this->gridIds as $k=>$gridId) {
-			$imageinfo[$k] = $leginondata->getImageInfo($gridId);
-			$drows[$k] = $imageinfo[$k]['delta row'];
-			$dcols[$k] = $imageinfo[$k]['delta column'];
+		foreach($this->imageIds as $k=>$v) {
+			$imageinfo[$k] = $leginondata->getImageInfo($v);
+			if ($dr = $imageinfo[$k]['delta row'])
+				$drows[$k] = $dr;
+			if ($dc = $imageinfo[$k]['delta column'])
+				$dcols[$k] = $dc;
 		}
 
-		$min_row = min($drows) - $imageinfo[0][dimy]/2;
-		$max_row = max($drows) + $imageinfo[0][dimy]/2;
-		$min_col = min($dcols) - $imageinfo[0][dimx]/2;
-		$max_col = max($dcols) + $imageinfo[0][dimx]/2;
+		if ($drows && $dcols) {
+			$min_row = min($drows) - $imageinfo[0][dimy]/2;
+			$max_row = max($drows) + $imageinfo[0][dimy]/2;
+			$min_col = min($dcols) - $imageinfo[0][dimx]/2;
+			$max_col = max($dcols) + $imageinfo[0][dimx]/2;
+		}
 
-		$img_w = 2*$margin + ($max_col - $min_col)/$ratio;
-		$img_h = 2*$margin + ($max_row - $min_row)/$ratio;
+		if ($this->size) {
+			$max_w = (2*$margin + $max_col - $min_col);
+			$ratio = $max_w/$this->size;
+		}
+
+		$img_w = (2*$margin + $max_col - $min_col)/$ratio;
+		$img_h = (2*$margin + $max_row - $min_row)/$ratio;
 		$img = imagecreatetruecolor($img_w, $img_h);
 		$background = imagecolorallocate($img, 0, 0, 0);
+		$crosscol = imagecolorallocate($img, 255, 255, 0);
+		$blue = imagecolorallocate($img, 0, 255, 255);
 		if ($this->displayframe)
 			$mosaicframecol = imagecolorallocate($img,
 						($this->framecolor >> 16) & 0xFF,
 						($this->framecolor >> 8) & 0xFF,
 						$this->framecolor & 0xFF
-					);
+						);
 
 		$sessionId = $imageinfo[0][sessionId];
 		$squaresize = $imageinfo[0][dimx]/$ratio;
 		$this->params['size'] = $squaresize;
+		$this->params['binning'] = ($ratio<1) ? 1 : $ratio;
 		$preset = 'grid';
+		$newimage = $leginondata->findImage($this->cId, $preset);
+		$newimageId = $newimage[id];
+//		$preset = 'sq';
 
 		foreach ($imageinfo as $k=>$r) {
-			$cx = $margin + ($dcols[$k] - $min_col)/$ratio; 
-			$cy = $margin + ($drows[$k] + $max_row)/$ratio;
+			$cx = ($margin + $dcols[$k] - $min_col)/$ratio; 
+			$cy = ($margin + $drows[$k] + $max_row)/$ratio;
 			$squarepoints = getsquarepoints($cx, $cy, $angle, $squaresize);
 			$dst_x = $squarepoints[0];
 			$dst_y = $squarepoints[1];
@@ -252,16 +279,39 @@ class Mosaic {
 			imagecopy($img, $gimg, $dst_x, $dst_y, $src_x, $src_y, $src_w, $src_h);
 			imagedestroy($gimg);
 			if ($this->displayframe) {
+				if ($newimageId==$r[imageId]) {
+					$crossquare = $squarepoints;
+					$cdx = $dst_x+1;
+					$cdy = $dst_y;
+					$cnb =$k+1;
+				}
 				drawsquare($img, $squarepoints, $mosaicframecol);
 				imagestringshadow($img, 4, $dst_x+1, $dst_y, $k+1, $mosaicframecol);
 			}
 		}
+		if ($crossquare) {
+			$col = $crosscol;
+			drawsquare($img, $crossquare, $crosscol);
+			imagestringshadow($img, 4, $cdx, $cdy, $cnb, $blue);
+		}
 
+		/*
 		if ($this->displayscalebar) {
 			$size = $squaresize;
 			$value = $imageinfo[0][pixelsize]*$imageinfo[0][binning]*$ratio;
 			$scalebar = new ScaleBar($img, $size, $value);
+			$scalebar->display($img_h-20);
+		}
+		*/
+		if ($this->displayscalebar) {
+			$size = ($max_row - $min_row)/$ratio;
+			$value = $imageinfo[0][pixelsize]*$imageinfo[0][binning]*$ratio;
+			$scalebar = new ScaleBar($img, $size, $value);
 			$scalebar->display($img_h);
+		}
+		if ($this->loadtime) {
+			$end=getmicrotime();
+			imagestringshadow($img, 4, 10/$ratio, 10/$ratio, "load time: ".($end-$begin), $mosaicframecol);
 		}
 		return $img;
 	}
