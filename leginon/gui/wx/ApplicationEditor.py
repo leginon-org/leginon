@@ -4,16 +4,17 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ApplicationEditor.py,v $
-# $Revision: 1.3 $
+# $Revision: 1.4 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
+# $Date: 2005-02-01 23:18:27 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
 import application
 import wx
-import gui.wx.Master
+#import gui.wx.Master
+import gui.wx.ApplicationEditorLite
 
 class Frame(wx.Frame):
 	def __init__(self, parent, manager):
@@ -50,11 +51,13 @@ class Frame(wx.Frame):
 
 		self.SetMenuBar(self.menubar)
 
-		self.appeditor = gui.wx.Master.ApplicationEditorCanvas(self, -1)
+		#self.editor = gui.wx.Master.ApplicationEditorCanvas(self, -1)
+		self.editor = gui.wx.ApplicationEditorLite.ApplicationEditorLite(self)
 
 		sz = wx.GridBagSizer(5, 5)
-		sz.Add(self.appeditor, (0, 0), (1, 1), wx.EXPAND)
-		sz.SetItemMinSize(self.appeditor, (640, 480))
+		sz.Add(self.editor, (0, 0), (1, 1), wx.EXPAND)
+		#sz.SetItemMinSize(self.editor, (640, 480))
+		sz.SetItemMinSize(self.editor, (300, 400))
 		sz.AddGrowableRow(0)
 		sz.AddGrowableCol(0)
 		self.SetSizerAndFit(sz)
@@ -67,7 +70,8 @@ class Frame(wx.Frame):
 		for bs in app.bindingspecs:
 			appdata['bindings'].append((bs['event class string'],
 																	bs['from node alias'], bs['to node alias']))
-		self.appeditor.application.setApplication(appdata)
+		#self.editor.application.setApplication(appdata)
+		self.editor.set(appdata)
 
 	def onLoad(self, evt):
 		dialog = LoadDialog(self, self.apps.keys())
@@ -83,20 +87,24 @@ class Frame(wx.Frame):
 			app.addNodeSpec(*ns)
 		for bs in appdata['bindings']:
 			app.addBindingSpec(*bs)
-		self.appeditor.application.setName(name)
+		#self.editor.application.setName(name)
+		self.editor.setApplicationName(name)
 		self.apps[name] = app
 		app.save()
 
 	def onSave(self, evt):
-		appdata = self.appeditor.application.getApplication()
+		#appdata = self.editor.application.getApplication()
+		appdata = self.editor.get()
 		name = appdata['name']
 		self.save(name, appdata)
 
 	def onSaveAs(self, evt):
-		name = self.appeditor.application.getName()
+		#name = self.editor.application.getName()
+		name = self.editor.getApplicationName()
 		dialog = SaveAsDialog(self, name, self.apps.keys())
 		if dialog.ShowModal() == wx.ID_OK:
-			appdata = self.appeditor.application.getApplication()
+			#appdata = self.editor.application.getApplication()
+			appdata = self.editor.get()
 			self.save(dialog.getApplicationName(), appdata)
 		dialog.Destroy()
 

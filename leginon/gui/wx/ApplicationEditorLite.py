@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ApplicationEditorLite.py,v $
-# $Revision: 1.3 $
+# $Revision: 1.4 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-01 22:29:20 $
+# $Date: 2005-02-01 23:18:27 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -130,6 +130,7 @@ class NodePropertiesDialog(wx.Dialog):
 		if classname is None:
 			self.cclass.SetSelection(0)
 		else:
+			# ...
 			self.cclass.SetStringSelection(classname)
 		self.sizer.Add(self.cclass, (1, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
@@ -245,6 +246,68 @@ class ApplicationEditorLite(wx.TreeCtrl):
 		self.Bind(wx.EVT_TREE_BEGIN_LABEL_EDIT, self.onTreeBeginLabelEdit)
 		self.Bind(wx.EVT_TREE_END_LABEL_EDIT, self.onTreeEndLabelEdit)
 
+	def clear(self):
+		self.DeleteAllItems()
+		self.nodes = {}
+		self.root = self.AddRoot('My Application')
+
+	def getApplicationName(self):
+		return self.GetItemText(self.root)
+
+	def setApplicationName(self, name):
+		self.SetItemText(self.root, name)
+
+	def get(self):
+		application = {}
+		application['name'] = self.getApplicationName()
+		application['nodes'] = []
+		application['bindings'] = []
+		for nodename in self.getNodeNames():
+			classname = self.nodes[nodename]['class name']
+			nodeitem = self.getNodeItem(nodename)
+			launcheritem = self.GetItemParent(nodeitem)
+			launchername = self.GetItemText(launcheritem)
+			dependencies = []
+			node = (classname, nodename, launchername, dependencies)
+			application['nodes'].append(node)
+			for eventbinding in self.getEventBindings(nodename):
+				string, eventname, tonodename = eventbinding
+				binding = (eventname, nodename, tonodename)
+				application['bindings'].append(binding)
+		return application
+
+	def set(self, application):
+		self.clear()
+		self.setApplicationName(application['name'])
+		for node in application['nodes']:
+			classname, nodename, launchername, dependencies = node
+			if self.getLauncherItem(launchername) is None:
+				self.addLauncher(launchername)
+			try:
+				self.addNode(classname, nodename, launchername, dependencies)
+			except ValueError, e:
+				message = 'Add node \'%s\' failed: %s.' % (nodename, e)
+				title = 'Application Warning'
+				dialog = wx.MessageDialog(self, message, title, wx.OK|wx.ICON_WARNING)
+				dialog.ShowModal()
+				dialog.Destroy()
+		for binding in application['bindings']:
+			eventname, fromnode, tonode = binding
+			try:
+				self.addEventBinding(eventname, fromnode, tonode)
+			except ValueError, e:
+				# ...
+				pass
+				print e
+		self.expand()
+
+	def expand(self):
+		self.Expand(self.root)
+		item, cookie = self.GetFirstChild(self.root)
+		while item.IsOk():
+			self.Expand(item)
+			item, cookie = self.GetNextChild(self.root, cookie)
+
 	def eventItemMethod(self, evt, methods):
 		item = evt.GetItem()
 		i = 0
@@ -345,13 +408,13 @@ class ApplicationEditorLite(wx.TreeCtrl):
 				name = 'My Launcher (%d)' % i
 				i += 1
 		elif self.getLauncherItem(name) is not None:
-			raise ValueError('Launcher named \'%s\' already exists' % name)
+			raise ValueError('launcher named \'%s\' already exists' % name)
 		return self.AppendItem(self.root, name)
 
 	def removeLauncher(self, name):
 		item = self.getLauncherItem(name)
 		if item is None:
-			raise ValueError('Invalid launcher name \'%s\'' % name)
+			raise ValueError('invalid launcher name \'%s\'' % name)
 		nodenames = self.getNodeNames(name)
 		for nodename in nodenames:
 			del self.nodes[nodename]
@@ -369,7 +432,7 @@ class ApplicationEditorLite(wx.TreeCtrl):
 	def addNode(self, classname, name, launchername, dependencies):
 		launcheritem = self.getLauncherItem(launchername)
 		if launcheritem is None:
-			raise ValueError('Invalid launcher name \'%s\'' % launchername)
+			raise ValueError('invalid launcher name \'%s\'' % launchername)
 		if name is None:
 			name = 'My Node'
 			i = 1
@@ -377,7 +440,7 @@ class ApplicationEditorLite(wx.TreeCtrl):
 				name = 'My Node (%d)' % i
 				i += 1
 		elif self.getNodeItem(name) is not None:
-			raise ValueError('Node named \'%s\' already exists' % name)
+			raise ValueError('node named \'%s\' already exists' % name)
 		self.nodes[name] = {}
 		self.nodes[name]['class name'] = classname
 		self.nodes[name]['dependencies'] = dependencies
@@ -387,7 +450,7 @@ class ApplicationEditorLite(wx.TreeCtrl):
 	def removeNode(self, name):
 		item = self.getNodeItem(name)
 		if item is None:
-			raise ValueError('Invalid node name \'%s\'' % name)
+			raise ValueError('invalid node name \'%s\'' % name)
 		self.Delete(item)
 		del self.nodes[name]
 		self.removeEventBindings([name])
@@ -428,10 +491,10 @@ class ApplicationEditorLite(wx.TreeCtrl):
 
 	def addEventBinding(self, eventname, fromnodename, tonodename):
 		if self.getNodeItem(tonodename) is None:
-			raise ValueError('No node named \'%s\' exists' % tonodename)
+			raise ValueError('no node named \'%s\' exists' % tonodename)
 		fromnodeitem = self.getNodeItem(fromnodename)
 		if fromnodeitem is None:
-			raise ValueError('No node named \'%s\' exists' % fromnodename)
+			raise ValueError('no node named \'%s\' exists' % fromnodename)
 		string = self.eventBindingString(eventname, tonodename)
 		if self.getEventBindingItem(fromnodeitem, string) is not None:
 			errorstring = '%s from %s to %s already bound'
@@ -442,7 +505,7 @@ class ApplicationEditorLite(wx.TreeCtrl):
 	def removeEventBinding(self, fromnodeitem, string):
 		item = self.getEventBindingItem(fromnodeitem, string)
 		if item is None:
-			raise ValueError('Invalid event binding')
+			raise ValueError('invalid event binding')
 		fromnodename = self.GetItemText(fromnodeitem)
 		eventname, tonodename = self.eventBinding(string)
 		self.Delete(item)
