@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PixelSizeCalibrator.py,v $
-# $Revision: 1.10 $
+# $Revision: 1.11 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
+# $Date: 2004-11-03 18:18:29 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -281,6 +281,15 @@ class PixelSizeListCtrl(wx.ListCtrl):
 		self.InsertColumn(2, 'Comment')
 
 	def addPixelSize(self, mag, ps, comment):
+		mag = float(mag)
+		if ps is None:
+			psstr = ''
+		else:
+			psstr = '%g' % ps
+		if comment is None:
+			commentstr = ''
+		else:
+			commentstr = str(comment)
 		index = 0
 		for i in range(self.GetItemCount()):
 			item = self.GetItem(i)
@@ -289,12 +298,12 @@ class PixelSizeListCtrl(wx.ListCtrl):
 				index = i
 				break
 			elif mag == imag:
-				self.SetStringItem(i, 1, '%g' % ps)
-				self.SetStringItem(i, 2, str(comment))
+				self.SetStringItem(i, 1, psstr)
+				self.SetStringItem(i, 2, commentstr)
 				return
 		self.InsertStringItem(index, str(mag))
-		self.SetStringItem(index, 1, '%g' % ps)
-		self.SetStringItem(index, 2, str(comment))
+		self.SetStringItem(index, 1, psstr)
+		self.SetStringItem(index, 2, commentstr)
 
 	def getSelectedMags(self):
 		mags = []
@@ -319,7 +328,7 @@ class PixelSizeCalibrationDialog(wx.Dialog):
 		cals.reverse()
 		for ps in cals:
 			mag, ps, comment = ps
-			self.lcpixelsize.addPixelSize(float(mag), float(ps), comment)
+			self.lcpixelsize.addPixelSize(mag, ps, comment)
 
 		self.benter = wx.Button(self, -1, 'Enter...')
 		self.bextrapolate = wx.Button(self, -1, 'Extrapolate...')
