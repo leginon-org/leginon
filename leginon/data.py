@@ -70,4 +70,18 @@ class DBRecordData(Data):
 			raise RuntimeError('invalid content for DBRecordData')
 		# maybe check that 'record' contains a dict
 
+class CorrelationData(Data):
+	def __init__(self, id, content):
+		Data.__init__(self, id, dict(content))
 
+class CorrelationImageData(ImageData):
+	def __init__(self, id, content):
+		ImageData.__init__(self, id, content)
+
+class CrossCorrelationImage(CorrelationImageData):
+	def __init__(self, id, content):
+		CorrelationImageData.__init__(self, id, content)
+
+class PhaseCorrelationImage(CorrelationImageData):
+	def __init__(self, id, content):
+		CorrelationImageData.__init__(self, id, content)
