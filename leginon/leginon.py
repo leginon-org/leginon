@@ -572,7 +572,7 @@ class ImageCollectorWidget(CustomWidget):
 		widget.button.pack()
 
 		widget = self.addWidget('Settings', imagecollector, ('Images', 'Select'), True)
-		widget.arrangeButtons(False)
+		self.arrangeButtons(widget, False)
 		self.addWidget('Control', imagecollector, ('Images', 'Select Image'))
 		widget = self.addWidget('Results', imagecollector, ('Images', 'Image'))
 		widget.getbutton.grid_forget()
