@@ -238,8 +238,8 @@ class MatrixCalibrationClient(CalibrationClient):
 		finds the requested matrix using magnification and type
 		'''
 		queryinstance = data.MatrixCalibrationData(magnification=mag, type=caltype)
-		queryinstance['session'] = data.SessionData()
-		queryinstance['session']['instrument'] = self.node.session['instrument']
+#		queryinstance['session'] = data.SessionData()
+#		queryinstance['session']['instrument'] = self.node.session['instrument']
 		caldatalist = self.node.research(datainstance=queryinstance, results=1)
 
 		if len(caldatalist) > 0:
