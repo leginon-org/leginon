@@ -255,8 +255,6 @@ class OffsetWindow(ScaledWindow):
 			self.updateDrawing()
 			self.Refresh()
 
-class ScrolledWindow(OffsetWindow):
-
 if __name__ == '__main__':
 	import sys
 	import Mrc
