@@ -58,8 +58,9 @@ class Panel(gui.wx.Calibrator.Panel):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_GET_INSTRUMENT, enable)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SET_INSTRUMENT, enable)
 		self.measuredialog.bmeasure.Enable(enable)
-		self.measuredialog.bcorrectdefocus.Enable(enable)
-		self.measuredialog.bcorrectstig.Enable(enable)
+		if self.node.resultvalue:
+			self.measuredialog.bcorrectdefocus.Enable(enable)
+			self.measuredialog.bcorrectstig.Enable(enable)
 		self.measuredialog.bresetdefocus.Enable(enable)
 
 	def _acquisitionEnable(self, enable):
@@ -209,6 +210,8 @@ class MeasureDialog(wx.Dialog):
 		self.bcorrectdefocus = wx.Button(self, -1, 'Correct Defocus')
 		self.bcorrectstig = wx.Button(self, -1, 'Correct Stigmator')
 		self.bresetdefocus = wx.Button(self, -1, 'Reset Defocus')
+		self.bcorrectdefocus.Enable(False)
+		self.bcorrectstig.Enable(False)
 
 		szbutton = wx.GridBagSizer(5, 5)
 		szbutton.Add(self.bmeasure, (0, 0), (1, 1), wx.EXPAND)

@@ -88,7 +88,7 @@ class CameraFuncs(object):
 		configure the camera given a dict similar to CameraEMData
 		'''
 		if camdict is None:
-			raise ValueError('invalid camera configuartion dictionary')
+			raise CameraConfigError('invalid camera configuartion dictionary')
 		camdata = data.CameraEMData()
 		camdata.friendly_update(camdict)
 		self.setCameraEMData(camdata)
