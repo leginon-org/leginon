@@ -17,6 +17,8 @@ class PresetsClient(object):
 
 	def storePreset(self, presetdata):
 		# should work
+		print 'PRESETDATA'
+		print presetdata
 		self.node.publish(presetdata, database=True)
 
 	def toScope(self, presetdata):
@@ -35,17 +37,19 @@ class PresetsClient(object):
 		'''
 		scope = self.node.researchByDataID(('scope',))
 		camera = self.node.researchByDataID(('camera no image data',))
+		scopedict = scope['em']
+		cameradict = camera['em']
 
 		## create new preset data
-		p = PresetData(self.ID(), name=presetname)
-		p.friendly_update(scope)
-		p.friendlyy_update(camera)
+		p = data.PresetData(self.node.ID(), name=presetname)
+		p.friendly_update(scopedict)
+		p.friendly_update(cameradict)
 		return p
 
 
 class DataHandler(datahandler.DataBinder):
-	def __init__(self, id, node):
-		datahandler.DataBinder.__init__(self, id)
+	def __init__(self, id, session, node):
+		datahandler.DataBinder.__init__(self, id, session)
 		self.node = node
 
 	def query(self, id):
@@ -127,14 +131,12 @@ class PresetsManager(node.Node):
 		myspec += nodespec
 		return myspec
 
-	def uiStoreCurrent(self, name):
-		preset = self.presetsclient.fromScope()
-		## is this the problem
-		presetdict = dict(preset)
-		self.setPreset(name, presetdict)
+	def uiStoreCurrent(self, presetname):
+		presetdata = self.presetsclient.fromScope(presetname)
+		self.presetsclient.storePreset(presetdata)
 		return ''
 
-	def uiRestore(self, name):
-		preset = self.getPreset(name)
-		self.presetsclient.toScope(preset)
+	def uiRestore(self, presetname):
+		presetdata = self.presetsclient.retrievePreset(presetname)
+		self.presetsclient.toScope(presetdata)
 		return ''
