@@ -16,7 +16,6 @@ class Launcher(node.Node):
 		self.checkPythonVersion()
 		self.addEventInput(event.LaunchEvent, self.handleLaunch)
 		self.addEventOutput(event.NodeClassesPublishEvent)
-		self.__launchlock = threading.Lock()
 		self.caller = calllauncher.CallLauncher()
 		l = self.location()
 		print 'launcher id: %s, at hostname: %s, TCP: %s, UI: %s' % (self.id,
@@ -55,7 +54,6 @@ class Launcher(node.Node):
 			kwargs = launchevent['kwargs']
 		else:
 			kwargs = {}
-		kwargs['launchlock'] = self.__launchlock
 
 		# get the requested class object
 		nodeclass = nodeclassreg.getNodeClass(targetclass)
@@ -64,12 +62,9 @@ class Launcher(node.Node):
 
 		## thread or process
 		if newproc:
-			self.caller.launchCall('fork',nodeclass,self.__launchlock, args,kwargs)
+			self.caller.launchCall('fork',nodeclass, args,kwargs)
 		else:
-			ret = self.__launchlock.acquire(1)
-			### the lock should be released either by the new node
-			### or calllauncher if the node caused an exception
-			self.caller.launchCall('thread',nodeclass,self.__launchlock, args,kwargs)
+			self.caller.launchCall('thread',nodeclass, args,kwargs)
 		self.confirmEvent(launchevent)
 
 #	def defineUserInterface(self):

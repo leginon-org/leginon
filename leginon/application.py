@@ -16,7 +16,6 @@ class Application(leginonobject.LeginonObject):
 			self.data['name'] = name
 		self.nodespecs = []
 		self.bindingspecs = []
-		self.launchednodeslock = threading.RLock()
 		self.launchednodes = []
 
 	def setName(self, name):
@@ -93,15 +92,7 @@ class Application(leginonobject.LeginonObject):
 		threads = []
 		for nodespec in self.nodespecs:
 			args = self.nodeSpec2Args(nodespec)
-			t = threading.Thread(name='launch %s thread' % str(args),
-															target=self.launchNode, args=(args,))
-			t.start()
-			threads.append(t)
-			print 'application sleep 0.5'
-			time.sleep(0.5)
-			print 'application sleep done'
-		for thread in threads:
-			thread.join()
+			self.launchNode(args)
 		for bindingspec in self.bindingspecs:
 			args = self.bindingSpec2Args(bindingspec)
 			self.printerror('binding %s' % str(args))
@@ -110,12 +101,9 @@ class Application(leginonobject.LeginonObject):
 	def launchNode(self, args):
 			self.printerror('launching %s' % str(args))
 			newid = apply(self.manager.launchNode, args)
-			self.launchednodeslock.acquire()
 			self.launchednodes.append(newid)
-			self.launchednodeslock.release()
 
 	def kill(self):
-		self.launchednodeslock.acquire()
 		while self.launchednodes:
 			nodeid = self.launchednodes.pop()
 			self.printerror('killing %s' % (nodeid,))
@@ -123,7 +111,6 @@ class Application(leginonobject.LeginonObject):
 				self.manager.killNode(nodeid)
 			except:
 				self.printException()
-		self.launchednodeslock.release()
 
 	def save(self):
 		self.manager.publish(self.data, database=True)

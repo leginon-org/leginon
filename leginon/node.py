@@ -68,11 +68,10 @@ class DataHandler(leginonobject.LeginonObject):
 
 class Node(leginonobject.LeginonObject):
 	'''Atomic operating unit for performing tasks, creating data and events.'''
-	def __init__(self, id, session, nodelocations = {}, datahandler=DataHandler, tcpport=None, xmlrpcport=None, clientclass = datatransport.Client, launchlock=None):
+	def __init__(self, id, session, nodelocations = {}, datahandler=DataHandler, tcpport=None, xmlrpcport=None, clientclass = datatransport.Client):
 		leginonobject.LeginonObject.__init__(self, id, session)
 
 		self.nodelocations = nodelocations
-		self.launchlock = launchlock
 
 		self.eventmapping = {'outputs':[], 'inputs':[]}
 
@@ -111,12 +110,6 @@ class Node(leginonobject.LeginonObject):
 				self.printerror('connected to manager')
 		self.die_event = threading.Event()
 
-	def releaseLauncher(self):
-		# release the launch lock
-		if self.launchlock is not None:
-			print self, 'releasing launchlock'
-			self.launchlock.release()
-
 	# main, start/stop methods
 
 	def main(self):
@@ -138,7 +131,6 @@ class Node(leginonobject.LeginonObject):
 		'''Call to make the node active and react to a call to exit. Calls main.'''
 		#interact_thread = self.interact()
 
-		self.releaseLauncher()
 		self.outputEvent(event.NodeInitializedEvent(id=self.ID()))
 		self.main()
 

@@ -44,7 +44,6 @@ class Manager(node.Node):
 
 		self.app = application.Application(self.ID(), self)
 
-		# this makes every received event get distributed
 		self.addEventInput(event.NodeAvailableEvent, self.registerNode)
 		self.addEventInput(event.NodeUnavailableEvent, self.unregisterNode)
 		self.addEventInput(event.NodeClassesPublishEvent,
@@ -54,6 +53,7 @@ class Manager(node.Node):
 		self.addEventInput(event.PublishEvent, self.registerData)
 		self.addEventInput(event.UnpublishEvent, self.unregisterData)
 		self.addEventInput(event.ListPublishEvent, self.registerData)
+		# this makes every received event get distributed
 		self.addEventInput(event.Event, self.distributeEvents)
 
 		self.launcherdict = {}
@@ -403,7 +403,9 @@ class Manager(node.Node):
 																													dependencies)
 		t = threading.Thread(target=self.waitNode, args=args)
 		t.start()
-		return self.id + (name,)
+		nodeid = self.id + (name,)
+		print 'NODEID', nodeid
+		return nodeid
 
 	def waitNode(self, launcher, newproc, target, name, nodeargs, dependencies):
 		newid = self.id + (name,)
@@ -414,20 +416,25 @@ class Manager(node.Node):
 		if launcher not in dependenciescopy:
 			dependenciescopy.append(launcher)
 
-		self.waitNodes(dependenciescopy)
-		ev = event.LaunchEvent(id=self.ID(), newproc=newproc,
-														targetclass=target, args=args)
-		attempts = 5
-		for i in range(attempts):
-			try:
-				self.outputEvent(ev, launcher, wait=True, timeout=1.0)
-			except:
-				self.printException()
-				time.sleep(1.0)
-				if i == attempts - 1:
-					raise
-			else:
-				break
+		#self.waitNodes(dependenciescopy)
+		ev = event.LaunchEvent(id=self.ID(), newproc=newproc, targetclass=target, args=args)
+		print 'OUTPUT LaunchEvent', target
+		self.outputEvent(ev, launcher, wait=True)
+		print 'DONE OUTPUT LaunchEvent', target
+
+		#attempts = 5
+		#for i in range(attempts):
+		#	try:
+		#		print 'OUTPUT LaunchEvent', target
+		#		self.outputEvent(ev, launcher, wait=True)
+		#		print 'DONE OUTPUT LaunchEvent', target
+		#	except:
+		#		self.printException()
+		#		time.sleep(1.0)
+		#		if i == attempts - 1:
+		#			raise
+		#	else:
+		#		break
 
 	def waitNodes(self, nodes):
 		self.initializednodescondition.acquire()
@@ -455,7 +462,8 @@ class Manager(node.Node):
 		ev = event.KillEvent()
 		try:
 			self.outputEvent(ev, nodeid)
-		except IOError:
+		except:
+			self.printException()
 			self.printerror('cannot push KillEvent to ' + str(nodeid)
 												+ ', unregistering')
 			# maybe didn't uninitialized
