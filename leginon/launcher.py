@@ -9,7 +9,6 @@
 #
 
 import data
-from databinder import DataBinder
 import event
 import leginonobject
 import node
