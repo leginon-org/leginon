@@ -4,13 +4,14 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MatlabTargetFinder.py,v $
-# $Revision: 1.2 $
+# $Revision: 1.3 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-01-19 00:00:47 $
+# $Date: 2005-01-21 18:43:02 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
+import threading
 import wx
 import gui.wx.Events
 import gui.wx.ImageViewer
@@ -26,20 +27,28 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
 													'settings',
 													shortHelpString='Settings')
+		self.toolbar.AddSeparator()
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SIMULATE_TARGET,
+													'simulatetarget',
+													shortHelpString='Target Test Image')
+		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_REFRESH,
 													'refresh',
-													shortHelpString='Reload Targets')
+													shortHelpString='Refresh Targets')
+		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SUBMIT,
 													'play',
 													shortHelpString='Submit Targets')
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SETTINGS, False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SIMULATE_TARGET, False)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_REFRESH, False)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, False)
 
 		self.imagepanel = gui.wx.ImageViewer.TargetImagePanel(self, -1)
-		#self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True)
-		#self.imagepanel.selectiontool.setDisplayed('acquisition', True)
-		#self.imagepanel.addTargetTool('focus', wx.BLUE, target=True)
-		#self.imagepanel.selectiontool.setDisplayed('focus', True)
+		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True)
+		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
+		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True)
+		self.imagepanel.selectiontool.setDisplayed('focus', True)
 		#self.imagepanel.addTargetTool('done', wx.RED)
 		#self.imagepanel.selectiontool.setDisplayed('done', True)
 		self.imagepanel.addTypeTool('Image', display=True)
@@ -57,10 +66,14 @@ class Panel(gui.wx.TargetFinder.Panel):
 		gui.wx.TargetFinder.Panel.onNodeInitialized(self)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
 											id=gui.wx.ToolBar.ID_SETTINGS)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onTargetTestImage,
+											id=gui.wx.ToolBar.ID_SIMULATE_TARGET)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onRefreshTool,
 											id=gui.wx.ToolBar.ID_REFRESH)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSubmitTool,
 											id=gui.wx.ToolBar.ID_SUBMIT)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SETTINGS, True)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SIMULATE_TARGET, True)
 
 	def onFoundTargets(self, evt):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_REFRESH, True)
@@ -78,29 +91,33 @@ class Panel(gui.wx.TargetFinder.Panel):
 	def onRefreshTool(self, evt):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_REFRESH, False)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, False)
-		self.node.matlabFindTargets()
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_REFRESH, True)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, True)
+		threading.Thread(target=self.node.matlabFindTargets).start()
 
 	def onSubmitTool(self, evt):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_REFRESH, False)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, False)
-		self.node.submitTargets()
+		threading.Thread(target=self.node.submitTargets).start()
+
+	def onTargetTestImage(self, evt):
+		threading.Thread(target=self.node.targetTestImage).start()
 
 class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
 	def initialize(self):
 		tfsbsz = gui.wx.TargetFinder.SettingsDialog.initialize(self)
 		gui.wx.Settings.Dialog.initialize(self)
 
+		self.widgets['test image'] = filebrowse.FileBrowseButton(self, -1)
 		self.widgets['module path'] = filebrowse.FileBrowseButton(self, -1)
 		self.widgets['user check'] = wx.CheckBox(self, -1,
 																				'Wait for user verification of targets')
 
 		sz = wx.GridBagSizer(5, 5)
-		sz.Add(self.widgets['module path'], (0, 0), (1, 1),
+		sz.Add(self.widgets['test image'], (0, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['module path'], (1, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 
-		sz.Add(self.widgets['user check'], (1, 0), (1, 1), wx.ALIGN_CENTER)
+		sz.Add(self.widgets['user check'], (2, 0), (1, 1), wx.ALIGN_CENTER)
 
 		sb = wx.StaticBox(self, -1, 'Matlab Module')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)

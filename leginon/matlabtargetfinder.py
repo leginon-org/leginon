@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/matlabtargetfinder.py,v $
-# $Revision: 1.2 $
+# $Revision: 1.3 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-01-19 00:00:47 $
+# $Date: 2005-01-21 18:43:02 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -15,14 +15,13 @@ import numarray
 import os.path
 import threading
 import data
+import Mrc
 import targetfinder
 import gui.wx.MatlabTargetFinder
 try:
 	import pymat
 except:
 	pymat = None
-
-handle = None
 
 class MatlabTargetFinder(targetfinder.TargetFinder):
 	panelclass = gui.wx.MatlabTargetFinder.Panel
@@ -32,48 +31,53 @@ class MatlabTargetFinder(targetfinder.TargetFinder):
 		'ignore images': False,
 		'module': '',
 		'user check': True,
+		'test image': '',
 	}
 	def __init__(self, *args, **kwargs):
 		self.userpause = threading.Event()
 		targetfinder.TargetFinder.__init__(self, *args, **kwargs)
 		if pymat is None:
 			self.logger.error('Loading Python Matlab interface (pymat) failed')
+			return
+		self.handle = None
 		self.start()
 
 	def matlabFindTargets(self):
-		pymat.put(handle, 'focus', [])
-		pymat.put(handle, 'acquisition', [])
+		pymat.put(self.handle, 'focus', [])
+		pymat.put(self.handle, 'acquisition', [])
 
 		d, f = os.path.split(self.settings['module path'])
 
 		if d:
-			pymat.eval(handle, 'path(path, %s)' % d)
+			pymat.eval(self.handle, 'path(path, %s)' % d)
 
 		if not f[:-2]:
 			raise RuntimeError
 
-		pymat.eval(handle, '[acquisition, focus] = %s(image)' % f[:-2])
+		pymat.eval(self.handle, '[acquisition, focus] = %s(image)' % f[:-2])
 
-		focus = pymat.get(handle, 'focus')
-		acquisition = pymat.get(handle, 'acquisition')
+		focus = pymat.get(self.handle, 'focus')
+		acquisition = pymat.get(self.handle, 'acquisition')
 
 		self.setTargets(acquisition, 'acquisition')
 		self.setTargets(focus, 'focus')
+
+		if self.settings['user check']:
+			self.panel.foundTargets()
 
 	def findTargets(self, imdata, targetlist):
 		image = imdata['image']
 
 		self.setImage(image, 'Image')
 
-		if handle is None:
-			handle = pymat.open()
-		pymat.put(handle, 'image', image)
+		if self.handle is None:
+			self.handle = pymat.open()
+		pymat.put(self.handle, 'image', image)
 
 		self.matlabFindTargets()
 
 		if self.settings['user check']:
 			# user now clicks on targets
-			self.panel.foundTargets()
 			self.notifyUserSubmit()
 			self.userpause.clear()
 			self.setStatus('user input')
@@ -81,9 +85,9 @@ class MatlabTargetFinder(targetfinder.TargetFinder):
 
 		self.setStatus('processing')
 
-		pymat.put(handle, 'image', [])
-		pymat.put(handle, 'focus', [])
-		pymat.put(handle, 'acquisition', [])
+		pymat.put(self.handle, 'image', [])
+		pymat.put(self.handle, 'focus', [])
+		pymat.put(self.handle, 'acquisition', [])
 
 		self.publishTargets(imdata, 'focus', targetlist)
 		self.publishTargets(imdata, 'acquisition', targetlist)
@@ -93,3 +97,23 @@ class MatlabTargetFinder(targetfinder.TargetFinder):
 	def submitTargets(self):
 		self.userpause.set()
 
+	def targetTestImage(self):
+		usercheck = self.settings['user check']
+		self.settings['user check'] = False
+		filename = self.settings['test image']
+		try:
+			image = Mrc.mrcstr_to_numeric(open(filename, 'rb').read())
+		except:
+			self.logger.error('Failed to load test image')
+			raise
+			return
+
+		self.setImage(image, 'Image')
+
+		if self.handle is None:
+			self.handle = pymat.open()
+		pymat.put(self.handle, 'image', image)
+
+		self.matlabFindTargets()
+
+		self.settings['user check'] = usercheck
