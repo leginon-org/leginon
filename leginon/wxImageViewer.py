@@ -549,13 +549,18 @@ class TargetTool(ImageTool):
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, True)
 		self.callback = callback
 		self.target_type = None
-		self.closest_target = None
 		self.combobox = None
 
+	def getTargetType(self):
+		return self.target_type
+
+	def setTargetType(self, name):
+		self.target_type = name
+		self.setTargetButtonBitmap()
+
 	def addTargetType(self, name):
-		if self.target_type is None:
-			self.target_type = name
-			self.setTargetButtonBitmap()
+		if self.getTargetType is None:
+			self.setTargetType(name)
 		self.addComboBox(name)
 
 	def deleteTargetType(self, name):
@@ -572,7 +577,7 @@ class TargetTool(ImageTool):
 		dc.SelectObject(bitmap)
 		dc.BeginDrawing()
 		dc.Clear()
-		color = self.imagepanel.colors[self.target_type]
+		color = self.imagepanel.target_types[self.target_type].getColor()
 		dc.SetPen(wxPen(color, 2))
 		dc.DrawLine(8, 0, 8, 15)
 		dc.DrawLine(0, 8, 15, 8)
@@ -583,20 +588,19 @@ class TargetTool(ImageTool):
 		self.button.Refresh()
 
 	def OnComboBoxSelect(self, evt):
-		self.target_type = evt.GetString()
-		self.setTargetButtonBitmap()
+		self.setTargetType(evt.GetString())
 
 	def addComboBox(self, name):
 		if self.combobox is None:
-			if len(self.imagepanel.targets) > 1:
+			if len(self.imagepanel.target_types) > 1:
 				self.combobox = wxComboBox(self.imagepanel, -1, value=self.target_type,
-																		choices=self.imagepanel.targets.keys(),
+																		choices=self.imagepanel.target_types.keys(),
 																		style=wxCB_DROPDOWN|wxCB_READONLY|wxCB_SORT)
 				EVT_COMBOBOX(self.imagepanel, self.combobox.GetId(),
 											self.OnComboBoxSelect)
 				self.sizer.Add(self.combobox, 0, wxALIGN_CENTER_VERTICAL | wxALL, 3)
 				self.sizer.Layout()
-			elif len(self.imagepanel.targets) == 1:
+			elif len(self.imagepanel.target_types) == 1:
 				self.target_type = name
 				self.sizer.Layout()
 		else:
@@ -620,142 +624,134 @@ class TargetTool(ImageTool):
 				self.sizer.Layout()
 				self.target_type = None
 
-	def OnLeftDoubleClick(self, evt):
+	def OnLeftClick(self, evt):
 		if self.button.GetToggle() and self.target_type is not None:
 			x, y = self.imagepanel.view2image((evt.m_x, evt.m_y))
 			target = self.imagepanel.addTarget(self.target_type, x, y)
 			if callable(self.callback):
-				targets = self.imagepanel.getTargetTypeValue(self.target_type)
-				self.callback(self.target_type, targets)
+				name = target.target_type.getName()
+				targets = self.imagepanel.getTargetTypeValue(name)
+				self.callback(target.target_type.getName(), targets)
 
-	def OnRightDoubleClick(self, evt):
-		if self.button.GetToggle() and self.closest_target is not None:
-			target_type, value = self.imagepanel.deleteTarget(self.closest_target)
-			self.closest_target = None
+	def OnRightClick(self, evt):
+		selectedtarget = self.imagepanel.getSelectedTarget()
+		if self.button.GetToggle() and selectedtarget is not None:
+			target_type, value = self.imagepanel.deleteTarget(selectedtarget)
 			if callable(self.callback):
 				self.callback(target_type, value)
 
-	def updateClosest(self, x, y):
-		closest_target = None
+	def closestTarget(self, x, y):
 		minimum_magnitude = 10
+
 		if self.imagepanel.smallScale():
 			xscale, yscale = self.imagepanel.getScale()
 			minimum_magnitude /= xscale
-		for target_type in self.imagepanel.targets.values():
-			for target in target_type:
-				magnitude = math.sqrt((x - target[0])**2 +
-															(y - target[1])**2)
-				if magnitude < minimum_magnitude:
-					minimum_magnitude = magnitude
-					closest_target = target
-		if self.closest_target is not None:
-			if self.closest_target == closest_target:
-				return
-			else:
-				old_target = self.closest_target
-				self.closest_target = None
-#				self.imagepanel.UpdateDrawing()
-		self.closest_target = closest_target
-#		if closest_target is not None:
-#			self.imagepanel.UpdateDrawing()
+
+		closest_target = None
+		for target in self.imagepanel.getTargets():
+			tx, ty = target.getPosition()
+			magnitude = math.sqrt((x - tx)**2 + (y - ty)**2)
+			if magnitude < minimum_magnitude:
+				minimum_magnitude = magnitude
+				closest_target = target
+
+		return closest_target
 
 	def OnMotion(self, evt, dc):
-		if self.button.GetToggle() and  len(self.imagepanel.targets) > 0:
+		if self.button.GetToggle():
 			viewoffset = self.imagepanel.panel.GetViewStart()
 			x, y = self.imagepanel.view2image((evt.m_x, evt.m_y))
-			self.updateClosest(x, y)
+			self.imagepanel.setSelectedTarget(self.closestTarget(x, y))
 
 	def getToolTipString(self, x, y, value):
-		if self.closest_target is not None:
-			for target_type, targets in self.imagepanel.targets.items():
-				if self.closest_target in targets:
-					return target_type + ' ' + str(self.closest_target)
-		return ''
-
-class TargetImagePanel(ImagePanel):
-	def __init__(self, parent, id, callback=None):
-		ImagePanel.__init__(self, parent, id)
-		self.targets = {}
-		self.colorlist = [wxRED, wxBLUE, wxColor(255, 0, 255), wxColor(0, 255, 255)]
-		self.colors = {}
-		self.targetbitmaps = {}
-		self.addTool(TargetTool(self, self.toolsizer, callback))
-
-	def addTargetType(self, name, value=[]):
-		if name in self.targets:
-			raise ValueError('Target type already exists')
-		self.addTargetTypeColor(name)
-		self.addTargetTypeBitmaps(name)
-		self.targets[name] = list(value)
-		for tool in self.tools:
-			if hasattr(tool, 'addTargetType'):
-				tool.addTargetType(name)
-
-	def addTargetTypeColor(self, name):
-		try:
-			self.colors[name] = self.colorlist[0]
-			del self.colorlist[0]
-		except IndexError:
-			raise RuntimeError('Not enough colors for addition target types')
-
-	def deleteTargetTypeColor(self, name):
-		del self.colors[name]
-
-	def addTargetTypeBitmaps(self, name):
-		color = self.colors[name]
-		default = self.makeTargetBitmap(self.colors[name])
-		selectedcolor = wxColor(color.Red()/2, color.Green()/2, color.Blue()/2)
-		selected = self.makeTargetBitmap(selectedcolor)
-		self.targetbitmaps[name] = {'default': default, 'selected': selected}
-
-	def deleteTargetTypeBitmaps(self, name):
-		del self.targetbitmaps[name]
-
-	def deleteTargetType(self, name):
-		try:
-			self.colorlist.append[self.colors[name]]
-			self.deleteTargetTypeColor(name)
-			self.deleteTargetTypeBitmaps(name)
-			del self.targets[name]
-		except:
-			raise ValueError('No such target type')
-		for tool in self.tools:
-			if hasattr(tool, 'addTargetType'):
-				tool.deleteTargetType(name)
-		self.UpdateDrawing()
-
-	def getTargetTypeValue(self, name):
-		try:
-			return self.targets[name]
-		except:
-			raise ValueError('No such target type')
-
-	def setTargetTypeValue(self, name, value):
-		if name not in self.targets:
-			self.addTargetType(name, value)
+		selectedtarget = self.imagepanel.getSelectedTarget()
+		if selectedtarget is not None:
+			name = selectedtarget.target_type.getName()
+			position = selectedtarget.getPosition()
+			return name + ' ' + str(position)
 		else:
-			self.targets[name] = list(value)
-		self.UpdateDrawing()
+			return ''
 
-	def addTarget(self, target_type, x, y):
-		target = (x, y)
-		self.targets[target_type].append(target)
-		self.UpdateDrawing()
-		return target
+class Target(object):
+	def __init__(self, x, y, target_type=None):
+		self.setPosition(x, y)
+		self.target_type = target_type
 
-	# could be hazardous if more than same target exists in type or multiple type
-	def deleteTarget(self, target):
-		for target_type in self.targets:
-			if target in self.targets[target_type]:
-				self.targets[target_type].remove(target)
-				self.UpdateDrawing()
-				return target_type, self.targets[target_type]
+	def getPosition(self):
+		return self.x, self.y
+
+	def setPosition(self, x, y):
+		self.x = x
+		self.y = y
+
+	def getTargetType(self):
+		return self.target_type
+
+	def setTargetType(self, target_type):
+		self.target_type = target_type
+
+class TargetType(object):
+	def __init__(self, name, color):
+		self.targets = []
+		self.bitmaps = {}
+		self.setName(name)
+		self.setColor(color)
+
+	def getTargets(self):
+		return self.targets
+
+	def getName(self):
+		return self.name
+
+	def setName(self, name):
+		self.name = name
+
+	def getColor(self):
+		return self.color
+
+	def setColor(self, color):
+		self.color = color
+		self.setBitmaps(self.color)
+
+	def addTarget(self, target):
+		if target in self.targets:
+			raise ValueError('cannot add target, target already exists')
+		if target.target_type != self:
+			if target.target_type is not None:
+				target.target_type.removeTarget(target)
+			target.setTargetType(self)
+			self.targets.append(target)
+
+	def removeTarget(self, target):
+		if target not in self.targets:
+			raise ValueError('cannot remove target, no such target')
+		target.setTargetType(None)
+		self.targets.remove(target)
 
 	def clearTargets(self):
-		self.targets = {}
-		self.UpdateDrawing()
+		for target in self.targets:
+			target.setTargetType(None)
+		self.targets = []
 
-	def makeTargetBitmap(self, color):
+	def getTargetPositions(self):
+		targetpositions = []
+		for target in self.targets:
+			targetpositions.append(target.getPosition())
+		return targetpositions
+
+	def getBitmap(self, name):
+		try:
+			return self.bitmaps[name]
+		except KeyError:
+			raise ValueError('no such bitmap')
+
+	def getDefaultBitmap(self):
+		return self.getBitmap('default')
+
+	def getSelectedBitmap(self):
+		return self.getBitmap('selected')
+
+	def makeBitmap(self, color):
 		penwidth = 1
 		length = 15
 		bitmap = wxEmptyBitmap(length, length)
@@ -772,6 +768,115 @@ class TargetImagePanel(ImagePanel):
 		bitmap.SetMask(wxMaskColour(bitmap, wxWHITE))
 		return bitmap
 
+	def setBitmaps(self, color):
+		default = self.makeBitmap(color)
+		self.bitmaps['default'] = default
+
+		selectedcolor = wxColor(color.Red()/2, color.Green()/2, color.Blue()/2)
+		selected = self.makeBitmap(selectedcolor)
+		self.bitmaps['selected'] = selected
+
+class TargetImagePanel(ImagePanel):
+	def __init__(self, parent, id, callback=None):
+		ImagePanel.__init__(self, parent, id)
+		self.target_types = {}
+		self.selectedtarget = None
+		self.colorlist = [wxRED, wxBLUE, wxColor(255, 0, 255), wxColor(0, 255, 255)]
+		self.addTool(TargetTool(self, self.toolsizer, callback))
+
+	def addTargetTypeColor(self, color):
+		self.colorlist.append(color)
+
+	def removeTargetTypeColor(self):
+		try:
+			color = self.colorlist[0]
+			del self.colorlist[0]
+		except IndexError:
+			raise RuntimeError('Not enough colors for addition target types')
+		return color
+
+	def addTargetType(self, name):
+		if name in self.target_types:
+			raise ValueError('Target type already exists')
+		color = self.removeTargetTypeColor()
+		self.target_types[name] = TargetType(name, color)
+
+		for tool in self.tools:
+			if hasattr(tool, 'addTargetType'):
+				tool.addTargetType(name)
+
+	def deleteTargetType(self, name):
+		try:
+			target_type = self.target_types[name]
+		except KeyError:
+			raise ValueError('No such target type')
+		color = target_type.color
+		del self.target_types[name]
+		self.addTargetTypeColor(color)
+
+		for tool in self.tools:
+			if hasattr(tool, 'addTargetType'):
+				tool.deleteTargetType(name)
+
+	# compat function
+	def getTargetTypeValue(self, name):
+		try:
+			return self.target_types[name].getTargetPositions()
+		except KeyError:
+			raise ValueError('No such target type')
+
+	# compat function
+	def setTargetTypeValue(self, name, value):
+		if name not in self.target_types:
+			self.addTargetType(name)
+		else:
+			self.target_types[name].clearTargets()
+		for position in value:
+			x, y = position
+			self.addTarget(name, x, y)
+
+		self.UpdateDrawing()
+
+	def addTarget(self, name, x, y):
+		if name not in self.target_types:
+			raise ValueError('No such target type to add target')
+		target = Target(x, y)
+		self.target_types[name].addTarget(target)
+		self.UpdateDrawing()
+		return target
+
+	def deleteTarget(self, target):
+		target_type = target.target_type
+		if target_type in self.target_types.values():
+			target_type.removeTarget(target)
+		else:
+			raise ValueError('Target\'s target type does not exist')
+		if self.getSelectedTarget() == target:
+			self.setSelectedTarget(None)
+		self.UpdateDrawing()
+
+		return target_type.getName(), target_type.getTargetPositions()
+
+	def clearTargets(self):
+		for target_type in self.target_types.values():
+			target_type.clearTargets()
+		self.UpdateDrawing()
+
+	def getTargets(self):
+		targetlist = []
+		for target_type in self.target_types.values():
+			targetlist += target_type.getTargets()
+		return targetlist
+
+	def getSelectedTarget(self):
+		return self.selectedtarget
+
+	def setSelectedTarget(self, target):
+		if target is not None:
+			if target not in self.getTargets():
+				raise ValueError('no such target')
+		self.selectedtarget = target
+
 	def getTargetBitmap(self, target):
 		for target_type in self.targets:
 			if target in self.targets[target_type]:
@@ -783,69 +888,75 @@ class TargetImagePanel(ImagePanel):
 				return self.targetbitmaps[target_type]['default']
 
 	def drawTarget(self, dc, target):
+		if target_type not in self.target_types.values():
+			return
+
+		if target == self.getSelectedTarget():
+			bitmap = target.target_type.getSelectedBitmap()
+		else:
+			bitmap = target.target_type.getDefaultBitmap()
+
 		memorydc = wxMemoryDC()
-		bitmap = self.getTargetBitmap(target)
 		memorydc.SelectObject(bitmap)
 		width = bitmap.GetWidth()
 		height = bitmap.GetHeight()
 
 		xscale, yscale = self.getScale()
+		position = target.getPosition()
 		if self.biggerView():
-			targetx, targety = target
-			targetx *= xscale
-			targety *= yscale
+			x, y = position
+			x *= xscale
+			y *= yscale
 		else:
-			targetx, targety = self.image2view(target)
+			x, y = self.image2view(position)
 
 		if not self.smallScale():
 			memorydc.SetUserScale(1.0/xscale, 1.0/yscale)
 			width *= xscale
 			height *= yscale
 
-		dc.Blit(targetx - width/2, targety - height/2,
-						width, height, memorydc, 0, 0, wxCOPY, True)
+		dc.Blit(x - width/2, y - height/2, width, height,
+						memorydc, 0, 0, wxCOPY, True)
 
 		memorydc.SelectObject(wxNullBitmap)
 
 	def drawTargets(self, dc):
-		selectedtargets = []
-		for tool in self.tools:
-			if hasattr(tool, 'closest_target'):
-				selectedtargets.append(tool.closest_target)
-
 		xscale, yscale = self.getScale()
 		memorydc = wxMemoryDC()
-		for target_type in self.targets:
-			for target in self.targets[target_type]:
-				if self.biggerView():
-					targetx, targety = target
-					targetx *= xscale
-					targety *= yscale
-				else:
-					targetx, targety = self.image2view(target)
-				if target in selectedtargets:
-					bitmap = self.targetbitmaps[target_type]['selected']
-				else:
-					bitmap = self.targetbitmaps[target_type]['default']
-				memorydc.Clear()
-				memorydc.SelectObject(bitmap)
-				width = bitmap.GetWidth()
-				height = bitmap.GetHeight()
-				if not self.smallScale():
-					memorydc.SetUserScale(1.0/xscale, 1.0/yscale)
-					width *= xscale
-					height *= yscale
-				dc.Blit(targetx - width/2, targety - height/2,
-								width, height, memorydc, 0, 0, wxCOPY, True)
 
-				memorydc.SelectObject(wxNullBitmap)
+		for target in self.getTargets():
+
+			if target == self.getSelectedTarget():
+				bitmap = target.target_type.getSelectedBitmap()
+			else:
+				bitmap = target.target_type.getDefaultBitmap()
+
+			position = target.getPosition()
+			if self.biggerView():
+				x, y = position
+				x *= xscale
+				y *= yscale
+			else:
+				x, y = self.image2view(position)
+
+			memorydc.Clear()
+			memorydc.SelectObject(bitmap)
+			width = bitmap.GetWidth()
+			height = bitmap.GetHeight()
+
+			if not self.smallScale():
+				memorydc.SetUserScale(1.0/xscale, 1.0/yscale)
+				width *= xscale
+				height *= yscale
+
+			dc.Blit(x - width/2, y - height/2,
+							width, height, memorydc, 0, 0, wxCOPY, True)
+
+			memorydc.SelectObject(wxNullBitmap)
 
 	def Draw(self, dc):
 		ImagePanel.Draw(self, dc)
 		dc.BeginDrawing()
-#		for target_type in self.targets.values():
-#			for target in target_type:
-#				self.drawTarget(dc, target)
 		self.drawTargets(dc)
 		dc.EndDrawing()
 
