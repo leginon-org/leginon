@@ -443,6 +443,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			return
 		self.setStatusMessage('Publishing mosaic data')
 		self.publish(self.mosaicdata, database=True)
+		self.setStatusMessage('Published mosaic data')
 
 	def publishMosaicImage(self):
 		if None in (self.mosaicdata, self.mosaicimage, self.mosaicimagescale):
