@@ -239,7 +239,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 	def getCurrentValues(self):
 		emdata = self.emclient.getScope()
-		defocusdata = emdata['defocus']
+		defocus = emdata['defocus']
 		stig = emdata['stigmator']['objective']
 		stigx = stig['x']
 		stigy = stig['y']
