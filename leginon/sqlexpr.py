@@ -448,7 +448,7 @@ class Insert(SQLExpression):
             template = self.valueList[0].keys()
             allowNonDict = False
         if template is not None:
-	    f = map(backquote, template)
+            f = map(backquote, template)
             insert += " (%s)" % ", ".join(f)
         first = True
         insert += " VALUES "

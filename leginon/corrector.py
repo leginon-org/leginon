@@ -170,9 +170,6 @@ class Corrector(node.Node):
 		for i in range(n):
 			print 'acquiring %s of %s' % (i+1, n)
 			imagedata = self.cam.acquireCameraImageData()
-#			numimage = imagedata.content['image']
-#			camstate = imagedata.content['camera']
-#			scopestate = imagedata.content['scope']
 			numimage = imagedata['image']
 			camstate = imagedata['camera']
 			scopestate = imagedata['scope']
@@ -203,13 +200,14 @@ class Corrector(node.Node):
 		seriesscope = seriesinfo['scope']
 
 		ref = cameraimage.averageSeries(series)
+		print type(ref)
 
 		plankey = self.newPlan(camstate)
 
 		self.plans[plankey][typekey] = ref
 
 		imagedata = datatype(self.ID(), image=ref, scope=seriesscope, camera=seriescam)
-		self.publish(imagedata, eventclass=pubtype)
+		self.publish(imagedata, eventclass=pubtype, database=True)
 
 		self.calc_norm(plankey)
 		return ref
