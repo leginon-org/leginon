@@ -10,15 +10,19 @@ import inspect
 import tem
 import ccdcamera
 
+temorder = []
 tems = {}
+ccdcameraorder = []
 ccdcameras = {}
 
 def register(module):
 	classes = inspect.getmembers(module, predicate=inspect.isclass)
 	for classname, c in classes:
 		if issubclass(c, tem.TEM):
+			temorder.append((c.name, c))
 			tems[c.name] = c
 		if issubclass(c, ccdcamera.CCDCamera):
+			ccdcameraorder.append((c.name, c))
 			ccdcameras[c.name] = c
 
 def getClass(name):
@@ -30,7 +34,7 @@ def getClass(name):
 		return None
 
 def getClasses():
-	return tems.items() + ccdcameras.items()
+	return temorder + ccdcameraorder
 
 import tecnai
 register(tecnai)
