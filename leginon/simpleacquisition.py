@@ -21,10 +21,7 @@ class SimpleAcquisition(acquisition.Acquisition):
 		acquisition.Acquisition.__init__(self, id, session, nodelocations, **kwargs)
 
 	def acquireImageOne(self):
-		'''
-		this is same as Acquisition 'uiTrial'
-		'''
-		self.processTargetData()
+		self.processTargetData(None)
 		return ''
 
 	def acquireImageLoop(self, pausetime):
@@ -49,7 +46,7 @@ class SimpleAcquisition(acquisition.Acquisition):
 		while 1:
 			if self.loopstop.isSet():
 				break
-			self.processTargetData()
+			self.processTargetData(None)
 			time.sleep(pausetime)
 		try:
 			self.looploock.release()
