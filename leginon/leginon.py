@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import copy
 import os
 import socket
 import sys
@@ -176,19 +175,29 @@ class Leginon(Tkinter.Frame):
 			self.addAcquireAndTarget(add_dialog.result[0], sourceids)
 
 	def exit(self):
-		nodeids = copy.copy(self.manager.clients)
+		nodeids = self.manager.clients.keys()
+		nodeids.remove(self.remotelauncher)
+		nodeids.remove(self.locallauncherid)
 		for nodeid in nodeids:
-			if nodeid != self.remotelauncher:
 				try:
 					self.manager.killNode(nodeid)
-				except:
-					print 'failed to kill', nodeid
+				except Exception, e:
+					print 'failed to kill', nodeid, e
+
 		#if sys.platform == 'win32':
 		#	win32api.TerminateProcess(self.locallauncherprocess, 0)
 		#else:
 		#	os.kill(self.locallauncherprocess)
+
+		while len(self.manager.clients) > 2:
+			time.sleep(0.25)
+
+		self.manager.killNode(self.locallauncherid)
+
+		while len(self.manager.clients) > 1:
+			time.sleep(0.25)
+
 		self.manager.exit()
-		time.sleep(5.0)
 		self.parent.destroy()
 
 	# needs to check what got started, the whole lot needs error handling

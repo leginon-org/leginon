@@ -41,9 +41,6 @@ class Watcher(node.Node):
 		myspec += nui
 		return myspec
 
-	def die(self, ievent=None):
-		node.Node.die(self)
-
 	## the event queue could be put in node.py or datahandler.DataBinder
 	def handleEvent(self, pubevent):
 		if not self.watchtoggle.get():

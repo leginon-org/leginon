@@ -196,9 +196,6 @@ class ImageMosaic(watcher.Watcher):
 		self.defineUserInterface()
 		#self.start()
 
-	def die(self, ievent=None):
-		watcher.Watcher.die(self)
-
 	def processData(self, idata):
 		tileimage = idata.content['image']
 		neighbors = idata.content['neighbor tiles']
