@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/remotecall.py,v $
-# $Revision: 1.15 $
+# $Revision: 1.16 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-02 19:13:31 $
-# $Author: suloway $
+# $Date: 2005-03-11 01:41:12 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -185,9 +185,11 @@ class ObjectCallProxy(object):
 
 class ObjectProxy(object):
 	def __init__(self, objectservice, nodename, name):
-		self._nodename = nodename
-		self._name = name
-		self._objectservice = objectservice
+		## to avoid using __setattr__ below, use base class methods
+		## (prevents some seg fault issues)
+		object.__setattr__(self, '_nodename', nodename)
+		object.__setattr__(self, '_name', name)
+		object.__setattr__(self, '_objectservice', objectservice)
 
 	def __getattr__(self, name):
 		d, t = self._objectservice.descriptions[self._nodename][self._name]
