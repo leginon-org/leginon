@@ -314,6 +314,11 @@ class HoleFinder(object):
 			edger = self.edgefinder.convolve(kernel=kernel1)
 			edgec = self.edgefinder.convolve(kernel=kernel2)
 			edges = Numeric.hypot(edger,edgec)
+			## zero the image edge effects
+			edges[:n] = 0
+			edges[:,:n] = 0
+			edges[:,-n:] = 0
+			edges[-n:] = 0
 		else:
 			raise RuntimeError('no such filter type: %s' % (filt,))
 
