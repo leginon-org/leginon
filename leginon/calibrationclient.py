@@ -198,7 +198,7 @@ class CalibrationClient(object):
 		biny = imagecontent1['camera']['binning']['y']
 		unbinned = {'row':shift[0] * biny, 'col': shift[1] * binx}
 
-		shiftinfo.update({'actual states': actual, 'pixel shift': unbinned, 'peak value': peakvalue, 'shape':pcimage.shape, 'stats': (stats1, stats2)}, 'driftdata': driftdata)
+		shiftinfo.update({'actual states': actual, 'pixel shift': unbinned, 'peak value': peakvalue, 'shape':pcimage.shape, 'stats': (stats1, stats2), 'driftdata': driftdata})
 		return shiftinfo
 
 
