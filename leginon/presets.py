@@ -138,12 +138,10 @@ class CircularIter(object):
 
 class DataHandler(node.DataHandler):
 	def query(self, id):
-		print 'QUERY', id
 		if id == ('presets',):
 			self.lock.acquire()
 			result = data.PresetSequenceData()
 			result['sequence'] = self.node.presets
-			print 'RESULT', result
 			self.lock.release()
 		elif id == ('current preset',):
 			self.lock.acquire()
@@ -178,8 +176,6 @@ class PresetsManager(node.Node):
 		'''
 		callback for received PresetChangeEvent from client
 		'''
-		print 'IEVENT'
-		print ievent
 		pname = ievent['name']
 		emtarget = ievent['emtarget']
 		if emtarget is None:
