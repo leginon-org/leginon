@@ -27,17 +27,17 @@ class Launcher(node.Node):
 
 	def addManager(self, loc):
 		self.managerclient = self.clientclass(self.ID(), loc)
-		e = event.NodeAvailableEvent(self.ID(), location=self.location(),
+		e = event.NodeAvailableEvent(id=self.ID(), location=self.location(),
 					nodeclass=self.__class__.__name__)
 		self.outputEvent(ievent=e, wait=1)
 		time.sleep(1)
 		self.publishNodeClasses()
-		self.outputEvent(event.NodeInitializedEvent(self.ID()))
+		self.outputEvent(event.NodeInitializedEvent(id=self.ID()))
 
 	def start(self):
 		self.main()
 		self.die_event.wait()
-		self.outputEvent(event.NodeUninitializedEvent(self.ID()))
+		self.outputEvent(event.NodeUninitializedEvent(id=self.ID()))
 		self.exit()
 
 	def main(self):
@@ -46,7 +46,7 @@ class Launcher(node.Node):
 	def publishNodeClasses(self):
 		#reload(nodeclassreg)
 		nodeclassnames = nodeclassreg.getNodeClassNames()
-		d = data.NodeClassesData(self.ID(), nodeclasses=nodeclassnames)
+		d = data.NodeClassesData(id=self.ID(), nodeclasses=nodeclassnames)
 		self.publish(d, pubevent=True)
 
 	def handleLaunch(self, launchevent):

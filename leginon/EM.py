@@ -144,9 +144,9 @@ class EM(node.Node):
 		self.uistate = self.getEM(withoutkeys=['image data'])
 		self.defineUserInterface()
 
-		e = event.ListPublishEvent(self.ID(), idlist=ids)
+		e = event.ListPublishEvent(id=self.ID(), idlist=ids)
 		self.outputEvent(e, wait=True)
-		self.outputEvent(event.NodeInitializedEvent(self.ID()))
+		self.outputEvent(event.NodeInitializedEvent(id=self.ID()))
 
 		self.queueHandler()
 

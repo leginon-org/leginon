@@ -149,8 +149,8 @@ class AcquisitionImagePublishEvent(PresetImagePublishEvent):
 class TrialImagePublishEvent(PresetImagePublishEvent):
 	dataclass = data.TrialImageData
 
-class CorrectionImagePublishEvent(CameraImagePublishEvent):
-	dataclass = data.CorrectionImageData
+class CorrectorImagePublishEvent(CameraImagePublishEvent):
+	dataclass = data.CorrectorImageData
 
 class TileImagePublishEvent(CameraImagePublishEvent):
 	'Event indicating image tile was published'
@@ -160,13 +160,13 @@ class MosaicImagePublishEvent(CameraImagePublishEvent):
 	'Event indicating mosaic image was published'
 	dataclass = data.MosaicImageData
 
-class DarkImagePublishEvent(CorrectionImagePublishEvent):
+class DarkImagePublishEvent(CorrectorImagePublishEvent):
 	dataclass = data.DarkImageData
 
-class BrightImagePublishEvent(CorrectionImagePublishEvent):
+class BrightImagePublishEvent(CorrectorImagePublishEvent):
 	dataclass = data.BrightImageData
 
-class NormImagePublishEvent(CorrectionImagePublishEvent):
+class NormImagePublishEvent(CorrectorImagePublishEvent):
 	dataclass = data.NormImageData
 
 class CorrelationImagePublishEvent(ImagePublishEvent):

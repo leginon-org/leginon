@@ -82,7 +82,7 @@ class ImViewer(imagewatcher.ImageWatcher):
 			print 'CLICKINFO', clickinfo
 			imageinfo = self.imageInfo()
 			clickinfo.update(imageinfo)
-			e = event.ImageClickEvent(self.ID(), clickinfo)
+			e = event.ImageClickEvent(id=self.ID(), initializer=clickinfo)
 			self.outputEvent(e)
 		finally:
 			self.clicklock.release()
@@ -122,7 +122,7 @@ class ImViewer(imagewatcher.ImageWatcher):
 #		print 'acquireAndDisplay done'
 
 	def acquireEvent(self):
-		e = event.ImageAcquireEvent(self.ID())
+		e = event.ImageAcquireEvent(id=self.ID())
 		self.outputEvent(e)
 
 	def displayNumericArray(self):

@@ -105,7 +105,7 @@ class Manager(node.Node):
 
 	def confirmEvent(self, ievent):
 		'''Override node.Node.confirmEvent to distribute a confirmation event to the node waiting for confirmation of the event.'''
-		self.outputEvent(event.ConfirmationEvent(self.ID(), eventid=ievent['id']),
+		self.outputEvent(event.ConfirmationEvent(id=self.ID(), eventid=ievent['id']),
 											0, ievent['id'][:-1])
 
 	def handleConfirmedEvent(self, ievent):
@@ -249,10 +249,10 @@ class Manager(node.Node):
 		# published data of nodeid mapping to location of node
 		nodelocationdata = self.datahandler.query(nodeid)
 		if nodelocationdata is None:
-			nodelocationdata = data.NodeLocationData(nodeid, location=nodelocation)
+			nodelocationdata = data.NodeLocationData(id=nodeid, location=nodelocation)
 		else:
 			# fools! should do something nifty to unregister, reregister, etc.
-			nodelocationdata = data.NodeLocationData(nodeid, location=nodelocation)
+			nodelocationdata = data.NodeLocationData(id=nodeid, location=nodelocation)
 		self.datahandler.insert(nodelocationdata)
 
 		self.confirmEvent(readyevent)
@@ -358,7 +358,7 @@ class Manager(node.Node):
 			dependenciescopy.append(launcher)
 
 		self.waitNodes(dependenciescopy)
-		ev = event.LaunchEvent(self.ID(), newproc=newproc,
+		ev = event.LaunchEvent(id=self.ID(), newproc=newproc,
 														targetclass=target, args=args)
 		attempts = 5
 		for i in range(attempts):
@@ -387,7 +387,7 @@ class Manager(node.Node):
 
 	def addNode(self, hostname, port):
 		'''Add a running node to the manager. Sends an event to the location.'''
-		e = event.NodeAvailableEvent(self.id, location=self.location(), nodeclass=self.__class__.__name__)
+		e = event.NodeAvailableEvent(id=self.id, location=self.location(), nodeclass=self.__class__.__name__)
 		client = self.clientclass(self.ID(),
 												{'hostname': hostname, 'TCP port': port})
 		client.push(e)
@@ -395,7 +395,7 @@ class Manager(node.Node):
 	def killNode(self, nodeid):
 		'''Attempt telling a node to die and unregister. Unregister if communication with the node fails.'''
 		try:
-			self.clients[nodeid].push(event.KillEvent(self.ID()))
+			self.clients[nodeid].push(event.KillEvent(id=self.ID()))
 		except IOError:
 			self.printerror('cannot push KillEvent to ' + str(nodeid)
 												+ ', unregistering')
@@ -424,7 +424,7 @@ class Manager(node.Node):
 		'''Registers the location of a piece of data by mapping the data's ID to its location. Appends location to list if data ID is already registered.'''
 		datalocationdata = self.datahandler.query(dataid)
 		if datalocationdata is None:
-			datalocationdata = data.DataLocationData(dataid, location=[nodeid])
+			datalocationdata = data.DataLocationData(id=dataid, location=[nodeid])
 		else:
 			if nodeid not in datalocationdata['location']:
 				datalocationdata['location'].append(nodeid)

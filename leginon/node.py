@@ -123,7 +123,7 @@ class Node(leginonobject.LeginonObject):
 
 	def exit(self):
 		'''Cleans up the node before it dies.'''
-		self.outputEvent(event.NodeUnavailableEvent(self.ID()))
+		self.outputEvent(event.NodeUnavailableEvent(id=self.ID()))
 		self.server.exit()
 		self.printerror('exited')
 
@@ -136,13 +136,13 @@ class Node(leginonobject.LeginonObject):
 		#interact_thread = self.interact()
 
 		self.releaseLauncher()
-		self.outputEvent(event.NodeInitializedEvent(self.ID()))
+		self.outputEvent(event.NodeInitializedEvent(id=self.ID()))
 		self.main()
 
 		# wait until the interact thread terminates
 		#interact_thread.join()
 		self.die_event.wait()
-		self.outputEvent(event.NodeUninitializedEvent(self.ID()))
+		self.outputEvent(event.NodeUninitializedEvent(id=self.ID()))
 		self.exit()
 
 	# location method
@@ -169,7 +169,7 @@ class Node(leginonobject.LeginonObject):
 			self.waitEvent(ievent)
 
 	def logEvent(self, ievent, status):
-		eventlog = event.EventLog(self.ID(), eventclass=ievent.__class__.__name__, status=status)
+		eventlog = event.EventLog(id=self.ID(), eventclass=ievent.__class__.__name__, status=status)
 		# pubevent is False by default, but just in case that changes
 		# we don't want infinite recursion here
 		self.publish(eventlog, database=True, pubevent=False)
@@ -205,7 +205,7 @@ class Node(leginonobject.LeginonObject):
 
 	def confirmEvent(self, ievent):
 		'''Confirm that an event has been received and/or handled.'''
-		self.outputEvent(event.ConfirmationEvent(self.ID(), eventid=ievent['id']))
+		self.outputEvent(event.ConfirmationEvent(id=self.ID(), eventid=ievent['id']))
 
 	def waitEvent(self, ievent):
 		'''Block for confirmation of a generated event.'''
@@ -256,7 +256,7 @@ class Node(leginonobject.LeginonObject):
 			else:
 				confirm = False
 			eventclass = event.publish_events[idata.__class__]
-			e = eventclass(self.ID(), dataid=idata['id'], confirm=confirm)
+			e = eventclass(id=self.ID(), dataid=idata['id'], confirm=confirm)
 			self.outputEvent(e)
 
 	def research(self, dataclass=None, datainstance=None, **kwargs):
@@ -300,7 +300,7 @@ class Node(leginonobject.LeginonObject):
 		if not issubclass(eventclass, event.UnpublishEvent):
 			raise TypeError('UnpublishEvent subclass required')
 		self.datahandler.remove(dataid)
-		self.outputEvent(eventclass(self.ID(), dataid=dataid))
+		self.outputEvent(eventclass(id=self.ID(), dataid=dataid))
 
 	def publishRemote(self, idata):
 		'''Publish a piece of data with the specified data ID, setting all other data with the same data ID to the data value (including other nodes).'''
@@ -348,7 +348,7 @@ class Node(leginonobject.LeginonObject):
 	def addManager(self, loc):
 		'''Set the manager controlling the node and notify said manager this node is available.'''
 		self.managerclient = self.clientclass(self.ID(), loc)
-		available_event = event.NodeAvailableEvent(self.ID(), location=self.location(),
+		available_event = event.NodeAvailableEvent(id=self.ID(), location=self.location(),
 												nodeclass=self.__class__.__name__)
 		self.outputEvent(ievent=available_event, wait=True)
 
