@@ -267,6 +267,8 @@ class ClickTargetFinder(TargetFinder):
 		self.clickimage = uidata.TargetImage('Clickable Image', None, 'rw')
 		self.clickimage.addTargetType('acquisition')
 		self.clickimage.addTargetType('focus')
+		self.clickimage.addTargetType('done acquisition')
+		self.clickimage.addTargetType('done focus')
 
 		submitmethod = uidata.Method('Submit Targets', self.submitTargets)
 		self.preventrepeat = uidata.Boolean('Do not allow submit if already submitted on this image', True, 'rw', persist=True)
@@ -391,6 +393,9 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.setStatusMessage('Finding mosaic images and data')
 		n = len(mosaicdata['data IDs'])
 		nloaded = 0
+		target_coords = []
+		target_coords_done = []
+		self.existing_targets = {}
 		for i, dataid in enumerate(mosaicdata['data IDs']):
 			# create an instance model to query
 			inst = data.AcquisitionImageData()
@@ -409,12 +414,42 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 				self.setStatusMessage('Cannot find image data referenced by mosaic')
 			else:
 				if imagedata['image'] is not None:
-					self.mosaic.addTile(imagedata)
+					newtile = self.mosaic.addTile(imagedata)
+					tilepos = self.mosaic.getTilePosition(newtile)
 					nloaded += 1
+					# load existing targets for this image
+					targets = self.researchImageTargets(imagedata)
+					# convert targets to mosaic targets
+					for target in targets:
+						coord = self.targetToMosaicCoord(tilepos, target)
+						if target['status'] == 'done':
+							target_coords_done.append(coord)
+						else:
+							target_coords.append(coord)
+							if coord not in self.existing_targets:
+								self.existing_targets[coord] = []
+							self.existing_targets[coord].append(target)
+
 		self.mosaicdata = mosaicdata
 		self.displayMosaic()
+		self.displayTargets(normal=target_coords, done=target_coords_done)
 		self.setStatusMessage('Mosaic loaded (%i of %i images loaded successfully)'
 													% (nloaded, n))
+
+	def targetToMosaicCoord(self, tilepos, targetdata):
+		## origin to corner
+		timage = targetdata['image']
+		trow = targetdata['delta row'] + timage['image'].shape[0] / 2
+		tcol = targetdata['delta column'] + timage['image'].shape[1] / 2
+		bbox = self.mosaic.getMosaicImageBoundaries()
+		r = tilepos[0] - bbox['min'][0] + trow
+		c = tilepos[1] - bbox['min'][1] + tcol
+		## this is in image viewer coords (x,y = col,row)
+		return c,r
+
+	def displayTargets(self, normal=[], done=[]):
+		self.clickimage.setTargetType('acquisition', normal)
+		self.clickimage.setTargetType('done acquisition', done)
 
 	def getMosaicImage(self):
 		if self.scaleimage.get():
@@ -462,13 +497,20 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 	def getTargetDataList(self, typename):
 		targetlist = []
+		new_existing_targets = {}
 		for imagetarget in self.clickimage.getTargetType(typename):
 			column, row = imagetarget
 			target = self.mosaic.getTargetInfo(column, row)
-			imagedata = target['imagedata']
-			drow = target['delta row']
-			dcol = target['delta column']
-			targetdata = self.newTargetData(imagedata, typename, drow, dcol)
+
+			targetdata = None
+			if imagetarget in self.existing_targets:
+				if self.existing_targets[imagetarget]:
+					targetdata = self.existing_targets[imagetarget].pop()
+			if targetdata is None:
+				imagedata = target['imagedata']
+				drow = target['delta row']
+				dcol = target['delta column']
+				targetdata = self.newTargetData(imagedata, typename, drow, dcol)
 
 			## a target on the full mosaic image
 			mtargetdata = data.MosaicTargetData()
@@ -478,6 +520,12 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			## now what to do with it?????
 
 			targetlist.append(targetdata)
+
+			if imagetarget not in new_existing_targets:
+				new_existing_targets[imagetarget] = []
+			new_existing_targets[imagetarget].append(targetdata)
+		self.existing_targets = new_existing_targets
+
 		return targetlist
 
 	def mosaicClear(self):
