@@ -11,7 +11,7 @@ import time
 class TestMosaic(node.Node):
 	def __init__(self, id, nodelocations, **kwargs):
 		node.Node.__init__(self, id, nodelocations, **kwargs)
-		self.addEventOutput(event.PublishEvent)
+		self.addEventOutput(event.TileImagePublishEvent)
 		self.start()
 
 	def main(self):
@@ -65,8 +65,10 @@ class TestMosaic(node.Node):
 								except IndexError:
 									pass
 
-				self.publish(data.ImageTileData(idmatrix[i][j], tile, neighbors))
 				time.sleep(1.0)
+				print 'publishing'
+				self.publish(data.TileImageData(idmatrix[i][j], tile, None, None,
+																				neighbors), event.TileImagePublishEvent)
 				tileoffset = (tileoffset[0], tileoffset[1] + tilesize[1] - pixeloverlap[1])
 			tileoffset = (tileoffset[0] + tilesize[0] - pixeloverlap[0], 0)
 

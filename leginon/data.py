@@ -135,7 +135,7 @@ class TileImageData(CameraImageData):
 	'''Contains a 2-D Numeric array of the image data and a list of neighboring image tile ID's.'''
 	def __init__(self, id, image, scope, camera, neighbortiles):
 		CameraImageData.__init__(self, id, image, scope, camera)
-		self.content.update({'neighbortiles':neighbortiles})
+		self.content.update({'neighbor tiles':neighbortiles})
 
 class StateMosaicData(Data):
 	'''Contains data ID of images mapped to their position and state.'''

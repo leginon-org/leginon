@@ -58,15 +58,16 @@ class ImageMosaicInfo(object):
 		imagemin = [0, 0]
 		imagemax = [0, 0]
 		tiledataids = self.getTileDataIDs()
+		print tiledataids
 		for tiledataid in tiledataids:
 			tileposition = self.getTilePosition(tiledataid)
 			tileshape = self.getTileShape(tiledataid)
 			tilemin = tileposition
-			tilemax = tileposition + tileshape
+			tilemax = (tileposition[0] + tileshape[0], tileposition[1] + tileshape[1])
 			for i in [0, 1]:
-				if tilemin < imagemin[i]:
+				if tilemin[i] < imagemin[i]:
 					imagemin[i] = tilemin[i]
-				if tilemax > imagemax[i]:
+				if tilemax[i] > imagemax[i]:
 					imagemax[i] = tilemax[i]
 		imageshape = (imagemax[0] - imagemin[0], 
 									imagemax[1] - imagemin[1]) 
@@ -77,9 +78,15 @@ class ImageMosaicInfo(object):
 			tileposition = self.getTilePosition(tiledataid)
 			tileshape = self.getTileShape(tiledataid)
 			tileimage = self.getTileImage(tiledataid)
-
-			tileoffset = tileposition - imagemin
-			tilelimit = tileoffset + tileshape
+			tileoffset = (tileposition[0]-imagemin[0], tileposition[1]-imagemin[1])
+			tilelimit = (tileoffset[0] + tileshape[0], tileoffset[1] + tileshape[1])
+			print 'tileposition =', tileposition
+			print 'tileshape =', tileshape
+			print 'tileoffset =', tileoffset
+			print 'tilelimit =', tilelimit
+			print 'image min =', imagemin
+			print 'image max =', imagemax
+			print 'image shape =', imageshape
 			mosaicimage[tileoffset[0]:tilelimit[0],
 									tileoffset[1]:tilelimit[1]] = tileimage.astype(astype)
 
@@ -112,7 +119,8 @@ class ImageMosaic(watcher.Watcher):
 		self.positionmethods['correlation'] = self.positionByCorrelation
 		self.positionmethods['automatic'] = self.automaticPosition
 		self.automaticpriority = ['correlation']
-		self.positionmethod = self.positionmethods.keys()[0]
+		#self.positionmethod = self.positionmethods.keys()[0]
+		self.positionmethod = 'correlation'
 
 		### some things for the pop-up viewer
 		self.iv = None
@@ -132,28 +140,28 @@ class ImageMosaic(watcher.Watcher):
 		for imagemosaic in self.imagemosaics:
 			for neighbor in neighbors:
 				if imagemosaic.hasTile(neighbor):
-					mosaics.append(neighbor)
+					mosaics.append(imagemosaic)
 					break
 		if len(mosaics) == 0:
 			imagemosaic = ImageMosaicInfo()
-			position = self.positionmethods[self.position](idata, None)
+			position = self.positionmethods[self.positionmethod](idata, None)
 			imagemosaic.addTile(idata.id, tileimage, position)
 			self.imagemosaics.append(imagemosaic)
 			print idata.id, "position =", imagemosaic.getTilePosition(idata.id)
 		else:
 			for imagemosaic in mosaics:
-				position = self.positionmethods[self.position](idata, imagemosaic)
+				position = self.positionmethods[self.positionmethod](idata, imagemosaic)
 				imagemosaic.addTile(idata.id, tileimage, position)
 				print idata.id, "position =", imagemosaic.getTilePosition(idata.id)
 
 	def automaticPosition(self, idata, imagemosaic):
 		for positionmethod in self.automaticpriority:
 			try:
-				position = self.positionmethods[positionmethod](idata, imagemosaic)
+				return self.positionmethods[positionmethod](idata, imagemosaic)
 			# needs exception?
 			except:
 				pass
-		return position
+		raise Exception
 
 	def getPeak(self, image1, image2):
 		self.correlator.setImage(0, image1)
@@ -431,17 +439,17 @@ class StateImageMosaic(ImageMosaic):
 		for imagemosaic in self.imagemosaics:
 			for neighbor in neighbors:
 				if imagemosaic.hasTile(neighbor):
-					mosaics.append(neighbor)
+					mosaics.append(imagemosaic)
 					break
 		if len(mosaics) == 0:
 			imagemosaic = StateImageMosaicInfo()
-			position = self.positionmethods[self.position](idata, None)
+			position = self.positionmethods[self.positionmethod](idata, None)
 			imagemosaic.addTile(idata.id, tileimage, position, tilestate)
 			self.imagemosaics.append(imagemosaic)
 			print idata.id, "position =", imagemosaic.getTilePosition(idata.id)
 		else:
 			for imagemosaic in mosaics:
-				position = self.positionmethods[self.position](idata, imagemosaic)
+				position = self.positionmethods[self.positionmethod](idata, imagemosaic)
 				imagemosaic.addTile(idata.id, tileimage, position, tilestate)
 				print idata.id, "position =", imagemosaic.getTilePosition(idata.id)
 
