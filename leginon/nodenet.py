@@ -48,14 +48,14 @@ class Node(object):
 
 		nodeinfo = {'location pickle' : locpickle, 'methods' : meths, 'events pickle': eventpickle}
 
-		id = self.managerlocation.rpc('addNode', (nodeinfo,))
+		id = self.managerlocation.rpc('register', (nodeinfo,))
 		return id
 
 	def unregister(self):
 		print 'unregister'
 		try:
-			self.managerlocation.rpc('deleteNode', (self.id,))
-			print 'deleteNode was just called on manager'
+			self.managerlocation.rpc('unregister', (self.id,))
+			print 'unregister was just called on manager'
 		except:
 			pass
 
@@ -72,7 +72,7 @@ class Node(object):
 		eventinst = cPickle.loads(eventpickle)
 		eventclass = eventinst.__class__
 		meth = self.events.inputmap[eventclass]
-		apply(meth, (event,))
+		apply(meth, (eventinst,))
 
 	def publish(self, dataid, data):
 		self.datahandler.put(dataid, data)
@@ -125,7 +125,10 @@ class Manager(object):
 		self.distributor = event.EventDistributor(self.registry)
 		self.locations = {}
 
-	def EXPORT_addNode(self, node):
+	def startNode(self):
+		pass
+
+	def EXPORT_register(self, node):
 
 		id = self.registry.addEntry(
 			registry.NodeRegistryEntry(node['methods'],
@@ -141,7 +144,7 @@ class Manager(object):
 
 		return id
 
-	def EXPORT_deleteNode(self, id):
+	def EXPORT_unregister(self, id):
 		self.registry.delEntry(id)
 		print 'node %s has been deleted' % id
 

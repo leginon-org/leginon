@@ -131,13 +131,35 @@ def bases_tup(classobject):
 
 
 class MyEvent(Event):
-	def __init__(self, extra=''):
-		Event.__init__(self, extra)
+	def __init__(self, stuff):
+		Event.__init__(self)
+		self.stuff = stuff
+
+	def xmlrpc_repr(self):
+		repr = Event.xmlrpc_repr(self)
+		repr['stuff'] = self.stuff
+		return repr
+
+	def __str__(self):
+		ret = Event.__str__(self)
+		ret = '%s\nstuff:  %s' % (ret, str(self.stuff))
+		return ret
 
 
 class YourEvent(Event):
-	def __init__(self, extra=''):
-		Event.__init__(self, extra)
+	def __init__(self, stuff):
+		Event.__init__(self)
+		self.stuff = stuff
+
+	def xmlrpc_repr(self):
+		repr = Event.xmlrpc_repr(self)
+		repr['stuff'] = self.stuff
+		return repr
+
+	def __str__(self):
+		ret = Event.__str__(self)
+		ret = '%s\nstuff:  %s' % (ret, str(self.stuff))
+		return ret
 
 
 class DataPublished(Event):
