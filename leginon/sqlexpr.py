@@ -38,6 +38,7 @@ except ImportError:
 import re
 import string
 import sqldict
+import MySQLdb
 
 def backquote(inputstr):
         """
@@ -650,7 +651,8 @@ def whereFormat(in_dict):
 	alias = in_dict['alias']
 	wherelist = []
 	for key, value in whereDict.items():
-		wherelist.append(" %s.`%s`=%s " % (alias, key, value))
+		evalue = MySQLdb.escape_string(str(value))
+		wherelist.append(''' %s.`%s`="%s" ''' % (alias, key, evalue))
 	wherestr = ' AND '.join(wherelist)
         return wherestr
 
