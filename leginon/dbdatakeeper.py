@@ -138,7 +138,6 @@ class DBDataKeeper(datahandler.DataHandler):
 		self.dbd.createSQLTable(table, definition)
 		myTable = self.dbd.Table(table)
 		newid = myTable.insert([formatedData])
-		print 'NEWID', newid
 		newdata.dbid = newid
 		return newid
 
