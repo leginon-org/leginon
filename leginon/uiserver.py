@@ -205,7 +205,7 @@ class Server(XMLRPCServer, uidata.Container):
 		try:
 			properties['value'] = uiobject.value
 		except AttributeError:
-			pass
+			properties['value'] = None
 		properties['configuration'] = uiobject.getConfiguration()
 		if thread:
 			block = False
