@@ -181,18 +181,20 @@ class Manager(node.Node):
 			try:
 				### this is a special case of outputEvent
 				### so we don't use outputEvent here
-				self.clients[to_node].push(ievent)
+				try:
+					self.clients[to_node].push(ievent)
+				except IOError:
+					### bad client, get rid of it
+					self.printerror('cannot push to node ' + str(to_node) + ', unregistering')
+					self.removeNode(to_node)
+					self.delLauncher(to_node)
+					raise
+				self.logEvent(ievent, 'distributed to %s' % (to_node,))
 			except:
 				self.printException()
-				self.printerror('cannot push to node ' + str(to_node) + ', unregistering')
 				# make sure we don't wait for confirmation
 				if ievent['confirm']:
 					ewaits[eventid][to_node].set()
-				# group into another function
-				self.removeNode(to_node)
-				# also remove from launcher registry
-				self.delLauncher(to_node)
-			self.logEvent(ievent, 'distributed to %s' % (to_node,))
 
 		### wait for all confirmations to come back
 		### the "and do" part make sure we only confirm if events
