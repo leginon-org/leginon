@@ -110,7 +110,7 @@ laplacian_kernel3 = Numeric.array((0,-1,0,-1,4,-1,0,-1,0), Numeric.Float32)
 laplacian_kernel3.shape = (3,3)
 
 #### 5x5 Laplacian
-laplacian_kernel5 = Numeric.ones((5,5), Numeric.float32)
+laplacian_kernel5 = Numeric.ones((5,5), Numeric.Float32)
 laplacian_kernel5[2,2] = 24.0
 
 #### Gaussian
