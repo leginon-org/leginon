@@ -161,9 +161,6 @@ class MatrixCalibrator(calibrator.Calibrator):
 
 		matrix = calclient.measurementToMatrix(shifts)
 		print 'MATRIX', matrix
-		print 'MATRIX shape', matrix.shape
-		print 'MATRIX type', matrix.typecode()
-		print 'MATRIX flat', Numeric.ravel(matrix)
 		calclient.storeMatrix(ht, mag, uiparameter, matrix)
 
 	def fakeCalibration(self):
@@ -205,6 +202,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 		self.uiserver.addObject(container)
 
 	def uiCalibrate(self):
+		self.getParameter()
 		try:
 			self.calibrate()
 		except (calibrationclient.NoPixelSizeError, CalibrationError, camerafuncs.NoCorrectorError), e:
@@ -214,8 +212,21 @@ class MatrixCalibrator(calibrator.Calibrator):
 				self.outputError('No good measurement, halting calibration')
 			elif isinstance(e, camerafuncs.NoCorrectorError):
 				self.outputError('Cannot get corrected images, Corrector may not be running')
+		except:
+			pass
 		else:
 			self.outputMessage('Calibration', 'Calibration completed successfully')
+		# return to original state
+		self.setParameter()
+
+	def getParameter(self):
+		param = self.uiparameter.getSelectedValue()
+		self.saveparam = self.researchByDataID((param,))
+		print 'storing parameter', param, self.saveparam[param]
+
+	def setParameter(self):
+		print 'returning to original state'
+		self.publishRemote(self.saveparam)
 
 	def uiAbort(self):
 		self.aborted.set()
