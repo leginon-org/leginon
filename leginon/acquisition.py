@@ -132,6 +132,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 			targetquery[key] = targetdata[key]
 		presetquery = data.PresetData(name=presetname)
 		imagequery = data.AcquisitionImageData(target=targetquery, preset=presetquery)
+		imagequery['scope'] = data.ScopeEMData()
+		imagequery['camera'] = data.CameraEMData()
+		print 'alreadyAcquired research'
 		datalist = self.research(datainstance=imagequery, fill=False)
 		if datalist:
 			## no need to acquire again, but need to republish
@@ -201,6 +204,30 @@ class Acquisition(targetwatcher.TargetWatcher):
 		imagedata = data.AcquisitionImageData(initializer=imagedata, id=self.ID(), preset=presetdata, label=labelstring, target=target)
 
 		self.publishDisplayWait(imagedata)
+
+	def retrieveImagesFromDB(self):
+		imagequery = data.AcquisitionImageData()
+		imagequery['session'] = self.session
+		imagequery['label'] = self.labelstring.get()
+		## don't read images because we only need the id
+		images = self.research(datainstance=imagequery, fill=False, readimages=False)
+		imageids = [repr(x['id']) for x in images]
+		return imageids
+
+	def uiUpdateDBImages(self):
+		imageids = self.retrieveImagesFromDB()
+		self.dbimages.setList(imageids)
+
+	def uiPretendAcquire(self):
+		idstr = self.dbimages.getSelectedValue()
+		id = eval(idstr)
+		queryimage = data.AcquisitionImageData(session=self.session, id=id)
+
+		result = self.research(datainstance=queryimage, fill=False)
+		## should be one result only
+		if result:
+			imagedata = result[0]
+			self.publishDisplayWait(imagedata)
 
 	def publishDisplayWait(self, imagedata):
 		'''
@@ -330,9 +357,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		self.databaseflag = uidata.Boolean('Publish to Database', True, 'rw')
 		self.labelstring = uidata.String('Label', self.id[-1], 'rw', persist=True)
+		self.dbimages = uidata.SingleSelectFromList('Images In DB', [], 0)
+		updatedbimages = uidata.Method('Refresh', self.uiUpdateDBImages)
+		pretendfromdb = uidata.Method('Pretend This Was Just Acquired', self.uiPretendAcquire)
 
 		databasecontainer = uidata.Container('Database')
-		databasecontainer.addObjects((self.databaseflag, self.labelstring))
+		databasecontainer.addObjects((self.databaseflag, self.labelstring, self.dbimages, updatedbimages, pretendfromdb))
 
 		settingscontainer = uidata.Container('Settings')
 		settingscontainer.addObjects((uicontainer, presetscontainer,
