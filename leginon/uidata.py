@@ -246,6 +246,10 @@ class Data(Object):
 			raise PermissionsError('cannot set, permission denied')
 
 	def set(self, value, callback=True):
+		### XXX Is this deepcopy necessary?
+		###     Only if we intend to modify value.  Probably should 
+		### figure out where value may be modified and do the deepcopy
+		### locally in that place.
 		value = copy.deepcopy(value)
 		if self.validate(value):
 			# should call in constructor?
