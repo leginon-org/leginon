@@ -295,13 +295,10 @@ class Node(leginonobject.LeginonObject):
 
 	def addSession(self, datainstance):
 		## setting an item of datainstance will reset the dbid
-		if datainstance['session'] is not self.session:
-			try:
-				datainstance['session'] = self.session
-			except RuntimeError:
-				print 'datainstance["session"] = ', id(datainstance['session']), datainstance['session']
-				print 'self.session = ', id(self.session), self.session
-				raise
+		### this is stupid because we should only have to check identity
+		### not equality
+		if datainstance['session']['name'] != self.session['name']:
+			datainstance['session'] = self.session
 		for key in datainstance:
 			if isinstance(datainstance[key], data.InSessionData):
 				self.addSession(datainstance[key])
