@@ -87,7 +87,7 @@ class Tietz(object):
 			raise RuntimeError('Failed to initialize interface CAMC4.Camera')
 
 		try:
-			ping = win32com.client.Dispatch('pyScope.Ping')
+			ping = win32com.client.Dispatch('pyScope.CAMCCallBack')
 		except pywintypes.com_error, e:
 			raise RuntimeError('Failed to initialize interface pyScope.Ping')
 
