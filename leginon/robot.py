@@ -126,7 +126,7 @@ class RobotNode(node.Node):
 				raise ScopeException('parameter is not set to value')
 
 	def getScope(self, key):
-		parameterdata = self.emclient.getData()
+		parameterdata = self.emclient.getScope()
 		if parameterdata is None:
 			raise ScopeException('cannot get parameter value')
 		self.logger.info('Get scope %s, %s' % (key, parameterdata[key]))
