@@ -97,7 +97,7 @@ class SizedDataKeeper(DictDataKeeper):
 			size = self.datadict[dataid].size()
 			del self.datadict[dataid]
 			self.size -= size
-		except KeyError:
+		except (KeyError, AttributeError):
 			pass
 		self.lock.release()
 

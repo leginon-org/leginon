@@ -10,6 +10,7 @@ import socket
 import threading
 import uidata
 import xmlrpclib
+import Queue
 
 # preferences
 import cPickle
@@ -24,10 +25,10 @@ class XMLRPCServer(object):
 	A SimpleXMLRPCServer that figures out its own host and port
 	Sets self.host and self.port accordingly
 	"""
-	def __init__(self, object_instance=None, port=None):
-		self.object_instance = object_instance 
-		self.port = port
+	def __init__(self, port=None):
 		self.hostname = socket.gethostname()
+
+		self.port = port
 		if self.port is not None:
 			# this exception will fall through if __init__ fails
 			self.server = SimpleXMLRPCServer.SimpleXMLRPCServer(
@@ -59,9 +60,10 @@ class XMLRPCServer(object):
 		t.start()
 		self.serverthread = t
 
-
 class Server(XMLRPCServer, uidata.Container):
 	def __init__(self, name='UI', port=None, tries=5):
+		self.queue = Queue.Queue()
+
 		self.xmlrpcclients = []
 		self.localclients = []
 		self.tries = tries
@@ -75,6 +77,22 @@ class Server(XMLRPCServer, uidata.Container):
 		self.server.register_function(self.setFromClient, 'set')
 		self.server.register_function(self.commandFromClient, 'command')
 		self.server.register_function(self.addXMLRPCClientServer, 'add client')
+
+	def queueHandler(self):
+		while True:
+			try:
+				request = self.queue.pop()
+				if 'typelist' in request:
+					if 'client' in request['typelist'] and request['value'] is None:
+						request['value'] = uiobject.toXMLRPC(request['value'])
+
+				self.localExecute(request, client)
+
+				if hasattr(uiobject, 'toXMLRPC') and 'value' in request:
+					request['value'] = uiobject.toXMLRPC(request['value'])
+				self.XMLRPCExecute(request, client)
+			except Exception, e:
+				print e
 
 	def getNameList(self):
 		return ()
@@ -110,13 +128,7 @@ class Server(XMLRPCServer, uidata.Container):
 		apply(uimethodobject.method, args)
 		return ''
 
-#	def set(self, namelist, value):
-#		for client in self.xmlrpcclients:
-#			# delete if fail?
-#			client.execute('set', (namelist, value))
-
 	def addXMLRPCClientServer(self, hostname, port):
-		# &@**!&!!!
 		from uiclient import XMLRPCClient
 		addclient = XMLRPCClient(hostname, port)
 		self.xmlrpcclients.append(addclient)
@@ -138,8 +150,8 @@ class Server(XMLRPCServer, uidata.Container):
 		for localclient in localclients:
 			target = getattr(localclient, commandstring)
 			args = (properties,)
-			threading.Thread(target=target, args=args).start()
-#			apply(target, args)
+#			threading.Thread(target=target, args=args).start()
+			apply(target, args)
 
 	def XMLRPCExecute(self, commandstring, properties, client=None):
 		if client in self.xmlrpcclients:
