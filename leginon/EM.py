@@ -15,9 +15,9 @@ import uidata
 import Queue
 import emregistry
 
-if sys.platform == 'win32':
-	sys.coinit_flags = 0
-	import pythoncom
+#if sys.platform == 'win32':
+#	sys.coinit_flags = 0
+#	import pythoncom
 
 # These keys are not included in a get all parameters
 prunekeys = (
@@ -237,16 +237,18 @@ class EM(node.Node):
 		try:
 			scopeclass = self.getClass(modulename, classname)
 			self.scope = scopedict.factory(scopeclass)()
-		except:
+		except Exception, e:
 			print 'cannot set scope to type', scopename
+			print e
 
 	def setCameraType(self, cameraname):
 		modulename, classname, d = emregistry.getCameraInfo(cameraname)
 		try:
 			cameraclass = self.getClass(modulename, classname)
 			self.camera = cameradict.factory(cameraclass)()
-		except:
+		except Exception, e:
 			print 'cannot set camera to type', cameraname
+			print e
 
 	def main(self):
 		pass
