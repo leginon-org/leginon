@@ -4,6 +4,7 @@ from Tkinter import *
 import Numeric
 import Image
 import ImageTk
+import math,sys
 
 ## (Numeric typcode,size) => (PIL mode,  PIL rawmode)
 ntype_itype = {
@@ -29,6 +30,40 @@ def numeric_bin(ndata, bin):
 
 	newshape = shape[0]/bin[0], shape[1]/bin[1]
 
+def linearscale(input, boundfrom, boundto):
+	"""
+	Rescale the data in the range 'boundfrom' to the range 'boundto'.
+	"""
+
+	### check args
+	if len(input) < 1:
+		return input
+	if len(boundfrom) != 2:
+		raise ValueError, 'boundfrom must be length 2'
+	if len(boundto) != 2:
+		raise ValueError, 'boundto must be length 2'
+
+	minfrom,maxfrom = boundfrom
+	minto,maxto = boundto
+
+	### default from bounds are min,max of the input
+	if minfrom == None:
+		minfrom = min(input.flat)
+	if maxfrom == None:
+		maxfrom = max(input.flat)
+
+	rangefrom = float(maxfrom - minfrom)
+	rangeto = float(maxto - minto)
+
+	# this is a hack to prevent zero division
+	# is there a better way to do this with some sort of 
+	# float limits module rather than hard coding 1e-99?
+	if not rangefrom:
+		rangefrom = 1e-99
+
+	output = (input - minfrom) * rangeto / rangefrom
+	return output
+
 
 class NumericImage:
 	"""
@@ -51,44 +86,22 @@ class NumericImage:
 		self.orig_array = num_data
 		h,w = shape  # transpose Numeric array
 		self.orig_size = w,h
-		self.num_min = min(Numeric.ravel(self.orig_array))
-		self.num_max = max(Numeric.ravel(self.orig_array))
-		print 'stats', self.num_min, self.num_max
+		self.extrema =  min(self.orig_array.flat), max(self.orig_array.flat)
+		print 'stats', self.extrema
+
+	def get(self, x, y):
+		return self.orig_array[y,x]
 
 	def zoom(self):
 		pass
-
-	def clip(self, input):
-		"""
-		Scale Numeric data to a viewable range (0-255).
-		clip tuple specifies (min, max) where min scales to 0, and
-		max scales to 255.
-		"""
-		minval = self.transform['clip'][0]
-		maxval = self.transform['clip'][1]
-		## if no clip specified, use min or max of array
-		if minval == None:
-			minval = self.num_min
-		if maxval == None:
-			maxval = self.num_max
-
-		range = maxval - minval
-		try:
-			scl = 255.0 / range
-			off = -255.0 * minval / range
-		except ZeroDivisionError:
-			scl = 0.0
-			off = 0.0
-
-		output = scl * input + off
-		return output
 
 	def update_image(self):
 		"""
 		generates the PIL Image representation of this Numeric array
 		"""
 
-		final = self.clip(self.orig_array)
+		clip = self.transform['clip']
+		final = linearscale(self.orig_array, clip, (0,255))
 		type = final.typecode()
 		h,w = final.shape
 		imsize = w,h
@@ -113,5 +126,17 @@ class NumericImage:
 
 if __name__ == '__main__':
 	from Numeric import *
-	a1 = reshape(arrayrange(128**2), (128,128))
-	n1 = NumericImage(a)
+
+	a = array([5,6,7,8,9], Float)
+	print 'a', a
+	b = linearscale(a, (None,None), (0,1))
+	print 'b', b
+	b = linearscale(a, (6,8), (0,1))
+	print 'b', b
+	b = linearscale(a, (8,6), (0,1))
+	print 'b', b
+	b = linearscale(a, (6,8), (1.0,-1.0))
+	print 'b', b
+
+	#a1 = reshape(arrayrange(128**2), (128,128))
+	#n1 = NumericImage(a)

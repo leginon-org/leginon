@@ -6,74 +6,6 @@ from ScrolledCanvas import *
 from Mrc import *
 from NumericImage import *
 
-## wrapper around canvas image item and its associated PIL photo image
-class ImageItem:
-	def __init__(self, canvas, nwx, nwy):
-		self.canvas = canvas
-		realcanvas = canvas.canvas
-		self.nwx = nwx
-		self.nwy = nwy
-		self.width = self.height = 0
-		self.dispwidth = self.dispheight = 0
-		self.zoomfactor = 1
-		self.photoimage = NumericImage('L', (0,0))
-		self.id = realcanvas.create_image(self.nwx, self.nwy, anchor=NW, image=self.photoimage)
-
-	def create_clipper(self, parent):
-		self.clippingwidget = ClippingWidget(parent, self)
-		return self.clippingwidget
-
-	def zoom(self):
-		pass
-
-	def show(self, clip=None):
-		"""show the data with specified clipping tuple"""
-		self.photoimage.paste(clip)
-
-	def imagexy(self,canvasx,canvasy):
-		"""return the image coords given the canvas coords"""
-
-		if self.width == 0 or self.height == 0:
-			return None
-
-		imgx = int(canvasx - self.nwx)
-		imgy = int(canvasy - self.nwy)
-		zoomimgx = int( round( float(imgx) / self.zoomfactor) )
-		zoomimgy = int( round( float(imgy) / self.zoomfactor) )
-
-		### return None if out of bounds
-		if imgx < 0 or imgx >= self.dispwidth:
-			return None
-		if imgy < 0 or imgy >= self.dispheight:
-			return None
-
-		return zoomimgx,zoomimgy
-
-	def grey_level(self,x,y):
-		"""returns the displayed grey level at pixel x,y"""
-		return self.photoimage.get(x,y)
-
-	def data_level(self,x,y):
-		"""returns the value of the underlying data at pixel x,y"""
-		### remember: Numeric array is transpose of image
-		return self.photoimage.array[y][x]
-
-	def import_numeric(self, data):
-		"""
-		import_numeric(image_id, data)
-		puts data into image
-		"""
-		if len(data.shape) != 2:
-			raise ValueError, "2D Numeric array required"
-		self.height,self.width = data.shape
-		## not taking into account zoom
-		self.dispheight,self.dispwidth = data.shape
-
-		self.photoimage.use_array(data)
-		self.clippingwidget.update_extrema()
-		self.show()
-		self.canvas.fit_images()
-
 
 class CursorInfo:
 	"""
@@ -82,7 +14,6 @@ class CursorInfo:
 	"""
 	def __init__(self, imagecanvas):
 		self.imagecanvas = imagecanvas
-		self.imageitem = None
 		self.imagex = IntVar()
 		self.imagey = IntVar()
 		self.imagedata = DoubleVar()
@@ -97,14 +28,13 @@ class CursorInfo:
 		img_x = None
 		img_y = None
 		img_i = None
-		for im in self.imagecanvas.images:
-			imcoord = im.imagexy(canvasx, canvasy)
-			if imcoord:
-				img = im
-				img_x = imcoord[0]
-				img_y = imcoord[1]
-				img_i = im.data_level(img_x,img_y)
-				break
+		im = self.imagecanvas.canvas
+		imcoord = im.imagexy(canvasx, canvasy)
+		if imcoord:
+			img = im
+			img_x = imcoord[0]
+			img_y = imcoord[1]
+			img_i = im.data_level(img_x,img_y)
 
 		self.imageitem = img
 		self.imagex.set(img_x)
@@ -119,24 +49,29 @@ class CursorInfoWidget(Frame):
 		self.xlab = Label(self, textvariable=cursorinfo.imagex, width=6)
 		self.ylab = Label(self, textvariable=cursorinfo.imagey, width=6)
 		self.ilab = Label(self, textvariable=cursorinfo.imagedata, width=6)
+		self['bg'] = parent['bg']
+		self.xlab['bg'] = parent['bg']
+		self.ylab['bg'] = parent['bg']
+		self.ilab['bg'] = parent['bg']
 		self.xlab.pack(side=LEFT)
 		self.ylab.pack(side=LEFT)
 		self.ilab.pack(side=LEFT)
 
 
-class ClippingWidget(Frame):
-	def __init__(self, parent, imageitem, *args, **kargs):
-		Frame.__init__(self, *args, **kargs)
-		self.imageitem = imageitem
-		self.clipmin = DoubleVar()
-		self.clipmax = DoubleVar()
+class ScalingWidget(Frame):
+	def __init__(self, parent, *args, **kargs):
+		Frame.__init__(self, parent, *args, **kargs)
+		self.imageviewer = parent
+		self.numimage = None
+		self.rangemin = DoubleVar()
+		self.rangemax = DoubleVar()
 		self._build()
 
 	def _build(self):
-		self.minscale = Scale(self, variable=self.clipmin, orient=HORIZONTAL, command=self.clip, showvalue=NO, width=8, length=300)
-		self.maxscale = Scale(self, variable=self.clipmax, orient=HORIZONTAL, command=self.clip, showvalue=NO, width=8, length=300)
-		self.minlab = Label(self, textvariable=self.clipmin)
-		self.maxlab = Label(self, textvariable=self.clipmax)
+		self.minscale = Scale(self, variable=self.rangemin, orient=HORIZONTAL, command=self.update_image, showvalue=NO, width=8, length=300)
+		self.maxscale = Scale(self, variable=self.rangemax, orient=HORIZONTAL, command=self.update_image, showvalue=NO, width=8, length=300)
+		self.minlab = Label(self, textvariable=self.rangemin)
+		self.maxlab = Label(self, textvariable=self.rangemax)
 
 		self.minscale.grid(column=0, row=0)
 		self.maxscale.grid(column=0, row=1)
@@ -144,8 +79,9 @@ class ClippingWidget(Frame):
 		self.maxlab.grid(column=1, row=1)
 
 	def update_extrema(self):
-		array_min = self.imageitem.photoimage.array_min
-		array_max = self.imageitem.photoimage.array_max
+		#array_min = self.imageitem.photoimage.array_min
+		#array_max = self.imageitem.photoimage.array_max
+		array_min,array_max = self.numimage.extrema
 		self.minscale['from_'] = array_min
 		self.maxscale['from_'] = array_min
 		self.minscale['to'] = array_max
@@ -153,13 +89,17 @@ class ClippingWidget(Frame):
 		self.set(array_min, array_max)
 
 	def set(self, newmin, newmax):
-		self.clipmin.set(newmin)
-		self.clipmax.set(newmax)
+		self.rangemin.set(newmin)
+		self.rangemax.set(newmax)
 
-	def clip(self,newval=None):
+	def use_image(self, image):
+		self.numimage = image
+		self.update_extrema()
+
+	def update_image(self,newval=None):
 		"""update the clipping on the imageitem"""
-		newclip = (self.clipmin.get(), self.clipmax.get())
-		self.imageitem.show(newclip)
+		newrange = (self.rangemin.get(), self.rangemax.get())
+		self.imageviewer.show(newrange)
 
 
 class ImageViewer(Frame):
@@ -171,24 +111,22 @@ class ImageViewer(Frame):
 		in the ImageViewer
 	"""
 
-	def __init__(self, *args, **kargs):
-		Frame.__init__(self, *args, **kargs)
+	def __init__(self, parent, *args, **kargs):
+		Frame.__init__(self, parent, *args, **kargs)
 		self._build()
 
 	## put together component widgets
 	def _build(self):
 		self.canvas = ScrolledCanvas(self, bg = '#acf',bd=4, relief=RAISED)
-		self.canvas.pack(padx=4,pady=4,expand=YES,fill=BOTH,side=TOP)
-		#self.cursorinfo = CursorInfoWidget(self, self.canvas.cursorinfo)
-		#self.cursorinfo.pack(side=TOP)
-		#self.clipper = self.im.create_clipper(self)
-		#self.clipper.pack(side=TOP)
+		self.cursorinfo = CursorInfo(self.canvas)
+		self.cursorinfowid = CursorInfoWidget(self, self.cursorinfo,bg='#acf')
+		self.canvas.canvas.bind('<Motion>', self.motion_callback)
 
-	def info_bar(self, state):
-		if state == ON:
-			pass
-		elif state == OFF:
-			pass
+		self.scaler = ScalingWidget(self)
+
+		self.cursorinfowid.pack(side=TOP)
+		self.scaler.pack(side=BOTTOM)
+		self.canvas.pack(padx=4,pady=4,expand=YES,fill=BOTH,side=TOP)
 
 	def import_numeric(self, data):
 		"""
@@ -197,9 +135,17 @@ class ImageViewer(Frame):
 		Optional 'clip' tuple gives min and max value to display
 		"""
 		self.canvas.canvas.use_numeric(data)
+		self.scaler.use_image(self.canvas.canvas.numimage)
 
-	def show(self, clip=None):
-		self.canvas.canvas.image_display()
+	def show(self, range=(None,None)):
+		self.canvas.canvas.image_display(range)
+
+	def motion_callback(self, event):
+		x = event.x
+		y = event.y
+		canx = self.canvas.canvas.canvasx(x)
+		cany = self.canvas.canvas.canvasy(y)
+		self.cursorinfo.query(canx,cany)
 
 	## resize my canvas when I am resized
 	def configure_callback(self, event):
