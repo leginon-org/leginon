@@ -1,10 +1,12 @@
-import wx
-from gui.wx.Entry import FloatEntry
+import threading
 import gui.wx.Camera
+from gui.wx.Entry import FloatEntry
+import gui.wx.Events
+import gui.wx.ImageViewer
 import gui.wx.Node
 import gui.wx.Settings
-import gui.wx.ImageViewer
 import gui.wx.Stats
+import wx
 
 ImageUpdatedEventType = wx.NewEventType()
 EVT_IMAGE_UPDATED = wx.PyEventBinder(ImageUpdatedEventType)
@@ -81,9 +83,24 @@ class Panel(gui.wx.Node.Panel):
 		self.Bind(wx.EVT_BUTTON, self.onSettingsButton, self.bsettings)
 		self.Bind(wx.EVT_BUTTON, self.onAcquireButton, self.bacquire)
 		self.Bind(wx.EVT_BUTTON, self.onContinuousButton, self.bcontinuous)
+		self.Bind(gui.wx.Events.EVT_ACQUISITION_DONE, self.onAcquisitionDone)
 		if self.node.projectdata.isConnected():
 			self.Bind(wx.EVT_BUTTON, self.onGridButton, self.bgrid)
 			self.bgrid.Enable(True)
+
+	def _acquisitionEnable(self, enable):
+		self.bsettings.Enable(enable)
+		if self.node.projectdata.isConnected():
+			self.bgrid.Enable(enable)
+		self.bacquire.Enable(enable)
+		self.bcontinuous.Enable(enable)
+
+	def onAcquisitionDone(self, evt):
+		self._acquisitionEnable(True)
+
+	def acquisitionDone(self):
+		evt = gui.wx.Events.AcquisitionDoneEvent()
+		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onImageUpdated(self, evt):
 		self.imagepanel.setImage(evt.image)
@@ -104,12 +121,12 @@ class Panel(gui.wx.Node.Panel):
 		dialog.Destroy()
 
 	def onAcquireButton(self, evt):
-		self.node.acquireImage()
+		self._acquisitionEnable(False)
+		threading.Thread(target=self.node.acquireImage).start()
 
 	def onLoopStopped(self, evt):
 		self.bcontinuous.SetLabel('Continuous')
-		self.bcontinuous.Enable(True)
-		self.bacquire.Enable(True)
+		self._acquisitionEnable(True)
 
 	def loopStopped(self):
 		evt = LoopStoppedEvent(self)
@@ -124,14 +141,14 @@ class Panel(gui.wx.Node.Panel):
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onContinuousButton(self, evt):
+		self._acquisitionEnable(False)
 		if self.bcontinuous.GetLabel() == 'Continuous':
 			self.node.acquisitionLoopStart()
 		elif self.bcontinuous.GetLabel() == 'Stop':
 			self.node.acquisitionLoopStop()
 		else:
+			self._acquisitionEnable(True)
 			raise RuntimeError
-		self.bacquire.Enable(False)
-		self.bcontinuous.Enable(False)
 
 class GridDialog(wx.Dialog):
 	def __init__(self, parent):

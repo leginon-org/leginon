@@ -80,14 +80,12 @@ class ManualAcquisition(node.Node):
 				self.logger.error('Cannot access Corrector node to correct image')
 			else:
 				self.logger.error('Error acquiring image')
-			self.logger.info('Error acquiring image')
 			raise AcquireError
 		if imagedata is None:
 			if correct:
 				self.logger.error('Corrector failed to acquire corrected image')
 			else:
 				self.logger.error('EM failed to acquire image')
-			self.logger.info('Error acquiring image')
 			raise AcquireError
 
 		# store EMData to DB
@@ -218,24 +216,30 @@ class ManualAcquisition(node.Node):
 			raise node.PublishError
 
 	def acquireImage(self):
-		self.logger.info('Acquiring image...')
-
 		try:
-			self.preExposure()
-		except RuntimeError:
-			return
+			try:
+				self.preExposure()
+			except RuntimeError:
+				self.panel.acquisitionDone()
+				return
 
-		try:
-			self.acquire()
-		except AcquireError:
-			return
+			try:
+				self.acquire()
+			except AcquireError:
+				self.panel.acquisitionDone()
+				return
 
-		try:
-			self.postExposure()
-		except RuntimeError:
-			return
+			try:
+				self.postExposure()
+			except RuntimeError:
+				self.panel.acquisitionDone()
+				return
+		except:
+			self.panel.acquisitionDone()
+			raise
 
-		self.logger.info('Image acquired')
+		self.logger.info('Image acquired.')
+		self.panel.acquisitionDone()
 
 	def loopStarted(self):
 		self.panel.loopStarted()

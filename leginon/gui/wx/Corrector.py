@@ -5,13 +5,7 @@ import gui.wx.ImageViewer
 import gui.wx.Settings
 import threading
 import gui.wx.Stats
-
-AcquisitionDoneEventType = wx.NewEventType()
-EVT_ACQUISITION_DONE = wx.PyEventBinder(AcquisitionDoneEventType)
-class AcquisitionDoneEvent(wx.PyEvent):
-	def __init__(self):
-		wx.PyEvent.__init__(self)
-		self.SetEventType(AcquisitionDoneEventType)
+import gui.wx.Events
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'corrector'
@@ -86,7 +80,7 @@ class Panel(gui.wx.Node.Panel):
 	def onNodeInitialized(self):
 		self.node.getPlan()
 		self.setPlan(self.node.plan)
-		self.Bind(EVT_ACQUISITION_DONE, self.onAcquisitionDone)
+		self.Bind(gui.wx.Events.EVT_ACQUISITION_DONE, self.onAcquisitionDone)
 		self.Bind(wx.EVT_BUTTON, self.onSettingsButton, self.bsettings)
 		self.Bind(wx.EVT_BUTTON, self.onEditPlan, self.beditplan)
 		self.Bind(wx.EVT_BUTTON, self.onAcquire, self.bacquire)
@@ -127,7 +121,7 @@ class Panel(gui.wx.Node.Panel):
 		self._acquisitionEnable(True)
 
 	def acquisitionDone(self):
-		evt = AcquisitionDoneEvent()
+		evt = gui.wx.Events.AcquisitionDoneEvent()
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def setPlan(self, plan):
