@@ -60,13 +60,9 @@ def replaceData(originaldata, func, memo=None, copymemo=None):
 	children which are Data instances are replaced with the result of
 	calling func on them.
 	'''
-	## create copy of originaldata, replace each child 
-	## with depthFirst(child).  Which is similar to saying:
+	## create copy of originaldata, recursively replace each child 
+	## with replaceData(child).  Which is similar to saying:
 	## replace each child with func(child)
-	## I would like to use copy or deepcopy here, but
-	## since I want to replace some values with some type
-	## of reference to that value, the types cannot be enforced
-	## like TypedDict.  Instead I use KeyedDict.
 
 	d = id(originaldata)
 
@@ -132,7 +128,7 @@ class Data(DataDict, leginonobject.LeginonObject):
 		return t
 	typemap = classmethod(typemap)
 
-	def depthFirst(self, func):
+	def replaceData(self, func):
 		'''
 
 		'''
@@ -142,6 +138,7 @@ class Data(DataDict, leginonobject.LeginonObject):
 	def factories(self, valuetype):
 		if issubclass(valuetype, Data):
 			def f(value):
+				print 'VALUE', value
 				if isinstance(value, DataReference):
 					return value
 				elif isinstance(value, valuetype):
@@ -276,6 +273,25 @@ class PresetData(Data):
 		return t
 	typemap = classmethod(typemap)
 
+class NewPresetData(Data):
+	def typemap(cls):
+		t = Data.typemap()
+		t += [
+			('name', str),
+			('magnification', int),
+			('spot size', int),
+			('intensity', float),
+			('image shift', dict),
+			('beam shift', dict),
+			('defocus', float),
+			('dimension', dict),
+			('binning', dict),
+			('offset', dict),
+			('exposure time', int),
+		]
+		return t
+	typemap = classmethod(typemap)
+
 class CorrelationData(Data):
 	pass
 
@@ -284,9 +300,31 @@ class ImageData(Data):
 		t = Data.typemap()
 		t += [ ('image', Numeric.ArrayType), ]
 		# for DB
-		t += [ ('database filename', str), ]
+		t += [ ('filename', str), ]
 		return t
 	typemap = classmethod(typemap)
+
+	def save(self):
+		'''
+		saves an image to file and sets 'filename' accordingly
+		'''
+		numdata = self['image']
+		session = self['session']
+		id = self['id']
+		idstrlist = [str(i) for i in id]
+		idstr = '-'.join(idstrlist)
+
+		if numdata is not None:
+			# filename = ???
+			try:
+				filename = os.environ['LEGINONPATH'] + '/images/%s-%s.mrc' % (session, idstr)
+			except:
+				filename = './images/%s-%s.mrc' % (session, idstr)
+			try:
+				Mrc.numeric_to_mrc(numdata, filename)
+			except:
+				self.printerror('error converting image to file')
+			self['filename'] = filename
 
 class CorrelationImageData(ImageData):
 	'''
@@ -347,6 +385,17 @@ class PresetImageData(CameraImageData):
 	def typemap(cls):
 		t = CameraImageData.typemap()
 		t += [ ('preset', PresetData), ]
+		return t
+	typemap = classmethod(typemap)
+
+class NewPresetImageData(CameraImageData):
+	'''
+	If an image was acquire using a certain preset, use this class
+	to include the preset with it.
+	'''
+	def typemap(cls):
+		t = CameraImageData.typemap()
+		t += [ ('preset', NewPresetData), ]
 		return t
 	typemap = classmethod(typemap)
 
