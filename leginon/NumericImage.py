@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from wxPython.wx import *
 from Tkinter import *
 import Numeric
 import Image
@@ -187,6 +188,28 @@ class NumericImage:
 		"""
 		photo = ImageTk.PhotoImage(self.image)
 		return photo
+
+	def somethingwxImage(self):
+		#self.clearImage()
+		#stream = cStringIO.StringIO(imagestring)
+		#self.image = Image.open(stream)
+
+		min, max = self.image.getextrema()
+		if max > 255.0 or min < 0.0:
+			r = max - min
+			if r:
+				scale = 255.0 / r
+				offset = -255.0 * min / r
+				image = self.image.point(lambda p: p * scale + offset)
+			else:
+				image = self.image
+		else:
+			image = self.image
+
+	def wxImage(self):
+		wximage = wxEmptyImage(self.image.size[0], self.image.size[1])
+		wximage.SetData(self.image.convert('RGB').tostring())
+		return wximage
 
 	def jpeg(self, filename, quality=100):
 		'Convert numeric -> JPEG [quality]'
