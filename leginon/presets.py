@@ -568,8 +568,6 @@ class PresetsManager(node.Node):
 		except:
 			self.messagelog.error('Cannot get high tension value, calibration display failed')
 			return
-		print 'high tension', ht
-
 		pcaltime = self.calclients['pixel size'].time(mag)
 		self.cal_pixelsize.set(str(pcaltime))
 		stagetime = self.calclients['stage'].time(ht, mag, 'stage position')
@@ -676,7 +674,7 @@ class PresetsManager(node.Node):
 
 		## acquisition
 		cameraconfigure = self.cam.configUIData()
-		acqdosemeth = uidata.Method('Acquire Dose Image', self.uiAcquireDose)
+		acqdosemeth = uidata.Method('Acquire Dose Image (be sure specimen is out of the field of view)', self.uiAcquireDose)
 		acqrefmeth = uidata.Method('Acquire Preset Reference Image', self.uiAcquireRef)
 
 		#self.statrows = uidata.Array('Stats Row Range', [], 'rw', persist=True)
