@@ -1,5 +1,6 @@
 from wxPython.wx import *
 import wxObjectCanvas
+import event
 import nodeclassreg
 
 class RenameDialog(wxDialog):
@@ -527,22 +528,22 @@ class Application(wxObjectCanvas.wxRectangleObject):
 		wxObjectCanvas.wxRectangleObject.OnStartConnection(self, evt)
 		for node in self.getNodes():
 			for input in node.inputconnectionpoints:
-				if issubclass(input.eventclass, self.connection.eventclass):
+				if issubclass(self.connection.eventclass, input.eventclass):
 					input.setDrawText(True)
 
 	def OnEndConnection(self, evt):
 		if self.connection is not None:
-			if issubclass(evt.toso.eventclass, self.connection.eventclass):
+			if issubclass(self.connection.eventclass, evt.toso.eventclass):
 				for node in self.getNodes():
 					for input in node.inputconnectionpoints:
-						if issubclass(input.eventclass, self.connection.eventclass):
+						if issubclass(self.connection.eventclass, input.eventclass):
 							input.setDrawText(False)
 				wxObjectCanvas.wxRectangleObject.OnEndConnection(self, evt)
 
 	def cancelConnection(self):
 		for node in self.getNodes():
 			for input in node.inputconnectionpoints:
-				if issubclass(input.eventclass, self.connection.eventclass):
+				if issubclass(self.connection.eventclass, input.eventclass):
 					input.setDrawText(False)
 		wxObjectCanvas.wxRectangleObject.cancelConnection(self)
 
@@ -560,7 +561,7 @@ class Application(wxObjectCanvas.wxRectangleObject):
 			if fromnode is not None and tonode is not None:
 				fromalias = fromnode.getAlias()
 				toalias = tonode.getAlias()
-				bindingtuple = (binding.getEventClass(), fromalias, toalias)
+				bindingtuple = (binding.getEventClass().__name__, fromalias, toalias)
 				application['bindings'].append(bindingtuple)
 		return application
 
@@ -603,7 +604,7 @@ class Application(wxObjectCanvas.wxRectangleObject):
 		bindspecs = []
 		for binding in self.getBindings():
 			for bindspec in application['bindings']:
-				if binding.getEventClass() == bindspec[0]:
+				if binding.getEventClass().__name__ == bindspec[0]:
 					fromso = binding.getFromShapeObject()
 					toso = binding.getToShapeObject()
 					if fromso is not None and toso is not None:
@@ -625,14 +626,14 @@ class Application(wxObjectCanvas.wxRectangleObject):
 				for node in self.getNodes():
 					if node.getAlias() == bindspec[1]:
 						for output in node.outputconnectionpoints:
-							if output.getEventClass() == bindspec[0]:
+							if output.getEventClass().__name__ == bindspec[0]:
 								fromcp = output
 					if node.getAlias() == bindspec[2]:
 						for input in node.inputconnectionpoints:
-							if input.getEventClass() == bindspec[0]:
+							if input.getEventClass().__name__ == bindspec[0]:
 								tocp = input
 				if fromcp is not None and tocp is not None:
-					binding = Binding(bindspec[0], fromcp, tocp)
+					binding = Binding(eval('event.' + bindspec[0]), fromcp, tocp)
 					self.addShapeObject(binding)
 
 class Master(wxObjectCanvas.wxRectangleObject):
