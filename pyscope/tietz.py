@@ -25,8 +25,8 @@ else:
 				print "Error: cannot dispatch CAMC.Camera"
 				raise
 	
-			self.camType = win32com.client.constants.ctSimulation
-			#self.camType = win32com.client.constants.ctPXL
+			#self.camType = win32com.client.constants.ctSimulation
+			self.camType = win32com.client.constants.ctPXL
 			#self.camType = win32com.client.constants.ctPVCam
 			#self.camType = win32com.client.constants.ctFastScan
 	
