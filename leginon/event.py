@@ -194,8 +194,7 @@ class ControlEvent(Event):
 
 class KillEvent(ControlEvent):
 	'Event that signals a kill'
-	def __init__(self, id, confirm=False):
-		ControlEvent.__init__(self, id=id)
+	pass
 
 class LaunchEvent(ControlEvent):
 	'ControlEvent sent to a NodeLauncher specifying a node to launch'
