@@ -16,8 +16,7 @@ class EMTest(node.Node):
 		magdata = self.researchByDataID('magnification')
 		print magdata.content
 
-		magdata.content['magnification'] = 1000
-		print magdata.origin
+		magdata.content['magnification'] = 10
 		self.publishRemote(magdata.origin['location'], magdata)
 
 		newmagdata = self.researchByDataID('magnification')

@@ -97,6 +97,7 @@ class Node(leginonobject.LeginonObject):
 
 	def researchByLocation(self, loc, dataid):
 		client = self.clientclass(loc)
+		#print "data ID =", dataid
 		return client.pull(dataid)
 
 	def researchByDataID(self, dataid):
