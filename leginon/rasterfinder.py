@@ -204,12 +204,16 @@ class RasterFinder(targetfinder.TargetFinder):
 
 		## user part
 		if self.settings['user check']:
-			self.notifyUserSubmit()
+			self.setStatus('user input')
+			self.logger.info('Waiting for user to check targets...')
+			self.panel.submitTargets()
 			self.userpause.clear()
 			self.userpause.wait()
-			self.unNotifyUserSubmit()
+			self.panel.targetsSubmitted()
+			self.setStatus('processing')
 
 		## the new way
+		self.logger.info('Publising targets...')
 		self.publishTargets(imdata, 'focus', targetlist)
 		self.publishTargets(imdata, 'acquisition', targetlist)
 
