@@ -3,17 +3,26 @@ import wx
 import wx.lib.intctrl
 import wx.lib.masked
 import gui.wx.Presets
+import gui.wx.Camera
 
 getmap = {
 	'string selection': 'GetStringSelection',
 	'value': 'GetValue',
 	'preset order': 'getValues',
+	'dimension': '_getDimension',
+	'offset': '_getOffset',
+	'binning': '_getBinning',
+	'exposure time': '_getExposureTime',
 }
 
 setmap = {
 	'string selection': 'SetStringSelection',
 	'value': 'SetValue',
 	'preset order': 'setValues',
+	'dimension': '_setDimension',
+	'offset': '_setOffset',
+	'binning': '_setBinning',
+	'exposure time': '_setExposureTime',
 }
 
 eventmap = {
@@ -25,6 +34,7 @@ eventmap = {
 	wx.lib.masked.NumCtrl: wx.lib.masked.EVT_NUM,
 	gui.wx.Presets.PresetOrder: gui.wx.Presets.EVT_PRESET_ORDER_CHANGED,
 	gui.wx.Presets.PresetChoice: gui.wx.Presets.EVT_PRESET_CHOICE,
+	gui.wx.Camera.CameraPanel: gui.wx.Camrea.EVT_CONFIGURATION_CHANGED,
 }
 
 def getWindowPath(window):

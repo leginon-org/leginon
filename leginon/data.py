@@ -1470,6 +1470,16 @@ class wxPresetChoiceData(wxData):
 		)
 	typemap = classmethod(typemap)
 
+class wxCameraPanelData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('dimension', dict),
+			('binning', dict),
+			('offset', dict),
+			('exposure time', float),
+		)
+	typemap = classmethod(typemap)
+
 class Request(type):
 	def __new__(cls, dataclass):
 		return type.__new__(cls, 'Request' + dataclass.__name__, (Data,),

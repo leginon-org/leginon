@@ -1,8 +1,17 @@
 # -*- coding: iso-8859-1 -*-
 import wx
-from wx.lib.intctrl import IntCtrl
+from wx.lib.intctrl import IntCtrl, EVT_INT
 
-class Panel(wx.Panel):
+ConfigurationChangedEventType = wx.NewEventType()
+EVT_CONFIGURATION_CHANGED = wx.PyEventBinder(ConfigurationChangedEventType)
+class ConfigurationChangedEvent(wx.PyCommandEvent):
+	def __init__(self, configuration, source):
+		wx.PyCommandEvent.__init__(self, ConfigurationChangedEventType,
+																source.GetId())
+		self.SetEventObject(source)
+		self.configuration = configuration
+
+class CameraPanel(wx.Panel):
 	def __init__(self, parent):
 		wx.Panel.__init__(self, parent, -1, name='pCamera')
 		self.geometry = None
@@ -42,13 +51,13 @@ class Panel(wx.Panel):
 
 		# exposure time
 		stet = wx.StaticText(self, -1, 'Exposure time:')
-		self.tcexposuretime = IntCtrl(self, -1, min=0, limited=True, size=(40, -1),
+		self.icexposuretime = IntCtrl(self, -1, min=0, limited=True, size=(40, -1),
 																	style=wx.TE_RIGHT)
 		stms = wx.StaticText(self, -1, 'ms')
 
 		self.szmain.Add(stet, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz = wx.GridBagSizer(0, 3)
-		sz.Add(self.tcexposuretime, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.icexposuretime, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(stms, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.szmain.Add(sz, (4, 1), (1, 1), wx.ALIGN_CENTER)
 
@@ -60,14 +69,70 @@ class Panel(wx.Panel):
 
 		self.Bind(wx.EVT_CHOICE, self.onCommonChoice, self.ccommon)
 		self.Bind(wx.EVT_BUTTON, self.onCustomButton, bcustom)
+		self.Bind(EVT_INT, self.onExposureTime, self.icexposuretime)
+
+		self.ccommon.SetSelection(0)
+		self.setGeometry(self.common[self.ccommon.GetStringSelection()])
+
+	def onConfigurationChanged(self):
+		evt = ConfigurationChangedEvent(self.getConfiguration(), self)
+		self.GetEventHandler().AddPendingEvent(evt)
+
+	def onExposureTime(self, evt):
+		self.onConfigurationChanged()
+
+	def setCommonChoice(self):
+		for key, geometry in self.common.items():
+			if self.geometry == geometry:
+				self.ccommon.SetStringSelection(key)
+				return
+		if self.ccommon.FindString('(Custom)') is wx.NOT_FOUND:
+			self.ccommon.Insert('(Custom)', 0)
+			self.ccommon.SetSelection(0)
+
+	def _getDimension(self):
+		return self.geometry['dimension']
+
+	def _setDimension(self, value):
+		self.geometry['dimension'] = value
+		self.setCommonChoice()
+
+	def _getOffset(self):
+		return self.geometry['offset']
+
+	def _setOffset(self, value):
+		self.geometry['offset'] = value
+		self.setCommonChoice()
+
+	def _getBinning(self):
+		return self.geometry['binning']
+
+	def _setBinning(self, value):
+		self.geometry['binning'] = value
+		self.setCommonChoice()
+
+	def _getExposureTime(self):
+		return float(self.icexposuretime.GetValue())
+
+	def _setExposureTime(self, value):
+		self.icexposuretime.SetValue(int(value))
 
 	def onCommonChoice(self, evt):
-		self.setGeometry(self.common[evt.GetString()])
+		key = evt.GetString()
+		if key == '(Custom)':
+			return
+		if self.setGeometry(self.common[key]):
+			self.onConfigurationChanged()
+		n = self.ccommon.FindString('(Custom)')
+		if n is not wx.NOT_FOUND:
+			self.ccommon.Delete(n)
 
 	def onCustomButton(self, evt):
 		dialog = CustomDialog(self, self.getGeometry())
 		if dialog.ShowModal() == wx.ID_OK:
-			self.setGeometry(dialog.getGeometry())
+			if self.setGeometry(dialog.getGeometry()):
+				self.onConfigurationChanged()
+			self.setCommonChoice()
 		dialog.Destroy()
 
 	def getCenteredGeometry(self, dimension, binning):
@@ -109,6 +174,8 @@ class Panel(wx.Panel):
 		return True
 
 	def setGeometry(self, geometry):
+		if geometry == self.geometry:
+			return False
 		if not self.validateGeometry(geometry):
 			raise ValueError
 		dimension = '%d × %d' % (geometry['dimension']['x'],
@@ -124,9 +191,18 @@ class Panel(wx.Panel):
 		self.Freeze()
 		self.szmain.Layout()
 		self.Thaw()
+		return True
 
 	def getGeometry(self):
 		return self.geometry
+
+	def getConfiguration(self):
+		g = self.getGeometry()
+		if g is None:	
+			return None
+		c = dict(g)
+		g['exposure time'] = self._getExposureTime()
+		return g
 
 class CustomDialog(wx.Dialog):
 	def __init__(self, parent, geometry):
@@ -136,25 +212,25 @@ class CustomDialog(wx.Dialog):
 		stx = wx.StaticText(self, -1, 'x')
 		sty = wx.StaticText(self, -1, 'y')
 		stdimension = wx.StaticText(self, -1, 'Dimension:')
-		self.tcxdimension = IntCtrl(self, -1, min=0, limited=True, size=(32, -1),
+		self.icxdimension = IntCtrl(self, -1, min=0, limited=True, size=(32, -1),
 																style=wx.TE_RIGHT)
-		self.tcydimension = IntCtrl(self, -1, min=0, limited=True, size=(32, -1),
+		self.icydimension = IntCtrl(self, -1, min=0, limited=True, size=(32, -1),
 																style=wx.TE_RIGHT)
 		stbinning = wx.StaticText(self, -1, 'Binning:')
 		self.cxbinning = wx.Choice(self, -1, choices=parent.binnings['x'])
 		self.cybinning = wx.Choice(self, -1, choices=parent.binnings['y'])
 		stoffset = wx.StaticText(self, -1, 'Offset:')
-		self.tcxoffset = IntCtrl(self, -1, min=0, limited=True, size=(32, -1),
+		self.icxoffset = IntCtrl(self, -1, min=0, limited=True, size=(32, -1),
 															style=wx.TE_RIGHT)
-		self.tcyoffset = IntCtrl(self, -1, min=0, limited=True, size=(32, -1),
+		self.icyoffset = IntCtrl(self, -1, min=0, limited=True, size=(32, -1),
 															style=wx.TE_RIGHT)
 		self.szxy = wx.GridBagSizer(5, 5)
 		self.szxy.Add(stx, (0, 1), (1, 1), wx.ALIGN_CENTER)
 		self.szxy.Add(sty, (0, 2), (1, 1), wx.ALIGN_CENTER)
 		self.szxy.Add(stdimension, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.szxy.Add(self.tcxdimension, (1, 1), (1, 1),
+		self.szxy.Add(self.icxdimension, (1, 1), (1, 1),
 									wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.ALL)
-		self.szxy.Add(self.tcydimension, (1, 2), (1, 1),
+		self.szxy.Add(self.icydimension, (1, 2), (1, 1),
 									wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.ALL)
 		self.szxy.Add(stbinning, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		self.szxy.Add(self.cxbinning, (2, 1), (1, 1),
@@ -162,9 +238,9 @@ class CustomDialog(wx.Dialog):
 		self.szxy.Add(self.cybinning, (2, 2), (1, 1),
 									wx.ALIGN_CENTER|wx.EXPAND|wx.ALL)
 		self.szxy.Add(stoffset, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.szxy.Add(self.tcxoffset, (3, 1), (1, 1),
+		self.szxy.Add(self.icxoffset, (3, 1), (1, 1),
 									wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.ALL)
-		self.szxy.Add(self.tcyoffset, (3, 2), (1, 1),
+		self.szxy.Add(self.icyoffset, (3, 2), (1, 1),
 									wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.ALL)
 
 		bok = wx.Button(self, wx.ID_OK, 'OK')
@@ -182,12 +258,12 @@ class CustomDialog(wx.Dialog):
 		sz.Add(szbutton, (1, 0), (1, 1), wx.ALIGN_RIGHT|wx.ALL, border=5)
 
 		if geometry is not None:
-			self.tcxdimension.SetValue(geometry['dimension']['x'])
-			self.tcydimension.SetValue(geometry['dimension']['y'])
+			self.icxdimension.SetValue(geometry['dimension']['x'])
+			self.icydimension.SetValue(geometry['dimension']['y'])
 			self.cxbinning.SetStringSelection(str(geometry['binning']['x']))
 			self.cybinning.SetStringSelection(str(geometry['binning']['y']))
-			self.tcxoffset.SetValue(geometry['offset']['x'])
-			self.tcyoffset.SetValue(geometry['offset']['y'])
+			self.icxoffset.SetValue(geometry['offset']['x'])
+			self.icyoffset.SetValue(geometry['offset']['y'])
 
 		self.SetSizerAndFit(sz)
 
@@ -195,12 +271,12 @@ class CustomDialog(wx.Dialog):
 
 	def getGeometry(self):
 		geometry = {'dimension': {}, 'binning': {}, 'offset': {}}
-		geometry['dimension']['x'] = self.tcxdimension.GetValue()
-		geometry['dimension']['y'] = self.tcydimension.GetValue()
+		geometry['dimension']['x'] = self.icxdimension.GetValue()
+		geometry['dimension']['y'] = self.icydimension.GetValue()
 		geometry['binning']['x'] = int(self.cxbinning.GetStringSelection())
 		geometry['binning']['y'] = int(self.cybinning.GetStringSelection())
-		geometry['offset']['x'] = self.tcxoffset.GetValue()
-		geometry['offset']['y'] = self.tcyoffset.GetValue()
+		geometry['offset']['x'] = self.icxoffset.GetValue()
+		geometry['offset']['y'] = self.icyoffset.GetValue()
 		return geometry
 
 	def onOK(self, evt):
@@ -217,7 +293,7 @@ if __name__ == '__main__':
 	class App(wx.App):
 		def OnInit(self):
 			frame = wx.Frame(None, -1, 'Camera Test')
-			panel = Panel(frame)
+			panel = CameraPanel(frame)
 			panel.setGeometry({'dimension': {'x': 128, 'y': 128},
 													'offset': {'x': 256, 'y': 256},
 													'binning': {'x': 2, 'y': 2}})
