@@ -482,6 +482,7 @@ class StageMeasurementData(InSessionData):
 		t = InSessionData.typemap()
 		t += [
 			('label', str),
+			('high tension', int),
 			('magnification', int),
 			('axis', str),
 			('x',float),
