@@ -99,7 +99,6 @@ class ImViewer(watcher.Watcher, camerafuncs.CameraFuncs):
 		self.acqrawbut['state'] = NORMAL
 
 	def uiAcquireRaw(self):
-		return None
 		imarray = self.acquireArray(0)
 		if imarray is None:
 			mrcstr = ''
