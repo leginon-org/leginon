@@ -38,7 +38,6 @@ else:
 			return False
 
 	class Tietz(camera.Camera):
-		hCam = None
 		camType = None
 		
 		def __init__(self, cameratype=None):
@@ -70,7 +69,7 @@ else:
 					return
 
 			try:
-				self.theCamera.RegisterCAMCCallBack(ping, 'EM')
+				hr = self.theCamera.RegisterCAMCCallBack(ping, 'EM')
 			except pywintypes.com_error, e:
 				print 'Error registering callback'
 				print e
@@ -102,7 +101,7 @@ else:
 				raise ValueError('Invalid camera type specified')
 	
 			try:
-				self.hCam = self.theCamera.Initialize(self.camType, 0)
+				hr = self.theCamera.Initialize(self.camType, 0)
 			except pywintypes.com_error, e:
 				print "Error initializing camera"
 				print e
@@ -138,9 +137,9 @@ else:
 			shutter_mode = 1
 			bytes_per_pixel = 2
 	
-			self.theCamera.Format(offset['x'], offset['y'],
-														dimension['x'], dimension['y'],
-														binning['x'], binning['y'])
+			hr = self.theCamera.Format(offset['x'], offset['y'],
+																	dimension['x'], dimension['y'],
+																	binning['x'], binning['y'])
 			if imagetype == 'normal':
 				acquiremethod = self.theCamera.AcquireImage
 			elif imagetype == 'dark':
@@ -148,7 +147,7 @@ else:
 			else:
 				raise ValueError('Invalid image type')
 
-			acquiremethod(exposure_time, 0)
+			hr = acquiremethod(exposure_time, 0)
 
 			a = array.array(self.arraytypecode, self.mmapImage(
 																bytes_per_pixel*dimension['x']*dimension['y']))
