@@ -515,8 +515,6 @@ class PresetsManager(node.Node):
 		newname = self.enteredname.get()
 		if newname:
 			newpreset = self.fromScope(newname)
-			d = newpreset.toDict(noNone=True)
-			del d['session']
 			self.presetparams.set(newpreset)
 			self.messagelog.information('created new preset: %s' % (newname,))
 			self.validateCycleOrder()
