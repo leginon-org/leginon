@@ -50,7 +50,7 @@ class CameraFuncs(object):
 		self.__cameraconfig = data.CameraConfigData()
 		self.__cameraconfig.update(leginonconfig.CAMERA_CONFIG)
 
-	def acquireCameraImageData(self, camconfig=None, correction=None):
+	def acquireCameraImageData(self, camconfig=None, correction=True):
 		## try to use UI camera config if none was specified
 		if camconfig == 'UI':
 			try:
@@ -69,12 +69,7 @@ class CameraFuncs(object):
 			self.currentCameraEMData(camdata)
 			print 'DONE CONFIG'
 
-		if correction is None:
-			cor = self.cameraConfig()['correct']
-		else:
-			cor = correction
-
-		if cor:
+		if correction:
 			### get image data from corrector node
 			try:
 				imdata = self.node.researchByDataID(('corrected image data',))
@@ -188,8 +183,7 @@ class CameraFuncs(object):
 
 		parameters = [('exposure time', 'Exposure time', uidata.Float, 500.0, 'rw'),
 									('auto offset', 'Auto offset', uidata.Boolean, True, 'rw'),
-									('auto square', 'Auto square', uidata.Boolean, True, 'rw'),
-									('correct', 'Correct image', uidata.Boolean, True, 'rw')]
+									('auto square', 'Auto square', uidata.Boolean, True, 'rw')]
 
 		pairs = [('dimension', 'Dimension', ['x', 'y'], uidata.Integer, [512, 512]),
 							('offset', 'Offset', ['x', 'y'], uidata.Integer, [0, 0]),
@@ -235,3 +229,153 @@ class CameraFuncs(object):
 			if c['auto offset']:
 				self.autoOffset(c)
 		return copy.deepcopy(self.__cameraconfig)
+
+class SmartCameraParameters(uidata.Container):
+	def __init__(self, node):
+		uidata.Container.__init__(self, 'Camera Parameters')
+		self.node = node
+
+		self.setCameraSize()
+
+		self.xyparamkeys = ('dimension', 'binning', 'offset')
+		self.xydefaults = {
+		  'dimension':{'x':512,'y':512},
+		  'binning':{'x':1,'y':1},
+		  'offset':{'x':0,'y':0},
+		}
+		self.xyvalues = {
+		  'dimension':{'x':None,'y':None},
+		  'binning':{'x':None,'y':None},
+		  'offset':{'x':None,'y':None},
+		}
+		self.xycontainer = None
+		self.xyoptions = {'square': True, 'centered': True}
+
+		self.build()
+
+	def setCameraSize(self):
+		try:
+			self.camerasize = self.node.session['instrument']['camera size']
+		except:
+			self.camerasize = 0
+
+		if not self.camerasize:
+			print 'There was a problem getting the current instrument camera size.'
+			print 'camera size will be faked: 4096x4096'
+			self.camerasize = 4096
+
+	def squareToggleCallback(self, value):
+		self.xyoptions['square'] = value
+		self.fillXYContainer()
+		return value
+
+	def centeredToggleCallback(self, value):
+		self.xyoptions['centered'] = value
+		self.fillXYContainer()
+		return value
+
+	def build(self):
+		self.xycontainer = uidata.Container('Geometry')
+
+		self.exposuretime = uidata.Integer('Exposure Time (ms)', 500, 'rw', persist=True)
+		testmeth = uidata.Method('Test', self.test)
+
+		self.squaretoggle = uidata.Boolean('Square', self.xyoptions['square'], 'rw', persist=True, callback=self.squareToggleCallback)
+		self.centeredtoggle = uidata.Boolean('Centered', self.xyoptions['centered'], 'rw', persist=True, callback=self.centeredToggleCallback)
+
+		self.addObjects((self.squaretoggle, self.centeredtoggle, self.xycontainer, self.exposuretime, testmeth))
+
+	def test(self):
+		params = self.get()
+		print 'params', params
+
+	def get(self):
+		paramdict = {}
+
+		square = self.xyoptions['square']
+		centered = self.xyoptions['centered']
+		if centered:
+			params = ('dimension','binning')
+		else:
+			params = ('dimension', 'binning', 'offset')
+		for param in params:
+			paramdict[param] = {}
+			for axis in ('x','y'):
+				paramdict[param][axis] = self.xyvalues[param][axis].get()
+		if centered:
+			self.autoOffset(paramdict)
+
+		paramdict['exposure time'] = self.exposuretime.get()
+
+		return paramdict
+
+	def set(self, paramdict):
+		pass
+
+	def clearXYContainer(self):
+		if not self.xycontainer:
+			return
+		for param in self.xyparamkeys:
+			try:
+				self.xycontainer.deleteObject(param)
+			except ValueError:
+				pass
+			for axis in ('x','y'):
+				label = '%s %s' % (param, axis)
+				try:
+					self.xycontainer.deleteObject(label)
+				except ValueError:
+					pass
+
+	def fillXYContainer(self):
+		if not self.xycontainer:
+			return
+
+		self.clearXYContainer()
+
+		square = self.xyoptions['square']
+		centered = self.xyoptions['centered']
+		showparams = list(self.xyparamkeys)
+		if centered:
+			showparams.remove('offset')
+			self.xyvalues['offset']['x'] = None
+			self.xyvalues['offset']['y'] = None
+
+		for param in showparams:
+			if square:
+				label = '%s %s' % (param, 'x')
+				default = self.xydefaults[param]['x']
+				i = uidata.Integer(label, default, 'rw', persist=True)
+				self.xycontainer.addObject(i)
+				self.xyvalues[param]['x'] = i
+				self.xyvalues[param]['y'] = i
+			else:
+				for axis in ('x','y'):
+					label = '%s %s' % (param, axis)
+					default = self.xydefaults[param][axis]
+					i = uidata.Integer(label, default, 'rw', persist=True)
+					self.xycontainer.addObject(i)
+					self.xyvalues[param][axis] = i
+
+
+	def autoOffset(self, paramdict):
+		camsize = {'x':self.camerasize, 'y':self.camerasize}
+		dim = paramdict['dimension']
+		bin = paramdict['binning']
+		paramdict['offset'] = autoOffset(camsize, dim, bin)
+
+	def isSquare(self, paramdict):
+		for param in self.xyparamkeys:
+			if paramdict[param]['x'] != paramdict[param]['y']:
+				return False
+		return True
+
+	def isCentered(self, paramdict):
+		## create a copy and then do aufoOffset on it
+		tmpdict = copy.deepcopy(paramdict)
+		self.autoOffset(tmpdict)
+		## check if it was auto offset to begin with
+		if axis in ('x','y'):
+			if tmpdict['offset'][axis] != paramdict['offset'][axis]:
+				return False
+		return True
