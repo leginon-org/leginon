@@ -56,9 +56,8 @@ def getNodeClassNames():
 #registerNodeClass('webcam', 'Webcam')
 registerNodeClass('EM', 'EM')
 registerNodeClass('corrector', 'Corrector')
-registerNodeClass('calibration', 'StageShiftCalibration')
-registerNodeClass('calibration', 'ModeledStageShiftCalibration')
-registerNodeClass('calibration', 'ImageShiftCalibration')
+registerNodeClass('matrixcalibrator', 'StageShiftCalibrator')
+registerNodeClass('matrixcalibrator', 'ImageShiftCalibrator')
 registerNodeClass('calibrationlibrary', 'CalibrationLibrary')
 
 registerNodeClass('gonmodeler', 'GonModeler')
