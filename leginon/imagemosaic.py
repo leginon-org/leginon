@@ -405,7 +405,7 @@ class ImageMosaic(watcher.Watcher):
 		# most recent for now
 		if len(self.imagemosaics) == 0:
 			return ''
-		mrcstr = Mrc.numeric_to_mrcstr(self.imagemosaics[-1].getMosaicImage(Numeric.Float32))
+		mrcstr = Mrc.numeric_to_mrcstr(self.imagemosaics[-1].getMosaicImage())
 		return xmlbinlib.Binary(mrcstr)
 
 class StateImageMosaic(ImageMosaic):
@@ -416,7 +416,7 @@ class StateImageMosaic(ImageMosaic):
 		self.rotationmatrix = None
 
 		# testing
-		self.setPixelSizeAndRotation(None)
+#		self.setPixelSizeAndRotation(None)
 
 		ImageMosaic.__init__(self, id, nodelocations, watchfor, **kwargs)
 
@@ -484,18 +484,18 @@ class StateImageMosaic(ImageMosaic):
 		return (int(round(y)), int(round(x)))
 
 	def setPixelSizeAndRotation(self, ievent):
-#		idata = self.researchByDataID(ievent.content)
-#		self.rotationmatrix = self.calculateRotationMatrix(
-#																						idata.content['image angle'])
-#		self.pixelsize = Numeric.array([idata.content['pixel size']['y'],
-#																		idata.content['pixel size']['x']],
-#																												Numeric.Float32)
-		# testing
-		theta = 2.310 + 1.0 * math.pi / 2.0
-		pixelsize = (3.56127239707e-07, 3.56127239707e-07)
-		self.rotationmatrix = self.calculateRotationMatrix(theta)
-		self.pixelsize = Numeric.array([pixelsize[0], pixelsize[1]],
+		idata = self.researchByDataID(ievent.content)
+		self.rotationmatrix = self.calculateRotationMatrix(
+																						idata.content['image angle'])
+		self.pixelsize = Numeric.array([idata.content['pixel size']['y'],
+																		idata.content['pixel size']['x']],
 																												Numeric.Float32)
+		# testing
+#		theta = 2.310 + 1.0 * math.pi / 2.0
+#		pixelsize = (3.56127239707e-07, 3.56127239707e-07)
+#		self.rotationmatrix = self.calculateRotationMatrix(theta)
+#		self.pixelsize = Numeric.array([pixelsize[0], pixelsize[1]],
+#																												Numeric.Float32)
 
 
 	def calculateRotationMatrix(self, theta):
