@@ -58,11 +58,9 @@ class Client(Base):
 		raise IOError
 
 class Server(Base):
-	def __init__(self, id, dhclass = datahandler.SimpleDataKeeper, dhargs = (), tcpport=None):
+	def __init__(self, id, dh, tcpport=None):
 		Base.__init__(self, id)
-		ndhargs = [self.ID()]
-		ndhargs += list(dhargs)
-		self.datahandler = apply(dhclass, ndhargs)
+		self.datahandler = dh
 		self.servers = {}
 		for t in self.transportmodules:
 			if tcpport is not None and t is tcptransport:

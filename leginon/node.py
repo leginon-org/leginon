@@ -69,7 +69,9 @@ class Node(leginonobject.LeginonObject):
 
 		self.eventmapping = {'outputs':[], 'inputs':[]}
 
-		self.server = datatransport.Server(self.ID(), dh, dhargs, tcpport)
+		self.datahandler = apply(dh, (self.ID(),) + dhargs)
+
+		self.server = datatransport.Server(self.ID(), self.datahandler, tcpport)
 		self.clientclass = clientclass
 
 		self.uiserver = interface.Server(self.ID(), xmlrpcport)
