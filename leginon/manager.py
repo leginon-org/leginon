@@ -142,10 +142,11 @@ class Manager(node.Node):
 		if self.session['instrument'] is None:
 			self.logger.warning('Cannot add instrument\'s launcher.')
 			return
-		if not self.session['instrument']['hostname']:
+		hostname = self.session['instrument']['hostname']
+		if not hostname:
 			self.logger.warning('Cannot add instrument\'s launcher.')
 			return
-		if self.session['instrument']['hostname'] == socket.gethostname().lower():
+		if hostname == socket.gethostname().lower():
 			return
 		try:
 			location = {}
