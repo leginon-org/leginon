@@ -32,6 +32,10 @@ largecontainer1 = uidata.LargeContainer('Large Container 1')
 server.addObject(largecontainer1)
 largecontainer1.addObject(uidata.String('String 0', 'string 0 text', 'rw'))
 
+largecontainer3 = uidata.LargeContainer('Large Container 3')
+largecontainer3.addObject(uidata.Float('Float 0', -1.4985, 'rw'))
+largecontainer1.addObject(largecontainer3)
+
 #server2 = uiserver.Server('client test')
 #bar1 = uidata.Container('bar 1')
 #bar2 = uidata.Container('bar 2')
