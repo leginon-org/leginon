@@ -39,10 +39,8 @@ class _fftEngine(object):
 fftw_mods = []
 
 try:
-	print 'importing sfftw...'
 	import sfftw
 	fftw_mods.append(sfftw)
-	print 'importing fftw...'
 	import fftw
 	fftw_mods.append(fftw)
 except ImportError:
@@ -70,11 +68,19 @@ else:
 		mod.plans = {}
 		mod.iplans = {}
 	# mapping Numeric typecode to (fftwmodule, transformed type)
-	type_info = {
-		Numeric.Float32: {'module':sfftw, 'trans':Numeric.Complex32},
-		Numeric.Float64: {'module':fftw, 'trans':Numeric.Complex64},
-		Numeric.Complex32: {'module':sfftw, 'trans':Numeric.Float32},
-		Numeric.Complex64: {'module':fftw, 'trans':Numeric.Float64}
+	type_module = {
+		Numeric.Float32: sfftw,
+		Numeric.Float64: fftw,
+		Numeric.Complex32: sfftw,
+		Numeric.Complex64: fftw,
+	}
+	real_complex = {
+		Numeric.Float32: Numeric.Complex32,
+		Numeric.Float64: Numeric.Complex64,
+	}
+	complex_real = {
+		Numeric.Complex32: Numeric.Float32,
+		Numeric.Complex64: Numeric.Float64,
 	}
 
 	class fftEngine(_fftEngine):
@@ -103,23 +109,30 @@ else:
 					print 'fftw plans done'
 
 		def _transform(self, im):
-			if im.typecode() not in type_info.keys():
-				im = im.astype(Numeric.Float32)
+			if im.typecode() not in complex_real.values():
+				try:
+					im = im.astype(complex_real[im.typecode()])
+				except KeyError:
+					im = im.astype(Numeric.Float32)
+
 			fftshape = (im.shape[1], im.shape[0] / 2 + 1)
-			imfft = Numeric.zeros(fftshape, type_info[im.typecode()]['trans'])
-			mod = type_info[im.typecode()]['module']
+			imfft = Numeric.zeros(fftshape, real_complex[im.typecode()])
+			mod = type_module[im.typecode()]
 			plan = self.timer(self.plan, (im.shape,mod))
 			mod.rfftwnd_one_real_to_complex(plan, im, imfft)
 			return imfft
 
 		def _itransform(self, fftim):
-			if fftim.typecode() not in type_info.keys():
-				im = im.astype(Numeric.Complex32)
+			if fftim.typecode() not in real_complex.values():
+				try:
+					fftim = fftim.astype(real_complex[fftim.typecode()])
+				except KeyError:
+					fftim = fftim.astype(Numeric.Complex32)
+
 			imshape = (2*(fftim.shape[1]-1), fftim.shape[0])
 
-			im = Numeric.zeros(imshape, type_info[fftim.typecode()]['trans'])
-			#im.savespace(1)  #prevent upcasting from float32 to float64
-			mod = type_info[fftim.typecode()]['module']
+			im = Numeric.zeros(imshape, complex_real[fftim.typecode()])
+			mod = type_module[fftim.typecode()]
 			plan = self.timer(self.iplan, (imshape,mod))
 			### the input image will be destroyed, so make copy
 			fftimcopy = Numeric.array(fftim)
@@ -129,25 +142,27 @@ else:
 			return im
 
 		def plan(self, shape, mod):
-			if shape not in mod.plans:
-				print 'creating %s plan for %s' % (mod.__name__, shape)
+			shapekey = (long(shape[0]), long(shape[1]))
+			if shapekey not in mod.plans:
+				print 'creating %s plan for %s' % (mod.__name__, shapekey)
 				r,c = shape
 				if self.measure:
-					mod.plans[shape] = mod.rfftw2d_create_plan(r,c,mod.FFTW_REAL_TO_COMPLEX, mod.FFTW_MEASURE|mod.FFTW_USE_WISDOM)
+					mod.plans[shapekey] = mod.rfftw2d_create_plan(r,c,mod.FFTW_REAL_TO_COMPLEX, mod.FFTW_MEASURE|mod.FFTW_USE_WISDOM)
 				else:
-					mod.plans[shape] = mod.rfftw2d_create_plan(r,c,mod.FFTW_REAL_TO_COMPLEX, mod.FFTW_ESTIMATE|mod.FFTW_USE_WISDOM)
+					mod.plans[shapekey] = mod.rfftw2d_create_plan(r,c,mod.FFTW_REAL_TO_COMPLEX, mod.FFTW_ESTIMATE|mod.FFTW_USE_WISDOM)
 
-			return mod.plans[shape]
+			return mod.plans[shapekey]
 
 		def iplan(self, shape, mod):
-			if shape not in mod.iplans:
-				print 'creating %s iplan for %s' % (mod.__name__, shape)
+			shapekey = (long(shape[0]), long(shape[1]))
+			if shapekey not in mod.iplans:
+				print 'creating %s iplan for %s' % (mod.__name__, shapekey)
 				r,c = shape
 				if self.measure:
-					mod.iplans[shape] = mod.rfftw2d_create_plan(r,c,mod.FFTW_COMPLEX_TO_REAL, mod.FFTW_MEASURE|mod.FFTW_USE_WISDOM)
+					mod.iplans[shapekey] = mod.rfftw2d_create_plan(r,c,mod.FFTW_COMPLEX_TO_REAL, mod.FFTW_MEASURE|mod.FFTW_USE_WISDOM)
 				else:
-					mod.iplans[shape] = mod.rfftw2d_create_plan(r,c,mod.FFTW_COMPLEX_TO_REAL, mod.FFTW_ESTIMATE|mod.FFTW_USE_WISDOM)
-			return mod.iplans[shape]
+					mod.iplans[shapekey] = mod.rfftw2d_create_plan(r,c,mod.FFTW_COMPLEX_TO_REAL, mod.FFTW_ESTIMATE|mod.FFTW_USE_WISDOM)
+			return mod.iplans[shapekey]
 
 if __name__ == '__main__':
 	import Mrc
