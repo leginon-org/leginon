@@ -235,7 +235,20 @@ class ImagePanel(wxPanel):
 		if self.bitmap is None:
 			self.buffer = None
 		else:
-			width, height = self.bitmap.GetWidth(), self.bitmap.GetHeight()
+			bitmapwidth = self.bitmap.GetWidth()
+			bitmapheight = self.bitmap.GetHeight()
+			clientwidth, clientheight = self.panel.GetClientSize()
+
+			if bitmapwidth < clientwidth:
+				width = bitmapwidth
+			else:
+				width = clientwidth
+
+			if bitmapheight < clientheight:
+				height = bitmapheight
+			else:
+				height = clientheight
+
 			self.buffer = wxEmptyBitmap(width, height)
 
 	def setVirtualSize(self):
@@ -288,7 +301,7 @@ class ImagePanel(wxPanel):
 	def setScale(self, scale):
 		for n in scale:
 			# from one test
-			if n > 512.0 or n < 0.002:
+			if n > 128.0 or n < 0.002:
 				return
 		oldscale = self.getScale()
 		self.scale = scale
