@@ -130,7 +130,6 @@ class CachedDictDataKeeper(DataHandler):
 		self.lock.release()
 
 	def writeoutcache(self):
-		print 'writing out cache'
 		self.timer = threading.Timer(self.timeout, self.writeoutcache)
 		self.timer.start()
 		now = time.time()
@@ -139,6 +138,7 @@ class CachedDictDataKeeper(DataHandler):
 				self.cache(k)
 
 	def cache(self, id):
+		print 'writing out cache...'
 		if not self.datadict[id]['cached']:
 			self.shelf[str(id)] = self.datadict[id]['data']
 			self.datadict[id]['cached'] = 1
