@@ -7,3 +7,8 @@ class OutHandler(leginonobject.LeginonObject):
 		self.outclient = outclient.OutClient()
 		self.outserver = outserver.OutServer()
 
+	def publish(self, pubdata):
+		pass
+
+	def put(self, pubdata):
+		pass
