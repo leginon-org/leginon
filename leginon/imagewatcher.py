@@ -17,6 +17,12 @@ import xmlrpclib
 #import xmlrpclib2 as xmlbinlib
 xmlbinlib = xmlrpclib
 
+
+###
+### this is very unorganized,  need to separate the ImageViewer stuff into
+### another class or into ImageViewer itself
+###
+
 class ImageWatcher(watcher.Watcher):
 	def __init__(self, id, nodelocations, **kwargs):
 		watchfor = event.ImagePublishEvent
@@ -31,6 +37,9 @@ class ImageWatcher(watcher.Watcher):
 		self.viewer_ready = threading.Event()
 		#self.start_viewer_thread()
 		self.clicklock = threading.Lock()
+		self.targetradius = 20
+		self.targetlist = []
+		self.targetdict = {}
 
 		## default camera config
 		currentconfig = self.cam.config()
@@ -40,7 +49,8 @@ class ImageWatcher(watcher.Watcher):
 
 		self.clickfuncs = {
 			'event': self.clickEvent,
-			'target': self.clickTarget
+			'add target': self.clickAddTarget,
+			'instant target': self.clickPublishTarget
 		}
 
 		self.cam.config(currentconfig)
@@ -57,33 +67,60 @@ class ImageWatcher(watcher.Watcher):
 		self.viewerthread.start()
 		#print 'thread started'
 
-	def clickCallback(self, tkevent):
+	def leftclickCallback(self, tkevent):
 		if not self.clicklock.acquire(0):
 			return
-		clickinfo = self.iv.eventXYInfo(tkevent)
-		clickinfo['image id'] = self.imagedata.id
-		clickinfo['scope'] = self.imagedata.content['scope']
-		clickinfo['camera'] = self.imagedata.content['camera']
+		try:
+			clickinfo = self.iv.eventXYInfo(tkevent)
+			clickinfo['image id'] = self.imagedata.id
+			clickinfo['scope'] = self.imagedata.content['scope']
+			clickinfo['camera'] = self.imagedata.content['camera']
+			clickinfo['source'] = 'click'
+			choice = self.uiclickcallback.get()
+			callback = self.clickfuncs[choice]
+			apply(callback, (clickinfo,))
+		finally:
+			self.clicklock.release()
 
-		choice = self.uiclickcallback.get()
-		if choice == 'event':
-			print 'clickEvent'
-			self.clickEvent(clickinfo)
-		elif choice == 'target':
-			print 'clickTarget'
-			self.clickTarget(clickinfo)
-		self.clicklock.release()
+	def rightclickCallback(self, tkevent):
+		if not self.clicklock.acquire(0):
+			return
+		try:
+			clickinfo = self.iv.eventXYInfo(tkevent)
+			self.clickDelTarget(clickinfo)
+		finally:
+			self.clicklock.release()
 
-	def clickTarget(self, clickinfo):
+	def clickPublishTarget(self, clickinfo):
 		'''
 		publish target when image clicked
 		'''
 		c = dict(clickinfo)
-		c['source'] = 'click'
-		print 'creating targetdata'
 		targetdata = data.ImageTargetData(self.ID(), c)
-		print 'publishing targetdata'
+
 		self.publish(targetdata, event.ImageTargetPublishEvent)
+
+	def clickAddTarget(self, clickinfo):
+		c = dict(clickinfo)
+		targetdata = data.ImageTargetData(self.ID(), c)
+		self.targetlist.append(targetdata)
+
+		canvasx = clickinfo['canvas x']
+		canvasy = clickinfo['canvas y']
+		circleid = self.drawTargetCircle(canvasx, canvasy, 'green')
+
+		self.targetdict[circleid] = targetdata
+		print 'ADD TARGETLIST', self.targetlist
+
+	def clickDelTarget(self, clickinfo):
+		canvasx = clickinfo['canvas x']
+		canvasy = clickinfo['canvas y']
+		circleids = self.clearTargetCircle(canvasx, canvasy)
+		for id in circleids:
+			targetdata = self.targetdict[id]
+			self.targetlist.remove(targetdata)
+			del(self.targetdict[id])
+		print 'DEL TARGETLIST', self.targetlist
 
 	def clickEvent(self, clickinfo):
 		'''
@@ -96,6 +133,16 @@ class ImageWatcher(watcher.Watcher):
 		e = event.ImageClickEvent(self.ID(), c)
 		self.outputEvent(e)
 
+	def drawTargetCircle(self, canvasx, canvasy, color):
+		return self.iv.canvas.addCircle(canvasx, canvasy, radius=self.targetradius, canvastags=('target',), color=color)
+
+	def clearTargetCircle(self, canvasx, canvasy):
+		radius = self.targetradius + 8
+		return self.iv.canvas.delCircle(canvasx, canvasy, radius, canvastags=('target',))
+
+	def clearAllTargetCircles(self):
+		self.iv.canvas.delItem('target')
+
 	def open_viewer(self):
 		#print 'root...'
 		root = self.root = Toplevel()
@@ -106,7 +153,8 @@ class ImageWatcher(watcher.Watcher):
 		root.wm_geometry('=450x400')
 
 		self.iv = ImageViewer.ImageViewer(root, bg='#488')
-		self.iv.bindCanvas('<Double-1>', self.clickCallback)
+		self.iv.bindCanvas('<Double-1>', self.leftclickCallback)
+		self.iv.bindCanvas('<Double-3>', self.rightclickCallback)
 		self.iv.pack()
 
 		self.viewer_ready.set()
@@ -162,10 +210,14 @@ class ImageWatcher(watcher.Watcher):
 		return ''
 
 	def processData(self, imagedata):
+		if not isinstance(imagedata, data.ImageData):
+			print 'Data is not ImageData instance'
+			return
 		self.imagedata = imagedata
 		self.numarray = imagedata.content['image']
 
 		if self.popupvalue:
+			self.clearAllTargetCircles()
 			self.displayNumericArray()
 
 	def displayNumericArray(self):
@@ -196,7 +248,7 @@ class ImageWatcher(watcher.Watcher):
 		popuptoggle.registerCallback(self.popupCallback)
 
 		clickchoices = self.registerUIData('clickfuncs', 'array', default=self.clickfuncs.keys())
-		self.uiclickcallback = self.registerUIData('Click Callback', 'string', choices=clickchoices, default='event', permissions='rw')
+		self.uiclickcallback = self.registerUIData('Click Callback', 'string', choices=clickchoices, default='add target', permissions='rw')
 
 		camconfig = self.cam.configUIData()
 		prefs = self.registerUIContainer('Preferences', (popuptoggle, camconfig, self.uiclickcallback))

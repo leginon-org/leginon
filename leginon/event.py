@@ -259,6 +259,10 @@ class ImageShiftPixelShiftEvent(PixelShiftEvent):
 class ImageTargetPublishEvent(PublishEvent):
 	def __init__(self, id, content, confirm):
 		PublishEvent.__init__(self, id, content, confirm)
+
+class ImageTargetListPublishEvent(PublishEvent):
+	def __init__(self, id, content, confirm):
+		PublishEvent.__init__(self, id, content, confirm)
 	
 
 ###########################################################

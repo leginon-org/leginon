@@ -5,22 +5,40 @@ import imagewatcher
 import node, event, data
 import Queue
 
+# TO DO:
+#  - every TargetFinder should have optional target editing before publishing
+#  - a lot of work to reorganize this class hierarchy
+#       - everything to do with ImageTargetData should be in this module
+#               (not in imagewatcher)
+
 class TargetFinder(imagewatcher.ImageWatcher):
 	def __init__(self, id, nodelocations, **kwargs):
 		imagewatcher.ImageWatcher.__init__(self, id, nodelocations, **kwargs)
 
 	def findTargets(self, numarray):
 		'''
-		this should either publish a list of targets, or publish
-		each of them as they are chosen 
+		this should build self.targetlist, a list of 
+		ImageTargetData items.
 		'''
 		raise NotImplementedError()
 
 	def processData(self, newdata):
 		imagewatcher.ImageWatcher.processData(self, newdata)
 
-		numdata = newdata.content['image']
-		self.findTargets(numdata)
+		print 'findTargets'
+		self.findTargets(newdata)
+		print 'publishTargets'
+		self.publishTargetList()
+		print 'DONE'
+
+	def publishTargetList(self):
+		print 'AAA'
+		targetlistdata = data.ImageTargetListData(self.ID(), self.targetlist)
+		print 'BBB', targetlistdata, event.ImageTargetListPublishEvent
+		self.publish(targetlistdata, event.ImageTargetListPublishEvent)
+		print 'CCC'
+		self.targetlist = []
+		self.targetdict = {}
 
 	def defineUserInterface(self):
 		imwatch = imagewatcher.ImageWatcher.defineUserInterface(self)
@@ -31,28 +49,54 @@ class TargetFinder(imagewatcher.ImageWatcher):
 
 class ClickTargetFinder(TargetFinder):
 	def __init__(self, id, nodelocations, **kwargs):
-		watchfor = event.CameraImagePublishEvent
-		lockblocking = None
-		watcher.Watcher.__init__(self, id, nodelocations, watchfor, lockblocking, **kwargs)
+		TargetFinder.__init__(self, id, nodelocations, **kwargs)
 
-	def findTargets(self, numarray):
+		self.userbusy = threading.Condition()
+		self.processlock = threading.Lock()
+
+		self.defineUserInterface()
+		self.start()
+
+	def findTargets(self, newdata):
 		'''
 		wait for the user to finish editing the targets
 		'''
-		pass
+		print 'waiting'
+		self.userbusy.acquire()
+		self.userbusy.wait()
+		self.userbusy.release()
 
 	def defineUserInterface(self):
 		tfspec = TargetFinder.defineUserInterface(self)
 
 		next = self.registerUIMethod(self.uiNext, 'Next', ())
-		submit = self.registerUIMethod(self.uiSubmit, 'Submit', ())
+		done = self.registerUIMethod(self.uiDone, 'Done', ())
+		cont = self.registerUIContainer('Controls', (next, done))
 
-		myspec = self.registerUISpec('Click Target Finder', (next,))
+		myspec = self.registerUISpec('Click Target Finder', (cont,))
 		myspec += tfspec
 
+	def processNext(self):
+		try:
+			self.processDataFromQueue()
+		except Exception, detail:
+			print 'DETAIL', detail
+			raise
+
 	def uiNext(self):
-		self.processDataFromQueue()
+		if not self.processlock.acquire(0):
+			return
+		try:
+			t = threading.Thread(target=self.processDataFromQueue)
+			t.setDaemon(1)
+			t.start()
+		finally:
+			self.processlock.release()
+
 		return ''
 
-	def uiSubmit(self):
+	def uiDone(self):
+		self.userbusy.acquire()
+		self.userbusy.notify()
+		self.userbusy.release()
 		return ''

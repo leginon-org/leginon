@@ -152,3 +152,7 @@ class StateMosaicData(Data):
 class ImageTargetData(Data):
 	def __init__(self, id, content):
 		Data.__init__(self, id, dict(content))
+
+class ImageTargetListData(Data):
+	def __init__(self, id, content):
+		Data.__init__(self, id, list(content))

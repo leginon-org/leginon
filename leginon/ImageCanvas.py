@@ -30,6 +30,42 @@ class ImageCanvas(Frame):
 	def bindCanvas(self, event, func):
 		self.canvas.bind(event, func)
 
+	def addCircle(self, canvasx, canvasy, radius, canvastags=(), color='green'):
+		mytags = ' '.join(canvastags + ('circle',))
+		x1 = canvasx - radius
+		x2 = canvasx + radius
+		y1 = canvasy - radius
+		y2 = canvasy + radius
+		id = self.canvas.create_oval(x1,y1,x2,y2,outline=color,tags=mytags)
+		return id
+
+	def delCircle(self, canvasx, canvasy, radius, canvastags=()):
+		mytags = canvastags + ('circle',)
+		x1 = canvasx - radius
+		x2 = canvasx + radius
+		y1 = canvasy - radius
+		y2 = canvasy + radius
+		items = self.canvas.find_enclosed(x1,y1,x2,y2)
+		print 'ENCLOSED:', items
+		delitems = []
+		for item in items:
+			## try to reject based on required tags
+			bad = 0
+			itemtags = self.canvas.gettags(item)
+			for tag in mytags:
+				if tag not in itemtags:
+					bad = 1
+					break
+			if not bad:
+				delitems.append(item)
+				self.canvas.delete(item)
+		print 'DELITEMS:', delitems
+		return delitems
+
+
+	def delItem(self, item):
+		self.canvas.delete(item)
+
 	def __build(self):
 		bgcolor = self['background']
 		can = self.canvas = Canvas(self, bg=bgcolor)
