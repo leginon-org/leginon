@@ -209,7 +209,7 @@ class EM(node.Node):
 		self.publish(self.cameradata, pubevent=True, pubeventclass=event.CameraEMPublishEvent, broadcast=True)
 
 		self.imagedata = data.DataHandler(data.CameraEMData, getdata=self.getImage)
-		self.publish(self.cameradata, pubevent=True, pubeventclass=event.CameraImageEMPublishEvent, broadcast=True, pubeventclass=event.CameraImageEMPublishEvent)
+		self.publish(self.cameradata, pubevent=True, pubeventclass=event.CameraImageEMPublishEvent, broadcast=True)
 
 		# get the scope module and class from the database
 		try:
