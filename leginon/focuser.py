@@ -240,7 +240,7 @@ class Focuser(acquisition.Acquisition):
 			resultdata['pre manual check'] = False
 
 		## autofocus
-		if self.auto_on.get():
+		if self.autofocus:
 			autofocuspreset = self.settings['preset']
 			autopresettarget = data.PresetTargetData(emtarget=presettarget['emtarget'], preset=autofocuspreset)
 			autostatus = self.autoFocus(resultdata, autopresettarget)
@@ -466,11 +466,6 @@ class Focuser(acquisition.Acquisition):
 		acquisition.Acquisition.defineUserInterface(self)
 		self.messagelog = uidata.MessageLog('Messages')
 
-		## auto focus
-		autocont = uidata.Container('Auto Focus')
-		self.auto_on = uidata.Boolean('Auto Focus On', True, 'rw', persist=True)
-		autocont.addObject(self.auto_on, position={'position':(0,0)})
-
 		## manual focus check
 		manualmeth = uidata.Method('Manual Check Now', self.manualNow)
 		manualpause = uidata.Method('Pause', self.manualPause)
@@ -516,14 +511,9 @@ class Focuser(acquisition.Acquisition):
 		# row8
 		mancont.addObject(self.man_image, position={'position':(8,0), 'span':(1,3)})
 
-		self.cc_image = uidata.TargetImage('Correlation Image', None, 'r')
-		self.cc_image.addTargetType('peak')
-
 		#### other
-		abortfailmethod = uidata.Method('Abort With Failure', self.uiAbortFailure)
-		testmethod = uidata.Method('Test Autofocus (broken)', self.uiTest)
 		container = uidata.LargeContainer('Focuser')
 		container.addObject(self.messagelog, position={'expand': 'all'})
-		container.addObjects((autocont, mancont, self.cc_image, abortfailmethod, testmethod))
+		container.addObjects((mancont,))
 		self.uicontainer.addObject(container)
 

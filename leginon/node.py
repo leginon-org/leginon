@@ -162,6 +162,10 @@ class Node(leginonobject.LeginonObject):
 		evt = gui.wx.Node.SetImageEvent(image, statistics)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
+	def setCorrelationImage(self, image, peak):
+		evt = gui.wx.Node.SetImageEvent(image, peak)
+		self.panel.GetEventHandler().AddPendingEvent(evt)
+
 	def exit(self):
 		'''Cleans up the node before it dies.'''
 		if self.uicontainer is not None:

@@ -994,14 +994,15 @@ class TargetType(object):
 		self.bitmaps['selected'] = selected
 
 class TargetImagePanel(ImagePanel):
-	def __init__(self, parent, id, callback=None):
+	def __init__(self, parent, id, callback=None, tool=True):
 		ImagePanel.__init__(self, parent, id)
 
 		self.target_types = {}
 		self.selectedtarget = None
 		self.colorlist = [wx.RED, wx.BLUE, wx.Color(255, 0, 255), wx.Color(0, 255, 255)]
 
-		self.addTool(TargetTool(self, self.toolsizer, callback))
+		if tool:
+			self.addTool(TargetTool(self, self.toolsizer, callback))
 		self.sizer.Layout()
 		self.Fit()
 

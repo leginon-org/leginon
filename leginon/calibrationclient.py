@@ -139,6 +139,11 @@ class CalibrationClient(object):
 				pixelpeak = peak['subpixel peak']
 				pixelpeak = pixelpeak[1],pixelpeak[0]
 				self.node.cc_image.setTargetType('peak', [pixelpeak])
+
+			if hasattr(self.node, 'panel'):
+				self.node.setCorrelationImage(pcimage.astype(Numeric.Float32),
+																			pixelpeak)
+
 			peakvalue = peak['subpixel peak value']
 			shift = correlator.wrap_coord(peak['subpixel peak'], pcimage.shape)
 			self.node.logger.info('pixel shift (row,col): %s' % (shift,))
@@ -189,6 +194,11 @@ class CalibrationClient(object):
 			pixelpeak = peak['subpixel peak']
 			pixelpeak = pixelpeak[1],pixelpeak[0]
 			self.node.cc_image.setTargetType('peak', [pixelpeak])
+
+		if hasattr(self.node, 'panel'):
+			self.node.setCorrelationImage(pcimage.astype(Numeric.Float32),
+																		pixelpeak)
+
 		peakvalue = peak['subpixel peak value']
 		shift = correlator.wrap_coord(peak['subpixel peak'], pcimage.shape)
 		self.node.logger.info('pixel shift (row,col): %s' % (shift,))

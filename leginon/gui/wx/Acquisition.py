@@ -26,9 +26,9 @@ class Panel(gui.wx.Node.Panel):
 		self.bsettings = wx.Button(self, -1, 'Settings...')
 		self.tbpause = wx.ToggleButton(self, -1, 'Pause')
 		self.tbstop = wx.ToggleButton(self, -1, 'Stop')
-		self.szcontrols.Add(self.bsettings, (0, 0), (1, 1), wx.ALIGN_CENTER)
-		self.szcontrols.Add(self.tbpause, (1, 0), (1, 1), wx.ALIGN_CENTER)
-		self.szcontrols.Add(self.tbstop, (2, 0), (1, 1), wx.ALIGN_CENTER)
+		self.szcontrols.Add(self.bsettings, (0, 0), (1, 1), wx.EXPAND)
+		self.szcontrols.Add(self.tbpause, (1, 0), (1, 1), wx.EXPAND)
+		self.szcontrols.Add(self.tbstop, (2, 0), (1, 1), wx.EXPAND)
 
 		# image
 		self.szimage = self._getStaticBoxSizer('Image', (1, 1), (1, 1),
