@@ -433,8 +433,8 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			beamtilts[1][tilt_axis] -= tilt_value
 
 			## set up to measure states
-			states1 = (data.ScopeEMData(state1), data.ScopeEMData(state1))
-			states2 = (data.ScopeEMData(state2), data.ScopeEMData(state2))
+			states1 = (data.ScopeEMData(initializer=state1), data.ScopeEMData(initializer=state1))
+			states2 = (data.ScopeEMData(initializer=state2), data.ScopeEMData(initializer=state2))
 
 			states1[0]['beam tilt'] = beamtilts[0]
 			states1[1]['beam tilt'] = beamtilts[1]
@@ -579,7 +579,7 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		changex = change[0]
 		changey = change[1]
 
-		new = data.ScopeEMData(scope)
+		new = data.ScopeEMData(initializer=scope)
 		## make a copy of this since it will be modified
 		new[par] = dict(scope[par])
 		new[par]['x'] += changex
@@ -764,7 +764,7 @@ class ModeledStageCalibrationClient(CalibrationClient):
 
 		delta = self.pixtix(xmod, ymod, xmagcal, ymagcal, curstage['x'], curstage['y'], pixcol, pixrow)
 
-		newscope = data.ScopeEMData(scope)
+		newscope = data.ScopeEMData(initializer=scope)
 		newscope['state position'] = dict(scope['stage position'])
 		newscope['stage position']['x'] += delta['x']
 		newscope['stage position']['y'] += delta['y']
