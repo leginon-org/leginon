@@ -364,12 +364,11 @@ class EMMosaic(object):
 		## a fake image from which to calculate a pixel vector
 		## Maybe could use an actual final image data.
 		someimage = self.tiles[0].imagedata
-		fakescope = data.ScopeEMData(initializer=someimage['scope'])
-		fakescope[param] = dict(someimage['scope'][param])
-		fakescope[param].update(center)
+		self.fakescope = data.ScopeEMData(initializer=someimage['scope'])
+		self.fakescope[param] = dict(someimage['scope'][param])
+		self.fakescope[param].update(center)
 		## assume the final fake image has same binning as first tile
-		fakecamera = data.CameraEMData(initializer=someimage['camera'])
-		self.fakeimage = data.CameraImageData(scope=fakescope, camera=fakecamera)
+		self.fakecamera = data.CameraEMData(initializer=someimage['camera'])
 		tile0 = self.tiles[0]
 		mosaic0 = mosaic1 = None
 		for tile in self.tiles:
@@ -494,14 +493,14 @@ class EMMosaic(object):
 
 	def getFakeParameter(self):
 		param = self.calibrationclient.parameter()
-		return self.fakeimage['scope'][param]
+		return self.fakescope[param]
 
 	def positionByCalibration(self, shift):
 		'''
 		calculate a pixel vector which corresponds to
 		the given parameter shift from the center of the fakeimage
 		'''
-		position = self.calibrationclient.itransform(shift, self.fakeimage['scope'], self.fakeimage['camera'])
+		position = self.calibrationclient.itransform(shift, self.fakescope, self.fakecamera)
 		if position is None:
 			return None
 		# this makes it work with calibration
