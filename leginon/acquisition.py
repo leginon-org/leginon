@@ -27,6 +27,9 @@ class NoMoveCalibration(Exception):
 class InvalidStagePosition(Exception):
 	pass
 
+class InvalidPresetsSequence(Exception):
+	pass
+
 class Acquisition(targetwatcher.TargetWatcher):
 
 	eventinputs = targetwatcher.TargetWatcher.eventinputs+[event.ImageClickEvent, event.DriftDoneEvent, event.ImageProcessDoneEvent]
@@ -86,6 +89,16 @@ class Acquisition(targetwatcher.TargetWatcher):
 				self.acquisitionlog.error(messagestr)
 				raise InvalidStagePosition(messagestr)
 
+	def validatePresets(self):
+		presetnames = self.uipresetnames.get()
+		if not presetnames:
+			raise InvalidPresetsSequence()
+		availablepresets = self.getPresetNames()
+		for presetname in presetnames:
+			if presetname not in availablepresets:
+				raise InvalidPresetsSequence()
+		return presetnames
+
 	def processTargetData(self, targetdata, force=False):
 		'''
 		This is called by TargetWatcher.processData when targets available
@@ -100,13 +113,18 @@ class Acquisition(targetwatcher.TargetWatcher):
 			except InvalidStagePosition:
 				return 'invalid'
 			except NoMoveCalibration:
-				return 'aborted'
+				self.acquisitionlog.error('calibrate this move type, then continue')
+				node.beep()
+				self.pause.set()
+				return 'repeat'
 
-		#presetnames = self.uipresetnames.getSelectedValues()
-		presetnames = self.uipresetnames.get()
-
-		if not presetnames:
-			self.outputWarning('No presets specified for target acquisition')
+		try:
+			presetnames = self.validatePresets()
+		except InvalidPresetsSequence:
+			self.acquisitionlog.error('correct the invalid presets sequence, then continue')
+			node.beep()
+			self.pause.set()
+			return 'repeat'
 
 		for newpresetname in presetnames:
 			if force == False:
@@ -476,9 +494,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.ui_image.set(None)
 		return value
 
-	def OLDuiRefreshPresetNames(self):
-		self.uipresetnames.setSelected([])
-		self.uipresetnames.setList(self.getPresetNames())
+	def uiRefreshPresetNames(self):
+		pnames = self.getPresetNames()
+		pnamestr = '  '.join(pnames)
+		self.uiavailablepresetnames.set(pnamestr)
 
 	def driftDetected(self):
 		'''
@@ -522,12 +541,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		presetscontainer = uidata.Container('Presets Sequence')
 
-		#presetnames = self.getPresetNames()
-		#self.uipresetnames = uidata.SelectFromList('Sequence', presetnames, [], 'r')
-		#refreshpresetnames = uidata.Method('Refresh', self.uiRefreshPresetNames)
-		#presetscontainer.addObjects((self.uipresetnames, refreshpresetnames))
+		self.uiavailablepresetnames = uidata.String('Preset Names', '', 'r')
+		refreshpresetnames = uidata.Method('Show Available Presets', self.uiRefreshPresetNames)
 		self.uipresetnames = uidata.Sequence('Presets Sequence', [], 'rw', persist=True)
-		presetscontainer.addObjects((self.uipresetnames,))
+		presetscontainer.addObjects((refreshpresetnames, self.uiavailablepresetnames, self.uipresetnames,))
 
 		self.uimovetype = uidata.SingleSelectFromList('Move Type',
 																									self.calclients.keys(),
