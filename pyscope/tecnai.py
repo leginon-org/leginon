@@ -408,7 +408,7 @@ class tecnai(scope.scope):
         return position
     
     def setStagePosition(self, position, relative = "absolute"):
-        tolerance = 1.0e-9
+        tolerance = 1.0e-5
         polltime = 0.1
         if relative == "relative":
             try:
@@ -431,7 +431,7 @@ class tecnai(scope.scope):
             pass
         else:
             self.theScope.Stage.Goto(pos, win32com.client.constants.axisZ)
-            while self.theScope.Stage.Position.Z - pos.Z > tolerance:
+            while abs(self.theScope.Stage.Position.Z - pos.Z) > tolerance:
                 time.sleep(polltime)
 
         try:
@@ -440,7 +440,7 @@ class tecnai(scope.scope):
             pass
         else:
             self.theScope.Stage.Goto(pos, win32com.client.constants.axisY)
-            while self.theScope.Stage.Position.Y - pos.Y > tolerance:
+            while abs(self.theScope.Stage.Position.Y - pos.Y) > tolerance:
                 time.sleep(polltime)
 
         try:
@@ -449,7 +449,7 @@ class tecnai(scope.scope):
             pass
         else:
             self.theScope.Stage.Goto(pos, win32com.client.constants.axisX)
-            while self.theScope.Stage.Position.X - pos.X > tolerance:
+            while abs(self.theScope.Stage.Position.X - pos.X) > tolerance:
                 time.sleep(polltime)
 
         try:
@@ -458,7 +458,7 @@ class tecnai(scope.scope):
             pass
         else:
             self.theScope.Stage.Goto(pos, win32com.client.constants.axisA)
-            while self.theScope.Stage.Position.A - pos.A > tolerance:
+            while abs(self.theScope.Stage.Position.A - pos.A) > tolerance:
                 time.sleep(polltime)
 
         try:
@@ -467,7 +467,7 @@ class tecnai(scope.scope):
             pass
         else:
             self.theScope.Stage.Goto(pos, win32com.client.constants.axisB)
-            while self.theScope.Stage.Position.B - pos.B > tolerance:
+            while abs(self.theScope.Stage.Position.B - pos.B) > tolerance:
                 time.sleep(polltime)
     
         return 0
