@@ -3,6 +3,7 @@ import data
 import event
 import cPickle
 import datahandler
+import dbdict
 
 class DataHandler(datahandler.DataBinder):
 	def __init__(self, id, calnode):
@@ -113,13 +114,33 @@ class DBCalibrationLibrary(CalibrationLibrary):
 		self.start()
 
 	def getKeys(self):
-		pass
+		try:
+			cal = dbdict.dbDict('CAL')
+			return cal.keys()
+		except:
+			return ()
 
 	def setCalibration(self, key, idata):
-		pass
+		cal = self.getCalibration()
+		newitem = idata.content
+		cal[key] = newitem
+		self.publishDataIDList()
 
 	def getCalibration(self, key=None):
-		pass
+		try:
+			cal = dbdict.dbDict('CAL')
+		except:
+			cal = {}
+
+		if key is None:
+			# return whole table as a dictionary
+			return cal
+		else:
+			# return just the specified key
+			try:
+				return cal[key]
+			except KeyError:
+				return None
 
 	def defineUserInterface(self):
 		nodespec = CalibrationLibrary.defineUserInterface(self)

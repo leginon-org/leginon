@@ -14,27 +14,21 @@ class dbDict(object):
 	Also, the db user must have the following rights:
 		select, insert, delete, update, create, drop.
 	By default the db parameters are:
-		hostname='localhost'
-		username='usr_object'
-		databasename='dbemdata'
+		host='localhost'
+		user='usr_object'
+		db='dbemdata'
 	Example:
 		import dbdict
 		a=dbdict.dbDict('dbdictname')
-		b=dbdict.dbDict('dbdictname', hostname='host.domain')
-
 
 		"a" creates a new table on localhost's database
-		"b" creates a new table on host.domain's database
 
-		dbd = dbdict.dbDict('dbdictname', hostname='cronus2')
+		dbd = dbdict.dbDict('dbdictname')
 		dbd[1]={'k':'v', 1:'nom'}
 		
 	"""
-	def __init__(self, tablename, hostname='localhost', username='usr_object', databasename='dbemdata'):
+	def __init__(self, tablename):
 		self.tablename = tablename
-		self.hostname=hostname
-		self.username=username
-		self.databasename=databasename
 		self.__open_db()
 		self.__create()
 		self.__close_db()
@@ -64,7 +58,10 @@ class dbDict(object):
 
 	def __open_db(self):
 		'Open a DB connection.'
-		self.dbc = sqldb.sqlDB(self.hostname, self.username, self.databasename)
+		try:
+			self.dbc = sqldb.sqlDB()
+		except Exception, e:
+			raise(e)
 
 	def __close_db(self):
 		'Close a DB connection.'
@@ -138,6 +135,22 @@ class dbDict(object):
 							self.tablename
 						   	)
 			return res_tuple
+
+	def __values(self):
+		'Return all keys from an existing object table.'
+		if self.dbc is not None:
+			res_tuple = self.dbc.selectall("""select object from `%s` """ %
+							self.tablename
+						   	)
+			return res_tuple
+
+	def __all(self):
+		'Return all keys from an existing object table.'
+		if self.dbc is not None:
+			res_tuple = self.dbc.selectall("""select objectKey, object from `%s` """ %
+							self.tablename
+						   	)
+			return res_tuple
 		
 	def __get(self, blobKey, type=0):
 		"""
@@ -200,6 +213,9 @@ class dbDict(object):
 		self.__empty()
 		self.__close_db()
 
+	def __repr__(self):
+		return self.all().__repr__()
+		
 	def __contains__(self, key):
 		'1 if an object table has a key k, else 0'
 		return self.has_key(key)
@@ -245,6 +261,17 @@ class dbDict(object):
 			return 1 
 		else:
 			return 0
+	def all(self):
+		self.__open_db()
+		t_pall = self.__all()
+		self.__close_db()
+		keys = []
+		values = []
+		for k in t_pall:
+			keys.append(self.__unpickle_key(k[0]))
+			values.append(self.__unpickle_key(k[1]))
+		all = dict(zip(keys,values))
+		return all
 
 	def keys(self):
 		'dump a list of keys from an object table'
@@ -255,4 +282,13 @@ class dbDict(object):
 		for k in t_pkeys:
 			keys.append(self.__unpickle_key(k[0]))
 		return keys
+
+	def values(self):
+		self.__open_db()
+		t_pvalues= self.__values()
+		self.__close_db()
+		values = []
+		for v in t_pvalues:
+			values.append(self.__unpickle_key(k[0]))
+		return values
 
