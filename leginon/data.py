@@ -792,9 +792,7 @@ class MosaicTargetData(InSessionData):
 class GridData(Data):
 	def typemap(cls):
 		t = Data.typemap()
-		t += [('grid number', int),
-					('grid tray ID', int),
-					('grid ID', int)]
+		t += [('grid ID', int)]
 		return t
 	typemap = classmethod(typemap)
 
