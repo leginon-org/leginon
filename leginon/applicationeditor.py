@@ -262,7 +262,7 @@ class LabeledLine(OverlappedLine):
 		del self.labeltextvariables[label]
 		label.place_forget()
 		if len(self.labels) == 0:
-#			ArrowLine.delete(self)
+			ArrowLine.delete(self)
 			pass
 		else:
 			self.placeLabels()
@@ -276,34 +276,33 @@ class EventLine(LabeledLine):
 	def __init__(self, canvas, originposition, destinationposition, originbbox,
 																				destinationbbox, eventbinding, editor):
 		self.eventbindings = {}
+		self.labelbindings = {}
 		self.editor = editor
 		LabeledLine.__init__(self, canvas, originposition, destinationposition,
 							originbbox, destinationbbox, eventbinding)
 
 	def menuEditLabel(self):
-		for eventbinding in self.eventbindings.keys():
-			if self.eventbindings[eventbinding] == self.selectedlabel:
-				eventdialog = EventDialog(self.editor, 'Edit Event', eventbinding[0])
-				if eventdialog.result is not None:
-					editedeventbinding = (eventdialog.result,
-																eventbinding[1], eventbinding[2])
+		eventbinding = self.labelbindings[self.selectedlabel]
+		eventdialog = EventDialog(self.editor, 'Edit Event', eventbinding[0])
+		if eventdialog.result is not None:
+			editedeventbinding = (eventdialog.result,
+														eventbinding[1], eventbinding[2])
 
-					self.labeltextvariables[self.selectedlabel].set(
-																		self.eventBindingText(editedeventbinding))
+			self.labeltextvariables[self.selectedlabel].set(
+															self.eventBindingText(editedeventbinding))
 
-					self.deleteBinding(eventbinding)
-					self.append(editedeventbinding)
+			self.append(editedeventbinding)
+			self.deleteBinding(eventbinding)
 		self.selectedlabel = None
 
 	def menuDeleteLabel(self):
-		for eventbinding in self.eventbindings.keys():
-			if self.eventbindings[eventbinding] == self.selectedlabel:
-				if len(self.eventbindings) == 1:
-					origin = self.editor.mapping[eventbinding[1]]
-					destination = self.editor.mapping[eventbinding[2]]
-					self.editor.connectionmanager.deleteConnection(origin, destination)
-				else:
-					self.deleteBinding(eventbinding)
+		eventbinding = self.labelbindings[self.selectedlabel]
+		if len(self.eventbindings) == 1:
+			origin = self.editor.mapping[eventbinding[1]]
+			destination = self.editor.mapping[eventbinding[2]]
+			self.editor.connectionmanager.deleteConnection(origin, destination)
+		else:
+			self.deleteBinding(eventbinding)
 		self.selectedlabel = None
 
 	def eventBindingText(self, eventbinding):
@@ -313,12 +312,14 @@ class EventLine(LabeledLine):
 	def append(self, eventbinding):
 		if eventbinding in self.eventbindings:
 			return
-		self.eventbindings[eventbinding] = \
-				LabeledLine.append(self, self.eventBindingText(eventbinding))
+		line = LabeledLine.append(self, self.eventBindingText(eventbinding))
+		self.eventbindings[eventbinding] = line
+		self.labelbindings[line] = eventbinding
 		self.editor.app.addBindSpec(eventbinding)
 
 	def deleteBinding(self, eventbinding):
 		self.deleteLabel(self.eventbindings[eventbinding])
+		del self.labelbindings[self.eventbindings[eventbinding]]
 		del self.eventbindings[eventbinding]
 		self.editor.app.delBindSpec(eventbinding)
 
