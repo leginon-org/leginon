@@ -7,7 +7,6 @@
 #
 
 import copy
-import xmlrpclib
 import Numeric
 import Mrc
 import threading
@@ -178,12 +177,6 @@ def clientContainerFactory(containerclass):
 			except KeyError:
 				pass
 			containerclass.__init__(self, name)
-
-		def toXMLRPC(self, value):
-			try:
-				return {'XML-RPC': value['XML-RPC']}
-			except KeyError:
-				return {}
 	return ClientContainer
 
 SmallClientContainer = clientContainerFactory(SmallContainer)
@@ -456,9 +449,6 @@ class SelectFromStruct(Container):
 class Binary(Data):
 	typelist = Data.typelist + ('binary',)
 
-	def toXMLRPC(self, value):
-		return xmlrpclib.Binary(value)
-
 class Dialog(Container):
 	typelist = Container.typelist + ('message dialog',)
 	def __init__(self, name):
@@ -483,24 +473,8 @@ class MessageDialog(Dialog):
 class PILImage(Binary):
 	typelist = Binary.typelist + ('PIL image',)
 
-	def toXMLRPC(self, value):
-		if value is not None:
-			stream = cStringIO.StringIO()
-			value.save(stream, 'jpeg')
-			value = xmlrpclib.Binary(stream.getvalue())
-			stream.close()
-		return value
-
 class Image(Binary):
 	typelist = Binary.typelist + ('image',)
-
-	def array2image(self, a):
-		return Mrc.numeric_to_mrcstr(a)
-
-	def toXMLRPC(self, value):
-		if isinstance(value, Numeric.arraytype):
-			value = xmlrpclib.Binary(self.array2image(value))
-		return value
 
 class ClickImage(Container):
 	typelist = Container.typelist + ('click image',)

@@ -5,7 +5,7 @@
 #       For terms of the license agreement
 #       see  http://ami.scripps.edu/software/leginon-license
 #
-import xmlrpclib
+import extendedxmlrpclib
 import uiserver
 import threading
 import time
@@ -148,15 +148,15 @@ def WidgetClassFromTypeList(typelist):
 class XMLRPCClient(object):
 	def __init__(self, serverhostname, serverport, port=None):
 		uri = 'http://%s:%s' % (serverhostname, serverport)
-		self.proxy = xmlrpclib.ServerProxy(uri, allow_none=1)
+		self.proxy = extendedxmlrpclib.ServerProxy(uri, allow_none=1)
 
 	def execute(self, function_name, args=()):
 		try:
 			return getattr(self.proxy, function_name)(*args)
-		except xmlrpclib.ProtocolError:
+		except extendedxmlrpclib.ProtocolError:
 			# usually return value not correct type
 			raise
-		except xmlrpclib.Fault:
+		except extendedxmlrpclib.Fault:
 			# exception during call of the function
 			raise
 
@@ -734,7 +734,7 @@ class wxDataWidget(wxWidget):
 		pass
 
 	def setValue(self, value):
-		if isinstance(value, xmlrpclib.Binary):
+		if isinstance(value, extendedxmlrpclib.Binary):
 			self.value = value.data
 		else:
 			self.value = value
@@ -1012,7 +1012,7 @@ class wxImageWidget(wxDataWidget):
 		pass
 
 	def setWidget(self, value):
-		if isinstance(value, xmlrpclib.Binary):
+		if isinstance(value, extendedxmlrpclib.Binary):
 			if value.data:
 				self.imageviewer.setImageFromMrcString(value.data)
 				width, height = self.imageviewer.GetSizeTuple()

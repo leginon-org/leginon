@@ -9,7 +9,7 @@ import SimpleXMLRPCServer
 import socket
 import threading
 import uidata
-import xmlrpclib
+import extendedxmlrpclib
 import Queue
 
 # preferences
@@ -180,7 +180,7 @@ class Server(XMLRPCServer, uidata.Container):
 			try:
 				client.execute(commandstring, (properties,))
 				return
-			except (xmlrpclib.ProtocolError, socket.error), e:
+			except (extendedxmlrpclib.ProtocolError, socket.error), e:
 				failures += 1
 		if removeclientslock is not None:
 			removeclientslock.acquire()
@@ -212,14 +212,7 @@ class Server(XMLRPCServer, uidata.Container):
 		properties['block'] = block
 
 		self.localExecute('addFromServer', properties, client, block, thread)
-
-		properties = self.toXMLRPC(uiobject, properties)
 		self.XMLRPCExecute('add', properties, client, block, thread)
-
-	def toXMLRPC(self, uiobject, properties):
-		if hasattr(uiobject, 'toXMLRPC') and 'value' in properties:
-			properties['value'] = uiobject.toXMLRPC(properties['value'])
-		return properties
 
 	def getChildren(self, uiobject):
 		children = []
@@ -247,9 +240,6 @@ class Server(XMLRPCServer, uidata.Container):
 		properties['block'] = block
 
 		self.localExecute('setFromServer', properties, client, block, thread)
-
-		if hasattr(uiobject, 'toXMLRPC') and 'value' in properties:
-			properties['value'] = uiobject.toXMLRPC(properties['value'])
 		self.XMLRPCExecute('set', properties, client, block, thread)
 
 	def _deleteObject(self, uiobject, client=None, block=True, thread=False):
