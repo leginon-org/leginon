@@ -132,3 +132,8 @@ except:
 # Leave it blank to be presented with a user name selector at start up.
 USERNAME = configparser.get('User', 'name')
 
+# drive mapping
+drives = configparser.options('Drive Mapping')
+for drive in drives:
+	pathmapping[drive + ':\\'] = configparser.get('Drive Mapping', drive)
+
