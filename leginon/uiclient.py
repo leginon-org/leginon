@@ -1576,32 +1576,9 @@ class wxTreePanel(wxPanel):
 		self.sashwindow.SetSashVisible(wxSASH_RIGHT, True)
 		self.sashwindow.SetExtraBorderSize(5)
 
-		bitmaps = {}
-		height = None
-		width = None
-		for type in wxMessageLog.types:
-			bitmap = wxBitmapFromImage(wxImage('%s/%s.bmp' % 
-																					(wxMessageLog.iconsdir, type)))
-			if width is None:
-				width = bitmap.GetWidth()
-			elif width != bitmap.GetWidth():
-				raise ValueError('Invalid tree bitmap width')
-			if height is None:
-				height = bitmap.GetHeight()
-			elif height != bitmap.GetHeight():
-				raise ValueError('Invalid tree bitmap height')
-			bitmaps[type] = bitmap
-
-		self.imagelist = wxImageList(width, height)
-		self.bitmaps = {}
-		self.bitmaps[None] = self.imagelist.AddWithColourMask(wxEmptyBitmap(width, height), wxBLACK)
-		for type in bitmaps:
-			self.bitmaps[type] = self.imagelist.Add(bitmaps[type])
-
 		self.tree = wxTreeCtrl(self.sashwindow, -1,
 														style=wxTR_HIDE_ROOT|wxTR_NO_BUTTONS)
 
-		self.tree.AssignImageList(self.imagelist)
 		self.root = self.tree.AddRoot('Containers')
 
 		self.childpanel = wxScrolledWindow(self, -1, size=(512, 512),
@@ -1640,24 +1617,7 @@ class wxTreePanel(wxPanel):
 			self.tree.Expand(parentid)
 		self.containers[container] = id
 		self.tree.SetPyData(id, container)
-		self.setImage(None, id)
 		#self.tree.SelectItem(id)
-
-	def setContainerImage(self, type, container):
-		id = self.containers[container]
-		self.setImage(type, id)
-
-	def setImage(self, type, id):
-		if not self.tree.ItemHasChildren(id):
-			childid = self.tree.AppendItem(id, 'Refreshing...')
-		else:
-			childid = None
-		self.tree.Expand(id)
-		for state in [wxTreeItemIcon_Normal, wxTreeItemIcon_Selected,
-									wxTreeItemIcon_Expanded, wxTreeItemIcon_SelectedExpanded]:
-			self.tree.SetItemImage(id, self.bitmaps[type], state)
-		if childid is not None:
-			self.tree.Delete(childid)
 
 	def deleteContainer(self, container):
 		id = self.containers[container]
@@ -1714,11 +1674,12 @@ class wxTreePanelContainerWidget(wxContainerWidget):
 		self.treepanel.deleteContainer(self)
 
 	def updateMessages(self):
-		for type in wxMessageLog.types:
-			if type in self.messages:
-				self.treepanel.setContainerImage(type, self)
-				return
-		self.treepanel.setContainerImage(None, self)
+		#for type in wxMessageLog.types:
+		#	if type in self.messages:
+		#		self.treepanel.setContainerImage(type, self)
+		#		return
+		#self.treepanel.setContainerImage(None, self)
+		pass
 
 	def onAddMessage(self, evt):
 		try:
