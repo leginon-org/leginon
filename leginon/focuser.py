@@ -20,6 +20,7 @@ class Focuser(acquisition.Acquisition):
 
 		self.cam = camerafuncs.CameraFuncs(self)
 
+		self.manualchecklock = threading.Lock()
 
 		self.btcalclient = calibrationclient.BeamTiltCalibrationClient(self)
 		self.abortfail = threading.Event()
@@ -57,6 +58,10 @@ class Focuser(acquisition.Acquisition):
 			camstate['exposure time'] = current_exptime
 			camstate = self.cam.currentCameraEMData(camstate)
 			target['pre_exposure'] = True
+
+		## pre manual check
+		if self.post_manual_check.get():
+			self.manualCheckLoop(presetdata['name'], emtarget)
 
 		if self.drifton.get():
 			driftthresh = self.driftthresh.get()
@@ -123,18 +128,8 @@ class Focuser(acquisition.Acquisition):
 				focusmethod(defoc)
 
 		## manual focus
-		if self.manual_check.get():
+		if self.pose_manual_check.get():
 			self.manualCheckLoop(presetdata['name'], emtarget)
-			## go back to focus preset and target
-			self.presetsclient.toScope(presetdata['name'], emtarget)
-			delay = self.uidelay.get()
-			print 'pausing for %s sec.' % (delay,)
-			time.sleep(delay)
-			while 1:
-				if self.manual_check_done.isSet():
-					break
-				# acquire image, show image and power spectrum
-				# allow user to adjust defocus and stig
 
 		## aquire and save the focus image
 		if self.acquirefinal.get():
@@ -163,7 +158,9 @@ class Focuser(acquisition.Acquisition):
 		presetnames = self.uipresetnames.getSelectedValues()
 		### Warning:  not target is being used, you are exposing
 		### whatever happens to be under the beam
-		self.manualCheckLoop(presetnames[0])
+		t = threading.Thread(target=self.manualCheckLoop, args=(presetnames[0],))
+		t.setDaemon(1)
+		t.start()
 
 	def manualCheckLoop(self, presetname, emtarget=None):
 		## go to preset and target
@@ -179,12 +176,61 @@ class Focuser(acquisition.Acquisition):
 			# acquire image, show image and power spectrum
 			# allow user to adjust defocus and stig
 			cor = self.uicorrectimage.get()
-			imagedata = self.cam.acquireCameraImageData(correction=cor)
+			self.manualchecklock.acquire()
+			try:
+				imagedata = self.cam.acquireCameraImageData(correction=cor)
+			finally:
+				self.manualchecklock.release()
 			imarray = imagedata['image']
 			pow = imagefun.power(imarray)
 			self.man_image.set(imarray)
 			self.man_power.set(pow)
 		print 'manual focus loop done'
+
+	def uiFocusUp(self):
+		self.changeDefocus('up')
+
+	def uiFocusDown(self):
+		self.changeDefocus('down')
+
+	def uiResetDefocus(self):
+		self.manualchecklock.acquire()
+		print 'reset defocus'
+		try:
+			newemdata = data.ScopeEMData(id=('scope',))
+			newemdata['reset defocus'] = True
+			self.publishRemote(newemdata)
+		finally:
+			self.manualchecklock.release()
+
+	def uiChangeToZero(self):
+		self.manualchecklock.acquire()
+		print 'changing to zero defocus'
+		try:
+			newemdata = data.ScopeEMData(id=('scope',))
+			newemdata['defocus'] = 0.0
+			self.publishRemote(newemdata)
+		finally:
+			self.manualchecklock.release()
+
+	def changeDefocus(self, direction):
+		delta = self.manual_delta.get()
+		self.manualchecklock.acquire()
+		print 'changing defocus %s %s' % (direction, delta)
+		try:
+			emdata = self.researchByDataID(('defocus',))
+			defocus = emdata['defocus']
+			if direction == 'up':
+				defocus += delta
+			elif direction == 'down':
+				defocus -= delta
+			newemdata = data.ScopeEMData(id=('scope',), defocus=defocus)
+			self.publishRemote(newemdata)
+		finally:
+			self.manualchecklock.release()
+
+
+		print 'changed defocus %s %s' % (direction, delta,)
 
 	def manualDone(self):
 		print 'will quit manual focus loop after this iteration'
@@ -230,7 +276,7 @@ class Focuser(acquisition.Acquisition):
 		self.melt = uidata.Float('Melt Time (s)', 0.0, 'rw', persist=True)
 
 		self.drifton = uidata.Boolean('Check Drift', True, 'rw', persist=True)
-		self.driftthresh = uidata.Float('Drift Threshold (pixels)', 2, 'rw', persist=True)
+		self.driftthresh = uidata.Float('Drift Threshold (pixels)', 2.0, 'rw', persist=True)
 
 		self.btilt = uidata.Float('Beam Tilt', 0.02, 'rw', persist=True)
 		self.stigfocthresh = uidata.Float('Stig Threshold', 1e-6, 'rw', persist=True)
@@ -242,13 +288,21 @@ class Focuser(acquisition.Acquisition):
 		self.publishimages = uidata.Boolean('Publish Tilt Images', False, 'rw', persist=True)
 
 		## manual focus check
-		self.manual_check = uidata.Boolean('Manual Check After Auto', False, 'rw', persist=True)
+		self.pre_manual_check = uidata.Boolean('Manual Check Before Auto', False, 'rw', persist=True)
+		self.post_manual_check = uidata.Boolean('Manual Check After Auto', False, 'rw', persist=True)
 		manualmeth = uidata.Method('Manual Check Now', self.manualNow)
 		manualdone = uidata.Method('Done', self.manualDone)
-		mancont = uidata.Container('Manual Focus')
+
+		manualreset = uidata.Method('Reset Defocus', self.uiResetDefocus)
+		manualtozero = uidata.Method('Change To Zero', self.uiChangeToZero)
+
+		self.manual_delta = uidata.Float('Manual Change Delta', 5e-7, 'rw', persist=True)
+		manchangeup = uidata.Method('Up', self.uiFocusUp)
+		manchangedown = uidata.Method('Down', self.uiFocusDown)
 		self.man_image = uidata.Image('Manual Focus Image', None, 'rw')
 		self.man_power = uidata.Image('Manual Focus Power Spectrum', None, 'rw')
-		mancont.addObjects((self.manual_check, manualmeth, manualdone, self.man_power, self.man_image))
+		mancont = uidata.Container('Manual Focus')
+		mancont.addObjects((self.pre_manual_check, self.post_manual_check, manualmeth, manualdone, manualreset, manualtozero, self.manual_delta, manchangeup, manchangedown, self.man_power, self.man_image))
 
 		self.acquirefinal = uidata.Boolean('Acquire Final Image', True, 'rw', persist=True)
 		abortfailmethod = uidata.Method('Abort With Failure', self.uiAbortFailure)
