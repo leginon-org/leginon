@@ -447,6 +447,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 					self.existing_targets[coord].append(target)
 		self.mosaicdata = mosaicdata
 		self.displayMosaic()
+		self.setStatusMessage('displaying targets...')
 		self.displayTargets(normal=target_coords, done=target_coords_done)
 		self.setStatusMessage('Mosaic loaded (%i of %i images loaded successfully)'
 													% (nloaded, n))
@@ -482,6 +483,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			## imagedata would be full mosaic image
 			self.clickimage.imagedata = None
 			print 'CCC'
+			node.beep()
 		else:
 			self.setStatusMessage('Not diplaying mosaic image')
 		print 'DDD'
