@@ -80,14 +80,14 @@ class dbDict(object):
 
 	def __empty(self):
 		'Clear an existing object table.'
-		if self.dbc !=None:
+		if self.dbc is not None:
 			return self.dbc.execute("""delete from `%s` """ %
 							(self.tablename)
 							)
 
 	def __del(self, cpickle_blobKey):
 		'Delete a row of an existing object table.'
-		if self.dbc !=None:
+		if self.dbc is not None:
 			val = self.dbc.execute("""delete from `%s`
 							where objectKey='%s' """ %
 							(self.tablename, cpickle_blobKey)
@@ -96,14 +96,14 @@ class dbDict(object):
 
 	def __length(self):
 		'Return number of rows of an existing object table.'
-		if self.dbc !=None:
+		if self.dbc is not None:
 			return self.dbc.selectone("""select count(Id) from `%s` """ %
 							(self.tablename)
 							)
 
 	def __get_Id(self, cpickle_blobKey):
 		'Return an object Id from a table by specifying a key.'
-		if self.dbc !=None:
+		if self.dbc is not None:
 			return self.dbc.selectone("""select Id from `%s`
 							where objectKey='%s' """ %
 							(self.tablename, cpickle_blobKey)
@@ -111,7 +111,7 @@ class dbDict(object):
 
 	def __get_hId(self, hash):
 		'Return an object Id from a table by specifying a hash.'
-		if self.dbc !=None:
+		if self.dbc is not None:
 			return self.dbc.selectone("""select Id from `%s`
 							where hash='%s' """ %
 							(self.tablename, hash)
@@ -119,7 +119,7 @@ class dbDict(object):
 
 	def __keys(self):
 		'Return all keys from an existing object table.'
-		if self.dbc !=None:
+		if self.dbc is not None:
 			res_tuple = self.dbc.selectall("""select objectKey from `%s` """ %
 							self.tablename
 						   	)
@@ -129,7 +129,7 @@ class dbDict(object):
 		"""
 		If type=1, the method will query the object DB using a hash as a key.
 		"""
-		if self.dbc !=None:
+		if self.dbc is not None:
 			if type == 0:
 				cpickle_blobKey = self.__pickle_key(blobKey)
 				res_tuple = self.dbc.selectone (""" select object from `%s`
@@ -154,7 +154,7 @@ class dbDict(object):
 
 	def __put(self, blobKey, blob):
 		'Insert a new object in an existing object table.'
-		if self.dbc !=None:
+		if self.dbc is not None:
 			hash = md5.new("""%s""" % blobKey).hexdigest()
 			cpickle_blobKey = self.__pickle_key(blobKey)
 			cpickle_blob	= self.__pickle_key(blob)

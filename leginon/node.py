@@ -218,7 +218,7 @@ class Node(leginonobject.LeginonObject):
 		# will change soon
 		nodeiddata = self.researchByLocation(self.managerloc, dataid)
 
-		if nodeiddata == None:
+		if nodeiddata is None:
 			print "node, researchByDataID: no such data ID"
 			raise IOError
 

@@ -67,7 +67,7 @@ class ShelveDataKeeper(DataHandler):
 
 		# there is an issue if done too quick, try to open existing file
 		# needs another attempt
-		if filename == None:
+		if filename is None:
 			r = xrange(0, 2**16 - 1)
 			files = os.listdir(path)
 			for i in r:
@@ -76,7 +76,7 @@ class ShelveDataKeeper(DataHandler):
 					filename = None
 				else:
 					break
-			if filename == None:
+			if filename is None:
 				raise IOError
 		self.filename = path + '/' + filename
 		try:
@@ -127,7 +127,7 @@ class CachedDictDataKeeper(DataHandler):
 		self.datadict = {}
 		self.lock = threading.Lock()
 
-		if filename == None:
+		if filename is None:
 			r = xrange(0, 2**16 - 1)
 			files = os.listdir(path)
 			for i in r:
@@ -136,7 +136,7 @@ class CachedDictDataKeeper(DataHandler):
 					filename = None
 				else:
 					break
-			if filename == None:
+			if filename is None:
 				raise IOError
 		self.filename = path + '/' + filename
 		try:
@@ -235,7 +235,7 @@ class DataBinder(DataHandler):
 
 	def setBinding(self, dataclass, func=None):
 		'func must take data instance as first arg'
-		if func == None:
+		if func is None:
 			if dataclass in self.bindings:
 				self.priority.remove(dataclass)
 				del self.bindings[dataclass]

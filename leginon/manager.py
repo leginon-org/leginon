@@ -94,7 +94,7 @@ class Manager(node.Node):
 
 		# published data of nodeid mapping to location of node
 		nodelocationdata = self.server.datahandler.query(nodeid)
-		if nodelocationdata == None:
+		if nodelocationdata is None:
 			nodelocationdata = data.NodeLocationData(nodeid, nodelocation)
 		else:
 			# fools! should do something nifty to unregister, reregister, etc.
@@ -156,7 +156,7 @@ class Manager(node.Node):
 	# creates/appends list with nodeid of published data
 	def publishDataLocation(self, dataid, nodeid):
 		datalocationdata = self.server.datahandler.query(dataid)
-		if datalocationdata == None:
+		if datalocationdata is None:
 			datalocationdata = data.DataLocationData(dataid, [nodeid])
 		else:
 			datalocationdata.content.append(nodeid)

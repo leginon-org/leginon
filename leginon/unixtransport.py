@@ -8,7 +8,7 @@ import sys
 class Server(SocketServer.ThreadingUnixStreamServer, socketstreamtransport.Server):
 	def __init__(self, id, dh, filename = None, path = '.'):
 		socketstreamtransport.Server.__init__(self, id, dh)
-		if filename == None:
+		if filename is None:
 			r = xrange(0, 2**16 - 1)
 			files = os.listdir(path)
 			for i in r:
@@ -17,7 +17,7 @@ class Server(SocketServer.ThreadingUnixStreamServer, socketstreamtransport.Serve
 					filename = None
 				else:
 					break
-			if filename == None:
+			if filename is None:
 				raise IOError
 		self.filename = path + '/' + filename
 		

@@ -73,7 +73,7 @@ class xmlrpcserver(object):
 		ret = apply(meth, params2)
 		print 'RETURN', ret
 
-		if ret == None:
+		if ret is None:
 			return ''
 		else:
 			return ret

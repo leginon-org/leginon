@@ -73,7 +73,7 @@ class Client(leginonobject.LeginonObject):
 		self.send(cPickle.dumps(idata, 1))
 		serverexception = cPickle.loads(self.receive())
 		self.close()
-		if serverexception != None:
+		if serverexception is not None:
 			print "socket transport, push: server failed to be pushed"
 			raise IOError
 
