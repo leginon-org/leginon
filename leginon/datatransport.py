@@ -57,7 +57,7 @@ class Client(Base):
 				#print 'RET', ret
 				return ret
 			except IOError:
-				print 'IOError while trying c.push(odata)'
+				#print 'IOError while trying c.push(odata)'
 				pass
 		print "transport IOError, unable to push data:", odata
 		raise IOError
