@@ -287,7 +287,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.displayedtargetdata = displayedtargetdata
 
 	def submitTargets(self):
-		self.logger.info('Sumbiting targets')
+		self.logger.info('Submitting targets')
 		self.getTargetDataList('acquisition')
 		self.getTargetDataList('focus')
 		try:
