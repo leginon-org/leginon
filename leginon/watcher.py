@@ -44,7 +44,7 @@ class Watcher(node.Node):
 			self.watchOff()
 		return self.watchvalue
 
-	def die(self):
+	def die(self, ievent=None):
 		node.Node.die(self)
 
 	def watchOn(self):
