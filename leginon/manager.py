@@ -150,11 +150,12 @@ class Manager(node.Node):
 
 	# launcher related methods
 
-	def newLauncher(self, newid):
-		'''Create a launcher node running in a thread within the manager's process.'''
-		t = threading.Thread(name='%s launcher thread' % newid[-1],
-								target=launcher.Launcher, args=(newid, self.nodelocations))
-		t.start()
+#	def newLauncher(self, newid):
+#		'''Create a launcher node running in a thread within the manager's process.'''
+#		t = threading.Thread(name='%s launcher thread' % newid[-1],
+#								target=launcher.Launcher, args=(newid, self.nodelocations))
+#		t.start()
+#		launcher.Launcher(newid, self.nodelocations)
 
 	def addLauncher(self, nodeid, location):
 		'''Register a launcher with the UI, aliases the launcher to the node ID, location and launchable node classes.'''
@@ -370,10 +371,10 @@ class Manager(node.Node):
 
 	# UI methods
 
-	def uiNewLauncher(self, name):
-		'''UI helper calling newLauncher. See newLauncher.'''
-		self.newLauncher(self.id + (name,))
-		return ''
+#	def uiNewLauncher(self, name):
+#		'''UI helper calling newLauncher. See newLauncher.'''
+#		self.newLauncher(self.id + (name,))
+#		return ''
 
 	def uiGetLauncherDict(self):
 		'''UI helper updated and retrieves launcher information.'''
@@ -531,10 +532,10 @@ class Manager(node.Node):
 									(saveapp, loadapp, launchapp, killapp))
 
 		# creating a launcher
-		argspec = (self.registerUIData('ID', 'string'),)
-		newlauncherspec = self.registerUIMethod(self.uiNewLauncher,
-															'New Launcher', (argspec))
-		launcherspec = self.registerUIContainer('Launcher', (newlauncherspec,))
+#		argspec = (self.registerUIData('ID', 'string'),)
+#		newlauncherspec = self.registerUIMethod(self.uiNewLauncher,
+#															'New Launcher', (argspec))
+#		launcherspec = self.registerUIContainer('Launcher', (newlauncherspec,))
 
 		# managing other nodes, information on nodes, adding a node
 		self.uinodesdata = self.registerUIData('Nodes', 'struct', 'r')
@@ -546,7 +547,8 @@ class Manager(node.Node):
 											(self.uinodesdata, addnodespec))
 
 		self.registerUISpec('Manager', (nodespec, launchspec,
-								killspec, bindspec, appspec, launcherspec, nodesspec))
+#								killspec, bindspec, appspec, launcherspec, nodesspec))
+								killspec, bindspec, appspec, nodesspec))
 
 if __name__ == '__main__':
 	import sys

@@ -17,29 +17,29 @@ if __name__ == '__main__':
 		m.app.load(appfile)
 		print m.app.getLaunchers()
 		for l in m.app.getLaunchers():
-			if l[0] == 'manager':
-				# if its in the manager's process, it must be started
-				m.newLauncher(l)
+	#		if l[0] == 'manager':
+	#			# if its in the manager's process, it must be started
+	#			m.newLauncher(l)
+	#			while l not in m.clients:
+	#				time.sleep(0.1)
+	#		else:
+				# if not, try to add it at a standard port
+			try:
+				m.addNode(l[-1], 55555)
 				while l not in m.clients:
 					time.sleep(0.1)
-			else:
-				# if not, try to add it at a standard port
-				try:
-					m.addNode(l[-1], 55555)
+			except:
+				# if its was on this machine, exec it
+				if socket.gethostname() == l[-1]:
+					print "Attempting to create local launcher process..."
+					os.spawnv(os.P_NOWAIT, 'launcher.py', ['launcher.py', '55555'])
 					while l not in m.clients:
-						time.sleep(0.1)
-				except:
-					# if its was on this machine, exec it
-					if socket.gethostname() == l[-1]:
-						print "Attempting to create local launcher process..."
-						os.spawnv(os.P_NOWAIT, 'launcher.py', ['launcher.py', '55555'])
-						while l not in m.clients:
-							try:
-								m.addNode(l[-1], 55555)
-							except:
-								time.sleep(0.25)
-					else:
-						print 'Unable to activate launcher %s' % l
+						try:
+							m.addNode(l[-1], 55555)
+						except:
+							time.sleep(0.25)
+				else:
+					print 'Unable to activate launcher %s' % l
 		m.app.launch()
 	except IndexError:
 		pass
