@@ -60,6 +60,9 @@ class wxUIClient(UIClient):
 
 	def addFromServer(self, namelist, typelist, value, read, write):
 		print 'ADD', namelist, typelist, value, read, write
+		# h4X0r
+		while(not hasattr(self.container, 'name')):
+			time.sleep(0.01)
 		self.container.add((self.container.name,) + tuple(namelist),
 																									typelist, value, read, write)
 		return ''

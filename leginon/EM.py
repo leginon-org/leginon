@@ -98,14 +98,14 @@ class DataHandler(node.DataHandler):
 			print idata['id'][:-1], 'EM set'
 #<<<<<<< EM.py
 #=======
-
-	def _insert(self, idata):
-		pass
-
-	# borrowed from NodeDataHandler
-	def setBinding(self, eventclass, func):
-		if issubclass(eventclass, event.Event):
-			datahandler.DataBinder.setBinding(self, eventclass, func)
+#
+#	def _insert(self, idata):
+#		pass
+#
+#	# borrowed from NodeDataHandler
+#	def setBinding(self, eventclass, func):
+#		if issubclass(eventclass, event.Event):
+#			datahandler.DataBinder.setBinding(self, eventclass, func)
 #>>>>>>> 1.64.2.4
 		else:
 			node.DataHandler.insert(self, idata)

@@ -8,7 +8,7 @@ class ImagePanel(wxPanel):
 	def __init__(self, parent, id):
 		self.image = None
 		self.bitmap = None
-		self.buffer = wxEmptyBitmap(0, 0)
+		self.buffer = wxEmptyBitmap(1, 1)
 #		wxPanel.__init__(self, parent, id, size=wxSize(256, 256))
 #		wxPanel.__init__(self, parent, id, style=wxNO_FULL_REPAINT_ON_RESIZE)
 		wxPanel.__init__(self, parent, id)
