@@ -115,9 +115,10 @@ class PresetsManager(node.Node):
 		self.currentselection = None
 		self.currentpreset = None
 		self.presets = []
-		self.getPresetsFromDB()
+		#self.getPresetsFromDB()
 
 		self.defineUserInterface()
+		self.getPresetsFromDB()
 		self.start()
 
 	def changePreset(self, ievent):
@@ -174,6 +175,8 @@ class PresetsManager(node.Node):
 			for p in self.presets:
 				p['hasref'] = False
 			self.presetToDB()
+
+		self.validateCycleOrder()
 
 	def presetToDB(self, presetdata=None):
 		'''
@@ -240,6 +243,7 @@ class PresetsManager(node.Node):
 			self.presetToDB(premove)
 		pnames = self.presetNames()
 		self.uiselectpreset.set(pnames, 0)
+		self.validateCycleOrder()
 
 	def toScope(self, p):
 		'''
@@ -399,6 +403,35 @@ class PresetsManager(node.Node):
 				break
 		return cycle
 
+	def validateCycleOrder(self):
+		'''
+		checks for missing presets or extra presets in the cycle list
+		'''
+		allpresets = self.presetNames()
+		cyclepresets = self.orderlist.get()
+
+		missing_in_cycle = []
+		for presetname in allpresets:
+			if presetname not in cyclepresets:
+				missing_in_cycle.append(presetname)
+		extra_in_cycle = []
+		for presetname in cyclepresets:
+			if presetname not in allpresets:
+				extra_in_cycle.append(presetname)
+
+		missing_str = ', '.join(missing_in_cycle)
+		extra_str = ', '.join(extra_in_cycle)
+		if missing_str:
+			missing_str = '  Presets Missing from cycle:  ' + missing_str
+		if extra_str:
+			extra_str = '  In Cycle, but no such preset:  ' + extra_str
+		message = '\n'.join([missing_str, extra_str])
+
+		if message:
+			title = 'Inconsistencies in Cycle Order List'
+			message = 'Inconsistencies in Cycle Order List:\n' + message
+			self.outputMessage(title, message)
+
 	def uiCycleToScope(self):
 		print 'Cycling Presets...'
 		for name in self.orderlist.get():
@@ -425,6 +458,7 @@ class PresetsManager(node.Node):
 			del d['session']
 			self.presetparams.set(d, callback=False)
 			print 'created new preset: %s' % (newname,)
+			self.validateCycleOrder()
 		else:
 			print 'Enter a preset name!'
 
