@@ -215,12 +215,14 @@ class DoseCalibrationClient(CalibrationClient):
 		newdata['session'] = self.node.session
 		newdata['high tension'] = ht
 		newdata['sensitivity'] = sensitivity
+		newdata['tem'] = self.instrument.getTEMName()
+		newdata['ccdcamera'] = self.instrument.getCCDCameraName()
 		self.node.publish(newdata, database=True, dbforce=True)
 
 	def researchSensitivity(self, ht, instrument):
 		qdata = data.CameraSensitivityCalibrationData()
-		qdata['session'] = data.SessionData()
-		qdata['session']['instrument'] = instrument
+		qdata['tem'] = self.instrument.getTEMName()
+		qdata['ccdcamera'] = self.instrument.getCCDCameraName()
 		qdata['high tension'] = ht
 		results = self.node.research(datainstance=qdata, results=1)
 		if results:
@@ -259,10 +261,12 @@ class DoseCalibrationClient(CalibrationClient):
 		return counts_per_electron
 
 	def sensitivity_from_imagedata(self, imagedata, dose_rate):
-		inst = imagedata['session']['instrument']
+		tem = imagedata['scope']['tem']
+		ccdcamera = imagedata['camera']['ccdcamera']
 		mag = imagedata['scope']['magnification']
 		self.node.logger.info('Magnification %.1f' % mag)
-		specimen_pixel_size = self.psizecal.retrievePixelSize(mag, instrument=inst)
+		specimen_pixel_size = self.psizecal.retrievePixelSize(mag, tem=tem,
+																													ccdcamera=ccdcamera)
 		self.node.logger.info('Specimen pixel size %.4e' % specimen_pixel_size)
 		camera_pixel_size = inst['camera pixel size']
 		self.node.logger.info('Camera pixel size %.4e' % camera_pixel_size)
@@ -278,12 +282,14 @@ class DoseCalibrationClient(CalibrationClient):
 		'''
 		imagedata indirectly contains most info needed to calc dose
 		'''
-		inst = imagedata['session']['instrument']
-		camera_pixel_size = inst['camera pixel size']
+		tem = imagedata['scope']['tem']
+		ccdcamera = imagedata['camera']['ccdcamera']
+		camera_pixel_size = imagedata['camera']['pixel size']['x']
 		ht = imagedata['scope']['high tension']
 		binning = imagedata['camera']['binning']['x']
 		mag = imagedata['scope']['magnification']
-		specimen_pixel_size = self.psizecal.retrievePixelSize(mag, instrument=inst)
+		specimen_pixel_size = self.psizecal.retrievePixelSize(mag, tem=tem,
+																													ccdcamera=ccdcamera)
 		self.node.logger.info('Specimen pixel size %.4e' % specimen_pixel_size)
 		exp_time = imagedata['camera']['exposure time'] / 1000.0
 		numdata = imagedata['image']
@@ -303,32 +309,35 @@ class PixelSizeCalibrationClient(CalibrationClient):
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)
 
-	def researchPixelSizeData(self, mag, instrument=None):
+	def researchPixelSizeData(self, mag, tem=None, ccdcamera=None):
 		queryinstance = data.PixelSizeCalibrationData()
 		queryinstance['magnification'] = mag
-		queryinstance['session'] = data.SessionData()
-		if instrument is None:
-			queryinstance['session']['instrument'] = self.node.session['instrument']
+		if tem is None:
+			queryinstance['tem'] = self.instrument.getTEMName()
 		else:
-			queryinstance['session']['instrument'] = instrument
+			queryinstance['tem'] = tem
+		if ccdcamera is None:
+			queryinstance['ccdcamera'] = self.instrument.getCCDCameraName()
+		else:
+			queryinstance['ccdcamera'] = ccdcamera
 		caldatalist = self.node.research(datainstance=queryinstance, results=1)
 		if len(caldatalist) > 0:
 			return caldatalist[0]
 		else:
 			return None
 
-	def retrievePixelSize(self, mag, instrument=None):
+	def retrievePixelSize(self, mag, tem=None, ccdcamera=None):
 		'''
 		finds the requested pixel size using magnification
 		'''
-		caldata = self.researchPixelSizeData(mag, instrument)
+		caldata = self.researchPixelSizeData(mag, tem, ccdcamera)
 		if caldata is None:
 			raise NoPixelSizeError()
 		pixelsize = caldata['pixelsize']
 		return pixelsize
 
-	def time(self, mag, instrument=None):
-		pdata = self.researchPixelSizeData(mag, instrument)
+	def time(self, mag, tem=None, ccdcamera=None):
+		pdata = self.researchPixelSizeData(mag, tem, ccdcamera)
 		if pdata is None:
 			timeinfo = None
 		else:
@@ -340,8 +349,8 @@ class PixelSizeCalibrationClient(CalibrationClient):
 		finds the requested pixel size using magnification
 		'''
 		queryinstance = data.PixelSizeCalibrationData()
-		queryinstance['session'] = data.SessionData()
-		queryinstance['session']['instrument'] = self.node.session['instrument']
+		queryinstance['tem'] = self.instrument.getTEMName()
+		queryinstance['ccdcamera'] = self.instrument.getCCDCameraName()
 		caldatalist = self.node.research(datainstance=queryinstance)
 
 		return caldatalist
@@ -379,8 +388,8 @@ class MatrixCalibrationClient(CalibrationClient):
 
 		queryinstance = data.MatrixCalibrationData(magnification=mag, type=caltype)
 		queryinstance['high tension'] = ht
-		queryinstance['session'] = data.SessionData()
-		queryinstance['session']['instrument'] = self.node.session['instrument']
+		queryinstance['tem'] = self.instrument.getTEMName()
+		queryinstance['ccdcamera'] = self.instrument.getCCDCameraName()
 		caldatalist = self.node.research(datainstance=queryinstance, results=1)
 		if len(caldatalist) > 0:
 			caldata = caldatalist[0]
@@ -413,7 +422,7 @@ class MatrixCalibrationClient(CalibrationClient):
 		stores a new calibration matrix
 		'''
 		newmatrix = Numeric.array(matrix, Numeric.Float64)
-		caldata = data.MatrixCalibrationData(session=self.node.session, magnification=mag, type=type, matrix=matrix)
+		caldata = data.MatrixCalibrationData(session=self.node.session, magnification=mag, type=type, matrix=matrix, tem=self.instrument.getTEMName(), ccdcamera=self.instrument.getCCDCameraName())
 		caldata['high tension'] = ht
 		self.node.publish(caldata, database=True, dbforce=True)
 
@@ -839,6 +848,8 @@ class ModeledStageCalibrationClient(CalibrationClient):
 	def storeMagCalibration(self, label, ht, mag, axis, angle, mean):
 		caldata = data.StageModelMagCalibrationData()
 		caldata['session'] = self.node.session
+		caldata['tem'] = self.instrument.getTEMName()
+		caldata['ccdcamera'] = self.instrument.getCCDCameraName()
 		caldata['label'] = label
 		caldata['high tension'] = ht
 		caldata['magnification'] = mag
@@ -848,11 +859,10 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		self.node.publish(caldata, database=True, dbforce=True)
 
 	def researchMagCalibration(self, ht, mag, axis):
-		tmpsession = data.SessionData()
-		tmpsession['instrument'] = self.node.session['instrument']
 		qinst = data.StageModelMagCalibrationData(magnification=mag, axis=axis)
 		qinst['high tension'] = ht
-		qinst['session'] = tmpsession
+		qinst['tem'] = self.instrument.getTEMName()
+		qinst['ccdcamera'] = self.instrument.getCCDCameraName()
 
 		caldatalist = self.node.research(datainstance=qinst, results=1)
 		if len(caldatalist) > 0:
@@ -880,6 +890,8 @@ class ModeledStageCalibrationClient(CalibrationClient):
 	def storeModelCalibration(self, label, axis, period, a, b):
 		caldata = data.StageModelCalibrationData()
 		caldata['session'] = self.node.session
+		caldata['tem'] = self.instrument.getTEMName()
+		caldata['ccdcamera'] = self.instrument.getCCDCameraName()
 		caldata['label'] = label 
 		caldata['axis'] = axis
 		caldata['period'] = period
@@ -891,11 +903,16 @@ class ModeledStageCalibrationClient(CalibrationClient):
 
 		self.node.publish(caldata, database=True, dbforce=True)
 
-	def researchModelCalibration(self, instrument, axis):
-		tmpsession = data.SessionData()
-		tmpsession['instrument'] = self.node.session['instrument']
+	def researchModelCalibration(self, axis, tem=None, ccdcamera=None):
 		qinst = data.StageModelCalibrationData(axis=axis)
-		qinst['session'] = tmpsession
+		if tem is None:
+			qinst['tem'] = self.instrument.getTEMName()
+		else:
+			qinst['tem'] = tem
+		if ccdcamera is None:
+			qinst['ccdcamera'] = self.instrument.getCCDCameraName()
+		else:
+			qinst['ccdcamera'] = ccdcamera
 		caldatalist = self.node.research(datainstance=qinst, results=1)
 		if len(caldatalist) > 0:
 			caldata = caldatalist[0]
@@ -904,7 +921,7 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		return caldata
 
 	def retrieveModelCalibration(self, axis):
-		caldata = self.researchModelCalibration(self.node.session['instrument'], axis)
+		caldata = self.researchModelCalibration(axis)
 		if caldata is None:
 			raise RuntimeError('no model calibration')
 		else:
@@ -920,8 +937,7 @@ class ModeledStageCalibrationClient(CalibrationClient):
 			return caldata2
 
 	def timeModelCalibration(self, axis):
-		inst = self.node.session['instrument']
-		caldata = self.researchModelCalibration(inst, axis)
+		caldata = self.researchModelCalibration(axis)
 		if caldata is None:
 			timeinfo = None
 		else:
@@ -1064,12 +1080,16 @@ class EucentricFocusClient(CalibrationClient):
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)
 
-	def researchEucentricFocus(self, ht, mag, instrument=None):
-		if instrument is None:
-			instrument = self.node.session['instrument']
+	def researchEucentricFocus(self, ht, mag, tem=None, ccdcamera=None):
 		query = data.EucentricFocusData()
-		query['session'] = data.SessionData()
-		query['session']['instrument'] = instrument
+		if tem is None:
+			query['tem'] = self.instrument.getTEMName()
+		else:
+			query['tem'] = tem
+		if ccdcamera is None:
+			query['ccdcamera'] = self.instrument.getCCDCameraName()
+		else:
+			query['ccdcamera'] = ccdcamera
 		query['high tension'] = ht
 		query['magnification'] = mag
 		datalist = self.node.research(datainstance=query, results=1)
@@ -1082,7 +1102,10 @@ class EucentricFocusClient(CalibrationClient):
 	def publishEucentricFocus(self, ht, mag, ef):
 		newdata = data.EucentricFocusData()
 		newdata['session'] = self.node.session
+		newdata['tem'] = self.instrument.getTEMName()
+		newdata['ccdcamera'] = self.instrument.getCCDCameraName()
 		newdata['high tension'] = ht
 		newdata['magnification'] = mag
 		newdata['focus'] = ef
 		self.node.publish(newdata, database=True, dbforce=True)
+

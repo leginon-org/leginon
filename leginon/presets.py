@@ -677,14 +677,15 @@ class PresetsManager(node.Node):
 		'''
 		get list of session names from this instrument
 		'''
-		if self.session['instrument'] is None:
-			self.sessiondict = {}
-			return
-		myinstname = self.session['instrument']['name']
+		# this has to be done differently
+		#if self.session['instrument'] is None:
+		#	self.sessiondict = {}
+		#	return
+		#myinstname = self.session['instrument']['name']
 		querysession = data.SessionData()
-		queryinst = data.InstrumentData()
-		queryinst['name'] = myinstname
-		querysession['instrument'] = queryinst
+		#queryinst = data.InstrumentData()
+		#queryinst['name'] = myinstname
+		#querysession['instrument'] = queryinst
 		limit = 100
 		sessionlist = self.research(datainstance=querysession, results=limit)
 		sessionnamelist = [x['name'] for x in sessionlist]

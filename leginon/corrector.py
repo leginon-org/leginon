@@ -37,9 +37,13 @@ class ImageCorrection(remotecall.Object):
 		remotecall.Object.__init__(self)
 
 	def getImage(self, ccdcameraname=None):
+		if ccdcameraname is not None:
+			self.node.instrument.setCCDCamera(ccdcameraname)
 		return self.node.acquireCorrectedImage()
 
 	def getImageData(self, ccdcameraname=None):
+		if ccdcameraname is not None:
+			self.node.instrument.setCCDCamera(ccdcameraname)
 		return self.node.acquireCorrectedImageData()
 
 class Corrector(node.Node):
@@ -96,6 +100,8 @@ class Corrector(node.Node):
 		plandata['camstate'] = newcamstate
 		plandata['bad_rows'] = self.plan['rows']
 		plandata['bad_cols'] = self.plan['columns']
+		plandata['tem'] = self.instrument.getTEMName()
+		plandata['ccdcamera'] = self.instrument.getCCDCameraName()
 		self.storePlan(plandata)
 
 	def getPlan(self):
@@ -157,8 +163,8 @@ class Corrector(node.Node):
 	def retrievePlan(self, corstate):
 		qplan = data.CorrectorPlanData()
 		qplan['camstate'] = corstate
-		qplan['session'] = data.SessionData()
-		qplan['session']['instrument'] = self.session['instrument']
+		qplan['tem'] = self.instrument.getTEMName()
+		qplan['ccdcamera'] = self.instrument.getCCDCameraName()
 		plandatalist = self.research(datainstance=qplan)
 		if plandatalist:
 			plandata = plandatalist[0]
@@ -232,8 +238,8 @@ class Corrector(node.Node):
 			return None
 
 		imagetemp['camstate'] = camstate
-		imagetemp['session'] = data.SessionData()
-		imagetemp['session']['instrument'] = self.session['instrument']
+		imagetemp['tem'] = self.instrument.getTEMName()
+		imagetemp['ccdcamera'] = self.instrument.getCCDCameraName()
 		try:
 			ref = self.research(datainstance=imagetemp, results=1)[0]
 		except node.ResearchError, e:
@@ -318,6 +324,8 @@ class Corrector(node.Node):
 		imagetemp['camstate'] = camstate
 		imagetemp['filename'] = self.filename(type, imagetemp.dmid[-1])
 		imagetemp['session'] = self.session
+		imagetemp['tem'] = self.instrument.getTEMName()
+		imagetemp['ccdcamera'] = self.instrument.getCCDCameraName()
 		self.logger.info('Publishing reference image...')
 		try:
 			self.publish(imagetemp, pubevent=True, database=True)

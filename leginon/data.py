@@ -837,16 +837,21 @@ camera_params = (
 	('image data', newdict.NumericArrayType),
 	('inserted', bool),
 	('dump', bool),
+	('pixel size', dict),
 )
 
 class ScopeEMData(EMData):
 	def typemap(cls):
-		return EMData.typemap() + scope_params
+		return EMData.typemap() + scope_params + (
+			('tem', str),
+		)
 	typemap = classmethod(typemap)
 
 class CameraEMData(EMData):
 	def typemap(cls):
-		return EMData.typemap() + camera_params
+		return EMData.typemap() + camera_params + (
+			('ccdcamera', str),
+		)
 	typemap = classmethod(typemap)
 
 class PresetTargetData(Data):
@@ -905,7 +910,12 @@ class DriftData(InSessionData):
 	typemap = classmethod(typemap)
 
 class CalibrationData(InSessionData):
-	pass
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('tem', str),
+			('ccdcamera', str),
+		)
+	typemap = classmethod(typemap)
 
 class CameraSensitivityCalibrationData(CalibrationData):
 	def typemap(cls):
@@ -1114,6 +1124,8 @@ class CorrectorImageData(ImageData):
 	def typemap(cls):
 		return ImageData.typemap() + (
 			('camstate', CorrectorCamstateData),
+			('tem', str),
+			('ccdcamera', str),
 		)
 	typemap = classmethod(typemap)
 
@@ -1223,6 +1235,8 @@ class CorrectorPlanData(InSessionData):
 			('bad_rows', tuple),
 			('bad_cols', tuple),
 			('clip_limits', tuple),
+			('tem', str),
+			('ccdcamera', str),
 		)
 	typemap = classmethod(typemap)
 

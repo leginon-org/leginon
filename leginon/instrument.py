@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.15 $
+# $Revision: 1.16 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-24 20:15:21 $
+# $Date: 2005-02-24 21:19:17 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -57,11 +57,26 @@ class Proxy(object):
 			if self.imagecorrection is self.imagecorrections[name]:
 				self.imagecorrection = None
 
+	def getTEMName(self):
+		if self.tem is None:
+			return None
+		return self.tem.__name
+
 	def getTEMNames(self):
 		return self.tems.keys()
 
+	def getCCDCameraName(self):
+		if self.ccdcamera is None:
+			return None
+		return self.ccdcamera.__name
+
 	def getCCDCameraNames(self):
 		return self.ccdcameras.keys()
+
+	def getImageCorrectionName(self):
+		if self.imagecorrection is None:
+			return None
+		return self.imagecorrection.__name
 
 	def getImageCorrectionNames(self):
 		return self.imagecorrections.keys()
@@ -101,7 +116,7 @@ class Proxy(object):
 		elif issubclass(dataclass, data.CorrectedCameraImageData):
 			if self.imagecorrection is None:
 				raise RuntimeError('no image correction set')
-			return self.imagecorrection.ImageData
+			return self.imagecorrection.getImageData(self.getCCDCameraName())
 		if proxy is None:
 			raise ValueError('no proxy selected for this data class')
 		instance = dataclass()
@@ -123,7 +138,12 @@ class Proxy(object):
 		result = proxy.multiCall(attributes, types)
 		for i, key in enumerate(keys):
 			instance[key] = result[i]
-		instance['session'] = self.session
+		if 'session' in instance:
+			instance['session'] = self.session
+		if 'tem' in instance:
+			instance['tem'] = self.getTEMName()
+		if 'ccdcamera' in instance:
+			instance['ccdcamera'] = self.getCCDCameraName()
 		return instance
 
 	def setData(self, instance):
@@ -219,5 +239,6 @@ parametermapping = (
 	('exposure type', 'ExposureType'),
 	('image data', 'Image'),
 	('inserted', 'Inserted'),
+	('pixel size', 'PixelSize'),
 )
 

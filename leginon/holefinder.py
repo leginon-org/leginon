@@ -115,7 +115,8 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.setImage(orig, 'Original')
 
 	def acqImage(self):
-		orig = self.instrument.imagecorrection.Image
+		ccdcameraname = self.instrument.getCCDCameraName()
+		orig = self.instrument.imagecorrection.getImage(ccdcameraname)
 		self.hf['original'] = orig
 		self.setImage(orig, 'Original')
 

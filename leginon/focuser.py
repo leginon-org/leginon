@@ -226,7 +226,7 @@ class Focuser(acquisition.Acquisition):
 			camstate1 = copy.copy(camstate0)
 			camstate1['exposure time'] = melt_time_ms
 			## make small image
-			camsize = self.session['instrument']['camera size']
+			camsize = self.instrument.ccdcamera.CameraSize
 			bin = 8
 			dim = camsize / bin
 			camstate1['dimension'] = {'x':dim,'y':dim}
