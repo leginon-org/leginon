@@ -363,12 +363,14 @@ class Manager(node.Node):
 		self.waitNodes(dependenciescopy)
 		ev = event.LaunchEvent(self.ID(), newproc=newproc,
 														targetclass=target, args=args)
-		attempts = 10
+		attempts = 5
 		for i in range(attempts):
 			try:
 				self.outputEvent(ev, 0, launcher)
 			except IOError:
 				time.sleep(1.0)
+				if i == attempts - 1:
+					raise
 			else:
 				break
 
