@@ -72,13 +72,23 @@ class ContrastTool(object):
 		return self.contrastmin, self.contrastmax
 
 	def getScaledValue(self, position):
-		return (self.imagemax - self.imagemin)*(position - self.slidermin)/(self.slidermax - self.slidermin) + self.imagemin
+		scale = float(position - self.slidermin)/(self.slidermax - self.slidermin)
+		return (self.imagemax - self.imagemin)*scale + self.imagemin
 
-	def setRange(self, range):
+	def getSliderValue(self, value):
+		scale = (value - self.imagemin)/(self.imagemax - self.imagemin)
+		return int((self.slidermax - self.slidermin)*scale + self.slidermin)
+
+	def setRange(self, range, value=None):
 		self.imagemin = range[0]
 		self.imagemax = range[1]
-		self.contrastmin = self.getScaledValue(self.minslider.GetValue())
-		self.contrastmax = self.getScaledValue(self.maxslider.GetValue())
+		if value is None:
+			self.contrastmin = self.getScaledValue(self.minslider.GetValue())
+			self.contrastmax = self.getScaledValue(self.maxslider.GetValue())
+		else:
+			self.contrastmin, self.contrastmax = value
+			self.minslider.SetValue(self.getSliderValue(self.contrastmin))
+			self.maxslider.SetValue(self.getSliderValue(self.contrastmax))
 
 	def onMinSlider(self, evt):
 		contrastmin = self.getScaledValue(evt.GetPosition())
@@ -415,9 +425,9 @@ class ImagePanel(wx.Panel):
 			yoffset = 0
 		self.offset = (xoffset, yoffset)
 
-	def setImage(self, imagedata, scroll=False):
+	def setImage(self, imagedata, scroll=False, stats={}):
 		if isinstance(imagedata, Numeric.ArrayType):
-			self.setNumericImage(imagedata, scroll)
+			self.setNumericImage(imagedata, scroll, stats)
 		elif isinstance(imagedata, Image.Image):
 			self.setPILImage(imagedata, scroll)
 		elif imagedata is None:
@@ -436,7 +446,7 @@ class ImagePanel(wx.Panel):
 			self.panel.Scroll(0, 0)
 		self.UpdateDrawing()
 
-	def setNumericImage(self, numericimage, scroll=False):
+	def setNumericImage(self, numericimage, scroll=False, stats={}):
 		'''
 		Set the numeric image, update bitmap, update buffer, set viewport size,
 		scroll, and refresh the screen.
@@ -446,19 +456,24 @@ class ImagePanel(wx.Panel):
 			raise TypeError('Numeric image must be of Numeric.ArrayType')
 
 		self.imagedata = numericimage
-		mn,mx = imagefun.minmax(self.imagedata)
-		mean = imagefun.mean(self.imagedata)
-		stdev = imagefun.stdev(self.imagedata, known_mean=mean)
+
+		if 'min' not in stats or 'max' not in stats:
+			stats['min'], stats['max'] = imagefun.minmax(self.imagedata)
+		if 'mean' not in stats:
+			stats['mean'] = imagefun.mean(self.imagedata)
+		if 'stdev' not in stats:
+			stats['stdev'] = imagefun.stdev(self.imagedata, known_mean=stats['mean'])
+
 		dflt_std = 5
 		## use these...
-		dflt_min = mean - dflt_std * stdev
-		dflt_max = mean + dflt_std * stdev
+		dflt_min = stats['mean'] - dflt_std * stats['stdev']
+		dflt_max = stats['mean'] + dflt_std * stats['stdev']
 		## unless they go beyond min and max of image
-		dflt_min = max(dflt_min, mn)
-		dflt_max = min(dflt_max, mx)
+		dflt_min = max(dflt_min, stats['min'])
+		dflt_max = min(dflt_max, stats['max'])
 
-		self.imagerange = (dflt_min, dflt_max)
-		self.contrasttool.setRange(self.imagerange)
+		value = (dflt_min, dflt_max)
+		self.contrasttool.setRange((stats['min'], stats['max']), value)
 		self.setBitmap()
 		self.setVirtualSize()
 		self.setBuffer()
