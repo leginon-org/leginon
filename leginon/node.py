@@ -285,6 +285,8 @@ class Node(leginonobject.LeginonObject):
 				eventclass = event.publish_events[dataclass]
 			else:
 				eventclass = pubeventclass
+			if eventclass is None:
+				raise PublishError('need to know which pubeventclass to use when publishing %s' % (dataclass,))
 			e = eventclass()
 			e['data'] = idata.reference()
 			if broadcast:

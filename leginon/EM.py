@@ -203,7 +203,7 @@ class EM(node.Node):
 
 		### data handlers that will be hosted here:
 		self.scopedata = data.DataHandler(data.ScopeEMData, getdata=self.getScope)
-		self.publish(self.scopedata, pubevent=True, broadcast=True)
+		self.publish(self.scopedata, pubevent=True, pubeventclass=event.ScopeEMPublishEvent, broadcast=True)
 
 		self.cameradata = data.DataHandler(data.CameraEMData, getdata=self.getCamera)
 		self.publish(self.cameradata, pubevent=True, broadcast=True)

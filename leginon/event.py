@@ -405,7 +405,11 @@ event_classes = eventClasses()
 for eventclass in event_classes.values():
 	if issubclass(eventclass, PublishEvent):
 		if hasattr(eventclass, 'dataclass'):
-			publish_events[eventclass.dataclass] = eventclass
+			if eventclass.dataclass in publish_events:
+				## for now we will just avoid a conflict
+				publish_events[eventclass.dataclass] = None
+			else:
+				publish_events[eventclass.dataclass] = eventclass
 
 # event related exceptions
 
