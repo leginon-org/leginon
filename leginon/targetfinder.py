@@ -7,6 +7,7 @@ import Queue
 import Mrc
 import uidata
 import Numeric
+import mosaic
 
 import xmlrpclib
 #import xmlrpclib2 as xmlbinlib
@@ -137,8 +138,10 @@ class ClickTargetFinder(TargetFinder):
 	def getTargetDataList(self, typename, datatype):
 		targetlist = []
 		for imagetarget in self.clickimage.getTargetType(typename):
-			target = {'canvas x': imagetarget[0],
-								'canvas y': imagetarget[1]}
+			column, row = imagetarget
+			target = {'array row': row,
+								'array column': column
+								'array shape': self.currentimage.shape}
 			imageinfo = self.imageInfo()
 			target.update(imageinfo)
 			targetdata = datatype(self.ID(), target)
@@ -169,4 +172,44 @@ class ClickTargetFinder(TargetFinder):
 #			print 'TARGETDATA later', targetdata['id']
 #		self.publishTargetList()
 #		self.currentimage = None
+
+# perhaps this should be a 'mixin' class so it can work with any target finder
+class MosaicClickTargetFinder(ClickTargetFinder):
+	def __init__(self, id, session, nodelocations, **kwargs):
+		ClickTargetFinder.__init__(self, id, session, nodelocations, **kwargs)
+		self.calclients = {
+			'image shift': calibrationclient.ImageShiftCalibrationClient(self),
+			'stage position': calibrationclient.StageCalibrationClient(self),
+			'modeled stage position':
+												calibrationclient.ModeledStageCalibrationClient(self)
+		}
+		self.mosaic = mosaic.EMMosaic(self.calclients)
+
+	def processData(self, newdata):
+		ClickTargetFinder.processData(self, newdata)
+		self.mosaic.addTile(newdata['image'], newdata['scope'], newdata['camera'])
+		self.clickimage.setImage(self.mosaic.getMosaicImage())
+		# needs to update target positions
+		self.clickimage.setTargets([])
+
+	def getTargetDataList(self, typename, datatype):
+		targetlist = []
+		for imagetarget in self.clickimage.getTargetType(typename):
+			x, y = imagetarget
+			target = self.mosaic.getTargetInfo(x, y)
+			imageinfo = self.imageInfo()
+			target.update(imageinfo)
+			targetdata = datatype(self.ID(), target)
+			self.targetlist.append(targetdata)
+		return targetlist
+
+	def advanceImage(self):
+		pass
+
+	def defineUserInterface(self):
+		ClickTargetFinder.defineUserInterface(self)
+		clearmethod = uidata.UIMethod('Reset Mosaic', self.mosaic.clear)
+		container = uidata.UIMediumContainer('Mosaic Click Target Finder')
+		container.addUIObjects((clearmethod))
+		self.uiserver.addUIObject(container)
 

@@ -1,57 +1,18 @@
 #!/usr/bin/env python
-import node
-import data
-import event
+import acquisitionmosaic
 import Numeric
-import math
-import random
-import Image
-import time
-import math
-import sys
 import Mrc
 
-class TestMosaic(node.Node):
-	def __init__(self, id, session, nodelocations, **kwargs):
-		node.Node.__init__(self, id, session, nodelocations, **kwargs)
-		self.addEventOutput(event.TileImagePublishEvent)
-		self.start()
+def makeTiles():
+	mosaic = acquisitionmosaic.Mosaic()
 
-	def main(self):
-		import time
-		time.sleep(3.0)
-		self.makeTiles()
+	tiles = [Mrc.mrc_to_numeric('test2.mrc'), Mrc.mrc_to_numeric('test2.mrc')]
+	neighbors = []
+	for tile in tiles:
+		mosaic.addTile(tile, neighbors)
+		neighbors = mosaic.tiles
+	for i in mosaic.tiles:
+		print i, i.position, i.image.shape
+	print mosaic.getNearestTile(0, 500)
 
-	def makeTiles(self):
-		path = 'mosaic\\'
-		fp = open(path + '02jun18a.pre.gonpos')
-		filelines = fp.readlines()
-		fp.close
-
-		neighbors = []
-		for line in filelines[:16]:
-			fields = line.split()
-			filename = fields[0]
-			x = float(fields[1])
-			y = float(fields[2])
-
-			print 'reading', filename
-			tile = Mrc.mrc_to_numeric(path + filename)
-			print 'type =', tile.typecode()
-#			tile = source.astype(Numeric.Float32)
-
-			time.sleep(1.0)
-			print 'publishing'
-			newid = self.ID()
-			self.publish(data.TileImageData(newid,
-																scope={'stage position': {'x': x, 'y': y}},
-																camera={'image data': tile},
-																neighbor_tiles=neighbors),
-										pubevent=True)
-			neighbors = [newid]
-
-#	def defineUserInterface(self):
-#		nodespec = node.Node.defineUserInterface(self)
-#
-#		self.registerUISpec('Test Mosaic', (nodespec,))
-
+makeTiles()
