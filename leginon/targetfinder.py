@@ -41,7 +41,7 @@ class TargetFinder(imagewatcher.ImageWatcher):
 
 	def publishTargetList(self):
 		if self.targetlist:
-			targetlistdata = data.ImageTargetListData(self.ID(), targets=self.targetlist)
+			targetlistdata = data.ImageTargetListData(id=self.ID(), targets=self.targetlist)
 			for targetdata in targetlistdata['targets']:
 				print targetdata['id']
 				
@@ -139,11 +139,12 @@ class ClickTargetFinder(TargetFinder):
 		for imagetarget in self.clickimage.getTargetType(typename):
 			column, row = imagetarget
 			# using self.currentiamge.shape could be bad
-			target = {'delta row': row - self.currentimage.shape/2,
-								'delta column': column - self.currentimage.shape/2}
+			target = {'delta row': row - self.currentimage.shape[0]/2,
+								'delta column': column - self.currentimage.shape[1]/2}
 			imageinfo = self.imageInfo()
 			target.update(imageinfo)
-			targetdata = datatype(self.ID(), target)
+			targetdata = datatype(id=self.ID())
+			targetdata.friendly_update(target)
 			self.targetlist.append(targetdata)
 		return targetlist
 
@@ -201,7 +202,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			target = self.mosaic.getTargetInfo(x, y)
 			imageinfo = self.imageInfo()
 			target.update(imageinfo)
-			targetdata = datatype(self.ID(), target)
+			targetdata = datatype(id=self.ID())
+			targetdata.friendly_update(target)
 			self.targetlist.append(targetdata)
 		return targetlist
 
