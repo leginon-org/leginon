@@ -147,7 +147,7 @@ OR
 
 
 import sqlexpr
-import extendedcopy as copy
+import copy
 import sqldb
 import string
 import re
@@ -1169,6 +1169,10 @@ def sqlColumnsDefinition(in_dict, noDefault=None):
 			column['Key'] = 'INDEX'
 			column['Index'] = [column['Field']]
 			columns.append(column)
+		elif isinstance(value, data.Object):
+			column['Field'] = object2sqlColumn(key)
+			column['Type'] = 'LONGBLOB'
+			columns.append(column)
 		elif isinstance(value, data.Binary):
 			column['Field'] = bin2sqlColumn(key)
 			column['Type'] = 'LONGBLOB'
@@ -1206,6 +1210,12 @@ def bin2sqlColumn(key):
 	Add BIN| if value is instance of data.binary
 	"""
 	return "BIN%s%s"%(sep,key,)
+
+def object2sqlColumn(key):
+	"""
+	Add PICKLE| if value is instance of data.Object
+	"""
+	return "PICKLE%s%s"%(sep,key,)
 
 def seq2sqlColumn(key):
 	"""
@@ -1274,6 +1284,8 @@ def sqlColumnsFormat(in_dict):
 			columns[ref2field(key,value)] = value.dbid
 		elif isinstance(value, data.Binary):
 			columns[bin2sqlColumn(key)] = value.getPickledObject()
+		elif isinstance(value, data.Object):
+			columns[object2sqlColumn(key)] = value.toPickle()
 		elif type(value) in [tuple, list]:
 			columns[seq2sqlColumn(key)] = repr(value)
 	return columns
@@ -1336,6 +1348,8 @@ def datatype(in_dict, qikey=None, qinfo=None):
 				content[a[1]] = eval(value)
 			except SyntaxError:
 				content[a[1]] = None
+		elif a[0] == 'PICKLE':
+			content[a[1]] = data.Object(new_pickle=value)
 		elif a[0] == 'BIN':
 			po = data.Binary(data.Pickle(value))
 			content[a[1]] = po.getObject()
