@@ -297,7 +297,7 @@ class ManualFocusDialog(wx.MiniFrame):
 
 		self.SetToolBar(self.toolbar)
 
-		self.panel = gui.wx.ImageViewer.ImagePanel(self, -1)
+		self.imagepanel = gui.wx.ImageViewer.ImagePanel(self, -1)
 
 		self.statusbar = wx.StatusBar(self, -1)
 		self.SetStatusBar(self.statusbar)
