@@ -5,17 +5,17 @@
 #			 For terms of the license agreement
 #			 see	http://ami.scripps.edu/software/leginon-license
 #
-import time
-import sys
-import node
-import data
-import event
-import threading
-import emailnotification
-import project
 import Image
-import gui.wx.Robot
+import sys
+import threading
+import time
+import data
+import emailnotification
+import event
 import instrument
+import node
+import project
+import gui.wx.Robot
 
 # ...
 def seconds2str(seconds):
@@ -122,10 +122,15 @@ class Robot(node.Node):
 																					event.MosaicDoneEvent]
 	eventoutputs = node.Node.eventoutputs + [event.MakeTargetListEvent,
 																						event.EmailEvent]
+	settingsclass = data.RobotSettingsData
+	defaultsettings = {
+		'column pressure threshold': 3.5e-5,
+	}
+	defaultcolumnpressurethreshold = 3.5e-5
 	def __init__(self, id, session, managerlocation, **kwargs):
 
-		self.simulate = False
 		#self.simulate = True
+		self.simulate = False
 
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 		self.instrument = instrument.Proxy(self.objectservice, self.session)
@@ -252,10 +257,18 @@ class Robot(node.Node):
 		self.waitScope('HolderType', 'single tilt', 0.25)
 		self.logger.info('Holder type is set to single tilt.')
 
+	def getColumnPressureThreshold(self):
+		threshold = self.settings['column pressure threshold']
+		if threshold is None:
+			threshold = self.defaultcolumnpressurethreshold
+		return threshold
+
 	def checkColumnPressure(self):
+		threshold = self.getColumnPressureThreshold()
 		self.logger.info('Checking column pressure...')
-		while self.instrument.tem.ColumnPressure > 3.5e-5:
+		while self.instrument.tem.ColumnPressure > threshold:
 			time.sleep(0.1)
+			threshold = self.getColumnPressureThreshold()
 		self.logger.info('Column pressure is below threshold.')
 
 	def highTensionOn(self):
@@ -420,8 +433,8 @@ class Robot(node.Node):
 
 	def newGrid(self, gridboxid, gridnumber):
 		projectdata = project.ProjectData()
-		return projectdata.newGrid('Robot #%d' % gridnumber, -1, gridnumber,
-																gridboxid, gridnumber)
+		return projectdata.newGrid('Robot Generated Grid #%d' % gridnumber,	
+																-1, gridnumber, gridboxid, gridnumber)
 
 	def getGridID(self, gridboxid, gridnumber):
 		projectdata = project.ProjectData()

@@ -1937,6 +1937,13 @@ class IntensityMonitorSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class RobotSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('column pressure threshold', float),
+		)
+	typemap = classmethod(typemap)
+
 class Request(type):
 	def __new__(cls, dataclass):
 		return type.__new__(cls, 'Request' + dataclass.__name__, (Data,),

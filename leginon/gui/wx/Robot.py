@@ -4,13 +4,14 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Robot.py,v $
-# $Revision: 1.4 $
+# $Revision: 1.5 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-02 23:05:12 $
+# $Date: 2005-03-03 00:03:41 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
+from gui.wx.Entry import FloatEntry
 import gui.wx.Events
 import gui.wx.Icons
 import gui.wx.Node
@@ -25,6 +26,9 @@ class Panel(gui.wx.Node.Panel):
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
 
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
+													'settings', shortHelpString='Start')
+		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY,
 													'play', shortHelpString='Start')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_EXTRACT,
@@ -69,6 +73,8 @@ class Panel(gui.wx.Node.Panel):
 		self.node.setTray(traylabel)
 
 	def onNodeInitialized(self):
+		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
+											id=gui.wx.ToolBar.ID_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onPlayTool, id=gui.wx.ToolBar.ID_PLAY)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onGridTool, id=gui.wx.ToolBar.ID_GRID)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onExtractTool,
@@ -88,6 +94,11 @@ class Panel(gui.wx.Node.Panel):
 
 		self.Bind(wx.EVT_BUTTON, self.onSelectAllButton, self.bselectall)
 		self.Bind(wx.EVT_BUTTON, self.onSelectNoneButton, self.bselectnone)
+
+	def onSettingsTool(self, evt):
+		dialog = SettingsDialog(self)
+		dialog.ShowModal()
+		dialog.Destroy()
 
 	def onPlayTool(self, evt):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
@@ -140,6 +151,25 @@ class Panel(gui.wx.Node.Panel):
 
 	def getGridQueueSize(self):
 		return self.tray.getGridQueueSize()
+
+class SettingsDialog(gui.wx.Settings.Dialog):
+	def initialize(self):
+		gui.wx.Settings.Dialog.initialize(self)
+
+		self.widgets['column pressure threshold'] = FloatEntry(self, -1, min=0.0,
+																														chars=6)
+
+		sz = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Column pressure threshold:')
+		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['column pressure threshold'], (0, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+
+		sb = wx.StaticBox(self, -1, 'Robot')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+
+		return [sbsz]
 
 class Tray(wx.Panel):
 	def __init__(self, *args, **kwargs):
