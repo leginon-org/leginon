@@ -281,22 +281,22 @@ class StateImageMosaic(ImageMosaic):
 		print 'pixelLocation args =', row, column
 		matrix = self.calibration2matrix()
 		print 'pixelLocation matrix =', matrix
-		determinant = LinearAlgebra.determinant(matrix)
-		print 'pixelLocation determinant =', determinant
-		x = (matrix[1,1] * column - matrix[1,0] * row) / determinant
-		y = (matrix[0,0] * row - matrix[0,1] * column) / determinant
+#		determinant = LinearAlgebra.determinant(matrix)
+#		print 'pixelLocation determinant =', determinant
+#		x = (matrix[1,1] * column - matrix[1,0] * row) / determinant
+#		y = (matrix[0,0] * row - matrix[0,1] * column) / determinant
+		x = column * matrix[0, 0] + row * matrix[1, 0]
+		y = column * matrix[0, 1] + row * matrix[1, 1]
 		print 'pixelLocation x, y =', x, y
 		return (int(round(y)), int(round(x)))
 
 	def calibration2matrix(self):
-		matrix = Numeric.array([[self.calibration['x pixel shift']['value'],
-															self.calibration['x pixel shift']['value']],
-														[self.calibration['y pixel shift']['value'],
-															self.calibration['y pixel shift']['value']]])
-		matrix[0, 0] /= self.calibration['x pixel shift']['x']
-		matrix[0, 1] /= self.calibration['x pixel shift']['y']
-		matrix[1, 0] /= self.calibration['y pixel shift']['x']
-		matrix[1, 1] /= self.calibration['y pixel shift']['y']
+		matrix = Numeric.array([[self.calibration['x pixel shift']['x'],
+														self.calibration['x pixel shift']['y']],
+													[self.calibration['y pixel shift']['x'],
+														self.calibration['y pixel shift']['y']]])
+		matrix[0] /= self.calibration['x pixel shift']['value']
+		matrix[1] /= self.calibration['y pixel shift']['value']
 		return matrix
 
 	def processDataByCalibration(self, idata):
