@@ -81,7 +81,7 @@ class Focuser(acquisition.Acquisition):
 		mag = scope['magnification']
 		eufoc = self.euclient.researchEucentricFocus(ht, mag)
 		if eufoc is None:
-			self.logger.error('no eucentric focus found for this ht=%s and mag=%s' % (ht, mag))
+			self.logger.error('No eucentric focus found for HT: %s and Mag.: %s' % (ht, mag))
 		else:
 			eufoc = eufoc['focus']
 			emdata = data.ScopeEMData(focus=eufoc)
@@ -93,7 +93,7 @@ class Focuser(acquisition.Acquisition):
 		mag = scope['magnification']
 		foc = scope['focus']
 		self.euclient.publishEucentricFocus(ht, mag, foc)
-		self.logger.info('eucentric focus saved to database, ht=%s, mag=%s, focus=%s' % (ht, mag, foc))
+		self.logger.info('Eucentric focus saved to database, HT: %s, Mag.: %s, Focus: %s' % (ht, mag, foc))
 
 	def autoFocus(self, resultdata, presettarget):
 		## need btilt, pub, driftthresh
@@ -114,8 +114,9 @@ class Focuser(acquisition.Acquisition):
 		## to another focus type before doing the correction
 		focustype = self.settings['correction type']
 		if focustype == 'Stage Z':
-			self.logger.info('setting eucentric focus')
+			self.logger.info('Setting eucentric focus...')
 			self.eucentricFocusToScope()
+			self.logger.info('Eucentric focus set')
 			self.eucset = True
 		else:
 			self.eucset = False
@@ -130,20 +131,18 @@ class Focuser(acquisition.Acquisition):
 			scope = self.emclient.getScope()
 			defoc = scope['defocus']
 			foc = scope['focus']
-			self.logger.info('Defocus %s' % defoc)
-			self.logger.info('Focus %s' % foc)
+			self.logger.info('Defocus: %s, Focus: %s' % (defoc, focus))
 		except Exception, e:
 			self.logger.exception('Autofocus failed: %s' % e)
 
 		try:
 			correction = self.btcalclient.measureDefocusStig(btilt, pub, drift_threshold=driftthresh, image_callback=self.setImage, target=target)
 		except calibrationclient.Abort:
-			self.logger.info('measureDefocusStig was aborted')
-			self.logger.info('aborted')
+			self.logger.info('Measurement of defocus and stig. has been aborted')
 			return 'aborted'
 		except calibrationclient.Drifting:
 			self.driftDetected(presettarget)
-			self.logger.info('drift detected (will try again when drift is done)')
+			self.logger.info('Drift detected (will try again when drift is done)')
 			return 'repeat'
 
 		self.logger.info('Measured defocus and stig %s' % correction)
@@ -165,7 +164,7 @@ class Focuser(acquisition.Acquisition):
 		else:
 			status = 'untrusted (%s>%s)' % (fitmin, fitlimit)
 			validdefocus = False
-			self.logger.info('Focus measurement failed: fitmin = %s (limit = %s)' % (fitmin, fitlimit))
+			self.logger.info('Focus measurement failed: min = %s (limit = %s)' % (fitmin, fitlimit))
 
 		### validate stig correction
 		# stig is only valid in a certain defocus range
@@ -175,7 +174,7 @@ class Focuser(acquisition.Acquisition):
 			validstig = False
 
 		if validstig and self.settings['stig correction']:
-			self.logger.info('Stig correction...')
+			self.logger.info('Stig. correction...')
 			self.correctStig(stigx, stigy)
 			resultdata['stig correction'] = 1
 		else:
@@ -213,7 +212,7 @@ class Focuser(acquisition.Acquisition):
 		## target.
 		melt_time = self.settings['melt time']
 		if melt_time and attempt > 1:
-			self.logger.info('target attempt %s, so not melting' % (attempt,))
+			self.logger.info('Target attempt %s, not melting' % (attempt,))
 		elif melt_time:
 			melt_time_ms = int(round(melt_time * 1000))
 			camstate0 = self.cam.getCameraEMData()
@@ -228,7 +227,7 @@ class Focuser(acquisition.Acquisition):
 			camstate1['offset'] = {'x':0,'y':0}
 			self.cam.setCameraEMData(camstate1)
 
-			self.logger.info('Melting for %s seconds' % (melt_time,))
+			self.logger.info('Melting for %s seconds...' % (melt_time,))
 			self.cam.acquireCameraImageData(correction=False)
 			self.logger.info('Done melting, resetting camera')
 
@@ -289,14 +288,16 @@ class Focuser(acquisition.Acquisition):
 		return False
 
 	def manualNow(self):
+		errstr = 'Manual focus failed: %s'
 		presetnames = self.settings['preset order']
 		try:
 			presetname = presetnames[0]
 		except IndexError:
 			message = 'no presets specified for manual focus'
-			self.logger.error(message)
+			self.logger.error(errstr % message)
 			return
-		self.logger.info('using preset %s for manual check' % (presetname,))
+		istr = 'Using preset \'%s\' for manual focus check' % (presetname,)
+		self.logger.info(istr)
 		### Warning:  no target is being used, you are exposing
 		### whatever happens to be under the beam
 		t = threading.Thread(target=self.manualCheckLoop, args=())
@@ -319,8 +320,7 @@ class Focuser(acquisition.Acquisition):
 			delay = self.settings['pause time']
 			self.logger.info('Pausing for %s seconds' % (delay,))
 			time.sleep(delay)
-		self.logger.info('Starting manual focus loop...')
-		self.logger.info('Please confirm defocus')
+		self.logger.info('Starting manual focus loop, please confirm defocus...')
 		self.beep()
 		self.manualplayer.play()
 		self.onManualCheck()
@@ -332,14 +332,14 @@ class Focuser(acquisition.Acquisition):
 				if self.manualplayer.wait() == 'stop':
 					break
 				if presettarget is not None:
-					self.logger.info('reseting preset and target after pause')
+					self.logger.info('Reseting preset and target after pause')
 					self.logger.debug('preset %s' % (presettarget['preset'],))
 					self.presetsclient.toScope(presettarget['preset'],
 																			presettarget['emtarget'])
 			# acquire image, show image and power spectrum
 			# allow user to adjust defocus and stig
 			cor = self.settings['correct image']
-			self.logger.info('Correct image %s' % cor)
+			self.logger.debug('Correct image %s' % cor)
 			self.manualchecklock.acquire()
 			try:
 				imagedata = self.cam.acquireCameraImageData(correction=cor)
@@ -349,7 +349,7 @@ class Focuser(acquisition.Acquisition):
 				imarray = imagedata['image']
 			except (TypeError, KeyError):
 				self.manualplayer.pause()
-				self.logger.error('Failed to acquire image')
+				self.logger.error('Failed to acquire image, pausing...')
 				continue
 			pow = imagefun.power(imarray, self.maskradius)
 			self.man_power = pow.astype(Numeric.Float32)
@@ -357,7 +357,7 @@ class Focuser(acquisition.Acquisition):
 			self.panel.setManualImage(self.man_image, 'Image')
 			self.panel.setManualImage(self.man_power, 'Power')
 		self.onManualCheckDone()
-		self.logger.info('Manual focus loop done')
+		self.logger.info('Manual focus check completed')
 
 	def uiFocusUp(self):
 		self.changeFocus('up')
@@ -367,11 +367,12 @@ class Focuser(acquisition.Acquisition):
 
 	def uiResetDefocus(self):
 		self.manualchecklock.acquire()
-		self.logger.info('Reset defocus')
+		self.logger.info('Reseting defocus...')
 		try:
 			self.resetDefocus()
 		finally:
 			self.manualchecklock.release()
+		self.logger.info('Defcous reset')
 
 	def resetDefocus(self):
 		newemdata = data.ScopeEMData()
@@ -429,18 +430,6 @@ class Focuser(acquisition.Acquisition):
 
 		self.logger.info('Changed %s %s %s' % (self.parameter, direction, delta,))
 
-	def manualDone(self):
-		self.logger.info('Will quit manual focus loop after this iteration...')
-		self.manualplayer.stop()
-
-	def manualPause(self):
-		self.logger.info('Will pause manual focus loop after this iteration...')
-		self.manualplayer.pause()
-
-	def manualContinue(self):
-		self.logger.info('Continuing manual focus...')
-		self.manualplayer.play()
-
 	def correctStig(self, deltax, deltay):
 		stig = self.emclient.getScope()['stigmator']
 		stig['objective']['x'] += deltax
@@ -460,7 +449,7 @@ class Focuser(acquisition.Acquisition):
 
 	def correctZ(self, delta):
 		if not self.eucset:
-			self.logger.warning('Eucentric focus was not set before measuring defocus because "Stage Z" was not selected then, but is now.  Changing Z now is a bad idea, so I will skip it.')
+			self.logger.warning('Eucentric focus was not set before measuring defocus because \'Stage Z\' was not selected then, but is now. Skipping Z correction.')
 			return
 		stage = self.emclient.getScope()['stage position']
 		alpha = stage['a']
