@@ -6,8 +6,8 @@ import weakref
 _id2obj_dict = weakref.WeakValueDictionary()
 
 class Server(leginonobject.LeginonObject):
-	def __init__(self, id, dh):
-		leginonobject.LeginonObject.__init__(self, id)
+	def __init__(self, nid, dh):
+		leginonobject.LeginonObject.__init__(self, nid)
 		self.datahandler = dh
 		self.pythonid = id(self)
 		_id2obj_dict[self.pythonid] = self

@@ -137,7 +137,7 @@ class Node(leginonobject.LeginonObject):
 		code.interact(banner,readfunc,local)
 
 	def raw_input(self, prompt):
-		newprompt = '%s%s' % (str(self.nodeid), prompt)
+		newprompt = '%s%s' % (str(self.id), prompt)
 		return raw_input(newprompt)
 
   # down from here is from EventHandler

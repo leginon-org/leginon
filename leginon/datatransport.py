@@ -42,7 +42,9 @@ class Client(Base):
 class Server(Base):
 	def __init__(self, id, dhclass = datahandler.SimpleDataKeeper, dhargs = ()):
 		Base.__init__(self, id)
-		self.datahandler = apply(dhclass, dhargs)
+		ndhargs = [self.ID()]
+		ndhargs += list(dhargs)
+		self.datahandler = apply(dhclass, ndhargs)
 		self.servers = {}
 		for t in self.transportmodules:
 			self.servers[t] = apply(t.Server, (self.ID(), self.datahandler,))
