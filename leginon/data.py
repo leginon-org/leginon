@@ -505,6 +505,7 @@ class ImageData(InSessionData):
 		t += [
 			('image', strictdict.NumericArrayType),
 			('label', str),
+			('filename', str),
 		]
 		return t
 	typemap = classmethod(typemap)
@@ -642,6 +643,11 @@ class AcquisitionImageData(PresetImageData):
 		t += [ ('target', AcquisitionImageTargetData), ]
 		return t
 	typemap = classmethod(typemap)
+
+	def filename(self):
+		if not self['filename']:
+			raise RuntimeError('no filename set for this image')
+		return self['filename'] + '.mrc'
 
 class TrialImageData(PresetImageData):
 	pass

@@ -132,8 +132,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 			targetquery[key] = targetdata[key]
 		presetquery = data.PresetData(name=presetname)
 		imagequery = data.AcquisitionImageData(target=targetquery, preset=presetquery)
+		## other things to fill in
 		imagequery['scope'] = data.ScopeEMData()
 		imagequery['camera'] = data.CameraEMData()
+		imagequery['session'] = data.SessionData()
+
 		print 'alreadyAcquired research'
 		datalist = self.research(datainstance=imagequery, fill=False)
 		if datalist:
@@ -222,6 +225,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 		idstr = self.dbimages.getSelectedValue()
 		id = eval(idstr)
 		queryimage = data.AcquisitionImageData(session=self.session, id=id)
+		queryimage['session'] = data.SessionData()
+		queryimage['scope'] = data.ScopeEMData()
+		queryimage['camera'] = data.CameraEMData()
+		queryimage['preset'] = data.PresetData()
+		queryimage['target'] = data.AcquisitionImageTargetData()
 
 		result = self.research(datainstance=queryimage, fill=False)
 		## should be one result only
@@ -240,6 +248,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.doneevents[dataid]['received'] = threading.Event()
 		self.doneevents[dataid]['status'] = 'waiting'
 
+		## set the 'filename' value
+		self.setImageFilename(imagedata)
+
 		print 'publishing image'
 		self.publish(imagedata, pubevent=True, database=self.databaseflag.get())
 		print 'image published'
@@ -250,6 +261,78 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if self.waitfordone.get():
 			self.waitForImageProcessDone()
 		return 'ok'
+
+	def setImageFilename(self, imagedata):
+		if imagedata['filename']:
+			return
+		rootname = self.getRootName(imagedata)
+		## use either data id or target number
+		if imagedata['target'] is None or imagedata['target']['number'] is None:
+			numberstr = '%04d' % (imagedata['id'][-1],)
+		else:
+			numberstr = '%04d' % (imagedata['target']['number'],)
+		presetstr = imagedata['preset']['name']
+		mystr = numberstr + presetstr
+		sep = '_'
+		parts = (rootname, mystr)
+		filename = sep.join(parts)
+		print 'FILENAME', filename
+		imagedata['filename'] = filename
+
+	def getRootName(self, imagedata):
+		'''
+		get the root name of an image from its parent
+		'''
+		parent_target = imagedata['target']
+
+		if parent_target is None:
+			## maybe parent target is in DB
+			imagequery = data.AcquisitionImageData()
+			for key in ('session', 'id'):
+				imagequery[key] = imagedata[key]
+			## this is what we really want
+			imagequery['target'] = data.AcquisitionImageTargetData()
+			imagequery['target']['image'] = data.AcquisitionImageData()
+			results = self.research(datainstance=imagequery, fill=False, readimages=False)
+			if results:
+				if len(results) != 1:
+					print 'WARNING: found more than one image with same session and id'
+				myimage = results[0]
+				parent_target = myimage['target']
+
+		if parent_target is None:
+			## there is no parent target
+			## create my own root name
+			return self.newRootName()
+
+		parent_image = parent_target['image']
+
+		if parent_image is None:
+			## maybe parent image is in DB
+			targetquery = data.AcquisitionImageTargetData()
+			for key in ('session', 'id'):
+				targetquery[key] = parent_target[key]
+			## this is what we really want
+			targetquery['image'] = data.AcquisitionImageData()
+			results = self.research(datainstance=targetquery, fill=False, readimages=False)
+			if results:
+				mytarget = results[0]
+				parent_image = mytarget['image']
+
+		if parent_image is None:
+			## there is no parent image
+			return self.newRootName()
+
+		## use root name from parent image
+		parent_root = parent_image['filename']
+		if parent_root:
+			return parent_root
+		else:
+			return self.newRootName()
+
+	def newRootName(self):
+		name = self.session['name']
+		return name
 
 	def waitForImageProcessDone(self):
 		imageids = self.doneevents.keys()
