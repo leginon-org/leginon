@@ -55,10 +55,10 @@ class NodeDataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
 			raise event.InvalidEventError('eventclass must be Event subclass')
 
 class Node(leginonobject.LeginonObject):
-	def __init__(self, id, managerloc = None, dh = NodeDataHandler, dhargs = (), clientclass = Client):
+	def __init__(self, id, nodelocations = {}, dh = NodeDataHandler, dhargs = (), clientclass = Client):
 		leginonobject.LeginonObject.__init__(self, id)
 
-		self.managerloc = managerloc
+		self.managerloc = nodelocations['manager']
 		self.clients = {}
 
 		self.registry = {'outputs':[], 'inputs':[]}
