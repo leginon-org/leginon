@@ -45,8 +45,8 @@ class CalibrationClient(object):
 
 		if publish_image:
 			self.node.publish(imagedata, pubevent=True)
-			if self.node.imageviewer is not None:
-				self.node.imageviewer.set(imagedata['image'])
+			if self.node.ui_image is not None:
+				self.node.ui_image.set(imagedata['image'])
 
 		## should find image stats to help determine validity of image
 		## in correlations
@@ -99,6 +99,7 @@ class CalibrationClient(object):
 				self.peakfinder.setImage(pcimage)
 				self.peakfinder.subpixelPeak()
 				peak = self.peakfinder.getResults()
+				print 'PEAK MINSUM', peak['minsum']
 				peakvalue = peak['subpixel peak value']
 				shift = correlator.wrap_coord(peak['subpixel peak'], pcimage.shape)
 				shiftrows = shift[0]
@@ -107,7 +108,8 @@ class CalibrationClient(object):
 				self.node.publish(d, database=True)
 
 				drift = abs(shift[0] + 1j * shift[1])
-				if drift < 1.0:
+				print 'DRIFT: ', drift
+				if drift < 2.0:
 					print 'no drift'
 					break
 				else:
@@ -145,6 +147,7 @@ class CalibrationClient(object):
 		self.peakfinder.setImage(pcimage)
 		self.peakfinder.subpixelPeak()
 		peak = self.peakfinder.getResults()
+		print 'PEAK MINSUM', peak['minsum']
 		peakvalue = peak['subpixel peak value']
 		shift = correlator.wrap_coord(peak['subpixel peak'], pcimage.shape)
 
@@ -175,11 +178,7 @@ class MatrixCalibrationClient(CalibrationClient):
 		finds the requested matrix using magnification and type
 		'''
 		qinst = data.MatrixCalibrationData(magnification=mag, type=caltype)
-		print 'QINST', qinst
 		caldatalist = self.node.research(datainstance=qinst, results=1)
-
-		print 'CALDATALIST'
-		print caldatalist
 
 		if len(caldatalist) > 0:
 			caldata = caldatalist[0]
@@ -212,6 +211,8 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		fmatrix = self.retrieveMatrix(mag, 'defocus')
 		amatrix = self.retrieveMatrix(mag, 'stigx')
 		bmatrix = self.retrieveMatrix(mag, 'stigy')
+		if None in (fmatrix, amatrix, bmatrix):
+			raise RuntimeError('missing calibration matrix')
 
 		tiltcenter = self.getBeamTilt()
 
@@ -258,7 +259,6 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		 d1,d2 are displacements resulting from beam tilts t1,t2
 		   (all must be 2x1 Numeric arrays)
 		'''
-		
 		## produce the matrix and vector for least squares fit
 		v = Numeric.zeros((4,), Numeric.Float64)
 		v[:2] = d1
