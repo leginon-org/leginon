@@ -21,7 +21,6 @@ class DBDataKeeper(datahandler.DataHandler):
 		'''
 		# idata: instance of a Data class 
 		# results: number of rows wanted
-		
 		queryinfo = self.queryInfo(idata)
 		result  = self.dbd.multipleQueries(queryinfo)
 
@@ -29,11 +28,7 @@ class DBDataKeeper(datahandler.DataHandler):
 			myresult = result.fetchmany(results)
 		else:
 			myresult = result.fetchall()
-
-#		print "MYRESULT", myresult
-
 		return myresult
-
 
 	def makeTableName(self, idata):
 		'''
