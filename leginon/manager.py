@@ -691,6 +691,11 @@ class Manager(node.Node):
 		self.uiclassselect.set(classes, 0)
 		return value
 
+	def uiSubmitDiaryMessage(self):
+		diarymessage = self.diarymessage.get()
+		diarydata = data.DiaryData(session=self.session, message=diarymessage)
+		self.publish(diarydata, database=True)
+
 	def defineUserInterface(self):
 		'''See node.Node.defineUserInterface.'''
 #		node.Node.defineUserInterface(self)
@@ -749,12 +754,17 @@ class Manager(node.Node):
 		eventcontainer = uidata.LargeContainer('Event Bindings')
 		eventcontainer.addObjects(eventobjects)
 
+		self.diarymessage = uidata.String('Message', '', 'rw')
+		diarymethod = uidata.Method('Submit', self.uiSubmitDiaryMessage)
+		diarycontainer = uidata.LargeContainer('Diary')
+		diarycontainer.addObjects((self.diarymessage, diarymethod))
+
 		uimanagersetup = self.managersetup.getUserInterface()
 
 		container = uidata.LargeContainer('Manager')
 
 		container.addObject(uimanagersetup)
-		container.addObjects((launchcontainer, nodemanagementcontainer, eventcontainer, self.applicationcontainer))
+		container.addObjects((launchcontainer, nodemanagementcontainer, eventcontainer, self.applicationcontainer, diarycontainer))
 		self.uiserver.addObject(container)
 
 class ManagerSetup(object):
