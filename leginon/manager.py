@@ -328,10 +328,12 @@ class Manager(node.Node):
 	# launcher related methods
 
 	def onAddLauncher(self, name):
-		self.frame.onAddLauncher(name)
+		evt = wxManager.AddLauncherEvent(name)
+		self.frame.GetEventHandler().ProcessEvent(evt)
 
 	def onRemoveLauncher(self, name):
-		self.frame.onRemoveLauncher(name)
+		evt = wxManager.RemoveLauncherEvent(name)
+		self.frame.GetEventHandler().ProcessEvent(evt)
 
 	def getLauncherCount(self):
 		return len(self.launcherdict)
@@ -488,10 +490,12 @@ class Manager(node.Node):
 		self.onAddNode(name)
 
 	def onAddNode(self, name):
-		self.frame.onAddNode(name)
+		evt = wxManager.AddNodeEvent(name)
+		self.frame.GetEventHandler().ProcessEvent(evt)
 
 	def onRemoveNode(self, name):
-		self.frame.onRemoveNode(name)
+		evt = wxManager.RemoveNodeEvent(name)
+		self.frame.GetEventHandler().ProcessEvent(evt)
 
 	def addNodeUIClient(self, nodename, uilocation):
 		if nodename in self.uiclientcontainers:

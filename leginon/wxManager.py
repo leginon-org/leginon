@@ -4,6 +4,39 @@ import uiclient
 import wx
 import wx.lib.intctrl
 
+AddNodeEventType = wx.NewEventType()
+RemoveNodeEventType = wx.NewEventType()
+AddLauncherEventType = wx.NewEventType()
+RemoveLauncherEventType = wx.NewEventType()
+EVT_ADD_NODE = wx.PyEventBinder(AddNodeEventType)
+EVT_REMOVE_NODE = wx.PyEventBinder(RemoveNodeEventType)
+EVT_ADD_LAUNCHER = wx.PyEventBinder(AddLauncherEventType)
+EVT_REMOVE_LAUNCHER = wx.PyEventBinder(RemoveLauncherEventType)
+
+class AddNodeEvent(wx.PyEvent):
+	def __init__(self, name):
+		wx.PyEvent.__init__(self)
+		self.SetEventType(AddNodeEventType)
+		self.name = name
+
+class RemoveNodeEvent(wx.PyEvent):
+	def __init__(self, name):
+		wx.PyEvent.__init__(self)
+		self.SetEventType(RemoveNodeEventType)
+		self.name = name
+
+class AddLauncherEvent(wx.PyEvent):
+	def __init__(self, name):
+		wx.PyEvent.__init__(self)
+		self.SetEventType(AddLauncherEventType)
+		self.name = name
+
+class RemoveLauncherEvent(wx.PyEvent):
+	def __init__(self, name):
+		wx.PyEvent.__init__(self)
+		self.SetEventType(RemoveLauncherEventType)
+		self.name = name
+
 class ManagerApp(wx.App):
 	def __init__(self, session, tcpport=None, xmlrpcport=None, **kwargs):
 		self.session = session
@@ -88,6 +121,11 @@ class ManagerFrame(wx.Frame):
 		self.statusbar = ManagerStatusBar(self)
 		self.SetStatusBar(self.statusbar)
 
+		self.Bind(EVT_ADD_NODE, self.onAddNode)
+		self.Bind(EVT_REMOVE_NODE, self.onRemoveNode)
+		self.Bind(EVT_ADD_LAUNCHER, self.onAddLauncher)
+		self.Bind(EVT_REMOVE_LAUNCHER, self.onRemoveLauncher)
+
 		self.panel = ManagerPanel(self, self.manager.uicontainer.location())
 
 	def onExit(self, evt):
@@ -129,42 +167,42 @@ class ManagerFrame(wx.Frame):
 			print 'ok!'
 		dialog.Destroy()
 
-	def onAddNode(self, name):
+	def onAddNode(self, evt):
 		# if it's in launcher kill menu don't add here
 		if self.manager.getNodeCount() >= 2:
 			self.bindmenuitem.Enable(True)
-		item = self.launcherkillmenu.FindItem(name)
+		item = self.launcherkillmenu.FindItem(evt.name)
 		if item is wx.NOT_FOUND:
-			item = wx.MenuItem(self.nodekillmenu, -1, name)
+			item = wx.MenuItem(self.nodekillmenu, -1, evt.name)
 			self.nodekillmenu.AppendItem(item)
 			self.Bind(wx.EVT_MENU, self.onMenuKill, item)
 			if not self.nodekillmenuitem.IsEnabled():
 				self.nodekillmenuitem.Enable(True)
 
-	def onRemoveNode(self, name):
+	def onRemoveNode(self, evt):
 		if self.manager.getNodeCount() < 2:
 			self.bindmenuitem.Enable(False)
-		item = self.nodekillmenu.FindItem(name)
+		item = self.nodekillmenu.FindItem(evt.name)
 		if item is not wx.NOT_FOUND:
 			self.nodekillmenu.Delete(item)
 			if self.nodekillmenu.GetMenuItemCount() < 1:
 				self.nodekillmenuitem.Enable(False)
 
-	def onAddLauncher(self, name):
+	def onAddLauncher(self, evt):
 		if not self.nodecreatemenuitem.IsEnabled():
 			self.nodecreatemenuitem.Enable(True)
 
-		item = wx.MenuItem(self.launcherkillmenu, -1, name)
+		item = wx.MenuItem(self.launcherkillmenu, -1, evt.name)
 		self.launcherkillmenu.AppendItem(item)
 		self.Bind(wx.EVT_MENU, self.onMenuKill, item)
 		if not self.launcherkillmenuitem.IsEnabled():
 			self.launcherkillmenuitem.Enable(True)
 
-	def onRemoveLauncher(self, name):
+	def onRemoveLauncher(self, evt):
 		if self.manager.getLauncherCount() < 1:
 			self.nodecreatemenuitem.Enable(False)
 
-		item = self.launcherkillmenu.FindItem(name)
+		item = self.launcherkillmenu.FindItem(evt.name)
 		if item is not wx.NOT_FOUND:
 			self.launcherkillmenu.Delete(item)
 			if self.launcherkillmenu.GetMenuItemCount() < 1:
