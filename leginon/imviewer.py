@@ -36,44 +36,44 @@ class ImViewer(watcher.Watcher):
 		self.viewerthread = threading.Thread(target=self.open_viewer)
 		self.viewerthread.setDaemon(1)
 		self.viewerthread.start()
-		print 'thread started'
+		#print 'thread started'
 
 	def clickEvent(self, tkevent):
 		clickinfo = self.iv.eventXYInfo(tkevent)
 		clickinfo['image id'] = self.imageid
-		print 'clickinfo', clickinfo
+		#print 'clickinfo', clickinfo
 		## prepare for xmlrpc
 		c = {}
 		for key,value in clickinfo.items():
 			if value is not None:
 				c[key] = value
-		print 'c', c
+		#print 'c', c
 		e = event.ImageClickEvent(self.ID(), c)
-		print 'sending ImageClickEvent'
+		#print 'sending ImageClickEvent'
 		self.outputEvent(e)
-		print 'sent ImageClickEvent'
+		#print 'sent ImageClickEvent'
 
 	def open_viewer(self):
-		print 'root...'
+		#print 'root...'
 		root = self.root = Tk()
 		root.wm_maxsize(800,800)
-		print 'iv'
+		#print 'iv'
 		self.iv = ImageViewer(root, bg='#488')
 		self.iv.bindCanvas('<Double-1>', self.clickEvent)
-		print 'iv pack'
+		#print 'iv pack'
 		self.iv.pack()
-		print 'acqbut'
+		#print 'acqbut'
 		self.acqeventbut = Button(root, text='Acquire Event', command=self.acquireEvent)
 		self.acqeventbut.pack()
 		self.acqbut = Button(root, text='Acquire', command=self.acquire)
 		self.acqbut.pack()
-		print 'viewer_ready.set'
+		#print 'viewer_ready.set'
 		self.viewer_ready.set()
-		print 'mainloop'
+		#print 'mainloop'
 		root.mainloop()
-		print 'viewer_ready.clear'
+		#print 'viewer_ready.clear'
 		self.viewer_ready.clear()
-		print 'viewer_ready.cleared'
+		#print 'viewer_ready.cleared'
 		self.iv = None
 
 	def close_viewer(self):
@@ -85,16 +85,16 @@ class ImViewer(watcher.Watcher):
 	def acquire(self):
 		self.acqbut['state'] = DISABLED
 		imdata = self.researchByDataID('image data')
-		self.displayNumericArray(imdata['image data'])
+		self.displayNumericArray(imdata.content['image data'])
 		self.acqbut['state'] = NORMAL
 
 	def acquireEvent(self):
 		self.acqeventbut['state'] = DISABLED
-		print 'sending ImageAcquireEvent'
+		#print 'sending ImageAcquireEvent'
 		e = event.ImageAcquireEvent(self.ID())
-		print 'e', e
+		#print 'e', e
 		self.outputEvent(e)
-		print 'sent ImageAcquireEvent'
+		#print 'sent ImageAcquireEvent'
 		self.acqeventbut['state'] = NORMAL
 	
 	def processData(self, imagedata):

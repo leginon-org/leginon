@@ -27,10 +27,10 @@ class Client(Base):
 		self.clients = []
 
 		for t in self.transportmodules:
-			print 'TTTTT', t
+			#print 'TTTTT', t
 			try:
 				self.clients.append(apply(t.Client, (self.ID(), serverlocation,)))
-				print 'TTTTT sucess'
+				#print 'TTTTT sucess'
 			except ValueError:
 				pass
 
@@ -49,12 +49,12 @@ class Client(Base):
 		raise IOError
 
 	def push(self, odata):
-		print 'ODATA', odata
+		#print 'ODATA', odata
 		for c in self.clients:
-			print 'C', c
+			#print 'C', c
 			try:
 				ret = c.push(odata)
-				print 'RET', ret
+				#print 'RET', ret
 				return ret
 			except IOError:
 				print 'IOError while trying c.push(odata)'

@@ -135,7 +135,7 @@ class Manager(node.Node):
 
 		# for the clients and mapping
 		self.addEventClient(nodeid, nodelocation)
-		print 'REGISTER NODE clients', self.clients
+		#print 'REGISTER NODE clients', self.clients
 
 		# published data of nodeid mapping to location of node
 		nodelocationdata = self.server.datahandler.query(nodeid)
@@ -235,9 +235,9 @@ class Manager(node.Node):
 
 		newid = self.nodeID(name)
 		args = (newid, self.nodelocations) + nodeargs
-		print 'LAUNCHNODE'
+		#print 'LAUNCHNODE'
 		self.launch(launcher, newproc, target, args)
-		print 'LAUNCHNODE launch(...'
+		#print 'LAUNCHNODE launch(...'
 		return newid
 
 	def launch(self, launcher, newproc, target, args=(), kwargs={}):
@@ -247,13 +247,13 @@ class Manager(node.Node):
 		target = name of a class in this launchers node class list
 		args, kwargs = args for callable object
 		"""
-		print 'MANAGER LAUNCH'
+		#print 'MANAGER LAUNCH'
 		ev = event.LaunchEvent(self.ID(), newproc, target, args, kwargs)
-		print 'EV', ev
+		#print 'EV', ev
 		#self.clients[launcher].push(ev)
-		print 'CLIENTS', self.clients
+		#print 'CLIENTS', self.clients
 		self.outputEvent(ev, nodeid=launcher)
-		print 'MANAGER LAUNCH DONE'
+		#print 'MANAGER LAUNCH DONE'
 
 	def killNode(self, nodeid):
 			try:
