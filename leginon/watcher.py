@@ -53,16 +53,16 @@ class Watcher(node.Node):
 
 	eventinputs = node.Node.eventinputs + [event.PublishEvent]
 
-	def __init__(self, id, session, nodelocations, watchfor=event.PublishEvent, lockblocking=None, **kwargs):
+	def __init__(self, id, session, nodelocations, watchfor=[event.PublishEvent], lockblocking=1, **kwargs):
 		node.Node.__init__(self, id, session, nodelocations, **kwargs)
-		self.watchfor = watchfor
 		self.lockblocking = lockblocking
 		self.handlelock = threading.Lock()
 
 		self.eventqueue = WatcherQueue(self.eventcallback, 0)
 		self.dataqueue = WatcherQueue(self.datacallback, 0)
 
-		self.addEventInput(self.watchfor, self.handleEvent)
+		for eventclass in watchfor:
+			self.addEventInput(eventclass, self.handleEvent)
 
 	def eventcallback(self, value):
 		if hasattr(self, 'uieventqueue'):
