@@ -216,6 +216,13 @@ class Frame(wx.Frame):
 
 		self.panel = gui.wx.Launcher.Panel(self)
 
+		self.Bind(wx.EVT_SIZE, self.onSize)
+
+	def onSize(self, evt):
+		self.panel.SetSize(self.GetClientSize())
+		self.panel.Layout()
+		evt.Skip()
+
 	def onAddLauncherPanel(self, evt):
 		self.panel.setLauncher(evt.launcher)
 

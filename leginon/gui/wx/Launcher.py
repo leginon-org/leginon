@@ -100,6 +100,13 @@ class Frame(wx.Frame):
 
 		self.panel = Panel(self, launcher)
 
+		self.Bind(wx.EVT_SIZE, self.onSize)
+
+	def onSize(self, evt):
+		self.panel.SetSize(self.GetClientSize())
+		self.panel.Layout()
+		evt.Skip()
+
 	def onExit(self, evt):
 		self.launcher.exit()
 		self.Close()
@@ -125,7 +132,7 @@ class ListCtrlPanel(wx.Panel):
 		self.swmessage.SetOrientation(wx.LAYOUT_HORIZONTAL)
 		self.swmessage.SetAlignment(wx.LAYOUT_TOP)
 		self.swmessage.SetSashVisible(wx.SASH_BOTTOM, True)
-		self.swmessage.SetExtraBorderSize(5)
+		#self.swmessage.SetExtraBorderSize(5)
 
 		self.data = 0
 		self.datatextmap = {}
@@ -139,7 +146,6 @@ class ListCtrlPanel(wx.Panel):
 
 		self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.onItemSelected, self.listctrl)
 		self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.onItemDeselected, self.listctrl)
-		self.Bind(wx.EVT_SIZE, self.onSize)
 		self.Bind(wx.EVT_SASH_DRAGGED, self.onSashDragged)
 
 	def addPanel(self, panel, label, imageindex=0):
@@ -193,9 +199,9 @@ class ListCtrlPanel(wx.Panel):
 			self.swmessage.SetDefaultSize((-1, evt.GetDragRect().height))
 		self.Layout()
 
-	def onSize(self, evt):
-		self.Layout()
-		evt.Skip()
+#	def onSize(self, evt):
+#		self.Layout()
+#		evt.Skip()
 
 	def Layout(self):
 		wx.LayoutAlgorithm().LayoutWindow(self, self.panel)
@@ -219,6 +225,12 @@ class Panel(ListCtrlPanel):
 
 		self.Bind(gui.wx.MessageLog.EVT_STATUS_UPDATED, self.onStatusUpdated)
 		self.Bind(EVT_SET_ORDER, self.onSetOrder)
+		self.swmessage.Bind(wx.EVT_SIZE, self.onSize)
+
+	def onSize(self, evt=None):
+		if hasattr(self.panel, 'messagelog'):
+			size = self.swmessage.GetClientSize()
+			self.panel.messagelog.SetSize(size - (3, 3))
 
 	def _onSetPanel(self, panel):
 		ListCtrlPanel._onSetPanel(self, panel)
@@ -230,10 +242,13 @@ class Panel(ListCtrlPanel):
 			tb = self.GetParent().toolbar
 		self.GetParent().SetToolBar(tb)
 		tb.Show(True)
+		tb.SetSize((self.GetParent().GetClientSize().width, -1))
 		if hasattr(self.panel, 'messagelog'):
 			self.panel.messagelog.Show(False)
 		if hasattr(panel, 'messagelog'):
 			panel.messagelog.Show(True)
+			size = self.swmessage.GetClientSize()
+			panel.messagelog.SetSize(size - (3, 3))
 
 	def onStatusUpdated(self, evt):
 		evtobj = evt.GetEventObject()
