@@ -3,60 +3,28 @@ import cPickle
 import socket
 import leginonobject
 import data
+import threading
 
 class Handler(SocketServer.StreamRequestHandler):
 	def __init__(self, request, server_address, server):
 		SocketServer.StreamRequestHandler.__init__(self, request, server_address, server)
 
-	def read(self):
-		return cPickle.load(self.rfile)
-
-	def write(self, o):
-		cPickle.dump(o, self.wfile)
-
-class PushHandler(Handler):
-	def __init__(self, request, server_address, server):
-		Handler.__init__(self, request, server_address, server)
-
-	def _handle(self, idata):
-		self.server.datahandler.insert(idata)
-
 	def handle(self):
-		idata = self.read()
-		self._handle(idata)
-
-class PullHandler(Handler):
-	def __init__(self, request, server_address, server):
-		Handler.__init__(self, request, server_address, server)
-
-	def _handle(self, id):
-		self.write(self.server.datahandler.query(id))
-
-	def handle(self):
-		id = self.read()
-		self._handle(id)
-
-class PushPullHandler(PushHandler, PullHandler):
-	def __init__(self, request, server_address, server):
-		PushHandler.__init__(self, request, server_address, server)
-		#PullHandler.__init__(self, request, server_address, server)
-
-	def handle(self):
-		obj = self.read()
+		obj = cPickle.load(self.rfile)
 		if isinstance(obj, data.Data):
 			# if is data, then push
-			PushHandler._handle(self, obj)
+			self.server.datahandler.insert(obj)
 		else:
 			# (elif when ID has a type) its and ID -> pull (query) by ID
-			PullHandler._handle(self, obj)
+			cPickle.dump(self.server.datahandler.query(obj), self.wfile)
 
 class Server(SocketServer.ThreadingTCPServer, leginonobject.LeginonObject):
-	def __init__(self, dh, handler, port=None):
+	def __init__(self, dh, port=None):
 		leginonobject.LeginonObject.__init__(self)
 		self.datahandler = dh
 		# instantiater can choose a port or we'll choose one for them
 		if port:
-			SocketServer.ThreadingTCPServer.__init__(self, ('', port), handler)
+			SocketServer.ThreadingTCPServer.__init__(self, ('', port), Handler)
 		else:
 			# range define by IANA as dynamic/private or so says Jim
 			portrange = (49152,65536)
@@ -65,7 +33,7 @@ class Server(SocketServer.ThreadingTCPServer, leginonobject.LeginonObject):
 			# iterate to the top or until unused port is found
 			while port <= portrange[1]:
 				try:
-					SocketServer.ThreadingTCPServer.__init__(self, ('', port), handler)
+					SocketServer.ThreadingTCPServer.__init__(self, ('', port), Handler)
 					break
 				except Exception, var:
 					# socket error, address already in use
@@ -75,22 +43,15 @@ class Server(SocketServer.ThreadingTCPServer, leginonobject.LeginonObject):
 						raise
 			self.port = port
 
+	def start(self):
+		self.thread = threading.Thread(None, self.serve_forever, None, (), {})
+		self.thread.setDaemon(1)
+		self.thread.start()
+
 	def location(self):
 		loc = leginonobject.LeginonObject.location(self)
-		loc['port'] = self.port
+		loc['tcp port'] = self.port
 		return loc
-
-class PullServer(Server):
-	def __init__(self, server, port=None):
-		Server.__init__(self, server, PullHandler, port)
-
-class PushServer(Server):
-	def __init__(self, server, port=None):
-		Server.__init__(self, server, PushHandler, port)
-
-class PushPullServer(Server):
-	def __init__(self, server, port=None):
-		Server.__init__(self, server, PushPullHandler, port)
 
 class Client(leginonobject.LeginonObject):
 	def __init__(self, hostname, port, buffer_size = 1024):
@@ -99,7 +60,6 @@ class Client(leginonobject.LeginonObject):
 		self.hostname = hostname
 		self.port = port
 
-class PullClient(Client):
 	def pull(self, id, family = socket.AF_INET, type = socket.SOCK_STREAM):
 		print 'PullClient.pull id = %s' % id
 		data = ""
@@ -117,14 +77,10 @@ class PullClient(Client):
 		# needs cPickle attempt
 		return cPickle.loads(data)
 
-class PushClient(Client):
 	def push(self, idata, family = socket.AF_INET, type = socket.SOCK_STREAM):
 		# needs to account for different data_id datatypes
 		s = socket.socket(family, type)
 		s.connect((self.hostname, self.port)) # Connect to server
 		s.send(cPickle.dumps(idata))
 		s.close()
-
-class PushPullClient(PushClient, PullClient):
-	pass
 

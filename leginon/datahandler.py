@@ -131,6 +131,7 @@ class CachedDictDataKeeper(DataHandler):
 		self.lock.release()
 
 	def writeoutcache(self):
+		print 'writing out cache'
 		self.timer = threading.Timer(self.timeout, self.writeoutcache)
 		self.timer.start()
 		now = time.time()

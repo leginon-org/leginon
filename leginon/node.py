@@ -1,25 +1,18 @@
-
 import code
 import leginonobject
 import event
-import clientpull
-import clientpush
-import pushpull
+import datatransport
 import datahandler
 
-class NodePushClient(clientpush.Client):
+class Client(datatransport.Client):
 	def __init__(self, hostname, port):
-		clientpush.Client.__init__(self, hostname, port)
+		datatransport.Client.__init__(self, hostname, port)
 
 	def push(self, ievent):
 		if isinstance(ievent, event.Event):
-			clientpush.Client.push(self, ievent)
+			datatransport.Client.push(self, ievent)
 		else:
 			raise InvalidEventError('event must be Event instance')
-
-class NodePullClient(clientpull.Client):
-	def __init__(self, hostname, port):
-		clientpull.Client.__init__(self, hostname, port)
 
 class NodeDataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
 	def __init__(self):
@@ -44,7 +37,7 @@ class NodeDataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
 			raise InvalidEventError('eventclass must be Event subclass')
 
 class Node(leginonobject.LeginonObject):
-	def __init__(self, nodeid, managerloc = None, dh = NodeDataHandler, dhargs = (), pushclientclass = NodePushClient, pullclientclass = NodePullClient):
+	def __init__(self, nodeid, managerloc = None, dh = NodeDataHandler, dhargs = (), clientclass = Client):
 		leginonobject.LeginonObject.__init__(self)
 
 		# added from eventhandler
@@ -52,9 +45,8 @@ class Node(leginonobject.LeginonObject):
 		self.distmap = {}
 		self.registry = {'outputs':[], 'inputs':[]}
 
-		self.pushpullserver = pushpull.Server(dh, dhargs)
-		self.pushclientclass = pushclientclass
-		self.pullclientclass = pullclientclass
+		self.server = datatransport.Server(dh, dhargs)
+		self.clientclass = clientclass
 
 		self.nodeid = nodeid
 		self.managerloc = managerloc
@@ -79,7 +71,7 @@ class Node(leginonobject.LeginonObject):
 		self.mark_data(idata)
 		if not issubclass(eventclass, event.PublishEvent):
 			raise TypeError('PublishEvent subclass required')
-		self.pushpullserver.datahandler.insert(idata)
+		self.server.datahandler.insert(idata)
 		self.announce(eventclass(idata.id))
 
 	def mark_data(self, data):
@@ -88,12 +80,12 @@ class Node(leginonobject.LeginonObject):
 
 	def research(self, creator, dataid):
 		hostname, port = creator
-		client = self.pullclientclass(hostname, port)
+		client = self.clientclass(hostname, port)
 		return client.pull(dataid)
 
 	def location(self):
 		loc = leginonobject.LeginonObject.location(self)
-		loc['port'] = self.pushpullserver.location()['datatcp port']
+		loc['port'] = self.server.location()['tcp port']
 		return loc
 
 	def interact(self):
@@ -104,19 +96,19 @@ class Node(leginonobject.LeginonObject):
 
   # down from here is from EventHandler
 	def addEventClient(self, newid, hostname, port):
-		self.clients[newid] = self.pushclientclass(hostname, port)
+		self.clients[newid] = self.clientclass(hostname, port)
 
 	def delEventClient(self, newid):
 		if newid in self.clients:
 			del self.clients[newid]
 
 	def addEventInput(self, eventclass, func):
-		self.pushpullserver.datahandler.setBinding(eventclass, func)
+		self.server.datahandler.setBinding(eventclass, func)
 		if eventclass not in self.registry['inputs']:
 			self.registry['inputs'].append(eventclass)
 
 	def delEventInput(self, eventclass):
-		self.pushpullserver.datahandler.setBinding(eventclass, None)
+		self.server.datahandler.setBinding(eventclass, None)
 		if eventclass in self.registry['inputs']:
 			self.registry['inputs'].remove(eventclass)
 
