@@ -107,6 +107,14 @@ class DriftDoneEvent(NotificationEvent):
 		return t
 	typemap = classmethod(typemap)
 
+class GridInsertedEvent(NotificationEvent):
+	'Event indicating a grid has been inserted'
+	def typemap(cls):
+		t = NotificationEvent.typemap()
+		t += [('grid number', int)]
+		return t
+	typemap = classmethod(typemap)
+
 ## could PublishEvent and UnpublishEvent be derived from a common class?
 class PublishEvent(NotificationEvent):
 	'Event indicating data was published'
@@ -237,6 +245,10 @@ class LockEvent(ControlEvent):
 	
 class UnlockEvent(ControlEvent):
 	'Event that signals an unlock'
+	pass
+
+class GridExtractEvent(ControlEvent):
+	'Event that signals a grid to be extracted'
 	pass
 
 ## this is basically the same as data.ImageTargetData

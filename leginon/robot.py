@@ -1,5 +1,3 @@
-import scopedict
-import tecnai
 import win32com.client
 import time
 import pywintypes
@@ -7,29 +5,41 @@ import sys
 import node
 import data
 import uidata
+import event
+import threading
 
-class Test(object):
-	def __init__(self):
-		self.Signal0 = 1
-		self.Signal1 = 1
-		self.Signal2 = 1
-		self.Signal3 = 1
-		self.Signal4 = 1
-		self.Signal5 = 1
-		self.Signal6 = 1
-		self.Signal7 = 1
+#class Test(object):
+#	def __init__(self):
+#		self.Signal0 = 1
+#		self.Signal1 = 1
+#		self.Signal2 = 1
+#		self.Signal3 = 1
+#		self.Signal4 = 1
+#		self.Signal5 = 1
+#		self.Signal6 = 1
+#		self.Signal7 = 1
 
 class RobotControl(node.Node):
 	def __init__(self, id, session, nodelocations, **kwargs):
 		node.Node.__init__(self, id, session, nodelocations, **kwargs)
-#		self.scope = scopedict.factory(tecnai.tecnai)()
+
+		self.extractok = False
+		self.extractlock = threading.Lock()
+
+		#self.scope = scopedict.factory(tecnai.tecnai)()
+		#self.communication = Test()
+
 		try:
-#			self.communication = win32com.client.Dispatch('RobotCommunications.Signal')
-			self.communication = Test()
+			self.communication = win32com.client.Dispatch('RobotCommunications.Signal')
+
+
 		except pywintypes.com_error:
 			raise RuntimeError('Cannot initialized robot communications')
 		self.statushistory = []
 		self.statusindex = -1
+		self.statuslength = 50
+
+		self.addEventInput(event.ExtractGridEvent, self.handleExtract)
 
 		self.defineUserInterface()
 		self.start()
@@ -75,21 +85,28 @@ class RobotControl(node.Node):
 
 	def setStatus(self, message):
 		self.statushistory.append(message)
+		if len(self.statushistory) > self.statuslength:
+			try:
+				self.statushistory = self.statushistory[-self.statuslength:]
+			except IndexError:
+				pass
 		self.statuslabel.set(message)
 
 	def insertStage(self):
+		self.insertmethod.disable()
+		self.extractmethod.disable()
 		self.setStatus('Verifying robot is ready for insertion')
 		while not self.communication.Signal0:
 			time.sleep(0.5)
 		self.communication.Signal0 = 0
 		self.setStatus('Robot is ready for insertion')
 
-		self.setStatus('Zeroing stage position')
-		self.setScope('stage position', {'x': 0.0, 'y': 0.0, 'z': 0.0, 'a': 0.0})
-		self.setStatus('Verifying stage position is zeroed')
-		self.condition('stage position', {'x': 0.0, 'y': 0.0, 'z': 0.0, 'a': 0.0},
-										None, True, 0.5, 15)
-		self.setStatus('Stage position is zeroed')
+#		self.setStatus('Zeroing stage position')
+#		self.setScope('stage position', {'x': 0.0, 'y': 0.0, 'z': 0.0, 'a': 0.0})
+#		self.setStatus('Verifying stage position is zeroed')
+#		self.condition('stage position', {'x': 0.0, 'y': 0.0, 'z': 0.0, 'a': 0.0},
+#										None, True, 0.5, 15)
+#		self.setStatus('Stage position is zeroed')
 
 		self.setStatus('Verifying there is no holder inserted')
 		self.condition('holder status', 'not inserted')
@@ -116,6 +133,8 @@ class RobotControl(node.Node):
 										True, 0.5, 600)
 		self.setStatus('Stage is ready, signaled robot to begin insertion step 1')
 
+		self.communication.Signal1 = 1
+
 		self.setStatus('Waiting for robot to complete insertion step 1')
 		while not self.communication.Signal2:
 			time.sleep(0.5)
@@ -133,25 +152,38 @@ class RobotControl(node.Node):
 										True, 0.5, 600)
 		self.setStatus('Stage is ready, signaled robot to begin insertion step 2')
 
+		self.communication.Signal3 = 1
+
 		self.setStatus('Waiting for robot to complete insertion step 2')
 		while not self.communication.Signal4:
 			time.sleep(0.5)
 		self.communication.Signal4 = 0
 		self.setStatus('Robot has completed insertion step 2')
+		self.setStatus('Robot has completed insertion')
+		self.insertmethod.enable()
+		self.extractmethod.enable()
+		evt = event.GridInsertedEvent()
+		evt['grid number'] = -1
+		self.outputEvent(evt)
+
+	def handleExtract(self, ievent):
+		self.extract()
 
 	def extractStage(self):
+		self.insertmethod.disable()
+		self.extractmethod.disable()
 		self.setStatus('Verifying robot is ready for extraction')
 		while not self.communication.Signal5:
 			time.sleep(0.5)
 		self.communication.Signal5 = 0
 		self.setStatus('Robot is ready for extraction')
 
-		self.setStatus('Zeroing stage position')
-		self.setScope('stage position', {'x': 0.0, 'y': 0.0, 'z': 0.0, 'a': 0.0})
+#		self.setStatus('Zeroing stage position')
+#		self.setScope('stage position', {'x': 0.0, 'y': 0.0, 'z': 0.0, 'a': 0.0})
 #		self.setStatus('Verifying stage position is zeroed')
 #		self.condition('stage position', {'x': 0.0, 'y': 0.0, 'z': 0.0, 'a': 0.0},
 #										None, True, 0.5, 15)
-		self.setStatus('Stage position is zeroed')
+#		self.setStatus('Stage position is zeroed')
 
 		self.setStatus('Verifying holder is inserted')
 		self.condition('holder status', 'inserted')
@@ -172,11 +204,20 @@ class RobotControl(node.Node):
 										True, 0.5, 600)
 		self.setStatus('Stage is ready, signaled robot to begin extraction')
 
+		self.communication.Signal6 = 1
+
 		self.setStatus('Waiting for robot to complete extraction')
 		while not self.communication.Signal7:
 			time.sleep(0.5)
 		self.communication.Signal7 = 0
 		self.setStatus('Robot has completed extraction')
+
+		self.extractlock.acquire()
+		self.extractok = True
+		self.extractlock.release()
+
+		self.insertmethod.enable()
+		self.extractmethod.enable()
 
 	def insert(self):
 		self.setStatus('Inserting stage')
@@ -186,11 +227,18 @@ class RobotControl(node.Node):
 			self.setStatus('Error inserting stage')
 
 	def extract(self):
-		self.setStatus('Extracting stage')
-		try:
-			self.extractStage()
-		except RuntimeError:
-			self.setStatus('Error extracting stage')
+		self.extractlock.acquire()
+		if self.extractok:
+			self.extractok = False
+			self.extractlock.release()
+
+			self.setStatus('Extracting stage')
+			try:
+				self.extractStage()
+			except RuntimeError:
+				self.setStatus('Error extracting stage')
+		else:
+			self.extractlock.release()
 
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
@@ -199,10 +247,10 @@ class RobotControl(node.Node):
 		statuscontainer = uidata.Container('Status')
 		statuscontainer.addObjects((self.statuslabel,))
 
-		insertmethod = uidata.Method('Insert', self.insert)
-		extractmethod = uidata.Method('Extract', self.extract)
+		self.insertmethod = uidata.Method('Insert', self.insert)
+		self.extractmethod = uidata.Method('Extract', self.extract)
 		controlcontainer = uidata.Container('Control')
-		controlcontainer.addObjects((insertmethod, extractmethod))
+		controlcontainer.addObjects((self.insertmethod, self.extractmethod))
 
 		rccontainer = uidata.MediumContainer('Robot Control')
 		rccontainer.addObjects((statuscontainer, controlcontainer))

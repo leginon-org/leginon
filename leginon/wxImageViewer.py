@@ -166,27 +166,51 @@ class ZoomTool(ImageTool):
 
 class ImagePanel(wxPanel):
 	def __init__(self, parent, id, imagesize=(512, 512)):
+		# initialize image variables
 		self.numericimage = None
 		self.bitmap = None
 		self.buffer = None
+
+		# get size of image panel (image display dimensions)
+		if type(imagesize) != tuple:
+			raise TypeError('Invalid type for image panel size, must be tuple')
+		if len(imagesize) != 2:
+			raise ValueError('Invalid image panel dimension, must be 2 element tuple')
+		for element in imagesize:
+			if type(element) != int:
+				raise TypeError('Image panel dimension must be integer')
+			if element < 0:
+				raise ValueError('Image panel dimension must be greater than 0')
 		self.imagesize = imagesize
+
+		# set scale of image (zoom factor)
 		self.scale = (1.0, 1.0)
+
+		# set offset of image (if image size * scale > image panel size)
 		self.offset = (0, 0)
 
 		wxPanel.__init__(self, parent, id)
 
+		# create main sizer, will contain tool sizer and imagepanel
 		self.sizer = wxBoxSizer(wxVERTICAL)
 		self.SetAutoLayout(true)
 		self.SetSizer(self.sizer)
 
+		# create tool size to contain individual tools
 		self.toolsizer = wxBoxSizer(wxHORIZONTAL)
 		self.sizer.Add(self.toolsizer)
 		self.tools = []
 
-		height, width = self.imagesize
-		self.initPanel()
+		# create image panel, set cursor
+		self.panel = wxScrolledWindow(self, -1, size=self.imagesize)
+		self.panel.SetScrollRate(1,1)
+		self.defaultcursor = wxCROSS_CURSOR
+		self.panel.SetCursor(self.defaultcursor)
+		self.sizer.Add(self.panel)
+		width, height = self.panel.GetSizeTuple()
+		self.sizer.SetItemMinSize(self.panel, width, height)
 
-
+		# bind panel events
 		EVT_LEFT_UP(self.panel, self.OnLeftUp)
 		EVT_RIGHT_UP(self.panel, self.OnRightUp)
 		EVT_LEFT_DCLICK(self.panel, self.OnLeftDoubleClick)
@@ -196,6 +220,7 @@ class ImagePanel(wxPanel):
 		EVT_MOTION(self.panel, self.OnMotion)
 		EVT_LEAVE_WINDOW(self.panel, self.OnLeave)
 
+		# add tools
 		self.addTool(ValueTool(self, self.toolsizer))
 		self.addTool(RulerTool(self, self.toolsizer))
 		self.addTool(ZoomTool(self, self.toolsizer))
@@ -205,18 +230,12 @@ class ImagePanel(wxPanel):
 	def addTool(self, tool):
 		self.tools.append(tool)
 
-	def initPanel(self):
-		self.panel = wxScrolledWindow(self, -1, size=self.imagesize)
-		self.panel.SetScrollRate(1,1)
-		self.defaultcursor = wxCROSS_CURSOR
-		self.panel.SetCursor(self.defaultcursor)
-		self.sizer.Add(self.panel)
-		width, height = self.panel.GetSizeTuple()
-		self.sizer.SetItemMinSize(self.panel, width, height)
-
 	# image set functions
 
 	def setBitmap(self):
+		'''
+		Set the internal wxBitmap to current Numeric image
+		'''
 		if self.numericimage is None:
 			self.bitmap = None
 			return
@@ -232,7 +251,10 @@ class ImagePanel(wxPanel):
 		else:
 			self.bitmap = wxBitmapFromImage(wximage)
 
-	def setBuffers(self):
+	def setBuffer(self):
+		'''
+		Set the interal buffer to empty bitmap the least size of bitmap or client
+		'''
 		if self.bitmap is None:
 			self.buffer = None
 		else:
@@ -253,6 +275,9 @@ class ImagePanel(wxPanel):
 			self.buffer = wxEmptyBitmap(width, height)
 
 	def setVirtualSize(self):
+		'''
+		Set size of viewport and offset for scrolling if image is bigger than view
+		'''
 		if self.bitmap is not None:
 			width, height = self.bitmap.GetWidth(), self.bitmap.GetHeight()
 			if self.smallScale():
@@ -272,15 +297,22 @@ class ImagePanel(wxPanel):
 			self.offset = (0, 0)
 
 	def setNumericImage(self, numericimage, scroll=False):
+		'''
+		Set the numeric image, update bitmap, update buffer, set viewport size,
+		scroll, and refresh the screen.
+		'''
 		self.numericimage = numericimage
 		self.setBitmap()
-		self.setBuffers()
+		self.setBuffer()
 		self.setVirtualSize()
 		if not scroll:
 			self.panel.Scroll(0, 0)
 		self.UpdateDrawing()
 
 	def clearImage(self):
+		'''
+		Set the numeric image to none, clears everything.
+		'''
 		self.setNumericImage(None)
 
 	def setImageFromMrcString(self, imagestring, scroll=False):
@@ -292,6 +324,9 @@ class ImagePanel(wxPanel):
 		return self.scale
 
 	def smallScale(self, scale=None):
+		'''
+		If image is smaller than the view XXX NEEDS UPDATE? XXX
+		'''
 		if scale is None:
 			scale = self.getScale()
 		if scale[0] < 1.0 or scale[1] < 1.0:
@@ -308,7 +343,7 @@ class ImagePanel(wxPanel):
 		self.scale = scale
 		if self.smallScale() or self.smallScale(oldscale):
 			self.setBitmap()
-			self.setBuffers()
+			self.setBuffer()
 
 		self.setVirtualSize()
 		if self.biggerView():
@@ -339,7 +374,7 @@ class ImagePanel(wxPanel):
 		x, y = center
 		xcenter, ycenter = self.getClientCenter()
 		xscale, yscale = self.getScale()
-		self.panel.Scroll(x * xscale - xcenter, y * yscale - ycenter)
+		self.panel.Scroll(int(x * xscale - xcenter), int(y * yscale - ycenter))
 
 	def view2image(self, xy, viewoffset=None, scale=None):
 		if viewoffset is None:
@@ -482,8 +517,10 @@ class ImagePanel(wxPanel):
 			xsize, ysize = self.panel.GetClientSize()
 
 			#dc.Blit(0, 0, xsize, ysize, bitmapdc, xviewoffset, yviewoffset)
-			dc.Blit(0, 0, xsize/xscale + yscale, ysize/yscale + yscale, bitmapdc,
-							xviewoffset/xscale, yviewoffset/xscale)
+			dc.Blit(0, 0,
+							int(xsize/xscale + yscale), int(ysize/yscale + yscale),
+							bitmapdc,
+							int(xviewoffset/xscale), int(yviewoffset/xscale))
 			bitmapdc.SelectObject(wxNullBitmap)
 		dc.EndDrawing()
 		dc.SetUserScale(1.0, 1.0)
@@ -922,7 +959,7 @@ class TargetImagePanel(ImagePanel):
 			width *= xscale
 			height *= yscale
 
-		dc.Blit(x - width/2, y - height/2, width, height,
+		dc.Blit(int(x - width/2), int(y - height/2), width, height,
 						memorydc, 0, 0, wxCOPY, True)
 
 		memorydc.SelectObject(wxNullBitmap)
@@ -956,7 +993,7 @@ class TargetImagePanel(ImagePanel):
 				width *= xscale
 				height *= yscale
 
-			dc.Blit(x - width/2, y - height/2,
+			dc.Blit(int(x - width/2), int(y - height/2),
 							width, height, memorydc, 0, 0, wxCOPY, True)
 
 			memorydc.SelectObject(wxNullBitmap)
@@ -969,7 +1006,8 @@ class TargetImagePanel(ImagePanel):
 
 if __name__ == '__main__':
 	import sys
-	filename = sys.argv[1]
+#	filename = sys.argv[1]
+	filename = 'test1.mrc'
 	def bar(xy):
 		print xy
 
@@ -977,10 +1015,10 @@ if __name__ == '__main__':
 		def OnInit(self):
 			frame = wxFrame(NULL, -1, 'Image Viewer')
 			self.SetTopWindow(frame)
-#			self.panel = TargetImagePanel(frame, -1)
-			self.panel = ClickImagePanel(frame, -1, bar)
-#			self.panel.addTargetType('foo')
-#			self.panel.addTargetType('bar')
+#			self.panel = ClickImagePanel(frame, -1, bar)
+			self.panel = TargetImagePanel(frame, -1)
+			self.panel.addTargetType('foo')
+			self.panel.addTargetType('bar')
 			frame.Fit()
 			frame.Show(true)
 			return true
