@@ -192,10 +192,10 @@ class DataManager(object):
 				oldsize = self.sizedict[dmid]
 			else:
 				oldsize = 0
-			self.size -= oldsize
-			self.size += dsize
+			self.size = self.size - oldsize + dsize
 			self.sizedict[dmid] = dsize
-			self.clean()
+			if self.size > self.maxsize:
+				self.clean()
 		finally:
 			self.lock.release()
 
@@ -450,6 +450,9 @@ class Data(DataDict, leginonobject.LeginonObject):
 		self.dmid = None
 
 		self.datahandlers = {}
+		self.__size = 2500
+		k = self.keys()
+		self.__sizedict = dict(zip(k, [0 for key in k]))
 
 		datamanager.insert(self, hold=hold)
 
@@ -475,6 +478,16 @@ class Data(DataDict, leginonobject.LeginonObject):
 				self[k] = other.special_getitem(k, dereference=False)
 		else:
 			super(Data, self).update(other)
+
+	def friendly_update(self, other):
+		if isinstance(other, Data):
+			for key in other.keys():
+				try:
+					self[key] = other.special_getitem(key, dereference=False)
+				except KeyError:
+					pass
+		else:
+			super(Data, self).friendly_update(other)
 
 	def __deepcopy__(self, memo={}):
 		# without this, it will copy the dict
@@ -563,7 +576,8 @@ class Data(DataDict, leginonobject.LeginonObject):
 			value = value.reference()
 			isdatahandler = True
 		super(Data, self).__setitem__(key, value)
-		datamanager.resize(self)
+		if self.resize(key, value):
+			datamanager.resize(self)
 
 		## Keep a record of datahandlers that I am referencing.
 		## This might be necessary to prevent an attempt to 
@@ -619,41 +633,34 @@ class Data(DataDict, leginonobject.LeginonObject):
 		return data2dict(self, noNone, dereference)
 
 	def size(self):
-		## This is crazy, but fun:
-		## I tried to estimate how must memory empty Data instances
-		## use and found it to be about 1400 bytes.
-		## An empty ImageData instance uses about 1900 bytes.
-		## empty ScopeEMData uses about 7000 bytes
-		## We could overide size in subclasses with these estimates,
-		## but for now just an overall guess:
-		size = 2500
-		for key, datatype in self.types().items():
-			try:
-				isdata = issubclass(datatype, Data)
-			except TypeError:
-				isdata = False
-			if isdata:
-				## do not include size of other Data
-				## and even if you do, self[key]
-				## is dereferencing and possibly querying
-				## the database
-				continue
-			if self[key] is not None:
-				size += self.sizeof(self[key])
-		return size
+		return self.__size
+
+	def resize(self, key, newvalue):
+		oldsize = self.__sizedict[key]
+		newsize = self.sizeof(newvalue)
+		self.__sizedict[key] = newsize
+		self.__size = self.__size - oldsize + newsize
+		if oldsize == newsize:
+			return False
+		return True
 
 	def sizeof(self, value):
-		if type(value) is Numeric.ArrayType:
-			size = reduce(Numeric.multiply, value.shape) * value.itemsize()
-		elif value is None:
+		if value is None:
 			## there is only one None object
-			size = 0
+			return 0
+		elif type(value) is Numeric.ArrayType:
+			return reduce(Numeric.multiply, value.shape) * value.itemsize()
 		else:
 			## this is my stupid estimate of size for other objects
 			## We could also check for int, str, float, etc.
 			## but this is easier
-			size = 8
-		return size
+			## This should be something other than 0, but
+			## for now it is 0 because otherwise we call 
+			## datamanager.resize more often, especially 
+			## if update() is called.  Maybe we need a better 
+			## update() and friendly_update() that only
+			## call datamanager.resize() once.
+			return 0
 
 	def reference(self):
 		## create a data reference to myself
