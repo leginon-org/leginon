@@ -311,6 +311,7 @@ class PresetsManager(node.Node):
 		self.presetToDB(newpreset)
 		pnames = self.presetNames()
 		self.uiselectpreset.set(pnames, len(pnames)-1)
+		print 'got preset %s from scope' % (name,)
 		return newpreset
 
 	def presetNames(self):
@@ -423,6 +424,7 @@ class PresetsManager(node.Node):
 			d = newpreset.toDict(noNone=True)
 			del d['session']
 			self.presetparams.set(d, callback=False)
+			print 'created new preset: %s' % (newname,)
 		else:
 			print 'Enter a preset name!'
 
@@ -461,8 +463,11 @@ class PresetsManager(node.Node):
 		'''
 		get list of session names from this instrument
 		'''
+		myinstname = self.session['instrument']['name']
 		querysession = data.SessionData()
-		querysession['instrument'] = self.session['instrument']
+		queryinst = data.InstrumentData()
+		queryinst['name'] = myinstname
+		querysession['instrument'] = queryinst
 		sessionlist = self.research(datainstance=querysession, fill=False)
 		sessionnamelist = [x['name'] for x in sessionlist]
 		return sessionnamelist
