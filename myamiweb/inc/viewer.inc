@@ -259,6 +259,8 @@ class view {
 		$this->name = $name;
 		$this->displayname = $this->name.'view';
 		$this->displayPresets(true);
+		$this->btinfo = new button('info'.$this->name, 'info');
+		$this->btinfo->setLink('imgreport.php','imgreport');
 	}
 
 	function setSize($size) {
@@ -310,6 +312,7 @@ class view {
 			.'var jsvfile'.$this->name.'=1;'.$this->crlf
 			.'var jsmin'.$this->name.';'.$this->crlf
 			.'var jsmax'.$this->name.';'.$this->crlf
+			.$this->btinfo->getJavascript().$this->crlf
 			.''.$this->crlf;
 		return $javascript;
 	}
@@ -367,6 +370,10 @@ class view {
 			<td align="right">
 			<table class="bgcolor1" border="0" cellspacing="1" cellpadding="0">
 			<tr>
+			<td width="15">'
+			.$this->btinfo->display().$this->crlf
+			.'
+			</td>
 			<td width="15">
 			<a href="javascript:toggleimage(\''.$this->name.'fft_bt\', \'fft_bt\');newfile(\''.$name.'\'); "
 				onmouseover="imageonfocus(\''.$this->name.'fft_bt\', \'fft_bt\', \'_over\')" 

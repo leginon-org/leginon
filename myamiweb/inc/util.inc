@@ -211,5 +211,53 @@ class iconlink {
 		echo $this->getScript();
 		echo $this->getHtmlTableIcons(3);
 	}
+
+	
+}
+
+function divtitle($title) {
+	$htmlstr = '
+	<div style="padding: 4px; border-style:solid; border-width:1; border-color:black; background-color:#CCCCFF">
+	<b>'.$title.'</b> 
+	</div>
+	';
+	return $htmlstr;
+}
+
+function getFileSize($filename, $precision, $unit="") {
+	if (!is_file($filename))
+		return false;
+	
+	if (!($bytes=filesize($filename)) || $bytes < 0)
+	       return false;
+
+	$units = array (
+		0 => 'Bytes',
+		1 => 'kB',
+		2 => 'MB',
+		3 => 'GB',
+		4 => 'TB',
+		'B' => '0',
+		'kB' => '1',
+		'MB' => '2',
+		'GB' => '3',
+		'TB' => '4'
+		);
+
+	$setlevel=($unit) ? $units[$unit] : -1;
+
+	$bytes_org = $bytes;
+	for ($level = 0; $bytes >= 1024 ; $level++) {
+		if ($setlevel==$level)
+			break;
+		$bytes /= 1024;     
+	}
+  
+  
+	if (!$ext=$units[$level]) {
+		$bytes=$bytes_org; 
+		$ext=$units[0]; 
+	}
+	return round($bytes, $precision).' '.$ext;
 }
 ?>

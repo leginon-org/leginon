@@ -121,6 +121,9 @@ TD.viewdt2 {
 	background-color:	#006699;
 }
 
+.bgcolor3 {
+	background-color:	#000000;
+}
 /* link for the header */
 .header {
 	text-decoration: none;
@@ -167,4 +170,10 @@ INPUT.button {
  voice-family: inherit;
  padding: 3px 4px;
 /*  ns4. */
+}
+
+.datafield0
+{
+        color:                  #777777;
+	font-weight: bold;
 }

@@ -10,6 +10,12 @@
 require('inc/leginon.inc');
 require('inc/square.inc');
 require('inc/scalebar.inc');
+function getmicrotime()
+{
+   list($usec, $sec) = explode(" ", microtime());
+   return ((float)$usec + (float)$sec);
+}
+
 $g=true;
 if (!$session=stripslashes($_GET[session])) {
 	$g=false;
@@ -68,12 +74,12 @@ if ($g) {
 
 	$pic = $path.$filename;
 	if (is_file($pic)) {
-		$begin=time();
+		$begin=getmicrotime();
 		if (READ_MRC == "mrcmod")
 			$img = imageCreateFromMRC($pic ,$new_w,$new_h,$minpix, $maxpix);
 		else
 			$img = $mrc->imagecreatefromMRC($pic,$new_w,$new_h,$minpix, $maxpix, $quality);
-		$end=time();
+		$end=getmicrotime();
 		$white = imagecolorallocate($img, 255, 255, 255);
 		$black = imagecolorallocate($img, 0, 0, 0);
 		$blue = imagecolorallocate($img, 0, 255, 255);
@@ -115,11 +121,6 @@ if ($g) {
 			}
 			
 		}
-		if ($displaytime=0) {
-			imagestring($img, 4, 11, 11, "load time: ".($end-$begin), $black);
-			imagestring($img, 4, 10, 10, "load time: ".($end-$begin), $blue);
-		}
-
 		$targets = $leginondata->getImageFocusTargets($id);
 		$line=20;
 		$diam=20;
@@ -144,6 +145,11 @@ if ($g) {
 			imagestring($img, 4, $xc, $yc, $tn, $col);
 		}
 	  }
+
+	if ($displaytime=1) {
+		imagestring($img, 4, 11, 11, "load time: ".($end-$begin), $black);
+		imagestring($img, 4, 10, 10, "load time: ".($end-$begin), $blue);
+	}
 
 	  /* display scale bar */
 	  if ($displayscalebar) {

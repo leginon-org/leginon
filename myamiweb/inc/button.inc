@@ -25,15 +25,17 @@ class button {
 		return $javascript;
 	}
 
-	function setLink($link) {
+	function setLink($link, $target="") {
 		$this->link=$link;
+		$this->target = ($target) ? 'target="'.$target.'"' : "";
 	}
+		//	<a href="javascript:void(0)" id="'.$this->name.'href">'.
 
 	function display() {
 		$iconwidth=15;
 		$name = $this->name;
 		$imgname = $this->name.'img';
-		$htmlbutton = '<a href="'.$this->link.'"'.$this->crlf
+		$htmlbutton = '<a id="'.$this->name.'href" '.$this->target.' href="'.$this->link.'"'.$this->crlf
 				.'onmouseover="imageonfocus(\''.$imgname.'\', \''.$this->name.'\', \'_over\')"'.$this->crlf
 				.'onmouseout="imageoff(\''.$imgname.'\', \''.$this->name.'\', \'\')"'.$this->crlf 
 				.'onclick="imageon(\''.$imgname.'\', \''.$this->name.'\', \'\')"'.$this->crlf 

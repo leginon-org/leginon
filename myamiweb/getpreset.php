@@ -10,6 +10,7 @@
 ?>
 <html>
 <head>
+<link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 </head>
 <body leftmargin="5" topmargin="0" bottommargin="0" marginwidth="5" marginheight="0" >
 <font face="Arial, Helvetica, sans-serif" size="2">
@@ -30,8 +31,8 @@ if ($id) {
 			$info = $leginondata->getGridInfo($id);
 			$filename = $leginondata->getFilename($id);
 			$presets = $leginondata->getPresets($id, $p);
-			if ($info[gridNb])
-				echo "<b>grid#:</b> ".$info[gridNb];
+			if ($info[gridId])
+				echo '<a class="header" target="gridinfo" href="'.$PROJECT_URL.'getgrid.php?gridId='.$info[gridId].'">grid info&raquo;</a>';
 			if (is_array($presets))
 			foreach($presets as $k=>$v)
 				if ($k=='defocus')

@@ -72,11 +72,14 @@ function newfile(view){
 
 	ni = "getparentimgtarget.php?"+options;
 	nlink = "javascript:popUpMap('map.php?"+options+"')";
+	ninfolink = "imgreport.php?id="+jsimgId+"&preset="+selpreset;
 
 	if (img = document.images[eval("\"" +view+ "img\"")]) 
 		img.src = ni;
 	if (link = document.getElementById(view+"href"))
 		link.href = nlink;
+	if (infolink = document.getElementById("info"+view+"_bthref"))
+		infolink.href = ninfolink;
 
 	if (cif=eval("this."+view+"if")) {
 		iflink = "getpreset.php?vf="+jsvfile+"&id="+jsimgId+"&preset="+selpreset;

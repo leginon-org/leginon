@@ -16,6 +16,9 @@ $DBUSER = "usr_object";
 $DBPASSWORD = "";
 $DATABASE = "dbemdata";
 
+// --- Project Base URL
+
+$PROJECT_URL = "http://cronus1.scripps.edu/leginon/project/";
 
 // --- Set External SQL server here (use for import/export application)
 $SQL_HOSTS[] = "cronus1";

@@ -129,7 +129,7 @@ class leginondata {
 		return $filenames;
 	}
 
-	function getPresets($fileId, $presets) {
+	function getPresets($fileId, $presets=array('mag','defocus','pixelsize','dose')) {
 		if (!is_array($presets) || !$fileId)
 			return false;
 		if (in_array('mag', $presets))
@@ -193,10 +193,11 @@ class leginondata {
 
 	function getImageMatrixCalibration($imgId) {
 		$q = "select "
-			."mcal.`ARRAY|matrix|1_1`, "
-			."mcal.`ARRAY|matrix|1_2`, "
-			."mcal.`ARRAY|matrix|2_1`, "
-			."mcal.`ARRAY|matrix|2_2`, "
+			."mcal.`ARRAY|matrix|1_1` as `a11`,"
+			."mcal.`ARRAY|matrix|1_2` as `a12`,"
+			."mcal.`ARRAY|matrix|2_1` as `a21`,"
+			."mcal.`ARRAY|matrix|2_2` as `a22`,"
+			."mcal.`type` as `type`,"
 			."atan2(mcal.`ARRAY|matrix|1_1`, mcal.`ARRAY|matrix|2_1`) as angle "
 			."from AcquisitionImageData a, MatrixCalibrationData mcal "
 			."left join ScopeEMData scope on (scope.`DEF_id`=a.`REF|ScopeEMData|scope`) "
@@ -216,6 +217,36 @@ class leginondata {
 		$Rparent = $this->mysql->SQLQuery($q);
 		$parent = mysql_fetch_array($Rparent);
 		return $parent;
+	}
+
+	function getMatrixCalibration($sessionId, $limit="") {
+		$q = "select "
+			."mcal.`ARRAY|matrix|1_1` as `a11`, "
+			."mcal.`ARRAY|matrix|1_2` as `a12`, "
+			."mcal.`ARRAY|matrix|2_1` as `a21`, "
+			."mcal.`ARRAY|matrix|2_2` as `a22`, "
+			."atan2(mcal.`ARRAY|matrix|1_1`, mcal.`ARRAY|matrix|2_1`) as angle "
+			."from AcquisitionImageData a, MatrixCalibrationData mcal "
+			."left join ScopeEMData scope on (scope.`DEF_id`=a.`REF|ScopeEMData|scope`) "
+			."left join SessionData s1 on (s1.`DEF_id`=a.`REF|SessionData|session`) "
+			."left join SessionData s2 on (s2.`DEF_id`=mcal.`REF|SessionData|session`) "
+			."where "
+			."s1.`REF|InstrumentData|instrument`=s2.`REF|InstrumentData|instrument` "
+			."and "
+			."scope.magnification = mcal.magnification "
+			."and "
+			."mcal.`type`='image shift' "
+			."and "
+			."mcal.`DEF_timestamp` < a.`DEF_timestamp` "
+			."and "
+			."a.`REF|SessionData|session`='".$sessionId."' ";
+		if ($limit)
+			$q .= "limit $limit";
+
+		echo $q;
+		$Rparent = $this->mysql->SQLQuery($q);
+//		$parent = mysql_fetch_array($Rparent);
+		return $Rparent;
 	}
 
 	function getImageFFT($imgId) {
@@ -294,6 +325,8 @@ class leginondata {
 		}
 		$q = "select "
 			."a.`DEF_id` as imageId, "
+			."date_format(a.`DEF_timestamp`, '%Y-%d-%m %T') as `timestamp`,"
+			."a.`REF|SessionData|session` as `sessionId`,"
 			."a.`MRC|image` as filename, "
 			."p.`name` as `preset`, "
 			."c.`SUBD|dimension|x` as dimx, "
@@ -302,8 +335,7 @@ class leginondata {
 			."pi.pixelsize as pixelsize, "
 			."scope.magnification, "
 			."scope.defocus, "
-			."grid.`grid number` as gridNb, "
-			."grid.`grid tray ID` as trayId "
+			."grid.`grid ID` as gridId "
 			.$parentselect
 			."from AcquisitionImageData a "
 			."left join ScopeEMData scope on (scope.`DEF_id`=a.`REF|ScopeEMData|scope`) "
@@ -314,7 +346,7 @@ class leginondata {
 			."left join AcquisitionImageTargetData parenttarget "
 			."on (parenttarget.`DEF_id`=a.`REF|AcquisitionImageTargetData|target`) "
 			."left join GridData grid "
-			."on (grid.`DEF_id`=parenttarget.`REF|GridData|grid`) "
+			."on (grid.`DEF_id`=a.`REF|GridData|grid`) "
 			."cross join PixelSizeCalibrationData pi on "
 			."(s1.`REF|InstrumentData|instrument`=s2.`REF|InstrumentData|instrument` and "
 			."scope.magnification = pi.magnification) "
@@ -329,13 +361,10 @@ class leginondata {
 
 	function getGridInfo($imgId) {
 		$q = "select "
-			."grid.`grid number` as gridNb, "
-			."grid.`grid tray ID` as trayId "
+			."grid.`grid ID` as gridId "
 			."from AcquisitionImageData a "
-			."left join AcquisitionImageTargetData target "
-			."on (target.`DEF_id`=a.`REF|AcquisitionImageTargetData|target`) "
 			."left join GridData grid "
-			."on (grid.`DEF_id`=target.`REF|GridData|grid`) "
+			."on (grid.`DEF_id`=a.`REF|GridData|grid`) "
 			."where "
 			."a.`DEF_id` ='".$imgId."' "; 
 
