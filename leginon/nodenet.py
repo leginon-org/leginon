@@ -44,7 +44,7 @@ class Node(xmlrpcserver.xmlrpcserver):
 		locpickle = cPickle.dumps(self.location)
 		eventpickle = cPickle.dumps(eventinfo)
 
-		nodeinfo = {'location pickle' : locpickle, 'methods' : 'meths', 'events pickle': eventpickle}
+		nodeinfo = {'location pickle' : locpickle, 'methods' : meths, 'events pickle': eventpickle}
 
 		id = self.managerlocation.rpc('addNode', (nodeinfo,))
 		return id
@@ -59,11 +59,8 @@ class Node(xmlrpcserver.xmlrpcserver):
 	def announce(self, eventinst):
 		### this sends an outgoing event to the manager
 		eventrepr = eventinst.xmlrpc_repr()
-		print 'ANNOUNCEeventrepr', eventrepr
 		args = (self.id, eventrepr)
-		print 'ARGS', args
 		ret = self.managerlocation.rpc('notify', args)
-		print 'return', ret
 
 	def EXPORT_event_dispatch(self, eventrepr):
 		### this decides what to do with incoming events
@@ -133,7 +130,6 @@ class Manager(xmlrpcserver.xmlrpcserver):
 				cPickle.loads(node['location pickle'])))
 
 		print 'node %s has been added' % id
-		#self.print_nodes()
 		return id
 
 	def EXPORT_deleteNode(self, id):
@@ -142,7 +138,6 @@ class Manager(xmlrpcserver.xmlrpcserver):
 
 	def EXPORT_nodes(self):
 		nodes = self.registry.xmlrpc_repr()
-		print 'XMLRPCRPER', nodes
 		return nodes
 
 	def EXPORT_notify(self, sourceid, eventrepr):

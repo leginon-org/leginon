@@ -33,7 +33,8 @@ class Registry(object):
 	def xmlrpc_repr(self):
 		repr = {}
 		for key in self.entries:
-			repr[key] = self.entries[key].xmlrpc_repr()
+			strkey = str(key)
+			repr[strkey] = self.entries[key].xmlrpc_repr()
 		return repr
 
 class RegistryEntry(object):
@@ -55,7 +56,7 @@ class RegistryEntry(object):
 		"return a legal xml-rpc structure representation"
 		repr = {}
 		repr['id'] = self.id
-		repr['entry time'] = self.entry_time
+		repr['time'] = tuple(self.time)
 		return repr
 
 class NodeRegistryEntry(RegistryEntry):
@@ -73,10 +74,25 @@ class NodeRegistryEntry(RegistryEntry):
 		return str
 
 	def xmlrpc_repr(self):
-		repr = RegistryEntry.__repr__(self)
+		repr = RegistryEntry.xmlrpc_repr(self)
 		repr['location'] = self.location.xmlrpc_repr()
 		repr['methods'] = self.methods
-		repr['events'] = self.events
+
+		## need to get inputs and outputs into xmlrpc format
+		inevents = self.events['inputs']
+		outevents = self.events['outputs']
+		edict = {}
+		edict['inputs'] = []
+		for eventclass in inevents:
+			classrepr = eventclass.class_xmlrpc_repr()
+			edict['inputs'].append(classrepr)
+		edict['outputs'] = []
+		for eventclass in outevents:
+			classrepr = eventclass.class_xmlrpc_repr()
+			edict['outputs'].append(classrepr)
+
+		repr['events'] = edict
+
 		return repr
 
 class DataRegistryEntry(RegistryEntry):

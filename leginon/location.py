@@ -12,7 +12,9 @@ class Location(object):
 	def rpc(self, method, args=()):
 			uri = self.getURI()
 			proxy = xmlrpclib.ServerProxy(uri)
+			print 'ZZZZZZZZZZZZZZ', method, args
 			ret = apply(getattr(proxy,method), args)
+			print 'XXXXXXXXXXXXXX'
 			return ret
 
 	def tostring(self):

@@ -67,7 +67,11 @@ class xmlrpcserver(SimpleXMLRPCServer):
 		arglen = len(argnames)
 		params2 = params[:arglen]
 
+
+		print 'APPLY', meth, params2
 		ret = apply(meth, params2)
+		print 'RETURN', ret
+
 		if ret == None:
 			return ''
 		else:
@@ -112,7 +116,7 @@ class callerbut(Frame):
 			arg = argentry.get()
 			args.append(arg)
 			args = tuple(args)
-		print 'calling %s with args %s' % (self.name, args)
+		print 'calling %s on %s with args %s' % (self.name, self.proxy,args)
 		ret = getattr(self.proxy, self.name)(*args)
 		print ret
 
