@@ -8,7 +8,10 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import Numeric
+try:
+	import numarray as Numeric
+except:
+	import Numeric
 import fftengine
 
 class Correlator(object):

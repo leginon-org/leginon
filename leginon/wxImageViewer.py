@@ -11,7 +11,10 @@
 import cStringIO
 import Mrc
 import math
-import Numeric
+try:
+	import numarray as Numeric
+except:
+	import Numeric
 import wx
 from wx.lib.buttons import GenBitmapToggleButton
 import NumericImage

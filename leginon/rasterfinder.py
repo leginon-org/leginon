@@ -15,7 +15,10 @@ import Mrc
 import camerafuncs
 import threading
 import ice
-import Numeric
+try:
+	import numarray as Numeric
+except:
+	import Numeric
 import imagefun
 
 class RasterFinder(targetfinder.TargetFinder):

@@ -12,7 +12,10 @@ import convolver
 import data
 import imagefun
 import Mrc
-import Numeric
+try:
+	import numarray as Numeric
+except:
+	import Numeric
 import random
 import targetfinder
 import threading

@@ -10,11 +10,15 @@
 
 # this is python Numeric version of -radial_image (mon_radial_image)
 
-import Numeric
+try:
+	import numarray as Numeric
+	import linear_algebra as LinearAlgebra
+except:
+	import Numeric
+	import LinearAlgebra
 import Mrc
 import imagefun
 import peakfinder
-import LinearAlgebra
 import convolver
 import ice
 

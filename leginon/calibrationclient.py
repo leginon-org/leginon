@@ -6,8 +6,12 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 import node, data, event
-import Numeric
-import LinearAlgebra
+try:
+	import numarray as Numeric
+	import linear_algebra as LinearAlgebra
+except:
+	import Numeric
+	import LinearAlgebra
 import math
 import correlator
 import peakfinder

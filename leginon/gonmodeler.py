@@ -20,7 +20,10 @@ import uidata
 import string
 import math
 import EM
-import Numeric
+try:
+	import numarray as Numeric
+except:
+	import Numeric
 
 class GonModeler(node.Node):
 	eventinputs = node.Node.eventinputs + EM.EMClient.eventinputs

@@ -1,4 +1,7 @@
-import Numeric
+try:
+	import numarray as Numeric
+except:
+	import Numeric
 import imagefun
 
 min_intensity = 0.000001

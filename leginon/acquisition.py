@@ -21,7 +21,10 @@ import threading
 import uidata
 import node
 import EM
-import Numeric
+try:
+	import numarray
+except:
+	import Numeric
 
 class NoMoveCalibration(Exception):
 	pass
@@ -407,6 +410,19 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if self.waitfordone.get():
 			self.waitForImageProcessDone()
 		return 'ok'
+
+	def publishStats(self, imagedata):
+		im = imagedata['image']
+		mn,mx = imagefun.minmax(im)
+		mean = imagefun.mean(im)
+		std = imagefun.stdev(im, mean)
+		statsdata = data.AcquisitionImageStatsData()
+		statsdata['min'] = mn
+		statsdata['max'] = mx
+		statsdata['mean'] = mean
+		statsdata['stdev'] = std
+		statsdata['image'] = imagedata
+		self.publish(statsdata, database=True)
 
 	def setImageFilename(self, imagedata):
 		if imagedata['filename']:

@@ -8,8 +8,12 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import Numeric
-from LinearAlgebra import linear_least_squares
+try:
+	import numarray as Numeric
+	from linear_algebra import linear_least_squares
+except:
+	import Numeric
+	from LinearAlgebra import linear_least_squares
 
 class PeakFinder(object):
 	def __init__(self):

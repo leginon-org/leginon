@@ -9,8 +9,12 @@
 #
 
 import math, string
-import Numeric
-import LinearAlgebra
+try:
+	import numarray as Numeric
+	import linear_algebra as LinearAlgebra
+except:
+	import Numeric
+	import LinearAlgebra
 import shelve
 
 class GonData:

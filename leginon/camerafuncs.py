@@ -12,7 +12,10 @@ Provides high level functions to access camera
 import leginonconfig
 import node
 import data
-import Numeric
+try:
+	import numarray as Numeric
+except:
+	import Numeric
 import copy
 import uidata
 from timer import Timer

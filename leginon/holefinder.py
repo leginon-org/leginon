@@ -16,7 +16,10 @@ import Mrc
 import camerafuncs
 import threading
 import ice
-import Numeric
+try:
+	import numarray as Numeric
+except:
+	import Numeric
 
 class HoleFinder(targetfinder.TargetFinder):
 	def __init__(self, id, session, managerlocation, **kwargs):

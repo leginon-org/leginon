@@ -15,7 +15,10 @@ import datatransport
 import event
 import imagefun
 import node
-import Numeric
+try:
+	import numarray as Numeric
+except:
+	import Numeric
 import threading
 import uidata
 import EM

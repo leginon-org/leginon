@@ -8,12 +8,17 @@
 
 import convolver
 import data
-import FFT
+try:
+	import numarray as Numeric
+	import fft as FFT
+	import numarray.linear_algebra.mlab as MLab
+except:
+	import Numeric
+	import FFT
+	import MLab
 import imagefun
-import MLab
 import Mrc
 import numextension
-import Numeric
 import random
 import targetfinder
 import threading

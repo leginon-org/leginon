@@ -2,7 +2,10 @@ from xmlrpclib import *
 import cStringIO
 import Image
 import Mrc
-import Numeric
+try:
+	import numarray as Numeric
+except:
+	import Numeric
 import types
 
 try:
@@ -35,6 +38,6 @@ def dump_instance(self, value, write):
 	else:
 		self.dump_instance(value, write)
 
-Marshaller.dispatch[Numeric.arraytype] = dump_Numeric_array
+Marshaller.dispatch[Numeric.ArrayType] = dump_Numeric_array
 Marshaller.dispatch[types.InstanceType] = dump_instance
 

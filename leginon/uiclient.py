@@ -19,7 +19,10 @@ import wxMaster
 import wxGridTray
 import wxMessageLog
 import wxList
-from Numeric import arraytype
+try:
+	from numarray import ArrayType
+except:
+	from Numeric import ArrayType
 import os
 
 EVT_ADD_WIDGET = wx.NewEventType()
@@ -1127,7 +1130,7 @@ class ApplicationWidget(wx.BoxSizer, DataWidget):
 
 class ImageMixIn(object):
 	def setImage(self, value):
-		if isinstance(value, arraytype):
+		if isinstance(value, ArrayType):
 			self.image.setNumericImage(value)
 		elif isinstance(value, extendedxmlrpclib.Binary):
 			self.image.setImageFromMrcString(value.data)

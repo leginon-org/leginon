@@ -14,7 +14,10 @@ import threading
 import event
 import time
 import imagefun
-import Numeric
+try:
+	import numarray as Numeric
+except:
+	import Numeric
 import copy
 
 class Focuser(acquisition.Acquisition):

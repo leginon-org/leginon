@@ -13,7 +13,10 @@ import event
 import imp
 import methoddict
 import node
-import Numeric
+try:
+	import numarray as Numeric
+except:
+	import Numeric
 import Queue
 import threading
 import time

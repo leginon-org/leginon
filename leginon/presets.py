@@ -19,7 +19,10 @@ import time
 import unique
 import newdict
 import EM
-import Numeric
+try:
+	import numarray as Numeric
+except:
+	import Numeric
 
 class PresetChangeError(Exception):
 	pass

@@ -8,7 +8,10 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import Numeric
+try:
+	import numarray
+except:
+	import Numeric
 import Mrc
 import Image
 import re
@@ -63,7 +66,7 @@ def resize(pil_image, size):
 
 ## (Numeric typcode,size) => (PIL mode,  PIL rawmode)
 ntype_itype = {
-	(Numeric.UnsignedInt8,1) : ('L','L'),
+	(Numeric.UInt8,1) : ('L','L'),
 	(Numeric.Int16,2) : ('I','I;16NS'),
 	(Numeric.Int,2) : ('I','I;16NS'),
 	(Numeric.Int,4) : ('I','I;32NS'),

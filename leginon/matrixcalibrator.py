@@ -14,7 +14,10 @@ import sys
 import time
 import camerafuncs
 import calibrationclient
-import Numeric
+try:
+	import numarray as Numeric
+except:
+	import Numeric
 import uidata
 import threading
 import node

@@ -15,7 +15,10 @@ import camerafuncs
 import correlator
 import peakfinder
 import calibrationclient
-import Numeric
+try:
+	import numarray as Numeric
+except:
+	import Numeric
 import time
 import threading
 import presets

@@ -10,14 +10,17 @@
 
 from wxPython.wx import wxEmptyImage
 import Image
-import Numeric
+try:
+	import numarray as Numeric
+except:
+	import Numeric
 import math
 import sys
 import time
 
 ## (Numeric typcode,size) => (PIL mode,  PIL rawmode)
 ntype_itype = {
-	(Numeric.UnsignedInt8,1) : ('L','L'),
+	(Numeric.UInt8,1) : ('L','L'),
 	(Numeric.Int16,2) : ('I','I;16NS'),
 	(Numeric.Int,2) : ('I','I;16NS'),
 	(Numeric.Int,4) : ('I','I;32NS'),
@@ -30,7 +33,7 @@ ntype_itype = {
 
 def Numeric2PILImage(numericarray, scale=False):
 	if scale:
-		numericarray = linearscale(numericarray, (None, None), (0, 255)).astype(Numeric.UnsignedInt8)
+		numericarray = linearscale(numericarray, (None, None), (0, 255)).astype(Numeric.UInt8)
 	type = numericarray.typecode()
 	h, w = numericarray.shape
 	imsize = w, h

@@ -10,7 +10,10 @@ import calibrationclient
 import event, data
 import uidata
 import node
-import Numeric
+try:
+	import numarray as Numeric
+except:
+	import Numeric
 
 class DoseCalibrator(calibrator.Calibrator):
 	'''
