@@ -89,7 +89,7 @@ class XMLApplicationExport:
 		<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
 		</sqltable>
 	"""
-		schema_create = '<sqltable name="%s" >%s' % (table,self.crlf)
+		schema_create = '  <sqltable name="%s" >%s' % (table,self.crlf)
 
 		rows = self.db.selectall("SHOW FIELDS FROM `%s`" % (table,))
 		for row in rows:
@@ -101,7 +101,7 @@ class XMLApplicationExport:
 			if not row['Null']:
 				schema_create += '      null="NOT NULL"%s' % (self.crlf,)
 			if row['Extra']:
-				schema_create += '      extra="%s"%s ' % (row['Extra'], self.crlf)
+				schema_create += '      extra="%s"%s' % (row['Extra'], self.crlf)
 			schema_create += "    />%s" % (self.crlf,)
 		
 		keys = self.db.selectall("SHOW KEYS FROM `%s`" % (table,)) 
@@ -129,7 +129,7 @@ class XMLApplicationExport:
 				schema_create += 'KEY %s (%s)' % (key, value_str) 
 			schema_create += '</key>%s' % (self.crlf,) 
 		
-		schema_create += '</sqltable>%s' % (self.crlf,)
+		schema_create += '  </sqltable>%s' % (self.crlf,)
 		return schema_create
 
 	def getXMLData(self, table, applicationId):
@@ -233,8 +233,11 @@ class XMLApplicationImport:
 				fname = self.getAttribute(d, 'name')
 				if conditions.has_key(fname):
 					fvalue = conditions[fname]
-				else:
+				elif n.firstChild is not None:
 					fvalue = "'%s'" % (sqldb.escape(n.firstChild.data),)
+				else:
+					fvalue = "''"
+
 				fieldvalues[fname]=fvalue
 
 				if fname <> 'DEF_id':
@@ -280,6 +283,8 @@ class ImportExport:
 
 	def __init__(self):
 		self.db = sqldb.sqlDB()
+		self.warning = ""
+		self.information = ""
 
 	def setDBparam(self, **kwargs):
 		"""
@@ -289,7 +294,11 @@ class ImportExport:
 		'passwd':leginonconfig.DB_PASS
 		"""
 		self.db = sqldb.sqlDB(**kwargs)
-		
+
+	def getMessageLog(self):
+		return {	'warning': self.warning,
+				'information': self.information
+			}
 
 	def importApplication(self, filename):
 		try:
@@ -317,7 +326,7 @@ class ImportExport:
 
 		# Insert New Application data
 		if check:
-			print "Application %s-%s exists" % (check['name'], check['version'])
+			self.warning = "Application %s-%s exists" % (check['name'], check['version'])
 		else:
 			q = xmlapp.getSQLApplicationQuery()
 			applicationId = self.db.insert(q)
@@ -331,7 +340,7 @@ class ImportExport:
 
 			checkquery = "Select `DEF_id`, name, version from ApplicationData where %s" % (where,)
 			check = self.db.selectone(checkquery)
-			print "Application %s-%s inserted sucessfully" % (check['name'], check['version'])
+			self.information =  "Application %s-%s inserted sucessfully" % (check['name'], check['version'])
 
 	def exportApplication(self, name=None, applicationId=None):
 		""" Export an application by name or by Id. If an application name is not None,
@@ -383,8 +392,11 @@ class ImportExport:
 ########################################
 
 if __name__ == "__main__":
+	appname = "MSI1_062"
+	appfile= "/home/dfellman/MSI1_062_1.xml"
 	app = ImportExport()
 	app.setDBparam(host="stratocaster")
-	app.importApplication('/home/dfellman/03dec15_0.xml')
-	dump = app.exportApplication('03dec15')
-	print dump
+	app.importApplication(appfile)
+	print app.getMessageLog()
+	dump = app.exportApplication(appname)
+	#print dump

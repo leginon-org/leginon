@@ -606,6 +606,9 @@ class Manager(node.Node):
 		appname = self.uiapplicationlist.getSelectedValue()
 		app = importexport.ImportExport()
 		dump = app.exportApplication(appname)
+		if dump is None:
+			self.messagelog.warning('Select a valid application')
+			return
 		try:
 			f = open(filename,'w')
 			f.write(dump)
@@ -617,9 +620,13 @@ class Manager(node.Node):
 		if filename is None:
 			return
 		try:
-			appname = self.uiapplicationlist.getSelectedValue()
 			app = importexport.ImportExport()
 			app.importApplication(filename)
+			messages = app.getMessageLog()
+			if messages['information']:
+				self.messagelog.information(messages['information'])
+			if messages['warning']:
+				self.messagelog.warning(messages['warning'])
 		except ValueError:
 			self.logger.exception('Unable to import application from "%s"' % filename)
 
