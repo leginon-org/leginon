@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageViewer.py,v $
-# $Revision: 1.36 $
+# $Revision: 1.37 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-01 23:02:56 $
+# $Date: 2004-11-02 21:53:37 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -1128,7 +1128,11 @@ class TypeTool(object):
 		self.tb = {}
 
 		if display is not None:
-			bitmap = getBitmap('display.png')
+			if target is None:
+				bitmap = getBitmap('display.png')
+			else:
+				bitmap = getTargetIconBitmap(target)
+
 			self.tb['display'] = GenBitmapToggleButton(self.parent, -1, bitmap,
 																									size=(24, 24))
 			self.tb['display'].SetToolTip(wx.ToolTip('Display'))
@@ -1136,7 +1140,7 @@ class TypeTool(object):
 			self.tb['display'].SetBezelWidth(1)
 
 		if target is not None:
-			bitmap = getTargetIconBitmap(target)
+			bitmap = getBitmap('arrow.png')
 			self.tb['target'] = GenBitmapToggleButton(self.parent, -1, bitmap,
 																								size=(24, 24))
 			self.tb['target'].SetBitmapDisabled(bitmap)
