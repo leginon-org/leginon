@@ -109,23 +109,22 @@ class BitmapWindow(BufferedWindow):
 
 		dc.SetUserScale(self._xscale, self._yscale)
 
-		memorydc = wx.MemoryDC()
-		memorydc.SelectObject(self._bitmap)
 		if wx.Platform == '__WXGTK__':
-			dc.DestroyClippingRegion()
-			dc.SetClippingRegion(0, 0,
-														self._clientwidthscaled, self._clientheightscaled)
-			xoffset = self._xoffsetscaled
-			if self._xview > 0:
-				xoffset -= self._xview
-			yoffset = self._yoffsetscaled
-			if self._yview > 0:
-				yoffset -= self._yview
-			dc.Blit(xoffset, yoffset,
-							self._bitmapwidth, self._bitmapheight,
+			x = max(self._xview, 0)
+			y = max(self._yview, 0)
+			width = min(self._bitmapwidth - x, self._clientwidthscaled)
+			height = min(self._bitmapheight - y, self._clientheightscaled)
+			bitmap = self._bitmap.GetSubBitmap((x, y, width, height))
+			memorydc = wx.MemoryDC()
+			memorydc.SelectObject(bitmap)
+
+			dc.Blit(self._xoffsetscaled, self._yoffsetscaled,
+							width, height,
 							memorydc,
 							0, 0)
 		else:
+			memorydc = wx.MemoryDC()
+			memorydc.SelectObject(self._bitmap)
 			dc.Blit(self._xoffsetscaled, self._yoffsetscaled,
 							self._clientwidthscaled, self._clientheightscaled,
 							memorydc,
@@ -193,8 +192,11 @@ class OffsetWindow(ScaledWindow):
 
 	def _setBitmap(self, bitmap):
 		ScaledWindow._setBitmap(self, bitmap)
-		self.SetScrollbars(self._xscale, self._yscale,
-												self._bitmapwidth, self._bitmapheight)
+		ppux = max(int(self._xscale), 1)
+		ppuy = max(int(self._yscale), 1)
+		nux = min(int(self._bitmapwidth*self._xscale), self._bitmapwidth)
+		nuy = min(int(self._bitmapheight*self._yscale), self._bitmapheight)
+		self.SetScrollbars(ppux, ppuy, nux, nuy)
 		self.updateOffset()
 		self.Refresh()
 
@@ -215,9 +217,11 @@ class OffsetWindow(ScaledWindow):
 		if ScaledWindow._setScale(self, x, y):
 			xposition = xcenter - self._clientwidthscaled/2
 			yposition = ycenter - self._clientheightscaled/2
-			self.SetScrollbars(self._xscale, self._yscale,
-													self._bitmapwidth, self._bitmapheight,
-													xposition, yposition)
+			ppux = max(int(self._xscale), 1)
+			ppuy = max(int(self._yscale), 1)
+			nux = min(int(self._bitmapwidth*self._xscale), self._bitmapwidth)
+			nuy = min(int(self._bitmapheight*self._yscale), self._bitmapheight)
+			self.SetScrollbars(ppux, ppuy, nux, nuy, xposition, yposition)
 			self.updateOffset()
 			return True
 		return False
