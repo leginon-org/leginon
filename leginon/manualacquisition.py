@@ -196,6 +196,9 @@ class ManualAcquisition(node.Node):
 			return 0
 		return value
 
+	def cmpGridLabel(self, x, y):
+		return cmp(self.gridmapping[x]['location'], self.gridmapping[y]['location'])
+
 	def onGridBoxSelect(self, value):
 		projectdata = project.ProjectData()
 		if not projectdata.isConnected():
@@ -220,9 +223,13 @@ class ManualAcquisition(node.Node):
 			self.gridmapping = {}
 			for gridlocation in gridlocations:
 				grid = grididindex[gridlocation['gridId']].fetchone()
-				self.gridmapping[grid['label']] = {'gridId': gridlocation['gridId'],
-																					'location': gridlocation['location']}
-			self.gridselect.set(['None'] + self.gridmapping.keys(), 0)
+				key = '%d - %s' % (gridlocation['location'], grid['label'])
+				self.gridmapping[key] = {'gridId': gridlocation['gridId'],
+																	'location': gridlocation['location'],
+																	'label': grid['label']}
+			keys = self.gridmapping.keys()
+			keys.sort(self.cmpGridLabel)
+			self.gridselect.set(['None'] + keys, 0)
 			self.gridmapping['None'] = None
 
 		return value
