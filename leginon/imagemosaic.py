@@ -96,15 +96,16 @@ class ImageMosaicInfo(object):
 		return mosaicimage
 
 class StateImageMosaicInfo(ImageMosaicInfo):
-	def addTile(self, dataid, image, position, state):
+	def addTile(self, dataid, image, position, scope, camera):
 		ImageMosaicInfo.addTile(self, dataid, image, position)
-		self.imageinfo[dataid]['state'] = state
+		self.imageinfo[dataid]['scope'] = scope
+		self.imageinfo[dataid]['camera'] = camera
 
-	def getTileState(self, dataid):
-		try:
-			return self.imageinfo[dataid]['state']
-		except KeyError:
-			raise ValueError
+#	def getTileState(self, dataid):
+#		try:
+#			return self.imageinfo[dataid]['state']
+#		except KeyError:
+#			raise ValueError
 
 class ImageMosaic(watcher.Watcher):
 	def __init__(self, id, nodelocations, watchfor = event.TileImagePublishEvent, **kwargs):
@@ -448,7 +449,9 @@ class StateImageMosaic(ImageMosaic):
 	def processData(self, idata):
 		tileimage = idata.content['image']
 		neighbors = idata.content['neighbor tiles']
-		tilestate = idata.content['scope']
+#		tilestate = idata.content['scope']
+		tilescope = idata.content['scope']
+		tilecamera = idata.content['camera']
 		mosaics = []
 		for imagemosaic in self.imagemosaics:
 			for neighbor in neighbors:
@@ -458,13 +461,16 @@ class StateImageMosaic(ImageMosaic):
 		if len(mosaics) == 0:
 			imagemosaic = StateImageMosaicInfo()
 			position = self.positionmethods[self.positionmethod](idata, None)
-			imagemosaic.addTile(idata.id, tileimage, position, tilestate)
+#			imagemosaic.addTile(idata.id, tileimage, position, tilestate)
+			imagemosaic.addTile(idata.id, tileimage, position, tilescope, tilecamera)
 			self.imagemosaics.append(imagemosaic)
 			print idata.id, "position =", imagemosaic.getTilePosition(idata.id)
 		else:
 			for imagemosaic in mosaics:
 				position = self.positionmethods[self.positionmethod](idata, imagemosaic)
-				imagemosaic.addTile(idata.id, tileimage, position, tilestate)
+#				imagemosaic.addTile(idata.id, tileimage, position, tilestate)
+				imagemosaic.addTile(idata.id, tileimage, position,
+																									tilescope, tilecamera)
 				print idata.id, "position =", imagemosaic.getTilePosition(idata.id)
 
 #	def setCalibration(self, ievent):
@@ -550,8 +556,12 @@ class StateImageMosaic(ImageMosaic):
 			statedata[tiledataid] = {}
 			statedata[tiledataid]['position'] = \
 										self.imagemosaics[-1].getTilePosition(tiledataid)
-			statedata[tiledataid]['state'] = \
-										 self.imagemosaics.getTileState(tiledataid)
+#			statedata[tiledataid]['state'] = \
+#										 self.imagemosaics[-1].getTileState(tiledataid)
+			statedata[tiledataid]['scope'] = \
+										 self.imagemosaics[-1].imageinfo[tiledataid]['scope']
+			statedata[tiledataid]['camera'] = \
+										 self.imagemosaics[-1].imageinfo[tiledataid]['camera']
 		self.publish(data.StateMosaicData(self.ID(), statedata),
 																			event.StateMosaicPublishEvent)
 

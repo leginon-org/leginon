@@ -32,6 +32,7 @@ class MosaicNavigator(navigator.Navigator):
 		row = clickevent.content['array row']
 		column = clickevent.content['array column']
 		shape = clickevent.content['array shape']
+		print 'clicked at', (row, column)
 
 		# certainly not optimal
 		maxmagnitude = math.sqrt(shape[0]**2 + shape[1]**2)
@@ -50,9 +51,17 @@ class MosaicNavigator(navigator.Navigator):
 		print 'moving to row: %s, column: %s' % (nearestdelta[0], nearestdelta[1])
 
 		self.publishRemote(data.EMData('all', mosaicdata[nearesttile]['state']))
-		e = self.shiftEventClass(self.ID(),
-									{'row': nearestdelta[0], 'column': nearestdelta[1]})
-		self.outputEvent(e)
+#		e = self.shiftEventClass(self.ID(),
+#									{'row': nearestdelta[0], 'column': nearestdelta[1]})
+#		self.outputEvent(e)
+		movetype = self.movetype.get()
+		calclient = self.calclients[movetype]
+		newstate = calclient.transform({'row': nearestdelta[0],
+																		'column': nearestdelta[1]},
+																		mosaicdata[nearesttile]['scope'],
+																		mosaicdata[nearesttile]['camera'])
+		emdata = data.EMData('scope', newstate)
+		self.publishRemote(emdata)
 
 		time.sleep(self.delaydata.get())
 
