@@ -174,6 +174,8 @@ def WidgetClassFromTypeList(typelist):
 	if typelist and typelist[0] == 'object':
 		if len(typelist) > 1 and typelist[1] == 'container':
 			return wxStaticBoxContainerWidget
+		elif len(typelist) > 1 and typelist[1] == 'method':
+			return wxButtonWidget
 		elif len(typelist) > 1 and typelist[1] == 'data':
 			if len(typelist) > 2 and typelist[2] == 'binary':
 				if len(typelist) > 3 and typelist[3] == 'image':
@@ -262,6 +264,33 @@ class wxStaticBoxContainerWidget(wxContainerWidget):
 			child.Destroy()
 			self.wxwidget.Remove(child.wxwidget)
 		self.staticbox.Destroy()
+
+class MethodWidget(Widget):
+	def __init__(self, uiclient, namelist):
+		Widget.__init__(self, uiclient, namelist)
+
+	def commandServer(self, args=()):
+		self.uiclient.commandServer(self.namelist, args)
+
+	def command(self, evt):
+		self.commandServer()
+
+class wxMethodWidget(MethodWidget):
+	def __init__(self, uiclient, namelist, window, parent):
+		MethodWidget.__init__(self, uiclient, namelist)
+		self.window = window
+		self.parent = parent
+
+	def Destroy(self):
+		pass
+
+class wxButtonWidget(wxMethodWidget):
+	def __init__(self, uiclient, namelist, window, parent):
+		wxMethodWidget.__init__(self, uiclient, namelist, window, parent)
+		self.wxwidget = wxBoxSizer(wxHORIZONTAL)
+		self.button = wxButton(self.parent, -1, self.name)
+		EVT_BUTTON(self.window, self.button.GetId(), self.command)
+		self.wxwidget.Add(self.button, 0, wxALIGN_CENTER | wxALL, 5)
 
 class DataWidget(Widget):
 	def __init__(self, uiclient, namelist):

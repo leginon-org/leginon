@@ -256,7 +256,9 @@ class UIImage(UIBinary):
 			mode = "F"
 		else:
 			raise ValueError('unsupported image mode')
+		# most likely a better way is possible
 		stream = cStringIO.StringIO()
-		Image.fromstring(mode, (a.shape[1],a.shape[0]), a.tostring()).save(stream,'PNG')
+		Image.fromstring(mode, (a.shape[1],a.shape[0]),
+											a.tostring()).save(stream,'PNG')
 		return stream.getvalue()
 
