@@ -131,7 +131,7 @@ class Navigator(node.Node):
 				binning = clickcamera['binning']['x']
 				dist = errordist * pixsize * binning
 				umdist = dist * 1000000.0
-				self.logger('Error %s pixels, distance %s pixels (%s microns)'
+				self.logger.info('Error %s pixels, distance %s pixels (%s microns)'
 										% (error, errordist, umdist))
 				if (abs(pixelshift['row']) > clickshape[0]/4) or (abs(pixelshift['col']) > clickshape[1]/4):
 					self.logger.info('Correlation untrusted due to large requested shift')
