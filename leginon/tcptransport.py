@@ -34,8 +34,13 @@ class Server(SocketServer.ThreadingTCPServer, socketstreamtransport.Server):
 		loc['TCP port'] = self.port
 		return loc
 
+## it might be better to not specify a default buffer size which would
+## force us to pay more attention to it.
+## The default buffer size was 1024, which worked with tecnai1
+## The value of 131072 seems to work with tecnai2, but not sure if it is
+## due to a tecnai2 configuration or the upgraded 1Gbit network
 class Client(socketstreamtransport.Client):
-	def __init__(self, id, location, buffer_size = 1024):
+	def __init__(self, id, location, buffer_size = 131072):
 		socketstreamtransport.Client.__init__(self, id, location, buffer_size)
 
 	def connect(self, family = socket.AF_INET, type = socket.SOCK_STREAM):
