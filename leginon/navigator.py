@@ -17,7 +17,7 @@ class Navigator(node.Node, camerafuncs.CameraFuncs):
 		}
 
 		## by default, use the generic PixelShiftEvent
-		self.shiftType('image shift')
+		self.shiftType('stage')
 
 		node.Node.__init__(self, id, nodelocations)
 
@@ -110,7 +110,7 @@ class Navigator(node.Node, camerafuncs.CameraFuncs):
 
 		self.delaydata = self.registerUIData('Delay (sec)', 'float', default=2.5, permissions='rw')
 
-		acqtypes = self.registerUIData('acqtypes', 'array', default=('raw', 'corrected'))
+		acqtypes = self.registerUIData('acqtypes', 'array', default=('corrected', 'corrected'))
 		self.acqtype = self.registerUIData('Acquisition Type', 'string', default='raw', permissions='rw', choices=acqtypes)
 
 		prefs = self.registerUIContainer('Preferences', (movetype, self.delaydata, self.acqtype))
