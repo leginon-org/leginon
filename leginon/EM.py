@@ -378,8 +378,9 @@ class EM(node.Node):
 		self.statestruct = uidata.UIStruct('Instrument State', {},
 																				'rw', self.uiCallback)
 		self.statestruct.set(self.uistate, callback=False)
+		updatemethod = uidata.UIMethod('Update', self.uiUpdate)
 		unlockmethod = uidata.UIMethod('Unlock', self.uiUnlock)
 		container = uidata.UIMediumContainer('EM')
-		container.addUIObjects((self.statestruct, unlockmethod))
+		container.addUIObjects((self.statestruct, updatemethod, unlockmethod))
 		self.uiserver.addUIObject(container)
 
