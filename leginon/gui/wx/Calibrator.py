@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Calibrator.py,v $
-# $Revision: 1.21 $
+# $Revision: 1.22 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-02 23:08:51 $
+# $Date: 2004-11-12 17:54:38 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -65,7 +65,7 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_ACQUIRE,
 													'acquire',
-													shortHelpString='Acquire')
+													shortHelpString='Acquire Image')
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_CALIBRATE,
 													'play',

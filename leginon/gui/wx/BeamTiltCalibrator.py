@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/BeamTiltCalibrator.py,v $
-# $Revision: 1.11 $
+# $Revision: 1.12 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
+# $Date: 2004-11-12 17:54:38 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -23,12 +23,12 @@ class Panel(gui.wx.Calibrator.Panel):
 	def initialize(self):
 		gui.wx.Calibrator.Panel.initialize(self)
 
-		self.toolbar.InsertSeparator(2)
+		#self.toolbar.InsertSeparator(2)
 		self.cparameter = wx.Choice(self.toolbar, -1,
 																choices=['Defocus', 'Stigmators'])
 		self.cparameter.SetSelection(0)
-		self.toolbar.InsertControl(3, self.cparameter)
-		self.toolbar.InsertTool(4, gui.wx.ToolBar.ID_PARAMETER_SETTINGS,
+		self.toolbar.InsertControl(5, self.cparameter)
+		self.toolbar.InsertTool(6, gui.wx.ToolBar.ID_PARAMETER_SETTINGS,
 													'settings',
 													shortHelpString='Parameter Settings')
 
