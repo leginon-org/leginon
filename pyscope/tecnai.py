@@ -110,8 +110,9 @@ class Tecnai(tem.TEM):
 			'diffraction mode': {'get': 'getDiffractionMode',
 														'set': 'setDiffractionMode'},
 			'reset defocus': {'set': 'resetDefocus', 'get': 'getResetDefocus'},
-			'main screen position': {'get': 'getMainScreen', 'set': 'setMainScreen'},
-			'small screen position': {'get': 'getSmallScreen'},
+			'main screen position': {'get': 'getMainScreenPosition',
+																'set': 'setMainScreenPosition'},
+			'small screen position': {'get': 'getSmallScreenPosition'},
 			'holder type': {'get': 'getHolderType', 'set': 'setHolderType'},
 			'turbo pump': {'get': 'getTurboPump', 'set': 'setTurboPump'},
 			'column valves': {'get': 'getColumnValves', 'set': 'setColumnValves'},
@@ -896,7 +897,7 @@ class Tecnai(tem.TEM):
 			raise RuntimeError('Open shutter (post-exposure) failed')
 		'''
 
-	def getMainScreen(self):
+	def getMainScreenPosition(self):
 		timeout = 5.0
 		sleeptime = 0.05
 		while (self.tecnai.Camera.MainScreen
@@ -914,13 +915,13 @@ class Tecnai(tem.TEM):
 		else:
 			return 'unknown'
 
-	def getSmallScreen(self):
+	def getSmallScreenPosition(self):
 		if self.tecnai.Camera.IsSmallScreenDown:
 			return 'down'
 		else:
 			return 'up'
 
-	def setMainScreen(self, mode):
+	def setMainScreenPosition(self, mode):
 		if mode == 'up':
 			self.tecnai.Camera.MainScreen = win32com.client.constants.spUp
 		elif mode == 'down':
