@@ -34,7 +34,7 @@ class DataHandler(datahandler.DataBinder):
 		if issubclass(eventclass, event.Event):
 			datahandler.DataBinder.setBinding(self, eventclass, func)
 		else:
-			raise InvalidEventError('eventclass must be Event subclass')
+			raise event.InvalidEventError('eventclass must be Event subclass')
 
 class EM(node.Node):
 	def __init__(self, id, nodelocations, scope = None, camera = None, **kwargs):
