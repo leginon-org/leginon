@@ -71,7 +71,7 @@ class Watcher(node.Node):
 			self.eventqueue.put(pubevent)
 
 	def getData(self, pubevent):
-		dataid = pubevent.content
+		dataid = pubevent['dataid']
 		newdata = self.researchByDataID(dataid)
 		if self.dataqueuetoggle.get():
 			self.dataqueue.put(newdata)
