@@ -1860,6 +1860,7 @@ class AcquisitionSettingsData(SettingsData):
 			('duplicate target type', str),
 			('wait time', float),
 			('iterations', int),
+			('adjust for drift', bool),
 		)
 	typemap = classmethod(typemap)
 
