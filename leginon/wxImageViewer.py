@@ -32,7 +32,6 @@ class ImagePanel(wxPanel):
 		self.initPanel()
 		height, width = self.panel.GetClientSize()
 		self.buffer = wxEmptyBitmap(height, width)
-		self.motionbuffer = wxEmptyBitmap(height, width)
 		self.initValue()
 		self.initZoom()
 		self.initRuler()
@@ -42,6 +41,14 @@ class ImagePanel(wxPanel):
 		EVT_PAINT(self.panel, self.OnPaint)
 		EVT_SIZE(self.panel, self.OnSize)
 		EVT_MOTION(self.panel, self.motion)
+
+	def smallScale(self, scale=None):
+		if scale is None:
+			scale = self.scale
+		if scale[0] < 1.0 or scale[1] < 1.0:
+			return True
+		else:
+			return False
 
 	def initPanel(self):
 		self.panel = wxScrolledWindow(self, -1, size=self.size)
@@ -145,7 +152,10 @@ class ImagePanel(wxPanel):
 		self.toolsizer.Add(self.rulerbutton, 0, wxALL, 3)
 
 	def setVirtualSize(self):
-		xscale, yscale = self.getScale()
+		if self.smallScale():
+			xscale, yscale = (1.0, 1.0)
+		else:
+			xscale, yscale = self.getScale()
 		if self.bitmap is not None:
 			self.panel.SetVirtualSize(((self.bitmap.GetWidth() - 1)*xscale,
 																	(self.bitmap.GetHeight() - 1)*yscale))
@@ -156,15 +166,17 @@ class ImagePanel(wxPanel):
 		return self.scale
 
 	def setScale(self, scale, offset=None):
+		flag = False
+		if self.smallScale():
+			flag = True
 		self.scale = tuple(scale)
-		self.setVirtualSize()
-
-		dc = wxClientDC(self.panel)
-		dc.BeginDrawing()
-		dc.Clear()
-		dc.EndDrawing()
-
-		self.UpdateDrawing()
+		if self.smallScale():
+			self.setNumericImage()
+		elif flag:
+			self.setNumericImage()
+		else:
+			self.setVirtualSize()
+			self.UpdateDrawing()
 
 		if offset is not None:
 			xcenter, ycenter = self.getClientCenter()
@@ -196,18 +208,28 @@ class ImagePanel(wxPanel):
 	def setImageFromMrcString(self, imagestring):
 		self.clearImage()
 		self.image = Mrc.mrcstr_to_numeric(imagestring)
+		self.setNumericImage()
+
+	def setNumericImage(self):
 		n = NumericImage(self.image)
 		n.update_image()
 		wximage = n.wxImage()
 		self.setImage(wximage)
 
 	def setImage(self, wximage):
-		self.bitmap = wxBitmapFromImage(wximage)
+		if self.smallScale():
+			width = wximage.GetWidth()
+			height = wximage.GetHeight()
+			self.bitmap = wxBitmapFromImage(wximage.Scale(width*self.scale[0],
+																										height*self.scale[1]))
+		else:
+			self.bitmap = wxBitmapFromImage(wximage)
 		self.setVirtualSize()
 		self.panel.Scroll(0, 0)
 		bitmapwidth = self.bitmap.GetWidth()
 		bitmapheight = self.bitmap.GetHeight()
 		self.buffer = wxEmptyBitmap(bitmapwidth, bitmapheight)
+		self.motionbuffer = wxEmptyBitmap(bitmapheight, bitmapwidth)
 		self.UpdateDrawing()
 
 	def clearImage(self):
@@ -231,7 +253,6 @@ class ImagePanel(wxPanel):
 		return (int(round((xy[0] * scale[0]) - viewoffset[0])),
 						int(round((xy[1] * scale[1]) - viewoffset[1])))
 
-
 	def getClientCenter(self):
 		center = self.panel.GetClientSize()
 		return (center[0]/2, center[1]/2)
@@ -250,13 +271,18 @@ class ImagePanel(wxPanel):
 			self.Draw(dc)
 
 			xviewoffset, yviewoffset = self.panel.GetViewStart()
-			xscale, yscale = self.getScale()
 			xsize, ysize = self.panel.GetClientSize()
 
-			dc.SetUserScale(xscale, yscale)
+			if self.smallScale():
+				xscale, yscale = (1.0, 1.0)
+			else:
+				xscale, yscale = self.getScale()
+				dc.SetUserScale(xscale, yscale)
+
 			dc.Blit(0, 0, xsize/xscale + 1, ysize/yscale + 1, fromdc,
 								xviewoffset/xscale, yviewoffset/yscale)
 			fromdc.SelectObject(wxNullBitmap)
+
 			dc.SetUserScale(1.0, 1.0)
 
 			string = ''
@@ -364,10 +390,13 @@ class ImagePanel(wxPanel):
 
 	def paint(self, fromdc, todc):
 		xviewoffset, yviewoffset = self.panel.GetViewStart()
-		xscale, yscale = self.getScale()
 		xsize, ysize = self.panel.GetClientSize()
 
-		todc.SetUserScale(xscale, yscale)
+		if self.smallScale():
+			xscale, yscale = (1.0, 1.0)
+		else:
+			xscale, yscale = self.getScale()
+			todc.SetUserScale(xscale, yscale)
 		todc.Blit(0, 0, xsize/xscale + 1, ysize/yscale + 1, fromdc,
 							xviewoffset/xscale, yviewoffset/yscale)
 
@@ -568,6 +597,8 @@ class TargetImagePanel(ImagePanel):
 		memorydc.SelectObject(bitmap)
 		width = bitmap.GetWidth()
 		height = bitmap.GetHeight()
+		if self.smallScale():
+			target = (target[0]*self.scale[0], target[1]*self.scale[1])
 		dc.Blit(target[0] - width/2, target[1] - height/2,
 									width, height, memorydc, 0, 0, wxCOPY, True)
 #		dc.DrawBitmap(bitmap, target[0] - bitmap.GetWidth()/2,
