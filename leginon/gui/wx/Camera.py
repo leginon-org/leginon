@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Camera.py,v $
-# $Revision: 1.24 $
+# $Revision: 1.25 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-22 00:28:25 $
+# $Date: 2005-02-25 01:34:25 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -39,6 +39,7 @@ class SetConfigurationEvent(wx.PyCommandEvent):
 class CameraPanel(wx.Panel):
 	def __init__(self, parent):
 		wx.Panel.__init__(self, parent, -1)
+		self.size = None
 		self.geometry = None
 		self.binnings = {'x': [1,2,4,8,16], 'y': [1,2,4,8,16]}
 		self.defaultexptime = 1000.0
@@ -105,15 +106,10 @@ class CameraPanel(wx.Panel):
 
 		self.Enable(False)
 
-	def setSize(self, session):
-		if session['instrument'] is None:
-			return
-		size = session['instrument']['camera size']
+	def setSize(self, size):
 		if size is None:
 			return
-		self._setSize(size)
 
-	def _setSize(self, size):
 		self.size = {'x': size, 'y': size}
 
 		self.Freeze()
@@ -240,7 +236,7 @@ class CameraPanel(wx.Panel):
 				return False
 			size = geometry['dimension'][a] + geometry['offset'][a]
 			size *= geometry['binning'][a]
-			if size > self.size[a]:
+			if self.size is None or size > self.size[a]:
 				return False
 		return True
 

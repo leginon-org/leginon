@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.16 $
+# $Revision: 1.17 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-24 21:19:17 $
+# $Date: 2005-02-25 01:34:25 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -60,7 +60,7 @@ class Proxy(object):
 	def getTEMName(self):
 		if self.tem is None:
 			return None
-		return self.tem.__name
+		return self.tem._name
 
 	def getTEMNames(self):
 		return self.tems.keys()
@@ -68,7 +68,7 @@ class Proxy(object):
 	def getCCDCameraName(self):
 		if self.ccdcamera is None:
 			return None
-		return self.ccdcamera.__name
+		return self.ccdcamera._name
 
 	def getCCDCameraNames(self):
 		return self.ccdcameras.keys()
@@ -76,7 +76,7 @@ class Proxy(object):
 	def getImageCorrectionName(self):
 		if self.imagecorrection is None:
 			return None
-		return self.imagecorrection.__name
+		return self.imagecorrection._name
 
 	def getImageCorrectionNames(self):
 		return self.imagecorrections.keys()

@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/DriftManager.py,v $
-# $Revision: 1.16 $
+# $Revision: 1.17 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-06 23:35:08 $
-# $Author: pulokas $
+# $Date: 2005-02-25 01:34:25 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
@@ -89,7 +89,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['threshold'] = FloatEntry(self, -1, min=0.0, chars=9)
 		self.widgets['pause time'] = FloatEntry(self, -1, min=0.0, chars=4)
 		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
-		self.widgets['camera settings'].setSize(self.node.session)
+		#self.widgets['camera settings'].setSize(self.node.session)
 
 		szthreshold = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Wait for drift to be less than')

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Corrector.py,v $
-# $Revision: 1.31 $
+# $Revision: 1.32 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
+# $Date: 2005-02-25 01:34:25 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -194,7 +194,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 
 		self.widgets['n average'] = IntEntry(self, -1, min=1, max=99, chars=2)
 		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
-		self.widgets['camera settings'].setSize(self.node.session)
+		#self.widgets['camera settings'].setSize(self.node.session)
 		self.widgets['despike'] = wx.CheckBox(self, -1, 'Despike images')
 		self.widgets['despike size'] = IntEntry(self, -1, min=1, chars=4)
 		self.widgets['despike threshold'] = FloatEntry(self, -1, min=1, chars=9)

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/remotecall.py,v $
-# $Revision: 1.12 $
+# $Revision: 1.13 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-23 22:01:18 $
+# $Date: 2005-02-25 01:34:25 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -98,6 +98,9 @@ class Object(object):
 		except KeyError, e:
 			result = TypeError('invalid execution name')
 		except Exception, result:
+			#import sys
+			#excinfo = sys.exc_info()
+			#sys.excepthook(*excinfo)
 			pass
 		return result
 
@@ -181,27 +184,27 @@ class ObjectCallProxy(object):
 
 class ObjectProxy(object):
 	def __init__(self, objectservice, nodename, name):
-		self.__objectservice = objectservice
-		self.__nodename = nodename
-		self.__name = name
+		self._nodename = nodename
+		self._name = name
+		self._objectservice = objectservice
 
 	def __getattr__(self, name):
-		d, t = self.__objectservice.descriptions[self.__nodename][self.__name]
+		d, t = self._objectservice.descriptions[self._nodename][self._name]
 		try:
 			description = d[name]
 		except KeyError:
 			raise AttributeError('attribute %s not in descripition' % name)
 		if 'method' in description:
-			args = (self.__nodename, self.__name, name, 'method')
-			return ObjectCallProxy(self.__objectservice._call, args)
+			args = (self._nodename, self._name, name, 'method')
+			return ObjectCallProxy(self._objectservice._call, args)
 		elif 'r' in description:
-			return self.__objectservice._call(self.__nodename, self.__name, name, 'r')
+			return self._objectservice._call(self._nodename, self._name, name, 'r')
 		else:
 			raise TypeError('attribute %s is not readable' % name)
 
 	def __setattr__(self, name, value):
 		try:
-			d, t = self.__objectservice.descriptions[self.__nodename][self.__name]
+			d, t = self._objectservice.descriptions[self._nodename][self._name]
 		except:
 			return object.__setattr__(self, name, value)
 		try:
@@ -209,27 +212,27 @@ class ObjectProxy(object):
 		except KeyError:
 			raise AttributeError('attribute %s not in descripition' % name)
 		if 'w' in description:
-			args = (self.__nodename, self.__name, name, 'w', (value,))
-			return self.__objectservice._call(*args)
+			args = (self._nodename, self._name, name, 'w', (value,))
+			return self._objectservice._call(*args)
 		else:
 			raise TypeError('attribute %s is not writeable' % name)
 
 	def hasAttribute(self, name):
-		d, t = self.__objectservice.descriptions[self.__nodename][self.__name]
+		d, t = self._objectservice.descriptions[self._nodename][self._name]
 		if name in d:
 			return True
 		return False
 
 	def getAttributeTypes(self, name):
-		d, t = self.__objectservice.descriptions[self.__nodename][self.__name]
+		d, t = self._objectservice.descriptions[self._nodename][self._name]
 		try:
 			return d[name].keys()
 		except KeyError:
 			return []
 
 	def multiCall(self, names, types, args=None, kwargs=None):
-		args = (self.__nodename, self.__name, names, types, args, kwargs)
-		return self.__objectservice._multiCall(*args)
+		args = (self._nodename, self._name, names, types, args, kwargs)
+		return self._objectservice._multiCall(*args)
 
 #class ObjectService(Object):
 class ObjectService(Locker):

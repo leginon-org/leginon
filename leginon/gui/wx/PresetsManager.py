@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.27 $
+# $Revision: 1.28 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-14 03:06:29 $
-# $Author: pulokas $
+# $Date: 2005-02-25 01:34:26 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
@@ -368,7 +368,7 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
 											id=gui.wx.ToolBar.ID_SETTINGS)
 
-		self.parameters.cpcamconfig.setSize(self.node.session)
+		#self.parameters.cpcamconfig.setSize(self.node.session)
 		self.parameters.cpcamconfig.clear()
 		self.parameters.bind(self.onUpdateParameters)
 

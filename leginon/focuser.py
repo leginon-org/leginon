@@ -349,8 +349,7 @@ class Focuser(acquisition.Acquisition):
 																			presettarget['emtarget'])
 			# acquire image, show image and power spectrum
 			# allow user to adjust defocus and stig
-			cor = self.settings['correct image']
-			self.logger.debug('Correct image %s' % cor)
+			correction = self.settings['correct image']
 			self.manualchecklock.acquire()
 			try:
 				if correction:
@@ -358,6 +357,7 @@ class Focuser(acquisition.Acquisition):
 				else:
 					imarray = self.instrument.ccdcamera.Image
 			except:
+				raise
 				self.manualchecklock.release()
 				self.manualplayer.pause()
 				self.logger.error('Failed to acquire image, pausing...')

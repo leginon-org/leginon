@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ManualAcquisition.py,v $
-# $Revision: 1.16 $
+# $Revision: 1.17 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-02 23:20:40 $
-# $Author: pulokas $
+# $Date: 2005-02-25 01:34:25 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
@@ -227,7 +227,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		gui.wx.Settings.Dialog.initialize(self)
 
 		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
-		self.widgets['camera settings'].setSize(self.node.session)
+		#self.widgets['camera settings'].setSize(self.node.session)
 		self.widgets['screen up'] = wx.CheckBox(self, -1, 'Up before acquire')
 		self.widgets['screen down'] = wx.CheckBox(self, -1, 'Down after acquired')
 		self.widgets['correct image'] = wx.CheckBox(self, -1, 'Correct image')
