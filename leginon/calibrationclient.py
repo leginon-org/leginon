@@ -126,8 +126,8 @@ class MatrixCalibrationClient(CalibrationClient):
 		'''
 		stores a newly calibration matrix
 		'''
-		caldata = data.MatrixCalibrationData(self.ID, magnification=mag, type=type, matrix=matrix)
-		self.publish(caldata, database=True)
+		caldata = data.MatrixCalibrationData(self.node.ID(), magnification=mag, type=type, matrix=matrix)
+		self.node.publish(caldata, database=True)
 
 
 class BeamTiltCalibrationClient(MatrixCalibrationClient):
@@ -344,6 +344,7 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		pixvect = (pixrow, pixcol)
 
 		matrix = self.retrieveMatrix(mag, par)
+		print 'matrix', matrix
 		change = Numeric.matrixmultiply(matrix, pixvect)
 		changex = change[0]
 		changey = change[1]
