@@ -680,6 +680,18 @@ class Manager(node.Node):
 				apps[appdata['name']] = app
 		return apps
 
+	def getApplicationHistory(self):
+		initializer = {'session': data.SessionData(user=self.session['user']),
+										'application': data.ApplicationData()}
+		appdata = data.LaunchedApplicationData(initializer=initializer)
+		appdatalist = self.research(appdata)
+		history = []
+		for a in appdatalist:
+			name =  a['application']['name']
+			if name not in history:
+				history.append(name)
+		return history
+
 	def onApplicationStarting(self, name, nnodes):
 		evt = wxManager.ApplicationStartingEvent(name, nnodes)
 		self.frame.GetEventHandler().AddPendingEvent(evt)
@@ -895,7 +907,7 @@ class Manager(node.Node):
 		nodelocations = self.uiNodeDict()
 		nodelocations[self.name] = self.location()
 		return nodelocations
-
+	
 	def uiUpdateRecentApplications(self):
 		recent = data.LaunchedApplicationData(session=data.SessionData(user=self.session['user']), application=data.ApplicationData())
 		recent = self.research(recent, results=300)

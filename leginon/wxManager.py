@@ -186,7 +186,8 @@ class ManagerFrame(wx.Frame):
 	def onMenuRunApplication(self, evt):
 		apps = self.manager.getApplications()
 		launchernames = self.manager.getLauncherNames()
-		dialog = RunApplicationDialog(self, apps, launchernames)
+		history = self.manager.getApplicationHistory()
+		dialog = RunApplicationDialog(self, apps, launchernames, history)
 		if dialog.ShowModal() == wx.ID_OK:
 			app = dialog.getValues()
 			threading.Thread(name='wxManager runApplication',
@@ -567,9 +568,18 @@ class BindEventDialog(wx.Dialog):
 		self.unboundeventlistbox.AppendItems(unbound)
 
 class RunApplicationDialog(wx.Dialog):
-	def __init__(self, parent, apps, launchernames):
+	def __init__(self, parent, apps, launchernames, history):
 		self.apps = apps
 		self.launchernames = launchernames
+
+		history.reverse()
+		names = apps.keys()
+		for n in history:
+			if n in names:
+				names.remove(n)
+				names.insert(0, n)
+		self.history = names
+
 		wx.Dialog.__init__(self, parent, -1, 'Run Application')
 
 		self.dialogsizer = wx.GridBagSizer()
@@ -579,8 +589,10 @@ class RunApplicationDialog(wx.Dialog):
 							wx.ALIGN_CENTER_VERTICAL)
 
 		self.sortbycheckbox = wx.CheckBox(self, -1, 'Sort by last used')
-		names = apps.keys()
-		if not self.sortbycheckbox.GetValue():
+		if self.sortbycheckbox.GetValue():
+			names = self.history
+		else:
+			names = apps.keys()
 			names.sort()
 		self.appchoice = wx.Choice(self, -1, choices=names)
 		self.sizer.Add(self.appchoice, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -591,6 +603,7 @@ class RunApplicationDialog(wx.Dialog):
 		self.appchoice.SetSelection(0)
 		self.onChoice()
 		self.Bind(wx.EVT_CHOICE, self.onChoice, self.appchoice)
+		self.Bind(wx.EVT_CHECKBOX, self.onCheckBox, self.sortbycheckbox)
 
 		buttonsizer = wx.GridBagSizer(0, 3)
 		runbutton = wx.Button(self, wx.ID_OK, 'Run')
@@ -637,6 +650,17 @@ class RunApplicationDialog(wx.Dialog):
 		self.sizer.Add(self.launchersizer, (2, 0), (1, 2), wx.ALIGN_CENTER)
 		self.dialogsizer.Layout()
 		self.Fit()
+
+	def onCheckBox(self, evt):
+		selection = self.appchoice.GetStringSelection()
+		self.appchoice.Clear()
+		if evt.IsChecked():
+			names = self.history
+		else:
+			names = self.apps.keys()
+			names.sort()
+		self.appchoice.AppendItems(names)
+		self.appchoice.SetStringSelection(selection)
 
 	def getValues(self):
 		for alias, choice in self.launcherchoices.items():
