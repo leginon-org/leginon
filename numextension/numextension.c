@@ -253,7 +253,13 @@ int add_blob_point(PyArrayObject *image, PyArrayObject *map, PyObject *pixelrow,
 	/* add to the blob lists */
 	PyList_Append(pixelrow, PyInt_FromLong(row));
 	PyList_Append(pixelcol, PyInt_FromLong(col));
-	PyList_Append(pixelv, PyFloat_FromDouble((double)image->data[index]));
+
+	if(image->descr->type_num == PyArray_FLOAT) {
+		PyList_Append(pixelv, PyFloat_FromDouble(((float *)image->data)[index]));
+	} else if(image->descr->type_num == PyArray_DOUBLE) {
+		PyList_Append(pixelv, PyFloat_FromDouble(((double *)image->data)[index]));
+	}
+
 	if (PyList_Size(pixelrow) > BLOBLIMIT) {
 		/* return int? */
 		return;
