@@ -92,7 +92,9 @@ class MosaicTargetMaker(TargetMaker):
 		except node.ResearchError:
 			self.setStatusMessage('Error publishing targets, cannot find EM')
 			return
-		
+		alpha = scope['stage position']['a']
+		alphadeg = alpha * 180.0 / 3.14159
+		self.logger.info('using current alpha tilt in targets: %.2f deg' % (alphadeg,))
 		pname = self.presetname.get()
 
 		if pname is None:
