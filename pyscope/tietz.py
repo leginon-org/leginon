@@ -543,8 +543,8 @@ else:
 		def __init__(self):
 			Tietz.__init__(self, 'SCX')
 	
-#		def getSimulationImagePath(self):
-#			raise NotImplementedError
+		def getSimulationImagePath(self):
+			raise NotImplementedError
 
 		def setUseSpeedtabForGainSwitch(self, value):
 			raise NotImplementedError
