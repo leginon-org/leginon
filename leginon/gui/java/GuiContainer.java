@@ -114,7 +114,7 @@ class GuiMethod {
 					new TreeData(name, xmlrpcclient, choices_id, widgets, mainPanel);
 			} else
 
-			if (xmlrpctype.equals("string"))
+			if (xmlrpctype.matches("string|integer|float|array"))
     				new AddTextField(name, 20, defaultval, widgets, mainPanel);
 
 			if (xmlrpctype.equals("boolean"))
