@@ -44,7 +44,6 @@ class ApplicationEditor(node.Node):
 																					bindingspecdata['from node alias'],
 																					bindingspecdata['to node alias']))
 
-
 		self.applicationeditor.set(applicationdata)
 
 	def defineUserInterface(self):
