@@ -51,6 +51,7 @@ class Focuser(acquisition.Acquisition):
 		'stig defocus max': 4e-6,
 		'acquire final': True,
 		'drift on z': True,
+		'correlation type': 'cross',
 	}
 
 	eventinputs = acquisition.Acquisition.eventinputs
@@ -64,6 +65,7 @@ class Focuser(acquisition.Acquisition):
 			'Defocus': self.correctDefocus
 		}
 
+		self.cortypes = ['cross', 'phase']
 		self.autofocus = False
 		self.manualchecklock = threading.Lock()
 		self.parameter = 'Defocus'

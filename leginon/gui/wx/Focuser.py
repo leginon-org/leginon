@@ -133,6 +133,17 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 		szdrift.Add(wx.StaticText(self, -1, 'pixels'), (0, 2), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL)
 
+		self.widgets['correlation type'] = Choice(self, -1,
+																							choices=self.node.cortypes)
+
+		szcor = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Use')
+		szcor.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szcor.Add(self.widgets['correlation type'], (0, 1), (1, 1),
+							wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'correlation')
+		szcor.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
 		self.widgets['check before'] = wx.CheckBox(self, -1,
 																			'Manual focus check before autofocus')
 		self.widgets['check after'] = wx.CheckBox(self, -1,
@@ -187,6 +198,7 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 		sz.Add(self.widgets['fit limit'], (4, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
 		sz.Add(szdrift, (5, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szcor, (6, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 
 		sz.Add(self.widgets['check before'], (0, 2), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
@@ -196,7 +208,7 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['drift on z'], (3, 2), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szstig, (4, 2), (3, 1), wx.ALIGN_CENTER)
+		sz.Add(szstig, (4, 2), (4, 1), wx.ALIGN_CENTER)
 		sz.AddGrowableRow(6)
 
 		sb = wx.StaticBox(self, -1, 'Autofocus')

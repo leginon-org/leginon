@@ -1802,6 +1802,7 @@ class FocuserSettingsData(AcquisitionSettingsData):
 			('stig defocus max', float),
 			('acquire final', bool),
 			('drift on z', bool),
+			('correlation type', str),
 		)
 	typemap = classmethod(typemap)
 
