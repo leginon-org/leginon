@@ -31,7 +31,7 @@ class ManualAcquisition(node.Node):
 		'image label': '',
 		'loop pause time': 0.0,
 		'low dose': False,
-		'low dose pause time': 0.0,
+		'low dose pause time': 4.0,
 	}
 	eventinputs = node.Node.eventinputs + EM.EMClient.eventinputs
 	eventoutputs = node.Node.eventoutputs + EM.EMClient.eventoutputs
