@@ -115,8 +115,9 @@ class Focuser(acquisition.Acquisition):
 		stigx = correction['stigx']
 		stigy = correction['stigy']
 		fitmin = correction['min']
+		lastdrift = correction['lastdrift']
 
-		resultdata.update({'defocus':defoc, 'stigx':stigx, 'stigy':stigy, 'min':fitmin})
+		resultdata.update({'defocus':defoc, 'stigx':stigx, 'stigy':stigy, 'min':fitmin, 'drift': lastdrift})
 
 		status = 'ok'
 

@@ -107,7 +107,9 @@ class CalibrationClient(object):
 		self.checkAbort()
 
 		## for drift check, continue to acquire at state1
-		if drift_threshold is not None:
+		if drift_threshold is None:
+			driftdata = None
+		else:
 			self.node.logger.info('Checking for drift...')
 
 			info1 = self.acquireStateImage(state1, publish_images, settle)
@@ -143,8 +145,8 @@ class CalibrationClient(object):
 			shiftrows = shift[0]
 			shiftcols = shift[1]
 			seconds = t1 - t0
-			d = data.DriftData(session=self.node.session, rows=shiftrows, cols=shiftcols, interval=seconds, target=target)
-			self.node.publish(d, database=True, dbforce=True)
+			driftdata = data.DriftData(session=self.node.session, rows=shiftrows, cols=shiftcols, interval=seconds, target=target)
+			self.node.publish(driftdata, database=True, dbforce=True)
 
 			drift = abs(shift[0] + 1j * shift[1])
 			self.node.logger.info('Seconds %f, pixels %f, pixels/second %.4e'
@@ -196,7 +198,7 @@ class CalibrationClient(object):
 		biny = imagecontent1['camera']['binning']['y']
 		unbinned = {'row':shift[0] * biny, 'col': shift[1] * binx}
 
-		shiftinfo.update({'actual states': actual, 'pixel shift': unbinned, 'peak value': peakvalue, 'shape':pcimage.shape, 'stats': (stats1, stats2)})
+		shiftinfo.update({'actual states': actual, 'pixel shift': unbinned, 'peak value': peakvalue, 'shape':pcimage.shape, 'stats': (stats1, stats2)}, 'driftdata': driftdata)
 		return shiftinfo
 
 
@@ -430,6 +432,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		self.checkAbort()
 		self.node.logger.info('Tilting...')
 		nodrift = False
+		lastdrift = None
 		for tiltaxis in ('x','y'):
 			bt1 = dict(tiltcenter)
 			bt1[tiltaxis] -= tilt_value
@@ -454,6 +457,8 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 				self.node.logger.info('Returned to tilt center %s' % tiltcenter)
 				raise
 			nodrift = True
+			if shiftinfo['driftdata'] is not None:
+				lastdrift = shiftinfo['driftdata']
 
 			pixshift = shiftinfo['pixel shift']
 
@@ -487,6 +492,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			sol = self.solveEq10_nostig(fmatrix,d1,t1,d2,t2)
 
 		self.node.logger.info('Solution %s' % sol)
+		sol['lastdrift'] = lastdrift
 		return sol
 
 	def solveEq10(self, F, A, B, d1, t1, d2, t2):
