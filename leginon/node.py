@@ -19,9 +19,9 @@ class Client(datatransport.Client):
 	def __init__(self, id, loc):
 		datatransport.Client.__init__(self, id, loc)
 
-	def push(self, idata):
+#	def push(self, idata):
 #		if isinstance(idata, event.Event):
-		datatransport.Client.push(self, idata)
+#			datatransport.Client.push(self, idata)
 #		else:
 #			raise event.InvalidEventError('event must be Event instance')
 
@@ -32,6 +32,7 @@ class DataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
 		datahandler.DataBinder.__init__(self, id)
 
 	def insert(self, idata):
+		'''Insert data into the datahandler. Only events can be inserted from and external source. Events are bound. See setBinding.'''
 		if isinstance(idata, event.Event):
 			datahandler.DataBinder.insert(self, idata)
 		else:
@@ -39,6 +40,7 @@ class DataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
 
 	# use this to insert into your own server
 	def _insert(self, idata):
+		'''Insert data into an internal (your own) datahandler.'''
 		if isinstance(idata, event.Event):
 			datahandler.DataBinder.insert(self, idata)
 		else:
@@ -47,6 +49,7 @@ class DataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
 	# def query(self, id): is inherited from SimpleDataKeeper
 
 	def setBinding(self, eventclass, func):
+		'''Overides datahandler.DataBinder, making sure it binds Event type only.'''
 		if issubclass(eventclass, event.Event):
 			datahandler.DataBinder.setBinding(self, eventclass, func)
 		else:
@@ -90,18 +93,23 @@ class Node(leginonobject.LeginonObject):
 
 
 	# main, start/stop methods
+
 	def main(self):
+		'''The body of taking place when the node is started. See start.'''
 		raise NotImplementedError()
 
 	def exit(self):
+		'''Cleans up the node before it dies.'''
 		self.outputEvent(event.NodeUnavailableEvent(self.ID()))
 		self.server.exit()
 		self.printerror('exited')
 
 	def die(self, ievent=None):
+		'''Tell the node to finish and call exit.'''
 		self.die_event.set()
 
 	def start(self):
+		'''Call to make the node active and react to a call to exit. Calls main.'''
 		#interact_thread = self.interact()
 
 		self.main()
@@ -122,6 +130,7 @@ class Node(leginonobject.LeginonObject):
 	# event input/output/blocking methods
 
 	def outputEvent(self, ievent, wait=0):
+		'''Send the event to the manager to be routed where necessary.'''
 		try:
 			self.managerclient.push(ievent)
 		except KeyError:
@@ -131,32 +140,39 @@ class Node(leginonobject.LeginonObject):
 			self.waitEvent(ievent)
 
 	def addEventInput(self, eventclass, func):
+		'''Map a function (event handler) to be called when the specified event is received.'''
 		self.server.datahandler.setBinding(eventclass, func)
 		if eventclass not in self.eventmapping['inputs']:
 			self.eventmapping['inputs'].append(eventclass)
 
 	def delEventInput(self, eventclass):
+		'''Unmap all functions (event handlers) to be called when the specified event is received.'''
 		self.server.datahandler.setBinding(eventclass, None)
 		if eventclass in self.eventmapping['inputs']:
 			self.eventmapping['inputs'].remove(eventclass)
 
 	def addEventOutput(self, eventclass):
+		'''Register the ability for the node to output specified event.'''
 		if eventclass not in self.eventmapping['outputs']:
 			self.eventmapping['outputs'].append(eventclass)
 		
 	def delEventOutput(self, eventclass):
+		'''Unregister the ability for the node to output specified event.'''
 		if eventclass in self.eventmapping['outputs']:
 			self.eventmapping['outputs'].remove(eventclass)
 
 	def confirmEvent(self, ievent):
+		'''Confirm that an event has been received and/or handled.'''
 		self.outputEvent(event.ConfirmationEvent(self.ID(), ievent.id))
 
 	def waitEvent(self, ievent):
+		'''Block for confirmation of a generated event.'''
 		if not ievent.id in self.confirmwaitlist:
 			self.confirmwaitlist[ievent.id] = threading.Event()
 		self.confirmwaitlist[ievent.id].wait()
 
 	def handleConfirmedEvent(self, ievent):
+		'''Handler for ConfirmationEvents. Unblocks the call waiting for confirmation of the event generated.'''
 		# this is bad since it will fill up with lots of events
 		if not ievent.content in self.confirmwaitlist:
 			self.confirmwaitlist[ievent.content] = threading.Event()
@@ -166,6 +182,7 @@ class Node(leginonobject.LeginonObject):
 	# data publish/research methods
 	
 	def publish(self, idata, eventclass=event.PublishEvent, confirm=False):
+		'''Make a piece of data available to other nodes.'''
 		if not issubclass(eventclass, event.PublishEvent):
 			raise TypeError('PublishEvent subclass required')
 		self.server.datahandler._insert(idata)
@@ -175,12 +192,14 @@ class Node(leginonobject.LeginonObject):
 		return e
 
 	def unpublish(self, dataid, eventclass=event.UnpublishEvent):
+		'''Make a piece of data unavailable to other nodes.'''
 		if not issubclass(eventclass, event.UnpublishEvent):
 			raise TypeError('UnpublishEvent subclass required')
 		self.server.datahandler.remove(dataid)
 		self.outputEvent(eventclass(self.ID(), dataid))
 
 	def publishRemote(self, idata):
+		'''Publish a piece of data with the specified data ID, setting all other data with the same data ID to the data value (including other nodes).'''
 		dataid = idata.id
 		nodeiddata = self.researchByLocation(self.nodelocations['manager'], dataid)
 		if nodeiddata is None:
@@ -193,11 +212,13 @@ class Node(leginonobject.LeginonObject):
 			client.push(idata)
 
 	def researchByLocation(self, loc, dataid):
+		'''Get a piece of data with the specified data ID by the location of a node.'''
 		client = self.clientclass(self.ID(), loc)
 		cdata = client.pull(dataid)
 		return cdata
 
 	def researchByDataID(self, dataid):
+		'''Get a piece of data with the specified data ID. Currently retrieves the data from the last node to publish it.'''
 		nodeiddata = self.managerclient.pull(dataid)
 
 		if nodeiddata is None:
@@ -212,6 +233,7 @@ class Node(leginonobject.LeginonObject):
 	# methods for setting up the manager
 
 	def addManager(self, loc):
+		'''Set the manager controlling the node and notify said manager this node is available.'''
 		self.managerclient = self.clientclass(self.ID(), loc)
 		newid = self.ID()
 		myloc = self.location()
@@ -219,11 +241,13 @@ class Node(leginonobject.LeginonObject):
 		self.outputEvent(ievent=available_event, wait=True)
 
 	def handleAddManager(self, ievent):
+		'''Event handler calling adddManager with event content. See addManager.'''
 		self.addManager(ievent.content)
 
 	# utility methods
 
 	def interact(self):
+		'''Create a prompt with namespace within the class instance for command linecontrol of the node.'''
 		banner = "Starting interpreter for %s" % self.__class__
 		readfunc = self.raw_input
 		local = locals()
@@ -234,26 +258,32 @@ class Node(leginonobject.LeginonObject):
 		return t
 
 	def raw_input(self, prompt):
+		'''Helper function for interact. See interact.'''
 		newprompt = '%s%s' % (str(self.id), prompt)
 		return raw_input(newprompt)
 
 	# UI methods
 
 	def registerUIMethod(self, func, name, argspec, returnspec=None):
+		'''Register a method with the UI server by function specifying argument and return value specifications.'''
 		return self.uiserver.registerMethod(func, name, argspec, returnspec)
 
 	def registerUIData(self, name, xmlrpctype, permissions=None,
 												choices=None, default=None):
+		'''Register a data value with the UI server.'''
 		return self.uiserver.registerData(name, xmlrpctype, permissions,
 																				choices, default)
 
 	def registerUIContainer(self, name=None, content=()):
+		'''Register a container for data and methods with the UI server.'''
 		return self.uiserver.registerContainer(name, content)
 
 	def registerUISpec(self, name=None, content=()):
+		'''Register the entire UI specification with the UI server.'''
 		return self.uiserver.registerSpec(name, content)
 
 	def uiDataDict(self, value=None):
+		'''Generate a dictionary of currently published data and attributes in a XML-RPC compatible format.'''
 		if value is None:
 			try:
 				return self.key2str(self.server.datahandler.datadict)
@@ -261,6 +291,7 @@ class Node(leginonobject.LeginonObject):
 				return {}
 
 	def key2str(self, d):
+		'''Helper function for uiDataDict. Makes keys and values into strings. See uiDataDict.'''
 		if type(d) is dict:
 			newdict = {}
 			for k in d:
@@ -270,6 +301,7 @@ class Node(leginonobject.LeginonObject):
 			return str(d)
 
 	def uiExit(self):
+		'''UI function calling die. See die.'''
 		self.die()
 		return ''
 
