@@ -213,7 +213,11 @@ class TypedDict(KeyedDict):
 			raise TypeError('no factory to validate %s' % (value, valuetype))
 		try: newvalue = valuefactory(value)
 		except ValueError, detail:
-			newdetail = 'value for %s must be %s; ' % (key,valuetype)
+			newdetail = '%s, value for %s must be %s; ' % (value, key,valuetype)
+			newdetail += str(detail)
+			raise TypeError(newdetail)
+		except TypeError, detail:
+			newdetail = '%s, value for %s must be %s; ' % (value, key,valuetype)
 			newdetail += str(detail)
 			raise TypeError(newdetail)
 		return newvalue
