@@ -17,11 +17,20 @@ def mkdirs(newdir, mode=0777):
 		if err.errno != errno.EEXIST or not os.path.isdir(newdir):
 			raise
 
+###############
+#   hardware  #
+###############
+TEM = 'tecnai'
+CCD = 'tietz'
+#CCD = 'gatan'
+
+
 #########################
 #       Launchers       #
 #########################
 LAUNCHERS = [
 	'tecnai2',
+	'tecnai1',
 	'defcon1',
 	'amilab2',
 	'defcon3',
