@@ -7,11 +7,11 @@ reload(fftengine)
 ## create a fft engine for the cross correlations
 ## turning off estimate will optimize, but planning takes longer
 #planshapes = ((512,512),)
-#ffteng = fftengine.fftFFTW(planshapes, estimate=1)
-ffteng = fftengine.fftNumeric()
+#fftfftw = fftengine.fftFFTW(planshapes, estimate=1)
+fftnumeric = fftengine.fftNumeric()
 
 #def correlation(image1, image2, ccflag=True, pcflag=True, subpixelflag=True):
-def correlation(image1, image2, ccflag=1, pcflag=1, subpixelflag=1):
+def correlation(image1, image2, ccflag=1, pcflag=1, subpixelflag=1, ffteng=fftnumeric):
 	val = {}
 
 	if not (ccflag or pcflag):
@@ -33,6 +33,7 @@ def correlation(image1, image2, ccflag=1, pcflag=1, subpixelflag=1):
 	if ccflag:
 		# invert correlation to use
 		cc = ffteng.itransform(ccfft)
+		print 'CC SHAPE', cc.shape
 
 		ccdict = findPeak(cc, subpixelflag)
 		val['cross correlation peak'] = ccdict['peak']
@@ -120,6 +121,7 @@ def quadraticPeak(m):
 
 	## find the max pixel indices (row,col)
 	peakrow,peakcol = matrixMax(m)
+	print 'SINGLE PIXEL PEAK', peakrow, peakcol
 
 	rows,cols = m.shape
 

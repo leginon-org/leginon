@@ -64,9 +64,11 @@ class fftFFTW(fftEngine):
 	def __init__(self, planshapes=(), estimate=0):
 		fftEngine.__init__(self)
 		self.estimate = estimate
+		print 'PLANSHAPES', planshapes
 		for shape in planshapes:
-			self.plan(shape)
-			self.iplan(shape)
+			print 'SHAPE', shape
+			self.timer(self.plan, (shape,))
+			self.timer(self.iplan, (shape,))
 
 	def _transform(self, im):
 		if im.typecode() != Numeric.Float32:
@@ -81,17 +83,22 @@ class fftFFTW(fftEngine):
 	def _itransform(self, fftim, normalize=0):
 		if fftim.typecode() != Numeric.Complex32:
 			raise TypeError('input must be Numeric.Complex32')
-		im = Numeric.zeros(fftim.shape, Numeric.Float32)
+		imshape = (2*(fftim.shape[0]-1), fftim.shape[1])
+
+		im = Numeric.zeros(imshape, Numeric.Float32)
 		im.savespace(1)  #prevent upcasting from float32 to float64
-		plan = self.timer(self.iplan, (fftim.shape,))
-		sfftw.rfftwnd_one_complex_to_real(plan, fftim, im)
+		plan = self.timer(self.iplan, (imshape,))
+		### the input image will be destroyed, so make copy
+		fftimcopy = Numeric.array(fftim)
+		sfftw.rfftwnd_one_complex_to_real(plan, fftimcopy, im)
 		if normalize:
-			norm = im.shape[0] * im.shape[1]
+			norm = imshape[0] * imshape[1]
 			im = Numeric.divide(im, norm)
 		return im
 
 	def plan(self, shape):
 		if shape not in plans:
+			print 'NEW PLAN', shape
 			r,c = shape
 			if self.estimate:
 				plans[shape] = sfftw.rfftw2d_create_plan(r,c,sfftw.FFTW_REAL_TO_COMPLEX, sfftw.FFTW_ESTIMATE|sfftw.FFTW_USE_WISDOM)
@@ -102,6 +109,7 @@ class fftFFTW(fftEngine):
 
 	def iplan(self, shape):
 		if shape not in iplans:
+			print 'NEW IPLAN', shape
 			r,c = shape
 			if self.estimate:
 				iplans[shape] = sfftw.rfftw2d_create_plan(r,c,sfftw.FFTW_COMPLEX_TO_REAL, sfftw.FFTW_ESTIMATE|sfftw.FFTW_USE_WISDOM)
