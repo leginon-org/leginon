@@ -185,7 +185,7 @@ class EM(node.Node):
 			'dark field mode',
 			'diffraction mode',
 			'low dose',
-			'low dose mode',
+			#'low dose mode',
 			'holder type',
 			'holder status',
 			'stage status',

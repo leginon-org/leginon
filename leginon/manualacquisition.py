@@ -115,11 +115,10 @@ class ManualAcquisition(node.Node):
 			self.logger.info('Error setting instrument parameters')
 			raise RuntimeError('Unable to set instrument parameters')
 
-	def getScope(self, key):
+	def getScope(self, key=None):
 		try:
 			value = self.emclient.getScope(key)
-		except node.ResearchError:
-			raise
+		except (node.ResearchError, EM.ScopeUnavailable):
 			self.logger.error('Cannot access EM node')
 			self.logger.info('Error getting instrument parameters')
 			raise RuntimeError('Unable to get instrument parameters')
@@ -130,11 +129,9 @@ class ManualAcquisition(node.Node):
 			self.setScope({'main screen position': 'up'})
 
 		if self.settings['low dose']:
-			state = self.getScope('low dose mode')
-			try:
-				self.lowdosemode = state['low dose mode']
-			except KeyError:
-				self.logger.warning('Failed to get low dose mode, will not return to previous low dose state post exposure')
+			self.lowdosemode = self.getScope('low dose mode')
+			if self.lowdosemode is None:
+				self.logger.warning('Failed to save previous low dose state')
 			self.setScope({'low dose mode': 'exposure'})
 			time.sleep(self.settings['low dose pause time'])
 
