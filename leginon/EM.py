@@ -299,6 +299,7 @@ class EM(node.Node):
 
 	def handleSet(self, setevent):
 		scopedata = setevent['data']
+		self.logger.debug('handleSet: %s' % (scopedata,))
 		self.statelock.acquire()
 		try:
 			done_event = threading.Event()
