@@ -432,9 +432,9 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		nodrift = False
 		for tiltaxis in ('x','y'):
 			bt1 = dict(tiltcenter)
-			bt1[tiltaxis] -= (tilt_value/2.0)
+			bt1[tiltaxis] -= tilt_value
 			bt2 = dict(tiltcenter)
-			bt2[tiltaxis] += (tilt_value/2.0)
+			bt2[tiltaxis] += tilt_value
 			state1 = data.ScopeEMData()
 			state2 = data.ScopeEMData()
 			state1['beam tilt'] = bt1
