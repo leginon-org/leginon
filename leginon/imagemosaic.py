@@ -15,7 +15,7 @@ import xmlrpclib
 xmlbinlib = xmlrpclib
 
 class ImageMosaic(watcher.Watcher):
-	def __init__(self, id, nodelocations, watchfor = event.ImageTilePublishEvent, **kwargs):
+	def __init__(self, id, nodelocations, watchfor = event.TileImagePublishEvent, **kwargs):
 		# needs own event?
 		lockblocking = 1
 		watcher.Watcher.__init__(self, id, nodelocations, watchfor, lockblocking, **kwargs)
@@ -309,7 +309,7 @@ class ImageMosaic(watcher.Watcher):
 
 class StateImageMosaic(ImageMosaic):
 	def __init__(self, id, nodelocations,
-								watchfor = event.StateImageTilePublishEvent, **kwargs):
+								watchfor = event.StateTileImagePublishEvent, **kwargs):
 		self.calibration = None
 		self.calibrationmatrix = None
 		self.methods = ['calibration', 'correlation']

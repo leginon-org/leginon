@@ -151,7 +151,8 @@ class Corrector(node.Node):
 		series = []
 		for i in range(n):
 			print 'acquiring %s of %s' % (i+1, n)
-			numimage = self.cam.acquireArray()
+			imagedata = self.cam.acquireCameraImageData()
+			numimage = imagedata.content['image']
 			series.append(numimage)
 		return series
 
@@ -210,20 +211,24 @@ class Corrector(node.Node):
 		print 'saving'
 		self.plans[key]['norm'] = norm
 		
-	def acquireCorrectedImageData(self):
-		numdata = self.acquireCorrectedArray()
-		return data.ImageData(self.ID(), numdata)
-
 	def acquireCorrectedArray(self):
+		imagedata = self.acquireCorrectedImageData()
+		return imagedata.content['image']
+
+	def acquireCorrectedImageData(self):
 		if self.fakeflag.get():
 			camconfig = self.cam.config()
 			camstate = camconfig['state']
 			numimage = Mrc.mrc_to_numeric('fake.mrc')
+			corrected = self.correct(numimage, camstate)
+			return data.ImageData(self.ID, corrected)
 		else:
-			camstate = self.cam.acquireCamera()
-			numimage = camstate['image data']
-		corrected = self.correct(numimage, camstate)
-		return corrected
+			imagedata = self.cam.acquireCameraImageData()
+			numimage = imagedata.content['image']
+			camstate = imagedata.content['camera']
+			corrected = self.correct(numimage, camstate)
+			imagedata.content['image'] = corrected
+			return imagedata
 
 	def correct(self, original, camstate):
 		'''

@@ -54,7 +54,6 @@ class Calibration(node.Node):
 	# calibrate needs to take a specific value
 	def calibrate(self):
 		self.clearStateImages()
-		adjustedrange = self.range
 
 		size = self.camerastate['size']
 		bin = self.camerastate['binning']
@@ -71,38 +70,51 @@ class Calibration(node.Node):
 		self.publish(event.LockEvent(self.ID()))
 		self.publishRemote(camdata)
 
-		# might reuse value from previous axis
+		baselist = []
+		for i in range(self.navg):
+			delta = i * 2e-5
+			basex = self.base['x'] + delta
+			basey = self.base['y'] + delta
+			newbase = {'x':basex, 'y':basey}
+			baselist.append(newbase)
+
+		cal = {}
 		for axis in self.axislist:
-			print "axis =", axis
-			basevalue = self.base[axis]
-			for i in range(self.attempts):
-				print "attempt =", i
-				delta = (adjustedrange[1] - adjustedrange[0]) / 2 + adjustedrange[0]
-				print 'delta', delta
-				newvalue = basevalue + delta
+			axiskey = axis + ' pixel shift'
+			cal[axiskey] = {'x': 0.0, 'y': 0.0}
+			for base in baselist:
+				print "axis =", axis
+				basevalue = base[axis]
+
+				print 'delta', self.delta
+				newvalue = basevalue + self.delta
 				print 'newvalue', newvalue
 
-				state1 = self.state(basevalue, axis)
-				state2 = self.state(newvalue, axis)
+				state1 = self.makeState(basevalue, axis)
+				state2 = self.makeState(newvalue, axis)
 				print 'states', state1, state2
-				shiftinfo = self.measureStateShift(state1, state2)
+				shiftinfo = self.measureStateShift(state1, state2, axis)
 				print 'shiftinfo', shiftinfo
 
-				verdict = self.validateShift(shiftinfo)
+				xpix = shiftinfo['pixel shift'][1]
+				ypix = shiftinfo['pixel shift'][0]
+				totalpix = abs(xpix + 1j * ypix)
 
-				if verdict == 'good':
-					print "good"
-					self.calibration.update({axis + " pixel shift": {'x':shiftinfo['shift'][1], 'y':shiftinfo['shift'][0], 'value': delta}})
-					break
-				elif verdict == 'small':
-					print "too small"
-					adjustedrange[0] = delta
-				elif verdict == 'big':
-					print "too big"
-					adjustedrange[1] = delta
+				change = shiftinfo['parameter shift']
+				perpix = change / totalpix
+				print '**PERPIX', perpix
 
-			basestate = self.state(self.base[axis], axis)
-			self.publishRemote(data.EMData('scope', basestate))
+				pixelsperx = xpix / change
+				pixelspery = ypix / change
+				cal[axiskey]['x'] += pixelsperx
+				cal[axiskey]['y'] += pixelspery
+				print 'cal', cal
+				
+			cal[axiskey]['x'] = cal[axiskey]['x'] / self.navg
+			cal[axiskey]['y'] = cal[axiskey]['y'] / self.navg
+			cal[axiskey]['value'] = 1.0
+
+		self.calibration = cal
 
 		self.publish(event.UnlockEvent(self.ID()))
 
@@ -114,69 +126,66 @@ class Calibration(node.Node):
 		self.images = []
 
 	def acquireStateImage(self, state):
-		## determine if this state is already acquired
-		for info in self.images:
-			if info['state'] == state:
-				image = info['image']
-				return info
-
 		## acquire image at this state
 		newemdata = data.EMData('scope', state)
 		self.publish(event.LockEvent(self.ID()))
 		self.publishRemote(newemdata)
 		print 'state settling time %s' % (self.settle,)
 		time.sleep(self.settle)
-		print 'getting corrected image data'
 
-		#emdata = self.researchByDataID('corrected image data')
-		#self.publish(event.UnlockEvent(self.ID()))
-		#image = emdata.content['corrected image data']
-		image = self.cam.acquireArray(camstate=None, correction=0)
-		print 'min', cameraimage.min(image)
-		print 'max', cameraimage.max(image)
+		actual_state = self.currentState()
+		imagedata = self.cam.acquireCameraImageData(camstate=None, correction=0)
+		self.publish(imagedata, event.CameraImagePublishEvent)
 
-		imagedata = data.ImageData(self.ID(), image)
-		self.publish(imagedata, event.ImagePublishEvent)
 		## should find image stats to help determine validity of image
 		## in correlations
 		image_stats = None
 
-		info = {'state': state, 'image': image, 'image stats': image_stats}
+		info = {'requested state': state, 'imagedata': imagedata, 'image stats': image_stats}
 		self.images.append(info)
 		return info
 
-	def measureStateShift(self, state1, state2):
+	def measureStateShift(self, state1, state2, axis):
 		'''measures the pixel shift between two states'''
 
 		print 'acquiring state images'
 		info1 = self.acquireStateImage(state1)
 		info2 = self.acquireStateImage(state2)
 
-		image1 = info1['image']
-		image2 = info2['image']
+		imagedata1 = info1['imagedata']
+		imagedata2 = info2['imagedata']
+		imagecontent1 = imagedata1.content
+		imagecontent2 = imagedata2.content
 		stats1 = info1['image stats']
 		stats2 = info2['image stats']
 
+		actual1 = imagecontent1['scope'][self.parameter][axis]
+		actual2 = imagecontent2['scope'][self.parameter][axis]
+		actual_shift = actual2 - actual1
+
 		shiftinfo = {}
 
-		self.correlator.insertImage(image1)
+		numimage1 = imagecontent1['image']
+		numimage2 = imagecontent2['image']
+
+		self.correlator.insertImage(numimage1)
 
 		## autocorrelation
-		self.correlator.insertImage(image1)
+		self.correlator.insertImage(numimage1)
 		acimage = self.correlator.phaseCorrelate()
-		acimagedata = data.ImageData(self.ID(), acimage)
-		self.publish(acimagedata, event.PhaseCorrelationImagePublishEvent)
+		acimagedata = data.PhaseCorrelationImageData(self.ID(), acimage, imagedata1.id, imagedata1.id)
+		#self.publish(acimagedata, event.PhaseCorrelationImagePublishEvent)
 
 		## phase correlation
-		self.correlator.insertImage(image2)
+		self.correlator.insertImage(numimage2)
 		print 'correlation'
 		pcimage = self.correlator.phaseCorrelate()
 
 		## subtract autocorrelation
 		pcimage -= acimage
 
-		pcimagedata = data.ImageData(self.ID(), pcimage)
-		self.publish(pcimagedata, event.PhaseCorrelationImagePublishEvent)
+		pcimagedata = data.PhaseCorrelationImageData(self.ID(), pcimage, imagedata1.id, imagedata2.id)
+		#self.publish(pcimagedata, event.PhaseCorrelationImagePublishEvent)
 
 		## peak finding
 		print 'peak finding'
@@ -185,7 +194,13 @@ class Calibration(node.Node):
 		peak = self.peakfinder.getResults()
 		peakvalue = peak['subpixel peak value']
 		shift = correlator.wrap_coord(peak['subpixel peak'], pcimage.shape)
-		shiftinfo.update({'shift': shift, 'peak value': peakvalue, 'shape':pcimage.shape, 'stats': (stats1, stats2)})
+
+		## need unbinned result
+		binx = imagecontent1['camera']['binning']['x']
+		biny = imagecontent1['camera']['binning']['y']
+		unbinned = shift[0] * biny, shift[1] * binx
+
+		shiftinfo.update({'parameter shift': actual_shift, 'pixel shift': unbinned, 'peak value': peakvalue, 'shape':pcimage.shape, 'stats': (stats1, stats2)})
 		return shiftinfo
 
 
@@ -200,7 +215,7 @@ class Calibration(node.Node):
 		  - pixel shift too small to use as calibration data
 		  	results in good correlation, but reject anyway
 		'''
-		shift = shiftinfo['shift']
+		shift = shiftinfo['pixel shift']
 		## Jim is proud of coming up with this ingenious method
 		## of calculating a hypotenuse without importing math.
 		## It's definietly too late to be working on a Friday.
@@ -290,13 +305,14 @@ class Calibration(node.Node):
 		nodespec = node.Node.defineUserInterface(self)
 
 		#### parameters for user to set
-		self.attempts = 5
-		self.range = [1e-7, 1e-6]
+		self.navg = 5
+		self.delta = 4e-5
 		self.correlationthreshold = 0.05
-		self.camerastate = {'size': 512, 'binning': 1, 'exposure time': 500}
+
+		self.camerastate = {'size': 1024, 'binning': 4, 'exposure time': 100}
+
 		try:
-			isdata = self.researchByDataID(self.parameter)
-			self.base = isdata.content[self.parameter]
+			self.base = self.currentState()
 		except:
 			self.base = {'x': 0.0, 'y':0.0}
 		####
@@ -305,22 +321,22 @@ class Calibration(node.Node):
 
 		paramchoices = self.registerUIData('paramdata', 'array', default=('image shift', 'stage position'))
 
-
 		argspec = (
+		self.registerUIData('N Average', 'float', default=self.navg),
 		self.registerUIData('Base', 'struct', default=self.base),
-		self.registerUIData('Minimum', 'float', default=self.range[0]),
-		self.registerUIData('Maximum', 'float', default=self.range[1]),
-		self.registerUIData('Attempts', 'integer', default=self.attempts),
+		self.registerUIData('Delta', 'float', default=self.delta),
 		self.registerUIData('Correlation Threshold', 'integer', default=self.correlationthreshold),
+
 		self.registerUIData('Camera State', 'struct', default=self.camerastate)
 		)
+
 		rspec = self.registerUIMethod(self.uiSetParameters, 'Set Parameters', argspec)
 
 		self.validshift = self.registerUIData('Valid Shift', 'struct', permissions='rw')
 		self.validshift.set(
 			{
-			'correlation': {'min': 20.0, 'max': 200.0},
-			'calibration': {'min': 20.0, 'max': 200.0}
+			'correlation': {'min': 20.0, 'max': 512.0},
+			'calibration': {'min': 20.0, 'max': 512.0}
 			}
 		)
 
@@ -330,17 +346,16 @@ class Calibration(node.Node):
 
 		filespec = self.registerUIContainer('File', (save, load))
 
-		self.registerUISpec('Calibration', (nodespec, cspec, rspec, self.validshift, filespec))
+		self.registerUISpec('Calibration', (cspec, rspec, self.validshift, filespec, nodespec))
 
 	def uiCalibrate(self):
 		self.calibrate()
 		return ''
 
-	def uiSetParameters(self, base, r0, r1, a, ct, cs):
+	def uiSetParameters(self, navg, base, delta, ct, cs):
+		self.navg = navg
 		self.base = base
-		self.range[0] = r0
-		self.range[1] = r1
-		self.attempts = a
+		self.delta = delta
 		self.correlationthreshold = ct
 		self.camerastate = cs
 		return ''
@@ -362,8 +377,12 @@ class SimpleCalibration(Calibration):
 		Calibration.__init__(self, id, nodelocations, **kwargs)
 		self.addEventInput(event.PixelShiftEvent, self.pixelShift)
 
-	def state(self, value, axis):
+	def makeState(self, value, axis):
 		return {self.parameter: {axis: value}}
+
+	def currentState(self):
+		dat = self.researchByDataID(self.parameter)
+		return dat.content[self.parameter]
 
 	def pixelShift(self, ievent):
 		print 'PIXELSHIFT'
@@ -383,9 +402,9 @@ class SimpleCalibration(Calibration):
 							matrix[0,1] * delta_col) / determinant
 
 		print "calculated %s change = %s, %s" %  (self.parameter, deltax, deltay)
-		current = self.researchByDataID(self.parameter)
-		currentx = current.content[self.parameter]['x']
-		currenty = current.content[self.parameter]['y']
+		current = self.currentState()
+		currentx = current['x']
+		currenty = current['y']
 		print "current %s = %s" % (self.parameter, current)
 		newimageshift = {self.parameter:
 			{

@@ -27,6 +27,7 @@ class ImViewer(watcher.Watcher):
 		self.cam = camerafuncs.CameraFuncs(self)
 		self.iv = None
 		self.numarray = None
+		self.imageid = None
 		self.viewer_ready = threading.Event()
 		#self.start_viewer_thread()
 
@@ -35,6 +36,11 @@ class ImViewer(watcher.Watcher):
 		currentconfig['state']['dimension']['x'] = 1024
 		currentconfig['state']['binning']['x'] = 4
 		currentconfig['state']['exposure time'] = 100
+
+		self.clickfuncs = {
+			'event': self.clickEvent,
+			'target': self.clickTarget
+		}
 
 		self.cam.config(currentconfig)
 		self.defineUserInterface()
@@ -53,22 +59,38 @@ class ImViewer(watcher.Watcher):
 		#print 'thread started'
 
 	def clickCallback(self, tkevent):
-		self.clickEvent(tkevent)
-
-	def clickEvent(self, tkevent):
 		clickinfo = self.iv.eventXYInfo(tkevent)
 		clickinfo['image id'] = self.imageid
-		#print 'clickinfo', clickinfo
-		## prepare for xmlrpc
+
+		choice = self.uiclickcallback.get()
+		if choice == 'event':
+			print 'clickEvent'
+			self.clickEvent(clickinfo)
+		elif choice == 'target':
+			print 'clickTarget'
+			self.clickTarget(clickinfo)
+
+	def clickTarget(self, clickinfo):
+		'''
+		publish target when image clicked
+		'''
+		c = dict(clickinfo)
+		c['source'] = 'click'
+		print 'creating targetdata'
+		targetdata = data.ImageTargetData(self.ID(), c)
+		print 'publishing targetdata'
+		self.publish(targetdata, event.ImageTargetPublishEvent)
+
+	def clickEvent(self, clickinfo):
+		'''
+		generate ImageClickEvent when image clicked
+		'''
 		c = {}
 		for key,value in clickinfo.items():
 			if value is not None:
 				c[key] = value
-		#print 'c', c
 		e = event.ImageClickEvent(self.ID(), c)
-		#print 'sending ImageClickEvent'
 		self.outputEvent(e)
-		#print 'sent ImageClickEvent'
 
 	def open_viewer(self):
 		#print 'root...'
@@ -116,7 +138,8 @@ class ImViewer(watcher.Watcher):
 	def acquireArray(self, corr=0):
 		camconfig = self.cam.config()
 		camstate = camconfig['state']
-		imarray = self.cam.acquireArray(camstate, correction=corr)
+		imdata = self.cam.acquireCameraImageData(camstate, correction=corr)
+		imarray = imdata.content['image']
 		return imarray
 
 	def acquireAndDisplay(self, corr=0):
@@ -142,14 +165,8 @@ class ImViewer(watcher.Watcher):
 		#numarray = Numeric.array(imarray)
 		#numarray.shape = (height,width)
 
-		## self.im must be 2-d numeric data
-
-		## this hack make ImViewer work with different imagedata types
 		c = imagedata.content
-		if type(c) is dict:
-			self.numarray = c['image']
-		else:
-			self.numarray = c
+		self.numarray = c['image']
 
 		self.imageid = imagedata.id
 		print 'IMVIEWER', self.imageid, self.popupvalue
@@ -167,7 +184,7 @@ class ImViewer(watcher.Watcher):
 		watcherspec = watcher.Watcher.defineUserInterface(self)
 
 		argspec = (
-		self.registerUIData('Filename', 'string'),
+		self.registerUIData('Filename', 'string', default='test1.mrc'),
 		)
 		loadspec = self.registerUIMethod(self.uiLoadImage, 'Load MRC', argspec)
 		savespec = self.registerUIMethod(self.uiSaveImage, 'Save MRC', argspec)
@@ -183,8 +200,11 @@ class ImViewer(watcher.Watcher):
 		popuptoggle = self.registerUIData('Pop-up Viewer', 'boolean', permissions='rw', default=popupdefault)
 		popuptoggle.registerCallback(self.popupCallback)
 
+		clickchoices = self.registerUIData('clickfuncs', 'array', default=self.clickfuncs.keys())
+		self.uiclickcallback = self.registerUIData('Click Callback', 'string', choices=clickchoices, default='event', permissions='rw')
+
 		camconfig = self.cam.configUIData()
-		prefs = self.registerUIContainer('Preferences', (popuptoggle, camconfig))
+		prefs = self.registerUIContainer('Preferences', (popuptoggle, camconfig, self.uiclickcallback))
 
 		self.registerUISpec(`self.id`, (acqraw, acqcor, acqev, prefs, filespec, watcherspec))
 
@@ -198,12 +218,12 @@ class ImViewer(watcher.Watcher):
 		return self.popupvalue
 
 	def uiLoadImage(self, filename):
-		im = Mrc.mrc_to_numeric(filename)
-		self.displayNumericArray(im)
+		self.numarray = Mrc.mrc_to_numeric(filename)
+		self.displayNumericArray()
 		return ''
 
 	def uiSaveImage(self, filename):
-		numarray = self.iv.imagearray
+		numarray = Numeric.array(self.iv.imagearray)
 		Mrc.numeric_to_mrc(numarray, filename)
 		return ''
 

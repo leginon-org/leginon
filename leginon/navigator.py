@@ -97,13 +97,12 @@ class Navigator(node.Node):
 		print 'acquiring image'
 		acqtype = self.acqtype.get()
 		if acqtype == 'raw':
-			image = self.cam.acquireArray(camstate,0)
+			imagedata = self.cam.acquireCameraImageData(camstate,0)
 		elif acqtype == 'corrected':
-			image = self.cam.acquireArray(camstate,1)
+			imagedata = self.cam.acquireCameraImageData(camstate,1)
 
-		imagedata = data.ImageData(self.ID(), image)
 		print 'publishing image'
-		self.publish(imagedata, event.ImagePublishEvent)
+		self.publish(imagedata, event.CameraImagePublishEvent)
 		print 'image published'
 
 	def defineUserInterface(self):

@@ -15,7 +15,7 @@ class CameraFuncs(object):
 	def __init__(self, node):
 		self.node = node
 
-	def acquireArray(self, camstate=None, correction=0):
+	def OLDacquireArray(self, camstate=None, correction=0):
 		'''
 		acquire an image with optional camstate and correction
 		'''
@@ -29,8 +29,6 @@ class CameraFuncs(object):
 			else:
 				imdata = self.node.researchByDataID('image data')
 				imagearray = imdata.content['image data']
-				print 'IMAGEARRAY shape', imagearray.shape
-				print 'IMAGEARRAY typecode', imagearray.typecode()
 		except Exception, detail:
 			print detail
 			print 'acquireArray: unable to acquire image data'
@@ -38,7 +36,7 @@ class CameraFuncs(object):
 		t.stop()
 		return imagearray
 
-	def acquireCamera(self, camstate=None, correction=0):
+	def OLDacquireCamera(self, camstate=None, correction=0):
 		'''
 		this will return entire camera data
 		'''
@@ -50,6 +48,27 @@ class CameraFuncs(object):
 			print 'acquireCamera: unable to acquire camera'
 			camstate = None
 		return camstate
+
+	def acquireCameraImageData(self, camstate=None, correction=0):
+		## configure camera
+		if camstate is not None:
+			self.state(camstate)
+
+		if correction:
+			### get image data from corrector node
+			imdata = self.node.researchByDataID('normalized image data')
+		else:
+			### create my own data from acquisition
+			scopedata = self.node.researchByDataID('scope')
+			scopedict = dict(scopedata.content)
+			camdata = self.node.researchByDataID('camera')
+			cameradict = dict(camdata.content)
+			numimage = cameradict['image data']
+			del cameradict['image data']
+			dataid = self.node.ID()
+			imdata = data.CameraImageData(dataid, image=numimage, scope=scopedict, camera=cameradict)
+
+		return imdata
 
 	def state(self, camstate=None):
 		'''

@@ -5,6 +5,7 @@ import threading
 import node, event, data
 import camerafuncs
 import cPickle
+import Mrc
 
 
 class GridPreview(node.Node):
@@ -30,7 +31,7 @@ class GridPreview(node.Node):
 	def defineUserInterface(self):
 		#nodespec = node.Node.defineUserInterface(self)
 		cam = self.cam.configUIData()
-		defprefs = {'center': {'x':0,'y':0}, 'overlap': 75, 'maxtargets': 9}
+		defprefs = {'center': {'x':0,'y':0}, 'overlap': 75, 'maxtargets': 4}
 		spiralprefs = self.registerUIData('Spiral', 'struct', callback=self.uiSpiralPrefs, default=defprefs, permissions='rw')
 		self.sim = self.registerUIData('Simulate TEM/camera', 'boolean', permissions='rw', default=0)
 		prefs = self.registerUIContainer('Preferences', (cam, spiralprefs, self.sim))
@@ -39,7 +40,6 @@ class GridPreview(node.Node):
 		stop = self.registerUIMethod(self.stopLoop, 'Stop', ())
 		reset = self.registerUIMethod(self.resetLoop, 'Reset', ())
 		controls = self.registerUIContainer('Controls', (start,stop,reset))
-
 		self.registerUISpec('Grid Preview', (prefs, controls))
 
 	def uiSpiralPrefs(self, value=None):
@@ -51,7 +51,7 @@ class GridPreview(node.Node):
 			overlap = value['overlap']
 			maxtargets = value['maxtargets']
 			spacing = size - (overlap / 100.0) * size
-			sp = self.spiral2(maxtargets)
+			sp = self.relative_spiral(maxtargets)
 			self.todo = []
 			for point in sp:
 				if point[0] == 0 and point[1] == 0:
@@ -119,7 +119,7 @@ class GridPreview(node.Node):
 
 			filename = self.tilefilename(thisid)
 			Mrc.numeric_to_mrc(imarray, filename)
-			storedata = {'id':thisid,'image':filename, 'state': stagepos, 'neighbors': neighbortiles}
+			storedata = {'id':thisid,'image':filename, 'state': stagepos, 'neighbors': neighbortiles, 'target':target}
 			self.logAppend(storedata)
 
 			imdata = data.StateImageTileData(thisid, imarray, stagepos, neighbortiles)
@@ -145,6 +145,10 @@ class GridPreview(node.Node):
 		f = open('gp.log', 'r')
 		self.loglist = cPickle.load(f)
 		f.close()
+
+	def logPrint(self):
+		for im in self.loglist:
+			print im['id'], im['target'], im['state']
 
 	def tilefilename(self, id):
 		indexstr = '%04d' % (id[-1],)
@@ -190,12 +194,13 @@ class GridPreview(node.Node):
 		try:
 			while self.temptodo and not self.stoprunning.isSet():
 				self.next_target()
+			self.logPrint()
 		except Exception, detail:
 			print detail
 		self.running.clear()
 		self.stoprunning.clear()
 
-	def spiral(self, length):
+	def absolute_spiral(self, length):
 		spiral = [(0,0)]
 		dir = (1,0)
 		xmax = xmin = ymax = ymin = 0
@@ -218,14 +223,16 @@ class GridPreview(node.Node):
 				dir = (1,0)
 		return spiral
 
-	def spiral2(self, length):
+	def relative_spiral(self, length):
 		spiral = [(0,0)]
+		spiraldir = [(0,0)]
 		dir = (1,0)
 		xmax = xmin = ymax = ymin = 0
 		while len(spiral) < length:
 			cur_pos = spiral[-1]
 			next_pos = (cur_pos[0] + dir[0], cur_pos[1] + dir[1])
-			spiral.append(dir)
+			spiral.append(next_pos)
+			spiraldir.append(dir)
 			cur_pos = next_pos
 			if cur_pos[0] > xmax:
 				xmax = cur_pos[0]
@@ -239,8 +246,4 @@ class GridPreview(node.Node):
 			elif cur_pos[1] < ymin:
 				ymin = cur_pos[1]
 				dir = (1,0)
-		return spiral
-
-
-
-
+		return spiraldir

@@ -126,30 +126,35 @@ class ImagePublishEvent(PublishEvent):
 	def __init__(self, id, content, confirm):
 		PublishEvent.__init__(self, id, content, confirm)
 
-class ReferenceImagePublishEvent(ImagePublishEvent):
-	'Event indicating image was published'
+class CameraImagePublishEvent(ImagePublishEvent):
+	'Event indicating camera image was published'
 	def __init__(self, id, content, confirm):
 		ImagePublishEvent.__init__(self, id, content, confirm)
 
-class ImageTilePublishEvent(ImagePublishEvent):
+class CorrectionImagePublishEvent(CameraImagePublishEvent):
+	'Event indicating image was published'
+	def __init__(self, id, content, confirm):
+		CameraImagePublishEvent.__init__(self, id, content, confirm)
+
+class TileImagePublishEvent(CameraImagePublishEvent):
 	'Event indicating image tile was published'
 	def __init__(self, id, content, confirm):
-		ImagePublishEvent.__init__(self, id, content, confirm)
+		CameraImagePublishEvent.__init__(self, id, content, confirm)
 
-class StateImageTilePublishEvent(ImagePublishEvent):
+class StateTileImagePublishEvent(CameraImagePublishEvent):
 	'Event indicating image tile was published'
 	def __init__(self, id, content, confirm):
-		ImagePublishEvent.__init__(self, id, content, confirm)
+		CameraImagePublishEvent.__init__(self, id, content, confirm)
 
-class DarkImagePublishEvent(ReferenceImagePublishEvent):
+class DarkImagePublishEvent(CorrectionImagePublishEvent):
 	'Event indicating image was published'
 	def __init__(self, id, content, confirm):
-		ReferenceImagePublishEvent.__init__(self, id, content, confirm)
+		CorrectionImagePublishEvent.__init__(self, id, content, confirm)
 
-class BrightImagePublishEvent(ReferenceImagePublishEvent):
+class BrightImagePublishEvent(CorrectionImagePublishEvent):
 	'Event indicating image was published'
 	def __init__(self, id, content, confirm):
-		ReferenceImagePublishEvent.__init__(self, id, content, confirm)
+		CorrectionImagePublishEvent.__init__(self, id, content, confirm)
 
 class CorrelationImagePublishEvent(ImagePublishEvent):
 	'Event indicating image was published'
@@ -250,6 +255,11 @@ class StagePixelShiftEvent(PixelShiftEvent):
 class ImageShiftPixelShiftEvent(PixelShiftEvent):
 	def __init__(self, id, content, confirm=False):
 		Event.__init__(self, id, dict(content), confirm)
+
+class ImageTargetPublishEvent(PublishEvent):
+	def __init__(self, id, content, confirm):
+		PublishEvent.__init__(self, id, content, confirm)
+	
 
 ###########################################################
 ###########################################################
