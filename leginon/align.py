@@ -47,13 +47,16 @@ def info(image1, image2):
 	if theta > 45:
 		theta -= 90
 
-	r1 = numarray.nd_image.rotate(image2, -theta, reshape=False)
+	r1 = numarray.nd_image.rotate(image2, -theta, reshape=True)
 
 	n = (int(image1.shape[0]/(2*math.sqrt(2))),
 				int(image1.shape[1]/(2*math.sqrt(2))))
 
-	c.insertImage(image1[n[0]:-n[0], n[1]:-n[1]])
-	c.insertImage(r1[n[0]:-n[0], n[1]:-n[1]])
+	i = ((image1.shape[0] - r1.shape[0])/2, (image1.shape[1] - r1.shape[1])/2)
+	tmp = image1[i[0]:r1.shape[0] + i[0], i[1]:r1.shape[1] + i[1]]
+	print r1.shape, tmp.shape
+	c.insertImage(tmp)
+	c.insertImage(r1)
 	xc = c.crossCorrelate()
 	p.setImage(xc)
 	p.subpixelPeak(npix=9)
@@ -62,14 +65,17 @@ def info(image1, image2):
 	pv = results['pixel peak value']
 	print '%s %g %g (%g, %g)' % ((f1[9:], theta, pv) + shift)
 
-	return image1[n[0]:-n[0], n[1]:-n[1]], r1[n[0]:-n[0], n[1]:-n[1]]
+	#return image1[n[0]:-n[0], n[1]:-n[1]], r1[n[0]:-n[0], n[1]:-n[1]]
 
-for i in range(16):
+for i in range(4, 16):
+#for i in [0]:
 	for j in range(9):
+	#for j in [4]:
 		f1 = '04dec17b_000%d_0000%dgr.mrc' % (749 + i, j + 1)
 		f2 = '05jan20a_000%d_0000%dgr.mrc' % (749 + i, j + 1)
 		image1 = Mrc.mrc_to_numeric(f1)
 		image2 = Mrc.mrc_to_numeric(f2)
-		r1, r2 = info(image1, image2)
-		info(r1, r2)
+		#r1, r2 = info(image1, image2)
+		#info(r1, r2)
+		info(image1, image2)
 
