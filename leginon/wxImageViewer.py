@@ -402,10 +402,11 @@ class ImagePanel(wxPanel):
 
 		if self.smallScale():
 			xoffset, yoffset = self.offset
-			if evt.m_x < xoffset or evt.m_x > xoffset + self.bitmap.GetWidth() - 1: 
+			width, height = self.panel.GetVirtualSize()
+			if evt.m_x < xoffset or evt.m_x > xoffset + width: 
 				self.UpdateDrawing()
 				return
-			if evt.m_y < yoffset or evt.m_y > yoffset + self.bitmap.GetHeight() - 1: 
+			if evt.m_y < yoffset or evt.m_y > yoffset + height: 
 				self.UpdateDrawing()
 				return
 
