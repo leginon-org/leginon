@@ -10,9 +10,8 @@ reload(correlator)
 reload(peakfinder)
 
 class ImageMosaic(watcher.Watcher):
-	def __init__(self, id, nodelocations):
+	def __init__(self, id, nodelocations, watchfor = event.ImageTilePublishEvent):
 		# needs own event?
-		watchfor = event.PublishEvent
 		lockblocking = 1
 		watcher.Watcher.__init__(self, id, nodelocations, watchfor, lockblocking)
 
@@ -244,6 +243,9 @@ class ImageMosaic(watcher.Watcher):
 		self.registerUISpec('Image Mosaic', (watcherspec, imagespec))
 
 class StateImageMosaic(ImageMosaic):
+	def __init__(self, id, nodelocations,
+								watchfor = event.StateImageTilePublishEvent):
+		ImageMosaic.__init__(self, id, nodelocations, watchfor)
 	def processData(self, idata):
 		ImageMosaic.processData(self, idata)
 		self.imagemosaic[idata.id]['state'] = idata.content['state']
