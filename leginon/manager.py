@@ -280,14 +280,14 @@ class Manager(node.Node):
 		"""
 		return a dict describing all currently managed nodes
 		"""
-		ret = {}
+		nodeinfo = {}
 		for nodename in self.clientlist:
 			nodeid = self.clientdict[nodename]
 			nodelocationdata = self.server.datahandler.query(nodeid)
 			if nodelocationdata:
 				nodeloc = nodelocationdata.content
-				ret[nodename] = nodeloc	
-		return ret
+				nodeinfo[nodename] = nodeloc	
+		return nodeinfo
 
 	def uiLaunch(self, name, launcher_str, nodeclass_str, args, newproc=0):
 		"""
@@ -345,7 +345,7 @@ if __name__ == '__main__':
 		import Tkinter
 		tk = Tkinter.Tk()
 		mgui = nodegui.NodeGUI(tk, node=m)
-		tk.wm_title('Leginon Manager')
+		#tk.wm_title('Leginon Manager')
 		mgui.pack()
 		t = threading.Thread(name = 'Tk GUI thread', target = tk.mainloop)
 		t.setDaemon(1)

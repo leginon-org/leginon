@@ -15,8 +15,6 @@ class Server(xmlrpcserver.xmlrpcserver):
 		self.funcdict = {}
 		self.funclist = []
 		self.server.register_function(self.uiMethods, 'methods')
-		self.id = id
-		self.server.register_function(self.uiID, 'id')
 
 	def registerFunction(self, func, argspec, alias=None):
 		if not alias:
@@ -53,8 +51,6 @@ class Server(xmlrpcserver.xmlrpcserver):
 		funcstruct['list'] = self.funclist
 		return funcstruct
 
-	def uiID(self):
-		return self.id
 
 class ClientComponent(object):
 	def __init__(self, parent, name, argspec):
@@ -123,7 +119,7 @@ class Client(object):
 	def __init__(self, hostname, port):
 		uri = 'http://%s:%s' % (hostname, port)
 		self.proxy = xmlrpclib.ServerProxy(uri)
-		self.id = self.proxy.id()
+		self.getMethods()
 
 	def getMethods(self):
 		self.funcdict = {}

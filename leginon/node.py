@@ -118,9 +118,17 @@ class Node(leginonobject.LeginonObject):
 		self.clientlist = []
 		self.clientdict = {}
 		print 'clientlist initialized'
+		self.registerUIFunction(self.uiID, (), 'ID')
+		self.registerUIFunction(self.uiClass, (), 'Class')
 
 	def registerUIFunction(self, func, argspec, alias=None):
 		self.uiserver.registerFunction(func, argspec, alias)
+
+	def uiID(self):
+		return self.id
+
+	def uiClass(self):
+		return self.__class__.__name__
 
 	def addManager(self, loc):
 		print 'addEventClient...'

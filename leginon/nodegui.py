@@ -122,12 +122,14 @@ class NodeGUI(Frame):
 
 		Frame.__init__(self, parent)
 		self.uiclient = interface.Client(hostname, port)
-		self.id = self.uiclient.id
+		self.id = self.uiclient.execute('ID')
 		self.components = {}
 		self.__build()
 
 	def __build(self):
 		f = Frame(self, bd=4, relief=SOLID)
+		l = Label(f, text=`self.id`)
+		l.pack(side=TOP)
 		b=Button(f, text='Refresh', command=self.__build_components)
 		b.pack(side=TOP)
 		f.pack(side=TOP, expand=YES, fill=BOTH)
