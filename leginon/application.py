@@ -28,7 +28,7 @@ class Application(leginonobject.LeginonObject):
 		if args not in self.bindspec:
 			self.bindspec.append(args)
 
-	def delBindSpec(self):
+	def delBindSpec(self, args):
 		if args in self.bindspec:
 			self.bindspec.remove(args)
 
