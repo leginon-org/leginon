@@ -20,10 +20,9 @@ class Client(leginonobject.LeginonObject):
 		self.clients[datatcp.PushClient].push(data)
 
 class Server(leginonobject.LeginonObject):
-	def __init__(self, dkclass = datahandler.SimpleDataKeeper):
+	def __init__(self, dhclass = datahandler.SimpleDataKeeper):
 		leginonobject.LeginonObject.__init__(self)
-		self.bindings = Bindings()
-		self.datahandler = dkclass()
+		self.datahandler = dhclass()
 		self.servers = {}
 		#self.servers[datalocal.PushServer] = datalocal.PushServer(self.datahandler)
 		self.servers[datatcp.PushServer] = datatcp.PushServer(self.datahandler)
@@ -36,10 +35,6 @@ class Server(leginonobject.LeginonObject):
 		loc = leginonobject.LeginonObject.location(self)
 		loc['datatcp port'] = self.servers[datatcp.PushServer].port
 		return loc
-
-
-	def handle_data(self, newdata):
-		print 'handling %s' % newdata
 
 
 if __name__ == '__main__':

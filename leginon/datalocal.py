@@ -3,17 +3,17 @@ import leginonobject
 import copy
 
 class Server(leginonobject.LeginonObject):
-	def __init__(self, dk):
+	def __init__(self, dh):
 		leginonobject.LeginonObject.__init__(self)
-		self.datakeeper = dk
+		self.datahandler = dh
 
 class PullServer(Server):
 	def datafromid(self, data_id):
-		return self.datakeeper.query(data_id)
+		return self.datahandler.query(data_id)
 
 class PushServer(Server):
 	def datatoid(self, data_id, newdata):
-		return self.datakeeper.insert(newdata)
+		return self.datahandler.insert(newdata)
 
 class Client(leginonobject.LeginonObject):
 	def __init__(self, server):
