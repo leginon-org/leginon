@@ -29,12 +29,11 @@ class PresetsClient(object):
 		evt = event.ChangePresetEvent()
 		evt['name'] = presetname
 		evt['emtarget'] = emtarget
-		print 'toScope', evt['name']
 		timeout = 40
 		try:
 			self.node.outputEvent(evt, wait=True, timeout=timeout)
 		except node.ConfirmationTimeout:
-			print 'no response from PresetsManager after % s' % (timeout,)
+			print 'no response from PresetsManager after % s, be sure this node is bound to PresetsManager' % (timeout,)
 
 	def presetchanged(self, ievent):
 		name = ievent['name']
