@@ -218,9 +218,10 @@ class PresetsManager(node.Node):
 		names = []
 		for preset in presets:
 			if preset['name'] not in names:
-				preset['session'] = self.session
-				mostrecent.append(preset)
 				names.append(preset['name'])
+				if preset['removed'] != 1:
+					preset['session'] = self.session
+					mostrecent.append(preset)
 		self.presets[:] = mostrecent
 
 		### if using another session's presets, now save them
@@ -275,15 +276,22 @@ class PresetsManager(node.Node):
 		remove a preset by index or reference
 		p is either a preset, or index of the preset
 		'''
+		premove = None
 		if type(p) is int:
+			premove = self.presets[p]
 			del self.presets[p]
 		elif type(p) is str:
 			pcopy = list(self.presets)
 			for preset in pcopy:
 				if preset['name'] == p:
+					premove = preset
 					self.presets.remove(preset)
 		else:
+			premove = p
 			self.presets.remove(p)
+		if premove is not None:
+			premove['removed'] = 1
+			self.presetToDB(premove)
 		pnames = self.presetNames()
 		self.uiselectpreset.set(pnames, 0)
 
