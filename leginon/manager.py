@@ -659,7 +659,7 @@ if __name__ == '__main__':
 	try:
 		session = sys.argv[1]
 	except IndexError:
-		session = time.ctime()
+		session = time.strftime('%Y-%m-%d-%H-%M')
 
 	m = Manager(('manager',), session)
 	m.start()
