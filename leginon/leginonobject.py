@@ -1,15 +1,16 @@
-
-import os, socket
+import os, socket, threading, weakref
 
 class LeginonObject(object):
 	def __init__(self):
-		self.loc = {}
-		self.loc['hostname'] = socket.gethostname()
-		self.loc['pid'] = os.getpid()
-		self.loc['pythonid'] = id(self)
 		self.id = id(self)
 
 	def location(self):
 		'return a dict describing the location of this object'
-		return self.loc
+		loc = {}
+		loc['hostname'] = socket.gethostname()
+		loc['PID'] = os.getpid()
+		loc['python ID'] = id(self)
+		#loc['thread'] = threading.currentThread()
+		#loc['weakref'] = weakref.ref(self)
+		return loc
 

@@ -21,9 +21,7 @@ class Launcher(node.Node):
 		Node uses NodeReadyEvent 
 		This uses LauncherReadyEvent
 		'''
-		managerhost = self.managerloc['hostname']
-		managerport = self.managerloc['TCP port']
-		self.addEventClient('manager', managerhost, managerport)
+		self.addEventClient('manager', self.managerloc)
 		self.announce(event.LauncherReadyEvent())
 
 	def main(self):

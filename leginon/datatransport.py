@@ -13,12 +13,11 @@ class Base(leginonobject.LeginonObject):
 class Client(Base):
 	# hostname/port -> location or whatever
 	# needs to be transport generalized like server
-	def __init__(self, hostname, port):
+	def __init__(self, location):
 		Base.__init__(self)
 		self.clients = {}
-		self.transportmodules = [tcptransport]
 		for t in self.transportmodules:
-			self.clients[t] = apply(t.Client, (hostname, port))
+			self.clients[t] = apply(t.Client, (location,))
 
 	def pull(self, id):
 		return self.clients[tcptransport].pull(id)

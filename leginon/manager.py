@@ -30,12 +30,8 @@ class Manager(node.Node):
 #		self.eventhandler.addDistmap(eventclass, from_node, to_node)
 
 	def registerNode(self, readyevent):
-		newid = readyevent.origin['id']
-		loc = readyevent.origin['location']
-		hostname = loc['hostname']
-		eventport = loc['TCP port']
-		print 'registering node', newid, hostname, eventport
-		self.addEventClient(newid, hostname, eventport)
+		print 'registering node', readyevent.origin
+		self.addEventClient(readyevent.origin['id'], readyevent.origin['location'])
 		print self.clients
 
 	def launchNode(self, launcher, newproc, target, newid):

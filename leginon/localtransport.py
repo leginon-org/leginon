@@ -11,15 +11,23 @@ class Server(leginonobject.LeginonObject):
 		pass
 
 class Client(leginonobject.LeginonObject):
-	def __init__(self, server):
+	def __init__(self, location):
 		leginonobject.LeginonObject.__init__(self)
-		self.server = server
+		self.serverlocation = location
 
 	def push(self, idata):
-		return self.server.datahandler.insert(copy.deepcopy(idata))
+		o = self.serverlocation['weakref']()
+		if o is None:
+			raise ValueError
+		else:
+			return o.datahandler.insert(copy.deepcopy(idata))
 
 	def pull(self, id):
-		return copy.deepcopy(self.server.datahandler.query(id))
+		o = self.serverlocation['weakref']()
+		if o is None:
+			raise ValueError
+		else:
+			return copy.deepcopy(o.datahandler.query(id))
 
 if __name__ == '__main__':
 	pass

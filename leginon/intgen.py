@@ -18,11 +18,9 @@ class IntGen(node.Node):
 	def sendint(self, newint):
 		intdata = data.IntData(newint)
 		self.publish(intdata, event.PublishEvent)
-		
 			
 	def main(self):
 		self.interact()
-
 
 if __name__ == '__main__':
 	import signal, sys

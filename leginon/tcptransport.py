@@ -54,17 +54,15 @@ class Server(SocketServer.ThreadingTCPServer, leginonobject.LeginonObject):
 		return loc
 
 class Client(leginonobject.LeginonObject):
-	def __init__(self, hostname, port, buffer_size = 1024):
+	def __init__(self, location, buffer_size = 1024):
 		self.buffer_size = buffer_size 
 		leginonobject.LeginonObject.__init__(self)
-		self.hostname = hostname
-		self.port = port
+		self.serverlocation = location
 
 	def pull(self, id, family = socket.AF_INET, type = socket.SOCK_STREAM):
-		print 'PullClient.pull id = %s' % id
 		data = ""
 		s = socket.socket(family, type)
-		s.connect((self.hostname, self.port)) # Connect to server
+		s.connect((self.serverlocation['hostname'],self.serverlocation['TCP port']))
 		idpickle = cPickle.dumps(id)
 		s.send(idpickle)
 
@@ -80,7 +78,7 @@ class Client(leginonobject.LeginonObject):
 	def push(self, idata, family = socket.AF_INET, type = socket.SOCK_STREAM):
 		# needs to account for different data_id datatypes
 		s = socket.socket(family, type)
-		s.connect((self.hostname, self.port)) # Connect to server
+		s.connect((self.serverlocation['hostname'],self.serverlocation['TCP port']))
 		s.send(cPickle.dumps(idata))
 		s.close()
 

@@ -5,8 +5,8 @@ import datatransport
 import datahandler
 
 class Client(datatransport.Client):
-	def __init__(self, hostname, port):
-		datatransport.Client.__init__(self, hostname, port)
+	def __init__(self, location):
+		datatransport.Client.__init__(self, location)
 
 	def push(self, ievent):
 		if isinstance(ievent, event.Event):
@@ -54,9 +54,7 @@ class Node(leginonobject.LeginonObject):
 			self.addManager()
 
 	def addManager(self):
-		managerhost = self.managerloc['hostname']
-		managerport = self.managerloc['TCP port']
-		self.addEventClient('manager', managerhost, managerport)
+		self.addEventClient('manager', self.managerloc)
 		self.announce(event.NodeReadyEvent())
 
 	def main(self):
@@ -78,9 +76,8 @@ class Node(leginonobject.LeginonObject):
 		data.origin['id'] = self.nodeid
 		data.origin['location'] = self.location()
 
-	def research(self, creator, dataid):
-		hostname, port = creator
-		client = self.clientclass(hostname, port)
+	def research(self, location, dataid):
+		client = self.clientclass(location)
 		return client.pull(dataid)
 
 	def location(self):
@@ -95,8 +92,8 @@ class Node(leginonobject.LeginonObject):
 		code.interact(banner,readfunc,local)
 
   # down from here is from EventHandler
-	def addEventClient(self, newid, hostname, port):
-		self.clients[newid] = self.clientclass(hostname, port)
+	def addEventClient(self, newid, location):
+		self.clients[newid] = self.clientclass(location)
 
 	def delEventClient(self, newid):
 		if newid in self.clients:
