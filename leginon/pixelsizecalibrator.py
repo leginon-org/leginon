@@ -1,4 +1,5 @@
 import calibrator
+import calibrationclient
 import event, data
 import uidata
 
@@ -8,6 +9,7 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 	'''
 	def __init__(self, id, session, nodelocations, **kwargs):
 		calibrator.Calibrator.__init__(self, id, session, nodelocations, **kwargs)
+		self.calclient = calibrationclient.PixelSizeCalibrationClient(self)
 
 		self.defineUserInterface()
 		self.start()
@@ -29,6 +31,8 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 
 	def store(self):
 		caldata = data.PixelSizeCalibrationData()
+		emhost = self.calclient.getHost()
+		caldata['em host'] = emhost
 		caldata['magnification'] = self.uimag.get()
 		caldata['pixelsize'] = self.uipixsize.get()
 		caldata['comment'] = self.comment.get()
