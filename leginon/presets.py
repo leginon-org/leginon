@@ -7,8 +7,39 @@ import copy
 import uidata
 import camerafuncs
 import strictdict
+import threading
+
 
 class PresetsClient(object):
+	'''
+	client functions for nodes to access PresetsManager
+	'''
+	def __init__(self, node):
+		self.node = node
+		self.node.addEventInput(event.PresetChangedEvent, self.presetchanged)
+		self.pchanged = {}
+
+	def toScope(self, presetname, emtarget=None):
+		'''
+		send the named preset to the scope
+		optionally send a target to the scope as well
+		'''
+		self.pchanged[presetname] = threading.Event()
+		evt = event.ChangePresetEvent()
+		evt['name'] = presetname
+		evt['emtarget'] = emtarget
+		self.node.outputEvent(evt)
+		print 'waiting for preset %s to be set' % (presetname,)
+		self.pchanged[presetname].wait(10)
+		print 'ok'
+
+	def presetchanged(self, ievent):
+		name = ievent['name']
+		if name in self.pchanged:
+			self.pchanged[name].set()
+
+
+class OLDPresetsClient(object):
 	'''
 	methods for accessing presets in the database
 	and using presets manager
@@ -92,11 +123,25 @@ class PresetsManager(node.Node):
 	def __init__(self, id, session, nodelocations, **kwargs):
 		node.Node.__init__(self, id, session, nodelocations, **kwargs)
 
+		self.addEventInput(event.ChangePresetEvent, self.changePreset)
+		self.addEventOutput(event.PresetChangedEvent)
+
 		self.current = None
 		self.setPresets([])
 
 		self.defineUserInterface()
 		self.start()
+
+	def changePreset(self, ievent):
+		'''
+		callback for received PresetChangeEvent from client
+		'''
+		pname = ievent['name']
+		emtarget = ievent['emtarget']
+		if emtarget is None:
+			self.toScope(pname)
+		else:
+			self.targetToScope(pname, emtarget)
 
 	def setPresets(self, presetlist):
 		'''
@@ -204,6 +249,7 @@ class PresetsManager(node.Node):
 			print 'no such preset'
 			return
 
+
 		## should use AllEMData, but that is not working yet
 		scopedata = data.ScopeEMData()
 		cameradata = data.CameraEMData()
@@ -213,6 +259,8 @@ class PresetsManager(node.Node):
 		cameradata['id'] = ('camera',)
 		self.publishRemote(scopedata)
 		self.publishRemote(cameradata)
+		name = presetdata['name']
+		self.outputEvent(event.PresetChangedEvent(name=name))
 
 	def fromScope(self, name):
 		'''
@@ -324,30 +372,36 @@ class PresetsManager(node.Node):
 
 		return
 
+	def targetToScope(self, newpresetname, emtargetdata):
+		'''
+		This is like toScope, but this one is mainly called
+		by client nodes which request that presets and targets
+		be tightly coupled.
+		'''
+		emdata = emtargetdata['scope']
+		oldpreset = self.presetFromName(emtargetdata['preset'])
+		newpreset = self.presetFromName(newpresetname)
 
+		newemdata = data.ScopeEMData(id=('scope',), initializer=emdata)
 
-		toscopemethod = uidata.UIMethod('To Scope', self.uiRestore)
-		toscopecontainer = uidata.UIContainer('Apply Preset')
-		toscopecontainer.addUIObjects((self.uiselectpreset, getpresetsmethod, toscopemethod))
+		# remove influence of old preset from emdata
+		newemdata['image shift']['x'] -= oldpreset['image shift']['x']
+		newemdata['image shift']['y'] -= oldpreset['image shift']['y']
 
+		# add influence of new preset
+		newishift = {}
+		newishift['x'] = newemdata['image shift']['x'] + newpreset['image shift']['x']
+		newishift['y'] = newemdata['image shift']['y'] + newpreset['image shift']['y']
 
+		newemdata.update(newpreset)
+		newemdata['image shift'] = newishift
 
-		self.selecteditpreset = uidata.UISelectFromList('Preset', self.managedPresets(), [], 'r')
-		self.editpresetstruct = uidata.UIStruct('Preset Parameters', {}, 'rw')
-		editcontainer = uidata.UIContainer('Edit Preset')
-		editcontainer.addUIObjects((self.selecteditpreset,self.editpresetstruct))
+		## should use AllEMData, but that is not working yet
+		cameradata = data.CameraEMData()
+		cameradata.friendly_update(presetdata)
+		cameradata['id'] = ('camera',)
 
-
-		self.enteredname = uidata.UIString('Name', '', 'rw')
-		self.enteredpos = uidata.UIInteger('Position', 0, 'rw')
-		fromscope = uidata.UIMethod('Set Params From Scope', self.uiStoreCurrent)
-		setpos = uidata.UIMethod('Set Position', self.uiStoreCurrent)
-
-		updatecontainer = uidata.UIContainer('Update Preset')
-		updatecontainer.addUIObjects((self.enteredname, self.enteredpos, fromscope, setpos))
-
-		container = uidata.UIMediumContainer('Presets Manager')
-		container.addUIObjects((toscopecontainer, fromscopecontainer))
-		self.uiserver.addUIObject(container)
-
-
+		self.publishRemote(newemdata)
+		self.publishRemote(cameradata)
+		name = presetdata['name']
+		self.outputEvent(event.PresetChangedEvent(name=name))
