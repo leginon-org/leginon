@@ -7,23 +7,32 @@ reg_dict = {}
 reg_list = []
 
 def registerNodeClass(modulename, classname):
+	### find the module
 	try:
 		modinfo = imp.find_module(modulename)
 	except ImportError:
-		print 'Module not found: %s' % modulename
+		print '### Module not found: %s' % modulename
 		return
 
-	mod = imp.load_module(modulename, *modinfo)
+	### import the module
+	try:
+		mod = imp.load_module(modulename, *modinfo)
+	except:
+		print '### Exception while importing %s' % modulename
+		return
 
+	### get the class from the module
 	try:
 		nodeclass = getattr(mod, classname)
 	except AttributeError:
-		print 'Class %s not in module %s' % (classname, modulename)
+		print '### Class %s not in module %s' % (classname, modulename)
 		return
 
+	### make sure class is Node
 	if not issubclass(nodeclass, node.Node):
-		raise RuntimeError('not subclass of node: %s' % module_class)
+		raise RuntimeError('### %s is not subclass of node.Node' % module_class)
 
+	### everything worked, record this in the registry
 	reg_dict[classname] = {'module': mod}
 	reg_list.append(classname)
 

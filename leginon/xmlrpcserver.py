@@ -2,7 +2,6 @@
 
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 import threading, xmlrpclib, os, socket, inspect
-from Tkinter import *
 import leginonobject
 
 ## range defined by IANA as dynamic/private
@@ -101,43 +100,6 @@ class xmlrpcserver(leginonobject.LeginonObject):
 		return rpcmethdict
 
 
-class callerbut(Frame):
-	def __init__(self, parent, proxy, name, args):
-		Frame.__init__(self, parent)
-
-		self.proxy = proxy
-		self.name = name
-		self.argentries = []
-
-		Button(self, text=name, command=self.butcom).pack(side=LEFT)
-		for arg in args:
-			Label(self, text=arg).pack(side=LEFT)
-			ent = Entry(self, width=10)
-			ent.pack(side=LEFT)
-			self.argentries.append(ent)
-
-	def butcom(self):
-		args = []
-		for argentry in self.argentries:
-			arg = argentry.get()
-			args.append(arg)
-			args = tuple(args)
-		print 'calling %s on %s with args %s' % (self.name, self.proxy,args)
-		ret = getattr(self.proxy, self.name)(*args)
-		print ret
-
-
-class xmlrpcgui(Frame):
-	def __init__(self, parent, host, port):
-		Frame.__init__(self, parent)
-		uri = 'http://' + host + ':' + `port`
-		self.proxy = xmlrpclib.ServerProxy(uri)
-		meths = self.proxy.RPCmethods()
-		for meth in meths:
-			name = meth
-			args = meths[meth]['args']
-			callerbut(self, self.proxy, name, args).pack(anchor=W)
-
 if __name__ == '__main__':
 	import signal
 
@@ -150,12 +112,3 @@ if __name__ == '__main__':
 
 
 	m = mynode()
-
-#	top = Tk()
-#	mgui = xmlrpcgui(top, m.host, m.port)
-#	mgui.pack()
-
-
-#	top.mainloop()
-
-
