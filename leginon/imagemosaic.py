@@ -272,7 +272,7 @@ class StateImageMosaic(ImageMosaic):
 			raise ValueError
 		self.imagemosaic[idata.id]['state'] = idata.content['state']
 
-	def pixelShift(self, ievent):
+	def pixelLocation(self, ievent):
 		row = ievent.content['row']
 		column = ievent.content['column']
 
