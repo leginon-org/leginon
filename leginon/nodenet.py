@@ -3,7 +3,7 @@ import dataserver
 import urllib
 import cPickle
 import location
-import registery
+import registry
 import event
 
 class Node(xmlrpcnode.xmlrpcnode):
@@ -119,17 +119,17 @@ class DataHandler(object):
 class Manager(xmlrpcnode.xmlrpcnode):
 	def __init__(self, *args, **kwargs):
 		xmlrpcnode.xmlrpcnode.__init__(self)
-		self.registery = registery.Registery()
+		self.registry = registry.Registry()
 		self.bindings = {}
 		self.locations = {}
 
 	def EXPORT_addNode(self, node):
 
-		id = self.registery.addEntry(
-			registery.RegisterEntry(node['methods'],
+		id = self.registry.addEntry(
+			registry.RegistryEntry(node['methods'],
 				cPickle.loads(node['events pickle']),
 				cPickle.loads(node['location pickle'])))
-		self.addProxy(id, self.registery.entries[id].location.getURI())
+		self.addProxy(id, self.registry.entries[id].location.getURI())
 		print 'node %s has been added' % id
 		self.print_nodes()
 
@@ -143,10 +143,10 @@ class Manager(xmlrpcnode.xmlrpcnode):
 
 	def print_nodes(self):
 		print 'NODES:'
-		print self.registery
+		print self.registry
 
 	def EXPORT_nodes(self):
-		nodes = self.registery.xmlrpc_repr()
+		nodes = self.registry.xmlrpc_repr()
 		print 'XMLRPCRPER', nodes
 		return nodes
 
@@ -187,7 +187,7 @@ class Manager(xmlrpcnode.xmlrpcnode):
 				del(self.bindings[key])
 
 	def EXPORT_locate(self, dataid):
-		######### I think this is replaced by the registery stuff
+		######### I think this is replaced by the registry stuff
 		## find the uri of the data referenced by dataid
 		location = ''
 		try:
