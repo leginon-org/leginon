@@ -44,6 +44,7 @@ class EM(node.Node):
 		#self.handler()
 
 	def refresh(self, name, attributes):
+		self.logger.info('Refreshing parameters for %s...' % name)
 		try:
 			instrument = self.instruments[name]
 		except KeyError:
@@ -53,12 +54,20 @@ class EM(node.Node):
 		try:
 			for attribute in attributes:
 				try:
-					values[attribute] = instrument._execute(self.name, attribute, 'r')
+					value = instrument._execute(self.name, attribute, 'r')
+					if isinstance(value, Exception):
+						raise value
+					else:
+						values[attribute] = value
 				except AttributeError:
 					self.logger.warning('Failed to refresh attribute \'%s\'' % attribute)
+				except TypeError:
+					# in theory this is an invalid execution name
+					pass
 		finally:
 			instrument.unlock(self.name)
 		self.panel.setParameters(name, values)
+		self.logger.info('Refresh completed.')
 
 	def exit(self):
 		node.Node.exit(self)

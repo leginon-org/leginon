@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Instrument.py,v $
-# $Revision: 1.37 $
+# $Revision: 1.38 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-02 01:02:18 $
+# $Date: 2005-03-02 17:10:09 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -72,7 +72,17 @@ def setControl(control, value):
 				control.SetStringSelection(value)
 
 	elif isinstance(control, CameraPanel):
-		control._setConfiguration(value)
+		if isinstance(value, dict):
+			keys = value.keys()
+			if 'x' in keys and 'y' in keys:
+				control.setSize(value)
+			else:
+				for i in ['dimension', 'offset', 'binning', 'exposure time']:
+					if i not in keys:
+						raise ValueError
+				control._setConfiguration(value)
+		else:
+			raise ValueError
 
 def getValue(wxobj):
 	if isinstance(wxobj, wx.StaticText):
@@ -519,7 +529,6 @@ class CamInfoSizer(wx.StaticBoxSizer):
 			'CameraName': 'Name',
 			'ChipName': 'Chip',
 			'SerialNumber': 'Serial number',
-			'CameraSize': 'Size',
 			'MaximumPixelValue': 'Maximum value',
 			'LiveModeAvailable': 'Live mode',
 			'SimulationImagePath': 'Simulation image path',
@@ -554,7 +563,7 @@ class CamConfigSizer(wx.StaticBoxSizer):
 			'Gain index',
 			'Speed index',
 			'Mirror',
-			'Rotate',
+			'Rotation',
 			'Shutter open delay',
 			'Shutter close delay',
 			'Preamp delay',
@@ -567,7 +576,7 @@ class CamConfigSizer(wx.StaticBoxSizer):
 			'Gain index': IntEntry(self.parent, -1, chars=2),
 			'Speed index': IntEntry(self.parent, -1, chars=2),
 			'Mirror': wx.Choice(self.parent, -1),
-			'Rotate': wx.Choice(self.parent, -1),
+			'Rotation': wx.Choice(self.parent, -1),
 			'Shutter open delay': IntEntry(self.parent, -1, chars=5),
 			'Shutter close delay': IntEntry(self.parent, -1, chars=5),
 			'Preamp delay': IntEntry(self.parent, -1, chars=5),
@@ -592,6 +601,7 @@ class CamConfigSizer(wx.StaticBoxSizer):
 
 		self.parametermap = {
 			'ExposureType': 'Exposure type',
+			'ExposureTypes': 'Exposure type',
 			'Inserted': 'Inserted',
 			'GainIndex': 'Gain index',
 			'SpeedIndex': 'Speed index',
@@ -599,15 +609,16 @@ class CamConfigSizer(wx.StaticBoxSizer):
 			'ShutterCloseDelay': 'Shutter close delay',
 			'PreampDelay': 'Preamp delay',
 			'ParallelMode': 'Parallel mode',
+			'Mirror': 'Mirror',
+			'MirrorStates': 'Mirror',
+			'Rotation': 'Rotation',
+			'Rotations': 'Rotation',
+			'CameraSize': 'Camera configuration',
+			'Configuration': 'Camera configuration',
 		}
 
 		for k, v in self.parametermap.items():
 			self.parametermap[k] = self.parameters[v]
-
-		self.parametermap['ImageTransform'] = {
-			'mirror': self.parameters['Mirror'],
-			'rotation': self.parameters['Rotate'],
-		}
 
 		self.sz.AddGrowableCol(1)
 
@@ -615,13 +626,19 @@ class ParameterMixin(object):
 	def setParameters(self, parameters, parametermap=None):
 		if parametermap is None:
 			parametermap = self.parametermap
-		keys = ['Magnifications']
+		keys = ['Magnifications', 'LowDoseStates', 'LowDoseModes',
+						'ShutterPositions', 'ExternalShutterStates', 'MainScreenPositions',
+						'HolderTypes', 'ColumnValvePositions', 'FilmExposureTypes',
+						'FilmDateTypes', 'ExposureTypes', 'MirrorStates', 'Rotations',
+						'CameraSize']
 		for key in keys:
 			try:
 				setControl(parametermap[key], parameters[key])
 			except KeyError:
 				pass
 		for key, value in parameters.items():
+			if key in keys:
+				continue
 			try:
 				if isinstance(parametermap[key], dict):
 					self.setParameters(value, parametermap[key])
@@ -630,6 +647,7 @@ class ParameterMixin(object):
 					parametermap[key].Enable(True)
 			except KeyError:
 				pass
+		self.sz.Layout()
 
 class TEMPanel(wx.Panel, ParameterMixin):
 	def __init__(self, *args, **kwargs):
@@ -668,8 +686,8 @@ class TEMPanel(wx.Panel, ParameterMixin):
 
 		self.parametermap = {
 			'HighTension': self.szpmain.parameters['High tension'],
-			'Magnification': self.szpmain.parameters['Magnification'],
 			'Magnifications': self.szpmain.parameters['Magnification'],
+			'Magnification': self.szpmain.parameters['Magnification'],
 			'Intensity': self.szpmain.parameters['Intensity'],
 			'SpotSize': self.szpmain.parameters['Spot size'],
 			'StageStatus': self.szstage.parameters['Status'],
@@ -713,29 +731,38 @@ class TEMPanel(wx.Panel, ParameterMixin):
 			},
 			'FilmStock': self.szfilm.parameters['Stock'],
 			'FilmExposureNumber': self.szfilm.parameters['Exposure number'],
+			'FilmExposureTypes': self.szfilm.parameters['Exposure type'],
 			'FilmExposureType': self.szfilm.parameters['Exposure type'],
 			'FilmAutomaticExposureTime':
 				self.szfilm.parameters['Automatic exposure time'],
 			'FilmManualExposureTime':
 				self.szfilm.parameters['Manual exposure time'],
 			'FilmUserCode': self.szfilm.parameters['User code'],
+			'FilmDateTypes': self.szfilm.parameters['Date Type'],
 			'FilmDateType': self.szfilm.parameters['Date Type'],
 			'FilmText': self.szfilm.parameters['Text'],
+			'ShutterPositions': self.szfilm.parameters['Shutter'],
 			'Shutter': self.szfilm.parameters['Shutter'],
+			'ExternalShutterStates': self.szfilm.parameters['External shutter'],
 			'ExternalShutter': self.szfilm.parameters['External shutter'],
 			'Focus': self.szfocus.parameters['Focus'],
 			'Defocus': self.szfocus.parameters['Defocus'],
 			'ResetDefocus': self.szfocus.parameters['Reset Defocus'],
 			'ScreenCurrent': self.szscreen.parameters['Current'],
+			'MainScreenPositions': self.szscreen.parameters['Main'],
 			'MainScreenPosition': self.szscreen.parameters['Main'],
 			'SmallScreenPosition': self.szscreen.parameters['Small'],
 			'VacuumStatus': self.szvacuum.parameters['Status'],
 			'ColumnPressure': self.szvacuum.parameters['Column pressure'],
-			'ColumnValves': self.szvacuum.parameters['Column valves'],
+			'ColumnValvePositions': self.szvacuum.parameters['Column valves'],
+			'ColumnValvePosition': self.szvacuum.parameters['Column valves'],
 			'TurboPump': self.szvacuum.parameters['Turbo pump'],
 			'HolderStatus': self.szholder.parameters['Status'],
+			'HolderTypes': self.szholder.parameters['Type'],
 			'HolderType': self.szholder.parameters['Type'],
+			'LowDoseStates': self.szlowdose.parameters['Status'],
 			'LowDose': self.szlowdose.parameters['Status'],
+			'LowDoseModes': self.szlowdose.parameters['Mode'],
 			'LowDoseMode': self.szlowdose.parameters['Mode'],
 		}
 
@@ -748,13 +775,17 @@ class CCDCameraPanel(wx.Panel, ParameterMixin):
 		self.szcaminfo = CamInfoSizer(self)
 		self.szcamconfig = CamConfigSizer(self)
 
-		self.sz.Add(self.szcaminfo, (0, 0), (1, 1), wx.EXPAND)
-		self.sz.Add(self.szcamconfig, (0, 1), (1, 1), wx.EXPAND)
+		self.sz.Add(self.szcamconfig, (0, 0), (1, 1), wx.EXPAND)
+		self.sz.Add(self.szcaminfo, (0, 1), (1, 1), wx.EXPAND)
 
 		self.sz.AddGrowableCol(0)
 		self.sz.AddGrowableCol(1)
 
 		self.SetSizer(self.sz)
+
+		self.parametermap = {}
+		self.parametermap.update(self.szcaminfo.parametermap)
+		self.parametermap.update(self.szcamconfig.parametermap)
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'instrument'
@@ -782,10 +813,10 @@ class Panel(gui.wx.Node.Panel):
 		self.szmain.Add(sz, (0, 0), (1, 1))
 
 		self.tempanel = TEMPanel(self, -1)
-		self.szmain.Add(self.tempanel, (1, 0), (1, 1), wx.ALIGN_CENTER)
+		self.tempanel.Show(False)
 
 		self.ccdcamerapanel = CCDCameraPanel(self, -1)
-		self.szmain.Add(self.ccdcamerapanel, (2, 0), (1, 1), wx.ALIGN_CENTER)
+		self.ccdcamerapanel.Show(False)
 
 		self.szmain.AddGrowableRow(2)
 
@@ -809,7 +840,6 @@ class Panel(gui.wx.Node.Panel):
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onSetParameters(self, evt):
-		print evt.name, evt.parameters
 		if evt.name in self.tems:
 			self.tems[evt.name].update(evt.parameters)
 			if self.choice.GetStringSelection() == evt.name:
@@ -868,6 +898,19 @@ class Panel(gui.wx.Node.Panel):
 				self.toolbar.EnableTool(gui.wx.ToolBar.ID_CALCULATE, False)
 		except ValueError:
 			pass
+		if string in self.tems and not self.szmain.FindItem(self.tempanel):
+			if self.szmain.FindItem(self.ccdcamerapanel):
+				self.szmain.Detach(self.ccdcamerapanel)
+				self.ccdcamerapanel.Show(False)
+			self.szmain.Add(self.tempanel, (1, 0), (1, 1), wx.ALIGN_CENTER)
+			self.tempanel.Show(True)
+		elif string in self.ccdcameras and not self.szmain.FindItem(self.ccdcamerapanel):
+			if self.szmain.FindItem(self.tempanel):
+				self.szmain.Detach(self.tempanel)
+				self.tempanel.Show(False)
+			self.szmain.Add(self.ccdcamerapanel, (1, 0), (1, 1), wx.ALIGN_CENTER)
+			self.ccdcamerapanel.Show(True)
+		self.szmain.Layout()
 
 	def onAddTEM(self, evt):
 		self.tems[evt.name] = {}

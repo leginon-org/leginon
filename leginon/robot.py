@@ -234,9 +234,9 @@ class RobotControl(RobotNode):
 
 	def closeColumnValves(self):
 		self.logger.info('Closing column valves')
-		self.instrument.tem.ColumnValves = 'closed'
+		self.instrument.tem.ColumnValvePosition = 'closed'
 		self.logger.info('Verifying column valves are closed')
-		self.waitScope('ColumnValves', 'closed', 0.5, 15)
+		self.waitScope('ColumnValvePosition', 'closed', 0.5, 15)
 		self.logger.info('Column valves are closed')
 
 	def turboPumpOn(self):
@@ -636,7 +636,7 @@ class RobotNotification(RobotNode):
 
 		self.logger.info('Opening column valves')
 		time.sleep(5.0)
-		self.instrument.tem.ColumnValves = 'open'
+		self.instrument.tem.ColumnValvePosition = 'open'
 		self.logger.info('Column valves open')
 
 		if self.instrument.ccdcamrea.hasAttribute('Inserted'):
@@ -668,7 +668,7 @@ class RobotNotification(RobotNode):
 		self.logger.info('Stage position zeroed')
 
 		self.logger.info('Closing column valves')
-		self.instrument.tem.ColumnValves = 'closed'
+		self.instrument.tem.ColumnValvePosition = 'closed'
 		self.logger.info('Column valves closed')
 
 		if self.instrument.ccdcamrea.hasAttribute('Inserted'):

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Events.py,v $
-# $Revision: 1.21 $
+# $Revision: 1.22 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-02 01:02:18 $
+# $Date: 2005-03-02 17:10:09 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -72,6 +72,7 @@ eventFactory('Found Targets')
 eventFactory('Get Atlases Done')
 eventFactory('Set Atlas Done')
 eventFactory('Get Magnifications Done')
+eventFactory('Refresh Done')
 eventFactory('Add TEM', attributes=['name'], command=True)
 eventFactory('Remove TEM', attributes=['name'], command=True)
 eventFactory('Set TEMs', attributes=['names'], command=True)

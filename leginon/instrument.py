@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.23 $
+# $Revision: 1.24 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-01 21:22:20 $
+# $Date: 2005-03-02 17:10:09 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -296,7 +296,7 @@ parametermapping = (
 	#('holder status', 'HolderStatus'),
 	#('stage status', 'StageStatus'),
 	#('vacuum status', 'VacuumStatus'),
-	#('column valves', 'ColumnValves'),
+	#('column valves', 'ColumnValvePosition'),
 
 	# CameraEM
 	('dimension', 'Dimension'),
