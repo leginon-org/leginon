@@ -6,10 +6,10 @@ import threading
 import Numeric
 import signal, time
 
-from viewer.ImageViewer import ImageViewer
+from ImageViewer import ImageViewer
 import watcher
 import node, event
-from mrc.Mrc import mrc_to_numeric
+from Mrc import mrc_to_numeric
 
 class ImViewer(watcher.Watcher):
 	def __init__(self, id, managerlocation):
