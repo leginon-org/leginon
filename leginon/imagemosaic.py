@@ -201,7 +201,6 @@ class ImageMosaic(watcher.Watcher):
 		# could be Inf
 		mincoordinate = [0, 0]
 		maxcoordinate = [0, 0]
-		self.printerror('bar 1')
 		for tileid in mosaic:
 			for i in [0, 1]:
 				min = mosaic[tileid]['position'][i]
@@ -210,17 +209,14 @@ class ImageMosaic(watcher.Watcher):
 					mincoordinate[i] = min
 				if max > maxcoordinate[i]:
 					maxcoordinate[i] = max
-		self.printerror('bar 2')
 		imageshape = (maxcoordinate[0] - mincoordinate[0], 
 									maxcoordinate[1] - mincoordinate[1]) 
-		self.printerror('bar 3')
 		image = Numeric.zeros(imageshape, Numeric.UnsignedInt16)
 		for tileid in mosaic:
 			row = mosaic[tileid]['position'][0] - mincoordinate[0]
 			column = mosaic[tileid]['position'][1] - mincoordinate[1]
 			iti = mosaic[tileid]['image']
 			image[row:row + iti.shape[0], column:column + iti.shape[1]] = iti.astype(Numeric.UnsignedInt16)
-		self.printerror('bar 4')
 		return image
 
 	def uiShow(self):
@@ -286,7 +282,7 @@ class StateImageMosaic(ImageMosaic):
 		x = (column * matrix[0, 0] + row * matrix[1, 0])/4
 		y = (column * matrix[0, 1] + row * matrix[1, 1])/4
 		print 'pixelLocation x, y =', x, y
-		return (int(round(y)), int(round(x)))
+		return (int(round(x)), int(round(y)))
 
 	def calibration2matrix(self):
 		matrix = Numeric.array([[self.calibration['x pixel shift']['x'],
@@ -317,22 +313,16 @@ class StateImageMosaic(ImageMosaic):
 	def uiPublishMosaicImage(self):
 		#ImageMosaic.uiPublishMosaicImage(self)
 
-		self.printerror('foo 1')
 		odata = data.ImageData(self.ID(), self.makeImage(self.imagemosaic))
-		self.printerror('foo 2')
 		self.publish(odata, event.ImagePublishEvent)
-		self.printerror('foo 3')
 
 		statedata = {'image data ID': odata.id}
-		self.printerror('foo 4')
 		for dataid in self.imagemosaic:
 			statedata[dataid] = {}
 			statedata[dataid]['position'] = self.imagemosaic[dataid]['position']
 			statedata[dataid]['state'] = self.imagemosaic[dataid]['state']
-		self.printerror('foo 5')
 		self.publish(data.StateMosaicData(self.ID(), statedata),
 			event.StateMosaicPublishEvent)
-		self.printerror('foo 6')
 
 		return ''
 

@@ -22,7 +22,7 @@
 #include <string.h>
 #include <stdlib.h>
 /***********************************************************************
- * $Header: /ami/sw/cvsroot/pyleginon/radix64_wrap.c,v 1.1 2003-03-06 21:35:48 pulokas Exp $
+ * $Header: /ami/sw/cvsroot/pyleginon/radix64_wrap.c,v 1.2 2003-03-13 17:41:03 suloway Exp $
  * swig_lib/python/python.cfg
  *
  * This file contains coded needed to add variable linking to the
@@ -33,6 +33,9 @@
  * and things like that.
  *
  * $Log: not supported by cvs2svn $
+ * Revision 1.1  2003/03/06 21:35:48  pulokas
+ * replacement for base64
+ *
  ************************************************************************/
 
 #ifdef __cplusplus
@@ -44,7 +47,7 @@ extern "C" {
 #endif
 
 /* Definitions for Windows/Unix exporting */
-#if defined(__WIN32__)
+//#if defined(__WIN32__)
 #   if defined(_MSC_VER)
 #	define SWIGEXPORT(a,b) __declspec(dllexport) a b
 #   else
@@ -54,9 +57,13 @@ extern "C" {
 #	    define SWIGEXPORT(a,b) a b
 #	endif
 #   endif
-#else
-#   define SWIGEXPORT(a,b) a b
-#endif
+//#else
+//#   define SWIGEXPORT(a,b) a b
+//#endif
+
+//#if defined(__WIN32__)
+#define bzero(b,len) (memset((b), '\0', (len)), (void) 0)
+//#endif
 
 #ifdef SWIG_GLOBAL
 #ifdef __cplusplus
@@ -229,7 +236,7 @@ SWIG_addvarlink(PyObject *p, char *name,
 
 
 /*****************************************************************************
- * $Header: /ami/sw/cvsroot/pyleginon/radix64_wrap.c,v 1.1 2003-03-06 21:35:48 pulokas Exp $
+ * $Header: /ami/sw/cvsroot/pyleginon/radix64_wrap.c,v 1.2 2003-03-13 17:41:03 suloway Exp $
  *
  * swigptr.swg
  *
