@@ -20,8 +20,6 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 	'''
 	def __init__(self, id, session, managerlocation, **kwargs):
 		calibrator.Calibrator.__init__(self, id, session, managerlocation, **kwargs)
-		self.emclient = EM.EMClient(self)
-		self.cam = camerafuncs.CameraFuncs(self)
 		self.calclient = calibrationclient.PixelSizeCalibrationClient(self)
 
 		self.defineUserInterface()
@@ -61,7 +59,6 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 		measurecont = uidata.Container('Measure From Image')
 		cameraconfigure = self.cam.uiSetupContainer()
 		acquiremeth = uidata.Method('Acquire', self.acquireImage)
-		self.ui_image = uidata.ClickImage('Measurement Image', self.handleImageClick, None)
 		self.lastclick = None
 		self.pixeldistance = uidata.Float('Pixel Distance', None, 'r')
 		self.realdistance = uidata.Float('Real Distance', None, 'rw', persist=True)
@@ -73,7 +70,6 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 
 		measurecont.addObject(cameraconfigure, position={'position':(0,0), 'span':(1,4)})
 		measurecont.addObject(acquiremeth, position={'position':(1,0), 'span':(1,4)})
-		measurecont.addObject(self.ui_image, position={'position':(2,0), 'span':(1,4)})
 		measurecont.addObject(self.realdistance, position={'position':(3,0)})
 		measurecont.addObject(self.pixeldistance, position={'position':(3,1)})
 		measurecont.addObject(self.binning, position={'position':(3,2)})
@@ -87,7 +83,7 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 		self.uicontainer.addObject(mycontainer)
 
 	def acquireImage(self):
-		self.cam.uiApplyAsNeeded()
+		self.cam.setCameraDict(self.settings['camera settings'])
 		try:
 			imagedata = self.cam.acquireCameraImageData()
 		except camerafuncs.NoCorrectorError:
@@ -104,7 +100,7 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 		self.bin = camera['binning']['x']
 		newimage = imagedata['image']
 		self.shape = newimage.shape
-		self.ui_image.setImage(newimage)
+		self.updateImage('Image', newimage)
 		self.magnification.set(self.mag)
 		self.binning.set(self.bin)
 

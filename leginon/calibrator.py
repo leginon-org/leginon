@@ -13,19 +13,42 @@ import time
 import camerafuncs
 import uidata
 import EM
+import gui.wx.Calibrator
 
 class Calibrator(node.Node):
 	'''
 	Calibrator base class
 	Contains basic functions useful for doing calibrations
 	'''
+	panelclass = gui.wx.Calibrator.Panel
+	settingsclass = data.CalibratorSettingsData
+	defaultsettings = {
+			'camera settings': None,
+			'correlation type': 'cross',
+	}
 	eventinputs = node.Node.eventinputs + EM.EMClient.eventinputs
 	eventoutputs = node.Node.eventoutputs + EM.EMClient.eventoutputs
 	def __init__(self, id, session, managerlocation, **kwargs):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
+		self.images = {
+			'Image': None,
+			'Correlation': None,
+		}
+		self.imagetargets = {
+			'Image': {},
+			'Correlation': {},
+		}
+		self.cortypes = ['cross', 'phase']
 		self.emclient = EM.EMClient(self)
 		self.cam = camerafuncs.CameraFuncs(self)
-		self.ui_image = None
+
+		self.typenames = ['Peak']
+		self.panel.addTargetTypes(self.typenames)
+
+	def updateImage(self, name, image, targets={}):
+		self.images[name] = image
+		self.imagetargets[name] = targets
+		self.panel.imageUpdated(name, image, targets)
 
 	def getMagnification(self):
 		mag = self.emclient.getScope()['magnification']
@@ -39,19 +62,3 @@ class Calibrator(node.Node):
 		dat = self.emclient.getScope()
 		return dat
 
-	def defineUserInterface(self):
-		node.Node.defineUserInterface(self)
-
-		self.cortype = uidata.SingleSelectFromList('Correlation Type', ['cross correlation', 'phase correlation'], 1, persist=True)
-		
-		self.ui_image = uidata.Image('Acquired Image', None, 'r')
-		self.cc_image = uidata.TargetImage('Correlation Image', None, 'r')
-		self.cc_image.addTargetType('peak')
-		camsetup = self.cam.uiSetupContainer()
-
-		container = uidata.LargeContainer('Calibrator')
-		container.addObject(self.cortype, position={'position':(0,0)})
-		container.addObject(self.ui_image, position={'position':(1,0)})
-		container.addObject(self.cc_image, position={'position':(1,1)})
-		container.addObject(camsetup, position={'position':(2,0)})
-		self.uicontainer.addObject(container)

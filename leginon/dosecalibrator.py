@@ -52,8 +52,7 @@ class DoseCalibrator(calibrator.Calibrator):
 		camsetup = self.cam.uiSetupContainer()
 		calcam = uidata.Method('Calibrate Camera Sensitivity', self.uiCalibrateCamera)
 		self.ui_sens = uidata.Float('Sensitivity (counts/electron)', 0.0, 'r')
-		self.ui_image = uidata.Image('Calibration Image', None, 'r')
-		camcont.addObjects((camsetup, calcam, self.ui_sens, self.ui_image))
+		camcont.addObjects((camsetup, calcam, self.ui_sens))
 
 		mycontainer = uidata.LargeContainer('Dose Calibrator')
 		mycontainer.addObjects((controlcont, dosecont, camcont))
@@ -101,10 +100,10 @@ class DoseCalibrator(calibrator.Calibrator):
 
 	def acquireImage(self):
 		self.screenUp()
-		self.cam.uiApplyAsNeeded()
+		self.cam.setCameraDict(self.settings['camera settings'])
 		imdata = self.cam.acquireCameraImageData(correction=True)
 		if imdata is not None:
-			self.ui_image.set(imdata['image'].astype(Numeric.Float32))
+			self.updateImage('Image', imdata['image'].astype(Numeric.Float32))
 		return imdata
 
 	def uiCalibrateCamera(self):

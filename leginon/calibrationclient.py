@@ -70,8 +70,8 @@ class CalibrationClient(object):
 
 		if publish_image:
 			self.node.publish(imagedata, pubevent=True)
-		if hasattr(self.node, 'ui_image') and self.node.ui_image is not None:
-			self.node.ui_image.set(imagedata['image'].astype(Numeric.Float32))
+
+		self.node.updateImage('Image', imagedata['image'].astype(Numeric.Float32))
 
 		## should find image stats to help determine validity of image
 		## in correlations
@@ -124,25 +124,22 @@ class CalibrationClient(object):
 			self.correlator.insertImage(self.numimage1)
 
 			self.node.logger.info('Correlation...')
-			if hasattr(self.node, 'cortype') and self.node.cortype.getSelectedValue() == 'cross correlation':
+			if self.node.settings['correlation type'] == 'cross':
 				pcimage = self.correlator.crossCorrelate()
-			else:
+			elif self.node.settings['correlation type'] == 'phase':
 				pcimage = self.correlator.phaseCorrelate()
-			if hasattr(self.node, 'cc_image') and self.node.cc_image is not None:
-				self.node.cc_image.setImage(pcimage.astype(Numeric.Float32))
+			else:
+				raise RuntimeError('Invalid correlation type')
 
 			self.node.logger.info('Peak finding...')
 			self.peakfinder.setImage(pcimage)
 			self.peakfinder.subpixelPeak(npix=9)
 			peak = self.peakfinder.getResults()
-			if hasattr(self.node, 'cc_image') and self.node.cc_image is not None:
-				pixelpeak = peak['subpixel peak']
-				pixelpeak = pixelpeak[1],pixelpeak[0]
-				self.node.cc_image.setTargetType('peak', [pixelpeak])
+			pixelpeak = peak['subpixel peak']
+			pixelpeak = pixelpeak[1],pixelpeak[0]
 
-			if hasattr(self.node, 'panel'):
-				self.node.setCorrelationImage(pcimage.astype(Numeric.Float32),
-																			pixelpeak)
+			self.node.updateImage('Correlation', pcimage.astype(Numeric.Float32),
+														{'Peak': [pixelpeak]})
 
 			peakvalue = peak['subpixel peak value']
 			shift = correlator.wrap_coord(peak['subpixel peak'], pcimage.shape)
@@ -177,12 +174,12 @@ class CalibrationClient(object):
 		self.checkAbort()
 
 		self.node.logger.info('Correlation...')
-		if hasattr(self.node, 'cortype') and self.node.cortype.getSelectedValue() == 'cross correlation':
+		if self.node.settings['correlation type'] == 'cross':
 			pcimage = self.correlator.crossCorrelate()
-		else:
+		elif self.node.settings['correlation type'] == 'phase':
 			pcimage = self.correlator.phaseCorrelate()
-		if hasattr(self.node, 'cc_image') and self.node.cc_image is not None:
-			self.node.cc_image.setImage(pcimage.astype(Numeric.Float32))
+		else:
+			raise RuntimeError('Invalid correlation type')
 
 		## peak finding
 		self.node.logger.info('Peak finding...')
@@ -190,10 +187,11 @@ class CalibrationClient(object):
 		self.peakfinder.subpixelPeak(npix=9)
 		peak = self.peakfinder.getResults()
 		self.node.logger.info('Peak minsum %f' % peak['minsum'])
-		if hasattr(self.node, 'cc_image') and self.node.cc_image is not None:
-			pixelpeak = peak['subpixel peak']
-			pixelpeak = pixelpeak[1],pixelpeak[0]
-			self.node.cc_image.setTargetType('peak', [pixelpeak])
+
+		pixelpeak = peak['subpixel peak']
+		pixelpeak = pixelpeak[1],pixelpeak[0]
+		self.node.updateImage('Correlation', pcimage.astype(Numeric.Float32),
+													{'Peak': [pixelpeak]})
 
 		if hasattr(self.node, 'panel'):
 			self.node.setCorrelationImage(pcimage.astype(Numeric.Float32),

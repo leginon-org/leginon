@@ -69,7 +69,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 		calclient = self.parameters[uiparameter]
 
 		## set cam state
-		self.cam.uiApplyAsNeeded()
+		self.cam.setCameraDict(self.settings['camera settings'])
 
 		basebase = self.getBase()
 		baselist = []
