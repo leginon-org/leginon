@@ -71,6 +71,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		### blobs
 		self.blobborder = uidata.Integer('Border', 20, 'rw', persist=True)
 		self.maxblobsize = uidata.Integer('Max Blob Size', 1000, 'rw', persist=True)
+		self.maxblobs = uidata.Integer('Max Number of Blobs', 300, 'rw', persist=True)
 		findblobmeth = uidata.Method('Find Blobs', self.findBlobs)
 		self.allblobs = uidata.Sequence('All Blobs', [])
 		self.allblobsimage = uidata.TargetImage('All Blobs Image', None, 'r')
@@ -99,7 +100,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.goodholesimage.addTargetType('focus')
 
 		allblobscontainer = uidata.MediumContainer('All Blobs')
-		allblobscontainer.addObjects((self.blobborder, self.maxblobsize, findblobmeth, self.allblobs, self.allblobsimage))
+		allblobscontainer.addObjects((self.blobborder, self.maxblobs, self.maxblobsize, findblobmeth, self.allblobs, self.allblobsimage))
 		laticeblobscontainer = uidata.MediumContainer('Latice Blobs')
 		laticeblobscontainer.addObjects(( self.latspacing, self.lattol, self.holestatsrad, self.icei0, fitlatmeth, self.latblobs, self.latblobsimage))
 		blobcont = uidata.MediumContainer('Blobs')
@@ -167,7 +168,8 @@ class HoleFinder(targetfinder.TargetFinder):
 	def findBlobs(self):
 		border = self.blobborder.get()
 		blobsize = self.maxblobsize.get()
-		self.hf.configure_blobs(border=border, maxblobsize=blobsize)
+		maxblobs = self.maxblobs.get()
+		self.hf.configure_blobs(border=border, maxblobsize=blobsize, maxblobs=maxblobs)
 		self.hf.find_blobs()
 		blobs = self.hf['blobs']
 		centers = self.blobCenters(blobs)

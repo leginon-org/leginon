@@ -329,7 +329,10 @@ class Blob(object):
 		for stat in ('complete', 'n', 'center', 'size', 'mean', 'stddev'):
 			print '\t%s:\t%s' % (stat, self.stats[stat])
 
-def find_blobs(image, mask, border=0, maxblobsize=50):
+class TooManyBlobs(Exception):
+	pass
+
+def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=50):
 	shape = image.shape
 	blobs = []
 	## create a copy of mask that will be modified
@@ -344,6 +347,9 @@ def find_blobs(image, mask, border=0, maxblobsize=50):
 				if err:
 					continue
 				blobs.append(newblob)	
+				if len(blobs) > maxblobs:
+					raise TooManyBlobs('found more than %s blobs' % (maxblobs,))
+
 	print 'Found %s blobs.' % (len(blobs),)
 	print 'Calculating blob stats'
 	for blob in blobs:

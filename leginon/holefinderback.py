@@ -414,11 +414,13 @@ class HoleFinder(object):
 		if self.save_mrc:
 			Mrc.numeric_to_mrc(t, 'threshold.mrc')
 
-	def configure_blobs(self, border=None, maxblobsize=None):
+	def configure_blobs(self, border=None, maxblobs=None, maxblobsize=None):
 		if border is not None:
 			self.blobs_config['border'] = border
 		if maxblobsize is not None:
 			self.blobs_config['maxblobsize'] = maxblobsize
+		if maxblobs is not None:
+			self.blobs_config['maxblobs'] = maxblobs
 
 	def find_blobs(self):
 		'''
@@ -431,7 +433,12 @@ class HoleFinder(object):
 		mask = self.__results['threshold']
 		border = self.blobs_config['border']
 		maxsize = self.blobs_config['maxblobsize']
-		blobs = imagefun.find_blobs(im, mask, border, maxsize)
+		maxblobs = self.blobs_config['maxblobs']
+		try:
+			blobs = imagefun.find_blobs(im, mask, border, maxblobs, maxsize)
+		except imagefun.TooManyBlobs:
+			print 'found too many blobs, emptying blob list'
+			blobs = []
 		self.__update_result('blobs', blobs)
 
 	def configure_lattice(self, tolerance=None, spacing=None, minspace=None):
