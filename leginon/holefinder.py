@@ -112,8 +112,8 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.foc_target_template = uidata.Sequence('Focus Template', [], 'rw', persist=True)
 		self.acq_target_template = uidata.Sequence('Acqusition Template', [], 'rw', persist=True)
 		submitmeth = uidata.Method('Submit', self.submit)
-		self.goodholesimage.addTargetType('acquisition')
-		self.goodholesimage.addTargetType('focus')
+		self.goodholesimage.addTargetType('acquisition', [], (0,255,0))
+		self.goodholesimage.addTargetType('focus', [], (0,0,255))
 
 		allblobscontainer = uidata.LargeContainer('All Blobs')
 		allblobscontainer.addObjects((self.blobborder, self.maxblobs, self.maxblobsize, findblobmeth, self.allblobs, self.allblobsimage))

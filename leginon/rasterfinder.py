@@ -87,8 +87,8 @@ class RasterFinder(targetfinder.TargetFinder):
 
 		## image
 		self.goodiceimage = uidata.TargetImage('Good Ice Image', None, 'r')
-		self.goodiceimage.addTargetType('acquisition')
-		self.goodiceimage.addTargetType('focus')
+		self.goodiceimage.addTargetType('acquisition', [], (0,255,0))
+		self.goodiceimage.addTargetType('focus', [], (0,0,255))
 
 		submitmeth = uidata.Method('Submit', self.submit)
 
