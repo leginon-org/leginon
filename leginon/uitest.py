@@ -22,5 +22,15 @@ def add():
 
 server = uiserver.Server()
 server.addObject(uidata.Method('Add', add))
+container = uidata.LargeContainer('Large Container')
+messages = [uidata.Message('0', 'error', 'Testing error message'),
+						uidata.Message('1', 'info', 'Testing info message'),
+						uidata.Message('2', 'warning', 'Testing warning message'),
+						uidata.Message('3', 'info', 'Testing info message' + ' foo'*50),
+						uidata.Message('4', 'error', 'Testing error message')]
+messagelog = uidata.MessageLog('Message log name')
+container.addObject(messagelog)
+server.addObject(container)
+messagelog.addObjects(messages)
 client = uiclient.UIApp({'instance': server}, 'UI Test')
 

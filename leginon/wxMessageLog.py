@@ -1,19 +1,28 @@
 from wxPython.wx import *
 
+iconsdir = 'icons'
+
 class wxMessage(wxPanel):
-	def __init__(self, parent, type, message):
+	def __init__(self, parent, type, message, clearcallback=None):
+		if type not in ['info', 'warning', 'error']:
+			raise ValueError
+		self.clearcallback = clearcallback
 		wxPanel.__init__(self, parent, -1, style=wxSIMPLE_BORDER)
 
 		self.SetBackgroundColour(wxWHITE)
 
-		image = wxImage('icons/%s.bmp' % type)
-		bitmap = wxBitmapFromImage(image)
-		self.icon = wxStaticBitmap(self, -1, bitmap,
-														size=wxSize(bitmap.GetWidth(), bitmap.GetHeight()))
+		try:
+			image = wxImage('%s/%s.bmp' % (iconsdir, type))
+			bitmap = wxBitmapFromImage(image)
+		except:
+			bitmap = wxNullBitmap
+		self.icon = wxStaticBitmap(self, -1, bitmap, size=wxSize(bitmap.GetWidth(),
+																														bitmap.GetHeight()))
+
 		self.message = message
 		self.text = wxStaticText(self, -1, '', style=wxST_NO_AUTORESIZE)
 		self.text.SetLabel(self.message)
-		EVT_SIZE(self.text, self.OnTextSize)
+
 		self.button = wxButton(self, -1, 'Clear')
 
 		self.sizer = wxBoxSizer(wxHORIZONTAL)
@@ -22,61 +31,74 @@ class wxMessage(wxPanel):
 		self.sizer.Add(self.button, 0, wxALIGN_CENTER|wxALL, 3)
 		self.SetSizerAndFit(self.sizer)
 
-	def OnTextSize(self, evt):
-		self.SetToolTip(wxToolTip(''))
-		size = evt.GetSize()
-		if self.text.GetTextExtent(self.message)[0] < size[0]:
-			self.text.SetLabel(self.message)
-		elif self.text.GetTextExtent('...')[0] > size[0]:
-			self.text.SetLabel('')
-		else:
-			min = 0
-			max = len(self.message) - 1
-			while True:
-				i = (max - min)/2 + min
-				extent = self.text.GetTextExtent(self.message[:i] + '...')
-				if extent[0] < size[0]:
-					if i <= min:
-						break
-					min = i
-				elif extent[0]  > size[0]:
-					max = i
-				else:
-					break
-			self.text.SetLabel(self.message[:i] + '...')
-			self.SetToolTip(wxToolTip(self.message))
+		EVT_SIZE(self.text, self.OnTextSize)
+		EVT_BUTTON(self.button, self.button.GetId(), self.OnButton)
 
-	def wordWrap(self, width):
-		start = 0
-		i = 0
-		message = self.message
-		while i < len(message):
-			if self.text.GetTextExtent(message[start:i])[0] > width:
-				message = message[:i - 1] + '\n' + message[i - 1:]
-				i += 1
-				start = i + 1
-			i += 1
-		self.text.SetLabel(message)
+	def OnTextSize(self, evt):
+		size = evt.GetSize()
+		width = size[0]
+		if self.text.GetTextExtent(self.message)[0] < width:
+			label = self.message
+			tooltip = ''
+		elif self.text.GetTextExtent('...')[0] > width:
+			label = ''
+			tooltip = ''
+		else:
+			label = self.message[:self.findTextExtent(width)] + '...'
+			tooltip = self.message
+		self.text.SetLabel(label)
+		self.SetToolTip(wxToolTip(tooltip))
+
+	def findTextExtent(self, width):
+		i0 = 0
+		i1 = len(self.message)
+		while True:
+			i = (i1 - i0)/2 + i0
+			extent = self.text.GetTextExtent(self.message[:i] + '...')
+			if extent[0] < width:
+				if i <= i0:
+					return i
+				i0 = i
+			elif extent[0]  > width:
+				if i >= i1:
+					return i
+				i1 = i
+			else:
+				return i
+
+	def OnButton(self, evt):
+		if callable(self.clearcallback):
+			self.clearcallback(self)
+		else:
+			self.Destroy()
 
 class wxMessageLog(wxScrolledWindow):
 	def __init__(self, parent):
-		wxScrolledWindow.__init__(self, parent, -1)
+		wxScrolledWindow.__init__(self, parent, -1, style=wxSIMPLE_BORDER)
+		self.SetBackgroundColour(wxWHITE)
 		self.SetScrollRate(10, 10)
 		self.sizer = wxBoxSizer(wxVERTICAL)
 		self.SetSizer(self.sizer)
 
-	def addMessage(self, type, message):
-		messagewidget = wxMessage(self, type, message)
+	def addMessage(self, type, message, clearcallback=None):
+		messagewidget = wxMessage(self, type, message, clearcallback)
 		self.sizer.Add(messagewidget, 0, wxEXPAND|wxBOTTOM)
-		EVT_BUTTON(self, messagewidget.button.GetId(), self.OnButton)
+		#EVT_BUTTON(messagewidget.button, messagewidget.button.GetId(),
+		#						self.OnButton)
+		return messagewidget
 
-	def OnButton(self, evt):
-		button = evt.GetEventObject()
-		panel = button.GetParent()
-		self.sizer.Remove(panel)
-		panel.Destroy()
+	def removeMessage(self, messagewidget):
+		self.sizer.Remove(messagewidget)
+		messagewidget.Destroy()
+		self.Layout()
+
+	def Layout(self):
+		wxScrolledWindow.Layout(self)
 		self.sizer.Layout()
 		self.sizer.FitInside(self)
+
+	def OnButton(self, evt):
+		self.removeMessage(evt.GetEventObject().GetParent())
 
 if __name__ == '__main__':
 	class MyApp(wxApp):
@@ -87,7 +109,7 @@ if __name__ == '__main__':
 			self.sizer = wxBoxSizer(wxVERTICAL)
 			self.panel.SetSizer(self.sizer)
 			self.messagelog = wxMessageLog(self.panel)
-			self.sizer.Add(self.messagelog, 1, wxEXPAND)
+			self.sizer.Add(self.messagelog, 1, wxEXPAND, 10)
 			frame.Fit()
 			frame.Show(True)
 			return True
@@ -95,6 +117,6 @@ if __name__ == '__main__':
 	app = MyApp(0)
 	app.messagelog.addMessage('error', 'This is an error')
 	app.messagelog.addMessage('warning', 'This is a warning')
-	app.messagelog.addMessage('info', 'This is information blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah')
+	app.messagelog.addMessage('info', 'This is information' + ' blah'*50)
 	app.MainLoop()
 

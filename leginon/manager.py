@@ -720,6 +720,8 @@ class Manager(node.Node):
 		'''See node.Node.defineUserInterface.'''
 #		node.Node.defineUserInterface(self)
 
+		self.messagelog = uidata.MessageLog('Message Log')
+
 		self.uilaunchname = uidata.String('Name', '', 'rw')
 		self.uiclassselect = uidata.SingleSelectFromList('Node Class', [], 0)
 		self.uilauncherselect = uidata.SingleSelectFromList('Launcher', [], 0)
@@ -794,9 +796,9 @@ class Manager(node.Node):
 		container = uidata.LargeContainer('Manager')
 
 #		container.addObject(uimanagersetup)
-		container.addObjects((launchcontainer, nodemanagementcontainer,
-													eventcontainer, self.applicationcontainer,
-													diarycontainer))
+		container.addObjects((self.messagelog, launchcontainer,
+													nodemanagementcontainer, eventcontainer,
+													self.applicationcontainer, diarycontainer))
 
 		self.uiUpdateNodeInfo()
 		self.uiUpdateLauncherInfo()
@@ -844,6 +846,7 @@ class ManagerSetup(object):
 			self.container.parent.deleteObject(self.container.name)
 
 		self.manager.defineUserInterface()
+		self.manager.messagelog.message('info', 'Manager initialized')
 
 	def uiGetSessionData(self):
 		initializer = {'name': self.session_name.get(),

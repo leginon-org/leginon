@@ -17,6 +17,7 @@ import wxDictTree
 import wxOrderedListBox
 import wxMaster
 import wxGridTray
+import wxMessageLog
 from Numeric import arraytype
 
 wxEVT_ADD_WIDGET = wxNewEventType()
@@ -113,6 +114,10 @@ def WidgetClassFromTypeList(typelist):
 								if typelist[3] == 'client':
 									return wxClientContainerFactory(wxTreePanelContainerWidget)
 							return wxTreePanelContainerWidget
+						elif typelist[2] == 'message':
+							return wxMessageWidget
+						elif typelist[2] == 'message log':
+							return wxMessageLogWidget
 					return wxStaticBoxContainerWidget
 				elif typelist[1] == 'method':
 					return wxButtonWidget
@@ -402,6 +407,7 @@ class wxContainerWidget(wxWidget):
 		self.nosizerclasses = (wxNotebookContainerWidget, wxDialogContainerWidget,
 														wxTreePanelContainerWidget, wxMessageDialogWidget,
 														wxFileDialogWidget)
+		self.expandclasses = (wxMessageWidget, wxMessageLogWidget)
 		wxWidget.__init__(self, name, parent, container, value, configuration)
 		self.childparent = self.parent
 
@@ -460,7 +466,10 @@ class wxContainerWidget(wxWidget):
 
 	def _addWidgetSizer(self, child, show=True):
 		if self.sizer is not None and not isinstance(child, self.nosizerclasses):
-			self.sizer.Add(child.sizer, 0, wxALL, 3)
+			if isinstance(child, self.expandclasses):
+				self.sizer.Add(child.sizer, 0, wxALL|wxEXPAND, 3)
+			else:
+				self.sizer.Add(child.sizer, 0, wxALL, 3)
 
 	def _addWidget(self, name, typelist, value, configuration, children):
 		if self._shown:
@@ -1570,7 +1579,7 @@ class wxTreePanel(wxPanel):
 			parentid = self.containers[container.container]
 		else:
 			parentid = self.root
-		self.childsizer.Add(container.sizer, 0)
+		self.childsizer.Add(container.sizer, 1, wxEXPAND)
 		id = self.tree.AppendItem(parentid, container.name)
 		if parentid != self.root:
 			self.tree.Expand(parentid)
@@ -1696,6 +1705,110 @@ class wxFileDialogWidget(wxContainerWidget):
 
 	def destroy(self):
 		self.dialog.Destroy()
+
+class wxMessageWidget(wxContainerWidget):
+	def __init__(self, name, parent, container, value, configuration):
+		self.messagewidget = None
+		self.type = None
+		self.message = None
+		self.clearflag = False
+		self.sizer = wxBoxSizer(wxVERTICAL)
+		wxContainerWidget.__init__(self, name, parent, container, value,
+																configuration)
+
+	def display(self):
+		self.messagewidget = wxMessageLog.wxMessage(self.parent, self.type,
+																							self.message, self.onClear)
+		self.sizer.Add(self.messagewidget, 0, wxEXPAND)
+		self.sizer.Layout()
+
+	def _addWidget(self, name, typelist, value, configuration, children):
+		if name == 'Type':
+			self.type = value
+		if name == 'Message':
+			print value
+			self.message = value
+		elif name == 'Clear':
+			self.clearflag = True
+		if self.type is not None and self.message is not None and self.clearflag:
+			self.display()
+
+	def onAddWidget(self, evt):
+		self._addWidget(evt.namelist[0], None, evt.value, None, None)
+		if evt.event is not None:
+			evt.event.set()
+
+	def onSetWidget(self, evt):
+		if evt.event is not None:
+			evt.event.set()
+
+	def onRemoveWidget(self, evt):
+		if evt.event is not None:
+			evt.event.set()
+
+	def onClear(self, messagewidget):
+		evt = CommandServerEvent([self.name, 'Clear'], ())
+		wxPostEvent(self.container.widgethandler, evt)
+
+	def layout(self):
+		pass
+
+	def destroy(self):
+		if self.messagewidget is not None:
+			self.messagewidget.Destroy()
+
+	def _show(self, show):
+		if self.messagewidget is not None:
+			self.messagewidget.Show(show)
+		wxContainerWidget._show(self, show)
+
+	#def _enable(self, enable):
+
+class wxMessageLogWidget(wxContainerWidget):
+	def __init__(self, name, parent, container, value, configuration):
+		self.messages = {}
+		self.sizer = wxBoxSizer(wxVERTICAL)
+		self.messagelog = wxMessageLog.wxMessageLog(parent)
+		self.messagelog.SetSize((-1, 100))
+		self.sizer.Add(self.messagelog, 1, wxEXPAND)
+		wxContainerWidget.__init__(self, name, parent, container, value,
+																configuration)
+
+	def _addWidget(self, name, typelist, value, configuration, children):
+		for child in children:
+			if child['namelist'][-1] == 'Type':
+				type = child['value']
+			elif child['namelist'][-1] == 'Message':
+				message = child['value']
+			elif child['namelist'][-1] == 'Clear':
+				pass
+		self.messages[name] = self.messagelog.addMessage(type, message,
+																											self.onClear)
+
+	def onClear(self, messagewidget):
+		for name, widget in self.messages.items():
+			if widget == messagewidget:
+				evt = CommandServerEvent([self.name, name, 'Clear'], ())
+				wxPostEvent(self.container.widgethandler, evt)
+				break
+
+	def onSetWidget(self, evt):
+		if evt.event is not None:
+			evt.event.set()
+
+	def onRemoveWidget(self, evt):
+		name = evt.namelist[0]
+		try:
+			self.messagelog.removeMessage(self.messages[name])
+			del self.messages[name]
+			self.layout()
+		except KeyError:
+			pass
+		if evt.event is not None:
+			evt.event.set()
+
+	def layout(self):
+		self.messagelog.Layout()
 
 if __name__ == '__main__':
 	import sys

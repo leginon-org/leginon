@@ -112,7 +112,7 @@ class Container(Object):
 		try:
 			for uiobject in uiobjects:
 				self.addObject(uiobject, block, thread)
-		except TypeError:
+		except TypeError, e:
 			print e
 		self.lock.release()
 
@@ -459,6 +459,38 @@ class Dialog(Container):
 			self.parent.deleteObject(self.name)
 		except ValueError:
 			pass
+
+class Message(Container):
+	typelist = Container.typelist + ('message',)
+	def __init__(self, name, type, message):
+		Container.__init__(self, name)
+		self.addObject(String('Type', type, 'r'))
+		self.addObject(String('Message', message, 'r'))
+		self.addObject(Method('Clear', self.clear))
+
+	def destroy(self):
+		try:
+			self.parent.deleteObject(self.name)
+		except ValueError:
+			pass
+
+	def clear(self):
+		self.destroy()
+
+class MessageLog(Container):
+	typelist = Container.typelist + ('message log',)
+	def __init__(self, name):
+		self.counter = 0
+		Container.__init__(self, name)
+
+	def addObject(self, uiobject, block=True, thread=False):
+		if not isinstance(uiobject, Message):
+			raise TypeError
+		Container.addObject(self, uiobject, block, thread)
+
+	def message(self, type, message):
+		self.addObject(Message('Message #%d' % self.counter, type, message))
+		self.counter += 1
 
 class MessageDialog(Dialog):
 	typelist = Dialog.typelist + ('message',)
