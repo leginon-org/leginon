@@ -856,6 +856,7 @@ class NodeGUILauncher(Frame):
 			return top
 		except:
 			top.destroy()
+			print "Error: cannot create new UI window for %s:%s" % (host, port)
 			return None
 
 if __name__ == '__main__':
