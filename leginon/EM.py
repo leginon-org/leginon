@@ -52,7 +52,6 @@ class CameraUnavailable(EMUnavailable):
 	pass
 
 class EMClient(object):
-	panelclass = gui.wx.Instrument.Panel
 	eventinputs = [event.ScopeEMPublishEvent,
 									event.CameraEMPublishEvent,
 									event.CameraImageEMPublishEvent]
@@ -174,6 +173,7 @@ class ExitRequest(Request):
 	pass
 
 class EM(node.Node):
+	panelclass = gui.wx.Instrument.Panel
 	eventinputs = node.Node.eventinputs + [event.LockEvent, event.UnlockEvent, event.SetScopeEvent, event.SetCameraEvent]
 	def __init__(self, name, session, managerlocation, tcpport=None, **kwargs):
 		self.scopemessagelog = uidata.MessageLog('Scope Message Log')

@@ -379,7 +379,7 @@ class Panel(gui.wx.Node.Panel):
 		self._setParameters(evt.parameters, self.parametermap)
 
 	def setParameters(self, parameters):
-		evt = SetParametersEvent(parameters)
+		evt = SetParametersEvent(self, parameters)
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onNodeInitialized(self):
