@@ -17,9 +17,11 @@ class ExitException(Exception):
 
 class DataBinder(object):
 	'''Bind data to a function. Used for mapping Events to handlers.'''
-	def __init__(self, threaded=True, queueclass=Queue.Queue, loggername=None, tcpport=None):
+	def __init__(self, node, threaded=True, queueclass=Queue.Queue, tcpport=None):
 		self.server = datatransport.Server(self, tcpport=tcpport)
-		self.logger = extendedlogging.getLogger(self.__class__.__name__, loggername)
+		self.node = node
+		self.node.initializeLogger()
+		self.logger = self.node.logger
 		## this is a mapping of data class to function
 		## using list instead of dict to preserve order, and also
 		## because there may be more than one function for every 
@@ -86,15 +88,16 @@ class DataBinder(object):
 			if issubclass(dataclass, bindclass):
 				try:
 					methods = self.bindings[bindclass][newdata['destination']]
-					for method in methods:
-						self.logger.info('%s handling destination %s, method %s'
-															% (dataclass, newdata['destination'], method))
-						try:
-							method(args)
-						except:
-							self.logger.exception('databinder exception while executing callback %s' % (method.__name__,))
 				except KeyError:
-					pass
+					continue
+				for method in methods:
+					self.logger.info('%s handling destination %s, method %s'
+														% (dataclass, newdata['destination'], method))
+					try:
+						method(args)
+					except:
+						self.logger.exception('databinder exception while executing callback %s' % (method.__name__,))
+						raise
 	
 	def addBinding(self, nodename, dataclass, method):
 		'method must take data instance as first arg'

@@ -72,7 +72,7 @@ class Node(leginonobject.LeginonObject):
 		self.launcher = launcher
 
 		if otherdatabinder is None:
-			self.databinder = DataBinder(tcpport=tcpport, loggername=self.logger.name)
+			self.databinder = DataBinder(self, tcpport=tcpport)
 		else:
 			self.databinder = otherdatabinder
 		if otherdbdatakeeper is None:

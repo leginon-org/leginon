@@ -71,7 +71,7 @@ class Manager(node.Node):
 		self.initializeLogger(name)
 
 		## need a special DataBinder
-		mydatabinder = DataBinder(tcpport=tcpport, loggername=self.logger.name)
+		mydatabinder = DataBinder(self, tcpport=tcpport)
 		node.Node.__init__(self, name, session, otherdatabinder=mydatabinder, xmlrpcport=xmlrpcport, **kwargs)
 
 		self.nodelocations = {}
