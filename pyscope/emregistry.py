@@ -60,8 +60,14 @@ def getScopeNames():
 def getCameraNames():
 	return getNames('camera')
 
-registerScope('Tecnai', 'tecnai', 'tecnai', 'Tecnai TEM')
+registerScope('Tecnai', 'tecnai', 'Tecnai', 'Tecnai TEM')
 
-registerCamera('Tietz', 'tietz', 'tietz', 'Tietz CCD Camera')
-registerCamera('Gatan', 'gatan', 'gatan', 'Gatan CCD Camera')
+registerCamera('Tietz', 'tietz', 'Tietz', 'Tietz Default CCD Camera')
+registerCamera('Tietz PXL', 'tietz', 'TietzPXL', 'Tietz PXL CCD Camera')
+registerCamera('Tietz Simulation', 'tietz', 'TietzSimulation',
+								'Tietz Simulation CCD Camera')
+registerCamera('Tietz PVCam', 'tietz', 'TietzPVCam', 'Tietz PVCam CCD Camera')
+registerCamera('Tietz FastScan', 'tietz', 'TietzFastScan',
+								'Tietz FastScan CCD Camera')
+registerCamera('Gatan', 'gatan', 'Gatan', 'Gatan CCD Camera')
 

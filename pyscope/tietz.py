@@ -2,7 +2,7 @@ import camera
 import sys
 
 if sys.platform != 'win32':
-	class tietz(camera.camera):
+	class Tietz(camera.Camera):
 		def __init__(self):
 			pass
 else:
@@ -12,23 +12,29 @@ else:
 	import array
 	import Numeric
 	import time
-	
-	class tietz(camera.camera):
+
+	class Tietz(camera.Camera):
 		hCam = None
 		camType = None
 		
-		def __init__(self):
-			camera.camera.__init__(self)
+		def __init__(self, cameratype=None):
+			camera.Camera.__init__(self)
 			try:
 				self.theCamera = win32com.client.Dispatch("CAMC.Camera")		
 			except:
 				print "Error: cannot dispatch CAMC.Camera"
 				raise
 	
-			#self.camType = win32com.client.constants.ctSimulation
-			self.camType = win32com.client.constants.ctPXL
-			#self.camType = win32com.client.constants.ctPVCam
-			#self.camType = win32com.client.constants.ctFastScan
+			if cameratype is None or cameratype == 'PXL':
+				self.camType = win32com.client.constants.ctPXL
+			elif cameratype == 'Simulation':
+				self.camType = win32com.client.constants.ctSimulation
+			elif cameratype == 'PVCam':
+				self.camType = win32com.client.constants.ctPVCam
+			elif cameratype == 'FastScan':
+				self.camType = win32com.client.constants.ctFastScan
+			else:
+				raise ValueError('Invalid camera type specified')
 	
 			try:
 				self.hCam = self.theCamera.Initialize(self.camType, 0)
@@ -77,7 +83,29 @@ else:
 			na = Numeric.array(a, self.Numerictypecode)
 			return Numeric.reshape(na, (dimension['y'], dimension['x']))
 
+		def setInserted(self, value):
+			pass
+
+		def getInserted(self):
+			return True
+
+	class TietzPXL(Tietz):
+		def __init__(self):
+			Tietz.__init__(self, 'PXL')
+	
+	class TietzSimulation(Tietz):
+		def __init__(self):
+			Tietz.__init__(self, 'Simulation')
+
+	class TietzPVCam(Tietz):
+		def __init__(self):
+			Tietz.__init__(self, 'PVCam')
+	
+	class TietzFastScan(Tietz):
+		def __init__(self):
+			Tietz.__init__(self, 'FastScan')
+	
 if __name__ == '__main__':
 	foo = tietz()
-	result = foo.getImage({'x': 0, 'y': 0}, {'x': 128, 'y': 128}, {'x': 1, 'y': 1}, 500)
+	result = foo.getImage({'x': 0, 'y': 0}, {'x': 128, 'y': 128}, {'x': 1, 'y': 1}, 500.0)
 	print result

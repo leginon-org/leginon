@@ -1,16 +1,27 @@
 import camera
+import Numeric
 
 def factory(cameraclass):
 	class cameradict(cameraclass):
 		def __init__(self, dict=None):
 			cameraclass.__init__(self)
-			self.data = {"offset": {'x': 0, 'y': 0},
-										"dimension": {'x': 512, 'y': 512},
-										"binning": {'x': 1, 'y': 1},
-										"exposure time" : 500,
-										"image data" : None}
+			self.structure = {'offset': {'x': int, 'y': int},
+										'dimension': {'x': int, 'y': int},
+										'binning': {'x': int, 'y': int},
+										'exposure time' : float,
+										'image data' : Numeric.arraytype,
+										'inserted': bool}
+			self.data = {'offset': {'x': 0, 'y': 0},
+										'dimension': {'x': 512, 'y': 512},
+										'binning': {'x': 1, 'y': 1},
+										'exposure time' : 500.0,
+										'inserted': True,
+										'image data' : None}
 			if dict is not None:
 				self.update(dict)
+
+		def getStructure(self):
+			return self.structure
 
 		def exit(self):
 			cameraclass.exit(self)
@@ -30,14 +41,18 @@ def factory(cameraclass):
 			return len(self.data)
 
 		def __getitem__(self, key):
-			if key == "image data":
+			if key == 'image data':
 				self.refresh()
+			elif key == 'inserted':
+				return self.getInserted()
 			return self.data[key]
 	  
 		def __setitem__(self, key, item):
-			setkeys = ["offset", "dimension", "binning", "exposure time"]
+			setkeys = ['offset', 'dimension', 'binning', 'exposure time']
 			if key in setkeys:
 				self.data[key] = item
+			elif key == 'inserted':
+				self.setInserted(item)
 			else:
 				raise ValueError
 		
@@ -98,10 +113,11 @@ def factory(cameraclass):
 			return iter(self.data)
 
 		def refresh(self):
-			self.data["image data"] = self.getImage(self.data["offset"], \
-																							self.data["dimension"], \
-																							self.data["binning"], \
-																							self.data["exposure time"])
+			self.data['inserted'] = self.getInserted()
+			self.data['image data'] = self.getImage(self.data['offset'], \
+																							self.data['dimension'], \
+																							self.data['binning'], \
+																							self.data['exposure time'])
 
 	return cameradict
 

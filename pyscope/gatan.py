@@ -2,14 +2,14 @@ import camera
 import sys
 
 if sys.platform != 'win32':
-	class gatan(camera.camera):
+	class gatan(camera.Camera):
 		def __init__(self):
 			pass
 else:
 	import win32com.client
-	import gatancom
+#	import gatancom
 
-	class gatan(camera.camera):
+	class Gatan(camera.Camera):
 		def __init__(self):
 			self.theCamera = win32com.client.Dispatch("TecnaiCCD.GatanCamera")        
 	    
@@ -27,3 +27,22 @@ else:
 			self.theCamera.ExposureTime = float(exposure_time) / 1000.0
 	
 			return self.theCamera.AcquireRawImage()
+
+		def insert(self):
+			self.theCamera.Insert()
+
+		def retract(self):
+			self.theCamera.Retract()
+
+		def setInserted(self, value):
+			if value:
+				self.insert()
+			else:
+				self.retract()
+
+		def getInserted(self):
+			if self.theCamera.IsInserted == 1:
+				return True
+			else:
+				return False
+

@@ -1,4 +1,4 @@
-class camera:
+class Camera:
 	def __init__(self):
 		self.arraytypecode = None
 
@@ -7,3 +7,10 @@ class camera:
 
 	def getImage(self, offset, dimension, binning, exposure_time):
 		raise NotImplementedError
+
+	def getInserted(self):
+		raise NotImplementedError
+
+	def setInserted(self, value):
+		raise NotImplementedError
+

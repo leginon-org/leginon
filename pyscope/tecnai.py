@@ -1,18 +1,19 @@
 import scope
 import sys
+import pywintypes
 	
 if sys.platform != 'win32':
-	class tecnai(scope.scope):
+	class tecnai(scope.Scope):
 		pass
 else:
 	import pythoncom
 	import win32com.client
-	import tecnaicom
-	import ldcom
+#	import tecnaicom
+#	import ldcom
 	import adacom
 	import time
 	
-	class tecnai(scope.scope):
+	class Tecnai(scope.Scope):
 		def cmpmags(self, x, y):
 			key = self.cmpmags_status
 			if x[key] < y[key]: 
@@ -95,11 +96,22 @@ else:
 	
 			return 0
 	
-		def getScreenCurrent(self):
-			return self.theScope.Camera.ScreenCurrent
+		def getScreenCurrent(self, novalue=False):
+			if novalue:
+				return float
+			return float(self.theScope.Camera.ScreenCurrent)
 		
-		def getGunTilt(self):
-			return {"x" : self.theScope.Gun.Tilt.X, "y" : self.theScope.Gun.Tilt.Y}
+		def getGunTilt(self, novalue=False):
+			value = {'x': None, 'y': None}
+
+			if novalue:
+				value['x'] = float
+				value['y'] = float
+			else:
+				value['x'] = float(self.theScope.Gun.Tilt.X)
+				value['y'] = float(self.theScope.Gun.Tilt.Y)
+
+			return value
 		
 		def setGunTilt(self, vector, relative = "absolute"):
 			if relative == "relative":
@@ -128,8 +140,17 @@ else:
 			self.theScope.Gun.Tilt = vec
 			return 0
 		
-		def getGunShift(self):
-			return {"x" : self.theScope.Gun.Shift.X, "y" : self.theScope.Gun.Shift.Y}
+		def getGunShift(self, novalue=False):
+			value = {'x': None, 'y': None}
+
+			if novalue:
+				value['x'] = float
+				value['y'] = float
+			else:
+				value['x'] = self.theScope.Gun.Shift.X
+				value['y'] = self.theScope.Gun.Shift.Y
+
+			return value
 		
 		def setGunShift(self, vector, relative = "absolute"):
 			if relative == "relative":
@@ -158,15 +179,19 @@ else:
 			self.theScope.Gun.Shift = vec
 			return 0
 		
-		def getHighTension(self):
-			return self.theScope.Gun.HTValue
+		def getHighTension(self, novalue=False):
+			if novalue:
+				return int
+			return int(self.theScope.Gun.HTValue)
 		
 		def setHighTension(self, ht):
 			self.theScope.Gun.HTValue = ht
 			return 0
 		
-		def getIntensity(self):
-			return self.theScope.Illumination.Intensity
+		def getIntensity(self, novalue=False):
+			if novalue:
+				return float
+			return float(self.theScope.Illumination.Intensity)
 		
 		def setIntensity(self, intensity, relative = "absolute"):
 			if relative == "relative":
@@ -179,7 +204,9 @@ else:
 			self.theScope.Illumination.Intensity = intensity
 			return 0
 	
-		def getDarkFieldMode(self):
+		def getDarkFieldMode(self, novalue=False):
+			if novalue:
+				return str
 			if self.theScope.Illumination.DFMode == win32com.client.constants.dfOff:
 				return "off"
 			elif self.theScope.Illumination.DFMode == win32com.client.constants.dfCartesian:
@@ -201,7 +228,9 @@ else:
 	
 			return 0
 		
-		def getBeamBlank(self):
+		def getBeamBlank(self, novalue=False):
+			if novalue:
+				return str
 			if self.theScope.Illumination.BeamBlanked == 0:
 				return "off"
 			elif self.theScope.Illumination.BeamBlanked == 1:
@@ -219,17 +248,32 @@ else:
 			
 			return 0
 		
-		def getStigmator(self):
-			 return {"condenser" : 
-					 {"x" : self.theScope.Illumination.CondenserStigmator.X,
-					  "y" : self.theScope.Illumination.CondenserStigmator.Y},
-					"objective" :
-					 {"x" : self.theScope.Projection.ObjectiveStigmator.X,
-					  "y" : self.theScope.Projection.ObjectiveStigmator.Y},
-					"diffraction" :
-					 {"x" : self.theScope.Projection.DiffractionStigmator.X,
-					  "y" : self.theScope.Projection.DiffractionStigmator.Y}
-					} 
+		def getStigmator(self, novalue=False):
+			value = {'condenser': {'x': None, 'y': None},
+								'objective': {'x': None, 'y': None},
+								'diffraction': {'x': None, 'y': None}}
+			if novalue:
+				value['condenser']['x'] = float
+				value['condenser']['y'] = float
+				value['objective']['x'] = float
+				value['objective']['y'] = float
+				value['diffraction']['x'] = float
+				value['diffraction']['y'] = float
+			else:
+				value['condenser']['x'] = \
+					float(self.theScope.Illumination.CondenserStigmator.X)
+				value['condenser']['y'] = \
+					float(self.theScope.Illumination.CondenserStigmator.Y)
+				value['objective']['x'] = \
+					float(self.theScope.Projection.ObjectiveStigmator.X)
+				value['objective']['y'] = \
+					float(self.theScope.Projection.ObjectiveStigmator.Y)
+				value['diffraction']['x'] = \
+					float(self.theScope.Projection.DiffractionStigmator.X)
+				value['diffraction']['y'] = \
+					float(self.theScope.Projection.DiffractionStigmator.Y)
+
+			return value
 			
 		def setStigmator(self, stigs, relative = "absolute"):
 			for key in stigs.keys():
@@ -273,8 +317,10 @@ else:
 	
 			return 0
 		
-		def getSpotSize(self):
-			return self.theScope.Illumination.SpotsizeIndex
+		def getSpotSize(self, novalue=False):
+			if novalue:
+				return int
+			return int(self.theScope.Illumination.SpotsizeIndex)
 		
 		def setSpotSize(self, ss, relative = "absolute"):
 			if relative == "relative":
@@ -287,8 +333,17 @@ else:
 			self.theScope.Illumination.SpotsizeIndex = ss
 			return 0
 		
-		def getBeamTilt(self):
-			return {"x" : self.theScope.Illumination.RotationCenter.X, "y" : self.theScope.Illumination.RotationCenter.Y}
+		def getBeamTilt(self, novalue=False):
+			value = {'x': None, 'y': None}
+
+			if novalue:
+				value['x'] = float
+				value['y'] = float
+			else:
+				value['x'] = float(self.theScope.Illumination.RotationCenter.X)
+				value['y'] = float(self.theScope.Illumination.RotationCenter.Y)
+
+			return value
 		
 		def setBeamTilt(self, vector, relative = "absolute"):
 			if relative == "relative":
@@ -317,8 +372,17 @@ else:
 			self.theScope.Illumination.RotationCenter = vec
 			return 0
 		
-		def getBeamShift(self):
-			return {"x" : self.theScope.Illumination.Shift.X, "y" : self.theScope.Illumination.Shift.Y}
+		def getBeamShift(self, novalue=False):
+			value = {'x': None, 'y': None}
+
+			if novalue:
+				value['x'] = float
+				value['y'] = float
+			else:
+				value['x'] = float(self.theScope.Illumination.Shift.X)
+				value['y'] = float(self.theScope.Illumination.Shift.Y)
+
+			return value
 	
 		def setBeamShift(self, vector, relative = "absolute"):
 			if relative == "relative":
@@ -347,8 +411,17 @@ else:
 			self.theScope.Illumination.Shift = vec
 			return 0
 		
-		def getImageShift(self):
-			return {"x" : self.theScope.Projection.ImageBeamShift.X, "y" : self.theScope.Projection.ImageBeamShift.Y}
+		def getImageShift(self, novalue=False):
+			value = {'x': None, 'y': None}
+
+			if novalue:
+				value['x'] = float
+				value['y'] = float
+			else:
+				value['x'] = float(self.theScope.Projection.ImageBeamShift.X)
+				value['y'] = float(self.theScope.Projection.ImageBeamShift.Y)
+
+			return value
 		
 		def setImageShift(self, vector, relative = "absolute"):
 			if relative == "relative":
@@ -377,8 +450,10 @@ else:
 			self.theScope.Projection.ImageBeamShift = vec
 			return 0
 		
-		def getDefocus(self):
-			return self.theScope.Projection.Defocus
+		def getDefocus(self, novalue=False):
+			if novalue:
+				return float
+			return float(self.theScope.Projection.Defocus)
 		
 		def setDefocus(self, defocus, relative = "absolute"):
 			if relative == "relative":
@@ -395,7 +470,9 @@ else:
 			self.theScope.Projection.ResetDefocus()
 			return 0
 		
-		def getMagnification(self):
+		def getMagnification(self, novalue=False):
+			if novalue:
+				return float
 			if self.theScope.Camera.MainScreen == win32com.client.constants.spUp:
 				key = "up"
 			elif self.theScope.Camera.MainScreen == win32com.client.constants.spDown:
@@ -407,7 +484,7 @@ else:
 	
 			for mag in self.magTable:
 				if mag['index'] == magindex:
-					return mag[key]
+					return float(mag[key])
 	
 			raise SystemError			
 	
@@ -434,17 +511,31 @@ else:
 			self.theScope.Projection.MagnificationIndex = prevmag['index']
 			return 0
 		
-		def getStagePosition(self):
-			position = {"x" : self.theScope.Stage.Position.X,
-						"y" : self.theScope.Stage.Position.Y,
-						"z" : self.theScope.Stage.Position.Z,
-						"a" : self.theScope.Stage.Position.A}
+		def getStagePosition(self, novalue=False):
+			value = {'x': None, 'y': None, 'z': None, 'a': None}
+
 			if(self.theScope.Stage.Holder == win32com.client.constants.hoDoubleTilt):
-				position["b"] = self.theScope.Stage.Position.B
-			return position
-		
+				value['b'] = None
+
+			if novalue:
+				value['x'] = float
+				value['y'] = float
+				value['z'] = float
+				value['a'] = float
+				if 'b' in value:
+					value['b'] = float
+			else:
+				value['x'] = float(self.theScope.Stage.Position.X)
+				value['y'] = float(self.theScope.Stage.Position.Y)
+				value['z'] = float(self.theScope.Stage.Position.Z)
+				value['a'] = float(self.theScope.Stage.Position.A)
+				if 'b' in value:
+					value['b'] = float(self.theScope.Stage.Position.B)
+
+			return value
+
 		def setStagePosition(self, position, relative = "absolute"):
-			tolerance = 1.0e-5
+			tolerance = 1.0e-4
 			polltime = 0.1
 			if relative == "relative":
 				try:
@@ -479,49 +570,66 @@ else:
 			except KeyError:
 				pass
 			else:
-				self.theScope.Stage.Goto(pos, win32com.client.constants.axisZ)
-				while abs(self.theScope.Stage.Position.Z - pos.Z) > tolerance:
-					time.sleep(polltime)
-	
+				try:
+					self.theScope.Stage.Goto(pos, win32com.client.constants.axisZ)
+					while abs(self.theScope.Stage.Position.Z - pos.Z) > tolerance:
+						time.sleep(polltime)
+				except pywintypes.com_error:
+					print 'stage z-axis limit hit'
+		
 			try:
 				pos.Y = position["y"]
 			except KeyError:
 				pass
 			else:
-				self.theScope.Stage.Goto(pos, win32com.client.constants.axisY)
-				while abs(self.theScope.Stage.Position.Y - pos.Y) > tolerance:
-					time.sleep(polltime)
+				try:
+					self.theScope.Stage.Goto(pos, win32com.client.constants.axisY)
+					while abs(self.theScope.Stage.Position.Y - pos.Y) > tolerance:
+						time.sleep(polltime)
+				except pywintypes.com_error:
+					print 'stage y-axis limit hit'
 	
 			try:
 				pos.X = position["x"]
 			except KeyError:
 				pass
 			else:
-				self.theScope.Stage.Goto(pos, win32com.client.constants.axisX)
-				while abs(self.theScope.Stage.Position.X - pos.X) > tolerance:
-					time.sleep(polltime)
+				try:
+					self.theScope.Stage.Goto(pos, win32com.client.constants.axisX)
+					while abs(self.theScope.Stage.Position.X - pos.X) > tolerance:
+						time.sleep(polltime)
+				except pywintypes.com_error:
+					print 'stage x-axis limit hit'
 	
 			try:
 				pos.A = position["a"]
 			except KeyError:
 				pass
 			else:
-				self.theScope.Stage.Goto(pos, win32com.client.constants.axisA)
-				while abs(self.theScope.Stage.Position.A - pos.A) > tolerance:
-					time.sleep(polltime)
+				try:
+					self.theScope.Stage.Goto(pos, win32com.client.constants.axisA)
+					while abs(self.theScope.Stage.Position.A - pos.A) > tolerance:
+						time.sleep(polltime)
+				except pywintypes.com_error:
+					print 'stage a-axis limit hit'
 	
 			try:
 				pos.B = position["b"]
 			except KeyError:
 				pass
 			else:
-				self.theScope.Stage.Goto(pos, win32com.client.constants.axisB)
-				while abs(self.theScope.Stage.Position.B - pos.B) > tolerance:
-					time.sleep(polltime)
+				try:
+					self.theScope.Stage.Goto(pos, win32com.client.constants.axisB)
+					while abs(self.theScope.Stage.Position.B - pos.B) > tolerance:
+						time.sleep(polltime)
+				except pywintypes.com_error:
+					print 'stage b-axis limit hit'
 		
 			return 0
 		
-		def getLowDose(self):
+		def getLowDose(self, novalue=False):
+			if novalue:
+				return str
 			if (self.theLowDose.IsInitialized == 1) and (self.theLowDose.LowDoseActive == win32com.client.constants.IsOn):
 				return "on"
 			else:
@@ -540,7 +648,9 @@ else:
 	
 			return 0		
 	
-		def getLowDoseMode(self):
+		def getLowDoseMode(self, novalue=False):
+			if novalue:
+				return str
 			if self.theLowDose.LowDoseState == win32com.client.constants.eExposure:
 				return "exposure"
 			elif self.theLowDose.LowDoseState == win32com.client.constants.eFocus1:
@@ -566,7 +676,9 @@ else:
 	
 			return 0
 		
-		def getDiffractionMode(self):
+		def getDiffractionMode(self, novalue=False):
+			if novalue:
+				return str
 			if self.theScope.Projection.Mode == win32com.client.constants.pmImaging:
 				return "imaging"
 			elif self.theScope.Projection.Mode == win32com.client.constants.pmDiffraction:
@@ -627,7 +739,9 @@ else:
 	
 			return 0
 
-		def getScreen(self):
+		def getScreen(self, novalue=False):
+			if novalue:
+				return str
 			if self.theAda.MainScreenStatus == 1:
 				return 'up'
 			else:
@@ -641,7 +755,9 @@ else:
 			else:
 				raise ValueError
 
-		def getHolderStatus(self):
+		def getHolderStatus(self, novalue=False):
+			if novalue:
+				return str
 			if self.theAda.SpecimenHolderInserted == adacom.constants.eInserted:
 				return 'inserted'
 			elif self.theAda.SpecimenHolderInserted == adacom.constants.eNotInserted:
@@ -649,31 +765,38 @@ else:
 			else:
 				return 'unknown'
 
-		def getHolderType(self):
+		def getHolderType(self, novalue=False):
+			if novalue:
+				return str
 			if self.theAda.CurrentSpecimenHolderName == u'No Specimen Holder':
 				return 'no holder'
 			elif self.theAda.CurrentSpecimenHolderName == u'Single Tilt':
 				return 'single tilt'
+			elif self.theAda.CurrentSpecimenHolderName == u'ST Cryo Holder':
+				return 'cryo'
 			else:
 				return 'unknown holder'
 
 		def setHolderType(self, holdertype):
 			if holdertype == 'no holder':
-				if self.theAda.SpecimenHolderName(0) == u'No Specimen Holder':
-					self.theAda.SetCurrentSpecimenHolder(0)
-				else:
-					raise SystemError
+				holderstr = u'No Specimen Holder'
 			elif holdertype == 'single tilt':
-				if self.theAda.SpecimenHolderName(1) == u'Single Tilt':
-					self.theAda.SetCurrentSpecimenHolder(1)
-				else:
-					raise SystemError
-			elif holdertype == 'unknown holder':
-				pass
+				holderstr = u'Single Tilt'
+			elif holdertype == 'cryo':
+				holderstr = u'ST Cryo Holder'
 			else:
-				raise ValueError
+				raise ValueError('invalid holder type specified')
 
-		def getStageStatus(self):
+			for i in [1,2,3]:
+				if self.theAda.SpecimenHolderName(i) == holderstr:
+					self.theAda.SetCurrentSpecimenHolder(i)
+					return
+
+			raise SystemError('no such holder available')
+
+		def getStageStatus(self, novalue=False):
+			if novalue:
+				return str
 			if self.theAda.GonioLedStatus == adacom.constants.eOn:
 				return 'busy'
 			elif self.theAda.GonioLedStatus == adacom.constants.eOff:
@@ -681,7 +804,9 @@ else:
 			else:
 				raise SystemError
 
-		def getTurboPump(self):
+		def getTurboPump(self, novalue=False):
+			if novalue:
+				return str
 			if self.theAda.GetTmpStatus == adacom.constants.eOn:
 				return 'on'
 			elif self.theAda.GetTmpStatus == adacom.constants.eOff:
@@ -697,7 +822,9 @@ else:
 			else:
 				raise ValueError
 
-		def getColumnValves(self):
+		def getColumnValves(self, novalue=False):
+			if novalue:
+				return str
 			if self.theScope.Vacuum.ColumnValvesOpen:
 				return 'open'
 			else:
@@ -711,7 +838,9 @@ else:
 			else:
 				raise ValueError
 
-		def getVacuumStatus(self):
+		def getVacuumStatus(self, novalue=False):
+			if novalue:
+				return str
 			status = self.theScope.Vacuum.Status
 			if status == win32com.client.constants.vsOff:
 				return 'off'
@@ -727,4 +856,9 @@ else:
 				return 'else'
 			else:
 				return 'unknown'
+
+		def getColumnPressure(self, novalue=False):
+			if novalue:
+				return float
+			return float(self.theScope.Vacuum.Gauges('P4').Pressure)
 

@@ -1,4 +1,4 @@
-class scope:
+class Scope:
 	def exit(self):
 		pass
 	def normalizeLens(self, lens = "all"):
@@ -98,4 +98,6 @@ class scope:
 	def setColumnValves(self, state):
 		raise NotImplementedError
 	def getVacuumStatus(self):
+		raise NotImplementedError
+	def getColumnPressure(self):
 		raise NotImplementedError

@@ -9,7 +9,7 @@ def factory(scopeclass):
 								'stage position', 'low dose', 'low dose mode',
 								'diffraction mode', 'reset defocus', 'screen position',
 								'holder status', 'holder type', 'stage status', 'column valves',
-								'vacuum status', 'turbo pump']
+								'vacuum status', 'turbo pump', 'column pressure']
 
 		def __init__(self):
 			scopeclass.__init__(self)
@@ -17,6 +17,12 @@ def factory(scopeclass):
 
 		def exit(self):
 			scopeclass.exit(self)
+
+		def getStructure(self):
+			structure = {}
+			for key in self.keylist:
+				structure[key] = self.__getitem__(key, novalue=True)
+			return structure
 	
 		def __repr__(self):
 			return repr(self.copy())
@@ -73,12 +79,12 @@ def factory(scopeclass):
 			elif key == 'diffraction mode':
 				self.setDiffractionMode(val)
 			elif key == 'reset defocus':
-				if val == 1:
+				if type(val) is not bool and type(val) is not int:
+					raise TypeError
+				if val:
 					self.resetDefocus()
-				elif val == 0:
-					pass
 				else:
-					raise ValueError
+					pass
 			elif key == 'screen position':
 				self.setScreen(val)
 			elif key == 'holder type':
@@ -91,61 +97,66 @@ def factory(scopeclass):
 				raise KeyError
 			return 0
 		
-		def __getitem__(self, key):
+		def __getitem__(self, key, novalue=False):
 			if key == 'screen current':
-				return self.getScreenCurrent()
+				return self.getScreenCurrent(novalue)
 			elif key == 'beam blank':
-				return self.getBeamBlank()
+				return self.getBeamBlank(novalue)
 			elif key == 'gun tilt':
-				return self.getGunTilt()
+				return self.getGunTilt(novalue)
 			elif key == 'gun shift':
-				return self.getGunShift()
+				return self.getGunShift(novalue)
 			elif key == 'high tension':
-				return self.getHighTension()
+				return self.getHighTension(novalue)
 			elif key == 'intensity':
-				return self.getIntensity()
+				return self.getIntensity(novalue)
 			elif key == 'dark field mode':
-				return self.getDarkFieldMode()
+				return self.getDarkFieldMode(novalue)
 			elif key == 'stigmator':
-				return self.getStigmator()
+				return self.getStigmator(novalue)
 			elif key == 'spot size':
-				return self.getSpotSize()
+				return self.getSpotSize(novalue)
 			elif key == 'beam tilt':
-				return self.getBeamTilt()
+				return self.getBeamTilt(novalue)
 			elif key == 'beam shift':
-				return self.getBeamShift()
+				return self.getBeamShift(novalue)
 			elif key == 'image shift':
-				return self.getImageShift()
+				return self.getImageShift(novalue)
 			elif key == 'defocus':
-				return self.getDefocus()
+				return self.getDefocus(novalue)
 			elif key == 'magnification':
-				return self.getMagnification()
+				return self.getMagnification(novalue)
 			elif key == 'stage position':
-				return self.getStagePosition()
+				return self.getStagePosition(novalue)
 			elif key == 'corrected stage position':
-				return self.getCorrectedStagePosition()
+				return self.getCorrectedStagePosition(novalue)
 			elif key == 'low dose':
-				return self.getLowDose()
+				return self.getLowDose(novalue)
 			elif key == 'low dose mode':
-				return self.getLowDoseMode()
+				return self.getLowDoseMode(novalue)
 			elif key == 'diffraction mode':
-				return self.getDiffractionMode()
+				return self.getDiffractionMode(novalue)
 			elif key == 'reset defocus':
-				return 0
+				if novalue:
+					return bool
+				else:
+					return False
 			elif key == 'screen position':
-				return self.getScreen()
+				return self.getScreen(novalue)
 			elif key == 'holder type':
-				return self.getHolderType()
+				return self.getHolderType(novalue)
 			elif key == 'holder status':
-				return self.getHolderStatus()
+				return self.getHolderStatus(novalue)
 			elif key == 'stage status':
-				return self.getStageStatus()
+				return self.getStageStatus(novalue)
 			elif key == 'turbo pump':
-				return self.getTurboPump()
+				return self.getTurboPump(novalue)
 			elif key == 'column valves':
-				return self.getColumnValves()
+				return self.getColumnValves(novalue)
 			elif key == 'vacuum status':
-				return self.getVacuumStatus()
+				return self.getVacuumStatus(novalue)
+			elif key == 'column pressure':
+				return self.getColumnPressure(novalue)
 			else:
 				raise KeyError
 
@@ -153,8 +164,11 @@ def factory(scopeclass):
 			self.correctedstage = value
 			return self.correctedstage
 
-		def getCorrectedStagePosition(self):
-			return self.correctedstage
+		def getCorrectedStagePosition(self, novalue=False):
+			if novalue:
+				return bool
+			else:
+				return self.correctedstage
 
 		def setStagePosition(self, value, type='absolute'):
 			# pre-position x and y (maybe others later)
