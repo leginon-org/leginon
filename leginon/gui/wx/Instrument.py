@@ -579,6 +579,7 @@ class CamConfigSizer(wx.StaticBoxSizer):
 		}
 
 class Panel(gui.wx.Node.Panel):
+	icon = 'instrument'
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
 

@@ -14,6 +14,7 @@ class ImageUpdatedEvent(wx.PyCommandEvent):
 		self.image = image
 
 class Panel(gui.wx.ClickTargetFinder.Panel):
+	icon = 'atlastarget'
 	def initialize(self):
 		gui.wx.ClickTargetFinder.Panel.initialize(self)
 
