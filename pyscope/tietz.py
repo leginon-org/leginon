@@ -87,7 +87,7 @@ class Tietz(object):
 
 		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
 		try:
-			self.theCamera = win32com.client.Dispatch('CAMC4.Camera')		
+			self.camera = win32com.client.Dispatch('CAMC4.Camera')		
 		except pywintypes.com_error, e:
 			print 'Error dispatching CAMC4.Camera'
 			print e
@@ -106,13 +106,13 @@ class Tietz(object):
 				return
 
 		try:
-			hr = self.theCamera.RegisterCAMCCallBack(ping, 'EM')
+			hr = self.camera.RegisterCAMCCallBack(ping, 'EM')
 		except pywintypes.com_error, e:
 			print 'Error registering callback'
 			print e
 			return
 
-		hr = self.theCamera.RequestLock()
+		hr = self.camera.RequestLock()
 		if hr == win32com.client.constants.crDeny:
 			print 'Error locking camera, denied lock'
 			return
@@ -144,7 +144,7 @@ class Tietz(object):
 			raise ValueError('Invalid camera type specified')
 	
 		try:
-			hr = self.theCamera.Initialize(cameratype, 0)
+			hr = self.camera.Initialize(cameratype, 0)
 		except pywintypes.com_error, e:
 			print 'Error initializing camera'
 			print e
@@ -225,7 +225,7 @@ class Tietz(object):
 			parameter = getattr(win32com.client.constants, parametername)
 		except:
 			return ''
-		value = self.theCamera.QueryParameter(parameter)
+		value = self.camera.QueryParameter(parameter)
 		if value in (5, 9):
 			return 'r'
 		elif value in (6, 10):
@@ -239,7 +239,7 @@ class Tietz(object):
 			parameter = getattr(win32com.client.constants, parametername)
 		except:
 			return None
-		value = self.theCamera.QueryParameter(parameter)
+		value = self.camera.QueryParameter(parameter)
 		if value in (5, 6, 7):
 			return int
 		elif value in (9, 10, 11):
@@ -255,9 +255,9 @@ class Tietz(object):
 		except:
 			return None
 		if parametertype is int:
-			return self.theCamera.LParam(parameter)
+			return self.camera.LParam(parameter)
 		elif parametertype is str:
-			return self.theCamera.SParam(parameter)
+			return self.camera.SParam(parameter)
 		return None
 
 	def _setParameterValue(self, parametername, value):
@@ -269,13 +269,13 @@ class Tietz(object):
 		except:
 			return None
 		if parametertype is int:
-			return self.theCamera.SetLParam(parameter, value)
+			return self.camera.SetLParam(parameter, value)
 		elif parametertype is str:
-			return self.theCamera.SetSParam(parameter, value)
+			return self.camera.SetSParam(parameter, value)
 		return None
 
 	def exit(self):
-		self.theCamera.UnlockCAMC()
+		self.camera.UnlockCAMC()
 	
 	def mmapImage(self, size):
 		map = mmapfile.mmapfile('', self.mmname, size)
@@ -311,6 +311,8 @@ class Tietz(object):
 		return self.exposuretype
 
 	def setExposureType(self, value):
+		if value not in ['normal', 'dark']:
+			raise ValueError('Invalid exposure type')
 		self.exposuretype = value
 	
 	def getImage(self):
@@ -321,16 +323,14 @@ class Tietz(object):
 		offset = self.getOffset()
 		dimension = self.getDimension()
 		binning = self.getBinning()
-		hr = self.theCamera.Format(offset['x'], offset['y'], dimension['x'],
+		hr = self.camera.Format(offset['x'], offset['y'], dimension['x'],
 																dimension['y'], binning['x'], binning['y'])
 
 		exposuretype = self.getExposureType()
 		if exposuretype == 'normal':
-			acquiremethod = self.theCamera.AcquireImage
+			acquiremethod = self.camera.AcquireImage
 		elif exposuretype == 'dark':
-			acquiremethod = self.theCamera.AcquireDark
-		else:
-			raise RuntimeError('Invalid exposure type')
+			acquiremethod = self.camera.AcquireDark
 
 		hr = acquiremethod(self.getExposureTime(), 0)
 
