@@ -6,9 +6,6 @@ import data
 import cameraimage
 import Numeric
 
-#CAMSIZE = (2048,2048)
-CAMSIZE = (4096,4096)
-
 class CameraFuncs(object):
 	'''
 	Useful functions for nodes that use camera data
@@ -84,9 +81,11 @@ class CameraFuncs(object):
 		to get an image centered on the camera
 		'''
 		dimx = camstate['dimension']['x']
-		dimy = camstate['dimension']['x'] 
-		offy = CAMSIZE[0] / 2 - dimy / 2
-		offx = CAMSIZE[1] / 2 - dimx / 2
+		dimy = camstate['dimension']['y'] 
+		sizex = camstate['size']['x']
+		sizey = camstate['size']['y'] 
+		offx = sizex / 2 - dimx / 2
+		offy = sizey / 2 - dimy / 2
 		camstate['offset'] = {'x': offx, 'y': offy}
 
 	def cameraConfigUIData(self):
