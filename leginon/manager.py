@@ -138,7 +138,7 @@ class Manager(node.Node):
 						location['TCP transport'] = {}
 						location['TCP transport']['hostname'] = hostname
 						location['TCP transport']['port'] = 55555
-						self.addNode(location, hostname)
+						self.addNode(hostname, location)
 				except (IOError, TypeError, socket.error):
 					self.messagelog.warning('Cannot add instrument\'s launcher.')
 
@@ -238,7 +238,6 @@ class Manager(node.Node):
 				self.logger.error('Cannot push to node ' + str(to_node)
 													+ ', unregistering')
 				self.removeNode(to_node)
-				self.delLauncher(to_node)
 				raise
 			self.logEvent(ievent, 'distributed to %s' % (to_node,))
 
@@ -302,7 +301,6 @@ class Manager(node.Node):
 					self.logger.error('Cannot push to node ' + str(to_node)
 														+ ', unregistering')
 					self.removeNode(to_node)
-					self.delLauncher(to_node)
 					raise
 				self.logEvent(ievent, 'distributed to %s' % (to_node,))
 			except:
@@ -328,15 +326,47 @@ class Manager(node.Node):
 
 	# launcher related methods
 
-	def addLauncher(self, nodename, location):
-		'''Register a launcher with the UI, aliases the launcher to the node ID, location and launchable node classes.'''
-		self.launcherdict[nodename] = {'location': location}
-		self.addNodeUIClient(nodename, location['UI'])
+	def onAddLauncher(self, name):
+		self.frame.onAddLauncher(name)
 
-	def delLauncher(self, nodename):
-		'''Unregister a launcher from the UI.'''
+	def onRemoveLauncher(self, name):
+		self.frame.onRemoveLauncher(name)
+
+	def getLauncherCount(self):
+		return len(self.launcherdict)
+
+	def getLauncherNames(self, sorted=True):
+		names = self.launcherdict.keys()
+		if sorted:
+			names.sort()
+		return names
+
+	def getLauncherClasses(self, name=None, sorted=True):
+		if name is None:
+			classes = {}
+			for name in self.getLauncherNames():
+				classes[name] = self.getLauncherClasses(name, sorted)
+		else:
+			try:
+				classes = list(self.launcherdict[name]['classes'])
+			except KeyError:
+				raise ValueError('Invalid launcher name')
+			if sorted:
+				classes.sort()
+		return classes
+
+	def _addLauncher(self, name, location):
+		'''Add launcher to mapping, add UI client.'''
+		if name in self.getLauncherNames():
+			raise RuntimeError('Launcher name in use.')
+		self.launcherdict[name] = {'location': location}
+		self.addNodeUIClient(name, location['UI'])
+		self.onAddLauncher(name)
+
+	def delLauncher(self, name):
+		'''Remove launcher from mapping and UI.'''
 		try:
-			del self.launcherdict[nodename]
+			del self.launcherdict[name]
 		except KeyError:
 			return
 		# could check and keep selected if possible
@@ -348,7 +378,8 @@ class Manager(node.Node):
 			selected = None
 			self.launchcontainer.disable()
 		self.uilauncherselect.set(launchers, selected)
-		self.deleteNodeUIClient(nodename)
+		self.deleteNodeUIClient(name)
+		self.onRemoveLauncher(name)
 
 	def handleNodeClassesPublish(self, ievent):
 		'''Event handler for retrieving launchable classes.'''
@@ -379,43 +410,74 @@ class Manager(node.Node):
 
 	# node related methods
 
-	def registerNode(self, readyevent):
-		'''Event handler for registering a node with the manager. Initializes a client for the node and adds information regarding the node's location.'''
-		nodename = readyevent['node']
-		if nodename in self.nodelocations:
-			self.killNode(nodename)
+	def getNodeCount(self):
+		return len(self.nodelocations)
 
-		nodelocation = readyevent['location']
-		classstring = readyevent['nodeclass']
+	def getNodeNames(self, sorted=True):
+		names = self.nodelocations.keys()
+		if sorted:
+			names.sort()
+		return names
 
-		# check if new node is launcher
-		if classstring == 'Launcher':
-			self.addLauncher(nodename, nodelocation)
+	def isLauncher(self, evt):
+		if evt['nodeclass'] == 'Launcher':
+			return True
+		return False
 
-		# for the clients and mapping
-		if 'data binder' in nodelocation \
-															and nodelocation['data binder'] is not None:
-			databinderlocation = nodelocation['data binder']
-			self.addClient(nodename, databinderlocation)
-		elif 'launcher' in nodelocation \
-															and nodelocation['launcher'] in self.clients:
-			self.clients[nodename] = self.clients[nodelocation['launcher']]
-			nodelocation = self.nodelocations[nodelocation['launcher']]
-			nodelocation = nodelocation['location']
+	def setNodeClient(self, name, location):
+		# if the node has a data binder, add it as a client
+		if location['data binder'] is not None:
+			self.addClient(name, location['data binder'])
+		# otherwise use the node's launcher's client
+		elif location['launcher'] in self.clients:
+			launchername = location['launcher']
+			try:
+				self.clients[name] = self.clients[location['launcher']]
+			except KeyError:
+				raise RuntimeError('Launcher specified by node has no client')
+			try:
+				nodelocationdata = self.nodelocations[launchername]
+			except KeyError:
+				raise RuntimeError('Launcher specified by node has no location data')
+			return nodelocationdata['location']
 		else:
-			# weak
-			raise RuntimeError('Cannot connect to node')
+			raise RuntimeError('Unable to find client for node')
+		return location
+
+	def registerNode(self, evt):
+		'''
+		Event handler for registering a node with the manager.  Initializes a
+		client for the node and adds information regarding the node's location.
+		'''
+
+		name = evt['node']
+		location = evt['location']
+		classname = evt['nodeclass']
+
+		# kill the node if it already exists. needs work.
+		if name in self.getNodeNames():
+			self.killNode(name)
+
+		# check if new node is launcher.
+		if self.isLauncher(evt):
+			self._addLauncher(name, location)
+
+		location = self.setNodeClient(name, location)
 
 		# add node location to nodelocations dict
-		initializer = {'location': nodelocation,
-										'class string': classstring}
-		nodelocationdata = data.NodeLocationData(initializer=initializer)
-		self.nodelocations[nodename] = nodelocationdata
+		initializer = {'location': location, 'class string': classname}
+		self.nodelocations[name] = data.NodeLocationData(initializer=initializer)
 
-		self.confirmEvent(readyevent)
+		self.confirmEvent(evt)
 		self.uiUpdateNodeInfo()
 
-		#self.confirmEvent(readyevent)
+		self.onAddNode(name)
+
+	def onAddNode(self, name):
+		self.frame.onAddNode(name)
+
+	def onRemoveNode(self, name):
+		self.frame.onRemoveNode(name)
 
 	def addNodeUIClient(self, nodename, uilocation):
 		if nodename in self.uiclientcontainers:
@@ -427,13 +489,12 @@ class Manager(node.Node):
 		except:
 			self.logger.exception('cannot add client container for node')
 
-	def unregisterNode(self, unavailable_event):
-		'''Event handler for unregistering the node from the manager. Removes all information, event mappings and the client related to the node.'''
-		nodename = unavailable_event['node']
+	def unregisterNode(self, evt):
+		'''Event handler Removes all information, event mappings and the client.'''
+		nodename = evt['node']
 		self.removeNode(nodename)
-		self.delLauncher(nodename)
+		self.confirmEvent(evt)
 		self.uiUpdateNodeInfo()
-		self.confirmEvent(unavailable_event)
 
 	def deleteNodeUIClient(self, nodename):
 		# also remove from launcher registry
@@ -464,12 +525,14 @@ class Manager(node.Node):
 				self.initializednodescondition.notifyAll()
 		self.initializednodescondition.release()
 
-	def removeNode(self, nodename):
-		'''Remove data, event mappings, and client for the node with the specfied node ID.'''
-		if nodename in self.nodelocations:
-			self.removeNodeDistmaps(nodename)
-			del self.nodelocations[nodename]
-			self.delClient(nodename)
+	def removeNode(self, name):
+		'''Remove data, event mappings, and client.'''
+		if name in self.nodelocations:
+			self.removeNodeDistmaps(name)
+			del self.nodelocations[name]
+			self.delClient(name)
+			self.delLauncher(name)
+			self.onRemoveNode(name)
 		else:
 			self.logger.error('Manager: node ' + str(nodename) + ' does not exist')
 
@@ -535,11 +598,19 @@ class Manager(node.Node):
 				return False
 		return True
 
-	def addNode(self, location, nodename):
+	def addLauncher(self, hostname, port):
+		location = {}
+		location['TCP transport'] = {}
+		location['TCP transport']['hostname'] = hostname
+		location['TCP transport']['port'] = port
+		self.addNode(hostname, location)
+
+	def addNode(self, name, location):
 		'''Add a running node to the manager. Sends an event to the location.'''
-		e = event.SetManagerEvent(destination=nodename,
-																	location=self.location(),
-																	session=self.session)
+		initializer = {'destination': name,
+										'location': self.location(),
+										'session': self.session}
+		e = event.SetManagerEvent(initializer=initializer)
 		client = datatransport.Client(location, loggername=self.logger.name)
 		try:
 			client.push(e)
@@ -570,8 +641,6 @@ class Manager(node.Node):
 			self.setNodeStatus(nodename, False)
 			# group into another function
 			self.removeNode(nodename)
-			# also remove from launcher registry
-			self.delLauncher(nodename)
 
 	# application methods
 
@@ -722,7 +791,7 @@ class Manager(node.Node):
 		location['TCP transport'] = {}
 		location['TCP transport']['hostname'] = hostname
 		location['TCP transport']['port'] = port
-		self.addNode(location, hostname)
+		self.addNode(hostname, location)
 		self.addmethod.enable()
 
 	def uiLaunch(self):

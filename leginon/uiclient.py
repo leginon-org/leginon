@@ -1509,7 +1509,7 @@ class BitmapTreeCtrl(wx.TreeCtrl):
 				dc.BeginDrawing()
 				dc.SetPen(wx.Pen(self.GetBackgroundColour()))
 				dc.SetBrush(wx.Brush(self.GetBackgroundColour()))
-				dc.DrawRectangle((rect[0] + rect[2], rect[1]), (width, height))
+				dc.DrawRectangle(rect[0] + rect[2], rect[1], width, height)
 				dc.EndDrawing()
 
 	def OnPaint(self, evt):
@@ -1527,7 +1527,7 @@ class BitmapTreeCtrl(wx.TreeCtrl):
 			for id in self.bitmaps[bitmap]:
 				if self.IsVisible(id):
 					rect = self.GetBoundingRect(id, True)
-					dc.DrawBitmap(bitmap, (rect[0] + rect[2], rect[1]))
+					dc.DrawBitmap(bitmap, rect[0] + rect[2], rect[1])
 		dc.EndDrawing()
 
 class TreePanel(wx.Panel):
