@@ -170,6 +170,11 @@ class IntEntry(NumberEntry):
 class FloatEntry(NumberEntry):
 	_type = float
 
+	def valueToString(self, value):
+		if value is None:
+			return self._nonestring
+		return '%g' % value
+
 if __name__ == '__main__':
 	class App(wx.App):
 		def OnInit(self):

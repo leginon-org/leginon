@@ -27,7 +27,7 @@ class Panel(wx.Panel):
 	def set(self, values):
 		for label in self.order:
 			try:
-				s = str(values[self.map[label]])
+				s = '%g' % values[self.map[label]]
 			except KeyError:
 				s = self.nonestr
 			self.values[label].SetLabel(s)

@@ -155,9 +155,9 @@ class ContrastTool(object):
 		self.maxslider.Bind(wx.EVT_SCROLL_THUMBTRACK, self.onMaxSlider)
 
 		self.iemin = FloatEntry(imagepanel, -1, chars=6, allownone=False,
-														value=str(self.contrastmin))
+														value='%g' % self.contrastmin)
 		self.iemax = FloatEntry(imagepanel, -1, chars=6, allownone=False,
-														value=str(self.contrastmax))
+														value='%g' % self.contrastmax)
 		self.iemin.Enable(False)
 		self.iemax.Enable(False)
 
@@ -339,7 +339,7 @@ class ValueTool(ImageTool):
 		self.button.SetToggle(True)
 
 	def valueString(self, x, y, value):
-		return '(%d, %d) %s' % (x, y, str(value))
+		return '(%d, %d) %s' % (x, y, '%g' % value)
 
 	def getToolTipString(self, x, y, value):
 		#self.imagepanel.pospanel.set({'x': x, 'y': y, 'value': value})
