@@ -23,4 +23,8 @@ location = m.location()
 #launcher.Launcher((socket.gethostname().lower(),),
 #									nodelocations={'manager': location})
 client = uiclient.UIApp(location['UI'], 'Leginon II')
-m.exit()
+try:
+	m.exit()
+except TypeError:
+	# currentThread() raises TypeError: 'NoneType' object is not callable
+	pass

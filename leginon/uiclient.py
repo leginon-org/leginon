@@ -156,6 +156,8 @@ def WidgetClassFromTypeList(typelist):
 							return entryWidgetClassFactory([float])
 						elif typelist[2] == 'number':
 							return entryWidgetClassFactory([int, float])
+						elif typelist[2] == 'password':
+							return entryWidgetClassFactory([str], True)
 						elif typelist[2] == 'struct':
 							if len(typelist) > 3:
 								if typelist[3] == 'application':
@@ -904,6 +906,7 @@ class wxGridTrayWidget(wxDataWidget):
 
 class wxEntryWidget(wxDataWidget):
 	types = [str]
+	password = False
 	def __init__(self, name, parent, container, value, configuration):
 		self.dirty = False
 		self.sizer = wxBoxSizer(wxHORIZONTAL)
@@ -914,7 +917,10 @@ class wxEntryWidget(wxDataWidget):
 				size = (150, -1)
 			else:
 				size = (-1, -1)
-			self.entry = wxTextCtrl(parent, -1, size=size, style=wxTE_PROCESS_ENTER)
+			style=wxTE_PROCESS_ENTER|wxTE_RICH
+			if self.password:
+				style |= wxTE_PASSWORD
+			self.entry = wxTextCtrl(parent, -1, size=size, style=style)
 		else:
 			self.entry = wxStaticText(parent, -1, '')
 
@@ -923,7 +929,7 @@ class wxEntryWidget(wxDataWidget):
 		self.set(value)
 
 		if self.write:
-			self.entry.SetDefaultStyle(wxTextAttr(wxBLACK))
+			self.entry.SetStyle(0, self.entry.GetLastPosition(), wxTextAttr(wxBLACK))
 			EVT_KILL_FOCUS(self.entry, self.onKillFocus)
 			EVT_TEXT_ENTER(self.entry, self.entry.GetId(), self.onEnter)
 			EVT_CHAR(self.entry, self.onChar)
@@ -935,9 +941,9 @@ class wxEntryWidget(wxDataWidget):
 	def setDirty(self, dirty):
 		self.dirty = dirty
 		if dirty:
-			self.entry.SetDefaultStyle(wxTextAttr(wxRED))
+			self.entry.SetStyle(0, self.entry.GetLastPosition(), wxTextAttr(wxRED))
 		else:
-			self.entry.SetDefaultStyle(wxTextAttr(wxBLACK))
+			self.entry.SetStyle(0, self.entry.GetLastPosition(), wxTextAttr(wxBLACK))
 
 	def onChar(self, evt):
 		self.setDirty(True)
@@ -1009,9 +1015,10 @@ class wxEntryWidget(wxDataWidget):
 		self.entry.Show(show)
 		wxDataWidget._show(self, show)
 
-def entryWidgetClassFactory(itypes):
+def entryWidgetClassFactory(itypes, ispassword=False):
 	class EntryWidgetClass(wxEntryWidget):
 		types = itypes
+		password = ispassword
 	return EntryWidgetClass
 
 class wxCheckBoxWidget(wxDataWidget):
@@ -1984,17 +1991,28 @@ class wxHistoryEntryWidget(wxContainerWidget):
 		wxContainerWidget.__init__(self, name, parent, container, value,
 																configuration)
 
-		#EVT_KILL_FOCUS(self.entry, self.onKillFocus)
+		EVT_KILL_FOCUS(self.combobox, self.onKillFocus)
 		EVT_TEXT_ENTER(self.combobox, self.combobox.GetId(), self.onEnter)
 		EVT_COMBOBOX(self.combobox, self.combobox.GetId(), self.onComboBox)
-		#EVT_CHAR(self.combobox, self.onChar)
+		EVT_CHAR(self.combobox, self.onChar)
 
 		self.sizer.Add(self.label, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
 		self.sizer.Add(self.combobox, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
 		self.layout()
 
-#	def onChar(self, evt):
-#		print evt
+	def setDirty(self, dirty):
+		self.dirty = dirty
+
+	def onChar(self, evt):
+		self.setDirty(True)
+		if evt.GetKeyCode() == WXK_ESCAPE:
+			self.setWidget(self.value)
+		evt.Skip()
+
+	def onKillFocus(self, evt):
+		if self.dirty:
+			self.setFromWidget()
+		evt.Skip()
 
 	def _addWidget(self, name, typelist, value, configuration, children):
 		if name == 'Value':
@@ -2033,8 +2051,11 @@ class wxHistoryEntryWidget(wxContainerWidget):
 	def onComboBox(self, evt):
 		self.setFromWidget(evt)
 
-	def setFromWidget(self, evt):
-		value = evt.GetString()
+	def setFromWidget(self, evt=None):
+		if evt is None:
+			value = self.combobox.GetValue()
+		else:
+			value = evt.GetString()
 		if self.types != [str]:
 			try:
 				value = eval(value)
@@ -2043,6 +2064,7 @@ class wxHistoryEntryWidget(wxContainerWidget):
 					return
 		if type(value) not in self.types:
 			return
+		self.setDirty(False)
 		evt = SetServerEvent([self.name, 'Value'], value)
 		wxPostEvent(self.container.widgethandler, evt)
 
@@ -2051,6 +2073,7 @@ class wxHistoryEntryWidget(wxContainerWidget):
 			self.combobox.SetValue('')
 		else:
 			self.combobox.SetValue(str(value))
+		self.setDirty(False)
 
 	def setHistory(self, history):
 		value = self.combobox.GetValue()

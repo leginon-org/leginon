@@ -129,20 +129,21 @@ class Client(object):
 			raise IOError
 
 	def push(self, idata):
-		self.connect()
+		try:
+			self.connect()
+		except socket.error, e:
+			raise IOError('connect to server failed')
 		try:
 			self.send(cPickle.dumps(idata, True))
 		except cPickle.UnpickleableError:
 			try:
 				self.send(localHack(idata))
 			except:
-				print 'cannot push unpickleable data'
-				raise IOError
+				raise IOError('cannot push unpickleable data')
 		serverexception = cPickle.loads(self.receive())
 		self.close()
 		if serverexception is not None:
-			print 'server failed to be pushed'
-			raise IOError
+			raise IOError('server failed to be pushed')
 
 	def connect(self, family, type=socket.SOCK_STREAM):
 		raise NotImplementedError
@@ -154,8 +155,7 @@ class Client(object):
 			else:
 				raise Exception('no socket available')
 		except Exception, e:
-			print 'socket send exception: %s' % str(e)
-			raise IOError
+			raise IOError('socket send exception: %s' % str(e))
 
 	def receive(self):
 		data = ''
@@ -167,15 +167,13 @@ class Client(object):
 			f.close()
 			return data
 		else:
-			print 'no socket available'
-			raise IOError
+			raise IOError('no socket available')
 
 	def close(self):
 		if self.socket is not None:
 			self.socket.close()
 		else:
-			print 'no socket available'
-			raise IOError
+			raise IOError('no socket available')
 
 Server.clientclass = Client
 Client.serverclass = Server

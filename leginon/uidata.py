@@ -236,6 +236,15 @@ class String(Data):
 		else:
 			return False
 
+class Password(Data):
+	typelist = Data.typelist + ('password',)
+	def validate(self, value):
+		return True
+		if type(value) is str or value is None:
+			return True
+		else:
+			return False
+
 class Array(Data):
 	typelist = Data.typelist + ('array',)
 	def validate(self, value):

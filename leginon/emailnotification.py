@@ -139,7 +139,8 @@ class Email(node.Node):
 
 		self.uiinboundhostname = uidata.String('Hostname', '', 'rw', persist=True)
 		self.uiinboundusername = uidata.String('Username', '', 'rw', persist=True)
-		self.uiinboundpassword = uidata.String('Password', '', 'rw', persist=False)
+		self.uiinboundpassword = uidata.Password('Password', '', 'rw',
+																							persist=False)
 		self.uiinboundinterval = uidata.Integer('Interval', 10, 'rw', persist=True)
 		inboundcontainer = uidata.Container('Inbound')
 		inboundcontainer.addObjects((self.uiinboundhostname,

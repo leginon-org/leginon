@@ -690,15 +690,19 @@ class Manager(node.Node):
 
 	def uiAddNode(self):
 		'''UI helper calling addNode. See addNode.'''
+		self.addmethod.disable()
 		hostname = self.uiaddnodehostname.get()
-		if hostname is None:
+		if not hostname:
 			self.messagelog.error('No hostname entered for adding a node')
+			self.addmethod.enable()
+			return
 		port = self.uiaddnodeport.get()
 		location = {}
 		location['TCP transport'] = {}
 		location['TCP transport']['hostname'] = hostname
 		location['TCP transport']['port'] = port
 		self.addNode(location, (hostname,))
+		self.addmethod.enable()
 
 	def uiLaunch(self):
 		launchername = self.uilauncherselect.getSelectedValue()
@@ -830,8 +834,8 @@ class Manager(node.Node):
 		self.uiaddnodehostname = uidata.HistoryData(uidata.String, 'Hostname',
 																								None, persist=True)
 		self.uiaddnodeport = uidata.Integer('TCP Port', 55555, 'rw')
-		addmethod = uidata.Method('Add', self.uiAddNode)
-		addobjects = (self.uiaddnodehostname, self.uiaddnodeport, addmethod)
+		self.addmethod = uidata.Method('Add', self.uiAddNode)
+		addobjects = (self.uiaddnodehostname, self.uiaddnodeport, self.addmethod)
 		addcontainer = uidata.Container('Add Existing Node')
 		addcontainer.addObjects(addobjects)
 		self.uikillselect = uidata.SingleSelectFromList('Node', [], 0)
