@@ -10,8 +10,6 @@ sqlexpr.py: Build SQL expressions
 
 class VersionError(Exception):
     pass
-class NoDefault:
-    pass
 
 True, False = (1==1), (0==1)
 
@@ -253,8 +251,8 @@ class ConstantSpace:
 ########################################
 
 class Select(SQLExpression):
-    def __init__(self, items, table=NoDefault, where=NoDefault, groupBy=NoDefault,
-                 having=NoDefault, orderBy=NoDefault, limit=NoDefault):
+    def __init__(self, items, table=None, where=None, groupBy=None,
+                 having=None, orderBy=None, limit=None):
         if type(items) is not type([]) and type(items) is not type(()):
             items = [items]
         self.items = items
@@ -280,15 +278,20 @@ class Select(SQLExpression):
 	elif self.table:
             select += " FROM %s" % self.table
         
-        if self.whereClause is not NoDefault:
+        if self.whereClause is not None:
             select += " WHERE %s" % sqlRepr(self.whereClause)
-        if self.groupBy is not NoDefault:
+        if self.groupBy is not None:
             select += " GROUP BY %s" % sqlRepr(self.groupBy)
-        if self.having is not NoDefault:
+        if self.having is not None:
             select += " HAVING %s" % sqlRepr(self.having)
-        if self.orderBy is not NoDefault:
-            select += " ORDER BY %s" % sqlRepr(self.orderBy)
-        if self.limit is not NoDefault:
+        if self.orderBy is not None:
+	    fields = self.orderBy['fields']
+	    sort = 'ASC'
+	    if self.orderBy.has_key('sort'):
+	        sort = self.orderBy['sort']
+	    fields = string.join(map(lambda id: sqlRepr(id), fields), ', ')
+            select += " ORDER BY %s %s" % (fields, sort,)
+        if self.limit is not None:
             select += " LIMIT %s" % sqlRepr(self.limit)
         return select
 
@@ -371,7 +374,7 @@ class ColumnSpec(dict):
 				pieces.append('NOT NULL')
 			if default:
 	                        pieces.append('DEFAULT')
-				pieces.append('%s')
+				pieces.append("'%s'" % default)
 				sql_args.append(default)
 			if auto:
 				pieces.append('AUTO_INCREMENT')
@@ -426,7 +429,7 @@ class CreateTable(SQLExpression):
         return create
 
 class Insert(SQLExpression):
-    def __init__(self, table, valueList=None, values=None, template=NoDefault):
+    def __init__(self, table, valueList=None, values=None, template=None):
         self.template = template
         self.table = table
         if valueList:
@@ -441,10 +444,10 @@ class Insert(SQLExpression):
         insert = "INSERT INTO %s" % self.table
         allowNonDict = True
         template = self.template
-        if template is NoDefault and type(self.valueList[0]) is type({}):
+        if template is None and type(self.valueList[0]) is type({}):
             template = self.valueList[0].keys()
             allowNonDict = False
-        if template is not NoDefault:
+        if template is not None:
             insert += " (%s)" % ", ".join(template)
         first = True
         insert += " VALUES "
@@ -454,7 +457,7 @@ class Insert(SQLExpression):
             else:
                 insert += ", "
             if type(value) is type({}):
-                if template is NoDefault:
+                if template is None:
                     raise TypeError, "You can't mix non-dictionaries with dictionaries in an INSERT if you don't provide a template (%s)" % repr(value)
                 value = dictToList(template, value)
             elif not allowNonDict:
@@ -471,7 +474,7 @@ def dictToList(template, dict):
     return list
 
 class Update(SQLExpression):
-    def __init__(self, table, values, template=NoDefault, where=NoDefault):
+    def __init__(self, table, values, template=None, where=None):
         self.table = table
         self.values = values
         self.template = template
@@ -480,7 +483,7 @@ class Update(SQLExpression):
         update = "%s %s" % (self.sqlName(), self.table)
         update += " SET"
         first = True
-        if self.template is not NoDefault:
+        if self.template is not None:
             for i in range(len(self.template)):
                 if first:
                     first = False
@@ -494,7 +497,7 @@ class Update(SQLExpression):
                 else:
                     update += ","
                 update += " %s=%s" % (key, sqlRepr(value))
-        if self.whereClause is not NoDefault:
+        if self.whereClause is not None:
             update += " WHERE %s" % repr(self.whereClause)
         return update
     def sqlName(self):
@@ -503,9 +506,9 @@ class Update(SQLExpression):
 class Delete(SQLExpression):
     """To be safe, this will signal an error if there is no where clause,
     unless you pass in where=None to the constructor."""
-    def __init__(self, table, where=NoDefault):
+    def __init__(self, table, where=None):
         self.table = table
-        if where is NoDefault:
+        if where is None:
             raise TypeError, "You must give a where clause or pass in None to indicate no where clause"
         self.whereClause = where
     def sqlRepr(self):
@@ -599,12 +602,14 @@ if __name__ == "__main__":
 >>> Delete(table.preset, where="expo"==table.preset.name)
 >>> Update(table.preset, {"lastModified": const.NOW()})
 >>> Replace(table.preset, ["expo1", 66000, -200, 0.867543], template=('name', 'Mag', 'Defocus', 'Dose'))
->>> CreateTable('myTable2', [{'Field': 'id', 'Type': 'int(16)', 'Key': 'PRIMARY', 'Extra':'auto_increment'}, {'Field': 'filename', 'Type': 'VARCHAR(50)', 'Key': 'INDEX', 'Index': ['filename']}, {'Field': 'filenameFR', 'Type': 'VARCHAR(50)', 'Key': 'INDEX', 'Index': ['filename']}], 'ISAM')
+>>> CreateTable('myTable2', [{'Field': 'id', 'Type': 'int(16) ', 'Key': 'PRIMARY', 'Extra':'auto_increment'}, {'Field': 'filename', 'Type': 'VARCHAR(50)', 'Key': 'INDEX', 'Index': ['filename']}, {'Field': 'filenameFR', 'Type': 'VARCHAR(50)', 'Key': 'INDEX', 'Index': ['filename']}], 'ISAM')
 >>> CreateTable('PEOPLE', [{'Field': 'id', 'Type': 'int(16)', 'Key': 'PRIMARY', 'Extra':'auto_increment'}, {'Field': 'Name', 'Type': 'VARCHAR(50)'}, {'Field': 'Address', 'Type': 'VARCHAR(50)'}, {'Field': 'City', 'Type': 'VARCHAR(50)'}, {'Field': 'State', 'Type': 'VARCHAR(50)'}])
->>> CreateTable('OBJECT', [{'Field': 'Id', 'Type': 'int(16)', 'Key': 'PRIMARY', 'Extra':'auto_increment'}, {'Field': 'hash', 'Type': 'VARCHAR(64)', 'Key': 'UNIQUE', 'Index': ['hash']}, {'Field': 'objectKey', 'Type': 'mediumblob', 'Key': 'UNIQUE', 'Index': ['objectKey(255)']}, {'Field': 'object', 'Type': 'longblob'}, {'Field': 'objectKeyString', 'Type': 'text'}, {'Field': 'objectString', 'Type': 'text'}])
 >>> Replace("tablename", ["expo1", 66000, -200, 0.867543], template=('name', 'Mag', 'Defocus', 'Dose'))
 >>> Select([table.preset.name, const.count(table.preset.Id)], where=LIKE(table.preset.name, "%square%"))
 >>> DropTable(table.preset)
+>>> CreateTable('OBJECT', [{'Field': 'Id', 'Type': 'int(20) unsigned', 'Key': 'PRIMARY', 'Extra':'auto_increment'}, {'Field': 'hash', 'Type': 'VARCHAR(64)', 'Key': 'UNIQUE', 'Index': ['hash']}, {'Field': 'objectKey', 'Type': 'varchar(50)', 'Key': 'UNIQUE', 'Index': ['objectKey(50)'], 'Null' : 'YES', 'Default': 'Denis'}, {'Field': 'object', 'Type': 'longblob'}, {'Field': 'objectKeyString', 'Type': 'text'}, {'Field': 'objectString', 'Type': 'text'},{'Field':'timestamp','Type':'timestamp','Null':'YES', 'Key':'INDEX'}])
+>>> Select([table.preset.name, table.preset.Defocus], where=LIKE(table.preset.name, "%square%"), orderBy={'fields':('id', 'name'), 'sort':'DESC'})
+>>> Select([table.PRESET.name, table.PRESET.Defocus], where=LIKE(table.PRESET.name, "%square%"), orderBy=None)
 """
     for expr in tests.split('\n'):
         if not expr.strip(): continue

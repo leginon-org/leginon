@@ -141,7 +141,12 @@ class BeamTiltCalibrationClient(CalibrationClient):
 		]
 		self.db.createSQLTable('beamtilt', columns)
 		self.db.beamtilt = self.db.Table('beamtilt', ['magnification', 'type', 'm1_1', 'm1_2', 'm2_1', 'm2_2'])
-		self.db.beamtilt.magtype = self.db.beamtilt.Index(['magnification', 'type'])
+		self.db.beamtilt.magtype = self.db.beamtilt.Index(['magnification', 'type'],
+					   orderBy = {'fields':('timestamp',),'sort':'DESC'})
+
+		self.db.beamtiltMatrix = self.db.Table('beamtilt', ['m1_1', 'm1_2', 'm2_1', 'm2_2'])
+		self.db.beamtiltMatrix.magtype = self.db.beamtilt.Index(['magnification', 'type'],
+					   orderBy = {'fields':('timestamp',),'sort':'DESC'})
 
 	def setCalibration(self, key, calibration):
 		dat = data.MatrixCalibrationData(('calibrations',key), calibration)
@@ -157,7 +162,7 @@ class BeamTiltCalibrationClient(CalibrationClient):
 		self.setCalibration(key, matrix)
 
 	def getMatrixDB(self, mag, type):
-		result = self.db.beamtilt.magtype[mag,type]
+		result = self.db.beamtiltMatrix.magtype[mag,type]
 		rows = result.fetchall()
 
 		print rows

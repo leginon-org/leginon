@@ -67,6 +67,13 @@ ACCESSING DATA
 This defines an index member to Preset called 'Name', which allows
 searching by 'Name'. 
 
+>>> db.Preset.NameDesc= db.Preset.Index(['Name'], orderBy = {'fields':('id',),'sort':'DESC'})
+
+This defines an index member to Preset called 'Name', which allows
+searching by 'Name'. Also the result is sorted by id in reverse order.
+Note: The default value of 'sort' is 'ASC'
+
+
 Accessing your data is very similar to using dictionaries. To
 retrieve information:
 
@@ -84,9 +91,13 @@ into the database. Assuming a pre-defined Preset object:
 >>> class Preset(ObjectBuilder):
 ...     table = "PRESET"
 ...	columns = [ 'Name', 'Defocus', 'Dose', 'Mag' ]
-...     indices = [ ('Name', ['Name']), ('NameMag', ['Name', 'Mag']) ]
+...     indices = [ ('Name', ['Name'], {'orderBy':{'fields':('id',)}}),
+...		    ('NameMag', ['Name', 'Mag']) ]
 ...
+
 >>> myPreset = Preset().register(db)
+
+
 
 p2 = Preset('exposure', -2000, 0.34565, 66000)
 
@@ -129,9 +140,11 @@ OR
 
 
 import sqlexpr
-# import MySQLdb
+import copy
 import sqldb
 import string
+import re
+import Numeric
 from types import *
 
 class SQLDict:
@@ -189,9 +202,10 @@ class SQLDict:
 
 	    self.db = db
 	    self.table = table
-	    self.columns = tuple(map(lambda col: sqlexpr.Field(self.table,col), columns))
+	    self.columns = columns
+	    self.fields = tuple(map(lambda col: sqlexpr.Field(self.table,col), self.columns))
 
-	def select(self, WHERE=''):
+	def select(self, where=None, orderBy=None):
 
 	    """Execute a SELECT command based on this Table and Index. The
 	    required argument i is a tuple containing the values to match
@@ -204,8 +218,12 @@ class SQLDict:
 	    Usually you don't need to call select() directly; this is done
 	    by the indexing operations (Index.__getitem__)."""
 
+	    if orderBy is not None:
+	        orderBy = copy.deepcopy(orderBy)
+		orderBy['fields'] = map(lambda id: sqlexpr.Field(self.table, id), orderBy['fields'])
+
 	    c = self.cursor()
-	    q = sqlexpr.Select(items=self.columns, table=self.table, where=WHERE).sqlRepr()
+	    q = sqlexpr.Select(items=self.fields, table=self.table, where=where, orderBy=orderBy).sqlRepr()
 	    c.execute(q)
 	    return c
 
@@ -242,8 +260,9 @@ class SQLDict:
 		Index handler for a _Table object.
 	    """
 
-	    def __init__(self, table, indices, WHERE):
+	    def __init__(self, table, indices, **kwargs):
 		self.table = table
+		self.kwargs= kwargs
 		ind = map(lambda id: sqlexpr.Field(self.table.table, id), indices)
 		self.fields = ind
 
@@ -260,7 +279,7 @@ class SQLDict:
 		if type(i) == ListType: i = tuple(i)
 		elif type(i) != TupleType: i = (i,)
 		w = sqlexpr.AND_EQUAL(zip(self.fields,i))
-		return self.table.select(WHERE=w)
+		return self.table.select(where=w, **self.kwargs)
 
 	    def __delitem__(self, i):
 		"""Delete items in the database matching i."""
@@ -270,18 +289,19 @@ class SQLDict:
 		return self.table.delete(i, WHERE=w)
 
 
-	def Index(self, indices=[], WHERE=''):
+	def Index(self, indices=[], **kwargs):
 
 	    """Create an index definition for this table.
 
 	    Usage: db.table.Index(indices)
 	    Where: indices   = tuple or list of column names to key on
+		   orderBy = optional ORDER BY clause.
 		   WHERE     = optional WHERE clause.
 		   WHERE not implemented YET...
 
 	    """
 
-	    return self._Index(self, indices, WHERE)
+	    return self._Index(self, indices, **kwargs)
 
 	class _Cursor:
 
@@ -289,9 +309,11 @@ class SQLDict:
 	    load the tuples returned from the database into a more interesting
 	    object."""
 
-	    def __init__(self, db, load):
+	    def __init__(self, db, load, columns):
 		self.cursor = db.cursor()
+		self.columns = columns
 		self.load = load
+		self.db = db
 
 	    def fetchone(self):
 		"""Fetch one object from current cursor context."""
@@ -308,14 +330,38 @@ class SQLDict:
 		Can specify an optional size argument for number of rows."""
 		return map(self.load, apply(self.cursor.fetchmany, size))
 
+	    def fetchonedict(self):
+		"""Fetch one object from current cursor context as a dictionary."""
+		row = self.fetchone()
+		return self.__2dict(self.columns,row)
+		
+	    def fetchalldict(self):
+		"""Fetch all object from current cursor context as a
+		   list of  dictionaries."""
+		rows = self.fetchall()
+		alldict=[]
+		for row in rows:
+			alldict.append(self.__2dict(self.columns,row))
+		return alldict
+
+	    def fetchalldict2(self):
+		"""Fetch all object from current cursor context as a
+		   list of  dictionaries."""
+		rows = self.fetchall()
+	    	return list(map(lambda row: self.__2dict(self.columns,row), rows))
+
 	    def __getattr__(self, attr):
 		return getattr(self.cursor, attr)
+
+	    def __2dict(self,keys,values):
+		"""Returns a dictionary from a list or tuple of keys and values."""
+		return dict(zip(keys,values))
 
 
 	def cursor(self):
 	    """Returns a new _Cursor object which is load-aware and
 	    otherwise behaves normally."""
-	    return self._Cursor(self.db, self.load)
+	    return self._Cursor(self.db, self.load, self.columns)
 
 
     def Table(self, table, columns):
@@ -367,6 +413,16 @@ class ObjectBuilder:
 	    setattr(self, self.columns[i], args[i])
 	self.set_keywords(dict=kw)
 
+    def __format_indices(self, indices):
+        nindices=[]
+        for indice in indices:
+                if len(indice)<3:
+                        nindices.append(tuple(list(indice)+[{}]))
+                else:
+                        nindices.append(indice)
+        return nindices
+
+
     def set_keywords(self, skim=0, dict={}):
 	"""
 	Assign attributes using keyword arguments. If skim=0 (default),
@@ -411,7 +467,117 @@ class ObjectBuilder:
 	t = db.Table(self.table, self.columns)
 	loader = lambda t, s=self.__class__: apply(s, t)
 	setattr(t, 'load', loader)
-	for indexname, columns in self.indices:
-	    setattr(t, indexname, t.Index(columns))
+        indices = self.__format_indices(self.indices)
+	for indexname, columns, args in indices:
+	    setattr(t, indexname, t.Index(columns, **args))
 	return t
 
+###################################
+# Database insert  tool functions #
+###################################
+
+def getFlatDict(in_dict):
+	"""
+	This function returns a flat dictionary. For example:
+	>>> d = { 'BShift':{'X': 45.0, 'Y': 18.0}, 'IShift':{'X': 8.0, 'Y': 6.0}}
+	>>> getFlatDict(d)
+
+	{'IShift_Y': 6.0, 'BShift_Y': 18.0, 'BShift_X': 45.0, 'IShift_X': 8.0}
+
+	The keys of the sub-dictionaries concatenate the parent key.
+
+	"""
+
+	items = {}
+	try:
+		keys = in_dict.keys()
+	
+	except AttributeError:
+		raise TypeError("Must be a Dictionary") 
+
+	for key in keys:
+		value = in_dict[key]
+		if type(value) is type({}):
+			d = getFlatDict(value)
+			nd={}
+			# build the new keys
+			for nk in d:
+				fk = '%s_%s' % (key,nk)
+				# increment a number if key exists already
+				i=0
+				while in_dict.has_key(fk):
+					i+=1
+					fk = re.sub('_[0-9]*$','',fk)
+					fk += '_%i' % (i)
+				nd.update({fk:d[nk]})
+			items.update(nd)
+		else:
+			items[key] = value	
+	return items
+
+
+def dict2matrix(in_dict):
+	"""
+	This function returns a matrix from a dictionary.
+	Each key from in_dict must have 2 numbers representing [row][colum].
+	They can be separated by any characters.
+									 _         _
+									|           |
+									| 1   2   j |
+									|           |
+	{'m1_1': 1, 'm1_2': 2, 'm2_1': 3, 'm2_2': 4, ..., 'mi_j':n} =>	| 3   4   . |
+									|       .   |
+									| i   .   n |
+									|_         _|
+
+	"""
+
+	# Get the shape and size of the matrix
+	ij=[]
+	for m in in_dict:
+		i=eval(re.findall('\d+',m)[0])
+		j=eval(re.findall('\d+',m)[1])
+		ij.append((i,j))
+	shape = max(ij)
+	size  = shape[0]*shape[1]
+
+	# Build the matrix
+	matrix = Numeric.zeros(size)
+	matrix.shape = shape
+	for m in in_dict:
+		i=eval(re.findall('\d+',m)[0])-1
+		j=eval(re.findall('\d+',m)[1])-1
+		matrix[i][j]=in_dict[m]
+
+	return matrix
+		
+def matrix2dict(matrix):
+	"""
+	This function returns a dictionary which represents a matrix.
+	matrix must be at least 2x1 or 1x2 Numeric arrays.
+	 _         _
+	|           |
+	| 1   2   j |
+	|           |
+	| 3   4   . |     =>   {'m1_1': 1, 'm1_2': 2, 'm2_1': 3, 'm2_2': 4, ..., 'mi_j':n}
+	|       .   |
+	| i   .   n |
+	|_         _|
+
+	"""
+	try:
+		if not (matrix.shape >= (1, 1) and len(matrix.shape) > 1):
+			raise ValueError("Wrong shape: must be at least 2x1 or 1x2")
+	except AttributeError:
+		raise TypeError("Must be Numeric array") 
+	d={}
+	i=0
+	for row in matrix:
+		i+=1
+		j=1
+		for col in row:
+			k = "m%s_%s" % (i,j)
+			v = matrix[i-1,j-1]
+			d[k]=v
+			j+=1
+	return d
