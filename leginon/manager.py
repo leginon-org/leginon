@@ -817,20 +817,25 @@ class Manager(node.Node):
 
 		self.messagelog = uidata.MessageLog('Message Log')
 
-		self.uilaunchname = uidata.String('Name', '', 'rw')
-		self.uiclassselect = uidata.SingleSelectFromList('Node Class', [], 0)
-		self.uilauncherselect = uidata.SingleSelectFromList('Launcher', [], 0)
+		self.uinodeinfo = uidata.Struct('Node Information', {}, 'r',
+																	tooltip='Information about current running '
+																	+ 'nodes including their class and location')
+
+		self.uilaunchname = uidata.String('Name', '', 'rw',
+															tooltip='Name to assign node when it is created')
+		self.uilauncherselect = uidata.SingleSelectFromList('Launcher', [], 0,
+															tooltip='Launcher to create node on')
+		self.uiclassselect = uidata.SingleSelectFromList('Node Class', [], 0,
+															tooltip='Class of node to be created')
 		self.uilauncherselect.setCallback(self.uiLauncherSelectCallback)
-		launchmethod = uidata.Method('Create', self.uiLaunch)
+		launchmethod = uidata.Method('Create', self.uiLaunch,
+																	tooltip='Create a new node')
 		launchobjects = (self.uilaunchname, self.uilauncherselect,
 											self.uiclassselect,
 											launchmethod)
 		self.launchcontainer = uidata.Container('Create New Node')
 		self.launchcontainer.addObjects(launchobjects)
 
-
-		self.uinodeinfo = uidata.Struct('Node Information', {}, 'r')
-		infoobjects = (self.uinodeinfo,)
 		self.uiaddnodehostname = uidata.HistoryData(uidata.String, 'Hostname',
 																								None, persist=True)
 		self.uiaddnodeport = uidata.Integer('TCP Port', 55555, 'rw')

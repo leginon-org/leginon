@@ -364,12 +364,11 @@ class ManagerSetup(object):
 		self.manager.uicontainer.addObject(self.logincontainer)
 
 	def createSelectSessionContainer(self):
-		self.sessionselector = uidata.SingleSelectFromList('Session', [], 0, 'rw')
+		self.sessionselector = uidata.SingleSelectFromList('Session', [], 0, 'rw',
+													tooltip='Leginon II session to be used when starting')
 		self.selectsessioncomment = uidata.String('Comment', '', 'r')
-		self.selectsessioninstrument = uidata.String('Instrument', '', 'r',
-				tooltip='Instrument used with this session')
-		self.selectsessionpath = uidata.String('Image Path', '', 'r',
-				tooltip='Path where images are stored for use with the database')
+		self.selectsessioninstrument = uidata.String('Instrument', '', 'r')
+		self.selectsessionpath = uidata.String('Image Path', '', 'r')
 
 		self.sessionselector.setCallback(self.onSessionSelect)
 

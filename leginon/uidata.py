@@ -284,8 +284,8 @@ class Application(Struct):
 
 class Container(Object):
 	typelist = Object.typelist + ('container',)
-	def __init__(self, name):
-		Object.__init__(self, name)
+	def __init__(self, name, tooltip=None):
+		Object.__init__(self, name, tooltip)
 		self.uiobjectdict = {}
 		self.uiobjectlist = []
 
@@ -406,8 +406,8 @@ class SelectFromList(Container):
 	typelist = Container.typelist + ('select from list',)
 	selectclass = Array
 	def __init__(self, name, listvalue, selected, permissions='r',
-								callback=None, postcallback=None, persist=False):
-		Container.__init__(self, name)
+								callback=None, postcallback=None, persist=False, tooltip=None):
+		Container.__init__(self, name, tooltip)
 		self.list = Array('List', listvalue, permissions, persist=persist)
 		self.selected = self.selectclass('Selected', selected, 'rw', callback,
 																			postcallback, persist)
@@ -453,9 +453,9 @@ class SingleSelectFromList(SelectFromList):
 	typelist = SelectFromList.typelist + ('single',)
 	selectclass = Integer
 	def __init__(self, name, listvalue, selected, permissions='r',
-								callback=None, postcallback=None, persist=False):
+								callback=None, postcallback=None, persist=False, tooltip=None):
 		SelectFromList.__init__(self, name, listvalue, selected, permissions,
-														callback, postcallback, persist)
+														callback, postcallback, persist, tooltip)
 
 	def getSelectedValue(self, selected=None):
 		if selected is None:
@@ -471,8 +471,8 @@ class SingleSelectFromList(SelectFromList):
 class HistoryData(Container):
 	typelist = Container.typelist + ('history data',)
 	def __init__(self, uidatatype, name, value, history=[], callback=None,	
-								persist=False, length=10):
-		Container.__init__(self, name)
+								persist=False, tooltip=None, length=10):
+		Container.__init__(self, name, tooltip)
 		#self.persist = persist
 		self.length = length
 		self.valuecallback = callback
@@ -522,8 +522,8 @@ class SelectFromStruct(Container):
 	typelist = Container.typelist + ('select from struct',)
 	# callback
 	def __init__(self, name, structvalue, selectedvalue, permissions='r',
-								persist=False):
-		Container.__init__(self, name)
+								persist=False, tooltip=None):
+		Container.__init__(self, name, tooltip)
 		self.struct = Struct('Struct', structvalue, permissions, persist=persist)
 		self.selected = Array('Selected', selectedvalue, 'rw', persist=persist)
 		self.persist = persist
@@ -591,8 +591,8 @@ class MessageLog(Container):
 
 class Dialog(ExternalContainer):
 	typelist = ExternalContainer.typelist + ('dialog',)
-	def __init__(self, name):
-		ExternalContainer.__init__(self, name)
+	def __init__(self, name, tooltip=None):
+		ExternalContainer.__init__(self, name, tooltip)
 
 	def destroy(self):
 		try:
