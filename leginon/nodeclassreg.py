@@ -87,7 +87,6 @@ registerNodeClass('robot', 'RobotNotification')
 registerNodeClass('EM', 'EM')
 registerNodeClass('emailnotification', 'Email')
 registerNodeClass('fftmaker', 'FFTMaker')
-if sys.platform == 'win32':
-#	registerNodeClass('webcam', 'Webcam')
-	registerNodeClass('robot', 'RobotControl')
+#registerNodeClass('webcam', 'Webcam')
+registerNodeClass('robot', 'RobotControl')
 

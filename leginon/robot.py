@@ -169,526 +169,526 @@ if sys.platform == 'win32':
 	import pywintypes
 	import Queue
 
-	class RobotControl(RobotNode):
-		eventinputs = RobotNode.eventinputs + [event.ExtractGridEvent,
-																						event.InsertGridEvent,]
-		eventoutputs = RobotNode.eventoutputs + [event.GridInsertedEvent,
-																							event.GridExtractedEvent,
-																							event.EmailEvent]
-		def __init__(self, id, session, managerlocation, **kwargs):
+class RobotControl(RobotNode):
+	eventinputs = RobotNode.eventinputs + [event.ExtractGridEvent,
+																					event.InsertGridEvent,]
+	eventoutputs = RobotNode.eventoutputs + [event.GridInsertedEvent,
+																						event.GridExtractedEvent,
+																						event.EmailEvent]
+	def __init__(self, id, session, managerlocation, **kwargs):
 
-			self.simulate = False
-			#self.simulate = True
+		self.simulate = False
+		#self.simulate = True
 
-			RobotNode.__init__(self, id, session, managerlocation, **kwargs)
-			self.gridorder = []
-			self.gridnumber = None
-			self.griddata = None
-			self.timings = {}
-			self.gridcleared = threading.Event()
+		RobotNode.__init__(self, id, session, managerlocation, **kwargs)
+		self.gridorder = []
+		self.gridnumber = None
+		self.griddata = None
+		self.timings = {}
+		self.gridcleared = threading.Event()
 
-			self.emailclient = emailnotification.EmailClient(self)
-	
-			# if label is same, kinda screwed
-			self.gridtrayids = {}
-			projectdata = project.ProjectData()
-			gridboxes = projectdata.getGridBoxes()
-			for i in gridboxes.getall():
-				self.gridtrayids[i['label']] = i['gridboxId']
+		self.emailclient = emailnotification.EmailClient(self)
 
-			self.queue = Queue.Queue()
-			threading.Thread(name='robot control queue handler thread',
-												target=self._queueHandler).start()
-	
-			self.addEventInput(event.InsertGridEvent, self.handleInsert)
-			self.addEventInput(event.ExtractGridEvent, self.handleExtract)
+		# if label is same, kinda screwed
+		self.gridtrayids = {}
+		projectdata = project.ProjectData()
+		gridboxes = projectdata.getGridBoxes()
+		for i in gridboxes.getall():
+			self.gridtrayids[i['label']] = i['gridboxId']
 
-			self.defineUserInterface()
-			self.start()
+		self.queue = Queue.Queue()
+		threading.Thread(name='robot control queue handler thread',
+											target=self._queueHandler).start()
 
-		def _queueHandler(self):
-			pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
-			if self.simulate:
-					self.communication = TestCommunication()
-			else:
-				try:
-					self.communication = win32com.client.Dispatch(
-																									'RobotCommunications.Signal')
-				except pywintypes.com_error, e:
-					raise RuntimeError('Cannot initialized robot communications')
+		self.addEventInput(event.InsertGridEvent, self.handleInsert)
+		self.addEventInput(event.ExtractGridEvent, self.handleExtract)
 
-			while True:
-				request = self.queue.get()
-				if isinstance(request, InsertRequest):
-					self._insert()
-				elif isinstance(request, ExtractRequest):
-					self._extract()
-				elif isinstance(request, ExitRequest):
-					request.event.set()
-					break
-				else:
-					self.logger.error('Invalid request put in queue')
+		self.defineUserInterface()
+		self.start()
+
+	def _queueHandler(self):
+		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
+		if self.simulate:
+				self.communication = TestCommunication()
+		else:
+			try:
+				self.communication = win32com.client.Dispatch(
+																								'RobotCommunications.Signal')
+			except pywintypes.com_error, e:
+				raise RuntimeError('Cannot initialized robot communications')
+
+		while True:
+			request = self.queue.get()
+			if isinstance(request, InsertRequest):
+				self._insert()
+			elif isinstance(request, ExtractRequest):
+				self._extract()
+			elif isinstance(request, ExitRequest):
 				request.event.set()
-			del self.communication
-
-		def exit(self):
-			request = ExitRequest()
-			self.queue.put(request)
-			request.event.wait()
-			RobotNode.exit(self)
-
-		def zeroStage(self):
-			self.setScopeStatusMessage('Zeroing stage position')
-			self.setScope('stage position', {'x': 0.0, 'y': 0.0, 'z': 0.0, 'a': 0.0})
-			self.setScopeStatusMessage('Stage position is zeroed')
-
-		def holderNotInScope(self):
-			self.setScopeStatusMessage('Verifying there is no holder inserted')
-			self.waitScope('holder status', 'not inserted')
-			self.setScopeStatusMessage('No holder currently inserted')
-
-		def holderInScope(self):
-			self.setScopeStatusMessage('Verifying holder is inserted')
-			self.waitScope('holder status', 'inserted')
-			self.setScopeStatusMessage('No holder currently inserted')
-
-		def vacuumReady(self):
-			self.setScopeStatusMessage('Verifying vacuum is ready')
-			self.waitScope('vacuum status', 'ready', 0.5, 600)
-			self.setScopeStatusMessage('Vacuum is ready')
-
-		def closeColumnValves(self):
-			self.setScopeStatusMessage('Closing column valves')
-			self.setScope('column valves', 'closed')
-			self.setScopeStatusMessage('Verifying column valves are closed')
-			self.waitScope('column valves', 'closed', 0.5, 15)
-			self.setScopeStatusMessage('Column valves are closed')
-
-		def turboPumpOn(self):
-			self.setScopeStatusMessage('Turning on turbo pump')
-			self.setScope('turbo pump', 'on')
-			self.setScopeStatusMessage('Verifying turbo pump is on')
-			self.waitScope('turbo pump', 'on', 0.5, 300)
-			self.setScopeStatusMessage('Turbo pump is on')
-
-		def stageReady(self):
-			self.setScopeStatusMessage('Waiting for stage to be ready')
-			self.waitScope('stage status', 'ready', 0.5, 600)
-			self.setScopeStatusMessage('Stage is ready')
-
-		def setHolderType(self):
-			self.setScopeStatusMessage('Setting holder type to single tilt')
-			self.setScope('holder type', 'single tilt')
-			self.setScopeStatusMessage('Verifying holder type is set to single tilt')
-			self.waitScope('holder type', 'single tilt', 0.5, 60)
-			self.setScopeStatusMessage('Holder type is set to single tilt')
-
-		def scopeReadyForInsertion1(self):
-			self.setScopeStatusMessage('Readying microscope for insertion step 1')
-			self.zeroStage()
-			self.holderNotInScope()
-			self.vacuumReady()
-			self.closeColumnValves()
-			self.turboPumpOn()
-			self.stageReady()
-			self.setScopeStatusMessage('Microscope ready for insertion step 1')
-
-		def scopeReadyForInsertion2(self):
-			self.setScopeStatusMessage('Readying microscope for insertion step 2')
-			self.setHolderType()
-			self.stageReady()
-			self.setScopeStatusMessage('Microscope ready for insertion step 2')
-
-		def scopeReadyForExtraction(self):
-			self.setScopeStatusMessage('Readying microscope for extraction')
-			self.zeroStage()
-			self.holderInScope()
-			self.vacuumReady()
-			self.closeColumnValves()
-			self.stageReady()
-			self.setScopeStatusMessage('Microscope ready for extraction')
-
-		def signalRobotToInsert1(self):
-			self.setRobotStatusMessage('Signaling robot to begin insertion step 1')
-			self.communication.Signal1 = 1
-			self.setRobotStatusMessage('Signaled robot to begin insertion step 1')
-
-		def signalRobotToInsert2(self):
-			self.setRobotStatusMessage('Signaling robot to begin insertion step 2')
-			self.communication.Signal3 = 1
-			self.setRobotStatusMessage('Signaled robot to begin insertion step 2')
-
-		def signalRobotToExtract(self):
-			self.setRobotStatusMessage('Signaling robot to begin extraction')
-			self.communication.Signal6 = 1
-			self.setRobotStatusMessage('Signaled robot to begin extraction')
-
-		def emailGridClear(self):
-			if self.gridnumber is None:
-				gridnumber = '(unknown)'
+				break
 			else:
-				gridnumber = self.gridnumber
-			subject = 'Grid #%s failed to be removed from specimen holder properly' % gridnumber
-			text = 'Reply to this message if grid is no longer in the specimen holder.\nImage of the specimen holder is attached.'
-			time.sleep(5.0)
+				self.logger.error('Invalid request put in queue')
+			request.event.set()
+		del self.communication
+
+	def exit(self):
+		request = ExitRequest()
+		self.queue.put(request)
+		request.event.wait()
+		RobotNode.exit(self)
+
+	def zeroStage(self):
+		self.setScopeStatusMessage('Zeroing stage position')
+		self.setScope('stage position', {'x': 0.0, 'y': 0.0, 'z': 0.0, 'a': 0.0})
+		self.setScopeStatusMessage('Stage position is zeroed')
+
+	def holderNotInScope(self):
+		self.setScopeStatusMessage('Verifying there is no holder inserted')
+		self.waitScope('holder status', 'not inserted')
+		self.setScopeStatusMessage('No holder currently inserted')
+
+	def holderInScope(self):
+		self.setScopeStatusMessage('Verifying holder is inserted')
+		self.waitScope('holder status', 'inserted')
+		self.setScopeStatusMessage('No holder currently inserted')
+
+	def vacuumReady(self):
+		self.setScopeStatusMessage('Verifying vacuum is ready')
+		self.waitScope('vacuum status', 'ready', 0.5, 600)
+		self.setScopeStatusMessage('Vacuum is ready')
+
+	def closeColumnValves(self):
+		self.setScopeStatusMessage('Closing column valves')
+		self.setScope('column valves', 'closed')
+		self.setScopeStatusMessage('Verifying column valves are closed')
+		self.waitScope('column valves', 'closed', 0.5, 15)
+		self.setScopeStatusMessage('Column valves are closed')
+
+	def turboPumpOn(self):
+		self.setScopeStatusMessage('Turning on turbo pump')
+		self.setScope('turbo pump', 'on')
+		self.setScopeStatusMessage('Verifying turbo pump is on')
+		self.waitScope('turbo pump', 'on', 0.5, 300)
+		self.setScopeStatusMessage('Turbo pump is on')
+
+	def stageReady(self):
+		self.setScopeStatusMessage('Waiting for stage to be ready')
+		self.waitScope('stage status', 'ready', 0.5, 600)
+		self.setScopeStatusMessage('Stage is ready')
+
+	def setHolderType(self):
+		self.setScopeStatusMessage('Setting holder type to single tilt')
+		self.setScope('holder type', 'single tilt')
+		self.setScopeStatusMessage('Verifying holder type is set to single tilt')
+		self.waitScope('holder type', 'single tilt', 0.5, 60)
+		self.setScopeStatusMessage('Holder type is set to single tilt')
+
+	def scopeReadyForInsertion1(self):
+		self.setScopeStatusMessage('Readying microscope for insertion step 1')
+		self.zeroStage()
+		self.holderNotInScope()
+		self.vacuumReady()
+		self.closeColumnValves()
+		self.turboPumpOn()
+		self.stageReady()
+		self.setScopeStatusMessage('Microscope ready for insertion step 1')
+
+	def scopeReadyForInsertion2(self):
+		self.setScopeStatusMessage('Readying microscope for insertion step 2')
+		self.setHolderType()
+		self.stageReady()
+		self.setScopeStatusMessage('Microscope ready for insertion step 2')
+
+	def scopeReadyForExtraction(self):
+		self.setScopeStatusMessage('Readying microscope for extraction')
+		self.zeroStage()
+		self.holderInScope()
+		self.vacuumReady()
+		self.closeColumnValves()
+		self.stageReady()
+		self.setScopeStatusMessage('Microscope ready for extraction')
+
+	def signalRobotToInsert1(self):
+		self.setRobotStatusMessage('Signaling robot to begin insertion step 1')
+		self.communication.Signal1 = 1
+		self.setRobotStatusMessage('Signaled robot to begin insertion step 1')
+
+	def signalRobotToInsert2(self):
+		self.setRobotStatusMessage('Signaling robot to begin insertion step 2')
+		self.communication.Signal3 = 1
+		self.setRobotStatusMessage('Signaled robot to begin insertion step 2')
+
+	def signalRobotToExtract(self):
+		self.setRobotStatusMessage('Signaling robot to begin extraction')
+		self.communication.Signal6 = 1
+		self.setRobotStatusMessage('Signaled robot to begin extraction')
+
+	def emailGridClear(self):
+		if self.gridnumber is None:
+			gridnumber = '(unknown)'
+		else:
+			gridnumber = self.gridnumber
+		subject = 'Grid #%s failed to be removed from specimen holder properly' % gridnumber
+		text = 'Reply to this message if grid is no longer in the specimen holder.\nImage of the specimen holder is attached.'
+		time.sleep(5.0)
+		try:
+			image = Image.open(self.imagefilename.get())
+			imagestring = emailnotification.PILImage2String(image)
+		except:
+			imagestring = None
+		self.emailclient.sendAndSet(self.gridcleared, subject, text, imagestring)
+
+	def waitForGridClear(self):
+		self.gridcleared.clear()
+		self.setRobotStatusMessage('Waiting for confirmation that grid is clear')
+		self.emailGridClear()
+		self.gridcleared.wait()
+		self.gridcleared = threading.Event()
+		self.setRobotStatusMessage('Resuming operation')
+		self.communication.Signal10 = 1
+
+	def uiGridCleared(self):
+		self.gridcleared.set()
+
+	def waitForRobotGridLoad(self):
+		self.setRobotStatusMessage('Verifying robot is ready for insertion')
+		while not self.communication.Signal0:
+			if self.communication.Signal8:
+				self.setRobotStatusMessage('Robot failed to extract grid from tray')
+				self.communication.Signal8 = 0
+				raise GridLoadException
+			time.sleep(0.5)
+		self.communication.Signal0 = 0
+		self.setRobotStatusMessage('Robot is ready for insertion')
+
+	def waitForRobotToInsert1(self):
+		self.setRobotStatusMessage(
+														'Waiting for robot to complete insertion step 1')
+		while not self.communication.Signal2:
+			time.sleep(0.5)
+		self.communication.Signal2 = 0
+		self.setRobotStatusMessage('Robot has completed insertion step 1')
+
+	def waitForRobotToInsert2(self):
+		self.setRobotStatusMessage(
+														'Waiting for robot to complete insertion step 2')
+		while not self.communication.Signal4:
+			time.sleep(0.5)
+		self.communication.Signal4 = 0
+		self.setRobotStatusMessage('Robot has completed insertion step 2')
+
+	def robotReadyForExtraction(self):
+		self.setRobotStatusMessage('Verifying robot is ready for extraction')
+		while not self.communication.Signal5:
+			time.sleep(0.5)
+		self.communication.Signal5 = 0
+		self.setRobotStatusMessage('Robot is ready for extraction')
+
+	def waitForRobotToExtract(self):
+		self.setRobotStatusMessage('Waiting for robot to complete extraction')
+		while not self.communication.Signal7:
+			if self.communication.Signal9:
+				self.setRobotStatusMessage(
+													'Robot failed to remove grid from specimen holder')
+				self.communication.Signal9 = 0
+				self.waitForGridClear()
+			time.sleep(0.5)
+		self.communication.Signal7 = 0
+		self.setRobotStatusMessage('Robot has completed extraction')
+
+	def getGridNumber(self):
+		gridnumber = -1
+		while not validateGridNumber(gridnumber):
 			try:
-				image = Image.open(self.imagefilename.get())
-				imagestring = emailnotification.PILImage2String(image)
-			except:
-				imagestring = None
-			self.emailclient.sendAndSet(self.gridcleared, subject, text, imagestring)
+				gridnumber = self.gridorder.pop(0)
+				self.uigridtray.set(self.gridorder)
+			except IndexError:
+				raise GridQueueEmpty
+		return gridnumber
 
-		def waitForGridClear(self):
-			self.gridcleared.clear()
-			self.setRobotStatusMessage('Waiting for confirmation that grid is clear')
-			self.emailGridClear()
-			self.gridcleared.wait()
-			self.gridcleared = threading.Event()
-			self.setRobotStatusMessage('Resuming operation')
-			self.communication.Signal10 = 1
+	def newGrid(self, gridboxid, gridnumber):
+		projectdata = project.ProjectData()
+		return projectdata.newGrid('Robot #%d' % gridnumber, -1, gridnumber,
+																gridboxid, gridnumber)
 
-		def uiGridCleared(self):
-			self.gridcleared.set()
+	def getGridID(self, gridboxid, gridnumber):
+		projectdata = project.ProjectData()
+		gridlocations = projectdata.getGridLocations()
+		gridboxidindex = gridlocations.Index(['gridboxId'])
+		gridlocations = gridboxidindex[gridboxid].fetchall()
+		for gridlocation in gridlocations:
+			if gridlocation['location'] == gridnumber:
+				return gridlocation['gridId']
+		return self.newGrid(gridboxid, gridnumber)
 
-		def waitForRobotGridLoad(self):
-			self.setRobotStatusMessage('Verifying robot is ready for insertion')
-			while not self.communication.Signal0:
-				if self.communication.Signal8:
-					self.setRobotStatusMessage('Robot failed to extract grid from tray')
-					self.communication.Signal8 = 0
-					raise GridLoadException
-				time.sleep(0.5)
-			self.communication.Signal0 = 0
-			self.setRobotStatusMessage('Robot is ready for insertion')
-
-		def waitForRobotToInsert1(self):
-			self.setRobotStatusMessage(
-															'Waiting for robot to complete insertion step 1')
-			while not self.communication.Signal2:
-				time.sleep(0.5)
-			self.communication.Signal2 = 0
-			self.setRobotStatusMessage('Robot has completed insertion step 1')
-
-		def waitForRobotToInsert2(self):
-			self.setRobotStatusMessage(
-															'Waiting for robot to complete insertion step 2')
-			while not self.communication.Signal4:
-				time.sleep(0.5)
-			self.communication.Signal4 = 0
-			self.setRobotStatusMessage('Robot has completed insertion step 2')
-
-		def robotReadyForExtraction(self):
-			self.setRobotStatusMessage('Verifying robot is ready for extraction')
-			while not self.communication.Signal5:
-				time.sleep(0.5)
-			self.communication.Signal5 = 0
-			self.setRobotStatusMessage('Robot is ready for extraction')
-
-		def waitForRobotToExtract(self):
-			self.setRobotStatusMessage('Waiting for robot to complete extraction')
-			while not self.communication.Signal7:
-				if self.communication.Signal9:
-					self.setRobotStatusMessage(
-														'Robot failed to remove grid from specimen holder')
-					self.communication.Signal9 = 0
-					self.waitForGridClear()
-				time.sleep(0.5)
-			self.communication.Signal7 = 0
-			self.setRobotStatusMessage('Robot has completed extraction')
-
-		def getGridNumber(self):
-			gridnumber = -1
-			while not validateGridNumber(gridnumber):
-				try:
-					gridnumber = self.gridorder.pop(0)
-					self.uigridtray.set(self.gridorder)
-				except IndexError:
-					raise GridQueueEmpty
-			return gridnumber
-
-		def newGrid(self, gridboxid, gridnumber):
-			projectdata = project.ProjectData()
-			return projectdata.newGrid('Robot #%d' % gridnumber, -1, gridnumber,
-																	gridboxid, gridnumber)
-
-		def getGridID(self, gridboxid, gridnumber):
-			projectdata = project.ProjectData()
-			gridlocations = projectdata.getGridLocations()
-			gridboxidindex = gridlocations.Index(['gridboxId'])
-			gridlocations = gridboxidindex[gridboxid].fetchall()
-			for gridlocation in gridlocations:
-				if gridlocation['location'] == gridnumber:
-					return gridlocation['gridId']
-			return self.newGrid(gridboxid, gridnumber)
-
-		def selectGrid(self):
-			try:
-				self.gridnumber = self.getGridNumber()
-				gridid = self.getGridID(self.gridtrayid, self.gridnumber)
-				initializer = {'grid ID': gridid}
-				self.griddata = data.GridData(initializer=initializer)
-			except GridQueueEmpty:
-				self.uicurrentgridnumber.set(None)
-				raise
-			else:
-				self.uicurrentgridnumber.set(self.gridnumber)
-				self.communication.gridNumber = self.gridnumber
-
-		def robotReadyForInsertion(self):
-			selectgrid = True
-			while(selectgrid):
-				try:
-					self.selectGrid()
-				except GridQueueEmpty:
-					self.setStatusMessage('Grid queue is empty')
-					raise
-				if self.simulate:
-					return
-				try:
-					self.waitForRobotGridLoad()
-				except GridLoadException:
-					selectgrid = True
-				else:
-					selectgrid = False
-
-		def outputGridInsertedEvent(self):
-			self.setStatusMessage('Sending notification the holder is inserted')
-			evt = event.GridInsertedEvent()
-			evt['grid'] = self.griddata
-			self.outputEvent(evt)
-			self.setStatusMessage('Sent notification the holder is inserted')
-
-		def outputGridExtractedEvent(self):
-			self.setStatusMessage('Sending notification the holder is extracted')
-			evt = event.GridExtractedEvent()
-			evt['grid'] = self.griddata
-			self.outputEvent(evt)
-			self.gridnumber = None
-			self.griddata = None
+	def selectGrid(self):
+		try:
+			self.gridnumber = self.getGridNumber()
+			gridid = self.getGridID(self.gridtrayid, self.gridnumber)
+			initializer = {'grid ID': gridid}
+			self.griddata = data.GridData(initializer=initializer)
+		except GridQueueEmpty:
 			self.uicurrentgridnumber.set(None)
-			self.setStatusMessage('Sent notification the holder is extracted')
+			raise
+		else:
+			self.uicurrentgridnumber.set(self.gridnumber)
+			self.communication.gridNumber = self.gridnumber
 
-		def estimateTimeLeft(self):
-			if 'insert' not in self.timings:
-				self.timings['insert'] = []
-			self.timings['insert'].append(time.time())
-
-			timestring = ''
-			ntimings = len(self.timings['insert']) - 1
-			if ntimings > 0:
-				first = self.timings['insert'][0]
-				last = self.timings['insert'][-1]
-				ngridsleft = len(self.gridorder)
-				secondsleft = (last - first)/ntimings*ngridsleft
-				timestring = seconds2str(secondsleft)
-			self.uitimeleft.set(timestring)
-
-		def _insert(self):
+	def robotReadyForInsertion(self):
+		selectgrid = True
+		while(selectgrid):
+			try:
+				self.selectGrid()
+			except GridQueueEmpty:
+				self.setStatusMessage('Grid queue is empty')
+				raise
 			if self.simulate:
-				self.insertmethod.disable()
-				self.estimateTimeLeft()
-				try:
-					self.robotReadyForInsertion()
-				except GridQueueEmpty:
-					self.insertmethod.enable()
-					return
-				self.outputGridInsertedEvent()
 				return
+			try:
+				self.waitForRobotGridLoad()
+			except GridLoadException:
+				selectgrid = True
+			else:
+				selectgrid = False
 
+	def outputGridInsertedEvent(self):
+		self.setStatusMessage('Sending notification the holder is inserted')
+		evt = event.GridInsertedEvent()
+		evt['grid'] = self.griddata
+		self.outputEvent(evt)
+		self.setStatusMessage('Sent notification the holder is inserted')
+
+	def outputGridExtractedEvent(self):
+		self.setStatusMessage('Sending notification the holder is extracted')
+		evt = event.GridExtractedEvent()
+		evt['grid'] = self.griddata
+		self.outputEvent(evt)
+		self.gridnumber = None
+		self.griddata = None
+		self.uicurrentgridnumber.set(None)
+		self.setStatusMessage('Sent notification the holder is extracted')
+
+	def estimateTimeLeft(self):
+		if 'insert' not in self.timings:
+			self.timings['insert'] = []
+		self.timings['insert'].append(time.time())
+
+		timestring = ''
+		ntimings = len(self.timings['insert']) - 1
+		if ntimings > 0:
+			first = self.timings['insert'][0]
+			last = self.timings['insert'][-1]
+			ngridsleft = len(self.gridorder)
+			secondsleft = (last - first)/ntimings*ngridsleft
+			timestring = seconds2str(secondsleft)
+		self.uitimeleft.set(timestring)
+
+	def _insert(self):
+		if self.simulate:
 			self.insertmethod.disable()
 			self.estimateTimeLeft()
-
-			self.setStatusMessage('Inserting holder into microscope')
-
 			try:
 				self.robotReadyForInsertion()
 			except GridQueueEmpty:
 				self.insertmethod.enable()
 				return
-
-			try:
-				self.scopeReadyForInsertion1()
-			except ScopeException:
-				self.insertmethod.enable()
-				return
-			self.signalRobotToInsert1()
-			self.waitForRobotToInsert1()
-
-			try:
-				self.scopeReadyForInsertion2()
-			except ScopeException:
-				self.insertmethod.enable()
-				return
-			self.signalRobotToInsert2()
-			self.waitForRobotToInsert2()
-
 			self.outputGridInsertedEvent()
+			return
 
-			self.setScopeStatusMessage('')
-			self.setRobotStatusMessage('')
-			self.setStatusMessage('Insertion of holder successfully completed')
-			#self.insertmethod.enable()
+		self.insertmethod.disable()
+		self.estimateTimeLeft()
 
-		def _extract(self):
-			if self.simulate:
-				self.outputGridExtractedEvent()
-				return
+		self.setStatusMessage('Inserting holder into microscope')
 
-			self.setStatusMessage('Extracting holder from microscope')
+		try:
+			self.robotReadyForInsertion()
+		except GridQueueEmpty:
+			self.insertmethod.enable()
+			return
 
-			self.robotReadyForExtraction()
-			try:
-				self.scopeReadyForExtraction()
-			except ScopeException:
-				return
-			self.signalRobotToExtract()
-			self.waitForRobotToExtract()
+		try:
+			self.scopeReadyForInsertion1()
+		except ScopeException:
+			self.insertmethod.enable()
+			return
+		self.signalRobotToInsert1()
+		self.waitForRobotToInsert1()
 
+		try:
+			self.scopeReadyForInsertion2()
+		except ScopeException:
+			self.insertmethod.enable()
+			return
+		self.signalRobotToInsert2()
+		self.waitForRobotToInsert2()
+
+		self.outputGridInsertedEvent()
+
+		self.setScopeStatusMessage('')
+		self.setRobotStatusMessage('')
+		self.setStatusMessage('Insertion of holder successfully completed')
+		#self.insertmethod.enable()
+
+	def _extract(self):
+		if self.simulate:
 			self.outputGridExtractedEvent()
+			return
 
-			self.setScopeStatusMessage('')
-			self.setRobotStatusMessage('')
-			self.setStatusMessage('Extraction of holder successfully completed')
+		self.setStatusMessage('Extracting holder from microscope')
 
-		def insert(self):
-			request = InsertRequest()
-			self.queue.put(request)
-			request.event.wait()
+		self.robotReadyForExtraction()
+		try:
+			self.scopeReadyForExtraction()
+		except ScopeException:
+			return
+		self.signalRobotToExtract()
+		self.waitForRobotToExtract()
 
-		def extract(self):
-			request = ExtractRequest()
-			self.queue.put(request)
-			request.event.wait()
+		self.outputGridExtractedEvent()
 
-		def handleInsert(self, ievent):
-			self.insert()
+		self.setScopeStatusMessage('')
+		self.setRobotStatusMessage('')
+		self.setStatusMessage('Extraction of holder successfully completed')
 
-		def handleExtract(self, ievent):
-			self.extract()
+	def insert(self):
+		request = InsertRequest()
+		self.queue.put(request)
+		request.event.wait()
 
-		def gridQueueCallback(self, value):
-			'''
-			gridstring = str(value[0])
-			lastvalue = value[0]
-			c = False
-			for i in value[1:]:
-				if i - lastvalue == 1:
-					c = True
-				else:
-					if c:
-						gridstring += '-'
-						gridstring += str(lastvalue)
-						c = False
-					gridstring += ', '
-					gridstring += str(i)
-				lastvalue = i
+	def extract(self):
+		request = ExtractRequest()
+		self.queue.put(request)
+		request.event.wait()
 
-			if c:
-				gridstring += '-'
-				gridstring += str(lastvalue)
+	def handleInsert(self, ievent):
+		self.insert()
 
-			self.uigridstring.set(gridstring)
-			'''
+	def handleExtract(self, ievent):
+		self.extract()
 
-			self.uigridtray.set(value)
+	def gridQueueCallback(self, value):
+		'''
+		gridstring = str(value[0])
+		lastvalue = value[0]
+		c = False
+		for i in value[1:]:
+			if i - lastvalue == 1:
+				c = True
+			else:
+				if c:
+					gridstring += '-'
+					gridstring += str(lastvalue)
+					c = False
+				gridstring += ', '
+				gridstring += str(i)
+			lastvalue = i
 
-		def uiGridTrayCallback(self, value):
-			self.gridorder = value
-			return value
+		if c:
+			gridstring += '-'
+			gridstring += str(lastvalue)
 
-		def uiAddGridRange(self):
-			try:
-				gridrange = range(self.uigridrangestart.get(),
-													self.uigridrangestop.get() + 1)
-			except:
-				return
-			for gridnumber in gridrange:
-				if validateGridNumber(gridnumber):
-					self.gridorder.append(gridnumber)
+		self.uigridstring.set(gridstring)
+		'''
+
+		self.uigridtray.set(value)
+
+	def uiGridTrayCallback(self, value):
+		self.gridorder = value
+		return value
+
+	def uiAddGridRange(self):
+		try:
+			gridrange = range(self.uigridrangestart.get(),
+												self.uigridrangestop.get() + 1)
+		except:
+			return
+		for gridnumber in gridrange:
+			if validateGridNumber(gridnumber):
+				self.gridorder.append(gridnumber)
+		self.uigridtray.set(self.gridorder)
+
+	def uiDeleteGrid(self):
+		try:
+			self.gridorder.pop()
 			self.uigridtray.set(self.gridorder)
+		except IndexError:
+			pass
 
-		def uiDeleteGrid(self):
-			try:
-				self.gridorder.pop()
-				self.uigridtray.set(self.gridorder)
-			except IndexError:
-				pass
+	def uiClearGridQueue(self):
+		self.gridorder = []
+		self.uigridtray.set(self.gridorder)
 
-		def uiClearGridQueue(self):
-			self.gridorder = []
-			self.uigridtray.set(self.gridorder)
+	def setStatusMessage(self, message):
+		self.logger.info(message)
+		self.uistatusmessage.set(message)
 
-		def setStatusMessage(self, message):
-			self.logger.info(message)
-			self.uistatusmessage.set(message)
+	def setRobotStatusMessage(self, message):
+		self.logger.info(message)
+		self.uirobotstatusmessage.set(message)
 
-		def setRobotStatusMessage(self, message):
-			self.logger.info(message)
-			self.uirobotstatusmessage.set(message)
+	def setScopeStatusMessage(self, message):
+		self.logger.info(message)
+		self.uiscopestatusmessage.set(message)
 
-		def setScopeStatusMessage(self, message):
-			self.logger.info(message)
-			self.uiscopestatusmessage.set(message)
+	def onGridTraySelect(self, value):
+		try:
+			label = self.gridtrayselect.getSelectedValue(value)
+			self.gridtrayid = self.gridtrayids[label]
+		except KeyError:
+			self.gridtrayid = None
+		return value
+	
+	def defineUserInterface(self):
+		RobotNode.defineUserInterface(self)
 
-		def onGridTraySelect(self, value):
-			try:
-				label = self.gridtrayselect.getSelectedValue(value)
-				self.gridtrayid = self.gridtrayids[label]
-			except KeyError:
-				self.gridtrayid = None
-			return value
-		
-		def defineUserInterface(self):
-			RobotNode.defineUserInterface(self)
+		gridtraylabels = self.gridtrayids.keys()
+		gridtraylabels.sort()
+		self.gridtrayselect = uidata.SingleSelectFromList('Grid Tray',
+																											gridtraylabels, 0, 'rw')
+		self.gridtrayselect.setCallback(self.onGridTraySelect)
+		self.gridtrayselect.setSelected(0)
 
-			gridtraylabels = self.gridtrayids.keys()
-			gridtraylabels.sort()
-			self.gridtrayselect = uidata.SingleSelectFromList('Grid Tray',
-																												gridtraylabels, 0, 'rw')
-			self.gridtrayselect.setCallback(self.onGridTraySelect)
-			self.gridtrayselect.setSelected(0)
+		#self.uigridtray = uidata.GridTray('Grids', [], 'rw',
+		self.uigridtray = uidata.Sequence('Grids', [], 'rw',
+																			self.uiGridTrayCallback)
+		griddeletemethod = uidata.Method('Delete', self.uiDeleteGrid)
+		gridclearmethod = uidata.Method('Clear', self.uiClearGridQueue)
 
-			#self.uigridtray = uidata.GridTray('Grids', [], 'rw',
-			self.uigridtray = uidata.Sequence('Grids', [], 'rw',
-																				self.uiGridTrayCallback)
-			griddeletemethod = uidata.Method('Delete', self.uiDeleteGrid)
-			gridclearmethod = uidata.Method('Clear', self.uiClearGridQueue)
+		self.uigridrangestart = uidata.Integer('From Grid Number', None, 'rw')
+		self.uigridrangestop = uidata.Integer('To Grid Number', None, 'rw')
+		gridaddrangemethod = uidata.Method('Add Range', self.uiAddGridRange)
+		gridclearedmethod = uidata.Method('Grid Cleared', self.uiGridCleared)
 
-			self.uigridrangestart = uidata.Integer('From Grid Number', None, 'rw')
-			self.uigridrangestop = uidata.Integer('To Grid Number', None, 'rw')
-			gridaddrangemethod = uidata.Method('Add Range', self.uiAddGridRange)
-			gridclearedmethod = uidata.Method('Grid Cleared', self.uiGridCleared)
+		gridcontainer = uidata.Container('Grids')
+		gridcontainer.addObjects((self.gridtrayselect, self.uigridtray,
+															griddeletemethod, gridclearmethod,
+															self.uigridrangestart, self.uigridrangestop,
+															gridaddrangemethod, gridclearedmethod))
 
-			gridcontainer = uidata.Container('Grids')
-			gridcontainer.addObjects((self.gridtrayselect, self.uigridtray,
-																griddeletemethod, gridclearmethod,
-																self.uigridrangestart, self.uigridrangestop,
-																gridaddrangemethod, gridclearedmethod))
+		self.uistatusmessage = uidata.String('Status', '', 'r')
+		self.uiscopestatusmessage = uidata.String('Microscope Status', '', 'r')
+		self.uirobotstatusmessage = uidata.String('Robot Status', '', 'r')
+		self.uicurrentgridnumber = uidata.Integer('Current grid number',
+																							None, 'r')
+		self.uitimeleft = uidata.String('Estimated time remaining', '', 'r')
+		self.imagefilename = uidata.String('Email image filename', '', 'rw',
+																				persist=True)
+		statuscontainer = uidata.Container('Status')
+		statuscontainer.addObjects((self.uistatusmessage,
+																self.uiscopestatusmessage,
+																self.uirobotstatusmessage,
+																self.uicurrentgridnumber,
+																self.uitimeleft,
+																self.imagefilename))
 
-			self.uistatusmessage = uidata.String('Status', '', 'r')
-			self.uiscopestatusmessage = uidata.String('Microscope Status', '', 'r')
-			self.uirobotstatusmessage = uidata.String('Robot Status', '', 'r')
-			self.uicurrentgridnumber = uidata.Integer('Current grid number',
-																								None, 'r')
-			self.uitimeleft = uidata.String('Estimated time remaining', '', 'r')
-			self.imagefilename = uidata.String('Email image filename', '', 'rw',
-																					persist=True)
-			statuscontainer = uidata.Container('Status')
-			statuscontainer.addObjects((self.uistatusmessage,
-																	self.uiscopestatusmessage,
-																	self.uirobotstatusmessage,
-																	self.uicurrentgridnumber,
-																	self.uitimeleft,
-																	self.imagefilename))
+		testemailmethod = uidata.Method('Test email', self.emailGridClear)
+		self.insertmethod = uidata.Method('Process Grids', self.insert)
+		controlcontainer = uidata.Container('Control')
+		controlcontainer.addObjects((self.insertmethod, testemailmethod))
 
-			testemailmethod = uidata.Method('Test email', self.emailGridClear)
-			self.insertmethod = uidata.Method('Process Grids', self.insert)
-			controlcontainer = uidata.Container('Control')
-			controlcontainer.addObjects((self.insertmethod, testemailmethod))
-
-			rccontainer = uidata.LargeContainer('Robot Control')
-			rccontainer.addObjects((gridcontainer, statuscontainer, controlcontainer))
-			self.uicontainer.addObject(rccontainer)
+		rccontainer = uidata.LargeContainer('Robot Control')
+		rccontainer.addObjects((gridcontainer, statuscontainer, controlcontainer))
+		self.uicontainer.addObject(rccontainer)
 
 class RobotNotification(RobotNode):
 	eventinputs = RobotNode.eventinputs + [event.GridInsertedEvent,
