@@ -16,7 +16,7 @@ import data, event
 import calibrationclient
 import camerafuncs
 import presets
-import extendedcopy as copy
+import copy
 import threading
 import uidata
 from node import ResearchError

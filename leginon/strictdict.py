@@ -14,7 +14,7 @@ Provides several specialized mapping types derived from the built-in dict type.
 
 import Numeric
 from types import NoneType
-import extendedcopy as copy
+import copy
 import time
 import os
 

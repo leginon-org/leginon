@@ -13,7 +13,7 @@ import leginonconfig
 import node
 import data
 import Numeric
-import extendedcopy as copy
+import copy
 import uidata
 from timer import Timer
 

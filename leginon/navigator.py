@@ -14,7 +14,7 @@ import data
 import time
 import camerafuncs
 import calibrationclient
-import extendedcopy as copy
+import copy
 import uidata
 import correlator
 import peakfinder
