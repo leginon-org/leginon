@@ -30,7 +30,7 @@ else:
 			pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
 			camera.Camera.__init__(self)
 			try:
-				self.theCamera = win32com.client.Dispatch("CAMC.Camera")		
+				self.theCamera = win32com.client.Dispatch("CAMC4.Camera")		
 			except:
 				print "Error: cannot dispatch CAMC.Camera"
 				raise
