@@ -58,7 +58,7 @@ class MatrixCalibrator(node.Node):
 
 		baselist = []
 		for i in range(self.navg):
-			delta = i * 2e-5
+			delta = i * self.interval
 			basex = self.base['x'] + delta
 			basey = self.base['y'] + delta
 			newbase = {'x':basex, 'y':basey}
@@ -266,7 +266,8 @@ class MatrixCalibrator(node.Node):
 
 		#### parameters for user to set
 		self.navg = 1
-		self.delta = 5e-5
+		self.delta = 2e-6
+		self.interval = 2e-6
 
 		self.camerastate = {'size': 1024, 'binning': 4, 'exposure time': 400}
 
@@ -284,6 +285,7 @@ class MatrixCalibrator(node.Node):
 		self.registerUIData('N Average', 'float', default=self.navg),
 		self.registerUIData('Base', 'struct', default=self.base),
 		self.registerUIData('Delta', 'float', default=self.delta),
+		self.registerUIData('Interval', 'float', default=self.interval),
 
 		self.registerUIData('Camera State', 'struct', default=self.camerastate)
 		)
@@ -304,10 +306,11 @@ class MatrixCalibrator(node.Node):
 		self.calibrate()
 		return ''
 
-	def uiSetParameters(self, navg, base, delta, cs):
+	def uiSetParameters(self, navg, base, delta, interval, cs):
 		self.navg = navg
 		self.base = base
 		self.delta = delta
+		self.interval = interval
 		self.camerastate = cs
 		return ''
 
