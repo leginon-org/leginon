@@ -100,18 +100,31 @@ User Interface Clients
 
 	   here is a summary of the struct:
                        
-             {'list': (method1, method2,...),
-	      'dict': {
-	               method1: {
-		                 'argspec':  see argspec description above
-				           in the Interface Server section
-		                }
-	               method2: {
-		                 'argspec':  ...
-		                }
-		       ...
-		      }
-             }
+             struct (
+                'list': array(method1string, method2string,...)
+	        'dict': struct (
+	               method1string: struct (
+		               'argspec':  array (
+                                              struct (
+                                                   'alias':  aliasstring1
+                                                   'name':  namestring1
+                                                   'type':  xmlrpctype1
+                                                     )
+                                              struct (
+                                                   'alias':  aliasstring2
+                                                   'name':  namestring2
+                                                   'type':  xmlrpctype2
+                                                     )
+                                                 )
+                                              struct (
+                                                    ...
+                                                     )
+                                             )
+	               method2string: struct (
+		             'argspec':  ...
+                                             )
+		             )
+             )
 
       id()
          takes no arguments and returns the ID of the node

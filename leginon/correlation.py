@@ -87,7 +87,7 @@ def matrixMax(m):
 			maxindex = (rowindex, m[rowindex].tolist().index(maxval))
 	return maxindex
 
-def quadraticPeak(m):
+def OLDquadraticPeak(m):
 	from Scientific.Functions.LeastSquares import polynomialLeastSquaresFit
 
 	peak = matrixMax(m)
@@ -114,3 +114,73 @@ def quadraticPeak(m):
 
 	return npeak
 
+def quadraticPeak(m):
+	from LinearAlgebra import linear_least_squares
+
+	## find the max pixel indices (row,col)
+	maxval = 0
+	peak = None
+	ind = 0
+	for val in m.flat:
+		if val > maxval:
+			maxval = val
+			peak = ind
+		ind += 1
+	if not peak:
+		raise RuntimeError('no peak in image')
+	# convert 1-d index to 2-d index
+	rows,cols = m.shape
+	peakrow = peak / rows
+	peakcol = peak % rows
+	print 'peak', peakrow, peakcol
+
+	# reject edge pixel
+	if (peakrow == 0) or (peakrow == rows - 1):
+		raise RuntimeError('peak on edge')
+	if (peakcol == 0) or (peakcol == cols - 1):
+		raise RuntimeError('peak on edge')
+
+	## fit quadratic to range of pixels centered on peak pixel
+	npix = 3  # could this be 5 for better accuracy?
+
+	rowrange = (peakrow-npix/2, peakrow+npix/2+1)
+	rowinds = Numeric.arrayrange(rowrange[0], rowrange[1])
+	rowvals = m[rowrange[0]:rowrange[1], peakcol]
+
+	colrange = (peakcol-npix/2, peakcol+npix/2+1)
+	colinds = Numeric.arrayrange(colrange[0], colrange[1])
+	colvals = m[peakrow, colrange[0]:colrange[1]]
+
+	print 'fit data indices', rowinds, colinds
+	print 'fit data values', rowvals, colvals
+
+	## create quadratic design matrix for row data
+	row_dm = Numeric.zeros(npix * 3)
+	row_dm.shape = (npix, 3)
+	i = 0
+	for row in rowinds:
+		row_dm[i] = (1,row,row*row)
+		i += 1
+
+	## fit and find zero
+	rowfit = linear_least_squares(row_dm, rowvals)
+	print 'rowfit', rowfit
+	rowcoeffs = rowfit[0]
+	rowzero = -rowcoeffs[1] / 2 / rowcoeffs[2]
+	print 'rowzero', rowzero
+
+	## create quadratic design matrix for col data
+	col_dm = Numeric.zeros(npix * 3)
+	col_dm.shape = (npix, 3)
+	i = 0
+	for col in colinds:
+		col_dm[i] = (1,col,col*col)
+		i += 1
+
+	## fit and find zero
+	colfit = linear_least_squares(col_dm, colvals)
+	colcoeffs = colfit[0]
+	colzero = -colcoeffs[1] / 2 / colcoeffs[2]
+	print 'colzero', colzero
+
+	return (rowzero, colzero)

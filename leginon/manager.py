@@ -269,12 +269,13 @@ class Manager(node.Node):
 			)
 		self.registerUIFunction(self.uiAddDistmap, argspec, 'Bind')
 
-	def uiLaunch(self, name, launcher_str, nodeclass_str, args, newproc):
+	def uiLaunch(self, name, launcher_str, nodeclass_str, args, newproc=0):
 		"""
 		user interface to the launchNode method
 		This simplifies the call for a user by using a
 		string to represent the launcher ID, node class, and args
 		"""
+		print 'LAUNCH %s,%s,%s,%s,%s' % (name, launcher_str, nodeclass_str, args, newproc)
 
 		launcher_id = self.launcherdict[launcher_str]
 		nodeclass = self.ui_nodeclasses[nodeclass_str]
@@ -296,6 +297,7 @@ class Manager(node.Node):
 		a user interface to addEventDistmap
 		uses strings to represent event class and node IDs
 		"""
+		print 'BIND %s,%s,%s' % (eventclass_str, fromnode_str, tonode_str)
 		eventclass = self.ui_eventclasses[eventclass_str]
 		fromnode_id = self.clientdict[fromnode_str]
 		tonode_id = self.clientdict[tonode_str]
@@ -313,7 +315,7 @@ if __name__ == '__main__':
 	m = Manager(manager_id)
 
 	## GUI
-	gui = 0
+	gui = 1
 	if gui:
 		import nodegui
 		import Tkinter
