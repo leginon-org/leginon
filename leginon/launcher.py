@@ -24,7 +24,7 @@ class Launcher(node.Node):
 		This uses LauncherAvailableEvent
 		'''
 		self.managerloc = loc
-		self.addEventClient('manager', loc)
+		self.addEventClient(('manager',), loc)
 
 		e = event.LauncherAvailableEvent(self.ID(), self.location())
 		self.outputEvent(e)

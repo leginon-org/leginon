@@ -40,6 +40,7 @@ class MyNode(node.Node):
 		mydata = data.StringData(self.ID(), self.timenow)
 		print "MyNode publishing id", mydata.id
 		self.publish(mydata)
+		self.waitEvent(self.publish(mydata))
 
 	def handle_intervalchange(self, controlevent):
 		print 'got control event %s' % controlevent

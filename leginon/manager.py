@@ -49,8 +49,21 @@ class Manager(node.Node):
 		'return an id for a new node'
 		return self.id + (name,)
 
-	def outputEvent(self, ievent):
-		self.distribute(ievent)
+	def confirmEvent(self, ievent):
+		self.outputEvent(event.ConfirmationEvent(self.ID(), ievent.id), \
+				ievent.id[:-1])
+
+	def registerConfirmedEvent(self, ievent):
+		nodeid = ievent.content[:-1]
+		if nodeid == self.id:
+			# this is bad since it will fill up with lots of events
+			if not ievent.content in self.confirmwaitlist:
+				self.confirmwaitlist[ievent.content] = threading.Event()
+				self.confirmwaitlist[ievent.content].set()
+				#del self.confirmwaitlist[ievent.content]
+		else:
+			# this could be in distribute
+			self.outputEvent(ievent, nodeid)
 
 	def addLauncher(self, nodeid):
 		self.launcherlist.append(nodeid[-1])

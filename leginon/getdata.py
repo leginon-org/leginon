@@ -19,6 +19,7 @@ class GetData(node.Node):
 		print "GetData researching id", ievent.content
 		idata = self.researchByDataID(ievent.content).content
 		print "received idata =", idata
+		self.confirmEvent(ievent)
 
 	def main(self):
 		pass

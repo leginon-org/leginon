@@ -108,7 +108,8 @@ class Node(leginonobject.LeginonObject):
 
 	def addManager(self, loc):
 		self.managerloc = loc
-		self.addEventClient('manager', loc)
+		self.addEventClient(('manager',), loc)
+		print "self.clients =", self.clients
 		newid = self.ID()
 		myloc = self.location()
 		available_event = event.NodeAvailableEvent(newid, myloc)
@@ -132,16 +133,18 @@ class Node(leginonobject.LeginonObject):
 		self.server.exit()
 		self.outputEvent(event.NodeUnavailableEvent(self.ID()))
 
-	def outputEvent(self, ievent):
-		self.clients['manager'].push(ievent)
+	def outputEvent(self, ievent, nodeid=('manager',)):
+		self.clients[nodeid].push(ievent)
 
 	def confirmEvent(self, ievent):
 		self.outputEvent(event.ConfirmationEvent(self.ID(), ievent.id))
 
 	def waitEvent(self, ievent):
+		print "waiting on", ievent.id
 		if not ievent.id in self.confirmwaitlist:
 			self.confirmwaitlist[ievent.id] = threading.Event()
 		self.confirmwaitlist[ievent.id].wait()
+		print "done for", ievent.id
 
 	def registerConfirmedEvent(self, ievent):
 		# this is bad since it will fill up with lots of events
@@ -158,7 +161,9 @@ class Node(leginonobject.LeginonObject):
 			raise TypeError('PublishEvent subclass required')
 		self.server.datahandler._insert(idata)
 		# this idata.id is content, I think
-		self.outputEvent(eventclass(self.ID(), idata.id))
+		e = eventclass(self.ID(), idata.id)
+		self.outputEvent(e)
+		return e
 
 	def unpublish(self, dataid, eventclass=event.UnpublishEvent):
 		if not issubclass(eventclass, event.UnpublishEvent):
