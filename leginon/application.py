@@ -78,7 +78,10 @@ class Application(leginonobject.LeginonObject):
 
 	def save(self, filename):
 		# for some reason updating after delLaunchSpec no worky
-		os.remove(filename)
+		try:
+			os.remove(filename)
+		except OSError:
+			pass
 		s = shelve.open(filename)
 		s['launchspec'] = self.launchspec
 		s['bindspec'] = self.bindspec
