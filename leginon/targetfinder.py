@@ -135,6 +135,12 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		self.makeTargetListEvent(targetlistdata)
 		self.publish(targetlistdata, pubevent=True)
 
+	def notifyUserSubmit(self):
+		myname = self.id[-1]
+		title = '%s waiting' % (myname,)
+		message = '%s is waiting for you to submit targets' % (myname,)
+		self.outputMessage(title, message)
+
 	def handleTargetListDone(self, targetlistdoneevent):
 		'''
 		Receives a target list done event and sets the threading event.
@@ -178,6 +184,7 @@ class ClickTargetFinder(TargetFinder):
 		self.clickimage.imagedata = imdata
 
 		# user now clicks on targets
+		self.notifyUserSubmit()
 		self.userpause.clear()
 		self.userpause.wait()
 		self.targetlist += self.getTargetDataList('focus')
