@@ -475,7 +475,6 @@ class Node(leginonobject.LeginonObject):
 		'''Set the manager controlling the node and notify said manager this node is available.'''
 		self.managerclient = self.clientclass(self.ID(), loc)
 		available_event = event.NodeAvailableEvent(id=self.ID(), location=self.location(), nodeclass=self.__class__.__name__)
-		print 'ADD MAN OUTPUTEVENT', self.id
 		self.outputEvent(ievent=available_event, wait=True, timeout=10)
 
 	def handleAddNode(self, ievent):
