@@ -59,31 +59,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.defineUserInterface()
 		self.start()
 
-	def replacePreset(self, targetstate, oldpreset, newpreset):
-		'''
-		Takes a target state (assumed to be at oldpreset) and 
-		replaces oldpreset with new preset, creating a new
-		target state.  For most parameters, this just overwrites
-		targetstate's values with the newpreset values, but for
-		image shift, we must subtract oldpreset and add newpreset
-		(since target image shift)
-		'''
-		### generate a microscope state from the targetdata
-		targetstate = self.targetToState(targetdata)
-
-		### subtract the old preset from the target, so that
-		### we can apply a new preset
-		print 'targetdata keys', targetdata.content.keys()
-		if 'preset' in targetdata.content:
-			oldpreset = targetdata.content['preset']
-
-			## right now, the only thing a target and preset
-			## have in common is image shift
-			targetstate['image shift']['x'] -= oldpreset['image shift']['x']
-			targetstate['image shift']['y'] -= oldpreset['image shift']['y']
-			print 'TARGETSTATE', targetstate
-		return targetstate
-
 	def processTargetData(self, targetdata=None):
 		'''
 		This is called by TargetWatcher.processData when targets available
@@ -95,97 +70,51 @@ class Acquisition(targetwatcher.TargetWatcher):
 		print 'PROCESSING', targetdata
 
 		if targetdata is not None:
-			targetstate = self.targetToState(targetdata)
+			oldtargetemdata = self.targetToEMData(targetdata)
 
-			### subtract the old preset from the target, so that
-			### we can apply a new preset
-			#print 'targetdata keys', targetdata.content.keys()
-			#if 'preset' in targetdata.content:
-			#	oldpreset = targetdata.content['preset']
-			print 'targetdata keys', targetdata.keys()
-			if 'preset' in targetdata:
-				oldpreset = targetdata['preset']
+			oldpreset = targetdata['preset']
 
-				## right now, the only thing a target and preset
-				## have in common is image shift
-				targetstate['image shift']['x'] -= oldpreset['image shift']['x']
-				targetstate['image shift']['y'] -= oldpreset['image shift']['y']
-				print 'TARGETSTATE', targetstate
+			newtargetemdata = self.removePreset(oldtargetemdata, oldpreset)
 		else:
-			targetstate = None
+			newtargetemdata = None
 		
-
 		### do each preset for this acquisition
 		presetnames = self.presetnames.get()
 
 		if not presetnames:
 			print 'NO PRESETS SPECIFIED'
 		## maybe could acquire anyway at target with no preset?
+		## default preset?  would have to rely on presetsmanager
 
 		for presetname in presetnames:
-			newpreset = self.presetsclient.getPreset(presetname)
+			presetdata = self.presetsclient.retrievePreset(presetname)
 			### simulated target is easy, real target requires
 			### merge with preset
-			if targetstate is None:
-				newtarget = newpreset
+			if newtargetemdata is None:
+				ptargetemdata = self.presetDataToEMData(presetdata)
 			else:
-				newtarget = copy.deepcopy(targetstate)
-
-## Merge the preset and target.  Every item in preset overides 
-## corresponding item in target, except image shift, which is added.
-## So we can't just use newtarget.update(newpreset).  For the future,
-## make specialized class that can handle update(), with knowledge of 
-## how to update different keys
-				for key in newtarget:
-					if key in newpreset:
-						### image shift is special
-						if key == 'image shift':
-							newtarget[key]['x'] += newpreset[key]['x']
-							newtarget[key]['y'] += newpreset[key]['y']
-						else:
-							newtarget[key] = newpreset[key]
-
-			print 'NEWTARGET', newtarget
+				## make newtargetemdata with preset applied
+				ptargetemdata = self.addPreset(newtargetemdata, presetdata)
+			print 'PRESET NEWTARGET',
+			print ptargetemdata
 
 			## set the scope/camera state
-			emdata = data.EMData(('scope',), em=newtarget)
-			self.publishRemote(emdata)
+			self.publishRemote(ptargetemdata)
 
 			print 'sleeping 2 sec'
 			time.sleep(2)
 
 			print 'acquire'
-			self.acquire(newpreset)
+			self.acquire(presetdata)
 
-	def acquire(self, preset):
-		acqtype = self.acqtype.get()
-		if acqtype == 'raw':
-			imagedata = self.cam.acquireCameraImageData(None,0)
-		elif acqtype == 'corrected':
-			try:
-				imagedata = self.cam.acquireCameraImageData(None,1)
-			except:
-				print 'image not acquired'
-				imagedata = None
-
-		if imagedata is None:
-			return
-
-		## attach preset to imagedata
-		#imagedata.content['preset'] = dict(preset)
-		imagedata['preset'] = dict(preset)
-
-		print 'publishing image'
-		self.publish(imagedata, eventclass=event.CameraImagePublishEvent)
-		print 'image published'
-
-	def targetToState(self, targetdata, movetype):
+	def targetToEMData(self, targetdata, movetype):
 		'''
-		convert an ImageTargetData to a scope/camera dict
+		convert an ImageTargetData to an EMData object
 		using chosen move type.
 		The result is a valid scope state that will center
 		the target on the camera, but not necessarily at the
-		desired preset
+		desired preset.  It is shifted from the preset of the 
+		original targetdata.
 		'''
 		#targetinfo = copy.deepcopy(targetdata.content)
 		targetinfo = copy.deepcopy(targetdata)
@@ -210,16 +139,78 @@ class Acquisition(targetwatcher.TargetWatcher):
 		movetype = self.movetype.get()
 		calclient = self.calclients[movetype]
 		newscope = calclient.transform(pixelshift, targetscope, targetcamera)
-		return newscope
 
-	def detailedTargetList(self, presetlist, targetlist, targetmethod):
-		'''
-		create detailed target list
-		'''
-		## add some inteligence here to automatically figure out
-		## with target method to use
+		## create new EMData object to hole this
+		emdata = data.EMData(('scope',), em=newscope)
+		return emdata
 
-		pass
+	def removePreset(self, emdata, presetdata):
+		# subtract the effects of a preset on an EMData object
+		# Right now all this means is subtract image shift
+		# It is assumed that other parameters of the preset
+		# like magnification will be updated later.
+
+		# make new EMData object
+		emdict = emdata['em']
+		newemdict = copy.deepcopy(emdict)
+		newemdata = data.EMData(('scope',), em=newemdict)
+
+		# update its values from PresetData object
+		newemdict['image shift']['x'] -= presetdata['image shift']['x']
+		newemdict['image shift']['y'] -= presetdata['image shift']['y']
+		print 'TARGETSTATE', targetstate
+		return newemdata
+
+	def addPreset(self, emdata, presetdata):
+		## applies a preset to an existing EMData object
+		## the result is to overwrite values of the EMData
+		## with new values from the preset.  However, image shift
+		## has the special behavior that it added not overwritten,
+		## because we don't want to interfere with the current
+		## target.
+
+		# make new EMData object
+		emdict = emdata['em']
+		newemdict = copy.deepcopy(emdict)
+		newemdata = data.EMData(('scope',), em=newemdict)
+
+		# image shift is added, other parameter just overwrite
+		newimageshift = copy.deepcopy(newemdict['image shift'])
+		newimageshift['x'] += presetdata['image shift']['x']
+		newimageshift['y'] += presetdata['image shift']['y']
+
+		# overwrite values from preset into emdict
+		newemdict.update(presetdata)
+		newemdict['image shift'] = newimageshift
+
+		return newemdata
+
+	def presetDataToEMData(self, presetdata):
+		emdict = dict(presetdata)
+		emdata = data.EMData(('scope',), em=emdict)
+		return emdata
+
+	def acquire(self, presetdata):
+		acqtype = self.acqtype.get()
+		if acqtype == 'raw':
+			imagedata = self.cam.acquireCameraImageData(None,0)
+		elif acqtype == 'corrected':
+			try:
+				imagedata = self.cam.acquireCameraImageData(None,1)
+			except:
+				print 'image not acquired'
+				imagedata = None
+
+		if imagedata is None:
+			return
+
+		## attach preset to imagedata
+		#imagedata.content['preset'] = dict(preset)
+		imagedata['preset'] = presetdata
+
+		print 'publishing image'
+		self.publish(imagedata, eventclass=event.CameraImagePublishEvent)
+		print 'image published'
 
 	def uiToScope(self, presetname):
 		print 'Going to preset %s' % (presetname,)
