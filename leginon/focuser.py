@@ -417,15 +417,6 @@ class Focuser(acquisition.Acquisition):
 		emdata = data.ScopeEMData(initializer=newstage)
 		self.logger.info('Correcting stage Z by %s' % (delta,))
 		self.emclient.setScope(emdata)
-		### reset zero at eucentric focus for other preset
-		linkedpreset = self.linkedpreset.get()
-		if not linkedpreset:
-			return
-		self.logger.info('going to linked preset: %s' % (linkedpreset,))
-		self.presetsclient.toScope(linkedpreset)
-		self.logger.info('going to eucentric focus and reseting zero defocus')
-		self.eucentricFocusToScope()
-		self.resetDefocus()
 
 	def correctNone(self, delta):
 		self.logger.info('Not applying defocus correction')
@@ -452,7 +443,6 @@ class Focuser(acquisition.Acquisition):
 		#self.publishimages = uidata.Boolean('Publish Tilt Images', False, 'rw', persist=True)
 
 		self.autofocuspreset = self.presetsclient.uiSinglePresetSelector('Auto Focus Preset', '', 'rw', persist=True)
-		self.linkedpreset = self.presetsclient.uiSinglePresetSelector('Linked Preset', '', 'rw', persist=True)
 		self.fitlimit = uidata.Float('Fit Limit', 1000, 'rw', persist=True)
 		focustypes = self.focus_methods.keys()
 		focustypes.sort()
@@ -470,8 +460,6 @@ class Focuser(acquisition.Acquisition):
 		autocont.addObject(self.driftthresh, position={'position':(1,1)})
 
 		autocont.addObject(self.autofocuspreset, position={'position':(3,0), 'span':(1,2)})
-		autocont.addObject(self.linkedpreset, position={'position':(3,2), 'span':(1,2)})
-
 		autocont.addObject(self.fitlimit, position={'position':(4,0)})
 		autocont.addObject(self.focustype, position={'position':(4,1)})
 
