@@ -26,6 +26,9 @@ class ImagePanel(wxPanel):
 		self.SetAutoLayout(true)
 		self.SetSizer(self.sizer)
 
+		self.toolsizer = wxBoxSizer(wxHORIZONTAL)
+		self.sizer.Add(self.toolsizer)
+
 		# need "inside" size
 		self.panel = wxScrolledWindow(self, -1, size=self.size)
 		self.panel.SetScrollRate(1,1)
@@ -43,6 +46,7 @@ class ImagePanel(wxPanel):
 
 		EVT_PAINT(self.panel, self.OnPaint)
 		EVT_SIZE(self.panel, self.OnSize)
+		EVT_MOTION(self.panel, self.motion)
 
 	def initValueLabels(self):
 		self.xlabel = wxStaticText(self, -1, '0000',
@@ -54,14 +58,12 @@ class ImagePanel(wxPanel):
 		self.valuelabel = wxStaticText(self, -1, '',
 																		style=wxALIGN_CENTRE)
 		self.valuelabel.SetLabel('')
-		self.valuesizer = wxBoxSizer(wxHORIZONTAL)
-		self.valuesizer.Add(wxStaticText(self, -1, 'x: '))
-		self.valuesizer.Add(self.xlabel)
-		self.valuesizer.Add(wxStaticText(self, -1, 'y: '))
-		self.valuesizer.Add(self.ylabel)
-		self.valuesizer.Add(wxStaticText(self, -1, 'Value: '))
-		self.valuesizer.Add(self.valuelabel)
-		self.sizer.Prepend(self.valuesizer)
+		self.toolsizer.Add(wxStaticText(self, -1, 'x: '))
+		self.toolsizer.Add(self.xlabel)
+		self.toolsizer.Add(wxStaticText(self, -1, 'y: '))
+		self.toolsizer.Add(self.ylabel)
+		self.toolsizer.Add(wxStaticText(self, -1, 'Value: '))
+		self.toolsizer.Add(self.valuelabel)
 
 	def bitmapTool(self, filename):
 		image = Image.open(filename)
@@ -75,30 +77,25 @@ class ImagePanel(wxPanel):
 		self.valueflag = True
 		bitmap = self.bitmapTool('valuetool.bmp')
 		valuebutton = wxBitmapButton(self, -1, bitmap)
+		valuebutton.SetToolTip(wxToolTip('Toggle Show Value'))
 		EVT_BUTTON(self, valuebutton.GetId(), self.OnValueButton)
-		self.sizer.Prepend(valuebutton, 0, wxALL, 3)
+		self.toolsizer.Add(valuebutton, 0, wxALL, 3)
 
 	def OnValueButton(self, evt):
-		if self.valueflag:
-			EVT_MOTION(self.panel, self.motion)
-		else:
-			EVT_MOTION(self.panel, None)
-			self.UpdateDrawing()
+		self.UpdateDrawing()
 		self.valueflag = not self.valueflag
 
 	def initZoom(self):
 		self.zoomflag = True
-		self.zoomsizer = wxBoxSizer(wxHORIZONTAL)
-		#zoombutton = wxButton(self, -1, 'Zoom')
 		bitmap = self.bitmapTool('zoomtool.bmp')
 		zoombutton = wxBitmapButton(self, -1, bitmap)
+		zoombutton.SetToolTip(wxToolTip('Toggle Zoom Tool'))
 		EVT_BUTTON(self, zoombutton.GetId(), self.OnZoomButton)
-		self.zoomsizer.Add(zoombutton, 0, wxCENTER | wxALL, 3)
-		self.zoomsizer.Add(wxStaticText(self, -1, 'Zoom:'), 0, wxCENTER | wxALL, 3)
+		self.toolsizer.Add(zoombutton, 0, wxALL, 3)
+		self.toolsizer.Add(wxStaticText(self, -1, 'Zoom:'), 0, wxALL, 3)
 		self.zoomlabel = wxStaticText(self, -1, '')
 		self.updateZoomLabel()
-		self.zoomsizer.Add(self.zoomlabel, 0, wxCENTER | wxALL, 3)
-		self.sizer.Prepend(self.zoomsizer)
+		self.toolsizer.Add(self.zoomlabel, 0, wxALL, 3)
 
 	def OnZoomButton(self, evt):
 		if self.zoomflag:
@@ -228,7 +225,7 @@ class ImagePanel(wxPanel):
 						int(round((xy[1] * self.scale[1]) - viewoffset[1])))
 
 	def motion(self, evt):
-		if self.image is None:
+		if self.image is None or not self.valueflag:
 			return
 		try:
 			x, y = self.view2image((evt.m_x, evt.m_y))
