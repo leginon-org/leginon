@@ -75,8 +75,13 @@ class TargetWatcher(watcher.Watcher):
 																		self.continueTargetListLoop)
 		abortmethod = uidata.Method('Abort', self.abortTargetListLoop)
 
+		self.publishrejects = uidata.Boolean('Publish and wait for rejected targets', False, 'rw', persist=True)
+
 		targetcontainer = uidata.Container('Target Processing')
-		targetcontainer.addObjects((pausemethod, continuemethod, abortmethod))
+		targetcontainer.addObject(pausemethod, position={'position':(0,0)})
+		targetcontainer.addObject(continuemethod, position={'position':(0,1)})
+		targetcontainer.addObject(abortmethod, position={'position':(0,2)})
+		targetcontainer.addObject(self.publishrejects, position={'position':(1,0), 'span':(1,3)})
 
 		controlcontainer = uidata.Container('Control')
 		controlcontainer.addObjects((targetcontainer,))
@@ -124,7 +129,7 @@ class TargetWatcher(watcher.Watcher):
 													(len(goodtargets), len(rejects), len(targetlist)))
 
 		# republish the rejects and wait for them to complete
-		if rejects:
+		if rejects and self.publishrejects.get():
 			self.uistatus.set('Publishing passed targets')
 			newtargetlist = data.ImageTargetListData(targets=rejects)
 			self.passTargets(newtargetlist)
