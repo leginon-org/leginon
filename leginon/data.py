@@ -17,6 +17,8 @@ import cPickle
 import types
 import threading
 import dbdatakeeper
+import copy
+import tcptransport
 
 class DataError(Exception):
 	pass
@@ -31,7 +33,12 @@ class DataAccessError(DataError):
 ## to be created are the first to be deleted from DataManager.
 class DataManager(object):
 	def __init__(self):
+		## will connect to database before first query
 		self.db = None
+
+		## start server
+		self.startServer()
+
 		## the size of these dicts are maintained by size restriction
 		self.datadict = strictdict.OrderedDict()
 		self.sizedict = {}
@@ -44,19 +51,24 @@ class DataManager(object):
 		self.size = 0
 		self.lock = threading.RLock()
 
-	def location(self):
-		'''
-		return location to be 
-		'''
-		pass
+	def startServer(self):
+		self.server = tcptransport.Server(self)
+		port = self.server.port
+		hostname = self.server.hostname
+		self.location = (hostname, port)
+		print 'LOCATION', self.location
+
+	def newid(self):
+		self.dmid += 1
+		return (self.location, self.dmid)
 
 	def insert(self, datainstance):
 		self.lock.acquire()
 		try:
 			## insert into datadict and sizedict
-			self.dmid += 1
-			self.datadict[self.dmid] = datainstance
-			datainstance.dmid = self.dmid
+			newid = self.newid()
+			self.datadict[newid] = datainstance
+			datainstance.dmid = newid
 			self.resize(datainstance)
 
 			## insert into persist dicts if it is in database
@@ -125,6 +137,13 @@ class DataManager(object):
 			self.db = dbdatakeeper.DBDataKeeper()
 		return self.db.direct_query(dataclass, dbid)
 
+	def getRemoteData(self, datareference):
+		dmid = datareference.dmid
+		location = {'hostname': dmid[0], 'port': dmid[1]}
+		client = tcptransport.Client(location)
+		datainstance = client.pull(datareference)
+		return datainstance
+
 	def getData(self, datareference):
 		self.lock.acquire()
 		try:
@@ -139,18 +158,35 @@ class DataManager(object):
 				dmid = self.db2dm[dataclass,dbid]
 				datareference.dmid = dmid
 
+			### check if this is a remote data reference
+			location = self.location
+			if dmid is not None:
+				location = dmid[0]
+
 			## now find the data
+			if location != self.location:
+				## in remote memory
+				datainstance = self.getRemoteData(datareference)
 			if dmid in self.datadict:
 				## in local memory
 				datainstance = self.datadict[dmid]
+				# access to datadict causes move to front
+				del self.datadict[dmid]
+				self.datadict[dmid] = datainstance
 			elif dbid is not None:
 				## in database
 				datainstance = self.getDataFromDB(dataclass, dbid)
 				if datainstance is not None:
 					dmid = datainstance.dmid
+			if datainstance is None:
+				raise DataAccessError('Referenced data no longer exists')
 		finally:
 			self.lock.release()
 		return datainstance
+
+	def query(self, datareference):
+		### this is how tcptransport server accesses this data manager
+		return self.getData(datareference)
 
 datamanager = DataManager()
 
@@ -349,15 +385,20 @@ class Data(DataDict, leginonobject.LeginonObject):
 		### synch with leginonobject attributes
 		if key == 'id':
 			super(Data, self).__setattr__(key, value)
-		elif key == 'session':
-			if isinstance(value, SessionData):
-				super(Data, self).__setattr__(key, value['name'])
-			else:
-				super(Data, self).__setattr__(key, value)
+		### removed the stuff about setting session attribute
+		### it is really is necessary, we should 
 		elif isinstance(value,Data):
 			value = DataReference(value)
-		DataDict.__setitem__(self, key, value)
+		#DataDict.__setitem__(self, key, value)
+		super(Data, self).__setitem__(key, value)
 		datamanager.resize(self)
+
+	def __getattr__(self, name):
+		### this method can be removed when all uses of the session attribute are gone
+		if name == 'session':
+			raise DataError("I got rid of the session attribute.  You should be using data['session'] instead of data.session")
+		else:
+			return getattr(super(Data, self), name)
 
 	def typemap(cls):
 		t = DataDict.typemap()
