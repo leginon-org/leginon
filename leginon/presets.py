@@ -430,7 +430,7 @@ class PresetsManager(node.Node):
 			reversecycle = self.createCycleList(currentname, presetname, magshortcut, reverse=True)
 			if len(reversecycle) == 1:
 				p = self.presetByName(reversecycle[0])
-				if p['magnificaiton'] == self.currentpreset['magnification']:
+				if p['magnification'] == self.currentpreset['magnification']:
 					thiscycle = reversecycle
 					print 'magnification adjacency detected, going directly to final preset'
 
@@ -465,6 +465,13 @@ class PresetsManager(node.Node):
 				reduced.insert(0,name1)
 			name2 = name1
 			preset2 = preset1
+
+		if magshortcut and len(reduced) > 1:
+			currentmag = self.currentpreset['magnification']
+			firstp = self.presetByName(reduced[0])
+			firstmag = firstp['magnification']
+			if firstmag == currentmag:
+				del reduced[0]
 
 		return reduced
 
