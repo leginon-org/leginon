@@ -23,8 +23,15 @@ if __name__ == '__main__':
 		try:
 			import pyScope.updatecom
 			pyScope.updatecom.run(os.path.join(pythonfolder, 'pyScope'))
-		except ImportError:
+		except:
 			print 'Failed to update COM'
+
+		try:
+			import pyScope.tietzping
+			pyScope.tietzping.register()
+		except:
+			print 'Failed to register pyScope.Ping'
+
 		try:
 			os.mkdir(pyscopefolder)
 			directory_created(pyscopefolder)
@@ -34,6 +41,12 @@ if __name__ == '__main__':
 		target = os.path.join(pythonfolder, 'pyScope', 'updatecom.py')
 		path = os.path.join(pyscopefolder, 'Update COM.lnk')
 		create_shortcut(target, 'Update COM', path, '',
+										os.path.join(pythonfolder, 'pyScope'))
+		file_created(path)
+
+		target = os.path.join(pythonfolder, 'pyScope', 'tietzping.py')
+		path = os.path.join(pyscopefolder, 'Update Ping.lnk')
+		create_shortcut(target, 'Update Ping', path, '',
 										os.path.join(pythonfolder, 'pyScope'))
 		file_created(path)
 

@@ -20,19 +20,6 @@ try:
 except ImportError:
 	import pyScope.tietzcom as tietzcom
 
-class Ping(object):
-	_typelib_guid_ = tietzcom.CLSID
-	_com_interfaces_ = ['ICAMCCallBack']
-	_public_methods_ = ['LivePing', 'RequestLock']
-	_reg_clsid_ = '{CB1473AA-6F1E-4744-8EFD-68F91CED4294}'
-	_reg_progid_ = 'PythonCAMC4.Ping'
-
-	def LivePing(self):
-		return 0
-
-	def RequestLock(self):
-		return False
-
 class Tietz(object):
 	cameratype = None
 	mmname = ''
@@ -100,17 +87,14 @@ class Tietz(object):
 			raise RuntimeError('Failed to initialize interface CAMC4.Camera')
 
 		try:
-			ping = win32com.client.Dispatch('PythonCAMC4.Ping')
+			ping = win32com.client.Dispatch('pyScope.Ping')
 		except pywintypes.com_error, e:
-			win32com.server.register.UseCommandLine(Ping)
-			try:
-				ping = win32com.client.Dispatch('PythonCAMC4.Ping')
-			except pywintypes.com_error, e:
-				raise RuntimeError('Error dispatching callback COM object')
+			raise RuntimeError('Failed to initialize interface pyScope.Ping')
 
 		try:
 			hr = self.camera.RegisterCAMCCallBack(ping, 'EM')
 		except pywintypes.com_error, e:
+			raise
 			raise RuntimeError('Error registering callback COM object')
 
 		hr = self.camera.RequestLock()
