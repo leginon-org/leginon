@@ -1,6 +1,38 @@
 from wxPython.wx import *
 import wxObjectCanvas
 
+class RenameDialog(wxDialog):
+	def __init__(self, parent, id, title='Rename', pos=wxDefaultPosition,
+								size=wxDefaultSize, style=wxDEFAULT_DIALOG_STYLE):
+
+		wxDialog.__init__(self, parent, id, title, pos, size, style)
+		sizer = wxBoxSizer(wxVERTICAL)
+
+		box = wxBoxSizer(wxHORIZONTAL)
+		label = wxStaticText(self, -1, 'New Name:')
+		box.Add(label, 0, wxALIGN_CENTER|wxALL, 3)
+		self.name_entry = wxTextCtrl(self, -1, '')
+		box.Add(self.name_entry, 1, wxALIGN_CENTER|wxALL, 3)
+		sizer.AddSizer(box)
+
+		box = wxBoxSizer(wxHORIZONTAL)
+		button = wxButton(self, wxID_OK, 'OK')
+		button.SetDefault()
+		box.Add(button, 0, wxALIGN_CENTER|wxALL, 5)
+		button = wxButton(self, wxID_CANCEL, 'Cancel')
+		box.Add(button, 0, wxALIGN_CENTER|wxALL, 5)
+		sizer.AddSizer(box)
+
+		self.SetSizer(sizer)
+		self.SetAutoLayout(True)
+		sizer.Fit(self)
+
+	def GetValue(self):
+		return self.name_entry.GetValue()
+
+	def SetValue(self, name):
+		self.name_entry.SetValue(name)
+
 class AddBindingDialog(wxDialog):
 	def __init__(self, parent, id, title='Add Binding', pos=wxDefaultPosition,
 								size=wxDefaultSize, style=wxDEFAULT_DIALOG_STYLE):
@@ -30,7 +62,7 @@ class AddBindingDialog(wxDialog):
 	def GetValue(self):
 		return self.classentry.GetValue()
 
-	def SetValue(self, alias, eventclass):
+	def SetValue(self, eventclass):
 		self.classentry.SetValue(eventclass)
 
 class Node(wxObjectCanvas.wxRectangleObject):
@@ -56,7 +88,7 @@ class Node(wxObjectCanvas.wxRectangleObject):
 		self.addText(self.name)
 
 	def menuRename(self, evt):
-		dialog = wxTextEntryDialog(None, 'New Name')
+		dialog = RenameDialog(None, -1)
 		dialog.SetValue(self.getName())
 		if dialog.ShowModal() == wxID_OK:
 			self.setName(dialog.GetValue())
@@ -148,7 +180,7 @@ class Launcher(wxObjectCanvas.wxRectangleObject):
 		self.addText(self.name)
 
 	def menuRename(self, evt):
-		dialog = wxTextEntryDialog(None, 'New Name')
+		dialog = RenameDialog(None, -1)
 		dialog.SetValue(self.getName())
 		if dialog.ShowModal() == wxID_OK:
 			self.setName(dialog.GetValue())
@@ -235,7 +267,7 @@ class Application(wxObjectCanvas.wxRectangleObject):
 		self.addText(self.name)
 
 	def menuRename(self, evt):
-		dialog = wxTextEntryDialog(None, 'New Name')
+		dialog = RenameDialog(None, -1)
 		dialog.SetValue(self.getName())
 		if dialog.ShowModal() == wxID_OK:
 			self.setName(dialog.GetValue())
