@@ -1,13 +1,20 @@
 """
-dbdict: a DB / Python Dictionary module.
-Note: use sqlbindict instead
+sqlbindict: a DB / Python Dictionary module.
+
+This creates a database interface which works pretty much like a
+Python dictionary. The keys and values of the dictionary are first
+"pickled" and then stored in a sql table as binary blobs. A
+string representation of the keys and values are stored as well, so
+it can be read by querying directly the database.
+
 """
 import sqldb
+import sqlexpr
 import cPickle
 import md5
 
 
-class dbDict(object):
+class SQLBinDict(object):
 	"""
 	This creates a dictionary which stores Keys and values as
 	binary blobs into a database.
@@ -17,29 +24,32 @@ class dbDict(object):
 	By default the db parameters are set in sqldb module:
 
 	Example:
-		import dbdict
-		a=dbdict.dbDict('dbdictname')
-		b=dbdict.dbDict('dbdictname', host='[YourHost]')
+		import sqlbindict
+		a=sqlbindict.SQLBinDict('dbdictname')
+
+		or you can set the following keywords:
+				host	= "DB_HOST"
+				user	= "DB_USER"
+				db	= "DB_NAME"
+				passwd	= "DB_PASS"
+
+		b=sqlbindict.SQLBinDict('dbdictname', host='[YourHost]')
 
 		"a" creates a new table on the defalut database.
 		"b" creates a new table on [YourHost]'s database.
 
-		dbd = dbdict.dbDict('dbdictname')
+		dbd = sqlbindict.SQLBinDict('dbdictname')
 		dbd[1]={'k':'v', 1:'nom'}
 		
 	"""
-	def __init__(self, tablename):
+	def __init__(self, tablename, **kwargs):
 		self.tablename = tablename
+		self.table = eval("sqlexpr.table.%s" % (tablename))
+		self.kwargs=kwargs
 		self.__open_db()
 		self.__create()
 		self.__close_db()
 	
-	def __addSlashes(self, str):
-		"""
-		Escape single quotes from the string str
-		"""
-		return repr(str + '"')[:-2] + "'"
-
 	##
 	## methods to convert:
 	##
@@ -57,8 +67,9 @@ class dbDict(object):
 	## private methods used to communicate with the database
 	##
 
-	def __open_db(self,**kwargs):
-		"""Open a DB connection.
+	def __open_db(self):
+		"""
+		   Open a DB connection.
 			The optional keyword arguments are:
 				host	= "DB_HOST"
 				user	= "DB_USER"
@@ -66,9 +77,9 @@ class dbDict(object):
 				passwd	= "DB_PASS"
 
 			By default, this is in the config.py file.
-	"""
+		"""
 		try:
-			self.dbc = sqldb.sqlDB(**kwargs)
+			self.dbc = sqldb.sqlDB(**self.kwargs)
 		except Exception, e:
 			raise(e)
 
@@ -77,117 +88,91 @@ class dbDict(object):
 		self.dbc.close()
 
 	def __create(self):
-		'Create a new object table which stores keys and values of a new dbDict object.'
-		self.dbc.execute("""
-				CREATE TABLE IF NOT EXISTS `%s` (
-					Id int(11) NOT NULL auto_increment,
-					hash varchar(64) NOT NULL default '',
-					objectKey mediumblob NOT NULL,
-					object longblob NOT NULL,
-					objectKeyString text NOT NULL,
-					objectString text NOT NULL,
-					PRIMARY KEY  (Id),
-					UNIQUE KEY objectKey (objectKey(255)),
-					UNIQUE KEY hash (hash)
-				) TYPE=MyISAM
-				""" % self.tablename )
+		'Create a new object table which stores keys and values of a new SQLBinDict object.'
+
+		tableDefinition = [{'Field': 'id', 'Type': 'int(16)', 'Key': 'PRIMARY', 'Extra':'auto_increment'},
+ 			{'Field': 'hash', 'Type': 'VARCHAR(64)', 'Key': 'UNIQUE', 'Index': ['hash']},
+			{'Field': 'objectKey', 'Type': 'mediumblob', 'Key': 'UNIQUE', 'Index': ['objectKey(255)']},
+			{'Field': 'object', 'Type': 'longblob'},
+			{'Field': 'objectKeyString', 'Type': 'text'},
+			{'Field': 'objectString', 'Type': 'text'}]
+
+		if self.dbc is not None:
+	    		q = sqlexpr.CreateTable(self.tablename, tableDefinition).sqlRepr()
+			self.dbc.execute(q)
+
 
 	def __drop(self):
 		'Drop an existing object table.'
-		self.dbc.execute("""
-				DROP TABLE `%s` 
-				""" % self.tablename )
+		if self.dbc is not None:
+	    		q = sqlexpr.DropTable(self.table).sqlRepr()
+			self.dbc.execute(q)
 
 	def __empty(self):
 		'Clear an existing object table.'
 		if self.dbc is not None:
-			return self.dbc.execute("""delete from `%s` """ %
-							(self.tablename)
-							)
+	    		q = sqlexpr.Delete(self.table, where=None).sqlRepr()
+			self.dbc.execute(q)
 
 	def __del(self, cpickle_blobKey):
 		'Delete a row of an existing object table.'
 		if self.dbc is not None:
-			val = self.dbc.execute("""delete from `%s`
-							where objectKey='%s' """ %
-							(self.tablename, cpickle_blobKey)
-							)
+	    		q = sqlexpr.Delete(self.table, where=self.table.objectKey==cpickle_blobKey).sqlRepr()
+			val = self.dbc.execute(q)
 			return val
 
 	def __length(self):
 		'Return number of rows of an existing object table.'
 		if self.dbc is not None:
-			return self.dbc.selectone("""select count(Id) from `%s` """ %
-							(self.tablename)
-							)
+			q = sqlexpr.Select(sqlexpr.const.count(self.table.Id)).sqlRepr()
+			return self.dbc.selectone(q)
 
 	def __get_Id(self, cpickle_blobKey):
 		'Return an object Id from a table by specifying a key.'
 		if self.dbc is not None:
-			return self.dbc.selectone("""select Id from `%s`
-							where objectKey='%s' """ %
-							(self.tablename, cpickle_blobKey)
-							)
+	    		q = sqlexpr.Select(self.table.Id,
+				 where=self.table.objectKey==cpickle_blobKey).sqlRepr()
+			return self.dbc.selectone(q)
 
 	def __get_hId(self, hash):
 		'Return an object Id from a table by specifying a hash.'
 		if self.dbc is not None:
-			return self.dbc.selectone("""select Id from `%s`
-							where hash='%s' """ %
-							(self.tablename, hash)
-							)
+	    		q = sqlexpr.Select(self.table.Id,
+				 where=self.table.hash==hash).sqlRepr()
+			return self.dbc.selectone(q)
 
 	def __keys(self):
 		'Return all keys from an existing object table.'
 		if self.dbc is not None:
-			res_tuple = self.dbc.selectall("""select objectKey from `%s` """ %
-							self.tablename
-						   	)
+	    		q = sqlexpr.Select(self.table.objectKey).sqlRepr()
+			res_tuple = self.dbc.selectall(q)
 			return res_tuple
 
 	def __values(self):
 		'Return all keys from an existing object table.'
 		if self.dbc is not None:
-			res_tuple = self.dbc.selectall("""select object from `%s` """ %
-							self.tablename
-						   	)
+	    		q = sqlexpr.Select(self.table.object).sqlRepr()
+			res_tuple = self.dbc.selectall(q)
 			return res_tuple
 
 	def __all(self):
 		'Return all keys from an existing object table.'
 		if self.dbc is not None:
-			res_tuple = self.dbc.selectall("""select objectKey, object from `%s` """ %
-							self.tablename
-						   	)
+	    		q = sqlexpr.Select([self.table.objectKey, self.table.object]).sqlRepr()
+			res_tuple = self.dbc.selectall(q)
 			return res_tuple
 		
-	def __get(self, blobKey, type=0):
-		"""
-		If type=1, the method will query the object DB using a hash as a key.
-		"""
+	def __get(self, blobKey):
+		'Return a object to the corresponding key.'
 		if self.dbc is not None:
-			if type == 0:
-				cpickle_blobKey = self.__pickle_key(blobKey)
-				res_tuple = self.dbc.selectone (""" select object from `%s`
-								where objectKey='%s'""" %
-								(self.tablename, cpickle_blobKey)
-								)
-				if res_tuple:
-					return self.__unpickle_key(res_tuple[0])
-				else:
-					raise KeyError(blobKey)	
-
-			elif type == 1:
-				hash = md5.new(blobKey).hexdigest()
-				res_tuple=self.dbc.selectone(""" select object from `%s`
-								where hash='%s'""" %
-								(self.tablename, hash)
-								)
-				if res_tuple:
-					return self.__unpickle_key(res_tuple[0])
-				else:
-					raise KeyError(blobKey)	
-
+			cpickle_blobKey = self.__pickle_key(blobKey)
+	    		q = sqlexpr.Select(self.table.object,
+				 where=self.table.objectKey==cpickle_blobKey).sqlRepr()
+			res_tuple = self.dbc.selectone(q)
+			if res_tuple:
+				return self.__unpickle_key(res_tuple[0])
+			else:
+				raise KeyError(blobKey)	
 
 	def __put(self, blobKey, blob):
 		'Insert a new object in an existing object table.'
@@ -195,15 +180,13 @@ class dbDict(object):
 			hash = md5.new("""%s""" % blobKey).hexdigest()
 			cpickle_blobKey = self.__pickle_key(blobKey)
 			cpickle_blob	= self.__pickle_key(blob)
-			blobKey_str="""%s""" % (blobKey)
-			blob_str="""%s""" % (blob)
-			blobKey_str=self.__addSlashes(blobKey_str)
-			blob_str=self.__addSlashes(blob_str)
+			blobKey_str="""%s""" % (blobKey,)
+			blob_str="""%s""" % (blob,)
 
-			q = ("""replace into `%s` (hash, objectKey, object, objectKeyString, objectString)
-							values ('%s', '%s', '%s', %s, %s) """ %
-						 	(self.tablename, hash, cpickle_blobKey, cpickle_blob, blobKey_str, blob_str)
-						)
+			q = sqlexpr.Replace(self.tablename,
+			    [hash, cpickle_blobKey, cpickle_blob, blobKey_str, blob_str],
+			    template=('hash', 'objectKey', 'object', 'objectKeyString', 'objectString')
+			    ).sqlRepr()
 			return self.dbc.insert(q)
 	##
 	## methods to emulate a Python Dictionary

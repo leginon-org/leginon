@@ -2,11 +2,19 @@
 sqldict: 
 
 This creates a database interface which works pretty much like a
-Python dictionary. 
+Python dictionary. The data are stored in a sql table.
 
 >>> from sqldict import *
->>> dbc = MySQLdb.connect(host='localhost', db='test', user='anonymous', passwd='')
->>> db = SQLDict(dbc)
+>>> db = SQLDict()
+
+The optional keyword arguments are:
+	host	= "DB_HOST"
+	user	= "DB_USER"
+	db	= "DB_NAME"
+	passwd	= "DB_PASS"
+By default, this is in the config.py file
+
+>>> db = SQLDict(host="YourHost")
 
 DEFINE / CREATE A TABLE
 -----------------------
@@ -121,8 +129,8 @@ OR
 
 
 import sqlexpr
-import MySQLdb
-
+# import MySQLdb
+import sqldb
 import string
 from types import *
 
@@ -131,11 +139,18 @@ class SQLDict:
     """SQLDict: An object class which implements something resembling
     a Python dictionary on top of an SQL DB-API database."""
 
-    def __init__(self, db):
-
-	"""Create a new SQLDict object.
-	db: an SQL DB-API database connection object"""
-	self.db = db
+    def __init__(self, **kwargs):
+	"""
+	Create a new SQLDict object.
+	db: an SQL DB-API database connection object.
+	The optional keyword arguments are:
+		host	= "DB_HOST"
+		user	= "DB_USER"
+		db	= "DB_NAME"
+		passwd	= "DB_PASS"
+	By default, this is in the config.py file
+	"""
+	self.db = sqldb.connect(**kwargs)
 
     def __del__(self):	self.close()
 

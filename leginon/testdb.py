@@ -1,7 +1,6 @@
 from sqldict import *
 
-dbc = MySQLdb.connect(host='localhost', db='test', user='anonymous', passwd='')
-db = SQLDict(dbc)
+db = SQLDict()
 
 presetDefinition = [{'Field': 'id', 'Type': 'int(16)', 'Key': 'PRIMARY', 'Extra':'auto_increment'},
 			{'Field': 'Name', 'Type': 'varchar(30)'},
@@ -38,7 +37,12 @@ class Preset(ObjectBuilder):
 	columns = ['Name', 'Mag', 'Defocus', 'Dose']
 	indices = [ ('Name', ['Name']), ('NameMag', ['Name', 'Mag']) ]
 
+
+
 myp1 = Preset().register(db)
 p1 = Preset('foc', 66000, -20,0.67543)
 
+d= myp1.Name['expo1']
+myp1.Name['expo1'] = {'Mag': 66000}
+myp1.NameMag['expo1', '6600']
 p1d = p1.dumpdict()

@@ -2,21 +2,24 @@
 import MySQLdb
 import config
 
+def connect(**kwargs):
+	defaults = {
+		'host':config.DB_HOST,
+		'user':config.DB_USER,
+		'db':config.DB_NAME,
+		'passwd':config.DB_PASS
+	}
+	defaults.update(kwargs)
+	c = MySQLdb.connect(**defaults)
+	return c
+
 class sqlDB:
 	"""
 	This class is a SQL interface to connect a MySQL DB server.
 	Default: host="localhost", user="usr_object", db="dbemdata"
 	"""
-	def __init__(self, host=config.DB_HOST, user=config.DB_USER, db=config.DB_NAME, passwd=config.DB_PASS):
-		self.host=host
-		self.user=user
-		self.db=db
-		self.passwd=passwd
-		self.dbConnection = self.connect()
-
-	def connect(self):
-		'Open a DB connection'
-		return MySQLdb.connect(host=self.host,user=self.user,db=self.db,passwd=self.passwd) 
+	def __init__(self, **kwargs):
+		self.dbConnection = connect(**kwargs)
 		
 	def selectone(self, strSQL, param=None):
 		'Execute a query and return the first row.'
@@ -46,4 +49,3 @@ class sqlDB:
 	def close(self):
 		'Close a DB connection'
 		self.dbConnection.close()
-

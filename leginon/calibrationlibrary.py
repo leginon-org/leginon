@@ -3,7 +3,7 @@ import data
 import event
 import cPickle
 import datahandler
-import dbdict
+import sqlbindict
 
 class DataHandler(datahandler.DataBinder):
 	def __init__(self, id, calnode):
@@ -123,7 +123,7 @@ class DBCalibrationLibrary(CalibrationLibrary):
 
 	def getKeys(self):
 		try:
-			cal = dbdict.dbDict('CAL')
+			cal = sqlbindict.SQLBinDict('CAL')
 			return cal.keys()
 		except:
 			return ()
@@ -136,7 +136,7 @@ class DBCalibrationLibrary(CalibrationLibrary):
 
 	def getCalibration(self, key=None):
 		try:
-			cal = dbdict.dbDict('CAL')
+			cal = sqlbindict.SQLBinDict('CAL')
 		except:
 			cal = {}
 

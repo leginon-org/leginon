@@ -379,21 +379,23 @@ class ColumnSpec(dict):
 	        	return sql_str
 		else:
 			keys = []
-			key_str = 'KEY'
+			key_str = ''
+			if unique:
+				key_str += 'UNIQUE'
+			if fulltext:
+				key_str += 'FULLTEXT'
+
+			key_str += ' KEY'
+
 			if index:
 				indexes = []
 				for indexName in index:
 					indexes.append(indexName)
 				index_str = string.join(indexes, ',')
-				keys.append('KEY '+name +'(' + index_str + ')')
+				keys.append(key_str+' '+name +'(' + index_str + ')')
 
 			if primary:
 				keys.append('PRIMARY KEY '+'('+ name +')' )
-
-			if unique:
-				keys.append('UNIQUE')
-			if fulltext:
-				keys.append('FULLTEXT')
 
 	       		return string.join(keys)
 
@@ -516,6 +518,13 @@ class Replace(Update):
     def sqlName(self):
         return "REPLACE"
 
+class DropTable(SQLExpression):
+    def __init__(self, table):
+        self.table = table
+
+    def sqlRepr(self):
+            return "DROP TABLE %s" % self.table
+
 ########################################
 ## SQL Builtins
 ########################################
@@ -592,6 +601,10 @@ if __name__ == "__main__":
 >>> Replace(table.preset, ["expo1", 66000, -200, 0.867543], template=('name', 'Mag', 'Defocus', 'Dose'))
 >>> CreateTable('myTable2', [{'Field': 'id', 'Type': 'int(16)', 'Key': 'PRIMARY', 'Extra':'auto_increment'}, {'Field': 'filename', 'Type': 'VARCHAR(50)', 'Key': 'INDEX', 'Index': ['filename']}, {'Field': 'filenameFR', 'Type': 'VARCHAR(50)', 'Key': 'INDEX', 'Index': ['filename']}], 'ISAM')
 >>> CreateTable('PEOPLE', [{'Field': 'id', 'Type': 'int(16)', 'Key': 'PRIMARY', 'Extra':'auto_increment'}, {'Field': 'Name', 'Type': 'VARCHAR(50)'}, {'Field': 'Address', 'Type': 'VARCHAR(50)'}, {'Field': 'City', 'Type': 'VARCHAR(50)'}, {'Field': 'State', 'Type': 'VARCHAR(50)'}])
+>>> CreateTable('OBJECT', [{'Field': 'Id', 'Type': 'int(16)', 'Key': 'PRIMARY', 'Extra':'auto_increment'}, {'Field': 'hash', 'Type': 'VARCHAR(64)', 'Key': 'UNIQUE', 'Index': ['hash']}, {'Field': 'objectKey', 'Type': 'mediumblob', 'Key': 'UNIQUE', 'Index': ['objectKey(255)']}, {'Field': 'object', 'Type': 'longblob'}, {'Field': 'objectKeyString', 'Type': 'text'}, {'Field': 'objectString', 'Type': 'text'}])
+>>> Replace("tablename", ["expo1", 66000, -200, 0.867543], template=('name', 'Mag', 'Defocus', 'Dose'))
+>>> Select([table.preset.name, const.count(table.preset.Id)], where=LIKE(table.preset.name, "%square%"))
+>>> DropTable(table.preset)
 """
     for expr in tests.split('\n'):
         if not expr.strip(): continue
