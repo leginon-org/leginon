@@ -146,11 +146,18 @@ class AddChoicesDialog(AddDialog):
 
 class Leginon(Tkinter.Frame):
 	def __init__(self, parent):
-		Tkinter.Frame.__init__(self, parent)
-		self.parent = parent
 		self.uiclients = {}
 		self.acquireandtargets = {}
+		self.manager = None
+		self.remotelauncher = None
+
+		self.parent = parent
+		self.parent.protocol('WM_DELETE_WINDOW', self.exit)
+		Tkinter.Frame.__init__(self, parent)
+
 		self.notebook = Pmw.NoteBook(self)
+		self.notebook.component('hull')['width'] = 800
+		self.notebook.component('hull')['height'] = 600
 		self.notebook.pack(fill=Tkinter.BOTH, expand=Tkinter.YES)
 
 		self.menu = Tkinter.Menu(parent, tearoff=0)
@@ -158,11 +165,17 @@ class Leginon(Tkinter.Frame):
 
 		self.filemenu = Tkinter.Menu(self.menu, tearoff=0)
 		self.menu.add_cascade(label='File', menu=self.filemenu)
+		self.filemenu.add_command(label='New...', command=self.new)
+		self.filemenu.add_separator()
 		self.filemenu.add_command(label='Exit', command=self.exit)
 
 		self.editmenu = Tkinter.Menu(self.menu, tearoff=0)
 		self.menu.add_cascade(label='Edit', menu=self.editmenu)
 		self.editmenu.add_command(label='Add...', command=self.add)
+		self.menu.entryconfigure(1, state=Tkinter.DISABLED)
+
+	def start(self):
+		self.new()
 
 	def add(self):
 		# Grid Atlas in there for now
@@ -175,19 +188,24 @@ class Leginon(Tkinter.Frame):
 			self.addAcquireAndTarget(add_dialog.result[0], sourceids)
 
 	def exit(self):
+		self.kill()
+		self.parent.destroy()
+
+	def kill(self):
+		if self.manager is None:
+			self.remotelauncher = None
+			return
+
 		nodeids = self.manager.clients.keys()
-		nodeids.remove(self.remotelauncher)
+		if self.remotelauncher is not None:
+			nodeids.remove(self.remotelauncher)
+			self.remotelauncher = None
 		nodeids.remove(self.locallauncherid)
 		for nodeid in nodeids:
-				try:
-					self.manager.killNode(nodeid)
-				except Exception, e:
-					print 'failed to kill', nodeid, e
-
-		#if sys.platform == 'win32':
-		#	win32api.TerminateProcess(self.locallauncherprocess, 0)
-		#else:
-		#	os.kill(self.locallauncherprocess)
+			try:
+				self.manager.killNode(nodeid)
+			except Exception, e:
+				print 'failed to kill', nodeid, e
 
 		while len(self.manager.clients) > 2:
 			time.sleep(0.25)
@@ -198,18 +216,26 @@ class Leginon(Tkinter.Frame):
 			time.sleep(0.25)
 
 		self.manager.exit()
-		self.parent.destroy()
+		self.manager = None
+		for page in self.notebook.pagenames():
+			self.notebook.delete(page)
+		self.uiclients = {}
+		self.acquireandtargets = {}
 
 	# needs to check what got started, the whole lot needs error handling
-	def start(self):
+	def new(self):
+		self.filemenu.entryconfigure(0, state=Tkinter.DISABLED)
+		self.kill()
 		setupwizard = leginonsetup.SetupWizard(self)
 		self.manager = setupwizard.manager
-#		self.locallauncherprocess = setupwizard.locallauncherprocess
 		self.remotelauncher = setupwizard.remotelauncher
 		if self.manager is None:
+			self.filemenu.entryconfigure(0, state=Tkinter.NORMAL)
 			return
+		self.menu.entryconfigure(1, state=Tkinter.NORMAL)
 		self.startApplication()
 		self.startGUI()
+		self.filemenu.entryconfigure(0, state=Tkinter.NORMAL)
 
 	def startApplication(self):
 		self.manager.app.load(applicationfilename)

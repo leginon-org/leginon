@@ -13,6 +13,7 @@ defaultlauncherport = 55555
 class Wizard(Tkinter.Toplevel):
 	def __init__(self, parent, title=None):
 		Tkinter.Toplevel.__init__(self, parent)
+		self.transient(parent)
 		if title is not None:
 			self.title(title)
 
@@ -33,6 +34,11 @@ class Wizard(Tkinter.Toplevel):
 		buttonframe.grid(row=1, column=0, sticky=Tkinter.E)
 
 		self.widget = None
+
+		if parent is not None:
+			self.geometry("+%d+%d" % (parent.winfo_rootx()+50,
+																parent.winfo_rooty()+50))
+		self.focus_set()
 
 	def setWidget(self, widget, back=None, next=None, cancel=None):
 		self.unsetWidget()
@@ -273,7 +279,6 @@ class SetupWizard(Wizard):
 		self.runwidget = RunWidget(self)
 		self.initialSetup()
 
-		self.transient(parent)
 		self.wait_window(self)
 
 	def initialSetup(self):
