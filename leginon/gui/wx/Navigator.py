@@ -95,7 +95,8 @@ class Panel(gui.wx.Node.Panel):
 class StageLocationsDialog(wx.Dialog):
 	def __init__(self, parent, node):
 		self.node = node
-		wx.Dialog.__init__(self, parent, -1, 'Stage Locations')
+		wx.Dialog.__init__(self, parent, -1, 'Stage Locations',
+												style=wx.DEFAULT_DIALOG_STYLE|wx.RESIZE_BORDER)
 
 		self.sz = wx.GridBagSizer(5, 5)
 
@@ -107,6 +108,7 @@ class StageLocationsDialog(wx.Dialog):
 			self.stposition[a] = wx.StaticText(self, -1, '-')
 			self.sz.Add(stposition[a], (0, i + 1), (1, 1), wx.ALIGN_CENTER)
 			self.sz.Add(self.stposition[a], (1, i + 1), (1, 1), wx.ALIGN_CENTER)
+			self.sz.AddGrowableCol(i + 1)
 
 		label0 = wx.StaticText(self, -1, 'Position:')
 		label1 = wx.StaticText(self, -1, 'Comment:')
@@ -137,15 +139,11 @@ class StageLocationsDialog(wx.Dialog):
 		self.sz.Add(szbuttons, (4, 0), (1, 1),
 								wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_TOP)
 
-		self.sz.AddGrowableCol(1)
-		self.sz.AddGrowableCol(2)
-		self.sz.AddGrowableCol(3)
-		self.sz.AddGrowableCol(4)
-		self.sz.AddGrowableCol(5)
 		self.sz.AddGrowableRow(4)
 
 		szdialog = wx.GridBagSizer(5, 5)
 		szdialog.Add(self.sz, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
+		szdialog.AddGrowableCol(0)
 
 		self.SetSizerAndFit(szdialog)
 
@@ -186,7 +184,7 @@ class StageLocationsDialog(wx.Dialog):
 					if l[a] is None:
 						self.stposition[a].SetLabel('-')
 					else:
-						self.stposition[a].SetLabel(str(l[a]))
+						self.stposition[a].SetLabel('%g' % l[a])
 				except KeyError:
 					self.stposition[a].SetLabel('-')
 
@@ -206,7 +204,6 @@ class StageLocationsDialog(wx.Dialog):
 		self.bfromscope.Enable(enable)
 		self.bremove.Enable(enable)
 
-		self.sz.Layout()
 		self.Fit()
 
 	def onLocationSelected(self, evt):
@@ -335,13 +332,29 @@ class NewLocationDialog(wx.Dialog):
 			evt.Skip()
 
 if __name__ == '__main__':
+	class Node(object):
+		def getLocationNames(self):
+			return ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k']
+
+		def getLocation(self, name):
+			value = 1.23456789e-6
+			keys = ['x', 'y', 'z', 'a', 'b']
+			location = {}
+			for key in keys:
+				location[key] = value
+			location['comment'] = 'This is a fake stage position for testing'
+			return location
+
 	class App(wx.App):
 		def OnInit(self):
 			frame = wx.Frame(None, -1, 'Navigator Test')
-			panel = Panel(frame, 'Test')
+			#panel = Panel(frame, 'Test')
+			node = Node()
+			dialog = StageLocationsDialog(frame, node)
 			frame.Fit()
 			self.SetTopWindow(frame)
 			frame.Show()
+			dialog.Show()
 			return True
 
 	app = App(0)
