@@ -31,18 +31,18 @@ class Application(leginonobject.LeginonObject):
 
 	def launch(self):
 		for args in self.launchspec:
-			print 'Application: launching', args
+			self.printerror('launching %s' % str(args))
 			newid = apply(self.manager.launchNode, args)
 			#print 'NEWID', newid
 			self.launchednodes.append(newid)
 		for args in self.bindspec:
-			print 'Application: binding', args
+			self.printerror('binding %s' % str(args))
 			apply(self.manager.addEventDistmap, args)
 
 	def kill(self):
 		while self.launchednodes:
 			nodeid = self.launchednodes.pop()
-			print 'Application: killing %s' % (nodeid,)
+			self.printerror('killing %s' % (nodeid,))
 			self.manager.killNode(nodeid)
 
 	def save(self, filename):

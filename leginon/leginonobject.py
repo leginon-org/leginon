@@ -29,7 +29,8 @@ class LeginonObject(object):
 		return newid
 
 	def printerror(self, errorstring, color=None):
-
+		# there is better way, but since ANSI colors hurt my eyes
+		# I don't know if we'll keep them
 		if self.__class__.__name__ == 'Manager':
 			color = 41
 		elif self.__class__.__name__ == 'Launcher':
