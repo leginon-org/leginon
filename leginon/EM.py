@@ -13,7 +13,9 @@ import socket
 import threading
 import gui.wx.Instrument
 from pyScope import tem, ccdcamera, registry, methoddict
-import pythoncom
+import sys
+if sys.platform == 'win32':
+	import pythoncom
 
 class EM(node.Node):
 	panelclass = gui.wx.Instrument.Panel
