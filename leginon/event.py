@@ -36,12 +36,20 @@ class PublishEvent(Event):
 	def __init__(self, dataid):
 		Event.__init__(self, content=dataid)
 
+# this could be a subclass of publish event, but I'm not sure if that
+# would confuse those not looking for a list
+class ListPublishEvent(Event):
+	'Event indicating data was published'
+	def __init__(self, idlist):
+		if type(idlist) == list:
+			Event.__init__(self, content = idlist)
+		else:
+			raise TypeError
 
 class ControlEvent(Event):
 	'Event that passes a value with it'
 	def __init__(self, content):
 		Event.__init__(self, content)
-
 
 class NumericControlEvent(ControlEvent):
 	'ControlEvent that allows only numeric values to be passed'
@@ -52,15 +60,12 @@ class NumericControlEvent(ControlEvent):
 		else:
 			raise TypeError('NumericControlEvent content type must be in %s' % allowedtypes)
 
-
 class LaunchEvent(ControlEvent):
 	'ControlEvent sent to a NodeLauncher specifying a node to launch'
 	#def __init__(self, nodeid, nodeclass, newproc=0):
 	def __init__(self, newproc, targetclass, args=(), kwargs={}):
 		nodeinfo = {'newproc':newproc,'targetclass':targetclass, 'args':args, 'kwargs':kwargs}
 		Event.__init__(self, content=nodeinfo)
-
-
 
 ###########################################################
 ## event related exceptions

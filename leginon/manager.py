@@ -22,6 +22,7 @@ class Manager(node.Node):
 		#self.addDistmap(event.PublishEvent, , ):
 
 		self.addEventInput(event.PublishEvent, self.registerData)
+		self.addEventInput(event.ListPublishEvent, self.registerData)
 
 		self.main()
 
@@ -29,30 +30,36 @@ class Manager(node.Node):
 		print self.location()
 		self.interact()
 
-	# now addEventDistmap inherited from node
-#	def addDistmap(self, eventclass, from_node=None, to_node=None):
-#		self.eventhandler.addDistmap(eventclass, from_node, to_node)
-
 	def registerNode(self, readyevent):
 		print 'registering node', readyevent.origin
 		self.addEventClient(readyevent.origin['id'], readyevent.origin['location'])
 		print self.clients
 
 	def registerData(self, publishevent):
-		#print 'registering data', publishevent.origin
-		if publishevent.content in self.dataregistry:
-			self.dataregistry[publishevent.content].append(publishevent.origin['id'])
+		print 'registering data', publishevent.origin
+		print publishevent
+
+		if isinstance(publishevent, event.PublishEvent):
+			id = publishevent.content
+			self.addDataRegistryEntry(id, publishevent.origin['id'])
+		elif isinstance(publishevent, event.ListPublishEvent):
+			for id in publishevent.content:
+				self.addDataRegistryEntry(id, publishevent.origin['id'])
 		else:
-			self.dataregistry[publishevent.content] = [publishevent.origin['id']]
-		#print self.dataregistry
+			raise TypeError
 
-	def launchNode(self, launcher, newproc, target, newid):
+		print self.dataregistry
+
+	def addDataRegistryEntry(self, dataid, nodeid):
+		if dataid in self.dataregistry:
+			self.dataregistry[dataid].append(nodeid)
+		else:
+			self.dataregistry[dataid] = [nodeid]
+
+	def launchNode(self, launcher, newproc, target, newid, nodeargs=()):
 		manloc = self.location()
-		args = (newid, manloc)
+		args = tuple([newid, manloc] + list(nodeargs))
 		self.launch(launcher, newproc, target, args)
-
-	def launchServer(self, launcher, newproc, target):
-		self.launch(launcher, newproc, target)
 
 	def launch(self, launcher, newproc, target, args=(), kwargs={}):
 		"""

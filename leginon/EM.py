@@ -70,18 +70,20 @@ class EM(node.Node):
 
 		node.Node.__init__(self, nodeid, managerloc, DataHandler, (self.lock, self.scope, self.camera))
 
-		self.addEventOutput(event.PublishEvent)
+		self.addEventOutput(event.ListPublishEvent)
 
-		ids = ['scope', 'camera', 'all']
+		ids = []
 		if self.scope:
+			ids += 'scope'
 			ids += self.scope.keys()
 		if self.camera:
+			ids += 'camera'
 			ids += self.camera.keys()
+		if self.scope and self.camera:
+			ids += 'all'
 
-		for id in ids:
-			e = event.PublishEvent(id)
-			e.content = id
-			self.announce(e)
+		e = event.ListPublishEvent(ids)
+		self.announce(e)
 
 if __name__ == '__main__':
 	import time
