@@ -5,22 +5,44 @@
 #       For terms of the license agreement
 #       see  http://ami.scripps.edu/software/leginon-license
 #
-import sys
-sys.coinit_flags = 0
-import pythoncom
-import win32com.client
-import winerror
+
+import tem
 import time
-# dynamic import handling
+import sys
+
 try:
-	import tecnaicom
-	import ldcom
-	import adacom
+	import pythoncom
+	import win32com.client
+	import winerror
 except ImportError:
-	from pyScope import tecnaicom, ldcom, adacom
+	pass
 
+try:
+	try:
+		import tecnaicom
+	except ImportError:
+		from pyScope import tecnaicom
+except ImportError:
+	pass
 
-class Tecnai(object):
+try:
+	try:
+		import ldcom
+	except ImportError:
+		from pyScope import ldcom
+except ImportError:
+	pass
+
+try:
+	try:
+		import adacom
+	except ImportError:
+		from pyScope import adacom
+except ImportError:
+	pass
+
+class Tecnai(tem.TEM):
+	name = 'Tecnai'
 	magtable = [
 		21, 28, 38, 56, 75, 97, 120, 170, 220, 330, 420, 550, 800, 1100, 1500, 2100,
 		1700, 2500, 3500, 5000, 6500, 7800, 9600, 11500, 14500, 19000, 25000, 29000,
@@ -36,6 +58,7 @@ class Tecnai(object):
 	]
 
 	def __init__(self):
+		tem.TEM.__init__(self)
 		self.correctedstage = True
 		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
 
@@ -1088,6 +1111,7 @@ class Tecnai(object):
 			raise ValueError('Invalid film date type specified')
 
 class TecnaiPolara(Tecnai):
+	name = 'Tecnai Polara'
 	magtable = [
 		62, 76, 100, 125, 175, 220, 280, 360, 480, 650, 790, 990, 1200, 1800, 2300,
 		2950, 3000, 4500, 5600, 9300, 13500, 18000, 22500, 27500, 34000, 41000,

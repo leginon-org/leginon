@@ -6,19 +6,23 @@
 #      see  http://ami.scripps.edu/software/leginon-license
 #
 
+#import array
+import ccdcamera
+import numarray
 import sys
-sys.coinit_flags = 0
-import pythoncom
-import pywintypes
-import win32com.client
-import win32com.server.register
-import array
-import mmapfile
-import numarray as Numeric
+
 try:
-	import tietzcom
+	import mmapfile
+	import pythoncom
+	import pywintypes
+	import win32com.client
+	import win32com.server.register
+	try:
+		import tietzcom
+	except ImportError:
+		import pyScope.tietzcom as tietzcom
 except ImportError:
-	import pyScope.tietzcom as tietzcom
+	pass
 
 class Tietz(object):
 	cameratype = None
@@ -69,8 +73,8 @@ class Tietz(object):
 		if self.cameratype is None:
 			raise NotImplementedError('Tietz virtual class')
 
-		self.arraytypecode = 'H'
-		self.numerictypecode = Numeric.UInt16
+		#self.arraytypecode = 'H'
+		self.imagetype = numarray.UInt16
 		self.bytesperpixel = 2
 
 		self.binning = {'x': 1, 'y': 1}
@@ -170,7 +174,7 @@ class Tietz(object):
 																		{'x': {'type': int}, 'y': {'type': int}}},
 			'exposure time': {'type': int},
 			'exposure type': {'type': str, 'values': ['normal', 'dark', 'bias', 'readout']},
-			'image data': {'type': Numeric.ArrayType},
+			'image data': {'type': numarray.ArrayType},
 			'chip name': {'type': str},
 			'camera name': {'type': str},
 			'camera size': {'type': dict, 'values':
@@ -354,7 +358,7 @@ class Tietz(object):
 		return False
 	
 	def getImage(self):
-		# {'type': Numeric.ArrayType}
+		# {'type': numarray.ArrayType}
 		# 0 uses internal flash signal
 		# 1 uses internal exposure signal (PVCam and PXL only)
 		# shutter_mode = 1
@@ -400,14 +404,13 @@ class Tietz(object):
 
 		imagesize = self.bytesperpixel*dimension['x']*dimension['y']
 
-		# Numeric directly?
 		map = mmapfile.mmapfile('', self.mmname, imagesize)
-		na = Numeric.array(array.array(self.arraytypecode, map.read(imagesize)),
-												self.numerictypecode)
+		#na = numarray.array(array.array(self.arraytypecode, map.read(imagesize)),
+		#										self.imagetype)
+		na = numarray.fromstring(map.read(imagesize), self.imagetype)
 		map.close()
 		na.shape = (dimension['y'], dimension['x'])
 		return na
-		#return Numeric.reshape(na, (dimension['y'], dimension['x']))
 
 	def getChipName(self):
 		# {'type': str}
@@ -652,27 +655,69 @@ class Tietz(object):
 		else:
 			raise RuntimeError('error getting camera axis')
 
-class TietzPXL(Tietz):
-	cameratype = win32com.client.constants.ctPXL
+class TietzPXL(Tietz, ccdcamera.CCDCamera):
+	name = 'Tietz PXL'
+	try:
+		cameratype = win32com.client.constants.ctPXL
+	except NameError:
+		pass
 	mmname = 'CAM_PXL_DATA'
+	def __init__(self):
+		ccdcamera.CCDCamera.__init__(self)
+		Tietz.__init__(self)
 	
-class TietzSimulation(Tietz):
-	cameratype = win32com.client.constants.ctSimulation
+class TietzSimulation(Tietz, ccdcamera.CCDCamera):
+	name = 'Tietz Simulation'
+	try:
+		cameratype = win32com.client.constants.ctSimulation
+	except NameError:
+		pass
 	mmname = 'CAM_SIMU_DATA'
+	def __init__(self):
+		ccdcamera.CCDCamera.__init__(self)
+		Tietz.__init__(self)
 
-class TietzPVCam(Tietz):
-	cameratype = win32com.client.constants.ctPVCam
+class TietzPVCam(Tietz, ccdcamera.CCDCamera):
+	name = 'Tietz PVCam'
+	try:
+		cameratype = win32com.client.constants.ctPVCam
+	except NameError:
+		pass
 	mmname = 'CAM_PVCAM_DATA'
+	def __init__(self):
+		ccdcamera.CCDCamera.__init__(self)
+		Tietz.__init__(self)
 	
-class TietzFastScan(Tietz):
-	cameratype = win32com.client.constants.ctFastScan
+class TietzFastScan(Tietz, ccdcamera.CCDCamera):
+	name = 'Tietz FastScan'
+	try:
+		cameratype = win32com.client.constants.ctFastScan
+	except NameError:
+		pass
 	mmname = 'CAM_FASTSCAN_DATA'
+	def __init__(self):
+		ccdcamera.CCDCamera.__init__(self)
+		Tietz.__init__(self)
 	
-class TietzFastScanFW(Tietz):
-	cameratype = win32com.client.constants.ctF114_FW
+class TietzFastScanFW(Tietz, ccdcamera.CCDCamera):
+	name = 'Tietz FastScan Firewire'
+	try:
+		cameratype = win32com.client.constants.ctF114_FW
+	except NameError:
+		pass
 	mmname = 'CAM_FSFW_DATA'
+	def __init__(self):
+		ccdcamera.CCDCamera.__init__(self)
+		Tietz.__init__(self)
 	
-class TietzSCX(Tietz):
-	cameratype = win32com.client.constants.ctSCX
+class TietzSCX(Tietz, ccdcamera.CCDCamera):
+	name = 'Tietz SCX'
+	try:
+		cameratype = win32com.client.constants.ctSCX
+	except NameError:
+		pass
 	mmname = 'CAM_SCX_DATA'
+	def __init__(self):
+		ccdcamera.CCDCamera.__init__(self)
+		Tietz.__init__(self)
 

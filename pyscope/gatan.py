@@ -6,22 +6,25 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
+import ccdcamera
+import numarray
 import sys
-sys.coinit_flags = 0
-import pythoncom
-import pywintypes
-import win32com.client
-try:
-	import numarray as Numeric
-except:
-	import Numeric
-try:
-	import TecnaiCCDWrapper
-except ImportError:
-	from pyScope import TecnaiCCDWrapper
 
-class Gatan(object):
+try:
+	import pythoncom
+	import pywintypes
+	import win32com.client
+	try:
+		import TecnaiCCDWrapper
+	except ImportError:
+		from pyScope import TecnaiCCDWrapper
+except ImportError:
+	pass
+
+class Gatan(ccdcamera.CCDCamera):
+	name = 'Gatan'
 	def __init__(self):
+		ccdcamera.CCDCamera.__init__(self)
 		self.unsupported = []
 
 		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
@@ -62,7 +65,7 @@ class Gatan(object):
 			'inserted': {'type': bool},
 			'retractable': {'type': bool},
 			'acquiring': {'type': bool},
-			'image data': {'type': Numeric.ArrayType},
+			'image data': {'type': numarray.ArrayType},
 		}
 
 		if not self.getRetractable():
