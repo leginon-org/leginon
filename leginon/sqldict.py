@@ -230,7 +230,7 @@ class SQLDict(object):
 			# print '-----------------------------------------------'
 			#print 'query =', query
 			c.execute(query)
-		except MySQLdb.ProgrammingError, e:
+		except (MySQLdb.ProgrammingError, MySQLdb.OperationalError), e:
 			errno = e.args[0]
 			## 1146:  table does not exist
 			## 1054:  column does not exist
