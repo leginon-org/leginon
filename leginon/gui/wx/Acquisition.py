@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Acquisition.py,v $
-# $Revision: 1.31 $
+# $Revision: 1.32 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-24 19:24:48 $
+# $Date: 2005-02-24 21:35:53 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -21,6 +21,7 @@ import gui.wx.Events
 import gui.wx.ImageViewer
 import gui.wx.ToolBar
 import threading
+from gui.wx.ImageBrowser import ImageBrowserPanel
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'acquisition'
@@ -50,6 +51,9 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP_STOP,
 													'simulatetargetloopstop',
 													shortHelpString='Stop Simulate Target Loop')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_BROWSE_IMAGES,
+													'imagebrowser',
+													shortHelpString='Browse Images')
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False)
@@ -86,6 +90,8 @@ class Panel(gui.wx.Node.Panel):
 											id=gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSimulateTargetLoopStopTool,
 											id=gui.wx.ToolBar.ID_SIMULATE_TARGET_LOOP_STOP)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onBrowseImagesTool,
+											id=gui.wx.ToolBar.ID_BROWSE_IMAGES)
 
 	def onSimulateTargetTool(self, evt):
 		threading.Thread(target=self.node.simulateTarget).start()
@@ -132,6 +138,14 @@ class Panel(gui.wx.Node.Panel):
 			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)
 			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, True) 
 			self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
+
+	def onBrowseImagesTool(self, evt):
+		frame = wx.Frame(None, -1, 'Image Browser Test')
+		frame.node = self.node
+		panel = ImageBrowserPanel(frame)
+		frame.Fit()
+		#self.SetTopWindow(frame)
+		frame.Show()
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):

@@ -548,3 +548,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 	def simulateTargetLoopStop(self):
 		self.logger.info('Simulated Target Loop will stop after next iteration')
 		self.simloopstop.set()
+
+	def loadImage(self, imagedata):
+			try:
+				num = imagedata['image'].read()
+			except AttributeError:
+				pass
+			else:
+				imagedata.__setitem__('image', num, force=True)
+			self.setImage(imagedata['image'].astype(Numeric.Float32), 'Image')
