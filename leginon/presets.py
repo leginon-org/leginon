@@ -116,10 +116,10 @@ class PresetsManager(node.Node):
 		self.currentselection = None
 		self.currentpreset = None
 		self.presets = []
-		#self.getPresetsFromDB()
+		self.getPresetsFromDB()
 
 		self.defineUserInterface()
-		self.getPresetsFromDB()
+		self.validateCycleOrder()
 		self.start()
 
 	def changePreset(self, ievent):
@@ -408,8 +408,12 @@ class PresetsManager(node.Node):
 		'''
 		checks for missing presets or extra presets in the cycle list
 		'''
-		allpresets = self.presetNames()
+		## this may be called before the user interface is done
+		## so we return in that case
+		if not hasattr(self, 'orderlist'):
+			return
 		cyclepresets = self.orderlist.get()
+		allpresets = self.presetNames()
 
 		missing_in_cycle = []
 		for presetname in allpresets:
@@ -422,12 +426,15 @@ class PresetsManager(node.Node):
 
 		missing_str = ', '.join(missing_in_cycle)
 		extra_str = ', '.join(extra_in_cycle)
+		problems = []
 		if missing_str:
 			missing_str = '  Presets Missing from cycle:  ' + missing_str
+			problems.append(missing_str)
 		if extra_str:
 			extra_str = '  In Cycle, but no such preset:  ' + extra_str
-		message = '\n'.join([missing_str, extra_str])
+			problems.append(extra_str)
 
+		message = '\n'.join(problems)
 		if message:
 			title = 'Inconsistencies in Cycle Order List'
 			message = 'Inconsistencies in Cycle Order List:\n' + message
