@@ -100,7 +100,7 @@ class ImagePanel(wxPanel):
 		self.toolsizer.Add(self.zoombutton, 0, wxALL, 3)
 		self.zoomlabel = wxStaticText(self, -1, '')
 		self.updateZoomLabel()
-		self.toolsizer.Add(self.zoomlabel, 0, wxALL, 3)
+		self.toolsizer.Add(self.zoomlabel, 0, wxALIGN_CENTER_VERTICAL | wxALL, 3)
 
 	def setVirtualSize(self):
 		xscale, yscale = self.getScale()
@@ -365,7 +365,7 @@ class TargetImagePanel(ImagePanel):
 				EVT_COMBOBOX(self, self.combobox.GetId(), self.apply)
 				self.combobox.SetForegroundColour(self.colors[self.target_type])
 #				self.toolsizer.Add(label, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
-				self.toolsizer.Add(self.combobox, 0, wxALIGN_CENTER|wxLEFT|wxRIGHT, 3)
+				self.toolsizer.Add(self.combobox, 0, wxALIGN_CENTER_VERTICAL | wxALL, 3)
 				self.toolsizer.Layout()
 			elif len(self.targets) == 1:
 				self.target_type = name
@@ -373,6 +373,7 @@ class TargetImagePanel(ImagePanel):
 				self.toolsizer.Layout()
 		else:
 			self.combobox.Append(name)
+			self.combobox.SetSize(self.combobox.GetBestSize())
 
 	def deleteComboBox(self, name):
 		if self.combobox is None:
