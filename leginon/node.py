@@ -31,7 +31,7 @@ class DataHandler(leginonobject.LeginonObject):
 		self.node = mynode
 
 	def local_only_insert(self, idata):
-		'''Insert data into the datahandler. Only events can be inserted from and external source. Events are bound. See setBinding.'''
+		'''Insert data into the datahandler. Only events can be inserted from and external source. Events are bound. See addBinding.'''
 		if isinstance(idata, event.Event):
 			self.databinder.insert(idata)
 		else:
@@ -49,12 +49,15 @@ class DataHandler(leginonobject.LeginonObject):
 	def query(self, id):
 		return self.datakeeper.query(id)
 
-	def setBinding(self, eventclass, func):
+	def addBinding(self, eventclass, func):
 		'''Overides datahandler.DataBinder, making sure it binds Event type only.'''
 		if issubclass(eventclass, event.Event):
-			self.databinder.setBinding(eventclass, func)
+			self.databinder.addBinding(eventclass, func)
 		else:
 			raise event.InvalidEventError('eventclass must be Event subclass')
+
+	def delBinding(self, eventclass, func):
+		self.databinder.delBinding(eventclass, func)
 
 	def dbInsert(self, idata):
 		self.dbdatakeeper.insert(idata)
@@ -180,6 +183,7 @@ class Node(leginonobject.LeginonObject):
 		### send event and cross your fingers
 		try:
 			client.push(ievent)
+			self.logEvent(ievent, status='%s eventToClient' % (self.id,))
 		except:
 			# make sure we don't wait for an event that failed
 			if wait:
@@ -187,8 +191,6 @@ class Node(leginonobject.LeginonObject):
 			self.printException()
 			raise
 
-		## log the event being sent
-		self.logEvent(ievent, status='eventToClient')
 
 		if wait:
 			### this wait should be released 
@@ -233,17 +235,13 @@ class Node(leginonobject.LeginonObject):
 
 	def addEventInput(self, eventclass, func):
 		'''Map a function (event handler) to be called when the specified event is received.'''
-		## simplified this, but is there a reason for the original
-		#self.server.datahandler.setBinding(eventclass, func)
-		self.datahandler.setBinding(eventclass, func)
+		self.datahandler.addBinding(eventclass, func)
 		if eventclass not in self.eventmapping['inputs']:
 			self.eventmapping['inputs'].append(eventclass)
 
 	def delEventInput(self, eventclass):
 		'''Unmap all functions (event handlers) to be called when the specified event is received.'''
-		## simplified this, but is there a reason for the original
-		#self.server.datahandler.setBinding(eventclass, None)
-		self.datahandler.setBinding(eventclass, None)
+		self.datahandler.delBinding(eventclass, None)
 		if eventclass in self.eventmapping['inputs']:
 			self.eventmapping['inputs'].remove(eventclass)
 
