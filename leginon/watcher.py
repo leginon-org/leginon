@@ -53,7 +53,7 @@ class Watcher(node.Node):
 
 ## an example of subclassing Watcher
 
-class TestWatch(watcher.Watcher):
+class TestWatch(Watcher):
 	def __init__(self, id, managerlocation):
 		watchfor = event.PublishEvent
 		lockblocking = 0

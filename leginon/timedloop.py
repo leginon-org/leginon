@@ -103,7 +103,7 @@ class TimedLoop(node.Node):
 import Numeric
 import data
 
-class TestLoop(timedloop.TimedLoop):
+class TestLoop(TimedLoop):
 	"""
 	Event Inputs:
 		StartEvent - starts the acquisition loop
