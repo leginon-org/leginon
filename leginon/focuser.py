@@ -527,12 +527,15 @@ class Focuser(acquisition.Acquisition):
 		# row8
 		mancont.addObject(self.man_image, position={'position':(8,0), 'span':(1,3)})
 
+		self.cc_image = uidata.TargetImage('Correlation Image', None, 'r')
+		self.cc_image.addTargetType('peak')
+
 		#### other
 		self.acquirefinal = uidata.Boolean('Acquire Final Image', True, 'rw', persist=True)
 		abortfailmethod = uidata.Method('Abort With Failure', self.uiAbortFailure)
 		testmethod = uidata.Method('Test Autofocus (broken)', self.uiTest)
 		container = uidata.LargeContainer('Focuser')
 		container.addObject(self.messagelog, position={'expand': 'all'})
-		container.addObjects((self.melt, autocont, mancont, self.acquirefinal, abortfailmethod, testmethod))
+		container.addObjects((self.melt, autocont, mancont, self.cc_image, self.acquirefinal, abortfailmethod, testmethod))
 		self.uicontainer.addObject(container)
 
