@@ -54,14 +54,20 @@ class MosaicNavigator(navigator.Navigator):
 		print 'nearest tile position =', mosaicdata[nearesttile]['position']
 		print 'delta row: %s, column: %s' % (nearestdelta[0], nearestdelta[1])
 
+		deltarow = row - shape[0] / 2
+		deltarow = column - shape[1] / 2
+		deltarow = -deltarow
+		deltacolumn = -deltacol
+
 		self.publishRemote(data.EMData('all', mosaicdata[nearesttile]['scope']))
 #		e = self.shiftEventClass(self.ID(),
 #									{'row': nearestdelta[0], 'column': nearestdelta[1]})
 #		self.outputEvent(e)
 		movetype = self.movetype.get()
 		calclient = self.calclients[movetype]
-		newstate = calclient.transform({'row': nearestdelta[0],
-																		'col': nearestdelta[1]},
+#		newstate = calclient.transform({'row': nearestdelta[0],
+#																		'col': nearestdelta[1]},
+		newstate = calclient.transform({'row': deltarow, 'col': deltacolumn},
 																		mosaicdata[nearesttile]['scope'],
 																		mosaicdata[nearesttile]['camera'])
 		emdata = data.EMData('scope', newstate)
