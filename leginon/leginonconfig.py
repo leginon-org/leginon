@@ -53,14 +53,14 @@ MODULE = os.path.dirname(__file__)
 
 configparser = ConfigParser.SafeConfigParser()
 # look in the same directory as this module
-defaultfilename = os.path.join(MODULE, 'default.cfg')
+defaultfilename = os.path.join(MODULE, 'config', 'default.cfg')
 try:
 	configparser.readfp(open(defaultfilename), defaultfilename)
 except IOError:
 	raise LeginonConfigError('Cannot find configuration file default.cfg')
 configparser.read(['leginon.cfg',
 										os.path.join(HOME, 'leginon.cfg'),
-										os.path.join(MODULE, 'leginon.cfg')])
+										os.path.join(MODULE, 'config', 'leginon.cfg')])
 
 # Main leginon database
 section = 'Database'
