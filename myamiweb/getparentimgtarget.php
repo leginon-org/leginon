@@ -8,7 +8,6 @@
  */
 
 require('inc/leginon.inc');
-require('inc/array_pystruct.inc');
 require('inc/image.inc');
 
 $g=true;
@@ -60,23 +59,13 @@ if ($g) {
 	);
 
 	if ($preset=='atlas') {
-		$mid = $leginondata->getId(
-			array('REF|SessionData|session' => $sessionId),
-			'MosaicData');
-
-		$mosaic = $leginondata->getMosaicDataInfo($mid);
-		$dataIds = get_pystruct_elements(pystruct_to_array($mosaic[0]['SEQ|data IDs']));
-
-		$gridIds = array();
-		foreach($dataIds as $did) {
-			$gridId = $leginondata->getId(
-				array('SEQ|id'=>$did, 'REF|SessionData|session'=>$sessionId)
-				);
-			if (is_array($gridId)) 
-				foreach($gridId as $g)
-					$gridIds[]=$g;
-			else 
-				$gridIds[] = $gridId;
+		
+		$types = $leginondata->getDataTypes($sessionId);
+		foreach ($types as $type) {
+			$d = $leginondata->findImage($id, $type);
+			$nId = $d['id'];
+			if ($gridIds = $leginondata->getMosaicImages($nId))
+				break;
 		}
 
 		$imgparams = array(
@@ -87,10 +76,11 @@ if ($g) {
 				'maxpix' => $maxpix,
 				'scalebar'=>false
 			);
+		
 		$mosaic = new Mosaic();
 		$mosaic->setImageIds($gridIds);
 		$mosaic->setImageParams($imgparams);
-		$mosaic->setCurrentImageId($id);
+		$mosaic->setCurrentImageId($nId);
 		$mosaic->setFrameColor(0,255,0);
 		$mosaic->setSize($size);
 		$mosaic->displayLoadtime($displayloadingtime);

@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.22 $
- *	@version $Id: leginon.inc,v 1.22 2004-09-01 17:40:49 dfellman Exp $
+ *	@version $Revision: 1.23 $
+ *	@version $Id: leginon.inc,v 1.23 2004-09-10 23:02:36 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -251,7 +251,7 @@ class leginondata {
 		$tables[] = $row[0];
 	}
 
-	function getId($fields=array(), $table = "AcquisitionImageData") {
+	function getId($fields=array(), $table = "AcquisitionImageData", $id="DEF_id") {
 		$acq_fields = $this->mysql->getFields($table); 
 		$where = array();
 		
@@ -263,7 +263,7 @@ class leginondata {
 		if (empty($where))
 			return false;
 		$wherestr = implode(' and ', $where);
-		$q = 'select DEF_id as id from `'.$table.'`'
+		$q = 'select `'.$id.'` as id from `'.$table.'`'
 			.' where '.$wherestr;
 		$R = $this->mysql->SQLQuery($q);
 		$ids = array();
@@ -308,24 +308,17 @@ class leginondata {
 		return $fileInfo[filename];
 	}
 
-	function getMosaicImageInfo($id) {
-		$q = "select "
-			." m.`SEQ|id`, m.`REF|SessionData|session` as sessionId, "
-			." m.`MRC|image` as filename, m.scale, "
-			." md.`SEQ|id` , md.`SEQ|data IDs` "
-			." from `MosaicImageData` m "
-			." left join `MosaicData` md "
-			." on (md.`DEF_id` = m.`REF|MosaicData|mosaic` ) "
-			." where m.`DEF_id` ='".$id."'";
-		$Rq = $this->mysql->SQLQuery($q);
-		return mysql_fetch_array($Rq, MYSQL_ASSOC);
-		
-	}
-
-	function getMosaicDataInfo($id) {
-		$table = 'MosaicData';
-		$fields = array ('SEQ|id', 'REF|SessionData|session', 'SEQ|data IDs');
-		return $this->getDataInfo($table, $id, $fields);
+	function getMosaicImages($id) {
+		$listId = $this->getId(
+				array('REF|AcquisitionImageData|image' => $id),
+				'MosaicTileData',
+				'REF|ImageListData|list'
+				);
+		return $this->getId(
+				array( 'REF|ImageListData|list'  => $listId),
+				'MosaicTileData',
+				'REF|AcquisitionImageData|image'
+				);
 	}
 
 	function getFilename($id, $table="AcquisitionImageData") {
@@ -1165,12 +1158,12 @@ class leginondata {
 	}
 
 	function formatDefocus(&$defocus) {
-		$defocus = number_format(($defocus/1e-6), 4,'.','').' µm';
+		$defocus = format_micro_number($defocus);
 		return $defocus;
 	}
 
 	function formatPixelsize(&$pixelsize) {
-		$pixelsize = number_format(($pixelsize/1e-9), 4,'.','').' nm';
+		$pixelsize = format_nano_number($pixelsize);
 		return $pixelsize;
 	}
 

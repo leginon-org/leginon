@@ -522,7 +522,6 @@ class view {
 		$defaultdatatype = ($this->selecteddatatype) ? $this->selecteddatatype : $datatypes[0];
 		$defaultpre = ($_POST[$prememo]) ? $_POST[$prememo] : $defaultdatatype;
 		$selpre = ($_POST[$prename]) ? $_POST[$prename] : $defaultpre;
-		$selpre = 'grid';
 		$displayview = $this->getViewState();
 		$htmlframe = '
 		<input type="hidden" name="'.$displayname.'" value="'.$displayview.'">

@@ -287,10 +287,6 @@ class Mosaic {
 		$squaresize = $imageinfo[0][dimx]/$ratio;
 		$this->params['size'] = $squaresize;
 		$this->params['binning'] = ($ratio<1) ? 1 : $ratio;
-		$preset = 'grid';
-		$newimage = $leginondata->findImage($this->cId, $preset);
-		$newimageId = $newimage[id];
-//		$preset = 'sq';
 
 		foreach ($imageinfo as $k=>$r) {
 			$cx = ($margin + $dcols[$k] - $min_col)/$ratio; 
@@ -304,7 +300,7 @@ class Mosaic {
 			imagecopy($img, $gimg, $dst_x, $dst_y, $src_x, $src_y, $src_w, $src_h);
 			imagedestroy($gimg);
 			if ($this->displayframe) {
-				if ($newimageId==$r[imageId]) {
+				if ($this->cId==$r[imageId]) {
 					$crossquare = $squarepoints;
 					$cdx = $dst_x+1;
 					$cdy = $dst_y;
