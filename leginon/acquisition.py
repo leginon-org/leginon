@@ -36,21 +36,23 @@ class Acquisition(targetwatcher.TargetWatcher):
 		a target (going to presets, acquiring images, etc.)
 		'''
 		## wait for focus targets to complete
+		print 'AAAAA'
 		for tid,tevent in self.targetevents.items():
 			print 'waiting for target %s to complete' % (tid,)
 			tevent.wait()
 
+		print 'BBBBB'
 		if targetdata is None:
 			emtarget = None
 		else:
 			#### for debugging
 			print 'TARGETDATA'
 			print '   row,col', targetdata['delta row'], targetdata['delta column']
-			print '   scope image shift', targetdata['scope']['image shift']
-			if targetdata['preset'] is not None:
-				print '   preset image shift', targetdata['preset']['image shift']
-			else:
+			print '   scope image shift', targetdata['scope']
+			if targetdata['preset'] is None:
 				print '   preset image shift, no preset in target'
+			else:
+				print '   preset image shift', targetdata['preset']
 
 			#### this creates ScopeEMData from the ImageTargetData
 			oldtargetemdata = self.targetToEMData(targetdata)
@@ -58,12 +60,16 @@ class Acquisition(targetwatcher.TargetWatcher):
 			#### now make EMTargetData to hold all this
 			emtarget = data.EMTargetData(scope=oldtargetemdata,preset=oldpreset)
 
+		print 'CCCCC'
+
 		### do each preset for this acquisition
 		try:
-			presetnames = eval(self.uipresetnames.get())
+			presetnames = self.uipresetnames.get()
 		except:
 			self.printException()
 			return
+
+		print 'DDDDD'
 
 		if not presetnames:
 			print 'NO PRESETS SPECIFIED'
@@ -71,7 +77,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		for newpresetname in presetnames:
 			self.presetsclient.toScope(newpresetname, emtarget)
 			print 'getting current preset'
-			p = self.getCurrentPreset()
+			p = self.presetsclient.getCurrentPreset()
 			print 'current preset'
 			print p
 			print 'acquire()'
@@ -117,14 +123,18 @@ class Acquisition(targetwatcher.TargetWatcher):
 		newscope = calclient.transform(pixelshift, targetscope, targetcamera)
 		print 'WITH TARGET', newscope['image shift']
 		## create new EMData object to hole this
-		emdata = data.ScopeEMData(('scope',), initializer=newscope)
+		emdata = data.ScopeEMData(id=('scope',), initializer=newscope)
 		return emdata
 
 	def acquire(self, presetdata, trial=False):
 		acqtype = self.uiacquiretype.getSelectedValue()[0]
+		if acqtype == 'corrected':
+			cor = True
+		else:
+			cor = False
 
 		### corrected or not??
-		imagedata = self.cam.acquireCameraImageData(None,0)
+		imagedata = self.cam.acquireCameraImageData(correction=cor)
 
 		if imagedata is None:
 			return
@@ -190,36 +200,23 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.confirmEvent(clickevent)
 
 	def uiToScope(self):
-		try:
-			presetname = self.uiselectpreset.getSelectedValue()[0]
-		except IndexError:
-			self.printerror('cannot determine preset name')
-			return
+		presetname = self.presetsclient.uiGetSelectedName()
 		print 'Going to preset %s' % (presetname,)
 		self.presetsclient.toScope(presetname)
 		print 'done'
 
-		### why is this here?
-		#presetnames = self.presetsclient.presetNames()
-		#if presetnames:
-		#	selected = [0]
-		#else:
-		#	selected = []
-		#self.uiselectpreset.set(presetnames, selected)
-
 	def uiToScopeAcquire(self):
-		try:
-			presetname = self.uiselectpreset.getSelectedValue()[0]
-			print 'PRESETNAME', presetname
-		except IndexError:
-			self.printerror('cannot determine preset name')
-			return
-
+		presetname = self.presetsclient.uiGetSelectedName()
 		## acquire a trial image
+		print 'Going to preset', presetname
 		self.presetsclient.toScope(presetname)
+		print 'Got to preset, getting current preset'
 		p = self.presetsclient.getCurrentPreset()
+		print 'CURRENT', p
 		## trial image
+		print 'Acquiring image'
 		self.acquire(p, trial=True)
+		print 'Acquired'
 
 		### why is this here?
 		#presetsnames = self.presetsclient.presetNames()
@@ -244,7 +241,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 	def uiTrial(self):
 		self.processTargetData(targetdata=None)
 
-	def uiGetPresetNames(self):
+	def OLDuiGetPresetNames(self):
 		presetlist = self.presetsclient.getPresets()
 		pnames = [p['name'] for p in presetlist]
 		if pnames:
@@ -264,17 +261,18 @@ class Acquisition(targetwatcher.TargetWatcher):
 		settingscontainer.addUIObjects((self.uimovetype, self.uidelay,
 																		self.uiacquiretype))
 
-		self.uipresetsnames = uidata.UIString('Presets', '[\'spread1100\']', 'rw')
-		self.uifromscopename = uidata.UIString('Preset Name', '', 'rw')
-		fromscopemethod = uidata.UIMethod('Create Preset', self.uiFromScope)
+		self.uipresetnames = uidata.UIArray('Sequence', ['yours'], 'rw')
+		pselect = self.presetsclient.uiPresetSelector()
 
-		getpresets = uidata.UIMethod('Get Names', self.uiGetPresetNames)
-		self.uiselectpreset = uidata.UISelectFromList('Select Preset', [], [], 'r')
+		#self.uifromscopename = uidata.UIString('Preset Name', '', 'rw')
+		#fromscopemethod = uidata.UIMethod('Create Preset', self.uiFromScope)
+
+		#getpresets = uidata.UIMethod('Get Names', self.uiGetPresetNames)
+		#self.uiselectpreset = uidata.UISelectFromList('Select Preset', [], [], 'r')
 		toscopemethod = uidata.UIMethod('Apply Preset', self.uiToScope)
 		toscopeandacquiremethod = uidata.UIMethod('Apply Preset and Acquire', self.uiToScopeAcquire)
 		presetscontainer = uidata.UIContainer('Presets')
-		presetscontainer.addUIObjects((self.uipresetsnames, self.uifromscopename, fromscopemethod, getpresets, self.uiselectpreset,
-																		toscopemethod, toscopeandacquiremethod))
+		presetscontainer.addUIObjects((self.uipresetnames, pselect, toscopemethod, toscopeandacquiremethod))
 		trialmethod = uidata.UIMethod('Trial', self.uiTrial)
 
 		self.ui_image = uidata.UIImage('Image', None, 'rw')
