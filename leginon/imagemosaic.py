@@ -267,6 +267,7 @@ class StateImageMosaic(ImageMosaic):
 			raise ValueError
 
 	def processData(self, idata):
+		print 'processData, state for idata =', idata.content['state']
 		if self.method == 'correlation':
 			self.processDataByCorrelation(idata)
 		elif self.method == 'calibration':
@@ -277,10 +278,13 @@ class StateImageMosaic(ImageMosaic):
 		self.imagemosaic[idata.id]['state'] = idata.content['state']
 
 	def pixelLocation(self, row, column):
+		print 'pixelLocation args =', row, column
 		matrix = self.calibration2matrix()
+		print 'pixelLocation matrix =', matrix
 		determinant = LinearAlgebra.determinant(matrix)
 		x = (matrix[1,1] * column - matrix[1,0] * row) / determinant
 		y = (matrix[0,0] * row - matrix[0,1] * column) / determinant
+		print 'pixelLocation x, y =', x, y
 		return (int(round(y)), int(round(x)))
 
 	def calibration2matrix(self):
