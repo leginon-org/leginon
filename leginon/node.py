@@ -59,7 +59,7 @@ class Node(leginonobject.LeginonObject):
 		self.datahandlers = {}
 		self.datahandlers['node'] = apply(dh, (self.ID(),) + dhargs)
 #		self.datahandlers['database'] = dbdatakeeper.DBDataKeeper(self.ID(),
-																															self.session)
+#																															self.session)
 
 		self.server = datatransport.Server(self.ID(),
 																				self.datahandlers['node'], tcpport)
@@ -234,11 +234,12 @@ class Node(leginonobject.LeginonObject):
 			[*] - keys in data
 		'''
 		result = []
-		if kwargs.keys() == ['id']:
-			try:
-				result.append(self.researchByID(kwargs['id']))
-			except ResearchError:
-				pass
+		if 'id' in kwargs and 'session' in kwargs and len(kwargs) == 2:
+			if self.session == kwargs['session']:
+				try:
+					result.append(self.researchByID(kwargs['id']))
+				except ResearchError:
+					pass
 
 #		result.append(self.datahandlers['database'].query(kwargs))
 		# assumes query yields list of matches
