@@ -37,7 +37,7 @@ class DataHandler(node.DataHandler):
 
 		if emkey == 'scope':
 			result = data.ScopeEMData(id=('scope',), initializer=stuff)
-		elif emkey == 'camera':
+		elif emkey in ('camera', 'camera no image data'):
 			result = data.CameraEMData(id=('camera',))
 			# this is a fix for the bigger problem of always 
 			# setting defocus
@@ -209,6 +209,8 @@ class EM(node.Node):
 				if EMkey in self.scope:
 					try:
 						result[EMkey] = self.scope[EMkey]
+						## always get defocus
+						result['defocus'] = self.scope['defocus']
 					except:	
 						print "failed to get '%s'" % EMkey
 						self.printException()
@@ -238,6 +240,8 @@ class EM(node.Node):
 						except:	
 							print "failed to get '%s'" % EMkey
 							self.printException()
+				## always get defocus
+				result['defocus'] = self.scope['defocus']
 			if not ('camera' in withoutkeys or 'all em' in withoutkeys):
 				for EMkey in self.camera:
 					if not EMkey in withoutkeys:
@@ -252,7 +256,7 @@ class EM(node.Node):
 
 		## getting defocus no matter what, since it changes if reset
 		## defocus was called
-		result['defocus'] = self.scope['defocus']
+		#result['defocus'] = self.scope['defocus']
 		self.pruneEMdict(result)
 		result['system time'] = time.time()
 
