@@ -20,12 +20,3 @@ class TargetWatcher(watcher.Watcher):
 		return watcher.Watcher.defineUserInterface(self)
 
 
-class TestTargetWatcher(TargetWatcher):
-	def __init__(self, id, nodelocations, **kwargs):
-		TargetWatcher.__init__(self, id, nodelocations, **kwargs)
-
-		self.defineUserInterface()
-		self.start()
-
-	def processTargetData(self, targetdata):
-		print 'PROCESSING', targetdata
