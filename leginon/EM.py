@@ -92,12 +92,19 @@ class DataHandler(node.DataHandler):
 			done_event = threading.Event()
 			#self.node.queue.put(Request(done_event, idata['em']))
 			print 'EM insert: requesting set (idata = %s)' % str(idata)
-			### using dict again...
-			d = dict(idata)
-			del d['id']
-			del d['session']
-			del d['system time']
-			del d['em host']
+			# this converts Data to a dict, and deletes items
+			# that are None.  This saves us some time because
+			# queueHandler will not only setEM, but getEM on
+			# all keys we give it, even if values are None
+			d = idata.toDict(noNone=True)
+			# also delete these, which are not understood by
+			# pyScope, or are read only
+			for key in ('id','session','system time','em host', 'image data'):
+				try:
+					del d[key]
+				except KeyError:
+					pass
+
 			self.node.queue.put(Request(done_event, d))
 			print 'EM insert: waiting for request to complete'
 			done_event.wait()
