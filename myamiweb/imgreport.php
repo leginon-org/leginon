@@ -8,6 +8,9 @@
  */
 
 require('inc/leginon.inc');
+require ('inc/viewer.inc');
+
+
 
 if(!$imgId=$_GET[id]) {
 	// --- if Id is not set, get the last acquired image from db
@@ -36,18 +39,40 @@ $fileinfo = imagemrcinfo($path.$filename);
 $sessioninfo = $leginondata->getSessionInfo($sessionId);
 $presets = $leginondata->getPresets($imgId);
 
+$viewer = new viewer();
+$viewer->setSessionId($sessionId);
+$viewer->setImageId($imgId);
+$javascript = $viewer->getJavascript();
+
+$view1 = new view('<b>Thumbnail</b>', 'thumb');
+$view1->displayCloseIcon(false);
+$view1->displayInfoIcon(false);
+$view1->displayFilterIcon(false);
+$view1->displayFFTIcon(true);
+$view1->displayScaleIcon(true);
+$view1->displayTargetIcon(true);
+$view1->displayAdjustLink(false);
+$view1->displayPresets(false);
+$view1->setFrameColor('#000000');
+$view1->setMenuColor('#ccccff');
+$view1->setSize(256);
+$viewer->add($view1);
+
+$javascript .= $viewer->getJavascriptInit();
+
 ?>
 <html>
 <head>
 <link rel="stylesheet" type="text/css" href="css/viewer.css"> 
 <title>Image Report: <?=$filename?></title>
+<?=$javascript;?>
 <script>
 function init() {
 	this.focus();
 }
 </script>
 </head>
-<body onload="init()">
+<body onload="init(); initviewer();">
 <?
 //--- define information to display
 $fileinfokeys = array (	'nx','ny',
@@ -206,5 +231,8 @@ echo "</table>";
 	</td>
 </tr>
 </table>
+<div style="border: 1px solid #000000; position:absolute; margin: 0px;padding:0px;  background-color: #CCCCFF">
+<?$viewer->display();?>
+</div>
 </body>
 </html>
