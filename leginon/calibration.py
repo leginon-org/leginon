@@ -126,7 +126,9 @@ class Calibration(node.Node):
 
 		# might reuse value from previous axis
 		for axis in self.axislist:
+			print "axis =", axis
 			for i in range(self.attempts):
+				print "attempt =", i
 				value = (adjustedrange[1] - adjustedrange[0]) / 2 + adjustedrange[0]
 
 				state1 = self.state(0.0, axis)
@@ -226,7 +228,7 @@ class Calibration(node.Node):
 		  - pixel shift too small to use as calibration data
 		  	results in good correlation, but reject anyway
 		'''
-		shift = shiftinfo['image shift']
+		shift = shiftinfo['shift']
 		## Jim is proud of coming up with this ingenious method
 		## of calculating a hypotenuse without importing math.
 		## It's definietly too late to be working on a Friday.
