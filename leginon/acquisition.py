@@ -296,7 +296,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 			numberstr = '%04d' % (imagedata['id'][-1],)
 		else:
 			numberstr = '%04d' % (imagedata['target']['number'],)
-		presetstr = imagedata['preset']['name']
+		if imagedata['preset'] is None:
+			presetstr = ''
+		else:
+			presetstr = imagedata['preset']['name']
 		mystr = numberstr + presetstr
 		sep = '_'
 		parts = (rootname, mystr)
