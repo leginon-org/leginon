@@ -14,20 +14,14 @@ class IntGen(node.Node):
 		print self.location()
 		print self.nodeid
 		self.main()
+
+	def sendint(self, newint):
+		intdata = data.IntData(newint)
+		self.publish(intdata, event.PublishEvent)
+		
 			
 	def main(self):
-		while 1:
-			stuff = raw_input('enter integer> ')
-			print 'stuff %s' % stuff
-			try:
-				stuff = data.IntData(stuff)
-				print 'stuff after int %s' % stuff
-			except ValueError:
-				print 'you did not enter an integer'
-				continue
-
-			#ev = event.ControlEvent(param=stuff)
-			self.publish(stuff, event.PublishEvent)
+		self.interact()
 
 
 if __name__ == '__main__':
