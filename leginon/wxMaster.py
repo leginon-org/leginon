@@ -54,6 +54,14 @@ class BindingConnectionPoint(wxObjectCanvas.wxConnectionPointObject):
 	def OnCancelConnection(self, evt):
 		evt.Skip()
 
+	def OnEnter(self, evt):
+		self.setDrawText(True)
+		self.UpdateDrawing()
+
+	def OnLeave(self, evt):
+		self.setDrawText(False)
+		self.UpdateDrawing()
+
 class BindingInput(BindingConnectionPoint):
 	def __init__(self, eventclass):
 		BindingConnectionPoint.__init__(self, eventclass, wxRED)
@@ -143,12 +151,13 @@ class Node(wxObjectCanvas.wxRectangleObject):
 	def OnEnter(self, evt):
 		for i in self.connectioninputs + self.connectionoutputs:
 			i.setDrawText(True)
+		self.UpdateDrawing()
 
 	def OnLeave(self, evt):
 		wxObjectCanvas.wxRectangleObject.OnLeave(self, evt)
 		for i in self.connectioninputs + self.connectionoutputs:
 			i.setDrawText(False)
-		#evt.Skip()
+		self.UpdateDrawing()
 
 	def removeBindings(self):
 		for so in self.shapeobjects:
@@ -163,11 +172,55 @@ class Node(wxObjectCanvas.wxRectangleObject):
 	def OnCancelConnection(self, evt):
 		evt.Skip()
 
+class BindingLabel(wxObjectCanvas.wxRectangleObject):
+	def __init__(self, text, color=wxBLACK):
+		wxObjectCanvas.wxRectangleObject.__init__(self, 0, 0)
+		self.addText(text)
+
+	def OnLeftDragStart(self, evt):
+		pass
+
+	def OnMotion(self, evt):
+		pass
+
+	def Draw(self, dc):
+		width, height = 0, 0
+		for text in self.text:
+			x, y = self.text[text]
+			w, h = dc.GetTextExtent(text)
+			if w + x > width:
+				width = w + x
+			if h + y > height:
+				height = h + y
+		self.width = width + 3
+		self.height = height + 3
+		wxObjectCanvas.wxRectangleObject.Draw(self, dc)
+
 class Binding(wxObjectCanvas.wxConnectionObject):
 	def __init__(self, name, fromnode=None, tonode=None):
 		self.name = name
 		wxObjectCanvas.wxConnectionObject.__init__(self, fromnode, tonode)
 		self.setText(self.name)
+		self.label = BindingLabel(self.name)
+
+	def setParent(self, parent):
+		wxObjectCanvas.wxConnectionObject.setParent(self, parent)
+		self.parent.addShapeObject(self.label, 0, 0)
+
+	def _crookedLine(self, dc, so1, x, y):
+		x1, y1 = wxObjectCanvas.wxConnectionObject._crookedLine(self, dc, so1, x, y)
+		self.setLabelPosition(x1, y1, x, y)
+
+	def crookedLine(self, dc, so1, so2):
+		x1, y1, x2, y2 = wxObjectCanvas.wxConnectionObject.crookedLine(self, dc,
+																																		so1, so2)
+		self.setLabelPosition(x1, y1, x2, y2)
+
+	def setLabelPosition(self, x1, y1, x2, y2):
+		xoffset, yoffset = self.label.getParent().getCanvasPosition()
+		lx = (x2 - x1)/2 + x1 - xoffset - self.label.width/2
+		ly = (y2 - y1)/2 + y1 - yoffset - self.label.height/2
+		self.label.setPosition(lx, ly)
 
 class AddNodeDialog(wxDialog):
 	def __init__(self, parent, id, title='Add Node', pos=wxDefaultPosition,
@@ -401,12 +454,18 @@ class Application(wxObjectCanvas.wxRectangleObject):
 	def addShapeObject(self, so, x=0, y=0):
 		if isinstance(so, Launcher):
 			wxObjectCanvas.wxRectangleObject.addShapeObject(self, so, x, y)
+		elif isinstance(so, BindingLabel):
+			wxObjectCanvas.wxRectangleObject.addShapeObject(self, so, x, y)
 		else:
 			raise TypeError('Invalid object type to add')
 
 	def OnEndConnection(self, evt):
 		if self.connection is not None:
 			if self.connection.name == evt.toso.eventclass:
+				for i in self.connectionobjects:
+					if i.getFromShapeObject() == self.connection.getFromShapeObject():
+						if i.getToShapeObject() == evt.toso:
+							return
 				wxObjectCanvas.wxRectangleObject.OnEndConnection(self, evt)
 
 class Master(wxObjectCanvas.wxRectangleObject):

@@ -471,6 +471,7 @@ class wxConnectionObject(object):
 		apply(dc.DrawLine, l2)
 		apply(dc.DrawLine, l3)
 		self.DrawText(dc, tx, ty, angle)
+		return x1, y1, x2, y2
 
 	def _crookedLine(self, dc, so1, x2, y2):
 		x1, y1 = so1.getCanvasCenter()
@@ -520,6 +521,7 @@ class wxConnectionObject(object):
 		apply(dc.DrawLine, l2)
 		apply(dc.DrawLine, l3)
 		self.DrawText(dc, tx, ty, angle)
+		return x1, y1
 
 	def elbowLine(self, dc, so1, so2):
 		arrowsize = 7
@@ -858,14 +860,18 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 				self.shapeobjects.insert(index + 1, shapeobject)
 			self.UpdateDrawing()
 
-	def Draw(self, dc):
-		pen = dc.GetPen()
-		dc.SetPen(wxPen(self.color, 1, self.style))
+	def DrawText(self, dc):
 		dc.SetFont(wxSWISS_FONT)
 		for text in self.text:
 			x, y = self.getCanvasPosition()
 			tx, ty = self.text[text]
 			dc.DrawText(text, x + tx + 1, y + ty + 1)
+
+	def Draw(self, dc):
+		pen = dc.GetPen()
+		dc.SetPen(wxPen(self.color, 1, self.style))
+
+		self.DrawText(dc)
 
 		for i in range(len(self.shapeobjects) - 1, -1, -1):
 			so = self.shapeobjects[i]
@@ -1198,18 +1204,16 @@ class wxRectangleObject(wxShapeObject):
 			self.setChildPosition(co, spacings[i + 1] - co.width/2,
 														-co.height/2 + self.height - 1)
 
+class wxConnectionObjectLabel(wxRectangleObject):
+	def __init__(self, width, height, color=wxBLACK):
+		wxRectangleObject.__init__(self, width, height)
+
 class wxConnectionPointObject(wxRectangleObject):
 	def __init__(self, color=wxBLACK):
 		wxRectangleObject.__init__(self, 7, 7, color)
 
 	def OnMotion(self, evt):
-		evt.Skip()
-
-	def OnEnter(self, evt):
-		pass
-
-	def OnLeave(self, evt):
-		pass
+		self.ProcessEvent(MoveConnectionEvent(evt.m_x, evt.m_y))
 
 #	def OnLeftDoubleClick(self, evt):
 #		binding = Binding(self.eventclass, self, None)
