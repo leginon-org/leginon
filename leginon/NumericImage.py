@@ -170,13 +170,16 @@ class NumericImage:
 		shape = num_data.shape
 		if len(shape) != 2:
 			raise RuntimeError, 'orig_array must be 2-D Numeric array'
-		self.orig_array = num_data
+		## experimenting with clipping to eliminate infinity
+		self.orig_array = Numeric.clip(num_data, -10000, 10000)
+
 		h,w = shape  # transpose Numeric array
 		self.orig_size = w,h
 
 		### if output size and clip are not set, use defaults
 		if not self.transform['output_size']:
 			self.transform['output_size'] = self.orig_size
+
 		flat = self.orig_array.flat
 		extmin = Numeric.argmin(flat)
 		extmax = Numeric.argmax(flat)

@@ -18,8 +18,9 @@ class LeginonObject(object):
 
 	def print_location(self):
 		loc = self.location()
+		print '     Leginon Object: %s' % (self.id,)
 		for key,value in loc.items():
-			print '%-25s  %s' % (key,value)
+			print '         %-25s  %s' % (key,value)
 
 	def ID(self):
 		newid = self.id + (self.idcounter,)

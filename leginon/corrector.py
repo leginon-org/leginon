@@ -2,7 +2,10 @@
 import node
 import Numeric
 import cameraimage
-import data
+reload(cameraimage)
+import data, event
+import shelve
+from Mrc import mrc_to_numeric, numeric_to_mrc
 
 ### these should go in a stats node or module
 
@@ -10,11 +13,14 @@ import data
 class Corrector(node.Node):
 	def __init__(self, id, nodelocations):
 
-		self.dark = None
-		self.bright = None
-		self.norm = None
+		self.refs = {}
 
 		node.Node.__init__(self, id, nodelocations)
+		self.addEventInput(event.ImageAcquireEvent, self.acquireCorrected)
+		self.addEventOutput(event.ImagePublishEvent)
+		self.addEventOutput(event.DarkImagePublishEvent)
+		self.addEventOutput(event.BrightImagePublishEvent)
+		self.start()
 
 	def main(self):
 		pass
@@ -25,7 +31,8 @@ class Corrector(node.Node):
 		### Acquire Bright/Dark
 		acqdark = self.registerUIMethod(self.acquireDark, 'Dark', ())
 		acqbright = self.registerUIMethod(self.acquireBright, 'Bright', ())
-		acq = self.registerUIContainer('Acquire References', (acqdark, acqbright))
+		acqcorr = self.registerUIMethod(self.acquireCorrected, 'Corrected', ())
+		acq = self.registerUIContainer('Acquire References', (acqdark, acqbright, acqcorr))
 
 		### Camera State Data Spec
 		defaultsize = (512,512)
@@ -37,54 +44,172 @@ class Corrector(node.Node):
 			'dimension': {'x':defaultsize[0], 'y':defaultsize[1]},
 			'offset': {'x': offset[0], 'y': offset[1]}
 		}
+		self.defaultcamstate = camstate
 		self.camdata = self.registerUIData('Camera', 'struct', default=camstate)
 
 		self.navgdata = self.registerUIData('Frames to Average', 'integer', default=3)
 
 		self.registerUISpec('Corrector', (acq, self.camdata, nodespec))
 
+	def saveRefs(self, filename, key):
+		strkey = str(key)
+		s = shelve.open(filename)
+		try:
+			s[strkey] = self.refs[key]
+		except KeyError:
+			pass
+		s.close()
+
+	def loadRefs(self, filename, key):
+		strkey = str(key)
+		s = shelve.open(filename)
+		print 'trying to find %s in refs file' % strkey
+		try:
+			self.refs[key] = s[strkey]
+			print 'got %s in refs file' % (key,)
+		except KeyError:
+			pass
+		s.close()
+
 	def acquireSeries(self, n):
 		series = []
-		for i in n:
+		for i in range(n):
+			print 'acquiring %s of %s' % (i+1, n)
 			imagedata = self.researchByDataID('image data')
 			numimage = imagedata.content['image data']
 			series.append(numimage)
 		return series
 
 	def acquireBright(self):
-		camstate = self.camdata.get()
+		camstate = dict(self.camdata.get())
 		camdata = data.EMData('camera', camstate)
 		self.publishRemote(camdata)
 		navg = self.navgdata.get()
 		series = self.acquireSeries(navg)
-		self.bright = self.averageSeries(series)
-		self.calc_norm()
+		bright = cameraimage.averageSeries(series)
+
+		key = self.cameraKey(camstate)
+		if key not in self.refs:
+			self.refs[key] = {'dark':None,'bright':None,'norm':None}
+		self.refs[key]['bright'] = bright
+
+		imagedata = data.BrightImageData(self.ID(), bright)
+		self.publish(imagedata, event.BrightImagePublishEvent)
+
+		print 'bright stats', self.stats(bright)
+		self.calc_norm(key)
+		return ''
 
 	def acquireDark(self):
-		camstate = self.camdata.get()
+		camstate = dict(self.camdata.get())
 		camstate['exposure time'] = 0.0
 		camdata = data.EMData('camera', camstate)
 		self.publishRemote(camdata)
 		navg = self.navgdata.get()
 		series = self.acquireSeries(navg)
-		self.dark = self.averageSeries(series)
-		self.calc_norm()
+		dark = cameraimage.averageSeries(series)
 
-	def calc_norm(self):
-		if self.bright and self.dark:
-			norm = self.bright - self.dark
+		key = self.cameraKey(camstate)
+		if key not in self.refs:
+			self.refs[key] = {'dark':None,'bright':None,'norm':None}
+		self.refs[key]['dark'] = dark
+
+		imagedata = data.DarkImageData(self.ID(), dark)
+		self.publish(imagedata, event.DarkImagePublishEvent)
+
+		print 'dark stats', self.stats(dark)
+		self.calc_norm(key)
+		return ''
+
+	def acquireCorrectedReal(self, ievent=None):
+		camdata = self.researchByDataID('camera')
+		camstate = camdata.content
+		numimage = camstate['image data']
+		#binning = self.researchByDataID('binning').content['binning']
+		key = self.cameraKey(camstate)
+		corrected = self.correct(numimage, key)
+		print 'corrected done'
+		correctdata = data.ImageData(self.ID(), corrected)
+		print 'publishing corrected'
+		self.publish(correctdata, event.ImagePublishEvent)
+		print 'done pub correct'
+		return ''
+
+	def acquireCorrected(self, ievent=None):
+		numimage = mrc_to_numeric('test1.mrc')
+		camstate = self.defaultcamstate
+		#binning = self.researchByDataID('binning').content['binning']
+		key = self.cameraKey(camstate)
+		corrected = self.correct(numimage, key)
+		numeric_to_mrc(corrected, 'corr.mrc')
+		print 'corrected done'
+		correctdata = data.ImageData(self.ID(), corrected)
+		print 'publishing corrected'
+		self.publish(correctdata, event.ImagePublishEvent)
+		print 'done pub correct'
+		return ''
+
+	def stats(self, im):
+		mean = cameraimage.mean(im)
+		print 'mean', mean
+		stdev = cameraimage.stdev(im)
+		print 'stdev', stdev
+		mn = cameraimage.min(im)
+		print 'mn', mn
+		mx = cameraimage.max(im)
+		print 'mx', mx
+		return {'mean':mean,'stdev':stdev,'min':mn,'max':mx}
+
+	def calc_norm(self, key):
+		if key not in self.refs:
+			self.refs[key] = {'dark':None,'bright':None,'norm':None}
+		bright = self.refs[key]['bright']
+		dark = self.refs[key]['dark']
+		if bright is not None and dark is not None:
+			norm = bright - dark
 			## there may be a better norm than this
 			normavg = cameraimage.mean(norm)
-			print "normavg", normavg
-			self.norm = normavg / norm
-			print "self.norm avg", cameraimage.mean(self.norm)
 
-	def correct(self, raw):
-		if self.dark is not None and self.norm is not None:
-			return (raw - self.dark) * self.norm
+			# division may result infinity or zero division
+			# so make sure there are no zeros in norm
+			norm = Numeric.clip(norm, 1.0, cameraimage.inf)
+			norm = normavg / norm
+			self.refs[key]['norm'] = norm
+			
+			print 'saving refs'
+			self.saveRefs('refs', key)
+
+	def correct(self, raw, key):
+		if key not in self.refs:
+			print 'loading refs'
+			self.loadRefs('refs', key)
+		if key not in self.refs:
+			print 'no refs, no correction'
+			return raw
+
+		refs = self.refs[key]
+		dark = refs['dark']
+		norm = refs['norm']
+
+		if dark is not None and norm is not None:
+			diff = raw - dark
+			## this may result in some infinity values
+			r = diff * norm
+			return r
 		else:
-			return None
+			return raw
 
+	def cameraKey(self, camstate):
+		'''
+		make a hash key from a camera state
+		'''
+		dim = camstate['dimension']
+		bin = camstate['binning']
+		off = camstate['offset']
+		## ignore exposure time for now
+		##camstate['exposure time']
+		key = (dim['x'],dim['y'],bin['x'],bin['y'],off['x'],off['y'])
+		return key
 
 if __name__ == '__main__':
 	from Numeric import *

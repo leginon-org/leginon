@@ -8,8 +8,9 @@ import signal, time
 
 from ImageViewer import ImageViewer
 import watcher
-import node, event
+import node, event, data
 from Mrc import mrc_to_numeric
+import cameraimage
 
 
 class ImViewer(watcher.Watcher):
@@ -23,8 +24,6 @@ class ImViewer(watcher.Watcher):
 		self.iv = None
 		self.viewer_ready = threading.Event()
 		self.start_viewer_thread()
-
-		self.print_location()
 
 	def die(self, killevent):
 		self.close_viewer()
@@ -56,24 +55,30 @@ class ImViewer(watcher.Watcher):
 	def open_viewer(self):
 		#print 'root...'
 		root = self.root = Tk()
-		root.wm_maxsize(800,800)
+		#root.wm_sizefrom('program')
+		root.wm_geometry('=450x400')
+
+		#print 'acqbut'
+		buttons = Frame(root)
+		self.acqbut = Button(buttons, text='Acquire', command=self.acquire)
+		self.acqbut.pack(side=LEFT)
+		self.acqeventbut = Button(buttons, text='Acquire Event', command=self.acquireEvent)
+		self.acqeventbut.pack(side=LEFT)
+		buttons.pack(side=TOP)
+
 		#print 'iv'
 		self.iv = ImageViewer(root, bg='#488')
 		self.iv.bindCanvas('<Double-1>', self.clickEvent)
 		#print 'iv pack'
 		self.iv.pack()
-		#print 'acqbut'
-		self.acqeventbut = Button(root, text='Acquire Event', command=self.acquireEvent)
-		self.acqeventbut.pack()
-		self.acqbut = Button(root, text='Acquire', command=self.acquire)
-		self.acqbut.pack()
+
 		#print 'viewer_ready.set'
 		self.viewer_ready.set()
 		#print 'mainloop'
 		root.mainloop()
-		#print 'viewer_ready.clear'
+
+		##clean up if window destroyed
 		self.viewer_ready.clear()
-		#print 'viewer_ready.cleared'
 		self.iv = None
 
 	def close_viewer(self):
@@ -83,6 +88,19 @@ class ImViewer(watcher.Watcher):
 			pass
 
 	def acquire(self):
+		### Camera State Data Spec
+		defaultsize = (512,512)
+		camerasize = (2048,2048)
+		offset = cameraimage.centerOffset(camerasize,defaultsize)
+		camstate = {
+			'exposure time': 500,
+			'binning': {'x':1, 'y':1},
+			'dimension': {'x':defaultsize[0], 'y':defaultsize[1]},
+			'offset': {'x': offset[0], 'y': offset[1]}
+		}
+		camdata = data.EMData('camera', camstate)
+		self.publishRemote(camdata)
+
 		self.acqbut['state'] = DISABLED
 		imdata = self.researchByDataID('image data')
 		self.displayNumericArray(imdata.content['image data'])
@@ -106,8 +124,6 @@ class ImViewer(watcher.Watcher):
 		#numarray.shape = (height,width)
 
 		## self.im must be 2-d numeric data
-
-		self.start_viewer_thread()
 
 		numarray = imagedata.content
 		self.imageid = imagedata.id

@@ -1,5 +1,11 @@
 import Numeric
 
+## Numeric seems to use infinity as a result of zero
+## division, but I can find no infinity constant or any other way of 
+## producing infinity without first doing a zero division
+## Here is my infinity contant
+inf = 1.0 / Numeric.array(0.0, Numeric.Float32)
+
 def centerOffset(camerasize, imagesize):
 	'''
 	determine offset to use image from camera center
@@ -9,19 +15,36 @@ def centerOffset(camerasize, imagesize):
 	return r
 
 def stdev(inputarray):
-	inlen = len(inputarray.flat)
+	f = inputarray.flat
+	inlen = len(f)
 	divisor = Numeric.array(inlen, Numeric.Float32)
-	m = Numeric.sum(inputarray.flat) / divisor
-	stdev = Numeric.sqrt(Numeric.sum((Numeric.ravel(input) - m)**2) / len(Numeric.ravel(input)))
+	m = Numeric.sum(f) / divisor
+	try:
+		bigsum = Numeric.sum((f - m)**2)
+	except OverflowError:
+		print 'OverflowError:  stdev returning None'
+		return None
+	stdev = Numeric.sqrt(bigsum / len(f))
 	return stdev
 
 def mean(inputarray):
-	inlen = len(input.flat)
+	f = inputarray.flat
+	inlen = len(f)
 	divisor = Numeric.array(inlen, Numeric.Float32)
-	m = Numeric.sum(input.flat) / divisor
+	m = Numeric.sum(f) / divisor
 	return m
 
-def averageSeries(self, series):
+def min(inputarray):
+	f = inputarray.flat
+	i = Numeric.argmin(f)
+	return f[i]
+
+def max(inputarray):
+	f = inputarray.flat
+	i = Numeric.argmax(f)
+	return f[i]
+
+def averageSeries(series):
 	slen = len(series)
 	if slen == 0:
 		return None

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from Tkinter import *
-from ImageCanvas import *
+from ImageCanvas import ImageCanvas, ScalingWidget
 
 class ImageViewer(Frame):
 	"""
@@ -22,17 +22,18 @@ class ImageViewer(Frame):
 		self.cursorinfowid = self.canvas.cursorinfo_widget(self, bg='#acf')
 		#self.canvas.bind('<Configure>', self.configure_callback)
 
-		self.scaler = ScalingWidget(self)
-		self.scaler.add_imagecanvas(self.canvas)
+		self.scaler = self.canvas.scaling_widget(self)
 
 		self.zoomframe = Frame(self)
-		Button(self.zoomframe, text='Zoom In', command=self.zoomin).pack()
-		Button(self.zoomframe, text='Zoom Out', command=self.zoomout).pack()
+		Button(self.zoomframe, text='Zoom In', command=self.zoomin).pack(side=LEFT)
+		Button(self.zoomframe, text='Zoom Out', command=self.zoomout).pack(side=LEFT)
 
 		self.cursorinfowid.pack(side=TOP)
-		self.scaler.pack(side=BOTTOM)
-		self.zoomframe.pack(side=BOTTOM)
-		self.canvas.pack(padx=4,pady=4,expand=YES,fill=BOTH,side=TOP)
+		self.scaler.pack(side=TOP)
+		self.zoomframe.pack(side=TOP)
+		self.canvas.pack(padx=4,pady=4,expand=YES,fill=BOTH,side=BOTTOM)
+
+		self.update()
 
 	def import_numeric(self, data):
 		"""
@@ -69,16 +70,35 @@ class TestClickable(ImageViewer):
 
 if __name__ == '__main__':
 	import sys
-	from mrc import Mrc
+	import Mrc
 
 	root = Tk()
+	screenh = root.winfo_screenheight()
+	print 'screenh', screenh
+	root.wm_maxsize(0,0)
 	jim = TestClickable(root, bg='#488')
+	#jim = ImageViewer(root, bg='#488')
 	jim.pack()
+	
+	#for filename in sys.argv[1:]:
+	#	data1 = Mrc.mrc_to_numeric(filename)
+	#	jim.import_numeric(data1)
+	#	raw_input('return to continue')
 
-	for filename in sys.argv[1:]:
-		data1 = Mrc.mrc_to_numeric(filename)
-		jim.import_numeric(data1)
-		raw_input('return to continue')
+	screenw = root.winfo_reqwidth()
+	screenh = root.winfo_reqheight()
+	print 'wh', screenw, screenh
+
+	filename = sys.argv[1]
+	data1 = Mrc.mrc_to_numeric(filename)
+	jim.import_numeric(data1)
+
+	screenw = root.winfo_width()
+	screenh = root.winfo_height()
+	print 'wh', screenw, screenh
+
+	root.mainloop()
+	
 	#print 'clip ImageViewer'
 	#jim.clip((500,700))
 	#print 'mainloop'

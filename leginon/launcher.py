@@ -19,8 +19,7 @@ class Launcher(node.Node):
 		self.addEventOutput(event.NodeClassesPublishEvent)
 		self.caller = calllauncher.CallLauncher()
 		print 'launcher id: %s' % (self.id,)
-		print 'location =', self.location()
-
+		self.print_location()
 		self.start()
 
 	def eventAddManager(self, ievent):
@@ -60,13 +59,10 @@ class Launcher(node.Node):
 		nodeclass = nodeclassreg.getNodeClass(targetclass)
 
 		## thread or process
-		#print 'newproc', newproc
 		if newproc:
 			self.caller.launchCall('fork',nodeclass,args,kwargs)
 		else:
 			self.caller.launchCall('thread',nodeclass,args,kwargs)
-		#print 'DONE with launchCall'
-
 
 	def defineUserInterface(self):
 		nint = node.Node.defineUserInterface(self)

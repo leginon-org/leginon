@@ -249,34 +249,10 @@ class Calibration(node.Node):
 		shape = shiftinfo['shape']
 		stats = shiftinfo['stats']
 
-		## judge based on image stats
-		## this should probably be done even before doing a 
-		## correlation to save time.  should reject doing doing
-		## a calibration over a big black area and stuff like that
-		## check that stats[0] is similar to stats[1]
-		# 
-
-		## judge based on correlation peak value
-		
-
-#		if peakvalue < minpeakvalue:
-#			peakverdict = 'low'
-#		elif peakvalue > maxpeakvalue:
-#			peakverdict = 'high'
-#		else:
-#			peakverdict = 'normal'
-
-		### Is this right?:
-		### We care about shift on each axis when it comes
-		### to validating the accuracy of the correlation.
-		### We care about total shift distance when it comes 
-		### to getting a good calibration, regardless of direction.
-
 		validshiftdict = self.validshift.get()
 		print 'validshiftdict', validshiftdict
 		validshift = []
-		print 'SHIFT', shift
-		print 'PEAK VALUE', peakvalue
+
 		return 'small shift'
 
 		for dim in (0,1):

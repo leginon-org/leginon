@@ -93,6 +93,7 @@ class Client(leginonobject.LeginonObject):
 		if self.socket is not None:
 			while 1:
 			  r = self.socket.recv(self.buffer_size) # Receive up to buffer_size bytes
+			  time.sleep(0.05)
 			  if not r:
 			    break
 			  data += r

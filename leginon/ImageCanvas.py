@@ -5,13 +5,14 @@ from NumericImage import *
 import time
 
 class ImageCanvas(Frame):
-	def __init__(self, *args, **kargs):
-		Frame.__init__(self, *args, **kargs)
+	def __init__(self, parent, *args, **kargs):
+		Frame.__init__(self, parent, *args, **kargs)
+		self.parent = parent
 		self.__build()
 		self.bindings()
 		self.zoomfactor = 1.0
 		self.cursorinfo = CursorInfo(self)
-		self.scalingwidget = []
+		self.scalingwidget = None
 		self.numimage = None
 
 	def bindings(self):
@@ -84,7 +85,7 @@ class ImageCanvas(Frame):
 		return coord
 
 	def extrema(self):
-		if self.numimage:
+		if self.numimage is not None:
 			return self.numimage.extrema
 		else:
 			return None
@@ -100,16 +101,14 @@ class ImageCanvas(Frame):
 		## use the old value of clip
 		oldclip = self.clip()
 		self.numimage = NumericImage(ndata,clip=oldclip)
-		self.update_scaling_widgets()
+		sw = self.scalingwidget
+		if sw is not None:
+			extrema = self.extrema()
+			# this should probably not shrink the range
+			sw.set_limits(extrema)
+			if not sw.scalelock.get():
+				sw.set_values(extrema)
 		self.update_canvas()
-
-	def update_scaling_widgets(self):
-		for sw in self.scalingwidget:
-			sw.set_from_imagecanvas()
-		## should make this condition of a scale lock
-		if not sw.scalelock.get():
-			newvalues = self.extrema()
-			sw.set_values(newvalues)
 
 	def clip(self, newclip=None):
 		if newclip:
@@ -119,16 +118,18 @@ class ImageCanvas(Frame):
 		return self.__get_numimage_clip()
 
 	def __set_numimage_clip(self, newclip):
-		if self.numimage:
+		if self.numimage is not None:
 			self.numimage.transform['clip'] = newclip
 
 	def __get_numimage_clip(self):
-		if self.numimage:
+		if self.numimage is not None:
 			return self.numimage.transform['clip']
 		else:
 			return None
 
 	def update_canvas(self):
+		if self.numimage is None:
+			return
 		self.numimage.update_image()
 		## this next line is currently the time waster
 		self.photo = self.numimage.photoimage()
@@ -136,9 +137,11 @@ class ImageCanvas(Frame):
 		newheight = self.photo.height()
 		self.resize(0,0,newwidth,newheight)
 		self.canvas.itemconfig(self.canimage, image=self.photo)
-		self.update()
+		#self.update()
 
 	def zoom(self, factor):
+		if self.numimage is None:
+			return
 		self.zoomfactor = self.zoomfactor * factor
 		oldsize = self.numimage.orig_size
 		newsizex = int(round(oldsize[0] * self.zoomfactor))
@@ -200,6 +203,11 @@ class ImageCanvas(Frame):
 	def cursorinfo_widget(self, parent, *args, **kargs):
 		return self.cursorinfo.widget(parent, *args, **kargs)
 
+	def scaling_widget(self, parent, *args, **kwargs):
+		wid = ScalingWidget(parent, self, *args, **kwargs)
+		self.scalingwidget = wid
+		return wid
+
 
 class CursorInfo:
 	"""
@@ -253,9 +261,9 @@ class CursorInfoWidget(Frame):
 		self.ilab.pack(side=LEFT)
 
 class ScalingWidget(Frame):
-	def __init__(self, parent, *args, **kargs):
+	def __init__(self, parent, imagecanvas, *args, **kargs):
 		Frame.__init__(self, parent, *args, **kargs)
-		self.imagecanvas = []
+		self.imagecanvas = imagecanvas
 		self.rangemin = DoubleVar()
 		self.rangemax = DoubleVar()
 		self.limit_from = None
@@ -263,23 +271,13 @@ class ScalingWidget(Frame):
 		self.minscalevalue = None
 		self.maxscalevalue = None
 		self.__build()
-		self.__callbacks_off()
-
-	def add_imagecanvas(self, imagecanvas):
-		self.imagecanvas.append(imagecanvas)
-		imagecanvas.scalingwidget.append(self)
-		self.set_from_imagecanvas()
-
-	def del_imagecanvas(self, imagecanvas):
-		imagecanvas.scalingwidget.remove(self)
-		self.imagecanvas.remove(imagecanvas)
-		self.set_from_imagecanvas()
+		self.__callbacks_on()
 
 	def __build(self):
 		self.minscale = Scale(self, orient=HORIZONTAL, showvalue=NO, width=8, length=300)
 		self.maxscale = Scale(self, orient=HORIZONTAL, showvalue=NO, width=8, length=300)
-		self.minlab = Label(self, textvariable=self.rangemin)
-		self.maxlab = Label(self, textvariable=self.rangemax)
+		self.minlab = Label(self, textvariable=self.rangemin, width=7)
+		self.maxlab = Label(self, textvariable=self.rangemax, width=7)
 		self.scalelock = BooleanVar()
 		lockbut = Checkbutton(self, text='Lock', variable=self.scalelock)
 
@@ -289,36 +287,7 @@ class ScalingWidget(Frame):
 		self.maxlab.grid(column=1, row=1)
 		lockbut.grid(column=2, row=0, rowspan=2)
 
-	def set_from_imagecanvas(self):
-		"""
-		This is called when a new imagecanvas is added
-		Makes sure limits of scalebars are able to handle
-		all data in the new imagecanvas.
-		"""
-		### find the min and max data of all imagecanvases
-		minmin,maxmax = None,None
-		for ican in self.imagecanvas:
-			extrema = ican.extrema()
-			if extrema:
-				thismin,thismax = extrema
-				## treat first good image different
-				if minmin == None:
-					minmin,maxmax = extrema
-					cur_clip = ican.clip()
-				else:
-					if thismin < minmin:
-						minmin = thismin
-					if thismax > maxmax:
-						maxmax = thismax
-
-		if minmin == None:
-			return
-
-		self.__set_limits( (minmin, maxmax) )
-		self.update()
-		self.__callbacks_on()
-
-	def __set_limits(self, newlimits):
+	def set_limits(self, newlimits):
 		newmin = newlimits[0]
 		newmax = newlimits[1]
 		newres = (newmax - newmin) / 256.0
@@ -344,13 +313,16 @@ class ScalingWidget(Frame):
 	def _minscale_callback(self, newval=None):
 		### turn off this callback while it is running
 		self.minscale['command'] = ''
+		#self.__callbacks_off()
 		if self.minscalevalue == newval:
 			self.minscale['command'] = self._minscale_callback
+			#self.__callbacks_on()
 			return
 		self.minscalevalue = newval
 		self.rangemin.set(newval)
 		self.__update_imagecanvas()
 		self.minscale['command'] = self._minscale_callback
+		#self.__callbacks_on()
 
 	def _maxscale_callback(self, newval=None):
 		### turn off this callback while it is running
@@ -369,8 +341,7 @@ class ScalingWidget(Frame):
 		rangemin = self.minscale.get()
 		rangemax = self.maxscale.get()
 		newrange = (rangemin, rangemax)
-		for ic in self.imagecanvas:
-			ic.clip(newrange)
+		self.imagecanvas.clip(newrange)
 
 if __name__ == '__main__':
 	mycan = ImageCanvas(None,bg='darkgrey')

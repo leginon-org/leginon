@@ -5,6 +5,7 @@ import xmlrpclib
 import threading
 import code
 import inspect
+import copy
 
 XMLRPCTYPES = ('boolean', 'integer', 'float', 'string', 'array', 'struct', 'date', 'binary')
 PERMISSIONS = (None, 'r', 'w', 'rw', 'wr')
@@ -47,13 +48,17 @@ class DataSpec(SpecObject):
 		if callable(self.uidata):
 			return self.uidata()
 		else:
-			return self.uidata
+			return copy.deepcopy(self.uidata)
 
 	def set(self, value):
 		if callable(self.uidata):
 			self.uidata(value)
 		else:
-			self.uidata = value
+			#self.uidata = copy.deepcopy(value)
+			if callable(value):
+				self.uidata = value
+			else:
+				self.uidata = copy.deepcopy(value)
 
 	def dict(self):
 		d = SpecObject.dict(self)

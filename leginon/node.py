@@ -22,9 +22,7 @@ class Client(datatransport.Client):
 
 	def push(self, idata):
 #		if isinstance(idata, event.Event):
-		#print 'node.Client.push...'
 		datatransport.Client.push(self, idata)
-		#print 'node.Client.push... datatrans... returned'
 #		else:
 #			raise event.InvalidEventError('event must be Event instance')
 
@@ -82,20 +80,19 @@ class Node(leginonobject.LeginonObject):
 		self.addEventInput(event.KillEvent, self.die)
 		self.addEventInput(event.ConfirmationEvent, self.registerConfirmedEvent)
 		if 'manager' in self.nodelocations:
-			print 'adding manager, %s' % self.nodelocations['manager']
 			try:
 				self.addManager(self.nodelocations['manager'])
 			except:
 				print 'exception in addManager'
 				raise
 			else:
-				print 'no exception'
+				print '%s connected to manager' % (self.id,)
 		self.die_event = threading.Event()
 
 	def exit(self):
 		self.outputEvent(event.NodeUnavailableEvent(self.ID()))
 		self.server.exit()
-		print "done"
+		print "%s exited" % (self.id,)
 
 	def die(self, ievent):
 		self.die_event.set()
@@ -180,9 +177,7 @@ class Node(leginonobject.LeginonObject):
 			return str(d)
 
 	def addManager(self, loc):
-		print 'addEventClient...'
 		self.addEventClient(('manager',), loc)
-		print "self.clients =", self.clients
 		newid = self.ID()
 		myloc = self.location()
 		available_event = event.NodeAvailableEvent(newid, myloc)
@@ -200,16 +195,13 @@ class Node(leginonobject.LeginonObject):
 		# wait until the interact thread terminates
 		#interact_thread.join()
 		self.die_event.wait()
-		print self.id, "exiting...",	
 		self.exit()
 
 	def outputEvent(self, ievent, wait=0, nodeid=('manager',)):
-		#print 'trying self.clients[nodeid].push(ievent)'
 		try:
 			self.clients[nodeid].push(ievent)
-			#print 'successful'
 		except KeyError:
-			#print 'cannot output event %s to %s' % (ievent,nodeid)
+			print 'cannot output event %s to %s' % (ievent,nodeid)
 			return
 		if wait:
 			self.waitEvent(ievent)
@@ -218,11 +210,9 @@ class Node(leginonobject.LeginonObject):
 		self.outputEvent(event.ConfirmationEvent(self.ID(), ievent.id))
 
 	def waitEvent(self, ievent):
-		print "waiting on", ievent.id
 		if not ievent.id in self.confirmwaitlist:
 			self.confirmwaitlist[ievent.id] = threading.Event()
 		self.confirmwaitlist[ievent.id].wait()
-		print "done for", ievent.id
 
 	def registerConfirmedEvent(self, ievent):
 		# this is bad since it will fill up with lots of events
@@ -234,14 +224,10 @@ class Node(leginonobject.LeginonObject):
 	def publish(self, idata, eventclass=event.PublishEvent, confirm=False):
 		if not issubclass(eventclass, event.PublishEvent):
 			raise TypeError('PublishEvent subclass required')
-		#print 'datahandler._insert'
 		self.server.datahandler._insert(idata)
 		# this idata.id is content, I think
-		#print 'publish event class', eventclass
 		e = eventclass(self.ID(), idata.id, confirm)
-		#print 'publish event', e
 		self.outputEvent(e)
-		#print 'done output event'
 		return e
 
 	def unpublish(self, dataid, eventclass=event.UnpublishEvent):
@@ -272,9 +258,7 @@ class Node(leginonobject.LeginonObject):
 
 	def researchByLocation(self, loc, dataid):
 		client = self.clientclass(self.ID(), loc)
-		#print "data ID =", dataid
 		cdata = client.pull(dataid)
-
 		return cdata
 
 	def researchByDataID(self, dataid):
