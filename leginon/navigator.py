@@ -32,6 +32,9 @@ class Navigator(node.Node):
 			'stage position': calibrationclient.StageCalibrationClient(self),
 			'modeled stage position': calibrationclient.ModeledStageCalibrationClient(self)
 		}
+		self.currentselection = None
+		self.stagelocations = []
+		self.getLocationsFromDB()
 
 		self.addEventInput(event.ImageClickEvent, self.handleImageClick)
 		self.addEventInput(event.ImageAcquireEvent, self.handleImageAcquire)
@@ -115,6 +118,204 @@ class Navigator(node.Node):
 		#self.publish(imagedata, pubevent=True)
 		#print 'image published'
 
+	def fromScope(self, name, comment=''):
+		'''
+		create a new location with name
+		if a location by this name already exists in my 
+		list of managed locations, it will be replaced by the new one
+		also returns the new location object
+		'''
+		try:
+			scopedata = self.researchByDataID(('stage position',))
+		except node.ResearchError:
+			self.outputMessage('Is EM running?', 'Unable to get stage position.  Is EM node running?')
+			return
+		allstagedata = scopedata['stage position']
+		stagedata = {}
+		stagedata['x'] = allstagedata['x']
+		stagedata['y'] = allstagedata['y']
+		xyonly = self.xyonly.get()
+		if not xyonly:
+			stagedata['z'] = allstagedata['z']
+			stagedata['a'] = allstagedata['a']
+
+		newloc = data.StageLocationData()
+		newloc.update(stagedata)
+		newloc['xy only'] = xyonly
+		newloc['id'] = None
+		newloc['session'] = self.session
+		newloc['name'] = name
+
+		## save comment, remove the old location
+		for loc in self.stagelocations:
+			if loc['name'] == name:
+				comment = loc['comment']
+				self.stagelocations.remove(loc)
+				break
+		newloc['comment'] = comment
+		newloc['removed'] = False
+
+		self.stagelocations.append(newloc)
+
+		self.locationToDB(newloc)
+		locnames = self.locationNames()
+		print 'LOCNAMES', locnames
+		self.uiselectlocation.set(locnames, len(locnames)-1)
+		return newloc
+
+	def removeLocation(self, loc):
+		'''
+		remove a location by index or reference
+		loc is either a locaiton, or index of the location
+		'''
+		locremove = None
+		if type(loc) is int:
+			locremove = self.stagelocations[loc]
+			del self.stagelocations[loc]
+		elif type(loc) is str:
+			loccopy = list(self.stagelocations)
+			for location in loccopy:
+				if location['name'] == loc:
+					locremove = location
+					self.stagelocations.remove(location)
+		else:
+			locremove = loc 
+			self.stagelocations.remove(loc)
+		if locremove is not None:
+			locremove['removed'] = 1
+			self.locationToDB(locremove)
+		locnames = self.locationNames()
+		self.uiselectlocation.set(locnames, 0)
+
+	def uiSelectedToScope(self):
+		new = self.uiselectlocation.getSelectedValue()
+		self.toScope(new)
+
+	def locationNames(self):
+		names = [loc['name'] for loc in self.stagelocations]
+		return names
+
+	def uiSelectedFromScope(self):
+		sel = self.uiselectlocation.getSelectedValue()
+		newlocation = self.fromScope(sel)
+
+	def uiSelectedRemove(self):
+		sel = self.uiselectlocation.getSelectedValue()
+		self.removeLocation(sel)
+
+	def uiNewFromScope(self):
+		newname = self.enteredname.get()
+		newcomment = self.enteredcomment.get()
+		if newname:
+			newloc = self.fromScope(newname, newcomment)
+
+	def uiSelectCallback(self, index):
+		try:
+			self.currentselection = self.stagelocations[index]
+		except IndexError:
+			self.currentselection = None
+		self.locationToParams(self.currentselection)
+		return index
+
+	def getLocationsFromDB(self):
+		'''
+		get list of locations for this session from DB
+		and use them to create self.stagelocations list
+		'''
+		### get location from database
+		locdata = data.StageLocationData(session=self.session)
+		locations = self.research(datainstance=locdata)
+
+		### only want most recent of each name
+		### since they are ordered by timestamp, just take the
+		### first one of each name
+		mostrecent = []
+		names = []
+		for loc in locations:
+			if loc['name'] not in names:
+				names.append(loc['name'])
+				if not loc['removed']:
+					mostrecent.append(loc)
+		self.stagelocations[:] = mostrecent
+
+	def locationToDB(self, stagelocdata):
+		'''
+		stores a location in the DB under the current session name
+		if no location is specified, store all self.stagelocations
+		'''
+		self.publish(stagelocdata, database=True)
+
+	def toScope(self, loc):
+		'''
+		loc is either index, location, or name
+		'''
+		locdata = None
+		if type(loc) is int:
+			locdata = self.stagelocations[p]
+		elif type(loc) is str:
+			for location in self.stagelocations:
+				if loc == location['name']:
+					locdata = location
+					break
+		elif isinstance(loc, data.StageLocationData):
+			locdata = loc
+		else:
+			print 'Bad arg for toScope'
+			return
+
+		if locdata is None:
+			print 'no such location'
+			return
+
+		name = locdata['name']
+		print 'moving to location %s' % (name,)
+
+		## should switch to using AllEMData
+		stagedict = {}
+		stagedict['x'] = locdata['x']
+		stagedict['y'] = locdata['y']
+		if not locdata['xy only']:
+			stagedict['z'] = locdata['z']
+			stagedict['a'] = locdata['a']
+		scopedata = data.ScopeEMData(id=('scope',))
+		scopedata['stage position'] = stagedict
+		try:
+			self.publishRemote(scopedata)
+		except node.PublishError:
+			self.printException()
+			print '** Maybe EM is not running?'
+		else:
+			self.currentlocation = locdata
+			print 'moved to location %s' % (name,)
+
+	def locationToDict(self, locationdata):
+		d = {}
+		if locationdata is None:
+			self.locationparams.set(d, callback=False)
+			return d
+
+		for key in ('comment', 'x', 'y'):
+			if locationdata[key] is not None:
+				d[key] = locationdata[key]
+		if not locationdata['xy only']:
+			for key in ('z','a'):
+				if locationdata[key] is not None:
+					d[key] = locationdata[key]
+		return d
+
+	def locationToParams(self, locationdata):
+		d = self.locationToDict(locationdata)
+		self.locationparams.set(d, callback=False)
+
+	def uiParamsCallback(self, value):
+		if (self.currentselection is None) or (not value):
+			return {}
+		else:
+			self.currentselection.update(value)
+			self.locationToDB(self.currentselection)
+			d = self.locationToDict(self.currentselection)
+		return d
+
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
 		movetypes = self.calclients.keys()
@@ -133,8 +334,37 @@ class Navigator(node.Node):
 		controlcontainer = uidata.Container('Control')
 		controlcontainer.addObjects((acqmeth, self.image))
 
+
+		## Location Presets
+		locationcontainer = uidata.Container('Stage Locations')
+		self.xyonly = uidata.Boolean('From Scope gets X and Y Only', True, 'rw')
+		self.enteredname = uidata.String('New Name', '', 'rw')
+		self.enteredcomment = uidata.String('New Comment', '', 'rw')
+		newfromscopemethod = uidata.Method('New Location From Scope', self.uiNewFromScope)
+		self.locationparams = uidata.Struct('Location Parameters', {}, 'rw', self.uiParamsCallback)
+		self.uiselectlocation = uidata.SingleSelectFromList('Location Selector', [], 0, callback=self.uiSelectCallback)
+		toscopemethod = uidata.Method('To Scope', self.uiSelectedToScope)
+		fromscopemethod = uidata.Method('From Scope', self.uiSelectedFromScope)
+		removemethod = uidata.Method('Remove', self.uiSelectedRemove)
+		obs = (
+			self.xyonly,
+			self.enteredname,
+			self.enteredcomment,
+			newfromscopemethod,
+			self.uiselectlocation,
+			toscopemethod,
+			fromscopemethod,
+			removemethod,
+			self.locationparams,
+		)
+		locationcontainer.addObjects(obs)
+
+		locnames = self.locationNames()
+		self.uiselectlocation.set(locnames, 0)
+
+		## main Navigator container
 		container = uidata.LargeContainer('Navigator')
-		container.addObjects((settingscontainer, controlcontainer))
+		container.addObjects((controlcontainer, settingscontainer, locationcontainer))
 		self.uiserver.addObject(container)
 
 class SimpleNavigator(Navigator):
