@@ -12,9 +12,9 @@ import signal
 import os
 
 class Manager(node.Node):
-	def __init__(self):
+	def __init__(self, id):
 		# the id is manager (in a list)
-		node.Node.__init__(self, ['manager'], None)
+		node.Node.__init__(self, id, None)
 
 		self.gui_ok = 0
 		self.common = common
@@ -144,7 +144,7 @@ class Manager(node.Node):
 
 	def launchNode(self, launcher, newproc, target, newid, nodeargs=()):
 		manloc = self.location()
-		args = tuple([newid, manloc] + list(nodeargs))
+		args = (newid, manloc) + nodeargs
 		self.launch(launcher, newproc, target, args)
 
 	def launch(self, launcher, newproc, target, args=(), kwargs={}):
@@ -314,8 +314,7 @@ class Manager(node.Node):
 
 if __name__ == '__main__':
 	import signal, sys
-	m = Manager()
 
-
-
+	manager_id = ('manager',)
+	m = Manager(manager_id)
 

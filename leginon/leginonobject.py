@@ -17,8 +17,6 @@ class LeginonObject(object):
 		return loc
 
 	def ID(self):
-		newid = list(self.id)
-		newid.append(self.idcounter)
+		newid = self.id + (self.idcounter,)
 		self.idcounter += 1
 		return newid
-

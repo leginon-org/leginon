@@ -62,12 +62,6 @@ class Node(leginonobject.LeginonObject):
 		if managerloc:
 			self.addManager(managerloc)
 
-	def ID(self):
-		newid = list(self.id)
-		newid.append(self.idcounter)
-		self.idcounter += 1
-		return newid
-
 	def addManager(self, loc):
 		self.managerloc = loc
 		self.addEventClient('manager', loc)

@@ -14,6 +14,7 @@ class Launcher(node.Node):
 
 		self.addEventInput(event.LaunchEvent, self.handleLaunch)
 		self.caller = calllauncher.CallLauncher()
+		print 'launcher id: %s' % self.id
 		self.main()
 
 	def addManager(self, loc):
@@ -23,7 +24,9 @@ class Launcher(node.Node):
 		'''
 		self.managerloc = loc
 		self.addEventClient('manager', loc)
-		self.announce(event.LauncherAvailableEvent(self.ID(), self.location()))
+
+		e = event.LauncherAvailableEvent(self.ID(), self.location())
+		self.announce(e)
 
 	def main(self):
 		self.interact()
@@ -66,5 +69,6 @@ if __name__ == '__main__':
 	manloc['TCP port'] = int(sys.argv[2])
 
 	myhost = socket.gethostname()
+	myid = (myhost,)
 
-	m = Launcher(myhost, manloc)
+	m = Launcher(myid, manloc)
