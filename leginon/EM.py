@@ -18,14 +18,14 @@ class DataHandler(datahandler.DataBinder):
 		self.EMnode = EMnode
 
 	def query(self, id):
-		result = data.EMData(self.ID(), EMnode.getEM([id]))
+		result = data.EMData(self.ID(), self.EMnode.getEM([id]))
 		return result
 
 	def insert(self, idata):
 		if isinstance(idata, event.Event):
 			datahandler.DataBinder.insert(self, idata)
 		else:
-			EMnode.setEM(idata.content)
+			self.EMnode.setEM(idata.content)
 
 	# borrowed from NodeDataHandler
 	def setBinding(self, eventclass, func):
