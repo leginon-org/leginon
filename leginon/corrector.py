@@ -283,6 +283,8 @@ class SimpleCorrector(node.Node):
 			# invert binning/exposure type for calculating normalizations
 			# could be less than optimal if retracting camera on darks
 			for binning in [1, 2, 4, 8]:
+				self.exposuretype.set('')
+				self.binning.set(str(binning))
 				self.status.set('Finding exposure time...')
 				exposuretime = self.findExposureTime(binning, self.findcounts.get())
 				if exposuretime is None:
@@ -291,7 +293,6 @@ class SimpleCorrector(node.Node):
 					raise FindExposureTimeError(message)
 				for exposuretype in ['dark', 'normal']:
 					self.exposuretype.set(exposuretypestrings[exposuretype])
-					self.binning.set(str(binning))
 					image, camerastate = \
 						self.acquireReferenceImage(binning, exposuretype, naverage,
 																				exposuretime)
