@@ -10,7 +10,6 @@
 
 import data
 import event
-import leginonobject
 import node
 import nodeclassreg
 import gui.wx.Launcher

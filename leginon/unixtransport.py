@@ -7,7 +7,6 @@
 #
 import SocketServer
 import socket
-import leginonobject
 import socketstreamtransport
 import os
 import sys

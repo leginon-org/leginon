@@ -7,7 +7,6 @@
 #
 import SocketServer
 import socket
-import leginonobject
 import socketstreamtransport
 
 locationkey = 'TCP transport'
