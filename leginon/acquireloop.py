@@ -2,11 +2,9 @@
 
 import timedloop
 import event
+import data
 import time
 #import Numeric
-import base64
-import array
-import copy
 import threading
 
 class AcquireLoop(timedloop.TimedLoop):
@@ -36,10 +34,11 @@ class AcquireLoop(timedloop.TimedLoop):
 
 	def process(self, camerastate):
 		## publish image
-		self.publish(camerastate, event.PublishEvent)
+		imagedata = data.ImageData(self.ID(), camerastate.content['image data'])
+		self.publish(imagedata, event.ImagePublishEvent)
 
 		imagearray = camerastate.content['image data']
-		print 'image 1...10', imagearray[:10]
+		print 'image 1...10', imagearray[:10,:10]
 
 		del camerastate.content['image data']
 		print camerastate.content
