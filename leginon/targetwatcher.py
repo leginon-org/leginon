@@ -56,11 +56,6 @@ class TargetWatcher(watcher.Watcher):
 			self.newtargetshift.set()
 
 	def processData(self, newdata):
-		'''
-		accepts either ImageTargetData or ImageTargetListData
-		'''
-		print '###############################################################################'
-		print '###############################################################################'
 		if not isinstance(newdata, data.ImageTargetListData):
 			return 
 
@@ -77,11 +72,22 @@ class TargetWatcher(watcher.Watcher):
 				print 'REJECT', target['id'], target.__class__
 				rejects.append(target)
 
-		### republish the rejects
+		### republish the rejects and wait for them to complete
 		if rejects:
 			print self.id, 'PUBLISHING REJECTS', len(rejects)
 			newtargetlist = data.ImageTargetListData(id=self.ID(), targets=rejects)
 			self.passTargets(newtargetlist)
+			rejectstatus = self.waitForRejects()
+
+			# decide whether or not to continue doing the
+			# good targets based on result of reject targets
+			if rejectstatus is not 'success':
+				## report my status as reject status
+				## may not be a good idea all the time
+				## This means if rejects were aborted
+				## then this whole target list was aborted
+				self.reportTargetListDone(newdata['id'], rejectstatus)
+				return
 
 		### process the good ones
 		self.abort.clear()
@@ -98,8 +104,6 @@ class TargetWatcher(watcher.Watcher):
 				print 'TARGET SOURCE IMAGE', imageid
 			except (KeyError, TypeError):
 				imageid = None
-				
-
 
 			while 1:
 				## check if this imageid needs update
@@ -153,10 +157,13 @@ class TargetWatcher(watcher.Watcher):
 
 			if self.abort.isSet():
 				print 'breaking from targetlist loop'
-				targetliststatus = 'abort'
+				targetliststatus = 'aborted'
 				break
 
-		e = event.TargetListDoneEvent(id=self.ID(), targetlistid=newdata['id'], status=targetliststatus)
+		self.reportTargetListDone(newdata['id'], targetliststatus)
+
+	def reportTargetListDone(self, listid, status):
+		e = event.TargetListDoneEvent(id=self.ID(), targetlistid=listid, status=status)
 		self.outputEvent(e)
 
 	def passTargets(self, targetlistdata):
@@ -172,6 +179,24 @@ class TargetWatcher(watcher.Watcher):
 		self.targetlistevents[targetlistdata['id']]['received'] = threading.Event()
 		self.targetlistevents[targetlistdata['id']]['status'] = 'waiting'
 		self.publish(targetlistdata, pubevent=True)
+
+	def waitForRejects(self):
+		# wait for focus target list to complete
+		print 'waiting for rejected targets to complete...'
+		for tid, teventinfo in self.targetlistevents.items():
+			teventinfo['received'].wait()
+		print 'done waiting for rejected targets'
+
+		## check status of all target lists
+		## all statuses must be success in order for complete success
+		status = 'success'
+		for tid, teventinfo in self.targetlistevents.items():
+			if teventinfo['status'] in ('failed', 'aborted'):
+				status = teventinfo['status']
+				break
+		self.targetlistevents.clear()
+		
+		return status
 
 	def handleTargetListDone(self, targetlistdoneevent):
 		targetlistid = targetlistdoneevent['targetlistid']

@@ -65,7 +65,7 @@ class Focuser(acquisition.Acquisition):
 			correction = self.btcalclient.measureDefocusStig(btilt, pub, drift_threshold=driftthresh, image_callback=self.ui_image.set)
 		except calibrationclient.Abort:
 			print 'measureDefocusStig was aborted'
-			return 'abort'
+			return 'aborted'
 		except calibrationclient.Drifting:
 			self.driftDetected()
 			return 'repeat'

@@ -158,7 +158,7 @@ class DriftManager(watcher.Watcher):
 
 			## check for abort
 			if self.abortevent.isSet():
-				return 'abort'
+				return 'aborted'
 
 		return 'success'
 
