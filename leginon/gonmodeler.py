@@ -148,14 +148,14 @@ class GonModeler(node.Node):
 		f.close()
 
 	def uiFit(self, datfile, terms):
-		self.fit(datfile, terms)
+		self.fit(datfile, terms, magonly=0)
 		return ''
 
-	def uiMagOnly(self, datfile):
-
+	def uiMagOnly(self, datfile, terms):
+		self.fit(datfile, terms, magonly=1)
 		return ''
 
-	def fit(self, datfile, terms):
+	def fit(self, datfile, terms, magonly=1):
 		magfile = None
 		# modfile  -> moddict
 		# magfile => magdict
@@ -169,8 +169,10 @@ class GonModeler(node.Node):
 		mod_dict = mod.toDict()
 		mag_dict = dat.dict()
 
-		self.calclient.setModel(axis, mod_dict)
 		self.calclient.setMagCalibration(mag, mag_dict)
+		if magonly:
+			return
+		self.calclient.setModel(axis, mod_dict)
 
 	def getStagePosition(self):
 		dat = self.researchByDataID('stage position')
@@ -197,10 +199,6 @@ class GonModeler(node.Node):
 			self.registerUIData('Terms', 'integer')
 		)
 		fit = self.registerUIMethod(self.uiFit, 'Fit Model', argspec)
-
-		argspec = (
-			self.registerUIData('Data File', 'string'),
-		)
 		magonly = self.registerUIMethod(self.uiMagOnly, 'Mag Only', argspec)
 
 		modelcont = self.registerUIContainer('Model', (measure,fit,magonly))
