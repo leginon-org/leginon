@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/robotscreening.py,v $
-# $Revision: 1.1 $
+# $Revision: 1.2 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-23 19:30:28 $
+# $Date: 2005-04-06 18:04:28 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -423,8 +423,9 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 				self.setImageFilename(imagedata)
 				self.publish(imagedata, pubevent=True, database=True)
 				image2 = imagedata['image']
-				theta, shift = align.alignImages(image1, image2)
-				infostring = 'Rotation: %g, shift: (%g, %g)' % ((theta,) + shift)
+				angles, scales, shift, value = \
+					align.findRotationScaleTranslation(image1, image2)
+				infostring = 'Rotation: (%g, %g), scale: (%g, %g), shift: (%g, %g), peak value: %g' % (angles + scales + shift + (value,))
 				self.logger.info(infostring)
 
 				targetlist = self.newTargetList()
@@ -445,8 +446,12 @@ class RobotAtlasTargetFinder(node.Node, targethandler.TargetWaitHandler):
 				# align targets
 				shape1 = image1.shape
 				shape2 = image2.shape
+				m, im = align.getMatrices(angles, scales)
+				print m
+				print im
 				for target in image.targets:
-					target = align.alignTarget(target, shape1, shape2, theta, shift)
+					target = numarray.matrixmultiply(m, target)
+					target = target + shift
 					row = target[0] - shape2[0]/2
 					column = target[1] - shape2[1]/2
 					targetdata = self.newTargetForImage(imagedata, row, column,
