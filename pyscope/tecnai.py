@@ -627,33 +627,42 @@ class Tecnai(object):
 #				time.sleep(polltime)
 	
 	def getLowDose(self):
-		if (self.theLowDose.IsInitialized == 1) and (self.theLowDose.LowDoseActive == win32com.client.constants.IsOn):
-			return 'on'
-		else:
-			return 'off'
+		try:
+			if (self.theLowDose.IsInitialized == 1) and (self.theLowDose.LowDoseActive == win32com.client.constants.IsOn):
+				return 'on'
+			else:
+				return 'off'
+		except pythoncom.com_error:
+			return 'disabled'
  
 	def setLowDose(self, ld):
-		if ld == 'off' :
-			self.theLowDose.LowDoseActive = win32com.client.constants.IsOff
-		elif ld == 'on':
-			if self.theLowDose.IsInitialized == 0:
-				raise SystemError
+		try:
+			if ld == 'off' :
+				self.theLowDose.LowDoseActive = win32com.client.constants.IsOff
+			elif ld == 'on':
+				if self.theLowDose.IsInitialized == 0:
+					raise RuntimeError('Low dose is not initialized')
+				else:
+					self.theLowDose.LowDoseActive = win32com.client.constants.IsOn
 			else:
-				self.theLowDose.LowDoseActive = win32com.client.constants.IsOn
-		else:
-			raise ValueError
+				raise ValueError
+		except pythoncom.com_error:
+			raise RuntimeError('Low dose is not enabled')
 
 	def getLowDoseMode(self):
-		if self.theLowDose.LowDoseState == win32com.client.constants.eExposure:
-			return 'exposure'
-		elif self.theLowDose.LowDoseState == win32com.client.constants.eFocus1:
-			return 'focus1'
-		elif self.theLowDose.LowDoseState == win32com.client.constants.eFocus2:
-			return 'focus2'
-		elif self.theLowDose.LowDoseState == win32com.client.constants.eSearch:
-			return 'search'
-		else:
-			raise SystemError
+		try:
+			if self.theLowDose.LowDoseState == win32com.client.constants.eExposure:
+				return 'exposure'
+			elif self.theLowDose.LowDoseState == win32com.client.constants.eFocus1:
+				return 'focus1'
+			elif self.theLowDose.LowDoseState == win32com.client.constants.eFocus2:
+				return 'focus2'
+			elif self.theLowDose.LowDoseState == win32com.client.constants.eSearch:
+				return 'search'
+			else:
+				return 'unknown'
+		except pythoncom.com_error:
+			return 'disabled'
 		
 	def setLowDoseMode(self, mode):
 		if mode == 'exposure':
