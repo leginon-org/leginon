@@ -53,11 +53,14 @@ class SpiralTargetMaker(TargetMaker):
 	def publishTargetList(self):
 		self.progress.set(0)
 
-		### do targets referenced from current state
+		### do targets referenced from current state and prefered preset
 		scope = self.researchByDataID(('scope',))
 		camera = self.researchByDataID(('camera',))
+		
 		pname = self.presetsclient.uiGetSelectedName()
 		preset = self.presetsclient.getPresetByName(pname)
+
+		scope.friendly_update(preset)
 		camera.friendly_update(preset)
 		size = camera['dimension']['x']
 
