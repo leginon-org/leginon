@@ -39,11 +39,6 @@ class Panel(gui.wx.Acquisition.Panel):
 		gui.wx.Acquisition.Panel.__init__(self, parent, name)
 
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_AUTOFOCUS,
-													'autofocus',
-													isToggle=True,
-													shortHelpString='Toggle Autofocus')
-		self.toolbar.ToggleTool(gui.wx.ToolBar.ID_AUTOFOCUS, True)
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_MANUAL_FOCUS,
 													'manualfocus',
 													shortHelpString='Manual Focus')
@@ -61,8 +56,6 @@ class Panel(gui.wx.Acquisition.Panel):
 
 		gui.wx.Acquisition.Panel.onNodeInitialized(self)
 
-		self.toolbar.Bind(wx.EVT_TOOL, self.onAutofocusTool,
-											id=gui.wx.ToolBar.ID_AUTOFOCUS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onManualFocusTool,
 											id=gui.wx.ToolBar.ID_MANUAL_FOCUS)
 
@@ -70,9 +63,6 @@ class Panel(gui.wx.Acquisition.Panel):
 		dialog = SettingsDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
-
-	def onAutofocusTool(self, evt):
-		self.node.autofocus = evt.IsChecked()
 
 	def onManualFocusTool(self, evt):
 		self.node.manualNow()
@@ -95,6 +85,8 @@ class Panel(gui.wx.Acquisition.Panel):
 class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 	def initialize(self):
 		asz = gui.wx.Acquisition.SettingsDialog.initialize(self)
+
+		self.widgets['autofocus'] = wx.CheckBox(self, -1, 'Autofocus')
 
 		focustypes = self.node.focus_methods.keys()
 		self.widgets['correction type'] = Choice(self, -1, choices=focustypes)
@@ -183,38 +175,40 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 
 		# settings sizer
 		sz = wx.GridBagSizer(10, 5)
-		sz.Add(wx.StaticText(self, -1, 'Correction type'), (0, 0), (1, 1),
+		sz.Add(self.widgets['autofocus'], (0, 0), (1, 3),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['correction type'], (0, 1), (1, 1),
+		sz.Add(wx.StaticText(self, -1, 'Correction type'), (1, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(wx.StaticText(self, -1, 'Preset'), (1, 0), (1, 1),
+		sz.Add(self.widgets['correction type'], (1, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['preset'], (1, 1), (1, 1),
+		sz.Add(wx.StaticText(self, -1, 'Preset'), (2, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(wx.StaticText(self, -1, 'Melt time:'), (2, 0), (1, 1),
+		sz.Add(self.widgets['preset'], (2, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szmelt, (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(wx.StaticText(self, -1, 'Beam tilt:'), (3, 0), (1, 1),
+		sz.Add(wx.StaticText(self, -1, 'Melt time:'), (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['beam tilt'], (3, 1), (1, 1),
+		sz.Add(szmelt, (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(wx.StaticText(self, -1, 'Beam tilt:'), (4, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['beam tilt'], (4, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		sz.Add(wx.StaticText(self, -1, 'Fit limit:'), (4, 0), (1, 1),
+		sz.Add(wx.StaticText(self, -1, 'Fit limit:'), (5, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['fit limit'], (4, 1), (1, 1),
+		sz.Add(self.widgets['fit limit'], (5, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
-		sz.Add(szdrift, (5, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szcor, (6, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szdrift, (6, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szcor, (7, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
 
-		sz.Add(self.widgets['check before'], (0, 2), (1, 1),
+		sz.Add(self.widgets['check before'], (1, 2), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['check after'], (1, 2), (1, 1),
+		sz.Add(self.widgets['check after'], (2, 2), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['acquire final'], (2, 2), (1, 1),
+		sz.Add(self.widgets['acquire final'], (3, 2), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['drift on z'], (3, 2), (1, 1),
+		sz.Add(self.widgets['drift on z'], (4, 2), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szstig, (4, 2), (4, 1), wx.ALIGN_CENTER)
-		sz.AddGrowableRow(6)
+		sz.Add(szstig, (5, 2), (3, 1), wx.ALIGN_CENTER)
+		#sz.AddGrowableRow(6)
 
 		sb = wx.StaticBox(self, -1, 'Autofocus')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)

@@ -28,6 +28,7 @@ class Focuser(acquisition.Acquisition):
 	settingsclass = data.FocuserSettingsData
 	# oops
 	defaultsettings = {
+		'autofocus': True,
 		'pause time': 2.5,
 		'move type': 'image shift',
 		'preset order': [],
@@ -67,7 +68,6 @@ class Focuser(acquisition.Acquisition):
 		}
 
 		self.cortypes = ['cross', 'phase']
-		self.autofocus = False
 		self.manualchecklock = threading.Lock()
 		self.parameter = 'Defocus'
 		self.maskradius = 0.01
@@ -259,7 +259,7 @@ class Focuser(acquisition.Acquisition):
 			resultdata['pre manual check'] = False
 
 		## autofocus
-		if self.autofocus:
+		if self.settings['autofocus']:
 			autofocuspreset = self.settings['preset']
 			autopresettarget = data.PresetTargetData(emtarget=presettarget['emtarget'], preset=autofocuspreset)
 			autostatus = self.autoFocus(resultdata, autopresettarget)

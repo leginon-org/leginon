@@ -1788,6 +1788,7 @@ class AcquisitionSettingsData(SettingsData):
 class FocuserSettingsData(AcquisitionSettingsData):
 	def typemap(cls):
 		return AcquisitionSettingsData.typemap() + (
+			('autofocus', bool),
 			('correction type', str),
 			('preset', str),
 			('melt time', float),
