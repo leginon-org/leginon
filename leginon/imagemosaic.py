@@ -17,6 +17,7 @@ import xmlrpclib
 #import xmlrpclib2 as xmlbinlib
 xmlbinlib = xmlrpclib
 
+# needs reorganizing, better classes and locking
 class ImageMosaicInfo(object):
 	def __init__(self):
 		self.imageinfo = {}
@@ -163,12 +164,20 @@ class StateImageMosaicInfo(ImageMosaicInfo):
 			tilestatesdata[tiledataid] = self.getTileState(tiledataid)
 		return tilestatesdata
 
+	def getMosaicImage(self, scale=1.0, autoscale=False, astype=Numeric.Int16):
+		self.lock.acquire()
+		image = ImageMosaicInfo.getMosaicImage(self, scale, autoscale, astype)
+		image['tile states'] = self.getTileStates()
+		self.lock.release()
+		return image
+
 class ImageMosaic(watcher.Watcher):
 	def __init__(self, id, nodelocations, watchfor = event.TileImagePublishEvent, **kwargs):
 		# needs own event?
 		lockblocking = 1
 		self.scale = 1.0
 		self.autoscale = 512
+		self.targetlist = []
 		watcher.Watcher.__init__(self, id, nodelocations, watchfor,
 																					lockblocking, **kwargs)
 
@@ -423,7 +432,7 @@ class ImageMosaic(watcher.Watcher):
 		clearspec = self.registerUIMethod(self.uiClearMosaics, 'Clear', ())
 
 		getimagespec = self.registerUIData('Mosaic Image', 'binary',
-														permissions='rw', callback=self.uiGetImageCallback)
+														permissions='rw', callback=self.uiImageCallback)
 
 		imagespec = self.registerUIContainer('Image', (publishspec, clearspec))
 		scalespec = self.registerUIData('Scale', 'float', permissions='rw',
@@ -450,13 +459,81 @@ class ImageMosaic(watcher.Watcher):
 			self.autoscale = value
 		return self.autoscale
 
-	def uiGetImageCallback(self):
-		image = self.getMosaicImage()
-		if image is None:
+	def uiImageCallback(self, value=None):
+		if value is not None:
+			self.submitTargets(value)
+
+		imageandscale = self.getMosaicImageAndScale()
+		if imageandscale is None:
 			return xmlbinlib.Binary('')
-		else:
-			mrcstr = Mrc.numeric_to_mrcstr(image)
-			return xmlbinlib.Binary(mrcstr)
+
+		image = imageandscale['image']
+		scale = imageandscale['scale']
+		tilestates = imageandscale['tile states']
+		self.clickinfo = {'scale': scale,
+											'shape': image.shape,
+											'tile states': tilestates}
+
+		mrcstr = Mrc.numeric_to_mrcstr(image)
+		return xmlbinlib.Binary(mrcstr)
+
+	def submitTargets(self, targetlist):
+		self.targetlist = []
+		for target in targetlist:
+			self.adjustTarget(target)
+			targetdata = data.ImageTargetData(self.ID(), target)
+			self.targetlist.append(targetdata)
+		self.publishTargetList()
+
+	# somewhere this is off by 2, i.e. its 1021 when should be 1023
+	# sometimes there is a KeyError for 'scope', not in tilestate for some reason
+	def adjustTarget(self, target):
+		shape = self.clickinfo['shape']
+		tilestates = self.clickinfo['tile states']
+		scale = self.clickinfo['scale']
+		row = target['array row'] * scale
+		column = target['array column'] * scale
+
+		maxmagnitude = math.sqrt(shape[0]**2 + shape[1]**2)
+		nearestdelta = (0,0)
+		nearesttile = None
+		for tile in tilestates:
+			try:
+				position = tilestates[tile]['position']
+				offset = tilestates[tile]['offset']
+				offsetposition = (position[0] + offset[0], position[1] + offset[1])
+				shape = tilestates[tile]['shape']
+			except KeyError, e:
+				print 'tilestates =', tilestates
+				print 'calculating error', e
+			deltaposition = ((row - offsetposition[0] - shape[0]/2.0),
+												(column - offsetposition[1] - shape[1]/2.0))
+			magnitude = math.sqrt((deltaposition[0])**2 + (deltaposition[1])**2)
+			if magnitude < maxmagnitude:
+				maxmagnitude = magnitude
+				nearestdelta = deltaposition
+				nearesttile = tile
+
+		try:
+			target['array shape'] = tilestates[nearesttile]['shape']
+			target['array row'] = int(round(nearestdelta[0]
+																				+ target['array shape'][0]/2.0))
+			target['array column'] = int(round(nearestdelta[1]
+																				+ target['array shape'][1]/2.0))
+			target['scope'] = tilestates[nearesttile]['scope']
+			target['camera'] = tilestates[nearesttile]['camera']
+		except KeyError, e:
+			print 'tilestates =', tilestates
+			print 'target =', target
+			print 'setting error', e
+
+	def publishTargetList(self):
+		if len(self.targetlist) > 0:
+			targetlistdata = data.ImageTargetListData(self.ID(), self.targetlist)
+			self.publish(targetlistdata, event.ImageTargetListPublishEvent)
+			print 'published targetlistdata', targetlistdata
+			print 'content'
+			print targetlistdata.content
 
 class StateImageMosaic(ImageMosaic):
 	def __init__(self, id, nodelocations, watchfor = event.TileImagePublishEvent, **kwargs):
@@ -524,22 +601,21 @@ class StateImageMosaic(ImageMosaic):
 		position['col'] *= -1
 		return (position['row'], position['col'])
 
-	def uiPublishMosaicImage(self):
-		#ImageMosaic.uiPublishMosaicImage(self)
-		imageandscale = self.getMosaicImageAndScale()
-		image = imageandscale['image']
-		scale = imageandscale['scale']
-		if image is not None:
-			mosaicimagedata = data.MosaicImageData(self.ID(), image,
-																							scope=None, camera=None)
-			statemosaic = {mosaicimagedata.id: {}}
-			statemosaic[mosaicimagedata.id]['tile states'] \
-																			= self.imagemosaics[-1].getTileStates()
-			statemosaic[mosaicimagedata.id]['scale'] = scale
-			statemosaicdata = data.StateMosaicData(self.ID(),
-										{mosaicimagedata.id: self.imagemosaics[-1].getTileStates()})
-			self.publish(statemosaicdata, event.StateMosaicPublishEvent)
-			self.publish(mosaicimagedata, event.MosaicImagePublishEvent)
-
-		return ''
+#	def uiPublishMosaicImage(self):
+#		#ImageMosaic.uiPublishMosaicImage(self)
+#		imageandscale = self.getMosaicImageAndScale()
+#		image = imageandscale['image']
+#		scale = imageandscale['scale']
+#		if image is not None:
+#			mosaicimagedata = data.MosaicImageData(self.ID(), image,
+#																							scope=None, camera=None)
+#			statemosaic = {mosaicimagedata.id: {}}
+#			statemosaic[mosaicimagedata.id]['tile states'] \
+#																			= self.imagemosaics[-1].getTileStates()
+#			statemosaic[mosaicimagedata.id]['scale'] = scale
+#			statemosaicdata = data.StateMosaicData(self.ID(),	statemosaic)
+#			self.publish(statemosaicdata, event.StateMosaicPublishEvent)
+#			self.publish(mosaicimagedata, event.MosaicImagePublishEvent)
+#
+#		return ''
 
