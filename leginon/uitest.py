@@ -38,7 +38,7 @@ server.addUIObject(bar2)
 import Numeric
 import Mrc
 import Image
-image = Mrc.mrc_to_numeric('test1.mrc')
+image = Mrc.mrc_to_numeric('test2.mrc')
 image1 = uidata.UIImage('Image 1', image)
 image2 = uidata.UITargetImage('Target Image 1', image)
 

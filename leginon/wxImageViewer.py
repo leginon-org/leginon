@@ -34,6 +34,7 @@ class ImagePanel(wxPanel):
 		self.sizer.SetItemMinSize(self.panel, size.GetWidth(), size.GetHeight())
 
 		self.initValueLabels()
+		self.initScaleEntry()
 
 		self.Fit()
 
@@ -59,6 +60,37 @@ class ImagePanel(wxPanel):
 		self.valuesizer.Add(self.valuelabel)
 		self.sizer.Prepend(self.valuesizer)
 		EVT_MOTION(self.panel, self.motion)
+
+	def initScaleEntry(self):
+		self.scalesizer = wxBoxSizer(wxHORIZONTAL)
+		self.scale_entry = {}
+		for axis, i in [('x', 0), ('y', 1)]:
+			self.scalesizer.Add(wxStaticText(self, -1, axis + ':'),
+													0, wxCENTER | wxALL, 5)
+			self.scale_entry[i] = wxTextCtrl(self, -1, value=str(self.scale[i]))
+			size = self.scale_entry[i].GetSize()
+			size = (size[0]/2, size[1])
+			self.scale_entry[i].SetSize(size)
+			self.scale_entry[i].SetMaxLength(6)
+			self.scalesizer.Add(self.scale_entry[i], 0, wxCENTER | wxALL, 3)
+		scalebutton = wxButton(self, -1, 'Scale')
+		self.scalesizer.Add(scalebutton, 0, wxCENTER | wxALL, 3)
+		EVT_BUTTON(self, scalebutton.GetId(), self.OnScale)
+		self.sizer.Prepend(self.scalesizer)
+
+	def OnScale(self, evt):
+		scale = list(self.scale)
+		for i in range(len(self.scale)):
+			try:
+				scale[i] = float(self.scale_entry[i].GetValue())
+			except:
+				self.scale_entry[i].SetValue(str(self.scale[i]))
+		self.scale = tuple(scale)
+		if self.bitmap is not None:
+			self.panel.SetVirtualSize((self.bitmap.GetWidth()*self.scale[0],
+																	self.bitmap.GetHeight()*self.scale[1]))
+		self.UpdateDrawing()
+		#self.panel.Refresh(0)
 
 	def PILsetImageFromMrcString(self, imagestring):
 		self.clearImage()
@@ -100,15 +132,16 @@ class ImagePanel(wxPanel):
 		self.bitmap = None
 		self.UpdateDrawing()
 
+	def view2image(self, xy):
+		viewoffset = self.panel.GetViewStart()
+		return (int(round((viewoffset[0] + xy[0]) / self.scale[0])),
+						int(round((viewoffset[1] + xy[1]) / self.scale[1])))
+
 	def motion(self, evt):
 		if self.image is None:
 			return
 		try:
-			viewoffset = self.panel.GetViewStart()
-			x = (viewoffset[0] + evt.m_x) / self.scale[0]
-			y = (viewoffset[1] + evt.m_y) / self.scale[1]
-			x = int(round(x))
-			y = int(round(y))
+			x, y = self.view2image((evt.m_x, evt.m_y))
 			rgb = self.image[y, x]
 			self.xlabel.SetLabel(str(x))
 			self.ylabel.SetLabel(str(y))
@@ -131,7 +164,8 @@ class ImagePanel(wxPanel):
 			clientdc.SetUserScale(self.scale[0], self.scale[1])
 			clientdc.Blit(0, 0, self.size[0]/self.scale[0],
 													self.size[1]/self.scale[1], dc,
-										viewoffset[0]/self.scale[0], viewoffset[1]/self.scale[1])
+													viewoffset[0]/self.scale[0],
+													viewoffset[1]/self.scale[1])
 
 	def Draw(self, dc):
 		dc.BeginDrawing()
@@ -158,7 +192,8 @@ class ImagePanel(wxPanel):
 			paintdc.SetUserScale(self.scale[0], self.scale[1])
 			paintdc.Blit(0, 0, self.size[0]/self.scale[0],
 													self.size[1]/self.scale[1], dc,
-										viewoffset[0]/self.scale[0], viewoffset[1]/self.scale[1])
+													viewoffset[0]/self.scale[0],
+													viewoffset[1]/self.scale[1])
 
 class TargetImagePanel(ImagePanel):
 	def __init__(self, parent, id, callback=None):
@@ -253,7 +288,8 @@ class TargetImagePanel(ImagePanel):
 	def motion(self, evt):
 		ImagePanel.motion(self, evt)
 		viewoffset = self.panel.GetViewStart()
-		self.updateClosest(viewoffset[0] + evt.m_x, viewoffset[1] + evt.m_y)
+		x, y = self.view2image((evt.m_x, evt.m_y))
+		self.updateClosest(x, y)
 
 	def updateClosest(self, x, y):
 		closest_target = None
@@ -279,12 +315,14 @@ class TargetImagePanel(ImagePanel):
 	def OnLeftDoubleClick(self, evt):
 		if self.target_type is not None:
 			viewoffset = self.panel.GetViewStart()
-			target = self.addTarget(self.target_type, viewoffset[0] + evt.m_x,
-																								viewoffset[1] + evt.m_y)
+			x, y = self.view2image((evt.m_x, evt.m_y))
+			target = self.addTarget(self.target_type, x, y)
 			if callable(self.callback):
 				self.callback(self.target_type, self.targets[self.target_type])
 
 	def drawTarget(self, dc, target, color=wxBLACK):
+		penwidth = 1
+		length = 10
 		for target_type in self.targets:
 			if target in self.targets[target_type]:
 				color = self.colors[target_type]
@@ -297,8 +335,10 @@ class TargetImagePanel(ImagePanel):
 
 		#dc.DrawCircle(target[0], target[1], 15)
 
-		dc.DrawLine(target[0] - 10, target[1], target[0] + 11, target[1])
-		dc.DrawLine(target[0], target[1] - 10, target[0], target[1] + 11)
+		dc.DrawLine(target[0] - length, target[1],
+								target[0] + length + 1, target[1])
+		dc.DrawLine(target[0], target[1] - length,
+								target[0], target[1] + length + 1)
 
 #		for i in range(target[0] - 10, target[0] + 11):
 #			for j in range(-1, 2):
