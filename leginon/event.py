@@ -239,7 +239,7 @@ class ImageClickEvent(Event):
 		  ('array column', int),
 		  ('array value', float),
 
-		  ('image id', tuple),
+		  ('image', data.ImageData),
 		  ('scope', dict),
 		  ('camera', dict),
 		  ('source', str),
