@@ -143,7 +143,6 @@ class TargetWatcher(watcher.Watcher):
 		self.pause.clear()
 		self.cont.clear()
 		targetliststatus = 'success'
-		ntargets = len(goodtargets)
 		for i, target in enumerate(goodtargets):
 			self.uicontrolstatus.set('Normal')
 			# abort
@@ -244,7 +243,6 @@ class TargetWatcher(watcher.Watcher):
 																										status='done')
 			self.publish(donetarget, database=True, dbforce=True)
 
-		self.uistatus.set('Target list processed.')
 		#self.uitargetid.set('')
 		#self.uitargetnumber.set('')
 		#self.uitargetstatus.set('')
@@ -252,6 +250,8 @@ class TargetWatcher(watcher.Watcher):
 		self.reportTargetListDone(newdata['id'], targetliststatus)
 
 	def reportTargetListDone(self, listid, status):
+		self.uistatus.set('Target list processed.')
+		print '%s done with target list' % (self.id[-1],)
 		e = event.TargetListDoneEvent(id=self.ID(), targetlistid=listid,
 																	status=status)
 		self.outputEvent(e)
