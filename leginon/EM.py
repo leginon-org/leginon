@@ -43,10 +43,12 @@ class DataHandler(datahandler.DataBinder):
 			datahandler.DataBinder.insert(self, idata)
 		else:
 			self.lock.acquire()
-			if self.scope and self.scope.has_key(idata.id):
-				self.scope[idata.id] = idata.content
-			elif self.camera and self.camera.has_key(idata.id):
-				self.camera[idata.id] = idata.content
+			for id in idata.content:
+				if self.scope and self.scope.has_key(id):
+					print id, idata.content
+					self.scope[id] = idata.content[id]
+				elif self.camera and self.camera.has_key(id):
+					self.camera[id] = idata.content[id]
 			self.lock.release()
 
 	# borrowed from NodeDataHandler
