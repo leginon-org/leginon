@@ -78,8 +78,8 @@ class Navigator(node.Node, camerafuncs.CameraFuncs):
 		self.acquireImage()
 
 	def acquireImage(self):
-		camstate = self.camconfigdata.get()
-
+		camconfig = self.cameraConfig()
+		camstate = camconfig['state']
 
 		print 'acquiring image'
 		acqtype = self.acqtype.get()
@@ -107,7 +107,7 @@ class Navigator(node.Node, camerafuncs.CameraFuncs):
 
 		prefs = self.registerUIContainer('Preferences', (movetype, self.delaydata, self.acqtype))
 
-		camspec = self.cameraConfigUISpec()
+		camspec = self.cameraConfigUIData()
 
 		self.registerUISpec('Navigator', (prefs, camspec, nodeui))
 

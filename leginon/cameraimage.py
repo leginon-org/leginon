@@ -54,6 +54,18 @@ def zeroCol(inputarray, col):
 	inputarray[:,col] = 0
 	return inputarray
 
+def fakeRows(inputarray, badrows, goodrow):
+	fakerow = inputarray[goodrow]
+	for row in badrows:
+		inputarray[row] = fakerow
+	return inputarray
+	
+def fakeCols(inputarray, badcols, goodcol):
+	fakecol = inputarray[:,goodcol]
+	for col in badcols:
+		inputarray[:,col] = fakecol
+	return inputarray
+
 ### This will hopefully be a class that contains a lot of the above
 ### functionality.  The name NumericImage is currently being used
 ### in the NumericImage module/class.  I would like that class to become

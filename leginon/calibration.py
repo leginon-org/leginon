@@ -127,11 +127,14 @@ class Calibration(node.Node, camerafuncs.CameraFuncs):
 		self.publishRemote(newemdata)
 		print 'state settling time %s' % (self.settle,)
 		time.sleep(self.settle)
-		print 'getting image data'
+		print 'getting corrected image data'
 
-		emdata = self.researchByDataID('image data')
-		self.publish(event.UnlockEvent(self.ID()))
-		image = emdata.content['image data']
+		#emdata = self.researchByDataID('corrected image data')
+		#self.publish(event.UnlockEvent(self.ID()))
+		#image = emdata.content['corrected image data']
+		image = self.cameraAcquireArray(camstate=None, correction=1)
+		print 'min', cameraimage.min(image)
+		print 'max', cameraimage.max(image)
 
 		imagedata = data.ImageData(self.ID(), image)
 		self.publish(imagedata, event.ImagePublishEvent)
@@ -179,7 +182,7 @@ class Calibration(node.Node, camerafuncs.CameraFuncs):
 		pcimage = self.correlator.phaseCorrelate()
 
 		pcimagedata = data.ImageData(self.ID(), pcimage)
-		self.publish(pcimagedata, event.PhaseCorrelationImagePublishEvent)
+		#self.publish(pcimagedata, event.PhaseCorrelationImagePublishEvent)
 
 		## peak finding
 		print 'peak finding'

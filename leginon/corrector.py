@@ -63,19 +63,23 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 
 		self.fakeflag = self.registerUIData('Fake', 'boolean', default=False, permissions='rw')
 
-		self.camconfigdata = self.cameraConfigUIData()
-		prefs = self.registerUIContainer('Preferences', (self.navgdata, self.fakeflag, self.camconfigdata))
+		camconfigdata = self.cameraConfigUIData()
+		prefs = self.registerUIContainer('Preferences', (self.navgdata, self.fakeflag, camconfigdata))
 
 		argspec = (
 			self.registerUIData('clip limits', 'array', default=()),
 			self.registerUIData('bad rows', 'array', default=()),
 			self.registerUIData('bad cols', 'array', default=())
 		)
-		plan = self.registerUIMethod(self.uiPlanParams, 'Set Plan Params', argspec)
+		setplan = self.registerUIMethod(self.uiSetPlanParams, 'Set Plan Params', argspec)
+
+		ret = self.registerUIData('Current Plan', 'struct')
+		getplan = self.registerUIMethod(self.uiGetPlanParams, 'Get Plan Params', (), returnspec=ret)
+		plan = self.registerUISpec('Plan', (getplan, setplan))
 
 		self.registerUISpec('Corrector', (plan, acqdark, acqbright, acqcorr, prefs, nodespec))
 
-	def uiPlanParams(self, cliplimits, badrows, badcols):
+	def uiSetPlanParams(self, cliplimits, badrows, badcols):
 		camconfig = self.cameraConfig()
 		camstate = camconfig['state']
 		key = self.newPlan(camstate)
@@ -85,6 +89,19 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 		newplan['bad cols'] = badcols
 		print 'updated %s to %s' % (key, self.plans[key])
 		return ''
+
+	def uiGetPlanParams(self):
+		camconfig = self.cameraConfig()
+		camstate = camconfig['state']
+		key = self.newPlan(camstate)
+		plan = self.plans[key]
+		plandict = {}
+		plandict['key'] = key
+		plandict['clip limits'] = plan['clip limits']
+		plandict['bad rows'] = plan['bad rows']
+		plandict['bad cols'] = plan['bad cols']
+		print 'plandict', plandict
+		return plandict
 
 	def uiAcquireDark(self):
 		dark = self.acquireReference(dark=True)
@@ -99,7 +116,7 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 		return xmlrpclib.Binary(mrcstr)
 
 	def uiAcquireCorrected(self):
-		camconfig = self.camconfigdata.get()
+		camconfig = self.cameraConfig()
 		camstate = camconfig['state']
 		self.cameraState(camstate)
 		imdata = self.acquireCorrectedArray()
@@ -141,9 +158,9 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 		return series
 
 	def acquireReference(self, dark=False):
-		camconfig = self.camconfigdata.get()
+		camconfig = self.cameraConfig()
 		camstate = camconfig['state']
-		tempcamstate = self.camconfigdata.get()
+		tempcamstate = dict(camstate)
 		if dark:
 			tempcamstate['exposure time'] = 0.0
 			typekey = 'dark'
@@ -171,22 +188,28 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 		return ref
 
 	def calc_norm(self, key):
-		if self.plans[key]['bright'] is None:
-			return
-		if self.plans[key]['dark'] is None:
-			return
 		bright = self.plans[key]['bright']
 		dark = self.plans[key]['dark']
+		if bright is None:
+			return
+		if dark is None:
+			return
+
+		print 'norm 1'
 
 		norm = bright - dark
 
 		## there may be a better normavg than this
+		print 'normavg'
 		normavg = cameraimage.mean(norm)
 
 		# division may result infinity or zero division
 		# so make sure there are no zeros in norm
+		print 'norm 2'
 		norm = Numeric.clip(norm, 1.0, cameraimage.inf)
+		print 'norm 3'
 		norm = normavg / norm
+		print 'saving'
 		self.plans[key]['norm'] = norm
 		
 	def acquireCorrectedImageData(self):
@@ -195,7 +218,8 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 
 	def acquireCorrectedArray(self):
 		if self.fakeflag.get():
-			camstate = self.camconfigdata.get()
+			camconfig = self.cameraConfig()
+			camstate = camconfig['state']
 			numimage = Mrc.mrc_to_numeric('test1.mrc')
 		else:
 			camstate = self.cameraAcquireCamera()
@@ -208,30 +232,42 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 		this puts an image through a pipeline of corrections
 		'''
 		key = self.newPlan(camstate)
+		print 'normalize'
 		normalized = self.normalize(original, key)
+		print 'touchup'
 		touchedup = self.removeBadPixels(normalized, key)
+		print 'clip'
 		clipped = self.clip(touchedup, key)
+		print 'done'
 		return clipped
 
 	def removeBadPixels(self, image, key):
-		rows = self.plans[key]['bad rows']
-		cols = self.plans[key]['bad cols']
+		badrows = self.plans[key]['bad rows']
+		badcols = self.plans[key]['bad cols']
 
-		print 'Removing bad rows %s and cols %s' % (rows, cols)
-		for row in rows:
-			cameraimage.zeroRow(image, row)
-		for col in cols:
-			cameraimage.zeroCol(image, col)
+		shape = image.shape
+
+		goodrow = None
+		for row in range(shape[0]):
+			if row not in badrows:
+				goodrow = row
+				break
+		cameraimage.fakeRows(image, badrows, goodrow)
+
+		goodcol = None
+		for col in range(shape[1]):
+			if col not in badcols:
+				goodcol = col
+				break
+		cameraimage.fakeCols(image, badcols, goodcol)
+
 		return image
 
 	def clip(self, image, key):
-		minclip, maxclip = self.plans[key]['clip limits']
-		if minclip is None and maxclip is None:
+		cliplimits = self.plans[key]['clip limits']
+		if len(cliplimits) == 0:
 			return image
-		if minclip is None:
-			minclip = -cameraimage.inf
-		if maxclip is None:
-			maxclip = cameraimage.inf
+		minclip,maxclip = cliplimits
 		return Numeric.clip(image, minclip, maxclip)
 
 	def normalize(self, raw, key):
@@ -262,7 +298,7 @@ class CorrectorPlan(object):
 		## defaults
 		self.plan['bad rows'] = ()
 		self.plan['bad cols'] = ()
-		self.plan['clip limits'] = (None, None)
+		self.plan['clip limits'] = ()
 
 		## load existing state
 		self.load()
@@ -317,7 +353,6 @@ class CorrectorPlan(object):
 	def saveRef(self, reftype):
 		filename = self.refFilename(reftype)
 		if self.refs[reftype] is not None:
-			print 'REF', self.refs[reftype]
 			print 'saving %s' % (filename,)
 			Mrc.numeric_to_mrc(self.refs[reftype], filename)
 

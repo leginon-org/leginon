@@ -98,7 +98,8 @@ class ImViewer(watcher.Watcher, camerafuncs.CameraFuncs):
 		return xmlrpclib.Binary(mrcstr)
 
 	def acquireArray(self, corr=0):
-		camstate = self.camconfigdata.get()
+		camconfig = self.cameraConfig()
+		camstate = camconfig['state']
 		imarray = self.cameraAcquireArray(camstate, correction=corr)
 		return imarray
 
@@ -129,6 +130,7 @@ class ImViewer(watcher.Watcher, camerafuncs.CameraFuncs):
 
 		self.numarray = imagedata.content
 		self.imageid = imagedata.id
+		print 'IMVIEWER', self.imageid, self.popupvalue
 		if self.popupvalue:
 			self.displayNumericArray()
 
@@ -159,7 +161,7 @@ class ImViewer(watcher.Watcher, camerafuncs.CameraFuncs):
 		popuptoggle = self.registerUIData('Pop-up Viewer', 'boolean', permissions='rw', default=popupdefault)
 		popuptoggle.registerCallback(self.popupCallback)
 
-		camconfig = self.cameraConfigUISpec()
+		camconfig = self.cameraConfigUIData()
 		prefs = self.registerUIContainer('Preferences', (popuptoggle, camconfig))
 
 		self.registerUISpec(`self.id`, (acqraw, acqcor, acqev, prefs, filespec, watcherspec))
