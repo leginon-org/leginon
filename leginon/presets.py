@@ -803,10 +803,7 @@ class PresetsManager(node.Node):
 				print 'now cycling to %s' % (previousname,)
 				self.toScopeFollowCycle(previousname)
 
-		## XXX this might be dangerous:  I'm taking the original target
-		## preset and using it's name to get the PresetManager's preset
-		## by that same name
-		oldpreset = self.presetByName(emtargetdata['preset']['name'])
+		oldpreset = emtargetdata['preset']
 		newpreset = self.presetByName(newpresetname)
 
 		emdata = copy.deepcopy(emtargetdata['scope'])
