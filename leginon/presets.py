@@ -424,6 +424,7 @@ class PresetsManager(node.Node):
 		## final preset change
 		if dofinal:
 			self.toScope(thiscycle[-1])
+			print 'cycle complete'
 
 	def createCycleList(self, current, final, magshortcut):
 		order = self.orderlist.get()
@@ -822,7 +823,9 @@ class PresetsManager(node.Node):
 			time.sleep(pause)
 			name = newpreset['name']
 			self.currentpreset = newpreset
-			self.uistatus.set('Preset changed to %s' % (name,))
+			message = 'Preset (with target) changed to %s' % (name,)
+			self.uistatus.set(message)
+			print message
 			self.outputEvent(event.PresetChangedEvent(name=name))
 
 class PresetParameters(uidata.Container):
