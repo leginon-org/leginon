@@ -4,6 +4,7 @@ import threading
 import os
 import shelve
 import time
+import event
 
 class DataHandler(leginonobject.LeginonObject):
 	def __init__(self, id):

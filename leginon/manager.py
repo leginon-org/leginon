@@ -28,7 +28,6 @@ class Manager(node.Node):
 		self.addEventInput(event.UnpublishEvent, self.unregisterData)
 		self.addEventInput(event.ListPublishEvent, self.registerData)
 
-		# needs to be done after manager handles the event
 		self.addEventInput(event.Event, self.distribute)
 
 		#self.start()
@@ -263,8 +262,6 @@ class Manager(node.Node):
 
 if __name__ == '__main__':
 	import signal, sys
-	import managergui
-	import Tkinter
 
 	manager_id = ('manager',)
 	m = Manager(manager_id)
@@ -272,6 +269,8 @@ if __name__ == '__main__':
 	## GUI
 	gui = 0
 	if gui:
+		import managergui
+		import Tkinter
 		tk = Tkinter.Tk()
 		mgui = managergui.ManagerGUI(tk, m)
 		mgui.pack()

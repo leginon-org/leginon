@@ -17,7 +17,7 @@ class Client(datatransport.Client):
 
 	def push(self, idata):
 #		if isinstance(idata, event.Event):
-			datatransport.Client.push(self, idata)
+		datatransport.Client.push(self, idata)
 #		else:
 #			raise event.InvalidEventError('event must be Event instance')
 
@@ -147,7 +147,10 @@ class Node(leginonobject.LeginonObject):
 		return client.pull(dataid)
 
 	def researchByDataID(self, dataid):
-		nodeiddata = self.researchByLocation(self.managerloc, dataid)
+		nodeiddata = None
+		# will change soon
+		while nodeiddata == None:
+			nodeiddata = self.researchByLocation(self.managerloc, dataid)
 		# should interate over nodes, be crafty, etc.
 		datalocationdata = self.researchByLocation(self.managerloc, nodeiddata.content[0])
 		return self.researchByLocation(datalocationdata.content, dataid)
