@@ -688,8 +688,7 @@ class FocuserResultData(Data):
 		t += [
 		  ('defocus', float),
 		  ('stigx', float),
-		  ('stigx', float),
-		  ('stigx', float),
+		  ('stigy', float),
 		  ('min', float),
 		  ('stig correction', int),
 		  ('defocus correction', str),
