@@ -32,7 +32,7 @@ class Calibrator(node.Node):
 		return mag
 
 	def getHighTension(self):
-		ht = self.emclient.getScope()['high tention']
+		ht = self.emclient.getScope()['high tension']
 		return ht
 
 	def currentState(self):
