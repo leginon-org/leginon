@@ -282,10 +282,10 @@ class Node(leginonobject.LeginonObject):
 			except KeyError:
 				self.printerror('DBDataKeeper research failed, no DBDataKeeper')
 
-		if results in kwargs:
-			return result[0:kwargs['results']]
-		else:
-			return result
+		if 'results' in kwargs:
+			if kwargs['results'] > 0:
+				return result[0:kwargs['results']]
+		return result
 
 	def unpublish(self, dataid, eventclass=event.UnpublishEvent):
 		'''Make a piece of data unavailable to other nodes.'''
