@@ -9,6 +9,7 @@ import uidata
 import Numeric
 import mosaic
 import calibrationclient
+import camerafuncs
 
 import xmlrpclib
 #import xmlrpclib2 as xmlbinlib
@@ -64,7 +65,8 @@ class ClickTargetFinder(TargetFinder):
 		self.currentimage = None
 
 		self.defineUserInterface()
-		self.start()
+		if self.__class__ == ClickTargetFinder:
+			self.start()
 
 	def processData(self, newdata):
 		'''
@@ -178,6 +180,7 @@ class ClickTargetFinder(TargetFinder):
 class MosaicClickTargetFinder(ClickTargetFinder):
 	def __init__(self, id, session, nodelocations, **kwargs):
 		ClickTargetFinder.__init__(self, id, session, nodelocations, **kwargs)
+		self.cam = camerafuncs.CameraFuncs(self)
 		self.calclients = {
 			'image shift': calibrationclient.ImageShiftCalibrationClient(self),
 			'stage position': calibrationclient.StageCalibrationClient(self),
@@ -185,6 +188,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 												calibrationclient.ModeledStageCalibrationClient(self)
 		}
 		self.mosaic = mosaic.EMMosaic(self.calclients)
+		if self.__class__ == MosaicClickTargetFinder:
+			self.start()
 
 	def processData(self, newdata):
 		ClickTargetFinder.processData(self, newdata)
