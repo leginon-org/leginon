@@ -30,13 +30,59 @@ class DataHandler(datahandler.DataBinder):
 class CalibrationLibrary(node.Node):
 	def __init__(self, id, nodelocations, **kwargs):
 		node.Node.__init__(self, id, nodelocations, DataHandler, (self,), **kwargs)
+		self.publishDataIDList()
+
+	def publishDataIDList(self):
+		# publish the ids that this node manages
 		ids = ['calibrations',]
+		keys = self.getKeys()
+		for key in keys:
+			id = ('calibrations',key)
+			ids.append(id)
 		e = event.ListPublishEvent(self.ID(), ids)
-		self.outputEvent(e)
+		#self.outputEvent(e)
+
+	def getKeys(self):
+		raise NotImplementedError()
+
+	def setCalibration(self, key, idata):
+		'''
+		should call self.publishDataIDList() if updated
+		'''
+		raise NotImplementedError()
+
+	def getCalibration(self, key=None):
+		raise NotImplementedError()
+
+
+class PickleCalibrationLibrary(CalibrationLibrary):
+	def __init__(self, id, nodelocations, **kwargs):
+		CalibrationLibrary.__init__(self, id, nodelocations, **kwargs)
 		self.defineUserInterface()
+
+
 		self.start()
 
-	def getCalibration(self):
+	def getKeys(self):
+		try:
+			f = open('CAL', 'r')
+			cal = cPickle.load(f)
+			f.close()
+			return cal.keys()
+		except:
+			return ()
+
+	def setCalibration(self, key, idata):
+		cal = self.getCalibration()
+		newitem = idata.content
+		cal[key] = newitem
+		## should make a backup before doing this
+		f = open('CAL', 'w')
+		cPickle.dump(cal, f, 1)
+		f.close()
+		self.publishDataIDList()
+
+	def getCalibration(self, key=None):
 		try:
 			f = open('CAL', 'r')
 			cal = cPickle.load(f)
@@ -44,19 +90,37 @@ class CalibrationLibrary(node.Node):
 		except IOError:
 			cal = {}
 
-		return cal
-
-	def setCalibration(self, idata):
-		cal = self.getCalibration()
-		newdict = idata.content
-		cal.update(newdict)
-		## should make a backup before doing this
-		f = open('CAL', 'w')
-		cPickle.dump(cal, f, 1)
-		f.close()
+		if key is None:
+			# return whole thing
+			return cal
+		else:
+			# return just the specified key
+			try:
+				return cal[key]
+			except KeyError:
+				return None
 
 	def defineUserInterface(self):
-		nodespec = node.Node.defineUserInterface(self)
-		self.registerUISpec('Calibration Library', (nodespec,))
+		nodespec = CalibrationLibrary.defineUserInterface(self)
+		self.registerUISpec('Pickle Calibration Library', (nodespec,))
+
+class DBCalibrationLibrary(CalibrationLibrary):
+	def __init__(self, id, nodelocation, **kwargs):
+		CalibrationLibrary.__init__(self, id, nodelocations, **kwargs)
+		self.defineUserInterface()
 
 
+		self.start()
+
+	def getKeys(self):
+		pass
+
+	def setCalibration(self, key, idata):
+		pass
+
+	def getCalibration(self, key=None):
+		pass
+
+	def defineUserInterface(self):
+		nodespec = CalibrationLibrary.defineUserInterface(self)
+		self.registerUISpec('DB Calibration Library', (nodespec,))

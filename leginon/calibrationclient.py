@@ -13,12 +13,13 @@ class CalibrationClient(object):
 
 	def getCalibration(self, key):
 		try:
-			cal = self.node.researchByDataID('calibrations')
+			calkey = ('calibrations', key)
+			cal = self.node.researchByDataID(calkey)
 		except:
 			print 'CalibrationClient unable to use calibrations.  Is a CalibrationLibrary node running?'
 			raise
 		try:
-			calvalue = cal.content[key]
+			calvalue = cal.content
 		except KeyError:
 			print '%s has not been calibrated' % (key,)
 			raise
