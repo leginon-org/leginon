@@ -57,6 +57,8 @@ class Calibration(node.Node):
 					{'x': {'min': 10.0, 'max': 50.0}, 'y': {'min': 10.0, 'max': 50.0}}}})
 
 		self.correlationthreshold = 0.05
+		# asdf
+		self.axislist = ['x', 'y']
 
 		node.Node.__init__(self, id, managerlocation)
 		self.clearStateImages()
@@ -120,34 +122,33 @@ class Calibration(node.Node):
 
 		print 'hello again from calibrate'
 
-		for i in range(self.attempts):
-			value = (adjustedrange[1] - adjustedrange[0]) / 2 + adjustedrange[0]
+		# might reuse value from previous axis
+		for axis in self.axislist:
+			for i in range(self.attempts):
+				value = (adjustedrange[1] - adjustedrange[0]) / 2 + adjustedrange[0]
 
-			state1 = self.state(0.0)
-			state2 = self.state(value)
-			print 'states', state1, state2
-			shiftinfo = self.measureStateShift(state1, state2)
-			print 'shiftinfo', shiftinfo
+				state1 = self.state(0.0, axis)
+				state2 = self.state(value, axis)
+				print 'states', state1, state2
+				shiftinfo = self.measureStateShift(state1, state2)
+				print 'shiftinfo', shiftinfo
 
-			verdict = self.validateShift(shiftinfo)
+				verdict = self.validateShift(shiftinfo)
 
-			if verdict == 'good':
-				print "good", self.calculate(cdata, value) 
-				self.publishRemote(self.emnode, data.EMData(self.ID(), self.state(0.0)))
-				return self.calculate(cdata, value)
-			elif verdict == 'small shift':
-				print "too small"
-				adjustedrange[0] = value
-			elif verdict == 'big shift':
-				print "too big"
-				adjustedrange[1] = value
-			else:
-				raise RuntimeError('hung jury')
+				if verdict == 'good':
+					print "good", self.calculate(cdata, value) 
+					self.publishRemote(self.emnode, data.EMData(self.ID(), self.state(0.0, axis)))
+					return self.calculate(cdata, value)
+				elif verdict == 'small shift':
+					print "too small"
+					adjustedrange[0] = value
+				elif verdict == 'big shift':
+					print "too big"
+					adjustedrange[1] = value
+				else:
+					raise RuntimeError('hung jury')
 
-
-
-
-		self.publishRemote(self.emnode, data.EMData(self.ID(), self.state(0.0)))
+		self.publishRemote(self.emnode, data.EMData(self.ID(), self.state(0.0, axis)))
 
 	def clearStateImages(self):
 		self.images = []
@@ -351,14 +352,22 @@ class StageCalibration(Calibration):
 	def __init__(self, id, managerlocation):
 		Calibration.__init__(self, id, managerlocation)
 
-	def state(self, value):
-		return {'stage position': {'x': value}}
+	def state(self, value, axis):
+		return {'stage position': {axis: value}}
 
 
 class ImageShiftCalibration(Calibration):
 	def __init__(self, id, managerlocation):
 		Calibration.__init__(self, id, managerlocation)
 
-	def state(self, value):
-		return {'image shift': {'x': value}}
+	def state(self, value, axis):
+		return {'image shift': {axis: value}}
+
+
+class AutoFocusCalibration(Calibration):
+	def __init__(self, id, managerlocation):
+		Calibration.__init__(self, id, managerlocation)
+
+	def state(self, value, axis):
+		return {'beam tilt': {axis: value}}
 
