@@ -848,7 +848,8 @@ camera_params = [
 	('exposure time', float),
 	('exposure type', str),
 	('image data', strictdict.NumericArrayType),
-	('inserted', bool)
+	('inserted', bool),
+	('dump', bool),
 ]
 
 class ScopeEMData(EMData):
