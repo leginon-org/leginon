@@ -924,7 +924,7 @@ class wxTargetImageWidget(wxContainerWidget):
 
 	def Destroy(self):
 		self.label.Destroy()
-		self.clickimage.Destroy()
+		self.targetimage.Destroy()
 
 	def add(self, namelist, typelist, value, read, write):
 		self.setWidget(namelist, value)
