@@ -6,6 +6,7 @@ import wx.lib.filebrowsebutton as filebrowse
 import gui.wx.Rings
 from gui.wx.Choice import Choice
 from gui.wx.Entry import Entry, IntEntry, FloatEntry
+import gui.wx.TargetTemplate
 
 AddTargetTypesEventType = wx.NewEventType()
 AddTargetsEventType = wx.NewEventType()
@@ -449,6 +450,12 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['ice min mean'] = FloatEntry(self, -1, chars=6)
 		self.widgets['ice max mean'] = FloatEntry(self, -1, chars=6)
 		self.widgets['ice max std'] = FloatEntry(self, -1, chars=6)
+		self.widgets['target template'] = wx.CheckBox(self, -1,
+																									'Use target template')
+		self.widgets['focus template'] = gui.wx.TargetTemplate.Panel(self,
+																									'Focus Target Template')
+		self.widgets['acquisition template'] = gui.wx.TargetTemplate.Panel(self,
+																									'Acquisition Target Template')
 
 		szice = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Min. mean:')
@@ -470,6 +477,12 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 		sbszice.Add(szice, 1, wx.EXPAND|wx.ALL, 5)
 
 		sztt = wx.GridBagSizer(5, 5)
+		sztt.Add(self.widgets['target template'], (0, 0), (1, 1),
+							wx.ALIGN_CENTER_VERTICAL)
+		sztt.Add(self.widgets['focus template'], (1, 0), (1, 1),
+							wx.ALIGN_CENTER)
+		sztt.Add(self.widgets['acquisition template'], (2, 0), (1, 1),
+							wx.ALIGN_CENTER)
 
 		sb = wx.StaticBox(self, -1, 'Target Template')
 		sbsztt = wx.StaticBoxSizer(sb, wx.VERTICAL)

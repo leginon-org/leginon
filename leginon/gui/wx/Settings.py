@@ -5,6 +5,7 @@ import gui.wx.Entry
 import gui.wx.Presets
 import wx.lib.filebrowsebutton as filebrowse
 import gui.wx.Rings
+import gui.wx.TargetTemplate
 
 class SettingsError(Exception):
 	pass
@@ -28,6 +29,8 @@ attributes = {
 			gui.wx.Camera.EVT_CONFIGURATION_CHANGED),
 	filebrowse.FileBrowseButton: ('GetValue', 'SetValue', None),
 	gui.wx.Rings.Panel: ('getRings', 'setRings', gui.wx.Rings.EVT_RINGS_UPDATED),
+	gui.wx.TargetTemplate.Panel: ('getTemplate', 'setTemplate',
+																gui.wx.TargetTemplate.EVT_TEMPLATE_UPDATED),
 }
 
 class Dialog(wx.Dialog):

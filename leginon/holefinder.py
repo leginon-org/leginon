@@ -54,6 +54,9 @@ class HoleFinder(targetfinder.TargetFinder):
 		'ice min mean': 0.05,
 		'ice max mean': 0.2,
 		'ice max std': 0.2,
+		'target template': False,
+		'focus template': [(0, 0)],
+		'acquisition template': [(0, 0)],
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		targetfinder.TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
@@ -99,8 +102,6 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.goodholesimage = uidata.TargetImage('Good Holes Image', None, 'r')
 
 		# target templates
-		self.use_target_template = uidata.Boolean('Use Target Template', False, 'rw', persist=True)
-		self.foc_target_template = uidata.Sequence('Focus Template', [], 'rw', persist=True)
 		# thickness limit on focus template
 		foc_template_limit = uidata.Container('Focus Template Thickness')
 		self.focthickon = uidata.Boolean('On', False, 'rw', persist=True)
@@ -110,13 +111,12 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.focicetstd = uidata.Float('Focus Maximum StdDev Thickness', 0.5, 'rw', persist=True)
 		foc_template_limit.addObjects((self.focthickon, self.focicerad, self.focicetmin, self.focicetmax, self.focicetstd))
 
-		self.acq_target_template = uidata.Sequence('Acqusition Template', [], 'rw', persist=True)
 		self.focus_one_hole = uidata.SingleSelectFromList('Focus One Hole', ['Off', 'Any Hole', 'Good Hole'], 0, permissions='rw', persist=True)
 		self.goodholesimage.addTargetType('acquisition', [], (0,255,0))
 		self.goodholesimage.addTargetType('focus', [], (0,0,255))
 
 		goodholescontainer = uidata.LargeContainer('Good Holes')
-		goodholescontainer.addObjects((self.use_target_template, self.foc_target_template, foc_template_limit, self.acq_target_template, self.focus_one_hole, self.goodholesimage, ))
+		goodholescontainer.addObjects((foc_template_limit, self.focus_one_hole, self.goodholesimage, ))
 
 		container = uidata.LargeContainer('Hole Finder')
 		container.addObjects((goodholescontainer,))
@@ -264,7 +264,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.goodholesimage.setImage(self.hf['original'])
 		self.goodholesimage.imagedata = self.currentimagedata
 		# takes x,y instead of row,col
-		if self.use_target_template.get():
+		if self.settings['target template']:
 			newtargets = self.applyTargetTemplate(centers)
 			acq_points = newtargets['acquisition']
 			focus_points.extend(newtargets['focus'])
@@ -331,8 +331,8 @@ class HoleFinder(targetfinder.TargetFinder):
 	def applyTargetTemplate(self, centers):
 		self.logger.info('apply template')
 		imshape = self.hf['original'].shape
-		acq_vect = self.acq_target_template.get()
-		foc_vect = self.foc_target_template.get()
+		acq_vect = self.settings['acquisition template']
+		foc_vect = self.settings['focus template']
 		newtargets = {'acquisition':[], 'focus':[]}
 		for center in centers:
 			self.logger.info('applying template to hole at %s' % (center,))
@@ -431,9 +431,9 @@ class HoleFinder(targetfinder.TargetFinder):
 			'ice-min-thickness': self.settings['ice min mean'],
 			'ice-max-thickness': self.settings['ice max mean'],
 			'ice-max-stdev': self.settings['ice max std'],
-			'template-on': self.use_target_template.get(),
-			'template-focus': self.foc_target_template.get(),
-			'template-acquisition': self.acq_target_template.get(),
+			'template-on': self.settings['target template'],
+			'template-focus': self.settings['focus template'],
+			'template-acquisition': self.settings['acquisition template'],
 		})
 
 		self.publish(hfprefs, database=True)

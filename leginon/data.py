@@ -1661,6 +1661,9 @@ class HoleFinderSettingsData(TargetFinderSettingsData):
 			('ice min mean', float),
 			('ice max mean', float),
 			('ice max std', float),
+			('target template', bool),
+			('focus template', list),
+			('acquisition template', list),
 		)
 	typemap = classmethod(typemap)
 
