@@ -660,7 +660,7 @@ class PresetsManager(node.Node):
 		eucfromscopemethod = uidata.Method('Eucentric Focus From Scope', self.uiSelectedEucFromScope)
 		euctoscopemethod = uidata.Method('Eucentric Focus To Scope', self.uiSelectedEucToScope)
 		removemethod = uidata.Method('Remove', self.uiSelectedRemove)
-		self.orderlist = uidata.Array('Cycle Order', [], 'rw', persist=True)
+		self.orderlist = uidata.Sequence('Cycle Order', [], 'rw', persist=True)
 
 		selectcont = uidata.Container('Selection')
 		selectcont.addObjects((self.uiselectpreset,toscopemethod,fromscopemethod,eucfromscopemethod,euctoscopemethod,removemethod,self.changepause,cyclemethod,self.usecycle,self.orderlist,self.autosquare,self.presetparams,statuscont,calcont))
@@ -674,8 +674,8 @@ class PresetsManager(node.Node):
 		acqdosemeth = uidata.Method('Acquire Dose Image (be sure specimen is out of the field of view)', self.uiAcquireDose)
 		acqrefmeth = uidata.Method('Acquire Preset Reference Image', self.uiAcquireRef)
 
-		#self.statrows = uidata.Array('Stats Row Range', [], 'rw', persist=True)
-		#self.statcols = uidata.Array('Stats Column Range', [], 'rw', persist=True)
+		#self.statrows = uidata.Sequence('Stats Row Range', [], 'rw', persist=True)
+		#self.statcols = uidata.Sequence('Stats Column Range', [], 'rw', persist=True)
 		#statsmeth = uidata.Method('Get Stats', self.uiGetStats)
 
 

@@ -88,8 +88,8 @@ class Watcher(node.Node):
 
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
-		self.uieventqueue = uidata.Sequence('Event Queue', [])
-		self.uidataqueue = uidata.Sequence('Data Queue', [])
+		self.uieventqueue = uidata.Sequence('Event Queue', [], 'r')
+		self.uidataqueue = uidata.Sequence('Data Queue', [], 'r')
 		self.uiignoreflag = uidata.Boolean('Ignore Incoming Events', False, 'rw')
 		self.uieventqueueflag = uidata.Boolean('Queue Events', False, 'rw')
 		processeventsmethod = uidata.Method('Process Event',

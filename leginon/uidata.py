@@ -239,8 +239,8 @@ class Array(Data):
 
 class Sequence(Array):
 	typelist = Array.typelist + ('sequence',)
-	def __init__(self, name, value):
-		Array.__init__(self, name, value)
+#	def __init__(self, name, value):
+#		Array.__init__(self, name, value)
 
 class GridTray(Array):
 	typelist = Array.typelist + ('grid tray',)

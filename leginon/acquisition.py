@@ -450,7 +450,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		#self.uipresetnames = uidata.SelectFromList('Sequence', presetnames, [], 'r')
 		#refreshpresetnames = uidata.Method('Refresh', self.uiRefreshPresetNames)
 		#presetscontainer.addObjects((self.uipresetnames, refreshpresetnames))
-		self.uipresetnames = uidata.Array('Presets Sequence', [], 'rw', persist=True)
+		self.uipresetnames = uidata.Sequence('Presets Sequence', [], 'rw', persist=True)
 		presetscontainer.addObjects((self.uipresetnames,))
 
 		self.uimovetype = uidata.SingleSelectFromList('Move Type',

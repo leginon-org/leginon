@@ -64,7 +64,7 @@ class RasterFinder(targetfinder.TargetFinder):
 		self.icetmax = uidata.Float('Maximum Mean Thickness', 0.2, 'rw', persist=True)
 		self.icetstd = uidata.Float('Maximum StdDev Thickness', 0.2, 'rw', persist=True)
 		icemeth = uidata.Method('Analyze Ice', self.ice)
-		self.goodice = uidata.Sequence('Good Ice', [])
+		self.goodice = uidata.Sequence('Good Ice', [], 'r')
 
 		icecont = uidata.Container('Ice Analysis')
 		icecont.addObjects((self.boxsize, self.icei0, self.icetmin, self.icetmax, self.icetstd, icemeth, self.goodice))
@@ -72,14 +72,14 @@ class RasterFinder(targetfinder.TargetFinder):
 		### post processing of targets
 		focuscont = uidata.Container('Focus Targets')
 		self.conv_foc = uidata.Boolean('Do Convolve', False, 'rw', persist=True)
-		self.conv_foc_template = uidata.Array('Convolve Template', [], 'rw', persist=True)
-		self.const_foc_template = uidata.Array('Constant Template', [], 'rw', persist=True)
+		self.conv_foc_template = uidata.Sequence('Convolve Template', [], 'rw', persist=True)
+		self.const_foc_template = uidata.Sequence('Constant Template', [], 'rw', persist=True)
 		focuscont.addObjects((self.conv_foc, self.conv_foc_template, self.const_foc_template))
 
 		acqcont = uidata.Container('Acquisition Targets')
 		self.conv_acq = uidata.Boolean('Do Convolve', False, 'rw', persist=True)
-		self.conv_acq_template = uidata.Array('Convolve Template', [], 'rw', persist=True)
-		self.const_acq_template = uidata.Array('Constant Template', [], 'rw', persist=True)
+		self.conv_acq_template = uidata.Sequence('Convolve Template', [], 'rw', persist=True)
+		self.const_acq_template = uidata.Sequence('Constant Template', [], 'rw', persist=True)
 		acqcont.addObjects((self.conv_acq, self.conv_acq_template, self.const_acq_template))
 
 		postcont = uidata.Container('Target Post Processing')

@@ -65,7 +65,7 @@ class HoleFinder(targetfinder.TargetFinder):
 
 
 		### Correlate Template
-		self.ringlist = uidata.Array('Ring Diameters', [(30,40)], 'rw', persist=True)
+		self.ringlist = uidata.Sequence('Ring Diameters', [(30,40)], 'rw', persist=True)
 		self.cortype = uidata.SingleSelectFromList('Correlation Type', ['cross correlation', 'phase correlation'], 0, persist=True)
 		self.corfilt = uidata.Float('Low Pass Filter', 0.0, 'rw', persist=True)
 		cormeth = uidata.Method('Correlate Template', self.correlateTemplate)
@@ -85,7 +85,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.maxblobsize = uidata.Integer('Max Blob Size', 1000, 'rw', persist=True)
 		self.maxblobs = uidata.Integer('Max Number of Blobs', 300, 'rw', persist=True)
 		findblobmeth = uidata.Method('Find Blobs', self.findBlobs)
-		self.allblobs = uidata.Sequence('All Blobs', [])
+		self.allblobs = uidata.Sequence('All Blobs', [], 'r')
 		self.allblobsimage = uidata.TargetImage('All Blobs Image', None, 'r')
 		self.allblobsimage.addTargetType('All Blobs')
 		self.latspacing = uidata.Float('Spacing', 150.0, 'rw', persist=True)
@@ -96,7 +96,7 @@ class HoleFinder(targetfinder.TargetFinder):
 
 
 		fitlatmeth = uidata.Method('Fit Lattice', self.fitLattice)
-		self.latblobs = uidata.Sequence('Lattice Blobs', [])
+		self.latblobs = uidata.Sequence('Lattice Blobs', [], 'r')
 		self.latblobsimage = uidata.TargetImage('Lattice Blobs Image', None, 'r')
 		self.latblobsimage.addTargetType('Lattice Blobs')
 
@@ -105,11 +105,11 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.icetstd = uidata.Float('Maximum StdDev Thickness', 0.2, 'rw', persist=True)
 
 		icemeth = uidata.Method('Analyze Ice', self.ice)
-		self.goodholes = uidata.Sequence('Good Holes', [])
+		self.goodholes = uidata.Sequence('Good Holes', [], 'r')
 		self.goodholesimage = uidata.TargetImage('Good Holes Image', None, 'r')
 		self.use_target_template = uidata.Boolean('Use Target Template', False, 'rw', persist=True)
-		self.foc_target_template = uidata.Array('Focus Template', [], 'rw', persist=True)
-		self.acq_target_template = uidata.Array('Acqusition Template', [], 'rw', persist=True)
+		self.foc_target_template = uidata.Sequence('Focus Template', [], 'rw', persist=True)
+		self.acq_target_template = uidata.Sequence('Acqusition Template', [], 'rw', persist=True)
 		submitmeth = uidata.Method('Submit', self.submit)
 		self.goodholesimage.addTargetType('acquisition')
 		self.goodholesimage.addTargetType('focus')

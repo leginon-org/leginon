@@ -611,7 +611,7 @@ class EM(node.Node):
 			interfaceclass = uidata.String
 			value = ''
 		elif datatype == list:
-			interfaceclass = uidata.Array
+			interfaceclass = uidata.Sequence
 			value = []
 		elif datatype == bool:
 			interfaceclass = uidata.Boolean

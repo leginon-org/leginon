@@ -551,7 +551,7 @@ class Node(leginonobject.LeginonObject):
 		return ''
 
 	def defineUserInterface(self):
-		idarray = uidata.Array('ID', self.id, 'r')
+		idarray = uidata.String('ID', str(self.id), 'r')
 		classstring = uidata.String('Class', self.__class__.__name__, 'r')
 		location = self.key2str(self.location())
 		locationstruct = uidata.Struct('Location', location, 'r')

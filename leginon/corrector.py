@@ -107,9 +107,9 @@ class Corrector(node.Node):
 		self.uiframestoaverage = uidata.Integer('Frames to Average', 3, 'rw')
 		self.uifakeflag = uidata.Boolean('Fake Image', False, 'rw')
 		cameraconfigure = self.cam.configUIData()
-		self.cliplimits = uidata.Array('Clip Limits', (), 'rw')
-		self.badrows = uidata.Array('Bad Rows', (), 'rw')
-		self.badcols = uidata.Array('Bad Cols', (), 'rw')
+		self.cliplimits = uidata.Sequence('Clip Limits', (), 'rw')
+		self.badrows = uidata.Sequence('Bad Rows', (), 'rw')
+		self.badcols = uidata.Sequence('Bad Cols', (), 'rw')
 		setplan = uidata.Method('Set Plan', self.uiSetPlanParams)
 		getplan = uidata.Method('Get Plan', self.uiGetPlanParams)
 

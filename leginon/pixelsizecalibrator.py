@@ -38,8 +38,8 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 		storecont.addObjects((self.uimag,self.uipixsize,self.comment,storemethod))
 
 		# extrapolate container
-		self.extrapfrommags = uidata.Array('Known Mags', [], 'rw')
-		self.extraptomags = uidata.Array('Mags to Extrapolate', [], 'rw')
+		self.extrapfrommags = uidata.Sequence('Known Mags', [], 'rw')
+		self.extraptomags = uidata.Sequence('Mags to Extrapolate', [], 'rw')
 		extrapmeth = uidata.Method('Extrapolate', self.extrapolate)
 		extrapcont = uidata.Container('Extrapolate')
 		extrapcont.addObjects((self.extrapfrommags,self.extraptomags,extrapmeth))

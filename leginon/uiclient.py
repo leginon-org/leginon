@@ -18,6 +18,7 @@ import wxOrderedListBox
 import wxMaster
 import wxGridTray
 import wxMessageLog
+import wxList
 from Numeric import arraytype
 
 wxEVT_ADD_WIDGET = wxNewEventType()
@@ -166,7 +167,7 @@ def WidgetClassFromTypeList(typelist):
 						elif typelist[2] == 'array':
 							if len(typelist) > 3:
 								if typelist[3] == 'sequence':
-									return wxListBoxWidget
+									return wxListWidget
 								elif typelist[3] == 'grid tray':
 									return wxGridTrayWidget
 							return entryWidgetClass([list, tuple])
@@ -1060,45 +1061,6 @@ class wxCheckBoxWidget(wxDataWidget):
 	def destroy(self):
 		self.checkbox.Destroy()
 
-class wxListBoxWidget(wxDataWidget):
-	def __init__(self, name, parent, container, value, configuration):
-		self.sizer = wxBoxSizer(wxVERTICAL)
-		self.label = wxStaticText(parent, -1, name)
-		self.listbox = wxListBox(parent, -1)
-		wxDataWidget.__init__(self, name, parent, container, value, configuration)
-
-		self.set(value)
-
-		EVT_LISTBOX(self.listbox, self.listbox.GetId(), self.OnListBox)
-
-		self.sizer.Add(self.label, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
-		self.sizer.Add(self.listbox, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
-		self.layout()
-
-	def _enable(self, enable):
-		self.label.Enable(enable)
-		self.listbox.Enable(enable)
-		wxDataWidget._enable(self, enable)
-
-	def _show(self, show):
-		self.label.Show(show)
-		self.listbox.Show(show)
-		wxDataWidget._show(self, show)
-
-	def OnListBox(self, evt):
-		selection = evt.GetSelection()
-		if selection >= 0:
-			self.listbox.Deselect(selection)
-
-	def setWidget(self, value):
-		self.listbox.Clear()
-		for i in value:
-			self.listbox.Append(str(i))
-
-	def destroy(self):
-		self.label.Destroy()
-		self.listbox.Destroy()
-
 class wxTreeCtrlWidget(wxDataWidget):
 	def __init__(self, name, parent, container, value, configuration):
 		self.sizer = wxBoxSizer(wxHORIZONTAL)
@@ -1130,6 +1092,43 @@ class wxTreeCtrlWidget(wxDataWidget):
 
 	def destroy(self):
 		self.tree.Destroy()
+
+class wxListWidget(wxDataWidget):
+	def __init__(self, name, parent, container, value, configuration):
+		self.label = wxStaticText(parent, -1, name)
+		self.sizer = wxBoxSizer(wxVERTICAL)
+		if 'write' in configuration and configuration['write']:
+			self.list = wxList.wxListEdit(parent, self.onSetFromWidget)
+		else:
+			self.list = wxList.wxListView(parent)
+		self.sizer.Add(self.label, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
+		self.sizer.Add(self.list, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
+		wxDataWidget.__init__(self, name, parent, container, value, configuration)
+		self.set(value)
+
+	def _enable(self, enable):
+		self.label.Enable(enable)
+		self.list.Enable(enable)
+		wxDataWidget._enable(self, enable)
+
+	def _show(self, show):
+		self.label.Show(show)
+		self.list.Show(show)
+		wxDataWidget._show(self, show)
+
+	def setFromWidget(self):
+		self.setServer(self.value)
+
+	def onSetFromWidget(self, values):
+		self.value = values
+		self.setFromWidget()
+
+	def setWidget(self, value):
+		self.list.setValues(value)
+
+	def destroy(self):
+		self.label.Destroy()
+		#self.list.Destroy()
 
 class wxApplicationWidget(wxDataWidget):
 	def __init__(self, name, parent, container, value, configuration):
