@@ -115,7 +115,7 @@ class OrderedDict(dict):
 			self.__ordered_values.append(value)
 			self.__ordered_items.append((key,value))
 
-	def __dellists(self, key, value):
+	def __dellists(self, key):
 		## could check for ValueErro exception here but
 		## I'm assuming dict.__delitem__ already called
 		## and would have already raised KeyError
