@@ -810,6 +810,19 @@ class BindingSpecData(Data):
 		return t
 	typemap = classmethod(typemap)
 
+class DiaryData(InSessionData):
+	'''
+	User's diary entry
+	'''
+	def typemap(cls):
+		t = InSessionData.typemap()
+		t += [
+		  ('message', str),
+		]
+		return t
+	typemap = classmethod(typemap)
+
+
 ########## for testing
 
 ## new class of data
