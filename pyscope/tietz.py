@@ -139,6 +139,7 @@ class Tietz(object):
 		try:
 			hr = cameracontrol.camera.Initialize(self.cameratype, 0)
 		except pywintypes.com_error, e:
+			cameracontrol.removeCamera(self)
 			raise RuntimeError('error initializing camera')
 
 		self.methodmapping = {
