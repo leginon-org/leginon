@@ -89,4 +89,7 @@ class scope:
         raise NotImplementedError
     def getStageStatus(self):
         raise NotImplementedError
-
+    def getTurboPump(self):
+        raise NotImplementedError
+    def setTurboPump(self, mode):
+        raise NotImplementedError

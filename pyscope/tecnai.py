@@ -5,9 +5,11 @@ if sys.platform != 'win32':
 	class tecnai(scope.scope):
 		pass
 else:
+	import pythoncom
 	import win32com.client
 	import tecnaicom
 	import ldcom
+	import adacom
 	import time
 	
 	class tecnai(scope.scope):
@@ -23,7 +25,8 @@ else:
 		def __init__(self):
 			self.theScope = win32com.client.Dispatch("Tecnai.Instrument.1")		
 			self.theLowDose = win32com.client.Dispatch("LDServer.LdSrv")
-			self.theAda = win32com.client.Dispatch("adaExp.TAdaExp")
+			self.theAda = win32com.client.Dispatch("adaExp.TAdaExp",
+																					clsctx=pythoncom.CLSCTX_LOCAL_SERVER)
 			# this was a quick way of doing things, needs to be redone
 			self.magTable = [{'index': 1, 'up': 21, 'down': 18.5},
 							 {'index': 2, 'up': 28, 'down': 25},
@@ -624,57 +627,73 @@ else:
 	
 			return 0
 
-	def getScreen(self):
-		if self.theAda.MainScreenStatus == 1:
-			return 'up'
-		else:
-			return 'down'
+		def getScreen(self):
+			if self.theAda.MainScreenStatus == 1:
+				return 'up'
+			else:
+				return 'down'
 
-	def setScreen(self, mode):
-		if mode == 'up':
-			self.theAda.MainScreenUp
-		elif mode == 'down':
-			self.theAda.MainScreenDown
-		else:
-			raise ValueError
+		def setScreen(self, mode):
+			if mode == 'up':
+				self.theAda.MainScreenUp
+			elif mode == 'down':
+				self.theAda.MainScreenDown
+			else:
+				raise ValueError
 
-	def getHolderStatus(self):
-		if self.theAda.SpecimenHolderInserted == adacom.constants.eInserted:
-			return 'inserted'
-		elif self.theAda.SpecimenHolderInserted == adacom.constants.eNotInserted:
-			return 'not inserted'
-		else:
-			raise SystemError
-
-	def getHolderType(self):
-		if self.theAda.CurrentSpecimenHolderName == u'No Specimen Holder':
-			return 'no holder'
-		elif self.theAda.CurrentSpecimenHolderName == u'Single Tilt':
-			return 'single tilt'
-		else:
-			return 'unknown holder'
-
-	def setHolderType(self, holdertype):
-		if holdertype == 'no holder':
-			if self.theAda.SpecimenHolderName(0) == u'No Specimen Holder':
-				self.theAda.SetCurrentSpecimenHolder(0)
+		def getHolderStatus(self):
+			if self.theAda.SpecimenHolderInserted == adacom.constants.eInserted:
+				return 'inserted'
+			elif self.theAda.SpecimenHolderInserted == adacom.constants.eNotInserted:
+				return 'not inserted'
 			else:
 				raise SystemError
-		elif holdertype == 'single tilt':
-			if self.theAda.SpecimenHolderName(1) == u'Single Tilt':
-				self.theAda.SetCurrentSpecimenHolder(1)
+
+		def getHolderType(self):
+			if self.theAda.CurrentSpecimenHolderName == u'No Specimen Holder':
+				return 'no holder'
+			elif self.theAda.CurrentSpecimenHolderName == u'Single Tilt':
+				return 'single tilt'
+			else:
+				return 'unknown holder'
+
+		def setHolderType(self, holdertype):
+			if holdertype == 'no holder':
+				if self.theAda.SpecimenHolderName(0) == u'No Specimen Holder':
+					self.theAda.SetCurrentSpecimenHolder(0)
+				else:
+					raise SystemError
+			elif holdertype == 'single tilt':
+				if self.theAda.SpecimenHolderName(1) == u'Single Tilt':
+					self.theAda.SetCurrentSpecimenHolder(1)
+				else:
+					raise SystemError
+			elif holdertype == 'unknown holder':
+				pass
+			else:
+				raise ValueError
+
+		def getStageStatus(self):
+			if self.theAda.GonioLedStatus == adacom.constants.eOn:
+				return 'busy'
+			elif self.theAda.GonioLedStatus == adacom.constants.eOff:
+				return 'ready'
 			else:
 				raise SystemError
-		elif holdertype == 'unknown holder':
-			pass
-		else:
-			raise ValueError
 
-	def getStageStatus(self):
-		if self.theAda.GonioLedStatus == adacom.constants.eOn:
-			return 'busy'
-		elif self.theAda.GonioLedStatus == adacom.constants.eOff:
-			return 'ready'
-		else:
-			raise SystemError
+		def getTurboPump(self):
+			if self.theAda.GetTmpStatus == adacom.constants.eOn:
+				return 'on'
+			elif self.theAda.GetTmpStatus == adacom.constants.eOff:
+				return 'off'
+			else:
+				raise SystemError
+
+		def setTurboPump(self, mode):
+			if mode == 'on':
+				self.theAda.SetTmp(adacom.constants.eOn)
+			elif mode == 'off':
+				self.theAda.SetTmp(adacom.constants.eOff)
+			else:
+				raise ValueError
 
