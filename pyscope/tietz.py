@@ -23,7 +23,7 @@ else:
 				self.theCamera = win32com.client.Dispatch("CAMC.Camera")		
 			except:
 				print "Error: cannot dispatch CAMC.Camera"
-				#raise
+				raise
 	
 			self.camType = win32com.client.constants.ctSimulation
 			#self.camType = win32com.client.constants.ctPXL
@@ -34,7 +34,7 @@ else:
 				self.hCam = self.theCamera.Initialize(self.camType, 0)
 			except:
 				print "Error: camera COM object already intialized"
-				#raise
+				raise
 
 			self.arraytypecode = 'H'
 			self.Numerictypecode = Numeric.UInt16
