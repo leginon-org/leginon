@@ -474,8 +474,9 @@ class Corrector(node.Node):
 
 	def uiAutoAcquireReferences(self):
 		binning = self.autobinning.get()
+		autoexptime = self.autoexptime.get()
 		targetmean = self.autotarget.get()
-		self.autoAcquireReferences(binning, targetmean)
+		self.autoAcquireReferences(binning, targetmean, autoexptime)
 
 	def autoAcquireReferences(self, binning, targetmean, initial_exp):
 		'''
