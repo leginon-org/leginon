@@ -21,6 +21,12 @@ import threading
 import uidata
 from node import ResearchError
 
+class NoMoveCalibration(Exception):
+	pass
+
+class InvalidStagePosition(Exception):
+	pass
+
 class Acquisition(targetwatcher.TargetWatcher):
 
 	eventinputs = targetwatcher.TargetWatcher.eventinputs+[event.ImageClickEvent, event.DriftDoneEvent, event.ImageProcessDoneEvent]
@@ -67,6 +73,19 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.publish(imagelistdata, pubevent=True, database=self.databaseflag.get())
 		self.imagelist = []
 
+	def validateStagePosition(self, stageposition):
+		## check for out of stage range target
+		stagelimits = {
+			'x': (-9.9e-4, 9.9e-4),
+			'y': (-9.9e-4, 9.9e-4),
+		}
+		for axis, limits in stagelimits.items():
+			if stageposition[axis] < limits[0] or stageposition[axis] > limits[1]:
+				messagestr = 'target stage position %s out of range... target aborting' % (stagepos,)
+				#print messagestr
+				self.acquisitionlog.error(messagestr)
+				raise InvalidStagePosition(messagestr)
+
 	def processTargetData(self, targetdata, force=False):
 		'''
 		This is called by TargetWatcher.processData when targets available
@@ -76,34 +95,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if targetdata is None:
 			emtarget = None
 		else:
-			#if targetdata['preset'] is None:
-			#	print 'preset image shift, no preset in target'
-			#else:
-			#	print 'preset image shift', targetdata['preset']
-
-			# this creates ScopeEMData from the ImageTargetData
-			oldtargetemdata = self.targetToEMData(targetdata)
-			if oldtargetemdata is None:
+			try:
+				emtarget = self.targetToEMTargetData(targetdata)
+			except InvalidStagePosition:
+				return 'invalid'
+			except NoMoveCalibration:
 				return 'aborted'
-
-
-			## check for out of stage range target
-			stagelimits = {
-				'x': (-9.9e-4, 9.9e-4),
-				'y': (-9.9e-4, 9.9e-4),
-			}
-			stagepos = oldtargetemdata['stage position']
-			for axis, limits in stagelimits.items():
-				if stagepos[axis] < limits[0] or stagepos[axis] > limits[1]:
-					messagestr = 'target stage position %s out of range... target aborting' % (stagepos,)
-					#print messagestr
-					self.acquisitionlog.error(messagestr)
-					return 'invalid'
-
-			oldpreset = targetdata['preset']
-
-			# now make EMTargetData to hold all this
-			emtarget = data.EMTargetData(scope=oldtargetemdata, preset=oldpreset)
 
 		#presetnames = self.uipresetnames.getSelectedValues()
 		presetnames = self.uipresetnames.get()
@@ -167,9 +164,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		else:
 			return False
 
-	def targetToEMData(self, targetdata):
+	def targetToEMTargetData(self, targetdata):
 		'''
-		convert an ImageTargetData to an EMData object
+		convert an ImageTargetData to an EMTargetData object
 		using chosen move type.
 		The result is a valid scope state that will center
 		the target on the camera, but not necessarily at the
@@ -180,11 +177,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 		necessary, and cause problems if used between different
 		magnification modes (LM, M, SA).
 		'''
+		originalpreset = targetdata['preset']
+
 		# get relavent info from target data
 		targetdeltarow = targetdata['delta row']
 		targetdeltacolumn = targetdata['delta column']
 		## make new copy because will be modified
-		targetscope = data.ScopeEMData(initializer=targetdata['scope'])
+		targetscope = copy.deepcopy(targetdata['scope'])
 		## camera is just read, not modified
 		targetcamera = targetdata['camera']
 
@@ -205,11 +204,27 @@ class Acquisition(targetwatcher.TargetWatcher):
 		try:
 			newscope = calclient.transform(pixelshift, targetscope, targetcamera)
 		except calibrationclient.NoMatrixCalibrationError:
-			self.acquisitionlog.error('No calibration for acquisition move to target')
-			return None
-		# create new EMData object to hole this
+			message = 'No calibration for acquisition move to target'
+			self.acquisitionlog.error(message)
+			raise NoMoveCalibration(message)
+
+		### remove stage position if this is not a stage move
+		### (unless requested to always move stage)
+		if movetype == 'image shift':
+			if not self.alwaysmovestage.get():
+				newscope['stage position'] = None
+
+		### check if stage position is valid
+		if newscope['stage position']:
+			self.validateStagePosition(newscope['stage position'])
+
+		# create new EMData object to hold this
 		emdata = data.ScopeEMData(id=('scope',), initializer=newscope)
-		return emdata
+
+		oldpreset = targetdata['preset']
+		# now make EMTargetData to hold all this
+		emtargetdata = data.EMTargetData(scope=emdata, preset=oldpreset)
+		return emtargetdata
 
 	def acquire(self, presetdata, target=None, emtarget=None):
 		### corrected or not??
@@ -517,6 +532,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.uimovetype = uidata.SingleSelectFromList('Move Type',
 																									self.calclients.keys(),
 																									0, persist=True)
+		self.alwaysmovestage = uidata.Boolean('Reset stage position even when move type is image shift', False, 'rw', persist=True)
 		self.uidelay = uidata.Float('Delay (sec)', 2.5, 'rw', persist=True)
 		self.uicorrectimage = uidata.Boolean('Correct image', True, 'rw',
 																			persist=True)
@@ -525,7 +541,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 																				persist=True)
 
 		acquirecontainer = uidata.Container('Acquisition')
-		acquirecontainer.addObjects((self.uicorrectimage, self.uimovetype,
+		acquirecontainer.addObjects((self.uicorrectimage, self.uimovetype, self.alwaysmovestage,
 																	self.uidelay, self.waitfordone))
 
 		self.databaseflag = uidata.Boolean('Publish to Database', True, 'rw')
