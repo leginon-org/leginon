@@ -272,10 +272,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if imagedata is None:
 			return 'fail'
 
-		labelstring = str(self.id)
-
 		## convert CameraImageData to AcquisitionImageData
-		imagedata = data.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=labelstring, target=target)
+		imagedata = data.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=target)
 
 		self.publishDisplayWait(imagedata)
 		self.imagelist.append(imagedata.reference())
@@ -283,8 +281,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 	def retrieveImagesFromDB(self):
 		imagequery = data.AcquisitionImageData()
 		imagequery['session'] = self.session
-		#imagequery['label'] = str(self.id)
-		imagequery['label'] = str(self.id)
+		imagequery['label'] = self.name
 		## don't read images because we only need the id
 		images = self.research(datainstance=imagequery, readimages=False)
 		imageids = [x.dbid for x in images]

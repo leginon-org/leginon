@@ -156,14 +156,13 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		Waits until theading events of all target list data are cleared.
 		'''
 		for tid, teventinfo in self.targetlistevents.items():
-			self.logger.info('%s waiting for %s' % (self.id, tid))
+			self.logger.info('%s waiting for %s' % (self.name, tid))
 			teventinfo['received'].wait()
-			self.logger.info('%s done waiting for %s' % (self.id, tid))
+			self.logger.info('%s done waiting for %s' % (self.name, tid))
 		self.targetlistevents.clear()
-		self.logger.info('%s done waiting' % (self.id,))
+		self.logger.info('%s done waiting' % (self.name,))
 
 	def notifyUserSubmit(self):
-		myname = self.id[-1]
 		message = 'waiting for you to submit targets'
 		self.usersubmitmessage = self.messagelog.information(message)
 		node.beep()

@@ -34,15 +34,14 @@ class SimpleCorrector(node.Node):
 	eventoutputs = node.Node.eventoutputs + [event.DarkImagePublishEvent,
 																						event.BrightImagePublishEvent] \
 																				 + EM.EMClient.eventoutputs
-	def __init__(self, id, session, managerlocation, **kwargs):
+	def __init__(self, name, session, managerlocation, **kwargs):
 		self.references = {}
 		self.abortevent = threading.Event()
-		node.Node.__init__(self, id, session, managerlocation, **kwargs)
+		node.Node.__init__(self, name, session, managerlocation, **kwargs)
 		self.emclient = EM.EMClient(self)
 		self.camerafuncs = camerafuncs.CameraFuncs(self)
 
-		self.initializeLogger(id[-1])
-
+		self.initializeLogger(name)
 
 		self.imagedata = data.DataHandler(data.CorrectedCameraImageData, getdata=self.acquireCorrectedImageData)
 		self.publish(self.imagedata, pubevent=True, broadcast=True)
@@ -474,10 +473,10 @@ class Corrector(node.Node):
 	'''
 	eventinputs = node.Node.eventinputs + EM.EMClient.eventinputs
 	eventoutputs = node.Node.eventoutputs + [event.DarkImagePublishEvent, event.BrightImagePublishEvent] + EM.EMClient.eventoutputs
-	def __init__(self, id, session, managerlocation, **kwargs):
-		self.initializeLogger(id[-1])
+	def __init__(self, name, session, managerlocation, **kwargs):
+		self.initializeLogger(name)
 
-		node.Node.__init__(self, id, session, managerlocation, **kwargs)
+		node.Node.__init__(self, name, session, managerlocation, **kwargs)
 
 		self.emclient = EM.EMClient(self)
 		self.cam = camerafuncs.CameraFuncs(self)
