@@ -53,7 +53,7 @@ Data Production, Pushing, and Pulling
             asking the manager.
 
 
-Optional User Interface Definition
+Optional User Interface Server Definition
 
    Every node has a built-in user interface server that allows interface
    clients to connect over XML-RPC.  The server is independent of any
@@ -69,7 +69,7 @@ Optional User Interface Definition
    its methods to a user interface.  A method is exported as follows:
       self.registerUIFunction(func, argspec, alias)
             func is any callable object (usually self.SomeMethod)
-            argspec should be a sequence of dicts, for example:
+            argspec should be an array of structs, for example:
             (
               {'name':'mynum', 'alias':'Mynum', 'type':'integer', 'default':1},
               {'name':'mystr', 'alias':'Xyz', 'type':'string', 'default':'hello'},
@@ -81,4 +81,40 @@ Optional User Interface Definition
             can also be set to sequence for an enumeration type.
           - alias is the alias that should be used by the UI
             (defaults to __name__)
+          - default is the default value for the argument
+
+User Interface Clients
+   User Interface Clients may query the User Interface Server and
+   dynamically create a user interface.  The client must know the 
+   'UI port' of the node, which is part of the node's location.  The 
+   UI port is the XML-RPC port to which the client must connect.
+   The following methods are available by default in every UI Server:
+
+      methods()
+         takes no arguments and returns a description of node specific
+	 methods that are available as XML-RPC calls.
+	 The return value is a XML-RPC struct type which includes two
+	 parts:
+	    'list':  an array containing the names of the methods
+	    'dict':  A struct giving a full description of the methods
+
+	   here is a summary of the struct:
+                       
+             {'list': (method1, method2,...),
+	      'dict': {
+	               method1: {
+		                 'argspec':  see argspec description above
+				           in the Interface Server section
+		                }
+	               method2: {
+		                 'argspec':  ...
+		                }
+		       ...
+		      }
+             }
+
+      id()
+         takes no arguments and returns the ID of the node
+         a node ID is an array of values.  These values can be integers,
+         strings, and possibly other types.
 

@@ -35,7 +35,8 @@ class Manager(node.Node):
 		pass
 
 	def start(self):
-		print self.location()
+		self.print_location()
+		#print self.location()
 		interact_thread = self.interact()
 
 		self.main()
@@ -230,6 +231,11 @@ class Manager(node.Node):
 			self.confirmmap[ievent.id] = do
 		for to_node in do:
 			self.clients[to_node].push(ievent)
+
+	def print_location(self):
+		loc = self.location()
+		for key,value in loc.items():
+			print '%-25s  %s' % (key,value)
 
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)

@@ -1,0 +1,34 @@
+Starting the manager
+   manager.py is an executable python script and takes no arguments.
+   After starting the manager, the manager's location will be printed and
+   a command interpreter will start.  The command interpreter is embedded 
+   in the manager object, giving access to the managers attributes through
+   self.attrname, etc.
+
+Interacting with the manager's user interface server
+   The manager runs a user interface server which is implemented as an
+   XML-RPC server.  The server is accessed through the port refered to
+   as the 'UI port'.  This is displayed when the manager starts.
+   See README.node for info on how to dynamically learn about a 
+   node's XML-RPC methods.
+
+   The following methods are available to a manager's XML-RPC clients:
+
+      Launch(Name, Launcher, Node Class, Args, New Process)
+         launches a new node using the specified launcher
+         Arguments:
+             Name (string):  the name of the new node
+             Launcher (enum):  the name of the launcher
+             Node Class(enum):  the class of node to launch
+	     Args (string):  comma seperated list of arguments for the node
+	     New Process (boolean):  flag to start node as new process rather
+	                         than a new thread
+
+      Bind(Event Class, From Node, To Node)
+         binds an event from one node to another node
+	 Arguments:
+	     Event Class (enum):  class of event to pass between the nodes
+	     From Node (enum):  name of node where event originates
+	     To Node (enum):  name of destination node
+
+      Both of the above methods return an empty string.
