@@ -30,9 +30,25 @@ class DBData(Data):
 		Data.__init__(self, id, dict(content))
 
 class ImageData(Data):
-	'''Image data. Content is a 2-D Numeric array.'''
-	def __init__(self, id, content):
+	'''
+	self.content will be a dict with the following keys
+	   'image':  the Numeric array representation of the image
+	'''
+	def __init__(self, id, image):
+		content = {'image':image}
 		Data.__init__(self, id, content)
+
+class CameraImageData(ImageData):
+	'''
+	ImageData that originates from a camera
+	self.content will be a dict with the following keys
+	   'image':  the Numeric array representation of the image
+	   'scope':  the microscope state (dict) at the time of acquisition
+	   'camera':  the camera state (dict) at the time of acquisition
+	'''
+	def __init__(self, id, image, scope, camera):
+		ImageData.__init__(self, id, image)
+		self.content.update({'scope':scope, 'camera':camera})
 
 class LocationData(Data):
 	'''Has data ID, but content is the location of the real data. Used by Manager.'''
@@ -84,43 +100,48 @@ class CorrelationData(Data):
 		Data.__init__(self, id, dict(content))
 
 class CorrelationImageData(ImageData):
-	def __init__(self, id, content):
-		ImageData.__init__(self, id, content)
+	'''
+	ImageData that results from a correlation of two images
+	content has the following keys:
+		'image': Numeric data	
+		'subject1':  first image (data id) used in correlation
+		'subject2':  second image (data id) used in correlation
+	'''
+	def __init__(self, id, image, subject1, subject2):
+		ImageData.__init__(self, id, image)
+		self.content.update({'subject1':subject1, 'subject2':subject2})
 
 class CrossCorrelationImageData(CorrelationImageData):
-	def __init__(self, id, content):
-		CorrelationImageData.__init__(self, id, content)
+	def __init__(self, id, image, subject1, subject2):
+		CorrelationImageData.__init__(self, id, image, subject1, subject2)
 
 class PhaseCorrelationImageData(CorrelationImageData):
-	def __init__(self, id, content):
-		CorrelationImageData.__init__(self, id, content)
+	def __init__(self, id, image, subject1, subject2):
+		CorrelationImageData.__init__(self, id, image, subject1, subject2)
 
-class ReferenceImageData(ImageData):
-	def __init__(self, id, content):
-		ImageData.__init__(self, id, content)
+class CorrectionImageData(CameraImageData):
+	def __init__(self, id, image, scope, camera):
+		CameraImageData.__init__(self, id, image, scope, camera)
 
-class DarkImageData(ReferenceImageData):
-	def __init__(self, id, content):
-		ReferenceImageData.__init__(self, id, content)
+class DarkImageData(CorrectionImageData):
+	def __init__(self, id, image, scope, camera):
+		CorrectionImageData.__init__(self, id, image, scope, camera)
 
-class BrightImageData(ReferenceImageData):
-	def __init__(self, id, content):
-		ReferenceImageData.__init__(self, id, content)
+class BrightImageData(CorrectionImageData):
+	def __init__(self, id, image, scope, camera):
+		CorrectionImageData.__init__(self, id, image, scope, camera)
 
-class ImageTileData(ImageData):
+class TileImageData(CameraImageData):
 	'''Contains a 2-D Numeric array of the image data and a list of neighboring image tile ID's.'''
-	def __init__(self, id, image, neighbortiles):
-		ImageData.__init__(self, id,
-			{'image': image, 'neighbor tiles': neighbortiles})
-
-class StateImageTileData(ImageData):
-	'''Contains a 2-D Numeric array of the image data, a list of neighboring image tile ID's, and [sub]state acquired at.'''
-	def __init__(self, id, image, state, neighbortiles):
-		ImageData.__init__(self, id,
-			{'image': image, 'neighbor tiles': neighbortiles, 'state': state})
+	def __init__(self, id, image, scope, camera, neighbortiles):
+		CameraImageData.__init__(self, id, image, scope, camera)
+		self.content.update({'neighbortiles':neighbortiles})
 
 class StateMosaicData(Data):
 	'''Contains data ID of images mapped to their position and state.'''
 	def __init__(self, id, content):
 		Data.__init__(self, id, dict(content))
 
+class ImageTargetData(Data):
+	def __init__(self, id, content):
+		Data.__init__(self, id, dict(content))
