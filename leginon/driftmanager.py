@@ -24,8 +24,10 @@ import threading
 import presets
 import copy
 import EM
+import gui.wx.DriftManager
 
 class DriftManager(watcher.Watcher):
+	panelclass = gui.wx.DriftManager.Panel
 	eventinputs = watcher.Watcher.eventinputs + [event.DriftDetectedEvent, event.NeedTargetShiftEvent, event.DriftWatchEvent] + EM.EMClient.eventinputs
 	eventoutputs = watcher.Watcher.eventoutputs + [event.DriftDoneEvent, event.ImageTargetShiftPublishEvent, event.ChangePresetEvent] + EM.EMClient.eventoutputs
 	def __init__(self, id, session, managerlocation, **kwargs):
@@ -50,7 +52,10 @@ class DriftManager(watcher.Watcher):
 		self.references = {}
 		self.abortevent = threading.Event()
 
-		self.defineUserInterface()
+		self.threshold = None
+		self.wait = None
+		self.camconfig = None
+
 		self.start()
 
 	def handleNeedShift(self, ev):
@@ -110,7 +115,7 @@ class DriftManager(watcher.Watcher):
 		self.references[label] = {'imageid': imageid, 'image': imagedata, 'shift': {}, 'emtarget': driftwatchevent['presettarget']['emtarget'], 'preset': driftwatchevent['presettarget']['preset']}
 
 	def uiMonitorDrift(self):
-		self.cam.uiApplyAsNeeded()
+		self.cam.setCameraDict(self.camconfig)
 		## calls monitorDrift in a new thread
 		t = threading.Thread(target=self.monitorDrift)
 		t.setDaemon(1)
@@ -160,7 +165,7 @@ class DriftManager(watcher.Watcher):
 
 	def acquireImage(self):
 		imagedata = self.cam.acquireCameraImageData()
-		self.im.set(imagedata['image'])
+		self.setImage(imagedata['image'])
 		return imagedata
 
 	def acquireLoop(self, target=None):
@@ -175,10 +180,10 @@ class DriftManager(watcher.Watcher):
 		self.logger.info('Pixel size at %sx is %s' % (mag, pixsize))
 
 		## ensure that loop executes once
-		current_drift = self.threshold.get() + 1.0
-		while current_drift > self.threshold.get():
+		current_drift = self.threshold + 1.0
+		while current_drift > self.threshold:
 			## wait for interval
-			time.sleep(self.pausetime.get())
+			time.sleep(self.wait)
 
 			## acquire next image
 			imagedata = self.acquireImage()
@@ -202,7 +207,7 @@ class DriftManager(watcher.Watcher):
 			seconds = t1 - t0
 			current_drift = meters / seconds
 			self.logger.info('Drift rate: %.4e' % (current_drift,))
-			self.driftvalue.set(current_drift)
+			self.setStatus('Drift rate: %.4e' % (current_drift,))
 
 			d = data.DriftData(session=self.session, rows=rows, cols=cols, interval=seconds, rowmeters=rowmeters, colmeters=colmeters, target=target)
 			self.publish(d, database=True, dbforce=True)
@@ -232,9 +237,9 @@ class DriftManager(watcher.Watcher):
 			shift[1] = peak[1] - shape[1]
 		return tuple(shift)
 
-	def uiMeasureDrift(self):
+	def measureDrift(self):
 		## configure camera
-		self.cam.uiApplyAsNeeded()
+		self.cam.setCameraDict(self.camconfig)
 		mag = self.getMag()
 		pixsize = self.pixsizeclient.retrievePixelSize(mag)
 		self.logger.info('Pixel size %s' % (pixsize,))
@@ -246,7 +251,7 @@ class DriftManager(watcher.Watcher):
 		self.correlator.insertImage(numdata)
 
 		# pause
-		time.sleep(self.pausetime.get())
+		time.sleep(self.wait)
 		
 		## acquire next image
 		imagedata = self.acquireImage()
@@ -268,29 +273,9 @@ class DriftManager(watcher.Watcher):
 		self.logger.info('Seconds %s' % seconds)
 		current_drift = meters / seconds
 		self.logger.info('Drift rate: %.4f' % (current_drift,))
-		self.driftvalue.set(current_drift)
+		self.setStatus('Drift rate: %.4f' % (current_drift,))
 
 	def targetsToDatabase(self):
 		for target in self.targetlist:
 			self.publish(target, database=True)
 
-	def defineUserInterface(self):
-		watcher.Watcher.defineUserInterface(self)
-
-		self.threshold = uidata.Float('Threshold (m)', 2e-10, 'rw', persist=True)
-		self.pausetime = uidata.Float('Pause Time (s)', 2.0, 'rw', persist=True)
-		abortmeth = uidata.Method('Abort', self.abort)
-
-		camconfig = self.cam.uiSetupContainer()
-		measuremeth = uidata.Method('Measure Drift Once', self.uiMeasureDrift)
-		monitormeth = uidata.Method('Monitor Drift', self.uiMonitorDrift)
-		self.driftvalue = uidata.Float('Drift Rate', 0.0, 'r')
-		
-		self.im = uidata.Image('Drift Image', None, 'r')
-
-		#subcont = uidata.Container('Sub')
-		#subcont.addObjects((self.threshold,))
-
-		container = uidata.LargeContainer('Drift Manager')
-		container.addObjects((abortmeth, self.threshold,self.pausetime,camconfig, measuremeth, monitormeth, self.driftvalue, self.im))
-		self.uicontainer.addObject(container)

@@ -80,6 +80,8 @@ class CameraPanel(wx.Panel):
 		self.Bind(EVT_INT, self.onExposureTime, self.icexposuretime)
 		self.Bind(EVT_SET_CONFIGURATION, self.onSetConfiguration)
 
+		self.Enable(False)
+
 	def setSize(self, session):
 		if session['instrument'] is None:
 			return
@@ -94,6 +96,7 @@ class CameraPanel(wx.Panel):
 		self.ccommon.AppendItems(choices)
 		self.ccommon.SetSelection(0)
 		self.setGeometry(self.common[self.ccommon.GetStringSelection()])
+		self.Enable(True)
 		self.szmain.Layout()
 		self.Thaw()
 
