@@ -14,7 +14,7 @@ import Numeric
 import strictdict
 import warnings
 import cPickle
-
+import types
 import threading
 import dbdatakeeper
 
@@ -31,12 +31,13 @@ class DataAccessError(DataError):
 ## to be created are the first to be deleted from DataManager.
 class DataManager(object):
 	def __init__(self):
-		self.db = dbdatakeeper.DBDataKeeper()
-		## the size of datadict and sizedict are maintained
+		self.db = None
+		## the size of these dicts are maintained by size restriction
 		self.datadict = strictdict.OrderedDict()
 		self.sizedict = {}
-		## the size of persistdict can grow out of control
-		self.persistdict = {}
+		self.db2dm = {}
+		self.dm2db = {}
+
 		megs = 256
 		self.maxsize = megs * 1024 * 1024
 		self.dmid = 0
@@ -58,21 +59,22 @@ class DataManager(object):
 			datainstance.dmid = self.dmid
 			self.resize(datainstance)
 
-			## insert into persistdict if it is in database
+			## insert into persist dicts if it is in database
 			if datainstance.dbid is not None:
-				self.persist(datainstance)
+				self.setPersistent(datainstance)
 		finally:
 			self.lock.release()
 
 	def setPersistent(self, datainstance):
 		self.lock.acquire()
 		try:
+			dataclass = datainstance.__class__
 			dbid = datainstance.dbid
 			if dbid is None:
 				raise DataError('persist can only be called on data that is stored in the database')
 			dmid = datainstance.dmid
-			dclass = datainstance.__class__
-			self.persistdict[dmid] = (dclass, dbid)
+			self.dm2db[dmid] = dataclass,dbid
+			self.db2dm[dataclass,dbid] = dmid
 		finally:
 			self.lock.release()
 
@@ -83,6 +85,10 @@ class DataManager(object):
 			self.size -= self.sizedict[dmid]
 			del self.sizedict[dmid]
 			print '****removed something', self.size
+			if dmid in self.dm2db:
+				dbkey = self.dm2db[dmid]
+				del self.db2dm[dbkey]
+				del self.dm2db[dmid]
 		finally:
 			self.lock.release()
 
@@ -114,6 +120,11 @@ class DataManager(object):
 		finally:
 			self.lock.release()
 
+	def getDataFromDB(self, dataclass, dbid):
+		if self.db is None:
+			self.db = dbdatakeeper.DBDataKeeper()
+		return self.db.direct_query(dataclass, dbid)
+
 	def getData(self, datareference):
 		self.lock.acquire()
 		try:
@@ -122,27 +133,21 @@ class DataManager(object):
 			dmid = datareference.dmid
 			dbid = datareference.dbid
 
+			## maybe data instance has been reborn from DB
+			## since DataReference object was created
+			if (dataclass,dbid) in self.db2dm:
+				dmid = self.db2dm[dataclass,dbid]
+				datareference.dmid = dmid
+
+			## now find the data
 			if dmid in self.datadict:
 				## in local memory
 				datainstance = self.datadict[dmid]
-			elif False:
-				## in remote memory
-				# like publishRemote and researchByDataID
-				# how do we do this?
-				pass
-			else:
+			elif dbid is not None:
 				## in database
-				if dbid is not None:
-					known_dbid = dbid
-				elif dmid in self.persistdict:
-					known_dbid = self.persistdict[dmid]
-				else:
-					known_dbid = None
-				if known_dbid is not None:
-					print 'GETDATA  DB'
-					datainstance = self.db.direct_query(dataclass, dbid)
-				else:
-					datainstance = None
+				datainstance = self.getDataFromDB(dataclass, dbid)
+				if datainstance is not None:
+					dmid = datainstance.dmid
 		finally:
 			self.lock.release()
 		return datainstance
@@ -372,7 +377,8 @@ class Data(DataDict, leginonobject.LeginonObject):
 					if valuetype is value.dataclass:
 						return value
 					else:
-						raise ValueError('must by type %s' (valutype,))
+						print 'VALUETYPE', valuetype, value.dataclass
+						raise ValueError('must by type %s' (valuetype,))
 				if isinstance(value, valuetype):
 					return value
 				elif isinstance(value, UnknownData):
@@ -390,7 +396,11 @@ class Data(DataDict, leginonobject.LeginonObject):
 	def size(self):
 		size = 0
 		for key, datatype in self.types().items():
-			if issubclass(datatype, Data):
+			try:
+				isdata = issubclass(datatype, Data)
+			except TypeError:
+				isdata = False
+			if isdata:
 				## do not include size of other Data
 				## and even if you do, self[key]
 				## is dereferencing and possibly querying
@@ -1175,39 +1185,11 @@ class DiaryData(InSessionData):
 		return t
 	typemap = classmethod(typemap)
 
-## to store binary blob in database
-class Pickle(str):
-	pass
-
-class Binary(object):
-	def __init__(self, new_o):
-		if isinstance(new_o, Binary):
-			self.o = new_o.o
-		else:
-			self.o = new_o
-
-	def getPickledObject(self):
-		if type(self.o) is not Pickle:
-			self.o = Pickle(cPickle.dumps(self.o, True))
-		return str(self.o)
-
-	def getObject(self):
-		if type(self.o) is Pickle:
-			po = cPickle.loads(self.o)
-			self.o = cPickle.loads(self.o)
-		return self.o
-
-	def __str__(self):
-		return str(self.o)
-
-	def __repr__(self):
-		return repr(self.o)
-
 class UIData(InSessionData):
 	def typemap(cls):
 		t = InSessionData.typemap()
 		t += [('object', tuple),
-					('binary value', Binary)]
+			('value', strictdict.AnyObject)]
 		return t
 	typemap = classmethod(typemap)
 
