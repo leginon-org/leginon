@@ -6,6 +6,8 @@ import peakfinder
 import sys
 import event
 import time
+import Numeric
+import LinearAlgebra
 
 False=0
 True=1
@@ -138,7 +140,7 @@ class Calibration(node.Node):
 				if verdict == 'good':
 					print "good"
 					self.publishRemote(data.EMData('scope', self.state(0.0, axis)))
-					self.calibration.update({axis + " pixel shift": {'x': shiftinfo['shift']['x'], 'y': cdata['shift']['y'], 'value': value}})
+					self.calibration.update({axis + " pixel shift": {'x': shiftinfo['shift']['x'], 'y': shiftinfo['shift']['y'], 'value': value}})
 				elif verdict == 'small shift':
 					print "too small"
 					adjustedrange[0] = value
@@ -267,7 +269,7 @@ class Calibration(node.Node):
 			if shiftinfo['peak value'] > self.correlationthreshold:
 				verdict = 'good'
 			else:
-				if cdata['peak value'] > self.correlationthreshold * 2:
+				if shiftinfo['peak value'] > self.correlationthreshold * 2:
 					verdict = 'small shift'
 				else:
 					verdict = 'big shift'
@@ -352,6 +354,10 @@ class StageCalibration(Calibration):
 
 class ImageShiftCalibration(Calibration):
 	def __init__(self, id, nodelocations):
+		#self.calibration = {"x pixel shift": {'x': 1.0, 'y': 2.0, 'value': 1.0},
+		#					 "y pixel shift": {'x': 3.0, 'y': 4.0, 'value': 1.0}}
+		#self.pixelShift(event.ImageShiftPixelShiftEvent(-1, {'row': 2.0, 'column': 2.0}))
+		#return
 		Calibration.__init__(self, id, nodelocations)
 		self.addEventInput(event.ImageShiftPixelShiftEvent, self.pixelShift)
 
@@ -359,8 +365,28 @@ class ImageShiftCalibration(Calibration):
 		return {'image shift': {axis: value}}
 
 	def pixelShift(self, ievent):
-		
+		print 'calibration =', self.calibration
+		print 'pixel shift =', ievent.content
+		matrix = self.calibration2matrix()
+		print "image shift calibration matrix =", matrix
+		determinant = LinearAlgebra.determinant(matrix)
+		imageshift = {'image shift': {}}
+		imageshift['x'] = (matrix[1,1] * ievent.content['column'] -
+							matrix[1,0] * ievent.content['row']) / determinant
+		imageshift['y'] = (matrix[0,0] * ievent.content['row'] -
+							matrix[0,1] * ievent.content['column']) / determinant
+		print "calculated image shift =", imageshift
+		imageshiftdata = data.EMData('scope', imageshift)
+		self.publishRemote(imageshiftdata)
 
+	def calibration2matrix(self):
+		matrix = Numeric.array([[self.calibration['x pixel shift']['x'],
+														self.calibration['x pixel shift']['y']],
+													[self.calibration['y pixel shift']['x'],
+														self.calibration['y pixel shift']['y']]])
+		matrix[0] /= self.calibration['x pixel shift']['value']
+		matrix[1] /= self.calibration['y pixel shift']['value']
+		return matrix
 
 class AutoFocusCalibration(Calibration):
 	def __init__(self, id, nodelocations):
@@ -393,3 +419,4 @@ class AutoFocusCalibration(Calibration):
 		cal['autofocus']['beam tilt'] = cal2['x shift']['value']
 
 		return cal
+
