@@ -15,35 +15,21 @@ import ldcom
 import adacom
 import time
 
-defaultmagtable = [(21, 18.5), (28, 25), (38, 34), (56, 50), (75, 66), (97, 86),	(120, 105), (170, 150), (220, 195), (330, 290), (420, 370), (550, 490),
-	(800, 710), (1100, 970), (1500, 1350), (2100, 1850), (1700, 1500),
-	(2500, 2200), (3500, 3100), (5000, 4400), (6500, 5800), (7800, 6900),
-	(9600, 8500), (11500, 10000), (14500, 13000), (19000, 17000), (25000, 22000),
-	(29000, 25500), (50000, 44000), (62000, 55000), (80000, 71000),
-	(100000, 89000), (150000, 135000), (200000, 175000), (240000, 210000),
-	(280000, 250000), (390000, 350000), (490000, 430000), (700000, 620000)]
+defaultmagtable = [
+	21, 28, 38, 56, 75, 97, 120, 170, 220, 330, 420, 550, 800, 1100, 1500, 2100,
+	1700, 2500, 3500, 5000, 6500, 7800, 9600, 11500, 14500, 19000, 25000, 29000,
+	50000, 62000, 80000, 100000, 150000, 200000, 240000, 280000, 390000, 490000,
+	700000
+]
 
-polaramagtable = [(62, 54), (76, 67), (100, 91), (125, 110), (175, 155),
-	(220, 195), (280, 250), (360, 320), (480, 430), (650, 570), (790, 700),
-	(990, 880), (1200, 1100), (1800, 1600), (2300, 2050), (2950, 2600),
-	(3000, 2650), (4500, 3900), (5600, 5000), (9300, 8200), (13500, 12000),
-	(18000, 15500), (22500, 20000), (27500, 24500), (34000, 29500),
-	(41000, 36000), (50000, 44000), (61000, 54000), (77000, 68000),
-	(95000, 84000), (115000, 105000), (160000, 140000), (200000, 175000),
-	(235000, 210000), (310000, 275000), (400000, 350000), (470000, 420000),
-	(630000, 560000), (800000, 710000)]
-
+polaramagtable = [
+	62, 76, 100, 125, 175, 220, 280, 360, 480, 650, 790, 990, 1200, 1800, 2300,
+	2950, 3000, 4500, 5600, 9300, 13500, 18000, 22500, 27500, 34000, 41000, 50000,
+	61000, 77000, 95000, 115000, 160000, 200000, 235000, 310000, 400000, 470000,
+	630000, 800000
+]
 
 class Tecnai(object):
-	def cmpmags(self, x, y):
-		key = self.cmpmags_status
-		if x[key] < y[key]: 
-			return -1
-		elif x[key] == y[key]: 
-			return 0
-		elif x[key] > y[key]: 
-			 return 1
-		
 	def __init__(self, magtable=defaultmagtable):
 		self.correctedstage = True
 		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
@@ -55,10 +41,9 @@ class Tecnai(object):
 		except pythoncom.com_error:
 			raise RuntimeError('Unable to initialize microscope interface[s]')
 
-		# this was a quick way of doing things, needs to be redone
-		self.magTable = []
-		for i, mag in enumerate(magtable):
-			self.magTable.append({'index': i + 1, 'up': mag[0], 'down': mag[1]})
+		self.magnifications = map(float, magtable)
+		self.sortedmagnifications = list(self.magnifications)
+		self.sortedmagnifications.sort()
 
 		self.methodmapping = {
 			'beam blank': {'get': 'getBeamBlank', 'set': 'setBeamBlank'},
@@ -144,7 +129,7 @@ class Tecnai(object):
 			'raw image shift': {'type': dict, 'values':
 																	{'x': {'type': float}, 'y': {'type': float}}},
 			'defocus': {'type': float},
-			'magnification': {'type': float},
+			'magnification': {'type': float, 'values': self.magnifications},
 			'magnification index': {'type': int},
 			'magnifications': {'type': list},
 			# correct for holder type
@@ -188,7 +173,7 @@ class Tecnai(object):
 			'external shutter': {'type': str, 'values': ['connected', 'disconnected']},
 		}
 		self.parameterdependencies = {
-			'main screen position': ['magnifications'],
+			'main screen position': ['small screen position'],
 			'film exposure type': ['film exposure time'],
 			'defocus': ['focus'],
 			'reset defocus': ['defocus'],
@@ -587,42 +572,25 @@ class Tecnai(object):
 		return False
 	
 	def getMagnification(self):
-		if self.theScope.Camera.MainScreen == win32com.client.constants.spUp:
-			key = 'up'
-		elif self.theScope.Camera.MainScreen == win32com.client.constants.spDown:
-			key = 'down'
-		else:   # perhaps spUnknown
-			raise SystemError
-
-		magindex = self.theScope.Projection.MagnificationIndex
-
-		for mag in self.magTable:
-			if mag['index'] == magindex:
-				return float(mag[key])
-
-		raise SystemError			
+		index = self.theScope.Projection.MagnificationIndex
+		if index < 1:
+			index = 1
+		return float(self.magnifications[index - 1])
 
 	def setMagnification(self, mag):
-		if self.theScope.Camera.MainScreen == win32com.client.constants.spUp:
-			key = 'up'
-		elif self.theScope.Camera.MainScreen == win32com.client.constants.spDown:
-			key = 'down'
-		else:   # perhaps spUnknown
-			raise SystemError
-
-		self.cmpmags_status = key
-
-		self.magTable.sort(self.cmpmags)
-
-		prevmag = self.magTable[0]
-		
-		for imag in self.magTable:
-			if imag[key] > mag:
-				 self.theScope.Projection.MagnificationIndex = prevmag['index']
-				 return
-			prevmag = imag
+		try:
+			mag = float(mag)
+		except:
+			raise TypeError
+		prevmag = self.sortedmagnifications[0]
+	
+		for m in self.sortedmagnifications:
+			if m > mag:
+				break
+			prevmag = m
 			
-		self.theScope.Projection.MagnificationIndex = prevmag['index']
+		index = self.magnifications.index(prevmag) + 1
+		self.theScope.Projection.MagnificationIndex = index
 		return
 
 	def getMagnificationIndex(self):
@@ -632,14 +600,7 @@ class Tecnai(object):
 		self.theScope.Projection.MagnificationIndex  = value + 1
 
 	def getMagnifications(self):
-		if self.theScope.Camera.MainScreen == win32com.client.constants.spUp:
-			key = 'up'
-		elif self.theScope.Camera.MainScreen == win32com.client.constants.spDown:
-			key = 'down'
-		else:
-			raise SystemError
-
-		return map(lambda m: m[key], self.magTable)	
+		return self.magnifications
 	
 	def getStagePosition(self):
 		value = {'x': None, 'y': None, 'z': None, 'a': None}
@@ -840,10 +801,23 @@ class Tecnai(object):
 		'''
 
 	def getMainScreen(self):
-		if self.theAda.MainScreenStatus == 1:
+		#if self.theAda.MainScreenStatus == 1:
+		timeout = 5.0
+		sleeptime = 0.05
+		while (self.theScope.Camera.MainScreen
+						== win32com.client.constants.spUnknown):
+			time.sleep(sleeptime)
+			if self.theScope.Camera.MainScreen != win32com.client.constants.spUnknown:
+				break
+			timeout -= sleeptime
+			if timeout <= 0.0:
+				return 'unknown'
+		if self.theScope.Camera.MainScreen == win32com.client.constants.spUp:
 			return 'up'
-		else:
+		elif self.theScope.Camera.MainScreen == win32com.client.constants.spDown:
 			return 'down'
+		else:
+			return 'unknown'
 
 	def getSmallScreen(self):
 		if self.theScope.Camera.IsSmallScreenDown:
@@ -853,9 +827,11 @@ class Tecnai(object):
 
 	def setMainScreen(self, mode):
 		if mode == 'up':
-			self.theAda.MainScreenUp
+			self.theScope.Camera.MainScreen = win32com.client.constants.spUp
+			#self.theAda.MainScreenUp
 		elif mode == 'down':
-			self.theAda.MainScreenDown
+			self.theScope.Camera.MainScreen = win32com.client.constants.spDown
+			#self.theAda.MainScreenDown
 		else:
 			raise ValueError
 
