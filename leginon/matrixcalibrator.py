@@ -1,32 +1,27 @@
-import node
-import data
+import node, event, data
 import fftengine
 import correlator
 import peakfinder
-import event
 import time
-import cPickle
-import cameraimage
 import camerafuncs
-import gonmodel
 import calibrationclient
-import Numeric
-import LinearAlgebra
 
 False=0
 True=1
 
 class MatrixCalibrator(node.Node):
-	def __init__(self, id, nodelocations, parameter, **kwargs):
+	def __init__(self, id, nodelocations, **kwargs):
 		self.cam = camerafuncs.CameraFuncs(self)
 		ffteng = fftengine.fftNumeric()
 		#ffteng = fftengine.fftFFTW(planshapes=(), estimate=1)
 		self.correlator = correlator.Correlator(ffteng)
 		self.peakfinder = peakfinder.PeakFinder()
 
-		if parameter not in ('image shift','stage position'):
-			raise RuntimeError('parameter %s not supported' % (parameter,) )
-		self.parameter = parameter
+		self.parameters = {
+		  'image shift': calibrationclient.ImageShiftCalibrationClient(self),
+		  'beam shift': calibrationclient.BeamShiftCalibrationClient(self),
+		  'stage position': calibrationclient.StageCalibrationClient(self)
+		}
 
 		self.axislist = ['x', 'y']
 		self.settle = 2.0
@@ -36,6 +31,7 @@ class MatrixCalibrator(node.Node):
 		node.Node.__init__(self, id, nodelocations, **kwargs)
 
 		self.defineUserInterface()
+		self.start()
 		
 	# calibrate needs to take a specific value
 	def calibrate(self):
@@ -100,7 +96,8 @@ class MatrixCalibrator(node.Node):
 
 		mag = self.getMagnification()
 		self.publish(event.UnlockEvent(self.ID()))
-		self.calclient.setCalibration(mag, shifts)
+		calclient = self.parameters[self.parameter]
+		calclient.setCalibration(mag, shifts)
 
 		print 'CALIBRATE DONE', shifts
 
@@ -279,9 +276,10 @@ class MatrixCalibrator(node.Node):
 
 		cspec = self.registerUIMethod(self.uiCalibrate, 'Calibrate', ())
 
-		paramchoices = self.registerUIData('paramdata', 'array', default=('image shift', 'stage position'))
+		parameters = self.registerUIData('paramdata', 'array', default=self.parameters.keys())
 
 		argspec = (
+		self.registerUIData('Parameter', 'string', choices=parameters, default='stage position'),
 		self.registerUIData('N Average', 'float', default=self.navg),
 		self.registerUIData('Base', 'struct', default=self.base),
 		self.registerUIData('Delta', 'float', default=self.delta),
@@ -306,7 +304,8 @@ class MatrixCalibrator(node.Node):
 		self.calibrate()
 		return ''
 
-	def uiSetParameters(self, navg, base, delta, interval, cs):
+	def uiSetParameters(self, parameter, navg, base, delta, interval, cs):
+		self.parameter = parameter
 		self.navg = navg
 		self.base = base
 		self.delta = delta
@@ -320,18 +319,3 @@ class MatrixCalibrator(node.Node):
 	def currentState(self):
 		dat = self.researchByDataID(self.parameter)
 		return dat.content[self.parameter]
-
-
-class ImageShiftCalibrator(MatrixCalibrator):
-	def __init__(self, id, nodelocations, **kwargs):
-		param='image shift'
-		self.calclient = calibrationclient.ImageShiftCalibrationClient(self)
-		MatrixCalibrator.__init__(self, id, nodelocations, parameter=param, **kwargs)
-		self.start()
-
-class StageShiftCalibrator(MatrixCalibrator):
-	def __init__(self, id, nodelocations, **kwargs):
-		param='stage position'
-		self.calclient = calibrationclient.StageCalibrationClient(self)
-		MatrixCalibrator.__init__(self, id, nodelocations, parameter=param, **kwargs)
-		self.start()
