@@ -10,9 +10,14 @@
 
 import gui.wx.Manager
 
-try:
-	m = gui.wx.Manager.App(None)
-except RuntimeError, e:
-	print 'Unable to start Leginon:', str(e)
-else:
-	m.MainLoop()
+def start():
+	try:
+		m = gui.wx.Manager.App(None)
+	except RuntimeError, e:
+		print 'Unable to start Leginon:', str(e)
+	else:
+		m.MainLoop()
+
+if __name__ == '__main__':
+	start()
+
