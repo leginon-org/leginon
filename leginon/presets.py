@@ -466,10 +466,29 @@ class PresetsManager(node.Node):
 		if not name:
 			self.logger.error('Invalid preset name')
 			return
+
+		if name in self.presets:
+			tem = self.presets[name]['tem']
+			if tem is not None and 'name' in tem:
+				try:
+					self.instrument.setTEM(tem['name'])
+				except ValueError:
+					self.logger.error('Cannot access TEM selected for this preset')
+					return
+			ccdcamera = self.presets[name]['ccdcamera']
+			if ccdcamera is not None and 'name' in ccdcamera:
+				try:
+					self.instrument.setCCDCamera(ccdcamera['name'])
+				except ValueError:
+					self.logger.error('Cannot access CCD camera selected for this preset')
+					return
+
 		if self.instrument.getTEMName() is None:
 			self.logger.error('No TEM selected for this preset')
+			return
 		if self.instrument.getCCDCameraName() is None:
 			self.logger.error('No CCD camera selected for this preset')
+			return
 		try:
 			scopedata = self.instrument.getData(data.ScopeEMData)
 			cameradata = self.instrument.getData(data.CameraEMData, image=False)

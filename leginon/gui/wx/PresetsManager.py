@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.33 $
+# $Revision: 1.34 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-11 19:36:33 $
+# $Date: 2005-03-22 23:32:13 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -160,7 +160,7 @@ class EditPresetDialog(gui.wx.Dialog.Dialog):
 				self.cccdcamera.SetStringSelection(self.nonestring)
 			else:
 				self.cccdcamera.SetStringSelection(ccdcamera['name'])
-		self.cbfilm.SetValue(parameters['film'])
+		self.cbfilm.SetValue(bool(parameters['film']))
 
 		try:
 			self.cpcamconfig.setSize(self.camerasizes[ccdcamera['name']])

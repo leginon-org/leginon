@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/atlasviewer.py,v $
-# $Revision: 1.12 $
+# $Revision: 1.13 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-21 23:43:03 $
+# $Date: 2005-03-22 23:32:12 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -481,6 +481,18 @@ class AtlasViewer(node.Node, targethandler.TargetWaitHandler):
 	def reacquireImage(self, imagedata, test=False):
 		presetdata = imagedata['preset']
 		targetdata = imagedata['target']
+
+		try:
+			t = 'TEM'
+			self.instrument.setTEM(presetdata['tem']['name'])
+			t = 'CCD Camera'
+			self.instrument.setTEM(presetdata['tem']['name'])
+		except (ValueError, TypeError, AttributeError, KeyError):
+			self.logger.error('Cannot access %s for preset' % t)
+			if test:
+				return False
+			else:
+				return None
 
 		# TODO: user select? should be in data
 		movetype = 'stage position'
