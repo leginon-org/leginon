@@ -105,6 +105,6 @@ if __name__ == '__main__':
 			args, kwargs = (launchername,), {'tcpport': 55555}
 		except:
 			args, kwargs = (launchername,), {}
-	l = gui.wx.Launcher.LauncherApp(*args, **kwargs)
+	l = gui.wx.Launcher.App(*args, **kwargs)
 	l.MainLoop()
 

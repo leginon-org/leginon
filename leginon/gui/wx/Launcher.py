@@ -33,7 +33,7 @@ class CreateNodePanelEvent(wx.PyEvent):
 		self.event = threading.Event()
 		self.panel = None
 
-class LauncherApp(wx.App):
+class App(wx.App):
 	def __init__(self, name, **kwargs):
 		self.name = name
 		self.kwargs = kwargs
@@ -42,7 +42,7 @@ class LauncherApp(wx.App):
 	def OnInit(self):
 		# seperate thread
 		self.launcher = launcher.Launcher(self.name, **self.kwargs)
-		frame = LauncherFrame(self.launcher)
+		frame = Frame(self.launcher)
 		launcher.panel = frame.panel
 		self.launcher.start()
 		self.SetTopWindow(frame)
@@ -52,11 +52,11 @@ class LauncherApp(wx.App):
 	def OnExit(self):
 		self.launcher.exit()
 
-class LauncherStatusBar(wx.StatusBar):
+class StatusBar(wx.StatusBar):
 	def __init__(self, parent):
 		wx.StatusBar.__init__(self, parent, -1)
 
-class LauncherFrame(wx.Frame):
+class Frame(wx.Frame):
 	def __init__(self, launcher):
 		self.launcher = launcher
 		wx.Frame.__init__(self, None, -1, 'Leginon', size=(750, 750),
@@ -82,10 +82,10 @@ class LauncherFrame(wx.Frame):
 		self.SetMenuBar(self.menubar)
 
 		# status bar
-		self.statusbar = LauncherStatusBar(self)
+		self.statusbar = StatusBar(self)
 		self.SetStatusBar(self.statusbar)
 
-		self.panel = LauncherPanel(self, launcher)
+		self.panel = Panel(self, launcher)
 
 	def onExit(self, evt):
 		self.launcher.exit()
@@ -175,7 +175,7 @@ iconmap = [('acquisition', acquisition.Acquisition),
 						('targetfinder', targetfinder.TargetFinder),
 						('node', node.Node)]
 
-class LauncherPanel(ListCtrlPanel):
+class Panel(ListCtrlPanel):
 	def __init__(self, parent, launcher):
 		self.launcher = launcher
 		ListCtrlPanel.__init__(self, parent, -1, style=wx.NO_BORDER,

@@ -79,7 +79,7 @@ class Manager(node.Node):
 		node.Node.__init__(self, name, session, otherdatabinder=mydatabinder,
 												xmlrpcport=xmlrpcport, **kwargs)
 
-		self.frame = gui.wx.Manager.ManagerFrame(self, self.research, self.publish)
+		self.frame = gui.wx.Manager.Frame(self, self.research, self.publish)
 
 		self.nodelocations = {}
 		self.broadcast = []

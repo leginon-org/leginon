@@ -37,7 +37,7 @@ stats.print_callers(30)
 #m.exit()
 
 try:
-	m = gui.wx.Manager.ManagerApp(None)
+	m = gui.wx.Manager.App(None)
 except RuntimeError, e:
 	print 'Unable to start Leginon:', str(e)
 else:

@@ -82,7 +82,7 @@ class AddLauncherPanelEvent(wx.PyEvent):
 		self.SetEventType(AddLauncherPanelEventType)
 		self.launcher = launcher
 
-class ManagerApp(wx.App):
+class App(wx.App):
 	def __init__(self, session, tcpport=None, xmlrpcport=None, **kwargs):
 		self.session = session
 		self.tcpport = tcpport
@@ -100,11 +100,11 @@ class ManagerApp(wx.App):
 	def OnExit(self):
 		self.manager.exit()
 
-class ManagerStatusBar(wx.StatusBar):
+class StatusBar(wx.StatusBar):
 	def __init__(self, parent):
 		wx.StatusBar.__init__(self, parent, -1)
 
-class ManagerFrame(wx.Frame):
+class Frame(wx.Frame):
 	def __init__(self, manager, research, publish):
 		self.manager = manager
 		self.research = research
@@ -192,7 +192,7 @@ class ManagerFrame(wx.Frame):
 		self.SetMenuBar(self.menubar)
 
 		# status bar
-		self.statusbar = ManagerStatusBar(self)
+		self.statusbar = StatusBar(self)
 		self.SetStatusBar(self.statusbar)
 
 		self.appgauge = None
@@ -207,7 +207,7 @@ class ManagerFrame(wx.Frame):
 		self.Bind(EVT_APPLICATION_KILLED, self.onApplicationKilled)
 		self.Bind(EVT_ADD_LAUNCHER_PANEL, self.onAddLauncherPanel)
 
-		self.panel = ManagerPanel(self, self.manager.uicontainer.location())
+		self.panel = Panel(self, self.manager.uicontainer.location())
 
 	def onAddLauncherPanel(self, evt):
 		# this doesn't really work
@@ -216,7 +216,7 @@ class ManagerFrame(wx.Frame):
 															wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.RESIZE_BORDER,
 												name='')
 		#sizer = wx.GridBagSizer(0, 0)
-		panel = gui.wx.Launcher.LauncherPanel(dialog, evt.launcher)
+		panel = gui.wx.Launcher.Panel(dialog, evt.launcher)
 		#sizer.Add(panel, (0, 0), (1, 1), wx.EXPAND|wx.ALL)
 		#dialog.SetSizerAndFit(sizer)
 
@@ -388,7 +388,7 @@ class ManagerFrame(wx.Frame):
 		if self.manager.getLauncherCount() > 0:
 			self.runappmenuitem.Enable(True)
 
-class ManagerPanel(wx.ScrolledWindow):
+class Panel(wx.ScrolledWindow):
 	def __init__(self, parent, location):
 		self._enabled = True
 		self._shown = True
