@@ -85,7 +85,7 @@ class wxListEdit(wxPanel):
 		self.editcallback = editcallback
 		wxPanel.__init__(self, parent, -1)
 		sizer = wxBoxSizer(wxVERTICAL)
-		self.entry = wxTextCtrl(self, -1)
+		self.entry = wxTextCtrl(self, -1, style=wxTE_PROCESS_ENTER)
 		insertbutton = wxButton(self, -1, 'Insert')
 		insertsizer = wxBoxSizer(wxHORIZONTAL)
 		insertsizer.Add(self.entry, 1, wxALIGN_CENTER|wxALL)
@@ -111,6 +111,7 @@ class wxListEdit(wxPanel):
 		EVT_BUTTON(self.upbutton, self.upbutton.GetId(), self.onUp)
 		EVT_BUTTON(self.downbutton, self.downbutton.GetId(), self.onDown)
 		EVT_LISTBOX(self.listbox, self.listbox.GetId(), self.onSelect)
+		EVT_TEXT_ENTER(self.entry, self.entry.GetId(), self.onInsert)
 
 	def fromString(self, string):
 		try:
