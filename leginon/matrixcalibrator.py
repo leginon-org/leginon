@@ -100,8 +100,8 @@ class MatrixCalibrator(node.Node):
 
 		mag = self.getMagnification()
 		self.publish(event.UnlockEvent(self.ID()))
-		key = self.calclient.magCalibrationKey(mag, self.parameter)
-		self.calclient.setCalibration(key, shifts)
+		self.calclient.setCalibration(mag, shifts)
+
 		print 'CALIBRATE DONE', shifts
 
 	def getMagnification(self):
