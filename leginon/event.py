@@ -295,7 +295,7 @@ class UnlockEvent(ControlEvent):
 class QueueGridEvent(ControlEvent):
 	def typemap(cls):
 		return ControlEvent.typemap() + (
-			('number', int),
+			('grid ID', int),
 		)
 	typemap = classmethod(typemap)
 

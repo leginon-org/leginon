@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/SetupWizard.py,v $
-# $Revision: 1.10 $
+# $Revision: 1.11 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-24 23:34:01 $
+# $Date: 2005-03-10 19:42:35 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -374,7 +374,7 @@ class SessionProjectPage(WizardPage):
 
 		sizer.Add(wx.StaticText(self, -1, 'Project:'), (1, 0), (1, 1),
 														wx.ALIGN_CENTER_VERTICAL)
-		if not parent.setup.projectdata.isConnected():
+		if parent.setup.projectdata is None:
 			raise NoProjectDatabaseError
 		self.projects = parent.setup.getProjects()
 		choices = self.projects.keys()
@@ -690,7 +690,10 @@ class Setup(object):
 	def __init__(self, research, publish):
 		self.research = research
 		self.publish = publish
-		self.projectdata = project.ProjectData()
+		try:
+			self.projectdata = project.ProjectData()
+		except project.NotConnectedError:
+			self.projectdata = None
 
 	def getUsers(self):
 		userdata = data.UserData(initializer={})
@@ -740,7 +743,7 @@ class Setup(object):
 						_indexBy('name', sessiondatalist))
 
 	def getProjects(self):
-		if not self.projectdata.isConnected():
+		if not self.projectdata is None:
 			return {}
 		projects = self.projectdata.getProjects()
 		projectdatalist = projects.getall()
@@ -774,7 +777,7 @@ class Setup(object):
 		return data.SessionData(initializer=initializer)
 
 	def linkSessionProject(self, sessiondata, projectid):
-		if not self.projectdata.isConnected():
+		if self.projectdata is None:
 			raise RuntimeError('Cannot link session, not connected to database.')
 		projectsession = project.ProjectExperiment(projectid, sessiondata['name'])
 		experiments = self.projectdata.getProjectExperiments()

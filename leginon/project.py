@@ -2,15 +2,16 @@
 import sqldict
 import leginonconfig
 
+class NotConnectedError(Exception):
+	pass
 
 # connection to the project database
 dbparams = {
-		'host':leginonconfig.DB_PROJECT_HOST,
-		'user':leginonconfig.DB_PROJECT_USER,
-		'db':leginonconfig.DB_PROJECT_NAME,
-		'passwd':leginonconfig.DB_PROJECT_PASS
-	}
-
+	'host': leginonconfig.DB_PROJECT_HOST,
+	'user': leginonconfig.DB_PROJECT_USER,
+	'db': leginonconfig.DB_PROJECT_NAME,
+	'passwd': leginonconfig.DB_PROJECT_PASS,
+}
 
 class Project(sqldict.ObjectBuilder):
 	'''Project: a class object to access the
@@ -41,30 +42,18 @@ class GridLocation(sqldict.ObjectBuilder):
 
 class ProjectData:
 	def __init__(self, **kwargs):
-		self.dbprojectconnection = False
+		if not dbparams['host']:
+			raise NotConnectedError('no hostname for project database')
 		try:
-			if not dbparams['host']:
-				raise Exception
 			self.db = sqldict.SQLDict(**dbparams)
-		except:
-			self.db = None
-			self.dbprojectconnection = False
-			return
-
-		if self.db.isConnected():
-			self.dbprojectconnection = True
-		else:
-			print 'No project DB'
-			return
+		except Exception, e:
+			raise NotConnectedError(e)
 
 		self.projects = Project().register(self.db)
 		self.projectexperiments = ProjectExperiment().register(self.db)
 		self.gridboxes = GridBox().register(self.db)
 		self.grids = Grid().register(self.db)
 		self.gridlocations = GridLocation().register(self.db)
-
-	def isConnected(self):
-		return self.dbprojectconnection
 
 	def getProjects(self):
 		return self.projects
@@ -97,10 +86,6 @@ if __name__ == "__main__":
 	# getall projects
 	#allprojects = projects.getall()
 	projectdata = ProjectData()
-	if not projectdata.isConnected():
-		print "Project DB not available"
-		sys.exit()
-
 	"""
 	for i in range(1, 97):
 		projectdata.newGrid('Robot Grids 2, #%d' % i, 113, i, 12, i)

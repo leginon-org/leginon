@@ -149,10 +149,13 @@ class Robot(node.Node):
 
 		# if label is same, kinda screwed
 		self.gridtrayids = {}
-		projectdata = project.ProjectData()
-		gridboxes = projectdata.getGridBoxes()
-		for i in gridboxes.getall():
-			self.gridtrayids[i['label']] = i['gridboxId']
+		try:
+			projectdata = project.ProjectData()
+			gridboxes = projectdata.getGridBoxes()
+			for i in gridboxes.getall():
+				self.gridtrayids[i['label']] = i['gridboxId']
+		except project.NotConnectedError, e:
+			self.logger.error('Failed to connect to the project database: %s' % e)
 
 		self.queue = Queue.Queue()
 		threading.Thread(name='robot control queue handler thread',
@@ -472,12 +475,20 @@ class Robot(node.Node):
 		return GridRequest(gridnumber)
 
 	def newGrid(self, gridboxid, gridnumber):
-		projectdata = project.ProjectData()
+		try:
+			projectdata = project.ProjectData()
+		except project.NotConnectedError, e:
+			self.logger.error('Failed to create grid information: %s' % e)
+			return None
 		return projectdata.newGrid('Robot Generated Grid #%d' % gridnumber,	
 																-1, gridnumber, gridboxid, gridnumber)
 
 	def getGridID(self, gridboxid, gridnumber):
-		projectdata = project.ProjectData()
+		try:
+			projectdata = project.ProjectData()
+		except project.NotConnectedError, e:
+			self.logger.error('Failed to find grid information: %s' % e)
+			return None
 		gridlocations = projectdata.getGridLocations()
 		gridboxidindex = gridlocations.Index(['gridboxId'])
 		gridlocations = gridboxidindex[gridboxid].fetchall()
@@ -488,6 +499,8 @@ class Robot(node.Node):
 
 	def makeGridData(self, gridnumber):
 		gridid = self.getGridID(self.gridtrayid, gridnumber)
+		if gridid is None:
+			return None
 		initializer = {'grid ID': gridid}
 		querydata = data.GridData(initializer=initializer)
 		griddatalist = self.research(querydata)
@@ -606,7 +619,11 @@ class Robot(node.Node):
 			gridboxid = self.gridtrayids[traylabel]
 		except KeyError:
 			raise ValueError('unknown tray label')
-		projectdata = project.ProjectData()
+		try:
+			projectdata = project.ProjectData()
+		except project.NotConnectedError, e:
+			self.logger.error('Failed to get grid locations: %s' % e)
+			return None
 		gridlocations = projectdata.getGridLocations()
 		gridboxidindex = gridlocations.Index(['gridboxId'])
 		gridlocations = gridboxidindex[gridboxid].fetchall()
@@ -616,7 +633,11 @@ class Robot(node.Node):
 		if self.simulate:
 			evt = event.MakeTargetListEvent()
 			evt['grid'] = self.makeGridData(gridnumber)
-			self.outputEvent(evt)
+			if evt['grid'] is None:
+				self.logger.error('Data collection event not sent')
+			else:
+				self.outputEvent(evt)
+				self.logger.info('Data collection event outputted')
 			return
 
 		self.logger.info('Grid inserted.')
@@ -626,8 +647,11 @@ class Robot(node.Node):
 		self.logger.info('Outputting data collection event')
 		evt = event.MakeTargetListEvent()
 		evt['grid'] = self.makeGridData(gridnumber)
-		self.outputEvent(evt)
-		self.logger.info('Data collection event outputted')
+		if evt['grid'] is None:
+			self.logger.error('Data collection event not sent')
+		else:
+			self.outputEvent(evt)
+			self.logger.info('Data collection event outputted')
 
 	def waitScope(self, parameter, value, interval=None, timeout=0.0):
 		if self.instrument.tem.hasAttribute(parameter):

@@ -42,6 +42,7 @@ class PresetsClient(object):
 	client functions for nodes to access PresetsManager
 	'''
 	eventinputs = [event.PresetChangedEvent, event.PresetPublishEvent]
+	eventoutputs = [event.ChangePresetEvent]
 	def __init__(self, node):
 		self.node = node
 		self.node.addEventInput(event.PresetChangedEvent, self.presetchanged)

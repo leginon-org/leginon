@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PixelSizeCalibrator.py,v $
-# $Revision: 1.14 $
+# $Revision: 1.15 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-10 01:29:27 $
+# $Date: 2005-03-10 19:42:35 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -324,7 +324,7 @@ class PixelSizeListCtrl(wx.ListCtrl, ListCtrlAutoWidthMixin):
 			mag = int(self.GetItem(i, 0).GetText())
 			text = self.GetItem(i, 1).GetText()
 			try:
-				ps = int(text)
+				ps = float(text)
 			except ValueError:
 				ps = None
 			comment = self.GetItem(i, 2).GetText()
