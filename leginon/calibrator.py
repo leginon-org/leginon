@@ -16,7 +16,7 @@ class Calibrator(node.Node):
 
 	def getMagnification(self):
 		magdata = self.researchByDataID(('magnification',))
-		return magdata.content['magnification']
+		return magdata['em']['magnification']
 
 	def currentState(self):
 		dat = self.researchByDataID(('scope',))
