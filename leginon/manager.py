@@ -357,16 +357,8 @@ class Manager(node.Node):
 			dependenciescopy.append(launcher)
 
 		self.initializednodescondition.acquire()
-		wait = False
-		for nodeid in dependenciescopy:
-			if nodeid not in self.initializednodes:
-				wait = True
-		while wait:
+		while not self.sublist(dependenciescopy, self.initializednodes):
 			self.initializednodescondition.wait()
-			wait = False
-			for nodeid in dependenciescopy:
-				if nodeid not in self.initializednodes:
-					wait = True
 		self.initializednodescondition.release()
 
 		ev = event.LaunchEvent(self.ID(), newproc=newproc,
@@ -374,6 +366,13 @@ class Manager(node.Node):
 		self.outputEvent(ev, 0, launcher)
 		return newid
 
+	# probably an easier way
+	def sublist(self, list1, list2):
+		'''returns True if all elements in list1 are in list2, otherwise False'''
+		for i in list1:
+			if i not in list2:
+				return False
+		return True
 
 	def addNode(self, hostname, port):
 		'''Add a running node to the manager. Sends an event to the location.'''
