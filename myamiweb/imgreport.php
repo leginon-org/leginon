@@ -162,7 +162,7 @@ echo formatHtmlRow('Size', $filesize);
 echo formatHtmlRow('Acquired', $imageinfo[timestamp]);
 echo formatHtmlRow('Path', $path);
 echo formatHtmlRow('Session', "$sessioninfo[Name] - $sessioninfo[Purpose]");
-echo formatHtmlRow('Instrument', "$sessioninfo[Instrument] - $sessioninfo[Instrument description]");
+echo formatHtmlRow('Instrument', $sessioninfo[Instrument].' - '.$sessioninfo['Instrument description']);
 echo "</table>";
 ?>
 	</td>
@@ -184,8 +184,10 @@ if (is_array($imageinfo)) {
 	foreach($presets as $k=>$v) {
 		if ($k=='defocus')
 			echo formatHtmlRow($k, $leginondata->formatDefocus($v));
-		else if ($k=='pixelsize')
+		else if ($k=='pixelsize') {
+			$v *= $imageinfo['binning'];
 			echo formatHtmlRow($k, $leginondata->formatPixelsize($v));
+		}
 		else if ($k=='dose') {
 			if (!empty($v))
 				echo formatHtmlRow($k, $leginondata->formatDose($v));
