@@ -763,6 +763,7 @@ class Manager(node.Node):
 			name = applicationdata['name']
 			if name not in applicationnamelist:
 				applicationnamelist.append(name)
+		applicationnamelist.sort()
 		self.uiapplicationlist.set(applicationnamelist, 0)
 
 	def uiLoadApp(self):
