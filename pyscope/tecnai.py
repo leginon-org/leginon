@@ -83,7 +83,7 @@ class Tecnai(tem.TEM):
 			return False
 
 	def setCorrectedStagePosition(self, value):
-		self.correctedstage = value
+		self.correctedstage = bool(value)
 		return self.correctedstage
 
 	def getCorrectedStagePosition(self):
