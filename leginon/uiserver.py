@@ -197,6 +197,8 @@ class Server(XMLRPCServer, uidata.Container):
 	def _addObject(self, uiobject, client=None, block=True, thread=True):
 		uiobject.server = self
 		properties = {}
+#		if isinstance(uiobject, uidata.Container):
+#			properties['children'] = self.getChildren(uiobject)
 		properties['dependencies'] = []
 		properties['namelist'] = uiobject.getNameList()
 		properties['typelist'] = uiobject.typelist
@@ -214,9 +216,29 @@ class Server(XMLRPCServer, uidata.Container):
 				properties['value'] = uiobject.toXMLRPC(properties['value'])
 		self.localExecute('addFromServer', properties, client, block, thread)
 
+		properties = self.toXMLRPC(uiobject, properties)
+		self.XMLRPCExecute('add', properties, client, block, thread)
+
+	def toXMLRPC(self, uiobject, properties):
 		if hasattr(uiobject, 'toXMLRPC') and 'value' in properties:
 			properties['value'] = uiobject.toXMLRPC(properties['value'])
-		self.XMLRPCExecute('add', properties, client, block, thread)
+		return properties
+
+	def getChildren(self, uiobject):
+		children = []
+		for childobject in uiobject.uiobjectlist:
+			properties = {}
+			properties['dependencies'] = []
+			properties['namelist'] = childobject.getNameList()
+			properties['typelist'] = childobject.typelist
+			try:
+				properties['value'] = childobject.value
+			except AttributeError:
+				pass
+			if isinstance(childobject, uidata.Container):
+				properties['children'] = self.getChildren(childobject)
+			children.append(properties)
+		return children
 
 	def _setObject(self, uiobject, client=None, block=True, thread=False):
 		properties = {}
