@@ -47,9 +47,9 @@ DB_PASS		= ''
 #########################
 #        Paths          #
 #########################
+## These are defaults, but can be changed per session configuration.
 ## use os.getcwd() for current directory
 LEGINON_PATH	= os.getcwd()
-
 IMAGE_PATH	= os.path.join(LEGINON_PATH, 'images')
 PREFS_PATH	= os.path.join(LEGINON_PATH, 'prefs')
 
