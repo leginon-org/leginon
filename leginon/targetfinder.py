@@ -59,11 +59,13 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 			self.findTargets(imagedata, targetlist)
 		self.makeTargetListEvent(targetlist)
 		if self.settings['queue']:
+			self.logger.info('Queue is on... not generating event')
 			pubevent=False
 		else:
+			self.logger.info('Queue is off... generating event')
 			pubevent=True
 		self.publish(targetlist, database=True, dbforce=True, pubevent=pubevent)
-		if self.settings['wait for done']:
+		if self.settings['wait for done'] and pubevent:
 			self.setStatus('waiting')
 			self.waitForTargetListDone()
 			self.setStatus('processing')
