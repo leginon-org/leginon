@@ -91,7 +91,7 @@ class DriftManager(watcher.Watcher):
 
 		## acquire images, measure drift
 		self.abortevent.clear()
-		self.acquireLoop()
+		self.acquireLoop(mag)
 
 		## publish ImageTargetShiftData
 		self.publishImageShifts(requested=False)
@@ -118,7 +118,7 @@ class DriftManager(watcher.Watcher):
 		self.im.set(imagedata['image'])
 		return imagedata
 
-	def acquireLoop(self):
+	def acquireLoop(self, mag):
 
 		## acquire first image
 		imagedata = self.acquireImage()
