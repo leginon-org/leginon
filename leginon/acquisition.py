@@ -54,6 +54,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'duplicate target type': 'focus',
 		'iterations': 1,
 		'wait time': 0,
+		'adjust for drift': False,
 	}
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
 								+ [event.DriftDoneEvent,

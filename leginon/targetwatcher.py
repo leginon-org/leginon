@@ -252,7 +252,8 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			while process_status == 'repeat':
 				attempt += 1
 
-				adjustedtarget = self.adjustTargetForDrift(target, adjustedtarget)
+				if self.settings['adjust for drift']:
+					adjustedtarget = self.adjustTargetForDrift(target, adjustedtarget)
 
 				# now have processTargetData work on it
 				try:

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Acquisition.py,v $
-# $Revision: 1.32 $
+# $Revision: 1.33 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-24 21:35:53 $
+# $Date: 2005-04-01 22:35:55 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -195,6 +195,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 																				'Wait for a node to process the image')
 		self.widgets['wait for rejects'] = wx.CheckBox(self, -1,
 																				'Publish and wait for rejected targets')
+		self.widgets['adjust for drift'] = wx.CheckBox(self, -1,
+																				'Adjust targets for drift')
 
 		# simulate loop settings
 		self.widgets['wait time'] = FloatEntry(self, -1, min=0.0, chars=6)
@@ -248,7 +250,9 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['wait for rejects'], (4, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(sbszsim, (5,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['adjust for drift'], (5, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(sbszsim, (6,0), (1,1), wx.ALIGN_CENTER_VERTICAL)
 #		sz.Add(szduplicate, (5, 1), (1, 1),
 #						wx.ALIGN_CENTER_VERTICAL)
 #		sz.AddGrowableRow(6)
