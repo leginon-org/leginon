@@ -21,14 +21,9 @@ class Launcher(node.Node):
 		self.start()
 
 	def addManager(self, loc):
-		'''
-		Node uses NodeAvailableEvent 
-		This uses LauncherAvailableEvent
-		'''
 		self.managerclient = self.clientclass(self.ID(), loc)
-
-		launcherinfo = self.location()
-		e = event.LauncherAvailableEvent(self.ID(), launcherinfo)
+		e = event.NodeAvailableEvent(self.ID(), self.location(),
+					self.__class__.__name__)
 		self.outputEvent(ievent=e, wait=1)
 		time.sleep(1)
 		self.publishNodeClasses()

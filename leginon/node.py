@@ -238,9 +238,8 @@ class Node(leginonobject.LeginonObject):
 	def addManager(self, loc):
 		'''Set the manager controlling the node and notify said manager this node is available.'''
 		self.managerclient = self.clientclass(self.ID(), loc)
-		newid = self.ID()
-		myloc = self.location()
-		available_event = event.NodeAvailableEvent(newid, myloc)
+		available_event = event.NodeAvailableEvent(self.ID(), self.location(),
+												self.__class__.__name__)
 		self.outputEvent(ievent=available_event, wait=True)
 
 	def handleAddManager(self, ievent):
@@ -290,6 +289,7 @@ class Node(leginonobject.LeginonObject):
 		if value is None:
 			try:
 				return self.key2str(self.server.datahandler.datadict)
+				return self.server.datahandler.datadict
 			except AttributeError:
 				return {}
 

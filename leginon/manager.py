@@ -212,10 +212,13 @@ class Manager(node.Node):
 		nodeid = readyevent.id[:-1]
 		self.printerror('registering node ' + str(nodeid))
 
-		nodelocation = readyevent.content
+		print readyevent.content
+		nodelocation = readyevent.content['location']
 
 		# check if new node is launcher
-		if isinstance(readyevent, event.LauncherAvailableEvent):
+#		if isinstance(readyevent, event.LauncherAvailableEvent):
+		print readyevent.content
+		if readyevent.content['class'] == 'Launcher':
 			self.addLauncher(nodeid, nodelocation)
 
 		# for the clients and mapping
@@ -384,13 +387,13 @@ class Manager(node.Node):
 	def uiNodeDict(self):
 		'''Returns a dict describing all currently managed nodes aliasing a readablenode name to the node's location.'''
 		nodeinfo = {}
-		nodedict = self.uiNodeIDMapping()
-		for nodename in nodedict:
-			nodeid = nodedict[nodename]
+		nodelist = self.uiNodeList()
+		for nodeidstr in nodelist:
+			nodeid = eval(nodeidstr)
 			nodelocationdata = self.server.datahandler.query(nodeid)
 			if nodelocationdata is not None:
 				nodeloc = nodelocationdata.content
-				nodeinfo[nodename] = nodeloc
+				nodeinfo[nodeidstr] = nodeloc
 		return nodeinfo
 
 	def uiAddNode(self, hostname, port):
@@ -422,22 +425,17 @@ class Manager(node.Node):
 		self.launchNode(launcher_id, newproc, nodeclass, name, args)
 		return ''
 
-	def uiKillNode(self, nodename):
+	def uiKillNode(self, nodeidstr):
 		'''UI helper calling killNode, using user readable node aliases. See killNode.'''
-		nodedict = self.uiNodeIDMapping()
-		nodeid = nodedict[nodename]
-		self.killNode(nodeid)
+		self.killNode(eval(nodeidstr))
 		return ''
 
-	def uiAddDistmap(self, eventclass_str, fromnode_str, tonode_str):
+	def uiAddDistmap(self, eventclass_str, fromnodeidstr, tonodeidstr):
 		'''a UI helper for addEventDistmap. Uses strings to represent event class and node IDs.'''
 		self.printerror('binding event %s from %s to %s'
-										% (eventclass_str, fromnode_str, tonode_str))
+										% (eventclass_str, fromnodeidstr, tonodeidstr))
 		eventclass = self.uieventclasses[eventclass_str]
-		nodedict = self.uiNodeIDMapping()
-		fromnode_id = nodedict[fromnode_str]
-		tonode_id = nodedict[tonode_str]
-		self.addEventDistmap(eventclass, fromnode_id, tonode_id)
+		self.addEventDistmap(eventclass, eval(fromnodeidstr), eval(tonodeidstr))
 
 		## just to make xmlrpc happy
 		return ''
@@ -445,7 +443,7 @@ class Manager(node.Node):
 	def	uiGetNodeLocations(self):
 		'''UI helper for mapping a node alias to the node's location.'''
 		nodelocations = self.uiNodeDict()
-		nodelocations[self.id[-1]] = self.location()
+		nodelocations[str(self.id)] = self.location()
 		return nodelocations
 
 	def uiSaveApp(self, filename):
@@ -468,19 +466,19 @@ class Manager(node.Node):
 		self.killApp()
 		return ''
 
-	def uiNodeListCallback(self):
+	def uiNodeList(self):
 		'''UI callback function returning list of user readable node aliases.'''
 		nodelist = []
 		for newid in self.clients:
-			nodelist.append(newid[-1])
+			nodelist.append(str(newid))
 		return nodelist
 
-	def uiNodeIDMapping(self):
-		'''UI callback function returning a dictionary mapping user readable node aliases to node IDs.'''
-		nodedict = {}
-		for newid in self.clients:
-			nodedict[newid[-1]] = newid
-		return nodedict
+#	def uiNodeIDMapping(self):
+#		'''UI callback function returning a dictionary mapping user readable node aliases to node IDs.'''
+#		nodedict = {}
+#		for newid in self.clients:
+#			nodedict[str(newid)] = newid
+#		return nodedict
 
 	def defineUserInterface(self):
 		'''See node.Node.defineUserInterface.'''
@@ -488,7 +486,7 @@ class Manager(node.Node):
 
 		# this is data for ui to read, but not visible
 		nodelistdata = self.registerUIData('nodelist', 'array', 'r')
-		nodelistdata.registerCallback(self.uiNodeListCallback)
+		nodelistdata.registerCallback(self.uiNodeList)
 
 		# launch node from tree of launchers
 		self.uilauncherdict = {}
