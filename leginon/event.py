@@ -187,6 +187,9 @@ class PresetImagePublishEvent(CameraImagePublishEvent):
 class AcquisitionImagePublishEvent(PresetImagePublishEvent):
 	dataclass = data.AcquisitionImageData
 
+class FilmPublishEvent(AcquisitionImagePublishEvent):
+	dataclass = data.FilmData
+
 class TrialImagePublishEvent(PresetImagePublishEvent):
 	dataclass = data.TrialImageData
 
