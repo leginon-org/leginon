@@ -344,6 +344,7 @@ class NodeLabel(object):
 		self.editor.connectionmanager.deleteConnections(self)
 		self.delete()
 		self.editor.app.delLaunchSpec(self.args)
+		self.editor.nodes.remove(self)
 
 	def getBox(self):
 		height = self.label.winfo_reqheight()
