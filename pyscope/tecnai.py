@@ -75,6 +75,7 @@ class Tecnai(object):
 			'raw image shift': {'get': 'getRawImageShift', 'set': 'setRawImageShift'},
 			'defocus': {'get': 'getDefocus', 'set': 'setDefocus'},
 			'magnification': {'get': 'getMagnification', 'set': 'setMagnification'},
+			'magnifications': {'get': 'getMagnifications'},
 			'stage position': {'get': 'getStagePosition', 'set': 'setStagePosition'},
 			'corrected stage position': {'get': 'getCorrectedStagePosition',
 																		'set': 'setCorrectedStagePosition'},
@@ -142,6 +143,7 @@ class Tecnai(object):
 																	{'x': {'type': float}, 'y': {'type': float}}},
 			'defocus': {'type': float},
 			'magnification': {'type': float},
+			'magnifications': {'type': list},
 			# correct for holder type
 			'stage position': {'type': dict, 'values':
 																{'x': {'type': float}, 'y': {'type': float},
@@ -183,7 +185,7 @@ class Tecnai(object):
 			'external shutter': {'type': str, 'values': ['connected', 'disconnected']},
 		}
 		self.parameterdependencies = {
-			'main screen position': ['magnification'],
+			'main screen position': ['magnifications'],
 			'film exposure type': ['film exposure time'],
 			'defocus': ['focus'],
 			'reset defocus': ['defocus'],
@@ -619,6 +621,16 @@ class Tecnai(object):
 			
 		self.theScope.Projection.MagnificationIndex = prevmag['index']
 		return
+
+	def getMagnifications(self):
+		if self.theScope.Camera.MainScreen == win32com.client.constants.spUp:
+			key = 'up'
+		elif self.theScope.Camera.MainScreen == win32com.client.constants.spDown:
+			key = 'down'
+		else:
+			raise SystemError
+
+		return map(lambda m: m[key], self.magTable)	
 	
 	def getStagePosition(self):
 		value = {'x': None, 'y': None, 'z': None, 'a': None}
