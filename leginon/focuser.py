@@ -106,7 +106,7 @@ class Focuser(acquisition.Acquisition):
 		self.btilt = self.registerUIData('Beam Tilt', 'float', default=0.02, permissions='rw')
 		focustypes = self.registerUIData('focustypes', 'array', default=self.focus_methods.keys())
 		self.focustype = self.registerUIData('Focus Correction Type', 'string', choices=focustypes, permissions='rw', default='None')
-		self.stigcorrection = self.registerUIData('Stigmator Correction', 'boolean', permissions='rw')
+		self.stigcorrection = self.registerUIData('Stigmator Correction', 'boolean', default=0,  permissions='rw')
 		self.publishimages = self.registerUIData('Publish Images', 'boolean', default=1, permissions='rw')
 
 		test = self.registerUIMethod(self.uiTest, 'Test Autofocus', ())

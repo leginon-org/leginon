@@ -721,6 +721,15 @@ class FocusTargetWidget(TargetWidget):
 		TargetWidget.__init__(self, parent, acquisition, clicktargetfinder)
 
 		widget = self.addWidget('Auto Focus', focuser,
+															('Presets', 'Acquisition Presets'), True)
+		self.arrangeEntry(widget, 20, Tkinter.LEFT, False)
+		widget = self.addWidget('Auto Focus', focuser,
+															('Preferences', 'TEM Parameter'), True)
+		self.arrangeCombobox(widget, 'Positioning Method', False)
+		widget = self.addWidget('Auto Focus', focuser,
+															('Preferences', 'Acquisition Type'), True)
+		self.arrangeCombobox(widget, None, False)
+		widget = self.addWidget('Auto Focus', focuser,
 														('Focuser Setup', 'Beam Tilt'), True)
 		self.arrangeEntry(widget, 7, Tkinter.RIGHT, False)
 		widget = self.addWidget('Auto Focus', focuser,
