@@ -33,6 +33,14 @@ class ImViewer(watcher.Watcher):
 		self.numarray = None
 		self.viewer_ready = threading.Event()
 		#self.start_viewer_thread()
+
+		## default camera config
+		currentconfig = self.cam.config()
+		currentconfig['state']['dimension']['x'] = 1024
+		currentconfig['state']['binning']['x'] = 4
+		currentconfig['state']['exposure time'] = 100
+
+		self.cam.config(currentconfig)
 		self.defineUserInterface()
 		self.start()
 
