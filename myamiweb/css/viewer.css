@@ -150,3 +150,21 @@ A.header:hover{
 }
 
 .textarea { font-family: Arial,Helvetica,sans-serif; font-size: 8pt }
+
+INPUT.field {
+	padding: 3px 4px;
+	border: 1px solid #3366aa;
+}
+
+INPUT.button {
+ background: #3366aa;
+ color: #ffffff;
+ font-weight: bold;
+/*/*/
+ border: 1px outset #bdcebb;
+ font-size: 10px;
+ voice-family: "\"}\"";
+ voice-family: inherit;
+ padding: 3px 4px;
+/*  ns4. */
+}

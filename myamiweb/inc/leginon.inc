@@ -166,6 +166,15 @@ class leginondata {
 		return $npath;
 	}
 
+	function getLastFilenameId($sessionId) {
+		$q = "select `DEF_id` as `id` from AcquisitionImageData "
+			." where `REF|SessionData|session`='$sessionId' "
+			." order by `DEF_timestamp` desc limit 1 ";
+		$RfileInfo = $this->mysql->SQLQuery($q);
+		$fileInfo = mysql_fetch_array($RfileInfo);
+		return $fileInfo[id];
+	} 
+
 	function getImagePath($sessionId){
 		$q = "select `image path` as path from `SessionData` "
 		    ." where `DEF_id`='$sessionId' ";

@@ -13,6 +13,7 @@ $link->setImagePath('img/');
 $link->addlink('imageviewer.php','Image Viewer','', 'viewer');
 $link->addlink('3wviewer.php','3 Way Viewer','', '3wviewer');
 $link->addlink('application.php','Import/Export Application','', 'application');
+$link->addlink('loi.php','LOI','', 'loi');
 
 ?>
 

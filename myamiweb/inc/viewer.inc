@@ -10,6 +10,7 @@
 require_once("config.php");
 require_once("inc/util.inc");
 require_once('inc/mysql.inc');
+require ('inc/button.inc');
 
 $VIEWNB=0;
 
@@ -39,6 +40,78 @@ class viewer {
 		$this->addsessionsel = $selector;
 	}
 
+	function addLoiControl($refreshtime="") {
+		if (empty($refreshtime))
+			$refreshtime = 5;
+		$btstop = new button('st1', 'stop');
+		$btstop->setLink('javascript:stop()');
+		$btstart = new button('st2', 'start');
+		$btstart->setLink('javascript:start()');
+		$loijavascript = ''
+		.$btstop->getJavascript().$this->crlf
+		.$btstart->getJavascript().$this->crlf
+		.'var mintime=1000;'.$this->crlf
+		.'var maxtime=60000;'.$this->crlf
+		.'var refreshtime=5000;'.$this->crlf
+		.'window.name="loi";'.$this->crlf
+		.''.$this->crlf
+		.'function start(){'.$this->crlf
+		.'	if (cif=this.myif) {'.$this->crlf
+		.'		formatrefreshtime();'.$this->crlf
+		.'		cif.start(refreshtime);'.$this->crlf
+		.'	}'.$this->crlf
+		.'}'.$this->crlf
+		.''.$this->crlf
+		.'function formatrefreshtime() {'.$this->crlf
+		.'	refreshtime=parseInt(document.viewerform.refreshtime.value)*1000;'.$this->crlf
+		.'	if (!refreshtime || refreshtime<mintime)'.$this->crlf
+		.'		refreshtime = mintime;'.$this->crlf
+		.'	if (refreshtime>maxtime)'.$this->crlf
+		.'		refreshtime = maxtime;'.$this->crlf
+		.'	document.viewerform.refreshtime.value = refreshtime/1000;'.$this->crlf
+		.'}'.$this->crlf
+		.''.$this->crlf
+		.'function stop() {'.$this->crlf
+		.'	if (cif=this.myif) {'.$this->crlf
+		.'		cif.stop();'.$this->crlf
+		.'	}'.$this->crlf
+		.'}'.$this->crlf
+		.''.$this->crlf
+		.'function reset(id) {'.$this->crlf
+		.'	jsimgId=id;'.$this->crlf
+		.'	updateviews();'.$this->crlf
+		.'}'.$this->crlf
+		.''.$this->crlf;
+
+		$loicontrol = ''
+		.'<table border=0>'.$this->crlf
+		.'<tr>'.$this->crlf
+		.'<td>'.$this->crlf
+		.'	<label for="refreshtime">Refresh (s):</label>'.$this->crlf
+		.'</td>'.$this->crlf
+		.'<td>'.$this->crlf
+		.'	<input class="field" type="text" name="refreshtime" size="4" value="'.$refreshtime.'">'.$this->crlf
+		.'</td>'.$this->crlf
+		.'<td>'.$this->crlf
+		.'	'.$btstop->display().$this->crlf
+		.'</td>'.$this->crlf
+		.'<td>'.$this->crlf
+		.'	'.$btstart->display().$this->crlf
+		.'</td>'.$this->crlf
+		.'<td>'.$this->crlf
+		.'<iframe name="myif" '.$this->crlf
+		.'	src="getlastfileid.php?session='.$this->sessionId.'"'.$this->crlf
+		.'	frameborder="0" width="0" height="0"'.$this->crlf
+		.'	marginheight="0" marginwidth="0"'.$this->crlf
+		.'	scrolling="no" ></iframe>'.$this->crlf
+		.'</td>'.$this->crlf
+		.'</tr>'.$this->crlf
+		.'</table>'.$this->crlf;
+
+		$this->addloicontrol = $loicontrol;
+		$this->addloijavascript = $loijavascript;
+	}
+
 	function addFileSelector($filenames=array(), $size=40) {
 		if ($size) $htmlsize = "size=$size";
 		$selector = '<select name="imageId" '.$htmlsize
@@ -56,22 +129,31 @@ class viewer {
 
 	function getJavascript() {
 		$str = '<script src="js/viewer.js"></script>'.$this->crlf;
+		$str .= '<script src="js/button.js"></script>'.$this->crlf;
 		$str .= '<script>'.$this->crlf;
 		if ($this->sessionId)
 			$str .= 'var jsSessionId = '.$this->sessionId.";".$this->crlf;
-		$str .= 'var jsimgId;'.$this->crlf;
-		$str .= ''.$this->crlf
-		.'</script>'.$this->crlf;
+		$jsimgId = ($this->imageId) ? ' = '.$this->imageId.';' : ';';
+		$str .= 'var jsimgId'.$jsimgId.$this->crlf;
+		$str .= ''.$this->crlf;
+		if ($this->addloijavascript)
+			$str .= $this->addloijavascript;
+		$str .= '</script>'.$this->crlf;
 		return $str;
 	}
 
 	function getJavascriptInit() {
 		$init = '<script>'.$this->crlf;
+		$init .= 'var jsviews = new Array();'.$this->crlf;
 		$initbuttons="";
-		foreach ($this->views as $v) 
+		$nv=0;
+		foreach ($this->views as $v) {
 			$init .= $v->getJavaScript().$this->crlf;
-			$init .= 'function updateviews() { '.$this->crlf;
-			$init .= ''.$this->crlf;
+			$init .= 'jsviews['.$nv.']="'.$v->getName().'";'.$this->crlf;
+			$nv++;
+		}
+		$init .= 'function updateviews() { '.$this->crlf;
+		$init .= ''.$this->crlf;
 		foreach ($this->views as $v) {
 			$name = $v->getName();
 			$init .= '	newfile("'.$name.'");'.$this->crlf;
@@ -83,6 +165,8 @@ class viewer {
 		$init .= $initbuttons.$this->crlf;
 		$init .= '	setimgId();'.$this->crlf;
 		$init .= '	updateviews();'.$this->crlf;
+		if ($this->addloijavascript)
+			$init .= '	start();'.$this->crlf;
 		$init .= '}'.$this->crlf;
 		$init .= ''.$this->crlf;
 		$init .= '</script>'.$this->crlf;
@@ -100,6 +184,13 @@ class viewer {
 		$display = '<form method="post" name="viewerform"  '.
 				'action="'.$PHP_SELF.'">'.$this->crlf;
 		$display .= '<table border="0">';
+		if ($this->addloicontrol) {
+			$display .= '<tr>';
+			$display .= '<td colspan=2>';
+			$display .= $this->addloicontrol;
+			$display .= '</td>';
+			$display .= '</tr>';
+		}
 		if ($this->addsessionsel) {
 			$display .= '<tr>';
 			$display .= '<td colspan=2>';
@@ -197,7 +288,7 @@ class view {
 		$this->datatypes = $datatypes;
 	}
 
-	function setImageId($imgId) {
+	function setImageId($imageId) {
 		$this->imageId=$imageId;
 	}
 
@@ -234,6 +325,10 @@ class view {
 		return $this->displayview;
 	}
 
+	function selectDataType($type) {
+		$this->selecteddatatype = $type;
+	}
+
 	function display() {
 		$iconwidth=15;
 		$datatypes = $this->datatypes;
@@ -242,7 +337,8 @@ class view {
 		$imgname = $this->name.'img';
 		$prename = $this->name.'pre';
 		$prememo = $this->name.'prem';
-		$defaultpre = ($_POST[$prememo]) ? $_POST[$prememo] : $datatypes[0];
+		$defaultdatatype = ($this->selecteddatatype) ? $this->selecteddatatype : $datatypes[0];
+		$defaultpre = ($_POST[$prememo]) ? $_POST[$prememo] : $defaultdatatype;
 		$selpre = ($_POST[$prename]) ? $_POST[$prename] : $defaultpre;
 		$displayview = $this->getViewState();
 		$htmlframe = '
@@ -294,7 +390,7 @@ class view {
 			</tr>
 			</table>
 		 </tr>
-		 <tr>
+		 <tr valign=bottom>
 			<td colspan="5">	';
 		if ($displayview=="on") {
 		$htmlframe .='
@@ -314,29 +410,25 @@ class view {
 					</select>
 			<a href="javascript:popUpAdjust(\''.$url.'\',\''.$name.'\',\''.$param.'\');">adjust&raquo;</a>
 				</td>
-			 </tr>
-			 <tr>
-				<td>
-		';
+			 </tr>';
 		if ($this->displaypreset) {
 		$htmlframe .= '
+			 <tr>
+				<td>
 		<iframe name="'.$this->name.'if" 
                         src="getpreset.php"
-			frameborder="0" width="100%" height="50"
+			frameborder="0" width="'.$this->size.'" height="50"
 			marginheight="1" marginwidth="5"
 			scrolling="no" ></iframe>
 		';
-		$htmlframe .= '
-				</td>
+		$htmlframe .= '</td>
 			 </tr>
-			 <tr>
-				<td>
 		';
-		} else $htmlframe .="&nbsp;";
+		}
 
-		$htmlframe .= '
-			<a href="javascript:void(0)" id="'.$this->name.'href">
-			<img name="'.$this->name.'img" src="img/empty.gif" border="0" hspace="0" vspace="0" width="'.$this->size.'" height="'.$this->size.'"></a>';
+		$htmlframe .= '<tr><td>
+			<a href="javascript:void(0)" id="'.$this->name.'href">'.
+			'<img name="'.$this->name.'img" src="img/empty.gif" border="0" hspace="0" vspace="0" width="'.$this->size.'" ></a>'; 
 
 		$htmlframe .= '
 				</td>
