@@ -317,13 +317,39 @@ class TargetImagePanel(ImagePanel):
 		self.callback = callback
 		ImagePanel.__init__(self, parent, id)
 		self.targets = {}
-		EVT_LEFT_DCLICK(self.panel, self.OnLeftDoubleClick)
-		EVT_RIGHT_DCLICK(self.panel, self.OnRightDoubleClick)
 		self.closest_target = None
 		self.combobox = None
 		self.target_type = None
 		self.colorlist = [wxRED, wxBLUE, wxColor(255, 0, 255), wxColor(0, 255, 255)]
 		self.colors = {}
+
+	def OnZoomButton(self, evt):
+		if self.zoombutton.GetToggle():
+			if len(self.targets) > 0 and self.targetbutton.GetToggle():
+				self.targetbutton.SetToggle(False)
+				self.OnTargetButton(None)
+		ImagePanel.OnZoomButton(self, evt)
+
+	def OnTargetButton(self, evt):
+		if self.targetbutton.GetToggle():
+			if self.zoombutton.GetToggle():
+				self.zoombutton.SetToggle(False)
+				self.OnZoomButton(None)
+			EVT_LEFT_DCLICK(self.panel, self.OnLeftDoubleClick)
+			EVT_RIGHT_DCLICK(self.panel, self.OnRightDoubleClick)
+		else:
+			self.closest_target = None
+			EVT_LEFT_DCLICK(self.panel, None)
+			EVT_RIGHT_DCLICK(self.panel, None)
+			self.UpdateDrawing()
+
+	def initTarget(self):
+		bitmap = self.bitmapTool('targettool.bmp')
+		self.targetbutton = wxGenBitmapToggleButton(self, -1, bitmap, size=(24, 24))
+		self.targetbutton.SetBezelWidth(1)
+		self.targetbutton.SetToolTip(wxToolTip('Toggle Target Tool'))
+		EVT_BUTTON(self, self.targetbutton.GetId(), self.OnTargetButton)
+		self.toolsizer.Add(self.targetbutton, 0, wxALL, 3)
 
 	def apply(self, evt):
 		self.target_type = evt.GetString()
@@ -332,19 +358,19 @@ class TargetImagePanel(ImagePanel):
 	def addComboBox(self, name):
 		if self.combobox is None:
 			if len(self.targets) > 1:
-				sizer = wxBoxSizer(wxHORIZONTAL)
-				label = wxStaticText(self, -1, 'Target Type:')
+#				label = wxStaticText(self, -1, 'Target Type:')
 				self.combobox = wxComboBox(self, -1, value=self.target_type,
 																							choices=self.targets.keys(),
 																style=wxCB_DROPDOWN | wxCB_READONLY | wxCB_SORT)
 				EVT_COMBOBOX(self, self.combobox.GetId(), self.apply)
 				self.combobox.SetForegroundColour(self.colors[self.target_type])
-				sizer.Add(label, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
-				sizer.Add(self.combobox, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
-				self.sizer.Insert(0, sizer, 0, wxALIGN_LEFT | wxALL, 5)
-				self.Fit()
+#				self.toolsizer.Add(label, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
+				self.toolsizer.Add(self.combobox, 0, wxALIGN_CENTER|wxLEFT|wxRIGHT, 3)
+				self.toolsizer.Layout()
 			elif len(self.targets) == 1:
 				self.target_type = name
+				self.initTarget()
+				self.toolsizer.Layout()
 		else:
 			self.combobox.Append(name)
 
@@ -353,9 +379,13 @@ class TargetImagePanel(ImagePanel):
 			if len(self.targets) > 2:
 				self.combobox.Delete(self.combobox.FindString(name))
 			elif len(self.targets) == 2:
-				self.sizer.Remove(0)
+				self.toolsizer.Remove(self.combobox)
+				self.toolsizer.Layout()
 				self.target_type = self.targets.keys()[0]
 			else:
+				EVT_BUTTON(self, self.targetbutton.GetId(), None)
+				self.toolsizer.Remove(self.targetbutton)
+				self.toolsizer.Layout()
 				self.target_type = None
 
 	def addTargetType(self, name, value=[]):
@@ -404,9 +434,10 @@ class TargetImagePanel(ImagePanel):
 
 	def motion(self, evt):
 		ImagePanel.motion(self, evt)
-		viewoffset = self.panel.GetViewStart()
-		x, y = self.view2image((evt.m_x, evt.m_y))
-		self.updateClosest(x, y)
+		if len(self.targets) > 0 and self.targetbutton.GetToggle():
+			viewoffset = self.panel.GetViewStart()
+			x, y = self.view2image((evt.m_x, evt.m_y))
+			self.updateClosest(x, y)
 
 	def updateClosest(self, x, y):
 		closest_target = None
