@@ -63,7 +63,7 @@ class CallLauncher(object):
 			try:
 				self.lock.release()
 			except:
-				pass
+				self.printException()
 
 	def newCallFork(self, targetcall, args=(), kwargs={}):
 		"""
