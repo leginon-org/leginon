@@ -1240,7 +1240,6 @@ def datatype(in_dict, qikey=None, qinfo=None):
 			try:
 				content[a[1]] = eval(value)
 			except SyntaxError:
-				print 'Invalid Sequence String: ', value
 				content[a[1]] = None
 		elif a[0] == 'BIN':
 			content[a[1]] = dict2bin({key:value})
