@@ -559,7 +559,7 @@ class wxTreeSelectWidget(wxContainerWidget):
 																											None, self.select)
 		self.tree.Enable(false)
 		self.wxwidget.Add(self.tree, 0, wxALIGN_CENTER | wxALL, 5)
-		self.value = {'Struct': [], 'Selected': None}
+		self.value = {'Struct': {}, 'Selected': []}
 
 	def select(self, itemlist):
 		value = [itemlist]
@@ -574,23 +574,29 @@ class wxTreeSelectWidget(wxContainerWidget):
 	def _set(self, value):
 		if 'Struct' in value:
 			self.tree.set(value['Struct'])
-################################################################
-#		if 'Selected' in value:
-#			i = value['Selected'][0]
-#			self.combobox.SetValue(str(value['List'][i]))
-		self.tree.Enable(true)
+		if 'Selected' in value and value['Selected']:
+			self.tree.select(value['Selected'][0])
+		if self.value['Struct'] and 'Selected' in value:
+			self.tree.Enable(true)
 
 	def setWidget(self, namelist, value):
 		self.lock.acquire()
+		setvalue = {}
 		if namelist == self.namelist + ('Struct',):
+			setvalue[namelist[-1]] = value
+			if not self.value['Struct']:
+				setvalue['Selected'] = self.value['Selected']
 			self.value['Struct'] = value
 		elif namelist == self.namelist + ('Selected',):
 			self.value['Selected'] = value
+			if self.value['Struct']:
+				setvalue[namelist[-1]] = value
 		else:
 			self.lock.release()
 			return
-		evt = SetWidgetEvent(self, {namelist[-1]: value})
-		wxPostEvent(self.window, evt)
+		if setvalue:
+			evt = SetWidgetEvent(self, setvalue)
+			wxPostEvent(self.window, evt)
 		self.lock.release()
 
 	# container set, should only be called within the container (setWidget)

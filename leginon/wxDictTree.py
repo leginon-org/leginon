@@ -43,11 +43,11 @@ class DictTreeCtrlPanel(wxPanel):
 				self.tree.SetPyData(child, dictvalue[item])
 
 	def OnBeginEdit(self, evt):
-		if self.tree.GetChildrenCount(evt.GetItem()) > 0:
+		if self.tree.ItemHasChildren(evt.GetItem()):
 			evt.Veto()
 
 	def OnBeginSelect(self, evt):
-		if self.tree.GetChildrenCount(evt.GetItem()) > 0:
+		if self.tree.ItemHasChildren(evt.GetItem()):
 			evt.Veto()
 
 	def OnSelect(self, evt):
@@ -62,6 +62,34 @@ class DictTreeCtrlPanel(wxPanel):
 			itemlist.insert(0, value)
 			item = self.tree.GetItemParent(item)
 		self.selectcallback(itemlist)
+
+	def select(self, namelist):
+		#self.tree.UnselectAll()
+		selectcallback = self.selectcallback
+		self.selectcallback = None
+		result = self.selectItem(self.root, namelist)
+		self.selectcallback = selectcallback
+		return result
+
+	def selectItem(self, item, namelist):
+		# needs error checking
+		if not namelist:
+			return False
+		value = self.tree.GetPyData(item)
+		cookie = 0
+		if type(value) is dict and namelist[0] in value:
+			(child, cookie) = self.tree.GetFirstChild(item, cookie)
+			while child.IsOk():
+				if self.selectItem(child, namelist[1:]):
+					return True
+				(child, cookie) = self.tree.GetNextChild(item, cookie)
+		if type(value) is not dict:
+			(child, cookie) = self.tree.GetFirstChild(item, cookie)
+			if self.tree.GetPyData(child) == namelist[0]:
+				# two events?
+				self.tree.SelectItem(child)
+				return True
+		return False
 
 	def OnEndEdit(self, evt):
 		if evt.IsEditCancelled():
