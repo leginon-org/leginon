@@ -590,6 +590,7 @@ class RobotNotification(RobotNode):
 		self.setScope('column valves', 'open')
 		self.setStatus('Column valves open')
 
+		'''
 		self.setStatus('Checking camera is retracted')
 		self.waitScope('inserted', False, 0.5, 60)
 		self.setStatus('Camera is retracted')
@@ -600,6 +601,7 @@ class RobotNotification(RobotNode):
 		self.setStatus('Checking camera is inserted')
 		self.waitScope('inserted', True, 0.5, 600)
 		self.setStatus('Camera is inserted')
+		'''
 
 		self.setStatus('Outputting data collection event')
 		self.outputEvent(event.PublishSpiralEvent())
@@ -616,12 +618,14 @@ class RobotNotification(RobotNode):
 		self.setScope('column valves', 'closed')
 		self.setStatus('Column valves closed')
 
+		'''
 		self.setStatus('Retracting camera')
 		self.setScope('inserted', False)
 
 		self.setStatus('Checking camera is retracted')
 		self.waitScope('inserted', False, 0.5, 600)
 		self.setStatus('Camera is retracted')
+		'''
 
 		self.setStatus('Outputting grid extract event')
 		self.outputEvent(event.ExtractGridEvent())
