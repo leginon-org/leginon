@@ -7,6 +7,7 @@ from wxPython.wx import *
 from wxPython.wxc import wxPyAssertionError
 import wxImageViewer
 import wxDictTree
+import wxOrderedListBox
 
 class XMLRPCClient(object):
 	def __init__(self, serverhostname, serverport, port=None):
@@ -183,6 +184,8 @@ def WidgetClassFromTypeList(typelist):
 					if len(typelist) > 2:
 						if typelist[2] == 'single select from list':
 							return wxComboBoxWidget
+						elif typelist[2] == 'select from list':
+							return wxOrderedListBoxWidget
 						elif typelist[2] == 'select from struct':
 							return wxTreeSelectWidget
 						elif typelist[2] == 'click image':
@@ -760,6 +763,64 @@ class wxComboBoxWidget(wxContainerWidget):
 				value = 0
 			stringvalue = str(self.value['List'][value])
 			self.combobox.SetValue(stringvalue)
+
+	def _set(self, value):
+		if 'List' in value:
+			self.setList(value['List'])
+		if 'Selected' in value:
+			self.setSelected(value['Selected'])
+
+	def setWidget(self, namelist, value):
+		self.lock.acquire()
+
+		if namelist == self.namelist + ('List',):
+			self.value['List'] = value
+		elif namelist == self.namelist + ('Selected',):
+			self.value['Selected'] = value
+		else:
+			self.lock.release()
+			raise ValueError('Invalid item for combo box widget container')
+
+		if self.value['List'] is not None and self.value['Selected'] is not None:
+			evt = SetWidgetEvent(self, self.value)
+			wxPostEvent(self.widgethandler, evt)
+
+		self.lock.release()
+
+	def set(self, namelist, value=None):
+		if value is None:
+			value = namelist
+			self._set(value)
+		else:
+			self.setWidget(namelist, value)
+		
+	def delete(self, namelist):
+		pass
+
+class wxOrderedListBoxWidget(wxContainerWidget):
+	def __init__(self, uiclient, namelist, widgethandler, parent):
+		self.lock = threading.Lock()
+		wxContainerWidget.__init__(self, uiclient, namelist, widgethandler, parent)
+		self.wxwidget = wxBoxSizer(wxHORIZONTAL)
+		self.orderedlistbox = wxOrderedListBox.wxOrderedListBox(self.parent, -1, self.callback)
+		self.wxwidget.Add(self.orderedlistbox, 0, wxALIGN_CENTER)
+		self.wxwidget.Layout()
+		self.value = {'List': None, 'Selected': None}
+
+	def callback(self, selected):
+		self.uiclient.setServer(self.namelist + ('Selected',), selected)
+
+	def Destroy(self):
+		self.orderedlistbox.Destroy()
+
+	def add(self, namelist, typelist, value, read, write):
+		self.setWidget(namelist, value)
+
+	def setList(self, value):
+		self.orderedlistbox.setList(value)
+
+	def setSelected(self, value):
+		self.orderedlistbox.setSelected(value)
 
 	def _set(self, value):
 		if 'List' in value:
