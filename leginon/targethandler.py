@@ -66,27 +66,24 @@ class TargetHandler(object):
 		mosaic is boolean to indicate list of targets will
 		generate a mosaic
 		'''
-		queue = self.getQueue(status='active')
+		queue = self.getQueue()
 		listdata = data.ImageTargetListData(session=self.session, label=label, mosaic=mosaic, image=image, queue=queue)
 		return listdata
 
-	def getQueue(self, status='active', label=None):
-		queueattr = 'targetlistqueue'
-		if status == 'done':
-			queueattr += status
-		if hasattr(self,queueattr):
-			return getattr(self, queueattr)
+	def getQueue(self, label=None):
+		if hasattr(self,'targetlistqueue'):
+			return self.targetlistqueue
 		if label is None:
 			label = self.name
-		queuequery = data.QueueData(session=self.session, label=label, status=status)
+		queuequery = data.QueueData(session=self.session, label=label)
 		queues = self.research(datainstance=queuequery)
 		if queues:
-			setattr(self, queueattr, queues[0])
+			self.targetlistqueue = queues[0]
 		else:
 			newqueue = data.QueueData(session=self.session, label=label)
 			self.publish(newqueue, database=True)
-			setattr(self, queueattr, newqueue)
-		return getattr(self, queueattr)
+			self.targetlistqueue = newqueue
+		return self.targetlistqueue
 
 	def newTarget(self, drow, dcol, **kwargs):
 		'''
@@ -135,11 +132,12 @@ class TargetHandler(object):
 		targetdata = self.newTarget(grid=grid, drow=drow, dcol=dcol, number=number, session=self.session, image=nullimage, **kwargs)
 		return targetdata
 
-	def newSimulatedTarget(self):
+	def newSimulatedTarget(self, preset=None):
+		## current state of TEM
 		scopedata = self.instrument.getData(data.ScopeEMData)
 		lastnumber = self.lastTargetNumber(session=self.session, type='simulated')
 		nextnumber = lastnumber + 1
-		newtarget = self.newTarget(drow=0, dcol=0, number=nextnumber, type='simulated', scope=scopedata)
+		newtarget = self.newTarget(drow=0, dcol=0, number=nextnumber, type='simulated', scope=scopedata, preset=preset)
 		return newtarget
 
 class TargetWaitHandler(TargetHandler):
