@@ -150,7 +150,6 @@ class Data(DataDict, leginonobject.LeginonObject):
 		## of deepcopy, (maybe pickle??), etc, which do not intend
 		## to modify the values, but trigger this anyway
 		if self.dbid is not None:
-			raise RuntimeError('__setitem__')
 			warnings.warn('__setitem__ on %s object that exists in DB...  dbid attribute will be reset' % (self.__class__), stacklevel=2)
 		self.dbid = None
 
