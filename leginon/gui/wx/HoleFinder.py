@@ -160,6 +160,7 @@ class TemplateSettingsDialog(gui.wx.Settings.Dialog):
 		return [sbsztemplate, sbszlpf, szbutton]
 
 	def onTestButton(self, evt):
+		self.setNodeSettings()
 		self.node.correlateTemplate()
 
 class EdgeSettingsDialog(gui.wx.Settings.Dialog):
@@ -234,6 +235,7 @@ class EdgeSettingsDialog(gui.wx.Settings.Dialog):
 		return [sbszlpf, sbszedge, szbutton]
 
 	def onTestButton(self, evt):
+		self.setNodeSettings()
 		self.node.findEdges()
 
 class ThresholdSettingsDialog(gui.wx.Settings.Dialog):
@@ -264,6 +266,7 @@ class ThresholdSettingsDialog(gui.wx.Settings.Dialog):
 		return [sbszthreshold, szbutton]
 
 	def onTestButton(self, evt):
+		self.setNodeSettings()
 		self.node.threshold()
 
 class BlobsSettingsDialog(gui.wx.Settings.Dialog):
@@ -304,6 +307,7 @@ class BlobsSettingsDialog(gui.wx.Settings.Dialog):
 		return [sbszblobs, szbutton]
 
 	def onTestButton(self, evt):
+		self.setNodeSettings()
 		self.node.findBlobs()
 
 class LatticeSettingsDialog(gui.wx.Settings.Dialog):
@@ -349,6 +353,7 @@ class LatticeSettingsDialog(gui.wx.Settings.Dialog):
 		return [sbszlattice, szbutton]
 
 	def onTestButton(self, evt):
+		self.setNodeSettings()
 		self.node.fitLattice()
 
 class FinalSettingsDialog(gui.wx.Settings.Dialog):
