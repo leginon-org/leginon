@@ -346,9 +346,9 @@ class Manager(node.Node):
 		self.app.addLaunchSpec(args)
 		t = threading.Thread(target=self.waitNode, args=args)
 		t.start()
+		return self.id + (name,)
 
 	def waitNode(self, launcher, newproc, target, name, nodeargs, dependencies):
-		newid = self.id + (name,)
 		args = (newid, self.session, self.nodelocations) + nodeargs
 		dependenciescopy = copy.copy(dependencies)
 
@@ -364,7 +364,6 @@ class Manager(node.Node):
 		ev = event.LaunchEvent(self.ID(), newproc=newproc,
 														targetclass=target, args=args)
 		self.outputEvent(ev, 0, launcher)
-		return newid
 
 	# probably an easier way
 	def sublist(self, list1, list2):
