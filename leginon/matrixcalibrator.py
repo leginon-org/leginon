@@ -1,4 +1,5 @@
-import node, event, data
+import calibrator
+import event, data
 import fftengine
 import correlator
 import peakfinder
@@ -9,7 +10,7 @@ import calibrationclient
 False=0
 True=1
 
-class MatrixCalibrator(node.Node):
+class MatrixCalibrator(calibrator.Calibrator):
 	'''
 	Calibrates a microscope parameter with image pixel coordinates.
 	Configure in the 'Set Parameters' section:
@@ -24,11 +25,7 @@ class MatrixCalibrator(node.Node):
 	(Valid Shift is currently being ignored)
 	'''
 	def __init__(self, id, nodelocations, **kwargs):
-		self.cam = camerafuncs.CameraFuncs(self)
-		ffteng = fftengine.fftNumeric()
-		#ffteng = fftengine.fftFFTW(planshapes=(), estimate=1)
-		self.correlator = correlator.Correlator(ffteng)
-		self.peakfinder = peakfinder.PeakFinder()
+		calibrator.Calibrator.__init__(self, id, nodelocations, **kwargs)
 
 		self.parameters = {
 		  'image shift': calibrationclient.ImageShiftCalibrationClient(self),
@@ -37,15 +34,10 @@ class MatrixCalibrator(node.Node):
 		}
 
 		self.axislist = ['x', 'y']
-		self.settle = 2.0
-
-		self.clearStateImages()
-
-		node.Node.__init__(self, id, nodelocations, **kwargs)
 
 		self.defineUserInterface()
 		self.start()
-		
+
 	# calibrate needs to take a specific value
 	def calibrate(self):
 		self.clearStateImages()
@@ -94,7 +86,10 @@ class MatrixCalibrator(node.Node):
 				colpix = shiftinfo['pixel shift']['col']
 				totalpix = abs(rowpix + 1j * colpix)
 
-				change = shiftinfo['parameter shift']
+				actual_states = shiftinfo['actual states']
+				actual1 = actual_state[0][self.parameter][axis]
+				actual2 = actual_state[1][self.parameter][axis]
+				change = actual2 - actual1
 				perpix = change / totalpix
 				print '**PERPIX', perpix
 
@@ -114,163 +109,6 @@ class MatrixCalibrator(node.Node):
 
 		print 'CALIBRATE DONE', shifts
 
-	def getMagnification(self):
-		magdata = self.researchByDataID('magnification')
-		return magdata.content['magnification']
-
-	def clearStateImages(self):
-		self.images = []
-
-	def acquireStateImage(self, state):
-		## acquire image at this state
-		newemdata = data.EMData('scope', state)
-		self.publish(event.LockEvent(self.ID()))
-		self.publishRemote(newemdata)
-		print 'state settling time %s' % (self.settle,)
-		time.sleep(self.settle)
-
-		actual_state = self.currentState()
-		imagedata = self.cam.acquireCameraImageData(camstate=None, correction=0)
-		self.publish(imagedata, event.CameraImagePublishEvent)
-
-		## should find image stats to help determine validity of image
-		## in correlations
-		image_stats = None
-
-		info = {'requested state': state, 'imagedata': imagedata, 'image stats': image_stats}
-		self.images.append(info)
-		return info
-
-	def measureStateShift(self, state1, state2, axis):
-		'''measures the pixel shift between two states'''
-
-		print 'acquiring state images'
-		info1 = self.acquireStateImage(state1)
-		info2 = self.acquireStateImage(state2)
-
-		imagedata1 = info1['imagedata']
-		imagedata2 = info2['imagedata']
-		imagecontent1 = imagedata1.content
-		imagecontent2 = imagedata2.content
-		stats1 = info1['image stats']
-		stats2 = info2['image stats']
-
-		actual1 = imagecontent1['scope'][self.parameter][axis]
-		actual2 = imagecontent2['scope'][self.parameter][axis]
-		actual_shift = actual2 - actual1
-
-		shiftinfo = {}
-
-		numimage1 = imagecontent1['image']
-		numimage2 = imagecontent2['image']
-
-		self.correlator.insertImage(numimage1)
-
-		## autocorrelation
-		self.correlator.insertImage(numimage1)
-		acimage = self.correlator.phaseCorrelate()
-		acimagedata = data.PhaseCorrelationImageData(self.ID(), acimage, imagedata1.id, imagedata1.id)
-		#self.publish(acimagedata, event.PhaseCorrelationImagePublishEvent)
-
-		## phase correlation
-		self.correlator.insertImage(numimage2)
-		print 'correlation'
-		pcimage = self.correlator.phaseCorrelate()
-
-		## subtract autocorrelation
-		pcimage -= acimage
-
-		pcimagedata = data.PhaseCorrelationImageData(self.ID(), pcimage, imagedata1.id, imagedata2.id)
-		#self.publish(pcimagedata, event.PhaseCorrelationImagePublishEvent)
-
-		## peak finding
-		print 'peak finding'
-		self.peakfinder.setImage(pcimage)
-		self.peakfinder.subpixelPeak()
-		peak = self.peakfinder.getResults()
-		peakvalue = peak['subpixel peak value']
-		shift = correlator.wrap_coord(peak['subpixel peak'], pcimage.shape)
-
-		## need unbinned result
-		binx = imagecontent1['camera']['binning']['x']
-		biny = imagecontent1['camera']['binning']['y']
-		unbinned = {'row':shift[0] * biny, 'col': shift[1] * binx}
-
-		shiftinfo.update({'parameter shift': actual_shift, 'pixel shift': unbinned, 'peak value': peakvalue, 'shape':pcimage.shape, 'stats': (stats1, stats2)})
-		return shiftinfo
-
-
-	### some of this should be put directly in Correlator 
-	### maybe have phaseCorrelate check validity of its result
-	def validateShift(self, shiftinfo):
-		'''
-		Calculate the validity of an image correlation
-		Reasons for rejection:
-		  - image shift too large to measure with given image size
-		        results in poor correlation
-		  - pixel shift too small to use as calibration data
-		  	results in good correlation, but reject anyway
-		'''
-		shift = shiftinfo['pixel shift']
-		## Jim is proud of coming up with this ingenious method
-		## of calculating a hypotenuse without importing math.
-		## It's definietly too late to be working on a Friday.
-		totalshift = abs(shift[0] * 1j + shift[1])
-		print 'totalshift', totalshift
-		peakvalue = shiftinfo['peak value']
-		shape = shiftinfo['shape']
-		stats = shiftinfo['stats']
-
-		validshiftdict = self.validshift.get()
-		print 'validshiftdict', validshiftdict
-
-		## for now I am ignoring percent, only using pixel
-		validshift = validshiftdict['calibration']
-		print 'validshift', validshift
-
-		## check if shift too small
-		if (totalshift < validshift['min']):
-			return 'small'
-		elif (totalshift > validshift['max']):
-			return 'big'
-		else:
-			return 'good'
-
-	def inRange(self, value, r):
-		if (len(r) != 2) or (r[0] > r[1]):
-			raise ValueError
-		if (value >= r[0]) and (value <= r[1]):
-			return True
-		else:
-			return False
-
-	def correlate(self, image):
-		# might also want to normalize with an autocorrelation of 
-		# image 0, this might remove effects of poor gain normalization
-		# but might also remove the correct peak for small shifts
-		self.correlator.setImage(1, image)
-		## phase correlation with new image
-		try:
-			pcimage = self.correlator.phaseCorrelate()
-			#imagedata = data.ImageData(self.ID(), pcimage)
-			#self.publish(imagedata, event.ImagePublishEvent)
-		except correlator.MissingImageError:
-			print 'missing image, no correlation'
-			return
-
-		## find peak in correlation image
-		self.peakfinder.setImage(pcimage)
-		peak = self.peakfinder.pixelPeak()
-		peak = self.peakfinder.subpixelPeak()
-		peak = self.peakfinder.getResults()
-		print 'peak', peak
-		peakvalue = peak['pixel peak value']
-		print 'peak value', peakvalue
-		## interpret as a shift
-		shift = correlator.wrap_coord(peak['subpixel peak'], pcimage.shape)
-		print 'shift', shift
-		return {'shift': {'x': shift[1], 'y': shift[0]}, 'peak value': peakvalue}
-
 	def defineUserInterface(self):
 		nodespec = node.Node.defineUserInterface(self)
 
@@ -282,7 +120,8 @@ class MatrixCalibrator(node.Node):
 		self.camerastate = {'size': 1024, 'binning': 4, 'exposure time': 400}
 
 		try:
-			self.base = self.currentState()
+			curstate = self.currentState()
+			self.base = curstate[self.parameter]
 		except:
 			self.base = {'x': 0.0, 'y':0.0}
 		####
@@ -329,6 +168,3 @@ class MatrixCalibrator(node.Node):
 	def makeState(self, value, axis):
 		return {self.parameter: {axis: value}}
 
-	def currentState(self):
-		dat = self.researchByDataID(self.parameter)
-		return dat.content[self.parameter]
