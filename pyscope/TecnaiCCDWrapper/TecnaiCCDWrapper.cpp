@@ -17,6 +17,11 @@ static PyObject *acquire(PyObject *self, PyObject *args) {
 	_variant_t vTemp;
 	void HUGEP *pbuffer = NULL;
 	VARTYPE vartype;
+	int left, top, right, bottom, binning;
+	float exposuretime;
+
+	if (!PyArg_ParseTuple(args, "iiiiif", &left, &top, &right, &bottom, &binning, &exposuretime))
+		return NULL;
 
 	// don't initialize com/create instance every acquire, will update
 	// I also meant to set exceptions
@@ -27,6 +32,13 @@ static PyObject *acquire(PyObject *self, PyObject *args) {
 		PyErr_SetString(PyExc_RuntimeError, "Failed to initialize camera");
 		return NULL;
 	}
+
+	pCamera->CameraLeft = left;
+	pCamera->CameraTop = top;
+	pCamera->CameraRight = right;
+	pCamera->CameraBottom = bottom;
+	pCamera->Binning = binning;
+	pCamera->ExposureTime = exposuretime;
 
 	vTemp = pCamera->AcquireRawImage();
 
