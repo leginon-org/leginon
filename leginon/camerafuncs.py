@@ -25,10 +25,16 @@ import newdict
 class NoCorrectorError(Exception):
 	pass
 
-class NoEMError(Exception):
+class CameraConfigError(Exception):
 	pass
 
-class CameraConfigError(Exception):
+class CameraError(Exception):
+	pass
+
+class SetCameraError(CameraError):
+	pass
+
+class GetCameraError(CameraError):
 	pass
 
 class CameraFuncs(object):
@@ -121,7 +127,8 @@ class CameraFuncs(object):
 			self.node.logger.debug('setCameraEMData: %s' % (camdata,))
 			self.node.emclient.setCamera(camdata)
 		except Exception, detail:
-			self.node.logger.exception('Unable to set camera state')
+			#self.node.logger.exception('Unable to set camera state')
+			raise SetCameraError('Unable to set camera state')
 
 	def getCameraEMData(self):
 		'''
@@ -131,9 +138,9 @@ class CameraFuncs(object):
 			newcamdata = self.emclient.getCamera()
 			return newcamdata
 		except:
-			self.node.logger.exception(
-									'Cannot find current camera settings, EM may not be running.')
-			return None
+			#self.node.logger.exception(
+			#						'Cannot find current camera settings, EM may not be running.')
+			raise GetCameraError('Unable to get camera state')
 
 	def uiSetupContainer(self):
 		'''

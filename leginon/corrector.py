@@ -74,8 +74,12 @@ class Corrector(node.Node):
 		self.start()
 
 	def setPlan(self):
-		self.cam.setCameraDict(self.settings['camera settings'])
-		camconfig = self.cam.getCameraEMData()
+		try:
+			self.cam.setCameraDict(self.settings['camera settings'])
+			camconfig = self.cam.getCameraEMData()
+		except camerafuncs.CameraError, e:
+			self.logger.error('Plan not saved: %s' % e)
+			return
 
 		newcamstate = data.CorrectorCamstateData()
 		newcamstate['session'] = self.session
@@ -101,8 +105,8 @@ class Corrector(node.Node):
 	def acquireDark(self):
 		try:
 			imagedata = self.acquireReference(dark=True)
-		except node.PublishError:
-			self.logger.exception('Cannot set EM parameter, EM may not be running')
+		except Exception, e:
+			self.logger.exception('Cannot acquire dark reference: %s' % e)
 		else:
 			self.displayImage(imagedata)
 			self.beep()
@@ -111,8 +115,8 @@ class Corrector(node.Node):
 	def acquireBright(self):
 		try:
 			imagedata = self.acquireReference(dark=False)
-		except node.PublishError:
-			self.logger.exception('Cannot set EM parameter, EM may not be running')
+		except Exception, e:
+			self.logger.exception('Cannot acquire bright reference: %s' % e)
 		else:
 			self.displayImage(imagedata)
 			self.beep()
@@ -122,8 +126,10 @@ class Corrector(node.Node):
 		try:
 			self.cam.setCameraDict(self.settings['camera settings'])
 			imagedata = self.cam.acquireCameraImageData(correction=False)
-		except (EM.ScopeUnavailable, camerafuncs.NoEMError):
-			self.logger.exception('Cannot set EM parameter, EM may not be running')
+		except (EM.ScopeUnavailable, camerafuncs.CameraError), e:
+			self.logger.error('Raw acquisition failed: %s' % e)
+		except Exception, e:
+			self.logger.exception('Raw acquisition failed: %s' % e)
 		else:
 			imagearray = imagedata['image']
 			self.displayImage(imagearray)
@@ -133,8 +139,10 @@ class Corrector(node.Node):
 		try:
 			self.cam.setCameraDict(self.settings['camera settings'])
 			imagedata = self.acquireCorrectedArray()
-		except node.PublishError:
-			self.logger.exception('Cannot set EM parameter, EM may not be running')
+		except (EM.ScopeUnavailable, camerafuncs.CameraError), e:
+			self.logger.error('Corrected acquisition failed: %s' % e)
+		except Exception, e:
+			self.logger.exception('Corrected acquisition failed: %s' % e)
 		else:
 			if imagedata is not None:
 				self.displayImage(imagedata)
@@ -175,8 +183,15 @@ class Corrector(node.Node):
 		return {'image series': series, 'scope': scopedata, 'camera':camdata}
 
 	def acquireReference(self, dark=False):
-		self.cam.setCameraDict(self.settings['camera settings'])
-		originalcamdata = self.cam.getCameraEMData()
+		try:
+			self.cam.setCameraDict(self.settings['camera settings'])
+			originalcamdata = self.cam.getCameraEMData()
+		except camerafuncs.CameraError, e:
+			self.logger.error('Reference acquisition failed: %s' % e)
+			return
+
+		if originalcamdata is None:
+			return None
 		tempcamdata = data.CameraEMData(initializer=originalcamdata)
 		if dark:
 			tempcamdata['exposure type'] = 'dark'
@@ -186,7 +201,11 @@ class Corrector(node.Node):
 			tempcamdata['exposure type'] = 'normal'
 			typekey = 'bright'
 			self.logger.info('Acquiring bright references...')
-		self.cam.setCameraEMData(tempcamdata)
+		try:
+			self.cam.setCameraEMData(tempcamdata)
+		except camerafuncs.SetCameraError, e:
+			self.logger.error('Reference acquisition failed: %s' % e)
+			return
 
 		seriesinfo = self.acquireSeries(self.settings['n average'],
 																		camdata=tempcamdata)
@@ -209,7 +228,11 @@ class Corrector(node.Node):
 
 		if tempcamdata['exposure type'] == 'dark':
 			self.logger.info('Reseting camera exposure type to normal from dark.')
-			self.cam.setCameraEMData(originalcamdata)
+			try:
+				self.cam.setCameraEMData(originalcamdata)
+			except camerafuncs.SetCameraError, e:
+				self.logger.warning('Cannot reset camera exposure type to normal: %s'
+														% e)
 		return ref
 
 	def researchRef(self, camstate, type):
@@ -308,13 +331,13 @@ class Corrector(node.Node):
 			dark = corimagedata['image']
 			bright = self.retrieveRef(corstate, 'bright')
 			if bright is None:
-				self.logger.error('No bright reference image for normalization calculations')
+				self.logger.warning('No bright reference image for normalization calculations')
 				return
 		if isinstance(corimagedata, data.BrightImageData):
 			bright = corimagedata['image']
 			dark = self.retrieveRef(corstate, 'dark')
 			if dark is None:
-				self.logger.error('No dark reference image for normalization calculations')
+				self.logger.warning('No dark reference image for normalization calculations')
 				return
 
 		norm = bright - dark
@@ -337,7 +360,7 @@ class Corrector(node.Node):
 	def acquireCorrectedImageData(self):
 		try:
 			imagedata = self.cam.acquireCameraImageData(correction=0)
-		except (EM.ScopeUnavailable, camerafuncs.NoEMError):
+		except (EM.ScopeUnavailable, camerafuncs.CameraError):
 			self.logger.exception('Cannot set EM parameter, EM may not be running')
 			return None
 		numimage = imagedata['image']
