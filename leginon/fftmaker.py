@@ -22,11 +22,11 @@ class FFTMaker(imagewatcher.ImageWatcher):
 	defaultsettings = {
 		'process': True,
 		'mask radius': 0.01,
+		'label': '',
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		imagewatcher.ImageWatcher.__init__(self, id, session, managerlocation, **kwargs)
 
-		self.label = None
 		self.postprocess = threading.Event()
 		self.start()
 
@@ -75,7 +75,7 @@ class FFTMaker(imagewatcher.ImageWatcher):
 			self.publishPowerImage(im)
 
 	def onStartPostProcess(self):
-		label = self.label
+		label = self.settings['label']
 		self.postprocess.set()
 		self.processByLabel(label)
 

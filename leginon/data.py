@@ -1613,6 +1613,7 @@ class FFTMakerSettingsData(SettingsData):
 		return SettingsData.typemap() + (
 			('process', bool),
 			('mask radius', float),
+			('label', str),
 		)
 	typemap = classmethod(typemap)
 

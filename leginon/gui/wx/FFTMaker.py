@@ -5,54 +5,37 @@ import gui.wx.Settings
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'fftmaker'
+	tools = [
+		'settings',
+		'play',
+		'stop',
+	]
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
-		self.bsettings = wx.Button(self, -1, 'Settings...')
-		self.szmain.Add(self.bsettings, (1, 0), (1, 1), wx.ALIGN_CENTER)
 
-		self.szdatabase = self._getStaticBoxSizer('Images in Database',
-																							(2, 0), (1, 1), wx.EXPAND|wx.ALL)
+		self.toolbar.enable(self, 'stop', False)
 
-		label = wx.StaticText(self, -1, 'Find images in this session with label:')
-		self.szdatabase.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.telabel = Entry(self, -1)
-		self.szdatabase.Add(self.telabel, (0, 1), (1, 1),
-												wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-
-		self.bstart = wx.Button(self, -1, 'Start')
-		self.bstop = wx.Button(self, -1, 'Stop')
-		self.bstop.Enable(False)
-		buttonsizer = wx.GridBagSizer(0, 0)
-		buttonsizer.Add(self.bstart, (0, 0), (1, 1), wx.ALIGN_CENTER)
-		buttonsizer.Add(self.bstop, (0, 1), (1, 1), wx.ALIGN_CENTER)
-		self.szdatabase.Add(buttonsizer, (1, 0), (1, 2), wx.ALIGN_RIGHT)
-
+		self.szmain.AddGrowableCol(0)
 		self.SetSizerAndFit(self.szmain)
 		self.SetupScrolling()
 
 	def onNodeInitialized(self):
-		self.Bind(wx.EVT_BUTTON, self.onSettingsButton, self.bsettings)
-		self.Bind(EVT_ENTRY, self.onLabelEntry, self.telabel)
-		self.Bind(wx.EVT_BUTTON, self.onStart, self.bstart)
-		self.Bind(wx.EVT_BUTTON, self.onStop, self.bstop)
+		pass
 
-	def onSettingsButton(self, evt):
+	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
 
-	def onLabelEntry(self, evt):
-		self.node.label = evt.GetValue()
-
-	def onStart(self, evt):
+	def onPlayTool(self, evt):
 		self.node.onStartPostProcess()
-		self.bstart.Enable(False)
-		self.bstop.Enable(True)
+		self.toolbar.enable(self, 'play', False)
+		self.toolbar.enable(self, 'stop', True)
 
-	def onStop(self, evt):
+	def onStopTool(self, evt):
 		self.node.onStopPostProcess()
-		self.bstop.Enable(False)
-		self.bstart.Enable(True)
+		self.toolbar.enable(self, 'stop', False)
+		self.toolbar.enable(self, 'play', True)
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -61,6 +44,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['process'] = wx.CheckBox(self, -1,
 																			'Calculate FFT and save to the database')
 		self.widgets['mask radius'] = FloatEntry(self, -1, min=0.0, chars=6)
+		self.widgets['label'] = Entry(self, -1)
 
 		szmaskradius = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Mask radius:')
@@ -78,7 +62,17 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
-		return [sbsz]
+		sz = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Find images in this session with label:')
+		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['label'], (0, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
+
+		sb = wx.StaticBox(self, -1, 'Images in Database')
+		sbszdb = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sbszdb.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+
+		return [sbsz, sbszdb]
 
 if __name__ == '__main__':
 	class App(wx.App):
