@@ -144,15 +144,11 @@ class Focuser(acquisition.Acquisition):
 			time.sleep(delay)
 
 			## acquire and publish image
-			acqtype = self.uiacquiretype.getSelectedValue()
 			labelstring = self.labelstring.get()
-			if acqtype == 'corrected':
-				cor = True
-			else:
-				cor = False
+			cor = self.uicorrectimage.get()
 			print 'acquiring focus image'
 			imagedata = self.cam.acquireCameraImageData(correction=cor)
-			fid = data.AcquitisionImageData(initializer=imagedata, id=self.ID(), preset=presetdata, label=labelstring, target=target)
+			fid = data.AcquisitionImageData(initializer=imagedata, id=self.ID(), preset=presetdata, label=labelstring, target=target)
 			self.publish(fid, database=True)
 			print 'focus image published'
 
@@ -181,11 +177,7 @@ class Focuser(acquisition.Acquisition):
 				break
 			# acquire image, show image and power spectrum
 			# allow user to adjust defocus and stig
-			acqtype = self.uiacquiretype.getSelectedValue()
-			if acqtype == 'corrected':
-				cor = True
-			else:
-				cor = False
+			cor = self.uicorrectimage.get()
 			imagedata = self.cam.acquireCameraImageData(correction=cor)
 			imarray = imagedata['image']
 			pow = imagefun.power(imarray)
