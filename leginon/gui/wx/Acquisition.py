@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Acquisition.py,v $
-# $Revision: 1.29 $
+# $Revision: 1.30 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-16 21:35:09 $
+# $Date: 2005-02-18 18:37:55 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -191,8 +191,6 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(self.widgets['wait for process'], (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['wait for rejects'], (4, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szlocktype, (5, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 #		sz.Add(szduplicate, (5, 1), (1, 1),
 #						wx.ALIGN_CENTER_VERTICAL)
