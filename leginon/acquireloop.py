@@ -21,7 +21,7 @@ class AcquireLoop(timedloop.TimedLoop):
 	"""
 	def __init__(self, id, managerlocation):
 		timedloop.TimedLoop.__init__(self, id, managerlocation)
-		print 'AcquireLoop %s started' % self.nodeid
+		print 'AcquireLoop started', self.id
 
 	def action(self):
 		"""
@@ -38,7 +38,7 @@ class AcquireLoop(timedloop.TimedLoop):
 		## publish image
 		self.publish(camerastate, event.PublishEvent)
 
-		imagearray = array.array(camerastate.content['datatype code'], base64.decodestring(camerastate.content['image data']))
+		imagearray = camerastate.content['image data']
 		print 'image 1...10', imagearray[:10]
 
 		del camerastate.content['image data']
