@@ -658,6 +658,18 @@ def whereFormat(in_dict):
 	wherestr = ' AND '.join(wherelist)
         return wherestr
 
+def whereFormatSimple(in_dict):
+	first = True
+	whereDict = sqldict.flatDict(in_dict)
+	wherelist = []
+	for key, value in whereDict.items():
+		if type(value) in [tuple, list]:
+			key = sqldict.seq2sqlColumn(key)
+		evalue = str(value)
+		wherelist.append(''' `%s`="%s" ''' % (key, evalue))
+	wherestr = ' AND '.join(wherelist)
+        return wherestr
+
 def orderFormat(alias):
 	sqlorder = "ORDER BY %s.DEF_timestamp DESC " % (alias)
 	return sqlorder 
