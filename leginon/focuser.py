@@ -32,6 +32,27 @@ class Focuser(acquisition.Acquisition):
 		self.manual_continue = threading.Event()
 		acquisition.Acquisition.__init__(self, id, session, managerlocation, target_types=('focus',), **kwargs)
 		self.btcalclient = calibrationclient.BeamTiltCalibrationClient(self)
+		self.euclient = calibrationclient.EucentricFocusClient(self)
+
+	def eucentricFocusToScope(self):
+		scope = self.emclient.getScope()
+		ht = scope['high tension']
+		mag = scope['magnification']
+		eufoc = self.euclient.researchEucentricFocus(ht, mag)
+		if eufoc is None:
+			self.logger.error('no eucentric focus found for this ht=%s and mag=%s' % (ht, mag))
+		else:
+			eufoc = eufoc['focus']
+			emdata = data.ScopeEMData(focus=eufoc)
+			self.emclient.setScope(emdata)
+
+	def eucentricFocusFromScope(self):
+		scope = self.emclient.getScope()
+		ht = scope['high tension']
+		mag = scope['magnification']
+		foc = scope['focus']
+		self.euclient.publishEucentricFocus(ht, mag, foc)
+		self.logger.info('eucentric focus saved to database, ht=%s, mag=%s, focus=%s' % (ht, mag, foc))
 
 	def autoFocus(self, resultdata, presettarget):
 		## need btilt, pub, driftthresh
@@ -45,6 +66,18 @@ class Focuser(acquisition.Acquisition):
 		## send the autofocus preset to the scope
 		autofocuspreset = presettarget['preset']
 		self.presetsclient.toScope(autofocuspreset, presettarget['emtarget'])
+
+		## set to eucentric focus if doing Z correction
+		## WARNING:  this assumes that user will not change
+		## to another focus type before doing the correction
+		focustype = self.focustype.getSelectedValue()
+		if focustype == 'Stage Z':
+			self.logger.info('setting eucentric focus')
+			self.eucentricFocusToScope()
+			self.eucset = True
+		else:
+			self.eucset = False
+
 		delay = self.uidelay.get()
 		self.logger.info('Pausing for %s seconds' % (delay,))
 		time.sleep(delay)
@@ -266,11 +299,25 @@ class Focuser(acquisition.Acquisition):
 		self.manualchecklock.acquire()
 		self.logger.info('Reset defocus')
 		try:
-			newemdata = data.ScopeEMData()
-			newemdata['reset defocus'] = True
-			self.emclient.setScope(newemdata)
+			self.resetDefocus()
 		finally:
 			self.manualchecklock.release()
+
+	def resetDefocus(self):
+		newemdata = data.ScopeEMData()
+		newemdata['reset defocus'] = True
+		self.emclient.setScope(newemdata)
+
+	def uiChangeToEucentric(self):
+		self.manualchecklock.acquire()
+		self.logger.info('Changing to eucentric focus')
+		try:
+			self.eucentricFocusToScope()
+		finally:
+			self.manualchecklock.release()
+
+	def uiEucentricFromScope(self):
+		self.eucentricFocusFromScope()
 
 	def uiChangeToZero(self):
 		self.manualchecklock.acquire()
@@ -340,6 +387,9 @@ class Focuser(acquisition.Acquisition):
 		self.emclient.setScope(emdata)
 
 	def correctZ(self, delta):
+		if not self.eucset:
+			self.logger.warning('Eucentric focus was not set before measuring defocus because "Stage Z" was not selected then, but is now.  Changing Z now is a bad idea, so I will skip it.')
+			return
 		stage = self.emclient.getScope()['stage position']
 		newz = stage['z'] + delta
 		newstage = {'stage position': {'z': newz }}
@@ -347,6 +397,15 @@ class Focuser(acquisition.Acquisition):
 		emdata = data.ScopeEMData(initializer=newstage)
 		self.logger.info('Correcting stage Z by %s' % (delta,))
 		self.emclient.setScope(emdata)
+		### reset zero at eucentric focus for other preset
+		linkedpreset = self.linkedpreset.get()
+		if not linkedpreset:
+			return
+		self.logger.info('going to linked preset: %s' % (linkedpreset,))
+		self.presetsclient.toScope(linkedpreset)
+		self.logger.info('going to eucentric focus and reseting zero defocus')
+		self.eucentricFocusToScope()
+		self.resetDefocus()
 
 	def correctNone(self, delta):
 		self.logger.info('Not applying defocus correction')
@@ -373,6 +432,7 @@ class Focuser(acquisition.Acquisition):
 		#self.publishimages = uidata.Boolean('Publish Tilt Images', False, 'rw', persist=True)
 
 		self.autofocuspreset = self.presetsclient.uiSinglePresetSelector('Auto Focus Preset', '', 'rw', persist=True)
+		self.linkedpreset = self.presetsclient.uiSinglePresetSelector('Linked Preset', '', 'rw', persist=True)
 		self.fitlimit = uidata.Float('Fit Limit', 1000, 'rw', persist=True)
 		focustypes = self.focus_methods.keys()
 		focustypes.sort()
@@ -389,6 +449,7 @@ class Focuser(acquisition.Acquisition):
 		autocont.addObject(self.driftthresh, position={'position':(1,1)})
 
 		autocont.addObject(self.autofocuspreset, position={'position':(3,0), 'span':(1,2)})
+		autocont.addObject(self.linkedpreset, position={'position':(3,2), 'span':(1,2)})
 
 		autocont.addObject(self.fitlimit, position={'position':(4,0)})
 		autocont.addObject(self.focustype, position={'position':(4,1)})
@@ -406,6 +467,8 @@ class Focuser(acquisition.Acquisition):
 		manualdone = uidata.Method('Done', self.manualDone)
 
 		manualreset = uidata.Method('Reset Defocus', self.uiResetDefocus)
+		euctoscope = uidata.Method('Eucentric Focus To Scope', self.uiChangeToEucentric)
+		eucfromscope = uidata.Method('Eucentric Focus From Scope', self.uiEucentricFromScope)
 		manualtozero = uidata.Method('Change To Zero', self.uiChangeToZero)
 
 		self.manual_parameter = uidata.SingleSelectFromList('Defocus or Stage Z', ['Defocus','Stage Z'], 0)
@@ -426,7 +489,9 @@ class Focuser(acquisition.Acquisition):
 		mancont.addObject(manualcontinue, position={'position':(1,1)})
 		mancont.addObject(manualdone, position={'position':(1,2)})
 		# row 2
-		mancont.addObject(manualreset, position={'position':(2,1)})
+		mancont.addObject(eucfromscope, position={'position':(2,0)})
+		mancont.addObject(euctoscope, position={'position':(2,1)})
+		mancont.addObject(manualreset, position={'position':(2,2)})
 		# row 3
 		mancont.addObject(self.manual_parameter, position={'position':(3,0), 'span':(1,3)})
 		# row 4
