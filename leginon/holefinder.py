@@ -179,7 +179,7 @@ class HoleFinder(targetfinder.TargetFinder):
 			centers.append((c[1],c[0]))
 		return centers
 
-	def blobTargets(self, blobs):
+	def blobStatsTargets(self, blobs):
 		targets = []
 		for blob in blobs:
 			target = {}
@@ -201,11 +201,31 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.hf.find_blobs()
 		blobs = self.hf['blobs']
 		#centers = self.blobCenters(blobs)
-		targets = self.blobTargets(blobs)
+		targets = self.blobStatsTargets(blobs)
 		#self.logger.info('Number of blobs: %s' % (len(centers),))
 		self.logger.info('Number of blobs: %s' % (len(targets),))
 		#self.setTargets(centers, 'Blobs')
 		self.setTargets(targets, 'Blobs')
+
+	def holeStatsTargets(self, holes):
+		targets = []
+		for hole in holes:
+
+			mean = float(hole.stats['hole_mean'])
+			tmean = self.icecalc.get_thickness(mean)
+			std = float(hole.stats['hole_std'])
+			tstd = self.icecalc.get_stdev_thickness(std, mean)
+
+			target = {}
+			target['x'] = hole.stats['center'][1]
+			target['y'] = hole.stats['center'][0]
+			target['stats'] = newdict.OrderedDict()
+			target['stats']['Mean Intensity'] = mean
+			target['stats']['Mean Thickness'] = tmean
+			target['stats']['S.D. Intensity'] = std
+			target['stats']['S.D. Thickness'] = tstd
+			targets.append(target)
+		return targets
 
 	def fitLattice(self):
 		self.logger.info('fit lattice')
@@ -223,17 +243,10 @@ class HoleFinder(targetfinder.TargetFinder):
 
 		holes = self.hf['holes']
 		#centers = self.blobCenters(holes)
-		targets = self.blobTargets(holes)
+		#targets = self.blobTargets(holes)
+		targets = self.holeStatsTargets(holes)
 		#self.logger.info('Number of holes: %s' % (len(centers),))
 		self.logger.info('Number of lattice blobs: %s' % (len(targets),))
-		mylist = []
-		for hole in holes:
-			mean = float(hole.stats['hole_mean'])
-			tmean = self.icecalc.get_thickness(mean)
-			std = float(hole.stats['hole_std'])
-			tstd = self.icecalc.get_stdev_thickness(std, mean)
-			center = tuple(hole.stats['center'])
-			mylist.append({'m':mean, 'tm': tmean, 's':std, 'ts': tstd, 'c':center})
 		#self.setTargets(centers, 'Lattice')
 		self.setTargets(targets, 'Lattice')
 
