@@ -42,10 +42,14 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		## check status of all done focus targets
 		abort = True
+		if not self.targetevents:
+			abort = False
 		for tid,teventinfo in self.targetevents.items():
 			if teventinfo['status'] == 'success':
 				abort = False
 
+		self.targetevents.clear()
+		
 		if abort:
 			print 'Aborting this target because focus failed'
 			return 'failure'
