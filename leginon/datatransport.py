@@ -2,7 +2,9 @@
 
 import leginonobject
 import localtransport
-import unixtransport
+import sys
+if sys.platform != 'win32':
+	import unixtransport
 import tcptransport
 import datahandler
 import sys
@@ -10,7 +12,11 @@ import sys
 class Base(leginonobject.LeginonObject):
 	def __init__(self, id):
 		leginonobject.LeginonObject.__init__(self, id)
-		self.transportmodules = [localtransport, unixtransport, tcptransport]
+		# order matters
+		if sys.platform != 'win32':
+			self.transportmodules = [localtransport, unixtransport, tcptransport]
+		else:
+			self.transportmodules = [localtransport, tcptransport]
 
 class Client(Base):
 	# hostname/port -> location or whatever
@@ -31,33 +37,32 @@ class Client(Base):
 			self.clients[localtransport] = \
 				apply(localtransport.Client, (self.ID(), serverlocation,))
 
-			try:
-				self.clients[unixtransport] = \
-					apply(unixtransport.Client, (self.ID(), serverlocation,))
-			except AttributeError:
-				del self.clients[unixtransport]
+			if sys.platform != 'win32':
+				try:
+					self.clients[unixtransport] = \
+						apply(unixtransport.Client, (self.ID(), serverlocation,))
+				except AttributeError:
+					del self.clients[unixtransport]
 
 		self.clients[tcptransport] = apply(tcptransport.Client, (self.ID(), serverlocation,))
 
 		self.serverlocation = serverlocation
 
 	def pull(self, idata):
-		try:
-			return self.clients[localtransport].pull(idata)
-		except KeyError, IOError:
+		for t in self.transportmodules:
 			try:
-				return self.clients[unixtransport].pull(idata)
+				return self.clients[t].pull(idata)
 			except KeyError, IOError:
-				return self.clients[tcptransport].pull(idata)
+				pass
+		return None
 
 	def push(self, odata):
-		try:
-			self.clients[localtransport].push(odata)
-		except KeyError, IOError:
+		for t in self.transportmodules:
 			try:
-				return self.clients[unixtransport].push(odata)
+				return self.clients[t].push(odata)
 			except KeyError, IOError:
-				return self.clients[tcptransport].push(odata)
+				pass
+		return None
 
 class Server(Base):
 	def __init__(self, id, dhclass = datahandler.SimpleDataKeeper, dhargs = ()):
