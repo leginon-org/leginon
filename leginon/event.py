@@ -83,14 +83,6 @@ class NodeUninitializedEvent(NotificationEvent):
 	'Event sent by a node to indicate that it is no longer operational'
 	pass
 
-class OLDTargetDoneEvent(NotificationEvent):
-	'Event indicating target is done'
-	def typemap(cls):
-		t = NotificationEvent.typemap()
-		t += [ ('targetid', tuple), ('status', str)]
-		return t
-	typemap = classmethod(typemap)
-
 class TargetListDoneEvent(NotificationEvent):
 	'Event indicating target list is done'
 	def typemap(cls):
@@ -99,9 +91,21 @@ class TargetListDoneEvent(NotificationEvent):
 		return t
 	typemap = classmethod(typemap)
 
+class ImageProcessDoneEvent(NotificationEvent):
+	'Event indicating target list is done'
+	def typemap(cls):
+		t = NotificationEvent.typemap()
+		t += [ ('imageid', tuple), ('status', str)]
+		return t
+	typemap = classmethod(typemap)
+
 class DriftDoneEvent(NotificationEvent):
 	'Event indicating that drift has ended'
-	pass
+	def typemap(cls):
+		t = NotificationEvent.typemap()
+		t += [('status', str)]
+		return t
+	typemap = classmethod(typemap)
 
 ## could PublishEvent and UnpublishEvent be derived from a common class?
 class PublishEvent(NotificationEvent):
@@ -136,6 +140,17 @@ class ListPublishEvent(Event):
 	def typemap(cls):
 		t = Event.typemap()
 		t += [ ('idlist', list), ]
+		return t
+	typemap = classmethod(typemap)
+
+class ImageTargetShiftPublishEvent(PublishEvent):
+	dataclass = data.ImageTargetShiftData
+
+class NeedTargetShiftEvent(NotificationEvent):
+	'''notify DriftManager that I want another ImageTargetShift'''
+	def typemap(cls):
+		t = NotificationEvent.typemap()
+		t += [ ('imageid', tuple), ]
 		return t
 	typemap = classmethod(typemap)
 
@@ -194,9 +209,6 @@ class PhaseCorrelationImagePublishEvent(CorrelationImagePublishEvent):
 
 class ImageTargetListPublishEvent(PublishEvent):
 	dataclass = data.ImageTargetListData
-
-class PixelDriftPublishEvent(PublishEvent):
-	dataclass = data.PixelDriftData
 
 class ControlEvent(Event):
 	'Event that passes a value with it'
