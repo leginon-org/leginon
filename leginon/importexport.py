@@ -13,6 +13,159 @@ import xml.dom.minidom as dom
 import sqldb
 import re
 
+class XMLApplicationExport:
+	"""XMLApplicationExport: An object class which exports an application as
+	a xml file"""
+
+	def __init__(self,db):
+		self.db = db
+		self.setCRLF('\n')
+
+	def setCRLF(self, newcrlf):
+		self.crlf = str(newcrlf)
+
+	def getCRLF(self):
+		return self.crlf
+
+	def getXMLheader(self, name, version, date):
+		header = '<!--'+self.crlf \
+			+ '-' + self.crlf \
+			+ '- Application XML-Dump' + self.crlf \
+			+ '- http://ami.scripps.edu/ ' + self.crlf \
+			+ '-' + self.crlf \
+			+ '- Application :' + str(name) + self.crlf \
+			+ '- Version     :' + str(version) + self.crlf \
+			+ '- Date : ' + str(date) + self.crlf \
+			+ '-' + self.crlf \
+			+ '-->' + self.crlf + self.crlf 
+		return header
+
+	def getXMLdump(self, ref_tables, applicationId):
+		""" build the final XML structure of an application:
+
+		<applicationdump>
+		 <definition>
+		 [xml table definition]
+		 </definition>
+		 <data>
+		 [xml data]
+		 </data>
+		<applicationdump>
+		"""
+		dump = '<applicationdump>%s' % (self.crlf,)
+		dump += ' <definition>%s' % (self.crlf,)
+		for table in ref_tables:
+			dump += self.getSQLTableDefinitionXML(table)
+		dump += ' </definition>%s' % (self.crlf,)
+		dump += ' <data>%s' % (self.crlf,)
+		for table in ref_tables:
+			dump += self.getXMLData(table, applicationId)
+		dump += ' </data>%s' % (self.crlf,)
+		dump += '</applicationdump>%s' % (self.crlf,)
+		return dump
+		
+	def getSQLTableDefinitionXML(self,table):
+		"""
+	Convert any SQL Table definition into XML. For example:
+
+	+---------------+---------------+------+-----+---------+----------------+
+	| Field         | Type          | Null | Key | Default | Extra          |
+	+---------------+---------------+------+-----+---------+----------------+
+	| DEF_id        | int(16)       |      | PRI | NULL    | auto_increment |
+	| DEF_timestamp | timestamp(14) | YES  | MUL | NULL    |                |
+	| name          | text          |      |     |         |                |
+	| version       | int(11)       |      |     | 0       |                |
+	+---------------+---------------+------+-----+---------+----------------+
+
+	=>
+
+		<sqltable name="ApplicationData" >
+		<field name="DEF_id" type="int(16)" null="NOT NULL" extra="auto_increment" />
+		<field name="DEF_timestamp" type="timestamp(14)" />
+		<field name="name" type="text" null="NOT NULL" />
+		<field name="version" type="int(11)" default="DEFAULT '0'" null="NOT NULL" />
+		<key>PRIMARY KEY (`DEF_id`)</key>
+		<key>KEY `DEF_timestamp` (`DEF_timestamp`)</key>
+		</sqltable>
+	"""
+		schema_create = '<sqltable name="%s" >%s' % (table,self.crlf)
+
+		rows = self.db.selectall("SHOW FIELDS FROM `%s`" % (table,))
+		for row in rows:
+			schema_create += '    <field %s' % (self.crlf,) 
+			schema_create += '      name="%s" %s' % (row['Field'], self.crlf)
+			schema_create += '      type="%s" %s' % (row['Type'], self.crlf)
+			if row['Default']:
+				schema_create += '      default="DEFAULT \'%s\'%s ' % (row['Default'], self.crlf)
+			if row['Null']:
+				schema_create += '      null="NOT NULL"%s' % (self.crlf,)
+			if row['Extra']:
+				schema_create += '      extra="%s"%s ' % (row['Extra'], self.crlf)
+			schema_create += "    />%s" % (self.crlf,)
+		
+		keys = self.db.selectall("SHOW KEYS FROM `%s`" % (table,)) 
+
+		keys_dict={}
+		for key in keys:
+			kname = key['Key_name']
+			if kname!='PRIMARY':
+				kname = sqldb.addbackquotes(kname)
+			if key['Non_unique']==0 and kname!='PRIMARY':
+				kname = "UNIQUE|%s" % (kname,)
+			if not keys_dict.has_key(kname):
+				keys_dict[kname]=[]
+			keys_dict[kname].append(sqldb.addbackquotes(key['Column_name']))
+
+		for key,value in keys_dict.items():
+			schema_create += '    <key>'
+			value_str = ', '.join(value)
+			if key=='PRIMARY':
+				schema_create += 'PRIMARY KEY (%s)' % (value_str,) 
+			elif re.findall('^UNIQUE\|',key):
+				k = re.sub('^UNIQUE\|', '', key)
+				schema_create += 'UNIQUE %s (%s)' % (k, value_str) 
+			else:
+				schema_create += 'KEY %s (%s)' % (key, value_str) 
+			schema_create += '</key>%s' % (self.crlf,) 
+		
+		schema_create += '</sqltable>%s' % (self.crlf,)
+		return schema_create
+
+	def getXMLData(self, table, applicationId):
+		"""
+	Convert each row (field/column name) into XML:
+	For example:
+		+--------+----------------+---------+---------+
+		| DEF_id | DEF_timestamp  | name    | version |
+		+--------+----------------+---------+---------+
+		|      1 | 20040121162912 | 03dec15 |       0 |
+		+--------+----------------+---------+---------+
+		
+		This sql result will be in XML:
+	
+		<!--  ApplicationData -->
+	    <sqltable name="ApplicationData" >
+		<field name="DEF_id" >79</field>
+		<field name="DEF_timestamp" >20031215125843</field>
+		<field name="name" >03dec15</field>
+		<field name="version" >0</field>
+	    </sqltable>
+		"""
+		data = "<!-- %s -->%s" % (table,self.crlf) 
+		q = 'SELECT * FROM `%s` WHERE `REF|ApplicationData|application`=%s ' % (table, applicationId)
+		results = self.db.selectall(q)
+		for result in results:
+			data += '    <sqltable name="%s">%s' % (table,self.crlf)
+			for k,v in result.items():
+				if k=='DEF_timestamp':
+					v = v.Format('%Y%m%d%H%M%S')
+				data += '        <field name="%s" >%s</field>%s' % (k,v,self.crlf)
+			data += '    </sqltable>%s' % (self.crlf,)
+		return data
+		
+
+
+
 class XMLApplicationImport:
 	"""XMLApplicationImport: An object class which import an application.xml file
 	and convert into SQL queries"""
@@ -167,8 +320,51 @@ class ImportExport:
 			check = self.db.selectone(checkquery)
 			print "Application %s-%s inserted sucessfully" % (check['name'], check['version'])
 
-	def exportApplication(self, name, version):
-		pass
+	def exportApplication(self, name=None, applicationId=None):
+		""" Export an application by name or by Id. If an application name is not None,
+		the latest version of this application will be exported"""
+		
+		if applicationId is not None:
+			q = "SELECT `DEF_id`, date_format(DEF_timestamp,'%m/%d/%Y') as date, " \
+			+ "`name`, `version` from ApplicationData " \
+			+ "where `DEF_Id` = " + str(applicationId)
+		elif name is not None:
+			q = "SELECT `DEF_id`, date_format(DEF_timestamp,'%m/%d/%Y') as date, " \
+			+ "`name`, `version` from ApplicationData " \
+			+ "where `name` = '" + str(name) +"'" \
+			+ " ORDER BY `DEF_timestamp` DESC LIMIT 1"
+		else:
+			return
+		try: 
+			result = self.db.selectone(q)
+			if not result:
+				return
+		except sqldb.MySQLdb.ProgrammingError, e:
+			return e
+
+		applicationId = result['DEF_id']
+		name = result['name']
+		version = result['version']
+		date = result['date']
+
+		ref_tables=[]
+		tables = self.db.selectall("SHOW TABLES")
+		for table in tables:
+			tablename=table['Tables_in_dbemdata']
+			q = "SHOW FIELDS FROM `%s`" % (tablename,)
+			rows = self.db.selectall(q)
+			for row in rows:
+				if re.findall('^REF\|ApplicationData', row['Field']):
+					try:
+						ref_tables.index(tablename)
+					except:
+						ref_tables.append(tablename)
+
+		xmlexp = XMLApplicationExport(self.db)
+		dump = xmlexp.getXMLheader(name,version,date)
+		dump += xmlexp.getXMLdump(ref_tables,applicationId)
+		
+		return dump
 
 ########################################
 ## Testing
@@ -178,4 +374,5 @@ if __name__ == "__main__":
 	app = ImportExport()
 	app.setDBparam(host="stratocaster")
 	app.importApplication('/home/dfellman/03dec15_0.xml')
-
+	dump = app.exportApplication('03dec15')
+	print dump
