@@ -22,11 +22,11 @@ if sys.platform == 'win32':
 class DataHandler(node.DataHandler):
 	def query(self, id):
 
-		self.EMnode.statelock.acquire()
+		self.node.statelock.acquire()
 		done_event = threading.Event()
-		self.EMnode.queue.put(Request(done_event, [id[0]]))
+		self.node.queue.put(Request(done_event, [id[0]]))
 		done_event.wait()
-		stuff = self.EMnode.state
+		stuff = self.node.state
 
 		if emkey == 'scope':
 			result = data.ScopeEMData(self.ID(), initializer=stuff)
@@ -46,7 +46,7 @@ class DataHandler(node.DataHandler):
 				except KeyError:
 					result = None
 
-		self.EMnode.statelock.release()
+		self.node.statelock.release()
 		return result
 
 #		emkey = id[0]
