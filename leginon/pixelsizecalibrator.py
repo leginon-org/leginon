@@ -60,10 +60,18 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 	def getCalibrations(self):
 		calibrations = self.calclient.retrieveAllPixelSizes()
 		pixelsizes = []
+		mag, mags = self.getMagnification()
 		for calibration in calibrations:
-			pixelsizes.append((calibration['magnification'],
-												calibration['pixelsize'],
-												calibration['comment']))
+			if mags is None or calibration['magnification'] in mags:
+				pixelsizes.append((calibration['magnification'],
+														calibration['pixelsize'],
+														calibration['comment']))
+		if mags is not None:
+			pixelsizemags = map(lambda (mag, ps, c): mag, pixelsizes)
+			for m in mags:
+				if m not in pixelsizemags:
+					pixelsizes.append((mag, None, None))
+			
 		return pixelsizes
 
 	def _store(self, mag, psize, comment):
@@ -73,3 +81,4 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 		caldata['comment'] = comment
 		caldata['session'] = self.session
 		self.publish(caldata, database=True)
+
