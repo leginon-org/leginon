@@ -111,10 +111,15 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetWaitHandler):
 		self.logger.debug('Publishing targetlist...')
 		self.publish(targetlist, database=True, pubevent=True)
 		self.logger.debug('Published targetlist %s' % (targetlist.dbid,))
+
 		if self.settings['wait for done']:
 			self.setStatus('waiting')
 			self.waitForTargetListDone()
 			self.setStatus('processing')
+
+	def publishQueue(self):
+		if hasattr(self, 'targetlistqueue') and self.targetlistqueue is not None:
+						self.publish(self.targetlistqueue, pubevent=True)
 
 	def notifyUserSubmit(self):
 		message = 'Waiting for user to submit targets...'

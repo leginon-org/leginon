@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/HoleFinder.py,v $
-# $Revision: 1.31 $
+# $Revision: 1.32 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-14 00:55:36 $
+# $Date: 2005-03-12 01:08:05 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -34,6 +34,9 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SUBMIT,
 													'play',
 													shortHelpString='Submit Targets')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SUBMIT_QUEUE,
+													'play',
+													shortHelpString='Submit Queued Targets')
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, False)
 
 		self.imagepanel = gui.wx.ImageViewer.TargetImagePanel(self, -1)
@@ -84,10 +87,15 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.Bind(gui.wx.ImageViewer.EVT_SETTINGS, self.onImageSettings)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSubmitTool,
 											id=gui.wx.ToolBar.ID_SUBMIT)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onSubmitQueueTool,
+											id=gui.wx.ToolBar.ID_SUBMIT_QUEUE)
 
 	def onSubmitTool(self, evt):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SUBMIT, False)
 		self.node.submit()
+
+	def onSubmitQueueTool(self, evt):
+		self.node.publishQueue()
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
@@ -488,10 +496,12 @@ class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
 																	'Allow for user verification of picked holes')
 		self.widgets['skip'] = wx.CheckBox(self, -1,
 																							'Skip auto picking of holes')
-
+		self.widgets['queue'] = wx.CheckBox(self, -1,
+																							'Queue up targets')
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(self.widgets['user check'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['skip'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['queue'], (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		sb = wx.StaticBox(self, -1, 'Hole finding')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)

@@ -110,6 +110,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.doneevents[imageid]['received'].set()
 
 	def processData(self, newdata):
+		if isinstance(newdata, data.QueueData):
+			self.processTargetListQueue(newdata)
+			return
 		self.logger.debug('Acquisition.processData')
 		self.imagelistdata = data.ImageListData(session=self.session,
 																						targets=newdata)

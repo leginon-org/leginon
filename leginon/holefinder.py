@@ -30,6 +30,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		'ignore images': False,
 		'user check': False,
 		'skip': False,
+		'queue': False,
 		'image filename': '',
 		'edge lpf': {
 			'sigma': 1.0,
@@ -412,6 +413,7 @@ class HoleFinder(targetfinder.TargetFinder):
 			'image': imagedata,
 			'user-check': self.settings['user check'],
 			'skip-auto': self.settings['skip'],
+			'queue': self.settings['queue'],
 
 			'edge-lpf-sigma': self.settings['edge lpf']['sigma'],
 			'edge-filter-type': self.settings['edge type'],

@@ -29,7 +29,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 	def __init__(self, id, session, managerlocation, target_types=('acquisition',),
 								**kwargs):
-		watchfor = [event.ImageTargetListPublishEvent]
+		watchfor = [event.ImageTargetListPublishEvent, event.QueuePublishEvent]
 		watcher.Watcher.__init__(self, id, session, managerlocation, watchfor,
 															**kwargs)
 
@@ -43,6 +43,37 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		self.target_types = target_types
 		self.targetlistevents = {}
 		self.driftedimages = {}
+		self.queueupdate = threading.Event()
+		self.startQueueProcessor()
+
+	def startQueueProcessor(self):
+		t = threading.Thread(target=self.queueProcessor)
+		t.setDaemon(True)
+		t.start()
+
+	def queueProcessor(self):
+		'''
+		this is run in a thread to watch for and handle queue updates
+		'''
+		while 1:
+			# wait for a queue update
+			self.queueupdate.wait()
+			self.queueupdate.clear()
+			self.logger.info('received queue update')
+
+			# get targetlists relating to this queue
+			tarlistquery = data.ImageTargetListData(queue=self.targetlistqueue)
+			targetlists = self.research(datainstance=tarlistquery)
+			tarlistquery = data.ImageTargetListData(queue=self.targetlistqueuedone)
+			donetargetlists = self.research(datainstance=tarlistquery)
+
+			# process all target lists in the queue
+			for targetlist in targetlists:
+				if targetlist in donetargetlists:
+					continue
+				self.processTargetList(targetlist)
+				donetargetlist = data.ImageTargetListData(initializer=targetlist, queue=self.targetlistqueuedone)
+				self.publish(donetargetlist, database=True)
 
 	def handleTargetShift(self, ev):
 		driftdata = ev['data']
@@ -57,9 +88,18 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			self.logger.debug('TARGET SHIFT NOT REQUESTED')
 
 	def processData(self, newdata):
-		if not isinstance(newdata, data.ImageTargetListData):
-			return
+		if isinstance(newdata, data.ImageTargetListData):
+			self.processTargetList(newdata)
+		if isinstance(newdata, data.QueueData):
+			self.processTargetListQueue(newdata)
 
+	def processTargetListQueue(self, newdata):
+		self.targetlistqueue = newdata
+		label = newdata['label']
+		self.targetlistqueuedone = self.getQueue(status='done', label=label)
+		self.queueupdate.set()
+
+	def processTargetList(self, newdata):
 		self.setStatus('processing')
 
 		### get targets that belong to this target list

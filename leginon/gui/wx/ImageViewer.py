@@ -1,13 +1,14 @@
+#!/usr/bin/env python
 # The Leginon software is Copyright 2004
 # The Scripps Research Institute, La Jolla, CA
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageViewer.py,v $
-# $Revision: 1.42 $
+# $Revision: 1.43 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-11 18:43:39 $
-# $Author: suloway $
+# $Date: 2005-03-12 01:08:05 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 

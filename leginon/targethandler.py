@@ -9,8 +9,8 @@ class TargetHandler(object):
 	'''
 	############# DATABASE INTERACTION #################
 
-	eventinputs = []
-	eventoutputs = [event.ImageTargetListPublishEvent]
+	eventinputs = [event.QueuePublishEvent]
+	eventoutputs = [event.ImageTargetListPublishEvent, event.QueuePublishEvent]
 
 	def compareTargetNumber(self, first, second):
 		### if come from different images, compare image dbid
@@ -66,8 +66,27 @@ class TargetHandler(object):
 		mosaic is boolean to indicate list of targets will
 		generate a mosaic
 		'''
-		listdata = data.ImageTargetListData(session=self.session, label=label, mosaic=mosaic, image=image)
+		queue = self.getQueue(status='active')
+		listdata = data.ImageTargetListData(session=self.session, label=label, mosaic=mosaic, image=image, queue=queue)
 		return listdata
+
+	def getQueue(self, status='active', label=None):
+		queueattr = 'targetlistqueue'
+		if status == 'done':
+			queueattr += status
+		if hasattr(self,queueattr):
+			return getattr(self, queueattr)
+		if label is None:
+			label = self.name
+		queuequery = data.QueueData(session=self.session, label=label, status=status)
+		queues = self.research(datainstance=queuequery)
+		if queues:
+			setattr(self, queueattr, queues[0])
+		else:
+			newqueue = data.QueueData(session=self.session, label=label)
+			self.publish(newqueue, database=True)
+			setattr(self, queueattr, newqueue)
+		return getattr(self, queueattr)
 
 	def newTarget(self, drow, dcol, **kwargs):
 		'''
@@ -155,12 +174,15 @@ class TargetWaitHandler(TargetHandler):
 		'''
 		Waits until theading events of all target list data are cleared.
 		'''
+		if self.settings['queue']:
+			return
 		for tid, teventinfo in self.targetlistevents.items():
 			self.logger.info('%s waiting for %s' % (self.name, tid))
 			teventinfo['received'].wait()
 			self.logger.info('%s done waiting for %s' % (self.name, tid))
 		self.targetlistevents.clear()
 		self.logger.info('%s done waiting' % (self.name,))
+
 
 if __name__ == '__main__':
 	import node

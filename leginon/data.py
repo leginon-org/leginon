@@ -794,7 +794,12 @@ class InSessionData(Data):
 	typemap = classmethod(typemap)
 
 class QueueData(InSessionData):
-	pass
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('label', str),
+			('status', str),
+		)
+	typemap = classmethod(typemap)
 
 class EMData(InSessionData):
 	def typemap(cls):
@@ -1320,6 +1325,7 @@ class ImageTargetListData(InSessionData):
 			('label', str),
 			('mosaic', bool),
 			('image', AcquisitionImageData),
+			('queue', QueueData),
 		)
 	typemap = classmethod(typemap)
 
@@ -1416,6 +1422,7 @@ class HoleFinderPrefsData(InSessionData):
 			('image', AcquisitionImageData),
 			('user-check', bool),
 			('skip-auto', bool),
+			('queue', bool),
 			('edge-lpf-on', bool),
 			('edge-lpf-size', int),
 			('edge-lpf-sigma', float),
@@ -1730,6 +1737,7 @@ class HoleFinderSettingsData(TargetFinderSettingsData):
 		return TargetFinderSettingsData.typemap() + (
 			('user check', bool),
 			('skip', bool),
+			('queue', bool),
 			('image filename', str),
 			('edge lpf', LowPassFilterSettingsData),
 			('edge', bool),
