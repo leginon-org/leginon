@@ -37,9 +37,6 @@ class DictDataKeeper(DataHandler):
 		self.datadict[newdata.id] = newdata
 		self.datadictlock.release()
 
-class SimpleDataKeeper(DictDataKeeper):
-	pass
-
 class ShelveDataKeeper(DataHandler):
 	def __init__(self, filename = None, path = '.'):
 		DataHandler.__init__(self)
@@ -100,7 +97,7 @@ class CachedDictDataKeeper(DataHandler):
 		self.shelf = shelve.open(self.filename)
 		self.age = age
 		self.timeout = timeout
-		self.timer = threading.Timer(timeout, self.write_cache)
+		self.timer = threading.Timer(self.timeout, self.writeoutcache)
 		self.timer.start()
 
 	def __del__(self):
@@ -132,15 +129,21 @@ class CachedDictDataKeeper(DataHandler):
 		self.datadict[newdata.id] = {'cached' : 0, 'ts' : time.time(), 'data' : newdata}
 		self.lock.release()
 
-	def write_cache(self):
-		self.timer = threading.Timer(self.timeout, self.write_cache)
+	def writeoutcache(self):
+		self.timer = threading.Timer(self.timeout, self.writeoutcache)
 		self.timer.start()
 		now = time.time()
 		for k in self.datadict.keys():
-			if not self.datadict[k]['cached']:
-				if now - self.datadict[k]['ts'] > self.age:
-					self.shelf[str(k)] = self.datadict[k]['data']
-					self.datadict[k] = {'cached' : 1}
+			if now - self.datadict[k]['ts'] > self.age:
+				self.cache(k)
+
+	def cache(self, id):
+		if not self.datadict[id]['cached']:
+			self.shelf[str(id)] = self.datadict[id]['data']
+			self.datadict[id] = {'cached' : 1}
+
+class SimpleDataKeeper(CachedDictDataKeeper):
+	pass
 
 class DataBinder(DataHandler):
 	def __init__(self):
