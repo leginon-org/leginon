@@ -62,9 +62,8 @@ class Manager(node.Node):
 			nodelocationdata = data.NodeLocationData(nodeid, nodelocation)
 		self.server.datahandler._insert(nodelocationdata)
 
-		## stuff to do if Node is a Launcher
-		if isinstance(readyevent, event.LauncherAvailableEvent):
-			self.gui_add_launcher(nodeid)
+		self.gui_add_node(readyevent)
+
 
 	def unregisterNode(self, unavailable_event):
 		nodeid = unavailable_event.id[:-1]
@@ -138,9 +137,10 @@ class Manager(node.Node):
 			except ValueError:
 				pass
 
-	def launchNode(self, launcher, newproc, target, newid, nodeargs=()):
+	def launchNode(self, launcher, newproc, target, name, nodeargs=()):
 		manloc = self.location()
-		args = (self.id + (newid,), manloc) + nodeargs
+		newid = self.nodeID(name)
+		args = (newid, manloc) + nodeargs
 		self.launch(launcher, newproc, target, args)
 
 	def launch(self, launcher, newproc, target, args=(), kwargs={}):
@@ -197,31 +197,32 @@ class Manager(node.Node):
 
 		root = Tk()
 
+		######################
+		#### Launch Node Frame
 		self.gui_launch_launcher = StringVar()
 		self.gui_launch_target = StringVar()
 		self.gui_launch_newproc = IntVar()
 		self.gui_launch_name = StringVar()
 		self.gui_launch_args = StringVar()
 
-		#### Launch Node Frame
-		launch_frame = Frame(root)
+		launch_frame = Frame(root, relief=RAISED, bd=3)
 
-		launch_lab = Label(launch_frame, text='LAUNCHER')
-		launch_lab.pack(side=TOP)
+		#launch_lab = Label(launch_frame, text='LAUNCHER')
+		#launch_lab.pack(side=TOP)
 
-		f = Frame(launch_frame, relief=RAISED)
+		f = Frame(launch_frame)
 		lab = Label(f, text='Launcher ID')
 		ent = Entry(f, textvariable=self.gui_launch_launcher)
-		self.gui_launcherlist = Listbox(f, height=6)
+		self.gui_launcherlist = Listbox(f, height=10)
 
 		self.gui_launcherlist.bind('<Button-1>', self.gui_select_launcherid)
 		self.gui_launcher_str2id = {}
 
-		lab.grid(row=0, column=0, sticky=S)
-		ent.grid(row=1, column=0, sticky=N)
-		self.gui_launcherlist.grid(row=0, column=1, rowspan=2)
+		lab.pack(side=TOP)
+		ent.pack(side=TOP)
+		self.gui_launcherlist.pack(side=TOP)
 
-		f.pack(side=TOP)
+		f.pack(side=LEFT)
 
 
 
@@ -236,10 +237,10 @@ class Manager(node.Node):
 		for nodeclass in self.nodeclasses:
 			self.gui_nodeclasslist.insert(END, nodeclass)
 
-		lab.grid(row=0, column=0, sticky=S)
-		ent.grid(row=1, column=0, sticky=N)
-		self.gui_nodeclasslist.grid(row=0, column=1, rowspan=2)
-		f.pack(side=TOP)
+		lab.pack(side=TOP)
+		ent.pack(side=TOP)
+		self.gui_nodeclasslist.pack(side=TOP)
+		f.pack(side=LEFT)
 
 		f = Frame(launch_frame)
 		lab = Label(f, text='Node Name')
@@ -258,52 +259,140 @@ class Manager(node.Node):
 		newproc = Checkbutton(launch_frame, text='New Process', variable=self.gui_launch_newproc) 
 		newproc.pack(side=TOP)
 
-		launch_but = Button(launch_frame, text='LAUNCH')
+		launch_but = Button(launch_frame, text='Launch')
 		launch_but['command'] = self.gui_launch_command
 		launch_but.pack(side=TOP)
 
-		launch_frame.pack(side=TOP)
+		launch_frame.pack(side=LEFT)
+
+		####################
+		##### Event Frame
+
+		event_frame = Frame(root, relief=RAISED, bd=3)
+
+		f = Frame(event_frame)
+		lab = Label(f, text='Event Type')
+		self.gui_event_type = StringVar()
+		ent = Entry(f, textvariable=self.gui_event_type)
+		self.gui_eventclasslist = Listbox(f, height=20)
+		self.gui_eventclasslist.bind('<Button-1>', self.gui_select_eventclass)
+		## fill listbox with event classes
+		self.eventclasses = event.eventClasses()
+		for eventclass in self.eventclasses:
+			self.gui_eventclasslist.insert(END, eventclass)
+
+		lab.pack(side=TOP)
+		ent.pack(side=TOP)
+		self.gui_eventclasslist.pack(side=TOP)
+		f.pack(side=LEFT)
+
+
+		f = Frame(event_frame)
+		lab = Label(f, text='From Node')
+		self.gui_event_fromnode = StringVar()
+		ent = Entry(f, textvariable=self.gui_event_fromnode)
+		self.gui_fromnodelist = Listbox(f, height=10)
+		self.gui_fromnodelist.bind('<Button-1>', self.gui_select_fromnode)
+		self.gui_fromnodelist_str2id = {}
+		lab.pack(side=TOP)
+		ent.pack(side=TOP)
+		self.gui_fromnodelist.pack(side=TOP)
+		f.pack(side=LEFT)
+
+		f = Frame(event_frame)
+		lab = Label(f, text='To Node')
+		self.gui_event_tonode = StringVar()
+		ent = Entry(f, textvariable=self.gui_event_tonode)
+		self.gui_tonodelist = Listbox(f, height=10)
+		self.gui_tonodelist.bind('<Button-1>', self.gui_select_tonode)
+		self.gui_tonodelist_str2id = {}
+		lab.pack(side=TOP)
+		ent.pack(side=TOP)
+		self.gui_tonodelist.pack(side=TOP)
+		f.pack(side=LEFT)
+
+		addevent_but = Button(event_frame, text='Add Event Distmap')
+		addevent_but['command'] = self.gui_event_command
+		addevent_but.pack(side=TOP)
+
+		event_frame.pack(side=LEFT)
 
 		self.gui_ok = 1
 		root.mainloop()
 
-	def gui_add_launcher(self, launcherid):
+
+	def gui_add_node(self, eventinst):
 		if not self.gui_ok:
 			return
-		str_id = str(launcherid)
-		self.gui_launcherlist.insert(END, str_id)
-		self.gui_launcher_str2id[str_id] = launcherid
 
-	def gui_del_launcher(self, launcherid):
+		self.junk = eventinst
+		print 'STUFF %s' % (eventinst,)
+		print 'STUFF %s' % (eventinst.id,)
+		print 'STUFF %s' % (eventinst.id[:-1],)
+		nodeid = eventinst.id[:-1]
+		str_id = str(nodeid)
+		print 'nodeid %s' % (nodeid,)
+
+		## add to the to and from node lists
+		print 'HELLO'
+		self.gui_fromnodelist.insert(END, str_id)
+		self.gui_fromnodelist_str2id[str_id] = nodeid
+		self.gui_tonodelist.insert(END, str_id)
+		self.gui_tonodelist_str2id[str_id] = nodeid
+		print 'BYE'
+
+		## stuff to do if Node is a Launcher
+		if isinstance(eventinst, event.LauncherAvailableEvent):
+			str_id = str(nodeid)
+			self.gui_launcherlist.insert(END, str_id)
+			self.gui_launcher_str2id[str_id] = nodeid
+
+	def gui_del_node(self, launcherid):
 		if not self.gui_ok:
 			return
 		### NOT DONE YET
 
 	def gui_select_launcherid(self, guievent):
 		launcherlist = self.gui_launcherlist.get(0,END)
-		#launcherindex = int(self.gui_launcherlist.curselection()[0])
 		launcherindex = self.gui_launcherlist.nearest(int(guievent.y))
 		launcher = launcherlist[launcherindex]
 		self.gui_launch_launcher.set(launcher)
 
 	def gui_select_nodeclass(self, guievent):
 		targetlist = self.gui_nodeclasslist.get(0,END)
-		#targetindex = int(self.gui_nodeclasslist.curselection()[0])
 		targetindex = self.gui_nodeclasslist.nearest(int(guievent.y))
 		targetname = targetlist[targetindex]
 		self.gui_launch_target.set(targetname)
+
+	def gui_select_eventclass(self, guievent):
+		eventlist = self.gui_eventclasslist.get(0,END)
+		eventindex = self.gui_eventclasslist.nearest(int(guievent.y))
+		eventname = eventlist[eventindex]
+		self.gui_event_type.set(eventname)
+
+	def gui_select_fromnode(self, guievent):
+		fromnodelist = self.gui_fromnodelist.get(0,END)
+		fromnodeindex = self.gui_fromnodelist.nearest(int(guievent.y))
+		fromnode = fromnodelist[fromnodeindex]
+		self.gui_event_fromnode.set(fromnode)
+
+	def gui_select_tonode(self, guievent):
+		tonodelist = self.gui_tonodelist.get(0,END)
+		tonodeindex = self.gui_tonodelist.nearest(int(guievent.y))
+		tonode = tonodelist[tonodeindex]
+		self.gui_event_tonode.set(tonode)
 
 	def gui_launch_command(self):
 
 		launcher_str = self.gui_launch_launcher.get()
 		launcher_id = self.gui_launcher_str2id[launcher_str]
+
 		newproc = self.gui_launch_newproc.get()
 
 		target = self.gui_launch_target.get()
 		target = self.nodeclasses[target]
 
 		newname = self.gui_launch_name.get()
-		newid = self.nodeID(newname)
 
 		args = self.gui_launch_args.get()
 		args = '(%s)' % args
@@ -313,7 +402,19 @@ class Manager(node.Node):
 			print 'problem evaluating args'
 			return
 
-		self.launchNode(launcher_id, newproc, target, newid, args)
+		self.launchNode(launcher_id, newproc, target, newname, args)
+
+	def gui_event_command(self):
+		eventclass = self.gui_event_type.get()
+		eventclass = self.eventclasses[eventclass]
+
+		fromnode_str = self.gui_event_fromnode.get()
+		fromnode_id = self.gui_fromnodelist_str2id[fromnode_str]
+
+		tonode_str = self.gui_event_tonode.get()
+		tonode_id = self.gui_tonodelist_str2id[tonode_str]
+		
+		self.addEventDistmap(eventclass, fromnode_id, tonode_id)
 
 
 if __name__ == '__main__':

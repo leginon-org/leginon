@@ -3,6 +3,19 @@
 import leginonobject
 import data
 
+def eventClasses():
+	"""
+	returns a dict:   {name: class_object, ...}
+	that contains all the Event subclasses defined in this module
+	"""
+	eventclasses = {}
+	all_attrs = globals()
+	for name,value in all_attrs.items():
+		if type(value) == type:
+			if issubclass(value, Event):
+				eventclasses[name] = value
+	return eventclasses
+
 class Event(data.Data):
 	def __init__(self, id, content=None):
 		data.Data.__init__(self, id, content)
