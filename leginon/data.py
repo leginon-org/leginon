@@ -16,6 +16,7 @@ import strictdict
 import copy
 import Mrc
 import warnings
+import Numeric
 
 ## Unresolved issue:
 ##  It would be nice if you could cast one Data type to another
@@ -190,7 +191,7 @@ class Data(DataDict, leginonobject.LeginonObject):
 
 	def sizeof(self, value, datatype):
 		if datatype == strictdict.NumericArrayType:
-			return len(value.flat) * value.itemsize()
+			return len(Numeric.ravel(value)) * value.itemsize()
 		else:
 			return 0
 
