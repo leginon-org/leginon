@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 
 import timedloop
+import event
 import time
 #import Numeric
 import base64
 import array
+import copy
 
 class AcquireLoop(timedloop.TimedLoop):
 	"""
@@ -18,6 +20,7 @@ class AcquireLoop(timedloop.TimedLoop):
 	"""
 	def __init__(self, nodeid, managerlocation):
 		timedloop.TimedLoop.__init__(self, nodeid, managerlocation)
+		self.addEventOutput(event.PublishEvent)
 
 	def action(self):
 		"""
@@ -25,20 +28,17 @@ class AcquireLoop(timedloop.TimedLoop):
 		"""
 
 		# this is rough, ImageData type, etc. to come soon
-		imagedata = self.researchByDataID('image data')
-		image = base64.decodestring(imagedata.content['image data'])
-
-		imagedatatype = self.researchByDataID('datatype code')
-		datatype = imagedatatype.content['datatype code']
-
-		imagearray = array.array(datatype, image)
+		camerastate = self.researchByDataID('camera')
+		imagearray = array.array(camerastate.content['datatype code'], base64.decodestring(camerastate.content['image data']))
 		print 'image 1...10', imagearray[:10]
 
-		#imagedata = self.researchByDataID('image data')
-		#print 'image 1...10', imagedata.content['image data'][:10]
+		c = copy.copy(camerastate.content)
+		del c['image data']
+		print c
 
 		## acquire image
 		print 'acquiring image %s' % time.asctime()
 
 		## publish image
+		self.publish(camerastate, event.PublishEvent)
 
