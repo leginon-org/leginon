@@ -4,43 +4,67 @@ import wx
 from wx.lib.mixins.listctrl import ColumnSorterMixin
 import gui.wx.MessageLog
 
-class LoggingConfiguration(object):
-	def __init__(self):
-		pass
+logging.Logger.manager.emittedNoHandlerWarning = 1
 
-	def _getLevel(self, logger):
-		level = logger.level
-		if type(level) is not str:
-			level = logging.getLevelName(level)
-		return level
+def getNodeChildLogger(name, node=None):
+	if node is not None:
+		name = node.name + '.' + name
+	logger = logging.getLogger(name)
+	logger.propagate = False
+	logger.setLevel(logging.ERROR)
+	return logger
 
-	def _getLevelNames(self):
-		levelnames = []
-		for i in logging._levelNames:
-			if type(i) is int:
-				levelnames.append(i)
-		levelnames.sort()
-		levelnames = map(lambda n: logging._levelNames[n], levelnames)
-		return levelnames
-
-	def _getLoggerNames(self):
-		# not accurate, but you can't delete loggers...
-		# ideally you'd want two locks in logging
-		logging._acquireLock()
-		try:
-			names = logging.root.manager.loggerDict.keys()
-		finally:
-			logging._releaseLock()
-		names.sort()
-		return names
-
-	def _testHandler(self, logger):
-		handler = logging.StreamHandler()
-		formatter = logging.Formatter()
-		handler.setFormatter(formatter)
+def getNodeLogger(node):
+	logger = logging.getLogger(node.name)
+	logger.propagate = False
+	logger.setLevel(logging.INFO)
+	if hasattr(node, 'panel') and node.panel is not None:
+		logger.window = node.panel
+		handler = MessageLogHandler(logger.window)
+		handler.setFormatter(logging.Formatter())
 		logger.addHandler(handler)
-		logger.setLevel(logging.INFO)
-		logger.info('Hello?')
+	return logger
+
+def getLoggerNames():
+	# not accurate, but you can't delete loggers...
+	# ideally you'd want two locks in logging
+	logging._acquireLock()
+	try:
+		names = logging.root.manager.loggerDict.keys()
+	finally:
+		logging._releaseLock()
+	names.sort()
+	return names
+
+def getLevelNames():
+	levelnames = []
+	for i in logging._levelNames:
+		if type(i) is int:
+			levelnames.append(i)
+	levelnames.sort()
+	levelnames = map(lambda n: logging._levelNames[n], levelnames)
+	return levelnames
+
+def getLevel(logger):
+	level = logger.level
+	if type(level) is not str:
+		level = logging.getLevelName(level)
+	return level
+
+def getLoggerSettings():
+	settings = {}
+	names = getLoggerNames()
+	for name in names:
+		logger = logging.getLogger(name)
+		settings[name] = {}
+		settings[name]['propagate'] = logger.propagate
+		settings[name]['level name'] = logging.getLevelName(logger.level)
+		settings[name]['handlers'] = []
+		for handler in logger.handlers:
+			handler.__class__.__name__
+			formatter = handler.formatter
+			formatter._fmt
+			formatter.datefmt
 
 '''
 class Dialog(wx.Dialog):
@@ -284,20 +308,19 @@ class HandlersPanel(wx.Panel):
 		self.logger.removeHandler(handler)
 		self.handlers.removeHandler(handler)
 
-class LoggingConfigurationDialog(wx.Dialog, LoggingConfiguration):
+class LoggingConfigurationDialog(wx.Dialog):
 	def __init__(self, parent):
 		style = wx.DEFAULT_DIALOG_STYLE
 		style |= wx.MAXIMIZE_BOX
 		style |= wx.MINIMIZE_BOX
 		style |= wx.RESIZE_BORDER
 		wx.Dialog.__init__(self, parent, -1, 'Logging Configuration', style=style)
-		LoggingConfiguration.__init__(self)
 
 		self.tree = wx.TreeCtrl(self, -1)
 
 		self.cbpropagate = wx.CheckBox(self, -1, 'Propagate')
 
-		self.clevel = wx.Choice(self, -1, choices=self._getLevelNames())
+		self.clevel = wx.Choice(self, -1, choices=getLevelNames())
 		self.clevel.SetSelection(0)
 
 		self.handlerspanel = HandlersPanel(self)
@@ -359,7 +382,7 @@ class LoggingConfigurationDialog(wx.Dialog, LoggingConfiguration):
 
 		self.cbpropagate.SetValue(logger.propagate)
 
-		level = self._getLevel(logger)
+		level = getLevel(logger)
 		if type(level) is not str:
 			level = logging.getLevelName(level)
 		self.clevel.SetStringSelection(level)
@@ -376,7 +399,7 @@ class LoggingConfigurationDialog(wx.Dialog, LoggingConfiguration):
 	def setTree(self):
 		self.root = self.tree.AddRoot('Root')
 		self.tree.SetPyData(self.root, logging.root)
-		for loggername in self._getLoggerNames():
+		for loggername in getLoggerNames():
 			names = loggername.split('.')
 			parent = self.root
 			for name in names[:-1]:
@@ -410,7 +433,7 @@ class MessageLogHandler(logging.Handler):
 		level = self.getLevel(record)
 		if level is None:
 			return
-		message = record.getMessage()
+		message = self.format(record)
 		evt = gui.wx.MessageLog.AddMessageEvent(self.window, level, message)
 		self.window.GetEventHandler().AddPendingEvent(evt)
 

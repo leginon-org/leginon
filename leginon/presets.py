@@ -179,8 +179,6 @@ class PresetsManager(node.Node):
 	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.PresetPublishEvent] + EM.EMClient.eventoutputs
 
 	def __init__(self, name, session, managerlocation, **kwargs):
-		self.initializeLogger(name)
-
 		node.Node.__init__(self, name, session, managerlocation, **kwargs)
 
 		self.addEventInput(event.ChangePresetEvent, self.changePreset)

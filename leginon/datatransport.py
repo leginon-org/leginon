@@ -16,17 +16,16 @@ import time
 import sys
 
 class Base(object):
-	def __init__(self, loggername=None):
+	def __init__(self, logger):
 		# order matters
 		self.transportmodules = [localtransport, tcptransport]
-		name = loggername + '.' + self.__class__.__name__
-		self.logger = logging.getLogger(name)
+		self.logger = logger
 
 class Client(Base):
 	# hostname/port -> location or whatever
 	# needs to be transport generalized like server
-	def __init__(self, serverlocation, loggername=None):
-		Base.__init__(self, loggername)
+	def __init__(self, serverlocation, logger):
+		Base.__init__(self, logger)
 
 		self.clients = []
 
@@ -86,8 +85,8 @@ class Client(Base):
 		return ret
 
 class Server(Base):
-	def __init__(self, dh, tcpport=None, loggername=None):
-		Base.__init__(self, loggername)
+	def __init__(self, dh, logger, tcpport=None):
+		Base.__init__(self, logger)
 		self.datahandler = dh
 		self.servers = {}
 		for t in self.transportmodules:

@@ -177,7 +177,8 @@ class DataManager(object):
 		self.dblock.acquire()
 		try:
 			if self.db is None:
-				self.db = dbdatakeeper.DBDataKeeper('data')
+				name = dbdatakeeper.DBDataKeeper.__name__
+				self.db = dbdatakeeper.DBDataKeeper(name)
 			### try to get data from dbcache before doing query
 			try:
 				dat = self.dbcache[dataclass,dbid]

@@ -16,12 +16,10 @@ class ExitException(Exception):
 
 class DataBinder(object):
 	'''Bind data to a function. Used for mapping Events to handlers.'''
-	def __init__(self, node, threaded=True, queueclass=Queue.Queue, tcpport=None):
-		self.server = datatransport.Server(self, tcpport=tcpport,
-																				loggername=node.name)
+	def __init__(self, node, logger, threaded=True, queueclass=Queue.Queue, tcpport=None):
+		self.logger = logger
+		self.server = datatransport.Server(self, logger, tcpport=tcpport)
 		self.node = node
-		self.node.initializeLogger()
-		self.logger = self.node.logger
 		## this is a mapping of data class to function
 		## using list instead of dict to preserve order, and also
 		## because there may be more than one function for every 

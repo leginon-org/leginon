@@ -260,8 +260,6 @@ class EM(node.Node):
 		self.statelock = threading.RLock()
 		self.state = {}
 
-		self.initializeLogger(name)
-
 		node.Node.__init__(self, name, session, managerlocation, **kwargs)
 
 		# get the scope module and class from the database

@@ -14,6 +14,7 @@ import event
 import leginonobject
 import logging
 import threading
+import gui.wx.Logging
 import gui.wx.Node
 
 import leginonconfig
@@ -72,11 +73,15 @@ class Node(leginonobject.LeginonObject):
 		self.launcher = launcher
 
 		if otherdatabinder is None:
-			self.databinder = DataBinder(self, tcpport=tcpport)
+			name = DataBinder.__name__
+			databinderlogger = gui.wx.Logging.getNodeChildLogger(name, self)
+			self.databinder = DataBinder(self, databinderlogger, tcpport=tcpport)
 		else:
 			self.databinder = otherdatabinder
 		if otherdbdatakeeper is None:
-			self.dbdatakeeper = DBDataKeeper(loggername=self.logger.name)
+			name = DBDataKeeper.__name__
+			dbdatakeeperlogger = gui.wx.Logging.getNodeChildLogger(name, self)
+			self.dbdatakeeper = DBDataKeeper(dbdatakeeperlogger)
 		else:
 			self.dbdatakeeper = otherdbdatakeeper
 
@@ -121,16 +126,12 @@ class Node(leginonobject.LeginonObject):
 	def getSettings(self):
 		return self.settings
 
-	def initializeLogger(self, name=None):
+	def initializeLogger(self):
 		if hasattr(self, 'logger'):
 			return
-		if name is None:
-			name = self.name
-		self.logger = logging.getLogger(name)
-		if hasattr(self, 'panel') and self.panel is not None:
-			self.logger.window = self.panel
-		clientloggername = self.logger.name + '.' + datatransport.Client.__name__
-		clientlogger = logging.getLogger(clientloggername)
+		self.logger = gui.wx.Logging.getNodeLogger(self)
+		clientname = datatransport.Client.__name__
+		self.clientlogger = gui.wx.Logging.getNodeChildLogger(clientname, self)
 
 	# main, start/stop methods
 
@@ -359,7 +360,7 @@ class Node(leginonobject.LeginonObject):
 	def setManager(self, location):
 		'''Set the manager controlling the node and notify said manager this node is available.'''
 		self.managerclient = datatransport.Client(location['data binder'],
-																							loggername=self.name)
+																							self.clientlogger)
 		available_event = event.NodeAvailableEvent(location=self.location(),
 																							nodeclass=self.__class__.__name__)
 		self.outputEvent(ievent=available_event, wait=True, timeout=10)

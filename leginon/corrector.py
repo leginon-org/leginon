@@ -75,8 +75,6 @@ class Corrector(node.Node):
 	eventinputs = node.Node.eventinputs + EM.EMClient.eventinputs
 	eventoutputs = node.Node.eventoutputs + [event.DarkImagePublishEvent, event.BrightImagePublishEvent] + EM.EMClient.eventoutputs
 	def __init__(self, name, session, managerlocation, **kwargs):
-		self.initializeLogger(name)
-
 		node.Node.__init__(self, name, session, managerlocation, **kwargs)
 
 		self.emclient = EM.EMClient(self)

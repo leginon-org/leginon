@@ -13,8 +13,8 @@ import logging
 import _mysql_exceptions
 
 class DBDataKeeper(object):
-	def __init__(self, loggername=None):
-		self.logger = logging.getLogger(loggername + '.' + self.__class__.__name__)
+	def __init__(self, logger):
+		self.logger = logger
 		try:
 			self.dbd = sqldict.SQLDict()
 		except _mysql_exceptions.OperationalError, e:

@@ -69,10 +69,12 @@ class Manager(node.Node):
 		self.clients = {}
 
 		self.name = 'Manager'
-		self.initializeLogger(self.name)
+		self.initializeLogger()
 
 		## need a special DataBinder
-		mydatabinder = DataBinder(self, tcpport=tcpport)
+		name = DataBinder.__name__
+		databinderlogger = gui.wx.Logging.getNodeChildLogger(name, self)
+		mydatabinder = DataBinder(self, databinderlogger, tcpport=tcpport)
 		node.Node.__init__(self, self.name, session, otherdatabinder=mydatabinder,
 												**kwargs)
 
@@ -167,7 +169,8 @@ class Manager(node.Node):
 
 	def addClient(self, name, databinderlocation):
 		'''Add a databinder client for a node keyed by the node ID.'''
-		self.clients[name] = datatransport.Client(databinderlocation, loggername=self.logger.name)
+		self.clients[name] = datatransport.Client(databinderlocation,
+																							self.clientlogger)
 
 	def delClient(self, name):
 		'''Deleted a client to a node by the node ID.'''
@@ -586,7 +589,7 @@ class Manager(node.Node):
 										'location': self.location(),
 										'session': self.session}
 		e = event.SetManagerEvent(initializer=initializer)
-		client = datatransport.Client(location, loggername=self.logger.name)
+		client = datatransport.Client(location, self.clientlogger)
 		try:
 			client.push(e)
 		except (IOError, EOFError):
