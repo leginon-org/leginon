@@ -1741,7 +1741,7 @@ class wxTreePanelContainerWidget(wxContainerWidget):
 		self.layout()
 
 	def layout(self):
-		wxContainerWidget.layout(self)
+		#wxContainerWidget.layout(self)
 		self.sizer.Layout()
 		self.panel.Fit()
 		if self._shown:
