@@ -545,7 +545,7 @@ class Node(leginonobject.LeginonObject):
 	def defineUserInterface(self):
 		idarray = uidata.Array('ID', self.id, 'r')
 		class_string = uidata.String('Class', self.__class__.__name__, 'r')
-		location = self.location()
+		location = self.key2str(self.location())
 		locationstruct = uidata.Struct('Location', location, 'r')
 		datakeepercontainer = self.datahandler.datakeeper.UI()
 		exitmethod = uidata.Method('Exit', self.uiExit)

@@ -143,7 +143,7 @@ def WidgetClassFromTypeList(typelist):
 class XMLRPCClient(object):
 	def __init__(self, serverhostname, serverport, port=None):
 		uri = 'http://%s:%s' % (serverhostname, serverport)
-		self.proxy = xmlrpclib.ServerProxy(uri)
+		self.proxy = xmlrpclib.ServerProxy(uri, allow_none=1)
 
 	def execute(self, function_name, args=()):
 		try:
@@ -172,10 +172,10 @@ class XMLRPCUIClient(XMLRPCClient, uiserver.XMLRPCServer):
 	def __init__(self, serverhostname, serverport, port=None):
 		XMLRPCClient.__init__(self, serverhostname, serverport, port)
 		uiserver.XMLRPCServer.__init__(self, port)
-		self.server.register_function(self.addFromServer, 'add')
-		self.server.register_function(self.setFromServer, 'set')
-		self.server.register_function(self.removeFromServer, 'remove')
-		self.server.register_function(self.configureFromServer, 'configure')
+		self.xmlrpcserver.register_function(self.addFromServer, 'add')
+		self.xmlrpcserver.register_function(self.setFromServer, 'set')
+		self.xmlrpcserver.register_function(self.removeFromServer, 'remove')
+		self.xmlrpcserver.register_function(self.configureFromServer, 'configure')
 
 	def addServer(self):
 		self.execute('add client', (self.hostname, self.port))
