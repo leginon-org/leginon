@@ -652,6 +652,10 @@ class EM(node.Node):
 			request = self.requestqueue.get()
 			if isinstance(request, SetRequest):
 				self.setEM(request.value)
+				keys = request.value.keys()
+				for key, value in self.scope.parameterdependencies.items():
+					if key in keys:
+						requeset.append(value)
 				self.state = self.getEM(request.value.keys())
 			elif isinstance(request, GetRequest):
 				self.state = self.getEM(request.value)
