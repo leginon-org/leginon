@@ -168,6 +168,7 @@ class ImageCanvas(Frame):
 			'canvas y': None,
 			'image x': None,
 			'image y': None,
+			'array shape': None,
 			'array row': None,
 			'array column': None,
 			'array value': None
@@ -188,6 +189,7 @@ class ImageCanvas(Frame):
 		numrc = self.numimage.imagexy_to_numericrc( (imx, imy) )
 		if numrc is None:
 			return info
+		info['array shape'] =  self.numimage.orig_array.shape
 		info['array row'] =  numrc[0]
 		info['array column'] =  numrc[1]
 		info['array value'] = self.getdata((numrc[1],numrc[0]))

@@ -38,16 +38,20 @@ class ImViewer(watcher.Watcher):
 		self.viewerthread.start()
 		print 'thread started'
 
-	def clickEvent(self, event):
-		clickinfo = self.iv.eventXYInfo(event)
+	def clickEvent(self, tkevent):
+		clickinfo = self.iv.eventXYInfo(tkevent)
 		clickinfo['image id'] = self.imageid
+		print 'clickinfo', clickinfo
 		## prepare for xmlrpc
 		c = {}
 		for key,value in clickinfo.items():
 			if value is not None:
 				c[key] = value
-		e = event.ClickImageEvent(self.ID(), c)
+		print 'c', c
+		e = event.ImageClickEvent(self.ID(), c)
+		print 'sending ImageClickEvent'
 		self.outputEvent(e)
+		print 'sent ImageClickEvent'
 
 	def open_viewer(self):
 		root = self.root = Tk()
@@ -66,8 +70,10 @@ class ImViewer(watcher.Watcher):
 		self.root.destroy()
 
 	def acquireEvent(self):
-		e = event.AcquireImageEvent(self.ID())
+		print 'sending ImageAcquireEvent'
+		e = event.ImageAcquireEvent(self.ID())
 		self.outputEvent(e)
+		print 'sent ImageAcquireEvent'
 	
 	def processData(self, imagedata):
 		#camdict = imagedata.content
