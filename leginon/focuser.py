@@ -210,11 +210,12 @@ class Focuser(acquisition.Acquisition):
 		if self.auto_on.get():
 			autofocuspreset = self.autofocuspreset.get()
 			autopresettarget = data.PresetTargetData(emtarget=presettarget['emtarget'], preset=autofocuspreset)
-			status = self.autoFocus(resultdata, autopresettarget)
-			resultdata['auto status'] = status
+			autostatus = self.autoFocus(resultdata, autopresettarget)
+			resultdata['auto status'] = autostatus
 			if status != 'ok':
-				self.publish(resultdata, database=True, dbforce=True)
-				return status
+				status = autostatus
+			else:
+				status = 'ok'
 		else:
 			resultdata['auto status'] = 'skipped'
 
@@ -222,6 +223,7 @@ class Focuser(acquisition.Acquisition):
 		if self.post_manual_check.get():
 			self.manualCheckLoop(presettarget)
 			resultdata['post manual check'] = True
+			status = 'ok'
 		else:
 			resultdata['post manual check'] = False
 
@@ -239,7 +241,7 @@ class Focuser(acquisition.Acquisition):
 		## publish results
 		self.publish(resultdata, database=True, dbforce=True)
 
-		return 'ok'
+		return status
 
 	def alreadyAcquired(self, targetdata, presettarget):
 		## for now, always do acquire
