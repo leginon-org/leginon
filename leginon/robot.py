@@ -728,6 +728,9 @@ class RobotNotification(RobotNode):
 		self.setStatus('Data collection event outputted')
 
 	def handleGridDataCollectionDone(self, ievent):
+		self.extract()
+
+	def extract(self):
 		if self.simulate:
 			self.outputEvent(event.ExtractGridEvent())
 			return
@@ -756,6 +759,9 @@ class RobotNotification(RobotNode):
 		self.setStatus('Grid extract event outputted')
 
 	def handleGridExtracted(self, ievent):
+		self.insert()
+
+	def insert(self):
 		self.setStatus('Outputting grid insert event')
 		evt = event.InsertGridEvent()
 		self.outputEvent(evt)
@@ -768,7 +774,10 @@ class RobotNotification(RobotNode):
 		statuscontainer = uidata.Container('Status')
 		statuscontainer.addObjects((self.statuslabel,))
 
+		insertmethod = uidata.Method('Insert', self.insert)
+		extractmethod = uidata.Method('Extract', self.extract)
+
 		container = uidata.LargeContainer('Robot Notification')
-		container.addObjects((statuscontainer,))
+		container.addObjects((statuscontainer, insertmethod, extractmethod))
 		self.uicontainer.addObject(container)
 
