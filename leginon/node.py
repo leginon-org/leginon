@@ -60,7 +60,7 @@ class DataHandler(leginonobject.LeginonObject):
 		self.dbdatakeeper.insert(idata)
 
 	def dbQuery(self, idata, results=None):
-		self.dbdatakeeper.query(idata, results)
+		return self.dbdatakeeper.query(idata, results)
 
 	def __getattr__(self, attr):
 		return getattr(self.datakeeper, attr)
@@ -296,7 +296,10 @@ class Node(leginonobject.LeginonObject):
 			print 'DATAINST'
 			print datainstance
 			results = kwargs.get('results', None)
-			resultlist += self.datahandler.dbQuery(datainstance, results)
+			newresults = self.datahandler.dbQuery(datainstance, results)
+			print 'NEWRESULTS'
+			print newresults
+			resultlist += newresults
 
 		return resultlist
 
