@@ -6,9 +6,12 @@ import javax.swing.*;
 public class NodeDesktop {
 	private CustomDesktopPane desktopPane = new CustomDesktopPane();
 	private JMenu displayMenu = new JMenu();
-	private	Vector vfr = new Vector();
-	private Vector mfr = new Vector();
+	private	Vector vframe = new Vector();
+	private Vector vmenu = new Vector();
+	private Vector vtogglebutton = new Vector();
+	private Vector vgui = new Vector();
 	private	JMenuItem	menuFrame;
+	private	JToolBar toolbar = new JToolBar();
 	
 	private final int	ITEM_PLAIN	=	0;	// Item types
 	private final int	ITEM_CHECK	=	1;
@@ -16,6 +19,16 @@ public class NodeDesktop {
 
 	public JDesktopPane getDesktopPane() {
 		return desktopPane;
+	}
+
+	public void clear() {
+		desktopPane.removeAll();
+		desktopPane.repaint();
+		toolbar.removeAll();
+		vframe.clear();
+		vmenu.clear();
+		vgui.clear();
+		vtogglebutton.clear();
 	}
 
 	public JMenuBar createMenuBar() {
@@ -33,19 +46,96 @@ public class NodeDesktop {
 		return menubar;
 	}
 
-	public void addJIF(JScrollPane scrollPane, int nb, String name) throws Exception {
+	public JToolBar addButtons() {
+		return toolbar;
+	}
+
+	public void addJIF(Object gui, JScrollPane scrollPane, int nb, String name) throws Exception {
 			Dimension d = scrollPane.getPreferredSize();
 			JInternalFrame jif = createInternalFrame(name);
 			jif.setBounds(20*(nb%10), 20*(nb%10), (int)d.getWidth(),(int)d.getHeight());
 			jif.setContentPane(scrollPane); 
 			jif.setVisible(true);
-			vfr.add(jif);
+			vframe.add(jif);
+			vgui.add(gui);
 
 			JMenuItem jmi =	createMenuItem( displayMenu, ITEM_CHECK, name, null, nb+47, name);
-			mfr.add(jmi);
+			vmenu.add(jmi);
+
+			JToggleButton jtb = createToggleButton(name);
+			toolbar.add(jtb);
+			vtogglebutton.add(jtb);
 			desktopPane.add(jif);
 			jif.setIcon(true);
 			
+	}
+
+	private JToggleButton createToggleButton(String name) {
+		JToggleButton jtb = new JToggleButton(name, false);
+
+		jtb.addMouseListener(new java.awt.event.MouseAdapter() {
+			public void mouseExited(java.awt.event.MouseEvent evt) {
+				jtbMouseExited(evt);
+			}
+			public void mouseEntered(java.awt.event.MouseEvent evt) {
+				jtbMouseEntered(evt);
+			}
+        	});
+
+		jtb.addActionListener(new java.awt.event.ActionListener() {
+			public void actionPerformed(java.awt.event.ActionEvent evt) {
+				jtbActionPerformed(evt);
+			}
+		});
+
+		return jtb;
+	}
+	private void jtbMouseEntered(java.awt.event.MouseEvent evt) {
+		JToggleButton jtb = (JToggleButton)evt.getSource();
+	        jtb.setBackground(new java.awt.Color(204, 204, 255));
+	}
+
+	private void setToggleButton(JToggleButton jtb, boolean state) {
+		if (state) {
+			jtb.setForeground(new java.awt.Color(204, 204, 235));
+			jtb.setSelected(true);
+		} else {
+			jtb.setForeground(new java.awt.Color(0, 0, 0));
+			jtb.setSelected(false);
+		}	
+	}
+
+	private void setInternalFrame(JInternalFrame jif, boolean state) throws Exception {
+		if (state) {
+			jif.setIcon(false);
+			jif.setSelected(true);
+		} else {
+			jif.setIcon(true);
+			jif.setSelected(false);
+		}
+	}
+
+	private void jtbActionPerformed(java.awt.event.ActionEvent evt) {
+		JToggleButton jtb = (JToggleButton)evt.getSource();
+		int index = vtogglebutton.indexOf(jtb);
+		JInternalFrame sjif = (JInternalFrame)vframe.elementAt(index);
+		JCheckBoxMenuItem cb = (JCheckBoxMenuItem)vmenu.elementAt(index);
+		try {
+			if (jtb.isSelected()) {
+				setToggleButton(jtb,true);
+				cb.setState(true);
+				setInternalFrame(sjif,true);
+			} else {
+				setToggleButton(jtb,false);
+				cb.setState(false);
+				setInternalFrame(sjif,false);
+			}	
+		} catch (Exception e) {}
+	}
+
+	private void jtbMouseExited(java.awt.event.MouseEvent evt) {
+		JToggleButton jtb = (JToggleButton)evt.getSource();
+		jtb.setBackground(new java.awt.Color(204, 204, 204));
 	}
 
 	private JInternalFrame createInternalFrame(String name) {
@@ -74,20 +164,39 @@ public class NodeDesktop {
 
 	private void jifInternalFrameDeactivated(javax.swing.event.InternalFrameEvent evt) {
 		JInternalFrame sjif = (JInternalFrame)evt.getSource();
-		int index = vfr.indexOf(sjif);
-		JCheckBoxMenuItem cb = (JCheckBoxMenuItem)mfr.elementAt(index);
-		try {
-			cb.setState(false);
-		} catch (Exception e) {}
+		int index = vframe.indexOf(sjif);
+		if (index > -1 ) {
+			JCheckBoxMenuItem cb = (JCheckBoxMenuItem)vmenu.elementAt(index);
+			JToggleButton jt = (JToggleButton)vtogglebutton.elementAt(index);
+			try {
+				cb.setState(false);
+				setToggleButton(jt,false);
+			} catch (Exception e) {}
+		}
 	}
 
 	private void jifInternalFrameActivated(javax.swing.event.InternalFrameEvent evt) {
 		JInternalFrame sjif = (JInternalFrame)evt.getSource();
-		int index = vfr.indexOf(sjif);
-		JCheckBoxMenuItem cb = (JCheckBoxMenuItem)mfr.elementAt(index);
+		int index = vframe.indexOf(sjif);
+		JCheckBoxMenuItem cb = (JCheckBoxMenuItem)vmenu.elementAt(index);
+		JToggleButton jt = (JToggleButton)vtogglebutton.elementAt(index);
 		try {
 			cb.setState(true);
+			setToggleButton(jt,true);
+
+			Object o = vgui.elementAt(index);
+			if (o instanceof GuiContainer) {
+				GuiContainer gui = (GuiContainer)o;
+				gui.refresh();
+			} else if (o instanceof GuiMethod) {
+				GuiMethod gui = (GuiMethod)o;
+				gui.refresh();
+			} else if (o instanceof GuiData) {
+				GuiData gui = (GuiData)o;
+				gui.refresh();
+			}
 		} catch (Exception e) {}
+		
 		
 	}
 
@@ -128,16 +237,17 @@ public class NodeDesktop {
 		menuItem.addActionListener(new java.awt.event.ActionListener() {
 			public void actionPerformed(java.awt.event.ActionEvent evt) {
 				JCheckBoxMenuItem cb = (JCheckBoxMenuItem)evt.getSource();
-				int index = mfr.indexOf(cb);
-				JInternalFrame sjif = (JInternalFrame)vfr.elementAt(index);
+				int index = vmenu.indexOf(cb);
+				JInternalFrame sjif = (JInternalFrame)vframe.elementAt(index);
+				JToggleButton jt = (JToggleButton)vtogglebutton.elementAt(index);
 				try {
 				if (cb.getState()) {
-					sjif.setIcon(false);
-					sjif.setSelected(true);
+					setInternalFrame(sjif,true);
+					setToggleButton(jt,true);
 				} else {
 					cb.setState(false);
-					sjif.setIcon(true);
-					sjif.setSelected(false);
+					setInternalFrame(sjif,false);
+					setToggleButton(jt,false);
 				}
 				} catch (Exception e) {}
 		
@@ -181,6 +291,15 @@ public class NodeDesktop {
 			desktopPane.cascade();
 		}
 	}
+}
+
+class CustomJInternalFrame extends JInternalFrame {
+	private Container c;
+
+	public void refresh() {
+
+	}
+
 }
 
 class CustomDesktopPane extends JDesktopPane { 

@@ -14,12 +14,11 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
 
 public class GuiContainer {
-	XmlRpcClient xmlrpcclient;
-	Hashtable spec;
-	Vector content;
-	Container c;
-	int type;
-	public String name;
+	private XmlRpcClient xmlrpcclient;
+	private Hashtable spec;
+	private Vector content;
+	private Container c;
+	private String name;
 
 	public GuiContainer(XmlRpcClient xmlrpcclient, Hashtable specWidget, Container c) throws Exception {
 		this.xmlrpcclient=xmlrpcclient;
@@ -27,7 +26,10 @@ public class GuiContainer {
 		this.c=c;
 		build();
 	}
-	public void build() throws Exception {
+
+	public void refresh() {}
+
+	private void build() throws Exception {
 		JPanel mainPanel =new JPanel();	
 		name = (String)spec.get("name");
                 mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
@@ -50,18 +52,36 @@ public class GuiContainer {
 }
 
 class GuiMethod {
-	XmlRpcClient xmlrpcclient;
-	Hashtable spec;
-	Container c;
-	Vector argspec;
-	public String name;
+
+	private XmlRpcClient xmlrpcclient;
+	private Hashtable spec;
+	private Container c;
+	private Vector argspec;
+	private Vector widgets;
+	private String name;
+
 	public GuiMethod(XmlRpcClient xmlrpcclient, Hashtable specWidget, Container c) throws Exception {
 		this.xmlrpcclient=xmlrpcclient;
 		this.spec= specWidget;
 		this.c=c;
 		build();
 	}
-	public void build() throws Exception {
+
+	public void refresh() throws Exception {
+		if (widgets instanceof Vector)
+			for (Enumeration e = widgets.elements() ; e.hasMoreElements() ;) {
+				Object widget = e.nextElement();
+				if (widget instanceof TreeData) {
+					TreeData td = (TreeData)widget;
+					td.update();
+				} else if (widget instanceof AddComboBox) {
+					AddComboBox acb = (AddComboBox)widget;
+					acb.update();
+				}
+			}
+	}
+
+	private void build() throws Exception {
 		JPanel mainPanel =new JPanel();	
 		String Mname = (String)spec.get("name");
 		String Mid = (String)spec.get("id");
@@ -69,7 +89,7 @@ class GuiMethod {
                 mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 		argspec = (Vector)spec.get("argspec");
 		Vector args = new Vector();
-		Vector widgets = new Vector();
+		widgets = new Vector();
 		
 		if (argspec instanceof Vector)
 		for (Enumeration e = argspec.elements() ; e.hasMoreElements() ;) {
@@ -112,13 +132,13 @@ class GuiMethod {
 }
 
 class GuiData {
-	XmlRpcClient xmlrpcclient;
-	Hashtable spec;
-	Container c;
-	Vector argspec;
-	String name;
-	String xmlrpctype;
-	int type;
+	private XmlRpcClient xmlrpcclient;
+	private Hashtable spec;
+	private Container c;
+	private Vector argspec;
+	private Vector widgets;
+	private String name;
+	private String xmlrpctype;
 
 	public GuiData(XmlRpcClient xmlrpcclient, Hashtable specWidget, Container c) throws Exception {
 		this.xmlrpcclient=xmlrpcclient;
@@ -126,11 +146,26 @@ class GuiData {
 		this.c=c;
 		build();
 	}
-	public void build() throws Exception {
+
+	public void refresh() throws Exception {
+		if (widgets instanceof Vector)
+			for (Enumeration e = widgets.elements() ; e.hasMoreElements() ;) {
+				Object widget = e.nextElement();
+				if (widget instanceof TreeData) {
+					TreeData td = (TreeData)widget;
+					td.update();
+				} else if (widget instanceof AddComboBox) {
+					AddComboBox acb = (AddComboBox)widget;
+					acb.update();
+				} 
+			}
+	}
+
+	private void build() throws Exception {
 		name = (String)spec.get("name");
 		xmlrpctype  = (String)spec.get("xmlrpctype");
 		String id = (String)spec.get("id");
-		Vector widgets = new Vector();
+		widgets = new Vector();
 
 		JPanel mainPanel =new JPanel();	
 		mainPanel.setBorder(new javax.swing.border.TitledBorder(name));
@@ -149,7 +184,6 @@ class GuiData {
 
 		Object defaultval = null;
 		if (spec.containsKey("default")) {
-			type=1;	
 			defaultval = spec.get("default");
 		} 
 
@@ -176,10 +210,10 @@ class GuiData {
 }
 
 class AddCheckBox {
-	String text;
-	Vector widgets;
-	Container c;
-	JCheckBox checkbox;
+	private String text;
+	private Vector widgets;
+	private Container c;
+	private JCheckBox checkbox;
 
 	public AddCheckBox(String text, Vector widgets, Container c) {
 		this.text=text;
@@ -202,12 +236,12 @@ class AddCheckBox {
 }
 
 class AddComboBox {
-	String text, id;
-	XmlRpcClient xmlrpcclient;
-	Container c;
-	Vector items = new Vector();
-	Vector widgets;
-	JComboBox cb;
+	private String text, id;
+	private XmlRpcClient xmlrpcclient;
+	private Container c;
+	private Vector items = new Vector();
+	private Vector widgets;
+	private JComboBox cb;
 	boolean editable;
 
 	public AddComboBox(String text, XmlRpcClient xmlrpcclient, String id, Vector widgets, Container c, boolean editable) throws Exception  {
@@ -271,12 +305,12 @@ class AddComboBox {
 }
 
 class AddTextField {
-	String text;
-	Object defaultval;
-	int size;
-	Vector widgets;
-	Container c;
-	JTextField textField;
+	private String text;
+	private Object defaultval;
+	private int size;
+	private Vector widgets;
+	private Container c;
+	private JTextField textField;
 
 	public AddTextField(String text, int size, Object defaultval, Vector widgets, Container c) {
 		this.text=text;
@@ -316,10 +350,10 @@ class AddTextField {
 }
 
 class AddButton {
-	String name, id, cmd, cmdxmlrpc;
-	XmlRpcClient xmlrpcclient;
-	Vector args, widgets;
-	Container c;
+	private String name, id, cmd, cmdxmlrpc;
+	private XmlRpcClient xmlrpcclient;
+	private Vector args, widgets;
+	private Container c;
 
 	public AddButton (String name, XmlRpcClient xmlrpcclient, String cmd, String id, Vector widgets, Container c) throws Exception  {
 		this.name=name;
@@ -425,16 +459,16 @@ class AddButton {
 }
 
 class TreeData {
-	String name, id;
-	XmlRpcClient xmlrpcclient;
-	Container c;
-	Vector widgets;
-	JTree tree;
-	TreeTableModel model;
-	JTreeTable treeTable;
-	JScrollPane hashPane;
-	Hashtable hashtree = new Hashtable();
-	Vector path = new Vector();
+	private String name, id;
+	private XmlRpcClient xmlrpcclient;
+	private Container c;
+	private Vector widgets;
+	private JTree tree;
+	private TreeTableModel model;
+	private JTreeTable treeTable;
+	private JScrollPane hashPane;
+	private Hashtable hashtree = new Hashtable();
+	private Vector path = new Vector();
 
 	public TreeData(String name, XmlRpcClient xmlrpcclient, String id, Hashtable defaultval, Vector widgets, Container c) throws Exception  {
 		this.name=name;

@@ -45,15 +45,16 @@ public class GuiJIFContainer {
     			JScrollPane scrollPane = new JScrollPane(framePanel);
                 	scrollPane.setPreferredSize(new Dimension(width,height));
 
-			dtp.addJIF(scrollPane, jif_count, n);
+			Object gui = new Object();
 
 			if (s.equals("container")) {
-				new GuiContainer(xmlrpcclient, (Hashtable)o, framePanel);
+				gui = new GuiContainer(xmlrpcclient, (Hashtable)o, framePanel);
 			} else if (s.equals("method")) {
-				new GuiMethod(xmlrpcclient, (Hashtable)o, framePanel);
+				gui = new GuiMethod(xmlrpcclient, (Hashtable)o, framePanel);
 			} else if (s.equals("data")) {
-				new GuiData(xmlrpcclient, (Hashtable)o, framePanel);
+				gui = new GuiData(xmlrpcclient, (Hashtable)o, framePanel);
 			} 
+			dtp.addJIF(gui, scrollPane, jif_count, n);
 			jif_count++;
 		}
 

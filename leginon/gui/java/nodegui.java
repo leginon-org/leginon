@@ -38,8 +38,11 @@ public class nodegui extends JFrame {
     }
 
     private void addControl() throws Exception {
-                JButton b = new JButton("Refresh");
-                controlPanel.add(b);
+		JToolBar tb = new JToolBar();
+                JButton b = new JButton("Reload");
+		tb.add(b);
+                controlPanel.add(tb);
+                controlPanel.add(nd.addButtons());
 
                 b.addActionListener(new ActionListener() {
                         public void actionPerformed(ActionEvent event) {
@@ -58,7 +61,7 @@ public class nodegui extends JFrame {
 	Object result = new Object();
 	result = client.execute("spec", new Vector());
 	Hashtable spec = (Hashtable)result;
-//	System.out.println("Spec"+spec);
+	// System.out.println("Spec"+spec);
 	gc = new GuiJIFContainer(client, spec, nd);
 	super.setTitle(url+":: Interface to "+gc.getSpectype()+":"+gc.getName());
     }
@@ -73,8 +76,7 @@ public class nodegui extends JFrame {
     }
 
     private void refresh() {
-	dtp.removeAll();
-	dtp.repaint();
+	nd.clear();
     }
 
     public static void main (String args[]) throws Exception {
