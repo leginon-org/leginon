@@ -1,7 +1,8 @@
 import xmlrpclib
 import uiserver
-import Tkinter
-import Pmw
+import threading
+import time
+from wxPython.wx import *
 
 class XMLRPCClient(object):
 	def __init__(self, serverhostname, serverport, port=None):
@@ -18,199 +19,12 @@ class XMLRPCClient(object):
 			# exception during call of the function
 			raise
 
-class UIWidget(object):
-	def __init__(self, name, parent, tkparent):
-		if type(name) is not str:
-			raise TypeError('UIWidget name must be a string')
-		self.name = name
-		if parent is not None and not isinstance(parent, UIContainerWidget):
-			raise TypeError('UIWidget parent must be a UIContainer or None')
-		self.parent = parent
-		self.tkparent = tkparent
-
-	def getWidgetFromList(self, namelist):
-		if len(namelist) == 1 and namelist[0] == self.name:
-			return self
-		else:
-			raise ValueError('incorrect widget')
-
-class UIButtonWidget(UIWidget, Tkinter.Button):
-	def __init__(self, name, parent, tkparent):
-		UIWidget.__init__(self, name, parent, tkparent)
-		Tkinter.Button.__init__(self, tkparent, text=self.name,
-																						command=self.command)
-
-	def command(self):
-		self.parent.commandCallback((self.name,), ())
-
-class UIDataWidget(UIWidget, Tkinter.Frame):
-	def __init__(self, name, parent, tkparent):
-		UIWidget.__init__(self, name, parent, tkparent)
-		Tkinter.Frame.__init__(self, tkparent)
-
-	def set(self, value):
-		raise NotImplemetedError()
-
-	def apply(self):
-		raise NotImplemetedError()
-
-	def setServer(self):
-		self.parent.setCallback((self.name,), self.value)
-
-def UIWidgetClassFromType(typelist):
-	if typelist[0] == 'object':
-		if len(typelist) > 1:
-			if typelist[1] == 'container':
-				return UIContainerWidget
-			elif typelist[1] == 'method':
-				return UIButtonWidget
-			elif typelist[1] == 'data':
-				if len(typelist) > 2:
-					if typelist[2] == 'boolean':
-						return UICheckbuttonWidget
-				return UIEntryWidget
-	raise ValueError('invalid type list for UI widget class')
-
-class UIContainerWidget(UIWidget, Pmw.Group):
-	def __init__(self, name, parent, tkparent):
-		self.uiwidgets = {}
-		UIWidget.__init__(self, name, parent, tkparent)
-		Pmw.Group.__init__(self, tkparent, tag_text=self.name)
-
-	def getWidgetFromList(self, namelist):
-		if type(namelist) not in (list, tuple):
-			raise TypeError('name hierarchy must be a list')
-		if not namelist:
-			raise ValueError('no widget name[s] specified')
-		if namelist[0] == self.name:
-			if len(namelist) == 1:
-				return self
-			else:
-				for uiwidget in self.uiwidgets.values():
-					try:
-						return uiwidget.getWidgetFromList(namelist[1:])
-					except ValueError:
-						pass
-				raise ValueError(	
-										'widget with specified name does not exists in container')
-		else:
-			raise ValueError('specfied name does not match widget name')
-			
-	def add(self, namelist, typelist, value):
-		container = self.getWidgetFromList(namelist[:-1])
-		if not isinstance(container, UIContainerWidget):
-			raise ValueError('parent of widget must be a container')
-		uiwidget_type = UIWidgetClassFromType(typelist)
-		name = namelist[-1]
-		uiwidget = uiwidget_type(name, container, container.interior())
-		if isinstance(uiwidget, UIDataWidget):
-			uiwidget.set(value)
-		uiwidget.grid(row=len(container.uiwidgets), column=0)
-		container.uiwidgets[name] = uiwidget
-
-	def set(self, namelist, value):
-		container = self.getWidgetFromList(namelist[:-1])
-		if not isinstance(container, UIContainerWidget):
-			raise ValueError('parent of widget must be a container')
-		name = namelist[-1]
-		try:
-			uiwidget = container.uiwidgets[name].set(value)
-		except KeyError:
-			raise ValueError('container \'%s\' does not contain widget \'%s\''
-																						% (self.name, name))
-
-	def delete(self, namelist):
-		container = self.getWidgetFromList(namelist[:-1])
-		if not isinstance(container, UIContainerWidget):
-			raise ValueError('parent of widget must be a container')
-		name = namelist[-1]
-		try:
-			uiwidget = container.uiwidgets[name]
-		except KeyError:
-			raise ValueError('container \'%s\' does not contain widget \'%s\''
-																						% (self.name, name))
-		deletedrow = uiwidget.grid_info()['row']
-		uiwidget.grid_forget()
-		#uiwidget.destroy()
-		del container.uiwidgets[name]
-
-		for uiwidget in container.uiwidgets.values():
-			row = uiwidget.grid_info()['row']
-			if row > deletedrow:
-				uiwidget.grid_configure(row=int(row)-1)
-
-	def setCallback(self, namelist, value):
-		self.parent.setCallback((self.name,) + namelist, value)
-
-	def commandCallback(self, namelist, args):
-		self.parent.commandCallback((self.name,) + namelist, args)
-
-class UIEntryWidget(UIDataWidget):
-	def __init__(self, name, parent, tkparent):
-		self.value = None
-		UIDataWidget.__init__(self, name, parent, tkparent)
-		self.applybutton = Tkinter.Button(self, text='Apply', command=self.apply)
-		self.applybutton.grid(row=0, column=1)
-		self.markClean()
-		self.entryfield = Pmw.EntryField(self, labelpos='w',
-																						label_text=self.name,
-																						modifiedcommand=self.markDirty)
-		self.entryfield.grid(row=0, column=0)
-
-	def set(self, value):
-		self.value = value
-		self.entryfield.setvalue(value)
-		self.markClean()
-
-	def markDirty(self):
-		self.applybutton['state'] = Tkinter.NORMAL
-
-	def markClean(self):
-		self.applybutton['state'] = Tkinter.DISABLED
-
-	def apply(self):
-		value = self.entryfield.getvalue()
-		if type(self.value) != str:
-			try:
-				value = eval(value)
-			except:
-				return
-			if type(value) == type(self.value):
-				self.set(value)
-			else:
-				return
-		else:
-			self.set(value)
-		self.setServer()
-
-class UICheckbuttonWidget(UIDataWidget):
-	def __init__(self, name, parent, tkparent):
-		self.value = None
-		UIDataWidget.__init__(self, name, parent, tkparent)
-		self.checkbuttonvar = Tkinter.IntVar()
-		self.checkbutton = Tkinter.Checkbutton(self, variable=self.checkbuttonvar,
-																									command=self.check,
-																									text=self.name)
-		self.checkbutton.grid(row=0, column=0)
-
-	def set(self, value):
-		self.value = value
-		self.checkbuttonvar.set(self.value)
-
-	def check(self):
-		if self.checkbuttonvar.get():
-			self.value = 1
-		else:
-			self.value = 0
-		self.setServer()
-
-class UIClient(XMLRPCClient, uiserver.XMLRPCServer, UIContainerWidget):
-	def __init__(self, tkparent, serverhostname, serverport, port=None):
-		UIContainerWidget.__init__(self, 'Server', None, tkparent)
+class UIClient(XMLRPCClient, uiserver.XMLRPCServer):
+	def __init__(self, serverhostname, serverport, port=None):
 		XMLRPCClient.__init__(self, serverhostname, serverport, port)
 		uiserver.XMLRPCServer.__init__(self, port)
-		self.server.register_function(self.setFromServer, 'SET')
 		self.server.register_function(self.addFromServer, 'ADD')
+		self.server.register_function(self.setFromServer, 'SET')
 		self.server.register_function(self.deleteFromServer, 'DEL')
 		self.execute('ADDSERVER', (self.hostname, self.port))
 
@@ -221,23 +35,224 @@ class UIClient(XMLRPCClient, uiserver.XMLRPCServer, UIContainerWidget):
 		self.execute('COMMAND', (namelist, args))
 
 	def addFromServer(self, namelist, typelist, value):
+		raise NotImplementedError
+
+	def setFromServer(self, namelist, value):
+		raise NotImplementedError
+
+	def deleteFromServer(self, namelist):
+		raise NotImplementedError
+
+class wxUIClient(UIClient):
+	def __init__(self, serverhostname, serverport, port=None):
+		# there are some timing issues to be thought out
+		self.app = UIApp(0)
+		UIClient.__init__(self, serverhostname, serverport, port)
+		# quick
+		self.app.uiclient = self
+		self.app.MainLoop()
+
+	def addFromServer(self, namelist, typelist, value):
 		print 'ADD', namelist, typelist, value
-		self.add(namelist, typelist, value)
+		self.app.container.add((self.app.container.name,) + tuple(namelist),
+																													typelist, value)
 		return ''
 
 	def setFromServer(self, namelist, value):
 		print 'SET', namelist, value
-		self.set(namelist, value)
+		self.app.container.set((self.app.container.name,) + tuple(namelist), value)
 		return ''
 
 	def deleteFromServer(self, namelist):
 		print 'DEL', namelist
-		self.delete(namelist)
+		#self.delete(namelist)
 		return ''
 
-	def setCallback(self, namelist, value):
-		self.setServer((self.name,) + namelist, value)
+class UIApp(wxApp):
+	def OnInit(self):
+		self.frame = wxFrame(NULL, -1, 'UI')
+		self.frame.Show(true)
+		self.SetTopWindow(self.frame)
+		self.panel = wxPanel(self.frame, -1)
+		self.panel.SetSize(self.frame.GetClientSize())
+		self.panel.Show(true)
+		self.container = wxStaticBoxContainerWidget(None, ('UI',),
+																								self.frame, self.panel)
+		self.panel.SetAutoLayout(true)
+		self.panel.SetSizer(self.container.wxwidget)
+		self.frame.Connect(-1, -1, wxEVT_ADD_WIDGET, self.addWidget)
+		self.frame.Connect(-1, -1, wxEVT_SET_WIDGET, self.setWidget)
+		return true
 
-	def commandCallback(self, namelist, args):
-		self.commandServer((self.name,) + namelist, args)
+	def addWidget(self, evt):
+		uiwidget = evt.widget_type(self.uiclient, evt.namelist,
+																			self.frame, evt.parent)
+		evt.container.children[evt.namelist] = uiwidget
+		if isinstance(uiwidget, DataWidget):
+			uiwidget.set(evt.value)
+		evt.container.wxwidget.Add(uiwidget.wxwidget)
+		evt.container.event.set()
+		evt.container.lock.release()
+
+	def setWidget(self, evt):
+		evt.container.children[evt.namelist].set(evt.value)
+		evt.container.event.set()
+		evt.container.lock.release()
+
+class Widget(object):
+	def __init__(self, uiclient, namelist):
+		self.uiclient = uiclient
+		self.namelist = namelist
+		self.name = namelist[-1]
+
+class ContainerWidget(Widget):
+	def __init__(self, uiclient, namelist):
+		Widget.__init__(self, uiclient, namelist)
+		self.children = {}
+
+	def addWidget(self, namelist, typelist, value):
+		raise NotImplementedError
+
+	def add(self, namelist, typelist, value):
+		childnamelist = namelist[:len(self.namelist) + 1]
+		if namelist[:len(self.namelist)] == self.namelist:
+			if len(namelist) - len(self.namelist) == 1:
+				self.addWidget(namelist, typelist, value)
+			elif childnamelist in self.children and isinstance(
+																self.children[childnamelist], ContainerWidget):
+				self.children[childnamelist].add(namelist, typelist, value)
+			else:
+				raise ValueError
+		else:
+			raise ValueError
+
+	def setWidget(self, namelist, value):
+		raise NotImplementedError
+
+	def set(self, namelist, value):
+		childnamelist = namelist[:len(self.namelist) + 1]
+		if namelist[:len(self.namelist)] == self.namelist:
+			if childnamelist in self.children:
+				if isinstance(self.children[childnamelist], DataWidget):
+					self.setWidget(namelist, value)
+				else:
+					self.children[childnamelist].set(namelist, value)
+			else:
+				raise ValueError
+		else:
+			raise ValueError
+
+def WidgetClassFromTypeList(typelist):
+	if typelist[0] == 'object':
+		if typelist[1] == 'container':
+			return wxStaticBoxContainerWidget
+		elif typelist[1] == 'data':
+			return wxEntryWidget
+	raise ValueError('invalid type for widget')
+	
+wxEVT_ADD_WIDGET = wxNewEventType()
+
+class AddWidgetEvent(wxPyEvent):
+	def __init__(self, namelist, container, typelist, parent, value):
+		wxPyEvent.__init__(self)
+		self.SetEventType(wxEVT_ADD_WIDGET)
+		self.widget_type = WidgetClassFromTypeList(typelist)
+		self.namelist = namelist
+		self.container = container
+		self.parent = parent
+		self.value = value
+
+wxEVT_SET_WIDGET = wxNewEventType()
+
+class SetWidgetEvent(wxPyEvent):
+	def __init__(self, container, namelist, value):
+		wxPyEvent.__init__(self)
+		self.SetEventType(wxEVT_SET_WIDGET)
+		self.container = container
+		self.namelist = namelist
+		self.value = value
+
+class wxContainerWidget(ContainerWidget):
+	def __init__(self, uiclient, namelist, window, parent):
+		ContainerWidget.__init__(self, uiclient, namelist)
+		self.window = window
+		self.parent = parent
+		self.lock = threading.Lock()
+		self.event = threading.Event()
+
+	def addWidget(self, namelist, typelist, value):
+		self.lock.acquire()
+		self.event.clear()
+		evt = AddWidgetEvent(namelist, self, typelist, self.parent, value)
+		wxPostEvent(self.window, evt)
+		self.event.wait()
+
+	# this locking should behave different than add
+	def setWidget(self, namelist, value):
+		self.lock.acquire()
+		evt = SetWidgetEvent(self, namelist, value)
+		wxPostEvent(self.window, evt)
+
+class wxStaticBoxContainerWidget(wxContainerWidget):
+	def __init__(self, uiclient, namelist, window, parent):
+		wxContainerWidget.__init__(self, uiclient, namelist, window, parent)
+		self.wxwidget = wxStaticBoxSizer(
+                 					 wxStaticBox(self.parent, -1, self.name), wxVERTICAL)
+
+class DataWidget(Widget):
+	def __init__(self, uiclient, namelist):
+		Widget.__init__(self, uiclient, namelist)
+
+	def setServer(self, value):
+		self.uiclient.setServer(self.namelist, value)
+
+	def set(self, value):
+		self.value = value
+
+class wxDataWidget(DataWidget):
+	def __init__(self, uiclient, namelist, window, parent):
+		DataWidget.__init__(self, uiclient, namelist)
+		self.window = window
+		self.parent = parent
+
+class wxEntryWidget(wxDataWidget):
+	def __init__(self, uiclient, namelist, window, parent):
+		wxDataWidget.__init__(self, uiclient, namelist, window, parent)
+		self.type = None
+		self.wxwidget = wxBoxSizer(wxHORIZONTAL)
+		self.label = wxStaticText(self.parent, -1, self.name)
+		self.applybutton = wxButton(self.parent, -1, 'Apply')
+		self.applybutton.Enable(false)
+		EVT_BUTTON(self.window, self.applybutton.GetId(), self.apply)
+		self.entry = wxTextCtrl(self.parent, -1)
+		EVT_TEXT(self.window, self.entry.GetId(), self.onEdit)
+		EVT_TEXT_ENTER(self.window, self.entry.GetId(), self.onEnter)
+		self.wxwidget.Add(self.label)
+		self.wxwidget.Add(self.entry)
+		self.wxwidget.Add(self.applybutton)
+
+	def onEdit(self, evt):
+		self.applybutton.Enable(true)
+
+	def onEnter(self, evt):
+		if self.applybutton.IsEnabled():
+			self.apply(evt)
+
+	def apply(self, evt):
+		value = self.entry.GetValue()
+		if type(self.value) is not str:
+			try:
+				value = eval(value)
+			except:
+				return
+		if type(self.value) != type(value):
+			return
+		self.value = value
+		self.applybutton.Enable(false)
+		self.setServer(self.value)
+
+	def set(self, value):
+		DataWidget.set(self, value)
+		self.entry.SetValue(str(self.value))
+		self.applybutton.Enable(false)
 

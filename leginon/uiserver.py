@@ -48,7 +48,7 @@ class XMLRPCServer(object):
 		self.serverthread = t
 
 class UIServer(XMLRPCServer, uidata.UIContainer):
-	def __init__(self, name='Server', port=None):
+	def __init__(self, name='UI', port=None):
 		self.uiclients = []
 		XMLRPCServer.__init__(self, port=port)
 		uidata.UIContainer.__init__(self, name)
@@ -68,11 +68,14 @@ class UIServer(XMLRPCServer, uidata.UIContainer):
 
 	def commandFromClient(self, namelist, args):
 		print 'commandFromClient', namelist, args
-		uidataobject = self.getUIObjectFromList(namelist)
-		if not isinstance(uidataobject, uidata.UIMethod):
+		uimethodobject = self.getUIObjectFromList(namelist)
+		if not isinstance(uimethodobject, uidata.UIMethod):
 			raise TypeError('name list does not resolve to UIMethod instance')
 		# need to catch arg error
-		apply(uidataobject.method, args)
+		#threading.Thread(name=uimethodobject.name + ' thread',
+		#									target=uimethodobject.method, args=args).start()
+		apply(uimethodobject.method, args)
+		print 'commandFromClient done'
 		return ''
 
 	def set(self, namelist, value):
@@ -86,7 +89,7 @@ class UIServer(XMLRPCServer, uidata.UIContainer):
 		addclient = uiclient.XMLRPCClient(hostname, port)
 		self.uiclients.append(addclient)
 		for uiobject in self.uiobjectdict.values():
-			self.addUIObjects(addclient, uiobject, (self.name, uiobject.name))
+			self.addUIObjects(addclient, uiobject, (uiobject.name,))
 		return ''
 
 	def addUIObjects(self, client, uiobject, namelist):
@@ -98,15 +101,16 @@ class UIServer(XMLRPCServer, uidata.UIContainer):
 	def addUIObjectCallback(self, namelist, typelist, value):
 		for client in self.uiclients:
 			# delete if fail?
-			client.execute('ADD', ((self.name,) + namelist, typelist, value))
+			client.execute('ADD', (namelist, typelist, value))
 
 	def setUIObjectCallback(self, namelist, value):
 		for client in self.uiclients:
 			# delete if fail?
-			client.execute('SET', ((self.name,) + namelist, value))
+			client.execute('SET', (namelist, value))
 
 	def deleteUIObjectCallback(self, namelist):
 		for client in self.uiclients:
 			# delete if fail?
-			client.execute('DEL', ((self.name,) + namelist,))
+			client.execute('DEL', (namelist,))
+			#threading.Thread(target=client.execute, args=('DEL', (namelist,))).start()
 
