@@ -194,14 +194,24 @@ class SQLDict:
 	def execute(self):
 	    for key,query in self.queries.items():
 	    	c = self._cursor()
-		c.execute(query)
-		self.cursors[key] = c
-		c.close
+		try:
+			c.execute(query)
+		except MySQLdb.ProgrammingError, e:
+			errno = e.args[0]
+			## 1146:  table does not exist
+			## 1054:  column does not exist
+			if errno in (1146, 1054):
+				print "your query failed, but that's ok for now"
+			else:
+				raise
+		else:
+			self.cursors[key] = c
 
 	def fetchmany(self, size):
 		cursorresults = {}
 		for qikey,cursor in self.cursors.items():
 			cursorresult = self._format(cursor.fetchmany(size), qikey)
+			cursor.close()
 			cursorresults[qikey] = cursorresult
 
 		return self._joinData(cursorresults)
@@ -210,6 +220,7 @@ class SQLDict:
 		cursorresults = {}
 		for qikey,cursor in self.cursors.items():
 			cursorresult = self._format(cursor.fetchall(), qikey)
+			cursor.close()
 			cursorresults[qikey] = cursorresult
 
 		return self._joinData(cursorresults)
@@ -1055,7 +1066,10 @@ def datatype(in_dict, qikey=None, qinfo=None):
 			if not allarrays.has_key(name):
 				allarrays[a[1]]=None
 		elif a[0] == 'SEQ':
-			content[a[1]] = eval(value)
+			try:
+				content[a[1]] = eval(value)
+			except SyntaxError:
+				content[a[1]] = None
 		elif a[0] == 'BIN':
 			content[a[1]] = dict2bin({key:value})
 		elif a[0] == 'REF':
