@@ -59,8 +59,12 @@ class Focuser(acquisition.Acquisition):
 		if validdefocus:
 			print 'Defocus correction'
 			focustype = self.focustype.get()
-			focusmethod = self.focus_methods[focustype]
-			focusmethod(defoc)
+			try:
+				focusmethod = self.focus_methods[focustype]
+			except KeyError:
+				print 'no method selected for correcting defocus'
+			else:
+				focusmethod(defoc)
 
 	def correctStig(self, deltax, deltay):
 		stig = self.researchByDataID('stigmator').content
@@ -97,7 +101,7 @@ class Focuser(acquisition.Acquisition):
 
 		self.btilt = self.registerUIData('Beam Tilt', 'float', default=0.02, permissions='rw')
 		focustypes = self.registerUIData('focustypes', 'array', default=self.focus_methods.keys())
-		self.focustype = self.registerUIData('Focus Correction Type', 'string', choices=focustypes, permissions='rw')
+		self.focustype = self.registerUIData('Focus Correction Type', 'string', choices=focustypes, permissions='rw', default='None')
 		self.stigcorrection = self.registerUIData('Stigmator Correction', 'boolean', permissions='rw')
 		self.publishimages = self.registerUIData('Publish Images', 'boolean', default=1)
 
