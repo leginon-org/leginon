@@ -157,6 +157,8 @@ class Node(leginonobject.LeginonObject):
 
 	def outputEvent(self, ievent, wait=0):
 		'''Send the event to the manager to be routed where necessary.'''
+		if ievent['id'] is None:
+			ievent['id'] = self.ID()
 		eventstatus = '%s to manager' % (self.id,)
 		self.logEvent(ievent, status=eventstatus)
 		try:
@@ -259,7 +261,7 @@ class Node(leginonobject.LeginonObject):
 			e = eventclass(id=self.ID(), dataid=idata['id'], confirm=confirm)
 			self.outputEvent(e)
 
-	def research(self, dataclass=None, datainstance=None, **kwargs):
+	def research(self, dataclass=None, datainstance=None):
 		'''
 		How a node finds some data in the leginon system:
 			1) Using a data class and keyword args:
@@ -277,15 +279,15 @@ class Node(leginonobject.LeginonObject):
 		#### make some sense out of args
 		### for research by dataclass, use kwargs to find instance
 		if dataclass is not None:
-			pass
+			raise NotImplementedError('research by data class is not implemented')
 
 		### standard search for data by ID
-		if 'id' in kwargs and 'session' in kwargs and len(kwargs) == 2:
-			if self.session == kwargs['session']:
-				try:
-					resultlist.append(self.researchByDataID(kwargs['id']))
-				except ResearchError:
-					pass
+		#if 'id' in kwargs and 'session' in kwargs and len(kwargs) == 2:
+		#	if self.session == kwargs['session']:
+		#		try:
+		#			resultlist.append(self.researchByDataID(kwargs['id']))
+		#		except ResearchError:
+		#			pass
 
 		### use DBDataKeeper query if not results yet
 		if not resultlist and datainstance is not None:
