@@ -63,6 +63,7 @@ class NotebookContainer(SpecWidget):
 			widget.pack(side=TOP)
 
 		self.notebook.pack(fill=BOTH, expand=YES)
+		self.notebook.setnaturalsize()
 
 
 def whichDataClass(dataspec):
@@ -269,7 +270,7 @@ class Method(SpecWidget):
 	def butcom(self):
 		newargs = []
 		for argwidget in self.argwidgets:
-			newvalue = argwidget.get()
+			newvalue = argwidget.getWidget()
 			newargs.append(newvalue)
 		ret = self.uiclient.execute(self.name, newargs)
 		self.process_return(ret)
