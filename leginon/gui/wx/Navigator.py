@@ -35,7 +35,7 @@ class Panel(gui.wx.Node.Panel):
 													'stagelocations',
 													shortHelpString='Stage Locations')
 		# image
-		self.imagepanel = gui.wx.ImageViewer.ClickImagePanel(self, -1)
+		self.imagepanel = gui.wx.ImageViewer.ClickImagePanel(self, -1, disable=True)
 
 		self.szmain.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND)
 
@@ -84,6 +84,11 @@ class Panel(gui.wx.Node.Panel):
 	def onImageClicked(self, evt):
 		self._acquisitionEnable(False)
 		threading.Thread(target=self.node.navigate, args=(evt.xy,)).start()
+
+	def navigateDone(self):
+		evt = gui.wx.ImageViewer.ImageClickDoneEvent(self.imagepanel)
+		self.imagepanel.GetEventHandler().AddPendingEvent(evt)
+		self.acquisitionDone()
 
 	def onLocations(self, evt):
 		self.locationsdialog.setLocations(evt.locations)

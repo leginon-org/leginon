@@ -28,12 +28,14 @@ import gui.wx.Stats
 wx.InitAllImageHandlers()
 
 ImageClickedEventType = wx.NewEventType()
+ImageClickDoneEventType = wx.NewEventType()
 MeasurementEventType = wx.NewEventType()
 DisplayEventType = wx.NewEventType()
 TargetingEventType = wx.NewEventType()
 SettingsEventType = wx.NewEventType()
 
 EVT_IMAGE_CLICKED = wx.PyEventBinder(ImageClickedEventType)
+EVT_IMAGE_CLICK_DONE = wx.PyEventBinder(ImageClickDoneEventType)
 EVT_MEASUREMENT = wx.PyEventBinder(MeasurementEventType)
 EVT_DISPLAY = wx.PyEventBinder(DisplayEventType)
 EVT_TARGETING = wx.PyEventBinder(TargetingEventType)
@@ -44,6 +46,11 @@ class ImageClickedEvent(wx.PyCommandEvent):
 		wx.PyCommandEvent.__init__(self, ImageClickedEventType, source.GetId())
 		self.SetEventObject(source)
 		self.xy = xy
+
+class ImageClickDoneEvent(wx.PyCommandEvent):
+	def __init__(self, source):
+		wx.PyCommandEvent.__init__(self, ImageClickDoneEventType, source.GetId())
+		self.SetEventObject(source)
 
 class MeasurementEvent(wx.PyCommandEvent):
 	def __init__(self, source, measurement):
@@ -1049,24 +1056,36 @@ class ImagePanel(wx.Panel):
 		self.sizer.Layout()
 
 class ClickTool(ImageTool):
-	def __init__(self, imagepanel, sizer):
+	def __init__(self, imagepanel, sizer, disable=False):
+		self._disable = disable
+		self._disabled = False
 		bitmap = getBitmap('arrow.png')
 		tooltip = 'Click Tool'
 		cursor = wx.StockCursor(wx.CURSOR_BULLSEYE)
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, True)
 
 	def OnLeftClick(self, evt):
-		if self.button.GetToggle():
-			xy = self.imagepanel.view2image((evt.m_x, evt.m_y))
-			idcevt = ImageClickedEvent(self.imagepanel, xy)
-			self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
+		if not self.button.GetToggle() or self._disabled:
+			return
+		if self._disable:
+			self._disabled = True
+		xy = self.imagepanel.view2image((evt.m_x, evt.m_y))
+		idcevt = ImageClickedEvent(self.imagepanel, xy)
+		self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
+
+	def onImageClickDone(self, evt):
+		self._disabled = False
 
 class ClickImagePanel(ImagePanel):
-	def __init__(self, parent, id):
+	def __init__(self, parent, id, disable=False):
 		ImagePanel.__init__(self, parent, id)
-		self.clicktool = self.addTool(ClickTool(self, self.toolsizer))
+		self.clicktool = self.addTool(ClickTool(self, self.toolsizer, disable))
+		self.Bind(EVT_IMAGE_CLICK_DONE, self.onImageClickDone)
 		self.sizer.Layout()
 		self.Fit()
+
+	def onImageClickDone(self, evt):
+		self.clicktool.onImageClickDone(evt)
 
 class TypeTool(object):
 	def __init__(self, parent, name, display=None, target=None, settings=None):

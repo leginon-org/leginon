@@ -105,7 +105,7 @@ class Navigator(node.Node):
 		clickcamera = self.camera
 
 		if None in (clickrow, clickcol, clickshape, clickscope, clickcamera):
-			self.panel.acquisitionDone()
+			self.panel.navigateDone()
 			return
 
 		self.logger.info('Moving to clicked position...')
@@ -130,12 +130,12 @@ class Navigator(node.Node):
 			errsubstr = 'unable to find calibration for %s' % e
 			self.logger.error(errstr % errsubstr)
 			self.beep()
-			self.panel.acquisitionDone()
+			self.panel.navigateDone()
 			return
 		except Exception, e:
 			self.logger.exception(errstr % e)
 			self.beep()
-			self.panel.acquisitionDone()
+			self.panel.navigateDone()
 			return
 		if not self.settings['complete state']:
 			if movetype == 'modeled stage position':
@@ -190,7 +190,7 @@ class Navigator(node.Node):
 			self.logger.info(res)
 
 		self.beep()
-		self.panel.acquisitionDone()
+		self.panel.naviagteDone()
 
 	def acquireImage(self):
 		self._acquireImage()
