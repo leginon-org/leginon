@@ -93,6 +93,7 @@ static PyObject *acquire(PyObject *self, PyObject *args) {
 
 	result = NA_vNewArray(pbuffer, type, psaImage->cDims, dims);
 	SafeArrayUnaccessData(psaImage);
+	SafeArrayDestroy(psaImage);
 	delete dims;
 
 	return (PyObject *)result;
