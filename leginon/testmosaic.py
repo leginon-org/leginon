@@ -26,12 +26,13 @@ class TestMosaic(node.Node):
 		#		testimage[i, j] = random.randrange(50, 1024)
 		#print testimage
 
-		im = Image.open('c:\\dev\\pyleginon\\test2.jpg')
+#		im = Image.open('c:\\dev\\pyleginon\\test2.jpg')
+		im = Image.open('\\\\colossus\\amishare\\suloway\\pyleginon\\test.jpg')
 		testimage = Numeric.fromstring(im.tostring(), Numeric.UnsignedInt8)
 		testimage.shape = im.size[1], im.size[0]
 		#print testimage.shape
 
-		ntiles = (3, 3)
+		ntiles = (2, 2)
 		overlap = 0.3
 
 		tilesize = (int(math.floor(testimage.shape[0]/(1 + (ntiles[0] - 1)
@@ -69,8 +70,8 @@ class TestMosaic(node.Node):
 				tileoffset = (tileoffset[0], tileoffset[1] + tilesize[1] - pixeloverlap[1])
 			tileoffset = (tileoffset[0] + tilesize[0] - pixeloverlap[0], 0)
 
-	def defineUserInterface(self):
-		nodespec = node.Node.defineUserInterface(self)
-
-		self.registerUISpec('Test Mosaic', (nodespec,))
+#	def defineUserInterface(self):
+#		nodespec = node.Node.defineUserInterface(self)
+#
+#		self.registerUISpec('Test Mosaic', (nodespec,))
 

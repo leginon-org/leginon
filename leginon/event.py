@@ -151,6 +151,11 @@ class PhaseCorrelationImagePublishEvent(CorrelationImagePublishEvent):
 	def __init__(self, id, content, confirm):
 		CorrelationImagePublishEvent.__init__(self, id, content, confirm)
 
+class StateMosaicPublishEvent(PublishEvent):
+	'Event indicating state mosaic data was published'
+	def __init__(self, id, content, confirm):
+		PublishEvent.__init__(self, id, content, confirm)
+
 class ControlEvent(Event):
 	'Event that passes a value with it'
 	def __init__(self, id, content=None, confirm=False):

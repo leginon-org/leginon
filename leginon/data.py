@@ -109,9 +109,14 @@ class ImageTileData(ImageData):
 		ImageData.__init__(self, id,
 			{'image': image, 'neighbor tiles': neighbortiles})
 
-class EMImageTileData(ImageData):
-	'''Contains a 2-D Numeric array of the image data and a list of neighboring image tile ID's.'''
+class StateImageTileData(ImageData):
+	'''Contains a 2-D Numeric array of the image data, a list of neighboring image tile ID's, and [sub]state acquired at.'''
 	def __init__(self, id, image, state, neighbortiles):
 		ImageData.__init__(self, id,
 			{'image': image, 'neighbor tiles': neighbortiles, 'state': state})
+
+class StateMosaicData(Data):
+	'''Contains data ID of images mapped to their position and state.'''
+	def __init__(self, id, content):
+		Data.__init__(self, id, dict(content))
 

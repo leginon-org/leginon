@@ -160,11 +160,8 @@ class ImageMosaic(watcher.Watcher):
 		tileimage = idata.content['image']
 		neighbors = idata.content['neighbor tiles']
 		if len(neighbors) == 0:
-			if len(self.imagemosaic) == 0:
-				self.imagemosaic[idata.id] = {'image': tileimage, 'position': (0, 0)}
-			else:
-				# it doesn't have and neighbors, start a new mosaic?
-				self.printerror('starting tile alread placed')
+			self.imagemosaic = {}
+			self.imagemosaic[idata.id] = {'image': tileimage, 'position': (0, 0)}
 		else:
 			positionvotes = ({}, {})
 			# calculate the tile's position based on shift from each of the neighbors
@@ -203,7 +200,7 @@ class ImageMosaic(watcher.Watcher):
 			self.imagemosaic[idata.id] = {}
 			self.imagemosaic[idata.id]['image'] = tileimage
 			self.imagemosaic[idata.id]['position'] = self.bestPosition(positionvotes)
-			print self.imagemosaic[idata.id]['position']
+		print idata.id, "position =", self.imagemosaic[idata.id]['position']
 
 	def makeImage(self, mosaic):
 		# could be Inf
@@ -234,7 +231,8 @@ class ImageMosaic(watcher.Watcher):
 		return ''
 
 	def uiPublishMosaicImage(self):
-		self.publish(data.ImageData(self.ID(), self.makeImage(self.imagemosaic)))
+		self.publish(data.ImageData(self.ID(), self.makeImage(self.imagemosaic)),
+			event.ImagePublishEvent)
 		return ''
 
 	def defineUserInterface(self):
@@ -244,4 +242,21 @@ class ImageMosaic(watcher.Watcher):
 										'Publish Image', ())
 		imagespec = self.registerUIContainer('Image', (showspec, publishspec))
 		self.registerUISpec('Image Mosaic', (watcherspec, imagespec))
+
+class StateImageMosaic(ImageMosaic):
+	def processData(self, idata):
+		ImageMosaic.processData(self, idata)
+		self.imagemosaic[idata.id]['state'] = idata.content['state']
+
+	def uiPublishMosaicImage(self):
+		ImageMosaic.uiPublishMosaicImage(self)
+
+		statedata = {}
+		for dataid in self.imagemosaic:
+			statedata[dataid]['position'] = self.imagemosaic[dataid]['position']
+			statedata[dataid]['state'] = self.imagemosaic[dataid]['state']
+		self.publish(data.StateMosaicData(self.ID(), statedata),
+			event.StateMosaicPublishEvent)
+
+		return ''
 

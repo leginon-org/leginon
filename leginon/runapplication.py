@@ -34,7 +34,8 @@ if __name__ == '__main__':
 					print "Attempting to create local launcher process..."
 					if sys.platform == 'win32':
 						os.spawnve(os.P_NOWAIT, 'c:\\Python22\\python.exe',
-							['launcher.py', 'c:\\dev\\pyleginon\\launcher.py', '55555'],
+							#['launcher.py', 'c:\\dev\\pyleginon\\launcher.py', '55555'],
+							['launcher.py', '\\\\colossus\\amishare\\suloway\\pyleginon\\launcher.py', '55555'],
 							os.environ)
 					else:
 						os.spawnv(os.P_NOWAIT, 'launcher.py', ['launcher.py', '55555'])
@@ -50,7 +51,8 @@ if __name__ == '__main__':
 		print "Attempting to create local launcher process..."
 		if sys.platform == 'win32':
 			os.spawnve(os.P_NOWAIT, 'c:\\Python22\\python.exe',
-				['launcher.py', 'c:\\dev\\pyleginon\\launcher.py', '55555'], os.environ)
+#				['launcher.py', 'c:\\dev\\pyleginon\\launcher.py', '55555'], os.environ)
+				['launcher.py', '\\\\colossus\\amishare\\suloway\\pyleginon\\launcher.py', '55555'], os.environ)
 		else:
 			os.spawnv(os.P_NOWAIT, 'launcher.py', ['launcher.py', '55555'])
 		l = (socket.gethostname(),)
