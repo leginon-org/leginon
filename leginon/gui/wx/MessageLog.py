@@ -20,12 +20,12 @@ class MessageLog(wx.ListCtrl, ColumnSorterMixin):
 		self.InsertColumn(1, 'Time', wx.LIST_FORMAT_RIGHT)
 		self.InsertColumn(2, 'Message')
 
-		self.levels = ['error', 'warning', 'info']
+		self.levels = ['ERROR', 'WARNING', 'INFO']
 
 		self.imagelist = wx.ImageList(16, 16)
 		self.icons = {}
 		for i in self.levels:
-			image = wx.Image(icons.getPath('%s.png' % i))
+			image = wx.Image(icons.getPath('%s.png' % i.lower()))
 			bitmap = wx.BitmapFromImage(image)
 			self.icons[i] = self.imagelist.Add(bitmap)
 		self.SetImageList(self.imagelist, wx.IMAGE_LIST_SMALL)
@@ -78,14 +78,16 @@ class MessageLog(wx.ListCtrl, ColumnSorterMixin):
 
 	def addMessage(self, level, message, secs=None):
 		if level not in self.levels:
-			raise ValueError('Invalid level')
+			self.levels.append(level)
 		if secs is None:
 			secs = time.time()
 		localtime = time.localtime(secs)
 		strtime = time.strftime('%I:%M:%S %p', localtime)
 		strtime = strtime.lstrip('0')
-		#index = self.InsertImageStringItem(0, level, self.icons[level])
-		index = self.InsertImageStringItem(0, '', self.icons[level])
+		if level in self.icons:
+			index = self.InsertImageStringItem(0, '', self.icons[level])
+		else:
+			index = self.InsertStringItem(0, level)
 		self.SetStringItem(index, 1, strtime)
 		self.SetStringItem(index, 2, message)
 		self.SetItemData(index, self.data)

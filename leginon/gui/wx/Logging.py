@@ -416,23 +416,10 @@ class LoggingConfigurationDialog(wx.Dialog):
 class MessageLogHandler(logging.Handler):
 	def __init__(self, window, level=logging.NOTSET):
 		self.window = window
-		self.levels = {
-			'ERROR': 'error',
-			'WARNING': 'warning',
-			'INFO': 'info',
-		}
 		logging.Handler.__init__(self, level)
 
-	def getLevel(self, record):
-		try:
-			return self.levels[record.levelname]
-		except KeyError:
-			return None
-
 	def emit(self, record):
-		level = self.getLevel(record)
-		if level is None:
-			return
+		level = record.levelname
 		message = self.format(record)
 		try:	
 			# listctrl can't do this...need to activate and show with dialog
