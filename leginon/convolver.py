@@ -135,7 +135,7 @@ def gaussian_kernel(n, sigma):
 		k2 = Numeric.exp(-(rows**2+cols**2) / 2.0 / sigma**2)
 		return k1 * k2
 	k = Numeric.fromfunction(i, (n,n))
-	return k
+	return k.astype(Numeric.Float32)
 
 #### Laplacian of Gaussian
 def laplacian_of_gaussian_kernel(n, sigma):
