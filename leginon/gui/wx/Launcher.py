@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Launcher.py,v $
-# $Revision: 1.26 $
+# $Revision: 1.27 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
+# $Date: 2004-10-28 00:35:27 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -20,6 +20,7 @@ import wx.lib.scrolledpanel
 import gui.wx.Logging
 import gui.wx.MessageLog
 import gui.wx.ToolBar
+import gui.wx.Selector
 
 CreateNodeEventType = wx.NewEventType()
 DestroyNodeEventType = wx.NewEventType()
@@ -147,34 +148,26 @@ class ListCtrlPanel(wx.Panel):
 		self.swmessage.SetSashVisible(wx.SASH_BOTTOM, True)
 		#self.swmessage.SetExtraBorderSize(5)
 
-		self.data = 0
-		self.datatextmap = {}
-		self.listctrl = wx.ListCtrl(self.swselect, -1,
-																style=wx.LC_REPORT|wx.LC_NO_HEADER)
-		self.listctrl.InsertColumn(0, 'Panels')
+		self.selector = gui.wx.Selector.Selector(self.swselect)	
 
 		self.defaultpanel = wx.lib.scrolledpanel.ScrolledPanel(self, -1)
 		self.panel = self.defaultpanel
 		self.panelmap = {}
 
-		self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.onItemSelected, self.listctrl)
-		self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.onItemDeselected, self.listctrl)
+		self.Bind(gui.wx.Selector.EVT_SELECT, self.onSelect, self.selector)
 		self.Bind(wx.EVT_SASH_DRAGGED, self.onSashDragged)
 
-	def addPanel(self, panel, label, imageindex=0):
+	def addPanel(self, panel, label, icon=None):
 		panel.Show(False)
 		self.panelmap[label] = panel
-		index = self.listctrl.GetItemCount()
-		index = self.listctrl.InsertImageStringItem(index, label, imageindex)
-		self.listctrl.SetItemData(index, self.data)
-		self.datatextmap[self.data] = label
-		self.data += 1
 
-		self.listctrl.SetColumnWidth(0, wx.LIST_AUTOSIZE)
-		clientwidth = self.listctrl.GetColumnWidth(0)
-		if clientwidth > self.listctrl.GetClientSize().width:
-			self.listctrl.SetClientSize((clientwidth, -1))
-			sashwidth = self.listctrl.GetSize().width + 18
+		selector = gui.wx.Selector.SelectorItem(self.selector, label, icon, panel)
+		self.selector.append(selector)
+
+		size = self.selector.GetSize()
+		bestsize = self.selector.GetBestSize()
+		if size.width < bestsize.width:
+			sashwidth = bestsize.width + 18
 			self.swselect.SetDefaultSize((sashwidth, -1))
 			self.Layout()
 
@@ -182,21 +175,19 @@ class ListCtrlPanel(wx.Panel):
 		for text, p in self.panelmap.items():
 			if p is panel:
 				break
-		index = self.listctrl.FindItem(0, text, False)
-		item = self.listctrl.GetItem(index)
-		state = item.GetState()
-		if self.listctrl.GetItemState(index, wx.LIST_STATE_SELECTED):
-			self.listctrl.SetItemState(index, wx.LIST_STATE_SELECTED, 0)
+
+		item = self.selector.getItem(text)
+		if self.selector.isSelected(item):
+			self.selector.selectItem(item, False)
 			self._setPanel(self.defaultpanel)
-		self.listctrl.DeleteItem(index)
+		self.selector.remove(text)
+
 		del self.panelmap[text]
 		if hasattr(panel, 'toolbar'):
 			panel.toolbar.Destroy()
 		if hasattr(panel, 'messagelog'):
 			panel.messagelog.Destroy()
 		panel.Destroy()
-
-		self.listctrl.SetColumnWidth(0, wx.LIST_AUTOSIZE)
 
 	def _onSetPanel(self, panel):
 		pass
@@ -212,11 +203,11 @@ class ListCtrlPanel(wx.Panel):
 			panel.messagelog.Layout()
 		self.Thaw()
 
-	def onItemSelected(self, evt):
-		self._setPanel(self.panelmap[evt.GetItem().GetText()])
-
-	def onItemDeselected(self, evt):
-		self._setPanel(self.defaultpanel)
+	def onSelect(self, evt):
+		if evt.selected:
+			self._setPanel(evt.item.data)
+		else:
+			self._setPanel(self.defaultpanel)
 
 	def onSashDragged(self, evt):
 		if evt.GetDragStatus() == wx.SASH_STATUS_OUT_OF_RANGE:
@@ -239,15 +230,12 @@ class Panel(ListCtrlPanel):
 		if launcher is not None:
 			self.setLauncher(launcher)
 
-		self.defaultcolor = (self.listctrl.GetForegroundColour(),
-													self.listctrl.GetBackgroundColour())
-		self.statuscolors = {
-			'INFO': (wx.BLUE, self.defaultcolor[1]),
-			'WARNING': (wx.Color(225, 180, 0), self.defaultcolor[1]),
-			'ERROR': (wx.RED, self.defaultcolor[1]),
-			'PROCESSING': (wx.GREEN, self.defaultcolor[1]),
+		self.statusicons = {
+			'INFO': 'info',
+			'WARNING': 'warning',
+			'ERROR': 'error',
+			'PROCESSING': 'node',
 		}
-		self.initializeImageList()
 
 		self.Bind(gui.wx.MessageLog.EVT_STATUS_UPDATED, self.onStatusUpdated)
 		self.Bind(EVT_SET_ORDER, self.onSetOrder)
@@ -281,18 +269,13 @@ class Panel(ListCtrlPanel):
 		evtobj = evt.GetEventObject()
 		for name, panel in self.panelmap.items():
 			if panel is evtobj:
-				item = self.listctrl.FindItem(-1, name, False)
+				item = self.selector.getItem(name)
 				try:
-					color = self.statuscolors[evt.level]
+					item.setBitmap(2, self.statusicons[evt.level])
 				except KeyError:
-					color = self.defaultcolor
-				self.listctrl.SetItemBackgroundColour(item, color[1])
-				self.listctrl.SetItemTextColour(item, color[0])
-				return
+					item.setBitmap(2, None)
 
 	def sortOrder(self, x, y):
-		x = self.datatextmap[x]
-		y = self.datatextmap[y]
 		try:
 			i = self.order.index(x)
 		except ValueError:
@@ -314,7 +297,7 @@ class Panel(ListCtrlPanel):
 
 	def onSetOrder(self, evt):
 		self.order = evt.order
-		self.listctrl.SortItems(self.sortOrder)
+		self.selector.sort(self.sortOrder)
 
 	def setOrder(self, order):
 		evt = SetOrderEvent(self, order)
@@ -327,17 +310,6 @@ class Panel(ListCtrlPanel):
 		self.Bind(EVT_CREATE_NODE_PANEL, self.onCreateNodePanel)
 		launcher.panel = self
 
-	def addIcon(self, filename):
-		iconpath = icons.getPath(filename + '.png')
-		image = wx.Image(iconpath)
-		bitmap = wx.BitmapFromImage(image)
-		self.iconmap[filename] = self.imagelist.Add(bitmap)
-
-	def initializeImageList(self):
-		self.iconmap = {}
-		self.imagelist = wx.ImageList(16, 16)
-		self.listctrl.AssignImageList(self.imagelist, wx.IMAGE_LIST_SMALL)
-
 	def addNode(self, n):
 		panel = n.panel
 		if panel is None:
@@ -349,12 +321,8 @@ class Panel(ListCtrlPanel):
 		else:
 			icon = 'node'
 
-		if icon not in self.iconmap:
-			self.addIcon(icon)
-		i = self.iconmap[icon]
-
-		self.addPanel(panel, label, i)
-		self.listctrl.SortItems(self.sortOrder)
+		self.addPanel(panel, label, icon)
+		self.selector.sort(self.sortOrder)
 
 	def removeNode(self, n):
 		if not hasattr(n, 'panel') or n.panel is None:

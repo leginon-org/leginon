@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Selector.py,v $
-# $Revision: 1.3 $
+# $Revision: 1.4 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-27 23:06:44 $
+# $Date: 2004-10-28 00:35:27 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -16,6 +16,16 @@ import wx.lib.scrolledpanel
 import gui.wx.Icons
 
 bitmaps = {}
+
+def getBitmap(name):
+	if name is None:
+		return wx.NullBitmap
+	if name not in bitmaps:
+		bitmaps[name] = gui.wx.Icons.icon(name)
+	bitmap = bitmaps[name]
+	if bitmap is None:
+		return wx.NullBitmap
+	return bitmap
 
 SelectEventType = wx.NewEventType()
 EVT_SELECT = wx.PyEventBinder(SelectEventType)
@@ -33,19 +43,17 @@ class SelectorItem(object):
 		self.data = data
 		self.items = []
 
-		self.items.append(None)
-
 		if icon is not None:
-			if name not in bitmaps:
-				bitmaps[icon] = gui.wx.Icons.icon(icon)
-			bitmap = bitmaps[icon]
+			bitmap = getBitmap(icon)
 			sb = wx.StaticBitmap(parent, -1, bitmap)
 			self.items.append(sb)
 		else:
-			self.items.append(None)
+			self.items.append(wx.StaticBitmap(parent, -1))
 
 		label = wx.StaticText(parent, -1, name)
 		self.items.append(label)
+
+		self.items.append(wx.StaticBitmap(parent, -1))
 
 		for item in self.items:
 			if item is None:
@@ -61,16 +69,20 @@ class SelectorItem(object):
 
 	def setSelected(self, selected):
 		if selected:
-			self.items[2].SetBackgroundColour(wx.Color(49, 106, 197))
-			self.items[2].SetForegroundColour(wx.WHITE)
+			self.items[1].SetBackgroundColour(wx.Color(49, 106, 197))
+			self.items[1].SetForegroundColour(wx.WHITE)
 		else:
-			self.items[2].SetBackgroundColour(wx.WHITE)
-			self.items[2].SetForegroundColour(wx.BLACK)
-		self.items[2].Refresh()
+			self.items[1].SetBackgroundColour(wx.WHITE)
+			self.items[1].SetForegroundColour(wx.BLACK)
+		self.items[1].Refresh()
+
+	def setBitmap(self, index, name):
+		self.items[index].SetBitmap(getBitmap(name))
 
 class Selector(wx.lib.scrolledpanel.ScrolledPanel):
 	def __init__(self, parent):
-		wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent, -1)
+		wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent, -1,
+																								style=wx.SIMPLE_BORDER)
 
 		self.order = []
 		self.items = {}
@@ -81,13 +93,33 @@ class Selector(wx.lib.scrolledpanel.ScrolledPanel):
 
 		self.sz = wx.GridBagSizer(1, 3)
 		self.sz.SetEmptyCellSize((16, 16))
-		self.sz.AddGrowableCol(2)
+		#self.sz.AddGrowableCol(1)
 
 		self.SetSizer(self.sz)
 		self.SetAutoLayout(True)
 		self.SetupScrolling()
 
 		self.Bind(wx.EVT_LEFT_DOWN, self.onLeftDown)
+
+	def getItem(self, name):
+		return self.items[name]
+
+	def isSelected(self, item):
+		if self.selected is item:
+			return True
+		else:
+			return False
+
+	def selectItem(self, item, selected):
+		if selected and not self.isSelected(item):
+			if self.selected is not None:
+				self.selected.setSelected(False)
+			self.selected = item
+			self.selected.setSelected(True)
+		elif not selected and self.isSelected(item):
+			item.setSelected(False)
+			self.selected = None
+		return selected
 
 	def onLeftDown(self, evt):
 		evtobj = evt.GetEventObject()
@@ -106,22 +138,13 @@ class Selector(wx.lib.scrolledpanel.ScrolledPanel):
 				row = item.GetPos().row
 		evt.Skip()
 
-		if row is None:
+		if row is None or row >= len(self.order):
 			return
 
 		name = self.order[row]
 		item = self.items[name]
 
-		if self.selected is item:
-			self.selected.setSelected(False)
-			self.selected = None
-			selected = False
-		else:
-			if self.selected is not None:
-				self.selected.setSelected(False)
-			self.selected = item
-			selected = True
-			self.selected.setSelected(True)
+		selected = self.selectItem(item, not self.isSelected(item))
 
 		evt = SelectEvent(self, item, selected)
 		self.GetEventHandler().AddPendingEvent(evt)
@@ -203,14 +226,14 @@ if __name__ == '__main__':
 		def OnInit(self):
 			frame = wx.Frame(None, -1, 'Selector Test')
 			panel = wx.Panel(frame, -1)
-			sizer = wx.GridBagSizer(0, 0)
+			self.sizer = wx.GridBagSizer(0, 0)
 
 			self.selector = Selector(panel)
-			sizer.Add(self.selector, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 5)
-			sizer.AddGrowableRow(0)
-			sizer.AddGrowableCol(0)
+			self.sizer.Add(self.selector, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 5)
+			self.sizer.AddGrowableRow(0)
+			self.sizer.AddGrowableCol(0)
 
-			panel.SetSizerAndFit(sizer)
+			panel.SetSizerAndFit(self.sizer)
 			frame.Fit()
 			self.SetTopWindow(frame)
 			frame.Show()

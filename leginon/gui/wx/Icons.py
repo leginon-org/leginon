@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Icons.py,v $
-# $Revision: 1.2 $
+# $Revision: 1.3 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
+# $Date: 2004-10-28 00:35:27 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -16,7 +16,10 @@ import wx
 
 def icon(name):
 	filename = '%s.png' % name
-	image = wx.Image(icons.getPath(filename))
+	path = icons.getPath(filename)
+	image = wx.Image(path)
+	if not image.Ok():
+		return None
 	image.ConvertAlphaToMask(64)
 	bitmap = wx.BitmapFromImage(image)
 	return bitmap
