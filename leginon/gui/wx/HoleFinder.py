@@ -37,8 +37,8 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.szmain.AddGrowableRow(1)
 		self.szmain.AddGrowableCol(0)
 
-	def getTargets(self, typename):
-		return self.imagepanel.getTargets(typename)
+	def getTargetPositions(self, typename):
+		return self.imagepanel.getTargetPositions(typename)
 
 	def onNodeInitialized(self):
 		gui.wx.TargetFinder.Panel.onNodeInitialized(self)
