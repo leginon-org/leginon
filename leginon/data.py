@@ -95,6 +95,10 @@ class CalibrationData(Data):
 	def __init__(self, id, content):
 		Data.__init__(self, id, dict(content))
 
+class PresetData(Data):
+	def __init__(self, id, content):
+		Data.__init__(self, id, dict(content))
+
 class CorrelationData(Data):
 	def __init__(self, id, content):
 		Data.__init__(self, id, dict(content))

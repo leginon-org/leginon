@@ -2,6 +2,7 @@ import node
 import data
 import event
 import datahandler
+import cPickle
 
 class PresetDict(dict):
 	'''
@@ -36,6 +37,20 @@ class PresetDict(dict):
 		for key in obj.keys(): self[key] = obj[key]
 
 
+### most common allowed keys for PresetDict
+STANDARD_KEYS = (
+	'spot size',
+	'magnification',
+	'image shift',
+	'beam shift',
+	'intensity',
+	'defocus',
+	'dimension',
+	'binning',
+	'exposure time'
+)
+
+
 class PresetsClient(object):
 	def __init__(self, node, allowed_keys):
 		self.node = node
@@ -60,18 +75,18 @@ class PresetsClient(object):
 		self.node.publishRemote(dat)
 
 	def toScope(self, presetdict):
-		d = dict(self.presets[name])
+		d = dict(presetdict)
 		### this seems to work event if the preset contains camera keys
 		emdata = data.EMData('scope', d)
-		self.publishRemote(emdata)
+		self.node.publishRemote(emdata)
 
 	def fromScope(self):
 		'''
 		return a new preset 
 		'''
 		p = PresetDict(self.allowed_keys)
-		scope = self.researchByDataID('scope')
-		camera = self.researchByDataID('camera no image data')
+		scope = self.node.researchByDataID('scope')
+		camera = self.node.researchByDataID('camera no image data')
 		p.update(scope.content)
 		p.update(camera.content)
 		return p
@@ -83,7 +98,7 @@ class DataHandler(datahandler.DataBinder):
 		self.node = node
 
 	def query(self, id):
-		cal = self.node.getPreset()
+		cal = self.node.getPresets()
 		result = data.PresetData(self.ID(), cal)
 		return result
 
@@ -91,7 +106,7 @@ class DataHandler(datahandler.DataBinder):
 		if isinstance(idata, event.Event):
 			datahandler.DataBinder.insert(self, idata)
 		else:
-			self.node.setPreset(idata)
+			self.node.setPresets(idata)
 
 	# borrowed from NodeDataHandler
 	def setBinding(self, eventclass, func):
@@ -109,7 +124,10 @@ class PresetsManager(node.Node):
 		e = event.ListPublishEvent(self.ID(), ids)
 		self.outputEvent(e)
 
-		#self.defineUserInterface()
+		
+		self.presetsclient = PresetsClient(self, STANDARD_KEYS)
+
+		self.defineUserInterface()
 		self.start()
 
 	def getPresets(self):
@@ -118,6 +136,10 @@ class PresetsManager(node.Node):
 			presets = cPickle.load(f)
 			f.close()
 		except IOError:
+			print 'unable to open PRESETS'
+			presets = {}
+		except EOFError:
+			print 'bad pickle in PRESETS'
 			presets = {}
 		return presets
 
@@ -132,6 +154,21 @@ class PresetsManager(node.Node):
 
 	def defineUserInterface(self):
 		nodespec = node.Node.defineUserInterface(self)
-		self.registerUISpec('Presets Manager', (nodespec,))
 
+		presetname = self.registerUIData('Name', 'string')
+		store = self.registerUIMethod(self.uiStoreCurrent, 'From Scope', (presetname,))
+		restore = self.registerUIMethod(self.uiRestore, 'To Scope', (presetname,))
 
+		test = self.registerUIContainer('Test', (store, restore))
+
+		self.registerUISpec('Presets Manager', (test, nodespec))
+
+	def uiStoreCurrent(self, name):
+		preset = self.presetsclient.fromScope()
+		self.presetsclient.setPreset(name, preset)
+		return ''
+
+	def uiRestore(self, name):
+		preset = self.presetsclient.getPreset(name)
+		self.presetsclient.toScope(preset)
+		return ''

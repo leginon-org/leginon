@@ -116,6 +116,11 @@ class CalibrationPublishEvent(PublishEvent):
 	def __init__(self, id, content, confirm):
 		PublishEvent.__init__(self, id, content, confirm)
 
+class PresetPublishEvent(PublishEvent):
+	'Event indicating preset was published'
+	def __init__(self, id, content, confirm):
+		PublishEvent.__init__(self, id, content, confirm)
+
 class CorrelationPublishEvent(PublishEvent):
 	'Event indicating cross correlation was published'
 	def __init__(self, id, content, confirm):
