@@ -13,7 +13,7 @@ class Handler(SocketServer.StreamRequestHandler):
 		try:
 			obj = cPickle.load(self.rfile)
 		except EOFError:
-			self.printerror('no data to read, handle socket connection failed')
+			print('no data to read, handle socket connection failed')
 			return
 
 		if isinstance(obj, data.Data):
@@ -22,18 +22,18 @@ class Handler(SocketServer.StreamRequestHandler):
 			try:
 				self.server.datahandler.insert(obj)
 			except Exception, e:
-				self.printerror('failed to insert pushed data')
+				print('failed to insert pushed data')
 				raise
 			try:
 				# returns exception if error, else None
 				cPickle.dump(e, self.wfile, 1)
 			except IOError:
-				self.printerror('write failed when acknowledging push')
+				print('write failed when acknowledging push')
 		else:
 			try:
 				cPickle.dump(self.server.datahandler.query(obj), self.wfile, 1)
 			except IOError:
-				self.printerror('write failed when returning requested data')
+				print('write failed when returning requested data')
 
 class Server(leginonobject.LeginonObject):
 	def __init__(self, id, dh):
