@@ -122,6 +122,10 @@ class CameraImagePublishEvent(ImagePublishEvent):
 	'Event indicating camera image was published'
 	pass
 
+class PresetImagePublishEvent(CameraImagePublishEvent):
+	'Event indicating preset camera image was published'
+	pass
+
 class CorrectionImagePublishEvent(CameraImagePublishEvent):
 	pass
 
