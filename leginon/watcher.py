@@ -22,6 +22,7 @@ class Watcher(node.Node):
 		self.lock = threading.RLock()
 
 		self.addEventInput(self.watchfor, self.handleEvent)
+		self.watchOn()
 
 	def defineUserInterface(self):
 		return node.Node.defineUserInterface(self)
@@ -29,7 +30,15 @@ class Watcher(node.Node):
 	def die(self):
 		node.Node.die(self)
 
+	def watchOn(self):
+		self.watch = 1
+
+	def watchOff(self):
+		self.watch = 0
+
 	def handleEvent(self, pubevent):
+		if not self.watch:
+			return
 		if self.lockblocking == 0:
 			if not self.lock.acquire(blocking=0):
 				return
