@@ -361,7 +361,10 @@ class MatrixCalibrationClient(CalibrationClient):
 		return matrix
 
 	def time(self, ht, mag, caltype):
-		caldata = self.researchMatrix(ht, mag, caltype)
+		try:
+			caldata = self.researchMatrix(ht, mag, caltype)
+		except:
+			caldata = None
 		if caldata is None:
 			timestamp = None
 		else:
