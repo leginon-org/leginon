@@ -2,6 +2,7 @@ import copy
 import cPickle
 import threading
 import datahandler
+import sqldict
 
 class DBDataKeeper(datahandler.DataHandler):
 	def __init__(self, id, session):
@@ -9,9 +10,33 @@ class DBDataKeeper(datahandler.DataHandler):
 		# leginon object id = id
 		# session id = session
 		# connect?
+		self.dbd = sqldict.SQLDict()
 
 	def query(self, **kwargs):
-		pass
+		# **kwargs should contain:
+		# data: instance of a Data class 
+		# indices: {field:value, ... } for the WHERE clause
+		
+		table = data.__class__.__name__
+		select = sqldict.sqlColumnsSelect(data)
+		self.dbd.myTable = self.dbd.Table(table,select)
+		sqlindices = map(sqldict.sqlColumnsFormat, indices.keys())
+		self.dbd.myTable.Index = self.dbd.Table(sqlindices,
+					orderBy = {'fields':('DEF_timestamp',),'sort':'DESC'})
+
+		# return a list of dictionnaries for all matching rows
+		result =  self.dbd.myTable.Index[indices.values()].fetchalldict()
+		return map(sqldict.sql2data, result)
+
+		# return an instance
+		# result =  self.dbd.myTable.Index[indices.values()].fetchonedict()
+		# val = data.update((sqldict.sql2data(result))
+		# return val
+
+		# to return one match only:
+		# result = self.db.myTable.Index[indices.values()].fetchonedict()
+		# return sqldict.sql2data(result)
+	
 		# WHERE stuff
 		# return instance of the necessary Data class or optionally a list of
 		# matching instances
@@ -20,8 +45,14 @@ class DBDataKeeper(datahandler.DataHandler):
 		# will have to be created here.
 
 	def insert(self, newdata):
-		pass
-		# newdata is instance of data to be inserted (I don't think its a copy)
+		data = copy.deepcopy(newdata)
+		table = data.__class__.__name__
+		definition = sqldict.sqlColumnsDefinition(data)
+		formatedData = sqldict.sqlColumnsFormat(data)
+		self.db.createSQLTable(table,definition)
+		self.db.myTable = self.db.Table(table)
+		
+		return self.db.myTable.insert([formatedData])
 
 		# images with be converted to an mrc file here, the filename will be
 		# available. What should the path of the file be?

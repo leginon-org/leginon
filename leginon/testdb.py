@@ -27,9 +27,8 @@ db.Preset = db.Table('PRESET', [ 'Name', 'Width', 'Height', 'Binning', 'ExpTime'
 		'BeamCurrent', 'LDButton', 'Mag', 'PixelSize', 'Defocus', 'SpotSize',
 		'Intensity', 'BShiftX', 'BShiftY', 'IShiftX', 'IShiftY' ])
 
-db.Preset.Name= db.Preset.Index(['Name'],
-			orderBy = {'fields':('id',),'sort':'DESC'})
-db.Preset.Name ['expo2']
+db.Preset.Name= db.Preset.Index(['Name'])
+db.Preset.Name['expo2']
 
 presetdata1 = ['focus2', 256, 256, 1, 0.3000, 41.6200, 0,'search', 66000, 0.2994, -2000, 3, 42414.5117, 106.9400, 28.7300, 198.0000, 4542.0000]
 

@@ -91,7 +91,6 @@ class SQLBinDict(object):
 		'Create a new object table which stores keys and values of a new SQLBinDict object.'
 
 		tableDefinition = [{'Field': 'id', 'Type': 'int(16)', 'Key': 'PRIMARY', 'Extra':'auto_increment'},
- 			{'Field': 'hash', 'Type': 'VARCHAR(64)', 'Key': 'UNIQUE', 'Index': ['hash']},
 			{'Field': 'objectKey', 'Type': 'mediumblob', 'Key': 'UNIQUE', 'Index': ['objectKey(255)']},
 			{'Field': 'object', 'Type': 'longblob'},
 			{'Field': 'objectKeyString', 'Type': 'text'},
@@ -134,13 +133,6 @@ class SQLBinDict(object):
 				 where=self.table.objectKey==cpickle_blobKey).sqlRepr()
 			return self.dbc.selectone(q)
 
-	def __get_hId(self, hash):
-		'Return an object Id from a table by specifying a hash.'
-		if self.dbc is not None:
-	    		q = sqlexpr.Select(self.table.Id,
-				 where=self.table.hash==hash).sqlRepr()
-			return self.dbc.selectone(q)
-
 	def __keys(self):
 		'Return all keys from an existing object table.'
 		if self.dbc is not None:
@@ -177,15 +169,14 @@ class SQLBinDict(object):
 	def __put(self, blobKey, blob):
 		'Insert a new object in an existing object table.'
 		if self.dbc is not None:
-			hash = md5.new("""%s""" % blobKey).hexdigest()
 			cpickle_blobKey = self.__pickle_key(blobKey)
 			cpickle_blob	= self.__pickle_key(blob)
 			blobKey_str="""%s""" % (blobKey,)
 			blob_str="""%s""" % (blob,)
 
 			q = sqlexpr.Replace(self.tablename,
-			    [hash, cpickle_blobKey, cpickle_blob, blobKey_str, blob_str],
-			    template=('hash', 'objectKey', 'object', 'objectKeyString', 'objectString')
+			    [cpickle_blobKey, cpickle_blob, blobKey_str, blob_str],
+			    template=('objectKey', 'object', 'objectKeyString', 'objectString')
 			    ).sqlRepr()
 			return self.dbc.insert(q)
 	##

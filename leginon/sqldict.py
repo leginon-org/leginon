@@ -195,7 +195,7 @@ class SQLDict:
 	"""Table handler for a SQLDict object. These should not be created
 	directly by user code."""
 
-	def __init__(self, db, table, columns):
+	def __init__(self, db, table, columns=[]):
 
 	    """Construct a new table definition. Don't invoke this
 	    directly. Use Table method of SQLDict instead."""
@@ -355,7 +355,7 @@ class SQLDict:
 	    return self._Cursor(self.db, self.load, self.columns)
 
 
-    def Table(self, table, columns):
+    def Table(self, table, columns=[]):
 
 	"""Add a new Table member.
 
@@ -456,8 +456,8 @@ class ObjectBuilder:
     def register(self, db):
 	"""Register into database."""
 	t = db.Table(self.table, self.columns)
-	loader = lambda t, s=self.__class__: apply(s, t)
-	setattr(t, 'load', loader)
+	# loader = lambda t, s=self.__class__: apply(s, t)
+	# setattr(t, 'load', loader)
         indices = self.__format_indices(self.indices)
 	for indexname, columns, args in indices:
 	    setattr(t, indexname, t.Index(columns, **args))
@@ -467,13 +467,14 @@ class ObjectBuilder:
 # Database insert  tool functions #
 ###################################
 
-def getFlatDict(in_dict):
+sep ='|'
+def flatDict(in_dict):
 	"""
 	This function returns a flat dictionary. For example:
 	>>> d = { 'BShift':{'X': 45.0, 'Y': 18.0}, 'IShift':{'X': 8.0, 'Y': 6.0}}
-	>>> getFlatDict(d)
+	>>> flatDict(d)
 
-	{'IShift_Y': 6.0, 'BShift_Y': 18.0, 'BShift_X': 45.0, 'IShift_X': 8.0}
+	{'SUBD|IShift|Y': 6.0, 'SUBD|BShift|Y': 18.0, 'SUBD|BShift|X': 45.0, 'SUBD|IShift|X': 8.0}
 
 	The keys of the sub-dictionaries concatenate the parent key.
 
@@ -489,37 +490,76 @@ def getFlatDict(in_dict):
 	for key in keys:
 		value = in_dict[key]
 		if type(value) is type({}):
-			d = getFlatDict(value)
+			d = flatDict(value)
 			nd={}
 			# build the new keys
 			for nk in d:
-				fk = '%s_%s' % (key,nk)
+				lfk = ['SUBD',key,nk]
+				fk= sep.join(lfk)
+				
 				# increment a number if key exists already
-				i=0
-				while in_dict.has_key(fk):
-					i+=1
-					fk = re.sub('_[0-9]*$','',fk)
-					fk += '_%i' % (i)
+				# i=0
+				# while in_dict.has_key(fk):
+				# 	i+=1
+				# 	fk = re.sub('|[0-9]*$','',fk)
+				# 	fk += '|%i' % (i)
 				nd.update({fk:d[nk]})
 			items.update(nd)
 		else:
 			items[key] = value	
 	return items
 
+def unflatDict(in_dict):
+	"""
+	This function unflat a dictionary. For example:
+	>>> d = {'SUBD|IShift|Y': 6.0, 'SUBD|BShift|Y': 18.0, 'SUBD|BShift|X': 45.0, 'SUBD|IShift|X': 8.0}
+	>>> unflatDict(d)
 
+	{ 'BShift':{'X': 45.0, 'Y': 18.0}, 'IShift':{'X': 8.0, 'Y': 6.0}}
+	"""
+
+	items = {}
+	try:
+		keys = in_dict.keys()
+	
+	except AttributeError:
+		raise TypeError("Must be a Dictionary") 
+
+	allsubdicts = {}
+	for key,value in in_dict.items():
+		a = re.findall('[^%s]+'%(sep,),key)
+		if a[0] == 'SUBD':
+			name = a[1]
+			if not allsubdicts.has_key(name):
+				allsubdicts[a[1]]=None
+
+	for subdict in allsubdicts:
+		dm={}
+		for key,value in in_dict.items():
+			l = re.findall('SUBD%s%s' %(sep,subdict,),key)
+			if l:
+				a = re.findall('[^%s]+'%(sep,),key)
+				dm.update({a[2]:value})
+		allsubdicts[subdict]=dm
+
+	return allsubdicts
+
+	
 def dict2matrix(in_dict):
 	"""
 	This function returns a matrix from a dictionary.
 	Each key from in_dict must have 2 numbers representing [row][colum].
 	They can be separated by any characters.
-									 _         _
-									|           |
-									| 1   2   j |
-									|           |
-	{'m1_1': 1, 'm1_2': 2, 'm2_1': 3, 'm2_2': 4, ..., 'mi_j':n} =>	| 3   4   . |
-									|       .   |
-									| i   .   n |
-									|_         _|
+
+	{'m|1_1': 1, 'm|1_2': 2, 'm|2_1': 3, 'm|2_2': 4, ..., 'm|i_j':n}
+					 _         _
+					|           |
+					| 1   2   j |
+					|           |
+		=>			| 3   4   . |
+					|       .   |
+					| i   .   n |
+					|_         _|
 
 	"""
 
@@ -542,20 +582,27 @@ def dict2matrix(in_dict):
 
 	return matrix
 		
-def matrix2dict(matrix):
+def matrix2dict(matrix, name=None):
 	"""
 	This function returns a dictionary which represents a matrix.
 	matrix must be at least 2x1 or 1x2 Numeric arrays.
+
 	 _         _
 	|           |
 	| 1   2   j |
 	|           |
-	| 3   4   . |     =>   {'m1_1': 1, 'm1_2': 2, 'm2_1': 3, 'm2_2': 4, ..., 'mi_j':n}
+	| 3   4   . |	=>
 	|       .   |
 	| i   .   n |
 	|_         _|
 
+	{'m|1_1': 1, 'm|1_2': 2, 'm|2_1': 3, 'm|2_2': 4, ..., 'm|i_j':n}
+
 	"""
+
+	if name is None:
+		name='m'
+		
 	try:
 		if not (matrix.shape >= (1, 1) and len(matrix.shape) > 1):
 			raise ValueError("Wrong shape: must be at least 2x1 or 1x2")
@@ -567,8 +614,157 @@ def matrix2dict(matrix):
 		i+=1
 		j=1
 		for col in row:
-			k = "m%s_%s" % (i,j)
+			# k = "ARRAY|%s|%s_%s" % (name,i,j)
+			k = sep.join(['ARRAY',name,'%s_%s'%(i,j)])
 			v = matrix[i-1,j-1]
 			d[k]=v
 			j+=1
 	return d
+
+def sqltype(object):
+	t = type(object)
+	if t is type(""):
+		return "TEXT"
+	elif t is float:
+		return "DOUBLE"
+	elif t is int:
+		return "INT(20)"
+	else:
+		return None
+
+def sqlColumnsDefinition(in_dict, noDefault=None):
+	"""
+Format a table definition for any Data Class:
+
+[{'Field': 'magnification', 'Type': 'INT(20)'}, {'Field': 'SUBD|BShift|X', 'Type': 'DOUBLE'}, {'Field': 'SUBD|BShift|Y', 'Type': 'DOUBLE'}, {'Field': 'ARRAY|matrix|1_1', 'Type': 'DOUBLE'}, {'Field': 'ARRAY|matrix|1_2', 'Type': 'DOUBLE'}, {'Field': 'ARRAY|matrix|2_1', 'Type': 'DOUBLE'}, {'Field': 'ARRAY|matrix|2_2', 'Type': 'DOUBLE'}, {'Field': 'defocus', 'Type': 'DOUBLE'}, {'Field': 'float', 'Type': 'DOUBLE'}, {'Field': 'type', 'Type': 'TEXT'}]
+	"""
+	columns=[]
+	# default columns are listed below
+	if noDefault is None:
+		defaults = [	{'Field': 'DEF_id', 'Type': 'int(16)',
+				'Key': 'PRIMARY', 'Extra':'auto_increment'},
+				{'Field':'DEF_timestamp','Type':'timestamp',
+				'Null':'YES', 'Key':'INDEX'}
+				]
+	columns += defaults
+	for key in in_dict:
+		column={}
+		value=in_dict[key]
+		sqlt = sqltype(value)
+		if sqlt is not None:
+			column['Field']=key
+			column['Type']=sqlt
+			columns.append(column)
+		elif type(value) is Numeric.ArrayType:
+			if len(value.flat) < 10:
+				arraydict = matrix2dict(value,key)
+				nd = sqlColumnsDefinition(arraydict)
+				nd.sort()
+				columns += nd
+			# Think about store the filename
+				
+		elif type(value) is dict:
+			flatdict = flatDict({key:value})
+			nd = sqlColumnsDefinition(flatdict)
+			nd.sort()
+			columns += nd
+
+		elif type(value) in [tuple, list]:
+			nd = sqlColumnsDefinition({seq2sqlColumn(key):repr(value)})
+			columns += nd
+			
+	return columns
+
+
+def seq2sqlColumn(key):
+	return "SEQ%s%s"%(sep,key,)
+
+def sqlColumnsSelect(in_dict):
+	"""
+['magnification', 'SUBD|BShift|X', 'SUBD|BShift|Y', 'ARRAY|matrix|1_1', 'ARRAY|matrix|1_2', 'ARRAY|matrix|2_1', 'ARRAY|matrix|2_2', 'defocus', 'float', 'type']
+	"""
+	columns=[]
+	for key in in_dict:
+		value=in_dict[key]
+		sqlt = sqltype(value)
+		if sqlt is not None:
+			columns.append(key)
+		elif type(value) is type(Numeric.array([0])):
+			arraydict = matrix2dict(value,key)
+			nd = sqlColumnsSelect(arraydict)
+			nd.sort()
+			columns += nd
+		elif type(value) is dict:
+			flatdict = flatDict({key:value})
+			nd = sqlColumnsSelect(flatdict)
+			nd.sort()
+			columns += nd
+		elif type(value) in [tuple, list]:
+			nd = sqlColumnsDefinition({seq2sqlColumn(key):repr(value)})
+			columns += nd
+	return columns
+
+
+def sqlColumnsFormat(in_dict):
+	"""
+{'ARRAY|matrix|2_1': 3.0, 'magnification': 5, 'ARRAY|matrix|2_2': 4.0,
+ 'SUBD|BShift|Y': 18.0, 'SUBD|BShift|X': 45.0, 'ARRAY|matrix|1_1': 1.0,
+ 'defocus': -9.9999999999999998e-13, 'ARRAY|matrix|1_2': 2.0,
+ 'float': 12.25, 'type': 'test'}
+	"""
+	columns={}
+	for key in in_dict:
+		value=in_dict[key]
+		sqlt = sqltype(value)
+		if sqlt is not None:
+			columns[key]=value
+		elif type(value) is type(Numeric.array([0])):
+			arraydict = matrix2dict(value,key)
+			columns.update(arraydict)
+		elif type(value) is dict:
+			flatdict = flatDict({key:value})
+			columns.update(flatdict)
+		elif type(value) in [tuple, list]:
+			columns[seq2sqlColumn(key)] = repr(value)
+	return columns
+
+
+sqldata = {'defocus': -9.9999999999999998e-13, 'float': 12.25, 'ARRAY|matrix|2_1': 3.0, 'magnification': 5, 'ARRAY|matrix|2_2': 4.0, 'SUBD|BShift|Y': 18.0, 'SUBD|BShift|X': 45.0, 'ARRAY|matrix|1_1': 1.0, 'ARRAY|matrix|1_2': 2.0, 'type': 'test', 'SEQ|MyId': "('MyId', 67543)"}
+
+def sql2data(in_dict):
+	"""
+'magnification': 5, 'BShift': {'Y': 18.0, 'X': 45.0}, 'matrix': array([[1, 2],
+[3, 4]]), 'defocus': -9.9999999999999998e-13, 'MyId': ('MyId', 67543),
+'float': 12.25, 'type': 'test'}
+
+	"""
+	content={}
+	allarrays={}
+	allsubdicts={}
+	# group ARRAY 
+	for key,value in in_dict.items():
+		a = re.findall('[^%s]+'%(sep,),key)
+		if a[0] == 'ARRAY':
+			name = a[1]
+			if not allarrays.has_key(name):
+				allarrays[a[1]]=None
+		elif a[0] == 'SEQ':
+			content[a[1]] = eval(value)
+		elif not a[0] in ['SUBD', ]:
+			content[key]=value
+	# build matrix
+	for matrix in allarrays:
+		dm={}
+		for key,value in in_dict.items():
+			l = re.findall('ARRAY%s%s' %(sep,matrix,),key)
+			if l:
+				dm.update({key:value})
+		allarrays[matrix]=dict2matrix(dm)
+
+	# build dictionaries
+	allsubdicts=unflatDict(in_dict)
+
+	content.update(allarrays)
+	content.update(allsubdicts)
+
+	return content

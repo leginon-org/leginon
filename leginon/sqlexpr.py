@@ -237,7 +237,7 @@ class Field(SQLExpression):
         self.tableName = tableName
         self.fieldName = fieldName
     def sqlRepr(self):
-        return self.tableName + "." + self.fieldName
+	return self.tableName + "." + self.fieldName
     def tablesUsedImmediate(self):
         return [self.tableName]
 
@@ -609,7 +609,7 @@ if __name__ == "__main__":
 >>> DropTable(table.preset)
 >>> CreateTable('OBJECT', [{'Field': 'Id', 'Type': 'int(20) unsigned', 'Key': 'PRIMARY', 'Extra':'auto_increment'}, {'Field': 'hash', 'Type': 'VARCHAR(64)', 'Key': 'UNIQUE', 'Index': ['hash']}, {'Field': 'objectKey', 'Type': 'varchar(50)', 'Key': 'UNIQUE', 'Index': ['objectKey(50)'], 'Null' : 'YES', 'Default': 'Denis'}, {'Field': 'object', 'Type': 'longblob'}, {'Field': 'objectKeyString', 'Type': 'text'}, {'Field': 'objectString', 'Type': 'text'},{'Field':'timestamp','Type':'timestamp','Null':'YES', 'Key':'INDEX'}])
 >>> Select([table.preset.name, table.preset.Defocus], where=LIKE(table.preset.name, "%square%"), orderBy={'fields':('id', 'name'), 'sort':'DESC'})
->>> Select([table.PRESET.name, table.PRESET.Defocus], where=LIKE(table.PRESET.name, "%square%"), orderBy=None)
+result>>> Select([table.PRESET.name, table.PRESET.Defocus], where=LIKE(table.PRESET.name, "%square%"), orderBy=None)
 """
     for expr in tests.split('\n'):
         if not expr.strip(): continue
