@@ -47,7 +47,7 @@ class DataSpec(SpecObject):
 
 
 class MethodSpec(SpecObject):
-	def __init__(self, name, argspec, returnspec):
+	def __init__(self, name, argspec, returnspec=None):
 		SpecObject.__init__(self, 'method')
 
 		self.name = name
@@ -61,7 +61,8 @@ class MethodSpec(SpecObject):
 		d['argspec'] = []
 		for arg in self.argspec:
 			d['argspec'].append(arg.dict())
-		d['returnspec'] = self.returnspec.dict()
+		if self.returnspec is not None:
+			d['returnspec'] = self.returnspec.dict()
 		return d
 
 class ContainerSpec(SpecObject):
@@ -99,7 +100,7 @@ class Server(xmlrpcserver.xmlrpcserver):
 		#self.server.register_function(self.uiMethods, 'methods')
 		self.server.register_function(self.uiSpec, 'spec')
 
-	def registerMethod(self, func, name, argspec, returnspec):
+	def registerMethod(self, func, name, argspec, returnspec=None):
 		self.server.register_function(func, name)
 		m = MethodSpec(name, argspec, returnspec)
 		return m
@@ -157,70 +158,6 @@ class Server(xmlrpcserver.xmlrpcserver):
 		return self.spec.dict()
 
 
-class ClientComponent(object):
-	def __init__(self, parent, name, argspec, returntype):
-		self.parent = parent
-		self.name = name
-		self.init_args(argspec)
-		self.returntype = returntype
-
-	def init_args(self, argspec):
-		self.argspec = argspec
-		self.argnameslist = []
-		self.argvaluesdict = {}
-		self.argtypesdict = {}
-		self.argaliasdict = {}
-		for arg in argspec:
-			argname = arg['name']
-			self.argnameslist.append(argname)
-			self.argtypesdict[argname] = arg['type']
-			if 'alias' in arg:
-				self.argaliasdict[argname] = arg['alias']
-			else:
-				self.argaliasdict[argname] = argname
-			if 'default' in arg:
-				self.argvaluesdict[argname] = arg['default']
-			else:
-				self.argvaluesdict[argname] = None
-
-	def execute(self):
-		args = self.argvalues()
-		return getattr(self.parent.proxy, self.name)(*args)
-
-	def argnames(self):
-		return tuple(self.argnameslist)
-
-	def argvalues(self):
-		arglist = []
-		for argname in self.argnameslist:
-			arglist.append(self.argvaluesdict[argname])
-		return tuple(arglist)
-
-	def argtypes(self):
-		arglist = []
-		for argname in self.argnameslist:
-			arglist.append(self.argtypesdict[argname])
-		return tuple(arglist)
-
-	def argtype(self, argname):
-		return self.argtypesdict[argname]
-
-	def argalias(self, argname):
-		return self.argaliasdict[argname]
-
-	def argvalue(self, argname):
-		return self.argvaluesdict[argname]
-
-	def setarg(self, argname, argvalue):
-		self.argvaluesdict[argname] = argvalue
-
-	def __setitem__(self, key, value):
-		self.argvaluesdict[key] = value
-
-	def __getitem__(self, key):
-		return self.argvaluesdict[key]
-
-
 class Client(object):
 	def __init__(self, hostname, port):
 		uri = 'http://%s:%s' % (hostname, port)
@@ -228,20 +165,6 @@ class Client(object):
 		#self.getMethods()
 		self.spec = self.getSpec()
 		print 'spec', self.spec
-
-	def getMethods(self):
-		self.funcdict = {}
-		self.funclist = []
-		f = self.proxy.methods()
-		fdict = f['dict']
-		self.funclist = f['list']
-		for key,value in fdict.items():
-			if 'return' in value:
-				returntype = value['return']
-			else:
-				returntype = None
-			c = ClientComponent(self, key, value['argspec'], returntype)
-			self.funcdict[key] = c
 
 	def getSpec(self):
 		self.spec = self.proxy.spec()

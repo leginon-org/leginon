@@ -8,8 +8,8 @@ import TreeWidget
 import os
 
 class SpecWidget(Frame):
-	def __init__(self, parent, uiclient, spec):
-		Frame.__init__(self, parent)
+	def __init__(self, parent, uiclient, spec, **kwargs):
+		Frame.__init__(self, parent, **kwargs)
 		self.spec = spec
 		self.uiclient = uiclient
 		self.buildSpec()
@@ -18,9 +18,11 @@ class SpecWidget(Frame):
 		raise NotImplementedError()
 
 
+### maybe should subclass Data to get specific types:  Combobox, Tree, ...
 class Data(SpecWidget):
 	def __init__(self, parent, uiclient, spec):
-		SpecWidget.__init__(self, parent, uiclient, spec)
+		self.bgcolor = 'cyan'
+		SpecWidget.__init__(self, parent, uiclient, spec, bd=1, relief=SUNKEN, bg=self.bgcolor)
 
 	def buildSpec(self):
 		name = self.name = self.spec['name']
@@ -68,15 +70,16 @@ class Data(SpecWidget):
 #('boolean', 'integer', 'float', 'string', 'array', 'struct', 'date', 'binary')
 	def arg_choice(self, name, choices):
 		self.tkvar = StringVar()
-		Label(self, text=name).pack(side=LEFT)
+		Label(self, text=name, bg=self.bgcolor).pack(side=LEFT)
 		cb = Pmw.ComboBox(self, entry_textvariable=self.tkvar)
+		##cb['bg'] = self.bgcolor
 		cb.setlist(choices)
 		cb.pack(side=LEFT)
 		self.datawidget = cb
 
 	def arg_check(self, name):
 		self.tkvar = BooleanVar()
-		self.datawidget = Checkbutton(self, text=name, variable=self.tkvar)
+		self.datawidget = Checkbutton(self, text=name, variable=self.tkvar, bg=self.bgcolor)
 		self.datawidget.pack(side=LEFT)
 
 	def arg_entry(self, name, type):
@@ -90,8 +93,8 @@ class Data(SpecWidget):
 			self.tkvar = StringVar()
 		if type == 'struct':
 			self.tkvar = StringVar()
-		Label(self, text=name).pack(side=LEFT)
-		self.datawidget = Entry(self, textvariable=self.tkvar, width=10)
+		Label(self, text=name, bg=self.bgcolor).pack(side=LEFT)
+		self.datawidget = Entry(self, textvariable=self.tkvar, width=10, bg=self.bgcolor)
 		self.datawidget.pack(side=LEFT)
 
 	def arg_array(self, name):
@@ -99,7 +102,7 @@ class Data(SpecWidget):
 
 	def arg_struct(self, name, struct):
 		self.struct = struct
-		sc = TreeWidget.ScrolledCanvas(self, bg='white', highlightthickness=0)
+		sc = TreeWidget.ScrolledCanvas(self, highlightthickness=0, bg=self.bgcolor)
 		sc.frame.pack()
 		item = StructTreeItem(None, name, self.struct)
 		node = TreeWidget.TreeNode(sc.canvas, None, item)
@@ -112,85 +115,6 @@ class Data(SpecWidget):
 	def arg_binary(self, name):
 		raise NotImplementedError
 
-
-class NodeGUIComponent(Frame):
-	def __init__(self, parent, clientcomponent):
-		Frame.__init__(self, parent)
-		self['bd'] = 3
-		self['relief'] = SOLID
-		self.client = clientcomponent
-		self.args = {}
-		self.__build()
-
-	def __build(self):
-		name = self.client.name
-
-
-		for argname in self.client.argnames():
-			argtype = self.client.argtype(argname)
-			argvalue = self.client.argvaluesdict[argname]
-			argalias = self.client.argaliasdict[argname]
-			a = NodeGUIArg(self, argname, argalias, argtype, argvalue)
-			a.pack()
-			self.args[argname] = a
-
-		def butcom():
-			for key,value in self.args.items():
-				self.client.setarg(key, self.args[key].get())
-			ret = self.client.execute()
-			self.process_return(ret)
-
-		but = Button(self, text=name, command=butcom)
-		but.pack()
-
-		retwidget = self.init_return(self.client.returntype)
-		if retwidget is not None:
-			retwidget.pack()
-
-	def process_return(self, returnvalue):
-		ret = self.returntype
-		if ret in ('array','string'):
-			self.retwidget['state'] = NORMAL
-			self.retwidget.delete(1.0,END)
-			self.retwidget.insert(1.0, `returnvalue`)
-			self.retwidget['state'] = DISABLED
-		if ret == 'struct':
-			item = StructTreeItem(None, 'Result', returnvalue)
-			node = TreeWidget.TreeNode(self.retwidget.canvas, None, item)
-			node.expand()
-#			self.retwidget['state'] = NORMAL
-#			self.retwidget['height'] = len(returnvalue)
-#			self.retwidget.delete(1.0,END)
-#			for key,value in returnvalue.items():
-#				rowstr = key + ': ' + `value` + '\n'
-#				self.retwidget.insert(END, rowstr)
-#			self.retwidget['state'] = DISABLED
-		else:
-			pass
-
-	def init_return(self, returntype):
-		'''
-		set up for handling return values
-		return a widget if one was created
-		'''
-		self.returntype = returntype
-		if returntype in ('array','string'):
-			wid = Frame(self)
-			widlab = Label(wid, text='Result:')
-			self.retwidget = Text(wid, height=1,width=30,wrap=NONE)
-			self.retwidget['state'] = DISABLED
-			retscroll = Scrollbar(wid, orient=HORIZONTAL)
-			retscroll['command'] = self.retwidget.xview
-			self.retwidget['xscrollcommand'] = retscroll.set
-			widlab.grid(row=0,column=0,rowspan=2)
-			self.retwidget.grid(row=0, column=1)
-			retscroll.grid(row=1,column=1,sticky=EW)
-			return wid
-		if returntype == 'struct':
-			self.retwidget = TreeWidget.ScrolledCanvas(self, bg='white', highlightthickness=0)
-			return self.retwidget.frame
-		else:
-			return None
 
 class Container(SpecWidget):
 	def __init__(self, parent, uiclient, spec):
@@ -214,26 +138,31 @@ class Container(SpecWidget):
 
 class Method(SpecWidget):
 	def __init__(self, parent, uiclient, spec):
-		SpecWidget.__init__(self, parent, uiclient, spec)
+		SpecWidget.__init__(self, parent, uiclient, spec, bd=3, relief=SOLID, bg='yellow')
 
 	def buildSpec(self):
 		self.name = self.spec['name']
 		self.argspec = self.spec['argspec']
-		self.returnspec = self.spec['returnspec']
+		
+		if 'returnspec' in self.spec:
+			self.returnspec = self.spec['returnspec']
+		else:
+			self.returnspec = None
 
 		self.argwidgets = []
 		for arg in self.argspec:
-			newwidget = Data(self, self.uiclient, spec)
+			newwidget = Data(self, self.uiclient, arg)
 			newwidget.pack()
 			self.argwidgets.append(newwidget)
 
 		but = Button(self, text=self.name, command=self.butcom)
 		but.pack()
 
-		retwidget = Data(self, self.uiclient, self.returnspec)
-		self.retwidget = retwidget.datawidget
-		if retwidget is not None:
-			retwidget.pack()
+		if self.returnspec is not None:
+			retwidget = Data(self, self.uiclient, self.returnspec)
+			self.retwidget = retwidget.datawidget
+			if retwidget is not None:
+				retwidget.pack()
 
 	def butcom(self):
 		newargs = []
@@ -248,8 +177,8 @@ class Method(SpecWidget):
 		if ret in ('array','string'):
 			print 'retwidget', self.retwidget
 			self.retwidget['state'] = NORMAL
-			self.retwidget.delete(1.0,END)
-			self.retwidget.insert(1.0, `returnvalue`)
+			self.retwidget.delete(0,END)
+			self.retwidget.insert(0, `returnvalue`)
 			self.retwidget['state'] = DISABLED
 		if ret == 'struct':
 			item = StructTreeItem(None, 'Result', returnvalue)

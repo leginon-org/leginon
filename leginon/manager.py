@@ -273,17 +273,20 @@ class Manager(node.Node):
 		self.launcherlist = []
 		self.launcherdict = {}
 
-		self.registerUISpec('MANAGER', nodespec)
-		return
 
 		argspec = (
-			{'name':'name', 'alias':'Name', 'type':'string'},
-			{'name':'launcher_str', 'alias':'Launcher', 'type':self.launcherlist},
-			{'name':'nodeclass_str', 'alias':'Node Class', 'type':nodeclass_list},
-			{'name':'args', 'alias':'Args', 'type':'string', 'default':''},
-			{'name':'newproc', 'alias':'New Process', 'type':'boolean', 'default':False}
-			)
-		self.registerUIFunction(self.uiLaunch, argspec, 'Launch')
+		self.registerUIData('Name', 'string', permissions='rw'),
+		self.registerUIData('Launcher', 'string', permissions='rw', enum=self.launcherlist),
+		self.registerUIData('Node Class', 'string', permissions='rw', enum=nodeclass_list),
+		self.registerUIData('Args', 'string', permissions='rw', default=''),
+		self.registerUIData('New Process', 'boolean', permissions='rw', default=False)
+		)
+
+		spec1 = self.registerUIMethod(self.uiLaunch, 'Launch', argspec)
+
+		self.registerUISpec('MANAGER', (nodespec, spec1))
+
+		return
 
 		argspec = (
 			{'name':'nodename', 'alias':'Node', 'type':self.clientlist},
