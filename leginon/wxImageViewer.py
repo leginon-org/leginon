@@ -13,11 +13,11 @@ import Mrc
 from NumericImage import NumericImage
 
 class ImagePanel(wxPanel):
-	def __init__(self, parent, id):
+	def __init__(self, parent, id, imagesize=(512, 512):
 		self.image = None
 		self.bitmap = None
 		self.buffer = wxNullBitmap
-		self.size = (512, 512)
+		self.imagesize = imagesize
 		self.scale = (1.0, 1.0)
 
 		wxPanel.__init__(self, parent, id)
@@ -60,7 +60,7 @@ class ImagePanel(wxPanel):
 			return False
 
 	def initPanel(self):
-		self.panel = wxScrolledWindow(self, -1, size=self.size)
+		self.panel = wxScrolledWindow(self, -1, size=self.imagesize)
 		self.panel.SetScrollRate(1,1)
 		self.panel.SetCursor(wxCROSS_CURSOR)
 		self.sizer.Add(self.panel)
