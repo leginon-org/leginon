@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Selector.py,v $
-# $Revision: 1.2 $
+# $Revision: 1.3 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-27 21:54:52 $
+# $Date: 2004-10-27 23:06:44 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -16,6 +16,15 @@ import wx.lib.scrolledpanel
 import gui.wx.Icons
 
 bitmaps = {}
+
+SelectEventType = wx.NewEventType()
+EVT_SELECT = wx.PyEventBinder(SelectEventType)
+class SelectEvent(wx.PyCommandEvent):
+	def __init__(self, source, item, selected):
+		wx.PyCommandEvent.__init__(self, SelectEventType, source.GetId())
+		self.SetEventObject(source)
+		self.item = item
+		self.selected = selected
 
 class SelectorItem(object):
 	def __init__(self, parent, name, icon=None, data=None):
@@ -38,12 +47,26 @@ class SelectorItem(object):
 		label = wx.StaticText(parent, -1, name)
 		self.items.append(label)
 
+		for item in self.items:
+			if item is None:
+				continue
+			item.Bind(wx.EVT_LEFT_DOWN, self.parent.onLeftDown)
+
 	def destroy(self):
 		while self.items:
 			item = self.items.pop()
 			if item is None:	
 				continue
 			item.Destroy()
+
+	def setSelected(self, selected):
+		if selected:
+			self.items[2].SetBackgroundColour(wx.Color(49, 106, 197))
+			self.items[2].SetForegroundColour(wx.WHITE)
+		else:
+			self.items[2].SetBackgroundColour(wx.WHITE)
+			self.items[2].SetForegroundColour(wx.BLACK)
+		self.items[2].Refresh()
 
 class Selector(wx.lib.scrolledpanel.ScrolledPanel):
 	def __init__(self, parent):
@@ -52,38 +75,78 @@ class Selector(wx.lib.scrolledpanel.ScrolledPanel):
 		self.order = []
 		self.items = {}
 
+		self.selected = None
+
 		self.SetBackgroundColour(wx.WHITE)
-		self.sz = wx.GridBagSizer(0, 0)
-		self.sz.AddGrowableRow(0)
-		self.sz.AddGrowableCol(0)
 
-		self.szselect = wx.GridBagSizer(1, 1)
-		self.szselect.SetEmptyCellSize((16, 16))
-		self.szselect.AddGrowableCol(2)
-
-		self.sz.Add(self.szselect, (0, 0), (1, 1))
+		self.sz = wx.GridBagSizer(1, 3)
+		self.sz.SetEmptyCellSize((16, 16))
+		self.sz.AddGrowableCol(2)
 
 		self.SetSizer(self.sz)
 		self.SetAutoLayout(True)
 		self.SetupScrolling()
 
+		self.Bind(wx.EVT_LEFT_DOWN, self.onLeftDown)
+
+	def onLeftDown(self, evt):
+		evtobj = evt.GetEventObject()
+		row = None
+		if evtobj is self:
+			y = 0
+			for i, height in enumerate(self.sz.GetRowHeights()):
+				height += self.sz.GetVGap()
+				if evt.m_y >= y and evt.m_y <= y + height:
+					row = i
+					break
+				y += height
+		else:
+			item = self.sz.FindItem(evtobj)
+			if item is not None:
+				row = item.GetPos().row
+		evt.Skip()
+
+		if row is None:
+			return
+
+		name = self.order[row]
+		item = self.items[name]
+
+		if self.selected is item:
+			self.selected.setSelected(False)
+			self.selected = None
+			selected = False
+		else:
+			if self.selected is not None:
+				self.selected.setSelected(False)
+			self.selected = item
+			selected = True
+			self.selected.setSelected(True)
+
+		evt = SelectEvent(self, item, selected)
+		self.GetEventHandler().AddPendingEvent(evt)
+
 	def addItem(self, row, item):
 		for i, additem in enumerate(item.items):
 			if additem is None:
 				continue
-			self.szselect.Add(additem, (row, i), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+			if isinstance(additem, wx.StaticText):
+				flags = wx.ALIGN_CENTER_VERTICAL
+			else:
+				flags = wx.ALIGN_CENTER
+			self.sz.Add(additem, (row, i), (1, 1), flags)
 
 	def moveItem(self, row, item):
 		for column, moveitem in enumerate(item.items):
 			if moveitem is None:
 				continue
-			self.szselect.SetItemPosition(moveitem, (row, column))
+			self.sz.SetItemPosition(moveitem, (row, column))
 
 	def detachItem(self, item):
 		for removeitem in item.items:
 			if removeitem is None:
 				continue
-			self.szselect.Detach(removeitem)
+			self.sz.Detach(removeitem)
 
 	def destroyItem(self, item):
 		self.detachItem(item)
@@ -100,7 +163,7 @@ class Selector(wx.lib.scrolledpanel.ScrolledPanel):
 		self.items[item.name] = item
 		self.order.insert(index, item.name)
 
-		self.szselect.Layout()
+		self.sz.Layout()
 
 	def append(self, item):
 		index = len(self.order)
@@ -118,7 +181,7 @@ class Selector(wx.lib.scrolledpanel.ScrolledPanel):
 		for row in range(index, len(self.order)):
 			self.moveItem(row, self.items[self.order[row]])
 
-		self.szselect.Layout()
+		self.sz.Layout()
 
 	def sort(self, cmpfunc=None):
 		order = list(self.order)
@@ -133,7 +196,7 @@ class Selector(wx.lib.scrolledpanel.ScrolledPanel):
 			self.moveItem(i[0], item)
 			self.order[i[0]], self.order[i[1]] = self.order[i[1]], self.order[i[0]]
 
-		self.szselect.Layout()
+		self.sz.Layout()
 
 if __name__ == '__main__':
 	class App(wx.App):
