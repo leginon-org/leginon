@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from Tkinter import *
+import threading
 import leginonobject
 import datahandler
 import node
@@ -28,6 +30,11 @@ class Manager(node.Node):
 
 	def main(self):
 		print self.location()
+
+		guithread = threading.Thread(target=self.gui)
+		guithread.setDaemon(1)
+		guithread.start()
+
 		self.interact()
 
 	def registerNode(self, readyevent):
@@ -103,7 +110,76 @@ class Manager(node.Node):
 										self.clients[to_node].push(ievent)
 										done.append(to_node)
 
+
+	def gui(self):
+		"""
+		open a GUI for the manager	
+		"""
+
+		root = Tk()
+
+		self.gui_launch_launcher = StringVar()
+		self.gui_launch_target = StringVar()
+		self.gui_launch_newproc = IntVar()
+		self.gui_launch_id = StringVar()
+		self.gui_launch_args = StringVar()
+
+		#### Launch Node Frame
+		launch_frame = Frame(root)
+		launch_but = Button(launch_frame, text='LAUNCH')
+		launch_but['command'] = self.gui_launch_command
+		launch_launcher_lab = Label(launch_frame, text='Launcher')
+		launch_launcher_ent = Entry(launch_frame, textvariable=self.gui_launch_launcher)
+
+		launch_newproc = Checkbutton(text='New Process', variable=self.gui_launch_newproc) 
+		launch_target_lab = Label(launch_frame, text='Node Class')
+		launch_target_ent = Entry(launch_frame, textvariable=self.gui_launch_target)
+		launch_id_lab = Label(launch_frame, text='Node ID')
+		launch_id_ent = Entry(launch_frame, textvariable=self.gui_launch_id)
+		launch_args_lab = Label(launch_frame, text='Node Args')
+		launch_args_ent = Entry(launch_frame, textvariable=self.gui_launch_args)
+
+		launch_but.pack(side=LEFT)
+		launch_launcher_lab.pack(side=LEFT)
+		launch_launcher_ent.pack(side=LEFT)
+		launch_target_lab.pack(side=LEFT)
+		launch_target_ent.pack(side=LEFT)
+		launch_id_lab.pack(side=LEFT)
+		launch_id_ent.pack(side=LEFT)
+		launch_newproc.pack(side=LEFT)
+		launch_frame.pack()
+		root.mainloop()
+
+	def gui_launch_command(self):
+		launcher = self.gui_launch_launcher.get()
+		newproc = self.gui_launch_newproc.get()
+
+		target = self.gui_launch_target.get()
+		target = 'self.common.%s' % target
+		print 'TARGET', target
+		try:
+			target = eval(target)
+		except:
+			print 'problem evaluating target'
+			return
+		newid = self.gui_launch_id.get()
+
+		args = self.gui_launch_args.get()
+		args = '(%s)' % args
+		print 'args', args
+		try:
+			args = eval(args)
+		except:
+			print 'problem evaluating args'
+			return
+
+		self.launchNode(launcher, newproc, target, newid, args)
+
+
 if __name__ == '__main__':
 	import signal, sys
 	m = Manager()
+
+
+
 
