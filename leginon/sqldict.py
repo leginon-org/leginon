@@ -598,7 +598,6 @@ def matrix2dict(matrix, name=None):
 	{'m|1_1': 1, 'm|1_2': 2, 'm|2_1': 3, 'm|2_2': 4, ..., 'm|i_j':n}
 
 	"""
-	print 'MATRIX2DICT', name, matrix
 
 	if name is None:
 		name='m'
@@ -616,7 +615,7 @@ def matrix2dict(matrix, name=None):
 		for col in row:
 			# k = "ARRAY|%s|%s_%s" % (name,i,j)
 			k = sep.join(['ARRAY',name,'%s_%s'%(i,j)])
-			v = matrix[i-1,j-1]
+			v = float(matrix[i-1,j-1])
 			d[k]=v
 			j+=1
 	return d
