@@ -12,7 +12,7 @@ import sys
 
 class Launcher(node.Node):
 	def __init__(self, id, nodelocations = {}, port = None, **kwargs):
-		node.Node.__init__(self, id, nodelocations, tcpport=port, **kwargs)
+		node.Node.__init__(self, id, 'launcher session', nodelocations, tcpport=port, **kwargs)
 		self.checkPythonVersion()
 		self.addEventInput(event.LaunchEvent, self.handleLaunch)
 		self.addEventOutput(event.NodeClassesPublishEvent)
@@ -23,7 +23,7 @@ class Launcher(node.Node):
 															l['hostname'], l['TCP port'], l['UI port'])
 		#self.print_location()
 		self.defineUserInterface()
-		self.start()
+#		self.start()
 
 	def addManager(self, loc):
 		self.managerclient = self.clientclass(self.ID(), loc)
@@ -74,12 +74,12 @@ class Launcher(node.Node):
 			### or calllauncher if the node caused an exception
 			self.caller.launchCall('thread',nodeclass,self.__launchlock, args,kwargs)
 
-	def defineUserInterface(self):
-		nint = node.Node.defineUserInterface(self)
-
-		ref = self.registerUIMethod(self.uiRefresh, 'Refresh', ())
-
-		self.registerUISpec('Launcher: %s' % (self.id,), (nint, ref))
+#	def defineUserInterface(self):
+#		nint = node.Node.defineUserInterface(self)
+#
+#		ref = self.registerUIMethod(self.uiRefresh, 'Refresh', ())
+#
+#		self.registerUISpec('Launcher: %s' % (self.id,), (nint, ref))
 
 	def uiRefresh(self):
 		self.publishNodeClasses()
@@ -111,4 +111,5 @@ if __name__ == '__main__':
 			m = Launcher(myid, {}, 55555)
 		except:
 			m = Launcher(myid, {})
+	m.start()
 

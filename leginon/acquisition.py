@@ -11,6 +11,7 @@ import camerafuncs
 import presets
 import copy
 import threading
+import uidata
 
 class Acquisition(targetwatcher.TargetWatcher):
 	def __init__(self, id, session, nodelocations, targetclass=data.ImageTargetData, **kwargs):
@@ -70,7 +71,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 			print '   image shift', newtargetemdata['image shift']
 
 		### do each preset for this acquisition
-		presetnames = self.presetnames.get()
+		try:
+			presetnames = eval(self.uipresetnames.get())
+		except:
+			print 'NO PRESETS SPECIFIED'
+			return
 		if not presetnames:
 			print 'NO PRESETS SPECIFIED'
 		for presetname in presetnames:
@@ -133,7 +138,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		pixelshift = {'row':deltarow, 'col':deltacol}
 
 		## figure out scope state that gets to the target
-		movetype = self.movetype.get()
+		movetype = self.uimovetype.getSelectedValue()[0]
 		calclient = self.calclients[movetype]
 		print 'ORIGINAL', targetscope['image shift']
 		newscope = calclient.transform(pixelshift, targetscope, targetcamera)
@@ -196,7 +201,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		return emdata
 
 	def acquire(self, presetdata, trial=False):
-		acqtype = self.acqtype.get()
+		acqtype = self.uiacquiretype.getSelectedValue()[0]
 		if acqtype == 'raw':
 			imagedata = self.cam.acquireCameraImageData(None,0)
 		elif acqtype == 'corrected':
@@ -268,41 +273,54 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 	def uiToScope(self):
 		try:
-			presetname = self.presetarg.get()['selected'][0]
-		except (KeyError, IndexError):
+			presetname = self.uiselectpreset.getSelectedValue()[0]
+		except IndexError:
 			self.printerror('cannot determine preset name')
+			return
 		print 'Going to preset %s' % (presetname,)
 		presetlist = self.presetsclient.retrievePresets(presetname)
 		presetdata = presetlist[0]
 		self.presetsclient.toScope(presetdata)
-		self.presetarg.set({'list': self.presetsNames(), 'selected': []})
-		return ''
+		presetsnames = self.presetsNames()
+		if presetsnames:
+			selected = [0]
+		else:
+			selected = []
+		self.uiselectpreset.set(presetsnames, selected)
 
 	def uiToScopeAcquire(self):
 		try:
-			presetname = self.presetarg.get()['selected'][0]
+			presetname = self.uiselectpreset.getSelectedValue()[0]
 			print 'PRESETNAME', presetname
-		except (KeyError, IndexError):
+		except IndexError:
 			self.printerror('cannot determine preset name')
-			return ''
-		## remember this preset name for when a click event comes back
-		self.testpresetname = presetname
+			return
+		else:
+			## remember this preset name for when a click event comes back
+			self.testpresetname = presetname
 
 		## acquire a trial image
 		self.acquireTargetAtPreset(presetname, trial=True)
-		self.presetarg.set({'list': self.presetsNames(), 'selected': []})
-		return ''
+		presetsnames = self.presetsNames()
+		if presetsnames:
+			selected = [0]
+		else:
+			selected = []
+		self.uiselectpreset.set(presetsnames, selected)
 
 	def uiFromScope(self):
-		presetname = self.fromscopename.get()
+		presetname = self.uifromscopename.get()
 		presetdata = self.presetsclient.fromScope(presetname)
 		self.presetsclient.storePreset(presetdata)
-		self.presetarg.set({'list': self.presetsNames(), 'selected': []})
-		return ''
+		presetsnames = self.presetsNames()
+		if presetsnames:
+			selected = [0]
+		else:
+			selected = []
+		self.uiselectpreset.set(presetsnames, selected)
 
 	def uiTrial(self):
 		self.processTargetData(targetdata=None)
-		return ''
 
 	def presetsNames(self):
 		presetsdata = self.presetsclient.retrievePresets()
@@ -314,31 +332,37 @@ class Acquisition(targetwatcher.TargetWatcher):
 		return presetsnames
 
 	def defineUserInterface(self):
-		super = targetwatcher.TargetWatcher.defineUserInterface(self)
+		targetwatcher.TargetWatcher.defineUserInterface(self)
+		self.uimovetype = uidata.UISelectFromList('Move Type',
+																							self.calclients.keys(), [0], 'r')
+		self.uidelay = uidata.UIFloat('Delay (sec)', 2.5, 'rw')
+		self.uiacquiretype = uidata.UISelectFromList('Acquisition Type',
+																							['raw', 'corrected'], [0], 'r')
+		settingscontainer = uidata.UIContainer('Settings')
+		settingscontainer.addUIObjects((self.uimovetype, self.uidelay,
+																		self.uiacquiretype))
 
-		movetypes = self.calclients.keys()
-		temparam = self.registerUIData('temparam', 'array', default=movetypes)
-		self.movetype = self.registerUIData('TEM Parameter', 'string', choices=temparam, permissions='rw', default='image shift')
+		self.uipresetsnames = uidata.UIString('Presets', '[\'spread1100\']', 'rw')
+		self.uifromscopename = uidata.UIString('Preset Name', '', 'rw')
+		fromscopemethod = uidata.UIMethod('Create Preset', self.uiFromScope)
+		presetsnames = self.presetsNames()
+		if presetsnames:
+			selected = [0]
+		else:
+			selected = []
+		self.uiselectpreset = uidata.UISelectFromList('Select Preset',
+																									presetsnames, selected, 'r')
+		toscopemethod = uidata.UIMethod('Apply Preset', self.uiToScope)
+		toscopeandacquiremethod = uidata.UIMethod('Apply Preset and Acquire',
+																							self.uiToScopeAcquire)
+		presetscontainer = uidata.UIContainer('Presets')
+		presetscontainer.addUIObjects((self.uipresetsnames, self.uifromscopename,
+																		fromscopemethod, self.uiselectpreset,
+																		toscopemethod, toscopeandacquiremethod))
+		trialmethod = uidata.UIMethod('Trial', self.uiTrial)
 
-		self.delaydata = self.registerUIData('Delay (sec)', 'float', default=2.5, permissions='rw')
+		container = uidata.UIMediumContainer('Acquisition')
+		container.addUIObjects((settingscontainer, presetscontainer, trialmethod))
 
-		acqtypes = self.registerUIData('acqtypes', 'array', default=('raw', 'corrected'))
-		self.acqtype = self.registerUIData('Acquisition Type', 'string', default='corrected', permissions='rw', choices=acqtypes)
-
-
-		prefs = self.registerUIContainer('Preferences', (self.movetype, self.delaydata, self.acqtype))
-
-		self.presetnames = self.registerUIData('Acquisition Presets', 'array', default=['spread1100'], permissions='rw')
-		self.fromscopename = self.registerUIData('Preset Name', 'string', permissions='rw')
-		fromscope = self.registerUIMethod(self.uiFromScope, 'Create Preset', ())
-		self.presetarg = self.registerUIData('Preset', 'struct', default = {'list': self.presetsNames(), 'selected': []}, permissions='rw', subtype='selected list')
-		toscope = self.registerUIMethod(self.uiToScope, 'Apply Preset', ())
-		toscopeacq = self.registerUIMethod(self.uiToScopeAcquire, 'To Scope And Acquire', ())
-		pre = self.registerUIContainer('Presets', (self.presetnames, self.fromscopename, fromscope, self.presetarg, toscope, toscopeacq))
-
-		trial = self.registerUIMethod(self.uiTrial, 'Trial', ())
-
-		myspec = self.registerUISpec('Acquisition', (prefs, pre, trial))
-		myspec += super
-		return myspec
+		self.uiserver.addUIObject(container)
 

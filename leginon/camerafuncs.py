@@ -6,6 +6,7 @@ import data
 import cameraimage
 import Numeric
 import copy
+import uidata
 from timer import Timer
 
 class CameraFuncs(object):
@@ -91,12 +92,10 @@ class CameraFuncs(object):
 
 	def configUIData(self):
 		'''
-		returns a camera configuration Spec object for UI server
+		returns camera configuration UI object
 		'''
 
-		camconfig = self.node.registerUIData('Camera Configuration', 'struct', permissions='rw', callback=self.config)
-
-		return camconfig
+		return uidata.UIStruct('Camera Configuration', None, 'rw', self.config)
 
 	def config(self, value=None):
 		'''
@@ -151,7 +150,3 @@ class CameraFuncs(object):
 
 		# return a copy of the current config value
 		return copy.deepcopy(self.cameraconfigvalue)
-
-
-
-

@@ -13,9 +13,7 @@ import Mrc
 import math
 import calibrationclient
 import camerafuncs
-import xmlrpclib
-#import xmlrpclib2 as xmlbinlib
-xmlbinlib = xmlrpclib
+import uidata
 
 # needs reorganizing, better classes and locking
 class ImageMosaicInfo(object):
@@ -146,8 +144,6 @@ class ImageMosaic(watcher.Watcher):
 	def __init__(self, id, session, nodelocations, watchfor=event.TileImagePublishEvent, **kwargs):
 		# needs own event?
 		lockblocking = 1
-		self.scale = 1.0
-		self.autoscale = 512
 		self.targetlist = []
 		watcher.Watcher.__init__(self, id, session, nodelocations, watchfor,
 																					lockblocking, **kwargs)
@@ -189,7 +185,8 @@ class ImageMosaic(watcher.Watcher):
 				#imagemosaic.addTile(idata.id, tileimage, position)
 				imagemosaic.addTile(idata['id'], tileimage, position)
 #				print idata.id, "position =", imagemosaic.getTilePosition(idata.id)
-		self.image.set(None)
+		#self.image.set(None)
+		self.setUIImage()
 
 	def automaticPosition(self, idata, imagemosaic):
 		for positionmethod in self.automaticpriority:
@@ -378,11 +375,11 @@ class ImageMosaic(watcher.Watcher):
 		if len(self.imagemosaics) == 0:
 			return None
 		# return most recent for now
-		if self.autoscale > 0:
-			imageandscale = self.imagemosaics[-1].getMosaicImage(self.autoscale, True)
-			self.scale = imageandscale['scale']
+		if self.autoscale.get() > 0:
+			imageandscale = self.imagemosaics[-1].getMosaicImage(self.autoscale.get(), True)
+			self.scale.set(imageandscale['scale'])
 		else:
-			imageandscale = self.imagemosaics[-1].getMosaicImage(self.scale, False)
+			imageandscale = self.imagemosaics[-1].getMosaicImage(self.scale.get(), False)
 		return imageandscale
 
 	def uiPublishMosaicImage(self):
@@ -398,58 +395,82 @@ class ImageMosaic(watcher.Watcher):
 		return ''
 
 	def defineUserInterface(self):
-		watcherspec = watcher.Watcher.defineUserInterface(self)
-		publishspec = self.registerUIMethod(self.uiPublishMosaicImage,
-										'Publish Image', ())
-		clearspec = self.registerUIMethod(self.uiClearMosaics, 'Clear', ())
+		watcher.Watcher.defineUserInterface(self)
+		publishmethod = uidata.UIMethod('Publish Image', self.uiPublishMosaicImage)
+		clearmethod = uidata.UIMethod('Clear Mosaics', self.uiClearMosaics)
+		self.scale = uidata.UIFloat('Scale', 1.0, 'rw', self.uiScaleCallback)
+		self.autoscale = uidata.UIInteger('Auto Scale', 512, 'rw',
+																			self.uiAutoScaleCallback)
+		# needs target image to work
+		self.submittargetsmethod = uidata.UIMethod('Sumbit Targets', self.uiSubmitTargets)
+		self.ui_image = uidata.UITargetImage('Mosiac Image', None, 'rw')
+		self.ui_image.addTargetType('Export Targets', [])
+		container = uidata.UIMediumContainer('Image Mosaic')
+		container.addUIObjects((publishmethod, clearmethod, self.scale,
+														self.autoscale, self.ui_image))
+		self.uiserver.addUIObject(container)
 
-		self.image = self.registerUIData('Mosaic Image', 'binary',
-														permissions='rw', callback=self.uiImageCallback)
-
-		imagespec = self.registerUIContainer('Image', (publishspec, clearspec))
-		scalespec = self.registerUIData('Scale', 'float', permissions='rw',
-															default=self.scale, callback=self.uiScaleCallback)
-		self.autoscale = 512
-		autoscalespec = self.registerUIData('Auto Scale',
-																				'integer',
-																				permissions='rw',
-																				default=self.autoscale,
-																				callback=self.uiAutoScaleCallback)
-		scalecontainerspec = self.registerUIContainer('Scale',
-																									(scalespec, autoscalespec))
-		spec = self.registerUISpec('Image Mosaic',
-																(imagespec, self.image, scalecontainerspec))
-		spec += watcherspec
-		return spec
+#		self.image = self.registerUIData('Mosaic Image', 'binary',
+#														permissions='rw', callback=self.uiImageCallback)
 
 	def uiScaleCallback(self, value=None):
-		if value is not None and value > 0.0:
-			self.scale = value
-			self.autoscale = 0
-		return self.scale
+		if value > 0.0:
+			if hasattr(self, 'autoscale'):
+				self.autoscale.set(0)
+		else:
+			value = self.scale.get()	
+		return value
 
-	def uiAutoScaleCallback(self, value=None):
-		if value is not None and value >= 0:
-			self.autoscale = value
-		return self.autoscale
+	def uiAutoScaleCallback(self, value):
+		if value < 0:
+			value = self.autoscale.get()
+		return value
 
-	def uiImageCallback(self, value=None):
-		if value is not None:
-			self.submitTargets(value)
-
+	def setUIImage(self):
 		imageandscale = self.getMosaicImageAndScale()
 		if imageandscale is None:
-			return xmlbinlib.Binary('')
-
+			self.ui_image.setImage(None)
+			self.ui_image.setTargets([])
+			return
+		self.targetlist = []
 		image = imageandscale['image']
 		scale = imageandscale['scale']
 		tilestates = imageandscale['tile states']
 		self.clickinfo = {'scale': scale,
 											'shape': image.shape,
 											'tile states': tilestates}
+		self.ui_image.setImage(None)
+		self.ui_image.setTargets([])
 
-		mrcstr = Mrc.numeric_to_mrcstr(image)
-		return xmlbinlib.Binary(mrcstr)
+#	def uiImageCallback(self, value=None):
+#		if value is not None:
+#			self.submitTargets(value)
+#
+#		imageandscale = self.getMosaicImageAndScale()
+#		if imageandscale is None:
+#			return xmlbinlib.Binary('')
+#
+#		image = imageandscale['image']
+#		scale = imageandscale['scale']
+#		tilestates = imageandscale['tile states']
+#		self.clickinfo = {'scale': scale,
+#											'shape': image.shape,
+#											'tile states': tilestates}
+#
+#		mrcstr = Mrc.numeric_to_mrcstr(image)
+#		return xmlbinlib.Binary(mrcstr)
+
+	def uiSubmitTargets(self):
+		self.targetlist = []
+		targets = self.ui_image.getTargetType('Export Targets')
+		for target in targets:
+			self.adjustTarget(target)
+			# should still work
+			del target['button']
+			targetdata = data.ImageTargetData(self.ID(), target)
+			self.targetlist.append(targetdata)
+		self.ui_image.setTargets([])
+		self.publishTargetList()
 
 	def submitTargets(self, targetlist):
 		self.targetlist = []
@@ -467,8 +488,10 @@ class ImageMosaic(watcher.Watcher):
 		shape = self.clickinfo['shape']
 		tilestates = self.clickinfo['tile states']
 		scale = self.clickinfo['scale']
-		row = target['array row'] * scale
-		column = target['array column'] * scale
+		#row = target['array row'] * scale
+		#column = target['array column'] * scale
+		row = target[1] * scale
+		column = target[0] * scale
 
 		maxmagnitude = math.sqrt(shape[0]**2 + shape[1]**2)
 		nearestdelta = (0,0)
@@ -490,14 +513,15 @@ class ImageMosaic(watcher.Watcher):
 				nearestdelta = deltaposition
 				nearesttile = tile
 
+		newtarget = {}
 		try:
-			target['array shape'] = tilestates[nearesttile]['shape']
-			target['array row'] = int(round(nearestdelta[0]
-																				+ target['array shape'][0]/2.0))
-			target['array column'] = int(round(nearestdelta[1]
-																				+ target['array shape'][1]/2.0))
-			target['scope'] = tilestates[nearesttile]['scope']
-			target['camera'] = tilestates[nearesttile]['camera']
+			newtarget['array shape'] = tilestates[nearesttile]['shape']
+			newtarget['array row'] = int(round(nearestdelta[0]
+																				+ newtarget['array shape'][0]/2.0))
+			newtarget['array column'] = int(round(nearestdelta[1]
+																				+ newtarget['array shape'][1]/2.0))
+			newtarget['scope'] = tilestates[nearesttile]['scope']
+			newtarget['camera'] = tilestates[nearesttile]['camera']
 		except KeyError, e:
 			print 'tilestates =', tilestates
 			print 'target =', target
@@ -600,10 +624,14 @@ class StateImageMosaic(ImageMosaic):
 				imagemosaic.addTile(idata['id'], tileimage, position,
 																									tilescope, tilecamera)
 				print idata['id'], "position =", imagemosaic.getTilePosition(idata['id'])
-		self.image.set(None)
+		#self.image.set(None)
+		self.setUIImage()
 
 	def positionByCalibration(self, idata, imagemosaic):
-		parameter = self.calibrationparameter.get()
+		try:
+			parameter = self.selectparameter.getSelectedValue()[0]
+		except IndexError:
+			self.printerror('no calibration parameter specified')
 		if parameter == 'all':
 			parameters = self.calibrationclients.keys()
 		else:
@@ -625,15 +653,15 @@ class StateImageMosaic(ImageMosaic):
 		return (position['row'], position['col'])
 
 	def defineUserInterface(self):
-		imagemosaicspec = ImageMosaic.defineUserInterface(self)
-		calibrationparameters = self.calibrationclients.keys() + ['all']
-		calibrationchoices = self.registerUIData('Calibration Choices', 'array',
-																							default=calibrationparameters)
-		self.calibrationparameter = self.registerUIData('Calibration Method',
-																		'string', choices=calibrationchoices,
-																		permissions='rw', default='stage position')
-		spec = self.registerUISpec('State Image Mosaic',
-																(self.calibrationparameter,))
-		spec += imagemosaicspec
-		return spec
+		ImageMosaic.defineUserInterface(self)
+		parameters = self.calibrationclients.keys() + ['all']
+		if parameters:
+			selected = [0]
+		else:
+			selected = []
+		self.selectparameter = uidata.UISelectFromList('Calibration Choices',
+																			parameters, selected, 'r')
+		container = uidata.UIMediumContainer('State Image Mosaic')
+		container.addUIObject(self.selectparameter)
+		self.uiserver.addUIObject(container)
 

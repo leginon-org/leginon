@@ -3,6 +3,9 @@ import data
 import event
 import dbdatakeeper
 import cPickle
+import copy
+import uidata
+import camerafuncs
 
 class PresetsClient(object):
 	'''
@@ -108,26 +111,44 @@ class PresetsManager(node.Node):
 		self.presetlist.append(presetdata)
 
 	def defineUserInterface(self):
-		nodespec = node.Node.defineUserInterface(self)
+		node.Node.defineUserInterface(self)
+		self.uiselectpreset = uidata.UISelectFromList('Preset', [], [], 'r')
+		self.uiGetPresets()
+		getpresetsmethod = uidata.UIMethod('Get Presets', self.uiGetPresets)
+		toscopemethod = uidata.UIMethod('To Scope', self.uiRestore)
+		toscopecontainer = uidata.UIContainer('Apply Preset')
+		toscopecontainer.addUIObjects((self.uiselectpreset, getpresetsmethod,
+																		toscopemethod))
+		self.uipresetname = uidata.UIString('Preset Name', '', 'rw')
+		fromscopemethod = uidata.UIMethod('From Scope', self.uiStoreCurrent)
+		fromscopecontainer = uidata.UIContainer('Create Preset')
+		fromscopecontainer.addUIObjects((self.uipresetname, fromscopemethod))
+		container = uidata.UIMediumContainer('Presets Manager')
+		container.addUIObjects((toscopecontainer, fromscopecontainer))
+		self.uiserver.addUIObject(container)
 
-		presetchoices = self.registerUIData('presetchoices', 'array', callback=self.getPresetNames, permissions='r')
-		presetname = self.registerUIData('Name', 'string', choices=presetchoices)
-		store = self.registerUIMethod(self.uiStoreCurrent, 'From Scope', (presetname,))
-		restore = self.registerUIMethod(self.uiRestore, 'To Scope', (presetname,))
+	def uiGetPresets(self):
+		presetsnames = self.getPresetNames()
+		if presetsnames:
+			presetsnames.sort()
+			selected = [0]
+		else:
+			selected = []
+		self.uiselectpreset.set(presetsnames, selected)
 
-		test = self.registerUIContainer('Test', (store, restore))
-
-		myspec = self.registerUISpec('Presets Manager', (test,))
-		myspec += nodespec
-		return myspec
-
-	def uiStoreCurrent(self, presetname):
+	def uiStoreCurrent(self):
+		presetname = self.uipresetname.get()
 		presetdata = self.presetsclient.fromScope(presetname)
 		self.presetsclient.storePreset(presetdata)
-		return ''
+		self.uiGetPresets()
 
-	def uiRestore(self, presetname):
+	def uiRestore(self):
+		try:
+			presetname = self.uiselectpreset.getSelectedValue()[0]
+		except IndexError:
+			self.printerror('no preset to send to instrument')
+			return
 		presetlist = self.presetsclient.retrievePresets(presetname)
 		presetdata = presetlist[0]
 		self.presetsclient.toScope(presetdata)
-		return ''
+

@@ -6,12 +6,10 @@ import Numeric
 import ImageViewer
 import threading
 from Tkinter import *
-import xmlrpclib
-#import xmlrpclib2 as xmlbinlib
-xmlbinlib = xmlrpclib
 import camerafuncs
 import Mrc
 import node, data, event
+import uidata
 
 class ImViewer(imagewatcher.ImageWatcher):
 	def __init__(self, id, session, nodelocations, **kwargs):
@@ -34,7 +32,7 @@ class ImViewer(imagewatcher.ImageWatcher):
 
 	def processData(self, imagedata):
 		imagewatcher.ImageWatcher.processData(self, imagedata)
-		if self.popupvalue:
+		if self.uipopupflag.get():
 			self.displayNumericArray()
 
 	def die(self, ievent=None):
@@ -97,19 +95,13 @@ class ImViewer(imagewatcher.ImageWatcher):
 
 	def uiAcquireRaw(self):
 		imarray = self.acquireArray(0)
-		if imarray is None:
-			mrcstr = ''
-		else:
-			mrcstr = Mrc.numeric_to_mrcstr(imarray)
-		return xmlbinlib.Binary(mrcstr)
+		if imarray is not None:
+			self.ui_image.set(imarray)
 
 	def uiAcquireCorrected(self):
-		im = self.acquireArray(1)
-		if im is None:
-			mrcstr = ''
-		else:
-			mrcstr = Mrc.numeric_to_mrcstr(im)
-		return xmlbinlib.Binary(mrcstr)
+		imarray = self.acquireArray(1)
+		if imarray is not None:
+			self.ui_image.set(imarray)
 
 	def acquireArray(self, corr=0):
 		camconfig = self.cam.config()
@@ -118,20 +110,19 @@ class ImViewer(imagewatcher.ImageWatcher):
 		imarray = imdata['image']
 		return imarray
 
-	def acquireAndDisplay(self, corr=0):
-		print 'acquireArray'
-		imarray = self.acquireArray(corr)
-		print 'displayNumericArray'
-		if imarray is None:
-			self.iv.displayMessage('NO IMAGE ACQUIRED')
-		else:
-			self.displayNumericArray(imarray)
-		print 'acquireAndDisplay done'
+#	def acquireAndDisplay(self, corr=0):
+#		print 'acquireArray'
+#		imarray = self.acquireArray(corr)
+#		print 'displayNumericArray'
+#		if imarray is None:
+#			self.iv.displayMessage('NO IMAGE ACQUIRED')
+#		else:
+#			self.displayNumericArray(imarray)
+#		print 'acquireAndDisplay done'
 
 	def acquireEvent(self):
 		e = event.ImageAcquireEvent(self.ID())
 		self.outputEvent(e)
-		return ''
 
 	def displayNumericArray(self):
 		'''
@@ -144,47 +135,50 @@ class ImViewer(imagewatcher.ImageWatcher):
 			self.iv.update()
 		self.clickEventOn()
 
-	def popupCallback(self, value=None):
-		if value is not None:
-			self.popupvalue = value
-
-		if self.popupvalue:
+	def popupCallback(self, value):
+		if value:
 			self.displayNumericArray()
-		
-		return self.popupvalue
+#		else:
+#			self.close_viewer()
+		return value
 
-	def uiLoadImage(self, filename):
+	def uiLoadImage(self):
+		filename = self.uifilename.get()
 		self.numarray = Mrc.mrc_to_numeric(filename)
-		self.displayNumericArray()
-		return ''
+		self.ui_image.set(self.numarray)
+		if self.uipopupflag.get():
+			self.displayNumericArray()
 
-	def uiSaveImage(self, filename):
+	def uiSaveImage(self):
+		filename = self.uifilename.get()
 		numarray = Numeric.array(self.iv.imagearray)
 		Mrc.numeric_to_mrc(numarray, filename)
-		return ''
 
 	def defineUserInterface(self):
-		watcherspec = imagewatcher.ImageWatcher.defineUserInterface(self)
+		imagewatcher.ImageWatcher.defineUserInterface(self)
+		self.uifilename = uidata.UIString('Filename', '', 'rw')
+		loadmethod = uidata.UIMethod('Load MRC', self.uiLoadImage)
+		savemethod = uidata.UIMethod('Save MRC', self.uiSaveImage)
+		filecontainer = uidata.UIContainer('File')
+		filecontainer.addUIObjects((self.uifilename, loadmethod, savemethod))
 
-		argspec = (
-		self.registerUIData('Filename', 'string', default='test1.mrc'),
-		)
-		loadspec = self.registerUIMethod(self.uiLoadImage, 'Load MRC', argspec)
-		savespec = self.registerUIMethod(self.uiSaveImage, 'Save MRC', argspec)
-		filespec = self.registerUIContainer('File', (loadspec,savespec))
+		self.ui_image = uidata.UIImage('Image', None, 'r')
+		rawmethod = uidata.UIMethod('Acquire Raw', self.uiAcquireRaw)
+		correctedmethod = uidata.UIMethod('Acquire Corrected',
+																			self.uiAcquireCorrected)
+		eventmethod = uidata.UIMethod('Event Acquire', self.acquireEvent)
+		acquirecontainer = uidata.UIContainer('Acquisition')
+		acquirecontainer.addUIObjects((self.ui_image, rawmethod, correctedmethod,
+																		eventmethod))
 
-		acqret = self.registerUIData('Image', 'binary')
+		self.uipopupflag = uidata.UIBoolean('Pop-up Viewer', False, 'rw',
+																				self.popupCallback)
+		cameraconfigure = self.cam.configUIData()
+		settingscontainer = uidata.UIContainer('Settings')
+		settingscontainer.addUIObjects((self.uipopupflag, cameraconfigure))
 
-		acqraw = self.registerUIMethod(self.uiAcquireRaw, 'Acquire Raw', (), returnspec=acqret)
-		acqcor = self.registerUIMethod(self.uiAcquireCorrected, 'Acquire Corrected', (), returnspec=acqret)
-		acqev = self.registerUIMethod(self.acquireEvent, 'Acquire Event', ())
+		container = uidata.UIMediumContainer('Image Viewer')
+		container.addUIObjects((acquirecontainer, settingscontainer, filecontainer))
 
-		popupdefault = xmlrpclib.Boolean(1)
-		popuptoggle = self.registerUIData('Pop-up Viewer', 'boolean', permissions='rw', default=popupdefault, callback=self.popupCallback)
+		self.uiserver.addUIObject(container)
 
-		camconfig = self.cam.configUIData()
-		prefs = self.registerUIContainer('Preferences', (popuptoggle, camconfig,))
-
-		myspec = self.registerUISpec(`self.id`, (acqraw, acqcor, acqev, prefs, filespec))
-		myspec += watcherspec
-		return myspec

@@ -9,11 +9,9 @@ import threading
 import Mrc
 import camerafuncs
 import dbdatakeeper
-import xmlrpclib
 import os
 import copy
-#import xmlrpclib2 as xmlbinlib
-xmlbinlib = xmlrpclib
+import uidata
 
 False = 0
 True = 1
@@ -58,44 +56,43 @@ class Corrector(node.Node):
 		self.start()
 
 	def defineUserInterface(self):
-		nodespec = node.Node.defineUserInterface(self)
+		node.Node.defineUserInterface(self)
+		darkmethod = uidata.UIMethod('Acquire Dark', self.uiAcquireDark)
+		brightmethod = uidata.UIMethod('Acquire Bright', self.uiAcquireBright)
+		correctedmethod = uidata.UIMethod('Acquire Corrected',
+																			self.uiAcquireCorrected)
 
-		### Acquire Bright/Dark
-		acqdark = self.registerUIMethod(self.uiAcquireDark, 'Acquire Dark', ())
-		acqbright = self.registerUIMethod(self.uiAcquireBright, 'Acquire Bright',())
-		acqcorr = self.registerUIMethod(self.uiAcquireCorrected,
-																					'Acquire Corrected', ())
-		self.acquireimage = self.registerUIData('Image', 'binary', permissions='r')
-		acquirecontainer = self.registerUIContainer('Acquire',
-															(acqdark, acqbright, acqcorr, self.acquireimage))
+		acquirecontainer = uidata.UIContainer('Image Acquisition')
+		acquirecontainer.addUIObjects((darkmethod, brightmethod, correctedmethod))
+		self.ui_image = uidata.UIImage('Image', None, 'rw')
 
-		self.navgdata = self.registerUIData('Frames to Average', 'integer',
-																						default=3, permissions='rw')
+		self.uiframestoaverage = uidata.UIInteger('Frames to Average', 3, 'rw')
+		self.uifakeflag = uidata.UIBoolean('Fake Image', False, 'rw')
+		cameraconfigure = self.cam.configUIData()
+		preferencescontainer = uidata.UIContainer('Preferences')
+		preferencescontainer.addUIObjects((self.uiframestoaverage, self.uifakeflag,
+																				cameraconfigure))
+		container = uidata.UIMediumContainer('Corrector')
+		container.addUIObjects((acquirecontainer, self.ui_image,
+														preferencescontainer))
+		self.uiserver.addUIObject(container)
 
-
-		self.fakeflag = self.registerUIData('Fake', 'boolean', default=False,
-																													permissions='rw')
-
-		camconfigdata = self.cam.configUIData()
-		prefs = self.registerUIContainer('Preferences',
-																	(self.navgdata, self.fakeflag, camconfigdata))
-
-		argspec = (
-			self.registerUIData('clip limits', 'array', default=()),
-			self.registerUIData('bad rows', 'array', default=()),
-			self.registerUIData('bad cols', 'array', default=())
-		)
-		setplan = self.registerUIMethod(self.uiSetPlanParams, 'Set Plan Params',
-																																			argspec)
-
-		ret = self.registerUIData('Current Plan', 'struct')
-		getplan = self.registerUIMethod(self.uiGetPlanParams, 'Get Plan Params',
-																													(), returnspec=ret)
-		plan = self.registerUISpec('Plan', (getplan, setplan))
-
-		myspec = self.registerUISpec('Corrector', (plan, acquirecontainer, prefs))
-		myspec += nodespec
-		return myspec
+#		argspec = (
+#			self.registerUIData('clip limits', 'array', default=()),
+#			self.registerUIData('bad rows', 'array', default=()),
+#			self.registerUIData('bad cols', 'array', default=())
+#		)
+#		setplan = self.registerUIMethod(self.uiSetPlanParams, 'Set Plan Params',
+#																																			argspec)
+#
+#		ret = self.registerUIData('Current Plan', 'struct')
+#		getplan = self.registerUIMethod(self.uiGetPlanParams, 'Get Plan Params',
+#																													(), returnspec=ret)
+#		plan = self.registerUISpec('Plan', (getplan, setplan))
+#
+#		myspec = self.registerUISpec('Corrector', (plan, acquirecontainer, prefs))
+#		myspec += nodespec
+#		return myspec
 
 	def uiSetPlanParams(self, cliplimits, badrows, badcols):
 		camconfig = self.cam.config()
@@ -117,15 +114,13 @@ class Corrector(node.Node):
 	def uiAcquireDark(self):
 		imagedata = self.acquireReference(dark=True)
 		print 'Dark Stats: %s' % (self.stats(imagedata),)
-		mrcstr = Mrc.numeric_to_mrcstr(imagedata)
-		self.acquireimage.set(xmlbinlib.Binary(mrcstr))
+		self.ui_image.set(imagedata)
 		return ''
 
 	def uiAcquireBright(self):
 		imagedata = self.acquireReference(dark=False)
 		print 'Bright Stats: %s' % (self.stats(imagedata),)
-		mrcstr = Mrc.numeric_to_mrcstr(imagedata)
-		self.acquireimage.set(xmlbinlib.Binary(mrcstr))
+		self.ui_image.set(imagedata)
 		return ''
 
 	def uiAcquireCorrected(self):
@@ -134,8 +129,7 @@ class Corrector(node.Node):
 		self.cam.state(camstate)
 		imagedata = self.acquireCorrectedArray()
 		print 'Corrected Stats: %s' % (self.stats(imagedata),)
-		mrcstr = Mrc.numeric_to_mrcstr(imagedata)
-		self.acquireimage.set(xmlbinlib.Binary(mrcstr))
+		self.ui_image.set(imagedata)
 		return ''
 
 	def newPlan(self, camstate):
@@ -157,7 +151,8 @@ class Corrector(node.Node):
 		return plandata
 
 	def storePlan(self, plandata):
-		self.publish(plandata, database=True)
+		#self.publish(plandata, database=True)
+		self.publish(plandata, database=False)
 
 	def acquireSeries(self, n, camstate):
 		series = []
@@ -182,7 +177,7 @@ class Corrector(node.Node):
 
 		self.cam.state(tempcamstate)
 
-		navg = self.navgdata.get()
+		navg = self.uiframestoaverage.get()
 
 		seriesinfo = self.acquireSeries(navg, camstate=tempcamstate)
 		series = seriesinfo['image series']
@@ -231,7 +226,8 @@ class Corrector(node.Node):
 		
 		imagedata = imageclass(self.ID(), image=numdata, camstate=newcamstate)
 		print 'publishing'
-		self.publish(imagedata, pubevent=True, database=True)
+		#self.publish(imagedata, pubevent=True, database=True)
+		self.publish(imagedata, pubevent=True, database=False)
 
 	def calc_norm(self, camstate):
 		dark = self.retrieveRef(camstate, 'dark')
@@ -265,7 +261,7 @@ class Corrector(node.Node):
 		return imagedata['image']
 
 	def acquireCorrectedImageData(self):
-		if self.fakeflag.get():
+		if self.uifakeflag.get():
 			camconfig = self.cam.config()
 			camstate = camconfig['state']
 			numimage = Mrc.mrc_to_numeric('fake.mrc')

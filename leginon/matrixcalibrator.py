@@ -8,8 +8,7 @@ import camerafuncs
 import calibrationclient
 import Numeric
 import Mrc
-import xmlrpclib
-xmlbinlib = xmlrpclib
+import uidata
 
 False=0
 True=1
@@ -56,15 +55,16 @@ class MatrixCalibrator(calibrator.Calibrator):
 
 	# calibrate needs to take a specific value
 	def calibrate(self):
-		calclient = self.parameters[self.parameter.get()]
+		uiparameter = self.uiparameter.getSelectedValue()[0]
+		calclient = self.parameters[uiparameter]
 
 		## set cam state
 
 		baselist = []
-		for i in range(self.navg.get()):
-			delta = i * self.interval.get()
-			basex = self.base.get()['x'] + delta
-			basey = self.base.get()['y'] + delta
+		for i in range(self.uinaverage.get()):
+			delta = i * self.ui_interval.get()
+			basex = self.uibase.get()['x'] + delta
+			basey = self.uibase.get()['y'] + delta
 			newbase = {'x':basex, 'y':basey}
 			baselist.append(newbase)
 
@@ -75,18 +75,16 @@ class MatrixCalibrator(calibrator.Calibrator):
 				print "axis =", axis
 				basevalue = base[axis]
 
-				print 'delta', self.delta.get()
-				newvalue = basevalue + self.delta.get()
+				print 'delta', self.uidelta.get()
+				newvalue = basevalue + self.uidelta.get()
 				print 'newvalue', newvalue
 
 				state1 = self.makeState(basevalue, axis)
 				state2 = self.makeState(newvalue, axis)
 				print 'states', state1, state2
-				shiftinfo = calclient.measureStateShift(state1, state2, 1, settle=self.settle[self.parameter.get()])
-				mrcstr = Mrc.numeric_to_mrcstr(calclient.numimage1)
-				self.image1.set(xmlbinlib.Binary(mrcstr))
-				mrcstr = Mrc.numeric_to_mrcstr(calclient.numimage2)
-				self.image2.set(xmlbinlib.Binary(mrcstr))
+				shiftinfo = calclient.measureStateShift(state1, state2, 1, settle=self.settle[uiparameter])
+				self.image1.set(calclient.numimage1)
+				self.image2.set(calclient.numimage2)
 				print 'shiftinfo', shiftinfo
 
 				rowpix = shiftinfo['pixel shift']['row']
@@ -94,8 +92,8 @@ class MatrixCalibrator(calibrator.Calibrator):
 				totalpix = abs(rowpix + 1j * colpix)
 
 				actual_states = shiftinfo['actual states']
-				actual1 = actual_states[0][self.parameter.get()][axis]
-				actual2 = actual_states[1][self.parameter.get()][axis]
+				actual1 = actual_states[0][uiparameter][axis]
+				actual2 = actual_states[1][uiparameter][axis]
 				change = actual2 - actual1
 				perpix = change / totalpix
 				print '**PERPIX', perpix
@@ -106,8 +104,8 @@ class MatrixCalibrator(calibrator.Calibrator):
 				shifts[axis]['col'] += colpixelsper
 				print 'shifts', shifts
 
-			shifts[axis]['row'] /= self.navg.get()
-			shifts[axis]['col'] /= self.navg.get()
+			shifts[axis]['row'] /= self.uinaverage.get()
+			shifts[axis]['col'] /= self.uinaverage.get()
 
 		mag = self.getMagnification()
 
@@ -116,67 +114,58 @@ class MatrixCalibrator(calibrator.Calibrator):
 		print 'MATRIX shape', matrix.shape
 		print 'MATRIX type', matrix.typecode()
 		print 'MATRIX flat', Numeric.ravel(matrix)
-		calclient.storeMatrix(mag, self.parameter.get(), matrix)
+		calclient.storeMatrix(mag, uiparameter, matrix)
 
 		print 'CALIBRATE DONE', shifts
 
 	def defineUserInterface(self):
-		nodespec = calibrator.Calibrator.defineUserInterface(self)
+		calibrator.Calibrator.defineUserInterface(self)
+		cameraconfig = self.cam.configUIData()
+		self.uinaverage = uidata.UIInteger('N Average', 1, 'rw')
+		self.uibase = uidata.UIStruct('Base', {}, 'rw')
+		parameters = self.parameters.keys()
+		if parameters:
+			parameters.sort()
+			selected = [0]
+		else:
+			selected = []
+		self.uiparameter = uidata.UISelectFromList('Parameter', parameters,
+																								selected, 'r',
+																								self.uiParameterCallback)
+		self.uidelta = uidata.UIFloat('Delta', 2e-6, 'rw')
+		self.ui_interval = uidata.UIFloat('Interval', 2e-6, 'rw')
+		validshift = {'correlation': {'min': 20.0, 'max': 512.0},
+  							   'calibration': {'min': 20.0, 'max': 512.0}}
+		self.uivalidshift = uidata.UIStruct('Valid Shift', validshift, 'rw')
 
-		camspec = self.cam.configUIData()
+		settingscontainer = uidata.UIContainer('Settings')
+		settingscontainer.addUIObjects((cameraconfig, self.uinaverage, self.uibase,
+																		self.uiparameter, self.uidelta,
+																		self.ui_interval, self.uivalidshift))
 
+		calibratemethod = uidata.UIMethod('Calibrate', self.uiCalibrate)
 
-		cspec = self.registerUIMethod(self.uiCalibrate, 'Calibrate', ())
+		self.image1 = uidata.UIImage('Image 1', None, 'r')
+		self.image2 = uidata.UIImage('Image 2', None, 'r')
+		imagecontainer = uidata.UIContainer('Images')
+		imagecontainer.addUIObjects((self.image1, self.image2))
 
-		parameters = self.registerUIData('paramdata', 'array',	
-																			default=self.parameters.keys())
-		self.navg = self.registerUIData('N Average', 'float', permissions='rw',
-																																	default=1)
-
-		self.base = self.registerUIData('Base', 'struct', permissions='rw')
-		self.parameter = self.registerUIData('Parameter', 'string',
-																					choices=parameters, permissions='rw',
-																					default='stage position',
-																					callback=self.uiParameterCallback)
-		self.delta = self.registerUIData('Delta', 'float', permissions='rw',
-																														default=2e-6)
-		self.interval = self.registerUIData('Interval', 'float', permissions='rw',
-																																	default=2e-6)
-
-		argspec = (self.parameter, self.navg, self.base, self.delta, self.interval)
-		rspec = self.registerUIContainer('Parameters', argspec)
-
-		self.image1 = self.registerUIData('Image 1', 'binary', permissions='r')
-		self.image2 = self.registerUIData('Image 2', 'binary', permissions='r')
-		imagespec = self.registerUIContainer('Images', (self.image1, self.image2))
-
-		self.validshift = self.registerUIData('Valid Shift', 'struct',
-																									permissions='rw')
-		self.validshift.set(
-			{
-			'correlation': {'min': 20.0, 'max': 512.0},
-			'calibration': {'min': 20.0, 'max': 512.0}
-			}
-		)
-
-		myspec = self.registerUISpec('Matrix Calibrator', (cspec, rspec, camspec, imagespec))
-		myspec += nodespec
-		return nodespec
+		container = uidata.UIMediumContainer('Matrix Calibrator')
+		container.addUIObjects((settingscontainer, calibratemethod, imagecontainer))
+		self.uiserver.addUIObject(container)
 
 	def uiCalibrate(self):
 		self.calibrate()
 		return ''
 
-	def uiParameterCallback(self, value=None):
-		if value is not None:
-			self.parametervalue = value
-			try:
-				curstate = self.currentState()
-				self.base.set(curstate[self.parametervalue])
-			except:
-				self.base.set({'x': 0.0, 'y':0.0})
-		return self.parametervalue
+	def uiParameterCallback(self, value):
+		try:
+			curstate = self.currentState()
+			self.uibase.set(curstate[value])
+		except:
+			self.uibase.set({'x': 0.0, 'y':0.0})
+		return value
 
 	def makeState(self, value, axis):
-		return {self.parameter.get(): {axis: value}}
+		return {self.uiparameter.getSelectedValue()[0]: {axis: value}}
 

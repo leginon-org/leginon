@@ -56,13 +56,17 @@ class UIServer(XMLRPCServer, uidata.UIContainer):
 		self.server.register_function(self.commandFromClient, 'COMMAND')
 		self.server.register_function(self.addServer, 'ADDSERVER')
 
+	def getUIObjectFromList(self, namelist):
+		namelist[0] = self.name
+		return uidata.UIContainer.getUIObjectFromList(self, namelist)
+
 	def setFromClient(self, namelist, value):
 		'''this is how a UI client sets a data value'''
 		uidataobject = self.getUIObjectFromList(namelist)
 		if not isinstance(uidataobject, uidata.UIData):
 			raise TypeError('name list does not resolve to UIData instance')
 		# except from this client?
-		uidataobject.set(value)
+		uidataobject._set(value)
 		return ''
 
 	def commandFromClient(self, namelist, args):
@@ -85,20 +89,34 @@ class UIServer(XMLRPCServer, uidata.UIContainer):
 		import uiclient
 		addclient = uiclient.XMLRPCClient(hostname, port)
 		self.uiclients.append(addclient)
-		for uiobject in self.uiobjectdict.values():
-			self.addUIObjects(addclient, uiobject, (uiobject.name,))
+		#for uiobject in self.uiobjectdict.values():
+		for uiobject in self.uiobjectlist:
+			self.addAllUIObjects(addclient, uiobject, (uiobject.name,))
 		return ''
 
-	def addUIObjects(self, client, uiobject, namelist):
-		client.execute('ADD', (namelist, uiobject.typelist, uiobject.value))
+	def addAllUIObjects(self, client, uiobject, namelist):
+		if hasattr(uiobject, 'value'):
+			value = uiobject.value
+		else:
+			value = ''
+		if hasattr(uiobject, 'read'):
+			read = uiobject.read
+		else:
+			read = False
+		if hasattr(uiobject, 'write'):
+			write = uiobject.write
+		else:
+			write = False
+		client.execute('ADD', (namelist, uiobject.typelist, value, read, write))
 		if isinstance(uiobject, uidata.UIContainer):
-			for childuiobject in uiobject.uiobjectdict.values():
-				self.addUIObjects(client, childuiobject, namelist+(childuiobject.name,))
+			#for childuiobject in uiobject.uiobjectdict.values():
+			for childuiobject in uiobject.uiobjectlist:
+				self.addAllUIObjects(client, childuiobject, namelist+(childuiobject.name,))
 
-	def addUIObjectCallback(self, namelist, typelist, value):
+	def addUIObjectCallback(self, namelist, typelist, value, read, write):
 		for client in self.uiclients:
 			# delete if fail?
-			client.execute('ADD', (namelist, typelist, value))
+			client.execute('ADD', (namelist, typelist, value, read, write))
 
 	def setUIObjectCallback(self, namelist, value):
 		for client in self.uiclients:

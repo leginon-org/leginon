@@ -2,6 +2,7 @@ import acquisition
 import node, data
 import calibrationclient
 import camerafuncs
+import uidata
 
 class Focuser(acquisition.Acquisition):
 	def __init__(self, id, sesison, nodelocations, **kwargs):
@@ -61,10 +62,10 @@ class Focuser(acquisition.Acquisition):
 
 		if validdefocus:
 			print 'Defocus correction'
-			focustype = self.focustype.get()
 			try:
+				focustype = self.focustype.getSelectedValue()[0]
 				focusmethod = self.focus_methods[focustype]
-			except KeyError:
+			except (IndexError, KeyError):
 				print 'no method selected for correcting defocus'
 			else:
 				focusmethod(defoc)
@@ -99,22 +100,23 @@ class Focuser(acquisition.Acquisition):
 
 	def uiTest(self):
 		self.acquire(None)
-		return ''
 
 	def defineUserInterface(self):
-		acqui = acquisition.Acquisition.defineUserInterface(self)
-
-		self.btilt = self.registerUIData('Beam Tilt', 'float', default=0.02, permissions='rw')
-		focustypes = self.registerUIData('focustypes', 'array', default=self.focus_methods.keys())
-		self.focustype = self.registerUIData('Focus Correction Type', 'string', choices=focustypes, permissions='rw', default='None')
-		self.stigcorrection = self.registerUIData('Stigmator Correction', 'boolean', default=0,  permissions='rw')
-		self.publishimages = self.registerUIData('Publish Images', 'boolean', default=1, permissions='rw')
-
-		test = self.registerUIMethod(self.uiTest, 'Test Autofocus', ())
-
-		prefs = self.registerUIContainer('Focuser Setup', (self.btilt, self.focustype, self.stigcorrection, self.publishimages, test))
-
-		myui = self.registerUISpec('Focuser', (prefs,))
-		myui += acqui
-		return myui
+		acquisition.Acquisition.defineUserInterface(self)
+		self.btilt = uidata.UIFloat('Beam Tilt', 0.02, 'rw')
+		focustypes = self.focus_methods.keys()
+		if focustypes:
+			focustypes.sort()
+			selected = [0]
+		else:
+			selected = []
+		self.focustype = uidata.UISelectFromList('Focus Correction Type',
+																							focustypes, selected, 'r')
+		self.stigcorrection = uidata.UIBoolean('Stigmator Correction', False, 'rw')
+		self.publishimages = uidata.UIBoolean('Publish Images', True, 'rw')
+		testmethod = uidata.UIMethod('Test Autofocus', self.uiTest)
+		container = uidata.UIMediumContainer('Focuser')
+		container.addUIObjects((self.btilt, self.focustype, self.stigcorrection,
+														self.publishimages, testmethod))
+		self.uiserver.addUIObject(container)
 

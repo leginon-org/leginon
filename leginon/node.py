@@ -5,10 +5,11 @@ import event
 import datatransport
 import datahandler
 import dbdatakeeper
-import interface
 import sys
 import copy
 import time
+import uiserver
+import uidata
 
 # False is not defined in early python 2.2
 False = 0
@@ -81,7 +82,8 @@ class Node(leginonobject.LeginonObject):
 																	self.datahandler, tcpport)
 		self.clientclass = clientclass
 
-		self.uiserver = interface.Server(self.ID(), xmlrpcport)
+		#self.uiserver = uiserver.UIServer('UI', xmlrpcport)
+		self.uiserver = uiserver.UIServer(str(self.id[-1]), xmlrpcport)
 
 		self.confirmwaitlist = {}
 
@@ -108,7 +110,7 @@ class Node(leginonobject.LeginonObject):
 		self.die_event = threading.Event()
 
 	def releaseLauncher(self):
-		## release the launch lock
+		# release the launch lock
 		if self.launchlock is not None:
 			print self, 'releasing launchlock'
 			self.launchlock.release()
@@ -168,8 +170,8 @@ class Node(leginonobject.LeginonObject):
 
 	def logEvent(self, ievent, status):
 		eventlog = event.EventLog(self.ID(), eventclass=ievent.__class__.__name__, status=status)
-		## pubevent is False by default, but just in case that changes
-		## we don't want infinite recursion here
+		# pubevent is False by default, but just in case that changes
+		# we don't want infinite recursion here
 		self.publish(eventlog, database=True, pubevent=False)
 
 	def logEventReceived(self, ievent):
@@ -203,14 +205,10 @@ class Node(leginonobject.LeginonObject):
 
 	def confirmEvent(self, ievent):
 		'''Confirm that an event has been received and/or handled.'''
-		#self.outputEvent(event.ConfirmationEvent(self.ID(), ievent.id))
 		self.outputEvent(event.ConfirmationEvent(self.ID(), eventid=ievent['id']))
 
 	def waitEvent(self, ievent):
 		'''Block for confirmation of a generated event.'''
-		#if not ievent.id in self.confirmwaitlist:
-		#	self.confirmwaitlist[ievent.id] = threading.Event()
-		#self.confirmwaitlist[ievent.id].wait()
 		if not ievent['id'] in self.confirmwaitlist:
 			self.confirmwaitlist[ievent['id']] = threading.Event()
 		self.confirmwaitlist[ievent['id']].wait()
@@ -393,36 +391,8 @@ class Node(leginonobject.LeginonObject):
 		newprompt = '%s%s' % (str(self.id), prompt)
 		return raw_input(newprompt)
 
-	# UI methods
-
-	def registerUIMethod(self, func, name, argspec, returnspec=None):
-		'''Register a method with the UI server by function specifying argument and return value specifications.'''
-		return self.uiserver.registerMethod(func, name, argspec, returnspec)
-
-	def registerUIData(self, name, xmlrpctype, permissions=None,
-					choices=None, default=None, pyname=None, callback=None, subtype=None):
-		'''Register a data value with the UI server.'''
-		return self.uiserver.registerData(name, xmlrpctype, permissions,
-																		choices, default, pyname, callback, subtype)
-
-	def registerUIContainer(self, name=None, content=()):
-		'''Register a container for data and methods with the UI server.'''
-		return self.uiserver.registerContainer(name, content)
-
-	def registerUISpec(self, name=None, content=()):
-		'''Register the entire UI specification with the UI server.'''
-		return self.uiserver.registerSpec(name, content)
-
-	def uiDataDict(self, value=None):
-		'''Generate a dictionary of currently published data and attributes in a XML-RPC compatible format.'''
-		if value is None:
-			try:
-				return self.key2str(self.datahandler.datadict)
-			except AttributeError:
-				return {}
-
 	def key2str(self, d):
-		'''Helper function for uiDataDict. Makes keys and values into strings. See uiDataDict.'''
+		'''Makes keys and values into strings.'''
 		if type(d) is dict:
 			newdict = {}
 			for k in d:
@@ -437,42 +407,18 @@ class Node(leginonobject.LeginonObject):
 		return ''
 
 	def defineUserInterface(self):
-		'''
-		This is where you register methods that can be accessed
-		by a user interface through XML-RPC
-		To register a method use:
-		   self.registerUIFunction(self.meth, argspec [,alias])
-		argspec should be a sequence object like this example:
-		(
-		  {'name':'mynum', 'alias':MyNum','type':'integer', 'default':1},
-		  {'name':'mystr', 'alias':'MyStr', 'type':'string', 'default':'hello'},
-		  {'name':'selection', 'alias':'Selection', 'type':('red','green','blue')}
-		)
-		- name is currently ignored and therefore argspec must be
-		  properly ordered for positional arguments
-		- arg types are found in interface.xmlrpctypes and this 
-		  can also be set to sequence for an enumeration type.
-		- alias is the alias that should be used by the UI
-		  (defaults to __name__)
-		'''
+		idarray = uidata.UIArray('ID', self.id, 'r')
+		class_string = uidata.UIString('Class', self.__class__.__name__, 'r')
+		locationstruct = uidata.UIStruct('Location', self.location(), 'r')
+#		self.uidatastruct = uidata.UIStruct('Data',
+#						self.datahandlers[self.datahandler].datadict, 'rw')
+		exitmethod = uidata.UIMethod('Exit', self.uiExit)
 
-		exitspec = self.registerUIMethod(self.uiExit, 'Exit', ())
-
-		idspec = self.registerUIData('ID', 'array', 'r', default=self.id)
-		classspec = self.registerUIData('Class', 'string', 'r',
-																		default=self.__class__.__name__)
-		locationspec = self.registerUIData('Location', 'struct', 'r',
-																	default=self.location())
-
-		datatree = self.registerUIData('Data', 'struct', permissions='r', callback=self.uiDataDict)
-
-		cont = self.registerUIContainer('Node', (exitspec, idspec, classspec, locationspec, datatree))
-
-		myspec = self.registerUISpec('Node',
-								(cont,))
-
-		return myspec
-
+		container = uidata.UIMediumContainer('Node')
+		container.addUIObjects((idarray, class_string, locationstruct,
+#														self.uidatastruct, exitmethod))
+														exitmethod))
+		self.uiserver.addUIObject(container)
 
 class ResearchError(Exception):
 	pass

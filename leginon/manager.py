@@ -9,6 +9,7 @@ import launcher
 import copy
 import time
 import dbdatakeeper
+import uidata
 
 class DataHandler(node.DataHandler):
 	def insert(self, idata):
@@ -26,6 +27,8 @@ class Manager(node.Node):
 
 		node.Node.__init__(self, id, session, nodelocations={}, datahandler=DataHandler, tcpport=tcpport, xmlrpcport=xmlrpcport, **kwargs)
 
+		self.uiclientcontainers = {}
+
 		self.checkPythonVersion()
 		self.uiserver.server.register_function(self.uiGetNodeLocations, 'getNodeLocations')
 
@@ -40,7 +43,7 @@ class Manager(node.Node):
 
 		self.app = application.Application(self.ID(), self)
 
-		## this makes every received event get distributed
+		# this makes every received event get distributed
 		self.addEventInput(event.NodeAvailableEvent, self.registerNode)
 		self.addEventInput(event.NodeUnavailableEvent, self.unregisterNode)
 		self.addEventInput(event.NodeClassesPublishEvent,
@@ -52,6 +55,7 @@ class Manager(node.Node):
 		self.addEventInput(event.ListPublishEvent, self.registerData)
 		self.addEventInput(event.Event, self.distributeEvents)
 
+		self.launcherdict = {}
 		self.defineUserInterface()
 		#self.start()
 
@@ -101,8 +105,6 @@ class Manager(node.Node):
 
 	def confirmEvent(self, ievent):
 		'''Override node.Node.confirmEvent to distribute a confirmation event to the node waiting for confirmation of the event.'''
-#		self.outputEvent(event.ConfirmationEvent(self.ID(), ievent.id),
-#											0, ievent.id[:-1])
 		self.outputEvent(event.ConfirmationEvent(self.ID(), eventid=ievent['id']),
 											0, ievent['id'][:-1])
 
@@ -163,8 +165,6 @@ class Manager(node.Node):
 								for to_node in self.handler.clients:
 									if to_node not in do:
 										do.append(to_node)
-		#if ievent.confirm:
-		#	self.confirmmap[ievent.id] = do
 		if ievent['confirm']:
 			self.confirmmap[ievent['id']] = do
 		for to_node in do:
@@ -181,35 +181,31 @@ class Manager(node.Node):
 
 	# launcher related methods
 
-#	def newLauncher(self, newid):
-#		'''Create a launcher node running in a thread within the manager's process.'''
-#		t = threading.Thread(name='%s launcher thread' % newid[-1],
-#								target=launcher.Launcher, args=(newid, self.nodelocations))
-#		t.start()
-#		launcher.Launcher(newid, self.nodelocations)
-
 	def addLauncher(self, nodeid, location):
 		'''Register a launcher with the UI, aliases the launcher to the node ID, location and launchable node classes.'''
 		name = nodeid[-1]
-		#print self.clients[nodeid]
-		self.uilauncherdict[name] = {'id':nodeid, 'location':location, 'node classes id':None}
+		self.launcherdict[name] = {'ID': nodeid, 'location': location}
 
 	def delLauncher(self, nodeid):
 		'''Unregister a launcher from the UI.'''
 		name = nodeid[-1]
 		try:
-			del self.uilauncherdict[name]
+			del self.launcherdict[name]
+			# could check and keep selected if possible
+			launchers = self.launcherdict.keys()
+			if launchers:
+				launchers.sort()
+				selected = [0]
+			else:
+				selected = []
+			self.uilauncherselect.set(launchers, selected)
 		except:
 			pass
-		self.updateLauncherDictDataDict()
 
-	def getLauncherNodeClasses(self, launchername):
+	def getLauncherNodeClasses(self, dataid, location, launcherid):
 		'''Retrieve a list of launchable classes from a launcher by alias launchername.'''
-		dataid = self.uilauncherdict[launchername]['node classes id']
-		loc = self.uilauncherdict[launchername]['location']
-		launcherid = self.uilauncherdict[launchername]['id']
 		try:
-			nodeclassesdata = self.researchByLocation(loc, dataid)
+			nodeclassesdata = self.researchByLocation(location, dataid)
 		except IOError:
 			self.printerror('cannot find launcher %s, unregistering' % launcherid)
 			# group into another function
@@ -219,24 +215,20 @@ class Manager(node.Node):
 		nodeclasses = nodeclassesdata['nodeclasses']
 		return nodeclasses
 
-	def handleNodeClassesPublish(self, event):
+	def handleNodeClassesPublish(self, ievent):
 		'''Event handler for retrieving launchable classes.'''
-		#launchername = event.id[-2]
-		launchername = event['id'][-2]
-		dataid = event['dataid']
-		self.uilauncherdict[launchername]['node classes id'] = dataid
-		self.updateLauncherDictDataDict(launchername)
-
-	def updateLauncherDictDataDict(self, launchername=None):
-		'''Refresh the UI launcher information.'''
-		if launchername is not None:
-			newdict = self.uilauncherdictdatadict
-			newdict[launchername] = self.getLauncherNodeClasses(launchername)
-		else:
-			newdict = {}
-			for name,value in self.uilauncherdict.items():
-				newdict[name] = self.getLauncherNodeClasses(name)
-		self.uilauncherdictdatadict = newdict
+		launchername = ievent['id'][-2]
+		dataid = ievent['dataid']
+		try:
+			self.launcherdict[launchername]['classes'] = self.getLauncherNodeClasses(
+																	dataid,
+																	self.launcherdict[launchername]['location'],
+																	self.launcherdict[launchername]['ID'])
+			launchers = self.launcherdict.keys()
+			launchers.sort()
+			self.uilauncherselect.set(launchers, [0])
+		except:
+			pass
 
 	# node related methods
 
@@ -264,15 +256,29 @@ class Manager(node.Node):
 		self.datahandler.insert(nodelocationdata)
 
 		self.confirmEvent(readyevent)
+		self.uiUpdateNodeInfo()
+		clientcontainer = uidata.UIClientContainer(str(nodeid[-1]),
+														(nodelocation['hostname'], nodelocation['UI port']))
+		try:
+			self.uiserver.addUIObject(clientcontainer)
+			self.uiclientcontainers[nodeid] = clientcontainer
+		except:
+			self.printerror('cannot add client container for node')
 
 	def unregisterNode(self, unavailable_event):
 		'''Event handler for unregistering the node from the manager. Removes all information, event mappings and the client related to the node.'''
-		#nodeid = unavailable_event.id[:-1]
 		nodeid = unavailable_event['id'][:-1]
 		self.removeNode(nodeid)
 
 		# also remove from launcher registry
 		self.delLauncher(nodeid)
+		self.uiUpdateNodeInfo()
+		try:
+			name = self.uiclientcontainers[nodeid].name
+			del self.uiclientcontainers[nodeid]
+			self.uiserver.deleteUIObject(name)
+		except:
+			self.printerror('cannot delete client container for node')
 
 	def handleNodeStatus(self, ievent):
 		nodeid = ievent['id'][:-1]
@@ -305,7 +311,7 @@ class Manager(node.Node):
 			self.delClient(nodeid)
 			self.printerror('node ' + str(nodeid) + ' unregistered')
 		else:
-			self.printerror('Manager: node ' + nodeid + ' does not exist')
+			self.printerror('Manager: node ' + str(nodeid) + ' does not exist')
 
 	def removeNodeDistmaps(self, nodeid):
 		'''Remove event mappings related to the node with the specifed node ID.'''
@@ -406,11 +412,9 @@ class Manager(node.Node):
 		'''Event handler. Calls publishDataLocation. Operates on singular data IDs or lists of data IDs.'''
 		if isinstance(publishevent, event.PublishEvent):
 			id = publishevent['dataid']
-			#self.publishDataLocation(id, publishevent.id[:-1])
 			self.publishDataLocation(id, publishevent['id'][:-1])
 		elif isinstance(publishevent, event.ListPublishEvent):
 			for id in publishevent['idlist']:
-				#self.publishDataLocation(id, publishevent.id[:-1])
 				self.publishDataLocation(id, publishevent['id'][:-1])
 		else:
 			raise TypeError
@@ -466,77 +470,83 @@ class Manager(node.Node):
 
 	# UI methods
 
-#	def uiNewLauncher(self, name):
-#		'''UI helper calling newLauncher. See newLauncher.'''
-#		self.newLauncher(self.id + (name,))
-#		return ''
+	def uiUpdateNodeInfo(self):
+		'''Updates nodes lists and info in UI.'''
+		nodes = self.clients.keys()
+		if nodes:
+			nodes = map(str, nodes)
+			selected = [0]
+		else:
+			selected = []
+		self.uikillselect.set(nodes, selected)
+		self.uifromnodeselect.set(nodes, selected)
+		self.uitonodeselect.set(nodes, selected)
 
-	def uiGetLauncherDict(self):
-		'''UI helper updated and retrieves launcher information.'''
-		self.updateLauncherDictDataDict()
-		return self.uilauncherdictdatadict
+		self.uinodeinfo.set(self.uiNodeDict())
 
 	def uiNodeDict(self):
-		'''Returns a dict describing all currently managed nodes aliasing a readablenode name to the node's location.'''
+		nodes = self.clients.keys()
 		nodeinfo = {}
 		nodelist = self.uiNodeList()
 		for nodeidstr in nodelist:
 			nodeid = eval(nodeidstr)
 			nodelocationdata = self.datahandler.query(nodeid)
 			if nodelocationdata is not None:
-				nodeloc = nodelocationdata['location']
-				nodeinfo[nodeidstr] = nodeloc
+				nodelocation = nodelocationdata['location']
+				nodeinfo[str(nodeid)] = nodelocation
 		return nodeinfo
 
-	def uiAddNode(self, hostname, port):
+	def uiAddNode(self):
 		'''UI helper calling addNode. See addNode.'''
+		hostname = self.uiaddnodehostname.get()
+		port = self.uiaddnodeport.get()
 		self.addNode(hostname, port)
-		#self.printerror('cannot connect to specified node')
-		return ''
 
-	def uiLaunchNode(self, name, launchclass, args, newproc=0):
-		'''UI to the launchNode method, simplifies the call for a user by using a string to represent the launcher ID, node class, and args.'''
-
-		if len(launchclass) != 2:
-			raise ValueError('launchclass must contain launcher and class')
-		launcher_str, nodeclass = launchclass
-
-		self.printerror('launching \'%s\' on \'%s\' (class %s)'
-										% (name, launcher_str, nodeclass))
-		launcher_id = self.uilauncherdict[launcher_str]['id']
-
-		args = '(%s)' % args
+	def uiLaunch(self):
+		launchername = self.uilauncherselect.getSelectedValue()[0]
+		launcherid = self.launcherdict[launchername]['ID']
+		process = self.uilaunchflag.get()
+		nodeclass = self.uiclassselect.getSelectedValue()[0]
+		name = self.uilaunchname.get()
+		args = '(%s)' % self.uilaunchargs.get()
 		try:
 			args = eval(args)
 		except:
-			self.printerror('problem evaluating args for launch')
+			self.printerror('error evaluating args during UI launch')
 			return
+		self.launchNode(launcherid, process, nodeclass, name, args)
 
-		self.launchNode(launcher_id, newproc, nodeclass, name, args)
-		return ''
+	def uiKillNode(self):
+		'''UI helper calling killNode, using str node aliases. See killNode.'''
+		value = self.uikillselect.getSelectedValue()
+		if value:
+			self.killNode(eval(value[0]))
 
-	def uiKillNode(self, nodeidstr):
-		'''UI helper calling killNode, using user readable node aliases. See killNode.'''
-		self.killNode(eval(nodeidstr))
-		return ''
-
-	def uiAddDistmap(self, eventclass_str, fromnodeidstr, tonodeidstr):
-		'''a UI helper for addEventDistmap. Uses strings to represent event class and node IDs.'''
+	def uiAddDistmap(self):
+		'''UI function using addEventDistmap. Strings represent event classes and node IDs.'''
+		try:
+			eventclass_str = self.uieventselect.getSelectedValue()[0]
+			fromnodeidstr = self.uifromnodeselect.getSelectedValue()[0]
+			tonodeidstr = self.uitonodeselect.getSelectedValue()[0]
+		except IndexError:
+			return
 		self.printerror('binding event %s from %s to %s'
 										% (eventclass_str, fromnodeidstr, tonodeidstr))
 		eventclass = self.uieventclasses[eventclass_str]
 		self.addEventDistmap(eventclass, eval(fromnodeidstr), eval(tonodeidstr))
 
-		## just to make xmlrpc happy
-		return ''
-
-	def uiDelDistmap(self, eventclassstr, fromnodeidstr, tonodeidstr):
-		'''a UI helper for delEventDistmap Uses strings to represent event class and node IDs.'''
+	def uiDelDistmap(self):
+		'''UI function using delEventDistmap. Strings represent event classes and node IDs.'''
+		try:
+			eventclass_str = self.uieventselect.getSelectedValue()[0]
+			fromnodeidstr = self.uifromnodeselect.getSelectedValue()[0]
+			tonodeidstr = self.uitonodeselect.getSelectedValue()[0]
+		except IndexError:
+			return
 		self.printerror('unbinding event %s from %s to %s'
-										% (eventclassstr, fromnodeidstr, tonodeidstr))
-		eventclass = self.uieventclasses[eventclassstr]
+										% (eventclass_str, fromnodeidstr, tonodeidstr))
+		eventclass = self.uieventclasses[eventclass_str]
 		self.delEventDistmap(eventclass, eval(fromnodeidstr), eval(tonodeidstr))
-		return ''
 
 	def	uiGetNodeLocations(self):
 		'''UI helper for mapping a node alias to the node's location.'''
@@ -544,105 +554,101 @@ class Manager(node.Node):
 		nodelocations[str(self.id)] = self.location()
 		return nodelocations
 
-	def uiSaveApp(self, filename):
+	def uiSaveApp(self):
 		'''UI helper for saveApp. See saveApp.'''
+		filename = self.uiapplicationfilename.get()
 		self.saveApp(filename)
-		return ''
 
-	def uiLoadApp(self, filename):
+	def uiLoadApp(self):
 		'''UI helper for loadApp. See loadApp.'''
+		filename = self.uiapplicationfilename.get()
 		self.loadApp(filename)
-		return ''
 
 	def uiLaunchApp(self):
 		'''UI helper for launchApp. See launchApp.'''
 		self.launchApp()
-		return ''
 
 	def uiKillApp(self):
 		'''UI helper for killApp. See killApp.'''
 		self.killApp()
-		return ''
 
-	def uiNodeList(self):
-		'''UI callback function returning list of user readable node aliases.'''
-		nodelist = []
-		for newid in self.clients:
-			nodelist.append(str(newid))
-		return nodelist
-
-#	def uiNodeIDMapping(self):
-#		'''UI callback function returning a dictionary mapping user readable node aliases to node IDs.'''
-#		nodedict = {}
-#		for newid in self.clients:
-#			nodedict[str(newid)] = newid
-#		return nodedict
+	def uiLauncherSelectCallback(self, value):
+		try:
+			values = self.uilauncherselect.getSelectedValue(value)
+			launchername = values[0]
+			classes = list(self.launcherdict[launchername]['classes'])
+			if classes:
+				classes.sort()
+				selected = [0]
+			else:
+				selected = []
+			self.uiclassselect.set(classes, selected)
+		except:
+			self.uiclassselect.set([], [])
+		return value
 
 	def defineUserInterface(self):
 		'''See node.Node.defineUserInterface.'''
-		nodespec = node.Node.defineUserInterface(self)
+		node.Node.defineUserInterface(self)
 
-		# this is data for ui to read, but not visible
-		nodelistdata = self.registerUIData('nodelist', 'array', 'r', callback=self.uiNodeList)
+		self.uilaunchname = uidata.UIString('Name', '', 'rw')
+		self.uiclassselect = uidata.UISelectFromList('Node Class', [], [], 'r')
+		self.uilauncherselect = uidata.UISelectFromList('Launcher', [], [], 'r',
+																									self.uiLauncherSelectCallback)
+		self.uilaunchargs = uidata.UIString('Arguments', '()', 'rw')
+		self.uilaunchflag = uidata.UIBoolean('Process', False, 'rw')
+		launchmethod = uidata.UIMethod('Launch', self.uiLaunch)
+		launchobjects = (self.uilaunchname, self.uilauncherselect,
+											self.uiclassselect, self.uilaunchargs,
+											self.uilaunchflag, launchmethod)
+		launchcontainer = uidata.UIMediumContainer('Launch')
+		launchcontainer.addUIObjects(launchobjects)
 
-		# launch node from tree of launchers
-		self.uilauncherdict = {}
-		self.uilauncherdictdatadict = {}
-		self.uilauncherdictdata = self.registerUIData('launcherdict', 'struct', 'r', callback=self.uiGetLauncherDict)
+		self.uinodeinfo = uidata.UIStruct('Node Info', {}, 'r')
+		infoobjects = (self.uinodeinfo,)
+		self.uiaddnodehostname = uidata.UIString('Hostname', '', 'rw')
+		self.uiaddnodeport = uidata.UIInteger('TCP Port', 55555, 'rw')
+		addmethod = uidata.UIMethod('Add', self.uiAddNode)
+		addobjects = (self.uiaddnodehostname, self.uiaddnodeport, addmethod)
+		self.uikillselect = uidata.UISelectFromList('Kill Node', [], [], 'r')
+		killmethod = uidata.UIMethod('Kill', self.uiKillNode)
+		killobjects = (self.uikillselect, killmethod)
+		nodemanagementcontainer = uidata.UIMediumContainer('Node Management')
+		nodemanagementcontainer.addUIObjects(infoobjects + addobjects + killobjects)
 
-		argspec = (self.registerUIData('Name', 'string'),
-								self.registerUIData('Launcher and Class', 'array',
-												choices=self.uilauncherdictdata),
-								self.registerUIData('Args', 'string', default=''),
-								self.registerUIData('New Process', 'boolean', default=False))
-		launchspec = self.registerUIMethod(self.uiLaunchNode, 'Launch', argspec)
+		self.uiapplicationfilename = uidata.UIString('Filename', '', 'rw')
+		applicationsavemethod = uidata.UIMethod('Save', self.uiSaveApp)
+		applicationloadmethod = uidata.UIMethod('Load', self.uiLoadApp)
+		applicationlaunchmethod = uidata.UIMethod('Launch', self.uiLaunchApp)
+		applicationkillmethod = uidata.UIMethod('Kill', self.uiKillApp)
+		applicationobjects = (self.uiapplicationfilename, applicationsavemethod,
+													applicationloadmethod, applicationlaunchmethod,
+													applicationkillmethod)
+		applicationcontainer = uidata.UIMediumContainer('Application')
+		applicationcontainer.addUIObjects(applicationobjects)
 
-		# list active nodes for killing
-		argspec = (self.registerUIData('Node', 'string',
-										choices=nodelistdata),)
-		killspec = self.registerUIMethod(self.uiKillNode, 'Kill', argspec)
-
-		# bind event from one node to another node
+		self.uifromnodeselect = uidata.UISelectFromList('From Node', [], [], 'r')
 		self.uieventclasses = event.eventClasses()
-		eventclass_list = self.uieventclasses.keys()
-		eventclass_list.sort()
-		self.uieventclasslistdata = self.registerUIData('eventclasslist', 'array',
-																		'r', default=eventclass_list)
-		argspec = (self.registerUIData('Event Class', 'string',
-											choices=self.uieventclasslistdata),
-								self.registerUIData('From Node', 'string',
-											choices=nodelistdata),
-								self.registerUIData('To Node', 'string',
-											choices=nodelistdata))
-		bindspec = self.registerUIMethod(self.uiAddDistmap, 'Bind', argspec)
-		unbindspec = self.registerUIMethod(self.uiDelDistmap, 'Unbind', argspec)
+		eventclasses = self.uieventclasses.keys()
+		eventclasses.sort()
+		if eventclasses:
+			selected = [0]
+		else:
+			selected = []
+		self.uieventselect = uidata.UISelectFromList('Event', eventclasses,
+																									selected, 'r')
+		self.uitonodeselect = uidata.UISelectFromList('To Node', [], [], 'r')
+		bindmethod = uidata.UIMethod('Bind', self.uiAddDistmap)
+		unbindmethod = uidata.UIMethod('Unbind', self.uiDelDistmap)
+		eventobjects = (self.uifromnodeselect, self.uieventselect,
+										self.uitonodeselect, bindmethod, unbindmethod)
+		eventcontainer = uidata.UIMediumContainer('Event Bindings')
+		eventcontainer.addUIObjects(eventobjects)
 
-		# save/load/killing applications
-		argspec = (self.registerUIData('Filename', 'string'),)
-		saveapp = self.registerUIMethod(self.uiSaveApp, 'Save', argspec)
-		loadapp = self.registerUIMethod(self.uiLoadApp, 'Load', argspec)
-		launchapp = self.registerUIMethod(self.uiLaunchApp, 'Launch', ())
-		killapp = self.registerUIMethod(self.uiKillApp, 'Kill', ())
-		bindingspec = self.registerUIContainer('Bindings', (bindspec, unbindspec))
-		appspec = self.registerUIContainer('Application',
-									(saveapp, loadapp, launchapp, killapp))
-
-		# creating a launcher
-#		argspec = (self.registerUIData('ID', 'string'),)
-#		newlauncherspec = self.registerUIMethod(self.uiNewLauncher,
-#															'New Launcher', (argspec))
-#		launcherspec = self.registerUIContainer('Launcher', (newlauncherspec,))
-
-		# managing other nodes, information on nodes, adding a node
-		self.uinodesdata = self.registerUIData('Nodes', 'struct', 'r', callback=self.uiNodeDict)
-		argspec = (self.registerUIData('Hostname', 'string'),
-								self.registerUIData('TCP Port', 'integer', default=55555))
-		addnodespec = self.registerUIMethod(self.uiAddNode, 'Add Node', (argspec))
-		nodesspec = self.registerUIContainer('Nodes',
-											(self.uinodesdata, addnodespec))
-
-		myspec = self.registerUISpec('Manager', (launchspec, killspec, bindingspec, appspec, nodesspec))
-		myspec += nodespec
+		container = uidata.UIMediumContainer('Manager')
+		container.addUIObjects((launchcontainer, nodemanagementcontainer,
+														eventcontainer, applicationcontainer))
+		self.uiserver.addUIObject(container)
 
 if __name__ == '__main__':
 	import sys

@@ -3,6 +3,7 @@
 import threading
 import node, event
 import Queue
+import uidata
 
 class Watcher(node.Node):
 	'''
@@ -28,22 +29,20 @@ class Watcher(node.Node):
 		self.addEventInput(self.watchfor, self.handleEvent)
 
 	def defineUserInterface(self):
-		nui = node.Node.defineUserInterface(self)
-		
-		self.watchtoggle = self.registerUIData('Watcher On', 'boolean', permissions = 'rw', default=1)
-		self.dataqueuetoggle = self.registerUIData('Data Queue On', 'boolean', permissions='rw', default=0)
-		procdata = self.registerUIMethod(self.uiProcessData, 'Process Data From Queue', ())
-		cleardata = self.registerUIMethod(self.uiClearQueue, 'Clear Data Queue', ())
-
-		cont = self.registerUIContainer('Watcher', (self.watchtoggle,self.dataqueuetoggle, procdata))
-
-		myspec = self.registerUISpec('Watcher', (cont,))
-		myspec += nui
-		return myspec
+		node.Node.defineUserInterface(self)
+		self.uiwatchflag = uidata.UIBoolean('Watching', True, 'rw')
+		self.uidataqueueflag = uidata.UIBoolean('Data Queue', False, 'rw')
+		processdatamethod = uidata.UIMethod('Process from Queue',
+																				self.uiProcessData)
+		cleardatamethod = uidata.UIMethod('Clear Queue', self.uiClearQueue)
+		container = uidata.UIMediumContainer('Watcher')
+		container.addUIObjects((self.uiwatchflag, self.uidataqueueflag,
+														processdatamethod, cleardatamethod))
+		self.uiserver.addUIObject(container)
 
 	## the event queue could be put in node.py or datahandler.DataBinder
 	def handleEvent(self, pubevent):
-		if not self.watchtoggle.get():
+		if not self.uiwatchflag.get():
 			return
 
 		## get lock if necessary
@@ -73,7 +72,7 @@ class Watcher(node.Node):
 	def getData(self, pubevent):
 		dataid = pubevent['dataid']
 		newdata = self.researchByDataID(dataid)
-		if self.dataqueuetoggle.get():
+		if self.uidataqueueflag.get():
 			self.dataqueue.put(newdata)
 		else:
 			self.processData(newdata)
@@ -95,14 +94,13 @@ class Watcher(node.Node):
 	## maybe this should start a new thread?
 	def uiProcessData(self):
 		self.processDataFromQueue(blocking=0)
-		return ''
 
 	def uiClearQueue(self):
 		while 1:
 			try:
 				self.dataqueue.get(0)
 			except Queue.Empty:
-				return ''
+				pass
 
 ## an example of subclassing Watcher
 
