@@ -9,7 +9,6 @@ class Location(object):
 		return "PID %d on %s:%d" % (self.pid, self.hostname, self.port)
 
 class NodeLocation(Location):
-        def __init__(self, hostname, port, pid, eventport, dataport):
+        def __init__(self, hostname, port, pid, dataport):
                 Location.__init__(self, hostname, port, pid)
-                self.eventport = eventport
                 self.dataport = dataport
