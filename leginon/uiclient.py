@@ -97,6 +97,8 @@ class UIApp(wxApp):
 		self.panel.SetAutoLayout(true)
 		self.panel.SetSizer(self.container.wxwidget)
 #		self.container.wxwidget.Fit(self.frame)
+		size = self.panel.GetSize()
+		self.container.wxwidget.SetDimension(0, 0, size.GetWidth(), size.GetHeight())
 		self.SetTopWindow(self.frame)
 		self.panel.Show(true)
 		self.frame.Fit()
@@ -283,7 +285,8 @@ class wxContainerWidget(ContainerWidget):
 			self.notebooksizer = wxNotebookSizer(self.notebook)
 			if hasattr(self, 'wxwidget'):
 				#self.wxwidget.Add(self.notebooksizer, 0, wxCENTER | wxALL, 5)
-				self.wxwidget.Add(self.notebooksizer, 0, wxALL, 5)
+				#self.wxwidget.Add(self.notebooksizer, 0, wxALL, 5)
+				self.wxwidget.Add(self.notebooksizer, 1, wxEXPAND | wxALL, 5)
 		return self.notebook
 
 #	def _Layout(self):
@@ -336,9 +339,9 @@ class wxNotebookContainerWidget(wxContainerWidget):
 		self.container = container
 
 	def Fit(self):
-		self.wxwidget.Layout()
 		if self.container is not None:
 			self.container.Fit()
+		#self.wxwidget.Layout()
 
 	def addWidget(self, namelist, typelist, value, read, write):
 		# needs locking to insure page number, etc.
@@ -407,9 +410,13 @@ def wxClientContainerFactory(wxcontainerwidget):
 			if hasattr(uiwidget, 'wxwidget'):
 				if not isinstance(uiwidget, wxNotebookContainerWidget):
 					#evt.container.wxwidget.Add(uiwidget.wxwidget, 0, wxCENTER | wxALL, 5)
-					evt.container.wxwidget.Add(uiwidget.wxwidget, 0, wxALL, 5)
+					#evt.container.wxwidget.Add(uiwidget.wxwidget, 0, wxALL, 5)
+					evt.container.wxwidget.Add(uiwidget.wxwidget, 0, wxEXPAND | wxALL, 5)
 #			self._Layout()
-			evt.container.Fit()
+			if hasattr(evt.container, 'wxwidget'):
+				evt.parent.Layout()
+				evt.container.wxwidget.Layout()
+			#evt.container.Fit()
 			evt.container.event.set()
 			evt.container.lock.release()
 
