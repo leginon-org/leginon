@@ -66,7 +66,8 @@ class Node(leginonobject.LeginonObject):
 		self.server = datatransport.Server(self.ID(), dh, dhargs)
 		self.clientclass = clientclass
 
-		self.uiserver = interface.Server(self.id)
+		uiserverid = self.ID()
+		self.uiserver = interface.Server(uiserverid)
 		self.uiactive = 0
 		self.defineUserInterface()
 
@@ -117,14 +118,16 @@ class Node(leginonobject.LeginonObject):
 		self.uiactive = 1
 		self.clientlist = []
 		self.clientdict = {}
-		print 'clientlist initialized'
-		#self.registerUIFunction(self.uiID, (), 'ID', returntype='array')
-		#self.registerUIFunction(self.uiClass, (), 'Class', returntype='string')
-		self.setUIData('id', self.id)
-		idspec = interface.DataSpec('id', 'array', permissions='r')
 
-		self.setUIData('class', self.__class__.__name__)
-		classspec = interface.DataSpec('class', 'string', permissions='r')
+		## this is data for ui to read, but not visible
+		self.clientlistdata = self.registerUIData('clientlist', 'array', permissions='r')
+		self.clientlistdata.set(self.clientlist)
+
+
+		idspec = self.registerUIData('id', 'array', permissions='r')
+		idspec.set(self.id)
+		classspec = self.registerUIData('class', 'string', permissions='r')
+		classspec.set(self.__class__.__name__)
 
 		c = self.registerUIContainer('Node Info', (idspec,classspec))
 		return c
@@ -142,17 +145,13 @@ class Node(leginonobject.LeginonObject):
 		return self.uiserver.registerSpec(name, content)
 
 	def setUIData(self, name, value):
-		self.uiserver.setData(name, value)
-		return self.uiserver.getData(name)
+		raise NotImplementedError('should set data directly through data object')
+		#self.uiserver.setData(name, value)
+		#return self.uiserver.getData(name)
 
 	def getUIData(self, name):
-		return self.uiserver.getData(name)
-
-	def uiID(self):
-		return self.id
-
-	def uiClass(self):
-		return self.__class__.__name__
+		raise NotImplementedError('should get data directly through data object')
+		#return self.uiserver.getData(name)
 
 	def addManager(self, loc):
 		print 'addEventClient...'
@@ -279,7 +278,7 @@ class Node(leginonobject.LeginonObject):
 			if name not in self.clientlist:
 				self.clientlist.append(name)
 			self.clientdict[name] = newid
-		self.setUIData('clientlist', self.clientlist)
+		self.clientlistdata.set(self.clientlist)
 
 	def delEventClient(self, newid):
 		if newid in self.clients:
@@ -290,7 +289,7 @@ class Node(leginonobject.LeginonObject):
 				name = newid[-1]
 				self.clientlist.remove(name)
 				del self.clientdict[name]
-		self.setUIData('clientlist', self.clientlist)
+		self.clientlistdata.set(self.clientlist)
 
 	def addEventInput(self, eventclass, func):
 		self.server.datahandler.setBinding(eventclass, func)

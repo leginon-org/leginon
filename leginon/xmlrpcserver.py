@@ -3,11 +3,12 @@
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 import threading, xmlrpclib, os, socket, inspect
 from Tkinter import *
+import leginonobject
 
 ## range defined by IANA as dynamic/private
 portrange = range(49152,65536)
 
-class xmlrpcserver(object):
+class xmlrpcserver(leginonobject.LeginonObject):
 	"""
 	A SimpleXMLRPCServer that figures out its own host and port
 	Sets self.host and self.port accordingly
@@ -17,7 +18,8 @@ class xmlrpcserver(object):
 	# is there some way to handle unmarshalable data by catching an
 	# exception and then pickling? there would have to be something
 	# client side mabye
-	def __init__(self,  object_instance=None, port=None):
+	def __init__(self,  id, object_instance=None, port=None):
+		leginonobject.LeginonObject.__init__(self, id)
 		self.object_instance = object_instance 
 		self.port = port
 		hostname = socket.gethostname()

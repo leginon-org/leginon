@@ -9,19 +9,26 @@ import inspect
 XMLRPCTYPES = ('boolean', 'integer', 'float', 'string', 'array', 'struct', 'date', 'binary')
 PERMISSIONS = (None, 'r', 'w', 'rw', 'wr')
 
-class SpecObject(object):
-	def __init__(self, spectype):
+class SpecObject(leginonobject.LeginonObject):
+	def __init__(self, id, spectype):
+		leginonobject.LeginonObject.__init__(self, id)
 		self.spectype = spectype
 
+	def dict(self):
+		d = {}
+		d['id'] = str(self.id)
+		d['spectype'] = self.spectype
+		return d
 
 class DataSpec(SpecObject):
 	"""
 	This describes a piece of data for an xml-rpc client
 	The client can use this description to define the data presentation
 	"""
-	def __init__(self, name, xmlrpctype, permissions=None, enum=None, default=None):
-		SpecObject.__init__(self, 'data')
+	def __init__(self, id, server, name, xmlrpctype, permissions=None, enum=None, default=None):
+		SpecObject.__init__(self, id, 'data')
 
+		self.server = server
 		self.name = name
 		if xmlrpctype in XMLRPCTYPES:
 			self.xmlrpctype = xmlrpctype
@@ -33,17 +40,30 @@ class DataSpec(SpecObject):
 			raise RuntimeError('invalid permissions %s' % permissions)
 		self.enum = enum
 		self.default = default
+		self.uidata = default
+
+	def get(self):
+		if callable(self.uidata):
+			return self.uidata()
+		else:
+			return self.uidata
+
+	def set(self, value):
+		if callable(self.uidata):
+			self.uidata(value)
+		else:
+			self.uidata = value
 
 	def dict(self):
-		d = {}
-		d['spectype'] = self.spectype
+		d = SpecObject.dict(self)
 		d['name'] = self.name
 		d['xmlrpctype'] = self.xmlrpctype
 		if self.permissions is not None:
 			d['permissions'] = self.permissions
 
 		if self.enum is not None:
-			d['enum'] = self.enum
+			idstr = str(self.enum.id)
+			d['enum'] = idstr
 
 		if self.default is not None:
 			d['default'] = self.default
@@ -51,16 +71,15 @@ class DataSpec(SpecObject):
 
 
 class MethodSpec(SpecObject):
-	def __init__(self, name, argspec, returnspec=None):
-		SpecObject.__init__(self, 'method')
+	def __init__(self, id, name, argspec, returnspec=None):
+		SpecObject.__init__(self, id, 'method')
 
 		self.name = name
 		self.argspec = argspec
 		self.returnspec = returnspec
 
 	def dict(self):
-		d = {}
-		d['spectype'] = self.spectype
+		d = SpecObject.dict(self)
 		d['name'] = self.name
 		d['argspec'] = []
 		for arg in self.argspec:
@@ -70,8 +89,8 @@ class MethodSpec(SpecObject):
 		return d
 
 class ContainerSpec(SpecObject):
-	def __init__(self, name=None, content=()):
-		SpecObject.__init__(self, 'container')
+	def __init__(self, id, name=None, content=()):
+		SpecObject.__init__(self, id, 'container')
 		self.name = name
 		self.content = []
 		if type(content) in (list, tuple):
@@ -87,8 +106,7 @@ class ContainerSpec(SpecObject):
 			raise RuntimeError('invalid content %s' % new_content)
 
 	def dict(self):
-		d = {}
-		d['spectype'] = self.spectype
+		d = SpecObject.dict(self)
 		if self.name is not None:
 			d['name'] = self.name
 		d['content'] = []
@@ -97,61 +115,48 @@ class ContainerSpec(SpecObject):
 		return d
 
 class Server(xmlrpcserver.xmlrpcserver):
-	def __init__(self, id=()):
-		xmlrpcserver.xmlrpcserver.__init__(self)
+	def __init__(self, id):
+		xmlrpcserver.xmlrpcserver.__init__(self, id)
 		self.uidata = {}
 		#self.server.register_function(self.uiMethods, 'methods')
 		self.server.register_function(self.uiSpec, 'spec')
 		self.server.register_function(self.uiGet, 'GET')
 		self.server.register_function(self.uiSet, 'SET')
 
-	def uiGet(self, name):
-		'''this is how a UI client gets uidata'''
-		data = self.getData(name)
-		if data is None:
+	def uiGet(self, idstr):
+		'''this is how a UI client gets a data value'''
+		data = self.uidata[idstr]
+		value = data.get()
+		if value is None:
 			return 'None'
 		else:
-			return data
+			return value
 
-	def uiSet(self, name, value):
-		'''this is how a UI client sets uidata'''
-		self.setData(name, value)
-		return self.uiGet(name)
-
-	def setData(self, name, value):
-		'''this is how something with access to this server sets uidata'''
-		if not (name in self.uidata) or not callable(self.uidata[name]):
-			self.uidata[name] = value
-		else:
-			self.uidata[name](name, value)
-
-	def getData(self, name):
-		'''this is how something with access to this server gets uidata'''
-		if callable(self.uidata[name]):
-			return self.uidata[name](name)
-		else:
-			return self.uidata[name]
+	def uiSet(self, idstr, value):
+		'''this is how a UI client sets a data value'''
+		data = self.uidata[idstr]
+		data.set(value)
+		return data.get()
 
 	def registerMethod(self, func, name, argspec, returnspec=None):
-		self.server.register_function(func, name)
-		m = MethodSpec(name, argspec, returnspec)
+		id = self.ID()
+		self.server.register_function(func, str(id))
+		m = MethodSpec(id, name, argspec, returnspec)
 		return m
 
 	def registerData(self, name, xmlrpctype, permissions=None, enum=None, default=None):
-		## permissions = None means it is not maintained on the server
-		## should probably keep track of permission in uidata also
-		if permissions is not None:
-			if default is not None:
-				self.uidata[name] = default
-		d = DataSpec(name, xmlrpctype, permissions, enum, default)
+		id = self.ID()
+		d = DataSpec(id, self, name, xmlrpctype, permissions, enum, default)
+		idstr = str(id)
+		self.uidata[idstr] = d
 		return d
 
 	def registerContainer(self, name=None, content=()):
-		c = ContainerSpec(name, content)
+		c = ContainerSpec(self.ID(), name, content)
 		return c
 
 	def registerSpec(self, name=None, content=()):
-		self.spec = ContainerSpec(name, content)
+		self.spec = ContainerSpec(self.ID(), name, content)
 		return self.spec
 
 	def uiSpec(self):

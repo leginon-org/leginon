@@ -77,7 +77,7 @@ class Manager(node.Node):
 		if name not in self.launcherlist:
 			self.launcherlist.append(name)
 		self.launcherdict[name] = nodeid
-		self.setUIData('launcherlist', self.launcherlist)
+		self.launcherlistdata.set(self.launcherlist)
 
 	def delLauncher(self, nodeid):
 		try:
@@ -85,7 +85,7 @@ class Manager(node.Node):
 			del self.launcherdict[nodeid[-1]]
 		except:
 			pass
-		self.setUIData('launcherlist', self.launcherlist)
+		self.launcherlistdata.set(self.launcherlist)
 
 	def registerNode(self, readyevent):
 		nodeid = readyevent.id[:-1]
@@ -278,36 +278,38 @@ class Manager(node.Node):
 		self.launcherlist = []
 		self.launcherdict = {}
 
-
 		## UI data to be used as enums for method args
-		self.setUIData('launcherlist', self.launcherlist)
-		self.setUIData('nodelist', self.clientlist)
-		self.setUIData('nodeclasslist', nodeclass_list)
-		self.setUIData('eventclasslist', eventclass_list)
+		self.launcherlistdata = self.registerUIData('launcherlist', 'array')
+		self.nodeclasslistdata = self.registerUIData('nodeclasslist', 'array')
+		self.eventclasslistdata = self.registerUIData('eventclasslist', 'array')
+		self.nodeclasslistdata.set(nodeclass_list)
+		self.eventclasslistdata.set(eventclass_list)
+
+
 
 		argspec = (
 		self.registerUIData('Name', 'string'),
-		self.registerUIData('Launcher', 'string', enum='launcherlist'),
-		self.registerUIData('Node Class', 'string', enum='nodeclasslist'),
+		self.registerUIData('Launcher', 'string', enum=self.launcherlistdata),
+		self.registerUIData('Node Class', 'string', enum=self.nodeclasslistdata),
 		self.registerUIData('Args', 'string', default=''),
 		self.registerUIData('New Process', 'boolean', default=False)
 		)
-		spec1 = self.registerUIMethod(self.uiLaunch, 'Launch Node', argspec)
+		spec1 = self.registerUIMethod(self.uiLaunch, 'Launch', argspec)
 
 
 		argspec = (
-		self.registerUIData('Node', 'string', enum='nodelist'),
+		self.registerUIData('Node', 'string', enum=self.clientlistdata),
 		)
 		spec2 = self.registerUIMethod(self.uiKill, 'Kill (experimental)', argspec)
 
 		argspec = (
-		self.registerUIData('Event Class', 'string', enum='eventclasslist'),
-		self.registerUIData('From Node', 'string', enum='nodelist'),
-		self.registerUIData('To Node', 'string', enum='nodelist'),
+		self.registerUIData('Event Class', 'string', enum=self.eventclasslistdata),
+		self.registerUIData('From Node', 'string', enum=self.clientlistdata),
+		self.registerUIData('To Node', 'string', enum=self.clientlistdata),
 		)
 		spec3 = self.registerUIMethod(self.uiAddDistmap, 'Bind', argspec)
 
-		nodetree = self.registerUIData('Node Tree', 'struct', permissions='rw')
+		self.nodetreedata = self.registerUIData('Node Tree', 'struct', permissions='rw')
 		self.nodeDict()
 
 
@@ -316,11 +318,11 @@ class Manager(node.Node):
 		)
 		saveapp = self.registerUIMethod(self.saveApp, 'Save', argspec)
 		loadapp = self.registerUIMethod(self.loadApp, 'Load', argspec)
-		launchapp = self.registerUIMethod(self.launchApp, 'Launch Application', ())
+		launchapp = self.registerUIMethod(self.launchApp, 'Launch', ())
 
 		app = self.registerUIContainer('Application', (saveapp, loadapp, launchapp))
 
-		self.registerUISpec('Manager', (nodespec, spec1, spec2, spec3, app, nodetree))
+		self.registerUISpec('Manager', (nodespec, spec1, spec2, spec3, app, self.nodetreedata))
 
 	def nodeDict(self):
 		"""
@@ -333,7 +335,7 @@ class Manager(node.Node):
 			if nodelocationdata is not None:
 				nodeloc = nodelocationdata.content
 				nodeinfo[nodename] = nodeloc
-		self.setUIData('Node Tree', nodeinfo)
+		self.nodetreedata.set(nodeinfo)
 		return nodeinfo
 
 	def uiLaunch(self, name, launcher_str, nodeclass_str, args, newproc=0):

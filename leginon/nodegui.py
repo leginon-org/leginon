@@ -11,6 +11,7 @@ class SpecWidget(Frame):
 	def __init__(self, parent, uiclient, spec, **kwargs):
 		Frame.__init__(self, parent, **kwargs)
 		self.spec = spec
+		self.id = self.spec['id']
 		self.uiclient = uiclient
 		self['bg'] = '#4488BB'
 		self.buttoncolor = '#7AA6C5'
@@ -137,11 +138,11 @@ class Data(SpecWidget):
 
 	def setServer(self):
 		value = self.getWidget()
-		r = self.uiclient.execute('SET', (self.name, value))
+		r = self.uiclient.execute('SET', (self.id, value))
 		self.setWidget(r)
 
 	def getServer(self):
-		r = self.uiclient.execute('GET', (self.name,))
+		r = self.uiclient.execute('GET', (self.id,))
 		self.setWidget(r)
 
 	def buildWidget(self, parent):
@@ -206,6 +207,8 @@ class ComboboxData(Data):
 		return self.combo
 
 	def updateList(self):
+		print 'COMBO', self.name
+		print 'UPDATE LIST', self.enum
 		newlist = self.uiclient.execute('GET', (self.enum,))
 		self.combo.setlist(newlist)
 
@@ -232,17 +235,17 @@ class TreeData(Data):
 		return self.treeframe
 
 	def setWidget(self, value):
+		self.dict = value
 		if self.sc is not None:
 			self.sc.frame.destroy()
-
 		self.sc = TreeWidget.ScrolledCanvas(self.treeframe, highlightthickness=0)
-		item = StructTreeItem(None, self.name, value)
+		item = StructTreeItem(None, self.name, self.dict)
 		node = TreeWidget.TreeNode(self.sc.canvas, None, item)
 		node.expand()
 		self.sc.frame.pack()
 
 	def getWidget(self):
-		raise NotImplementedError()
+		return self.dict
 
 
 class Method(SpecWidget):
@@ -281,7 +284,7 @@ class Method(SpecWidget):
 		for argwidget in self.argwidgets:
 			newvalue = argwidget.getWidget()
 			newargs.append(newvalue)
-		ret = self.uiclient.execute(self.name, newargs)
+		ret = self.uiclient.execute(self.id, newargs)
 		self.process_return(ret)
 
 	def process_return(self, returnvalue):
