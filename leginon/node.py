@@ -7,7 +7,6 @@ import datahandler
 import interface
 import sys
 import copy
-import time
 
 # False is not defined in early python 2.2
 False = 0
@@ -102,7 +101,6 @@ class Node(leginonobject.LeginonObject):
 
 	def die(self, ievent=None):
 		self.die_event.set()
-		return ''
 
 	def start(self):
 		#interact_thread = self.interact()
@@ -272,6 +270,10 @@ class Node(leginonobject.LeginonObject):
 		else:
 			return str(d)
 
+	def uiExit(self):
+		self.die()
+		return ''
+
 	def defineUserInterface(self):
 		'''
 		This is where you register methods that can be accessed
@@ -294,7 +296,7 @@ class Node(leginonobject.LeginonObject):
 
 		self.uiactive = 1
 
-		exitspec = self.registerUIMethod(self.die, 'Exit', ())
+		exitspec = self.registerUIMethod(self.uiExit, 'Exit', ())
 
 		idspec = self.registerUIData('ID', 'array', 'r', default=self.id)
 		classspec = self.registerUIData('Class', 'string', 'r',

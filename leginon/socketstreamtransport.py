@@ -4,8 +4,6 @@ import socket
 import leginonobject
 import data
 import threading
-import copy
-import time
 
 class Handler(SocketServer.StreamRequestHandler):
 	def __init__(self, request, server_address, server):

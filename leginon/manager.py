@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
 import threading
-import leginonobject
-import datahandler
 import node
 import application
 import data
@@ -142,7 +140,6 @@ class Manager(node.Node):
 	# launcher related methods
 
 	def newLauncher(self, newid):
-		print self.nodelocations
 		t = threading.Thread(name='launcher thread',
 								target=launcher.Launcher, args=(newid, self.nodelocations))
 		t.start()

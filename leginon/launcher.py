@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 
-import signal
-import node, data
+import node
+import data
 import event
-import threading
 import nodeclassreg
 import calllauncher
 import time
