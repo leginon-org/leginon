@@ -46,7 +46,8 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
 		targetlist = self.newTargetList()
 		for imagedata in images:
 			## now read the image, replace FileReference
-			imagedata['image'] = imagedata['image'].read()
+			num = imagedata['image'].read()
+			imagedata.__setitem__('image', num, force=True)
 			self.findTargets(imagedata, targetlist)
 		self.makeTargetListEvent(targetlist)
 		self.publish(targetlist, database=True, dbforce=True, pubevent=True)
