@@ -828,7 +828,7 @@ class ManagerSetup(object):
 			project.projectexperiments.insert([projectsession.dumpdict()])
 
 		if session['instrument'] is not None and \
-			session['instrument']['hostname'] not in self.manager.launcherdict.keys():
+			session['instrument']['hostname'] not in self.manager.launcherdict.keys() and not self.skipinstrument.get():
 			try:
 				hostname = session['instrument']['hostname']
 				if hostname:
@@ -1071,6 +1071,9 @@ class ManagerSetup(object):
 		self.image_path = uidata.String('Image Path', image_path, 'rw',
 																		persist=True)
 		self.container.addObject(self.image_path)
+
+		self.skipinstrument = uidata.Boolean('Do Not Connect Instrument Launcher', False, 'rw', persist=True)
+		self.container.addObject(self.skipinstrument)
 
 		startmethod = uidata.Method('Start', self.start)
 		self.container.addObject(startmethod)
