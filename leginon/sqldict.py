@@ -561,6 +561,8 @@ def dict2matrix(in_dict):
 					| i   .   n |
 					|_         _|
 
+	example:
+	{'ARRAY|matrix|2_1': -1.24684512082676e-10, 'ARRAY|matrix|2_2': 2.0027370335951399e-10, 'ARRAY|matrix|1_2': 1.2226514813724901e-10, 'ARRAY|matrix|1_1': 1.9444897985776799e-10}
 	"""
 
 	# Get the shape and size of the matrix
