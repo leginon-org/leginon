@@ -722,6 +722,16 @@ class ScaledAcquisitionImageData(ImageData):
 class TrialImageData(PresetImageData):
 	pass
 
+class ImageListData(InSessionData):
+	def typemap(cls):
+		t = InSessionData.typemap()
+		t += [ ('images', list), ]
+		return t
+	typemap = classmethod(typemap)
+
+class AcquisitionImageListData(ImageListData):
+	pass
+
 class CorrectorPlanData(InSessionData):
 	'''
 	mosaic data contains data ID of images mapped to their 

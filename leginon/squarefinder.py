@@ -326,7 +326,7 @@ class SquareFinder(targetfinder.TargetFinder):
 		output = self.pluginpipeline.process(Image(imagedata['image']))
 		targets = map(lambda t: self.newTargetData(imagedata, 'acquisition',
 																								t[0], t[1]), output.targets)
-		self.targetlist.append(targets)
+		self.targetlist += targets
 
 	def defineUserInterface(self):
 		targetfinder.TargetFinder.defineUserInterface(self)

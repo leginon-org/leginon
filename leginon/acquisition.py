@@ -23,7 +23,7 @@ import uidata
 class Acquisition(targetwatcher.TargetWatcher):
 
 	eventinputs = targetwatcher.TargetWatcher.eventinputs+[event.ImageClickEvent, event.DriftDoneEvent, event.ImageProcessDoneEvent]
-	eventoutputs = targetwatcher.TargetWatcher.eventoutputs + [event.LockEvent, event.UnlockEvent, event.AcquisitionImagePublishEvent, event.TrialImagePublishEvent, event.ChangePresetEvent, event.DriftDetectedEvent]
+	eventoutputs = targetwatcher.TargetWatcher.eventoutputs + [event.LockEvent, event.UnlockEvent, event.AcquisitionImagePublishEvent, event.TrialImagePublishEvent, event.ChangePresetEvent, event.DriftDetectedEvent, event.AcquisitionImageListPublishEvent]
 
 	def __init__(self, id, session, nodelocations, target_type='acquisition', **kwargs):
 
@@ -40,6 +40,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		}
 		self.presetsclient = presets.PresetsClient(self)
 		self.doneevents = {}
+		self.imagelist = []
 
 		self.defineUserInterface()
 		self.start()
@@ -55,6 +56,14 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if imageid in self.doneevents:
 			self.doneevents[imageid]['status'] = status
 			self.doneevents[imageid]['received'].set()
+
+	def processData(self, newdata):
+		self.imagelist = []
+		targetwatcher.TargetWatcher.processData(self, newdata)
+		imagelistdata = data.AcquisitionImageListData(id=self.ID(),
+																									images=self.imagelist)
+		self.publish(imagelistdata, pubevent=True, database=self.databaseflag.get())
+		self.imagelist = []
 
 	def processTargetData(self, targetdata, force=False):
 		'''
@@ -108,18 +117,21 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.presetsclient.toScope(newpresetname, emtarget)
 			self.uiprocessingstatus.set('Determining current preset')
 			p = self.presetsclient.getCurrentPreset()
-			self.uiprocessingstatus.set('Current preset is "%s"' % p['name'])
+			if p is not None:
+				self.uiprocessingstatus.set('Current preset is "%s"' % p['name'])
 			delay = self.uidelay.get()
 			self.uiprocessingstatus.set('Pausing for %s seconds before acquiring'
 																	% (delay,))
 			time.sleep(delay)
-			self.uiprocessingstatus.set('Acquiring image...')
+			self.uiacquisitionstatus.set('Acquiring image...')
 			ret = self.acquire(p, target=targetdata, emtarget=emtarget)
 			# in these cases, return immediately
 			if ret in ('aborted', 'repeat'):
+				self.uiacquisitionstatus.set('Acquition state is "%s"' % ret)
 				return ret
+			self.uiacquisitionstatus.set('Image acquired')
 
-		self.uiprocessingstatus.set('Done processing')
+		self.uiprocessingstatus.set('Processing complete')
 
 		return 'ok'
 
@@ -191,7 +203,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		try:
 			newscope = calclient.transform(pixelshift, targetscope, targetcamera)
 		except calibrationclient.NoMatrixCalibrationError:
-			self.outputWarning('No calibration for acquisition move to target')
+			self.acquisitionlog.error('No calibration for acquisition move to target')
 			return None
 		# create new EMData object to hole this
 		emdata = data.ScopeEMData(id=('scope',), initializer=newscope)
@@ -215,6 +227,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		imagedata = data.AcquisitionImageData(initializer=imagedata, id=self.ID(), preset=presetdata, label=labelstring, target=target)
 
 		self.publishDisplayWait(imagedata)
+		self.imagelist.append(imagedata['id'])
 
 	def retrieveImagesFromDB(self):
 		imagequery = data.AcquisitionImageData()
@@ -296,7 +309,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		if self.waitfordone.get():
 			self.waitForImageProcessDone()
-		self.uioutputstatus.set('Done')
+		self.uioutputstatus.set('Image published')
 		return 'ok'
 
 	def setImageFilename(self, imagedata):
@@ -305,9 +318,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		rootname = self.getRootName(imagedata)
 		## use either data id or target number
 		if imagedata['target'] is None or imagedata['target']['number'] is None:
-			numberstr = '%04d' % (imagedata['id'][-1],)
+			numberstr = '%05d' % (imagedata['id'][-1],)
 		else:
-			numberstr = '%04d' % (imagedata['target']['number'],)
+			numberstr = '%05d' % (imagedata['target']['number'],)
 		if imagedata['preset'] is None:
 			presetstr = ''
 		else:

@@ -13,10 +13,11 @@ import event
 import watcher
 
 class ImageWatcher(watcher.Watcher):
-	eventinputs = watcher.Watcher.eventinputs + [event.ImagePublishEvent]
+	eventinputs = watcher.Watcher.eventinputs + [event.ImagePublishEvent,
+																								event.ImageListPublishEvent]
 	eventoutputs = watcher.Watcher.eventoutputs + [event.ImageProcessDoneEvent]
 	def __init__(self, id, session, nodelocations, **kwargs):
-		watchfor = [event.ImagePublishEvent]
+		watchfor = [event.ImagePublishEvent, event.ImageListPublishEvent]
 		watcher.Watcher.__init__(self, id, session, nodelocations, watchfor,
 															**kwargs)
 
@@ -26,8 +27,9 @@ class ImageWatcher(watcher.Watcher):
 	def processImageData(self, imagedata):
 		raise NotImplementedError
 
-	def publishImageProcessDone(self, status='ok'):
-		imageid = self.currentimagedata['id']
+	def publishImageProcessDone(self, imageid=None, status='ok'):
+		if imageid is None:
+			imageid = self.currentimagedata['id']
 		initializer = {'id': self.ID(),
 										'imageid': self.currentimagedata['id'],
 										'status': status}
@@ -35,10 +37,17 @@ class ImageWatcher(watcher.Watcher):
 		self.outputEvent(oevent)
 
 	def processData(self, idata):
-		if not isinstance(idata, data.ImageData):
+		if isinstance(idata, data.ImageData):
+			self.currentimagedata = idata
+			self.numarray = idata['image']
+			self.processImageData(idata)
+			self.publishImageProcessDone()
+		elif isinstance(idata, data.ImageListData):
+			# self.currentimagedata, self.numarray not implemented
+			self.processImageListData(idata)
+			if 'images' in idata and idata['images'] is None:
+				for imageid in idata['images']:
+					self.publishImageProcessDone(imageid=imageid)
+		else:
 			raise TypeError('data to be processed is not an ImageData instance')
-		self.currentimagedata = idata
-		self.numarray = idata['image']
-		self.processImageData(idata)
-		self.publishImageProcessDone()
 

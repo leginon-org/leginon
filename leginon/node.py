@@ -501,21 +501,25 @@ class Node(leginonobject.LeginonObject):
 		newdata = self.researchByLocation(datalocationdata['location'], dataid)
 		return newdata
 
+	def researchPublishedDataByID(self, dataid):
+		newdata = self.researchByDataID(dataid)
+		if newdata is None:
+			if issubclass(publishevent.dataclass, data.Data):
+				initializer = {'id': dataid}
+				if issubclass(publishevent.dataclass, data.InSessionData):
+					initializer['session'] = self.session
+				datainstance = publishevent.dataclass(initializer=initializer)
+				newdatalist = self.research(datainstance=datainstance)
+				if newdatalist:
+					newdata = newdatalist[0]
+		return newdata
+
 	def researchPublishedData(self, publishevent):
 		newdata = None
 		if 'dataid' in publishevent:
 			dataid = publishevent['dataid']
 			if dataid is not None:
-				newdata = self.researchByDataID(dataid)
-				if newdata is None:
-					if issubclass(publishevent.dataclass, data.Data):
-						initializer = {'id': dataid}
-						if issubclass(publishevent.dataclass, data.InSessionData):
-							initializer['session'] = self.session
-						datainstance = publishevent.dataclass(initializer=initializer)
-						newdatalist = self.research(datainstance=datainstance)
-						if newdatalist:
-							newdata = newdatalist[0]
+				newdata = self.researchPublishedDataByID(dataid)
 		return newdata
 
 	# methods for setting up the manager

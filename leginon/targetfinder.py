@@ -83,6 +83,16 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		'''
 		raise NotImplementedError()
 
+	def processImageListData(self, imagelistdata):
+		if 'images' not in imagelistdata or imagelistdata['images'] is None:
+			return
+		for imagedataid in imagelistdata['images']:
+			imagedata = self.researchPublishedDataByID(imagedataid)
+			if imagedata is None:
+				continue
+			self.findTargets(imagedata)
+		self.publishTargetList()
+
 	def processImageData(self, imagedata):
 		'''
 		Gets and publishes target information of specified image data.

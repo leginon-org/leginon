@@ -114,7 +114,7 @@ class TargetWatcher(watcher.Watcher):
 			else:
 				rejects.append(target)
 
-		self.uintargets.set('%d to be processed, %d to be passed, %d total' %
+		self.uintargets.set('%d process, %d pass, %d total' %
 													(len(goodtargets), len(rejects), len(targetlist)))
 
 		# republish the rejects and wait for them to complete
@@ -242,10 +242,10 @@ class TargetWatcher(watcher.Watcher):
 			self.publish(donetarget, database=True, dbforce=True)
 
 		self.uistatus.set('Target list processed.')
-		self.uitargetid.set('')
-		self.uitargetnumber.set('')
-		self.uitargetstatus = uidata.String('', '', 'r')
-		self.uisourceimageid = uidata.String('', '', 'r')
+		#self.uitargetid.set('')
+		#self.uitargetnumber.set('')
+		#self.uitargetstatus.set('')
+		#self.uisourceimageid.set('')
 		self.reportTargetListDone(newdata['id'], targetliststatus)
 
 	def reportTargetListDone(self, listid, status):

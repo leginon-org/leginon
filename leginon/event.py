@@ -233,6 +233,12 @@ class PhaseCorrelationImagePublishEvent(CorrelationImagePublishEvent):
 class ImageTargetListPublishEvent(PublishEvent):
 	dataclass = data.ImageTargetListData
 
+class ImageListPublishEvent(PublishEvent):
+	dataclass = data.ImageListData
+
+class AcquisitionImageListPublishEvent(ImageListPublishEvent):
+	dataclass = data.AcquisitionImageListData
+
 class ControlEvent(Event):
 	'Event that passes a value with it'
 	pass

@@ -132,6 +132,8 @@ class MatrixCalibrator(calibrator.Calibrator):
 					print 'FAILED PIXEL SIZE TOLERANCE'
 					continue
 
+				if change == 0.0:
+					raise CalibrationError()
 				rowpixelsper = rowpix / change
 				colpixelsper = colpix / change
 				shifts[axis]['row'] += rowpixelsper
@@ -165,6 +167,14 @@ class MatrixCalibrator(calibrator.Calibrator):
 		print 'MATRIX flat', Numeric.ravel(matrix)
 		calclient.storeMatrix(ht, mag, uiparameter, matrix)
 
+	def fakeCalibration(self):
+		ht = self.getHighTension()
+		mag = self.getMagnification()
+		uiparameter = self.uiparameter.getSelectedValue()
+		matrix = Numeric.zeros((2,2))
+		calclient = self.parameters[uiparameter]
+		calclient.storeMatrix(ht, mag, uiparameter, matrix)
+
 	def defineUserInterface(self):
 		calibrator.Calibrator.defineUserInterface(self)
 
@@ -187,9 +197,12 @@ class MatrixCalibrator(calibrator.Calibrator):
 
 		calibratemethod = uidata.Method('Calibrate (be sure to configure camera first)', self.uiCalibrate)
 		abortmethod = uidata.Method('Abort', self.uiAbort)
+		fakecalibrationmethod = uidata.Method('Fake Calibration',
+																				self.fakeCalibration)
 
 		container = uidata.LargeContainer('Matrix Calibrator')
-		container.addObjects((settingscontainer, calibratemethod, abortmethod))
+		container.addObjects((settingscontainer, calibratemethod, abortmethod,
+													fakecalibrationmethod))
 		self.uiserver.addObject(container)
 
 	def uiCalibrate(self):
