@@ -43,9 +43,10 @@ class TargetFinder(imagewatcher.ImageWatcher):
 	def publishTargetList(self):
 		if self.targetlist:
 			targetlistdata = data.ImageTargetListData(id=self.ID(), targets=self.targetlist)
+			## XXX this might not work for mosaic
 			for targetdata in targetlistdata['targets']:
 				targetdata['image id'] = self.imagedata['id']
-				
+
 			self.publish(targetlistdata, pubevent=True)
 
 		self.targetsToDatabase()
@@ -104,14 +105,11 @@ class ClickTargetFinder(TargetFinder):
 		self.clickimage.setTargets([])
 
 	def processTargets(self):
-		self.targetlist += self.getTargetDataList('Focus Target',
-																							data.FocusTargetData)
-		self.targetlist += self.getTargetDataList('Imaging Target',
-																							data.ImageTargetData)
+		self.getTargetDataList('Focus Target', data.FocusTargetData)
+		self.getTargetDataList('Imaging Target', data.ImageTargetData)
 		self.publishTargetList()
 
 	def getTargetDataList(self, typename, datatype):
-		targetlist = []
 		for imagetarget in self.clickimage.getTargetType(typename):
 			column, row = imagetarget
 			# using self.currentiamge.shape could be bad
@@ -122,7 +120,6 @@ class ClickTargetFinder(TargetFinder):
 			targetdata = datatype(id=self.ID())
 			targetdata.friendly_update(target)
 			self.targetlist.append(targetdata)
-		return targetlist
 
 # perhaps this should be a 'mixin' class so it can work with any target finder
 class MosaicClickTargetFinder(ClickTargetFinder):
@@ -148,16 +145,16 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.clickimage.setTargets([])
 
 	def getTargetDataList(self, typename, datatype):
-		targetlist = []
 		for imagetarget in self.clickimage.getTargetType(typename):
 			x, y = imagetarget
 			target = self.mosaic.getTargetInfo(x, y)
 			imageinfo = self.imageInfo()
-			target.update(imageinfo)
+			### just need preset, everythin else is there already
+			target['preset'] = imageinfo['preset']
+
 			targetdata = datatype(id=self.ID())
 			targetdata.friendly_update(target)
 			self.targetlist.append(targetdata)
-		return targetlist
 
 	#def advanceImage(self):
 	#	pass
@@ -178,11 +175,11 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 	def defineUserInterface(self):
 		ClickTargetFinder.defineUserInterface(self)
+		# turn queue off by default
+		self.uidataqueueflag.set(False)
 		parameters = self.mosaic.getCalibrationParameters()
 		parameter = parameters.index(self.mosaic.getCalibrationParameter())
-		self.uicalibrationparameter = uidata.SingleSelectFromList(
-																'Calibration Parameter', parameters, parameter,
-																callback=self.uiSetCalibrationParameter)
+		self.uicalibrationparameter = uidata.SingleSelectFromList('Calibration Parameter', parameters, parameter, callback=self.uiSetCalibrationParameter, persist=True)
 		clearmethod = uidata.Method('Reset Mosaic', self.mosaicClear)
 		container = uidata.MediumContainer('Mosaic Click Target Finder')
 		container.addObjects((clearmethod, self.uicalibrationparameter))
