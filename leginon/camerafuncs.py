@@ -15,12 +15,21 @@ class CameraFuncs(object):
 	def __init__(self, node):
 		self.node = node
 
-	def acquireCameraImageData(self, camstate=None, correction=0):
+	def acquireCameraImageData(self, camstate=None, correction=None):
 		## configure camera
-		if camstate is not None:
-			self.state(camstate)
+		if camstate is None:
+			cs = self.config()['state']
+		else:
+			cs = camstate
+		self.state(cs)
 
-		if correction:
+		if correction is None:
+			cor = self.config()['correct']
+		else:
+			cor = correction
+
+		print 'COR', cor, self, self.node
+		if cor:
 			### get image data from corrector node
 			imdata = self.node.researchByDataID('corrected image data')
 		else:
@@ -33,6 +42,7 @@ class CameraFuncs(object):
 			del cameradict['image data']
 			dataid = self.node.ID()
 			imdata = data.CameraImageData(dataid, image=numimage, scope=scopedict, camera=cameradict)
+		print 'imdata', imdata
 
 		return imdata
 
@@ -120,6 +130,7 @@ class CameraFuncs(object):
 		## set default values
 		if not hasattr(self, 'cameraconfigvalue'):
 			self.cameraconfigvalue = {}
+			self.cameraconfigvalue['correct'] = 1
 			self.cameraconfigvalue['auto square'] = 1
 			self.cameraconfigvalue['auto offset'] = 1
 			## attempt to get current camera state
