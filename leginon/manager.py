@@ -392,7 +392,9 @@ if __name__ == '__main__':
 	if gui:
 		import nodegui
 		import Tkinter
+		import Pmw
 		tk = Tkinter.Tk()
+		Pmw.initialise(tk)
 		mgui = nodegui.NodeGUI(tk, node=m)
 		tk.wm_title('Leginon Manager')
 		mgui.pack()

@@ -345,6 +345,7 @@ class NodeGUI(Frame):
 		else:
 			raise RuntimeError('NodeGUI needs either node instance or hostname and port')
 
+
 		Frame.__init__(self, parent)
 		self.uiclient = interface.Client(hostname, port)
 
@@ -425,6 +426,7 @@ if __name__ == '__main__':
 	import sys
 
 	tk = Tk()
+	Pmw.initialise(tk)
 	hostname = sys.argv[1]
 	port = sys.argv[2]
 	gui = NodeGUI(tk, sys.argv[1], sys.argv[2])
