@@ -489,17 +489,14 @@ class PresetsManager(node.Node):
 		extra_str = ', '.join(extra_in_cycle)
 		problems = []
 		if missing_str:
-			missing_str = '  Presets Missing from cycle:  ' + missing_str
+			missing_str = 'Presets Missing from cycle:  ' + missing_str
 			problems.append(missing_str)
 		if extra_str:
-			extra_str = '  In Cycle, but no such preset:  ' + extra_str
+			extra_str = 'In Cycle, but no such preset:  ' + extra_str
 			problems.append(extra_str)
 
-		message = '\n'.join(problems)
+		message = ', '.join(problems)
 		if message:
-			title = 'Inconsistencies in Cycle Order List'
-			message = 'Inconsistencies in Cycle Order List:\n' + message
-			#self.outputMessage(title, message)
 			self.messagelog.warning(message)
 
 	def uiCycleToScope(self):
@@ -716,6 +713,9 @@ class PresetsManager(node.Node):
 		self.setStatus(self.currentpreset)
 
 	def uiAcquireDose(self):
+		if self.currentpreset is None:
+			self.messagelog.error('You go to a preset before measuring dose')
+			return
 		print 'acquiring dose image (using preset config, but 512x512)'
 		config = data.CameraConfigData()
 		config.friendly_update(self.currentpreset)
