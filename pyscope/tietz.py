@@ -27,6 +27,7 @@ except ImportError:
 
 class CameraControl(object):
 	def __init__(self):
+		self.pingname = 'pyScope'
 		self.cameralock = threading.RLock()
 		self.camera = None
 		self.cameras = []
@@ -92,7 +93,7 @@ class CameraControl(object):
 			raise RuntimeError('failed to initialize interface pyScope.Ping')
 
 		try:
-			hr = self.camera.RegisterCAMCCallBack(ping, 'EM')
+			hr = self.camera.RegisterCAMCCallBack(ping, self.pingname)
 		except pywintypes.com_error, e:
 			raise RuntimeError('error registering callback COM object')
 
@@ -106,6 +107,11 @@ class CameraControl(object):
 
 	def uninitialize(self):
 		self.camera.UnlockCAMC()
+
+	def __del__(self):
+		locked, pingname = self.camera.IsLocked
+		if locked and pingname == self.pingname:
+			self.uninitialize()
 
 cameracontrol = CameraControl()
 
