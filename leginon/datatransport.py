@@ -16,14 +16,30 @@ class Client(Base):
 	def __init__(self, location):
 		Base.__init__(self)
 		self.clients = {}
-		for t in self.transportmodules:
-			self.clients[t] = apply(t.Client, (location,))
+
+#		for t in self.transportmodules:
+#			self.clients[t] = apply(t.Client, (location,))
+
+		try:
+			if location['hostname'] == self.location()['hostname']:
+				#if location['PID'] == self.location()['PID']:
+				self.clients[localtransport] = apply(localtransport.Client, (location,))
+		except KeyError:
+			pass
+
+		self.clients[tcptransport] = apply(tcptransport.Client, (location,))
 
 	def pull(self, id):
-		return self.clients[tcptransport].pull(id)
+		try:
+			return self.clients[localtransport].pull(id)
+		except KeyError:
+			return self.clients[tcptransport].pull(id)
 
 	def push(self, idata):
-		self.clients[tcptransport].push(idata)
+		try:
+			self.clients[localtransport].push(idata)
+		except KeyError:
+			self.clients[tcptransport].push(idata)
 
 class Server(Base):
 	def __init__(self, dhclass = datahandler.SimpleDataKeeper, dhargs = ()):

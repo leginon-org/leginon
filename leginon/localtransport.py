@@ -3,23 +3,21 @@ import leginonobject
 import copy
 import weakref
 
-class WeakrefWrapper:
-  def __init__(self, ref):
-    self.ref = ref
-  def __getstate__(self):
-    return None
+_id2obj_dict = weakref.WeakValueDictionary()
 
 class Server(leginonobject.LeginonObject):
 	def __init__(self, dh):
 		leginonobject.LeginonObject.__init__(self)
 		self.datahandler = dh
+		self.pythonid = id(self)
+		_id2obj_dict[self.pythonid] = self
 
 	def start(self):
 		pass
 
 	def location(self):
 		loc = leginonobject.LeginonObject.location(self)
-		loc['weakref'] = WeakrefWrapper(weakref.ref(self))
+		loc['local server python ID'] = self.pythonid
 		return loc
 
 class Client(leginonobject.LeginonObject):
@@ -28,18 +26,20 @@ class Client(leginonobject.LeginonObject):
 		self.serverlocation = location
 
 	def push(self, idata):
-		o = self.serverlocation['weakref']()
-		if o is None:
-			raise ValueError
+		print "pushing locally..."
+		obj = _id2obj_dict[self.serverlocation['local server python ID']]
+		if obj is None:
+			raise ValueError # or IOError since its a data transfer?
 		else:
-			return o.datahandler.insert(copy.deepcopy(idata))
+			return obj.datahandler.insert(copy.deepcopy(idata))
 
 	def pull(self, id):
-		o = self.serverlocation['weakref']()
-		if o is None:
+		print "pulling locally..."
+		obj = _id2obj_dict[self.serverlocation['local server python ID']]
+		if obj is None:
 			raise ValueError
 		else:
-			return copy.deepcopy(o.datahandler.query(id))
+			return copy.deepcopy(obj.datahandler.query(id))
 
 if __name__ == '__main__':
 	pass
