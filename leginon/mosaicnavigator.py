@@ -3,6 +3,7 @@ import data
 import event
 import math
 import node
+import time
 
 class MosaicNavigator(navigator.Navigator):
 	def __init__(self, id, nodelocations, **kwargs):
