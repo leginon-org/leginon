@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Navigator.py,v $
-# $Revision: 1.28 $
+# $Revision: 1.29 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-25 01:34:25 $
+# $Date: 2005-02-25 22:07:02 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -296,7 +296,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['use camera settings'] = wx.CheckBox(self, -1,
 																								'Use camera configuration')
 		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
-		#self.widgets['camera settings'].setSize(self.node.session)
+		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
 
 		# settings sizer
 		sz = wx.GridBagSizer(5, 10)

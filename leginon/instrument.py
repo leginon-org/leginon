@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.18 $
+# $Revision: 1.19 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-25 19:03:20 $
+# $Date: 2005-02-25 22:07:02 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -34,12 +34,20 @@ class Proxy(object):
 		if 'TEM' in types:
 			proxy = self.objectservice.getObjectProxy(nodename, name)
 			self.tems[name] = proxy
+			if self.wxeventhandler is not None:
+				names = self.getTEMNames()
+				evt = gui.wx.Events.SetTEMsEvent(self.wxeventhandler, names)
+				self.wxeventhandler.GetEventHandler().AddPendingEvent(evt)
 			if self.tem is None:
 				self.setTEM(name)
 
 		if 'CCDCamera' in types:
 			proxy = self.objectservice.getObjectProxy(nodename, name)
 			self.ccdcameras[name] = proxy
+			if self.wxeventhandler is not None:
+				names = self.getCCDCameraNames()
+				evt = gui.wx.Events.SetCCDCamerasEvent(self.wxeventhandler, names)
+				self.wxeventhandler.GetEventHandler().AddPendingEvent(evt)
 			if self.ccdcamera is None:
 				self.setCCDCamera(name)
 
@@ -51,14 +59,14 @@ class Proxy(object):
 
 	def onRemoveDescription(self, nodename, name):
 		if name in self.tems and self.tem is self.tems[name]:
-			self.tem = None
+			self.setTEM(None)
 
 		if name in self.ccdcameras and self.ccdcamera is self.ccdcameras[name]:
-			self.ccdcamera = None
+			self.setCCDCamera(None)
 
 		if name in self.imagecorrections:
 			if self.imagecorrection is self.imagecorrections[name]:
-				self.imagecorrection = None
+				self.setImageCorrection(None)
 
 	def getTEMName(self):
 		if self.tem is None:
@@ -66,7 +74,9 @@ class Proxy(object):
 		return self.tem._name
 
 	def getTEMNames(self):
-		return self.tems.keys()
+		tems = self.tems.keys()
+		tems.sort()
+		return tems
 
 	def getCCDCameraName(self):
 		if self.ccdcamera is None:
@@ -74,7 +84,9 @@ class Proxy(object):
 		return self.ccdcamera._name
 
 	def getCCDCameraNames(self):
-		return self.ccdcameras.keys()
+		ccdcameras = self.ccdcameras.keys()
+		ccdcameras.sort()
+		return ccdcameras
 
 	def getImageCorrectionName(self):
 		if self.imagecorrection is None:
@@ -82,13 +94,18 @@ class Proxy(object):
 		return self.imagecorrection._name
 
 	def getImageCorrectionNames(self):
-		return self.imagecorrections.keys()
+		ics = self.imagecorrections.keys()
+		ics.sort()
+		return ics
 
 	def setTEM(self, name):
 		if name is None:
 			self.tem = None
 		else:
 			self.tem = self.tems[name]
+		if self.wxeventhandler is not None:
+			evt = gui.wx.Events.SetTEMEvent(self.wxeventhandler, name)
+			self.wxeventhandler.GetEventHandler().AddPendingEvent(evt)
 
 	def setCCDCamera(self, name):
 		if name is None:

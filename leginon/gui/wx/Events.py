@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Events.py,v $
-# $Revision: 1.17 $
+# $Revision: 1.18 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-25 19:03:56 $
+# $Date: 2005-02-25 22:07:02 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -53,13 +53,19 @@ PlayerEventType = wx.NewEventType()
 SetImageEventType = wx.NewEventType()
 SetTargetsEventType = wx.NewEventType()
 StatusUpdatedEventType = wx.NewEventType()
+SetTEMEventType = wx.NewEventType()
+SetTEMsEventType = wx.NewEventType()
 SetCCDCameraEventType = wx.NewEventType()
+SetCCDCamerasEventType = wx.NewEventType()
 
 EVT_PLAYER = wx.PyEventBinder(PlayerEventType)
 EVT_SET_IMAGE = wx.PyEventBinder(SetImageEventType)
 EVT_SET_TARGETS = wx.PyEventBinder(SetTargetsEventType)
 EVT_STATUS_UPDATED = wx.PyEventBinder(StatusUpdatedEventType)
+EVT_SET_TEM = wx.PyEventBinder(SetTEMEventType)
+EVT_SET_TEMS = wx.PyEventBinder(SetTEMsEventType)
 EVT_SET_CCDCAMERA = wx.PyEventBinder(SetCCDCameraEventType)
+EVT_SET_CCDCAMERAS = wx.PyEventBinder(SetCCDCamerasEventType)
 
 class PlayerEvent(wx.PyEvent):
 	def __init__(self, state):
@@ -89,9 +95,27 @@ class StatusUpdatedEvent(wx.PyCommandEvent):
 		self.level = level
 		self.status = status
 
+class SetTEMEvent(wx.PyCommandEvent):
+	def __init__(self, source, name):
+		wx.PyCommandEvent.__init__(self, SetTEMEventType, source.GetId())
+		self.SetEventObject(source)
+		self.name = name
+
+class SetTEMsEvent(wx.PyCommandEvent):
+	def __init__(self, source, names):
+		wx.PyCommandEvent.__init__(self, SetTEMsEventType, source.GetId())
+		self.SetEventObject(source)
+		self.names = names
+
 class SetCCDCameraEvent(wx.PyCommandEvent):
 	def __init__(self, source, name):
 		wx.PyCommandEvent.__init__(self, SetCCDCameraEventType, source.GetId())
 		self.SetEventObject(source)
 		self.name = name
+
+class SetCCDCamerasEvent(wx.PyCommandEvent):
+	def __init__(self, source, names):
+		wx.PyCommandEvent.__init__(self, SetCCDCamerasEventType, source.GetId())
+		self.SetEventObject(source)
+		self.names = names
 

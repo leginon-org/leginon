@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ManualAcquisition.py,v $
-# $Revision: 1.17 $
+# $Revision: 1.18 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-25 01:34:25 $
+# $Date: 2005-02-25 22:07:02 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -16,6 +16,7 @@ import gui.wx.Camera
 from gui.wx.Entry import Entry, FloatEntry
 import gui.wx.Events
 import gui.wx.ImageViewer
+import gui.wx.Instrument
 import gui.wx.Node
 import gui.wx.Settings
 import gui.wx.Stats
@@ -144,6 +145,37 @@ class Panel(gui.wx.Node.Panel):
 		self._acquisitionEnable(False)
 		self.node.acquisitionLoopStop()
 
+	def instrumentSelectionEvent(self, evt):
+		try:
+			evthandler = self.settingsdialog.instrumentselection.GetEventHandler()
+			evthandler.AddPendingEvent(evt)
+		except AttributeError:
+			pass
+
+	def setCameraSize(self):
+		try:
+			camerasize = self.node.instrument.camerasize
+			self.settingsdialog.widgets['camera settings'].setSize(camerasize)
+		except AttributeError:
+			pass
+
+	def onSetTEM(self, evt):
+		gui.wx.Node.Panel.onSetTEM(self, evt)
+		self.instrumentSelectionEvent(evt)
+
+	def onSetTEMs(self, evt):
+		gui.wx.Node.Panel.onSetTEMs(self, evt)
+		self.instrumentSelectionEvent(evt)
+
+	def onSetCCDCamera(self, evt):
+		gui.wx.Node.Panel.onSetCCDCamera(self, evt)
+		self.instrumentSelectionEvent(evt)
+		self.setCameraSize()
+
+	def onSetCCDCameras(self, evt):
+		gui.wx.Node.Panel.onSetCCDCameras(self, evt)
+		self.instrumentSelectionEvent(evt)
+
 class GridDialog(wx.Dialog):
 	def __init__(self, parent):
 		self.node = parent.node
@@ -226,8 +258,11 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
 
+		self.instrumentselection = gui.wx.Instrument.SelectionPanel(self,
+																													self.node.instrument)
+
 		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
-		#self.widgets['camera settings'].setSize(self.node.session)
+		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
 		self.widgets['screen up'] = wx.CheckBox(self, -1, 'Up before acquire')
 		self.widgets['screen down'] = wx.CheckBox(self, -1, 'Down after acquired')
 		self.widgets['correct image'] = wx.CheckBox(self, -1, 'Correct image')
@@ -264,20 +299,21 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sbszlowdose.Add(szlowdose, 1, wx.EXPAND|wx.ALL, 5)
 
 		sz = wx.GridBagSizer(5, 5)
-		sz.Add(self.widgets['camera settings'], (0, 0), (1, 3), wx.EXPAND)
-		sz.Add(self.widgets['correct image'], (1, 0), (1, 3),
+		sz.Add(self.instrumentselection, (0, 0), (1, 3), wx.EXPAND)
+		sz.Add(self.widgets['camera settings'], (1, 0), (1, 3), wx.EXPAND)
+		sz.Add(self.widgets['correct image'], (2, 0), (1, 3),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['save image'], (2, 0), (1, 3),
+		sz.Add(self.widgets['save image'], (3, 0), (1, 3),
 						wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'Loop pause')
-		sz.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['loop pause time'], (3, 1), (1, 1),
+		sz.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['loop pause time'], (4, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'seconds')
-		sz.Add(label, (3, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(label, (4, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'Label')
-		sz.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['image label'], (4, 1), (1, 1),
+		sz.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['image label'], (5, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
 		sz.AddGrowableCol(1)
 

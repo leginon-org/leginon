@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Instrument.py,v $
-# $Revision: 1.30 $
+# $Revision: 1.31 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-24 19:43:50 $
+# $Date: 2005-02-25 22:07:02 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -17,6 +17,7 @@ from gui.wx.Camera import CameraPanel, EVT_CONFIGURATION_CHANGED
 from gui.wx.Entry import Entry, IntEntry, FloatEntry, EVT_ENTRY
 import gui.wx.Node
 import gui.wx.ToolBar
+import threading
 
 def setControl(control, value):
 	testr = '%s value must be of type %s (is type %s)'
@@ -858,11 +859,112 @@ class Panel(gui.wx.Node.Panel):
 							self.szcamconfig.parameters['Camera configuration'])
 		self.Enable(True)
 
+class SelectionPanel(wx.Panel):
+	def __init__(self, parent, proxy):
+		wx.Panel.__init__(self, parent, -1)
+		self.proxy = proxy
+		tem = self.proxy.getTEMName()
+		tems = self.proxy.getTEMNames()
+		ccdcamera = self.proxy.getCCDCameraName()
+		ccdcameras = self.proxy.getCCDCameraNames()
+
+		self.nonestring = 'None'
+
+		self.ctem = wx.Choice(self, -1, choices=[self.nonestring] + tems)
+		if tem not in tems:
+			tem = self.nonestring
+		self.ctem.SetStringSelection(tem)
+
+		self.cccdcamera = wx.Choice(self, -1,
+																choices=[self.nonestring] + ccdcameras)
+		if ccdcamera not in ccdcameras:
+			ccdcamera = self.nonestring
+		self.cccdcamera.SetStringSelection(ccdcamera)
+
+		sz = wx.GridBagSizer(3, 3)
+		label = wx.StaticText(self, -1, 'TEM')
+		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.ctem, (0, 1), (1, 1), wx.ALIGN_CENTER|wx.EXPAND)
+		label = wx.StaticText(self, -1, 'CCD Camera')
+		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.cccdcamera, (1, 1), (1, 1), wx.ALIGN_CENTER|wx.EXPAND)
+
+		sz.AddGrowableCol(0)
+
+		sb = wx.StaticBox(self, -1, 'Instrument')
+		self.sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		self.sbsz.Add(sz, 0, wx.EXPAND|wx.ALL, 5)
+
+		self.SetSizerAndFit(self.sbsz)
+
+		self.Bind(wx.EVT_CHOICE, self.onTEMChoice, self.ctem)
+		self.Bind(wx.EVT_CHOICE, self.onCCDCameraChoice, self.cccdcamera)
+
+		self.Bind(gui.wx.Events.EVT_SET_TEM, self.onSetTEM)
+		self.Bind(gui.wx.Events.EVT_SET_TEMS, self.onSetTEMs)
+		self.Bind(gui.wx.Events.EVT_SET_CCDCAMERA, self.onSetCCDCamera)
+		self.Bind(gui.wx.Events.EVT_SET_CCDCAMERAS, self.onSetCCDCameras)
+
+	def onSetTEM(self, evt):
+		string = evt.name
+		if string is None:
+			string = self.nonestring
+		self.ctem.SetStringSelection(string)
+		if not self.ctem.IsEnabled():
+			self.ctem.Enable(True)
+
+	def onSetTEMs(self, evt):
+		string = self.ctem.GetStringSelection()
+		self.ctem.Freeze()
+		self.ctem.Clear()
+		self.ctem.AppendItems([self.nonestring] + evt.names)
+		if string not in evt.names:
+			string = self.nonestring
+		self.ctem.SetStringSelection(string)
+		self.ctem.Thaw()
+
+	def onSetCCDCamera(self, evt):
+		string = evt.name
+		if string is None:
+			string = self.nonestring
+		self.cccdcamera.SetStringSelection(string)
+		if not self.cccdcamera.IsEnabled():
+			self.cccdcamera.Enable(True)
+
+	def onSetCCDCameras(self, evt):
+		string = self.cccdcamera.GetStringSelection()
+		self.cccdcamera.Freeze()
+		self.cccdcamera.Clear()
+		self.cccdcamera.AppendItems([self.nonestring] + evt.names)
+		if string not in evt.names:
+			string = self.nonestring
+		self.cccdcamera.SetStringSelection(string)
+		self.cccdcamera.Thaw()
+
+	def onTEMChoice(self, evt):
+		string = evt.GetString()
+		if string == self.nonestring:
+			tem = None
+		else:
+			tem = string
+		self.ctem.Enable(False)
+		threading.Thread(target=self.proxy.setTEM, args=(tem,)).start()
+
+	def onCCDCameraChoice(self, evt):
+		string = evt.GetString()
+		if string == self.nonestring:
+			ccdcamera = None
+		else:
+			ccdcamera = string
+		self.cccdcamera.Enable(False)
+		threading.Thread(target=self.proxy.setCCDCamera, args=(ccdcamera,)).start()
+
 if __name__ == '__main__':
 	class App(wx.App):
 		def OnInit(self):
 			frame = wx.Frame(None, -1, 'Instrument Test')
-			panel = Panel(frame, 'Test')
+			#panel = Panel(frame, 'Test')
+			panel = SelectionPanel(frame, None, ['Tecnai'], None, ['Tietz', 'Tietz Fastscan'])
 			frame.Fit()
 			self.SetTopWindow(frame)
 			frame.Show()

@@ -61,7 +61,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['wait time'] = FloatEntry(self, -1, min=0.0, chars=6)
 		self.widgets['iterations'] = IntEntry(self, -1, min=0.0, chars=6)
 		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
-		#self.widgets['camera settings'].setSize(self.node.session)
+		self.widgets['camera settings'].setSize(self.node.instrument.camerasize)
 
 		szwaittime = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Wait Time:')
