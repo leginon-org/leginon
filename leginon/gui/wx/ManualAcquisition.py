@@ -8,12 +8,27 @@ import gui.wx.ImageViewer
 ImageUpdatedEventType = wx.NewEventType()
 EVT_IMAGE_UPDATED = wx.PyEventBinder(ImageUpdatedEventType)
 class ImageUpdatedEvent(wx.PyCommandEvent):
-	def __init__(self, source, name, image, targets=None):
+	def __init__(self, source, name, image, targets={}, stats={}):
 		wx.PyCommandEvent.__init__(self, ImageUpdatedEventType, source.GetId())
 		self.SetEventObject(source)
 		self.name = name
 		self.image = image
 		self.targets = targets
+		self.stats = stats
+
+LoopStartedEventType = wx.NewEventType()
+EVT_LOOP_STARTED = wx.PyEventBinder(LoopStartedEventType)
+class LoopStartedEvent(wx.PyCommandEvent):
+	def __init__(self, source):
+		wx.PyCommandEvent.__init__(self, LoopStartedEventType, source.GetId())
+		self.SetEventObject(source)
+
+LoopStoppedEventType = wx.NewEventType()
+EVT_LOOP_STOPPED = wx.PyEventBinder(LoopStoppedEventType)
+class LoopStoppedEvent(wx.PyCommandEvent):
+	def __init__(self, source):
+		wx.PyCommandEvent.__init__(self, LoopStoppedEventType, source.GetId())
+		self.SetEventObject(source)
 
 class Panel(gui.wx.Node.Panel):
 	imageclass = gui.wx.ImageViewer.ImagePanel
@@ -59,6 +74,8 @@ class Panel(gui.wx.Node.Panel):
 		self.szmain.AddGrowableRow(5)
 
 		self.Bind(EVT_IMAGE_UPDATED, self.onImageUpdated)
+		self.Bind(EVT_LOOP_STARTED, self.onLoopStarted)
+		self.Bind(EVT_LOOP_STOPPED, self.onLoopStopped)
 
 	def onNodeInitialized(self):
 		self.Bind(wx.EVT_BUTTON, self.onSettingsButton, self.bsettings)
@@ -84,8 +101,32 @@ class Panel(gui.wx.Node.Panel):
 	def onAcquireButton(self, evt):
 		self.node.acquireImage()
 
+	def onLoopStopped(self, evt):
+		self.bcontinuous.SetLabel('Continuous')
+		self.bcontinuous.Enable(True)
+		self.bacquire.Enable(True)
+
+	def loopStopped(self):
+		evt = LoopStoppedEvent(self)
+		self.GetEventHandler().AddPendingEvent(evt)
+
+	def onLoopStarted(self, evt):
+		self.bcontinuous.SetLabel('Stop')
+		self.bcontinuous.Enable(True)
+
+	def loopStarted(self):
+		evt = LoopStartedEvent(self)
+		self.GetEventHandler().AddPendingEvent(evt)
+
 	def onContinuousButton(self, evt):
-		raise NotImplementedError
+		if self.bcontinuous.GetLabel() == 'Continuous':
+			self.node.acquisitionLoopStart()
+		elif self.bcontinuous.GetLabel() == 'Stop':
+			self.node.acqusitionLoopStop()
+		else:
+			raise RuntimeError
+		self.bacquire.Enable(False)
+		self.bcontinuous.Enable(False)
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):

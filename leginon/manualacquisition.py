@@ -46,80 +46,72 @@ class ManualAcquisition(node.Node):
 		self.defineUserInterface()
 		self.start()
 
+	def updateImage(self, name, image, targets={}, stats={}):
+		self.panel.imageUpdated(name, image, targets, stats)
+
 	def getImageStats(self, image):
+		if image is None:
+			return {'mean': None, 'stdev': None, 'min': None, 'max': None}
 		mean = imagefun.mean(image)
 		stdev = imagefun.stdev(image, known_mean=mean)
 		min = imagefun.min(image)
 		max = imagefun.max(image)
 		return {'mean': mean, 'stdev': stdev, 'min': min, 'max': max}
 
-	def displayImageStats(self, image):
-		if image is None:
-			self.mean.set(None)
-			self.min.set(None)
-			self.max.set(None)
-			self.std.set(None)
-		else:
-			stats = self.getImageStats(image)
-			self.mean.set(stats['mean'])
-			self.min.set(stats['min'])
-			self.max.set(stats['max'])
-			self.std.set(stats['stdev'])
-
 	def acquire(self):
-		correct = self.correctimage.get()
+		correct = self.settings['correct image']
 		if correct:
 			prefix = ''
 		else:
 			prefix = 'un'
-		self.status.set('Acquiring %scorrected image...' % prefix)
+		self.setStatus('Acquiring %scorrected image...' % prefix)
 		try:
 			self.camerafuncs.setCameraDict(self.settings['camera settings'])
 			imagedata = self.camerafuncs.acquireCameraImageData(correction=correct)
 		except Exception, e:
 			if isinstance(e, node.ResearchError):
-				self.messagelog.error('Cannot access EM node to acquire image')
+				self.logger.error('Cannot access EM node to acquire image')
 			elif isinstance(e, camerafuncs.NoCorrectorError):
-				self.messagelog.error('Cannot access Corrector node to correct image')
+				self.logger.error('Cannot access Corrector node to correct image')
 			else:
-				self.messagelog.error('Error acquiring image')
-			self.status.set('Error acquiring image')
+				self.logger.error('Error acquiring image')
+			self.setStatus('Error acquiring image')
 			raise AcquireError
 		if imagedata is None:
 			if correct:
-				self.messagelog.error('Corrector failed to acquire corrected image')
+				self.logger.error('Corrector failed to acquire corrected image')
 			else:
-				self.messagelog.error('EM failed to acquire image')
-			self.status.set('Error acquiring image')
+				self.logger.error('EM failed to acquire image')
+			self.setStatus('Error acquiring image')
 			raise AcquireError
 
 		# store EMData to DB
 		self.publish(imagedata['scope'], database=True)
 		self.publish(imagedata['camera'], database=True)
 
-		self.status.set('Displaying image...')
-		self.image.set(imagedata['image'])
-		self.displayImageStats(imagedata['image'])
-		if self.usedatabase.get():
-			self.status.set('Saving image to database...')
+		self.setStatus('Displaying image...')
+		stats = self.getImageStats(imagedata['image'])
+		self.updateImage('Image', imagedata['image'], stats=stats)
+		if self.settings['save image']:
+			self.setStatus('Saving image to database...')
 			try:
 				self.publishImageData(imagedata)
 			except node.PublishError, e:
 				message = 'Error saving image to database'
-				self.status.set(message)
+				self.setStatus(message)
 				if str(e):
 					message += ' (%s)' % str(e)
-				self.messagelog.error(message)
+				self.logger.error(message)
 				raise AcquireError
-		self.status.set('Image acquisition complete')
+		self.setStatus('Image acquisition complete')
 
 	def setScope(self, value):
 		scopedata = data.ScopeEMData(initializer=value)
 		try:
 			self.emclient.setScope(scopedata)
 		except node.PublishError:
-			self.messagelog.error('Cannot access EM node')
-			self.status.set('Error setting instrument parameters')
+			self.logger.error('Cannot access EM node')
+			self.setStatus('Error setting instrument parameters')
 			raise RuntimeError('Unable to set instrument parameters')
 
 	def getScope(self, key):
@@ -127,27 +119,27 @@ class ManualAcquisition(node.Node):
 			value = self.emclient.getScope(key)
 		except node.ResearchError:
 			raise
-			self.messagelog.error('Cannot access EM node')
-			self.status.set('Error getting instrument parameters')
+			self.logger.error('Cannot access EM node')
+			self.setStatus('Error getting instrument parameters')
 			raise RuntimeError('Unable to get instrument parameters')
 		return value
 
 	def preExposure(self):
-		if self.up.get():
+		if self.settings['screen up']:
 			self.setScope({'main screen position': 'up'})
 
-		if self.lowdose.get():
+		if self.settings['low dose']:
 			self.lowdosemode = self.getScope('low dose mode')
 			self.setScope({'low dose mode': 'exposure'})
-			time.sleep(self.pause.get())
+			time.sleep(self.settings['low dose pause time'])
 
 	def postExposure(self):
 		if self.lowdosemode is not None:
 			self.setScope({'low dose mode': self.lowdosemode})
 			self.lowdosemode = None
-			time.sleep(self.pause.get())
+			time.sleep(self.settings['low dose pause time'])
 
-		if self.down.get():
+		if self.settings['screen down']:
 			self.setScope({'main screen position': 'down'})
 
 	def setImageFilename(self, imagedata):
@@ -222,48 +214,43 @@ class ManualAcquisition(node.Node):
 			raise node.PublishError
 
 	def acquireImage(self):
-		self.acquiremethod.disable()
-		self.startmethod.disable()
-		self.status.set('Acquiring image...')
+		self.setStatus('Acquiring image...')
 
 		try:
 			self.preExposure()
 		except RuntimeError:
-			self.acquiremethod.enable()
-			self.startmethod.enable()
 			return
 
 		try:
 			self.acquire()
 		except AcquireError:
-			self.acquiremethod.enable()
-			self.startmethod.enable()
 			return
 
 		try:
 			self.postExposure()
 		except RuntimeError:
-			self.acquiremethod.enable()
-			self.startmethod.enable()
 			return
 
-		self.status.set('Image acquired')
-		self.acquiremethod.enable()
-		self.startmethod.enable()
+		self.setStatus('Image acquired')
+
+	def loopStarted(self):
+		self.panel.loopStarted()
+
+	def loopStopped(self):
+		self.panel.loopStopped()
 
 	def acquisitionLoop(self):
-		self.status.set('Starting acquisition loop...')
+		self.setStatus('Starting acquisition loop...')
 
 		try:
 			self.preExposure()
 		except RuntimeError:
-			self.acquiremethod.enable()
-			self.startmethod.enable()
-			self.stopmethod.disable()
+			self.loopStopped()
 			return
 
 		self.loopstop.clear()
-		self.status.set('Acquisition loop started')
+		self.setStatus('Acquisition loop started')
+		self.loopStarted()
 		while True:
 			if self.loopstop.isSet():
 				break
@@ -272,38 +259,31 @@ class ManualAcquisition(node.Node):
 			except AcquireError:
 				self.loopstop.set()
 				break
-			pausetime = self.pausetime.get()
+			pausetime = self.settings['loop pause time']
 			if pausetime > 0:
-				self.status.set('Pausing for ' + str(pausetime) + ' seconds...')
+				self.setStatus('Pausing for ' + str(pausetime) + ' seconds...')
 				time.sleep(pausetime)
 
 		try:
 			self.postExposure()
 		except RuntimeError:
-			self.acquiremethod.enable()
-			self.startmethod.enable()
-			self.stopmethod.disable()
+			self.loopStopped()
 			return
 
-		self.acquiremethod.enable()
-		self.startmethod.enable()
-		self.stopmethod.disable()
-		self.status.set('Acquisition loop stopped')
+		self.loopStopped()
+		self.setStatus('Acquisition loop stopped')
 
 	def acquisitionLoopStart(self):
 		if not self.loopstop.isSet():
+			self.loopStopped()
 			return
-		self.status.set('Starting acquisition loop...')
-		self.acquiremethod.disable()
-		self.startmethod.disable()
-		self.stopmethod.enable()
+		self.setStatus('Starting acquisition loop...')
 		loopthread = threading.Thread(target=self.acquisitionLoop)
 		loopthread.setDaemon(1)
 		loopthread.start()
 
 	def acquisitionLoopStop(self):
-		self.stopmethod.disable()
-		self.status.set('Stopping acquisition loop...')
+		self.setStatus('Stopping acquisition loop...')
 		self.loopstop.set()
 
 	def onSetPauseTime(self, value):
@@ -365,32 +345,6 @@ class ManualAcquisition(node.Node):
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
 
-		self.messagelog = uidata.MessageLog('Message Log')
-		self.status = uidata.String('Status', '', 'r')
-
-		self.mean = uidata.Float('Mean', None, 'r')
-		self.min = uidata.Float('Min', None, 'r')
-		self.max = uidata.Float('Max', None, 'r')
-		self.std = uidata.Float('Std. Dev.', None, 'r')
-		statisticscontainer = uidata.Container('Statistics')
-		statisticscontainer.addObject(self.mean, position={'position': (0, 0),
-																											'justify': ['center']})
-		statisticscontainer.addObject(self.min, position={'position': (0, 1),
-																											'justify': ['center']})
-		statisticscontainer.addObject(self.max, position={'position': (0, 2),
-																											'justify': ['center']})
-		statisticscontainer.addObject(self.std, position={'position': (0, 3),
-																											'justify': ['center']})
-
-		statuscontainer = uidata.Container('Status')
-		statuscontainer.addObject(self.status)
-
-		self.image = uidata.Image('Image', None, 'rw')
-		imagecontainer = uidata.Container('Image')
-		imagecontainer.addObject(statisticscontainer,
-															position={'justify': ['center'], 'expand': 'all'})
-		imagecontainer.addObject(self.image)
-
 		self.gridboxselect = uidata.SingleSelectFromList('Grid Box', None, None,
 																											'rw')
 		self.gridselect = uidata.SingleSelectFromList('Grid', None, None, 'rw')
@@ -403,70 +357,11 @@ class ManualAcquisition(node.Node):
 		gridcontainer.addObjects((self.gridboxselect, self.gridselect))
 		gridcontainer.addObject(refreshmethod, position={'justify': ['right']})
 
-		self.lowdose = uidata.Boolean('Low dose', False, 'rw', persist=True,
-							tooltip='Switch to low dose exposure mode before acquiring, and'
-								+ ' switch back to previous mode when acquisition is completed')
-		self.pause = uidata.Number('Low dose pause (seconds)', 5.0, 'rw',
-																persist=True,
-						tooltip='Number of seconds to pause after switching low dose modes')
-		self.up = uidata.Boolean('Up before acquire', True, 'rw',
-															persist=True,
-						tooltip='Move the main viewing screen up before image acquisition')
-		self.down = uidata.Boolean('Down after acquire', True,
-																'rw', persist=True,
-						tooltip='Move the main viewing screen down after image acquisition'
-											+ ' has completed')
-		mainscreencontainer = uidata.Container('Main Screen Control')
-		mainscreencontainer.addObjects((self.up, self.down))
-
-		self.correctimage = uidata.Boolean('Correct image', True, 'rw',
-																				persist=True,
-																			tooltip='Correct the acquired image data')
-		camerafuncscontainer = self.camerafuncs.uiSetupContainer()
-		self.pausetime = uidata.Number('Loop pause time (seconds)', 0.0, 'rw',
-																		callback=self.onSetPauseTime, persist=True,
-										tooltip='Time in seconds to pause between image acquistion'
-														+ ' when continuously acquiring')
-		self.usedatabase = uidata.Boolean('Save image to database', True, 'rw',
-																			persist=True,
-																	tooltip='Save each image and its information'
-																						+ ' to the database when acquired')
 		settingscontainer = uidata.Container('Settings')
-		settingscontainer.addObjects((gridcontainer, mainscreencontainer,
-																	self.correctimage, camerafuncscontainer,
-																	self.pausetime, self.usedatabase,
-																	self.lowdose, self.pause))
-
-		self.acquiremethod = uidata.Method('Acquire', self.acquireImage,
-													tooltip='Acquire an image with the current settings')
-		self.startmethod = uidata.Method('Start', self.acquisitionLoopStart,
-										tooltip='Start acquiring images on the specified interval')
-		self.stopmethod = uidata.Method('Stop', self.acquisitionLoopStop,
-																		tooltip='Stop acquiring images')
-		self.stopmethod.disable()
-		loopcontainer = uidata.Container('Continuous Acquisition')
-		loopcontainer.addObject(self.startmethod, position={'position': (0, 0)}) 
-		loopcontainer.addObject(self.stopmethod, position={'position': (1, 0)})
-		controlcontainer = uidata.Container('Control')
-		controlcontainer.addObject(self.acquiremethod,
-																position={'justify': ['center']})
-		controlcontainer.addObject(loopcontainer,
-																position={'position': (0, 1),
-																					'justify': ['center']})
+		settingscontainer.addObjects((gridcontainer,))
 
 		container = uidata.LargeContainer('Manual Acquisition')
-		container.addObject(self.messagelog, position={'position': (0, 0),
-																										'span': (1, 2),
-																										'expand': 'all'})
-		container.addObject(statuscontainer, position={'position': (1, 0),
-																										'span': (1, 2),
-																										'expand': 'all'})
 		container.addObject(settingscontainer, position={'position': (2, 0),
 																				'justify': ['bottom', 'left', 'right']})
-		container.addObject(controlcontainer, position={'position': (3, 0),
-																									'justify': ['left', 'right']})
-		container.addObject(imagecontainer, position={'position': (2, 1),
-																							'span': (2, 1)})
-																							#'justify': ['center']})
 		self.uicontainer.addObject(container)
 
