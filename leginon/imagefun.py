@@ -49,8 +49,7 @@ faster.  For now you are using slower functions implemented in imagefun'''
 ## division, but I can find no infinity constant or any other way of 
 ## producing infinity without first doing a zero division
 ## Here is my infinity contant
-print 'ignore zero division warning that may follow...'
-inf = Numeric.array(1.0, Numeric.Float32) / Numeric.array(0.0, Numeric.Float32)
+inf = 1e500
 
 def stdev_slow(inputarray, known_mean=None):
 	im = toFloat(inputarray)
