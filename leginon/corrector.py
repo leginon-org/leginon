@@ -11,6 +11,7 @@ import camerafuncs
 import dbdatakeeper
 import xmlrpclib
 import os
+import copy
 #import xmlrpclib2 as xmlbinlib
 xmlbinlib = xmlrpclib
 
@@ -137,17 +138,18 @@ class Corrector(node.Node):
 		return plan
 
 	def retrievePlan(self, camstate):
-		plan = self.research(dataclass=data.CorrectorPlanData, camstate=camstate)
-		return plan
+		plandatalist = self.research(dataclass=data.CorrectorPlanData, camstate=camstate)
+		plandata = plandatalist[0]
+		return plandata
 
 	def storePlan(self, plandata):
 		self.publish(plandata, database=True)
 
-	def acquireSeries(self, n, correction=True):
+	def acquireSeries(self, n, camstate):
 		series = []
 		for i in range(n):
 			print 'acquiring %s of %s' % (i+1, n)
-			imagedata = self.cam.acquireCameraImageData(correction=correction)
+			imagedata = self.cam.acquireCameraImageData(camstate=camstate, correction=False)
 			numimage = imagedata['image']
 			camstate = imagedata['camera']
 			scopestate = imagedata['scope']
@@ -157,34 +159,34 @@ class Corrector(node.Node):
 	def acquireReference(self, dark=False):
 		camconfig = self.cam.config()
 		camstate = camconfig['state']
-		tempcamstate = dict(camstate)
+		tempcamstate = copy.deepcopy(camstate)
 		if dark:
 			tempcamstate['exposure time'] = 0.0
 			typekey = 'dark'
-			datatype = data.DarkImageData
-			pubtype = event.DarkImagePublishEvent
 		else:
 			typekey = 'bright'
-			datatype = data.BrightImageData
-			pubtype = event.BrightImagePublishEvent
 
 		self.cam.state(tempcamstate)
 
 		navg = self.navgdata.get()
 
-		seriesinfo = self.acquireSeries(navg, False)
+		seriesinfo = self.acquireSeries(navg, camstate=tempcamstate)
 		series = seriesinfo['image series']
+		for im in series:
+			print im.shape, im.typecode()
 		seriescam = seriesinfo['camera']
 		seriesscope = seriesinfo['scope']
 
+		print 'averaging series'
 		ref = cameraimage.averageSeries(series)
-		imagedata = datatype(self.ID(), image=ref, scope=seriesscope, camera=seriescam, camstate=camstate)
-		self.publish(imagedata, eventclass=pubtype, database=True)
+		self.storeRef(typekey, ref, camstate)
 
+		print 'got ref, calcnorm'
 		self.calc_norm(camstate)
+		print 'returning ref'
 		return ref
 
-	def getRef(self, camstate, type):
+	def retrieveRef(self, camstate, type):
 		if type == 'dark':
 			imageclass = data.DarkImageData
 		elif type == 'bright':
@@ -196,13 +198,29 @@ class Corrector(node.Node):
 
 		try:
 			ref = self.research(dataclass=imageclass, camstate=camstate)
+			ref = ref[0]
 			return ref['image']
 		except:
 			return None
 
+	def storeRef(self, type, numdata, camstate):
+		if type == 'dark':
+			imageclass = data.DarkImageData
+			eventclass = event.DarkImagePublishEvent
+		elif type == 'bright':
+			imageclass = data.BrightImageData
+			eventclass = event.BrightImagePublishEvent
+		elif type == 'norm':
+			imageclass = data.NormImageData
+			eventclass = event.NormImagePublishEvent
+		
+		imagedata = imageclass(self.ID(), image=numdata, camstate=camstate)
+		print 'publishing'
+		self.publish(imagedata, eventclass=eventclass, database=True)
+
 	def calc_norm(self, camstate):
-		bright = self.getRef(camstate, 'dark')
-		bright = self.getRef(camstate, 'bright')
+		dark = self.retrieveRef(camstate, 'dark')
+		bright = self.retrieveRef(camstate, 'bright')
 		if bright is None:
 			print 'NO BRIGHT'
 			return
@@ -225,9 +243,8 @@ class Corrector(node.Node):
 		print 'norm 3'
 		norm = normavg / norm
 		print 'saving'
-		imagedata = data.NormImageData(self.ID(), image=norm, scope=seriesscope, camera=seriescam)
-		self.publish(imagedata, eventclass=pubtype, database=True)
-		
+		self.storeRef('norm', norm, camstate)
+
 	def acquireCorrectedArray(self):
 		imagedata = self.acquireCorrectedImageData()
 #		return imagedata.content['image']
@@ -295,8 +312,8 @@ class Corrector(node.Node):
 		return Numeric.clip(image, minclip, maxclip)
 
 	def normalize(self, raw, camstate):
-		dark = self.getRef(camstate, 'dark')
-		norm = self.getRef(camstate, 'norm')
+		dark = self.retrieveRef(camstate, 'dark')
+		norm = self.retrieveRef(camstate, 'norm')
 		if dark is not None and norm is not None:
 			diff = raw - dark
 			## this may result in some infinity values
