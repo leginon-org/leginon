@@ -678,25 +678,44 @@ class TargetImagePanel(ImagePanel):
 		self.targets = {}
 		self.colorlist = [wxRED, wxBLUE, wxColor(255, 0, 255), wxColor(0, 255, 255)]
 		self.colors = {}
+		self.targetbitmaps = {}
 		self.addTool(TargetTool(self, self.toolsizer, callback))
 
 	def addTargetType(self, name, value=[]):
 		if name in self.targets:
 			raise ValueError('Target type already exists')
-		try:
-			self.colors[name] = self.colorlist[0]
-			del self.colorlist[0]
-		except IndexError:
-			raise RuntimeError('Not enough colors for addition target types')
+		self.addTargetTypeColor(name)
+		self.addTargetTypeBitmaps(name)
 		self.targets[name] = list(value)
 		for tool in self.tools:
 			if hasattr(tool, 'addTargetType'):
 				tool.addTargetType(name)
 
+	def addTargetTypeColor(self, name):
+		try:
+			self.colors[name] = self.colorlist[0]
+			del self.colorlist[0]
+		except IndexError:
+			raise RuntimeError('Not enough colors for addition target types')
+
+	def deleteTargetTypeColor(self, name):
+		del self.colors[name]
+
+	def addTargetTypeBitmaps(self, name):
+		color = self.colors[name]
+		default = self.makeTargetBitmap(self.colors[name])
+		selectedcolor = wxColor(color.Red()/2, color.Green()/2, color.Blue()/2)
+		selected = self.makeTargetBitmap(selectedcolor)
+		self.targetbitmaps[name] = {'default': default, 'selected': selected}
+
+	def deleteTargetTypeBitmaps(self, name):
+		del self.targetbitmaps[name]
+
 	def deleteTargetType(self, name):
 		try:
 			self.colorlist.append[self.colors[name]]
-			del self.colors[name]
+			self.deleteTargetTypeColor(name)
+			self.deleteTargetTypeBitmaps(name)
 			del self.targets[name]
 		except:
 			raise ValueError('No such target type')
@@ -736,33 +755,32 @@ class TargetImagePanel(ImagePanel):
 		self.targets = {}
 		self.UpdateDrawing()
 
-	# needs to be stored rather than generated
-	def getTargetBitmap(self, target):
+	def makeTargetBitmap(self, color):
 		penwidth = 1
 		length = 15
-		for target_type in self.targets:
-			if target in self.targets[target_type]:
-				color = self.colors[target_type]
-				break
-		# temp
-		for tool in self.tools:
-			if hasattr(tool, 'closest_target'):
-				if target == tool.closest_target:
-					color = wxColor(color.Red()/2, color.Green()/2, color.Blue()/2)
-		pen = wxPen(color, 1)
-		mem = wxMemoryDC()
 		bitmap = wxEmptyBitmap(length, length)
-		mem.SelectObject(bitmap)
-		mem.BeginDrawing()
-		mem.Clear()
-		mem.SetBrush(wxBrush(color, wxTRANSPARENT))
-		mem.SetPen(pen)
-		mem.DrawLine(length/2, 0, length/2, length)
-		mem.DrawLine(0, length/2, length, length/2)
-		mem.EndDrawing()
-		mem.SelectObject(wxNullBitmap)
+		dc = wxMemoryDC()
+		dc.SelectObject(bitmap)
+		dc.BeginDrawing()
+		dc.Clear()
+		dc.SetBrush(wxBrush(color, wxTRANSPARENT))
+		dc.SetPen(wxPen(color, penwidth))
+		dc.DrawLine(length/2, 0, length/2, length)
+		dc.DrawLine(0, length/2, length, length/2)
+		dc.EndDrawing()
+		dc.SelectObject(wxNullBitmap)
 		bitmap.SetMask(wxMaskColour(bitmap, wxWHITE))
 		return bitmap
+
+	def getTargetBitmap(self, target):
+		for target_type in self.targets:
+			if target in self.targets[target_type]:
+				# temp
+				for tool in self.tools:
+					if hasattr(tool, 'closest_target'):
+						if target == tool.closest_target:
+							return self.targetbitmaps[target_type]['selected']
+				return self.targetbitmaps[target_type]['default']
 
 	def drawTarget(self, dc, target):
 		memorydc = wxMemoryDC()
