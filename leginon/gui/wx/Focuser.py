@@ -1,3 +1,4 @@
+import threading
 import wx
 from gui.wx.Choice import Choice
 from gui.wx.Entry import FloatEntry, EVT_ENTRY
@@ -86,6 +87,9 @@ class Panel(gui.wx.Acquisition.Panel):
 	def setManualImage(self, image, typename, stats={}):
 		evt = gui.wx.Events.SetImageEvent(image, typename, stats)
 		self.manualdialog.GetEventHandler().AddPendingEvent(evt)
+
+	def manualUpdated(self):
+		self.manualdialog.manualUpdated()
 
 class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 	def initialize(self):
@@ -343,6 +347,7 @@ class ManualFocusDialog(wx.MiniFrame):
 							id=gui.wx.ToolBar.ID_SET_INSTRUMENT)
 		self.Bind(wx.EVT_CLOSE, self.onClose)
 		self.Bind(gui.wx.Events.EVT_SET_IMAGE, self.onSetImage)
+		self.Bind(gui.wx.Events.EVT_MANUAL_UPDATED, self.onManualUpdated)
 
 	def onSettingsTool(self, evt):
 		self.settingsdialog.maskradius.SetValue(self.node.maskradius)
@@ -383,24 +388,40 @@ class ManualFocusDialog(wx.MiniFrame):
 			self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, True) 
 			self.toolbar.EnableTool(gui.wx.ToolBar.ID_STOP, False)
 
+	def _manualEnable(self, enable):
+		self.toolbar.Enable(enable)
+
+	def onManualUpdated(self, evt):
+		self._manualEnable(True)
+
+	def manualUpdated(self):
+		evt = gui.wx.Events.ManualUpdatedEvent()
+		self.GetEventHandler().AddPendingEvent(evt)
+
 	def onPlusTool(self, evt):
-		self.node.uiFocusUp()
+		self._manualEnable(False)
+		threading.Thread(target=self.node.uiFocusUp).start()
 
 	def onMinusTool(self, evt):
-		self.node.uiFocusDown()
+		self._manualEnable(False)
+		threading.Thread(target=self.node.uiFocusDown).start()
 
 	def onValueTool(self, evt):
+		self._manualEnable(False)
 		value = self.value.GetValue()
-		self.node.setFocus(value)
+		threading.Thread(target=self.node.setFocus, args=(value,)).start()
 
 	def onResetTool(self, evt):
-		self.node.uiResetDefocus()
+		self._manualEnable(False)
+		threading.Thread(target=self.node.uiResetDefocus).start()
 
 	def onGetInstrumentTool(self, evt):
-		self.node.uiEucentricFromScope()
+		self._manualEnable(False)
+		threading.Thread(target=self.node.uiEucentricFromScope).start()
 
 	def onSetInstrumentTool(self, evt):
-		self.node.uiChangeToEucentric()
+		self._manualEnable(False)
+		threading.Thread(target=self.node.uiChangeToEucentric).start()
 
 	def onClose(self, evt):
 		self.node.manualplayer.stop()

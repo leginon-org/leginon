@@ -30,6 +30,7 @@ eventFactory('Set Instrument Done')
 eventFactory('Measurement Done')
 eventFactory('Submit Targets')
 eventFactory('Targets Submitted')
+eventFactory('Manual Updated')
 
 PlayerEventType = wx.NewEventType()
 SetImageEventType = wx.NewEventType()

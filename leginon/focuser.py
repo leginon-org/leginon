@@ -21,6 +21,7 @@ except:
 import copy
 import gui.wx.Focuser
 import player
+import EM
 
 class Focuser(acquisition.Acquisition):
 	panelclass = gui.wx.Focuser.Panel
@@ -79,7 +80,12 @@ class Focuser(acquisition.Acquisition):
 		self.euclient = calibrationclient.EucentricFocusClient(self)
 
 	def eucentricFocusToScope(self):
-		scope = self.emclient.getScope()
+		errstr = 'Eucentric focus to instrument failed: %s'
+		try:
+			scope = self.emclient.getScope()
+		except EM.ScopeUnavailable, e:
+			self.logger.error(errstr % 'unable to access instrument')
+			return
 		ht = scope['high tension']
 		mag = scope['magnification']
 		eufoc = self.euclient.researchEucentricFocus(ht, mag)
@@ -91,11 +97,20 @@ class Focuser(acquisition.Acquisition):
 			self.emclient.setScope(emdata)
 
 	def eucentricFocusFromScope(self):
-		scope = self.emclient.getScope()
+		errstr = 'Eucentric focus from instrument failed: %s'
+		try:
+			scope = self.emclient.getScope()
+		except EM.ScopeUnavailable, e:
+			self.logger.error(errstr % 'unable to access instrument')
+			return
 		ht = scope['high tension']
 		mag = scope['magnification']
 		foc = scope['focus']
-		self.euclient.publishEucentricFocus(ht, mag, foc)
+		try:
+			self.euclient.publishEucentricFocus(ht, mag, foc)
+		except node.PublishError, e:
+			self.logger.error(errstr % 'unable to save')
+			return
 		self.logger.info('Eucentric focus saved to database, HT: %s, Mag.: %s, Focus: %s' % (ht, mag, foc))
 
 	def autoFocus(self, resultdata, presettarget):
@@ -364,9 +379,11 @@ class Focuser(acquisition.Acquisition):
 
 	def uiFocusUp(self):
 		self.changeFocus('up')
+		self.panel.manualUpdated()
 
 	def uiFocusDown(self):
 		self.changeFocus('down')
+		self.panel.manualUpdated()
 
 	def uiResetDefocus(self):
 		self.manualchecklock.acquire()
@@ -375,12 +392,19 @@ class Focuser(acquisition.Acquisition):
 			self.resetDefocus()
 		finally:
 			self.manualchecklock.release()
+			self.panel.manualUpdated()
 		self.logger.info('Defcous reset')
 
 	def resetDefocus(self):
+		errstr = 'Reset defocus failed: %s'
 		newemdata = data.ScopeEMData()
 		newemdata['reset defocus'] = True
-		self.emclient.setScope(newemdata)
+		try:
+			self.emclient.setScope(newemdata)
+		except node.PublishError, e:
+			self.logger.error(errstr % 'unable to access instrument')
+		except node.ConfirmationNoBinding, e:
+			self.logger.error(errstr % 'unable to access instrument (not bound)')
 
 	def uiChangeToEucentric(self):
 		self.manualchecklock.acquire()
@@ -389,11 +413,14 @@ class Focuser(acquisition.Acquisition):
 			self.eucentricFocusToScope()
 		finally:
 			self.manualchecklock.release()
+			self.panel.manualUpdated()
 
 	def uiEucentricFromScope(self):
 		self.eucentricFocusFromScope()
+		self.panel.manualUpdated()
 
 	def setFocus(self, value):
+		errstr = 'Set focus failed: %s'
 		self.manualchecklock.acquire()
 		self.logger.info('Changing to zero defocus')
 		try:
@@ -402,9 +429,15 @@ class Focuser(acquisition.Acquisition):
 				newemdata['stage position'] = {'z': value}
 			elif self.parameter == 'Defocus':
 				newemdata['defocus'] = value
-			self.emclient.setScope(newemdata)
+			try:
+				self.emclient.setScope(newemdata)
+			except node.PublishError, e:
+				self.logger.error(errstr % 'unable to access instrument')
+			except node.ConfirmationNoBinding, e:
+				self.logger.error(errstr % 'unable to access instrument (not bound)')
 		finally:
 			self.manualchecklock.release()
+			self.panel.manualUpdated()
 
 	def changeFocus(self, direction):
 		delta = self.increment
@@ -427,9 +460,16 @@ class Focuser(acquisition.Acquisition):
 			elif self.parameter == 'Defocus':
 				newemdata['defocus'] = value
 			self.emclient.setScope(newemdata)
-		finally:
+		except EM.ScopeUnavailable, e:
+			self.logger.error('Change focus failed: unable to access instrument')
 			self.manualchecklock.release()
+			return
+		except Exception, e:
+			self.logger.exception('Change focus failed: %s' % e)
+			self.manualchecklock.release()
+			return
 
+		self.manualchecklock.release()
 
 		self.logger.info('Changed %s %s %s' % (self.parameter, direction, delta,))
 
