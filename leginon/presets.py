@@ -271,10 +271,11 @@ class PresetsManager(node.Node):
 			selectedindex = self.uiselectpreset.getSelected()
 			try:
 				selectedname = self.uiselectpreset.getSelectedValue()
-			except RuntimeError:
-				selectedindex = 0
-			else:
+				## may not be in presets anymore if removed
+				## should cause exception
 				selectedindex = self.presets.keys().index(selectedname)
+			except:
+				selectedindex = 0
 			self.uiselectpreset.set(self.presets.keys(), selectedindex)
 
 		## only set the UI if this was not from a callback
@@ -313,11 +314,8 @@ class PresetsManager(node.Node):
 		pnew = data.PresetData(initializer=premove, removed=1)
 		self.presetToDB(pnew)
 
-		## update numbers if necessary
+		## update order, selector list, etc.
 		self.setOrder()
-
-		pnames = self.presetNames()
-		self.uiselectpreset.set(pnames, 0)
 
 	def toScope(self, pname, magonly=False, outputevent=True):
 		'''
