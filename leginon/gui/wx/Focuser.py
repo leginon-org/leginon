@@ -352,9 +352,11 @@ class ManualFocusDialog(wx.MiniFrame):
 	def onSettingsTool(self, evt):
 		self.settingsdialog.maskradius.SetValue(self.node.maskradius)
 		self.settingsdialog.increment.SetValue(self.node.increment)
+		self.MakeModal(False)
 		if self.settingsdialog.ShowModal() == wx.ID_OK:
 			self.node.maskradius = self.settingsdialog.maskradius.GetValue()
 			self.node.increment = self.settingsdialog.increment.GetValue()
+		self.MakeModal(True)
 
 	def onPlayTool(self, evt):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
