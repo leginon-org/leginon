@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Launcher.py,v $
-# $Revision: 1.31 $
+# $Revision: 1.32 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-22 23:47:20 $
+# $Date: 2005-03-21 23:43:03 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -174,6 +174,9 @@ class ListCtrlPanel(wx.Panel):
 		for text, p in self.panelmap.items():
 			if p is panel:
 				break
+
+		if p is not panel:
+			return
 
 		item = self.selector.getItem(text)
 		if self.selector.isSelected(item):

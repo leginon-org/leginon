@@ -107,18 +107,19 @@ class ExitRequest(Request):
 	pass
 
 class GridRequest(Request):
-	def __init__(self, number, gridid=None, node=None):
+	def __init__(self, number, gridid=None, node=None, griddata=None):
 		Request.__init__(self)
 		self.number = number
 		self.loaded = False
 		self.gridid = gridid
 		self.node = node
+		self.griddata = griddata
 
 if sys.platform == 'win32':
 	import pythoncom
 	import win32com.client
 	import pywintypes
-	import Queue
+import Queue
 
 class Robot(node.Node):
 	panelclass = gui.wx.Robot.Panel
@@ -178,19 +179,21 @@ class Robot(node.Node):
 	def handleQueueGrid(self, ievent):
 		number = self.getGridNumber(ievent['grid ID'])
 		evt = event.GridLoadedEvent()
-		evt['grid ID'] = ievent['grid ID']
+		griddata = data.GridData(initializer={'grid ID': ievent['grid ID']})
+		evt['grid'] = griddata
 		evt['request node'] = ievent['node']
 		if number is None:
 			evt['status'] = 'invalid'
 			self.outputEvent(evt)
 			return
-		request = GridRequest(number, evt['grid ID'], evt['request node'])
+		request = GridRequest(number, evt['grid']['grid ID'], evt['request node'])
 		self.queue.put(request)
 		request.event.wait()
 		if request.loaded:
 			evt['status'] = 'ok'
 		else:
 			evt['status'] = 'failed'
+		evt['grid'] = request.griddata
 		self.outputEvent(evt)
 
 	def handleUnloadGrid(self, evt):
@@ -202,10 +205,10 @@ class Robot(node.Node):
 		self.extractcondition.release()
 
 	def _queueHandler(self):
-		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
 		if self.simulate:
 			self.communication = TestCommunication()
 		else:
+			pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
 			try:
 				self.communication = win32com.client.Dispatch(
 																								'RobotCommunications.Signal')
@@ -238,13 +241,15 @@ class Robot(node.Node):
 				self.gridnumber = gridnumber
 
 				try:
-					self.insert()
+					griddata = self.insert()
 				except GridLoadError:
 					self.gridnumber = None
 					continue
 
 				if hasattr(request, 'loaded'):
 					request.loaded = True
+				if hasattr(request, 'griddata'):
+					request.griddata = griddata
 				request.event.set()
 
 				self.extractcondition.acquire()
@@ -569,7 +574,9 @@ class Robot(node.Node):
 			if griddata['insertion'] > insertion:
 				insertion = griddata['insertion']
 		initializer = {'grid ID': gridid, 'insertion': insertion + 1}
-		return data.GridData(initializer=initializer)
+		griddata = data.GridData(initializer=initializer)
+		self.publish(griddata, database=True)
+		return griddata
 
 	def selectGrid(self, gridnumber):
 		self.logger.info('Current grid: %d' % gridnumber)
@@ -606,8 +613,7 @@ class Robot(node.Node):
 		if self.simulate:
 			self.estimateTimeLeft()
 			self.logger.info('Insertion of holder successfully completed')
-			self.gridInserted(self.gridnumber)
-			return
+			return self.gridInserted(self.gridnumber)
 
 		self.estimateTimeLeft()
 
@@ -637,7 +643,7 @@ class Robot(node.Node):
 		self.unlockScope()
 
 		self.logger.info('Insertion of holder successfully completed')
-		self.gridInserted(self.gridnumber)
+		return self.gridInserted(self.gridnumber)
 
 	def extract(self):
 		if self.simulate:
@@ -701,7 +707,7 @@ class Robot(node.Node):
 			else:
 				self.outputEvent(evt)
 				self.logger.info('Data collection event outputted')
-			return
+			return evt['grid']
 
 		self.logger.info('Grid inserted.')
 
@@ -715,6 +721,7 @@ class Robot(node.Node):
 		else:
 			self.outputEvent(evt)
 			self.logger.info('Data collection event outputted')
+		return evt['grid']
 
 	def waitScope(self, parameter, value, interval=None, timeout=0.0):
 		if self.instrument.tem.hasAttribute(parameter):

@@ -789,7 +789,7 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		biny = camera['binning']['y']
 		par = self.parameter()
 		tem = scope['tem']
-		cam = camera['ccdcamera']
+		ccdcamera = camera['ccdcamera']
 
 		pixrow = pixelshift['row'] * biny
 		pixcol = pixelshift['col'] * binx

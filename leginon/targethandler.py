@@ -175,8 +175,11 @@ class TargetWaitHandler(TargetHandler):
 		'''
 		Waits until theading events of all target list data are cleared.
 		'''
-		if self.settings['queue']:
-			return
+		try:
+			if self.settings['queue']:
+				return
+		except AttributeError, KeyError:
+			pass
 		for tid, teventinfo in self.targetlistevents.items():
 			self.logger.info('%s waiting for %s' % (self.name, tid))
 			teventinfo['received'].wait()

@@ -754,10 +754,13 @@ class PresetsManager(node.Node):
 		#queryinst = data.InstrumentData()
 		#queryinst['name'] = myinstname
 		#querysession['instrument'] = queryinst
-		limit = 100
+		limit = 256
 		sessionlist = self.research(datainstance=querysession, results=limit)
-		sessionnamelist = [x['name'] for x in sessionlist]
-		self.sessiondict = newdict.OrderedDict(zip(sessionnamelist, sessionlist))
+		sessions = []
+		for session in sessionlist:
+			if 'name' in session and session['name']:
+				sessions.append((session['name'], session))
+		self.sessiondict = newdict.OrderedDict(sessions)
 
 	def acquireDoseImage(self, presetname):
 		errstr = 'Acquire dose image failed: %s'

@@ -302,7 +302,7 @@ class QueueGridEvent(ControlEvent):
 class GridLoadedEvent(NotificationEvent):
 	def typemap(cls):
 		return ControlEvent.typemap() + (
-			('grid ID', int),
+			('grid', data.GridData),
 			('request node', str),
 			('status', str),
 		)

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/atlasviewer.py,v $
-# $Revision: 1.11 $
+# $Revision: 1.12 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-11 02:30:08 $
+# $Date: 2005-03-21 23:43:03 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -170,6 +170,7 @@ class AtlasViewer(node.Node, targethandler.TargetWaitHandler):
 		self.waitforgridid = None
 		self.waitforgridevent = threading.Event()
 		self.waitforgridstatus = None
+		self.waitforgriddata = None
 
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 
@@ -197,8 +198,9 @@ class AtlasViewer(node.Node, targethandler.TargetWaitHandler):
 		if evt['request node'] != self.name:
 			return
 
-		if self.waitforgridid == evt['grid ID']:
+		if self.waitforgridid == evt['grid']['grid ID']:
 			self.waitforgridstatus = evt['status']
+			self.waitforgriddata = evt['grid']
 			self.waitforgridevent.set()
 
 	def getAtlases(self):
@@ -292,7 +294,7 @@ class AtlasViewer(node.Node, targethandler.TargetWaitHandler):
 			self.insertion.images.reverse()
 
 	def setAtlas(self, gridid, number):
-		self.updateAtlasTargets()
+		#self.updateAtlasTargets()
 		grid = self.grids.getGridByID(gridid)
 		self.insertion = grid.getInsertionByNumber(number)
 		self.updateAtlasImage()
@@ -328,6 +330,10 @@ class AtlasViewer(node.Node, targethandler.TargetWaitHandler):
 		return ((minrow, maxrow), (mincolumn, maxcolumn))
 
 	def updateAtlasImage(self):
+		if self.insertion is None:
+			self.setImage(None, 'Image')
+			self.setTargets([], 'Acquisition')
+			return
 		self.updateImages(self.insertion.images)
 		extrema = self.getAtlasExtrema(self.insertion.images)
 		shape = (extrema[0][1] - extrema[0][0], extrema[1][1] - extrema[1][0])
@@ -388,6 +394,8 @@ class AtlasViewer(node.Node, targethandler.TargetWaitHandler):
 			self.waitforgridid = None
 			status = self.waitforgridstatus
 			self.waitforgridstatus = None
+			griddata = self.waitforgriddata
+			self.waitforgriddata = None
 			self.waitforgridevent.clear()
 
 			if status == 'ok':
