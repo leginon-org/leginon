@@ -61,11 +61,16 @@ class FileReference(object):
 		self.filename = filename
 		self.loader = loader
 		self.pathkey = pathkey
+		self.data = None
 
 	def read(self, path):
-		#print 'reading image', self.filename
+		if self.data is not None:
+			print 'already read', self.filename
+			return self.data
+		print 'reading image', self.filename
 		fullname = os.path.join(path, self.filename)
-		return self.loader(fullname)
+		self.data = self.loader(fullname)
+		return self.data
 
 ## still missing from these classes: ##   __copy__
 
