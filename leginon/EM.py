@@ -179,6 +179,8 @@ class EM(node.Node):
 		self.scopemessagelog = uidata.MessageLog('Scope Message Log')
 		self.cameramessagelog = uidata.MessageLog('Camera Message Log')
 
+		self.typemap = {}
+
 		# These keys are not included in a get all parameters
 		self.prunekeys = [
 			'gun shift',
@@ -384,6 +386,8 @@ class EM(node.Node):
 				except KeyError:
 					pass
 
+		self.panel.initParameters(self.typemap)
+
 		self.uistate = {}
 		self.defineUserInterface()
 
@@ -416,6 +420,7 @@ class EM(node.Node):
 		try:
 			scopeclass = self.getClass(modulename, classname)
 			self.scope = methoddict.factory(scopeclass)()
+			self.typemap.update(self.scope.typemapping)
 		except Exception, e:
 			self.scopemessagelog.error('Cannot set scope to type ' + str(scopename))
 
@@ -427,6 +432,7 @@ class EM(node.Node):
 		try:
 			cameraclass = self.getClass(modulename, classname)
 			self.camera = methoddict.factory(cameraclass)()
+			self.typemap.update(self.camera.typemapping)
 		except Exception, e:
 			self.cameramessagelog.error('Cannot set camera to type ' + str(cameraname))
 

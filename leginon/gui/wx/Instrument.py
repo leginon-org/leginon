@@ -2,8 +2,90 @@ import wx
 from gui.wx.Entry import Entry, IntEntry, FloatEntry, EVT_ENTRY
 import gui.wx.Node
 
+def setControl(control, value):
+	testr = '%s value must be of type %s (is type %s)'
+	vestr = 'Invalid value %s for instance of %s'
+	controlname = control.__class__.__name__
+	valuetypename = value.__class__.__name__
+
+	if isinstance(control, wx.StaticText):
+
+		try:
+			value = str(value)
+		except:
+			typename = str.__name__
+			raise TypeError(testr % (controlname, typename, valuetypename))
+
+		control.SetLabel(value)
+
+	if isinstance(control, (Entry, wx.TextCtrl, wx.CheckBox)):
+
+		if isinstance(control, Entry):
+			pass
+		elif isinstance(control, wx.TextCtrl) and type(value) is not str:
+			typename = str.__name__
+			raise TypeError(testr % (controlname, typename, valuetypename))
+		elif isinstance(control, wx.CheckBox) and type(value) is not bool:
+			typename = bool.__name__
+			raise TypeError(testr % (controlname, typename, valuetypename))
+
+		try:
+			control.SetValue(value)
+		except ValueError:
+			raise ValueError(vestr % (value, controlname))
+
+	elif isinstance(control, wx.Choice):
+
+		if isinstance(control, wx.TextCtrl) and type(value) is not str:
+			typename = str.__name__
+			raise TypeError(testr % (controlname, typename, valuetypename))
+
+		if control.FindString(value) == wx.NOT_FOUND:
+			raise ValueError(vestr % (value, controlname))
+		else:
+			control.SetStringSelection(value)
+
+def getValue(wxobj):
+	if isinstance(wxobj, wx.StaticText):
+		return wxobj.GetLabel()
+	elif isinstance(wxobj, (Entry, wx.TextCtrl, wx.CheckBox)):
+		return wxobj.GetValue()
+	elif isinstance(wxobj, wx.Choice):
+		return wxobj.GetStringSelection()
+	elif isinstance(wxobj, wx.Event):
+		evtobj = wxobj.GetEventObject()
+		if isinstance(evtobj, wx.CheckBox):
+			return wxobj.IsChecked()
+		elif isinstance(evtobj, (Entry, wx.TextCtrl)):
+			return wxobj.GetValue()
+		elif isinstance(evtobj, wx.Choice):
+			return wxobj.GetString()
+	else:
+		raise ValueError('Cannot get value for %s' % wxobj.__class__.__name__)
+
+def bindControl(parent, method, control):
+	if isinstance(wxobj, wx.CheckBox):
+		binder = wx.EVT_CHECKBOX
+	elif isinstance(wxobj, Entry):
+		binder = EVT_ENTRY
+	elif isinstance(wxobj, wx.Choice):
+		binder = wx.EVT_CHOICE
+	else:
+		raise ValueError('Cannot bind event for %s' % wxobj.__class__.__name__)
+	parent.Bind(binder, method, control)
+
+InitParametersEventType = wx.NewEventType()
 SetParametersEventType = wx.NewEventType()
+
+EVT_INIT_PARAMETERS = wx.PyEventBinder(InitParametersEventType)
 EVT_SET_PARAMETERS = wx.PyEventBinder(SetParametersEventType)
+
+class InitParametersEvent(wx.PyCommandEvent):
+	def __init__(self, source, parameters):
+		wx.PyCommandEvent.__init__(self, InitParametersEventType, source.GetId())
+		self.SetEventObject(source)
+		self.parameters = parameters
+
 class SetParametersEvent(wx.PyCommandEvent):
 	def __init__(self, source, parameters):
 		wx.PyCommandEvent.__init__(self, SetParametersEventType, source.GetId())
@@ -38,7 +120,7 @@ class LensesSizer(wx.StaticBoxSizer):
 		self.addXY('Tilt', 'Beam')
 		self.addXY('Objective', 'Stigmator')
 		self.addXY('Diffraction', 'Stigmator')
-		self.addXY('Condensor', 'Stigmator')
+		self.addXY('Condenser', 'Stigmator')
 
 		self.sz.AddGrowableCol(0)
 
@@ -56,6 +138,7 @@ class LensesSizer(wx.StaticBoxSizer):
 			self.xy[group][name][a] = FloatEntry(self.parent, -1, chars=9)
 			self.sz.Add(self.xy[group][name][a], (row, i+2), (1, 1),
 									wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+			self.xy[group][name][a].Enable(False)
 		self.row += 1
 
 class FilmSizer(wx.StaticBoxSizer):
@@ -79,7 +162,7 @@ class FilmSizer(wx.StaticBoxSizer):
 			'External shutter',
 		]
 
-		parameters = {
+		self.parameters = {
 			'Stock': wx.StaticText(self.parent, -1, ''),
 			'Exposure number': IntEntry(self.parent, -1, chars=5),
 			'Exposure type': wx.Choice(self.parent, -1),
@@ -96,8 +179,11 @@ class FilmSizer(wx.StaticBoxSizer):
 		for key in parameterorder:
 			st = wx.StaticText(self.parent, -1, key + ':')
 			self.sz.Add(st, (row, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-			self.sz.Add(parameters[key], (row, 1), (1, 1),
-									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
+			style = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT
+			if isinstance(self.parameters[key], Entry):
+				style |= wx.FIXED_MINSIZE
+			self.sz.Add(self.parameters[key], (row, 1), (1, 1), style)
+			self.parameters[key].Enable(False)
 			row += 1
 
 class StageSizer(wx.StaticBoxSizer):
@@ -156,7 +242,7 @@ class HolderSizer(wx.StaticBoxSizer):
 
 		parameterorder = ['Status', 'Type']
 
-		parameters = {
+		self.parameters = {
 			'Status': wx.StaticText(self.parent, -1, ''),
 			'Type': wx.Choice(self.parent, -1),
 		}
@@ -164,7 +250,8 @@ class HolderSizer(wx.StaticBoxSizer):
 		for i, p in enumerate(parameterorder):
 			st = wx.StaticText(self.parent, -1, p + ':')
 			self.sz.Add(st, (i, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-			self.sz.Add(parameters[p], (i, 1), (1, 1), wx.ALIGN_CENTER)
+			self.sz.Add(self.parameters[p], (i, 1), (1, 1), wx.ALIGN_CENTER)
+			self.parameters[p].Enable(False)
 
 		self.sz.AddGrowableCol(1)
 
@@ -176,7 +263,7 @@ class ScreenSizer(wx.StaticBoxSizer):
 		self.sz = wx.GridBagSizer(0, 5)
 		self.Add(self.sz, 1, wx.EXPAND|wx.ALL, 5)
 
-		parameters = {
+		self.parameters = {
 			'Current': wx.StaticText(self.parent, -1, ''),
 			'Main': wx.Choice(self.parent, -1),
 			'Small': wx.StaticText(self.parent, -1, ''),
@@ -185,14 +272,16 @@ class ScreenSizer(wx.StaticBoxSizer):
 		p = 'Current'
 		st = wx.StaticText(self.parent, -1, p + ':')
 		self.sz.Add(st, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.sz.Add(parameters[p], (0, 1), (1, 2), wx.ALIGN_CENTER)
+		self.sz.Add(self.parameters[p], (0, 1), (1, 2), wx.ALIGN_CENTER)
 
 		st = wx.StaticText(self.parent, -1, 'Position:')
 		self.sz.Add(st, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		for i, p in enumerate(['Main', 'Small']):
 			st = wx.StaticText(self.parent, -1, p)
 			self.sz.Add(st, (i+1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-			self.sz.Add(parameters[p], (i+1, 2), (1, 1), wx.ALIGN_CENTER)
+			self.sz.Add(self.parameters[p], (i+1, 2), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL)
+			self.parameters[p].Enable(False)
 		self.sz.AddGrowableCol(0)
 		self.sz.AddGrowableCol(1)
 		self.sz.AddGrowableCol(2)
@@ -211,7 +300,7 @@ class VacuumSizer(wx.StaticBoxSizer):
 			'Column valves',
 			'Turbo pump'
 		]
-		parameters = {
+		self.parameters = {
 			'Status': wx.StaticText(self.parent, -1, ''),
 			'Column pressure': wx.StaticText(self.parent, -1, ''),
 			'Column valves': wx.Choice(self.parent, -1),
@@ -221,8 +310,9 @@ class VacuumSizer(wx.StaticBoxSizer):
 		for i, p in enumerate(parameterorder):
 			st = wx.StaticText(self.parent, -1, p + ':')
 			self.sz.Add(st, (i, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-			self.sz.Add(parameters[p], (i, 1), (1, 1), wx.ALIGN_CENTER)
+			self.sz.Add(self.parameters[p], (i, 1), (1, 1), wx.ALIGN_CENTER)
 			self.sz.AddGrowableRow(i)
+			self.parameters[p].Enable(False)
 
 class LowDoseSizer(wx.StaticBoxSizer):
 	def __init__(self, parent, title='Low Dose'):
@@ -236,7 +326,7 @@ class LowDoseSizer(wx.StaticBoxSizer):
 			'Status',
 			'Mode'
 		]
-		parameters = {
+		self.parameters = {
 			'Status': wx.Choice(self.parent, -1),
 			'Mode': wx.Choice(self.parent, -1),
 		}
@@ -244,7 +334,8 @@ class LowDoseSizer(wx.StaticBoxSizer):
 		for i, p in enumerate(parameterorder):
 			st = wx.StaticText(self.parent, -1, p)
 			self.sz.Add(st, (i, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-			self.sz.Add(parameters[p], (i, 1), (1, 1), wx.ALIGN_CENTER)
+			self.sz.Add(self.parameters[p], (i, 1), (1, 1), wx.ALIGN_CENTER)
+			self.parameters[p].Enable(False)
 
 		self.sz.AddGrowableCol(1)
 
@@ -260,7 +351,7 @@ class FocusSizer(wx.StaticBoxSizer):
 			'Focus',
 			'Defocus',
 		]
-		parameters = {
+		self.parameters = {
 			'Focus': FloatEntry(self.parent, -1, chars=9),
 			'Defocus': FloatEntry(self.parent, -1, chars=9),
 			'Reset Defocus': wx.Button(self.parent, -1, 'Reset Defocus'),
@@ -269,9 +360,13 @@ class FocusSizer(wx.StaticBoxSizer):
 		for i, p in enumerate(parameterorder):
 			st = wx.StaticText(self.parent, -1, p)
 			self.sz.Add(st, (i, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-			self.sz.Add(parameters[p], (i, 1), (1, 1), wx.ALIGN_CENTER)
+			self.sz.Add(self.parameters[p], (i, 1), (1, 1), wx.ALIGN_CENTER)
 
-		self.sz.Add(parameters['Reset Defocus'], (i+1, 1), (1, 1), wx.ALIGN_CENTER)
+		self.sz.Add(self.parameters['Reset Defocus'], (i+1, 1), (1, 1),
+								wx.ALIGN_CENTER)
+
+		for p in self.parameters.values():
+			p.Enable(False)
 
 		self.sz.AddGrowableCol(1)
 
@@ -298,12 +393,13 @@ class MainSizer(wx.StaticBoxSizer):
 
 		for i, p in enumerate(parameterorder):
 			st = wx.StaticText(self.parent, -1, p + ':')
-			self.sz.Add(st, (i, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-			self.sz.Add(self.parameters[p], (i, 1), (1, 1),
-									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.FIXED_MINSIZE)
-			self.sz.AddGrowableRow(i)
+			style = wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT
 			if isinstance(self.parameters[p], Entry):
-				self.parameters[p].Enable(False)
+				style |= wx.FIXED_MINSIZE
+			self.sz.Add(st, (i, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+			self.sz.Add(self.parameters[p], (i, 1), (1, 1), style)
+			self.sz.AddGrowableRow(i)
+			self.parameters[p].Enable(False)
 
 		self.sz.AddGrowableCol(1)
 
@@ -346,10 +442,10 @@ class Panel(gui.wx.Node.Panel):
 		self.szparameters.Add(self.szlowdose, (4, 1), (1, 1), wx.EXPAND)
 
 		self.parametermap = {
-			'high tension': self.szmain.parameters['High tension'],
-			'magnification': self.szmain.parameters['Magnification'],
-			'intensity': self.szmain.parameters['Intensity'],
-			'spot size': self.szmain.parameters['Spot size'],
+			'high tension': self.szpmain.parameters['High tension'],
+			'magnification': self.szpmain.parameters['Magnification'],
+			'intensity': self.szpmain.parameters['Intensity'],
+			'spot size': self.szpmain.parameters['Spot size'],
 			'stage status': self.szstage.parameters['Status'],
 			'corrected stage position': self.szstage.parameters['Correction'],
 			'stage position': {
@@ -359,24 +455,102 @@ class Panel(gui.wx.Node.Panel):
 				'a': self.szstage.parameters['a'],
 				'b': self.szstage.parameters['b'],
 			},
+			'image shift': {
+				'x': self.szlenses.xy['Image']['Shift']['x'],
+				'y': self.szlenses.xy['Image']['Shift']['y'],
+			},
+			'raw image shift': {
+				'x': self.szlenses.xy['Image']['Shift (raw)']['x'],
+				'y': self.szlenses.xy['Image']['Shift (raw)']['y'],
+			},
+			'beam shift': {
+				'x': self.szlenses.xy['Beam']['Shift']['x'],
+				'y': self.szlenses.xy['Beam']['Shift']['y'],
+			},
+			'beam tilt': {
+				'x': self.szlenses.xy['Beam']['Tilt']['x'],
+				'y': self.szlenses.xy['Beam']['Tilt']['y'],
+			},
+			'stigmator': {
+				'objective': {
+					'x': self.szlenses.xy['Stigmator']['Objective']['x'],
+					'y': self.szlenses.xy['Stigmator']['Objective']['y'],
+				},
+				'diffraction': {
+					'x': self.szlenses.xy['Stigmator']['Diffraction']['x'],
+					'y': self.szlenses.xy['Stigmator']['Diffraction']['y'],
+				},
+				'condenser': {
+					'x': self.szlenses.xy['Stigmator']['Condenser']['x'],
+					'y': self.szlenses.xy['Stigmator']['Condenser']['y'],
+				},
+			},
+			'film stock': self.szfilm.parameters['Stock'],
+			'film exposure number': self.szfilm.parameters['Exposure number'],
+			'film exposure type': self.szfilm.parameters['Exposure type'],
+			'film automatic exposure time':
+				self.szfilm.parameters['Automatic exposure time'],
+			'film manual exposure time':
+				self.szfilm.parameters['Manual exposure time'],
+			'film user code': self.szfilm.parameters['User code'],
+			'film date type': self.szfilm.parameters['Date Type'],
+			'film text': self.szfilm.parameters['Text'],
+			'shutter': self.szfilm.parameters['Shutter'],
+			'external shutter': self.szfilm.parameters['External shutter'],
+			'focus': self.szfocus.parameters['Focus'],
+			'defocus': self.szfocus.parameters['Defocus'],
+			'reset defocus': self.szfocus.parameters['Reset Defocus'],
+			'screen current': self.szscreen.parameters['Current'],
+			'main screen position': self.szscreen.parameters['Main'],
+			'small screen position': self.szscreen.parameters['Small'],
+			'vacuum status': self.szvacuum.parameters['Status'],
+			'column pressure': self.szvacuum.parameters['Column pressure'],
+			'column valves': self.szvacuum.parameters['Column valves'],
+			'turbo pump': self.szvacuum.parameters['Turbo pump'],
+			'holder status': self.szholder.parameters['Status'],
+			'holder type': self.szholder.parameters['Type'],
+			'low dose': self.szlowdose.parameters['Status'],
+			'low dose mode': self.szlowdose.parameters['Mode'],
 		}
 
 		self.SetSizerAndFit(self.szmain)
 		self.SetupScrolling()
 		self.Enable(False)
 
+		self.Bind(EVT_INIT_PARAMETERS, self.onInitParameters)
 		self.Bind(EVT_SET_PARAMETERS, self.onSetParameters)
+
+	def _initParameter(self, parameter, value):
+		if isinstance(parameter, wx.Choice):
+			parameter.Clear()
+			parameter.AppendItems(value['values'])
 
 	def _setParameter(self, parameter, value):
 		if isinstance(parameter, dict):
 			self._setParameters(value, parameter)
-		elif isinstance(parameter, wx.StaticText):
-			parameter.SetLabel(value)
-		elif isinstance(parameter, (Entry, wx.TextCtrl, wx.CheckBox)):
-			parameter.SetValue(value)
-			parameter.Enable(True)
+		else:
+			try:
+				setControl(parameter, value)
+				parameter.Enable(True)
+			except (TypeError, ValueError), e:
+				pass
+
+	def _initParameters(self, parameters, parametermap=None):
+		self.Enable(False)
+		self.Freeze()
+		if parametermap is None:
+			parametermap = self.parametermap
+		for key, value in parameters.items():
+			try:
+				self._initParameter(parametermap[key], value)
+			except KeyError:
+				pass
+		self.Thaw()
+		self.Enable(True)
 
 	def _setParameters(self, parameters, parametermap=None):
+		self.Enable(False)
+		self.Freeze()
 		if parametermap is None:
 			parametermap = self.parametermap
 		for key, value in parameters.items():
@@ -384,6 +558,15 @@ class Panel(gui.wx.Node.Panel):
 				self._setParameter(parametermap[key], value)
 			except KeyError:
 				pass
+		self.Thaw()
+		self.Enable(True)
+
+	def onInitParameters(self, evt):
+		self._initParameters(evt.parameters, self.parametermap)
+
+	def initParameters(self, parameters):
+		evt = InitParametersEvent(self, parameters)
+		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onSetParameters(self, evt):
 		self._setParameters(evt.parameters, self.parametermap)

@@ -164,9 +164,12 @@ class ListCtrlPanel(wx.Panel):
 		if evt.GetDragStatus() == wx.SASH_STATUS_OUT_OF_RANGE:
 			return
 		self.sashwindow.SetDefaultSize((evt.GetDragRect().width, -1))
-		wx.LayoutAlgorithm().LayoutWindow(self, self.panel)
+		self.Layout()
 
-	def onSize(self, evt):
+	def onSize(self, evt=None):
+		self.Layout()
+
+	def Layout(self):
 		wx.LayoutAlgorithm().LayoutWindow(self, self.panel)
 
 class Panel(ListCtrlPanel):
