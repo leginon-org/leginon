@@ -119,7 +119,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		targetdeltarow = targetdata['delta row']
 		targetdeltacolumn = targetdata['delta column']
 		## make new copy because will be modified
-		targetscope = data.ScopeEMData(targetdata['scope'])
+		targetscope = data.ScopeEMData(initializer=targetdata['scope'])
 		## camera is just read, not modified
 		targetcamera = targetdata['camera']
 
