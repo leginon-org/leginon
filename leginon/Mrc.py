@@ -9,6 +9,7 @@
 #
 
 import Numeric
+import MLab
 import array
 import struct
 import sys
@@ -31,23 +32,6 @@ typecode_mrcmode = {
 	Numeric.Int32: 2,
 	Numeric.Int8: 1
 	}
-
-def min(inputarray):
-	f = Numeric.ravel(inputarray)
-	i = Numeric.argmin(f)
-	return f[i]
-
-def max(inputarray):
-	f = Numeric.ravel(inputarray)
-	i = Numeric.argmax(f)
-	return f[i]
-
-def mean(inputarray):
-	f = Numeric.ravel(inputarray)
-	inlen = len(f)
-	divisor = Numeric.array(inlen, Numeric.Float32)
-	m = Numeric.sum(f) / divisor
-	return m
 
 def mrc_to_numeric(filename):
 	f = open(filename, 'rb')
@@ -98,30 +82,63 @@ def mrc_write(mrcfile, image):
 class MrcData:
 	def __init__(self):
 		self.data = None
+		self.nx = None
+		self.ny = None
+		self.nz = None
 		self.mode = None
-		self.width = None
-		self.height = None
-		self.depth = None
-		self.min = None
-		self.max = None
-		self.mean = None
+		self.nxstart = None
+		self.nystart = None
+		self.nzstart = None
+		self.mx = None
+		self.my = None
+		self.mz = None
+		self.xlen = None
+		self.ylen = None
+		self.zlen = None
+		self.alpha = 90.0
+		self.beta = 90.0
+		self.gamma = 90.0
+		self.mapc = 1
+		self.mapr = 2
+		self.maps = 3
+		self.amin = None
+		self.amax = None
+		self.amean = None
+		self.origin_x = None
+		self.origin_y = None
+		self.origin_z = None
 		self.identstr = 'MAP '
 		## as with toNumeric (below) we use little endian as standard
-		self.machstamp = 'DA '
+		self.machstamp = 'DA'
+		self.nlabl = 0
+
 
 	def useheader(self, head):
-		self.describe(head['width'], head['height'], head['depth'], head['mode'], head['min'], head['max'], head['mean'], head['identstr'], head['machstamp'])
+		self.describe(head['nx'], head['ny'], head['nz'], head['mode'], head['amin'], head['amax'], head['amean'], head['rms'], head['identstr'], head['machstamp'])
 
-	def describe(self, width, height, depth, mode, min, max, mean, identstr, machstamp):
+	def describe(self, nx, ny, nz, mode, amin, amax, amean, rms, identstr, machstamp):
+		self.nx = nx
+		self.ny = ny
+		self.nz = nz
 		self.mode = mode
-		self.width = width
-		self.height = height
-		self.depth = depth
-		self.min = min
-		self.max = max
-		self.mean = mean
+		self.nxstart = 0
+		self.nystart = 0
+		self.nzstart = 0
+		self.mx = self.nx
+		self.my = self.ny
+		self.mz = self.nz
+		self.xlen = self.nx
+		self.ylen = self.ny
+		self.zlen = self.nz
+		self.origin_x = nx / 2.0
+		self.origin_y = ny / 2.0
+		self.origin_z = nz / 2.0
+		self.amin = amin
+		self.amax = amax
+		self.amean = amean
 		self.identstr = identstr
 		self.machstamp = machstamp
+		self.rms = rms
 
 	def fromfile(self, fobj):
 		try:
@@ -129,7 +146,7 @@ class MrcData:
 		except KeyError:
 			print 'Unknown MRC mode', self.mode
 			raise
-		elements = self.width * self.height * self.depth
+		elements = self.nx * self.ny * self.nz
 		self.data = fobj.read(elements * elementsize)
 
 	def tofile(self, fobj):
@@ -143,12 +160,12 @@ class MrcData:
 			narray = narray.byteswapped()
 
 		## reshape based on my description
-		if self.height < 2 and self.depth < 2:
-			shape = (self.width, )
-		elif self.depth < 2:
-			shape = (self.height, self.width)
+		if self.ny < 2 and self.nz < 2:
+			shape = (self.nx, )
+		elif self.nz < 2:
+			shape = (self.ny, self.nx)
 		else:
-			shape = (self.depth, self.height, self.width)
+			shape = (self.nz, self.ny, self.nx)
 		narray.shape = shape
 
 		return narray
@@ -170,27 +187,26 @@ class MrcData:
 		shape = narray.shape
 		if len(shape) == 1:
 			# x data only
-			self.width = shape[0]
-			self.height = 1
-			self.depth = 1
+			self.nx = shape[0]
+			self.ny = 1
+			self.nz = 1
 		elif len(shape) == 2:
 			# x,y data
-			self.height = shape[0]
-			self.width = shape[1]
-			self.depth = 1
+			self.ny = shape[0]
+			self.nx = shape[1]
+			self.nz = 1
 		elif len(shape) == 3:
 			# x,y,z data
-			self.depth = shape[0]
-			self.height = shape[1]
-			self.width = shape[2]
+			self.nz = shape[0]
+			self.ny = shape[1]
+			self.nx = shape[2]
 		else:
 			raise 'unsupported'
 
-		## these are defined previously in this module
-		## (not Python built-ins)
-		self.min = min(narray)
-		self.max = max(narray)
-		self.mean = mean(narray)
+		self.amin  = MLab.min(Numeric.ravel(narray))
+		self.amax  = MLab.max(Numeric.ravel(narray))
+		self.amean = MLab.mean(Numeric.ravel(narray))
+		self.rms   = MLab.std(Numeric.ravel(narray))
 
 		## for now, using little endian as standard
 		if sys.byteorder != 'little':
@@ -217,75 +233,123 @@ class MrcHeader:
 		self.data[key] = value
 
 	def usedata(self, mrcdata):
-		self['width'] = mrcdata.width
-		self['height'] = mrcdata.height
-		self['depth'] = mrcdata.depth
+		self['nx'] = mrcdata.nx
+		self['ny'] = mrcdata.ny
+		self['nz'] = mrcdata.nz
 		self['mode'] = mrcdata.mode
-		self['min'] = mrcdata.min
-		self['max'] = mrcdata.max
-		self['mean'] = mrcdata.mean
+		self['nxstart'] = mrcdata.nxstart or 0
+		self['nystart'] = mrcdata.nystart or 0
+		self['nzstart'] = mrcdata.nzstart or 0
+		self['mx'] = mrcdata.mx or mrcdata.nx
+		self['my'] = mrcdata.my or mrcdata.ny
+		self['mz'] = mrcdata.mz or mrcdata.nz
+		self['xlen'] = mrcdata.xlen or mrcdata.nx
+		self['ylen'] = mrcdata.ylen or mrcdata.ny
+		self['zlen'] = mrcdata.zlen or mrcdata.nz
+		self['alpha'] = mrcdata.alpha or 90
+		self['beta'] = mrcdata.beta or 90
+		self['gamma'] = mrcdata.gamma or 90
+		self['mapc'] = mrcdata.mapc or 1
+		self['mapr'] = mrcdata.mapr or 2
+		self['maps'] = mrcdata.maps or 3
+		self['amin'] = mrcdata.amin or 0
+		self['amax'] = mrcdata.amax or 0
+		self['amean'] = mrcdata.amean or 0
+		self['origin_x'] = mrcdata.origin_x or mrcdata.nx / 2.0 
+		self['origin_y'] = mrcdata.origin_y or mrcdata.ny / 2.0
+		self['origin_z'] = mrcdata.origin_z or mrcdata.nz / 2.0
 		self['identstr'] = mrcdata.identstr
 		self['machstamp'] = mrcdata.machstamp
+		self['rms'] = mrcdata.rms or 0
+		self['nlabl'] = mrcdata.nlabl or 0
 
 	def fromstring(self, headstr):
 		"get data from a string representation of MRC header"
 
-		## first chunk includes width,height,depth,type
+		## first chunk includes nx,ny,nz,type
 		chunk = headstr[:16]
-		width,height,depth,mode = struct.unpack('<4i', chunk)
-		self['width'] = width
-		self['height'] = height
-		self['depth'] = depth
+		nx,ny,nz,mode = struct.unpack('<4i', chunk)
+		self['nx'] = nx
+		self['ny'] = ny
+		self['nz'] = nz
 		self['mode'] = mode 
 
-		## I'm starting to impliment the other fields of the header...
-		chunk = headstr[16:28]
-		nxstart,nystart,nzstart = struct.unpack('<3i', chunk)
+		chunk = headstr[16:40]
+		nxstart,nystart,nzstart,mx,my,mz = struct.unpack('<6i', chunk)
 		self['nxstart'] = nxstart
 		self['nystart'] = nystart
 		self['nzstart'] = nzstart
+		self['mx'] = mx
+		self['my'] = my
+		self['mz'] = mz
 
-		## after skipping some fields, here are image stats
-		chunk = headstr[76:88]
-		datamin,datamax,datamean = struct.unpack('3f', chunk)
-		self['min'] = datamin
-		self['max'] = datamax
-		self['mean'] = datamean
+		chunk = headstr[40:64]
+		xlen,ylen,zlen,alpha,beta,gamma = struct.unpack('<6f', chunk)
+		self['xlen'] = xlen
+		self['ylen'] = ylen
+		self['zlen'] = zlen
+		self['alpha'] = alpha
+		self['beta'] = beta
+		self['gamma'] = gamma
 
-		## File identifier & machine stamp
-		chunk = headstr[208:214]
-		identstr,machstamp = struct.unpack('4s 2s', chunk)
-		## Next item should be 'MAP '...
+		chunk = headstr[64:88]
+		mapc,mapr,maps,amin,amax,amean = struct.unpack('<3i 3f', chunk)
+		self['mapc'] = mapc
+		self['mapr'] = mapr
+		self['maps'] = maps
+		self['amin'] = amin
+		self['amax'] = amax
+		self['amean'] = amean
+
+		## Origin, File identifier ('MAP ') & machine stamp ('DA')
+		chunk = headstr[196:214]
+		ox,oy,oz,identstr,machstamp = struct.unpack('<3f 4s 2s', chunk)
+		self['origin_x'] = ox
+		self['origin_y'] = oy
+		self['origin_z'] = oz
 		self['identstr'] = identstr
-		## Next item should be 'DA' for little-endian...
 		self['machstamp'] = machstamp
 
-		## rest of headstr ignored for now
+		# Density standard deviation
+		chunk = headstr[216:220]
+		self['rms'] = struct.unpack('1f', chunk)
+
+		# Number of labels and labels themselves ignored for now
 
 	def tostring(self):
 		"create string representation of header data"
 
 		#### create a struct format string
-		# first 16 byte chunk includes width,height,depth,mode
-		dims = '<4i'
-		# some padding, then the stats
-		pad1 = '60x'
-		stats = '3f'
-		# File identifier, machine stamp
-		pad2 = '120x'
-		ident =  '4s'
-		stamp = '2s'
-		## already done 16 + 60 + 12 + 120 + 6 = 214 bytes
-		## pad the rest 1024 - 224 = 810
-		pad3 = '810x'
+		# first 28 byte chunk includes nx,ny,nz,mode,n[xyz]start
+		dims = '<7i '
+		# Then m[xyz] and [xyz]len,(both essentially n[xyz] again),
+		# followed by alpha,beta,gamma, followed by map[crs]:
+		mxyz = '3i 3f 3f 3i'
+		# then min/max/mean
+		stats = '3f '
+		pad1 = '108x '
+		# Origin, file identifier, machine stamp
+		origin = '3f '
+		ident =  '4s '
+		stamp = '2s '
+		pad2 = '2x '
+		rms = '1f '
+		## already done 16 + 60 + 12 + 120 + 12 = 220 bytes
+		## pad the rest 1024 - 220 = 804
+		pad3 = '804x'
 
-		fmtstr = dims + pad1 + stats + pad2 + ident + stamp + pad3
+		fmtstr = dims + mxyz + stats + pad1 + origin + ident + stamp + pad2 + rms + pad3
 
 		headstr = struct.pack(fmtstr, 
-			self['width'], self['height'],
-			self['depth'], self['mode'] ,
-			self['min'], self['max'], self['mean'],
-			self['identstr'], self['machstamp'])
+			self['nx'], self['ny'], self['nz'], self['mode'], 
+			self['nxstart'], self['nystart'], self['nzstart'], 
+			self['mx'], self['my'], self['mz'],
+			self['xlen'], self['ylen'], self['zlen'],
+			self['alpha'], self['beta'], self['gamma'],
+			self['mapc'], self['mapr'], self['maps'],
+			self['amin'], self['amax'], self['amean'],
+			self['origin_x'], self['origin_y'], self['origin_z'],
+			self['identstr'], self['machstamp'], self['rms'] )
 		return headstr
 
 	def fromfile(self, fobj):
