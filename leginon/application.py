@@ -106,7 +106,7 @@ class Application(object):
 		try:
 			eventclass = getattr(event, bs['event class string'])
 		except:
-			raise ValueError('cannot get event class for binding')
+			raise ValueError('cannot get event class for binding: %s' % (bs['event class string'],))
 		try:
 			fromnode = bs['from node alias']
 			tonode = bs['to node alias']

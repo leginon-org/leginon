@@ -60,6 +60,23 @@ class CalibrationClient(object):
 		if self.abortevent.isSet():
 			raise Abort()
 
+	def getPixelSize(self, mag, tem=None, ccdcamera=None):
+		queryinstance = data.PixelSizeCalibrationData()
+		queryinstance['magnification'] = mag
+		if tem is None:
+			queryinstance['tem'] = self.instrument.getTEMData()
+		else:
+			queryinstance['tem'] = tem
+		if ccdcamera is None:
+			queryinstance['ccdcamera'] = self.instrument.getCCDCameraData()
+		else:
+			queryinstance['ccdcamera'] = ccdcamera
+		caldatalist = self.node.research(datainstance=queryinstance, results=1)
+		if len(caldatalist) > 0:
+			return caldatalist[0]['pixelsize']
+		else:
+			return None
+
 	def acquireStateImage(self, state, publish_image=0, settle=0.0):
 		self.node.logger.debug('Acquiring image...')
 		## acquire image at this state
@@ -151,13 +168,29 @@ class CalibrationClient(object):
 			shiftrows = shift[0]
 			shiftcols = shift[1]
 			seconds = t1 - t0
-			driftdata = data.DriftData(session=self.node.session, rows=shiftrows, cols=shiftcols, interval=seconds, target=target)
+
+			## publish scope and camera to be used with drift data
+			scope = imagedata1['scope']
+			self.node.publish(scope, database=True, dbforce=True)
+			camera = imagedata1['camera']
+			self.node.publish(camera, database=True, dbforce=True)
+			driftdata = data.DriftData(session=self.node.session, rows=shiftrows, cols=shiftcols, interval=seconds, target=target, scope=scope, camera=camera)
 			self.node.publish(driftdata, database=True, dbforce=True)
 
-			drift = abs(shift[0] + 1j * shift[1])
-			self.node.logger.info('Seconds %f, pixels %f, pixels/second %.4e'
-							% (seconds, drift, float(drift)/seconds))
+			pixels = abs(shift[0] + 1j * shift[1])
+			# convert to meters
+			mag = actual1['magnification']
+			pixelsize = self.getPixelSize(mag)
+			meters = pixelsize * pixels
+			drift = meters / seconds
+			self.node.logger.info('Seconds %f, pixels %f, meters %f, meters/second %.4e'
+							% (seconds, pixels, meters, float(meters)/seconds))
 			if drift > drift_threshold:
+				## declare drift above threshold
+				declared = data.DriftDeclaredData()
+				declared['system time'] = t1
+				declared['type'] = 'threshold'
+				self.node.publish(declared, database=True, dbforce=True)
 				raise Drifting()
 
 		self.checkAbort()

@@ -161,21 +161,13 @@ class ConfirmationEvent(NotificationEvent):
 class QueuePublishEvent(PublishEvent):
 	dataclass = data.QueueData
 
-class ImageTargetShiftPublishEvent(PublishEvent):
-	dataclass = data.ImageTargetShiftData
+class AcquisitionImageDriftPublishEvent(PublishEvent):
+	dataclass = data.AcquisitionImageDriftData
 
 class NeedTargetShiftEvent(NotificationEvent):
-	'''notify DriftManager that I want another ImageTargetShift'''
+	'''notify DriftManager that I want to know image drift for target update'''
 	def typemap(cls):
 		return NotificationEvent.typemap() + (
-			('imageid', int),
-		)
-	typemap = classmethod(typemap)
-
-class DriftWatchEvent(Event):
-	def typemap(cls):
-		return Event.typemap() + (
-			('presettarget', data.PresetTargetData),
 			('image', data.AcquisitionImageData),
 		)
 	typemap = classmethod(typemap)
@@ -185,14 +177,6 @@ class DriftWatchEvent(Event):
 ## drift at this state.
 class DriftDetectedEvent(PublishEvent):
 	dataclass = data.DriftDetectedData
-
-class DriftDeclaredEvent(Event):
-	'''
-	sent to DriftManager to declare that a drift has happened
-	no drift monitoring is required at this time.
-	The ImageTargetShift updating should still take place when necessary.
-	'''
-	pass
 
 class NodeOrderEvent(Event):
 	'ControlEvent sent to a NodeLauncher specifying a node to launch'

@@ -925,6 +925,16 @@ class DriftData(InSessionData):
 			('colmeters', float),
 			('interval', float),
 			('target', AcquisitionImageTargetData),
+			('scope', ScopeEMData),
+			('camera', CameraEMData),
+		)
+	typemap = classmethod(typemap)
+
+class DriftDeclaredData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('system time', float),
+			('type', str),
 		)
 	typemap = classmethod(typemap)
 
@@ -1203,6 +1213,7 @@ class AcquisitionImageData(PresetImageData):
 	def typemap(cls):
 		return PresetImageData.typemap() + (
 			('target', AcquisitionImageTargetData),
+			('emtarget', EMTargetData),
 			('grid', GridData),
 		)
 	typemap = classmethod(typemap)
@@ -1215,6 +1226,16 @@ class AcquisitionImageStatsData(InSessionData):
 			('max', float),
 			('mean', float),
 			('stdev', float),
+		)
+	typemap = classmethod(typemap)
+
+class AcquisitionImageDriftData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('image', AcquisitionImageData),
+			('rows', float),
+			('columns', float),
+			('system time', float),
 		)
 	typemap = classmethod(typemap)
 
@@ -1293,17 +1314,6 @@ class ImageTargetData(InSessionData):
 			('status', str),
 			('grid', GridData),
 			('list', ImageTargetListData),
-		)
-	typemap = classmethod(typemap)
-
-class ImageTargetShiftData(InSessionData):
-	'''
-	This keeps a dict of target shifts for a set of images.
-	'''
-	def typemap(cls):
-		return InSessionData.typemap() + (
-			('shifts', dict),
-			('requested', bool),
 		)
 	typemap = classmethod(typemap)
 

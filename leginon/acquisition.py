@@ -65,8 +65,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 											event.AcquisitionImagePublishEvent,
 										
 	event.ChangePresetEvent, event.PresetLockEvent, event.PresetUnlockEvent,
-											event.DriftDetectedEvent, event.DriftDeclaredEvent,
-											event.ImageListPublishEvent, event.DriftWatchEvent]
+											event.DriftDetectedEvent, 
+											event.ImageListPublishEvent]
 
 	def __init__(self, id, session, managerlocation, target_types=('acquisition',), **kwargs):
 
@@ -178,10 +178,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		ret = 'ok'
 		for newpresetname in presetnames:
-			presettarget = data.PresetTargetData(emtarget=emtarget, preset=newpresetname)
-			#self.publish(presettarget, database=True)
 			if force == False:
-				if self.alreadyAcquired(targetdata, presettarget):
+				if self.alreadyAcquired(targetdata, newpresetname):
 					continue
 
 			self.presetsclient.toScope(newpresetname, emtarget)
@@ -212,7 +210,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 				except:
 					self.logger.exception('film acquisition')
 			else:
-				ret = self.acquire(p, target=targetdata, presettarget=presettarget, attempt=attempt)
+				ret = self.acquire(p, target=targetdata, emtarget=emtarget, attempt=attempt)
 				# in these cases, return immediately
 				if ret in ('aborted', 'repeat'):
 					self.reportStatus('acquisition', 'Acquisition state is "%s"' % ret)
@@ -222,7 +220,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		return ret
 
-	def alreadyAcquired(self, targetdata, presettarget):
+	def alreadyAcquired(self, targetdata, preset):
 		'''
 		determines if image already acquired using targetdata and presetname
 		'''
@@ -232,7 +230,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		# seems to have trouple with using original targetdata as
 		# a query, so use a copy with only some of the fields
-		presetquery = data.PresetData(name=presettarget['preset'])
+		presetquery = data.PresetData(name=preset['name'])
 		imagequery = data.AcquisitionImageData(target=targetdata, preset=presetquery)
 		## other things to fill in
 		imagequery['scope'] = data.ScopeEMData()
@@ -244,7 +242,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			## no need to acquire again, but need to republish
 			self.reportStatus('output', 'Image was acquired previously, republishing')
 			imagedata = datalist[0]
-			self.publishDisplayWait(imagedata, presettarget)
+			self.publishDisplayWait(imagedata)
 			return True
 		else:
 			return False
@@ -327,7 +325,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		## create FilmData(AcquisitionImageData) which 
 		## will be used to store info about this exposure
-		filmdata = data.FilmData(session=self.session, preset=presetdata, label=self.name, target=target)
+		filmdata = data.FilmData(session=self.session, preset=presetdata, label=self.name, target=target, emtarget=emtarget)
 		## no image to store in file, but this provides 'filename' for 
 		## film text
 		self.setImageFilename(filmdata)
@@ -354,7 +352,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## record in database
 		self.publish(filmdata, pubevent=True, database=self.settings['save image'])
 
-	def acquire(self, presetdata, target=None, presettarget=None, attempt=None):
+	def acquire(self, presetdata, target=None, emtarget=None, attempt=None):
 		### corrected or not??
 
 		## acquire image
@@ -379,11 +377,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.publish(imagedata['camera'], database=True)
 
 		## convert CameraImageData to AcquisitionImageData
-		imagedata = data.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=target, list=self.imagelistdata)
+		imagedata = data.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=target, list=self.imagelistdata, emtarget=emtarget)
 		if target is not None and 'grid' in target and target['grid'] is not None:
 			imagedata['grid'] = target['grid']
 
-		self.publishDisplayWait(imagedata, presettarget)
+		self.publishDisplayWait(imagedata)
 
 	def retrieveImagesFromDB(self):
 		imagequery = data.AcquisitionImageData()
@@ -394,7 +392,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		imageids = [x.dbid for x in images]
 		return imageids
 
-	def publishDisplayWait(self, imagedata, presettarget=None):
+	def publishDisplayWait(self, imagedata):
 		'''
 		publish image data, display it, then wait for something to 
 		process it
@@ -409,8 +407,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.publishStats(imagedata)
 		self.reportStatus('output', 'Stats published...')
 
-		ev = event.DriftWatchEvent(image=imagedata, presettarget=presettarget)
-		self.outputEvent(ev)
 		## set up to handle done events
 		dataid = imagedata.dbid
 		self.doneevents[dataid] = {}
@@ -530,9 +526,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 		presetnames = self.presetsclient.getPresetNames()
 		return presetnames
 
-	def declareDrift(self):
-		evt = event.DriftDeclaredEvent()
-		self.outputEvent(evt, wait=True)
+	def declareDrift(self, type):
+		## declare drift manually
+		declared = data.DriftDeclaredData()
+		declared['system time'] = self.instrument.tem.SystemTime
+		declared['type'] = type
+		self.publish(declared, database=True, dbforce=True)
 
 	def driftDetected(self, presettarget):
 		'''

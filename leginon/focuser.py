@@ -481,7 +481,7 @@ class Focuser(acquisition.Acquisition):
 		### for updating the X,Y side effect of changing Z
 		if self.settings['drift on z']:
 			self.logger.info('Declaring drift after correcting stage Z')
-			self.declareDrift()
+			self.declareDrift(type='stage')
 
 	def correctNone(self, delta):
 		self.logger.info('Not applying defocus correction')

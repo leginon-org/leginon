@@ -344,7 +344,6 @@ class Node(object):
 		return resultlist
 
 	def researchDBID(self, dataclass, dbid, readimages=True):
-		#print 'WARNING:  researchDBID() IS TEMPORARY WHILE WE ARE STILL STORING LISTS OF DBIDs'
 		return self.dbdatakeeper.direct_query(dataclass, dbid, readimages)
 
 	# methods for setting up the manager
