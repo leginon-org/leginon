@@ -7,6 +7,7 @@ import array
 import strictdict
 import copy
 import Mrc
+import warnings
 
 ## Unresolved issue:
 ##  It would be nice if you could cast one Data type to another
@@ -87,7 +88,7 @@ def data2dict(idata, noNone=False):
 				d[key] = subd
 		else:
 			if not noNone or value is not None:
-				d[key] = copy.deepcopy(value)
+				d[key] = value
 	return d
 
 class Data(DataDict, leginonobject.LeginonObject):
@@ -101,6 +102,8 @@ class Data(DataDict, leginonobject.LeginonObject):
 	'''
 	def __init__(self, **kwargs):
 		DataDict.__init__(self)
+
+		self.dbid = None
 
 		# if initializer was given, update my values
 		if 'initializer' in kwargs:
@@ -118,7 +121,6 @@ class Data(DataDict, leginonobject.LeginonObject):
 		## Database ID (primary key)
 		## If this is None, then this data has not
 		## been inserted into the database
-		self.dbid = None
 
 	def __setitem__(self, key, value):
 		'''
@@ -132,9 +134,16 @@ class Data(DataDict, leginonobject.LeginonObject):
 			else:
 				super(Data, self).__setattr__(key, value)
 		DataDict.__setitem__(self, key, value)
+
 		## reset dbid because data no longer matches database
 		## Unfortunately, this does not cover all cases of
 		## modifying the object, just at the top level.
+		## Also, this is called more often than necessary because
+		## of deepcopy, (maybe pickle??), etc, which do not intend
+		## to modify the values, but trigger this anyway
+		if self.dbid is not None:
+			raise RuntimeError('__setitem__')
+			warnings.warn('__setitem__ on %s object that exists in DB...  dbid attribute will be reset' % (self.__class__), stacklevel=2)
 		self.dbid = None
 
 	def typemap(cls):
