@@ -1,0 +1,53 @@
+Start Processes:
+- Start manager.py process (take note of its the UI port)
+- Start one launcher.py process on each machine where nodes will run.
+   (take note of each launcher's TCP port)
+- Start one nodegui.py process on each machine where a GUI will be used.
+
+Connect nodegui to manager's UI port.
+   GUI notes:
+       Remember to 'Refresh' nodegui when nodes have been added/removed
+       or they may not show up in various places.
+
+In manager 'Nodes' section:  'Add Node' for each launcher.
+
+In manager 'Application' section:  'Load' an application, then 'Launch'
+     OR
+Use manager 'Launch' and 'Kill' sections to add and remove nodes.
+
+
+
+Commonly used nodes:
+
+EM - Interface to the Tecnai and camera.  Should be launched on the 
+     Tecnai host computer.
+
+Corrector - Handles requests for 'corrected image data'.
+     Does flat fielding and other corrections on a raw camera image.
+     Currently ignoring dose dependencies.  It stores bright field
+     and dark field images in MRC format.
+
+CalibrationLibrary - Handles requests for calibrations.   Right now this
+     only stores calibrations in a python pickle.  FUTURE: this will
+     use the database and also import/export to XML calibration file.
+
+PresetsManager - Manages presets (in pickle, but DB in future)
+     Nodes use the PresetsClient class to access the PresetsManager
+
+MatrixCalibrator - This generates calibration matrices for basic 
+     transforms between pixel coordinates and TEM parameter coordinates.
+     It stores these using the CalibrationLibrary
+
+ImViewer - General purpose image viewing node.  Accepts any ImagePublishEvent.
+
+SimpleNavigator - Link between ImViewer and calibrations that are necessary to 
+     navigate around a displayed image.
+
+GridPreviewer - Acquires images at low magnification while spiraling out
+     from the center of a grid.
+
+StateImageMosaic - Takes a series of images and combines them into a mosaic
+     based on the state at which they were acquired.  Usually used with
+     GridPreviewer.
+
+
