@@ -588,6 +588,7 @@ class EM(node.Node):
 									('intensity', 'Intensity', uidata.Float, 'rw'),
 									('defocus', 'Defocus', uidata.Float, 'rw'),
 									('spot size', 'Spot Size', uidata.Integer, 'rw'),
+									('screen current', 'Screen Current', uidata.Float, 'r'),
 									('screen position', 'Main Screen', uidata.String, 'r')]
 
 		for key, name, datatype, permissions in parameters:
