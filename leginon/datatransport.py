@@ -103,7 +103,7 @@ class Server(Base):
 		for t in self.transportmodules:
 			self.servers[t].exit()
 			self.logger.info('%s server exited' % t.__name__)
-		self.datahandler.exit()
+		#self.datahandler.exit()
 		self.logger.info('Exited')
 
 	def location(self):

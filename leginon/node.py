@@ -220,7 +220,7 @@ class Node(leginonobject.LeginonObject):
 		if self.managerclient is not None:
 			return self.eventToClient(ievent, self.managerclient, wait, timeout)
 		else:
-			print 'no manager, not sending event: %s' % (ievent,)
+			self.logger.warning('No manager, not sending event: %s' % (ievent,))
 
 	def handleConfirmedEvent(self, ievent):
 		'''Handler for ConfirmationEvents. Unblocks the call waiting for confirmation of the event generated.'''

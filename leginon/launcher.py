@@ -14,6 +14,7 @@ import leginonobject
 import node
 import nodeclassreg
 import uiserver
+import wxLauncher
 
 class Launcher(node.Node):
 	def __init__(self, name, session=None, tcpport=None, xmlrpcport=None, **kwargs):
@@ -23,13 +24,8 @@ class Launcher(node.Node):
 
 		node.Node.__init__(self, name, session, tcpport=tcpport, xmlrpcport=xmlrpcport, **kwargs)
 
-		self.defineUserInterface()
 		self.addEventInput(event.CreateNodeEvent, self.onCreateNode)
-		self.start()
-
-	def defineUserInterface(self):
-		#self.initializeLoggerUserInterface()
-		node.Node.defineUserInterface(self)
+		self.frame = wxLauncher.LauncherFrame(self)
 
 	def start(self):
 		pass
@@ -47,7 +43,6 @@ class Launcher(node.Node):
 	def exit(self):
 		self.exitNodes()
 		node.Node.exit(self)
-		self.server.exit()
 
 	def publishNodeClasses(self):
 		#reload(nodeclassreg)
@@ -80,9 +75,7 @@ class Launcher(node.Node):
 if __name__ == '__main__':
 	import socket
 	import sys
-	import time
 
-	print 'Launcher initializing...',
 	hostname = socket.gethostname().lower()
 	launchername = hostname
 
@@ -94,23 +87,15 @@ if __name__ == '__main__':
 			managerlocation['data binder']['TCP transport'] = {}
 			port = int(sys.argv[2])
 			managerlocation['data binder']['TCP transport']['port'] = port
-			launcher = Launcher(launchername, managerlocation=managerlocation)
+			args, kwargs = (launchername,), {'managerlocation': managerlocation}
 		except IndexError:
-			launcher = Launcher(launchername, tcpport=int(sys.argv[1]))
+			args, kwargs = (launchername,), {'tcpport': int(sys.argv[1])}
 	except IndexError:
 		try:
+			args, kwargs = (launchername,), {'tcpport': 55555}
 			launcher = Launcher(launchername, tcpport=55555)
 		except:
-			launcher = Launcher(launchername)
-	print 'Done.'
-	print 'Press control-c to exit'
-	launcher.start()
-	try:
-		while True:
-			time.sleep(0.5)
-	except KeyboardInterrupt:
-		pass
-	print 'Launcher exiting...',
-	launcher.exit()
-	print 'Done.'
+			args, kwargs = (launchername,), {}
+	l = wxLauncher.LauncherApp(*args, **kwargs)
+	l.MainLoop()
 
