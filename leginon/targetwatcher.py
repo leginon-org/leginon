@@ -82,8 +82,8 @@ class TargetWatcher(watcher.Watcher):
 		controlcontainer.addObjects((targetcontainer,))
 
 		container = uidata.LargeContainer('Target Watcher')
-		container.addObjects((self.targetwatcherlog, statuscontainer,
-													controlcontainer,))
+		container.addObject(self.targetwatcherlog, position={'expand': 'all'})
+		container.addObjects((statuscontainer, controlcontainer,))
 
 		self.uicontainer.addObject(container)
 

@@ -420,8 +420,9 @@ class SimpleCorrector(node.Node):
 		findcontrolcontainer.addObjects((findexposuretimemethod,))
 
 		findcontainer = uidata.LargeContainer('Auto Exposure Time')
-		findcontainer.addObjects((self.findmessagelog, findstatuscontainer,
-															findsettingscontainer, findcontrolcontainer))
+		findcontainer.addObject(self.findmessagelog, position={'expand': 'all'})
+		findcontainer.addObjects((findstatuscontainer, findsettingscontainer,
+															findcontrolcontainer))
 
 		self.messagelog = uidata.MessageLog('Message Log')
 
@@ -452,8 +453,8 @@ class SimpleCorrector(node.Node):
 		controlcontainer.addObjects((referencescontainer,))
 
 		container = uidata.LargeContainer('Simple Corrector')
-		container.addObjects((self.messagelog, statuscontainer, controlcontainer,
-													self.image))
+		container.addObject(self.messagelog, position={'expand': 'all'})
+		container.addObjects((statuscontainer, controlcontainer, self.image))
 
 		self.uicontainer.addObjects((advancedsettingscontainer, findcontainer,
 															container,))
@@ -559,7 +560,8 @@ class Corrector(node.Node):
 		self.ui_image = uidata.Image('Image', None, 'rw')
 
 		container = uidata.LargeContainer('Corrector')
-		container.addObjects((self.messagelog, statuscontainer, settingscontainer, controlcontainer,
+		container.addObject(self.messagelog, position={'expand': 'all'})
+		container.addObjects((statuscontainer, settingscontainer, controlcontainer,
 													statscontainer, self.ui_image))
 		self.uicontainer.addObject(container)
 

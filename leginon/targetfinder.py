@@ -214,7 +214,8 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		self.ignore_images = uidata.Boolean('Ignore Images', False, 'rw', persist=True)
 
 		container = uidata.LargeContainer('Target Finder')
-		container.addObjects((self.messagelog, self.wait_for_done,self.ignore_images))
+		container.addObject(self.messagelog, position={'expand': 'all'})
+		container.addObjects((self.wait_for_done,self.ignore_images))
 
 		self.uicontainer.addObject(container)
 
