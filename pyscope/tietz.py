@@ -184,6 +184,7 @@ class Tietz(object):
 			'retractable': {'get':'getRetractable'},
 			'camera axis': {'get':'getCameraAxis'},
 			'speed table gain switch': {'set': 'setUseSpeedTableForGainSwitch'},
+			'dump': {'set': 'dumpImage'},
 		}
 
 		self.typemapping = {
@@ -194,7 +195,7 @@ class Tietz(object):
 			'offset': {'type': dict, 'values':
 																		{'x': {'type': int}, 'y': {'type': int}}},
 			'exposure time': {'type': int},
-			'exposure type': {'type': str, 'values': ['normal', 'dark', 'bias']},
+			'exposure type': {'type': str, 'values': ['normal', 'dark', 'bias', 'readout']},
 			'image data': {'type': Numeric.arraytype},
 			'chip name': {'type': str},
 			'camera name': {'type': str},
@@ -228,7 +229,8 @@ class Tietz(object):
 			'hardware speed index': {'type': int},
 			'retractable': {'type': bool},
 			'camera axis': {'type': str},
-			'speed table gain switch': {'type': bool}
+			'speed table gain switch': {'type': bool},
+			'dump': {'type': bool},
 		}
 
 		for methodname, dependencies in self.dependencymapping.items():
@@ -363,10 +365,16 @@ class Tietz(object):
 		return self.exposuretype
 
 	def setExposureType(self, value):
-		# {'type': str, 'values': ['normal', 'dark', 'bias']}
-		if value not in ['normal', 'dark', 'bias']:
+		# {'type': str, 'values': ['normal', 'dark', 'bias', 'readout']}
+		if value not in ['normal', 'dark', 'bias', 'readout']:
 			raise ValueError('Invalid exposure type')
 		self.exposuretype = value
+
+	def dumpImage(self, value):
+		if not value:
+			return
+		## could this be fast if we force a large binning on it?
+		hr = self.camera.AcquireReadout(0)
 	
 	def getImage(self):
 		# {'type': Numeric.arraytype}
@@ -408,6 +416,8 @@ class Tietz(object):
 			hr = self.camera.AcquireDark(self.getExposureTime(), 0)
 		elif exposuretype == 'bias':
 			hr = self.camera.AcquireBias(0)
+		elif exposuretype == 'readout':
+			hr = self.camera.AcquireReadout(0)
 		else:
 			raise ValueError('Invalid exposure type for image acquisition')
 
