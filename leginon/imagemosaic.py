@@ -298,6 +298,8 @@ class StateImageMosaic(ImageMosaic):
 					% str(idata.id))
 			return
 		# hardcode for now
+		self.imagemosaic[idata.id] = {}
+		self.imagemosaic[idata.id]['image'] = idata.content['image']
 		self.imagemosaic[idata.id]['position'] = \
 			self.pixelLocation(idata.content['state']['stage position']['y'],
 														idata.content['state']['stage position']['x']) 
