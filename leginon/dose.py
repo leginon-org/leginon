@@ -6,6 +6,7 @@
 ### 4k gatan camera:  15um
 
 #Note:  FEI scopes have large screen with diameter of 160mm
+# small circle is 5mm, big circle is 40mm
 
 ## electrons per coulomb
 coulomb = 6.2414e18
