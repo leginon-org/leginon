@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/About.py,v $
-# $Revision: 1.2 $
+# $Revision: 1.3 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-26 20:21:53 $
+# $Date: 2004-10-26 20:56:05 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -33,10 +33,10 @@ class Dialog(gui.wx.Dialog.Dialog):
 		label = wx.StaticText(self, -1, 'Automated Data Acquisition Software for Transmission Electron Microscopy')
 		self.sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER)
 
-		version = version.getVersion()
-		if not version:
-			version = '(no version)'
-		label = wx.StaticText(self, -1, 'Version %s' % version)
+		v = version.getVersion()
+		if not v:
+			v = '(None)'
+		label = wx.StaticText(self, -1, 'Version %s' % v)
 		self.sz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER)
 
 		label = wx.StaticText(self, -1, 'System information')
@@ -47,46 +47,46 @@ class Dialog(gui.wx.Dialog.Dialog):
 		label = wx.StaticText(self, -1, 'Python:')
 		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		try:
-			version = sys.version.split()[0]
+			v = sys.version.split()[0]
 		except:
-			version = 'Unknown'
-		label = wx.StaticText(self, -1, version)
+			v = 'Unknown'
+		label = wx.StaticText(self, -1, v)
 		sz.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, 'wxPython:')
 		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		try:
-			version = wx.__version__
+			v = wx.__version__
 		except:
-			version = 'Unknown'
-		label = wx.StaticText(self, -1, version)
+			v = 'Unknown'
+		label = wx.StaticText(self, -1, v)
 		sz.Add(label, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, 'numarray:')
 		sz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		try:
-			version = numarray.__version__
+			v = numarray.__version__
 		except:
-			version = 'Unknown'
-		label = wx.StaticText(self, -1, version)
+			v = 'Unknown'
+		label = wx.StaticText(self, -1, v)
 		sz.Add(label, (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, 'mysql-python:')
 		sz.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		try:
-			version = _mysql.__version__
+			v = _mysql.__version__
 		except:
-			version = 'Unknown'
-		label = wx.StaticText(self, -1, version)
+			v = 'Unknown'
+		label = wx.StaticText(self, -1, v)
 		sz.Add(label, (3, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, 'PIL:')
 		sz.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		try:
-			version = Image.VERSION
+			v = Image.VERSION
 		except:
-			version = 'Unknown'
-		label = wx.StaticText(self, -1, version)
+			v = 'Unknown'
+		label = wx.StaticText(self, -1, v)
 		sz.Add(label, (4, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		sz.AddGrowableCol(0)
