@@ -444,11 +444,7 @@ class DriftData(InSessionData):
 	typemap = classmethod(typemap)
 
 class CalibrationData(InSessionData):
-	def typemap(cls):
-		t = InSessionData.typemap()
-		t += [ ('type', str) ]
-		return t
-	typemap = classmethod(typemap)
+	pass
 
 class MagDependentCalibrationData(CalibrationData):
 	def typemap(cls):
@@ -474,7 +470,26 @@ class GoodTiltCalibrationData(MagDependentCalibrationData):
 class MatrixCalibrationData(MagDependentCalibrationData):
 	def typemap(cls):
 		t = MagDependentCalibrationData.typemap()
-		t += [ ('matrix', strictdict.NumericArrayType), ]
+		t += [ ('type', str), ('matrix', strictdict.NumericArrayType), ]
+		return t
+	typemap = classmethod(typemap)
+
+class StageModelCalibrationData(CalibrationData):
+	def typemap(cls):
+		t = CalibrationData.typemap()
+		t += [
+			('axis', str),
+			('period', float),
+			('a', strictdict.NumericArrayType),
+			('b', strictdict.NumericArrayType)
+		]
+		return t
+	typemap = classmethod(typemap)
+
+class StageModelMagCalibrationData(MagDependentCalibrationData):
+	def typemap(cls):
+		t = MagDependentCalibrationData.typemap()
+		t += [ ('axis', str), ('angle', float), ('mean',float)]
 		return t
 	typemap = classmethod(typemap)
 
