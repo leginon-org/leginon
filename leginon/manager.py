@@ -40,7 +40,10 @@ class Manager(node.Node):
 
 	def registerData(self, publishevent):
 		#print 'registering data', publishevent.origin
-		self.dataregistry[publishevent.content] = publishevent.origin['id']
+		if publishevent.content in self.dataregistry:
+			self.dataregistry[publishevent.content].append(publishevent.origin['id'])
+		else:
+			self.dataregistry[publishevent.content] = [publishevent.origin['id']]
 		#print self.dataregistry
 
 	def launchNode(self, launcher, newproc, target, newid):
