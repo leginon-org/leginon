@@ -77,7 +77,8 @@ class MatrixCalibrator(calibrator.Calibrator):
 		mag = emdata['magnification']
 		pixsize = self.pixsizeclient.retrievePixelSize(mag)
 
-		delta = camconfig['dimension']['x']*camconfig['binning']['x']*pixsize/4
+		percent = self.shiftpercent.get()
+		delta = percent * camconfig['dimension']['x']*camconfig['binning']['x']*pixsize
 		print 'DELTA', delta
 
 		shifts = {}
@@ -148,11 +149,11 @@ class MatrixCalibrator(calibrator.Calibrator):
 		print 'MATRIX flat', Numeric.ravel(matrix)
 		calclient.storeMatrix(mag, uiparameter, matrix)
 
-
 	def defineUserInterface(self):
 		calibrator.Calibrator.defineUserInterface(self)
 
-		self.uitolerance = uidata.Float('Tolerance', 0.12, 'rw')
+		self.uitolerance = uidata.Float('Tolerance', 0.12, 'rw', persist=True)
+		self.shiftpercent = uidata.Float('Shift Fraction', 0.25, 'rw', persist=True)
 		parameters = self.parameters.keys()
 		parameters.sort()
 		self.uiparameter = uidata.SingleSelectFromList('Parameter', parameters, 0)
