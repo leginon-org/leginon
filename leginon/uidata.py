@@ -186,14 +186,17 @@ class UIData(UIObject):
 		else:
 			raise ValueError('invalid permissions value')
 
+		self.setCallback(callback)
+
+		self.set(value)
+
+	def setCallback(self, callback):
 		if callable(callback):
 			self.callback = callback
 		elif callback is None:
 			self.callback = None
 		else:
 			raise TypeError('callback must be callable or None')
-
-		self.set(value)
 
 	def _set(self, value):
 		if self.write:
@@ -277,6 +280,9 @@ class UISingleSelectFromList(UIContainer):
 		self.addUIObject(self.list)
 		self.addUIObject(self.selected)
 
+	def setCallback(self, callback):
+		self.selected.setCallback(callback)
+
 	def set(self, listvalue, selectedindex):
 		self.setList(listvalue)
 		self.setSelected(selectedindex)
@@ -297,7 +303,10 @@ class UISingleSelectFromList(UIContainer):
 		valuelist = self.getList()
 		if selected is None:
 			selected = self.getSelected()
-		return valuelist[selected]
+		try:
+			return valuelist[selected]
+		except IndexError:
+			return None
 
 class UISelectFromList(UIContainer):
 	typelist = UIContainer.typelist + ('select from list',)

@@ -640,14 +640,10 @@ class Manager(node.Node):
 		self.killApp()
 
 	def uiLauncherSelectCallback(self, value):
-		try:
-			launchername = self.uilauncherselect.getSelectedValue(value)
-			classes = list(self.launcherdict[launchername]['classes'])
-			classes.sort()
-			self.uiclassselect.set(classes, 0)
-		except:
-			self.uiclassselect.set([], 0)
-			self.printException()
+		launchername = self.uilauncherselect.getSelectedValue(value)
+		classes = list(self.launcherdict[launchername]['classes'])
+		classes.sort()
+		self.uiclassselect.set(classes, 0)
 		return value
 
 	def defineUserInterface(self):
@@ -656,8 +652,8 @@ class Manager(node.Node):
 
 		self.uilaunchname = uidata.UIString('Name', '', 'rw')
 		self.uiclassselect = uidata.UISingleSelectFromList('Node Class', [], 0)
-		self.uilauncherselect = uidata.UISingleSelectFromList('Launcher', [], 0,
-																									self.uiLauncherSelectCallback)
+		self.uilauncherselect = uidata.UISingleSelectFromList('Launcher', [], 0)
+		self.uilauncherselect.setCallback(self.uiLauncherSelectCallback)
 		self.uilaunchargs = uidata.UIString('Arguments', '()', 'rw')
 		self.uilaunchflag = uidata.UIBoolean('Process', False, 'rw')
 		launchmethod = uidata.UIMethod('Launch', self.uiLaunch)
