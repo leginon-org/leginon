@@ -152,12 +152,41 @@ class wxConnectionObject(object):
 	def __init__(self, shapeobject1, shapeobject2):
 		self.shapeobject1 = shapeobject1
 		self.shapeobject2 = shapeobject2
+		self.forward = True
+		self.backward = True
+
+	def same(self, other):
+		if (self.shapeobject1 == other.shapeobject1 and
+				self.shapeobject2 == other.shapeobject2):
+			return True
+		if (self.shapeobject2 == other.shapeobject1 and
+				self.shapeobject1 == other.shapeobject2):
+			return True
+		return False
+
+	def connects(self, shapeobject):
+		if shapeobject == self.shapeobject1 or shapeobject == self.shapeobject2:
+			return True
+		return False
 
 	def Draw(self, dc):
+		if self.forward and self.backward:
+			self.DrawLine(dc, 3)
+			self.DrawLine(dc, -3, True)
+		elif self.forward:
+			self.DrawLine(dc, 0)
+		elif self.backward:
+			self.DrawLine(dc, 0, True)
+
+	def getCenters(self):
 		x1 = self.shapeobject1.x + self.shapeobject1.width/2
 		y1 = self.shapeobject1.y + self.shapeobject1.height/2
 		x2 = self.shapeobject2.x + self.shapeobject2.width/2
 		y2 = self.shapeobject2.y + self.shapeobject2.height/2
+		return (x1, y1, x2, y2)
+
+	def DrawLine(self, dc, offset=0, reverse=False):
+		x1, y1, x2, y2 = self.getCenters()
 
 		try:
 			slope = float(y2 - y1)/float(x2 - x1)
@@ -168,28 +197,44 @@ class wxConnectionObject(object):
 		oldbrush = dc.GetBrush()
 		dc.SetBrush(wxBLACK_BRUSH)
 		if slope >= -1 and slope < 1:
+			y1 += offset
+			y2 += offset
 			if x1 > x2:
 				x1 = self.shapeobject1.x
 				x2 = self.shapeobject2.x + self.shapeobject2.width - 1
-				dc.DrawPolygon([(0, 0), (7, -3), (7, 3)], x2, y2)
+				if reverse:
+					dc.DrawPolygon([(0, 0), (-7, -3), (-7, 3)], x1, y1)
+				else:
+					dc.DrawPolygon([(0, 0), (7, -3), (7, 3)], x2, y2)
 			else:
 				x1 = self.shapeobject1.x + self.shapeobject1.width
 				x2 = self.shapeobject2.x
-				dc.DrawPolygon([(0, 0), (-7, -3), (-7, 3)], x2, y2)
-			mx = x2 + (x1 - x2)/2
+				if reverse:
+					dc.DrawPolygon([(0, 0), (7, -3), (7, 3)], x1, y1)
+				else:
+					dc.DrawPolygon([(0, 0), (-7, -3), (-7, 3)], x2, y2)
+			mx = x2 + (x1 - x2)/2 + offset
 			dc.DrawLine(x1, y1, mx, y1)
 			dc.DrawLine(mx, y1, mx, y2)
 			dc.DrawLine(mx, y2, x2, y2)
 		else:
+			x1 += offset
+			x2 += offset
 			if y1 > y2:
 				y1 = self.shapeobject1.y
 				y2 = self.shapeobject2.y + self.shapeobject2.height - 1
-				dc.DrawPolygon([(0, 0), (-3, 7), (3, 7)], x2, y2)
+				if reverse:
+					dc.DrawPolygon([(0, 0), (-3, -7), (3, -7)], x1, y1)
+				else:
+					dc.DrawPolygon([(0, 0), (-3, 7), (3, 7)], x2, y2)
 			else:
 				y1 = self.shapeobject1.y + self.shapeobject1.height
 				y2 = self.shapeobject2.y
-				dc.DrawPolygon([(0, 0), (-3, -7), (3, -7)], x2, y2)
-			my = y2 + (y1 - y2)/2
+				if reverse:
+					dc.DrawPolygon([(0, 0), (-3, 7), (3, 7)], x1, y1)
+				else:
+					dc.DrawPolygon([(0, 0), (-3, -7), (3, -7)], x2, y2)
+			my = y2 + (y1 - y2)/2 + offset
 			dc.DrawLine(x1, y1, x1, my)
 			dc.DrawLine(x1, my, x2, my)
 			dc.DrawLine(x2, my, x2, y2)
@@ -248,6 +293,8 @@ class wxObjectCanvas(wxScrolledWindow):
 		EVT_RIGHT_UP(self, self.OnRightUp)
 		EVT_MOTION(self, self.OnMotion)
 
+		EVT_KEY_UP(self, self.OnKeyUp)
+
 		EVT_LEFT_CLICK(self, self.OnLeftClick)
 		EVT_RIGHT_CLICK(self, self.OnRightClick)
 		EVT_LEFT_DRAG_START(self, self.OnLeftDragStart)
@@ -263,10 +310,31 @@ class wxObjectCanvas(wxScrolledWindow):
 		if so not in self.shapeobjects:
 			self.shapeobjects.append(so)
 			so.SetNextHandler(self)
+		self.UpdateDrawing()
+
+	def removeShapeObject(self, so):
+		if so in self.shapeobjects:
+			self.shapeobjects.remove(so)
+			# delete handler?
+		remove = []
+		for co in self.connectionobjects:
+			if co.connects(so):
+				remove.append(co)
+		for i in remove:
+			self.removeConnectionObject(i)
+		self.UpdateDrawing()
 
 	def addConnectionObject(self, co):
-		if co not in self.connectionobjects:
-			self.connectionobjects.append(co)
+		for i in self.connectionobjects:
+			if co.same(i):
+				return
+		self.connectionobjects.append(co)
+		self.UpdateDrawing()
+
+	def removeConnectionObject(self, co):
+		if co in self.connectionobjects:
+			self.connectionobjects.remove(co)
+		self.UpdateDrawing()
 
 	def Draw(self, dc):
 		dc.BeginDrawing()
@@ -309,6 +377,12 @@ class wxObjectCanvas(wxScrolledWindow):
 		if self.selected is not None:
 			self.selected.ProcessEvent(UnselectEvent())
 
+	def OnKeyUp(self, evt):
+		if evt.GetKeyCode() == WXK_DELETE:
+			pass
+		else:
+			evt.Skip()
+
 	def OnLeftUp(self, evt):
 		shapeobject = self.getShapeObjectFromXY(evt.m_x, evt.m_y)
 		if self.dragobject is not None:
@@ -318,6 +392,8 @@ class wxObjectCanvas(wxScrolledWindow):
 			self.dragobject = None
 		elif shapeobject is not None:
 			shapeobject.ProcessEvent(LeftClickEvent(evt.m_x, evt.m_y))
+		else:
+			self.unselectShapeObject()
 
 	def OnRightUp(self, evt):
 		shapeobject = self.getShapeObjectFromXY(evt.m_x, evt.m_y)
@@ -336,12 +412,13 @@ class wxObjectCanvas(wxScrolledWindow):
 	def OnLeftClick(self, evt):
 		shapeobject = self.getShapeObjectFromXY(evt.x, evt.y)
 		if shapeobject is not None:
-			self.selectShapeObject(shapeobject)
+			if shapeobject == self.selected:
+				self.unselectShapeObject()
+			else:
+				self.selectShapeObject(shapeobject)
 
 	def OnRightClick(self, evt):
-		shapeobject = self.getShapeObjectFromXY(evt.x, evt.y)
-		if shapeobject == self.selected:
-			self.unselectShapeObject()
+		pass
 
 	def OnLeftDragStart(self, evt):
 		self.dragobject = (evt.shapeobject, evt.offsetx, evt.offsety)
@@ -391,5 +468,6 @@ if __name__ == '__main__':
 	app.canvas.addConnectionObject(wxConnectionObject(ro3, ro2))
 	app.canvas.addConnectionObject(wxConnectionObject(ro1, ro2))
 	app.canvas.addConnectionObject(wxConnectionObject(ro3, ro1))
+	app.canvas.removeShapeObject(ro2)
 	app.MainLoop()
 
