@@ -1,5 +1,6 @@
 import Tkinter
 import tkSimpleDialog
+import tkFileDialog
 import math
 import application
 import nodeclassreg
@@ -489,12 +490,59 @@ class ApplicationEditor(Editor):
 	def __init__(self, parent, **kwargs):
 		Editor.__init__(self, parent, **kwargs)
 		self.mapping = {}
+		self.filename = None
+		self.parent = parent
+		self.app = application.Application(('Application',), None)
+
+		self.menu = Tkinter.Menu(parent, tearoff=0)
+		parent.config(menu = self.menu)
+
+		self.filemenu = Tkinter.Menu(self.menu, tearoff=0)
+		self.menu.add_cascade(label = 'File', menu = self.filemenu)
+		self.filemenu.add_command(label = 'New', command = self.new)
+		self.filemenu.add_command(label = 'Open...', command = self.open)
+		self.filemenu.add_command(label = 'Save', command = self.save)
+		self.filemenu.add_command(label = 'Save As...', command = self.saveAs)
+		self.filemenu.add_separator()
+		self.filemenu.add_command(label = 'Exit', command = self.exit)
 
 		self.newnodeposition = (0, 0)
-		self.menu = Tkinter.Menu(self, tearoff=0)
-		self.menu.add_command(label='New Node', command=self.newNode)
-		self.menu.add_command(label='Arrange Nodes', command=self.circle)
+		self.popupmenu = Tkinter.Menu(self, tearoff=0)
+		self.popupmenu.add_command(label='New Node', command=self.newNode)
+		self.popupmenu.add_command(label='Arrange Nodes', command=self.circle)
 		self.canvas.bind('<Button-3>', self.rightClick)
+
+	def new(self):
+		self.connectionmanager.abortConnection()
+		for node in self.nodes:
+			self.connectionmanager.deleteConnections(node)
+			node.delete()
+		self.mapping = {}
+		self.nodes = []
+		self.filename = None
+		self.app = application.Application(('Application',), None)
+
+	def open(self):
+		filename = tkFileDialog.askopenfilename()
+		if filename is not '':
+			self.new()
+			self.load(filename)
+			self.filename = filename
+
+	def save(self):
+		if self.filename is None:
+			self.saveAs()
+		else:
+			self.app.save(self.filename)
+
+	def saveAs(self):
+		filename = tkFileDialog.asksaveasfilename()
+		if filename is not '':
+			self.app.save(filename)
+			self.filename = filename
+
+	def exit(self):
+		self.parent.destroy()
 
 	def rightClick(self, ievent):
 		if self.connectionmanager.activeconnection is None:
@@ -511,10 +559,9 @@ class ApplicationEditor(Editor):
 
 	def popup(self, ievent):
 		self.newnodeposition = (ievent.x, ievent.y)
-		self.menu.post(ievent.x_root, ievent.y_root)
+		self.popupmenu.post(ievent.x_root, ievent.y_root)
 
 	def load(self, filename):
-		self.app = application.Application(('AE Application',), None)
 		self.app.load(filename)
 		for args in self.app.launchspec:
 			self.displayNode(args)
@@ -622,7 +669,6 @@ if __name__ == '__main__':
 	root = Tkinter.Tk()
 	root.wm_title('Application Editor')
 	ae = ApplicationEditor(root)
-	ae.load(sys.argv[1])
 	ae.pack()
 	root.mainloop()
 
