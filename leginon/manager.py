@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import threading
+import leginonconfig
 import node
 import application
 import data
@@ -515,7 +516,7 @@ class Manager(node.Node):
 
 	def uiAddNode(self):
 		'''UI helper calling addNode. See addNode.'''
-		hostname = self.uiaddnodehostname.get()
+		hostname = self.uiaddnodehostname.getSelectedValue()[0]
 		port = self.uiaddnodeport.get()
 		self.addNode(hostname, port)
 
@@ -623,7 +624,7 @@ class Manager(node.Node):
 
 		self.uinodeinfo = uidata.UIStruct('Node Info', {}, 'r')
 		infoobjects = (self.uinodeinfo,)
-		self.uiaddnodehostname = uidata.UIString('Hostname', '', 'rw')
+		self.uiaddnodehostname = uidata.UISelectFromList('Hostname', leginonconfig.LAUNCHERS, [0], 'r')
 		self.uiaddnodeport = uidata.UIInteger('TCP Port', 55555, 'rw')
 		addmethod = uidata.UIMethod('Add', self.uiAddNode)
 		addobjects = (self.uiaddnodehostname, self.uiaddnodeport, addmethod)
