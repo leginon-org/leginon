@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/remotecall.py,v $
-# $Revision: 1.19 $
+# $Revision: 1.20 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-22 19:46:52 $
+# $Date: 2005-03-28 18:00:29 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -96,7 +96,7 @@ class Object(object):
 		try:
 			result = self._interface[name][type](*args, **kwargs)
 		except KeyError, e:
-			result = TypeError('invalid execution name')
+			result = TypeError('invalid execution name \'%s\' (%s)' % (name, type))
 		except Exception, result:
 			#import sys
 			#excinfo = sys.exc_info()
@@ -298,6 +298,8 @@ class ObjectService(Locker):
 	def _removeDescription(self, nodename, name):
 		try:
 			del self.descriptions[nodename][name]
+			if not self.descriptions[nodename]:
+				del self.descriptions[nodename]
 			self._removeHandler(nodename, name)
 		except KeyError:
 			pass
@@ -403,7 +405,10 @@ class ManagerObjectService(ObjectService):
 		for nn in self.descriptions:
 			if nn == nodename:
 				continue
-			location = self.node.nodelocations[nn]['location']
+			try:
+				location = self.node.nodelocations[nn]['location']
+			except KeyError:
+				raise RuntimeError('cannot get location of \'%s\'' % (nn,))
 			for n in self.descriptions[nn]:
 				d, t = self.descriptions[nn][n]
 				if 'ObjectService' in t:
