@@ -164,7 +164,6 @@ class Leginon(Tkinter.Frame):
 			sourceids = []
 			for source in add_dialog.result[1]:
 				sourceids.append(self.acquireandtargets[source].targetid)
-			print sourceids
 			self.addAcquireAndTarget(add_dialog.result[0], sourceids)
 
 	# needs to check what got started, the whole lot needs error handling
@@ -244,6 +243,8 @@ class Leginon(Tkinter.Frame):
 		return (socket.gethostname(),)
 
 	def addAcquireAndTarget(self, name, sourceids=[]):
+		if name in self.acquireandtargets:
+			return
 		acquirename = name + ' Acquisition'
 		targetname = name + ' Click Target Finder'
 		acquireid = self.manager.launchNode(self.locallauncherid, 0,

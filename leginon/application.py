@@ -4,6 +4,7 @@ This is an Application manager to be included as a component of Manager
 import shelve
 import leginonobject
 import time
+import os
 
 class Application(leginonobject.LeginonObject):
 	def __init__(self, id, manager):
@@ -61,6 +62,8 @@ class Application(leginonobject.LeginonObject):
 				print 'error while killing %s' % (nodeid,)
 
 	def save(self, filename):
+		# for some reason updating after delLaunchSpec no worky
+		os.remove(filename)
 		s = shelve.open(filename)
 		s['launchspec'] = self.launchspec
 		s['bindspec'] = self.bindspec
