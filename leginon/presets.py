@@ -8,6 +8,7 @@ import uidata
 import camerafuncs
 import strictdict
 import threading
+import time
 
 
 class PresetsClient(object):
@@ -61,7 +62,7 @@ class PresetsClient(object):
 
 	def uiPresetSelector(self):
 		getpresets = uidata.Method('Get Names', self.uiGetPresetNames)
-		self.uiselectpreset = uidata.SingleSelectFromList('Select Preset', [], 0)
+		self.uiselectpreset = uidata.SingleSelectFromList('Select Preset', [], 0, persist=True)
 		container = uidata.Container('Preset Selection')
 		container.addObjects((getpresets, self.uiselectpreset))
 		return container
@@ -339,12 +340,14 @@ class PresetsManager(node.Node):
 
 	def uiCycleToScope(self):
 		print 'Cycling Presets...'
+		pause = self.cyclepause.get()
 		for name in self.orderlist.get():
 			p = self.presetByName(name)
 			if p is None:
 				self.printerror('%s not in presets' % (name,))
 			else:
 				self.toScope(p)
+				time.sleep(pause)
 		print 'Cycle Done'
 
 	def uiSelectedFromScope(self):
@@ -421,13 +424,14 @@ class PresetsManager(node.Node):
 		self.presetparams = uidata.Struct('Parameters', {}, 'rw', self.uiParamsCallback)
 		self.uiselectpreset = uidata.SingleSelectFromList('Preset', [], 0, callback=self.uiSelectCallback)
 		toscopemethod = uidata.Method('To Scope', self.uiToScope)
+		self.cyclepause = uidata.Float('Cycle Pause', 1.0, 'rw', persist=True)
 		cyclemethod = uidata.Method('Cycle To Scope', self.uiCycleToScope)
 		fromscopemethod = uidata.Method('From Scope', self.uiSelectedFromScope)
 		removemethod = uidata.Method('Remove', self.uiSelectedRemove)
 		self.orderlist = uidata.Array('Order', [], 'rw', persist=True)
 
 		selectcont = uidata.Container('Selection')
-		selectcont.addObjects((self.uiselectpreset,toscopemethod,cyclemethod,fromscopemethod,removemethod,self.orderlist,self.autosquare,self.presetparams))
+		selectcont.addObjects((self.uiselectpreset,toscopemethod,fromscopemethod,removemethod,self.cyclepause,cyclemethod,self.orderlist,self.autosquare,self.presetparams))
 
 		pnames = self.presetNames()
 		self.uiselectpreset.set(pnames, 0)
