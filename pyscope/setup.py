@@ -8,9 +8,11 @@ if sys.platform == 'win32':
 	)
 	ext_package = 'pyScope'
 	ext_modules = [module]
+	scripts = ['install-pyscope.py']
 else:
 	ext_package = None
 	ext_modules = None
+	scripts = []
 
 setup(
 	name='pyScope',
@@ -20,6 +22,6 @@ setup(
 	package_dir={'pyScope': ''},
 	ext_package=ext_package,
 	ext_modules=ext_modules,
-	scripts=['install-pyscope.py'],
+	scripts=scripts,
 )
 
