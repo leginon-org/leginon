@@ -28,7 +28,7 @@ class Handler(SocketServer.StreamRequestHandler):
 			try:
 				cPickle.dump(self.server.datahandler.query(obj), self.wfile)
 			except IOError:
-				print "TCP write failed"
+				print "tcptransport: write failed"
 
 class Server(SocketServer.ThreadingTCPServer, leginonobject.LeginonObject):
 	def __init__(self, id, dh, port=None):
@@ -90,7 +90,13 @@ class Client(leginonobject.LeginonObject):
 	def push(self, idata, family = socket.AF_INET, type = socket.SOCK_STREAM):
 		# needs to account for different data_id datatypes
 		s = socket.socket(family, type)
-		s.connect((self.serverlocation['hostname'],self.serverlocation['TCP port']))
-		s.send(cPickle.dumps(idata))
-		s.close()
+		try:
+			s.connect((self.serverlocation['hostname'], self.serverlocation['TCP port']))
+		except Exception, var:
+			# socket error, connection refused
+			if (var[0] == 111):
+				print "tcptransport: unable to connect to", self.serverlocation['hostname'], "port", self.serverlocation['TCP port']
+		else:
+			s.send(cPickle.dumps(idata))
+			s.close()
 

@@ -37,7 +37,9 @@ class Manager(node.Node):
 		print self.location()
 		if self.usegui:
 			self.start_gui()
-		self.interact()
+		interact_thread = self.interact()
+		# wait until the interact thread terminates
+		interact_thread.join()
 		self.exit()
 
 	def exit(self):

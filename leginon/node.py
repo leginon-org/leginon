@@ -6,6 +6,7 @@ import datahandler
 import sys
 import copy
 import os
+import threading
 if sys.platform == 'win32':
 	sys.coinit_flags = 0
 
@@ -85,7 +86,9 @@ class Node(leginonobject.LeginonObject):
 	def main(self):
 		'''this is the node's parent method'''
 		#raise NotImplementedError()
-		self.interact()
+		interact_thread = self.interact()
+		# wait until the interact thread terminates
+		interact_thread.join()
 		self.exit()
 
 	def exit(self):
@@ -149,7 +152,10 @@ class Node(leginonobject.LeginonObject):
 		banner = "Starting interpreter for %s" % self.__class__
 		readfunc = self.raw_input
 		local = locals()
-		code.interact(banner,readfunc,local)
+		t = threading.Thread(target=code.interact, args=(banner, readfunc, local))
+		t.setDaemon(1)
+		t.start()
+		return t
 
 	def raw_input(self, prompt):
 		newprompt = '%s%s' % (str(self.id), prompt)
