@@ -101,6 +101,14 @@ class PresetChoice(wx.Choice):
 		self.Enable(choices)
 		self.Thaw()
 
+	def SetStringSelection(self, string):
+		if string is not None and self.GetCount() > 0:
+			n = self.FindString(string)
+			if n == wx.NOT_FOUND:
+				self.SetSelection(0)
+			else:
+				self.SetSelection(n)
+
 class PresetOrder(wx.Panel):
 	def __init__(self, parent, id, **kwargs):
 		wx.Panel.__init__(self, parent, id, **kwargs)

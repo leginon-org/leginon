@@ -1524,6 +1524,16 @@ class CameraSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class MosaicTargetMakerSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('preset', str),
+			('label', str),
+			('radius', float),
+			('overlap', float),
+		)
+	typemap = classmethod(typemap)
+
 class CorrectorSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (

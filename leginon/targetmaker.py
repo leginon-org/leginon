@@ -44,17 +44,19 @@ class TargetMaker(node.Node, targethandler.TargetHandler):
 
 class MosaicTargetMaker(TargetMaker):
 	panelclass = gui.wx.MosaicTargetMaker.Panel
+	settingsclass = data.MosaicTargetMakerSettingsData
+	defaultsettings = {
+		'preset': None,
+		'label': '',
+		'radius': 0.01,
+		'overlap': 0.0,
+	}
 	eventinputs = TargetMaker.eventinputs + [event.MakeTargetListEvent]
 	def __init__(self, id, session, managerlocation, **kwargs):
 		TargetMaker.__init__(self, id, session, managerlocation, **kwargs)
 		self.pixelsizecalclient = calibrationclient.PixelSizeCalibrationClient(self)
 		self.addEventInput(event.MakeTargetListEvent, self.makeMosaicTargetList)
 		self.presetsclient = presets.PresetsClient(self)
-
-		self.preset = None
-		self.label = None
-		self.radius = None
-		self.overlap = None
 
 		self.defineUserInterface()
 		self.start()
@@ -71,15 +73,16 @@ class MosaicTargetMaker(TargetMaker):
 		alpha = scope['stage position']['a']
 		alphadeg = alpha * 180.0 / 3.14159
 		self.logger.info('using current alpha tilt in targets: %.2f deg' % (alphadeg,))
-		if self.preset is None:
+		presetname = self.settings['preset']
+		if presetname is None:
 			self.setStatus('Error publishing targets, no preset selected')
 			return
 
-		self.setStatus('Finding preset "%s"' % self.preset)
-		preset = self.presetsclient.getPresetByName(self.preset)
+		self.setStatus('Finding preset "%s"' % presetname)
+		preset = self.presetsclient.getPresetByName(presetname)
 
 		if preset is None:
-			message = 'Error publishing tagets, cannot find preset "%s"' % self.preset
+			message = 'Error publishing tagets, cannot find preset "%s"' % presetname
 			self.setStatus(message)
 			return
 
@@ -93,7 +96,7 @@ class MosaicTargetMaker(TargetMaker):
 			# stage position
 			scope['stage position'][key] = center[key]
 
-		overlap = self.overlap/100.0
+		overlap = self.settings['overlap']/100.0
 		if overlap < 0.0 or overlap >= 100.0:
 			self.setStatus('Invalid overlap specified')
 			return
@@ -109,7 +112,7 @@ class MosaicTargetMaker(TargetMaker):
 		self.setStatus('Creating target list')
 		if ievent is None: 
 			### generated from user invoked method
-			targetlist = self.newTargetList(mosaic=True, label=self.label)
+			targetlist = self.newTargetList(mosaic=True, label=self.settings['label'])
 			grid = None
 		else:
 			### generated from external event
@@ -120,7 +123,7 @@ class MosaicTargetMaker(TargetMaker):
 		self.setStatus('Publishing target list')
 		### publish to DB so new targets get right reference
 		self.publish(targetlist, database=True)
-		args = (self.radius, pixelsize, binning, imagesize, overlap)
+		args = (self.settings['radius'], pixelsize, binning, imagesize, overlap)
 		for delta in self.makeCircle(*args):
 			targetdata = self.newTargetForGrid(grid, delta[0], delta[1], scope=scope, camera=camera, preset=preset, list=targetlist, type='acquisition')
 			self.publish(targetdata, database=True)
