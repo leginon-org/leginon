@@ -55,7 +55,7 @@ class viewer {
 	}
 
 	function getJavascript() {
-		$str = '<script src="js/viewer2.js"></script>'.$this->crlf;
+		$str = '<script src="js/viewer.js"></script>'.$this->crlf;
 		$str .= '<script>'.$this->crlf;
 		if ($this->sessionId)
 			$str .= 'var jsSessionId = '.$this->sessionId.";".$this->crlf;
@@ -212,6 +212,7 @@ class view {
 			.'var '.$this->name.'fft_bt_st=false;'.$this->crlf
 			.'var '.$this->name.'close_bt_st=false;'.$this->crlf
 			.'var '.$this->name.'size='.$this->size.';'.$this->crlf
+			.'var jsvfile'.$this->name.'=1;'.$this->crlf
 			.'var jsmin'.$this->name.';'.$this->crlf
 			.'var jsmax'.$this->name.';'.$this->crlf
 			.''.$this->crlf;

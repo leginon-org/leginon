@@ -96,6 +96,7 @@ function newexp() {
 
 function newfile(view){
 	jssize = eval(view+"size");
+	jsvfile = eval("jsvfile"+view);
 	selpreset = "";
 	
 	if (list = eval("document.viewerform."+view+"pre"))
@@ -125,7 +126,7 @@ function newfile(view){
 		link.href = nlink;
 
 	if (cif=eval("this."+view+"if")) {
-		iflink = "getpreset.php?id="+jsimgId+"preset="+selpreset;
+		iflink = "getpreset.php?vf="+jsvfile+"&id="+jsimgId+"preset="+selpreset;
 		cif.document.location.replace(iflink);
 	}
 

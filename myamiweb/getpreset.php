@@ -24,6 +24,7 @@ $id=$_GET['id'];
 $preset=$_GET['preset'];
 $viewfilename=$_GET['vf'];
 if ($id) {
+	echo "<font style='font-size: 12px;'>";
 	$newimage = $leginondata->findImage($id, $preset);
 	$id = $newimage[id];
 			$info = $leginondata->getGridInfo($id);
@@ -44,7 +45,7 @@ if ($id) {
 				else
 					echo " <b>$k:</b> $v";
 	if ($viewfilename)
-		echo " <br>$filename";
+		echo " <br>$filename</font>";
 
 }
 ?>
