@@ -12,9 +12,12 @@ class Node(xmlrpcnode.xmlrpcnode):
 		self.id = id
 		self.datahandler = DataHandler(self)
 		self.dataport = self.datahandler.port
-		## events should be initialized by subclass before this
-		self.events = getattr(self, 'events', [])
 
+		## eventmap and outevents should be initialized by subclass before this
+		## __init__ is called, but if not, they are initialize here
+		self.eventmap = getattr(self, 'eventmap', {})
+		self.outevents = getattr(self, 'outevents', [])
+		
 		if manageraddress:
 			managerhost, managerport = manageraddress
 			manager_uri = 'http://' + managerhost + ':' + `managerport`
@@ -40,8 +43,16 @@ class Node(xmlrpcnode.xmlrpcnode):
 			pass
 
 	def announce(self, event):
-		args = (self.id, event)
+		### this sends an outgoing event to the manager
+		eventrepr = event.xmlrpc_repr()
+		args = (eventrepr,)
 		self.callProxy('manager', 'notify', args)
+
+	def EXPORT_event_dispatch(self, event):
+		### this decides what to do with incoming events
+		## the 
+		meth = self.eventmap[event]
+		apply(meth
 
 	def publish(self, dataid, data):
 		self.datahandler.put(dataid, data)
@@ -49,6 +60,7 @@ class Node(xmlrpcnode.xmlrpcnode):
 	def research(self, dataid):
 		data = self.datahandler.get(dataid)
 		return data
+
 
 class DataHandler(object):
 	def __init__(self, mynode):
