@@ -70,7 +70,7 @@ class EM(node.Node):
 
 	def main(self):
 		self.addEventOutput(event.ListPublishEvent)
-		ids = ['scope', 'camera', 'all']
+		ids = ['scope', 'camera', 'camera no image data', 'all']
 		ids += self.scope.keys()
 		ids += self.camera.keys()
 		e = event.ListPublishEvent(self.ID(), ids)
@@ -107,9 +107,16 @@ class EM(node.Node):
 						result[EMkey] = self.camera[EMkey]
 					except:	
 						print "failed to get '%s'" % EMkey
-				elif EMkey == 'scope' or EMkey == 'all':
+				elif EMkey == 'scope':
 					result.update(self.scope)
-				elif EMkey == 'camera' or EMkey == 'all':
+				elif EMKey == 'camera no image data':
+					for camerakeys in self.camera:
+						if camerakey != 'image data':
+							result[camerakey] = self.camera[camerakey]
+				elif EMkey == 'camera':
+					result.update(self.camera)
+				elif EMkey == 'all':
+					result.update(self.scope)
 					result.update(self.camera)
 		elif withoutkeys is not None:
 			if not ('scope' in withoutkeys or 'all' in withoutkeys):
