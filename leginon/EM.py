@@ -250,7 +250,7 @@ class EM(node.Node):
 
 		if ids:
 			e = event.ListPublishEvent(id=self.ID(), idlist=ids)
-#			self.outputEvent(e, wait=True)
+			self.outputEvent(e, wait=True)
 
 		self.outputEvent(event.NodeInitializedEvent(id=self.ID()))
 
