@@ -86,7 +86,7 @@ class CameraFuncs(object):
 		'''
 		configure the camera given a dict similar to CameraEMData
 		'''
-		camdata = CameraEMData(('camera',))
+		camdata = data.CameraEMData(id=('camera',))
 		camdata.friendly_update(camdict)
 		self.setCameraEMData(camdata)
 
