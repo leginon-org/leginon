@@ -648,7 +648,8 @@ def fromFormat(table, alias=None):
 	return sqlfrom
 
 def joinFormat(field, joinTable):
-	sqljoin = " LEFT JOIN %s AS %s ON (%s = %s.`DEF_ID`) " % (joinTable['class name'], joinTable['alias'], field, joinTable['alias'])
+	sqljoin = " JOIN %s AS %s ON (%s = %s.`DEF_ID`) " % (joinTable['class name'], joinTable['alias'], field, joinTable['alias'])
+	# sqljoin = " LEFT JOIN %s AS %s ON (%s = %s.`DEF_ID`) " % (joinTable['class name'], joinTable['alias'], field, joinTable['alias'])
 	return sqljoin
 
 def whereFormat(in_dict):
