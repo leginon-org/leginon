@@ -1,10 +1,10 @@
 import threading
-import xmlrpcserver
 import code
 import leginonobject
 import event
 import datatransport
 import datahandler
+import interface
 import sys
 import copy
 
@@ -53,12 +53,14 @@ class Node(leginonobject.LeginonObject):
 	def __init__(self, id, managerloc = None, dh = NodeDataHandler, dhargs = (), clientclass = Client):
 		leginonobject.LeginonObject.__init__(self, id)
 
-		self.rpc_port = None
 		self.clients = {}
 		self.registry = {'outputs':[], 'inputs':[]}
 
 		self.server = datatransport.Server(self.ID(), dh, dhargs)
 		self.clientclass = clientclass
+
+		self.uiserver = interface.Server()
+		self.defineUserInterface()
 
 		if managerloc:
 			self.addManager(managerloc)
@@ -76,9 +78,22 @@ class Node(leginonobject.LeginonObject):
 	def die(self, ievent):
 		sys.exit()
 
-	def startRPC(self):
-		x = xmlrpcserver.xmlrpcserver(self)
-		self.rpc_port = x.port
+	def defineUserInterface(self):
+		'''
+		This is where you register methods that can be accessed
+		by a user interface through XML-RPC
+		To register a method use:
+		   self.uiserver.RegisterMethod(self.meth, argspec [,alias])
+		argspec should be a sequence object like this example:
+		(
+		{'name':'mynum', 'type':'integer', 'default':1},
+		{'name':'mystr', 'type':'string', 'default':'hello'},
+		{'name':'selection', 'type':('red','green','blue')}
+		)
+		alias is an optional alias that should be used the the UI
+		  (defaults to the method name)
+		'''
+		pass
 
 	def addManager(self, loc):
 		self.managerloc = loc
@@ -158,7 +173,7 @@ class Node(leginonobject.LeginonObject):
 	def location(self):
 		loc = leginonobject.LeginonObject.location(self)
 		loc.update(self.server.location())
-		loc['RPC port'] = self.rpc_port
+		loc['UI port'] = self.uiserver.port
 		return loc
 
 	def interact(self):

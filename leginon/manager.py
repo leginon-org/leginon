@@ -17,9 +17,6 @@ class Manager(node.Node):
 		self.common = common
 		self.distmap = {}
 
-		### this initializes the "UI server"
-		self.uiInit()
-
 		## this makes every received event get distributed
 		self.addEventInput(event.NodeAvailableEvent, self.registerNode)
 		self.addEventInput(event.NodeUnavailableEvent, self.unregisterNode)
@@ -36,7 +33,6 @@ class Manager(node.Node):
 		pass
 
 	def start(self):
-		self.startRPC()
 		print self.location()
 		interact_thread = self.interact()
 
@@ -199,44 +195,67 @@ class Manager(node.Node):
 										self.clients[to_node].push(ievent)
 										done.append(to_node)
 
-	### the following ui* methods could be put into a seperate class
-	### and maybe one day general node ui server class
+	### these are methods that I want to export to the UI
 
-	def uiInit(self):
-		self.ui_info = {}
-		self.ui_info['nodeclasses'] = {}
-		self.ui_info['nodes'] = {}
-		self.ui_info['launchers'] = {}
-		self.ui_info['eventclasses'] = {}
+	def defineUserInterface(self):
+		self.ui_nodes = {}
+		self.ui_launchers = {}
+		self.ui_eventclasses = event.eventClasses()
+		self.ui_nodeclasses = common.nodeClasses()
 
-		self.uiUpdateEventclasses()
-		self.uiUpdateNodeclasses()
+		self.uiserver.RegisterMethod(self.uiLaunchers, (), 'launchers')
+		self.uiserver.RegisterMethod(self.uiNodes, (), 'nodes')
+		self.uiserver.RegisterMethod(self.uiNodeclasses, (), 'nodeclasses')
+		self.uiserver.RegisterMethod(self.uiEventclasses, (), 'eventclasses')
+		self.uiserver.RegisterMethod(self.uiGetID, (), 'id')
 
-	def uiGetInfo(self, key):
-		return self.ui_info[key].keys()
+		argspec = (
+			{'name':'name', 'type':'string'},
+			{'name':'launcher_str', 'type':'string'},
+			{'name':'nodeclass_str', 'type':'string'},
+			{'name':'args', 'type':'string', 'default':''},
+			{'name':'newproc', 'type':'boolean', 'default':False}
+			)
+		self.uiserver.RegisterMethod(self.uiLaunch, argspec, 'launch')
+		argspec = (
+			{'name':'eventclass_str', 'type':'string'},
+			{'name':'fromnode_str', 'type':'string'},
+			{'name':'tonode_str', 'type':'string'}
+			)
+		self.uiserver.RegisterMethod(self.uiAddDistmap, argspec, 'bind')
+
+	def uiLaunchers(self):
+		'return the current list of launchers'
+		return self.ui_launchers.keys()
+
+	def uiNodes(self):
+		'return the current list of nodes'
+		return self.ui_nodes.keys()
+
+	def uiNodeclasses(self):
+		'return the current list of node classes'
+		return self.ui_nodeclasses.keys()
+
+	def uiEventclasses(self):
+		'return the current list of event classes'
+		return self.ui_eventclasses.keys()
 
 	def uiGetID(self):
 		return self.id
 
-	def uiUpdateEventclasses(self):
-		self.ui_info['eventclasses'] = event.eventClasses()
-
-	def uiUpdateNodeclasses(self):
-		self.ui_info['nodeclasses'] = common.nodeClasses()
-
 	def uiAddNode(self, node_id):
 		node_str = node_id[-1]
-		self.ui_info['nodes'][node_str] = node_id
+		self.ui_nodes[node_str] = node_id
 
 	def uiAddLauncher(self, launcher_id):
 		launcher_str = launcher_id[-1]
-		self.ui_info['launchers'][launcher_str] = launcher_id
+		self.ui_launchers[launcher_str] = launcher_id
 
 	def uiLaunch(self, name, launcher_str, nodeclass_str, args, newproc):
 		"interface to the launchNode method"
 
-		launcher_id = self.ui_info['launchers'][launcher_str]
-		nodeclass = self.ui_info['nodeclasses'][nodeclass_str]
+		launcher_id = self.ui_launchers[launcher_str]
+		nodeclass = self.ui_nodeclasses[nodeclass_str]
 
 		args = '(%s)' % args
 		try:
@@ -251,9 +270,9 @@ class Manager(node.Node):
 		return ''
 
 	def uiAddDistmap(self, eventclass_str, fromnode_str, tonode_str):
-		eventclass = self.ui_info['eventclasses'][eventclass_str]
-		fromnode_id = self.ui_info['nodes'][fromnode_str]
-		tonode_id = self.ui_info['nodes'][tonode_str]
+		eventclass = self.ui_eventclasses[eventclass_str]
+		fromnode_id = self.ui_nodes[fromnode_str]
+		tonode_id = self.ui_nodes[tonode_str]
 		self.addEventDistmap(eventclass, fromnode_id, tonode_id)
 
 		## just to make xmlrpc happy

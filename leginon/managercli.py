@@ -1,43 +1,39 @@
 #!/usr/bin/env python
 
-import xmlrpclib
+import interface
 import threading
 import code
 
 class ManagerCLI(object):
-	def __init__(self, managerobject=None, host=None, port=None):
-		if managerobject:
-			self.manager = managerobject
-		elif host and port:
-			uri = 'http://%s:%s' % (host, port)
-			self.manager = xmlrpclib.ServerProxy(uri)
-		else:
-			raise RuntimeError('specify either managerobject or host and port')
-
+	def __init__(self, hostname, port):
+		self.uiclient = interface.Client(hostname, port)
+		self.refresh()
 		self.__interact()
 
+	def refresh(self):
+		self.uiclient.getMethods()
 
 	def launchers(self):
 		'list the available launcher nodes'
-		launcherlist = self.manager.uiGetInfo('launchers')
+		launcherlist = self.uiclient.execute('launchers')
 		for launcher in launcherlist:
 			print '\t%s' % launcher
 
 	def nodes(self):
 		'list all available nodes'
-		nodelist = self.manager.uiGetInfo('nodes')
+		nodelist = self.uiclient.execute('nodes')
 		for node in nodelist:
 			print '\t%s' % node
 
 	def eventclasses(self):
 		'list available event classes'
-		eventclasslist = self.manager.uiGetInfo('eventclasses')
+		eventclasslist = self.uiclient.execute('eventclasses')
 		for eventclass in eventclasslist:
 			print '\t%s' % eventclass
 
 	def nodeclasses(self):
 		'list available node classes'
-		nodeclasslist = self.manager.uiGetInfo('nodeclasses')
+		nodeclasslist = self.uiclient.execute('nodeclasses')
 		for nodeclass in nodeclasslist:
 			print '\t%s' % nodeclass
 
@@ -46,15 +42,22 @@ class ManagerCLI(object):
 		launches a new node
 		usage:  launch(name, launcher, nodeclass, args='', newproc=0)
 		'''
-		self.manager.uiLaunch(name, launcher, nodeclass, args, newproc)
+		self.uiclient.setarg('launch', 'name', name)
+		self.uiclient.setarg('launch', 'launcher_str', launcher)
+		self.uiclient.setarg('launch', 'nodeclass_str', nodeclass)
+		self.uiclient.setarg('launch', 'args', args)
+		self.uiclient.setarg('launch', 'newproc', newproc)
+		self.uiclient.execute('launch')
 
-	def bind(self):
+	def bind(self, eventclass, fromnode, tonode):
 		'''
 		bind an event class from one node to another node
 		usage:  launch(eventclass, fromnode, tonode)
 		'''
-		eventclass_str = self.gui_eventclasslist.get()
-		self.manager.uiAddDistmap(eventclass_str, fromnode_str, tonode_str)
+		self.uiclient.setarg('bind', 'eventclass_str', eventclass)
+		self.uiclient.setarg('bind', 'fromnode_str', fromnode)
+		self.uiclient.setarg('bind', 'tonode_str', tonode)
+		self.uiclient.execute('bind')
 
 	def __raw_input(self, prompt):
 		newprompt = '%s %s' % (self.prompt, prompt)
@@ -76,7 +79,7 @@ class ManagerCLI(object):
 	    launch
 	    bind
 		"""
-		nodeid  = self.manager.uiGetID()
+		nodeid  = self.uiclient.execute('id')
 		self.prompt = nodeid[-1]
 		readfunc = self.__raw_input
 		local = locals()
@@ -90,4 +93,4 @@ if __name__ == '__main__':
 		print 'usage:   %s' % string.join(args, ' ')
 		sys.exit()
 
-	c = ManagerCLI(host = sys.argv[1], port = sys.argv[2])
+	c = ManagerCLI(hostname = sys.argv[1], port = sys.argv[2])

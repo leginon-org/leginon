@@ -17,7 +17,7 @@ class xmlrpcserver(object):
 	# is there some way to handle unmarshalable data by catching an
 	# exception and then pickling? there would have to be something
 	# client side mabye
-	def __init__(self,  object_instance, port=None):
+	def __init__(self,  object_instance=None, port=None):
 		self.object_instance = object_instance 
 		self.port = port
 		hostname = socket.gethostname()
@@ -44,7 +44,8 @@ class xmlrpcserver(object):
 
 	def _start_serving(self):
 		self.server.register_function(self.RPCmethods)
-		self.server.register_instance(self.object_instance)
+		if self.object_instance:
+			self.server.register_instance(self.object_instance)
 		th = threading.Thread(target=self.server.serve_forever)
 		th.setDaemon(1)
 		th.start()
