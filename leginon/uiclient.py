@@ -1585,6 +1585,7 @@ class TreePanel(wx.Panel):
 			parentid = self.root
 		self.childsizer.Add(container, 1, wx.EXPAND)
 		id = self.tree.AppendItem(parentid, container.name)
+		self.tree.Update()
 		if parentid != self.root:
 			self.tree.Expand(parentid)
 		self.containers[container] = id

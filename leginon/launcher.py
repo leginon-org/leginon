@@ -76,7 +76,10 @@ class Launcher(node.Node):
 		self.confirmEvent(ievent)
 
 	def onDestroyNode(self, node):
-		self.nodes.remove(node)
+		try:
+			self.nodes.remove(node)
+		except ValueError:
+			pass # ???
 
 if __name__ == '__main__':
 	import socket
