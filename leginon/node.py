@@ -191,7 +191,7 @@ class Node(leginonobject.LeginonObject):
 		#del self.confirmwaitlist[ievent.content]
 
 	# data publish/research methods
-	
+
 	def publish(self, idata, eventclass=event.PublishEvent, confirm=False):
 		'''Make a piece of data available to other nodes.'''
 		if not issubclass(eventclass, event.PublishEvent):
@@ -214,7 +214,16 @@ class Node(leginonobject.LeginonObject):
 		dataid = idata.id
 		nodeiddata = self.researchByLocation(self.nodelocations['manager'], dataid)
 		if nodeiddata is None:
-			self.printerror('Node: publishRemote, no such data ID %s' % dataid)
+			# try a partial ID lookup
+			nodeiddata = self.researchByLocation(self.nodelocations['manager'], dataid[:1])
+
+		print 'NODEIDDATA', nodeiddata.content
+
+		if nodeiddata is None:
+			self.printerror('Node: researchByDataID, no such data ID %s' % (dataid,))
+			raise IOError
+		
+				
 			raise IOError
 		for nodeid in nodeiddata.content:
 			nodelocation = self.researchByLocation(self.nodelocations['manager'],
@@ -233,7 +242,7 @@ class Node(leginonobject.LeginonObject):
 		nodeiddata = self.managerclient.pull(dataid)
 
 		if nodeiddata is None:
-			self.printerror('Node: researchByDataID, no such data ID %s' % dataid)
+			self.printerror('Node: researchByDataID, no such data ID %s' % (dataid,))
 			raise IOError
 		# should interate over nodes, be crafty, etc.
 		datalocationdata = self.managerclient.pull(nodeiddata.content[-1])

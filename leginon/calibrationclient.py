@@ -18,17 +18,12 @@ class CalibrationClient(object):
 		except:
 			print 'CalibrationClient unable to use calibrations.  Is a CalibrationLibrary node running?'
 			raise
-		try:
-			calvalue = cal.content
-		except KeyError:
-			print '%s has not been calibrated' % (key,)
-			raise
-			
+
+		calvalue = cal.content
 		return calvalue
 
 	def setCalibration(self, key, calibration):
-		newdict = {key: calibration}
-		dat = data.CalibrationData('calibrations', newdict)
+		dat = data.CalibrationData(('calibrations',key), calibration)
 		self.node.publishRemote(dat)
 
 	def magCalibrationKey(self, magnification, caltype):
@@ -48,6 +43,24 @@ class CalibrationClient(object):
 
 	def itransform(self, shift, scope, camera):
 		raise NotImplementedError()
+
+class BeamTiltCalibrationClient(CalibrationClient):
+	def __init__(self, node):
+		CalibrationClient.__init__(self, node)
+	
+	def getMatrix(self, mag, type):
+		key = self.magCalibrationKey(mag, type)
+		matrix = self.getCalibration(key)
+		return matrix
+
+	def setMatrix(self, mag, type, matrix):
+		key = self.magCalibrationKey(mag, type)
+		self.setCalibration(key, matrix)
+
+	def measureDefocus(self):
+		mag = None
+		self.getMatrix(mag, type)
+
 
 class MatrixCalibrationClient(CalibrationClient):
 	def __init__(self, node):

@@ -41,8 +41,8 @@ class Calibrator(node.Node):
 		print 'state settling time %s' % (self.settle,)
 		time.sleep(self.settle)
 
-		actual_state = self.currentState()
 		imagedata = self.cam.acquireCameraImageData(camstate=None, correction=0)
+		actual_state = imagedata.content['scope']
 		self.publish(imagedata, event.CameraImagePublishEvent)
 
 		## should find image stats to help determine validity of image
@@ -159,3 +159,6 @@ class Calibrator(node.Node):
 	def currentState(self):
 		dat = self.researchByDataID('scope')
 		return dat.content
+
+	def defineUserInterface(self):
+		return node.Node.defineUserInterface(self)

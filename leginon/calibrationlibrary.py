@@ -11,7 +11,13 @@ class DataHandler(datahandler.DataBinder):
 		self.calnode = calnode
 
 	def query(self, id):
-		cal = self.calnode.getCalibration()
+		print 'query ID', id
+		if type(id) is str:
+			key = None
+		else:
+			key = id[1]
+		cal = self.calnode.getCalibration(key)
+		print 'CAL', cal
 		result = data.CalibrationData(self.ID(), cal)
 		return result
 
@@ -19,7 +25,8 @@ class DataHandler(datahandler.DataBinder):
 		if isinstance(idata, event.Event):
 			datahandler.DataBinder.insert(self, idata)
 		else:
-			self.calnode.setCalibration(idata)
+			key = idata.id[1]
+			self.calnode.setCalibration(key, idata)
 
 	# borrowed from NodeDataHandler
 	def setBinding(self, eventclass, func):
@@ -35,13 +42,13 @@ class CalibrationLibrary(node.Node):
 
 	def publishDataIDList(self):
 		# publish the ids that this node manages
-		ids = ['calibrations',]
+		ids = [('calibrations',)]
 		keys = self.getKeys()
 		for key in keys:
 			id = ('calibrations',key)
 			ids.append(id)
 		e = event.ListPublishEvent(self.ID(), ids)
-		#self.outputEvent(e)
+		self.outputEvent(e)
 
 	def getKeys(self):
 		raise NotImplementedError()
