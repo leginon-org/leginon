@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/atlasviewer.py,v $
-# $Revision: 1.10 $
+# $Revision: 1.11 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-11 01:46:33 $
+# $Date: 2005-03-11 02:30:08 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -381,7 +381,6 @@ class AtlasViewer(node.Node, targethandler.TargetWaitHandler):
 			self.logger.info('Waiting for the robot to load grid ID #%d' % grid.gridid)
 			evt = event.QueueGridEvent()
 			evt['grid ID'] = grid.gridid
-			#evt['node'] = self.name
 			self.outputEvent(evt)
 			self.waitforgridid = grid.gridid
 			self.waitforgridstatus = None
@@ -390,6 +389,7 @@ class AtlasViewer(node.Node, targethandler.TargetWaitHandler):
 			status = self.waitforgridstatus
 			self.waitforgridstatus = None
 			self.waitforgridevent.clear()
+
 			if status == 'ok':
 				self.logger.info('Robot loaded grid ID %d' % grid.gridid)
 			elif status == 'invalid':
@@ -450,7 +450,10 @@ class AtlasViewer(node.Node, targethandler.TargetWaitHandler):
 
 					self.waitForTargetListDone()
 
-			self.logger.info('Waiting for the robot to unload grid ID #%d' % grid.gridid)
+			evt = event.UnloadGridEvent()
+			evt['grid ID'] = grid.gridid
+			self.outputEvent(evt)
+			self.logger.info('Robot notified to unload grid ID #%d' % grid.gridid)
 
 		self.panel.targetsSubmitted()
 

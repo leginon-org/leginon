@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Robot.py,v $
-# $Revision: 1.6 $
+# $Revision: 1.7 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-09 18:25:02 $
+# $Date: 2005-03-11 02:30:09 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -110,7 +110,7 @@ class Panel(gui.wx.Node.Panel):
 
 	def onExtractTool(self, evt):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_EXTRACT, False)
-		self.node.extractevent.set()
+		self.node.handleGridDataCollectionDone(None)
 
 	def onGridQueueEmpty(self, evt):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, True)

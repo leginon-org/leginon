@@ -107,10 +107,12 @@ class ExitRequest(Request):
 	pass
 
 class GridRequest(Request):
-	def __init__(self, number):
+	def __init__(self, number, gridid=None, node=None):
 		Request.__init__(self)
 		self.number = number
 		self.loaded = False
+		self.gridid = gridid
+		self.node = node
 
 if sys.platform == 'win32':
 	import pythoncom
@@ -145,7 +147,8 @@ class Robot(node.Node):
 		self.gridnumber = None
 		self.startevent = threading.Event()
 		self.exitevent = threading.Event()
-		self.extractevent = threading.Event()
+		self.extractinfo = None
+		self.extractcondition = threading.Condition()
 		self.gridcleared = threading.Event()
 
 		self.emailclient = emailnotification.EmailClient(self)
@@ -167,9 +170,8 @@ class Robot(node.Node):
 		self.addEventInput(event.MosaicDoneEvent, self.handleGridDataCollectionDone)
 		self.addEventInput(event.TargetListDoneEvent,
 												self.handleGridDataCollectionDone)
-		self.addEventInput(event.QueueGridEvent,
-												self.handleQueueGrid)
-
+		self.addEventInput(event.QueueGridEvent, self.handleQueueGrid)
+		self.addEventInput(event.UnloadGridEvent, self.handleUnloadGrid)
 
 		self.start()
 
@@ -182,7 +184,7 @@ class Robot(node.Node):
 			evt['status'] = 'invalid'
 			self.outputEvent(evt)
 			return
-		request = GridRequest(number)
+		request = GridRequest(number, evt['grid ID'], evt['request node'])
 		self.queue.put(request)
 		request.event.wait()
 		if request.loaded:
@@ -190,6 +192,14 @@ class Robot(node.Node):
 		else:
 			evt['status'] = 'failed'
 		self.outputEvent(evt)
+
+	def handleUnloadGrid(self, evt):
+		gridid = evt['grid ID']
+		node = evt['node']
+		self.extractcondition.acquire()
+		self.extractinfo = (gridid, node)
+		self.extractcondition.notify()
+		self.extractcondition.release()
 
 	def _queueHandler(self):
 		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
@@ -237,9 +247,14 @@ class Robot(node.Node):
 					request.loaded = True
 				request.event.set()
 
-				self.extractevent.clear()
-				self.panel.gridInserted()
-				self.extractevent.wait()
+				self.extractcondition.acquire()
+				if request.gridid is None and request.node is None:
+					self.panel.gridInserted()
+				while (self.extractinfo is None
+								or self.extractinfo != (request.gridid, request.node)):
+					self.extractcondition.wait()
+				self.extractinfo = None
+				self.extractcondition.release()
 
 				self.extract()
 				self.gridnumber = None
@@ -648,7 +663,10 @@ class Robot(node.Node):
 	def handleGridDataCollectionDone(self, ievent):
 		# ...
 		self.panel.extractingGrid()
-		self.extractevent.set()
+		self.extractcondition.acquire()
+		self.extractinfo = (None, None)
+		self.extractcondition.notify()
+		self.extractcondition.release()
 
 	def getTrayLabels(self):
 		return self.gridtrayids.keys()

@@ -311,6 +311,7 @@ class GridLoadedEvent(NotificationEvent):
 class UnloadGridEvent(NotificationEvent):
 	def typemap(cls):
 		return ControlEvent.typemap() + (
+			('grid ID', int),
 		)
 	typemap = classmethod(typemap)
 
