@@ -448,6 +448,22 @@ class ImageData(Data):
 			if isinstance(thing, ImageData):
 				thing.load()
 
+	def __str__(self):
+		'''
+		don't want to print Numeric array
+		'''
+		itemlist = []
+		for key,value in self.items():
+			if type(value) is Numeric.ArrayType:
+				valuestr = '(NumericArray,shape=%s)' % (value.shape,)
+			else:
+				valuestr = str(value)
+			itemstr = "%s: %s" % (str(key), valuestr)
+			itemlist.append(itemstr)
+		joinedstr = ', '.join(itemlist)
+		finalstr = '{%s}' % (joinedstr,)
+		return finalstr
+
 class CorrelationImageData(ImageData):
 	'''
 	ImageData that results from a correlation of two images
