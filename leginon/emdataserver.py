@@ -41,7 +41,7 @@ class DataHandler(datahandler.DataHandler):
 class DataServer(dataserver.DataServer):
 	def __init__(self, scopeclass, cameraclass):
 		dataserver.DataServer.__init__(self)
-		self.lock = threading.RLock()
+		self.lock = threading.Lock()
 		self.scope = scopedict.factory(scopeclass)()
 		self.camera = cameradict.factory(cameraclass)()
 		self.pushserver = clientpush.Server(DataHandler, (self.scope, self.camera, self.lock))
