@@ -57,6 +57,7 @@ def getNodeClassNames():
 registerNodeClass('EM', 'EM')
 registerNodeClass('corrector', 'Corrector')
 registerNodeClass('matrixcalibrator', 'MatrixCalibrator')
+registerNodeClass('pixelsizecalibrator', 'PixelSizeCalibrator')
 registerNodeClass('beamtiltcalibrator', 'BeamTiltCalibrator')
 registerNodeClass('intensitycalibrator', 'IntensityCalibrator')
 registerNodeClass('presets', 'PresetsManager')
