@@ -109,12 +109,12 @@ class Node(leginonobject.LeginonObject):
 			settings = self.research(qdata, results=1)[0]
 		except IndexError:
 			settings = self.settingsclass(initializer=self.defaultsettings)
-		self.settings = settings.toDict()
+		self.settings = settings.toDict(dereference=True)
 
 	def setSettings(self, d):
 		d['session'] = self.session
 		d['name'] = self.name
-		sd = self.settingsclass(initializer=d)
+		sd = self.settingsclass.fromDict(d)
 		self.publish(sd, database=True, dbforce=True)
 		self.settings = d
 

@@ -277,20 +277,6 @@ class CameraPanel(wx.Panel):
 	def setConfiguration(self, value):
 		self._setExposureTime(value['exposure time'])
 		self.setGeometry(value)
-
-	def getData(self):
-		config = self.getConfiguration()
-		if config is None:
-			return None
-		else:
-			return data.CameraSettingsData(initializer=config)
-
-	def setData(self, d):
-		if d is None:
-			return
-		if hasattr(d, 'toDict'):
-			d = d.toDict()
-		self.setConfiguration(d)
 		self.setCommonChoice()
 
 	def onSetConfiguration(self, evt):

@@ -25,7 +25,7 @@ attributes = {
 	gui.wx.Presets.EditPresetOrder:
 		('getValues', 'setValues', gui.wx.Presets.EVT_PRESET_ORDER_CHANGED),
 	gui.wx.Camera.CameraPanel:
-		('getData', 'setData',
+		('getConfiguration', 'setConfiguration',
 			gui.wx.Camera.EVT_CONFIGURATION_CHANGED),
 	filebrowse.FileBrowseButton: ('GetValue', 'SetValue', None),
 	gui.wx.Rings.Panel: ('getRings', 'setRings', gui.wx.Rings.EVT_RINGS_UPDATED),
@@ -136,12 +136,11 @@ class Dialog(wx.Dialog):
 		if settings != self.settings:
 			node = self.GetParent().node
 			if node is None:
-				initializer = {}
+				d = {}
 			else:
-				initializer = node.getSettings()
-			initializer.update(settings)
-			settingsdata = node.settingsclass(initializer=initializer)
-			node.setSettings(settingsdata)
+				d = node.getSettings()
+			d.update(settings)
+			node.setSettings(d)
 			self.settings = settings
 			self.bapply.Enable(False)
 
@@ -150,8 +149,8 @@ class Dialog(wx.Dialog):
 		if node is None:
 			return
 
-		settingsdata = node.getSettings()
-		self.setSettings(self.widgets, settingsdata)
+		settings = node.getSettings()
+		self.setSettings(self.widgets, settings)
 
 		self.settings = self.getSettings(self.widgets)
 		self.bapply.Enable(False)

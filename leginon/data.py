@@ -369,6 +369,16 @@ def data2dict(idata, noNone=False, dereference=False):
 				d[key] = value
 	return d
 
+def dict2data(d, datatype):
+	instance = datatype()
+	for key, subtype in datatype.typemap():
+		if key in d:
+			if issubclass(subtype, Data):
+				instance[key] = dict2data(d[key], subtype)
+			else:
+				instance[key] = d[key]
+	return instance
+
 class Data(newdict.TypedDict, leginonobject.LeginonObject):
 	'''
 	Combines DataDict and LeginonObject to create the base class
@@ -492,7 +502,9 @@ class Data(newdict.TypedDict, leginonobject.LeginonObject):
 				### if got new DataReference, first was bad
 				if isinstance(val, DataReference):
 					# replace my reference with new one
-					self[key] = val
+					#self[key] = val
+					# !!! is this ok?
+					self.__setitem__(key, value, force=True)
 					# use new reference
 					val = val.getData()
 			else:
@@ -512,7 +524,9 @@ class Data(newdict.TypedDict, leginonobject.LeginonObject):
 				### if got new DataReference, first was bad
 				if isinstance(val, DataReference):
 					# replace my reference with new one
-					self[key] = val
+					#self[key] = val
+					# !!! is this ok?
+					self.__setitem__(key, value, force=True)
 					# use new reference
 					val = val.getData()
 			else:
@@ -555,6 +569,11 @@ class Data(newdict.TypedDict, leginonobject.LeginonObject):
 
 	def toDict(self, noNone=False, dereference=False):
 		return data2dict(self, noNone, dereference)
+
+	def fromDict(cls, d):
+		return dict2data(d, cls)
+
+	fromDict = classmethod(fromDict)
 
 	def size(self):
 		return self.__size
