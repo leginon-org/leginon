@@ -94,7 +94,6 @@ class Tietz(object):
 		try:
 			hr = self.camera.RegisterCAMCCallBack(ping, 'EM')
 		except pywintypes.com_error, e:
-			raise
 			raise RuntimeError('Error registering callback COM object')
 
 		hr = self.camera.RequestLock()
@@ -395,7 +394,6 @@ class Tietz(object):
 		elif exposuretype == 'bias':
 			hr = self.camera.AcquireBias(0)
 		elif exposuretype == 'readout':
-			print 'acquireReadout'
 			hr = self.camera.AcquireReadout(0)
 		else:
 			raise ValueError('Invalid exposure type for image acquisition')
