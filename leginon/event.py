@@ -107,7 +107,7 @@ class EventHandler(leginonobject.LeginonObject):
 ##	PublishEvent
 ##	ControlEvent
 ##		NumericControlEvent
-##		LaunchNodeEvent
+##		LaunchEvent
 ##
 ##
 
@@ -143,7 +143,7 @@ class NumericControlEvent(ControlEvent):
 		else:
 			raise TypeError('NumericControlEvent content type must be in %s' % allowedtypes)
 
-class LaunchNodeEvent(ControlEvent):
+class LaunchEvent(ControlEvent):
 	'ControlEvent sent to a NodeLauncher specifying a node to launch'
 	def __init__(self, nodeid, nodeclass, newproc=0):
 		nodeinfo = {'id':nodeid, 'class':nodeclass, 'newproc':newproc}

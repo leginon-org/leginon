@@ -7,11 +7,11 @@ import event
 import threading
 
 
-class NodeLauncher(node.Node):
+class Launcher(node.Node):
 	def __init__(self, nodeid, managerlocation):
 		node.Node.__init__(self, nodeid, managerlocation)
 
-		self.addEventIn(event.LaunchNodeEvent, self.handleLaunchNode)
+		self.addEventIn(event.LaunchEvent, self.handleLaunch)
 		self.main()
 
 	def addManager(self):
@@ -22,13 +22,13 @@ class NodeLauncher(node.Node):
 		managerhost = self.managerloc['hostname']
 		managerport = self.managerloc['event port']
 		self.addEventClient('manager', managerhost, managerport)
-		self.announce(event.NodeLauncherReadyEvent())
+		self.announce(event.LauncherReadyEvent())
 
 	def main(self):
 		self.interact()
 
-	def handleLaunchNode(self, launchevent):
-		print 'handling LaunchNodeEvent', launchevent
+	def handleLaunch(self, launchevent):
+		print 'handling LaunchEvent', launchevent
 		print 'content', launchevent.content
 		nodeid = launchevent.content['id']
 		nodeclass = launchevent.content['class']
@@ -67,4 +67,4 @@ if __name__ == '__main__':
 
 	myhost = socket.gethostname()
 
-	m = NodeLauncher(myhost, manloc)
+	m = Launcher(myhost, manloc)
