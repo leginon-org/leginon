@@ -31,10 +31,6 @@ class ImageData(Data):
 	def __init__(self, id, content):
 		Data.__init__(self, id, content)
 
-class CorrelationData(ImageData):
-	def __init__(self, id, content):
-		Data.__init__(self, id, content)
-
 # this is for the manager, it masquerades (sp?) as the data with the same id,
 # but it contains the location of the data instead.
 # the content is the list of locations the manager gets from the nodeid and
