@@ -497,6 +497,8 @@ class ContainerWidget(Widget):
 						flag |= wx.ALIGN_RIGHT
 				if 'center' in position['justify']:
 					flag |= wx.ALIGN_CENTER
+				if 'all' == position['expand']:
+					flag |= wx.EXPAND
 				# pad for notebook, tree?
 				paddedposition = (position['position'][0] + 2, position['position'][1])
 				self.sizer.Add(child, paddedposition, position['span'], flag, 3)

@@ -354,6 +354,9 @@ class Container(Object, strictdict.OrderedDict):
 		if 'justify' not in position:
 			position['justify'] = ['top', 'left']
 
+		if 'expand' not in position:
+			position['expand'] = 'no'
+
 		self.positions[uiobject.name] = position
 		return position
 

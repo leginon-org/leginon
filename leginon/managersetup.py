@@ -449,7 +449,8 @@ class ManagerSetup(object):
 																										'Create Leginon II Session')
 
 		self.createsessioncontainer.addObject(self.createmessages,
-																					position={'span': (1,2)})
+																					position={'span': (1,2),
+																										'expand': 'all'})
 		self.createsessioncontainer.addObject(self.createsessionname,
 																					position={'span': (1,2)})
 		self.createsessioncontainer.addObject(self.createsessioncomment,
