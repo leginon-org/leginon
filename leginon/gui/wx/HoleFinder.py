@@ -423,10 +423,10 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 		sztt = wx.GridBagSizer(5, 5)
 		sztt.Add(self.widgets['target template'], (0, 0), (1, 1),
 							wx.ALIGN_CENTER_VERTICAL)
-		sztt.Add(sbszftt, (1, 0), (1, 1), wx.EXPAND)
-		sztt.Add(self.widgets['focus template'], (2, 0), (1, 1),
+		sztt.Add(sbszftt, (1, 0), (2, 1), wx.ALIGN_CENTER)
+		sztt.Add(self.widgets['focus template'], (1, 1), (1, 1),
 							wx.ALIGN_CENTER)
-		sztt.Add(self.widgets['acquisition template'], (3, 0), (1, 1),
+		sztt.Add(self.widgets['acquisition template'], (2, 1), (1, 1),
 							wx.ALIGN_CENTER)
 
 		sb = wx.StaticBox(self, -1, 'Target Template')
