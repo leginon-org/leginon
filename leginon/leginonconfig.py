@@ -60,13 +60,20 @@ def mkdirs(newdir, mode=0777):
 class LeginonConfigError(Exception):
 	pass
 
+HOME = os.path.expanduser('~')
+CURRENT = os.getcwd()
+MODULE = os.path.dirname(__file__)
+
 configparser = ConfigParser.SafeConfigParser()
-defaultfilename = 'default.cfg'
+# look in the same directory as this module
+defaultfilename = os.path.join(MODULE, 'default.cfg')
 try:
 	configparser.readfp(open(defaultfilename), defaultfilename)
 except IOError:
-	raise LeginonConfigError('Cannot find configuration file leginon.cfg')
-configparser.read('leginon.cfg')
+	raise LeginonConfigError('Cannot find configuration file default.cfg')
+configparser.read(['leginon.cfg',
+										os.path.join(HOME, 'leginon.cfg'),
+										os.path.join(MODULE, 'leginon.cfg')])
 
 #######################################################################
 #    DATABASE
@@ -105,8 +112,6 @@ DB_PROJECT_PASS = configparser.get(section, 'password')
 # the current directory (where this process was executed, not necessarily
 # where this script resides)
 
-HOME = os.path.expanduser('~')
-CURRENT = os.getcwd()
 IMAGE_PATH = configparser.get('Images', 'path')
 
 ### check to see if image path has been set, then create it
