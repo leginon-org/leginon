@@ -126,7 +126,7 @@ class ExitRequest(Request):
 
 class EM(node.Node):
 	eventinputs = node.Node.eventinputs + [event.LockEvent, event.UnlockEvent, event.SetScopeEvent, event.SetCameraEvent]
-	def __init__(self, id, session, managerlocation, tcpport=None, **kwargs):
+	def __init__(self, name, session, managerlocation, tcpport=None, **kwargs):
 		self.scopemessagelog = uidata.MessageLog('Scope Message Log')
 		self.cameramessagelog = uidata.MessageLog('Camera Message Log')
 
@@ -203,7 +203,7 @@ class EM(node.Node):
 
 		# external lock for nodes keep EM for themself
 		self.nodelock = threading.Lock()
-		self.locknodeid = None
+		self.locknode = None
 
 		# state tracks always keeps the current (known by EM) and compares
 		# to changes in the UI state in order to only change parameters that
@@ -211,9 +211,9 @@ class EM(node.Node):
 		self.statelock = threading.RLock()
 		self.state = {}
 
-		self.initializeLogger(id[-1])
+		self.initializeLogger(name)
 
-		node.Node.__init__(self, id, session, managerlocation, **kwargs)
+		node.Node.__init__(self, name, session, managerlocation, **kwargs)
 
 		### data handlers that will be hosted here:
 		self.scopedata = data.DataHandler(data.ScopeEMData, getdata=self.getScope)
@@ -391,14 +391,14 @@ class EM(node.Node):
 			pass
 
 	def doLock(self, ievent):
-		if ievent['node'] != self.locknodeid:
+		if ievent['node'] != self.locknode:
 			self.nodelock.acquire()
-			self.locknodeid = ievent['node']
+			self.locknode = ievent['node']
 		self.confirmEvent(ievent)
 
 	def doUnlock(self, ievent):
-		if ievent['node'] == self.locknodeid:
-			self.locknodeid = None
+		if ievent['node'] == self.locknode:
+			self.locknode = None
 			self.nodelock.release()
 		self.confirmEvent(ievent)
 
@@ -570,7 +570,7 @@ class EM(node.Node):
 			request.event.set()
 
 	def uiUnlock(self):
-		self.locknodeid = None
+		self.locknode = None
 		self.nodelock.release()
 
 	def uiRefreshScope(self):
