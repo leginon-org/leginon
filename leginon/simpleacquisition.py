@@ -6,30 +6,31 @@ import data
 import time
 import cameraimage
 import camerafuncs
+import presets
 
 class SimpleAcquisition(node.Node):
 	def __init__(self, id, nodelocations, **kwargs):
 		node.Node.__init__(self, id, nodelocations, **kwargs)
 
 		self.cam = camerafuncs.CameraFuncs(self)
+		self.presetsclient = presets.PresetsClient(self)
 
 		## default camera config
-		currentconfig = self.cam.config()
-		currentconfig['state']['dimension']['x'] = 1024
-		currentconfig['state']['binning']['x'] = 4
-		currentconfig['state']['exposure time'] = 400
-		self.cam.config(currentconfig)
 
 		self.defineUserInterface()
 		self.start()
 
 	def acquireImage(self):
-		camconfig = self.cam.config()
-		camstate = camconfig['state']
+		presetname = self.presetname.get()
+		print 'going to preset %s' % (presetname,)
+		preset = self.presetsclient.getPreset(presetname)
+		print 'preset mag:', preset['magnification']
+		self.presetsclient.toScope(preset)
+		time.sleep(2)
 
 		print 'acquiring image'
 		acqtype = self.acqtype.get()
-		if acqtype == 'raw': imagedata = self.cam.acquireCameraImageData(camstate,0)
+		if acqtype == 'raw': imagedata = self.cam.acquireCameraImageData(None,0)
 		elif acqtype == 'corrected':
 			try:
 				imagedata = self.cam.acquireCameraImageData(camstate,1)
@@ -39,6 +40,9 @@ class SimpleAcquisition(node.Node):
 
 		if imagedata is None:
 			return
+		## attach preset to imagedata
+		imagedata.content['preset'] = dict(preset)
+
 		print 'publishing image'
 		self.publish(imagedata, event.CameraImagePublishEvent)
 		print 'image published'
@@ -52,9 +56,9 @@ class SimpleAcquisition(node.Node):
 		acqtypes = self.registerUIData('acqtypes', 'array', default=('raw', 'corrected'))
 		self.acqtype = self.registerUIData('Acquisition Type', 'string', default='raw', permissions='rw', choices=acqtypes)
 
-		camspec = self.cam.configUIData()
+		self.presetname = self.registerUIData('Preset Name', 'string', default='p56', permissions='rw')
 
-		prefs = self.registerUIContainer('Preferences', (self.acqtype,camspec))
+		prefs = self.registerUIContainer('Preferences', (self.acqtype,self.presetname))
 
 		acq = self.registerUIMethod(self.acquireImage, 'Acquire', ())
 
