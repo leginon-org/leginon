@@ -158,11 +158,15 @@ class Navigator(node.Node):
 		self.handleImageClick(click)
 
 	def acquireImage(self):
-		print 'acquiring image'
 		self.cam.uiApplyAsNeeded()
-		imagedata = self.cam.acquireCameraImageData()
+		try:
+			imagedata = self.cam.acquireCameraImageData()
+		except camerafuncs.NoCorrectorError:
+			self.messagelog.error('No Corrector node, acquisition failed')
+			return
 
 		if imagedata is None:
+			self.messagelog.error('acquisition failed')
 			return
 
 		self.scope = imagedata['scope']

@@ -145,7 +145,11 @@ class SimpleCorrector(node.Node):
 																	columnoffset:columnoffset + columns]
 
 	def acquireCorrectedImageData(self):
-		imagedata = self.camerafuncs.acquireCameraImageData(correction=False)
+		try:
+			imagedata = self.camerafuncs.acquireCameraImageData(correction=False)
+		except camerafuncs.NoEMError:
+			self.messagelog.error('EM not running')
+			return None
 		image = imagedata['image']
 		cameradata = imagedata['camera']
 		correctedimage = self.correctImage(image, cameradata)
@@ -512,6 +516,7 @@ class Corrector(node.Node):
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
 
+		self.messagelog = uidata.MessageLog('Messages')
 		self.uistatus = uidata.String('Status', '', 'r')
 		statuscontainer = uidata.Container('Status')
 		statuscontainer.addObjects((self.uistatus,))
@@ -573,7 +578,7 @@ class Corrector(node.Node):
 		self.ui_image = uidata.Image('Image', None, 'rw')
 
 		container = uidata.LargeContainer('Corrector')
-		container.addObjects((statuscontainer, settingscontainer, controlcontainer,
+		container.addObjects((self.messagelog, statuscontainer, settingscontainer, controlcontainer,
 													statscontainer, self.ui_image))
 		self.uicontainer.addObject(container)
 
@@ -838,7 +843,11 @@ class Corrector(node.Node):
 		return imagedata['image']
 
 	def acquireCorrectedImageData(self):
-		imagedata = self.cam.acquireCameraImageData(correction=0)
+		try:
+			imagedata = self.cam.acquireCameraImageData(correction=0)
+		except camerafuncs.NoEMError:
+			self.messagelog.error('EM not running')
+			return None
 		numimage = imagedata['image']
 		camdata = imagedata['camera']
 		corstate = data.CorrectorCamstateData()

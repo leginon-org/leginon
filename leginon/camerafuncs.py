@@ -20,6 +20,9 @@ from timer import Timer
 class NoCorrectorError(Exception):
 	pass
 
+class NoEMError(Exception):
+	pass
+
 class CameraConfigError(Exception):
 	pass
 
@@ -63,11 +66,14 @@ class CameraFuncs(object):
 			try:
 				imdata = self.node.researchByDataID(('corrected image data',))
 			except node.ResearchError:
-				raise NoCorrectorError('maybe corrector node is not running')
+				raise NoCorrectorError('maybe Corrector node is not running')
 		else:
 			### create my own data from acquisition
-			scopedata = self.node.researchByDataID(('scope',))
-			camdata = self.node.researchByDataID(('camera',))
+			try:
+				scopedata = self.node.researchByDataID(('scope',))
+				camdata = self.node.researchByDataID(('camera',))
+			except node.ResearchError:
+				raise NoEMError('maybe EM node is not running')
 
 			### move image to its own key
 			numimage = camdata['image data']
