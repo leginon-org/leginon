@@ -48,7 +48,7 @@ class MosaicNavigator(navigator.Navigator):
 		self.publishRemote(data.EMData('all', mosaicdata[nearesttile]['state']))
 		e = self.shiftEventClass(self.ID(),
 									{'row': nearestdelta[0], 'column': nearestdelta[1]})
-		self.output(e)
+		self.outputEvent(e)
 
 		time.sleep(self.delaydata.get())
 
