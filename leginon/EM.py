@@ -419,8 +419,7 @@ class EM(node.Node):
 						self.tems.append(scope)
 						self.objectservice._addObject(name, scope)
 				except Exception, e:
-					self.logger.exception('Initializing scope type %s failed: %s'
-																	% (name, e))
+					self.logger.debug('Initializing scope type %s failed: %s' % (name, e))
 			elif issubclass(c, ccdcamera.CCDCamera):
 				class CCDCameraClass(c, instrument.CCDCamera):
 					def __init__(self):
@@ -437,8 +436,7 @@ class EM(node.Node):
 						self.tems.append(camera)
 						self.objectservice._addObject(name, camera)
 				except Exception, e:
-					self.logger.exception('Initializing camera type %s failed: %s'
-																	% (name, e))
+					self.logger.debug('Initializing camera type %s failed: %s' % (name, e))
 
 		for key, permissions in self.permissions.items():
 			try:
@@ -676,14 +674,14 @@ class EM(node.Node):
 			elif isinstance(request, SetInstrumentRequest):
 				pass
 			elif isinstance(request, ExitRequest):
-				for tem in self.tems():
+				for tem in self.tems:
 					try:
 						tem.exit()
 					except AttributeError:
 						pass
-				for camera in self.ccdcameras():
+				for camera in self.ccdcameras:
 					try:
-						tem.exit()
+						camera.exit()
 					except AttributeError:
 						pass
 				break

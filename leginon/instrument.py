@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.5 $
+# $Revision: 1.6 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-23 19:44:25 $
+# $Date: 2005-02-23 20:03:43 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -61,6 +61,8 @@ class Proxy(object):
 			self.ccdcamera = self.ccdcameras[name]
 
 	def getData(self, dataclass):
+		import time
+		t = time.time()
 		if issubclass(dataclass, data.ScopeEMData):
 			proxy = self.tem
 		elif issubclass(dataclass, data.CameraEMData):
@@ -73,10 +75,11 @@ class Proxy(object):
 			if key in instance and proxy.hasattr(attribute):
 				parameters.append((key, attribute))
 		names = [p[1] for p in parameters]
-		types = ['get']*len(names)
+		types = ['r']*len(names)
 		result = proxy.multiCall(names, types)
-		for i, key in enumerate(parameters):
-			instance[key] = result[i]
+		for i, p in enumerate(parameters):
+			instance[p[0]] = result[i]
+		print time.time() - t
 		return instance
 
 class TEM(remotecall.Locker):
@@ -87,37 +90,27 @@ class CCDCamera(remotecall.Locker):
 
 parametermapping = (
   ('magnification', 'Magnifiction'),
-  ('magnifications', 'Magnifications'),
   ('spot size', 'SpotSize'),
-  ('intensity', 'Intensity'),
   ('image shift', 'ImageShift'),
   ('beam shift', 'BeamShift'),
-  ('defocus', 'Defocus'),
   ('focus', 'Focus'),
-  #('reset defocus', 'resetDefocus'),
+  ('defocus', 'Defocus'),
+  ###('reset defocus', 'resetDefocus'),
+  ('intensity', 'Intensity'),
+  ('magnifications', 'Magnifications'),
   ('screen current', 'ScreenCurrent'),
-  ('beam blank', 'BeamBlank'),
   ('stigmator', 'Stigmator'),
   ('beam tilt', 'BeamTilt'),
   ('corrected stage position', 'CorrectedStagePosition'),
   ('stage position', 'StagePosition'),
-  ('holder type', 'HolderType'),
-  ('holder status', 'HolderStatus'),
-  ('stage status', 'StageStatus'),
-  ('vacuum status', 'VacuumStatus'),
-  ('column valves', 'ColumnValves'),
   ('column pressure', 'ColumnPressure'),
-  ('turbo pump', 'TurboPump'),
   ('high tension', 'HighTension'),
   ('main screen position', 'MainScreenPosition'),
   ('small screen position', 'SmallScreenPosition'),
-  ('low dose', 'LowDose'),
-  ('low dose mode', 'LowDoseMode'),
   ('film stock', 'FilmStock'),
   ('film exposure number', 'FilmExposureNumber'),
-  #('pre film exposure', 'preFilmExposure'),
-  #('post film exposure', 'postFilmExposure'),
-  #('film exposure', 'filmExposure'),
+  ###('pre film exposure', 'preFilmExposure'),
+  ###('post film exposure', 'postFilmExposure'),
   ('film exposure type', 'FilmExposureType'),
   ('film exposure time', 'FilmExposureTime'),
   ('film manual exposure time', 'FilmManualExposureTime'),
@@ -125,5 +118,15 @@ parametermapping = (
   ('film text', 'FilmText'),
   ('film user code', 'FilmUserCode'),
   ('film date type', 'FilmDateType'),
+  #('beam blank', 'BeamBlank'),
+  #('film exposure', 'filmExposure'),
+  #('low dose', 'LowDose'),
+  #('low dose mode', 'LowDoseMode'),
+  #('turbo pump', 'TurboPump'),
+  #('holder type', 'HolderType'),
+  #('holder status', 'HolderStatus'),
+  #('stage status', 'StageStatus'),
+  #('vacuum status', 'VacuumStatus'),
+  #('column valves', 'ColumnValves'),
 )
 

@@ -220,12 +220,14 @@ class ManualAcquisition(node.Node):
 			raise node.PublishError
 
 	def acquireImage(self):
+		'''
 		temnames = self.instrument.getTEMNames()
-		ccdcameranames = self.instrument.getCCDCameras()
+		ccdcameranames = self.instrument.getCCDCameraNames()
 		print temnames
 		print ccdcameranames
 		self.instrument.setTEM(temnames[0])
-		print self.instrument.getData(data.ScopeEMData())
+		print self.instrument.getData(data.ScopeEMData)
+		'''
 		try:
 			try:
 				self.preExposure()

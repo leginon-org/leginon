@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/remotecall.py,v $
-# $Revision: 1.9 $
+# $Revision: 1.10 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-23 19:44:25 $
+# $Date: 2005-02-23 20:03:43 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -51,7 +51,7 @@ class MultiRequest(Request):
 		if args is None:
 			args = [()]*len(attributenames)
 		if kwargs is None:
-			args = [{}]*len(attributenames)
+			kwargs = [{}]*len(attributenames)
 		if len(args) != n or len(kwargs) != n:
 			raise ValueError
 		Request.__init__(self, origin, node, name, attributenames, types,
