@@ -38,12 +38,6 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
                (strcmp(key, "high tension") == 0) ||
                (strcmp(key, "spot size") == 0) ||
                (strcmp(key, "exposure time") == 0) ||
-               (strcmp(key, "x offset") == 0) ||
-               (strcmp(key, "y offset") == 0) ||
-               (strcmp(key, "x dimension") == 0) ||
-               (strcmp(key, "y dimension") == 0) ||
-               (strcmp(key, "x binning") == 0) ||
-               (strcmp(key, "y binning") == 0) ||
                (strcmp(key, "defocus") == 0)) {
               plhs[0] = mxCreateDoubleMatrix(1,1, mxREAL); 
               if(pobj2double(mxGetPr(plhs[0]),
@@ -53,7 +47,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
                       (strcmp(key, "gun tilt") == 0) ||
                       (strcmp(key, "gun shift") == 0) ||
                       (strcmp(key, "beam tilt") == 0) ||
-                      (strcmp(key, "beam shift") == 0)) {
+                      (strcmp(key, "beam shift") == 0) ||
+                      (strcmp(key, "offset") == 0) ||
+                      (strcmp(key, "dimension") == 0) ||
+                      (strcmp(key, "binning") == 0)) {
               plhs[0] = mxCreateDoubleMatrix(1,2, mxREAL); 
               if(pobj2vector(mxGetPr(plhs[0]), mxGetPr(plhs[0]) + 1,
                              addrgetitemfromstr(uri, key)) == -1)
@@ -76,12 +73,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
             } else if((strcmp(key, "image data") == 0)) {
               unsigned short *data;
               int size, dims[2];
+							double tempdims[2];
               if(b64str2ushorts(&data, &size, addrgetitemfromstr(uri, key)) == -1)
                 mexErrMsgTxt("Error getting value\n");
-              if(pobj2int(&dims[0], addrgetitemfromstr(uri, "x dimension")) == -1)
+              if(pobj2vector(&(tempdims[0]), &(tempdims[1]),
+                             addrgetitemfromstr(uri, "dimension")) == -1)
                 mexErrMsgTxt("Error getting value\n");
-              if(pobj2int(&dims[1], addrgetitemfromstr(uri, "y dimension")) == -1)
-                mexErrMsgTxt("Error getting value\n");
+              dims[0] = (int)tempdims[0];
+              dims[1] = (int)tempdims[1];
               plhs[0] = mxCreateNumericArray(2, dims, mxUINT16_CLASS, mxREAL);
               memcpy(mxGetPr(plhs[0]), data, size);
             } else
@@ -100,19 +99,16 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
              (strcmp(key, "high tension") == 0) ||
              (strcmp(key, "spot size") == 0) ||
              (strcmp(key, "exposure time") == 0) ||
-             (strcmp(key, "x offset") == 0) ||
-             (strcmp(key, "y offset") == 0) ||
-             (strcmp(key, "x dimension") == 0) ||
-             (strcmp(key, "y dimension") == 0) ||
-             (strcmp(key, "x binning") == 0) ||
-             (strcmp(key, "y binning") == 0) ||
              (strcmp(key, "defocus") == 0)) {
             addrsetitemfromstr(uri, key, double2pobj(*mxGetPr(prhs[3])));
           } else if((strcmp(key, "image shift") == 0) ||
                     (strcmp(key, "gun tilt") == 0) ||
                     (strcmp(key, "gun shift") == 0) ||
                     (strcmp(key, "beam tilt") == 0) ||
-                    (strcmp(key, "beam shift") == 0)) {
+                    (strcmp(key, "beam shift") == 0) ||
+                    (strcmp(key, "offset") == 0) ||
+                    (strcmp(key, "dimension") == 0) ||
+                    (strcmp(key, "binning") == 0)) {
             addrsetitemfromstr(uri, key, vector2pobj(*mxGetPr(prhs[3]),
                                                      *(mxGetPr(prhs[3])+1)));
           } else if((strcmp(key, "stage position") == 0)) {
