@@ -527,22 +527,22 @@ class Application(wxObjectCanvas.wxRectangleObject):
 		wxObjectCanvas.wxRectangleObject.OnStartConnection(self, evt)
 		for node in self.getNodes():
 			for input in node.inputconnectionpoints:
-				if issubclass(self.connection.eventclass, input.eventclass):
+				if issubclass(input.eventclass, self.connection.eventclass):
 					input.setDrawText(True)
 
 	def OnEndConnection(self, evt):
 		if self.connection is not None:
-			if issubclass(self.connection.eventclass, evt.toso.eventclass):
+			if issubclass(evt.toso.eventclass, self.connection.eventclass):
 				for node in self.getNodes():
 					for input in node.inputconnectionpoints:
-						if issubclass(self.connection.eventclass, input.eventclass):
+						if issubclass(input.eventclass, self.connection.eventclass):
 							input.setDrawText(False)
 				wxObjectCanvas.wxRectangleObject.OnEndConnection(self, evt)
 
 	def cancelConnection(self):
 		for node in self.getNodes():
 			for input in node.inputconnectionpoints:
-				if issubclass(self.connection.eventclass, input.eventclass):
+				if issubclass(input.eventclass, self.connection.eventclass):
 					input.setDrawText(False)
 		wxObjectCanvas.wxRectangleObject.cancelConnection(self)
 
