@@ -258,7 +258,7 @@ class Manager(node.Node):
 			print '%-25s  %s' % (key,value)
 
 	def defineUserInterface(self):
-		node.Node.defineUserInterface(self)
+		nodespec = node.Node.defineUserInterface(self)
 
 		self.ui_nodes = {}
 		self.ui_launchers = {}
@@ -272,6 +272,9 @@ class Manager(node.Node):
 		nodeclass_list.sort()
 		self.launcherlist = []
 		self.launcherdict = {}
+
+		self.registerUISpec('MANAGER', nodespec)
+		return
 
 		argspec = (
 			{'name':'name', 'alias':'Name', 'type':'string'},
@@ -366,10 +369,10 @@ if __name__ == '__main__':
 	## GUI
 	gui = 1
 	if gui:
-		import nodegui
+		import nodegui2
 		import Tkinter
 		tk = Tkinter.Tk()
-		mgui = nodegui.NodeGUI(tk, node=m)
+		mgui = nodegui2.NodeGUI(tk, node=m)
 		#tk.wm_title('Leginon Manager')
 		mgui.pack()
 #		t = threading.Thread(name = 'Tk GUI thread', target = tk.mainloop)

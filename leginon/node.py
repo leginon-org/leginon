@@ -118,11 +118,29 @@ class Node(leginonobject.LeginonObject):
 		self.clientlist = []
 		self.clientdict = {}
 		print 'clientlist initialized'
-		self.registerUIFunction(self.uiID, (), 'ID', returntype='array')
-		self.registerUIFunction(self.uiClass, (), 'Class', returntype='string')
+		#self.registerUIFunction(self.uiID, (), 'ID', returntype='array')
+		#self.registerUIFunction(self.uiClass, (), 'Class', returntype='string')
+		r = interface.DataSpec('id', 'array', permissions='r')
+		a = self.registerUIMethod(self.uiID, 'ID', (), returnspec=r)
+		r = interface.DataSpec('class', 'string', permissions='r')
+		b = self.registerUIMethod(self.uiClass, 'Class', (), returnspec=r)
+		c = self.registerUIContainer('Node Methods', (a,b))
+		return c
 
 	def registerUIFunction(self, func, argspec, alias=None, returntype=None):
 		self.uiserver.registerFunction(func, argspec, alias, returntype)
+
+	def registerUIMethod(self, func, name, argspec, returnspec):
+		return self.uiserver.registerMethod(func, name, argspec, returnspec)
+
+	def registerUIData(self, name, xmlrpctype, permissions='r', enum=(), default=None):
+		return self.uiserver.registerData(name, xmlrpctype, permissions, enum, default)
+
+	def registerUIContainer(self, name=None, content=()):
+		return self.uiserver.registerContainer(name, content)
+
+	def registerUISpec(self, name=None, content=()):
+		return self.uiserver.registerSpec(name, content)
 
 	def uiID(self):
 		return self.id
