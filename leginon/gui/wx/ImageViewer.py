@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageViewer.py,v $
-# $Revision: 1.41 $
+# $Revision: 1.42 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-05 19:19:46 $
+# $Date: 2004-11-11 18:43:39 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -38,6 +38,7 @@ import numextension
 from gui.wx.Entry import FloatEntry, EVT_ENTRY
 import gui.wx.Stats
 import time
+import gui.wx.ImageViewer2
 
 wx.InitAllImageHandlers()
 
@@ -309,12 +310,15 @@ class ContrastTool(object):
 
 class ImageTool(object):
 	def __init__(self, imagepanel, sizer, bitmap, tooltip='', cursor=None,
-								untoggle=False):
+								untoggle=False, button=None):
 		self.sizer = sizer
 		self.imagepanel = imagepanel
 		self.cursor = cursor
-		self.button = GenBitmapToggleButton(self.imagepanel, -1, bitmap,
-                                          size=(24, 24))
+		if button is None:
+			self.button = GenBitmapToggleButton(self.imagepanel, -1, bitmap,
+ 	                                         size=(24, 24))
+		else:
+			self.button = button
 		self.untoggle = untoggle
 		self.button.SetBezelWidth(1)
 		if tooltip:
@@ -397,6 +401,30 @@ class CrosshairTool(ImageTool):
 		dc.DrawLine(0, y, width, y)
 
 	def OnToggle(self, value):
+		self.imagepanel.UpdateDrawing()
+
+class ColormapTool(ImageTool):
+	def __init__(self, imagepanel, sizer):
+		bitmap = getBitmap('color.png')
+		tooltip = 'Show Color'
+		cursor = None
+		imagepanel.colormap = None
+		self.grayscalebitmap = getBitmap('grayscale.png')
+		self.colorbitmap = bitmap
+		button = GenBitmapButton(imagepanel, -1, bitmap, size=(24, 24))
+		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, False,
+												button=button)
+
+	def OnButton(self, evt):
+		if self.imagepanel.colormap is None:
+			self.imagepanel.colormap = gui.wx.ImageViewer2.colormap
+			self.button.SetBitmapLabel(self.grayscalebitmap)
+			self.button.SetToolTip(wx.ToolTip('Show Grayscale'))
+		else:
+			self.imagepanel.colormap = None
+			self.button.SetBitmapLabel(self.colorbitmap)
+			self.button.SetToolTip(wx.ToolTip('Show Color'))
+		self.imagepanel.setBitmap()
 		self.imagepanel.UpdateDrawing()
 
 class RulerTool(ImageTool):
@@ -521,6 +549,8 @@ class ImagePanel(wx.Panel):
 		self.bitmap = None
 		self.buffer = None
 
+		self.colormap = None
+
 		self.selectiontool = None
 
 		# get size of image panel (image display dimensions)
@@ -583,6 +613,7 @@ class ImagePanel(wx.Panel):
 		self.addTool(RulerTool(self, self.toolsizer))
 		self.addTool(ZoomTool(self, self.toolsizer))
 		self.addTool(CrosshairTool(self, self.toolsizer))
+		self.addTool(ColormapTool(self, self.toolsizer))
 
 		self.contrasttool = ContrastTool(self, self.toolsizer)
 
@@ -601,7 +632,13 @@ class ImagePanel(wx.Panel):
 		if isinstance(self.imagedata, Numeric.ArrayType):
 			clip = self.contrasttool.getRange()
 			wximage = wx.EmptyImage(self.imagedata.shape[1], self.imagedata.shape[0])
-			wximage.SetData(numextension.rgbstring(self.imagedata, clip[0], clip[1]))
+			if self.colormap is None:
+				wximage.SetData(numextension.rgbstring(self.imagedata,
+																								clip[0], clip[1]))
+			else:
+				wximage.SetData(numextension.rgbstring(self.imagedata,
+																								clip[0], clip[1],
+																								self.colormap))
 		elif isinstance(self.imagedata, Image.Image):
 			wximage = wx.EmptyImage(self.imagedata.size[0], self.imagedata.size[1])
 			wximage.SetData(self.imagedata.convert('RGB').tostring())
