@@ -512,9 +512,12 @@ class NodeGUILauncher(Frame):
 		launchportlab.pack(side=LEFT)
 		self.launchportent.pack(side=LEFT)
 
+		self.launchhostent.bind('<KeyPress-Return>', self.launchgui)
+		self.launchportent.bind('<KeyPress-Return>', self.launchgui)
+
 		f.pack(side=TOP, fill=BOTH)
 
-	def launchgui(self):
+	def launchgui(self, event=None):
 		host = self.launchhostent.get()
 		port = self.launchportent.get()
 		tk = self.newGUIWindow(host, port)
