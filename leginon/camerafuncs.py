@@ -48,11 +48,13 @@ class CameraFuncs(object):
 
 	def currentCameraEMData(self, camdata=None):
 		'''
-		Sets the camera state to camstate.
-		If called without camstate, return the current camera state
+		Sets the camera state using camdata.
+		If called without camdata, return the current camera state
 		'''
 		t = Timer('camerafuncs state')
 		if camdata is not None:
+			if not isinstance(camdata, data.CameraEMData):
+				raise TypeError('camdata not type CameraEMData')
 			t2 = Timer('publish camera state')
 			try:
 				self.node.publishRemote(camdata)
