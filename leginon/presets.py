@@ -417,6 +417,23 @@ class PresetsManager(node.Node):
 			raise RuntimeError('current preset %s not in cycle order list' % (currentname,))
 
 		thiscycle = self.createCycleList(currentname, presetname, magshortcut)
+		
+		### We can make one more possible shortcut if we are going
+		### to a preset such that there are no mag changes between
+		### the current preset and the final preset (even in the
+		### reverse cycle)  In such case, we can go direct.
+		### If len(thiscycle) == 1 already, then there is no advantage,
+		### but if len(thiscycle) > 1 and len(reversecycle) == 1 and
+		### the final preset has the same mag as the current one,
+		### then we can go direct
+		if magshortcut and len(thiscycle) > 1:
+			reversecycle = self.createCycleList(currentname, presetname, magshortcut, reverse=True)
+			if len(reversecycle) == 1:
+				p = self.presetByName(reversecycle[0])
+				if p['magnificaiton'] == self.currentpreset['magnification']
+				thiscycle = reversecycle
+				print 'magnification adjacency detected, going directly to final preset'
+
 		## go to every preset in thiscycle except the last
 		for pname in thiscycle[:-1]:
 			self.toScope(pname, magonly)
@@ -426,17 +443,20 @@ class PresetsManager(node.Node):
 			self.toScope(thiscycle[-1])
 			print 'cycle complete'
 
-	def createCycleList(self, current, final, magshortcut):
+	def createCycleList(self, current, final, magshortcut, reverse=False):
 		order = self.orderlist.get()
 
 		# start with only final in the reduced list
 		reduced = [final]
 
-		## propose adding previous presets one by one
+		## propose adding previous/next presets one by one
 		name2 = final
 		preset2 = self.presetByName(name2)
 		while 1:
-			name1 = self.previousNameInCycle(name2, order)
+			if reverse:
+				name1 = self.nextNameInCycle(name2, order)
+			else:
+				name1 = self.previousNameInCycle(name2, order)
 			if name1 == current:
 				break
 			preset1 = self.presetByName(name1)
