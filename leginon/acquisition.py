@@ -4,6 +4,7 @@ or an ImageTargetListData.  The method processTargetData is called on each
 ImageTargetData.
 '''
 
+import focuser
 import targetwatcher
 import time
 import data, event
@@ -11,6 +12,7 @@ import calibrationclient
 import camerafuncs
 import presets
 import copy
+import threading
 
 class Acquisition(targetwatcher.TargetWatcher):
 	def __init__(self, id, session, nodelocations, **kwargs):
@@ -46,6 +48,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## maybe should have timeout?
 		print 'waiting for focus to complete'
 		self.targetevents[targetid].wait()
+		## maybe delete old events?
 
 	def processTargetData(self, targetdata):
 		'''
@@ -55,11 +58,14 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'''
 		### should make both target data and preset an option
 
-		## pass focus targets to another node
-		if isinstance(targetdata, data.FocusTargetData):
-			print 'FFFFFFF this is a focus target'
-			self.focus(targetdata)
-			return
+		## if this is not a focuser, pass focus targets on
+		## right now this would be done one at a time
+		## maybe we could pack all the focus targets into one list
+		if not isinstance(self, focuser.Focuser):
+			if isinstance(targetdata, data.FocusTargetData):
+				print 'passing on focus target'
+				self.focus(targetdata)
+				return
 
 		if targetdata is None:
 			newtargetemdata = None
@@ -304,8 +310,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 	def uiToScopeAcquire(self):
 		try:
 			presetname = self.presetarg.get()['selected'][0]
+			print 'PRESETNAME', presetname
 		except (KeyError, IndexError):
 			self.printerror('cannot determine preset name')
+			return ''
 		## remember this preset name for when a click event comes back
 		self.testpresetname = presetname
 
