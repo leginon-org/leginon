@@ -227,7 +227,7 @@ class Client(object):
 			print 'ProtocolError detail:', detail.errmsg
 			ret = None
 		except xmlrpclib.Fault, detail:
-			print 'Received the following excepetion from XML-RPC Server during call to %s:' % funcname
+			print 'Received the following exception from XML-RPC Server during call to %s:' % funcname
 			print detail.faultString
 			ret = None
 		return ret
