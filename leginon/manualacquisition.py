@@ -41,9 +41,14 @@ class ManualAcquisition(node.Node):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 		self.emclient = EM.EMClient(self)
 		self.camerafuncs = camerafuncs.CameraFuncs(self)
-		self.gridmapping = {'None': None}
+
 		self.lowdosemode = None
-		self.defineUserInterface()
+
+		self.projectdata = project.ProjectData()
+		self.gridmapping = {}
+		self.gridbox = None
+		self.grid = None
+
 		self.start()
 
 	def updateImage(self, name, image, targets={}, stats={}):
@@ -197,9 +202,8 @@ class ManualAcquisition(node.Node):
 
 	def publishImageData(self, imagedata):
 		acquisitionimagedata = data.AcquisitionImageData(initializer=imagedata)
-		grid = self.gridselect.getSelectedValue()
-		gridinfo = self.gridmapping[grid]
-		if gridinfo is not None:
+		if self.grid is not None:
+			gridinfo = self.gridmapping[self.grid]
 			griddata = data.GridData()
 			griddata['grid ID'] = gridinfo['gridId']
 			acquisitionimagedata['grid'] = griddata
@@ -294,74 +298,31 @@ class ManualAcquisition(node.Node):
 	def cmpGridLabel(self, x, y):
 		return cmp(self.gridmapping[x]['location'], self.gridmapping[y]['location'])
 
-	def onGridBoxSelect(self, value):
-		projectdata = project.ProjectData()
-		if not projectdata.isConnected():
-			self.gridboxselect.set(['None'], 0)
-			self.gridselect.setList(['None'])
-			return 0
+	def getGrids(self, label):
+		gridboxes = self.projectdata.getGridBoxes()
+		labelindex = gridboxes.Index(['label'])
+		gridbox = labelindex[label].fetchone()
+		gridboxid = gridbox['gridboxId']
+		gridlocations = self.projectdata.getGridLocations()
+		gridboxidindex = gridlocations.Index(['gridboxId'])
+		gridlocations = gridboxidindex[gridboxid].fetchall()
+		grids = self.projectdata.getGrids()
+		grididindex = grids.Index(['gridId'])
+		self.gridmapping = {}
+		for gridlocation in gridlocations:
+			grid = grididindex[gridlocation['gridId']].fetchone()
+			key = '%d - %s' % (gridlocation['location'], grid['label'])
+			self.gridmapping[key] = {'gridId': gridlocation['gridId'],
+																'location': gridlocation['location'],
+																'label': grid['label']}
+		keys = self.gridmapping.keys()
+		keys.sort(self.cmpGridLabel)
+		return keys
 
-		label = self.gridboxselect.getSelectedValue(value)
-
-		if label == 'None':
-			self.gridselect.set(['None'], 0)
-		else:
-			gridboxes = projectdata.getGridBoxes()
-			labelindex = gridboxes.Index(['label'])
-			gridbox = labelindex[label].fetchone()
-			gridboxid = gridbox['gridboxId']
-			gridlocations = projectdata.getGridLocations()
-			gridboxidindex = gridlocations.Index(['gridboxId'])
-			gridlocations = gridboxidindex[gridboxid].fetchall()
-			grids = projectdata.getGrids()
-			grididindex = grids.Index(['gridId'])
-			self.gridmapping = {}
-			for gridlocation in gridlocations:
-				grid = grididindex[gridlocation['gridId']].fetchone()
-				key = '%d - %s' % (gridlocation['location'], grid['label'])
-				self.gridmapping[key] = {'gridId': gridlocation['gridId'],
-																	'location': gridlocation['location'],
-																	'label': grid['label']}
-			keys = self.gridmapping.keys()
-			keys.sort(self.cmpGridLabel)
-			self.gridselect.set(['None'] + keys, 0)
-			self.gridmapping['None'] = None
-
-		return value
-
-	def updateGridBoxSelection(self):
-		projectdata = project.ProjectData()
-		if not projectdata.isConnected():
-			self.gridboxselect.set(['None'], 0)
-			return
-
-		gridboxes = projectdata.getGridBoxes()
+	def getGridBoxes(self):
+		gridboxes = self.projectdata.getGridBoxes()
 		labelindex = gridboxes.Index(['label'])
 		gridboxlabels = map(lambda d: d['label'], gridboxes.getall())
-		gridboxlabels.append('None')
 		gridboxlabels.reverse()
-		self.gridboxselect.set(gridboxlabels, 0)
-
-	def defineUserInterface(self):
-		node.Node.defineUserInterface(self)
-
-		self.gridboxselect = uidata.SingleSelectFromList('Grid Box', None, None,
-																											'rw')
-		self.gridselect = uidata.SingleSelectFromList('Grid', None, None, 'rw')
-		self.gridboxselect.setCallback(self.onGridBoxSelect)
-		self.updateGridBoxSelection()
-		refreshmethod = uidata.Method('Refresh', self.updateGridBoxSelection,
-									tooltip='Refresh the grid listing from the project database')
-
-		gridcontainer = uidata.Container('Current Grid')
-		gridcontainer.addObjects((self.gridboxselect, self.gridselect))
-		gridcontainer.addObject(refreshmethod, position={'justify': ['right']})
-
-		settingscontainer = uidata.Container('Settings')
-		settingscontainer.addObjects((gridcontainer,))
-
-		container = uidata.LargeContainer('Manual Acquisition')
-		container.addObject(settingscontainer, position={'position': (2, 0),
-																				'justify': ['bottom', 'left', 'right']})
-		self.uicontainer.addObject(container)
+		return gridboxlabels
 

@@ -53,6 +53,7 @@ class Panel(gui.wx.Node.Panel):
 
 		self.bsettings = wx.Button(self, -1, 'Settings...')
 		self.bgrid = wx.Button(self, -1, 'Grid...')
+		self.bgrid.Enable(False)
 		self.bacquire = wx.Button(self, -1, 'Acquire')
 		self.bcontinuous = wx.Button(self, -1, 'Continuous')
 
@@ -79,9 +80,11 @@ class Panel(gui.wx.Node.Panel):
 
 	def onNodeInitialized(self):
 		self.Bind(wx.EVT_BUTTON, self.onSettingsButton, self.bsettings)
-		self.Bind(wx.EVT_BUTTON, self.onGridButton, self.bgrid)
 		self.Bind(wx.EVT_BUTTON, self.onAcquireButton, self.bacquire)
 		self.Bind(wx.EVT_BUTTON, self.onContinuousButton, self.bcontinuous)
+		if self.node.projectdata.isConnected():
+			self.Bind(wx.EVT_BUTTON, self.onGridButton, self.bgrid)
+			self.bgrid.Enable(True)
 
 	def onImageUpdated(self, evt):
 		self.imagepanel.setImage(evt.image)
@@ -98,7 +101,8 @@ class Panel(gui.wx.Node.Panel):
 	def onGridButton(self, evt):
 		dialog = GridDialog(self)
 		if dialog.ShowModal() == wx.ID_OK:
-			print 'ok'
+			self.node.gridbox = dialog.gridbox
+			self.node.grid = dialog.grid
 		dialog.Destroy()
 
 	def onAcquireButton(self, evt):
@@ -133,10 +137,23 @@ class Panel(gui.wx.Node.Panel):
 
 class GridDialog(wx.Dialog):
 	def __init__(self, parent):
+		self.node = parent.node
 		wx.Dialog.__init__(self, parent, -1, 'Grid Selection')
 
-		self.cgridbox = wx.Choice(self, -1)
+		choices = ['None'] + self.node.getGridBoxes()
+		self.cgridbox = wx.Choice(self, -1, choices=choices)
 		self.cgrid = wx.Choice(self, -1)
+
+		if self.node.gridbox is None:
+			self.cgridbox.SetStringSelection('None')
+		else:
+			self.cgridbox.SetStringSelection(self.node.gridbox)
+		self.onGridBoxChoice()
+		if self.node.grid is None:
+			self.cgrid.SetStringSelection('None')
+		else:
+			self.cgrid.SetStringSelection(self.node.grid)
+		self.onGridChoice()
 
 		szgrid = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Grid box:')
@@ -152,7 +169,6 @@ class GridDialog(wx.Dialog):
 		sbszgrid.Add(szgrid, 1, wx.EXPAND|wx.ALL, 5)
 
 		self.bselect = wx.Button(self, wx.ID_OK, 'Select')
-		self.bselect.Enable(False)
 		self.bcancel = wx.Button(self, wx.ID_CANCEL, 'Cancel')
 
 		szbutton = wx.GridBagSizer(5, 5)
@@ -166,6 +182,36 @@ class GridDialog(wx.Dialog):
 		sz.Add(szbutton, (1, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
 
 		self.SetSizerAndFit(sz)
+
+		self.Bind(wx.EVT_CHOICE, self.onGridBoxChoice, self.cgridbox)
+		self.Bind(wx.EVT_CHOICE, self.onGridChoice, self.cgrid)
+
+	def onGridBoxChoice(self, evt=None):
+		if evt is None:
+			gridbox = self.cgridbox.GetStringSelection()
+		else:
+			gridbox = evt.GetString()
+		choices = ['None']
+		if gridbox == 'None':
+			self.gridbox = None
+		else:
+			choices += self.node.getGrids(gridbox)
+			self.gridbox = gridbox
+
+		self.cgrid.Clear()
+		self.cgrid.AppendItems(choices)
+		self.cgrid.SetSelection(0)
+		self.onGridChoice()
+
+	def onGridChoice(self, evt=None):
+		if evt is None:
+			grid = self.cgrid.GetStringSelection()
+		else:
+			grid = evt.GetString()
+		if grid == 'None':
+			self.grid = None
+		else:
+			self.grid = grid
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
