@@ -10,8 +10,6 @@ class MyNode(node.Node):
 
 		#self.addEventInput(event.ControlEvent, self.handle_intervalchange)
 		self.addEventInput(event.PublishEvent, self.handle_intervalpublished)
-		self.addEventOutput(event.PublishEvent)
-		self.addEventOutput(event.UnpublishEvent)
 
 		self.interval = 5
 		print self.location()

@@ -24,6 +24,14 @@ class NodeDataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
 		datahandler.SimpleDataKeeper.__init__(self, id)
 		datahandler.DataBinder.__init__(self, id)
 
+		self.addEventOutput(event.PublishEvent)
+		self.addEventOutput(event.UnpublishEvent)
+		self.addEventOutput(event.NodeAvailableEvent)
+		self.addEventOutput(event.NodeUnavailableEvent)
+
+	def __del__(self, id):
+		self.announce(event.NodeUnavailableEvent(self.ID()))
+
 	def insert(self, idata):
 		if isinstance(idata, event.Event):
 			datahandler.DataBinder.insert(self, idata)
