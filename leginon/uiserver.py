@@ -44,6 +44,12 @@ class Server(xmlrpc.Server, uidata.Container):
 		self.xmlrpcserver.register_function(self.addXMLRPCClientServer,	
 																				'add client')
 
+	def __str__(self):
+		return object.__str__(self)
+
+	def __repr__(self):
+		return object.__repr__(self)
+
 	def location(self):
 		location = {}
 		location['hostname'] = self.hostname
