@@ -1,5 +1,13 @@
 #!/usr/bin/env python
 
+#
+# COPYRIGHT:
+#       The Leginon software is Copyright 2003
+#       The Scripps Research Institute, La Jolla, CA
+#       For terms of the license agreement
+#       see  http://ami.scripps.edu/software/leginon-license
+#
+
 import Numeric
 from LinearAlgebra import linear_least_squares, solve_linear_equations
 import time

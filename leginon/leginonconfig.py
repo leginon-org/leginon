@@ -1,3 +1,10 @@
+#
+# COPYRIGHT:
+#       The Leginon software is Copyright 2003
+#       The Scripps Research Institute, La Jolla, CA
+#       For terms of the license agreement
+#       see  http://ami.scripps.edu/software/leginon-license
+#
 """
 leginonconfig.py: Configuration file for leginon defaults and such
 We could also do this using the ConfigParser module and have this
