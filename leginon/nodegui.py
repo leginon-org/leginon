@@ -781,12 +781,14 @@ class NodeGUILauncher(Frame):
 
 		nodeidframe = Frame(automaticframe, bd=4, relief=SOLID)
 
+		nglabel = Label(nodeidframe, text='Node UI:')
 		nodeidlabel = Label(nodeidframe, text='Node ID')
 		self.nodeidsvar = StringVar()
 		self.nodeidsentry = ComboBoxDropdownCallback(nodeidframe, self.getNodeLocations, entry_textvariable=self.nodeidsvar)
 		self.nodeidsentry.component('entryfield').component('entry')['width'] = 20
-		launchuibutton = Button(nodeidframe, text='Launch GUI', command=self.launchUIbyNodeID)
+		launchuibutton = Button(nodeidframe, text='Launch', command=self.launchUIbyNodeID)
 
+		nglabel.pack(side=TOP)
 		nodeidlabel.pack(side=LEFT)
 		self.nodeidsentry.pack(side=LEFT)
 		launchuibutton.pack(side=LEFT)
