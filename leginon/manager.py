@@ -30,6 +30,7 @@ import uiclient
 import newdict
 import socket
 import wxManager
+import nodeclassreg
 
 class DataBinder(databinder.DataBinder):
 	def handleData(self, newdata):
@@ -413,14 +414,27 @@ class Manager(node.Node):
 	def getNodeCount(self):
 		return len(self.nodelocations)
 
+	def getNodeClass(self, name):
+		nodelocationdata = self.nodelocations[name]
+		classname = nodelocationdata['class string']
+		if self.isLauncher(classname):
+			return launcher.Launcher
+		else:
+			nodeclass = nodeclassreg.getNodeClass(classname)
+		return nodeclass
+
+	def getNodeEventIO(self, name):
+		nodeclass = self.getNodeClass(name)
+		return {'inputs': nodeclass.eventinputs, 'outputs': nodeclass.eventoutputs}
+
 	def getNodeNames(self, sorted=True):
 		names = self.nodelocations.keys()
 		if sorted:
 			names.sort()
 		return names
 
-	def isLauncher(self, evt):
-		if evt['nodeclass'] == 'Launcher':
+	def isLauncher(self, name):
+		if name == 'Launcher':
 			return True
 		return False
 
@@ -459,7 +473,7 @@ class Manager(node.Node):
 			self.killNode(name)
 
 		# check if new node is launcher.
-		if self.isLauncher(evt):
+		if self.isLauncher(classname):
 			self._addLauncher(name, location)
 
 		location = self.setNodeClient(name, location)

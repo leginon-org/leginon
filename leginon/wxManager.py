@@ -1,3 +1,4 @@
+import event
 import manager
 import uiclient
 import wx
@@ -56,7 +57,7 @@ class ManagerFrame(wx.Frame):
 
 		self.menubar.Append(self.launchermenu, '&Launcher')
 
-		# node launchermenu
+		# node menu
 		self.nodemenu = wx.Menu()
 
 		self.nodecreatemenuitem = wx.MenuItem(self.nodemenu, -1, '&Create')
@@ -72,6 +73,14 @@ class ManagerFrame(wx.Frame):
 		self.nodekillmenuitem.Enable(False)
 
 		self.menubar.Append(self.nodemenu, '&Node')
+
+		# event menu
+		self.eventmenu = wx.Menu()
+		self.bindmenuitem = wx.MenuItem(self.eventmenu, -1, '&Bind')
+		self.Bind(wx.EVT_MENU, self.onMenuBind, self.bindmenuitem)
+		self.eventmenu.AppendItem(self.bindmenuitem)
+		self.bindmenuitem.Enable(False)
+		self.menubar.Append(self.eventmenu, '&Event')
 
 		self.SetMenuBar(self.menubar)
 
@@ -109,8 +118,21 @@ class ManagerFrame(wx.Frame):
 		name = item.GetLabel()
 		self.manager.killNode(name)
 
+	def onMenuBind(self, evt):
+		nodenames = self.manager.getNodeNames()
+		eventio = {}
+		for name in nodenames:
+			eventio[name] = self.manager.getNodeEventIO(name)
+		eventclasses = event.eventClasses()
+		dialog = BindEventDialog(self, nodenames, eventio, eventclasses)
+		if dialog.ShowModal() == wx.ID_OK:
+			print 'ok!'
+		dialog.Destroy()
+
 	def onAddNode(self, name):
 		# if it's in launcher kill menu don't add here
+		if self.manager.getNodeCount() >= 2:
+			self.bindmenuitem.Enable(True)
 		item = self.launcherkillmenu.FindItem(name)
 		if item is wx.NOT_FOUND:
 			item = wx.MenuItem(self.nodekillmenu, -1, name)
@@ -120,6 +142,8 @@ class ManagerFrame(wx.Frame):
 				self.nodekillmenuitem.Enable(True)
 
 	def onRemoveNode(self, name):
+		if self.manager.getNodeCount() < 2:
+			self.bindmenuitem.Enable(False)
 		item = self.nodekillmenu.FindItem(name)
 		if item is not wx.NOT_FOUND:
 			self.nodekillmenu.Delete(item)
@@ -290,4 +314,92 @@ class CreateNodeDialog(wx.Dialog):
 			dlg = wx.MessageDialog(self, e, 'Node Create Error', wx.OK|wx.ICON_ERROR)
 			dlg.ShowModal()
 			dlg.Destroy()
+
+class BindEventDialog(wx.Dialog):
+	def __init__(self, parent, nodenames, eventio, eventclasses):
+		self.nodenames = nodenames
+		self.eventio = eventio
+		self.eventclasses = eventclasses
+		wx.Dialog.__init__(self, parent, -1, 'Bind Event')
+
+		self.dialogsizer = wx.GridBagSizer()
+
+		sizer = wx.GridBagSizer(5, 5)
+
+		sizer.Add(wx.StaticText(self, -1, 'From:'), (0, 0), (1, 1),
+																									wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(wx.StaticText(self, -1, 'Event:'), (0, 1), (1, 1),
+																									wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(wx.StaticText(self, -1, 'To:'), (0, 2), (1, 1),
+																									wx.ALIGN_CENTER_VERTICAL)
+
+		self.fromlistbox = wx.ListBox(self, -1, choices=nodenames)
+		self.eventlistbox = wx.ListBox(self, -1, choices=eventclasses.keys())
+		self.tolistbox = wx.ListBox(self, -1, choices=nodenames)
+		sizer.Add(self.fromlistbox, (1, 0), (1, 1), wx.EXPAND)
+		sizer.Add(self.eventlistbox, (1, 1), (1, 1), wx.EXPAND)
+		sizer.Add(self.tolistbox, (1, 2), (1, 1), wx.EXPAND)
+		self.Bind(wx.EVT_LISTBOX, self.onFromSelect, self.fromlistbox)
+		self.Bind(wx.EVT_LISTBOX, self.onToSelect, self.tolistbox)
+
+		self.dialogsizer.Add(sizer, (0, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 10)
+		self.SetSizerAndFit(self.dialogsizer)
+
+	def getCommonEvents(self, fromname, toname):
+		outputs = self.eventio[fromname]['outputs']
+		inputs = self.eventio[toname]['inputs']
+		events = []
+		for output in outputs:
+			if output in inputs:
+				events.append(output.__name__)
+		return events
+
+	def restoreListBox(self, listbox):
+		selection = listbox.GetStringSelection()
+		listbox.Clear()
+		listbox.AppendItems(self.nodenames)
+		if listbox.FindString(selection) is not wx.NOT_FOUND:
+			listbox.SetStringSelection(selection)
+
+	def onFromSelect(self, evt):
+		self.restoreListBox(self.tolistbox)
+
+		name = evt.GetString()
+
+		selection = self.eventlistbox.GetStringSelection()
+		toname = self.tolistbox.GetStringSelection()
+		if toname:
+			events = self.getCommonEvents(name, toname)
+		else:
+			events = []
+
+		self.eventlistbox.Clear()
+		self.eventlistbox.AppendItems(events)
+		if self.eventlistbox.FindString(selection) is not wx.NOT_FOUND:
+			self.eventlistbox.SetStringSelection(selection)
+
+		n = self.tolistbox.FindString(name)
+		if n is not wx.NOT_FOUND:
+			self.tolistbox.Delete(n)
+
+	def onToSelect(self, evt):
+		self.restoreListBox(self.fromlistbox)
+
+		name = evt.GetString()
+
+		selection = self.eventlistbox.GetStringSelection()
+		fromname = self.fromlistbox.GetStringSelection()
+		if fromname:
+			events = self.getCommonEvents(fromname, name)
+		else:
+			events = []
+
+		self.eventlistbox.Clear()
+		self.eventlistbox.AppendItems(events)
+		if self.eventlistbox.FindString(selection) is not wx.NOT_FOUND:
+			self.eventlistbox.SetStringSelection(selection)
+
+		n = self.fromlistbox.FindString(name)
+		if n is not wx.NOT_FOUND:
+			self.fromlistbox.Delete(n)
 
