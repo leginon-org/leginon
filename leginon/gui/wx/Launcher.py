@@ -198,9 +198,9 @@ class Panel(ListCtrlPanel):
 		self.listctrl.AssignImageList(imagelist, wx.IMAGE_LIST_SMALL)
 
 	def addNode(self, n):
-		if not hasattr(n, 'panel'):
-			return
 		panel = n.panel
+		if panel is None:
+			return
 		label = n.name
 		for i, icon in enumerate(iconmap):
 			if isinstance(n, icon[1]):

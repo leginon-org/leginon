@@ -8,8 +8,6 @@ class Panel(gui.wx.Node.Panel):
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1,
 																name='%s.pMosaicTargetMaker' % name)
-		self.node = None
-
 		self.szmain = wx.GridBagSizer(5, 5)
 
 		self.szstatus = self._getStaticBoxSizer('Status', (0, 0), (1, 1),
@@ -67,7 +65,6 @@ class Panel(gui.wx.Node.Panel):
 
 		self.Bind(wx.EVT_BUTTON, self.onCreateAtlas, self.bcreate)
 
-		self.Bind(gui.wx.Node.EVT_NODE_INITIALIZED, self.onNodeInitialized)
 		self.Bind(gui.wx.Node.EVT_SET_STATUS, self.onSetStatus)
 
 	def initializeValues(self):
@@ -92,11 +89,6 @@ class Panel(gui.wx.Node.Panel):
 		self.Bind(wx.EVT_TEXT, self.onLabel, self.tclabel)
 		self.Bind(wx.lib.masked.EVT_NUM, self.onRadius, self.ncradius)
 		self.Bind(wx.lib.masked.EVT_NUM, self.onOverlap, self.ncoverlap)
-
-	def onNodeInitialized(self, evt):
-		self.node = evt.node
-		self.initializeValues()
-		evt.event.set()
 
 	def onSetStatus(self, evt):
 		self.ststatus.SetLabel(evt.status)

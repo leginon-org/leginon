@@ -16,6 +16,7 @@ import extendedlogging
 import threading
 import uiserver
 import uidata
+import gui.wx.Node
 
 import leginonconfig
 import os
@@ -45,7 +46,7 @@ def beep():
 
 class Node(leginonobject.LeginonObject):
 	'''Atomic operating unit for performing tasks, creating data and events.'''
-
+	panelclass = None
 	eventinputs = [event.Event,
 									event.KillEvent,
 									event.ConfirmationEvent]
@@ -56,9 +57,10 @@ class Node(leginonobject.LeginonObject):
 									event.NodeInitializedEvent,
 									event.NodeUninitializedEvent]
 
-	def __init__(self, name, session, managerlocation=None, otherdatabinder=None, otherdbdatakeeper=None, otheruiserver=None, tcpport=None, xmlrpcport=None, launcher=None):
+	def __init__(self, name, session, managerlocation=None, otherdatabinder=None, otherdbdatakeeper=None, otheruiserver=None, tcpport=None, xmlrpcport=None, launcher=None, panel=None):
 		leginonobject.LeginonObject.__init__(self)
 		self.name = name
+		self.panel = panel
 		
 		self.initializeLogger()
 
@@ -118,7 +120,15 @@ class Node(leginonobject.LeginonObject):
 	# main, start/stop methods
 
 	def start(self):
+		self.onInitialized()
 		self.outputEvent(event.NodeInitializedEvent())
+
+	def onInitialized(self):
+		if self.panel is None:
+			return
+		evt = gui.wx.Node.NodeInitializedEvent(self)
+		self.panel.GetEventHandler().AddPendingEvent(evt)
+		evt.event.wait()
 
 	def exit(self):
 		'''Cleans up the node before it dies.'''

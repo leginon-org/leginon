@@ -29,6 +29,19 @@ class SetImageEvent(wx.PyEvent):
 		self.image = image
 
 class Panel(wx.lib.scrolledpanel.ScrolledPanel):
+	def __init__(self, *args, **kwargs):
+		wx.lib.scrolledpanel.ScrolledPanel.__init__(self, *args, **kwargs)
+		self.node = None
+		self.Bind(EVT_NODE_INITIALIZED, self.onNodeInitialized)
+
+	def initializeValues(self):
+		pass
+
+	def onNodeInitialized(self, evt):
+		self.node = evt.node
+		self.initializeValues()
+		evt.event.set()
+
 	def _getStaticBoxSizer(self, label, *args):
 		sbs = wx.StaticBoxSizer(wx.StaticBox(self, -1, label), wx.VERTICAL)
 		gbsz = wx.GridBagSizer(5, 5)

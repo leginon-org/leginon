@@ -45,8 +45,7 @@ class TargetMaker(node.Node, targethandler.TargetHandler):
 class MosaicTargetMaker(TargetMaker):
 	panelclass = gui.wx.MosaicTargetMaker.Panel
 	eventinputs = TargetMaker.eventinputs + [event.MakeTargetListEvent]
-	def __init__(self, id, session, managerlocation, panel=None, **kwargs):
-		self.panel = panel
+	def __init__(self, id, session, managerlocation, **kwargs):
 		TargetMaker.__init__(self, id, session, managerlocation, **kwargs)
 		self.pixelsizecalclient = calibrationclient.PixelSizeCalibrationClient(self)
 		self.addEventInput(event.MakeTargetListEvent, self.makeMosaicTargetList)
@@ -58,14 +57,7 @@ class MosaicTargetMaker(TargetMaker):
 		self.overlap = None
 
 		self.defineUserInterface()
-
-		self.onInitialized()
 		self.start()
-
-	def onInitialized(self):
-		evt = gui.wx.Node.NodeInitializedEvent(self)
-		self.panel.GetEventHandler().AddPendingEvent(evt)
-		evt.event.wait()
 
 	def setStatus(self, status):
 		evt = gui.wx.Node.SetStatusEvent(status)

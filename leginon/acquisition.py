@@ -56,11 +56,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 											event.ImageListPublishEvent, event.DriftWatchEvent] \
 									+ EM.EMClient.eventoutputs
 
-	def __init__(self, id, session, managerlocation, target_types=('acquisition',), panel=None, **kwargs):
+	def __init__(self, id, session, managerlocation, target_types=('acquisition',), **kwargs):
 
 		targetwatcher.TargetWatcher.__init__(self, id, session, managerlocation, target_types=target_types, **kwargs)
-
-		self.panel = panel
 
 		self.addEventInput(event.DriftDoneEvent, self.handleDriftDone)
 		self.addEventInput(event.ImageProcessDoneEvent, self.handleImageProcessDone)
@@ -89,13 +87,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.duplicate = None
 		self.duplicatetype = None
 
-		self.onInitialized()
 		self.start()
-
-	def onInitialized(self):
-		evt = gui.wx.Node.NodeInitializedEvent(self)
-		self.panel.GetEventHandler().AddPendingEvent(evt)
-		evt.event.wait()
 
 	def setStatus(self, status):
 		evt = gui.wx.Node.SetStatusEvent(status)

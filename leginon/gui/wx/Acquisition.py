@@ -10,8 +10,6 @@ class Panel(gui.wx.Node.Panel):
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1, name='%s.pAcquisition' % name)
 
-		self.node = None
-
 		self.szmain = wx.GridBagSizer(5, 5)
 
 		# status
@@ -109,7 +107,6 @@ class Panel(gui.wx.Node.Panel):
 		self.SetSizerAndFit(self.szmain)
 		self.SetupScrolling()
 
-		self.Bind(gui.wx.Node.EVT_NODE_INITIALIZED, self.onNodeInitialized)
 		self.Bind(gui.wx.Presets.EVT_NEW_PRESET, self.onNewPreset)
 
 		self.Bind(wx.lib.masked.EVT_NUM, self.onWaitNum, self.ncwait)
@@ -174,11 +171,6 @@ class Panel(gui.wx.Node.Panel):
 		if presets:
 			evt = gui.wx.Presets.PresetsChangedEvent(presets)
 			self.presetorder.GetEventHandler().AddPendingEvent(evt)
-
-	def onNodeInitialized(self, evt):
-		self.node = evt.node
-		self.initializeValues()
-		evt.event.set()
 
 	def onWaitNum(self, evt):
 		if self.node is not None:
