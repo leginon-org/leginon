@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageViewer.py,v $
-# $Revision: 1.35 $
+# $Revision: 1.36 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
+# $Date: 2004-11-01 23:02:56 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -1487,8 +1487,8 @@ class TargetImagePanel(ImagePanel):
 
 		for target in targets:
 			x, y = self.image2view((target.x, target.y))
-			dc.Blit(int(round((x - halfwidth)/xscale)),
-							int(round((y - halfheight)/xscale)),
+			dc.Blit(int(round(x/xscale - halfwidth)),
+							int(round(y/xscale - halfheight)),
 							width, height,
 							memorydc, 0, 0,
 							wx.COPY, True)
