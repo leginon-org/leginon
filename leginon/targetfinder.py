@@ -125,8 +125,8 @@ class TargetFinder(imagewatcher.ImageWatcher):
 				## increment target number
 				targetnumbers[parentid] += 1
 				target['number'] = targetnumbers[parentid]
-
-			self.publish(target, database=True)
+			print 'PUBLISH', target['delta row'], target['delta column'], target['image']['id']
+			#self.publish(target, database=True)
 
 #		if self.targetlist:
 		targetlistdata = data.ImageTargetListData(id=self.ID(),
@@ -301,11 +301,14 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			'modeled stage position':
 												calibrationclient.ModeledStageCalibrationClient(self)
 		}
-		self.mosaic = mosaic.EMMosaic(self.calclients)
+		self.mosaic = mosaic.EMMosaic(self.calclients['stage position'])
 		self.mosaicdata = None
 		self.mosaicimage = None
 		self.mosaicdata = None
 		self.mosaicimagescale = None
+		self.currentposition = []
+
+		self.mosaic.setCalibrationClient(self.calclients['stage position'])
 
 		self.existing_targets = {}
 		self.clearTiles()
@@ -362,7 +365,11 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			targets = self.researchImageTargets(imagedata)
 			self.targetmap[id] = targets
 
-	def displayCurrentPosition(self):
+	def uiRefreshCurrentPosition(self):
+		self.updateCurrentPosition()
+		self.clickimage.setTargetType('position', self.currentposition)
+
+	def updateCurrentPosition(self):
 		try:
 			image = self.imagemap.values()[0]
 		except:
@@ -371,15 +378,25 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		scope = image['scope'].toDict()
 		camera = image['camera'].toDict()
 
-		#s = self.researchByDataID(('stage position',))
-		#stagepos = s['stage position']
-		stagepos = {'x': 0, 'y': 0}
-		scope['stage position'] = {'x': 0, 'y': 0}
-		print 'stage', scope['stage position']
+		s = self.researchByDataID(('stage position',))
+		stagepos = s['stage position']
+		# for testing with mosaic 151 from 04apr02b
+		# this is the center of image 207 (the center of 3 images)
+		#stagepos = {'x': -0.000547287, 'y': 6.08626e-5}
+		scope['stage position'] = stagepos
 
-		mosaicstate = {'scope': scope, 'camera': camera}
-		pos = self.mosaic.positionByCalibration(mosaicstate)
-		print 'POS', pos
+		center = self.mosaic.getFakeParameter()
+		shift = {}
+		for axis in ('x','y'):
+			shift[axis] = stagepos[axis] - center[axis]
+
+		## this is unscaled and relative to center of mosaic image
+		delta = self.mosaic.positionByCalibration(shift)
+		moshape = self.mosaic.mosaicshape
+		pos = moshape[0]/2+delta[0], moshape[1]/2+delta[1]
+		pos = self.mosaic.scaled(pos)
+		vcoord = pos[1],pos[0]
+		self.currentposition = [vcoord]
 
 	def displayDatabaseTargets(self):
 		self.setStatusMessage('getting targets from database')
@@ -397,17 +414,20 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		for id, targetlist in self.targetmap.items():
 			for targetdata in targetlist:
 				tile = self.tilemap[id]
-				tilepos = self.mosaic.getTilePosition(tile)
-				t = self.targetToMosaicCoord(tilepos, targetdata)
-				if t not in self.displayedtargetdata:
-					self.displayedtargetdata[t] = []
-				self.displayedtargetdata[t].append(targetdata)
+				#tilepos = self.mosaic.getTilePosition(tile)
+				r,c = self.targetToMosaic(tile, targetdata)
+				vcoord = c,r
+				if vcoord not in self.displayedtargetdata:
+					self.displayedtargetdata[vcoord] = []
+				self.displayedtargetdata[vcoord].append(targetdata)
 				if targetdata['status'] in ('done', 'aborted'):
-					donetargets.append(t)
+					donetargets.append(vcoord)
 				else:
-					targets.append(t)
+					targets.append(vcoord)
 		self.clickimage.setTargetType('acquisition', targets)
 		self.clickimage.setTargetType('done', donetargets)
+		self.updateCurrentPosition()
+		self.clickimage.setTargetType('position', self.currentposition)
 		n = len(targets)
 		ndone = len(donetargets)
 		self.setStatusMessage('displayed %s targets (%s done)' % (n+ndone, ndone))
@@ -490,22 +510,23 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		if self.autocreate.get():
 			self.createMosaicImage()
 
-	def targetToMosaicCoord(self, tilepos, targetdata):
-		timage = targetdata['image']
-		### trow, tcol is coord of target on component image
-		trow = targetdata['delta row'] + timage['image'].shape[0] / 2
-		tcol = targetdata['delta column'] + timage['image'].shape[1] / 2
+	def targetToMosaic(self, tile, targetdata):
+		shape = tile.image.shape
+		drow = targetdata['delta row']
+		dcol = targetdata['delta column']
+		tilepos = drow+shape[0]/2, dcol+shape[1]/2
+		mospos = self.mosaic.tile2mosaic(tile, tilepos)
+		scaledpos = self.mosaic.scaled(mospos)
+		return scaledpos
 
-		bbox = self.mosaic.getMosaicImageBoundaries()
-		scale = self.mosaic.scale
-		## this is in image viewer coords (x,y = col,row)
-		r = tilepos[0] - bbox['min'][0] + trow
-		c = tilepos[1] - bbox['min'][1] + tcol
-
-		## scale
-		r = scale * r
-		c = scale * c
-		return c,r
+	def mosaicToTarget(self, typename, row, col):
+		unscaled = self.mosaic.unscaled((row,col))
+		tile, pos = self.mosaic.mosaic2tile(unscaled)
+		shape = tile.image.shape
+		drow,dcol = pos[0]-shape[0]/2, pos[1]-shape[1]/2
+		imagedata = tile.imagedata
+		targetdata = self.newTargetData(imagedata, typename, drow, dcol)
+		return targetdata
 
 	def createMosaicImage(self):
 		if self.mosaicdata is None:
@@ -545,13 +566,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			if t in self.displayedtargetdata and self.displayedtargetdata[t]:
 				targetdata = self.displayedtargetdata[t].pop()
 			else:
-				scale = self.mosaic.scale
-				newt = t[0]/scale, t[1]/scale
-				targetinfo = self.mosaic.getTargetInfo(*newt)
-				imagedata = targetinfo['imagedata']
-				drow = targetinfo['delta row']
-				dcol = targetinfo['delta column']
-				targetdata = self.newTargetData(imagedata, typename, drow, dcol)
+				c,r = t
+				targetdata = self.mosaicToTarget(typename, r, c)
 			targetlist.append(targetdata)
 			if t not in displayedtargetdata:
 				displayedtargetdata[t] = []
@@ -563,11 +579,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		if not hasattr(self, 'uicalibrationparameter'):
 			return value
 		parameter = self.uicalibrationparameter.getSelectedValue(value)
-		try:
-			self.mosaic.setCalibrationParameter(parameter)
-		except ValueError:
-			self.statusmessage.set('invalid calibration parameter specified',
-															thread=True)
+		calclient = self.calclients[parameter]
+		self.mosaic.setCalibrationClient(calclient)
 		return value
 
 	def setStatusMessage(self, message):
@@ -603,9 +616,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		### Mosaic Image Management
 		mosaicimagecont = uidata.Container('Mosaic Image')
 
-		parameters = self.mosaic.getCalibrationParameters()
-		parameter = parameters.index(self.mosaic.getCalibrationParameter())
-		self.uicalibrationparameter = uidata.SingleSelectFromList( 'Calibration Parameter', parameters, parameter, callback=self.uiSetCalibrationParameter, persist=True)
+		parameters = self.calclients.keys()
+		self.uicalibrationparameter = uidata.SingleSelectFromList( 'Calibration Parameter', parameters, 'stage position', callback=self.uiSetCalibrationParameter, persist=True)
 		self.scaleimage = uidata.Boolean('Scale Image', True, 'rw', persist=True)
 		self.maxdimension = uidata.Integer('Maximum Dimension', 512, 'rw', persist=True)
 		createmethod = uidata.Method('Create Mosaic Image From Tile List', self.createMosaicImage)
@@ -617,7 +629,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		### Targets
 		targetcont = uidata.Container('Targeting')
 		refreshtargets = uidata.Method('Refresh Targets', self.displayDatabaseTargets)
-		refreshposition = uidata.Method('Refresh Current Position', self.displayCurrentPosition)
+		refreshposition = uidata.Method('Refresh Current Position', self.uiRefreshCurrentPosition)
 		targetcont.addObjects((refreshtargets, refreshposition))
 
 		container = uidata.LargeContainer('Mosaic Click Target Finder')

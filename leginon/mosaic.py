@@ -10,6 +10,7 @@ import correlator
 import peakfinder
 import math
 import imagefun
+import data
 
 class Tile(object):
 	def __init__(self, image, position, imagedata):
@@ -313,68 +314,195 @@ class Mosaic(object):
 		return nearesttile, nearestdelta, location
 
 class EMTile(Tile):
-	def __init__(self, image, state, position, imagedata):
-		Tile.__init__(self, image, position, imagedata)
-		self.state = state
+	def __init__(self, imagedata):
+		image = imagedata['image']
+		Tile.__init__(self, image, position=None, imagedata=imagedata)
 
-class EMMosaic(Mosaic):
-	def __init__(self, calibrationclients):
-		self.calibrationclients = calibrationclients
-		self.setCalibrationParameter('stage position')
+class EMMosaic(object):
+	def __init__(self, calibrationclient):
+		self.setCalibrationClient(calibrationclient)
+		self.clear()
 
-		Mosaic.__init__(self)
+	def clear(self):
+		self.tiles = []
 
-		self.positionmethods['calibration'] = self.positionByCalibration
-		self.automaticpriority = ['calibration', 'correlation']
-		self.positionmethod = 'calibration'
-
-	def getCalibrationParameters(self):
-		return self.calibrationclients.keys()
-
-	def getCalibrationParameter(self):
-		return self.calibration
-
-	def setCalibrationParameter(self, parameter):
-		if parameter in self.getCalibrationParameters():
-			self.calibration = parameter
-		else:
-			raise ValueError('invalid calibration parameter')
+	def setCalibrationClient(self, calibrationclient):
+		self.calibrationclient = calibrationclient
 
 	def addTile(self, imagedata):
-		image = imagedata['image']
-		state = {}
-		state['scope'] = imagedata['scope']
-		state['camera'] = imagedata['camera']
-		position = self.positionmethods[self.positionmethod](imagedata)
-
-		tile = EMTile(image, state, position, imagedata)
+		tile = EMTile(imagedata)
 		self.tiles.append(tile)
 		return tile
 
-	def positionByCalibration(self, state):
-		if self.calibration == 'all':
-			parameters = self.calibrationclients.values()
+	def round(self, f):
+		try:
+			return int(round(f))
+		except:
+			return int(round(f[0])), int(round(f[1]))
+
+	def calculateMosaicImage(self):
+		'''
+		calculates (but does not generate) an unscaled mosaic image
+		'''
+		if not self.tiles:
+			return
+		param = self.calibrationclient.parameter()
+		## calculate parameter center of final mosaic image
+		center = {'x': 0.0, 'y': 0.0}
+		for tile in self.tiles:
+			tileparam = tile.imagedata['scope'][param]
+			center['x'] += tileparam['x']
+			center['y'] += tileparam['y']
+		n = len(self.tiles)
+		center['x'] /= n
+		center['y'] /= n
+		self.center = center
+
+		## Calculate pixel vector on final image to center of 
+		## each tile.
+		## To use calibrationclient's itransform method, we need
+		## a fake image from which to calculate a pixel vector
+		## Maybe could use an actual final image data.
+		fakescope = data.ScopeEMData()
+		fakescope[param] = center
+		fakecamera = data.CameraEMData()
+		## assume the final fake image has same binning as first tile
+		fakecamera['binning'] = self.tiles[0].imagedata['camera']['binning']
+		self.fakeimage = data.CameraImageData(scope=fakescope, camera=fakecamera)
+		tile0 = self.tiles[0]
+		mosaic0 = mosaic1 = None
+		for tile in self.tiles:
+			tileparam = {}
+			## calculate the parameter shift from center of 
+			## mosaic image to center of tile
+			for axis in ('x','y'):
+				tileparam[axis] = tile.imagedata['scope'][param][axis] - center[axis]
+			## calculate corresponding pixel shift (float)
+			center2center = self.positionByCalibration(tileparam)
+			## for targeting, until it's fixed
+			tile.position = center2center
+
+			## pixel shift mosaic center to tile center (int)
+			center2center = self.round(center2center)
+			tile.center_vect = center2center
+
+			## pixel shift from center of mosaic to corners of tile
+			shape = tile.image.shape
+			corner_vect = center2center[0]-shape[0]/2, center2center[1]-shape[1]/2
+			corner1_vect = corner_vect[0]+shape[0], corner_vect[1]+shape[1]
+			tile.corner_vect = corner_vect
+			## check if this is a min or max in the mosaic
+			if mosaic0 is None:
+				mosaic0 = [corner_vect[0], corner_vect[1]]
+				mosaic1 = [corner1_vect[0], corner1_vect[1]]
+			for axis in (0,1):
+				if corner_vect[axis] < mosaic0[axis]:
+					mosaic0[axis] = corner_vect[axis]
+				if corner1_vect[axis] > mosaic1[axis]:
+					mosaic1[axis] = corner1_vect[axis]
+		## mosaic shape at full scale
+		self.mosaicshape = mosaic1[0]-mosaic0[0], mosaic1[1]-mosaic0[1]
+
+		## center of mosaic image
+		mosaic_center = self.mosaicshape[0]/2, self.mosaicshape[1]/2
+
+		## position of corner and center
+		for tile in self.tiles:
+			corner_pos = mosaic_center[0]+tile.corner_vect[0], mosaic_center[1]+tile.corner_vect[1]
+			center_pos = mosaic_center[0]+tile.center_vect[0], mosaic_center[1]+tile.center_vect[1]
+			tile.corner_pos = corner_pos
+			tile.center_pos = center_pos
+
+	def scaled(self, coord):
+		scoord = self.scale*coord[0], self.scale*coord[1]
+		intcoord = self.round(scoord)
+		return intcoord
+
+	def unscaled(self, coord):
+		newcoord = coord[0]/self.scale, coord[1]/self.scale
+		return newcoord
+
+	def getMosaicImage(self, maxdimension=None):
+		self.calculateMosaicImage()
+
+		### scale the mosaic shape
+		mshape = self.mosaicshape
+		if maxdimension is None:
+			scale = 1.0
 		else:
-			calibrations = [self.calibrationclients[self.calibration]]
-		position = {'row': 0.0, 'col': 0.0}
-		for calibration in calibrations:
-			parameterposition = calibration.itransform(
-																			state['scope'][calibration.parameter()],
-																			state['scope'], state['camera'])
-			if parameterposition is None:
-				print 'calibration positioning error'
-				return None
-			position['row'] += parameterposition['row']
-			position['col'] += parameterposition['col']
+			maxdim = max(self.mosaicshape)
+			scale = float(maxdimension) / float(maxdim)
+		self.scale = scale
+
+		mshape = self.scaled(mshape)
+
+		### create mosaic image
+		typecode = self.tiles[0].image.typecode()
+		mosaicimage = Numeric.zeros(mshape, typecode)
+
+		### scale and insert tiles
+		for tile in self.tiles:
+			scaled_tile = imagefun.scale(tile.image, (scale, scale)).astype(typecode)
+			scaled_shape = scaled_tile.shape
+			scaled_pos = self.scaled(tile.corner_pos)
+			rowslice = slice(scaled_pos[0],scaled_pos[0]+scaled_shape[0])
+			colslice = slice(scaled_pos[1],scaled_pos[1]+scaled_shape[1])
+			mosaicimage[rowslice, colslice] = scaled_tile
+		return mosaicimage
+
+	def distanceToTile(self, tile, row, col):
+		tilepos = tile.center_pos
+		rdist = tilepos[0] - row
+		cdist = tilepos[1] - col
+		dist = Numeric.hypot(rdist, cdist)
+		return dist
+
+	def getNearestTile(self, row, col):
+		if not self.tiles:
+			return 
+		row,col = self.scale * row, self.scale * col
+
+		nearest = self.tiles[0]
+		nearestdist = self.distanceToTile(nearest, row, col)
+		for tile in self.tiles[1:]:
+			dist = self.distanceToTile(tile, row, col)
+			if dist < nearestdist:
+				nearest = tile
+				nearestdist = dist
+		return nearest
+
+	def tile2mosaic(self, tile, tilepos):
+		'''
+		return an unscaled mosaic position given a tile and a position
+		on the unscaled tile image
+		'''
+		mos = tile.corner_pos[0] + tilepos[0], tile.corner_pos[1] + tilepos[1]
+		return mos
+
+	def mosaic2tile(self, mosaic_pos):
+		'''
+		given a mosaic position
+		return a tile and a position on that tile
+		'''
+		tile = self.getNearestTile(mosaic_pos[0], mosaic_pos[1])
+
+		pos = mosaic_pos[0]-tile.corner_pos[0], mosaic_pos[1]-tile.corner_pos[1]
+		return tile, pos
+
+	def getFakeParameter(self):
+		param = self.calibrationclient.parameter()
+		return self.fakeimage['scope'][param]
+
+	def positionByCalibration(self, shift):
+		'''
+		calculate a pixel vector which corresponds to
+		the given parameter shift from the center of the fakeimage
+		'''
+		position = self.calibrationclient.itransform(shift, self.fakeimage['scope'], self.fakeimage['camera'])
+		if position is None:
+			print 'calibration positioning error'
+			return None
 		# this makes it work with calibration
 		position['row'] *= -1
 		position['col'] *= -1
 		return (position['row'], position['col'])
-
-	def getTargetInfo(self, x, y):
-		tile, deltaposition, location = self.getNearestTile(x, y)
-		return {'delta row': deltaposition[0],
-						'delta column': deltaposition[1],
-						'scope': tile.state['scope'],
-						'camera': tile.state['camera'], 'imagedata': tile.imagedata}
-
