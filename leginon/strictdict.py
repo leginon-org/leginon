@@ -112,9 +112,6 @@ class OrderedDict(dict):
 		r = '%s(%s)' % (self.__class__.__name__, s)
 		return r
 
-	def __deepcopy__(self, memo):
-		initializer = copy.deepcopy(self.__ordered_items, memo)
-		return self.__class__(initializer)
 
 class KeyedDict(OrderedDict):
 	'''

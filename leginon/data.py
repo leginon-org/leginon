@@ -73,25 +73,6 @@ class Data(DataDict, leginonobject.LeginonObject):
 		return t
 	typemap = classmethod(typemap)
 
-	def __deepcopy__(self, memo):
-		'''
-		this has to deepcopy both DataDict and LeginonObject
-		not sure if this is working right
-		'''
-		id_copy = copy.deepcopy(self.id, memo)
-		initializer = dict(self)
-		# these will be initialized by LeginonObject
-		try:
-			del initializer['id']
-		except KeyError:
-			pass
-		try:
-			del initializer['session']
-		except KeyError:
-			pass
-		initializer_copy = copy.deepcopy(initializer, memo)
-		mycopy = self.__class__(id=id_copy, initializer=initializer_copy)
-		return mycopy
 
 ## How to define a new leginon data type:
 ##   - Inherit Data or a subclass of Data.
