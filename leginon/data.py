@@ -137,6 +137,13 @@ class TileImageData(CameraImageData):
 		CameraImageData.__init__(self, id, image, scope, camera)
 		self.content.update({'neighbor tiles':neighbortiles})
 
+class MosaicImageData(CameraImageData):
+	def __init__(self, id, image, scope, camera):
+		CameraImageData.__init__(self, id, image, scope, camera)
+		## scope and camera may not be useful if the mosaic is
+		## mangled too much, maybe something else useful to put
+		## here
+
 class StateMosaicData(Data):
 	'''Contains data ID of images mapped to their position and state.'''
 	def __init__(self, id, content):

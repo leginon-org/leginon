@@ -379,8 +379,8 @@ class ImageMosaic(watcher.Watcher):
 		# publish most recent for now
 		if len(self.imagemosaics) == 0:
 			return ''
-		odata = data.ImageData(self.ID(), self.imagemosaics[-1].getMosaicImage())
-		self.publish(odata, event.ImagePublishEvent)
+		odata = data.MosaicImageData(self.ID(), self.imagemosaics[-1].getMosaicImage())
+		self.publish(odata, event.MosaicImagePublishEvent)
 		return ''
 
 	def uiClearMosaics(self):
@@ -538,8 +538,8 @@ class StateImageMosaic(ImageMosaic):
 
 		if len(self.imagemosaics) == 0:
 			return ''
-		odata = data.ImageData(self.ID(), self.imagemosaics[-1].getMosaicImage())
-		self.publish(odata, event.ImagePublishEvent)
+		odata = data.MosaicImageData(self.ID(), self.imagemosaics[-1].getMosaicImage())
+		self.publish(odata, event.MosaicImagePublishEvent)
 
 		statedata = {'image data ID': odata.id}
 		for tiledataid in self.imagemosaics[-1]:
