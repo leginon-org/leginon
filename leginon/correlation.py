@@ -1,5 +1,14 @@
+#!/usr/bin/env python
+
 import Numeric
-import FFT
+import fftengine
+reload(fftengine)
+
+## create a fft engine for the cross correlations
+## turning off estimate will optimize, but planning takes longer
+#planshapes = ((512,512),)
+#ffteng = fftengine.fftFFTW(planshapes, estimate=1)
+ffteng = fftengine.fftNumeric()
 
 #def correlation(image1, image2, ccflag=True, pcflag=True, subpixelflag=True):
 def correlation(image1, image2, ccflag=1, pcflag=1, subpixelflag=1):
@@ -12,14 +21,18 @@ def correlation(image1, image2, ccflag=1, pcflag=1, subpixelflag=1):
 		raise ValueError('images not same dimensions')
 	
 	# FFT of the two images
-	ffts = (FFT.real_fft2d(image1), FFT.real_fft2d(image2))
+	ffts = (ffteng.transform(image1), ffteng.transform(image2))
+	print 'ffts shape'
+	print ffts[0].shape
+	print 'ffts'
+	#print ffts[0]
 
 	# elementwise cross-correlation = conjugate(ffts[0]) * ffts[1]
 	ccfft = Numeric.multiply(Numeric.conjugate(ffts[0]), ffts[1])
 
 	if ccflag:
 		# invert correlation to use
-		cc = FFT.inverse_real_fft2d(ccfft)
+		cc = ffteng.itransform(ccfft)
 
 		ccdict = findPeak(cc, subpixelflag)
 		val['cross correlation peak'] = ccdict['peak']
@@ -30,14 +43,23 @@ def correlation(image1, image2, ccflag=1, pcflag=1, subpixelflag=1):
 		# elementwise phase-correlation =
 		# cross-correlation / magnitude(cross-correlation
 
-		pcfft = ccfft / Numeric.absolute(ccfft)
+		ab = Numeric.absolute(ccfft)
 
-		pc = FFT.inverse_real_fft2d(pcfft)
+		print 'ccfft type', ccfft.typecode()
+		print 'ccfft shape', ccfft.shape
+		print 'ab type', ab.typecode()
+		print 'ab shape', ab.shape
+		#print ab
+
+		pcfft = ccfft / ab
+		#print pcfft
+
+		pc = ffteng.itransform(pcfft)
 
 		pcdict = findPeak(pc, subpixelflag)
 		val['phase correlation peak'] = pcdict['peak']
-		val['phase correlation index'] = findPeak(pc, 0)['peak']
 		val['phase correlation shift'] = pcdict['shift']
+		val['phase correlation index'] = findPeak(pc, 0)['peak']
 		val['phase correlation image'] = pc
 
 	return val
@@ -154,3 +176,18 @@ def quadraticPeak(m):
 	colzero = -colcoeffs[1] / 2 / colcoeffs[2]
 
 	return (rowzero, colzero)
+
+if __name__ == '__main__':
+	from mrc.Mrc import mrc_to_numeric, numeric_to_mrc
+	im1 = mrc_to_numeric('test1.mrc')
+	im2 = mrc_to_numeric('test2.mrc')
+	#im1 = mrc_to_numeric('small.mrc')
+	#im2 = mrc_to_numeric('small.mrc')
+	#im1 = im1[:4,:4]
+	#im2 = im2[:4,:4]
+
+	c = correlation(im1, im2, 0, 1, 1)
+	print 'peak', c['phase correlation peak']
+	print 'shift', c['phase correlation shift']
+	im = c['phase correlation image']
+	numeric_to_mrc(im, 'phasecor.mrc')
