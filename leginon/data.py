@@ -1719,6 +1719,7 @@ class TargetFinderSettingsData(SettingsData):
 		return SettingsData.typemap() + (
 			('wait for done', bool),
 			('ignore images', bool),
+			('queue', bool),
 		)
 	typemap = classmethod(typemap)
 
@@ -1751,7 +1752,6 @@ class HoleFinderSettingsData(TargetFinderSettingsData):
 		return TargetFinderSettingsData.typemap() + (
 			('user check', bool),
 			('skip', bool),
-			('queue', bool),
 			('image filename', str),
 			('edge lpf', LowPassFilterSettingsData),
 			('edge', bool),
