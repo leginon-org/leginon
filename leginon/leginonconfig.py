@@ -1,5 +1,7 @@
 """
-config: Configuration file
+leginonconfig.py: Configuration file for leginon defaults and such
+We could also do this using the ConfigParser module and have this
+be a more standard .ini file thing.
 """
 import os, errno
 
@@ -14,6 +16,14 @@ def mkdirs(newdir, mode=0777):
 	except OSError, err:
 		if err.errno != errno.EEXIST or not os.path.isdir(newdir):
 			raise
+
+#########################
+#       Launchers       #
+#########################
+LAUNCHERS = [
+	'tecnai2',
+	'defcon1',
+]
 
 #########################
 #	Database	#
