@@ -17,6 +17,9 @@ class DriftingTimeout(Exception):
 class Abort(Exception):
 	pass
 
+class NoPixelSizeError(Exception):
+	pass
+
 class CalibrationClient(object):
 	'''
 	this is a component of a node that needs to use calibrations
@@ -212,8 +215,7 @@ class PixelSizeCalibrationClient(CalibrationClient):
 		if len(caldatalist) > 0:
 			caldata = caldatalist[0]
 		else:
-			print 'NO PIXEL SIZE CALIBRATION'
-			return None
+			raise NoPixelSizeError
 		pixelsize = caldata['pixelsize']
 		return pixelsize
 

@@ -14,6 +14,9 @@ import uidata
 False=0
 True=1
 
+class CalibrationError(Exception):
+	pass
+
 class MatrixCalibrator(calibrator.Calibrator):
 	'''
 	Calibrates a microscope parameter with image pixel coordinates.
@@ -73,8 +76,8 @@ class MatrixCalibrator(calibrator.Calibrator):
 		emdata = self.researchByDataID(('magnification',))
 		mag = emdata['magnification']
 		pixsize = self.pixsizeclient.retrievePixelSize(mag)
-		print 'PIXSIZE', pixsize
-		delta = camconfig['dimension']['x'] * camconfig['binning']['x'] * pixsize / 4
+
+		delta = camconfig['dimension']['x']*camconfig['binning']['x']*pixsize/4
 		print 'DELTA', delta
 
 		shifts = {}
@@ -127,7 +130,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 			else:
 				# this axis was a failure
 				# better just fail the whole calibration
-				print 'NO GOOD MEASUREMENTS... ABORTING'
+				raise CalibrationError
 				return
 
 		# return to base
@@ -144,7 +147,6 @@ class MatrixCalibrator(calibrator.Calibrator):
 		print 'MATRIX flat', Numeric.ravel(matrix)
 		calclient.storeMatrix(mag, uiparameter, matrix)
 
-		print 'CALIBRATE DONE', shifts
 
 	def defineUserInterface(self):
 		calibrator.Calibrator.defineUserInterface(self)
@@ -171,8 +173,17 @@ class MatrixCalibrator(calibrator.Calibrator):
 		self.uiserver.addObject(container)
 
 	def uiCalibrate(self):
-		self.calibrate()
-		return ''
+		try:
+			self.calibrate()
+		except (calibrationclient.NoPixelSizeError, CalibrationError, camerafuncs.NoCorrectorError), e:
+			if isinstance(e, calibrationclient.NoPixelSizeError):
+				self.outputError('Cannot get pixel size for current state, halting calibration')
+			elif isinstance(e, CalibrationError):
+				self.outputError('No good measurement, halting calibration')
+			elif isinstance(e, camerafuncs.NoCorrectorError):
+				self.outputError('Cannot get corrected images, Corrector may not be running')
+		else:
+			self.outputMessage('Calibration', 'Calibration completed successfully')
 
 	def getBase(self):
 		if self.uicurbase.get():

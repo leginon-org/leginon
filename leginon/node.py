@@ -509,6 +509,20 @@ class Node(leginonobject.LeginonObject):
 														exitmethod))
 		self.uiserver.addObject(container)
 
+	def outputMessage(self, title, message):
+		# log too maybe
+		if hasattr(self, 'uiserver'):
+			messagedialog = uidata.MessageDialog(title, message)
+			self.uiserver.addObject(messagedialog)
+		else:
+			self.printerror(title + ': ' + message)
+
+	def outputWarning(self, warning):
+		self.outputMessage('Warning', warning)
+
+	def outputError(self, error):
+		self.outputMessage('Error', error)
+
 class ResearchError(Exception):
 	pass
 
