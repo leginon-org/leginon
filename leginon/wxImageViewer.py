@@ -32,6 +32,7 @@ class ImagePanel(wxPanel):
 		self.initPanel()
 		height, width = self.panel.GetClientSize()
 		self.buffer = wxEmptyBitmap(height, width)
+		self.motionbuffer = wxEmptyBitmap(height, width)
 		self.initValue()
 		self.initZoom()
 		self.initRuler()
@@ -239,10 +240,12 @@ class ImagePanel(wxPanel):
 		if self.image is None:
 			return
 		if self.valuebutton.GetToggle() or self.ruler is not None:
+			self.UpdateDrawing()
 			dc = wxMemoryDC()
-			dc.SelectObject(self.buffer)
+			dc.SelectObject(self.motionbuffer)
 			dc.BeginDrawing()
-			self.Draw(dc)
+			dc.Clear()
+			#self.Draw(dc)
 			string = ''
 			x, y = self.view2image((evt.m_x, evt.m_y))
 			if self.ruler is not None:
@@ -256,8 +259,15 @@ class ImagePanel(wxPanel):
 			if string:
 				self.drawLabel(dc, x, y, string)
 			dc.EndDrawing()
-			self.paint(dc, wxClientDC(self.panel))
+			#self.paint(dc, wxClientDC(self.panel))
 			dc.SelectObject(wxNullBitmap)
+
+			self.motionbuffer.SetMask(wxMaskColour(self.motionbuffer, wxWHITE))
+
+			clientdc = wxClientDC(self.panel)
+			clientdc.BeginDrawing()
+			clientdc.DrawBitmap(self.motionbuffer, 0, 0, 1)
+			clientdc.EndDrawing()
 
 	def drawRulerLine(self, origin, destination, dc):
 		dc.SetPen(wxPen(wxRED, 1))
@@ -268,11 +278,14 @@ class ImagePanel(wxPanel):
 										math.sqrt((x - self.ruler[0])**2 + (y - self.ruler[1])**2))
 
 	def valueString(self, x, y):
-		value = self.image[y, x]
-		return '(%d, %d): %s' % (x, y, str(value))
+		try:
+			value = self.image[y, x]
+			return '(%d, %d): %s' % (x, y, str(value))
+		except IndexError:
+			return 'Invalid index'
 
 	def drawLabel(self, dc, x, y, string):
-		dc.SetBrush(wxBrush(wxWHITE))
+		dc.SetBrush(wxBrush(wxColour(255, 255, 220)))
 		dc.SetPen(wxPen(wxBLACK, 1))
 
 		xextent, yextent, d, e = dc.GetFullTextExtent(string, wxNORMAL_FONT)

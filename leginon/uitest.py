@@ -48,7 +48,7 @@ image2.addTargetType('Foo Bar', [(120, 200), (50, 78)])
 
 
 #bar2.addUIObject(image1)
-#bar2.addUIObject(image2)
+bar2.addUIObject(image2)
 
 def gar(foo):
 	print foo
