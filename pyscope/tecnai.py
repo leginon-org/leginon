@@ -6,24 +6,19 @@ import time
 
 class tecnai(scope.scope):
     def cmpmags(self, x, y):
-        if self.theScope.Camera.MainScreen == win32com.client.constants.spUp:
-            key = "up"
-        elif self.theScope.Camera.MainScreen == win32com.client.constants.spDown:
-            key = "down"
-        else:   # perhaps spUnknown
-            raise SystemError
-        
+        key = self.cmpmags_status
         if x[key] < y[key]: 
-	       		return -1
-       	elif x[key] == y[key]: 
- 	      		return 0
-       	elif x[key] > y[key]: 
-         		return 1
+            return -1
+        elif x[key] == y[key]: 
+            return 0
+        elif x[key] > y[key]: 
+             return 1
         
     def __init__(self):
         self.theScope = win32com.client.Dispatch("Tecnai.Instrument.1")        
         self.theLowDose = win32com.client.Dispatch("LDServer.LdSrv")
         self.theFilm = win32com.client.Dispatch("adaExp.TAdaExp")
+                # this was a quick way of doing things, needs to be redone
         self.magTable = [{'index': 1, 'up': 21, 'down': 18.5},
                          {'index': 2, 'up': 28, 'down': 25},
                          {'index': 3, 'up': 38, 'down': 34},
@@ -381,6 +376,8 @@ class tecnai(scope.scope):
             key = "down"
         else:   # perhaps spUnknown
             raise SystemError
+
+        self.cmpmags_status = key
 
         self.magTable.sort(self.cmpmags)
 
