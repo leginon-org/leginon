@@ -147,6 +147,8 @@ class AddChoicesDialog(AddDialog):
 class Leginon(Tkinter.Frame):
 	def __init__(self, parent):
 		self.manageruiclient = None
+		self.wrappers = {}
+		self.gridatlases = {}
 		self.targets = {}
 		self.manager = None
 		self.remotelauncher = None
@@ -171,9 +173,9 @@ class Leginon(Tkinter.Frame):
 
 		self.editmenu = Tkinter.Menu(self.menu, tearoff=0)
 		self.menu.add_cascade(label='Edit', menu=self.editmenu)
-		self.editmenu.add_command(label='Add Target...', command=self.menuAddTarget)
 		self.editmenu.add_command(label='Add Grid Atlas...',
 															command=self.menuAddGridAtlas)
+		self.editmenu.add_command(label='Add Target...', command=self.menuAddTarget)
 		self.menu.entryconfigure(1, state=Tkinter.DISABLED)
 
 		self.windowmenu = Tkinter.Menu(self.menu, tearoff=0)
@@ -184,18 +186,20 @@ class Leginon(Tkinter.Frame):
 		self.new()
 
 	def menuAddTarget(self):
-		# Grid Atlas in there for now
-		name = 'Target #%s' % str(len(self.targets))
-		add_dialog = AddChoicesDialog(self, name, self.targets.keys(), [])
+		name = 'Target #%s' % str(len(self.targets) + 1)
+		add_dialog = AddChoicesDialog(self, name,
+											 self.targets.keys() + self.gridatlases.keys(), [])
 		if add_dialog.result is not None:
 			sourceids = []
 			for source in add_dialog.result[1]:
-				sourceids.append(self.targets[source].targetid)
+				if source in self.targets:
+					sourceids.append(self.targets[source].targetid)
+				elif source in self.gridatlases:
+					sourceids.append(self.gridatlases[source].targetid)
 			self.addTarget(add_dialog.result[0], sourceids)
 
 	def menuAddGridAtlas(self):
-		# Grid Atlas in there for now
-		name = 'Grid Atlas #%s' % str(len(self.targets))
+		name = 'Grid Atlas #%s' % str(len(self.gridatlases) + 1)
 		add_dialog = AddDialog(self, name)
 		if add_dialog.result is not None:
 			self.addGridAtlas(add_dialog.result)
@@ -234,6 +238,8 @@ class Leginon(Tkinter.Frame):
 			self.notebook.delete(page)
 		self.manageruiclient = None
 		self.windowmenu.delete(0, Tkinter.END)
+		self.wrappers = {}
+		self.gridatlases = {}
 		self.targets = {}
 
 	# needs to check what got started, the whole lot needs error handling
@@ -248,12 +254,8 @@ class Leginon(Tkinter.Frame):
 			return
 		self.menu.entryconfigure(1, state=Tkinter.NORMAL)
 		self.startApplication()
-		self.startGUI()
+		self.startUI()
 		self.filemenu.entryconfigure(0, state=Tkinter.NORMAL)
-
-	# be smarted
-	def windows(self):
-		pass
 
 	def startApplication(self):
 		self.manager.app.load(applicationfilename)
@@ -275,7 +277,7 @@ class Leginon(Tkinter.Frame):
 
 		self.manager.app.launch()
 
-	def startGUI(self):
+	def startUI(self):
 		managerlocation = self.managerLocation()
 		self.manageruiclient = interface.Client(managerlocation[0],
 																										managerlocation[1])
@@ -308,7 +310,7 @@ class Leginon(Tkinter.Frame):
 		return (socket.gethostname(),)
 
 	def addGridAtlas(self, name):
-		self.targets[name] = GridAtlas(self.manager, self.manageruiclient,
+		self.gridatlases[name] = GridAtlas(self.manager, self.manageruiclient,
 																		self.locallauncherid, self.notebook,
 																		self.debug, self.windowmenu, name)
 
@@ -430,21 +432,20 @@ class WidgetWrapper(object):
 		self.nodeinfo[key]['name'] = name
 		self.nodeinfo[key]['class name'] = classname
 
-	def initializeNodes(self):
+	def initialize(self):
 		for node in self.nodeinfo:
 			self.nodeinfo[node]['ID'] = self.manager.launchNode(self.launcherid, 0,
 																						self.nodeinfo[node]['class name'],
 																						self.nodeinfo[node]['name'])
 
-	def initializeUIs(self):
+		self.initializeBindings()
+
 		for node in self.nodeinfo:
 			self.nodeinfo[node]['UI info'] = self.uiClient(self.nodeinfo[node]['ID'])
 		self.page = self.notebook.add(self.name)
 
-	def initializeWidget(self):
-		pass
+		self.initializeWidget()
 
-	def initializePage(self):
 		self.menuvariable = Tkinter.IntVar()
 		self.menuvariable.set(1)
 		self.windowmenu.add_checkbutton(label=self.name,
@@ -454,10 +455,15 @@ class WidgetWrapper(object):
 		self.notebook.setnaturalsize()
 		self.notebook.selectpage(self.name)
 
-	def initializeDebugUIs(self):
 		for node in self.nodeinfo:
 			self.debug.addDebugTab(self.nodeinfo[node]['name'],
 															self.nodeinfo[node]['UI info'])
+
+	def initializeBindings(self):
+		pass
+
+	def initializeWidget(self):
+		pass
 
 	def menuCallback(self):
 		if self.menuvariable.get() == 1:
@@ -465,7 +471,7 @@ class WidgetWrapper(object):
 		else:
 			self.hide()
 
-	# better way in Pmw.NoteBook?
+	# better way in Pmw.NoteBook that delete?
 	def hide(self):
 		self.widget.destroy()
 		self.notebook.delete(self.name)
@@ -502,9 +508,7 @@ class Debug(WidgetWrapper):
 	def __init__(self, manageruiclient, notebook, windowmenu, name):
 		WidgetWrapper.__init__(self, None, manageruiclient, None, notebook, None,
 																														windowmenu, name)
-		self.initializeUIs()
-		self.initializeWidget()
-		self.initializePage()
+		self.initialize()
 
 	def initializeWidget(self):
 		self.widget = Pmw.NoteBook(self.page)
@@ -532,18 +536,14 @@ class GridAtlas(WidgetWrapper):
 		self.addNodeInfo('gridpreview', self.name + ' Grid Preview', 'GridPreview')
 		self.addNodeInfo('stateimagemosaic', self.name + ' State Image Mosaic',
 																												'StateImageMosaic')
-		self.initializeNodes()
 
+		self.initialize()
 		self.targetid = self.nodeinfo['stateimagemosaic']['ID']
 
+	def initializeBindings(self):
 		self.manager.addEventDistmap(event.TileImagePublishEvent,
 																				self.nodeinfo['gridpreview']['ID'],
 																				self.nodeinfo['stateimagemosaic']['ID'])
-
-		self.initializeUIs()
-		self.initializeWidget()
-		self.initializePage()
-		self.initializeDebugUIs()
 
 	def initializeWidget(self):
 		self.widget = GridAtlasWidget(self.page,
@@ -556,26 +556,24 @@ class Target(WidgetWrapper):
 		WidgetWrapper.__init__(self, manager, manageruiclient, launcherid,
 														notebook, debug, windowmenu, name)
 
+		self.targetsourceids = targetsourceids
+
 		self.addNodeInfo('acquire', self.name + ' Acquisition', 'Acquisition')
 		self.addNodeInfo('target', self.name + ' Click Target Finder',
 																							'ClickTargetFinder')
 
-		self.initializeNodes()
+		self.initialize()
 
 		self.targetid = self.nodeinfo['target']['ID']
 
+	def initializeBindings(self):
 		self.manager.addEventDistmap(event.CameraImagePublishEvent,
 																				self.nodeinfo['acquire']['ID'],
 																				self.nodeinfo['target']['ID'])
-
-		for nodeid in targetsourceids:
+		for nodeid in self.targetsourceids:
 			self.manager.addEventDistmap(event.ImageTargetListPublishEvent,
 																				nodeid, self.nodeinfo['acquire']['ID'])
 
-		self.initializeUIs()
-		self.initializeWidget()
-		self.initializePage()
-		self.initializeDebugUIs()
 
 	def initializeWidget(self):
 		self.widget = TargetWidget(self.page,
