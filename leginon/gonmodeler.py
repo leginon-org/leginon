@@ -41,6 +41,7 @@ class GonModeler(node.Node):
 		self.cam.currentCameraEMData(camdata=emdata)
 
 		mag = self.getMagnification()
+		ht = self.getHighTension()
 
 		self.oldimagedata = None
 		self.acquireNextPosition(axis)
@@ -61,7 +62,7 @@ class GonModeler(node.Node):
 			delta = datalist[2]
 			imx = datalist[3]
 			imy = datalist[4]
-			self.writeData(label, mag, axis, gonx, gony, delta, imx, imy)
+			self.writeData(label, ht, mag, axis, gonx, gony, delta, imx, imy)
 			t.stop()
 		print 'loop done'
 		self.threadlock.release()
@@ -159,11 +160,12 @@ class GonModeler(node.Node):
 			count += 1
 		print 'inserted %s data points' % (count,)
 
-	def writeData(self, label, mag, axis, gonx, gony, delta, imx, imy):
+	def writeData(self, label, ht, mag, axis, gonx, gony, delta, imx, imy):
 		stagedata = data.StageMeasurementData()
 		stagedata['label'] = label
 		stagedata['magnification'] = mag
 		stagedata['axis'] = axis
+		stagedata['high tension'] = ht
 		stagedata['x'] = gonx
 		stagedata['y'] = gony
 		stagedata['delta'] = delta
@@ -188,6 +190,10 @@ class GonModeler(node.Node):
 	def getMagnification(self):
 		dat = self.researchByDataID(('magnification',))
 		return dat['magnification']
+
+	def getHighTension(self):
+		dat = self.researchByDataID(('high tension',))
+		return dat['high tension']
 
 	def defineUserInterface(self):
 		nodespec = node.Node.defineUserInterface(self)
