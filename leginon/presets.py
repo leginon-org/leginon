@@ -322,7 +322,15 @@ class PresetsManager(node.Node):
 		return names
 
 	def uiGetPresetsFromDB(self):
-		othersession = self.othersession.get()
+		othersessionname = self.othersession.get()
+		initializer = {'name': othersessionname}
+		othersessiondata = data.SessionData(initializer=initializer)
+		sessions = self.research(datainstance=othersessiondata)
+		try:
+			othersession = sessions[0]
+		except (TypeError, IndexError):
+			print 'cannot find session:', othersessionname
+			return
 		self.getPresetsFromDB(othersession)
 		names = self.presetNames()
 		self.uiselectpreset.set(names, 0)
