@@ -4,7 +4,7 @@ import Numeric
 import LinearAlgebra
 import shelve
 
-class MagInfo:
+class OLDMagInfo:
 	def __init__(self, magfile):
 		self.magfile = magfile
 	def open_shelve(self):
@@ -28,14 +28,17 @@ class GonData:
 	A GonData instance holds the data from a goniometer calibration.
 	It is only meant to handle one axis.
 	"""
-	def __init__(self, infile, magfile):
+	def __init__(self, infile):
 		self.gonpos = None
 		self.othergonpos = None
 		self.pixpertick = None
 		self.datavg = None
 		self.angle = None
-		self.maginfo = MagInfo(magfile)
+		self.maginfo = {}
 		self.read_data(infile)
+
+	def dict(self):
+		return self.maginfo
 
 	def read_data(self,filename):
 		datafile = open(filename, 'r')
@@ -89,11 +92,15 @@ class GonData:
 		self.avg = 1.0 / self.avg
 		self.angle /= n
 
-		anglekey = 'angle' + self.axis
-		self.maginfo.set(anglekey, self.angle)
-		self.maginfo.set('datavg', self.avg)
+		if 'data angle' not in self.maginfo:
+			self.maginfo['data angle'] = {}
+		if 'data mean' not in self.maginfo:
+			self.maginfo['data mean'] = {}
+		self.maginfo['data angle'][self.axis] = self.angle
+		self.maginfo['data mean'][self.axis] = self.avg
+
 		print "maginfo set:"
-		print "   anglekey:", self.angle
+		print "   angle:", self.angle
 		print "   datavg:", self.avg
 
 class GonModel:
@@ -128,11 +135,7 @@ class GonModel:
 	## return a goniometer delta based on an image delta
 	## this is a rotation, not scaled to the model
 	## this only calculates the gon delta for one axis
-	def rotate(self, maginfo, ximg, yimg):
-		if self.axis == 'x':
-			angle = maginfo.get('anglex')
-		elif self.axis == 'y':
-			angle = maginfo.get('angley')
+	def rotate(self, angle, ximg, yimg):
 		gon = ximg * math.cos(angle) + yimg * math.sin(angle)
 		return gon
 
@@ -179,6 +182,20 @@ class GonModel:
 		ss['a'] = self.a
 		ss['b'] = self.b
 		ss.close()
+
+	def toDict(self):
+		ss = {}
+		ss['axis'] = self.axis
+		ss['period'] = self.period
+		ss['a'] = self.a
+		ss['b'] = self.b
+		return ss
+
+	def fromDict(self, d):
+		self.axis = d['axis']
+		self.period = d['period']
+		self.a = d['a']
+		self.b = d['b']
 
 	def design_matrix(self, gondata, terms, period):
 		ma = 2 * terms + 1
@@ -227,7 +244,9 @@ class GonModel:
 		self.period = best_period
 		self.a0 = 1.0 / best_x[0]
 
-		gondata.maginfo.set('modavg'+gondata.axis, self.a0)
+		if 'model mean' not in gondata.maginfo:
+			gondata.maginfo['model mean'] = {}
+		gondata.maginfo['model mean'][gondata.axis] = self.a0
 		print "maginfo set:"
 		print "  modavg" + gondata.axis, self.a0
 
