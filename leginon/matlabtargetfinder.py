@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/matlabtargetfinder.py,v $
-# $Revision: 1.3 $
+# $Revision: 1.4 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-01-21 18:43:02 $
+# $Date: 2005-02-11 01:00:19 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -49,7 +49,7 @@ class MatlabTargetFinder(targetfinder.TargetFinder):
 		d, f = os.path.split(self.settings['module path'])
 
 		if d:
-			pymat.eval(self.handle, 'path(path, %s)' % d)
+			pymat.eval(self.handle, 'path(path, \'%s\')' % d)
 
 		if not f[:-2]:
 			raise RuntimeError

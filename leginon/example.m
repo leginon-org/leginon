@@ -1,5 +1,5 @@
 % example Matlab module for target finding
 function [acquisition, focus] = example(image)
-acquisition = [68, 2; 23, 54; 45, 39]
-focus = [8, 42; 36, 48; 51, 94]
+acquisition = [168, 234; 203, 54; 450, 390]
+focus = [324, 42; 36, 248; 151, 94]
 

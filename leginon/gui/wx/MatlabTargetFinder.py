@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MatlabTargetFinder.py,v $
-# $Revision: 1.3 $
+# $Revision: 1.4 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-01-21 18:43:02 $
+# $Date: 2005-02-11 01:00:19 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -106,8 +106,10 @@ class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
 		tfsbsz = gui.wx.TargetFinder.SettingsDialog.initialize(self)
 		gui.wx.Settings.Dialog.initialize(self)
 
-		self.widgets['test image'] = filebrowse.FileBrowseButton(self, -1)
-		self.widgets['module path'] = filebrowse.FileBrowseButton(self, -1)
+		self.widgets['test image'] = filebrowse.FileBrowseButton(self,
+																			labelText='Test Image:', fileMask='*.mrc')
+		self.widgets['module path'] = filebrowse.FileBrowseButton(self,
+																			labelText='Matlab File:', fileMask='*.m')
 		self.widgets['user check'] = wx.CheckBox(self, -1,
 																				'Wait for user verification of targets')
 
