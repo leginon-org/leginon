@@ -35,50 +35,53 @@ class DataHandler(node.DataHandler):
 			return node.DataHandler.query(self, id)
 		emkey = id[0]
 		self.node.statelock.acquire()
-		done_event = threading.Event()
-		self.node.requestqueue.put(GetRequest(done_event, [emkey]))
-		done_event.wait()
-		state = self.node.state
+		try:
+			done_event = threading.Event()
+			self.node.requestqueue.put(GetRequest(done_event, [emkey]))
+			done_event.wait()
+			state = self.node.state
 
-		if emkey == 'scope':
-			result = data.ScopeEMData(id=('scope',))
-			result.friendly_update(state)
-		elif emkey in ('camera', 'camera no image data'):
-			result = data.CameraEMData(id=('camera',))
-			# this is a fix for the bigger problem of always 
-			# setting defocus
-			result.friendly_update(state)
-		elif emkey == 'all em':
-			result = data.AllEMData(id=('all em',))
-			result.friendly_update(state)
-		else:
-			### could be either CameraEMData or ScopeEMData
-			trydatascope = data.ScopeEMData(id=('scope',))
-			trydatacamera = data.CameraEMData(id=('camera',))
-			for trydata in (trydatascope, trydatacamera):
-				try:
-					trydata.update(state)
-					result = trydata
-					break
-				except KeyError:
-					result = None
-
-		self.node.statelock.release()
+			if emkey == 'scope':
+				result = data.ScopeEMData(id=('scope',))
+				result.friendly_update(state)
+			elif emkey in ('camera', 'camera no image data'):
+				result = data.CameraEMData(id=('camera',))
+				# this is a fix for the bigger problem of always 
+				# setting defocus
+				result.friendly_update(state)
+			elif emkey == 'all em':
+				result = data.AllEMData(id=('all em',))
+				result.friendly_update(state)
+			else:
+				### could be either CameraEMData or ScopeEMData
+				trydatascope = data.ScopeEMData(id=('scope',))
+				trydatacamera = data.CameraEMData(id=('camera',))
+				for trydata in (trydatascope, trydatacamera):
+					try:
+						trydata.update(state)
+						result = trydata
+						break
+					except KeyError:
+						result = None
+		finally:
+			self.node.statelock.release()
 		return result
 
 	def insert(self, idata):
 		if isinstance(idata, data.EMData):
 			self.node.statelock.acquire()
-			done_event = threading.Event()
-			d = idata.toDict(noNone=True)
-			for key in ['id', 'session', 'system time', 'image data']:
-				try:
-					del d[key]
-				except KeyError:
-					pass
-			self.node.requestqueue.put(SetRequest(done_event, d))
-			done_event.wait()
-			self.node.statelock.release()
+			try:
+				done_event = threading.Event()
+				d = idata.toDict(noNone=True)
+				for key in ['id', 'session', 'system time', 'image data']:
+					try:
+						del d[key]
+					except KeyError:
+						pass
+				self.node.requestqueue.put(SetRequest(done_event, d))
+				done_event.wait()
+			finally:
+				self.node.statelock.release()
 		else:
 			node.DataHandler.insert(self, idata)
 
@@ -165,7 +168,7 @@ class EM(node.Node):
 			'diffraction mode': '',
 			'low dose': '',
 			'low dose mode': '',
-			'screen current': '',
+			'screen current': 'r',
 #			'holder type': '',
 #			'holder status': '',
 #			'stage status': '',
@@ -484,10 +487,12 @@ class EM(node.Node):
 			return
 
 		self.statelock.acquire()
-		done_event = threading.Event()
-		self.requestqueue.put(SetRequest(done_event, request))
-		done_event.wait()
-		self.statelock.release()
+		try:
+			done_event = threading.Event()
+			self.requestqueue.put(SetRequest(done_event, request))
+			done_event.wait()
+		finally:
+			self.statelock.release()
 
 	def queueHandler(self):
 		while True:
@@ -512,41 +517,49 @@ class EM(node.Node):
 		self.scopecontainer.disable()
 		self.cameracontainer.disable()
 		self.statelock.acquire()
-		done_event = threading.Event()
-		request = self.uiGetDictData(self.uiscopedict).keys()
-		self.requestqueue.put(GetRequest(done_event, request))
-		done_event.wait()
-		self.statelock.release()
-		self.cameracontainer.enable()
-		self.scopecontainer.enable()
+		try:
+			done_event = threading.Event()
+			request = self.uiGetDictData(self.uiscopedict).keys()
+			self.requestqueue.put(GetRequest(done_event, request))
+			done_event.wait()
+		finally:
+			self.statelock.release()
+			self.cameracontainer.enable()
+			self.scopecontainer.enable()
 
 	def uiRefreshCamera(self):
 		self.scopecontainer.disable()
 		self.cameracontainer.disable()
 		self.statelock.acquire()
-		done_event = threading.Event()
-		request = self.uiGetDictData(self.uicameradict).keys()
-		self.requestqueue.put(GetRequest(done_event, request))
-		done_event.wait()
-		self.statelock.release()
-		self.cameracontainer.enable()
-		self.scopecontainer.enable()
+		try:
+			done_event = threading.Event()
+			request = self.uiGetDictData(self.uicameradict).keys()
+			self.requestqueue.put(GetRequest(done_event, request))
+			done_event.wait()
+		finally:
+			self.statelock.release()
+			self.cameracontainer.enable()
+			self.scopecontainer.enable()
 
 	def uiSetScope(self):
 		self.scopecontainer.disable()
 		self.cameracontainer.disable()
-		scopedict = self.uiGetDictData(self.uiscopedict)
-		updatedstate = self.uiSetState(scopedict)
-		self.cameracontainer.enable()
-		self.scopecontainer.enable()
+		try:
+			scopedict = self.uiGetDictData(self.uiscopedict)
+			updatedstate = self.uiSetState(scopedict)
+		finally:
+			self.cameracontainer.enable()
+			self.scopecontainer.enable()
 
 	def uiSetCamera(self):
 		self.scopecontainer.disable()
 		self.cameracontainer.disable()
-		cameradict = self.uiGetDictData(self.uicameradict)
-		updatedstate = self.uiSetState(cameradict)
-		self.cameracontainer.enable()
-		self.scopecontainer.enable()
+		try:
+			cameradict = self.uiGetDictData(self.uicameradict)
+			updatedstate = self.uiSetState(cameradict)
+		finally:
+			self.cameracontainer.enable()
+			self.scopecontainer.enable()
 
 	def uiGetDictData(self, uidict):
 		uidictdata = {}
