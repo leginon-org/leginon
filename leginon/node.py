@@ -361,7 +361,6 @@ class Node(leginonobject.LeginonObject):
 		else:
 			pubeventclass = None
 
-
 		### publish event
 		if 'publisheventinstance' in kwargs:
 			return self.outputEvent(kwargs['publisheventinstance'])

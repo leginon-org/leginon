@@ -222,7 +222,7 @@ class DataBinder(DataHandler):
 		## because there may be more than one function for every 
 		## data class
 		self.threaded = threaded
-		self.bindings = {}
+		self.bindings = strictdict.OrderedDict()
 
 		## a queue to hold incoming data, and a thread
 		## to process data from the queue
