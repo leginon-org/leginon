@@ -175,7 +175,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 		self.shiftpercent = uidata.Float('Shift Fraction', 0.25, 'rw', persist=True)
 		parameters = self.parameters.keys()
 		parameters.sort()
-		self.uiparameter = uidata.SingleSelectFromList('Parameter', parameters, 0)
+		self.uiparameter = uidata.SingleSelectFromList('Parameter', parameters, 0, persist=True)
 		self.uinaverage = uidata.Integer('N Average', 1, 'rw')
 		self.ui_interval = uidata.Float('Interval', 2e-6, 'rw')
 		self.uicurbase = uidata.Boolean('Current as Base', True, 'rw')
