@@ -65,9 +65,7 @@ if sys.platform != 'win32':
 		def __init__(self, planshapes=(), estimate=0):
 			fftEngine.__init__(self)
 			self.estimate = estimate
-			print 'PLANSHAPES', planshapes
 			for shape in planshapes:
-				print 'SHAPE', shape
 				self.timer(self.plan, (shape,))
 				self.timer(self.iplan, (shape,))
 
@@ -98,7 +96,6 @@ if sys.platform != 'win32':
 
 		def plan(self, shape):
 			if shape not in plans:
-				print 'NEW PLAN', shape
 				r,c = shape
 				if self.estimate:
 					plans[shape] = sfftw.rfftw2d_create_plan(r,c,sfftw.FFTW_REAL_TO_COMPLEX, sfftw.FFTW_ESTIMATE|sfftw.FFTW_USE_WISDOM)
@@ -109,7 +106,6 @@ if sys.platform != 'win32':
 
 		def iplan(self, shape):
 			if shape not in iplans:
-				print 'NEW IPLAN', shape
 				r,c = shape
 				if self.estimate:
 					iplans[shape] = sfftw.rfftw2d_create_plan(r,c,sfftw.FFTW_COMPLEX_TO_REAL, sfftw.FFTW_ESTIMATE|sfftw.FFTW_USE_WISDOM)

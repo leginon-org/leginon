@@ -198,15 +198,10 @@ class Manager(node.Node):
 		args = (launcher, newproc, target, name, nodeargs)
 		self.app.addLaunchSpec(args)
 
-		print 'aaaaaa'
 		manloc = self.location()
-		print 'bbbbbb'
 		newid = self.nodeID(name)
-		print 'cccccc'
 		args = (newid, manloc) + nodeargs
-		print 'dddddd'
 		self.launch(launcher, newproc, target, args)
-		print 'eeeeee'
 
 	def launch(self, launcher, newproc, target, args=(), kwargs={}):
 		"""
@@ -215,9 +210,7 @@ class Manager(node.Node):
 		target = callable object under self.common
 		args, kwargs = args for callable object
 		"""
-		print 'rrrrrr'
 		ev = event.LaunchEvent(self.ID(), newproc, target, args, kwargs)
-		print 'ssssss'
 		self.clients[launcher].push(ev)
 
 	def killNode(self, nodeid):
