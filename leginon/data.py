@@ -527,10 +527,10 @@ class ImageData(InSessionData):
 		impath = leginonconfig.IMAGE_PATH
 
 		# create new directory for session
-		impath = os.path.join(impath, self['session'])
+		impath = os.path.join(impath, self['session']['name'])
 		leginonconfig.mkdirs(impath)
 
-		basename = '%s_%s_' % (self['session'], self.__class__.__name__)
+		basename = '%s_%s_' % (self['session']['name'], self.__class__.__name__)
 		basename = os.path.join(impath, basename)
 		extension = '.mrc'
 		wildcard = intwidth * '?'
