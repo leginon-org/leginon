@@ -3,8 +3,6 @@ Acquisition node is a TargetWatcher, so it receives either an ImageTargetData
 or an ImageTargetListData.  The method processTargetData is called on each
 ImageTargetData.
 '''
-
-import focuser
 import targetwatcher
 import time
 import data, event
@@ -15,8 +13,8 @@ import copy
 import threading
 
 class Acquisition(targetwatcher.TargetWatcher):
-	def __init__(self, id, session, nodelocations, **kwargs):
-		targetwatcher.TargetWatcher.__init__(self, id, session, nodelocations, **kwargs)
+	def __init__(self, id, session, nodelocations, targetclass=data.ImageTargetData, **kwargs):
+		targetwatcher.TargetWatcher.__init__(self, id, session, nodelocations, targetclass, **kwargs)
 		self.addEventInput(event.ImageClickEvent, self.handleImageClick)
 		self.addEventInput(event.TargetDoneEvent, self.handleTargetDone)
 		self.cam = camerafuncs.CameraFuncs(self)
@@ -27,28 +25,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 			'modeled stage position': calibrationclient.ModeledStageCalibrationClient(self)
 		}
 		self.presetsclient = presets.PresetsClient(self)
-		self.targetevents = {}
 
 		self.defineUserInterface()
 		self.start()
-
-	def handleTargetDone(self, targetevent):
-		targetid = targetevent['targetid']
-		print 'got targetdone event, setting threading event', targetid
-		if targetid in self.targetevents:
-			self.targetevents[targetid].set()
-
-	def focus(self, focustargetdata):
-		targetid = focustargetdata['id']
-		## maybe should check if already waiting on this target?
-		self.targetevents[targetid] = threading.Event()
-		print 'publishing focustargetdata', targetid
-		newtargetlist = data.ImageTargetListData(self.ID(), targets=[focustargetdata,])
-		self.publish(newtargetlist, eventclass=event.ImageTargetListPublishEvent)
-		## maybe should have timeout?
-		print 'waiting for focus to complete'
-		self.targetevents[targetid].wait()
-		## maybe delete old events?
 
 	def processTargetData(self, targetdata):
 		'''
@@ -56,16 +35,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		If called with targetdata=None, this simulates what occurs at
 		a target (going to presets, acquiring images, etc.)
 		'''
-		### should make both target data and preset an option
-
-		## if this is not a focuser, pass focus targets on
-		## right now this would be done one at a time
-		## maybe we could pack all the focus targets into one list
-		if not isinstance(self, focuser.Focuser):
-			if isinstance(targetdata, data.FocusTargetData):
-				print 'passing on focus target'
-				self.focus(targetdata)
-				return
+		## wait for focus targets to complete
+		for tid,tevent in self.targetevents.items():
+			print 'waiting for target %s to complete' % (tid,)
+			tevent.wait()
 
 		if targetdata is None:
 			newtargetemdata = None
