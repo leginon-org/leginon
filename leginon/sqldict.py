@@ -197,7 +197,8 @@ class SQLDict:
 	    for key,query in self.queries.items():
 	    	c = self._cursor()
 		try:
-			#print "THIS ONE: ", query
+			print "THIS ONE: "
+			print query
 			c.execute(query)
 		except MySQLdb.ProgrammingError, e:
 			errno = e.args[0]
@@ -382,6 +383,23 @@ class SQLDict:
 	    	q = sqlexpr.SelectAll(self.table, where=where, orderBy=orderBy).sqlRepr()
 	    c.execute(q)
 	    return c
+
+	def insert2(self, v=[]):
+	    c = self.cursor()
+	    print 'V'
+	    print v
+	    wherelist = sqlexpr.whereFormatSimple(v[0])
+	    print 'WHERELIST'
+	    print wherelist
+	    qsel = sqlexpr.SelectAll(self.table, where=wherelist).sqlRepr()
+	    print 'QSEL'
+	    print qsel
+	    c.execute(qsel)
+	    print 'cursor after query'
+	    print c.fetchall()
+	    q = sqlexpr.Insert(self.table, v).sqlRepr()
+	    c.execute(q)
+	    return c.insert_id()
 
 	def insert(self, v=[]):
 	    c = self.cursor()
@@ -671,8 +689,13 @@ def queryFormat(in_dict):
 			if sqlexprstr:
 				sqlwhere.append(sqlexprstr)
 	sqljoinstr = ' '.join(sqljoin)
-	sqlwherestr= ' AND '.join(sqlwhere)
-	sqlquery = "%s %s WHERE %s %s" % (sqlfrom, sqljoinstr, sqlwherestr, sqlorder)
+
+	if sqlwhere:
+		sqlwherestr= 'WHERE ' + ' AND '.join(sqlwhere)
+	else:
+		sqlwherestr = ''
+
+	sqlquery = "%s %s %s %s" % (sqlfrom, sqljoinstr, sqlwherestr, sqlorder)
 	return sqlquery
 
 def join2ref(key, in_dict):
