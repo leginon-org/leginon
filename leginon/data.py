@@ -148,6 +148,16 @@ class MosaicImageData(CameraImageData):
 		## mangled too much, maybe something else useful to put
 		## here
 
+class PresetImageData(CameraImageData):
+	'''
+	Adds preset to CameraImageData
+	Because of targeting issues, it is necessary to track the preset
+	since it may be different that the assigned scope and camera
+	'''
+	def __init__(self, id, image, scope, camera, preset):
+		CameraImageData.__init__(self, id, image, scope, camera)
+		self.content.update({'preset':preset})
+
 class StateMosaicData(Data):
 	'''Contains data ID of images mapped to their position and state.'''
 	def __init__(self, id, content):
