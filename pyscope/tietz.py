@@ -392,8 +392,9 @@ class Tietz(object):
 		offset = self.getOffset()
 		dimension = self.getDimension()
 		binning = self.getBinning()
-		hr = self.camera.Format(offset['x'], offset['y'], dimension['x'],
-																dimension['y'], binning['x'], binning['y'])
+		hr = self.camera.Format(offset['x']*binning['x'], offset['y']*binning['y'],
+														dimension['x'], dimension['y'],
+														binning['x'], binning['y'])
 
 		exposuretype = self.getExposureType()
 		if exposuretype == 'normal':
