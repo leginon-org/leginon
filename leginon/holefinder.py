@@ -37,6 +37,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.uidataqueueflag.set(False)
 
 		self.usercheckon = uidata.Boolean('User Check', False, 'rw', persist=True)
+		self.skipauto = uidata.Boolean('Skip Auto Hole Finder', False, 'rw', persist=True)
 		self.usequantifoil = uidata.Boolean('Quantifoil', True, 'rw', persist=True)
 
 		self.testfile = uidata.String('Filename', '', 'rw', persist=True)
@@ -125,7 +126,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		goodholescontainer.addObjects((self.icetmin, self.icetmax, self.icetstd, icemeth, self.goodholes, self.use_target_template, self.foc_target_template, self.acq_target_template, self.goodholesimage, submitmeth))
 
 		container = uidata.LargeContainer('Hole Finder')
-		container.addObjects((self.usercheckon, originalcont,edgecont,corcont,threshcont, blobcont, goodholescontainer))
+		container.addObjects((self.usercheckon, self.skipauto, originalcont,edgecont,corcont,threshcont, blobcont, goodholescontainer))
 		self.uiserver.addObject(container)
 
 	def readImage(self):
@@ -244,6 +245,10 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.goodholesimage.setTargetType('acquisition', acq_points)
 		self.goodholesimage.setTargetType('focus', focus_points)
 
+	def bypass(self):
+		self.goodholesimage.setImage(self.hf['original'])
+		self.goodholesimage.imagedata = self.currentimagedata
+
 	def applyTargetTemplate(self, centers):
 		acq_vect = self.acq_target_template.get()
 		foc_vect = self.foc_target_template.get()
@@ -278,9 +283,12 @@ class HoleFinder(targetfinder.TargetFinder):
 			self.targetlist = previous
 			return
 
-		## automated part
+		## auto or not?
 		self.hf['original'] = imdata['image']
-		self.everything()
+		if self.skipauto.get():
+			self.bypass()
+		else:
+			self.everything()
 
 		## user part
 		if self.usercheckon.get():
