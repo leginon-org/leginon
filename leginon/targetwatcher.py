@@ -24,7 +24,7 @@ class TargetWatcher(watcher.Watcher):
 
 		self.abort = threading.Event()
 		self.pause = threading.Event()
-		self.continue = threading.Event()
+		self.cont = threading.Event()
 		self.targetclass = targetclass
 		#self.targetevents = {}
 		self.targetlistevents = {}
@@ -72,7 +72,7 @@ class TargetWatcher(watcher.Watcher):
 		### process the good ones
 		self.abort.clear()
 		self.pause.clear()
-		self.continue.clear()
+		self.cont.clear()
 		print self.id, 'PROCESSING GOOD', len(goodtargets)
 		targetliststatus = 'success'
 		for target in goodtargets:
@@ -87,8 +87,8 @@ class TargetWatcher(watcher.Watcher):
 			print 'checking pause'
 			if self.pause.isSet():
 				print 'pausing'
-				self.continue.clear()
-				self.continue.wait()
+				self.cont.clear()
+				self.cont.wait()
 				self.pause.clear()
 				print 'done pausing'
 			print 'checking abort'
@@ -146,4 +146,4 @@ class TargetWatcher(watcher.Watcher):
 
 	def continueTargetListLoop(self):
 		print 'continuing loop'
-		self.continue.set()
+		self.cont.set()
