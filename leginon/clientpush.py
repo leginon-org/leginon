@@ -20,9 +20,9 @@ class Client(leginonobject.LeginonObject):
 		self.clients[datatcp.PushClient].push(data)
 
 class Server(leginonobject.LeginonObject):
-	def __init__(self, dhclass = datahandler.SimpleDataKeeper):
+	def __init__(self, dhclass = datahandler.SimpleDataKeeper, dhargs = ()):
 		leginonobject.LeginonObject.__init__(self)
-		self.datahandler = dhclass()
+		self.datahandler = apply(dhclass, dhargs)
 		self.servers = {}
 		#self.servers[datalocal.PushServer] = datalocal.PushServer(self.datahandler)
 		self.servers[datatcp.PushServer] = datatcp.PushServer(self.datahandler)

@@ -20,9 +20,9 @@ class Client(leginonobject.LeginonObject):
 		return self.clients[datatcp.PullClient].pull(dataid)
 
 class Server(leginonobject.LeginonObject):
-	def __init__(self, dhclass = datahandler.SimpleDataKeeper):
+	def __init__(self, dhclass = datahandler.SimpleDataKeeper, dhargs = ()):
 		leginonobject.LeginonObject.__init__(self)
-		self.datahandler = dhclass()
+		self.datahandler = apply(dhclass, dhargs)
 		self.servers = {}
 		#self.servers[datalocal.PullServer] = datalocal.PullServer(self.datahandler)
 		self.servers[datatcp.PullServer] = datatcp.PullServer(self.datahandler)
