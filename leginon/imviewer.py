@@ -121,7 +121,7 @@ class ImViewer(imagewatcher.ImageWatcher):
 
 	def uiSaveImage(self):
 		filename = self.uifilename.get()
-		numarray = Numeric.array(self.iv.imagearray)
+		numarray = Numeric.array(self.numarray)
 		Mrc.numeric_to_mrc(numarray, filename)
 
 	def defineUserInterface(self):
