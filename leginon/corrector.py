@@ -266,18 +266,14 @@ class Corrector(node.Node):
 
 	def retrieveRef(self, camstate, type):
 		key = self.refKey(camstate, type)
-		print 'KEY', key
 		## another way to do the cache would be to use the local
 		##   data keeper
 
 		## try to use reference image from cache
-		print 'KEYS'
-		print self.ref_cache.keys()
 		try:
 			return self.ref_cache[key]
 		except KeyError:
-			print key, 'is not in', self.ref_cache.keys()
-			pass
+			print 'loading reference image', key
 
 		## use reference image from database
 		ref = self.researchRef(camstate, type)
