@@ -66,10 +66,10 @@ class Client(leginonobject.LeginonObject):
 		self.buffer_size = buffer_size 
 		leginonobject.LeginonObject.__init__(self)
 		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		self.socket.connect((hostname, port)) # Connect to server
 
 	def pull(self, data_id):
 		data = ""
+		self.socket.connect((hostname, port)) # Connect to server
 		# needs to account for different data_id datatypes
 		self.socket.send("%s\n" % data_id)
 		while 1:
@@ -83,6 +83,7 @@ class Client(leginonobject.LeginonObject):
 
 	def push(self, data):
 		# needs to account for different data_id datatypes
+		self.socket.connect((hostname, port)) # Connect to server
 		self.socket.send(pickle.dumps(data))
 		self.socket.close()
 
