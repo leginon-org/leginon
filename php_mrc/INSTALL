@@ -8,7 +8,7 @@ PHP-MRC
 
 	> cd /usr/src/php-4.3.8/
 	> ./buildconf --force
-	> ./configure --prefix=/usr/share --datadir=/usr/share/php --bindir=/usr/bin --libdir=/usr/share --includedir=/usr/include --with-_lib=lib --with-config-file-path=/etc --with-exec-dir=/usr/lib/php/bin --with-jpeg-dir=/usr --with-zlib=yes --with-gd --with-apxs=/usr/sbin/apxs
+	> ./configure --prefix=/usr/share --datadir=/usr/share/php --bindir=/usr/bin --libdir=/usr/share --includedir=/usr/include --with-_lib=lib --with-config-file-path=/etc --with-exec-dir=/usr/lib/php/bin --with-jpeg-dir=/usr --with-zlib=yes --with-gd --enable-mrc --with-apxs=/usr/sbin/apxs
 
 	> make
 	> make install

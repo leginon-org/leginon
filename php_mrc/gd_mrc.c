@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "php.h"
 #include "gd.h"
 #include "mrc.h"
 #include "gd_mrc.h"
