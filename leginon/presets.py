@@ -591,7 +591,7 @@ class PresetsManager(node.Node):
 		try:
 			ht = self.getHighTension()
 		except:
-			print 'Cannot get high tension value, calibration display failed'
+			#print 'Cannot get high tension value, calibration display failed'
 			return
 		pcaltime = self.calclients['pixel size'].time(mag)
 		self.cal_pixelsize.set(str(pcaltime))
