@@ -59,7 +59,7 @@ class DoseCalibrator(calibrator.Calibrator):
 		except:
 			return None
 		if scope['main screen position'] == 'down':
-			mag = scope['magnification']
+			mag = scope['main screen magnification']
 			current = scope['screen current']
 			scale = self.settings['scale factor']
 			self.results['screen magnification'] = mag
