@@ -320,6 +320,9 @@ class ImageTargetData(Data):
 		return t
 	typemap = classmethod(typemap)
 
+class FocusTargetData(ImageTargetData):
+	pass
+
 ### XXX the list here has variable lenght
 class ImageTargetListData(Data):
 	def typemap(cls):
