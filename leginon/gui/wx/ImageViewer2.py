@@ -269,6 +269,8 @@ class OffsetWindow(CenteredWindow):
 			self._updatedrawing = True
 			self._refresh = True
 
+		return x, y
+
 	def setOffset(self, x, y):
 		self._setOffset(x, y)
 		if self._updatedrawing:
@@ -301,20 +303,62 @@ class OffsetWindow(CenteredWindow):
 class ScrolledWindow(OffsetWindow):
 	def __init__(self, parent, id):
 		OffsetWindow.__init__(self, parent, id)
-		self.Bind(wx.EVT_SCROLLWIN, self.onScrollWin)
+		self.Bind(wx.EVT_SCROLLWIN_TOP, self.onScrollWinTop)
+		self.Bind(wx.EVT_SCROLLWIN_BOTTOM, self.onScrollWinBottom)
+		self.Bind(wx.EVT_SCROLLWIN_LINEUP, self.onScrollWinLineUp)
+		self.Bind(wx.EVT_SCROLLWIN_LINEDOWN, self.onScrollWinLineDown)
+		self.Bind(wx.EVT_SCROLLWIN_PAGEUP, self.onScrollWinPageUp)
+		self.Bind(wx.EVT_SCROLLWIN_PAGEDOWN, self.onScrollWinPageDown)
+		self.Bind(wx.EVT_SCROLLWIN_THUMBTRACK, self.onScrollWinThumbTrack)
 
-	def onScrollWin(self, evt):
+	def onScrollWinTop(self, evt):
+		orientation = evt.GetOrientation()
+		position = 0
+		self.onScrollWin(orientation, position)
+
+	def onScrollWinBottom(self, evt):
+		orientation = evt.GetOrientation()
+		position = self.GetScrollRange(orientation)
+		self.onScrollWin(orientation, position)
+
+	def onScrollWinLineUp(self, evt):
+		orientation = evt.GetOrientation()
+		position = self.GetScrollPos(orientation) - 1
+		self.onScrollWin(orientation, position)
+
+	def onScrollWinLineDown(self, evt):
+		orientation = evt.GetOrientation()
+		position = self.GetScrollPos(orientation) + 1
+		self.onScrollWin(orientation, position)
+
+	def onScrollWinPageUp(self, evt):
+		orientation = evt.GetOrientation()
+		position = self.GetScrollPos(orientation) - self.GetScrollThumb(orientation)
+		self.onScrollWin(orientation, position)
+
+	def onScrollWinPageDown(self, evt):
+		orientation = evt.GetOrientation()
+		position = self.GetScrollPos(orientation) + self.GetScrollThumb(orientation)
+		self.onScrollWin(orientation, position)
+
+	def onScrollWinThumbTrack(self, evt):
 		orientation = evt.GetOrientation()
 		position = evt.GetPosition()
+		self.onScrollWin(orientation, position)
+
+	def onScrollWin(self, orientation, position):
 		if orientation == wx.HORIZONTAL:
 			x = position
 			y = self.GetScrollPos(wx.VERTICAL)
-			self.SetScrollPos(wx.HORIZONTAL, position)
 		elif orientation == wx.VERTICAL:
 			x = self.GetScrollPos(wx.HORIZONTAL)
 			y = position
-			self.SetScrollPos(wx.VERTICAL, position)
 		self.setOffset(x, y)
+
+	def _setOffset(self, x, y):
+		x, y = OffsetWindow._setOffset(self, x, y)
+		self.SetScrollPos(wx.HORIZONTAL, x)
+		self.SetScrollPos(wx.VERTICAL, y)
 
 	def updateScrollbars(self, position=None):
 		if position is None:
@@ -334,9 +378,17 @@ class ScrolledWindow(OffsetWindow):
 		self.SetScrollbar(wx.HORIZONTAL, xposition, xthumbsize, xrange)
 		self.SetScrollbar(wx.VERTICAL, yposition, ythumbsize, yrange)
 
-	def _onSize(self, evt):
+	def _setBitmap(self, bitmap):
+		OffsetWindow._setBitmap(self, bitmap)
 		self.updateScrollbars()
+
+	def _setScale(self, x, y):
+		OffsetWindow._setScale(self, x, y)
+		self.updateScrollbars()
+
+	def _onSize(self, evt):
 		OffsetWindow._onSize(self, evt)
+		self.updateScrollbars()
 
 if __name__ == '__main__':
 	import sys
