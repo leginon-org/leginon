@@ -830,8 +830,8 @@ class PresetsManager(node.Node):
 
 		emdata = copy.deepcopy(emtargetdata['scope'])
 
-		## only set stage x and y
-		if self.xyonly.get():
+		if emdata['stage position'] and self.xyonly.get():
+			## only set stage x and y
 			for key in emdata['stage position'].keys():
 				if key not in ('x','y'):
 					del emdata['stage position'][key]
