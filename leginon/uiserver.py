@@ -4,58 +4,9 @@ import socket
 import threading
 import uidata
 import xmlrpclib
-import sys
 
 # range defined by IANA as dynamic/private
 portrange = xrange(49152, 65536)
-
-### This is SimpleXMLRPCRequestHAndler except it will raise
-### both catch exceptions to send as Faults to client, and also
-### raise the exception on the server
-class MyRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
-    def do_POST(self):
-        """Handles the HTTP POST request.
-
-        Attempts to interpret all HTTP POST requests as XML-RPC calls,
-        which are forwarded to the _dispatch method for handling.
-        """
-
-        try:
-            # get arguments
-            data = self.rfile.read(int(self.headers["content-length"]))
-            params, method = xmlrpclib.loads(data)
-
-            # generate response
-            try:
-                response = self._dispatch(method, params)
-                # wrap response in a singleton tuple
-                response = (response,)
-            except:
-                # report exception back to server
-                response = xmlrpclib.dumps(
-                    xmlrpclib.Fault(1, "%s:%s" % (sys.exc_type, sys.exc_value))
-                    )
-		excinfo = sys.exc_info()
-		apply(sys.excepthook, excinfo)
-		sys.stderr.write('%s: %s\n' % (excinfo[0], excinfo[1]))
-            else:
-                response = xmlrpclib.dumps(response, methodresponse=1)
-        except:
-            # internal error, report as HTTP server error
-            self.send_response(500)
-            self.end_headers()
-        else:
-            # got a valid XML RPC response
-            self.send_response(200)
-            self.send_header("Content-type", "text/xml")
-            self.send_header("Content-length", str(len(response)))
-            self.end_headers()
-            self.wfile.write(response)
-
-            # shut down the connection
-            self.wfile.flush()
-            self.connection.shutdown(1)
-
 
 class XMLRPCServer(object):
 	"""
@@ -69,7 +20,7 @@ class XMLRPCServer(object):
 		if self.port is not None:
 			# this exception will fall through if __init__ fails
 			self.server = SimpleXMLRPCServer.SimpleXMLRPCServer((self.hostname, 
-																								 self.port), requestHandler=MyRequestHandler, logRequests=False)
+																								 self.port), logRequests=False)
 			self._startServing()
 			return
 
@@ -77,7 +28,7 @@ class XMLRPCServer(object):
 		for self.port in portrange:
 			try:
 				self.server = SimpleXMLRPCServer.SimpleXMLRPCServer(
-																										(self.hostname, self.port), requestHandler=MyRequestHandler,
+																										(self.hostname, self.port),
 																										logRequests=False)
 				break
 			except Exception, var:

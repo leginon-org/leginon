@@ -1,6 +1,6 @@
 #
 # XML-RPC CLIENT LIBRARY
-# $Id: xmlrpclib.py,v 1.2 2003-03-07 02:29:34 pulokas Exp $
+# $Id: xmlrpclib.py,v 1.3 2003-06-09 22:43:06 pulokas Exp $
 #
 # an XML-RPC client interface for Python.
 #
@@ -189,12 +189,17 @@ class ResponseError(Error):
     """Indicates a broken response package."""
     pass
 
+import sys
 class Fault(Error):
     """Indicates an XML-RPC fault package."""
     def __init__(self, faultCode, faultString, **extra):
         Error.__init__(self)
         self.faultCode = faultCode
         self.faultString = faultString
+	excinfo = sys.exc_info()
+	### print the Exception that caused this Fault
+	apply(sys.excepthook, excinfo)
+	sys.stderr.write('%s: %s\n' % (excinfo[0], excinfo[1]))
     def __repr__(self):
         return (
             "<Fault %s: %s>" %
