@@ -32,7 +32,7 @@ class DataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
 			if idata['id'][:-1] == self['id'][:-1]:
 				datahandler.SimpleDataKeeper.insert(self, copy.deepcopy(idata))
 			else:
-				raise InvalidEventError('event must be Event instance')
+				raise event.InvalidEventError('event must be Event instance')
 
 	# def query(self, id): is inherited from SimpleDataKeeper
 

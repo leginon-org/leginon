@@ -182,7 +182,7 @@ class DataHandler(datahandler.DataBinder):
 		if issubclass(eventclass, event.Event):
 			datahandler.DataBinder.setBinding(self, eventclass, func)
 		else:
-			raise InvalidEventError('eventclass must be Event subclass')
+			raise event.InvalidEventError('eventclass must be Event subclass')
 
 
 class PresetsManager(node.Node):
