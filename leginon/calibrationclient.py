@@ -16,6 +16,7 @@ import sys
 import threading
 import gonmodel
 import imagefun
+import Mrc
 
 class Drifting(Exception):
 	pass
@@ -49,15 +50,14 @@ class CalibrationClient(object):
 			raise Abort()
 
 	def acquireStateImage(self, state, publish_image=0, settle=0.0):
+		print 'acquiring image'
 		## acquire image at this state
-		print 'creating EM data'
 		newemdata = data.ScopeEMData(id=('scope',), initializer=state)
 #		needs unlock too
 #		print 'publishing lock'
 #		self.node.publish(event.LockEvent(id=self.node.ID()))
 #		print 'publishing EM'
 		self.node.publishRemote(newemdata)
-		print 'state settling time %s' % (settle,)
 		time.sleep(settle)
 
 		imagedata = self.cam.acquireCameraImageData()
@@ -118,6 +118,7 @@ class CalibrationClient(object):
 
 			print 'correlation'
 			pcimage = self.correlator.phaseCorrelate()
+			Mrc.numeric_to_mrc(pcimage, 'pcimage.mrc')
 
 			print 'peak finding'
 			self.peakfinder.setImage(pcimage)
@@ -127,11 +128,11 @@ class CalibrationClient(object):
 			shift = correlator.wrap_coord(peak['subpixel peak'], pcimage.shape)
 			shiftrows = shift[0]
 			shiftcols = shift[1]
-			d = data.DriftData(id=self.node.ID(), rows=shiftrows, cols=shiftcols)
+			seconds = t1 - t0
+			d = data.DriftData(id=self.node.ID(), rows=shiftrows, cols=shiftcols, interval=seconds)
 			self.node.publish(d, database=True, dbforce=True)
 
 			drift = abs(shift[0] + 1j * shift[1])
-			seconds = t1 - t0
 			print 'SECONDS: ', seconds
 			print 'PIXELS: ', drift
 			print 'PIXELS/SECOND: %.4e' % (float(drift) / seconds,)
