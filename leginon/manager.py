@@ -12,12 +12,12 @@ True=1
 
 class Manager(node.Node):
 	'''Overlord of the nodes. Handles node communication (data and events).'''
-	def __init__(self, id, tcpport=None, xmlrpcport=None):
+	def __init__(self, id, tcpport=None, xmlrpcport=None, **kwargs):
 		# the id is manager (in a list)
 
 		self.clients = {}
 
-		node.Node.__init__(self, id, {}, tcpport=tcpport, xmlrpcport=xmlrpcport)
+		node.Node.__init__(self, id, {}, tcpport=tcpport, xmlrpcport=xmlrpcport, **kwargs)
 
 		self.uiserver.server.register_function(self.uiGetNodeLocations,
 																						'getNodeLocations')
@@ -40,6 +40,7 @@ class Manager(node.Node):
 		self.addEventInput(event.ListPublishEvent, self.registerData)
 		self.addEventInput(event.Event, self.distributeEvents)
 
+		self.defineUserInterface()
 		#self.start()
 
 	# main/start methods
@@ -124,6 +125,9 @@ class Manager(node.Node):
 		except:
 			self.printerror(str(eventclass) + ': ' + str(fromnodeid)
 											+ ' to ' + str(tonodeid) + ' no such binding')
+
+		args = (eventclass, fromnodeid, tonodeid)
+		self.app.delBindSpec(args)
 
 	def distributeEvents(self, ievent):
 		'''Push event to eventclients based on event class and source.'''

@@ -18,7 +18,8 @@ class CallLauncher(object):
 		else:
 			self.procname = __file__
 
-	def launchCall(self, launchtype, targetcall, args=(), kwargs={}):
+	def launchCall(self, launchtype, targetcall, lock, args=(), kwargs={}):
+		self.lock = lock
 		launchtypes = ('thread', 'fork', 'pipe')
 		if launchtype not in launchtypes:
 			raise ValueError("allowed launchtypes %s" % launchtypes)
@@ -42,10 +43,26 @@ class CallLauncher(object):
 		"""
 		make a call to targetcall in a new thread
 		"""
-		t = threading.Thread(name='%s node thread' % targetcall.__name__, target=targetcall, args=args, kwargs=kwargs)
+		#t = threading.Thread(name='%s node thread' % targetcall.__name__, target=targetcall, args=args, kwargs=kwargs)
+		wrapperargs = (targetcall, args, kwargs)
+		t = threading.Thread(name='%s node thread' % targetcall.__name__, target=self.callableWrapper, args=wrapperargs)
 		t.setDaemon(1)
 		t.start()
 		return t
+
+	def callableWrapper(self, callable, args=(), kwargs={}):
+		'''
+		the callable is responsible for releasign the launchlock
+		but if it doesn't because of an exception, this will release it
+		'''
+		try:
+			apply(callable, args, kwargs)
+		except Exception, detail:
+			print '***** exception while calling %s: %s' % (callable,detail)
+			try:
+				self.lock.release()
+			except:
+				pass
 
 	def newCallFork(self, targetcall, args=(), kwargs={}):
 		"""

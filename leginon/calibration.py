@@ -16,9 +16,9 @@ reload(camerafuncs)
 False=0
 True=1
 
-class Calibration(node.Node, camerafuncs.CameraFuncs):
-	def __init__(self, id, nodelocations):
-
+class Calibration(node.Node):
+	def __init__(self, id, nodelocations, **kwargs):
+		self.cam = camerafuncs.CameraFuncs(self)
 		ffteng = fftengine.fftNumeric()
 		#ffteng = fftengine.fftFFTW(planshapes=(), estimate=1)
 		self.correlator = correlator.Correlator(ffteng)
@@ -30,7 +30,8 @@ class Calibration(node.Node, camerafuncs.CameraFuncs):
 		self.calibration = {}
 		self.clearStateImages()
 
-		node.Node.__init__(self, id, nodelocations)
+		node.Node.__init__(self, id, nodelocations, **kwargs)
+		self.defineUserInterface()
 		
 	def calculatePixelFromPercent(self, percent):
 		pixel = {'x': {'min': None, 'max': None}, 'y': {'min': None, 'max': None}}
@@ -67,7 +68,7 @@ class Calibration(node.Node, camerafuncs.CameraFuncs):
 			"binning": {'x': bin, 'y': bin},
 			"exposure time": exp
 		}
-		self.cameraDefaultOffset(camstate)
+		self.cam.autoOffset(camstate)
 
 		camdata = data.EMData('camera', camstate)
 
@@ -134,7 +135,7 @@ class Calibration(node.Node, camerafuncs.CameraFuncs):
 		#emdata = self.researchByDataID('corrected image data')
 		#self.publish(event.UnlockEvent(self.ID()))
 		#image = emdata.content['corrected image data']
-		image = self.cameraAcquireArray(camstate=None, correction=0)
+		image = self.cam.acquireArray(camstate=None, correction=0)
 		print 'min', cameraimage.min(image)
 		print 'max', cameraimage.max(image)
 
@@ -282,8 +283,11 @@ class Calibration(node.Node, camerafuncs.CameraFuncs):
 			print "Error: failed to load calibration"
 		else:
 			print "loading", self.calibration, "from file:", filename
-		self.publish(data.CalibrationData(self.ID(), self.calibration),
-									event.CalibrationPublishEvent)
+		dat = data.CalibrationData(self.ID(), self.calibration)
+		print 'data', dat
+		ev = event.CalibrationPublishEvent
+		print 'eventclass', ev
+		self.publish(data.CalibrationData(self.ID(), self.calibration), ev)
 		return ''
 
 	def defineUserInterface(self):
@@ -349,7 +353,7 @@ class Calibration(node.Node, camerafuncs.CameraFuncs):
 ## this is a base class for simple pixel calibrations 
 # for lack of a better name...
 class SimpleCalibration(Calibration):
-	def __init__(self, id, nodelocations, parameter):
+	def __init__(self, id, nodelocations, parameter, **kwargs):
 		#self.calibration = {"x pixel shift": {'x': 1.0, 'y': 2.0, 'value': 1.0},
 		#					 "y pixel shift": {'x': 3.0, 'y': 4.0, 'value': 1.0}}
 		#self.pixelShift(event.ImageShiftPixelShiftEvent(-1, {'row': 2.0, 'column': 2.0}))
@@ -359,7 +363,7 @@ class SimpleCalibration(Calibration):
 			raise RuntimeError('parameter %s not supported' % (parameter,) )
 		self.parameter = parameter
 
-		Calibration.__init__(self, id, nodelocations)
+		Calibration.__init__(self, id, nodelocations, **kwargs)
 		self.addEventInput(event.PixelShiftEvent, self.pixelShift)
 		self.start()
 
@@ -412,13 +416,13 @@ class SimpleCalibration(Calibration):
 		return matrix
 
 class ImageShiftCalibration(SimpleCalibration):
-	def __init__(self, id, nodelocations):
+	def __init__(self, id, nodelocations, **kwargs):
 		param='image shift'
-		SimpleCalibration.__init__(self, id, nodelocations, parameter=param)
+		SimpleCalibration.__init__(self, id, nodelocations, parameter=param, **kwargs)
 
 
 class StageShiftCalibration(SimpleCalibration):
-	def __init__(self, id, nodelocations):
+	def __init__(self, id, nodelocations, **kwargs):
 		param='stage position'
-		SimpleCalibration.__init__(self, id, nodelocations, parameter=param)
+		SimpleCalibration.__init__(self, id, nodelocations, parameter=param, **kwargs)
 

@@ -4,8 +4,8 @@ import calibration
 import node
 
 class AutoFocusCalibration(node.Node, calibration.Calibration):
-	def __init__(self, id, nodelocations):
-		calibration.Calibration.__init__(self, id, nodelocations)
+	def __init__(self, id, nodelocations, **kwargs):
+		calibration.Calibration.__init__(self, id, nodelocations, **kwargs)
 		self.axislist = ['x']
 		self.defocus = 0.0001
 		self.deltadefocus

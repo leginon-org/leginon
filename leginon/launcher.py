@@ -6,15 +6,17 @@ import event
 import nodeclassreg
 import calllauncher
 import time
+import threading
 
 
 class Launcher(node.Node):
-	def __init__(self, id, nodelocations = {}, port = None):
-		node.Node.__init__(self, id, nodelocations, tcpport=port)
+	def __init__(self, id, nodelocations = {}, port = None, **kwargs):
+		node.Node.__init__(self, id, nodelocations, tcpport=port, **kwargs)
 
 		self.addEventInput(event.LaunchEvent, self.handleLaunch)
 		self.addEventInput(event.UpdateNodeClassesEvent, self.publishNodeClasses)
 		self.addEventOutput(event.NodeClassesPublishEvent)
+		self.__launchlock = threading.Lock()
 		self.caller = calllauncher.CallLauncher()
 		l = self.location()
 		print 'launcher id: %s, at hostname: %s, TCP: %s, UI: %s' % (self.id,
@@ -45,15 +47,23 @@ class Launcher(node.Node):
 		targetclass = launchevent.content['targetclass']
 		args = launchevent.content['args']
 		kwargs = launchevent.content['kwargs']
+		kwargs['launchlock'] = self.__launchlock
 
 		# get the requested class object
 		nodeclass = nodeclassreg.getNodeClass(targetclass)
 
+		print 'launching', nodeclass
+
 		## thread or process
 		if newproc:
-			self.caller.launchCall('fork',nodeclass,args,kwargs)
+			self.caller.launchCall('fork',nodeclass,self.__launchlock, args,kwargs)
 		else:
-			self.caller.launchCall('thread',nodeclass,args,kwargs)
+			print 'acquiring lock'
+			ret = self.__launchlock.acquire(1)
+			print 'acquired lock: ', ret
+			### the lock should be released either by the new node
+			### or calllauncher if the node caused an exception
+			self.caller.launchCall('thread',nodeclass,self.__launchlock, args,kwargs)
 
 	def defineUserInterface(self):
 		nint = node.Node.defineUserInterface(self)

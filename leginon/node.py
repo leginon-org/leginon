@@ -60,10 +60,13 @@ class DataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
 class Node(leginonobject.LeginonObject):
 	'''Atomic operating unit for performing tasks, creating data and events.'''
 	def __init__(self, id, nodelocations = {}, dh = DataHandler, dhargs = (),
-								tcpport=None, xmlrpcport=None, clientclass = datatransport.Client):
+								tcpport=None, xmlrpcport=None, clientclass = datatransport.Client, launchlock=None):
 		leginonobject.LeginonObject.__init__(self, id)
 
 		self.nodelocations = nodelocations
+		self.launchlock = launchlock
+		print 'SELF.LAUNCHLOCK', self.launchlock
+		print 'SELF', self
 
 		self.eventmapping = {'outputs':[], 'inputs':[]}
 
@@ -71,7 +74,6 @@ class Node(leginonobject.LeginonObject):
 		self.clientclass = clientclass
 
 		self.uiserver = interface.Server(self.ID(), xmlrpcport)
-		self.defineUserInterface()
 
 		self.confirmwaitlist = {}
 
@@ -94,11 +96,17 @@ class Node(leginonobject.LeginonObject):
 				self.printerror('connected to manager')
 		self.die_event = threading.Event()
 
+	def releaseLauncher(self):
+		## release the launch lock
+		if self.launchlock is not None:
+			print self, 'releasing launchlock'
+			self.launchlock.release()
+
 	# main, start/stop methods
 
 	def main(self):
 		'''The body of taking place when the node is started. See start.'''
-		raise NotImplementedError()
+		pass
 
 	def exit(self):
 		'''Cleans up the node before it dies.'''
@@ -114,6 +122,7 @@ class Node(leginonobject.LeginonObject):
 		'''Call to make the node active and react to a call to exit. Calls main.'''
 		#interact_thread = self.interact()
 
+		self.releaseLauncher()
 		self.main()
 
 		# wait until the interact thread terminates

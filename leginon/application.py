@@ -19,15 +19,17 @@ class Application(leginonobject.LeginonObject):
 		if args not in self.launchspec:
 			self.launchspec.append(args)
 
-	def delLaunchSpec(self):
-		pass
+	def delLaunchSpec(self, args):
+		if args in self.launchspec:
+			self.launchspec.remove(args)
 
 	def addBindSpec(self, args):
 		if args not in self.bindspec:
 			self.bindspec.append(args)
 
 	def delBindSpec(self):
-		pass
+		if args in self.bindspec:
+			self.bindspec.remove(args)
 
 	def getLaunchers(self):
 		launchers = []
@@ -49,7 +51,10 @@ class Application(leginonobject.LeginonObject):
 		while self.launchednodes:
 			nodeid = self.launchednodes.pop()
 			self.printerror('killing %s' % (nodeid,))
-			self.manager.killNode(nodeid)
+			try:
+				self.manager.killNode(nodeid)
+			except:
+				print 'error while killing %s' % (nodeid,)
 
 	def save(self, filename):
 		s = shelve.open(filename)

@@ -6,22 +6,35 @@ import node, event, data
 import camerafuncs
 reload(camerafuncs)
 
-class GridPreview(node.Node, camerafuncs.CameraFuncs):
-	def __init__(self, id, nodelocations):
+
+class GridPreview(node.Node):
+	def __init__(self, id, nodelocations, **kwargs):
+		self.cam = camerafuncs.CameraFuncs(self)
 		self.done = []
 		self.todo = []
 		self.temptodo = []
 		self.stoprunning = threading.Event()
 		self.running = threading.Event()
-		node.Node.__init__(self, id, nodelocations)
+		print 'init1 GridPreview is instance of node.Node?', isinstance(self, node.Node)
+		node.Node.__init__(self, id, nodelocations, **kwargs)
+		print 'init2 GridPreview is instance of node.Node?', isinstance(self, node.Node)
+
+		## default camera config
+		currentconfig = self.cam.config()
+		currentconfig['state']['dimension']['x'] = 1024
+		currentconfig['state']['binning']['x'] = 4
+		currentconfig['state']['exposure time'] = 100
+		self.cam.config(currentconfig)
+
+		self.defineUserInterface()
 		self.start()
 
 	def main(self):
 		pass
 
 	def defineUserInterface(self):
-		nodespec = node.Node.defineUserInterface(self)
-		cam = self.cameraConfigUIData()
+		#nodespec = node.Node.defineUserInterface(self)
+		cam = self.cam.configUIData()
 		defprefs = {'center': {'x':0,'y':0}, 'overlap': 75, 'maxtargets': 9}
 		spiralprefs = self.registerUIData('Spiral', 'struct', callback=self.uiSpiralPrefs, default=defprefs, permissions='rw')
 		self.sim = self.registerUIData('Simulate TEM/camera', 'boolean', permissions='rw', default=0)
@@ -32,11 +45,11 @@ class GridPreview(node.Node, camerafuncs.CameraFuncs):
 		reset = self.registerUIMethod(self.resetLoop, 'Reset', ())
 		controls = self.registerUIContainer('Controls', (start,stop,reset))
 
-		self.registerUISpec('Grid Preview', (prefs, controls, nodespec))
+		self.registerUISpec('Grid Preview', (prefs, controls))
 
 	def uiSpiralPrefs(self, value=None):
 		if value is not None:
-			camconfig = self.cameraConfig()
+			camconfig = self.cam.config()
 			camstate = camconfig['state']
 			size = camstate['dimension']['x']
 			self.prefs = value
@@ -82,7 +95,7 @@ class GridPreview(node.Node, camerafuncs.CameraFuncs):
 			else:
 				# move to next postion
 
-				camconfig = self.cameraConfig()
+				camconfig = self.cam.config()
 				camstate = camconfig['state']
 				binx = camstate['binning']['x']
 				biny = camstate['binning']['y']
@@ -99,8 +112,10 @@ class GridPreview(node.Node, camerafuncs.CameraFuncs):
 			time.sleep(2)
 
 			stagepos = self.researchByDataID('stage position')
+			stagepos = stagepos.content
+			print 'gridpreview stagepos', stagepos
 
-			imarray = self.cameraAcquireArray(camstate=None, correction=1)
+			imarray = self.cam.acquireArray(camstate=None, correction=1)
 			thisid = self.ID()
 			if self.lastid is None:
 				neighbortiles = []

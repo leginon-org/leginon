@@ -32,12 +32,12 @@ class DataHandler(node.DataHandler):
 			self.lock.release()
 			return node.DataHandler.query(self, id)
 
-class Corrector(node.Node, camerafuncs.CameraFuncs):
-	def __init__(self, id, nodelocations):
-
+class Corrector(node.Node):
+	def __init__(self, id, nodelocations, **kwargs):
+		self.cam = camerafuncs.CameraFuncs(self)
 		self.plans = {}
 
-		node.Node.__init__(self, id, nodelocations, DataHandler, (self,))
+		node.Node.__init__(self, id, nodelocations, DataHandler, (self,), **kwargs)
 		self.addEventOutput(event.DarkImagePublishEvent)
 		self.addEventOutput(event.BrightImagePublishEvent)
 		self.addEventOutput(event.ListPublishEvent)
@@ -46,6 +46,7 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 		e = event.ListPublishEvent(self.ID(), ids)
 		self.outputEvent(e)
 
+		self.defineUserInterface()
 		self.start()
 
 	def main(self):
@@ -65,7 +66,7 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 
 		self.fakeflag = self.registerUIData('Fake', 'boolean', default=False, permissions='rw')
 
-		camconfigdata = self.cameraConfigUIData()
+		camconfigdata = self.cam.configUIData()
 		prefs = self.registerUIContainer('Preferences', (self.navgdata, self.fakeflag, camconfigdata))
 
 		argspec = (
@@ -82,7 +83,7 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 		self.registerUISpec('Corrector', (plan, acqdark, acqbright, acqcorr, prefs, nodespec))
 
 	def uiSetPlanParams(self, cliplimits, badrows, badcols):
-		camconfig = self.cameraConfig()
+		camconfig = self.cam.config()
 		camstate = camconfig['state']
 		key = self.newPlan(camstate)
 		newplan = self.plans[key]
@@ -93,7 +94,7 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 		return ''
 
 	def uiGetPlanParams(self):
-		camconfig = self.cameraConfig()
+		camconfig = self.cam.config()
 		camstate = camconfig['state']
 		key = self.newPlan(camstate)
 		plan = self.plans[key]
@@ -118,9 +119,9 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 		return xmlbinlib.Binary(mrcstr)
 
 	def uiAcquireCorrected(self):
-		camconfig = self.cameraConfig()
+		camconfig = self.cam.config()
 		camstate = camconfig['state']
-		self.cameraState(camstate)
+		self.cam.state(camstate)
 		imdata = self.acquireCorrectedArray()
 		print 'Corrected Stats: %s' % (self.stats(imdata),)
 		mrcstr = Mrc.numeric_to_mrcstr(imdata)
@@ -155,12 +156,12 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 		series = []
 		for i in range(n):
 			print 'acquiring %s of %s' % (i+1, n)
-			numimage = self.cameraAcquireArray()
+			numimage = self.cam.acquireArray()
 			series.append(numimage)
 		return series
 
 	def acquireReference(self, dark=False):
-		camconfig = self.cameraConfig()
+		camconfig = self.cam.config()
 		camstate = camconfig['state']
 		tempcamstate = dict(camstate)
 		if dark:
@@ -173,7 +174,7 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 			datatype = data.BrightImageData
 			pubtype = event.BrightImagePublishEvent
 
-		self.cameraState(tempcamstate)
+		self.cam.state(tempcamstate)
 
 		navg = self.navgdata.get()
 		series = self.acquireSeries(navg)
@@ -220,11 +221,11 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 
 	def acquireCorrectedArray(self):
 		if self.fakeflag.get():
-			camconfig = self.cameraConfig()
+			camconfig = self.cam.config()
 			camstate = camconfig['state']
 			numimage = Mrc.mrc_to_numeric('fake.mrc')
 		else:
-			camstate = self.cameraAcquireCamera()
+			camstate = self.cam.acquireCamera()
 			numimage = camstate['image data']
 		corrected = self.correct(numimage, camstate)
 		return corrected

@@ -21,17 +21,20 @@ import xmlrpclib
 #import xmlrpclib2 as xmlbinlib
 xmlbinlib = xmlrpclib
 
-class ImViewer(watcher.Watcher, camerafuncs.CameraFuncs):
-	def __init__(self, id, nodelocations):
+class ImViewer(watcher.Watcher):
+	def __init__(self, id, nodelocations, **kwargs):
 		watchfor = event.ImagePublishEvent
 		lockblocking = 0
-		watcher.Watcher.__init__(self, id, nodelocations, watchfor, lockblocking)
+		watcher.Watcher.__init__(self, id, nodelocations, watchfor, lockblocking, **kwargs)
 		self.addEventOutput(event.ImageClickEvent)
 
+		self.cam = camerafuncs.CameraFuncs(self)
 		self.iv = None
 		self.numarray = None
 		self.viewer_ready = threading.Event()
 		#self.start_viewer_thread()
+		self.defineUserInterface()
+		self.start()
 
 	def die(self, killevent=None):
 		self.close_viewer()
@@ -101,9 +104,9 @@ class ImViewer(watcher.Watcher, camerafuncs.CameraFuncs):
 		return xmlbinlib.Binary(mrcstr)
 
 	def acquireArray(self, corr=0):
-		camconfig = self.cameraConfig()
+		camconfig = self.cam.config()
 		camstate = camconfig['state']
-		imarray = self.cameraAcquireArray(camstate, correction=corr)
+		imarray = self.cam.acquireArray(camstate, correction=corr)
 		return imarray
 
 	def acquireAndDisplay(self, corr=0):
@@ -170,7 +173,7 @@ class ImViewer(watcher.Watcher, camerafuncs.CameraFuncs):
 		popuptoggle = self.registerUIData('Pop-up Viewer', 'boolean', permissions='rw', default=popupdefault)
 		popuptoggle.registerCallback(self.popupCallback)
 
-		camconfig = self.cameraConfigUIData()
+		camconfig = self.cam.configUIData()
 		prefs = self.registerUIContainer('Preferences', (popuptoggle, camconfig))
 
 		self.registerUISpec(`self.id`, (acqraw, acqcor, acqev, prefs, filespec, watcherspec))

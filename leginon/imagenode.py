@@ -4,8 +4,8 @@ import xmlrpclib
 import Numeric
 
 class ImageNode(node.Node):
-	def __init__(self, id, nodelocations):
-		node.Node.__init__(self, id, nodelocations)
+	def __init__(self, id, nodelocations, **kwargs):
+		node.Node.__init__(self, id, nodelocations, **kwargs)
 		self.start()
 
 	def main(self):

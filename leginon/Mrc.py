@@ -9,12 +9,13 @@ import cStringIO
 mrcmode_typecode = {
 	0: (1, Numeric.UnsignedInt8),
 	1: (2, Numeric.Int16),
-	2: (4, Numeric.Float32)
+	2: (4, Numeric.Float32),
+	3: (2, Numeric.UInt16)
 	}
 typecode_mrcmode = {
 	Numeric.UnsignedInt8: 0,
 	Numeric.Int16: 1,
-	Numeric.UInt16: 1,
+	Numeric.UInt16: 3,
 	Numeric.Float32: 2,
 	Numeric.Float: 2,
 	Numeric.Float64: 2,

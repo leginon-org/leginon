@@ -16,10 +16,10 @@ class ShiftMeter(watcher.Watcher):
 	its buffer, which can hold two images.  The shift between the two
 	images in the buffer is measured after every insert.
 	'''
-	def __init__(self, id, nodelocations):
+	def __init__(self, id, nodelocations, **kwargs):
 		watchfor = event.ImagePublishEvent
 		lockblocking = 0
-		watcher.Watcher.__init__(self, id, nodelocations, watchfor, lockblocking)
+		watcher.Watcher.__init__(self, id, nodelocations, watchfor, lockblocking, **kwargs)
 		if 1:
 			ffteng = fftengine.fftNumeric()
 		elif sys.platform == 'win32':

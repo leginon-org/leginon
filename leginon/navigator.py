@@ -8,8 +8,8 @@ import cameraimage
 import camerafuncs
 reload(camerafuncs)
 
-class Navigator(node.Node, camerafuncs.CameraFuncs):
-	def __init__(self, id, nodelocations):
+class Navigator(node.Node):
+	def __init__(self, id, nodelocations, **kwargs):
 		self.shift_types = {
 			'image shift': event.ImageShiftPixelShiftEvent,
 			'stage': event.StagePixelShiftEvent,
@@ -19,15 +19,26 @@ class Navigator(node.Node, camerafuncs.CameraFuncs):
 		## by default, use the generic PixelShiftEvent
 		self.shiftType('stage')
 
-		node.Node.__init__(self, id, nodelocations)
+		self.cam = camerafuncs.CameraFuncs(self)
+		print 'init1 Navigator is instance of node.Node?', isinstance(self, node.Node)
+		node.Node.__init__(self, id, nodelocations, **kwargs)
+		print 'init2 Navigator is instance of node.Node?', isinstance(self, node.Node)
 
 		self.addEventInput(event.ImageClickEvent, self.handleImageClick)
 		self.addEventInput(event.ImageAcquireEvent, self.handleImageAcquire)
 		self.addEventOutput(event.ImagePublishEvent)
 		self.addEventOutput(event.PixelShiftEvent)
 
-	def die(self, killevent):
-		self.exit()
+		## default camera config
+		currentconfig = self.cam.config()
+		currentconfig['state']['dimension']['x'] = 1024
+		currentconfig['state']['binning']['x'] = 4
+		currentconfig['state']['exposure time'] = 100
+		self.cam.config(currentconfig)
+
+		self.defineUserInterface()
+
+		self.start()
 
 	def shiftType(self, shift_type=None):
 		'''
@@ -56,7 +67,7 @@ class Navigator(node.Node, camerafuncs.CameraFuncs):
 		deltacol = clickcol - clickshape[1] / 2
 
 		## binning
-		camconfig = self.cameraConfig()
+		camconfig = self.cam.config()
 		camstate = camconfig['state']
 		binx = camstate['binning']['x']
 		biny = camstate['binning']['y']
@@ -86,15 +97,15 @@ class Navigator(node.Node, camerafuncs.CameraFuncs):
 		self.acquireImage()
 
 	def acquireImage(self):
-		camconfig = self.cameraConfig()
+		camconfig = self.cam.config()
 		camstate = camconfig['state']
 
 		print 'acquiring image'
 		acqtype = self.acqtype.get()
 		if acqtype == 'raw':
-			image = self.cameraAcquireArray(camstate,0)
+			image = self.cam.acquireArray(camstate,0)
 		elif acqtype == 'corrected':
-			image = self.cameraAcquireArray(camstate,1)
+			image = self.cam.acquireArray(camstate,1)
 
 		imagedata = data.ImageData(self.ID(), image)
 		print 'publishing image'
@@ -110,12 +121,12 @@ class Navigator(node.Node, camerafuncs.CameraFuncs):
 
 		self.delaydata = self.registerUIData('Delay (sec)', 'float', default=2.5, permissions='rw')
 
-		acqtypes = self.registerUIData('acqtypes', 'array', default=('corrected', 'corrected'))
-		self.acqtype = self.registerUIData('Acquisition Type', 'string', default='raw', permissions='rw', choices=acqtypes)
+		acqtypes = self.registerUIData('acqtypes', 'array', default=('raw', 'corrected'))
+		self.acqtype = self.registerUIData('Acquisition Type', 'string', default='corrected', permissions='rw', choices=acqtypes)
 
 		prefs = self.registerUIContainer('Preferences', (movetype, self.delaydata, self.acqtype))
 
-		camspec = self.cameraConfigUIData()
+		camspec = self.cam.configUIData()
 
 		self.registerUISpec('Navigator', (prefs, camspec, nodeui))
 

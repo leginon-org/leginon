@@ -11,16 +11,17 @@ reload(correlator)
 reload(peakfinder)
 
 class ImageMosaic(watcher.Watcher):
-	def __init__(self, id, nodelocations, watchfor = event.ImageTilePublishEvent):
+	def __init__(self, id, nodelocations, watchfor = event.ImageTilePublishEvent, **kwargs):
 		# needs own event?
 		lockblocking = 1
-		watcher.Watcher.__init__(self, id, nodelocations, watchfor, lockblocking)
+		watcher.Watcher.__init__(self, id, nodelocations, watchfor, lockblocking, **kwargs)
 
 		self.imagemosaic = {}
 
 		self.correlator = correlator.Correlator(fftengine.fftNumeric())
 		self.peakfinder = peakfinder.PeakFinder()
 
+		self.defineUserInterface()
 		self.start()
 
 	def main(self):
@@ -245,14 +246,15 @@ class ImageMosaic(watcher.Watcher):
 
 class StateImageMosaic(ImageMosaic):
 	def __init__(self, id, nodelocations,
-								watchfor = event.StateImageTilePublishEvent):
+								watchfor = event.StateImageTilePublishEvent, **kwargs):
 		self.calibration = None
 		self.methods = ['calibration', 'correlation']
 		self.method = self.methods[0]
-		ImageMosaic.__init__(self, id, nodelocations, watchfor)
+		ImageMosaic.__init__(self, id, nodelocations, watchfor, **kwargs)
 		self.addEventInput(event.CalibrationPublishEvent, self.setCalibration)
 
 	def setCalibration(self, ievent):
+		print 'setting calibration'
 		idata = self.researchByDataID(ievent.content)
 		self.calibration = idata.content
 

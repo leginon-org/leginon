@@ -15,8 +15,8 @@ class Watcher(node.Node):
 		1 = blocking lock:  events wait until previous is handled
 		None = no lock:  each event handled in own thread
 	'''
-	def __init__(self, id, nodelocations, watchfor=event.PublishEvent, lockblocking=None):
-		node.Node.__init__(self, id, nodelocations)
+	def __init__(self, id, nodelocations, watchfor=event.PublishEvent, lockblocking=None, **kwargs):
+		node.Node.__init__(self, id, nodelocations, **kwargs)
 		self.watchfor = watchfor
 		self.lockblocking = lockblocking
 		self.lock = threading.RLock()

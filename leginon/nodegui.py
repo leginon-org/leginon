@@ -501,21 +501,17 @@ class Method(SpecWidget):
 			self.argwidgetsdict[id].refresh(aspec)
 
 	def butcom(self):
-		bc = Timer('butcom')
 		args = []
 		for argwidget in self.argwidgetslist:
 			newvalue = argwidget.getWidget()
 			args.append(newvalue)
 		args = tuple(args)
 		print 'executing %s' % (self.id,)
-		t = Timer('uiclient execute')
 		ret = self.uiclient.execute(self.id, args)
-		t.stop()
 		if ret is not None:
 			t = Timer('process return')
 			self.process_return(ret)
 			t.stop()
-		bc.stop()
 
 	def process_return(self, returnvalue):
 		if self.retwidget is not None:
