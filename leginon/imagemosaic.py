@@ -32,6 +32,10 @@ class ImageMosaic(watcher.Watcher):
 		self.defineUserInterface()
 		#self.start()
 
+	def die(self, ievent=None):
+		self.close_viewer()
+		watcher.Watcher.die(self)
+
 	def getPeak(self, image1, image2):
 		self.correlator.setImage(0, image1)
 		self.correlator.setImage(1, image2)
@@ -260,6 +264,13 @@ class ImageMosaic(watcher.Watcher):
 		##clean up if window destroyed
 		self.viewer_ready.clear()
 		self.iv = None
+
+	def close_viewer(self):
+		try:
+			self.root.destroy()
+		except:
+			### root may not exist or already destroyed
+			pass
 
 	def displayNumericArray(self, numarray):
 		self.start_viewer_thread()

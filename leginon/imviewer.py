@@ -40,9 +40,9 @@ class ImViewer(watcher.Watcher):
 		self.defineUserInterface()
 		self.start()
 
-	def die(self, killevent=None):
+	def die(self, ievent=None):
 		self.close_viewer()
-		self.exit()
+		watcher.Watcher.die(self)
 
 	def start_viewer_thread(self):
 		if self.iv is not None:
