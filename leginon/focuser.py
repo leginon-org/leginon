@@ -172,7 +172,7 @@ class Focuser(acquisition.Acquisition):
 		return False
 
 	def manualNow(self):
-		presetnames = self.uipresetnames.getSelectedValues()
+		presetnames = self.uipresetnames.get()
 		### Warning:  not target is being used, you are exposing
 		### whatever happens to be under the beam
 		t = threading.Thread(target=self.manualCheckLoop, args=(presetnames[0],))
