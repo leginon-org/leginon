@@ -585,7 +585,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 																			callback=self.uiSetCalibrationParameter,
 																			persist=True)
 		self.scaleimage = uidata.Boolean('Scale Image', True, 'rw', persist=True)
-		self.maxdimension = uidata.Integer('Maximum Dimension', 512, 'rw')
+		self.maxdimension = uidata.Integer('Maximum Dimension', 512, 'rw', persist=True)
 		self.autocreate = uidata.Boolean('Auto Create', True, 'rw')
 		settingscontainer = uidata.Container('Settings')
 		settingscontainer.addObjects((self.uicalibrationparameter,
