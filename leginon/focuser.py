@@ -33,8 +33,14 @@ class Focuser(acquisition.Acquisition):
 		btilt = self.btilt.get()
 		pub = self.publishimages.get()
 
+		## Need to melt only once per target, event though
+		## this method may be called multiple times on the same
+		## target.
+		## To be sure, we flag a target as having been melted.
+		## This is only safe if we can be sure that we don't
+		## use different copies of the same target each time.
 		melt_time = self.melt.get()
-		if melt_time:
+		if melt_time and not target['pre_exposure']:
 			melt_time_ms = int(round(melt_time * 1000))
 			camstate = self.cam.currentCameraEMData()
 			current_exptime = camstate['exposure time']
@@ -47,6 +53,7 @@ class Focuser(acquisition.Acquisition):
 
 			camstate['exposure time'] = current_exptime
 			camstate = self.cam.currentCameraEMData(camstate)
+			target['pre_exposure'] = True
 
 		if self.drifton.get():
 			driftthresh = self.driftthresh.get()
