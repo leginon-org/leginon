@@ -226,6 +226,8 @@ class Manager(node.Node):
 
 
 	def defineUserInterface(self):
+		node.Node.defineUserInterface(self)
+
 		self.ui_nodes = {}
 		self.ui_launchers = {}
 
@@ -233,7 +235,9 @@ class Manager(node.Node):
 		self.ui_nodeclasses = common.nodeClasses()
 
 		eventclass_list = self.ui_eventclasses.keys()
+		eventclass_list.sort()
 		nodeclass_list = self.ui_nodeclasses.keys()
+		nodeclass_list.sort()
 		self.launcherlist = []
 		self.launcherdict = {}
 
@@ -244,17 +248,21 @@ class Manager(node.Node):
 			{'name':'args', 'alias':'Args', 'type':'string', 'default':''},
 			{'name':'newproc', 'alias':'New Process', 'type':'boolean', 'default':False}
 			)
-		self.uiserver.RegisterMethod(self.uiLaunch, argspec, 'launch')
+		self.registerUIFunction(self.uiLaunch, argspec, 'Launch')
 
 		argspec = (
 			{'name':'eventclass_str', 'alias':'Event Class', 'type':eventclass_list},
 			{'name':'fromnode_str', 'alias':'From Node', 'type':self.clientlist},
 			{'name':'tonode_str', 'alias':'To Node', 'type':self.clientlist}
 			)
-		self.uiserver.RegisterMethod(self.uiAddDistmap, argspec, 'bind')
+		self.registerUIFunction(self.uiAddDistmap, argspec, 'Bind')
 
 	def uiLaunch(self, name, launcher_str, nodeclass_str, args, newproc):
-		"interface to the launchNode method"
+		"""
+		user interface to the launchNode method
+		This simplifies the call for a user by using a
+		string to represent the launcher ID, node class, and args
+		"""
 
 		launcher_id = self.launcherdict[launcher_str]
 		nodeclass = self.ui_nodeclasses[nodeclass_str]
@@ -272,6 +280,10 @@ class Manager(node.Node):
 		return ''
 
 	def uiAddDistmap(self, eventclass_str, fromnode_str, tonode_str):
+		"""
+		a user interface to addEventDistmap
+		uses strings to represent event class and node IDs
+		"""
 		eventclass = self.ui_eventclasses[eventclass_str]
 		fromnode_id = self.clientdict[fromnode_str]
 		tonode_id = self.clientdict[tonode_str]

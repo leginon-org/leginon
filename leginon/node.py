@@ -56,19 +56,15 @@ class Node(leginonobject.LeginonObject):
 
 		self.clients = {}
 
-		# this was added for interface server
-		self.clientlist = []
-		self.clientdict = {}
-
 		self.registry = {'outputs':[], 'inputs':[]}
 
 		self.server = datatransport.Server(self.ID(), dh, dhargs)
 		self.clientclass = clientclass
 
-		self.confirmwaitlist = {}
-
 		self.uiserver = interface.Server(self.id)
 		self.defineUserInterface()
+
+		self.confirmwaitlist = {}
 
 		self.addEventOutput(event.PublishEvent)
 		self.addEventOutput(event.UnpublishEvent)
@@ -92,19 +88,25 @@ class Node(leginonobject.LeginonObject):
 		This is where you register methods that can be accessed
 		by a user interface through XML-RPC
 		To register a method use:
-		   self.uiserver.RegisterMethod(self.meth, argspec [,alias])
+		   self.uiserver.registerFunction(self.meth, argspec [,alias])
 		argspec should be a sequence object like this example:
 		(
-		{'name':'mynum', 'type':'integer', 'default':1},
-		{'name':'mystr', 'type':'string', 'default':'hello'},
-		{'name':'selection', 'type':('red','green','blue')}
+		  {'name':'mynum', 'alias':MyNum','type':'integer', 'default':1},
+		  {'name':'mystr', 'alias':'MyStr', 'type':'string', 'default':'hello'},
+		  {'name':'selection', 'alias':'Selection', 'type':('red','green','blue')}
 		)
+		- name is currently ignored and therefore argspec must be
+		  properly ordered for positional arguments
 		- arg types are found in interface.xmlrpctypes and this 
-		can also be set to sequence for an enumeration type.
-		- alias is an optional alias that should be used the the UI
-		  (defaults to the method name)
+		  can also be set to sequence for an enumeration type.
+		- alias is the alias that should be used by the UI
+		  (defaults to __name__)
 		'''
-		pass
+		self.clientlist = []
+		self.clientdict = {}
+
+	def registerUIFunction(self, func, argspec, alias=None):
+		self.uiserver.registerFunction(func, argspec, alias)
 
 	def addManager(self, loc):
 		self.managerloc = loc
@@ -151,9 +153,6 @@ class Node(leginonobject.LeginonObject):
 		#del self.confirmwaitlist[ievent.content]
 
 	def publish(self, idata, eventclass=event.PublishEvent):
-		## no longer have to mark_data becuase id takes care of it
-		#self.mark_data(idata)
-
 		if not issubclass(eventclass, event.PublishEvent):
 			raise TypeError('PublishEvent subclass required')
 		self.server.datahandler._insert(idata)

@@ -17,24 +17,28 @@ class Server(xmlrpcserver.xmlrpcserver):
 		self.id = id
 		self.server.register_function(self.uiID, 'id')
 
-	def RegisterMethod(self, method, argspec, alias=None):
+	def registerFunction(self, func, argspec, alias=None):
 		if not alias:
-			alias = method.__name__
+			alias = func.__name__
 
-		argnames = inspect.getargspec(method.im_func)[0]
-
-		## validate argspec
+### I have commented some things until client makes RPC calls with kwargs dict.
+### Until then, there is no need to associate the original arg name
+### with the arg.  Instead calls will depend on positional arguments
+### Therefore, argspec must be ordered properly and argspec['name'] is ignored
+### Also must differentiate between method and function for inspect
+#		argnames = inspect.getargspec(method.im_func)[0]
 		for argdict in argspec:
-			if argdict['name'] not in argnames:
-				raise RuntimeError('bad argname in argdict')
+			## validate argspec
+			
+#			if argdict['name'] not in argnames:
+#				raise RuntimeError('bad argname in argdict')
 			xmlrpctype = argdict['type']
 			if xmlrpctype not in xmlrpctypes:
 				if type(xmlrpctype) not in (tuple,list):
 					raise RuntimeError('bad xmlrpctype')
 
-		self.funcdict[alias] = {'func': method, 'argspec':argspec}
-
-		self.server.register_function(method, alias)
+		self.funcdict[alias] = {'func': func, 'argspec':argspec}
+		self.server.register_function(func, alias)
 
 	def uiMethods(self):
 		'makes some of self.funcdict public to rpc clients'
@@ -143,7 +147,7 @@ class TestNode(object):
 			{'name':'mystr', 'type':'string', 'default':'hello'},
 			{'name':'selection', 'type':('red','green','blue'), 'default':'blue'}
 			)
-		self.uiserver.RegisterMethod(self.asdf, argspec, 'Asdf')
+		self.registerUIFunction(self.asdf, argspec, 'Asdf')
 
 	def asdf(self, mynum, mystr, selection):
 		print 'mynum', mynum
