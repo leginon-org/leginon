@@ -28,7 +28,6 @@ class DataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
 		if isinstance(idata, event.Event):
 			datahandler.DataBinder.insert(self, idata)
 		else:
-			print idata.id, self.id
 			if idata.id[:-1] == self.id[:-1]:
 				datahandler.SimpleDataKeeper.insert(self, copy.deepcopy(idata))
 			else:
