@@ -129,7 +129,11 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 	def measureDefocusStig(self, btilt):
 		self.setCamState()
-		ret = self.calclient.measureDefocusStig(btilt)
+		try:
+			ret = self.calclient.measureDefocusStig(btilt)
+		except:
+			self.printException()
+			ret = {}
 		print 'RET', ret
 		return ret
 
