@@ -118,6 +118,13 @@ class Manager(node.Node):
 		if to_node not in self.distmap[eventclass][from_node]:
 			self.distmap[eventclass][from_node].append(to_node)
 
+	def delEventDistmap(self, eventclass, fromnodeid, tonodeid=None):
+		try:
+			self.distmap[eventclass][fromnodeid].remove(tonodeid)
+		except:
+			self.printerror(str(eventclass) + ': ' + str(fromnodeid)
+											+ ' to ' + str(tonodeid) + ' no such binding')
+
 	def distributeEvents(self, ievent):
 		'''Push event to eventclients based on event class and source.'''
 		eventclass = ievent.__class__
@@ -440,6 +447,14 @@ class Manager(node.Node):
 		## just to make xmlrpc happy
 		return ''
 
+	def uiDelDistmap(self, eventclassstr, fromnodeidstr, tonodeidstr):
+		'''a UI helper for delEventDistmap Uses strings to represent event class and node IDs.'''
+		self.printerror('unbinding event %s from %s to %s'
+										% (eventclassstr, fromnodeidstr, tonodeidstr))
+		eventclass = self.uieventclasses[eventclassstr]
+		self.delEventDistmap(eventclass, eval(fromnodeidstr), eval(tonodeidstr))
+		return ''
+
 	def	uiGetNodeLocations(self):
 		'''UI helper for mapping a node alias to the node's location.'''
 		nodelocations = self.uiNodeDict()
@@ -519,6 +534,7 @@ class Manager(node.Node):
 								self.registerUIData('To Node', 'string',
 											choices=nodelistdata))
 		bindspec = self.registerUIMethod(self.uiAddDistmap, 'Bind', argspec)
+		unbindspec = self.registerUIMethod(self.uiDelDistmap, 'Unbind', argspec)
 
 		# save/load/killing applications
 		argspec = (self.registerUIData('Filename', 'string'),)
@@ -526,6 +542,7 @@ class Manager(node.Node):
 		loadapp = self.registerUIMethod(self.uiLoadApp, 'Load', argspec)
 		launchapp = self.registerUIMethod(self.uiLaunchApp, 'Launch', ())
 		killapp = self.registerUIMethod(self.uiKillApp, 'Kill', ())
+		bindingspec = self.registerUIContainer('Bindings', (bindspec, unbindspec))
 		appspec = self.registerUIContainer('Application',
 									(saveapp, loadapp, launchapp, killapp))
 
@@ -546,7 +563,7 @@ class Manager(node.Node):
 
 		self.registerUISpec('Manager', (nodespec, launchspec,
 #								killspec, bindspec, appspec, launcherspec, nodesspec))
-								killspec, bindspec, appspec, nodesspec))
+								killspec, bindingspec, appspec, nodesspec))
 
 if __name__ == '__main__':
 	import sys
