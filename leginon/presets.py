@@ -409,6 +409,9 @@ class PresetsManager(node.Node):
 	def presetNames(self):
 		return self.presets.keys()
 
+	def getSessions(self):
+		return self.sessiondict.keys()
+
 	def getSessionPresets(self, name):
 		sessiondata = self.sessiondict[name]
 		return self.presetsclient.getPresetsFromDB(sessiondata)

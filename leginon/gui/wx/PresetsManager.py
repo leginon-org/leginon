@@ -201,13 +201,14 @@ class EditPresets(gui.wx.Presets.PresetOrder):
 																	'Acquire dose image for the selected preset')
 		self.bfromscope = self._bitmapButton('instrumentget',
 							'Overwrite the selected preset with the current instrument state')
+		self.bremove = self._bitmapButton('minus', 'Remove the selected preset')
+
 		self.bnewfromscope = self._bitmapButton('instrumentgetnew',
 												'Create a new preset from the current instrument state')
 		self.bnewfromscope.Enable(True)
 		self.bimport = self._bitmapButton('import',
 																			'Import presets from another session')
 		self.bimport.Enable(True)
-		self.bremove = self._bitmapButton('minus', 'Remove preset')
 
 	def _sizer(self):
 		sizer = wx.GridBagSizer(3, 3)
@@ -219,9 +220,9 @@ class EditPresets(gui.wx.Presets.PresetOrder):
 		sizer.Add(self.btoscope, (4, 1), (1, 1), wx.ALIGN_CENTER)
 		sizer.Add(self.bacquire, (6, 1), (1, 1), wx.ALIGN_CENTER)
 		sizer.Add(self.bfromscope, (7, 1), (1, 1), wx.ALIGN_CENTER)
-		sizer.Add(self.bnewfromscope, (9, 1), (1, 1), wx.ALIGN_CENTER)
-		sizer.Add(self.bimport, (10, 1), (1, 1), wx.ALIGN_CENTER)
-		sizer.Add(self.bremove, (11, 1), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.bremove, (8, 1), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.bnewfromscope, (10, 1), (1, 1), wx.ALIGN_CENTER)
+		sizer.Add(self.bimport, (11, 1), (1, 1), wx.ALIGN_CENTER)
 		self.SetSizerAndFit(sizer)
 
 	def _bind(self):
@@ -337,6 +338,8 @@ class Panel(gui.wx.Node.Panel):
 		self.Bind(wx.EVT_BUTTON, self.onAcquireDoseImage, self.presets.bacquire)
 		self.Bind(wx.EVT_BUTTON, self.onFromScope, self.presets.bfromscope)
 		self.Bind(wx.EVT_BUTTON, self.onNewFromScope, self.presets.bnewfromscope)
+
+		self.importdialog = ImportDialog(self.GetParent(), self.node)
 		self.Bind(wx.EVT_BUTTON, self.onImport, self.presets.bimport)
 
 		self.Bind(wx.EVT_BUTTON, self.onAcquireDoseImage, self.bacquire)
@@ -374,16 +377,14 @@ class Panel(gui.wx.Node.Panel):
 		self.node.acquireDoseImage()
 
 	def onImport(self, evt):
-		dialog = ImportDialog(self)
-		dialog.ShowModal()
-		dialog.Destroy()
+		self.importdialog.ShowModal()
 
 	def onFromScope(self, evt):
 		name = self.presets.getSelectedPreset()
 		self.node.fromScope(name)
 
 	def onNewFromScope(self, evt):
-		dialog = NewDialog(self)
+		dialog = NewDialog(self.GetParent(), self.node)
 		if dialog.ShowModal() == wx.ID_OK:
 			self.node.fromScope(dialog.name)
 		dialog.Destroy()
@@ -459,18 +460,16 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		return [sbsz]
 
 class NewDialog(wx.Dialog):
-	def __init__(self, parent):
+	def __init__(self, parent, node):
 		wx.Dialog.__init__(self, parent, -1, 'Create New Preset')
+		self.node = node
 
-		stdesc = wx.StaticText(self, -1,
-														'Create a new preset from the current scope state')
 		stname = wx.StaticText(self, -1, 'Preset name:')
 		self.tcname = wx.TextCtrl(self, -1, '')
 
 		sz = wx.GridBagSizer(5, 5)
-		sz.Add(stdesc, (0, 0), (1, 2), wx.ALIGN_CENTER)
-		sz.Add(stname, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.tcname, (1, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(stname, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		sz.Add(self.tcname, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		bcreate = wx.Button(self, wx.ID_OK, 'Create')
 		bcancel = wx.Button(self, wx.ID_CANCEL, 'Cancel')
@@ -489,7 +488,7 @@ class NewDialog(wx.Dialog):
 
 	def onCreate(self, evt):
 		name = self.tcname.GetValue()
-		if not name or name in self.GetParent().node.presets:
+		if not name or name in self.node.presets:
 			dialog = wx.MessageDialog(self, 'Invalid preset name', 'Error',
 																wx.OK|wx.ICON_ERROR)
 			dialog.ShowModal()
@@ -499,63 +498,72 @@ class NewDialog(wx.Dialog):
 			evt.Skip()
 
 class ImportDialog(wx.Dialog):
-	def __init__(self, parent):
+	def __init__(self, parent, node):
 		wx.Dialog.__init__(self, parent, -1, 'Import Presets')
+		self.node = node
 		self.presets = None
 
-		stdesc = wx.StaticText(self, -1,
-														'Select a session to import presets from.')
-		self.stpresets = wx.StaticText(self, -1, '(No session selected.)')
-		stsession = wx.StaticText(self, -1, 'Session:')
-		self.csession = wx.Choice(self, -1, choices=self._getSessionNames())
+		sessionnames = self.node.getSessions()
+		self.csession = wx.Choice(self, -1, choices=sessionnames)
+		self.lbpresets = wx.ListBox(self, -1, style=wx.LB_EXTENDED)
 
 		sz = wx.GridBagSizer(5, 5)
-		sz.Add(stdesc, (0, 0), (1, 2), wx.ALIGN_CENTER)
-		sz.Add(self.stpresets, (1, 0), (1, 2), wx.ALIGN_CENTER)
-		sz.Add(stsession, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		sz.Add(self.csession, (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		label = wx.StaticText(self, -1, 'Session:')
+		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.csession, (0, 1), (1, 1), wx.ALIGN_CENTER)
+		label = wx.StaticText(self, -1, 'Presets:')
+		sz.Add(label, (1, 0), (1, 1))
+		sz.Add(self.lbpresets, (1, 1), (1, 1), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 
-		bimport = wx.Button(self, wx.ID_OK, 'Import')
-		bdone = wx.Button(self, wx.ID_CANCEL, 'Done')
+		self.bimport = wx.Button(self, -1, 'Import')
+		self.bimport.Enable(False)
+		bdone = wx.Button(self, wx.ID_OK, 'Done')
+		bdone.SetDefault()
 
 		szbutton = wx.GridBagSizer(5, 5)
-		szbutton.Add(bimport, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		szbutton.Add(self.bimport, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		szbutton.Add(bdone, (0, 1), (1, 1), wx.ALIGN_CENTER)
 
 		self.szmain = wx.GridBagSizer(5, 5)
-		self.szmain.Add(sz, (0, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, border=5)
-		self.szmain.Add(szbutton, (1, 0), (1, 1), wx.ALIGN_RIGHT|wx.ALL, border=5)
+		self.szmain.Add(sz, (0, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 10)
+		self.szmain.Add(szbutton, (1, 0), (1, 1), wx.ALIGN_RIGHT|wx.ALL, 5)
 
 		self.SetSizerAndFit(self.szmain)
 
-		self.Bind(wx.EVT_BUTTON, self.onImport, bimport)
 		self.Bind(wx.EVT_CHOICE, self.onSessionChoice, self.csession)
-
-	def _getSessionNames(self):
-		return self.GetParent().node.sessiondict.keys()
+		self.Bind(wx.EVT_LISTBOX, self.onPresetsListBox, self.lbpresets)
+		self.Bind(wx.EVT_BUTTON, self.onImport, self.bimport)
 
 	def onSessionChoice(self, evt=None):
 		if evt is None:
 			name = self.csession.GetStringSelection()
 		else:
 			name = evt.GetString()
-		self.presets = self.GetParent().node.getSessionPresets(name)
+		self.presets = self.node.getSessionPresets(name)
 		presetnames = self.presets.keys()
+		self.lbpresets.Clear()
 		if presetnames:
-			label = ', '.join(presetnames)
+			self.lbpresets.AppendItems(presetnames)
+			self.lbpresets.Enable(True)
 		else:
-			label = 'No presets in selected session.'
-		self.stpresets.SetLabel(label)
-		self.szmain.Layout()
+			self.lbpresets.Enable(False)
+
+	def onPresetsListBox(self, evt):
+		if self.lbpresets.GetSelections():
+			self.bimport.Enable(True)
+		else:
+			self.bimport.Enable(False)
 
 	def onImport(self, evt):
-		if self.presets:
-			self.GetParent().node.importPresets(self.presets)
-		else:
-			dialog = wx.MessageDialog(self, 'No presets to import', 'Error',
-																wx.OK|wx.ICON_ERROR)
-			dialog.ShowModal()
-			dialog.Destroy()
+		self.Enable(False)
+		presets = {}
+		selections = self.lbpresets.GetSelections()
+		for i in selections:
+			name = self.lbpresets.GetString(i)
+			presets[name] = self.presets[name]
+			self.lbpresets.Deselect(i)
+		self.node.importPresets(presets)
+		self.Enable(True)
 
 if __name__ == '__main__':
 	class App(wx.App):
