@@ -100,7 +100,8 @@ class MosaicTargetMaker(TargetMaker):
 
 	def validateSettings(self):
 		label = self.settings['label']
-		self.checkLabel(label)
+		if label:
+			self.checkLabel(label)
 		radius = self.settings['radius']
 		if radius <= 0.0:
 			raise AtlasError('invalid radius specified')
@@ -187,8 +188,9 @@ class MosaicTargetMaker(TargetMaker):
 		return targetlist, grid
 
 	def _makeAtlas(self, evt):
-		publishargs = self._calculateAtlas()
-		self._publishAtlas(publishargs, evt=evt)
+		args = self._calculateAtlas()
+		kwargs = {'evt': evt}
+		self._publishAtlas(*args, **kwargs)
 
 	def _calculateAtlas(self):
 		self.logger.info('Creating atlas targets...')
