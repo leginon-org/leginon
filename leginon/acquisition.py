@@ -179,7 +179,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		# seems to have trouple with using original targetdata as
 		# a query, so use a copy with only some of the fields
 		targetquery = data.AcquisitionImageTargetData()
-		for key in ('session'):
+		for key in ('session',):
 			targetquery[key] = targetdata[key]
 		presetquery = data.PresetData(name=presetname)
 		imagequery = data.AcquisitionImageData(target=targetquery, preset=presetquery)
@@ -374,7 +374,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if parent_target is None:
 			## maybe parent target is in DB
 			imagequery = data.AcquisitionImageData()
-			for key in ('session'):
+			for key in ('session',):
 				imagequery[key] = imagedata[key]
 			## this is what we really want
 			imagequery['target'] = data.AcquisitionImageTargetData()
@@ -396,7 +396,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if parent_image is None:
 			## maybe parent image is in DB
 			targetquery = data.AcquisitionImageTargetData()
-			for key in ('session'):
+			for key in ('session',):
 				targetquery[key] = parent_target[key]
 			## this is what we really want
 			targetquery['image'] = data.AcquisitionImageData()
