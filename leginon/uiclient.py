@@ -1655,6 +1655,7 @@ class wxTreePanel(wxPanel):
 		evt.Skip()
 
 	def updateMessage(self, dc):
+		# a bit slow
 		dc.BeginDrawing()
 		dc.SetPen(wxPen(self.tree.GetBackgroundColour()))
 		dc.SetBrush(wxBrush(self.tree.GetBackgroundColour()))
