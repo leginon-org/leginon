@@ -213,12 +213,11 @@ class Manager(node.Node):
 		nodeid = readyevent.id[:-1]
 		self.printerror('registering node ' + str(nodeid))
 
-		print readyevent.content
+		#print readyevent.content
 		nodelocation = readyevent.content['location']
 
 		# check if new node is launcher
 #		if isinstance(readyevent, event.LauncherAvailableEvent):
-		print readyevent.content
 		if readyevent.content['class'] == 'Launcher':
 			self.addLauncher(nodeid, nodelocation)
 
