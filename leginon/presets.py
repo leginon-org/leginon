@@ -560,7 +560,7 @@ class PresetsManager(node.Node):
 			newpreset = self.fromScope(newname)
 			d = newpreset.toDict(noNone=True)
 			del d['session']
-			self.presetparams.set(d, callback=False)
+			self.presetparams.set(newpreset)
 			self.messagelog.info('created new preset: %s' % (newname,))
 			self.validateCycleOrder()
 		else:
@@ -577,7 +577,7 @@ class PresetsManager(node.Node):
 				del d['session']
 			except KeyError:
 				pass
-			self.presetparams.set(d, callback=False)
+			self.presetparams.set(self.currentselection)
 			self.displayCalibrations(self.currentselection)
 			self.setStatus(self.currentselection)
 		return index
@@ -591,7 +591,7 @@ class PresetsManager(node.Node):
 		try:
 			ht = self.getHighTension()
 		except:
-			self.messagelog.error('Cannot get high tension value, calibration display failed')
+			print 'Cannot get high tension value, calibration display failed'
 			return
 		pcaltime = self.calclients['pixel size'].time(mag)
 		self.cal_pixelsize.set(str(pcaltime))
@@ -611,19 +611,10 @@ class PresetsManager(node.Node):
 		tmpstr = 'x: %s, y: %s' % (modstagemagtimex,modstagemagtimey)
 		self.cal_modeledstagemag.set(tmpstr)
 
-	def uiParamsCallback(self, value):
-		if (self.currentselection is None) or (not value):
-			d = {}
-		else:
-			if self.autosquare.get():
-				for autokey in ('dimension','binning','offset'):
-					self.square(value[autokey])
-			for key in value:
-				self.currentselection[key] = value[key]
-			self.presetToDB(self.currentselection)
-			d = self.currentselection.toDict(noNone=True)
-			del d['session']
-		return d
+	def uiCommitParams(self):
+		presetdict = self.presetparams.get()
+		self.currentselection.update(presetdict)
+		self.presetToDB(self.currentselection)
 
 	def square(self, xydict):
 		xydict['y'] = xydict['x']
@@ -689,9 +680,9 @@ class PresetsManager(node.Node):
 												self.cal_modeledstagemod, self.cal_modeledstagemag))
 
 		# selection
+		self.presetparams = PresetParameters(self)
+		commitmethod = uidata.Method('Commit Parameters', self.uiCommitParams)
 		self.autosquare = uidata.Boolean('Auto Square', True, 'rw')
-		self.presetparams = uidata.Struct('Parameters', {}, 'rw',
-																			self.uiParamsCallback)
 		self.uiselectpreset = uidata.SingleSelectFromList('Preset', [], 0,
 																								callback=self.uiSelectCallback)
 		toscopemethod = uidata.Method('To Scope', self.uiToScope)
@@ -717,8 +708,8 @@ class PresetsManager(node.Node):
 		selectcont = uidata.Container('Selection')
 		selectcont.addObjects((self.uiselectpreset, toscopemethod, fromscopemethod,
 														eucfromscopemethod, euctoscopemethod, removemethod,
-														self.changepause, cyclecont, self.autosquare,
-														self.presetparams, statuscont, calcont))
+														self.changepause, self.presetparams, commitmethod, self.autosquare,
+														statuscont, calcont, cyclecont))
 
 		pnames = self.presetNames()
 		self.uiselectpreset.set(pnames, 0)
@@ -908,3 +899,59 @@ class PresetsManager(node.Node):
 			self.currentpreset = newpreset
 			self.uistatus.set('Preset changed to %s' % (name,))
 			self.outputEvent(event.PresetChangedEvent(name=name))
+
+class PresetParameters(uidata.Container):
+	def __init__(self, node):
+		uidata.Container.__init__(self, 'Preset Parameters')
+		self.node = node
+		self.singles = ('magnification', 'spot size', 'defocus', 'intensity')
+		self.doubles = ('image shift', 'beam shift')
+
+		self.build()
+
+	def build(self):
+		self.singlesdict = {}
+		for single in self.singles:
+			self.singlesdict[single] = uidata.Number(single, 0, 'rw')
+		self.doublesdict = {}
+		for double in self.doubles:
+			self.doublesdict[double] = {}
+			for axis in ('x', 'y'):
+				label = double + ' ' + axis
+				self.doublesdict[double][axis] = uidata.Number(label, 0, 'rw')
+
+		self.camera = camerafuncs.SmartCameraParameters(self.node)
+
+		components = []
+		for single in self.singles:
+			components.append(self.singlesdict[single])
+		for double in self.doubles:
+			for axis in ('x', 'y'):
+				components.append(self.doublesdict[double][axis])
+		components.append(self.camera)
+		self.addObjects(components)
+
+	def set(self, presetdata):
+		self.camera.set(presetdata)
+		for single in self.singles:
+			self.singlesdict[single].set(presetdata[single])
+		for double in self.doubles:
+			for axis in ('x','y'):
+				self.doublesdict[double][axis].set(presetdata[double][axis])
+
+	def get(self):
+		presetdict = {}
+
+		camdict = self.camera.get()
+		presetdict.update(camdict)
+
+		for single in self.singles:
+			presetdict[single] = self.singlesdict[single].get()
+		for double in self.doubles:
+			presetdict[double] = {}
+			for axis in ('x','y'):
+				presetdict[double][axis] = self.doublesdict[double][axis].get()
+
+		return presetdict
+
+
