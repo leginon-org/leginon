@@ -11,7 +11,7 @@ import sys
 import threading
 import gonmodel
 
-class DriftingTimeout(Exception):
+class Drifting(Exception):
 	pass
 
 class Abort(Exception):
@@ -42,7 +42,6 @@ class CalibrationClient(object):
 	def acquireStateImage(self, state, publish_image=0, settle=0.0):
 		## acquire image at this state
 		print 'creating EM data'
-		print 'state =', state
 		newemdata = data.ScopeEMData(id=('scope',), initializer=state)
 #		needs unlock too
 #		print 'publishing lock'
@@ -69,7 +68,7 @@ class CalibrationClient(object):
 		info = {'requested state': state, 'imagedata': imagedata, 'image stats': image_stats}
 		return info
 
-	def measureStateShift(self, state1, state2, publish_images=0, settle=0.0, checkdrift=False, timeout=None):
+	def measureStateShift(self, state1, state2, publish_images=0, settle=0.0, drift_threshold=None, image_callback=None):
 		'''
 		Measures the pixel shift between two states
 		 Returned dict has these keys:
@@ -88,52 +87,44 @@ class CalibrationClient(object):
 		stats1 = info1['image stats']
 		actual1 = imagecontent1['scope']
 		self.numimage1 = imagecontent1['image']
+		if image_callback is not None:
+			apply(image_callback, (self.numimage1,))
 		self.correlator.insertImage(self.numimage1)
 
+		self.checkAbort()
+
 		## for drift check, continue to acquire at state1
-		if checkdrift:
+		if drift_threshold is not None:
 			print 'checking for drift'
-			if timeout is None:
-				timelimit = None
-			else:
-				timelimit = time.time() + timeout
-			while 1:
-				info1 = self.acquireStateImage(state1, publish_images, settle)
-				imagedata1 = info1['imagedata']
-				imagecontent1 = imagedata1
-				stats1 = info1['image stats']
-				actual1 = imagecontent1['scope']
-				self.numimage1 = imagecontent1['image']
-				self.correlator.insertImage(self.numimage1)
 
-				print 'correlation'
-				pcimage = self.correlator.phaseCorrelate()
+			info1 = self.acquireStateImage(state1, publish_images, settle)
+			imagedata1 = info1['imagedata']
+			imagecontent1 = imagedata1
+			stats1 = info1['image stats']
+			actual1 = imagecontent1['scope']
+			self.numimage1 = imagecontent1['image']
+			if image_callback is not None:
+				apply(image_callback, (self.numimage1,))
+			self.correlator.insertImage(self.numimage1)
 
-				print 'peak finding'
-				self.peakfinder.setImage(pcimage)
-				self.peakfinder.subpixelPeak()
-				peak = self.peakfinder.getResults()
-				print 'PEAK MINSUM', peak['minsum']
-				peakvalue = peak['subpixel peak value']
-				shift = correlator.wrap_coord(peak['subpixel peak'], pcimage.shape)
-				shiftrows = shift[0]
-				shiftcols = shift[1]
-				d = data.DriftData(id=self.node.ID(), rows=shiftrows, cols=shiftcols)
-				self.node.publish(d, database=True)
+			print 'correlation'
+			pcimage = self.correlator.phaseCorrelate()
 
-				drift = abs(shift[0] + 1j * shift[1])
-				print 'DRIFT: ', drift
-				if drift < 2.0:
-					print 'no drift'
-					break
-				else:
-					print 'drift', drift
+			print 'peak finding'
+			self.peakfinder.setImage(pcimage)
+			self.peakfinder.subpixelPeak()
+			peak = self.peakfinder.getResults()
+			peakvalue = peak['subpixel peak value']
+			shift = correlator.wrap_coord(peak['subpixel peak'], pcimage.shape)
+			shiftrows = shift[0]
+			shiftcols = shift[1]
+			d = data.DriftData(id=self.node.ID(), rows=shiftrows, cols=shiftcols)
+			self.node.publish(d, database=True)
 
-				self.checkAbort()
-				
-				if timelimit and time.time() > timelimit:
-					raise DriftingTimeout()
-
+			drift = abs(shift[0] + 1j * shift[1])
+			print 'DRIFT: ', drift
+			if drift > drift_threshold:
+				raise Drifting()
 
 #		mrcstr = Mrc.numeric_to_mrcstr(numimage1)
 #		self.ui_image1.set(xmlbinlib.Binary(mrcstr))
@@ -146,6 +137,8 @@ class CalibrationClient(object):
 		stats2 = info2['image stats']
 		actual2 = imagecontent2['scope']
 		self.numimage2 = imagecontent2['image']
+		if image_callback is not None:
+			apply(image_callback, (self.numimage2,))
 		self.correlator.insertImage(self.numimage2)
 #		mrcstr = Mrc.numeric_to_mrcstr(numimage2)
 #		self.ui_image2.set(xmlbinlib.Binary(mrcstr))
@@ -276,7 +269,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		emdata = self.node.researchByDataID(('beam tilt',))
 		return emdata
 
-	def measureDefocusStig(self, tilt_value, publish_images=0, checkdrift=False, drift_timeout=300):
+	def measureDefocusStig(self, tilt_value, publish_images=0, drift_threshold=None, image_callback=None):
 		self.abortevent.clear()
 		emdata = self.node.researchByDataID(('magnification',))
 		#mag = emdata.content['magnification']
@@ -293,21 +286,29 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			raise RuntimeError('missing calibration matrix')
 
 		tiltcenter = self.getBeamTilt()
+		print 'TILTCENTER', tiltcenter
 
 		### need two tilt displacement measurements
 		### easiest is one on each tilt axis
 		shifts = {}
 		tilts = {}
 		self.checkAbort()
+		print 'TILTING'
 		for tiltaxis in ('x','y'):
 			state1 = copy.deepcopy(tiltcenter)
 			state1['beam tilt'][tiltaxis] -= (tilt_value/2.0)
 			state2 = copy.deepcopy(tiltcenter)
 			state2['beam tilt'][tiltaxis] += (tilt_value/2.0)
 			try:
-				shiftinfo = self.measureStateShift(state1, state2, publish_images, settle=0.25, checkdrift=checkdrift, timeout=drift_timeout)
+				shiftinfo = self.measureStateShift(state1, state2, publish_images, settle=0.5, drift_threshold=drift_threshold, image_callback=image_callback)
 			except Abort:
 				break
+			except Drifting:
+				## return to original beam tilt
+				emdata = data.ScopeEMData(id=('scope',), initializer=tiltcenter)
+				self.node.publishRemote(emdata)
+				print 'RETURNED TO TILT CENTER', tiltcenter
+				raise
 
 			pixshift = shiftinfo['pixel shift']
 
@@ -324,6 +325,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		## return to original beam tilt
 		emdata = data.ScopeEMData(id=('scope',), initializer=tiltcenter)
 		self.node.publishRemote(emdata)
+		print 'RETURNED TO TILT CENTER', tiltcenter
 
 		self.checkAbort()
 
