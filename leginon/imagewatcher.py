@@ -36,6 +36,7 @@ class ImageWatcher(watcher.Watcher):
 
 	def processData(self, idata):
 		if isinstance(idata, data.ImageData):
+			self.logger.debug('** imagewathcer processData')
 			imageid = idata.dbid
 			self.currentimagedata = idata
 			self.numarray = idata['image']
