@@ -78,27 +78,51 @@ class wxMessageLog(wxScrolledWindow):
 		self.SetBackgroundColour(wxWHITE)
 		self.SetScrollRate(10, 10)
 		self.sizer = wxBoxSizer(wxVERTICAL)
-		self.SetSizer(self.sizer)
+		self.emptylabel = wxStaticText(self, -1, 'Message log empty')
+		self.sizer.Add(self.emptylabel, 0, wxALL, 3)
+		self.messages = []
+		self.updateEmptyLabel()
+		self.SetSizerAndFit(self.sizer)
+		EVT_SIZE(self, self.updateSize)
+
+	def updateEmptyLabel(self):
+		if len(self.messages) == 0:
+			self.sizer.Show(self.emptylabel, True)
+		else:
+			self.sizer.Show(self.emptylabel, False)
+
+	def updateSize(self, evt=None):
+		if len(self.messages) == 0:
+			height = self.sizer.GetMinSize()[1]
+		else:
+			height = 0
+			for i, message in enumerate(self.messages):
+				if i >= 3:
+					break
+				height += message.GetSize()[1]
+		self.SetSize((-1, height))
 
 	def addMessage(self, type, message, clearcallback=None):
 		messagewidget = wxMessage(self, type, message, clearcallback)
 		self.sizer.Add(messagewidget, 0, wxEXPAND|wxBOTTOM)
-		#EVT_BUTTON(messagewidget.button, messagewidget.button.GetId(),
-		#						self.OnButton)
+		self.messages.append(messagewidget)
+		self.updateEmptyLabel()
+		self.updateSize()
+		self.Layout()
 		return messagewidget
 
 	def removeMessage(self, messagewidget):
+		self.messages.remove(messagewidget)
 		self.sizer.Remove(messagewidget)
 		messagewidget.Destroy()
+		self.updateEmptyLabel()
+		self.updateSize()
 		self.Layout()
 
 	def Layout(self):
 		wxScrolledWindow.Layout(self)
 		self.sizer.Layout()
 		self.sizer.FitInside(self)
-
-	def OnButton(self, evt):
-		self.removeMessage(evt.GetEventObject().GetParent())
 
 if __name__ == '__main__':
 	class MyApp(wxApp):
