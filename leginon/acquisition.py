@@ -161,18 +161,18 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		imarray = imagedata['image']
 
-		nodename = self.id[-1]
+		labelstring = self.labelstring.get()
 
 		## attach preset to imagedata and create PresetImageData
 		## use same id as original imagedata
 		dataid = self.ID()
 
 		if trial:
-			trialimage = data.TrialImageData(id=dataid, initializer=imagedata, preset=presetdata, label=nodename)
+			trialimage = data.TrialImageData(id=dataid, initializer=imagedata, preset=presetdata, label=labelstring)
 			print 'publishing trial image'
 			self.publish(trialimage, pubevent=True, database=False)
 		else:
-			pimagedata = data.AcquisitionImageData(id=dataid, initializer=imagedata, preset=presetdata, label=nodename)
+			pimagedata = data.AcquisitionImageData(id=dataid, initializer=imagedata, preset=presetdata, label=labelstring)
 			self.publish(pimagedata, pubevent=True, database=self.databaseflag.get())
 			print 'PIMAGEDATA'
 			print '   scope image shift', pimagedata['scope']['image shift']
@@ -261,9 +261,10 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.uiacquiretype = uidata.SingleSelectFromList('Acquisition Type',
 																							['raw', 'corrected'], 0)
 		self.databaseflag = uidata.Boolean('Publish to Database', True, 'rw')
+		self.labelstring = uidata.String('Label', self.id[-1], 'rw', persist=True)
 		settingscontainer = uidata.Container('Settings')
 		settingscontainer.addObjects((self.uimovetype, self.uidelay,
-																		self.uiacquiretype, self.databaseflag))
+																		self.uiacquiretype, self.databaseflag, self.labelstring))
 
 		presets = self.getPresetNames()
 		self.uipresetnames = uidata.SelectFromList('Sequence', presets, [], 'r')
