@@ -857,7 +857,7 @@ class PresetsManager(node.Node):
 		message = 'Preset (with target) changed to %s' % (name,)
 		self.uistatus.set(message)
 		self.logger.info(message)
-		self.outputEvent(event.PresetChangedEvent(name=name))
+		self.outputEvent(event.PresetChangedEvent(name=name, preset=newpreset))
 
 class PresetParameters(uidata.Container):
 	def __init__(self, node, usercallback=None):
