@@ -2,6 +2,7 @@
 
 from wxPython.wx import *
 wxInitAllImageHandlers()
+from wxPython.lib.buttons import wxGenBitmapToggleButton
 #from wxPython.wxc import wxPyAssertionError
 import cStringIO
 import Numeric
@@ -31,8 +32,6 @@ class ImagePanel(wxPanel):
 		self.initPanel()
 		self.initValue()
 		self.initZoom()
-#		self.initScaleEntry()
-#		self.initValueLabels()
 
 		self.Fit()
 
@@ -48,23 +47,6 @@ class ImagePanel(wxPanel):
 		width, height = self.panel.GetSizeTuple()
 		self.sizer.SetItemMinSize(self.panel, width, height)
 
-	def initValueLabels(self):
-		self.xlabel = wxStaticText(self, -1, '0000',
-																style=wxALIGN_CENTRE | wxST_NO_AUTORESIZE)
-		self.xlabel.SetLabel('')
-		self.ylabel = wxStaticText(self, -1, '0000',
-																style=wxALIGN_CENTRE | wxST_NO_AUTORESIZE)
-		self.ylabel.SetLabel('')
-		self.valuelabel = wxStaticText(self, -1, '',
-																		style=wxALIGN_CENTRE)
-		self.valuelabel.SetLabel('')
-		self.toolsizer.Add(wxStaticText(self, -1, 'x: '))
-		self.toolsizer.Add(self.xlabel)
-		self.toolsizer.Add(wxStaticText(self, -1, 'y: '))
-		self.toolsizer.Add(self.ylabel)
-		self.toolsizer.Add(wxStaticText(self, -1, 'Value: '))
-		self.toolsizer.Add(self.valuelabel)
-
 	def bitmapTool(self, filename):
 		wximage = wxImage(filename)
 		bitmap = wxBitmapFromImage(wximage)
@@ -73,15 +55,16 @@ class ImagePanel(wxPanel):
 
 	def OnValueButton(self, evt):
 		self.UpdateDrawing()
-		self.valueflag = not self.valueflag
 
 	def initValue(self):
-		self.valueflag = True
 		bitmap = self.bitmapTool('valuetool.bmp')
-		valuebutton = wxBitmapButton(self, -1, bitmap)
-		valuebutton.SetToolTip(wxToolTip('Toggle Show Value'))
-		EVT_BUTTON(self, valuebutton.GetId(), self.OnValueButton)
-		self.toolsizer.Add(valuebutton, 0, wxALL, 3)
+		#valuebutton = wxBitmapButton(self, -1, bitmap)
+		self.valuebutton = wxGenBitmapToggleButton(self, -1, bitmap, size=(24, 24))
+		self.valuebutton.SetBezelWidth(1)
+		self.valuebutton.SetToggle(True)
+		self.valuebutton.SetToolTip(wxToolTip('Toggle Show Value'))
+		EVT_BUTTON(self, self.valuebutton.GetId(), self.OnValueButton)
+		self.toolsizer.Add(self.valuebutton, 0, wxALL, 3)
 
 	def updateZoomLabel(self):
 		xscale, yscale = self.getScale()
@@ -98,7 +81,7 @@ class ImagePanel(wxPanel):
 		self.updateZoomLabel()
 
 	def OnZoomButton(self, evt):
-		if self.zoomflag:
+		if self.zoombutton.GetToggle():
 			self.panel.SetCursor(wxStockCursor(wxCURSOR_MAGNIFIER))
 			EVT_LEFT_UP(self.panel, self.OnZoomIn)
 			EVT_RIGHT_UP(self.panel, self.OnZoomOut)
@@ -106,27 +89,18 @@ class ImagePanel(wxPanel):
 			self.panel.SetCursor(wxCROSS_CURSOR)
 			EVT_LEFT_UP(self.panel, None)
 			EVT_RIGHT_UP(self.panel, None)
-		self.zoomflag = not self.zoomflag
 
 	def initZoom(self):
-		self.zoomflag = True
 		bitmap = self.bitmapTool('zoomtool.bmp')
-		zoombutton = wxBitmapButton(self, -1, bitmap)
-		zoombutton.SetToolTip(wxToolTip('Toggle Zoom Tool'))
-		EVT_BUTTON(self, zoombutton.GetId(), self.OnZoomButton)
-		self.toolsizer.Add(zoombutton, 0, wxALL, 3)
+		#zoombutton = wxBitmapButton(self, -1, bitmap)
+		self.zoombutton = wxGenBitmapToggleButton(self, -1, bitmap, size=(24, 24))
+		self.zoombutton.SetBezelWidth(1)
+		self.zoombutton.SetToolTip(wxToolTip('Toggle Zoom Tool'))
+		EVT_BUTTON(self, self.zoombutton.GetId(), self.OnZoomButton)
+		self.toolsizer.Add(self.zoombutton, 0, wxALL, 3)
 		self.zoomlabel = wxStaticText(self, -1, '')
 		self.updateZoomLabel()
 		self.toolsizer.Add(self.zoomlabel, 0, wxALL, 3)
-
-	def getEntryScale(self):
-		scale = list(self.getScale())
-		for i in range(len(scale)):
-			try:
-				scale[i] = float(self.scale_entry[i].GetValue())
-			except:
-				self.scale_entry[i].SetValue(str(scale[i]))
-		return scale
 
 	def setVirtualSize(self):
 		xscale, yscale = self.getScale()
@@ -157,25 +131,6 @@ class ImagePanel(wxPanel):
 		else:
 			self.panel.Scroll(0, 0)
 		#self.panel.Refresh(0)
-
-	def OnScaleEntry(self, evt):
-		self.setScale(self.getEntryScale(), self.view2image(self.getClientCenter()))
-
-	def initScaleEntry(self):
-		self.scale_entry = {}
-		scale = self.getScale()
-		for axis, i in [('x', 0), ('y', 1)]:
-			self.toolsizer.Add(wxStaticText(self, -1, axis + ':'),
-													0, wxCENTER | wxALL, 5)
-			self.scale_entry[i] = wxTextCtrl(self, -1, value=str(scale[i]))
-			size = self.scale_entry[i].GetSize()
-			size = (size[0]/2, size[1])
-			self.scale_entry[i].SetSize(size)
-			self.scale_entry[i].SetMaxLength(6)
-			self.toolsizer.Add(self.scale_entry[i], 0, wxCENTER | wxALL, 3)
-		scalebutton = wxButton(self, -1, 'Scale')
-		self.toolsizer.Add(scalebutton, 0, wxCENTER | wxALL, 3)
-		EVT_BUTTON(self, scalebutton.GetId(), self.OnScaleEntry)
 
 	def PILsetImageFromMrcString(self, imagestring):
 		self.clearImage()
@@ -242,13 +197,9 @@ class ImagePanel(wxPanel):
 	def motion(self, evt):
 		if self.image is None:
 			return
-		if self.valueflag:
+		if self.valuebutton.GetToggle():
 			x, y = self.view2image((evt.m_x, evt.m_y))
 			self.drawValueLabel(x, y)
-#		if self.valuelabelflag:
-#			self.xlabel.SetLabel(str(x))
-#			self.ylabel.SetLabel(str(y))
-#			self.valuelabel.SetLabel(str(value))
 
 	def drawValueLabel(self, x, y):
 		value = self.image[y, x]
