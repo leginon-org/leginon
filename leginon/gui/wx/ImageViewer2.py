@@ -246,9 +246,12 @@ class OffsetWindow(CenteredWindow):
 		y *= self._yscale
 		return x, y
 
+	def centerOffset(self, x, y):
+		x -= self._clientwidth/(2.0*self._xscale)
+		y -= self._clientheight/(2.0*self._yscale)
+		self.setOffset(x, y)
+
 	def _setOffset(self, x, y):
-		#x -= self._clientwidth/(2.0*self._xscale)
-		#y -= self._clientheight/(2.0*self._yscale)
 		x = min(x, self._bitmaprect.width - self._clientwidth/self._xscale
 																			- self._blitrect.x*2)
 		y = min(y, self._bitmaprect.height - self._clientheight/self._yscale
@@ -349,7 +352,7 @@ if __name__ == '__main__':
 	def onLeftUp(evt):
 		eventobject = evt.GetEventObject()
 		offset = eventobject.clientToBitmap(evt.m_x, evt.m_y)
-		eventobject.setOffset(*offset)
+		eventobject.centerOffset(*offset)
 
 	def onRightUp(evt):
 		pass
