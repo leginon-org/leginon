@@ -126,28 +126,44 @@ class Manager(node.Node):
 
 		#### Launch Node Frame
 		launch_frame = Frame(root)
+
+		f = Frame(launch_frame)
+		lab = Label(f, text='Launcher')
+		ent = Entry(f, textvariable=self.gui_launch_launcher)
+		lab.pack(side=LEFT)
+		ent.pack(side=LEFT)
+		f.pack(side=TOP)
+
+		f = Frame(launch_frame)
+		lab = Label(f, text='Node Class')
+		ent = Entry(f, textvariable=self.gui_launch_target)
+		lab.pack(side=LEFT)
+		ent.pack(side=LEFT)
+		f.pack(side=TOP)
+
+		f = Frame(launch_frame)
+		lab = Label(f, text='Node ID')
+		ent = Entry(f, textvariable=self.gui_launch_id)
+		lab.pack(side=LEFT)
+		ent.pack(side=LEFT)
+		f.pack(side=TOP)
+
+		f = Frame(launch_frame)
+		lab = Label(f, text='Node Args')
+		ent = Entry(f, textvariable=self.gui_launch_args)
+		lab.pack(side=LEFT)
+		ent.pack(side=LEFT)
+		f.pack(side=TOP)
+
+		newproc = Checkbutton(launch_frame, text='New Process', variable=self.gui_launch_newproc) 
+		newproc.pack(side=TOP)
+
 		launch_but = Button(launch_frame, text='LAUNCH')
 		launch_but['command'] = self.gui_launch_command
-		launch_launcher_lab = Label(launch_frame, text='Launcher')
-		launch_launcher_ent = Entry(launch_frame, textvariable=self.gui_launch_launcher)
+		launch_but.pack(side=TOP)
 
-		launch_newproc = Checkbutton(text='New Process', variable=self.gui_launch_newproc) 
-		launch_target_lab = Label(launch_frame, text='Node Class')
-		launch_target_ent = Entry(launch_frame, textvariable=self.gui_launch_target)
-		launch_id_lab = Label(launch_frame, text='Node ID')
-		launch_id_ent = Entry(launch_frame, textvariable=self.gui_launch_id)
-		launch_args_lab = Label(launch_frame, text='Node Args')
-		launch_args_ent = Entry(launch_frame, textvariable=self.gui_launch_args)
+		launch_frame.pack(side=TOP)
 
-		launch_but.pack(side=LEFT)
-		launch_launcher_lab.pack(side=LEFT)
-		launch_launcher_ent.pack(side=LEFT)
-		launch_target_lab.pack(side=LEFT)
-		launch_target_ent.pack(side=LEFT)
-		launch_id_lab.pack(side=LEFT)
-		launch_id_ent.pack(side=LEFT)
-		launch_newproc.pack(side=LEFT)
-		launch_frame.pack()
 		root.mainloop()
 
 	def gui_launch_command(self):
