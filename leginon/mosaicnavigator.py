@@ -72,9 +72,8 @@ class MosaicNavigator(navigator.Navigator):
 #		self.outputEvent(e)
 		movetype = self.movetype.get()
 		calclient = self.calclients[movetype]
-#		newstate = calclient.transform({'row': nearestdelta[0],
-#																		'col': nearestdelta[1]},
-		newstate = calclient.transform({'row': deltarow, 'col': deltacolumn},
+		newstate = calclient.transform({'row': nearestdelta[0],
+																		'col': nearestdelta[1]},
 																		mosaicdata[nearesttile]['scope'],
 																		mosaicdata[nearesttile]['camera'])
 		emdata = data.EMData('scope', newstate)
