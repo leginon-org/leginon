@@ -160,7 +160,7 @@ import strictdict
 import Mrc
 import os
 
-class SQLDict:
+class SQLDict(object):
 
     """SQLDict: An object class which implements something resembling
     a Python dictionary on top of an SQL DB-API database."""
@@ -174,10 +174,22 @@ class SQLDict:
 		user	= "DB_USER"
 		db	= "DB_NAME"
 		passwd	= "DB_PASS"
-	By default, this is in the config.py file
+	By default, this is in the leginonconfig.py file
 	"""
 
-	self.db = sqldb.connect(**kwargs)
+	try:
+		self.db = sqldb.connect(**kwargs)
+		self.connected = True
+	except Exception,e:
+		self.db = None
+		self.connected = False
+		self.sqlexception = e
+
+    def isConnected(self):
+	return self.connected
+
+    def sqlException(self):
+	return self.sqlexception
 
     def __del__(self):	self.close()
 

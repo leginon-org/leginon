@@ -28,7 +28,7 @@ def addbackquotes(anystring):
 	return "`%s`" % (anystring,)
 
 
-class sqlDB:
+class sqlDB(object):
 	"""
 	This class is a SQL interface to connect a MySQL DB server.
 	Default: host="localhost", user="usr_object", db="dbemdata"

@@ -36,10 +36,17 @@ class GridBox(sqldict.ObjectBuilder):
 
 class ProjectData:
 	def __init__(self, **kwargs):
+		self.dbprojectconnection = False
 		self.db = sqldict.SQLDict(**dbparams)
+		if self.db.isConnected():
+			self.dbprojectconnection = True
+
 		self.projects = Project().register(self.db)
 		self.projectexperiments = ProjectExperiment().register(self.db)
 		self.gridboxes = GridBox().register(self.db)
+
+	def isConnected(self):
+		return self.dbprojectconnection
 
 	def getProjects(self):
 		return self.projects
@@ -55,9 +62,15 @@ class ProjectData:
 ########################################
 
 if __name__ == "__main__":
+	import sys
 	# getall projects
 	#allprojects = projects.getall()
 	projectdata = ProjectData()
+	if not projectdata.isConnected():
+		print "Project DB not available"
+		sys.exit()
+
+	"""
 	projects = projectdata.getProjects()
 	print projects.getall()
 	projectdata1 = ProjectData()
@@ -85,4 +98,5 @@ if __name__ == "__main__":
 	# returns the last inserted id for a new insert
 	key = projectexperiments.insert([newsession.dumpdict()])
 	print key
+	"""
 

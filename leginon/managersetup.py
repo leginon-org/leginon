@@ -11,6 +11,8 @@ class ManagerSetup(object):
 	def __init__(self, manager):
 		self.manager = manager
 
+		self.initProjectConnection()
+
 		self.defineUserInterface()
 
 		self.initProjects()
@@ -49,9 +51,10 @@ class ManagerSetup(object):
 			self.build_messages.error('session name already used')
 			node.beep()
 			return
-		projectname = self.projectselection.getSelectedValue()
 		self.manager.publish(sessiondata, database=True)
-		self.linkSessionProject(sessiondata, projectname)
+		if self.projectdataconnected:
+			projectname = self.projectselection.getSelectedValue()
+			self.linkSessionProject(sessiondata, projectname)
 		# refresh session list
 		self.uiUpdateSessionList()
 		self.build_messages.information('session published')
@@ -111,8 +114,13 @@ class ManagerSetup(object):
 		self.users = self.indexByName(users)
 		self.uiUpdateUsers()
 
-	def initProjects(self):
+	def initProjectConnection(self):
 		self.projectdata = project.ProjectData()
+		self.projectdataconnected = self.projectdata.isConnected()
+
+	def initProjects(self):
+		if not self.projectdataconnected:
+			return
 		self.projects = self.projectdata.getProjects()
 		projects = self.projects.getall()
 		self.projectmap = {}
@@ -349,10 +357,11 @@ class ManagerSetup(object):
 
 
 		build_projectcontainer = uidata.Container('Project')
-		self.projectselection = uidata.SingleSelectFromList('Project', [], 0,
+		if self.projectdataconnected:
+						self.projectselection = uidata.SingleSelectFromList('Project', [], 0,
 																				callback=self.uiProjectSelectCallback,
 																				persist=True)
-		build_projectcontainer.addObject(self.projectselection)
+						build_projectcontainer.addObject(self.projectselection)
 
 		build_usercontainer = uidata.Container('User')
 		self.userselection = uidata.SingleSelectFromList('Name', [], 0,
@@ -385,17 +394,20 @@ class ManagerSetup(object):
 		self.build_messages = uidata.MessageLog('Messages')
 
 
-		sessionbuilderobjects = (
+		sessionbuilderobjects = [
 		  suggestnamemethod,
 		  self.build_session_name,
 		  self.build_session_comment,
-		  build_projectcontainer,
 		  build_usercontainer,
 		  build_instrumentcontainer,
 		  self.build_image_path,
 		  createmethod,
 		  self.build_messages,
-		)
+		]
+
+		if self.projectdataconnected:
+			sessionbuilderobjects.insert(4,build_projectcontainer)
+
 		sessionbuilder.addObjects(sessionbuilderobjects)
 
 		mainobjects = (
