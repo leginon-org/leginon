@@ -75,102 +75,18 @@ class ArrowLine(Line):
 	def deleteArrow(self):
 		self.canvas.delete(self.arrow)
 
-class LabeledLine(ArrowLine):
-	def __init__(self, canvas, originposition, destinationposition, text):
-		ArrowLine.__init__(self, canvas, originposition, destinationposition)
-
-		self.labels = []
-		self.labeltextvariables = {}
-		self.selectedlabel = None
-		self.append(text)
-
-		self.menu = Tkinter.Menu(self.canvas, tearoff=0)
-		self.menu.add_command(label='Edit', command=self.menuEditLabel)
-		self.menu.add_command(label='Delete', command=self.menuDeleteLabel)
-
-	def menuEditLabel(self):
-		textvariable = self.labeltextvariables[self.selectedlabel]
-		editedtext = tkSimpleDialog.askString('Edit Label', 'Text:',
-																					initialvalue=text.variable.get())
-		if editedtext is not None:
-			textvariable.set(editedtext)
-		self.selectedlabel = None
-
-	def menuDeleteLabel(self):
-		self.deleteLabel(self.selectedlabel)
-		self.selectedlabel = None
-
-	def lift(self, ievent):
-		for label in self.labels:
-			label.lift()
-
-	def move(self, originposition, destinationposition):
-		ArrowLine.move(self, originposition, destinationposition)
-		self.placeLabels()
-
-	def placeLabels(self):
-		coordinates = self._coordinates()
-		originposition = (coordinates[0], coordinates[1])
-		destinationposition = (coordinates[2], coordinates[3])
-		offset = 0
-		for label in self.labels:
-			label.place(
-				x = (int(destinationposition[0]) + int(originposition[0]))/2,
-				y = (int(destinationposition[1]) + int(originposition[1]))/2 + offset,
-				anchor=Tkinter.CENTER)
-			offset += label.winfo_reqheight()
-
-	def append(self, text):
-		labeltext = Tkinter.StringVar()
-		labeltext.set(text)
-		label = Tkinter.Label(self.canvas, textvariable=labeltext,
-													relief=Tkinter.RAISED, justify=Tkinter.LEFT, bd=1,
-													padx=5, pady=3, bg='white')
-		self.labels.append(label)
-		self.labeltextvariables[label] = labeltext
-		self.placeLabels()
-		label.bind('<Button-1>', self.lift)
-		label.bind('<Button-3>', self.popup)
-
-		return label
-
-	def popup(self, ievent):
-		self.selectedlabel = ievent.widget
-		self.menu.post(ievent.x_root, ievent.y_root)
-
-#	def remove(self, text):
-#		for label in self.labeltextvariables:
-#			if self.labeltextvariables[label].get() == text:
-#				self.deleteLabel(label)
-#				break
-
-	def deleteLabel(self, label):
-		self.labels.remove(label)
-		del self.labeltextvariables[label]
-		label.place_forget()
-		if len(self.labels) == 0:
-#			ArrowLine.delete(self)
-			pass
-		else:
-			self.placeLabels()
-
-	def delete(self):
-		for label in self.labels:
-			self.deleteLabel(label)
-		ArrowLine.delete(self)
-
-class OverlappedLine(LabeledLine):
+class OverlappedLine(ArrowLine):
 	def __init__(self, canvas, originposition, destinationposition,
-																			originbbox, destinationbbox, text):
+																			originbbox, destinationbbox):
 		positions = self.overlappedPositions(originposition, destinationposition,
 																									originbbox, destinationbbox)
-		LabeledLine.__init__(self, canvas, positions[0], positions[1], text)
+		ArrowLine.__init__(self, canvas, positions[0], positions[1])
 
 	def move(self, originposition, destinationposition,
 																								originbbox, destinationbbox):
 		positions = self.overlappedPositions(originposition, destinationposition,
 																									originbbox, destinationbbox)
-		LabeledLine.move(self, positions[0], positions[1])
+		ArrowLine.move(self, positions[0], positions[1])
 
 	def overlappedPositions(self, originposition, destinationposition,
 																					originbbox, destinationbbox):
@@ -267,12 +183,100 @@ class OverlappedLine(LabeledLine):
 														position2[0], position2[1]),
 														widget.getBox())
 
-class EventLine(OverlappedLine):
+class LabeledLine(OverlappedLine):
+	def __init__(self, canvas, originposition, destinationposition,
+																			originbbox, destinationbbox, text):
+		OverlappedLine.__init__(self, canvas, originposition, destinationposition,
+																									originbbox, destinationbbox)
+
+		self.labels = []
+		self.labeltextvariables = {}
+		self.selectedlabel = None
+		self.append(text)
+
+		self.menu = Tkinter.Menu(self.canvas, tearoff=0)
+		self.menu.add_command(label='Edit', command=self.menuEditLabel)
+		self.menu.add_command(label='Delete', command=self.menuDeleteLabel)
+
+	def menuEditLabel(self):
+		textvariable = self.labeltextvariables[self.selectedlabel]
+		editedtext = tkSimpleDialog.askString('Edit Label', 'Text:',
+																					initialvalue=text.variable.get())
+		if editedtext is not None:
+			textvariable.set(editedtext)
+		self.selectedlabel = None
+
+	def menuDeleteLabel(self):
+		self.deleteLabel(self.selectedlabel)
+		self.selectedlabel = None
+
+	def lift(self, ievent):
+		for label in self.labels:
+			label.lift()
+
+	def move(self, originposition, destinationposition, originbbox,
+																											destinationbbox):
+		OverlappedLine.move(self, originposition, destinationposition, originbbox,
+																															 destinationbbox)
+		self.placeLabels()
+
+	def placeLabels(self):
+		coordinates = self._coordinates()
+		originposition = (coordinates[0], coordinates[1])
+		destinationposition = (coordinates[2], coordinates[3])
+		offset = 0
+		for label in self.labels:
+			label.place(
+				x = (int(destinationposition[0]) + int(originposition[0]))/2,
+				y = (int(destinationposition[1]) + int(originposition[1]))/2 + offset,
+				anchor=Tkinter.CENTER)
+			offset += label.winfo_reqheight()
+
+	def append(self, text):
+		labeltext = Tkinter.StringVar()
+		labeltext.set(text)
+		label = Tkinter.Label(self.canvas, textvariable=labeltext,
+													relief=Tkinter.RAISED, justify=Tkinter.LEFT, bd=1,
+													padx=5, pady=3, bg='white')
+		self.labels.append(label)
+		self.labeltextvariables[label] = labeltext
+		self.placeLabels()
+		label.bind('<Button-1>', self.lift)
+		label.bind('<Button-3>', self.popup)
+
+		return label
+
+	def popup(self, ievent):
+		self.selectedlabel = ievent.widget
+		self.menu.post(ievent.x_root, ievent.y_root)
+
+#	def remove(self, text):
+#		for label in self.labeltextvariables:
+#			if self.labeltextvariables[label].get() == text:
+#				self.deleteLabel(label)
+#				break
+
+	def deleteLabel(self, label):
+		self.labels.remove(label)
+		del self.labeltextvariables[label]
+		label.place_forget()
+		if len(self.labels) == 0:
+#			ArrowLine.delete(self)
+			pass
+		else:
+			self.placeLabels()
+
+	def delete(self):
+		for label in self.labels:
+			self.deleteLabel(label)
+		OverlappedLine.delete(self)
+
+class EventLine(LabeledLine):
 	def __init__(self, canvas, originposition, destinationposition, originbbox,
 																				destinationbbox, eventbinding, editor):
 		self.eventbindings = {}
 		self.editor = editor
-		OverlappedLine.__init__(self, canvas, originposition, destinationposition,
+		LabeledLine.__init__(self, canvas, originposition, destinationposition,
 							originbbox, destinationbbox, eventbinding)
 
 	def menuEditLabel(self):
@@ -309,7 +313,7 @@ class EventLine(OverlappedLine):
 		if eventbinding in self.eventbindings:
 			return
 		self.eventbindings[eventbinding] = \
-				OverlappedLine.append(self, self.eventBindingText(eventbinding))
+				LabeledLine.append(self, self.eventBindingText(eventbinding))
 		self.editor.app.addBindSpec(eventbinding)
 
 	def deleteBinding(self, eventbinding):
@@ -320,7 +324,7 @@ class EventLine(OverlappedLine):
 	def delete(self):
 		for eventbinding in self.eventbindings.keys():
 			self.deleteBinding(eventbinding)
-		ArrowLine.delete(self)
+		OverlappedLine.delete(self)
 
 class ConnectionManager(Line):
 	def __init__(self, canvas, editor):
