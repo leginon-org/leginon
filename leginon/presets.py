@@ -17,6 +17,7 @@ import camerafuncs
 import threading
 import time
 import unique
+import strictdict
 
 class PresetsClient(object):
 	'''
@@ -131,7 +132,7 @@ class PresetsManager(node.Node):
 
 		self.currentselection = None
 		self.currentpreset = None
-		self.presets = []
+		self.presets = strictdict.OrderedDict()
 		self.getPresetsFromDB()
 
 		self.defineUserInterface()
@@ -175,32 +176,21 @@ class PresetsManager(node.Node):
 			diffsession = True
 
 		### get presets from database
-		newsession = data.SessionData(initializer=session)
-		newsession['image path'] = None
-		pdata = data.PresetData(session=newsession)
+		pdata = data.PresetData(session=session)
 		presets = self.research(datainstance=pdata)
 
 		### only want most recent of each name
-		mostrecent = []
-		names = []
+		self.presets = strictdict.OrderedDict()
 		for preset in presets:
-			if preset['name'] not in names:
-				names.append(preset['name'])
+			pname = preset['name']
+			if pname not in self.presets.keys():
 				if preset['removed'] != 1:
 					if preset['session'] is not self.session:
-						preset['session'] = self.session
-					mostrecent.append(preset)
-		self.presets[:] = mostrecent
-
-		### if using another session's presets, now save them
-		### as this sessions presets
-		if diffsession:
-			## since this is a new session, we don't trust
-			## previously acquired references (plus they won't
-			## be linked to these new presets anyway)
-			for p in self.presets:
-				p['hasref'] = False
-			self.presetToDB()
+						newpreset = data.PresetData(initializer=preset, session=self.session, hasref=False)
+						self.presetToDB(newpreset)
+					else:
+						newpreset = preset
+					self.presets[pname] = newpreset
 
 		self.validateCycleOrder()
 
@@ -210,92 +200,37 @@ class PresetsManager(node.Node):
 		if no preset is specified, store all self.presets
 		'''
 		if presetdata is None:
-			tostore = self.presets
+			tostore = self.presets.values()
 		else:
 			tostore = [presetdata]
 		for p in tostore:
-			pdata = copy.copy(p)
-			pdata['session'] = self.session
-			self.publish(pdata, database=True, dbforce=True)
+			self.publish(p, database=True, dbforce=True)
 
 	def presetByName(self, name):
-		for p in self.presets:
-			if p['name'] == name:
-				return p
-		return None
-
-	def indexByName(self, name):
-		i = 0
-		for p in self.presets:
-			if p['name'] == name:
-				return i
-			i += 1
-		return None
-
-	def indexByPreset(self, preset):
-		return self.presets.index(preset)
-
-	def insertPreset(self, p, newpreset):
-		'''
-		insert new preset into my set of managed presets
-		p is either the index or item to insert at
-		'''
-		if type(p) is int:
-			i = p
+		if name in self.presets.keys():
+			return self.presets[name]
 		else:
-			i = self.index(p)
-		self.presets.insert(i, newpreset)
+			return None
 
-	def removePreset(self, p):
+	def removePreset(self, pname):
 		'''
-		remove a preset by index or reference
-		p is either a preset, or index of the preset
+		remove a preset by name
 		'''
-		premove = None
-		if type(p) is int:
-			premove = self.presets[p]
-			del self.presets[p]
-		elif type(p) is str:
-			pcopy = list(self.presets)
-			for preset in pcopy:
-				if preset['name'] == p:
-					premove = preset
-					self.presets.remove(preset)
-		else:
-			premove = p
-			self.presets.remove(p)
-		if premove is not None:
-			premove['removed'] = 1
-			self.presetToDB(premove)
+		if pname in self.presets.keys():
+			premove = self.presets[pname]
+			del self.presets[pname]
+			pnew = data.PresetData(initializer=premove, removed=1)
+			self.presetToDB(pnew)
 		pnames = self.presetNames()
 		self.uiselectpreset.set(pnames, 0)
 		self.validateCycleOrder()
 
-	def presetFromName(self, pname):
-		presetdata = None
-		for preset in self.presets:
-			if pname == preset['name']:
-				presetdata = preset
-				break
-		return presetdata
-
-	def toScope(self, p, magonly=False):
+	def toScope(self, pname, magonly=False):
 		'''
-		p is either index, preset, or name
 		'''
-		presetdata = None
-		if type(p) is int:
-			presetdata = self.presets[p]
-		elif type(p) is str:
-			presetdata = self.presetFromName(p)
-		elif isinstance(p, data.PresetData):
-			presetdata = p
-		else:
-			self.messagelog.error('Invalid argument to set scope')
-			return
-
+		presetdata = self.presetByName(pname)
 		if presetdata is None:
-			self.messagelog.error('No such preset')
+			self.messagelog.error('No such preset %s' % (pname,))
 			return
 
 		scopedata = data.ScopeEMData()
@@ -356,11 +291,10 @@ class PresetsManager(node.Node):
 		newpreset['session'] = self.session
 		newpreset['name'] = name
 
-		for p in self.presets:
-			if p['name'] == name:
-				self.presets.remove(p)
-				break
-		self.presets.append(newpreset)
+		# to put preset at end, remove it first
+		if name in self.presets.keys():
+			del self.presets[name]
+		self.presets[name] = newpreset
 
 		self.presetToDB(newpreset)
 		pnames = self.presetNames()
@@ -370,8 +304,7 @@ class PresetsManager(node.Node):
 		return newpreset
 
 	def presetNames(self):
-		names = [p['name'] for p in self.presets]
-		return names
+		return self.presets.keys()
 
 	def uiGetPresetsFromDB(self):
 		othersessionname = self.othersession.getSelectedValue()
@@ -553,15 +486,11 @@ class PresetsManager(node.Node):
 
 	def uiSelectCallback(self, index):
 		try:
-			self.currentselection = self.presets[index]
+			pname = self.presetNames()[index]
+			self.currentselection = self.presetByName(pname)
 		except IndexError:
 			self.currentselection = None
 		else:
-			d = self.currentselection.toDict(noNone=True)
-			try:
-				del d['session']
-			except KeyError:
-				pass
 			self.presetparams.set(self.currentselection)
 			self.displayCalibrations(self.currentselection)
 			self.setStatus(self.currentselection)
@@ -596,10 +525,22 @@ class PresetsManager(node.Node):
 		tmpstr = 'x: %s, y: %s' % (modstagemagtimex,modstagemagtimey)
 		self.cal_modeledstagemag.set(tmpstr)
 
-	def uiCommitParams(self):
+	def uiCommitParams(self, value):
+		oldpreset = self.currentselection
+		pname = oldpreset['name']
 		presetdict = self.presetparams.get()
-		self.currentselection.update(presetdict)
-		self.presetToDB(self.currentselection)
+		newpreset = data.PresetData(initializer=presetdict, session=self.session, name=pname)
+
+		# to put preset at end, remove it first
+		del self.presets[pname]
+		self.presets[pname] = newpreset
+
+		### make sure other pointers go to this new preset
+		if self.currentpreset is oldpreset:
+			self.currentpreset = newpreset
+		self.currentselection = newpreset
+
+		self.presetToDB(newpreset)
 
 	def square(self, xydict):
 		xydict['y'] = xydict['x']
@@ -665,8 +606,7 @@ class PresetsManager(node.Node):
 												self.cal_modeledstagemod, self.cal_modeledstagemag))
 
 		# selection
-		self.presetparams = PresetParameters(self)
-		commitmethod = uidata.Method('Commit Parameters', self.uiCommitParams)
+		self.presetparams = PresetParameters(self, postcallback=self.uiCommitParams)
 		self.uiselectpreset = uidata.SingleSelectFromList('Preset', [], 0,
 																								callback=self.uiSelectCallback)
 		toscopemethod = uidata.Method('To Scope', self.uiToScope)
@@ -683,7 +623,7 @@ class PresetsManager(node.Node):
 		removemethod = uidata.Method('Remove', self.uiSelectedRemove)
 
 		selectcont = uidata.Container('Selection')
-		selectcont.addObjects((self.uiselectpreset, toscopemethod, fromscopemethod, removemethod, self.changepause, commitmethod, self.presetparams, statuscont, calcont, cyclecont))
+		selectcont.addObjects((self.uiselectpreset, toscopemethod, fromscopemethod, removemethod, self.changepause, self.presetparams, statuscont, calcont, cyclecont))
 
 		pnames = self.presetNames()
 		self.uiselectpreset.set(pnames, 0)
@@ -868,9 +808,10 @@ class PresetsManager(node.Node):
 			self.outputEvent(event.PresetChangedEvent(name=name))
 
 class PresetParameters(uidata.Container):
-	def __init__(self, node):
+	def __init__(self, node, postcallback=None):
 		uidata.Container.__init__(self, 'Preset Parameters')
 		self.node = node
+		self.postcallback = postcallback
 		self.singles = ('magnification', 'spot size', 'defocus', 'intensity')
 		self.doubles = ('image shift', 'beam shift')
 
@@ -879,15 +820,15 @@ class PresetParameters(uidata.Container):
 	def build(self):
 		self.singlesdict = {}
 		for single in self.singles:
-			self.singlesdict[single] = uidata.Number(single, 0, 'rw')
+			self.singlesdict[single] = uidata.Number(single, 0, 'rw', postcallback=self.postcallback)
 		self.doublesdict = {}
 		for double in self.doubles:
 			self.doublesdict[double] = {}
 			for axis in ('x', 'y'):
 				label = double + ' ' + axis
-				self.doublesdict[double][axis] = uidata.Number(label, 0, 'rw')
+				self.doublesdict[double][axis] = uidata.Number(label, 0, 'rw', postcallback=self.postcallback)
 
-		self.camera = camerafuncs.SmartCameraParameters(self.node)
+		self.camera = camerafuncs.SmartCameraParameters(self.node, postcallback=self.postcallback)
 
 		components = []
 		for single in self.singles:
@@ -899,12 +840,13 @@ class PresetParameters(uidata.Container):
 		self.addObjects(components)
 
 	def set(self, presetdata):
-		self.camera.set(presetdata)
+		presetdict = presetdata.toDict()
+		self.camera.set(presetdict)
 		for single in self.singles:
-			self.singlesdict[single].set(presetdata[single])
+			self.singlesdict[single].set(presetdict[single], postcallback=False)
 		for double in self.doubles:
 			for axis in ('x','y'):
-				self.doublesdict[double][axis].set(presetdata[double][axis])
+				self.doublesdict[double][axis].set(presetdict[double][axis], postcallback=False)
 
 	def get(self):
 		presetdict = {}

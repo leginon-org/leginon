@@ -191,9 +191,10 @@ class SmartCameraParameters(uidata.Container):
 	It requires a node instance in the initializer which is used
 	to get the camera size of the current instrument.
 	'''
-	def __init__(self, node):
+	def __init__(self, node, postcallback=None):
 		uidata.Container.__init__(self, '')
 		self.node = node
+		self.postcallback = postcallback
 
 		self.setCameraSize()
 
@@ -234,10 +235,16 @@ class SmartCameraParameters(uidata.Container):
 		self.fillXYContainer()
 		return value
 
+	def onModified(self, value):
+		if self.postcallback is None:
+			return
+		allparams = self.get()
+		self.postcallback(allparams)
+
 	def build(self):
 		self.xycontainer = uidata.Container('Geometry')
 
-		self.exposuretime = uidata.Integer('Exposure Time (ms)', 500, 'rw', persist=True)
+		self.exposuretime = uidata.Integer('Exposure Time (ms)', 500, 'rw', persist=True, postcallback=self.onModified)
 		self.squaretoggle = uidata.Boolean('Square image', self.xyoptions['square'], 'rw', persist=True, callback=self.squareToggleCallback)
 		self.centeredtoggle = uidata.Boolean('Center image', self.xyoptions['centered'], 'rw', persist=True, callback=self.centeredToggleCallback)
 
@@ -282,11 +289,11 @@ class SmartCameraParameters(uidata.Container):
 		## fill in the values
 		if not centered:
 			for axis in axes:
-				self.xyvalues['offset'][axis].set(paramdict['offset'][axis])
+				self.xyvalues['offset'][axis].set(paramdict['offset'][axis], postcallback=False)
 		for param in ('dimension','binning'):
 			for axis in axes:
-				self.xyvalues[param][axis].set(paramdict[param][axis])
-		self.exposuretime.set(paramdict['exposure time'])
+				self.xyvalues[param][axis].set(paramdict[param][axis], postcallback=False)
+		self.exposuretime.set(paramdict['exposure time'], postcallback=False)
 
 	def clearXYContainer(self):
 		if not self.xycontainer:
@@ -321,7 +328,7 @@ class SmartCameraParameters(uidata.Container):
 			if square:
 				label = '%s %s' % (param, 'x')
 				default = self.xydefaults[param]['x']
-				i = uidata.Integer(label, default, 'rw', persist=True)
+				i = uidata.Integer(label, default, 'rw', persist=True, postcallback=self.onModified)
 				self.xycontainer.addObject(i, thread=True)
 				self.xyvalues[param]['x'] = i
 				self.xyvalues[param]['y'] = i
@@ -329,7 +336,7 @@ class SmartCameraParameters(uidata.Container):
 				for axis in ('x','y'):
 					label = '%s %s' % (param, axis)
 					default = self.xydefaults[param][axis]
-					i = uidata.Integer(label, default, 'rw', persist=True)
+					i = uidata.Integer(label, default, 'rw', persist=True, postcallback=self.onModified)
 					self.xycontainer.addObject(i, thread=True)
 					self.xyvalues[param][axis] = i
 
