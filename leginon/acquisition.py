@@ -272,7 +272,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		imagequery = data.AcquisitionImageData()
 		imagequery['session'] = self.session
 		#imagequery['label'] = str(self.id)
-		imagequery['label'] = self.id[-1]
+		imagequery['label'] = str(self.id)
 		## don't read images because we only need the id
 		images = self.research(datainstance=imagequery, fill=False, readimages=False)
 		imageids = [repr(x['id']) for x in images]
