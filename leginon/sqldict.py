@@ -361,7 +361,7 @@ class SQLDict(object):
 			return 
 
 		needpath = []
-		for key,value in root.items():
+		for key,value in root.items(dereference=False):
 			if isinstance(value, data.UnknownData):
 				target = pool[value.qikey]
 				root[key] = target
@@ -381,7 +381,7 @@ class SQLDict(object):
 			root[key] = fileref.read(leginonconfig.mapPath(imagepath))
 
 		## now the object is final, so we can safely set dbid
-		root.dbid = root.pending_dbid
+		root.setPersistent(root.pending_dbid)
 		del root.pending_dbid
 
     class _createSQLTable:
@@ -1354,11 +1354,14 @@ def datatype(in_dict, qikey=None, qinfo=None):
 																								Mrc.mrc_to_numeric)
 		elif a[0] == 'REF':
 			try:
+				## maybe referenced data was in this query
 				jqikey = qinfo[qikey]['join'][a[2]]
 			except KeyError:
 				# if qinfo does not have it, then the query
 				# did not request it.  Just set it to None
-				content[a[2]] = None
+				dclassname = a[1]
+				dclass = getattr(data, dclassname)
+				content[a[2]] = data.DataReference(dataclass=dclass, dbid=value)
 			else:
 				## This references a Data instance
 				content[a[2]] = data.UnknownData(jqikey)

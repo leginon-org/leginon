@@ -13,8 +13,9 @@ import leginonobject
 import Numeric
 import strictdict
 import warnings
-import weakref
+#import weakref
 import threading
+import dbdatakeeper
 
 class DataError(Exception):
 	pass
@@ -23,16 +24,29 @@ class DataManagerOverflowError(DataError):
 class DataAccessError(DataError):
 	pass
 
+## manages weak references between data instances
+## DataManager holds strong references to every Data instance that
+## is created.  The memory size is restricted such that the first instances
+## to be created are the first to be deleted from DataManager.
 class DataManager(object):
 	def __init__(self):
+		self.db = dbdatakeeper.DBDataKeeper()
+		## the size of datadict and sizedict are maintained
 		self.datadict = strictdict.OrderedDict()
 		self.sizedict = {}
+		## the size of persistdict can grow out of control
 		self.persistdict = {}
 		megs = 256
 		self.maxsize = megs * 1024 * 1024
 		self.dmid = 0
 		self.size = 0
 		self.lock = threading.RLock()
+
+	def location(self):
+		'''
+		return location to be 
+		'''
+		pass
 
 	def insert(self, datainstance):
 		self.lock.acquire()
@@ -42,13 +56,22 @@ class DataManager(object):
 			self.datadict[self.dmid] = datainstance
 			datainstance.dmid = self.dmid
 			self.resize(datainstance)
+
+			## insert into persistdict if it is in database
+			if datainstance.dbid is not None:
+				self.persist(datainstance)
 		finally:
 			self.lock.release()
 
-	def persist(self, dmid):
+	def setPersistent(self, datainstance):
 		self.lock.acquire()
 		try:
-			pass
+			dbid = datainstance.dbid
+			if dbid is None:
+				raise DataError('persist can only be called on data that is stored in the database')
+			dmid = datainstance.dmid
+			dclass = datainstance.__class__
+			self.persistdict[dmid] = (dclass, dbid)
 		finally:
 			self.lock.release()
 
@@ -90,48 +113,66 @@ class DataManager(object):
 		finally:
 			self.lock.release()
 
-	def getData(self, dmid):
+	def getData(self, datareference):
 		self.lock.acquire()
 		try:
-			try:
-				return self.datadict[dmid]
-			except KeyError:
-				raise RuntimeError('data removed')
+			dataclass = datareference.dataclass
+			datainstance = None
+			dmid = datareference.dmid
+			dbid = datareference.dbid
+
+			if dmid in self.datadict:
+				## in local memory
+				datainstance = self.datadict[dmid]
+			elif False:
+				## in remote memory
+				# like publishRemote and researchByDataID
+				# how do we do this?
+				pass
+			else:
+				## in database
+				if dbid is not None:
+					known_dbid = dbid
+				elif dmid in self.persistdict:
+					known_dbid = self.persistdict[dmid]
+				else:
+					known_dbid = None
+				if known_dbid is not None:
+					print 'GETDATA  DB'
+					datainstance = self.db.direct_query(dataclass, dbid)
+				else:
+					datainstance = None
 		finally:
 			self.lock.release()
-
-class DataReference(object):
-	def __init__(self, datainstance):
-		### avoid calling __setattr__ here
-		self.__dict__['dmid'] = datainstance.dmid
-		self.__dict__['dbid'] = datainstance.dbid
-		self.__dict__['dataclass'] = datainstance.__class__
-		self.__dict__['proxy'] = weakref.proxy(datainstance)
-
-	def __getattr__(self, name):
-		#if name in ('dmid','dbid','__class__'):
-		#	return self.__dict__[name]
-		try:
-			return getattr(self.proxy, name)
-		except ReferenceError:
-			self.reviveProxy()
-			return getattr(self.proxy, name)
-
-	def __setattr__(self, name, value):
-		try:
-			return setattr(self.proxy, name, value)
-		except ReferenceError:
-			self.reviveProxy()
-			return getattr(self.proxy, name)
-
-	def reviveProxy(self):
-		print 'What do I do????'
-		self.proxy = None
-
-	def getData(self):
-		return datamanager.getData(self.dmid)
+		return datainstance
 
 datamanager = DataManager()
+
+class DataReference(object):
+	'''
+	initialized with a datainstance or 
+	a dataclass and at least one of dmid and/or dbid
+	'''
+	def __init__(self, datainstance=None, dataclass=None, dmid=None, dbid=None):
+		if datainstance is not None:
+			self.dataclass = datainstance.__class__
+			self.dmid = datainstance.dmid
+			self.dbid = datainstance.dbid
+		elif dataclass is not None:
+			self.dataclass = dataclass
+			if dmid is None and dbid is None:
+				raise DataError('DataReference has neither a dmid nor a dbid')
+			self.dmid = dmid
+			self.dbid = dbid
+		else:
+			raise DataError('DataReference needs either datainstance or dataclass')
+
+	def getData(self):
+		datainstance = datamanager.getData(self)
+		if datainstance is not None:
+			self.dmid = datainstance.dmid
+			self.dbid = datainstance.dbid
+		return datainstance
 
 
 ## Unresolved issue:
@@ -228,12 +269,18 @@ class Data(DataDict, leginonobject.LeginonObject):
 	'''
 	def __init__(self, **kwargs):
 		DataDict.__init__(self)
-		datamanager.insert(self)
 
 		## Database ID (primary key)
 		## If this is None, then this data has not
 		## been inserted into the database
 		self.dbid = None
+
+		## DataManager ID
+		## this is None, then this data has not
+		## been inserted into the DataManager
+		self.dmid = None
+
+		datamanager.insert(self)
 
 		# if initializer was given, update my values
 		if 'initializer' in kwargs:
@@ -248,8 +295,14 @@ class Data(DataDict, leginonobject.LeginonObject):
 		legid = self['id']
 		leginonobject.LeginonObject.__init__(self, legid)
 
-	def items(self):
+	def setPersistent(self, dbid):
+		self.dbid = dbid
+		datamanager.setPersistent(self)
+
+	def items(self, dereference=True):
 		original = super(Data, self).items()
+		if not dereference:
+			return original
 		deref = []
 		for item in original:
 			if isinstance(item[1], DataReference):
@@ -259,8 +312,10 @@ class Data(DataDict, leginonobject.LeginonObject):
 			deref.append((item[0],val))
 		return deref
 
-	def values(self):
+	def values(self, dereference=True):
 		original = super(Data, self).values()
+		if not dereference:
+			return original
 		deref = []
 		for value in original:
 			if isinstance(value, DataReference):
@@ -270,11 +325,16 @@ class Data(DataDict, leginonobject.LeginonObject):
 			deref.append(val)
 		return deref
 
-	def __getitem__(self, key):
+	def special_getitem(self, key, dereference):
+		'''
+		'''
 		value = super(Data, self).__getitem__(key)
-		if isinstance(value, DataReference):
+		if dereference and isinstance(value, DataReference):
 			value = value.getData()
 		return value
+
+	def __getitem__(self, key):
+		return self.special_getitem(key, dereference=True)
 
 	def __setitem__(self, key, value):
 		'''
@@ -330,13 +390,21 @@ class Data(DataDict, leginonobject.LeginonObject):
 	def size(self):
 		size = 0
 		for key, datatype in self.types().items():
-			if key in self and self[key] is not None:
+			if issubclass(datatype, Data):
+				## do not include size of other Data
+				## and even if you do, self[key]
+				## is dereferencing and possibly querying
+				## the database
+				continue
+			if self[key] is not None:
 				size += self.sizeof(self[key])
 		return size
 
 	def sizeof(self, value):
 		if type(value) is Numeric.ArrayType:
 			size = reduce(Numeric.multiply, value.shape) * value.itemsize()
+		elif value is None:
+			size = 0
 		else:
 			## this is my stupid estimate of size for other objects
 			size = 8
