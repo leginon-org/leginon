@@ -205,6 +205,11 @@ class PresetsManager(node.Node):
 		'''
 		if session is None:
 			session = self.session
+			diffsession = False
+		else:
+			## importing another sessions presets
+			diffsession = True
+
 		### get presets from database
 		pdata = data.PresetData(session=session)
 		presets = self.research(datainstance=pdata)
@@ -214,17 +219,29 @@ class PresetsManager(node.Node):
 		names = []
 		for preset in presets:
 			if preset['name'] not in names:
+				preset['session'] = self.session
 				mostrecent.append(preset)
 				names.append(preset['name'])
 		self.presets[:] = mostrecent
 
-	def presetToDB(self, presetdata):
+		### if using another session's presets, now save them
+		### as this sessions presets
+		if diffsession:
+			self.presetToDB()
+
+	def presetToDB(self, presetdata=None):
 		'''
 		stores a preset in the DB under the current session name
+		if no preset is specified, store all self.presets
 		'''
-		pdata = copy.copy(presetdata)
-		pdata['session'] = self.session
-		self.publish(pdata, database=True)
+		if presetdata is None:
+			tostore = self.presets
+		else:
+			tostore = [presetdata]
+		for p in tostore:
+			pdata = copy.copy(p)
+			pdata['session'] = self.session
+			self.publish(pdata, database=True)
 
 	def presetByName(self, name):
 		for p in self.presets:
@@ -335,6 +352,12 @@ class PresetsManager(node.Node):
 		names = [p['name'] for p in self.presets]
 		return names
 
+	def uiGetPresetsFromDB(self):
+		othersession = self.othersession.get()
+		self.getPresetsFromDB(othersession)
+		names = self.presetNames()
+		self.uiselectpreset.set(names, 0)
+
 	def uiToScope(self):
 		sel = self.uiselectpreset.getSelectedValue()
 		self.toScope(sel)
@@ -352,21 +375,16 @@ class PresetsManager(node.Node):
 		else:
 			print 'Enter a preset name!'
 
-	def uiSelectCallback(self, value):
-		if value:
-			try:
-				index = value[0]
-			except IndexError:
-				self.currentselection = None
-			else:
-				try:
-					self.currentselection = self.presets[index]
-				except IndexError:
-					self.currentselection = None
-				else:
-					d = self.currentselection.toDict(noNone=True)
-					self.presetparams.set(d, callback=False)
-		return value
+	def uiSelectCallback(self, index):
+		print 'INDEX', index
+		try:
+			self.currentselection = self.presets[index]
+		except IndexError:
+			self.currentselection = None
+		else:
+			d = self.currentselection.toDict(noNone=True)
+			self.presetparams.set(d, callback=False)
+		return index
 
 	def uiParamsCallback(self, value):
 		if (self.currentselection is None) or (not value):
@@ -382,6 +400,9 @@ class PresetsManager(node.Node):
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
 
+		self.othersession = uidata.UIString('Session', '', 'rw')
+		fromdb = uidata.UIMethod('Import', self.uiGetPresetsFromDB)
+
 		self.presetparams = uidata.UIStruct('Parameters', {}, 'rw', self.uiParamsCallback)
 		self.uiselectpreset = uidata.UISingleSelectFromList('Preset', [], 0, callback=self.uiSelectCallback)
 		pnames = self.presetNames()
@@ -394,7 +415,7 @@ class PresetsManager(node.Node):
 		newfromscopemethod = uidata.UIMethod('New From Scope', self.uiNewFromScope)
 
 		container = uidata.UIMediumContainer('Presets Manager')
-		container.addUIObjects((self.uiselectpreset, toscopemethod, fromscopemethod, self.enteredname, newfromscopemethod, self.presetparams))
+		container.addUIObjects((self.othersession, fromdb, self.uiselectpreset, toscopemethod, fromscopemethod, self.enteredname, newfromscopemethod, self.presetparams))
 		self.uiserver.addUIObject(container)
 
 		return
