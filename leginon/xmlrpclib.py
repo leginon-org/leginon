@@ -1,6 +1,6 @@
 #
 # XML-RPC CLIENT LIBRARY
-# $Id: xmlrpclib.py,v 1.4 2003-06-20 23:11:43 pulokas Exp $
+# $Id: xmlrpclib.py,v 1.5 2003-08-26 17:59:11 suloway Exp $
 #
 # an XML-RPC client interface for Python.
 #
@@ -126,8 +126,11 @@ Exported functions:
                  name (None if not present).
 """
 
+import debugleak
 import re, string, time, operator
 from timer import Timer
+import base64
+import StringIO
 
 from types import *
 
@@ -286,6 +289,8 @@ class Binary:
     Modified decode and encode to use radix64 if available
     """
     def __init__(self, data=None):
+        debugleak.logInstanceCreation(self)
+        debugleak.logInstanceCreation(data)
         self.data = data
 
     def __cmp__(self, other):
@@ -294,31 +299,29 @@ class Binary:
         return cmp(self.data, other)
 
     def decode(self, data):
-	## first try the faster radix64, then base64
-	t = Timer('Binary.decode')
-	try:
-		import radix64
-		self.data = radix64.decode(data)
-	except:
-		import base64
-		print 'using base64, you should install radix64 instead'
-		self.data = base64.decodestring(data)
-	t.stop()
+        ## first try the faster radix64, then base64
+#        t = Timer('Binary.decode')
+#        try:
+#            import radix64
+#            self.data = radix64.decode(data)
+#        except:
+#         print 'using base64, you should install radix64 instead'
+         self.data = base64.decodestring(data)
+#        t.stop()
 
     def encode(self, out):
-    	t = Timer('Binary.encode')
-        out.write("<value><base64>\n")
-	## first try the faster radix64, then base64
-	try:
-		import radix64
-		e = radix64.encode(self.data)
-		out.write(e)
-	except:
-		import base64, StringIO
-		print 'using base64, you should install radix64 instead'
-		base64.encode(StringIO.StringIO(self.data), out)
-        out.write("</base64></value>\n")
-	t.stop()
+#        t = Timer('Binary.encode')
+         out.write("<value><base64>\n")
+         ## first try the faster radix64, then base64
+#        try:
+#            import radix64
+#            e = radix64.encode(self.data)
+#            out.write(e)
+#        except:
+#         print 'using base64, you should install radix64 instead'
+         base64.encode(StringIO.StringIO(self.data), out)
+         out.write("</base64></value>\n")
+#        t.stop()
 
 def binary(data):
     value = Binary()
