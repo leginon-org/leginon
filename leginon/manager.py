@@ -188,7 +188,12 @@ class Manager(node.Node):
 							else:
 								for to_node in self.handler.clients:
 									if to_node not in do:
-																				do.append(to_node)
+										do.append(to_node)
+
+		## if nothing to do, report a warning and return now
+		if not do:
+			print 'FYI:  %s event from node %s is not bound to any nodes.' % (eventclass.__name__, from_node)
+			return
 
 		### set up confirmation event waiting
 		ewaits = self.disteventswaiting
