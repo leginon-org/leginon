@@ -17,9 +17,10 @@ class EventDistributor(object):
 		if key in self.bindings:
 			eventrepr = eventinst.xmlrpc_repr()
 			targets = self.bindings[key]
-			for target in targets:
+			for targetid in targets:
 				args = (eventrepr,)
-				self.callProxy(target, 'event_dispatch', args)
+				loc = self.registry.entries[targetid].location
+				loc.rpc('event_dispatch', args)
 
 	def addBinding(self, sourceid, targetid, eventclass):
 		## this should probably be moved into event.EventDistributor

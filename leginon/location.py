@@ -1,3 +1,5 @@
+import xmlrpclib
+
 class Location(object):
         def __init__(self, hostname, rpcport, pid):
                 self.hostname = hostname
@@ -6,6 +8,12 @@ class Location(object):
 
 	def getURI(self):
 		return "http://%s:%d" % (self.hostname, self.rpcport)
+
+	def rpc(self, method, args=()):
+			uri = self.getURI()
+			proxy = xmlrpclib.ServerProxy(uri)
+			ret = apply(getattr(proxy,method), args)
+			return ret
 
 	def tostring(self):
 		return "PID %d on %s:%d" % (self.pid, self.hostname, self.rpcport)

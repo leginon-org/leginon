@@ -45,7 +45,7 @@ class xmlrpcserver(SimpleXMLRPCServer):
 
 	def _start_serving(self):
 		hostname = self.location.hostname
-		port = self.location.port
+		port = self.location.rpcport
 		print 'xml-rpc server %s:%s' % (hostname,port)
 		self.register_instance(self)
 		th = threading.Thread(target=self.serve_forever)
@@ -90,29 +90,6 @@ class xmlrpcserver(SimpleXMLRPCServer):
 
 		return rpcmethdict
 
-
-class xmlrpcnode(xmlrpcserver):
-	"""
-	xmlrpcserver that also acts as an xmlrpc client to other servers
-	"""
-	def __init__(self):
-		xmlrpcserver.__init__(self)
-		self.proxies = {}
-
-	def addProxy(self, id, uri):
-		proxy = xmlrpclib.ServerProxy(uri)
-		self.proxies[id] = proxy
-
-	def deleteProxy(self, id):
-		try:
-			del(self.proxies[id])
-		except KeyError:
-			pass
-
-	def callProxy(self, id, method, args=()):
-		proxy = self.proxies[id]
-		#return getattr(proxy,method)(*args)
-		return apply(getattr(proxy,method), args)
 
 class callerbut(Frame):
 	def __init__(self, parent, proxy, name, args):

@@ -6,9 +6,9 @@ import location
 import registry
 import event
 
-class Node(xmlrpcnode.xmlrpcnode):
+class Node(xmlrpcnode.xmlrpcserver):
 	def __init__(self, manageraddress):
-		xmlrpcnode.xmlrpcnode.__init__(self)
+		xmlrpcnode.xmlrpcserver.__init__(self)
 
 		self.datahandler = DataHandler(self)
 
@@ -16,16 +16,16 @@ class Node(xmlrpcnode.xmlrpcnode):
 		# and instance of Location as part of the constructor
 		# or the whole thing could be a dictionary
 		self.location = location.NodeLocation(self.location.hostname,
-							self.location.port,
+							self.location.rpcport,
 							self.location.pid,
 							self.datahandler.port)
 
 		self.init_events()
 
 		if manageraddress:
-			manager_location = location.Location(manageraddress[0],
+			self.managerlocation = location.Location(manageraddress[0],
 							manageraddress[1], None)
-			self.id = self.manager_connect(manager_location.getURI())
+			self.id = self.register()
 
 	def init_events(self):
 		raise NotImplementedError()
@@ -33,8 +33,8 @@ class Node(xmlrpcnode.xmlrpcnode):
 	def __del__(self):
 		self.manager_close()
 
-	def manager_connect(self, uri):
-		self.addProxy('manager', uri)
+	def register(self):
+
 		meths = self.EXPORT_methods()
 
 		eventinfo = {}
@@ -46,15 +46,13 @@ class Node(xmlrpcnode.xmlrpcnode):
 
 		nodeinfo = {'location pickle' : locpickle, 'methods' : 'meths', 'events pickle': eventpickle}
 
-		args = (nodeinfo,)
-		id = self.callProxy('manager', 'addNode', args)
+		id = self.managerlocation.rpc('addNode', (nodeinfo,))
 		return id
 
 	def manager_close(self):
 		print 'manager_close'
 		try:
-			args = (self.id,)
-			self.callProxy('manager', 'deleteNode', args)
+			self.managerlocation.rpc('deleteNode', (self.id,))
 		except:
 			pass
 
@@ -64,7 +62,7 @@ class Node(xmlrpcnode.xmlrpcnode):
 		print 'ANNOUNCEeventrepr', eventrepr
 		args = (self.id, eventrepr)
 		print 'ARGS', args
-		ret = self.callProxy('manager', 'notify', args)
+		ret = self.managerlocation.rpc('notify', args)
 		print 'return', ret
 
 	def EXPORT_event_dispatch(self, eventrepr):
@@ -110,21 +108,21 @@ class DataHandler(object):
 		## notify manager of the new location
 		location = self.mynode.location.getURI() + '/' + dataid
 		args = (dataid, location)
-		self.mynode.callProxy('manager', 'addLocation', args)
+		self.mynode.managerlocation.rpc('addLocation', args)
 
 	def get(self, dataid):
 		args = (dataid,)
-		location = self.mynode.callProxy('manager', 'locate', args)
+		location = self.mynode.managerlocation.rpc('locate', args)
 		urlfile = urllib.urlopen(location)
 		data = cPickle.load(urlfile)
 
 		return data
 
-class Manager(xmlrpcnode.xmlrpcnode):
+class Manager(xmlrpcnode.xmlrpcserver):
 	def __init__(self, *args, **kwargs):
-		xmlrpcnode.xmlrpcnode.__init__(self)
+		xmlrpcnode.xmlrpcserver.__init__(self)
 		self.registry = registry.Registry()
-		self.distributor = event.EventDistributor()
+		self.distributor = event.EventDistributor(self.registry)
 		self.locations = {}
 
 	def EXPORT_addNode(self, node):
@@ -133,18 +131,14 @@ class Manager(xmlrpcnode.xmlrpcnode):
 			registry.NodeRegistryEntry(node['methods'],
 				cPickle.loads(node['events pickle']),
 				cPickle.loads(node['location pickle'])))
-		self.addProxy(id, self.registry.entries[id].location.getURI())
+
 		print 'node %s has been added' % id
 		#self.print_nodes()
 		return id
 
 	def EXPORT_deleteNode(self, id):
-		try:
-			#del(self.clients[nodeid])
-			self.delProxy(id)
-			print 'node %s has been deleted' % id
-		except KeyError:
-			pass
+		self.registry.delEntry(id)
+		print 'node %s has been deleted' % id
 
 	def EXPORT_nodes(self):
 		nodes = self.registry.xmlrpc_repr()
