@@ -3,6 +3,9 @@ import leginonobject
 import event
 import datatransport
 import datahandler
+import sys
+if sys.platform == 'win32':
+	sys.coinit_flags = 0
 
 class Client(datatransport.Client):
 	def __init__(self, location):

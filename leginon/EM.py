@@ -5,11 +5,8 @@ import scopedict
 import cameradict
 import threading
 import data
-# this is so the COM stuff will work
-# I don't know if this is a good place for it, perhaps the caller is
 import sys
 if sys.platform == 'win32':
-	sys.coinit_flags = 0
 	import pythoncom
 
 class DataHandler(datahandler.DataBinder):
