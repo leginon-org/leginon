@@ -21,43 +21,81 @@ class SquareFinder(targetfinder.TargetFinder):
 																				**kwargs)
 		self.squarefinder = squarefinderback.SquareFinder()
 		self.image = None
-		self.lpfimage = None
-		self.thresholdimage = None
+		self.defineUserInterface()
+		self.setImage(None)
+		self.start()
+
+	def setImage(self, image):
+		self.image = image
+		self.ui_image.setImage(self.image)
+		if self.image is not None:
+			dimension = self.uisquaredimension.get()
+			if dimension is not None:
+				self.updateMaxBlobs(self.image, dimension)
+			self.lpfmethod.enable()
+		else:
+			self.lpfmethod.disable()
+		self.setLPFImage(None)
 		self.blobs = []
 		self.targets = []
 		self.squaredimension = None
-		self.defineUserInterface()
-		self.start()
+
+	def setLPFImage(self, image):
+		self.lpfimage = image
+		if self.lpfimage is not None:
+			self.ui_image.setImage(self.lpfimage)
+			self.thresholdmethod.enable()
+		else:
+			self.thresholdmethod.disable()
+		self.setThresholdImage(None)
+
+	def setThresholdImage(self, image):
+		self.thresholdimage = image
+		if self.thresholdimage is not None:
+			self.ui_image.setImage(self.thresholdimage)
+			self.findblobsmethod.enable()
+		else:
+			self.findblobsmethod.disable()
+		self.setBlobs([])
+
+	def setBlobs(self, blobs):
+		self.blobs = blobs
+		if blobs:
+			self.targetmethod.enable()
+		else:
+			self.targetmethod.disable()
+		self.setTargets([])
+
+	def setTargets(self, targets):
+		self.targets = targets
+		self.ui_image.setTargetType('Targets', self.targets)
 
 	def lowPassFilter(self):
 		size = self.uilpfsize.get()
 		sigma = self.uilpfsigma.get()
 		try:
-			self.lpfimage = self.squarefinder.lowPassFilter(size, sigma, self.image)
+			image = self.squarefinder.lowPassFilter(size, sigma, self.image)
 		except (RuntimeError, OverflowError):
+			image = None
 			self.messagelog.error('Low pass filter failed')
-			return
-		self.thresholdmethod.enable()
+		self.setLPFImage(image)
 
 	def threshold(self):
-		self.thresholdimage = self.squarefinder.threshold(self.lpfimage)
-		self.findblobsmethod.enable()
+		self.setThresholdImage(self.squarefinder.threshold(self.lpfimage))
 
 	def findBlobs(self):
 		border = self.uiborder.get()
 		maxblobs = self.uimaxblobs.get()
 		maxblobsize = self.uimaxblobsize.get()
 		try:
-			self.blobs = self.squarefinder.findblobs(self.lpfimage,
-																										self.thresholdimage, border,
-																										maxblobs, maxblobsize)
+			blobs = self.squarefinder.findblobs(self.lpfimage, self.thresholdimage,
+																					border, maxblobs, maxblobsize)
 		except TooManyBlobs:
+			blobs = []
 			self.messagelog.error('Too many blobs found')
-			return
-		self.targetmethod.enable()
+		self.setBlobs(blobs)
 
 	def target(self):
-		self.targets = []
 		targetborder = self.uitargetborder.get()
 		shape = self.image.shape
 		if targetborder < 0 or targetborder > shape[0]/2 \
@@ -66,65 +104,52 @@ class SquareFinder(targetfinder.TargetFinder):
 		targetmin = (targetborder, targetborder)
 		targetmax = (self.image.shape[0] - targetborder,
 									self.image.shape[1] - targetborder)
+		targets = []
 		for blob in self.blobs:
 			if blob[0] >= targetmin[0] and blob[0] <= targetmax[0] \
 					and blob[1] >= targetmin[1] and blob[1] <= targetmax[1]:
-				self.targets.append(blob)
+				targets.append(blob)
+		self.setTargets(targets)
 
 	def uiLoad(self):
 		filename = self.uitestfilename.get()
 		try:
-			self.image = Mrc.mrc_to_numeric(filename)
+			image = Mrc.mrc_to_numeric(filename)
 		except IOError:
+			image = None
 			self.messagelog.error('Load file "%s" failed' % filename)
-			return
-		self.ui_image.setImage(self.image)
-		self.updateMaxBlobs()
-		self.lpfmethod.enable()
+		self.setImage(image)
 
 	def uiLowPassFilter(self):
 		self.lowPassFilter()
-		self.ui_image.setImage(self.lpfimage)
 
 	def uiThreshold(self):
 		self.threshold()
-		self.ui_image.setImage(self.thresholdimage)
 
 	def uiFindBlobs(self):
 		self.findBlobs()
 
 	def uiTarget(self):
 		self.target()
-		self.ui_image.setTargetType('Targets', self.targets)
 
 	def onSetSquareDimension(self, value):
 		if value is None:
 			return value
-		self.squaredimension = value
-		self.updateMaxBlobs()
-		self.uimaxblobsize.set((self.squaredimension*1.1)**2)
-		self.uitargetborder.set(self.squaredimension/2)
+		if self.image is not None:
+			self.updateMaxBlobs(self.image, value)
+		self.uimaxblobsize.set((value*1.1)**2)
+		self.uitargetborder.set(value/2)
 		return value
 
-	def updateMaxBlobs(self):
-		if self.image is None or self.squaredimension is None:
-			return
-		blobs = (self.image.shape[0]/self.squaredimension,
-							self.image.shape[1]/self.squaredimension)
-		maxblobs = blobs[0]*blobs[1]
+	def updateMaxBlobs(self, image, dimension):
+		maxblobs = image.shape[0]/dimension * image.shape[1]/dimension
 		self.uimaxblobs.set(maxblobs)
 
 	def onShowAdvanced(self, value):
 		if value:
-			try:
-				self.settingscontainer.addObject(self.advancedcontainer)
-			except ValueError:
-				pass
+			self.advancedcontainer.enable()
 		else:
-			try:
-				self.settingscontainer.deleteObject('Advanced')
-			except ValueError:
-				pass
+			self.advancedcontainer.disable()
 		return value
 
 	def defineUserInterface(self):
@@ -172,15 +197,16 @@ class SquareFinder(targetfinder.TargetFinder):
 
 		self.uisquaredimension = uidata.Number('Square Dimension', None, 'rw',
 															callback=self.onSetSquareDimension, persist=True)
-		self.settingscontainer = uidata.Container('Settings')
-		self.settingscontainer.addObjects((self.uisquaredimension,))
 
 		self.advancedcontainer = uidata.Container('Advanced')
 		self.advancedcontainer.addObjects((lpfcontainer, findblobscontainer,
 																	targetcontainer))
-		self.uishowadvanced = uidata.Boolean('Show advanced settings', False, 'rw', 																					callback=self.onShowAdvanced,
+		self.uishowadvanced = uidata.Boolean('Edit advanced settings', False, 'rw',
+																					callback=self.onShowAdvanced,
 																					persist=True)
-		self.settingscontainer.addObject(self.uishowadvanced)
+		settingscontainer = uidata.Container('Settings')
+		settingscontainer.addObjects((self.uisquaredimension, self.uishowadvanced,
+																	self.advancedcontainer))
 
 		controlcontainer = uidata.Container('Control')
 		controlcontainer.addObjects((self.lpfmethod, self.thresholdmethod,
@@ -188,7 +214,7 @@ class SquareFinder(targetfinder.TargetFinder):
 
 		container = uidata.LargeContainer('Square Finder')
 		container.addObjects((self.messagelog, testfilecontainer,
-													self.settingscontainer, controlcontainer,
+													settingscontainer, controlcontainer,
 													self.ui_image,))
 		self.uiserver.addObjects((container,))
 
