@@ -182,6 +182,11 @@ class Tecnai(object):
 			'shutter': {'type': str, 'values': ['open', 'closed']},
 			'external shutter': {'type': str, 'values': ['connected', 'disconnected']},
 		}
+		self.parameterdependencies = {
+			'main screen position': ['magnification'],
+			'film exposure type': ['film exposure time'],
+			'reset defocus': ['defocus'],
+		}
 
 	def setCorrectedStagePosition(self, value):
 		self.correctedstage = value
