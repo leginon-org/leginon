@@ -456,6 +456,13 @@ class Data(DataDict, leginonobject.LeginonObject):
 
 		leginonobject.LeginonObject.__init__(self)
 
+	def update(self, other):
+		'''
+		needs to not dereference
+		'''
+		for k in other.keys():
+			self[k] = other.special_getitem(k, dereference=False)
+
 	def __deepcopy__(self, memo={}):
 		# without this, it will copy the dict
 		# stuff first and then the OrderedDict, but the dict copy
