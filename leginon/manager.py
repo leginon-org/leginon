@@ -378,8 +378,6 @@ class Manager(node.Node):
 		)
 		spec3 = self.registerUIMethod(self.uiAddDistmap, 'Bind', argspec)
 
-		ndict = self.nodeDict()
-		self.nodetreedata = self.registerUIData('Nodes', 'struct', permissions='r', default=ndict)
 
 		argspec = (
 		self.registerUIData('Filename', 'string'),
@@ -394,13 +392,16 @@ class Manager(node.Node):
 		argspec = (self.registerUIData('ID', 'string'),)
 		newlauncherspec = self.registerUIMethod(self.newLauncher, 'New Launcher', (argspec))
 
+		launcherspec = self.registerUIContainer('Launcher', (newlauncherspec,))
+
+		ndict = self.nodeDict()
+		self.nodetreedata = self.registerUIData('Nodes', 'struct', permissions='r', default=ndict)
 		argspec = (self.registerUIData('Hostname', 'string'),
 								self.registerUIData('Port', 'integer'))
-		addlauncherspec = self.registerUIMethod(self.uiAddLauncher, 'Add Launcher', (argspec))
+		addnodespec = self.registerUIMethod(self.uiAddNode, 'Add Node', (argspec))
+		nodesspec = self.registerUIContainer('Nodes', (self.nodetreedata, addnodespec))
 
-		launcherspec = self.registerUIContainer('Launcher', (newlauncherspec, addlauncherspec))
-
-		self.registerUISpec('Manager', (nodespec, spec1, spec2, spec3, app, launcherspec, self.nodetreedata))
+		self.registerUISpec('Manager', (nodespec, spec1, spec2, spec3, app, launcherspec, nodesspec))
 
 	def nodeDict(self):
 		"""
@@ -415,16 +416,16 @@ class Manager(node.Node):
 				nodeinfo[nodename] = nodeloc
 		return nodeinfo
 
-	def uiAddLauncher(self, hostname, port):
+	def uiAddNode(self, hostname, port):
 		e = event.ManagerAvailableEvent(self.id, self.location())
 		try:
 			client = self.clientclass(self.ID(), {'hostname': hostname, 'TCP port': port})
 		except:
-			print "Error: cannot connect to specified launcher"
+			print "Error: cannot connect to specified node"
 		try:
 			client.push(e)
 		except:
-			print "Error: cannot push to specified launcher"
+			print "Error: cannot push to specified node"
 		return ''
 
 	def uiLaunch(self, name, launchclass, args, newproc=0):

@@ -79,6 +79,7 @@ class Node(leginonobject.LeginonObject):
 		self.addEventOutput(event.NodeUnavailableEvent)
 		self.addEventInput(event.KillEvent, self.die)
 		self.addEventInput(event.ConfirmationEvent, self.registerConfirmedEvent)
+		self.addEventInput(event.ManagerAvailableEvent, self.eventAddManager)
 		if 'manager' in self.nodelocations:
 			try:
 				self.addManager(self.nodelocations['manager'])
@@ -178,7 +179,11 @@ class Node(leginonobject.LeginonObject):
 		else:
 			return str(d)
 
+	def eventAddManager(self, ievent):
+		self.addManager(ievent.content)
+
 	def addManager(self, loc):
+		self.delAllEventClients()
 		self.addEventClient(('manager',), loc)
 		newid = self.ID()
 		myloc = self.location()
@@ -319,6 +324,13 @@ class Node(leginonobject.LeginonObject):
 				self.clientlist.remove(name)
 				del self.clientdict[name]
 		self.clientlistdata.set(self.clientlist)
+
+	def delAllEventClients(self):
+		try:
+			for clientid in self.clients:
+				del self.clients[clientid]
+		except:
+			pass
 
 	def addEventInput(self, eventclass, func):
 		self.server.datahandler.setBinding(eventclass, func)

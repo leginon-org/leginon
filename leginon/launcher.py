@@ -15,22 +15,18 @@ class Launcher(node.Node):
 
 		self.addEventInput(event.LaunchEvent, self.handleLaunch)
 		self.addEventInput(event.UpdateNodeClassesEvent, self.publishNodeClasses)
-		self.addEventInput(event.ManagerAvailableEvent, self.eventAddManager)
 		self.addEventOutput(event.NodeClassesPublishEvent)
 		self.caller = calllauncher.CallLauncher()
 		print 'launcher id: %s' % (self.id,)
 		self.print_location()
 		self.start()
 
-	def eventAddManager(self, ievent):
-		self.addManager(ievent.content)
-
 	def addManager(self, loc):
 		'''
 		Node uses NodeAvailableEvent 
 		This uses LauncherAvailableEvent
 		'''
-		self.nodelocations['manager'] = loc
+		self.delEventClient(('manager',))
 		self.addEventClient(('manager',), loc)
 
 		launcherinfo = self.location()
