@@ -361,7 +361,7 @@ class Node(leginonobject.LeginonObject):
 		'''Event handler calling setManager with event info. See setManager.'''
 		if self.session is None:
 			self.session = ievent['session']
-		if ievent['session'] == self.session:
+		if ievent['session']['name'] == self.session['name']:
 			self.setManager(ievent['location'])
 		else:
 			self.logger.warning('Attempt to set manager rejected')
