@@ -282,7 +282,7 @@ class EM(node.Node):
 			self.weird_update(self.camera, result)
 
 		result['system time'] = time.time()
-		result['em host'] = self.id[-1]
+		result['em host'] = self.location()['hostname']
 
 		self.lock.release()
 		return result
