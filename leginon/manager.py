@@ -151,6 +151,7 @@ class Manager(node.Node):
 			nodename = ievent['node']
 			ev = event.ConfirmationEvent(eventid=eventid, status=status)
 			self.outputEvent(ev, nodename)
+			ievent['confirm'] = None
 
 	def handleConfirmedEvent(self, ievent):
 		'''Event handler for distributing a confirmation event to the node waiting for confirmation of the event.'''
