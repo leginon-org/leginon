@@ -8,7 +8,8 @@ def factory(scopeclass):
 								'defocus', 'magnification', 'corrected stage position',
 								'stage position', 'low dose', 'low dose mode',
 								'diffraction mode', 'reset defocus', 'screen position',
-								'holder status', 'holder type', 'stage status', 'column valves']
+								'holder status', 'holder type', 'stage status', 'column valves',
+								'vacuum status', 'turbo pump']
 
 		def __init__(self):
 			scopeclass.__init__(self)
