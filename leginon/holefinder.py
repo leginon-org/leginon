@@ -226,6 +226,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		centers = self.blobCenters(goodholes)
 		self.goodholes.set(centers)
 		self.goodholesimage.setImage(self.hf['original'])
+		self.goodholesimage.imagedata = self.currentimagedata
 		# takes x,y instead of row,col
 		if self.use_target_template.get():
 			newtargets = self.applyTargetTemplate(centers)
@@ -280,20 +281,23 @@ class HoleFinder(targetfinder.TargetFinder):
 			self.notifyUserCheck()
 			self.userpause.clear()
 			self.userpause.wait()
-		self.getTargetDataList('focus')
-		self.getTargetDataList('acquisition')
+		targetlist = self.getTargetDataList('focus')
+		self.targetlist.extend(targetlist)
+		targetlist = self.getTargetDataList('acquisition')
+		self.targetlist.extend(targetlist)
 
 	def submit(self):
 		self.userpause.set()
 
 	def getTargetDataList(self, typename):
+		targetlist = []
 		for imagetarget in self.goodholesimage.getTargetType(typename):
 			column, row = imagetarget
-			# using self.currentiamge.shape could be bad
-			target = {'delta row': row - self.numarray.shape[0]/2,
-								'delta column': column - self.numarray.shape[1]/2}
-			imageinfo = self.imageInfo()
-			target.update(imageinfo)
-			targetdata = data.AcquisitionImageTargetData(id=self.ID(), type=typename, version=0)
-			targetdata.friendly_update(target)
-			self.targetlist.append(targetdata)
+			imagedata = self.goodholesimage.imagedata
+			imagearray = imagedata['image']
+			drow = row - imagearray.shape[0]/2
+			dcol = column - imagearray.shape[1]/2
+
+			targetdata = self.newTargetData(imagedata, typename, drow, dcol)
+			targetlist.append(targetdata)
+		return targetlist

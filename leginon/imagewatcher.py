@@ -22,30 +22,18 @@ class ImageWatcher(watcher.Watcher):
 
 		self.iv = None
 		self.numarray = None
-		self.imagedata = None
-
-	def imageInfo(self):
-		'''
-		add some info to clickinfo to create targetinfo
-		'''
-		imageinfo = {}
-		imageinfo['scope'] = self.imagedata['scope']
-		imageinfo['camera'] = self.imagedata['camera']
-		if 'preset' in self.imagedata and self.imagedata['preset'] is not None:
-			imageinfo['preset'] = self.imagedata['preset']
-		imageinfo['source'] = 'click'
-		return imageinfo
+		self.currentimagedata = None
 
 	def processData(self, somedata):
 		if not isinstance(somedata, data.ImageData):
 			raise RuntimeError('Data is not ImageData instance')
-		self.imagedata = somedata
+		self.currentimagedata = somedata
 		self.numarray = somedata['image']
 		self.processImageData(somedata)
 		self.sendImageProcessDone()
 
 	def sendImageProcessDone(self, status='ok'):
-		imageid = self.imagedata['id']
+		imageid = self.currentimagedata['id']
 		ev = event.ImageProcessDoneEvent(id=self.ID(), imageid=imageid, status=status)
 		print '%s sending %s' % (self.id, ev)
 		self.outputEvent(ev)

@@ -61,6 +61,8 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		'''
 		Gets and publishes target information of specified image data.
 		'''
+		if self.ignore_images.get():
+			return
 		self.findTargets(imagedata)
 		self.publishTargetList()
 
@@ -73,7 +75,6 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		for target in self.targetlist:
 			# XXX this might not work for mosaic
 			# XXX need to publish a mosaic image so this will work
-			target['image'] = self.imagedata
 			target['index'] = index
 			index += 1
 			print 'TARGET publishing %s' % (target['id'],)
@@ -137,11 +138,11 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		# turn off data queuing by default
 		self.uidataqueueflag.set(False)
 
-		self.wait_for_done = uidata.Boolean('Wait for "Done"', True, 'rw',
-																				persist=True)
+		self.wait_for_done = uidata.Boolean('Wait for "Done"', True, 'rw', persist=True)
+		self.ignore_images = uidata.Boolean('Ignore Images', False, 'rw', persist=True)
 
 		container = uidata.LargeContainer('Target Finder')
-		container.addObjects((self.wait_for_done,))
+		container.addObjects((self.wait_for_done,self.ignore_images))
 
 		self.uiserver.addObject(container)
 
@@ -159,6 +160,7 @@ class ClickTargetFinder(TargetFinder):
 		# display image
 		self.clickimage.setTargets([])
 		self.clickimage.setImage(imdata['image'])
+		self.clickimage.imagedata = imdata
 
 		# user now clicks on targets
 		self.userpause.clear()
@@ -169,18 +171,31 @@ class ClickTargetFinder(TargetFinder):
 	def submitTargets(self):
 		self.userpause.set()
 
+	def newTargetData(self, imagedata, type, drow, dcol):
+		'''
+		returns a new target data object with data filled in from the image data
+		'''
+		imagearray = imagedata['image']
+		targetdata = data.AcquisitionImageTargetData(id=self.ID(), type=type, version=0)
+		targetdata['image'] = imagedata
+		targetdata['scope'] = imagedata['scope']
+		targetdata['camera'] = imagedata['camera']
+		targetdata['preset'] = imagedata['preset']
+		targetdata['type'] = type
+		targetdata['delta row'] = drow
+		targetdata['delta column'] = dcol
+		return targetdata
+
 	def getTargetDataList(self, typename):
 		targetlist = []
 		for imagetarget in self.clickimage.getTargetType(typename):
 			column, row = imagetarget
-			# using self.numarray.shape could be bad
-			target = {'delta row': row - self.numarray.shape[0]/2,
-								'delta column': column - self.numarray.shape[1]/2}
-			imageinfo = self.imageInfo()
-			target.update(imageinfo)
-			targetdata = data.AcquisitionImageTargetData(id=self.ID(), type=typename,
-																										version=0)
-			targetdata.friendly_update(target)
+			imagedata = self.clickimage.imagedata
+			imagearray = imagedata['image']
+			drow = row - imagearray.shape[0]/2
+			dcol = column - imagearray.shape[1]/2
+
+			targetdata = self.newTargetData(imagedata, typename, drow, dcol)
 			targetlist.append(targetdata)
 		return targetlist
 
@@ -229,7 +244,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 	def submitTargets(self):
 		self.setStatusMessage('Sumbiting targets')
-		self.getTargetDataList('acquisition')
+		targetlist = self.getTargetDataList('acquisition')
+		self.targetlist.extend(targetlist)
 		self.publishTargetList()
 		self.setStatusMessage('Targets submitted')
 
@@ -329,7 +345,6 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			except IndexError:
 				self.setStatusMessage('Cannot find image data referenced by mosaic')
 			else:
-				self.imagedata = imagedata
 				if imagedata['image'] is not None:
 					self.mosaic.addTile(imagedata)
 					nloaded += 1
@@ -349,6 +364,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		if self.displayimage.get():
 			self.setStatusMessage('Displaying mosaic image')
 			self.clickimage.setImage(self.getMosaicImage())
+			## imagedata would be full mosaic image
+			self.clickimage.imagedata = None
 		else:
 			self.setStatusMessage('Not diplaying mosaic image')
 		self.clickimage.setTargets([])
@@ -369,17 +386,16 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			self.setStatusMessage('Error saving mosaic image, no mosaic')
 
 	def getTargetDataList(self, typename):
+		targetlist = []
 		for imagetarget in self.clickimage.getTargetType(typename):
-			x, y = imagetarget
-			target = self.mosaic.getTargetInfo(x, y)
-			imageinfo = self.imageInfo()
-			# just need preset, everythin else is there already
-			target['preset'] = imageinfo['preset']
-
-			targetdata = data.AcquisitionImageTargetData(id=self.ID(), type=typename,
-																										version=0)
-			targetdata.friendly_update(target)
-			self.targetlist.append(targetdata)
+			column, row = imagetarget
+			target = self.mosaic.getTargetInfo(column, row)
+			imagedata = target['imagedata']
+			drow = target['delta row']
+			dcol = target['delta column']
+			targetdata = self.newTargetData(imagedata, typename, drow, dcol)
+			targetlist.append(targetdata)
+		return targetlist
 
 	def mosaicClear(self):
 		self.setStatusMessage('Clearing mosaic')
@@ -387,6 +403,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		initializer = {'id': self.ID(), 'data IDs': []}
 		self.mosaicdata = data.MosaicData(initializer=initializer)
 		self.clickimage.setImage(None)
+		self.clickimage.imagedata = None
 		self.setStatusMessage('Mosaic cleared')
 
 	def uiSetCalibrationParameter(self, value):
