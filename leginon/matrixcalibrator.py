@@ -10,11 +10,15 @@ import calibrationclient
 import Numeric
 import Mrc
 import uidata
+import threading
 
 False=0
 True=1
 
 class CalibrationError(Exception):
+	pass
+
+class Aborted(Exception):
 	pass
 
 class MatrixCalibrator(calibrator.Calibrator):
@@ -47,6 +51,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 		}
 
 		self.axislist = ['x', 'y']
+		self.aborted = threading.Event()
 
 		self.defineUserInterface()
 		self.start()
@@ -80,6 +85,8 @@ class MatrixCalibrator(calibrator.Calibrator):
 		percent = self.shiftpercent.get()
 		delta = percent * camconfig['dimension']['x']*camconfig['binning']['x']*pixsize
 		print 'DELTA', delta
+
+		self.aborted.clear()
 
 		shifts = {}
 		for axis in self.axislist:
@@ -126,14 +133,18 @@ class MatrixCalibrator(calibrator.Calibrator):
 				n += 1
 				print 'shifts', shifts
 
+				if self.aborted.isSet():
+					raise Aborted()
+
 			if n:
 				shifts[axis]['row'] /= n
 				shifts[axis]['col'] /= n
 			else:
 				# this axis was a failure
 				# better just fail the whole calibration
-				raise CalibrationError
-				return
+				raise CalibrationError()
+
+
 
 		# return to base
 		emdata = data.ScopeEMData(id=('scope',))
@@ -170,9 +181,10 @@ class MatrixCalibrator(calibrator.Calibrator):
 		settingscontainer.addObjects((self.uitolerance, self.shiftpercent, self.uiparameter, self.uinaverage, self.ui_interval, self.uicurbase, self.uibase))
 
 		calibratemethod = uidata.Method('Calibrate', self.uiCalibrate)
+		abortmethod = uidata.Method('Abort', self.uiAbort)
 
 		container = uidata.LargeContainer('Matrix Calibrator')
-		container.addObjects((settingscontainer, calibratemethod))
+		container.addObjects((settingscontainer, calibratemethod, abortmethod))
 		self.uiserver.addObject(container)
 
 	def uiCalibrate(self):
@@ -187,6 +199,9 @@ class MatrixCalibrator(calibrator.Calibrator):
 				self.outputError('Cannot get corrected images, Corrector may not be running')
 		else:
 			self.outputMessage('Calibration', 'Calibration completed successfully')
+
+	def uiAbort(self):
+		self.aborted.set()
 
 	def getBase(self):
 		if self.uicurbase.get():
