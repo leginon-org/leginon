@@ -676,14 +676,16 @@ class EM(node.Node):
 			elif isinstance(request, SetInstrumentRequest):
 				pass
 			elif isinstance(request, ExitRequest):
-				try:
-					self.scope.exit()
-				except AttributeError:
-					pass
-				try:
-					self.camera.exit()
-				except AttributeError:
-					pass
+				for tem in self.tems():
+					try:
+						tem.exit()
+					except AttributeError:
+						pass
+				for camera in self.ccdcameras():
+					try:
+						tem.exit()
+					except AttributeError:
+						pass
 				break
 			else:
 				raise TypeError('invalid EM request')

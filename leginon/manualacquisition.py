@@ -50,7 +50,7 @@ class ManualAcquisition(node.Node):
 		self.gridbox = None
 		self.grid = None
 
-		self.instrumentproxy = instrument.Proxy(self.objectservice)
+		self.instrument = instrument.Proxy(self.objectservice)
 
 		self.start()
 
@@ -220,6 +220,12 @@ class ManualAcquisition(node.Node):
 			raise node.PublishError
 
 	def acquireImage(self):
+		temnames = self.instrument.getTEMNames()
+		ccdcameranames = self.instrument.getCCDCameras()
+		print temnames
+		print ccdcameranames
+		self.instrument.setTEM(temnames[0])
+		print self.instrument.getData(data.ScopeEMData())
 		try:
 			try:
 				self.preExposure()
