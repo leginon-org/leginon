@@ -185,17 +185,18 @@ class MosaicSettingsDialog(gui.wx.Settings.Dialog):
 
 class LPFSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		self.widgets['size'] = IntEntry(self, -1, min=1, chars=4)
-		self.widgets['sigma'] = FloatEntry(self, -1, min=0.0, chars=4)
+		self.widgets['lpf'] = {}
+		self.widgets['lpf']['size'] = IntEntry(self, -1, min=1, chars=4)
+		self.widgets['lpf']['sigma'] = FloatEntry(self, -1, min=0.0, chars=4)
 
 		sz = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Size:')
 		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['size'], (0, 1), (1, 1),
+		sz.Add(self.widgets['lpf']['size'], (0, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		label = wx.StaticText(self, -1, 'Sigma:')
 		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['sigma'], (1, 1), (1, 1),
+		sz.Add(self.widgets['lpf']['sigma'], (1, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		sz.AddGrowableCol(1)
 
@@ -208,14 +209,15 @@ class LPFSettingsDialog(gui.wx.Settings.Dialog):
 class BlobSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		self.widgets['threshold'] = FloatEntry(self, -1, min=0, chars=6)
-		self.widgets['border'] = IntEntry(self, -1, min=0, chars=6)
-		self.widgets['max blobs'] = IntEntry(self, -1, min=0, chars=6)
-		self.widgets['min blob size'] = IntEntry(self, -1, min=0, chars=6)
-		self.widgets['max blob size'] = IntEntry(self, -1, min=0, chars=6)
-		self.widgets['min blob mean'] = FloatEntry(self, -1, chars=6)
-		self.widgets['max blob mean'] = FloatEntry(self, -1, chars=6)
-		self.widgets['min blob stdev'] = FloatEntry(self, -1, chars=6)
-		self.widgets['max blob stdev'] = FloatEntry(self, -1, chars=6)
+		self.widgets['blobs'] = {}
+		self.widgets['blobs']['border'] = IntEntry(self, -1, min=0, chars=6)
+		self.widgets['blobs']['max'] = IntEntry(self, -1, min=0, chars=6)
+		self.widgets['blobs']['min size'] = IntEntry(self, -1, min=0, chars=6)
+		self.widgets['blobs']['max size'] = IntEntry(self, -1, min=0, chars=6)
+		self.widgets['blobs']['min mean'] = FloatEntry(self, -1, chars=6)
+		self.widgets['blobs']['max mean'] = FloatEntry(self, -1, chars=6)
+		self.widgets['blobs']['min stdev'] = FloatEntry(self, -1, chars=6)
+		self.widgets['blobs']['max stdev'] = FloatEntry(self, -1, chars=6)
 
 		szrange = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Min.')
@@ -224,21 +226,21 @@ class BlobSettingsDialog(gui.wx.Settings.Dialog):
 		szrange.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER)
 		label = wx.StaticText(self, -1, 'Blob size:')
 		szrange.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER)
-		szrange.Add(self.widgets['min blob size'], (1, 1), (1, 1),
+		szrange.Add(self.widgets['blobs']['min size'], (1, 1), (1, 1),
 								wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		szrange.Add(self.widgets['max blob size'], (1, 2), (1, 1),
+		szrange.Add(self.widgets['blobs']['max size'], (1, 2), (1, 1),
 								wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'Blob mean:')
 		szrange.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER)
-		szrange.Add(self.widgets['min blob mean'], (2, 1), (1, 1),
+		szrange.Add(self.widgets['blobs']['min mean'], (2, 1), (1, 1),
 								wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		szrange.Add(self.widgets['max blob mean'], (2, 2), (1, 1),
+		szrange.Add(self.widgets['blobs']['max mean'], (2, 2), (1, 1),
 								wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 		label = wx.StaticText(self, -1, 'Blob stdev.:')
 		szrange.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER)
-		szrange.Add(self.widgets['min blob stdev'], (3, 1), (1, 1),
+		szrange.Add(self.widgets['blobs']['min stdev'], (3, 1), (1, 1),
 								wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
-		szrange.Add(self.widgets['max blob stdev'], (3, 2), (1, 1),
+		szrange.Add(self.widgets['blobs']['max stdev'], (3, 2), (1, 1),
 								wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 
 		sz = wx.GridBagSizer(5, 5)
@@ -248,11 +250,11 @@ class BlobSettingsDialog(gui.wx.Settings.Dialog):
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		label = wx.StaticText(self, -1, 'Border:')
 		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['border'], (1, 1), (1, 1),
+		sz.Add(self.widgets['blobs']['border'], (1, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		label = wx.StaticText(self, -1, 'Max. number of blobs:')
 		sz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['max blobs'], (2, 1), (1, 1),
+		sz.Add(self.widgets['blobs']['max'], (2, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		sz.Add(szrange, (3, 0), (1, 2), wx.ALIGN_CENTER)
 		sz.AddGrowableCol(1)

@@ -1090,6 +1090,7 @@ class ClickImagePanel(ImagePanel):
 class TypeTool(object):
 	def __init__(self, parent, name, display=None, target=None, settings=None):
 		self.parent = parent
+
 		self.name = name
 
 		self.label = wx.StaticText(parent, -1, name)
