@@ -45,20 +45,28 @@ class UIContainer(UIObject):
 		self.uiobjectdict = {}
 
 	def addUIObject(self, uiobject):
-		# update "spec" somehow?
 		if uiobject.name not in self.uiobjectdict:
 			if isinstance(uiobject, UIObject):
 				uiobject.setParent(self)
 				self.addUIObjectCallback((uiobject.name,), uiobject.typelist,
-																											uiobject.value)
+																										uiobject.value)
+				if isinstance(uiobject, UIContainer):
+					uiobject.addUIObjectsCallback()
 				self.uiobjectdict[uiobject.name] = uiobject
 			else:
 				raise TypeError('value must be a UIObject instance')
 		else:
 			raise ValueError('name already exists in UI Object mapping')
 
+	def addUIObjectsCallback(self):
+		for uiobject in self.uiobjectdict.values():
+			self.addUIObjectCallback((uiobject.name,), uiobject.typelist,
+																										uiobject.value)
+			if isinstance(uiobject, UIContainer):
+				uiobject.addUIObjectsCallback()
+
 	def deleteUIObject(self, name):
-		# update "spec" somehow?
+		# update "spec"?
 		try:
 			uiobject = self.uiobjectdict[name]
 			del self.uiobjectdict[name]
@@ -71,7 +79,8 @@ class UIContainer(UIObject):
 		if self.parent is not None:
 			self.parent.addUIObjectCallback((self.name,) + namelist, typelist, value)
 		else:
-			raise RuntimeError('cannot add object to container without parent')
+			pass
+			#raise RuntimeError('cannot add object to container without parent')
 
 	def setUIObjectCallback(self, namelist, value):
 		if self.parent is not None:
@@ -99,31 +108,18 @@ class UIContainer(UIObject):
 		else:
 			raise ValueError('name does not exist in UI Object mapping')
 
-#	def addUIObjects(self, namedict, uiobject):
-#		for name in namedict:
-#			if name in self.uiobjectdict:
-#				self.addUIObject(name, namedict[name])
-#				if uiobject, UIContainer
-#			uiobject = namedict[name]
-#		try:
-#			container = self.getUIObjectFromList(namelist[:-1])
-#		except ValueError:
-#			raise ValueError('container name does not exist in UI Object mapping')
-#		container.addUIObject(namelist[-1], uiobject)
-
-#	def deleteUIObjectFromList(self, namelist):
-#		try:
-#			container = self.getUIObjectFromList(namelist[:-1])
-#		except ValueError:
-#			raise ValueError('container name does not exist in UI Object mapping')
-#		container.deleteUIObject(namelist[-1], uiobject)
-
-	# setUIObject?
-	# getUIObject?
+class UIDialog(UIContainer):
+	typelist = UIContainer.typelist + ('dialog',)
 
 class UIMethod(UIObject):
 	typelist = UIObject.typelist + ('method',)
-	pass
+	# don't keep
+	value = ''
+	def __init__(self, name, method):
+		UIObject.__init__(self, name)
+		if not callable(method):
+			raise TypeError('method must be callable')
+		self.method = method
 
 class UIData(UIObject):
 	permissionsvalues = ('r', 'w', 'rw', 'wr')

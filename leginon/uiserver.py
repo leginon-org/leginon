@@ -53,25 +53,26 @@ class UIServer(XMLRPCServer, uidata.UIContainer):
 		XMLRPCServer.__init__(self, port=port)
 		uidata.UIContainer.__init__(self, name)
 		self.server.register_function(self.setFromClient, 'SET')
+		self.server.register_function(self.commandFromClient, 'COMMAND')
 		self.server.register_function(self.addServer, 'ADDSERVER')
-
-#	def clientDataPull(self, namelist):
-#		'''UI client calls this over network to get a data value'''
-#		uidataboject = self.getUIObjectFromList(namelist)
-#		if not isinstance(uidataobject, uidata.UIData):
-#			raise TypeError('name hierarchy list does not resolve to UIData instance')
-#		value = uidataobject.get()
-#		return value
 
 	def setFromClient(self, namelist, value):
 		'''this is how a UI client sets a data value'''
 		print 'setFromClient', namelist, value
 		uidataobject = self.getUIObjectFromList(namelist)
-		print uidataobject
 		if not isinstance(uidataobject, uidata.UIData):
-			raise TypeError('name hierarchy list does not resolve to UIData instance')
+			raise TypeError('name list does not resolve to UIData instance')
 		# except from this client?
 		uidataobject.set(value)
+		return ''
+
+	def commandFromClient(self, namelist, args):
+		print 'commandFromClient', namelist, args
+		uidataobject = self.getUIObjectFromList(namelist)
+		if not isinstance(uidataobject, uidata.UIMethod):
+			raise TypeError('name list does not resolve to UIMethod instance')
+		# need to catch arg error
+		apply(uidataobject.method, args)
 		return ''
 
 	def set(self, namelist, value):
@@ -89,7 +90,6 @@ class UIServer(XMLRPCServer, uidata.UIContainer):
 		return ''
 
 	def addUIObjects(self, client, uiobject, namelist):
-		print 'updating', namelist
 		client.execute('ADD', (namelist, uiobject.typelist, uiobject.value))
 		if isinstance(uiobject, uidata.UIContainer):
 			for childuiobject in uiobject.uiobjectdict.values():

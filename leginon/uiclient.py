@@ -28,13 +28,25 @@ class UIWidget(object):
 		self.parent = parent
 		self.tkparent = tkparent
 
+	def getWidgetFromList(self, namelist):
+		if len(namelist) == 1 and namelist[0] == self.name:
+			return self
+		else:
+			raise ValueError('incorrect widget')
+
+class UIButtonWidget(UIWidget, Tkinter.Button):
+	def __init__(self, name, parent, tkparent):
+		UIWidget.__init__(self, name, parent, tkparent)
+		Tkinter.Button.__init__(self, tkparent, text=self.name,
+																						command=self.command)
+
+	def command(self):
+		self.parent.commandCallback((self.name,), ())
+
 class UIDataWidget(UIWidget, Tkinter.Frame):
 	def __init__(self, name, parent, tkparent):
 		UIWidget.__init__(self, name, parent, tkparent)
 		Tkinter.Frame.__init__(self, tkparent)
-		self.applybutton = Tkinter.Button(self, text='Apply', command=self.apply)
-		self.applybutton.grid(row=0, column=1)
-		self.markClean()
 
 	def set(self, value):
 		raise NotImplemetedError()
@@ -42,25 +54,22 @@ class UIDataWidget(UIWidget, Tkinter.Frame):
 	def apply(self):
 		raise NotImplemetedError()
 
-	def markDirty(self):
-		self.applybutton['state'] = Tkinter.NORMAL
-
-	def markClean(self):
-		self.applybutton['state'] = Tkinter.DISABLED
-
-	def getWidgetFromList(self, namelist):
-		if len(namelist) == 1 and namelist[0] == self.name:
-			return self
-		else:
-			raise ValueError('incorrect widget')
+	def setServer(self):
+		self.parent.setCallback((self.name,), self.value)
 
 def UIWidgetClassFromType(typelist):
-	if typelist[:2] == ['object', 'container']:
-		return UIContainerWidget
-	elif typelist[:2] == ['object', 'data']:
-		return UIEntryWidget
-	else:
-		raise ValueError('invalid type list for UI widget class')
+	if typelist[0] == 'object':
+		if len(typelist) > 1:
+			if typelist[1] == 'container':
+				return UIContainerWidget
+			elif typelist[1] == 'method':
+				return UIButtonWidget
+			elif typelist[1] == 'data':
+				if len(typelist) > 2:
+					if typelist[2] == 'boolean':
+						return UICheckbuttonWidget
+				return UIEntryWidget
+	raise ValueError('invalid type list for UI widget class')
 
 class UIContainerWidget(UIWidget, Pmw.Group):
 	def __init__(self, name, parent, tkparent):
@@ -130,13 +139,19 @@ class UIContainerWidget(UIWidget, Pmw.Group):
 			if row > deletedrow:
 				uiwidget.grid_configure(row=int(row)-1)
 
-	def applyCallback(self, namelist, value):
-		self.parent.applyCallback((self.name,) + namelist, value)
+	def setCallback(self, namelist, value):
+		self.parent.setCallback((self.name,) + namelist, value)
+
+	def commandCallback(self, namelist, args):
+		self.parent.commandCallback((self.name,) + namelist, args)
 
 class UIEntryWidget(UIDataWidget):
 	def __init__(self, name, parent, tkparent):
 		self.value = None
 		UIDataWidget.__init__(self, name, parent, tkparent)
+		self.applybutton = Tkinter.Button(self, text='Apply', command=self.apply)
+		self.applybutton.grid(row=0, column=1)
+		self.markClean()
 		self.entryfield = Pmw.EntryField(self, labelpos='w',
 																						label_text=self.name,
 																						modifiedcommand=self.markDirty)
@@ -146,6 +161,12 @@ class UIEntryWidget(UIDataWidget):
 		self.value = value
 		self.entryfield.setvalue(value)
 		self.markClean()
+
+	def markDirty(self):
+		self.applybutton['state'] = Tkinter.NORMAL
+
+	def markClean(self):
+		self.applybutton['state'] = Tkinter.DISABLED
 
 	def apply(self):
 		value = self.entryfield.getvalue()
@@ -160,7 +181,28 @@ class UIEntryWidget(UIDataWidget):
 				return
 		else:
 			self.set(value)
-		self.parent.applyCallback((self.name,), self.value)
+		self.setServer()
+
+class UICheckbuttonWidget(UIDataWidget):
+	def __init__(self, name, parent, tkparent):
+		self.value = None
+		UIDataWidget.__init__(self, name, parent, tkparent)
+		self.checkbuttonvar = Tkinter.IntVar()
+		self.checkbutton = Tkinter.Checkbutton(self, variable=self.checkbuttonvar,
+																									command=self.check,
+																									text=self.name)
+		self.checkbutton.grid(row=0, column=0)
+
+	def set(self, value):
+		self.value = value
+		self.checkbuttonvar.set(self.value)
+
+	def check(self):
+		if self.checkbuttonvar.get():
+			self.value = 1
+		else:
+			self.value = 0
+		self.setServer()
 
 class UIClient(XMLRPCClient, uiserver.XMLRPCServer, UIContainerWidget):
 	def __init__(self, tkparent, serverhostname, serverport, port=None):
@@ -174,6 +216,9 @@ class UIClient(XMLRPCClient, uiserver.XMLRPCServer, UIContainerWidget):
 
 	def setServer(self, namelist, value):
 		self.execute('SET', (namelist, value))
+
+	def commandServer(self, namelist, args):
+		self.execute('COMMAND', (namelist, args))
 
 	def addFromServer(self, namelist, typelist, value):
 		print 'ADD', namelist, typelist, value
@@ -190,6 +235,9 @@ class UIClient(XMLRPCClient, uiserver.XMLRPCServer, UIContainerWidget):
 		self.delete(namelist)
 		return ''
 
-	def applyCallback(self, namelist, value):
+	def setCallback(self, namelist, value):
 		self.setServer((self.name,) + namelist, value)
+
+	def commandCallback(self, namelist, args):
+		self.commandServer((self.name,) + namelist, args)
 
