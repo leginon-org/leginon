@@ -170,8 +170,6 @@ class DBDataKeeper(datahandler.DataHandler):
 		self.recursiveInsert(newdata)
 
 	def flatInsert(self, newdata):
-		print 'flatInsert'
-		print newdata
 		newdatacopy = copy.deepcopy(newdata)
 		table = newdatacopy.__class__.__name__
 		definition = sqldict.sqlColumnsDefinition(newdatacopy)
@@ -229,11 +227,6 @@ class DBDataKeeper(datahandler.DataHandler):
 			mycopy['image'] = None
 
 		return mycopy
-
-	# you can clean up with this if you want
-	def exit(self):
-		pass
-		# disconnect?
 
 	# don't bother with these for now
 	def remove(self, id):
