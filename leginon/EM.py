@@ -81,7 +81,8 @@ class DataHandler(node.DataHandler):
 		print 'EM query: state lock acquired'
 		done_event = threading.Event()
 		print 'EM query: putting in request for %s' % str([emkey])
-		self.node.queue.put(Request(done_event, [emkey]))
+		self.node.queue.put(Request(done_event, [emkey],
+																self.node.externalstatusupdate.get()))
 		print 'EM query: waiting on request'
 		done_event.wait()
 		print 'EM query: got request'
@@ -140,7 +141,8 @@ class DataHandler(node.DataHandler):
 				except KeyError:
 					pass
 
-			self.node.queue.put(Request(done_event, d))
+			self.node.queue.put(Request(done_event, d,
+																	self.node.externalstatusupdate.get()))
 			print 'EM insert: waiting for request to complete'
 			done_event.wait()
 			print 'EM insert: updating UI'
@@ -153,9 +155,10 @@ class DataHandler(node.DataHandler):
 		print 'EM insert: done'
 
 class Request(object):
-	def __init__(self, ievent, value):
+	def __init__(self, ievent, value, updatestatus=True):
 		self.event = ievent
 		self.value = value
+		self.updatestatus = updatestatus
 
 class EM(node.Node):
 	eventinputs = node.Node.eventinputs + [event.LockEvent, event.UnlockEvent]
@@ -257,11 +260,14 @@ class EM(node.Node):
 			if key not in prunekeys:
 				destination[key] = source[key]
 
-	def getEM(self, withkeys=[], withoutkeys=[]):
-		self.uiSetStatus('Getting parameters', 5)
-		self.uiSetStatus('Acquiring lock for parameter query', 10)
+	def getEM(self, withkeys=[], withoutkeys=[], updatestatus=True):
+		if updatestatus:
+			self.uiSetStatus('Getting parameters', 5)
+			self.uiSetStatus('Acquiring lock for parameter query', 10)
 		self.lock.acquire()
-		self.uiSetStatus('Lock acquired, processing request', 15)
+		if updatestatus:
+			self.uiSetStatus('Lock acquired, processing request', 15)
+
 		result = {}
 
 		if not withkeys and withoutkeys:
@@ -309,7 +315,8 @@ class EM(node.Node):
 				withoutkeys += self.scope.keys()
 				withoutkeys += self.camera.keys()
 
-		self.uiSetStatus('Refining request', 20)
+		if updatestatus:
+			self.uiSetStatus('Refining request', 20)
 
 		for key in withoutkeys:
 			try:
@@ -317,33 +324,37 @@ class EM(node.Node):
 			except ValueError:
 				pass
 
-		self.uiSetStatus('Sending request to instrument', 25)
-
-		if withkeys:
-			percent = 25
-			increment = (90-percent)/len(withkeys)
+		if updatestatus:
+			self.uiSetStatus('Sending request to instrument', 25)
+			if withkeys:
+				percent = 25
+				increment = (90-percent)/len(withkeys)
 
 		scopekeys = self.scope.keys()
 		camerakeys = self.camera.keys()
 		for key in withkeys:
-			self.uiSetStatus('Requesting ' + key + ' value', None)
+			if updatestatus:
+				self.uiSetStatus('Requesting ' + key + ' value', None)
 			if key in scopekeys:
 				result[key] = self.scope[key]
 			elif key in camerakeys:
 				result[key] = self.camera[key]
 			else:
 				pass
-			percent += increment
-			self.uiSetStatus('Value of ' + key + ' acquired', percent)
+			if updatestatus:
+				percent += increment
+				self.uiSetStatus('Value of ' + key + ' acquired', percent)
 
 		result['system time'] = time.time()
 		result['em host'] = self.location()['hostname']
 
-		self.uiSetStatus('Releasing Lock', 90)
+		if updatestatus:
+			self.uiSetStatus('Releasing Lock', 90)
 		self.lock.release()
-		self.uiSetStatus('Lock Released', 95)
-		self.uiSetStatus('Parameter get completed', 100)
-		self.uiSetStatus('', 0)
+		if updatestatus:
+			self.uiSetStatus('Lock Released', 95)
+			self.uiSetStatus('Parameter get completed', 100)
+			self.uiSetStatus('', 0)
 		return result
 
 	def sortEMdict(self, emdict):
@@ -374,25 +385,28 @@ class EM(node.Node):
 		newdict.update(olddict)
 		return newdict
 
-	def setEM(self, emstate):
-		self.uiSetStatus('Setting parameters', 5)
-		self.uiSetStatus('Acquiring lock for parameter modifications', 10)
+	def setEM(self, emstate, updatestatus=True):
+		if updatestatus:
+			self.uiSetStatus('Setting parameters', 5)
+			self.uiSetStatus('Acquiring lock for parameter modifications', 10)
 		self.lock.acquire()
-		self.uiSetStatus('Lock acquired, processing request', 15)
+		if updatestatus:
+			self.uiSetStatus('Lock acquired, processing request', 15)
 
 		# order the items in emstate
 		ordered = self.sortEMdict(emstate)
 
-		self.uiSetStatus('Request processed, sending to instrument', 20)
-
-		if ordered:
-			percent = 20
-			increment = (90-percent)/len(ordered.keys())
+		if updatestatus:
+			self.uiSetStatus('Request processed, sending to instrument', 20)
+			if ordered:
+				percent = 20
+				increment = (90-percent)/len(ordered.keys())
 
 		scopekeys = self.scope.keys()
 		camerakeys = self.camera.keys()
 		for emkey, emvalue in ordered.items():
-			self.uiSetStatus('Requesting modification of ' + emkey, None)
+			if updatestatus:
+				self.uiSetStatus('Requesting modification of ' + emkey, None)
 			if emvalue is not None:
 				if emkey in scopekeys:
 					try:
@@ -406,14 +420,17 @@ class EM(node.Node):
 					except:	
 						#print "failed to set '%s' to" % EMkey, EMstate[EMkey]
 						self.printException()
-			percent += increment
-			self.uiSetStatus('Value of ' + emkey + ' modified', percent)
+			if updatestatus:
+				percent += increment
+				self.uiSetStatus('Value of ' + emkey + ' modified', percent)
 
-		self.uiSetStatus('Releasing Lock', 90)
+		if updatestatus:
+			self.uiSetStatus('Releasing Lock', 90)
 		self.lock.release()
-		self.uiSetStatus('Lock Released', 95)
-		self.uiSetStatus('Parameter modifications completed', 100)
-		self.uiSetStatus('', 0)
+		if updatestatus:
+			self.uiSetStatus('Lock Released', 95)
+			self.uiSetStatus('Parameter modifications completed', 100)
+			self.uiSetStatus('', 0)
 
 	# needs to have statelock locked
 	def uiUpdate(self):
@@ -449,10 +466,12 @@ class EM(node.Node):
 		while True:
 			request = self.queue.get()
 			if isinstance(request.value, dict):
-				self.setEM(request.value)
-				self.state = self.getEM(request.value.keys())
+				self.setEM(request.value, updatestatus=request.updatestatus)
+				self.state = self.getEM(request.value.keys(),
+																updatestatus=request.updatestatus)
 			else:
-				self.state = self.getEM(request.value)
+				self.state = self.getEM(request.value,
+																updatestatus=request.updatestatus)
 			self.uiUpdate()
 			request.event.set()
 
@@ -510,8 +529,8 @@ class EM(node.Node):
 				self.uiprogresslabel.set(message)
 			if percent is not None:
 				self.uiprogress.set(percent)
-			if percent is not None or message is not None:
-				time.sleep(0.25)
+#			if percent is not None or message is not None:
+#				time.sleep(0.25)
 
 	def uiSetStatus(self, message, percent):
 		if hasattr(self, 'progresslabel') and hasattr(self, 'progress'):
@@ -562,9 +581,13 @@ class EM(node.Node):
 
 		self.progresslabel = uidata.String('State', '', 'r')
 		self.progress = uidata.Progress('', 0)
+		self.externalstatusupdate = uidata.Boolean(
+																					'Update status for external changes',
+																					False, 'rw')
 		statuscontainer = uidata.Container('Status')
 		statuscontainer.addObject(self.progresslabel)
 		statuscontainer.addObject(self.progress)
+		statuscontainer.addObject(self.externalstatusupdate)
 
 		self.uiprogresslabel = uidata.String('State', '', 'r')
 		self.uiprogress = uidata.Progress('', 0)
