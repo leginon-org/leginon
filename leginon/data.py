@@ -1630,6 +1630,49 @@ class ClickTargetFinderSettingsData(TargetFinderSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class LowPassFilterSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('size', int),
+			('sigma', float),
+		)
+	typemap = classmethod(typemap)
+
+class BlobFinderSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('border', int),
+			('max blobs', int),
+			('min blob size', int),
+			('max blob size', int),
+			('min blob mean', float),
+			('max blob mean', float),
+			('min blob stdev', float),
+			('max blob stdev', float),
+		)
+	typemap = classmethod(typemap)
+
+class SquareFinderSettingsData(LowPassFilterSettingsData,
+																BlobFinderSettingsData):
+	def typemap(cls):
+		return LowPassFilterSettingsData.typemap() \
+						+ BlobFinderSettingsData.typemap() + (
+			('threshold', float),
+		)
+	typemap = classmethod(typemap)
+
+class MosaicClickTargetFinderSettingsData(ClickTargetFinderSettingsData,
+																					SquareFinderSettingsData):
+	def typemap(cls):
+		return ClickTargetFinderSettingsData.typemap() \
+						+ SquareFinderSettingsData.typemap() + (
+			('calibration parameter', str),
+			('scale image', bool),
+			('scale size', int),
+			('mosaic image on tile change', bool),
+		)
+	typemap = classmethod(typemap)
+
 class AcquisitionSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (

@@ -326,6 +326,12 @@ class EMMosaic(object):
 		self.setCalibrationClient(calibrationclient)
 		self.clear()
 
+	def hasTiles(self):
+		if self.tiles:
+			return True
+		else:
+			return False
+
 	def clear(self):
 		self.tiles = []
 

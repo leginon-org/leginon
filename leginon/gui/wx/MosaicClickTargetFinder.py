@@ -1,0 +1,153 @@
+import wx
+from gui.wx.Choice import Choice
+from gui.wx.Entry import IntEntry, FloatEntry
+import gui.wx.Settings
+import gui.wx.ClickTargetFinder
+
+class Panel(gui.wx.ClickTargetFinder.Panel):
+	def initialize(self):
+		gui.wx.ClickTargetFinder.Panel.initialize(self)
+
+		self.btiles = wx.Button(self, -1, 'Tiles...')
+		self.bmosaic = wx.Button(self, -1, 'Mosaic...')
+		self.szbuttons.Add(self.btiles, (2, 0), (1, 1), wx.EXPAND)
+		self.szbuttons.Add(self.bmosaic, (3, 0), (1, 1), wx.EXPAND)
+
+	def onNodeInitialized(self):
+		gui.wx.ClickTargetFinder.Panel.onNodeInitialized(self)
+		self.Bind(wx.EVT_BUTTON, self.onTilesButton, self.btiles)
+		self.Bind(wx.EVT_BUTTON, self.onMosaicButton, self.bmosaic)
+
+	'''
+	def onSettingsButton(self, evt):
+		dialog = SettingsDialog(self)
+		dialog.ShowModal()
+		dialog.Destroy()
+	'''
+
+	def onTilesButton(self, evt):
+		choices = self.node.getMosaicNames()
+		dialog = TilesDialog(self, choices)
+		result = dialog.ShowModal()
+		if result == wx.ID_OK:
+			selection = self.cmosaic.GetStringSelection()
+			if selection:
+				self.node.loadMosaicTiles(selection)
+		elif result == wx.ID_RESET:
+			self.node.clearTiles()
+		dialog.Destroy()
+
+	def onMosaicButton(self, evt):
+		dialog = MosaicSettingsDialog(self)
+		dialog.ShowModal()
+		dialog.Destroy()
+
+class TilesDialog(wx.Dialog):
+	def __init__(self, parent, choices):
+		wx.Dialog.__init__(self, parent, -1, 'Tiles')
+
+		self.cmosaic = wx.Choice(self, -1, choices=choices)
+
+		sz = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Load tiles from mosaic:')
+		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.cmosaic, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		bload = wx.Button(self, wx.ID_OK, 'Load')
+		breset = wx.Button(self, -1, 'Reset')
+		bcancel = wx.Button(self, wx.ID_CANCEL, 'Cancel')
+
+		if not choices:
+			self.cmosaic.Enable(False)
+			self.cmosaic.Append('(No mosaics)')
+			bload.Enable(False)
+		self.cmosaic.SetSelection(0)
+
+		szbuttons = wx.GridBagSizer(5, 5)
+		szbuttons.Add(bload, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		szbuttons.Add(breset, (0, 1), (1, 1), wx.ALIGN_CENTER)
+		szbuttons.Add(bcancel, (0, 2), (1, 1), wx.ALIGN_CENTER)
+
+		szdialog = wx.GridBagSizer(5, 5)
+		szdialog.Add(sz, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
+		szdialog.Add(szbuttons, (1, 0), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 10)
+
+		self.SetSizerAndFit(szdialog)
+
+		self.Bind(wx.EVT_BUTTON, self.onResetButton, breset)
+
+	def onResetButton(self, evt):
+		self.EndModal(wx.ID_RESET)
+
+class MosaicSettingsDialog(gui.wx.Settings.Dialog):
+	def initialize(self):
+		choices = self.node.calclients.keys()
+		self.widgets['calibration parameter'] = Choice(self, -1, choices=choices)
+		self.widgets['scale image'] = wx.CheckBox(self, -1, 'Scale image to')
+		self.widgets['scale size'] = IntEntry(self, -1, min=1, chars=4)
+		self.widgets['mosaic image on tile change'] = wx.CheckBox(self, -1,
+																	'Create mosaic image when tile list changes')
+
+		self.bcreate = wx.Button(self, -1, 'Create')
+		self.bsave = wx.Button(self, -1, 'Save')
+
+		szp = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Calibration parameter')
+		szp.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szp.Add(self.widgets['calibration parameter'], (0, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+
+		szs = wx.GridBagSizer(5, 5)
+		szs.Add(self.widgets['scale image'], (0, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		szs.Add(self.widgets['scale size'], (0, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'pixels in largest dimension')
+		szs.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		szb = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Mosaic image:')
+		szb.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szb.Add(self.bcreate, (0, 1), (1, 1), wx.ALIGN_CENTER)
+		szb.Add(self.bsave, (0, 2), (1, 1), wx.ALIGN_CENTER)
+
+		sz = wx.GridBagSizer(5, 5)
+		sz.Add(szp, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szs, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['mosaic image on tile change'], (2, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szb, (3, 0), (1, 1), wx.ALIGN_CENTER)
+
+		sb = wx.StaticBox(self, -1, 'Mosaics')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
+
+		self.bcreate.Enable(self.node.mosaic.hasTiles())
+		self.bsave.Enable(self.node.hasMosaicImage())
+
+		self.Bind(wx.EVT_BUTTON, self.onCreateButton, self.bcreate)
+		self.Bind(wx.EVT_BUTTON, self.onSaveButton, self.bsave)
+
+		return [sbsz]
+
+	def onCreateButton(self, evt):
+		self.node.createMosaicImage()
+		self.bsave.Enable(self.node.hasMosaicImage())
+
+	def onSaveButton(self, evt):
+		self.node.publishMosaicImage()
+
+if __name__ == '__main__':
+	class App(wx.App):
+		def OnInit(self):
+			frame = wx.Frame(None, -1, 'Mosaic Click Target Finder Test')
+			panel = Panel(frame, 'Test')
+			frame.Fit()
+			self.SetTopWindow(frame)
+			frame.Show()
+			return True
+
+	app = App(0)
+	app.MainLoop()
+

@@ -102,7 +102,13 @@ class Dialog(wx.Dialog):
 			return
 		settings = self.getSettings()
 		if settings != self.settings:
-			settingsdata = node.settingsclass(initializer=settings)
+			node = self.GetParent().node
+			if node is None:
+				initializer = {}
+			else:
+				initializer = node.getSettings().toDict()
+			initializer.update(settings)
+			settingsdata = node.settingsclass(initializer=initializer)
 			node.setSettings(settingsdata)
 			self.settings = settings
 			self.bapply.Enable(False)
