@@ -1102,6 +1102,17 @@ class CameraImageData(ImageData):
 		)
 	typemap = classmethod(typemap)
 
+class CameraImageStatsData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('image', CameraImageData),
+			('min', float),
+			('max', float),
+			('mean', float),
+			('stdev', float),
+		)
+	typemap = classmethod(typemap)
+
 class CorrectedCameraImageData(CameraImageData):
 	pass
 
@@ -1889,6 +1900,14 @@ class ManualAcquisitionSettingsData(SettingsData):
 			('image label', str),
 			('low dose', bool),
 			('low dose pause time', float),
+		)
+	typemap = classmethod(typemap)
+
+class IntensityMonitorSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('wait time', float),
+			('iterations', int),
 		)
 	typemap = classmethod(typemap)
 
