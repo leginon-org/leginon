@@ -30,6 +30,13 @@ watch_set = (
 'stage position',
 )
 
+class EMUnavailable(Exception):
+	pass
+class ScopeUnavailable(EMUnavailable):
+	pass
+class CameraUnavailable(EMUnavailable):
+	pass
+
 class EMClient(object):
 	def __init__(self, node):
 		self.node = node
@@ -51,19 +58,29 @@ class EMClient(object):
 		self.cameraimageref = ievent
 
 	def getScope(self):
+		if self.scoperef is None:
+			raise ScopeUnavailable()
 		return self.scoperef['data']
 
 	def getCamera(self):
+		if self.cameraref is None:
+			raise ScopeUnavailable()
 		return self.cameraref['data']
 
 	def getImage(self):
+		if self.cameraimageref is None:
+			raise CameraUnavailable()
 		return self.cameraimageref['data']
 
 	def setScope(self, value):
+		## how to we prevent waiting forever when no scope
+		## Maybe manager should return some kind of exception
 		setevent = event.SetScopeEvent(data=value)
 		self.node.outputEvent(setevent, wait=True)
 
 	def setCamera(self, value):
+		## how to we prevent waiting forever when no camera
+		## Maybe manager should return some kind of exception
 		setevent = event.SetCameraEvent(data=value)
 		self.node.outputEvent(setevent, wait=True)
 
