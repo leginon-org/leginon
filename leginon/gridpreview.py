@@ -26,10 +26,10 @@ class GridPreview(node.Node):
 		currentconfig['state']['binning']['x'] = 2
 		currentconfig['state']['exposure time'] = 400
 
-		currentconfig['state']['binning']['x'] = 1
-		currentconfig['state']['offset']['x'] = 0
-		currentconfig['state']['offset']['y'] = 0
-		currentconfig['auto offset'] = 0
+#		currentconfig['state']['binning']['x'] = 1
+#		currentconfig['state']['offset']['x'] = 0
+#		currentconfig['state']['offset']['y'] = 0
+#		currentconfig['auto offset'] = 0
 
 		self.cam.config(currentconfig)
 
