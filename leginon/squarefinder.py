@@ -324,15 +324,9 @@ class SquareFinder(targetfinder.TargetFinder):
 
 	def findTargets(self, imagedata):
 		output = self.pluginpipeline.process(Image(imagedata['image']))
-		self.targetlist = map(lambda t: self.newTargetData(imagedata, 'acquisition',
-																												t[0], t[1]),
-													output.targets)
-
-	def onCJTest(self):
-		n = 1000
-		while n <= 4320:
-			self.load('images/04mar08a-bak/Robot 3-8-2004_%04dgrid.mrc' % n)
-			n += 3
+		targets = map(lambda t: self.newTargetData(imagedata, 'acquisition',
+																								t[0], t[1]), output.targets)
+		self.targetlist.append(targets)
 
 	def defineUserInterface(self):
 		targetfinder.TargetFinder.defineUserInterface(self)
@@ -351,10 +345,8 @@ class SquareFinder(targetfinder.TargetFinder):
 		pipelinecontainer = uidata.Container('Pipeline')
 		pipelinecontainer.addObjects(self.pluginpipeline.userinterfaceitems)
 
-		cjtest = uidata.Method('CJ Test', self.onCJTest)
-
 		container = uidata.LargeContainer('Square Finder')
 		container.addObjects((self.messagelog, filecontainer,
-													pipelinecontainer, self.ui_image, cjtest))
+													pipelinecontainer, self.ui_image))
 		self.uiserver.addObjects((container,))
 
