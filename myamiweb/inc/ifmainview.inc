@@ -13,9 +13,15 @@ if ($mvId!=0) { ?>
 		<table class="bgcolor1" border="0" cellpadding="1" cellspacing="0" >
 		 <tr>
 			<td>Image Type</td>
+			<td align=right>
+			<a href="javascript:toggleimage('mvscale_bt', 'scale_bt'); newfile();"
+					onmouseover="imageonfocus('mvscale_bt', 'scale_bt', '_over')" 
+					onmouseout="imageonfocus('mvscale_bt', 'scale_bt', '')" 
+					><img name="mvscale_bt" src="img/scale_bt_off.gif" border="0" height="15" vspace="0"></a>
+		</td>
 		 </tr>
 		 <tr>
-			<td>
+			<td colspan=2>
 			<table class="bgcolor0" border="0" cellpadding="0" cellspacing="0" >
 			 <tr>
 				<td>

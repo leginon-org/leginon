@@ -67,6 +67,9 @@ $nrexp = sizeof($experiment);
 $datatypes = $leginondata->getDatatypes($expId);
 // print_r($datatypes);
 $def_label = $datatypes[0];
+// --- Add foc pow 
+$datatypes[] = "focpow";
+
 
 // --- Get current user preferences
 $v1sel = (empty($_POST[v1sel])) ? $_POST[v1list] : $_POST[v1sel];

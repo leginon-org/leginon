@@ -47,12 +47,44 @@ if ($g) {
 	// --- get image path
 	$path = $leginondata->getImagePath($session);
 	// --- get parent image info
-	$parent = $leginondata->getParent($id, $preset);
-	// --- get filename
-	$id = $parent[parentId];
-	$filename = $leginondata->getFilename($id);
+	if (in_array($preset, $leginondata->getTypeFFT())) {
+		$fftimage  = $leginondata->getImageFFT($id);
+		if (!$fftimage) {
+			// --- try to find sibling if preset not a parent
+			if ($preset=='focpow') {
+				$preset='foc';
+			} else {
+				$imageinfo = $leginondata->getImageInfo($id);
+				$preset = $imageinfo[preset];
+			}
+			$relation = $leginondata->getImageRelation($id, $preset,false);
+			$fftimage  = $leginondata->getImageFFT($relation[siblingimageId]);
+		}
+		$filename = $fftimage[fftimage];
+		$fft=true;
+		$displaytarget=false;
+		$displayscalebar=false;
+	} else {
+		$parent = $leginondata->getParent($id, $preset);
+		if (!$parent)
+		// --- try to find sibling if preset not a parent
+			$relation = $leginondata->getImageRelation($id, $preset);
+			if (!$relation)
+			// --- try to find sibling if from an other target
+				$relation = $leginondata->getImageRelation($id, $preset, false);
+			
+		if ($relation) {
+			$id = $relation[siblingimageId];
+			$preset = $relation[siblingpreset];
+			$parent = $leginondata->getParent($id, $preset);
+		}
+
+		// --- get filename
+		$id = $parent[parentId];
+		$filename = $leginondata->getFilename($id);
+	}
 	$pic = $path.$filename;
-	if (file_exists($pic) && $parent[parentpreset]==$preset) {
+	if (is_file($pic) && ($parent[parentpreset]==$preset || $fft)) {
 		$img = $mrc->imagecreatefromMRC2($pic,$new_w,$new_h,$minpix, $maxpix, $quality);
 		$white = imagecolorallocate($img, 255, 255, 255);
 		$black = imagecolorallocate($img, 0, 0, 0);
@@ -121,6 +153,8 @@ if ($g) {
 			imagestring($img, 4, $xc, $yc, $tn, $col);
 		}
 	  }
+	//		imagestring($img, 4, 10, 40, "id: $id", $col);
+	//		imagestring($img, 4, 10, 20, "id: $filename", $col);
 
 	  /* display scale bar */
 	  if ($displayscalebar) {

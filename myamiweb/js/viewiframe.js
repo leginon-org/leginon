@@ -6,6 +6,46 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
+/* Display Scale Bar */
+var path = "img/";
+scale_bt_off=new Image();
+scale_bt_off.src=path+"scale_bt_off.gif";
+scale_bt_on=new Image();
+scale_bt_on.src=path+"scale_bt_on.gif";
+scale_bt_over_off=new Image();
+scale_bt_over_off.src=path+"scale_bt_over_off.gif";
+scale_bt_over_on=new Image();
+scale_bt_over_on.src=path+"scale_bt_over_on.gif";
+
+var mvscale_bt=false;
+
+
+function imageon(imagename, name, type) {
+	document.images[eval("\"" + imagename + "\"")].src = eval(name+type+"_on.src");
+	eval(imagename+'=true');
+}
+
+function imageoff(imagename, name, type) {
+	document.images[eval("\"" + imagename + "\"")].src = eval(name+type+"_off.src");
+	eval(imagename+'=false');
+}
+
+function toggleimage(imagename, name) {
+	imagenamestr = document.images[eval("\"" + imagename + "\"")].src;
+	if (imagenamestr.search('_on') != -1)
+		imageoff(imagename, name, '');
+	else if (imagenamestr.search('_off') != -1)
+		imageon(imagename, name, '');
+}
+
+function imageonfocus(imagename, name, type) {
+	imagenamestr = document.images[eval("\"" + imagename + "\"")].src;
+	if (imagenamestr.search('_on') != -1)
+		imageon(imagename, name, type);
+	else if (imagenamestr.search('_off') != -1)
+		imageoff(imagename, name, type);
+}
+
 function sendForm(name, pID) {
     jsfexp=document.listform.allfile.options[document.
     listform.allfile.selectedIndex].value;
@@ -40,10 +80,11 @@ function updateGradient() {
 }
 
 function newscale(){
+	jssb=1;
 	setQuality();
 	setSize();
 	newimg = new Image();
-	newimg.src= jsbaseurl+jsimgmv+"?table="+escape(jstmv)+"&session="+escape(jsexpId)+"&id="+escape(jsfexp)+"&t="+jsquality+"&s="+jssize+"&np="+jsminpix+"&xp="+jsmaxpix; 
+	newimg.src= jsbaseurl+jsimgmv+"?table="+escape(jstmv)+"&session="+escape(jsexpId)+"&id="+escape(jsfexp)+"&t="+jsquality+"&s="+jssize+"&np="+jsminpix+"&xp="+jsmaxpix+"&sb="+jssb; 
 	img_timer=setInterval('imgIsComplete()',25);	
 }
 
@@ -87,6 +128,7 @@ function setlist(){
 }
 
 function newfile() { 
+     jssb=1;
      setQuality();
      currentfile=document.listform.allfile.options[document.
      listform.allfile.selectedIndex].text
@@ -95,7 +137,7 @@ function newfile() {
      listform.allfile.selectedIndex].value
 	var lId;
 	if (jsmvId.length != 0){
-		parent.picturebox.document.getElementById('imgmv').src=jsimgmv+"?table="+escape(jstmv)+"&session="+escape(jsexpId)+"&id="+escape(jsfexp)+"&t="+jsquality+"&s="+jssize+"&np="+jsminpix+"&xp="+jsmaxpix; 
+		parent.picturebox.document.getElementById('imgmv').src=jsimgmv+"?table="+escape(jstmv)+"&session="+escape(jsexpId)+"&id="+escape(jsfexp)+"&t="+jsquality+"&s="+jssize+"&np="+jsminpix+"&xp="+jsmaxpix+"&sb="+jssb; 
 		// var imgURL="getimage.php?tmpl="+jsimgmv+"&table="+escape(jstmv)+"&session="+escape(jsexpId)+"&id="+escape(jsfexp)+"&t="+jsquality+"&s="+jssize+"&np="+jsminpix+"&xp="+jsmaxpix; 
 		// picturebox.document.location.replace(imgURL);
 		

@@ -25,6 +25,7 @@
 					onmouseout="imageonfocus('v1scale_bt', 'scale_bt', '')" 
 					><img name="v1scale_bt" src="img/scale_bt_off.gif" border="0" height="15" vspace="0"></a></td>
 <? /*
+Dave & Buster's
 			<td><a href="javacript:void(0)"><img src="img/close_off.gif" border="0" height="16" vspace="0"></a> <a href="javacript:void(0)"><img src="img/open_off.gif" border="0" height="16" vspace="0"></a></td><td>View 1</td>
 */ ?>
 		 </tr>

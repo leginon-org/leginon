@@ -64,8 +64,10 @@ class leginondata {
 		$q="select "
 		."s.Name, "
 		."s.comment as Purpose, "
-		."date_format(s.`DEF_timestamp`, '%Y-%e-%m %T') as `Begin Time`,"
-		."date_format(a.`DEF_timestamp`, '%Y-%e-%m %T') as `End Time`, "
+		."date_format(s.`DEF_timestamp`, '%Y-%d-%m %T') as `Begin Time`,"
+		."date_format(a.`DEF_timestamp`, '%Y-%d-%m %T') as `End Time`, "
+		."date_format(s.`DEF_timestamp`, '%Y-%m-%d') as `btime`,"
+		."date_format(a.`DEF_timestamp`, '%Y-%m-%d') as `etime`, "
 		."sec_to_time((Dayofyear(a.`DEF_timestamp`)-Dayofyear(s.`DEF_timestamp`))*86400-"
 		."time_to_sec(s.`DEF_timestamp`)+time_to_sec(a.`DEF_timestamp`)) as `Total Duration`, "
 		."s.`Image path`, "
@@ -110,12 +112,23 @@ class leginondata {
 	}
 
 	function getFilenames($expId, $name, $table="AcquisitionImageData") {
+		if (in_array($name, $this->typefft)) {
+		$q = "select a.`DEF_id`, f.`MRC|Image` as filename "
+		    ." from `$table` a "
+		    ." left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
+		    ." left join AcquisitionFFTData f on (f.`REF|AcquisitionImageData|source`=a.`DEF_id`) "
+		    ." where a.`REF|SessionData|session`='$expId' "
+		    ." and f.`MRC|Image`<>'NULL' "
+		    ." order by a.`DEF_id` DESC ";
+		} else {
 		$q = "select a.`DEF_id`, a.`MRC|Image` as filename "
 		    ." from `$table` a "
 		    ." left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
-		    ." where a.`REF|SessionData|session`='$expId' "
-		    ." and p.name = '$name' "
-		    ." order by a.`DEF_id` DESC ";
+		    ." where a.`REF|SessionData|session`='$expId' ";
+			if ($name)
+		    	$q .=" and p.name = '$name' ";
+		    $q .=" order by a.`DEF_id` DESC ";
+		}
 		$Rfile=$this->mysql->SQLQuery($q);
 		return $Rfile;
 	}
@@ -129,6 +142,8 @@ class leginondata {
 			$sqlselect[]="scope.defocus";
 		if (in_array('pixelsize', $presets))
 			$sqlselect[]="pi.pixelsize";
+		if (in_array('dose', $presets))
+			$sqlselect[]="p.dose";
 		$sqlselectstr=implode(', ',$sqlselect);
 		$q='
 		select '.$sqlselectstr.'
@@ -136,6 +151,7 @@ class leginondata {
 			left join ScopeEMData scope on (scope.`DEF_id`=a.`REF|ScopeEMData|scope`) 
 			left join SessionData s1 on (s1.`DEF_id`=a.`REF|SessionData|session`) 
 			left join SessionData s2 on (s2.`DEF_id`=pi.`REF|SessionData|session`) 
+			left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) 
 		where s1.`REF|InstrumentData|instrument`=s2.`REF|InstrumentData|instrument`
 				and scope.magnification = pi.magnification 
 				and a.`DEF_id` = '.$fileId.'
@@ -197,20 +213,43 @@ class leginondata {
 		return $parent;
 	}
 
+	function getImageFFT($imgId) {
+		$q = "select  "
+			."fft.`DEF_id` as fftimageId, "
+			."fft.`MRC|image` as fftimage "
+			."from "
+			."AcquisitionFFTData fft "
+			."where "
+			."fft.`REF|AcquisitionImageData|source` ='".$imgId."' "; 
+
+		$Rparent = $this->mysql->SQLQuery($q);
+		$parent = mysql_fetch_array($Rparent);
+		return $parent;
+	}
+
 	function getImageInfo($imgId) {
 		$q = "select "
 			."c.`SUBD|dimension|x` as dimx, "
 			."c.`SUBD|dimension|y` as dimy, "
 			."c.`SUBD|binning|y` as binning, "
 			."pi.pixelsize as pixelsize, "
+			."a.`DEF_id` as imageId, "
 			."a.`MRC|image` as filename, "
+			."p.`name` as `preset`, "
 			."scope.magnification, "
-			."scope.defocus "
+			."scope.defocus, "
+			."grid.`grid number` as gridNb, "
+			."grid.`grid tray ID` as trayId "
 			."from AcquisitionImageData a, PixelSizeCalibrationData pi "
 			."left join ScopeEMData scope on (scope.`DEF_id`=a.`REF|ScopeEMData|scope`) "
 			."left join SessionData s1 on (s1.`DEF_id`=a.`REF|SessionData|session`) "
 			."left join SessionData s2 on (s2.`DEF_id`=pi.`REF|SessionData|session`) "
 			."left join CameraEMData c on (a.`REF|CameraEMData|camera`=c.`DEF_id`) "
+			."left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
+			."left join AcquisitionImageTargetData target "
+			."on (target.`DEF_id`=a.`REF|AcquisitionImageTargetData|target`) "
+			."left join GridData grid "
+			."on (grid.`DEF_id`=target.`REF|GridData|grid`) "
 			."where "
 			."s1.`REF|InstrumentData|instrument`=s2.`REF|InstrumentData|instrument` "
 			."and "
@@ -218,9 +257,74 @@ class leginondata {
 			."and "
 			."a.`DEF_id` ='".$imgId."' "; 
 
+	//	echo $q;
 		$Rimageinfo = $this->mysql->SQLQuery($q);
 		$imageinfo = mysql_fetch_array($Rimageinfo);
 		return $imageinfo;
+	}
+
+	function getGridInfo($imgId) {
+		$q = "select "
+			."grid.`grid number` as gridNb, "
+			."grid.`grid tray ID` as trayId "
+			."from AcquisitionImageData a "
+			."left join AcquisitionImageTargetData target "
+			."on (target.`DEF_id`=a.`REF|AcquisitionImageTargetData|target`) "
+			."left join GridData grid "
+			."on (grid.`DEF_id`=target.`REF|GridData|grid`) "
+			."where "
+			."a.`DEF_id` ='".$imgId."' "; 
+
+		$Rgridinfo = $this->mysql->SQLQuery($q);
+		$gridinfo = mysql_fetch_array($Rgridinfo);
+		return $gridinfo;
+	}
+
+	function getImageRelation($imgId, $preset='', $matchtargetnb=true) {
+		if ($matchtargetnb) {
+			$targetnbwhere = "siblingtarget.`number`= parenttarget.`number` and ";
+			$targetnbjoin  = "left join AcquisitionImageTargetData siblingtarget "
+				."on (siblingtarget.`DEF_id`=sibling.`REF|AcquisitionImageTargetData|target`) ";
+		}
+		$q = "select "  
+			."sibling.`DEF_id` as siblingimageId, "
+			."sibling.`MRC|image` as siblingimage, "
+			."sp.`name` as siblingpreset, "
+			."parent.`DEF_id` as parentId, "
+			."parent.`MRC|image` as parentimage, "
+			."pp.`name` as parentpreset, "
+			."a.`DEF_id` as imageId, "
+			."a.`MRC|image` as image, "
+			."p.`name` as preset "
+			."from "
+			."AcquisitionImageData a "
+			."left join PresetData p "
+			."on (p.DEF_id=a.`REF|PresetData|preset`) "
+			."left join AcquisitionImageTargetData parenttarget "
+			."on (parenttarget.`DEF_id`=a.`REF|AcquisitionImageTargetData|target`) "
+			."left join AcquisitionImageData parent "
+			."on (parent.`DEF_id`=parenttarget.`REF|AcquisitionImageData|image`) "
+			."left join AcquisitionImageTargetData targets "
+			."on (targets.`REF|AcquisitionImageData|image`=parenttarget.`REF|AcquisitionImageData|image`) "
+			."left join AcquisitionImageData sibling "
+			."on (targets.`DEF_id`=sibling.`REF|AcquisitionImageTargetData|target`) "
+			.$targetnbjoin
+			."left join PresetData sp  on (sp.DEF_id=sibling.`REF|PresetData|preset`) "
+			."left join PresetData pp "
+			."on (pp.DEF_id=parent.`REF|PresetData|preset`) "
+			."where "
+			.$targetnbwhere
+			."sibling.`MRC|image` <> 'NULL' "
+			."and "
+			."sibling.`DEF_id` <> a.`DEF_id` ";
+			if ($preset)
+				$q .= "and sp.`name`='".$preset."' ";
+			$q .="and "
+			."a.`DEF_id` ='".$imgId."' "; 
+
+		$Rparent = $this->mysql->SQLQuery($q);
+		$parent = mysql_fetch_array($Rparent);
+		return $parent;
 	}
 
 	function getParentImageInfo($imgId) {
@@ -308,10 +412,19 @@ a.`DEF_id` ='12458'
 */
 	}
 
+	var $typefft = array('focpow');
+	// var $typefft = array('pow', 'focpow');
+
+	function getTypeFFT() {
+		return $this->typefft;
+	}
+
 	function getParent($imgId, $preset) {
 		$newparent=array();
 		$parentId = $imgId;
 
+
+	//	$relation = $this->getImageRelation($imgId, $preset);
 		// -- check if the current preset correspond to current image Id
 		$parent = $this->getParentImageInfo($parentId);
 		if ($parent[inputpreset]==$preset) 

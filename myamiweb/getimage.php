@@ -22,8 +22,8 @@ $quality=$_GET['t'];
 $minpix=$_GET['np'];
 $maxpix=$_GET['xp'];
 
-$targets = $leginondata->getImageTargets($id);
-$focustargets = $leginondata->getImageFocusTargets($id);
+// $targets = $leginondata->getImageTargets($id);
+// $focustargets = $leginondata->getImageFocusTargets($id);
 
 $src = "$template?table=$table&session=$session&id=$id&t=$quality&s=$size&np=$minpix&xp=$maxpix&sb=1";
 ?>
