@@ -21,6 +21,9 @@ class Event(data.Data):
 ##		ControlEvent
 ##			StartEvent
 ##			Stopvent
+##			KillEvent
+##			PauseEvent
+##			ResumeEvent
 ##			NumericControlEvent
 ##			LaunchEvent
 
@@ -81,6 +84,21 @@ class StartEvent(ControlEvent):
 		ControlEvent.__init__(self, id)
 	
 class StopEvent(ControlEvent):
+	'Event that signals a stop'
+	def __init__(self, id):
+		ControlEvent.__init__(self, id)
+
+class KillEvent(ControlEvent):
+	'Event that signals a stop'
+	def __init__(self, id):
+		ControlEvent.__init__(self, id)
+
+class PauseEvent(ControlEvent):
+	'Event that signals a start'
+	def __init__(self, id):
+		ControlEvent.__init__(self, id)
+	
+class ResumeEvent(ControlEvent):
 	'Event that signals a stop'
 	def __init__(self, id):
 		ControlEvent.__init__(self, id)

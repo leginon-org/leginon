@@ -210,10 +210,10 @@ class DataBinder(DataHandler):
 				if self.bindings[bindclass]:
 					args = (newdata,)
 					for func in self.bindings[bindclass]:
-						try:
-							apply(func, args)
-						except:
-							pass
+#						try:
+						apply(func, args)
+#						except:
+#							pass
 
 	def setBinding(self, dataclass, func=None):
 		'func must take data instance as first arg'

@@ -68,24 +68,18 @@ class Manager(node.Node):
 
 	def unregisterNode(self, unavailable_event):
 		nodeid = unavailable_event.id[:-1]
-		print 'unregistering node', nodeid
-
-		#print 'removing data references:'
-		self.removeNodeData(nodeid)
-		#print self.server.datahandler.datadict
-
-		#print 'removing event mappings:'
-		self.removeNodeDistmaps(nodeid)
-		#print self.distmap
-
-		#print 'removing node reference and client:'
 		self.removeNode(nodeid)
-		#print self.server.datahandler.datadict
-		#print self.clients
 
 	def removeNode(self, nodeid):
-		self.server.datahandler.remove(nodeid)
-		self.delEventClient(nodeid)
+		nodelocationdata = self.server.datahandler.query(nodeid)
+		if nodelocationdata:
+			self.removeNodeData(nodeid)
+			self.removeNodeDistmaps(nodeid)
+			self.server.datahandler.remove(nodeid)
+			self.delEventClient(nodeid)
+			print 'node', nodeid, 'unregistered'
+		else:
+			print 'node', nodeid, 'does not exist'
 
 	def removeNodeDistmaps(self, nodeid):
 		# needs to completely cleanup the distmap
@@ -146,7 +140,7 @@ class Manager(node.Node):
 
 	def launchNode(self, launcher, newproc, target, newid, nodeargs=()):
 		manloc = self.location()
-		args = (newid, manloc) + nodeargs
+		args = (self.id + (newid,), manloc) + nodeargs
 		self.launch(launcher, newproc, target, args)
 
 	def launch(self, launcher, newproc, target, args=(), kwargs={}):
@@ -158,6 +152,10 @@ class Manager(node.Node):
 		"""
 		ev = event.LaunchEvent(self.ID(), newproc, target, args, kwargs)
 		self.clients[launcher].push(ev)
+
+	def killNode(self, nodeid):
+		self.clients[nodeid].push(event.KillEvent(self.ID()))
+		self.removeNode(nodeid)
 
 	def addEventDistmap(self, eventclass, from_node=None, to_node=None):
 		if eventclass not in self.distmap:

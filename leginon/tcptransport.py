@@ -25,7 +25,10 @@ class Handler(SocketServer.StreamRequestHandler):
 			#starttime = time.time()
 			#cPickle.dump(idata, self.wfile)
 			#print "tcptransport.py, cPickle dumps", time.time() - starttime, "secs."
-			cPickle.dump(self.server.datahandler.query(obj), self.wfile)
+			try:
+				cPickle.dump(self.server.datahandler.query(obj), self.wfile)
+			except IOError:
+				print "TCP write failed"
 
 class Server(SocketServer.ThreadingTCPServer, leginonobject.LeginonObject):
 	def __init__(self, id, dh, port=None):

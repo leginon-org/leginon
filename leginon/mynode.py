@@ -17,8 +17,8 @@ class MyNode(node.Node):
 		self.main()
 
 	def main(self, startevent=None):
-		#while 1:
-		for i in [1,2,3]:
+		#for i in [1,2,3]:
+		while 1:
 			self.print_stuff()
 			time.sleep(self.interval)
 		#self.unregister()

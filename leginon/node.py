@@ -5,6 +5,7 @@ import datatransport
 import datahandler
 import sys
 import copy
+import os
 if sys.platform == 'win32':
 	sys.coinit_flags = 0
 
@@ -66,9 +67,15 @@ class Node(leginonobject.LeginonObject):
 		self.addEventOutput(event.UnpublishEvent)
 		self.addEventOutput(event.NodeAvailableEvent)
 		self.addEventOutput(event.NodeUnavailableEvent)
+		self.addEventInput(event.KillEvent, self.die)
 
 	def __del__(self):
 		self.announce(event.NodeUnavailableEvent(self.ID()))
+
+	def die(self, ievent):
+		print "die?"
+		os._exit(1)
+		print "dead..."
 
 	def addManager(self, loc):
 		self.managerloc = loc
