@@ -556,9 +556,8 @@ class ImageCollectorWidget(CustomWidget):
 		widget.button.pack_forget()
 		widget.button.pack()
 
-#		self.addWidget('Settings', imagecollector, ('Images', 'Queue List'))
-		self.addWidget('Control', imagecollector, ('Images', 'Advance Image'))
-#		self.addWidget('Control', imagecollector, ('Images', 'Select Image'))
+		self.addWidget('Settings', imagecollector, ('Images', 'Select'))
+		self.addWidget('Control', imagecollector, ('Images', 'Select Image'))
 		self.addWidget('Results', imagecollector, ('Images', 'Image'))
 
 class PresetsWidget(CustomWidget):
