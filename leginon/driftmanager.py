@@ -51,7 +51,7 @@ class DriftManager(watcher.Watcher):
 				}
 			),
 	}
-	eventinputs = watcher.Watcher.eventinputs + [event.DriftDetectedEvent, event.NeedTargetShiftEvent, event.DriftWatchEvent] + EM.EMClient.eventinputs
+	eventinputs = watcher.Watcher.eventinputs + [event.DriftDetectedEvent, event.DriftDeclaredEvent, event.NeedTargetShiftEvent, event.DriftWatchEvent] + EM.EMClient.eventinputs
 	eventoutputs = watcher.Watcher.eventoutputs + [event.DriftDoneEvent, event.ImageTargetShiftPublishEvent, event.ChangePresetEvent] + EM.EMClient.eventoutputs
 	def __init__(self, id, session, managerlocation, **kwargs):
 		watchfor = [event.DriftDetectedEvent]
@@ -63,6 +63,7 @@ class DriftManager(watcher.Watcher):
 		## then add:
 		#acquisition.Acquisition.__init__(self, id, sesison, managerlocation, target_types=('focus',), **kwargs)
 		self.addEventInput(event.DriftWatchEvent, self.handleDriftWatchEvent)
+		self.addEventInput(event.DriftDeclaredEvent, self.handleDriftDeclaredEvent)
 
 		self.correlator = correlator.Correlator()
 		self.peakfinder = peakfinder.PeakFinder()
@@ -113,6 +114,15 @@ class DriftManager(watcher.Watcher):
 		rows,cols = self.peak2shift(peak, pc.shape)
 		self.logger.info('rows %s, columns %s' % (rows, cols))
 		return {'rows':rows,'columns':cols}
+
+	def declareDrift(self):
+		self.handleDriftDeclaredEvent(evt=None)
+
+	def handleDriftDeclaredEvent(self, evt=None):
+		self.logger.info('drift was declared, publishing image shifts...')
+		self.publishImageShifts(requested=False)
+		if evt is not None:
+			self.confirmEvent(evt)
 
 	def processData(self, newdata):
 		self.logger.debug('processData')

@@ -181,7 +181,15 @@ class DriftWatchEvent(Event):
 ## drift at this state.
 class DriftDetectedEvent(PublishEvent):
 	dataclass = data.DriftDetectedData
-	
+
+class DriftDeclaredEvent(Event):
+	'''
+	sent to DriftManager to declare that a drift has happened
+	no drift monitoring is required at this time.
+	The ImageTargetShift updating should still take place when necessary.
+	'''
+	pass
+
 class NodeClassesPublishEvent(PublishEvent):
 	'Event indicating launcher published new list of node classes'
 	dataclass = data.NodeClassesData

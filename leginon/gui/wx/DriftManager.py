@@ -22,12 +22,14 @@ class Panel(gui.wx.Node.Panel):
 
 		self.bsettings = wx.Button(self, -1, 'Settings...')
 		self.bmeasure = wx.Button(self, -1, 'Measure Drift')
+		self.bdeclare = wx.Button(self, -1, 'Declare Drift')
 		self.cbcheckdrift = wx.CheckBox(self, -1, 'Check drift')
 
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(self.bsettings, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		sz.Add(self.bmeasure, (1, 0), (1, 1), wx.ALIGN_CENTER)
-		sz.Add(self.cbcheckdrift, (2, 0), (1, 1), wx.ALIGN_CENTER)
+		sz.Add(self.bdeclare, (2, 0), (1, 1), wx.ALIGN_CENTER)
+		sz.Add(self.cbcheckdrift, (3, 0), (1, 1), wx.ALIGN_CENTER)
 		self.szmain.Add(sz, (1, 0), (1, 1), wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_TOP)
 
 		# image
@@ -45,6 +47,7 @@ class Panel(gui.wx.Node.Panel):
 	def onNodeInitialized(self):
 		self.Bind(wx.EVT_BUTTON, self.onSettingsButton, self.bsettings)
 		self.Bind(wx.EVT_BUTTON, self.onMeasure, self.bmeasure)
+		self.Bind(wx.EVT_BUTTON, self.onDeclare, self.bdeclare)
 		self.Bind(wx.EVT_CHECKBOX, self.onCheckDriftCheck, self.cbcheckdrift)
 
 		self.onCheckDriftCheck()
@@ -67,6 +70,9 @@ class Panel(gui.wx.Node.Panel):
 
 	def onMeasure(self, evt):
 		self.node.measureDrift()
+
+	def onDeclare(self, evt):
+		self.node.declareDrift()
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):

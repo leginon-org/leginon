@@ -217,11 +217,9 @@ class SmartCameraParameters(uidata.Container):
 
 		try:
 			camerasize = self.node.session['instrument']['camera size']
-		except KeyError:
+		except (KeyError, AttributeError, TypeError):
 			self.node.logger.warning(
 					'Cannot get instrument camera size, camera size set to 1024x1024')
-			camerasize = 1024
-		except AttributeError:
 			camerasize = 1024
 
 		self.camerasize = {'x': camerasize, 'y': camerasize}

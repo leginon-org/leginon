@@ -1388,6 +1388,36 @@ class HoleStatsData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
+class SquareFinderPrefsData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('image', MosaicImageData),
+			('lpf-size', float),
+			('lpf-sigma', float),
+			('threshold', float),
+			('border', int),
+			('maxblobs', int),
+			('minblobsize', int),
+			('maxblobsize', int),
+			('mean-min', int),
+			('mean-max', int),
+			('std-min', int),
+			('std-max', int),
+		)
+	typemap = classmethod(typemap)
+
+class SquareStatsData(InSessionData):
+	def typemap(cls):
+		return InSessionData.typemap() + (
+			('prefs', SquareFinderPrefsData),
+			('row', int),
+			('column', int),
+			('mean', float),
+			('stdev', float),
+			('good', bool),
+		)
+	typemap = classmethod(typemap)
+
 # for testing
 class DiaryData(InSessionData):
 	'''
@@ -1617,6 +1647,7 @@ class FocuserSettingsData(AcquisitionSettingsData):
 			('stig defocus min', float),
 			('stig defocus max', float),
 			('acquire final', bool),
+			('drift on z', bool),
 		)
 	typemap = classmethod(typemap)
 

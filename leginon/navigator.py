@@ -21,6 +21,7 @@ import peakfinder
 import math
 import EM
 import gui.wx.Navigator
+import newdict
 
 class Navigator(node.Node):
 	panelclass = gui.wx.Navigator.Panel
@@ -57,13 +58,13 @@ class Navigator(node.Node):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 		self.emclient = EM.EMClient(self)
 		self.cam = camerafuncs.CameraFuncs(self)
-		self.calclients = {
-			'image shift': calibrationclient.ImageShiftCalibrationClient(self),
-			'beam shift': calibrationclient.BeamShiftCalibrationClient(self),
-			'image beam shift': calibrationclient.ImageBeamShiftCalibrationClient(self),
-			'stage position': calibrationclient.StageCalibrationClient(self),
-			'modeled stage position': calibrationclient.ModeledStageCalibrationClient(self)
-		}
+		self.calclients = newdict.OrderedDict()
+		self.calclients['image shift'] = calibrationclient.ImageShiftCalibrationClient(self)
+		self.calclients['stage position'] = calibrationclient.StageCalibrationClient(self)
+		self.calclients['modeled stage position'] = calibrationclient.ModeledStageCalibrationClient(self)
+		self.calclients['beam shift'] = calibrationclient.BeamShiftCalibrationClient(self)
+		self.calclients['image beam shift'] = calibrationclient.ImageBeamShiftCalibrationClient(self)
+
 		self.pcal = calibrationclient.PixelSizeCalibrationClient(self)
 		self.stagelocations = []
 		self.getLocationsFromDB()

@@ -429,10 +429,7 @@ class HoleFinder(object):
 		border = self.blobs_config['border']
 		maxsize = self.blobs_config['maxblobsize']
 		maxblobs = self.blobs_config['maxblobs']
-		try:
-			blobs = imagefun.find_blobs(im, mask, border, maxblobs, maxsize)
-		except imagefun.TooManyBlobs:
-			blobs = []
+		blobs = imagefun.find_blobs(im, mask, border, maxblobs, maxsize)
 		self.__update_result('blobs', blobs)
 
 	def configure_lattice(self, tolerance=None, spacing=None, minspace=None):

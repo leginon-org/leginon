@@ -267,6 +267,11 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		ht = scope['high tension']
 		mag = scope['magnification']
 		eudata = self.euclient.researchEucentricFocus(ht,mag)
+		if eudata is None:
+			message = 'No eucentric focus has been saved for ht=%s and mag=%s' % (ht,mag)
+			self.logger.info(message)
+			self.messagelog.information(message)
+			return
 		focus = eudata['focus']
 
 		scopedata = data.ScopeEMData()

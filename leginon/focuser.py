@@ -39,7 +39,7 @@ class Focuser(acquisition.Acquisition):
 		'correction type': 'Defocus',
 		'preset': '',
 		'melt time': 0.0,
-		'beam tilt': 0.02,
+		'beam tilt': 0.01,
 		'drift threshold': 2.0,
 		'fit limit': 1000,
 		'check drift': True,
@@ -49,6 +49,7 @@ class Focuser(acquisition.Acquisition):
 		'stig defocus min': 1e-6,
 		'stig defocus max': 4e-6,
 		'acquire final': True,
+		'drift on z': True,
 	}
 
 	eventinputs = acquisition.Acquisition.eventinputs
@@ -193,9 +194,9 @@ class Focuser(acquisition.Acquisition):
 				resultdata['defocus correction'] = focustype
 				focusmethod(defoc)
 		if 'defocus correction' in resultdata:
-			resultstring = 'corrected focus by %.3e using %s' % (defoc, focustype,)
+			resultstring = 'corrected focus by %.3e using %s (min=%s)' % (defoc, focustype,fitmin)
 		else:
-			resultstring = 'invalid focus measurement'
+			resultstring = 'invalid focus measurement (min=%s)' % (fitmin,)
 		if resultdata['stig correction']:
 			resultstring = resultstring + ', corrected stig by x,y=%.4f,%.4f' % (stigx, stigy)
 		self.setStatus(resultstring)
@@ -236,10 +237,13 @@ class Focuser(acquisition.Acquisition):
 
 			self.cam.setCameraEMData(camstate0)
 
+		status = 'unknown'
+
 		## pre manual check
 		if self.settings['check before']:
 			self.manualCheckLoop(presettarget)
 			resultdata['pre manual check'] = True
+			status = 'ok'
 		else:
 			resultdata['pre manual check'] = False
 
@@ -249,10 +253,13 @@ class Focuser(acquisition.Acquisition):
 			autopresettarget = data.PresetTargetData(emtarget=presettarget['emtarget'], preset=autofocuspreset)
 			autostatus = self.autoFocus(resultdata, autopresettarget)
 			resultdata['auto status'] = autostatus
-			if status != 'ok':
-				status = autostatus
-			else:
+			if autostatus == 'ok':
 				status = 'ok'
+			elif autostatus == 'repeat':
+				### when we need to repeat, return immediately 
+				return 'repeat'
+			else:
+				status = autostatus
 		else:
 			resultdata['auto status'] = 'skipped'
 
@@ -452,12 +459,19 @@ class Focuser(acquisition.Acquisition):
 			self.logger.warning('Eucentric focus was not set before measuring defocus because "Stage Z" was not selected then, but is now.  Changing Z now is a bad idea, so I will skip it.')
 			return
 		stage = self.emclient.getScope()['stage position']
-		newz = stage['z'] + delta
+		alpha = stage['a']
+		deltaz = delta * Numeric.cos(alpha)
+		newz = stage['z'] + deltaz
 		newstage = {'stage position': {'z': newz }}
 		newstage['reset defocus'] = 1
 		emdata = data.ScopeEMData(initializer=newstage)
-		self.logger.info('Correcting stage Z by %s' % (delta,))
+		self.logger.info('Correcting stage Z by %s (defocus change %s at alpha %s)' % (deltaz,delta,alpha))
 		self.emclient.setScope(emdata)
+		### this is to notify DriftManager that it is responsible
+		### for updating the X,Y side effect of changing Z
+		if self.settings['drift on z']:
+			self.logger.info('Declaring drift after correcting stage Z')
+			self.declareDrift()
 
 	def correctNone(self, delta):
 		self.logger.info('Not applying defocus correction')

@@ -125,6 +125,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		foc_template_limit.addObjects((self.focthickon, self.focicerad, self.focicetmin, self.focicetmax, self.focicetstd))
 
 		self.acq_target_template = uidata.Sequence('Acqusition Template', [], 'rw', persist=True)
+		self.focus_one_hole = uidata.SingleSelectFromList('Focus One Hole', ['Off', 'Any Hole', 'Good Hole'], 0, permissions='rw', persist=True)
 		submitmeth = uidata.Method('Submit', self.submit)
 		self.goodholesimage.addTargetType('acquisition', [], (0,255,0))
 		self.goodholesimage.addTargetType('focus', [], (0,0,255))
@@ -137,7 +138,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		blobcont.addObjects((allblobscontainer, latticeblobscontainer))
 
 		goodholescontainer = uidata.LargeContainer('Good Holes')
-		goodholescontainer.addObjects((self.icetmin, self.icetmax, self.icetstd, icemeth, self.goodholes, self.use_target_template, self.foc_target_template, foc_template_limit, self.acq_target_template, self.goodholesimage, submitmeth))
+		goodholescontainer.addObjects((self.icetmin, self.icetmax, self.icetstd, icemeth, self.goodholes, self.use_target_template, self.foc_target_template, foc_template_limit, self.acq_target_template, self.focus_one_hole, self.goodholesimage, submitmeth))
 
 		container = uidata.LargeContainer('Hole Finder')
 		container.addObjects((self.usercheckon, self.skipauto, originalcont,edgecont,corcont,threshcont, blobcont, goodholescontainer))
@@ -212,6 +213,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.hf.find_blobs()
 		blobs = self.hf['blobs']
 		centers = self.blobCenters(blobs)
+		self.logger.info('Blobs: %s' % (len(centers),))
 		self.allblobs.set(centers)
 		self.allblobsimage.setImage(self.hf['original'])
 		self.allblobsimage.setTargetType('All Blobs', centers)
@@ -232,6 +234,7 @@ class HoleFinder(targetfinder.TargetFinder):
 
 		holes = self.hf['holes']
 		centers = self.blobCenters(holes)
+		self.logger.info('Holes: %s' % (len(centers),))
 		mylist = []
 		for hole in holes:
 			mean = float(hole.stats['hole_mean'])
@@ -254,6 +257,30 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.hf.calc_ice()
 		goodholes = self.hf['holes2']
 		centers = self.blobCenters(goodholes)
+		allcenters = self.blobCenters(self.hf['holes'])
+
+		focus_points = []
+
+		## replace an acquisition target with a focus target
+		onehole = self.focus_one_hole.getSelectedValue()
+		if centers and onehole != 'Off':
+			## if only one hole, this is useless
+			if len(allcenters) < 2:
+				self.logger.info('need more than one hole if you want to focus on one of them')
+				centers = []
+			elif onehole == 'Any Hole':
+				fochole = self.focus_on_hole(centers, allcenters)
+				focus_points.append(fochole)
+			elif onehole == 'Good Hole':
+				if len(centers) < 2:
+					self.logger.info('need more than one good hole if you want to focus on one of them')
+					centers = []
+				else:
+					## use only good centers
+					fochole = self.focus_on_hole(centers, centers)
+					focus_points.append(fochole)
+
+		self.logger.info('Holes with good ice: %s' % (len(centers),))
 		self.goodholes.set(centers)
 		self.goodholesimage.setImage(self.hf['original'])
 		self.goodholesimage.imagedata = self.currentimagedata
@@ -261,14 +288,60 @@ class HoleFinder(targetfinder.TargetFinder):
 		if self.use_target_template.get():
 			newtargets = self.applyTargetTemplate(centers)
 			acq_points = newtargets['acquisition']
-			focus_points = newtargets['focus']
+			focus_points.extend(newtargets['focus'])
 		else:
 			acq_points = centers
-			focus_points = []
+
 		self.goodholesimage.setTargetType('acquisition', acq_points)
 		self.goodholesimage.setTargetType('focus', focus_points)
+		self.logger.info('Acquisition Targets: %s' % (len(acq_points),))
+		self.logger.info('Focus Targets: %s' % (len(focus_points),))
 		hfprefs = self.storeHoleFinderPrefsData(self.currentimagedata)
 		self.storeHoleStatsData(hfprefs)
+
+	def centroid(self, points):
+		## find centroid
+		cx = cy = 0.0
+		for point in points:
+			cx += point[0]
+			cy += point[1]
+		cx /= len(points)
+		cy /= len(points)
+		return cx,cy
+
+	def focus_on_hole(self, good, all):
+		cx,cy = self.centroid(all)
+		focpoint = None
+
+		## make a list of the bad holes
+		bad = []
+		for point in all:
+			if point not in good:
+				bad.append(point)
+
+		## if there are bad holes, use one
+		if bad:
+			point = bad[0]
+			closest_dist = Numeric.hypot(point[0]-cx,point[1]-cy)
+			closest_point = point
+			for point in bad:
+				dist = Numeric.hypot(point[0]-cx,point[1]-cy)
+				if dist < closest_dist:
+					closest_dist = dist
+					closest_point = point
+			return closest_point
+
+		## now use a good hole for focus
+		point = good[0]
+		closest_dist = Numeric.hypot(point[0]-cx,point[1]-cy)
+		closest_point = point
+		for point in good:
+			dist = Numeric.hypot(point[0]-cx,point[1]-cy)
+			if dist < closest_dist:
+				closest_dist = dist
+				closest_point = point
+		good.remove(closest_point)
+		return closest_point
 
 	def bypass(self):
 		self.goodholesimage.setTargetType('acquisition', [])
@@ -308,7 +381,7 @@ class HoleFinder(targetfinder.TargetFinder):
 					coord = target[1], target[0]
 					stats = self.hf.get_hole_stats(self.hf['original'], coord, rad)
 					if stats is None:
-						self.logger.info('skipping template point %s:  stats region out of bounds' % (vect, tm, ts))
+						self.logger.info('skipping template point %s:  stats region out of bounds' % (vect,))
 						continue
 					tm = self.icecalc.get_thickness(stats['mean'])
 					ts = self.icecalc.get_stdev_thickness(stats['std'], stats['mean'])

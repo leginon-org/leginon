@@ -156,6 +156,8 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 		szstig.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		self.widgets['acquire final'] = wx.CheckBox(self, -1, 'Acquire final image')
+		self.widgets['drift on z'] = wx.CheckBox(self, -1,
+																						'Declare drift after Z corrected')
 
 		# settings sizer
 		sz = wx.GridBagSizer(10, 5)
@@ -186,7 +188,9 @@ class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['acquire final'], (2, 2), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szstig, (3, 2), (4, 1), wx.ALIGN_CENTER)
+		sz.Add(self.widgets['drift on z'], (3, 2), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szstig, (4, 2), (3, 1), wx.ALIGN_CENTER)
 		sz.AddGrowableRow(6)
 
 		sb = wx.StaticBox(self, -1, 'Autofocus')

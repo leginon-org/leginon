@@ -70,7 +70,7 @@ def stdev_slow(inputarray, known_mean=None):
 	return float(stdev)
 
 def stdev_fast(inputarray, known_mean=None):
-	s = numextension.stdev(inputarray.astype(Numeric.Float32))
+	s = numextension.stdev(inputarray)
 	return float(s)
 
 if numextension is None:
@@ -98,7 +98,7 @@ def max(inputarray):
 ### wrap some functions that are in numextension
 if numextension is not None:
 	def minmax(image):
-		return numextension.minmax(image.astype(Numeric.Float32))
+		return numextension.minmax(image)
 
 	def despike(image, size=11, sigma=3.5, debug=0):
 		'''
@@ -112,7 +112,7 @@ if numextension is not None:
 		dev. then the pixel will be set to the mean value.
 		'''
 		# last argument is debug flag
-		return numextension.despike(image.astype(Numeric.Float32), size, sigma, debug)
+		numextension.despike(image, size, sigma, debug)
 
 
 def medianSeries(series):
@@ -156,9 +156,12 @@ def scale(array, scale):
 
 	indices = [None, None]
 	for i in range(2):
-		indices[i] = Numeric.arrayrange(int(round(scale[i]*array.shape[i])))
-		indices[i] = indices[i] / scale[i]
-		indices[i] = Numeric.floor(indices[i]+scale[i]/2.0+0.5).astype(Numeric.Int)
+		index = Numeric.arrayrange(int(round(scale[i]*array.shape[i])))
+		index = index / scale[i]
+		## mystery stuff:
+		#index = Numeric.floor(index+scale[i]/2.0+0.5).astype(Numeric.Int)
+		index = Numeric.floor(index).astype(Numeric.Int)
+		indices[i] = index
 
 	return Numeric.take(Numeric.take(array, indices[0]), indices[1], 1)
 
@@ -305,26 +308,6 @@ def swap_quadrants(numericarray):
 	newarray = swap_col_halves(newarray)
 	return newarray
 
-def zeroRow(inputarray, row):
-	inputarray[row] = 0
-	return inputarray
-
-def zeroCol(inputarray, col):
-	inputarray[:,col] = 0
-	return inputarray
-
-def fakeRows(inputarray, badrows, goodrow):
-	fakerow = inputarray[goodrow]
-	for row in badrows:
-		inputarray[row] = fakerow
-	return inputarray
-	
-def fakeCols(inputarray, badcols, goodcol):
-	fakecol = inputarray[:,goodcol]
-	for col in badcols:
-		inputarray[:,col] = fakecol
-	return inputarray
-
 ## see the correlator.py module for a more efficient way to do
 ## correlations on a series of images
 def cross_correlate(im1, im2):
@@ -436,13 +419,24 @@ class Blob(object):
 		else:
 			self.stats['size'] = Numeric.zeros((2,),Numeric.Float32)
 		
-		## need to calculate value list here
-		# this is fake:
-		#self.value_list = [2]
+		## get value array using pixel list
+		pixel_array.transpose()
+		rows = pixel_array[0]
+		cols = pixel_array[1]
+		try:
+			value_array = self.image[rows,cols]
+		except:
+			print 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+			print 'SHAPE', self.image.shape
+			print 'LEN RC', len(rows), len(cols)
+			print 'ROWS', minmax(rows)
+			print 'COLS', minmax(cols)
+			print 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'
+			raise
 
-		value_array = Numeric.array(self.value_list, Numeric.Float32)
-		valuesum = Numeric.sum(value_array)
-		valuesquares = value_array ** 2
+		self.value_array = value_array.astype(Numeric.Float32)
+		valuesum = Numeric.sum(self.value_array)
+		valuesquares = self.value_array ** 2
 		sumvaluesquares = Numeric.sum(valuesquares)
 
 		## mean pixel value
@@ -465,9 +459,6 @@ class Blob(object):
 	def print_stats(self):
 		for stat in ('complete', 'n', 'center', 'size', 'mean', 'stddev'):
 			print '\t%s:\t%s' % (stat, self.stats[stat])
-
-class TooManyBlobs(Exception):
-	pass
 
 def near_center(shape, blobs, n):
 	'''
@@ -533,10 +524,10 @@ def find_blobs_slow(image, mask, border=0, maxblobs=300, maxblobsize=100, minblo
 	return blobs
 
 def find_blobs_fast(image, mask, border=0, maxblobs=300, maxblobsize=100, minblobsize=0):
-	print 'fast blobs'
 	shape = image.shape
-	tmpmask = mask.astype(Numeric.Int)
 
+	### create copy of mask since it will be modified now
+	tmpmask = Numeric.array(mask, Numeric.Int32)
 	## zero out tmpmask outside of border
 	if border:
 		tmpmask[:border] = 0
@@ -545,7 +536,7 @@ def find_blobs_fast(image, mask, border=0, maxblobs=300, maxblobsize=100, minblo
 		tmpmask[:,-border:] = 0
 
 	## find blobs the new way
-	blobs = numextension.blobs(image, tmpmask)
+	blobs = numextension.blobs(tmpmask)
 
 	## then fake them into the original blob class
 	fakeblobs = []
@@ -554,14 +545,13 @@ def find_blobs_fast(image, mask, border=0, maxblobs=300, maxblobsize=100, minblo
 	for blob in blobs:
 		fakeblob = Blob(image, mask)
 		fakeblob.pixel_list = zip(blob['pixelrow'], blob['pixelcol'])
-		fakeblob.value_list = blob['pixelv']
-		fakeblob.calc_stats()
 		if len(fakeblob.pixel_list) >= maxblobsize:
 			toobig += 1
 			continue
 		if len(fakeblob.pixel_list) < minblobsize:
 			toosmall += 1
 			continue
+		fakeblob.calc_stats()
 		fakeblobs.append(fakeblob)
 
 	print 'rejected %s oversized blobs' % (toobig,)

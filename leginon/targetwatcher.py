@@ -24,9 +24,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 	eventinputs = watcher.Watcher.eventinputs + targethandler.TargetHandler.eventinputs + [event.TargetListDoneEvent,
 																						event.ImageTargetListPublishEvent,
 																						event.ImageTargetShiftPublishEvent]
-	eventoutputs = watcher.Watcher.eventoutputs + targethandler.TargetHandler.eventoutputs + [event.TargetListDoneEvent,
-																							event.ImageTargetListPublishEvent,
-																							event.NeedTargetShiftEvent]
+	eventoutputs = watcher.Watcher.eventoutputs + targethandler.TargetHandler.eventoutputs + [event.TargetListDoneEvent, event.NeedTargetShiftEvent]
 
 	def __init__(self, id, session, managerlocation, target_types=('acquisition',),
 								**kwargs):

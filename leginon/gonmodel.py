@@ -260,8 +260,8 @@ class GonModel:
 			for period in Numeric.arrayrange(minp, maxp+incp, incp):
 				a = self.design_matrix(gondata,terms,period)
 				x,resids,rank,s = LinearAlgebra.linear_least_squares(a,b)
-				if resids < best_resids:
-					best_resids = resids
+				if resids[0] < best_resids:
+					best_resids = resids[0]
 					best_period = period
 					best_x = x
 			minp = best_period - incp

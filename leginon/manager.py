@@ -779,7 +779,7 @@ class Manager(node.Node):
 			app.importApplication(filename)
 			messages = app.getMessageLog()
 			if messages['information']:
-				self.logger.information(messages['information'])
+				self.logger.info(messages['information'])
 			if messages['warning']:
 				self.logger.warning(messages['warning'])
 		except ValueError:

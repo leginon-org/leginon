@@ -474,9 +474,9 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 
 			shifts[tiltaxis] = (pixshift['row'], pixshift['col'])
 			if tiltaxis == 'x':
-				tilts[tiltaxis] = (tilt_value, 0)
+				tilts[tiltaxis] = (2*tilt_value, 0)
 			else:
-				tilts[tiltaxis] = (0, tilt_value)
+				tilts[tiltaxis] = (0, 2*tilt_value)
 			try:
 				self.checkAbort()
 			except Abort:

@@ -5,6 +5,7 @@ except:
 import imagefun
 
 min_intensity = 0.000001
+inf = 1e300
 
 class IceCalculator(object):
 	def __init__(self, i0=None):
@@ -25,7 +26,7 @@ class IceCalculator(object):
 
 	def get_stdev_thickness(self, stdev_intensity, mean_intensity):
 		if stdev_intensity >= mean_intensity:
-			std = imagefun.inf
+			std = inf
 		else:
 			std = Numeric.log(mean_intensity / (mean_intensity-stdev_intensity))
 		return std

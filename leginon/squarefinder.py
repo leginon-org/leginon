@@ -215,7 +215,7 @@ class BlobFinderPlugin(Plugin):
 																	input.mask[::scale, ::scale],
 																	border/scale, maxblobs,
 																	maxblobsize/scale, minblobsize/scale)
-		except (ValueError, imagefun.TooManyBlobs):
+		except ValueError:
 			blobs = []
 
 		thresholdedblobs = []

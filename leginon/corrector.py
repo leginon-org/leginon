@@ -359,12 +359,14 @@ class Corrector(node.Node):
 		'''
 		normalized = self.normalize(original, camstate)
 		plan = self.retrievePlan(camstate)
-		good = self.removeBadPixels(normalized, plan)
+		if plan is not None:
+			good = self.removeBadPixels(normalized, plan)
 
 		if self.settings['despike']:
 			self.logger.info('Despiking...')
-			good = imagefun.despike(good, self.settings['despike size'],
-																		self.settings['despike threshold'])
+			thresh = self.despikevalue.get()
+			nsize = self.despikesize.get()
+			imagefun.despike(normalized, nsize, thresh)
 			self.logger.info('Despiked')
 
 		## this has been commented because original.type()
@@ -374,30 +376,36 @@ class Corrector(node.Node):
 		## values
 		#return good.astype(original.type())
 
-		final = good.astype(Numeric.Float32)
+		final = normalized.astype(Numeric.Float32)
 		return final
 
 	def removeBadPixels(self, image, plan):
 		badrows = plan['rows']
 		badcols = plan['columns']
+		badrowscols = [badrows,badcols]
 
 		shape = image.shape
 
-		goodrow = None
-		for row in range(shape[0]):
-			if row not in badrows:
-				goodrow = row
-				break
-		imagefun.fakeRows(image, badrows, goodrow)
-
-		goodcol = None
-		for col in range(shape[1]):
-			if col not in badcols:
-				goodcol = col
-				break
-		imagefun.fakeCols(image, badcols, goodcol)
-
-		return image
+		for axis in (0,1):
+			for bad in badrowscols[axis]:
+				## find a near by good one
+				good = None
+				for i in range(bad+1,shape[axis]):
+					if i not in badrowscols[axis]:
+						good = i
+						break
+				if good is None:
+					for i in range(bad-1,-1,-1):
+						if i not in badrowscols[axis]:
+							good = i
+							break
+				if good is None:
+					raise RuntimeError('image has no good rows/cols')
+				else:
+					if axis == 0:
+						image[bad] = image[good]
+					else:
+						image[:,bad] = image[:,good]
 
 	def normalize(self, raw, camstate):
 		dark = self.retrieveRef(camstate, 'dark')
