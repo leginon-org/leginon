@@ -145,8 +145,7 @@ class Focuser(acquisition.Acquisition):
 		self.driftthresh = uidata.Float('Drift Threshold (pixels)', 2, 'rw', persist=True)
 		focustypes = self.focus_methods.keys()
 		focustypes.sort()
-		self.focustype = uidata.SingleSelectFromList('Focus Correction Type',
-																							focustypes, 0)
+		self.focustype = uidata.SingleSelectFromList('Focus Correction Type', focustypes, 0, persist=True)
 		self.stigcorrection = uidata.Boolean('Stigmator Correction', False, 'rw', persist=True)
 		self.publishimages = uidata.Boolean('Publish Images', True, 'rw', persist=True)
 		abortfailmethod = uidata.Method('Abort With Failure', self.uiAbortFailure)
