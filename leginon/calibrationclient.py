@@ -540,11 +540,11 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			states2[0]['beam tilt'] = beamtilts[0]
 			states2[1]['beam tilt'] = beamtilts[1]
 
-			self.node.logger.info('States 1 %s' % (states1,))
+			self.node.logger.debug('States 1 %s' % (states1,))
 			shiftinfo = self.measureStateShift(states1[0], states1[1], 1, settle=0.25)
 			pixelshift1 = shiftinfo['pixel shift']
 
-			self.node.logger.info('States 2 %s' % (states2,))
+			self.node.logger.debug('States 2 %s' % (states2,))
 			shiftinfo = self.measureStateShift(states2[0], states2[1], 1, settle=0.25)
 			pixelshift2 = shiftinfo['pixel shift']
 			self.node.logger.info('Pixel shift 1 %s, Pixel shift 2 %s'
