@@ -93,7 +93,7 @@ class EM(node.Node):
 			ids.append('all')
 
 		e = event.ListPublishEvent(self.ID(), ids)
-		self.announce(e)
+		self.outputEvent(e)
 
 if __name__ == '__main__':
 	import time

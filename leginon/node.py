@@ -65,17 +65,20 @@ class Node(leginonobject.LeginonObject):
 		self.server = datatransport.Server(self.ID(), dh, dhargs)
 		self.clientclass = clientclass
 
+		self.confirmwaitlist = {}
+
 		self.uiserver = interface.Server()
 		self.defineUserInterface()
-
-		if managerloc:
-			self.addManager(managerloc)
 
 		self.addEventOutput(event.PublishEvent)
 		self.addEventOutput(event.UnpublishEvent)
 		self.addEventOutput(event.NodeAvailableEvent)
 		self.addEventOutput(event.NodeUnavailableEvent)
 		self.addEventInput(event.KillEvent, self.die)
+		self.addEventInput(event.ConfirmationEvent, self.registerConfirmedEvent)
+
+		if managerloc:
+			self.addManager(managerloc)
 
 	def __del__(self):
 		#self.exit()
@@ -108,7 +111,9 @@ class Node(leginonobject.LeginonObject):
 		self.addEventClient('manager', loc)
 		newid = self.ID()
 		myloc = self.location()
-		self.announce(event.NodeAvailableEvent(newid, myloc))
+		available_event = event.NodeAvailableEvent(newid, myloc)
+		self.outputEvent(available_event)
+		self.waitEvent(available_event)
 
 	def main(self):
 		raise NotImplementedError()
@@ -125,12 +130,25 @@ class Node(leginonobject.LeginonObject):
 
 	def exit(self):
 		self.server.exit()
-		self.announce(event.NodeUnavailableEvent(self.ID()))
+		self.outputEvent(event.NodeUnavailableEvent(self.ID()))
 
-	def announce(self, ievent):
-		## no longer have to mark_data becuase id takes care of it
-		#self.mark_data(ievent)
+	def outputEvent(self, ievent):
 		self.clients['manager'].push(ievent)
+
+	def confirmEvent(self, ievent):
+		self.outputEvent(event.ConfirmationEvent(self.ID(), ievent.id))
+
+	def waitEvent(self, ievent):
+		if not ievent.id in self.confirmwaitlist:
+			self.confirmwaitlist[ievent.id] = threading.Event()
+		self.confirmwaitlist[ievent.id].wait()
+
+	def registerConfirmedEvent(self, ievent):
+		# this is bad since it will fill up with lots of events
+		if not ievent.content in self.confirmwaitlist:
+			self.confirmwaitlist[ievent.content] = threading.Event()
+		self.confirmwaitlist[ievent.content].set()
+		#del self.confirmwaitlist[ievent.content]
 
 	def publish(self, idata, eventclass=event.PublishEvent):
 		## no longer have to mark_data becuase id takes care of it
@@ -140,13 +158,13 @@ class Node(leginonobject.LeginonObject):
 			raise TypeError('PublishEvent subclass required')
 		self.server.datahandler._insert(idata)
 		# this idata.id is content, I think
-		self.announce(eventclass(self.ID(), idata.id))
+		self.outputEvent(eventclass(self.ID(), idata.id))
 
 	def unpublish(self, dataid, eventclass=event.UnpublishEvent):
 		if not issubclass(eventclass, event.UnpublishEvent):
 			raise TypeError('UnpublishEvent subclass required')
 		self.server.datahandler.remove(dataid)
-		self.announce(eventclass(self.ID(), dataid))
+		self.outputEvent(eventclass(self.ID(), dataid))
 
 	def publishRemote(self, nodeid, idata):
 		# perhaps an event can be generated in this too

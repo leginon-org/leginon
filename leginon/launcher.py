@@ -27,7 +27,8 @@ class Launcher(node.Node):
 		self.addEventClient('manager', loc)
 
 		e = event.LauncherAvailableEvent(self.ID(), self.location())
-		self.announce(e)
+		self.outputEvent(e)
+		self.waitEvent(e)
 
 	def main(self):
 		pass

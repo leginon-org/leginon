@@ -31,6 +31,7 @@ class Event(data.Data):
 ##			PublishEvent
 ##			UnpublishEvent
 ##			ListPublishEvent
+##			ConfirmationEvent
 ##		ControlEvent
 ##			StartEvent
 ##			Stopvent
@@ -75,6 +76,11 @@ class PublishImageEvent(NotificationEvent):
 	'Event indicating image was published'
 	def __init__(self, id, dataid):
 		NotificationEvent.__init__(self, id, content=dataid)
+
+class ConfirmationEvent(Event):
+	'Event sent to confirm event processing'
+	def __init__(self, id, eventid):
+		Event.__init__(self, id, content=eventid)
 
 # this could be a subclass of publish event, but I'm not sure if that
 # would confuse those not looking for a list

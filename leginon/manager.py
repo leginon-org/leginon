@@ -49,6 +49,9 @@ class Manager(node.Node):
 		'return an id for a new node'
 		return self.id + (name,)
 
+	def outputEvent(self, ievent):
+		self.distribute(ievent)
+
 	def addLauncher(self, nodeid):
 		self.launcherlist.append(nodeid[-1])
 		self.launcherdict[nodeid[-1]] = nodeid
@@ -81,6 +84,11 @@ class Manager(node.Node):
 		# check if new node is launcher
 		if isinstance(readyevent, event.LauncherAvailableEvent):
 			self.addLauncher(nodeid)
+
+		# temporary, plan to add reverse path for each distmap call for confirm
+		self.addEventDistmap(event.ConfirmationEvent, self.id, nodeid)
+
+		self.confirmEvent(readyevent)
 
 	def unregisterNode(self, unavailable_event):
 		nodeid = unavailable_event.id[:-1]
@@ -274,7 +282,7 @@ if __name__ == '__main__':
 	m = Manager(manager_id)
 
 	## GUI
-	gui = 1
+	gui = 0
 	if gui:
 		import managergui
 		import Tkinter
