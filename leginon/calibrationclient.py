@@ -520,7 +520,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		Each call of this function acquires four images
 		and returns two shift displacements.
 		'''
-		self.node.logger.info('State 1 %s, State 2 %s' % (state1, state2))
+		self.node.logger.debug('State 1 %s, State 2 %s' % (state1, state2))
 		
 		beamtilt = self.getBeamTilt()
 
@@ -577,15 +577,15 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			bt0 = dict(beamtilt)
 			bt0[tilt_axis] += tilt_m
 			state0 = data.ScopeEMData(initializer={'beam tilt':bt0})
-			self.node.logger.info('State 0 %s' % (state0,))
+			self.node.logger.debug('State 0 %s' % (state0,))
 			### create the two equal and opposite tilted states
 			statepos = data.ScopeEMData(initializer={'beam tilt':dict(bt0)})
 			stateneg = data.ScopeEMData(initializer={'beam tilt':dict(bt0)})
 
 			statepos['beam tilt'][tilt_axis] += tilt_t
-			self.node.logger.info('State positive %s' % (statepos,))
+			self.node.logger.debug('State positive %s' % (statepos,))
 			stateneg['beam tilt'][tilt_axis] -= tilt_t
-			self.node.logger.info('State negative %s' % (stateneg,))
+			self.node.logger.debug('State negative %s' % (stateneg,))
 
 			shiftinfo = self.measureStateShift(state0, statepos, 1, settle=0.25)
 			pixelshift1 = shiftinfo['pixel shift']
