@@ -429,10 +429,13 @@ class ImageData(Data):
 		# value must be binary data from xmlrpc
 		if not isinstance(value, xmlrpclib.Binary):
 			raise RuntimeError('value must be instance of xmlrpclib.Binary')
-
-		print 'setting widget'
-		numdata = Mrc.mrcstr_to_numeric(value.data)
-		self.iv.import_numeric(numdata)
+		mrcstr = value.data
+		if mrcstr == '':
+			self.iv.displayMessage('NO IMAGE DATA')
+		else:
+			numdata = Mrc.mrcstr_to_numeric(mrcstr)
+			self.iv.import_numeric(numdata)
+		
 
 	def getWidget(self):
 		print 'not implemented'
