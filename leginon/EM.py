@@ -45,7 +45,7 @@ class EM(node.Node):
 		if scope is None:
 			scope = ('tecnai', 'tecnai')
 		if camera is None:
-			camera = ('tietz', 'tietz')
+			camera = ('gatan', 'gatan')
 		self.setEMclasses(scope, camera)
 
 		node.Node.__init__(self, id, nodelocations, DataHandler, (self,))
