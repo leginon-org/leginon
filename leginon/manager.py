@@ -25,6 +25,7 @@ class Manager(node.Node):
 		#self.addDistmap(event.PublishEvent, , ):
 
 		self.addEventInput(event.PublishEvent, self.registerData)
+		self.addEventInput(event.UnpublishEvent, self.unregisterData)
 		self.addEventInput(event.ListPublishEvent, self.registerData)
 
 		self.main()
@@ -61,6 +62,25 @@ class Manager(node.Node):
 		if isinstance(readyevent, event.LauncherReadyEvent):
 			self.gui_add_launcher(newid)
 
+#	def unregisterNode(self, readyevent):
+#		print 'registering node', readyevent.origin
+#
+#		nodeid = readyevent.origin['id']
+#		nodelocation = readyevent.origin['location']
+#
+#		# for the clients and mapping
+#		self.delEventClient(nodeid)
+#		print self.clients
+#
+#		# published data of nodeid mapping to location of node
+#		nodelocationdata = self.server.datahandler.query(nodeid)
+#		if nodelocationdata == None:
+#			nodelocationdata = data.NodeLocationData(nodeid, nodelocation)
+#		else:
+#			# fools! should do something nifty to unregister, reregister, etc.
+#			nodelocationdata = data.NodeLocationData(nodeid, nodelocation)
+#		self.server.datahandler._insert(nodelocationdata)
+
 	def registerData(self, publishevent):
 		if isinstance(publishevent, event.PublishEvent):
 			id = publishevent.content
@@ -79,6 +99,26 @@ class Manager(node.Node):
 		else:
 			datalocationdata.content.append(nodeid)
 		self.server.datahandler._insert(datalocationdata)
+
+	def unregisterData(self, unpublishevent):
+		if isinstance(unpublishevent, event.UnpublishEvent):
+			id = unpublishevent.content
+			self.unpublishDataLocation(id, unpublishevent.origin['id'])
+		else:
+			raise TypeError
+
+	# creates/appends list with nodeid of published data
+	def unpublishDataLocation(self, dataid, nodeid):
+		datalocationdata = self.server.datahandler.query(dataid)
+		if datalocationdata:
+			try:
+				datalocationdata.content.remove(nodeid)
+				if len(datalocationdata.content) == 0:
+					self.server.datahandler.remove(dataid)
+				else:
+					self.server.datahandler._insert(datalocationdata)
+			except ValueError:
+				pass
 
 	def launchNode(self, launcher, newproc, target, newid, nodeargs=()):
 		manloc = self.location()

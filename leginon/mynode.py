@@ -11,6 +11,7 @@ class MyNode(node.Node):
 		#self.addEventInput(event.ControlEvent, self.handle_intervalchange)
 		self.addEventInput(event.PublishEvent, self.handle_intervalpublished)
 		self.addEventOutput(event.PublishEvent)
+		self.addEventOutput(event.UnpublishEvent)
 
 		self.interval = 5
 		print self.location()
@@ -26,7 +27,10 @@ class MyNode(node.Node):
 		self.timenow = time.asctime()
 		print 'node %s says %s' % (self.nodeid,self.timenow)
 		mydata = data.StringData(self.timenow)
-		self.publish(mydata, event.PublishEvent)
+		self.publish(mydata)
+		print self.server.datahandler.datadict
+		self.unpublish(mydata.id)
+		print self.server.datahandler.datadict
 
 	def handle_intervalchange(self, controlevent):
 		print 'got control event %s' % controlevent

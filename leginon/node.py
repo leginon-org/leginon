@@ -82,11 +82,18 @@ class Node(leginonobject.LeginonObject):
 		self.server.datahandler._insert(idata)
 		self.announce(eventclass(idata.id))
 
-	def publishRemote(self, loc, idata):
+	def unpublish(self, dataid, eventclass=event.UnpublishEvent):
+		if not issubclass(eventclass, event.UnpublishEvent):
+			raise TypeError('UnpublishEvent subclass required')
+		self.server.datahandler.remove(dataid)
+		self.announce(eventclass(dataid))
+
+	def publishRemote(self, nodeid, idata):
 		# perhaps an event can be generated in this too
-		# this should be done by nodeid instead?
-		client = self.clientclass(loc)
-		client.push(idata)
+		nodelocation = self.researchByLocation(self.managerloc, nodeid)
+		# should interate over nodes, be crafty, etc.
+		self.addEventClient(nodeid, nodelocation)
+		self.clients[nodeid].push(idata)
 
 	def mark_data(self, data):
 		data.origin['id'] = self.nodeid

@@ -14,6 +14,8 @@ class Event(data.Data):
 ##	NodeReadyEvent
 ##		LauncherReadyEvent
 ##	PublishEvent
+##	UnpublishEvent
+##	ListPublishEvent
 ##	ControlEvent
 ##		StartEvent
 ##		Stopvent
@@ -35,6 +37,11 @@ class LauncherReadyEvent(NodeReadyEvent):
 
 class PublishEvent(Event):
 	'Event indicating data was published'
+	def __init__(self, dataid):
+		Event.__init__(self, content=dataid)
+
+class UnpublishEvent(Event):
+	'Event indicating data was unpublished (deleted)'
 	def __init__(self, dataid):
 		Event.__init__(self, content=dataid)
 
