@@ -149,7 +149,7 @@ class Watcher(node.Node):
 
 	def getData(self, pubevent):
 		# need to ignore datahandlers, so check reference first
-		ref = newdata.speical_getitem('data', dereference=False)
+		ref = pubevent.special_getitem('data', dereference=False)
 		if ref.datahandler:
 			return
 		newdata = pubevent['data']
