@@ -29,7 +29,6 @@ datatransport.py
 dbdatakeeper.py
 dbdatatest.py
 dbdict.py
-debugleak.py
 driftchecker.py
 event.py
 fftengine.py
@@ -65,7 +64,6 @@ pixelsizecalibrator.py
 pixtix.py
 presets.py
 presettable.py
-python23test.py
 radix64.dll
 radix64.so
 shelfdict.py
@@ -98,7 +96,6 @@ watcher.py
 wxDictTree.py
 wxImageViewer.py
 wxMaster.py
-wxMaster.py.new
 wxObjectCanvas.py
 wxOrderedListBox.py
 xmlrpclib.py
