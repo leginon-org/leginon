@@ -38,19 +38,19 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
 		'''
 		raise NotImplementedError()
 
-	### this needs to be done by linking images to an ImageList object
-	### or something like that, data containing lists of data needs 
-	### to outlawed to avoid data referencing and database storing problems
 	def processImageListData(self, imagelistdata):
 		if 'images' not in imagelistdata or imagelistdata['images'] is None:
 			return
+
+		querydata = data.AcquistiionImageData(list=imagelistdata)
+		## research, but don't read images until later
+		images = self.research(querydata, readimages=False)
 		targetlist = self.newTargetList()
-		for ref in imagelistdata['images']:
-			imagedata = ref.getData()
-			if imagedata is None:
-				continue
+		for imagedata in images:
+			## now read the image, replace FileReference
+			imagedata['image'] = imagedata['image'].read()
 			self.findTargets(imagedata, targetlist)
-		self.publish(targetlist, database=True, pubevent=True)
+		self.publish(targetlist, database=True, dbforce=True, pubevent=True)
 		if self.wait_for_done.get():
 			self.waitForTargetListDone()
 
@@ -60,8 +60,9 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
 		'''
 		if self.ignore_images.get():
 			return
-		self.findTargets(imagedata)
-		self.publishTargetList()
+		targetlist = self.newTargetList()
+		self.findTargets(imagedata, targetlist)
+		self.publish(targetlist, database=True, dbforce=True, pubevent=True)
 		if self.wait_for_done.get():
 			self.waitForTargetListDone()
 
@@ -160,16 +161,16 @@ class ClickTargetFinder(TargetFinder):
 		self.logger.info('Waiting for user to select targets...')
 		self.userpause.wait()
 		self.logger.info('Done waiting')
-		self.targetsFromClickImage('focus', targetlist)
-		self.targetsFromClickImage('acquisition', targetlist)
+		self.targetsFromClickImage(self.clickimage, 'focus', targetlist)
+		self.targetsFromClickImage(self.clickimage, 'acquisition', targetlist)
 
 	def submitTargets(self):
 		self.userpause.set()
 
-	def targetsFromClickImage(self, typename, targetlist):
-		for imagetarget in self.clickimage.getTargetType(typename):
+	def targetsFromClickImage(self, clickimage, typename, targetlist):
+		for imagetarget in clickimage.getTargetType(typename):
 			column, row = imagetarget
-			imagedata = self.clickimage.imagedata
+			imagedata = clickimage.imagedata
 			imagearray = imagedata['image']
 			drow = row - imagearray.shape[0]/2
 			dcol = column - imagearray.shape[1]/2
@@ -206,9 +207,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 												calibrationclient.ModeledStageCalibrationClient(self)
 		}
 		self.mosaic = mosaic.EMMosaic(self.calclients['stage position'])
-		self.mosaicdata = None
+		self.mosaicimagelist = None
 		self.mosaicimage = None
-		self.mosaicdata = None
 		self.mosaicimagescale = None
 		self.currentposition = []
 
@@ -224,7 +224,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 	# not complete
 	def handleTargetListDone(self, targetlistdoneevent):
 		self.setStatusMessage('Target list done')
-		self.tileListToDatabase()
+		### XXX should we clear self.mosaicimagelist here???
+		#self.tileListToDatabase()
 		self.clearTiles()
 		self.outputEvent(event.MosaicDoneEvent())
 		self.setStatusMessage('Mosaic is done, notification sent')
@@ -237,7 +238,6 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.setStatusMessage('Targets submitted')
 
 	def clearTiles(self):
-		self.idlist = []
 		self.tilemap = {}
 		self.imagemap = {}
 		self.targetmap = {}
@@ -246,16 +246,13 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			self.clearMosaicImage()
 
 	def addTile(self, imagedata):
-		print 'THIS SHOULD NOT USE DBID'
-		print 'THIS SHOULD USE A NEW DATA TYPE FOR TILEDATA THAT LINKS TO MOSAICDATA AND IMAGEDATA'
-		print 'MOSAICDATA SHOULD NOT HAVE ID LIST'
+		self.logger.debug('I DONT LIKE DBID HERE, WHAT IF NOT IN DB?')
 		imid = imagedata.dbid
 		if imid in self.tilemap:
 			self.setStatusMessage('Image already in mosaic')
 			return
 
 		self.setStatusMessage('Adding image to mosaic')
-		self.idlist.append(imid)
 		newtile = self.mosaic.addTile(imagedata)
 		self.tilemap[imid] = newtile
 		self.imagemap[imid] = imagedata
@@ -263,13 +260,9 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.targetmap[imid] = targets
 		self.setStatusMessage('Image added to mosaic')
 
-		## generate new MosaicData
-		initializer = {'data IDs': list(self.idlist)}
-		self.mosaicdata = data.MosaicData(initializer=initializer)
-
 	def targetsFromDatabase(self):
 		for id, imagedata in self.imagemap.items():
-			targets = self.researchImageTargets(imagedata)
+			targets = self.researchTargets(image=imagedata)
 			self.targetmap[id] = targets
 
 	def uiRefreshCurrentPosition(self):
@@ -282,11 +275,12 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		except:
 			self.logger.exception('Need tiles and mosaic image')
 			return
-		stagepos = self.emclient.getScope()['stage position']
-		# for testing with mosaic 151 from 04apr02b
-		# this is the center of image 207 (the center of 3 images)
-		#stagepos = {'x': -0.000547287, 'y': 6.08626e-5}
-
+		try:
+			stagepos = self.emclient.getScope()['stage position']
+		except EM.ScopeUnavailable:
+			self.logger.exception('could not get current position')
+			self.currentposition = []
+			return
 		center = self.mosaic.getFakeParameter()
 		shift = {}
 		for axis in ('x','y'):
@@ -298,6 +292,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		pos = moshape[0]/2+delta[0], moshape[1]/2+delta[1]
 		pos = self.mosaic.scaled(pos)
 		vcoord = pos[1],pos[0]
+		### this is a list of targets, in this case, one target
 		self.currentposition = [vcoord]
 
 	def displayDatabaseTargets(self):
@@ -334,67 +329,94 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		ndone = len(donetargets)
 		self.setStatusMessage('displayed %s targets (%s done)' % (n+ndone, ndone))
 
+	def getMosaicImageList(self, targetlist):
+		self.logger.debug('in getMosaicImageList')
+		if not targetlist['mosaic']:
+			self.logger.debug('target list not mosaic')
+			raise RuntimeError('TargetListData for mosaic ImageListData should have mosaic=True')
+		if self.mosaicimagelist and self.mosaicimagelist['targets'] is targetlist:
+			### same targetlist we got before
+			self.logger.debug('same targets')
+			return self.mosaicimagelist
+		self.logger.debug('new image list data')
+		self.mosaicimagelist = data.ImageListData(targets=targetlist)
+		self.logger.debug('publishing new mosaic image list')
+		self.publish(self.mosaicimagelist, database=True, dbforce=True)
+		self.logger.debug('published new mosaic image list')
+		return self.mosaicimagelist
+
 	def processImageData(self, imagedata):
 		'''
 		different from ClickTargetFinder because findTargets is
 		not per image, instead we have submitTargets.
+		Each new image becomes a tile in a mosaic.
 		'''
 		self.setStatusMessage('Processing inbound image data')
+		### create a new imagelist if not already done
+		targets = imagedata['target']['list']
+		imagelist = self.getMosaicImageList(targets)
+		self.setStatusMessage('creating MosaicTileData')
+		self.logger.debug('creating MosaicTileData')
+		tiledata = data.MosaicTileData(image=imagedata, list=imagelist)
+		self.logger.debug('publishing MosaicTileData')
+		self.publish(tiledata, database=True)
+		self.logger.debug('published MosaicTileData')
 		self.addTile(imagedata)
 		if self.autocreate.get():
 			self.createMosaicImage()
 		self.setStatusMessage('Image data processed')
 
-	def tileListToDatabase(self):
-		if not self.idlist:
-			self.setStatusMessage('Mosaic is empty')
-			return
-		self.setStatusMessage('Publishing mosaic data')
-		self.publish(self.mosaicdata, database=True)
-		self.setStatusMessage('Published mosaic data')
-
 	def publishMosaicImage(self):
-		if None in (self.mosaicdata, self.mosaicimage, self.mosaicimagescale):
+		if None in (self.mosaicimage, self.mosaicimagescale):
 			self.setStatusMessage('generate a mosaic image before publishing')
 			return
 		self.setStatusMessage('Publishing mosaic image data')
 		mosaicimagedata = data.MosaicImageData()
-		mosaicimagedata['mosaic'] = self.mosaicdata
+		mosaicimagedata['list'] = self.mosaicimagelist
 		mosaicimagedata['image'] = self.mosaicimage
 		mosaicimagedata['scale'] = self.mosaicimagescale
 		self.publish(mosaicimagedata, database=True)
 		self.setStatusMessage('Mosaic published')
 
+	def researchMosaicTileData(self):
+		tilequery = data.MosaicTileData(session=self.session, list=data.ImageListData())
+		mosaictiles = self.research(datainstance=tilequery)
+		mosaiclists = {}
+		for tile in mosaictiles:
+			list = tile['list']
+			label = '(no label)'
+			if list['targets'] is not None:
+				if list['targets']['label']:
+					label = list['targets']['label']
+			key = '%s:  %s' % (list.dbid, label)
+			if key not in mosaiclists:
+				mosaiclists[key] = []
+			mosaiclists[key].append(tile)
+		self.mosaicselectionmapping = mosaiclists
+		return mosaiclists
+
 	def updateMosaicSelection(self):
 		self.setStatusMessage('Updating mosaic selection')
-		instance = data.MosaicData(session=self.session)
-		self.setStatusMessage('Finding mosaics')
-		mosaics = self.research(datainstance=instance)
-		self.mosaicselectionmapping = {}
-		print 'SHOULD NOT USE DBID, SHOULD USE TIMESTAMP OR SOMETHING PEOPLE CAN UNDERSTAND'
-		for mosaic in mosaics:
-			key = str(mosaic['session']['name']) + ' ' + str(mosaic.dbid)
-			self.mosaicselectionmapping[key] = mosaic
+		self.researchMosaicTileData()
 		self.mosaicselection.set(self.mosaicselectionmapping.keys(), 0)
 		self.setStatusMessage('Mosaic selection updated')
 
 	def mosaicTilesFromDatabase(self):
-		self.setStatusMessage('Loading mosaic')
-		key = self.mosaicselection.getSelectedValue()
-		try:
-			self.mosaicdata = self.mosaicselectionmapping[key]
-		except KeyError:
-			self.setStatusMessage('Invalid mosaic selected')
-			return
 		self.setStatusMessage('Clearing mosaic')
 		self.clearTiles()
-		mosaicsession = self.mosaicdata['session']
-		self.setStatusMessage('Finding mosaic images and data')
-		ntotal = len(self.mosaicdata['data IDs'])
-		for i, dataid in enumerate(self.mosaicdata['data IDs']):
+		self.setStatusMessage('Loading mosaic images')
+		key = self.mosaicselection.getSelectedValue()
+		tiles = self.mosaicselectionmapping[key]
+		self.mosaicimagelist = tiles[0]['list']
+		mosaicsession = self.mosaicimagelist['session']
+		ntotal = len(tiles)
+		if not ntotal:
+			self.setStatusMessage('no tiles in selected list')
+			return
+		for i, tile in enumerate(tiles):
 			# create an instance model to query
 			self.setStatusMessage('Finding image %i of %i' % (i + 1, ntotal))
-			imagedata = self.researchDBID(data.AcquisitionImageData, dataid)
+			imagedata = tile['image']
 			self.addTile(imagedata)
 		self.setStatusMessage('Mosaic loaded (%i of %i images loaded successfully)' % (i+1, ntotal))
 		if self.autocreate.get():
@@ -415,14 +437,10 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		shape = tile.image.shape
 		drow,dcol = pos[0]-shape[0]/2, pos[1]-shape[1]/2
 		imagedata = tile.imagedata
-		targetdata = self.newTargetData(imagedata, typename, drow, dcol)
+		targetdata = self.newTarget(drow, dcol, type=typename, image=imagedata)
 		return targetdata
 
 	def createMosaicImage(self):
-		if self.mosaicdata is None:
-			self.setStatusMessage('need tiles to create mosaic image')
-			return
-
 		self.setStatusMessage('creating mosaic image')
 
 		if self.scaleimage.get():
@@ -489,8 +507,6 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		tilescontainer = uidata.Container('Mosaic Tiles')
 
 		clearmethod = uidata.Method('Reset Tile List', self.clearTiles)
-		publishtilelist = uidata.Method('Publish Tile List',
-																		self.tileListToDatabase)
 
 		# load tiles from db
 		loadcontainer = uidata.Container('Tile Lists Published in This Session')
@@ -504,7 +520,6 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		loadcontainer.addObject(loadmethod, position={'position':(0,2)})
 
 		tilescontainer.addObject(clearmethod, position={'position':(0,0)})
-		tilescontainer.addObject(publishtilelist, position={'position':(0,1)})
 		tilescontainer.addObject(loadcontainer, position={'position':(1,0), 'span':(1,2)})
 
 		### Mosaic Image Management

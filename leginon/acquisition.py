@@ -82,10 +82,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.doneevents[imageid]['received'].set()
 
 	def processData(self, newdata):
+		self.logger.debug('Acquisition.processData')
 		self.imagelistdata = data.ImageListData(targets=newdata)
-		self.publish(imagelistdata, database=True)
+		self.publish(self.imagelistdata, database=True)
 		targetwatcher.TargetWatcher.processData(self, newdata)
-		self.publish(imagelistdata, pubevent=True)
+		self.publish(self.imagelistdata, pubevent=True)
 
 	def validateStagePosition(self, stageposition):
 		## check for out of stage range target
@@ -319,7 +320,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			return 'fail'
 
 		## convert CameraImageData to AcquisitionImageData
-		imagedata = data.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=target, list=self.imagelist)
+		imagedata = data.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=target, list=self.imagelistdata)
 
 		if target is not None and 'grid' in target and target['grid'] is not None:
 			imagedata['grid'] = target['grid']

@@ -278,7 +278,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		# ice
 		self.ice()
 
-	def findTargets(self, imdata):
+	def findTargets(self, imdata, targetlist):
 		## check if targets already found on this image
 		previous = self.researchImageTargets(imdata)
 		if previous:
@@ -297,23 +297,10 @@ class HoleFinder(targetfinder.TargetFinder):
 			self.notifyUserSubmit()
 			self.userpause.clear()
 			self.userpause.wait()
-		targetlist = self.getTargetDataList('focus')
-		self.targetlist.extend(targetlist)
-		targetlist = self.getTargetDataList('acquisition')
-		self.targetlist.extend(targetlist)
+
+		### publish targets from goodholesimage
+		self.targetsFromClickImage(self.goodholesimage, 'focus', targetlist)
+		self.targetsFromClickImage(self.goodholesimage, 'acquisition', targetlist)
 
 	def submit(self):
 		self.userpause.set()
-
-	def getTargetDataList(self, typename):
-		targetlist = []
-		for imagetarget in self.goodholesimage.getTargetType(typename):
-			column, row = imagetarget
-			imagedata = self.goodholesimage.imagedata
-			imagearray = imagedata['image']
-			drow = row - imagearray.shape[0]/2
-			dcol = column - imagearray.shape[1]/2
-
-			targetdata = self.newTargetData(imagedata, typename, drow, dcol)
-			targetlist.append(targetdata)
-		return targetlist
