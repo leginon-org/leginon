@@ -21,9 +21,9 @@ class ContrastTool(object):
 		self.slidermin = 0
 		self.slidermax = 100
 		self.minslider = wxSlider(self.imagepanel, -1, self.slidermin,
-															self.slidermin, self.slidermax, size=(100, -1))
+															self.slidermin, self.slidermax, size=(200, -1))
 		self.maxslider = wxSlider(self.imagepanel, -1, self.slidermax,
-															self.slidermin, self.slidermax, size=(100, -1))
+															self.slidermin, self.slidermax, size=(200, -1))
 		EVT_SCROLL_THUMBRELEASE(self.minslider, self.onMinSlider)
 		EVT_SCROLL_THUMBRELEASE(self.maxslider, self.onMaxSlider)
 		EVT_SCROLL_ENDSCROLL(self.minslider, self.onMinSlider)
@@ -1142,6 +1142,6 @@ if __name__ == '__main__':
 			return true
 
 	app = MyApp(0)
-#	app.panel.setImageFromMrcString(open(filename, 'rb').read())
+	app.panel.setImageFromMrcString(open(filename, 'rb').read())
 	app.MainLoop()
 
