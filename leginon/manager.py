@@ -2,16 +2,17 @@
 
 import leginonobject
 import node
-import nodelib
+import common
 import event
 import signal
 
+import os
 
 class Manager(node.Node):
 	def __init__(self):
 		node.Node.__init__(self, 'manager', managerloc=None)
 
-		self.nodelib = nodelib
+		self.common = common
 
 		## this makes every received event get distributed
 		self.addEventIn(event.Event, self.eventhandler.distribute)
@@ -36,18 +37,24 @@ class Manager(node.Node):
 		self.addEventClient(newid, hostname, eventport)
 		print self.eventhandler.clients
 
-	def launch(self, launcher, nodeid, nodeclass, newproc=0):
+	def launchNode(self, launcher, newproc, target, newid):
+		manloc = self.location()
+		args = (newid, manloc)
+		self.launch(launcher, newproc, target, args)
+
+	def launchServer(self, launcher, newproc, target):
+		self.launch(launcher, newproc, target)
+
+	def launch(self, launcher, newproc, target, args=(), kwargs={}):
 		"""
-		launcher is id of launcher node
-		nodeid is the id to assign to the new node
-		nodeclass is the class of node to create
-		     nodeclass should be accessed thorugh self.nodelib...
+		launcher = id of launcher node
+		newproc = flag to indicate new process, else new thread
+		target = callable object under self.common
+		args, kwargs = args for callable object
 		"""
-		print 'launch with %s, %s, %s' % (launcher,nodeid,nodeclass)
-		ev = event.LaunchEvent(nodeid, nodeclass, newproc)
-		print 'pushing LaunchEvent', ev
+		#ev = event.LaunchEvent(nodeid, nodeclass, newproc)
+		ev = event.LaunchEvent(newproc, target, args, kwargs)
 		self.eventhandler.push(launcher, ev)
-		print 'pushed'
 
 if __name__ == '__main__':
 	import signal, sys

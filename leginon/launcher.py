@@ -2,9 +2,10 @@
 
 import signal
 import node
-import nodelib
 import event
 import threading
+import common
+import calllauncher
 
 
 class Launcher(node.Node):
@@ -12,12 +13,13 @@ class Launcher(node.Node):
 		node.Node.__init__(self, nodeid, managerlocation)
 
 		self.addEventIn(event.LaunchEvent, self.handleLaunch)
+		self.caller = calllauncher.CallLauncher()
 		self.main()
 
 	def addManager(self):
 		'''
 		Node uses NodeReadyEvent 
-		This uses NodeLauncherReadyEvent
+		This uses LauncherReadyEvent
 		'''
 		managerhost = self.managerloc['hostname']
 		managerport = self.managerloc['event port']
@@ -28,25 +30,23 @@ class Launcher(node.Node):
 		self.interact()
 
 	def handleLaunch(self, launchevent):
-		print 'handling LaunchEvent', launchevent
-		print 'content', launchevent.content
-		nodeid = launchevent.content['id']
-		nodeclass = launchevent.content['class']
+		# unpack event content
 		newproc = launchevent.content['newproc']
-		if issubclass(nodeclass, node.Node):
-			myargs = (nodeid, nodeclass)
-			print 'making thread'
-			t = threading.Thread(target=self.launchNode, args=myargs)
-		elif issubclass(nodeclass, dataserver.DataServer):
-			myargs = (nodeclass)
-			print 'making thread'
-			t = threading.Thread(target=self.launchDataServer, args=myargs)
+		targetclass = launchevent.content['targetclass']
+		args = launchevent.content['args']
+		kwargs = launchevent.content['kwargs']
+
+		## thread or process
+		if newproc:
+			self.caller.launchCall('fork',targetclass,args,kwargs)
 		else:
-			raise ValueError
-		print 'setting daemon mode'
-		t.setDaemon(1)
-		print 'starting'
-		t.start()
+			self.caller.launchCall('thread',targetclass,args,kwargs)
+
+	def launchThread(self):
+		pass
+
+	def launchProcess(self):
+		pass
 
 	def launchNode(self, nodeid, nodeclass):
 		## new node's manager = launcher's manager

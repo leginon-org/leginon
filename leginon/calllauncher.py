@@ -1,0 +1,102 @@
+#!/usr/bin/env python
+"""
+This module serves two puposes:
+        - provides the class CallLauncher
+        - acts as an executable process which can be launched by a 
+          CallLauncher instance
+A CallLauncher instance has a method launchCall which is used to launch a
+call to any callable python object either in a new thread or a new process
+"""
+
+import os, sys, threading, cPickle
+import common
+
+
+class CallLauncher(object):
+	def __init__(self, slave=0):
+		self.calls = []
+		if slave:
+			self.acceptCall()
+		else:
+			self.procname = __file__
+
+	def launchCall(self, launchtype, targetcall, args=(), kwargs={}):
+		launchtypes = ('thread', 'fork', 'pipe')
+		if launchtype not in launchtypes:
+			raise ValueError("allowed launchtypes %s" % launchtypes)
+		if not callable(targetcall):
+			raise TypeError('targetcall must be callable object')
+
+		if launchtype == 'thread':
+			c = self.newCallThread(targetcall, args, kwargs)
+		elif launchtype == 'pipe':
+			c = self.newCallPipe(targetcall, args, kwargs)
+		elif launchtype == 'fork':
+			c = self.newCallFork(targetcall, args, kwargs)
+
+		callinfo = {}
+		callinfo['type'] = launchtype
+		callinfo['handle'] = c
+		self.calls.append(callinfo)
+	
+	def newCallThread(self, targetcall, args=(), kwargs={}):
+		"""
+		make a call to targetcall in a new thread
+		"""
+		t = threading.Thread(target=targetcall, args=args, kwargs=kwargs)
+		t.setDaemon(1)
+		t.start()
+		return t
+
+	def newCallFork(self, targetcall, args=(), kwargs={}):
+		"""
+		make a call to targetcall in a forked process
+		(unix only)
+		"""
+		pid = os.fork()
+		if pid:
+			return pid
+		else:
+			apply(targetcall, args, kwargs)
+			sys.exit()
+	
+	def newCallPipe(self, targetcall, args=(), kwargs={}):
+		"""
+		A failed attempt at an alternative to the fork method
+		make a call to targetcall in a popen process
+		(can't figure out how to close the pipe without killing
+		the new process)
+		"""
+		targetinfo = {}
+		targetinfo['targetcall'] = targetcall
+		targetinfo['args'] = args
+		targetinfo['kwargs'] = kwargs
+
+		print 'opening pipe'
+		wpipe = os.popen(self.procname, 'w')
+		print 'dumping pickle'
+		cPickle.dump(targetinfo, wpipe, 1)
+		print 'closing'
+		#wpipe.close()
+		print 'closed'
+		## need to figure out pid of new process
+		newpid = None
+		return newpid
+
+	def acceptCall(self):
+		"""
+		used by a new process to get the target call from the 
+		parent process
+		"""
+		targetinfo = cPickle.load(sys.stdin)
+		sys.stdin.close()
+		targetcall = targetinfo['targetcall']
+		args = targetinfo['args']
+		kwargs = targetinfo['kwargs']
+		#apply(targetcall, args, kwargs)
+		self.newCallThread(targetcall, args, kwargs)
+
+
+if __name__ == '__main__':
+	c = CallLauncher(slave=1)
+

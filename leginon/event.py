@@ -103,7 +103,7 @@ class EventHandler(leginonobject.LeginonObject):
 ##
 ## Event
 ##	NodeReadyEvent
-##		NodeLauncherReadyEvent
+##		LauncherReadyEvent
 ##	PublishEvent
 ##	ControlEvent
 ##		NumericControlEvent
@@ -117,7 +117,7 @@ class NodeReadyEvent(Event):
 	def __init__(self):
 		Event.__init__(self, content=None)
 
-class NodeLauncherReadyEvent(NodeReadyEvent):
+class LauncherReadyEvent(NodeReadyEvent):
 	'Event sent by a node to the manager to indicate a successful init'
 	def __init__(self):
 		NodeReadyEvent.__init__(self)
@@ -143,10 +143,12 @@ class NumericControlEvent(ControlEvent):
 		else:
 			raise TypeError('NumericControlEvent content type must be in %s' % allowedtypes)
 
+
 class LaunchEvent(ControlEvent):
 	'ControlEvent sent to a NodeLauncher specifying a node to launch'
-	def __init__(self, nodeid, nodeclass, newproc=0):
-		nodeinfo = {'id':nodeid, 'class':nodeclass, 'newproc':newproc}
+	#def __init__(self, nodeid, nodeclass, newproc=0):
+	def __init__(self, newproc, targetclass, args=(), kwargs={}):
+		nodeinfo = {'newproc':newproc,'targetclass':targetclass, 'args':args, 'kwargs':kwargs}
 		Event.__init__(self, content=nodeinfo)
 
 

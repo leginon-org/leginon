@@ -22,9 +22,6 @@ class DictDataKeeper(DataHandler):
 		self.datadictlock = threading.Lock()
 
 	def query(self, id):
-		print 'Simple...query', id
-		print 'query DATADICT', self.datadict
-		print 'query DATADICT', id, self.datadict[id]
 		self.datadictlock.acquire()
 		try:
 			result = self.datadict[id]
@@ -34,13 +31,11 @@ class DictDataKeeper(DataHandler):
 		return result
 
 	def insert(self, newdata):
-		print 'Simple...insert', newdata.id, newdata
 		if not issubclass(newdata.__class__, data.Data):
 			raise TypeError
 		self.datadictlock.acquire()
 		self.datadict[newdata.id] = newdata
 		self.datadictlock.release()
-		print 'insert DATADICT', self.datadict
 
 class SimpleDataKeeper(DictDataKeeper):
 	pass
