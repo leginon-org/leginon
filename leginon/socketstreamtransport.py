@@ -86,7 +86,7 @@ class Client(object):
 	def send(self, request):
 		try:
 			s = self.connect()
-			sfile = s.makefile('wb')
+			sfile = s.makefile('rwb')
 		except:
 			raise
 

@@ -7,7 +7,6 @@
 #
 
 import data
-import datatransport
 from pyScope import emregistry, methoddict
 import event
 import imp
