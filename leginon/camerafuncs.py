@@ -24,7 +24,7 @@ class CameraFuncs(object):
 		t = Timer('research image')
 		try:
 			if correction:
-				imdata = self.node.researchByDataID('normalized image data')
+				imdata = self.node.researchByDataID('corrected image data')
 				imagearray = imdata.content
 			else:
 				imdata = self.node.researchByDataID('image data')
@@ -56,7 +56,7 @@ class CameraFuncs(object):
 
 		if correction:
 			### get image data from corrector node
-			imdata = self.node.researchByDataID('normalized image data')
+			imdata = self.node.researchByDataID('corrected image data')
 		else:
 			### create my own data from acquisition
 			scopedata = self.node.researchByDataID('scope')
