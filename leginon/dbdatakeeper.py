@@ -106,14 +106,14 @@ class DBDataKeeper(datahandler.DataHandler):
 			finaldict.update(d)
 		return finaldict
 
-	def insert(self, newdata):
+	def insert(self, newdata, force=False):
 		self.lock.acquire()
 		try:
-			self._insert(newdata)
+			self._insert(newdata, force=force)
 		finally:
 			self.lock.release()
 
-	def recursiveInsert(self, newdata):
+	def recursiveInsert(self, newdata, force=False):
 		'''
 		recursive insert will insert an objects children before
 		inserting an object
@@ -125,19 +125,19 @@ class DBDataKeeper(datahandler.DataHandler):
 
 		## insert this object if is has never been inserted
 		if newdata.dbid is None:
-			newdata.dbid = self.flatInsert(newdata)
+			newdata.dbid = self.flatInsert(newdata, force=force)
 
-	def _insert(self, newdata):
+	def _insert(self, newdata, force=False):
 		#self.flatInsert(newdata)
-		return self.recursiveInsert(newdata)
+		return self.recursiveInsert(newdata, force=force)
 
-	def flatInsert(self, newdata):
+	def flatInsert(self, newdata, force=False):
 		table = newdata.__class__.__name__
 		definition = sqldict.sqlColumnsDefinition(newdata)
 		formatedData = sqldict.sqlColumnsFormat(newdata)
 		self.dbd.createSQLTable(table, definition)
 		myTable = self.dbd.Table(table)
-		newid = myTable.insert([formatedData])
+		newid = myTable.insert([formatedData], force=force)
 		return newid
 
 	# don't bother with these for now
