@@ -1,5 +1,6 @@
 # -*- coding: iso-8859-1 -*-
 import copy
+import data
 import wx
 from gui.wx.Entry import IntEntry, FloatEntry, EVT_ENTRY
 
@@ -110,7 +111,12 @@ class CameraPanel(wx.Panel):
 
 	def setCommonChoice(self):
 		for key, geometry in self.common.items():
-			if self.geometry == geometry:
+			flag = True
+			for i in ['dimension', 'offset', 'binning']:
+				if self.geometry[i] != geometry[i]:
+					flag = False
+					break
+			if flag:
 				self.ccommon.SetStringSelection(key)
 				return
 		if self.ccommon.FindString('(Custom)') is wx.NOT_FOUND:
@@ -262,6 +268,13 @@ class CameraPanel(wx.Panel):
 	def setConfiguration(self, value):
 		self._setExposureTime(value['exposure time'])
 		self.setGeometry(value)
+
+	def getData(self):
+		return data.CameraSettingsData(initializer=self.getConfiguration())
+
+	def setData(self, d):
+		self.setConfiguration(d.toDict())
+		self.setCommonChoice()
 
 	def onSetConfiguration(self, evt):
 		self.setConfiguration(evt.configuration)

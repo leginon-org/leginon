@@ -1,5 +1,6 @@
 import wx
 from gui.wx.Choice import Choice
+import gui.wx.Camera
 import gui.wx.Entry
 import gui.wx.Presets
 
@@ -20,6 +21,9 @@ attributes = {
 		('getValues', 'setValues', gui.wx.Presets.EVT_PRESET_ORDER_CHANGED),
 	gui.wx.Presets.EditPresetOrder:
 		('getValues', 'setValues', gui.wx.Presets.EVT_PRESET_ORDER_CHANGED),
+	gui.wx.Camera.CameraPanel:
+		('getData', 'setData',
+			gui.wx.Camera.EVT_CONFIGURATION_CHANGED),
 }
 
 class Dialog(wx.Dialog):

@@ -1,9 +1,11 @@
 import wx
 from gui.wx.Entry import FloatEntry, EVT_ENTRY
 import gui.wx.Camera
+from gui.wx.Choice import Choice
 import gui.wx.Data
-import gui.wx.Node
 import gui.wx.ImageViewer
+import gui.wx.Node
+import gui.wx.Settings
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'navigator'
@@ -19,37 +21,13 @@ class Panel(gui.wx.Node.Panel):
 		self.szstatus.Add(self.ststatus, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		# settings
-		self.szsettings = self._getStaticBoxSizer('Settings', (1, 0), (1, 1),
-																							wx.ALL)
+		self.szbuttons = wx.GridBagSizer(5, 5)
+		self.szmain.Add(self.szbuttons, (1, 0), (1, 1), wx.ALIGN_CENTER)
 
-		sz = wx.GridBagSizer(5, 5)
-		label0 = wx.StaticText(self, -1, 'Wait')
-		self.fewait = FloatEntry(self, -1, min=0.0, allownone=False, chars=4,
-															value='2.5', name='feWait')
-		label1 = wx.StaticText(self, -1, 'seconds and use')
-		self.cmovetype = wx.Choice(self, -1, name='cMoveType')
-		label2 = wx.StaticText(self, -1, 'to move to target')
-
-		sz.Add(label0, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL)
-		sz.Add(self.fewait, (0, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALL)
-		sz.Add(label1, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL)
-		sz.Add(self.cmovetype, (0, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL)
-		sz.Add(label2, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL)
-
-		self.cbcheckerror = wx.CheckBox(self, -1, 'Check calibration error',
-																			name='cbCheckError')
-		self.cbcompletestate = wx.CheckBox(self, -1, 'Set complete state',
-																			name='cbCompleteState')
-		self.cpcamconfig = gui.wx.Camera.CameraPanel(self)
-
-		self.szsettings.Add(sz, (0, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL)
-		self.szsettings.Add(self.cbcheckerror, (1, 0), (1, 1),
-												wx.ALIGN_CENTER_VERTICAL)
-		self.szsettings.Add(self.cbcompletestate, (2, 0), (1, 1),
-												wx.ALIGN_CENTER_VERTICAL)
-		self.szsettings.Add(self.cpcamconfig, (3, 0), (1, 1),
-												wx.ALIGN_CENTER)
+		self.bsettings = wx.Button(self, -1, 'Settings...')
+		self.bacquire = wx.Button(self, -1, 'Acquire')
+		self.szbuttons.Add(self.bsettings, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		self.szbuttons.Add(self.bacquire, (1, 0), (1, 1), wx.ALIGN_CENTER)
 
 		# controls
 		self.szlocations = self._getStaticBoxSizer('Stage Locations',
@@ -93,77 +71,27 @@ class Panel(gui.wx.Node.Panel):
 		# image
 		self.szimage = self._getStaticBoxSizer('Navigation', (1, 1), (2, 1),
 																						wx.EXPAND|wx.ALL)
-		self.bacquire = wx.Button(self, -1, 'Acquire')
 		self.imagepanel = gui.wx.ImageViewer.ClickImagePanel(self, -1)
-		self.szimage.Add(self.bacquire, (0, 0), (1, 1), wx.ALIGN_CENTER)
-		self.szimage.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND|wx.ALL)
+		self.szimage.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND|wx.ALL)
 		self.szimage.AddGrowableCol(0)
 
 		self.szmain.AddGrowableCol(1)
-		self.szmain.AddGrowableRow(2)
+		self.szmain.AddGrowableRow(1, 1)
+		self.szmain.AddGrowableRow(2, 4)
 
 		self.SetSizerAndFit(self.szmain)
 		self.SetupScrolling()
 
 	def onNodeInitialized(self):
-		movetypes = self.node.calclients.keys()
-		if movetypes:
-			self.cmovetype.AppendItems(movetypes)
-			self.cmovetype.SetSelection(0)
+		self.Bind(wx.EVT_BUTTON, self.onSettingsButton, self.bsettings)
+		self.Bind(wx.EVT_BUTTON, self.onAcquireButton, self.bacquire)
 
-		self.lblocations.AppendItems(self.node.getLocationNames())
+	def onSettingsButton(self, evt):
+		dialog = SettingsDialog(self)
+		dialog.ShowModal()
+		dialog.Destroy()
 
-		self.cpcamconfig.setSize(self.node.session)
-
-		gui.wx.Data.setWindowFromDB(self.fewait)
-		gui.wx.Data.setWindowFromDB(self.cmovetype)
-		gui.wx.Data.setWindowFromDB(self.cbcheckerror)
-		gui.wx.Data.setWindowFromDB(self.cbcompletestate)
-		gui.wx.Data.setWindowFromDB(self.cpcamconfig)
-
-		self.node.wait = self.fewait.GetValue()
-		self.node.movetype = self.cmovetype.GetStringSelection()
-		self.node.checkerror = self.cbcheckerror.GetValue()
-		self.node.completestate = self.cbcompletestate.GetValue()
-		self.node.camconfig = self.cpcamconfig.getConfiguration()
-
-		gui.wx.Data.bindWindowToDB(self.fewait)
-		gui.wx.Data.bindWindowToDB(self.cmovetype)
-		gui.wx.Data.bindWindowToDB(self.cbcheckerror)
-		gui.wx.Data.bindWindowToDB(self.cbcompletestate)
-		gui.wx.Data.bindWindowToDB(self.cpcamconfig)
-
-		self.Bind(EVT_ENTRY, self.onWaitEntry, self.fewait)
-		self.Bind(wx.EVT_CHOICE, self.onMoveTypeChoice, self.cmovetype)
-		self.Bind(wx.EVT_CHECKBOX, self.onErrorCheckCheck, self.cbcheckerror)
-		self.Bind(wx.EVT_CHECKBOX, self.onCompleteStateCheck, self.cbcompletestate)
-		self.Bind(gui.wx.Camera.EVT_CONFIGURATION_CHANGED, self.onCamConfigChanged,
-							self.cpcamconfig)
-		self.Bind(wx.EVT_BUTTON, self.onAcquire, self.bacquire)
-		self.Bind(wx.EVT_BUTTON, self.onNew, self.bnew)
-		self.Bind(wx.EVT_BUTTON, self.onToScope, self.btoscope)
-		self.Bind(wx.EVT_BUTTON, self.onFromScope, self.bfromscope)
-		self.Bind(wx.EVT_BUTTON, self.onRemove, self.bremove)
-		self.Bind(wx.EVT_LISTBOX, self.onLocationSelected, self.lblocations)
-		self.Bind(gui.wx.ImageViewer.EVT_IMAGE_DOUBLE_CLICKED, self.onImageDoubleClicked,
-							self.imagepanel)
-
-	def onWaitEntry(self, evt):
-		self.node.wait = evt.GetValue()
-
-	def onMoveTypeChoice(self, evt):
-		self.node.movetype = evt.GetString()
-
-	def onErrorCheckCheck(self, evt):
-		self.node.checkerror = evt.IsChecked()
-
-	def onCompleteStateCheck(self, evt):
-		self.node.completestate = evt.IsChecked()
-
-	def onCamConfigChanged(self, evt):
-		self.node.camconfig = evt.configuration
-
-	def onAcquire(self, evt):
+	def onAcquireButton(self, evt):
 		self.node.acquireImage()
 
 	def onNew(self, evt):
@@ -213,6 +141,67 @@ class Panel(gui.wx.Node.Panel):
 		# ...
 		if self.node.shape is not None:
 			self.node.navigate(evt.xy)
+
+class SettingsDialog(gui.wx.Settings.Dialog):
+	def initialize(self):
+		gui.wx.Settings.Dialog.initialize(self)
+
+		# move type
+		movetypes = self.node.calclients.keys()
+		self.widgets['move type'] = Choice(self, -1, choices=movetypes)
+		szmovetype = wx.GridBagSizer(5, 5)
+		szmovetype.Add(wx.StaticText(self, -1, 'Use'),
+										(0, 0), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL)
+		szmovetype.Add(self.widgets['move type'],
+										(0, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL)
+		szmovetype.Add(wx.StaticText(self, -1, 'to move to target'),
+										(0, 2), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL)
+
+		# pause time
+		self.widgets['pause time'] = FloatEntry(self, -1,
+																		min=0.0,
+																		allownone=False,
+																		chars=4,
+																		value='0.0')
+		szpausetime = wx.GridBagSizer(5, 5)
+		szpausetime.Add(wx.StaticText(self, -1, 'Wait'),
+								(0, 0), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL)
+		szpausetime.Add(self.widgets['pause time'],
+								(0, 1), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		szpausetime.Add(wx.StaticText(self, -1, 'seconds before acquiring image'),
+								(0, 2), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL)
+
+		# misc. checkboxes
+		self.widgets['check calibration'] = wx.CheckBox(self, -1,
+																										'Check calibration error')
+		self.widgets['complete state'] = wx.CheckBox(self, -1,
+																								'Set complete instrument state')
+		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
+		self.widgets['camera settings'].setSize(self.node.session)
+
+		# settings sizer
+		sz = wx.GridBagSizer(5, 10)
+		sz.Add(szmovetype, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szpausetime, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['check calibration'], (2, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['complete state'], (3, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['camera settings'], (0, 1), (5, 1),
+						wx.ALIGN_CENTER)
+		sz.AddGrowableRow(4)
+
+		sb = wx.StaticBox(self, -1, 'Navigation')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+
+		return sbsz
 
 class NewLocationDialog(wx.Dialog):
 	def __init__(self, parent):

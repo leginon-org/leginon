@@ -2,10 +2,10 @@
 
 #
 # COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
-#       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
+#			 The Leginon software is Copyright 2003
+#			 The Scripps Research Institute, La Jolla, CA
+#			 For terms of the license agreement
+#			 see	http://ami.scripps.edu/software/leginon-license
 #
 
 import node
@@ -24,6 +24,31 @@ import gui.wx.Navigator
 
 class Navigator(node.Node):
 	panelclass = gui.wx.Navigator.Panel
+	settingsclass = data.NavigatorSettingsData
+	defaultsettings = {
+		'pause time': 2.5,
+		'move type': 'image shift',
+		'check calibration': True,
+		'complete state': True,
+		'camera settings':
+			data.CameraSettingsData(
+				initializer={
+					'dimension': {
+						'x': 1024,
+						'y': 1024,
+					},
+					'offset': {
+						'x': 0,
+						'y': 0,
+					},
+					'binning': {
+						'x': 1,
+						'y': 1,
+					},
+					'exposure time': 1000.0,
+				}
+			),
+	}
 	eventinputs = node.Node.eventinputs + EM.EMClient.eventinputs
 	eventoutputs = node.Node.eventoutputs + [event.CameraImagePublishEvent] \
 									+ EM.EMClient.eventoutputs
@@ -48,11 +73,6 @@ class Navigator(node.Node):
 		self.newshape = None
 		self.oldshape = None
 
-		self.wait = None
-		self.movetype = None
-		self.checkerror = None
-		self.completestate = None
-		self.camconfig = None
 		self.shape = None
 
 	def newImage(self, newimage):
@@ -93,35 +113,36 @@ class Navigator(node.Node):
 		mag = clickscope['magnification']
 
 		## figure out shift
-		calclient = self.calclients[self.movetype]
+		movetype = self.settings['move type']
+		calclient = self.calclients[movetype]
 		try:
 			newstate = calclient.transform(pixelshift, clickscope, clickcamera)
 		except:
 			message = ('Error in transform. Likely missing calibration for %s at %s'
-									+ ' and current high tension') % (self.movetype, mag)
+									+ ' and current high tension') % (movetype, mag)
 			self.logger.error(message)
 			node.beep()
 			return
-		if not self.completestate:
-			if self.movetype == 'modeled stage position':
+		if not self.settings['complete state']:
+			if movetype == 'modeled stage position':
 				newmovetype = 'stage position'
 				newstate = {newmovetype: newstate[newmovetype]}
-			elif self.movetype == 'image beam shift':
+			elif movetype == 'image beam shift':
 				newstate = {'image shift': newstate['image shift'], 'beam shift': newstate['beam shift']}
 			else:
-				newmovetype = self.movetype
+				newmovetype = movetype
 				newstate = {newmovetype: newstate[newmovetype]}
 		emdat = data.ScopeEMData(initializer=newstate)
 		self.emclient.setScope(emdat)
 
 		# wait for a while
-		time.sleep(self.wait)
+		time.sleep(self.settings['pause time'])
 
 		## acquire image
 		self.acquireImage()
 
 		## calibration error checking
-		if self.checkerror:
+		if self.settings['check calibration']:
 			newshift = self.newShift()
 			if newshift is None:
 				res = 'Error not calculated'
@@ -137,7 +158,7 @@ class Navigator(node.Node):
 				dist = errordist * pixsize * binning
 				umdist = dist * 1000000.0
 
-				res = 'Error: %.3f um (Pixels: Request: (%d, %d),  Actual: (%.1f, %.1f),  Error: %.3f)' % (umdist, pixelshift['col'], pixelshift['row'], newshift[1], newshift[0], errordist)
+				res = 'Error: %.3f um (Pixels: Request: (%d, %d),	Actual: (%.1f, %.1f),	Error: %.3f)' % (umdist, pixelshift['col'], pixelshift['row'], newshift[1], newshift[0], errordist)
 				self.logger.info(res)
 
 				if (abs(pixelshift['row']) > clickshape[0]/4) or (abs(pixelshift['col']) > clickshape[1]/4):
@@ -150,7 +171,7 @@ class Navigator(node.Node):
 		node.beep()
 
 	def acquireImage(self):
-		self.cam.setCameraDict(self.camconfig)
+		self.cam.setCameraDict(self.settings['camera settings'])
 		try:
 			imagedata = self.cam.acquireCameraImageData()
 		except camerafuncs.NoCorrectorError:

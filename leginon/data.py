@@ -1503,6 +1503,27 @@ class SettingsData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
+class CameraSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('dimension', dict),
+			('offset', dict),
+			('binning', dict),
+			('exposure time', float),
+		)
+	typemap = classmethod(typemap)
+
+class NavigatorSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('pause time', float),
+			('move type', str),
+			('check calibration', bool),
+			('complete state', bool),
+			('camera settings', CameraSettingsData),
+		)
+	typemap = classmethod(typemap)
+
 class AcquisitionSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
