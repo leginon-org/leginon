@@ -859,7 +859,7 @@ class wxClickImageWidget(wxContainerWidget):
 	def _set(self, value):
 		if value:
 			self.clickimage.setImageFromMrcString(value)
-			width, height = self.targetimage.GetSizeTuple()
+			width, height = self.clickimage.GetSizeTuple()
 			self.wxwidget.SetItemMinSize(self.clickimage, width, height)
 		else:
 			self.clickimage.clearImage()
@@ -903,9 +903,8 @@ class wxTargetImageWidget(wxContainerWidget):
 			if key == 'Image':
 				if value['Image']:
 					self.targetimage.setImageFromMrcString(value['Image'])
-					targetimagesize = self.targetimage.GetSize()
-					self.wxwidget.SetItemMinSize(self.targetimage,
-											targetimagesize.GetWidth(), targetimagesize.GetHeight())
+					width, height = self.targetimage.GetSizeTuple()
+					self.wxwidget.SetItemMinSize(self.targetimage, width, height)
 					#self.parent.Layout()
 				else:
 					self.targetimage.clearImage()
