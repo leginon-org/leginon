@@ -126,7 +126,7 @@ class Node(leginonobject.LeginonObject):
 		self.setUIData('class', self.__class__.__name__)
 		classspec = interface.DataSpec('class', 'string', permissions='r')
 
-		c = self.registerUIContainer('Node Methods', (idspec,classspec))
+		c = self.registerUIContainer('Node Info', (idspec,classspec))
 		return c
 
 	def registerUIMethod(self, func, name, argspec, returnspec=None):

@@ -35,6 +35,34 @@ class Container(SpecWidget):
 				raise RuntimeError('invalid spec type')
 			widget.pack(side=TOP)
 
+class NotebookContainer(SpecWidget):
+	def __init__(self, parent, uiclient, spec):
+		SpecWidget.__init__(self, parent, uiclient, spec, bg='cyan')
+		self.build()
+
+	def build(self):
+		self.name = self.spec['name']
+		self.label = Label(self, text = self.name)
+		self.label.pack()
+
+		self.notebook = Pmw.NoteBook(self)
+		for spec in self.spec['content']:
+			name = spec['name']
+			spectype = spec['spectype']
+			newframe = self.notebook.add(name)
+			if spectype == 'container':
+				widget = Container(newframe, self.uiclient, spec)
+			elif spectype == 'method':
+				widget = Method(newframe, self.uiclient, spec)
+			elif spectype == 'data':
+				dataclass = whichDataClass(spec)
+				widget = dataclass(newframe, self.uiclient, spec)
+			else:
+				raise RuntimeError('invalid spec type')
+			widget.pack(side=TOP)
+
+		self.notebook.pack(fill=BOTH, expand=YES)
+
 
 def whichDataClass(dataspec):
 	'''this checks a data spec to figure out what Data class to use'''
@@ -320,7 +348,7 @@ class NodeGUI(Frame):
 	def __build_components(self):
 		if self.mainframe is not None:
 			self.mainframe.destroy()
-		self.mainframe = Container(self, self.uiclient, self.uiclient.spec)
+		self.mainframe = NotebookContainer(self, self.uiclient, self.uiclient.spec)
 		self.mainframe.pack()
 
 
