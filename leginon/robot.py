@@ -323,20 +323,22 @@ class RobotNotification(RobotNode):
 
 	def handleGridExtracted(self, ievent):
 		self.setStatus('Outputting grid insert event')
-		evt = event.InsertGridEvent()
-		evt['grid number'] = -1
-		self.outputEvent(evt)
-		self.setStatus('Grid insert event outputted')
+		if self.insertonextract.get():
+			evt = event.InsertGridEvent()
+			evt['grid number'] = -1
+			self.outputEvent(evt)
+			self.setStatus('Grid insert event outputted')
 
 	def defineUserInterface(self):
 		RobotNode.defineUserInterface(self)
 
 		self.statuslabel = uidata.String('Current Operation', '', 'r')
+		self.insertonextract = uidata.Boolean('Insert on extract', 1, 'rw')
 		statuscontainer = uidata.Container('Status')
 		statuscontainer.addObjects((self.statuslabel,))
 
 		container = uidata.MediumContainer('Robot Notification')
-		container.addObjects((statuscontainer,))
+		container.addObjects((statuscontainer, self.insertonextract))
 		self.uiserver.addObject(container)
 
 class RobotTest(node.Node):
