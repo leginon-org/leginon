@@ -692,6 +692,7 @@ class RunApplicationDialog(wx.Dialog):
 							wx.ALIGN_CENTER_VERTICAL)
 
 		self.sortbycheckbox = wx.CheckBox(self, -1, 'Sort by last used')
+		self.sortbycheckbox.SetValue(True)
 		if self.sortbycheckbox.GetValue():
 			names = self.history
 		else:
