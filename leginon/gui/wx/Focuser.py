@@ -28,6 +28,7 @@ class ManualCheckDoneEvent(wx.PyCommandEvent):
 		self.SetEventObject(source)
 
 class Panel(gui.wx.Acquisition.Panel):
+	icon = 'focuser'
 	def __init__(self, parent, name):
 		gui.wx.Acquisition.Panel.__init__(self, parent, name)
 		self.SetName('%s.pFocuser' % name)
