@@ -78,12 +78,16 @@ class DriftManager(watcher.Watcher):
 		imageid = imagedata['id']
 		self.references[nodeid] = {'imageid': imageid, 'image': imagedata, 'shift': {}}
 
-	def monitorDrift(self, emdata):
-		## use emdata to set up scope and camera
-		emdata['id'] = ('all em',)
-		self.publishRemote(emdata)
-		mag = emdata['magnification']
-		self.pixsize = self.pixsizeclient.retrievePixelSize(mag)
+	def monitorDrift(self, emdata=None):
+		if emdata is not None:
+			## use emdata to set up scope and camera
+			emdata['id'] = ('all em',)
+			self.publishRemote(emdata)
+			mag = emdata['magnification']
+		else:
+			## use current state
+			magdata = self.researchByDataID(('magnification',))
+			mag = magdata['magnification']
 
 		## acquire images, measure drift
 		self.abortevent.clear()
@@ -93,8 +97,10 @@ class DriftManager(watcher.Watcher):
 		self.publishImageShifts(requested=False)
 
 		## DriftDoneEvent
-		ev = event.DriftDoneEvent()
-		self.outputEvent(ev)
+		## only output if this was called from another node
+		if emdata is not None:
+			ev = event.DriftDoneEvent()
+			self.outputEvent(ev)
 
 	def publishImageShifts(self, requested=False):
 		print 'PUBLISH IMAGE SHIFTS'
@@ -119,7 +125,7 @@ class DriftManager(watcher.Watcher):
 		numdata = imagedata['image']
 		t0 = imagedata['scope']['system time']
 		self.correlator.insertImage(numdata)
-
+		pixsize = self.pixsizeclient.retrievePixelSize(mag)
 
 		## ensure that loop executes once
 		current_drift = self.threshold.get() + 1.0
@@ -140,7 +146,7 @@ class DriftManager(watcher.Watcher):
 			dist = Numeric.hypot(rows,cols)
 
 			## calculate drift 
-			meters = dist * self.pixsize
+			meters = dist * pixsize
 			# rely on system time of EM node
 			seconds = t1 - t0
 			current_drift = meters / seconds
@@ -232,7 +238,8 @@ class DriftManager(watcher.Watcher):
 		abortmeth = uidata.Method('Abort', self.abort)
 
 		camconfig = self.cam.configUIData()
-		measuremeth = uidata.Method('Measure Drift', self.uiMeasureDrift)
+		measuremeth = uidata.Method('Measure Drift Once', self.uiMeasureDrift)
+		monitormeth = uidata.Method('Monitor Drift', self.monitorDrift)
 		self.driftvalue = uidata.Float('Drift Rate', 0.0, 'r')
 		
 		self.im = uidata.Image('Drift Image', None, 'r')
@@ -241,5 +248,5 @@ class DriftManager(watcher.Watcher):
 		#subcont.addObjects((self.threshold,))
 
 		container = uidata.MediumContainer('Drift Manager')
-		container.addObjects((abortmeth, self.threshold,self.pausetime,camconfig, measuremeth, self.driftvalue, self.im))
+		container.addObjects((abortmeth, self.threshold,self.pausetime,camconfig, measuremeth, monitormeth, self.driftvalue, self.im))
 		self.uiserver.addObject(container)
