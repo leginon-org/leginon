@@ -464,8 +464,16 @@ class Manager(node.Node):
 		client = self.clientclass(location)
 		try:
 			client.push(e)
-		except EOFError:
-			self.printerror('manager unable to add node')
+		except (IOError, EOFError):
+			try:
+				hostname = location['TCP transport']['hostname']
+			except KeyError:
+				hostname = '<unknown host>'
+			try:
+				tcp_port = location['TCP transport']['port']
+			except KeyError:
+				tcp_port = '<unknown port>'
+			self.messagelog.error('Failed to add node at '+hostname+':'+str(tcp_port))
 
 	def killNode(self, nodeid):
 		'''Attempt telling a node to die and unregister. Unregister if communication with the node fails.'''
@@ -633,16 +641,21 @@ class Manager(node.Node):
 	def uiLaunch(self):
 		launchername = self.uilauncherselect.getSelectedValue()
 		launcherid = self.launcherdict[launchername]['ID']
-		process = self.uilaunchflag.get()
+#		process = self.uilaunchflag.get()
+		process = False
 		nodeclass = self.uiclassselect.getSelectedValue()
 		name = self.uilaunchname.get()
-		args = '(%s)' % self.uilaunchargs.get()
-		try:
-			args = eval(args)
-		except:
-			self.printerror('error evaluating args during UI launch')
-			self.printException()
+		if not name:
+			self.messagelog.error('Invalid node name "%s"' % name)
 			return
+#		args = '(%s)' % self.uilaunchargs.get()
+#		try:
+#			args = eval(args)
+#		except:
+#			self.printerror('error evaluating args during UI launch')
+#			self.printException()
+#			return
+		args = ()
 		self.launchNode(launcherid, process, nodeclass, name, args)
 
 	def uiKillNode(self):
@@ -726,28 +739,34 @@ class Manager(node.Node):
 		self.uiclassselect = uidata.SingleSelectFromList('Node Class', [], 0)
 		self.uilauncherselect = uidata.SingleSelectFromList('Launcher', [], 0)
 		self.uilauncherselect.setCallback(self.uiLauncherSelectCallback)
-		self.uilaunchargs = uidata.String('Arguments', '()', 'rw')
-		self.uilaunchflag = uidata.Boolean('Process', False, 'rw')
-		launchmethod = uidata.Method('Launch', self.uiLaunch)
+#		self.uilaunchargs = uidata.String('Arguments', '()', 'rw')
+#		self.uilaunchflag = uidata.Boolean('Process', False, 'rw')
+		launchmethod = uidata.Method('Create', self.uiLaunch)
 		launchobjects = (self.uilaunchname, self.uilauncherselect,
-											self.uiclassselect, self.uilaunchargs,
-											self.uilaunchflag, launchmethod)
-		launchcontainer = uidata.LargeContainer('Launch')
+											self.uiclassselect,
+											#self.uilaunchargs, self.uilaunchflag,
+											launchmethod)
+		launchcontainer = uidata.Container('Create New Node')
 		launchcontainer.addObjects(launchobjects)
 
 
-		self.uinodeinfo = uidata.Struct('Node Info', {}, 'r')
+		self.uinodeinfo = uidata.Struct('Node Information', {}, 'r')
 		infoobjects = (self.uinodeinfo,)
 		self.uiaddnodehostname = uidata.SingleSelectFromList('Hostname',
 																										leginonconfig.LAUNCHERS, 0)
 		self.uiaddnodeport = uidata.Integer('TCP Port', 55555, 'rw')
 		addmethod = uidata.Method('Add', self.uiAddNode)
 		addobjects = (self.uiaddnodehostname, self.uiaddnodeport, addmethod)
-		self.uikillselect = uidata.SingleSelectFromList('Kill Node', [], 0)
+		addcontainer = uidata.Container('Add Existing Node')
+		addcontainer.addObjects(addobjects)
+		self.uikillselect = uidata.SingleSelectFromList('Node', [], 0)
 		killmethod = uidata.Method('Kill', self.uiKillNode)
 		killobjects = (self.uikillselect, killmethod)
-		nodemanagementcontainer = uidata.LargeContainer('Node Management')
-		nodemanagementcontainer.addObjects(infoobjects + addobjects + killobjects)
+		killcontainer = uidata.Container('Kill Node')
+		killcontainer.addObjects(killobjects)
+		nodemanagementcontainer = uidata.LargeContainer('Nodes')
+		nodemanagementcontainer.addObjects((self.uinodeinfo, launchcontainer,
+																				addcontainer, killcontainer))
 
 		self.uiapplicationlist = uidata.SingleSelectFromList('Application', [], 0)
 		self.uiUpdateApplications()
@@ -770,7 +789,7 @@ class Manager(node.Node):
 				applicationloadmethod, applicationlaunchmethod,
 				applicationkillmethod, self.importexportcontainer)
 		self.uilauncheraliascontainer = None
-		self.applicationcontainer = uidata.LargeContainer('Application')
+		self.applicationcontainer = uidata.LargeContainer('Applications')
 		self.applicationcontainer.addObjects(applicationobjects)
 
 		self.uifromnodeselect = uidata.SingleSelectFromList('From Node', [], 0)
@@ -783,7 +802,7 @@ class Manager(node.Node):
 		unbindmethod = uidata.Method('Unbind', self.uiDelDistmap)
 		eventobjects = (self.uifromnodeselect, self.uieventselect,
 										self.uitonodeselect, bindmethod, unbindmethod)
-		eventcontainer = uidata.LargeContainer('Event Bindings')
+		eventcontainer = uidata.LargeContainer('Events')
 		eventcontainer.addObjects(eventobjects)
 
 		self.diarymessage = uidata.String('Message', '', 'rw')
@@ -796,9 +815,9 @@ class Manager(node.Node):
 		container = uidata.LargeContainer('Manager')
 
 #		container.addObject(uimanagersetup)
-		container.addObjects((self.messagelog, launchcontainer,
-													nodemanagementcontainer, eventcontainer,
-													self.applicationcontainer, diarycontainer))
+		container.addObjects((self.messagelog, nodemanagementcontainer,
+													eventcontainer, self.applicationcontainer))
+													#, diarycontainer))
 
 		self.uiUpdateNodeInfo()
 		self.uiUpdateLauncherInfo()
