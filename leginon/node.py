@@ -93,6 +93,7 @@ class Node(leginonobject.LeginonObject):
 	def exit(self):
 		self.outputEvent(event.NodeUnavailableEvent(self.ID()))
 		self.server.exit()
+		print "done"
 
 	def die(self, ievent):
 		self.die_event.set()
@@ -202,7 +203,7 @@ class Node(leginonobject.LeginonObject):
 		# wait until the interact thread terminates
 		#interact_thread.join()
 		self.die_event.wait()
-		
+		print self.id, "exiting...",	
 		self.exit()
 
 	def outputEvent(self, ievent, wait=0, nodeid=('manager',)):
