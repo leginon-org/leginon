@@ -63,18 +63,22 @@ class ImageMosaicInfo(object):
 	def getMosaicLimits(self):
 		self.lock.acquire()
 		# could be Inf
-		imagemin = [0, 0]
-		imagemax = [0, 0]
 		tiledataids = self.getTileDataIDs()
+		imagemin = None
+		imagemax = None
 		for tiledataid in tiledataids:
 			tileposition = self.getTilePosition(tiledataid)
 			tileshape = self.getTileShape(tiledataid)
 			tilemin = tileposition
 			tilemax = (tileposition[0] + tileshape[0], tileposition[1] + tileshape[1])
 			for i in [0, 1]:
-				if tilemin[i] < imagemin[i]:
+				if imagemin is None:
+					imagemin = list(tilemin)
+				elif tilemin[i] < imagemin[i]:
 					imagemin[i] = tilemin[i]
-				if tilemax[i] > imagemax[i]:
+				if imagemax is None:
+					imagemax = list(tilemax)
+				elif tilemax[i] > imagemax[i]:
 					imagemax[i] = tilemax[i]
 
 		self.lock.release()
@@ -587,14 +591,14 @@ class StateImageMosaic(ImageMosaic):
 			imagemosaic.addTile(idata['id'], tileimage, position,
 																			tilescope, tilecamera)
 			self.imagemosaics.append(imagemosaic)
-#			print idata.id, "position =", imagemosaic.getTilePosition(idata.id)
+			print idata['id'], "position =", imagemosaic.getTilePosition(idata['id'])
 		else:
 			for imagemosaic in mosaics:
 				position = self.positionmethods[self.positionmethod](idata, imagemosaic)
 				#imagemosaic.addTile(idata.id, tileimage, position,
 				imagemosaic.addTile(idata['id'], tileimage, position,
 																									tilescope, tilecamera)
-#				print idata.id, "position =", imagemosaic.getTilePosition(idata.id)
+				print idata['id'], "position =", imagemosaic.getTilePosition(idata['id'])
 		self.image.set(None)
 
 	def positionByCalibration(self, idata, imagemosaic):
