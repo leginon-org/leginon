@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetTemplate.py,v $
-# $Revision: 1.4 $
+# $Revision: 1.5 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
+# $Date: 2004-12-06 21:15:26 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -23,9 +23,10 @@ class TemplateUpdatedEvent(wx.PyCommandEvent):
 		self.template = template
 
 class Dialog(wx.Dialog):
-	def __init__(self, parent, title, target=None):
+	def __init__(self, parent, title, target=None, targetname='Relative target'):
 		wx.Dialog.__init__(self, parent, -1, title)
 
+		self.targetname = targetname
 		self.iex = IntEntry(self, -1, chars=4)
 		self.iey = IntEntry(self, -1, chars=4)
 
@@ -41,7 +42,7 @@ class Dialog(wx.Dialog):
 		sztarget.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER)
 		label = wx.StaticText(self, -1, 'y')
 		sztarget.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER)
-		label = wx.StaticText(self, -1, 'Relative target')
+		label = wx.StaticText(self, -1, self.targetname)
 		sztarget.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sztarget.Add(self.iex, (1, 1), (1, 1), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 		sztarget.Add(self.iey, (1, 2), (1, 1), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
@@ -81,8 +82,10 @@ class Dialog(wx.Dialog):
 			evt.Skip()
 
 class Panel(wx.Panel):
-	def __init__(self, parent, title):
+	def __init__(self, parent, title, targetname='Relative target'):
 		wx.Panel.__init__(self, parent, -1)
+
+		self.targetname = targetname
 
 		self.lbtemplate = wx.ListBox(self, -1, style=wx.LB_SINGLE)
 		self.badd = wx.Button(self, -1, 'Add...')
@@ -115,7 +118,7 @@ class Panel(wx.Panel):
 	def _updated(self, evt=False):
 		enable = self.lbtemplate.GetSelection() >= 0
 		self.bedit.Enable(enable)
-		enable = self.lbtemplate.GetSelection() >= 0 and self.lbtemplate.GetCount() > 1
+		enable = enable and self.lbtemplate.GetCount() > 0
 		self.bdelete.Enable(enable)
 		if evt:
 			e = TemplateUpdatedEvent(self, list(self._template))
@@ -125,12 +128,12 @@ class Panel(wx.Panel):
 		self._updated(False)
 
 	def getTemplate(self):
-		if len(self._template) < 1:
+		if len(self._template) < 0:
 			raise RuntimeError
 		return list(self._template)
 
 	def setTemplate(self, template):
-		if len(template) < 1:
+		if len(template) < 0:
 			raise ValueError
 		self.lbtemplate.Clear()
 		self._template = []
@@ -161,14 +164,14 @@ class Panel(wx.Panel):
 	def _addTarget(self, target):
 		if not self.validate(target):
 			raise ValueError
-		string = 'Relative target: (%s, %s)' % target
+		string = '%s: (%s, %s)' % ((self.targetname,) + target)
 		self.lbtemplate.Append(string)
 		self._template.append(target)
 
 	def _setTarget(self, n, target):
 		if not self.validate(target):
 			raise ValueError
-		string = 'Relative target: (%s, %s)' % target
+		string = '%s: (%s, %s)' % ((self.targetname,) + target)
 		self.lbtemplate.SetString(n, string)
 		self._template[n] = target
 

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RasterFinder.py,v $
-# $Revision: 1.7 $
+# $Revision: 1.8 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-11 19:43:17 $
+# $Date: 2004-12-06 21:15:26 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -131,6 +131,7 @@ class RasterSettingsDialog(gui.wx.Settings.Dialog):
 		return [sbszraster, szbutton]
 
 	def onTestButton(self, evt):
+		self.setNodeSettings()
 		self.node.createRaster()
 
 class FinalSettingsDialog(gui.wx.Settings.Dialog):
@@ -146,12 +147,14 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['focus convolve template'] = \
 							gui.wx.TargetTemplate.Panel(self, 'Convolve Template')
 		self.widgets['focus constant template'] = \
-							gui.wx.TargetTemplate.Panel(self, 'Constant Template')
+							gui.wx.TargetTemplate.Panel(self, 'Constant Template',
+																					targetname='Constant target')
 		self.widgets['acquisition convolve'] = wx.CheckBox(self, -1, 'Convolve')
 		self.widgets['acquisition convolve template'] = \
 							gui.wx.TargetTemplate.Panel(self, 'Convolve Template')
 		self.widgets['acquisition constant template'] = \
-							gui.wx.TargetTemplate.Panel(self, 'Constant Template')
+							gui.wx.TargetTemplate.Panel(self, 'Constant Template',
+																					targetname='Constant target')
 
 		szice = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Box size:')
@@ -217,6 +220,7 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 		return [sbszice, sbszft, sbszat, szbutton]
 
 	def onAnalyzeIceButton(self, evt):
+		self.setNodeSettings()
 		self.node.ice()
 
 class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
