@@ -18,6 +18,7 @@ import uidata
 import Queue
 import emregistry
 import unique
+import Numeric
 
 class DataHandler(node.DataHandler):
 	def query(self, id):
@@ -535,34 +536,91 @@ class EM(node.Node):
 	def getDictStructure(self, dictionary):
 		return self.keys()
 
-	def cameraInterface(self):
-		self.camera.keys()
-		self.uicameradict = {}
-		cameraparameterscontainer = uidata.Container('Parameters')
+	def interfaceObjectFromKey(self, obj, key):
+		try:
+			permissions = ''
+			if obj.readable(key):
+				permissions += 'r'
+			if obj.writable(key):
+				permissions += 'w'
+		except (KeyError, AttributeError):
+			raise ValueError('cannot get permission for "%s" from object' % key)
+		if not permissions:
+			raise ValueError('permissions of "%s" do not allow object creation' % key)
+		try:
+			return self.interfaceObjectFromTypeInfo(key, obj.typemapping[key],
+																								permissions)
+		except (AttributeError, KeyError):
+			raise ValueError('no typemap for "%s"' % key)
 
-		parameters = [('exposure time', 'Exposure time', uidata.Float, 'rw')]
+	def interfaceObjectFromTypeInfo(self, key, typeinfodict, permissions):
+		datatype = typeinfodict['type']
+		if datatype == int:
+			interfaceclass = uidata.Integer
+			value = None
+		elif datatype == float:
+			interfaceclass = uidata.Float
+			value = None
+		elif datatype == str:
+			interfaceclass = uidata.String
+			value = ''
+		elif datatype == list:
+			interfaceclass = uidata.Array
+			value = []
+		elif datatype == bool:
+			interfaceclass = uidata.Boolean
+			value = False
+		elif datatype == Numeric.arraytype:
+			raise ValueError('currently not displaying images')
+			value = None
+		elif datatype == dict:
+			interfaceclass = uidata.Container
 
-		for key, name, datatype, permissions in parameters:
-			self.uicameradict[key] = datatype(name, None, permissions)
-			cameraparameterscontainer.addObject(self.uicameradict[key])
+		try:
+			range = typeinfodict['range']
+		except KeyError:
+			pass
 
-		pairs = [('dimension', 'Dimension', ['x', 'y'], uidata.Integer),
-							('offset', 'Offset', ['x', 'y'], uidata.Integer),
-							('binning', 'Binning', ['x', 'y'], uidata.Integer)]
+		try:
+			values = typeinfodict['values']
+			if datatype == dict:
+				mapping = {}
+				objects = []
+				for subkey in values:
+					try:
+						subinterface, submapping = self.interfaceObjectFromTypeInfo(subkey,
+																														values[subkey],
+																														permissions)
+						objects.append(subinterface)
+						mapping[subkey] = subinterface
+					except (AttributeError, KeyError, ValueError):
+						pass
+				interface = interfaceclass(key)
+				interface.addObjects(objects)
+				return interface, mapping
+		except KeyError:
+			if datatype == dict:
+				return interfaceclass(key), None
 
-		for key, name, axes, datatype in pairs:
-			self.uicameradict[key] = {}
-			container = uidata.Container(name)
-			for axis in axes:
-				self.uicameradict[key][axis] = datatype(axis, 0, 'rw')
-				container.addObject(self.uicameradict[key][axis])
-			cameraparameterscontainer.addObject(container)
+		return interfaceclass(key, value, permissions=permissions), None
 
-		self.cameracontainer = uidata.LargeContainer('Camera')
-		self.cameracontainer.addObject(cameraparameterscontainer)
-
-		setcamera = uidata.Method('Set', self.uiSetCamera)
-		self.cameracontainer.addObject(setcamera)
+	def interfaceFromObject(self, obj):
+		keys = obj.keys()
+		interfaceobjects = []
+		mapping = {}
+		for key in keys:
+			try:
+				interfaceobject, submapping = self.interfaceObjectFromKey(obj, key)
+				interfaceobjects.append(interfaceobject)
+				if submapping is None:
+					mapping[key] = interfaceobject
+				else:
+					mapping[key] = submapping
+			except ValueError, e:
+				pass
+		container = uidata.Container('Parameters')
+		container.addObjects(interfaceobjects)
+		return container, mapping
 
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
@@ -630,6 +688,12 @@ class EM(node.Node):
 
 		# camera
 
+		camerainterface, self.uicameradict = self.interfaceFromObject(self.camera)
+		self.cameracontainer = uidata.LargeContainer('Camera')
+		setcamera = uidata.Method('Set', self.uiSetCamera)
+		self.cameracontainer.addObjects([camerainterface, setcamera])
+
+		'''
 		self.uicameradict = {}
 		cameraparameterscontainer = uidata.Container('Parameters')
 
@@ -654,9 +718,7 @@ class EM(node.Node):
 
 		self.cameracontainer = uidata.LargeContainer('Camera')
 		self.cameracontainer.addObject(cameraparameterscontainer)
-
-		setcamera = uidata.Method('Set', self.uiSetCamera)
-		self.cameracontainer.addObject(setcamera)
+		'''
 
 		container = uidata.LargeContainer('EM')
 		container.addObjects((self.scopecontainer, self.cameracontainer))
