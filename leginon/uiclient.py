@@ -177,10 +177,14 @@ class wxUIClient(UIClient):
 		UIClient.__init__(self, serverhostname, serverport, port)
 		threading.Thread(target=self.addServer, args=()).start()
 
+#	def start(self):
+#		self.addServer()
+
 	def addFromServer(self, namelist, typelist, value, read, write):
-		#print 'addFromServer', namelist, value
+		#print 'addFromServer', namelist
 		evt = AddWidgetEvent(namelist, typelist, value, read, write)
 		wxPostEvent(self.container.widgethandler, evt)
+#		print 'pending count =', self.container.getPendingCount()
 		return ''
 
 	def setFromServer(self, namelist, value):
@@ -213,6 +217,7 @@ class UIApp(wxApp):
 		containerclass = wxClientContainerFactory(wxStaticBoxContainerWidget)
 		self.container = containerclass('UI Client', self.panel, self,
 																		(self.serverhostname, self.serverport))
+#		self.container.uiclient.start()
 		if self.container.sizer is not None:
 			self.panel.SetSizer(self.container.sizer)
 		self.SetTopWindow(self.frame)
@@ -253,6 +258,7 @@ class wxContainerWidget(wxWidget):
 		wxWidget.__init__(self, name, parent, container)
 		self.children = {}
 		self.childparent = self.parent
+		self.pending = []
 
 		self.notebook = None
 
@@ -277,13 +283,35 @@ class wxContainerWidget(wxWidget):
 				if self.sizer is not None and child.sizer is not None:
 					self.sizer.Add(child.sizer, 0, wxALL, 3)
 
+#		if isinstance(child, wxClientContainerWidget):
+#			child.uiclient.start()
+
+		# hmm...
+		for evt in list(self.pending):
+#			if name == evt.namelist[0]:
+#				print '***posting', evt.namelist, 'to child', name
+			self.pending.remove(evt)
+#				evt.namelist = evt.namelist[1:]
+#				wxPostEvent(child.widgethandler, evt)
+			wxPostEvent(self.widgethandler, evt)
+
+	def getPendingCount(self):
+		pendingcount = 0
+		for i in self.children.values():
+			if hasattr(i, 'getPendingCount'):
+				pendingcount += i.getPendingCount()
+		pendingcount += len(self.pending)
+		return pendingcount
+
 	def _addWidgetToChild(self, evt):
 		for name, child in self.children.items():
 			if name == evt.namelist[0]:
 				evt.namelist = evt.namelist[1:]
 				wxPostEvent(child.widgethandler, evt)
 				return
-		raise ValueError('No such child to add widget')
+#		print '***adding', evt.namelist, 'type', evt.__class__.__name__, 'to pending children'
+		self.pending.append(evt)
+		#raise ValueError('No such child to add widget')
 
 	def onAddWidget(self, evt):
 		if len(evt.namelist) == 1:
@@ -298,7 +326,8 @@ class wxContainerWidget(wxWidget):
 				evt.namelist = evt.namelist[1:]
 				wxPostEvent(child.widgethandler, evt)
 				return
-		raise ValueError('No such child to set widget')
+		self.pending.append(evt)
+		#raise ValueError('No such child to set widget')
 
 	def onRemoveWidget(self, evt):
 		for name, child in self.children.items():
@@ -315,7 +344,8 @@ class wxContainerWidget(wxWidget):
 					evt.namelist = evt.namelist[1:]
 					wxPostEvent(child.widgethandler, evt)
 					return
-		raise ValueError('No such child to remove widget')
+		self.pending.append(evt)
+		#raise ValueError('No such child to remove widget')
 
 	def onEnableWidget(self, evt):
 		if len(evt.namelist) == 0:
@@ -326,7 +356,8 @@ class wxContainerWidget(wxWidget):
 					evt.namelist = evt.namelist[1:]
 					wxPostEvent(child.widgethandler, evt)
 					return
-			raise ValueError('No such child to set widget')
+			self.pending.append(evt)
+			#raise ValueError('No such child to enable widget')
 
 	def enable(self, enabled):
 		wxWidget.enable(self, enabled)

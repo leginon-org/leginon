@@ -281,6 +281,13 @@ class Data(Object):
 class Boolean(Data):
 	typelist = Data.typelist + ('boolean',)
 
+#	def set(self, value, callback=True):
+#		if value:
+#			value = 1
+#		else:
+#			value = 0
+#		Data.set(self, value, callback)
+
 	def validate(self, value):
 		if value is None:	
 			return False

@@ -199,11 +199,11 @@ class Server(XMLRPCServer, uidata.Container):
 			write = uiobject.write
 		else:
 			write = False
-		client.execute('ADD', (namelist, uiobject.typelist, value, read, write))
+
 		if isinstance(uiobject, uidata.Container):
-			#for childuiobject in uiobject.uiobjectdict.values():
 			for childuiobject in uiobject.uiobjectlist:
 				self.addAllObjects(client, childuiobject, namelist+(childuiobject.name,))
+		client.execute('ADD', (namelist, uiobject.typelist, value, read, write))
 
 	def addObjectCallback(self, namelist, typelist, value, read, write):
 		for client in self.uiclients:
