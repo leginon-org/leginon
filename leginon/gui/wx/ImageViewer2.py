@@ -68,6 +68,8 @@ class BufferedWindow(wx.ScrolledWindow):
 	def onSize(self, evt):
 		self._onSize(evt)
 		self.updateDrawing()
+		if evt is not None:
+			evt.Skip()
 
 class BitmapWindow(BufferedWindow):
 	def __init__(self, parent, id):
@@ -79,8 +81,6 @@ class BitmapWindow(BufferedWindow):
 		self._yscale = 1.0
 		self._xview = 0
 		self._yview = 0
-		self._xviewscaled = 0
-		self._yviewscaled = 0
 		self._bitmap = None
 		BufferedWindow.__init__(self, parent, id)
 
@@ -115,8 +115,13 @@ class BitmapWindow(BufferedWindow):
 			dc.DestroyClippingRegion()
 			dc.SetClippingRegion(0, 0,
 														self._clientwidthscaled, self._clientheightscaled)
-			dc.Blit(self._xoffsetscaled - self._xview,
-							self._yoffsetscaled - self._yview,
+			xoffset = self._xoffsetscaled
+			if self._xview > 0:
+				xoffset -= self._xview
+			yoffset = self._yoffsetscaled
+			if self._yview > 0:
+				yoffset -= self._yview
+			dc.Blit(xoffset, yoffset,
 							self._bitmapwidth, self._bitmapheight,
 							memorydc,
 							0, 0)
@@ -152,6 +157,7 @@ class ScaledWindow(BitmapWindow):
 		return updated
 
 	def setScale(self, x, y):
+		self.Freeze()
 		if self._setScale(x, y):
 			self.updateDrawing()
 			self.Refresh()
@@ -226,11 +232,9 @@ class OffsetWindow(ScaledWindow):
 		xview, yview = self.GetViewStart()
 		if self._xview != xview:
 			self._xview = xview
-			self._xviewscaled = int(self._xview/self._xscale)
 			updated = True
 		if self._yview != yview:
 			self._yview = yview
-			self._yviewscaled = int(self._yview/self._yscale)
 			updated = True
 		if updated:
 			self.updateDrawing()
