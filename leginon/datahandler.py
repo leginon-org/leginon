@@ -230,7 +230,8 @@ class CachedDictDataKeeper(DataHandler):
 		self.lock.release()
 		return result
 
-class SimpleDataKeeper(CachedDictDataKeeper):
+#class SimpleDataKeeper(CachedDictDataKeeper):
+class SimpleDataKeeper(DictDataKeeper):
 	'''Define a basic data keeper with functionality.'''
 	pass
 
