@@ -124,12 +124,14 @@ class Node(leginonobject.LeginonObject):
 		self.clientlistdata.set(self.clientlist)
 
 
-		idspec = self.registerUIData('id', 'array', permissions='r')
+		idspec = self.registerUIData('ID', 'array', permissions='r')
 		idspec.set(self.id)
-		classspec = self.registerUIData('class', 'string', permissions='r')
+		classspec = self.registerUIData('Class', 'string', permissions='r')
 		classspec.set(self.__class__.__name__)
+		locspec = self.registerUIData('Location', 'struct', permissions='r')
+		locspec.set(self.location())
 
-		c = self.registerUIContainer('Node Info', (idspec,classspec))
+		c = self.registerUIContainer('Node Info', (idspec,classspec,locspec))
 		return c
 
 	def registerUIMethod(self, func, name, argspec, returnspec=None):

@@ -311,7 +311,6 @@ class Manager(node.Node):
 		self.nodetreedata = self.registerUIData('Node Tree', 'struct', permissions='rw')
 		self.nodeDict()
 
-
 		argspec = (
 		self.registerUIData('Filename', 'string'),
 		)
