@@ -28,8 +28,8 @@ class Focuser(acquisition.Acquisition):
 		self.abortfail.clear()
 		btilt = self.btilt.get()
 		pub = self.publishimages.get()
-		checkdrift = False
-		drift_timeout = 300
+		checkdrift = self.drifton.get()
+		drift_timeout = self.drifttimeout.get()
 		try:
 			correction = self.btcalclient.measureDefocusStig(btilt, pub, checkdrift, drift_timeout)
 		except calibrationclient.Abort:
@@ -127,7 +127,9 @@ class Focuser(acquisition.Acquisition):
 	def defineUserInterface(self):
 		acquisition.Acquisition.defineUserInterface(self)
 		self.btilt = uidata.Float('Beam Tilt', 0.02, 'rw')
-		self.stigfocthresh = uidata.Float('Threshold', 1e-6, 'rw')
+		self.stigfocthresh = uidata.Float('Stig Threshold', 1e-6, 'rw')
+		self.drifton = uidata.Boolean('Check Drift', True, 'rw')
+		self.drifttimeout = uidata.Float('Drift Timeout (sec)', 300, 'rw')
 		focustypes = self.focus_methods.keys()
 		focustypes.sort()
 		self.focustype = uidata.SingleSelectFromList('Focus Correction Type',
@@ -137,6 +139,6 @@ class Focuser(acquisition.Acquisition):
 		abortfailmethod = uidata.Method('Abort With Failure', self.uiAbortFailure)
 		testmethod = uidata.Method('Test Autofocus', self.uiTest)
 		container = uidata.MediumContainer('Focuser')
-		container.addObjects((self.btilt, self.stigfocthresh, self.focustype, self.stigcorrection, self.publishimages, abortfailmethod, testmethod))
+		container.addObjects((self.btilt, self.stigfocthresh, self.drifton, self.drifttimeout, self.focustype, self.stigcorrection, self.publishimages, abortfailmethod, testmethod))
 		self.uiserver.addObject(container)
 
