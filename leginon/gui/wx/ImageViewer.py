@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageViewer.py,v $
-# $Revision: 1.39 $
+# $Revision: 1.40 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-02 23:23:38 $
+# $Date: 2004-11-05 19:09:44 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -346,8 +346,8 @@ class ImageTool(object):
 	def OnMotion(self, evt, dc):
 		pass
 
-	def getToolTipString(self, x, y, value):
-		return ''
+	def getToolTipStrings(self, x, y, value):
+		return []
 
 	def Draw(self, dc):
 		pass
@@ -366,12 +366,12 @@ class ValueTool(ImageTool):
 			valuestr = '%g' % value
 		return '(%d, %d) %s' % (x, y, valuestr)
 
-	def getToolTipString(self, x, y, value):
+	def getToolTipStrings(self, x, y, value):
 		#self.imagepanel.pospanel.set({'x': x, 'y': y, 'value': value})
 		if self.button.GetToggle():
-			return self.valueString(x, y, value)
+			return [self.valueString(x, y, value)]
 		else:
-			return ''
+			return []
 
 class CrosshairTool(ImageTool):
 	def __init__(self, imagepanel, sizer):
@@ -449,14 +449,14 @@ class RulerTool(ImageTool):
 			y = evt.m_y #- self.imagepanel.offset[1]
 			self.DrawRuler(dc, x, y)
 
-	def getToolTipString(self, x, y, value):
+	def getToolTipStrings(self, x, y, value):
 		if self.button.GetToggle() and self.start is not None:
 			x0, y0 = self.start
 			dx, dy = x - x0, y - y0
-			return 'From (%d, %d) x=%d y=%d d=%.2f' % (x0, y0, dx, dy,
-																									math.hypot(dx, dy))
+			return ['From (%d, %d) x=%d y=%d d=%.2f' % (x0, y0, dx, dy,
+																									math.hypot(dx, dy))]
 		else:
-			return ''
+			return []
 
 class ZoomTool(ImageTool):
 	def __init__(self, imagepanel, sizer):
@@ -916,17 +916,12 @@ class ImagePanel(wx.Panel):
 
 		self._onMotion(evt, dc)
 
-		strings = []
 		x, y = self.view2image((evt.m_x, evt.m_y))
 		value = self.getValue(x, y)
-
+		strings = []
 		for tool in self.tools:
-			string = tool.getToolTipString(x, y, value)
-			if string:
-				strings.append(string)
-		string = self._getToolTipString(x, y, value)
-		if string:
-			strings.append(string)
+			strings += tool.getToolTipStrings(x, y, value)
+		strings += self._getToolTipStrings(x, y, value)
 		if strings:
 			self.drawToolTip(dc, x, y, strings)
 
@@ -935,8 +930,8 @@ class ImagePanel(wx.Panel):
 		self.paint(dc, wx.ClientDC(self.panel))
 		dc.SelectObject(wx.NullBitmap)
 
-	def _getToolTipString(self, x, y, value):
-		return ''
+	def _getToolTipStrings(self, x, y, value):
+		return []
 
 	def _onLeftClick(self, evt):
 		pass
@@ -1411,6 +1406,11 @@ class Target(object):
 		self.y = y
 		self.type = type
 
+class StatsTarget(Target):
+	def __init__(self, x, y, type, stats):
+		Target.__init__(self, x, y, type)
+		self.stats = stats
+
 class TargetType(object):
 	def __init__(self, name, color):
 		self.name = name
@@ -1437,7 +1437,13 @@ class TargetType(object):
 		self.targets.remove(target)
 
 	def setTargets(self, targets):
-		self.targets = map(lambda (x, y): Target(x, y, self), targets)
+		self.targets = []
+		for target in targets:
+			if isinstance(target, dict):
+				self.targets.append(StatsTarget(target['x'], target['y'],
+																				self, target['stats']))
+			else:
+				self.targets.append(Target(target[0], target[1], self))
 
 	def getTargetPositions(self):
 		if self.targets is None:
@@ -1550,8 +1556,9 @@ class TargetImagePanel(ImagePanel):
 			self.addTarget(self.selectedtype.name, x, y)
 
 	def _onRightClick(self, evt):
-		if self.selectedtarget is not None:
-			self.deleteTarget(self.selectedtarget)
+		if self.selectedtarget is not None :
+			if self.selectedtype == self.selectedtarget.type:
+				self.deleteTarget(self.selectedtarget)
 
 	def closestTarget(self, type, x, y):
 		minimum_magnitude = 10
@@ -1561,31 +1568,49 @@ class TargetImagePanel(ImagePanel):
 			minimum_magnitude /= xscale
 
 		closest_target = None
-		for target in self.targets[type]:
-			magnitude = math.hypot(x - target.x, y - target.y)
-			if magnitude < minimum_magnitude:
-				minimum_magnitude = magnitude
-				closest_target = target
+
+		if type is not None:
+			for target in self.targets[type]:
+				magnitude = math.hypot(x - target.x, y - target.y)
+				if magnitude < minimum_magnitude:
+					minimum_magnitude = magnitude
+					closest_target = target
+
+		if closest_target is None:
+			for key in self.order:
+				if key == type:
+					continue
+				for target in self.targets[key]:
+					magnitude = math.hypot(x - target.x, y - target.y)
+					if magnitude < minimum_magnitude:
+						minimum_magnitude = magnitude
+						closest_target = target
 
 		return closest_target
 
 	def _onMotion(self, evt, dc):
 		ImagePanel._onMotion(self, evt, dc)
-		if self.selectedtype is not None:
-			viewoffset = self.panel.GetViewStart()
-			x, y = self.view2image((evt.m_x, evt.m_y))
-			self.selectedtarget = self.closestTarget(self.selectedtype, x, y)
-		else:
-			self.selectedtarget = None
+#		if self.selectedtype is not None:
+		viewoffset = self.panel.GetViewStart()
+		x, y = self.view2image((evt.m_x, evt.m_y))
+		self.selectedtarget = self.closestTarget(self.selectedtype, x, y)
+#		else:
+#			self.selectedtarget = None
 
-	def _getToolTipString(self, x, y, value):
-		string = ImagePanel._getToolTipString(self, x, y, value)
+	def _getToolTipStrings(self, x, y, value):
+		strings = ImagePanel._getToolTipStrings(self, x, y, value)
 		selectedtarget = self.selectedtarget
 		if selectedtarget is not None:
 			name = selectedtarget.type.name
 			position = selectedtarget.position
-			string += name + ' ' + str(position)
-		return string
+			strings.append('%s (%g, %g)' % (name, position[0], position[1]))
+			if isinstance(selectedtarget, StatsTarget):
+				for key, value in selectedtarget.stats.items():
+					if type(value) is float:
+						strings.append('%s: %g' % (key, value))
+					else:
+						strings.append('%s: %s' % (key, value))
+		return strings
 
 if __name__ == '__main__':
 	import sys
@@ -1608,7 +1633,7 @@ if __name__ == '__main__':
 
 			self.panel = TargetImagePanel(frame, -1)
 			self.panel.addTypeTool('Target Practice', toolclass=TargetTypeTool, display=wx.RED, target=True)
-			self.panel.setTargets('Target Practice', [])
+			self.panel.setTargets('Target Practice', [(100, 100)])
 
 			self.sizer.Add(self.panel, 1, wx.EXPAND|wx.ALL)
 			frame.SetSizerAndFit(self.sizer)

@@ -13,6 +13,7 @@ import targetfinder
 import holefinderback
 import Mrc
 import camerafuncs
+import newdict
 import threading
 import ice
 try:
@@ -178,6 +179,19 @@ class HoleFinder(targetfinder.TargetFinder):
 			centers.append((c[1],c[0]))
 		return centers
 
+	def blobTargets(self, blobs):
+		targets = []
+		for blob in blobs:
+			target = {}
+			target['x'] = blob.stats['center'][1]
+			target['y'] = blob.stats['center'][0]
+			target['stats'] = newdict.OrderedDict()
+			target['stats']['Size'] = blob.stats['n']
+			target['stats']['Mean'] = blob.stats['mean']
+			target['stats']['Std. Dev.'] = blob.stats['stddev']
+			targets.append(target)
+		return targets
+
 	def findBlobs(self):
 		self.logger.info('find blobs')
 		border = self.settings['blobs border']
@@ -186,9 +200,12 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.hf.configure_blobs(border=border, maxblobsize=blobsize, maxblobs=maxblobs)
 		self.hf.find_blobs()
 		blobs = self.hf['blobs']
-		centers = self.blobCenters(blobs)
-		self.logger.info('Blobs: %s' % (len(centers),))
-		self.setTargets(centers, 'Blobs')
+		#centers = self.blobCenters(blobs)
+		targets = self.blobTargets(blobs)
+		#self.logger.info('Number of blobs: %s' % (len(centers),))
+		self.logger.info('Number of blobs: %s' % (len(targets),))
+		#self.setTargets(centers, 'Blobs')
+		self.setTargets(targets, 'Blobs')
 
 	def fitLattice(self):
 		self.logger.info('fit lattice')
@@ -205,8 +222,10 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.hf.calc_holestats()
 
 		holes = self.hf['holes']
-		centers = self.blobCenters(holes)
-		self.logger.info('Holes: %s' % (len(centers),))
+		#centers = self.blobCenters(holes)
+		targets = self.blobTargets(holes)
+		#self.logger.info('Number of holes: %s' % (len(centers),))
+		self.logger.info('Number of lattice blobs: %s' % (len(targets),))
 		mylist = []
 		for hole in holes:
 			mean = float(hole.stats['hole_mean'])
@@ -215,7 +234,8 @@ class HoleFinder(targetfinder.TargetFinder):
 			tstd = self.icecalc.get_stdev_thickness(std, mean)
 			center = tuple(hole.stats['center'])
 			mylist.append({'m':mean, 'tm': tmean, 's':std, 'ts': tstd, 'c':center})
-		self.setTargets(centers, 'Lattice')
+		#self.setTargets(centers, 'Lattice')
+		self.setTargets(targets, 'Lattice')
 
 	def ice(self):
 		self.logger.info('limit thickness')
