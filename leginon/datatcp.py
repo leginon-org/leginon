@@ -16,7 +16,7 @@ class PullHandler(SocketServer.StreamRequestHandler, leginonobject.LeginonObject
 		# data_id needs to be send with a newline
 		data_id = self.rfile.readline()
 		# pickle the data from data_id (w/o the trailing newline char)
-		data = self.server.datahandler.query(data_id)
+		data = self.server.datahandler.query(data_id[:-1])
 		pickle.dump(data, self.wfile)
 
 class PushHandler(SocketServer.StreamRequestHandler, leginonobject.LeginonObject):
@@ -49,7 +49,7 @@ class Server(SocketServer.ThreadingTCPServer, leginonobject.LeginonObject):
 					SocketServer.ThreadingTCPServer.__init__(self, ('', port), handler)
 					break
 				except Exception, var:
-					if var[0] == 98: # socket error, address already in use
+					if (var[0] == 98 or var[0] == 10048): # socket error, address already in use
 						port += 1
 					else:
 						raise

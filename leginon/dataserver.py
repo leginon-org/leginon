@@ -5,6 +5,9 @@ import clientpull
 class DataServer(leginonobject.LeginonObject):
 	def __init__(self):
 		leginonobject.LeginonObject.__init__(self)
-		self.pushserver = clientpush.Server()
-		self.pullserver = clientpull.Server()
+		# perhaps better done in child class
+		#self.pushserver = clientpush.Server()
+		#self.pullserver = clientpull.Server()
+		self.pushserver = None
+		self.pullserver = None
 
