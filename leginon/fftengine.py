@@ -38,15 +38,15 @@ class _fftEngine(object):
 		raise NotImplementedError()
 
 
-### this attempts to use sfftw to create the fft engine classs
+### this attempts to use fftw single and double
 ### if that fails, it will use Numeric
 fftw_mods = []
 
 try:
-	import sfftw
-	fftw_mods.append(sfftw)
-	import fftw
-	fftw_mods.append(fftw)
+	import fftw.single
+	fftw_mods.append(fftw.single)
+	import fftw.double
+	fftw_mods.append(fftw.double)
 except ImportError:
 	print 'could not import fftw modules'
 
@@ -73,10 +73,10 @@ else:
 		mod.iplans = {}
 	# mapping numarray type to (fftwmodule, transformed type)
 	type_module = {
-		Numeric.Float32: sfftw,
-		Numeric.Float64: fftw,
-		Numeric.Complex32: sfftw,
-		Numeric.Complex64: fftw,
+		Numeric.Float32: fftw.single,
+		Numeric.Float64: fftw.double,
+		Numeric.Complex32: fftw.single,
+		Numeric.Complex64: fftw.double,
 	}
 	real_complex = {
 		Numeric.Float32: Numeric.Complex32,
