@@ -9,6 +9,9 @@ import correlator
 import peakfinder
 import time
 
+class DriftingTimeout(Exception):
+	pass
+
 class CalibrationClient(object):
 	'''
 	this is a component of a node that needs to use calibrations
@@ -50,7 +53,7 @@ class CalibrationClient(object):
 		info = {'requested state': state, 'imagedata': imagedata, 'image stats': image_stats}
 		return info
 
-	def measureStateShift(self, state1, state2, publish_images=0, settle=0.0):
+	def measureStateShift(self, state1, state2, publish_images=0, settle=0.0, checkdrift=False, timeout=None):
 		'''
 		Measures the pixel shift between two states
 		 Returned dict has these keys:
@@ -62,12 +65,56 @@ class CalibrationClient(object):
 		'''
 
 		print 'acquiring state images'
+
 		info1 = self.acquireStateImage(state1, publish_images, settle)
 		imagedata1 = info1['imagedata']
 		imagecontent1 = imagedata1
 		stats1 = info1['image stats']
 		actual1 = imagecontent1['scope']
 		self.numimage1 = imagecontent1['image']
+		self.correlator.insertImage(self.numimage1)
+
+		## for drift check, continue to acquire at state1
+		if checkdrift:
+			print 'checking for drift'
+			if timeout is None:
+				timelimit = None
+			else:
+				timelimit = time.time() + timeout
+			while 1:
+				info1 = self.acquireStateImage(state1, publish_images, settle)
+				imagedata1 = info1['imagedata']
+				imagecontent1 = imagedata1
+				stats1 = info1['image stats']
+				actual1 = imagecontent1['scope']
+				self.numimage1 = imagecontent1['image']
+				self.correlator.insertImage(self.numimage1)
+
+				print 'correlation'
+				pcimage = self.correlator.phaseCorrelate()
+
+				print 'peak finding'
+				self.peakfinder.setImage(pcimage)
+				self.peakfinder.subpixelPeak()
+				peak = self.peakfinder.getResults()
+				peakvalue = peak['subpixel peak value']
+				shift = correlator.wrap_coord(peak['subpixel peak'], pcimage.shape)
+				shiftrows = shift[0]
+				shiftcols = shift[1]
+				d = data.DriftData(self.ID(), rows=shiftrows, cols=shiftcols)
+				self.publish(d, database=True)
+
+				drift = abs(shift[0] + 1j * shift[1])
+				if drift < 1.0:
+					print 'no drift'
+					break
+				else:
+					print 'drift', drift
+				
+				if timelimit and time.time() > timelimit:
+					raise DriftingTimeout()
+
+
 #		mrcstr = Mrc.numeric_to_mrcstr(numimage1)
 #		self.ui_image1.set(xmlbinlib.Binary(mrcstr))
 
@@ -77,15 +124,13 @@ class CalibrationClient(object):
 		stats2 = info2['image stats']
 		actual2 = imagecontent2['scope']
 		self.numimage2 = imagecontent2['image']
+		self.correlator.insertImage(self.numimage2)
 #		mrcstr = Mrc.numeric_to_mrcstr(numimage2)
 #		self.ui_image2.set(xmlbinlib.Binary(mrcstr))
 
 		actual = (actual1, actual2)
 		shiftinfo = {}
 
-		print 'correlation insert'
-		self.correlator.insertImage(self.numimage1)
-		self.correlator.insertImage(self.numimage2)
 		print 'correlation'
 		pcimage = self.correlator.phaseCorrelate()
 		#pcimagedata = data.PhaseCorrelationImageData(self.node.ID(), pcimage, imagedata1.id, imagedata2.id)
@@ -109,11 +154,11 @@ class CalibrationClient(object):
 		shiftinfo.update({'actual states': actual, 'pixel shift': unbinned, 'peak value': peakvalue, 'shape':pcimage.shape, 'stats': (stats1, stats2)})
 		return shiftinfo
 
-		def configUIData(self):
-			self.ui_image1 = self.registerUIData('Image 1', 'binary', permissions='r')
-			self.ui_image2 = self.registerUIData('Image 2', 'binary', permissions='r')
-			imagespec = self.registerUIContainer('Images', (self.image1, self.image2))
-			return imagespec
+	def configUIData(self):
+		self.ui_image1 = self.registerUIData('Image 1', 'binary', permissions='r')
+		self.ui_image2 = self.registerUIData('Image 2', 'binary', permissions='r')
+		imagespec = self.registerUIContainer('Images', (self.image1, self.image2))
+		return imagespec
 
 class MatrixCalibrationClient(CalibrationClient):
 	'''
@@ -137,7 +182,7 @@ class MatrixCalibrationClient(CalibrationClient):
 
 	def storeMatrix(self, mag, type, matrix):
 		'''
-		stores a newly calibration matrix
+		stores a new calibration matrix
 		'''
 		newmatrix = Numeric.array(matrix, Numeric.Float64)
 		caldata = data.MatrixCalibrationData(self.node.ID(), magnification=mag, type=type, matrix=matrix)
@@ -155,7 +200,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		print 'getBeamTilt', beamtilt
 		return beamtilt
 
-	def measureDefocusStig(self, tilt_value, publish_images=0):
+	def measureDefocusStig(self, tilt_value, publish_images=0, drift_timeout=300):
 		emdata = self.node.researchByDataID(('magnification',))
 		#mag = emdata.content['magnification']
 		mag = emdata['em']['magnification']
@@ -174,7 +219,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			state1['beam tilt'][tiltaxis] -= (tilt_value/2.0)
 			state2 = copy.deepcopy(tiltcenter)
 			state2['beam tilt'][tiltaxis] += (tilt_value/2.0)
-			shiftinfo = self.measureStateShift(state1, state2, publish_images, settle=0.25)
+			shiftinfo = self.measureStateShift(state1, state2, publish_images, settle=0.25, checkdrift=True, timeout=drift_timeout)
 			pixshift = shiftinfo['pixel shift']
 
 			shifts[tiltaxis] = (pixshift['row'], pixshift['col'])
