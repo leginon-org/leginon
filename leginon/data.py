@@ -36,12 +36,7 @@ class DataManager(object):
 	def __init__(self):
 		## will connect to database before first query
 		self.db = None
-
-		## start server
-		if 1:
-			self.startServer()
-		else:
-			self.location = (None, None)
+		self.startServer()
 
 		## this lock should be used on access to everything below
 		self.lock = threading.RLock()
