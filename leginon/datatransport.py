@@ -74,20 +74,15 @@ class Client(Base):
 				return ret
 			except IOError:
 				self.logger.info('%s client push data failed' % str(c))
-				pass
-			except:
-				raise
 		raise IOError('IOError, unable to push data ' + str(odata))
 
 	def push(self, odata):
 		self.lock.acquire()
 		try:
 			ret = self._push(odata)
+		finally:
 			self.lock.release()
-			return ret
-		except:
-			self.lock.release()
-			raise
+		return ret
 
 class Server(Base):
 	def __init__(self, dh, tcpport=None, loggername=None):
