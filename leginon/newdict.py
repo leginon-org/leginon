@@ -119,9 +119,10 @@ class TypedDict(OrderedDict):
 		super(TypedDict,self).__init__(complete_init)
 
 	def __setitem__(self, key, value):
+		## validate key, new keys not allowed
+		t = self.__types[key]
 		## validate value	
 		if value is not None:
-			t = self.__types[key]
 			try:
 				validator = validators[t]
 			except KeyError:
