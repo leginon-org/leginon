@@ -269,6 +269,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			# this are unknown, but we need them:
 			inst['scope'] = data.ScopeEMData()
 			inst['camera'] = data.CameraEMData()
+			inst['preset'] = data.PresetData()
 			imagedatalist = self.research(datainstance=inst, fill=False)
 			try:
 				imagedata = imagedatalist[0]
@@ -276,6 +277,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 				#self.outputWarning('Cannot find image data referenced by mosaic')
 				print 'Cannot find image data referenced by mosaic'
 			else:
+				self.imagedata = imagedata
 				self.mosaic.addTile(imagedata)
 		self.mosaicdata = mosaicdata
 		self.clickimage.setImage(self.mosaic.getMosaicImage())
