@@ -944,6 +944,13 @@ class DiaryData(InSessionData):
 		return t
 	typemap = classmethod(typemap)
 
+class UIData(InSessionData):
+	def typemap(cls):
+		t = InSessionData.typemap()
+		t += [('object', tuple),
+					('pickled value', str)]
+		return t
+	typemap = classmethod(typemap)
 
 ########## for testing
 

@@ -21,10 +21,12 @@ class Launcher(node.Node):
 	def __init__(self, id, session=None, tcpport=None, xmlrpcport=None, **kwargs):
 		self.nodes = []
 
-		self.uicontainer = uiserver.Server(str(id[-1]), xmlrpcport)
 
 		self.datahandler = node.DataHandler(self)
 		self.server = datatransport.Server(self.datahandler, tcpport)
+		self.uicontainer = uiserver.Server(str(id[-1]), xmlrpcport,
+																		dbdatakeeper=self.datahandler.dbdatakeeper,
+																		session=session)
 
 		node.Node.__init__(self, id, session, **kwargs)
 
@@ -43,6 +45,7 @@ class Launcher(node.Node):
 
 	def setManager(self, location):
 		self.exitNodes()
+		self.uicontainer.sesssion = self.session
 		node.Node.setManager(self, location)
 		self.publishNodeClasses()
 		self.outputEvent(event.NodeInitializedEvent(id=self.ID()))

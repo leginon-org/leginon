@@ -6,6 +6,7 @@ import socket
 import time
 import uidata
 import node
+import launcher
 
 class ManagerSetup(object):
 	def __init__(self, manager):
@@ -41,6 +42,9 @@ class ManagerSetup(object):
 			self.container.parent.deleteObject(self.container.name)
 
 		self.manager.defineUserInterface()
+		launcher.Launcher((socket.gethostname().lower(),), session=session,
+              			    nodelocations={'manager': self.manager.location()})
+
 
 	def uiCreateSession(self):
 		self.createmethod.disable()

@@ -11,6 +11,7 @@ import threading
 import uidata
 import extendedxmlrpclib
 import Queue
+import data
 
 # preferences
 import cPickle
@@ -19,6 +20,9 @@ import os
 
 # range defined by IANA as dynamic/private
 portrange = xrange(49152, 65536)
+
+class NoValueError(Exception):
+	pass
 
 class XMLRPCServer(object):
 	"""
@@ -62,10 +66,13 @@ class XMLRPCServer(object):
 
 class Server(XMLRPCServer, uidata.Container):
 	typelist = uidata.Container.typelist + ('server',)
-	def __init__(self, name='UI', port=None, tries=5):
+	def __init__(self, name='UI', port=None, tries=5,
+								dbdatakeeper=None, session=None):
 		self.xmlrpcclients = []
 		self.localclients = []
 		self.tries = tries
+		self.dbdatakeeper = dbdatakeeper
+		self.session = session
 
 		self.pref_lock = threading.Lock()
 
@@ -103,7 +110,7 @@ class Server(XMLRPCServer, uidata.Container):
 
 		# record new value in a pickle
 		if uidataobject.persist:
-			self.updatePickle(namelist, value)
+			self.setDatabaseFromObject(uidataobject)
 
 		return ''
 
@@ -197,11 +204,9 @@ class Server(XMLRPCServer, uidata.Container):
 		if removeclientslock is not None:
 			removeclientslock.release()
 
-	def addObject(self, uiobject, block=True, thread=False):
-		uidata.Container.addObject(self, uiobject, block, thread)
-
-		# updates the objects with stored preferences
-		self.usePreferences()
+#	def addObject(self, uiobject, block=True, thread=False):
+#		uidata.Container.addObject(self, uiobject, block, thread)
+#		self.usePreferences()
 
 	def propertiesFromObject(self, uiobject, block, thread):
 		properties = {}
@@ -224,6 +229,8 @@ class Server(XMLRPCServer, uidata.Container):
 		return properties
 
 	def _addObject(self, uiobject, client=None, block=True, thread=True):
+		if client is None:
+			self.setObjectFromDatabase(uiobject)
 		properties = self.propertiesFromObject(uiobject, block, thread)
 		self.localExecute('addFromServer', properties, client, block, thread)
 		self.XMLRPCExecute('add', properties, client, block, thread)
@@ -265,30 +272,107 @@ class Server(XMLRPCServer, uidata.Container):
 
 	# file based preference methods
 
+	def setObjectFromDatabase(self, uiobject):
+		if self.dbdatakeeper is None or self.session is None:
+			return
+		if isinstance(uiobject, uidata.Container):
+			for childobject in uiobject.uiobjectlist:
+				self.setObjectFromDatabase(childobject)
+		if not isinstance(uiobject, uidata.Data) or not uiobject.persist:
+			return
+		namelist = uiobject._getNameList()
+		try:
+			session = data.SessionData()
+			session['user'] = self.session['user']
+			initializer = {'session': session,
+											'object': namelist}
+			odata = data.UIData(initializer=initializer)
+			results = self.dbdatakeeper.query(odata, results=1)
+			if results:
+				try:
+					pickledvalue = results[0]['pickled value']
+					try:
+						value = cPickle.loads(pickledvalue)
+					except:
+						print 'Error unpickling UI value'
+						return
+					uiobject.set(value, server=False)
+				except KeyError:
+					return
+		except:
+			print 'Error setting preference'
+
+	def setDatabaseFromObject(self, uiobject):
+		if self.dbdatakeeper is None or self.session is None:
+			print 'Cannot save UI values to database'
+			return
+		if not isinstance(uiobject, uidata.Data):
+			return
+		namelist = uiobject._getNameList()
+		value = uiobject.get()
+		pickledvalue = cPickle.dumps(value, True)
+		initializer = {'session': self.session,
+										'object': namelist,
+										'pickled value': pickledvalue}
+		odata = data.UIData(initializer=initializer)
+		self.dbdatakeeper.insert(odata)
+
+	def _setObjectFromFile(self, uiobject, d):
+		if isinstance(uiobject, uidata.Container):
+			for childobject in uiobject.uiobjectlist:
+				self._setObjectFromFile(childobject, d)
+		if not isinstance(uiobject, uidata.Data) or not uiobject.persist:
+			return
+		namelist = uiobject._getNameList()
+		if tuple(namelist) in d:
+			try:
+				uiobject.set(d[tuple(namelist)], server=False)
+			except:
+				print 'Error setting preference'
+
+	def setObjectFromFile(self, uiobject):
+		try:
+			f = file(leginonconfig.PREFS_FILE, 'rb')
+		except IOError, e:
+			print 'Error setting preferences', e.strerror
+			return
+		try:
+			d = cPickle.load(f)
+		except Exception, e:
+			print 'Invalid file for preferences'
+			f.close()
+			return
+		self._setObjectFromFile(uiobject, d)
+		f.close()
+	
+	def setFileFromObject(self, uiobject):
+		if not isinstance(uiobject, uidata.Data):
+			return
+		try:
+			f = file(leginonconfig.PREFS_FILE, 'wb')
+		except IOError, e:
+			print 'Error saving preferences', e.strerror
+			return
+		try:
+			d = cPickle.load(f)
+		except:
+			d = {}
+		namelist = uiobject._getNameList()
+		d[tuple(namelist)]= uiobject.get()
+		cPickle.dump(d, f, True)
+		f.close()
+
 	def setFromPickle(self, namelist, value):
-		'''
-		same as setFromClient, except this does not updatePickle
-		'''
 		uidataobject = self._getObjectFromList(namelist)
 		if not isinstance(uidataobject, uidata.Data):
 			raise TypeError('name list does not resolve to Data instance')
-		# except from this client?
 		uidataobject._set(value)
 
-	### Where should this be called?
-	### and is this just a really bad idea for something like
-	### EM that does a lot of stuff in a callback when a value is set
-	### I guess things like that are not "preferences", but they are
-	### all treated the same here.  Anything data value in the user
-	### interface is a preference
 	def usePreferences(self):
-		'''
-		this "replays" the recorded user preferences
-		'''
 		d = self.getPickle()
 		if not d:
 			return
-		for key,value in d.items():
+		for key, value in d.items():
 			namelist = list(key)
 			try:
 				self.setFromPickle(namelist, value)
@@ -304,7 +388,6 @@ class Server(XMLRPCServer, uidata.Container):
 		return value
 
 	def _getPickle(self, namelist=None):
-		### maybe want a lock on this
 		fname = '%s.pref' % (self.name,)
 		fname = os.path.join(leginonconfig.PREFS_PATH, fname)
 		try:

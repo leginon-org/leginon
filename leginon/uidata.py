@@ -152,7 +152,7 @@ class Data(Object):
 			raise PermissionsError('cannot set, permission denied')
 		self.lock.release()
 
-	def set(self, value, callback=True, block=True, thread=False):
+	def set(self, value, callback=True, block=True, thread=False, server=True):
 		self.lock.acquire()
 		if callback and self.callback is not None:
 			try:
@@ -164,7 +164,7 @@ class Data(Object):
 		else:
 			self.lock.release()
 			raise TypeError('invalid data value for type')
-		if self.server is not None:
+		if self.server is not None and server:
 			self.server._setObject(self, None, block, thread)
 		self.lock.release()
 
