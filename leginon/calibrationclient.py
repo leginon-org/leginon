@@ -16,6 +16,7 @@ import time
 import sys
 import threading
 import gonmodel
+import imagefun
 
 class Drifting(Exception):
 	pass
@@ -125,7 +126,7 @@ class CalibrationClient(object):
 			shiftrows = shift[0]
 			shiftcols = shift[1]
 			d = data.DriftData(id=self.node.ID(), rows=shiftrows, cols=shiftcols)
-			self.node.publish(d, database=True)
+			self.node.publish(d, database=True, dbforce=True)
 
 			drift = abs(shift[0] + 1j * shift[1])
 			seconds = t1 - t0
@@ -198,7 +199,7 @@ class DoseCalibrationClient(CalibrationClient):
 		newdata['session'] = self.node.session
 		newdata['high tension'] = ht
 		newdata['sensitivity'] = sensitivity
-		self.node.publish(newdata, database=True, force=True)
+		self.node.publish(newdata, database=True, dbforce=True)
 
 	def researchSensitivity(self, ht, instrument):
 		qdata = data.CameraSensitivityCalibrationData()
@@ -220,28 +221,29 @@ class DoseCalibrationClient(CalibrationClient):
 		sens = sdata['sensitivity']
 		return {'pixel size':psize, 'sensitivity':sens}
 
-	def dose_from_screen(self, screen_mag, beam_current, beam_diameter):
-		## electrons per screen area per second
-		beam_area = math.pi * (beam_diameter/2.0)**2
-		screen_electrons = beam_current * self.coulomb / beam_area
-		## electrons per specimen area per second (dose rate)
-		dose_rate = screen_electrons * (screen_mag**2)
-		return dose_rate
-
 	def sensitivity(self, dose_rate, camera_mag, camera_pixel_size, exposure_time, counts):
 		camera_dose = float(dose_rate) / float((camera_mag**2))
+		print 'camera dose', camera_dose
 		dose_per_pixel = camera_dose * (camera_pixel_size**2)
 		electrons_per_pixel = dose_per_pixel * exposure_time
+		print 'el per pix', electrons_per_pixel
 		counts_per_electron = float(counts) / electrons_per_pixel
 		return counts_per_electron
 
 	def sensitivity_from_imagedata(self, imagedata, dose_rate):
 		inst = imagedata['session']['instrument']
 		mag = imagedata['scope']['magnification']
+		print 'mag', mag
 		specimen_pixel_size = self.psizecal.retrievePixelSize(mag, instrument=inst)
+		print 'spec pix size', specimen_pixel_size
 		camera_pixel_size = inst['camera pixel size']
+		print 'cam pix size', camera_pixel_size
 		camera_mag = camera_pixel_size / specimen_pixel_size
-		return self.sensitivity(dose_rate, camera_mag, camera_pixelsize, exposure_time, counts)
+		print 'camera_mag', camera_mag
+		exposure_time = imagedata['camera']['exposure time'] / 1000.0
+		binning = imagedata['camera']['binning']['x']
+		mean_counts = imagefun.mean(imagedata['image']) / (binning**2)
+		return self.sensitivity(dose_rate, camera_mag, camera_pixel_size, exposure_time, mean_counts)
 
 	def dose_from_imagedata(self, imagedata):
 		'''
@@ -364,7 +366,7 @@ class MatrixCalibrationClient(CalibrationClient):
 		newmatrix = Numeric.array(matrix, Numeric.Float64)
 		caldata = data.MatrixCalibrationData(id=self.node.ID(), magnification=mag, type=type, matrix=matrix)
 		caldata['high tension'] = ht
-		self.node.publish(caldata, database=True)
+		self.node.publish(caldata, database=True, dbforce=True)
 
 
 class BeamTiltCalibrationClient(MatrixCalibrationClient):
@@ -734,7 +736,7 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		caldata['axis'] = axis
 		caldata['angle'] = angle
 		caldata['mean'] = mean
-		self.node.publish(caldata, database=True)
+		self.node.publish(caldata, database=True, dbforce=True)
 
 	def retrieveMagCalibration(self, ht, mag, axis):
 		tmpsession = data.SessionData()
@@ -764,7 +766,7 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		caldata['a'] = a
 		caldata['b'] = b
 
-		self.node.publish(caldata, database=True)
+		self.node.publish(caldata, database=True, dbforce=True)
 
 	def retrieveModelCalibration(self, axis):
 		tmpsession = data.SessionData()
