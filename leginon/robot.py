@@ -147,8 +147,9 @@ if sys.platform == 'win32':
 
 			while not validateGridNumber(gridnumber):
 				try:
+					print '1. gridnumnber =', gridnumber
 					gridnumber = self.gridqueue.get()
-					print gridnumber
+					print '2. gridnumnber =', gridnumber
 				except Queue.Empty:
 					print 'foo'
 					self.insertmethod.enable()
