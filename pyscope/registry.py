@@ -29,6 +29,9 @@ def getClass(name):
 	else:
 		return None
 
+def getClasses():
+	return self.tems.items() + self.ccdcameras.items()
+
 import tecnai
 register(tecnai)
 
