@@ -357,14 +357,17 @@ class Manager(node.Node):
 		if launcher not in dependenciescopy:
 			dependenciescopy.append(launcher)
 
-		self.initializednodescondition.acquire()
-		while not self.sublist(dependenciescopy, self.initializednodes):
-			self.initializednodescondition.wait()
-		self.initializednodescondition.release()
+		self.waitNodes(dependenciescopy)
 
 		ev = event.LaunchEvent(self.ID(), newproc=newproc,
 														targetclass=target, args=args)
 		self.outputEvent(ev, 0, launcher)
+
+	def waitNodes(self, nodes):
+		self.initializednodescondition.acquire()
+		while not self.sublist(nodes, self.initializednodes):
+			self.initializednodescondition.wait()
+		self.initializednodescondition.release()
 
 	# probably an easier way
 	def sublist(self, list1, list2):

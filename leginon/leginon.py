@@ -261,7 +261,7 @@ class Leginon(Tkinter.Frame):
 		self.manager.app.load(applicationfilename)
 
 		self.locallauncherid = self.localLauncherID()
-		replaceargs = {}
+		replaceargs = []
 		for args in self.manager.app.launchspec:
 			if args[2] == 'EM' and self.remotelauncher is not None:
 				newlauncherid = self.remotelauncher
@@ -269,11 +269,11 @@ class Leginon(Tkinter.Frame):
 				newlauncherid = self.locallauncherid
 
 			if args[0] != newlauncherid: 
-				replaceargs[args] = (newlauncherid,) + args[1:]
+				replaceargs.append((args, (newlauncherid,) + args[1:]))
 
-		for args in replaceargs:
-			self.manager.app.delLaunchSpec(args)
-			self.manager.app.addLaunchSpec(replaceargs[args])
+		for i in replaceargs:
+			self.manager.app.delLaunchSpec(i[0])
+			self.manager.app.addLaunchSpec(i[1])
 
 		self.manager.app.launch()
 
@@ -427,16 +427,24 @@ class WidgetWrapper(object):
 		self.windowmenu = windowmenu
 		self.name = name
 
-	def addNodeInfo(self, key, name, classname):
+	def addNodeInfo(self, key, name, classname, dependencies=[]):
 		self.nodeinfo[key] = {}
 		self.nodeinfo[key]['name'] = name
 		self.nodeinfo[key]['class name'] = classname
+		self.nodeinfo[key]['dependencies'] = dependencies
 
 	def initialize(self):
+		ids = []
 		for node in self.nodeinfo:
 			self.nodeinfo[node]['ID'] = self.manager.launchNode(self.launcherid, 0,
 																						self.nodeinfo[node]['class name'],
-																						self.nodeinfo[node]['name'])
+																						self.nodeinfo[node]['name'],
+																						(),
+																						self.nodeinfo[node]['dependencies'])
+			ids.append(self.nodeinfo[node]['ID'])
+
+		if ids:
+			self.manager.waitNodes(ids)
 
 		self.initializeBindings()
 
