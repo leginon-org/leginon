@@ -476,11 +476,7 @@ class ImageData(Data):
 		if self['image'] is not None:
 			## create a directory to store images
 			filename = self.filename()
-			try:
-				Mrc.numeric_to_mrc(self['image'], filename)
-			except:
-				raise
-				self.printerror('error converting image to file')
+			Mrc.numeric_to_mrc(self['image'], filename)
 			self['filename'] = filename
 
 	def load(self, filename=None):
@@ -492,10 +488,7 @@ class ImageData(Data):
 		if self['filename'] is None:
 			raise RuntimeError('no filename specified for ImageData load')
 
-		try:
-			self['image'] = Mrc.mrc_to_numeric(self['filename'])
-		except:
-			self.printerror('error converting image from file')
+		self['image'] = Mrc.mrc_to_numeric(self['filename'])
 
 
 class CorrelationImageData(ImageData):
@@ -669,6 +662,20 @@ class ImageTargetListData(Data):
 	def typemap(cls):
 		t = Data.typemap()
 		t += [ ('targets', list), ]
+		return t
+	typemap = classmethod(typemap)
+
+class EMTargetData(Data):
+	'''
+	This is an ImageTargetData with deltas converted to new scope
+	'''
+	def typemap(cls):
+		t = Data.typemap()
+		t += [
+			# pixel delta to target from state in row, column
+		  ('scope', ScopeEMData),
+		  ('preset', PresetData)
+		]
 		return t
 	typemap = classmethod(typemap)
 
