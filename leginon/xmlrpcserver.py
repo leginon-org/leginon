@@ -24,14 +24,14 @@ class xmlrpcserver(leginonobject.LeginonObject):
 		hostname = socket.gethostname()
 		if self.port is not None:
 			# this exception will fall through if __init__ fails
-			self.server = SimpleXMLRPCServer((hostname,self.port))
+			self.server = SimpleXMLRPCServer((hostname,self.port), logRequests=False)
 			self._start_serving()
 			return
 
 		## find a port in range defined by IANA as dynamic/private
 		for self.port in portrange:
 			try:
-				self.server = SimpleXMLRPCServer((hostname,self.port))
+				self.server = SimpleXMLRPCServer((hostname,self.port), logRequests=False)
 				break
 			except Exception, var:
 				if (var[0] == 98 or var[0] == 10048 or var[0] == 112):
