@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import data
 import targetfinder
 import holefinderback
 import uidata
@@ -226,7 +227,7 @@ class HoleFinder(targetfinder.TargetFinder):
 								'delta column': column - self.currentimage.shape[1]/2}
 			imageinfo = self.imageInfo()
 			target.update(imageinfo)
-			targetdata = AcquisitionImageTargetData(id=self.ID())
+			targetdata = data.AcquisitionImageTargetData(id=self.ID())
 			targetdata.friendly_update(target)
 			self.targetlist.append(targetdata)
 
