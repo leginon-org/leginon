@@ -252,6 +252,24 @@ class ConnectionManager(Line):
 			self.lines[key]['line'] = LabeledLine(self.canvas, position[0],
 																						position[1], destination, text)
 
+	def deleteConnection(self, origin, destination):
+		key = (origin, destination)
+		if key in self.lines:
+			# needs to LabeledLine to track multiple connections
+			self.lines[key]['line'].delete()
+			del self.lines[key]
+			inversekey = (destination, origin)
+			if inversekey in self.lines:
+				position = self.offsetPosition(destination, origin)
+				self.lines[inversekey]['offset'] = False
+				self.lines[inversekey]['line'].move(position[0], position[1])
+
+	def deleteConnections(self, widget):
+		linekeys = self.lines.keys()
+		for key in linekeys:
+			if key[0] == widget or key[1] == widget:
+				self.deleteConnection(key[0], key[1])
+
 	def refreshConnections(self, widget):
 		for key in self.lines:
 			if key[0] == widget or key[1] == widget:
@@ -280,17 +298,52 @@ class ConnectionManager(Line):
 			self.activeconnection = None
 
 class NodeLabel(object):
-	def __init__(self, canvas, itext, editor, position = (0, 0)):
+	def __init__(self, canvas, args, editor, position = (0, 0)):
 		self.canvas = canvas
 		self.editor = editor
-		self.label = Tkinter.Label(self.canvas, text=itext, relief=Tkinter.RAISED,
-												justify=Tkinter.LEFT, bd=1, padx=5, pady=3, bg='white')
-		self.label.bind('<Button-3>', self.editor.connectionmanager.abortConnection)
+		self.args = args
+		self.labeltextvariable = Tkinter.StringVar()
+		self.labeltextvariable.set(self.argsLabel(self.args))
+		self.label = Tkinter.Label(self.canvas, textvariable=self.labeltextvariable,
+																relief=Tkinter.RAISED, justify=Tkinter.LEFT,
+																bd=1, padx=5, pady=3, bg='white')
 		self.label.bind('<Motion>', self.moveConnection)
 		self.label.bind('<B1-Motion>', self.drag)
 		self.label.bind('<Button-1>', self.startDrag)
 		self.label.bind('<Double-Button-1>', self.handleConnection)
 		self.label.place(x = position[0], y = position[1], anchor=Tkinter.CENTER)
+
+		self.menu = Tkinter.Menu(self.label, tearoff=0)
+		self.menu.add_command(label='Edit', command=self.editNode)
+		self.menu.add_command(label='Delete', command=self.deleteNode)
+		self.label.bind('<Button-3>', self.rightClick)
+
+	def argsLabel(self, args):
+		return "Name: %s\nClass: %s\nLauncher: %s\nProcess: %s\nArgumentss: %s" \
+																% (args[3], args[2], args[0], args[1], args[4])
+
+	def rightClick(self, ievent):
+		if self.editor.connectionmanager.activeconnection is None:
+			self.popup(ievent)
+		else:
+			self.editor.connectionmanager.abortConnection()
+
+	def popup(self, ievent):
+		self.newnodeposition = (ievent.x, ievent.y)
+		self.menu.post(ievent.x_root, ievent.y_root)
+
+	def editNode(self):
+		nodedialog = NodeDialog(self.editor, 'Edit Node', self.args)
+		if nodedialog.result is not None:
+			self.editor.app.delLaunchSpec(self.args)
+			self.args = nodedialog.result
+			self.editor.app.addLaunchSpec(nodedialog.result)
+			self.labeltextvariable.set(self.argsLabel(self.args))
+
+	def deleteNode(self):
+		self.editor.connectionmanager.deleteConnections(self)
+		self.delete()
+		self.editor.app.delLaunchSpec(self.args)
 
 	def getBox(self):
 		height = self.label.winfo_reqheight()
@@ -327,6 +380,9 @@ class NodeLabel(object):
 		else:
 			self.editor.connectionmanager.finishConnection(self)
 
+	def delete(self):
+		self.label.place_forget()
+
 class Editor(Tkinter.Frame):
 	def __init__(self, parent, **kwargs):
 		Tkinter.Frame.__init__(self, parent, **kwargs)
@@ -334,37 +390,16 @@ class Editor(Tkinter.Frame):
 		self.nodes = []
 		self.canvas = Tkinter.Canvas(self, height=600, width=800, bg='white')
 		self.connectionmanager = ConnectionManager(self.canvas)
+		self.canvas.bind('<Button-3>', self.connectionmanager.abortConnection)
 		self.canvas.bind('<Motion>', self.moveConnection)
 		self.canvas.pack(fill=Tkinter.BOTH, expand=1)
-
-		self.newnodeposition = (0, 0)
-		self.menu = Tkinter.Menu(parent, tearoff=0)
-		self.menu.add_command(label='New Node', command=self.uiAddNode)
-		self.menu.add_command(label='Circle', command=self.circle)
-		self.canvas.bind('<Button-3>', self.rightClick)
-
-	def rightClick(self, ievent):
-		if self.connectionmanager.activeconnection is None:
-			self.popup(ievent)
-		else:
-			self.connectionmanager.abortConnection()
-		
-	def uiAddNode(self):
-		nodedialog = NodeDialog(self)
-		print nodedialog.result
-		self.addNode('<None>')
-		self.newnodeposition = (0, 0)
-
-	def popup(self, ievent):
-		self.newnodeposition = (ievent.x, ievent.y)
-		self.menu.post(ievent.x_root, ievent.y_root)
 
 	def moveConnection(self, ievent):
 		if self.connectionmanager.activeconnection is not None:
 			self.connectionmanager.setActiveConnectionPositionRaw((ievent.x,ievent.y))
 
-	def addNode(self, text):
-		node = NodeLabel(self.canvas, text, self, self.newnodeposition)
+	def addNode(self, args):
+		node = NodeLabel(self.canvas, args, self, self.newnodeposition)
 		self.nodes.append(node)
 		return node
 
@@ -381,6 +416,29 @@ class ApplicationEditor(Editor):
 		Editor.__init__(self, parent, **kwargs)
 		self.mapping = {}
 
+		self.newnodeposition = (0, 0)
+		self.menu = Tkinter.Menu(parent, tearoff=0)
+		self.menu.add_command(label='New Node', command=self.newNode)
+		self.menu.add_command(label='Circle', command=self.circle)
+		self.canvas.bind('<Button-3>', self.rightClick)
+
+	def rightClick(self, ievent):
+		if self.connectionmanager.activeconnection is None:
+			self.popup(ievent)
+		else:
+			self.connectionmanager.abortConnection()
+		
+	def newNode(self):
+		nodedialog = NodeDialog(self, 'New Node')
+		if nodedialog.result is not None:
+			self.app.addLaunchSpec(nodedialog.result)
+			self.displayNode(nodedialog.result)
+		self.newnodeposition = (0, 0)
+
+	def popup(self, ievent):
+		self.newnodeposition = (ievent.x, ievent.y)
+		self.menu.post(ievent.x_root, ievent.y_root)
+
 	def load(self, filename):
 		self.app = application.Application(('AE Application',), None)
 		self.app.load(filename)
@@ -391,11 +449,7 @@ class ApplicationEditor(Editor):
 		self.circle()
 
 	def displayNode(self, args):
-		print args
-		labelstring = \
-					"Name: %s\nClass: %s\nLauncher: %s\nProcess: %s\nArgumentss: %s" \
-														% (args[3], args[2], args[0], args[1], args[4])
-		self.mapping[('manager', args[3])] = Editor.addNode(self, labelstring)
+		self.mapping[('manager', args[3])] = Editor.addNode(self, args)
 
 	def displayConnection(self, binding):
 		self.connectionmanager.addConnection(self.mapping[binding[1]],
@@ -403,6 +457,10 @@ class ApplicationEditor(Editor):
 																					str(binding[0]))
 
 class NodeDialog(tkSimpleDialog.Dialog):
+	def __init__(self, parent, title, args=None):
+		self.args = args
+		tkSimpleDialog.Dialog.__init__(self, parent, title)
+
 	def body(self, master):
 		Tkinter.Label(master, text='Name:').grid(row=0)
 		Tkinter.Label(master, text='Class:').grid(row=1)
@@ -431,8 +489,23 @@ class NodeDialog(tkSimpleDialog.Dialog):
 		self.processcheckbutton.grid(row=3, column=1)
 		self.argumentsentry.grid(row=4, column=1)
 
+		if self.args is not None:
+			self.nameentry.delete(0, Tkinter.END)
+			self.nameentry.insert(Tkinter.END, self.args[3])
+
+			self.classlistbox.select_clear(0, Tkinter.END)
+			self.classlistbox.select_set(self.nodeclasses.index(self.args[2]))
+
+			self.launcherentry.delete(0, Tkinter.END)
+			self.launcherentry.insert(Tkinter.END, self.args[0])
+
+			self.processvariable.set(self.args[1])
+
+			self.argumentsentry.delete(0, Tkinter.END)
+			self.argumentsentry.insert(Tkinter.END, str(self.args[4]))
+		
 	def apply(self):
-		name = self.launcherentry.get()
+		name = self.nameentry.get()
 		selection = self.classlistbox.curselection()
 		if len(selection) == 0:
 			selection = ('0',)
