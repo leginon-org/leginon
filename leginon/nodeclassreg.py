@@ -93,6 +93,7 @@ registerNodeClass('focuser', 'Focuser', 'Pipeline')
 registerNodeClass('targetfinder', 'ClickTargetFinder', 'Pipeline')
 registerNodeClass('holefinder', 'HoleFinder', 'Pipeline')
 registerNodeClass('rasterfinder', 'RasterFinder', 'Pipeline')
+registerNodeClass('matlabtargetfinder', 'MatlabTargetFinder', 'Pipeline')
 registerNodeClass('fftmaker', 'FFTMaker', 'Pipeline')
 
 # need new interface

@@ -1662,6 +1662,14 @@ class ClickTargetFinderSettingsData(TargetFinderSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class MatlabTargetFinderSettingsData(TargetFinderSettingsData):
+	def typemap(cls):
+		return TargetFinderSettingsData.typemap() + (
+			('module path', str),
+			('user check', bool),
+		)
+	typemap = classmethod(typemap)
+
 class LowPassFilterSettingsData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
