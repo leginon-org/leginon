@@ -40,8 +40,6 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		targetquery['camera'] = data.CameraEMData()
 		targetquery['preset'] = data.PresetData()
 		targets = self.research(datainstance=targetquery, fill=False)
-		if targets:
-			print 'found %s targets for image %s' % (len(targets), imagedata['id'])
 
 		## now filter out only the latest versions
 		# map target id to latest version
@@ -53,6 +51,9 @@ class TargetFinder(imagewatcher.ImageWatcher):
 				have[targetid] = target
 		havelist = have.values()
 		havelist.sort(self.compareTargetNumber)
+		if havelist:
+			print 'found %s targets for image %s' % (len(havelist), imagedata['id'])
+
 		return havelist
 
 	def compareTargetNumber(self, first, second):
