@@ -9,7 +9,7 @@ def factory(cameraclass):
 										"binning": {'x': 1, 'y': 1},
 										"exposure time" : 500,
 										"image data" : None,
-										"size": {'x': 2048, 'y': 2048}}
+										"camera size": self.camerasize}
 			if dict is not None:
 				self.update(dict)
 
