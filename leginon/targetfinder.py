@@ -70,12 +70,16 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		self.publishTargetList()
 
 	def publishTargetList(self):
+		index = 1
 		for target in self.targetlist:
 			## XXX this might not work for mosaic
 			## XXX need to publish a mosaic image so this will work
 			target['image'] = self.imagedata
+			target['index'] = index
+			index += 1
 			print 'TARGET publishing %s' % (target['id'],)
 			self.publish(target, database=True)
+
 		if self.targetlist:
 			targetlistdata = data.ImageTargetListData(id=self.ID(), targets=self.targetlist)
 
