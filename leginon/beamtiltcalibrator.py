@@ -133,6 +133,10 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			type = 'stig' + stigaxis
 			self.calclient.storeMatrix(mag, type, matrix)
 
+		## return to original stig
+		stigdict = {'stigmator':{'objective':currentstig}}
+		stigdata = data.ScopeEMData(id=('scope',), initializer=stigdict)
+		self.publishRemote(stigdata)
 		return ''
 
 	def measureDefocusStig(self, btilt):
@@ -177,8 +181,10 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		self.measuretiltvalue = uidata.Float('Measure Tilt', 0.01, 'rw')
 		self.resultvalue = uidata.Struct('Necessary Correction', {}, 'r')
 		measuremethod = uidata.Method('Measure', self.uiMeasureDefocusStig)
+		correctdefocusmethod = uidata.Method('Correct Defocus', self.uiCorrectDefocus)
+		correctstigmethod = uidata.Method('Correct Stigmator', self.uiCorrectStigmator)
 		measurecontainer = uidata.Container('Measure')
-		measurecontainer.addObjects((self.measuretiltvalue, self.resultvalue, measuremethod))
+		measurecontainer.addObjects((self.measuretiltvalue, self.resultvalue, measuremethod, correctdefocusmethod, correctstigmethod))
 
 		container = uidata.LargeContainer('Beam Tilt Calibrator')
 		container.addObjects((defocuscontainer, stigcontainer, measurecontainer))
@@ -197,4 +203,35 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		result = self.measureDefocusStig(self.measuretiltvalue.get())
 		self.resultvalue.set(result)
 
+	def uiCorrectDefocus(self):
+		delta = self.resultvalue.get()
+		if not delta:
+			print 'no result, you must measure first'
+			return
+		current = self.getCurrentValues()	
 
+		newdefocus = current['defocus'] + delta['defocus']
+		newdata = data.ScopeEMData(id=('scope',), defocus=newdefocus)
+		self.publishRemote(newdata)
+
+	def uiCorrectStigmator(self):
+		delta = self.resultvalue.get()
+		if not delta:
+			print 'no result, you must measure first'
+			return
+		current = self.getCurrentValues()	
+
+		newstigx = current['stigx'] + delta['stigx']
+		newstigy = current['stigy'] + delta['stigy']
+		stigdict = {'stigmator': {'objective': {'x':newstigx,'y':newstigy}}}
+		newdata = data.ScopeEMData(id=('scope',), initializer=stigdict)
+		self.publishRemote(newdata)
+
+	def getCurrentValues(self):
+		defocusdata = self.researchByDataID(('defocus',))
+		defocus = defocusdata['defocus']
+		stigdata = self.researchByDataID(('stigmator',))
+		stig = stigdata['stigmator']['objective']
+		stigx = stig['x']
+		stigy = stig['y']
+		return {'defocus':defocus, 'stigx':stigx, 'stigy':stigy}
