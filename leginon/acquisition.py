@@ -42,8 +42,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 			tevent.wait()
 
 		if targetdata is None:
-			newtargetemdata = None
+			emtarget = None
 		else:
+			#### for debugging
 			print 'TARGETDATA'
 			print '   row,col', targetdata['delta row'], targetdata['delta column']
 			print '   scope image shift', targetdata['scope']['image shift']
@@ -52,62 +53,31 @@ class Acquisition(targetwatcher.TargetWatcher):
 			else:
 				print '   preset image shift, no preset in target'
 
+			#### this creates ScopeEMData from the ImageTargetData
 			oldtargetemdata = self.targetToEMData(targetdata)
 			oldpreset = targetdata['preset']
-
-			if oldpreset is None:
-				# I don't know if this works, but if there is no preset, don't remove
-				newtargetemdata = oldtargetemdata
-			else:
-				print 'OLDPRESET'
-				print '   magnification', oldpreset['magnification']
-				print '   image shift', oldpreset['image shift']
-				newtargetemdata = self.removePreset(oldtargetemdata, oldpreset)
-
-		if newtargetemdata is not None:
-			print 'type', type(newtargetemdata)
-			print 'NEWTARGETEMDATA'
-			print '   magnification', newtargetemdata['magnification']
-			print '   image shift', newtargetemdata['image shift']
+			#### now make EMTargetData to hold all this
+			emtarget = data.EMTargetData(scope=oldtargetemdata,preset=oldpreset)
 
 		### do each preset for this acquisition
 		try:
 			presetnames = eval(self.uipresetnames.get())
 		except:
-			print 'NO PRESETS SPECIFIED'
+			self.printException()
 			return
+
 		if not presetnames:
 			print 'NO PRESETS SPECIFIED'
-		for presetname in presetnames:
-			self.acquireTargetAtPreset(presetname, newtargetemdata, trial=False)
 
-	def acquireTargetAtPreset(self, presetname, targetemdata=None, trial=False):
-			presetlist = self.presetsclient.retrievePresets(presetname)
-			presetdata = presetlist[0]
-			### simulated target is easy, real target requires
-			### merge with preset
-			print 'PRESETDATA'
-			print '   magnification', presetdata['magnification']
-			print '   image shift', presetdata['image shift']
-			if targetemdata is None:
-				ptargetemdata = self.presetDataToEMData(presetdata)
-			else:
-				## make newtargetemdata with preset applied
-				ptargetemdata = self.addPreset(targetemdata, presetdata)
-				print 'PTARGETEMDATA'
-				print '   magnification', ptargetemdata['magnification']
-				print '   image shift', ptargetemdata['image shift']
-
-			## set the scope/camera state
-			self.outputEvent(event.LockEvent(self.ID()))
-			self.publishRemote(ptargetemdata)
-
-			print 'sleeping 2 sec'
-			time.sleep(2)
-
-#			print 'acquire'
-			self.acquire(presetdata, trial)
-			self.outputEvent(event.UnlockEvent(self.ID()))
+		for newpresetname in presetnames:
+			self.presetsclient.toScope(newpresetname, emtarget)
+			print 'getting current preset'
+			p = self.getCurrentPreset()
+			print 'current preset'
+			print p
+			print 'acquire()'
+			self.acquire(p)
+			print 'done'
 
 	def targetToEMData(self, targetdata):
 		'''
@@ -151,89 +121,34 @@ class Acquisition(targetwatcher.TargetWatcher):
 		emdata = data.ScopeEMData(('scope',), initializer=newscope)
 		return emdata
 
-	def removePreset(self, emdata, presetdata):
-		# subtract the effects of a preset on an EMData object
-		# Right now all this means is subtract image shift
-		# It is assumed that other parameters of the preset
-		# like magnification will be updated later.
-
-		# make new EMData object
-		newemdata = data.ScopeEMData(('scope',))
-		newemdata.update(emdata)
-
-		print 'REMOVING', presetdata['image shift']
-
-		# update its values from PresetData object
-		newemdata['image shift']['x'] -= presetdata['image shift']['x']
-		newemdata['image shift']['y'] -= presetdata['image shift']['y']
-		print 'TARGET AFTER', newemdata['image shift']
-		return newemdata
-
-	def addPreset(self, emdata, presetdata):
-		## applies a preset to an existing EMData object
-		## the result is to overwrite values of the EMData
-		## with new values from the preset.  However, image shift
-		## has the special behavior that it added not overwritten,
-		## because we don't want to interfere with the current
-		## target.
-
-		print 'ADD PRESET'
-
-		# make new EMData object
-		newemdata = data.ScopeEMData(('scope',))
-		newemdata.update(emdata)
-		print 'TARGET BEFORE', newemdata['image shift']
-
-		print 'ADDING', presetdata['image shift']
-		# image shift is added, other parameter just overwrite
-		ishift = newemdata['image shift']
-		ishift['x'] += presetdata['image shift']['x']
-		ishift['y'] += presetdata['image shift']['y']
-		## save a temp ishift because update() will overwrite it
-		tempishift = copy.deepcopy(ishift)
-
-		# overwrite values from preset into emdict
-		newemdata.update(presetdata)
-		newemdata['image shift'] = tempishift
-		print 'TARGET AFTER', newemdata['image shift']
-		return newemdata
-
-	def presetDataToEMData(self, presetdata):
-		#emdict = dict(presetdata)
-		emdata = data.ScopeEMData(('scope',))
-		emdata.update(presetdata)
-		return emdata
-
 	def acquire(self, presetdata, trial=False):
 		acqtype = self.uiacquiretype.getSelectedValue()[0]
-		if acqtype == 'raw':
-			imagedata = self.cam.acquireCameraImageData(None,0)
-		elif acqtype == 'corrected':
-			try:
-				imagedata = self.cam.acquireCameraImageData(None,1)
-			except:
-				print 'image not acquired'
-				imagedata = None
+
+		### corrected or not??
+		imagedata = self.cam.acquireCameraImageData(None,0)
 
 		if imagedata is None:
 			return
 
+		imarray = imagedata['image']
+
 		## attach preset to imagedata and create PresetImageData
 		## use same id as original imagedata
-		dataid = imagedata['id']
+		dataid = self.ID()
 
 		if trial:
-			trialimage = data.TrialImageData(dataid, initializer=imagedata, preset=presetdata)
+			trialimage = data.TrialImageData(id=dataid, initializer=imagedata, preset=presetdata)
 			print 'publishing trial image'
 			self.publish(trialimage, pubevent=True, database=False)
 		else:
-			pimagedata = data.AcquisitionImageData(dataid, initializer=imagedata, preset=presetdata)
-#			print 'publishing image'
+			pimagedata = data.AcquisitionImageData(id=dataid, initializer=imagedata, preset=presetdata)
 			self.publish(pimagedata, pubevent=True, database=True)
 			print 'PIMAGEDATA'
 			print '   scope image shift', pimagedata['scope']['image shift']
 			print '   preset image shift', pimagedata['preset']['image shift']
 		print 'image published'
+		print 'displaying image'
+		self.ui_image.set(imarray)
 
 
 	def handleImageClick(self, clickevent):
@@ -271,7 +186,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		time.sleep(2)
 
 		## acquire image
-		#self.acquireTargetAtPreset(self.testpresetname, trial=True)
 		self.acquire(presetdata=None, trial=True)
 		self.outputEvent(event.UnlockEvent(self.ID()))
 
@@ -282,15 +196,16 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.printerror('cannot determine preset name')
 			return
 		print 'Going to preset %s' % (presetname,)
-		presetlist = self.presetsclient.retrievePresets(presetname)
-		presetdata = presetlist[0]
-		self.presetsclient.toScope(presetdata)
-		presetsnames = self.presetsNames()
-		if presetsnames:
-			selected = [0]
-		else:
-			selected = []
-		self.uiselectpreset.set(presetsnames, selected)
+		self.presetsclient.toScope(presetname)
+		print 'done'
+
+		### why is this here?
+		#presetnames = self.presetsclient.presetNames()
+		#if presetnames:
+		#	selected = [0]
+		#else:
+		#	selected = []
+		#self.uiselectpreset.set(presetnames, selected)
 
 	def uiToScopeAcquire(self):
 		try:
@@ -299,24 +214,27 @@ class Acquisition(targetwatcher.TargetWatcher):
 		except IndexError:
 			self.printerror('cannot determine preset name')
 			return
-		else:
-			## remember this preset name for when a click event comes back
-			self.testpresetname = presetname
 
 		## acquire a trial image
-		self.acquireTargetAtPreset(presetname, trial=True)
-		presetsnames = self.presetsNames()
-		if presetsnames:
-			selected = [0]
-		else:
-			selected = []
-		self.uiselectpreset.set(presetsnames, selected)
+		self.presetsclient.toScope(presetname)
+		p = self.presetsclient.getCurrentPreset()
+		## trial image
+		self.acquire(p, trial=True)
+
+		### why is this here?
+		#presetsnames = self.presetsclient.presetNames()
+		#if presetsnames:
+		#	selected = [0]
+		#else:
+		#	selected = []
+		#self.uiselectpreset.set(presetsnames, selected)
 
 	def uiFromScope(self):
+		raise NotImplementedError('this is not up to date with new presetsclient')
 		presetname = self.uifromscopename.get()
 		presetdata = self.presetsclient.fromScope(presetname)
 		self.presetsclient.storePreset(presetdata)
-		presetsnames = self.presetsNames()
+		presetsnames = self.presetsclient.presetNames()
 		if presetsnames:
 			selected = [0]
 		else:
@@ -326,14 +244,14 @@ class Acquisition(targetwatcher.TargetWatcher):
 	def uiTrial(self):
 		self.processTargetData(targetdata=None)
 
-	def presetsNames(self):
-		presetsdata = self.presetsclient.retrievePresets()
-		presetsnames = []
-		for data in presetsdata:
-			if data['name'] not in presetsnames:
-				presetsnames.append(data['name'])
-		presetsnames.sort()
-		return presetsnames
+	def uiGetPresetNames(self):
+		presetlist = self.presetsclient.getPresets()
+		pnames = [p['name'] for p in presetlist]
+		if pnames:
+			sel = [0]
+		else:
+			sel = []
+		self.uiselectpreset.set(pnames, sel) 
 
 	def defineUserInterface(self):
 		targetwatcher.TargetWatcher.defineUserInterface(self)
@@ -349,24 +267,21 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.uipresetsnames = uidata.UIString('Presets', '[\'spread1100\']', 'rw')
 		self.uifromscopename = uidata.UIString('Preset Name', '', 'rw')
 		fromscopemethod = uidata.UIMethod('Create Preset', self.uiFromScope)
-		presetsnames = self.presetsNames()
-		if presetsnames:
-			selected = [0]
-		else:
-			selected = []
-		self.uiselectpreset = uidata.UISelectFromList('Select Preset',
-																									presetsnames, selected, 'r')
+
+		getpresets = uidata.UIMethod('Get Names', self.uiGetPresetNames)
+		self.uiselectpreset = uidata.UISelectFromList('Select Preset', [], [], 'r')
 		toscopemethod = uidata.UIMethod('Apply Preset', self.uiToScope)
-		toscopeandacquiremethod = uidata.UIMethod('Apply Preset and Acquire',
-																							self.uiToScopeAcquire)
+		toscopeandacquiremethod = uidata.UIMethod('Apply Preset and Acquire', self.uiToScopeAcquire)
 		presetscontainer = uidata.UIContainer('Presets')
-		presetscontainer.addUIObjects((self.uipresetsnames, self.uifromscopename,
-																		fromscopemethod, self.uiselectpreset,
+		presetscontainer.addUIObjects((self.uipresetsnames, self.uifromscopename, fromscopemethod, getpresets, self.uiselectpreset,
 																		toscopemethod, toscopeandacquiremethod))
 		trialmethod = uidata.UIMethod('Trial', self.uiTrial)
 
+		self.ui_image = uidata.UIImage('Image', None, 'rw')
+
+
 		container = uidata.UIMediumContainer('Acquisition')
-		container.addUIObjects((settingscontainer, presetscontainer, trialmethod))
+		container.addUIObjects((settingscontainer, presetscontainer, trialmethod, self.ui_image))
 
 		self.uiserver.addUIObject(container)
 
