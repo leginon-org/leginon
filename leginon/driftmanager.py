@@ -28,6 +28,29 @@ import gui.wx.DriftManager
 
 class DriftManager(watcher.Watcher):
 	panelclass = gui.wx.DriftManager.Panel
+	settingsclass = data.DriftManagerSettingsData
+	defaultsettings = {
+		'threshold': 2e-10,
+		'pause time': 2.5,
+		'camera settings':
+			data.CameraSettingsData(
+				initializer={
+					'dimension': {
+						'x': 1024,
+						'y': 1024,
+					},
+					'offset': {
+						'x': 0,
+						'y': 0,
+					},
+					'binning': {
+						'x': 1,
+						'y': 1,
+					},
+					'exposure time': 1000.0,
+				}
+			),
+	}
 	eventinputs = watcher.Watcher.eventinputs + [event.DriftDetectedEvent, event.NeedTargetShiftEvent, event.DriftWatchEvent] + EM.EMClient.eventinputs
 	eventoutputs = watcher.Watcher.eventoutputs + [event.DriftDoneEvent, event.ImageTargetShiftPublishEvent, event.ChangePresetEvent] + EM.EMClient.eventoutputs
 	def __init__(self, id, session, managerlocation, **kwargs):
@@ -51,10 +74,6 @@ class DriftManager(watcher.Watcher):
 
 		self.references = {}
 		self.abortevent = threading.Event()
-
-		self.threshold = None
-		self.wait = None
-		self.camconfig = None
 
 		self.start()
 
@@ -115,7 +134,7 @@ class DriftManager(watcher.Watcher):
 		self.references[label] = {'imageid': imageid, 'image': imagedata, 'shift': {}, 'emtarget': driftwatchevent['presettarget']['emtarget'], 'preset': driftwatchevent['presettarget']['preset']}
 
 	def uiMonitorDrift(self):
-		self.cam.setCameraDict(self.camconfig)
+		self.cam.setCameraDict(self.settings['camera settings'])
 		## calls monitorDrift in a new thread
 		t = threading.Thread(target=self.monitorDrift)
 		t.setDaemon(1)
@@ -180,10 +199,11 @@ class DriftManager(watcher.Watcher):
 		self.logger.info('Pixel size at %sx is %s' % (mag, pixsize))
 
 		## ensure that loop executes once
-		current_drift = self.threshold + 1.0
-		while current_drift > self.threshold:
+		threshold = self.settings['threshold']
+		current_drift = threshold + 1.0
+		while current_drift > threshold:
 			## wait for interval
-			time.sleep(self.wait)
+			time.sleep(self.settings['pause time'])
 
 			## acquire next image
 			imagedata = self.acquireImage()
@@ -239,7 +259,7 @@ class DriftManager(watcher.Watcher):
 
 	def measureDrift(self):
 		## configure camera
-		self.cam.setCameraDict(self.camconfig)
+		self.cam.setCameraDict(self.settings['camera settings'])
 		mag = self.getMag()
 		pixsize = self.pixsizeclient.retrievePixelSize(mag)
 		self.logger.info('Pixel size %s' % (pixsize,))
@@ -251,7 +271,7 @@ class DriftManager(watcher.Watcher):
 		self.correlator.insertImage(numdata)
 
 		# pause
-		time.sleep(self.wait)
+		time.sleep(self.settings['pause time'])
 		
 		## acquire next image
 		imagedata = self.acquireImage()

@@ -92,12 +92,8 @@ class UserPage(WizardPage):
 		parent.sessionselectpage.setSessionNames(self.names)
 
 		# update database values
-		gui.wx.Data.setWindowFromDB(parent.sessiontypepage.sessiontyperadiobox)
-		# set session select page values
-		gui.wx.Data.setWindowFromDB(parent.sessionselectpage.sessionchoice)
-		gui.wx.Data.setWindowFromDB(parent.sessionselectpage.limitcheckbox)
-		gui.wx.Data.setWindowFromDB(parent.sessionselectpage.limitintctrl)
-		gui.wx.Data.setWindowFromDB(parent.sessionselectpage.connectcheckbox)
+		sd = self.GetParent().setup.getSettings(userdata)
+		self.GetParent().setSettings(sd)
 		# oops...
 		parent.sessionselectpage.setSessionNames(self.names)
 
@@ -128,7 +124,6 @@ class SessionTypePage(WizardPage):
 																						majorDimension=1,
 																						style=wx.RA_SPECIFY_COLS,
 																						name='rbSessionType')
-		gui.wx.Data.bindWindowToDB(self.sessiontyperadiobox)
 		sizer.Add(self.sessiontyperadiobox, (1, 0), (1, 2), wx.ALIGN_CENTER)
 
 		sizer.Add(wx.StaticText(self, -1,
@@ -169,7 +164,6 @@ class SessionSelectPage(WizardPage):
 							(0, 0), (1, 2))
 
 		self.sessionchoice = wx.Choice(self, -1, name='cSession')
-		gui.wx.Data.bindWindowToDB(self.sessionchoice)
 		self.sizer.Add(self.sessionchoice, (1, 0), (1, 2), wx.ALIGN_CENTER)
 
 		self.sizer.AddGrowableCol(0)
@@ -177,7 +171,6 @@ class SessionSelectPage(WizardPage):
 
 		self.limitsizer = wx.GridBagSizer(0, 3)
 		self.limitcheckbox = wx.CheckBox(self, -1, '', name='cbLimit')
-		gui.wx.Data.bindWindowToDB(self.limitcheckbox)
 		self.Bind(wx.EVT_CHECKBOX, self.onLimitChange, self.limitcheckbox)
 		self.limitsizer.Add(self.limitcheckbox, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		label = wx.StaticText(self, -1, 'List only last')
@@ -187,7 +180,6 @@ class SessionSelectPage(WizardPage):
 																								min=1, max=99, limited=True,
 																								name='icLimit')
 		self.limitintctrl.Bind(wx.EVT_TEXT, self.onLimitChange, self.limitintctrl)
-		gui.wx.Data.bindWindowToDB(self.limitintctrl)
 		self.limitsizer.Add(self.limitintctrl, (0, 2), (1, 1), wx.ALIGN_CENTER)
 		label = wx.StaticText(self, -1, 'sessions')
 		self.limitsizer.Add(label, (0, 3), (1, 1), wx.ALIGN_CENTER)
@@ -213,7 +205,6 @@ class SessionSelectPage(WizardPage):
 
 		self.connectcheckbox = wx.CheckBox(self, -1, 'Connect to instrument',
 																				name='cbConnect')
-		gui.wx.Data.bindWindowToDB(self.connectcheckbox)
 		self.sizer.Add(self.connectcheckbox, (7, 0), (1, 2), wx.ALIGN_CENTER)
 
 		self.sizer.Add(wx.StaticText(self, -1,
@@ -546,7 +537,7 @@ class SessionCreatePage(WizardPage):
 
 class SetupWizard(wx.wizard.Wizard):
 	def __init__(self, parent, research, publish):
-		self.setup = Setup(research)
+		self.setup = Setup(research, publish)
 		self.publish = publish
 		self.session = None
 		image = wx.Image(icons.getPath('setup.png'))
@@ -573,12 +564,18 @@ class SetupWizard(wx.wizard.Wizard):
 
 		self.Bind(wx.wizard.EVT_WIZARD_PAGE_CHANGING, self.onPageChanging, self)
 		self.Bind(wx.wizard.EVT_WIZARD_PAGE_CHANGED, self.onPageChanged, self)
+		self.Bind(wx.wizard.EVT_WIZARD_FINISHED, self.onFinished)
 
 		self.FitToPage(self.userpage)
 		if self.userpage.skip:
 			self.RunWizard(self.userpage.GetNext())
 		else:
 			self.RunWizard(self.userpage)
+
+	def onFinished(self, evt):
+		if self.session is not None:
+			initializer = self.getSettings()
+			self.setup.saveSettings(self.session['user'], initializer)
 
 	def getUsers(self):
 		users = self.setup.getUsers()
@@ -645,6 +642,36 @@ class SetupWizard(wx.wizard.Wizard):
 				self.sessioncreatepage.sizer.SetItemMinSize(o, o.GetSize())
 			self.sessioncreatepage.pagesizer.Layout()
 
+	def setSettings(self, sd):
+		if sd['session type']:
+			s = sd['session type']
+			n = self.sessiontypepage.sessiontyperadiobox.FindString(s)
+			if n != wx.NOT_FOUND:
+				self.sessiontypepage.sessiontyperadiobox.SetSelection(n)
+		self.sessionselectpage.limitcheckbox.SetValue(sd['limit'])
+		self.sessionselectpage.limitintctrl.SetValue(sd['n limit'])
+		if sd['selected session'] is not None:
+			s = sd['selected session']
+			n = self.sessionselectpage.sessionchoice.FindString(s)
+			if n != wx.NOT_FOUND:
+				self.sessionselectpage.sessionchoice.SetSelection(n)
+		self.sessionselectpage.connectcheckbox.SetValue(sd['connect'])
+
+	def getSettings(self):
+		initializer = {
+			'session type':
+				self.sessiontypepage.sessiontyperadiobox.GetStringSelection(),
+			'selected session':
+				self.sessionselectpage.sessionchoice.GetStringSelection(),
+			'limit':
+				self.sessionselectpage.limitcheckbox.GetValue(),
+			'n limit':
+				self.sessionselectpage.limitintctrl.GetValue(),
+			'connect':
+				self.sessionselectpage.connectcheckbox.GetValue(),
+		}
+		return initializer
+
 def _indexBy(by, datalist):
 	index = {}
 	bydone = []
@@ -659,14 +686,38 @@ def _indexBy(by, datalist):
 	return index
 
 class Setup(object):
-	def __init__(self, research):
+	def __init__(self, research, publish):
 		self.research = research
+		self.publish = publish
 		self.projectdata = project.ProjectData()
 
 	def getUsers(self):
 		userdata = data.UserData(initializer={})
 		userdatalist = self.research(datainstance=userdata)
 		return _indexBy('full name', userdatalist)
+
+	def getSettings(self, userdata):
+		settingsclass = data.SetupWizardSettingsData
+		defaultsettings = {
+			'session type': 'Create a new session',
+			'selected session': None,
+			'limit': True,
+			'n limit': 10,
+			'connect': True,
+		}
+		qsession = data.SessionData(initializer={'user': userdata})
+		qdata = settingsclass(initializer={'session': qsession})
+		try:
+			settings = self.research(qdata, results=1)[0]
+		except IndexError:
+			settings = settingsclass(initializer=defaultsettings)
+		return settings
+
+	def saveSettings(self, userdata, initializer):
+		settingsclass = data.SetupWizardSettingsData
+		sd = settingsclass(initializer=initializer)
+		sd['session'] = data.SessionData(initializer={'user': userdata})
+		self.publish(sd, database=True, dbforce=True)
 
 	def getSessions(self, userdata, n=None):
 		sessiondata = data.SessionData(initializer={'user': userdata})

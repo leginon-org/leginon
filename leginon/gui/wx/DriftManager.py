@@ -1,9 +1,10 @@
 import wx
-from wx.lib.masked import NumCtrl, EVT_NUM
+from gui.wx.Entry import FloatEntry
 import gui.wx.Camera
 import gui.wx.Data
-import gui.wx.Node
 import gui.wx.ImageViewer
+import gui.wx.Node
+import gui.wx.Settings
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'driftmanager'
@@ -19,52 +20,16 @@ class Panel(gui.wx.Node.Panel):
 		self.szstatus.Add(self.ststatus, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		# settings
-		self.szsettings = self._getStaticBoxSizer('Settings', (1, 0), (1, 1),
-																							wx.ALL)
 
-		self.cbcheckdrift = wx.CheckBox(self, -1, 'Check drift',
-																			name='cbCheckDrift')
-		self.szsettings.Add(self.cbcheckdrift, (0, 0), (1, 1),
-												wx.ALIGN_CENTER_VERTICAL)
-
-		label0 = wx.StaticText(self, -1, 'Wait for drift to be less than')
-		self.ncthreshold = NumCtrl(self, -1, 2e-10, integerWidth=1,
-																								fractionWidth=12,
-																								allowNone=False,
-																								allowNegative=False,
-																								name='ncThreshold')
-		label1 = wx.StaticText(self, -1, 'meters')
-
-		sz = wx.GridBagSizer(5, 5)
-		sz.Add(label0, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL)
-		sz.Add(self.ncthreshold, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL)
-		sz.Add(label1, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL)
-		self.szsettings.Add(sz, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL)
-
-		label0 = wx.StaticText(self, -1, 'Wait')
-		self.ncwait = NumCtrl(self, -1, 2.0, integerWidth=2,
-																					fractionWidth=1,
-																					allowNone=False,
-																					allowNegative=False,
-																					name='ncWait')
-		label1 = wx.StaticText(self, -1, 'seconds between checking')
-
-		sz = wx.GridBagSizer(5, 5)
-		sz.Add(label0, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL)
-		sz.Add(self.ncwait, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL)
-		sz.Add(label1, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL)
-		self.szsettings.Add(sz, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL)
-
-		self.cpcamconfig = gui.wx.Camera.CameraPanel(self)
-
-		self.szsettings.Add(self.cpcamconfig, (3, 0), (1, 1), wx.ALIGN_CENTER)
-
-		# controls
-		self.szcontrols = self._getStaticBoxSizer('Controls', (2, 0), (1, 1),
-																			wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_TOP)
-
+		self.bsettings = wx.Button(self, -1, 'Settings...')
 		self.bmeasure = wx.Button(self, -1, 'Measure Drift')
-		self.szcontrols.Add(self.bmeasure, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		self.cbcheckdrift = wx.CheckBox(self, -1, 'Check drift')
+
+		sz = wx.GridBagSizer(5, 5)
+		sz.Add(self.bsettings, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		sz.Add(self.bmeasure, (1, 0), (1, 1), wx.ALIGN_CENTER)
+		sz.Add(self.cbcheckdrift, (2, 0), (1, 1), wx.ALIGN_CENTER)
+		self.szmain.Add(sz, (1, 0), (1, 1), wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_TOP)
 
 		# image
 		self.szimage = self._getStaticBoxSizer('Image', (1, 1), (2, 1),
@@ -79,30 +44,16 @@ class Panel(gui.wx.Node.Panel):
 		self.SetupScrolling()
 
 	def onNodeInitialized(self):
-		self.cpcamconfig.setSize(self.node.session)
-
-		gui.wx.Data.setWindowFromDB(self.cbcheckdrift)
-		gui.wx.Data.setWindowFromDB(self.ncthreshold)
-		gui.wx.Data.setWindowFromDB(self.ncwait)
-		gui.wx.Data.setWindowFromDB(self.cpcamconfig)
-
-		self.node.threshold = self.ncthreshold.GetValue()
-		self.node.wait = self.ncwait.GetValue()
-		self.node.camconfig = self.cpcamconfig.getConfiguration()
-
-		gui.wx.Data.bindWindowToDB(self.ncthreshold)
-		gui.wx.Data.bindWindowToDB(self.ncwait)
-		gui.wx.Data.bindWindowToDB(self.cpcamconfig)
-
-		self.Bind(wx.EVT_CHECKBOX, self.onCheckDriftCheck, self.cbcheckdrift)
-		self.Bind(EVT_NUM, self.onThresholdNum, self.ncthreshold)
-		self.Bind(EVT_NUM, self.onWaitNum, self.ncwait)
-		self.Bind(gui.wx.Camera.EVT_CONFIGURATION_CHANGED, self.onCamConfigChanged,
-							self.cpcamconfig)
+		self.Bind(wx.EVT_BUTTON, self.onSettingsButton, self.bsettings)
 		self.Bind(wx.EVT_BUTTON, self.onMeasure, self.bmeasure)
+		self.Bind(wx.EVT_CHECKBOX, self.onCheckDriftCheck, self.cbcheckdrift)
 
 		self.onCheckDriftCheck()
-		# check drift
+
+	def onSettingsButton(self, evt):
+		dialog = SettingsDialog(self)
+		dialog.ShowModal()
+		dialog.Destroy()
 
 	def onCheckDriftCheck(self, evt=None):
 		if evt is None:
@@ -115,17 +66,44 @@ class Panel(gui.wx.Node.Panel):
 		else:
 			self.node.abort()
 
-	def onThresholdNum(self, evt):
-		self.node.threshold = evt.GetValue()
-
-	def onWaitNum(self, evt):
-		self.node.wait = evt.GetValue()
-
-	def onCamConfigChanged(self, evt):
-		self.node.camconfig = evt.configuration
-
 	def onMeasure(self, evt):
 		self.node.measureDrift()
+
+class SettingsDialog(gui.wx.Settings.Dialog):
+	def initialize(self):
+		gui.wx.Settings.Dialog.initialize(self)
+
+		self.widgets['threshold'] = FloatEntry(self, -1, min=0.0, chars=9)
+		self.widgets['pause time'] = FloatEntry(self, -1, min=0.0, chars=4)
+		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
+		self.widgets['camera settings'].setSize(self.node.session)
+
+		szthreshold = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Wait for drift to be less than')
+		szthreshold.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szthreshold.Add(self.widgets['threshold'], (0, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'meters')
+		szthreshold.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		szpause = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Wait')
+		szpause.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szpause.Add(self.widgets['pause time'], (0, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'seconds between checking drift')
+		szpause.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+		sz = wx.GridBagSizer(5, 10)
+		sz.Add(szthreshold, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szpause, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['camera settings'], (2, 0), (1, 1), wx.ALIGN_CENTER)
+
+		sb = wx.StaticBox(self, -1, 'Drift Management')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
+
+		return sbsz
 
 if __name__ == '__main__':
 	class App(wx.App):

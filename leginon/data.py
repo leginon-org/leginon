@@ -1503,6 +1503,17 @@ class SettingsData(InSessionData):
 		)
 	typemap = classmethod(typemap)
 
+class SetupWizardSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('session type', str),
+			('selected session', str),
+			('limit', bool),
+			('n limit', int),
+			('connect', bool),
+		)
+	typemap = classmethod(typemap)
+
 class CameraSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
@@ -1531,6 +1542,15 @@ class NavigatorSettingsData(SettingsData):
 			('move type', str),
 			('check calibration', bool),
 			('complete state', bool),
+			('camera settings', CameraSettingsData),
+		)
+	typemap = classmethod(typemap)
+
+class DriftManagerSettingsData(SettingsData):
+	def typemap(cls):
+		return SettingsData.typemap() + (
+			('threshold', float),
+			('pause time', float),
 			('camera settings', CameraSettingsData),
 		)
 	typemap = classmethod(typemap)
