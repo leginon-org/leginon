@@ -585,17 +585,15 @@ class Manager(node.Node):
 	# UI methods
 	def uiExportApp(self):
 		try:
-			filedialog = uidata.SaveFileDialog('Export Application',
-																					self.exportApplication)
-			self.importexportcontainer.addObject(filedialog)
+			self.importexportcontainer.addObject(uidata.SaveFileDialog(
+																	'Export Application', self.exportApplication))
 		except ValueError:
 			pass
 
 	def uiImportApp(self):
 		try:
-			filedialog = uidata.LoadFileDialog('Import Application',
-																					self.importApplication)
-			self.importexportcontainer.addObject(filedialog)
+			self.importexportcontainer.addObject(uidata.LoadFileDialog(
+																	'Import Application', self.importApplication))
 		except ValueError:
 			pass
 

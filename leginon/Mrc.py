@@ -50,14 +50,10 @@ def mean(inputarray):
 	return m
 
 def mrc_to_numeric(filename):
-	try:
-		f = open(filename, 'rb')
-		image = mrc_read(f)
-		f.close()
-		return image
-	except Exception, detail:
-		print detail
-		return None
+	f = open(filename, 'rb')
+	image = mrc_read(f)
+	f.close()
+	return image
 
 def numeric_to_mrc(ndata, filename):
 	if type(ndata) is not Numeric.ArrayType:
@@ -123,7 +119,10 @@ class MrcData:
 		self.mean = mean
 
 	def fromfile(self, fobj):
-		elementsize = mrcmode_typecode[self.mode][0]
+		try:
+			elementsize = mrcmode_typecode[self.mode][0]
+		except KeyError:
+			raise TypeError('Invalid MRC type')
 		elements = self.width * self.height * self.depth
 		self.data = fobj.read(elements * elementsize)
 
@@ -149,8 +148,13 @@ class MrcData:
 		return narray
 
 	def fromNumeric(self, narray):
+		if not isinstance(narray, Numeric.arraytype):
+			raise TypeError('Value must be a Numeric array')
 		typecode = narray.typecode()
-		self.mode = typecode_mrcmode[typecode]
+		try:
+			self.mode = typecode_mrcmode[typecode]
+		except KeyError:
+			raise TypeError('Invalid Numeric array type for MRC conversion')
 
 		# array to the proper typecode
 		newtypecode = mrcmode_typecode[self.mode][1]

@@ -113,24 +113,44 @@ class ImViewer(imagewatcher.ImageWatcher):
 		e = event.ImageAcquireEvent(id=self.ID())
 		self.outputEvent(e)
 
+	def loadImage(self, filename):
+		if filename is None:
+			return
+		try:
+			self.numarray = Mrc.mrc_to_numeric(filename)
+			self.ui_image.set(self.numarray)
+			self.doPow()
+		except (TypeError, IOError):
+			self.printerror('Unable to load image "%s"' % filename)
+			
+
 	def uiLoadImage(self):
-		filename = self.uifilename.get()
-		self.numarray = Mrc.mrc_to_numeric(filename)
-		self.ui_image.set(self.numarray)
-		self.doPow()
+		try:
+			self.filecontainer.addObject(uidata.LoadFileDialog('Load Image',
+																													self.loadImage))
+		except ValueError:
+			pass
+
+	def saveImage(self, filename):
+		numarray = Numeric.array(self.numarray)
+		try:
+			Mrc.numeric_to_mrc(numarray, filename)
+		except (TypeError, IOError):
+			self.printerror('Unable to save image "%s"' % filename)
 
 	def uiSaveImage(self):
-		filename = self.uifilename.get()
-		numarray = Numeric.array(self.numarray)
-		Mrc.numeric_to_mrc(numarray, filename)
+		try:
+			self.filecontainer.addObject(uidata.SaveFileDialog('Save Image',
+																													self.saveImage))
+		except ValueError:
+			pass
 
 	def defineUserInterface(self):
 		imagewatcher.ImageWatcher.defineUserInterface(self)
-		self.uifilename = uidata.String('Filename', '', 'rw')
-		loadmethod = uidata.Method('Load MRC', self.uiLoadImage)
-		savemethod = uidata.Method('Save MRC', self.uiSaveImage)
-		filecontainer = uidata.Container('File')
-		filecontainer.addObjects((self.uifilename, loadmethod, savemethod))
+		savemethod = uidata.Method('Save', self.uiSaveImage)
+		loadmethod = uidata.Method('Load', self.uiLoadImage)
+		self.filecontainer = uidata.Container('File')
+		self.filecontainer.addObjects((savemethod, loadmethod))
 
 		cameraconfigure = self.cam.configUIData()
 		settingscontainer = uidata.Container('Settings')
@@ -144,11 +164,14 @@ class ImViewer(imagewatcher.ImageWatcher):
 		self.ui_image_pow = uidata.Image('Power Image', None, 'r')
 		eventmethod = uidata.Method('Event Acquire', self.acquireEvent)
 		acquirecontainer = uidata.Container('Acquisition')
-		acquirecontainer.addObjects((acqmethod, acqloopmethod, acqstopmethod, eventmethod, self.do_pow, self.ui_image, self.ui_image_pow))
+		acquirecontainer.addObjects((acqmethod, acqloopmethod, acqstopmethod,
+																	eventmethod, self.do_pow, self.ui_image,
+																	self.ui_image_pow))
 
 
 		container = uidata.LargeContainer('Image Viewer')
-		container.addObjects((settingscontainer, filecontainer, acquirecontainer))
+		container.addObjects((settingscontainer, self.filecontainer,
+													acquirecontainer))
 
 		self.uiserver.addObject(container)
 

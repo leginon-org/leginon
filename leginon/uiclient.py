@@ -1638,7 +1638,7 @@ class wxFileDialogWidget(wxContainerWidget):
 				commandnamelist = [self.name, 'Cancel']
 			setevent = SetServerEvent([self.name, 'Filename'], setvalue, thread=False)
 			wxPostEvent(self.container.widgethandler, setevent)
-			commandevent = CommandServerEvent(commandnamelist, ())
+			commandevent = CommandServerEvent(commandnamelist, (), thread=False)
 			wxPostEvent(self.container.widgethandler, commandevent)
 
 		wxContainerWidget._show(self, show)
