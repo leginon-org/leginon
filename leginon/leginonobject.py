@@ -67,3 +67,11 @@ class LeginonObject(object):
 			printstring += '\033[0m'
 		print printstring
 
+	def checkPythonVersion(self):
+		message = '''
+		XXXXXXXXXXXXXXXXXX X X X  WARNING  X X X XXXXXXXXXXXXXXXXXX
+		You are not using Python 2.2.2!  deepcopy at your own risk!
+		XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+		'''
+		if sys.version[:5] != '2.2.2':
+			self.printerror(message)
