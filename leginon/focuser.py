@@ -19,7 +19,7 @@ class Focuser(acquisition.Acquisition):
 
 		acquisition.Acquisition.__init__(self, id, sesison, nodelocations, targetclass=data.FocusTargetData, **kwargs)
 
-	def acquire(self, preset, trial=False):
+	def acquire(self, preset, target=None, trial=False):
 		'''
 		this replaces Acquisition.acquire()
 		Instead of acquiring an image, we do autofocus
@@ -73,9 +73,9 @@ class Focuser(acquisition.Acquisition):
 		if validstig and self.stigcorrection.get():
 			print 'Stig correction'
 			self.correctStig(stigx, stigy)
-			info['corrected stig'] = 1
+			info['stig correction'] = 1
 		else:
-			info['corrected stig'] = 0
+			info['stig correction'] = 0
 
 		if validdefocus:
 			print 'Defocus correction'
@@ -88,6 +88,7 @@ class Focuser(acquisition.Acquisition):
 				info['defocus correction'] = focustype
 				focusmethod(defoc)
 
+		## add target to this sometime
 		frd = data.FocuserResultData(initializer=info)
 		self.publish(frd, database=True)
 
@@ -129,19 +130,20 @@ class Focuser(acquisition.Acquisition):
 
 	def defineUserInterface(self):
 		acquisition.Acquisition.defineUserInterface(self)
-		self.btilt = uidata.Float('Beam Tilt', 0.02, 'rw')
-		self.stigfocthresh = uidata.Float('Stig Threshold', 1e-6, 'rw')
-		self.drifton = uidata.Boolean('Check Drift', True, 'rw')
-		self.drifttimeout = uidata.Float('Drift Timeout (sec)', 300, 'rw')
+		self.btilt = uidata.Float('Beam Tilt', 0.02, 'rw', persist=True)
+		self.stigfocthresh = uidata.Float('Stig Threshold', 1e-6, 'rw', persist=True)
+		self.drifton = uidata.Boolean('Check Drift', True, 'rw', persist=True)
+		self.drifttimeout = uidata.Float('Drift Timeout (sec)', 300, 'rw', persist=True)
+		self.driftthresh = uidata.Float('Drift Threshold (pixels) (NOT IMPLEMENTED)', 2, 'rw', persist=True)
 		focustypes = self.focus_methods.keys()
 		focustypes.sort()
 		self.focustype = uidata.SingleSelectFromList('Focus Correction Type',
 																							focustypes, 0)
-		self.stigcorrection = uidata.Boolean('Stigmator Correction', False, 'rw')
-		self.publishimages = uidata.Boolean('Publish Images', True, 'rw')
+		self.stigcorrection = uidata.Boolean('Stigmator Correction', False, 'rw', persist=True)
+		self.publishimages = uidata.Boolean('Publish Images', True, 'rw', persist=True)
 		abortfailmethod = uidata.Method('Abort With Failure', self.uiAbortFailure)
 		testmethod = uidata.Method('Test Autofocus', self.uiTest)
 		container = uidata.MediumContainer('Focuser')
-		container.addObjects((self.btilt, self.stigfocthresh, self.drifton, self.drifttimeout, self.focustype, self.stigcorrection, self.publishimages, abortfailmethod, testmethod))
+		container.addObjects((self.btilt, self.stigfocthresh, self.drifton, self.drifttimeout, self.driftthresh, self.focustype, self.stigcorrection, self.publishimages, abortfailmethod, testmethod))
 		self.uiserver.addObject(container)
 
