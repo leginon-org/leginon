@@ -729,13 +729,15 @@ class Binary(Data):
 class PILImage(Binary):
 	typelist = Binary.typelist + ('PIL image',)
 
+## these types cause set() to seg fault
+badtypes = ('d', 'l')
 class Image(Binary):
 	typelist = Binary.typelist + ('image',)
 	def set(self, value):
 		if value:
-			## these types cause seg fault
-			if value.typecode() in ('F','l'):
-				raise RuntimeError('Image type cannot be double')
+			print 'TYPECODE', value.typecode()
+			if value.typecode() in badtypes:
+				raise RuntimeError('Image type %s is illegal, try Float32 instead' % (value.typecode(),))
 		Binary.set(self, value)
 
 class ClickImage(Container):
