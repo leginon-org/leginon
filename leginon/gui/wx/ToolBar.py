@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ToolBar.py,v $
-# $Revision: 1.21 $
+# $Revision: 1.22 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-28 17:24:34 $
-# $Author: suloway $
+# $Date: 2004-11-04 22:00:01 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -48,6 +48,7 @@ ID_MINUS = 10031
 ID_VALUE = 10032
 ID_RESET = 10033
 ID_SIMULATE_TARGET = 10034
+ID_ABORT_DRIFT = 10035
 
 class ToolBar(wx.ToolBar):
 	def __init__(self, parent):

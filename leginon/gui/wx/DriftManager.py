@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/DriftManager.py,v $
-# $Revision: 1.14 $
+# $Revision: 1.15 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
-# $Author: suloway $
+# $Date: 2004-11-04 22:00:01 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -28,16 +28,18 @@ class Panel(gui.wx.Node.Panel):
 													'settings',
 													shortHelpString='Settings')
 		self.toolbar.AddSeparator()
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_CHECK_DRIFT,
-													'check',
-													isToggle=True,
-													shortHelpString='Check Drift')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_MEASURE_DRIFT,
 													'ruler',
 													shortHelpString='Measure Drift')
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_DECLARE_DRIFT,
 													'declare',
 													shortHelpString='Declare Drift')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_CHECK_DRIFT,
+													'play',
+													shortHelpString='Check Drift')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_ABORT_DRIFT,
+													'stop',
+													shortHelpString='Abort DriftCheck')
 		self.toolbar.Realize()
 
 		# image
@@ -56,27 +58,23 @@ class Panel(gui.wx.Node.Panel):
 											id=gui.wx.ToolBar.ID_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onCheckDriftTool,
 											id=gui.wx.ToolBar.ID_CHECK_DRIFT)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onAbortDriftTool,
+											id=gui.wx.ToolBar.ID_ABORT_DRIFT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureDriftTool,
 											id=gui.wx.ToolBar.ID_MEASURE_DRIFT)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onDeclareDriftTool,
 											id=gui.wx.ToolBar.ID_DECLARE_DRIFT)
-		self.onCheckDriftTool()
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
 
-	def onCheckDriftTool(self, evt=None):
-		if evt is None:
-			check = self.toolbar.GetToolState(gui.wx.ToolBar.ID_CHECK_DRIFT)
-		else:
-			check = evt.IsChecked()
-		# this doesn't really work
-		if check:
-			self.node.uiMonitorDrift()
-		else:
-			self.node.abort()
+	def onCheckDriftTool(self, evt):
+		self.node.uiMonitorDrift()
+
+	def onAbortDriftTool(self, evt):
+		self.node.abort()
 
 	def onMeasureDriftTool(self, evt):
 		self.node.measureDrift()
