@@ -39,7 +39,7 @@ class Manager(node.Node):
 		self.nodelocations['manager'] = self.location()
 
 		self.distmap = {}
-		# maps event id to list of node it was distributed to if event.confirm
+		# maps event id to list of node it was distributed to if event['confirm']
 		self.confirmmap = {}
 
 		self.app = application.Application(self.ID(), self)
@@ -103,11 +103,15 @@ class Manager(node.Node):
 
 	def confirmEvent(self, ievent):
 		'''Override node.Node.confirmEvent to distribute a confirmation event to the node waiting for confirmation of the event.'''
-		self.outputEvent(event.ConfirmationEvent(self.ID(), ievent.id),
-											0, ievent.id[:-1])
+#		self.outputEvent(event.ConfirmationEvent(self.ID(), ievent.id),
+#											0, ievent.id[:-1])
+		# XXX unknown XXX
+		self.outputEvent(event.ConfirmationEvent(self.ID(), ievent['id']),
+											0, ievent['id'][:-1])
 
 	def handleConfirmedEvent(self, ievent):
 		'''Event handler for distributing a confirmation event to the node waiting for confirmation of the event.'''
+		# XXX don't know what content key will be XXX
 		nodeid = ievent.content[:-1]
 		if nodeid == self.id:
 			# this is bad since it will fill up with lots of events
@@ -116,7 +120,8 @@ class Manager(node.Node):
 				self.confirmwaitlist[ievent.content].set()
 				#del self.confirmwaitlist[ievent.content]
 		else:
-			self.confirmmap[ievent.content].remove(ievent.id[:-1])
+			#self.confirmmap[ievent.content].remove(ievent.id[:-1])
+			self.confirmmap[ievent.content].remove(ievent['id'][:-1])
 			if len(self.confirmmap[ievent.content]) == 0:
 				del self.confirmmap[ievent.content]
 				self.outputEvent(ievent, 0, nodeid)
@@ -146,7 +151,8 @@ class Manager(node.Node):
 	def distributeEvents(self, ievent):
 		'''Push event to eventclients based on event class and source.'''
 		eventclass = ievent.__class__
-		from_node = ievent.id[:-1]
+		#from_node = ievent.id[:-1]
+		from_node = ievent['id'][:-1]
 		do = []
 		for distclass,fromnodes in self.distmap.items():
 			if issubclass(eventclass, distclass):
@@ -160,8 +166,10 @@ class Manager(node.Node):
 								for to_node in self.handler.clients:
 									if to_node not in do:
 										do.append(to_node)
-		if ievent.confirm:
-			self.confirmmap[ievent.id] = do
+		#if ievent.confirm:
+		#	self.confirmmap[ievent.id] = do
+		if ievent['confirm']:
+			self.confirmmap[ievent['id']] = do
 		for to_node in do:
 			try:
 				self.clients[to_node].push(ievent)
@@ -216,7 +224,8 @@ class Manager(node.Node):
 
 	def handleNodeClassesPublish(self, event):
 		'''Event handler for retrieving launchable classes.'''
-		launchername = event.id[-2]
+		#launchername = event.id[-2]
+		launchername = event['id'][-2]
 		dataid = event.content
 		self.uilauncherdict[launchername]['node classes id'] = dataid
 		self.updateLauncherDictDataDict(launchername)
@@ -236,14 +245,17 @@ class Manager(node.Node):
 
 	def registerNode(self, readyevent):
 		'''Event handler for registering a node with the manager. Initializes a client for the node and adds information regarding the node's location.'''
-		nodeid = readyevent.id[:-1]
+		#nodeid = readyevent.id[:-1]
+		nodeid = readyevent['id'][:-1]
 		self.printerror('registering node ' + str(nodeid))
 
+		# XXX unknown XXX
 		#print readyevent.content
 		nodelocation = readyevent.content['location']
 
 		# check if new node is launcher
 #		if isinstance(readyevent, event.LauncherAvailableEvent):
+		# XXX unknown XXX
 		if readyevent.content['class'] == 'Launcher':
 			self.addLauncher(nodeid, nodelocation)
 
@@ -265,7 +277,8 @@ class Manager(node.Node):
 
 	def unregisterNode(self, unavailable_event):
 		'''Event handler for unregistering the node from the manager. Removes all information, event mappings and the client related to the node.'''
-		nodeid = unavailable_event.id[:-1]
+		#nodeid = unavailable_event.id[:-1]
+		nodeid = unavailable_event['id'][:-1]
 		self.removeNode(nodeid)
 
 		# also remove from launcher registry
@@ -319,12 +332,14 @@ class Manager(node.Node):
 
 		newid = self.id + (name,)
 		args = (newid, self.session, self.nodelocations) + nodeargs
+		# XXX unknown XXX
 		ev = event.LaunchEvent(self.ID(), newproc, target, args)
 		self.outputEvent(ev, 0, launcher)
 		return newid
 
 	def addNode(self, hostname, port):
 		'''Add a running node to the manager. Sends an event to the location.'''
+		# XXX unknown XXX
 		e = event.NodeAvailableEvent(self.id, self.location(),
 																	self.__class__.__name__)
 		client = self.clientclass(self.ID(),
@@ -348,11 +363,14 @@ class Manager(node.Node):
 	def registerData(self, publishevent):
 		'''Event handler. Calls publishDataLocation. Operates on singular data IDs or lists of data IDs.'''
 		if isinstance(publishevent, event.PublishEvent):
+			# XXX unknown XXX
 			id = publishevent.content
-			self.publishDataLocation(id, publishevent.id[:-1])
+			#self.publishDataLocation(id, publishevent.id[:-1])
+			self.publishDataLocation(id, publishevent['id'][:-1])
 		elif isinstance(publishevent, event.ListPublishEvent):
 			for id in publishevent.content:
-				self.publishDataLocation(id, publishevent.id[:-1])
+				#self.publishDataLocation(id, publishevent.id[:-1])
+				self.publishDataLocation(id, publishevent['id'][:-1])
 		else:
 			raise TypeError
 		self.confirmEvent(publishevent)
@@ -374,8 +392,10 @@ class Manager(node.Node):
 	def unregisterData(self, unpublishevent):
 		'''Event handler unregistering data from the manager. Removes a location mapped to the data ID.'''
 		if isinstance(unpublishevent, event.UnpublishEvent):
+			# XXX unknown XXX
 			id = unpublishevent.content
-			self.unpublishDataLocation(id, unpublishevent.id[:-1])
+			#self.unpublishDataLocation(id, unpublishevent.id[:-1])
+			self.unpublishDataLocation(id, unpublishevent['id'][:-1])
 		else:
 			raise TypeError
 

@@ -44,6 +44,7 @@ class Launcher(node.Node):
 
 	def handleLaunch(self, launchevent):
 		# unpack event content
+		# XXX don't know what key content will be XXX
 		newproc = launchevent.content['newproc']
 		targetclass = launchevent.content['targetclass']
 		args = launchevent.content['args']

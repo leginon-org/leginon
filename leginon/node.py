@@ -142,6 +142,7 @@ class Node(leginonobject.LeginonObject):
 	def outputEvent(self, ievent, wait=0):
 		'''Send the event to the manager to be routed where necessary.'''
 		try:
+			ievent['confirm'] = True
 			ievent.confirm = True
 			self.managerclient.push(ievent)
 		except KeyError:
@@ -176,21 +177,29 @@ class Node(leginonobject.LeginonObject):
 
 	def confirmEvent(self, ievent):
 		'''Confirm that an event has been received and/or handled.'''
-		self.outputEvent(event.ConfirmationEvent(self.ID(), ievent.id))
+		#self.outputEvent(event.ConfirmationEvent(self.ID(), ievent.id))
+		self.outputEvent(event.ConfirmationEvent(self.ID(), ievent['id']))
 
 	def waitEvent(self, ievent):
 		'''Block for confirmation of a generated event.'''
-		if not ievent.id in self.confirmwaitlist:
-			self.confirmwaitlist[ievent.id] = threading.Event()
-		self.confirmwaitlist[ievent.id].wait()
+		#if not ievent.id in self.confirmwaitlist:
+		#	self.confirmwaitlist[ievent.id] = threading.Event()
+		#self.confirmwaitlist[ievent.id].wait()
+		if not ievent['id'] in self.confirmwaitlist:
+			self.confirmwaitlist[ievent['id']] = threading.Event()
+		self.confirmwaitlist[ievent['id']].wait()
 
 	def handleConfirmedEvent(self, ievent):
 		'''Handler for ConfirmationEvents. Unblocks the call waiting for confirmation of the event generated.'''
 		# this is bad since it will fill up with lots of events
+#		if not ievent.content in self.confirmwaitlist:
+#			self.confirmwaitlist[ievent.content] = threading.Event()
+#		self.confirmwaitlist[ievent.content].set()
+		#del self.confirmwaitlist[ievent.content]
+		# XXX don't know what key content with be XXX
 		if not ievent.content in self.confirmwaitlist:
 			self.confirmwaitlist[ievent.content] = threading.Event()
 		self.confirmwaitlist[ievent.content].set()
-		#del self.confirmwaitlist[ievent.content]
 
 	# data publish/research methods
 
@@ -230,6 +239,7 @@ class Node(leginonobject.LeginonObject):
 
 		if 'node' in kwargs and kwargs['node']:
 			self.datahandlers[self.datahandler].insert(idata)
+			# XXX unknown XXX
 			e = eventclass(self.ID(), idata['id'], confirm)
 			self.outputEvent(e)
 
@@ -268,6 +278,7 @@ class Node(leginonobject.LeginonObject):
 			raise TypeError('UnpublishEvent subclass required')
 #		self.server.datahandler.remove(dataid)
 		self.datahandlers[self.datahandler].remove(dataid)
+		# XXX unknown XXX
 		self.outputEvent(eventclass(self.ID(), dataid))
 
 	def publishRemote(self, idata):
@@ -310,14 +321,17 @@ class Node(leginonobject.LeginonObject):
 	def addManager(self, loc):
 		'''Set the manager controlling the node and notify said manager this node is available.'''
 		self.managerclient = self.clientclass(self.ID(), loc)
+		# XXX unknown XXX
 		available_event = event.NodeAvailableEvent(self.ID(), self.location(),
 												self.__class__.__name__)
 		self.outputEvent(ievent=available_event, wait=True)
 
 	def handleAddNode(self, ievent):
 		'''Event handler calling adddManager with event content. See addManager.'''
-		if ievent.content['class'] == 'Manager':
-			self.addManager(ievent.content['location'])
+#		if ievent.content['class'] == 'Manager':
+#			self.addManager(ievent.content['location'])
+		if ievent['class'] == 'Manager':
+			self.addManager(ievent['location'])
 
 	# utility methods
 

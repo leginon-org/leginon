@@ -191,6 +191,7 @@ class PresetsManager(node.Node):
                              (dbdatakeeper.DBDataKeeper, ())], **kwargs)
 
 		ids = ['presets',]
+		# XXX I don't know what to do with this yet XXX
 		e = event.ListPublishEvent(self.ID(), ids)
 		self.outputEvent(e)
 		
