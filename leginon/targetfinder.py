@@ -18,6 +18,7 @@ import Numeric
 import mosaic
 import calibrationclient
 import camerafuncs
+import time
 
 import xmlrpclib
 #import xmlrpclib2 as xmlbinlib
@@ -113,8 +114,6 @@ class TargetFinder(imagewatcher.ImageWatcher):
 
 		self.publish(targetlistdata, pubevent=True)
 
-
-
 	def handleTargetListDone(self, targetlistdoneevent):
 		targetlistid = targetlistdoneevent['targetlistid']
 		status = targetlistdoneevent['status']
@@ -169,7 +168,7 @@ class ClickTargetFinder(TargetFinder):
 		#advancemethod = uidata.Method('Advance Image', self.advanceImage)
 		submitmethod = uidata.Method('Submit Targets', self.submitTargets)
 		container = uidata.LargeContainer('Click Target Finder')
-		container.addObjects((submitmethod, self.clickimage))
+		container.addObjects((self.clickimage, submitmethod))
 		self.uiserver.addObject(container)
 
 	def getTargetDataList(self, typename):
@@ -205,13 +204,10 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 	# not complete
 	def handleTargetListDone(self, targetlistdoneevent):
-		print 'mosaic to database'
+		ClickTargetFinder.handleTargetListDone(self, targetlistdoneevent)
 		self.mosaicToDatabase()
-		print 'mosaic clear'
 		self.mosaicClear()
-		print 'output event'
 		self.outputEvent(event.MosaicDoneEvent())
-		print 'output event done'
 
 	def submitTargets(self):
 		self.getTargetDataList('acquisition')
@@ -225,9 +221,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		'''
 		self.mosaic.addTile(imagedata)
 		self.mosaicdata['data IDs'].append(imagedata['id'])
-		self.clickimage.setImage(self.mosaic.getMosaicImage())
-		# needs to update target positions
-		self.clickimage.setTargets([])
+		self.displayMosaic()
 
 	def mosaicToDatabase(self):
 		if self.mosaicdata['session'] is not None:
@@ -239,15 +233,20 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.mosaicdata = data.MosaicData(initializer=initializer)
 		self.publish(mosaicdata, database=True)
 
+		mosaicimagedata = data.MosaicImageData()
+		mosaicimagedata['id'] = self.ID()
+		mosaicimagedata['mosaic'] = mosaicdata
+		mosaicimagedata['image'] = self.getMosaicImage()
+		mosaicimagedata['scale'] = self.mosaic.scale
+		self.publish(mosaicimagedata, database=True)
+
 	def updateMosaicSelection(self):
 		sessioninitializer = {'user': self.session['user'],
 													'instrument': self.session['instrument']}
 		session = data.SessionData(initializer=sessioninitializer)
 		initializer = {'session': session}
 		instance = data.MosaicData(initializer=initializer)
-#		print 'INSTANCE', instance
 		mosaics = self.research(datainstance=instance)
-#		print 'MOSAICS', mosaics
 		self.mosaicselectionmapping = {}
 		for mosaic in mosaics:
 			key = str(mosaic['session']['name']) + ' ' + str(mosaic['id'])
@@ -263,7 +262,6 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			return
 		self.mosaic.clear()
 		mosaicsession = mosaicdata['session']
-		print 'mosaicsession =', mosaicsession
 		for dataid in mosaicdata['data IDs']:
 			## create an instance model to query
 			inst = data.AcquisitionImageData()
@@ -284,8 +282,26 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 				self.imagedata = imagedata
 				self.mosaic.addTile(imagedata)
 		self.mosaicdata = mosaicdata
-		self.clickimage.setImage(self.mosaic.getMosaicImage())
+		self.displayMosaic()
+		print 'mosaic from database finished'
+
+	def getMosaicImage(self):
+		if self.scaleimage.get():
+			maxdim = self.maxdimension.get()
+		else:
+			maxdim = None
+		return self.mosaic.getMosaicImage(maxdim)
+
+	def displayMosaic(self):
+		if self.displayimage.get():
+			self.clickimage.setImage(self.getMosaicImage())
 		self.clickimage.setTargets([])
+
+	def mosaicToFile(self):
+		filename = self.uifilename.get()
+		mosaicnumericarray = self.getMosaicImage()
+		Mrc.numeric_to_mrc(mosaicnumericarray, filename)
+		print 'mosaic to file finished'
 
 	def getTargetDataList(self, typename):
 		for imagetarget in self.clickimage.getTargetType(typename):
@@ -321,19 +337,6 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 	def defineUserInterface(self):
 		ClickTargetFinder.defineUserInterface(self)
 
-		self.mosaicselection = uidata.SingleSelectFromList('Mosaic', [], 0)
-		self.updateMosaicSelection()
-		refreshmethod = uidata.Method('Refresh', self.updateMosaicSelection)
-		loadmethod = uidata.Method('Load', self.mosaicFromDatabase)
-		loadcontainer = uidata.Container('Load')
-		loadcontainer.addObjects((self.mosaicselection, refreshmethod,
-																											loadmethod))
-		savecurrentmethod = uidata.Method('Save Current', self.mosaicToDatabase)
-		savecontainer = uidata.Container('Save')
-		savecontainer.addObjects((savecurrentmethod,))
-		databasecontainer = uidata.Container('Database')
-		databasecontainer.addObjects((loadcontainer, savecontainer))
-
 		parameters = self.mosaic.getCalibrationParameters()
 		parameter = parameters.index(self.mosaic.getCalibrationParameter())
 		self.uicalibrationparameter = uidata.SingleSelectFromList(
@@ -341,9 +344,38 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 																			parameter,
 																			callback=self.uiSetCalibrationParameter,
 																			persist=True)
+		self.scaleimage = uidata.Boolean('Scale Image', True, 'rw')
+		self.maxdimension = uidata.Integer('Maximum Dimension', 512, 'rw')
+		self.displayimage = uidata.Boolean('Display Image', True, 'rw')
+		settingscontainer = uidata.Container('Settings')
+		settingscontainer.addObjects((self.uicalibrationparameter,
+																	self.scaleimage, self.maxdimension,
+																	self.displayimage))
+
+		self.mosaicselection = uidata.SingleSelectFromList('Mosaic', [], 0)
+		self.updateMosaicSelection()
+
+		refreshmethod = uidata.Method('Refresh', self.updateMosaicSelection)
+
+		loadmethod = uidata.Method('Load', self.mosaicFromDatabase)
+		loadcontainer = uidata.Container('Load')
+		loadcontainer.addObjects((self.mosaicselection, refreshmethod, loadmethod))
+
+		publishmosaicmethod = uidata.Method('Publish Mosaic', self.mosaicToDatabase)
+
+
+		self.uifilename = uidata.String('Filename', '', 'rw')
+		saveimagemethod = uidata.Method('Save Image', self.mosaicToFile)
+		filecontainer = uidata.Container('File')
+		filecontainer.addObjects((self.uifilename, saveimagemethod)) 
+
 		clearmethod = uidata.Method('Reset Mosaic', self.mosaicClear)
+
+		controlcontainer = uidata.Container('Control')
+		controlcontainer.addObjects((clearmethod, publishmosaicmethod,
+																	loadcontainer, filecontainer))
+
 		container = uidata.LargeContainer('Mosaic Click Target Finder')
-		container.addObjects((databasecontainer, clearmethod,
-													self.uicalibrationparameter))
+		container.addObjects((settingscontainer, controlcontainer))
 		self.uiserver.addObject(container)
 

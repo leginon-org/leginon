@@ -28,7 +28,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 	def __init__(self, id, session, nodelocations, target_type='acquisition', **kwargs):
 
 		targetwatcher.TargetWatcher.__init__(self, id, session, nodelocations, target_type, **kwargs)
-		self.addEventInput(event.ImageClickEvent, self.handleImageClick)
 		self.addEventInput(event.DriftDoneEvent, self.handleDriftDone)
 		self.addEventInput(event.ImageProcessDoneEvent, self.handleImageProcessDone)
 		self.driftdone = threading.Event()
@@ -219,45 +218,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if imageid in self.doneevents:
 			self.doneevents[imageid]['received'].set()
 			self.doneevents[imageid]['status'] = 'forced'
-
-	def handleImageClick(self, clickevent):
-		'''
-		for interaction with and image viewer during preset config
-		'''
-		print 'handling image click'
-		clickinfo = copy.deepcopy(clickevent)
-		## get relavent info from click event
-		clickrow = clickinfo['array row']
-		clickcol = clickinfo['array column']
-		clickshape = clickinfo['array shape']
-		clickscope = clickinfo['scope']
-		clickcamera = clickinfo['camera']
-
-		## calculate delta from image center
-		deltarow = clickrow - clickshape[0] / 2
-		deltacol = clickcol - clickshape[1] / 2
-
-		## to shift clicked point to center...
-		deltarow = -deltarow
-		deltacol = -deltacol
-
-		pixelshift = {'row':deltarow, 'col':deltacol}
-		mag = clickscope['magnification']
-
-		## figure out shift
-		calclient = self.calclients['image shift']
-		newstate = calclient.transform(pixelshift, clickscope, clickcamera)
-		emdat = data.ScopeEMData(('scope',), initializer=newstate)
-		self.outputEvent(event.LockEvent(self.ID()))
-		self.publishRemote(emdat)
-
-		# wait for a while
-		time.sleep(2)
-
-		## acquire image
-		self.acquire(presetdata=None, target=None, trial=True)
-		self.outputEvent(event.UnlockEvent(self.ID()))
-		self.confirmEvent(clickevent)
 
 	def uiToScope(self):
 		presetname = self.presetsclient.uiGetSelectedName()

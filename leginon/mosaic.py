@@ -102,6 +102,7 @@ class Mosaic(object):
 			image = imagefun.scale(tile.image, (scale, scale)).astype(astype)
 			mosaicimage[offset[0]:offset[0] + image.shape[0],
 									offset[1]:offset[1] + image.shape[1]] = image
+		self.scale = scale
 		return mosaicimage
 
 	def addTile(self, image, neighbors):

@@ -545,7 +545,12 @@ class ImageData(InSessionData):
 
 class MosaicImageData(ImageData):
 	'''Image of a mosaic'''
-	pass
+	def typemap(cls):
+		t = ImageData.typemap()
+		t += [ ('mosaic', MosaicData), ]
+		t += [ ('scale', float), ]
+		return t
+	typemap = classmethod(typemap)
 
 class CorrelationImageData(ImageData):
 	'''
