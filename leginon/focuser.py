@@ -23,12 +23,12 @@ class Focuser(acquisition.Acquisition):
 		self.abortfail = threading.Event()
 		acquisition.Acquisition.__init__(self, id, sesison, nodelocations, targetclass=data.FocusTargetData, **kwargs)
 
-	def acquire(self, preset, target=None, trial=False):
+	def acquire(self, presetdata, target=None, trial=False, emtarget=None):
 		'''
 		this replaces Acquisition.acquire()
 		Instead of acquiring an image, we do autofocus
 		'''
-		info = {}
+		info = {'target':target}
 		self.abortfail.clear()
 		btilt = self.btilt.get()
 		pub = self.publishimages.get()
@@ -119,6 +119,26 @@ class Focuser(acquisition.Acquisition):
 				info['defocus correction'] = focustype
 				focusmethod(defoc)
 
+		## aquire and save the focus image
+		if self.acquirefinal.get():
+			## go back to focus preset and target
+			self.presetsclient.toScope(presetdata['name'], emtarget)
+			delay = self.uidelay.get()
+			print 'pausing for %s sec.' % (delay,)
+			time.sleep(delay)
+
+			## acquire and publish image
+			acqtype = self.uiacquiretype.getSelectedValue()
+			if acqtype == 'corrected':
+				cor = True
+			else:
+				cor = False
+			print 'acquiring focus image'
+			imagedata = self.cam.acquireCameraImageData(correction=cor)
+			fid = data.FocusImageData(initializer=imagedata, id=self.ID(), preset=presetdata, label=labelstring, target=target)
+			self.publish(fid, database=True)
+			print 'focus image published'
+
 		## add target to this sometime
 		frd = data.FocuserResultData(initializer=info)
 		self.publish(frd, database=True)
@@ -175,10 +195,11 @@ class Focuser(acquisition.Acquisition):
 		focustypes.sort()
 		self.focustype = uidata.SingleSelectFromList('Focus Correction Type', focustypes, 0, persist=True)
 		self.stigcorrection = uidata.Boolean('Stigmator Correction', False, 'rw', persist=True)
-		self.publishimages = uidata.Boolean('Publish Images', True, 'rw', persist=True)
+		self.publishimages = uidata.Boolean('Publish Tilt Images', False, 'rw', persist=True)
+		self.acquirefinal = uidata.Boolean('Acquire Final Image', True, 'rw', persist=True)
 		abortfailmethod = uidata.Method('Abort With Failure', self.uiAbortFailure)
 		testmethod = uidata.Method('Test Autofocus (broken)', self.uiTest)
 		container = uidata.MediumContainer('Focuser')
-		container.addObjects((self.melt, self.drifton, self.driftthresh, self.btilt, self.stigfocthresh, self.focustype, self.stigcorrection, self.publishimages, abortfailmethod, testmethod))
+		container.addObjects((self.melt, self.drifton, self.driftthresh, self.btilt, self.stigfocthresh, self.focustype, self.stigcorrection, self.publishimages, self.acquirefinal, abortfailmethod, testmethod))
 		self.uiserver.addObject(container)
 
