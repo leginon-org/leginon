@@ -1569,8 +1569,57 @@ class wxTargetImageWidget(wxContainerWidget):
 		self.label.Destroy()
 		self.targetimage.Destroy()
 
+class wxBitmapTreeCtrl(wxTreeCtrl):
+	def __init__(self, parent, style):
+		wxTreeCtrl.__init__(self, parent, -1, style=style)
+		self.bitmaps = {}
+		EVT_PAINT(self, self.OnPaint)
+
+	def setItemBitmap(self, id, bitmap):
+		for b in self.bitmaps:
+			if id in self.bitmaps[b]:
+				self.bitmaps[b].remove(id)
+				width = b.GetWidth()
+				height = b.GetHeight()
+		if bitmap is not None:
+			try:
+				self.bitmaps[bitmap].append(id)
+			except KeyError:
+				self.bitmaps[bitmap] = [id]
+			self.drawBitmaps(wxClientDC(self))
+		else:
+			if self.IsVisible(id):
+				rect = self.GetBoundingRect(id)
+				dc = wxClientDC(self)
+				dc.BeginDrawing()
+				dc.SetPen(wxPen(self.GetBackgroundColour()))
+				dc.SetBrush(wxBrush(self.GetBackgroundColour()))
+				dc.DrawRectangle(rect[0] + rect[2], rect[1], width, height)
+				dc.EndDrawing()
+
+	def OnPaint(self, evt):
+		#wxTreeCtrl.OnPaint(self, evt)
+		self.drawBitmaps(wxPaintDC(self))
+		evt.Skip()
+
+	def drawBitmaps(self, dc):
+		dc.BeginDrawing()
+		for bitmap in self.bitmaps:
+			for id in self.bitmaps[bitmap]:
+				if self.IsVisible(id):
+					rect = self.GetBoundingRect(id)
+					dc.DrawBitmap(bitmap, rect[0] + rect[2], rect[1])
+		dc.EndDrawing()
+
 class wxTreePanel(wxPanel):
 	def __init__(self, parent):
+		self.bitmaps = {}
+		for type in wxMessageLog.types:
+			self.bitmaps[type] = wxBitmapFromImage(wxImage('%s/%s.bmp' %
+																								(wxMessageLog.iconsdir, type)))
+			self.bitmapsize = (self.bitmaps[type].GetWidth(),
+													self.bitmaps[type].GetHeight())
+
 		wxPanel.__init__(self, parent, -1)
 
 		self.containers = {}
@@ -1582,16 +1631,8 @@ class wxTreePanel(wxPanel):
 		self.sashwindow.SetSashVisible(wxSASH_RIGHT, True)
 		self.sashwindow.SetExtraBorderSize(5)
 
-		self.bitmaps = {}
-		for type in wxMessageLog.types:
-			self.bitmaps[type] = wxBitmapFromImage(wxImage('%s/%s.bmp' %
-																								(wxMessageLog.iconsdir, type)))
-			self.bitmapsize = (self.bitmaps[type].GetWidth(),
-													self.bitmaps[type].GetHeight())
-
-		self.tree = wxTreeCtrl(self.sashwindow, -1,
-														style=wxTR_HIDE_ROOT|wxTR_NO_BUTTONS)
-		EVT_PAINT(self.tree, self.onPaint)
+		self.tree = wxBitmapTreeCtrl(self.sashwindow,
+																	wxTR_HIDE_ROOT|wxTR_NO_BUTTONS)
 
 		self.root = self.tree.AddRoot('Containers')
 
@@ -1604,6 +1645,16 @@ class wxTreePanel(wxPanel):
 		EVT_SIZE(self, self.OnSize)
 		EVT_SASH_DRAGGED(self, self.sashwindow.GetId(), self.OnSashDrag)
 		EVT_TREE_SEL_CHANGED(self.tree, self.tree.GetId(), self.OnTreeSelected)
+
+	def updateMessage(self, container, type):
+		try:
+			image = self.bitmaps[type]
+		except KeyError:
+			image = None
+		try:
+			self.tree.setItemBitmap(self.containers[container], image)
+		except KeyError:
+			pass
 
 	def OnSashDrag(self, evt):
 		if evt.GetDragStatus() == wxSASH_STATUS_OUT_OF_RANGE:
@@ -1650,31 +1701,6 @@ class wxTreePanel(wxPanel):
 		self.childsizer.Layout()
 		self.childsizer.FitInside(self.childpanel)
 
-	def onPaint(self, evt):
-		self.updateMessage(wxPaintDC(self.tree))
-		evt.Skip()
-
-	def updateMessage(self, dc):
-		# a bit slow
-		dc.BeginDrawing()
-		dc.SetPen(wxPen(self.tree.GetBackgroundColour()))
-		dc.SetBrush(wxBrush(self.tree.GetBackgroundColour()))
-		id = self.tree.GetFirstVisibleItem()
-		while True:
-			try:
-				rect = self.tree.GetBoundingRect(id)
-			except:
-				break
-			message = self.tree.GetPyData(id).message
-			if message is not None:
-				#dc.DrawText(message, rect[0] + rect[2], rect[1])
-				dc.DrawBitmap(self.bitmaps[message], rect[0] + rect[2], rect[1])
-			else:
-				dc.DrawRectangle(rect[0] + rect[2], rect[1],
-													self.bitmapsize[0], self.bitmapsize[1])
-			id = self.tree.GetNextVisible(id)
-		dc.EndDrawing()
-
 class wxTreePanelContainerWidget(wxContainerWidget):
 	def __init__(self, name, parent, container, value, configuration):
 		self.treepanel = container.getTreeContainer()
@@ -1713,24 +1739,19 @@ class wxTreePanelContainerWidget(wxContainerWidget):
 		wxContainerWidget.destroy(self)
 		self.treepanel.deleteContainer(self)
 
-	def updateMessages(self):
-		#for type in wxMessageLog.types:
-		#	if type in self.messages:
-		#		self.treepanel.setContainerImage(type, self)
-		#		return
-		#self.treepanel.setContainerImage(None, self)
-		self.message = None
+	def updateMessage(self):
+		messagetype = None
 		for type in wxMessageLog.types:
 			if type in self.messages:
-				self.message = type
-		self.treepanel.updateMessage(wxClientDC(self.treepanel.tree))
+				messagetype = type
+		self.treepanel.updateMessage(self, messagetype)
 
 	def onAddMessage(self, evt):
 		try:
 			self.messages[evt.type] += 1
 		except KeyError:
 			self.messages[evt.type] = 1
-			self.updateMessages()
+			self.updateMessage()
 		wxContainerWidget.onAddMessage(self, evt)
 
 	def onRemoveMessage(self, evt):
@@ -1738,7 +1759,7 @@ class wxTreePanelContainerWidget(wxContainerWidget):
 			self.messages[evt.type] -= 1
 			if self.messages[evt.type] == 0:
 				del self.messages[evt.type]
-				self.updateMessages()
+				self.updateMessage()
 		except KeyError:
 			pass
 		wxContainerWidget.onRemoveMessage(self, evt)
