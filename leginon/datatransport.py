@@ -13,22 +13,18 @@ class Base(leginonobject.LeginonObject):
 class Client(Base):
 	# hostname/port -> location or whatever
 	# needs to be transport generalized like server
-	def __init__(self, location):
+	def __init__(self, serverlocation):
 		Base.__init__(self)
 		self.clients = {}
 
 #		for t in self.transportmodules:
-#			self.clients[t] = apply(t.Client, (location,))
+#			self.clients[t] = apply(t.Client, (serverlocation,))
 
 		# will make manager sort this out soon
-		try:
-			if location['hostname'] == self.location()['hostname']:
-				#if location['PID'] == self.location()['PID']:
-				self.clients[localtransport] = apply(localtransport.Client, (location,))
-		except KeyError:
-			pass
-
-		self.clients[tcptransport] = apply(tcptransport.Client, (location,))
+		clientlocation = self.location()
+		if ('hostname' in serverlocation) and ('hostname' in clientlocation) and (serverlocation['hostname'] == clientlocation['hostname']):
+				self.clients[localtransport] = apply(localtransport.Client, (serverlocation,))
+		self.clients[tcptransport] = apply(tcptransport.Client, (serverlocation,))
 
 	def pull(self, id):
 		try:
