@@ -196,10 +196,10 @@ class Node(leginonobject.LeginonObject):
 #			self.confirmwaitlist[ievent.content] = threading.Event()
 #		self.confirmwaitlist[ievent.content].set()
 		#del self.confirmwaitlist[ievent.content]
-		# XXX don't know what key content with be XXX
-		if not ievent.content in self.confirmwaitlist:
-			self.confirmwaitlist[ievent.content] = threading.Event()
-		self.confirmwaitlist[ievent.content].set()
+		eventid = ievent['eventid']
+		if not eventid in self.confirmwaitlist:
+			self.confirmwaitlist[eventid] = threading.Event()
+		self.confirmwaitlist[eventid].set()
 
 	# data publish/research methods
 
@@ -239,7 +239,6 @@ class Node(leginonobject.LeginonObject):
 
 		if 'node' in kwargs and kwargs['node']:
 			self.datahandlers[self.datahandler].insert(idata)
-			# XXX unknown XXX
 			e = eventclass(self.ID(), dataid=idata['id'], confirm=confirm)
 			self.outputEvent(e)
 
@@ -291,8 +290,7 @@ class Node(leginonobject.LeginonObject):
 			raise TypeError('UnpublishEvent subclass required')
 #		self.server.datahandler.remove(dataid)
 		self.datahandlers[self.datahandler].remove(dataid)
-		# XXX unknown XXX
-		self.outputEvent(eventclass(self.ID(), dataid))
+		self.outputEvent(eventclass(self.ID(), dataid=dataid))
 
 	def publishRemote(self, idata):
 		'''Publish a piece of data with the specified data ID, setting all other data with the same data ID to the data value (including other nodes).'''
@@ -334,9 +332,8 @@ class Node(leginonobject.LeginonObject):
 	def addManager(self, loc):
 		'''Set the manager controlling the node and notify said manager this node is available.'''
 		self.managerclient = self.clientclass(self.ID(), loc)
-		# XXX unknown XXX
-		available_event = event.NodeAvailableEvent(self.ID(), self.location(),
-												self.__class__.__name__)
+		available_event = event.NodeAvailableEvent(self.ID(), location=self.location(),
+												nodeclass=self.__class__.__name__)
 		self.outputEvent(ievent=available_event, wait=True)
 
 	def handleAddNode(self, ievent):

@@ -22,7 +22,7 @@ class Navigator(node.Node):
 
 		self.addEventInput(event.ImageClickEvent, self.handleImageClick)
 		self.addEventInput(event.ImageAcquireEvent, self.handleImageAcquire)
-		self.addEventOutput(event.ImagePublishEvent)
+		self.addEventOutput(event.CameraImagePublishEvent)
 
 		## default camera config
 		currentconfig = self.cam.config()

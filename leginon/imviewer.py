@@ -84,7 +84,6 @@ class ImViewer(imagewatcher.ImageWatcher):
 			print 'CLICKINFO', clickinfo
 			imageinfo = self.imageInfo()
 			clickinfo.update(imageinfo)
-			# XXX unknown XXX
 			e = event.ImageClickEvent(self.ID(), clickinfo)
 			self.outputEvent(e)
 		finally:

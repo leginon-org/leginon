@@ -105,25 +105,24 @@ class Manager(node.Node):
 		'''Override node.Node.confirmEvent to distribute a confirmation event to the node waiting for confirmation of the event.'''
 #		self.outputEvent(event.ConfirmationEvent(self.ID(), ievent.id),
 #											0, ievent.id[:-1])
-		# XXX unknown XXX
-		self.outputEvent(event.ConfirmationEvent(self.ID(), ievent['id']),
+		self.outputEvent(event.ConfirmationEvent(self.ID(), eventid=ievent['id']),
 											0, ievent['id'][:-1])
 
 	def handleConfirmedEvent(self, ievent):
 		'''Event handler for distributing a confirmation event to the node waiting for confirmation of the event.'''
-		# XXX don't know what content key will be XXX
-		nodeid = ievent.content[:-1]
+		eventid = ievent['eventid']
+		nodeid = eventid[:-1]
 		if nodeid == self.id:
 			# this is bad since it will fill up with lots of events
-			if not ievent.content in self.confirmwaitlist:
-				self.confirmwaitlist[ievent.content] = threading.Event()
-				self.confirmwaitlist[ievent.content].set()
-				#del self.confirmwaitlist[ievent.content]
+			if not eventid in self.confirmwaitlist:
+				self.confirmwaitlist[eventid] = threading.Event()
+				self.confirmwaitlist[eventid].set()
+				#del self.confirmwaitlist[eventid]
 		else:
-			#self.confirmmap[ievent.content].remove(ievent.id[:-1])
-			self.confirmmap[ievent.content].remove(ievent['id'][:-1])
-			if len(self.confirmmap[ievent.content]) == 0:
-				del self.confirmmap[ievent.content]
+			#self.confirmmap[eventid].remove(ievent.id[:-1])
+			self.confirmmap[eventid].remove(ievent['id'][:-1])
+			if len(self.confirmmap[eventid]) == 0:
+				del self.confirmmap[eventid]
 				self.outputEvent(ievent, 0, nodeid)
 
 	def addEventDistmap(self, eventclass, from_node=None, to_node=None):
@@ -226,7 +225,7 @@ class Manager(node.Node):
 		'''Event handler for retrieving launchable classes.'''
 		#launchername = event.id[-2]
 		launchername = event['id'][-2]
-		dataid = event.content
+		dataid = event['dataid']
 		self.uilauncherdict[launchername]['node classes id'] = dataid
 		self.updateLauncherDictDataDict(launchername)
 
@@ -249,14 +248,12 @@ class Manager(node.Node):
 		nodeid = readyevent['id'][:-1]
 		self.printerror('registering node ' + str(nodeid))
 
-		# XXX unknown XXX
 		#print readyevent.content
-		nodelocation = readyevent.content['location']
+		nodelocation = readyevent['location']
 
 		# check if new node is launcher
 #		if isinstance(readyevent, event.LauncherAvailableEvent):
-		# XXX unknown XXX
-		if readyevent.content['class'] == 'Launcher':
+		if readyevent['nodeclass'] == 'Launcher':
 			self.addLauncher(nodeid, nodelocation)
 
 		# for the clients and mapping
@@ -332,16 +329,13 @@ class Manager(node.Node):
 
 		newid = self.id + (name,)
 		args = (newid, self.session, self.nodelocations) + nodeargs
-		# XXX unknown XXX
-		ev = event.LaunchEvent(self.ID(), newproc, target, args)
+		ev = event.LaunchEvent(self.ID(), newproc=newproc, target=target, args=args)
 		self.outputEvent(ev, 0, launcher)
 		return newid
 
 	def addNode(self, hostname, port):
 		'''Add a running node to the manager. Sends an event to the location.'''
-		# XXX unknown XXX
-		e = event.NodeAvailableEvent(self.id, self.location(),
-																	self.__class__.__name__)
+		e = event.NodeAvailableEvent(self.id, location=self.location(), nodeclass=self.__class__.__name__)
 		client = self.clientclass(self.ID(),
 												{'hostname': hostname, 'TCP port': port})
 		client.push(e)
@@ -363,12 +357,11 @@ class Manager(node.Node):
 	def registerData(self, publishevent):
 		'''Event handler. Calls publishDataLocation. Operates on singular data IDs or lists of data IDs.'''
 		if isinstance(publishevent, event.PublishEvent):
-			# XXX unknown XXX
-			id = publishevent.content
+			id = publishevent['dataid']
 			#self.publishDataLocation(id, publishevent.id[:-1])
 			self.publishDataLocation(id, publishevent['id'][:-1])
 		elif isinstance(publishevent, event.ListPublishEvent):
-			for id in publishevent.content:
+			for id in publishevent['idlist']:
 				#self.publishDataLocation(id, publishevent.id[:-1])
 				self.publishDataLocation(id, publishevent['id'][:-1])
 		else:
@@ -392,9 +385,6 @@ class Manager(node.Node):
 	def unregisterData(self, unpublishevent):
 		'''Event handler unregistering data from the manager. Removes a location mapped to the data ID.'''
 		if isinstance(unpublishevent, event.UnpublishEvent):
-			# XXX unknown XXX
-			id = unpublishevent.content
-			#self.unpublishDataLocation(id, unpublishevent.id[:-1])
 			self.unpublishDataLocation(id, unpublishevent['id'][:-1])
 		else:
 			raise TypeError

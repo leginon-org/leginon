@@ -23,15 +23,9 @@ def eventClasses():
 class Event(data.Data):
 	def typemap(cls):
 		t = data.Data.typemap()
-		t += [ ('confirm', int), ('content', object)]
+		t += [ ('confirm', int), ]
 		return t
 	typemap = classmethod(typemap)
-
-class OLDEvent(data.Data):
-	def __init__(self, id, content=None, confirm=False):
-		data.Data.__init__(self, id, content)
-		self.confirm = confirm
-
 
 ## Standard Event Types:
 ##
@@ -81,6 +75,7 @@ class NodeUninitializedEvent(NotificationEvent):
 	'Event sent by a node to indicate that it is no longer operational'
 	pass
 
+## could PublishEvent and UnpublishEvent be derived from a common class?
 class PublishEvent(NotificationEvent):
 	'Event indicating data was published'
 	def typemap(cls):
@@ -117,18 +112,6 @@ class ListPublishEvent(Event):
 
 class NodeClassesPublishEvent(PublishEvent):
 	'Event indicating launcher published new list of node classes'
-	pass
-
-class CalibrationPublishEvent(PublishEvent):
-	'Event indicating calibration was published'
-	pass
-
-class PresetPublishEvent(PublishEvent):
-	'Event indicating preset was published'
-	pass
-
-class CorrelationPublishEvent(PublishEvent):
-	'Event indicating cross correlation was published'
 	pass
 
 class ImagePublishEvent(PublishEvent):
@@ -169,6 +152,9 @@ class StateMosaicPublishEvent(PublishEvent):
 	'Event indicating state mosaic data was published'
 	pass
 
+class ImageTargetListPublishEvent(PublishEvent):
+	pass
+
 class ControlEvent(Event):
 	'Event that passes a value with it'
 	pass
@@ -191,10 +177,6 @@ class LaunchEvent(ControlEvent):
 		return t
 	typemap = classmethod(typemap)
 
-class UpdateNodeClassesEvent(ControlEvent):
-	'ControlEvent sent to a launcher telling it to update node classes'
-	pass
-
 class LockEvent(ControlEvent):
 	'Event that signals a lock'
 	pass
@@ -203,20 +185,32 @@ class UnlockEvent(ControlEvent):
 	'Event that signals an unlock'
 	pass
 
+## this is basically the same as data.ImageTargetData
 class ImageClickEvent(Event):
-	def __init__(self, id, content, confirm=False):
-		Event.__init__(self, id, dict(content), confirm)
+	def typemap(cls):
+		t = Event.typemap()
+		t += [
+		  ('canvas x', int),
+		  ('canvas y', int),
+		  ('image x', int),
+		  ('image y', int),
+		  ('array shape', tuple),
+		  ('array row', int),
+		  ('array column', int),
+		  ('array value', float),
+
+		  ('image id', tuple),
+		  ('scope', dict),
+		  ('camera', dict),
+		  ('source', str),
+		  ('preset', PresetData)
+		]
+		return t
+	typemap = classmethod(typemap)
 
 class ImageAcquireEvent(Event):
 	pass
 	
-class ImageTargetPublishEvent(PublishEvent):
-	pass
-
-class ImageTargetListPublishEvent(PublishEvent):
-	pass
-	
-
 ###########################################################
 ###########################################################
 ## event related exceptions

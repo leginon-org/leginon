@@ -14,7 +14,6 @@ class Launcher(node.Node):
 		node.Node.__init__(self, id, nodelocations, tcpport=port, **kwargs)
 
 		self.addEventInput(event.LaunchEvent, self.handleLaunch)
-		self.addEventInput(event.UpdateNodeClassesEvent, self.publishNodeClasses)
 		self.addEventOutput(event.NodeClassesPublishEvent)
 		self.__launchlock = threading.Lock()
 		self.caller = calllauncher.CallLauncher()
@@ -27,8 +26,8 @@ class Launcher(node.Node):
 
 	def addManager(self, loc):
 		self.managerclient = self.clientclass(self.ID(), loc)
-		e = event.NodeAvailableEvent(self.ID(), self.location(),
-					self.__class__.__name__)
+		e = event.NodeAvailableEvent(self.ID(), location=self.location(),
+					nodeclass=self.__class__.__name__)
 		self.outputEvent(ievent=e, wait=1)
 		time.sleep(1)
 		self.publishNodeClasses()
@@ -44,11 +43,10 @@ class Launcher(node.Node):
 
 	def handleLaunch(self, launchevent):
 		# unpack event content
-		# XXX don't know what key content will be XXX
-		newproc = launchevent.content['newproc']
-		targetclass = launchevent.content['targetclass']
-		args = launchevent.content['args']
-		kwargs = launchevent.content['kwargs']
+		newproc = launchevent['newproc']
+		targetclass = launchevent['targetclass']
+		args = launchevent['args']
+		kwargs = launchevent['kwargs']
 		kwargs['launchlock'] = self.__launchlock
 
 		# get the requested class object

@@ -18,13 +18,10 @@ class ImageWatcher(watcher.Watcher):
 		watchfor = event.ImagePublishEvent
 		lockblocking = 0
 		watcher.Watcher.__init__(self, id, nodelocations, watchfor, lockblocking, **kwargs)
-		self.addEventOutput(event.ImageClickEvent)
 
 		self.iv = None
 		self.numarray = None
 		self.imagedata = None
-
-		self.clickactions = ('ImageClickEvent', 'Target Editor')
 
 	def imageInfo(self):
 		'''
@@ -50,19 +47,3 @@ class ImageWatcher(watcher.Watcher):
 		self.imagedata = imagedata
 		#self.numarray = imagedata.content['image']
 		self.numarray = imagedata['image']
-
-	def OLDselectClickAction(self, value=None):
-		if value is not None:
-			self.clickaction = value
-
-		## turn off callbacks
-		self.iv.canvas.targetClickerOff()
-		self.clickEventOff()
-
-		## choose new callback to turn on
-		if self.clickaction == 'ImageClickEvent':
-			self.clickEventOn()
-		elif self.clickaction == 'Target Editor':
-			self.iv.canvas.targetClickerOn()
-			
-		return self.clickaction

@@ -28,7 +28,6 @@ class FFTViewer(imagewatcher.ImageWatcher):
 			return
 		self.imagedata = imagedata
 
-		#numarray = imagedata.content['image']
 		numarray = imagedata['image']
 		### calculate power image
 		self.numarray = cameraimage.power(numarray)

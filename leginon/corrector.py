@@ -56,8 +56,7 @@ class Corrector(node.Node):
 		self.addEventOutput(event.ListPublishEvent)
 
 		ids = ['corrected image data',]
-		# XXX unknown XXX
-		e = event.ListPublishEvent(self.ID(), ids)
+		e = event.ListPublishEvent(self.ID(), idlist=ids)
 		self.outputEvent(e)
 
 		self.defineUserInterface()

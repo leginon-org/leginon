@@ -26,8 +26,7 @@ class DataHandler(datahandler.DataBinder):
 		if isinstance(idata, event.Event):
 			datahandler.DataBinder.insert(self, idata)
 		else:
-			#self.EMnode.setEM(idata.content)
-			self.EMnode.setEM(idata)
+			self.EMnode.setEM(idata['em'])
 
 	# borrowed from NodeDataHandler
 	def setBinding(self, eventclass, func):
@@ -80,7 +79,7 @@ class EM(node.Node):
 		ids = ['scope', 'camera', 'camera no image data', 'all']
 		ids += self.scope.keys()
 		ids += self.camera.keys()
-		e = event.ListPublishEvent(self.ID(), ids)
+		e = event.ListPublishEvent(self.ID(), idlist=ids)
 		self.outputEvent(e, wait=True)
 		self.outputEvent(event.NodeInitializedEvent(self.ID()))
 

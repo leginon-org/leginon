@@ -20,4 +20,4 @@ class Calibrator(node.Node):
 
 	def currentState(self):
 		dat = self.researchByDataID('scope')
-		return dat.content
+		return dat['em']
