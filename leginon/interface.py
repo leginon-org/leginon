@@ -115,16 +115,22 @@ class Server(xmlrpcserver.xmlrpcserver):
 
 	def uiSet(self, name, value):
 		'''this is how a UI client sets uidata'''
-		self.setData(name,value)
+		self.setData(name, value)
 		return self.uiGet(name)
 
 	def setData(self, name, value):
 		'''this is how something with access to this server sets uidata'''
-		self.uidata[name] = value
+		if not (name in self.uidata) or not callable(self.uidata[name]):
+			self.uidata[name] = value
+		else:
+			self.uidata[name](name, value)
 
 	def getData(self, name):
 		'''this is how something with access to this server gets uidata'''
-		return self.uidata[name]
+		if callable(self.uidata[name]):
+			return self.uidata[name](name)
+		else:
+			return self.uidata[name]
 
 	def registerMethod(self, func, name, argspec, returnspec=None):
 		self.server.register_function(func, name)

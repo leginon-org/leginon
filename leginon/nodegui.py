@@ -69,8 +69,8 @@ class Data(SpecWidget):
 			self.tkvar.set(value)
 
 	def get(self):
-		if type(self.type) is dict:
-			return self.struct
+		if self.type == 'struct':
+			return self.tkvar
 		else:
 			return self.tkvar.get()
 
@@ -128,6 +128,7 @@ class Data(SpecWidget):
 		raise NotImplementedError
 
 	def update_tree(self, treedict):
+		self.tkvar = treedict
 		if self.sc is not None:
 			self.sc.frame.destroy()
 
