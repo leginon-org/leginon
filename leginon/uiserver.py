@@ -58,7 +58,6 @@ class UIServer(XMLRPCServer, uidata.UIContainer):
 
 	def setFromClient(self, namelist, value):
 		'''this is how a UI client sets a data value'''
-		print 'setFromClient', namelist, value
 		uidataobject = self.getUIObjectFromList(namelist)
 		if not isinstance(uidataobject, uidata.UIData):
 			raise TypeError('name list does not resolve to UIData instance')
@@ -67,7 +66,6 @@ class UIServer(XMLRPCServer, uidata.UIContainer):
 		return ''
 
 	def commandFromClient(self, namelist, args):
-		print 'commandFromClient', namelist, args
 		uimethodobject = self.getUIObjectFromList(namelist)
 		if not isinstance(uimethodobject, uidata.UIMethod):
 			raise TypeError('name list does not resolve to UIMethod instance')
@@ -75,7 +73,6 @@ class UIServer(XMLRPCServer, uidata.UIContainer):
 		#threading.Thread(name=uimethodobject.name + ' thread',
 		#									target=uimethodobject.method, args=args).start()
 		apply(uimethodobject.method, args)
-		print 'commandFromClient done'
 		return ''
 
 	def set(self, namelist, value):

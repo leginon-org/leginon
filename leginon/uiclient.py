@@ -33,10 +33,14 @@ class UIClient(XMLRPCClient, uiserver.XMLRPCServer):
 		self.execute('ADDSERVER', (self.hostname, self.port))
 
 	def setServer(self, namelist, value):
-		self.execute('SET', (namelist, value))
+		#self.execute('SET', (namelist, value))
+		threading.Thread(target=self.execute,
+											args=('SET', (namelist, value))).start()
 
 	def commandServer(self, namelist, args):
-		self.execute('COMMAND', (namelist, args))
+		#self.execute('COMMAND', (namelist, args))
+		threading.Thread(target=self.execute,
+											args=('COMMAND', (namelist, args))).start()
 
 	def addFromServer(self, namelist, typelist, value):
 		raise NotImplementedError

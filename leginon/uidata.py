@@ -266,7 +266,6 @@ class UIMessageDialog(UIDialog):
 
 	def ok(self):
 		self.destroy()
-		print 'ok done'
 
 class UIImage(UIBinary):
 	typelist = UIBinary.typelist + ('image',)
