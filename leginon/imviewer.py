@@ -16,8 +16,6 @@ import camerafuncs
 reload(camerafuncs)
 import xmlrpclib
 
-fake = 1
-
 class ImViewer(watcher.Watcher, camerafuncs.CameraFuncs):
 	def __init__(self, id, nodelocations):
 		watchfor = event.ImagePublishEvent
@@ -102,23 +100,23 @@ class ImViewer(watcher.Watcher, camerafuncs.CameraFuncs):
 
 	def uiAcquireRaw(self):
 		imarray = self.acquireArray(0)
-		mrcstr = Mrc.numeric_to_mrcstr(imarray)
+		if imarray is None:
+			mrcstr = ''
+		else:
+			mrcstr = Mrc.numeric_to_mrcstr(imarray)
 		return xmlrpclib.Binary(mrcstr)
 
 	def acquireCorrected(self):
 		self.acqcorbut['state'] = DISABLED
-		if fake:
-			self.acquireAndDisplay(2)
-		else:
-			self.acquireAndDisplay(1)
+		self.acquireAndDisplay(1)
 		self.acqcorbut['state'] = NORMAL
 
 	def uiAcquireCorrected(self):
-		if fake:
-			im = self.acquireArray(2)
+		im = self.acquireArray(1)
+		if im is None:
+			mrcstr = ''
 		else:
-			im = self.acquireArray(1)
-		mrcstr = Mrc.numeric_to_mrcstr(im)
+			mrcstr = Mrc.numeric_to_mrcstr(im)
 		return xmlrpclib.Binary(mrcstr)
 
 	def acquireArray(self, corr=0):
@@ -130,8 +128,14 @@ class ImViewer(watcher.Watcher, camerafuncs.CameraFuncs):
 		return imarray
 
 	def acquireAndDisplay(self, corr=0):
+		print 'acquireArray'
 		imarray = self.acquireArray(corr)
-		self.displayNumericArray(imarray)
+		print 'displayNumericArray'
+		if imarray is None:
+			self.iv.displayMessage('NO IMAGE ACQUIRED')
+		else:
+			self.displayNumericArray(imarray)
+		print 'acquireAndDisplay done'
 
 	def acquireEvent(self):
 		self.acqeventbut['state'] = DISABLED
