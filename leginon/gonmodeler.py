@@ -9,6 +9,8 @@ import timer
 import cameraimage
 import camerafuncs
 import threading
+import calibrationclient
+import gonmodel
 
 class GonModeler(node.Node):
 	def __init__(self, id, nodelocations, **kwargs):
@@ -20,6 +22,7 @@ class GonModeler(node.Node):
 		self.settle = 2.0
 		self.threadstop = threading.Event()
 		self.threadlock = threading.Lock()
+		self.calclient = calibrationclient.ModeledStageCalibrationClient(self)
 
 		node.Node.__init__(self, id, nodelocations, **kwargs)
 		self.defineUserInterface()
@@ -144,6 +147,31 @@ class GonModeler(node.Node):
 		f.write(datastr + '\n')
 		f.close()
 
+	def uiFit(self, datfile, terms):
+		self.fit(datfile, terms)
+		return ''
+
+	def uiMagOnly(self, datfile):
+
+		return ''
+
+	def fit(self, datfile, terms):
+		magfile = None
+		# modfile  -> moddict
+		# magfile => magdict
+		dat = gonmodel.GonData(datfile)
+		axis = dat.axis
+		mag = dat.mag
+
+		mod = gonmodel.GonModel()
+		mod.fit_data(dat, terms)
+
+		mod_dict = mod.toDict()
+		mag_dict = dat.dict()
+
+		self.calclient.setModel(axis, mod_dict)
+		self.calclient.setMagCalibration(mag, mag_dict)
+
 	def getStagePosition(self):
 		dat = self.researchByDataID('stage position')
 		return dat.content
@@ -164,10 +192,22 @@ class GonModeler(node.Node):
 		start = self.registerUIMethod(self.uiStartLoop, 'Start', argspec)
 		stop = self.registerUIMethod(self.uiStopLoop, 'Stop', ())
 		measure = self.registerUIContainer('Measure', (start, stop))
+		argspec = (
+			self.registerUIData('Data File', 'string'),
+			self.registerUIData('Terms', 'integer')
+		)
+		fit = self.registerUIMethod(self.uiFit, 'Fit Model', argspec)
+
+		argspec = (
+			self.registerUIData('Data File', 'string'),
+		)
+		magonly = self.registerUIMethod(self.uiMagOnly, 'Mag Only', argspec)
+
+		modelcont = self.registerUIContainer('Model', (measure,fit,magonly))
 
 		camconfig = self.cam.configUIData()
 
-		self.registerUISpec('Goniometer Modeler', (measure, camconfig, nodespec))
+		self.registerUISpec('Goniometer Modeler', (modelcont, camconfig, nodespec))
 
 	def uiStartLoop(self, axis, points, interval):
 		if not self.threadlock.acquire(0):
