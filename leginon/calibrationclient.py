@@ -348,17 +348,15 @@ class MatrixCalibrationClient(CalibrationClient):
 		caldatalist = self.node.research(datainstance=queryinstance, results=1)
 		if len(caldatalist) > 0:
 			caldata = caldatalist[0]
+			return caldata
 		else:
-			caldata = None
-		return caldata
+			raise NoMatrixCalibrationError('HT: %s, mag: %s, cal type: %s' % (ht, mag, caltype))
 
 	def retrieveMatrix(self, ht, mag, caltype):
 		'''
 		finds the requested matrix using magnification and type
 		'''
 		caldata = self.researchMatrix(ht, mag, caltype)
-		if caldata is None:
-			raise NoMatrixCalibrationError('HT: %s, mag: %s, cal type: %s' % (ht, mag, caltype))
 		matrix = caldata['matrix'].copy()
 		return matrix
 
@@ -700,12 +698,7 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 
 		vect = (shift['x'], shift['y'])
 
-		try:
-			matrix = self.retrieveMatrix(ht, mag, par)
-			if matrix is None:
-				return None
-		except NoMatrixCalibrationError:
-			return None
+		matrix = self.retrieveMatrix(ht, mag, par)
 		matrix = LinearAlgebra.inverse(matrix)
 
 		pixvect = Numeric.matrixmultiply(matrix, vect)
