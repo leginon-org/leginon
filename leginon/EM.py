@@ -419,11 +419,11 @@ class EM(node.Node):
 		orderedkeys.sort(self.cmpEM)
 
 		if self.scope is not None:
-			scopekeys = self.scope.keys()
+			scopekeys = self.scope.writekeys()
 		else:
 			scopekeys = []
 		if self.camera is not None:
-			camerakeys = self.camera.keys()
+			camerakeys = self.camera.writekeys()
 		else:
 			camerakeys = []
 
