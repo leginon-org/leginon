@@ -187,7 +187,9 @@ if sys.platform == 'win32':
 
 			# if label is same, kinda screwed
 			self.gridtrayids = {}
-			for i in project.gridboxes.getall():
+			projectdata = project.ProjectData()
+			gridboxes = projectdata.getGridBox()
+			for i in gridboxes.getall():
 				self.gridtrayids[i['label']] = i['gridboxId']
 	
 			self.addEventInput(event.InsertGridEvent, self.handleInsert)
