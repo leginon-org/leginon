@@ -12,37 +12,57 @@ class AcquisitionDoneEvent(wx.PyEvent):
 		wx.PyEvent.__init__(self)
 		self.SetEventType(AcquisitionDoneEventType)
 
+class StatsPanel(wx.Panel):
+	def __init__(self, parent, title='Statistics'):
+		wx.Panel.__init__(self, parent, -1)
+
+		self.statslist = [
+			'Mean',
+			'Min.',
+			'Max.',
+			'Std. dev.',
+		]
+
+		self.labels = {}
+		self.values = {}
+		self.sz = wx.GridBagSizer(5, 5)
+		for i, stat in enumerate(self.statslist):
+			self.labels[stat] = wx.StaticText(self, -1, stat + ':')
+			self.values[stat] = wx.StaticText(self, -1, '', style=wx.ALIGN_RIGHT)
+			self.sz.Add(self.labels[stat], (i, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+			self.sz.Add(self.values[stat], (i, 1), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		self.sz.AddGrowableCol(1)
+
+		self.sbsz = wx.StaticBoxSizer(wx.StaticBox(self, -1, title), wx.VERTICAL)
+		self.sbsz.Add(self.sz, 1, wx.EXPAND|wx.ALL, 5)
+		self.SetSizerAndFit(self.sbsz)
+
+		self.keymap = {
+			'Mean': 'mean',
+			'Min.': 'min',
+			'Max.': 'max',
+			'Std. dev.': 'stdev',
+		}
+
+	def setStats(self, stats):
+		for stat in self.statslist:
+			try:
+				value = stats[self.keymap[stat]]
+			except KeyError:
+				value = ''
+			self.values[stat].SetLabel(str(value))
+		self.sbsz.Layout()
+
 class Panel(gui.wx.Node.Panel):
 	icon = 'corrector'
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
 
 		# statistics
-		self.szstats = self._getStaticBoxSizer('Statistics', (1, 0), (1, 1),
-																						wx.EXPAND|wx.ALL)
-		stlmean = wx.StaticText(self, -1, 'Mean:')
-		stlmin = wx.StaticText(self, -1, 'Minimum:')
-		stlmax = wx.StaticText(self, -1, 'Maximum:')
-		stlsigma = wx.StaticText(self, -1, 'Std. Dev.:')
+		self.statspanel = StatsPanel(self)
+		self.szmain.Add(self.statspanel, (1, 0), (1, 1), wx.EXPAND)
 
-		self.stvmean = wx.StaticText(self, -1, '')
-		self.stvmin = wx.StaticText(self, -1, '')
-		self.stvmax = wx.StaticText(self, -1, '')
-		self.stvsigma = wx.StaticText(self, -1, '')
-
-		self.szstats.Add(stlmean, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.szstats.Add(self.stvmean, (0, 1), (1, 1),
-											wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		self.szstats.Add(stlmin, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.szstats.Add(self.stvmin, (1, 1), (1, 1),
-											wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		self.szstats.Add(stlmax, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.szstats.Add(self.stvmax, (2, 1), (1, 1),
-											wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		self.szstats.Add(stlsigma, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.szstats.Add(self.stvsigma, (3, 1), (1, 1),
-											wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		self.szstats.AddGrowableCol(1)
 
 		# settings
 		self.szplan = self._getStaticBoxSizer('Plan', (2, 0), (1, 1),
@@ -99,7 +119,7 @@ class Panel(gui.wx.Node.Panel):
 		self.szimage.AddGrowableRow(0)
 		self.szimage.AddGrowableCol(0)
 
-		self.szmain.AddGrowableRow(4)
+		self.szmain.AddGrowableRow(5)
 		self.szmain.AddGrowableCol(1)
 
 		self.SetSizerAndFit(self.szmain)
@@ -115,17 +135,7 @@ class Panel(gui.wx.Node.Panel):
 
 	def onSetImage(self, evt):
 		gui.wx.Node.Panel.onSetImage(self, evt)
-		if 'mean' in evt.statistics:
-			self.stvmean.SetLabel(str(evt.statistics['mean']))
-		if 'min' in evt.statistics:
-			self.stvmin.SetLabel(str(evt.statistics['min']))
-		if 'max' in evt.statistics:
-			self.stvmax.SetLabel(str(evt.statistics['max']))
-		if 'stdev' in evt.statistics:
-			self.stvsigma.SetLabel(str(evt.statistics['stdev']))
-		#if self.IsShown():
-		#	self.szmain.Layout()
-		#	self.GetParent().Layout()
+		self.statspanel.setStats(evt.statistics)
 
 	def onSettingsButton(self, evt):
 		dialog = SettingsDialog(self)
@@ -134,8 +144,17 @@ class Panel(gui.wx.Node.Panel):
 		self.node.getPlan()
 		self.setPlan(self.node.plan)
 
+	def _acquisitionEnable(self, enable):
+		self.beditplan.Enable(enable)
+		self.bsettings.Enable(enable)
+		self.rbdark.Enable(enable)
+		self.rbbright.Enable(enable)
+		self.rbraw.Enable(enable)
+		self.rbcorrected.Enable(enable)
+		self.bacquire.Enable(enable)
+
 	def onAcquire(self, evt):
-		self.Enable(False)
+		self._acquisitionEnable(False)
 		if self.rbdark.GetValue():
 			method = self.node.acquireDark
 		elif self.rbbright.GetValue():
@@ -147,7 +166,7 @@ class Panel(gui.wx.Node.Panel):
 		threading.Thread(target=method).start()	
 
 	def onAcquisitionDone(self, evt):
-		self.Enable(True)
+		self._acquisitionEnable(True)
 
 	def acquisitionDone(self):
 		evt = AcquisitionDoneEvent()
@@ -232,7 +251,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 
 class EditPlanDialog(wx.Dialog):
 	def __init__(self, parent):
-		wx.Dialog.__init__(self, parent, -1, 'Edit Plan')
+		wx.Dialog.__init__(self, parent.GetParent(), -1, 'Edit Plan')
+		self.parent = parent
 
 		strows = wx.StaticText(self, -1, 'Bad rows:')
 		stcolumns = wx.StaticText(self, -1, 'Bad columns:')
@@ -261,8 +281,8 @@ class EditPlanDialog(wx.Dialog):
 
 	def onSave(self, evt):
 		try:
-			rows = self.GetParent().str2plan(self.tcrows.GetValue())
-			columns = self.GetParent().str2plan(self.tccolumns.GetValue())
+			rows = self.parent.str2plan(self.tcrows.GetValue())
+			columns = self.parent.str2plan(self.tccolumns.GetValue())
 		except ValueError:
 			dialog = wx.MessageDialog(self, 'Invalid plan', 'Error',
 																wx.OK|wx.ICON_ERROR)

@@ -176,7 +176,7 @@ class Corrector(node.Node):
 	def acquireSeries(self, n, camdata):
 		series = []
 		for i in range(n):
-			self.logger.info('Acquiring %s of %s' % (i+1, n))
+			self.logger.info('Acquiring reference image (%s of %s)' % (i+1, n))
 			imagedata = self.cam.acquireCameraImageData(correction=False)
 			numimage = imagedata['image']
 			camdata = imagedata['camera']
@@ -191,11 +191,11 @@ class Corrector(node.Node):
 		if dark:
 			tempcamdata['exposure type'] = 'dark'
 			typekey = 'dark'
-			self.logger.info('Acquiring dark')
+			self.logger.info('Acquiring dark references...')
 		else:
 			tempcamdata['exposure type'] = 'normal'
 			typekey = 'bright'
-			self.logger.info('Acquiring bright')
+			self.logger.info('Acquiring bright references...')
 		self.cam.setCameraEMData(tempcamdata)
 
 		seriesinfo = self.acquireSeries(self.settings['n average'],
@@ -204,7 +204,7 @@ class Corrector(node.Node):
 		seriescam = seriesinfo['camera']
 		seriesscope = seriesinfo['scope']
 
-		self.logger.info('Averaging series')
+		self.logger.info('Averaging reference series...')
 		ref = imagefun.averageSeries(series)
 
 		corstate = data.CorrectorCamstateData()
@@ -213,12 +213,12 @@ class Corrector(node.Node):
 		corstate['binning'] = seriescam['binning']
 
 		refimagedata = self.storeRef(typekey, ref, corstate)
-
-		self.logger.info('Got reference image, calculating normalization')
-		self.calc_norm(refimagedata)
+		if refimagedata is not None:
+			self.logger.info('Got reference image, calculating normalization')
+			self.calc_norm(refimagedata)
 
 		if tempcamdata['exposure type'] == 'dark':
-			self.logger.info('Reseting camera exposure type to normal from dark')
+			self.logger.info('Reseting camera exposure type to normal from dark.')
 			self.cam.setCameraEMData(originalcamdata)
 		return ref
 
@@ -236,12 +236,14 @@ class Corrector(node.Node):
 		imagetemp['session'] = data.SessionData()
 		imagetemp['session']['instrument'] = self.session['instrument']
 		self.logger.info('Researching reference image')
-		refs = self.research(datainstance=imagetemp, results=1)
-		self.logger.info('Reference image researched')
-		if refs:
-			ref = refs[0]
-		else:
+		try:
+			refs = self.research(datainstance=imagetemp, results=1)
+		except node.ResearchError, e:
+			self.logger.warning('Finding reference image failed: %s' % (e,))
 			ref = None
+		else:
+			self.logger.info('Reference image researched')
+			ref = refs[0]
 		return ref
 
 	def refKey(self, camstate, type):
@@ -273,7 +275,6 @@ class Corrector(node.Node):
 			image = ref['image']
 			self.ref_cache[key] = image
 		else:
-			self.logger.info('No reference image found')
 			image = None
 		return image
 
@@ -297,7 +298,11 @@ class Corrector(node.Node):
 		imagetemp['filename'] = self.filename(type, imagetemp.dmid[-1])
 		imagetemp['session'] = self.session
 		self.logger.info('Publishing reference image...')
-		self.publish(imagetemp, pubevent=True, database=True)
+		try:
+			self.publish(imagetemp, pubevent=True, database=True)
+		except node.PublishError, e:
+			self.logger.error('Publishing reference image failed: %s' % (e,))
+			return None
 		self.logger.info('Reference image published')
 		return imagetemp
 
@@ -311,13 +316,13 @@ class Corrector(node.Node):
 			dark = corimagedata['image']
 			bright = self.retrieveRef(corstate, 'bright')
 			if bright is None:
-				self.logger.info('No bright reference image')
+				self.logger.error('No bright reference image for normalization calculations')
 				return
 		if isinstance(corimagedata, data.BrightImageData):
 			bright = corimagedata['image']
 			dark = self.retrieveRef(corstate, 'dark')
 			if dark is None:
-				self.logger.info('No dark reference image')
+				self.logger.error('No dark reference image for normalization calculations')
 				return
 
 		norm = bright - dark
@@ -362,8 +367,8 @@ class Corrector(node.Node):
 
 		if self.settings['despike']:
 			self.logger.info('Despiking...')
-			thresh = self.despikevalue.get()
-			nsize = self.despikesize.get()
+			nsize = self.settings['despike size']
+			thresh = self.settings['despike threshold']
 			imagefun.despike(normalized, nsize, thresh)
 			self.logger.info('Despiked')
 
@@ -414,6 +419,7 @@ class Corrector(node.Node):
 			r = diff * norm
 			return r
 		else:
+			self.logger.warning('Cannot find references, image will not be normalized')
 			return raw
 
 	def stats(self, im):

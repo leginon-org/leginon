@@ -297,17 +297,12 @@ class Node(leginonobject.LeginonObject):
 		if database:
 			try:
 				self.dbdatakeeper.insert(idata, force=dbforce)
-			except Exception, e:
+			except (OSError, IOError), e:
+				raise PublishError(str(e))
+			except KeyError:
+				raise PublishError('No DBDataKeeper to publish data to.')
+			except Exception:
 				raise
-				if isinstance(e, OSError):
-					message = str(e)
-				elif isinstance(e, IOError):
-					message = str(e)
-				elif isinstance(e, KeyError):
-					message = 'no DBDataKeeper to publish'
-				else:
-					raise
-				raise PublishError(message)
 
 		### publish event
 		if pubevent:
