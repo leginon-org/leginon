@@ -455,8 +455,8 @@ if __name__ == '__main__':
 	hostname = sys.argv[1]
 	port = int(sys.argv[2])
 
-	tk = Tk()
-	gui = NodeGUI(tk, hostname, port)
+	root = Tk()
+	gui = NodeGUI(root, hostname, port)
 	gui.pack(expand=YES, fill=BOTH)
-	tk.mainloop()
+	root.mainloop()
 

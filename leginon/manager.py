@@ -397,13 +397,14 @@ if __name__ == '__main__':
 
 	## GUI
 	if sys.platform == 'win32':
-		gui = 0
+		gui = 1
 	else:
 		gui = 1
 	if gui:
-		import nodegui
+		import nodegui, Tkinter
 		port = m.location()['UI port']
 		host = m.location()['hostname']
-		tk = nodegui.newGUIWindow(host,port)
-		tk.wm_title('Leginon Manager')
+		root = Tkinter.Tk()
+		gui = nodegui.NodeGUI(root, host, port)
+		gui.pack(expand=Tkinter.YES, fill=Tkinter.BOTH)
 	m.start()
