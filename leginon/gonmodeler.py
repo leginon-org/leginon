@@ -204,7 +204,7 @@ class GonModeler(node.Node):
 		measurecont.addObjects((self.uiaxis, self.uipoints, self.uiinterval, self.uidatalabel, start, stop, self.uiconvertfilename, convert))
 
 		self.uifitlabel = uidata.String('Label', '', 'rw', persist=True)
-		self.uifitmag = uidata.Integer('Magnification', '', 'rw', persist=True)
+		self.uifitmag = uidata.Integer('Magnification', None, 'rw', persist=True)
 		self.uifitaxis = uidata.SingleSelectFromList('Axis',  ['x','y'], 0, persist=True)
 		self.uiterms = uidata.Integer('Terms', 5, 'rw', persist=True)
 		fit = uidata.Method('Fit Model', self.uiFit)

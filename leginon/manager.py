@@ -547,9 +547,8 @@ class Manager(node.Node):
 		'''Calls application.Application.launch.'''
 		if self.uilauncheraliascontainer is None:
 			return
-		for alias in self.uilauncheraliascontainer.getObjects():
-			self.application.setLauncherAlias(alias.getName(),
-																				(alias.getSelectedValue(),))
+		for alias in self.uilauncheraliascontainer.uiobjectlist:
+			self.application.setLauncherAlias(alias.name, (alias.getSelectedValue(),))
 		self.application.launch()
 
 	def killApp(self):

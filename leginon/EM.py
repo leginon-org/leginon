@@ -276,7 +276,6 @@ class EM(node.Node):
 			self.scope = methoddict.factory(scopeclass)()
 		except Exception, e:
 			print 'cannot set scope to type', scopename
-			print e
 
 	def setCameraType(self, cameraname):
 		modulename, classname, d = emregistry.getCameraInfo(cameraname)
@@ -285,7 +284,6 @@ class EM(node.Node):
 			self.camera = methoddict.factory(cameraclass)()
 		except Exception, e:
 			print 'cannot set camera to type', cameraname
-			print e
 
 	def main(self):
 		pass
@@ -664,9 +662,12 @@ class EM(node.Node):
 		self.cameracontainer = uidata.LargeContainer('Camera')
 		refreshcamera = uidata.Method('Refresh', self.uiRefreshCamera)
 		setcamera = uidata.Method('Set', self.uiSetCamera)
-		self.cameracontainer.addObjects([camerainterface, refreshcamera, setcamera])
+		self.cameracontainer.addObjects((camerainterface, refreshcamera, setcamera))
 
 		container = uidata.LargeContainer('EM')
-		container.addObjects((self.scopecontainer, self.cameracontainer))
+		if self.scope is not None:
+			container.addObject(self.scopecontainer)
+		if self.camera is not None:
+			container.addObject(self.cameracontainer)
 		self.uiserver.addObject(container)
 

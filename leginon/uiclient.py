@@ -511,7 +511,7 @@ class wxContainerWidget(wxWidget):
 		if 'enabled' in configuration:
 			wxWidget.enable(self, configuration['enabled'])
 		for name, child in self.children.items():
-			evt = ConfigureWidgetEvent([], configuration)
+			evt = ConfigureWidgetEvent([], configuration, None)
 			wxPostEvent(child.widgethandler, evt)
 
 	def onSetServer(self, evt):
