@@ -56,14 +56,8 @@ class mySimpleDialog(tkSimpleDialog.Dialog):
 		self.wait_window(self)
 
 class AddDialog(mySimpleDialog):
-	def __init__(self, parent, name, choices, sources=[]):
+	def __init__(self, parent, name):
 		self.name = name
-		self.sources = sources
-		self.sources.sort()
-		self.choices = choices
-		self.choices.sort()
-		for source in self.sources:
-			self.choices.remove(source)
 		mySimpleDialog.__init__(self, parent, 'Add')
 
 	def body(self, master):
@@ -72,6 +66,22 @@ class AddDialog(mySimpleDialog):
 		self.nameentry = Tkinter.Entry(master)
 		self.nameentry.grid(row=1, column=0)
 		self.nameentry.insert(Tkinter.END, self.name)
+
+	def apply(self):
+		self.result = self.nameentry.get()
+
+class AddChoicesDialog(AddDialog):
+	def __init__(self, parent, name, choices, sources=[]):
+		self.sources = sources
+		self.sources.sort()
+		self.choices = choices
+		self.choices.sort()
+		for source in self.sources:
+			self.choices.remove(source)
+		AddDialog.__init__(self, parent, name)
+
+	def body(self, master):
+		AddDialog.body(self, master)
 
 		self.sourceslabel = Tkinter.Label(master, text='Sources:')
 		self.sourceslabel.grid(row=2, column=0, sticky = Tkinter.W)
@@ -144,12 +154,12 @@ class Leginon(Tkinter.Frame):
 
 		self.editmenu = Tkinter.Menu(self.menu, tearoff=0)
 		self.menu.add_cascade(label='Edit', menu=self.editmenu)
-		self.editmenu.add_command(labe='Add...', command=self.add)
+		self.editmenu.add_command(label='Add...', command=self.add)
 
 	def add(self):
 		# Grid Atlas in there for now
 		name = 'Acquire and Target #%s' % str(len(self.acquireandtargets))
-		add_dialog = AddDialog(self, name, self.acquireandtargets.keys(), [])
+		add_dialog = AddChoicesDialog(self, name, self.acquireandtargets.keys(), [])
 		if add_dialog.result is not None:
 			sourceids = []
 			for source in add_dialog.result[1]:
@@ -322,7 +332,8 @@ class GridAtlasWidget(CustomWidget):
 		self.addWidget('Control', gridpreview, ('Controls', 'Stop'))
 		self.addWidget('Control', gridpreview, ('Controls', 'Reset'))
 
-		self.addWidget('Image', stateimagemosaic, ('Mosaic Image',))
+		widget = self.addWidget('Image', stateimagemosaic, ('Mosaic Image',))
+		widget.iv.canvas.resize(0, 0, 512, 512)
 
 class AcquireAndTargetWidget(CustomWidget):
 	def __init__(self, parent, acquisition, clicktargetfinder, targetid):
