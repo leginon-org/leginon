@@ -68,7 +68,7 @@ class ImagePanel(wxPanel):
 		self.sizer.SetItemMinSize(self.panel, width, height)
 
 	def bitmapTool(self, filename):
-		wximage = wxImage(filename)
+		wximage = wxImage('icons/' + filename)
 		bitmap = wxBitmapFromImage(wximage)
 		bitmap.SetMask(wxMaskColour(bitmap, wxWHITE))
 		return bitmap
