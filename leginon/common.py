@@ -5,9 +5,5 @@
 from mynode import MyNode
 from intgen import IntGen
 from EM import EM
+from emtest import EMTest
 
-import time
-def fun(arg):
-	for i in range(arg):
-		print i
-		time.sleep(1)
