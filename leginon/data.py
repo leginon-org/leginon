@@ -264,9 +264,15 @@ class PresetImageData(CameraImageData):
 	'''
 	def typemap(cls):
 		t = CameraImageData.typemap()
-		t += [ ('preset', PresetData), ]
+		t += [ ('preset', dict), ]
 		return t
 	typemap = classmethod(typemap)
+
+class AcquisitionImageData(PresetImageData):
+	pass
+
+class TrialImageData(PresetImageData):
+	pass
 
 class CorrectorPlanData(Data):
 	'''
@@ -315,7 +321,7 @@ class ImageTargetData(Data):
 		  ('scope', dict),
 		  ('camera', dict),
 		  ('source', str),
-		  ('preset', PresetData)
+		  ('preset', dict)
 		]
 		return t
 	typemap = classmethod(typemap)

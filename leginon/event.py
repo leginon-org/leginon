@@ -126,6 +126,12 @@ class PresetImagePublishEvent(CameraImagePublishEvent):
 	'Event indicating preset camera image was published'
 	pass
 
+class AcquisitionImagePublishEvent(PresetImagePublishEvent):
+	pass
+
+class TrialImagePublishEvent(PresetImagePublishEvent):
+	pass
+
 class CorrectionImagePublishEvent(CameraImagePublishEvent):
 	pass
 
