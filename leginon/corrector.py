@@ -56,7 +56,7 @@ class Corrector(node.Node):
 		self.addEventOutput(event.BrightImagePublishEvent)
 		self.addEventOutput(event.ListPublishEvent)
 
-		ids = [('corrected image data'),]
+		ids = [('corrected image data',)]
 		e = event.ListPublishEvent(self.ID(), idlist=ids)
 		self.outputEvent(e)
 
