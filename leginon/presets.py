@@ -10,13 +10,22 @@ class PresetsClient(object):
 	def __init__(self, node):
 		self.node = node
 
-	def retrievePreset(self, presetname):
-		# needs to research new style
-		presetdatalist = self.node.research(dataclass=data.PresetData, name=presetname)
-		print 'RETRIEVE LIST', presetdatalist
-		presetdata = presetdatalist[0]
-		print 'RETRIEVE PRESET', presetdata
-		return presetdata
+	def retrievePresets(self, presetname=None, session=None):
+		'''
+		Returns a list of PresetData instances.
+		if session is not specified, use this node's session
+		if presetname is not specified, return all.
+		'''
+		query = {}
+		if presetname is not None:
+			query['name'] = presetname
+		if session is not None:
+			query['session'] = session
+		else:
+			query['session'] = self.node.session
+			
+		presetdatalist = self.node.research(dataclass=data.PresetData, **query)
+		return presetdatalist
 
 	def storePreset(self, presetdata):
 		# should work
@@ -121,10 +130,18 @@ class PresetsManager(node.Node):
 		cPickle.dump(presets, f, 1)
 		f.close()
 
+	def getSessionPresetNames(self, value=None):
+		presets = self.presetsclient.retrievePresets()
+		names = []
+		for preset in presets:
+			names.append(preset['name'])
+		return names
+
 	def defineUserInterface(self):
 		nodespec = node.Node.defineUserInterface(self)
 
-		presetname = self.registerUIData('Name', 'string')
+		presetchoices = self.registerUIData('presetchoices', 'array', callback=self.getSessionPresetNames, permissions='r')
+		presetname = self.registerUIData('Name', 'string', choices=presetchoices)
 		store = self.registerUIMethod(self.uiStoreCurrent, 'From Scope', (presetname,))
 		restore = self.registerUIMethod(self.uiRestore, 'To Scope', (presetname,))
 
@@ -140,6 +157,7 @@ class PresetsManager(node.Node):
 		return ''
 
 	def uiRestore(self, presetname):
-		presetdata = self.presetsclient.retrievePreset(presetname)
+		presetlist = self.presetsclient.retrievePresets(presetname)
+		presetdata = presetdata[0]
 		self.presetsclient.toScope(presetdata)
 		return ''
