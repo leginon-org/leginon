@@ -21,14 +21,28 @@ else:
 ## Here is my infinity contant
 inf = 1.0 / Numeric.array(0.0, Numeric.Float32)
 
+## these are integer types in Numeric
+numeric_integers = (
+	Numeric.Character,
+	Numeric.Int,
+	Numeric.Int0,
+	Numeric.Int16,
+	Numeric.Int32,
+	Numeric.Int8,
+	Numeric.UInt,
+	Numeric.UInt16,
+	Numeric.UInt32,
+	Numeric.UInt8,
+)
+
 def toFloat(inputarray):
 	'''
-	if inputarray is an integer type ('1','l','s','i'):
+	if inputarray is an integer type:
 		return a Float32 version of it
 	else:
 		return inputarray
 	'''
-	if inputarray.typecode() in ('1lsi'):
+	if inputarray.typecode() in numeric_integers:
 		return inputarray.astype(Numeric.Float32)
 	else:
 		return inputarray
@@ -45,7 +59,7 @@ def stdev(inputarray):
 		print 'OverflowError:	stdev returning None'
 		return None
 	stdev = Numeric.sqrt(bigsum / (len(f)-1))
-	return stdev
+	return float(stdev)
 
 def mean(inputarray):
 	im = toFloat(inputarray)
@@ -53,17 +67,17 @@ def mean(inputarray):
 	inlen = len(f)
 	divisor = Numeric.array(inlen, Numeric.Float32)
 	m = Numeric.sum(f) / divisor
-	return m
+	return float(m)
 
 def min(inputarray):
 	f = Numeric.ravel(inputarray)
 	i = Numeric.argmin(f)
-	return f[i]
+	return float(f[i])
 
 def max(inputarray):
 	f = Numeric.ravel(inputarray)
 	i = Numeric.argmax(f)
-	return f[i]
+	return float(f[i])
 
 def sumSeries(series):
 	if len(series) == 0:
@@ -283,15 +297,16 @@ def phase_correlate(im1, im2):
 ## sized blobs.
 import sys
 reclim = sys.getrecursionlimit()
-if reclim < 2000:
-	sys.setrecursionlimit(2000)
+if reclim < 20000:
+	sys.setrecursionlimit(20000)
 
 class Blob(object):
 	'''
 	a Blob instance represets a connected set of pixels
 	'''
-	neighbor_deltas = Numeric.array(((-1,-1),(-1,0),(-1,1), (0,-1), (0,1), (1,-1), (1,0), (1,1)))
-	maxpoints = 2000
+	#neighbor_deltas = Numeric.array(((-1,-1),(-1,0),(-1,1), (0,-1), (0,1), (1,-1), (1,0), (1,1)))
+	neighbor_deltas = Numeric.array(((-1,1), (0,1), (1,-1), (1,0), (1,1)))
+	#maxpoints = 2000
 	def __init__(self, image, mask):
 		self.image = image
 		self.mask = mask
@@ -313,18 +328,18 @@ class Blob(object):
 
 		# abort this blob if too many points
 		# if we don't abort, we will hit a recursion limit
-		if len(self.pixel_list) > self.maxpoints:
-			return False
+		#if len(self.pixel_list) > self.maxpoints:
+		#	return False
 
 		# check neighbors
 		neighbors = self.neighbor_deltas + (row,col)
 		for neighbor in neighbors:
 			if self.recursionerror:
 				break
-			try:
-				value = tmpmask[neighbor]
-			except IndexError:
+			# check if neighbor is out of bounds
+			if neighbor[0] < 0 or neighbor[1] < 0 or neighbor[0] >= tmpmask.shape[0] or neighbor[1] >= tmpmask.shape[1]:
 				continue
+			value = tmpmask[neighbor]
 			if value:
 				try:
 					self.add_point(neighbor[0],neighbor[1],tmpmask)
@@ -392,6 +407,14 @@ def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=50):
 	blobs = []
 	## create a copy of mask that will be modified
 	tmpmask = mask.astype(Numeric.Int8)
+
+	## zero out tmpmask outside of border
+	if border:
+		tmpmask[:border] = 0
+		tmpmask[-border:] = 0
+		tmpmask[:,:border] = 0
+		tmpmask[:,-border:] = 0
+
 	for row in range(border,shape[0]-border):
 		for col in range(border,shape[1]-border):
 			if tmpmask[row,col]:
