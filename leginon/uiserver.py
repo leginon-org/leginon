@@ -22,7 +22,7 @@ import cPickle
 class NoValueError(Exception):
 	pass
 
-userprefs = {}
+userprefs = {'prefs': {}, 'user': None}
 
 class Server(xmlrpc.Server, uidata.Container):
 	typelist = uidata.Container.typelist + ('server',)
@@ -246,10 +246,12 @@ class Server(xmlrpc.Server, uidata.Container):
 		get current user's prefs from DB and put them in 
 		userprefs
 		'''
-		if userprefs:
-			return
 		if self.session is None:
 			return
+		## check if same user
+		if userprefs['prefs'] and self.session['user'].dbid == userprefs['user']:
+				return
+		userprefs['user'] = self.session['user'].dbid
 		sessionquery = data.SessionData(user=self.session['user'])
 		prefquery = data.UIData(session=sessionquery)
 		results = self.dbdatakeeper.query(prefquery)
@@ -257,8 +259,8 @@ class Server(xmlrpc.Server, uidata.Container):
 		## so now get the newest stuff into a dict
 		for result in results:
 			key = tuple(result['object'])
-			if key not in userprefs:
-				userprefs[key] = result['value']
+			if key not in userprefs['prefs']:
+				userprefs['prefs'][key] = result['value']
 
 	def setObjectFromDatabase(self, uiobject):
 		if self.dbdatakeeper is None or self.session is None:
@@ -271,7 +273,7 @@ class Server(xmlrpc.Server, uidata.Container):
 		namelist = tuple(uiobject._getNameList())
 		try:
 			try:
-				value = userprefs[namelist]
+				value = userprefs['prefs'][namelist]
 			except KeyError:
 				return False
 			### get object from Object
@@ -285,8 +287,11 @@ class Server(xmlrpc.Server, uidata.Container):
 			return False
 
 	def setDatabaseFromObject(self, uiobject):
-		if self.dbdatakeeper is None or self.session is None:
-			print 'Cannot save UI values to database'
+		if self.dbdatakeeper is None:
+			print 'Cannot save UI values to database without dbdatakeeper'
+			return
+		if self.session is None:
+			print 'Cannot save UI values to database without session'
 			return
 		if isinstance(uiobject, uidata.Container):
 			for childobject in uiobject.values():

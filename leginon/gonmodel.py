@@ -13,25 +13,6 @@ import Numeric
 import LinearAlgebra
 import shelve
 
-class OLDMagInfo:
-	def __init__(self, magfile):
-		self.magfile = magfile
-	def open_shelve(self):
-		self.shelve = shelve.open(self.magfile)
-	def close_shelve(self):
-		self.shelve.close()
-
-	def get(self, key):
-		self.open_shelve()
-		ret = self.shelve[key] 
-		self.close_shelve()
-		return ret
-
-	def set(self, key, value):
-		self.open_shelve()
-		self.shelve[key] = value
-		self.close_shelve()
-
 class GonData:
 	"""
 	A GonData instance holds the data from a goniometer calibration.

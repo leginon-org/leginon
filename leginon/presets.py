@@ -232,11 +232,8 @@ class PresetsManager(node.Node):
 	def presetToDB(self, presetdata):
 		'''
 		stores a preset in the DB under the current session name
-		if no preset is specified, store all self.presets
 		'''
 		self.publish(presetdata, database=True, dbforce=True)
-		## immediately replace it with a copy so we can do updates
-		#pname = presetdata['name']
 
 	def presetByName(self, name):
 		if name in self.presets.keys():
@@ -835,35 +832,26 @@ class PresetsManager(node.Node):
 
 		oldpreset = emtargetdata['preset']
 		newpreset = self.presetByName(newpresetname)
+		## make copy of target stage and image shift
+		mystage = dict(emtargetdata['stage position'])
+		myimage = dict(emtargetdata['image shift'])
 
-		origscope = emtargetdata['scope']
-		scopedata = data.ScopeEMData(initializer=origscope)
-		# we will potentially modify stage position, so copy
-		scopedata['stage position'] = copy.deepcopy(origscope['stage position'])
+		## decide if moving stage or not, and which axes to move
 		movetype = emtargetdata['movetype']
 		if movetype == 'image shift':
 			if not self.alwaysmovestage.get():
-				scopedata['stage position'] = None
+				mystage = None
 
-		if scopedata['stage position'] and self.xyonly.get():
+		if mystage and self.xyonly.get():
 			## only set stage x and y
-			for key in scopedata['stage position'].keys():
+			for key in mystage.keys():
 				if key not in ('x','y'):
-					del scopedata['stage position'][key]
-
-		## always ignore focus (only defocus should be used)
-		try:
-			scopedata['focus'] = None
-		except:
-			pass
-
-		## yet another copy, so we can modify it using preset
-		scopedata = data.ScopeEMData(initializer=scopedata)
+					del mystage[key]
 
 		## figure out how to transform the target image shift
 		## ???
 		## for now, assume that image shift targets are not passed
-		## across mag mode ranges, so newishift is straight from 
+		## across mag mode ranges, so newimage is straight from 
 		## newpreset
 		## Within the same mag mode, use target - oldpreset + newpreset
 
@@ -876,24 +864,23 @@ class PresetsManager(node.Node):
 		else:
 			newmag = 'SA'
 
-		newishift = {}
 		if oldmag == newmag:
 			self.uistatus.set('Using same magnification mode')
-			newishift['x'] = scopedata['image shift']['x']
-			newishift['x'] -= oldpreset['image shift']['x']
-			newishift['x'] += newpreset['image shift']['x']
-
-			newishift['y'] = scopedata['image shift']['y']
-			newishift['y'] -= oldpreset['image shift']['y']
-			newishift['y'] += newpreset['image shift']['y']
+			myimage['x'] -= oldpreset['image shift']['x']
+			myimage['x'] += newpreset['image shift']['x']
+			myimage['y'] -= oldpreset['image shift']['y']
+			myimage['y'] += newpreset['image shift']['y']
 		else:
 			self.uistatus.set('Using different magnification mode')
-			newishift['x'] = newpreset['image shift']['x']
-			newishift['y'] = newpreset['image shift']['y']
+			myimage['x'] = newpreset['image shift']['x']
+			myimage['y'] = newpreset['image shift']['y']
 
-		## should use AllEMData, but that is not working yet
+		### create ScopeEMData with preset and target shift
+		scopedata = data.ScopeEMData()
 		scopedata.friendly_update(newpreset)
-		scopedata['image shift'] = newishift
+		scopedata['image shift'] = myimage
+		scopedata['stage position'] = mystage
+		### createCameraEMData with preset
 		cameradata = data.CameraEMData()
 		cameradata.friendly_update(newpreset)
 

@@ -272,6 +272,7 @@ class Node(leginonobject.LeginonObject):
 			try:
 				self.dbdatakeeper.insert(idata, force=dbforce)
 			except Exception, e:
+				raise
 				if isinstance(e, OSError):
 					message = str(e)
 				elif isinstance(e, IOError):
@@ -303,52 +304,26 @@ class Node(leginonobject.LeginonObject):
 				e['destination'] = ''
 			return self.outputEvent(e)
 
-	def research(self, dataclass=None, datainstance=None, results=None, readimages=True):
+	def research(self, datainstance, results=None, readimages=True):
 		'''
-		How a node finds some data in the leginon system:
-			1) Using a data class and keyword args:
-				self.research(dataclass=myclass, stuff=4)
-			2) Using a partially filled data instance:
-				self.research(datainstance=mydata)
-
-			In both cases, zero or more results (data instances)
-			will be returned in a list.  The result list will
-			not contain two instaces with the same ID.
+		find instances in the database that match the 
+		given datainstance
 		'''
-		#### make some sense out of args
-		### for research by dataclass, use kwargs to find instance
-		if dataclass is not None:
-			datainstance = dataclass()
-
-		### use DBDataKeeper query if not results yet
-		if datainstance is not None:
-			try:
-				resultlist = self.dbdatakeeper.query(datainstance, results, readimages=readimages)
-			except Exception, e:
-				if isinstance(e, OSError):
-					message = str(e)
-				elif isinstance(e, IOError):
-					message = str(e)
-				else:
-					raise
-				raise ResearchError(message)
-		else:
-			raise RuntimeError('research needs either data instance or data class')
+		try:
+			resultlist = self.dbdatakeeper.query(datainstance, results, readimages=readimages)
+		except Exception, e:
+			if isinstance(e, OSError):
+				message = str(e)
+			elif isinstance(e, IOError):
+				message = str(e)
+			else:
+				raise
+			raise ResearchError(message)
 		return resultlist
 
 	def researchDBID(self, dataclass, dbid):
 		print 'WARNING:  researchDBID() IS TEMPORARY WHILE WE ARE STILL STORING LISTS OF DBIDs'
 		return self.dbdatakeeper.direct_query(dataclass, dbid)
-
-	def updateReferencedData(self, datareference, updateinstance):
-		'''
-		using the 'updateinstance',
-		modify the value of an existing data instance, which is
-		referenced by 'datareference'
-		'''
-
-		#client = self.getClient(nodelocation['location']['data transport'])
-		#client.push(idata)
 
 	# methods for setting up the manager
 
@@ -361,8 +336,18 @@ class Node(leginonobject.LeginonObject):
 
 	def handleSetManager(self, ievent):
 		'''Event handler calling setManager with event info. See setManager.'''
-		if self.session is None:
-			self.session = ievent['session']
+		## was only resetting self.session if it was previously none
+		## now try setting it every time (maybe this would benefit
+		## the launcher who could receive this event from different
+		## sessions
+		self.session = ievent['session']
+		## have a new session from manager, so reset session in
+		## uiserver and get new user preferences
+		self.uiserver.session = self.session
+		# this will be ignored if this new session has same user
+		# as previous one
+		self.uiserver.getUserPreferencesFromDatabase()
+
 		if ievent['session']['name'] == self.session['name']:
 			self.setManager(ievent['location'])
 		else:

@@ -678,20 +678,21 @@ class Corrector(node.Node):
 
 	def acquireReference(self, dark=False):
 		self.cam.uiApplyAsNeeded()
-		camdata = self.cam.getCameraEMData()
+		originalcamdata = self.cam.getCameraEMData()
+		tempcamdata = data.CameraEMData(initializer=originalcamdata)
 		if dark:
-			camdata['exposure type'] = 'dark'
+			tempcamdata['exposure type'] = 'dark'
 			typekey = 'dark'
 			self.uistatus.set('Acquiring dark')
 		else:
-			camdata['exposure type'] = 'normal'
+			tempcamdata['exposure type'] = 'normal'
 			typekey = 'bright'
 			self.uistatus.set('Acquiring bright')
-		self.cam.setCameraEMData(camdata)
+		self.cam.setCameraEMData(tempcamdata)
 
 		navg = self.uiframestoaverage.get()
 
-		seriesinfo = self.acquireSeries(navg, camdata=camdata)
+		seriesinfo = self.acquireSeries(navg, camdata=tempcamdata)
 		series = seriesinfo['image series']
 		seriescam = seriesinfo['camera']
 		seriesscope = seriesinfo['scope']
@@ -709,11 +710,9 @@ class Corrector(node.Node):
 		self.uistatus.set('Got reference image, calculating normalization')
 		self.calc_norm(refimagedata)
 
-		# since its not in use yet
-		if camdata['exposure type'] == 'dark':
+		if tempcamdata['exposure type'] == 'dark':
 			self.uistatus.set('Reseting camera exposure type to normal from dark')
-			camdata['exposure type'] = 'normal'
-			self.cam.setCameraEMData(camdata)
+			self.cam.setCameraEMData(originalcamdata)
 		return ref
 
 	def researchRef(self, camstate, type):

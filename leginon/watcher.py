@@ -114,7 +114,7 @@ class Watcher(node.Node):
 		container.addObjects((eventcontainer, datacontainer))
 		self.uicontainer.addObject(container)
 
-	## the event queue could be put in node.py or datahandler.DataBinder
+	## the event queue could be put in node.py or databinder.DataBinder
 	def handleEvent(self, pubevent):
 		if self.uiignoreflag.get():
 			return

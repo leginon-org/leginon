@@ -15,6 +15,7 @@ import event
 import time
 import imagefun
 import Numeric
+import copy
 
 class Focuser(acquisition.Acquisition):
 	eventinputs = acquisition.Acquisition.eventinputs
@@ -158,7 +159,7 @@ class Focuser(acquisition.Acquisition):
 		self.autofocusresult.set(resultstring)
 		return status
 
-	def acquire(self, presetdata, target=None, presettarget=None):
+	def acquire(self, presetdata, target=None, presettarget=None, attempt=None):
 		'''
 		this replaces Acquisition.acquire()
 		Instead of acquiring an image, we do autofocus
@@ -170,25 +171,28 @@ class Focuser(acquisition.Acquisition):
 		## Need to melt only once per target, event though
 		## this method may be called multiple times on the same
 		## target.
-		## To be sure, we flag a target as having been melted.
-		## This is only safe if we can be sure that we don't
-		## use different copies of the same target each time.
 		melt_time = self.melt.get()
-		if melt_time and not target['pre_exposure']:
+		if melt_time and attempt > 1:
+			self.logger.info('target attempt %s, so not melting' % (attempt,))
+		elif melt_time:
 			melt_time_ms = int(round(melt_time * 1000))
-			camstate = self.cam.getCameraEMData()
-			current_exptime = camstate['exposure time']
-			camstate['exposure time'] = melt_time_ms
-			self.cam.setCameraEMData(camstate)
+			camstate0 = self.cam.getCameraEMData()
+			camstate1 = copy.copy(camstate0)
+			camstate1['exposure time'] = melt_time_ms
+			## make small image
+			camsize = self.session['instrument']['camera size']
+			bin = 8
+			dim = camsize / bin
+			camstate1['dimension'] = {'x':dim,'y':dim}
+			camstate1['binning'] = {'x':bin,'y':bin}
+			camstate1['offset'] = {'x':0,'y':0}
+			self.cam.setCameraEMData(camstate1)
 
 			self.logger.info('Melting for %s seconds' % (melt_time,))
-			self.cam.acquireCameraImageData()
-			self.logger.info('Done melting, resetting exposure time')
+			self.cam.acquireCameraImageData(correction=False)
+			self.logger.info('Done melting, resetting camera')
 
-			camstate['exposure time'] = current_exptime
-			self.cam.setCameraEMData(camstate)
-			# is this any good?
-			#target['pre_exposure'] = True
+			self.cam.setCameraEMData(camstate0)
 
 		## pre manual check
 		if self.pre_manual_check.get():

@@ -405,9 +405,17 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			return
 		self.setStatusMessage('Publishing mosaic image data')
 		mosaicimagedata = data.MosaicImageData()
+		mosaicimagedata['session'] = self.session
 		mosaicimagedata['list'] = self.mosaicimagelist
 		mosaicimagedata['image'] = self.mosaicimage
 		mosaicimagedata['scale'] = self.mosaicimagescale
+		filename = 'mosaic'
+		lab = self.mosaicimagelist['targets']['label']
+		if lab:
+			filename = filename + '_' + lab
+		dim = self.mosaicimagescale
+		filename = filename + '_' + str(dim)
+		mosaicimagedata['filename'] = filename
 		self.publish(mosaicimagedata, database=True)
 		self.setStatusMessage('Mosaic published')
 

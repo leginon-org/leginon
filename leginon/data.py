@@ -482,27 +482,6 @@ class Data(DataDict, leginonobject.LeginonObject):
 		else:
 			super(Data, self).friendly_update(other)
 
-	### XXX this is too dangerous
-	def XXX__deepcopy__(self, memo={}):
-		# without this, it will copy the dict
-		# stuff first and then the OrderedDict, but the dict copy
-		# requires __setitem__ which has been redefined here and 
-		# requires OrderedDict to be initialized first
-		# Solution:  deepcopy should do OrderedDict first, then dict
-		y = self.__class__()
-
-		## should really check for __getstate__ and __setstate__
-		dictcopy = copy.deepcopy(self.__dict__, memo)
-		del dictcopy['dmid']
-		y.__dict__.update(dictcopy)
-
-		## dict deepcopy
-		for key, value in self.items(dereference=False):
-			key = copy.deepcopy(key, memo)
-			value = copy.deepcopy(value, memo)
-			y[key] = value
-		return y
-
 	def __copy__(self):
 		return self.__class__(initializer=self)
 
@@ -1401,10 +1380,10 @@ class EMTargetData(InSessionData):
 	def typemap(cls):
 		t = InSessionData.typemap()
 		t += [
-			# pixel delta to target from state in row, column
-		  ('scope', ScopeEMData),
 		  ('preset', PresetData),
-		  ('movetype', str)
+		  ('movetype', str),
+		  ('image shift', dict),
+		  ('stage position', dict),
 		]
 		return t
 	typemap = classmethod(typemap)

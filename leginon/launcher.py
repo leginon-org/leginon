@@ -23,8 +23,6 @@ class Launcher(node.Node):
 
 		node.Node.__init__(self, name, session, tcpport=tcpport, xmlrpcport=xmlrpcport, **kwargs)
 
-		#self.datahandler.insert(uicontainer)
-
 		self.defineUserInterface()
 		self.addEventInput(event.CreateNodeEvent, self.onCreateNode)
 		self.start()
@@ -42,7 +40,6 @@ class Launcher(node.Node):
 
 	def setManager(self, location):
 		self.exitNodes()
-		self.uicontainer.sesssion = self.session
 		node.Node.setManager(self, location)
 		self.publishNodeClasses()
 		self.outputEvent(event.NodeInitializedEvent(node=self.name))

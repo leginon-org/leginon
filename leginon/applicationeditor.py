@@ -33,7 +33,7 @@ class ApplicationEditor(node.Node):
 		self.logger.info('Application saved')
 
 	def uiUpdate(self):
-		applicationdatalist = self.research(dataclass=data.ApplicationData)
+		applicationdatalist = self.research(data.ApplicationData())
 		applicationnamelist = []
 		for applicationdata in applicationdatalist:
 			name = applicationdata['name']

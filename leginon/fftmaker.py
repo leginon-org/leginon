@@ -50,7 +50,7 @@ class FFTMaker(imagewatcher.ImageWatcher):
 		# turn off data queuing by default
 		self.uidataqueueflag.set(False)
 
-		self.ignore_images = uidata.Boolean('Ignore Images', False, 'rw', persist=True)
+		self.ignore_images = uidata.Boolean('Ignore Images', True, 'rw', persist=True)
 		self.maskrad = uidata.Float('Mask Radius (% of imagewidth)', 0.01, 'rw', persist=True)
 
 		container = uidata.LargeContainer('FFT Maker')

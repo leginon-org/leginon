@@ -165,10 +165,16 @@ class wxListEdit(wxPanel):
 		if callable(self.editcallback):
 			self.editcallback(self.getValues())
 
+	def fakeInsert(self):
+		count = self.listbox.GetCount()
+		self.listbox.Append('')
+		self.listbox.Delete(count)
+
 	def onInsert(self, evt):
 		try:
 			value = self.fromString(self.entry.GetValue())
 		except ValueError:
+			self.fakeInsert()
 			return
 		string = self.toString(value)
 		n = self.listbox.GetSelection()

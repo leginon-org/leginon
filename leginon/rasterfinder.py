@@ -232,11 +232,10 @@ class RasterFinder(targetfinder.TargetFinder):
 		# ice
 		self.ice()
 
-	def findTargets(self, imdata):
+	def findTargets(self, imdata, targetlist):
 		## check if targets already found on this image
-		previous = self.researchImageTargets(imdata)
+		previous = self.researchTargets(image=imdata)
 		if previous:
-			self.targetlist = previous
 			return
 
 		## automated part
@@ -248,23 +247,11 @@ class RasterFinder(targetfinder.TargetFinder):
 			self.notifyUserSubmit()
 			self.userpause.clear()
 			self.userpause.wait()
-		targetlist = self.getTargetDataList('focus')
-		self.targetlist.extend(targetlist)
-		targetlist = self.getTargetDataList('acquisition')
-		self.targetlist.extend(targetlist)
+			self.unNotifyUserSubmit()
+
+		## the new way
+		self.targetsFromClickImage(self.goodiceimage, 'focus', targetlist)
+		self.targetsFromClickImage(self.goodiceimage, 'acquisition', targetlist)
 
 	def submit(self):
 		self.userpause.set()
-
-	def getTargetDataList(self, typename):
-		targetlist = []
-		for imagetarget in self.goodiceimage.getTargetType(typename):
-			column, row = imagetarget
-			imagedata = self.goodiceimage.imagedata
-			imagearray = imagedata['image']
-			drow = row - imagearray.shape[0]/2
-			dcol = column - imagearray.shape[1]/2
-
-			targetdata = self.newTargetData(imagedata, typename, drow, dcol)
-			targetlist.append(targetdata)
-		return targetlist

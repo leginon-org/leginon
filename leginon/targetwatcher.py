@@ -205,7 +205,9 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 			# this while loop allows target to repeat
 			process_status = 'repeat'
+			attempt = 0
 			while process_status == 'repeat':
+				attempt += 1
 				# check if this imageid needs update
 				self.logger.debug('DRIFTED IMAGES ' + str(self.driftedimages))
 				if imageid in self.driftedimages:
@@ -245,7 +247,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 				# now have processTargetData work on it
 				try:
-					process_status = self.processTargetData(adjustedtarget)
+					process_status = self.processTargetData(adjustedtarget, attempt=attempt)
 				except:
 					self.logger.exception('')
 					process_status = 'exception'

@@ -79,6 +79,11 @@ class ManualAcquisition(node.Node):
 				self.messagelog.error('EM failed to acquire image')
 			self.status.set('Error acquiring image')
 			raise AcquireError
+
+		# store EMData to DB
+		self.publish(imagedata['scope'], database=True)
+		self.publish(imagedata['camera'], database=True)
+
 		self.status.set('Displaying image...')
 		self.image.set(imagedata['image'])
 		self.displayImageStats(imagedata['image'])
@@ -106,13 +111,13 @@ class ManualAcquisition(node.Node):
 
 	def getScope(self, key):
 		try:
-			value = self.emclient.getScope()[key]
+			value = self.emclient.getScope(key)
 		except node.ResearchError:
 			raise
 			self.messagelog.error('Cannot access EM node')
 			self.status.set('Error getting instrument parameters')
 			raise RuntimeError('Unable to get instrument parameters')
-		return value[key]
+		return value
 
 	def preExposure(self):
 		if self.up.get():

@@ -731,7 +731,7 @@ class Manager(node.Node):
 
 	def uiUpdateApplications(self):
 		self.applicationlaunchmethod.disable()
-		applicationdatalist = self.research(dataclass=data.ApplicationData)
+		applicationdatalist = self.research(data.ApplicationData())
 		applicationnamelist = ['(Select an application)']
 		for applicationdata in applicationdatalist:
 			name = applicationdata['name']

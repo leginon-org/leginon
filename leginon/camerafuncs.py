@@ -62,6 +62,7 @@ class CameraFuncs(object):
 		else:
 			### create my own data from acquisition
 			scopedata = self.emclient.getScope()
+			self.node.logger.debug('stig for image: %s' % (scopedata['stigmator']['objective'],))
 			camdata = self.emclient.getImage()
 			numimage = camdata['image data']
 			camdata['image data'] = None

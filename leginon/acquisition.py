@@ -111,7 +111,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 				raise InvalidPresetsSequence()
 		return presetnames
 
-	def processTargetData(self, targetdata, force=False):
+	def processTargetData(self, targetdata, force=False, attempt=None):
 		'''
 		This is called by TargetWatcher.processData when targets available
 		If called with targetdata=None, this simulates what occurs at
@@ -171,14 +171,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 				except:
 					self.logger.exception('film acquisition')
 			else:
-				self.reportStatus('acquisition', 'Acquiring image...')
-				ret = self.acquire(p, target=targetdata, presettarget=presettarget)
+				ret = self.acquire(p, target=targetdata, presettarget=presettarget, attempt=attempt)
 				# in these cases, return immediately
 				if ret in ('aborted', 'repeat'):
 					self.reportStatus('acquisition', 'Acquisition state is "%s"' % ret)
 					return ret
-				self.reportStatus('acquisition', 'Image acquired')
-
 
 		self.reportStatus('processing', 'Processing complete')
 
@@ -231,11 +228,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 		targetdeltacolumn = targetdata['delta column']
 		origscope = targetdata['scope']
 		targetscope = data.ScopeEMData(initializer=origscope)
-		## deepcopy these because they are dictionaries that could
+		## copy these because they are dictionaries that could
 		## otherwise be shared (although transform() should be
 		## smart enough to create copies as well)
-		targetscope['stage position'] = copy.deepcopy(origscope['stage position'])
-		targetscope['image shift'] = copy.deepcopy(origscope['image shift'])
+		targetscope['stage position'] = dict(origscope['stage position'])
+		targetscope['image shift'] = dict(origscope['image shift'])
 		targetcamera = targetdata['camera']
 
 		## to shift targeted point to center...
@@ -258,14 +255,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 		if newscope['stage position']:
 			self.validateStagePosition(newscope['stage position'])
 
-		## publish in DB because it will likely be needed later
-		## when returning to the same target,
-		## even after it is removed from memory
-		self.publish(newscope, database=True)
-
 		oldpreset = targetdata['preset']
 		# now make EMTargetData to hold all this
-		emtargetdata = data.EMTargetData(scope=newscope, preset=oldpreset, movetype=movetype)
+		emtargetdata = data.EMTargetData(preset=oldpreset, movetype=movetype)
+		emtargetdata['image shift'] = dict(newscope['image shift'])
+		emtargetdata['stage position'] = dict(newscope['stage position'])
+
 		## publish in DB because it will likely be needed later
 		## when returning to the same target,
 		## even after it is removed from memory
@@ -300,12 +295,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		request['film text'] = str(filmdata['filename'])
 		request['film date type'] = 'YY.MM.DD'
 		self.emclient.setScope(request)
-
-		cameradata = data.CameraEMData()
-		cameradata['exposure time'] = presetdata['exposure time']
-		self.emclient.setCamera(cameradata)
-		self.emclient.getImage(hold=False)
-
+		self.emclient.getImage()
 		request = data.ScopeEMData()
 		request['post film exposure'] = True
 		self.emclient.setScope(request)
@@ -313,11 +303,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## record in database
 		self.publish(filmdata, pubevent=True, database=self.databaseflag.get())
 
-	def acquire(self, presetdata, target=None, presettarget=None):
+	def acquire(self, presetdata, target=None, presettarget=None, attempt=None):
 		### corrected or not??
 		cor = self.uicorrectimage.get()
 
 		## acquire image
+		self.reportStatus('acquisition', 'acquiring image...')
 		imagedata = None
 		try:
 			try:
@@ -328,6 +319,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.acquisitionlog.error('Cannot access Corrector node to correct image')
 		if imagedata is None:
 			return 'fail'
+
+		self.reportStatus('acquisition', 'image acquired')
+
+		## store EMData to DB to prevent referencing errors
+		self.publish(imagedata['scope'], database=True)
+		self.publish(imagedata['camera'], database=True)
 
 		## convert CameraImageData to AcquisitionImageData
 		imagedata = data.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=self.name, target=target, list=self.imagelistdata)
@@ -510,7 +507,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.publish(targetdata, database=True)
 		## change to 'processing' just like targetwatcher does
 		proctargetdata = data.AcquisitionImageTargetData(initializer=targetdata, status='processing')
-		self.processTargetData(targetdata=proctargetdata)
+		ret = self.processTargetData(targetdata=proctargetdata, attempt=1)
+		self.logger.info('Done with simulated target, status: %s (repeat will not be honored)' % (ret,))
 
 	def getPresetNames(self):
 		presetnames = self.presetsclient.getPresetNames()

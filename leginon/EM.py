@@ -19,6 +19,7 @@ import threading
 import time
 import uidata
 import unique
+import copy
 
 watch_set = (
 'magnification',
@@ -58,19 +59,33 @@ class EMClient(object):
 		self.scoperef = None
 		self.cameraref = None
 		self.cameraimageref = None
+		self.scopeavailable = threading.Event()
+		self.cameraavailable = threading.Event()
+		self.cameraimageavailable = threading.Event()
 		self.node.addEventInput(event.ScopeEMPublishEvent, self.handleScopePublish)
 		self.node.addEventInput(event.CameraEMPublishEvent, self.handleCameraPublish)
 		self.node.addEventInput(event.CameraImageEMPublishEvent, self.handleCameraImagePublish)
 
 	def handleScopePublish(self, ievent):
 		self.scoperef = ievent
+		self.scopeavailable.set()
 
 	def handleCameraPublish(self, ievent):
 		self.cameraref = ievent
+		self.cameraavailable.set()
 
 	def handleCameraImagePublish(self, ievent):
-		self.node.logger.debug('handleCameraImagePublish: %s' % (ievent.special_getitem('data', dereference=False),))
 		self.cameraimageref = ievent
+		self.cameraimageavailable.set()
+
+	def wait_for_scope(self, timeout=None):
+		self.scopeavailable.wait(timeout=timeout)
+
+	def wait_for_camera(self, timeout=None):
+		self.cameraavailable.wait(timeout=timeout)
+
+	def wait_for_image(self, timeout=None):
+		self.cameraimageavailable.wait(timeout=timeout)
 
 	def getScope(self, key=None):
 		if self.scoperef is None:
@@ -78,7 +93,8 @@ class EMClient(object):
 		## still has to get whole ScopeEMData just to get one key
 		dat = self.scoperef['data']
 		if key is None:
-			return dat
+			## return copy to avoid referencing problem
+			return copy.copy(dat)
 		else:
 			return dat[key]
 
@@ -89,7 +105,8 @@ class EMClient(object):
 		dat = self.cameraref['data']
 		self.node.logger.debug('getCamera dat dmid: %s' % (dat.dmid,))
 		if key is None:
-			return dat
+			## return copy to avoid referencing problem
+			return copy.copy(dat)
 		else:
 			return dat[key]
 
@@ -99,11 +116,19 @@ class EMClient(object):
 		self.node.logger.debug('GET IMAGE REF: %s' % (self.cameraimageref.special_getitem('data', dereference=False),))
 		dat = self.cameraimageref['data']
 		if key is None:
+			## return copy to avoid referencing problem
+			## this looks funny, but keeps datamanager from
+			## thinking it is using a lot of memory
+			im = dat['image data']
+			dat['image data'] = None
+			dat = copy.copy(dat)
+			dat['image data'] = im
 			return dat
 		else:
 			return dat[key]
 
 	def setScope(self, value):
+		value = copy.copy(value)
 		self.node.logger.debug('setScope: %s' % (value, ))
 		setevent = event.SetScopeEvent(data=value)
 		try:
@@ -113,6 +138,7 @@ class EMClient(object):
 			raise
 
 	def setCamera(self, value):
+		value = copy.copy(value)
 		self.node.logger.debug('setCamera: %s' % (value, ))
 		setevent = event.SetCameraEvent(data=value)
 		try:
