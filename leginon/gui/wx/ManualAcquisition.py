@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ManualAcquisition.py,v $
-# $Revision: 1.20 $
+# $Revision: 1.21 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-28 22:17:52 $
+# $Date: 2005-03-25 18:40:08 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -93,14 +93,14 @@ class Panel(gui.wx.Node.Panel, gui.wx.Instrument.SelectionMixin):
 											id=gui.wx.ToolBar.ID_PLAY)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onStopTool,
 											id=gui.wx.ToolBar.ID_STOP)
-		if self.node.projectdata.isConnected():
+		if self.node.projectdata is not None:
 			self.toolbar.Bind(wx.EVT_TOOL, self.onGridTool,
 												id=gui.wx.ToolBar.ID_GRID)
 			self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, True)
 
 	def _acquisitionEnable(self, enable):
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_SETTINGS, enable)
-		if self.node.projectdata.isConnected():
+		if self.node.projectdata is not None:
 			self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, enable)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ACQUIRE, enable)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, enable)
