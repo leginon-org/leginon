@@ -1,0 +1,4 @@
+#!/bin/bash
+
+ps -ef | grep "launcher.py" | awk '{print$2}' | sort -n | xargs -t -iasdf kill -9 asdf
+
