@@ -274,9 +274,17 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 		self.shapeobjects = []
 		self.connectionobjects = []
 
+	def setPosition(self, x, y):
+		self.x = x
+		self.y = y
+		for so in self.shapeobjects:
+			so.setOffset(self.x + self.xoffset, self.y + self.yoffset)
+
 	def setOffset(self, x, y):
 		self.xoffset = x
 		self.yoffset = y
+		for so in self.shapeobjects:
+			so.setOffset(self.x + self.xoffset, self.y + self.yoffset)
 
 	def UpdateDrawing(self):
 		self.ProcessEvent(UpdateDrawingEvent())
@@ -384,6 +392,17 @@ class wxRectangleObject(wxShapeObject):
 											self.width, self.height)
 		wxShapeObject.Draw(self, dc)
 
+class DragInfo(object):
+	def __init__(self, shapeobject, xoffset, yoffset):
+		self.shapeobject = shapeobject
+		self.xoffset = xoffset
+		self.yoffset = yoffset
+
+	def setPosition(self, x, y):
+		x = x - self.shapeobject.xoffset - self.xoffset
+		y = y - self.shapeobject.yoffset - self.yoffset
+		self.shapeobject.setPosition(x, y)
+
 class wxObjectCanvas(wxScrolledWindow):
 	def __init__(self, parent, id, master):
 		wxScrolledWindow.__init__(self, parent, id)
@@ -391,6 +410,8 @@ class wxObjectCanvas(wxScrolledWindow):
 		self.master = master
 		self.master.SetNextHandler(self)
 		self.SetVirtualSize((self.master.width, self.master.height))
+
+		self.draginfo = None
 
 		EVT_PAINT(self, self.OnPaint)
 		EVT_SIZE(self, self.OnSize)
@@ -425,15 +446,35 @@ class wxObjectCanvas(wxScrolledWindow):
 		self.UpdateDrawing()
 
 	def OnLeftUp(self, evt):
-		shapeobject = self.master.getShapeObjectFromXY(evt.m_x, evt.m_y)
-		shapeobject.ProcessEvent(LeftClickEvent(shapeobject, evt.m_x, evt.m_y))
+		if self.draginfo is not None:
+			self.draginfo.setPosition(evt.m_x, evt.m_y)
+#			x = self.draginfo.shapeobject.x
+#			y = self.draginfo.shapeobject.y
+#			w = self.draginfo.shapeobject.width
+#			h = self.draginfo.shapeobject.height
+#			shapeobject = self.master.getShapeObjectFromXY(x, y, w, h)
+#			shapeobject.addShapeObject(self.draginfo.shapeobject)
+			self.draginfo = None
+			self.UpdateDrawing()
+		else:
+			shapeobject = self.master.getShapeObjectFromXY(evt.m_x, evt.m_y)
+			shapeobject.ProcessEvent(LeftClickEvent(shapeobject, evt.m_x, evt.m_y))
 
 	def OnRightUp(self, evt):
 		shapeobject = self.master.getShapeObjectFromXY(evt.m_x, evt.m_y)
 		shapeobject.ProcessEvent(RightClickEvent(shapeobject, evt.m_x, evt.m_y))
 
 	def OnMotion(self, evt):
-		pass
+		if evt.LeftIsDown():
+			if self.draginfo is None:
+				shapeobject = self.master.getShapeObjectFromXY(evt.m_x, evt.m_y)
+				xoffset = evt.m_x - shapeobject.xoffset - shapeobject.x
+				yoffset = evt.m_y - shapeobject.yoffset - shapeobject.y
+				self.draginfo = DragInfo(shapeobject, xoffset, yoffset)
+			else:
+				print evt.m_x, evt.m_y
+				self.draginfo.setPosition(evt.m_x, evt.m_y)
+				self.UpdateDrawing()
 
 if __name__ == '__main__':
 	class MyApp(wxApp):
@@ -460,6 +501,10 @@ if __name__ == '__main__':
 	o3 = wxRectangleObject(50, 50, 200, 200)
 	o3.addText('test child child 2 object', 10, 10)
 	o1.addShapeObject(o3)
+
+	o4 = wxRectangleObject(30, 30, 50, 50)
+	o4.addText('foo', 10, 10)
+	o2.addShapeObject(o4)
 
 	app.MainLoop()
 
