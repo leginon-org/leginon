@@ -225,10 +225,10 @@ class DoseCalibrationClient(CalibrationClient):
 
 	def sensitivity(self, dose_rate, camera_mag, camera_pixel_size, exposure_time, counts):
 		camera_dose = float(dose_rate) / float((camera_mag**2))
-		self.node.logger.info('Camera dose %f' % camera_dose)
+		self.node.logger.info('Camera dose %.4e' % camera_dose)
 		dose_per_pixel = camera_dose * (camera_pixel_size**2)
 		electrons_per_pixel = dose_per_pixel * exposure_time
-		self.node.logger.info('electrons/pixel %f' % electrons_per_pixel)
+		self.node.logger.info('electrons/pixel %.4e' % electrons_per_pixel)
 		counts_per_electron = float(counts) / electrons_per_pixel
 		return counts_per_electron
 
@@ -237,11 +237,11 @@ class DoseCalibrationClient(CalibrationClient):
 		mag = imagedata['scope']['magnification']
 		self.node.logger.info('Magnification %.1f' % mag)
 		specimen_pixel_size = self.psizecal.retrievePixelSize(mag, instrument=inst)
-		self.node.logger.info('Specimen pixel size %f' % specimen_pixel_size)
+		self.node.logger.info('Specimen pixel size %.4e' % specimen_pixel_size)
 		camera_pixel_size = inst['camera pixel size']
-		self.node.logger.info('Camera pixel size %f' % camera_pixel_size)
+		self.node.logger.info('Camera pixel size %.4ef' % camera_pixel_size)
 		camera_mag = camera_pixel_size / specimen_pixel_size
-		self.node.logger.info('Camera magnification %f' % camera_mag)
+		self.node.logger.info('Camera magnification %.1f' % camera_mag)
 		exposure_time = imagedata['camera']['exposure time'] / 1000.0
 		binning = imagedata['camera']['binning']['x']
 		mean_counts = imagefun.mean(imagedata['image']) / (binning**2)
@@ -257,13 +257,13 @@ class DoseCalibrationClient(CalibrationClient):
 		binning = imagedata['camera']['binning']['x']
 		mag = imagedata['scope']['magnification']
 		specimen_pixel_size = self.psizecal.retrievePixelSize(mag, instrument=inst)
-		self.node.logger.info('Specimen pixel size %f' % specimen_pixel_size)
+		self.node.logger.info('Specimen pixel size %.4e' % specimen_pixel_size)
 		exp_time = imagedata['camera']['exposure time'] / 1000.0
 		numdata = imagedata['image']
 		sensitivity = self.retrieveSensitivity(ht, inst)
-		self.node.logger.info('Sensitivity %f' % sensitivity)
+		self.node.logger.info('Sensitivity %.2f' % sensitivity)
 		mean_counts = imagefun.mean(numdata) / (binning**2)
-		self.node.logger.info('Mean counts %f' % mean_counts)
+		self.node.logger.info('Mean counts %.1f' % mean_counts)
 		totaldose = mean_counts / specimen_pixel_size**2 / sensitivity
 		return totaldose
 
