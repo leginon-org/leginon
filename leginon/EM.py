@@ -69,7 +69,6 @@ class EM(node.Node):
 			elif issubclass(c, ccdcamera.CCDCamera):
 				ccdcameras.append(i)
 		for name, c in tems + ccdcameras + fastccdcameras:
-			objectname = '%s (%s)' % (name, socket.gethostname().lower())
 			if issubclass(c, tem.TEM):
 				instrumentclass = instrument.TEM
 			elif issubclass(c, ccdcamera.FastCCDCamera):
@@ -78,12 +77,17 @@ class EM(node.Node):
 				instrumentclass = instrument.CCDCamera
 			class ObjectClass(c, instrumentclass):
 				def __init__(self):
+					self._hostname = socket.gethostname().lower()
 					c.__init__(self)
 					instrumentclass.__init__(self)
+
+				def getHostname(self):
+					return self._hostname
+
 			try:
 				instance = ObjectClass()
 				self.instruments.append(instance)
-				self.objectservice._addObject(objectname, instance)
+				self.objectservice._addObject(name, instance)
 				self.logger.info('Added interface for %s' % name)
 			except Exception, e:
 				self.logger.debug('Initialization of %s failed: %s' % (name, e))

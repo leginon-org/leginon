@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Instrument.py,v $
-# $Revision: 1.33 $
+# $Revision: 1.34 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-28 22:17:52 $
+# $Date: 2005-03-01 18:59:08 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -618,6 +618,10 @@ class Panel(gui.wx.Node.Panel):
 													shortHelpString='Do Pauses')
 		self.toolbar.Realize()
 
+		self.listbox = wx.ListBox(self, -1)
+		self.szmain.Add(self.listbox, (0, 0), (1, 1), wx.ALIGN_CENTER)
+
+		'''
 		self.szmain.AddGrowableCol(0)
 		self.szmain.AddGrowableCol(1)
 
@@ -746,6 +750,8 @@ class Panel(gui.wx.Node.Panel):
 				pass
 
 		self.Enable(False)
+		'''
+
 		self.SetSizer(self.szmain)
 		self.SetAutoLayout(True)
 		self.SetupScrolling()

@@ -102,8 +102,8 @@ class Corrector(node.Node):
 		plandata['camstate'] = newcamstate
 		plandata['bad_rows'] = self.plan['rows']
 		plandata['bad_cols'] = self.plan['columns']
-		plandata['tem'] = self.instrument.getTEMName()
-		plandata['ccdcamera'] = self.instrument.getCCDCameraName()
+		plandata['tem'] = self.instrument.getTEMData()
+		plandata['ccdcamera'] = self.instrument.getCCDCameraData()
 		self.storePlan(plandata)
 
 	def getPlan(self):
@@ -165,8 +165,8 @@ class Corrector(node.Node):
 	def retrievePlan(self, corstate):
 		qplan = data.CorrectorPlanData()
 		qplan['camstate'] = corstate
-		qplan['tem'] = self.instrument.getTEMName()
-		qplan['ccdcamera'] = self.instrument.getCCDCameraName()
+		qplan['tem'] = self.instrument.getTEMData()
+		qplan['ccdcamera'] = self.instrument.getCCDCameraData()
 		plandatalist = self.research(datainstance=qplan)
 		if plandatalist:
 			plandata = plandatalist[0]
@@ -240,8 +240,8 @@ class Corrector(node.Node):
 			return None
 
 		imagetemp['camstate'] = camstate
-		imagetemp['tem'] = self.instrument.getTEMName()
-		imagetemp['ccdcamera'] = self.instrument.getCCDCameraName()
+		imagetemp['tem'] = self.instrument.getTEMData()
+		imagetemp['ccdcamera'] = self.instrument.getCCDCameraData()
 		try:
 			ref = self.research(datainstance=imagetemp, results=1)[0]
 		except node.ResearchError, e:
@@ -326,8 +326,8 @@ class Corrector(node.Node):
 		imagetemp['camstate'] = camstate
 		imagetemp['filename'] = self.filename(type, imagetemp.dmid[-1])
 		imagetemp['session'] = self.session
-		imagetemp['tem'] = self.instrument.getTEMName()
-		imagetemp['ccdcamera'] = self.instrument.getCCDCameraName()
+		imagetemp['tem'] = self.instrument.getTEMData()
+		imagetemp['ccdcamera'] = self.instrument.getCCDCameraData()
 		self.logger.info('Publishing reference image...')
 		try:
 			self.publish(imagetemp, pubevent=True, database=True)

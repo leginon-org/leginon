@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.21 $
+# $Revision: 1.22 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-01 01:33:28 $
+# $Date: 2005-03-01 18:59:08 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -92,6 +92,17 @@ class Proxy(object):
 		tems.sort()
 		return tems
 
+	def getTEMData(self):
+		if self.tem is None:
+			return None
+		instrumentdata = data.InstrumentData()
+		instrumentdata['name'] = self.tem._name
+		try:
+			instrumentdata['hostname'] = self.tem.Hostname
+		except:
+			raise RuntimeError('unable to get TEM hostname')
+		return instrumentdata
+
 	def getCCDCameraName(self):
 		if self.ccdcamera is None:
 			return None
@@ -101,6 +112,17 @@ class Proxy(object):
 		ccdcameras = self.ccdcameras.keys()
 		ccdcameras.sort()
 		return ccdcameras
+
+	def getCCDCameraData(self):
+		if self.ccdcamera is None:
+			return None
+		instrumentdata = data.InstrumentData()
+		instrumentdata['name'] = self.ccdcamera._name
+		try:
+			instrumentdata['hostname'] = self.ccdcamera.Hostname
+		except:
+			raise RuntimeError('unable to get TEM hostname')
+		return instrumentdata
 
 	def getImageCorrectionName(self):
 		if self.imagecorrection is None:
@@ -186,9 +208,9 @@ class Proxy(object):
 		if 'session' in instance:
 			instance['session'] = self.session
 		if 'tem' in instance:
-			instance['tem'] = self.getTEMName()
+			instance['tem'] = self.getTEMData()
 		if 'ccdcamera' in instance:
-			instance['ccdcamera'] = self.getCCDCameraName()
+			instance['ccdcamera'] = self.getCCDCameraData()
 		return instance
 
 	def setData(self, instance):

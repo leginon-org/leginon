@@ -753,12 +753,7 @@ class InstrumentData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
 			('name', str),
-			('description', str),
-			('scope', str),
-			('camera', str),
 			('hostname', str),
-			('camera size', int),
-			('camera pixel size', float)
 		)
 	typemap = classmethod(typemap)
 
@@ -843,14 +838,14 @@ camera_params = (
 class ScopeEMData(EMData):
 	def typemap(cls):
 		return EMData.typemap() + scope_params + (
-			('tem', str),
+			('tem', InstrumentData),
 		)
 	typemap = classmethod(typemap)
 
 class CameraEMData(EMData):
 	def typemap(cls):
 		return EMData.typemap() + camera_params + (
-			('ccdcamera', str),
+			('ccdcamera', InstrumentData),
 		)
 	typemap = classmethod(typemap)
 
@@ -912,8 +907,8 @@ class DriftData(InSessionData):
 class CalibrationData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
-			('tem', str),
-			('ccdcamera', str),
+			('tem', InstrumentData),
+			('ccdcamera', InstrumentData),
 		)
 	typemap = classmethod(typemap)
 
@@ -1040,8 +1035,8 @@ class PresetData(InSessionData):
 			('hasref', bool),
 			('dose', float),
 			('film', bool),
-			('tem', str),
-			('ccdcamera', str),
+			('tem', InstrumentData),
+			('ccdcamera', InstrumentData),
 		)
 	typemap = classmethod(typemap)
 
@@ -1126,8 +1121,8 @@ class CorrectorImageData(ImageData):
 	def typemap(cls):
 		return ImageData.typemap() + (
 			('camstate', CorrectorCamstateData),
-			('tem', str),
-			('ccdcamera', str),
+			('tem', InstrumentData),
+			('ccdcamera', InstrumentData),
 		)
 	typemap = classmethod(typemap)
 
@@ -1237,8 +1232,8 @@ class CorrectorPlanData(InSessionData):
 			('bad_rows', tuple),
 			('bad_cols', tuple),
 			('clip_limits', tuple),
-			('tem', str),
-			('ccdcamera', str),
+			('tem', InstrumentData),
+			('ccdcamera', InstrumentData),
 		)
 	typemap = classmethod(typemap)
 
