@@ -105,6 +105,11 @@ class ListPublishEvent(Event):
 		else:
 			raise TypeError
 
+class ImagePublishEvent(PublishEvent):
+	'Event indicating image was published'
+	def __init__(self, id, content, confirm):
+		PublishEvent.__init__(self, id, content, confirm)
+
 class ControlEvent(Event):
 	'Event that passes a value with it'
 	def __init__(self, id, content=None, confirm=False):

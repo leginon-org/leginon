@@ -95,7 +95,6 @@ class NodeGUIComponent(Frame):
 		for argname in self.client.argnames():
 			argtype = self.client.argtype(argname)
 			argvalue = self.client.argvaluesdict[argname]
-			print 'ARGVALUE: %s' % (argvalue,)
 			argalias = self.client.argaliasdict[argname]
 			a = NodeGUIArg(self, argname, argalias, argtype, argvalue)
 			a.pack()

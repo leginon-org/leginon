@@ -1,21 +1,4 @@
-
 ### this module is used as a container for all node classes
-
-import node
-
-from watcher import TestWatch
-from timedloop import TestLoop
-from acquireloop import AcquireLoop
-from mynode import MyNode
-from intgen import IntGen
-from EM import EM
-from emtest import EMTest
-from betacalibration import BetaCalibration
-try:
-	from imviewer2 import ImViewer
-except ImportError:
-	pass
-from getdata import GetData
 
 def nodeClasses():
 	"""
@@ -30,3 +13,21 @@ def nodeClasses():
 			if issubclass(value, node.Node):
 				nodeclasses[name] = value
 	return nodeclasses
+
+
+import node
+
+from watcher import TestWatch
+from timedloop import TestLoop
+from acquireloop import AcquireLoop
+from mynode import MyNode
+from intgen import IntGen
+from EM import EM
+from emtest import EMTest
+#from betacalibration import BetaCalibration
+try:
+	from imviewer2 import ImViewer
+except ImportError:
+	pass
+from getdata import GetData
+from shiftmeter import ShiftMeter

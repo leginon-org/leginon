@@ -268,6 +268,21 @@ class Manager(node.Node):
 			{'name':'tonode_str', 'alias':'To Node', 'type':self.clientlist}
 			)
 		self.registerUIFunction(self.uiAddDistmap, argspec, 'Bind')
+		
+		self.registerUIFunction(self.uiNodes, (), 'nodes')
+
+	def uiNodes(self):
+		"""
+		return a dict describing all currently managed nodes
+		"""
+		ret = {}
+		for nodename in self.clientlist:
+			nodeid = self.clientdict[nodename]
+			nodelocationdata = self.server.datahandler.query(nodeid)
+			if nodelocationdata:
+				nodeloc = nodelocationdata.content
+				ret[nodename] = nodeloc	
+		return ret
 
 	def uiLaunch(self, name, launcher_str, nodeclass_str, args, newproc=0):
 		"""

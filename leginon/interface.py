@@ -78,7 +78,6 @@ class ClientComponent(object):
 				self.argaliasdict[argname] = argname
 			if 'default' in arg:
 				self.argvaluesdict[argname] = arg['default']
-				print 'SETTING DEFAULT: %s' % (arg['default'],)
 			else:
 				self.argvaluesdict[argname] = None
 
