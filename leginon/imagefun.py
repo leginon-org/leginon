@@ -214,13 +214,28 @@ def center_fill(input, size, value=0):
 	cenr, cenc = center
 	input[cenr-size/2:cenr+size/2, cenc-size/2:cenc+size/2] = value
 
-def power(numericarray):
+def power(numericarray, mask_radius=10):
 	fft = ffteng.transform(numericarray)
 	pow = Numeric.absolute(fft)
 	pow = Numeric.log(pow)
-	pow = Numeric.clip(pow, 9, 13)
+	#pow = Numeric.clip(pow, clipmin, clipmax)
 	pow = shuffle(pow)
+	center_mask(pow, mask_radius)
 	return pow
+
+def center_mask(numericarray, mask_radius):
+	shape = numericarray.shape
+	center = shape[0]/2, shape[1]/2
+	center_square = numericarray[center[0]-mask_radius:center[0]+mask_radius, center[1]-mask_radius:center[1]+mask_radius]
+
+	m = mean(numericarray)
+	cs_shape = center_square.shape
+	cs_center = cs_shape[0]/2, cs_shape[1]/2
+	for row in range(cs_shape[0]):
+		for col in range(cs_shape[1]):
+			dist = Numeric.hypot(row-cs_center[0],col-cs_center[1])
+			if dist <= mask_radius:
+				center_square[row,col] = m
 
 def shuffle(narray):
 	'''
