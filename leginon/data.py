@@ -477,7 +477,7 @@ class PhaseCorrelationImageData(CorrelationImageData):
 class CameraImageData(ImageData):
 	def typemap(cls):
 		t = ImageData.typemap()
-		t += [ ('scope', EMData), ('camera', EMData), ]
+		t += [ ('scope', ScopeEMData), ('camera', CameraEMData), ]
 		return t
 	typemap = classmethod(typemap)
 
@@ -486,7 +486,7 @@ class CameraImageData(ImageData):
 class CorrectionImageData(CameraImageData):
 	def typemap(cls):
 		t = CameraImageData.typemap()
-		t += [ ('camstate', dict), ]
+		t += [ ('camstate', CameraEMData), ]
 		return t
 	typemap = classmethod(typemap)
 
@@ -548,7 +548,7 @@ class CorrectorPlanData(Data):
 	def typemap(cls):
 		t = Data.typemap()
 		t += [
-			('camstate', dict),
+			('camstate', CameraEMData),
 			('bad_rows', tuple),
 			('bad_cols', tuple),
 			('clip_limits', tuple)
@@ -584,10 +584,10 @@ class ImageTargetData(Data):
 		  ('array value', float),
 
 		  ('image id', tuple),
-		  ('scope', dict),
-		  ('camera', dict),
+		  ('scope', ScopeEMData),
+		  ('camera', CameraEMData),
 		  ('source', str),
-		  ('preset', dict)
+		  ('preset', PresetData)
 		]
 		return t
 	typemap = classmethod(typemap)

@@ -50,7 +50,7 @@ class CameraFuncs(object):
 		if camstate is not None:
 			t2 = Timer('publish camera state')
 			try:
-				camdata = data.EMData(('camera',), initializer=camstate)
+				camdata = data.CameraEMData(('camera',), initializer=camstate)
 				print 'CAMDATA', camdata
 				self.node.publishRemote(camdata)
 			except Exception, detail:

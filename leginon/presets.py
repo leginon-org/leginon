@@ -42,7 +42,7 @@ class PresetsClient(object):
 		'''
 		d = dict(presetdata)
 		### this seems to work even if the preset contains camera keys
-		emdata = data.EMData(('scope',), initializer=d)
+		emdata = data.ScopeEMData(('scope',), initializer=d)
 		self.node.publishRemote(emdata)
 
 	def fromScope(self, presetname):

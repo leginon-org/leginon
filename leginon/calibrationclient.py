@@ -29,7 +29,7 @@ class CalibrationClient(object):
 		## acquire image at this state
 		print 'creating EM data'
 		print 'state =', state
-		newemdata = data.EMData(('scope',), initializer=state)
+		newemdata = data.ScopeEMData(('scope',), initializer=state)
 #		needs unlock too
 #		print 'publishing lock'
 #		self.node.publish(event.LockEvent(self.node.ID()))
@@ -226,7 +226,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 				tilts[tiltaxis] = (0, tilt_value)
 
 		## return to original beam tilt
-		emdata = data.EMData(('scope',), initializer=tiltcenter)
+		emdata = data.ScopeEMData(('scope',), initializer=tiltcenter)
 		self.node.publishRemote(emdata)
 
 		print 'TILTS'
@@ -337,7 +337,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			print 'PIXELSHIFT2', pixelshift2
 		finally:
 			## return to original beam tilt
-			emdata = data.EMData(('scope',), initializer=beamtilt)
+			emdata = data.ScopeEMData(('scope',), initializer=beamtilt)
 			self.node.publishRemote(emdata)
 
 		return (pixelshift1, pixelshift2)
@@ -380,7 +380,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			print 'PIXELSHIFT2', pixelshift2
 		finally:
 			## return to original beam tilt
-			emdata = data.EMData(('scope',), initializer=beamtilt)
+			emdata = data.ScopeEMData(('scope',), initializer=beamtilt)
 			self.node.publishRemote(emdata)
 
 		pixelshiftdiff = {}
@@ -595,5 +595,5 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		current['stage position']['y'] += deltagon['y']
 		print 'current after delta', current
 
-		stagedata = data.EMData(('scope',), initializer=current)
+		stagedata = data.ScopeEMData(('scope',), initializer=current)
 		self.publishRemote(stagedata)

@@ -91,7 +91,7 @@ class GridPreview(node.Node):
 				# move to center
 				center = self.prefs['center']
 				gonpos = {'stage position': {'x':center['x'], 'y':center['y']}}
-				emdata = data.EMData(('scope',), initializer=gonpos)
+				emdata = data.ScopeEMData(('scope',), initializer=gonpos)
 				print 'moving to center', center
 				self.publishRemote(emdata)
 			else:
@@ -104,7 +104,7 @@ class GridPreview(node.Node):
 				print 'transforming'
 				newstate = self.calclient.transform(pixelshift, scopestate, self.presetdata)
 				print 'done transforming'
-				emdat = data.EMData(('scope',), initializer=newstate)
+				emdat = data.ScopeEMData(('scope',), initializer=newstate)
 				print 'moving to next position'
 				self.publishRemote(emdat)
 

@@ -139,7 +139,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		newscope = calclient.transform(pixelshift, targetscope, targetcamera)
 		print 'WITH TARGET', newscope['image shift']
 		## create new EMData object to hole this
-		emdata = data.EMData(('scope',), initializer=newscope)
+		emdata = data.ScopeEMData(('scope',), initializer=newscope)
 		return emdata
 
 	def removePreset(self, emdata, presetdata):
@@ -149,7 +149,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		# like magnification will be updated later.
 
 		# make new EMData object
-		newemdata = data.EMData(('scope',))
+		newemdata = data.ScopeEMData(('scope',))
 		newemdata.update(emdata)
 
 		print 'REMOVING', presetdata['image shift']
@@ -171,7 +171,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		print 'ADD PRESET'
 
 		# make new EMData object
-		newemdata = data.EMData(('scope',))
+		newemdata = data.ScopeEMData(('scope',))
 		newemdata.update(emdata)
 		print 'TARGET BEFORE', newemdata['image shift']
 
@@ -191,7 +191,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 	def presetDataToEMData(self, presetdata):
 		#emdict = dict(presetdata)
-		emdata = data.EMData(('scope',))
+		emdata = data.ScopeEMData(('scope',))
 		emdata.update(presetdata)
 		return emdata
 
@@ -254,7 +254,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## figure out shift
 		calclient = self.calclients['image shift']
 		newstate = calclient.transform(pixelshift, clickscope, clickcamera)
-		emdat = data.EMData(('scope',), initializer=newstate)
+		emdat = data.ScopeEMData(('scope',), initializer=newstate)
 		self.outputEvent(event.LockEvent(self.ID()))
 		self.publishRemote(emdat)
 

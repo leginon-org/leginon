@@ -58,7 +58,7 @@ class GonModeler(node.Node):
 	def acquireNextPosition(self, axis, state=None):
 		## go to state
 		if state is not None:
-			newemdata = data.EMData(('scope',), initializer=state)
+			newemdata = data.ScopeEMData(('scope',), initializer=state)
 			self.publishRemote(newemdata)
 			time.sleep(self.settle)
 
