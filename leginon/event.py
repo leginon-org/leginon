@@ -99,6 +99,10 @@ class TargetListDoneEvent(NotificationEvent):
 		return t
 	typemap = classmethod(typemap)
 
+class DriftDoneEvent(NotificationEvent):
+	'Event indicating that drift has ended'
+	pass
+
 ## could PublishEvent and UnpublishEvent be derived from a common class?
 class PublishEvent(NotificationEvent):
 	'Event indicating data was published'
@@ -108,7 +112,7 @@ class PublishEvent(NotificationEvent):
 		t += [ ('dataid', tuple), ]
 		return t
 	typemap = classmethod(typemap)
-	
+
 class UnpublishEvent(NotificationEvent):
 	'Event indicating data was unpublished (deleted)'
 	def typemap(cls):
@@ -135,6 +139,12 @@ class ListPublishEvent(Event):
 		return t
 	typemap = classmethod(typemap)
 
+## this is a PublishEvent because we want to publish the EM state
+## that was used to detect the drift, so that we can continue to monitor
+## drift at this state.
+class DriftDetectedEvent(PublishEvent):
+	dataclass = data.AllEMData
+	
 class NodeClassesPublishEvent(PublishEvent):
 	'Event indicating launcher published new list of node classes'
 	dataclass = data.NodeClassesData
