@@ -74,6 +74,7 @@ class Navigator(node.Node):
 		self.oldshape = None
 
 		self.shape = None
+		self.start()
 
 	def newImage(self, newimage):
 		self.oldshape = self.newshape
@@ -336,12 +337,6 @@ class Navigator(node.Node):
 		else:
 			self.currentlocation = locdata
 			self.logger.info('Moved to location %s' % (name,))
-
-class SimpleNavigator(Navigator):
-	def __init__(self, id, session, managerlocation, **kwargs):
-		Navigator.__init__(self, id, session, managerlocation, **kwargs)
-		self.start()
-
 
 if __name__ == '__main__':
 	id = ('navigator',)
