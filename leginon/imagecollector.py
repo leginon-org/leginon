@@ -45,5 +45,5 @@ class ImageCollector(imagewatcher.ImageWatcher):
 			mrcstr = ''
 		self.ui_image.set(xmlbinlib.Binary(mrcstr))
 		self.imagelistlock.release()
-		return ''
+		return self.imagelistselect.get()
 

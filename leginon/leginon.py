@@ -571,7 +571,8 @@ class ImageCollectorWidget(CustomWidget):
 		widget.button.pack_forget()
 		widget.button.pack()
 
-		self.addWidget('Settings', imagecollector, ('Images', 'Select'))
+		widget = self.addWidget('Settings', imagecollector, ('Images', 'Select'), True)
+		widget.arrangeButtons(False)
 		self.addWidget('Control', imagecollector, ('Images', 'Select Image'))
 		widget = self.addWidget('Results', imagecollector, ('Images', 'Image'))
 		widget.getbutton.grid_forget()
@@ -655,7 +656,6 @@ class AutoFocusWidget(CustomWidget):
 
 		widget = self.addWidget('Results', beamtiltcalibrator,
 											('Calibrate', 'Measure', 'Necessary Correction'), True)
-		widget.getbutton.grid_forget()
 		self.arrangeTree(widget, None, False)
 
 #		widget = self.addWidget('Results', matrixcalibrator, ('Images', 'Image 1'))
