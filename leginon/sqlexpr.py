@@ -237,7 +237,7 @@ class Field(SQLExpression):
         self.tableName = tableName
         self.fieldName = fieldName
     def sqlRepr(self):
-	return self.tableName + "." + self.fieldName
+	return self.tableName + "." + backquote(self.fieldName)
     def tablesUsedImmediate(self):
         return [self.tableName]
 
@@ -448,7 +448,8 @@ class Insert(SQLExpression):
             template = self.valueList[0].keys()
             allowNonDict = False
         if template is not None:
-            insert += " (%s)" % ", ".join(template)
+	    f = map(backquote, template)
+            insert += " (%s)" % ", ".join(f)
         first = True
         insert += " VALUES "
         for value in self.valueList:

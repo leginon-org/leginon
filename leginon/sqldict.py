@@ -649,7 +649,7 @@ Format a table definition for any Data Class:
 				{'Field':'DEF_timestamp','Type':'timestamp',
 				'Null':'YES', 'Key':'INDEX'}
 				]
-	columns += defaults
+		columns += defaults
 	for key in in_dict:
 		column={}
 		value=in_dict[key]
@@ -661,19 +661,19 @@ Format a table definition for any Data Class:
 		elif type(value) is Numeric.ArrayType:
 			if len(value.flat) < 10:
 				arraydict = matrix2dict(value,key)
-				nd = sqlColumnsDefinition(arraydict)
+				nd = sqlColumnsDefinition(arraydict, noDefault=[])
 				nd.sort()
 				columns += nd
 			# Think about store the filename
 				
 		elif type(value) is dict:
 			flatdict = flatDict({key:value})
-			nd = sqlColumnsDefinition(flatdict)
+			nd = sqlColumnsDefinition(flatdict, noDefault=[])
 			nd.sort()
 			columns += nd
 
 		elif type(value) in [tuple, list]:
-			nd = sqlColumnsDefinition({seq2sqlColumn(key):repr(value)})
+			nd = sqlColumnsDefinition({seq2sqlColumn(key):repr(value)}, noDefault=[])
 			columns += nd
 			
 	return columns

@@ -47,10 +47,10 @@ class DBDataKeeper(datahandler.DataHandler):
 		table = newdatacopy.__class__.__name__
 		definition = sqldict.sqlColumnsDefinition(newdatacopy)
 		formatedData = sqldict.sqlColumnsFormat(newdatacopy)
-		self.db.createSQLTable(table,definition)
-		self.db.myTable = self.db.Table(table)
+		self.dbd.createSQLTable(table,definition)
+		self.dbd.myTable = self.dbd.Table(table)
 		
-		return self.db.myTable.insert([formatedData])
+		return self.dbd.myTable.insert([formatedData])
 
 		# images with be converted to an mrc file here, the filename will be
 		# available. What should the path of the file be?
