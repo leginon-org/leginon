@@ -317,6 +317,10 @@ class PresetsManager(node.Node):
 			print 'no such preset'
 			return
 
+		name = presetdata['name']
+
+		print 'changing to preset %s' % (name,)
+
 		## should use AllEMData, but that is not working yet
 		scopedata = data.ScopeEMData()
 		cameradata = data.CameraEMData()
@@ -331,9 +335,9 @@ class PresetsManager(node.Node):
 			self.printException()
 			print '** Maybe EM is not running?'
 		else:
-			name = presetdata['name']
 			self.currentpreset = presetdata
 			self.outputEvent(event.PresetChangedEvent(name=name))
+			print 'preset changed to %s' % (name,)
 
 	def fromScope(self, name):
 		'''
