@@ -3,6 +3,9 @@
 from Tkinter import *
 import Pmw
 import interface
+# why doesn't this work? add <python dir>\Tools\idle to your PYTHONPATH
+import TreeWidget
+import os
 
 class NodeGUIArg(Frame):
 	def __init__(self, parent, argname, argalias, argtype, argvalue=None):
@@ -20,8 +23,8 @@ class NodeGUIArg(Frame):
 			self.arg_string(argalias)
 		elif argtype == 'array':
 			self.arg_array(argalias)
-		elif argtype == 'struct':
-			self.arg_struct(argalias)
+		elif type(argtype) == dict:
+			self.arg_struct(argalias, argtype)
 		elif argtype == 'date':
 			self.arg_date(argalias)
 		elif argtype == 'binary':
@@ -69,8 +72,12 @@ class NodeGUIArg(Frame):
 	def arg_array(self, name):
 		raise NotImplementedError
 
-	def arg_struct(self, name):
-		raise NotImplementedError
+	def arg_struct(self, name, struct):
+		sc = TreeWidget.ScrolledCanvas(self, bg='white')
+		sc.frame.pack()
+		item = StructTreeItem(name, struct)
+		node = TreeWidget.TreeNode(sc.canvas, None, item)
+		node.update()
 		
 	def arg_date(self, name):
 		raise NotImplementedError
@@ -192,6 +199,80 @@ class NodeGUI(Frame):
 			c.pack(side=TOP, expand=YES, fill=BOTH)
 			self.components[key] = c
 		
+class StructTreeItem(TreeWidget.TreeItem):
+	def __init__(self, key, value):
+		self.key = key
+		self.value = value
+
+	def GetText(self):
+		if self.key:
+			return self.key
+		else:
+			return self.value
+
+	def IsEditable(self):
+		if self.key:
+			return False
+		else:
+			return True
+
+	def SetText(self, text):
+		self.value = type(self.value)(text)
+
+	def GetIconName(self):
+		pass
+
+	def IsExpandable(self):
+		if self.key:
+			return True
+		else:
+			return False
+
+	def GetSubList(self):
+		if type(self.value) is dict:
+			sublist = []
+			for k in self.value:
+				item = StructTreeItem(k, self.value[k])
+				sublist.append(item)
+			return sublist
+		else:
+			return [StructTreeItem(None, self.value)]
+
+#class StructTreeItem(TreeWidget.TreeItem):
+#	def __init__(self, key, value):
+#		self.key = key
+#		self.value = value
+#
+#	def GetText(self):
+#		if self.key:
+#			return self.key
+#		else:
+#			return self.value
+#
+#	def IsEditable(self):
+#		if self.key:
+#			return False
+#		else:
+#			return True
+#
+#	def SetText(self):
+#		pass
+#
+#	def GetIconName(self):
+#		pass
+#
+#	def IsExpandable(self):
+#		return type(self.value) is dict
+#
+#	def GetSubList(self):
+#		if type(self.value) is dict:
+#			sublist = []
+#			for k in self.value:
+#				item = StructTreeItem(k, self.value[k])
+#				sublist.append(item)
+#			return sublist
+#		else:
+#			return [StructTreeItem(None, self.value)]
 
 if __name__ == '__main__':
 	import sys

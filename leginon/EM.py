@@ -110,6 +110,15 @@ class EM(node.Node):
 			self.locknodeid = None
 			self.nodelock.release()
 
+	def defineUserInterface(self):
+		node.Node.defineUserInterface(self)
+		argspec = (
+			{'name': 'parameter', 'alias': 'Parameter', 'type': {'test': 2, 'foo': {'bar': 1}}},)
+		self.registerUIFunction(self.foo, argspec, 'Foo')
+
+	def foo(self):
+		pass
+
 if __name__ == '__main__':
 	import time
 	import tecnai

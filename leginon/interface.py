@@ -33,7 +33,7 @@ class Server(xmlrpcserver.xmlrpcserver):
 #				raise RuntimeError('bad argname in argdict')
 			xmlrpctype = argdict['type']
 			if xmlrpctype not in xmlrpctypes:
-				if type(xmlrpctype) not in (tuple,list):
+				if type(xmlrpctype) not in (dict,tuple,list):
 					raise RuntimeError('bad xmlrpctype')
 
 		self.funcdict[alias] = {'func': func, 'argspec':argspec, 'returntype':returntype}
