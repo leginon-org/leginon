@@ -1,0 +1,19 @@
+Install the prerequisite software necessary to run Leginon 2 listed on the
+download page.
+
+If you are using a Gatan camera on the machine Leginon 2 is being installed copy
+pyScope\pythoncom22.dll over the copy python installed (should be
+%SystemRoot%\system32\pythoncom22.dll).
+
+Add the pyleginon and pyScope directories to the PYTHONPATH environment variable.
+
+Edit leginonconfig.py to customize your environment
+
+Run start.py (this automatically starts manager and launcher on local machine)
+
+You may run launcher.py to additional machines on the network in order to run
+nodes on those machines. (i.e. run launcher.py on the machine connected to the
+microscope and start.py on a separate machine, freeing the microscope machine
+to handle getting and setting microscope parameters and the separate machine to
+run everything else.)
+
