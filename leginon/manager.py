@@ -52,8 +52,8 @@ class Manager(node.Node):
 		self.addEventInput(event.NodeUnavailableEvent, self.unregisterNode)
 		self.addEventInput(event.NodeClassesPublishEvent,
 															self.handleNodeClassesPublish)
-		self.addEventInput(event.NodeInitializedEvent, self.setNodeStatus)
-		self.addEventInput(event.NodeUninitializedEvent, self.setNodeStatus)
+		self.addEventInput(event.NodeInitializedEvent, self.handleNodeStatus)
+		self.addEventInput(event.NodeUninitializedEvent, self.handleNodeStatus)
 		self.addEventInput(event.PublishEvent, self.registerData)
 		self.addEventInput(event.UnpublishEvent, self.unregisterData)
 		self.addEventInput(event.ListPublishEvent, self.registerData)
@@ -280,14 +280,20 @@ class Manager(node.Node):
 		# also remove from launcher registry
 		self.delLauncher(nodeid)
 
-	def setNodeStatus(self, ievent):
-		self.initializednodescondition.acquire()
+	def handleNodeStatus(self, ievent):
 		nodeid = ievent['id'][:-1]
 		if isinstance(ievent, event.NodeInitializedEvent):
+			self.setNodeStatus(nodeid, True)
+		elif isinstance(ievent, event.NodeUninitializedEvent):
+			self.setNodeStatus(nodeid, False)
+
+	def setNodeStatus(self, nodeid, status):
+		self.initializednodescondition.acquire()
+		if status:
 			if nodeid not in self.initializednodes:
 				self.initializednodes.append(nodeid)
 				self.initializednodescondition.notifyAll()
-		elif isinstance(ievent, event.NodeUninitializedEvent):
+		else:
 			if nodeid in self.initializednodes:
 				self.initializednodes.remove(nodeid)
 				self.initializednodescondition.notifyAll()
@@ -338,9 +344,6 @@ class Manager(node.Node):
 		'''
 		args = (launcher, newproc, target, name, nodeargs, dependencies)
 		self.app.addLaunchSpec(args)
-		# be dependent on the launcher you're launching from by default
-		if launcher not in dependencies:
-			dependencies.append(launcher)
 		t = threading.Thread(target=self.waitNode, args=args)
 		t.start()
 
@@ -349,15 +352,21 @@ class Manager(node.Node):
 		args = (newid, self.session, self.nodelocations) + nodeargs
 		dependenciescopy = copy.copy(dependencies)
 
+		# be dependent on the launcher you're launching from by default
+		if launcher not in dependenciescopy:
+			dependenciescopy.append(launcher)
+
 		self.initializednodescondition.acquire()
+		wait = False
 		for nodeid in dependenciescopy:
-			if nodeid in self.initializednodes:
-				dependenciescopy.remove(nodeid)
-		while len(dependenciescopy) > 0:
+			if nodeid not in self.initializednodes:
+				wait = True
+		while wait:
 			self.initializednodescondition.wait()
+			wait = False
 			for nodeid in dependenciescopy:
-				if nodeid in self.initializednodes:
-					dependenciescopy.remove(nodeid)
+				if nodeid not in self.initializednodes:
+					wait = True
 		self.initializednodescondition.release()
 
 		ev = event.LaunchEvent(self.ID(), newproc=newproc,
@@ -380,6 +389,8 @@ class Manager(node.Node):
 		except IOError:
 			self.printerror('cannot push KillEvent to ' + str(nodeid)
 												+ ', unregistering')
+			# maybe didn't uninitialized
+			self.setNodeStatus(nodeid, False)
 			# group into another function
 			self.removeNode(nodeid)
 			# also remove from launcher registry
