@@ -319,7 +319,8 @@ class RobotControl(RobotNode):
 		text = 'Reply to this message if grid is no longer in the specimen holder.\nImage of the specimen holder is attached.'
 		time.sleep(5.0)
 		try:
-			image = Image.open(self.imagefilename.get())
+			raise NotImplemetedError
+			image = Image.open(imagefilename)
 			imagestring = emailnotification.PILImage2String(image)
 		except:
 			imagestring = None
@@ -412,10 +413,9 @@ class RobotControl(RobotNode):
 			initializer = {'grid ID': gridid}
 			self.griddata = data.GridData(initializer=initializer)
 		except GridQueueEmpty:
-			self.uicurrentgridnumber.set(None)
 			raise
 		else:
-			self.uicurrentgridnumber.set(self.gridnumber)
+			self.logger.info('Current grid: %d' % self.gridnumber)
 			self.communication.gridNumber = self.gridnumber
 
 	def robotReadyForInsertion(self):
@@ -449,7 +449,6 @@ class RobotControl(RobotNode):
 		self.outputEvent(evt)
 		self.gridnumber = None
 		self.griddata = None
-		self.uicurrentgridnumber.set(None)
 		self.logger.info('Sent notification the holder is extracted')
 
 	def estimateTimeLeft(self):
@@ -465,21 +464,22 @@ class RobotControl(RobotNode):
 			ngridsleft = self.panel.getGridQueueSize()
 			secondsleft = (last - first)/ntimings*ngridsleft
 			timestring = seconds2str(secondsleft)
-		self.uitimeleft.set(timestring)
+		if timestring:
+			self.logger.info(timestring + ' remaining')
 
 	def _insert(self):
 		if self.simulate:
-			self.insertmethod.disable()
+			#self.insertmethod.disable()
 			self.estimateTimeLeft()
 			try:
 				self.robotReadyForInsertion()
 			except GridQueueEmpty:
-				self.insertmethod.enable()
+				#self.insertmethod.enable()
 				return
 			self.outputGridInsertedEvent()
 			return
 
-		self.insertmethod.disable()
+		#self.insertmethod.disable()
 		self.estimateTimeLeft()
 
 		self.logger.info('Inserting holder into microscope')
@@ -487,13 +487,13 @@ class RobotControl(RobotNode):
 		try:
 			self.robotReadyForInsertion()
 		except GridQueueEmpty:
-			self.insertmethod.enable()
+			#self.insertmethod.enable()
 			return
 
 		try:
 			self.scopeReadyForInsertion1()
 		except ScopeException:
-			self.insertmethod.enable()
+			#self.insertmethod.enable()
 			return
 		self.signalRobotToInsert1()
 		self.waitForRobotToInsert1()
@@ -501,7 +501,7 @@ class RobotControl(RobotNode):
 		try:
 			self.scopeReadyForInsertion2()
 		except ScopeException:
-			self.insertmethod.enable()
+			#self.insertmethod.enable()
 			return
 		self.signalRobotToInsert2()
 		self.waitForRobotToInsert2()
@@ -509,7 +509,6 @@ class RobotControl(RobotNode):
 		self.outputGridInsertedEvent()
 
 		self.logger.info('Insertion of holder successfully completed')
-		#self.insertmethod.enable()
 
 	def _extract(self):
 		if self.simulate:
@@ -591,31 +590,6 @@ class RobotControl(RobotNode):
 		gridboxidindex = gridlocations.Index(['gridboxId'])
 		gridlocations = gridboxidindex[gridboxid].fetchall()
 		return [int(i['location']) for i in gridlocations]
-
-	'''
-	def defineUserInterface(self):
-		RobotNode.defineUserInterface(self)
-
-		self.uicurrentgridnumber = uidata.Integer('Current grid number',
-																							None, 'r')
-		self.uitimeleft = uidata.String('Estimated time remaining', '', 'r')
-		self.imagefilename = uidata.String('Email image filename', '', 'rw',
-																				persist=True)
-		statuscontainer = uidata.Container('Status')
-		statuscontainer.addObjects((
-																self.uicurrentgridnumber,
-																self.uitimeleft,
-																self.imagefilename))
-
-		testemailmethod = uidata.Method('Test email', self.emailGridClear)
-		self.insertmethod = uidata.Method('Process Grids', self.insert)
-		controlcontainer = uidata.Container('Control')
-		controlcontainer.addObjects((self.insertmethod, testemailmethod))
-
-		rccontainer = uidata.LargeContainer('Robot Control')
-		rccontainer.addObjects((statuscontainer, controlcontainer))
-		self.uicontainer.addObject(rccontainer)
-	'''
 
 class RobotNotification(RobotNode):
 	panelclass = gui.wx.Robot.NotificationPanel

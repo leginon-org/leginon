@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Robot.py,v $
-# $Revision: 1.1 $
+# $Revision: 1.2 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-12-11 00:52:21 $
+# $Date: 2004-12-11 01:23:24 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -59,8 +59,8 @@ class ControlPanel(gui.wx.Node.Panel):
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_GRID,
 													'grid', shortHelpString='Grid Cleared')
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
-		self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, False)
+		#self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
+		#self.toolbar.EnableTool(gui.wx.ToolBar.ID_GRID, False)
 		self.toolbar.Realize()
 
 		self.ctray = wx.Choice(self, -1)
@@ -72,8 +72,15 @@ class ControlPanel(gui.wx.Node.Panel):
 
 		self.tray = Tray(self, -1)
 
+		self.bselectall = wx.Button(self, -1, 'Select All')
+		self.bselectnone = wx.Button(self, -1, 'Select None')
+		szselect = wx.GridBagSizer(5, 5)
+		szselect.Add(self.bselectall, (0, 0), (1, 1), wx.ALIGN_CENTER)
+		szselect.Add(self.bselectnone, (0, 1), (1, 1), wx.ALIGN_CENTER)
+
 		self.szmain.Add(sztray, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		self.szmain.Add(self.tray, (1, 0), (1, 1), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		self.szmain.Add(szselect, (2, 0), (1, 1), wx.ALIGN_CENTER)
 		self.szmain.AddGrowableCol(0)
 
 		self.SetSizer(self.szmain)
@@ -91,6 +98,7 @@ class ControlPanel(gui.wx.Node.Panel):
 	def onNodeInitialized(self):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onPlayTool, id=gui.wx.ToolBar.ID_PLAY)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onGridTool, id=gui.wx.ToolBar.ID_GRID)
+
 		self.Bind(wx.EVT_CHOICE, self.onTrayChoice, self.ctray)
 		choices = self.node.getTrayLabels()
 		if choices:
@@ -99,17 +107,26 @@ class ControlPanel(gui.wx.Node.Panel):
 			self.ctray.Enable(True)
 			self.onTrayChoice()
 
+		self.Bind(wx.EVT_BUTTON, self.onSelectAllButton, self.bselectall)
+		self.Bind(wx.EVT_BUTTON, self.onSelectNoneButton, self.bselectnone)
+
 	def onPlayTool(self, evt):
 		threading.Thread(target=self.node.insert).start()
 
 	def onGridTool(self, evt):
 		threading.Thread(target=self.node.gridCleared).start()
 
+	def onSelectAllButton(self, evt):
+		self.tray.selectAll()
+
+	def onSelectNoneButton(self, evt):
+		self.tray.selectNone()
+
 	def getNextGrid(self):
-		return self.ctray.getNextGrid()
+		return self.tray.getNextGrid()
 
 	def getGridQueueSize(self):
-		return self.ctray.getGridQueueSize()
+		return self.tray.getGridQueueSize()
 
 class Tray(wx.Panel):
 	def __init__(self, *args, **kwargs):
@@ -129,6 +146,16 @@ class Tray(wx.Panel):
 		self.Bind(wx.EVT_RIGHT_UP, self.onRightUp)
 		self.Bind(wx.EVT_PAINT, self.onPaint)
 		self.Bind(gui.wx.Events.EVT_UPDATE_DRAWING, self.onUpdateDrawing)
+
+	def selectAll(self):
+		grids = list(self.gridlist)
+		grids.sort()
+		self.gridqueue = grids
+		self.updateDrawing()
+
+	def selectNone(self):
+		self.gridqueue = []
+		self.updateDrawing()
 
 	def getNextGrid(self):
 		try:
