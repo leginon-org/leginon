@@ -4,6 +4,22 @@ require ("inc/jpgraph_scatter.php");
 require ("inc/image.inc");
 require ("inc/leginon.inc");
 
+function getColorMap($v) {
+        $c = floor($v%255);
+        if ($v<255) {
+                $colormap = ((255 << 16) + ($c << 8) + 0);
+        } else if ($v<255*2) {
+                $colormap = (((255-$c) << 16) + (255 << 8) + 0);
+        } else if ($v<255*3) {
+                $colormap = ((0 << 16) + (255 << 8) + $c);
+        } else if ($v<255*4) {
+                $colormap = ((0 << 16) + ((255-$c) << 8) + 255);
+        } else if ($v<=255*5) {
+                $colormap = (($c << 16) + (0 << 8) + 255);
+        }
+        return $colormap;
+}
+
 $defaultId= 1445;
 $defaultpreset='en';
 $sessionId= ($_GET[Id]) ? $_GET[Id] : $defaultId;
@@ -24,15 +40,21 @@ if ($viewdata) {
 	exit;
 }
 
+
 foreach ($stats as $stat) {
-	if ($stat['parent thickness-mean'] > 0.5)
-		continue;
-	$datay[] = $stat['mean'];
-	$datax[] = $stat['parent mean'];
+//	if ($stat['parent thickness-mean'] > 0.5)
+//		continue;
+	$prefId = $stat['prefId'];
+//	$datay[] = $stat['mean'];
+//	$datax[] = $stat['parent mean'];
+	$datay[$prefId][] = $stat['mean'];
+        $datax[$prefId][] = $stat['parent mean'];
+
 //	$datax[] = $stat['parent thickness-mean'];
 	
 }
-if (!$datax && !$datay) {
+$keys = (array_keys($datax));
+if (empty($keys[0])) { // && !$datax && !$datay) {
 	$width = 12;
 	$height = 12;
 	$source = blankimage($width,$height);
@@ -49,9 +71,16 @@ if (!$datax && !$datay) {
 	$graph->yaxis->SetTitlemargin(35);
 	$graph->yaxis->title->Set("density ".$parentinfo['parentpreset']);
 
-	$sp1 = new ScatterPlot($datay,$datax);
+//	$sp1 = new ScatterPlot($datay,$datax);
+	foreach ($keys as $k=>$v) {
+                $sp[$k] = new ScatterPlot($datay[$v],$datax[$v]);
+        	$color = '#'.dechex(getColorMap($k));
+        	$sp[$k]->mark->SetFillColor($color);
+        	$sp[$k]->mark->SetColor($color);
+                $graph->Add($sp[$k]);
+        }
 
-	$graph->Add($sp1);
+
 	$source = $graph->Stroke(_IMG_HANDLER);
 }
 resample($source, $width, $height);

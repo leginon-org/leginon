@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.40 $
- *	@version $Id: leginon.inc,v 1.40 2005-01-24 23:28:43 dfellman Exp $
+ *	@version $Revision: 1.41 $
+ *	@version $Id: leginon.inc,v 1.41 2005-02-03 01:16:51 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -126,6 +126,8 @@ class leginondata {
 		."s.`DEF_id` as SessionId, "
 		."s.Name, "
 		."s.comment as Purpose, "
+		."unix_timestamp(s.`DEF_timestamp`) as `Begin unixTimestamp`,"
+		."unix_timestamp(a.`DEF_timestamp`) as `End unixTimestamp`, "
 		."date_format(s.`DEF_timestamp`, '%Y-%d-%m %T') as `Begin Time`,"
 		."date_format(a.`DEF_timestamp`, '%Y-%d-%m %T') as `End Time`, "
 		."sec_to_time((Dayofyear(a.`DEF_timestamp`)-Dayofyear(s.`DEF_timestamp`))*86400-"
@@ -845,6 +847,11 @@ class leginondata {
 		
 	}
 
+	function getDefocusStats($imgId, $preset) {
+		$newimage = $this->findRelation($imgId, $preset, 'focus', false);
+		return $newimage;
+	}
+
 	function getImageTargets($imgId) {
 		$q =	" select "
 			."floor(t.`delta column`+c.`SUBD|dimension|x`/2) as x, "
@@ -1480,10 +1487,41 @@ class leginondata {
 		return $this->mysql->getSQLResult($q);
 	}
 
-	function getRelatedStats($sessionId, $preset) {
+	function getImageStats($sessionId="", $preset="") {
+
+		if ($sessionId) {
+			$where[] = "`a`.`REF|SessionData|session` = $sessionId";
+		}
+
+		if ($preset) {
+			$preselect = ", `p`.`name`, `p`.`magnification`";
+			$prejoin = "LEFT JOIN `PresetData` AS `p` ON (`p`.`DEF_id`=`a`.`REF|PresetData|preset`)";
+			$where[] = "`p`.`name` = '$preset'"; 
+		}
+
+		if ($where)
+			$sqlwhere = "WHERE ".implode(' AND ', $where);
+
+
+		$q="SELECT "
+		."`s`.`DEF_timestamp` as `timestamp` , `s`.`min`, `s`.`max`, "
+		."`s`.`REF|AcquisitionImageData|image` as `imageId`, "
+		."`s`.`stdev`, `s`.`mean` "
+		.$preselect 
+		."FROM "
+		."`AcquisitionImageStatsData` AS `s` "
+		."LEFT JOIN `AcquisitionImageData` AS `a` "
+		."ON (`a`.`DEF_id`=`s`.`REF|AcquisitionImageData|image`) "
+		.$prejoin
+		.$sqlwhere ;
+		return $this->mysql->getSQLResult($q);
+	}
+
+		function getRelatedStats($sessionId, $preset) {
 		$q="SELECT "
 			."`a`.`DEF_id` as `Id`, "
 			."`istats`.`mean`, "
+			."`h`.`DEF_id` as `prefId`, "
 			."`parent`.`DEF_id` as `parentId`, "
 			."`hstats`.`mean` AS `parent mean`, "
 			."`hstats`.`thickness-mean` AS `parent thickness-mean` "
@@ -1507,8 +1545,7 @@ class leginondata {
 			."`parent`.`DEF_id` is not NULL "
 			."AND "
 			."`p`.`name` = '$preset' "
-			."AND "
-			."`hstats`.`DEF_id` <> 0 ";
+			."group by `hstats`.`DEF_id`";
 		return $this->mysql->getSQLResult($q);
 	}
 

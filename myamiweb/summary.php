@@ -9,6 +9,7 @@
 
 require('inc/leginon.inc');
 
+
 // --- Set  experimentId
 $lastId = $leginondata->getLastSessionId();
 $expId = (empty($_GET[expId])) ? $lastId : $_GET[expId];
@@ -58,6 +59,8 @@ if (!empty($sessioninfo)) {
 	echo "<table border='0'>\n";
 	$i=0;
 	foreach($sessioninfo as $k=>$v) {
+		if (eregi('timestamp', $k))
+			continue;
 		echo formatHtmlRow($k, $v);
 	}
 	echo "</table>\n";
@@ -83,7 +86,7 @@ if (!empty($summary)) {
 echo "</td>";
 echo "</tr>";
 echo "<tr>";
-echo "<td colspan='2'>";
+echo "<td valign='top' colspan='1'>";
 echo divtitle("Drift ");
 echo "<a href='driftreport.php?Id=$expId'>report &raquo;</a>";
 echo "<table border='0'>\n";
@@ -98,6 +101,44 @@ echo "<table border='0'>\n";
 	echo "</tr>";
 echo "</table>\n";
 echo "</td>";
+echo "<td valign='top' >";
+echo divtitle("Temperature");
+	$channels = "&ch0=1&ch1=1&ch2=1&ch4=1&ch5=1&ch6=1";
+	echo "<a href='temperaturegraph.php?vd=1&Id=$expId$channels'>[data]</a>";
+	echo "<a href='temperaturegraph.php?vs=1&Id=$expId$channels'>[sql]</a><br>";
+	echo "<a href='temperaturegraph.php?Id=$expId$channels'>";
+	echo "<img border='0' src='temperaturegraph.php?w=256&Id=$expId$channels'>";
+	echo "</a>";
+echo "</td>";
+echo "</tr>";
+$presets = $leginondata->getDatatypes($expId);
+	echo "<tr>";
+	echo "<td colspan='2'>";
+	echo divtitle("Image Stats");
+	echo "<table border='0'>\n";
+$n=0;
+echo "<tr>";
+foreach ($presets as $preset) {
+	$sessionId=$expId;
+	if (!$leginondata->getRelatedStats($expId, $preset))
+		continue;
+	if ($n%3==0) {
+		echo "</tr>";
+		echo "<tr>";
+	}
+	$n++;
+?>
+<td>
+Preset: <?=$preset?>
+<a href="imagestatsgraph.php?vdata=1&Id=<?=$sessionId?>&preset=<?=$preset?>">[data]</a>
+<a href="imagestatsgraph.php?vs=1&Id=<?=$sessionId?>&preset=<?=$preset?>">[sql]</a><br>
+<a href="imagestatsgraph.php?Id=<?=$sessionId?>&preset=<?=$preset?>"><img
+ border="0"  src="imagestatsgraph.php?w=210&Id=<?=$sessionId?>&preset=<?=$preset?>"></a>
+</td>
+<?
+}
+echo "</tr>";
+echo "</table>";
 echo "</tr>";
 $icethicknesspresets = $leginondata->getIceThicknessPresets($expId);
 if (!empty($icethicknesspresets)) {

@@ -30,9 +30,11 @@ $preset = stripslashes($_GET[preset]);
 $t = $_GET['t'];
 if ($t=='png') {
         $type = "image/x-png";
+	$ext = "png";
 } else {
         $type = "image/jpeg";
 	$quality=$t;
+	$ext = "jpg";
 }
 
 if ($cache) {
@@ -129,7 +131,11 @@ if ($cache) {
 	$re = $cachedb->put($uri, $stringimage);
 	echo $stringimage;
 } else {
+	$nimgId = $leginondata->findImage($id, $preset);
+	list($res) = $leginondata->getFilename($nimgId['id']);
+	$filename = ereg_replace('mrc$', $ext, $res['filename']);
 	Header( "Content-type: $type ");
+	Header( "Content-Disposition: inline; filename=".$filename);
         if ($t=='png')
                 imagepng($img);
         else
