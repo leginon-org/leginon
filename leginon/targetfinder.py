@@ -34,10 +34,8 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		'''
 		raise NotImplementedError()
 
-	def processData(self, newdata):
-		imagewatcher.ImageWatcher.processData(self, newdata)
-
-		self.findTargets(newdata)
+	def processImageData(self, imagedata):
+		self.findTargets(imagedata)
 		self.publishTargetList()
 
 	def publishTargetList(self):
@@ -74,13 +72,14 @@ class ClickTargetFinder(TargetFinder):
 			self.defineUserInterface()
 			self.start()
 
-	def processData(self, newdata):
+	def processImageData(self, imagedata):
 		'''
 		redefined because this is manual target finding
-		Instead of calling findTargets, let uiImage get the image
-		Then call publishTargetList in another function
+		We don't want to call findTargets because it is not
+		implemented.  Instead, let user select targets, then
+		publish targets as a user activated step.
 		'''
-		imagewatcher.ImageWatcher.processData(self, newdata)
+		pass
 		
 	def defineUserInterface(self):
 		TargetFinder.defineUserInterface(self)
@@ -140,10 +139,10 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			self.defineUserInterface()
 			self.start()
 
-	def processData(self, newdata):
-		ClickTargetFinder.processData(self, newdata)
-		self.mosaic.addTile(newdata)
-		self.mosaicdata['data IDs'].append(newdata['id'])
+	def processImageData(self, imagedata):
+		ClickTargetFinder.processImageData(self, imagedata)
+		self.mosaic.addTile(imagedata)
+		self.mosaicdata['data IDs'].append(imagedata['id'])
 		self.clickimage.setImage(self.mosaic.getMosaicImage())
 		# needs to update target positions
 		self.clickimage.setTargets([])

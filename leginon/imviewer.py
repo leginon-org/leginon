@@ -23,9 +23,8 @@ class ImViewer(imagewatcher.ImageWatcher):
 		self.defineUserInterface()
 		self.start()
 
-	def processData(self, imagedata):
-		imagewatcher.ImageWatcher.processData(self, imagedata)
-		self.ui_image.set(self.numarray)
+	def processImageData(self, imagedata):
+		self.ui_image.set(imagedata['image'])
 		self.doPow()
 
 	def doPow(self):
