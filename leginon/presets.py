@@ -322,7 +322,7 @@ class PresetsManager(node.Node):
 		return names
 
 	def uiGetPresetsFromDB(self):
-		othersessionname = self.othersession.get()
+		othersessionname = self.othersession.getSelectedValue()
 		initializer = {'name': othersessionname}
 		othersessiondata = data.SessionData(initializer=initializer)
 		sessions = self.research(datainstance=othersessiondata)
@@ -399,7 +399,11 @@ class PresetsManager(node.Node):
 		node.Node.defineUserInterface(self)
 
 		## import
-		self.othersession = uidata.String('Session', '', 'rw')
+#		self.othersession = uidata.String('Session', '', 'rw')
+		sessionlist = self.research(dataclass=data.SessionData)
+		sessionnamelist = map(lambda x: x['name'], sessionlist)
+		sessionnamelist.sort()
+		self.othersession = uidata.SingleSelectFromList('Session', sessionnamelist, 0)
 		fromdb = uidata.Method('Import', self.uiGetPresetsFromDB)
 		importcont = uidata.Container('Import')
 		importcont.addObjects((self.othersession, fromdb))
