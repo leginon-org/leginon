@@ -43,7 +43,7 @@ class ImageWatcher(watcher.Watcher):
 		elif isinstance(idata, data.ImageListData):
 			# self.currentimagedata, self.numarray not implemented
 			self.processImageListData(idata)
-			if 'images' in idata and idata['images'] is None:
+			if 'images' in idata and idata['images'] is not None:
 				for imageid in idata['images']:
 					self.publishImageProcessDone(imageid=imageid)
 		else:
