@@ -52,6 +52,9 @@ class ImViewer(watcher.Watcher):
 		self.viewerthread.start()
 		#print 'thread started'
 
+	def clickCallback(self, tkevent):
+		self.clickEvent(tkevent)
+
 	def clickEvent(self, tkevent):
 		clickinfo = self.iv.eventXYInfo(tkevent)
 		clickinfo['image id'] = self.imageid
@@ -70,12 +73,14 @@ class ImViewer(watcher.Watcher):
 	def open_viewer(self):
 		#print 'root...'
 		root = self.root = Toplevel()
+		## this gets rid of the root window
+		root._root().withdraw()
 		
 		#root.wm_sizefrom('program')
 		root.wm_geometry('=450x400')
 
 		self.iv = ImageViewer.ImageViewer(root, bg='#488')
-		self.iv.bindCanvas('<Double-1>', self.clickEvent)
+		self.iv.bindCanvas('<Double-1>', self.clickCallback)
 		self.iv.pack()
 
 		self.viewer_ready.set()

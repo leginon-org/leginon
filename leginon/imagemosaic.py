@@ -253,6 +253,7 @@ class ImageMosaic(watcher.Watcher):
 
 	def open_viewer(self):
 		root = self.root = Toplevel()
+		root._root().withdraw()
 		root.wm_geometry('=450x400')
 
 		self.iv = ImageViewer.ImageViewer(root, bg='#488')
