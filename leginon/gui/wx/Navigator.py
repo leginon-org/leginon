@@ -75,6 +75,7 @@ class Panel(gui.wx.Node.Panel):
 	def onNodeInitialized(self):
 		self.Bind(wx.EVT_BUTTON, self.onSettingsButton, self.bsettings)
 		self.Bind(wx.EVT_BUTTON, self.onAcquireButton, self.bacquire)
+		self.Bind(wx.EVT_BUTTON, self.onNew, self.bnew)
 
 	def onSettingsButton(self, evt):
 		dialog = SettingsDialog(self)

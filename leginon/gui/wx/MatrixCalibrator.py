@@ -38,10 +38,10 @@ class Panel(gui.wx.Calibrator.Panel):
 	def onParameterChoice(self, evt):
 		self.node.parameter = evt.GetString().lower()
 
-	def onCalibrateButton(self, evt):
+	def onCalibrateTool(self, evt):
 		self.node.uiCalibrate()
 
-	def onAbortButton(self, evt):
+	def onAbortTool(self, evt):
 		self.node.uiAbort()
 
 class MatrixSettingsDialog(gui.wx.Settings.Dialog):

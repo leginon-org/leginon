@@ -4,22 +4,28 @@ from gui.wx.Entry import IntEntry, FloatEntry
 import gui.wx.Settings
 import gui.wx.TargetFinder
 import gui.wx.ClickTargetFinder
+import gui.wx.ToolBar
 
 class Panel(gui.wx.ClickTargetFinder.Panel):
 	icon = 'atlastarget'
 	def initialize(self):
 		gui.wx.ClickTargetFinder.Panel.initialize(self)
 
-		self.btiles = wx.Button(self, -1, 'Tiles...')
-		self.bmosaic = wx.Button(self, -1, 'Mosaic...')
-		self.brefreshtargets = wx.Button(self, -1, 'Refresh Targets')
-		self.bshowposition = wx.Button(self, -1, 'Show Position')
-		self.bfindsquares = wx.Button(self, -1, 'Find Squares')
-		self.szbuttons.Add(self.btiles, (2, 0), (1, 1), wx.EXPAND)
-		self.szbuttons.Add(self.bmosaic, (3, 0), (1, 1), wx.EXPAND)
-		self.szbuttons.Add(self.brefreshtargets, (4, 0), (1, 1), wx.EXPAND)
-		self.szbuttons.Add(self.bshowposition, (5, 0), (1, 1), wx.EXPAND)
-		self.szbuttons.Add(self.bfindsquares, (6, 0), (1, 1), wx.EXPAND)
+		self.toolbar.InsertTool(2, gui.wx.ToolBar.ID_TILES,
+													'tiles',
+													shortHelpString='Tiles')
+		self.toolbar.InsertTool(3, gui.wx.ToolBar.ID_MOSAIC,
+													'atlasmaker',
+													shortHelpString='Mosaic')
+		self.toolbar.InsertTool(4, gui.wx.ToolBar.ID_REFRESH,
+													'refresh',
+													shortHelpString='Refresh')
+		self.toolbar.InsertTool(5, gui.wx.ToolBar.ID_CURRENT_POSITION,
+													'currentposition',
+													shortHelpString='Show Position')
+		self.toolbar.InsertTool(6, gui.wx.ToolBar.ID_FIND_SQUARES,
+													'squarefinder',
+													shortHelpString='Find Squares')
 
 		self.rbdisplay = {}
 		self.rbdisplay['Original'] = wx.RadioButton(self, -1, 'Originial',
@@ -65,13 +71,19 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 
 	def onNodeInitialized(self):
 		gui.wx.ClickTargetFinder.Panel.onNodeInitialized(self)
-		self.Bind(wx.EVT_BUTTON, self.onTilesButton, self.btiles)
-		self.Bind(wx.EVT_BUTTON, self.onMosaicButton, self.bmosaic)
-		self.Bind(wx.EVT_BUTTON, self.onRefreshTargetsButton, self.brefreshtargets)
-		self.Bind(wx.EVT_BUTTON, self.onShowPositionButton, self.bshowposition)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onTilesButton,
+											id=gui.wx.ToolBar.ID_TILES)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onMosaicButton,
+											id=gui.wx.ToolBar.ID_MOSAIC)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onRefreshTargetsButton,
+											id=gui.wx.ToolBar.ID_REFRESH)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onShowPositionButton,
+											id=gui.wx.ToolBar.ID_CURRENT_POSITION)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onFindSquaresButton,
+											id=gui.wx.ToolBar.ID_FIND_SQUARES)
+
 		self.Bind(wx.EVT_BUTTON, self.onLPFSettingsButton, self.blpfsettings)
 		self.Bind(wx.EVT_BUTTON, self.onBlobSettingsButton, self.bblobsettings)
-		self.Bind(wx.EVT_BUTTON, self.onFindSquaresButton, self.bfindsquares)
 		for value in self.rbdisplay.values():
 			self.Bind(wx.EVT_RADIOBUTTON, self.onDisplayRadioButton, value)
 
