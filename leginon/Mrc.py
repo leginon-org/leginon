@@ -9,22 +9,25 @@
 #
 
 import Numeric
-import MLab
 import array
 import struct
 import sys
 import cStringIO
+import imagefun
 
 mrcmode_typecode = {
 	0: (1, Numeric.UnsignedInt8),
 	1: (2, Numeric.Int16),
 	2: (4, Numeric.Float32),
-	3: (2, Numeric.UInt16)
+	## UInt16 is supported in the new JMRC standard (Jim's MRC, hahaha):
+	7: (2, Numeric.UInt16)
 	}
+
 typecode_mrcmode = {
 	Numeric.UnsignedInt8: 0,
 	Numeric.Int16: 1,
-	Numeric.UInt16: 3,
+	## UInt16 is supported in the new JMRC standard (Jim's MRC, hahaha):
+	Numeric.UInt16: 7,
 	Numeric.Float32: 2,
 	Numeric.Float: 2,
 	Numeric.Float64: 2,
@@ -203,10 +206,9 @@ class MrcData:
 		else:
 			raise 'unsupported'
 
-		self.amin  = MLab.min(Numeric.ravel(narray))
-		self.amax  = MLab.max(Numeric.ravel(narray))
-		self.amean = MLab.mean(Numeric.ravel(narray))
-		self.rms   = MLab.std(Numeric.ravel(narray))
+		self.amin,self.amax = imagefun.minmax(narray)
+		self.amean = imagefun.mean(narray)
+		self.rms = imagefun.stdev(narray, self.amean)
 
 		## for now, using little endian as standard
 		if sys.byteorder != 'little':
