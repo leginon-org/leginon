@@ -1,3 +1,4 @@
+import leginonconfig
 import threading
 import code
 import leginonobject
@@ -11,6 +12,8 @@ import time
 import uiserver
 import uidata
 import data
+import os
+import cPickle
 
 # False is not defined in early python 2.2
 False = 0
@@ -96,8 +99,6 @@ class Node(leginonobject.LeginonObject):
 
 		self.nodelocations = nodelocations
 
-		self.eventmapping = {'outputs':[], 'inputs':[]}
-
 		self.datahandler = datahandler(self.ID(), session, self)
 
 		self.server = datatransport.Server(self.ID(),
@@ -112,13 +113,6 @@ class Node(leginonobject.LeginonObject):
 
 		self.eventswaiting = {}
 		self.ewlock = threading.Lock()
-
-		self.addEventOutput(event.PublishEvent)
-		self.addEventOutput(event.UnpublishEvent)
-		self.addEventOutput(event.NodeAvailableEvent)
-		self.addEventOutput(event.NodeUnavailableEvent)
-		self.addEventOutput(event.NodeInitializedEvent)
-		self.addEventOutput(event.NodeUninitializedEvent)
 
 		#self.addEventInput(event.Event, self.logEventReceived)
 		self.addEventInput(event.KillEvent, self.die)
@@ -137,6 +131,40 @@ class Node(leginonobject.LeginonObject):
 		self.die_event = threading.Event()
 
 	# main, start/stop methods
+
+	def ID(self):
+		'''
+		this is redefined so that idcounter is persistent
+		'''
+		newid = self.id + (self.IDCounter(),)
+		return newid
+
+	def IDCounter(self):
+		# read current ID count value
+		fname = ''
+		if self.session is not None:
+			session_name = self.session['name']
+			fname = fname + session_name + '_'
+		my_name = self.id[-1]
+		fname = fname + my_name + '.id'
+		fullname = os.path.join(leginonconfig.PREFS_PATH, fname)
+		try:
+			f = open(fullname, 'r')
+			last_count = cPickle.load(f)
+			f.close()
+		except:
+			last_count = 0
+
+		# create new id count
+		new_count = last_count + 1
+		try:
+			f = open(fullname, 'w')
+			cPickle.dump(new_count, f, 0)
+			f.close()
+		except:
+			print 'error while saving %s to pickle in file %s' % (new_count, fullname)
+			raise
+		return new_count
 
 	def main(self):
 		'''The body of taking place when the node is started. See start.'''
@@ -158,7 +186,9 @@ class Node(leginonobject.LeginonObject):
 		'''Call to make the node active and react to a call to exit. Calls main.'''
 		#interact_thread = self.interact()
 
+		print 'START', self.id
 		self.outputEvent(event.NodeInitializedEvent(id=self.ID()))
+		print 'NODEINIT', self.id
 		self.main()
 
 		# wait until the interact thread terminates
@@ -222,7 +252,10 @@ class Node(leginonobject.LeginonObject):
 			eventwait.wait(timeout)
 			notimeout = eventwait.isSet()
 			self.ewlock.acquire()
-			del self.eventswaiting[eventid]
+			try:
+				del self.eventswaiting[eventid]
+			except KeyError:
+				print 'This could be bad to except KeyError'
 			self.ewlock.release()
 			if not notimeout:
 				raise ConfirmationTimeout(str(ievent))
@@ -260,24 +293,10 @@ class Node(leginonobject.LeginonObject):
 	def addEventInput(self, eventclass, func):
 		'''Map a function (event handler) to be called when the specified event is received.'''
 		self.datahandler.addBinding(eventclass, func)
-		if eventclass not in self.eventmapping['inputs']:
-			self.eventmapping['inputs'].append(eventclass)
 
 	def delEventInput(self, eventclass):
 		'''Unmap all functions (event handlers) to be called when the specified event is received.'''
 		self.datahandler.delBinding(eventclass, None)
-		if eventclass in self.eventmapping['inputs']:
-			self.eventmapping['inputs'].remove(eventclass)
-
-	def addEventOutput(self, eventclass):
-		'''Register the ability for the node to output specified event.'''
-		if eventclass not in self.eventmapping['outputs']:
-			self.eventmapping['outputs'].append(eventclass)
-		
-	def delEventOutput(self, eventclass):
-		'''Unregister the ability for the node to output specified event.'''
-		if eventclass in self.eventmapping['outputs']:
-			self.eventmapping['outputs'].remove(eventclass)
 
 	# data publish/research methods
 
@@ -306,13 +325,22 @@ class Node(leginonobject.LeginonObject):
 
 		self.datahandler.insert(idata)
 
+		if 'pubeventclass' in kwargs:
+			pubeventclass = kwargs['pubeventclass']
+		else:
+			pubeventclass = None
+
 		### publish event
 		if 'pubevent' in kwargs and kwargs['pubevent']:
 			if 'confirm' in kwargs:
 				confirm = kwargs['confirm']
 			else:
 				confirm = False
-			eventclass = event.publish_events[idata.__class__]
+			
+			if pubeventclass is None:
+				eventclass = event.publish_events[idata.__class__]
+			else:
+				eventclass = pubeventclass
 			e = eventclass(id=self.ID(), dataid=idata['id'], confirm=confirm)
 			self.outputEvent(e)
 
