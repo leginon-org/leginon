@@ -296,7 +296,6 @@ def laplacian_kernel():
 	k.shape = (3,3)
 	return k.astype(Numeric.Float32)
 
-
 def gaussian_kernel(n, sigma):
 	if not n % 2:
 		raise RuntimeError('guassian kernel must have odd size')
@@ -358,7 +357,7 @@ class Blob(object):
 	a Blob instance represets a connected set of pixels
 	'''
 	neighbors = ((-1,-1),(-1,0),(-1,1), (0,-1), (0,1), (1,-1), (1,0), (1,1))
-	maxpoints = 100000
+	maxpoints = 200
 	def __init__(self, image, mask):
 		self.image = image
 		self.mask = mask
@@ -449,13 +448,13 @@ class Blob(object):
 		for stat in ('complete', 'n', 'center', 'size', 'mean', 'stddev'):
 			print '\t%s:\t%s' % (stat, self.stats[stat])
 
-def find_blobs(image, mask):
+def find_blobs(image, mask, border=0):
 	shape = image.shape
 	blobs = []
 	## create a copy of mask that will be modified
 	tmpmask = mask.astype(Numeric.Int8)
-	for row in range(shape[0]):
-		for col in range(shape[1]):
+	for row in range(border,shape[0]-border):
+		for col in range(border,shape[1]-border):
 			if tmpmask[row,col]:
 				newblob = Blob(image, mask)
 				err = newblob.add_point(row, col, tmpmask)
