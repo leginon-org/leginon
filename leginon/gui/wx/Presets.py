@@ -9,12 +9,15 @@ def getBitmap(filename):
 	return bitmap
 
 PresetOrderChangedEventType = wx.NewEventType()
+PresetRemovedEventType = wx.NewEventType()
 PresetChoiceEventType = wx.NewEventType()
 PresetsChangedEventType = wx.NewEventType()
 NewPresetEventType = wx.NewEventType()
 PresetSelectedEventType = wx.NewEventType()
 
 EVT_PRESET_ORDER_CHANGED = wx.PyEventBinder(PresetOrderChangedEventType)
+EVT_PRESET_REMOVED = wx.PyEventBinder(PresetRemovedEventType)
+
 EVT_PRESET_CHOICE = wx.PyEventBinder(PresetChoiceEventType)
 EVT_PRESETS_CHANGED = wx.PyEventBinder(PresetsChangedEventType)
 EVT_NEW_PRESET = wx.PyEventBinder(NewPresetEventType)
@@ -26,6 +29,12 @@ class PresetOrderChangedEvent(wx.PyCommandEvent):
 																source.GetId())
 		self.SetEventObject(source)
 		self.presets = presets
+
+class PresetRemovedEvent(wx.PyCommandEvent):
+	def __init__(self, source, presetname):
+		wx.PyCommandEvent.__init__(self, PresetRemovedEventType, source.GetId())
+		self.SetEventObject(source)
+		self.presetname = presetname
 
 class PresetsChoiceEvent(wx.PyCommandEvent):
 	def __init__(self, choice, source):
@@ -138,7 +147,7 @@ class PresetOrder(wx.Panel):
 			self.listbox.InsertItems([string], n - 1)
 			self.listbox.SetSelection(n - 1)
 		self.updateButtons(n - 1)
-		self.presetsEditEvent()
+		self.presetOrderChanged()
 
 	def onDown(self, evt):
 		n = self.listbox.GetSelection()
@@ -148,7 +157,7 @@ class PresetOrder(wx.Panel):
 			self.listbox.InsertItems([string], n + 1)
 			self.listbox.SetSelection(n + 1)
 		self.updateButtons(n + 1)
-		self.presetsEditEvent()
+		self.presetOrderChanged()
 
 	def getSelectedPreset(self):
 		presetname = self.listbox.GetStringSelection()
@@ -179,11 +188,16 @@ class PresetOrder(wx.Panel):
 		return values
 
 	def setValues(self, values):
+		self.Enable(False)
+
 		filtered = []
 		for v in values:
 			if v:
 				filtered.append(v)
 		values = filtered
+
+		string = self.listbox.GetStringSelection()
+
 		count = self.listbox.GetCount()
 		if values is None:
 			values = []
@@ -204,14 +218,28 @@ class PresetOrder(wx.Panel):
 			for i in range(count - 1, n - 1, -1):
 				self.listbox.Delete(i)
 
-	def presetsEditEvent(self):
+		n = self.listbox.FindString(string)
+		if n != wx.NOT_FOUND:
+			self.listbox.SetSelection(n)
+			self.updateButtons(n)
+
+		self.Enable(True)
+
+	def presetOrderChanged(self):
 		evt = PresetOrderChangedEvent(self.getValues(), self)
+		self.GetEventHandler().AddPendingEvent(evt)
+
+	def presetRemoved(self, presetname):
+		evt = PresetRemovedEvent(self, presetname)
+		self.GetEventHandler().AddPendingEvent(evt)
+
+	def presetSelected(self, presetname):
+		evt = PresetSelectedEvent(self, presetname)
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onSelect(self, evt):
 		self.updateButtons(evt.GetInt())
-		evt = PresetSelectedEvent(self, evt.GetString())
-		self.GetEventHandler().AddPendingEvent(evt)
+		self.presetSelected(evt.GetString())
 
 	def updateButtons(self, n):
 		if n > 0:
@@ -271,7 +299,7 @@ class EditPresetOrder(PresetOrder):
 		else:
 			self.listbox.InsertItems([string], n)
 			self.updateButtons(n + 1)
-		self.presetsEditEvent()
+		self.presetOrderChanged()
 
 	def onDelete(self, evt):
 		n = self.listbox.GetSelection()
@@ -286,7 +314,7 @@ class EditPresetOrder(PresetOrder):
 			self.updateButtons(n - 1)
 		else:
 			self.deletebutton.Enable(False)
-		self.presetsEditEvent()
+		self.presetOrderChanged()
 
 	def onSelect(self, evt):
 		PresetOrder.onSelect(self, evt)

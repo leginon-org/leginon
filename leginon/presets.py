@@ -71,7 +71,7 @@ class PresetsClient(object):
 		done = {}
 		for p in plist:
 			pname = p['name']
-			if pname in done:
+			if not pname or pname in done:
 				continue
 			done[pname] = None
 			if p['removed']:
@@ -246,6 +246,8 @@ class PresetsManager(node.Node):
 		## make new presets with this session
 		#self.presets = newdict.OrderedDict()
 		for name, preset in pdict.items():
+			if not name:
+				continue
 			newp = data.PresetData(initializer=preset, session=self.session)
 			self.presetToDB(newp)
 			self.presets[name] = newp
@@ -285,7 +287,7 @@ class PresetsManager(node.Node):
 			number += 1
 		self.presets = d
 
-		self.panel.onSetOrder(self.presets.keys(), setorder=setorder)
+		self.panel.setOrder(self.presets.keys(), setorder=setorder)
 
 	def setCycleOrder(self, namelist):
 		## make sure nothing is added or removed from the list
@@ -401,7 +403,7 @@ class PresetsManager(node.Node):
 
 		## update UI
 		# ???
-		self.panel.onSetOrder(self.presets.keys())
+		self.panel.setOrder(self.presets.keys())
 		self.logger.info('Set preset "%s" values from instrument' % name)
 		self.beep()
 		return newpreset

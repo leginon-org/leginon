@@ -1,3 +1,4 @@
+import data
 import wx
 from gui.wx.Entry import FloatEntry, EVT_ENTRY
 import gui.wx.Camera
@@ -231,19 +232,25 @@ class EditPresets(gui.wx.Presets.PresetOrder):
 
 	def onRemove(self, evt):
 		n = self.listbox.GetSelection()
-		if n >= 0:
-			self.listbox.Delete(n)
+		if n < 0:
+			return
+		presetname = self.listbox.GetString(n)
+		self.listbox.Delete(n)
+		self.presetRemoved(presetname)
+
 		count = self.listbox.GetCount()
 		if n < count:
 			self.listbox.Select(n)
-			self.updateButtons(n)
 		elif count > 0:
 			self.listbox.Select(n - 1)
-			self.updateButtons(n - 1)
+		n = self.listbox.GetSelection()
+		self.updateButtons(n)
+		if n < 0:
+			presetname = ''
 		else:
-			self.bremove.Enable(False)
-			self._selectEnable(False)
-		self.presetsEditEvent()
+			presetname = self.listbox.GetString(n)
+		self.presetSelected(presetname)
+		self.presetOrderChanged()
 
 	def setChoices(self, choices):
 		gui.wx.Presets.PresetOrder.setChoices(self, choices)
@@ -259,17 +266,20 @@ class EditPresets(gui.wx.Presets.PresetOrder):
 		else:
 			self.listbox.InsertItems([string], n)
 			self.updateButtons(n + 1)
-		self.presetsEditEvent()
+		self.presetOrderChanged()
 
-	def _selectEnable(self, enable):
-		self.btoscope.Enable(enable)
-		self.bacquire.Enable(enable)
-		self.bfromscope.Enable(enable)
-		self.bremove.Enable(enable)
-
-	def onSelect(self, evt):
-		gui.wx.Presets.PresetOrder.onSelect(self, evt)
-		self._selectEnable(evt.IsSelection())
+	def updateButtons(self, n):
+		gui.wx.Presets.PresetOrder.updateButtons(self, n)
+		if n >= 0:
+			self.btoscope.Enable(True)
+			self.bacquire.Enable(True)
+			self.bfromscope.Enable(True)
+			self.bremove.Enable(True)
+		else:
+			self.btoscope.Enable(False)
+			self.bacquire.Enable(False)
+			self.bfromscope.Enable(False)
+			self.bremove.Enable(False)
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'presets'
@@ -318,8 +328,6 @@ class Panel(gui.wx.Node.Panel):
 		self.SetAutoLayout(True)
 		self.SetupScrolling()
 
-		self.Bind(gui.wx.Presets.EVT_PRESET_ORDER_CHANGED,
-							self.onCycleOrderChanged, self.presets)
 		self.Bind(EVT_SET_PARAMETERS, self.onSetParameters)
 		self.Bind(EVT_SET_CALIBRATIONS, self.onSetCalibrations)
 		self.Bind(EVT_SET_DOSE_VALUE, self.onSetDoseValue)
@@ -334,6 +342,10 @@ class Panel(gui.wx.Node.Panel):
 
 		self.Bind(gui.wx.Presets.EVT_PRESET_SELECTED,
 							self.onPresetSelected, self.presets)
+		self.Bind(gui.wx.Presets.EVT_PRESET_ORDER_CHANGED,
+							self.onCycleOrderChanged, self.presets)
+		self.Bind(gui.wx.Presets.EVT_PRESET_REMOVED,
+							self.onRemove, self.presets)
 		self.Bind(wx.EVT_BUTTON, self.onToScope, self.presets.btoscope)
 		self.Bind(wx.EVT_BUTTON, self.onAcquireDoseImage, self.presets.bacquire)
 		self.Bind(wx.EVT_BUTTON, self.onFromScope, self.presets.bfromscope)
@@ -351,17 +363,8 @@ class Panel(gui.wx.Node.Panel):
 
 	def onCycleOrderChanged(self, evt):
 		self.node.setCycleOrder(evt.presets)
-		
-		name = self.presets.getSelectedPreset()
-		if name:
-			self.node.selectPreset(name)
-			self.parameters.Enable(True)
-		else:
-			self.calibrations.set({})
-			self.parameters.Enable(False)
-			self.parameters.set(None)
 
-	def onSetOrder(self, presets, setorder=True):
+	def setOrder(self, presets, setorder=True):
 		if setorder:
 			evt = gui.wx.Presets.PresetsChangedEvent(presets)
 			self.presets.GetEventHandler().AddPendingEvent(evt)
@@ -396,7 +399,9 @@ class Panel(gui.wx.Node.Panel):
 		self.parameters.set(evt.parameters)
 
 	def setParameters(self, parameters):
-		evt = SetParametersEvent(parameters.toDict(), self)
+		if isinstance(parameters, data.Data):
+			parameters = parameters.toDict()
+		evt = SetParametersEvent(parameters, self)
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onSetCalibrations(self, evt):
@@ -413,13 +418,14 @@ class Panel(gui.wx.Node.Panel):
 			self.parameters.Enable(True)
 		else:
 			self.calibrations.set({})
+			self.parameters.set(None)
 			self.parameters.Enable(False)
 
 	def onToScope(self, evt):
 		self.node.cycleToScope(self.presets.getSelectedPreset())
 
 	def onRemove(self, evt):
-		self.node.removePreset(self.presets.getSelectedPreset())
+		self.node.removePreset(evt.presetname)
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
