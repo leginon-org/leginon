@@ -75,6 +75,10 @@ class DBRecordData(Data):
 			raise RuntimeError('invalid content for DBRecordData')
 		# maybe check that 'record' contains a dict
 
+class CalibrationData(Data):
+	def __init__(self, id, content):
+		Data.__init__(self, id, dict(content))
+
 class CorrelationData(Data):
 	def __init__(self, id, content):
 		Data.__init__(self, id, dict(content))
