@@ -232,8 +232,11 @@ class Corrector(node.Node):
 		imagetemp['camstate'] = camstate
 		## somehow session is being set to the current session
 		## don't want to query based on that.
-		imagetemp['session'] = None
+		imagetemp['session'] = data.SessionData()
+		imagetemp['session']['instrument'] = self.session['instrument']
+		print 'researching reference images'
 		refs = self.research(datainstance=imagetemp, results=1)
+		print 'done researching reference image'
 		if refs:
 			ref = refs[0]
 			image = ref['image']
