@@ -185,9 +185,9 @@ class SQLDict:
 	def __init__(self, db, queryinfo):
 	    self.db = db
 	    self.queryinfo = queryinfo
-	    print 'querinfo ', self.queryinfo
+	    #print 'querinfo ', self.queryinfo
 	    self.queries = setQueries(queryinfo)
-	    print 'queries ', self.queries
+	    #print 'queries ', self.queries
 	    self.cursors = {}
 	    self.execute()
 
