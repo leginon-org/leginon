@@ -127,13 +127,18 @@ def widgetFromSpec(parent, uiclient, spec, styled=True, server=False):
 
 def whichDataClass(dataspec):
 	'''this checks a data spec to figure out what Data class to use'''
-	type = dataspec['xmlrpctype']
+	datatype = dataspec['xmlrpctype']
 	if 'choices' in dataspec:
 		choices = dataspec['choices']
 		choicesid = choices['id']
 		choicestype  = choices['type']
 	else:
 		choices = None
+
+	if 'subtype' in dataspec:
+			subtype = dataspec['subtype']
+	else:
+		subtype = None
 
 	if choices is not None:
 		if choicestype == 'array':
@@ -144,16 +149,18 @@ def whichDataClass(dataspec):
 			## return DependentComboboxData
 		else:
 			raise RuntimeError('choices type %s not supported' % choicestype)
-	elif type == 'boolean':
+	elif datatype == 'boolean':
 		return CheckbuttonData
-	elif type in ('integer', 'float', 'string', 'array'):
+	elif datatype in ('integer', 'float', 'string', 'array'):
 		return EntryData
-	elif type == 'struct':
+	elif datatype == 'struct' and subtype == 'selected list':
+		return ListboxData
+	elif datatype == 'struct':
 		return TreeData
-	elif type == 'binary':
+	elif datatype == 'binary':
 		return ImageData
 	else:
-		raise RuntimeError('type not supported')
+		raise RuntimeError(('type not supported: %s' % datatype))
 
 class Data(SpecWidget):
 	def __init__(self, parent, uiclient, spec, styled=True, server=False):
@@ -475,7 +482,48 @@ class TreeSelectorData(Data):
 		## return the path to the selected item
 		return self.sc.canvas.selectedtrace[1:]
 
+class ListboxData(Data):
+	def __init__(self, parent, uiclient, spec, styled=True, server=False):
+		self.list = []
+		Data.__init__(self, parent, uiclient, spec, styled, server)
 
+	def buildWidget(self, parent):
+		self.frame = Frame(parent)
+		scrollbar = Scrollbar(self.frame, orient=VERTICAL)
+		self.listbox = Listbox(self.frame, yscrollcommand=scrollbar.set, bg='white')
+		scrollbar.config(command=self.listbox.yview)
+		self.listbox.grid(row = 0, column = 0, sticky='nsew')
+		scrollbar.grid(row = 0, column = 1, sticky='ns')
+		return self.frame
+
+	def setWidget(self, value):
+		if type(value) is not dict:
+			return
+		if 'list' not in value or 'selected' not in value:
+			return
+
+		for i in range(len(value['list'])):
+			try:
+				if value['list'][i] != self.listbox.get(i):
+					self.listbox.delete(i)
+					self.listbox.insert(i, value['list'][i])
+			except IndexError:
+				self.listbox.insert(END, value['list'][i:])
+				break
+
+		self.list = value['list']
+
+		for i in range(len(self.list)):
+			if self.list[i] in value['selected']:
+				self.listbox.select_set(i)
+
+	def getWidget(self):
+		selected = []
+		for i in self.listbox.curselection():
+			selected.append(self.list[int(i)])
+		value = {'list': self.list, 'selected': selected}
+		return value
+		
 class TreeData(Data):
 	def __init__(self, parent, uiclient, spec, styled=True, server=False):
 #		self.dict = {}
@@ -600,12 +648,12 @@ class Method(SpecWidget):
 			self.argwidgetslist.append(newwidget)
 
 		if self.styled:
-			but = Button(self, text=self.name, command=self.butcom,
+			self.button = Button(self, text=self.name, command=self.butcom,
 																						bg=self.buttoncolor)
-			but.pack()
+			self.button.pack()
 		else:
-			but = Button(self, text=self.name, command=self.butcom)
-			but.pack(expand=YES, fill=X)
+			self.button = Button(self, text=self.name, command=self.butcom)
+			self.button.pack(expand=YES, fill=X)
 
 		if self.returnspec is not None:
 			dataclass = whichDataClass(self.returnspec)

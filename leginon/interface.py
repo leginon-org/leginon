@@ -24,7 +24,7 @@ class DataSpec(SpecObject):
 	This describes a piece of data for an xml-rpc client
 	The client can use this description to define the data presentation
 	"""
-	def __init__(self, id, server, name, xmlrpctype, permissions=None, choices=None, default=None, pyname=None, callback=None):
+	def __init__(self, id, server, name, xmlrpctype, permissions=None, choices=None, default=None, pyname=None, callback=None, subtype=None):
 		SpecObject.__init__(self, id, 'data')
 
 		self.server = server
@@ -38,6 +38,7 @@ class DataSpec(SpecObject):
 		else:
 			raise RuntimeError('invalid permissions %s' % permissions)
 		self.choices = choices
+		self.subtype = subtype
 		self.uidata = None
 		self.pyname = pyname
 		if callback is not None:
@@ -83,6 +84,9 @@ class DataSpec(SpecObject):
 			idstr = str(self.choices.id)
 			type = self.choices.xmlrpctype
 			d['choices'] = {'id':idstr, 'type':type}
+
+		if self.subtype is not None:
+			d['subtype'] = self.subtype
 
 #		d['default'] = self.default
 		if self.pyname is not None:
@@ -199,9 +203,9 @@ class Server(xmlrpcserver.xmlrpcserver):
 		m = MethodSpec(id, name, argspec, returnspec)
 		return m
 
-	def registerData(self, name, xmlrpctype, permissions=None, choices=None, default=None, pyname=None, callback=None):
+	def registerData(self, name, xmlrpctype, permissions=None, choices=None, default=None, pyname=None, callback=None, subtype=None):
 		id = self.ID()
-		d = DataSpec(id, self, name, xmlrpctype, permissions, choices, default, pyname, callback)
+		d = DataSpec(id, self, name, xmlrpctype, permissions, choices, default, pyname, callback, subtype)
 		idstr = str(id)
 		self.uidata[idstr] = d
 		return d

@@ -178,7 +178,7 @@ class Leginon(Tkinter.Frame):
 															command=self.menuAddGridAtlas)
 		self.editmenu.add_command(label='Add Target...', command=self.menuAddTarget)
 		self.editmenu.add_command(label='Add Viewer...',
-																	command=self.menuAddImageCollection)
+																	command=self.menuAddImageCollector)
 		self.menu.entryconfigure(1, state=Tkinter.DISABLED)
 
 		self.windowmenu = Tkinter.Menu(self.menu, tearoff=0)
@@ -201,7 +201,7 @@ class Leginon(Tkinter.Frame):
 					sourceids.append(self.gridatlases[source].targetid)
 			self.addTarget(add_dialog.result[0], sourceids)
 
-	def menuAddImageCollection(self):
+	def menuAddImageCollector(self):
 		name = 'Viewer #%s' % str(len(self.imagecollectors) + 1)
 		add_dialog = AddChoicesDialog(self, name,
 											 self.targets.keys() + self.gridatlases.keys(), [])
@@ -212,7 +212,7 @@ class Leginon(Tkinter.Frame):
 					sourceids.append(self.targets[source].targetid)
 				elif source in self.gridatlases:
 					sourceids.append(self.gridatlases[source].targetid)
-			self.addImageCollection(add_dialog.result[0], sourceids)
+			self.addImageCollector(add_dialog.result[0], sourceids)
 
 	def menuAddGridAtlas(self):
 		name = 'Grid Atlas #%s' % str(len(self.gridatlases) + 1)
@@ -357,8 +357,8 @@ class Leginon(Tkinter.Frame):
 																self.debug, self.windowmenu, name,
 																sourceids)
 
-	def addImageCollection(self, name, sourceids=[]):
-		self.imagecollectors[name] = ImageCollection(self.manager,
+	def addImageCollector(self, name, sourceids=[]):
+		self.imagecollectors[name] = ImageCollector(self.manager,
 																self.manageruiclient,
 																self.locallauncherid, self.notebook,
 																self.debug, self.windowmenu, name,
@@ -526,10 +526,12 @@ class ImageCorrectionWidget(CustomWidget):
 
 		widget = self.addWidget('Results', corrector, ('Acquire', 'Image'))
 
-class ImageCollectionWidget(CustomWidget):
+class ImageCollectorWidget(CustomWidget):
 	def __init__(self, parent, imagecollector):
 		CustomWidget.__init__(self, parent)
+		self.addWidget('Settings', imagecollector, ('Images', 'Queue List'))
 		self.addWidget('Control', imagecollector, ('Images', 'Advance Image'))
+		self.addWidget('Control', imagecollector, ('Images', 'Select Image'))
 		self.addWidget('Results', imagecollector, ('Images', 'Image'))
 
 class PresetsWidget(CustomWidget):
@@ -624,6 +626,12 @@ class GridAtlasWidget(CustomWidget):
 		widget = self.addWidget('Settings', stateimagemosaic,
 																			('Calibration Method',), True)
 		self.arrangeCombobox(widget, 'Positioning Method', False)
+		widget = self.addWidget('Settings', gridpreview,
+																('Preferences', 'Camera Configuration'), True)
+		self.arrangeTree(widget, None, False)
+		widget = self.addWidget('Settings', gridpreview,
+																('Preferences', 'Spiral'), True)
+		self.arrangeTree(widget, None, False)
 
 		self.addWidget('Control', gridpreview, ('Controls', 'Run'))
 		self.addWidget('Control', gridpreview, ('Controls', 'Stop'))
@@ -636,7 +644,7 @@ class TargetWidget(CustomWidget):
 		CustomWidget.__init__(self, parent)
 
 		widget = self.addWidget('Settings', acquisition,
-															('Presets', 'Preset Names'), True)
+															('Presets', 'Acquisition Presets'), True)
 		self.arrangeEntry(widget, 20, Tkinter.LEFT, False)
 		widget = self.addWidget('Settings', acquisition,
 															('Preferences', 'TEM Parameter'), True)
@@ -644,6 +652,18 @@ class TargetWidget(CustomWidget):
 		widget = self.addWidget('Settings', acquisition,
 															('Preferences', 'Acquisition Type'), True)
 		self.arrangeCombobox(widget, None, False)
+
+		self.addWidget('Presets', acquisition, ('Presets', 'Preset'))
+		widget = self.addWidget('Presets', acquisition, ('Presets', 'Apply Preset'))
+		widget.button.pack_forget()
+		widget.button.pack()
+		widget = self.addWidget('Presets', acquisition,
+															('Presets', 'Preset Name'))
+		self.arrangeEntry(widget, 20, Tkinter.LEFT)
+		widget = self.addWidget('Presets', acquisition,
+																	('Presets', 'Create Preset'))
+		widget.button.pack_forget()
+		widget.button.pack()
 
 		widget = self.addWidget('Results', clicktargetfinder, ('Clickable Image',))
 
@@ -782,7 +802,7 @@ class ImageCorrection(WidgetWrapper):
 		self.widget = ImageCorrectionWidget(self.page,
 															self.nodeinfo['corrector']['UI info'])
 
-class ImageCollection(WidgetWrapper):
+class ImageCollector(WidgetWrapper):
 	def __init__(self, manager, manageruiclient, launcherid, notebook,
 																		debug, windowmenu, name, sourceids):
 		WidgetWrapper.__init__(self, manager, manageruiclient, launcherid,
@@ -793,7 +813,7 @@ class ImageCollection(WidgetWrapper):
 		self.initialize()
 
 	def initializeWidget(self):
-		self.widget = ImageCollectionWidget(self.page,
+		self.widget = ImageCollectorWidget(self.page,
 															self.nodeinfo['imagecollector']['UI info'])
 
 	def initializeBindings(self):

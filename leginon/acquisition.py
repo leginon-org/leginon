@@ -220,29 +220,48 @@ class Acquisition(targetwatcher.TargetWatcher):
 		#self.acquireTargetAtPreset(self.testpresetname, trial=True)
 		self.acquire(presetdata=None, trial=True)
 
-	def uiToScope(self, presetname):
+	def uiToScope(self):
+		try:
+			presetname = self.presetarg.get()['selected'][0]
+		except (KeyError, IndexError):
+			self.printerror('cannot determine preset name')
 		print 'Going to preset %s' % (presetname,)
 		presetlist = self.presetsclient.retrievePresets(presetname)
 		presetdata = presetlist[0]
 		self.presetsclient.toScope(presetdata)
+		self.presetarg.set({'list': self.presetsNames(), 'selected': []})
 		return ''
 
-	def uiToScopeAcquire(self, presetname):
+	def uiToScopeAcquire(self):
+		try:
+			presetname = self.presetarg.get()['selected'][0]
+		except (KeyError, IndexError):
+			self.printerror('cannot determine preset name')
 		## remember this preset name for when a click event comes back
 		self.testpresetname = presetname
 
 		## acquire a trial image
 		self.acquireTargetAtPreset(presetname, trial=True)
+		self.presetarg.set({'list': self.presetsNames(), 'selected': []})
 		return ''
 
-	def uiFromScope(self, presetname):
+	def uiFromScope(self):
+		presetname = self.fromscopename.get()
 		presetdata = self.presetsclient.fromScope(presetname)
 		self.presetsclient.storePreset(presetdata)
+		self.presetarg.set({'list': self.presetsNames(), 'selected': []})
 		return ''
 
 	def uiTrial(self):
 		self.processTargetData(targetdata=None)
 		return ''
+
+	def presetsNames(self):
+		presetsdata = self.presetsclient.retrievePresets()
+		presetsnames = []
+		for data in presetsdata:
+			presetsnames.append(data['name'])
+		return presetsnames
 
 	def defineUserInterface(self):
 		super = targetwatcher.TargetWatcher.defineUserInterface(self)
@@ -259,12 +278,13 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		prefs = self.registerUIContainer('Preferences', (self.movetype, self.delaydata, self.acqtype))
 
-		self.presetnames = self.registerUIData('Preset Names', 'array', default=('spread1100',), permissions='rw')
-		presetarg = self.registerUIData('Preset', 'string', choices=self.presetnames)
-		fromscope = self.registerUIMethod(self.uiFromScope, 'From Scope', (presetarg,))
-		toscope = self.registerUIMethod(self.uiToScope, 'To Scope', (presetarg,))
-		toscopeacq = self.registerUIMethod(self.uiToScopeAcquire, 'To Scope And Acquire', (presetarg,))
-		pre = self.registerUIContainer('Presets', (self.presetnames, fromscope, toscope, toscopeacq))
+		self.presetnames = self.registerUIData('Acquisition Presets', 'array', default=[], permissions='rw')
+		self.fromscopename = self.registerUIData('Preset Name', 'string', permissions='rw')
+		fromscope = self.registerUIMethod(self.uiFromScope, 'Create Preset', ())
+		self.presetarg = self.registerUIData('Preset', 'struct', default = {'list': self.presetsNames(), 'selected': []}, permissions='rw', subtype='selected list')
+		toscope = self.registerUIMethod(self.uiToScope, 'Apply Preset', ())
+		toscopeacq = self.registerUIMethod(self.uiToScopeAcquire, 'To Scope And Acquire', ())
+		pre = self.registerUIContainer('Presets', (self.presetnames, self.fromscopename, fromscope, self.presetarg, toscope, toscopeacq))
 
 		trial = self.registerUIMethod(self.uiTrial, 'Trial', ())
 
