@@ -12,31 +12,35 @@ import data
 import cPickle
 import dbdatakeeper
 
-initializer = {'name': 'voici'}
+ #initializer = {'name': 'voici'}
+initializer = {'name': 'Session Test 2'}
 session = data.SessionData(initializer=initializer)
 dk = dbdatakeeper.DBDataKeeper()
 # d = dbdatakeeper.DBDataKeeper(('fake',), session)
 value = {"denis":68}
-namelist = ('ufer', 'Presets Manager', 'Selection', 'Cycle', 'Cycle On')
+# namelist = ('ufer', 'Presets Manager', 'Selection', 'Cycle', 'Cycle On')
+namelist = ('Manager', 'Nodes', 'Add Existing Node', 'Hostname', 'History')
 bin = data.Binary(value)
-# bin = data.AnyType(value)
 
 initializer = {'session': session,
 		'object': namelist,
-		'pickled value': bin }
+		'binary value': None }
 
 odata = data.UIData(initializer=initializer)
-#dk.insert(odata)
+ #dk.insert(odata)
 print odata
 
-#sys.exit()
+# sys.exit()
 
 
 result = dk.query(odata)
-print "----------------------"
-print "Result: ",result
+#print "----------------------"
+#print "Result: ",result
 
-d = result[0]['pickled value'].getObject()
+d = result[0]['binary value'].getObject()
+print "-----------"
+print d
+print "-----------"
 if isinstance(value, data.Binary):
 	d = value.getObject()
 print "object: %s, %s " % (d, type(d))

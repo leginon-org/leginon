@@ -1207,7 +1207,7 @@ class UIData(InSessionData):
 	def typemap(cls):
 		t = InSessionData.typemap()
 		t += [('object', tuple),
-					('pickled value', Binary)]
+					('binary value', Binary)]
 		return t
 	typemap = classmethod(typemap)
 

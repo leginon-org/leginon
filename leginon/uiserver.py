@@ -247,7 +247,7 @@ class Server(xmlrpc.Server, uidata.Container):
 			results = self.dbdatakeeper.query(odata, results=1)
 			if results:
 				try:
-					value = results[0]['pickled value']
+					value = results[0]['binary value']
 					if isinstance(value, data.Binary):
 						value = value.getObject()
 					uiobject.set(value, server=False, postcallback=False)
@@ -271,7 +271,7 @@ class Server(xmlrpc.Server, uidata.Container):
 		value = uiobject.get()
 		initializer = {'session': self.session,
 										'object': namelist,
-										'pickled value': value}
+										'binary value': value}
 		odata = data.UIData(initializer=initializer)
 		self.dbdatakeeper.insert(odata, force=True)
 
