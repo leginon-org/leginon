@@ -108,6 +108,8 @@ class EM(node.Node):
 	eventoutputs = node.Node.eventoutputs + [event.ListPublishEvent]
 	def __init__(self, id, session, nodelocations, **kwargs):
 
+		self.messagelog = uidata.MessageLog('Message Log')
+
 		# These keys are not included in a get all parameters
 		self.prunekeys = [
 			'gun shift',
@@ -197,7 +199,7 @@ class EM(node.Node):
 			scopename = self.session['instrument']['scope']
 		except (TypeError, KeyError):
 			# no scope is associated with this session
-			print 'no scope is associated with this session'
+			self.messagelog.warning('no scope is associated with this session')
 			scopename = None
 
 		# get the camera module and class from the database
@@ -205,7 +207,7 @@ class EM(node.Node):
 			cameraname = self.session['instrument']['camera']
 		except (TypeError, KeyError):
 			# no camera is associated with this session
-			print 'no camera is associated with this session'
+			self.messagelog.warning('no camera is associated with this session')
 			cameraname = None
 
 		# add event inputs for locking and unlocking EM from a node
@@ -290,7 +292,7 @@ class EM(node.Node):
 			scopeclass = self.getClass(modulename, classname)
 			self.scope = methoddict.factory(scopeclass)()
 		except Exception, e:
-			print 'cannot set scope to type', scopename
+			self.messagelog.error('cannot set scope to type ' + str(scopename))
 
 	def setCameraType(self, cameraname):
 		modulename, classname, d = emregistry.getCameraInfo(cameraname)
@@ -298,7 +300,7 @@ class EM(node.Node):
 			cameraclass = self.getClass(modulename, classname)
 			self.camera = methoddict.factory(cameraclass)()
 		except Exception, e:
-			print 'cannot set camera to type', cameraname
+			self.messagelog.error('cannot set camera to type ' + str(cameraname))
 
 	def main(self):
 		pass
@@ -443,8 +445,7 @@ class EM(node.Node):
 			camerakeys = []
 
 		if 'focus' in orderedkeys and 'defocus' in orderedkeys:
-			print 'WARNING!!!!:  you are changing focus and defocus at the same time'
-			print 'defocus', state['focus'], 'focus', state['defocus']
+			self.messagelog.warning('Focus and defocus changed at the same time defocus ' + str(state['focus']) +  ' focus ' + str(state['defocus']))
 
 		print 'setEM'
 		for key in orderedkeys:
@@ -456,12 +457,15 @@ class EM(node.Node):
 					try:
 						self.scope[key] = value
 					except:	
+						self.messagelog.error("failed to set '%s' to %s" % (key, value))
 						print "failed to set '%s' to %s" % (key, value)
 						self.printException()
 				elif key in camerakeys:
 					try:
 						self.camera[key] = value
 					except:	
+						self.messagelog.error("failed to set '%s' to %s"
+																	% (key, state[key]))
 						print "failed to set '%s' to" % key, state[key]
 						self.printException()
 
@@ -699,6 +703,7 @@ class EM(node.Node):
 		self.cameracontainer.disable()
 
 		container = uidata.LargeContainer('EM')
+		container.addObject(self.messagelog)
 		if self.scope is not None:
 			container.addObject(self.scopecontainer)
 		if self.camera is not None:

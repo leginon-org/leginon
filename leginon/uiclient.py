@@ -146,13 +146,13 @@ def WidgetClassFromTypeList(typelist):
 								if typelist[3] == 'progress':
 									return wxProgressWidget
 							else:
-								return entryWidgetClass([int])
+								return entryWidgetClassFactory([int])
 						elif typelist[2] == 'boolean':
 							return wxCheckBoxWidget
 						elif typelist[2] == 'float':
-							return entryWidgetClass([float])
+							return entryWidgetClassFactory([float])
 						elif typelist[2] == 'number':
-							return entryWidgetClass([int, float])
+							return entryWidgetClassFactory([int, float])
 						elif typelist[2] == 'struct':
 							if len(typelist) > 3:
 								if typelist[3] == 'application':
@@ -170,7 +170,7 @@ def WidgetClassFromTypeList(typelist):
 									return wxListWidget
 								elif typelist[3] == 'grid tray':
 									return wxGridTrayWidget
-							return entryWidgetClass([list, tuple])
+							return entryWidgetClassFactory([list, tuple])
 					return wxEntryWidget
 	raise ValueError('invalid type for widget')
 	
@@ -960,8 +960,8 @@ class wxEntryWidget(wxDataWidget):
 			try:
 				value = eval(value)
 			except:
-				excinfo = sys.exc_info()
-				sys.excepthook(*excinfo)
+#				excinfo = sys.exc_info()
+#				sys.excepthook(*excinfo)
 				if str not in self.types:
 					return
 		if type(value) not in self.types:
@@ -1018,10 +1018,10 @@ class wxEntryWidget(wxDataWidget):
 #			self.applybutton.Show(show)
 		wxDataWidget._show(self, show)
 
-def entryWidgetClass(itypes):
-	class EWC(wxEntryWidget):
+def entryWidgetClassFactory(itypes):
+	class EntryWidgetClass(wxEntryWidget):
 		types = itypes
-	return EWC
+	return EntryWidgetClass
 
 class wxCheckBoxWidget(wxDataWidget):
 	def __init__(self, name, parent, container, value, configuration):
