@@ -147,15 +147,24 @@ class DBDataKeeper(object):
 		recursive insert will insert an objects children before
 		inserting an object
 		'''
-		## insert children if they are Data instances
-		for value in newdata.values():
-			if isinstance(value, data.Data):
-				self.recursiveInsert(value)
+		### get out of here if already in database
+		if newdata.dbid is not None:
+			return
 
-		## insert this object if is has never been inserted
-		if newdata.dbid is None:
-			dbid = self.flatInsert(newdata, force=force)
-			newdata.setPersistent(dbid)
+		## insert children if they are Data instances
+		## and have never been inserted
+		## Look at reference first to avoid unecessary getData()
+		for value in newdata.values(dereference=False):
+			if isinstance(value, data.DataReference):
+				if value.dbid is None:
+					# what if the reference dbid is None
+					# but the actual data does have dbid.
+					# should I update the reference???
+					self.recursiveInsert(value.getData())
+
+		## insert this object
+		dbid = self.flatInsert(newdata, force=force)
+		newdata.setPersistent(dbid)
 
 	def _insert(self, newdata, force=False):
 		#self.flatInsert(newdata)
