@@ -8,6 +8,9 @@ import event
 import random
 import pickle
 import uidata
+import strictdict
+import gc
+import copy
 
 class DataHandler(leginonobject.LeginonObject):
 	'''Base class for DataHandlers. Defines virtual functions.'''
@@ -39,7 +42,7 @@ class DictDataKeeper(DataHandler):
 	def __init__(self, id, session):
 		DataHandler.__init__(self, id, session)
 		self.datadict = {}
-		self.lock = threading.Lock()
+		self.lock = threading.RLock()
 
 	def query(self, id):
 		self.lock.acquire()
@@ -54,7 +57,6 @@ class DictDataKeeper(DataHandler):
 		if not issubclass(newdata.__class__, data.Data):
 			raise TypeError
 		self.lock.acquire()
-		#self.datadict[newdata.id] = newdata
 		self.datadict[newdata['id']] = newdata
 		self.lock.release()
 
@@ -74,6 +76,44 @@ class DictDataKeeper(DataHandler):
 
 	def UI(self):
 		return None
+
+class SizedDataKeeper(DictDataKeeper):
+	def __init__(self, id, session, maxsize=18.0):
+		DictDataKeeper.__init__(self, id, session)
+		self.maxsize = maxsize * 1024 * 1024 * 8
+		self.datadict = strictdict.OrderedDict()
+		self.size = 0
+
+	def insert(self, newdata):
+		if not issubclass(newdata.__class__, data.Data):
+			raise TypeError
+		self.lock.acquire()
+		self.size += newdata.size()
+		self.datadict[newdata['id']] = copy.deepcopy(newdata)
+		self.clean()
+		self.lock.release()
+
+	def remove(self, dataid):
+		self.lock.acquire()
+		try:
+			size = self.datadict[dataid].size()
+			del self.datadict[dataid]
+			self.size -= size
+		except KeyError:
+			pass
+		self.lock.release()
+
+	def clean(self):
+		self.lock.acquire()
+		while self.size > self.maxsize:
+			try:
+				removeid = self.datadict.keys()[0]
+				print 'clean: removing', removeid, 'old size =', self.size/1024/1024/8.0, 'M',
+				self.remove(removeid)
+				print 'new size =', self.size/1024/1024/8.0, 'M'
+			except IndexError:
+				return
+		self.lock.release()
 
 class TimeoutDataKeeper(DictDataKeeper):
 	'''Keep remove data after a timeout.'''

@@ -27,7 +27,7 @@ class DataHandler(leginonobject.LeginonObject):
 		else:
 			raise TypeError('session must be of proper type')
 		## giving these all the same id, don't know why
-		self.datakeeper = datahandler.TimeoutDataKeeper(id, session)
+		self.datakeeper = datahandler.SizedDataKeeper(id, session)
 		self.databinder = datahandler.DataBinder(id, session)
 		self.dbdatakeeper = dbdatakeeper.DBDataKeeper(id, session)
 		self.node = mynode

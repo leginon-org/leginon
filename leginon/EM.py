@@ -75,18 +75,18 @@ def unique(s):
 class DataHandler(node.DataHandler):
 	def query(self, id):
 		emkey = id[0]
-		print 'EM query: acquiring state lock'
+		#print 'EM query: acquiring state lock'
 		self.node.statelock.acquire()
-		print 'EM query: state lock acquired'
+		#print 'EM query: state lock acquired'
 		done_event = threading.Event()
-		print 'EM query: putting in request for %s' % str([emkey])
+		#print 'EM query: putting in request for %s' % str([emkey])
 		self.node.queue.put(Request(done_event, [emkey],
 																self.node.externalstatusupdate.get()))
-		print 'EM query: waiting on request'
+		#print 'EM query: waiting on request'
 		done_event.wait()
-		print 'EM query: got request'
+		#print 'EM query: got request'
 		stuff = self.node.state
-		print 'EM query: creating data, (keys = %s)' % str(stuff.keys())
+		#print 'EM query: creating data, (keys = %s)' % str(stuff.keys())
 
 		if emkey == 'scope':
 			result = data.ScopeEMData(id=('scope',))
@@ -112,23 +112,23 @@ class DataHandler(node.DataHandler):
 				except KeyError:
 					result = None
 
-		print 'EM query: UI update'
+		#print 'EM query: UI update'
 		self.node.uiUpdate()
-		print 'EM query: data created, releaseing statelock'
+		#print 'EM query: data created, releaseing statelock'
 		self.node.statelock.release()
-		print 'EM query: returning'
+		#print 'EM query: returning'
 		return result
 
 	def insert(self, idata):
-		print 'EM insert: testing instance of EMData'
+		#print 'EM insert: testing instance of EMData'
 		if isinstance(idata, data.EMData):
-			print 'EM insert: is instance of EMData, acquiring statelock'
+			#print 'EM insert: is instance of EMData, acquiring statelock'
 			#print idata['id'][:-1], 'attempting to set EM'
 			self.node.statelock.acquire()
-			print 'EM insert: statelock acquired'
+			#print 'EM insert: statelock acquired'
 			done_event = threading.Event()
 			#self.node.queue.put(Request(done_event, idata['em']))
-			print 'EM insert: requesting set (idata = %s)' % str(idata)
+			#print 'EM insert: requesting set (idata = %s)' % str(idata)
 			# this converts Data to a dict, and deletes items
 			# that are None.  This saves us some time because
 			# queueHandler will not only setEM, but getEM on
@@ -144,16 +144,16 @@ class DataHandler(node.DataHandler):
 
 			self.node.queue.put(Request(done_event, d,
 																	self.node.externalstatusupdate.get()))
-			print 'EM insert: waiting for request to complete'
+			#print 'EM insert: waiting for request to complete'
 			done_event.wait()
-			print 'EM insert: updating UI'
+			#print 'EM insert: updating UI'
 			self.node.uiUpdate()
-			print 'EM insert: releasing state lock'
+			#print 'EM insert: releasing state lock'
 			self.node.statelock.release()
 		else:
 			node.DataHandler.insert(self, idata)
 
-		print 'EM insert: done'
+		#print 'EM insert: done'
 
 class Request(object):
 	def __init__(self, ievent, value, updatestatus=True):

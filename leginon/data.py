@@ -231,6 +231,19 @@ class Data(DataDict, leginonobject.LeginonObject):
 	def toDict(self, noNone=False):
 		return data2dict(self, noNone)
 
+	def size(self):
+		size = 0
+		for key, datatype in self.types().items():
+			if key in self and self[key] is not None:
+				size += self.sizeof(self[key], datatype)
+		return size
+
+	def sizeof(self, value, datatype):
+		if datatype == strictdict.NumericArrayType:
+			return len(value.flat) * value.itemsize()
+		else:
+			return 0
+
 '''
 
 ## How to define a new leginon data type:
