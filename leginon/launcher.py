@@ -22,6 +22,7 @@ class Launcher(node.Node):
 		print 'launcher id: %s, at hostname: %s, TCP: %s, UI: %s' % (self.id,
 															l['hostname'], l['TCP port'], l['UI port'])
 		#self.print_location()
+		self.defineUserInterface()
 		self.start()
 
 	def addManager(self, loc):
