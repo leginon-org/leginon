@@ -96,7 +96,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			print 'pausing for %s sec.' % (delay,)
 			time.sleep(delay)
 			print 'acquire()'
-			ret = self.acquire(p, target=targetdata)
+			ret = self.acquire(p, target=targetdata, trial=False)
 			if ret:
 				return 'failure'
 			print 'done'
@@ -144,7 +144,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		emdata = data.ScopeEMData(id=('scope',), initializer=newscope)
 		return emdata
 
-	def acquire(self, presetdata, target=None):
+	def acquire(self, presetdata, target=None, trial=False):
 		acqtype = self.uiacquiretype.getSelectedValue()
 		if acqtype == 'corrected':
 			cor = True
@@ -165,7 +165,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## use same id as original imagedata
 		dataid = self.ID()
 
-		if target is None:
+		if trial:
 			trialimage = data.TrialImageData(id=dataid, initializer=imagedata, preset=presetdata, label=labelstring)
 			print 'publishing trial image'
 			self.publish(trialimage, pubevent=True, database=False)
@@ -215,7 +215,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		time.sleep(2)
 
 		## acquire image
-		self.acquire(presetdata=None, target=None)
+		self.acquire(presetdata=None, target=None, trial=True)
 		self.outputEvent(event.UnlockEvent(self.ID()))
 		self.confirmEvent(clickevent)
 
@@ -235,7 +235,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		print 'CURRENT', p
 		## trial image
 		print 'Acquiring image'
-		self.acquire(p, target=None)
+		self.acquire(p, target=None, trial=True)
 		print 'Acquired'
 
 	def uiTrial(self):
