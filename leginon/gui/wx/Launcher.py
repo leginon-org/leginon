@@ -234,7 +234,7 @@ class Panel(ListCtrlPanel):
 	def onSize(self, evt=None):
 		if hasattr(self.panel, 'messagelog'):
 			size = self.swmessage.GetClientSize()
-			self.panel.messagelog.SetSize(size - (3, 3))
+			self.panel.messagelog.SetSize(size - (10, 10))
 
 	def _onSetPanel(self, panel):
 		ListCtrlPanel._onSetPanel(self, panel)
@@ -252,7 +252,8 @@ class Panel(ListCtrlPanel):
 		if hasattr(panel, 'messagelog'):
 			panel.messagelog.Show(True)
 			size = self.swmessage.GetClientSize()
-			panel.messagelog.SetSize(size - (3, 3))
+			panel.messagelog.SetPosition((5, 5))
+			panel.messagelog.SetSize(size - (10, 10))
 
 	def onStatusUpdated(self, evt):
 		evtobj = evt.GetEventObject()
@@ -262,6 +263,7 @@ class Panel(ListCtrlPanel):
 				try:
 					color = self.statuscolors[evt.level]
 				except KeyError:
+					# won't work for different default color
 					color = wx.BLACK
 				self.listctrl.SetItemTextColour(item, color)
 				return
