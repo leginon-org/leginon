@@ -127,10 +127,11 @@ class SpiralTargetMaker(TargetMaker):
 											'scope': scope,
 											'camera': camera,
 											'preset': preset}
-			try:
-				initializer['grid'] = ievent['grid']
-			except (KeyError, AttributeError):
-				pass
+			if ievent is not None:
+				try:
+					initializer['grid'] = ievent['grid']
+				except (KeyError, AttributeError):
+					pass
 			targetdata = data.AcquisitionImageTargetData(initializer=initializer,
 																										type='acquisition')
 			self.targetlist.append(targetdata)
