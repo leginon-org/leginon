@@ -15,6 +15,7 @@ class Manager(node.Node):
 	def __init__(self):
 		node.Node.__init__(self, 'manager', None)
 
+		self.gui_ok = 0
 		self.common = common
 		self.distmap = {}
 
@@ -55,6 +56,10 @@ class Manager(node.Node):
 			# fools! should do something nifty to unregister, reregister, etc.
 			nodelocationdata = data.NodeLocationData(nodeid, nodelocation)
 		self.server.datahandler._insert(nodelocationdata)
+
+		## stuff to do if Node is a Launcher
+		if isinstance(readyevent, event.LauncherReadyEvent):
+			self.gui_add_launcher(newid)
 
 	def registerData(self, publishevent):
 		if isinstance(publishevent, event.PublishEvent):
@@ -137,11 +142,15 @@ class Manager(node.Node):
 		#### Launch Node Frame
 		launch_frame = Frame(root)
 
+		launch_lab = Label(launch_frame, text='LAUNCHER')
+		launch_lab.pack(side=TOP)
+
 		f = Frame(launch_frame)
-		lab = Label(f, text='Launcher')
-		ent = Entry(f, textvariable=self.gui_launch_launcher)
+		lab = Label(f, text='Launcher ID')
+		#ent = Entry(f, textvariable=self.gui_launch_launcher)
+		self.gui_launcherlist = Listbox(f, height=6)
 		lab.pack(side=LEFT)
-		ent.pack(side=LEFT)
+		self.gui_launcherlist.pack(side=LEFT)
 		f.pack(side=TOP)
 
 		f = Frame(launch_frame)
@@ -174,10 +183,24 @@ class Manager(node.Node):
 
 		launch_frame.pack(side=TOP)
 
+		self.gui_ok = 1
 		root.mainloop()
 
+	def gui_add_launcher(self, launcherid):
+		if not self.gui_ok:
+			return
+		self.gui_launcherlist.insert(END, launcherid)
+
+	def gui_del_launcher(self, launcherid):
+		if not self.gui_ok:
+			return
+		### NOT DONE YET
+
 	def gui_launch_command(self):
-		launcher = self.gui_launch_launcher.get()
+		#launcher = self.gui_launch_launcher.get()
+		launcherlist = self.gui_launcherlist.get(0,END)
+		launcherindex = int(self.gui_launcherlist.curselection()[0])
+		launcher = launcherlist[launcherindex]
 		newproc = self.gui_launch_newproc.get()
 
 		target = self.gui_launch_target.get()
