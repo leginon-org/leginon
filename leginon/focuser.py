@@ -329,7 +329,8 @@ class Focuser(acquisition.Acquisition):
 			if state == 'stop':
 				break
 			elif state == 'pause':
-				self.manualplayer.wait()
+				if self.manualplayer.wait() == 'stop':
+					break
 				if presettarget is not None:
 					self.logger.info('reseting preset and target after pause')
 					self.logger.debug('preset %s' % (presettarget['preset'],))
@@ -344,11 +345,12 @@ class Focuser(acquisition.Acquisition):
 				imagedata = self.cam.acquireCameraImageData(correction=cor)
 			finally:
 				self.manualchecklock.release()
-			if imagedata is None:
+			try:
+				imarray = imagedata['image']
+			except (TypeError, KeyError):
 				self.manualplayer.pause()
 				self.logger.error('Failed to acquire image')
 				continue
-			imarray = imagedata['image']
 			pow = imagefun.power(imarray, self.maskradius)
 			self.man_power = pow.astype(Numeric.Float32)
 			self.man_image = imarray.astype(Numeric.Float32)

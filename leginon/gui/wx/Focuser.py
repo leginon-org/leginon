@@ -76,10 +76,12 @@ class Panel(gui.wx.Acquisition.Panel):
 		self.node.manualNow()
 
 	def onManualCheck(self, evt):
+		self.manualdialog.MakeModal(True)
 		self.manualdialog.Show()
 
 	def onManualCheckDone(self, evt):
 		self.manualdialog.Show(False)
+		self.manualdialog.MakeModal(False)
 
 	def setManualImage(self, image, typename, stats={}):
 		evt = gui.wx.Events.SetImageEvent(image, typename, stats)
@@ -325,6 +327,7 @@ class ManualFocusDialog(wx.MiniFrame):
 		self.Bind(wx.EVT_TOOL, self.onSetInstrumentTool,
 							id=gui.wx.ToolBar.ID_SET_INSTRUMENT)
 		self.Bind(wx.EVT_CLOSE, self.onClose)
+		self.Bind(gui.wx.Events.EVT_SET_IMAGE, self.onSetImage)
 
 	def onSettingsTool(self, evt):
 		self.settingsdialog.maskradius.SetValue(self.node.maskradius)
@@ -386,7 +389,9 @@ class ManualFocusDialog(wx.MiniFrame):
 
 	def onClose(self, evt):
 		self.node.manualplayer.stop()
-		evt.Skip()
+
+	def onSetImage(self, evt):
+		self.imagepanel.setImageType(evt.typename, evt.image)
 
 if __name__ == '__main__':
 	class App(wx.App):
