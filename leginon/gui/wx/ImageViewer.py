@@ -5,10 +5,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ImageViewer.py,v $
-# $Revision: 1.43 $
+# $Revision: 1.44 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-12 01:08:05 $
-# $Author: pulokas $
+# $Date: 2005-03-17 19:00:39 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
@@ -752,7 +752,15 @@ class ImagePanel(wx.Panel):
 		x, y = self.panel.GetViewStart()
 		width, height = self.panel.GetSize()
 		vwidth, vheight = self.panel.GetVirtualSize()
-		return (x + width/2.0)/vwidth, (y + height/2.0)/vheight
+		if vwidth == 0:
+			x = 0
+		else:
+			(x + width/2.0)/vwidth
+		if vheight == 0:
+			y = 0
+		else:
+			y = (y + height/2.0)/vheight
+		return x, y
 
 	def setScrolledCenter(self, center):
 		cwidth, cheight = center
