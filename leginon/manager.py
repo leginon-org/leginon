@@ -20,8 +20,6 @@ class Manager(node.Node):
 		self.distmap = {}
 
 		self.gui_ok = 0
-		if gui:
-			self.start_gui()
 
 		## this makes every received event get distributed
 		self.addEventInput(event.Event, self.distribute)
@@ -36,8 +34,9 @@ class Manager(node.Node):
 
 	def main(self):
 		print self.location()
-
-
+		gui = None
+		if gui:
+			self.start_gui()
 		self.interact()
 
 	def nodeID(self, name):

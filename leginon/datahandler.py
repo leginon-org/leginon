@@ -135,6 +135,7 @@ class CachedDictDataKeeper(DataHandler):
 		self.age = age
 		self.timeout = timeout
 		self.timer = threading.Timer(self.timeout, self.writeoutcache)
+		self.timer.setDaemon(1)
 		self.timer.start()
 
 	def __del__(self):
@@ -176,6 +177,7 @@ class CachedDictDataKeeper(DataHandler):
 
 	def writeoutcache(self):
 		self.timer = threading.Timer(self.timeout, self.writeoutcache)
+		self.timer.setDaemon(1)
 		self.timer.start()
 		now = time.time()
 		for k in self.datadict.keys():
