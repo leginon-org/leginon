@@ -638,7 +638,7 @@ class ModeledStageCalibrationClient(CalibrationClient):
 			print 'GOT MEAN', caldata['mean']
 			return caldata
 		else:
-			raise RuntimeError('no mag calibration')
+			raise RuntimeError('no model mag calibration')
 
 	def storeModelCalibration(self, label, axis, period, a, b):
 		caldata = data.StageModelCalibrationData()
@@ -669,7 +669,7 @@ class ModeledStageCalibrationClient(CalibrationClient):
 			caldata['b'] = caldata['b'][0]
 			return caldata
 		else:
-			raise RuntimeError('no mag calibration')
+			raise RuntimeError('no model calibration')
 
 	def getLabeledData(self, label, mag, axis):
 		qdata = data.StageMeasurementData()
