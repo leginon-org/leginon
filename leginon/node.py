@@ -11,11 +11,11 @@ class Client(datatransport.Client):
 	def __init__(self, location):
 		datatransport.Client.__init__(self, location)
 
-	def push(self, ievent):
-		if isinstance(ievent, event.Event):
-			datatransport.Client.push(self, ievent)
-		else:
-			raise event.InvalidEventError('event must be Event instance')
+	def push(self, idata):
+#		if isinstance(idata, event.Event):
+			datatransport.Client.push(self, idata)
+#		else:
+#			raise event.InvalidEventError('event must be Event instance')
 
 class NodeDataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
 	def __init__(self):
