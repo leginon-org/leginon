@@ -27,9 +27,10 @@ class CalibrationClient(object):
 		print 'creating EM data'
 		print 'state =', state
 		newemdata = data.EMData(('scope',), em=state)
-		print 'publishing lock'
-		self.node.publish(event.LockEvent(self.node.ID()))
-		print 'publishing EM'
+#		needs unlock too
+#		print 'publishing lock'
+#		self.node.publish(event.LockEvent(self.node.ID()))
+#		print 'publishing EM'
 		self.node.publishRemote(newemdata)
 		print 'state settling time %s' % (settle,)
 		time.sleep(settle)

@@ -287,10 +287,13 @@ class Leginon(Tkinter.Frame):
 		replaceargs = []
 		for args in self.manager.app.launchspec:
 			nodes.append(('manager', args[3]))
-			if args[2] == 'EM' and self.remotelauncher is not None:
-				newlauncherid = self.remotelauncher
-			else:
-				newlauncherid = self.locallauncherid
+			if args[2] == 'EM':
+				self.EMid = nodes[-1]
+				print 'self.EMid =', self.EMid
+				if self.remotelauncher is not None:
+					newlauncherid = self.remotelauncher
+				else:
+					newlauncherid = self.locallauncherid
 
 			if args[0] != newlauncherid: 
 				replaceargs.append((args, (newlauncherid,) + args[1:]))
@@ -353,21 +356,21 @@ class Leginon(Tkinter.Frame):
 
 	def addGridAtlas(self, name):
 		self.gridatlases[name] = GridAtlas(self.manager, self.manageruiclient,
-																		self.locallauncherid, self.notebook,
-																		self.debug, self.windowmenu, name)
+																	self.locallauncherid, self.notebook,
+																	self.debug, self.windowmenu, name, self.EMid)
 
 	def addTarget(self, name, sourceids=[]):
 		self.targets[name] = Target(self.manager, self.manageruiclient,
 																self.locallauncherid, self.notebook,
 																self.debug, self.windowmenu, name,
-																sourceids)
+																sourceids, self.EMid)
 
 	def addImageCollector(self, name, sourceids=[]):
 		self.imagecollectors[name] = ImageCollector(self.manager,
 																self.manageruiclient,
 																self.locallauncherid, self.notebook,
 																self.debug, self.windowmenu, name,
-																sourceids)
+																sourceids, self.EMid)
 
 class WidgetGroup(Pmw.Group):
 	def __init__(self, parent, name):
@@ -830,9 +833,10 @@ class ImageCorrection(WidgetWrapper):
 
 class ImageCollector(WidgetWrapper):
 	def __init__(self, manager, manageruiclient, launcherid, notebook,
-																		debug, windowmenu, name, sourceids):
+																	debug, windowmenu, name, sourceids, EMid):
 		WidgetWrapper.__init__(self, manager, manageruiclient, launcherid,
 														notebook, debug, windowmenu, name)
+		self.EMid = EMid
 		self.addNodeInfo('acquire', self.name + ' Acquisition', 'Acquisition')
 		self.addNodeInfo('imagecollector', self.name + ' Image Collector',
 																											'ImageCollector')
@@ -845,6 +849,10 @@ class ImageCollector(WidgetWrapper):
 																		self.nodeinfo['imagecollector']['UI info'])
 
 	def initializeBindings(self):
+		self.manager.addEventDistmap(event.LockEvent,
+																	self.nodeinfo['acquire']['ID'], self.EMid)
+		self.manager.addEventDistmap(event.UnlockEvent,
+																	self.nodeinfo['acquire']['ID'], self.EMid)
 		self.manager.addEventDistmap(event.AcquisitionImagePublishEvent,
 																				self.nodeinfo['acquire']['ID'],
 																				self.nodeinfo['imagecollector']['ID'])
@@ -893,10 +901,11 @@ class AutoFocus(WidgetWrapper):
 
 class GridAtlas(WidgetWrapper):
 	def __init__(self, manager, manageruiclient, launcherid, notebook,
-																			debug, windowmenu, name):
+																			debug, windowmenu, name, EMid):
 		WidgetWrapper.__init__(self, manager, manageruiclient, launcherid,
 														notebook, debug, windowmenu, name)
 
+		self.EMid = EMid
 		self.addNodeInfo('gridpreview', self.name + ' Grid Preview', 'GridPreview')
 		self.addNodeInfo('stateimagemosaic', self.name + ' State Image Mosaic',
 																												'StateImageMosaic')
@@ -905,6 +914,12 @@ class GridAtlas(WidgetWrapper):
 		self.targetid = self.nodeinfo['stateimagemosaic']['ID']
 
 	def initializeBindings(self):
+		self.manager.addEventDistmap(event.LockEvent,
+																				self.nodeinfo['gridpreview']['ID'],
+																				self.EMid)
+		self.manager.addEventDistmap(event.UnlockEvent,
+																				self.nodeinfo['gridpreview']['ID'],
+																				self.EMid)
 		self.manager.addEventDistmap(event.TileImagePublishEvent,
 																				self.nodeinfo['gridpreview']['ID'],
 																				self.nodeinfo['stateimagemosaic']['ID'])
@@ -916,9 +931,11 @@ class GridAtlas(WidgetWrapper):
 
 class Target(WidgetWrapper):
 	def __init__(self, manager, manageruiclient, launcherid, notebook,
-											debug, windowmenu, name, targetsourceids):
+											debug, windowmenu, name, targetsourceids, EMid):
 		WidgetWrapper.__init__(self, manager, manageruiclient, launcherid,
 														notebook, debug, windowmenu, name)
+
+		self.EMid = EMid
 
 		self.targetsourceids = targetsourceids
 
@@ -931,6 +948,10 @@ class Target(WidgetWrapper):
 		self.targetid = self.nodeinfo['target']['ID']
 
 	def initializeBindings(self):
+		self.manager.addEventDistmap(event.LockEvent,
+																	self.nodeinfo['acquire']['ID'], self.EMid)
+		self.manager.addEventDistmap(event.UnlockEvent,
+																	self.nodeinfo['acquire']['ID'], self.EMid)
 		self.manager.addEventDistmap(event.AcquisitionImagePublishEvent,
 																				self.nodeinfo['acquire']['ID'],
 																				self.nodeinfo['target']['ID'])

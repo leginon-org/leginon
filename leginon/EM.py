@@ -29,7 +29,9 @@ class DataHandler(datahandler.DataBinder):
 		if isinstance(idata, event.Event):
 			datahandler.DataBinder.insert(self, idata)
 		else:
+			print idata['id'][:-1], 'attempting to set EM'
 			self.EMnode.setEM(idata['em'])
+			print idata['id'][:-1], 'EM set'
 
 	# borrowed from NodeDataHandler
 	def setBinding(self, eventclass, func):
@@ -94,13 +96,17 @@ class EM(node.Node):
 		self.camera.exit()
 
 	def doLock(self, ievent):
+		print 'EM do lock'
 		if ievent['id'][:-1] != self.locknodeid:
 			self.nodelock.acquire()
 			self.locknodeid = ievent['id'][:-1]
+			print self.locknodeid, 'acquired EM lock'
 		self.confirmEvent(ievent)
 
 	def doUnlock(self, ievent):
+		print 'EM do unlock'
 		if ievent['id'][:-1] == self.locknodeid:
+			print self.locknodeid, 'releasing EM lock'
 			self.locknodeid = None
 			self.nodelock.release()
 
@@ -264,6 +270,10 @@ class EM(node.Node):
 		self.uistate = self.sortEMdict(emdict)
 		return emdict
 
+	def uiUnlock(self):
+		self.locknodeid = None
+		self.nodelock.release()
+
 	def defineUserInterface(self):
 		nodespec = node.Node.defineUserInterface(self)
 
@@ -275,7 +285,8 @@ class EM(node.Node):
 		loadspec = self.registerUIMethod(self.load, 'Load', argspec)
 
 		filespec = self.registerUIContainer('File', (savespec, loadspec))
+		unlockspec = self.registerUIMethod(self.uiUnlock, 'Unlock', ())
 
-		myspec = self.registerUISpec('EM', (statespec, filespec))
+		myspec = self.registerUISpec('EM', (statespec, unlockspec, filespec))
 		myspec += nodespec
 		return myspec

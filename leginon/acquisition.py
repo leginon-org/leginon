@@ -67,17 +67,21 @@ class Acquisition(targetwatcher.TargetWatcher):
 			print 'TARGETDATA'
 			print '   row,col', targetdata['array row'], targetdata['array column']
 			print '   scope image shift', targetdata['scope']['image shift']
-			print '   preset image shift', targetdata['preset']['image shift']
+			if targetdata['preset'] is not None:
+				print '   preset image shift', targetdata['preset']['image shift']
+			else:
+				print '   preset image shift, no preset in target'
 
 			oldtargetemdata = self.targetToEMData(targetdata)
 			oldpreset = targetdata['preset']
-			print 'OLDPRESET'
-			print '   magnification', oldpreset['magnification']
-			print '   image shift', oldpreset['image shift']
+
 			if oldpreset is None:
 				# I don't know if this works, but if there is no preset, don't remove
 				newtargetemdata = oldtargetemdata
 			else:
+				print 'OLDPRESET'
+				print '   magnification', oldpreset['magnification']
+				print '   image shift', oldpreset['image shift']
 				newtargetemdata = self.removePreset(oldtargetemdata, oldpreset)
 
 		if newtargetemdata is not None:
@@ -111,6 +115,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 				print '   image shift', ptargetemdata['em']['image shift']
 
 			## set the scope/camera state
+			self.outputEvent(event.LockEvent(self.ID()))
 			self.publishRemote(ptargetemdata)
 
 			print 'sleeping 2 sec'
@@ -118,6 +123,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 #			print 'acquire'
 			self.acquire(presetdata, trial)
+			self.outputEvent(event.UnlockEvent(self.ID()))
 
 	def targetToEMData(self, targetdata):
 		'''
@@ -272,6 +278,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		calclient = self.calclients['image shift']
 		newstate = calclient.transform(pixelshift, clickscope, clickcamera)
 		emdat = data.EMData(('scope',), em=newstate)
+		self.outputEvent(event.LockEvent(self.ID()))
 		self.publishRemote(emdat)
 
 		# wait for a while
@@ -280,6 +287,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## acquire image
 		#self.acquireTargetAtPreset(self.testpresetname, trial=True)
 		self.acquire(presetdata=None, trial=True)
+		self.outputEvent(event.UnlockEvent(self.ID()))
 
 	def uiToScope(self):
 		try:

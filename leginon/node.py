@@ -153,7 +153,6 @@ class Node(leginonobject.LeginonObject):
 		'''Send the event to the manager to be routed where necessary.'''
 		try:
 			ievent['confirm'] = True
-			ievent.confirm = True
 			self.managerclient.push(ievent)
 		except KeyError:
 			self.printerror('cannot output event %s' % ievent)
@@ -188,7 +187,7 @@ class Node(leginonobject.LeginonObject):
 	def confirmEvent(self, ievent):
 		'''Confirm that an event has been received and/or handled.'''
 		#self.outputEvent(event.ConfirmationEvent(self.ID(), ievent.id))
-		self.outputEvent(event.ConfirmationEvent(self.ID(), ievent['id']))
+		self.outputEvent(event.ConfirmationEvent(self.ID(), eventid=ievent['id']))
 
 	def waitEvent(self, ievent):
 		'''Block for confirmation of a generated event.'''

@@ -223,6 +223,7 @@ class GridPreview(node.Node):
 
 		# will be in presets or something
 		emdata = data.EMData(('scope',), em={'magnification': self.magnification})
+		self.outputEvent(event.LockEvent(self.ID()))
 		self.publishRemote(emdata)
 
 		self.cam.state(self.cam.config()['state'])
@@ -232,6 +233,7 @@ class GridPreview(node.Node):
 #			self.logPrint()
 		except:
 			self.printerror('error while executing loop')
+		self.outputEvent(event.UnlockEvent(self.ID()))
 		self.running.clear()
 		self.stoprunning.clear()
 
