@@ -67,9 +67,10 @@ class SimpleAcquisition(acquisition.Acquisition):
 		acqloop = uidata.Method('Acquire Loop', self.acquireImageLoop)
 		acqloopstop = uidata.Method('Stop', self.acquireImageLoopStop)
 
-		acqcont = uidata.MediumContainer('Acquire')
+		acqcont = uidata.Container('Acquire')
 		acqcont.addObjects((acq, acqloop, acqloopstop))
 
 		container = uidata.MediumContainer('Simple Acquisition')
 		container.addObject(acqcont)
 		self.uiserver.addObject(container)
+
