@@ -729,7 +729,7 @@ class AcquisitionImageTargetData(ImageTargetData):
 		return t
 	typemap = classmethod(typemap)
 
-class FocusTargetData(ImageTargetData):
+class FocusTargetData(AcquisitionImageTargetData):
 	pass
 
 ### XXX the list here has variable length
