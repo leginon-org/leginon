@@ -276,6 +276,7 @@ class EM(node.Node):
 			done_event.wait()
 		finally:
 			self.statelock.release()
+			self.confirmEvent(setevent)
 
 	def handler(self, scopename, cameraname):
 		self.scope = None
