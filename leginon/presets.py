@@ -6,10 +6,12 @@ import cPickle
 import copy
 import uidata
 import camerafuncs
+import strictdict
 
 class PresetsClient(object):
 	'''
 	methods for accessing presets in the database
+	and using presets manager
 	and for setting/getting a preset to/from the EM node
 	'''
 	def __init__(self, node):
@@ -92,23 +94,77 @@ class PresetsManager(node.Node):
 
 		self.presetsclient = PresetsClient(self)
 		self.current = None
-		self.presetdict = OrderedDict()
-		self.presetcircle = CircularIter(self.presetdict)
+		self.setPresets([])
 
 		self.defineUserInterface()
 		self.start()
 
-	def getPresetNames(self, value=None):
-		presets = self.presetsclient.retrievePresets()
-		names = []
+	def setPresets(self, presetlist):
+		'''
+		initializes my current list of presets, in proper order
+		also initializes my circular iterator
+		'''
+		self.presets = list(presetlist)
+		self.circle = CircularIter(self.presets)
+
+	def getSessionPresets(self):
+		'''
+		get list of presets for this session
+		'''
+		### get presets from database
+		pdata = data.PresetData(('dummy',), session=self['session'])
+		pdata['id'] = None
+		presets = self.research(pdata)
+
+		### only want most recent of each name
+		recent = strictdict.OrderedDict()
 		for preset in presets:
-			presetname = preset['name']
-			if presetname not in names:
-				names.append(presetname)
+			if preset['name'] not in recent:
+				recent[preset['name'] = preset
+		return recent
+
+	def presetByName(self, name):
+		for p in self.presets:
+			if p['name'] == name:
+				return p
+		return None
+
+	def indexByName(self, name):
+		i = 0
+		for p in self.presets:
+			if p['name'] == name:
+				return i
+			i += 1
+		return None
+
+	def indexByPreset(self, preset):
+		return self.presets.index(preset)
+
+	def insertPreset(self, p, newpreset):
+		'''
+		insert new preset into my set of managed presets
+		'''
+		if type(p) is int:
+			i = p
+		else:
+			i = self.index
+		self.presets.insert(position, newpreset)
+
+	def removePreset(self, p):
+		'''
+		remove a preset by index or reference
+		'''
+		if type(p) is int:
+			del self.presets[p]
+		else:
+			self.presets.remove(p)
+
+	def presetNames(self):
+		names = [p['name'] for p in self.presets]
 		return names
 
-	def addToPresetList(self, presetdata):
-		self.presetlist.append(presetdata)
+	def newPreset(self, name, position):
+		
 
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
@@ -117,15 +173,44 @@ class PresetsManager(node.Node):
 		getpresetsmethod = uidata.UIMethod('Get Presets', self.uiGetPresets)
 		toscopemethod = uidata.UIMethod('To Scope', self.uiRestore)
 		toscopecontainer = uidata.UIContainer('Apply Preset')
-		toscopecontainer.addUIObjects((self.uiselectpreset, getpresetsmethod,
-																		toscopemethod))
-		self.uipresetname = uidata.UIString('Preset Name', '', 'rw')
-		fromscopemethod = uidata.UIMethod('From Scope', self.uiStoreCurrent)
-		fromscopecontainer = uidata.UIContainer('Create Preset')
-		fromscopecontainer.addUIObjects((self.uipresetname, fromscopemethod))
+		toscopecontainer.addUIObjects((self.uiselectpreset, getpresetsmethod, toscopemethod))
+
+
+
+		self.selecteditpreset = uidata.UISelectFromList('Preset', self.managedPresets(), [], 'r')
+		self.editpresetstruct = uidata.UIStruct('Preset Parameters', {}, 'rw')
+		editcontainer = uidata.UIContainer('Edit Preset')
+		editcontainer.addUIObjects((,))
+
+
+		self.enteredname = uidata.UIString('Name', '', 'rw')
+		self.enteredpos = uidata.UIInteger('Position', 0, 'rw')
+		fromscope = uidata.UIMethod('Set Params From Scope', self.uiStoreCurrent)
+		setpos = uidata.UIMethod('Set Position', self.uiStoreCurrent)
+
+		updatecontainer = uidata.UIContainer('Update Preset')
+		updatecontainer.addUIObjects((self.enteredname, self.enteredpos, fromscope, setpos))
+
 		container = uidata.UIMediumContainer('Presets Manager')
 		container.addUIObjects((toscopecontainer, fromscopecontainer))
 		self.uiserver.addUIObject(container)
+
+	def NEWdefineUserInterface(self):
+		node.Node.defineUserInterface(self)
+		self.statestruct = uidata.UIStruct('Instrument State', {}, 'rw', self.uiCallback)
+		self.statestruct.set(self.uistate, callback=False)
+		unlockmethod = uidata.UIMethod('Unlock', self.uiUnlock)
+		container = uidata.UIMediumContainer('EM')
+		container.addUIObjects((self.statestruct, unlockmethod))
+		self.uiserver.addUIObject(container)
+
+	def managedPresets(self, value=None):
+		'''
+		get and set the list of managed presets for this session
+		'''
+		if value is not None:
+			self.managedpresets = value
+		return self.managedpresets
 
 	def uiGetPresets(self):
 		presetsnames = self.getPresetNames()
