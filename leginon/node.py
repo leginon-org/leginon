@@ -22,7 +22,7 @@ class DataHandler(leginonobject.LeginonObject):
 	'''
 	def __init__(self, id, session, mynode):
 		leginonobject.LeginonObject.__init__(self, id)
-		if isinstance(session, data.SessionData):
+		if isinstance(session, data.SessionData) or session is None:
 			self.session = session
 		else:
 			raise TypeError('session must be of proper type')
@@ -106,6 +106,9 @@ class Node(leginonobject.LeginonObject):
 
 		#self.uiserver = uiserver.UIServer('UI', xmlrpcport)
 		self.uiserver = uiserver.Server(str(self.id[-1]), xmlrpcport)
+
+#		if not isinstance(self.session, data.SessionData):
+#			self.outputWarning('No session specified')
 
 		self.eventswaiting = {}
 		self.ewlock = threading.Lock()
@@ -513,9 +516,9 @@ class Node(leginonobject.LeginonObject):
 		# log too maybe
 		if hasattr(self, 'uiserver'):
 			if number > 0:
-				messagedialog = uidata.MessageDialog('%s #%d' % (title,number), message)
+				messagedialog = uidata.MessageDialog('%s #%d (%s)' % (title, number, str(self.id[-1])), message)
 			else:
-				messagedialog = uidata.MessageDialog(title, message)
+				messagedialog = uidata.MessageDialog('%s (%s)' % (title, str(self.id[-1])), message)
 			try:
 				self.uiserver.addObject(messagedialog)
 			except ValueError:
