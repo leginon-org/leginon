@@ -126,7 +126,8 @@ $imageinfokeys = array (
 	//	'defocus',
 		'high tension',
 		'gridNb',
-		'trayId'
+		'trayId',
+		'exposure time'
 		);
 
 $parentimageinfokeys = array (	

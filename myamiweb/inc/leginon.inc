@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.19 $
- *	@version $Id: leginon.inc,v 1.19 2004-05-27 20:53:42 dfellman Exp $
+ *	@version $Revision: 1.20 $
+ *	@version $Id: leginon.inc,v 1.20 2004-05-28 17:23:50 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -470,6 +470,7 @@ class leginondata {
 			."c.`SUBD|dimension|x` as dimx, "
 			."c.`SUBD|dimension|y` as dimy, "
 			."c.`SUBD|binning|y` as binning, "
+			."c.`exposure time`, "
 			."pi.pixelsize as pixelsize, "
 			."scope.magnification, "
 			."scope.defocus, "
