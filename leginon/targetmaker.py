@@ -77,7 +77,7 @@ class SpiralTargetMaker(TargetMaker):
 		overlap = self.overlap.get()
 		for delta in self.makeSpiral(maxtargets, overlap, size):
 			initializer = {'id': self.ID(), 'session': self.session, 'delta row': delta[0], 'delta column': delta[1], 'scope': scope, 'camera': camera, 'preset': preset}
-			self.targetlist.append(data.ImageTargetData(initializer=initializer))
+			self.targetlist.append(data.AcquisitionImageTargetData(initializer=initializer))
 			self.progress.set(self.progress.get() + 100/maxtargets)
 		self.progress.set(100)
 		TargetMaker.publishTargetList(self)

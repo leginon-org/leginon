@@ -15,7 +15,7 @@ class TargetWatcher(watcher.Watcher):
 																							event.ImageTargetListPublishEvent]
 	eventoutputs = watcher.Watcher.eventoutputs + [event.TargetListDoneEvent, event.ImageTargetListPublishEvent]
 
-	def __init__(self, id, session, nodelocations, targetclass=data.ImageTargetData, **kwargs):
+	def __init__(self, id, session, nodelocations, targetclass=data.AcquisitionImageTargetData, **kwargs):
 		watchfor = event.ImageTargetListPublishEvent
 		watcher.Watcher.__init__(self, id, session, nodelocations, watchfor, lockblocking=0, **kwargs)
 
