@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Navigator.py,v $
-# $Revision: 1.26 $
+# $Revision: 1.27 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-12 18:11:55 $
-# $Author: suloway $
+# $Date: 2004-11-14 02:35:44 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -328,6 +328,7 @@ class NewLocationDialog(wx.Dialog):
 		self.tcname = wx.TextCtrl(self, -1, '')
 		self.tccomment = wx.TextCtrl(self, -1, '')
 		self.cbxyonly = wx.CheckBox(self, -1, 'Save x and y only')
+		self.cbxyonly.SetValue(True)
 
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(stname, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
