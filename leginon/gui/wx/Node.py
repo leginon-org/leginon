@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Node.py,v $
-# $Revision: 1.26 $
+# $Revision: 1.27 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-29 21:31:21 $
+# $Date: 2004-11-01 19:53:23 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -106,8 +106,8 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 			window = self
 		window.GetEventHandler().AddPendingEvent(evt)
 
-	def setProcessing(self, value):
-		level = 'PROCESSING'
-		evt = gui.wx.Events.StatusUpdatedEvent(self, level, value)
+	def setStatus(self, status):
+		level = 'STATUS'
+		evt = gui.wx.Events.StatusUpdatedEvent(self, level, status)
 		self.GetEventHandler().AddPendingEvent(evt)
 

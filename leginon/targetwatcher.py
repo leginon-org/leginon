@@ -60,10 +60,12 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		if not isinstance(newdata, data.ImageTargetListData):
 			return
 
+		self.setStatus('processing')
+
 		### get targets that belong to this target list
 		targetlist = self.researchTargets(list=newdata)
 		listid = newdata.dbid
-		self.logger.debug('TargetWatcher will process %s targets in list %s' % (len(targetlist),listid))
+		self.logger.debug('TargetWatcher will process %s targets in list %s' % (len(targetlist), listid))
 
 		# separate the good targets from the rejects
 		goodtargets = []
@@ -94,6 +96,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				## then this whole target list was aborted
 				self.logger.warning('Passed targets not processed, aborting current target list')
 				self.reportTargetListDone(newdata.dmid, rejectstatus)
+				self.setStatus('idle')
 				return
 
 			self.logger.info('Passed targets processed, processing current target list')
@@ -102,8 +105,12 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		targetliststatus = 'success'
 		for i, target in enumerate(goodtargets):
 			self.logger.debug('target %s status %s' % (i, target['status'],))
-			# abort
+			# ...
+			if self.player.state() == 'pause':
+				self.setStatus('user input')
 			state = self.player.wait()
+			self.setStatus('processing')
+			# abort
 			if state == 'stop':
 				self.logger.info('Aborting current target list')
 				targetliststatus = 'aborted'
@@ -128,14 +135,14 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				tlist = [focustarget]
 				self.rejectTargets(tlist)
 
-			self.logger.debug('creating processing target')
+			self.logger.debug('Creating processing target...')
 			adjustedtarget = data.AcquisitionImageTargetData(initializer=target,
 																												status='processing')
 			#self.publish(adjustedtarget, database=True, dbforce=True)
 			## Why force???
-			self.logger.debug('publishing processing target')
+			self.logger.debug('Publishing processing target...')
 			self.publish(adjustedtarget, database=True)
-			self.logger.debug('processing target published')
+			self.logger.debug('Processing target published')
 
 			# this while loop allows target to repeat
 			process_status = 'repeat'
@@ -153,10 +160,12 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 						# need to have drift manager do it
 						self.newtargetshift.clear()
 						ev = event.NeedTargetShiftEvent(imageid=imageid)
-						self.logger.debug('SENDING NEEDTARGETSHIFTEVENT AND WAITING ' + str(imageid))
+						self.logger.debug('Sending NeedTargetShiftEvent and waiting, imageid = %s' % (imageid,))
 						self.outputEvent(ev)
+						self.setStatus('waiting')
 						self.newtargetshift.wait()
-						self.logger.debug('DONE WAITING')
+						self.setStatus('processing')
+						self.logger.debug('Done waiting for NeedTargetShiftEvent')
 						# 'done.'
 					adjust = self.driftedimages[imageid]
 					# perhaps flip
@@ -186,23 +195,28 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 					process_status = 'exception'
 
 				# pause
+				# ...
+				if self.player.state() == 'pause':
+					self.setStatus('user input')
 				state = self.player.wait()
+				self.setStatus('processing')
 				if state == 'stop':
 					self.logger.info('Aborted')
 					break
 
 				# end of target repeat loop
 
-			self.logger.debug('creating done target')
+			self.logger.debug('Creating done target...')
 			donetarget = data.AcquisitionImageTargetData(initializer=adjustedtarget,
 																										status='done')
 			#self.publish(donetarget, database=True, dbforce=True)
 			## Why force???
-			self.logger.debug('publishing done target')
+			self.logger.debug('Publishing done target...')
 			self.publish(donetarget, database=True)
-			self.logger.debug('done target published')
+			self.logger.debug('Done target published')
 
 		self.reportTargetListDone(newdata.dmid, targetliststatus)
+		self.setStatus('idle')
 
 	def reportTargetListDone(self, listid, status):
 		self.logger.info('%s done with target list ID: %s, status: %s' % (self.name, listid, status))
@@ -239,7 +253,9 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		self.targetlistevents[tlistid]['status'] = 'waiting'
 		self.publish(rejectlist, pubevent=True)
 		self.logger.info('Waiting for reject targets to be processed...')
+		self.setStatus('waiting')
 		rejectstatus = self.waitForRejects()
+		self.setStatus('processing')
 		return rejectstatus
 
 	def handleTargetListDone(self, targetlistdoneevent):

@@ -111,10 +111,12 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 	def processData(self, newdata):
 		self.logger.debug('Acquisition.processData')
-		self.imagelistdata = data.ImageListData(session=self.session, targets=newdata)
+		self.imagelistdata = data.ImageListData(session=self.session,
+																						targets=newdata)
 		self.publish(self.imagelistdata, database=True)
 		targetwatcher.TargetWatcher.processData(self, newdata)
 		self.publish(self.imagelistdata, pubevent=True)
+		self.logger.debug('Acquisition.processData done')
 
 	def validateStagePosition(self, stageposition):
 		## check for out of stage range target
@@ -124,7 +126,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 		}
 		for axis, limits in stagelimits.items():
 			if stageposition[axis] < limits[0] or stageposition[axis] > limits[1]:
-				messagestr = 'target stage position %s out of range... target aborting' % (stageposition,)
+				pstr = '%s: %g' % (axis, stageposition[axis])
+				messagestr = 'Aborting target: stage position %s out of range' % pstr
 				self.logger.error(messagestr)
 				raise InvalidStagePosition(messagestr)
 

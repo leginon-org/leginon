@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Events.py,v $
-# $Revision: 1.12 $
+# $Revision: 1.13 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-29 21:31:21 $
+# $Date: 2004-11-01 19:53:23 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -77,9 +77,9 @@ class SetTargetsEvent(wx.PyEvent):
 		self.typename = typename
 
 class StatusUpdatedEvent(wx.PyCommandEvent):
-	def __init__(self, source, level, value=None):
+	def __init__(self, source, level, status=None):
 		wx.PyCommandEvent.__init__(self, StatusUpdatedEventType, source.GetId())
 		self.SetEventObject(source)
 		self.level = level
-		self.value = value
+		self.status = status
 

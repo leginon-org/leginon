@@ -376,3 +376,6 @@ class Node(leginonobject.LeginonObject):
 			print '\a'
 		self.logger.info('[beep]')
 
+	def setStatus(self, status):
+		self.panel.setStatus(status)
+

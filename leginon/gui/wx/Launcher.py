@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Launcher.py,v $
-# $Revision: 1.28 $
+# $Revision: 1.29 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-29 21:31:21 $
+# $Date: 2004-11-01 19:53:23 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -234,7 +234,6 @@ class Panel(ListCtrlPanel):
 			'INFO': 'info',
 			'WARNING': 'warning',
 			'ERROR': 'error',
-			'PROCESSING': 'node',
 		}
 
 		self.Bind(gui.wx.Events.EVT_STATUS_UPDATED, self.onStatusUpdated)
@@ -270,8 +269,8 @@ class Panel(ListCtrlPanel):
 		for name, panel in self.panelmap.items():
 			if panel is evtobj:
 				item = self.selector.getItem(name)
-				if evt.level == 'PROCESSING':
-					item.setProcessing(evt.value)
+				if evt.level == 'STATUS':
+					item.setStatus(evt.status)
 					break
 				try:
 					item.setBitmap(2, self.statusicons[evt.level])

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Selector.py,v $
-# $Revision: 1.7 $
+# $Revision: 1.8 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-29 21:51:14 $
+# $Date: 2004-11-01 19:53:23 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -106,10 +106,15 @@ class SelectorItem(object):
 	def setBitmap(self, index, name):
 		self.items[index].SetBitmap(getBitmap(name))
 
-	def setProcessing(self, value):
-		if value and not self.items[3].Running():
+	def setStatus(self, value):
+		running = self.items[3].Running()
+		if value == 'processing' and not running:
 			self.items[3].Start()
-		elif not value and self.items[3].Running():
+		elif value == 'waiting':
+			pass
+		elif value == 'user input':
+			pass
+		elif value == 'idle' and running:
 			self.items[3].Rest()
 			self.items[3].Refresh()
 

@@ -377,13 +377,13 @@ class Corrector(node.Node):
 		return imagedata['image']
 
 	def acquireCorrectedImageData(self):
-		self.panel.setProcessing(True)
+		self.setStatus('processing')
 		errstr = 'Acquisition of corrected image failed: %s'
 		try:
 			imagedata = self.cam.acquireCameraImageData(correction=0)
 		except (EM.ScopeUnavailable, camerafuncs.CameraError):
 			self.logger.exception(errstr % 'unable to access instrument')
-			self.panel.setProcessing(False)
+			self.setStatus('idle')
 			return None
 		numimage = imagedata['image']
 		camdata = imagedata['camera']
@@ -394,7 +394,7 @@ class Corrector(node.Node):
 		corrected = self.correct(numimage, corstate)
 		newdata = data.CorrectedCameraImageData(initializer=imagedata,
 																						image=corrected)
-		self.panel.setProcessing(False)
+		self.setStatus('idle')
 		return newdata
 
 	def correct(self, original, camstate):
