@@ -215,7 +215,7 @@ class ContrastTool(object):
 			scale = (value - self.imagemin)/(self.imagemax - self.imagemin)
 		except ZeroDivisionError:
 			scale = 1.0
-		return int((self.slidermax - self.slidermin)*scale + self.slidermin)
+		return int(round((self.slidermax - self.slidermin)*scale + self.slidermin))
 
 	def setRange(self, range, value=None):
 		if range is None:
@@ -541,7 +541,7 @@ class ImagePanel(wx.Panel):
 		self.sizer.SetItemMinSize(self.panel, width, height)
 
 		self.statspanel = gui.wx.Stats.Stats(self, -1, style=wx.SIMPLE_BORDER)
-		self.sizer.Add(self.statspanel, (1, 0), (1, 1), wx.ALL, 3)
+		self.sizer.Add(self.statspanel, (1, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3)
 
 		# bind panel events
 		self.panel.Bind(wx.EVT_LEFT_UP, self.OnLeftClick)
@@ -584,8 +584,8 @@ class ImagePanel(wx.Panel):
 
 		if self.scaleImage():
 			xscale, yscale = self.getScale()
-			width = int(wximage.GetWidth()*xscale)
-			height = int(wximage.GetHeight()*yscale)
+			width = int(round(wximage.GetWidth()*xscale))
+			height = int((wximage.GetHeight()*yscale))
 			self.bitmap = wx.BitmapFromImage(wximage.Scale(width, height))
 		else:
 			self.bitmap = wx.BitmapFromImage(wximage)
@@ -629,7 +629,8 @@ class ImagePanel(wx.Panel):
 				virtualsize = (width - 1, height - 1)
 			else:
 				xscale, yscale = self.getScale()
-				virtualsize = (int((width - 1) * xscale), int((height - 1) * yscale))
+				virtualsize = (int(round((width - 1) * xscale)),
+												int(round((height - 1) * yscale)))
 			self.virtualsize = virtualsize
 		else:
 			self.virtualsize = (0, 0)
@@ -662,11 +663,13 @@ class ImagePanel(wx.Panel):
 			self.setNumericImage(imagedata, stats)
 		elif isinstance(imagedata, Image.Image):
 			self.setPILImage(imagedata)
-			self.statspanel.setStats(stats)
+			self.statspanel.set(stats)
+			self.sizer.SetItemMinSize(self.statspanel, self.statspanel.GetSize())
 			self.sizer.Layout()
 		elif imagedata is None:
 			self.clearImage()
-			self.statspanel.setStats(stats)
+			self.statspanel.set(stats)
+			self.sizer.SetItemMinSize(self.statspanel, self.statspanel.GetSize())
 			self.sizer.Layout()
 		else:
 			raise TypeError('Invalid image data type for setting image')
@@ -690,7 +693,8 @@ class ImagePanel(wx.Panel):
 		cwidth, cheight = center
 		width, height = self.panel.GetSize()
 		vwidth, vheight = self.panel.GetVirtualSize()
-		x, y = int(vwidth*cwidth - width/2.0), int(vheight*cheight - height/2.0)
+		x = int(round(vwidth*cwidth - width/2.0))
+		y = int(round(vheight*cheight - height/2.0))
 		self.panel.Scroll(x, y)
 
 	def setNumericImage(self, numericimage, stats={}):
@@ -713,7 +717,8 @@ class ImagePanel(wx.Panel):
 		if 'stdev' not in stats:
 			stats['stdev'] = imagefun.stdev(self.imagedata, known_mean=stats['mean'])
 
-		self.statspanel.setStats(stats)
+		self.statspanel.set(stats)
+		self.sizer.SetItemMinSize(self.statspanel, self.statspanel.GetSize())
 
 		dflt_std = 5
 		## use these...
@@ -730,7 +735,7 @@ class ImagePanel(wx.Panel):
 		self.setBuffer()
 		self.setScrolledCenter(center)
 		self.UpdateDrawing()
-		#self.sizer.Layout()
+		self.sizer.Layout()
 		#self.panel.Refresh()
 
 	def clearImage(self):
@@ -817,7 +822,8 @@ class ImagePanel(wx.Panel):
 		x, y = center
 		xcenter, ycenter = self.getClientCenter()
 		xscale, yscale = self.getScale()
-		self.panel.Scroll(int(x * xscale - xcenter), int(y * yscale - ycenter))
+		self.panel.Scroll(int(round(x * xscale - xcenter)),
+											int(round(y * yscale - ycenter)))
 
 	def view2image(self, xy, viewoffset=None, scale=None):
 		if viewoffset is None:
@@ -978,7 +984,12 @@ class ImagePanel(wx.Panel):
 			xviewoffset, yviewoffset = self.panel.GetViewStart()
 			xsize, ysize = self.panel.GetClientSize()
 
-			dc.Blit(self.offset[0], self.offset[1], int(xsize/xscale + xscale), int(ysize/yscale + yscale), bitmapdc, int(xviewoffset/xscale), int(yviewoffset/yscale))
+			dc.Blit(self.offset[0], self.offset[1],
+							int(round(xsize/xscale + xscale)),
+							int(round(ysize/yscale + yscale)),
+							bitmapdc,
+							int(round(xviewoffset/xscale)),
+							int(round(yviewoffset/yscale)))
 			dc.SetUserScale(1.0, 1.0)
 			for t in self.tools:
 				t.Draw(dc)
@@ -1408,14 +1419,14 @@ class TargetImagePanel(ImagePanel):
 
 		halfwidth = width/2.0
 		halfheight = height/2.0
-		width = int(width)
-		height = int(height)
+		width = int(round(width))
+		height = int(round(height))
 
 		xv, yv = self.biggerView()
 
 		for target in targets:
 			x, y = self.image2view((target.x, target.y))
-			dc.Blit(int(x - halfwidth), int(y - halfheight),
+			dc.Blit(int(round(x - halfwidth)), int(round(y - halfheight)),
 							width, height,
 							memorydc, 0, 0,
 							wx.COPY, True)
