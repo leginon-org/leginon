@@ -60,7 +60,7 @@ class Launcher(node.Node):
 		kwargs['otherdatabinder'] = self.databinder
 
 		if hasattr(nodeclass, 'panelclass'):
-			evt = wxLauncher.CreateNodePanelEvent(nodeclass.panelclass)
+			evt = wxLauncher.CreateNodePanelEvent(nodeclass.panelclass, nodename)
 			self.panel.GetEventHandler().AddPendingEvent(evt)
 			evt.event.wait()
 			kwargs['panel'] = evt.panel

@@ -25,10 +25,11 @@ class DestroyNodeEvent(wx.PyEvent):
 		self.node = node
 
 class CreateNodePanelEvent(wx.PyEvent):
-	def __init__(self, panelclass):
+	def __init__(self, panelclass, name):
 		wx.PyEvent.__init__(self)
 		self.SetEventType(CreateNodePanelEventType)
 		self.panelclass = panelclass
+		self.name = name
 		self.event = threading.Event()
 		self.panel = None
 
@@ -217,7 +218,7 @@ class LauncherPanel(ListCtrlPanel):
 
 	def onCreateNodePanel(self, evt):
 		self.Freeze()
-		evt.panel = evt.panelclass(self)
+		evt.panel = evt.panelclass(self, evt.name)
 		evt.panel.Show(False)
 		self.Thaw()
 		evt.event.set()

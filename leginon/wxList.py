@@ -268,6 +268,173 @@ class wxColumnList(wxListCtrl):
 				value = str(value)
 				self.SetStringItem(i, j, value)
 
+import wx
+import wx.lib.buttons
+import sys, os
+
+def getBitmap(filename):
+	rundir = sys.path[0]
+	iconpath = os.path.join(rundir, 'icons', filename)
+	wximage = wx.Image(iconpath)
+	bitmap = wx.BitmapFromImage(wximage)
+	bitmap.SetMask(wx.Mask(bitmap, wx.WHITE))
+	return bitmap
+
+class wxPresetsEdit(wx.Panel):
+	def __init__(self, parent, editcallback=None):
+		self.editcallback = editcallback
+		wx.Panel.__init__(self, parent, -1)
+		sizer = wx.GridBagSizer(3, 3)
+		self.choice = wx.Choice(self, -1)
+		self.choice.Enable(False)
+
+		self.insertbutton = wx.lib.buttons.GenBitmapButton(self, -1,
+																												getBitmap('plus.png'),
+																												size=(20, 20))
+		self.insertbutton.SetBezelWidth(1)
+		self.insertbutton.Enable(False)
+
+		sizer.Add(self.choice, (0, 0), (1, 1),
+							wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.ALL)
+		sizer.Add(self.insertbutton, (0, 1), (1, 1), wx.ALIGN_CENTER|wx.ALL)
+		self.listbox = wx.ListBox(self, -1)
+		sizer.Add(self.listbox, (1, 0), (3, 1), wx.EXPAND|wx.ALL)
+
+		self.deletebutton = wx.lib.buttons.GenBitmapButton(self, -1,
+																												getBitmap('minus.png'),
+																												size=(20, 20))
+		self.deletebutton.SetBezelWidth(1)
+		self.deletebutton.Enable(False)
+
+		self.upbutton = wx.lib.buttons.GenBitmapButton(self, -1,
+																										getBitmap('up.png'),
+																										size=(20, 20))
+		self.upbutton.SetBezelWidth(1)
+		self.upbutton.Enable(False)
+
+		self.downbutton = wx.lib.buttons.GenBitmapButton(self, -1,
+																											getBitmap('down.png'),
+																											size=(20, 20))
+		self.downbutton.SetBezelWidth(1)
+		self.downbutton.Enable(False)
+
+		sizer.Add(self.deletebutton, (1, 1), (1, 1), wx.ALIGN_CENTER|wx.ALL)
+		sizer.Add(self.upbutton, (2, 1), (1, 1), wx.ALIGN_CENTER|wx.ALL)
+		sizer.Add(self.downbutton, (3, 1), (1, 1),
+							wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_TOP|wx.ALL)
+		sizer.AddGrowableRow(3)
+		self.SetSizerAndFit(sizer)
+
+		EVT_BUTTON(self.insertbutton, self.insertbutton.GetId(), self.onInsert)
+		EVT_BUTTON(self.deletebutton, self.deletebutton.GetId(), self.onDelete)
+		EVT_BUTTON(self.upbutton, self.upbutton.GetId(), self.onUp)
+		EVT_BUTTON(self.downbutton, self.downbutton.GetId(), self.onDown)
+		EVT_LISTBOX(self.listbox, self.listbox.GetId(), self.onSelect)
+
+	def setChoices(self, choices):
+		self.Freeze()
+		self.choice.Clear()
+		self.choice.AppendItems(choices)
+		self.choice.Enable(choices)
+		self.insertbutton.Enable(choices)
+		self.Thaw()
+
+	def getValues(self):
+		values = []
+		for i in range(self.listbox.GetCount()):
+			try:
+				values.append(self.listbox.GetString(i))
+			except ValueError:
+				raise
+		return values
+
+	def setValues(self, values):
+		count = self.listbox.GetCount()
+		if values is None:
+			values = []
+		n = len(values)
+		if count < n:
+			nsame = count
+		else:
+			nsame = n
+		for i in range(nsame):
+			try:
+				if self.listbox.GetString(i) != values[i]:
+					self.listbox.SetString(i, values[i])
+			except ValueError:
+				raise
+		if count < n:
+			self.listbox.InsertItems(values[nsame:], nsame)
+		elif count > n:
+			for i in range(count - 1, n - 1, -1):
+				self.listbox.Delete(i)
+
+	def doCallback(self):
+		if callable(self.editcallback):
+			self.editcallback(self.getValues())
+
+	def onInsert(self, evt):
+		try:
+			string = self.choice.GetStringSelection()
+		except ValueError:
+			return
+		n = self.listbox.GetSelection()
+		if n < 0:
+			self.listbox.Append(string)
+		else:
+			self.listbox.InsertItems([string], n)
+			self.updateButtons(n + 1)
+		self.doCallback()
+
+	def onDelete(self, evt):
+		n = self.listbox.GetSelection()
+		if n >= 0:
+			self.listbox.Delete(n)
+		count = self.listbox.GetCount()
+		if n < count:
+			self.listbox.Select(n)
+			self.updateButtons(n)
+		elif count > 0:
+			self.listbox.Select(n - 1)
+			self.updateButtons(n - 1)
+		else:
+			self.deletebutton.Enable(False)
+		self.doCallback()
+
+	def onUp(self, evt):
+		n = self.listbox.GetSelection()
+		if n > 0:
+			string = self.listbox.GetString(n)
+			self.listbox.Delete(n)
+			self.listbox.InsertItems([string], n - 1)
+			self.listbox.Select(n - 1)
+		self.updateButtons(n - 1)
+		self.doCallback()
+
+	def onDown(self, evt):
+		n = self.listbox.GetSelection()
+		if n >= 0 and n < self.listbox.GetCount() - 1:
+			string = self.listbox.GetString(n)
+			self.listbox.Delete(n)
+			self.listbox.InsertItems([string], n + 1)
+			self.listbox.Select(n + 1)
+		self.updateButtons(n + 1)
+		self.doCallback()
+
+	def onSelect(self, evt):
+		self.deletebutton.Enable(True)
+		self.updateButtons(evt.GetSelection())
+
+	def updateButtons(self, n):
+		if n > 0:
+			self.upbutton.Enable(True)
+		else:
+			self.upbutton.Enable(False)
+		if n < self.listbox.GetCount() - 1:
+			self.downbutton.Enable(True)
+		else:
+			self.downbutton.Enable(False)
+
 if __name__ == '__main__':
 	class MyApp(wxApp):
 		def OnInit(self):
@@ -276,23 +443,16 @@ if __name__ == '__main__':
 			self.panel = wxPanel(frame, -1)
 			self.sizer = wxBoxSizer(wxVERTICAL)
 
+			'''
 			self.listview = wxListView(self.panel)
 			self.sizer.Add(self.listview, 1, wxEXPAND)
-			print self.listview.getValues()
 			self.listview.setValues(['a', 'b', 'c', 'd'])
-			print self.listview.getValues()
-			self.listview.setValues(['a', 'b', 'c', 'z'])
-			print self.listview.getValues()
-			self.listview.setValues(['a', 'b'])
-			print self.listview.getValues()
-			self.listview.setValues(['a', 'b', 'x', 'y', 'z'])
-			print self.listview.getValues()
-			self.listview.setValues(['q', 'r', 'x', 'y', 'z'])
-			print self.listview.getValues()
+			'''
 
-			self.listedit = wxListEdit(self.panel, self.callback)
+			self.listedit = wxPresetsEdit(self.panel, self.callback)
 			self.sizer.Add(self.listedit, 1, wxEXPAND)
 
+			'''
 			self.columnlist = wxColumnList(self.panel)
 			self.columnlist.setValues({'columns':
 																		['Column 1', 'Column 2', 'Column 3'],
@@ -303,6 +463,7 @@ if __name__ == '__main__':
 																			['j', 'k', 'l']]})
 			print self.columnlist.getValues()
 			self.sizer.Add(self.columnlist, 1, wxEXPAND)
+			'''
 
 			self.panel.SetSizerAndFit(self.sizer)
 			frame.Fit()

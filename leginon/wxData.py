@@ -1,13 +1,33 @@
 import data
 import wx
 import wx.lib.intctrl
+import wx.lib.masked
+import wxPresets
+
+getmap = {'string selection': 'GetStringSelection',
+						'value': 'GetValue',
+						'preset order': 'getValues'}
+
+setmap = {'string selection': 'SetStringSelection',
+						'value': 'SetValue',
+						'preset order': 'setValues'}
+
+eventmap = {wx.RadioBox: wx.EVT_RADIOBOX,
+						wx.Choice: wx.EVT_CHOICE,
+						wx.CheckBox: wx.EVT_CHECKBOX,
+						wx.lib.intctrl.IntCtrl: wx.EVT_TEXT,
+						wx.lib.masked.NumCtrl: wx.lib.masked.EVT_NUM,
+						wxPresets.PresetOrder: wxPresets.EVT_PRESET_ORDER_CHANGED}
 
 def getWindowPath(window):
 	parent = window
 	path = ''
 	while parent:
 		w = parent
-		path += w.GetName() + '.'
+		name = w.GetName()
+		path += name + '.'
+		if name == 'fLeginon':
+			break
 		parent = w.GetParent()
 	return path[:-1], w
 
@@ -17,18 +37,10 @@ def getWindowDataClass(window):
 	except AttributeError:
 		raise ValueError('No data class for window class')
 
-setmap = {'string selection': 'SetStringSelection',
-						'value': 'SetValue'}
-
 def setWindowFromData(window, d):
 	for key, value in setmap.items():
 		if key in d and d[key] is not None:
 			getattr(window, value)(d[key])
-
-eventmap = {wx.RadioBox: wx.EVT_RADIOBOX,
-						wx.Choice: wx.EVT_CHOICE,
-						wx.CheckBox: wx.EVT_CHECKBOX,
-						wx.lib.intctrl.IntCtrl: wx.EVT_TEXT}
 
 def onEvent(evt):
 	window = evt.GetEventObject()
@@ -54,9 +66,6 @@ def setWindowFromDB(window):
 
 def bindWindowToDB(window):
 	window.Bind(eventmap[window.__class__], onEvent, window)
-
-getmap = {'string selection': 'GetStringSelection',
-						'value': 'GetValue'}
 
 def setDataFromWindow(window, d):
 	for key, value in getmap.items():

@@ -1442,6 +1442,20 @@ class wxIntCtrlData(wxData):
 		)
 	typemap = classmethod(typemap)
 
+class wxNumCtrlData(wxData):
+	def typemap(cls):
+		return wxData.typemap() + (
+			('value', float),
+		)
+	typemap = classmethod(typemap)
+
+class wxPresetOrderData(wxData):
+	def typemap(cls):
+		return wxData.typemap() + (
+			('preset order', list),
+		)
+	typemap = classmethod(typemap)
+
 class Request(type):
 	def __new__(cls, dataclass):
 		return type.__new__(cls, 'Request' + dataclass.__name__, (Data,),
