@@ -108,13 +108,20 @@ class CameraFuncs(object):
 		'''
 		wrapper around configCameraEMData() so it works with UI
 		'''
-		camdata = data.CameraEMData(initializer=value['state'])
-		value['state'] = camdata
+		if value is not None:
+			camdata = data.CameraEMData(initializer=value['state'])
+			value['state'] = camdata
 		newvalue = self.configCameraEMData(value)
+		print 'NEWVALUE'
+		print newvalue
 		camstate = copy.deepcopy(dict(newvalue['state']))
-		del camstate['id']
-		del camstate['session']
-		del camstate['system time']
+		print 'CAMSTATE'
+		print camstate
+		for key in ('id', 'session', 'system time'):
+			try:
+				del camstate['id']
+			except KeyError:
+				pass
 		newvalue['state'] = camstate
 		return newvalue
 
@@ -129,7 +136,7 @@ class CameraFuncs(object):
 		value = copy.deepcopy(value)
 		if value is not None:
 			### make mods to state based on auto settings
-			state = value['state']
+			state = data.CameraEMData(initializer=value['state'])
 			if value['auto square']:
 				### an alternative would be to figure out
 				### if x or y changed and set the other one
