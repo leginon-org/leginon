@@ -221,7 +221,6 @@ class EM(node.Node):
 		for key in source:
 			if key not in prunekeys:
 				destination[key] = source[key]
-			else:
 
 	def getEM(self, withkeys=[], withoutkeys=[]):
 		self.lock.acquire()
