@@ -269,8 +269,6 @@ class Node(leginonobject.LeginonObject):
 				database - publish to database
 		'''
 		if database:
-			if isinstance(idata, data.InSessionData):
-				self.addSession(idata)
 			try:
 				self.dbdatakeeper.insert(idata, force=dbforce)
 			except Exception, e:
@@ -305,20 +303,21 @@ class Node(leginonobject.LeginonObject):
 				e['destination'] = ''
 			return self.outputEvent(e)
 
+	### this is way too slow because it has to traverse an entire tree
+	### of data, which is usually unnecessary when there are only a 
+	### few 'session' values that need to be set.
+	### It is time to stop using this and start setting 'session'
+	### explicitly when data is created rather than when publishing.
 	def addSession(self, datainstance):
-		## setting an item of datainstance will reset the dbid
-		### this is stupid because we should only have to check identity
-		### not equality
-		if datainstance['session'] is None or datainstance['session']['name'] != self.session['name']:
-			datainstance['session'] = self.session
-		for key in datainstance:
-			try:
-				child = datainstance[key]
-			except data.DataAccessError:
-				self.logger.exception('addSession')
-			else:
-				if isinstance(child, data.InSessionData):
-					self.addSession(child)
+		itemtypes = datainstance.types()
+		sessionname = self.session['name']
+		for key, value in datainstance.items():
+			thistype = itemtypes[key]
+			if thistype is data.SessionData:
+				if value is None or value['name'] != sessionname:
+					datainstance[key] = self.session
+			if isinstance(value, data.InSessionData):
+				self.addSession(value)
 
 	def research(self, dataclass=None, datainstance=None, results=None, readimages=True):
 		'''
