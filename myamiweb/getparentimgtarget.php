@@ -43,6 +43,8 @@ $displayscalebar = ($_GET['sb']==1) ? true : false;
 $fft = ($_GET['fft']==1) ? true : false;
 if (!$filter=$_GET['flt']) 
 	$filter = 'default';
+if (!$binning=$_GET['binning']) 
+	$binning = 'auto';
 
 $displayloadingtime = false;
 
@@ -79,7 +81,8 @@ if ($g) {
 			$begin=getmicrotime();
 
 		if (READ_MRC == "mrcmod") {
-			$binning = ($dimx > 1024) ? (($dimx > 2048) ? 4 : 2 ) : 1;
+			if ($binning=='auto')
+				$binning = ($dimx > 1024) ? (($dimx > 2048) ? 4 : 2 ) : 1;
 			$filterdata = new filter($pic, $minpix, $maxpix, $binning);
 			$img = $filterdata->getFilter($filter);
 			if ($size) {

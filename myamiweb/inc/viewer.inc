@@ -377,6 +377,7 @@ class view {
 			.'var jsmin'.$this->name.';'.$this->crlf
 			.'var jsmax'.$this->name.';'.$this->crlf
 			.'var jsfilter'.$this->name.';'
+			.'var jsbinning'.$this->name.';'
 			.$this->crlf;
 		return $javascript;
 	}

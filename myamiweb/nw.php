@@ -6,7 +6,10 @@ $sb = ($_GET[sb]) ? '&sb=1' : '';
 $minpix = ($_GET[np]) ? '&np='.$_GET[np] : '';
 $maxpix = ($_GET[xp]) ? '&xp='.$_GET[xp] : '';
 $fft = ($_GET[fft]) ? '&fft='.$_GET[fft] : '';
-$options = $tg.$sb.$minpix.$maxpix.$fft;
+$filter = ($_GET[flt]) ? '&flt='.$_GET[flt] : '';
+$binning = ($_GET[binning]) ? '&binning='.$_GET[binning] : '';
+
+$options = $tg.$sb.$minpix.$maxpix.$fft.$filter.$binning;
 
 $filename = $leginondata->getFilename($id);
 $imgsrc = "getparentimgtarget.php?preset=".$_GET[preset]."&session=".$_GET[session]."&id=".$id."&t=png&s=0".$options;

@@ -32,6 +32,8 @@ if (!$name=$_GET['name'])
 	$name='v';
 if (!$currentfilter=$_GET['filter'])
 	$currentfilter='default';
+if (!$currentbinning=$_GET['binning'])
+	$currentbinning='auto';
 
 $arrayurl = explode("/", $PHP_SELF);
 array_pop($arrayurl);
@@ -42,6 +44,7 @@ var jsmaxpix = $max;
 var jsbaseurl = '$baseurl/';
 var jsviewname = '$name';
 var jsfilter = '$currentfilter';
+var jsbinning = '$currentbinning';
 ";
 require('inc/filter.inc');
 $filterdata = new filter();
@@ -54,6 +57,10 @@ function update() {
 //		eval("parentwindow.jsmin"+jsviewname+"="+jsminpix);
 //	if (eval("parentwindow.jsmax"+jsviewname))
 //		eval("parentwindow.jsmax"+jsviewname+"="+jsmaxpix);
+	if (binninglist = document.adjustform.binning)
+		jsbinning=binninglist.options[binninglist.selectedIndex].value;
+	parentwindow.setbinning(jsviewname,jsbinning);
+
 	if (filterlist = document.adjustform.filter)
 		jsfilter=filterlist.options[filterlist.selectedIndex].value;
 	parentwindow.setfilter(jsviewname,jsfilter);
