@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/PresetsManager.py,v $
-# $Revision: 1.25 $
+# $Revision: 1.26 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-28 23:36:23 $
-# $Author: pulokas $
+# $Date: 2004-11-11 19:43:17 $
+# $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
@@ -507,8 +507,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		gui.wx.Settings.Dialog.initialize(self)
 
 		self.widgets['pause time'] = FloatEntry(self, -1, min=0.0, chars=4)
-		self.widgets['xy only'] = wx.CheckBox(self, -1,
-																					'Move stage x and y axes only')
+#		self.widgets['xy only'] = wx.CheckBox(self, -1,
+#																					'Move stage x and y axes only')
 		self.widgets['stage always'] = wx.CheckBox(self, -1,
 																		'Always move stage regardless of move type')
 		self.widgets['cycle'] = wx.CheckBox(self, -1, 'Cycle presets')
@@ -526,13 +526,13 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 
 		sz = wx.GridBagSizer(5, 10)
 		sz.Add(szpausetime, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['xy only'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['stage always'], (2, 0), (1, 1),
+#		sz.Add(self.widgets['xy only'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['stage always'], (1, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['cycle'], (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['optimize cycle'], (4, 0), (1, 1),
+		sz.Add(self.widgets['cycle'], (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['optimize cycle'], (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['mag only'], (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['mag only'], (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		sb = wx.StaticBox(self, -1, 'Preset Management')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/TargetFinder.py,v $
-# $Revision: 1.11 $
+# $Revision: 1.12 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
+# $Date: 2004-11-11 19:43:17 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -19,9 +19,9 @@ import gui.wx.ToolBar
 class Panel(gui.wx.Node.Panel):
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
-		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
-													'settings',
-													shortHelpString='Settings')
+#		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
+#													'settings',
+#													shortHelpString='Settings')
 
 		self.initialize()
 		self.toolbar.Realize()
@@ -30,9 +30,9 @@ class Panel(gui.wx.Node.Panel):
 		self.SetAutoLayout(True)
 		self.SetupScrolling()
 
-	def onNodeInitialized(self):
-		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
-											id=gui.wx.ToolBar.ID_SETTINGS)
+#	def onNodeInitialized(self):
+#		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
+#											id=gui.wx.ToolBar.ID_SETTINGS)
 
 	def initialize(self):
 		pass
@@ -46,6 +46,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
 		gui.wx.Settings.Dialog.initialize(self)
 
+		'''
 		self.widgets['wait for done'] = wx.CheckBox(self, -1,
 					'Wait for another node to process targets before marking them done')
 		self.widgets['ignore images'] = wx.CheckBox(self, -1,
@@ -54,7 +55,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(self.widgets['wait for done'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['ignore images'], (1, 0), (1, 1),
+		sz.Add(self.widgets['ignore images'], (0, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 
 		sb = wx.StaticBox(self, -1, 'Target finding')
@@ -62,6 +63,9 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sbsz.Add(sz, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
 		return [sbsz]
+		'''
+
+		return []
 
 if __name__ == '__main__':
 	class App(wx.App):

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/HoleFinder.py,v $
-# $Revision: 1.29 $
+# $Revision: 1.30 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-05 17:37:04 $
+# $Date: 2004-11-11 19:43:17 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -27,6 +27,9 @@ class Panel(gui.wx.TargetFinder.Panel):
 	def initialize(self):
 		gui.wx.TargetFinder.Panel.initialize(self)
 
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
+													'settings',
+													shortHelpString='Settings')
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SUBMIT,
 													'play',
@@ -76,6 +79,8 @@ class Panel(gui.wx.TargetFinder.Panel):
 
 	def onNodeInitialized(self):
 		gui.wx.TargetFinder.Panel.onNodeInitialized(self)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
+											id=gui.wx.ToolBar.ID_SETTINGS)
 		self.Bind(gui.wx.ImageViewer.EVT_SETTINGS, self.onImageSettings)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSubmitTool,
 											id=gui.wx.ToolBar.ID_SUBMIT)
@@ -140,27 +145,27 @@ class TemplateSettingsDialog(gui.wx.Settings.Dialog):
 		gui.wx.Settings.Dialog.initialize(self)
 
 		self.widgets['template lpf'] = {}
-		self.widgets['template lpf']['on'] = wx.CheckBox(self, -1,
-																											'Use low pass filter')
-		self.widgets['template lpf']['size'] = IntEntry(self, -1,
-																										min=1, chars=4)
+#		self.widgets['template lpf']['on'] = wx.CheckBox(self, -1,
+#																											'Use low pass filter')
+#		self.widgets['template lpf']['size'] = IntEntry(self, -1,
+#																										min=1, chars=4)
 		self.widgets['template lpf']['sigma'] = FloatEntry(self, -1,
 																												min=0.0, chars=4)
 
 		szlpf = wx.GridBagSizer(5, 5)
-		szlpf.Add(self.widgets['template lpf']['on'], (0, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, 'Size:')
-		szlpf.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szlpf.Add(self.widgets['template lpf']['size'], (1, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+#		szlpf.Add(self.widgets['template lpf']['on'], (0, 0), (1, 1),
+#						wx.ALIGN_CENTER_VERTICAL)
+#		label = wx.StaticText(self, -1, 'Size:')
+#		szlpf.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+#		szlpf.Add(self.widgets['template lpf']['size'], (1, 1), (1, 1),
+#						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		label = wx.StaticText(self, -1, 'Sigma:')
-		szlpf.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szlpf.Add(self.widgets['template lpf']['sigma'], (2, 1), (1, 1),
+		szlpf.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szlpf.Add(self.widgets['template lpf']['sigma'], (0, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		szlpf.AddGrowableCol(1)
 
-		sb = wx.StaticBox(self, -1, 'Low Pass Filter')
+		sb = wx.StaticBox(self, -1, 'Low Pass Filter (Phase Correlation)')
 		sbszlpf = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszlpf.Add(szlpf, 1, wx.EXPAND|wx.ALL, 5)
 
@@ -203,21 +208,21 @@ class EdgeSettingsDialog(gui.wx.Settings.Dialog):
 		gui.wx.Settings.Dialog.initialize(self)
 
 		self.widgets['edge lpf'] = {}
-		self.widgets['edge lpf']['on'] = wx.CheckBox(self, -1,
-																									'Use low pass filter')
-		self.widgets['edge lpf']['size'] = IntEntry(self, -1, min=1, chars=4)
+#		self.widgets['edge lpf']['on'] = wx.CheckBox(self, -1,
+#																									'Use low pass filter')
+#		self.widgets['edge lpf']['size'] = IntEntry(self, -1, min=1, chars=4)
 		self.widgets['edge lpf']['sigma'] = FloatEntry(self, -1, min=0.0, chars=4)
 
 		szlpf = wx.GridBagSizer(5, 5)
-		szlpf.Add(self.widgets['edge lpf']['on'], (0, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, 'Size:')
-		szlpf.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szlpf.Add(self.widgets['edge lpf']['size'], (1, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+#		szlpf.Add(self.widgets['edge lpf']['on'], (0, 0), (1, 1),
+#						wx.ALIGN_CENTER_VERTICAL)
+#		label = wx.StaticText(self, -1, 'Size:')
+#		szlpf.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+#		szlpf.Add(self.widgets['edge lpf']['size'], (1, 1), (1, 1),
+#						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		label = wx.StaticText(self, -1, 'Sigma:')
-		szlpf.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szlpf.Add(self.widgets['edge lpf']['sigma'], (2, 1), (1, 1),
+		szlpf.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szlpf.Add(self.widgets['edge lpf']['sigma'], (0, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		szlpf.AddGrowableCol(1)
 
@@ -225,33 +230,33 @@ class EdgeSettingsDialog(gui.wx.Settings.Dialog):
 		sbszlpf = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszlpf.Add(szlpf, 1, wx.EXPAND|wx.ALL, 5)
 
-		self.widgets['edge'] = wx.CheckBox(self, -1, 'Use edge finding')
-		self.widgets['edge type'] = Choice(self, -1, choices=self.node.filtertypes)
-		self.widgets['edge log size'] = IntEntry(self, -1, min=1, chars=4)
-		self.widgets['edge log sigma'] = FloatEntry(self, -1, min=0.0, chars=4)
-		self.widgets['edge absolute'] = wx.CheckBox(self, -1,
-																					'Take absolute value of edge values')
+#		self.widgets['edge'] = wx.CheckBox(self, -1, 'Use edge finding')
+#		self.widgets['edge type'] = Choice(self, -1, choices=self.node.filtertypes)
+#		self.widgets['edge log size'] = IntEntry(self, -1, min=1, chars=4)
+#		self.widgets['edge log sigma'] = FloatEntry(self, -1, min=0.0, chars=4)
+#		self.widgets['edge absolute'] = wx.CheckBox(self, -1,
+#																					'Take absolute value of edge values')
 		self.widgets['edge threshold'] = FloatEntry(self, -1, chars=9)
 
 		szedge = wx.GridBagSizer(5, 5)
-		szedge.Add(self.widgets['edge'], (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, 'Type:')
-		szedge.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szedge.Add(self.widgets['edge type'], (1, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		label = wx.StaticText(self, -1, 'LoG Size:')
-		szedge.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szedge.Add(self.widgets['edge log size'], (2, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'LoG Sigma:')
-		szedge.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szedge.Add(self.widgets['edge log sigma'], (3, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		szedge.Add(self.widgets['edge absolute'], (4, 0), (1, 2),
-								wx.ALIGN_CENTER_VERTICAL)
+#		szedge.Add(self.widgets['edge'], (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
+#		label = wx.StaticText(self, -1, 'Type:')
+#		szedge.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+#		szedge.Add(self.widgets['edge type'], (1, 1), (1, 1),
+#						wx.ALIGN_CENTER_VERTICAL)
+#		label = wx.StaticText(self, -1, 'LoG Size:')
+#		szedge.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+#		szedge.Add(self.widgets['edge log size'], (2, 1), (1, 1),
+#						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+#		label = wx.StaticText(self, -1, 'LoG Sigma:')
+#		szedge.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+#		szedge.Add(self.widgets['edge log sigma'], (3, 1), (1, 1),
+#						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+#		szedge.Add(self.widgets['edge absolute'], (4, 0), (1, 2),
+#								wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'Threshold:')
-		szedge.Add(label, (5, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szedge.Add(self.widgets['edge threshold'], (5, 1), (1, 1),
+		szedge.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szedge.Add(self.widgets['edge threshold'], (0, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		szedge.AddGrowableCol(1)
 
@@ -363,19 +368,26 @@ class LatticeSettingsDialog(gui.wx.Settings.Dialog):
 		szlattice.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szlattice.Add(self.widgets['lattice tolerance'], (1, 1), (1, 1),
 										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'Hole stats. radius:')
-		szlattice.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szlattice.Add(self.widgets['lattice hole radius'], (2, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		label = wx.StaticText(self, -1, 'Zero thickness:')
-		szlattice.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		szlattice.Add(self.widgets['lattice zero thickness'], (3, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		szlattice.AddGrowableCol(1)
 
-		sb = wx.StaticBox(self, -1, 'Lattice fitting')
+		sb = wx.StaticBox(self, -1, 'Lattice Fitting')
 		sbszlattice = wx.StaticBoxSizer(sb, wx.VERTICAL)
 		sbszlattice.Add(szlattice, 1, wx.EXPAND|wx.ALL, 5)
+
+		szstats = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Radius:')
+		szstats.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szstats.Add(self.widgets['lattice hole radius'], (0, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Zero thickness:')
+		szstats.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szstats.Add(self.widgets['lattice zero thickness'], (1, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		szstats.AddGrowableCol(1)
+
+		sb = wx.StaticBox(self, -1, 'Hole Statistics')
+		sbszstats = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sbszstats.Add(szstats, 1, wx.EXPAND|wx.ALL, 5)
 
 		self.btest = wx.Button(self, -1, 'Test')
 		szbutton = wx.GridBagSizer(5, 5)
@@ -385,7 +397,7 @@ class LatticeSettingsDialog(gui.wx.Settings.Dialog):
 
 		self.Bind(wx.EVT_BUTTON, self.onTestButton, self.btest)
 
-		return [sbszlattice, szbutton]
+		return [sbszlattice, sbszstats, szbutton]
 
 	def onTestButton(self, evt):
 		self.setNodeSettings()

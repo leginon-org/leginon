@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Acquisition.py,v $
-# $Revision: 1.26 $
+# $Revision: 1.27 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-28 17:24:34 $
+# $Date: 2004-11-11 19:43:17 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -158,42 +158,42 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['preset order'].setChoices(presets)
 
 		# misc. checkboxes
-		self.widgets['correct image'] = wx.CheckBox(self, -1, 'Correct image')
-		self.widgets['display image'] = wx.CheckBox(self, -1, 'Display image')
+#		self.widgets['correct image'] = wx.CheckBox(self, -1, 'Correct image')
+#		self.widgets['display image'] = wx.CheckBox(self, -1, 'Display image')
 		self.widgets['save image'] = wx.CheckBox(self, -1, 'Save image to database')
 		self.widgets['wait for process'] = wx.CheckBox(self, -1,
 																				'Wait for a node to process the image')
 		self.widgets['wait for rejects'] = wx.CheckBox(self, -1,
 																				'Publish and wait for rejected targets')
-		# duplicate target
-		self.widgets['duplicate targets'] = wx.CheckBox(self, -1,
-																				'Duplicate targets with type:')
-		self.widgets['duplicate target type'] = Choice(self, -1,
-																							choices=self.node.duplicatetypes)
+#		# duplicate target
+#		self.widgets['duplicate targets'] = wx.CheckBox(self, -1,
+#																				'Duplicate targets with type:')
+#		self.widgets['duplicate target type'] = Choice(self, -1,
+#																							choices=self.node.duplicatetypes)
 
-		szduplicate = wx.GridBagSizer(0, 0)
-		szduplicate.Add(self.widgets['duplicate targets'], (0, 0), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL)
-		szduplicate.Add(self.widgets['duplicate target type'], (0, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL)
+#		szduplicate = wx.GridBagSizer(0, 0)
+#		szduplicate.Add(self.widgets['duplicate targets'], (0, 0), (1, 1),
+#										wx.ALIGN_CENTER_VERTICAL)
+#		szduplicate.Add(self.widgets['duplicate target type'], (0, 1), (1, 1),
+#										wx.ALIGN_CENTER_VERTICAL)
 
 		# settings sizer
 		sz = wx.GridBagSizer(5, 25)
 		sz.Add(szmovetype, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szpausetime, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['preset order'], (2, 0), (5, 1), wx.ALIGN_CENTER)
-		sz.Add(self.widgets['correct image'], (0, 1), (1, 1),
+		sz.Add(self.widgets['preset order'], (0, 1), (5, 1), wx.ALIGN_CENTER)
+#		sz.Add(self.widgets['correct image'], (0, 1), (1, 1),
+#						wx.ALIGN_CENTER_VERTICAL)
+#		sz.Add(self.widgets['display image'], (1, 1), (1, 1),
+#						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['save image'], (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['wait for process'], (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['display image'], (1, 1), (1, 1),
+		sz.Add(self.widgets['wait for rejects'], (4, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['save image'], (2, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['wait for process'], (3, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['wait for rejects'], (4, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szduplicate, (5, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz.AddGrowableRow(6)
+#		sz.Add(szduplicate, (5, 1), (1, 1),
+#						wx.ALIGN_CENTER_VERTICAL)
+#		sz.AddGrowableRow(6)
 
 		sb = wx.StaticBox(self, -1, 'Image Acquisition')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/MosaicClickTargetFinder.py,v $
-# $Revision: 1.11 $
+# $Revision: 1.12 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
+# $Date: 2004-11-11 19:43:17 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -22,24 +22,23 @@ import gui.wx.ToolBar
 class Panel(gui.wx.ClickTargetFinder.Panel):
 	icon = 'atlastarget'
 	def initialize(self):
-		gui.wx.ClickTargetFinder.Panel.initialize(self)
+		gui.wx.ClickTargetFinder.Panel.initialize(self, focus=False)
 
-		self.toolbar.InsertSeparator(2)
-		self.toolbar.InsertTool(3, gui.wx.ToolBar.ID_TILES,
+		self.toolbar.InsertTool(1, gui.wx.ToolBar.ID_TILES,
 													'tiles',
 													shortHelpString='Tiles')
-		self.toolbar.InsertTool(4, gui.wx.ToolBar.ID_MOSAIC,
+		self.toolbar.InsertTool(2, gui.wx.ToolBar.ID_MOSAIC,
 													'atlasmaker',
 													shortHelpString='Mosaic')
-		self.toolbar.AddSeparator()
-		self.toolbar.InsertTool(5, gui.wx.ToolBar.ID_REFRESH,
+		self.toolbar.InsertSeparator(3)
+		self.toolbar.InsertTool(4, gui.wx.ToolBar.ID_REFRESH,
 													'refresh',
 													shortHelpString='Refresh')
-		self.toolbar.InsertTool(6, gui.wx.ToolBar.ID_CURRENT_POSITION,
+		self.toolbar.InsertTool(5, gui.wx.ToolBar.ID_CURRENT_POSITION,
 													'currentposition',
 													shortHelpString='Show Position')
-		self.toolbar.InsertSeparator(7)
-		self.toolbar.InsertTool(8, gui.wx.ToolBar.ID_FIND_SQUARES,
+		self.toolbar.InsertSeparator(6)
+		self.toolbar.InsertTool(7, gui.wx.ToolBar.ID_FIND_SQUARES,
 													'squarefinder',
 													shortHelpString='Find Squares')
 
@@ -144,8 +143,8 @@ class MosaicSettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['calibration parameter'] = Choice(self, -1, choices=choices)
 		self.widgets['scale image'] = wx.CheckBox(self, -1, 'Scale image to')
 		self.widgets['scale size'] = IntEntry(self, -1, min=1, chars=4)
-		self.widgets['mosaic image on tile change'] = wx.CheckBox(self, -1,
-																	'Create mosaic image when tile list changes')
+		#self.widgets['mosaic image on tile change'] = wx.CheckBox(self, -1,
+		#															'Create mosaic image when tile list changes')
 
 		self.bcreate = wx.Button(self, -1, 'Create')
 		self.bsave = wx.Button(self, -1, 'Save')
@@ -173,9 +172,9 @@ class MosaicSettingsDialog(gui.wx.Settings.Dialog):
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(szp, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(szs, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['mosaic image on tile change'], (2, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(szb, (3, 0), (1, 1), wx.ALIGN_CENTER)
+		#sz.Add(self.widgets['mosaic image on tile change'], (2, 0), (1, 1),
+		#				wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(szb, (2, 0), (1, 1), wx.ALIGN_CENTER)
 
 		sb = wx.StaticBox(self, -1, 'Mosaics')
 		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)

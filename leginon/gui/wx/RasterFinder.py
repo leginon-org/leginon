@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/RasterFinder.py,v $
-# $Revision: 1.6 $
+# $Revision: 1.7 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-02 23:08:51 $
+# $Date: 2004-11-11 19:43:17 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -24,6 +24,9 @@ class Panel(gui.wx.TargetFinder.Panel):
 	def initialize(self):
 		gui.wx.TargetFinder.Panel.initialize(self)
 
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
+													'settings',
+													shortHelpString='Settings')
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SUBMIT,
 													'play',
@@ -43,6 +46,8 @@ class Panel(gui.wx.TargetFinder.Panel):
 
 	def onNodeInitialized(self):
 		gui.wx.TargetFinder.Panel.onNodeInitialized(self)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
+											id=gui.wx.ToolBar.ID_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSubmitTool,
 											id=gui.wx.ToolBar.ID_SUBMIT)
 

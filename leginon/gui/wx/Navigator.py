@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Navigator.py,v $
-# $Revision: 1.24 $
+# $Revision: 1.25 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-22 18:49:44 $
+# $Date: 2004-11-11 19:43:17 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -280,8 +280,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		# misc. checkboxes
 		self.widgets['check calibration'] = wx.CheckBox(self, -1,
 																										'Check calibration error')
-		self.widgets['complete state'] = wx.CheckBox(self, -1,
-																								'Set complete instrument state')
+#		self.widgets['complete state'] = wx.CheckBox(self, -1,
+#																								'Set complete instrument state')
 		self.widgets['use camera settings'] = wx.CheckBox(self, -1,
 																								'Use camera configuration')
 		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
@@ -293,8 +293,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		sz.Add(szpausetime, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['check calibration'], (2, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['complete state'], (3, 0), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
+#		sz.Add(self.widgets['complete state'], (3, 0), (1, 1),
+#						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['use camera settings'], (0, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['camera settings'], (1, 1), (4, 1),

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/ClickTargetFinder.py,v $
-# $Revision: 1.13 $
+# $Revision: 1.14 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-11-02 23:08:51 $
+# $Date: 2004-11-11 19:43:17 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -18,10 +18,9 @@ import gui.wx.TargetFinder
 import gui.wx.ToolBar
 
 class Panel(gui.wx.TargetFinder.Panel):
-	def initialize(self):
+	def initialize(self, focus=True):
 		gui.wx.TargetFinder.Panel.initialize(self)
 
-		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_SUBMIT,
 													'play',
 													shortHelpString='Submit Targets')
@@ -29,8 +28,8 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.imagepanel = gui.wx.ImageViewer.TargetImagePanel(self, -1)
 		self.imagepanel.addTargetTool('acquisition', wx.GREEN, target=True)
 		self.imagepanel.selectiontool.setDisplayed('acquisition', True)
-		self.imagepanel.addTargetTool('focus', wx.BLUE, target=True)
-		self.imagepanel.selectiontool.setDisplayed('focus', True)
+		#self.imagepanel.addTargetTool('focus', wx.BLUE, target=True)
+		#self.imagepanel.selectiontool.setDisplayed('focus', True)
 		self.imagepanel.addTargetTool('done', wx.RED)
 		self.imagepanel.selectiontool.setDisplayed('done', True)
 		self.imagepanel.addTargetTool('position', wx.Color(255, 128, 0))

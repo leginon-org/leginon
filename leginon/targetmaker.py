@@ -54,7 +54,7 @@ class MosaicTargetMaker(TargetMaker):
 		'preset': None,
 		'label': '',
 		'radius': 0.0005,
-		'overlap': 0.0,
+		'overlap': 1.0,
 		'max targets': 128,
 		'max size': 16384,
 		'mosaic center': 'stage center',
