@@ -93,6 +93,9 @@ class EM(node.Node):
 		e = event.ListPublishEvent(self.ID(), ids)
 		self.announce(e)
 
+	def main(self):
+		pass
+
 if __name__ == '__main__':
 	import time
 	import tecnai
