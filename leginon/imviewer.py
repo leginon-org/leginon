@@ -59,8 +59,8 @@ class ImViewer(watcher.Watcher):
 		self.iv = ImageViewer(root, bg='#488')
 		self.iv.bindCanvas('<Double-1>', self.clickEvent)
 		self.iv.pack()
-		acqbut = Button(root, text='Acquire', command=self.acquireEvent)
-		acqbut.pack()
+		self.acqbut = Button(root, text='Acquire', command=self.acquireEvent)
+		self.acqbut.pack()
 		self.viewer_ready.set()
 		root.mainloop()
 		self.viewer_ready.clear()
@@ -70,10 +70,13 @@ class ImViewer(watcher.Watcher):
 		self.root.destroy()
 
 	def acquireEvent(self):
+		self.acqbut['state'] = DISABLED
 		print 'sending ImageAcquireEvent'
 		e = event.ImageAcquireEvent(self.ID())
+		print 'e', e
 		self.outputEvent(e)
 		print 'sent ImageAcquireEvent'
+		self.acqbut['state'] = NORMAL
 	
 	def processData(self, imagedata):
 		#camdict = imagedata.content
