@@ -17,6 +17,10 @@ class project {
 						$PROJECT_DBPASSWORD, $PROJECT_DATABASE);
         }
 
+	function checkDBConnection() {
+		return $this->mysql->checkDBConnection();
+	}
+
 	function getGridInfo($gridId){
                 $info=array();
                 $q='select gridId, label as "label", '

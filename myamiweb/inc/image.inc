@@ -109,7 +109,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 			imagestringshadow($img, 4, $ctx, $cty, $tn, $col);
 			
 		    }
-		    $targets = $leginondata->getImageFocusTargets($id);
+		    $targets = $leginondata->getImageFocusTargets($imageId);
 		    foreach ($targets as $target) {
 			$tgn=$target[tnumber];
 			$tn='focus'."  ".$tgn;

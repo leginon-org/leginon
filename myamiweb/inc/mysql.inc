@@ -38,13 +38,23 @@ class mysql {
 
 	function connect_db($host="") {
 		$host = (empty($host)) ? $this->hostname : $host;
-		$link = mysql_connect($host, $this->db_user, $this->db_pass)  or  die( "Unable  to  connect  to  SQL  server");
-		if (!link)
-			return $this->error[0];
+		$link = @mysql_connect($host, $this->db_user, $this->db_pass);
+		if (!$link)
+			return mysql_error();
 		$db = mysql_select_db($this->database, $link);
 		if(!$db)
-			return $this->error[1];
+			return mysql_error();
 		return $link;
+	}
+
+	function checkDBConnection($host="") {
+		$resource = $this->connect_db($host);
+		if (is_resource($resource)) {
+			$this->close_db($resource);
+			return True;
+		} else {
+			return False;
+		}
 	}
 
 	function close_db($resource_link="") {
@@ -152,12 +162,6 @@ class mysql {
 	    return (true);
 	}
 
-	var $error = array
-		(
-		"Unable  to  connect  to  SQL  server",
-		"Unable  to  select  database"
-		);
-
 	function setSQLHost($host) {
 		$this->new_sqlhost = $host;
 	}
@@ -202,6 +206,23 @@ class mysql {
 				$fields[] = $r[Field];
 		}
 		return $fields;
+	}
+
+	function getTables() {
+		$tables = array();
+		$R = $this->SQLQuery("SHOW TABLES ");
+		while ($row = mysql_fetch_row($R))
+			$tables[] = $row[0];
+
+		return $tables;
+	}
+
+	function isTable($table) {
+		$istable = false;
+		$tables = $this->getTables();
+		if (in_array($table, $tables))
+			$istable = true;
+		return $istable;
 	}
 
 }

@@ -21,7 +21,10 @@ $sessionId = (empty($sessionId)) ? $lastId : $sessionId;
 $datatypes = $leginondata->getAllDatatypes($sessionId);
 
 $projectdata = new project();
-$projects = $projectdata->getProjects('all');
+$projectdb = $projectdata->checkDBConnection();
+
+if($projectdb)
+	$projects = $projectdata->getProjects('all');
 
 $sessions = $leginondata->getSessions('description', $projectId);
 
@@ -32,11 +35,13 @@ if (!$sessionId_exists)
 $filenames = $leginondata->getFilenames($sessionId, $preset);
 
 $viewer = new viewer();
-$viewer->setProjectId($projectId);
+if($projectdb) {
+	$viewer->setProjectId($projectId);
+	$viewer->addProjectSelector($projects);
+}
 $viewer->setSessionId($sessionId);
 $viewer->setImageId($imageId);
 $viewer->addSessionSelector($sessions);
-$viewer->addProjectSelector($projects);
 $viewer->addFileSelector($filenames);
 $viewer->setNbViewPerRow('2');
 $javascript = $viewer->getJavascript();

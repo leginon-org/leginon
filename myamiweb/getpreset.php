@@ -30,12 +30,14 @@ if ($id) {
 	$newimage = $leginondata->findImage($id, $preset);
 	$id = $newimage[id];
 			$gridId	= $leginondata->getGridId($id);
-			$project = new project();
-			$gridinfo = $project->getGridInfo($gridId);
+			$projectdata = new project();
+			if($projectdata->checkDBConnection()) {
+				$gridinfo = $projectdata->getGridInfo($gridId);
+				if ($gridId)
+					echo '<a class="header" target="gridinfo" href="'.$PROJECT_URL.'getgrid.php?gridId='.$gridId.'">grid# '.$gridinfo[number].' info&raquo;</a>';
+			}
 			$filename = $leginondata->getFilename($id);
 			$presets = $leginondata->getPresets($id, $p);
-			if ($gridId)
-				echo '<a class="header" target="gridinfo" href="'.$PROJECT_URL.'getgrid.php?gridId='.$gridId.'">grid# '.$gridinfo[number].' info&raquo;</a>';
 			if (is_array($presets))
 			foreach($presets as $k=>$v)
 				if ($k=='defocus')

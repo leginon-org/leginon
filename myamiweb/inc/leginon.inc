@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.20 $
- *	@version $Id: leginon.inc,v 1.20 2004-05-28 17:23:50 dfellman Exp $
+ *	@version $Revision: 1.21 $
+ *	@version $Id: leginon.inc,v 1.21 2004-06-17 23:09:00 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -435,8 +435,14 @@ class leginondata {
 		$parentId = ($parentinfo['parentId']) ? $parentinfo['parentId'] : false;
 		$parentselect = "";
 		$parentjoin = "";
+		$gridtable = $this->mysql->isTable('GridData');
+		$gridselect = ($gridtable) ?
+			"grid.`grid ID` as gridId, " : "";
+		$gridjoin = ($gridtable) ?
+			"left join GridData grid "
+			."on (grid.`DEF_id`=a.`REF|GridData|grid`) " : '';
 		if ($parentId) {
-			$parentselect = ", "
+			$parentselect = ""
 			."parent.`DEF_id` as parentId, "
 			."parent.`MRC|image` as parentimage, "
 			."pp.`name` as parentpreset, "
@@ -448,7 +454,7 @@ class leginondata {
 			."(cp.`SUBD|binning|y`* ppi.pixelsize)) as targetdim, "
 			."((c.`SUBD|binning|y`* sqrt(c.`SUBD|dimension|x`*c.`SUBD|dimension|x`  "
 			."+ c.`SUBD|dimension|y`*c.`SUBD|dimension|y`) * pi.pixelsize) /  "
-			."(cp.`SUBD|binning|y`* ppi.pixelsize)) as targetdiam ";
+			."(cp.`SUBD|binning|y`* ppi.pixelsize)) as targetdiam,  ";
 			$parentjoin = ""
 			."left join AcquisitionImageData parent "
 			."on (parent.`DEF_id`=parenttarget.`REF|AcquisitionImageData|image`) "
@@ -462,6 +468,8 @@ class leginondata {
 			."pscope.magnification = ppi.magnification) ";
 		}
 		$q = "select "
+			.$gridselect
+			.$parentselect
 			."a.`DEF_id` as imageId, "
 			."date_format(a.`DEF_timestamp`, '%Y-%d-%m %T') as `timestamp`,"
 			."a.`REF|SessionData|session` as `sessionId`,"
@@ -478,9 +486,7 @@ class leginondata {
 			."parenttarget.`delta column`, "
 			."parenttarget.`delta row`, "
 			."floor(parenttarget.`delta column`+cp.`SUBD|dimension|x`/2) as targetx, "
-			."floor(parenttarget.`delta row`+cp.`SUBD|dimension|y`/2) as targety, "
-			."grid.`grid ID` as gridId "
-			.$parentselect
+			."floor(parenttarget.`delta row`+cp.`SUBD|dimension|y`/2) as targety "
 			."from AcquisitionImageData a "
 			."left join ScopeEMData scope on (scope.`DEF_id`=a.`REF|ScopeEMData|scope`) "
 			."left join SessionData s1 on (s1.`DEF_id`=a.`REF|SessionData|session`) "
@@ -491,8 +497,7 @@ class leginondata {
 			."on (parenttarget.`DEF_id`=a.`REF|AcquisitionImageTargetData|target`) "
 			."left join CameraEMData cp "
 			."on (parenttarget.`REF|CameraEMData|camera`=cp.`DEF_id`) "
-			."left join GridData grid "
-			."on (grid.`DEF_id`=a.`REF|GridData|grid`) "
+			.$gridjoin
 			."cross join PixelSizeCalibrationData pi on "
 			."(s1.`REF|InstrumentData|instrument`=s2.`REF|InstrumentData|instrument` and "
 			."scope.magnification = pi.magnification) "
@@ -506,6 +511,8 @@ class leginondata {
 	}
 
 	function getGridId($imgId) {
+		if (!$this->mysql->isTable('GridData'))
+			return 0;
 		$q = "select "
 			."grid.`grid ID` as gridId "
 			."from AcquisitionImageData a "
