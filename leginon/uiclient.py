@@ -854,7 +854,7 @@ class wxClickImageWidget(wxContainerWidget):
 
 	def callback(self, xy):
 		self.uiclient.setServer(self.namelist + ('Coordinates',), xy, False)
-		self.uiclient.commandServer(self.namelist + ('Click',), (), False)
+		self.uiclient.commandServer(self.namelist + ('Click',), (), True)
 
 	def _set(self, value):
 		if value:
