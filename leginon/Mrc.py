@@ -48,7 +48,7 @@ def mrc_to_numeric(filename):
 	return image
 
 def numeric_to_mrc(ndata, filename):
-	if type(ndata) is not Numeric.ArrayType:
+	if not isinstance(ndata, Numeric.ArrayType):
 		raise TypeError('ndata must be Numeric array')
 	f = open(filename, 'wb')
 	mrc_write(f, ndata)
@@ -65,7 +65,7 @@ def mrcstr_to_numeric(mrcstr):
 		return None
 
 def numeric_to_mrcstr(ndata):
-	if type(ndata) is not Numeric.ArrayType:
+	if not isinstance(ndata, Numeric.ArrayType):
 		raise TypeError('ndata must be Numeric array')
 	f = cStringIO.StringIO()
 	mrc_write(f, ndata)

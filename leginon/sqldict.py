@@ -1179,7 +1179,7 @@ def sqlColumnsDefinition(in_dict, noDefault=None):
 			column['Field'] = object2sqlColumn(key)
 			column['Type'] = 'LONGBLOB'
 			columns.append(column)
-		elif type(value) is Numeric.ArrayType:
+		elif isinstance(value, Numeric.ArrayType):
 			### Numeric array
 			if len(Numeric.ravel(value)) < 10:
 				arraydict = matrix2dict(value,key)
@@ -1231,7 +1231,7 @@ def sqlColumnsSelect(in_dict):
 		sqlt = sqltype(value)
 		if sqlt is not None:
 			columns.append(key)
-		elif type(value) is Numeric.ArrayType:
+		elif isinstance(value, Numeric.ArrayType):
 			if len(Numeric.ravel(value)) < 10:
 				arraydict = matrix2dict(value,key)
 				nd = sqlColumnsSelect(arraydict)
@@ -1264,7 +1264,7 @@ def sqlColumnsFormat(in_dict):
 		sqlt = sqltype(value)
 		if sqlt is not None:
 			columns[key]=value
-		elif type(value) is Numeric.ArrayType:
+		elif isinstance(value, Numeric.ArrayType):
 			if len(Numeric.ravel(value)) < 10:
 				datadict = matrix2dict(value,key)
 			else:
