@@ -1530,7 +1530,10 @@ class wxTargetImageWidget(wxContainerWidget):
 		self.targetimage.setTargetTypeValue(name, value, color)
 
 	def setTargetColor(self, name, value):
-		self.targetcolors[name] = tuple(value)
+		try:
+			self.targetcolors[name] = tuple(value)
+		except:
+			self.targetcolors[name] = None
 
 	def _addWidget(self, name, typelist, value, configuration, children):
 		# should disable until all available
