@@ -261,9 +261,9 @@ class CameraPanel(wx.Panel):
 		g = self.getGeometry()
 		if g is None:	
 			return None
-		c = dict(g)
-		g['exposure time'] = self._getExposureTime()
-		return g
+		c = copy.deepcopy(g)
+		c['exposure time'] = self._getExposureTime()
+		return c
 
 	def _setGeometry(self, geometry):
 		if self.geometry is None:
