@@ -3,6 +3,7 @@ from gui.wx.Choice import Choice
 import gui.wx.Camera
 import gui.wx.Entry
 import gui.wx.Presets
+import wx.lib.filebrowsebutton as filebrowse
 
 class SettingsError(Exception):
 	pass
@@ -24,6 +25,7 @@ attributes = {
 	gui.wx.Camera.CameraPanel:
 		('getData', 'setData',
 			gui.wx.Camera.EVT_CONFIGURATION_CHANGED),
+	filebrowse.FileBrowseButton: ('GetValue', 'SetValue', None),
 }
 
 class Dialog(wx.Dialog):
@@ -35,8 +37,6 @@ class Dialog(wx.Dialog):
 
 		self.widgets = {}
 
-		sz = self.initialize()
-
 		# buttons
 		self.bok = wx.Button(self, wx.ID_OK, 'OK')
 		self.bcancel = wx.Button(self, wx.ID_CANCEL, 'Cancel')
@@ -45,6 +45,8 @@ class Dialog(wx.Dialog):
 		szbuttons.Add(self.bok, (0, 0), (1, 1), wx.ALIGN_CENTER)
 		szbuttons.Add(self.bcancel, (0, 1), (1, 1), wx.ALIGN_CENTER)
 		szbuttons.Add(self.bapply, (0, 2), (1, 1), wx.ALIGN_CENTER)
+
+		sz = self.initialize()
 
 		szmain = wx.GridBagSizer(5, 5)
 		for i, s in enumerate(sz):
@@ -61,7 +63,8 @@ class Dialog(wx.Dialog):
 		self.Bind(wx.EVT_BUTTON, self.onSet, self.bapply)
 
 		for widget in self.widgets.values():
-			self.Bind(attributes[widget.__class__][2], self.onModified)
+			if attributes[widget.__class__][2] is not None:
+				self.Bind(attributes[widget.__class__][2], self.onModified)
 
 	def initialize(self):
 		return []

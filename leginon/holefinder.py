@@ -20,8 +20,25 @@ try:
 	import numarray as Numeric
 except:
 	import Numeric
+import gui.wx.HoleFinder
 
 class HoleFinder(targetfinder.TargetFinder):
+	panelclass = gui.wx.HoleFinder.Panel
+	settingsclass = data.HoleFinderSettingsData
+	defaultsettings = {
+		'user check': False,
+		'skip': False,
+		'image filename': '',
+		'edge lpf': True,
+		'edge lpf size': 5,
+		'edge lpf sigma': 1.0,
+		'edge': True,
+		'edge type': 'sobel',
+		'edge log size': 9,
+		'edge log sigma': 1.4,
+		'edge absolute': False,
+		'edge threshold': 100.0,
+	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		targetfinder.TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
 		self.hf = holefinderback.HoleFinder()
@@ -36,27 +53,18 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.defineUserInterface()
 		self.start()
 
+	#def defineUserInterface(self):
+		#cameraconfigure = self.cam.uiSetupContainer()
+		#acqmeth = uidata.Method('Acquire Image', self.acqImage)
+		#testmeth = uidata.Method('Test All', self.everything)
+
 	def defineUserInterface(self):
 		targetfinder.TargetFinder.defineUserInterface(self)
 
-		self.usercheckon = uidata.Boolean('User Check', False, 'rw', persist=True)
-		self.skipauto = uidata.Boolean('Skip Auto Hole Finder', False, 'rw', persist=True)
-		self.usequantifoil = uidata.Boolean('Quantifoil', True, 'rw', persist=True)
-
-		self.testfile = uidata.String('Filename', '', 'rw', persist=True)
-		readmeth = uidata.Method('Read Image', self.readImage)
-		cameraconfigure = self.cam.uiSetupContainer()
-		acqmeth = uidata.Method('Acquire Image', self.acqImage)
-		testmeth = uidata.Method('Test All', self.everything)
 		self.originalimage = uidata.Image('Original', None, 'r')
-		originalcont = uidata.LargeContainer('Original')
-		originalcont.addObjects((self.testfile, readmeth, cameraconfigure, acqmeth, testmeth, self.originalimage))
 
 		### edge detection
 		self.edgeson = uidata.Boolean('Find Edges On', True, 'rw', persist=True)
-		self.lowpasson = uidata.Boolean('Low Pass Filter On', True, 'rw', persist=True)
-		self.lowpasssize = uidata.Integer('Low Pass Filter Size', 5, 'rw', persist=True)
-		self.lowpasssigma = uidata.Number('Low Pass Filter Sigma', 1.0, 'rw', persist=True)
 		self.edgethresh = uidata.Number('Threshold', 100.0, 'rw', persist=True)
 		self.filtertype = uidata.SingleSelectFromList('Filter Type', ['sobel', 'laplacian3', 'laplacian5', 'laplacian-gaussian'], 0, persist=True)
 		self.glapsize = uidata.Integer('LoG Size', 9, 'rw', persist=True)
@@ -65,7 +73,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		edgemeth = uidata.Method('Find Edges', self.findEdges)
 		self.edgeimage = uidata.Image('Edge Image', None, 'r')
 		edgecont = uidata.LargeContainer('Edge Finder')
-		edgecont.addObjects((self.edgeson, self.lowpasson, self.lowpasssize, self.lowpasssigma, self.filtertype, self.glapsize, self.glapsigma, self.edgeabs, self.edgethresh, edgemeth, self.edgeimage,))
+		edgecont.addObjects((self.edgeson, self.filtertype, self.glapsize, self.glapsigma, self.edgeabs, self.edgethresh, edgemeth, self.edgeimage,))
 
 
 		### Correlate Template
@@ -126,7 +134,6 @@ class HoleFinder(targetfinder.TargetFinder):
 
 		self.acq_target_template = uidata.Sequence('Acqusition Template', [], 'rw', persist=True)
 		self.focus_one_hole = uidata.SingleSelectFromList('Focus One Hole', ['Off', 'Any Hole', 'Good Hole'], 0, permissions='rw', persist=True)
-		submitmeth = uidata.Method('Submit', self.submit)
 		self.goodholesimage.addTargetType('acquisition', [], (0,255,0))
 		self.goodholesimage.addTargetType('focus', [], (0,0,255))
 
@@ -138,14 +145,13 @@ class HoleFinder(targetfinder.TargetFinder):
 		blobcont.addObjects((allblobscontainer, latticeblobscontainer))
 
 		goodholescontainer = uidata.LargeContainer('Good Holes')
-		goodholescontainer.addObjects((self.icetmin, self.icetmax, self.icetstd, icemeth, self.goodholes, self.use_target_template, self.foc_target_template, foc_template_limit, self.acq_target_template, self.focus_one_hole, self.goodholesimage, submitmeth))
+		goodholescontainer.addObjects((self.icetmin, self.icetmax, self.icetstd, icemeth, self.goodholes, self.use_target_template, self.foc_target_template, foc_template_limit, self.acq_target_template, self.focus_one_hole, self.goodholesimage, ))
 
 		container = uidata.LargeContainer('Hole Finder')
-		container.addObjects((self.usercheckon, self.skipauto, originalcont,edgecont,corcont,threshcont, blobcont, goodholescontainer))
+		container.addObjects((edgecont,corcont,threshcont, blobcont, goodholescontainer))
 		self.uicontainer.addObject(container)
 
-	def readImage(self):
-		filename = self.testfile.get()
+	def readImage(self, filename):
 		orig = Mrc.mrc_to_numeric(filename)
 		self.hf['original'] = orig
 		self.currentimagedata = None
@@ -164,9 +170,9 @@ class HoleFinder(targetfinder.TargetFinder):
 		sig = self.glapsigma.get()
 		ab = self.edgeabs.get()
 		filt = self.filtertype.getSelectedValue()
-		lowpasson = self.lowpasson.get()
-		lowpassn = self.lowpasssize.get()
-		lowpasssig = self.lowpasssigma.get()
+		lowpasson = self.settings['edge lpf']
+		lowpassn = self.settings['edge lpf size']
+		lowpasssig = self.settings['edge lpf sigma']
 		edgethresh = self.edgethresh.get()
 		self.hf.configure_edges(filter=filt, size=n, sigma=sig, absvalue=ab, lp=lowpasson, lpn=lowpassn, lpsig=lowpasssig, thresh=edgethresh)
 		self.hf.find_edges()
@@ -427,12 +433,12 @@ class HoleFinder(targetfinder.TargetFinder):
 		hfprefs.update({
 			'session': self.session,
 			'image': imagedata,
-			'user-check': self.usercheckon.get(),
-			'skip-auto': self.skipauto.get(),
+			'user-check': self.settings['user check'],
+			'skip-auto': self.settings['skip'],
 
-			'edge-lpf-on': self.lowpasson.get(),
-			'edge-lpf-size': self.lowpasssize.get(),
-			'edge-lpf-sigma': self.lowpasssigma.get(),
+			'edge-lpf-on': self.settings['edge lpf'],
+			'edge-lpf-size': self.settings['edge lpf size'],
+			'edge-lpf-sigma': self.settings['edge lpf sigma'],
 			'edge-filter-type': self.filtertype.getSelectedValue(),
 			'edge-threshold': self.edgethresh.get(),
 
@@ -469,13 +475,13 @@ class HoleFinder(targetfinder.TargetFinder):
 		## auto or not?
 		self.hf['original'] = imdata['image']
 		self.currentimagedata = imdata
-		if self.skipauto.get():
+		if self.settings['skip']:
 			self.bypass()
 		else:
 			self.everything()
 
 		## user part
-		if self.usercheckon.get():
+		if self.settings['user check']:
 			self.notifyUserSubmit()
 			self.userpause.clear()
 			self.userpause.wait()
@@ -487,3 +493,4 @@ class HoleFinder(targetfinder.TargetFinder):
 
 	def submit(self):
 		self.userpause.set()
+

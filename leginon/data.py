@@ -1630,6 +1630,24 @@ class ClickTargetFinderSettingsData(TargetFinderSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class HoleFinderSettingsData(TargetFinderSettingsData):
+	def typemap(cls):
+		return TargetFinderSettingsData.typemap() + (
+			('user check', bool),
+			('skip', bool),
+			('image filename', str),
+			('edge lpf', bool),
+			('edge lpf size', int),
+			('edge lpf sigma', float),
+			('edge', bool),
+			('edge type', str),
+			('edge log size', int),
+			('edge log sigma', float),
+			('edge absolute', bool),
+			('edge threshold', float),
+		)
+	typemap = classmethod(typemap)
+
 class LowPassFilterSettingsData(SettingsData):
 	def typemap(cls):
 		return SettingsData.typemap() + (
