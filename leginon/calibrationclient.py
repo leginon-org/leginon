@@ -303,17 +303,11 @@ class PixelSizeCalibrationClient(CalibrationClient):
 		return pixelsize
 
 	def time(self, mag, instrument=None):
-		print 'aaa'
 		pdata = self.researchPixelSizeData(mag, instrument)
-		print 'bbb'
 		if pdata is None:
-			print 'fff'
 			timeinfo = None
-			print 'ccc'
 		else:
-			print 'eee'
 			timeinfo = pdata.timestamp
-			print 'ddd'
 		return timeinfo
 
 	def retrieveAllPixelSizes(self):
@@ -745,7 +739,7 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		caldata['mean'] = mean
 		self.node.publish(caldata, database=True, dbforce=True)
 
-	def retrieveMagCalibration(self, ht, mag, axis):
+	def researchMagCalibration(self, ht, mag, axis):
 		tmpsession = data.SessionData()
 		tmpsession['instrument'] = self.node.session['instrument']
 		qinst = data.StageModelMagCalibrationData(magnification=mag, axis=axis)
@@ -755,12 +749,25 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		caldatalist = self.node.research(datainstance=qinst, results=1)
 		if len(caldatalist) > 0:
 			caldata = caldatalist[0]
-			print 'GOT ANGLE', caldata['angle']
-			print 'GOT MEAN', caldata['mean']
+		else:
+			caldata = None
+		return caldata
+
+	def retrieveMagCalibration(self, ht, mag, axis):
+		caldata = self.researchMagCalibration(ht, mag, axis)
+		if caldata is None:
+			raise RuntimeError('no model mag calibration')
+		else:
 			caldata2 = dict(caldata)
 			return caldata2
+
+	def timeMagCalibration(self, ht, mag, axis):
+		caldata = self.researchMagCalibration(ht, mag, axis)
+		if caldata is None:
+			timeinfo = None
 		else:
-			raise RuntimeError('no model mag calibration')
+			timeinfo = caldata.timestamp
+		return timeinfo
 
 	def storeModelCalibration(self, label, axis, period, a, b):
 		caldata = data.StageModelCalibrationData()
@@ -775,16 +782,23 @@ class ModeledStageCalibrationClient(CalibrationClient):
 
 		self.node.publish(caldata, database=True, dbforce=True)
 
-	def retrieveModelCalibration(self, axis):
+	def researchModelCalibration(self, instrument, axis):
 		tmpsession = data.SessionData()
 		tmpsession['instrument'] = self.node.session['instrument']
 		qinst = data.StageModelCalibrationData(axis=axis)
 		qinst['session'] = tmpsession
-		print 'QINST'
-		print qinst
 		caldatalist = self.node.research(datainstance=qinst, results=1)
 		if len(caldatalist) > 0:
 			caldata = caldatalist[0]
+		else:
+			caldata = None
+		return caldata
+
+	def retrieveModelCalibration(self, axis):
+		caldata = self.researchModelCalibration(self.node.session['instrument'], axis)
+		if caldata is None:
+			raise RuntimeError('no model calibration')
+		else:
 			print 'PERIOD', caldata['period']
 			print 'A', caldata['a'], caldata['a'].shape
 			print 'B', caldata['b'], caldata['b'].shape
@@ -795,8 +809,15 @@ class ModeledStageCalibrationClient(CalibrationClient):
 			caldata2['a'] = Numeric.ravel(caldata['a']).copy()
 			caldata2['b'] = Numeric.ravel(caldata['b']).copy()
 			return caldata2
+
+	def timeModelCalibration(self, axis):
+		inst = self.node.session['instrument']
+		caldata = self.researchModelCalibration(inst, axis)
+		if caldata is None:
+			timeinfo = None
 		else:
-			raise RuntimeError('no model calibration')
+			timeinfo = caldata.timestamp
+		return timeinfo
 
 	def getLabeledData(self, label, mag, axis):
 		qdata = data.StageMeasurementData()
