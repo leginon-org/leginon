@@ -120,17 +120,19 @@ class Node(leginonobject.LeginonObject):
 		print 'clientlist initialized'
 		#self.registerUIFunction(self.uiID, (), 'ID', returntype='array')
 		#self.registerUIFunction(self.uiClass, (), 'Class', returntype='string')
-		r = interface.DataSpec('id', 'array', permissions='r')
-		a = self.registerUIMethod(self.uiID, 'ID', (), returnspec=r)
-		r = interface.DataSpec('class', 'string', permissions='r')
-		b = self.registerUIMethod(self.uiClass, 'Class', (), returnspec=r)
-		c = self.registerUIContainer('Node Methods', (a,b))
+		self.setUIData('id', self.id)
+		idspec = interface.DataSpec('id', 'array', permissions='r')
+
+		self.setUIData('class', self.__class__.__name__)
+		classspec = interface.DataSpec('class', 'string', permissions='r')
+
+		c = self.registerUIContainer('Node Methods', (idspec,classspec))
 		return c
 
 	def registerUIMethod(self, func, name, argspec, returnspec=None):
 		return self.uiserver.registerMethod(func, name, argspec, returnspec)
 
-	def registerUIData(self, name, xmlrpctype, permissions='r', enum=(), default=None):
+	def registerUIData(self, name, xmlrpctype, permissions=None, enum=None, default=None):
 		return self.uiserver.registerData(name, xmlrpctype, permissions, enum, default)
 
 	def registerUIContainer(self, name=None, content=()):
@@ -138,6 +140,13 @@ class Node(leginonobject.LeginonObject):
 
 	def registerUISpec(self, name=None, content=()):
 		return self.uiserver.registerSpec(name, content)
+
+	def setUIData(self, name, value):
+		self.uiserver.setData(name, value)
+		return self.uiserver.getData(name)
+
+	def getUIData(self, name):
+		return self.uiserver.getData(name)
 
 	def uiID(self):
 		return self.id
@@ -270,6 +279,7 @@ class Node(leginonobject.LeginonObject):
 			if name not in self.clientlist:
 				self.clientlist.append(name)
 			self.clientdict[name] = newid
+		self.setUIData('clientlist', self.clientlist)
 
 	def delEventClient(self, newid):
 		if newid in self.clients:
@@ -280,6 +290,7 @@ class Node(leginonobject.LeginonObject):
 				name = newid[-1]
 				self.clientlist.remove(name)
 				del self.clientdict[name]
+		self.setUIData('clientlist', self.clientlist)
 
 	def addEventInput(self, eventclass, func):
 		self.server.datahandler.setBinding(eventclass, func)

@@ -7,7 +7,7 @@ import code
 import inspect
 
 XMLRPCTYPES = ('boolean', 'integer', 'float', 'string', 'array', 'struct', 'date', 'binary')
-PERMISSIONS = ('r', 'rw')
+PERMISSIONS = (None, 'r', 'w', 'rw', 'wr')
 
 class SpecObject(object):
 	def __init__(self, spectype):
@@ -19,7 +19,7 @@ class DataSpec(SpecObject):
 	This describes a piece of data for an xml-rpc client
 	The client can use this description to define the data presentation
 	"""
-	def __init__(self, name, xmlrpctype, permissions='r', enum=(), default=None):
+	def __init__(self, name, xmlrpctype, permissions=None, enum=None, default=None):
 		SpecObject.__init__(self, 'data')
 
 		self.name = name
@@ -39,8 +39,12 @@ class DataSpec(SpecObject):
 		d['spectype'] = self.spectype
 		d['name'] = self.name
 		d['xmlrpctype'] = self.xmlrpctype
-		d['permissions'] = self.permissions
-		d['enum'] = self.enum
+		if self.permissions is not None:
+			d['permissions'] = self.permissions
+
+		if self.enum is not None:
+			d['enum'] = self.enum
+
 		if self.default is not None:
 			d['default'] = self.default
 		return d
@@ -95,29 +99,44 @@ class ContainerSpec(SpecObject):
 class Server(xmlrpcserver.xmlrpcserver):
 	def __init__(self, id=()):
 		xmlrpcserver.xmlrpcserver.__init__(self)
-		self.data = {}
+		self.uidata = {}
 		#self.server.register_function(self.uiMethods, 'methods')
 		self.server.register_function(self.uiSpec, 'spec')
 		self.server.register_function(self.uiGet, 'GET')
 		self.server.register_function(self.uiSet, 'SET')
 
 	def uiGet(self, name):
-		if self.data[name] is None:
+		'''this is how a UI client gets uidata'''
+		data = self.getData(name)
+		if data is None:
 			return 'None'
 		else:
-			return self.data[name]
+			return data
 
 	def uiSet(self, name, value):
-		self.data[name] = value
-		return self.data[name]
+		'''this is how a UI client sets uidata'''
+		self.setData(name,value)
+		return self.uiGet(name)
+
+	def setData(self, name, value):
+		'''this is how something with access to this server sets uidata'''
+		self.uidata[name] = value
+
+	def getData(self, name):
+		'''this is how something with access to this server gets uidata'''
+		return self.uidata[name]
 
 	def registerMethod(self, func, name, argspec, returnspec=None):
 		self.server.register_function(func, name)
 		m = MethodSpec(name, argspec, returnspec)
 		return m
 
-	def registerData(self, name, xmlrpctype, permissions='r', enum=(), default=None):
-		self.data[name] = default
+	def registerData(self, name, xmlrpctype, permissions=None, enum=None, default=None):
+		## permissions = None means it is not maintained on the server
+		## should probably keep track of permission in uidata also
+		if permissions is not None:
+			if default is not None:
+				self.uidata[name] = default
 		d = DataSpec(name, xmlrpctype, permissions, enum, default)
 		return d
 
@@ -139,13 +158,12 @@ class Client(object):
 		self.proxy = xmlrpclib.ServerProxy(uri)
 		#self.getMethods()
 		self.spec = self.getSpec()
-		print 'spec', self.spec
 
 	def getSpec(self):
 		self.spec = self.proxy.spec()
 		return self.spec
 
-	def execute(self, funcname, args):
+	def execute(self, funcname, args=()):
 		return getattr(self.proxy, funcname)(*args)
 
 

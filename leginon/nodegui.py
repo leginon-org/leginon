@@ -27,15 +27,21 @@ class Data(SpecWidget):
 	def buildSpec(self):
 		name = self.name = self.spec['name']
 		self.type = self.spec['xmlrpctype']
-		self.enum = self.spec['enum']
-		self.permissions = self.spec['permissions']
+		if 'enum' in self.spec:
+			self.enum = self.spec['enum']
+		else:
+			self.enum = None
+		if 'permissions' in self.spec:
+			self.permissions = self.spec['permissions']
+		else:
+			self.permissions = None
 
 		if 'default' in self.spec:
 			self.default = self.spec['default']
 		else:
 			self.default = None
 
-		if len(self.enum) > 0:
+		if self.enum is not None:
 			self.arg_choice(name, self.enum)
 		elif self.type == 'boolean':
 			self.arg_check(name)
@@ -44,7 +50,7 @@ class Data(SpecWidget):
 		elif self.type == 'array':
 			self.arg_entry(name, self.type)
 		elif self.type == 'struct':
-			self.arg_entry(name, self.type)
+			self.arg_struct(name)
 		elif self.type == 'date':
 			self.arg_date(name)
 		elif self.type == 'binary':
@@ -58,7 +64,7 @@ class Data(SpecWidget):
 
 	def set(self, value):
 		if self.type == 'struct':
-			self.struct = value
+			self.update_tree(value)
 		else:
 			self.tkvar.set(value)
 
@@ -75,15 +81,17 @@ class Data(SpecWidget):
 
 	def getServer(self):
 		r = self.uiclient.execute('GET', (self.name,))
+		print 'GET RETURNS', r
 		self.set(r)
 
 # types:
 #('boolean', 'integer', 'float', 'string', 'array', 'struct', 'date', 'binary')
-	def arg_choice(self, name, choices):
+	def arg_choice(self, name, enum_name):
 		self.tkvar = StringVar()
 		Label(self, text=name, bg=self.bgcolor).pack(side=LEFT)
 		cb = Pmw.ComboBox(self, entry_textvariable=self.tkvar)
 		##cb['bg'] = self.bgcolor
+		choices = self.uiclient.execute('GET', (enum_name,))
 		cb.setlist(choices)
 		cb.pack(side=LEFT)
 		self.datawidget = cb
@@ -107,23 +115,46 @@ class Data(SpecWidget):
 		if type == 'struct':
 			self.tkvar = StringVar()
 		Label(self, text=name, bg=self.bgcolor).pack(side=LEFT)
-		if self.permissions == 'rw':
-			Button(self, text='Set', command=self.setServer).pack()
-			Button(self, text='Get', command=self.getServer).pack()
 		self.datawidget = Entry(self, textvariable=self.tkvar, width=10, bg=self.bgcolor)
 		self.datawidget.pack(side=LEFT)
+
+		if self.permissions is not None:
+			if 'w' in self.permissions:
+				Button(self, text='Set', command=self.setServer).pack(side=LEFT)
+			if 'r' in self.permissions:
+				Button(self, text='Get', command=self.getServer).pack(side=LEFT)
+
 
 	def arg_array(self, name):
 		raise NotImplementedError
 
-	def arg_struct(self, name, struct):
-		self.struct = struct
-		sc = TreeWidget.ScrolledCanvas(self, highlightthickness=0, bg=self.bgcolor)
-		sc.frame.pack()
-		item = StructTreeItem(None, name, self.struct)
-		node = TreeWidget.TreeNode(sc.canvas, None, item)
+	def update_tree(self, treedict):
+		if self.sc is not None:
+			self.sc.frame.destroy()
+
+		self.sc = TreeWidget.ScrolledCanvas(self.treeframe, highlightthickness=0, bg=self.bgcolor)
+		#sc.frame.pack(side=TOP)
+		item = StructTreeItem(None, self.name, treedict)
+		node = TreeWidget.TreeNode(self.sc.canvas, None, item)
 		node.expand()
-		self.datawidget = sc
+		#self.datawidget = sc
+		self.sc.frame.pack()
+
+	def arg_struct(self, name):
+		self.sc = None
+		self.treeframe = Frame(self)
+		td = self.getServer()
+		self.update_tree(td)
+		self.treeframe.pack(side=TOP)
+
+		if self.permissions is not None:
+			getsetframe = Frame(self)
+			if 'w' in self.permissions:
+				Button(getsetframe, text='Set', command=self.setServer).pack(side=LEFT)
+			if 'r' in self.permissions:
+				Button(getsetframe, text='Get', command=self.getServer).pack(side=LEFT)
+			getsetframe.pack(side=TOP)
+
 		
 	def arg_date(self, name):
 		raise NotImplementedError
@@ -134,7 +165,7 @@ class Data(SpecWidget):
 
 class Container(SpecWidget):
 	def __init__(self, parent, uiclient, spec):
-		SpecWidget.__init__(self, parent, uiclient, spec)
+		SpecWidget.__init__(self, parent, uiclient, spec, bg='green')
 
 	def buildSpec(self):
 		self.name = self.spec['name']
@@ -191,7 +222,6 @@ class Method(SpecWidget):
 	def process_return(self, returnvalue):
 		ret = self.returnspec['xmlrpctype']
 		if ret in ('array','string'):
-			print 'retwidget', self.retwidget
 			self.retwidget['state'] = NORMAL
 			self.retwidget.delete(0,END)
 			self.retwidget.insert(0, `returnvalue`)
@@ -248,37 +278,23 @@ class NodeGUI(Frame):
 		Frame.__init__(self, parent)
 		self.uiclient = interface.Client(hostname, port)
 
-		mainframe = Container(self, self.uiclient, self.uiclient.spec)
-		mainframe.pack()
-
-		#self.id = self.uiclient.execute('ID')
-		#print 'ID', self.id
-		#self.components = {}
-		#self.__build()
+		self.__build()
 
 	def __build(self):
 		f = Frame(self, bd=4, relief=SOLID)
-		l = Label(f, text=`self.id`)
-		l.pack(side=TOP)
 		b=Button(f, text='Refresh', command=self.__build_components)
 		b.pack(side=TOP)
 		f.pack(side=TOP, expand=YES, fill=BOTH)
+		self.mainframe = None
 		self.__build_components()
 
 	def __build_components(self):
-		## destroy components if this is a refresh
-		for value in self.components.values():
-			value.destroy()
-		self.components.clear()
+		if self.mainframe is not None:
+			self.mainframe.destroy()
+		self.mainframe = Container(self, self.uiclient, self.uiclient.spec)
+		self.mainframe.pack()
 
-		self.uiclient.getMethods()
-			
-		for key in self.uiclient.funclist:
-			value = self.uiclient.funcdict[key]
-			c = NodeGUIComponent(self, value)
-			c.pack(side=TOP, expand=YES, fill=BOTH)
-			self.components[key] = c
-		
+
 # This was done quickly, should be thought out more I suppose
 class StructTreeItem(TreeWidget.TreeItem):
 	def __init__(self, parent, key, value):
