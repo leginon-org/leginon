@@ -5,6 +5,7 @@ Provides a mix-in class CameraFuncs
 import data
 import cameraimage
 import Numeric
+from timer import Timer
 
 class CameraFuncs(object):
 	'''
@@ -16,6 +17,7 @@ class CameraFuncs(object):
 		'''
 		if camstate is not None:
 			self.cameraState(camstate)
+		t = Timer('research image')
 		try:
 			if correction:
 				imdata = self.researchByDataID('normalized image data')
@@ -23,11 +25,12 @@ class CameraFuncs(object):
 			else:
 				imdata = self.researchByDataID('image data')
 				imagearray = imdata.content['image data']
-				imagearray = Numeric.array(imagearray, 'l')
+				print 'IMAGEARRAY', imagearray.shape
 		except Exception, detail:
 			print detail
 			print 'cameraAcquireArray: unable to acquire image data'
 			imagearray = None
+		t.stop()
 		return imagearray
 
 	def cameraAcquireCamera(self, camstate=None, correction=0):
@@ -48,15 +51,20 @@ class CameraFuncs(object):
 		Sets the camera state to camstate.
 		If called without camstate, return the current camera state
 		'''
+		t = Timer('cameraState')
 		if camstate is not None:
+			t2 = Timer('publish camera state')
 			try:
 				camdata = data.EMData('camera', camstate)
 				self.publishRemote(camdata)
 			except Exception, detail:
 				print detail
 				print 'cameraState: unable to set camera state'
+			t2.stop()
+
 		try:
 			newcamstate = self.researchByDataID('camera no image data')
+			t.stop()
 			return newcamstate
 		except Exception, detail:
 			print detail
@@ -79,8 +87,10 @@ class CameraFuncs(object):
 
 		binx = camstate['binning']['x']
 		biny = camstate['binning']['y']
-		pixx = camstate['dimension']['x'] * binx
-		pixy = camstate['dimension']['y'] * biny
+		sizex /= binx
+		sizey /= biny
+		pixx = camstate['dimension']['x']
+		pixy = camstate['dimension']['y']
 		offx = sizex / 2 - pixx / 2
 		offy = sizey / 2 - pixy / 2
 		camstate['offset'] = {'x': offx, 'y': offy}
