@@ -178,7 +178,7 @@ class EM(node.Node):
 		return ''
 
 	def uiCallback(self, value=None):
-		if value:
+		if value is not None:
 			return self.setEM(value)
 		else:
 			return self.getEM(withoutkeys=['image data'])
