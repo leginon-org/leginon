@@ -36,6 +36,9 @@ eventmap = {
 	gui.wx.Presets.EditPresetOrder: gui.wx.Presets.EVT_PRESET_ORDER_CHANGED,
 	gui.wx.Presets.PresetChoice: gui.wx.Presets.EVT_PRESET_CHOICE,
 	gui.wx.Camera.CameraPanel: gui.wx.Camera.EVT_CONFIGURATION_CHANGED,
+	gui.wx.Entry.Entry: gui.wx.Entry.EVT_ENTRY,
+	gui.wx.Entry.IntEntry: gui.wx.Entry.EVT_ENTRY,
+	gui.wx.Entry.FloatEntry: gui.wx.Entry.EVT_ENTRY,
 }
 
 def getWindowPath(window):

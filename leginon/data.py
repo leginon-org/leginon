@@ -1482,6 +1482,20 @@ class wxCameraPanelData(wxData):
 		)
 	typemap = classmethod(typemap)
 
+class wxEntryData(wxData):
+	_valuetype = str
+	def typemap(cls):
+		return wxData.typemap() + (
+			('value', cls._valuetype),
+		)
+	typemap = classmethod(typemap)
+
+class wxIntEntryData(wxEntryData):
+	_valuetype = int
+
+class wxFloatEntryData(wxEntryData):
+	_valuetype = float
+
 class Request(type):
 	def __new__(cls, dataclass):
 		return type.__new__(cls, 'Request' + dataclass.__name__, (Data,),

@@ -1,5 +1,5 @@
 import wx
-import wx.lib.masked
+from gui.wx.Entry import FloatEntry, EVT_ENTRY
 import gui.wx.Camera
 import gui.wx.Data
 import gui.wx.Node
@@ -24,18 +24,15 @@ class Panel(gui.wx.Node.Panel):
 
 		sz = wx.GridBagSizer(5, 5)
 		label0 = wx.StaticText(self, -1, 'Wait')
-		self.ncwait = wx.lib.masked.NumCtrl(self, -1, 2.5,
-																				integerWidth=2,
-																				fractionWidth=1,
-																				allowNone=False,
-																				allowNegative=False,
-																				name='ncWait')
+		self.fewait = FloatEntry(self, -1, min=0.0, allownone=False, chars=4,
+															value='2.5', name='feWait')
 		label1 = wx.StaticText(self, -1, 'seconds and use')
 		self.cmovetype = wx.Choice(self, -1, name='cMoveType')
 		label2 = wx.StaticText(self, -1, 'to move to target')
 
 		sz.Add(label0, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL)
-		sz.Add(self.ncwait, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL)
+		sz.Add(self.fewait, (0, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALL)
 		sz.Add(label1, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL)
 		sz.Add(self.cmovetype, (0, 3), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL)
 		sz.Add(label2, (0, 4), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALL)
@@ -118,25 +115,25 @@ class Panel(gui.wx.Node.Panel):
 
 		self.cpcamconfig.setSize(self.node.session)
 
-		gui.wx.Data.setWindowFromDB(self.ncwait)
+		gui.wx.Data.setWindowFromDB(self.fewait)
 		gui.wx.Data.setWindowFromDB(self.cmovetype)
 		gui.wx.Data.setWindowFromDB(self.cbcheckerror)
 		gui.wx.Data.setWindowFromDB(self.cbcompletestate)
 		gui.wx.Data.setWindowFromDB(self.cpcamconfig)
 
-		self.node.wait = self.ncwait.GetValue()
+		self.node.wait = self.fewait.GetValue()
 		self.node.movetype = self.cmovetype.GetStringSelection()
 		self.node.checkerror = self.cbcheckerror.GetValue()
 		self.node.completestate = self.cbcompletestate.GetValue()
 		self.node.camconfig = self.cpcamconfig.getConfiguration()
 
-		gui.wx.Data.bindWindowToDB(self.ncwait)
+		gui.wx.Data.bindWindowToDB(self.fewait)
 		gui.wx.Data.bindWindowToDB(self.cmovetype)
 		gui.wx.Data.bindWindowToDB(self.cbcheckerror)
 		gui.wx.Data.bindWindowToDB(self.cbcompletestate)
 		gui.wx.Data.bindWindowToDB(self.cpcamconfig)
 
-		self.Bind(wx.lib.masked.EVT_NUM, self.onWaitNum, self.ncwait)
+		self.Bind(EVT_ENTRY, self.onWaitEntry, self.fewait)
 		self.Bind(wx.EVT_CHOICE, self.onMoveTypeChoice, self.cmovetype)
 		self.Bind(wx.EVT_CHECKBOX, self.onErrorCheckCheck, self.cbcheckerror)
 		self.Bind(wx.EVT_CHECKBOX, self.onCompleteStateCheck, self.cbcompletestate)
@@ -151,9 +148,8 @@ class Panel(gui.wx.Node.Panel):
 		self.Bind(wxImageViewer.EVT_IMAGE_DOUBLE_CLICKED, self.onImageDoubleClicked,
 							self.imagepanel)
 
-	def onWaitNum(self, evt):
-		if self.node is not None:
-			self.node.wait = evt.GetValue()
+	def onWaitEntry(self, evt):
+		self.node.wait = evt.GetValue()
 
 	def onMoveTypeChoice(self, evt):
 		self.node.movetype = evt.GetString()
