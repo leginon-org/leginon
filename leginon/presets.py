@@ -74,27 +74,42 @@ class PresetsClient(object):
 			if p['name'] == pname:
 				return p
 
-	def uiPresetSelector(self):
-		getpresets = uidata.Method('Get Names', self.uiGetPresetNames)
-		self.uiselectpreset = uidata.SingleSelectFromList('Select Preset', [], 0, persist=True)
-		container = uidata.Container('Preset Selection')
-		container.addObjects((getpresets, self.uiselectpreset))
-		return container
+	def uiSinglePresetSelector(self, label='', default='', permissions='rw', persist=False):
+		return SinglePresetSelector(self, label, default, permissions, persist)
 
-	def uiGetPresetNames(self):
+	def getPresetNames(self):
 		presetlist = self.getPresets()
 		pnames = [p['name'] for p in presetlist]
-		self.uiselectpreset.set(pnames, 0) 
+		return pnames
 
-	def uiGetSelectedName(self):
-		presetname = self.uiselectpreset.getSelectedValue()
-		return presetname
+class SinglePresetSelector(uidata.Container):
+	def __init__(self, presetsclient, label='', default='', permissions='rw', persist=False):
+		uidata.Container.__init__(self, label)
+		self.presetsclient = presetsclient
+		showavailable = uidata.Method('Show Available Names', self.refreshPresetNames)
+		self.available = uidata.String('Available', '', 'r')
+		self.entry = uidata.String('Preset Name', default, permissions, persist=persist)
+		self.addObjects((showavailable, self.available, self.entry))
+
+	def get(self):
+		return self.entry.get()
+
+	def set(self, value):
+		self.entry.set(value)
+
+	def refreshPresetNames(self):
+		names = self.presetsclient.getPresetNames()
+		if names:
+			availstr = '   '.join(names)
+		else:
+			availstr = 'No Presets Available'
+		self.available.set(availstr)
 
 class DataHandler(node.DataHandler):
 	def query(self, id):
 		if id == ('presets',):
 			result = data.PresetSequenceData()
-			result['sequence'] = self.node.presets
+			result['sequence'] = self.node.presets.values()
 		elif id == ('current preset',):
 			result = self.node.currentpreset
 		else:

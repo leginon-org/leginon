@@ -72,7 +72,7 @@ class SpiralTargetMaker(TargetMaker):
 		statuscontainer = uidata.Container('Status')
 		statuscontainer.addObjects((self.statusmessage,))
 
-		pselect = self.presetsclient.uiPresetSelector()
+		self.presetname = self.presetsclient.uiSinglePresetSelector('Preset', '', 'rw', persist=True)
 		self.radius = uidata.Float('Radius (meters)', 1.0e-3, 'rw', persist=True)
 		self.overlap = uidata.Integer('Overlap (percent)', 0, 'rw', persist=True)
 		settingscontainer = uidata.Container('Settings')
@@ -100,7 +100,7 @@ class SpiralTargetMaker(TargetMaker):
 			self.setStatusMessage('Error publishing targets, cannot find EM')
 			return
 		
-		pname = self.presetsclient.uiGetSelectedName()
+		pname = self.presetname.get()
 
 		if pname is None:
 			self.setStatusMessage('Error publishing targets, no preset selected')

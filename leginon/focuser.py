@@ -46,7 +46,6 @@ class Focuser(acquisition.Acquisition):
 			driftthresh = None
 
 		## send the autofocus preset to the scope
-		#autofocuspreset = self.presetsclient.uiGetSelectedName()
 		autofocuspreset = self.autofocuspreset.get()
 		self.presetsclient.toScope(autofocuspreset, emtarget)
 		delay = self.uidelay.get()
@@ -362,8 +361,7 @@ class Focuser(acquisition.Acquisition):
 		self.stigfocminthresh = uidata.Float('Stig Defocus Min', 1e-6, 'rw', persist=True)
 		self.stigfocmaxthresh = uidata.Float('Stig Defocus Max', 4e-6, 'rw', persist=True)
 
-		#autofocuspreset = self.presetsclient.uiPresetSelector()
-		self.autofocuspreset = uidata.String('Auto Focus Preset', '', 'rw', persist=True)
+		self.autofocuspreset = self.presetsclient.uiSinglePresetSelector('Auto Focus Preset', '', 'rw', persist=True)
 
 		focustypes = self.focus_methods.keys()
 		focustypes.sort()
