@@ -37,12 +37,12 @@ class DoseCalibrator(calibrator.Calibrator):
 		self.start()
 
 	def uiMeasureDoseRate(self):
-		self.screenDown()
+		#self.screenDown()
 		status = self.getCurrentAndMag()
 		if status == 'ok':
 			pass
 		elif status == 'screen':
-			self.logger.error('Cannot measure current with main screen down')
+			self.logger.error('Cannot measure current with main screen up')
 		elif status == None:
 			e = 'Unable to measure dose rate: unable to access instrument'
 			self.logger.error(e)
@@ -82,7 +82,7 @@ class DoseCalibrator(calibrator.Calibrator):
 			return 'screen'
 
 	def acquireImage(self):
-		self.screenUp()
+		# self.screenUp()
 		return calibrator.Calibrator.acquireImage(self)
 
 	def uiCalibrateCamera(self):
