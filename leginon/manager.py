@@ -8,7 +8,6 @@ import data
 import common
 import event
 import signal
-import os
 
 class Manager(node.Node):
 	def __init__(self, id):
@@ -215,6 +214,9 @@ class Manager(node.Node):
 	def uiGetInfo(self, key):
 		return self.ui_info[key].keys()
 
+	def uiGetID(self):
+		return self.id
+
 	def uiUpdateEventclasses(self):
 		self.ui_info['eventclasses'] = event.eventClasses()
 
@@ -260,6 +262,7 @@ class Manager(node.Node):
 if __name__ == '__main__':
 	import signal, sys
 	import managergui
+	import Tkinter
 
 	manager_id = ('manager',)
 	m = Manager(manager_id)
@@ -267,7 +270,7 @@ if __name__ == '__main__':
 	## GUI
 	gui = 1
 	if gui:
-		tk = Tk()
+		tk = Tkinter.Tk()
 		mgui = managergui.ManagerGUI(tk, m)
 		mgui.pack()
 		t = threading.Thread(target = tk.mainloop)

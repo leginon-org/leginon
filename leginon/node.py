@@ -1,5 +1,4 @@
 import threading
-import socket
 import xmlrpcserver
 import code
 import leginonobject
@@ -8,8 +7,7 @@ import datatransport
 import datahandler
 import sys
 import copy
-import os
-import threading
+
 if sys.platform == 'win32':
 	sys.coinit_flags = 0
 

@@ -16,9 +16,11 @@ class ShelfDict(object):
 		self.__close_shelf()
 
 	def __open_shelf(self):
+		print 'open'
 		self.shelf = shelve.open(self.filename)
 
 	def __close_shelf(self):
+		print 'close'
 		self.shelf.close()
 
 	def __pickle_key(self, key):
@@ -63,8 +65,15 @@ class ShelfDict(object):
 
 	def __len__(self):
 		self.__open_shelf()
-		return len(self.shelf)
+		length = len(self.shelf)
 		self.__close_shelf()
+		return length
+
+	def __iter__(self):
+		return self.iterkeys()
+
+	def iterkeys(self):
+		return iter(self.keys())
 
 	def has_key(self, key):
 		self.__open_shelf()
@@ -78,3 +87,26 @@ class ShelfDict(object):
 		self.__close_shelf()
 		keys = map(self.__unpickle_key, pkeys)
 		return keys
+
+	def values(self):
+		self.__open_shelf()
+		d = dict(self.shelf)
+		self.__close_shelf()
+		return d.values()
+
+	def items(self):
+		self.__open_shelf()
+		d = dict(self.shelf)
+		self.__close_shelf()
+		items = []
+		for pkey,value in d.items():
+			key = self.__unpickle_key(pkey)
+			items.append((key,value))
+		return items
+
+	def update(self, newdict):
+		self.__open_shelf()
+		for key,value in newdict.items():
+			newkey = self.__pickle_key(key)
+			self.shelf[newkey] = value
+		self.__close_shelf()
