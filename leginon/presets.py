@@ -154,8 +154,9 @@ class PresetsClient(object):
 		p = PresetDict()
 		scope = self.node.researchByDataID('scope')
 		camera = self.node.researchByDataID('camera no image data')
-		p.update(scope.content)
-		p.update(camera.content)
+		# these two work?
+		p.update(scope)
+		p.update(camera)
 		return p
 
 

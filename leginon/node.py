@@ -214,7 +214,7 @@ class Node(leginonobject.LeginonObject):
 			try:
 				self.datahandlers[dbdatakeeper.DBDataKeeper].insert(idata)
 			except KeyError:
-				self.printerror('no DBDataKeeper to publish: %s' % str(idata.id))
+				self.printerror('no DBDataKeeper to publish: %s' % str(idata['id']))
 
 		if 'eventclass' in kwargs:
 			eventclass = kwargs['eventclass']
@@ -230,9 +230,7 @@ class Node(leginonobject.LeginonObject):
 
 		if 'node' in kwargs and kwargs['node']:
 			self.datahandlers[self.datahandler].insert(idata)
-
-			# this idata.id is content, I think
-			e = eventclass(self.ID(), idata.id, confirm)
+			e = eventclass(self.ID(), idata['id'], confirm)
 			self.outputEvent(e)
 
 	def research(self, **kwargs):
@@ -274,7 +272,7 @@ class Node(leginonobject.LeginonObject):
 
 	def publishRemote(self, idata):
 		'''Publish a piece of data with the specified data ID, setting all other data with the same data ID to the data value (including other nodes).'''
-		dataid = idata.id
+		dataid = idata['id']
 		nodeiddata = self.researchByLocation(self.nodelocations['manager'], dataid)
 		if nodeiddata is None:
 			# try a partial ID lookup
@@ -283,10 +281,10 @@ class Node(leginonobject.LeginonObject):
 		if nodeiddata is None:
 			raise PublishError('No such Data ID: %s' % (dataid,))
 
-		for nodeid in nodeiddata.content:
+		for nodeid in nodeiddata['location']:
 			nodelocation = self.researchByLocation(self.nodelocations['manager'],
 				nodeid)
-			client = self.clientclass(self.ID(), nodelocation.content)
+			client = self.clientclass(self.ID(), nodelocation['location'])
 			client.push(idata)
 
 	def researchByLocation(self, loc, dataid):
@@ -303,8 +301,8 @@ class Node(leginonobject.LeginonObject):
 			raise ResearchError('No such Data ID: %s' % (dataid,))
 
 		# should interate over nodes, be crafty, etc.
-		datalocationdata = self.managerclient.pull(nodeiddata.content[-1])
-		newdata = self.researchByLocation(datalocationdata.content, dataid)
+		datalocationdata = self.managerclient.pull(nodeiddata['location'][-1])
+		newdata = self.researchByLocation(datalocationdata['location'], dataid)
 		return newdata
 
 	# methods for setting up the manager

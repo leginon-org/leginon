@@ -21,7 +21,7 @@ class TargetWatcher(watcher.Watcher):
 			print 'TARGETLIST len', len(targetlist)
 			self.abort.clear()
 			for target in targetlist:
-				print 'targetid', target.id
+				print 'targetid', target['id']
 				self.processTargetData(target)
 				print 'checking abort'
 				if self.abort.isSet():

@@ -43,8 +43,8 @@ class TargetFinder(imagewatcher.ImageWatcher):
 																								targets=self.targetlist)
 			self.publish(targetlistdata, event.ImageTargetListPublishEvent)
 			print 'published targetlistdata', targetlistdata
-			print 'content'
-			print targetlistdata.content
+			print 'targets'
+			print targetlistdata['targets']
 
 	def defineUserInterface(self):
 		imwatch = imagewatcher.ImageWatcher.defineUserInterface(self)

@@ -7,6 +7,7 @@ import time
 import cameraimage
 import camerafuncs
 import calibrationclient
+import copy
 
 class Navigator(node.Node):
 	def __init__(self, id, nodelocations, **kwargs):
@@ -33,7 +34,7 @@ class Navigator(node.Node):
 
 	def handleImageClick(self, clickevent):
 		print 'handling image click'
-		clickinfo = clickevent.content
+		clickinfo = copy.deepcopy(clickevent)
 		## get relavent info from click event
 		clickrow = clickinfo['array row']
 		clickcol = clickinfo['array column']
@@ -56,7 +57,7 @@ class Navigator(node.Node):
 		movetype = self.movetype.get()
 		calclient = self.calclients[movetype]
 		newstate = calclient.transform(pixelshift, clickscope, clickcamera)
-		emdat = data.EMData('scope', newstate)
+		emdat = data.EMData('scope', em=newstate)
 		self.publishRemote(emdat)
 
 		# wait for a while
