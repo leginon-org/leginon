@@ -149,7 +149,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		except InvalidStagePosition:
 			return 'invalid'
 		except NoMoveCalibration:
-			self.logger.info('Pausing...')
 			self.player.pause()
 			self.logger.error('Calibrate this move type, then continue')
 			self.beep()
@@ -165,7 +164,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 			else:
 				## if there was a targetdata, then 
 				## we assume we are in a target list loop
-				self.logger.info('Pausing...')
 				self.player.pause()
 				self.logger.error(estr + ' and press continue')
 				self.beep()

@@ -1,7 +1,8 @@
-import gui.wx.Acquisition
+import wx
 from gui.wx.Choice import Choice
 from gui.wx.Entry import FloatEntry, EVT_ENTRY
-import wx
+import gui.wx.Acquisition
+import gui.wx.Events
 import gui.wx.ImageViewer
 import gui.wx.ToolBar
 
@@ -79,9 +80,9 @@ class Panel(gui.wx.Acquisition.Panel):
 	def onManualCheckDone(self, evt):
 		self.manualdialog.Show(False)
 
-	def updateManualImages(self):
-		evt = UpdateImagesEvent()
-		self.manualdialog.AddPendingEvent(evt)
+	def setManualImage(self, image, typename, stats={}):
+		evt = gui.wx.Events.SetImageEvent(image, typename, stats)
+		self.manualdialog.GetEventHandler().AddPendingEvent(evt)
 
 class SettingsDialog(gui.wx.Acquisition.SettingsDialog):
 	def initialize(self):
@@ -259,15 +260,13 @@ class ManualFocusDialog(wx.Dialog):
 		szmaskradius.Add(wx.StaticText(self, -1, '% of image'), (0, 2), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
 
-		self.rbimage = wx.RadioBox(self, -1, 'Display',
-																					choices=['Image', 'Power Spectrum'],
-																					style=wx.RA_VERTICAL)
-
 		szimage = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Image'), wx.VERTICAL)
 		szimage.Add(szmaskradius, 0, wx.ALIGN_CENTER|wx.ALL, 5)
-		szimage.Add(self.rbimage, 0, wx.ALIGN_CENTER|wx.ALL, 5)
 
-		self.ipimage = gui.wx.ImageViewer.ImagePanel(self, -1)
+		self.image = gui.wx.ImageViewer.ImagePanel(self, -1)
+		self.image.addTypeTool('Image', display=True)
+		self.image.addTypeTool('Power', display=True)
+		self.image.selectiontool.setDisplayed('Image', True)
 
 		sz = wx.GridBagSizer(5, 5)
 		sz.Add(szef, (0, 0), (1, 2), wx.EXPAND)
@@ -278,7 +277,7 @@ class ManualFocusDialog(wx.Dialog):
 		sz.Add(self.bdone, (4, 1), (1, 1), wx.ALIGN_CENTER|wx.TOP, 10)
 		szmain = wx.GridBagSizer(5, 5)
 		szmain.Add(sz, (0, 0), (1, 1), wx.ALIGN_TOP|wx.ALL, 10)
-		szmain.Add(self.ipimage, (0, 1), (1, 1), wx.ALIGN_CENTER|wx.ALL, 10)
+		szmain.Add(self.image, (0, 1), (1, 1), wx.ALIGN_CENTER|wx.ALL, 10)
 		self.SetSizerAndFit(szmain)
 
 		self.Bind(wx.EVT_BUTTON, self.onEFToScopeButton, self.beftoscope)
@@ -291,12 +290,14 @@ class ManualFocusDialog(wx.Dialog):
 		self.Bind(EVT_ENTRY, self.onMaskRadiusEntry, self.femaskradius)
 		self.Bind(EVT_ENTRY, self.onIncrementEntry, self.feincrement)
 		self.Bind(wx.EVT_CHOICE, self.onParameterChoice, self.cparameter)
-		self.Bind(EVT_UPDATE_IMAGES, self.onUpdateImages, parent)
-		self.Bind(wx.EVT_RADIOBOX, self.onUpdateImages, self.rbimage)
+		self.Bind(gui.wx.Events.EVT_SET_IMAGE, self.onSetImage)
 
 		self.onParameterChoice()
 		self.onMaskRadiusEntry()
 		self.onIncrementEntry()
+
+	def onSetImage(self, evt):
+		self.image.setImageType(evt.typename, evt.image)
 
 	def onTogglePause(self, evt):
 		if evt.IsChecked():
@@ -342,13 +343,6 @@ class ManualFocusDialog(wx.Dialog):
 		else:
 			parameter = evt.GetString()
 		self.node.parameter = parameter
-
-	def onUpdateImages(self, evt):
-		string = self.rbimage.GetStringSelection()
-		if string == 'Image':
-			self.ipimage.setImage(self.node.man_image)
-		elif string == 'Power Spectrum':
-			self.ipimage.setImage(self.node.man_power)
 
 if __name__ == '__main__':
 	class App(wx.App):

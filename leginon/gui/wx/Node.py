@@ -7,12 +7,8 @@ import gui.wx.ToolBar
 import gui.wx.Events
 
 NodeInitializedEventType = wx.NewEventType()
-SetImageEventType = wx.NewEventType()
-SetTargetsEventType = wx.NewEventType()
 
 EVT_NODE_INITIALIZED = wx.PyEventBinder(NodeInitializedEventType)
-EVT_SET_IMAGE = wx.PyEventBinder(SetImageEventType)
-EVT_SET_TARGETS = wx.PyEventBinder(SetTargetsEventType)
 
 class NodeInitializedEvent(wx.PyEvent):
 	def __init__(self, node):
@@ -20,21 +16,6 @@ class NodeInitializedEvent(wx.PyEvent):
 		self.SetEventType(NodeInitializedEventType)
 		self.node = node
 		self.event = threading.Event()
-
-class SetImageEvent(wx.PyEvent):
-	def __init__(self, image, typename=None, stats={}):
-		wx.PyEvent.__init__(self)
-		self.SetEventType(SetImageEventType)
-		self.image = image
-		self.typename = typename
-		self.stats = stats
-
-class SetTargetsEvent(wx.PyEvent):
-	def __init__(self, targets, typename):
-		wx.PyEvent.__init__(self)
-		self.SetEventType(SetTargetsEventType)
-		self.targets = targets
-		self.typename = typename
 
 class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 	def __init__(self, parent, id, tools=None, **kwargs):
@@ -54,8 +35,8 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 		self.messagelog.Show(False)
 
 		self.Bind(EVT_NODE_INITIALIZED, self._onNodeInitialized)
-		self.Bind(EVT_SET_IMAGE, self.onSetImage)
-		self.Bind(EVT_SET_TARGETS, self.onSetTargets)
+		self.Bind(gui.wx.Events.EVT_SET_IMAGE, self.onSetImage)
+		self.Bind(gui.wx.Events.EVT_SET_TARGETS, self.onSetTargets)
 		self.Bind(gui.wx.Events.EVT_ACQUISITION_DONE, self.onAcquisitionDone)
 		self.Bind(gui.wx.MessageLog.EVT_ADD_MESSAGE, self.onAddMessage)
 

@@ -14,6 +14,7 @@ import event
 import leginonobject
 import logging
 import threading
+import gui.wx.Events
 import gui.wx.Logging
 import gui.wx.Node
 import copy
@@ -145,11 +146,11 @@ class Node(leginonobject.LeginonObject):
 		evt.event.wait()
 
 	def setImage(self, image, typename=None, stats={}):
-		evt = gui.wx.Node.SetImageEvent(image, typename, stats)
+		evt = gui.wx.Events.SetImageEvent(image, typename, stats)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
 	def setTargets(self, targets, typename):
-		evt = gui.wx.Node.SetTargetsEvent(targets, typename)
+		evt = gui.wx.Events.SetTargetsEvent(targets, typename)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
 	def exit(self):

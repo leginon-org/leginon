@@ -30,12 +30,31 @@ eventFactory('Set Instrument Done')
 eventFactory('Measurement Done')
 
 PlayerEventType = wx.NewEventType()
+SetImageEventType = wx.NewEventType()
+SetTargetsEventType = wx.NewEventType()
 
 EVT_PLAYER = wx.PyEventBinder(PlayerEventType)
+EVT_SET_IMAGE = wx.PyEventBinder(SetImageEventType)
+EVT_SET_TARGETS = wx.PyEventBinder(SetTargetsEventType)
 
 class PlayerEvent(wx.PyEvent):
 	def __init__(self, state):
 		wx.PyEvent.__init__(self)
 		self.SetEventType(PlayerEventType)
 		self.state = state
+
+class SetImageEvent(wx.PyEvent):
+	def __init__(self, image, typename=None, stats={}):
+		wx.PyEvent.__init__(self)
+		self.SetEventType(SetImageEventType)
+		self.image = image
+		self.typename = typename
+		self.stats = stats
+
+class SetTargetsEvent(wx.PyEvent):
+	def __init__(self, targets, typename):
+		wx.PyEvent.__init__(self)
+		self.SetEventType(SetTargetsEventType)
+		self.targets = targets
+		self.typename = typename
 

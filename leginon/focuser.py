@@ -324,7 +324,7 @@ class Focuser(acquisition.Acquisition):
 		self.logger.info('Starting manual focus loop...')
 		self.logger.info('Please confirm defocus')
 		self.beep()
-		while 1:
+		while True:
 			if self.manual_check_done.isSet():
 				break
 			if self.manual_pause.isSet():
@@ -342,11 +342,15 @@ class Focuser(acquisition.Acquisition):
 				imagedata = self.cam.acquireCameraImageData(correction=cor)
 			finally:
 				self.manualchecklock.release()
+			if imagedata is None:
+				self.logger.error('Failed to acquire image')
+				break
 			imarray = imagedata['image']
 			pow = imagefun.power(imarray, self.maskradius)
 			self.man_power = pow.astype(Numeric.Float32)
 			self.man_image = imarray.astype(Numeric.Float32)
-			self.panel.updateManualImages(self.panel)
+			self.panel.setManualImage(self.man_image, 'Image')
+			self.panel.setManualImage(self.man_power, 'Power')
 		self.onManualCheckDone()
 		self.logger.info('Manual focus loop done')
 

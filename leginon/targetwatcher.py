@@ -38,7 +38,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		self.addEventInput(event.ImageTargetShiftPublishEvent,
 												self.handleTargetShift)
 
-		self.player = player.Player(callback=self.panel.playerEvent)
+		self.player = player.Player(callback=self.onPlayer)
 		self.panel.playerEvent(self.player.state())
 		self.newtargetshift = threading.Event()
 		self.target_types = target_types
@@ -104,7 +104,8 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		for i, target in enumerate(goodtargets):
 			self.logger.debug('target %s status %s' % (i, target['status'],))
 			# abort
-			if self.player.state() == 'stop':
+			state = self.player.wait()
+			if state == 'stop':
 				self.logger.info('Aborting current target list')
 				targetliststatus = 'aborted'
 				donetarget = data.AcquisitionImageTargetData(initializer=target, status='aborted')
@@ -178,7 +179,6 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 				try:
 					process_status = self.processTargetData(adjustedtarget, attempt=attempt)
 				except node.PublishError, e:
-					self.logger.info('Pausing...')
 					self.player.pause()
 					self.logger.exception('Saving image failed: %s' % e)
 					process_status = 'repeat'
@@ -187,12 +187,8 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 					process_status = 'exception'
 
 				# pause
-				if self.player.state() == 'pause':
-					self.logger.info('Paused')
-					self.player.wait()
-
-				# abort
-				if self.player.state() == 'stop':
+				state = self.player.wait()
+				if state == 'stop':
 					self.logger.info('Aborted')
 					break
 
@@ -266,4 +262,16 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 	def continueTargetListLoop(self):
 		self.player.play()
+
+	def onPlayer(self, state):
+		infostr = ''
+		if state == 'play':
+			infostr += 'Continuing...'
+		elif state == 'pause':
+			infostr += 'Pausing...'
+		elif state == 'stop':
+			infostr += 'Aborting...'
+		if infostr:
+			self.logger.info(infostr)
+		self.panel.playerEvent(state)
 
