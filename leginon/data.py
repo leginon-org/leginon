@@ -1768,6 +1768,20 @@ class DoseCalibratorSettingsData(CalibratorSettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class GonModelerSettingsData(CalibratorSettingsData):
+	def typemap(cls):
+		return CalibratorSettingsData.typemap() + (
+			('measure axis', str),
+			('measure points', int),
+			('measure interval', float),
+			('measure tolerance', float),
+			('model axis', str),
+			('model magnification', float),
+			('model terms', int),
+			('model mag only', bool),
+		)
+	typemap = classmethod(typemap)
+
 class BeamTiltCalibratorSettingsData(CalibratorSettingsData):
 	def typemap(cls):
 		return CalibratorSettingsData.typemap() + (

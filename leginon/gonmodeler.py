@@ -20,32 +20,48 @@ import uidata
 import string
 import math
 import EM
+import calibrator
 try:
 	import numarray as Numeric
 except:
 	import Numeric
+import gui.wx.GonModeler
 
-class GonModeler(node.Node):
-	eventinputs = node.Node.eventinputs + EM.EMClient.eventinputs
-	eventoutputs = node.Node.eventoutputs + EM.EMClient.eventoutputs
+class GonModeler(calibrator.Calibrator):
+	panelclass = gui.wx.GonModeler.Panel
+	settingsclass = data.GonModelerSettingsData
+	defaultsettings = {
+		'camera settings': None,
+		'correlation type': 'cross',
+		'measure axis': 'x',
+		'measure points': 200,
+		'measure interval': 5e-6,
+		'measure tolerance': 25.0,
+		'model axis': 'x',
+		'model magnification': None,
+		'model terms': 5,
+		'model mag only': False,
+	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.correlator = correlator.Correlator()
 		self.peakfinder = peakfinder.PeakFinder()
 		self.settle = 5.0
 		self.threadstop = threading.Event()
 		self.threadlock = threading.Lock()
-		node.Node.__init__(self, id, session, managerlocation, **kwargs)
-		self.emclient = EM.EMClient(self)
-		self.cam = camerafuncs.CameraFuncs(self)
+		calibrator.Calibrator.__init__(self, id, session, managerlocation, **kwargs)
 		self.calclient = calibrationclient.ModeledStageCalibrationClient(self)
 		self.pcal = calibrationclient.PixelSizeCalibrationClient(self)
-		self.defineUserInterface()
+
+		self.axes = ['x', 'y']
+		self.measurelabel = ''
+		self.modellabel = ''
+
 		self.start()
 
 	# calibrate needs to take a specific value
 	def loop(self, label, axis, points, interval):
 		## set camera state
-		self.cam.uiApplyAsNeeded()
+		self.cam.setCameraDict(self.settings['camera settings'])
 
 		mag = self.getMagnification()
 		ht = self.getHighTension()
@@ -78,7 +94,7 @@ class GonModeler(node.Node):
 			self.logger.info('Measured pixel size %s' % (measuredpixsize,))
 			error = abs(measuredpixsize - known_pixelsize) / known_pixelsize
 			self.logger.info('Error %s' % (error,))
-			if error > self.tolerance.get():
+			if error > self.settings['tolerance']/100.0:
 				self.logger.info('Rejected...')
 			else:
 				self.logger.info('Saving to database...')
@@ -100,7 +116,7 @@ class GonModeler(node.Node):
 		## acquire image
 		newimagedata = self.cam.acquireCameraImageData(correction=0)
 		newnumimage = newimagedata['image']
-		self.ui_image.set(newnumimage.astype(Numeric.Float32))
+		self.updateImage('Image', newnumimage.astype(Numeric.Float32))
 
 		## insert into correlator
 		self.correlator.insertImage(newnumimage)
@@ -170,11 +186,7 @@ class GonModeler(node.Node):
 
 	def uiFit(self):
 		# label, mag, axis, terms,...
-		self.calclient.fit(self.uifitlabel.get(), self.uifitmag.get(), self.uifitaxis.getSelectedValue(), self.uiterms.get(), magonly=0)
-		return ''
-
-	def uiMagOnly(self):
-		self.calclient.fit(self.uifitlabel.get(), self.uifitmag.get(), self.uifitaxis.getSelectedValue(), self.uiterms.get(), magonly=1)
+		self.calclient.fit(self.modellabel, self.settings['model magnification'], self.settings['model axis'], self.settings['model terms'], magonly=self.settings['model mag only'])
 		return ''
 
 	def getMagnification(self):
@@ -185,48 +197,13 @@ class GonModeler(node.Node):
 		dat = self.emclient.getScope()
 		return dat['high tension']
 
-	def defineUserInterface(self):
-		nodespec = node.Node.defineUserInterface(self)
-
-		self.ui_image = uidata.Image('GonModeler Image', None, 'rw')
-
-		self.uidatalabel = uidata.String('Label', '', 'rw', persist=True)
-		self.uiaxis = uidata.SingleSelectFromList('Axis',  ['x','y'], 0)
-		self.uipoints = uidata.Integer('Points', 200, 'rw', persist=True)
-		self.uiinterval = uidata.Float('Interval', 5e-6, 'rw', persist=True)
-		self.tolerance = uidata.Float('Tolerance (fraction of known pixel size)', 0.25, 'rw', persist=True)
-		start = uidata.Method('Start', self.uiStartLoop)
-		stop = uidata.Method('Stop', self.uiStopLoop)
-		measurecont = uidata.Container('Measure')
-		measurecont.addObjects((self.uiaxis, self.uipoints, self.uiinterval, self.uidatalabel, self.tolerance, start, stop))
-
-		self.uifitlabel = uidata.String('Label', '', 'rw', persist=True)
-		self.uifitmag = uidata.Integer('Magnification', None, 'rw', persist=True)
-		self.uifitaxis = uidata.SingleSelectFromList('Axis',  ['x','y'], 0, persist=True)
-		self.uiterms = uidata.Integer('Terms', 5, 'rw', persist=True)
-		fit = uidata.Method('Fit Model', self.uiFit)
-		magonly = uidata.Method('Mag Only', self.uiMagOnly)
-
-		modelcont = uidata.Container('Model')
-		modelcont.addObjects((self.uifitlabel, self.uifitmag, self.uifitaxis, self.uiterms, fit, magonly))
-
-		camconfig = self.cam.uiSetupContainer()
-
-		maincont = uidata.LargeContainer('GonModeler')
-		maincont.addObject(measurecont, position={'position':(0,0)})
-		maincont.addObject(modelcont, position={'position':(1,0)})
-		maincont.addObject(camconfig, position={'position':(2,0)})
-		maincont.addObject(self.ui_image, position={'position':(0,1), 'span': (3,1)})
-
-		self.uicontainer.addObject(maincont)
-
 	def uiStartLoop(self):
 		if not self.threadlock.acquire(0):
 			return ''
-		label = self.uidatalabel.get()
-		axis = self.uiaxis.getSelectedValue()
-		points = self.uipoints.get()
-		interval = self.uiinterval.get()
+		label = self.measurelabel
+		axis = self.settings['measure axis']
+		points = self.settings['measure points']
+		interval = self.settings['measure interval']
 		self.threadstop.clear()
 		t = threading.Thread(target=self.loop, args=(label, axis, points, interval))
 		t.setDaemon(1)
