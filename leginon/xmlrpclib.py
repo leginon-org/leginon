@@ -1,6 +1,6 @@
 #
 # XML-RPC CLIENT LIBRARY
-# $Id: xmlrpclib.py,v 1.6 2003-08-26 18:18:05 suloway Exp $
+# $Id: xmlrpclib.py,v 1.7 2003-08-27 17:18:27 suloway Exp $
 #
 # an XML-RPC client interface for Python.
 #
@@ -128,7 +128,10 @@ Exported functions:
 
 import re, string, time, operator
 from timer import Timer
-import base64
+try:
+	import radix64
+except:
+	import base64
 import StringIO
 
 from types import *
@@ -298,27 +301,25 @@ class Binary:
     def decode(self, data):
         ## first try the faster radix64, then base64
 #        t = Timer('Binary.decode')
-#        try:
-#            import radix64
-#            self.data = radix64.decode(data)
-#        except:
-#         print 'using base64, you should install radix64 instead'
-         self.data = base64.decodestring(data)
+        try:
+            self.data = radix64.decode(data)
+        except:
+            print 'using base64, you should install radix64 instead'
+            self.data = base64.decodestring(data)
 #        t.stop()
 
     def encode(self, out):
-#        t = Timer('Binary.encode')
+         t = Timer('Binary.encode')
          out.write("<value><base64>\n")
          ## first try the faster radix64, then base64
-#        try:
-#            import radix64
-#            e = radix64.encode(self.data)
-#            out.write(e)
-#        except:
-#         print 'using base64, you should install radix64 instead'
-         base64.encode(StringIO.StringIO(self.data), out)
+         try:
+             e = radix64.encode(self.data)
+             out.write(e)
+         except:
+             print 'using base64, you should install radix64 instead'
+             base64.encode(StringIO.StringIO(self.data), out)
          out.write("</base64></value>\n")
-#        t.stop()
+         t.stop()
 
 def binary(data):
     value = Binary()
