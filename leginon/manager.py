@@ -184,7 +184,7 @@ class Manager(node.Node):
 				self.clients[to_node].push(ievent)
 			except:
 				self.printException()
-				self.printerror('cannot push to node ' + str(nodeid) + ', unregistering')
+				self.printerror('cannot push to node ' + str(to_node) + ', unregistering')
 				# make sure we don't wait for confirmation
 				if ievent['confirm']:
 					ewaits[eventid][to_node].set()
