@@ -107,6 +107,3 @@ registerNodeClass('fftmaker', 'FFTMaker', 'Pipeline')
 #registerNodeClass('intensitycalibrator', 'IntensityCalibrator', 'Calibrations')
 #registerNodeClass('webcam', 'Webcam', 'Utility')
 
-# depreciated
-#registerNodeClass('simpleacquisition', 'SimpleAcquisition', 'Pipeline')
-
