@@ -1,6 +1,6 @@
 #
 # XML-RPC CLIENT LIBRARY
-# $Id: xmlrpclib.py,v 1.3 2003-06-09 22:43:06 pulokas Exp $
+# $Id: xmlrpclib.py,v 1.4 2003-06-20 23:11:43 pulokas Exp $
 #
 # an XML-RPC client interface for Python.
 #
@@ -298,11 +298,10 @@ class Binary:
 	t = Timer('Binary.decode')
 	try:
 		import radix64
-		print 'USING RADIX64'
 		self.data = radix64.decode(data)
 	except:
 		import base64
-		print 'USING BASE64'
+		print 'using base64, you should install radix64 instead'
 		self.data = base64.decodestring(data)
 	t.stop()
 
@@ -312,12 +311,11 @@ class Binary:
 	## first try the faster radix64, then base64
 	try:
 		import radix64
-		print 'USING RADIX64'
 		e = radix64.encode(self.data)
 		out.write(e)
 	except:
 		import base64, StringIO
-		print 'USING BASE64'
+		print 'using base64, you should install radix64 instead'
 		base64.encode(StringIO.StringIO(self.data), out)
         out.write("</base64></value>\n")
 	t.stop()
