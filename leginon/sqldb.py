@@ -20,6 +20,14 @@ def connect(**kwargs):
 	c = MySQLdb.connect(**defaults)
 	return c
 
+def escape(anystring):
+	'addslashes to any quotes if necessary'
+	return MySQLdb.escape_string(anystring)
+
+def addbackquotes(anystring):
+	return "`%s`" % (anystring,)
+
+
 class sqlDB:
 	"""
 	This class is a SQL interface to connect a MySQL DB server.
@@ -27,32 +35,30 @@ class sqlDB:
 	"""
 	def __init__(self, **kwargs):
 		self.dbConnection = connect(**kwargs)
+	    	self.c = self.dbConnection.cursor(cursorclass=MySQLdb.cursors.DictCursor)
 		
 	def selectone(self, strSQL, param=None):
 		'Execute a query and return the first row.'
-		c=self.dbConnection.cursor()	
-		c.execute(strSQL, param)
-		result = c.fetchone()
+		self.c.execute(strSQL, param)
+		result = self.c.fetchone()
 		return result
 
 	def selectall(self, strSQL, param=None):
 		'Execute a query and return all rows.'
-		c=self.dbConnection.cursor()	
-		c.execute(strSQL, param)
-		result = c.fetchall()
+		self.c.execute(strSQL, param)
+		result = self.c.fetchall()
 		return result
 
 	def insert(self, strSQL, param=None):
 		'Execute a query to insert data. It returns the last inserted Id.'
-		c=self.dbConnection.cursor()	
-		c.execute(strSQL, param)
-		return c.insert_id()
+		self.c.execute(strSQL, param)
+		return self.c.insert_id()
 
 	def execute(self, strSQL, param=None):
 		'Execute a query'
-		c=self.dbConnection.cursor()	
-		return c.execute(strSQL, param)
+		return self.c.execute(strSQL, param)
 
 	def close(self):
 		'Close a DB connection'
 		self.dbConnection.close()
+
