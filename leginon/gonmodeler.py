@@ -48,6 +48,7 @@ class GonModeler(node.Node):
 		print 'CURRENT POS', currentpos
 
 		for i in range(points):
+			print 'Point %s' % (i,)
 			t = timer.Timer('loop')
 			if self.threadstop.isSet():
 				print 'loop breaking before all points done'
