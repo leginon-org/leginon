@@ -37,10 +37,6 @@ class DataHandler(datahandler.DataBinder):
 		else:
 			result = None
 
-		### taking this out until it breaks something
-		#if result:
-		#	result.origin['location'] = self.EMnode.location()
-
 		self.lock.release()
 		return result
 
@@ -66,7 +62,15 @@ class DataHandler(datahandler.DataBinder):
 
 class EM(node.Node):
 	def __init__(self, id, managerloc, scopeclass = None, cameraclass = None):
+		# internal
 		self.lock = threading.Lock()
+		# external
+		self.nodelock = threading.Lock()
+		self.locknodeid = None
+
+		self.addEventInput(event.Lock, self.lock)
+		self.addEventInput(event.Unlock, self.unlock)
+
 		if scopeclass:
 			self.scope = scopedict.factory(scopeclass)()
 		else:
@@ -94,6 +98,17 @@ class EM(node.Node):
 
 		e = event.ListPublishEvent(self.ID(), ids)
 		self.outputEvent(e)
+
+	def lock(self, ievent):
+		if ievent.id[-1] != self.locknodeid:
+			self.nodelock.acquire()
+			self.locknodeid = ievent.id[-1]
+		self.confirmEvent(ievent)
+
+	def unlock(self, ievent):
+		if ievent.id[-1] == self.locknodeid:
+			self.locknodeid = None
+			self.nodelock.release()
 
 if __name__ == '__main__':
 	import time

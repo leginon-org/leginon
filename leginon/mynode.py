@@ -38,7 +38,7 @@ class MyNode(node.Node):
 		self.timenow = time.asctime()
 		print 'node %s says %s' % (self.id,self.timenow)
 		mydata = data.StringData(self.ID(), self.timenow)
-		self.publish(mydata)
+		#self.publish(mydata)
 		self.waitEvent(self.publish(mydata))
 
 	def handle_intervalchange(self, controlevent):
