@@ -801,14 +801,29 @@ static PyObject *linearscale(PyObject *self, PyObject *args) {
 }
 
 static PyObject *rgbstring(PyObject *self, PyObject *args) {
-	PyObject *input, *output;
+	PyObject *input, *output, *colormap = NULL, *values = NULL, *cvalue = NULL;
 	PyArrayObject *inputarray;
 	int i, j, size;
 	float frommin, frommax, fromrange, scale, value;
-	unsigned char scaledvalue, *string, *index;
+	unsigned char *string, *index;
+	int scaledvalue;
+	float colors = 255.0;
+	unsigned char *rgb = NULL;
 
-	if(!PyArg_ParseTuple(args, "Off", &input, &frommin, &frommax))
+	if(!PyArg_ParseTuple(args, "Off|O", &input, &frommin, &frommax, &colormap))
 		return NULL;
+
+	if(colormap != NULL) {
+		colors = (float)(PySequence_Size(colormap) - 1);
+		rgb = PyMem_New(unsigned char, colors*3);
+		for(i = 0; i <= colors; i++) {
+			values = PySequence_Fast_GET_ITEM(colormap, i);
+			for(j = 0; j < 3; j++) {
+				cvalue = PySequence_Fast_GET_ITEM(values, j);
+				rgb[i*3 + j] = (unsigned char)PyInt_AsUnsignedLongMask(cvalue);
+			}
+		}
+	}
 
 	inputarray = NA_InputArray(input, tFloat32, NUM_C_ARRAY|NUM_COPY);
 
@@ -817,7 +832,7 @@ static PyObject *rgbstring(PyObject *self, PyObject *args) {
 	if(fromrange == 0.0)
 		scale = 0.0;
 	else
-		scale = 255.0/fromrange;
+		scale = (float)colors/fromrange;
 
 	size = inputarray->dimensions[0]*inputarray->dimensions[1]*3;
 	output = PyString_FromStringAndSize(NULL, size);
@@ -830,16 +845,24 @@ static PyObject *rgbstring(PyObject *self, PyObject *args) {
 			if(value <= frommin) {
 				scaledvalue = 0;
 			} else if(value >= frommax) {
-				scaledvalue = 255;
+				scaledvalue = colors;
 			} else {
-				scaledvalue = (unsigned char)(scale*(value - frommin));
+				scaledvalue = (int)(scale*(value - frommin));
 			}
-			*index = scaledvalue;
-			*(index + 1) = scaledvalue;
-			*(index + 2) = scaledvalue;
+			if(colormap == NULL) {
+				*index = (unsigned char)scaledvalue;
+				*(index + 1) = (unsigned char)scaledvalue;
+				*(index + 2) = (unsigned char)scaledvalue;
+			} else {
+				scaledvalue *= 3;
+				*index = rgb[scaledvalue];
+				*(index + 1) = rgb[scaledvalue + 1];
+				*(index + 2) = rgb[scaledvalue + 2];
+			}
 			index += 3;
 		}
 	}
+	PyMem_Del(rgb);
 
 	Py_DECREF(inputarray);
 
