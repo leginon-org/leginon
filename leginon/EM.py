@@ -124,29 +124,26 @@ class EM(node.Node):
 			self.locknodeid = None
 			self.nodelock.release()
 
-	def uiCallback(self, name, value=None):
-		print "name =", name
-		if name == 'EM State':
-			if value:
-				for id in value:
-					if self.scope and self.scope.has_key(id):
-						self.scope[id] = value[id]
-					elif self.camera and self.camera.has_key(id):
-						self.camera[id] = value[id]
-			else:
-				d = {}
-				if self.scope:
-					d.update(self.scope)
-				if self.camera:
-					d.update(self.camera)
-					del d['image data']
-				return d
+	def uiCallback(self, value=None):
+		if value:
+			for id in value:
+				if self.scope and self.scope.has_key(id):
+					self.scope[id] = value[id]
+				elif self.camera and self.camera.has_key(id):
+					self.camera[id] = value[id]
 		else:
-			raise ValueError
+			d = {}
+			if self.scope:
+				d.update(self.scope)
+			if self.camera:
+				d.update(self.camera)
+				del d['image data']
+			return d
 
 	def defineUserInterface(self):
 		nodespec = node.Node.defineUserInterface(self)
 		emspec = self.registerUIData('EM State', 'struct', permissions='rw')
+		emspec.set(self.uiCallback)
 		self.registerUISpec('EM', (nodespec, emspec))
 		d = {}
 		if self.scope:
@@ -154,7 +151,7 @@ class EM(node.Node):
 		if self.camera:
 			d.update(self.camera)
 			del d['image data']
-		self.setUIData('EM State', self.uiCallback)
+
 
 if __name__ == '__main__':
 	import time
