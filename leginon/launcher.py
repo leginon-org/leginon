@@ -65,7 +65,7 @@ class Launcher(node.Node):
 
 		ref = self.registerUIMethod(self.uiRefresh, 'Refresh', ())
 
-		self.registerUISpec('Launcher: %s' % self.id, (nint, ref))
+		self.registerUISpec('Launcher: %s' % (self.id,), (nint, ref))
 
 	def uiRefresh(self):
 		self.publishNodeClasses()
