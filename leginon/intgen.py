@@ -8,9 +8,11 @@ class IntGen(node.Node):
 	def __init__(self, managerlocation):
 		node.Node.__init__(self, managerlocation)
 
-		self.addEventOut(event.ControlEvent)
+		#self.addEventOut(event.ControlEvent)
+		self.addEventOut(event.PublishEvent)
 
 		print self.location()
+		print self.id
 		self.main()
 			
 	def main(self):
@@ -18,15 +20,14 @@ class IntGen(node.Node):
 			stuff = raw_input('enter integer> ')
 			print 'stuff %s' % stuff
 			try:
-				stuff = int(stuff)
+				stuff = data.IntData(stuff)
 				print 'stuff after int %s' % stuff
 			except ValueError:
 				print 'you did not enter an integer'
 				continue
 
-			ev = event.ControlEvent(param=stuff)
-			print 'now announcing %s' % ev
-			self.announce(ev)
+			#ev = event.ControlEvent(param=stuff)
+			self.publish(stuff, event.PublishEvent)
 
 
 if __name__ == '__main__':

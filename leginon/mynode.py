@@ -8,11 +8,13 @@ class MyNode(node.Node):
 	def __init__(self, managerlocation):
 		node.Node.__init__(self, managerlocation)
 
-		self.addEventIn(event.ControlEvent, self.handle_intervalchange)
+		#self.addEventIn(event.ControlEvent, self.handle_intervalchange)
+		self.addEventIn(event.PublishEvent, self.handle_intervalpublished)
 		self.addEventOut(event.PublishEvent)
 
-		self.interval = 2
+		self.interval = 5
 		print self.location()
+		print self.id
 		self.main()
 
 	def main(self):
@@ -23,16 +25,26 @@ class MyNode(node.Node):
 	def print_stuff(self):
 		timenow = time.asctime()
 		print timenow
-		mydata = data.StringData(self.id, timenow)
-		self.publish(mydata)
-		myevent = event.PublishEvent(dataid=mydata.id)
-		self.announce(myevent)
+		mydata = data.StringData(timenow)
+		self.publish(mydata, event.PublishEvent)
 
 	def handle_intervalchange(self, controlevent):
 		print 'got control event %s' % controlevent
 		new_interval = controlevent.content
 		print 'new_interval %s is type %s' % (new_interval, type(new_interval))
 		self.change_interval(new_interval)
+
+	def handle_intervalpublished(self, publishevent):
+		print 'got publish event %s' % publishevent
+		dataid = publishevent.content
+		print 'publish event dataid %s' % dataid
+		datahost = publishevent.origin['location']['hostname']
+		dataport = publishevent.origin['location']['data port']
+		dataserv = (datahost,dataport)
+		print 'dataserv ', dataserv
+		new_interval = self.research(dataserv, dataid)
+		print 'new_interval %s is type %s' % (new_interval, type(new_interval))
+		self.change_interval(new_interval.content)
 
 	def change_interval(self, new_interval):
 		self.interval = new_interval

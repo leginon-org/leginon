@@ -13,33 +13,41 @@ class Node(leginonobject.LeginonObject):
 		if managerloc:
 			managerhost = managerloc['hostname']
 			managerport = managerloc['event port']
-			self.eventhandler.addClient(managerhost, managerport)
+			self.addEventClient('manager', managerhost, managerport)
+			self.announce(event.NodeReadyEvent())
 
 	def main(self):
 		'''this is the node's parent method'''
 		raise NotImplementedError()
 
 	def announce(self, event):
-		# mark event with info about the creator
-		loc = self.location()
-		hostname = loc['hostname']
-		port = loc['event port']
-		event.creator = (hostname, port)
+		self.mark_data(event)
+		self.eventhandler.push('manager', event)
 
-		client = (self.managerloc['hostname'], self.managerloc['event port'])
-		self.eventhandler.push(client, event)
-
-	def publish(self, data):
+	def publish(self, data, eventclass=event.PublishEvent):
+		self.mark_data(data)
+		if not issubclass(eventclass, event.PublishEvent):
+			raise TypeError('PublishEvent subclass required')
 		self.datahandler.insert(data)
+		self.announce(eventclass(data.id))
 
-	def research(self, dataid):
-		return self.datahandler.pull(dataid)
+	def mark_data(self, data):
+		data.origin['id'] = self.id
+		data.origin['location'] = self.location()
+
+	def research(self, creator, dataid):
+		print 'hello world', creator
+		newdata = self.datahandler.query(creator, dataid)
+		return newdata
 
 	def location(self):
 		loc = leginonobject.LeginonObject.location(self)
 		loc['event port'] = self.eventhandler.port
 		loc['data port'] = self.datahandler.port
 		return loc
+
+	def addEventClient(self, id, host, port):
+		self.eventhandler.addClient(id, host, port)
 
 	def addEventIn(self, eventclass, func):
 		self.eventhandler.addInput(eventclass, func)
@@ -54,11 +62,19 @@ class Node(leginonobject.LeginonObject):
 		self.eventhandler.delOutput(eventclass)
 
 
-class NodeDataHandler(clientpull.Client, clientpull.Server):
+class NodeDataHandler(leginonobject.LeginonObject):
 	def __init__(self):
-		clientpull.Server.__init__(self, datahandler.SimpleDataKeeper)
-		loc = clientpull.Server.location(self)
-		self.port = loc['datatcp port']
+		leginonobject.LeginonObject.__init__(self)
+		self.server = clientpull.Server(datahandler.SimpleDataKeeper)
+		self.port = self.server.location()['datatcp port']
 
 	def insert(self, newdata):
-		self.datahandler.insert(newdata)
+		self.server.datahandler.insert(newdata)
+
+	def query(self, creator, dataid):
+		print 'hello world again'
+		print 'NodeDataHandler.query creator', creator
+		hostname,port = creator
+		client = clientpull.Client(hostname, port)
+		return client.pull(dataid)
+
