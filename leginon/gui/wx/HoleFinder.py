@@ -155,14 +155,14 @@ class TemplateSettingsDialog(gui.wx.Settings.Dialog):
 		label = wx.StaticText(self, -1, 'Use')
 		szcor.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szcor.Add(self.widgets['template type'], (0, 1), (1, 1),
-						wx.ALIGN_CENTER_VERTICAL)
+							wx.ALIGN_CENTER_VERTICAL)
 		label = wx.StaticText(self, -1, 'correlation')
 		szcor.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		sztemplate = wx.GridBagSizer(5, 5)
 		sztemplate.Add(szcor, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sztemplate.Add(self.widgets['template rings'], (1, 0), (1, 1),
-										wx.ALIGN_CENTER)
+										wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 
 		sb = wx.StaticBox(self, -1, 'Template Correlation')
 		sbsztemplate = wx.StaticBoxSizer(sb, wx.VERTICAL)
@@ -449,9 +449,9 @@ class FinalSettingsDialog(gui.wx.Settings.Dialog):
 							wx.ALIGN_CENTER_VERTICAL)
 		sztt.Add(sbszftt, (1, 0), (2, 1), wx.ALIGN_CENTER)
 		sztt.Add(self.widgets['focus template'], (1, 1), (1, 1),
-							wx.ALIGN_CENTER)
+							wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 		sztt.Add(self.widgets['acquisition template'], (2, 1), (1, 1),
-							wx.ALIGN_CENTER)
+							wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 
 		sb = wx.StaticBox(self, -1, 'Target Template')
 		sbsztt = wx.StaticBoxSizer(sb, wx.VERTICAL)
