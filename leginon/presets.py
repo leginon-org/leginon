@@ -546,7 +546,7 @@ class PresetsManager(node.Node):
 		else:
 			self.presetparams.set(self.currentselection)
 			self.displayCalibrations(self.currentselection)
-			self.setStatus(self.currentselection)
+			#self.setStatus(self.currentselection)
 		return index
 
 	def getHighTension(self):
@@ -625,30 +625,25 @@ class PresetsManager(node.Node):
 		self.uicurrent = uidata.String('Current', '', 'r')
 		self.uinew = uidata.String('New', '', 'r')
 		statuscontainer = uidata.Container('Status')
-		statuscontainer.addObjects((self.uistatus, self.uiprevious,
-																self.uicurrent, self.uinew))
+		statuscontainer.addObject(self.uistatus, position={'position':(0,0), 'span':(1,3)})
+		statuscontainer.addObject(self.uiprevious, position={'position':(1,0)})
+		statuscontainer.addObject(self.uicurrent, position={'position':(1,1)})
+		statuscontainer.addObject(self.uinew, position={'position':(1,2)})
 
-		self.xyonly = uidata.Boolean('Target stage x and y only', True, 'rw',
-																	persist=True)
-
+		# from other session
 		sessionnamelist = self.getSessionNameList()
-		self.othersession = uidata.SingleSelectFromList('Session', sessionnamelist,
-																										0)
+		self.othersession = uidata.SingleSelectFromList('Session', sessionnamelist, 0)
 		fromdb = uidata.Method('Import', self.uiGetPresetsFromDB)
 		importcont = uidata.Container('Import')
-		importcont.addObjects((self.othersession, fromdb))
+		importcont.addObject(self.othersession, position={'position':(0,0)})
+		importcont.addObject(fromdb, position={'position':(0,1)})
 
-		# create preset
-		self.enteredname = uidata.String('New Name', '', 'rw')
+		# from scope
+		newfromscopecont = uidata.Container('New')
+		self.enteredname = uidata.String('Name', '', 'rw')
 		newfromscopemethod = uidata.Method('New From Scope', self.uiNewFromScope)
-		createcont = uidata.Container('Preset Creation')
-		createcont.addObjects((self.enteredname, newfromscopemethod))
-
-		# preset status
-		statuscont = uidata.Container('Preset Status')
-		self.dosestatus = uidata.String('Dose', '', 'r')
-		self.refstatus = uidata.String('Reference Image', '', 'r')
-		statuscont.addObjects((self.dosestatus, self.refstatus))
+		newfromscopecont.addObject(self.enteredname, position={'position':(0,0)})
+		newfromscopecont.addObject(newfromscopemethod, position={'position':(0,1)})
 
 		# calibrations status
 		calcont = uidata.Container('Calibration Status')
@@ -662,27 +657,41 @@ class PresetsManager(node.Node):
 												self.cal_stage, self.cal_beam,
 												self.cal_modeledstagemod, self.cal_modeledstagemag))
 
+
+		## change parameters
+		changecont = uidata.Container('Preset Change Parameters')
+		self.xyonly = uidata.Boolean('Target stage x and y only', True, 'rw', persist=True)
+		self.changepause = uidata.Float('Pause', 1.0, 'rw', persist=True)
+		changecont.addObject(self.changepause, position={'position':(0,0)})
+		changecont.addObject(self.xyonly, position={'position':(0,1)})
+
 		# selection
+		selectcont = uidata.Container('Selection')
 		self.presetparams = PresetParameters(self, usercallback=self.uiCommitParams)
+		controls = uidata.Container('')
 		self.uiselectpreset = uidata.SingleSelectFromList('Preset', [], 0,
 																								callback=self.uiSelectCallback)
 		toscopemethod = uidata.Method('To Scope', self.uiToScope)
-		self.changepause = uidata.Float('Pause', 1.0, 'rw', persist=True)
+		fromscopemethod = uidata.Method('From Scope', self.uiSelectedFromScope)
+		removemethod = uidata.Method('Remove', self.uiSelectedRemove)
+		controls.addObject(self.uiselectpreset, position={'position':(0,0)})
+		controls.addObject(toscopemethod, position={'position':(0,1)})
+		controls.addObject(fromscopemethod, position={'position':(0,2)})
+		controls.addObject(removemethod, position={'position':(0,3)})
+
+		## Cycle
 		cyclecont = uidata.Container('Cycle')
 		self.usecycle = uidata.Boolean('On', True, 'rw', persist=True)
 		self.cyclemagshortcut = uidata.Boolean('Mag Shortcut', True, 'rw', persist=True)
 		self.cyclemagonly = uidata.Boolean('Mag Only', True, 'rw', persist=True)
 		self.orderlist = uidata.Sequence('Order', [], 'rw', callback=self.uiSetOrderCallback)
+
 		cyclecont.addObject(self.usecycle, position={'position':(0,0)})
 		cyclecont.addObject(self.cyclemagshortcut, position={'position':(0,1)})
 		cyclecont.addObject(self.cyclemagonly, position={'position':(0,2)})
 		cyclecont.addObject(self.orderlist, position={'position':(1,0), 'span':(1,3)})
 
-		fromscopemethod = uidata.Method('From Scope', self.uiSelectedFromScope)
-		removemethod = uidata.Method('Remove', self.uiSelectedRemove)
-
-		selectcont = uidata.Container('Selection')
-		selectcont.addObjects((self.uiselectpreset, toscopemethod, fromscopemethod, removemethod, self.changepause, self.presetparams, statuscont, calcont, cyclecont))
+		selectcont.addObjects((controls, self.presetparams, calcont, cyclecont))
 
 		pnames = self.presetNames()
 		self.uiselectpreset.set(pnames, 0)
@@ -690,10 +699,11 @@ class PresetsManager(node.Node):
 
 		# acquisition frame
 
-		## goes with Acquire Reference Image and there is not
+		## goes with Acquire Reference Image and therefore is not
 		## useful at the moment
 		#cameraconfigure = self.cam.uiSetupContainer()
 		acqdosemeth = uidata.Method('Acquire Dose Image (be sure specimen is not in the field of view)', self.uiAcquireDose)
+		self.acqdosevalue = uidata.String('Dose', '', 'r')
 		## not useful at the moment
 		#acqrefmeth = uidata.Method('Acquire Preset Reference Image', self.uiAcquireRef)
 
@@ -705,18 +715,19 @@ class PresetsManager(node.Node):
 		self.ui_image = uidata.Image('Image', None, 'r')
 
 		imagecont = uidata.Container('Acquisition')
-		imagecont.addObjects((acqdosemeth, self.ui_image,))
+		imagecont.addObject(acqdosemeth, position={'position':(0,0)})
+		imagecont.addObject(self.acqdosevalue, position={'position':(0,1)})
+		imagecont.addObject(self.ui_image, position={'span':(1,2)})
 
 		# main container
 		container = uidata.LargeContainer('Presets Manager')
 		container.addObject(self.messagelog, position={'expand': 'all'})
-		container.addObjects((statuscontainer, self.xyonly,
-													importcont, createcont, selectcont, imagecont))
+		container.addObjects((statuscontainer, changecont, importcont, newfromscopecont, selectcont, imagecont))
 		self.uicontainer.addObject(container)
 
 		return
 
-	def uiAcquireRef(self):
+	def XXXuiAcquireRef(self):
 		self.uistatus.set('Acquiring reference image')
 		self.cam.uiApplyAsNeeded()
 		imagedata = self.cam.acquireCameraImageData(correction=True)
@@ -761,9 +772,13 @@ class PresetsManager(node.Node):
 		## store the dose in the current preset
 		self.currentpreset['dose'] = dose
 		self.presetToDB(self.currentpreset)
-		self.setStatus(self.currentpreset)
 
-	def setStatus(self, preset):
+		## update the display of dose in parameters
+		self.presetparams.set(self.currentselection)
+		## update other display of dose
+		self.acqdosevalue.set('for %s is %.4f' % (self.currentpreset['name'], dose))
+
+	def XXXsetStatus(self, preset):
 		## dose
 		if preset['dose'] is None:
 			status = 'N/A'
@@ -869,32 +884,33 @@ class PresetParameters(uidata.Container):
 		uidata.Container.__init__(self, 'Preset Parameters')
 		self.node = node
 		self.usercallback = usercallback
-		self.singles = ('magnification', 'spot size', 'defocus', 'intensity')
+		self.singles = ('magnification', 'spot size', 'defocus', 'intensity', 'dose')
 		self.doubles = ('image shift', 'beam shift')
 
 		self.build()
 
 	def build(self):
 		self.singlesdict = {}
+		row = 0
+		col = 0
 		for single in self.singles:
-			self.singlesdict[single] = uidata.Number(single, 0, 'rw', usercallback=self.usercallback)
+			o = self.singlesdict[single] = uidata.Number(single, 0, 'rw', usercallback=self.usercallback)
+			self.addObject(o, position={'position':(row,col)})
+			col += 1
+			if col > 2:
+				col = 0
+				row += 1
 		self.doublesdict = {}
 		for double in self.doubles:
+			row += 1
 			self.doublesdict[double] = {}
-			for axis in ('x', 'y'):
-				label = double + ' ' + axis
-				self.doublesdict[double][axis] = uidata.Number(label, 0, 'rw', usercallback=self.usercallback)
-
+			subcont = uidata.Container(double)
+			for pos,axis in ((0,'x'), (1,'y')):
+				o = self.doublesdict[double][axis] = uidata.Number(axis, 0, 'rw', usercallback=self.usercallback)
+				subcont.addObject(o, position={'position':(0,pos)})
+			self.addObject(subcont, position={'position':(row,0),'span':(1,3)})
 		self.camera = camerafuncs.SmartCameraParameters(self.node, usercallback=self.usercallback)
-
-		components = []
-		for single in self.singles:
-			components.append(self.singlesdict[single])
-		for double in self.doubles:
-			for axis in ('x', 'y'):
-				components.append(self.doublesdict[double][axis])
-		components.append(self.camera)
-		self.addObjects(components)
+		self.addObject(self.camera)
 
 	def set(self, presetdata):
 		presetdict = presetdata.toDict()
