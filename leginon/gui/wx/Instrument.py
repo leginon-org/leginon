@@ -423,6 +423,55 @@ class MainSizer(wx.StaticBoxSizer):
 
 		self.sz.AddGrowableCol(1)
 
+class CamInfoSizer(wx.StaticBoxSizer):
+	def __init__(self, parent, title='Camera Infomration'):
+		self.parent = parent
+		wx.StaticBoxSizer.__init__(self, wx.StaticBox(self.parent, -1, title),
+																			wx.VERTICAL)
+		self.sz = wx.GridBagSizer(5, 5)
+		self.Add(self.sz, 1, wx.EXPAND|wx.ALL, 5)
+
+		parameterorder = [
+			'Name',
+			'Chip',
+			'Size',
+			'Pixel size',
+			'Max value',
+			'Live mode',
+			'Simulation image path',
+			'Temperature',
+			'Hardware gain index',
+			'Hardware speed index',
+			'Retractable',
+			'Axis',
+		]
+		self.parameters = {}
+		for i, p in parameterorder:
+			st = wx.StaticText(self.parent, -1, p + ':')
+			self.parameters[p] = wx.StaticText(self.parent, -1, '')
+			self.sz.Add(st, (i, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+			self.sz.Add(self.parameters[p], (i, 1), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+			self.sz.AddGrowableRow(i)
+			self.parameters[p].Enable(False)
+
+		self.sz.AddGrowableCol(1)
+
+		self.parametermap = {
+			'camera name': 'Name',
+			'chip name': 'Chip',
+			'camera size': 'Size',
+			'pixel size': 'Pixel size',
+			'maximum pixel value': 'Maximum value',
+			'live mode available': 'Live mode',
+			'simulation image path': 'Simulation image path',
+			'temperature': 'Temperature',
+			'hardware gain index': 'Hardware gain index',
+			'hardware speed index': 'Hardware speed index',
+			'retractable': 'Retractable',
+			'camera axis': 'Axis',
+		}
+
 class Panel(gui.wx.Node.Panel):
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1, name='%s.pInstrument' % name)
@@ -446,6 +495,7 @@ class Panel(gui.wx.Node.Panel):
 		self.szlowdose = LowDoseSizer(self)
 		self.szfocus = FocusSizer(self)
 		self.szpmain = MainSizer(self)
+		self.szcaminfo = CamInfoSizer(self)
 
 		self.szparameters.Add(self.szpmain, (0, 0), (1, 1), wx.EXPAND)
 		self.szparameters.Add(self.szstage, (0, 1), (1, 1), wx.EXPAND)
@@ -460,6 +510,8 @@ class Panel(gui.wx.Node.Panel):
 
 		self.szparameters.Add(self.szholder, (3, 1), (1, 1), wx.EXPAND)
 		self.szparameters.Add(self.szlowdose, (4, 1), (1, 1), wx.EXPAND)
+
+		self.szparameters.Add(self.szcaminfo, (5, 0), (1, 1), wx.EXPAND)
 
 		self.parametermap = {
 			'high tension': self.szpmain.parameters['High tension'],
@@ -532,6 +584,8 @@ class Panel(gui.wx.Node.Panel):
 			'low dose': self.szlowdose.parameters['Status'],
 			'low dose mode': self.szlowdose.parameters['Mode'],
 		}
+
+		self.parametermap.update(self.szcaminfo.parametermap)
 
 		self.controlmap = self.reverseMap(self.parametermap)
 
