@@ -194,6 +194,9 @@ class ImageClickEvent(Event):
 	def __init__(self, id, content, confirm=False):
 		Event.__init__(self, id, dict(content), confirm)
 
+class ImageAcquireEvent(Event):
+	def __init__(self, id):
+		Event.__init__(self, id)
 	
 ###########################################################
 ###########################################################
