@@ -8,7 +8,6 @@ class Line(object):
 		self.origin = origin
 		self.destination = None
 		self.line = None
-#		self.label = None
 		position = self.origin.getPosition()
 		self.createline(position[0], position[1], position[0], position[1])
 
