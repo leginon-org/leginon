@@ -6,7 +6,6 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 import node
-import scopedict
 import methoddict
 import threading
 import data
@@ -127,6 +126,8 @@ class EM(node.Node):
 			'offset'
 			'dimension',
 			'binning',
+			'exposure time',
+			'exposure type'
 		]
 
 		## if any of these are changed, follow up with the specified pause
@@ -138,6 +139,26 @@ class EM(node.Node):
 			'beam shift': 0.1,
 			'defocus': 0.4,
 			'intensity': 0.1,
+		}
+
+		self.permissions = {
+			'high tension': 'r',
+			'temperature': 'r',
+			'column valves': 'r',
+			'gun shift': '',
+			'gun tilt': '',
+			'beam blank': '',
+			'dark field mode': '',
+			'diffraction mode': '',
+			'low dose': '',
+			'low dose mode': '',
+			'screen current': '',
+			'holder type': '',
+			'holder status': '',
+			'stage status': '',
+			'vacuum status': '',
+			'turbo pump': '',
+			'column pressure': '',
 		}
 
 		# the queue of requests to get and set parameters
@@ -196,6 +217,17 @@ class EM(node.Node):
 		if cameraname is not None:
 			self.setCameraType(cameraname)
 
+		for key, permissions in self.permissions.items():
+			try:
+				if self.scope is not None:
+					self.scope.setPermissions(key, permissions)
+			except KeyError:
+				try:
+					if self.camera is not None:
+						self.camera.setPermissions(key, permissions)
+				except KeyError:
+					pass
+
 		ids = []
 		if self.scope is not None:
 			ids += ['scope']
@@ -235,11 +267,11 @@ class EM(node.Node):
 	def setScopeType(self, scopename):
 		scopeinfo = emregistry.getScopeInfo(scopename)
 		if scopeinfo is None:
-			raise RuntimeError('EM node unable to get scope info...  Maybe you are running EM node in the wrong place?...')
+			raise RuntimeError('EM node unable to get scope info')
 		modulename, classname, d = scopeinfo
 		try:
 			scopeclass = self.getClass(modulename, classname)
-			self.scope = scopedict.factory(scopeclass)()
+			self.scope = methoddict.factory(scopeclass)()
 		except Exception, e:
 			print 'cannot set scope to type', scopename
 			print e
@@ -456,42 +488,24 @@ class EM(node.Node):
 		self.locknodeid = None
 		self.nodelock.release()
 
-	def uiResetDefocus(self):
-		self.scopecontainer.disable()
-		self.cameracontainer.disable()
-		self.uiSetState({'reset defocus': 1})
-		self.statelock.acquire()
-		done_event = threading.Event()
-		self.requestqueue.put(GetRequest(done_event, ['defocus']))
-		done_event.wait()
-		self.statelock.release()
-		self.cameracontainer.enable()
-		self.scopecontainer.enable()
-
-	def uiToggleMainScreen(self):
-		self.scopecontainer.disable()
-		self.cameracontainer.disable()
-		try:
-			uiscreenposition = self.uiscopedict['screen position'].get()
-		except KeyError:
-			return
-		if uiscreenposition == 'down':
-			self.uiSetState({'screen position': 'up'})
-		elif uiscreenposition == 'up':
-			self.uiSetState({'screen position': 'down'})
-		self.statelock.acquire()
-		done_event = threading.Event()
-		self.requestqueue.put(GetRequest(done_event, ['magnification']))
-		done_event.wait()
-		self.cameracontainer.enable()
-		self.scopecontainer.enable()
-
 	def uiRefreshScope(self):
 		self.scopecontainer.disable()
 		self.cameracontainer.disable()
 		self.statelock.acquire()
 		done_event = threading.Event()
 		request = self.uiGetDictData(self.uiscopedict).keys()
+		self.requestqueue.put(GetRequest(done_event, request))
+		done_event.wait()
+		self.statelock.release()
+		self.cameracontainer.enable()
+		self.scopecontainer.enable()
+
+	def uiRefreshCamera(self):
+		self.scopecontainer.disable()
+		self.cameracontainer.disable()
+		self.statelock.acquire()
+		done_event = threading.Event()
+		request = self.uiGetDictData(self.uicameradict).keys()
 		self.requestqueue.put(GetRequest(done_event, request))
 		done_event.wait()
 		self.statelock.release()
@@ -592,7 +606,10 @@ class EM(node.Node):
 																														values[subkey],
 																														permissions)
 						objects.append(subinterface)
-						mapping[subkey] = subinterface
+						if submapping is None:
+							mapping[subkey] = subinterface
+						else:
+							mapping[subkey] = submapping
 					except (AttributeError, KeyError, ValueError):
 						pass
 				interface = interfaceclass(key)
@@ -605,10 +622,11 @@ class EM(node.Node):
 		return interfaceclass(key, value, permissions=permissions), None
 
 	def interfaceFromObject(self, obj):
-		keys = obj.keys()
+		orderedkeys = obj.keys()
+		orderedkeys.sort(self.cmpEM)
 		interfaceobjects = []
 		mapping = {}
-		for key in keys:
+		for key in orderedkeys:
 			try:
 				interfaceobject, submapping = self.interfaceObjectFromKey(obj, key)
 				interfaceobjects.append(interfaceobject)
@@ -625,100 +643,23 @@ class EM(node.Node):
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
 
-		self.uipauses = uidata.Boolean('Do Pauses', False, permissions='rw', persist=True)
+		self.uipauses = uidata.Boolean('Do Pauses', False, permissions='rw',
+																		persist=True)
 
 		# scope
-
-		self.uiscopedict = {}
-		scopeparameterscontainer = uidata.Container('Parameters')
-
-		parameters = [('magnification', 'Magnification', uidata.Number, 'rw'),
-									('intensity', 'Intensity', uidata.Float, 'rw'),
-									('defocus', 'Defocus', uidata.Float, 'rw'),
-									('spot size', 'Spot Size', uidata.Integer, 'rw'),
-									('high tension', 'High Tension', uidata.Float, 'r'),
-									('screen current', 'Screen Current', uidata.Float, 'r'),
-									('screen position', 'Main Screen', uidata.String, 'r')]
-
-		for key, name, datatype, permissions in parameters:
-			self.uiscopedict[key] = datatype(name, None, permissions)
-			scopeparameterscontainer.addObject(self.uiscopedict[key])
-
-		togglemainscreen = uidata.Method('Toggle Main Screen',
-																			self.uiToggleMainScreen)
-		resetdefocus = uidata.Method('Reset Defocus', self.uiResetDefocus)
-		scopeparameterscontainer.addObject(togglemainscreen)
-		scopeparameterscontainer.addObject(resetdefocus)
-
-		pairs = [('stage position', 'Stage Position',
-								['x', 'y', 'z', 'a'], uidata.Float),
-							('image shift', 'Image Shift', ['x', 'y'], uidata.Float),
-							('beam tilt', 'Beam Tilt', ['x', 'y'], uidata.Float),
-							('beam shift', 'Beam Shift', ['x', 'y'], uidata.Float)]
-		for key, name, axes, datatype in pairs:
-			self.uiscopedict[key] = {}
-			container = uidata.Container(name)
-			for axis in axes:
-				self.uiscopedict[key][axis] = datatype(axis, None, 'rw')
-				container.addObject(self.uiscopedict[key][axis])
-			scopeparameterscontainer.addObject(container)
-
-		self.uiscopedict['stigmator'] = {}
-		stigmatorcontainer = uidata.Container('Stigmators')
-		pairs = [('condenser', 'Condenser'), ('objective', 'Objective'),
-							('diffraction', 'Diffraction')]
-		for key, name in pairs:
-			self.uiscopedict['stigmator'][key] = {}
-			container = uidata.Container(name)
-			for axis in ['x', 'y']:
-				self.uiscopedict['stigmator'][key][axis] = uidata.Float(axis, None, 'rw')
-				container.addObject(self.uiscopedict['stigmator'][key][axis])
-			stigmatorcontainer.addObject(container)
-
-		scopeparameterscontainer.addObject(stigmatorcontainer)
-
-		self.scopecontainer = uidata.LargeContainer('Microscope')
-		self.scopecontainer.addObject(self.uipauses)
-		self.scopecontainer.addObject(scopeparameterscontainer)
-
+		scopeinterface, self.uiscopedict = self.interfaceFromObject(self.scope)
 		refreshscope = uidata.Method('Refresh', self.uiRefreshScope)
 		setscope = uidata.Method('Set', self.uiSetScope)
-		self.scopecontainer.addObject(refreshscope)
-		self.scopecontainer.addObject(setscope)
+		self.scopecontainer = uidata.LargeContainer('Microscope')
+		self.scopecontainer.addObjects((self.uipauses, scopeinterface,
+																		refreshscope, setscope))
 
 		# camera
-
 		camerainterface, self.uicameradict = self.interfaceFromObject(self.camera)
 		self.cameracontainer = uidata.LargeContainer('Camera')
+		refreshcamera = uidata.Method('Refresh', self.uiRefreshCamera)
 		setcamera = uidata.Method('Set', self.uiSetCamera)
-		self.cameracontainer.addObjects([camerainterface, setcamera])
-
-		'''
-		self.uicameradict = {}
-		cameraparameterscontainer = uidata.Container('Parameters')
-
-		parameters = [('exposure time', 'Exposure time', uidata.Float, 'rw'),
-									('exposure type', 'Image type', uidata.String, 'rw')]
-
-		for key, name, datatype, permissions in parameters:
-			self.uicameradict[key] = datatype(name, None, permissions)
-			cameraparameterscontainer.addObject(self.uicameradict[key])
-
-		pairs = [('dimension', 'Dimension', ['x', 'y'], uidata.Integer),
-							('offset', 'Offset', ['x', 'y'], uidata.Integer),
-							('binning', 'Binning', ['x', 'y'], uidata.Integer)]
-
-		for key, name, axes, datatype in pairs:
-			self.uicameradict[key] = {}
-			container = uidata.Container(name)
-			for axis in axes:
-				self.uicameradict[key][axis] = datatype(axis, 0, 'rw')
-				container.addObject(self.uicameradict[key][axis])
-			cameraparameterscontainer.addObject(container)
-
-		self.cameracontainer = uidata.LargeContainer('Camera')
-		self.cameracontainer.addObject(cameraparameterscontainer)
-		'''
+		self.cameracontainer.addObjects([camerainterface, refreshcamera, setcamera])
 
 		container = uidata.LargeContainer('EM')
 		container.addObjects((self.scopecontainer, self.cameracontainer))
