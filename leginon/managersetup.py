@@ -280,11 +280,13 @@ class ManagerSetup(object):
 	def suggestSessionName(self):
 		session_name = 'enter unique name here'
 		for suffix in 'abcdefghijklmnopqrstuvwxyz':
-			maybe = time.strftime('%y%b%d'+suffix).lower()
-			if maybe in self.session_dict:
+			maybe_name = time.strftime('%y%b%d'+suffix).lower()
+			qsession = data.SessionData(name=maybe_name)
+			maybe_session = self.research(datainstance=qsession)
+			if maybe_session:
 				continue
 			else:
-				session_name = maybe
+				session_name = maybe_name
 				break
 		return session_name
 
