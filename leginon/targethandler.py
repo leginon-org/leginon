@@ -102,7 +102,7 @@ class TargetHandler(object):
 			list = None
 		lastnumber = self.lastTargetNumber(grid=grid, list=list, image=nullimage, session=self.session)
 		number = lastnumber + 1
-		targetdata = self.newTarget(grid=grid, drow=drow, dcol=dcol, number=number, session=self.session, **kwargs)
+		targetdata = self.newTarget(grid=grid, drow=drow, dcol=dcol, number=number, session=self.session, image=nullimage, **kwargs)
 		return targetdata
 
 	def newSimulatedTarget(self):
