@@ -1,11 +1,11 @@
 # -*- coding: mbcs -*-
 # Created by makepy.py version 0.4.6
-# By python version 2.3.2 (#49, Oct  2 2003, 20:02:00) [MSC v.1200 32 bit (Intel)]
+# By python version 2.3.3 (#51, Dec 18 2003, 20:22:39) [MSC v.1200 32 bit (Intel)]
 # From type library 'adaExp.exe'
-# On Wed Dec 17 12:23:59 2003
+# On Tue Apr 20 13:58:00 2004
 """adaExp Library"""
 makepy_version = '0.4.6'
-python_version = 0x20302f0
+python_version = 0x20303f0
 
 import win32com.client.CLSIDToClass, pythoncom
 from pywintypes import IID

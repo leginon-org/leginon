@@ -98,7 +98,8 @@ class Tecnai(object):
 			'diffraction mode': {'get': 'getDiffractionMode',
 														'set': 'setDiffractionMode'},
 			'reset defocus': {'set': 'resetDefocus'},
-			'screen position': {'get': 'getScreen', 'set': 'setScreen'},
+			'main screen position': {'get': 'getMainScreen', 'set': 'setMainScreen'},
+			'small screen position': {'get': 'getSmallScreen'},
 			'holder type': {'get': 'getHolderType', 'set': 'setHolderType'},
 			'turbo pump': {'get': 'getTurboPump', 'set': 'setTurboPump'},
 			'column valves': {'get': 'getColumnValves', 'set': 'setColumnValves'},
@@ -108,7 +109,20 @@ class Tecnai(object):
 			'vacuum status': {'get': 'getVacuumStatus'},
 			'column pressure': {'get': 'getColumnPressure'},
 			'objective excitation': {'get': 'getObjectiveExcitation'},
-			'focus': {'get': 'getFocus', 'set': 'setFocus'}
+			'focus': {'get': 'getFocus', 'set': 'setFocus'},
+			'film stock': {'get': 'getFilmStock'},
+			'film exposure number': {'get': 'getFilmExposureNumber',
+																'set': 'setFilmExposureNumber'},
+			'film exposure': {'set': 'filmExposure'},
+			'film exposure type': {'get': 'getFilmExposureType',
+															'set': 'setFilmExposureType'},
+			'film exposure time': {'get': 'getFilmExposureTime'},
+			'film manual exposure time': {'get': 'getFilmManualExposureTime',
+																		'set': 'setFilmManualExposureTime'},
+			'film automatic exposure time': {'get': 'getFilmAutomaticExposureTime'},
+			'film text': {'get': 'getFilmText', 'set': 'setFilmText'},
+			'film user code': {'get': 'getFilmUserCode', 'set': 'setFilmUserCode'},
+			'film date type': {'get': 'getFilmDateType', 'set': 'setFilmDateType'},
 		}
 
 		self.typemapping = {
@@ -147,7 +161,8 @@ class Tecnai(object):
 																		['exposure', 'focus1', 'focus2', 'search']},
 			'diffraction mode': {'type': str, 'values': ['imaging', 'diffraction']},
 			'reset defocus': {'type': bool},
-			'screen position': {'type': str, 'values': ['up', 'down']},
+			'main screen position': {'type': str, 'values': ['up', 'down']},
+			'small screen position': {'type': str, 'values': ['up', 'down']},
 			# no unknown holder
 			'holder type': {'type': str, 'values':
 																			['no holder', 'single tilt', 'cryo']},
@@ -159,7 +174,18 @@ class Tecnai(object):
 			'vacuum status': {'type': str},
 			'column pressure': {'type': float},
 			'objective excitation': {'type': float},
-			'focus': {'type': float}
+			'focus': {'type': float},
+			'film stock': {'type': int},
+			'film exposure number': {'type': int},
+			'film exposure': {'type': bool},
+			'film exposure type': {'type': str, 'values': ['manual', 'automatic']},
+			'film exposure time': {'type': float},
+			'film manual exposure time': {'type': float},
+			'film automatic exposure time': {'type': float},
+			'film text': {'type': str},
+			'film user code': {'type': str},
+			'film date type': {'type': str,
+										'values': ['no date', 'DD-MM-YY', 'MM/DD/YY', 'YY.MM.DD']},
 		}
 
 	def setCorrectedStagePosition(self, value):
@@ -211,8 +237,6 @@ class Tecnai(object):
 		else:
 			raise ValueError
 
-		return 0
-
 	def getScreenCurrent(self):
 		return float(self.theScope.Camera.ScreenCurrent)
 	
@@ -248,7 +272,6 @@ class Tecnai(object):
 		except KeyError:
 			pass
 		self.theScope.Gun.Tilt = vec
-		return 0
 	
 	def getGunShift(self):
 		value = {'x': None, 'y': None}
@@ -282,14 +305,12 @@ class Tecnai(object):
 		except KeyError:
 			pass
 		self.theScope.Gun.Shift = vec
-		return 0
 	
 	def getHighTension(self):
 		return int(self.theScope.Gun.HTValue)
 	
 	def setHighTension(self, ht):
 		self.theScope.Gun.HTValue = ht
-		return 0
 	
 	def getIntensity(self):
 		return float(self.theScope.Illumination.Intensity)
@@ -303,7 +324,6 @@ class Tecnai(object):
 			raise ValueError
 		
 		self.theScope.Illumination.Intensity = intensity
-		return 0
 
 	def getDarkFieldMode(self):
 		if self.theScope.Illumination.DFMode == win32com.client.constants.dfOff:
@@ -324,8 +344,6 @@ class Tecnai(object):
 			self.theScope.Illumination.DFMode = win32com.client.constants.dfConical
 		else:
 			raise ValueError
-
-		return 0
 	
 	def getBeamBlank(self):
 		if self.theScope.Illumination.BeamBlanked == 0:
@@ -342,8 +360,6 @@ class Tecnai(object):
 			self.theScope.Illumination.BeamBlanked = 1
 		else:
 			raise ValueError
-		
-		return 0
 	
 	def getStigmator(self):
 		value = {'condenser': {'x': None, 'y': None},
@@ -403,8 +419,6 @@ class Tecnai(object):
 				self.theScope.Projection.DiffractionStigmator = stigmator
 			else:
 				raise ValueError
-
-		return 0
 	
 	def getSpotSize(self):
 		return int(self.theScope.Illumination.SpotsizeIndex)
@@ -418,7 +432,6 @@ class Tecnai(object):
 			raise ValueError
 		
 		self.theScope.Illumination.SpotsizeIndex = ss
-		return 0
 	
 	def getBeamTilt(self):
 		value = {'x': None, 'y': None}
@@ -452,7 +465,6 @@ class Tecnai(object):
 		except KeyError:
 			pass
 		self.theScope.Illumination.RotationCenter = vec
-		return 0
 	
 	def getBeamShift(self):
 		value = {'x': None, 'y': None}
@@ -486,7 +498,6 @@ class Tecnai(object):
 		except KeyError:
 			pass
 		self.theScope.Illumination.Shift = vec
-		return 0
 	
 	def getImageShift(self):
 		value = {'x': None, 'y': None}
@@ -519,7 +530,6 @@ class Tecnai(object):
 		except KeyError:
 			pass
 		self.theScope.Projection.ImageBeamShift = vec
-		return 0
 	
 	def getDefocus(self):
 		return float(self.theScope.Projection.Defocus)
@@ -533,12 +543,11 @@ class Tecnai(object):
 			raise ValueError
 		
 		self.theScope.Projection.Defocus = defocus
-		return 0
 	
 	def resetDefocus(self, value):
-		if value:
-			self.theScope.Projection.ResetDefocus()
-		return 0
+		if not value:
+			return
+		self.theScope.Projection.ResetDefocus()
 	
 	def getMagnification(self):
 		if self.theScope.Camera.MainScreen == win32com.client.constants.spUp:
@@ -573,11 +582,11 @@ class Tecnai(object):
 		for imag in self.magTable:
 			if imag[key] > mag:
 				 self.theScope.Projection.MagnificationIndex = prevmag['index']
-				 return 0
+				 return
 			prevmag = imag
 			
 		self.theScope.Projection.MagnificationIndex = prevmag['index']
-		return 0
+		return
 	
 	def getStagePosition(self):
 		value = {'x': None, 'y': None, 'z': None, 'a': None}
@@ -592,97 +601,30 @@ class Tecnai(object):
 		return value
 
 	def _setStagePosition(self, position, relative = 'absolute'):
-		tolerance = 1.0e-4
-		polltime = 0.1
+#		tolerance = 1.0e-4
+#		polltime = 0.01
+
 		if relative == 'relative':
-			try:
-				position['x'] += self.theScope.Stage.Position.X
-			except KeyError:
-				pass
-			try:
-				position['y'] += self.theScope.Stage.Position.Y
-			except KeyError:
-				pass
-			try:
-				position['z'] += self.theScope.Stage.Position.Z
-			except KeyError:
-				pass
-			try:
-				position['a'] += self.theScope.Stage.Position.A
-			except KeyError:
-				pass
-			try:
-				position['b'] += self.theScope.Stage.Position.B
-			except KeyError:
-				pass
-		elif relative == 'absolute':
-			pass
-		else:
+			for key in position:
+				position[key] += getattr(self.theScope.Stage.Position, key.upper())
+		elif relative != 'absolute':
 			raise ValueError
 		
 		pos = self.theScope.Stage.Position
 
-		try:
-			pos.Z = position['z']
-		except KeyError:
-			pass
-		else:
-			try:
-				self.theScope.Stage.Goto(pos, win32com.client.constants.axisZ)
-				while abs(self.theScope.Stage.Position.Z - pos.Z) > tolerance:
-					time.sleep(polltime)
-			except pywintypes.com_error:
-				print 'stage z-axis limit hit'
-	
-		try:
-			pos.Y = position['y']
-		except KeyError:
-			pass
-		else:
-			try:
-				self.theScope.Stage.Goto(pos, win32com.client.constants.axisY)
-				while abs(self.theScope.Stage.Position.Y - pos.Y) > tolerance:
-					time.sleep(polltime)
-			except pywintypes.com_error:
-				print 'stage y-axis limit hit'
+		axes = 0
+		for key, value in position.items():
+			setattr(pos, key.upper(), value)
+			axes |= getattr(win32com.client.constants, 'axis' + key.upper())
 
 		try:
-			pos.X = position['x']
-		except KeyError:
-			pass
-		else:
-			try:
-				self.theScope.Stage.Goto(pos, win32com.client.constants.axisX)
-				while abs(self.theScope.Stage.Position.X - pos.X) > tolerance:
-					time.sleep(polltime)
-			except pywintypes.com_error:
-				print 'stage x-axis limit hit'
-
-		try:
-			pos.A = position['a']
-		except KeyError:
-			pass
-		else:
-			try:
-				self.theScope.Stage.Goto(pos, win32com.client.constants.axisA)
-				while abs(self.theScope.Stage.Position.A - pos.A) > tolerance:
-					time.sleep(polltime)
-			except pywintypes.com_error:
-				print 'stage a-axis limit hit'
-
-		try:
-			pos.B = position['b']
-		except KeyError:
-			pass
-		else:
-			try:
-				self.theScope.Stage.Goto(pos, win32com.client.constants.axisB)
-				while abs(self.theScope.Stage.Position.B - pos.B) > tolerance:
-					time.sleep(polltime)
-			except pywintypes.com_error:
-				print 'stage b-axis limit hit'
-	
-		return 0
+			self.theScope.Stage.Goto(pos, axes)
+		except pywintypes.com_error:
+			print 'Stage limit hit'
+#		for key in position:
+#			while abs(getattr(self.theScope.Stage.Position, key.upper())
+#								- getattr(pos, key.upper())) > tolerance:
+#				time.sleep(polltime)
 	
 	def getLowDose(self):
 		if (self.theLowDose.IsInitialized == 1) and (self.theLowDose.LowDoseActive == win32com.client.constants.IsOn):
@@ -700,8 +642,6 @@ class Tecnai(object):
 				self.theLowDose.LowDoseActive = win32com.client.constants.IsOn
 		else:
 			raise ValueError
-
-		return 0		
 
 	def getLowDoseMode(self):
 		if self.theLowDose.LowDoseState == win32com.client.constants.eExposure:
@@ -747,56 +687,50 @@ class Tecnai(object):
 		
 		return 0
 
-	def filmExposure(self):
-		hr = self.theAda.CloseShutter
-		if hr != 0:
-		  return hr
-		hr = self.theAda.DisconnectExternalShutter
-		if hr != 0:
-		  return hr
-		hr = self.theAda.MainScreenUp
-		if hr != 0:
-		  return hr
-		hr = self.theAda.LoadPlate
-		if hr != 0:
-		  return hr
-		hr = self.theAda.ExposePlateLabel
-		if hr != 0:
-		  return hr
-		hr = self.theAda.OpenShutter
-		if hr != 0:
-		  return hr
+	def filmExposure(self, value):
+		if not value:
+			return
+
+		if self.getStock() < 1:
+			raise RuntimeError('No film to take exposure')
+
+		if self.theAda.CloseShutter != 0:
+			raise RuntimeError('Close shutter (pre-exposure) failed')
+		if self.theAda.DisconnectExternalShutter != 0:
+			raise RuntimeError('Disconnect external shutter failed')
+		if self.theAda.LoadPlate != 0:
+			raise RuntimeError('Load plate failed')
+		if self.theAda.ExposePlateLabel != 0:
+			raise RuntimeError('Expose plate label failed')
+		if self.theAda.OpenShutter != 0:
+			raise RuntimeError('Open (pre-exposure) shutter failed')
 		
 		self.theScope.Camera.TakeExposure()
 		
-		hr = self.theAda.CloseShutter
-		if hr != 0:
-		  return hr
-		hr = self.theAda.UnloadPlate
-		if hr != 0:
-		  return hr
-		hr = self.theAda.UpdateExposureNumber
-		if hr != 0:
-		  return hr
-		hr = self.theAda.MainScreenDown
-		if hr != 0:
-		  return hr
-		hr = self.theAda.ConnectExternalShutter
-		if hr != 0:
-		  return hr
-		hr = self.theAda.OpenShutter
-		if hr != 0:
-		  return hr
+		if self.theAda.CloseShutter != 0:
+			raise RuntimeError('Close shutter (post-exposure) failed')
+		if self.theAda.UnloadPlate != 0:
+			raise RuntimeError('Unload plate failed')
+		if self.theAda.UpdateExposureNumber != 0:
+			raise RuntimeError('Update exposure number failed')
+		if self.theAda.ConnectExternalShutter != 0:
+			raise RuntimeError('Connect external shutter failed')
+		if self.theAda.OpenShutter != 0:
+			raise RuntimeError('Open shutter (post-exposure) failed')
 
-		return 0
-
-	def getScreen(self):
+	def getMainScreen(self):
 		if self.theAda.MainScreenStatus == 1:
 			return 'up'
 		else:
 			return 'down'
 
-	def setScreen(self, mode):
+	def getSmallScreen(self):
+		if self.theScope.Camera.IsSmallScreenDown:
+			return 'down'
+		else:
+			return 'up'
+
+	def setMainScreen(self, mode):
 		if mode == 'up':
 			self.theAda.MainScreenUp
 		elif mode == 'down':
@@ -905,4 +839,83 @@ class Tecnai(object):
 
 	def setFocus(self, value):
 		self.theScope.Projection.Focus = value
+
+	def getFilmStock(self):
+		return self.theScope.Camera.Stock
+
+	def getFilmExposureNumber(self):
+		return self.theScope.Camera.ExposureNumber
+
+	def setFilmExposureNumber(self, value):
+		self.theScope.Camera.ExposureNumber = value
+
+	def getFilmExposureType(self):
+		if self.theScope.Camera.ManualExposure:
+			return 'manual'
+		else:
+			return 'automatic'
+
+	def setFilmExposureType(self, value):
+		if value ==  'manual':
+			self.theScope.Camera.ManualExposure = True
+		elif value == 'automatic':
+			self.theScope.Camera.ManualExposure = False
+		else:
+			raise ValueError('Invalid value for film exposure type')
+
+	def getFilmExposureTime(self):
+		if self.theScope.Camera.ManualExposure:
+			return self.getFilmManualExposureTime()
+		else:
+			return self.getFilmAutomaticExposureTime()
+
+	def getFilmManualExposureTime(self):
+		return float(self.theScope.Camera.ManualExposureTime)
+
+	def setFilmManualExposureTime(self, value):
+		self.theScope.Camera.ManualExposureTime = value
+
+	def getFilmAutomaticExposureTime(self):
+		return float(self.theScope.Camera.MeasuredExposureTime)
+
+	def getFilmText(self):
+		return str(self.theScope.Camera.FilmText)
+
+	def setFilmText(self, value):
+		self.theScope.Camera.FilmText = value
+
+	def getFilmUserCode(self):
+		return str(self.theScope.Camera.Usercode)
+
+	def setFilmUserCode(self, value):
+		self.theScope.Camera.Usercode = value
+
+	def getFilmDateType(self):
+		filmdatetype = self.theScope.Camera.PlateLabelDateType
+		if filmdatetype == win32com.client.constants.dtNoDate:
+			return 'no date'
+		elif filmdatetype == win32com.client.constants.dtDDMMYY:
+			return 'DD-MM-YY'
+		elif filmdatetype == win32com.client.constants.dtMMDDYY:
+			return 'MM/DD/YY'
+		elif filmdatetype == win32com.client.constants.dtYYMMDD:
+			return 'YY.MM.DD'
+		else:
+			return 'unknown'
+
+	def setFilmDateType(self, value):
+		if value == 'no date':
+			self.theScope.Camera.PlateLabelDateType \
+				= win32com.client.constants.dtNoDate
+		elif value == 'DD-MM-YY':
+			self.theScope.Camera.PlateLabelDateType \
+				= win32com.client.constants.dtDDMMYY
+		elif value == 'MM/DD/YY':
+			self.theScope.Camera.PlateLabelDateType \
+				= win32com.client.constants.dtMMDDYY
+		elif value == 'YY.MM.DD':
+			self.theScope.Camera.PlateLabelDateType \
+				= win32com.client.constants.dtYYMMDD
+		else:
+			raise ValueError('Invalid film date type specified')
 
