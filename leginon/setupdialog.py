@@ -1,6 +1,7 @@
 import wx
 import wx.wizard
 import wx.lib.intctrl
+import leginonconfig
 
 class WizardPage(wx.wizard.PyWizardPage):
 	def __init__(self, parent, previous=None, next=None):
@@ -178,10 +179,11 @@ class SessionSelectPage(WizardPage):
 		try:
 			self.instrumenttext.SetLabel(session['instrument']['name'])
 			self.connectcheckbox.Enable(True)
-		except KeyError:
+		except (AttributeError, KeyError, TypeError):
 			self.instrumenttext.SetLabel('(No instrument)')
 			self.connectcheckbox.Enable(False)
-		self.imagedirectorytext.SetLabel(session['image path'])
+		directory = leginonconfig.mapPath(session['image path'])
+		self.imagedirectorytext.SetLabel(directory)
 		# autoresize on static text gets reset by sizer during layout
 		for i in [self.descriptiontext, self.instrumenttext,
 							self.imagedirectorytext]:
@@ -312,6 +314,7 @@ class SessionInstrumentPage(WizardPage):
 
 		self.SetSizerAndFit(pagesizer)
 
+# might want to check if directory exists and warn...
 class SessionImageDirectoryPage(WizardPage):
 	def __init__(self, parent):
 		WizardPage.__init__(self, parent)
@@ -327,7 +330,11 @@ class SessionImageDirectoryPage(WizardPage):
 
 		sizer.Add(wx.StaticText(self, -1, 'Image Directory:'), (1, 0), (1, 1),
 														wx.ALIGN_CENTER_VERTICAL)
-		self.directorytextctrl = wx.TextCtrl(self, -1, '')
+		try:
+			defaultdirectory = leginonconfig.mapPath(leginonconfig.IMAGE_PATH)
+		except AttributeError:
+			defaultdirectory = ''
+		self.directorytextctrl = wx.TextCtrl(self, -1, defaultdirectory)
 		sizer.Add(self.directorytextctrl, (1, 1), (1, 1),
 							wx.ALIGN_CENTER_VERTICAL|wx.EXPAND|wx.LEFT|wx.RIGHT)
 		self.browsebutton = wx.Button(self, -1, 'Browse...')
@@ -346,7 +353,8 @@ class SessionImageDirectoryPage(WizardPage):
 		self.SetSizerAndFit(pagesizer)
 
 	def onBrowse(self, evt):
-		dlg = wx.DirDialog(self, 'Choose a directory',
+		dlg = wx.DirDialog(self, 'Select a base directory',
+												self.directorytextctrl.GetValue(),
 												style=wx.DD_DEFAULT_STYLE|wx.DD_NEW_DIR_BUTTON)
 		if dlg.ShowModal() == wx.ID_OK:
 			self.directorytextctrl.SetLabel(dlg.GetPath())
@@ -407,8 +415,10 @@ class SessionCreatePage(WizardPage):
 		self.SetSizerAndFit(self.pagesizer)
 
 class SetupWizard(wx.wizard.Wizard):
-	def __init__(self, parent, research):
+	def __init__(self, parent, research, publish):
 		self.setup = Setup(research)
+		self.publish = publish
+		self.session = None
 		wx.wizard.Wizard.__init__(self, parent, -1, 'Leginon Setup')
 
 		self.Bind(wx.wizard.EVT_WIZARD_PAGE_CHANGING, self.onPageChanging, self)
@@ -451,17 +461,44 @@ class SetupWizard(wx.wizard.Wizard):
 		self.RunWizard(self.userpage)
 
 	def onPageChanging(self, evt):
-		if evt.GetPage() is self.namepage and evt.GetDirection():
+		# this count only for forward
+		if not evt.GetDirection():
+			return
+		page = evt.GetPage()
+		if page is self.userpage:
+			userdata = self.users[self.userpage.userchoice.GetStringSelection()]
+			self.names, self.sessions = self.setup.getSessions(userdata)
+			if not self.sessions:
+				self.userpage.setNext(self.namepage)
+		elif page is self.namepage:
 			name = self.namepage.nametextctrl.GetValue()
 			if self.setup.existsSessionName(name):
 				evt.Veto()
 				self.namepage.nameExistsDialog()
+		elif page is self.sessionselectpage:
+			name = self.sessionselectpage.sessionchoice.GetStringSelection()
+			self.session = self.sessions[name]
+			self.connect = self.sessionselectpage.connectcheckbox.GetValue()
+		elif page is self.sessioncreatepage:
+			user = self.userpage.userchoice.GetStringSelection()
+			user = self.users[user]
+			name = self.namepage.nametextctrl.GetValue()
+			description = self.namepage.descriptiontextctrl.GetValue()
+			project = self.projectpage.projectchoice.GetStringSelection()
+			instrument = self.instrumentpage.instrumentchoice.GetStringSelection()
+			try:
+				instrument = self.instruments[instrument]
+			except KeyError:
+				instrument = None
+			directory = self.imagedirectorypage.directorytextctrl.GetValue()
+			self.session = self.setup.createSession(user, name, description,
+																							instrument, directory)
+			self.publish(self.session, database=True)
+			self.connect = self.sessioncreatepage.connectcheckbox.GetValue()
 
 	def onPageChanged(self, evt):
 		page = evt.GetPage()
 		if page is self.sessionselectpage:
-			userdata = self.users[self.userpage.userchoice.GetStringSelection()]
-			self.names, self.sessions = self.setup.getSessions(userdata)
 			self.sessionselectpage.setSessionNames(self.names)
 		elif page is self.sessioncreatepage:
 			name = self.namepage.nametextctrl.GetValue()
@@ -482,6 +519,7 @@ class SetupWizard(wx.wizard.Wizard):
 				self.sessioncreatepage.sizer.SetItemMinSize(o, o.GetSize())
 			self.sessioncreatepage.pagesizer.Layout()
 
+import os
 import data
 import project
 import time
@@ -543,6 +581,17 @@ class Setup(object):
 		if self.research(datainstance=sessiondata):
 			return True
 		return False
+
+	def createSession(self, user, name, description, instrument, directory):
+		imagedirectory = os.path.join(leginonconfig.unmapPath(directory), name).replace('\\', '/')
+		initializer = {
+			'name': name,
+			'comment': description,
+			'user': user,
+			'instrument': instrument,
+			'image path': imagedirectory,
+		}
+		return data.SessionData(initializer=initializer)
 
 if __name__ == '__main__':
 	class TestApp(wx.App):
