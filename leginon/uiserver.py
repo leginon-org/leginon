@@ -138,8 +138,8 @@ class Server(XMLRPCServer, uidata.Container):
 		for localclient in localclients:
 			target = getattr(localclient, commandstring)
 			args = (properties,)
-#			threading.Thread(target=target, args=args).start()
-			apply(target, args)
+			threading.Thread(target=target, args=args).start()
+#			apply(target, args)
 
 	def XMLRPCExecute(self, commandstring, properties, client=None):
 		if client in self.xmlrpcclients:
