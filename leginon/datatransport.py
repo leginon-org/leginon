@@ -65,13 +65,14 @@ class Server(Base):
 			self.servers[t].start()
 
 	def __del__(self):
-		#self.exit()
-		pass
+		for t in self.transportmodules:
+			self.servers[t].__del__()
+		self.datahandler.__del__()
 
-	def exit(self):
-		self.datahandler.exit()
-		for s in self.servers:
-			self.servers[s].exit()
+#	def exit(self):
+#		self.datahandler.exit()
+#		for s in self.servers:
+#			self.servers[s].exit()
 
 	def location(self):
 		loc = {}

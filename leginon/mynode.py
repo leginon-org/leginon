@@ -32,7 +32,7 @@ class MyNode(node.Node):
 
 		# wait until the interact thread terminates
 		interact_thread.join()
-		self.exit()
+		#self.exit()
 
 	def print_stuff(self):
 		self.timenow = time.asctime()

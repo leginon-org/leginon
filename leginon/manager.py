@@ -29,6 +29,9 @@ class Manager(node.Node):
 
 		#self.start()
 
+	def __del__(self):
+		del self.server
+
 	def main(self):
 		pass
 
@@ -40,10 +43,10 @@ class Manager(node.Node):
 
 		# wait until the interact thread terminates
 		interact_thread.join()
-		self.exit()
+		#self.exit()
 
-	def exit(self):
-		self.server.exit()
+	#def exit(self):
+	#	self.server.exit()
 
 	def nodeID(self, name):
 		'return an id for a new node'
@@ -290,7 +293,7 @@ class Manager(node.Node):
 
 
 if __name__ == '__main__':
-	import signal, sys
+	import signal, sys, time
 
 	manager_id = ('manager',)
 	#manager_id = 'manager'
@@ -311,3 +314,5 @@ if __name__ == '__main__':
 		t.start()
 	## interact interface (could be changed to use ui* methods, like GUI)
 	m.start()
+
+	m.__del__()

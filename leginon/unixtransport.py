@@ -29,8 +29,11 @@ class Server(SocketServer.ThreadingUnixStreamServer, socketstreamtransport.Serve
 		loc['UNIX pipe filename'] = self.filename
 		return loc
 
-	def exit(self):
+	def __del__(self):
 		os.remove(self.filename)
+
+#	def exit(self):
+#		os.remove(self.filename)
 
 class Client(socketstreamtransport.Client):
 	def __init__(self, id, location, buffer_size = 1024):

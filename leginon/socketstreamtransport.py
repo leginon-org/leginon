@@ -47,11 +47,14 @@ class Server(leginonobject.LeginonObject):
 		self.thread.setDaemon(1)
 		self.thread.start()
 
+	def __del__(self):
+		pass
+
 	def location(self):
 		return leginonobject.LeginonObject.location(self)
 
-	def exit(self):
-		pass
+#	def exit(self):
+#		pass
 
 class Client(leginonobject.LeginonObject):
 	def __init__(self, id, location, buffer_size = 1024):

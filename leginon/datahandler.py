@@ -22,8 +22,8 @@ class DataHandler(leginonobject.LeginonObject):
 	def ids(self):
 		raise NotImplementedError
 
-	def exit(self):
-		pass
+#	def exit(self):
+#		pass
 
 class DictDataKeeper(DataHandler):
 	def __init__(self, id):
@@ -83,11 +83,10 @@ class ShelveDataKeeper(DataHandler):
 		self.shelflock = threading.Lock()
 
 	def __del__(self):
-		#self.exit()
-		pass
-
-	def exit(self):
 		os.remove(self.filename)
+
+#	def exit(self):
+#		os.remove(self.filename)
 
 	def query(self, id):
 		self.shelflock.acquire()
@@ -148,10 +147,10 @@ class CachedDictDataKeeper(DataHandler):
 		self.timer.start()
 
 	def __del__(self):
-		self.exit()
-
-	def exit(self):
 		os.remove(self.filename)
+
+#	def exit(self):
+#		os.remove(self.filename)
 
 	def query(self, id):
 #		self.lock.acquire()
