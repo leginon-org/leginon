@@ -110,6 +110,7 @@ class DataManager(object):
 			## insert into datadict and sizedict
 			newid = self.newid()
 			self.datadict[newid] = datainstance
+			self.sizedict[newid] = 0
 
 			if remote:
 				## do not modify the original dmid
