@@ -370,6 +370,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		self.reportStatus('output', 'Publishing image...')
 		self.publish(imagedata, pubevent=True, database=self.databaseflag.get())
+		self.reportStatus('output', 'Image published')
 
 		ev = event.DriftWatchEvent(image=imagedata, presettarget=presettarget)
 		self.outputEvent(ev)
@@ -378,7 +379,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.doneevents[dataid] = {}
 		self.doneevents[dataid]['received'] = threading.Event()
 		self.doneevents[dataid]['status'] = 'waiting'
-		self.reportStatus('output', 'Image published')
 		if self.displayimageflag.get():
 			self.reportStatus('output', 'Displaying image...')
 			self.ui_image.set(imagedata['image'])
@@ -386,7 +386,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		if self.waitfordone.get():
 			self.waitForImageProcessDone()
-		self.reportStatus('output', 'Image published')
 		return 'ok'
 
 	def setImageFilename(self, imagedata):
