@@ -32,9 +32,16 @@ class NodeLauncher(node.Node):
 		print 'content', launchevent.content
 		nodeid = launchevent.content['id']
 		nodeclass = launchevent.content['class']
-		myargs = (nodeid, nodeclass)
-		print 'making thread'
-		t = threading.Thread(target=self.launchNode, args=myargs)
+		if issubclass(nodeclass, node.Node):
+			myargs = (nodeid, nodeclass)
+			print 'making thread'
+			t = threading.Thread(target=self.launchNode, args=myargs)
+		elif issubclass(nodeclass, dataserver.DataServer):
+			myargs = (nodeclass)
+			print 'making thread'
+			t = threading.Thread(target=self.launchDataServer, args=myargs)
+		else:
+			raise ValueError
 		print 'setting daemon mode'
 		t.setDaemon(1)
 		print 'starting'
@@ -44,6 +51,10 @@ class NodeLauncher(node.Node):
 		## new node's manager = launcher's manager
 		print 'launching %s %s' % (nodeid, nodeclass)
 		nodeclass(nodeid, self.managerloc)
+
+	def launchDataServer(self, dataserverclass):
+		print 'launching %s' % nodeclass
+		dataserverclass()
 
 
 if __name__ == '__main__':
