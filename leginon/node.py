@@ -171,14 +171,15 @@ class Node(leginonobject.LeginonObject):
 
 	def researchByDataID(self, dataid, timeout = 0.5, retries = 10):
 		# will change soon
-		for i in xrange(0, retries):
-			nodeiddata = self.researchByLocation(self.managerloc, dataid)
-			if nodeiddata == None:
-				time.sleep(timeout)
-			else:
-				break
+#		for i in xrange(0, retries):
+		nodeiddata = self.researchByLocation(self.managerloc, dataid)
+#			if nodeiddata == None:
+#				time.sleep(timeout)
+#			else:
+#				break
 
 		if nodeiddata == None:
+			print "node, researchByDataID: no such data ID"
 			raise IOError
 
 		# should interate over nodes, be crafty, etc.
