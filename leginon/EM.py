@@ -91,8 +91,8 @@ class EM(node.Node):
 
 		node.Node.__init__(self, id, nodelocations, DataHandler, (self.lock, self.scope, self.camera, self))
 
-		self.addEventInput(event.LockEvent, self.lock)
-		self.addEventInput(event.UnlockEvent, self.unlock)
+		self.addEventInput(event.LockEvent, self.doLock)
+		self.addEventInput(event.UnlockEvent, self.doUnlock)
 
 		self.start()
 
@@ -131,13 +131,13 @@ class EM(node.Node):
 		e = event.ListPublishEvent(self.ID(), ids)
 		self.outputEvent(e)
 
-	def lock(self, ievent):
+	def doLock(self, ievent):
 		if ievent.id[-1] != self.locknodeid:
 			self.nodelock.acquire()
 			self.locknodeid = ievent.id[-1]
 		self.confirmEvent(ievent)
 
-	def unlock(self, ievent):
+	def doUnlock(self, ievent):
 		if ievent.id[-1] == self.locknodeid:
 			self.locknodeid = None
 			self.nodelock.release()

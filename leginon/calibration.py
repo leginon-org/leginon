@@ -106,6 +106,7 @@ class Calibration(node.Node):
 		camdata = data.EMData('camera', camstate)
 
 		print 'camdata', camdata
+		self.publish(event.LockEvent(self.ID()))
 		self.publishRemote(camdata)
 
 		print 'hello again from calibrate'
@@ -143,6 +144,8 @@ class Calibration(node.Node):
 			basestate = self.state(self.base[axis], axis)
 			self.publishRemote(data.EMData('scope', basestate))
 
+		self.publish(event.UnlockEvent(self.ID()))
+
 		print 'CALIBRATE DONE', self.calibration
 
 	def clearStateImages(self):
@@ -159,12 +162,14 @@ class Calibration(node.Node):
 		print 'setting state', state
 		newemdata = data.EMData('scope', state)
 		print 'publishing state', newemdata
+		self.publish(event.LockEvent(self.ID()))
 		self.publishRemote(newemdata)
 		print 'sleeping 1 sec'
 		time.sleep(1.0)
 		print 'getting image data'
 
 		emdata = self.researchByDataID('image data')
+		self.publish(event.UnlockEvent(self.ID()))
 		print 'emdata type', type(emdata)
 		image = emdata.content['image data']
 
