@@ -638,13 +638,22 @@ class Data(DataDict, leginonobject.LeginonObject):
 		dr = DataReference(datainstance=self)
 		return dr
 
+	def nstr(self, value):
+		if type(value) is Numeric.ArrayType:
+			shape = value.shape
+			if max(shape) > 2:
+				s = 'array(shape: %s, type: %s)' % (shape,value.typecode())
+				return s
+		return str(value)
+
 	def __str__(self):
 		items = self.items(dereference=False)
-		items = map(lambda x: (str(x[0]), str(x[1])), items)
+		items = map(lambda x: (x[0], self.nstr(x[1])), items)
 		items = map(': '.join, items)
 		s = ', '.join(items)
 		s = '{%s}' % (s,)
 		return s
+	__repr__ = __str__
 
 class DataHandler(object):
 	'''
