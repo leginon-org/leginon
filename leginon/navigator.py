@@ -50,7 +50,7 @@ class Navigator(node.Node):
 		movetype = self.movetype.getSelectedValue()[0]
 		calclient = self.calclients[movetype]
 		newstate = calclient.transform(pixelshift, clickscope, clickcamera)
-		emdat = data.ScopeEMData(('scope',), initializer=newstate)
+		emdat = data.ScopeEMData(id=('scope',), initializer=newstate)
 		self.publishRemote(emdat)
 
 		# wait for a while
@@ -85,9 +85,9 @@ class Navigator(node.Node):
 		self.shape = imagedata['image'].shape
 		self.image.setImage(imagedata['image'])
 
-		print 'publishing image'
-		self.publish(imagedata, pubevent=True)
-		print 'image published'
+		#print 'publishing image'
+		#self.publish(imagedata, pubevent=True)
+		#print 'image published'
 
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
@@ -105,9 +105,10 @@ class Navigator(node.Node):
 		settingscontainer = uidata.UIContainer('Settings')
 		settingscontainer.addUIObjects((self.movetype, self.delaydata, cameraconfigure))
 
+		acqmeth = uidata.UIMethod('Acquire', self.acquireImage)
 		self.image = uidata.UIClickImage('Navigation', self.handleImageClick2, None)
 		controlcontainer = uidata.UIContainer('Control')
-		controlcontainer.addUIObject(self.image)
+		controlcontainer.addUIObjects((acqmeth, self.image))
 
 		container = uidata.UIMediumContainer('Navigator')
 		container.addUIObjects((settingscontainer, controlcontainer))
