@@ -1,6 +1,8 @@
 from wxPython.wx import *
 from wxPython.ogl import *
 
+wxOGLInitialize()
+
 class Node(wxRectangleShape):
 	def __init__(self, name):
 		self.name = name
@@ -152,12 +154,9 @@ class Master(wxShapeCanvas):
 		shape.SetCanvas(self)
 		shape.SetX(x)
 		shape.SetY(y)
-		if pen:
-			shape.SetPen(pen)
-		if brush:
-			shape.SetBrush(brush)
-		if text:
-			shape.AddText(text)
+		shape.SetPen(pen)
+		shape.SetBrush(brush)
+		shape.AddText(text)
 		#shape.SetShadowMode(SHADOW_RIGHT)
 		self.diagram.AddShape(shape)
 		shape.Show(True)
