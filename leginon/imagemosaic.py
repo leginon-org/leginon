@@ -14,16 +14,105 @@ import xmlrpclib
 #import xmlrpclib2 as xmlbinlib
 xmlbinlib = xmlrpclib
 
+class ImageMosaicInfo(object):
+	def __init__(self):
+		self.imageinfo = {}
+
+	def addTile(self, dataid, image, position):
+		self.imageinfo[dataid] = {}
+		self.imageinfo[dataid]['image'] = image
+		self.imageinfo[dataid]['position'] = position
+
+	def hasTile(self, dataid):
+		if dataid in self.getTileDataIDs():
+			return True
+		else:
+			return False
+
+	def hasTiles(self, dataids):
+		for dataid in dataids:
+			if not self.hasTile(dataid):
+				return False
+		return True
+
+	def getTileImage(self, dataid):
+		try:
+			return self.imageinfo[dataid]['image']
+		except KeyError:
+			raise ValueError
+
+	def getTilePosition(self, dataid):
+		try:
+			return self.imageinfo[dataid]['position']
+		except KeyError:
+			raise ValueError
+
+	def getTileDataIDs(self):
+		return self.imageinfo.keys()
+
+	def getTileShape(self, dataid):
+		return self.getTileImage(dataid).shape
+
+	def getMosaicImage(self, astype=Numeric.UnsignedInt16):
+		# could be Inf
+		imagemin = [0, 0]
+		imagemax = [0, 0]
+		tiledataids = self.getTileDataIDs()
+		for tiledataid in tiledataids:
+			tileposition = self.getTilePosition(tiledataid)
+			tileshape = self.getTileShape(tiledataid)
+			tilemin = tileposition
+			tilemax = tileposition + tileshape
+			for i in [0, 1]:
+				if tilemin < imagemin[i]:
+					imagemin[i] = tilemin[i]
+				if tilemax > imagemax[i]:
+					imagemax[i] = tilemax[i]
+		imageshape = (imagemax[0] - imagemin[0], 
+									imagemax[1] - imagemin[1]) 
+
+		mosaicimage = Numeric.zeros(imageshape, astype)
+
+		for tiledataid in tiledataids:
+			tileposition = self.getTilePosition(tiledataid)
+			tileshape = self.getTileShape(tiledataid)
+			tileimage = self.getTileImage(tiledataid)
+
+			tileoffset = tileposition - imagemin
+			tilelimit = tileoffset + tileshape
+			mosaicimage[tileoffset[0]:tilelimit[0],
+									tileoffset[1]:tilelimit[1]] = tileimage.astype(astype)
+
+		return mosaicimage
+
+class StateImageMosaicInfo(object):
+	def addTile(self, dataid, image, position, state):
+		ImageMosaicInfo.addTile(self, dataid, image, position)
+		self.imageinfo[dataid]['state'] = state
+
+	def getTileState(self, dataid):
+		try:
+			return self.imageinfo[dataid]['state']
+		except KeyError:
+			raise ValueError
+
 class ImageMosaic(watcher.Watcher):
 	def __init__(self, id, nodelocations, watchfor = event.TileImagePublishEvent, **kwargs):
 		# needs own event?
 		lockblocking = 1
-		watcher.Watcher.__init__(self, id, nodelocations, watchfor, lockblocking, **kwargs)
-
-		self.imagemosaic = {}
+		watcher.Watcher.__init__(self, id, nodelocations, watchfor,
+																					lockblocking, **kwargs)
 
 		self.correlator = correlator.Correlator(fftengine.fftNumeric())
 		self.peakfinder = peakfinder.PeakFinder()
+
+		self.imagemosaics = []
+
+		self.positionmethods = {}
+		self.positionmethods['correlation'] = self.positionByCorrelation
+		self.positionmethods['automatic'] = self.automaticPosition
+		self.automaticpriority = ['correlation']
+		self.positionmethod = self.positionmethods.keys()[0]
 
 		### some things for the pop-up viewer
 		self.iv = None
@@ -35,6 +124,36 @@ class ImageMosaic(watcher.Watcher):
 	def die(self, ievent=None):
 		self.close_viewer()
 		watcher.Watcher.die(self)
+
+	def processData(self, idata):
+		tileimage = idata.content['image']
+		neighbors = idata.content['neighbor tiles']
+		mosaics = []
+		for imagemosaic in self.imagemosaics:
+			for neighbor in neighbors:
+				if imagemosaic.hasTile(neighbor):
+					mosaics.append(neighbor)
+					break
+		if len(mosaics) == 0:
+			imagemosaic = ImageMosaicInfo()
+			position = self.positionmethods[self.position](idata, None)
+			imagemosaic.addTile(idata.id, tileimage, position)
+			self.imagemosaics.append(imagemosaic)
+			print idata.id, "position =", imagemosaic.getTilePosition(idata.id)
+		else:
+			for imagemosaic in mosaics:
+				position = self.positionmethods[self.position](idata, imagemosaic)
+				imagemosaic.addTile(idata.id, tileimage, position)
+				print idata.id, "position =", imagemosaic.getTilePosition(idata.id)
+
+	def automaticPosition(self, idata, imagemosaic):
+		for positionmethod in self.automaticpriority:
+			try:
+				position = self.positionmethods[positionmethod](idata, imagemosaic)
+			# needs exception?
+			except:
+				pass
+		return position
 
 	def getPeak(self, image1, image2):
 		self.correlator.setImage(0, image1)
@@ -166,22 +285,16 @@ class ImageMosaic(watcher.Watcher):
 						maxpeakvalue = positionvotes[i][p]['peaks value']
 		return tuple(position)
 
-	def processData(self, idata):
+	def positionByCorrelation(self, idata, imagemosaic):
+		if imagemosaic is None:
+			return (0, 0)
 		tileimage = idata.content['image']
 		neighbors = idata.content['neighbor tiles']
-		if len(neighbors) == 0:
-			self.imagemosaic = {}
-			self.imagemosaic[idata.id] = {'image': tileimage, 'position': (0, 0)}
-		else:
-			positionvotes = ({}, {})
-			# calculate the tile's position based on shift from each of the neighbors
-			for neighbor in neighbors:
-				if neighbor not in self.imagemosaic:
-					# we don't know about its neighbors, wait for them?
-					self.printerror('unknown neighbor %s' % str(neighbor))
-					break
-				neighborimage = self.imagemosaic[neighbor]['image']
-				neighborposition = self.imagemosaic[neighbor]['position']
+		positionvotes = ({}, {})
+		for neighbor in neighbors:
+			if imagemosaic.hasTile(neighbor):
+				neighborimage = imagemosaic.getTileImage(neighbor)
+				neighborposition = imagemosaic.getTilePosition(neighbor)
 
 				# phase correlate the tile image with the neighbors
 				self.correlator.setImage(0, tileimage)
@@ -193,61 +306,33 @@ class ImageMosaic(watcher.Watcher):
 
 				# determine which of the shifts is valid
 				unwrappedshift = peak['pixel peak']
-				wrappedshift = correlator.wrap_coord(peak['pixel peak'], pcimage.shape)
+				wrappedshift = correlator.wrap_coord(peak['pixel peak'],
+																										pcimage.shape)
 				shift = self.compareShifts(unwrappedshift, wrappedshift,
-						tileimage, neighborimage)
+																				tileimage, neighborimage)
 
 				# use the shift and the neighbor position to get tile position
 				tileposition = (neighborposition[0] + shift[0],
-										neighborposition[1] + shift[1])
+												neighborposition[1] + shift[1])
 				peakvalue = peak['pixel peak value']
 
 				# add a vote for this position
 				positionvotes = self.votePosition(positionvotes,
 													tileposition, peakvalue)
 
-			# add the tile image and position to the mosaic
-			self.imagemosaic[idata.id] = {}
-			self.imagemosaic[idata.id]['image'] = tileimage
-			self.imagemosaic[idata.id]['position'] = self.bestPosition(positionvotes)
-		print idata.id, "position =", self.imagemosaic[idata.id]['position']
-
-	def makeImage(self, mosaic):
-		# could be Inf
-		mincoordinate = [0, 0]
-		maxcoordinate = [0, 0]
-		for tileid in mosaic:
-			for i in [0, 1]:
-				min = mosaic[tileid]['position'][i]
-				max = mosaic[tileid]['position'][i] + mosaic[tileid]['image'].shape[i]
-				if min < mincoordinate[i]:
-					mincoordinate[i] = min
-				if max > maxcoordinate[i]:
-					maxcoordinate[i] = max
-		imageshape = (maxcoordinate[0] - mincoordinate[0], 
-									maxcoordinate[1] - mincoordinate[1]) 
-		mosaicimage = Numeric.zeros(imageshape, Numeric.UnsignedInt16)
-		for tileid in mosaic:
-			row = mosaic[tileid]['position'][0] - mincoordinate[0]
-			column = mosaic[tileid]['position'][1] - mincoordinate[1]
-			iti = mosaic[tileid]['image']
-			mosaicimage[row:row + iti.shape[0], column:column + iti.shape[1]] \
-												= iti.astype(Numeric.UnsignedInt16)
-		return mosaicimage
-
-	def OLDuiShow(self):
-		i = self.makeImage(self.imagemosaic)
-		import Image
-		Image.fromstring('L', (i.shape[1], i.shape[0]), i.tostring()).show()
-		return ''
+		return self.bestPosition(positionvotes)
 
 	def uiShow(self):
-		self.displayNumericArray(self.makeImage(self.imagemosaic))
+		# show most recent for now
+		if len(self.imagemosaics) == 0:
+			return
+		self.displayNumericArray(self.imagemosaics[-1].getMosaicImage())
 
 	def start_viewer_thread(self):
 		if self.iv is not None:
 			return
-		self.viewerthread = threading.Thread(name=`self.id`, target=self.open_viewer)
+		self.viewerthread = threading.Thread(name=`self.id`,
+																					target=self.open_viewer)
 		self.viewerthread.setDaemon(1)
 		self.viewerthread.start()
 
@@ -281,19 +366,23 @@ class ImageMosaic(watcher.Watcher):
 			self.iv.update()
 
 	def uiPublishMosaicImage(self):
-		odata = data.ImageData(self.ID(), self.makeImage(self.imagemosaic))
+		# publish most recent for now
+		if len(self.imagemosaics) == 0:
+			return ''
+		odata = data.ImageData(self.ID(), self.imagemosaics[-1].getMosaicImage())
 		self.publish(odata, event.ImagePublishEvent)
 		return ''
 
-	def uiClearMosaic(self):
-		self.imagemosaic = {}
+	def uiClearMosaics(self):
+		self.imagemosaics = []
+		return ''
 
 	def defineUserInterface(self):
 		watcherspec = watcher.Watcher.defineUserInterface(self)
 		showspec = self.registerUIMethod(self.uiShow, 'Show Image', ())
 		publishspec = self.registerUIMethod(self.uiPublishMosaicImage,
 										'Publish Image', ())
-		clearspec = self.registerUIMethod(self.uiClearMosaic, 'Clear', ())
+		clearspec = self.registerUIMethod(self.uiClearMosaics, 'Clear', ())
 
 		getimagespec = self.registerUIData('Mosaic Image', 'binary',
 														permissions='r', callback=self.uiGetImageCallback)
@@ -304,142 +393,127 @@ class ImageMosaic(watcher.Watcher):
 																(watcherspec, imagespec, getimagespec))
 
 	def uiGetImageCallback(self):
-		mrcstr = Mrc.numeric_to_mrcstr(self.makeImage(self.imagemosaic))
+		# most recent for now
+		if len(self.imagemosaics) == 0:
+			return ''
+		mrcstr = Mrc.numeric_to_mrcstr(self.imagemosaics[-1].getMosaicImage())
 		return xmlbinlib.Binary(mrcstr)
 
 class StateImageMosaic(ImageMosaic):
 	def __init__(self, id, nodelocations,
 								watchfor = event.StateTileImagePublishEvent, **kwargs):
-		self.calibration = None
 		self.calibrationmatrix = None
-		self.methods = ['calibration', 'correlation']
-		self.method = self.methods[0]
-		# percent is the percent of the image size to use as the window
-		self.percent = 0.15
+
+		self.pixelsize = None
+		self.rotationmatrix = None
+
 		ImageMosaic.__init__(self, id, nodelocations, watchfor, **kwargs)
+
+		self.positionmethods['pixel size'] = self.positionByPixelSize
+		self.positionmethods['calibration'] = self.positionByCalibration
+		self.automaticpriority = ['pixel size', 'calibration', 'correlation']
+		self.positionmethod = self.positionmethods.keys()[0]
 
 		self.addEventInput(event.CalibrationPublishEvent, self.setCalibration)
 		self.start()
 
-	def setCalibration(self, ievent):
-		idata = self.researchByDataID(ievent.content)
-		self.calibration = idata.content
-		print 'calibration set to', self.calibration
-		self.calibrationmatrix = self.calculateCalibrationMatrix()
-		print 'calibration matrix set to', self.calibrationmatrix
-
-	def setProcessingMethod(self, processingmethod):
-		if method in self.methods:
-			self.method = method
+	def setProcessingMethod(self, positionmethod):
+		if positionmethod in self.positionmethods.keys():
+			self.positionmethod = positionmethod
 		else:
 			raise ValueError
 
 	def processData(self, idata):
-		print 'processData, state for idata =', idata.content['state']
-		if self.method == 'correlation':
-			self.processDataByCorrelation(idata)
-		elif self.method == 'calibration':
-			self.processDataByCalibration(idata)
-		elif self.method == 'pixel size':
-			self.processDataByPixelSize(idata)
+		tileimage = idata.content['image']
+		neighbors = idata.content['neighbor tiles']
+		tilestate = idata.content['state']
+		mosaics = []
+		for imagemosaic in self.imagemosaics:
+			for neighbor in neighbors:
+				if imagemosaic.hasTile(neighbor):
+					mosaics.append(neighbor)
+					break
+		if len(mosaics) == 0:
+			imagemosaic = StateImageMosaicInfo()
+			position = self.positionmethods[self.position](idata, None)
+			imagemosaic.addTile(idata.id, tileimage, position, tilestate)
+			self.imagemosaics.append(imagemosaic)
+			print idata.id, "position =", imagemosaic.getTilePosition(idata.id)
 		else:
-			self.printerror('invalid processing method specified')
-			raise ValueError
-		self.imagemosaic[idata.id]['state'] = idata.content['state']
+			for imagemosaic in mosaics:
+				position = self.positionmethods[self.position](idata, imagemosaic)
+				imagemosaic.addTile(idata.id, tileimage, position, tilestate)
+				print idata.id, "position =", imagemosaic.getTilePosition(idata.id)
 
-	def pixelLocationByCalibration(self, row, column):
+	def setCalibration(self, ievent):
+		idata = self.researchByDataID(ievent.content)
+		self.calibrationmatrix = self.calculateCalibrationMatrix(idata.content)
+
+	def calculateCalibrationMatrix(self, calibration):
+		matrix = Numeric.array([[calibration['x pixel shift']['x'],
+															calibration['x pixel shift']['y']],
+														[calibration['y pixel shift']['x'],
+															calibration['y pixel shift']['y']]])
+		matrix[0] /= calibration['x pixel shift']['value']
+		matrix[1] /= calibration['y pixel shift']['value']
+		return matrix
+
+	def positionByCalibration(self, idata, imagemosaic):
+		if self.calibrationmatix is None:
+			self.printerror('cannot process by calibration, no calibration available')
+			raise ValueError
+
+		row = idata.content['state']['stage position']['y']
+		column = idata.content['state']['stage position']['x']
 		matrix = self.calibrationmatrix
 		# bin by 4 hardcoded for now, maybe attach to image data
 		x = -(column * matrix[0, 0] + row * matrix[1, 0])/4
 		y = -(column * matrix[0, 1] + row * matrix[1, 1])/4
 		return (int(round(y)), int(round(x)))
 
-	def calculateCalibrationMatrix(self):
-		matrix = Numeric.array([[self.calibration['x pixel shift']['x'],
-														self.calibration['x pixel shift']['y']],
-													[self.calibration['y pixel shift']['x'],
-														self.calibration['y pixel shift']['y']]])
-		matrix[0] /= self.calibration['x pixel shift']['value']
-		matrix[1] /= self.calibration['y pixel shift']['value']
-		return matrix
+	def setPixelSizeAndRotation(self, ievent):
+		idata = self.researchByDataID(ievent.content)
+		self.rotationmatrix = self.calculateRotationMatrix(
+																						idata.content['image angle'])
+		self.pixelsize = Numeric.array([idata.content['pixel size']['y'],
+																		idata.content['pixel size']['x']],
+																												Numeric.Float32)
 
-	def processDataByCalibration(self, idata):
-		if self.calibration is None:
-			self.printerror(
-				'unable to process data %s by calibration, no calibration available'
-					% str(idata.id))
-			return
+	def calculateCalibrationMatrix(self, theta):
+		sintheta = math.sin(theta)
+		costheta = math.cos(theta)      
+		return Numeric.array([[-costheta, sintheta],
+													[sintheta, costheta]], Numeric.Float32)
 
-		# hardcode stage position for now
-		self.imagemosaic[idata.id] = {}
-		self.imagemosaic[idata.id]['image'] = idata.content['image']
-		self.imagemosaic[idata.id]['position'] = self.pixelLocationByCalibration(
-							idata.content['state']['stage position']['y'],
-							idata.content['state']['stage position']['x']) 
-
-		print idata.id, "calibrated mosaic position =", \
-												self.imagemosaic[idata.id]['position']
-
-		# experimental adjust by correlation
-		currenttile = self.imagemosaic[idata.id]
-		neighbortile = self.imagemosaic[idata.content['neighbor tiles'][0]]
-
-		# cross-correlate the two images
-		self.correlator.setImage(0, currenttile['image'])
-		self.correlator.setImage(1, neighbortile['image'])
-		pcimage = self.correlator.phaseCorrelate()
-
-		# shift is the calculated offset of the images determined by calibration
-		shift = [0, 0]
-		# windowsize is the area to look for a peak with correlation
-		windowsize = [0, 0]
-		# for each axis determine the shift and calculate windowsize
-		for i in [0, 1]:
-			shift[i] = currenttile['position'][i] - neighbortile['position'][i]
-			windowsize[i] = currenttile['image'].shape[i] * self.percent
-		print 'calibrated shift from neighbor =', shift
-		print 'windowsize for correlation =', windowsize
-		print 'window coordinates for correlation = [%s:%s, %s:%s]' % \
-							(shift[0]-windowsize[0]/2, shift[0]+windowsize[0]/2,
-								shift[1]-windowsize[1]/2, shift[1]+windowsize[1]/2)
-
-		# find the peak in the window
-		self.peakfinder.setImage(
-				pcimage[shift[0]-windowsize[0]/2:shift[0]+windowsize[0]/2,
-								shift[1]-windowsize[1]/2:shift[1]+windowsize[1]/2])
-		self.peakfinder.pixelPeak()
-		peak = self.peakfinder.getResults()
-		print 'pixel peak =', peak['pixel peak']
-
-		# set position to peak found in the window offset by the window location
-		self.imagemosaic[idata.id]['position'] = \
-				(peak['pixel peak'][0] + shift[0] - windowsize[0]/2,
-					peak['pixel peak'][1] + shift[1] - windowsize[1]/2)
-		print idata.id, "calibrated position adjusted by correlation =", \
-										self.imagemosaic[idata.id]['position']
-
-	def processDataByCorrelation(self, idata):
-		ImageMosaic.processData(self, idata)
-
-	def proccessDataByPixelSize(self, idata):
-		pass
+	def positionByPixelSize(self, idata, imagemosaic):
+		tilestate = idata.content['state']
+		if self.rotationmatrix is None or self.pixelsize is None:
+			self.printerror('cannot process by pixel size, no calibration available')
+			raise ValueError
+		x = tilestate['stage position']['x']
+		y = tilestate['stage position']['y']
+		stateposition = Numeric.array([y, x], Numeric.Float32)
+		position = Numeric.matrixmultiply(self.rotationmatrix,
+																		stateposition / self.pixelsize)
+		return (int(round(offset[0])), int(round(offset[1])))
 
 	def uiPublishMosaicImage(self):
 		#ImageMosaic.uiPublishMosaicImage(self)
 
-		for dataid in self.imagemosaic:
-			print 'PMI: %s position = %s' % (str(dataid),
-																		str(self.imagemosaic[dataid]['position']))
-		odata = data.ImageData(self.ID(), self.makeImage(self.imagemosaic))
+		if len(self.imagemosaics) == 0:
+			return ''
+		odata = data.ImageData(self.ID(), self.imagemosaics[-1].getMosaicImage())
 		self.publish(odata, event.ImagePublishEvent)
 
 		statedata = {'image data ID': odata.id}
-		for dataid in self.imagemosaic:
-			statedata[dataid] = {}
-			statedata[dataid]['position'] = self.imagemosaic[dataid]['position']
-			statedata[dataid]['state'] = self.imagemosaic[dataid]['state']
+		for tiledataid in self.imagemosaics[-1]:
+			statedata[tiledataid] = {}
+			statedata[tiledataid]['position'] = \
+										self.imagemosaics[-1].getTilePosition(tiledataid)
+			statedata[tiledataid]['state'] = \
+										 self.imagemosaics.getTileState(tiledataid)
 		self.publish(data.StateMosaicData(self.ID(), statedata),
-			event.StateMosaicPublishEvent)
+																			event.StateMosaicPublishEvent)
 
 		return ''
 
