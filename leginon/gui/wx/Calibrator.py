@@ -146,6 +146,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		gui.wx.Settings.Dialog.initialize(self)
 
 		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
+		self.widgets['camera settings'].setSize(self.node.session)
 		self.widgets['correlation type'] = Choice(self, -1,
 																							choices=self.node.cortypes)
 

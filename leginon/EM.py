@@ -264,16 +264,6 @@ class EM(node.Node):
 
 		node.Node.__init__(self, name, session, managerlocation, **kwargs)
 
-		### data handlers that will be hosted here:
-		self.scopedata = data.DataHandler(data.ScopeEMData, getdata=self.getScope)
-		self.publish(self.scopedata, pubevent=True, pubeventclass=event.ScopeEMPublishEvent, broadcast=True)
-
-		self.cameradata = data.DataHandler(data.CameraEMData, getdata=self.getCamera)
-		self.publish(self.cameradata, pubevent=True, pubeventclass=event.CameraEMPublishEvent, broadcast=True)
-
-		self.imagedata = data.DataHandler(data.CameraEMData, getdata=self.getImage)
-		self.publish(self.imagedata, pubevent=True, pubeventclass=event.CameraImageEMPublishEvent, broadcast=True)
-
 		# get the scope module and class from the database
 		try:
 			scopename = self.session['instrument']['scope']
@@ -364,6 +354,32 @@ class EM(node.Node):
 			self.statelock.release()
 			self.confirmEvent(setevent)
 
+	def publishData(self):
+		### data handlers that will be hosted here:
+		if self.scope is not None:
+			self.scopedata = data.DataHandler(data.ScopeEMData,
+																				getdata=self.getScope)
+			self.publish(self.scopedata,
+										pubevent=True,
+										pubeventclass=event.ScopeEMPublishEvent,
+										broadcast=True)
+
+		if self.camera is not None:
+			self.cameradata = data.DataHandler(data.CameraEMData,
+																					getdata=self.getCamera)
+			self.publish(self.cameradata,
+										pubevent=True,
+										pubeventclass=event.CameraEMPublishEvent,
+										broadcast=True)
+
+			self.imagedata = data.DataHandler(data.CameraEMData,
+																				getdata=self.getImage)
+			self.publish(self.imagedata,
+										pubevent=True,
+										pubeventclass=event.CameraImageEMPublishEvent,
+										broadcast=True)
+
+
 	def handler(self, scopename, cameraname):
 		self.scope = None
 		self.camera = None
@@ -395,6 +411,7 @@ class EM(node.Node):
 			self.state = self.getEM(keys)
 
 		self.start()
+		self.publishData()
 		self.queueHandler()
 
 	def getClass(self, modulename, classname):
@@ -616,15 +633,20 @@ class EM(node.Node):
 		finally:
 			self.statelock.release()
 
+	def appendDependencies(self, keys):
+		if self.scope is not None:
+			for key, value in self.scope.parameterdependencies.items():
+				if key in keys:
+					keys += value
+		return keys
+
 	def queueHandler(self):
 		while True:
 			request = self.requestqueue.get()
 			if isinstance(request, SetRequest):
 				self.setEM(request.value)
 				keys = request.value.keys()
-				for key, value in self.scope.parameterdependencies.items():
-					if key in keys:
-						keys += value
+				keys = self.appendDependencies(keys)
 				self.state = self.getEM(keys)
 			elif isinstance(request, GetRequest):
 				self.state = self.getEM(request.value)

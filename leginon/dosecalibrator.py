@@ -8,70 +8,44 @@
 import calibrator
 import calibrationclient
 import event, data
-import uidata
 import node
 try:
 	import numarray as Numeric
 except:
 	import Numeric
+import gui.wx.DoseCalibrator
 
 class DoseCalibrator(calibrator.Calibrator):
 	'''
 	calibrate the camera sensitivity and other dose measurements
 	'''
+	panelclass = gui.wx.DoseCalibrator.Panel
+	settingsclass = data.DoseCalibratorSettingsData
+	defaultsettings = {
+		'camera settings': None,
+		'correlation type': 'cross',
+		'beam diameter': 0.16,
+		'scale factor': 0.88,
+	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		calibrator.Calibrator.__init__(self, id, session, managerlocation, **kwargs)
 		self.calclient = calibrationclient.DoseCalibrationClient(self)
 		self.results = {}
 
-		self.defineUserInterface()
 		self.start()
-
-	def defineUserInterface(self):
-		node.Node.defineUserInterface(self)
-
-		## screen controls
-		controlcont = uidata.Container('Manual Screen Controls (Dose Measurement and Sensitivity Calibration Control automatically control screen)')
-		upmeth = uidata.Method('Screen Up', self.screenUp)
-		downmeth = uidata.Method('Screen Down', self.screenDown)
-		controlcont.addObjects((upmeth, downmeth))
-
-
-		## dose measurement
-		dosecont = uidata.Container('Dose Measurement')
-		self.beamdia = uidata.Float('Beam Diameter (m)', 160e-3, 'rw', persist=True)
-		self.beamscale = uidata.Float('Screen Current->Beam Current Scale Factor', 0.88, 'rw', persist=True)
-		dosemeth = uidata.Method('Measure Dose Rate', self.uiMeasureDoseRate)
-		self.ui_beamcurrent = uidata.Float('Beam Current (Amps)', 0.0, 'r')
-		self.ui_screenmag = uidata.Float('Screen Magnification', 0.0, 'r')
-		self.ui_doserate = uidata.Float('Dose Rate (electrons / m^2 / s)', 0.0, 'r')
-		dosecont.addObjects((self.beamdia, self.beamscale, dosemeth, self.ui_beamcurrent, self.ui_screenmag, self.ui_doserate))
-
-		### camera calibration
-		camcont = uidata.Container('Camera Sensitivity Calibration (Do Dose Measurement First)')
-		camsetup = self.cam.uiSetupContainer()
-		calcam = uidata.Method('Calibrate Camera Sensitivity', self.uiCalibrateCamera)
-		self.ui_sens = uidata.Float('Sensitivity (counts/electron)', 0.0, 'r')
-		camcont.addObjects((camsetup, calcam, self.ui_sens))
-
-		mycontainer = uidata.LargeContainer('Dose Calibrator')
-		mycontainer.addObjects((controlcont, dosecont, camcont))
-		self.uicontainer.addObject(mycontainer)
 
 	def uiMeasureDoseRate(self):
 		self.screenDown()
 		status = self.getCurrentAndMag()
 		if status == 'ok':
-			self.ui_screenmag.set(self.results['screen magnification'])
-			self.ui_beamcurrent.set(self.results['beam current'])
+			pass
 		elif status == 'screen':
 			self.logger.error('Cannot measure current with main screen down')
 
 		screen_mag = self.results['screen magnification']
 		beam_current = self.results['beam current']
-		beam_diameter = self.beamdia.get()
+		beam_diameter = self.settings['beam diameter']
 		doserate = self.calclient.dose_from_screen(screen_mag, beam_current, beam_diameter)
-		self.ui_doserate.set(doserate)
 		self.results['dose rate'] = doserate
 
 	def screenDown(self):
@@ -91,7 +65,7 @@ class DoseCalibrator(calibrator.Calibrator):
 		if scope['main screen position'] == 'down':
 			mag = scope['magnification']
 			current = scope['screen current']
-			scale = self.beamscale.get()
+			scale = self.settings['scale factor']
 			self.results['screen magnification'] = mag
 			self.results['beam current'] = current * scale
 			return 'ok'
@@ -110,9 +84,12 @@ class DoseCalibrator(calibrator.Calibrator):
 		imdata = self.acquireImage()
 		screen_mag = self.results['screen magnification']
 		beam_current = self.results['beam current']
-		beam_diameter = self.beamdia.get()
+		beam_diameter = self.settings['beam diameter']
 		dose_rate = self.results['dose rate']
 		sens = self.calclient.sensitivity_from_imagedata(imdata, dose_rate)
-		self.ui_sens.set(sens)
+		self.sens = sens
 		ht = imdata['scope']['high tension']
 		self.calclient.storeSensitivity(ht, sens)
+
+	def abortCalibration(self):
+		raise NotImplementedError

@@ -1760,6 +1760,14 @@ class CalibratorSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class DoseCalibratorSettingsData(CalibratorSettingsData):
+	def typemap(cls):
+		return CalibratorSettingsData.typemap() + (
+			('beam diameter', float),
+			('scale factor', float),
+		)
+	typemap = classmethod(typemap)
+
 class BeamTiltCalibratorSettingsData(CalibratorSettingsData):
 	def typemap(cls):
 		return CalibratorSettingsData.typemap() + (
