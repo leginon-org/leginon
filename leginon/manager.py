@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-from Tix import *
 import threading
 import leginonobject
 import datahandler
@@ -245,11 +244,17 @@ class Manager(node.Node):
 
 		self.launchNode(launcher_id, newproc, nodeclass, name, args)
 
+		## just to make xmlrpc happy
+		return ''
+
 	def uiAddDistmap(self, eventclass_str, fromnode_str, tonode_str):
 		eventclass = self.ui_info['eventclasses'][eventclass_str]
 		fromnode_id = self.ui_info['nodes'][fromnode_str]
 		tonode_id = self.ui_info['nodes'][tonode_str]
 		self.addEventDistmap(eventclass, fromnode_id, tonode_id)
+
+		## just to make xmlrpc happy
+		return ''
 
 
 if __name__ == '__main__':
