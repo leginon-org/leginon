@@ -56,7 +56,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.doneevents[imageid]['status'] = status
 			self.doneevents[imageid]['received'].set()
 
-	def processTargetData(self, targetdata, trial=False):
+	def processTargetData(self, targetdata):
 		'''
 		This is called by TargetWatcher.processData when targets available
 		If called with targetdata=None, this simulates what occurs at
@@ -109,7 +109,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			print 'pausing for %s sec.' % (delay,)
 			time.sleep(delay)
 			print 'acquire()'
-			ret = self.acquire(p, target=targetdata, trial=trial, emtarget=emtarget)
+			ret = self.acquire(p, target=targetdata, emtarget=emtarget)
 			# in these cases, return immediately
 			if ret in ('aborted', 'repeat'):
 				return ret
@@ -124,10 +124,15 @@ class Acquisition(targetwatcher.TargetWatcher):
 		## if image exists with targetdata and presetdata, no acquire
 		## we expect target to be exact, however, presetdata may have
 		## changed so we only query on preset name
+
+		# seems to have trouple with using original targetdata as
+		# a query, so use a copy with only some of the fields
+		targetquery = data.AcquisitionImageTargetData()
+		for key in ('session','id'):
+			targetquery[key] = targetdata[key]
 		presetquery = data.PresetData(name=presetname)
-		imagequery = data.AcquisitionImageData(target=targetdata, preset=presetquery)
-		# do I want fill=False here???
-		datalist = self.research(datainstance=imagequery)
+		imagequery = data.AcquisitionImageData(target=targetquery, preset=presetquery)
+		datalist = self.research(datainstance=imagequery, fill=False)
 		if datalist:
 			## no need to acquire again, but need to republish
 			print 'image was acquired previously... republishing'
@@ -193,7 +198,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		labelstring = self.labelstring.get()
 
 		## convert CameraImageData to AcquisitionImageData
-		imagedata = data.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=labelstring, target=target)
+		imagedata = data.AcquisitionImageData(initializer=imagedata, id=self.ID(), preset=presetdata, label=labelstring, target=target)
 
 		self.publishDisplayWait(imagedata)
 
@@ -260,11 +265,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 		print 'CURRENT', p
 		## trial image
 		print 'Acquiring image'
-		self.acquire(p, target=None, trial=True)
+		self.acquire(p, target=None)
 		print 'Acquired'
 
 	def uiTrial(self):
-		self.processTargetData(targetdata=None, trial=True)
+		self.processTargetData(targetdata=None)
 
 	def getPresetNames(self):
 		presetnames = []
