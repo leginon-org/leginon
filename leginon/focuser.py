@@ -239,16 +239,17 @@ class Focuser(acquisition.Acquisition):
 		self.logger.info('using preset %s for manual check' % (presetname,))
 		### Warning:  no target is being used, you are exposing
 		### whatever happens to be under the beam
-		t = threading.Thread(target=self.manualCheckLoop, args=(presettarget,))
+		t = threading.Thread(target=self.manualCheckLoop, args=())
 		t.setDaemon(1)
 		t.start()
 
 	def manualCheckLoop(self, presettarget=None):
 		## go to preset and target
-		self.presetsclient.toScope(presettarget['preset'], presettarget['emtarget'])
-		delay = self.uidelay.get()
-		self.logger.info('Pausing for %s seconds' % (delay,))
-		time.sleep(delay)
+		if presettarget is not None:
+			self.presetsclient.toScope(presettarget['preset'], presettarget['emtarget'])
+			delay = self.uidelay.get()
+			self.logger.info('Pausing for %s seconds' % (delay,))
+			time.sleep(delay)
 		self.manual_check_done.clear()
 		self.logger.info('Starting manual focus loop...')
 		message = self.messagelog.information('Please confirm defocus')
@@ -258,9 +259,10 @@ class Focuser(acquisition.Acquisition):
 				break
 			if self.manual_pause.isSet():
 				self.waitForContinue()
-				self.logger.info('reseting preset and target after pause')
-				self.logger.debug('preset %s' % (presettarget['preset'],))
-				self.presetsclient.toScope(presettarget['preset'], presettarget['emtarget'])
+				if presettarget is not None:
+					self.logger.info('reseting preset and target after pause')
+					self.logger.debug('preset %s' % (presettarget['preset'],))
+					self.presetsclient.toScope(presettarget['preset'], presettarget['emtarget'])
 			# acquire image, show image and power spectrum
 			# allow user to adjust defocus and stig
 			cor = self.uicorrectimage.get()
