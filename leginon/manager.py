@@ -284,7 +284,17 @@ class Manager(node.Node):
 		if ievent.confirm:
 			self.confirmmap[ievent.id] = do
 		for to_node in do:
-			self.clients[to_node].push(ievent)
+			try:
+				self.clients[to_node].push(ievent)
+			except IOError:
+				# group into another function
+				self.removeNode(to_node)
+				# also remove from launcher registry
+				self.delLauncher(to_node)
+				ndict = self.nodeDict()
+				self.nodetreedata.set(ndict)
+
+				
 
 	def spawnLauncher(self, id):
 		t = threading.Thread(name='launcher thread', target=launcher.Launcher, args=(self.id + (id,), self.nodelocations))
