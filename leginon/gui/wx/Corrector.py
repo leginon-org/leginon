@@ -8,6 +8,62 @@ import gui.wx.Stats
 import gui.wx.Events
 import gui.wx.ToolBar
 
+def plan2str(plan):
+	if not plan:
+		return ''
+	splan = []
+	for i in plan:
+		if i not in splan:
+			splan.append(i)
+	splan.sort()
+	j = 0
+	start = stop = -1
+	ranges = []
+	string = ''
+	i = -1
+	for i in range(len(splan) - 1):
+		if splan[i] + 1 == splan[i + 1]:
+			if j == 0:
+				start = splan[i]
+			else:
+				stop = splan[i + 1]
+			j += 1
+		else:
+			if j > 1:
+				string += '%d-%d, ' % (start, stop)
+				ranges.append((start, stop))
+			elif j > 0:
+				string += '%d, %d, ' % (splan[i-1], splan[i])
+			else:
+				string += '%d, ' % (splan[i],)
+			j = 0
+	if j > 1:
+		string += '%d-%d, ' % (start, stop)
+	elif j > 0:
+		string += '%d, %d, ' % (splan[i], splan[i+1])
+	else:
+		string += '%d, ' % (splan[i+1],)
+
+	return string[:-2]
+
+def str2plan(string):
+	strings = string.split(',')
+	plan = []
+	for s in strings:
+		try:
+			toks = map(lambda s: int(s.strip()), s.split('-'))
+			if len(toks) > 2:
+				continue
+			elif len(toks) == 2:
+				toks = range(toks[0], toks[1] + 1)
+			for t in toks:
+				if t not in plan:
+					plan.append(t)
+		except ValueError:
+			raise ValueError
+	plan.sort()
+	return plan
+
 class Panel(gui.wx.Node.Panel):
 	icon = 'corrector'
 	def __init__(self, parent, name):
@@ -112,8 +168,8 @@ class Panel(gui.wx.Node.Panel):
 			self.stbadrows.SetLabel('')
 			self.stbadcolumns.SetLabel('')
 		else:
-			self.stbadrows.SetLabel(self.plan2str(plan['rows']))
-			self.stbadcolumns.SetLabel(self.plan2str(plan['columns']))
+			self.stbadrows.SetLabel(plan2str(plan['rows']))
+			self.stbadcolumns.SetLabel(plan2str(plan['columns']))
 		self.plan = plan
 
 	def onEditPlan(self, evt):
@@ -123,30 +179,6 @@ class Panel(gui.wx.Node.Panel):
 			self.node.plan = self.plan
 			self.node.setPlan()
 		dialog.Destroy()
-
-	def plan2str(self, plan):
-		splan = []
-		for i in plan:
-			if i not in splan:
-				splan.append(i)
-		splan.sort()
-		return str(splan)[1:-1]
-
-	def str2plan(self, string):
-		strings = string.split(',')
-		plan = []
-		for s in strings:
-			try:
-				s = s.strip()
-				if not s:
-					continue
-				i = int(s)
-				if i not in plan:
-					plan.append(i)
-			except ValueError:
-				raise ValueError
-		plan.sort()
-		return plan
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -220,8 +252,8 @@ class EditPlanDialog(wx.Dialog):
 
 	def onSave(self, evt):
 		try:
-			rows = self.parent.str2plan(self.tcrows.GetValue())
-			columns = self.parent.str2plan(self.tccolumns.GetValue())
+			rows = str2plan(self.tcrows.GetValue())
+			columns = str2plan(self.tccolumns.GetValue())
 		except ValueError:
 			dialog = wx.MessageDialog(self, 'Invalid plan', 'Error',
 																wx.OK|wx.ICON_ERROR)
