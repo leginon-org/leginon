@@ -129,7 +129,7 @@ class DriftManager(watcher.Watcher):
 		self.logger.info('DriftManager monitoring drift...')
 		if driftdata is not None:
 			## use driftdata to set up scope and camera
-			pname = driftdata['preset']
+			pname = driftdata['presetname']
 			emtarget = driftdata['emtarget']
 			target = emtarget['target']
 			self.presetsclient.toScope(pname, emtarget)

@@ -106,7 +106,7 @@ class Focuser(acquisition.Acquisition):
 			return
 		self.logger.info('Eucentric focus saved to database, HT: %s, Mag.: %s, Focus: %s' % (ht, mag, foc))
 
-	def autoFocus(self, resultdata, presettarget):
+	def autoFocus(self, resultdata, presetname, emtarget):
 		## need btilt, pub, driftthresh
 		btilt = self.settings['beam tilt']
 		pub = False
@@ -116,9 +116,8 @@ class Focuser(acquisition.Acquisition):
 			driftthresh = None
 
 		## send the autofocus preset to the scope
-		autofocuspreset = presettarget['preset']
-		self.presetsclient.toScope(autofocuspreset, presettarget['emtarget'])
-		target = presettarget['emtarget']['target']
+		self.presetsclient.toScope(presetname, emtarget)
+		target = emtarget['target']
 
 		## set to eucentric focus if doing Z correction
 		## WARNING:  this assumes that user will not change
@@ -151,7 +150,7 @@ class Focuser(acquisition.Acquisition):
 			self.logger.info('Measurement of defocus and stig. has been aborted')
 			return 'aborted'
 		except calibrationclient.Drifting:
-			self.driftDetected(presettarget)
+			self.driftDetected(presetname, emtarget)
 			self.logger.info('Drift detected (will try again when drift is done)')
 			return 'repeat'
 
@@ -206,7 +205,7 @@ class Focuser(acquisition.Acquisition):
 		self.logger.info(resultstring)
 		return status
 
-	def acquire(self, presetdata, target=None, presettarget=None, attempt=None):
+	def acquire(self, presetdata, target=None, emtarget=None, attempt=None):
 		'''
 		this replaces Acquisition.acquire()
 		Instead of acquiring an image, we do autofocus
@@ -245,7 +244,7 @@ class Focuser(acquisition.Acquisition):
 		## pre manual check
 		if self.settings['check before']:
 			self.setStatus('user input')
-			self.manualCheckLoop(presettarget)
+			self.manualCheckLoop(presetdata['name'], emtarget)
 			self.setStatus('processing')
 			resultdata['pre manual check'] = True
 			status = 'ok'
@@ -255,8 +254,7 @@ class Focuser(acquisition.Acquisition):
 		## autofocus
 		if self.settings['autofocus']:
 			autofocuspreset = self.settings['preset']
-			autopresettarget = data.PresetTargetData(emtarget=presettarget['emtarget'], preset=autofocuspreset)
-			autostatus = self.autoFocus(resultdata, autopresettarget)
+			autostatus = self.autoFocus(resultdata, autofocuspreset, emtarget)
 			resultdata['auto status'] = autostatus
 			if autostatus == 'ok':
 				status = 'ok'
@@ -271,7 +269,7 @@ class Focuser(acquisition.Acquisition):
 		## post manual check
 		if self.settings['check after']:
 			self.setStatus('user input')
-			self.manualCheckLoop(presettarget)
+			self.manualCheckLoop(presetdata['name'], emtarget)
 			self.setStatus('processing')
 			resultdata['post manual check'] = True
 			status = 'ok'
@@ -281,20 +279,20 @@ class Focuser(acquisition.Acquisition):
 		## aquire and save the focus image
 		if self.settings['acquire final']:
 			## go back to focus preset and target
-			self.presetsclient.toScope(presetdata['name'], presettarget['emtarget'])
+			self.presetsclient.toScope(presetdata['name'], emtarget)
 			delay = self.settings['pause time']
 			self.logger.info('Pausing for %s seconds' % (delay,))
 			time.sleep(delay)
 
 			## acquire and publish image, like superclass does
-			acquisition.Acquisition.acquire(self, presetdata, target, presettarget)
+			acquisition.Acquisition.acquire(self, presetdata, target, emtarget)
 
 		## publish results
 		self.publish(resultdata, database=True, dbforce=True)
 
 		return status
 
-	def alreadyAcquired(self, targetdata, presettarget):
+	def alreadyAcquired(self, targetdata, preset, emtarget):
 		## for now, always do acquire
 		return False
 
@@ -323,11 +321,10 @@ class Focuser(acquisition.Acquisition):
 		evt = gui.wx.Focuser.ManualCheckDoneEvent(self.panel)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
-	def manualCheckLoop(self, presettarget=None):
+	def manualCheckLoop(self, presetname=None, emtarget=None):
 		## go to preset and target
-		if presettarget is not None:
-			self.presetsclient.toScope(presettarget['preset'],
-																	presettarget['emtarget'])
+		if presetname is not None:
+			self.presetsclient.toScope(presetname, emtarget)
 			delay = self.settings['pause time']
 			self.logger.info('Pausing for %s seconds' % (delay,))
 			time.sleep(delay)
@@ -342,11 +339,10 @@ class Focuser(acquisition.Acquisition):
 			elif state == 'pause':
 				if self.manualplayer.wait() == 'stop':
 					break
-				if presettarget is not None:
+				if presetname is not None:
 					self.logger.info('Reseting preset and target after pause')
-					self.logger.debug('preset %s' % (presettarget['preset'],))
-					self.presetsclient.toScope(presettarget['preset'],
-																			presettarget['emtarget'])
+					self.logger.debug('preset %s' % (presetname,))
+					self.presetsclient.toScope(presetname, emtarget)
 			# acquire image, show image and power spectrum
 			# allow user to adjust defocus and stig
 			correction = self.settings['correct image']
