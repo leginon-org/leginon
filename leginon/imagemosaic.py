@@ -6,6 +6,9 @@ import fftengine
 import correlator
 import peakfinder
 import LinearAlgebra
+import threading
+from Tkinter import *
+import ImageViewer
 
 class ImageMosaic(watcher.Watcher):
 	def __init__(self, id, nodelocations, watchfor = event.ImageTilePublishEvent, **kwargs):
@@ -17,6 +20,10 @@ class ImageMosaic(watcher.Watcher):
 
 		self.correlator = correlator.Correlator(fftengine.fftNumeric())
 		self.peakfinder = peakfinder.PeakFinder()
+
+		### some things for the pop-up viewer
+		self.iv = None
+		self.viewer_ready = threading.Event()
 
 		self.defineUserInterface()
 		#self.start()
@@ -219,11 +226,42 @@ class ImageMosaic(watcher.Watcher):
 			image[row:row + iti.shape[0], column:column + iti.shape[1]] = iti.astype(Numeric.UnsignedInt16)
 		return image
 
-	def uiShow(self):
+	def OLDuiShow(self):
 		i = self.makeImage(self.imagemosaic)
 		import Image
 		Image.fromstring('L', (i.shape[1], i.shape[0]), i.tostring()).show()
 		return ''
+
+	def uiShow(self):
+		self.displayNumericArray(self.makeImage(self.imagemosaic))
+
+	def start_viewer_thread(self):
+		if self.iv is not None:
+			return
+		self.viewerthread = threading.Thread(name=`self.id`, target=self.open_viewer)
+		self.viewerthread.setDaemon(1)
+		self.viewerthread.start()
+
+	def open_viewer(self):
+		root = self.root = Toplevel()
+		root.wm_geometry('=450x400')
+
+		self.iv = ImageViewer.ImageViewer(root, bg='#488')
+		self.iv.pack()
+
+		self.viewer_ready.set()
+		root.mainloop()
+
+		##clean up if window destroyed
+		self.viewer_ready.clear()
+		self.iv = None
+
+	def displayNumericArray(self, numarray):
+		self.start_viewer_thread()
+		self.viewer_ready.wait()
+		if numarray is not None:
+			self.iv.import_numeric(numarray)
+			self.iv.update()
 
 	def uiPublishMosaicImage(self):
 		odata = data.ImageData(self.ID(), self.makeImage(self.imagemosaic))
