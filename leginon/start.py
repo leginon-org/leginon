@@ -32,6 +32,7 @@ try:
 except IndexError:
 	session = time.strftime('%Y-%m-%d-%H-%M')
 
+'''
 def startManager(location, event):
 	location.update(manager.Manager(('manager',), None).location())
 	event.set()
@@ -46,7 +47,10 @@ threading.Thread(target=startManager, args=(location, event)).start()
 event.wait()
 threading.Thread(target=startLauncher, args=(location, event)).start()
 event.wait()
+'''
 
+location = manager.Manager(('manager',), None).location()
+launcher.Launcher((socket.gethostname(),), {'manager': location})
 instance = location['UI']['instance']
 client = uiclient.UIApp(uiclient.wxLocalClient, (instance,), 'Leginon II')
 
