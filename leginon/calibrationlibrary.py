@@ -66,9 +66,8 @@ class CalibrationLibrary(node.Node):
 class PickleCalibrationLibrary(CalibrationLibrary):
 	def __init__(self, id, nodelocations, **kwargs):
 		CalibrationLibrary.__init__(self, id, nodelocations, **kwargs)
+
 		self.defineUserInterface()
-
-
 		self.start()
 
 	def getKeys(self):
@@ -109,16 +108,11 @@ class PickleCalibrationLibrary(CalibrationLibrary):
 			except KeyError:
 				return None
 
-	def defineUserInterface(self):
-		nodespec = CalibrationLibrary.defineUserInterface(self)
-		self.registerUISpec('Pickle Calibration Library', (nodespec,))
-
 class DBCalibrationLibrary(CalibrationLibrary):
 	def __init__(self, id, nodelocation, **kwargs):
 		CalibrationLibrary.__init__(self, id, nodelocations, **kwargs)
+
 		self.defineUserInterface()
-
-
 		self.start()
 
 	def getKeys(self):
@@ -149,7 +143,3 @@ class DBCalibrationLibrary(CalibrationLibrary):
 				return cal[key]
 			except KeyError:
 				return None
-
-	def defineUserInterface(self):
-		nodespec = CalibrationLibrary.defineUserInterface(self)
-		self.registerUISpec('DB Calibration Library', (nodespec,))

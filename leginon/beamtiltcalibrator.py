@@ -58,13 +58,13 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		print 'storing calibration'
 		mag = self.getMagnification()
 		self.calclient.setMatrix(mag, 'defocus', matrix)
+		self.calclient.setMatrixDB(mag, 'defocus', matrix)
 		return ''
 
 	def calibrateStigmators(self, tilt_value, delta):
 		self.setCamState()
 
 		currentstig = self.getStigmator()
-		print 'CURRENT', currentstig
 		## set up the stig states
 		stig = {'x':{}, 'y':{}}
 		for axis in ('x','y'):
@@ -74,7 +74,6 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 					stig[axis][sign]['stigmator']['objective'][axis] += delta/2.0
 				elif sign == '-':
 					stig[axis][sign]['stigmator']['objective'][axis] -= delta/2.0
-		print 'STIG', stig
 
 		for stigaxis in ('x','y'):
 			print 'calculating matrix for stig %s' % (stigaxis,)
@@ -98,6 +97,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 			mag = self.getMagnification()
 			type = 'stig' + stigaxis
 			self.calclient.setMatrix(mag, type, matrix)
+			self.calclient.setMatrixDB(mag, type, matrix)
 
 		return ''
 
@@ -144,7 +144,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 		calcont = self.registerUIContainer('Calibrate', (caldefocus, calstig, measure))
 
-		self.registerUISpec('Beam Tilt Calibrator', (calcont, camconfig, calspec,))
-
+		myspec = self.registerUISpec('Beam Tilt Calibrator', (calcont, camconfig,))
+		myspec += calspec
+		return myspec
 
 
