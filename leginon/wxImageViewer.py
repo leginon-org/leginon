@@ -35,6 +35,7 @@ class ImagePanel(wxPanel):
 
 		self.initValueLabels()
 		self.initScaleEntry()
+		self.initZoom()
 
 		self.Fit()
 
@@ -61,6 +62,35 @@ class ImagePanel(wxPanel):
 		self.sizer.Prepend(self.valuesizer)
 		EVT_MOTION(self.panel, self.motion)
 
+	def initZoom(self):
+		self.zoomsizer = wxBoxSizer(wxHORIZONTAL)
+		zoombutton = wxButton(self, -1, 'Zoom')
+		EVT_BUTTON(self, zoombutton.GetId(), self.OnZoomButton)
+		self.zoomsizer.Add(zoombutton, 0, wxCENTER | wxALL, 3)
+		self.zoomsizer.Add(wxStaticText(self, -1, 'Zoom:'), 0, wxCENTER | wxALL, 3)
+		self.zoomlabel = wxStaticText(self, -1, '')
+		self.updateZoomLabel()
+		self.zoomsizer.Add(self.zoomlabel, 0, wxCENTER | wxALL, 3)
+		self.sizer.Prepend(self.zoomsizer)
+
+	def OnZoomButton(self, evt):
+		self.panel.SetCursor(wxStockCursor(wxCURSOR_MAGNIFIER))
+		EVT_LEFT_UP(self.panel, self.OnZoomIn)
+		EVT_RIGHT_UP(self.panel, self.OnZoomOut)
+
+	def OnZoomIn(self, evt):
+		self.setScale((self.scale[0]*2, self.scale[1]*2),
+									self.view2image((evt.m_x, evt.m_y)))
+		self.updateZoomLabel()
+
+	def OnZoomOut(self, evt):
+		self.setScale((self.scale[0]/2, self.scale[1]/2),
+									self.view2image((evt.m_x, evt.m_y)))
+		self.updateZoomLabel()
+
+	def updateZoomLabel(self):
+		self.zoomlabel.SetLabel(str(self.scale[0]) + 'x')
+
 	def initScaleEntry(self):
 		self.scalesizer = wxBoxSizer(wxHORIZONTAL)
 		self.scale_entry = {}
@@ -78,21 +108,40 @@ class ImagePanel(wxPanel):
 		EVT_BUTTON(self, scalebutton.GetId(), self.OnScale)
 		self.sizer.Prepend(self.scalesizer)
 
-	def OnScale(self, evt):
+	def getEntryScale(self):
 		scale = list(self.scale)
 		for i in range(len(self.scale)):
 			try:
 				scale[i] = float(self.scale_entry[i].GetValue())
 			except:
 				self.scale_entry[i].SetValue(str(self.scale[i]))
-		viewoffset = self.panel.GetViewStart()
-		viewoffset = (viewoffset[0]/self.scale[0], viewoffset[1]/self.scale[1])
+		return scale
+
+	def OnScale(self, evt):
+		self.setScale(self.getEntryScale(), self.getViewCenter())
+
+	def getViewCenter(self):
+		center = self.panel.GetClientSize()
+		center = (center[0]/2, center[1]/2)
+		return self.view2image(center)
+
+	def setScale(self, scale, offset=None):
 		self.scale = tuple(scale)
 		if self.bitmap is not None:
 			self.panel.SetVirtualSize((self.bitmap.GetWidth()*self.scale[0],
 																	self.bitmap.GetHeight()*self.scale[1]))
+		dc = wxClientDC(self.panel)
+		dc.BeginDrawing()
+		dc.Clear()
+		dc.EndDrawing()
 		self.UpdateDrawing()
-		self.panel.Scroll(viewoffset[0]*self.scale[0], viewoffset[1]*self.scale[1])
+		if offset is not None:
+			center = self.panel.GetClientSize()
+			center = (center[0]/2, center[1]/2)
+			self.panel.Scroll((offset[0])*self.scale[0] - center[0],
+												(offset[1])*self.scale[1] - center[1])
+		else:
+			self.panel.Scroll(0, 0)
 		#self.panel.Refresh(0)
 
 	def PILsetImageFromMrcString(self, imagestring):
@@ -165,8 +214,9 @@ class ImagePanel(wxPanel):
 			viewoffset = self.panel.GetViewStart()
 			clientdc = wxClientDC(self.panel)
 			clientdc.SetUserScale(self.scale[0], self.scale[1])
-			clientdc.Blit(0, 0, self.size[0]/self.scale[0],
-													self.size[1]/self.scale[1], dc,
+			size = self.panel.GetClientSize()
+			clientdc.Blit(0, 0, Numeric.ceil(size[0]/self.scale[0]),
+													Numeric.ceil(size[1]/self.scale[1]), dc,
 													viewoffset[0]/self.scale[0],
 													viewoffset[1]/self.scale[1])
 
@@ -193,8 +243,9 @@ class ImagePanel(wxPanel):
 			viewoffset = self.panel.GetViewStart()
 			paintdc = wxPaintDC(self.panel)
 			paintdc.SetUserScale(self.scale[0], self.scale[1])
-			paintdc.Blit(0, 0, self.size[0]/self.scale[0],
-													self.size[1]/self.scale[1], dc,
+			size = self.panel.GetClientSize()
+			paintdc.Blit(0, 0, Numeric.ceil(size[0]/self.scale[0]),
+													Numeric.ceil(size[1]/self.scale[1]), dc,
 													viewoffset[0]/self.scale[0],
 													viewoffset[1]/self.scale[1])
 
@@ -323,39 +374,31 @@ class TargetImagePanel(ImagePanel):
 			if callable(self.callback):
 				self.callback(self.target_type, self.targets[self.target_type])
 
-	def drawTarget(self, dc, target, color=wxBLACK):
+	# needs to be stored rather than generated
+	def getTargetBitmap(self, target, color=wxBLACK):
 		penwidth = 1
-		length = 10
+		length = 15
 		for target_type in self.targets:
 			if target in self.targets[target_type]:
 				color = self.colors[target_type]
 		if target == self.closest_target:
 			color = wxColor(color.Red()/2, color.Green()/2, color.Blue()/2)
-		dc.SetBrush(wxBrush(color, wxTRANSPARENT))
 		pen = wxPen(color, 1)
-		dc.SetPen(pen)
-		#dc.SetPen(wxPen(color, 3))
+		mem = wxMemoryDC()
+		bitmap = wxEmptyBitmap(length, length)
+		mem.SelectObject(bitmap)
+		mem.SetBrush(wxBrush(color, wxTRANSPARENT))
+		mem.SetPen(pen)
+		mem.DrawLine(length/2, 0, length/2, length)
+		mem.DrawLine(0, length/2, length, length/2)
+		mem.SelectObject(wxNullBitmap)
+		bitmap.SetMask(wxMaskColour(bitmap, wxBLACK))
+		return bitmap
 
-		#dc.DrawCircle(target[0], target[1], 15)
-
-		dc.DrawLine(target[0] - length, target[1],
-								target[0] + length + 1, target[1])
-		dc.DrawLine(target[0], target[1] - length,
-								target[0], target[1] + length + 1)
-
-#		for i in range(target[0] - 10, target[0] + 11):
-#			for j in range(-1, 2):
-#				color = wxColour(dc.GetPixel(i, target[1] + j).Red(), 0, 0)
-#				pen.SetColour(color)
-#				dc.SetPen(pen)
-#				dc.DrawPoint(i, target[1] + j)
-#
-#		for i in range(target[1] - 10, target[1] + 11):
-#			for j in range(-1, 2):
-#				color = wxColour(dc.GetPixel(target[0] + j, i).Red(), 0, 0)
-#				pen.SetColour(color)
-#				dc.SetPen(pen)
-#				dc.DrawPoint(target[0] + j, i)
+	def drawTarget(self, dc, target):
+		bitmap = self.getTargetBitmap(target)
+		dc.DrawBitmap(bitmap, target[0] - bitmap.GetWidth()/2,
+													target[1] - bitmap.GetHeight()/2, 1)
 
 	def OnRightDoubleClick(self, evt):
 		if self.closest_target is not None:
@@ -392,6 +435,6 @@ if __name__ == '__main__':
 
 	app = MyApp(0)
 	#app.panel.setImage(open('test.jpg', 'rb').read())
-	app.panel.setImageFromMrcString(open('test2.mrc', 'rb').read())
+	app.panel.setImageFromMrcString(open('test1.mrc', 'rb').read())
 	app.MainLoop()
 
