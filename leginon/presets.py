@@ -85,25 +85,6 @@ class PresetsClient(object):
 		return presetname
 
 
-class CircularIter(object):
-	'''
-	creates a circular iterator around an object that supports iteration
-	'''
-	def __init__(self, iterable):
-		self.iterable = iterable
-		self.iterator = iter(self.iterable)
-
-	def next(self):
-		try:
-			return self.iterator.next()
-		except StopIteration:
-			self.iterator = iter(self.iterable)
-			return self.iterator.next()
-
-	def __iter__(self):
-		return self
-
-
 class DataHandler(node.DataHandler):
 	def query(self, id):
 		if id == ('presets',):
@@ -135,7 +116,6 @@ class PresetsManager(node.Node):
 		self.currentselection = None
 		self.currentpreset = None
 		self.presets = []
-		self.circle = CircularIter(self.presets)
 		self.getPresetsFromDB()
 
 		self.defineUserInterface()
@@ -472,19 +452,20 @@ class PresetsManager(node.Node):
 	def square(self, xydict):
 		xydict['y'] = xydict['x']
 
+	def getSessionNameList(self):
+		'''
+		get list of session names from this instrument
+		'''
+		querysession = data.SessionData()
+		querysession['instrument'] = self.session['instrument']
+		sessionlist = self.research(datainstance=querysession, fill=False)
+		sessionnamelist = [x['name'] for x in sessionlist]
+		return sessionnamelist
+
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
 
-		## import
-		try:
-			presetslist = self.research(dataclass=data.PresetData)
-		except IndexError:
-			print 'Preset session research index error'
-			raise
-			presetslist = []
-		sessionnamelist = map(lambda x: x['session']['name'], presetslist)
-		sessionnamelist = unique.unique(sessionnamelist)
-		sessionnamelist.sort()
+		sessionnamelist = self.getSessionNameList()
 		self.othersession = uidata.SingleSelectFromList('Session', sessionnamelist, 0)
 		fromdb = uidata.Method('Import', self.uiGetPresetsFromDB)
 		importcont = uidata.Container('Import')
@@ -518,10 +499,18 @@ class PresetsManager(node.Node):
 		## acquisition
 		cameraconfigure = self.cam.configUIData()
 		acqmeth = uidata.Method('Acquire', self.uiAcquire)
+
+		#self.statrows = uidata.Array('Stats Row Range', [], 'rw', persist=True)
+		#self.statcols = uidata.Array('Stats Column Range', [], 'rw', persist=True)
+		#statsmeth = uidata.Method('Get Stats', self.uiGetStats)
+
+
 		self.ui_image = uidata.Image('Image', None, 'r')
+
 
 		imagecont = uidata.Container('Acquisition')
 		imagecont.addObjects((cameraconfigure, acqmeth, self.ui_image,))
+
 
 		## main container
 		container = uidata.LargeContainer('Presets Manager')
@@ -538,7 +527,7 @@ class PresetsManager(node.Node):
 		self.scope = imagedata['scope']
 		self.camera = imagedata['camera']
 		self.shape = imagedata['image'].shape
-		self.ui_image.setImage(imagedata['image'])
+		self.ui_image.set(imagedata['image'])
 
 	def targetToScope(self, newpresetname, emtargetdata):
 		'''
