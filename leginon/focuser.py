@@ -14,7 +14,7 @@ class Focuser(acquisition.Acquisition):
 			'Defocus': self.correctDefocus
 		}
 
-		acquisition.Acquisition.__init__(self, id, sesison, nodelocations, **kwargs)
+		acquisition.Acquisition.__init__(self, id, sesison, nodelocations, targetclass=data.FocusTargetData, **kwargs)
 
 	def acquire(self, preset, trial=False):
 		'''
