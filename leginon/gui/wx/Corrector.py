@@ -6,7 +6,7 @@ import gui.wx.Node
 import wxImageViewer
 
 class Panel(gui.wx.Node.Panel):
-	icon = 'acquisition'
+	icon = 'corrector'
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1, name='%s.pAcquisition' % name)
 
