@@ -14,10 +14,10 @@ import event, data
 ###
 
 class ImageWatcher(watcher.Watcher):
-	def __init__(self, id, nodelocations, **kwargs):
+	def __init__(self, id, session, nodelocations, **kwargs):
 		watchfor = event.ImagePublishEvent
 		lockblocking = 0
-		watcher.Watcher.__init__(self, id, nodelocations, watchfor, lockblocking, **kwargs)
+		watcher.Watcher.__init__(self, id, session, nodelocations, watchfor, lockblocking, **kwargs)
 
 		self.iv = None
 		self.numarray = None

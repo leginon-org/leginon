@@ -6,9 +6,9 @@ import node
 import time
 
 class MosaicNavigator(navigator.Navigator):
-	def __init__(self, id, nodelocations, **kwargs):
+	def __init__(self, id, session, nodelocations, **kwargs):
 		self.statemosaic = {}
-		navigator.Navigator.__init__(self, id, nodelocations, **kwargs)
+		navigator.Navigator.__init__(self, id, session, nodelocations, **kwargs)
 		self.addEventInput(event.StateMosaicPublishEvent, self.addStateMosaic)
 		self.defineUserInterface()
 		self.start()

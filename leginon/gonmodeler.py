@@ -13,7 +13,7 @@ import calibrationclient
 import gonmodel
 
 class GonModeler(node.Node):
-	def __init__(self, id, nodelocations, **kwargs):
+	def __init__(self, id, session, nodelocations, **kwargs):
 		self.cam = camerafuncs.CameraFuncs(self)
 		ffteng = fftengine.fftNumeric()
 		#ffteng = fftengine.fftFFTW(planshapes=(), estimate=1)
@@ -24,7 +24,7 @@ class GonModeler(node.Node):
 		self.threadlock = threading.Lock()
 		self.calclient = calibrationclient.ModeledStageCalibrationClient(self)
 
-		node.Node.__init__(self, id, nodelocations, **kwargs)
+		node.Node.__init__(self, id, session, nodelocations, **kwargs)
 		self.defineUserInterface()
 		self.start()
 

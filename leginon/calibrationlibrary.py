@@ -7,8 +7,8 @@ import dbdatakeeper
 import sqlbindict
 
 class DataHandler(datahandler.DataBinder):
-	def __init__(self, id, calnode):
-		datahandler.DataBinder.__init__(self, id)
+	def __init__(self, id, session, calnode):
+		datahandler.DataBinder.__init__(self, id, session)
 		self.calnode = calnode
 
 	def query(self, id):
@@ -37,8 +37,8 @@ class DataHandler(datahandler.DataBinder):
 
 
 class CalibrationLibrary(node.Node):
-	def __init__(self, id, nodelocations, **kwargs):
-		node.Node.__init__(self, id, nodelocations,
+	def __init__(self, id, session, nodelocations, **kwargs):
+		node.Node.__init__(self, id, session, nodelocations,
 					[(DataHandler, (self,)), (dbdatakeeper.DBDataKeeper, ())], **kwargs)
 		self.storagedict = {
 			'pickle': PickleStorage(),

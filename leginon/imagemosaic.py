@@ -172,13 +172,13 @@ class StateImageMosaicInfo(ImageMosaicInfo):
 		return image
 
 class ImageMosaic(watcher.Watcher):
-	def __init__(self, id, nodelocations, watchfor = event.TileImagePublishEvent, **kwargs):
+	def __init__(self, id, session, nodelocations, watchfor=event.TileImagePublishEvent, **kwargs):
 		# needs own event?
 		lockblocking = 1
 		self.scale = 1.0
 		self.autoscale = 512
 		self.targetlist = []
-		watcher.Watcher.__init__(self, id, nodelocations, watchfor,
+		watcher.Watcher.__init__(self, id, session, nodelocations, watchfor,
 																					lockblocking, **kwargs)
 
 		self.correlator = correlator.Correlator(fftengine.fftNumeric())
@@ -539,9 +539,9 @@ class ImageMosaic(watcher.Watcher):
 			print targetlistdata['targets']
 
 class StateImageMosaic(ImageMosaic):
-	def __init__(self, id, nodelocations, watchfor = event.TileImagePublishEvent, **kwargs):
+	def __init__(self, id, session, nodelocations, watchfor = event.TileImagePublishEvent, **kwargs):
 
-		ImageMosaic.__init__(self, id, nodelocations, watchfor, **kwargs)
+		ImageMosaic.__init__(self, id, session, nodelocations, watchfor, **kwargs)
 
 		self.cam = camerafuncs.CameraFuncs(self)
 

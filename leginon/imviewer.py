@@ -14,8 +14,8 @@ import Mrc
 import node, data, event
 
 class ImViewer(imagewatcher.ImageWatcher):
-	def __init__(self, id, nodelocations, **kwargs):
-		imagewatcher.ImageWatcher.__init__(self, id, nodelocations, **kwargs)
+	def __init__(self, id, session, nodelocations, **kwargs):
+		imagewatcher.ImageWatcher.__init__(self, id, session, nodelocations, **kwargs)
 
 		self.cam = camerafuncs.CameraFuncs(self)
 

@@ -12,8 +12,8 @@ import sys
 import Mrc
 
 class TestMosaic(node.Node):
-	def __init__(self, id, nodelocations, **kwargs):
-		node.Node.__init__(self, id, nodelocations, **kwargs)
+	def __init__(self, id, session, nodelocations, **kwargs):
+		node.Node.__init__(self, id, session, nodelocations, **kwargs)
 		self.addEventOutput(event.TileImagePublishEvent)
 		self.start()
 

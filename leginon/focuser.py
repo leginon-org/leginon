@@ -4,7 +4,7 @@ import calibrationclient
 import camerafuncs
 
 class Focuser(acquisition.Acquisition):
-	def __init__(self, id, nodelocations, **kwargs):
+	def __init__(self, id, sesison, nodelocations, **kwargs):
 		self.cam = camerafuncs.CameraFuncs(self)
 
 		self.btcalclient = calibrationclient.BeamTiltCalibrationClient(self)
@@ -14,7 +14,7 @@ class Focuser(acquisition.Acquisition):
 			'Defocus': self.correctDefocus
 		}
 
-		acquisition.Acquisition.__init__(self, id, nodelocations, **kwargs)
+		acquisition.Acquisition.__init__(self, id, sesison, nodelocations, **kwargs)
 
 	def acquire(self, preset):
 		'''

@@ -10,8 +10,8 @@ class Calibrator(node.Node):
 	Calibrator base class
 	Contains basic functions useful for doing calibrations
 	'''
-	def __init__(self, id, nodelocations, **kwargs):
-		node.Node.__init__(self, id, nodelocations, **kwargs)
+	def __init__(self, id, session, nodelocations, **kwargs):
+		node.Node.__init__(self, id, session, nodelocations, **kwargs)
 		self.cam = camerafuncs.CameraFuncs(self)
 
 	def getMagnification(self):

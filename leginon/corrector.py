@@ -18,9 +18,9 @@ False = 0
 True = 1
 
 class DataHandler(node.DataHandler):
-	def __init__(self, id, inode):
+	def __init__(self, id, session, inode):
 		self.node = inode
-		node.DataHandler.__init__(self, id)
+		node.DataHandler.__init__(self, id, session)
 	# acq/rel twice on normal data
 	def query(self, id):
 		self.lock.acquire()
@@ -45,12 +45,13 @@ class Corrector(node.Node):
 	  a dark and bright image for this plan.  These are stored as MRC
 	  in the corrections directory.
 	'''
-	def __init__(self, id, nodelocations, **kwargs):
+	def __init__(self, id, session, nodelocations, **kwargs):
 		self.cam = camerafuncs.CameraFuncs(self)
 		self.plans = {}
 
-		node.Node.__init__(self, id, nodelocations, [(DataHandler, (self,)),
-																		(dbdatakeeper.DBDataKeeper, ())], **kwargs)
+		node.Node.__init__(self, id, session, nodelocations,
+												[(DataHandler, (self,)),
+													(dbdatakeeper.DBDataKeeper, ())], **kwargs)
 		self.addEventOutput(event.DarkImagePublishEvent)
 		self.addEventOutput(event.BrightImagePublishEvent)
 		self.addEventOutput(event.ListPublishEvent)

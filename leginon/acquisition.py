@@ -44,8 +44,9 @@ import copy
 
 
 class Acquisition(targetwatcher.TargetWatcher):
-	def __init__(self, id, nodelocations, **kwargs):
-		targetwatcher.TargetWatcher.__init__(self, id, nodelocations, **kwargs)
+	def __init__(self, id, session, nodelocations, **kwargs):
+		targetwatcher.TargetWatcher.__init__(self, id, session,
+																					nodelocations, **kwargs)
 		self.cam = camerafuncs.CameraFuncs(self)
 
 		self.calclients = {

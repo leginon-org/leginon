@@ -10,14 +10,14 @@ import calibrationclient
 
 
 class GridPreview(node.Node):
-	def __init__(self, id, nodelocations, **kwargs):
+	def __init__(self, id, session, nodelocations, **kwargs):
 		self.cam = camerafuncs.CameraFuncs(self)
 		self.done = []
 		self.todo = []
 		self.temptodo = []
 		self.stoprunning = threading.Event()
 		self.running = threading.Event()
-		node.Node.__init__(self, id, nodelocations, **kwargs)
+		node.Node.__init__(self, id, session, nodelocations, **kwargs)
 		self.calclient = calibrationclient.StageCalibrationClient(self)
 
 		# will be in presets or something

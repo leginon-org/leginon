@@ -11,8 +11,8 @@ import calibrationclient
 class BeamTiltCalibrator(calibrator.Calibrator):
 	'''
 	'''
-	def __init__(self, id, nodelocations, **kwargs):
-		calibrator.Calibrator.__init__(self, id, nodelocations, **kwargs)
+	def __init__(self, id, session, nodelocations, **kwargs):
+		calibrator.Calibrator.__init__(self, id, session, nodelocations, **kwargs)
 
 
 		self.calclient = calibrationclient.BeamTiltCalibrationClient(self)

@@ -10,8 +10,8 @@ import calibrationclient
 import copy
 
 class Navigator(node.Node):
-	def __init__(self, id, nodelocations, **kwargs):
-		node.Node.__init__(self, id, nodelocations, **kwargs)
+	def __init__(self, id, session, nodelocations, **kwargs):
+		node.Node.__init__(self, id, session, nodelocations, **kwargs)
 		self.cam = camerafuncs.CameraFuncs(self)
 		self.calclients = {
 			'image shift': calibrationclient.ImageShiftCalibrationClient(self),
@@ -110,8 +110,8 @@ class Navigator(node.Node):
 		return myui
 
 class SimpleNavigator(Navigator):
-	def __init__(self, id, nodelocations, **kwargs):
-		Navigator.__init__(self, id, nodelocations, **kwargs)
+	def __init__(self, id, session, nodelocations, **kwargs):
+		Navigator.__init__(self, id, session, nodelocations, **kwargs)
 		self.defineUserInterface()
 		self.start()
 

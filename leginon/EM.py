@@ -53,8 +53,7 @@ class EM(node.Node):
 
 		node.Node.__init__(self, id, session, nodelocations,
 												[(DataHandler, (self,)),
-													(dbdatakeeper.DBDataKeeper, ())],
-												launchlock=kwargs['launchlock'])
+													(dbdatakeeper.DBDataKeeper, ())], **kwargs)
 
 		self.addEventInput(event.LockEvent, self.doLock)
 		self.addEventInput(event.UnlockEvent, self.doUnlock)

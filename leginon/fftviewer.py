@@ -7,8 +7,8 @@ import Numeric
 import cameraimage
 
 class FFTViewer(imagewatcher.ImageWatcher):
-	def __init__(self, id, nodelocations, **kwargs):
-		imagewatcher.ImageWatcher.__init__(self, id, nodelocations, **kwargs)
+	def __init__(self, id, session, nodelocations, **kwargs):
+		imagewatcher.ImageWatcher.__init__(self, id, session, nodelocations, **kwargs)
 
 		self.fftengine = fftengine.fftNumeric()
 

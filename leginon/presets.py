@@ -87,9 +87,10 @@ class DataHandler(datahandler.DataBinder):
 
 
 class PresetsManager(node.Node):
-	def __init__(self, id, nodelocations, **kwargs):
-		node.Node.__init__(self, id, nodelocations, [(DataHandler, (self,)),
-                             (dbdatakeeper.DBDataKeeper, ())], **kwargs)
+	def __init__(self, id, session, nodelocations, **kwargs):
+		node.Node.__init__(self, id, session, nodelocations,
+												[(DataHandler, (self,)),
+													(dbdatakeeper.DBDataKeeper, ())], **kwargs)
 
 		ids = ['presets',]
 		e = event.ListPublishEvent(self.ID(), idlist=ids)

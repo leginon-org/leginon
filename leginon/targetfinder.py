@@ -17,8 +17,8 @@ xmlbinlib = xmlrpclib
 #               (not in imagewatcher)
 
 class TargetFinder(imagewatcher.ImageWatcher):
-	def __init__(self, id, nodelocations, **kwargs):
-		imagewatcher.ImageWatcher.__init__(self, id, nodelocations, **kwargs)
+	def __init__(self, id, session, nodelocations, **kwargs):
+		imagewatcher.ImageWatcher.__init__(self, id, session, nodelocations, **kwargs)
 
 	def findTargets(self, numarray):
 		'''
@@ -54,8 +54,8 @@ class TargetFinder(imagewatcher.ImageWatcher):
 
 
 class ClickTargetFinder(TargetFinder):
-	def __init__(self, id, nodelocations, **kwargs):
-		TargetFinder.__init__(self, id, nodelocations, **kwargs)
+	def __init__(self, id, session, nodelocations, **kwargs):
+		TargetFinder.__init__(self, id, session, nodelocations, **kwargs)
 
 		self.userbusy = threading.Condition()
 		self.processlock = threading.Lock()

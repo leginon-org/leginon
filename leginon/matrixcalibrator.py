@@ -24,8 +24,8 @@ class MatrixCalibrator(calibrator.Calibrator):
 	Then 'Calibrate'
 	(Valid Shift is currently being ignored)
 	'''
-	def __init__(self, id, nodelocations, **kwargs):
-		calibrator.Calibrator.__init__(self, id, nodelocations, **kwargs)
+	def __init__(self, id, session, nodelocations, **kwargs):
+		calibrator.Calibrator.__init__(self, id, session, nodelocations, **kwargs)
 
 		self.parameters = {
 		  'image shift': calibrationclient.ImageShiftCalibrationClient(self),

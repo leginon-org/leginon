@@ -5,9 +5,9 @@ import watcher
 import threading
 
 class TargetWatcher(watcher.Watcher):
-	def __init__(self, id, nodelocations, **kwargs):
+	def __init__(self, id, session, nodelocations, **kwargs):
 		watchfor = event.ImageTargetListPublishEvent
-		watcher.Watcher.__init__(self, id, nodelocations, watchfor, lockblocking=0, **kwargs)
+		watcher.Watcher.__init__(self, id, session, nodelocations, watchfor, lockblocking=0, **kwargs)
 		self.abort = threading.Event()
 
 	def processData(self, newdata):
