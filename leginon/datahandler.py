@@ -36,7 +36,7 @@ class SimpleDataKeeper(DataHandler):
 		self.datadictlock.release()
 
 
-class DataHandler(DataHandler):
+class DataBinder(DataHandler):
 	def __init__(self):
 		DataKeeper.__init__(self)
 		self.bindings = {}
@@ -52,7 +52,7 @@ class DataHandler(DataHandler):
 			except:
 				pass
 
-	def bind(self, dataclass, func=None):
+	def setBinding(self, dataclass, func=None):
 		'func must take data instance as first arg'
 		if func == None:
 			if dataclass in self.bindings:

@@ -5,7 +5,7 @@ import leginonobject
 import datalocal
 import datatcp
 import threading
-import datakeeper
+import datahandler
 
 class Client(leginonobject.LeginonObject):
   # hostname/port -> location
@@ -20,13 +20,13 @@ class Client(leginonobject.LeginonObject):
 		self.clients[datatcp.PushClient].push(data)
 
 class Server(leginonobject.LeginonObject):
-	def __init__(self, dkclass = datakeeper.SimpleDataKeeper):
+	def __init__(self, dkclass = datahandler.SimpleDataKeeper):
 		leginonobject.LeginonObject.__init__(self)
 		self.bindings = Bindings()
-		self.datakeeper = dkclass()
+		self.datahandler = dkclass()
 		self.servers = {}
-		#self.servers[datalocal.PushServer] = datalocal.PushServer(self.datakeeper)
-		self.servers[datatcp.PushServer] = datatcp.PushServer(self.datakeeper)
+		#self.servers[datalocal.PushServer] = datalocal.PushServer(self.datahandler)
+		self.servers[datatcp.PushServer] = datatcp.PushServer(self.datahandler)
 		thread = threading.Thread(None, self.servers[datatcp.PushServer].serve_forever, None, (), {})
 		# this isn't working right now
 		thread.setDaemon(1)
