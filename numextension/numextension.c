@@ -91,6 +91,7 @@ It is faster than the sum of both min and max above because it does
 3 comparisons for every 2 elements, rather than two comparison for every 
 element
 ****/
+
 static PyObject *
 minmax(PyObject *self, PyObject *args)
 {
@@ -543,6 +544,45 @@ bin(PyObject *self, PyObject *args)
 	return PyArray_Return(result);
 }
 
+static PyObject *houghline(PyObject *self, PyObject *args) {
+	PyObject *input;
+	PyArrayObject *inputarray, *hough;
+	int dimensions[2];
+	int n;
+	int i, j, theta, r;
+	double rtheta;
+	float increment = 1.0;
+
+	if (!PyArg_ParseTuple(args, "O|f", &input, &increment))
+		return NULL;
+
+	inputarray = (PyArrayObject *)
+									PyArray_ContiguousFromObject(input, PyArray_DOUBLE, 2, 2);
+
+	if(inputarray->dimensions[0] != inputarray->dimensions[1])
+		return NULL;
+
+	n = inputarray->dimensions[0];
+
+	dimensions[0] = (int)ceil(M_SQRT2*n);
+	dimensions[1] = (int)round(90/increment);
+	hough = (PyArrayObject *)PyArray_FromDims(2, dimensions, PyArray_DOUBLE);
+
+	for(i = 0; i < inputarray->dimensions[0]; i++)
+		for(j = 0; j < inputarray->dimensions[1]; j++)
+			if(((double *)inputarray->data)[j * (i + 1)] > 0.0) {
+				for(theta = 0; theta < dimensions[1]; theta++) {
+					rtheta = theta * increment * M_PI/180;
+					r = (int)(abs(j*cos(rtheta)) + i*sin(rtheta) + 0.5);
+					*(double *)(hough->data + r*hough->strides[0]
+											+ theta*hough->strides[1]) +=
+									*(double *)(inputarray->data + i*inputarray->strides[0]
+															+ j*inputarray->strides[1]);
+				}
+			}
+
+	return PyArray_Return(hough);
+}
 
 static struct PyMethodDef numeric_methods[] = {
 	{"min", min, METH_VARARGS},
@@ -552,6 +592,7 @@ static struct PyMethodDef numeric_methods[] = {
 	{"blobs", blobs, METH_VARARGS},
 	{"despike", despike, METH_VARARGS},
 	{"bin", bin, METH_VARARGS},
+	{"houghline", houghline, METH_VARARGS},
 	{NULL, NULL}
 };
 
