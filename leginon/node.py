@@ -294,8 +294,7 @@ class Node(leginonobject.LeginonObject):
 			return
 
 		if 'database' in kwargs and kwargs['database']:
-			if isinstance(idata, data.InSessionData):
-				idata['session'] = self.session
+			self.addSession(idata)
 			try:
 				self.datahandler.dbInsert(idata)
 			except KeyError, e:
@@ -313,6 +312,13 @@ class Node(leginonobject.LeginonObject):
 			eventclass = event.publish_events[idata.__class__]
 			e = eventclass(id=self.ID(), dataid=idata['id'], confirm=confirm)
 			self.outputEvent(e)
+
+	def addSession(self, datainstance):
+		if isinstance(datainstance, data.InSessionData):
+			datainstance['session'] = self.session
+		for key in datainstance:
+			if isinstance(datainstance[key], data.Data):
+				self.addSession(datainstance[key])
 
 	def research(self, dataclass=None, datainstance=None, results=None):
 		'''

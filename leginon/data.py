@@ -605,7 +605,7 @@ class CameraImageData(ImageData):
 ## but for now it helps to query the same way we used to
 class CorrectorImageData(ImageData):
 	def typemap(cls):
-		t = CameraImageData.typemap()
+		t = ImageData.typemap()
 		t += [ ('camstate', CorrectorCamstateData), ]
 		return t
 	typemap = classmethod(typemap)
