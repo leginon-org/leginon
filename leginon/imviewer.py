@@ -106,7 +106,7 @@ class ImViewer(imagewatcher.ImageWatcher):
 	def acquireArray(self, corr=0):
 		camconfig = self.cam.config()
 		camstate = camconfig['state']
-		camdata = data.CameraEMData(('camera',), initializer=camstate)
+		camdata = data.CameraEMData(id=('camera',), initializer=camstate)
 		imdata = self.cam.acquireCameraImageData(camdata, correction=corr)
 		imarray = imdata['image']
 		return imarray
