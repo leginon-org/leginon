@@ -49,9 +49,9 @@ will return a reference to sss instead of sss.
 
 pickling and deepcopying are optimized because they do not dereference.
 If iii is pickled or deepcopied, sss is not.
-If iii is stored in the database
-Instead, iii['session']
-contains a DataReference object.
+If iii is stored in the database, sss will be stored only if it is not already.
+If iii and sss are in the database, and iii is queried, only iii is returned.
+sss will be queried automatically when accessing iii['session']
 '''
 
 ## manages weak references between data instances
