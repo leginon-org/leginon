@@ -82,46 +82,6 @@ function smooth2($filename="", $minpix="", $maxpix="", $colormap=false, $binning
 	$img = imageFilteredCreateFromMRC (
 			$filename, $minpix,
 			$maxpix,
-function getdefault($filename="", $minpix="", $maxpix="", $colormap=false, $binning=1, $type='default') {
-	$minpix = ($minpix) ? $minpix : MIN_PIXEL_VAL;
-	$maxpix = ($maxpix) ? $maxpix : (($colormap) ? MAX_COLOR_PIXEL_VAL : MAX_PIXEL_VAL);
-	if (!is_file($filename))
-		return false;
-
-	return imageCreateFromMRC (
-		$filename, 
-		$minpix, $maxpix,
-		$colormap,
-		$binning
-		);
-}
-
-function smooth1($filename="", $minpix="", $maxpix="", $colormap=false, $binning=1 ) {
-	$minpix = ($minpix) ? $minpix : MIN_PIXEL_VAL;
-	$maxpix = ($maxpix) ? $maxpix : (($colormap) ? MAX_COLOR_PIXEL_VAL : MAX_PIXEL_VAL);
-	if (!is_file($filename))
-		return false;
-	$kernel = 5;
-	$sigma = 2.73;
-	return imageFilteredCreateFromMRC (
-			$filename, 
-			$minpix, $maxpix,
-			$colormap,
-			$binning,
-			$kernel, $sigma
-			);
-}
-
-function smooth2($filename="", $minpix="", $maxpix="", $colormap=false, $binning=1 ) {
-	$minpix = ($minpix) ? $minpix : MIN_PIXEL_VAL;
-	$maxpix = ($maxpix) ? $maxpix : (($colormap) ? MAX_COLOR_PIXEL_VAL : MAX_PIXEL_VAL);
-	if (!is_file($filename))
-		return false;
-	$kernel = 5;
-	$sigma = 1;
-	$img = imageFilteredCreateFromMRC (
-			$filename, $minpix,
-			$maxpix,
 			$colormap,
 			$binning,
 			$kernel, $sigma

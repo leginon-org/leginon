@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.39 $
- *	@version $Id: leginon.inc,v 1.39 2004-12-07 00:30:42 dfellman Exp $
+ *	@version $Revision: 1.40 $
+ *	@version $Id: leginon.inc,v 1.40 2005-01-24 23:28:43 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -1425,6 +1425,7 @@ class leginondata {
 
 		$select =  "UNIX_TIMESTAMP(d1.`DEF_timestamp`) as `unix_timestamp`, "
 		."date_format(d1.`DEF_timestamp`, '%Y-%d-%m %T') as `timestamp`, "
+		."a.`MRC|image` as filename, "
 		."t.`REF|AcquisitionImageData|image` as imageId, "
 		."t.`DEF_id` as targetId, "
 		."d1.cols as driftx, "
@@ -1446,6 +1447,7 @@ class leginondata {
 		."from DriftData d1 "
 		."left join AcquisitionImageTargetData as t  "
 		."on (t.`DEF_id` = d1.`REF|AcquisitionImageTargetData|target`)  "
+		."left join AcquisitionImageData as a on (a.`DEF_id` = t.`REF|AcquisitionImageData|image`) "
 		."where "
 		.$condition
 		."t.`type`='focus' "

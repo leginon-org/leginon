@@ -6,7 +6,7 @@
  *	For terms of the license agreement
  *	see  http://ami.scripps.edu/software/leginon-license
  */
-print_r($_GET);
+
 require_once("config.php");
 require_once("inc/util.inc");
 require_once('inc/mysql.inc');
