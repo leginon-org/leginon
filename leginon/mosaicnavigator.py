@@ -32,44 +32,25 @@ class MosaicNavigator(navigator.Navigator):
 		row = clickevent.content['array row']
 		column = clickevent.content['array column']
 		shape = clickevent.content['array shape']
-		print 'clicked =', (row, column)
 
 		# certainly not optimal
 		maxmagnitude = math.sqrt(shape[0]**2 + shape[1]**2)
-		print 'maxmagnitude =', maxmagnitude
 		nearestdelta = (0,0)
 		nearesttile = None
 		for tile in mosaicdata:
 			position = mosaicdata[tile]['position']
-			print tile, 'position =', position
-
 			offset = mosaicdata[tile]['offset']
-			print tile, 'offset =', offset
-
 			offsetposition = (position[0] + offset[0], position[1] + offset[1])
-			print tile, 'offset position =', offsetposition
-
 			shape = mosaicdata[tile]['shape']
-			print tile, 'shape =', shape
-
 			deltaposition = (-(row - offsetposition[0] - shape[0] / 2),
 												-(column - offsetposition[1] - shape[1] / 2))
-
-			print tile, 'deltaposition =', deltaposition
 			magnitude = math.sqrt((deltaposition[0])**2 + (deltaposition[1])**2)
-			print tile, 'magnitude =', magnitude
 			if magnitude < maxmagnitude:
 				maxmagnitude = magnitude
 				nearestdelta = deltaposition
 				nearesttile = tile
 
-		print 'nearest tile position =', mosaicdata[nearesttile]['position']
-		print 'delta row: %s, column: %s' % (nearestdelta[0], nearestdelta[1])
-
-		self.publishRemote(data.EMData('all', mosaicdata[nearesttile]['scope']))
-#		e = self.shiftEventClass(self.ID(),
-#									{'row': nearestdelta[0], 'column': nearestdelta[1]})
-#		self.outputEvent(e)
+#		self.publishRemote(data.EMData('all', mosaicdata[nearesttile]['scope']))
 		movetype = self.movetype.get()
 		calclient = self.calclients[movetype]
 		newstate = calclient.transform({'row': nearestdelta[0],
