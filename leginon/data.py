@@ -1,6 +1,6 @@
 
 import leginonobject
-import array
+import Numeric
 
 class Data(leginonobject.LeginonObject):
 	'''baseclass for leginon data.  subclasses should implement content'''
@@ -46,4 +46,21 @@ class DataLocationData(LocationData):
 		LocationData.__init__(self, id, list(content))
 	def __repr__(self):
 			return "<DataLocationData for %s> %s" % (self.id, self.content)
+
+class NumericData(Data):
+	def __init__(self, id, content):
+		if type(content) != Numeric.ArrayType:
+			raise RuntimeError('content must be Numeric array')
+		Data.__init__(self, id, content)
+
+class DBRecordData(Data):
+	def __init__(self, id, content):
+		Data.__init__(self, id, dict(content))
+		# validate content
+		if 'table' not in self.content:
+			raise RuntimeError('invalid content for DBRecordData')
+		if 'record' not in self.content:
+			raise RuntimeError('invalid content for DBRecordData')
+		# maybe check that 'record' contains a dict
+
 

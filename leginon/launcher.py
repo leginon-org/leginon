@@ -14,7 +14,7 @@ class Launcher(node.Node):
 
 		self.addEventInput(event.LaunchEvent, self.handleLaunch)
 		self.caller = calllauncher.CallLauncher()
-		print 'launcher id: %s' % self.id
+		print 'launcher id: %s' % (self.id,)
 
 		self.start()
 

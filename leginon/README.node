@@ -22,7 +22,7 @@ Generating and Handling Events
 
    Events can be confirmed in order to verify they have been received
    and processed by nodes who are confingured to receive the event.
-   If a node needs to confirm that an event has been processed may call
+   If a node needs to confirm that an event has been processed it may call
    self.confirmEvent(eventinstance) and a confirmation will be made.
    A node that wishes to wait until an event has been confirmed may
    call self.outputEvent(eventinstance, 1) which will block until the
@@ -39,7 +39,8 @@ Data Production, Pushing, and Pulling
             to pull if they request it.
 
       self.publishRemote(nodeid, datainstance)
-            Publishes datainstance on another node
+            Publishes datainstance on another node.  In this case, data
+            is actually pushed to another node.
 
       self.unpublish(dataid, eventclass=event.UnpublishEvent)
             Unpublishes the data refered to by dataid and generates
@@ -70,7 +71,7 @@ Optional User Interface Definition
             func is any callable object (usually self.SomeMethod)
             argspec should be a sequence of dicts, for example:
             (
-              {'name':'mynum', 'alias':Mynum', 'type':'integer', 'default':1},
+              {'name':'mynum', 'alias':'Mynum', 'type':'integer', 'default':1},
               {'name':'mystr', 'alias':'Xyz', 'type':'string', 'default':'hello'},
               {'name':'selection', 'alias':'AAA', 'type':('red','green','blue')}
             )

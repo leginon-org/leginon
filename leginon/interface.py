@@ -13,6 +13,7 @@ class Server(xmlrpcserver.xmlrpcserver):
 	def __init__(self, id=()):
 		xmlrpcserver.xmlrpcserver.__init__(self)
 		self.funcdict = {}
+		self.funclist = []
 		self.server.register_function(self.uiMethods, 'methods')
 		self.id = id
 		self.server.register_function(self.uiID, 'id')
@@ -38,15 +39,18 @@ class Server(xmlrpcserver.xmlrpcserver):
 					raise RuntimeError('bad xmlrpctype')
 
 		self.funcdict[alias] = {'func': func, 'argspec':argspec}
+		self.funclist.append(alias)
 		self.server.register_function(func, alias)
 
 	def uiMethods(self):
 		'makes some of self.funcdict public to rpc clients'
 		funcstruct = {}
+		fdict = {}
 		for key,value in self.funcdict.items():
-			funcstruct[key] = {}
-			funcstruct[key]['argspec'] = value['argspec']
-
+			fdict[key] = {}
+			fdict[key]['argspec'] = value['argspec']
+		funcstruct['dict'] = fdict
+		funcstruct['list'] = self.funclist
 		return funcstruct
 
 	def uiID(self):
@@ -123,8 +127,11 @@ class Client(object):
 
 	def getMethods(self):
 		self.funcdict = {}
+		self.funclist = []
 		f = self.proxy.methods()
-		for key,value in f.items():
+		fdict = f['dict']
+		self.funclist = f['list']
+		for key,value in fdict.items():
 			c = ClientComponent(self, key, value['argspec'])
 			self.funcdict[key] = c
 

@@ -15,18 +15,21 @@ class TimedLoop(node.Node):
 		NumericControlEvent - modifies the loop interval
 	"""
 	def __init__(self, nodeid, managerlocation):
+		self.interval = 0
+		self.nextevent = threading.Event()
+		self.stopevent = threading.Event()
+		self.mainlock = threading.RLock()
+
 		node.Node.__init__(self, nodeid, managerlocation)
 
 		self.addEventInput(event.StartEvent, self._handle_start)
 		self.addEventInput(event.StopEvent, self._handle_stop)
 		self.addEventInput(event.NumericControlEvent, self._handle_intervalchange)
 
-		self.interval = 0
-		self.nextevent = threading.Event()
-		self.stopevent = threading.Event()
-		self.mainlock = threading.RLock()
-
 		self.interact()
+
+	def defineUserInterface(self):
+		node.Node.defineUserInterface(self)
 
 	def main(self):
 		"""
@@ -94,3 +97,68 @@ class TimedLoop(node.Node):
 		defined in subclass
 		"""
 		raise NotImplementedError()
+
+
+### an example of subclassing TimedLoop
+import Numeric
+import data
+
+class TestLoop(timedloop.TimedLoop):
+	"""
+	Event Inputs:
+		StartEvent - starts the acquisition loop
+		StopEvent - stops the acquisition loop
+		NumericControlEvent - modifies the loop interval
+	"""
+	def __init__(self, id, managerlocation=None):
+		timedloop.TimedLoop.__init__(self, id, managerlocation)
+		print 'TestLoop %s started' % (self.id,)
+
+	def action(self):
+		"""
+		this is the real guts of this node
+		"""
+		size = 5
+		a = Numeric.arrayrange(size * size)
+		a = Numeric.reshape(a, (size,size)) 
+		adata = data.NumericData(self.ID(), a)
+		print 'publishing', adata
+		self.publish(adata, event.PublishEvent)
+
+	def defineUserInterface(self):
+		timedloop.TimedLoop.defineUserInterface(self)
+
+		self.registerUIFunction(self.myStart, (), alias='Start')
+		self.registerUIFunction(self.myStop, (), alias='Stop')
+		argspec = (
+			{'name':'new_interval','alias':'Interval','type':'integer'},
+			)
+		self.registerUIFunction(self.myChange, argspec, alias='Change')
+
+	def myStart(self):
+		'start with a dummy start event'
+		self._handle_start(None)
+		return ''
+
+	def myStop(self):
+		'stop with a dummy stop event'
+		self._handle_stop(None)
+		return ''
+
+	def myChange(self, new_interval):
+		self._change_interval(new_interval)
+		return ''
+		
+
+
+if __name__ == '__main__':
+	from Tkinter import *
+	import nodegui
+
+	id = ('testloop',)
+	t = TestLoop(id)
+
+	tk = Tk()
+	gui = nodegui.NodeGUI(tk, node=t)
+	gui.pack()
+	tk.mainloop()

@@ -309,10 +309,8 @@ if __name__ == '__main__':
 	if gui:
 		import nodegui
 		import Tkinter
-		hostname = m.location()['hostname']
-		port = m.location()['UI port']
 		tk = Tkinter.Tk()
-		mgui = nodegui.NodeGUI(tk, hostname, port)
+		mgui = nodegui.NodeGUI(tk, node=m)
 		tk.wm_title('Leginon Manager')
 		mgui.pack()
 		t = threading.Thread(name = 'Tk GUI thread', target = tk.mainloop)

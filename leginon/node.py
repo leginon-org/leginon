@@ -54,6 +54,7 @@ class Node(leginonobject.LeginonObject):
 	def __init__(self, id, managerloc = None, dh = NodeDataHandler, dhargs = (), clientclass = Client):
 		leginonobject.LeginonObject.__init__(self, id)
 
+		self.managerloc = managerloc
 		self.clients = {}
 
 		self.registry = {'outputs':[], 'inputs':[]}
@@ -62,6 +63,7 @@ class Node(leginonobject.LeginonObject):
 		self.clientclass = clientclass
 
 		self.uiserver = interface.Server(self.id)
+		self.uiactive = 0
 		self.defineUserInterface()
 
 		self.confirmwaitlist = {}
@@ -72,9 +74,9 @@ class Node(leginonobject.LeginonObject):
 		self.addEventOutput(event.NodeUnavailableEvent)
 		self.addEventInput(event.KillEvent, self.die)
 		self.addEventInput(event.ConfirmationEvent, self.registerConfirmedEvent)
-
-		if managerloc:
-			self.addManager(managerloc)
+		if self.managerloc:
+			print 'adding manager'
+			self.addManager(self.managerloc)
 
 	def exit(self):
 		self.outputEvent(event.NodeUnavailableEvent(self.ID()))
@@ -88,7 +90,7 @@ class Node(leginonobject.LeginonObject):
 		This is where you register methods that can be accessed
 		by a user interface through XML-RPC
 		To register a method use:
-		   self.uiserver.registerFunction(self.meth, argspec [,alias])
+		   self.registerUIFunction(self.meth, argspec [,alias])
 		argspec should be a sequence object like this example:
 		(
 		  {'name':'mynum', 'alias':MyNum','type':'integer', 'default':1},
@@ -102,14 +104,15 @@ class Node(leginonobject.LeginonObject):
 		- alias is the alias that should be used by the UI
 		  (defaults to __name__)
 		'''
+		self.uiactive = 1
 		self.clientlist = []
 		self.clientdict = {}
+		print 'clientlist initialized'
 
 	def registerUIFunction(self, func, argspec, alias=None):
 		self.uiserver.registerFunction(func, argspec, alias)
 
 	def addManager(self, loc):
-		self.managerloc = loc
 		self.addEventClient(('manager',), loc)
 		print "self.clients =", self.clients
 		newid = self.ID()
@@ -130,8 +133,12 @@ class Node(leginonobject.LeginonObject):
 		interact_thread.join()
 		self.exit()
 
-	def outputEvent(self, ievent, wait=False, nodeid=('manager',)):
-		self.clients[nodeid].push(ievent)
+	def outputEvent(self, ievent, wait=0, nodeid=('manager',)):
+		try:
+			self.clients[nodeid].push(ievent)
+		except KeyError:
+			#print 'cannot output event %s to %s' % (ievent,nodeid)
+			return
 		if wait:
 			self.waitEvent(ievent)
 
@@ -139,11 +146,11 @@ class Node(leginonobject.LeginonObject):
 		self.outputEvent(event.ConfirmationEvent(self.ID(), ievent.id))
 
 	def waitEvent(self, ievent):
-		#print "waiting on", ievent.id
+		print "waiting on", ievent.id
 		if not ievent.id in self.confirmwaitlist:
 			self.confirmwaitlist[ievent.id] = threading.Event()
 		self.confirmwaitlist[ievent.id].wait()
-		#print "done for", ievent.id
+		print "done for", ievent.id
 
 	def registerConfirmedEvent(self, ievent):
 		# this is bad since it will fill up with lots of events
@@ -229,16 +236,21 @@ class Node(leginonobject.LeginonObject):
 		self.clients[newid] = self.clientclass(self.ID(), loc)
 
 		## this was added to work with interface server
-		self.clientlist.append(newid[-1])
-		self.clientdict[newid[-1]] = newid
+		if self.uiactive:
+			name = newid[-1]
+			if name not in self.clientlist:
+				self.clientlist.append(name)
+			self.clientdict[name] = newid
 
 	def delEventClient(self, newid):
 		if newid in self.clients:
 			del self.clients[newid]
 
 			## this was added to work with interface server
-			self.clientlist.remove(newid[-1])
-			del self.clientdict[newid[-1]]
+			if self.uiactive:
+				name = newid[-1]
+				self.clientlist.remove(name)
+				del self.clientdict[name]
 
 	def addEventInput(self, eventclass, func):
 		self.server.datahandler.setBinding(eventclass, func)

@@ -111,7 +111,15 @@ class NodeGUIComponent(Frame):
 
 
 class NodeGUI(Frame):
-	def __init__(self, parent, hostname, port):
+	def __init__(self, parent, hostname=None, port=None, node=None):
+		if hostname and port:
+			pass
+		elif node:
+			hostname = node.location()['hostname']
+			port = node.location()['UI port']
+		else:
+			raise RuntimeError('NodeGUI needs either node instance or hostname and port')
+
 		Frame.__init__(self, parent)
 		self.uiclient = interface.Client(hostname, port)
 		self.id = self.uiclient.id
@@ -131,7 +139,8 @@ class NodeGUI(Frame):
 
 		self.uiclient.getMethods()
 			
-		for key,value in self.uiclient.funcdict.items():
+		for key in self.uiclient.funclist:
+			value = self.uiclient.funcdict[key]
 			c = NodeGUIComponent(self, value)
 			c.pack(side=TOP, expand=YES, fill=BOTH)
 			self.components[key] = c
