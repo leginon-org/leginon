@@ -12,12 +12,7 @@ class Handler(SocketServer.StreamRequestHandler):
 
 	def handle(self):
 		try:
-			print 'SSSS'
-			t1 = time.clock()
 			obj = cPickle.load(self.rfile)
-			t2 = time.clock()
-			tdiff = t2 - t1
-			print 'TTTT cPickle.load', tdiff
 		except EOFError:
 			print('no data to read, handle socket connection failed')
 			return
@@ -32,32 +27,15 @@ class Handler(SocketServer.StreamRequestHandler):
 				raise
 			try:
 				# returns exception if error, else None
-				print 'socketstreamserver dumping 111', tdiff
-				t1 = time.clock()
 				cPickle.dump(e, self.wfile, 1)
-				t2 = time.clock()
-				tdiff = t2 - t1
-				print 'TTTT cPickle.dump Data instance', tdiff
 			except IOError:
 				print('write failed when acknowledging push')
 		else:
 			try:
-				print 'datahandler query'
 				newdata = self.server.datahandler.query(obj)
-				print 'datahandler query done'
 
-				print 'socketstreamserver dumping 222'
-				t1 = time.clock()
 				s = cPickle.dumps(newdata, 1)
-				t2 = time.clock()
-				tdiff = t2 - t1
-				print 'TTTT cPickle.dump not Data instance', tdiff
-				print 'writing to socket'
-				t1 = time.clock()
 				self.wfile.write(s)
-				t2 = time.clock()
-				tdiff = t2 - t1
-				print 'socket written', tdiff
 
 			except IOError:
 				print('write failed when returning requested data')
@@ -79,7 +57,7 @@ class Server(leginonobject.LeginonObject):
 		pass
 
 class Client(leginonobject.LeginonObject):
-	def __init__(self, id, location, buffer_size = 1024):
+	def __init__(self, id, location, buffer_size):
 		leginonobject.LeginonObject.__init__(self, id)
 		self.serverlocation = location
 		self.socket = None
@@ -87,48 +65,19 @@ class Client(leginonobject.LeginonObject):
 
 	def pull(self, id):
 		self.connect()
-
-		print 'SSSS'
-		t1 = time.clock()
 		idpickle = cPickle.dumps(id, 1)
-		t2 = time.clock()
-		tdiff = t2 - t1
-		print 'TTTT cPickle.dumps pull idpickle', tdiff
-
 		self.send(idpickle)
-		print 'receive'
 		data = self.receive()
-		print 'receive done'
 		self.close()
-
-		print 'SSSS'
-		t1 = time.clock()
 		p = cPickle.loads(data)
-		t2 = time.clock()
-		tdiff = t2 - t1
-		print 'TTTT cPickle.loads pull data', tdiff
-
 		return p
 
 	def push(self, idata):
 		self.connect()
-
-		print 'SSSS'
-		t1 = time.clock()
 		p = cPickle.dumps(idata, 1)
-		t2 = time.clock()
-		tdiff = t2 - t1
-		print 'TTTT cPickle.dumps push data', tdiff
-
 		self.send(p)
 		r = self.receive()
-
-		print 'SSSS'
-		t1 = time.clock()
 		serverexception = cPickle.loads(r)
-		t2 = time.clock()
-		tdiff = t2 - t1
-		print 'TTTT cPickle.loads push data', tdiff
 
 		self.close()
 		if serverexception is not None:
@@ -164,5 +113,3 @@ class Client(leginonobject.LeginonObject):
 		else:
 			self.printerror('no socket available')
 			raise IOError
-
-
