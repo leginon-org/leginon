@@ -85,13 +85,16 @@ class Launcher(node.Node):
 if __name__ == '__main__':
 	import sys, socket
 
-#	managerlocation = {}
-#	managerlocation['hostname'] = sys.argv[1]
-#	managerlocation['TCP port'] = int(sys.argv[2])
-#	managerlocation['UNIX pipe filename'] = str(sys.argv[3])
-
 	myhost = socket.gethostname()
 	myid = (myhost,)
 
-#	m = Launcher(myid, {'manager': managerlocation})
-	m = Launcher(myid, {})
+	managerlocation = {}
+	try:
+		managerlocation['hostname'] = sys.argv[1]
+		managerlocation['TCP port'] = int(sys.argv[2])
+		#managerlocation['UNIX pipe filename'] = str(sys.argv[3])
+		m = Launcher(myid, {'manager': managerlocation})
+	except IndexError:
+		m = Launcher(myid, {})
+
+

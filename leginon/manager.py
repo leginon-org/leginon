@@ -84,7 +84,17 @@ class Manager(node.Node):
 	def getLauncherNodeClasses(self, launchername):
 		dataid = self.launcherdict[launchername]['node classes id']
 		loc = self.launcherdict[launchername]['location']
-		nodeclassesdata = self.researchByLocation(loc, dataid)
+		launcherid = self.launcherdict[launchername]['id']
+		try:
+			nodeclassesdata = self.researchByLocation(loc, dataid)
+		except IOError:
+			print "unable to research launcher, unregistering launcher:", launcherid
+			# group into another function
+			self.removeNode(launcherid)
+			# also remove from launcher registry
+			self.delLauncher(launcherid)
+			ndict = self.nodeDict()
+			self.nodetreedata.set(ndict)
 		nodeclasses = nodeclassesdata.content
 		return nodeclasses
 
@@ -238,8 +248,16 @@ class Manager(node.Node):
 		self.clients[launcher].push(ev)
 
 	def killNode(self, nodeid):
-		self.clients[nodeid].push(event.KillEvent(self.ID()))
-		#self.removeNode(nodeid)
+			try:
+				self.clients[nodeid].push(event.KillEvent(self.ID()))
+			except IOError:
+				print "unable to push KillEvent to node, unregistering node", nodeid
+				# group into another function
+				self.removeNode(nodeid)
+				# also remove from launcher registry
+				self.delLauncher(nodeid)
+				ndict = self.nodeDict()
+				self.nodetreedata.set(ndict)
 
 	def addEventDistmap(self, eventclass, from_node=None, to_node=None):
 		args = (eventclass, from_node, to_node)

@@ -44,7 +44,7 @@ class Client(Base):
 			except IOError:
 				pass
 		print "transport IOError, unable to pull data:", idata
-		return None
+		raise IOError
 
 	def push(self, odata):
 		for c in self.clients:
@@ -53,7 +53,7 @@ class Client(Base):
 			except IOError:
 				pass
 		print "transport IOError, unable to push data:", odata
-		return None
+		raise IOError
 
 class Server(Base):
 	def __init__(self, id, dhclass = datahandler.SimpleDataKeeper, dhargs = ()):
