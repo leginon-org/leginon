@@ -96,6 +96,9 @@ class HoleFinder(targetfinder.TargetFinder):
 		icemeth = uidata.Method('Analyze Ice', self.ice)
 		self.goodholes = uidata.Sequence('Good Holes', [])
 		self.goodholesimage = uidata.TargetImage('Good Holes Image', None, 'r')
+		self.use_target_template = uidata.Boolean('Use Target Template', False, 'rw', persist=True)
+		self.foc_target_template = uidata.Array('Focus Template', [], 'rw', persist=True)
+		self.acq_target_template = uidata.Array('Acqusition Template', [], 'rw', persist=True)
 		submitmeth = uidata.Method('Submit', self.submit)
 		self.goodholesimage.addTargetType('acquisition')
 		self.goodholesimage.addTargetType('focus')
@@ -108,7 +111,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		blobcont.addObjects((allblobscontainer, laticeblobscontainer))
 
 		goodholescontainer = uidata.MediumContainer('Good Holes')
-		goodholescontainer.addObjects((self.icetmin, self.icetmax, self.icetstd, icemeth, self.goodholes, self.goodholesimage, submitmeth))
+		goodholescontainer.addObjects((self.icetmin, self.icetmax, self.icetstd, icemeth, self.goodholes, self.use_target_template, self.foc_target_template, self.acq_target_template, self.goodholesimage, submitmeth))
 
 		container = uidata.MediumContainer('Hole Finder')
 		container.addObjects((self.usercheckon, originalcont,edgecont,corcont,threshcont, blobcont, goodholescontainer))
@@ -217,9 +220,28 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.goodholes.set(centers)
 		self.goodholesimage.setImage(self.hf['original'])
 		# takes x,y instead of row,col
-		self.goodholesimage.setTargetType('acquisition', centers)
-		self.goodholesimage.setTargetType('focus', [])
+		if self.use_target_template.get():
+			newtargets = self.applyTargetTemplate(centers)
+			acq_points = newtargets['acquisition']
+			foc_points = newtargets['focus']
+		else:
+			acq_points = centers
+			focus_points = []
+		self.goodholesimage.setTargetType('acquisition', acq_points)
+		self.goodholesimage.setTargetType('focus', focus_points)
 
+	def applyTargetTemplate(self, centers):
+		acq_vect = self.acq_target_template.get()
+		foc_vect = self.foc_target_template.get()
+		newtargets = {'acquisition':[], 'focus':[]}
+		for center in centers:
+			for vect in acq_vect:
+				target = center[0]+vect[0], center[1]+vect[1]
+				newtargets['acquisition'].append(target)
+			for vect in foc_vect:
+				target = center[0]+vect[0], center[1]+vect[1]
+				newtargets['focus'].append(target)
+		return newtargets
 
 	def everything(self):
 		# find edges
