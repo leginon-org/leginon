@@ -136,7 +136,6 @@ class MatrixCalibrator(calibrator.Calibrator):
 				shifts[axis]['row'] += rowpixelsper
 				shifts[axis]['col'] += colpixelsper
 				n += 1
-				self.logger.info('Shifts %s' % shifts)
 
 				if self.aborted.isSet():
 					raise Aborted()
