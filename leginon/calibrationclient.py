@@ -114,7 +114,8 @@ class MatrixCalibrationClient(CalibrationClient):
 		'''
 		finds the requested matrix using magnification and type
 		'''
-		caldata = self.node.research(dataclass=data.MatrixCalibration, magnification=mag, type=caltype)
+		caldatalist = self.node.research(dataclass=data.MatrixCalibration, magnification=mag, type=caltype)
+		caldata = caldatalist[0]
 		matrix = caldata['matrix']
 		return matrix
 

@@ -12,7 +12,10 @@ class PresetsClient(object):
 
 	def retrievePreset(self, presetname):
 		# needs to research new style
-		presetdata = self.node.research(dataclass=data.PresetData, name=presetname)
+		presetdatalist = self.node.research(dataclass=data.PresetData, name=presetname)
+		print 'RETRIEVE LIST', presetdatalist
+		presetdata = presetdatalist[0]
+		print 'RETRIEVE PRESET', presetdata
 		return presetdata
 
 	def storePreset(self, presetdata):
