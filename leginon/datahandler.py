@@ -5,6 +5,7 @@ import os
 import shelve
 import time
 import event
+import random
 
 class DataHandler(leginonobject.LeginonObject):
 	def __init__(self, id):
@@ -65,26 +66,21 @@ class ShelveDataKeeper(DataHandler):
 	def __init__(self, id, filename = None, path = '.'):
 		DataHandler.__init__(self, id)
 
-		# there is an issue if done too quick, try to open existing file
-		# needs another attempt
+		self.openshelf(filename, path)
+
+	def openshelf(self, filename, path):
 		if filename is None:
-			r = xrange(0, 2**16 - 1)
-			files = os.listdir(path)
-			for i in r:
-				filename = "shelf.%d" % i
-				if filename in files:
-					filename = None
-				else:
-					break
-			if filename is None:
-				raise IOError
-		self.filename = path + '/' + filename
-		try:
+			randfilename = "shelf.%d" % random.randrange(1024)
+			self.filename = path + '/' + randfilename
+			try:
+				self.shelf = shelve.open(self.filename)
+				self.shelflock = threading.Lock()
+			except:
+				self.openshelf(filename, path)
+		else:
+			self.filename = path + '/' + randfilename
 			self.shelf = shelve.open(self.filename)
 			self.shelflock = threading.Lock()
-		except:
-			print 'exception trying to open %s' % (self.filename,)
-			raise
 
 	def exit(self):
 		os.remove(self.filename)
@@ -127,29 +123,28 @@ class CachedDictDataKeeper(DataHandler):
 		self.datadict = {}
 		self.lock = threading.Lock()
 
-		if filename is None:
-			r = xrange(0, 2**16 - 1)
-			files = os.listdir(path)
-			for i in r:
-				filename = "shelf.%d" % i
-				if filename in files:
-					filename = None
-				else:
-					break
-			if filename is None:
-				raise IOError
-		self.filename = path + '/' + filename
-		try:
-			self.shelf = shelve.open(self.filename)
-		except:
-			print 'exception trying to open %s' % (self.filename,)
-			raise
+		self.openshelf(filename, path)
+
 		self.age = age
 		self.timeout = timeout
 		self.timer = threading.Timer(self.timeout, self.writeoutcache)
 		self.timer.setName('cache timer thread')
 		self.timer.setDaemon(1)
 		self.timer.start()
+
+	def openshelf(self, filename, path):
+		if filename is None:
+			randfilename = "shelf.%d" % random.randrange(1024)
+			self.filename = path + '/' + randfilename
+			try:
+				self.shelf = shelve.open(self.filename)
+				self.shelflock = threading.Lock()
+			except:
+				self.openshelf(filename, path)
+		else:
+			self.filename = path + '/' + randfilename
+			self.shelf = shelve.open(self.filename)
+			self.shelflock = threading.Lock()
 
 	def exit(self):
 		os.remove(self.filename)
