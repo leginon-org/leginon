@@ -21,6 +21,7 @@ True=1
 class SpecWidget(Frame):
 	def __init__(self, parent, uiclient, spec, **kwargs):
 		Frame.__init__(self, parent, **kwargs)
+		self.parent = parent
 		self.spec = spec
 		self.id = self.spec['id']
 		self.uiclient = uiclient
@@ -214,7 +215,15 @@ class EntryData(Data):
 
 	def buildWidget(self, parent):
 		self.entry = Entry(parent, width=10, bg=self.entrycolor)
+		self.entry.bind('<KeyPress-Return>', self.enterCallback)
 		return self.entry
+
+	def enterCallback(self, event):
+		'''
+		if this is a method, execute it when enter is pressed
+		'''
+		if isinstance(self.parent, Method):
+			self.parent.butcom()
 
 	def setWidget(self, value):
 		if value is None:
