@@ -411,7 +411,7 @@ class EM(node.Node):
 			class ObjectClass(c, instrumentclass):
 				def __init__(self):
 					c.__init__(self)
-					instrument.TEM.__init__(self)
+					instrumentclass.__init__(self)
 			try:
 				if name in [scopename, cameraname]:
 					instance = methoddict.factory(ObjectClass)()
@@ -419,7 +419,7 @@ class EM(node.Node):
 				else:
 					instance = ObjectClass()
 				self.instruments.append(instance)
-				self.objectservice._addObject(name, instance)
+				self.objectservice._addObject(objectname, instance)
 				if name == scopename:
 					self.scope = instance
 				elif name == cameraname:
