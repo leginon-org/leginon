@@ -295,11 +295,13 @@ class ImageMosaic(watcher.Watcher):
 										'Publish Image', ())
 		clearspec = self.registerUIMethod(self.uiClearMosaic, 'Clear', ())
 
-		getimagespec = self.registerUIData('Mosaic Image', 'binary', permissions='r', callback=self.uiGetImageCallback)
+		getimagespec = self.registerUIData('Mosaic Image', 'binary',
+														permissions='r', callback=self.uiGetImageCallback)
 
 		imagespec = self.registerUIContainer('Image',
 																					(showspec, publishspec, clearspec))
-		self.registerUISpec('Image Mosaic', (watcherspec, imagespec, getimagespec))
+		return self.registerUISpec('Image Mosaic',
+																(watcherspec, imagespec, getimagespec))
 
 	def uiGetImageCallback(self):
 		mrcstr = Mrc.numeric_to_mrcstr(self.makeImage(self.imagemosaic))
@@ -309,17 +311,22 @@ class StateImageMosaic(ImageMosaic):
 	def __init__(self, id, nodelocations,
 								watchfor = event.StateImageTilePublishEvent, **kwargs):
 		self.calibration = None
+		self.calibrationmatrix = None
 		self.methods = ['calibration', 'correlation']
 		self.method = self.methods[0]
+		# percent is the percent of the image size to use as the window
+		self.percent = 0.15
 		ImageMosaic.__init__(self, id, nodelocations, watchfor, **kwargs)
 
 		self.addEventInput(event.CalibrationPublishEvent, self.setCalibration)
 		self.start()
 
 	def setCalibration(self, ievent):
-		print 'setting calibration'
 		idata = self.researchByDataID(ievent.content)
 		self.calibration = idata.content
+		print 'calibration set to', self.calibration
+		self.calibrationmatrix = self.calculateCalibrationMatrix()
+		print 'calibration matrix set to', self.calibrationmatrix
 
 	def setProcessingMethod(self, processingmethod):
 		if method in self.methods:
@@ -333,25 +340,21 @@ class StateImageMosaic(ImageMosaic):
 			self.processDataByCorrelation(idata)
 		elif self.method == 'calibration':
 			self.processDataByCalibration(idata)
+		elif self.method == 'pixel size':
+			self.processDataByPixelSize(idata)
 		else:
 			self.printerror('invalid processing method specified')
 			raise ValueError
 		self.imagemosaic[idata.id]['state'] = idata.content['state']
 
-	def pixelLocation(self, row, column):
-		print 'pixelLocation args =', row, column
-		matrix = self.calibration2matrix()
-		print 'pixelLocation matrix =', matrix
-#		determinant = LinearAlgebra.determinant(matrix)
-#		print 'pixelLocation determinant =', determinant
-#		x = (matrix[1,1] * column - matrix[1,0] * row) / determinant
-#		y = (matrix[0,0] * row - matrix[0,1] * column) / determinant
-		x = (column * matrix[0, 0] + row * matrix[1, 0])/4
-		y = (column * matrix[0, 1] + row * matrix[1, 1])/4
-		print 'pixelLocation x, y =', x, y
-		return (int(round(-y)), int(round(-x)))
+	def pixelLocationByCalibration(self, row, column):
+		matrix = self.calibrationmatrix
+		# bin by 4 hardcoded for now, maybe attach to image data
+		x = -(column * matrix[0, 0] + row * matrix[1, 0])/4
+		y = -(column * matrix[0, 1] + row * matrix[1, 1])/4
+		return (int(round(y)), int(round(x)))
 
-	def calibration2matrix(self):
+	def calculateCalibrationMatrix(self):
 		matrix = Numeric.array([[self.calibration['x pixel shift']['x'],
 														self.calibration['x pixel shift']['y']],
 													[self.calibration['y pixel shift']['x'],
@@ -361,65 +364,65 @@ class StateImageMosaic(ImageMosaic):
 		return matrix
 
 	def processDataByCalibration(self, idata):
-		tileimage = idata.content['image']
-		neighbors = idata.content['neighbor tiles']
-		if len(neighbors) == 0:
-			self.imagemosaic = {}
-
 		if self.calibration is None:
 			self.printerror(
 				'unable to process data %s by calibration, no calibration available'
 					% str(idata.id))
 			return
-		# hardcode for now
+
+		# hardcode stage position for now
 		self.imagemosaic[idata.id] = {}
 		self.imagemosaic[idata.id]['image'] = idata.content['image']
-		self.imagemosaic[idata.id]['position'] = \
-			self.pixelLocation(idata.content['state']['stage position']['y'],
-														idata.content['state']['stage position']['x']) 
-		print idata.id, "calibrated position =", self.imagemosaic[idata.id]['position']
+		self.imagemosaic[idata.id]['position'] = self.pixelLocationByCalibration(
+							idata.content['state']['stage position']['y'],
+							idata.content['state']['stage position']['x']) 
 
-		ct = self.imagemosaic[idata.id]
-		nt = self.imagemosaic[neighbors[0]]
+		print idata.id, "calibrated mosaic position =", \
+												self.imagemosaic[idata.id]['position']
 
-		self.correlator.setImage(0, ct['image'])
-		self.correlator.setImage(1, nt['image'])
+		# experimental adjust by correlation
+		currenttile = self.imagemosaic[idata.id]
+		neighbortile = self.imagemosaic[idata.content['neighbor tiles'][0]]
+
+		# cross-correlate the two images
+		self.correlator.setImage(0, currenttile['image'])
+		self.correlator.setImage(1, neighbortile['image'])
 		pcimage = self.correlator.phaseCorrelate()
 
+		# shift is the calculated offset of the images determined by calibration
 		shift = [0, 0]
+		# windowsize is the area to look for a peak with correlation
 		windowsize = [0, 0]
-		percent = 0.15
+		# for each axis determine the shift and calculate windowsize
 		for i in [0, 1]:
-			shift[i] = ct['position'][i] - nt['position'][i]
-			windowsize[i] = ct['image'].shape[i] * percent
-		print 'shift =', shift
-		print 'windowsize =', windowsize
-#			if ct['position'][i] < nt['position'][i]:
-#				if nt['position'][i] < ct['position'][i] + ct['image'].shape[i]]:
-#					overlap[i] = [nt['position'][i], ct['position'][i]
-#																					+ ct['image'].shape[i]]
-#				else:
-#					overlap[i] = 0
-#			else:
-#				if ct['position'][i] < nt['position'][i] + nt['image'].shape[i]]:
-#					overlap[i] = [ct['position'][i], nt['position'][i]
-#																					+ nt['image'].shape[i]]
-#				else:
-#					overlap[i] = 0
+			shift[i] = currenttile['position'][i] - neighbortile['position'][i]
+			windowsize[i] = currenttile['image'].shape[i] * self.percent
+		print 'calibrated shift from neighbor =', shift
+		print 'windowsize for correlation =', windowsize
+		print 'window coordinates for correlation = [%s:%s, %s:%s]' % \
+							(shift[0]-windowsize[0]/2, shift[0]+windowsize[0]/2,
+								shift[1]-windowsize[1]/2, shift[1]+windowsize[1]/2)
 
+		# find the peak in the window
 		self.peakfinder.setImage(
 				pcimage[shift[0]-windowsize[0]/2:shift[0]+windowsize[0]/2,
 								shift[1]-windowsize[1]/2:shift[1]+windowsize[1]/2])
 		self.peakfinder.pixelPeak()
 		peak = self.peakfinder.getResults()
-		print 'pixel peak value =', peak['pixel peak value']
+		print 'pixel peak =', peak['pixel peak']
+
+		# set position to peak found in the window offset by the window location
 		self.imagemosaic[idata.id]['position'] = \
-				(peak['pixel peak value'][0] + shift[0]-windowsize[0]/2,
-					peak['pixel peak value'][1] + shift[1]-windowsize[1]/2)
-		print idata.id, "calibrated position adjusted =", self.imagemosaic[idata.id]['position']
+				(peak['pixel peak'][0] + shift[0] - windowsize[0]/2,
+					peak['pixel peak'][1] + shift[1] - windowsize[1]/2)
+		print idata.id, "calibrated position adjusted by correlation =", \
+										self.imagemosaic[idata.id]['position']
 
 	def processDataByCorrelation(self, idata):
 		ImageMosaic.processData(self, idata)
+
+	def proccessDataByPixelSize(self, idata):
+		pass
 
 	def uiPublishMosaicImage(self):
 		#ImageMosaic.uiPublishMosaicImage(self)
@@ -439,4 +442,11 @@ class StateImageMosaic(ImageMosaic):
 			event.StateMosaicPublishEvent)
 
 		return ''
+
+#	def defineUserInterface(self):
+#		imagemosaicspec = ImageMosaic.defineUserInterface(self)
+#		percentspec = self.registerUIData('Percent', 'float',
+#																			permissions='rw', default=self.percent)
+#		statespec = self.registerUIContainer('State', (percentspec,))
+#		self.registerUISpec('State Image Mosaic', imagemosaicspec + statespec)
 
