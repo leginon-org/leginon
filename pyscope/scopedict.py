@@ -66,6 +66,8 @@ def factory(scopeclass):
           elif key == 'reset defocus':
               if val == 1:
                   self.resetDefocus()
+	      elif val == 0:
+	          pass
               else:
                   raise ValueError
           else:
