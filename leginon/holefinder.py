@@ -51,6 +51,9 @@ class HoleFinder(targetfinder.TargetFinder):
 		'lattice tolerance': 0.1,
 		'lattice hole radius': 15.0,
 		'lattice zero thickness': 1000.0,
+		'ice min mean': 0.05,
+		'ice max mean': 0.2,
+		'ice max std': 0.2,
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		targetfinder.TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
@@ -93,12 +96,6 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.latblobsimage = uidata.TargetImage('Lattice Blobs Image', None, 'r')
 		self.latblobsimage.addTargetType('Lattice Blobs')
 
-		self.icetmin = uidata.Float('Minimum Mean Thickness', 0.05, 'rw', persist=True)
-		self.icetmax = uidata.Float('Maximum Mean Thickness', 0.2, 'rw', persist=True)
-		self.icetstd = uidata.Float('Maximum StdDev Thickness', 0.2, 'rw', persist=True)
-
-		icemeth = uidata.Method('Analyze Ice', self.ice)
-		self.goodholes = uidata.Sequence('Good Holes', [], 'r')
 		self.goodholesimage = uidata.TargetImage('Good Holes Image', None, 'r')
 
 		# target templates
@@ -119,7 +116,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.goodholesimage.addTargetType('focus', [], (0,0,255))
 
 		goodholescontainer = uidata.LargeContainer('Good Holes')
-		goodholescontainer.addObjects((self.icetmin, self.icetmax, self.icetstd, icemeth, self.goodholes, self.use_target_template, self.foc_target_template, foc_template_limit, self.acq_target_template, self.focus_one_hole, self.goodholesimage, ))
+		goodholescontainer.addObjects((self.use_target_template, self.foc_target_template, foc_template_limit, self.acq_target_template, self.focus_one_hole, self.goodholesimage, ))
 
 		container = uidata.LargeContainer('Hole Finder')
 		container.addObjects((goodholescontainer,))
@@ -207,7 +204,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		latspace = self.settings['lattice spacing']
 		lattol = self.settings['lattice tolerance']
 		r = self.settings['lattice hole radius']
-		i0 = self.settings['hole zero thickness']
+		i0 = self.settings['lattice zero thickness']
 		self.icecalc.set_i0(i0)
 
 		self.hf.configure_lattice(spacing=latspace, tolerance=lattol)
@@ -232,10 +229,10 @@ class HoleFinder(targetfinder.TargetFinder):
 
 	def ice(self):
 		self.logger.info('limit thickness')
-		i0 = self.settings['hole zero thickness']
-		tmin = self.icetmin.get()
-		tmax = self.icetmax.get()
-		tstd = self.icetstd.get()
+		i0 = self.settings['lattice zero thickness']
+		tmin = self.settings['ice min mean']
+		tmax = self.settings['ice max mean']
+		tstd = self.settings['ice max std']
 		self.hf.configure_ice(i0=i0,tmin=tmin,tmax=tmax,tstd=tstd)
 		self.hf.calc_ice()
 		goodholes = self.hf['holes2']
@@ -264,7 +261,6 @@ class HoleFinder(targetfinder.TargetFinder):
 					focus_points.append(fochole)
 
 		self.logger.info('Holes with good ice: %s' % (len(centers),))
-		self.goodholes.set(centers)
 		self.goodholesimage.setImage(self.hf['original'])
 		self.goodholesimage.imagedata = self.currentimagedata
 		# takes x,y instead of row,col
@@ -430,11 +426,11 @@ class HoleFinder(targetfinder.TargetFinder):
 			'lattice-spacing': self.settings['lattice spacing'],
 			'lattice-tolerance': self.settings['lattice tolerance'],
 			'stats-radius': self.settings['lattice hole radius'],
-			'ice-zero-thickness': self.settings['hole zero thickness'],
+			'ice-zero-thickness': self.settings['lattice zero thickness'],
 
-			'ice-min-thickness': self.icetmin.get(),
-			'ice-max-thickness': self.icetmax.get(),
-			'ice-max-stdev': self.icetstd.get(),
+			'ice-min-thickness': self.settings['ice min mean'],
+			'ice-max-thickness': self.settings['ice max mean'],
+			'ice-max-stdev': self.settings['ice max std'],
 			'template-on': self.use_target_template.get(),
 			'template-focus': self.foc_target_template.get(),
 			'template-acquisition': self.acq_target_template.get(),

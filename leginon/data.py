@@ -1658,6 +1658,9 @@ class HoleFinderSettingsData(TargetFinderSettingsData):
 			('lattice tolerance', float),
 			('lattice hole radius', float),
 			('lattice zero thickness', float),
+			('ice min mean', float),
+			('ice max mean', float),
+			('ice max std', float),
 		)
 	typemap = classmethod(typemap)
 

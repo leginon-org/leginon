@@ -131,6 +131,8 @@ class Panel(gui.wx.TargetFinder.Panel):
 							self.bhf['Blobs'])
 		self.Bind(wx.EVT_BUTTON, self.onLatticeSettingsButton,
 							self.bhf['Lattice'])
+		self.Bind(wx.EVT_BUTTON, self.onFinalSettingsButton,
+							self.bhf['Final'])
 
 	def onSubmitButton(self, evt):
 		self.node.submitTargets()
@@ -170,6 +172,11 @@ class Panel(gui.wx.TargetFinder.Panel):
 
 	def onLatticeSettingsButton(self, evt):
 		dialog = LatticeSettingsDialog(self)
+		dialog.ShowModal()
+		dialog.Destroy()
+
+	def onFinalSettingsButton(self, evt):
+		dialog = FinalSettingsDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
 
@@ -434,6 +441,52 @@ class LatticeSettingsDialog(gui.wx.Settings.Dialog):
 
 	def onTestButton(self, evt):
 		self.node.fitLattice()
+
+class FinalSettingsDialog(gui.wx.Settings.Dialog):
+	def initialize(self):
+		gui.wx.Settings.Dialog.initialize(self)
+
+		self.widgets['ice min mean'] = FloatEntry(self, -1, chars=6)
+		self.widgets['ice max mean'] = FloatEntry(self, -1, chars=6)
+		self.widgets['ice max std'] = FloatEntry(self, -1, chars=6)
+
+		szice = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Min. mean:')
+		szice.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szice.Add(self.widgets['ice min mean'], (0, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Max. mean:')
+		szice.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szice.Add(self.widgets['ice max mean'], (1, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Max. stdev.:')
+		szice.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szice.Add(self.widgets['ice max std'], (2, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		szice.AddGrowableCol(1)
+
+		sb = wx.StaticBox(self, -1, 'Ice Thickness Threshold')
+		sbszice = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sbszice.Add(szice, 1, wx.EXPAND|wx.ALL, 5)
+
+		sztt = wx.GridBagSizer(5, 5)
+
+		sb = wx.StaticBox(self, -1, 'Target Template')
+		sbsztt = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sbsztt.Add(sztt, 1, wx.EXPAND|wx.ALL, 5)
+
+		self.bice = wx.Button(self, -1, 'Analyze Ice')
+		szbutton = wx.GridBagSizer(5, 5)
+		szbutton.Add(self.bice, (0, 0), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		szbutton.AddGrowableCol(0)
+
+		self.Bind(wx.EVT_BUTTON, self.onAnalyzeIceButton, self.bice)
+
+		return [sbszice, sbsztt, szbutton]
+
+	def onAnalyzeIceButton(self, evt):
+		self.node.ice()
 
 class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
 	def initialize(self):
