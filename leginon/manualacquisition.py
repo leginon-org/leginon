@@ -9,6 +9,7 @@
 import camerafuncs
 import data
 import node
+import project
 import threading
 import time
 import uidata
@@ -54,6 +55,8 @@ class ManualAcquisition(node.Node):
 	def publishImageData(self, imagedata):
 		acquisitionimagedata = data.AcquisitionImageData(initializer=imagedata)
 		acquisitionimagedata['id'] = self.ID()
+		grid = self.gridselect.getSelectedValue()
+		acquisitionimagedata['gridId'] = self.gridmapping[grid]['gridId']
 		self.publish(acquisitionimagedata, database=True)
 
 	def acquireImage(self):
@@ -106,6 +109,50 @@ class ManualAcquisition(node.Node):
 			return 0
 		return value
 
+	def onGridBoxSelect(self, value):
+		projectdata = project.ProjectData()
+		if not projectdata.isConnected():
+			self.gridboxselect.set(['None'], 0)
+			self.gridselect.setList(['None'])
+			return 0
+
+		label = self.gridboxselect.getSelectedValue(value)
+
+		if label == 'None':
+			self.gridselect.set(['None'], 0)
+		else:
+			gridboxes = projectdata.getGridBoxes()
+			labelindex = gridboxes.Index(['label'])
+			gridbox = labelindex[label].fetchone()
+			gridboxid = gridbox['gridboxId']
+			gridlocations = projectdata.getGridLocations()
+			gridboxidindex = gridlocations.Index(['gridboxId'])
+			gridlocations = gridboxidindex[gridboxid].fetchall()
+			grids = projectdata.getGrids()
+			grididindex = grids.Index(['gridId'])
+			self.gridmapping = {}
+			for gridlocation in gridlocations:
+				grid = grididindex[gridlocation['gridId']].fetchone()
+				self.gridmapping[grid['label']] = {'gridId': gridlocation['gridId'],
+																					'location': gridlocation['location']}
+			self.gridselect.set(['None'] + self.gridmapping.keys(), 0)
+			self.gridmapping['None'] = None
+
+		return value
+
+	def updateGridBoxSelection(self):
+		projectdata = project.ProjectData()
+		if not projectdata.isConnected():
+			self.gridboxselect.set(['None'], 0)
+			return
+
+		gridboxes = projectdata.getGridBoxes()
+		labelindex = gridboxes.Index(['label'])
+		gridboxlabels = map(lambda d: d['label'], gridboxes.getall())
+		gridboxlabels.append('None')
+		gridboxlabels.reverse()
+		self.gridboxselect.set(gridboxlabels, 0)
+
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
 
@@ -116,15 +163,28 @@ class ManualAcquisition(node.Node):
 
 		self.image = uidata.Image('Image', None, 'rw')
 
+		self.gridboxselect = uidata.SingleSelectFromList('Grid Box', None, None,
+																											'rw')
+		self.gridselect = uidata.SingleSelectFromList('Grid', None, None, 'rw')
+		self.gridboxselect.setCallback(self.onGridBoxSelect)
+		self.updateGridBoxSelection()
+		refreshmethod = uidata.Method('Refresh', self.updateGridBoxSelection)
+
+		gridcontainer = uidata.Container('Current Grid')
+		gridcontainer.addObjects((self.gridboxselect, self.gridselect,
+															refreshmethod))
+
 		self.correctimage = uidata.Boolean('Correct image', True, 'rw',
 																				persist=True)
-		self.pausetime = uidata.Number('Loop Pause Time (seconds)', 0.0, 'rw',
+		camerafuncscontainer = self.camerafuncs.uiSetupContainer()
+		self.pausetime = uidata.Number('Loop pause time (seconds)', 0.0, 'rw',
 																		callback=self.onSetPauseTime, persist=True)
 		self.usedatabase = uidata.Boolean('Save image to database', True, 'rw',
 																			persist=True)
 		settingscontainer = uidata.Container('Settings')
-		settingscontainer.addObjects((self.correctimage, self.pausetime,
-																	self.usedatabase))
+		settingscontainer.addObjects((gridcontainer, self.correctimage,
+																	camerafuncscontainer,
+																	self.pausetime, self.usedatabase))
 
 		self.acquiremethod = uidata.Method('Acquire', self.acquireImage)
 		self.startmethod = uidata.Method('Start', self.acquisitionLoopStart)
