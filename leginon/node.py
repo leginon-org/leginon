@@ -219,6 +219,7 @@ class Node(leginonobject.LeginonObject):
 
 		if 'database' in kwargs and kwargs['database']:
 			try:
+				idata['session'] = self.session
 				self.datahandlers[dbdatakeeper.DBDataKeeper].insert(idata)
 			except KeyError:
 				self.printerror('no DBDataKeeper to publish: %s' % str(idata['id']))
@@ -246,6 +247,9 @@ class Node(leginonobject.LeginonObject):
 		Takes kwargs:
 			for node's datahandlers specify 'id' and 'session'
 			for DBDataKeeper specify 'dataclass' and keys ('id', 'magnification', ...)
+				or
+			specify 'dataclass' and indexinstance with keys set to values to query,
+			and keys set to None for not querying
 			[*] - keys in data
 		'''
 		result = []
@@ -257,13 +261,16 @@ class Node(leginonobject.LeginonObject):
 					pass
 
 		try:
-			datainstance = dataclass(('dummy ID',))
+			datainstance = kwargs['dataclass'](('dummy ID',))
 			# copy should suffice
-			indices = copy.copy(kwargs)
-			del indices['dataclass']
-			for index in indices:
-				if index not in datainstance:
-					raise ValueError
+			if 'indexinstance' in kwargs:
+				indices = dict(kwargs['indexinstance'])
+			else:
+				indices = copy.copy(kwargs)
+				del indices['dataclass']
+				for index in indices:
+					if index not in datainstance:
+						raise ValueError
 			result += self.datahandlers[dbdatakeeper.DBDataKeeper].query(datainstance,
 																																				indices)
 		except (KeyError, ValueError), e:
