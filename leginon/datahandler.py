@@ -23,8 +23,8 @@ class DataHandler(leginonobject.LeginonObject):
 	def ids(self):
 		raise NotImplementedError
 
-#	def exit(self):
-#		pass
+	def exit(self):
+		pass
 
 class DictDataKeeper(DataHandler):
 	def __init__(self, id):
