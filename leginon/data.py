@@ -1624,6 +1624,7 @@ class NavigatorSettingsData(SettingsData):
 			('move type', str),
 			('check calibration', bool),
 			('complete state', bool),
+			('use camera settings', bool),
 			('camera settings', CameraSettingsData),
 		)
 	typemap = classmethod(typemap)

@@ -269,6 +269,8 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 																										'Check calibration error')
 		self.widgets['complete state'] = wx.CheckBox(self, -1,
 																								'Set complete instrument state')
+		self.widgets['use camera settings'] = wx.CheckBox(self, -1,
+																								'Use camera configuration')
 		self.widgets['camera settings'] = gui.wx.Camera.CameraPanel(self)
 		self.widgets['camera settings'].setSize(self.node.session)
 
@@ -280,7 +282,9 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 						wx.ALIGN_CENTER_VERTICAL)
 		sz.Add(self.widgets['complete state'], (3, 0), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['camera settings'], (0, 1), (5, 1),
+		sz.Add(self.widgets['use camera settings'], (0, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['camera settings'], (1, 1), (4, 1),
 						wx.ALIGN_CENTER)
 		sz.AddGrowableRow(4)
 

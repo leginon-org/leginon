@@ -31,6 +31,7 @@ class Navigator(node.Node):
 		'move type': 'image shift',
 		'check calibration': True,
 		'complete state': True,
+		'use camera settings': False,
 		'camera settings':
 			data.CameraSettingsData(
 				initializer={
@@ -198,11 +199,12 @@ class Navigator(node.Node):
 
 	def _acquireImage(self):
 		errstr = 'Acquire image failed: %s'
-		try:
-			self.cam.setCameraDict(self.settings['camera settings'])
-		except camerafuncs.CameraError, e:
-			self.logger.error(errstr % e)
-			return
+		if self.settings['use camera settings']:
+			try:
+				self.cam.setCameraDict(self.settings['camera settings'])
+			except camerafuncs.CameraError, e:
+				self.logger.error(errstr % e)
+				return
 		try:
 			imagedata = self.cam.acquireCameraImageData()
 		except camerafuncs.NoCorrectorError:
