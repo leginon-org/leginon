@@ -737,6 +737,7 @@ class Tecnai(object):
 		if not value:
 			return
 
+		'''
 		if self.getFilmStock() < 1:
 			raise RuntimeError('No film to take exposure')
 
@@ -750,9 +751,11 @@ class Tecnai(object):
 			raise RuntimeError('Expose plate label failed')
 		if self.theAda.OpenShutter != 0:
 			raise RuntimeError('Open (pre-exposure) shutter failed')
+		'''
 		
 		self.theScope.Camera.TakeExposure()
 		
+		'''
 		if self.theAda.CloseShutter != 0:
 			raise RuntimeError('Close shutter (post-exposure) failed')
 		if self.theAda.UnloadPlate != 0:
@@ -763,6 +766,7 @@ class Tecnai(object):
 			raise RuntimeError('Connect external shutter failed')
 		if self.theAda.OpenShutter != 0:
 			raise RuntimeError('Open shutter (post-exposure) failed')
+		'''
 
 	def getMainScreen(self):
 		if self.theAda.MainScreenStatus == 1:
