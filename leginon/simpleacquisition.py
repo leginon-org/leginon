@@ -43,7 +43,7 @@ class SimpleAcquisition(acquisition.Acquisition):
 		if not self.looplock.acquire(0):
 			return
 		try:
-			t = threading.Thread(target=self.loop,args=(self.pausetime.get(),))
+			t = threading.Thread(target=self.loop)
 			t.setDaemon(1)
 			t.start()
 		except:
@@ -54,7 +54,7 @@ class SimpleAcquisition(acquisition.Acquisition):
 			raise
 		return ''
 
-	def loop(self, pausetime):
+	def loop(self):
 		## would be nice if only set preset at beginning
 		## need to change Acquisition to do that as option
 		self.loopstop.clear()
@@ -62,7 +62,7 @@ class SimpleAcquisition(acquisition.Acquisition):
 			if self.loopstop.isSet():
 				break
 			self.processTargetData(None)
-			time.sleep(pausetime)
+			time.sleep(self.pausetime.get())
 		try:
 			self.looploock.release()
 		except:
@@ -76,13 +76,13 @@ class SimpleAcquisition(acquisition.Acquisition):
 		acquisition.Acquisition.defineUserInterface(self)
 
 		acq = uidata.Method('Acquire', self.acquireImageOne)
-		self.pausetime = uidata.Float('Pause Time', 0.0, 'rw')
+		self.pausetime = uidata.Float('Pause Time (sec)', 0.0, 'rw', persist=True)
 
 		acqloop = uidata.Method('Acquire Loop', self.acquireImageLoop)
 		acqloopstop = uidata.Method('Stop', self.acquireImageLoopStop)
 
 		acqcont = uidata.Container('Acquire')
-		acqcont.addObjects((acq, acqloop, acqloopstop))
+		acqcont.addObjects((acq, acqloop, self.pausetime, acqloopstop))
 
 		container = uidata.LargeContainer('Simple Acquisition')
 		container.addObject(acqcont)
