@@ -102,6 +102,9 @@ else:
 			if relative == "relative":
 				try:
 					vector["x"] += self.theScope.Gun.Tilt.X
+				except KeyError:
+					pass
+				try:
 					vector["y"] += self.theScope.Gun.Tilt.Y
 				except KeyError:
 					pass
@@ -113,6 +116,9 @@ else:
 			vec = self.theScope.Gun.Tilt
 			try:
 				vec.X = vector["x"]
+			except KeyError:
+				pass
+			try:
 				vec.Y = vector["y"]
 			except KeyError:
 				pass
@@ -126,6 +132,9 @@ else:
 			if relative == "relative":
 				try:
 					vector["x"] += self.theScope.Gun.Shift.X
+				except KeyError:
+					pass
+				try:
 					vector["y"] += self.theScope.Gun.Shift.Y
 				except KeyError:
 					pass
@@ -137,6 +146,9 @@ else:
 			vec = self.theScope.Gun.Shift
 			try:
 				vec.X = vector["x"]
+			except KeyError:
+				pass
+			try:
 				vec.Y = vector["y"]
 			except KeyError:
 				pass
@@ -230,6 +242,9 @@ else:
 				if relative == "relative":
 					try:
 						stigs[key]["x"] += stigmator.X
+					except KeyError:
+						pass
+					try:
 						stigs[key]["y"] += stigmator.Y
 					except KeyError:
 						pass
@@ -276,6 +291,9 @@ else:
 			if relative == "relative":
 				try:
 					vector["x"] += self.theScope.Illumination.RotationCenter.X
+				except KeyError:
+					pass
+				try:
 					vector["y"] += self.theScope.Illumination.RotationCenter.Y
 				except KeyError:
 					pass
@@ -287,6 +305,9 @@ else:
 			vec = self.theScope.Illumination.RotationCenter
 			try:
 				vec.X = vector["x"]
+			except KeyError:
+				pass
+			try:
 				vec.Y = vector["y"]
 			except KeyError:
 				pass
@@ -300,6 +321,9 @@ else:
 			if relative == "relative":
 				try:
 					vector["x"] += self.theScope.Illumination.Shift.X
+				except KeyError:
+					pass
+				try:
 					vector["y"] += self.theScope.Illumination.Shift.Y
 				except KeyError:
 					pass
@@ -311,6 +335,9 @@ else:
 			vec = self.theScope.Illumination.Shift
 			try:
 				vec.X = vector["x"]
+			except KeyError:
+				pass
+			try:
 				vec.Y = vector["y"]
 			except KeyError:
 				pass
@@ -324,6 +351,9 @@ else:
 			if relative == "relative":
 				try:
 					vector["x"] += self.theScope.Projection.ImageBeamShift.X
+				except KeyError:
+					pass
+				try:
 					vector["y"] += self.theScope.Projection.ImageBeamShift.Y
 				except KeyError:
 					pass
@@ -335,6 +365,9 @@ else:
 			vec = self.theScope.Projection.ImageBeamShift
 			try:
 				vec.X = vector["x"]
+			except KeyError:
+				pass
+			try:
 				vec.Y = vector["y"]
 			except KeyError:
 				pass
@@ -413,9 +446,21 @@ else:
 			if relative == "relative":
 				try:
 					position["x"] += self.theScope.Stage.Position.X
+				except KeyError:
+					pass
+				try:
 					position["y"] += self.theScope.Stage.Position.Y
+				except KeyError:
+					pass
+				try:
 					position["z"] += self.theScope.Stage.Position.Z
+				except KeyError:
+					pass
+				try:
 					position["a"] += self.theScope.Stage.Position.A
+				except KeyError:
+					pass
+				try:
 					position["b"] += self.theScope.Stage.Position.B
 				except KeyError:
 					pass
