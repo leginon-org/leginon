@@ -194,6 +194,7 @@ class PresetsManager(node.Node):
 		else:
 			self.targetToScope(pname, emtarget)
 		self.confirmEvent(ievent)
+		print 'Preset changed to %s' % (pname,)
 
 	def getPresetsFromDB(self, session=None):
 		'''
