@@ -139,11 +139,16 @@ class MatrixCalibrator(calibrator.Calibrator):
 				colpix = shiftinfo['pixel shift']['col']
 				self.logger.info('Shift between images: (%.2f, %.2f)' % (colpix, rowpix))
 				totalpix = abs(rowpix + 1j * colpix)
+				if totalpix == 0.0:
+					raise CalibrationError('total pixel shift is zero')
 
 				actual_states = shiftinfo['actual states']
 				actual1 = actual_states[0][self.parameter][axis]
 				actual2 = actual_states[1][self.parameter][axis]
 				change = actual2 - actual1
+				if change == 0.0:
+					raise CalibrationError('change in %s is zero' % self.parameter)
+
 				perpix = change / totalpix
 
 				## deviation from pixsize should be less than
@@ -161,8 +166,6 @@ class MatrixCalibrator(calibrator.Calibrator):
 					self.logger.warning('Failed pixel size tolerance')
 					continue
 
-				if change == 0.0:
-					raise CalibrationError()
 				rowpixelsper = rowpix / change
 				colpixelsper = colpix / change
 				shifts[axis]['row'] += rowpixelsper
@@ -178,7 +181,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 			else:
 				# this axis was a failure
 				# better just fail the whole calibration
-				raise CalibrationError()
+				raise CalibrationError('no successful calibration measurement')
 
 		# return to base
 		emdata = data.ScopeEMData()
@@ -213,8 +216,8 @@ class MatrixCalibrator(calibrator.Calibrator):
 		except calibrationclient.NoPixelSizeError:
 			self.logger.error(
 								'Unable to get pixel size, aborting calibration')
-		except CalibrationError:
-			self.logger.error('Bad calibration measurement, aborting calibration')
+		except CalibrationError, e:
+			self.logger.error('Bad calibration measurement, aborting: %s', e)
 		except Exception, e:
 			self.logger.exception('Calibration failed: %s', e)
 		else:

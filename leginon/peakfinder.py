@@ -15,6 +15,9 @@ except:
 	import Numeric
 	from LinearAlgebra import linear_least_squares
 
+class FindPeakError(Exception):
+	pass
+
 class PeakFinder(object):
 	def __init__(self):
 		self.initResults()
@@ -77,8 +80,11 @@ class PeakFinder(object):
 		minsum = fit[1][0]
 
 		## find root
-		row0 = -coeffs[1] / 2.0 / coeffs[0]
-		col0 = -coeffs[3] / 2.0 / coeffs[2]
+		try:
+			row0 = -coeffs[1] / 2.0 / coeffs[0]
+			col0 = -coeffs[3] / 2.0 / coeffs[2]
+		except ZeroDivisionError:
+			raise FindPeakError('peak least squares fit has zero coefficient')
 
 		## find peak value
 		peak = coeffs[0] * row0**2 + coeffs[1] * row0 + coeffs[2] * col0**2 + coeffs[3] * col0 + coeffs[4]
