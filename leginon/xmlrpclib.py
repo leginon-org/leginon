@@ -1,6 +1,6 @@
 #
 # XML-RPC CLIENT LIBRARY
-# $Id: xmlrpclib.py,v 1.9 2003-09-10 23:08:09 suloway Exp $
+# $Id: xmlrpclib.py,v 1.10 2003-09-22 19:49:36 pulokas Exp $
 #
 # an XML-RPC client interface for Python.
 #
@@ -434,6 +434,7 @@ class Binary:
         out.write("<value><base64>\n")
         try:
             e = radix64.encode(self.data)
+	    out.write(e)
         except:
             base64.encode(StringIO.StringIO(self.data), out)
         out.write("</base64></value>\n")
