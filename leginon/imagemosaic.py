@@ -313,15 +313,21 @@ class StateImageMosaic(ImageMosaic):
 	def uiPublishMosaicImage(self):
 		#ImageMosaic.uiPublishMosaicImage(self)
 
+		self.printerror('foo 1')
 		odata = data.ImageData(self.ID(), self.makeImage(self.imagemosaic))
+		self.printerror('foo 2')
 		self.publish(odata, event.ImagePublishEvent)
+		self.printerror('foo 3')
 
 		statedata = {'image data ID': odata.id}
+		self.printerror('foo 4')
 		for dataid in self.imagemosaic:
 			statedata[dataid]['position'] = self.imagemosaic[dataid]['position']
 			statedata[dataid]['state'] = self.imagemosaic[dataid]['state']
+		self.printerror('foo 5')
 		self.publish(data.StateMosaicData(self.ID(), statedata),
 			event.StateMosaicPublishEvent)
+		self.printerror('foo 6')
 
 		return ''
 
