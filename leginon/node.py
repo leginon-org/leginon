@@ -336,9 +336,16 @@ class Node(leginonobject.LeginonObject):
 				self.addSession(idata)
 			try:
 				self.datahandler.dbInsert(idata, force=dbforce)
-			except KeyError, e:
-				self.printerror('no DBDataKeeper to publish: %s' % str(idata['id']))
-				raise
+			except Exception, e:
+				if isinstance(e, OSError):
+					message = str(e)
+				if isinstance(e, IOError):
+					message = str(e)
+				elif isinstance(e, KeyError):
+					message = 'no DBDataKeeper to publish: %s' % str(idata['id'])
+				else:
+					raise
+				raise PublishError(message)
 
 		self.datahandler.insert(idata)
 
