@@ -126,6 +126,7 @@ class CameraFuncs(object):
 		if not isinstance(camdata, data.CameraEMData):
 			raise TypeError('camdata not type CameraEMData')
 		self.validateCameraEMData(camdata)
+		camdata['id'] = ('camera',)
 		try:
 			self.node.publishRemote(camdata)
 		except Exception, detail:
