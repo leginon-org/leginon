@@ -254,7 +254,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 	def defineUserInterface(self):
 		targetwatcher.TargetWatcher.defineUserInterface(self)
 		self.uimovetype = uidata.SingleSelectFromList('Move Type',
-																							self.calclients.keys(), 0)
+																							self.calclients.keys(), 0, persist=True)
 		self.uidelay = uidata.Float('Delay (sec)', 2.5, 'rw')
 		self.uiacquiretype = uidata.SingleSelectFromList('Acquisition Type',
 																							['raw', 'corrected'], 0, persist=True)
