@@ -280,7 +280,7 @@ class StateImageMosaic(ImageMosaic):
 		determinant = LinearAlgebra.determinant(matrix)
 		x = (matrix[1,1] * column - matrix[1,0] * row) / determinant
 		y = (matrix[0,0] * row - matrix[0,1] * column) / determinant
-		return (y, x)
+		return (int(round(y)), int(round(x)))
 
 	def calibration2matrix(self):
 		matrix = Numeric.array([[self.calibration['x pixel shift']['x'],
