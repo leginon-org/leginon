@@ -14,8 +14,6 @@ class TargetWatcher(watcher.Watcher):
 		watchfor = event.ImageTargetListPublishEvent
 		watcher.Watcher.__init__(self, id, session, nodelocations, watchfor, lockblocking=0, **kwargs)
 
-		## moved here from acquisition, hope this doesn't break it
-		self.addEventInput(event.TargetDoneEvent, self.handleTargetDone)
 		self.addEventInput(event.TargetListDoneEvent, self.handleTargetListDone)
 
 		self.abort = threading.Event()
@@ -39,8 +37,10 @@ class TargetWatcher(watcher.Watcher):
 		rejects = []
 		for target in targetlist:
 			if target.__class__ is self.targetclass:
+				print 'GOOD', target['id'], target.__class__
 				goodtargets.append(target)
 			else:
+				print 'REJECT', target['id'], target.__class__
 				rejects.append(target)
 
 		### republish the rejects
@@ -52,20 +52,25 @@ class TargetWatcher(watcher.Watcher):
 		### process the good ones
 		self.abort.clear()
 		print self.id, 'PROCESSING GOOD', len(goodtargets)
+		targetliststatus = 'success'
 		for target in goodtargets:
 			print 'STARTING NEW TARGET', target['id']
 			print 'python id', id(target)
 			print 'target id', target['id']
 			print 'target id id', id(target['id'])
 			newstatus = self.processTargetData(target)
-			print 'NEWSTATUS', newstatus
-			e = event.TargetDoneEvent(id=self.ID(), targetid=target['id'], status=newstatus)
-			self.outputEvent(e)
+			print 'TARGET FINISHED STATUS', newstatus
+			#e = event.TargetDoneEvent(id=self.ID(), targetid=target['id'], status=newstatus)
+			#self.outputEvent(e)
 			print 'checking abort'
 			if self.abort.isSet():
 				print 'breaking from targetlist loop'
+				targetliststatus = 'failure'
 				break
 			print 'not aborted'
+
+		e = event.TargetListDoneEvent(id=self.ID(), targetlistid=newdata['id'], status=targetliststatus)
+		self.outputEvent(e)
 
 	def passTargets(self, targetlistdata):
 		## create an event watcher for each target we pass
@@ -76,9 +81,9 @@ class TargetWatcher(watcher.Watcher):
 		#	self.targetevents[targetid]['received'] = threading.Event()
 		#	self.targetevents[targetid]['status'] = 'waiting'
 
-		self.targetlistevents[targetlistdata['id']['received'] = threading.Event()
+		self.targetlistevents[targetlistdata['id']] = {}
+		self.targetlistevents[targetlistdata['id']]['received'] = threading.Event()
 		self.targetlistevents[targetlistdata['id']]['stats'] = 'waiting'
-		print 'publishing focustargetdata', targetid
 		self.publish(targetlistdata, pubevent=True)
 
 	def OLDhandleTargetDone(self, targetdoneevent):
