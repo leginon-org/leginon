@@ -329,11 +329,11 @@ class Manager(node.Node):
 
 	def onAddLauncher(self, name):
 		evt = wxManager.AddLauncherEvent(name)
-		self.frame.GetEventHandler().ProcessEvent(evt)
+		self.frame.GetEventHandler().AddPendingEvent(evt)
 
 	def onRemoveLauncher(self, name):
 		evt = wxManager.RemoveLauncherEvent(name)
-		self.frame.GetEventHandler().ProcessEvent(evt)
+		self.frame.GetEventHandler().AddPendingEvent(evt)
 
 	def getLauncherCount(self):
 		return len(self.launcherdict)
@@ -491,11 +491,11 @@ class Manager(node.Node):
 
 	def onAddNode(self, name):
 		evt = wxManager.AddNodeEvent(name)
-		self.frame.GetEventHandler().ProcessEvent(evt)
+		self.frame.GetEventHandler().AddPendingEvent(evt)
 
 	def onRemoveNode(self, name):
 		evt = wxManager.RemoveNodeEvent(name)
-		self.frame.GetEventHandler().ProcessEvent(evt)
+		self.frame.GetEventHandler().AddPendingEvent(evt)
 
 	def addNodeUIClient(self, nodename, uilocation):
 		if nodename in self.uiclientcontainers:
@@ -605,7 +605,7 @@ class Manager(node.Node):
 	def waitNodes(self, nodes):
 		self.initializednodescondition.acquire()
 		while not self.sublist(nodes, self.initializednodes):
-			self.initializednodescondition.wait(0.1)
+			self.initializednodescondition.wait(0.01)
 		self.initializednodescondition.release()
 
 	# probably an easier way
@@ -661,6 +661,60 @@ class Manager(node.Node):
 			self.removeNode(nodename)
 
 	# application methods
+
+	def getApplicationNames(self):
+		names = []
+		appdatalist = self.research(data.ApplicationData())
+		for appdata in appdatalist:
+			if appdata['name'] not in names:
+				names.append(appdata['name'])
+		return names
+
+	def getApplications(self):
+		apps = {}
+		appdatalist = self.research(data.ApplicationData())
+		for appdata in appdatalist:
+			if appdata['name'] not in apps:
+				app = application.Application(self)
+				app.load(appdata['name'])
+				apps[appdata['name']] = app
+		return apps
+
+	def onApplicationStarting(self, name, nnodes):
+		evt = wxManager.ApplicationStartingEvent(name, nnodes)
+		self.frame.GetEventHandler().AddPendingEvent(evt)
+
+	def onApplicationNodeStarted(self, name):
+		evt = wxManager.ApplicationNodeStartedEvent(name)
+		self.frame.GetEventHandler().AddPendingEvent(evt)
+
+	def onApplicationStarted(self, name):
+		evt = wxManager.ApplicationStartedEvent(name)
+		self.frame.GetEventHandler().AddPendingEvent(evt)
+
+	def waitApplication(self, app):
+		nodes = app.launch()
+		self.initializednodescondition.acquire()
+		while nodes:
+			for node in list(nodes):
+				if node in self.initializednodes:
+					nodes.remove(node)
+					self.onApplicationNodeStarted(node)
+			self.initializednodescondition.wait(0.01)
+		self.initializednodescondition.release()
+
+	def runApplication(self, app):
+		name = app.applicationdata['name']
+		nnodes = len(app.nodespecs)
+		self.onApplicationStarting(name, nnodes)
+		self.application = app
+		initializer = {}
+		initializer['session'] = self.session
+		initializer['application'] = app.applicationdata
+		self.waitApplication(app)
+		d = data.LaunchedApplicationData(initializer=initializer)
+		self.publish(d, database=True, dbforce=True)
+		self.onApplicationStarted(name)
 
 	def loadApp(self, name):
 		'''Calls application.Application.load.'''

@@ -3,15 +3,22 @@ import manager
 import uiclient
 import wx
 import wx.lib.intctrl
+import threading
 
 AddNodeEventType = wx.NewEventType()
 RemoveNodeEventType = wx.NewEventType()
 AddLauncherEventType = wx.NewEventType()
 RemoveLauncherEventType = wx.NewEventType()
+ApplicationStartingEventType = wx.NewEventType()
+ApplicationNodeStartedEventType = wx.NewEventType()
+ApplicationStartedEventType = wx.NewEventType()
 EVT_ADD_NODE = wx.PyEventBinder(AddNodeEventType)
 EVT_REMOVE_NODE = wx.PyEventBinder(RemoveNodeEventType)
 EVT_ADD_LAUNCHER = wx.PyEventBinder(AddLauncherEventType)
 EVT_REMOVE_LAUNCHER = wx.PyEventBinder(RemoveLauncherEventType)
+EVT_APPLICATION_STARTING = wx.PyEventBinder(ApplicationStartingEventType)
+EVT_APPLICATION_NODE_STARTED = wx.PyEventBinder(ApplicationNodeStartedEventType)
+EVT_APPLICATION_STARTED = wx.PyEventBinder(ApplicationStartedEventType)
 
 class AddNodeEvent(wx.PyEvent):
 	def __init__(self, name):
@@ -35,6 +42,25 @@ class RemoveLauncherEvent(wx.PyEvent):
 	def __init__(self, name):
 		wx.PyEvent.__init__(self)
 		self.SetEventType(RemoveLauncherEventType)
+		self.name = name
+
+class ApplicationStartingEvent(wx.PyEvent):
+	def __init__(self, name, nnodes):
+		wx.PyEvent.__init__(self)
+		self.SetEventType(ApplicationStartingEventType)
+		self.name = name
+		self.nnodes = nnodes
+
+class ApplicationNodeStartedEvent(wx.PyEvent):
+	def __init__(self, name):
+		wx.PyEvent.__init__(self)
+		self.SetEventType(ApplicationNodeStartedEventType)
+		self.name = name
+
+class ApplicationStartedEvent(wx.PyEvent):
+	def __init__(self, name):
+		wx.PyEvent.__init__(self)
+		self.SetEventType(ApplicationStartedEventType)
 		self.name = name
 
 class ManagerApp(wx.App):
@@ -75,6 +101,14 @@ class ManagerFrame(wx.Frame):
 		filemenu.AppendItem(exit)
 		self.menubar.Append(filemenu, '&File')
 
+		# application menu
+		self.applicationmenu = wx.Menu()
+		self.runmenuitem = wx.MenuItem(self.applicationmenu, -1, '&Run')
+		self.Bind(wx.EVT_MENU, self.onMenuRun, self.runmenuitem)
+		self.applicationmenu.AppendItem(self.runmenuitem)
+		self.menubar.Append(self.applicationmenu, '&Application')
+		self.runmenuitem.Enable(False)
+
 		# launcher menu
 		self.launchermenu = wx.Menu()
 		addmenuitem = wx.MenuItem(self.launchermenu, -1, '&Add')
@@ -113,7 +147,7 @@ class ManagerFrame(wx.Frame):
 		self.Bind(wx.EVT_MENU, self.onMenuBind, self.bindmenuitem)
 		self.eventmenu.AppendItem(self.bindmenuitem)
 		self.bindmenuitem.Enable(False)
-		self.menubar.Append(self.eventmenu, '&Event')
+		self.menubar.Append(self.eventmenu, '&Events')
 
 		self.SetMenuBar(self.menubar)
 
@@ -121,16 +155,32 @@ class ManagerFrame(wx.Frame):
 		self.statusbar = ManagerStatusBar(self)
 		self.SetStatusBar(self.statusbar)
 
+		self.applicationprogressdialog = None
+
 		self.Bind(EVT_ADD_NODE, self.onAddNode)
 		self.Bind(EVT_REMOVE_NODE, self.onRemoveNode)
 		self.Bind(EVT_ADD_LAUNCHER, self.onAddLauncher)
 		self.Bind(EVT_REMOVE_LAUNCHER, self.onRemoveLauncher)
+		self.Bind(EVT_APPLICATION_STARTING, self.onApplicationStarting)
+		self.Bind(EVT_APPLICATION_NODE_STARTED, self.onApplicationNodeStarted)
+		self.Bind(EVT_APPLICATION_STARTED, self.onApplicationStarted)
 
 		self.panel = ManagerPanel(self, self.manager.uicontainer.location())
 
 	def onExit(self, evt):
 		self.manager.exit()
 		self.Close()
+
+	def onMenuRun(self, evt):
+		apps = self.manager.getApplications()
+		launchernames = self.manager.getLauncherNames()
+		dialog = RunApplicationDialog(self, apps, launchernames)
+		if dialog.ShowModal() == wx.ID_OK:
+			app = dialog.getValues()
+			threading.Thread(name='wxManager runApplication',
+												target=self.manager.runApplication,
+												args=(app,)).start()
+		dialog.Destroy()
 
 	def onMenuCreate(self, evt):
 		launchernames = self.manager.getLauncherNames()
@@ -193,6 +243,9 @@ class ManagerFrame(wx.Frame):
 		if not self.nodecreatemenuitem.IsEnabled():
 			self.nodecreatemenuitem.Enable(True)
 
+		if not self.runmenuitem.IsEnabled():
+			self.runmenuitem.Enable(True)
+
 		item = wx.MenuItem(self.launcherkillmenu, -1, evt.name)
 		self.launcherkillmenu.AppendItem(item)
 		self.Bind(wx.EVT_MENU, self.onMenuKill, item)
@@ -202,12 +255,31 @@ class ManagerFrame(wx.Frame):
 	def onRemoveLauncher(self, evt):
 		if self.manager.getLauncherCount() < 1:
 			self.nodecreatemenuitem.Enable(False)
+			self.runmenuitem.Enable(False)
 
 		item = self.launcherkillmenu.FindItem(evt.name)
 		if item is not wx.NOT_FOUND:
 			self.launcherkillmenu.Delete(item)
 			if self.launcherkillmenu.GetMenuItemCount() < 1:
 				self.launcherkillmenuitem.Enable(False)
+
+	def onApplicationStarting(self, evt):
+		dlg = wx.ProgressDialog('Starting %s' % evt.name,
+														'Starting application %s' % evt.name,
+														maximum=evt.nnodes, parent=self,
+														style=wx.PD_APP_MODAL)
+		dlg.count = 0
+		self.applicationprogressdialog = dlg
+
+	def onApplicationNodeStarted(self, evt):
+		dlg = self.applicationprogressdialog
+		if dlg is not None:
+			dlg.count += 1
+			dlg.Update(dlg.count, 'Started %s node' % evt.name)
+
+	def onApplicationStarted(self, evt):
+		if self.applicationprogressdialog is not None:
+			self.applicationprogressdialog.Destroy()
 
 class ManagerPanel(wx.ScrolledWindow):
 	def __init__(self, parent, location):
@@ -469,4 +541,81 @@ class BindEventDialog(wx.Dialog):
 		self.boundeventlistbox.AppendItems(bound)
 		self.unboundeventlistbox.Clear()
 		self.unboundeventlistbox.AppendItems(unbound)
+
+class RunApplicationDialog(wx.Dialog):
+	def __init__(self, parent, apps, launchernames):
+		self.apps = apps
+		self.launchernames = launchernames
+		wx.Dialog.__init__(self, parent, -1, 'Run Application')
+
+		self.dialogsizer = wx.GridBagSizer()
+		self.sizer = wx.GridBagSizer(5, 5)
+
+		self.sizer.Add(wx.StaticText(self, -1, 'Application:'), (0, 0), (1, 1),
+							wx.ALIGN_CENTER_VERTICAL)
+
+		self.sortbycheckbox = wx.CheckBox(self, -1, 'Sort by last used')
+		names = apps.keys()
+		if not self.sortbycheckbox.GetValue():
+			names.sort()
+		self.appchoice = wx.Choice(self, -1, choices=names)
+		self.sizer.Add(self.appchoice, (0, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		self.sizer.Add(self.sortbycheckbox, (1, 0), (1, 2), wx.ALIGN_CENTER)
+		self.launchersizer = None
+		self.launcherlabels = []
+		self.launcherchoices = {}
+		self.appchoice.SetSelection(0)
+		self.onChoice()
+		self.Bind(wx.EVT_CHOICE, self.onChoice, self.appchoice)
+
+		buttonsizer = wx.GridBagSizer(0, 3)
+		runbutton = wx.Button(self, wx.ID_OK, 'Run')
+		runbutton.SetDefault()
+		buttonsizer.Add(runbutton, (0, 0), (1, 1),
+										wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
+
+		cancelbutton = wx.Button(self, wx.ID_CANCEL, 'Cancel')
+		buttonsizer.Add(cancelbutton, (0, 1), (1, 1), wx.ALIGN_CENTER)
+
+		buttonsizer.AddGrowableCol(0)
+
+		self.sizer.Add(buttonsizer, (3, 0), (1, 2), wx.EXPAND)
+
+		self.dialogsizer.Add(self.sizer, (0, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 10)
+		self.SetSizerAndFit(self.dialogsizer)
+
+	def onChoice(self, evt=None):
+		if evt is None:
+			name = self.appchoice.GetStringSelection()
+		else:
+			name = evt.GetString()
+		self.app = self.apps[name]
+		launcheraliases = self.app.getLauncherAliases()
+		if self.launchersizer is not None:
+			self.sizer.Remove(self.launchersizer)
+			for label in self.launcherlabels:
+				label.Destroy()
+			for choice in self.launcherchoices.values():
+				choice.Destroy()
+			self.launchersizer = None
+			self.launcherlabels = []
+			self.launcherchoices = {}
+		if launcheraliases:
+			self.launchersizer = wx.GridBagSizer(5, 5)
+			for i, launcheralias in enumerate(launcheraliases):
+				label = wx.StaticText(self, -1, launcheralias + ':')
+				self.launcherlabels.append(label)
+				self.launchersizer.Add(label, (i, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+				choice = wx.Choice(self, -1, choices=self.launchernames)
+				choice.SetSelection(0)
+				self.launchersizer.Add(choice, (i, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+				self.launcherchoices[launcheralias] = choice
+		self.sizer.Add(self.launchersizer, (2, 0), (1, 2), wx.ALIGN_CENTER)
+		self.dialogsizer.Layout()
+		self.Fit()
+
+	def getValues(self):
+		for alias, choice in self.launcherchoices.items():
+			self.app.setLauncherAlias(alias, choice.GetStringSelection())
+		return self.app
 
