@@ -65,6 +65,7 @@ class Node(leginonobject.LeginonObject):
 
 	def announce(self, ievent):
 		self.mark_data(ievent)
+		#print ievent.content
 		self.clients['manager'].push(ievent)
 
 	def publish(self, idata, eventclass=event.PublishEvent):

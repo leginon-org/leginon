@@ -26,7 +26,7 @@ class Client(leginonobject.LeginonObject):
 		self.serverlocation = location
 
 	def push(self, idata):
-		print "pushing locally..."
+		#print "pushing locally..."
 		obj = _id2obj_dict[self.serverlocation['local server python ID']]
 		if obj is None:
 			raise IOError # err...its sort of an IOError
@@ -34,7 +34,7 @@ class Client(leginonobject.LeginonObject):
 			return obj.datahandler.insert(copy.deepcopy(idata))
 
 	def pull(self, id):
-		print "pulling locally..."
+		#print "pulling locally..."
 		obj = _id2obj_dict[self.serverlocation['local server python ID']]
 		if obj is None:
 			raise IOError

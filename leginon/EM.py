@@ -5,6 +5,7 @@ import scopedict
 import cameradict
 import threading
 import data
+import event
 import sys
 if sys.platform == 'win32':
 	import pythoncom
@@ -22,28 +23,30 @@ class DataHandler(datahandler.DataBinder):
 			result = data.EMData({id : self.scope[id]})
 		elif self.camera and self.camera.has_key(id):
 			result = data.EMData({id : self.camera[id]})
-		elif id == 'scope':
+		elif self.scope and id == 'scope':
 			result = data.EMData(self.scope)
-		elif id == 'camera':
+		elif self.camera and id == 'camera':
 			result = data.EMData(self.camera)
 		elif id == 'all':
 			result = data.EMData({})
-			result.content.update(self.scope)
-			result.content.update(self.camera)
+			if self.scope:
+				result.content.update(self.scope)
+			if self.camera:
+				result.content.update(self.camera)
 		else:
 			result = None
 		self.lock.release()
 		return result
 
-	def insert(self, newdata):
+	def insert(self, idata):
 		if isinstance(idata, event.Event):
 			datahandler.DataBinder.insert(self, idata)
 		else:
 			self.lock.acquire()
-			if self.scope and self.scope.has_key(newdata.id):
-				self.scope[newdata.id] = newdata.content
-			elif self.camera and self.camera.has_key(newdata.id):
-				self.camera[newdata.id] = newdata.content
+			if self.scope and self.scope.has_key(idata.id):
+				self.scope[idata.id] = idata.content
+			elif self.camera and self.camera.has_key(idata.id):
+				self.camera[idata.id] = idata.content
 			self.lock.release()
 
 	# borrowed from NodeDataHandler
@@ -66,6 +69,19 @@ class EM(node.Node):
 			self.camera = None
 
 		node.Node.__init__(self, nodeid, managerloc, DataHandler, (self.lock, self.scope, self.camera))
+
+		self.addEventOutput(event.PublishEvent)
+
+		ids = ['scope', 'camera', 'all']
+		if self.scope:
+			ids += self.scope.keys()
+		if self.camera:
+			ids += self.camera.keys()
+
+		for id in ids:
+			e = event.PublishEvent(id)
+			e.content = id
+			self.announce(e)
 
 if __name__ == '__main__':
 	import time
