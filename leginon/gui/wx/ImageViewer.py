@@ -895,6 +895,7 @@ class ImagePanel(wx.Panel):
 		self.setBuffer()
 		self.Refresh()
 		#self.UpdateDrawing()
+		evt.Skip()
 
 	def OnPaint(self, evt):
 		if self.buffer is None:

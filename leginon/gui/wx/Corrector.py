@@ -57,8 +57,6 @@ class Panel(gui.wx.Node.Panel):
 		self.imagepanel = gui.wx.ImageViewer.ImagePanel(self, -1)
 		self.szmain.Add(self.imagepanel, (1, 1), (2, 1), wx.EXPAND)
 
-		self.szmain.SetItemSpan(self.messagelog, (1, 2))
-
 		self.szmain.AddGrowableRow(2)
 		self.szmain.AddGrowableCol(1)
 

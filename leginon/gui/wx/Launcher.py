@@ -113,16 +113,23 @@ class ListCtrlPanel(wx.Panel):
 	def __init__(self, *args, **kwargs):
 		wx.Panel.__init__(self, *args, **kwargs)
 
-		self.sashwindow = wx.SashLayoutWindow(self, -1, style=wx.NO_BORDER)
-		self.sashwindow.SetDefaultSize((100, -1))
-		self.sashwindow.SetOrientation(wx.LAYOUT_VERTICAL)
-		self.sashwindow.SetAlignment(wx.LAYOUT_LEFT)
-		self.sashwindow.SetSashVisible(wx.SASH_RIGHT, True)
-		self.sashwindow.SetExtraBorderSize(5)
+		self.swselect = wx.SashLayoutWindow(self, -1, style=wx.NO_BORDER)
+		self.swselect.SetDefaultSize((100, -1))
+		self.swselect.SetOrientation(wx.LAYOUT_VERTICAL)
+		self.swselect.SetAlignment(wx.LAYOUT_LEFT)
+		self.swselect.SetSashVisible(wx.SASH_RIGHT, True)
+		self.swselect.SetExtraBorderSize(5)
+
+		self.swmessage = wx.SashLayoutWindow(self, -1, style=wx.NO_BORDER)
+		self.swmessage.SetDefaultSize((-1, 100))
+		self.swmessage.SetOrientation(wx.LAYOUT_HORIZONTAL)
+		self.swmessage.SetAlignment(wx.LAYOUT_TOP)
+		self.swmessage.SetSashVisible(wx.SASH_BOTTOM, True)
+		self.swmessage.SetExtraBorderSize(5)
 
 		self.data = 0
 		self.datatextmap = {}
-		self.listctrl = wx.ListCtrl(self.sashwindow, -1,
+		self.listctrl = wx.ListCtrl(self.swselect, -1,
 																style=wx.LC_REPORT|wx.LC_NO_HEADER)
 		self.listctrl.InsertColumn(0, 'Panels')
 
@@ -133,7 +140,7 @@ class ListCtrlPanel(wx.Panel):
 		self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.onItemSelected, self.listctrl)
 		self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.onItemDeselected, self.listctrl)
 		self.Bind(wx.EVT_SIZE, self.onSize)
-		self.Bind(wx.EVT_SASH_DRAGGED, self.onSashDragged, self.sashwindow)
+		self.Bind(wx.EVT_SASH_DRAGGED, self.onSashDragged)
 
 	def addPanel(self, panel, label, imageindex=0):
 		panel.Show(False)
@@ -159,16 +166,16 @@ class ListCtrlPanel(wx.Panel):
 		del self.panelmap[text]
 		panel.Destroy()
 
+	def _onSetPanel(self, panel):
+		pass
+
 	def _setPanel(self, panel):
 		self.Freeze()
-
 		self.panel.Show(False)
-
+		self._onSetPanel(panel)
 		self.panel = panel
 		self.panel.Show(True)
-
 		self.Layout()
-
 		self.Thaw()
 
 	def onItemSelected(self, evt):
@@ -180,11 +187,15 @@ class ListCtrlPanel(wx.Panel):
 	def onSashDragged(self, evt):
 		if evt.GetDragStatus() == wx.SASH_STATUS_OUT_OF_RANGE:
 			return
-		self.sashwindow.SetDefaultSize((evt.GetDragRect().width, -1))
+		if evt.GetEventObject() is self.swselect:
+			self.swselect.SetDefaultSize((evt.GetDragRect().width, -1))
+		if evt.GetEventObject() is self.swmessage:
+			self.swmessage.SetDefaultSize((-1, evt.GetDragRect().height))
 		self.Layout()
 
-	def onSize(self, evt=None):
+	def onSize(self, evt):
 		self.Layout()
+		evt.Skip()
 
 	def Layout(self):
 		wx.LayoutAlgorithm().LayoutWindow(self, self.panel)
@@ -209,7 +220,8 @@ class Panel(ListCtrlPanel):
 		self.Bind(gui.wx.MessageLog.EVT_STATUS_UPDATED, self.onStatusUpdated)
 		self.Bind(EVT_SET_ORDER, self.onSetOrder)
 
-	def _setPanel(self, panel):
+	def _onSetPanel(self, panel):
+		ListCtrlPanel._onSetPanel(self, panel)
 		tb = self.GetParent().GetToolBar()
 		tb.Show(False)
 		if hasattr(panel, 'toolbar'):
@@ -218,7 +230,10 @@ class Panel(ListCtrlPanel):
 			tb = self.GetParent().toolbar
 		self.GetParent().SetToolBar(tb)
 		tb.Show(True)
-		ListCtrlPanel._setPanel(self, panel)
+		if hasattr(self.panel, 'messagelog'):
+			self.panel.messagelog.Show(False)
+		if hasattr(panel, 'messagelog'):
+			panel.messagelog.Show(True)
 
 	def onStatusUpdated(self, evt):
 		evtobj = evt.GetEventObject()
@@ -321,7 +336,7 @@ class Panel(ListCtrlPanel):
 		ListCtrlPanel.Layout(self)
 		tb = self.GetParent().GetToolBar()
 		if hasattr(tb, 'spacer'):
-			tb.spacer.SetSize((self.sashwindow.GetSize().width, -1))
+			tb.spacer.SetSize((self.swselect.GetSize().width, -1))
 			tb.Realize()
 	
 	def getToolBar(self):

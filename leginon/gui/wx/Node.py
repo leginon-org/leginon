@@ -39,10 +39,10 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 	def __init__(self, parent, id, tools=None, **kwargs):
 
 		self.node = None
-		if 'style' in kwargs:
-			kwargs['style'] |= wx.SIMPLE_BORDER
-		else:
-			kwargs['style'] = wx.SIMPLE_BORDER
+		#if 'style' in kwargs:
+		#	kwargs['style'] |= wx.SIMPLE_BORDER
+		#else:
+		#	kwargs['style'] = wx.SIMPLE_BORDER
 		wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent, id, **kwargs)
 
 		self.toolbar = parent.getToolBar()
@@ -50,8 +50,8 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 
 		self.szmain = wx.GridBagSizer(5, 5)
 
-		self.messagelog = gui.wx.MessageLog.MessageLog(self)
-		self.szmain.Add(self.messagelog, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 3)
+		self.messagelog = gui.wx.MessageLog.MessageLog(parent.swmessage)
+		self.messagelog.Show(False)
 
 		self.Bind(EVT_NODE_INITIALIZED, self._onNodeInitialized)
 		self.Bind(EVT_SET_IMAGE, self.onSetImage)
