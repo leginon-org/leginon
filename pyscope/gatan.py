@@ -29,5 +29,5 @@ else:
 			self.theCamera.ExposureTime = float(exposure_time) / 1000.0
 	
 			imagetuple = self.theCamera.AcquireRawImage()
-			na2 = Numeric.array(imagetuple, 's')
+			na2 = Numeric.array(imagetuple, Numeric.UInt16)
 			return na2
