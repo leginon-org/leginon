@@ -38,14 +38,14 @@ class Panel(gui.wx.Node.Panel):
 		dialog.ShowModal()
 		dialog.Destroy()
 
-	def onAtlasCreated(self):
+	def onAtlasCreated(self, evt):
 		self.toolbar.Enable(True)
 
 	def onCreateAtlas(self, evt):
 		self.toolbar.Enable(False)
 		threading.Thread(target=self.node.makeAtlas).start()
 
-	def atlasCreated(self, evt):
+	def atlasCreated(self):
 		evt = gui.wx.Events.AtlasCreatedEvent()
 		self.GetEventHandler().AddPendingEvent(evt)
 

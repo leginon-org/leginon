@@ -162,15 +162,18 @@ class ListCtrlPanel(wx.Panel):
 		for text, p in self.panelmap.items():
 			if p is panel:
 				break
-		itemid = self.listctrl.FindItem(0, text, False)
-		item = self.listctrl.GetItem(itemid)
+		index = self.listctrl.FindItem(0, text, False)
+		item = self.listctrl.GetItem(index)
 		state = item.GetState()
-		if state & wx.LIST_STATE_SELECTED:
-			state &= not wx.LIST_STATE_SELECTED
-			item.SetState(state)
+		if self.listctrl.GetItemState(index, wx.LIST_STATE_SELECTED):
+			self.listctrl.SetItemState(index, wx.LIST_STATE_SELECTED, 0)
 			self._setPanel(self.defaultpanel)
-		self.listctrl.DeleteItem(itemid)
+		self.listctrl.DeleteItem(index)
 		del self.panelmap[text]
+		if hasattr(panel, 'toolbar'):
+			panel.toolbar.Destroy()
+		if hasattr(panel, 'messagelog'):
+			panel.messagelog.Destroy()
 		panel.Destroy()
 
 	def _onSetPanel(self, panel):

@@ -419,6 +419,8 @@ class MessageLogHandler(logging.Handler):
 		logging.Handler.__init__(self, level)
 
 	def emit(self, record):
+		if self.window is None:
+			return
 		level = record.levelname
 		message = self.format(record)
 		try:	
@@ -428,8 +430,11 @@ class MessageLogHandler(logging.Handler):
 		except ValueError:
 			pass
 		secs = record.created
-		evt = gui.wx.MessageLog.AddMessageEvent(self.window, level, message, secs)
-		self.window.GetEventHandler().AddPendingEvent(evt)
+		try:
+			evt = gui.wx.MessageLog.AddMessageEvent(self.window, level, message, secs)
+			self.window.GetEventHandler().AddPendingEvent(evt)
+		except wx.PyDeadObjectError:
+			self.window = None
 
 if __name__ == '__main__':
 	class App(wx.App):
