@@ -105,11 +105,14 @@ class MrcData:
 		self.min = None
 		self.max = None
 		self.mean = None
+		self.identstr = 'MAP '
+		## as with toNumeric (below) we use little endian as standard
+		self.machstamp = 'DA '
 
 	def useheader(self, head):
-		self.describe(head['width'], head['height'], head['depth'], head['mode'], head['min'], head['max'], head['mean'])
+		self.describe(head['width'], head['height'], head['depth'], head['mode'], head['min'], head['max'], head['mean'], head['identstr'], head['machstamp'])
 
-	def describe(self, width, height, depth, mode, min, max, mean):
+	def describe(self, width, height, depth, mode, min, max, mean, identstr, machstamp):
 		self.mode = mode
 		self.width = width
 		self.height = height
@@ -117,6 +120,8 @@ class MrcData:
 		self.min = min
 		self.max = max
 		self.mean = mean
+		self.identstr = identstr
+		self.machstamp = machstamp
 
 	def fromfile(self, fobj):
 		try:
@@ -219,6 +224,8 @@ class MrcHeader:
 		self['min'] = mrcdata.min
 		self['max'] = mrcdata.max
 		self['mean'] = mrcdata.mean
+		self['identstr'] = mrcdata.identstr
+		self['machstamp'] = mrcdata.machstamp
 
 	def fromstring(self, headstr):
 		"get data from a string representation of MRC header"
@@ -245,6 +252,14 @@ class MrcHeader:
 		self['max'] = datamax
 		self['mean'] = datamean
 
+		## File identifier & machine stamp
+		chunk = headstr[208:214]
+		identstr,machstamp = struct.unpack('4s 2s', chunk)
+		## Next item should be 'MAP '...
+		self['identstr'] = identstr
+		## Next item should be 'DA' for little-endian...
+		self['machstamp'] = machstamp
+
 		## rest of headstr ignored for now
 
 	def tostring(self):
@@ -256,16 +271,21 @@ class MrcHeader:
 		# some padding, then the stats
 		pad1 = '60x'
 		stats = '3f'
-		## already done 16 + 60 + 12 = 88 bytes
-		## pad the rest 1024 - 88 = 936
-		pad2 = '936x'
+		# File identifier, machine stamp
+		pad2 = '120x'
+		ident =  '4s'
+		stamp = '2s'
+		## already done 16 + 60 + 12 + 120 + 6 = 214 bytes
+		## pad the rest 1024 - 224 = 810
+		pad3 = '810x'
 
-		fmtstr = dims + pad1 + stats + pad2
+		fmtstr = dims + pad1 + stats + pad2 + ident + stamp + pad3
 
 		headstr = struct.pack(fmtstr, 
 			self['width'], self['height'],
 			self['depth'], self['mode'] ,
-			self['min'], self['max'], self['mean'])
+			self['min'], self['max'], self['mean'],
+			self['identstr'], self['machstamp'])
 		return headstr
 
 	def fromfile(self, fobj):
@@ -278,6 +298,20 @@ class MrcHeader:
 
 if __name__ == '__main__':
 	filename = 'test1.mrc'
+	fileout  = 'test2.mrc'
 	f = open(filename)
 	h = MrcHeader(f)
 	print h.data
+
+	f.seek(0)
+	im = mrc_read(f)
+
+	g = open(fileout,'w')
+	mrc_write(g,im)
+	f.close()
+	g.close()
+
+	g = open(fileout)
+	h = MrcHeader(g)
+	print h.data
+	g.close()
