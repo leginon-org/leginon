@@ -241,7 +241,9 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		session = data.SessionData(initializer=sessioninitializer)
 		initializer = {'session': session}
 		instance = data.MosaicData(initializer=initializer)
+		print 'INSTANCE', instance
 		mosaics = self.research(datainstance=instance)
+		print 'MOSAICS', mosaics
 		self.mosaicselectionmapping = {}
 		for mosaic in mosaics:
 			key = str(mosaic['session']['name']) + ' ' + str(mosaic['id'])
@@ -259,10 +261,15 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		mosaicsession = mosaicdata['session']
 		print 'mosaicsession =', mosaicsession
 		for dataid in mosaicdata['data IDs']:
-			initializer = {'id': dataid, 'session': mosaicsession}
-			print 'initializer =', initializer
-			instance = data.AcquisitionImageData(initializer=initializer)
-			imagedatalist = self.research(datainstance=instance) #, results=1)
+			## create an instance model to query
+			inst = data.AcquisitionImageData()
+			# these are known:
+			inst['id'] = dataid
+			inst['session'] = mosaicsession
+			# this are unknown, but we need them:
+			inst['scope'] = data.ScopeEMData()
+			inst['camera'] = data.CameraEMData()
+			imagedatalist = self.research(datainstance=inst, fill=False)
 			try:
 				imagedata = imagedatalist[0]
 			except IndexError:
