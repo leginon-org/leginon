@@ -29,22 +29,16 @@ else:
 			self.theCamera.CameraTop = offset['y']
 			self.theCamera.CameraBottom = offset['y'] + dimension['y']
 			self.theCamera.Binning = binning['x']
-			self.theCamera.ExposureTime = exposure_time / 1000
+			self.theCamera.ExposureTime = float(exposure_time) / 1000.0
 	
-			if type == "illuminated":
-				imagetuple = self.theCamera.AcquireRawImage()
-			elif type == "dark":
-				tmpExpTime = self.theCamera.ExposureTime
-				self.theCamera.ExposureTime = 0
-				imagetuple = self.theCamera.AcquireImage()
-				self.theCamera.ExposureTime = tmpExpTime
-			else:
-				raise ValueError
+			imagetuple = self.theCamera.AcquireRawImage()
+
 			imagelist = []
 			for row in imagetuple:
 				for value in row:
 					imagelist.append(value)
 			a = array.array(self.arraytypecode, imagelist)
 			na = Numeric.array(a, self.Numerictypecode)
-			return Numeric.reshape(na, (dimension['y'], dimension['x']))
+			na.shape = (dimension['y'], dimension['x'])
+			return na
 	    
