@@ -483,6 +483,7 @@ class EM(node.Node):
 				pass
 
 		result['system time'] = time.time()
+		result['session'] = self.session
 
 		return result
 
