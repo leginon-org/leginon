@@ -811,6 +811,7 @@ scope_params = [
 	('spot size', int),
 	('intensity', float),
 	('image shift', dict),
+	('raw image shift', dict),
 	('beam shift', dict),
 	('defocus', float),
 	('focus', float),
