@@ -24,6 +24,7 @@ import icons
 import numextension
 from gui.wx.Entry import FloatEntry, EVT_ENTRY
 import gui.wx.Stats
+import time
 
 wx.InitAllImageHandlers()
 
@@ -884,10 +885,10 @@ class ImagePanel(wx.Panel):
 			xoffset, yoffset = self.offset
 			width, height = self.virtualsize
 			if evt.m_x < xoffset or evt.m_x > xoffset + width: 
-				self.UpdateDrawing()
+				#self.UpdateDrawing()
 				return
 			if evt.m_y < yoffset or evt.m_y > yoffset + height: 
-				self.UpdateDrawing()
+				#self.UpdateDrawing()
 				return
 
 		dc = wx.MemoryDC()
@@ -980,6 +981,8 @@ class ImagePanel(wx.Panel):
 			y += height
 
 	def Draw(self, dc):
+		#print 'Draw'
+		#now = time.time()
 		dc.BeginDrawing()
 		dc.Clear()
 		if self.bitmap is None:
@@ -997,21 +1000,26 @@ class ImagePanel(wx.Panel):
 			xviewoffset, yviewoffset = self.panel.GetViewStart()
 			xsize, ysize = self.panel.GetClientSize()
 
-			dc.Blit(self.offset[0], self.offset[1],
-							int(round(xsize/xscale + xscale)),
-							int(round(ysize/yscale + yscale)),
-							bitmapdc,
-							int(round(xviewoffset/xscale)),
-							int(round(yviewoffset/yscale)))
+			width = self.bitmap.GetWidth()
+			height = self.bitmap.GetHeight()
+			dc.DestroyClippingRegion()
+			dc.SetClippingRegion(0, 0, #self.offset[0], self.offset[1],
+														int(round(xsize/xscale)),
+														int(round(ysize/yscale)))
+
+			dc.Blit(int(round((self.offset[0] - xviewoffset)/xscale)),
+							int(round((self.offset[1] - yviewoffset)/yscale)),
+							width, height, bitmapdc, 0, 0)
+
 			dc.SetUserScale(1.0, 1.0)
 			for t in self.tools:
 				t.Draw(dc)
 			bitmapdc.SelectObject(wx.NullBitmap)
 		dc.EndDrawing()
+		#print 'Drawn', time.time() - now
 
 	def paint(self, fromdc, todc):
 		xsize, ysize = self.panel.GetClientSize()
-		#todc.Blit(self.offset[0], self.offset[1], xsize + 1, ysize + 1, fromdc, 0, 0)
 		todc.Blit(0, 0, xsize + 1, ysize + 1, fromdc, 0, 0)
 
 	def UpdateDrawing(self):
@@ -1453,25 +1461,26 @@ class TargetImagePanel(ImagePanel):
 
 		width = bitmap.GetWidth()
 		height = bitmap.GetHeight()
-		if not self.scaleImage():
-			memorydc.SetUserScale(1.0/scale[0], 1.0/scale[1])
-			width *= scale[0]
-			height *= scale[1]
+		if self.scaleImage():
+			xscale, yscale = (1.0, 1.0)
+		else:
+			xscale, yscale = self.getScale()
+			dc.SetUserScale(xscale, yscale)
 
 		halfwidth = width/2.0
 		halfheight = height/2.0
-		width = int(round(width))
-		height = int(round(height))
 
 		xv, yv = self.biggerView()
 
 		for target in targets:
 			x, y = self.image2view((target.x, target.y))
-			dc.Blit(int(round(x - halfwidth)), int(round(y - halfheight)),
+			dc.Blit(int(round((x - halfwidth)/xscale)),
+							int(round((y - halfheight)/xscale)),
 							width, height,
 							memorydc, 0, 0,
 							wx.COPY, True)
 
+		dc.SetUserScale(1.0, 1.0)
 		memorydc.SelectObject(wx.NullBitmap)
 		memorydc.EndDrawing()
 
