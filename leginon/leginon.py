@@ -414,15 +414,16 @@ class CustomWidget(Tkinter.Frame):
 	def arrangeTree(self, widget, text=None):
 		if text is not None:
 			widget.label.configure(text=text)
-		widget.label.grid(row = 0, column = 0, padx = 5, pady = 5)
+		widget.label.grid(row = 0, column = 0, sticky='w', padx = 5, pady = 5)
 		if widget.getbutton is None:
 			widget.setbutton.grid(row = 0, column = 1, padx = 5, pady = 5)
 		else:
 			widget.getbutton.grid(row = 0, column = 1, padx = 5, pady = 5)
 			widget.setbutton.grid(row = 0, column = 2, padx = 5, pady = 5)
-		widget.sc.frame.grid(row = 1, column = 0, padx = 5, pady = 5,
-																											columnspan = 2)
-		widget.sc.frame.configure(bd=1, relief=Tkinter.SUNKEN)
+#		widget.sc.frame.grid(row = 1, column = 0, padx = 5, pady = 5,
+#																											columnspan = 2)
+#		widget.sc.frame.configure(bd=1, relief=Tkinter.SUNKEN)
+		widget.tree.edit_tree.configure(bd=1, relief=Tkinter.SUNKEN)
 
 	def addGroup(self, name):
 		group = WidgetGroup(self, name)

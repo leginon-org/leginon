@@ -15,6 +15,7 @@ import xmlrpclib
 xmlbinlib = xmlrpclib
 from timer import Timer
 import xmlrpcserver
+import newtree
 
 False=0
 True=1
@@ -477,34 +478,39 @@ class TreeSelectorData(Data):
 
 class TreeData(Data):
 	def __init__(self, parent, uiclient, spec, styled=True, server=False):
-		self.dict = {}
+#		self.dict = {}
 		Data.__init__(self, parent, uiclient, spec, styled, server)
 		if self.type != 'struct':
 			raise RuntimeError('TreeData requires struct type')
 
 	def buildWidget(self, parent):
-		self.treenode = None
-		if self.styled:
-			self.sc = TreeWidget.ScrolledCanvas(self, highlightthickness=0, bg=self.entrycolor, height=180, width=200)
-		else:
-			self.sc = TreeWidget.ScrolledCanvas(self, highlightthickness=0, bg='white', height=180, width=200)
-		return self.sc.frame
+#		self.treenode = None
+#		if self.styled:
+#			self.sc = TreeWidget.ScrolledCanvas(self, highlightthickness=0, bg=self.entrycolor, height=180, width=200)
+#		else:
+#			self.sc = TreeWidget.ScrolledCanvas(self, highlightthickness=0, bg='white', height=180, width=200)
+#		return self.sc.frame
+		self.tree = newtree.EntryTree(parent, {}, self.name, height=180, width=200)
+		return self.tree
 
 	def setWidget(self, value):
-		if self.dict == value:
-			return
-		if value is None:
-			self.dict = {}
-		else:
-			self.dict = value
-		item = StructTreeItem(None, self.name, self.dict)
-		if self.treenode is not None:
-			self.treenode.destroy()
-		self.treenode = TreeWidget.TreeNode(self.sc.canvas, None, item)
-		self.treenode.expand()
+#		import copy
+#		if self.dict == value:
+#			return
+#		if self.treenode is not None:
+#			self.treenode.destroy()
+#		if value is None:
+#			self.dict = {}
+#		else:
+#			self.dict = copy.deepcopy(value)
+#		item = StructTreeItem(None, self.name, self.dict)
+#		self.treenode = TreeWidget.TreeNode(self.sc.canvas, None, item)
+#		self.treenode.expand()
+		self.tree.set(value)
 
 	def getWidget(self):
-		return self.dict
+#		return self.dict
+		return self.tree.get()
 
 
 class ImageData(Data):
