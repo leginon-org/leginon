@@ -25,6 +25,9 @@ class TargetFinder(imagewatcher.ImageWatcher):
 	def processData(self, newdata):
 		imagewatcher.ImageWatcher.processData(self, newdata)
 
+		self.targetlist = []
+		self.targetdict = {}
+
 		print 'findTargets'
 		self.findTargets(newdata)
 		print 'publishTargets'
