@@ -132,6 +132,19 @@ class KeyedDict(OrderedDict):
 		else:
 			raise KeyError('%s, new items not allowed' % (key,))
 
+	def friendly_update(self, other):
+		'''
+		Like update(), but this one will ignore keys from the source
+		mapping that are invalid, rather than raise an exception.
+		If this is more useful than the regular update, maybe we 
+		should think about replacing update with friendly_update.
+		'''
+		for key,value in other.items():
+			try:
+				self[key] = value
+			except KeyError:
+				pass
+
 class TypedDict(KeyedDict):
 	'''
 	TypedDict takes KeyedDict one step further and declares the type
