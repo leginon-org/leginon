@@ -573,7 +573,7 @@ class PresetsManager(node.Node):
 		self.currentselection = self.presetByName(pname)
 		self.panel.setParameters(self.currentselection)
 		self.displayCalibrations(self.currentselection)
-		self.displayDose(self.currentselection)
+		#self.displayDose(self.currentselection)
 
 	def getHighTension(self):
 		try:
@@ -711,7 +711,7 @@ class PresetsManager(node.Node):
 		## display
 		dose = self.dosecal.dose_from_imagedata(imagedata)
 		if dose is not None:
-			self.displayDose(self.currentpreset)
+			self.panel.setDoseValue(dose)
 			self.setImage(imagedata['image'].astype(Numeric.Float32))
 
 	def saveDose(self, dose, presetname):
@@ -723,10 +723,11 @@ class PresetsManager(node.Node):
 			if self.currentpreset['name'] == presetname:
 				self.currentpreset = preset
 				self.panel.setParameters(self.currentpreset)
-
+	'''
 	def displayDose(self, preset):
 		dose = preset['dose']
 		self.panel.setDoseValue(dose)
+	'''
 
 	def targetToScope(self, newpresetname, emtargetdata):
 		'''
