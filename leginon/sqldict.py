@@ -660,7 +660,7 @@ def sqltype(object,key=None):
 			return "TEXT"
 	elif t is float:
 		return "DOUBLE"
-	elif t is int:
+	elif t in (int,long):
 		return "INT(20)"
 	else:
 		return None
