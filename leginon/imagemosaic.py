@@ -22,7 +22,7 @@ class ImageMosaic(watcher.Watcher):
 		self.peakfinder = peakfinder.PeakFinder()
 
 		self.defineUserInterface()
-		self.start()
+		#self.start()
 
 	def main(self):
 		pass
@@ -251,7 +251,9 @@ class StateImageMosaic(ImageMosaic):
 		self.methods = ['calibration', 'correlation']
 		self.method = self.methods[0]
 		ImageMosaic.__init__(self, id, nodelocations, watchfor, **kwargs)
+
 		self.addEventInput(event.CalibrationPublishEvent, self.setCalibration)
+		self.start()
 
 	def setCalibration(self, ievent):
 		print 'setting calibration'
@@ -274,10 +276,7 @@ class StateImageMosaic(ImageMosaic):
 			raise ValueError
 		self.imagemosaic[idata.id]['state'] = idata.content['state']
 
-	def pixelLocation(self, ievent):
-		row = ievent.content['row']
-		column = ievent.content['column']
-
+	def pixelLocation(self, row, column):
 		matrix = self.calibration2matrix()
 		determinant = LinearAlgebra.determinant(matrix)
 		x = (matrix[1,1] * column - matrix[1,0] * row) / determinant
