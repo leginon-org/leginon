@@ -302,7 +302,7 @@ class Manager(node.Node):
 		argspec = (
 		self.registerUIData('Node', 'string', enum=self.clientlistdata),
 		)
-		spec2 = self.registerUIMethod(self.uiKill, 'Kill (experimental)', argspec)
+		spec2 = self.registerUIMethod(self.uiKill, 'Kill', argspec)
 
 		argspec = (
 		self.registerUIData('Event Class', 'string', enum=self.eventclasslistdata),
