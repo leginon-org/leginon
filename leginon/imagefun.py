@@ -139,22 +139,15 @@ def center_fill(input, size, value=0):
 	rows,cols = input.shape
 	center = rows/2, cols/2
 	cenr, cenc = center
-	print 'CENTER', center
 	input[cenr-size/2:cenr+size/2, cenc-size/2:cenc+size/2] = value
 
 def power(numericarray):
 	fft = ffteng.transform(numericarray)
-	#pow = Numeric.absolute(fft) ** 2
+	## should I square this?
 	pow = Numeric.absolute(fft)
-	#pow = swap(pow)
-	pow = shuffle(pow)
-	center_fill(pow, 15, 0)
-	pow = linearscale(pow, (None, None), (1,100))
-	pow = Numeric.clip(pow, 1, 100)
-	print 'type', pow.typecode()
-	print 'min', min(pow)
-	print 'max', max(pow)
 	pow = Numeric.log(pow)
+	pow = Numeric.clip(pow, 6, 14)
+	pow = shuffle(pow)
 	return pow
 
 def shuffle(narray):
@@ -162,22 +155,22 @@ def shuffle(narray):
 	take a half fft/power spectrum centered at 0,0
 	and convert to full fft/power centered at center of image
 	'''
+	oldr,oldc = narray.shape
+	r,c = newshape = oldr, (oldc-1)*2
+
 	## create new full size array 
-	r,oldc = narray.shape
-	c = 2*(oldc-1)
-	newshape = r,c
 	new = Numeric.zeros(newshape, narray.typecode())
 
 	## fill in right half
-	new[r/2:,c/2-1:] = narray[:r/2,:]
-	new[:r/2,c/2-1:] = narray[r/2:,:]
+	new[r/2:,c/2:] = narray[:r/2,1:]
+	new[:r/2,c/2:] = narray[r/2:,1:]
 
 	## fill in left half
-	for row in range(1,r):
-		for col in range(c/2-1):
-			new[row,col] = new[-1-row,-2-col]
+	reverserows = -Numeric.arrayrange(r) - 1
+	reversecols = -Numeric.arrayrange(c/2) - 1
+	new[:,:c/2] = Numeric.take(new[:,c/2:], reverserows, 0)
+	new[:,:c/2] = Numeric.take(new[:,:c/2], reversecols, 1)
 
-	new[r/2,c/2-1] = new[r/2,c/2]
 	return new
 
 def swap(numericarray):
