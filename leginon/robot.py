@@ -167,6 +167,9 @@ if sys.platform == 'win32':
 																							event.GridExtractedEvent,
 																							event.EmailEvent]
 		def __init__(self, id, session, nodelocations, **kwargs):
+
+			self.simulate = False
+
 			RobotNode.__init__(self, id, session, nodelocations, **kwargs)
 			self.gridorder = []
 			self.gridnumber = None
@@ -382,6 +385,8 @@ if sys.platform == 'win32':
 				except GridQueueEmpty:
 					self.setStatusMessage('Grid queue is empty')
 					raise
+				if self.simulate:
+					return
 				try:
 					self.waitForRobotGridLoad()
 				except GridLoadException:
@@ -400,10 +405,10 @@ if sys.platform == 'win32':
 			self.setStatusMessage('Sending notification the holder is extracted')
 			evt = event.GridExtractedEvent()
 			evt['grid'] = self.griddata
+			self.outputEvent(evt)
 			self.gridnumber = None
 			self.griddata = None
 			self.uicurrentgridnumber.set(None)
-			self.outputEvent(evt)
 			self.setStatusMessage('Sent notification the holder is extracted')
 
 		def estimateTimeLeft(self):
@@ -422,9 +427,20 @@ if sys.platform == 'win32':
 			self.uitimeleft.set(timestring)
 
 		def insert(self):
+			if self.simulate:
+				self.insertmethod.disable()
+				self.estimateTimeLeft()
+				try:
+					self.robotReadyForInsertion()
+				except GridQueueEmpty:
+					self.insertmethod.enable()
+					return
+				self.outputGridInsertedEvent()
+				return
+
 			self.insertmethod.disable()
 			self.estimateTimeLeft()
-				
+
 			self.setStatusMessage('Inserting holder into microscope')
 
 			try:
@@ -457,6 +473,10 @@ if sys.platform == 'win32':
 			#self.insertmethod.enable()
 
 		def extract(self):
+			if self.simulate:
+				self.outputGridExtractedEvent()
+				return
+
 			self.setStatusMessage('Extracting holder from microscope')
 
 			self.robotReadyForExtraction()
@@ -556,8 +576,10 @@ if sys.platform == 'win32':
 			self.gridtrayselect = uidata.SingleSelectFromList('Grid Tray',
 																												gridtraylabels, 0, 'rw')
 			self.gridtrayselect.setCallback(self.onGridTraySelect)
+			self.gridtrayselect.setSelected(0)
 
-			self.uigridtray = uidata.GridTray('Grids', [], 'rw',
+			#self.uigridtray = uidata.GridTray('Grids', [], 'rw',
+			self.uigridtray = uidata.Sequence('Grids', [], 'rw',
 																				self.uiGridTrayCallback)
 			griddeletemethod = uidata.Method('Delete', self.uiDeleteGrid)
 			gridclearmethod = uidata.Method('Clear', self.uiClearGridQueue)
@@ -597,21 +619,33 @@ if sys.platform == 'win32':
 class RobotNotification(RobotNode):
 	eventinputs = RobotNode.eventinputs + [event.GridInsertedEvent,
 																					event.GridExtractedEvent,
-																					event.MosaicDoneEvent]
+																					event.MosaicDoneEvent,
+																					event.TargetListDoneEvent]
 	eventoutputs = RobotNode.eventoutputs + [event.ExtractGridEvent,
 																						event.InsertGridEvent,
 																						event.PublishSpiralEvent]
 	def __init__(self, id, session, nodelocations, **kwargs):
+
+		self.simulate = False
+
 		RobotNode.__init__(self, id, session, nodelocations, **kwargs)
 
 		self.addEventInput(event.GridInsertedEvent, self.handleGridInserted)
 		self.addEventInput(event.GridExtractedEvent, self.handleGridExtracted)
 		self.addEventInput(event.MosaicDoneEvent, self.handleGridDataCollectionDone)
+		self.addEventInput(event.TargetListDoneEvent,
+												self.handleGridDataCollectionDone)
 
 		self.defineUserInterface()
 		self.start()
 
 	def handleGridInserted(self, ievent):
+		if self.simulate:
+			evt = event.PublishSpiralEvent()
+			evt['grid'] = ievent['grid']
+			self.outputEvent(evt)
+			return
+
 		self.setStatus('Grid inserted (event received)')
 
 		self.setStatus('Checking vacuum')
@@ -648,6 +682,10 @@ class RobotNotification(RobotNode):
 		self.setStatus('Data collection event outputted')
 
 	def handleGridDataCollectionDone(self, ievent):
+		if self.simulate:
+			self.outputEvent(event.ExtractGridEvent())
+			return
+
 		self.setStatus('Data collection finished (event received)')
 
 		self.setStatus('Zeroing stage position')

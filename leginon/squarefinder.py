@@ -101,7 +101,7 @@ class SquareFinder(targetfinder.TargetFinder):
 		try:
 			blobs = self.squarefinder.findblobs(self.lpfimage, self.thresholdimage,
 																					border, maxblobs, maxblobsize)
-		except TooManyBlobs:
+		except (TooManyBlobs, ValueError):
 			blobs = []
 			self.messagelog.error('Too many blobs found')
 		self.setBlobs(blobs)
@@ -162,8 +162,9 @@ class SquareFinder(targetfinder.TargetFinder):
 		return value
 
 	def updateMaxBlobs(self, image, dimension):
-		maxblobs = image.shape[0]/dimension * image.shape[1]/dimension
-		self.uimaxblobs.set(maxblobs)
+		if not self.uishowadvanced.get():
+			maxblobs = image.shape[0]/dimension * image.shape[1]/dimension
+			self.uimaxblobs.set(maxblobs*2)
 
 	def onShowAdvanced(self, value):
 		if value:
@@ -187,7 +188,6 @@ class SquareFinder(targetfinder.TargetFinder):
 			column, row = target
 			deltarow = row - rows/2
 			deltacolumn = column - columns/2
-			print deltarow, deltacolumn, row, column
 			targetlist.append(self.newTargetData(imagedata, targettypename,
 																						deltarow, deltacolumn))
 		return targetlist
@@ -247,6 +247,9 @@ class SquareFinder(targetfinder.TargetFinder):
 		self.uiuserverify = uidata.Boolean('Allow user verification of targets',
 																				True, 'rw', persist=True)
 
+		self.uishowadvanced = uidata.Boolean('Edit advanced settings', False, 'rw',
+																					callback=self.onShowAdvanced,
+																					persist=True)
 		self.uisquaredimension = uidata.Number('Square Dimension', None, 'rw',
 															callback=self.onSetSquareDimension, persist=True)
 
@@ -257,9 +260,6 @@ class SquareFinder(targetfinder.TargetFinder):
 		self.advancedcontainer = uidata.Container('Advanced')
 		self.advancedcontainer.addObjects((lpfcontainer, findblobscontainer,
 																	targetcontainer))
-		self.uishowadvanced = uidata.Boolean('Edit advanced settings', False, 'rw',
-																					callback=self.onShowAdvanced,
-																					persist=True)
 		settingscontainer = uidata.Container('Settings')
 		settingscontainer.addObjects((self.uiuserverify, self.uisquaredimension,
 																	self.uilimittargets, self.uitargetlimit,
