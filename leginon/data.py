@@ -575,28 +575,6 @@ class ImageData(InSessionData):
 
 		return fullname
 
-	def save(self):
-		'''
-		saves an image to file and sets 'filename' accordingly
-		'''
-		if self['image'] is not None:
-			## create a directory to store images
-			filename = self.filename()
-			Mrc.numeric_to_mrc(self['image'], filename)
-			self['filename'] = filename
-
-	def load(self, filename=None):
-		'''
-		loads MRC image using either the 'filename' item of ImageData instance, or the specified 'filename' argument.
-		'''
-		if filename is not None:
-			self['filename'] = filename
-		if self['filename'] is None:
-			raise RuntimeError('no filename specified for ImageData load')
-
-		self['image'] = Mrc.mrc_to_numeric(self['filename'])
-
-
 class CorrelationImageData(ImageData):
 	'''
 	ImageData that results from a correlation of two images
