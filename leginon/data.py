@@ -1651,6 +1651,9 @@ class HoleFinderSettingsData(TargetFinderSettingsData):
 			('template lpf size', int),
 			('template lpf sigma', float),
 			('threshold', float),
+			('blobs border', int),
+			('blobs max', int),
+			('blobs max size', int),
 		)
 	typemap = classmethod(typemap)
 

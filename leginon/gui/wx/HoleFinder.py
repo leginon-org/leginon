@@ -53,7 +53,7 @@ class Panel(gui.wx.TargetFinder.Panel):
 			'Edge',
 			'Template',
 			'Threshold',
-			'Blob',
+			'Blobs',
 			'Lattice',
 			'Final'
 		]
@@ -127,6 +127,8 @@ class Panel(gui.wx.TargetFinder.Panel):
 							self.bhf['Template'])
 		self.Bind(wx.EVT_BUTTON, self.onThresholdSettingsButton,
 							self.bhf['Threshold'])
+		self.Bind(wx.EVT_BUTTON, self.onBlobsSettingsButton,
+							self.bhf['Blobs'])
 
 	def onSubmitButton(self, evt):
 		self.node.submitTargets()
@@ -159,9 +161,14 @@ class Panel(gui.wx.TargetFinder.Panel):
 		dialog.ShowModal()
 		dialog.Destroy()
 
+	def onBlobsSettingsButton(self, evt):
+		dialog = BlobsSettingsDialog(self)
+		dialog.ShowModal()
+		dialog.Destroy()
+
 class OriginalSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		tfsbsz = gui.wx.Settings.Dialog.initialize(self)
+		gui.wx.Settings.Dialog.initialize(self)
 
 		self.widgets['image filename'] = filebrowse.FileBrowseButton(self, -1)
 		self.bok.SetLabel('Load')
@@ -178,7 +185,7 @@ class OriginalSettingsDialog(gui.wx.Settings.Dialog):
 
 class TemplateSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		tfsbsz = gui.wx.Settings.Dialog.initialize(self)
+		gui.wx.Settings.Dialog.initialize(self)
 
 		self.widgets['template lpf'] = wx.CheckBox(self, -1, 'Use low pass filter')
 		self.widgets['template lpf size'] = IntEntry(self, -1, min=1, chars=4)
@@ -236,7 +243,7 @@ class TemplateSettingsDialog(gui.wx.Settings.Dialog):
 
 class EdgeSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		tfsbsz = gui.wx.Settings.Dialog.initialize(self)
+		gui.wx.Settings.Dialog.initialize(self)
 
 		self.widgets['edge lpf'] = wx.CheckBox(self, -1, 'Use low pass filter')
 		self.widgets['edge lpf size'] = IntEntry(self, -1, min=1, chars=4)
@@ -308,7 +315,7 @@ class EdgeSettingsDialog(gui.wx.Settings.Dialog):
 
 class ThresholdSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		tfsbsz = gui.wx.Settings.Dialog.initialize(self)
+		gui.wx.Settings.Dialog.initialize(self)
 
 		self.widgets['threshold'] = FloatEntry(self, -1, chars=9)
 
@@ -335,6 +342,46 @@ class ThresholdSettingsDialog(gui.wx.Settings.Dialog):
 
 	def onTestButton(self, evt):
 		self.node.threshold()
+
+class BlobsSettingsDialog(gui.wx.Settings.Dialog):
+	def initialize(self):
+		gui.wx.Settings.Dialog.initialize(self)
+
+		self.widgets['blobs border'] = IntEntry(self, -1, min=0, chars=6)
+		self.widgets['blobs max'] = IntEntry(self, -1, min=0, chars=6)
+		self.widgets['blobs max size'] = IntEntry(self, -1, min=0, chars=6)
+
+		szblobs = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Border:')
+		szblobs.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szblobs.Add(self.widgets['blobs border'], (0, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Max. blobs:')
+		szblobs.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szblobs.Add(self.widgets['blobs max'], (1, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Max. blob size:')
+		szblobs.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		szblobs.Add(self.widgets['blobs max size'], (2, 1), (1, 1),
+										wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		szblobs.AddGrowableCol(1)
+
+		sb = wx.StaticBox(self, -1, 'Blob finding')
+		sbszblobs = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sbszblobs.Add(szblobs, 1, wx.EXPAND|wx.ALL, 5)
+
+		self.btest = wx.Button(self, -1, 'Test')
+		szbutton = wx.GridBagSizer(5, 5)
+		szbutton.Add(self.btest, (0, 0), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		szbutton.AddGrowableCol(0)
+
+		self.Bind(wx.EVT_BUTTON, self.onTestButton, self.btest)
+
+		return [sbszblobs, szbutton]
+
+	def onTestButton(self, evt):
+		self.node.findBlobs()
 
 class SettingsDialog(gui.wx.TargetFinder.SettingsDialog):
 	def initialize(self):

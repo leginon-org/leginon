@@ -44,6 +44,9 @@ class HoleFinder(targetfinder.TargetFinder):
 		'template lpf size': 15,
 		'template lpf sigma': 1.0,
 		'threshold': 3.0,
+		'blobs border': 20,
+		'blobs max': 300,
+		'blobs max size': 1000,
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		targetfinder.TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
@@ -80,18 +83,10 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.originalimage = uidata.Image('Original', None, 'r')
 		self.edgeimage = uidata.Image('Edge Image', None, 'r')
 		self.corimage = uidata.Image('Correlation Image', None, 'r')
-
-		### threshold
 		self.threshimage = uidata.Image('Thresholded Image', None, 'r')
-
-		### blobs
-		self.blobborder = uidata.Integer('Border', 20, 'rw', persist=True)
-		self.maxblobsize = uidata.Integer('Max Blob Size', 1000, 'rw', persist=True)
-		self.maxblobs = uidata.Integer('Max Number of Blobs', 300, 'rw', persist=True)
-		findblobmeth = uidata.Method('Find Blobs', self.findBlobs)
-		self.allblobs = uidata.Sequence('All Blobs', [], 'r')
 		self.allblobsimage = uidata.TargetImage('All Blobs Image', None, 'r')
 		self.allblobsimage.addTargetType('All Blobs')
+
 		self.latspacing = uidata.Number('Spacing', 150.0, 'rw', persist=True)
 		self.lattol = uidata.Number('Tolerance', 0.1, 'rw', persist=True)
 
@@ -129,12 +124,10 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.goodholesimage.addTargetType('acquisition', [], (0,255,0))
 		self.goodholesimage.addTargetType('focus', [], (0,0,255))
 
-		allblobscontainer = uidata.LargeContainer('All Blobs')
-		allblobscontainer.addObjects((self.blobborder, self.maxblobs, self.maxblobsize, findblobmeth, self.allblobs, self.allblobsimage))
 		latticeblobscontainer = uidata.LargeContainer('Lattice Blobs')
 		latticeblobscontainer.addObjects(( self.latspacing, self.lattol, self.holestatsrad, self.icei0, fitlatmeth, self.latblobs, self.latblobsimage))
 		blobcont = uidata.LargeContainer('Blobs')
-		blobcont.addObjects((allblobscontainer, latticeblobscontainer))
+		blobcont.addObjects((latticeblobscontainer,))
 
 		goodholescontainer = uidata.LargeContainer('Good Holes')
 		goodholescontainer.addObjects((self.icetmin, self.icetmax, self.icetstd, icemeth, self.goodholes, self.use_target_template, self.foc_target_template, foc_template_limit, self.acq_target_template, self.focus_one_hole, self.goodholesimage, ))
@@ -209,15 +202,14 @@ class HoleFinder(targetfinder.TargetFinder):
 
 	def findBlobs(self):
 		self.logger.info('find blobs')
-		border = self.blobborder.get()
-		blobsize = self.maxblobsize.get()
-		maxblobs = self.maxblobs.get()
+		border = self.settings['blobs border']
+		blobsize = self.settings['blobs max size']
+		maxblobs = self.settings['blobs max']
 		self.hf.configure_blobs(border=border, maxblobsize=blobsize, maxblobs=maxblobs)
 		self.hf.find_blobs()
 		blobs = self.hf['blobs']
 		centers = self.blobCenters(blobs)
 		self.logger.info('Blobs: %s' % (len(centers),))
-		self.allblobs.set(centers)
 		self.allblobsimage.setImage(self.hf['original'])
 		self.allblobsimage.setTargetType('All Blobs', centers)
 
@@ -444,9 +436,9 @@ class HoleFinder(targetfinder.TargetFinder):
 			'template-lpf': self.settings['template lpf sigma'],
 
 			'threshold-value': self.settings['threshold'],
-			'blob-border': self.blobborder.get(),
-			'blob-max-number': self.maxblobs.get(),
-			'blob-max-size': self.maxblobsize.get(),
+			'blob-border': self.settings['blobs border'],
+			'blob-max-number': self.settings['blobs max'],
+			'blob-max-size': self.settings['blobs max size'],
 			'lattice-spacing': self.latspacing.get(),
 			'lattice-tolerance': self.lattol.get(),
 			'stats-radius': self.holestatsrad.get(),
