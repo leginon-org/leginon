@@ -325,7 +325,7 @@ class Focuser(acquisition.Acquisition):
 		self.manual_check_done.clear()
 		self.logger.info('Starting manual focus loop...')
 		self.logger.info('Please confirm defocus')
-		node.beep()
+		self.beep()
 		while 1:
 			if self.manual_check_done.isSet():
 				break

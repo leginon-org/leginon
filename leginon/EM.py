@@ -138,7 +138,7 @@ class EMClient(object):
 		try:
 			self.node.outputEvent(setevent, wait=True)
 		except node.ConfirmationNoBinding:
-			self.node.logger.exception('')
+			self.node.logger.debug('Cannot set scope parameter (no event binding)')
 			raise
 
 	def setCamera(self, value):
@@ -148,7 +148,7 @@ class EMClient(object):
 		try:
 			self.node.outputEvent(setevent, wait=True)
 		except node.ConfirmationNoBinding:
-			self.node.logger.exception('')
+			self.node.logger.debug('Cannot set camera parameter (no event binding)')
 			raise
 
 class Request(object):

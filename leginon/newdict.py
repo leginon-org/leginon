@@ -23,9 +23,9 @@ class FileReference(object):
 		if self.path is None:
 			raise RuntimeError('no path set for %s' % (self.filename,))
 		if self.data is not None:
-			print 'already read', self.filename
+			#print 'already read', self.filename
 			return self.data
-		print 'reading image', self.filename
+		#print 'reading image', self.filename
 		fullname = os.path.join(self.path, self.filename)
 		self.data = self.loader(fullname)
 		return self.data

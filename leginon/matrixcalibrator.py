@@ -187,7 +187,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 		matrix = calclient.measurementToMatrix(shifts)
 		self.logger.info('Matrix %s' % matrix)
 		calclient.storeMatrix(ht, mag, self.parameter, matrix)
-		node.beep()
+		self.beep()
 
 	def fakeCalibration(self):
 		ht = self.getHighTension()

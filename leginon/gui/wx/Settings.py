@@ -59,15 +59,24 @@ class Dialog(wx.Dialog):
 		szmain.Add(szbuttons, (i+1, 0), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT|wx.ALL, 10)
 
-		# set values
 		self.getNodeSettings()
 
+		# set values
 		self.SetSizerAndFit(szmain)
 
 		self.Bind(wx.EVT_BUTTON, self.onSet, self.bok)
 		self.Bind(wx.EVT_BUTTON, self.onSet, self.bapply)
 
 		self.bindSettings(self.widgets)
+
+	def Show(self, show):
+		if show:
+			self.getNodeSettings()
+		wx.Dialog.Show(self, show)
+
+	def ShowModal(self):
+		self.getNodeSettings()
+		wx.Dialog.ShowModal(self)
 
 	def bindSettings(self, widgets):
 		for widget in widgets.values():
@@ -111,7 +120,11 @@ class Dialog(wx.Dialog):
 				self.setSettings(widget, sd[key])
 			else:
 				try:
-					getattr(widget, attributes[widget.__class__][1])(sd[key])
+					if sd[key] is None:
+						widgetvalue = getattr(widget, attributes[widget.__class__][0])()
+						sd[key] = widgetvalue
+					else:
+						getattr(widget, attributes[widget.__class__][1])(sd[key])
 				except ValueError:
 					raise ValueError('Invalid value %s for widget "%s"' % (sd[key], key))
 

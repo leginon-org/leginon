@@ -1124,7 +1124,7 @@ def saveMRC(object, name, path, filename, thumb=False):
 	k = sep.join(['MRC',name])
 	fullname = leginonconfig.mapPath(os.path.join(path,filename))
 	if object is not None:
-		print 'saving MRC', fullname
+		#print 'saving MRC', fullname
 		Mrc.numeric_to_mrc(object, fullname)
 	d[k] = filename
 	return d

@@ -122,7 +122,7 @@ class Navigator(node.Node):
 			message = ('Error in transform. Likely missing calibration for %s at %s'
 									+ ' and current high tension') % (movetype, mag)
 			self.logger.error(message)
-			node.beep()
+			self.beep()
 			return
 		if not self.settings['complete state']:
 			if movetype == 'modeled stage position':
@@ -169,7 +169,7 @@ class Navigator(node.Node):
 					pass
 			self.logger.info(res)
 
-		node.beep()
+		self.beep()
 
 	def acquireImage(self):
 		self.cam.setCameraDict(self.settings['camera settings'])

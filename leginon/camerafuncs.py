@@ -121,9 +121,7 @@ class CameraFuncs(object):
 			self.node.logger.debug('setCameraEMData: %s' % (camdata,))
 			self.node.emclient.setCamera(camdata)
 		except Exception, detail:
-			self.node.logger.exception(
-															'camerafuncs.state: unable to set camera state')
-			raise
+			self.node.logger.exception('Unable to set camera state')
 
 	def getCameraEMData(self):
 		'''
@@ -318,9 +316,7 @@ class SmartCameraParameters(uidata.Container):
 		try:
 			self.validate(parameterdict)
 		except ValueError, e:
-			self.node.logger.exception('')
-			if hasattr(self.node, 'messagelog'):
-				self.node.messagelog.error(str(e))
+			self.node.logger.exception(str(e))
 
 		for parameter in ('Binning', 'Dimension', 'Offset'):
 			for axis, uiobject in self[parameter].items():

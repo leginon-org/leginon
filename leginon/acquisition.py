@@ -150,7 +150,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			return 'invalid'
 		except NoMoveCalibration:
 			self.logger.error('calibrate this move type, then continue')
-			node.beep()
+			self.beep()
 			self.pause.set()
 			return 'repeat'
 
@@ -164,7 +164,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 				## if there was a targetdata, then 
 				## we assume we are in a target list loop
 				self.logger.error('Paused... correct the invalid presets sequence, then continue')
-				node.beep()
+				self.beep()
 				self.pause.set()
 				return 'repeat'
 

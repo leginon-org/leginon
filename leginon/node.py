@@ -36,13 +36,6 @@ import sys
 if sys.platform == 'win32':
 	import winsound
 
-def beep():
-	try:
-		winsound.PlaySound('SystemExclamation', winsound.SND_ALIAS)
-		print 'BEEP!'
-	except:
-		print '\aBEEP!'
-
 class Node(leginonobject.LeginonObject):
 	'''Atomic operating unit for performing tasks, creating data and events.'''
 	panelclass = None
@@ -368,4 +361,11 @@ class Node(leginonobject.LeginonObject):
 			self.setManager(ievent['location'])
 		else:
 			self.logger.warning('Attempt to set manager rejected')
+
+	def beep(self):
+		try:
+			winsound.PlaySound('SystemExclamation', winsound.SND_ALIAS)
+		except:
+			print '\a',
+		self.logger.info('[beep]')
 

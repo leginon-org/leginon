@@ -396,7 +396,7 @@ class PresetsManager(node.Node):
 		# ???
 		self.panel.onSetOrder(self.presets.keys())
 		self.logger.info('Set preset "%s" values from instrument' % name)
-		node.beep()
+		self.beep()
 		return newpreset
 
 	def presetNames(self):
@@ -418,7 +418,7 @@ class PresetsManager(node.Node):
 		if not self.settings['cycle on']:
 			if dofinal:
 				self.toScope(presetname)
-			node.beep()
+			self.beep()
 			return
 
 		order = self.presets.keys()
@@ -470,7 +470,7 @@ class PresetsManager(node.Node):
 		if dofinal:
 			self.toScope(thiscycle[-1])
 			self.logger.info('Cycle completed')
-		node.beep()
+		self.beep()
 
 	def createCycleList(self, current, final, magshortcut, reverse=False):
 		order = self.presets.keys()

@@ -103,7 +103,7 @@ class Corrector(node.Node):
 			self.logger.exception('Cannot set EM parameter, EM may not be running')
 		else:
 			self.displayImage(imagedata)
-			node.beep()
+			self.beep()
 		self.panel.acquisitionDone()
 
 	def acquireBright(self):
@@ -113,7 +113,7 @@ class Corrector(node.Node):
 			self.logger.exception('Cannot set EM parameter, EM may not be running')
 		else:
 			self.displayImage(imagedata)
-			node.beep()
+			self.beep()
 		self.panel.acquisitionDone()
 
 	def acquireRaw(self):
@@ -220,13 +220,15 @@ class Corrector(node.Node):
 		imagetemp['session']['instrument'] = self.session['instrument']
 		self.logger.info('Researching reference image')
 		try:
-			refs = self.research(datainstance=imagetemp, results=1)
+			ref = self.research(datainstance=imagetemp, results=1)[0]
 		except node.ResearchError, e:
 			self.logger.warning('Finding reference image failed: %s' % (e,))
 			ref = None
+		except IndexError:
+			self.logger.warning('Finding reference image failed')
+			ref = None
 		else:
 			self.logger.info('Reference image researched')
-			ref = refs[0]
 		return ref
 
 	def refKey(self, camstate, type):

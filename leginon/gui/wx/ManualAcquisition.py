@@ -4,6 +4,7 @@ import gui.wx.Camera
 import gui.wx.Node
 import gui.wx.Settings
 import gui.wx.ImageViewer
+import gui.wx.Stats
 
 ImageUpdatedEventType = wx.NewEventType()
 EVT_IMAGE_UPDATED = wx.PyEventBinder(ImageUpdatedEventType)
@@ -42,8 +43,11 @@ class Panel(gui.wx.Node.Panel):
 		self.SetupScrolling()
 
 	def initialize(self):
-		# settings
+		# stats
+		self.statspanel = gui.wx.Stats.StatsPanel(self)
+		self.szmain.Add(self.statspanel, (1, 0), (1, 1), wx.EXPAND)
 
+		# buttons
 		self.bsettings = wx.Button(self, -1, 'Settings...')
 		self.bgrid = wx.Button(self, -1, 'Grid...')
 		self.bgrid.Enable(False)
@@ -55,23 +59,25 @@ class Panel(gui.wx.Node.Panel):
 		self.szbuttons.Add(self.bgrid, (1, 0), (1, 1), wx.EXPAND)
 		self.szbuttons.Add(self.bacquire, (2, 0), (1, 1), wx.EXPAND)
 		self.szbuttons.Add(self.bcontinuous, (3, 0), (1, 1), wx.EXPAND)
-		self.szmain.Add(self.szbuttons, (1, 0), (1, 1), wx.ALIGN_CENTER)
-		self.szmain.AddGrowableCol(1)
+		self.szmain.Add(self.szbuttons, (2, 0), (1, 1), wx.ALIGN_CENTER)
 
 		# image
 		self.imagepanel = self.imageclass(self, -1)
-		self.szimage = self._getStaticBoxSizer('Image', (1, 1), (5, 1),
+		self.szimage = self._getStaticBoxSizer('Image', (1, 1), (4, 1),
 																						wx.EXPAND|wx.ALL)
 		self.szimage.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND)
 		self.szimage.AddGrowableRow(0)
 		self.szimage.AddGrowableCol(0)
-		self.szmain.AddGrowableRow(5)
+
+		self.szmain.AddGrowableRow(4)
+		self.szmain.AddGrowableCol(1)
 
 		self.Bind(EVT_IMAGE_UPDATED, self.onImageUpdated)
 		self.Bind(EVT_LOOP_STARTED, self.onLoopStarted)
 		self.Bind(EVT_LOOP_STOPPED, self.onLoopStopped)
 
 	def onNodeInitialized(self):
+		self.settingsdialog = SettingsDialog(self)
 		self.Bind(wx.EVT_BUTTON, self.onSettingsButton, self.bsettings)
 		self.Bind(wx.EVT_BUTTON, self.onAcquireButton, self.bacquire)
 		self.Bind(wx.EVT_BUTTON, self.onContinuousButton, self.bcontinuous)
@@ -81,15 +87,14 @@ class Panel(gui.wx.Node.Panel):
 
 	def onImageUpdated(self, evt):
 		self.imagepanel.setImage(evt.image)
+		self.statspanel.setStats(evt.stats)
 
-	def imageUpdated(self, name, image, targets=None):
-		evt = ImageUpdatedEvent(self, name, image, targets)
+	def imageUpdated(self, name, image, targets=None, stats={}):
+		evt = ImageUpdatedEvent(self, name, image, targets, stats)
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onSettingsButton(self, evt):
-		dialog = SettingsDialog(self)
-		dialog.ShowModal()
-		dialog.Destroy()
+		self.settingsdialog.ShowModal()
 
 	def onGridButton(self, evt):
 		dialog = GridDialog(self)
@@ -122,7 +127,7 @@ class Panel(gui.wx.Node.Panel):
 		if self.bcontinuous.GetLabel() == 'Continuous':
 			self.node.acquisitionLoopStart()
 		elif self.bcontinuous.GetLabel() == 'Stop':
-			self.node.acqusitionLoopStop()
+			self.node.acquisitionLoopStop()
 		else:
 			raise RuntimeError
 		self.bacquire.Enable(False)

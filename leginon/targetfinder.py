@@ -136,7 +136,7 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
 	def notifyUserSubmit(self):
 		message = 'waiting for you to submit targets'
 		self.usersubmitmessage = self.logger.info(message)
-		node.beep()
+		self.beep()
 
 	def unNotifyUserSubmit(self):
 		try:
@@ -555,7 +555,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		## imagedata would be full mosaic image
 		#self.clickimage.imagedata = None
 		self.displayTargets()
-		node.beep()
+		self.beep()
 
 	def clearMosaicImage(self):
 		self.setImage(None)

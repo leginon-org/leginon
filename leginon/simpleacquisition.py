@@ -29,12 +29,12 @@ class SimpleAcquisition(acquisition.Acquisition):
 
 	def acquireImageOne(self):
 		self.processTargetData(None)
-		node.beep()
+		self.beep()
 		return ''
 
 	def acquireImageOneNoPreset(self):
 		self.acquire(None)
-		node.beep()
+		self.beep()
 
 	def alreadyAcquired(self, targetdata, presetname):
 		'''
