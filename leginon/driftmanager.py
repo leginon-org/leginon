@@ -44,7 +44,6 @@ class DriftManager(watcher.Watcher):
 		self.start()
 
 	def handleNeedShift(self, ev):
-		print 'DONT KNOW WHAT TO DO HERE YET'
 		imageid = ev['imageid']
 		for key,value in self.references.items():
 			imid = value['imageid']
@@ -104,7 +103,7 @@ class DriftManager(watcher.Watcher):
 		from each node.
 		'''
 		label = imagedata['label']
-		imageid = imagedata.dmid
+		imageid = imagedata.dbid
 		self.references[label] = {'imageid': imageid, 'image': imagedata, 'shift': {}}
 
 	def uiMonitorDrift(self):
@@ -150,14 +149,17 @@ class DriftManager(watcher.Watcher):
 
 		## DriftDoneEvent
 		## only output if this was called from another node
-		if emdata is not None:
+		if driftdata is not None:
 			self.logger.info('DriftManager sending DriftDoneEvent...')
 			ev = event.DriftDoneEvent()
 			self.outputEvent(ev)
 		self.logger.info('DriftManager done monitoring drift')
 
 	def publishImageShifts(self, requested=False):
-		self.logger.info('Publishing image shifts...')
+		if requested:
+			self.logger.info('Publishing requested image shifts...')
+		else:
+			self.logger.info('Publishing image shifts...')
 		to_publish = {}
 		for value in self.references.values():
 			if not requested:
@@ -166,14 +168,6 @@ class DriftManager(watcher.Watcher):
 		self.logger.info('to publish %s' % to_publish)
 		dat = data.ImageTargetShiftData(shifts=to_publish,
 																		requested=requested)
-
-		print '''
-			publishing ImageTargetShiftData'
-			this used to have confirm=True, but not wait=True,
-			so I don't know if it was ever waiting anyway
-			Is there any reason to get confirmation if you
-			are not going to wait for it?
-		'''
 		self.publish(dat, pubevent=True)
 
 	def acquireImage(self):
