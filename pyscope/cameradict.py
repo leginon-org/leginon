@@ -12,6 +12,9 @@ def factory(cameraclass):
 			if dict is not None:
 				self.update(dict)
 
+		def exit(self):
+			cameraclass.exit(self)
+
 		def __repr__(self):
 			self.refresh()
 			return repr(self.data)

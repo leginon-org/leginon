@@ -1,4 +1,6 @@
 class scope:
+    def exit(self):
+        pass
     def normalizeLens(self, lens = "all"):
         raise NotImplementedError
     def getScreenCurrent(self):

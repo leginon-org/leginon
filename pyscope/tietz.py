@@ -39,7 +39,7 @@ else:
 			self.arraytypecode = 'H'
 			self.Numerictypecode = Numeric.UInt16
 
-		def __del__(self):
+		def exit(self):
 			self.theCamera.Uninitialize(self.hCam)
 	
 		def mmapImage(self, size):

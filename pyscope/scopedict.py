@@ -8,6 +8,8 @@ def factory(scopeclass):
               "beam shift", "image shift", "defocus",
               "magnification", "stage position", "low dose",
               "low dose mode", "diffraction mode"]
+      def exit(self):
+          scopeclass.exit(self)
   
       def __repr__(self):
           return repr(self.copy())
