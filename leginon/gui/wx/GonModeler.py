@@ -68,6 +68,7 @@ class SettingsDialog(gui.wx.Calibrator.SettingsDialog):
 		return szcal + [sbszmeasure, sbszmodel]
 
 class Panel(gui.wx.Calibrator.Panel):
+	icon = 'sine'
 	settingsclass = SettingsDialog
 	def initialize(self):
 		gui.wx.Calibrator.Panel.initialize(self)
