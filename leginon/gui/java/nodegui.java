@@ -285,23 +285,6 @@ class GuiData {
 			JPanel permPanel =new JPanel();	
                 	permPanel.setLayout(new BoxLayout(permPanel, BoxLayout.X_AXIS));
 			String permissions = (String)spec.get("permissions");
-<<<<<<< nodegui.java
-			if (permissions.matches("[r]"))
-				new AddButton ("Get", xmlrpcclient, "GET", id, widgets, permPanel);
-			if (permissions.matches("[w]")) 
-				new AddButton ("Set", xmlrpcclient, "SET", id, widgets, permPanel);
-			mainPanel.add(permPanel);
-=======
-			if (permissions.equals("r"))
-				new AddButton ("Get", xmlrpcclient, "GET", args, mainPanel);
-			if (permissions.equals("w")) 
-				new AddButton ("Set", xmlrpcclient, "SET", args, mainPanel);
-			if (permissions.equals("rw")) {
-
-				new AddButton ("Get", xmlrpcclient, "GET", args, mainPanel);
-				new AddButton ("Set", xmlrpcclient, "SET", args, mainPanel);
-			}
->>>>>>> 1.2
 		}
 
 		Object defaultval = null;
