@@ -285,17 +285,23 @@ class view {
 		$this->name = $name;
 		$this->displayname = $this->name.'view';
 		$this->displayPresets(true);
+		$this->btdownload = new button('download'.$this->name, 'dwd');
+		$this->btdownload->setLink('download.php','');
+		$this->displayscaleicon = true;
 		$this->btinfo = new button('info'.$this->name, 'info');
-		$this->btinfo->setLink('imgreport.php','imgreport');
+		$this->btinfo->setLink('imgreport.php','');
 		$this->displayscaleicon = true;
 		$this->displaytargeticon = true;
 		$this->displayffticon = true;
 		$this->displayfiltericon = true;
 		$this->displayinfoicon = true;
+		$this->displaydownloadicon = true;
 		$this->displaycloseicon = true;
 		$this->displayadjustlink = true;
 		$this->framecolor = ' class="bgcolor1" ';
 		$this->menucolor = ' class="bgcolor1" ';
+		$this->presetscript = 'getpreset.php';
+		$this->imagescript = 'getparentimgtarget.php';
 	}
 
 	function setSize($size) {
@@ -341,6 +347,10 @@ class view {
 		$this->displaycloseicon = $state;
 	}
 
+	function displayDownloadIcon($state) {
+		$this->displaydownloadicon = $state;
+	}
+
 	function displayInfoIcon($state) {
 		$this->displayinfoicon = $state;
 	}
@@ -373,6 +383,8 @@ class view {
 			.'var '.$this->name.'filter_bt_st=false;'.$this->crlf
 			.'var '.$this->name.'close_bt_st=false;'.$this->crlf
 			.'var '.$this->name.'size='.$this->size.';'.$this->crlf
+			.'var jsimagescript'.$this->name.'="'.$this->imagescript.'";'.$this->crlf
+			.'var jspresetscript'.$this->name.'="'.$this->presetscript.'";'.$this->crlf
 			.'var jsvfile'.$this->name.'=1;'.$this->crlf
 			.'var jsmin'.$this->name.';'.$this->crlf
 			.'var jsmax'.$this->name.';'.$this->crlf
@@ -385,6 +397,7 @@ class view {
 	function getJavascriptButton() {
 		$javascript = ''.$this->crlf
 			.$this->btinfo->getJavascript()
+			.$this->btdownload->getJavascript()
 			.$this->crlf;
 		return $javascript;
 	}
@@ -416,6 +429,14 @@ class view {
 
 	function setMenuColor($color) {
 		$this->menucolor = ' bgcolor="'.$color.'" ';
+	}
+
+	function setPresetScript($scriptname) {
+		$this->presetscript = $scriptname;
+	}
+
+	function setImageScript($scriptname) {
+                $this->imagescript= $scriptname;
 	}
 
 	function display() {
@@ -457,6 +478,13 @@ class view {
 			<td align="right">
 			<table '.$this->menucolor.' border="0" cellspacing="1" cellpadding="0">
 			<tr>
+		';
+		if ($this->displaydownloadicon)
+		$htmlframe .= '
+			<td width="15">'
+			.$this->btdownload->display().$this->crlf
+			.'
+			</td>
 		';
 		if ($this->displayinfoicon)
 		$htmlframe .= '
@@ -551,7 +579,7 @@ class view {
 			 <tr>
 				<td>
 		<iframe name="'.$this->name.'if" 
-                        src="getpreset.php"
+                        src="'.$this->presetscript.'"
 			frameborder="0" width="'.$this->size.'" height="50"
 			marginheight="1" marginwidth="5"
 			scrolling="no" ></iframe>

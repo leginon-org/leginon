@@ -1,32 +1,30 @@
 <?
 require('inc/leginon.inc');
-$id=$_GET[fileId];
-$sessionId=$_GET[sessionId];
+$imgId  = $_GET[id];
+$preset = $_GET[preset];
+
+$newimage = $leginondata->findImage($imgId, $preset);
+$imgId = $newimage[id];
+$imageinfo = $leginondata->getImageInfo($imgId);
+$sessionId = $imageinfo[sessionId];
 $path = $leginondata->getImagePath($sessionId);
-$filename = $leginondata->getFilename($id);
-$pic = $path.$filename;
+$filename = $leginondata->getFilename($imgId);
+
+$pic  = $path.$filename;
+$size = filesize($path.$filename);
 if (file_exists($pic))  {
 	header("Content-Type: application/octet-stream");
 	header("Content-Type: application/force-download");
 	header("Content-Type: application/download");
+	header("Content-Length: $size");
 	header("Content-Disposition: attachment; filename=".$filename);
 	readfile($pic);
-	exit;
 } else {
-?>
-<HTML>
-<HEAD>
-<LINK rel="stylesheet" href="css/viewer.css" type="text/css"> 
-<TITLE>Leginon Image Viewer</TITLE>
-</HEAD>
-<BODY><H3>
-<?
-echo " file not found ";
-?>
-</H3>
-<a href="javascript:history.go(-1)">&laquo; Back</a> 
-</BODY>
-</HTML>
-<?
+echo "
+<script>
+alert('file: $pic \\n is not available');
+history.go(-1);
+</script>
+";
 }
 ?>

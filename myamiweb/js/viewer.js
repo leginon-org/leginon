@@ -45,6 +45,8 @@ var lastoptions = new Array();
 function newfile(view){
 	jssize = eval(view+"size");
 	jsvfile = eval("jsvfile"+view);
+	jsimagescriptcur = eval("jsimagescript"+view);
+	jspresetscriptcur = eval("jspresetscript"+view);
 	selpreset = "";
 	vid = getviewindex(view);
 	
@@ -72,9 +74,10 @@ function newfile(view){
 		return;
 
 
-	ni = "getparentimgtarget.php?"+options;
+	ni = jsimagescriptcur+"?"+options;
 	nlink = "javascript:popUpMap('map.php?"+options+"')";
 	ninfolink = "imgreport.php?id="+jsimgId+"&preset="+selpreset;
+	ndownloadlink = "download.php?id="+jsimgId+"&preset="+selpreset;
 
 	if (img = document.images[eval("\"" +view+ "img\"")]) 
 		img.src = ni;
@@ -82,9 +85,11 @@ function newfile(view){
 		link.href = nlink;
 	if (infolink = document.getElementById("info"+view+"_bthref"))
 		infolink.href = ninfolink;
+	if (downloadlink = document.getElementById("download"+view+"_bthref"))
+		downloadlink.href = ndownloadlink;
 
 	if (cif=eval("this."+view+"if")) {
-		iflink = "getpreset.php?vf="+jsvfile+"&id="+jsimgId+"&preset="+selpreset;
+		iflink = jspresetscriptcur+"?vf="+jsvfile+"&id="+jsimgId+"&preset="+selpreset;
 		cif.document.location.replace(iflink);
 	}
 

@@ -25,6 +25,9 @@ class leginondata {
 		$this->mysql = new mysql($HOSTNAME, $DBUSER, $DBPASSWORD, $DATABASE);
 	}
 
+	function query($q) {
+		return $this->mysql->SQLQuery($q);
+	}
 	
 	function getLastSessionId() {
 		$q = "select distinct(s.DEF_id) from AcquisitionImageData a "

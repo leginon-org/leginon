@@ -85,8 +85,7 @@ function zoom(val) {
 }
 
 function updateGradient() {
-  	document.getElementById('gradientDiv').style.background = 'url('+jsbaseurl+'img/dfe/grad.php?min='+jsminpix+'&max='+jsmaxpix+')'; 
-
+	document.getElementById('gradientDiv').style.background = 'url('+jsbaseurl+'img/dfe/grad.php?min='+jsminpix+'&max='+jsmaxpix+'&gmin='+jsmingradpix+'&gmax='+jsmaxgradpix+')'; 
 }
 
 function newscale(){
