@@ -23,8 +23,9 @@ class MyNode(node.Node):
 			time.sleep(self.interval)
 
 	def print_stuff(self):
-		timenow = time.asctime()
-		print timenow
+		self.timenow = time.asctime()
+		print 'node %s says %s' % (self.nodeid,self.timenow)
+		print 'testthing', testthing
 		mydata = data.StringData(timenow)
 		self.publish(mydata, event.PublishEvent)
 

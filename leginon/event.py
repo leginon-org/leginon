@@ -15,6 +15,8 @@ class Event(data.Data):
 ##		LauncherReadyEvent
 ##	PublishEvent
 ##	ControlEvent
+##		StartEvent
+##		Stopvent
 ##		NumericControlEvent
 ##		LaunchEvent
 ##
@@ -48,8 +50,18 @@ class ListPublishEvent(Event):
 
 class ControlEvent(Event):
 	'Event that passes a value with it'
-	def __init__(self, content):
+	def __init__(self, content=None):
 		Event.__init__(self, content)
+
+class StartEvent(ControlEvent):
+	'Event that signals a start'
+	def __init__(self):
+		ControlEvent.__init__(self)
+	
+class StopEvent(ControlEvent):
+	'Event that signals a stop'
+	def __init__(self):
+		ControlEvent.__init__(self)
 
 class NumericControlEvent(ControlEvent):
 	'ControlEvent that allows only numeric values to be passed'

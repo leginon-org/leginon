@@ -8,16 +8,23 @@ class IntGen(node.Node):
 	def __init__(self, nodeid, managerlocation):
 		node.Node.__init__(self, nodeid, managerlocation)
 
-		#self.addEventOutput(event.ControlEvent)
-		self.addEventOutput(event.PublishEvent)
+		self.addEventOutput(event.NumericControlEvent)
+		self.addEventOutput(event.StartEvent)
+		self.addEventOutput(event.StopEvent)
 
 		print self.location()
 		print self.nodeid
+
 		self.main()
 
 	def sendint(self, newint):
-		intdata = data.IntData(newint)
-		self.publish(intdata, event.PublishEvent)
+		self.announce(event.NumericControlEvent(newint))
+
+	def sendstart(self):
+		self.announce(event.StartEvent())
+
+	def sendstop(self):
+		self.announce(event.StopEvent())
 			
 	def main(self):
 		self.interact()
