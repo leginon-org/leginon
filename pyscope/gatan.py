@@ -35,6 +35,17 @@ else:
 			self.theCamera.CameraBottom = offset['y'] + dimension['y']
 			self.theCamera.Binning = binning['x']
 			self.theCamera.ExposureTime = float(exposure_time) / 1000.0
+
+			if imagetype == 'normal':
+				pass
+			elif imagetype == 'dark':
+				if self.getInserted():
+					self.retract()
+					image = self.theCamera.AcquireRawImage()
+					self.insert()
+					return image
+			else:
+				raise ValueError('Invalid image type')
 	
 			return self.theCamera.AcquireRawImage()
 
