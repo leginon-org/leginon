@@ -577,7 +577,14 @@ class Data(DataDict, leginonobject.LeginonObject):
 		return data2dict(self, noNone)
 
 	def size(self):
-		size = 0
+		## This is crazy, but fun:
+		## I tried to estimate how must memory empty Data instances
+		## use and found it to be about 1400 bytes.
+		## An empty ImageData instance uses about 1900 bytes.
+		## empty ScopeEMData uses about 7000 bytes
+		## We could overide size in subclasses with these estimates,
+		## but for now just an overall guess:
+		size = 2500
 		for key, datatype in self.types().items():
 			try:
 				isdata = issubclass(datatype, Data)
@@ -597,11 +604,13 @@ class Data(DataDict, leginonobject.LeginonObject):
 		if type(value) is Numeric.ArrayType:
 			size = reduce(Numeric.multiply, value.shape) * value.itemsize()
 		elif value is None:
+			## there is only one None object
 			size = 0
 		else:
 			## this is my stupid estimate of size for other objects
+			## We could also check for int, str, float, etc.
+			## but this is easier
 			size = 8
-
 		return size
 
 	def reference(self):
