@@ -684,6 +684,8 @@ def whereFormat(in_dict):
 	for key, value in whereDict.items():
 		if type(value) in [tuple, list]:
 			key = sqldict.seq2sqlColumn(key)
+		elif type(value) is bool:
+			value = int(value)
 		elif isinstance(value,strictdict.AnyObject):
 			key = sqldict.bin2sqlColumn(key)
 			value = value.getPickledObject()
