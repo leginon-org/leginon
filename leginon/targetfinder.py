@@ -80,6 +80,7 @@ class ClickTargetFinder(TargetFinder):
 
 		myspec = self.registerUISpec('Click Target Finder', (clickimage,))
 		myspec += tfspec
+		return myspec
 
 	def uiImage(self, value=None):
 		'''

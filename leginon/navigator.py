@@ -105,7 +105,9 @@ class Navigator(node.Node):
 
 		camspec = self.cam.configUIData()
 
-		self.registerUISpec('Navigator', (prefs, camspec, nodeui))
+		myui = self.registerUISpec('Navigator', (prefs, camspec, nodeui))
+		myui += nodeui
+		return myui
 
 class SimpleNavigator(Navigator):
 	def __init__(self, id, nodelocations, **kwargs):

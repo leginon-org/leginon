@@ -11,6 +11,7 @@ import xmlrpclib
 xmlbinlib = xmlrpclib
 import camerafuncs
 import Mrc
+import node, data, event
 
 class ImViewer(imagewatcher.ImageWatcher):
 	def __init__(self, id, nodelocations, **kwargs):
@@ -38,7 +39,7 @@ class ImViewer(imagewatcher.ImageWatcher):
 
 	def die(self, ievent=None):
 		self.close_viewer()
-		watcher.Watcher.die(self)
+		imagewatcher.ImageWatcher.die(self)
 
 	def start_viewer_thread(self):
 		if self.iv is not None:
@@ -76,9 +77,11 @@ class ImViewer(imagewatcher.ImageWatcher):
 
 	def clickEventCallback(self, tkevent):
 		if not self.clicklock.acquire(0):
+			print 'locked'
 			return
 		try:
 			clickinfo = self.iv.eventXYInfo(tkevent)
+			print 'CLICKINFO', clickinfo
 			imageinfo = self.imageInfo()
 			clickinfo.update(imageinfo)
 			e = event.ImageClickEvent(self.ID(), clickinfo)
@@ -139,6 +142,7 @@ class ImViewer(imagewatcher.ImageWatcher):
 		if self.numarray is not None:
 			self.iv.import_numeric(self.numarray)
 			self.iv.update()
+		self.clickEventOn()
 
 	def popupCallback(self, value=None):
 		if value is not None:
@@ -158,13 +162,6 @@ class ImViewer(imagewatcher.ImageWatcher):
 		numarray = Numeric.array(self.iv.imagearray)
 		Mrc.numeric_to_mrc(numarray, filename)
 		return ''
-
-	def OLDdefineUserInterface(self):
-		imwatch = imagewatcher.ImageWatcher.defineUserInterface(self)
-		print 'imwatch', imwatch
-		myspec = self.registerUISpec('ImViewer', ())
-		print 'myspec', myspec
-		myspec += imwatch
 
 	def defineUserInterface(self):
 		watcherspec = imagewatcher.ImageWatcher.defineUserInterface(self)
@@ -189,4 +186,6 @@ class ImViewer(imagewatcher.ImageWatcher):
 		camconfig = self.cam.configUIData()
 		prefs = self.registerUIContainer('Preferences', (popuptoggle, camconfig,))
 
-		self.registerUISpec(`self.id`, (acqraw, acqcor, acqev, prefs, filespec, watcherspec))
+		myspec = self.registerUISpec(`self.id`, (acqraw, acqcor, acqev, prefs, filespec))
+		myspec += watcherspec
+		return myspec
