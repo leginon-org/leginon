@@ -1110,6 +1110,7 @@ class Tecnai(tem.TEM):
 		else:
 			raise ValueError('Invalid film date type specified')
 
+'''
 class TecnaiPolara(Tecnai):
 	name = 'Tecnai Polara'
 	magtable = [
@@ -1125,4 +1126,5 @@ class TecnaiPolara(Tecnai):
 		44000, 54000, 68000, 84000, 105000, 140000, 175000, 210000, 275000, 350000,
 		420000, 560000, 710000
 	]
+'''
 
