@@ -17,7 +17,6 @@ except:
 	import LinearAlgebra
 import data
 import calibrationclient
-import uidata
 import node
 import gui.wx.BeamTiltCalibrator
 import camerafuncs
