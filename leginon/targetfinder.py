@@ -145,6 +145,11 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		# needs to update target positions
 		self.clickimage.setTargets([])
 
+	def mosaicFromDB(self):
+		self.mosaic.mosaicFromDB()
+		self.clickimage.setImage(self.mosaic.getMosaicImage())
+		self.clickimage.setTargets([])
+
 	def getTargetDataList(self, typename, datatype):
 		for imagetarget in self.clickimage.getTargetType(typename):
 			x, y = imagetarget
