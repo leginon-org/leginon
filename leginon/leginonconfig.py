@@ -21,8 +21,8 @@ def mkdirs(newdir, mode=0777):
 #   hardware  #
 ###############
 TEM = 'tecnai'
-CCD = 'tietz'
-#CCD = 'gatan'
+#CCD = 'tietz'
+CCD = 'gatan'
 
 
 #########################
