@@ -6,8 +6,10 @@ if sys.platform != 'win32':
 		def __init__(self):
 			pass
 else:
+	sys.coinit_flags = 0
+	import pythoncom
 	import win32com.client
-#	import tietzcom
+	import tietzcom
 	import mmapfile
 	import array
 	import Numeric
@@ -18,6 +20,7 @@ else:
 		camType = None
 		
 		def __init__(self, cameratype=None):
+			pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
 			camera.Camera.__init__(self)
 			try:
 				self.theCamera = win32com.client.Dispatch("CAMC.Camera")		

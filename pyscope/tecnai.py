@@ -1,13 +1,14 @@
 import scope
 import sys
-import pywintypes
 	
 if sys.platform != 'win32':
 	class tecnai(scope.Scope):
 		pass
 else:
+	sys.coinit_flags = 0
 	import pythoncom
 	import win32com.client
+	import pywintypes
 #	import tecnaicom
 #	import ldcom
 	import adacom
@@ -24,7 +25,8 @@ else:
 				 return 1
 			
 		def __init__(self):
-			self.theScope = win32com.client.Dispatch("Tecnai.Instrument.1")		
+			pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
+			self.theScope = win32com.client.Dispatch("Tecnai.Instrument")		
 			self.theLowDose = win32com.client.Dispatch("LDServer.LdSrv")
 			self.theAda = win32com.client.Dispatch("adaExp.TAdaExp",
 																					clsctx=pythoncom.CLSCTX_LOCAL_SERVER)

@@ -6,11 +6,14 @@ if sys.platform != 'win32':
 		def __init__(self):
 			pass
 else:
+	sys.coinit_flags = 0
+	import pythoncom
 	import win32com.client
 #	import gatancom
 
 	class Gatan(camera.Camera):
 		def __init__(self):
+			pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
 			self.theCamera = win32com.client.Dispatch("TecnaiCCD.GatanCamera")        
 	    
 		def __del__(self):
