@@ -11,6 +11,77 @@ define(MIN_PIXEL_VAL, 0);
 define(MAX_PIXEL_VAL, 255); 
 define(MAX_COLOR_PIXEL_VAL, 1274); 
 
+class filter {
+
+
+	var $filter_types = array (
+				'default' => 'Default',
+				'smooth1' => 'Smooth 1',
+				'smooth2' => 'Smooth 2',
+				'smooth3' => 'Smooth 3',
+				'smooth4' => 'Smooth 4'
+			);
+
+	var $binning_types = array (
+				'auto' => 'auto',
+				1 => 1,
+				2 => 2,
+				3 => 3,
+				4 => 4,
+				5 => 5
+			);
+
+	function getFilterTypes() {
+		return $this->filter_types;
+	}
+
+	function getBinningTypes() {
+		return $this->binning_types;
+	}
+
+}
+
+
+function getdefault($filename="", $minpix="", $maxpix="", $colormap=false, $binning=1, $type='default') {
+	$minpix = ($minpix) ? $minpix : MIN_PIXEL_VAL;
+	$maxpix = ($maxpix) ? $maxpix : (($colormap) ? MAX_COLOR_PIXEL_VAL : MAX_PIXEL_VAL);
+	if (!is_file($filename))
+		return false;
+
+	return imageCreateFromMRC (
+		$filename, 
+		$minpix, $maxpix,
+		$colormap,
+		$binning
+		);
+}
+
+function smooth1($filename="", $minpix="", $maxpix="", $colormap=false, $binning=1 ) {
+	$minpix = ($minpix) ? $minpix : MIN_PIXEL_VAL;
+	$maxpix = ($maxpix) ? $maxpix : (($colormap) ? MAX_COLOR_PIXEL_VAL : MAX_PIXEL_VAL);
+	if (!is_file($filename))
+		return false;
+	$kernel = 5;
+	$sigma = 2.73;
+	return imageFilteredCreateFromMRC (
+			$filename, 
+			$minpix, $maxpix,
+			$colormap,
+			$binning,
+			$kernel, $sigma
+			);
+}
+
+function smooth2($filename="", $minpix="", $maxpix="", $colormap=false, $binning=1 ) {
+	$minpix = ($minpix) ? $minpix : MIN_PIXEL_VAL;
+	$maxpix = ($maxpix) ? $maxpix : (($colormap) ? MAX_COLOR_PIXEL_VAL : MAX_PIXEL_VAL);
+	if (!is_file($filename))
+		return false;
+	$kernel = 5;
+	$sigma = 1;
+	$img = imageFilteredCreateFromMRC (
+			$filename, $minpix,
+			$maxpix,
 function getdefault($filename="", $minpix="", $maxpix="", $colormap=false, $binning=1, $type='default') {
 	$minpix = ($minpix) ? $minpix : MIN_PIXEL_VAL;
 	$maxpix = ($maxpix) ? $maxpix : (($colormap) ? MAX_COLOR_PIXEL_VAL : MAX_PIXEL_VAL);
