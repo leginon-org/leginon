@@ -217,14 +217,9 @@ class Node(leginonobject.LeginonObject):
 			# try a partial ID lookup
 			nodeiddata = self.researchByLocation(self.nodelocations['manager'], dataid[:1])
 
-		print 'NODEIDDATA', nodeiddata.content
-
 		if nodeiddata is None:
-			self.printerror('Node: researchByDataID, no such data ID %s' % (dataid,))
-			raise IOError
-		
-				
-			raise IOError
+			raise PublishError('No such Data ID: %s' % (dataid,))
+
 		for nodeid in nodeiddata.content:
 			nodelocation = self.researchByLocation(self.nodelocations['manager'],
 				nodeid)
@@ -242,8 +237,8 @@ class Node(leginonobject.LeginonObject):
 		nodeiddata = self.managerclient.pull(dataid)
 
 		if nodeiddata is None:
-			self.printerror('Node: researchByDataID, no such data ID %s' % (dataid,))
-			raise IOError
+			raise ResearchError('No such Data ID: %s' % (dataid,))
+
 		# should interate over nodes, be crafty, etc.
 		datalocationdata = self.managerclient.pull(nodeiddata.content[-1])
 		newdata = self.researchByLocation(datalocationdata.content, dataid)
@@ -361,3 +356,9 @@ class Node(leginonobject.LeginonObject):
 
 		return containerspec
 
+
+class ResearchError(Exception):
+	pass
+
+class PublishError(Exception):
+	pass
