@@ -6,7 +6,7 @@ class Client(leginonobject.LeginonObject):
 	def __init__(self):
 		leginonobject.LeginonObject.__init__(self)
 
-	def get(self, dataid):
+	def pull(self, dataid):
 		raise NotImplementedError()
 
 
