@@ -38,6 +38,7 @@ class Focuser(acquisition.Acquisition):
 		acquisition.Acquisition.__init__(self, id, session, managerlocation, target_types=('focus',), **kwargs)
 		self.btcalclient = calibrationclient.BeamTiltCalibrationClient(self)
 		self.euclient = calibrationclient.EucentricFocusClient(self)
+		self.defineUserInterface()
 
 	def eucentricFocusToScope(self):
 		scope = self.emclient.getScope()
