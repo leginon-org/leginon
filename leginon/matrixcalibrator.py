@@ -10,6 +10,19 @@ False=0
 True=1
 
 class MatrixCalibrator(node.Node):
+	'''
+	Calibrates a microscope parameter with image pixel coordinates.
+	Configure in the 'Set Parameters' section:
+	  'Parameter':  microscope parameter
+	  'N Average':  how many measurements to average, each 
+	     measurement is seperated by 'Interval'
+	  'Base':  where to start (this is a little weird now)
+	  'Delta':  amount to shift the parameter in measurement
+	  'Camera State':  camera configuration
+	  Then 'Set Parameters'
+	Then 'Calibrate'
+	(Valid Shift is currently being ignored)
+	'''
 	def __init__(self, id, nodelocations, **kwargs):
 		self.cam = camerafuncs.CameraFuncs(self)
 		ffteng = fftengine.fftNumeric()
