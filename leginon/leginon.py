@@ -660,16 +660,16 @@ class GridAtlasWidget(CustomWidget):
 
 		widget = self.addWidget('Settings', gridpreview,
 														('Preferences', 'Preset Name'), True)
-		self.arrangeEntry(widget, 9, Tkinter.RIGHT, False)
+		self.arrangeEntry(widget, 15, Tkinter.LEFT, False)
 		widget = self.addWidget('Settings', stateimagemosaic,
 																			('Scale', 'Auto Scale'), True)
 		self.arrangeEntry(widget, 4, Tkinter.RIGHT, False)
 		widget = self.addWidget('Settings', stateimagemosaic,
 																			('Calibration Method',), True)
 		self.arrangeCombobox(widget, 'Positioning Method', False)
-		widget = self.addWidget('Settings', gridpreview,
-																('Preferences', 'Camera Configuration'), True)
-		self.arrangeTree(widget, None, False)
+#		widget = self.addWidget('Settings', gridpreview,
+#																('Preferences', 'Camera Configuration'), True)
+#		self.arrangeTree(widget, None, False)
 		widget = self.addWidget('Settings', gridpreview,
 																('Preferences', 'Spiral'), True)
 		self.arrangeTree(widget, None, False)
