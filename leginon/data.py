@@ -757,6 +757,22 @@ class InstrumentData(Data):
 		)
 	typemap = classmethod(typemap)
 
+class MagnificationsData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('instrument', InstrumentData),
+			('magnifications', list),
+		)
+	typemap = classmethod(typemap)
+
+class MainScreenScaleData(Data):
+	def typemap(cls):
+		return Data.typemap() + (
+			('instrument', InstrumentData),
+			('scale', float),
+		)
+	typemap = classmethod(typemap)
+
 class SessionData(Data):
 	def typemap(cls):
 		return Data.typemap() + (
@@ -1866,7 +1882,7 @@ class GonModelerSettingsData(CalibratorSettingsData):
 			('measure interval', float),
 			('measure tolerance', float),
 			('model axis', str),
-			('model magnification', float),
+			('model magnification', int),
 			('model terms', int),
 			('model mag only', bool),
 			('model tolerance', float),

@@ -19,7 +19,7 @@ class EM(node.Node):
 	panelclass = gui.wx.Instrument.Panel
 	def __init__(self, name, session, managerlocation, tcpport=None, **kwargs):
 
-		self.instruments = []
+		self.instruments = {}
 
 		self.pauses = {
 			'magnification':  1.5,
@@ -43,8 +43,22 @@ class EM(node.Node):
 		self.handlerthread.start()
 		#self.handler()
 
-	def refresh(self):
-		pass
+	def refresh(self, name, attributes):
+		try:
+			instrument = self.instruments[name]
+		except KeyError:
+			return
+		values = {}
+		instrument.lock(self.name)
+		try:
+			for attribute in attributes:
+				try:
+					values[attribute] = instrument._execute(self.name, attribute, 'r')
+				except AttributeError:
+					self.logger.warning('Failed to refresh attribute \'%s\'' % attribute)
+		finally:
+			instrument.unlock(self.name)
+		self.panel.setParameters(name, values)
 
 	def exit(self):
 		node.Node.exit(self)
@@ -53,6 +67,7 @@ class EM(node.Node):
 				i.exit()
 			except:
 				pass
+		self.instruments = {}
 		self.exitevent.set()
 
 	def handler(self):
@@ -90,12 +105,16 @@ class EM(node.Node):
 
 			try:
 				instance = ObjectClass()
-				self.instruments.append(instance)
+				self.instruments[name] = instance
 				self.objectservice._addObject(name, instance)
 				self.logger.info('Added interface for %s' % name)
 			except Exception, e:
 				self.logger.debug('Initialization of %s failed: %s' % (name, e))
 				continue
+
+			if self.hasMagnifications(name):
+				self.initializeMagnifications(name)
+
 			wxaddmethod(name)
 		if not self.instruments:
 			self.logger.warning('No interfaces could be initiailized')
@@ -104,4 +123,52 @@ class EM(node.Node):
 
 		# exiting this thread seems to disconnect the COM servers
 		self.exitevent.wait()
+
+	def hasMagnifications(self, name):
+		try:
+			instance = self.instruments[name]
+		except KeyError:
+			raise ValueError('no instrument %s' % name)
+		if not hasattr(instance, 'getMagnificationsInitialized'):
+			return False
+		if not hasattr(instance, 'setMagnifications'):
+			return False
+		return True
+
+	def initializeMagnifications(self, name):
+		try:
+			instance = self.instruments[name]
+		except KeyError:
+			raise ValueError('no instrument %s' % name)
+		if instance.getMagnificationsInitialized():
+			return
+		instrumentdata = data.InstrumentData()
+		instrumentdata['name'] = name
+		instrumentdata['hostname'] = instance.getHostname()
+		queryinstance = data.MagnificationsData()
+		queryinstance['instrument'] = instrumentdata
+		try:
+			result = self.research(queryinstance, results=1)[0]
+		except IndexError:
+			self.logger.warning('No magnifications saved for %s' % name)
+			return
+		instance.setMagnifications(result['magnifications'])
+
+	def getMagnifications(self, name):
+		try:
+			instance = self.instruments[name]
+		except KeyError:
+			raise ValueError('no instrument %s' % name)
+		self.logger.info('Getting magnifications from the instrument...')
+		instance.findMagnifications()
+		self.logger.info('Saving...')
+		instrumentdata = data.InstrumentData()
+		instrumentdata['name'] = name
+		instrumentdata['hostname'] = instance.getHostname()
+		magnificationsdata = data.MagnificationsData()
+		magnificationsdata['instrument'] = instrumentdata
+		magnificationsdata['magnifications'] = instance.getMagnifications()
+		self.publish(magnificationsdata, database=True, dbforce=True)
+		self.logger.info('Magnifications saved.')
+		self.panel.onGetMagnificationsDone()
 

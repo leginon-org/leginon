@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/remotecall.py,v $
-# $Revision: 1.13 $
+# $Revision: 1.14 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-25 01:34:25 $
+# $Date: 2005-03-02 01:02:18 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -141,7 +141,8 @@ class Locker(Object):
 	def _execute(self, origin, name, type, args=(), kwargs={}):
 		# handle lock and unlock directly
 		self._lock.acquire()
-		if self.locknode != origin:
+		haslock = self.locknode == origin
+		if not haslock:
 			if self.locknode is not None:
 				self._lock.wait()
 			self.locknode = origin
@@ -149,23 +150,23 @@ class Locker(Object):
 			result = None
 		else:
 			result = Object._execute(self, origin, name, type, args, kwargs)
-		if name != 'lock':
+		if not haslock and name != 'lock':
 			self.locknode = None
 			self._lock.notify()
 		self._lock.release()
 		return result
 
-	def lock(self):
+	def lock(self, name):
 		self._lock.acquire()
-		if self.locknode != self.node.name:
+		if self.locknode != name:
 			if self.locknode is not None:
 				self._lock.wait()
-			self.locknode = self.node.name
+			self.locknode = name
 		self._lock.release()
 
-	def unlock(self):
+	def unlock(self, name):
 		self._lock.acquire()
-		if self.locknode != self.node.name:
+		if self.locknode != name:
 			self._lock.release()
 			raise UnlockError
 		else:

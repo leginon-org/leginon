@@ -5,9 +5,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Instrument.py,v $
-# $Revision: 1.36 $
+# $Revision: 1.37 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-01 21:22:20 $
+# $Date: 2005-03-02 01:02:18 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -15,6 +15,7 @@
 import wx
 from gui.wx.Camera import CameraPanel, EVT_CONFIGURATION_CHANGED
 from gui.wx.Entry import Entry, IntEntry, FloatEntry, EVT_ENTRY
+import gui.wx.Events
 import gui.wx.Node
 import gui.wx.ToolBar
 import threading
@@ -52,17 +53,23 @@ def setControl(control, value):
 			raise ValueError(vestr % (value, controlname))
 
 	elif isinstance(control, wx.Choice):
-
-		try:
-			value = str(value)
-		except:
-			typename = str.__name__
-			raise TypeError(testr % (controlname, typename, valuetypename))
-
-		if control.FindString(value) == wx.NOT_FOUND:
-			raise ValueError(vestr % (value, controlname))
+		if isinstance(value, list):
+			values = [str(v) for v in value]
+			control.Freeze()
+			control.Clear()
+			control.AppendItems(values)
+			control.Thaw()
 		else:
-			control.SetStringSelection(value)
+			try:
+				value = str(value)
+			except:
+				typename = str.__name__
+				raise TypeError(testr % (controlname, typename, valuetypename))
+
+			if control.FindString(value) == wx.NOT_FOUND:
+				raise ValueError(vestr % (value, controlname))
+			else:
+				control.SetStringSelection(value)
 
 	elif isinstance(control, CameraPanel):
 		control._setConfiguration(value)
@@ -116,9 +123,10 @@ class InitParametersEvent(wx.PyCommandEvent):
 		self.session = session
 
 class SetParametersEvent(wx.PyCommandEvent):
-	def __init__(self, source, parameters):
+	def __init__(self, source, name, parameters):
 		wx.PyCommandEvent.__init__(self, SetParametersEventType, source.GetId())
 		self.SetEventObject(source)
+		self.name = name
 		self.parameters = parameters
 
 class LensesSizer(wx.StaticBoxSizer):
@@ -508,18 +516,18 @@ class CamInfoSizer(wx.StaticBoxSizer):
 		self.sz.AddGrowableCol(1)
 
 		self.parametermap = {
-			'camera name': 'Name',
-			'chip name': 'Chip',
-			'serial number': 'Serial number',
-			'camera size': 'Size',
-			'maximum pixel value': 'Maximum value',
-			'live mode available': 'Live mode',
-			'simulation image path': 'Simulation image path',
-			'temperature': 'Temperature',
-			'hardware gain index': 'Hardware gain index',
-			'hardware speed index': 'Hardware speed index',
-			'retractable': 'Retractable',
-			'camera axis': 'Axis',
+			'CameraName': 'Name',
+			'ChipName': 'Chip',
+			'SerialNumber': 'Serial number',
+			'CameraSize': 'Size',
+			'MaximumPixelValue': 'Maximum value',
+			'LiveModeAvailable': 'Live mode',
+			'SimulationImagePath': 'Simulation image path',
+			'Temperature': 'Temperature',
+			'HardwareGainIndex': 'Hardware gain index',
+			'HardwareSpeedIndex': 'Hardware speed index',
+			'Retractable': 'Retractable',
+			'CameraAxis': 'Axis',
 		}
 
 		for k, v in self.parametermap.items():
@@ -583,27 +591,47 @@ class CamConfigSizer(wx.StaticBoxSizer):
 			self.sz.AddGrowableRow(i)
 
 		self.parametermap = {
-			'exposure type': 'Exposure type',
-			'inserted': 'Inserted',
-			'gain index': 'Gain index',
-			'speed index': 'Speed index',
-			'shutter open delay': 'Shutter open delay',
-			'shutter close delay': 'Shutter close delay',
-			'preamp delay': 'Preamp delay',
-			'parallel mode': 'Parallel mode',
+			'ExposureType': 'Exposure type',
+			'Inserted': 'Inserted',
+			'GainIndex': 'Gain index',
+			'SpeedIndex': 'Speed index',
+			'ShutterOpenDelay': 'Shutter open delay',
+			'ShutterCloseDelay': 'Shutter close delay',
+			'PreampDelay': 'Preamp delay',
+			'ParallelMode': 'Parallel mode',
 		}
 
 		for k, v in self.parametermap.items():
 			self.parametermap[k] = self.parameters[v]
 
-		self.parametermap['image transform'] = {
+		self.parametermap['ImageTransform'] = {
 			'mirror': self.parameters['Mirror'],
 			'rotation': self.parameters['Rotate'],
 		}
 
 		self.sz.AddGrowableCol(1)
 
-class TEMPanel(wx.Panel):
+class ParameterMixin(object):
+	def setParameters(self, parameters, parametermap=None):
+		if parametermap is None:
+			parametermap = self.parametermap
+		keys = ['Magnifications']
+		for key in keys:
+			try:
+				setControl(parametermap[key], parameters[key])
+			except KeyError:
+				pass
+		for key, value in parameters.items():
+			try:
+				if isinstance(parametermap[key], dict):
+					self.setParameters(value, parametermap[key])
+				else:
+					setControl(parametermap[key], value)
+					parametermap[key].Enable(True)
+			except KeyError:
+				pass
+
+class TEMPanel(wx.Panel, ParameterMixin):
 	def __init__(self, *args, **kwargs):
 		wx.Panel.__init__(self, *args, **kwargs)
 
@@ -638,7 +666,80 @@ class TEMPanel(wx.Panel):
 
 		self.SetSizer(self.sz)
 
-class CCDCameraPanel(wx.Panel):
+		self.parametermap = {
+			'HighTension': self.szpmain.parameters['High tension'],
+			'Magnification': self.szpmain.parameters['Magnification'],
+			'Magnifications': self.szpmain.parameters['Magnification'],
+			'Intensity': self.szpmain.parameters['Intensity'],
+			'SpotSize': self.szpmain.parameters['Spot size'],
+			'StageStatus': self.szstage.parameters['Status'],
+			'CorrectedStagePosition': self.szstage.parameters['Correction'],
+			'StagePosition': {
+				'x': self.szstage.parameters['x'],
+				'y': self.szstage.parameters['y'],
+				'z': self.szstage.parameters['z'],
+				'a': self.szstage.parameters['a'],
+				'b': self.szstage.parameters['b'],
+			},
+			'ImageShift': {
+				'x': self.szlenses.xy['Image']['Shift']['x'],
+				'y': self.szlenses.xy['Image']['Shift']['y'],
+			},
+			'RawImageShift': {
+				'x': self.szlenses.xy['Image']['Shift (raw)']['x'],
+				'y': self.szlenses.xy['Image']['Shift (raw)']['y'],
+			},
+			'BeamShift': {
+				'x': self.szlenses.xy['Beam']['Shift']['x'],
+				'y': self.szlenses.xy['Beam']['Shift']['y'],
+			},
+			'BeamTilt': {
+				'x': self.szlenses.xy['Beam']['Tilt']['x'],
+				'y': self.szlenses.xy['Beam']['Tilt']['y'],
+			},
+			'Stigmator': {
+				'objective': {
+					'x': self.szlenses.xy['Stigmator']['Objective']['x'],
+					'y': self.szlenses.xy['Stigmator']['Objective']['y'],
+				},
+				'diffraction': {
+					'x': self.szlenses.xy['Stigmator']['Diffraction']['x'],
+					'y': self.szlenses.xy['Stigmator']['Diffraction']['y'],
+				},
+				'condenser': {
+					'x': self.szlenses.xy['Stigmator']['Condenser']['x'],
+					'y': self.szlenses.xy['Stigmator']['Condenser']['y'],
+				},
+			},
+			'FilmStock': self.szfilm.parameters['Stock'],
+			'FilmExposureNumber': self.szfilm.parameters['Exposure number'],
+			'FilmExposureType': self.szfilm.parameters['Exposure type'],
+			'FilmAutomaticExposureTime':
+				self.szfilm.parameters['Automatic exposure time'],
+			'FilmManualExposureTime':
+				self.szfilm.parameters['Manual exposure time'],
+			'FilmUserCode': self.szfilm.parameters['User code'],
+			'FilmDateType': self.szfilm.parameters['Date Type'],
+			'FilmText': self.szfilm.parameters['Text'],
+			'Shutter': self.szfilm.parameters['Shutter'],
+			'ExternalShutter': self.szfilm.parameters['External shutter'],
+			'Focus': self.szfocus.parameters['Focus'],
+			'Defocus': self.szfocus.parameters['Defocus'],
+			'ResetDefocus': self.szfocus.parameters['Reset Defocus'],
+			'ScreenCurrent': self.szscreen.parameters['Current'],
+			'MainScreenPosition': self.szscreen.parameters['Main'],
+			'SmallScreenPosition': self.szscreen.parameters['Small'],
+			'VacuumStatus': self.szvacuum.parameters['Status'],
+			'ColumnPressure': self.szvacuum.parameters['Column pressure'],
+			'ColumnValves': self.szvacuum.parameters['Column valves'],
+			'TurboPump': self.szvacuum.parameters['Turbo pump'],
+			'HolderStatus': self.szholder.parameters['Status'],
+			'HolderType': self.szholder.parameters['Type'],
+			'LowDose': self.szlowdose.parameters['Status'],
+			'LowDoseMode': self.szlowdose.parameters['Mode'],
+		}
+
+class CCDCameraPanel(wx.Panel, ParameterMixin):
 	def __init__(self, *args, **kwargs):
 		wx.Panel.__init__(self, *args, **kwargs)
 
@@ -660,13 +761,17 @@ class Panel(gui.wx.Node.Panel):
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
 
-		#self.toolbar.AddTool(gui.wx.ToolBar.ID_REFRESH,
-		#											'refresh',
-		#											shortHelpString='Refresh')
-		#self.toolbar.Realize()
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_REFRESH,
+													'refresh',
+													shortHelpString='Refresh')
+		self.toolbar.AddSeparator()
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_CALCULATE,
+													'calculate',
+													shortHelpString='Get Magnifications')
+		self.toolbar.Realize()
 
-		self.tems = []
-		self.ccdcameras = []
+		self.tems = {}
+		self.ccdcameras = {}
 
 		self.choice = wx.Choice(self, -1)
 		self.choice.Enable(False)
@@ -695,37 +800,94 @@ class Panel(gui.wx.Node.Panel):
 		self.Bind(gui.wx.Events.EVT_ADD_CCDCAMERA, self.onAddCCDCamera)
 		self.Bind(gui.wx.Events.EVT_REMOVE_CCDCAMERA, self.onRemoveCCDCamera)
 		self.Bind(wx.EVT_CHOICE, self.onChoice, self.choice)
+		self.Bind(EVT_SET_PARAMETERS, self.onSetParameters)
+		self.Bind(gui.wx.Events.EVT_GET_MAGNIFICATIONS_DONE,
+							self.onGetMagnificationsDone)
+
+	def setParameters(self, name, parameters):
+		evt = SetParametersEvent(self, name, parameters)
+		self.GetEventHandler().AddPendingEvent(evt)
+
+	def onSetParameters(self, evt):
+		print evt.name, evt.parameters
+		if evt.name in self.tems:
+			self.tems[evt.name].update(evt.parameters)
+			if self.choice.GetStringSelection() == evt.name:
+				self.tempanel.setParameters(evt.parameters)
+		elif evt.name in self.ccdcameras:
+			self.ccdcameras[evt.name].update(evt.parameters)
+			if self.choice.GetStringSelection() == evt.name:
+				self.ccdcamerapanel.setParameters(evt.parameters)
+
+	def onRefreshTool(self, evt):
+		name = self.choice.GetStringSelection()
+		if name in self.tems:
+			attributes = self.tempanel.parametermap.keys()
+		elif name in self.ccdcameras:
+			attributes = self.ccdcamerapanel.parametermap.keys()
+		else:
+			return
+		if name:
+			args = (name, attributes)
+			threading.Thread(target=self.node.refresh, args=args).start()
 
 	def onNodeInitialized(self):
-		#self.toolbar.Bind(wx.EVT_TOOL, self.onRefreshTool,
-		#									id=gui.wx.ToolBar.ID_REFRESH)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onRefreshTool,
+											id=gui.wx.ToolBar.ID_REFRESH)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onCalculateTool,
+											id=gui.wx.ToolBar.ID_CALCULATE)
 		self.Enable(True)
+		self.onChoice()
+
+	def onCalculateTool(self, evt):
+		string = self.choice.GetStringSelection()
+		if not string:
+			return
+		args = (string,)
+		self.choice.Enable(False)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_CALCULATE, False)
+		threading.Thread(target=self.node.getMagnifications, args=args).start()
+
+	def onGetMagnificationsDone(self):
+		self.choice.Enable(True)
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_CALCULATE, True)
+
+	def getMagnificationsDone(self):
+		evt = gui.wx.Events.GetMagnificationsDoneEvent()
+		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onChoice(self, evt=None):
 		if evt is None:
 			string = self.choice.GetStringSelection()
 		else:
 			string = evt.GetString()
+		try:
+			if self.node is not None and self.node.hasMagnifications(string):
+				self.toolbar.EnableTool(gui.wx.ToolBar.ID_CALCULATE, True)
+			else:
+				self.toolbar.EnableTool(gui.wx.ToolBar.ID_CALCULATE, False)
+		except ValueError:
+			pass
 
 	def onAddTEM(self, evt):
-		self.tems.append(evt.name)
+		self.tems[evt.name] = {}
 		self.onAdd(evt)
 
 	def onAddCCDCamera(self, evt):
-		self.ccdcameras.append(evt.name)
+		self.ccdcameras[evt.name] = {}
 		self.onAdd(evt)
 
 	def onRemoveTEM(self, evt):
 		try:
-			self.tems.remove(evt.name)
-		except ValueError:
+			del self.tems[evt.name]
+		except KeyError:
 			pass
 		self.onRemove(evt)
 
 	def onRemoveCCDCamera(self, evt):
 		try:
-			self.ccdcameras.remove(evt.name)
-		except ValueError:
+			del self.ccdcameras[evt.name]
+		except KeyError:
 			pass
 		self.onRemove(evt)
 
