@@ -48,8 +48,9 @@ class CalibrationClient(object):
 		print 'state settling time %s' % (settle,)
 		time.sleep(settle)
 
-		myconfig = self.cam.cameraConfig()
-		imagedata = self.cam.acquireCameraImageData(camconfig=myconfig)
+		#myconfig = self.cam.cameraConfig()
+		#imagedata = self.cam.acquireCameraImageData(camconfig=myconfig)
+		imagedata = self.cam.acquireCameraImageData()
 		actual_state = imagedata['scope']
 
 		if publish_image:
@@ -179,6 +180,29 @@ class CalibrationClient(object):
 #		self.ui_image2 = self.registerUIData('Image 2', 'binary', permissions='r')
 #		imagespec = self.registerUIContainer('Images', (self.image1, self.image2))
 #		return imagespec
+
+class PixelSizeCalibrationClient(CalibrationClient):
+	'''
+	basic CalibrationClient for accessing a type of calibration involving
+	a matrix at a certain magnification
+	'''
+	def __init__(self, node):
+		CalibrationClient.__init__(self, node)
+
+	def retrievePixelSize(self, mag):
+		'''
+		finds the requested pixel size using magnification
+		'''
+		qinst = data.PixelSizeCalibrationData(magnification=mag)
+		caldatalist = self.node.research(datainstance=qinst, results=1)
+
+		if len(caldatalist) > 0:
+			caldata = caldatalist[0]
+		else:
+			print 'NO PIXEL SIZE CALIBRATION'
+			return None
+		pixelsize = caldata['pixelsize']
+		return pixelsize
 
 class MatrixCalibrationClient(CalibrationClient):
 	'''
