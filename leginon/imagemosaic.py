@@ -337,6 +337,11 @@ class StateImageMosaic(ImageMosaic):
 		return matrix
 
 	def processDataByCalibration(self, idata):
+		#tileimage = idata.content['image']
+		neighbors = idata.content['neighbor tiles']
+		if len(neighbors) == 0:
+			self.imagemosaic = {}
+
 		if self.calibration is None:
 			self.printerror(
 				'unable to process data %s by calibration, no calibration available'
