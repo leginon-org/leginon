@@ -264,7 +264,8 @@ class SessionData(Data):
 		t += [('name', str),
 					('user', UserData),
 					('instrument', InstrumentData),
-					('image path', str)]
+					('image path', str),
+					('comment', str)]
 		return t
 	typemap = classmethod(typemap)
 
