@@ -296,7 +296,12 @@ class Node(leginonobject.LeginonObject):
 	def addSession(self, datainstance):
 		## setting an item of datainstance will reset the dbid
 		if datainstance['session'] is not self.session:
-			datainstance['session'] = self.session
+			try:
+				datainstance['session'] = self.session
+			except RuntimeError:
+				print 'datainstance["session"] = ', id(datainstance['session']), datainstance['session']
+				print 'self.session = ', id(self.session), self.session
+				raise
 		for key in datainstance:
 			if isinstance(datainstance[key], data.InSessionData):
 				self.addSession(datainstance[key])
