@@ -440,10 +440,10 @@ class ColumnSpec(dict):
 				for indexName in index:
 					indexes.append(indexName)
 				index_str = string.join(indexes, ',')
-				keys.append(key_str+' '+name +'(' + index_str + ')')
+				keys.append(key_str+' `'+name +'` (`' + index_str + '`)')
 
 			if primary:
-				keys.append('PRIMARY KEY '+'('+ name +')' )
+				keys.append('PRIMARY KEY '+'(`'+ name +'`)' )
 
 	       		return string.join(keys)
 
