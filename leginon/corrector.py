@@ -62,11 +62,11 @@ class Corrector(node.Node):
 		node.Node.defineUserInterface(self)
 		darkmethod = uidata.Method('Acquire Dark', self.uiAcquireDark)
 		brightmethod = uidata.Method('Acquire Bright', self.uiAcquireBright)
-		correctedmethod = uidata.Method('Acquire Corrected',
-																			self.uiAcquireCorrected)
+		rawmethod = uidata.Method('Acquire Raw', self.uiAcquireRaw)
+		correctedmethod = uidata.Method('Acquire Corrected', self.uiAcquireCorrected)
 
 		acquirecontainer = uidata.Container('Image Acquisition')
-		acquirecontainer.addObjects((darkmethod, brightmethod, correctedmethod))
+		acquirecontainer.addObjects((darkmethod, brightmethod, rawmethod, correctedmethod))
 		self.ui_image = uidata.Image('Image', None, 'rw')
 
 		self.uiframestoaverage = uidata.Integer('Frames to Average', 3, 'rw')
@@ -89,6 +89,8 @@ class Corrector(node.Node):
 		newcamstate = data.CorrectorCamstateData()
 		newcamstate.friendly_update(camconfig)
 		newcamstate['id'] = None
+		current = self.cam.currentCameraEMData()
+		newcamstate['em host'] = current['em host']
 		plandata = data.CorrectorPlanData()
 		plandata['camstate'] = newcamstate
 		plandata['clip_limits'] = self.cliplimits.get()
@@ -118,6 +120,14 @@ class Corrector(node.Node):
 		imagedata = self.acquireReference(dark=False)
 		print 'Bright Stats: %s' % (self.stats(imagedata),)
 		self.ui_image.set(imagedata)
+		return ''
+
+	def uiAcquireRaw(self):
+		camconfig = self.cam.cameraConfig()
+		imagedata = self.cam.acquireCameraImageData(camconfig=camconfig, correction=0)
+		imagearray = imagedata['image']
+		print 'Corrected Stats: %s' % (self.stats(imagearray),)
+		self.ui_image.set(imagearray)
 		return ''
 
 	def uiAcquireCorrected(self):
