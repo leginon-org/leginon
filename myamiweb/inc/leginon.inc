@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.23 $
- *	@version $Id: leginon.inc,v 1.23 2004-09-10 23:02:36 dfellman Exp $
+ *	@version $Revision: 1.24 $
+ *	@version $Id: leginon.inc,v 1.24 2004-09-16 17:28:06 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -1143,6 +1143,9 @@ class leginondata {
 						$this->formatDose($row[$i]);
 
 					$f .= '|'.ereg_replace("'","",$row[$i]);
+					if (eregi("\n", $f)) {
+						$f = ereg_replace("\n|\r", " ", $f);
+					}
 					$nodes= explode("|", $f);
 					$s="";
 					foreach($nodes as $n) {
@@ -1206,7 +1209,6 @@ class leginondata {
 			$nodeparent[]=0;
 			$node[]=$v1;
 		}
-
 		foreach($nodeId as $i) {
 			foreach($nodeId as $l) {
 				if (ereg ("^".$node[$i].".+", $node[$l])) {
