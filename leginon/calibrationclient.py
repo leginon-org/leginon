@@ -668,6 +668,11 @@ class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 		changex = change[0]
 		changey = change[1]
 
+		### take into account effect of alpha tilt on Y stage pos
+		if par == 'stage position' and 'a' in scope[par] and scope[par]['a'] is not None:
+			alpha = scope[par]['a']
+			changey = changey / Numeric.cos(alpha)
+
 		new = data.ScopeEMData(initializer=scope)
 		## make a copy of this since it will be modified
 		new[par] = dict(scope[par])
@@ -903,6 +908,11 @@ class ModeledStageCalibrationClient(CalibrationClient):
 
 
 		delta = self.pixtix(xmod, ymod, xmagcal, ymagcal, curstage['x'], curstage['y'], pixcol, pixrow)
+
+		### take into account effect of alpha tilt on Y stage pos
+		if 'a' in curstage and curstage['a'] is not None:
+			alpha = curstage['a']
+			delta['y'] = delta['y'] / Numeric.cos(alpha)
 
 		newscope = data.ScopeEMData(initializer=scope)
 		newscope['stage position'] = dict(scope['stage position'])
