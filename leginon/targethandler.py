@@ -49,13 +49,13 @@ class TargetHandler(object):
 
 	########## TARGET CREATION #############
 
-	def newTargetList(self, label='', mosaic=False):
+	def newTargetList(self, label='', mosaic=False, image=None):
 		'''
 		label will be included in filenames
 		mosaic is boolean to indicate list of targets will
 		generate a mosaic
 		'''
-		listdata = data.ImageTargetListData(session=self.session, label=label, mosaic=mosaic)
+		listdata = data.ImageTargetListData(session=self.session, label=label, mosaic=mosaic, image=image)
 		return listdata
 
 	def newTarget(self, drow, dcol, **kwargs):

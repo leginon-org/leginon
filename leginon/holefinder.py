@@ -280,9 +280,8 @@ class HoleFinder(targetfinder.TargetFinder):
 
 	def findTargets(self, imdata, targetlist):
 		## check if targets already found on this image
-		previous = self.researchImageTargets(imdata)
+		previous = self.researchTargets(image=imdata)
 		if previous:
-			self.targetlist = previous
 			return
 
 		## auto or not?
@@ -297,6 +296,7 @@ class HoleFinder(targetfinder.TargetFinder):
 			self.notifyUserSubmit()
 			self.userpause.clear()
 			self.userpause.wait()
+			self.unNotifyUserSubmit()
 
 		### publish targets from goodholesimage
 		self.targetsFromClickImage(self.goodholesimage, 'focus', targetlist)

@@ -48,9 +48,21 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
 			## now read the image, replace FileReference
 			imagedata['image'] = imagedata['image'].read()
 			self.findTargets(imagedata, targetlist)
+		self.makeTargetListEvent(targetlist)
 		self.publish(targetlist, database=True, dbforce=True, pubevent=True)
 		if self.wait_for_done.get():
 			self.waitForTargetListDone()
+
+	def targetsFromClickImage(self, clickimage, typename, targetlist):
+		for imagetarget in clickimage.getTargetType(typename):
+			column, row = imagetarget
+			imagedata = clickimage.imagedata
+			imagearray = imagedata['image']
+			drow = row - imagearray.shape[0]/2
+			dcol = column - imagearray.shape[1]/2
+
+			targetdata = self.newTargetForImage(imagedata, drow, dcol, type=typename, list=targetlist)
+			self.publish(targetdata, database=True)
 
 	def processImageData(self, imagedata):
 		'''
@@ -58,8 +70,9 @@ class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
 		'''
 		if self.ignore_images.get():
 			return
-		targetlist = self.newTargetList()
+		targetlist = self.newTargetList(image=imagedata)
 		self.findTargets(imagedata, targetlist)
+		self.makeTargetListEvent(targetlist)
 		self.publish(targetlist, database=True, dbforce=True, pubevent=True)
 		if self.wait_for_done.get():
 			self.waitForTargetListDone()
@@ -157,23 +170,13 @@ class ClickTargetFinder(TargetFinder):
 		self.userpause.clear()
 		self.logger.info('Waiting for user to select targets...')
 		self.userpause.wait()
+		self.unNotifyUserSubmit()
 		self.logger.info('Done waiting')
 		self.targetsFromClickImage(self.clickimage, 'focus', targetlist)
 		self.targetsFromClickImage(self.clickimage, 'acquisition', targetlist)
 
 	def submitTargets(self):
 		self.userpause.set()
-
-	def targetsFromClickImage(self, clickimage, typename, targetlist):
-		for imagetarget in clickimage.getTargetType(typename):
-			column, row = imagetarget
-			imagedata = clickimage.imagedata
-			imagearray = imagedata['image']
-			drow = row - imagearray.shape[0]/2
-			dcol = column - imagearray.shape[1]/2
-
-			targetdata = self.newTargetForImage(imagedata, drow, dcol, type=typename, list=targetlist)
-			self.publish(targetdata, database=True)
 
 	def defineUserInterface(self):
 		TargetFinder.defineUserInterface(self)
