@@ -9,9 +9,8 @@ else:
 	import win32com.client
 	import tietzcom
 	import mmapfile
-	import base64
 	import array
-	#import Numeric
+	import Numeric
 	
 	class tietz(camera.camera):
 		hCam = None
@@ -28,6 +27,7 @@ else:
 	
 			self.hCam = self.theCamera.Initialize(self.camType, 0)
 			self.arraytypecode = 'H'
+			self.Numerictypecode = Numeric.UInt16
 
 		def __del__(self):
 			self.theCamera.Uninitialize(self.hCam)
@@ -44,11 +44,13 @@ else:
 			else:
 				raise ValueError
 	
-			map = mmapfile.mmapfile(mmname, size)
+			#map = mmapfile.mmapfile(mmname, size)
+			map = mmapfile.mmapfile('', mmname, size)
 			result = map.read(size)
 			map.close()
-			return base64.encodestring(result)
-			#return Numeric.array(array.array(self.arraytypecode, result), self.Numerictypecode)
+			#return base64.encodestring(result)
+			#return Numeric.reshape((selfNumeric.array(result, self.Numerictypecode)
+			return result
 	
 		def getImage(self, offset, dimension, binning, exposure_time):	
 			# 0 uses internal flash signal
@@ -60,5 +62,11 @@ else:
 														dimension['x'], dimension['y'], \
 														binning['x'], binning['y'])
 			self.theCamera.AcquireImage(self.hCam, exposure_time, shutter_mode, 0)
-			return self.mmapImage(bytes_per_pixel*dimension['x']*dimension['y'])
-		
+			a = array.array(self.arraytypecode, self.mmapImage(bytes_per_pixel*dimension['x']*dimension['y']))
+			na = Numeric.array(a, self.Numerictypecode)
+			return Numeric.reshape(na, (dimension['y'], dimension['x']))
+
+if __name__ == '__main__':
+	foo = tietz()
+	result = foo.getImage({'x': 0, 'y': 0}, {'x': 128, 'y': 128}, {'x': 1, 'y': 1}, 500)
+	print result
