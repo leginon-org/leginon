@@ -55,9 +55,9 @@ class MosaicNavigator(navigator.Navigator):
 		print 'delta row: %s, column: %s' % (nearestdelta[0], nearestdelta[1])
 
 		deltarow = row - shape[0] / 2
-		deltarow = column - shape[1] / 2
+		deltacolumn = column - shape[1] / 2
 		deltarow = -deltarow
-		deltacolumn = -deltacol
+		deltacolumn = -deltacolumn
 
 		self.publishRemote(data.EMData('all', mosaicdata[nearesttile]['scope']))
 #		e = self.shiftEventClass(self.ID(),
