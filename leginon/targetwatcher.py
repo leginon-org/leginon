@@ -191,11 +191,13 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 			self.uisourceimageid.set('')
 
+			self.logger.debug('publishing processing target')
 			adjustedtarget = data.AcquisitionImageTargetData(initializer=target,
 																												status='processing')
 			#self.publish(adjustedtarget, database=True, dbforce=True)
 			## Why force???
 			self.publish(adjustedtarget, database=True)
+			self.logger.debug('processing target published')
 
 			# this while loop allows target to repeat
 			process_status = 'repeat'
@@ -266,11 +268,13 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 				# end of target repeat loop
 
+			self.logger.debug('publishing done target')
 			donetarget = data.AcquisitionImageTargetData(initializer=adjustedtarget,
 																										status='done')
 			#self.publish(donetarget, database=True, dbforce=True)
 			## Why force???
 			self.publish(donetarget, database=True)
+			self.logger.debug('done target published')
 
 		#self.uitargetid.set('')
 		#self.uitargetnumber.set('')
