@@ -66,8 +66,11 @@ def receive(hostname, username, password):
 
 def waitForReply(message, hostname, username, password, interval=10.0):
 	while True:
-		replies = map(lambda m: m['In-Reply-To'],
-									receive(hostname, username, password))
+		try:
+			replies = map(lambda m: m['In-Reply-To'],
+										receive(hostname, username, password))
+		except:
+			pass
 		if message['Message-ID'] in replies:
 			return message['Message-ID']
 		time.sleep(interval)
