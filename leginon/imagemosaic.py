@@ -167,7 +167,7 @@ class ImageMosaic(watcher.Watcher):
 		# needs own event?
 		lockblocking = 1
 		self.scale = 1.0
-		self.autoscale = 0
+		self.autoscale = 512
 		watcher.Watcher.__init__(self, id, nodelocations, watchfor,
 																					lockblocking, **kwargs)
 
@@ -478,6 +478,7 @@ class ImageMosaic(watcher.Watcher):
 																					(showspec, publishspec, clearspec))
 		scalespec = self.registerUIData('Scale', 'float', permissions='rw',
 															default=self.scale, callback=self.uiScaleCallback)
+		self.autoscale = 512
 		autoscalespec = self.registerUIData('Auto Scale',
 																				'integer',
 																				permissions='rw',
@@ -489,13 +490,13 @@ class ImageMosaic(watcher.Watcher):
 										(watcherspec, imagespec, getimagespec, scalecontainerspec))
 
 	def uiScaleCallback(self, value=None):
-		if value is not None and value > 0:
+		if value is not None and value > 0.0:
 			self.scale = value
 			self.autoscale = 0
 		return self.scale
 
 	def uiAutoScaleCallback(self, value=None):
-		if value is not None and value > 0:
+		if value is not None and value >= 0:
 			self.autoscale = value
 		return self.autoscale
 

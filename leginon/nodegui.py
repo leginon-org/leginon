@@ -144,6 +144,8 @@ class Data(SpecWidget):
 													styled, bd=2, relief=SOLID)
 		else:
 			SpecWidget.__init__(self, parent, uiclient, spec, styled)
+		self.getbutton = None
+		self.setbutton = None
 		self.initInfo(spec)
 		self.build()
 	
@@ -176,32 +178,47 @@ class Data(SpecWidget):
 		### label
 		if self.styled:
 			lab = Label(headframe, text=self.name, bg=self['bg'])
+			lab.pack(side=LEFT, fill=BOTH)
 		else:
 			lab = Label(headframe, text=self.name)
-		lab.pack(side=LEFT, fill=BOTH)
+			lab.grid(row = 0, column = 0)
+#		lab.pack(side=LEFT, fill=BOTH)
 
 		### optional get/set
 		if self.permissions is not None:
 			if 'r' in self.permissions:
 				if self.styled:
-					Button(headframe, text='Get', command=self.getServer,
-																					bg=self.buttoncolor).pack(side=RIGHT)
+					self.getbutton = Button(headframe, text='Get',
+																	command=self.getServer, bg=self.buttoncolor)
+					self.getbutton.pack(side=RIGHT)
 				else:
-					Button(headframe, text='Get', command=self.getServer).pack(side=RIGHT)
+					self.getbutton = Button(headframe, text='Get', command=self.getServer)
+					self.getbutton.grid(row = 0, column = 1)
 			if 'w' in self.permissions:
 				if self.styled:
-					Button(headframe, text='Set', command=self.setServer,
-																					bg=self.buttoncolor).pack(side=RIGHT)
+					self.setbutton = Button(headframe, text='Set',
+																	command=self.setServer, bg=self.buttoncolor)
+					self.setbutton.pack(side=RIGHT)
 				else:
-					Button(headframe, text='Set', command=self.setServer).pack(side=RIGHT)
+					self.setbutton = Button(headframe, text='Set', command=self.setServer)
+					self.setbutton.grid(row = 0, column = 2)
 
-		headframe.pack(side=TOP)
+		if self.styled:
+			headframe.pack(side=TOP)
+		else:
+			headframe.grid(row = 0, column = 0)
 
 		### the actual data widget
-		w = self.buildWidget(self)
+		if self.styled:
+			w = self.buildWidget(self)
+		else:
+			w = self.buildWidget(headframe)
 		if self.default is not None:
 			self.setWidget(self.default)
-		w.pack(side=TOP, expand=YES, fill=BOTH)
+		if self.styled:
+			w.pack(side=TOP, expand=YES, fill=BOTH)
+		else:
+			w.grid(row = 1, column = 0, columnspan = 3)
 
 	def refresh(self, spec):
 		SpecWidget.refresh(self, spec)

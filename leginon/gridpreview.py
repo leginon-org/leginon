@@ -20,6 +20,9 @@ class GridPreview(node.Node):
 		node.Node.__init__(self, id, nodelocations, **kwargs)
 		self.calclient = calibrationclient.StageCalibrationClient(self)
 
+		# will be in presets or something
+		self.magnification = 56.0
+
 		## default camera config
 		currentconfig = self.cam.config()
 		currentconfig['state']['dimension']['x'] = 1024
@@ -38,11 +41,14 @@ class GridPreview(node.Node):
 
 	def defineUserInterface(self):
 		#nodespec = node.Node.defineUserInterface(self)
+		# will be in presets or something
+		mag = self.registerUIData('Magnification', 'float', callback=self.uiMagnification, default=self.magnification, permissions='rw')
+		self.sim = self.registerUIData('Simulate TEM/camera', 'boolean', permissions='rw', default=0)
 		cam = self.cam.configUIData()
 		defprefs = {'center': {'x':0,'y':0}, 'overlap': 50, 'maxtargets': 4}
 		spiralprefs = self.registerUIData('Spiral', 'struct', callback=self.uiSpiralPrefs, default=defprefs, permissions='rw')
 		self.sim = self.registerUIData('Simulate TEM/camera', 'boolean', permissions='rw', default=0)
-		prefs = self.registerUIContainer('Preferences', (cam, spiralprefs, self.sim))
+		prefs = self.registerUIContainer('Preferences', (mag, cam, spiralprefs, self.sim))
 
 		start = self.registerUIMethod(self.runLoop, 'Run', ())
 		stop = self.registerUIMethod(self.stopLoop, 'Stop', ())
@@ -80,6 +86,12 @@ class GridPreview(node.Node):
 
 	def uiEstimate(self):
 		return ''
+
+	# will be in presets or something
+	def uiMagnification(self, value=None):
+		if value is not None:
+			self.magnification = value
+		return self.magnification
 
 	def getScope(self):
 		return self.researchByDataID('scope').content
@@ -203,6 +215,11 @@ class GridPreview(node.Node):
 	def _loop(self):
 		self.stoprunning.clear()
 		self.running.set()
+
+		# will be in presets or something
+		emdata = data.EMData('scope', {'magnification': self.magnification})
+		self.publishRemote(emdata)
+
 		self.cam.state(self.cam.config()['state'])
 		try:
 			while self.temptodo and not self.stoprunning.isSet():
