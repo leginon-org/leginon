@@ -752,7 +752,11 @@ class AcquisitionImageTargetData(ImageTargetData):
 	def typemap(cls):
 		t = ImageTargetData.typemap()
 		t += [
-		  ('image', AcquisitionImageData)
+		  ('image', AcquisitionImageData),
+		  ## this could be generalized as total dose, from all
+		  ## exposures on this target.  For now, this is just to
+		  ## keep track of when we have done the melt ice thing.
+		  ('pre_exposure', bool),
 		]
 		return t
 	typemap = classmethod(typemap)
