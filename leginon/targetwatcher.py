@@ -26,6 +26,16 @@ class TargetWatcher(watcher.Watcher):
 		#self.targetevents = {}
 		self.targetlistevents = {}
 
+	def defineUserInterface(self):
+		watcher.Watcher.defineUserInterface(self)
+
+		abortmeth = uidata.Method('Abort Target List', self.abortTargetListLoop)
+
+		container = uidata.MediumContainer('Target Watcher')
+		container.addObject(abortmeth)
+
+		self.uiserver.addObject(container)
+
 	def processData(self, newdata):
 		'''
 		accepts either ImageTargetData or ImageTargetListData
