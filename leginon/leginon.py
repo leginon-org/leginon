@@ -462,7 +462,7 @@ class CustomWidget(Tkinter.Frame):
 		self.groups[name] = group
 		group.grid(row = len(self.groups), column = 0, padx=10, pady=10)
 		# whatever
-		if name == 'Image':
+		if name == 'Results':
 			group.grid(row = 0, column = 1, rowspan = len(self.groups))
 
 	def addWidget(self, groupname, info, name, groupset=False):
@@ -493,7 +493,7 @@ class ImageCorrectionWidget(CustomWidget):
 		self.addWidget('Control', corrector, ('Acquire', 'Acquire Bright'))
 		self.addWidget('Control', corrector, ('Acquire', 'Acquire Corrected'))
 
-		widget = self.addWidget('Image', corrector, ('Acquire', 'Image'))
+		widget = self.addWidget('Results', corrector, ('Acquire', 'Image'))
 		widget.iv.canvas.resize(0, 0, 512, 512)
 
 class CalibrationsWidget(CustomWidget):
@@ -521,48 +521,57 @@ class CalibrationsWidget(CustomWidget):
 
 		self.addWidget('Control', matrixcalibrator, ('Calibrate',))
 
-		widget = self.addWidget('Image', matrixcalibrator, ('Images', 'Image 1'))
+		widget = self.addWidget('Results', matrixcalibrator, ('Images', 'Image 1'))
 		widget.iv.canvas.resize(0, 0, 512, 512)
 
-		widget = self.addWidget('Image', matrixcalibrator, ('Images', 'Image 2'))
+		widget = self.addWidget('Results', matrixcalibrator, ('Images', 'Image 2'))
 		widget.iv.canvas.resize(0, 0, 512, 512)
 
 class AutoFocusWidget(CustomWidget):
 	def __init__(self, parent, beamtiltcalibrator):
 		CustomWidget.__init__(self, parent)
 
-#		widget = self.addWidget('Settings', matrixcalibrator,
-#														('Parameters', 'Parameter'), True)
-#		self.arrangeCombobox(widget, 'Type', False)
-#		widget = self.addWidget('Settings', matrixcalibrator,
-#														('Parameters', 'Base'), True)
-#		self.arrangeTree(widget, 'Base Position', False)
-#		widget = self.addWidget('Settings', matrixcalibrator,
-#														('Parameters', 'N Average'), True)
-#		self.arrangeEntry(widget, 2, Tkinter.RIGHT, False)
-#		widget = self.addWidget('Settings', matrixcalibrator,
-#														('Parameters', 'Delta'), True)
-#		self.arrangeEntry(widget, 10, Tkinter.RIGHT, False)
-#		widget = self.addWidget('Settings', matrixcalibrator,
-#														('Parameters', 'Interval'), True)
-#		self.arrangeEntry(widget, 10, Tkinter.RIGHT, False)
-#		widget = self.addWidget('Settings', beamtiltcalibrator,
-#												('Calibrate', 'Tilt Value'), True)
-#		self.arrangeEntry(widget, 7, Tkinter.RIGHT, False)
+		widget = self.addWidget('Settings', beamtiltcalibrator,
+							('Calibrate', 'Calibrate Defocus', 'Defocus Tilt Value'), True)
+		self.arrangeEntry(widget, 7, Tkinter.RIGHT, False)
+		widget = self.addWidget('Settings', beamtiltcalibrator,
+							('Calibrate', 'Calibrate Defocus', 'Defocus 1'), True)
+		self.arrangeEntry(widget, 7, Tkinter.RIGHT, False)
+		widget = self.addWidget('Settings', beamtiltcalibrator,
+							('Calibrate', 'Calibrate Defocus', 'Defocus 2'), True)
+		self.arrangeEntry(widget, 7, Tkinter.RIGHT, False)
+
+		widget = self.addWidget('Settings', beamtiltcalibrator,
+						('Calibrate', 'Calibrate Stigmators', 'Stigmator Tilt Value'), True)
+		self.arrangeEntry(widget, 7, Tkinter.RIGHT, False)
+		widget = self.addWidget('Settings', beamtiltcalibrator,
+						('Calibrate', 'Calibrate Stigmators', 'Stigmator Delta'), True)
+		self.arrangeEntry(widget, 7, Tkinter.RIGHT, False)
+
+		widget = self.addWidget('Settings', beamtiltcalibrator,
+						('Calibrate', 'Measure', 'Measure Tilt Value'), True)
+		self.arrangeEntry(widget, 7, Tkinter.RIGHT, False)
+
 		widget = self.addWidget('Settings', beamtiltcalibrator,
 														('Camera Configuration',), True)
 		self.arrangeTree(widget, None, False)
+
+		self.addWidget('Control', beamtiltcalibrator,
+							('Calibrate', 'Calibrate Defocus', 'Calibrate Defocus'))
+		self.addWidget('Control', beamtiltcalibrator,
+							('Calibrate', 'Calibrate Stigmators', 'Calibrate Stigmators'))
+		self.addWidget('Control', beamtiltcalibrator,
+							('Calibrate', 'Measure', 'Measure'))
+
 		widget = self.addWidget('Results', beamtiltcalibrator,
 														('Calibrate', 'Measure', 'Necessary Correction'),
 																																				True)
 		self.arrangeTree(widget, None, False)
-#
-#		self.addWidget('Control', matrixcalibrator, ('Calibrate',))
-#
-#		widget = self.addWidget('Image', matrixcalibrator, ('Images', 'Image 1'))
+
+#		widget = self.addWidget('Results', matrixcalibrator, ('Images', 'Image 1'))
 #		widget.iv.canvas.resize(0, 0, 512, 512)
 #
-#		widget = self.addWidget('Image', matrixcalibrator, ('Images', 'Image 2'))
+#		widget = self.addWidget('Results', matrixcalibrator, ('Images', 'Image 2'))
 #		widget.iv.canvas.resize(0, 0, 512, 512)
 
 class GridAtlasWidget(CustomWidget):
@@ -583,7 +592,7 @@ class GridAtlasWidget(CustomWidget):
 		self.addWidget('Control', gridpreview, ('Controls', 'Stop'))
 		self.addWidget('Control', gridpreview, ('Controls', 'Reset'))
 
-		widget = self.addWidget('Image', stateimagemosaic, ('Mosaic Image',))
+		widget = self.addWidget('Results', stateimagemosaic, ('Mosaic Image',))
 		widget.iv.canvas.resize(0, 0, 512, 512)
 
 class TargetWidget(CustomWidget):
@@ -600,7 +609,7 @@ class TargetWidget(CustomWidget):
 															('Preferences', 'Acquisition Type'), True)
 		self.arrangeCombobox(widget, None, False)
 
-		widget = self.addWidget('Image', clicktargetfinder, ('Clickable Image',))
+		widget = self.addWidget('Results', clicktargetfinder, ('Clickable Image',))
 		widget.iv.canvas.resize(0, 0, 512, 512)
 
 class WidgetWrapper(object):

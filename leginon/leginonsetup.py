@@ -302,7 +302,8 @@ class RunWidget(Tkinter.Frame):
 	def startManager(self, session=None):
 		# will set to member of main application
 		if session is None:
-			self.manager = manager.Manager(('manager',), time.ctime())
+			self.manager = manager.Manager(('manager',),
+																			time.strftime('%Y-%m-%d-%H-%M'))
 		else:
 			self.manager = manager.Manager(('manager',), session)
 

@@ -155,7 +155,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 		camconfig = self.cam.configUIData()
 
-		self.defocustiltvalue = self.registerUIData('Tilt Value', 'float',
+		self.defocustiltvalue = self.registerUIData('Defocus Tilt Value', 'float',
 																															default=0.01)
 		self.defocus1 = self.registerUIData('Defocus 1', 'float', default=-1e-6)
 		self.defocus2 = self.registerUIData('Defocus 2', 'float', default=-2e-6)
@@ -163,18 +163,19 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 																					'Calibrate Defocus', ())
 		caldefocus = self.registerUIContainer('Calibrate Defocus', (self.defocustiltvalue, self.defocus1, self.defocus2, caldefocusmethod))
 
-		self.stigtiltvalue = self.registerUIData('Tilt Value', 'float',
+		self.stigtiltvalue = self.registerUIData('Stigmator Tilt Value', 'float',
 																														default=0.01)
-		self.stigdelta = self.registerUIData('Stig Delta', 'float', default=0.01)
+		self.stigdelta = self.registerUIData('Stigmator Delta', 'float',
+																												default=0.01)
 		calstigmethod = self.registerUIMethod(self.uiCalibrateStigmators,
 																		'Calibrate Stigmators', ())
 		calstig = self.registerUIContainer('Calibrate Stigmators', (self.stigtiltvalue, self.stigdelta, calstigmethod))
 
-		self.measuretiltvalue = self.registerUIData('Tilt Value', 'float',
+		self.measuretiltvalue = self.registerUIData('Measure Tilt Value', 'float',
 																														default=0.01)
 		self.resultvalue = self.registerUIData('Necessary Correction', 'struct')
 		measuremethod = self.registerUIMethod(self.uiMeasureDefocusStig,
-										'Measure Defocus and Astigmatism', ())
+										'Measure', ())
 		measure = self.registerUIContainer('Measure', (self.measuretiltvalue, measuremethod, self.resultvalue))
 
 		calcont = self.registerUIContainer('Calibrate', (caldefocus, calstig, measure))
