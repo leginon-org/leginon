@@ -721,68 +721,27 @@ class NodeGUILauncher(Frame):
 		manualframe = self.notebook.add('Manual')
 
 		##################################################
-
-		f = Frame(manualframe, bd=4, relief=SOLID)
-
-		launchbut = Button(f, text='Launch GUI', command=self.launchgui)
-		launchhostlab = Label(f, text='Host')
-
-		#self.launchhostent = Entry(f, width=15)
-		self.hostvar = StringVar()
-		self.launchhostent = Pmw.ComboBox(f, entry_textvariable=self.hostvar)
-		self.launchhostent.component('entryfield').component('entry')['width'] = 12
-		defaulthost = socket.gethostname()
-		self.hostvar.set(defaulthost)
 		
-		self.hosthistory = []
-		self.addHostHistory(defaulthost)
-
-		launchportlab = Label(f, text='Port')
-
-		self.launchportent = Pmw.Counter(f, datatype='integer')
-		self.launchportent.component('entryfield').component('entry')['width'] = 5
-		portent = self.launchportent.component('entry')
-		portent.insert(0, 49153)
-
-		launchhostlab.pack(side=LEFT)
-		self.launchhostent.pack(side=LEFT)
-		launchportlab.pack(side=LEFT)
-		self.launchportent.pack(side=LEFT)
-		launchbut.pack(side=LEFT)
-
-		self.launchhostent.bind('<KeyPress-Return>', self.launchgui)
-		portent.bind('<KeyPress-Return>', self.launchgui)
-
-		f.pack(side=TOP, fill=BOTH)
+		launchframe = Frame(manualframe, bd=4, relief=SOLID)
+		launchhostport = HostPortSelector(launchframe, buttontext='Launch GUI', callback=self.launchgui)
+		launchhostport.pack()
+		launchframe.pack()
 
 		###############################################
 
 		managerframe = Frame(connectframe, bd=4, relief=SOLID)
 
-		mllabel = Label(managerframe, text='Manager Location:')
-
-		managerhostnamelabel = Label(managerframe, text='Hostname')
-		self.managerhostnamevar = StringVar()
-		self.managerhostnameentry = Pmw.ComboBox(managerframe, entry_textvariable=self.managerhostnamevar)
-		self.managerhostnameentry.component('entryfield').component('entry')['width'] = 12
-		self.managerhostnamevar.set(defaulthost)
-		self.managerhostnameentry.bind('<KeyPress-Return>', self.getNodeLocations)
-
-		managerportlabel = Label(managerframe, text='UI Port')
-		self.managerportentry = Pmw.Counter(managerframe, datatype='integer')
-		self.managerportentry.component('entryfield').component('entry')['width'] = 5
-		managerportentry = self.managerportentry.component('entry')
-		managerportentry.insert(0, 49153)
-		managerportentry.bind('<KeyPress-Return>', self.getNodeLocations)
-
-		connectbutton = Button(managerframe, text='Connect', command=self.setManagerLocation)
+		mllabel = Label(managerframe, text='Manager UI Server:')
+		mlhostport = HostPortSelector(managerframe, buttontext='Connect', callback = self.setManagerLocation)
+		statusframe = Frame(managerframe)
+		mlstatuslab = Label(statusframe, text='Status:  ')
+		self.mlstatus = Label(statusframe, text='Not Connected')
 
 		mllabel.pack(side=TOP)
-		managerhostnamelabel.pack(side=LEFT)
-		self.managerhostnameentry.pack(side=LEFT)
-		managerportlabel.pack(side=LEFT)
-		self.managerportentry.pack(side=LEFT)
-		connectbutton.pack(side=LEFT)
+		mlhostport.pack(side=TOP)
+		mlstatuslab.pack(side=LEFT)
+		self.mlstatus.pack(side=LEFT)
+		statusframe.pack(side=TOP)
 
 		managerframe.pack(side=TOP, fill=BOTH)
 
@@ -791,35 +750,35 @@ class NodeGUILauncher(Frame):
 		nglabel = Label(nodeidframe, text='Node UI:')
 		nodeidlabel = Label(nodeidframe, text='Node ID')
 		self.nodeidsvar = StringVar()
-#		self.nodeidsentry = ComboBoxDropdownCallback(nodeidframe, self.getNodeLocations, entry_textvariable=self.nodeidsvar)
 		self.nodeidsentry = Pmw.ComboBox(nodeidframe, entry_textvariable=self.nodeidsvar)
 		self.nodeidsentry.component('entryfield').component('entry')['width'] = 20
-		launchuibutton = Button(nodeidframe, text='Launch', command=self.launchUIbyNodeID)
-		refreshbutton = Button(nodeidframe, text='Refresh', command=self.getNodeLocations)
+		self.launchuibutton = Button(nodeidframe, text='Launch', command=self.launchUIbyNodeID, state=DISABLED)
+		self.refreshbutton = Button(nodeidframe, text='Refresh', command=self.getNodeLocations, state=DISABLED)
 
 		nglabel.pack(side=TOP)
 		nodeidlabel.pack(side=LEFT)
 		self.nodeidsentry.pack(side=LEFT)
-		launchuibutton.pack(side=LEFT)
-		refreshbutton.pack(side=LEFT)
+		self.launchuibutton.pack(side=LEFT)
+		self.refreshbutton.pack(side=LEFT)
 
 		nodeidframe.pack(side=TOP, fill=BOTH)
 
 		self.notebook.pack(fill=BOTH, expand=YES)
 		self.notebook.setnaturalsize()
 
-	def setManagerLocation(self):
-		hostname = self.managerhostnamevar.get()
-		uiport = self.managerportentry.get()
+	def setManagerLocation(self, hostname, uiport):
 		self.uiclient = interface.Client(hostname, uiport)
-		self.getNodeLocations()
+		try:
+			self.getNodeLocations()
+			self.mlstatus['text'] = 'Connected'
+			self.launchuibutton['state'] = NORMAL
+			self.refreshbutton['state'] = NORMAL
+		except socket.error:
+			self.mlstatus['text'] = 'Failed to connect to UI Server'
+			print 'Failed to connect to UI Server'
 
 	def getNodeLocations(self):
-		try:
-			self.nodelocations = self.uiclient.execute("getNodeLocations")
-		except:
-			self.nodelocations = {}
-
+		self.nodelocations = self.uiclient.execute("getNodeLocations")
 		self.nodeidsentry.setlist(self.nodelocations.keys())
 
 		try:
@@ -837,18 +796,8 @@ class NodeGUILauncher(Frame):
 		except:
 			print "Error: cannot launch '%s' by ID" % nodeid
 
-	def addHostHistory(self, host):
-		if host not in self.hosthistory:
-			self.hosthistory.append(host)
-			self.launchhostent.setlist(self.hosthistory)
-
-	def launchgui(self, event=None):
-		host = self.hostvar.get()
-		port = self.launchportent.get()
+	def launchgui(self, host, port):
 		tk = self.newGUIWindow(host, port)
-		# only store host in history if launch worked
-		if tk is not None:
-			self.addHostHistory(host)
 
 	def newGUIWindow(self, host, port):
 		top = Toplevel()
@@ -857,7 +806,8 @@ class NodeGUILauncher(Frame):
 			gui = NodeGUI(top, host, port)
 			gui.pack(expand=YES, fill=BOTH)
 			return top
-		except:
+		except Exception, detail:
+			print 'UI DETAIL', detail
 			top.destroy()
 			print "Error: cannot create new UI window for %s:%s" % (host, port)
 			return None
@@ -928,6 +878,57 @@ class NodeUILauncher(Frame):
 			top.destroy()
 			print "Error: cannot create new UI window for %s:%s" % (host, port)
 			return None
+
+class HostPortSelector(Frame):
+	'''
+	HostPortSelector(parent, buttontext, callback)
+	This is a hostname/port selector widget
+	callback must take two arguments:  hostname, and port
+	'''
+	def __init__(self, parent, buttontext, callback):
+		Frame.__init__(self, parent)
+
+		defaulthost = socket.gethostname()
+		self.externalCallback = callback
+		self.hosthistory = [defaulthost,]
+
+
+		hostnamelabel = Label(self, text='Host')
+
+		self.hostnamevar = StringVar()
+		self.hostnameentry = Pmw.ComboBox(self, entry_textvariable=self.hostnamevar)
+		self.hostnameentry.setlist(self.hosthistory)
+		self.hostnameentry.component('entryfield').component('entry')['width'] = 12
+		self.hostnamevar.set(defaulthost)
+		self.hostnameentry.bind('<KeyPress-Return>', self.localCallback)
+
+		portlabel = Label(self, text='Port')
+
+		self.portentry = Pmw.Counter(self, datatype='integer')
+		self.portentry.component('entryfield').component('entry')['width'] = 5
+		portentry = self.portentry.component('entry')
+		portentry.insert(0, 49153)
+		portentry.bind('<KeyPress-Return>', self.localCallback)
+
+		button = Button(self, text=buttontext, command=self.localCallback)
+
+		hostnamelabel.pack(side=LEFT)
+		self.hostnameentry.pack(side=LEFT)
+		portlabel.pack(side=LEFT)
+		self.portentry.pack(side=LEFT)
+		button.pack(side=LEFT)
+
+	def localCallback(self):
+		host = self.hostnamevar.get()
+		port = self.portentry.get()
+		self.externalCallback(host, port)
+		self.addHostHistory(host)
+
+	def addHostHistory(self, host):
+		if host not in self.hosthistory:
+			self.hosthistory.append(host)
+			self.hostnameentry.setlist(self.hosthistory)
+
 
 if __name__ == '__main__':
 	import sys
