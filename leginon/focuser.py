@@ -230,7 +230,7 @@ class Focuser(acquisition.Acquisition):
 			self.manualchecklock.release()
 
 	def changeFocus(self, direction):
-		parameter = self.manual_parameter.get()
+		parameter = self.manual_parameter.getSelectedValue()
 		delta = self.manual_delta.get()
 		self.manualchecklock.acquire()
 		print 'changing %s %s %s' % (parameter, direction, delta)
