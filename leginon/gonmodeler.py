@@ -152,7 +152,6 @@ class GonModeler(node.Node):
 		print 'inserted %s data points' % (count,)
 
 	def writeData(self, label, mag, axis, gonx, gony, delta, imx, imy):
-		print 'Writing', stagedata
 		stagedata = data.StageMeasurementData()
 		stagedata['label'] = label
 		stagedata['magnification'] = mag
@@ -162,6 +161,7 @@ class GonModeler(node.Node):
 		stagedata['delta'] = delta
 		stagedata['imagex'] = imx
 		stagedata['imagey'] = imy
+		print 'Writing', stagedata
 		self.publish(stagedata, database=True)
 
 	def uiFit(self):
