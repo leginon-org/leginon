@@ -792,7 +792,7 @@ class NodeDialog(mySimpleDialog):
 		if len(selection) == 0:
 			selection = ('0',)
 		classstring = self.nodeclasses[int(selection[0])]
-		launcher = self.launcherentry.get()
+		launcher = eval(self.launcherentry.get())
 		process = self.processvariable.get()
 		arguments = eval(self.argumentsentry.get())
 		self.result = (launcher, process, classstring, name, arguments)
