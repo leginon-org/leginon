@@ -2,12 +2,32 @@ import os, socket
 import random
 #import threading, weakref
 import sys
+import copy
 
 class LeginonObject(object):
 	'''Generic base class for objects. Defines ID and location.'''
 	def __init__(self, id):
-		self.id = id
+		self.id = self.validateID(id)
+		self.session = self.id[0]
 		self.idcounter = 0
+
+	def validateID(self, id):
+		## make copy in case id was a mutable type
+		myid = copy.deepcopy(id)
+		## make a tuple out of it
+		try:
+			myid = tuple(myid)
+		except TypeError:
+			raise ValueError('%s, id must be sequence with session string as first item' % (id,))
+		try:
+			session = myid[0]
+		except IndexError:
+			raise ValueError('%s, id must be sequence with session string as first item' % (id,))
+
+		if type(session) != str:
+			raise ValueError('%s, id must be sequence with session string as first item' % (id,))
+
+		return myid
 
 	def location(self):
 		'''Returns a dict describing the location of this object.'''
