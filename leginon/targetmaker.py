@@ -12,6 +12,24 @@ import presets
 import calibrationclient
 import math
 
+def magnitude(coordinate, coordinates):
+	return map(lambda c: math.sqrt(sum(map(lambda m, n: (n - m)**2,
+																					coordinate, c))), coordinates)
+
+def closestTarget(start, targets):
+	values = magnitude(start, targets)
+	return values.index(min(values))
+
+def sortTargets(targets, start=None):
+	if start is not None:
+		targets.insert(0, start)
+	for i in range(1, len(targets) - 1):
+		index = closestTarget(targets[i], targets[i+1:])
+		targets.insert(i, targets.pop(index))
+	if start is not None:
+		del targets[0]
+	return targets
+
 class TargetMaker(node.Node):
 	eventoutputs = node.Node.eventoutputs + [event.ImageTargetListPublishEvent]
 	def __init__(self, id, session, nodelocations, **kwargs):
@@ -23,6 +41,7 @@ class TargetMaker(node.Node):
 			targetlistdata = data.ImageTargetListData(id=self.ID(),
 																								targets=self.targetlist)
 			self.publish(targetlistdata, pubevent=True)
+			self.targetlist = []
 
 #	def defineUserInterface(self):
 #		node.Node.defineUserInterface(self)
@@ -139,7 +158,6 @@ class SpiralTargetMaker(TargetMaker):
 			self.targetlist.append(targetdata)
 		self.setStatusMessage('Publishing target list')
 		TargetMaker.publishTargetList(self)
-		self.targetlist = []
 		self.setStatusMessage('Target list published')
 
 	def makeCircle(self, radius, pixelsize, binning, imagesize, overlap=0.0):
@@ -232,4 +250,16 @@ class SpiralTargetMaker(TargetMaker):
 				ymin = cur_pos[1]
 				dir = (1,0)
 		return spiraldir
+
+if __name__ == '__main__':
+	import random
+
+	def randomTargets(nc, nt, scale):
+		random.seed()
+		return map(lambda t: tuple(map(lambda c: (random.random() - 0.5)*2*scale,
+																		range(nc))), range(nt))
+
+	start = (0.0, 0.0)
+	targets = randomTargets(2, 16, 2.0e-3)
+	print sortTargets(targets, start)
 
