@@ -21,13 +21,12 @@ class ImViewer(watcher.Watcher, camerafuncs.CameraFuncs):
 		watchfor = event.ImagePublishEvent
 		lockblocking = 0
 		watcher.Watcher.__init__(self, id, nodelocations, watchfor, lockblocking)
-
 		self.addEventOutput(event.ImageClickEvent)
 
 		self.iv = None
 		self.numarray = None
 		self.viewer_ready = threading.Event()
-		self.start_viewer_thread()
+		#self.start_viewer_thread()
 
 	def die(self, killevent=None):
 		self.close_viewer()
@@ -90,7 +89,8 @@ class ImViewer(watcher.Watcher, camerafuncs.CameraFuncs):
 	def close_viewer(self):
 		try:
 			self.root.destroy()
-		except TclError:
+		except:
+			### root may not exist or already destroyed
 			pass
 
 	def acquireRaw(self):
@@ -99,6 +99,7 @@ class ImViewer(watcher.Watcher, camerafuncs.CameraFuncs):
 		self.acqrawbut['state'] = NORMAL
 
 	def uiAcquireRaw(self):
+		return None
 		imarray = self.acquireArray(0)
 		if imarray is None:
 			mrcstr = ''
@@ -120,10 +121,9 @@ class ImViewer(watcher.Watcher, camerafuncs.CameraFuncs):
 		return xmlrpclib.Binary(mrcstr)
 
 	def acquireArray(self, corr=0):
-		defaultsize = (512,512)
-		camerasize = (2048,2048)
-		offset = cameraimage.centerOffset(camerasize,defaultsize)
 		camstate = self.camconfig.get()
+		self.cameraDefaultOffset(camstate)
+		self.camconfig.set(camstate)
 		imarray = self.cameraAcquireArray(camstate, correction=corr)
 		return imarray
 
@@ -159,13 +159,15 @@ class ImViewer(watcher.Watcher, camerafuncs.CameraFuncs):
 
 		self.numarray = imagedata.content
 		self.imageid = imagedata.id
-		self.displayNumericArray(self.numarray)
+		if self.popupvalue:
+			self.displayNumericArray()
 
-	def displayNumericArray(self, numarray):
+	def displayNumericArray(self):
 		self.start_viewer_thread()
 		self.viewer_ready.wait()
-		self.iv.import_numeric(numarray)
-		self.iv.update()
+		if self.numarray is not None:
+			self.iv.import_numeric(self.numarray)
+			self.iv.update()
 
 	def defineUserInterface(self):
 		watcherspec = watcher.Watcher.defineUserInterface(self)
@@ -183,9 +185,22 @@ class ImViewer(watcher.Watcher, camerafuncs.CameraFuncs):
 		acqcor = self.registerUIMethod(self.uiAcquireCorrected, 'Acquire Corrected', (), returnspec=acqret)
 		acqev = self.registerUIMethod(self.acquireEvent, 'Acquire Event', ())
 
-		self.camconfig = self.cameraConfigUISpec()
+		popuptoggle = self.registerUIData('Pop-up Viewer', 'boolean', permissions='rw', default=self.popupCallback)
+		popuptoggle.set(xmlrpclib.Boolean(0))
 
-		self.registerUISpec(`self.id`, (acqraw, acqcor, acqev, self.camconfig, filespec, watcherspec))
+		#camconfig = self.cameraConfigUISpec()
+		#prefs = self.registerUIContainer('Preferences', (popuptoggle,))
+
+		self.registerUISpec(`self.id`, (acqraw, acqcor, acqev, filespec, watcherspec))
+
+	def popupCallback(self, value=None):
+		if value is not None:
+			self.popupvalue = value
+
+		if self.popupvalue:
+			self.displayNumericArray()
+		
+		return self.popupvalue
 
 	def uiLoadImage(self, filename):
 		im = Mrc.mrc_to_numeric(filename)
@@ -196,6 +211,8 @@ class ImViewer(watcher.Watcher, camerafuncs.CameraFuncs):
 		numarray = self.iv.imagearray
 		Mrc.numeric_to_mrc(numarray, filename)
 		return ''
+
+
 
 if __name__ == '__main__':
 	id = ('ImViewer',)
