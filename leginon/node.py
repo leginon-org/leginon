@@ -240,7 +240,7 @@ class Node(leginonobject.LeginonObject):
 		if 'node' in kwargs and kwargs['node']:
 			self.datahandlers[self.datahandler].insert(idata)
 			# XXX unknown XXX
-			e = eventclass(self.ID(), idata['id'], confirm)
+			e = eventclass(self.ID(), dataid=idata['id'], confirm=confirm)
 			self.outputEvent(e)
 
 	def research(self, **kwargs):
