@@ -1,4 +1,4 @@
-class Register(object):
+class Registery(object):
         def __init__(self):
                 self.id = 0
                 self.entries = {}
@@ -27,7 +27,7 @@ class Register(object):
 			repr[key] = self.entries[key].xmlrpc_repr()
 		return repr
 
-class RegisterEntry(object):
+class RegisteryEntry(object):
         def __init__(self, methods, events, location):
                 self.id = None
                 self.methods = methods
