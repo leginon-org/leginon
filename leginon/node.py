@@ -339,7 +339,7 @@ class Node(leginonobject.LeginonObject):
 			except Exception, e:
 				if isinstance(e, OSError):
 					message = str(e)
-				if isinstance(e, IOError):
+				elif isinstance(e, IOError):
 					message = str(e)
 				elif isinstance(e, KeyError):
 					message = 'no DBDataKeeper to publish: %s' % str(idata['id'])
