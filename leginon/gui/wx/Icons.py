@@ -4,15 +4,17 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Icons.py,v $
-# $Revision: 1.4 $
+# $Revision: 1.5 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-29 21:31:21 $
+# $Date: 2004-10-29 22:38:52 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
 import icons
 import wx
+
+wx.InitAllImageHandlers()
 
 bitmaps = {}
 
