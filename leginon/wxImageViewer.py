@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from wxPython.wx import *
-from wxPython.wxc import wxPyAssertionError
+#from wxPython.wxc import wxPyAssertionError
 import cStringIO
 import Numeric
 import Image
@@ -215,7 +215,7 @@ class ImagePanel(wxPanel):
 		dc.SetBrush(wxBrush(wxWHITE))
 		dc.SetPen(wxPen(wxBLACK, 1))
 
-		string = '(%d, %d), %d' % (xy[0], xy[1], value)
+		string = '(%d, %d): %d' % (xy[0], xy[1], value)
 
 		try:
 			apply(self.blit, self.damaged)
@@ -253,6 +253,8 @@ class ImagePanel(wxPanel):
 		dc.EndDrawing()
 
 	def blit(self, x, y, w, h):
+		if self.buffer == wxNullBitmap:
+			return
 		dc = wxMemoryDC()
 		dc.SelectObject(self.buffer)
 		#dc.SetUserScale(self.scale[0], self.scale[1])
@@ -267,34 +269,30 @@ class ImagePanel(wxPanel):
 									w/self.scale[0] + 1, h/self.scale[1] + 1, dc, ix, iy)
 
 	def UpdateDrawing(self):
-		if USE_BUFFERED_DC:
-			clientdc = wxClientDC(self.panel)
-			self.panel.PrepareDC(clientdc)
-			dc = wxBufferedDC(clientdc, self.buffer)
-			self.Draw(dc)
-		else:
-			dc = wxMemoryDC()
-			dc.SelectObject(self.buffer)
-			self.Draw(dc)
-			viewoffset = self.panel.GetViewStart()
-			clientdc = wxClientDC(self.panel)
-			clientdc.SetUserScale(self.scale[0], self.scale[1])
-			size = self.panel.GetClientSize()
-			clientdc.Blit(0, 0, Numeric.ceil(size[0]/self.scale[0]),
-													Numeric.ceil(size[1]/self.scale[1]), dc,
-													viewoffset[0]/self.scale[0],
-													viewoffset[1]/self.scale[1])
+		if self.buffer == wxNullBitmap:
+			return
+		dc = wxMemoryDC()
+		dc.SelectObject(self.buffer)
+		self.Draw(dc)
+		viewoffset = self.panel.GetViewStart()
+		clientdc = wxClientDC(self.panel)
+		clientdc.SetUserScale(self.scale[0], self.scale[1])
+		size = self.panel.GetClientSize()
+		clientdc.Blit(0, 0, size[0]/self.scale[0] + 1,
+												size[1]/self.scale[1] + 1, dc,
+												viewoffset[0]/self.scale[0],
+												viewoffset[1]/self.scale[1])
 
 	def Draw(self, dc):
-		try:
-			dc.BeginDrawing()
-			if self.bitmap is None:
-				dc.Clear()
-			else:
-				dc.DrawBitmap(self.bitmap, 0, 0)
-			dc.EndDrawing()
-		except wxPyAssertionError:
-			pass
+#		try:
+		dc.BeginDrawing()
+		if self.bitmap is None:
+			dc.Clear()
+		else:
+			dc.DrawBitmap(self.bitmap, 0, 0)
+		dc.EndDrawing()
+#		except wxPyAssertionError:
+#			pass
 
 	def OnSize(self, evt):
 		width, height = self.panel.GetSizeTuple()
@@ -302,20 +300,19 @@ class ImagePanel(wxPanel):
 		self.UpdateDrawing()
 
 	def OnPaint(self, evt):
-		if USE_BUFFERED_DC:
-			dc = wxBufferedPaintDC(self.panel, self.buffer)
-		else:
-			dc = wxMemoryDC()
-			dc.SelectObject(self.buffer)
-			self.Draw(dc)
-			viewoffset = self.panel.GetViewStart()
-			paintdc = wxPaintDC(self.panel)
-			paintdc.SetUserScale(self.scale[0], self.scale[1])
-			size = self.panel.GetClientSize()
-			paintdc.Blit(0, 0, Numeric.ceil(size[0]/self.scale[0]),
-													Numeric.ceil(size[1]/self.scale[1]), dc,
-													viewoffset[0]/self.scale[0],
-													viewoffset[1]/self.scale[1])
+		if self.buffer == wxNullBitmap:
+			return
+		dc = wxMemoryDC()
+		dc.SelectObject(self.buffer)
+		self.Draw(dc)
+		viewoffset = self.panel.GetViewStart()
+		paintdc = wxPaintDC(self.panel)
+		paintdc.SetUserScale(self.scale[0], self.scale[1])
+		size = self.panel.GetClientSize()
+		paintdc.Blit(0, 0, Numeric.ceil(size[0]/self.scale[0]),
+												Numeric.ceil(size[1]/self.scale[1]), dc,
+												viewoffset[0]/self.scale[0],
+												viewoffset[1]/self.scale[1])
 
 class TargetImagePanel(ImagePanel):
 	def __init__(self, parent, id, callback=None):
