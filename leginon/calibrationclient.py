@@ -259,7 +259,8 @@ class DoseCalibrationClient(CalibrationClient):
 		electrons_per_pixel = dose_per_pixel * exposure_time
 		if electrons_per_pixel == 0:
 			raise ValueError('Invalid electrons per pixel calculated')
-		self.node.logger.info('electrons/pixel %.4e' % electrons_per_pixel)
+		self.node.logger.info('Calculated electrons/pixel %.4e'
+													% electrons_per_pixel)
 		counts_per_electron = float(counts) / electrons_per_pixel
 		return counts_per_electron
 
@@ -270,7 +271,7 @@ class DoseCalibrationClient(CalibrationClient):
 		specimen_pixel_size = self.psizecal.retrievePixelSize(mag, instrument=inst)
 		self.node.logger.info('Specimen pixel size %.4e' % specimen_pixel_size)
 		camera_pixel_size = inst['camera pixel size']
-		self.node.logger.info('Camera pixel size %.4ef' % camera_pixel_size)
+		self.node.logger.info('Camera pixel size %.4e' % camera_pixel_size)
 		camera_mag = camera_pixel_size / specimen_pixel_size
 		self.node.logger.info('Camera magnification %.1f' % camera_mag)
 		exposure_time = imagedata['camera']['exposure time'] / 1000.0

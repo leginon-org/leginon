@@ -45,6 +45,7 @@ class Panel(gui.wx.Node.Panel):
 											id=gui.wx.ToolBar.ID_ACQUIRE)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onStageLocationsTool,
 											id=gui.wx.ToolBar.ID_STAGE_LOCATIONS)
+		self.Bind(wx.EVT_IMAGE_CLICKED, self.onImageClicked)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
@@ -59,7 +60,7 @@ class Panel(gui.wx.Node.Panel):
 		dialog.ShowModal()
 		dialog.Destroy()
 
-	def onImageDoubleClicked(self, evt):
+	def onImageClicked(self, evt):
 		# ...
 		if self.node.shape is not None:
 			self.node.navigate(evt.xy)

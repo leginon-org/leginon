@@ -40,9 +40,6 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 		newimage = imagedata['image']
 		self.shape = newimage.shape
 
-	def calculatePixelDistance(self, fromxy, toxy):
-		return math.hypot(toxy[0]-fromxy[0], toxy[1]-fromxy[1])
-
 	def calculateMeasured(self, pdist, dist):
 		return dist / (self.bin * pdist)
 

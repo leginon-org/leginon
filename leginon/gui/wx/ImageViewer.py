@@ -27,6 +27,51 @@ import gui.wx.Stats
 
 wx.InitAllImageHandlers()
 
+ImageClickedEventType = wx.NewEventType()
+MeasurementEventType = wx.NewEventType()
+DisplayEventType = wx.NewEventType()
+TargetingEventType = wx.NewEventType()
+SettingsEventType = wx.NewEventType()
+
+EVT_IMAGE_CLICKED = wx.PyEventBinder(ImageClickedEventType)
+EVT_MEASUREMENT = wx.PyEventBinder(MeasurementEventType)
+EVT_DISPLAY = wx.PyEventBinder(DisplayEventType)
+EVT_TARGETING = wx.PyEventBinder(TargetingEventType)
+EVT_SETTINGS = wx.PyEventBinder(SettingsEventType)
+
+class ImageClickedEvent(wx.PyCommandEvent):
+	def __init__(self, xy, source):
+		wx.PyCommandEvent.__init__(self, ImageClickedEventType, source.GetId())
+		self.SetEventObject(source)
+		self.xy = xy
+
+class MeasurementEvent(wx.PyCommandEvent):
+	def __init__(self, source, measurement):
+		wx.PyCommandEvent.__init__(self, MeasurementEventType, source.GetId())
+		self.SetEventObject(source)
+		self.measurement = measurement
+
+class DisplayEvent(wx.PyCommandEvent):
+	def __init__(self, source, name, value):
+		wx.PyCommandEvent.__init__(self, DisplayEventType, source.GetId())
+		self.SetEventObject(source)
+		self.name = name
+		self.value = value
+
+class TargetingEvent(wx.PyCommandEvent):
+	def __init__(self, source, name, value):
+		wx.PyCommandEvent.__init__(self, TargetingEventType, source.GetId())
+		self.SetEventObject(source)
+		self.name = name
+		self.value = value
+
+class SettingsEvent(wx.PyCommandEvent):
+	def __init__(self, source, name):
+		wx.PyCommandEvent.__init__(self, SettingsEventType, source.GetId())
+		self.SetEventObject(source)
+		self.name = name
+
+
 bitmaps = {}
 
 def getBitmap(filename):
@@ -221,7 +266,7 @@ class ContrastTool(object):
 		if contrastmin < self.imagemin:
 			self.contrastmin = self.imagemin
 			self.iemin.SetValue(self.contrastmin)
-		if contrastmin > self.contrastmax:
+		elif contrastmin > self.contrastmax:
 			self.contrastmin = self.contrastmax
 			self.iemin.SetValue(self.contrastmin)
 		else:
@@ -280,12 +325,6 @@ class ImageTool(object):
 	def OnRightClick(self, evt):
 		pass
 
-	def OnLeftDoubleClick(self, evt):
-		pass
-
-	def OnRightDoubleClick(self, evt):
-		pass
-
 	def OnMotion(self, evt, dc):
 		pass
 
@@ -315,19 +354,35 @@ class RulerTool(ImageTool):
 		cursor = wx.CROSS_CURSOR
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, True)
 		self.start = None
+		self.measurement = None
 
 	def OnLeftClick(self, evt):
 		if self.button.GetToggle():
+			if self.start is not None:
+				x = evt.m_x - self.imagepanel.offset[0]
+				y = evt.m_y - self.imagepanel.offset[1]
+				x0, y0 = self.start
+				dx, dy = x - x0, y - y0
+				self.measurement = {
+					'from': self.start,
+					'to': (x, y),
+					'delta': (dx, dy),
+					'magnitude': math.hypot(dx, dy),
+				}
+				mevt = MeasurementEvent(self.imagepanel, dict(self.measurement))
+				self.imagepanel.GetEventHandler().AddPendingEvent(mevt)
 			self.start = self.imagepanel.view2image((evt.m_x, evt.m_y))
 
 	def OnRightClick(self, evt):
 		if self.button.GetToggle():
 			self.start = None
+			self.measurement = None
 			self.imagepanel.UpdateDrawing()
 
 	def OnToggle(self, value):
 		if not value:
 			self.start = None
+			self.measurement = None
 
 	def DrawRuler(self, dc, x, y):
 		dc.SetPen(wx.Pen(wx.RED, 1))
@@ -345,8 +400,9 @@ class RulerTool(ImageTool):
 	def getToolTipString(self, x, y, value):
 		if self.button.GetToggle() and self.start is not None:
 			x0, y0 = self.start
-			return 'From (%d, %d) x=%d y=%d d=%.2f' % (x0, y0, x - x0, y - y0,
-																								math.sqrt((x-x0)**2+(y-y0)**2))
+			dx, dy = x - x0, y - y0
+			return 'From (%d, %d) x=%d y=%d d=%.2f' % (x0, y0, dx, dy,
+																									math.hypot(dx, dy))
 		else:
 			return ''
 
@@ -462,8 +518,6 @@ class ImagePanel(wx.Panel):
 		# bind panel events
 		self.panel.Bind(wx.EVT_LEFT_UP, self.OnLeftUp)
 		self.panel.Bind(wx.EVT_RIGHT_UP, self.OnRightUp)
-		self.panel.Bind(wx.EVT_LEFT_DCLICK, self.OnLeftDoubleClick)
-		self.panel.Bind(wx.EVT_RIGHT_DCLICK, self.OnRightDoubleClick)
 		self.panel.Bind(wx.EVT_PAINT, self.OnPaint)
 		self.panel.Bind(wx.EVT_SIZE, self.OnSize)
 		self.panel.Bind(wx.EVT_MOTION, self.OnMotion)
@@ -577,9 +631,11 @@ class ImagePanel(wx.Panel):
 		elif isinstance(imagedata, Image.Image):
 			self.setPILImage(imagedata, scroll)
 			self.statspanel.setStats(stats)
+			self.sizer.Layout()
 		elif imagedata is None:
 			self.clearImage()
 			self.statspanel.setStats(stats)
+			self.sizer.Layout()
 		else:
 			raise TypeError('Invalid image data type for setting image')
 
@@ -630,6 +686,7 @@ class ImagePanel(wx.Panel):
 		if not scroll:
 			self.panel.Scroll(0, 0)
 		self.UpdateDrawing()
+		self.sizer.Layout()
 		self.panel.Refresh()
 
 	def clearImage(self):
@@ -812,14 +869,6 @@ class ImagePanel(wx.Panel):
 			tool.OnRightClick(evt)
 		self._onRightClick(evt)
 
-	def OnLeftDoubleClick(self, evt):
-		for tool in self.tools:
-			tool.OnLeftDoubleClick(evt)
-
-	def OnRightDoubleClick(self, evt):
-		for tool in self.tools:
-			tool.OnRightDoubleClick(evt)
-
 	def drawToolTip(self, dc, x, y, strings):
 		dc.SetBrush(wx.Brush(wx.Colour(255, 255, 220)))
 		dc.SetPen(wx.Pen(wx.BLACK, 1))
@@ -923,15 +972,6 @@ class ImagePanel(wx.Panel):
 		self.selectiontool.addTypeTool(name, **kwargs)
 		self.sizer.Layout()
 
-ImageDoubleClickedEventType = wx.NewEventType()
-EVT_IMAGE_DOUBLE_CLICKED = wx.PyEventBinder(ImageDoubleClickedEventType)
-class ImageDoubleClickedEvent(wx.PyCommandEvent):
-	def __init__(self, xy, source):
-		wx.PyCommandEvent.__init__(self, ImageDoubleClickedEventType,
-																source.GetId())
-		self.SetEventObject(source)
-		self.xy = xy
-
 class ClickTool(ImageTool):
 	def __init__(self, imagepanel, sizer, callback=None):
 		bitmap = getBitmap('arrow.png')
@@ -940,12 +980,12 @@ class ClickTool(ImageTool):
 		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, True)
 		self.callback = callback
 
-	def OnLeftDoubleClick(self, evt):
+	def OnLeftUp(self, evt):
 		if self.button.GetToggle():
 			xy = self.imagepanel.view2image((evt.m_x, evt.m_y))
 			if callable(self.callback):
 				self.callback(xy)
-			idcevt = ImageDoubleClickedEvent(xy, self.imagepanel)
+			idcevt = ImageClickedEvent(xy, self.imagepanel)
 			self.imagepanel.GetEventHandler().AddPendingEvent(idcevt)
 
 class ClickImagePanel(ImagePanel):
@@ -954,34 +994,6 @@ class ClickImagePanel(ImagePanel):
 		self.clicktool = self.addTool(ClickTool(self, self.toolsizer, callback))
 		self.sizer.Layout()
 		self.Fit()
-
-DisplayEventType = wx.NewEventType()
-TargetingEventType = wx.NewEventType()
-SettingsEventType = wx.NewEventType()
-
-EVT_DISPLAY = wx.PyEventBinder(DisplayEventType)
-EVT_TARGETING = wx.PyEventBinder(TargetingEventType)
-EVT_SETTINGS = wx.PyEventBinder(SettingsEventType)
-
-class DisplayEvent(wx.PyCommandEvent):
-	def __init__(self, source, name, value):
-		wx.PyCommandEvent.__init__(self, DisplayEventType, source.GetId())
-		self.SetEventObject(source)
-		self.name = name
-		self.value = value
-
-class TargetingEvent(wx.PyCommandEvent):
-	def __init__(self, source, name, value):
-		wx.PyCommandEvent.__init__(self, TargetingEventType, source.GetId())
-		self.SetEventObject(source)
-		self.name = name
-		self.value = value
-
-class SettingsEvent(wx.PyCommandEvent):
-	def __init__(self, source, name):
-		wx.PyCommandEvent.__init__(self, SettingsEventType, source.GetId())
-		self.SetEventObject(source)
-		self.name = name
 
 class TypeTool(object):
 	def __init__(self, parent, name, display=None, target=None, settings=None):
@@ -1435,15 +1447,6 @@ if __name__ == '__main__':
 			#self.panel.addTargetType('foo')
 			#self.panel.addTargetType('bar')
 
-			self.panel.addTypeTool('Image')
-			self.panel.addTypeTool('Target', display=True, target=wx.BLUE, settings=True)
-			self.panel.addTypeTool('Target 2', display=True, target=wx.RED, settings=True)
-			self.panel.addTypeTool('Target 3', display=True, settings=True)
-			self.panel.addTypeTool('Target 4', display=True, target=wx.GREEN, settings=True)
-			self.panel.addTypeTool('Image 2', display=True, settings=True)
-			self.panel.setTargets('Target 2', [(5, 6), (100, 100)])
-			self.panel.setTargets('Target 4', [(10, 30), (50, 50)])
-
 #			self.panel = ClickImagePanel(frame, -1, bar)
 
 #			self.panel = ImagePanel(frame, -1)
@@ -1460,7 +1463,7 @@ if __name__ == '__main__':
 	elif filename[-4:] == '.mrc':
 		#app.panel.setImageFromMrcString(
 		image = Mrc.mrcstr_to_numeric(open(filename, 'rb').read())
-		app.panel.setImageType('Image 2', image)
+		app.panel.setImage(image)
 	else:
 		app.panel.setImage(Image.open(filename))
 	app.MainLoop()

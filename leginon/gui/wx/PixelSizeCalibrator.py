@@ -6,28 +6,24 @@ import gui.wx.ImageViewer
 import gui.wx.ToolBar
 
 class Panel(gui.wx.Calibrator.Panel):
-	imageclass = gui.wx.ImageViewer.ClickImagePanel
 	def initialize(self):
 		gui.wx.Calibrator.Panel.initialize(self)
 
 		self.toolbar.Realize()
 		self.toolbar.DeleteTool(gui.wx.ToolBar.ID_ABORT)
 
-		self.fromxy = None
-		self.toxy = None
-		self.imagepanel.clicktool.callback = self.onImageClick
-
 	def onNodeInitialized(self):
 		gui.wx.Calibrator.Panel.onNodeInitialized(self)
+		self.measurement = None
+		self.Bind(gui.wx.ImageViewer.EVT_MEASUREMENT, self.onMeasurement)
+
+	def onMeasurement(self, evt):
+		self.measurement = evt.measurement
 
 	def onCalibrateTool(self, evt):
 		dialog = PixelSizeCalibrationDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
-
-	def onImageClick(self, xy):
-		self.fromxy = self.toxy
-		self.toxy = xy
 
 class ExtrapolateDialog(wx.Dialog):
 	def __init__(self, parent, mags):
@@ -168,15 +164,15 @@ class EnterDialog(wx.Dialog):
 			evt.Skip()
 
 class MeasureDialog(wx.Dialog):
-	def __init__(self, parent, mag, pd, bin):
+	def __init__(self, parent, mag, bin):
 		self.node = parent.node
 
 		wx.Dialog.__init__(self, parent, -1, 'Measure Pixel Size')
 
-		self.pdist = pd
+		self.pixeldistance = parent.measurement['magnitude']
 
 		self.stmag = wx.StaticText(self, -1, str(mag))
-		self.stpd = wx.StaticText(self, -1, str(pd))
+		self.stpd = wx.StaticText(self, -1, str(self.pixeldistance))
 		self.stbinning = wx.StaticText(self, -1, str(bin))
 		self.stps = wx.StaticText(self, -1, '')
 		self.fedistance = FloatEntry(self, -1, chars=6)
@@ -189,10 +185,12 @@ class MeasureDialog(wx.Dialog):
 		szenter.Add(self.stmag, (0, 1), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
-		label = wx.StaticText(self, -1, 'Pixel distance:')
+		label = wx.StaticText(self, -1, 'Measured distance:')
 		szenter.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szenter.Add(self.stpd, (1, 1), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'pixels')
+		szenter.Add(label, (1, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, 'Binning:')
 		szenter.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -203,6 +201,8 @@ class MeasureDialog(wx.Dialog):
 		szenter.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		szenter.Add(self.fedistance, (3, 1), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'm')
+		szenter.Add(label, (3, 2), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 
 		label = wx.StaticText(self, -1, 'Pixel size:')
 		szenter.Add(label, (4, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
@@ -252,7 +252,7 @@ class MeasureDialog(wx.Dialog):
 		else:
 			evt.Skip()
 
-		self.ps = self.node.calculateMeasured(self.pdist, distance)
+		self.ps = self.node.calculateMeasured(self.pixeldistance, distance)
 		self.stps.SetLabel(str(self.ps))
 		self.sz.Layout()
 
@@ -295,6 +295,8 @@ class PixelSizeCalibrationDialog(wx.Dialog):
 
 		wx.Dialog.__init__(self, parent, -1, 'Pixel Size Calibration')
 
+		self.measurement = parent.measurement
+
 		self.lcpixelsize = PixelSizeListCtrl(self, -1)
 		cals = self.node.getCalibrations()
 		cals.sort()
@@ -306,6 +308,8 @@ class PixelSizeCalibrationDialog(wx.Dialog):
 		self.benter = wx.Button(self, -1, 'Enter...')
 		self.bextrapolate = wx.Button(self, -1, 'Extrapolate...')
 		self.bmeasure = wx.Button(self, -1, 'Measure...')
+		if None in [self.node.mag, self.node.bin, self.measurement]:
+			self.bmeasure.Enable(False)
 
 		self.bdone = wx.Button(self, wx.ID_OK, 'Done')
 
@@ -333,18 +337,6 @@ class PixelSizeCalibrationDialog(wx.Dialog):
 		sz.Add(szbutton, (1, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
 
 		self.SetSizerAndFit(sz)
-
-		check = [
-			self.node.mag,
-			self.node.bin,
-			self.node.pixeldistance,
-			parent.fromxy,
-			parent.toxy
-		]
-		if None in check:
-			self.bmeasure.Enable(False)
-		else:
-			self.bmeasure.Enable(True)
 
 		self.Bind(wx.EVT_BUTTON, self.onEnterButton, self.benter)
 		self.Bind(wx.EVT_BUTTON, self.onExtrapolateButton, self.bextrapolate)
@@ -380,10 +372,8 @@ class PixelSizeCalibrationDialog(wx.Dialog):
 
 	def onMeasureButton(self, evt):
 		mag = self.node.mag
-		pd = self.node.calculatePixelDistance(self.GetParent().fromxy,
-																					self.GetParent().toxy)
 		bin = self.node.bin
-		dialog = MeasureDialog(self, mag, pd, bin)
+		dialog = MeasureDialog(self, mag, bin)
 		if dialog.ShowModal() == wx.ID_OK:
 			ps = dialog.ps
 			comment = dialog.tccomment.GetValue()
