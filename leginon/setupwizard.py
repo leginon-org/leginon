@@ -704,7 +704,7 @@ class Setup(object):
 		return False
 
 	def createSession(self, user, name, description, instrument, directory):
-		imagedirectory = os.path.join(leginonconfig.unmapPath(directory), name).replace('\\', '/')
+		imagedirectory = os.path.join(leginonconfig.unmapPath(directory), name, 'rawdata').replace('\\', '/')
 		initializer = {
 			'name': name,
 			'comment': description,

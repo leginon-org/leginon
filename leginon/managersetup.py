@@ -93,7 +93,7 @@ class ManagerSetup(object):
 		  'user': self.userdata,
 		  'instrument': self.uiGetInstrument(),
 		}
-		imagepath = os.path.join(leginonconfig.IMAGE_PATH, initializer['name'])
+		imagepath = os.path.join(leginonconfig.IMAGE_PATH, initializer['name'], 'rawdata')
 		imagepath = imagepath.replace('\\', '/')
 		initializer['image path'] = imagepath
 		return data.SessionData(initializer=initializer)
