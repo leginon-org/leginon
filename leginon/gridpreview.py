@@ -144,10 +144,10 @@ class GridPreview(node.Node):
 			else:
 				neighbortiles = [self.lastid,]
 
-			filename = self.tilefilename(thisid)
-			Mrc.numeric_to_mrc(imarray, filename)
-			storedata = {'id':thisid,'image':filename, 'state': stagepos, 'neighbors': neighbortiles, 'target':target}
-			self.logAppend(storedata)
+#			filename = self.tilefilename(thisid)
+#			Mrc.numeric_to_mrc(imarray, filename)
+#			storedata = {'id':thisid,'image':filename, 'state': stagepos, 'neighbors': neighbortiles, 'target':target}
+#			self.logAppend(storedata)
 
 			scope = imagedata['scope']
 			camera = imagedata['camera']
@@ -214,7 +214,7 @@ class GridPreview(node.Node):
 		else:
 			self.temptodo = list(self.todo)
 			self.lastid = None
-			self.logClear()
+#			self.logClear()
 		return ''
 
 	def _loop(self):
@@ -229,7 +229,7 @@ class GridPreview(node.Node):
 		try:
 			while self.temptodo and not self.stoprunning.isSet():
 				self.next_target()
-			self.logPrint()
+#			self.logPrint()
 		except:
 			self.printerror('error while executing loop')
 		self.running.clear()

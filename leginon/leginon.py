@@ -14,7 +14,11 @@ import acquisition
 import EM
 import targetfinder
 
-applicationfilename = 'leginon.app'
+try:
+	applicationfilename = os.environ['LEGINONPATH'] + '\\leginon.app'
+except Exception, e:
+	print e
+	raise RuntimeError('LEGINONPATH environment variable error')
 
 class mySimpleDialog(tkSimpleDialog.Dialog):
 	def __init__(self, parent, title, args=None):

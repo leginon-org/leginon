@@ -313,13 +313,17 @@ class RunWidget(Tkinter.Frame):
 
 	def startLocalLauncher(self):
 #		launcherpath = '\\\\colossus\\amishare\\suloway\\pyleginon\\launcher.py'
-		launcherpath = '\\\\colossus\\amishare\\suloway\\pyleginon\\launcher.py'
+#		launcherpath = '\\\\colossus\\amishare\\suloway\\pyleginon\\launcher.py'
+		try:
+			launcherpath = os.envrion['LEGINONPATH'] + '\\launcher.py'
+		except:
+			raise RuntimeError('LEGINONPATH environment variable error')
 
 		if sys.platform == 'win32':
 			process = os.spawnv(os.P_NOWAIT, 'C:\\Python22\\python.exe',
 								['launcher.py', launcherpath])
 		else:
-			process = os.spawnv(os.P_NOWAIT, 'launcher.py', ['launcher.py'])
+			process = os.spawnv(os.P_NOWAIT, launcherpath, ['launcher.py'])
 
 #		self.locallauncherprocess = process
 
@@ -366,4 +370,5 @@ class SetupWizard(Wizard):
 			self.nextbutton['text'] = 'Start'
 		else:
 			self.setWidget(self.runwidget, self.startSetup, None, self.destroy)
+			self.backbutton.focus_set()
 
