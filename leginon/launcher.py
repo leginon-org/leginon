@@ -32,9 +32,16 @@ class Launcher(node.Node):
 		self.datahandler.insert(self.uicontainer)
 
 		self.defineUserInterface()
-		self.publishNodeClasses()
 		self.addEventInput(event.CreateNodeEvent, self.onCreateNode)
 		self.start()
+
+	def start(self):
+		pass
+
+	def addManager(self, location):
+		node.Node.addManager(self, location)
+		self.publishNodeClasses()
+		self.outputEvent(event.NodeInitializedEvent(id=self.ID()))
 
 	def exit(self):
 		node.Node.exit(self)
@@ -69,11 +76,13 @@ class Launcher(node.Node):
 		self.confirmEvent(ievent)
 
 if __name__ == '__main__':
-	import sys, socket
+	import socket
+	import sys
+	import time
 
 	print 'Launcher initializing...',
-	myhost = socket.gethostname()
-	myid = (myhost,)
+	hostname = socket.gethostname()
+	launcherid = (hostname,)
 
 	managerlocation = {}
 	try:
@@ -83,14 +92,20 @@ if __name__ == '__main__':
 			managerlocation['data transport']['TCP transport'] = {}
 			port = int(sys.argv[2])
 			managerlocation['data transport']['TCP transport']['port'] = port
-			m = Launcher(myid, nodelocations={'manager': managerlocation})
+			launcher = Launcher(launcherid,
+													nodelocations={'manager': managerlocation})
 		except IndexError:
-			m = Launcher(myid, int(sys.argv[1]))
+			launcher = Launcher(launcherid, int(sys.argv[1]))
 	except IndexError:
 		try:
-			m = Launcher(myid, 55555)
+			launcher = Launcher(launcherid, 55555)
 		except:
-			m = Launcher(myid)
+			launcher = Launcher(launcherid)
 	print 'Done.'
-	m.start()
+	launcher.start()
+	try:
+		while True:
+			time.sleep(0.5)
+	except KeyboardInterrupt:
+		pass
 

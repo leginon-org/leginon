@@ -866,7 +866,7 @@ class Corrector(node.Node):
 			thresh = self.despikevalue.get()
 			nsize = self.despikesize.get()
 			good = imagefun.despike(good, nsize, thresh)
-		return good
+		return good.astype(original.typecode())
 
 	def removeBadPixels(self, image, plandata):
 		badrows = plandata['bad_rows']

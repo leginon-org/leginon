@@ -356,7 +356,7 @@ class SQLDict(object):
 		for key in needpath:
 			fileref = root[key]
 			# replace reference with actual data
-			root[key] = fileref.read(imagepath)
+			root[key] = fileref.read(leginonconfig.mapPath(imagepath))
 
 		## now the object is final, so we can safely set dbid
 		root.dbid = root.pending_dbid
@@ -1310,8 +1310,7 @@ def datatype(in_dict, qikey=None, qinfo=None):
 		elif a[0] == 'MRC':
 			## set up a FileReference, to be used later
 			## when we know the full path
-			content[a[1]] = strictdict.FileReference(leginonconfig.mapPath(value),
-																								'image path',
+			content[a[1]] = strictdict.FileReference(value, 'image path',
 																								Mrc.mrc_to_numeric)
 		elif a[0] == 'REF':
 			try:

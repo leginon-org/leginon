@@ -17,7 +17,7 @@ def localHack(obj):
 		location = obj['location']
 	except (KeyError):
 		try:
-			location = obj['args'][2]['manager']
+			location = obj['node locations']['manager']
 		except (KeyError, IndexError):
 			raise
 
