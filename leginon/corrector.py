@@ -875,7 +875,16 @@ class Corrector(node.Node):
 			thresh = self.despikevalue.get()
 			nsize = self.despikesize.get()
 			good = imagefun.despike(good, nsize, thresh)
-		return good.astype(original.typecode())
+
+		## this has been commented because original.typecode()
+		## might be unsigned and causes negative values to wrap
+		## around to very large positive values
+		## before doing this astype, we should maybe clip negative
+		## values
+		#return good.astype(original.typecode())
+
+		final = good.astype(Numeric.Float32)
+		return final
 
 	def removeBadPixels(self, image, plandata):
 		badrows = plandata['bad_rows']
