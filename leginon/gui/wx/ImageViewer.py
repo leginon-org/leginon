@@ -160,11 +160,17 @@ class ContrastTool(object):
 		return self.contrastmin, self.contrastmax
 
 	def getScaledValue(self, position):
-		scale = float(position - self.slidermin)/(self.slidermax - self.slidermin)
+		try:
+			scale = float(position - self.slidermin)/(self.slidermax - self.slidermin)
+		except ZeroDivisionError:
+			scale = 1.0
 		return (self.imagemax - self.imagemin)*scale + self.imagemin
 
 	def getSliderValue(self, value):
-		scale = (value - self.imagemin)/(self.imagemax - self.imagemin)
+		try:
+			scale = (value - self.imagemin)/(self.imagemax - self.imagemin)
+		except ZeroDivisionError:
+			scale = 1.0
 		return int((self.slidermax - self.slidermin)*scale + self.slidermin)
 
 	def setRange(self, range, value=None):

@@ -153,6 +153,7 @@ class ListCtrlPanel(wx.Panel):
 		self.panelmap[label] = panel
 		index = self.listctrl.GetItemCount()
 		index = self.listctrl.InsertImageStringItem(index, label, imageindex)
+		self.listctrl.SetColumnWidth(0, wx.LIST_AUTOSIZE)
 		self.listctrl.SetItemData(index, self.data)
 		self.datatextmap[self.data] = label
 		self.data += 1

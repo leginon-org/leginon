@@ -141,8 +141,8 @@ class Node(leginonobject.LeginonObject):
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 		evt.event.wait()
 
-	def setImage(self, image, typename=None, statistics={}):
-		evt = gui.wx.Node.SetImageEvent(image, typename, statistics)
+	def setImage(self, image, typename=None, stats={}):
+		evt = gui.wx.Node.SetImageEvent(image, typename, stats)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
 	def setTargets(self, targets, typename):

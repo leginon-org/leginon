@@ -32,32 +32,29 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.Realize()
 
 		# settings
-		self.szplan = self._getStaticBoxSizer('Plan', (1, 0), (1, 1),
-																							wx.EXPAND|wx.ALL)
+		self.szplan = self._getStaticBoxSizer('Plan', (0, 0), (1, 1), wx.ALIGN_TOP)
+
+		self.stbadrows = wx.StaticText(self, -1)
+		self.stbadcolumns = wx.StaticText(self, -1)
+		self.beditplan = wx.Button(self, -1, 'Edit...')
 
 		label = wx.StaticText(self, -1, 'Bad rows:')
 		self.szplan.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.stbadrows = wx.StaticText(self, -1)
 		self.szplan.Add(self.stbadrows, (0, 1), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-
 		label = wx.StaticText(self, -1, 'Bad columns:')
 		self.szplan.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.stbadcolumns = wx.StaticText(self, -1)
 		self.szplan.Add(self.stbadcolumns, (1, 1), (1, 1),
 								wx.ALIGN_CENTER_VERTICAL|wx.EXPAND)
-
 		self.szplan.AddGrowableCol(1)
-
-		self.beditplan = wx.Button(self, -1, 'Edit...')
 		self.szplan.Add(self.beditplan, (2, 1), (1, 2),
 												wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
 		# image
 		self.imagepanel = gui.wx.ImageViewer.ImagePanel(self, -1)
-		self.szmain.Add(self.imagepanel, (1, 1), (2, 1), wx.EXPAND)
+		self.szmain.Add(self.imagepanel, (0, 1), (2, 1), wx.EXPAND)
 
-		self.szmain.AddGrowableRow(2)
+		self.szmain.AddGrowableRow(1)
 		self.szmain.AddGrowableCol(1)
 
 		self.SetSizerAndFit(self.szmain)
