@@ -33,7 +33,7 @@ db.Preset.Name['expo2']
 presetdata1 = ['focus2', 256, 256, 1, 0.3000, 41.6200, 0,'search', 66000, 0.2994, -2000, 3, 42414.5117, 106.9400, 28.7300, 198.0000, 4542.0000]
 
 
-db.Preset2 = db.Table('PRESET', [ 'Name', 'Mag', 'Defocus', 'Dose'])
+db.Preset2 = db.Table('PRESET', ['Name', 'Mag', 'Defocus', 'Dose'])
 db.Preset2.Name = db.Preset2.Index(['Name'],
 			orderBy = {'fields':('id',),'sort':'DESC'})
 dr = db.Preset2.Name['expo2'].fetchonedict()

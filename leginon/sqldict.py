@@ -346,7 +346,10 @@ class SQLDict:
 
 	    def __2dict(self,keys,values):
 		"""Returns a dictionary from a list or tuple of keys and values."""
-		return dict(zip(keys,values))
+		if (values):
+			return dict(zip(keys,values))
+		else:
+			return {}
 
 
 	def cursor(self):
