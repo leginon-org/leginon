@@ -219,15 +219,15 @@ class ImageCanvas(Frame):
 		return info
 
 	def cursorinfo_widget(self, parent, *args, **kargs):
-		return self.cursorinfo.widget(parent, *args, **kargs)
+		return self.cursorinfo.widget(parent, bg=self['bg'], *args, **kargs)
 
 	def scaling_widget(self, parent, *args, **kwargs):
-		wid = ScalingWidget(parent, self, *args, **kwargs)
+		wid = ScalingWidget(parent, self, bg=self['bg'], *args, **kwargs)
 		self.scalingwidget = wid
 		return wid
 
 	def zooming_widget(self, parent, *args, **kwargs):
-		wid = ZoomingWidget(parent, self, *args, **kwargs)
+		wid = ZoomingWidget(parent, self, bg=self['bg'], *args, **kwargs)
 		self.zoomingwidget = wid
 		return wid
 
@@ -275,10 +275,9 @@ class CursorInfoWidget(Frame):
 		self.xlab = Label(self, textvariable=cursorinfo.numx, width=6)
 		self.ylab = Label(self, textvariable=cursorinfo.numy, width=6)
 		self.ilab = Label(self, textvariable=cursorinfo.numdata, width=9)
-		self['bg'] = parent['bg']
-		self.xlab['bg'] = parent['bg']
-		self.ylab['bg'] = parent['bg']
-		self.ilab['bg'] = parent['bg']
+		self.xlab['bg'] = self['bg']
+		self.ylab['bg'] = self['bg']
+		self.ilab['bg'] = self['bg']
 		self.xlab.pack(side=LEFT)
 		self.ylab.pack(side=LEFT)
 		self.ilab.pack(side=LEFT)
@@ -291,10 +290,10 @@ class ZoomingWidget(Frame):
 		self.__build()
 
 	def __build(self):
-		Button(self, text='Zoom In', command=self.zoomin).pack(side=LEFT)
-		Button(self, text='Zoom Out', command=self.zoomout).pack(side=LEFT)
+		Button(self, text='Zoom In', command=self.zoomin, bg=self['bg']).pack(side=LEFT)
+		Button(self, text='Zoom Out', command=self.zoomout, bg=self['bg']).pack(side=LEFT)
 		self.zoomlock = BooleanVar()
-		Checkbutton(self, text='Lock', variable=self.zoomlock).pack(side=LEFT)
+		Checkbutton(self, text='Lock', variable=self.zoomlock, bg=self['bg']).pack(side=LEFT)
 
 	def zoomin(self):
 		self.factor = self.factor * 2.0
@@ -322,24 +321,55 @@ class ScalingWidget(Frame):
 		self.limit_to = None
 		self.minscalevalue = None
 		self.maxscalevalue = None
+		self.scalewidth = 300
+		self.gradheight = 10
 		self.__build()
 		self.__callbacks_on()
 
 	def __build(self):
-		self.minscale = Scale(self, orient=HORIZONTAL, showvalue=NO, width=8, length=300)
-		self.maxscale = Scale(self, orient=HORIZONTAL, showvalue=NO, width=8, length=300)
-		self.minlab = Label(self, textvariable=self.rangemin, width=7)
-		self.maxlab = Label(self, textvariable=self.rangemax, width=7)
-		self.scalelock = BooleanVar()
-		lockbut = Checkbutton(self, text='Lock', variable=self.scalelock)
+		scaleframe = Frame(self)
+		self.minscale = Scale(scaleframe, orient=HORIZONTAL, showvalue=NO, width=8, length=self.scalewidth, troughcolor=self['bg'], bg='black', activebackground='black', bd=0)
+		self.maxscale = Scale(scaleframe, orient=HORIZONTAL, showvalue=NO, width=8, length=self.scalewidth, troughcolor=self['bg'], bg='white', activebackground='white', bd=0)
+		self.gradcanvas = Canvas(scaleframe, width=self.scalewidth, height=self.gradheight)
+		self.gradcanimage = self.gradcanvas.create_image(0,0,anchor=NW)
+		self.newGradient()
 
-		self.minscale.grid(column=0, row=0)
-		self.maxscale.grid(column=0, row=1)
-		self.minlab.grid(column=1, row=0)
-		self.maxlab.grid(column=1, row=1)
-		lockbut.grid(column=2, row=0, rowspan=2)
+		self.minscale.pack(side=TOP)
+		self.gradcanvas.pack(side=TOP)
+		self.maxscale.pack(side=TOP)
+
+		labframe = Frame(self, bg=self['bg'])
+		self.minlab = Label(labframe, textvariable=self.rangemin, width=7, bg=self['bg'])
+		self.maxlab = Label(labframe, textvariable=self.rangemax, width=7, bg=self['bg'])
+		self.scalelock = BooleanVar()
+		lockbut = Checkbutton(labframe, text='Lock', variable=self.scalelock, bg=self['bg'])
+
+		self.minlab.grid(column=0, row=0)
+		self.maxlab.grid(column=0, row=1)
+		lockbut.grid(column=1, row=0, rowspan=2)
+
+		scaleframe.pack(side=LEFT)
+		labframe.pack(side=LEFT)
+
+	def gradfunc(self, row, col):
+		return self.gradmin + self.gradslope * col
+
+	def newGradient(self):
+		newmin = float(self.minscale['from'])
+		newmax = float(self.minscale['to'])
+		self.gradmin = newmin
+		self.gradslope = (newmax - newmin) / self.scalewidth
+		image = Numeric.fromfunction(self.gradfunc, (self.gradheight,self.scalewidth))
+		self.gradimage = NumericImage(image)
+
+	def updateGradient(self, clip):
+		self.gradimage.transform['clip'] = clip
+		self.gradimage.update_image()
+		self.gradphoto = self.gradimage.photoimage()
+		self.gradcanvas.itemconfig(self.gradcanimage, image=self.gradphoto)
 
 	def set_limits(self, newlimits):
+		self.limits = newlimits
 		newmin = newlimits[0]
 		newmax = newlimits[1]
 		newres = (newmax - newmin) / 256.0
@@ -349,10 +379,12 @@ class ScalingWidget(Frame):
 		self.maxscale['from'] = newmin
 		self.minscale['to'] = newmax
 		self.maxscale['to'] = newmax
+		self.newGradient()
 
 	def set_values(self, newvalues):
 		self.minscale.set(newvalues[0])
 		self.maxscale.set(newvalues[1])
+		self.updateGradient(newvalues)
 
 	def __callbacks_on(self):
 		self.minscale['command'] = self._minscale_callback
@@ -383,7 +415,6 @@ class ScalingWidget(Frame):
 			self.maxscale['command'] = self._maxscale_callback
 			return
 		self.maxscalevalue = newval
-
 		self.rangemax.set(newval)
 		self.__update_imagecanvas()
 		self.maxscale['command'] = self._maxscale_callback
@@ -394,6 +425,7 @@ class ScalingWidget(Frame):
 		rangemax = self.maxscale.get()
 		newrange = (rangemin, rangemax)
 		self.imagecanvas.clip(newrange)
+		self.updateGradient(newrange)
 
 if __name__ == '__main__':
 	mycan = ImageCanvas(None,bg='darkgrey')

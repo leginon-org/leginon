@@ -19,16 +19,19 @@ class ImageViewer(Frame):
 
 	## put together component widgets
 	def _build(self):
-		self.canvas = ImageCanvas(self, bg = '#acf',bd=4, relief=RAISED)
-		self.cursorinfowid = self.canvas.cursorinfo_widget(self, bg='#acf')
+		self.canvas = ImageCanvas(self, bg=self['bg'],bd=4, relief=RAISED)
 		#self.canvas.bind('<Configure>', self.configure_callback)
 
 		self.scaler = self.canvas.scaling_widget(self)
-		self.zoomer = self.canvas.zooming_widget(self)
+		zframe = Frame(self, bg=self['bg'])
+		self.cursorinfowid = self.canvas.cursorinfo_widget(zframe)
+		self.zoomer = self.canvas.zooming_widget(zframe)
 
-		self.cursorinfowid.pack(side=TOP)
+		self.cursorinfowid.pack(side=LEFT)
+		self.zoomer.pack(side=LEFT)
+
 		self.scaler.pack(side=TOP)
-		self.zoomer.pack(side=TOP)
+		zframe.pack(side=TOP)
 		self.canvas.pack(padx=4,pady=4,expand=YES,fill=BOTH,side=BOTTOM)
 
 		self.update()
@@ -75,7 +78,7 @@ if __name__ == '__main__':
 	screenh = root.winfo_screenheight()
 	print 'screenh', screenh
 	root.wm_maxsize(0,0)
-	jim = TestClickable(root, bg='#488')
+	jim = TestClickable(root, bg='#acf')
 	#jim = ImageViewer(root, bg='#488')
 	jim.pack()
 	
