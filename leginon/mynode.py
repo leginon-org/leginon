@@ -8,7 +8,7 @@ class MyNode(node.Node):
 	def __init__(self, id, managerlocation):
 		node.Node.__init__(self, id, managerlocation)
 
-		#self.addEventInput(event.ControlEvent, self.handle_intervalchange)
+		self.addEventInput(event.NumericControlEvent, self.handle_intervalchange)
 		self.addEventInput(event.StartEvent, self.main)
 		self.addEventInput(event.PublishEvent, self.handle_intervalpublished)
 

@@ -27,7 +27,11 @@ class IntGen(node.Node):
 		self.announce(event.StopEvent(self.ID()))
 			
 	def main(self):
-		self.interact()
+		try:
+			self.interact()
+		except:
+			print 'interact quit poorly'
+		print 'interact quit cleanly'
 
 if __name__ == '__main__':
 	import signal, sys

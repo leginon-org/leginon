@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from Tkinter import *
+from Tix import *
 import threading
 import leginonobject
 import datahandler
@@ -199,54 +199,35 @@ class Manager(node.Node):
 
 		######################
 		#### Launch Node Frame
-		self.gui_launch_launcher = StringVar()
-		self.gui_launch_target = StringVar()
 		self.gui_launch_newproc = IntVar()
 		self.gui_launch_name = StringVar()
 		self.gui_launch_args = StringVar()
 
 		launch_frame = Frame(root, relief=RAISED, bd=3)
 
-		#launch_lab = Label(launch_frame, text='LAUNCHER')
-		#launch_lab.pack(side=TOP)
-
-		f = Frame(launch_frame)
-		lab = Label(f, text='Launcher ID')
-		ent = Entry(f, textvariable=self.gui_launch_launcher)
-		self.gui_launcherlist = Listbox(f, height=10)
-
-		self.gui_launcherlist.bind('<Button-1>', self.gui_select_launcherid)
-		self.gui_launcher_str2id = {}
-
-		lab.pack(side=TOP)
-		ent.pack(side=TOP)
-		self.gui_launcherlist.pack(side=TOP)
-
-		f.pack(side=LEFT)
-
-
-
-		f = Frame(launch_frame)
-		lab = Label(f, text='Node Class')
-		ent = Entry(f, textvariable=self.gui_launch_target)
-		
-		self.gui_nodeclasslist = Listbox(f, height=10)
-		self.gui_nodeclasslist.bind('<Button-1>', self.gui_select_nodeclass)
-		## fill listbox with classes from common module
-		self.nodeclasses = common.nodeClasses()
-		for nodeclass in self.nodeclasses:
-			self.gui_nodeclasslist.insert(END, nodeclass)
-
-		lab.pack(side=TOP)
-		ent.pack(side=TOP)
-		self.gui_nodeclasslist.pack(side=TOP)
-		f.pack(side=LEFT)
-
 		f = Frame(launch_frame)
 		lab = Label(f, text='Node Name')
 		ent = Entry(f, textvariable=self.gui_launch_name)
 		lab.pack(side=LEFT)
 		ent.pack(side=LEFT)
+		f.pack(side=TOP)
+
+		f = Frame(launch_frame)
+		lab = Label(f, text='Launcher ID')
+		self.gui_launcher_str2id = {}
+		self.gui_launcherlist = ComboBox(f)
+		lab.pack(side=TOP)
+		self.gui_launcherlist.pack(side=TOP)
+		f.pack(side=TOP)
+
+		f = Frame(launch_frame)
+		lab = Label(f, text='Node Class')
+		self.gui_nodeclasslist = ComboBox(f)
+		self.nodeclasses = common.nodeClasses()
+		for nodeclass in self.nodeclasses:
+			self.gui_nodeclasslist.insert(END, nodeclass)
+		lab.pack(side=TOP)
+		self.gui_nodeclasslist.pack(side=TOP)
 		f.pack(side=TOP)
 
 		f = Frame(launch_frame)
@@ -272,44 +253,30 @@ class Manager(node.Node):
 
 		f = Frame(event_frame)
 		lab = Label(f, text='Event Type')
-		self.gui_event_type = StringVar()
-		ent = Entry(f, textvariable=self.gui_event_type)
-		self.gui_eventclasslist = Listbox(f, height=20)
-		self.gui_eventclasslist.bind('<Button-1>', self.gui_select_eventclass)
-		## fill listbox with event classes
+		self.gui_eventclasslist = ComboBox(f)
 		self.eventclasses = event.eventClasses()
 		for eventclass in self.eventclasses:
 			self.gui_eventclasslist.insert(END, eventclass)
-
 		lab.pack(side=TOP)
-		ent.pack(side=TOP)
 		self.gui_eventclasslist.pack(side=TOP)
-		f.pack(side=LEFT)
+		f.pack(side=TOP)
 
 
 		f = Frame(event_frame)
 		lab = Label(f, text='From Node')
-		self.gui_event_fromnode = StringVar()
-		ent = Entry(f, textvariable=self.gui_event_fromnode)
-		self.gui_fromnodelist = Listbox(f, height=10)
-		self.gui_fromnodelist.bind('<Button-1>', self.gui_select_fromnode)
+		self.gui_fromnodelist = ComboBox(f)
 		self.gui_fromnodelist_str2id = {}
 		lab.pack(side=TOP)
-		ent.pack(side=TOP)
 		self.gui_fromnodelist.pack(side=TOP)
-		f.pack(side=LEFT)
+		f.pack(side=TOP)
 
 		f = Frame(event_frame)
 		lab = Label(f, text='To Node')
-		self.gui_event_tonode = StringVar()
-		ent = Entry(f, textvariable=self.gui_event_tonode)
-		self.gui_tonodelist = Listbox(f, height=10)
-		self.gui_tonodelist.bind('<Button-1>', self.gui_select_tonode)
+		self.gui_tonodelist = ComboBox(f)
 		self.gui_tonodelist_str2id = {}
 		lab.pack(side=TOP)
-		ent.pack(side=TOP)
 		self.gui_tonodelist.pack(side=TOP)
-		f.pack(side=LEFT)
+		f.pack(side=TOP)
 
 		addevent_but = Button(event_frame, text='Add Event Distmap')
 		addevent_but['command'] = self.gui_event_command
@@ -352,44 +319,14 @@ class Manager(node.Node):
 			return
 		### NOT DONE YET
 
-	def gui_select_launcherid(self, guievent):
-		launcherlist = self.gui_launcherlist.get(0,END)
-		launcherindex = self.gui_launcherlist.nearest(int(guievent.y))
-		launcher = launcherlist[launcherindex]
-		self.gui_launch_launcher.set(launcher)
-
-	def gui_select_nodeclass(self, guievent):
-		targetlist = self.gui_nodeclasslist.get(0,END)
-		targetindex = self.gui_nodeclasslist.nearest(int(guievent.y))
-		targetname = targetlist[targetindex]
-		self.gui_launch_target.set(targetname)
-
-	def gui_select_eventclass(self, guievent):
-		eventlist = self.gui_eventclasslist.get(0,END)
-		eventindex = self.gui_eventclasslist.nearest(int(guievent.y))
-		eventname = eventlist[eventindex]
-		self.gui_event_type.set(eventname)
-
-	def gui_select_fromnode(self, guievent):
-		fromnodelist = self.gui_fromnodelist.get(0,END)
-		fromnodeindex = self.gui_fromnodelist.nearest(int(guievent.y))
-		fromnode = fromnodelist[fromnodeindex]
-		self.gui_event_fromnode.set(fromnode)
-
-	def gui_select_tonode(self, guievent):
-		tonodelist = self.gui_tonodelist.get(0,END)
-		tonodeindex = self.gui_tonodelist.nearest(int(guievent.y))
-		tonode = tonodelist[tonodeindex]
-		self.gui_event_tonode.set(tonode)
-
 	def gui_launch_command(self):
 
-		launcher_str = self.gui_launch_launcher.get()
+		launcher_str = self.gui_launcherlist.entry.get()
 		launcher_id = self.gui_launcher_str2id[launcher_str]
 
 		newproc = self.gui_launch_newproc.get()
 
-		target = self.gui_launch_target.get()
+		target = self.gui_nodeclasslist.entry.get()
 		target = self.nodeclasses[target]
 
 		newname = self.gui_launch_name.get()
@@ -405,13 +342,13 @@ class Manager(node.Node):
 		self.launchNode(launcher_id, newproc, target, newname, args)
 
 	def gui_event_command(self):
-		eventclass = self.gui_event_type.get()
+		eventclass = self.gui_eventclasslist.entry.get()
 		eventclass = self.eventclasses[eventclass]
 
-		fromnode_str = self.gui_event_fromnode.get()
+		fromnode_str = self.gui_fromnodelist.entry.get()
 		fromnode_id = self.gui_fromnodelist_str2id[fromnode_str]
 
-		tonode_str = self.gui_event_tonode.get()
+		tonode_str = self.gui_tonodelist.entry.get()
 		tonode_id = self.gui_tonodelist_str2id[tonode_str]
 		
 		self.addEventDistmap(eventclass, fromnode_id, tonode_id)
