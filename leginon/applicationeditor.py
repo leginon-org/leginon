@@ -13,6 +13,7 @@ class Line(object):
 
 	def createline(self, x0, y0, x1, y1):
 		self.line = self.canvas.create_line(x0, y0, x1, y1)
+		self.origin.intersection(x0, y0, x1, y1)
 #		midpoint = (int(y1) + int(y0))/2
 #		self.line1 = self.canvas.create_line(x0, y0, x0, midpoint)
 #		self.line2 = self.canvas.create_line(x0, midpoint, x1, midpoint)
@@ -114,9 +115,11 @@ class NodeLabel(object):
 
 	def drag(self, ievent):
 		self.abortConnection(ievent)
-		position = self.getPosition()
-		self.move(position[0] + ievent.x - self.dragoffset[0],
-							position[1] + ievent.y - self.dragoffset[1])
+#		position = self.getPosition()
+#		self.move(position[0] + ievent.x - self.dragoffset[0],
+#							position[1] + ievent.y - self.dragoffset[1])
+		self.move(ievent.x - self.dragoffset[0],
+							ievent.y - self.dragoffset[1])
 
 	def startDrag(self, ievent):
 		self.dragoffset = (ievent.x, ievent.y)
@@ -142,6 +145,51 @@ class NodeLabel(object):
 			self.editor.activeconnection.delete()
 			self.editor.activeconnection = None
 
+	def inside(self, x, y):
+		bbox = self.canvas.bbox(self.box)
+		if x >= bbox[0] and x <= bbox[2] and y >= bbox[1] and y <= bbox[3]:
+			return True
+		else:
+			return False
+
+	def intersection(self, x0, y0, x1, y1):
+		bbox = self.canvas.bbox(self.box)
+		bbx0 = bbox[0]
+		bby0 = bbox[1]
+		bbx1 = bbox[2]
+		bby1 = bbox[3]
+		lines = [(bbx0, bby0, bbx1, bby0), (bbx1, bby0, bbx1, bby1),
+							(bbx1, bby1, bbx0, bby1), (bbx0, bby1, bbx0, bby0)]
+		for line in lines:
+			print self.intersectline(x0, y0, x1, y1,
+													line[0], line[1], line[2], line[3])
+
+	def intersectline(self, x0, y0, x1, y1, x2, y2, x3, y3):
+		if x1 - x0 != 0:
+			m1 = float(y1 - y0)/float(x1 - x0)
+		else:
+			m1 = 1e+10
+
+		if x3 - x2 != 0:
+			m2 = float(y3 - y2)/float(x3 - x2)
+		else:
+			m2 = 1e+10
+
+		a1 = m1
+		a2 = m2
+		b1 = -1.0
+		b2 = -1.0
+		c1 = float(y0) - m1*float(x0)
+		c2 = float(y2) - m2*float(x2)
+
+		det = (a1*b2 - a2*b1)
+		if det == 0.0:
+			return None
+
+		xi=(b1*c2 - b2*c1)/det
+		yi=(a2*c1 - a1*c2)/det
+		return(xi, yi)
+
 class Editor(Tkinter.Frame):
 	def __init__(self, parent, **kwargs):
 		Tkinter.Frame.__init__(self, parent, **kwargs)
@@ -151,7 +199,13 @@ class Editor(Tkinter.Frame):
 		self.canvas = Tkinter.Canvas(self, height=600, width=800, bg='white')
 		self.canvas.bind('<Button-3>', self.abortConnection)
 		self.canvas.bind('<Motion>', self.moveConnection)
+		self.canvas.bind('<B1-Motion>', self.drag)
 		self.canvas.pack(fill=Tkinter.BOTH, expand=1)
+
+	def drag(self, ievent):
+		for node in self.nodes:
+			if node.inside(ievent.x, ievent.y):
+				node.drag(ievent)
 
 	def moveConnection(self, ievent):
 		if self.activeconnection is not None:
