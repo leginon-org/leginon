@@ -113,13 +113,16 @@ class TargetWatcher(watcher.Watcher):
 			except (KeyError, TypeError):
 				imageid = None
 
-			while 1:
+			adjustedtarget = data.AcquisitionImageTargetData(initializer=target)
+
+			### this while loop allows target to repeat
+			process_status = 'repeat'
+			while process_status == 'repeat':
 				## check if this imageid needs update
 				if imageid in self.driftedimages:
 					print 'DRIFTED IMAGE TARGET'
 					if self.driftedimages[imageid]:
-						adjust = self.driftedimages[imageid]
-						print 'ALREADY HAVE ADJUST', adjust
+						print 'ALREADY HAVE ADJUST'
 					else:
 						## need to have drift manager do it
 						self.newtargetshift.clear()
@@ -127,43 +130,37 @@ class TargetWatcher(watcher.Watcher):
 						print 'NEED ADJUST'
 						self.outputEvent(ev)
 						self.newtargetshift.wait()
-						adjust = self.driftedimages[imageid]
-						print 'GOT ADJUST', adjust
+						print 'GOT ADJUST'
+					adjust = self.driftedimages[imageid]
+					print 'ADJUST', adjust
+					adjustedtarget['version'] += 1
+					adjustedtarget['delta row'] = target['delta row'] + adjust['rows']
+					adjustedtarget['delta column'] = target['delta column'] + adjust['columns']
 				else:
-					adjust = {'rows':0, 'columns':0}
-					print 'NOT DRIFTED TARGET', adjust
+					print 'NOT DRIFTED TARGET'
 
-				## apply updated
-				print 'TARGET WAS R,C', target['delta row'], target['delta column']
-
-				target['delta row'] += adjust['rows']
-				target['delta column'] += adjust['columns']
-
-
-				print 'TARGET IS NOW R,C', target['delta row'], target['delta column']
-
+				## now have processTargetData work on it
 				try:
-					process_status = self.processTargetData(target)
+					process_status = self.processTargetData(adjustedtarget)
 				except:
 					self.printException()
 					process_status = 'exception'
+				print 'TARGET PROCESSED STATUS', process_status
 
-				print 'TARGET FINISHED STATUS', process_status
-				print 'checking pause'
+				## pause
 				if self.pause.isSet():
 					print 'pausing'
 					self.cont.clear()
 					self.cont.wait()
 					self.pause.clear()
 					print 'done pausing'
-				print 'checking abort'
+
+				## abort
 				if self.abort.isSet():
 					print 'breaking from repeat loop'
 					break
-				print 'not aborted'
 
-				if process_status != 'repeat':
-					break
+				###### end of target repeat loop
 
 			if self.abort.isSet():
 				print 'breaking from targetlist loop'
