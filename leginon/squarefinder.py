@@ -181,9 +181,14 @@ class ThresholdPlugin(Plugin):
 	def _process(self, input):
 		min = imagefun.min(input.image)
 		max = imagefun.max(input.image)
-		cutoff = (max - min) / 10.0
+		cutoff = (max - min) / self.cutoff.get()
 		return self.outputclass(input.image,
 														imagefun.threshold(input.image, cutoff))
+
+	def defineUserInterface(self):
+		Plugin.defineUserInterface(self)
+		self.cutoff = uidata.Float('Cutoff', 10.0, 'rw', persist=True, size=(4, 1))
+		self.uicontainer.addObject(self.cutoff)
 
 class BlobFinderPlugin(Plugin):
 	name = 'Blob Finder'
