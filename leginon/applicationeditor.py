@@ -416,6 +416,10 @@ class NodeLabel(object):
 		self.delete()
 		self.editor.app.delLaunchSpec(self.args)
 		self.editor.nodes.remove(self)
+		for key in self.editor.mapping:
+			if self.editor.mapping[key] == self:
+				del self.editor.mapping[key]
+				break
 
 	def getBox(self):
 		height = self.label.winfo_reqheight()
@@ -635,6 +639,8 @@ class NodeDialog(tkSimpleDialog.Dialog):
 		self.classlistbox.select_set(0)
 
 		self.launcherentry = Tkinter.Entry(master)
+		self.launcherentry.insert(Tkinter.END, '(\'\',)')
+
 		self.processvariable = Tkinter.IntVar()
 		self.processcheckbutton = Tkinter.Checkbutton(master,
 																						variable = self.processvariable)
@@ -655,7 +661,7 @@ class NodeDialog(tkSimpleDialog.Dialog):
 			self.classlistbox.select_set(self.nodeclasses.index(self.args[2]))
 
 			self.launcherentry.delete(0, Tkinter.END)
-			self.launcherentry.insert(Tkinter.END, self.args[0])
+			self.launcherentry.insert(Tkinter.END, str(self.args[0]))
 
 			self.processvariable.set(self.args[1])
 
@@ -668,7 +674,7 @@ class NodeDialog(tkSimpleDialog.Dialog):
 		if len(selection) == 0:
 			selection = ('0',)
 		classstring = self.nodeclasses[int(selection[0])]
-		launcher = (self.launcherentry.get(),)
+		launcher = self.launcherentry.get()
 		process = self.processvariable.get()
 		arguments = eval(self.argumentsentry.get())
 		self.result = (launcher, process, classstring, name, arguments)
