@@ -95,6 +95,9 @@ class Panel(wx.Panel):
 		self._updated(False)
 
 		self.SetSizerAndFit(sz)
+		minsize = (sz.GetSize().width, self.lbtemplate.GetSize().height)
+		sz.SetItemMinSize(self.lbtemplate, minsize)
+		self.Fit()
 
 	def _updated(self, evt=False):
 		enable = self.lbtemplate.GetSelection() >= 0
@@ -117,6 +120,7 @@ class Panel(wx.Panel):
 		if len(template) < 1:
 			raise ValueError
 		self.lbtemplate.Clear()
+		self._template = []
 		for target in template:
 			self._addTarget(target)
 		self._updated(False)

@@ -143,7 +143,7 @@ class TemplateSettingsDialog(gui.wx.Settings.Dialog):
 		sztemplate = wx.GridBagSizer(5, 5)
 		sztemplate.Add(szcor, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 		sztemplate.Add(self.widgets['template rings'], (1, 0), (1, 1),
-										wx.EXPAND)
+										wx.ALIGN_CENTER)
 
 		sb = wx.StaticBox(self, -1, 'Template Correlation')
 		sbsztemplate = wx.StaticBoxSizer(sb, wx.VERTICAL)

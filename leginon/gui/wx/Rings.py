@@ -78,12 +78,10 @@ class Panel(wx.Panel):
 		sz = wx.GridBagSizer(5, 5)
 		label = wx.StaticText(self, -1, 'Rings')
 		sz.Add(label, (0, 0), (1, 2), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.lbrings, (1, 0), (1, 3), wx.EXPAND)
+		sz.Add(self.lbrings, (1, 0), (1, 3), wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 		sz.Add(self.badd, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 		sz.Add(self.bedit, (2, 1), (1, 1), wx.ALIGN_CENTER)
 		sz.Add(self.bdelete, (2, 2), (1, 1), wx.ALIGN_CENTER)
-		sz.AddGrowableRow(1)
-		sz.AddGrowableCol(0)
 
 		self.Bind(wx.EVT_BUTTON, self.onAddButton, self.badd)
 		self.Bind(wx.EVT_BUTTON, self.onEditButton, self.bedit)
@@ -94,6 +92,9 @@ class Panel(wx.Panel):
 		self._updated(False)
 
 		self.SetSizerAndFit(sz)
+		minsize = (sz.GetSize().width, self.lbrings.GetSize().height)
+		sz.SetItemMinSize(self.lbrings, minsize)
+		self.Fit()
 
 	def _updated(self, evt=False):
 		enable = self.lbrings.GetSelection() >= 0
@@ -116,6 +117,7 @@ class Panel(wx.Panel):
 		if len(rings) < 1:
 			raise ValueError
 		self.lbrings.Clear()
+		self._rings = []
 		for ring in rings:
 			self._addRing(ring)
 		self._updated(False)
