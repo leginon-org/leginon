@@ -337,7 +337,7 @@ class view {
 		$this->btdownload->setLink('download.php','');
 		$this->displayscaleicon = true;
 		$this->btinfo = new button('info'.$this->name, 'info');
-		$this->btinfo->setLink('imgreport.php','');
+		$this->btinfo->setLink('imgreport.php','imginfo');
 		$this->displayscaleicon = true;
 		$this->displaytargeticon = true;
 		$this->displayffticon = true;
