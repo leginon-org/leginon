@@ -894,10 +894,10 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		## do modifications to newstage here
 		xmodcal = self.retrieveModelCalibration('x')
 		ymodcal = self.retrieveModelCalibration('y')
-		self.node.logger.info('x model a %s' % xmodcal['a'])
-		self.node.logger.info('x model b %s' % xmodcal['b'])
-		self.node.logger.info('y model a shape %s' % ymodcal['a'].shape)
-		self.node.logger.info('y model b shape %s' % ymodcal['b'].shape)
+		self.node.logger.debug('x model a %s' % xmodcal['a'])
+		self.node.logger.debug('x model b %s' % xmodcal['b'])
+		self.node.logger.debug('y model a shape %s' % ymodcal['a'].shape)
+		self.node.logger.debug('y model b shape %s' % ymodcal['b'].shape)
 		xmod = gonmodel.GonModel()
 		xmod.fromDict(xmodcal)
 		ymod = gonmodel.GonModel()
@@ -905,6 +905,8 @@ class ModeledStageCalibrationClient(CalibrationClient):
 
 		xmagcal = self.retrieveMagCalibration(scope['high tension'], scope['magnification'], 'x')
 		ymagcal = self.retrieveMagCalibration(scope['high tension'], scope['magnification'], 'y')
+		self.node.logger.debug('x mag cal %s' % (xmagcal,))
+		self.node.logger.debug('y mag cal %s' % (ymagcal,))
 
 
 		delta = self.pixtix(xmod, ymod, xmagcal, ymagcal, curstage['x'], curstage['y'], pixcol, pixrow)
