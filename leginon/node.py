@@ -81,9 +81,11 @@ class Node(leginonobject.LeginonObject):
 		self.server.datahandler._insert(idata)
 		self.announce(eventclass(idata.id))
 
-	def publishRemote(self, nodeid, idata):
+	def publishRemote(self, location, idata):
 		# perhaps an event can be generated in this too
-		self.clients[nodeid].insert(idata)
+		# this should be done by nodeid instead?
+		client = self.clientclass(location)
+		client.push(idata)
 
 	def mark_data(self, data):
 		data.origin['id'] = self.nodeid

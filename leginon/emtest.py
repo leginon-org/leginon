@@ -16,6 +16,10 @@ class EMTest(node.Node):
 		maglocdata = self.research(self.managerloc, 'magnification')
 		magdata = self.research(maglocdata.content[0], 'magnification')
 		print magdata.content
+		magdata['magnification'] = 1000
+	  self.publishRemote(maglocdata.content[0], magdata)
+		newmagdata = self.research(maglocdata.content[0], 'magnification')
+		print newmagdata.content
 
 if __name__ == '__main__':
 	pass
