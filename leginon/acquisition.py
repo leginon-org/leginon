@@ -405,7 +405,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.doneevents[dataid]['status'] = 'waiting'
 		if self.settings['display image']:
 			self.reportStatus('output', 'Displaying image...')
-			self.setImage(imagedata['image'].astype(Numeric.Float32))
+			self.setImage(imagedata['image'].astype(Numeric.Float32), 'Image')
 			self.reportStatus('output', 'Image displayed')
 
 		if self.settings['wait for process']:

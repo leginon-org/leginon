@@ -187,7 +187,7 @@ class ClickTargetFinder(TargetFinder):
 
 		# display image
 		map(self.setTargets, zip([[]]*len(self.typenames), self.typenames))
-		self.setImage(imdata['image'])
+		self.setImage(imdata['image'], 'Image')
 		#self.clickimage.imagedata = imdata
 
 		# user now clicks on targets
@@ -541,14 +541,14 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.mosaicimagedata = None
 
 		self.logger.info('Displaying mosaic image')
-		self.setImage(self.mosaicimage, 'Original')
+		self.setImage(self.mosaicimage, 'Image')
 		## imagedata would be full mosaic image
 		#self.clickimage.imagedata = None
 		self.displayTargets()
 		self.beep()
 
 	def clearMosaicImage(self):
-		self.setImage(None, 'Original')
+		self.setImage(None, 'Image')
 		self.mosaicimage = None
 		self.mosaicimagescale = None
 		self.mosaicimagedata = None

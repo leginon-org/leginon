@@ -31,12 +31,8 @@ class Panel(gui.wx.Node.Panel):
 													shortHelpString='Acquire')
 		self.toolbar.Realize()
 
-		# statistics
-		self.statspanel = gui.wx.Stats.StatsPanel(self)
-		self.szmain.Add(self.statspanel, (1, 0), (1, 1), wx.EXPAND)
-
 		# settings
-		self.szplan = self._getStaticBoxSizer('Plan', (2, 0), (1, 1),
+		self.szplan = self._getStaticBoxSizer('Plan', (1, 0), (1, 1),
 																							wx.EXPAND|wx.ALL)
 
 		label = wx.StaticText(self, -1, 'Bad rows:')
@@ -57,18 +53,13 @@ class Panel(gui.wx.Node.Panel):
 		self.szplan.Add(self.beditplan, (2, 1), (1, 2),
 												wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
 
-		self.szbuttons = wx.GridBagSizer(5, 5)
-		self.szmain.Add(self.szbuttons, (3, 0), (1, 1), wx.ALIGN_CENTER)
-
 		# image
-		self.szimage = self._getStaticBoxSizer('Image', (1, 1), (5, 1),
-																						wx.EXPAND|wx.ALL)
 		self.imagepanel = gui.wx.ImageViewer.ImagePanel(self, -1)
-		self.szimage.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND|wx.ALL)
-		self.szimage.AddGrowableRow(0)
-		self.szimage.AddGrowableCol(0)
+		self.szmain.Add(self.imagepanel, (1, 1), (2, 1), wx.EXPAND)
 
-		self.szmain.AddGrowableRow(5)
+		self.szmain.SetItemSpan(self.messagelog, (1, 2))
+
+		self.szmain.AddGrowableRow(2)
 		self.szmain.AddGrowableCol(1)
 
 		self.SetSizerAndFit(self.szmain)
@@ -90,7 +81,6 @@ class Panel(gui.wx.Node.Panel):
 
 	def onSetImage(self, evt):
 		gui.wx.Node.Panel.onSetImage(self, evt)
-		self.statspanel.setStats(evt.statistics)
 
 	def onSettingsTool(self, evt):
 		self.dialog.ShowModal()

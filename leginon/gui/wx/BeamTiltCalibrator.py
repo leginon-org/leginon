@@ -8,34 +8,38 @@ class Panel(gui.wx.Calibrator.Panel):
 	def initialize(self):
 		gui.wx.Calibrator.Panel.initialize(self)
 
+		self.toolbar.InsertSeparator(2)
+		self.cparameter = wx.Choice(self.toolbar, -1,
+																choices=['Defocus', 'Stigmators'])
+		self.cparameter.SetSelection(0)
+		self.toolbar.InsertControl(3, self.cparameter)
+		self.toolbar.InsertTool(4, gui.wx.ToolBar.ID_PARAMETER_SETTINGS,
+													'settings',
+													shortHelpString='Parameter Settings')
+
 		self.toolbar.AddSeparator()
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_MEASURE,
 													'ruler',
 													shortHelpString='Measure')
 
-		self.cparameter = wx.Choice(self, -1, choices=['Defocus', 'Stigmators'])
-		self.cparameter.SetSelection(0)
-		self.bpsettings = wx.Button(self, -1, 'Setttings...')
-		self.szparameter = self._getStaticBoxSizer('Calibration Parameter',
-																								(3, 0), (1, 1), wx.ALIGN_CENTER)
-		self.szparameter.Add(self.cparameter, (0, 0), (1, 1), wx.ALIGN_CENTER)
-		self.szparameter.Add(self.bpsettings, (0, 1), (1, 1), wx.ALIGN_CENTER)
-
-		self.beuctoscope = wx.Button(self, -1, 'To Scope')
-		self.beucfromscope = wx.Button(self, -1, 'From Scope')
-
-		self.szeuc = self._getStaticBoxSizer('Eucentric Focus',
-																					(4, 0), (1, 1), wx.ALIGN_CENTER)
-		self.szeuc.Add(self.beuctoscope, (0, 0), (1, 1), wx.EXPAND)
-		self.szeuc.Add(self.beucfromscope, (1, 0), (1, 1), wx.EXPAND)
+		self.toolbar.AddSeparator()
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_GET_INSTRUMENT,
+													'instrumentget',
+													shortHelpString='Eucentric Focus From Scope')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SET_INSTRUMENT,
+													'instrumentset',
+													shortHelpString='Eucentric Focus To Scope')
 
 	def onNodeInitialized(self):
 		gui.wx.Calibrator.Panel.onNodeInitialized(self)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onParameterSettingsTool,
+											id=gui.wx.ToolBar.ID_PARAMETER_SETTINGS)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onMeasureTool,
 											id=gui.wx.ToolBar.ID_MEASURE)
-		self.Bind(wx.EVT_BUTTON, self.onParameterSettingsButton, self.bpsettings)
-		self.Bind(wx.EVT_BUTTON, self.onEucToScope, self.beuctoscope)
-		self.Bind(wx.EVT_BUTTON, self.onEucFromScope, self.beucfromscope)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onEucFromScope,
+											id=gui.wx.ToolBar.ID_GET_INSTRUMENT)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onEucToScope,
+											id=gui.wx.ToolBar.ID_SET_INSTRUMENT)
 
 	def onEucToScope(self, evt):
 		self.node.uiEucToScope()
@@ -48,7 +52,7 @@ class Panel(gui.wx.Calibrator.Panel):
 		dialog.ShowModal()
 		dialog.Destroy()
 
-	def onParameterSettingsButton(self, evt):
+	def onParameterSettingsTool(self, evt):
 		parameter = self.cparameter.GetStringSelection()
 		if parameter == 'Defocus':
 			dialog = DefocusSettingsDialog(self)

@@ -101,7 +101,7 @@ class CalibrationClient(object):
 		t0 = actual1['system time']
 		self.numimage1 = imagecontent1['image']
 		if image_callback is not None:
-			apply(image_callback, (self.numimage1,))
+			apply(image_callback, (self.numimage1, 'Correlation'))
 		self.correlator.insertImage(self.numimage1)
 
 		self.checkAbort()
@@ -120,7 +120,7 @@ class CalibrationClient(object):
 			t1 = actual1['system time']
 			self.numimage1 = imagecontent1['image']
 			if image_callback is not None:
-				apply(image_callback, (self.numimage1,))
+				apply(image_callback, (self.numimage1, 'Correlation'))
 			self.correlator.insertImage(self.numimage1)
 
 			self.node.logger.info('Correlation...')

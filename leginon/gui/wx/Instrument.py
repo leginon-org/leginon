@@ -605,9 +605,9 @@ class Panel(gui.wx.Node.Panel):
 		self.szmain.AddGrowableCol(0)
 		self.szmain.AddGrowableCol(1)
 
-		self.szscope = self._getStaticBoxSizer('Microscope', (1, 0), (1, 2),
+		self.szscope = self._getStaticBoxSizer('Microscope', (1, 0), (1, 1),
 																								wx.EXPAND|wx.ALL)
-		self.szcamera = self._getStaticBoxSizer('Camera', (2, 0), (1, 2),
+		self.szcamera = self._getStaticBoxSizer('Camera', (2, 0), (1, 1),
 																								wx.EXPAND|wx.ALL)
 		self.szlenses = LensesSizer(self)
 		self.szfilm = FilmSizer(self)

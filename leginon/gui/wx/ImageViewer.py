@@ -23,6 +23,7 @@ import imagefun
 import icons
 import numextension
 from gui.wx.Entry import FloatEntry, EVT_ENTRY
+import gui.wx.Stats
 
 wx.InitAllImageHandlers()
 
@@ -113,6 +114,8 @@ class ContrastTool(object):
 														value=str(self.contrastmin))
 		self.iemax = FloatEntry(imagepanel, -1, chars=6, allownone=False,
 														value=str(self.contrastmax))
+		self.iemin.Enable(False)
+		self.iemax.Enable(False)
 
 		self.iemin.Bind(EVT_ENTRY, self.onMinEntry)
 		self.iemax.Bind(EVT_ENTRY, self.onMaxEntry)
@@ -441,11 +444,14 @@ class ImagePanel(wx.Panel):
 		self.panel.SetScrollRate(1, 1)
 		self.defaultcursor = wx.CROSS_CURSOR
 		self.panel.SetCursor(self.defaultcursor)
-		self.sizer.Add(self.panel, (1, 1), (1, 1), wx.EXPAND)
-		self.sizer.AddGrowableRow(1)
+		self.sizer.Add(self.panel, (1, 1), (3, 1), wx.EXPAND)
+		self.sizer.AddGrowableRow(4)
 		self.sizer.AddGrowableCol(1)
 		width, height = self.panel.GetSizeTuple()
 		self.sizer.SetItemMinSize(self.panel, width, height)
+
+		self.statspanel = gui.wx.Stats.Stats(self)
+		self.sizer.Add(self.statspanel, (1, 0), (1, 1), wx.EXPAND|wx.ALL, 3)
 
 		# bind panel events
 		self.panel.Bind(wx.EVT_LEFT_UP, self.OnLeftUp)
@@ -564,8 +570,10 @@ class ImagePanel(wx.Panel):
 			self.setNumericImage(imagedata, scroll, stats)
 		elif isinstance(imagedata, Image.Image):
 			self.setPILImage(imagedata, scroll)
+			self.statspanel.setStats(stats)
 		elif imagedata is None:
 			self.clearImage()
+			self.statspanel.setStats(stats)
 		else:
 			raise TypeError('Invalid image data type for setting image')
 
@@ -597,6 +605,8 @@ class ImagePanel(wx.Panel):
 			stats['mean'] = imagefun.mean(self.imagedata)
 		if 'stdev' not in stats:
 			stats['stdev'] = imagefun.stdev(self.imagedata, known_mean=stats['mean'])
+
+		self.statspanel.setStats(stats)
 
 		dflt_std = 5
 		## use these...
@@ -902,8 +912,7 @@ class ImagePanel(wx.Panel):
 	def addTypeTool(self, name, **kwargs):
 		if self.selectiontool is None:
 			self.selectiontool = SelectionTool(self)
-			self.sizer.Add(self.selectiontool, (1, 0), (1, 1),
-											wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_TOP|wx.ALL, 3)
+			self.sizer.Add(self.selectiontool, (2, 0), (1, 1), wx.EXPAND|wx.ALL, 3)
 		self.selectiontool.addTypeTool(name, **kwargs)
 		self.sizer.Layout()
 
@@ -1036,6 +1045,7 @@ class SelectionTool(wx.GridBagSizer):
 	def __init__(self, parent):
 		self.parent = parent
 		wx.GridBagSizer.__init__(self, 3, 3)
+		self.AddGrowableCol(1)
 		self.SetEmptyCellSize((0, 24))
 		self.order = []
 		self.tools = {}

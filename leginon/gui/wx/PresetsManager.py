@@ -195,6 +195,8 @@ class Panel(gui.wx.Node.Panel):
 		self.szmain.AddGrowableCol(1)
 		self.szmain.AddGrowableRow(3)
 
+		self.szmain.SetItemSpan(self.messagelog, (1, 2))
+
 		self.SetSizerAndFit(self.szmain)
 		self.SetupScrolling()
 

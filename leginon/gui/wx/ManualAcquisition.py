@@ -9,17 +9,6 @@ import gui.wx.Stats
 import gui.wx.ToolBar
 import wx
 
-ImageUpdatedEventType = wx.NewEventType()
-EVT_IMAGE_UPDATED = wx.PyEventBinder(ImageUpdatedEventType)
-class ImageUpdatedEvent(wx.PyCommandEvent):
-	def __init__(self, source, name, image, targets={}, stats={}):
-		wx.PyCommandEvent.__init__(self, ImageUpdatedEventType, source.GetId())
-		self.SetEventObject(source)
-		self.name = name
-		self.image = image
-		self.targets = targets
-		self.stats = stats
-
 LoopStartedEventType = wx.NewEventType()
 EVT_LOOP_STARTED = wx.PyEventBinder(LoopStartedEventType)
 class LoopStartedEvent(wx.PyCommandEvent):
@@ -67,22 +56,13 @@ class Panel(gui.wx.Node.Panel):
 		self.SetupScrolling()
 
 	def initialize(self):
-		# stats
-		self.statspanel = gui.wx.Stats.StatsPanel(self)
-		self.szmain.Add(self.statspanel, (1, 0), (1, 1), wx.EXPAND)
-
 		# image
 		self.imagepanel = self.imageclass(self, -1)
-		self.szimage = self._getStaticBoxSizer('Image', (1, 1), (4, 1),
-																						wx.EXPAND|wx.ALL)
-		self.szimage.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND)
-		self.szimage.AddGrowableRow(0)
-		self.szimage.AddGrowableCol(0)
+		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND)
 
-		self.szmain.AddGrowableRow(4)
-		self.szmain.AddGrowableCol(1)
+		self.szmain.AddGrowableRow(1)
+		self.szmain.AddGrowableCol(0)
 
-		self.Bind(EVT_IMAGE_UPDATED, self.onImageUpdated)
 		self.Bind(EVT_LOOP_STARTED, self.onLoopStarted)
 		self.Bind(EVT_LOOP_STOPPED, self.onLoopStopped)
 
@@ -114,14 +94,6 @@ class Panel(gui.wx.Node.Panel):
 
 	def acquisitionDone(self):
 		evt = gui.wx.Events.AcquisitionDoneEvent()
-		self.GetEventHandler().AddPendingEvent(evt)
-
-	def onImageUpdated(self, evt):
-		self.imagepanel.setImage(evt.image)
-		self.statspanel.setStats(evt.stats)
-
-	def imageUpdated(self, name, image, targets=None, stats={}):
-		evt = ImageUpdatedEvent(self, name, image, targets, stats)
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onSettingsTool(self, evt):

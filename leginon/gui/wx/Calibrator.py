@@ -38,14 +38,9 @@ class Panel(gui.wx.Node.Panel):
 			color = wx.Color(255, 128, 0)
 			self.imagepanel.addTargetType('Peak', color, display=True)
 
-		self.szimage = self._getStaticBoxSizer('Image', (1, 1), (5, 1),
-																						wx.EXPAND|wx.ALL)
-		self.szimage.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND)
-		self.szimage.AddGrowableRow(0)
-		self.szimage.AddGrowableCol(0)
-
-		self.szmain.AddGrowableRow(5)
-		self.szmain.AddGrowableCol(1)
+		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND|wx.ALL)
+		self.szmain.AddGrowableRow(1)
+		self.szmain.AddGrowableCol(0)
 
 	def onNodeInitialized(self):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,

@@ -30,6 +30,7 @@ class ManualCheckDoneEvent(wx.PyCommandEvent):
 
 class Panel(gui.wx.Acquisition.Panel):
 	icon = 'focuser'
+	imagepanelclass = gui.wx.ImageViewer.TargetImagePanel
 	def __init__(self, parent, name):
 		gui.wx.Acquisition.Panel.__init__(self, parent, name)
 
@@ -42,12 +43,9 @@ class Panel(gui.wx.Acquisition.Panel):
 													'manualfocus',
 													shortHelpString='Manual Focus')
 		# correlation image
-		szimage = self._getStaticBoxSizer('Correlation Image', (1, 1), (1, 1),
-																						wx.EXPAND|wx.ALL)
-		self.ipcorrelation = gui.wx.ImageViewer.TargetImagePanel(self, -1, tool=False)
-		self.ipcorrelation.addTargetType('Peak')
-		szimage.Add(self.ipcorrelation, (0, 0), (1, 1), wx.EXPAND|wx.ALL)
-		self.szmain.AddGrowableRow(2)
+		self.imagepanel.addTypeTool('Correlation', display=True)
+		self.imagepanel.addTypeTool('Peak', display=True,
+																target=wx.Color(255, 128, 0))
 
 		self.szmain.Layout()
 

@@ -59,21 +59,12 @@ class RasterFinder(targetfinder.TargetFinder):
 			'Raster': {},
 			'Final': {},
 		}
-		# ...
-		self.typenames = ['acquisition', 'focus', 'Raster']
-		self.panel.addTargetTypes(self.typenames)
-
 		self.start()
-
-	def updateImage(self, name, image, targets={}):
-		self.images[name] = image
-		self.imagetargets[name] = targets
-		self.panel.imageUpdated(name, image, targets)
 
 	def readImage(self, filename):
 		orig = Mrc.mrc_to_numeric(filename)
 		self.original = orig
-		self.updateImage('Original', orig)
+		self.setImage(orig, 'Original')
 
 	'''
 	def acqImage(self):
@@ -81,7 +72,7 @@ class RasterFinder(targetfinder.TargetFinder):
 		imdata = self.cam.acquireCameraImageData()
 		orig = imdata['image']
 		self.original = orig
-		self.updateImage('Original', orig)
+		self.setImage(orig, 'Original')
 	'''
 
 	def transpose_points(self, points):
@@ -108,7 +99,7 @@ class RasterFinder(targetfinder.TargetFinder):
 				if c < 0 or c >= imageshape[1]: continue
 				points.append((r,c))
 
-		self.updateImage('Raster', None, {'Raster': self.transpose_points(points)})
+		self.setTargets(self.transpose_points(points), 'Raster')
 		self.rasterpoints = points
 		self.logger.info('Full raster has %s points' % (len(points),))
 
@@ -179,8 +170,8 @@ class RasterFinder(targetfinder.TargetFinder):
 		const_acq = self.settings['acquisition constant template']
 		acq_points.extend(const_acq)
 
-		self.updateImage('Final', None,
-											{'acquisition': acq_points, 'focus': focus_points})
+		self.setTargets(acq_points, 'acquisition')
+		self.setTargets(focus_points, 'focus')
 
 	def applyTargetTemplate(self, centers, type):
 		if type == 'focus':

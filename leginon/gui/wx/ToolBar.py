@@ -26,6 +26,9 @@ ID_CURRENT_POSITION = 1022
 ID_FIND_SQUARES = 1023
 ID_ATLAS = 1024
 ID_STAGE_LOCATIONS = 1025
+ID_PARAMETER_SETTINGS = 1026
+ID_GET_INSTRUMENT = 1027
+ID_SET_INSTRUMENT = 1028
 
 class ToolBar(wx.ToolBar):
 	def __init__(self, parent):
@@ -39,7 +42,9 @@ class ToolBar(wx.ToolBar):
 
 	def AddTool(self, id, bitmap, **kwargs):
 		bitmap = '%s.png' % bitmap
-		bitmap = wx.BitmapFromImage(wx.Image(icons.getPath(bitmap)))
+		image = wx.Image(icons.getPath(bitmap))
+		image.ConvertAlphaToMask(64)
+		bitmap = wx.BitmapFromImage(image)
 		wx.ToolBar.AddTool(self, id, bitmap, **kwargs)
 
 	def InsertTool(self, pos, id, bitmap, **kwargs):

@@ -5,6 +5,7 @@ import gui.wx.Camera
 import gui.wx.Calibrator
 import gui.wx.Settings
 import gui.wx.ImageViewer
+import gui.wx.ToolBar
 
 def capitalize(string):
 	if string:
@@ -15,21 +16,24 @@ class Panel(gui.wx.Calibrator.Panel):
 	def initialize(self):
 		gui.wx.Calibrator.Panel.initialize(self)
 
-		self.cparameter = wx.Choice(self, -1)
-		self.bpsettings = wx.Button(self, -1, 'Setttings...')
-		self.szparameter = self._getStaticBoxSizer('Calibration Parameter',
-																								(3, 0), (1, 1), wx.ALIGN_CENTER)
-		self.szparameter.Add(self.cparameter, (0, 0), (1, 1), wx.ALIGN_CENTER)
-		self.szparameter.Add(self.bpsettings, (0, 1), (1, 1), wx.ALIGN_CENTER)
+		self.toolbar.InsertSeparator(2)
+		self.cparameter = wx.Choice(self.toolbar, -1)
+		self.cparameter.SetSelection(0)
+		self.toolbar.InsertControl(3, self.cparameter)
+		self.toolbar.InsertTool(4, gui.wx.ToolBar.ID_PARAMETER_SETTINGS,
+													'settings',
+													shortHelpString='Parameter Settings')
 
 	def onNodeInitialized(self):
 		gui.wx.Calibrator.Panel.onNodeInitialized(self)
 		self.cparameter.AppendItems(map(capitalize, self.node.parameters.keys()))
 		self.cparameter.SetStringSelection(capitalize(self.node.parameter))
 		self.Bind(wx.EVT_CHOICE, self.onParameterChoice, self.cparameter)
-		self.Bind(wx.EVT_BUTTON, self.onParameterSettingsButton, self.bpsettings)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onParameterSettingsTool,
+											id=gui.wx.ToolBar.ID_PARAMETER_SETTINGS)
+		self.toolbar.Realize()
 
-	def onParameterSettingsButton(self, evt):
+	def onParameterSettingsTool(self, evt):
 		parameter = self.cparameter.GetStringSelection()
 		dialog = MatrixSettingsDialog(self, parameter.lower(), parameter)
 		dialog.ShowModal()

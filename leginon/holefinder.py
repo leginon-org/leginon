@@ -97,8 +97,6 @@ class HoleFinder(targetfinder.TargetFinder):
 			'laplacian-gaussian'
 		]
 		# ...
-		self.typenames = ['acquisition', 'focus', 'All blobs', 'Lattice Blobs']
-		self.panel.addTargetTypes(self.typenames)
 
 		self.cortypes = ['cross', 'phase']
 		self.focustypes = ['Off', 'Any Hole', 'Good Hole']
@@ -113,23 +111,18 @@ class HoleFinder(targetfinder.TargetFinder):
 		testmeth = uidata.Method('Test All', self.everything)
 	'''
 
-	def updateImage(self, name, image, targets={}):
-		self.images[name] = image
-		self.imagetargets[name] = targets
-		self.panel.imageUpdated(name, image, targets)
-
 	def readImage(self, filename):
 		orig = Mrc.mrc_to_numeric(filename)
 		self.hf['original'] = orig
 		self.currentimagedata = None
-		self.updateImage('Original', orig)
+		self.setImage('Original', orig)
 
 	def acqImage(self):
 		self.cam.uiApplyAsNeeded()
 		imdata = self.cam.acquireCameraImageData()
 		orig = imdata['image']
 		self.hf['original'] = orig
-		self.updateImage('Original', orig)
+		self.setImage('Original', orig)
 
 	def findEdges(self):
 		self.logger.info('find edges')
@@ -145,7 +138,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.hf.configure_edges(filter=filt, size=n, sigma=sig, absvalue=ab, lp=lowpasson, lpn=lowpassn, lpsig=lowpasssig, thresh=edgethresh, edges=edges)
 		self.hf.find_edges()
 		# convert to Float32 to prevent seg fault
-		self.updateImage('Edge', self.hf['edges'].astype(Numeric.Float32))
+		self.setImage(self.hf['edges'].astype(Numeric.Float32), 'Edge')
 
 	def correlateTemplate(self):
 		self.logger.info('correlate ring template')
@@ -166,7 +159,7 @@ class HoleFinder(targetfinder.TargetFinder):
 			corfilt = None
 		self.hf.configure_correlation(cortype, corfilt)
 		self.hf.correlate_template()
-		self.updateImage('Template', self.hf['correlation'].astype(Numeric.Float32))
+		self.setImage(self.hf['correlation'].astype(Numeric.Float32), 'Template')
 
 	def threshold(self):
 		self.logger.info('threshold')
@@ -174,7 +167,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.hf.configure_threshold(tvalue)
 		self.hf.threshold_correlation()
 		# convert to Float32 to prevent seg fault
-		self.updateImage('Threshold', self.hf['threshold'].astype(Numeric.Float32))
+		self.setImage(self.hf['threshold'].astype(Numeric.Float32), 'Threshold')
 
 	def blobCenters(self, blobs):
 		centers = []
@@ -193,7 +186,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		blobs = self.hf['blobs']
 		centers = self.blobCenters(blobs)
 		self.logger.info('Blobs: %s' % (len(centers),))
-		self.updateImage('Blobs', None, {'All Blobs': centers})
+		self.setTargets(centers, 'Blobs')
 
 	def fitLattice(self):
 		self.logger.info('fit lattice')
@@ -220,7 +213,7 @@ class HoleFinder(targetfinder.TargetFinder):
 			tstd = self.icecalc.get_stdev_thickness(std, mean)
 			center = tuple(hole.stats['center'])
 			mylist.append({'m':mean, 'tm': tmean, 's':std, 'ts': tstd, 'c':center})
-		self.updateImage('Lattice', None, {'Lattice Blobs': centers})
+		self.setTargets(centers, 'Lattice')
 
 	def ice(self):
 		self.logger.info('limit thickness')
@@ -264,8 +257,8 @@ class HoleFinder(targetfinder.TargetFinder):
 		else:
 			acq_points = centers
 
-		self.updateImage('Final', None, {'acquisition': acq_points,
-																										'focus': focus_points})
+		self.setTargets(acq_points, 'acquisition')
+		self.setTargets(focus_points, 'focus')
 		self.logger.info('Acquisition Targets: %s' % (len(acq_points),))
 		self.logger.info('Focus Targets: %s' % (len(focus_points),))
 		hfprefs = self.storeHoleFinderPrefsData(self.currentimagedata)
@@ -316,7 +309,8 @@ class HoleFinder(targetfinder.TargetFinder):
 		return closest_point
 
 	def bypass(self):
-		self.updateImage('Final', None, {'acquisition': [], 'focus': []})
+		self.setTargets([], 'acquisition')
+		self.setTargets([], 'focus')
 
 	def applyTargetTemplate(self, centers):
 		self.logger.info('apply template')

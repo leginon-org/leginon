@@ -21,12 +21,12 @@ class NodeInitializedEvent(wx.PyEvent):
 		self.event = threading.Event()
 
 class SetImageEvent(wx.PyEvent):
-	def __init__(self, image, typename=None, statistics={}):
+	def __init__(self, image, typename=None, stats={}):
 		wx.PyEvent.__init__(self)
 		self.SetEventType(SetImageEventType)
 		self.image = image
 		self.typename = typename
-		self.statistics = statistics
+		self.stats = stats
 
 class SetTargetsEvent(wx.PyEvent):
 	def __init__(self, targets, typename):
@@ -51,7 +51,7 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 		self.szmain = wx.GridBagSizer(5, 5)
 
 		self.messagelog = gui.wx.MessageLog.MessageLog(self)
-		self.szmain.Add(self.messagelog, (0, 0), (1, 2), wx.EXPAND|wx.ALL, 3)
+		self.szmain.Add(self.messagelog, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 3)
 
 		self.Bind(EVT_NODE_INITIALIZED, self._onNodeInitialized)
 		self.Bind(EVT_SET_IMAGE, self.onSetImage)
@@ -73,7 +73,7 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 		if evt.typename is None:
 			self.imagepanel.setImage(evt.image)
 		else:
-			self.imagepanel.setImageType(evt.image, evt.typename)
+			self.imagepanel.setImageType(evt.typename, evt.image)
 
 	def onSetTargets(self, evt):
 		self.imagepanel.setTargets(evt.typname, evt.targets)

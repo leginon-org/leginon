@@ -30,7 +30,6 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 													'squarefinder',
 													shortHelpString='Find Squares')
 
-		self.imagepanel.addTypeTool('Originial', display=True)
 		self.imagepanel.addTypeTool('Filtered', display=True, settings=True)
 		self.imagepanel.addTypeTool('Thresholded', display=True, settings=True)
 
@@ -47,8 +46,7 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 		self.toolbar.Bind(wx.EVT_TOOL, self.onFindSquaresButton,
 											id=gui.wx.ToolBar.ID_FIND_SQUARES)
 
-		self.Bind(gui.wx.ImageViewer.EVT_SETTINGS, self.onImageSettings,
-							self.imagepanel)
+		self.Bind(gui.wx.ImageViewer.EVT_SETTINGS, self.onImageSettings)
 
 	def onTilesButton(self, evt):
 		choices = self.node.getMosaicNames()
@@ -206,9 +204,9 @@ class LPFSettingsDialog(gui.wx.Settings.Dialog):
 
 class BlobSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
-		self.widgets['threshold'] = IntEntry(self, -1, min=0, chars=4)
-		self.widgets['border'] = IntEntry(self, -1, min=0, chars=4)
-		self.widgets['max blobs'] = IntEntry(self, -1, min=0, chars=4)
+		self.widgets['threshold'] = FloatEntry(self, -1, min=0, chars=6)
+		self.widgets['border'] = IntEntry(self, -1, min=0, chars=6)
+		self.widgets['max blobs'] = IntEntry(self, -1, min=0, chars=6)
 		self.widgets['min blob size'] = IntEntry(self, -1, min=0, chars=6)
 		self.widgets['max blob size'] = IntEntry(self, -1, min=0, chars=6)
 		self.widgets['min blob mean'] = FloatEntry(self, -1, chars=6)
@@ -241,15 +239,19 @@ class BlobSettingsDialog(gui.wx.Settings.Dialog):
 								wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
 
 		sz = wx.GridBagSizer(5, 5)
-		label = wx.StaticText(self, -1, 'Border:')
+		label = wx.StaticText(self, -1, 'Threshold:')
 		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['border'], (0, 1), (1, 1),
+		sz.Add(self.widgets['threshold'], (0, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Border:')
+		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['border'], (1, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
 		label = wx.StaticText(self, -1, 'Max. number of blobs:')
-		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		sz.Add(self.widgets['max blobs'], (1, 1), (1, 1),
+		sz.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['max blobs'], (2, 1), (1, 1),
 						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
-		sz.Add(szrange, (2, 0), (1, 2), wx.ALIGN_CENTER)
+		sz.Add(szrange, (3, 0), (1, 2), wx.ALIGN_CENTER)
 		sz.AddGrowableCol(1)
 
 		sb = wx.StaticBox(self, -1, 'Blob Finding')

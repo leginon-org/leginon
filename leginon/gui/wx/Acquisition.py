@@ -9,6 +9,7 @@ import gui.wx.ToolBar
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'acquisition'
+	imagepanelclass = gui.wx.ImageViewer.ImagePanel
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
 
@@ -28,7 +29,8 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.Realize()
 
 		# image
-		self.imagepanel = gui.wx.ImageViewer.ImagePanel(self, -1)
+		self.imagepanel = self.imagepanelclass(self, -1)
+		self.imagepanel.addTypeTool('Image', display=True)
 		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND|wx.ALL, 3)
 
 		self.szmain.AddGrowableRow(1)

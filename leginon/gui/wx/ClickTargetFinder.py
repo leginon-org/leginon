@@ -19,12 +19,10 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.imagepanel.addTypeTool('done', target=wx.RED, display=True)
 		self.imagepanel.addTypeTool('position', target=wx.Color(255, 128, 0),
 																	display=True)
-		self.szimage = self._getStaticBoxSizer('Target Image', (1, 1), (3, 1),
-																						wx.EXPAND|wx.ALL)
-		self.szimage.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND)
-		self.szimage.AddGrowableRow(0)
-		self.szimage.AddGrowableCol(0)
-		self.szmain.AddGrowableRow(3)
+		self.imagepanel.addTypeTool('Image', display=True)
+		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND)
+		self.szmain.AddGrowableRow(1)
+		self.szmain.AddGrowableCol(0)
 
 	def getTargets(self, typename):
 		return self.imagepanel.getTargets(typename)

@@ -51,9 +51,6 @@ class ManualAcquisition(node.Node):
 
 		self.start()
 
-	def updateImage(self, name, image, targets={}, stats={}):
-		self.panel.imageUpdated(name, image, targets, stats)
-
 	def getImageStats(self, image):
 		if image is None:
 			return {'mean': None, 'stdev': None, 'min': None, 'max': None}
@@ -94,7 +91,7 @@ class ManualAcquisition(node.Node):
 
 		self.logger.info('Displaying image...')
 		stats = self.getImageStats(imagedata['image'])
-		self.updateImage('Image', imagedata['image'], stats=stats)
+		self.setImage(imagedata['image'], stats=stats)
 		if self.settings['save image']:
 			self.logger.info('Saving image to database...')
 			try:

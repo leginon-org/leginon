@@ -9,34 +9,6 @@ from gui.wx.Entry import Entry, IntEntry, FloatEntry
 import gui.wx.TargetTemplate
 import gui.wx.ToolBar
 
-AddTargetTypesEventType = wx.NewEventType()
-AddTargetsEventType = wx.NewEventType()
-SetTargetsEventType = wx.NewEventType()
-
-EVT_ADD_TARGET_TYPES = wx.PyEventBinder(AddTargetTypesEventType)
-EVT_ADD_TARGETS = wx.PyEventBinder(AddTargetsEventType)
-EVT_SET_TARGETS = wx.PyEventBinder(SetTargetsEventType)
-
-class AddTargetTypesEvent(wx.PyCommandEvent):
-	def __init__(self, source, typenames):
-		wx.PyCommandEvent.__init__(self, AddTargetTypesEventType, source.GetId())
-		self.SetEventObject(source)
-		self.typenames = typenames
-
-class AddTargetsEvent(wx.PyCommandEvent):
-	def __init__(self, source, typename, targets):
-		wx.PyCommandEvent.__init__(self, AddTargetsEventType, source.GetId())
-		self.SetEventObject(source)
-		self.typename = typename
-		self.targets = targets
-
-class SetTargetsEvent(wx.PyCommandEvent):
-	def __init__(self, source, typename, targets):
-		wx.PyCommandEvent.__init__(self, SetTargetsEventType, source.GetId())
-		self.SetEventObject(source)
-		self.typename = typename
-		self.targets = targets
-
 class Panel(gui.wx.TargetFinder.Panel):
 	icon = 'holefinder'
 	def initialize(self):
@@ -47,158 +19,30 @@ class Panel(gui.wx.TargetFinder.Panel):
 													'play',
 													shortHelpString='Submit Targets')
 
-		self.targetcolors = {
-			'acquisition': wx.GREEN,
-			'focus': wx.BLUE,
-			'All Blobs': wx.Color(0, 255, 255),
-			'Lattice Blobs': wx.Color(255, 0, 255),
-		}
-
-		self.szdisplay = self._getStaticBoxSizer('Display', (2, 0), (1, 1),
-																							wx.ALIGN_CENTER)
-		order = [
-			'Original',
-			'Edge',
-			'Template',
-			'Threshold',
-			'Blobs',
-			'Lattice',
-			'Final'
-		]
-		self.imagecheckboxes = [
-			'Original',
-			'Edge',
-			'Template',
-			'Threshold',
-		]
-		self.targetcheckboxes = [
-			'Blobs',
-			'Lattice',
-			'Final'
-		]
-		self.rbdisplay = {}
-		self.bhf = {}
-		for i, n in enumerate(order):
-			self.rbdisplay[n] = wx.CheckBox(self, -1, n)
-			self.bhf[n] = wx.Button(self, -1, 'Settings...')
-			self.szdisplay.Add(self.rbdisplay[n], (i, 0), (1, 1),
-													wx.ALIGN_CENTER_VERTICAL)
-			self.szdisplay.Add(self.bhf[n], (i, 1), (1, 1), wx.ALIGN_CENTER)
-
 		self.imagepanel = gui.wx.ImageViewer.TargetImagePanel(self, -1)
-		self.szimage = self._getStaticBoxSizer('Target Image', (1, 1), (3, 1),
-																						wx.EXPAND|wx.ALL)
-		self.szimage.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND)
-		self.szimage.AddGrowableRow(0)
-		self.szimage.AddGrowableCol(0)
-		self.szmain.AddGrowableRow(3)
+		self.imagepanel.addTypeTool('Original', display=True, settings=True)
+		self.imagepanel.addTypeTool('Edge', display=True, settings=True)
+		self.imagepanel.addTypeTool('Template', display=True, settings=True)
+		self.imagepanel.addTypeTool('Threshold', display=True, settings=True)
+		self.imagepanel.addTypeTool('Blobs', display=True,
+																target=wx.Color(0, 255, 255), settings=True)
+		self.imagepanel.addTypeTool('Lattice', display=True,
+																target=wx.Color(255, 0, 255), settings=True)
+		self.imagepanel.addTypeTool('acquisition', display=True, target=wx.GREEN,
+																settings=True)
+		self.imagepanel.addTypeTool('focus', display=True, target=wx.BLUE,
+																settings=True)
 
-		self.Bind(EVT_ADD_TARGET_TYPES, self.onAddTargetTypes)
-		self.Bind(EVT_ADD_TARGETS, self.onAddTargets)
-		self.Bind(EVT_SET_TARGETS, self.onSetTargets)
-		self.Bind(gui.wx.TargetFinder.EVT_IMAGE_UPDATED, self.onImageUpdated)
-
-	def onImageUpdated(self, evt):
-		if self.rbdisplay[evt.name].GetValue():
-			if evt.name in self.imagecheckboxes:
-				self.imagepanel.setImage(evt.image)
-			if evt.name in self.targetcheckboxes:
-				if evt.targets is not None:
-					self._setTargets(evt.targets)
-
-	def imageUpdated(self, name, image, targets=None):
-		evt = gui.wx.TargetFinder.ImageUpdatedEvent(self, name, image, targets)
-		self.GetEventHandler().AddPendingEvent(evt)
-
-	def onAddTargetTypes(self, evt):
-		for typename in evt.typenames:
-			try:
-				color = self.targetcolors[typename]
-			except KeyError:
-				color = None
-			self.imagepanel.addTargetType(typename, color)
-
-	def onAddTargets(self, evt):
-		for target in evt.targets:
-			x, y = target
-			self.imagepanel.addTarget(evt.typename, x, y)
-
-	def onSetTargets(self, evt):
-		self.imagepanel.clearTargets(evt.typename)
-		self.onAddTargets(evt)
-
-	def addTargetTypes(self, typenames):
-		evt = AddTargetTypesEvent(self, typenames)
-		self.GetEventHandler().AddPendingEvent(evt)
-
-	def addTargets(self, typename, targets):
-		evt = AddTargetsEvent(self, typename, targets)
-		self.GetEventHandler().AddPendingEvent(evt)
-
-	def setTargets(self, typename, targets):
-		evt = SetTargetsEvent(self, typename, targets)
-		self.GetEventHandler().AddPendingEvent(evt)
+		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND)
+		self.szmain.AddGrowableRow(1)
+		self.szmain.AddGrowableCol(0)
 
 	def getTargets(self, typename):
-		return self.imagepanel.getTargetTypeValue(typename)
-
-	def onDisplayImageCheckBox(self, evt):
-		key = evt.GetEventObject().GetLabel()
-		for k in self.imagecheckboxes:
-			if k != key:
-				self.rbdisplay[k].SetValue(False)
-		if evt.IsChecked():
-			try:
-				image = self.node.images[key]
-			except KeyError:
-				image = None
-		else:
-			image = None
-		self.imagepanel.setImage(image)
-
-	def _setTargets(self, targets):
-		for typename, targetlist in targets.items():
-			self.imagepanel.clearTargets(typename)
-			for target in targetlist:
-				x, y = target
-				self.imagepanel.addTarget(typename, x, y)
-
-	def onDisplayTargetsCheckBox(self, evt):
-		key = evt.GetEventObject().GetLabel()
-		try:
-			targets = self.node.imagetargets[key]
-		except KeyError:
-			targets = {}
-		if evt.IsChecked():
-			self._setTargets(targets)
-		else:
-			for typename in targets:
-				self.imagepanel.clearTargets(typename)
+		return self.imagepanel.getTargets(typename)
 
 	def onNodeInitialized(self):
 		gui.wx.TargetFinder.Panel.onNodeInitialized(self)
-
-		for k in self.imagecheckboxes:
-			self.Bind(wx.EVT_CHECKBOX, self.onDisplayImageCheckBox, self.rbdisplay[k])
-		for k in self.targetcheckboxes:
-			self.Bind(wx.EVT_CHECKBOX, self.onDisplayTargetsCheckBox,
-								self.rbdisplay[k])
-
-		self.Bind(wx.EVT_BUTTON, self.onOriginalSettingsButton,
-							self.bhf['Original'])
-		self.Bind(wx.EVT_BUTTON, self.onEdgeSettingsButton,
-							self.bhf['Edge'])
-		self.Bind(wx.EVT_BUTTON, self.onTemplateSettingsButton,
-							self.bhf['Template'])
-		self.Bind(wx.EVT_BUTTON, self.onThresholdSettingsButton,
-							self.bhf['Threshold'])
-		self.Bind(wx.EVT_BUTTON, self.onBlobsSettingsButton,
-							self.bhf['Blobs'])
-		self.Bind(wx.EVT_BUTTON, self.onLatticeSettingsButton,
-							self.bhf['Lattice'])
-		self.Bind(wx.EVT_BUTTON, self.onFinalSettingsButton,
-							self.bhf['Final'])
-
+		self.Bind(gui.wx.ImageViewer.EVT_SETTINGS, self.onImageSettings)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onSubmitTool,
 											id=gui.wx.ToolBar.ID_SUBMIT)
 
@@ -210,43 +54,34 @@ class Panel(gui.wx.TargetFinder.Panel):
 		dialog.ShowModal()
 		dialog.Destroy()
 
-	def onOriginalSettingsButton(self, evt):
-		dialog = OriginalSettingsDialog(self)
-		if dialog.ShowModal() == wx.ID_OK:
-			filename = self.node.settings['image filename']
-			if filename:
-				self.node.readImage(filename)
-		dialog.Destroy()
+	def onImageSettings(self, evt):
+		if evt.name == 'Original':
+			dialog = OriginalSettingsDialog(self)
+			if dialog.ShowModal() == wx.ID_OK:
+				filename = self.node.settings['image filename']
+				if filename:
+					self.node.readImage(filename)
+			dialog.Destroy()
+			return
 
-	def onEdgeSettingsButton(self, evt):
-		dialog = EdgeSettingsDialog(self)
+		if evt.name == 'Edge':
+			dialog = EdgeSettingsDialog(self)
+		elif evt.name == 'Template':
+			dialog = TemplateSettingsDialog(self)
+		elif evt.name == 'Threshold':
+			dialog = ThresholdSettingsDialog(self)
+		elif evt.name == 'Blobs':
+			dialog = BlobsSettingsDialog(self)
+		elif evt.name == 'Lattice':
+			dialog = LatticeSettingsDialog(self)
+		elif evt.name == 'acquisition':
+			dialog = FinalSettingsDialog(self)
+		elif evt.name == 'focus':
+			dialog = FinalSettingsDialog(self)
+
 		dialog.ShowModal()
 		dialog.Destroy()
 
-	def onTemplateSettingsButton(self, evt):
-		dialog = TemplateSettingsDialog(self)
-		dialog.ShowModal()
-		dialog.Destroy()
-
-	def onThresholdSettingsButton(self, evt):
-		dialog = ThresholdSettingsDialog(self)
-		dialog.ShowModal()
-		dialog.Destroy()
-
-	def onBlobsSettingsButton(self, evt):
-		dialog = BlobsSettingsDialog(self)
-		dialog.ShowModal()
-		dialog.Destroy()
-
-	def onLatticeSettingsButton(self, evt):
-		dialog = LatticeSettingsDialog(self)
-		dialog.ShowModal()
-		dialog.Destroy()
-
-	def onFinalSettingsButton(self, evt):
-		dialog = FinalSettingsDialog(self)
-		dialog.ShowModal()
-		dialog.Destroy()
 
 class OriginalSettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):

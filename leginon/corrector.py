@@ -142,9 +142,10 @@ class Corrector(node.Node):
 
 	def displayImage(self, imagedata):
 		if imagedata is None:
-			self.setImage(None, {})
+			self.setImage(None, stats={})
 		else:
-			self.setImage(imagedata.astype(Numeric.Float32), self.stats(imagedata))
+			self.setImage(imagedata.astype(Numeric.Float32),
+										stats=self.stats(imagedata))
 
 	def retrievePlan(self, corstate):
 		qplan = data.CorrectorPlanData()

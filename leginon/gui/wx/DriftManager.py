@@ -28,13 +28,11 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.Realize()
 
 		# image
-		self.szimage = self._getStaticBoxSizer('Image', (1, 0), (2, 1),
-																						wx.EXPAND|wx.ALL)
 		self.imagepanel = gui.wx.ImageViewer.ImagePanel(self, -1)
-		self.szimage.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND|wx.ALL)
+		self.szmain.Add(self.imagepanel, (1, 0), (1, 1), wx.EXPAND)
 
-		self.szmain.AddGrowableCol(1)
-		self.szmain.AddGrowableRow(2)
+		self.szmain.AddGrowableRow(1)
+		self.szmain.AddGrowableCol(0)
 
 		self.SetSizerAndFit(self.szmain)
 		self.SetupScrolling()
