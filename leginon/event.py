@@ -37,9 +37,9 @@ def bases_tup(classobject):
 	return basetup
 
 
-class MyEvent(event.Event):
+class MyEvent(Event):
 	def __init__(self):
-		event.Event.__init__(self)
+		Event.__init__(self)
 
 	def xmlrpc_repr(self):
 		repr = event.Event.xmlrpc_repr(self)
@@ -47,9 +47,9 @@ class MyEvent(event.Event):
 		return repr
 
 
-class YourEvent(event.Event):
+class YourEvent(Event):
 	def __init__(self):
-		event.Event.__init__(self)
+		Event.__init__(self)
 
 	def xmlrpc_repr(self):
 		repr = event.Event.xmlrpc_repr(self)
