@@ -353,7 +353,7 @@ class NodeClassesData(Data):
 class DriftData(Data):
 	def typemap(cls):
 		t = Data.typemap()
-		t += []
+		t += [('rows', float), ('cols', float)]
 		return t
 	typemap = classmethod(typemap)
 
