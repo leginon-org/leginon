@@ -254,9 +254,8 @@ class ChangePresetEvent(Event):
 class PresetChangedEvent(Event):
 	def typemap(cls):
 		t = Event.typemap()
-		t += [
-			('name', str),
-		]
+		t += [ ('name', str), ]
+		return t
 	typemap = classmethod(typemap)
 
 ##############################################################
