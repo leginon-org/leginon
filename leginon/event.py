@@ -105,10 +105,25 @@ class ListPublishEvent(Event):
 		else:
 			raise TypeError
 
+class CorrelationPublishEvent(PublishEvent):
+	'Event indicating cross correlation was published'
+	def __init__(self, id, content, confirm):
+		PublishEvent.__init__(self, id, content, confirm)
+
 class ImagePublishEvent(PublishEvent):
 	'Event indicating image was published'
 	def __init__(self, id, content, confirm):
 		PublishEvent.__init__(self, id, content, confirm)
+
+class CrossCorrelationImagePublishEvent(ImagePublishEvent):
+	'Event indicating image was published'
+	def __init__(self, id, content, confirm):
+		ImagePublishEvent.__init__(self, id, content, confirm)
+
+class PhaseCorrelationImagePublishEvent(ImagePublishEvent):
+	'Event indicating image was published'
+	def __init__(self, id, content, confirm):
+		ImagePublishEvent.__init__(self, id, content, confirm)
 
 class ControlEvent(Event):
 	'Event that passes a value with it'

@@ -263,6 +263,11 @@ class Manager(node.Node):
 		self.registerUIFunction(self.uiLaunch, argspec, 'Launch')
 
 		argspec = (
+			{'name':'nodename', 'alias':'Node', 'type':self.clientlist},
+			)
+		self.registerUIFunction(self.uiKill, argspec, 'Kill (experimental)')
+
+		argspec = (
 			{'name':'eventclass_str', 'alias':'Event Class', 'type':eventclass_list},
 			{'name':'fromnode_str', 'alias':'From Node', 'type':self.clientlist},
 			{'name':'tonode_str', 'alias':'To Node', 'type':self.clientlist}
@@ -306,6 +311,10 @@ class Manager(node.Node):
 
 		## just to make xmlrpc happy
 		return ''
+
+	def uiKill(self, nodename):
+		nodeid = self.clientdict[nodename]
+		self.killNode(nodeid)
 
 	def uiAddDistmap(self, eventclass_str, fromnode_str, tonode_str):
 		"""

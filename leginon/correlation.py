@@ -61,9 +61,8 @@ def findPeak(image, subpixelflag):
 				wrapped = peak[dim] - image.shape[dim]
 			val['shift'].append(wrapped)
 	except:
-		raise
-		val['peak'] = None
-		val['shift'] = None
+		val['peak'] = ()
+		val['shift'] = ()
 		print 'error finding peak'
 	return val
 

@@ -78,10 +78,10 @@ class CorrelationImageData(ImageData):
 	def __init__(self, id, content):
 		ImageData.__init__(self, id, content)
 
-class CrossCorrelationImage(CorrelationImageData):
+class CrossCorrelationImageData(CorrelationImageData):
 	def __init__(self, id, content):
 		CorrelationImageData.__init__(self, id, content)
 
-class PhaseCorrelationImage(CorrelationImageData):
+class PhaseCorrelationImageData(CorrelationImageData):
 	def __init__(self, id, content):
 		CorrelationImageData.__init__(self, id, content)
