@@ -531,7 +531,7 @@ class ImageData(InSessionData):
 			basename += '_%s' % (self['id'][-2],)
 			
 		myindex = self['id'][-1]
-		basename += '_%04d.mrc' % (myindex,)
+		basename += '_%06d.mrc' % (myindex,)
 		return basename
 
 	def thumb_filename(self):
