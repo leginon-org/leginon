@@ -35,14 +35,14 @@ class MosaicNavigator(navigator.Navigator):
 		print 'clicked =', (row, column)
 
 		# certainly not optimal
-		print 'maxmagnitude =", maxmagnitude
 		maxmagnitude = math.sqrt(shape[0]**2 + shape[1]**2)
+		print 'maxmagnitude =', maxmagnitude
 		nearestdelta = (0,0)
 		nearesttile = None
 		for tile in mosaicdata:
 			position = mosaicdata[tile]['position']
 			print tile, 'position =', position
-			deltaposition = ((position[0] - row), (position[1] - column))
+			deltaposition = ((position[0] + row), (position[1] + column))
 			print tile, 'deltaposition =', deltaposition
 			magnitude = math.sqrt((deltaposition[0])**2 + (deltaposition[1])**2)
 			print tile, 'magnitude =', magnitude
