@@ -82,18 +82,14 @@ class Corrector(node.Node):
 		self.start()
 
 	def setPlan(self):
+		newcamstate = data.CorrectorCamstateData()
+		newcamstate['session'] = self.session
 		try:
 			self.instrument.ccdcamera.Settings = self.settings['camera settings']
-			camconfig = self.instrument.getData(data.CameraEMData)
+			newcamstate.friendly_update(self.instrument.ccdcamera.Geometry)
 		except Exception, e:
 			self.logger.error('Plan not saved: %s' % e)
 			return
-
-		newcamstate = data.CorrectorCamstateData()
-		newcamstate['session'] = self.session
-		newcamstate['dimension'] = camconfig['dimension']
-		newcamstate['offset'] = camconfig['offset']
-		newcamstate['binning'] = camconfig['binning']
 		plandata = data.CorrectorPlanData()
 		plandata['session'] = self.session
 		plandata['camstate'] = newcamstate

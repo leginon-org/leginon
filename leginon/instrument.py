@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.11 $
+# $Revision: 1.12 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-23 22:52:34 $
+# $Date: 2005-02-24 01:21:57 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -71,6 +71,8 @@ class Proxy(object):
 			instance = dataclass()
 			instance['scope'] = self.getData(data.ScopeEMData)
 			instance['camera'] = self.getData(data.CameraEMData)
+			instance['image'] = instance['camera']['image data']
+			instance['camera']['image data'] = None
 			return instance
 		if proxy is None:
 			raise ValueError('no proxy selected for this data class')
