@@ -960,7 +960,8 @@ class ManagerSetup(object):
 		self.container = uidata.ExternalContainer('Manager Setup')
 
 		usercontainer = uidata.Container('User')
-		self.userselection = uidata.SingleSelectFromList('Name', [], 0, self.uiUserSelectCallback, persist=True)
+		self.userselection = uidata.SingleSelectFromList('Name', [], 0,
+																			self.uiUserSelectCallback, persist=True)
 		self.userfullname = uidata.String('Full Name', '', 'r')
 		self.usergroup = uidata.String('Group Name', '', 'r')
 		usercontainer.addObjects((self.userselection,
@@ -969,7 +970,8 @@ class ManagerSetup(object):
 		self.container.addObject(usercontainer)
 
 		instrumentcontainer = uidata.Container('Instrument')
-		self.instrumentselection = uidata.SingleSelectFromList('Name', [], 0, self.uiInstrumentSelectCallback, persist=True)
+		self.instrumentselection = uidata.SingleSelectFromList('Name', [], 0,
+																	self.uiInstrumentSelectCallback, persist=True)
 		self.instrumentdescription = uidata.String('Description', '', 'r')
 		self.instrumenthostname = uidata.String('Hostname', '', 'r')
 
@@ -980,13 +982,16 @@ class ManagerSetup(object):
 		self.container.addObject(instrumentcontainer)
 
 		session_name = time.strftime('%Y-%m-%d')
-		self.session_name = uidata.String('Session Name', session_name, 'rw', persist=True)
+		self.session_name = uidata.String('Session Name', session_name, 'rw',
+																				persist=True)
 		self.container.addObject(self.session_name)
-		self.session_comment = uidata.String('Session Comment', '', 'rw', persist=True)
+		self.session_comment = uidata.String('Session Comment', '', 'rw',
+																					persist=True)
 		self.container.addObject(self.session_comment)
 		## default path comes from leginonconfig
 		image_path = os.path.join(leginonconfig.IMAGE_PATH,session_name)
-		self.image_path = uidata.String('Image Path', image_path, 'rw', persist=True)
+		self.image_path = uidata.String('Image Path', image_path, 'rw',
+																		persist=True)
 		self.container.addObject(self.image_path)
 
 		startmethod = uidata.Method('Start', self.start)

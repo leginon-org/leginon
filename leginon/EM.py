@@ -246,6 +246,8 @@ class EM(node.Node):
 
 		self.state = self.getEM(self.uiscopedict.keys() + self.uicameradict.keys())
 		self.uiUpdate()
+		self.scopecontainer.enable()
+		self.cameracontainer.enable()
 
 		if ids:
 			e = event.ListPublishEvent(id=self.ID(), idlist=ids)
@@ -655,6 +657,7 @@ class EM(node.Node):
 		self.scopecontainer = uidata.LargeContainer('Microscope')
 		self.scopecontainer.addObjects((self.uipauses, scopeinterface,
 																		refreshscope, setscope))
+		self.scopecontainer.disable()
 
 		# camera
 		camerainterface, self.uicameradict = self.interfaceFromObject(self.camera)
@@ -662,6 +665,7 @@ class EM(node.Node):
 		refreshcamera = uidata.Method('Refresh', self.uiRefreshCamera)
 		setcamera = uidata.Method('Set', self.uiSetCamera)
 		self.cameracontainer.addObjects((camerainterface, refreshcamera, setcamera))
+		self.cameracontainer.disable()
 
 		container = uidata.LargeContainer('EM')
 		if self.scope is not None:
