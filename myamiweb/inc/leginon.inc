@@ -39,6 +39,16 @@ class leginondata {
 		return $expId;
 	}
 
+	function sessionIdExists($sessions, $sessionId) {
+		$sessionId_exists=false;
+		foreach ($sessions as $session)
+		if (in_array($sessionId, $session)) {
+			$sessionId_exists=true;
+				break;
+		}
+		return $sessionId_exists;
+	}
+
 	function getSessions($comment="", $projectId=false) {
 		$selectcomment = ($comment) ? 
 				"if (length(s.comment)>0, concat(s.name,' - ',s.comment), s.name)" : "s.name";
