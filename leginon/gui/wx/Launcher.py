@@ -43,7 +43,6 @@ class App(wx.App):
 	def OnInit(self):
 		self.launcher = launcher.Launcher(self.name, **self.kwargs)
 		frame = Frame(self.launcher)
-		self.launcher.panel = frame.panel
 		self.launcher.start()
 		self.SetTopWindow(frame)
 		frame.Show(True)
@@ -171,15 +170,18 @@ class ListCtrlPanel(wx.Panel):
 		wx.LayoutAlgorithm().LayoutWindow(self, self.panel)
 
 class Panel(ListCtrlPanel):
-	def __init__(self, parent, launcher):
-		self.launcher = launcher
+	def __init__(self, parent, launcher=None):
 		ListCtrlPanel.__init__(self, parent, -1, style=wx.NO_BORDER)
-
+		if launcher is not None:
+			self.setLauncher(launcher)
 		self.initializeImageList()
 
+	def setLauncher(self, launcher):
+		self.launcher = launcher
 		self.Bind(EVT_CREATE_NODE, self.onCreateNode)
 		self.Bind(EVT_DESTROY_NODE, self.onDestroyNode)
 		self.Bind(EVT_CREATE_NODE_PANEL, self.onCreateNodePanel)
+		launcher.panel = self
 
 	def addIcon(self, filename):
 		iconpath = icons.getPath(filename + '.png')

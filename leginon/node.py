@@ -14,8 +14,6 @@ import event
 import leginonobject
 import extendedlogging
 import threading
-import uiserver
-import uidata
 import gui.wx.Node
 
 import leginonconfig
@@ -57,7 +55,7 @@ class Node(leginonobject.LeginonObject):
 									event.NodeInitializedEvent,
 									event.NodeUninitializedEvent]
 
-	def __init__(self, name, session, managerlocation=None, otherdatabinder=None, otherdbdatakeeper=None, otheruiserver=None, tcpport=None, xmlrpcport=None, launcher=None, panel=None):
+	def __init__(self, name, session, managerlocation=None, otherdatabinder=None, otherdbdatakeeper=None, tcpport=None, xmlrpcport=None, launcher=None, panel=None):
 		leginonobject.LeginonObject.__init__(self)
 		self.name = name
 		self.panel = panel
@@ -81,17 +79,6 @@ class Node(leginonobject.LeginonObject):
 			self.dbdatakeeper = DBDataKeeper(loggername=self.logger.name)
 		else:
 			self.dbdatakeeper = otherdbdatakeeper
-
-		## set up uiserver and uicontainer
-		## Either I own the server, or I use the one given to me
-		if otheruiserver is None:
-			self.uiserver = uiserver.Server(self.name, xmlrpcport, session=session)
-			self.uicontainer = self.uiserver
-			self.uiserver.getUserPreferencesFromDatabase()
-		else:
-			self.uiserver = otheruiserver
-			self.uicontainer = uidata.LargeContainer(self.name)
-			self.uiserver.addObject(self.uicontainer)
 
 		self.confirmationevents = {}
 		self.eventswaiting = {}
@@ -140,6 +127,9 @@ class Node(leginonobject.LeginonObject):
 		if name is None:
 			name = self.name
 		self.logger = extendedlogging.getLogger(name)
+		clientlogger = extendedlogging.getLogger(self.logger.name + '.'
+																							+ datatransport.Client.__name__)
+
 
 	# main, start/stop methods
 
@@ -168,8 +158,6 @@ class Node(leginonobject.LeginonObject):
 
 	def exit(self):
 		'''Cleans up the node before it dies.'''
-		if self.uicontainer is not None:
-			self.uicontainer.delete()
 		try:
 			self.outputEvent(event.NodeUninitializedEvent(), wait=True,
 																										timeout=3.0)
@@ -197,7 +185,6 @@ class Node(leginonobject.LeginonObject):
 		else:
 			location['launcher'] = None
 		location['data binder'] = self.databinder.location()
-		location['UI'] = self.uiserver.location()
 		return location
 	# event input/output/blocking methods
 
@@ -382,49 +369,9 @@ class Node(leginonobject.LeginonObject):
 		## the launcher who could receive this event from different
 		## sessions
 		self.session = ievent['session']
-		## have a new session from manager, so reset session in
-		## uiserver and get new user preferences
-		self.uiserver.session = self.session
-		# this will be ignored if this new session has same user
-		# as previous one
-		self.uiserver.getUserPreferencesFromDatabase()
 
 		if ievent['session']['name'] == self.session['name']:
 			self.setManager(ievent['location'])
 		else:
 			self.logger.warning('Attempt to set manager rejected')
-
-	# utility methods
-
-	def key2str(self, d):
-		'''Makes keys and values into strings.'''
-		if type(d) is dict:
-			newdict = {}
-			for k in d:
-				newdict[str(k)] = self.key2str(d[k])
-			return newdict
-		else:
-			return str(d)
-
-	def uiExit(self):
-		'''UI function calling die. See die.'''
-		self.die()
-
-	def defineUserInterface(self):
-		name = uidata.String('Name', self.name, 'r')
-		classstring = uidata.String('Class', self.__class__.__name__, 'r')
-		location = self.key2str(self.location())
-		locationstruct = uidata.Struct('Location', location, 'r')
-		exitmethod = uidata.Method('Exit', self.uiExit)
-
-		# cheat a little here
-		clientlogger = extendedlogging.getLogger(self.logger.name + '.'
-																							+ datatransport.Client.__name__)
-		if clientlogger.container not in self.logger.container.values():
-			self.logger.container.addObject(clientlogger.container,
-																			position={'span': (1,2), 'expand': 'all'})
-
-		container = uidata.LargeContainer('Node')
-		self.uicontainer.addObjects((name, classstring, locationstruct,
-																	self.logger.container, exitmethod))
 

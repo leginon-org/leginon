@@ -3,7 +3,6 @@ import logging
 import manager
 import os
 import threading
-import uiclient
 import wx
 import wx.lib.intctrl
 import gui.wx.Launcher
@@ -207,21 +206,10 @@ class Frame(wx.Frame):
 		self.Bind(EVT_APPLICATION_KILLED, self.onApplicationKilled)
 		self.Bind(EVT_ADD_LAUNCHER_PANEL, self.onAddLauncherPanel)
 
-		self.panel = Panel(self, self.manager.uicontainer.location())
+		self.panel = gui.wx.Launcher.Panel(self)
 
 	def onAddLauncherPanel(self, evt):
-		# this doesn't really work
-		style=wx.CAPTION|wx.SYSTEM_MENU|wx.CLOSE_BOX|wx.MAXIMIZE_BOX|wx.MINIMIZE_BOX|wx.RESIZE_BORDER
-		dialog = wx.Dialog(self, -1, 'Temporary Launcher Window', style=style)
-		#sizer = wx.GridBagSizer(0, 0)
-		panel = gui.wx.Launcher.Panel(dialog, evt.launcher)
-		#sizer.Add(panel, (0, 0), (1, 1), wx.EXPAND|wx.ALL)
-		#dialog.SetSizerAndFit(sizer)
-
-		evt.launcher.panel = panel
-
-		dialog.SetSize((800, 600))
-		dialog.Show(True)
+		self.panel.setLauncher(evt.launcher)
 
 	def onExit(self, evt):
 		self.manager.exit()
@@ -392,10 +380,6 @@ class Panel(wx.ScrolledWindow):
 		self._shown = True
 		wx.ScrolledWindow.__init__(self, parent, -1)
 		self.SetScrollRate(5, 5)
-		containerclass = uiclient.SimpleContainerWidget
-		containerclass = uiclient.ClientContainerFactory(containerclass)
-		self.container = containerclass('UI Client', self, self, location, {})
-		self.SetSizerAndFit(self.container)
 
 	def layout(self):
 		pass

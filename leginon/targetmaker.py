@@ -58,7 +58,6 @@ class MosaicTargetMaker(TargetMaker):
 		self.addEventInput(event.MakeTargetListEvent, self.makeMosaicTargetList)
 		self.presetsclient = presets.PresetsClient(self)
 
-		self.defineUserInterface()
 		self.start()
 
 	def makeMosaicTargetList(self, ievent=None):

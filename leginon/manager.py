@@ -18,12 +18,9 @@ import leginonconfig
 import launcher
 import node
 import threading
-import uiserver
-import uidata
 import leginonobject
 import extendedlogging
 import copy
-import uiclient
 import newdict
 import socket
 import gui.wx.SetupWizard
@@ -84,10 +81,6 @@ class Manager(node.Node):
 		self.nodelocations = {}
 		self.broadcast = []
 
-		self.uiclientcontainers = {}
-		self.uicontainer.xmlrpcserver.register_function(self.uiGetNodeLocations,
-																										'getNodeLocations')
-
 		# ready nodes, someday 'initialized' nodes
 		self.initializednodescondition = threading.Condition()
 		self.initializednodes = []
@@ -117,8 +110,6 @@ class Manager(node.Node):
 
 		self.session = setup.session
 		self.frame.session = self.session
-		self.uicontainer.session = setup.session
-		self.uicontainer.getUserPreferencesFromDatabase()
 
 		# needs threading, but shouldn't
 		t = threading.Thread(name='create launcher thread',
@@ -160,7 +151,6 @@ class Manager(node.Node):
 	def location(self):
 		location = leginonobject.LeginonObject.location(self)
 		location['data binder'] = self.databinder.location()
-		location['UI'] = self.uicontainer.location()
 		return location
 
 	# main/start methods
@@ -377,7 +367,6 @@ class Manager(node.Node):
 		if name in self.getLauncherNames():
 			raise RuntimeError('Launcher name in use.')
 		self.launcherdict[name] = {'location': location}
-		self.addNodeUIClient(name, location['UI'])
 		self.onAddLauncher(name)
 
 	def delLauncher(self, name):
@@ -386,7 +375,6 @@ class Manager(node.Node):
 			del self.launcherdict[name]
 		except KeyError:
 			return
-		self.deleteNodeUIClient(name)
 		self.onRemoveLauncher(name)
 
 	def handleNodeClassesPublish(self, ievent):
@@ -485,29 +473,11 @@ class Manager(node.Node):
 		evt = gui.wx.Manager.RemoveNodeEvent(name)
 		self.frame.GetEventHandler().AddPendingEvent(evt)
 
-	def addNodeUIClient(self, nodename, uilocation):
-		if nodename in self.uiclientcontainers:
-			self.deleteNodeUIClient(nodename)
-		clientcontainer = uidata.LargeClientContainer(nodename, uilocation)
-		try:
-			self.uicontainer.addObject(clientcontainer)
-			self.uiclientcontainers[nodename] = clientcontainer
-		except:
-			self.logger.exception('cannot add client container for node')
-
 	def unregisterNode(self, evt):
 		'''Event handler Removes all information, event mappings and the client.'''
 		nodename = evt['node']
 		self.removeNode(nodename)
 		self.confirmEvent(evt)
-
-	def deleteNodeUIClient(self, nodename):
-		# also remove from launcher registry
-		try:
-			del self.uiclientcontainers[nodename]
-			self.uicontainer.deleteObject(nodename)
-		except:
-			self.logger.exception('cannot delete client container for node')
 
 	def handleNodeStatus(self, ievent):
 		nodename = ievent['node']
@@ -733,11 +703,6 @@ class Manager(node.Node):
 			self.logger.error('No available launchers to run application')
 			return
 		self.application.load(name)
-		aliases = self.application.getLauncherAliases()
-		uialiasselectors = []
-		for alias in aliases:
-			uialiasselectors.append(uidata.SingleSelectFromList(alias, launchers, 0))
-		self.setLauncherSelectors(uialiasselectors)
 
 	def launchApp(self):
 		'''Calls application.Application.launch.'''
@@ -754,7 +719,6 @@ class Manager(node.Node):
 	def killApp(self):
 		'''Calls application.Application.kill.'''
 		self.application.kill()
-		self.setLauncherSelectors(selectors=None)
 
 	def exportApplication(self, filename, appname):
 		if filename is None:
@@ -785,24 +749,6 @@ class Manager(node.Node):
 		except ValueError:
 			self.logger.exception('Unable to import application from "%s"' % filename)
 
-	# UI methods
-	def uiNodeDict(self):
-		nodes = self.clients.keys()
-		nodeinfo = {}
-		for nodename in nodes:
-			if nodename in self.nodelocations:
-				nodelocationdata = self.nodelocations[nodename]
-				nodelocation = nodelocationdata['location']
-				nodeinfo[nodename] = nodelocation
-				nodeinfo[nodename]['class'] = nodelocationdata['class string']
-		return nodeinfo
-
-	def uiGetNodeLocations(self):
-		'''UI helper for mapping a node alias to the node's location.'''
-		nodelocations = self.uiNodeDict()
-		nodelocations[self.name] = self.location()
-		return nodelocations
-	
 if __name__ == '__main__':
 	import sys
 	import time

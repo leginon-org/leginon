@@ -180,6 +180,7 @@ class Panel(gui.wx.Node.Panel):
 		self.szdoseimage.Add(self.imagepanel, (1, 0), (1, 3), wx.ALIGN_CENTER)
 		self.szdoseimage.AddGrowableCol(2)
 
+		self.szmain.AddGrowableCol(1)
 		self.szmain.AddGrowableRow(3)
 
 		self.SetSizerAndFit(self.szmain)

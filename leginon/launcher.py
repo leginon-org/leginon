@@ -13,7 +13,6 @@ import event
 import leginonobject
 import node
 import nodeclassreg
-import uiserver
 import gui.wx.Launcher
 
 class Launcher(node.Node):
@@ -55,7 +54,6 @@ class Launcher(node.Node):
 		managerlocation = ievent['manager location']
 
 		kwargs = {}
-		kwargs['otheruiserver'] = self.uiserver
 		kwargs['launcher'] = self
 		kwargs['otherdatabinder'] = self.databinder
 
