@@ -38,7 +38,7 @@ class DriftManager(watcher.Watcher):
 				im = value['image']
 				shift = self.calcShift(im)
 				self.references[key]['shift'] = shift
-				self.publishImageShifts()
+				self.publishImageShifts(requested=True)
 				break
 		self.confirmEvent(ev)
 
@@ -86,28 +86,25 @@ class DriftManager(watcher.Watcher):
 		self.pixsize = self.pixsizeclient.retrievePixelSize(mag)
 
 		## acquire images, measure drift
-		print 'AAAAAAAAAAAAAAAAAAAAAA'
 		self.abortevent.clear()
-		print 'BBBBBBBBBBBBBBBBBBBBBB'
 		self.acquireLoop()
-		print 'CCCCCCCCCCCCCCCCCCCC'
 
 		## publish ImageTargetShiftData
-		self.publishImageShifts(reset=True)
+		self.publishImageShifts(requested=False)
 
 		## DriftDoneEvent
 		ev = event.DriftDoneEvent()
 		self.outputEvent(ev)
 
-	def publishImageShifts(self, reset=False):
+	def publishImageShifts(self, requested=False):
 		print 'PUBLISH IMAGE SHIFTS'
 		to_publish = {}
 		for value in self.references.values():
-			if reset:
+			if not requested:
 				value['shift'] = {}
 			to_publish[value['imageid']] = value['shift']
 		print 'TO PUBLISH', to_publish
-		dat = data.ImageTargetShiftData(id=self.ID(), shifts=to_publish)
+		dat = data.ImageTargetShiftData(id=self.ID(), shifts=to_publish, requested=requested)
 		self.publish(dat, pubevent=True, confirm=True)
 
 	def acquireImage(self):
