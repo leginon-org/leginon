@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import node
 import event
 import data
 import time
@@ -8,6 +7,7 @@ import cameraimage
 import camerafuncs
 import presets
 import threading
+import acquisition
 
 class SimpleAcquisition(acquisition.Acquisition):
 	'''
