@@ -921,6 +921,7 @@ class wxEntryWidget(wxDataWidget):
 			EVT_KILL_FOCUS(self.entry, self.onKillFocus)
 #			EVT_TEXT(self.entry, self.entry.GetId(), self.onEdit)
 			EVT_TEXT_ENTER(self.entry, self.entry.GetId(), self.onEnter)
+			EVT_CHAR(self.entry, self.onChar)
 
 		self.sizer.Add(self.label, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
 		self.sizer.Add(self.entry, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
@@ -928,6 +929,11 @@ class wxEntryWidget(wxDataWidget):
 #			self.sizer.Add(self.applybutton, 0, wxALIGN_CENTER|wxLEFT|wxRIGHT, 3)
 #			self.dirty = self.applybutton.IsEnabled()
 		self.layout()
+
+	def onChar(self, evt):
+		if evt.GetKeyCode() == WXK_ESCAPE:
+			self.setWidget(self.value)
+		evt.Skip()
 
 	def onKillFocus(self, evt):
 		self.setFromWidget()
