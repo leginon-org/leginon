@@ -9,8 +9,8 @@ if sys.platform == 'win32':
 	sys.coinit_flags = 0
 
 class Client(datatransport.Client):
-	def __init__(self, loc):
-		datatransport.Client.__init__(self, loc)
+	def __init__(self, id, loc):
+		datatransport.Client.__init__(self, id, loc)
 
 	def push(self, idata):
 #		if isinstance(idata, event.Event):
@@ -19,10 +19,10 @@ class Client(datatransport.Client):
 #			raise event.InvalidEventError('event must be Event instance')
 
 class NodeDataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
-	def __init__(self):
+	def __init__(self, id):
 		# this will call LeginonObject constructor twice I think
-		datahandler.SimpleDataKeeper.__init__(self)
-		datahandler.DataBinder.__init__(self)
+		datahandler.SimpleDataKeeper.__init__(self, id)
+		datahandler.DataBinder.__init__(self, id)
 
 	def insert(self, idata):
 		if isinstance(idata, event.Event):
@@ -54,16 +54,24 @@ class Node(leginonobject.LeginonObject):
 		self.clients = {}
 		self.registry = {'outputs':[], 'inputs':[]}
 
-		self.server = datatransport.Server(dh, dhargs)
+		self.server = datatransport.Server(self.ID(), dh, dhargs)
 		self.clientclass = clientclass
 
 		if managerloc:
 			self.addManager(managerloc)
 
+		self.idcounter = 0
+
+	def ID(self):
+		newid = list(self.id)
+		newid.append(self.idcounter)
+		self.idcounter += 1
+		return newid
+
 	def addManager(self, loc):
 		self.managerloc = loc
 		self.addEventClient('manager', loc)
-		self.announce(event.NodeAvailableEvent())
+		self.announce(event.NodeAvailableEvent(self.ID()))
 
 	def main(self):
 		'''this is the node's parent method'''
@@ -79,13 +87,14 @@ class Node(leginonobject.LeginonObject):
 		if not issubclass(eventclass, event.PublishEvent):
 			raise TypeError('PublishEvent subclass required')
 		self.server.datahandler._insert(idata)
-		self.announce(eventclass(idata.id))
+		# this idata.id is content, I think
+		self.announce(eventclass(self.ID(), idata.id))
 
 	def unpublish(self, dataid, eventclass=event.UnpublishEvent):
 		if not issubclass(eventclass, event.UnpublishEvent):
 			raise TypeError('UnpublishEvent subclass required')
 		self.server.datahandler.remove(dataid)
-		self.announce(eventclass(dataid))
+		self.announce(eventclass(self.ID(), dataid))
 
 	def publishRemote(self, nodeid, idata):
 		# perhaps an event can be generated in this too
@@ -103,7 +112,7 @@ class Node(leginonobject.LeginonObject):
 		return self.researchByLocation(loc, dataid)
 
 	def researchByLocation(self, loc, dataid):
-		client = self.clientclass(loc)
+		client = self.clientclass(self.ID(), loc)
 		#print "data ID =", dataid
 		return client.pull(dataid)
 
@@ -130,7 +139,7 @@ class Node(leginonobject.LeginonObject):
 
   # down from here is from EventHandler
 	def addEventClient(self, newid, loc):
-		self.clients[newid] = self.clientclass(loc)
+		self.clients[newid] = self.clientclass(self.ID(), loc)
 
 	def delEventClient(self, newid):
 		if newid in self.clients:

@@ -15,3 +15,5 @@ class LeginonObject(object):
 		#loc['weakref'] = weakref.ref(self)
 		return loc
 
+	def ID(self):
+		raise NotImplementedError

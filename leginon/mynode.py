@@ -23,12 +23,12 @@ class MyNode(node.Node):
 		for i in [1,2,3]:
 			self.print_stuff()
 			time.sleep(self.interval)
-		self.announce(event.NodeUnavailableEvent())
+		self.announce(event.NodeUnavailableEvent(self.ID()))
 
 	def print_stuff(self):
 		self.timenow = time.asctime()
 		print 'node %s says %s' % (self.nodeid,self.timenow)
-		mydata = data.StringData(self.timenow)
+		mydata = data.StringData(self.ID(), self.timenow)
 		self.publish(mydata)
 
 	def handle_intervalchange(self, controlevent):

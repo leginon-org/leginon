@@ -23,7 +23,7 @@ class Launcher(node.Node):
 		'''
 		self.managerloc = loc
 		self.addEventClient('manager', loc)
-		self.announce(event.LauncherAvailableEvent())
+		self.announce(event.LauncherAvailableEvent(self.ID()))
 
 	def main(self):
 		self.interact()
