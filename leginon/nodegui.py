@@ -177,12 +177,12 @@ class Data(SpecWidget):
 
 		### label
 		if self.styled:
-			lab = Label(headframe, text=self.name, bg=self['bg'])
-			lab.pack(side=LEFT, fill=BOTH)
+			self.label = Label(headframe, text=self.name, bg=self['bg'])
+			self.label.pack(side=LEFT, fill=BOTH)
 		else:
-			lab = Label(headframe, text=self.name)
-			lab.grid(row = 0, column = 0)
-#		lab.pack(side=LEFT, fill=BOTH)
+			self.label = Label(headframe, text=self.name)
+			self.label.grid(row = 0, column = 0)
+#		self.label.pack(side=LEFT, fill=BOTH)
 
 		### optional get/set
 		if self.permissions is not None:
