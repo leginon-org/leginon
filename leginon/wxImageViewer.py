@@ -300,7 +300,7 @@ class ImagePanel(wxPanel):
 		self.setVirtualSize()
 		if self.biggerView():
 			self.panel.Refresh()
-		self.UpdateDrawing()
+		#self.UpdateDrawing()
 
 	# utility functions
 
@@ -397,6 +397,15 @@ class ImagePanel(wxPanel):
 	def OnMotion(self, evt):
 		if self.buffer is None or self.motionbuffer is None:
 			return
+
+		if self.smallScale():
+			xoffset, yoffset = self.offset
+			if evt.m_x < xoffset or evt.m_x > xoffset + self.bitmap.GetWidth() - 1: 
+				self.UpdateDrawing()
+				return
+			if evt.m_y < yoffset or evt.m_y > yoffset + self.bitmap.GetHeight() - 1: 
+				self.UpdateDrawing()
+				return
 
 		dc = self.getMotionBufferDC()
 
