@@ -80,9 +80,9 @@ class Node(leginonobject.LeginonObject):
 		if managerloc:
 			self.addManager(managerloc)
 
-	def __del__(self):
+	def exit(self):
 		self.outputEvent(event.NodeUnavailableEvent(self.ID()))
-		del self.server
+		self.server.exit()
 
 	def die(self, ievent):
 		sys.exit()
@@ -126,11 +126,7 @@ class Node(leginonobject.LeginonObject):
 
 		# wait until the interact thread terminates
 		interact_thread.join()
-#		self.exit()
-
-#	def exit(self):
-#		self.server.exit()
-#		self.outputEvent(event.NodeUnavailableEvent(self.ID()))
+		self.exit()
 
 	def outputEvent(self, ievent, wait=0, nodeid=('manager',)):
 		self.clients[nodeid].push(ievent)

@@ -16,7 +16,6 @@ class GetData(node.Node):
 		self.start()
 
 	def handlepublished(self, ievent):
-		print "GetData researching id", ievent.content
 		idata = self.researchByDataID(ievent.content).content
 		print "received idata =", idata
 		self.confirmEvent(ievent)

@@ -77,7 +77,7 @@ class PublishImageEvent(NotificationEvent):
 	def __init__(self, id, dataid):
 		NotificationEvent.__init__(self, id, content=dataid)
 
-class ConfirmationEvent(Event):
+class ConfirmationEvent(NotificationEvent):
 	'Event sent to confirm event processing'
 	def __init__(self, id, eventid):
 		Event.__init__(self, id, content=eventid)

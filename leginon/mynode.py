@@ -32,13 +32,12 @@ class MyNode(node.Node):
 
 		# wait until the interact thread terminates
 		interact_thread.join()
-		#self.exit()
+		self.exit()
 
 	def print_stuff(self):
 		self.timenow = time.asctime()
 		print 'node %s says %s' % (self.id,self.timenow)
 		mydata = data.StringData(self.ID(), self.timenow)
-		print "MyNode publishing id", mydata.id
 		self.publish(mydata)
 		self.waitEvent(self.publish(mydata))
 

@@ -74,4 +74,3 @@ if __name__ == '__main__':
 	myid = (myhost,)
 
 	m = Launcher(myid, manloc)
-	m.__del__()

@@ -82,11 +82,8 @@ class ShelveDataKeeper(DataHandler):
 		self.shelf = shelve.open(self.filename)
 		self.shelflock = threading.Lock()
 
-	def __del__(self):
+	def exit(self):
 		os.remove(self.filename)
-
-#	def exit(self):
-#		os.remove(self.filename)
 
 	def query(self, id):
 		self.shelflock.acquire()
@@ -146,14 +143,11 @@ class CachedDictDataKeeper(DataHandler):
 		self.timer.setDaemon(1)
 		self.timer.start()
 
-	def __del__(self):
+	def exit(self):
 		os.remove(self.filename)
 
-#	def exit(self):
-#		os.remove(self.filename)
-
 	def query(self, id):
-#		self.lock.acquire()
+		self.lock.acquire()
 		if self.datadict.has_key(id):
 			if self.datadict[id]['cached']:
 				self.datadict[id]['data'] = self.shelf[str(id)]
@@ -163,7 +157,7 @@ class CachedDictDataKeeper(DataHandler):
 			result = self.datadict[id]['data']
 		else:
 			result = None
-#		self.lock.release()
+		self.lock.release()
 		return result
 
 	def insert(self, newdata):

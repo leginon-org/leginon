@@ -35,6 +35,7 @@ class Client(Base):
 		if len(self.clients) == 0:
 			raise IOError
 
+	# these aren't ordering right, dictionary iteration
 	def pull(self, idata):
 		for c in self.clients:
 			try:
@@ -64,15 +65,10 @@ class Server(Base):
 			self.servers[t] = apply(t.Server, (self.ID(), self.datahandler))
 			self.servers[t].start()
 
-	def __del__(self):
+	def exit(self):
 		for t in self.transportmodules:
-			self.servers[t].__del__()
-		self.datahandler.__del__()
-
-#	def exit(self):
-#		self.datahandler.exit()
-#		for s in self.servers:
-#			self.servers[s].exit()
+			self.servers[t].exit()
+		self.datahandler.exit()
 
 	def location(self):
 		loc = {}
