@@ -31,15 +31,26 @@ class TargetFinder(imagewatcher.ImageWatcher):
 	def researchImageTargets(self, imagedata):
 		'''
 		Get a list of all targets that have this image as their parent.
+		only want most recent versions of each
 		'''
 		targetquery = data.AcquisitionImageTargetData()
 		imagequery = data.AcquisitionImageData(initializer=imagedata)
 		imagequery['image'] = None
 		targetquery['image'] = imagequery
 		targets = self.research(datainstance=targetquery, fill=False)
-		return targets
 
-	def lastTargetIndex(self, imagedata):
+		## now filter out only the latest versions
+		# map target id to latest version
+		# assuming query result is ordered by timestamp, this works
+		have = {}
+		for target in targets:
+			targetid = target['id']
+			if targetid not in have:
+				have[targetid] = target
+		havelist = have.values()
+		return havelist
+
+	def lastTargetNumber(self, imagedata):
 		'''
 		Returns the number of the last target associated with the given image data.
 		'''
@@ -52,7 +63,7 @@ class TargetFinder(imagewatcher.ImageWatcher):
 
 	def findTargets(self, imdata):
 		'''
-		Virtual function, inherehiting classes implement building self.targetlist,
+		Virtual function, inheritting classes implement building self.targetlist,
 		a list of ImageTargetData items.
 		'''
 		raise NotImplementedError()
@@ -78,19 +89,21 @@ class TargetFinder(imagewatcher.ImageWatcher):
 
 		## add a 'number' to the target and then publish it
 		for target in self.targetlist:
-			parentimage = target['image']
-			## would rather do away with id and use dbid, which
-			## is more unique
-			parentid = parentimage['id']
-			if parentid in targetnumbers:
-				last_targetnumber = targetnumbers[parentid]
-			else:
-				last_targetnumber = self.lastTargetNumber(parentimage)
-				targetnumbers[parentid] = last_targetnumber
+			# target may have number if it was previously published
+			if target['number'] is None:
+				parentimage = target['image']
+				## would rather do away with id and use dbid, which
+				## is more unique
+				parentid = parentimage['id']
+				if parentid in targetnumbers:
+					last_targetnumber = targetnumbers[parentid]
+				else:
+					last_targetnumber = self.lastTargetNumber(parentimage)
+					targetnumbers[parentid] = last_targetnumber
 
-			## increment target number
-			targetnumbers[parentid] += 1
-			target['number'] = targetnumbers[parentid]
+				## increment target number
+				targetnumbers[parentid] += 1
+				target['number'] = targetnumbers[parentid]
 
 			print 'TARGET publishing %s' % (target['id'],)
 			self.publish(target, database=True)
@@ -178,6 +191,12 @@ class ClickTargetFinder(TargetFinder):
 			self.start()
 
 	def findTargets(self, imdata):
+		## check if targets already found on this image
+		previous = self.researchImageTargets(imdata)
+		if previous:
+			self.targetlist = previous
+			return
+
 		# display image
 		self.clickimage.setTargets([])
 		self.clickimage.setImage(imdata['image'])
@@ -198,7 +217,7 @@ class ClickTargetFinder(TargetFinder):
 		returns a new target data object with data filled in from the image data
 		'''
 		imagearray = imagedata['image']
-		targetdata = data.AcquisitionImageTargetData(id=self.ID(), type=type, version=0)
+		targetdata = data.AcquisitionImageTargetData(id=self.ID(), type=type, version=0, status='new')
 		targetdata['image'] = imagedata
 		targetdata['scope'] = imagedata['scope']
 		targetdata['camera'] = imagedata['camera']
