@@ -1,8 +1,11 @@
 import wx
 
-class Stats(wx.GridBagSizer):
-	def __init__(self, parent):
-		wx.GridBagSizer.__init__(self, 3, 3)
+class Stats(wx.Panel):
+	def __init__(self, parent, id, **kwargs):
+		wx.Panel.__init__(self, parent, id, **kwargs)
+		self.SetBackgroundColour(wx.WHITE)
+
+		self.nonestr = '(N/A)'
 
 		self.statslist = [
 			'Mean',
@@ -11,15 +14,19 @@ class Stats(wx.GridBagSizer):
 			'Std. dev.',
 		]
 
+		self.sz = wx.GridBagSizer(0, 5)
+
 		self.labels = {}
 		self.values = {}
 		for i, stat in enumerate(self.statslist):
-			self.labels[stat] = wx.StaticText(parent, -1, stat + ':')
-			self.values[stat] = wx.StaticText(parent, -1, '', style=wx.ALIGN_RIGHT)
-			self.Add(self.labels[stat], (i, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-			self.Add(self.values[stat], (i, 1), (1, 1),
-								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-		self.AddGrowableCol(1)
+			self.labels[stat] = wx.StaticText(self, -1, stat + ':')
+			self.values[stat] = wx.StaticText(self, -1, self.nonestr,
+																				style=wx.ALIGN_RIGHT)
+			self.sz.Add(self.labels[stat], (i, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+			self.sz.Add(self.values[stat], (i, 1), (1, 1),
+									wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+			self.sz.AddGrowableRow(i)
+		self.sz.AddGrowableCol(1)
 
 		self.keymap = {
 			'Mean': 'mean',
@@ -28,12 +35,15 @@ class Stats(wx.GridBagSizer):
 			'Std. dev.': 'stdev',
 		}
 
+		self.SetSizerAndFit(self.sz)
+
 	def setStats(self, stats):
 		for stat in self.statslist:
 			try:
 				s = str(stats[self.keymap[stat]])
 			except KeyError:
-				s = ''
+				s = self.nonestr
 			self.values[stat].SetLabel(s)
-		self.Layout()
+		self.sz.Layout()
+		#self.Fit()
 

@@ -345,6 +345,22 @@ class ValueTool(ImageTool):
 		else:
 			return ''
 
+class CrosshairTool(ImageTool):
+	def __init__(self, imagepanel, sizer):
+		bitmap = getTargetIconBitmap(wx.BLUE)
+		tooltip = 'Toggle Center Crosshair'
+		cursor = None
+		ImageTool.__init__(self, imagepanel, sizer, bitmap, tooltip, cursor, False)
+
+	def Draw(self, dc):
+		dc.SetPen(wx.Pen(wx.BLUE, 1))
+		width = self.imagepanel.bitmap.GetWidth()
+		height = self.imagepanel.bitmap.GetHeight()
+		center = width/2, height/2
+		x0, y0 = self.imagepanel.image2view(center)
+		dc.DrawLine(x0, y0, x1, y1)
+		dc.DrawLine(x0, y0, x1, y1)
+
 class RulerTool(ImageTool):
 	def __init__(self, imagepanel, sizer):
 		bitmap = getBitmap('ruler.png')
@@ -357,8 +373,8 @@ class RulerTool(ImageTool):
 	def OnLeftClick(self, evt):
 		if self.button.GetToggle():
 			if self.start is not None:
-				x = evt.m_x - self.imagepanel.offset[0]
-				y = evt.m_y - self.imagepanel.offset[1]
+				x = evt.m_x #- self.imagepanel.offset[0]
+				y = evt.m_y #- self.imagepanel.offset[1]
 				x0, y0 = self.start
 				dx, dy = x - x0, y - y0
 				self.measurement = {
@@ -385,14 +401,14 @@ class RulerTool(ImageTool):
 	def DrawRuler(self, dc, x, y):
 		dc.SetPen(wx.Pen(wx.RED, 1))
 		x0, y0 = self.imagepanel.image2view(self.start)
-		x0 -= self.imagepanel.offset[0]
-		y0 -= self.imagepanel.offset[1]
+		#x0 -= self.imagepanel.offset[0]
+		#y0 -= self.imagepanel.offset[1]
 		dc.DrawLine(x0, y0, x, y)
 
 	def OnMotion(self, evt, dc):
 		if self.button.GetToggle() and self.start is not None:
-			x = evt.m_x - self.imagepanel.offset[0]
-			y = evt.m_y - self.imagepanel.offset[1]
+			x = evt.m_x #- self.imagepanel.offset[0]
+			y = evt.m_y #- self.imagepanel.offset[1]
 			self.DrawRuler(dc, x, y)
 
 	def getToolTipString(self, x, y, value):
@@ -500,7 +516,9 @@ class ImagePanel(wx.Panel):
 		self.tools = []
 
 		# create image panel, set cursor
-		self.panel = wx.ScrolledWindow(self, -1, size=self.imagesize)
+		self.panel = wx.ScrolledWindow(self, -1, size=self.imagesize,
+																		style=wx.SIMPLE_BORDER)
+		self.panel.SetBackgroundColour(wx.WHITE)
 		self.panel.SetScrollRate(1, 1)
 		self.defaultcursor = wx.CROSS_CURSOR
 		self.panel.SetCursor(self.defaultcursor)
@@ -510,8 +528,9 @@ class ImagePanel(wx.Panel):
 		width, height = self.panel.GetSizeTuple()
 		self.sizer.SetItemMinSize(self.panel, width, height)
 
-		self.statspanel = gui.wx.Stats.Stats(self)
-		self.sizer.Add(self.statspanel, (1, 0), (1, 1), wx.EXPAND|wx.ALL, 3)
+		self.statspanel = gui.wx.Stats.Stats(self, -1, style=wx.SIMPLE_BORDER)
+		self.statspanel.SetBackgroundColour(wx.WHITE)
+		self.sizer.Add(self.statspanel, (1, 0), (1, 1), wx.ALL, 3)
 
 		# bind panel events
 		self.panel.Bind(wx.EVT_LEFT_UP, self.OnLeftClick)
@@ -566,25 +585,26 @@ class ImagePanel(wx.Panel):
 		if self.bitmap is None:
 			self.buffer = None
 		else:
-			bitmapwidth = self.bitmap.GetWidth()
-			bitmapheight = self.bitmap.GetHeight()
-			clientwidth, clientheight = self.panel.GetClientSize()
+			#bitmapwidth = self.bitmap.GetWidth()
+			#bitmapheight = self.bitmap.GetHeight()
+			#clientwidth, clientheight = self.panel.GetClientSize()
 
-			xscale, yscale = self.scale
-			if not self.scaleImage():
-				bitmapwidth = int(bitmapwidth * xscale)
-				bitmapheight = int(bitmapheight * yscale)
+			#xscale, yscale = self.scale
+			#if not self.scaleImage():
+			#	bitmapwidth = int(bitmapwidth * xscale)
+			#	bitmapheight = int(bitmapheight * yscale)
 
-			if bitmapwidth < clientwidth:
-				width = bitmapwidth
-			else:
-				width = clientwidth
+			#if bitmapwidth < clientwidth:
+			#	width = bitmapwidth
+			#else:
+			#	width = clientwidth
 
-			if bitmapheight < clientheight:
-				height = bitmapheight
-			else:
-				height = clientheight
+			#if bitmapheight < clientheight:
+			#	height = bitmapheight
+			#else:
+			#	height = clientheight
 
+			width, height = self.panel.GetClientSize()
 			self.buffer = wx.EmptyBitmap(width, height)
 
 	def setVirtualSize(self):
@@ -602,7 +622,9 @@ class ImagePanel(wx.Panel):
 		else:
 			self.virtualsize = (0, 0)
 		self.panel.SetVirtualSize(self.virtualsize)
+		self.setViewOffset()
 
+	def setViewOffset(self):
 		xv, yv = self.biggerView()
 		xsize, ysize = self.virtualsize
 		xclientsize, yclientsize = self.panel.GetClientSize()
@@ -696,8 +718,8 @@ class ImagePanel(wx.Panel):
 		self.setBuffer()
 		self.setScrolledCenter(center)
 		self.UpdateDrawing()
-		self.sizer.Layout()
-		self.panel.Refresh()
+		#self.sizer.Layout()
+		#self.panel.Refresh()
 
 	def clearImage(self):
 		self.contrasttool.setRange(None)
@@ -746,9 +768,9 @@ class ImagePanel(wx.Panel):
 
 		self.setVirtualSize()
 		self.setBuffer()
-		xv, yv = self.biggerView()
-		if xv or yv:
-			self.panel.Refresh()
+		#xv, yv = self.biggerView()
+		#if xv or yv:
+		#	self.panel.Refresh()
 
 	# utility functions
 
@@ -912,8 +934,8 @@ class ImagePanel(wx.Panel):
 		else:
 			yoffset = -(10 + yextent + 4)
 
-		ix -= self.offset[0]
-		iy -= self.offset[1]
+		#ix -= self.offset[0]
+		#iy -= self.offset[1]
 
 		x = int(round((ix + xoffset)))
 		y = int(round((iy + yoffset)))
@@ -928,6 +950,7 @@ class ImagePanel(wx.Panel):
 
 	def Draw(self, dc):
 		dc.BeginDrawing()
+		dc.Clear()
 		if self.bitmap is None:
 			dc.Clear()
 		else:
@@ -943,14 +966,15 @@ class ImagePanel(wx.Panel):
 			xviewoffset, yviewoffset = self.panel.GetViewStart()
 			xsize, ysize = self.panel.GetClientSize()
 
-			dc.Blit(0, 0, int(xsize/xscale + xscale), int(ysize/yscale + yscale), bitmapdc, int(xviewoffset/xscale), int(yviewoffset/yscale))
+			dc.Blit(self.offset[0], self.offset[1], int(xsize/xscale + xscale), int(ysize/yscale + yscale), bitmapdc, int(xviewoffset/xscale), int(yviewoffset/yscale))
 			bitmapdc.SelectObject(wx.NullBitmap)
 		dc.EndDrawing()
 		dc.SetUserScale(1.0, 1.0)
 
 	def paint(self, fromdc, todc):
 		xsize, ysize = self.panel.GetClientSize()
-		todc.Blit(self.offset[0], self.offset[1], xsize + 1, ysize + 1, fromdc, 0, 0)
+		#todc.Blit(self.offset[0], self.offset[1], xsize + 1, ysize + 1, fromdc, 0, 0)
+		todc.Blit(0, 0, xsize + 1, ysize + 1, fromdc, 0, 0)
 
 	def UpdateDrawing(self):
 		if self.buffer is None:
@@ -964,10 +988,11 @@ class ImagePanel(wx.Panel):
 
 	def OnSize(self, evt):
 		#self.setBitmap()
-		self.setVirtualSize()
+		#self.setVirtualSize()
+		self.setViewOffset()
 		self.setBuffer()
-		self.Refresh()
-		#self.UpdateDrawing()
+		#self.panel.Refresh()
+		self.UpdateDrawing()
 		evt.Skip()
 
 	def OnPaint(self, evt):
@@ -1474,7 +1499,7 @@ if __name__ == '__main__':
 							lambda e: self.panel.setImage(self.panel.imagedata))
 
 #			self.panel = TargetImagePanel(frame, -1)
-#			self.panel.addTypeTool('Target Practice', display=True, target=wx.RED)
+			self.panel.addTypeTool('Target Practice', display=True, target=wx.RED)
 
 			self.sizer.Add(self.panel, 1, wx.EXPAND|wx.ALL)
 			frame.SetSizerAndFit(self.sizer)
