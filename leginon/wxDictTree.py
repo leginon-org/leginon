@@ -103,6 +103,7 @@ class DictTreeCtrlPanel(wxPanel):
 
 	def OnEndEdit(self, evt):
 		if not callable(self.editcallback) or evt.IsEditCancelled():
+			evt.Veto()
 			return
 		newvalue = evt.GetLabel()
 		# apparently under Gtk if you hit enter to set the value two events fire
@@ -121,7 +122,9 @@ class DictTreeCtrlPanel(wxPanel):
 			except:
 				evt.Veto()
 				return
-			if type(newvalue) != type(oldvalue):
+			try:
+				type(oldvalue)(newvalue)
+			except:
 				evt.Veto()
 				return
 		self.tree.SetPyData(item, newvalue)

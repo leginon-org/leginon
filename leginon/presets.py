@@ -590,7 +590,7 @@ class PresetsManager(node.Node):
 
 	def uiParamsCallback(self, value):
 		if (self.currentselection is None) or (not value):
-			return {}
+			d = {}
 		else:
 			if self.autosquare.get():
 				for autokey in ('dimension','binning','offset'):
