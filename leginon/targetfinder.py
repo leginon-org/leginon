@@ -22,6 +22,7 @@ xmlbinlib = xmlrpclib
 #               (not in imagewatcher)
 
 class TargetFinder(imagewatcher.ImageWatcher):
+	eventoutputs = imagewatcher.ImageWatcher.eventoutputs + [event.ImageTargetListPublishEvent]
 	def __init__(self, id, session, nodelocations, **kwargs):
 		self.targetlist = []
 		imagewatcher.ImageWatcher.__init__(self, id, session, nodelocations, **kwargs)

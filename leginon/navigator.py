@@ -11,6 +11,11 @@ import copy
 import uidata
 
 class Navigator(node.Node):
+
+	eventinputs = node.Node.eventinputs + [event.ImageClickEvent,
+																					event.ImageAcquireEvent]
+	eventoutputs = node.Node.eventoutputs + [event.CameraImagePublishEvent]
+
 	def __init__(self, id, session, nodelocations, **kwargs):
 		node.Node.__init__(self, id, session, nodelocations, **kwargs)
 		self.cam = camerafuncs.CameraFuncs(self)

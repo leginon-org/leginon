@@ -10,6 +10,11 @@ class TargetWatcher(watcher.Watcher):
 	It is also initialized with a specific type of target that it can
 	process.  All other targets are republished in another target list.
 	'''
+
+	eventinputs = watcher.Watcher.eventinputs + [event.TargetListDoneEvent,
+																							event.ImageTargetListPublishEvent]
+	eventoutputs = watcher.Watcher.eventoutputs + [event.TargetListDoneEvent]
+
 	def __init__(self, id, session, nodelocations, targetclass=data.ImageTargetData, **kwargs):
 		watchfor = event.ImageTargetListPublishEvent
 		watcher.Watcher.__init__(self, id, session, nodelocations, watchfor, lockblocking=0, **kwargs)

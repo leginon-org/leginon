@@ -4,6 +4,7 @@ import uidata
 import presets
 
 class TargetMaker(node.Node):
+	eventoutputs = node.Node.eventoutputs + [event.ImageTargetListPublishEvent]
 	def __init__(self, id, session, nodelocations, **kwargs):
 		self.targetlist = []
 		node.Node.__init__(self, id, session, nodelocations, **kwargs)

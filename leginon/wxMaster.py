@@ -1,5 +1,7 @@
 from wxPython.wx import *
 import wxObjectCanvas
+import nodeclassreg
+import event
 
 class RenameDialog(wxDialog):
 	def __init__(self, parent, id, title='Rename', pos=wxDefaultPosition,
@@ -36,14 +38,19 @@ class RenameDialog(wxDialog):
 class BindingConnectionPoint(wxObjectCanvas.wxConnectionPointObject):
 	def __init__(self, eventclass, color=wxBLACK):
 		self.eventclass = eventclass
-		self.setDrawText(False)
+		self.drawtext = 0
 		wxObjectCanvas.wxConnectionPointObject.__init__(self, color)
 
 	def getDrawText(self):
-		return self.drawtext
+		if self.drawtext > 0:
+			return True
+		return False
 
 	def setDrawText(self, value):
-		self.drawtext = value
+		if value:
+			self.drawtext += 1
+		else:
+			self.drawtext -= 1
 
 	def OnStartConnection(self, evt):
 		evt.Skip()
@@ -95,29 +102,40 @@ class BindingOutput(BindingConnectionPoint):
 			dc.DrawRotatedText(self.eventclass, x, y, -90)
 
 class Node(wxObjectCanvas.wxRectangleObject):
-	def __init__(self, name):
-		self.name = name
+	def __init__(self, alias, nodeclass):
 		wxObjectCanvas.wxRectangleObject.__init__(self, 60, 60, wxColor(128,0,128))
-		self.addText(self.name)
+		self.alias = alias 
+		self.nodeclass = nodeclass
+
+		nc = nodeclassreg.getNodeClass(self.nodeclass)
+		for inputclass in nc.eventinputs:
+			input = BindingInput(inputclass.__name__)
+			self.addConnectionInput(input)
+		for outputclass in nc.eventoutputs:
+			output = BindingOutput(outputclass.__name__)
+			self.addConnectionOutput(output)
+
+		self.addText(self.alias)
+		self.addText(self.nodeclass, 0, 12)
 
 		self.popupmenu.Append(101, 'Rename...')
 		self.popupmenu.Append(103, 'Delete')
 		EVT_MENU(self.popupmenu, 101, self.menuRename)
 		EVT_MENU(self.popupmenu, 103, self.menuDelete)
 
-	def getName(self):
-		return self.name
+	def getAlias(self):
+		return self.alias
 
-	def setName(self, name):
-		self.removeText(self.name)
-		self.name = name
-		self.addText(self.name)
+	def setAlias(self, alias):
+		self.removeText(self.alias)
+		self.alias = alias 
+		self.addText(self.alias)
 
 	def menuRename(self, evt):
 		dialog = RenameDialog(None, -1)
-		dialog.SetValue(self.getName())
+		dialog.SetValue(self.getAlias())
 		if dialog.ShowModal() == wxID_OK:
-			self.setName(dialog.GetValue())
+			self.setAlias(dialog.GetValue())
 			self.UpdateDrawing()
 		dialog.Destroy()
 
@@ -203,10 +221,10 @@ class BindingLabel(wxObjectCanvas.wxRectangleObject):
 		wxObjectCanvas.wxRectangleObject.Draw(self, dc)
 
 class Binding(wxObjectCanvas.wxConnectionObject):
-	def __init__(self, name, fromnode=None, tonode=None):
-		self.name = name
+	def __init__(self, eventclass, fromnode=None, tonode=None):
+		self.eventclass = eventclass
 		wxObjectCanvas.wxConnectionObject.__init__(self, fromnode, tonode)
-		self.label = BindingLabel(self.name)
+		self.label = BindingLabel(self.eventclass)
 		self.addShapeObject(self.label)
 
 	def _crookedLine(self, dc, so1, x, y):
@@ -241,8 +259,14 @@ class AddNodeDialog(wxDialog):
 		box = wxBoxSizer(wxHORIZONTAL)
 		label = wxStaticText(self, -1, 'Class:')
 		box.Add(label, 0, wxALIGN_CENTER|wxALL, 3)
-		self.classentry = wxTextCtrl(self, -1, '')
-		box.Add(self.classentry, 1, wxALIGN_CENTER|wxALL, 3)
+		classnames = nodeclassreg.getNodeClassNames()
+		classnames.sort()
+		self.classcombo = wxComboBox(self, -1, choices=classnames,
+																	style=wxCB_DROPDOWN|wxCB_READONLY)
+		self.classcombo.SetSelection(0)
+		box.Add(self.classcombo, 1, wxALIGN_CENTER|wxALL, 3)
+#		self.classentry = wxTextCtrl(self, -1, '')
+#		box.Add(self.classentry, 1, wxALIGN_CENTER|wxALL, 3)
 		sizer.AddSizer(box)
 
 		box = wxBoxSizer(wxHORIZONTAL)
@@ -258,17 +282,19 @@ class AddNodeDialog(wxDialog):
 		sizer.Fit(self)
 
 	def GetValue(self):
-		return self.aliasentry.GetValue(), self.classentry.GetValue()
+		return self.aliasentry.GetValue(), self.classcombo.GetStringSelection()
+		#return self.aliasentry.GetValue(), self.classentry.GetValue()
 
 	def SetValue(self, alias, nodeclass):
 		self.aliasentry.SetValue(alias)
-		self.classentry.SetValue(nodeclass)
+		self.classcombo.SetStringSelection(nodeclass)
+		#self.classentry.SetValue(nodeclass)
 
 class Launcher(wxObjectCanvas.wxRectangleObject):
-	def __init__(self, name):
-		self.name = name
+	def __init__(self, alias):
+		self.alias = alias
 		wxObjectCanvas.wxRectangleObject.__init__(self, 150, 150, wxColor(0,128,0))
-		self.addText(self.name)
+		self.addText(self.alias)
 
 		self.popupmenu.Append(101, 'Rename...')
 		self.popupmenu.Append(102, 'Add Node...')
@@ -277,19 +303,19 @@ class Launcher(wxObjectCanvas.wxRectangleObject):
 		EVT_MENU(self.popupmenu, 102, self.menuAddNode)
 		EVT_MENU(self.popupmenu, 103, self.menuDelete)
 
-	def getName(self):
-		return self.name
+	def getAlias(self):
+		return self.alias
 
-	def setName(self, name):
-		self.removeText(self.name)
-		self.name = name
-		self.addText(self.name)
+	def setAlias(self, alias):
+		self.removeText(self.alias)
+		self.alias = alias
+		self.addText(self.alias)
 
 	def menuRename(self, evt):
 		dialog = RenameDialog(None, -1)
-		dialog.SetValue(self.getName())
+		dialog.SetValue(self.getAlias())
 		if dialog.ShowModal() == wxID_OK:
-			self.setName(dialog.GetValue())
+			self.setAlias(dialog.GetValue())
 			self.UpdateDrawing()
 		dialog.Destroy()
 
@@ -297,7 +323,7 @@ class Launcher(wxObjectCanvas.wxRectangleObject):
 		dialog = AddNodeDialog(None, -1)
 		if dialog.ShowModal() == wxID_OK:
 			alias, nodeclass = dialog.GetValue()
-			self.addShapeObject(Node(alias))
+			self.addShapeObject(Node(alias, nodeclass))
 		dialog.Destroy()
 
 	def menuDelete(self, evt):
@@ -427,14 +453,32 @@ class Application(wxObjectCanvas.wxRectangleObject):
 		else:
 			raise TypeError('Invalid object type to add')
 
+	def OnStartConnection(self, evt):
+		wxObjectCanvas.wxRectangleObject.OnStartConnection(self, evt)
+		for node in self.getNodes():
+			for input in node.connectioninputs:
+				if input.eventclass == self.connection.eventclass:
+					input.setDrawText(True)
+
 	def OnEndConnection(self, evt):
 		if self.connection is not None:
-			if self.connection.name == evt.toso.eventclass:
+			if self.connection.eventclass == evt.toso.eventclass:
 				for i in self.connectionobjects:
 					if i.getFromShapeObject() == self.connection.getFromShapeObject():
 						if i.getToShapeObject() == evt.toso:
 							return
+				for node in self.getNodes():
+					for input in node.connectioninputs:
+						if input.eventclass == self.connection.eventclass:
+							input.setDrawText(False)
 				wxObjectCanvas.wxRectangleObject.OnEndConnection(self, evt)
+
+	def cancelConnection(self):
+		for node in self.getNodes():
+			for input in node.connectioninputs:
+				if input.eventclass == self.connection.eventclass:
+					input.setDrawText(False)
+		wxObjectCanvas.wxRectangleObject.cancelConnection(self)
 
 class Master(wxObjectCanvas.wxRectangleObject):
 	def __init__(self):
@@ -481,11 +525,14 @@ if __name__ == '__main__':
 	l0 = Launcher('Launcher 0')
 	l1 = Launcher('Launcher 1')
 	l2 = Launcher('Launcher 2')
-	n0 = Node('Node 0')
-	n1 = Node('Node 1')
-	n2 = Node('Node 2')
-	n3 = Node('Node 3')
-	n4 = Node('Node 4')
+
+	app.MainLoop()
+
+	n0 = Node('Node 0', 'Class 0')
+	n1 = Node('Node 1', 'Class 0')
+	n2 = Node('Node 2', 'Class 0')
+	n3 = Node('Node 3', 'Class 0')
+	n4 = Node('Node 4', 'Class 0')
 	cpo0 = BindingInput('eventclass 0')
 	cpo1 = BindingInput('eventclass 1')
 	cpo2 = BindingInput('eventclass 2')
@@ -516,6 +563,4 @@ if __name__ == '__main__':
 	app.master.addShapeObject(b0)
 	app.master.addShapeObject(b1)
 	app.master.addShapeObject(b2)
-
-	app.MainLoop()
 

@@ -14,9 +14,16 @@ import threading
 import uidata
 
 class Acquisition(targetwatcher.TargetWatcher):
+
+	eventinputs = targetwatcher.TargetWatcher.eventinputs+[event.ImageClickEvent]
+	eventoutputs = targetwatcher.TargetWatcher.eventoutputs + [event.LockEvent,
+																															event.UnlockEvent]
+
 	def __init__(self, id, session, nodelocations, targetclass=data.ImageTargetData, **kwargs):
 		targetwatcher.TargetWatcher.__init__(self, id, session, nodelocations, targetclass, **kwargs)
 		self.addEventInput(event.ImageClickEvent, self.handleImageClick)
+		self.addEventOutput(event.LockEvent)
+		self.addEventOutput(event.UnlockEvent)
 		self.cam = camerafuncs.CameraFuncs(self)
 
 		self.calclients = {

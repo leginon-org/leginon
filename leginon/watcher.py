@@ -16,6 +16,9 @@ class Watcher(node.Node):
 		1 = blocking lock:  events wait until previous is handled
 		None = no lock:  each event handled in own thread
 	'''
+
+	eventinputs = node.Node.eventinputs + [event.PublishEvent]
+
 	def __init__(self, id, session, nodelocations, watchfor=event.PublishEvent, lockblocking=None, **kwargs):
 		node.Node.__init__(self, id, session, nodelocations, **kwargs)
 		self.watchfor = watchfor

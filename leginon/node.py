@@ -68,6 +68,19 @@ class DataHandler(leginonobject.LeginonObject):
 
 class Node(leginonobject.LeginonObject):
 	'''Atomic operating unit for performing tasks, creating data and events.'''
+
+	eventinputs = [event.Event,
+									event.KillEvent,
+									event.ConfirmationEvent,
+									event.NodeAvailableEvent]
+
+	eventoutputs = [event.PublishEvent,
+									event.UnpublishEvent,
+									event.NodeAvailableEvent,
+									event.NodeUnavailableEvent,
+									event.NodeInitializedEvent,
+									event.NodeUninitializedEvent]
+
 	def __init__(self, id, session, nodelocations = {}, datahandler=DataHandler, tcpport=None, xmlrpcport=None, clientclass = datatransport.Client):
 		leginonobject.LeginonObject.__init__(self, id, session)
 

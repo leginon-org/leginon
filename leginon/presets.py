@@ -163,11 +163,17 @@ class DataHandler(node.DataHandler):
 
 
 class PresetsManager(node.Node):
+
+	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent]
+	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent,
+																						event.ListPublishEvent]
+
 	def __init__(self, id, session, nodelocations, **kwargs):
 		node.Node.__init__(self, id, session, nodelocations, datahandler=DataHandler, **kwargs)
 
 		self.addEventInput(event.ChangePresetEvent, self.changePreset)
 		self.addEventOutput(event.PresetChangedEvent)
+		self.addEventOutput(event.ListPublishEvent)
 
 		ids = [('presets',), ('current preset',)]
 		e = event.ListPublishEvent(idlist=ids)

@@ -6,6 +6,7 @@ import event, data
 import copy
 
 class ImageWatcher(watcher.Watcher):
+	eventinputs = watcher.Watcher.eventinputs + [event.ImagePublishEvent]
 	def __init__(self, id, session, nodelocations, **kwargs):
 		watchfor = event.ImagePublishEvent
 		lockblocking = 0

@@ -92,6 +92,8 @@ class Request(object):
 		self.value = value
 
 class EM(node.Node):
+	eventinputs = node.Node.eventinputs + [event.LockEvent, event.UnlockEvent]
+	eventoutputs = node.Node.eventoutputs + [event.ListPublishEvent]
 	def __init__(self, id, session, nodelocations,
 								scope = None, camera = None, **kwargs):
 		# internal
