@@ -64,10 +64,7 @@ class Data(DataDict, leginonobject.LeginonObject):
 
 	def typemap(cls):
 		t = DataDict.typemap()
-		t += [
-			('id', tuple),
-			('session', str),
-		]
+		t += [ ('id', tuple), ('session', str), ]
 		return t
 	typemap = classmethod(typemap)
 
@@ -86,13 +83,9 @@ class NewData(Data):
 	'''
 	def typemap(cls):
 		t = Data.typemap()
-		t += [
-			('stuff', int),
-			('thing', float),
-		]
+		t += [ ('stuff', int), ('thing', float), ]
 		return t
 	typemap = classmethod(typemap)
-
 
 class NumericData(Data):
 	'''
@@ -100,159 +93,85 @@ class NumericData(Data):
 	'''
 	def typemap(cls):
 		t = Data.typemap()
-		t += [
-			('array', Numeric.ArrayType),
-		]
+		t += [ ('array', Numeric.ArrayType), ]
 		return t
 	typemap = classmethod(typemap)
 
-
-class ImageData(NumericData):
-	'''
-	Example of a new data type
-	'''
+### maybe split this up into scope and camera?
+class EMData(Data):
 	def typemap(cls):
-		t = NumericData.typemap()
+		t = Data.typemap()
+		t += [ ('em', dict), ]
+		return t
+	typemap = classmethod(typemap)
+
+class LocationData(Data):
+	pass
+
+class NodeLocationData(LocationData):
+	def typemap(cls):
+		t = LocationData.typemap()
+		t += [ ('location', dict), ]
+		return t
+	typemap = classmethod(typemap)
+
+class DataLocationData(LocationData):
+	def typemap(cls):
+		t = LocationData.typemap()
+		t += [ ('location', list), ]
+		return t
+	typemap = classmethod(typemap)
+
+class NodeClassesData(Data):
+	def typemap(cls):
+		t = Data.typemap()
+		t += [ ('nodeclasses', tuple), ]
+		return t
+	typemap = classmethod(typemap)
+
+class CalibrationData(Data):
+	def typemap(cls):
+		t = Data.typemap()
+		t += [ ('type', str), ]
+		return t
+	typemap = classmethod(typemap)
+
+class MatrixCalibrationData(CalibrationData):
+	def typemap(cls):
+		t = CalibrationData.typemap()
+		t += [ ('magnification', int), ('matrix', Numeric.ArrayType), ]
+		return t
+	typemap = classmethod(typemap)
+
+class PresetData(Data):
+	def typemap(cls):
+		t = Data.typemap()
 		t += [
-			('numeric', NumericData),
+			('spot size', int),
+			('magnification', int),
+			('image shift', dict),
+			('beam shift', dict),
+			('intensity', float),
+			('defocus', float),
+			('dimension', dict),
+			('binning', dict),
+			('offset', dict),
+			('exposure time', int),
 		]
 		return t
 	typemap = classmethod(typemap)
 
+class CorrelationData(Data):
+	pass
 
+class ImageData(Data):
+	def typemap(cls):
+		t = Data.typemap()
+		t += [ ('image', Numeric.ArrayType), ]
+		return t
+	typemap = classmethod(typemap)
 
-class OLDData(leginonobject.LeginonObject):
-	'''Baseclass for leginon data. Subclasses should implement content.'''
-	def __init__(self, id, content):
-		leginonobject.LeginonObject.__init__(self, id)
-		self.content = content
-
-class OLDIntData(OLDData):
-	'''Integer data.'''
-	def __init__(self, id, content):
-		Data.__init__(self, id, int(content))
-
-class OLDStringData(OLDData):
-	'''String data.'''
-	def __init__(self, id, content):
-		Data.__init__(self, id, str(content))
-
-class OLDEMData(OLDData):
-	'''EM data. Dictionary of keys to values.'''
-	def __init__(self, id, content):
-		Data.__init__(self, id, dict(content))
-
-class OLDDBData(OLDData):
-	'''Database data.'''
-	def __init__(self, id, content):
-		Data.__init__(self, id, dict(content))
-
-class OLDImageData(OLDData):
-	'''
-	self.content will be a dict with the following keys
-	   'image':  the Numeric array representation of the image
-	'''
-	def __init__(self, id, image):
-		content = {'image':image}
-		Data.__init__(self, id, content)
-
-class OLDCameraImageData(OLDImageData):
-	'''
-	ImageData that originates from a camera
-	self.content will be a dict with the following keys
-	   'image':  the Numeric array representation of the image
-	   'scope':  the microscope state (dict) at the time of acquisition
-	   'camera':  the camera state (dict) at the time of acquisition
-	'''
-	def __init__(self, id, image, scope, camera):
-		ImageData.__init__(self, id, image)
-		self.content.update({'scope':scope, 'camera':camera})
-
-class OLDLocationData(OLDData):
-	'''Has data ID, but content is the location of the real data. Used by Manager.'''
-	def __init__(self, id, content):
-		Data.__init__(self, id, content)
-
-class OLDNodeLocationData(OLDLocationData):
-	'''Node ID is the data ID, but content is the location of the node. Used by Manager.'''
-	def __init__(self, id, content):
-		LocationData.__init__(self, id, dict(content))
-	def __repr__(self):
-			return "<NodeLocationData for %s> %s" % (self.id, self.content)
-
-class OLDNodeClassesData(OLDData):
-	'''Node Classes data.'''
-	def __init__(self, id, content):
-		Data.__init__(self, id, tuple(content))
-
-class OLDDataLocationData(OLDLocationData):
-	'''Has data ID, but content is a list of node IDs where the data is located. Used by Manager.'''
-	def __init__(self, id, content):
-		LocationData.__init__(self, id, list(content))
-	def __repr__(self):
-		'''Returns a readable format.'''
-		return "<DataLocationData for %s> %s" % (self.id, self.content)
-
-class OLDNumericData(OLDData):
-	def __init__(self, id, content):
-		if type(content) != Numeric.ArrayType:
-			raise RuntimeError('content must be Numeric array')
-		Data.__init__(self, id, content)
-
-class OLDDBRecordData(OLDData):
-	def __init__(self, id, content):
-		Data.__init__(self, id, dict(content))
-		# validate content
-		if 'table' not in self.content:
-			raise RuntimeError('invalid content for DBRecordData')
-		if 'record' not in self.content:
-			raise RuntimeError('invalid content for DBRecordData')
-		# maybe check that 'record' contains a dict
-
-class OLDCalibrationData(OLDData):
-	def __init__(self, id, content):
-		Data.__init__(self, id, dict(content))
-
-class OLDMatrixCalibrationData(OLDCalibrationData):
-	EXAMPLE = {
-		'magnification': 5,
-		'type': 'test',
-		'matrix': Numeric.array([[1.0,2.0],[3.0,4.0]], Numeric.Float64)
-	}
-	def __init__(self, id, magnification, type, matrix):
-		try:
-			if matrix.shape != (2,2):
-				raise ValueError('matrix must be 2x2')
-			matrixcontent = matrix.astype(Numeric.Float64)
-		except AttributeError:
-			print 'MatrixCalibrationData requires Numeric array'
-			raise TypeError('matrix must be 2x2 Numeric array')
-
-		content = {'magnification': int(magnification), 'type': str(type), 'matrix': matrixcontent}
-		CalibrationData.__init__(self, id, content)
-
-class OLDPresetData(OLDData):
-	EXAMPLE = {
-		'spot size': 5,
-		'magnification': 50,
-		'image shift': {'x': 0.555, 'y': 0.888},
-		'beam shift': {'x': 0.555, 'y': 0.888},
-		'intensity': 0.555,
-		'defocus': -2e-6,
-
-		'dimension': {'x': 512, 'y': 512},
-		'binning': {'x': 2, 'y': 2},
-		'offset': {'x':512, 'y':300},
-		'exposure time': 500
-	}
-	def __init__(self, id, content):
-		Data.__init__(self, id, dict(content))
-
-class OLDCorrelationData(OLDData):
-	def __init__(self, id, content):
-		Data.__init__(self, id, dict(content))
-
-class OLDCorrelationImageData(OLDImageData):
+class CorrelationImageData(ImageData):
 	'''
 	ImageData that results from a correlation of two images
 	content has the following keys:
@@ -260,67 +179,98 @@ class OLDCorrelationImageData(OLDImageData):
 		'subject1':  first image (data id) used in correlation
 		'subject2':  second image (data id) used in correlation
 	'''
-	def __init__(self, id, image, subject1, subject2):
-		ImageData.__init__(self, id, image)
-		self.content.update({'subject1':subject1, 'subject2':subject2})
+	def typemap(cls):
+		t = ImageData.typemap()
+		t += [ ('subject1', ImageData), ('subject2', ImageData), ]
+		return t
+	typemap = classmethod(typemap)
 
-class OLDCrossCorrelationImageData(OLDCorrelationImageData):
-	def __init__(self, id, image, subject1, subject2):
-		CorrelationImageData.__init__(self, id, image, subject1, subject2)
+class CrossCorrelationImageData(CorrelationImageData):
+	pass
 
-class OLDPhaseCorrelationImageData(OLDCorrelationImageData):
-	def __init__(self, id, image, subject1, subject2):
-		CorrelationImageData.__init__(self, id, image, subject1, subject2)
+class PhaseCorrelationImageData(CorrelationImageData):
+	pass
 
-class OLDCorrectionImageData(OLDCameraImageData):
-	def __init__(self, id, image, scope, camera):
-		CameraImageData.__init__(self, id, image, scope, camera)
+class CameraImageData(ImageData):
+	def typemap(cls):
+		t = ImageData.typemap()
+		t += [ ('scope', dict), ('camera', dict), ]
+		return t
+	typemap = classmethod(typemap)
 
-class OLDDarkImageData(OLDCorrectionImageData):
-	def __init__(self, id, image, scope, camera):
-		CorrectionImageData.__init__(self, id, image, scope, camera)
+class CorrectionImageData(CameraImageData):
+	pass
 
-class OLDBrightImageData(OLDCorrectionImageData):
-	def __init__(self, id, image, scope, camera):
-		CorrectionImageData.__init__(self, id, image, scope, camera)
+class DarkImageData(CorrectionImageData):
+	pass
 
-class OLDTileImageData(OLDCameraImageData):
-	'''Contains a 2-D Numeric array of the image data and a list of neighboring image tile ID's.'''
-	def __init__(self, id, image, scope, camera, neighbortiles):
-		CameraImageData.__init__(self, id, image, scope, camera)
-		self.content.update({'neighbor tiles':neighbortiles})
+class BrightImageData(CorrectionImageData):
+	pass
 
-class OLDMosaicImageData(OLDCameraImageData):
-	def __init__(self, id, image, scope, camera):
-		CameraImageData.__init__(self, id, image, scope, camera)
-		## scope and camera may not be useful if the mosaic is
-		## mangled too much, maybe something else useful to put
-		## here
+class TileImageData(CameraImageData):
+	def typemap(cls):
+		t = CameraImageData.typemap()
+		t += [ ('neighbor tiles', list), ]
+		return t
+	typemap = classmethod(typemap)
 
-class OLDPresetImageData(OLDCameraImageData):
+class MosaicImageData(CameraImageData):
+	## scope and camera may not be useful if the mosaic is
+	## mangled too much, maybe something else useful to put
+	## here
+	pass
+
+class PresetImageData(CameraImageData):
 	'''
-	Adds preset to CameraImageData
-	Because of targeting issues, it is necessary to track the preset
-	since it may be different that the assigned scope and camera
+	If an image was acquire using a certain preset, use this class
+	to include the preset with it.
 	'''
-	def __init__(self, id, image, scope, camera, preset):
-		CameraImageData.__init__(self, id, image, scope, camera)
-		self.content.update({'preset':preset})
+	def typemap(cls):
+		t = CameraImageData.typemap()
+		t += [ ('preset', PresetData), ]
+		return t
+	typemap = classmethod(typemap)
 
-class OLDStateMosaicData(OLDData):
-	'''Contains data ID of images mapped to their position and state.'''
-	def __init__(self, id, content):
-		Data.__init__(self, id, dict(content))
+### XXX the dict here has variable lenght
+class StateMosaicData(Data):
+	'''
+	mosaic data contains data ID of images mapped to their 
+	position and state.
+	'''
+	def typemap(cls):
+		t = Data.typemap()
+		t += [ ('mosaic data', dict), ]
+		return t
+	typemap = classmethod(typemap)
 
-class OLDImageTargetData(OLDData):
-	def __init__(self, id, content):
-		Data.__init__(self, id, dict(content))
+## this stuff camera from ImageCanvas.eventXYInfo and ImageWatcher.imageInfo
+## XXX preset may not always be set
+class ImageTargetData(Data):
+	def typemap(cls):
+		t = Data.typemap()
+		t += [
+		  ('canvas x', int),
+		  ('canvas y', int),
+		  ('image x', int),
+		  ('image y', int),
+		  ('array shape', tuple),
+		  ('array row', int),
+		  ('array column', int),
+		  ('array value', float),
 
-class OLDImageTargetListData(OLDData):
-	def __init__(self, id, content):
-		Data.__init__(self, id, list(content))
+		  ('image id', tuple),
+		  ('scope', dict),
+		  ('camera', dict),
+		  ('source', str),
+		  ('preset', PresetData)
+		]
+		return t
+	typemap = classmethod(typemap)
 
-if __name__ == '__main__':
-	id = (1,2)
-	d = Data(id)
-	print 'd', d
+### XXX the list here has variable lenght
+class ImageTargetListData(Data):
+	def typemap(cls):
+		t = Data.typemap()
+		t += [ ('targets', list), ]
+		return t
+	typemap = classmethod(typemap)
