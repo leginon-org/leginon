@@ -46,8 +46,14 @@ image2.addTargetType('Foo', [(200, 120)])
 image2.addTargetType('Bar', [])
 image2.addTargetType('Foo Bar', [(120, 200), (50, 78)])
 
+
 #bar2.addUIObject(image1)
 bar2.addUIObject(image2)
+
+def gar(foo):
+	print foo
+clickimage = uidata.UIClickImage('Click Image', gar, image)
+bar1.addUIObject(clickimage)
 
 foo1.addUIObject(uidata.UIMethod('Method 1', bar))
 foo1.addUIObject(uidata.UIBoolean('Boolean 1', 1, 'r'))

@@ -376,28 +376,20 @@ class UIImage(UIBinary):
 			value = xmlrpclib.Binary(value)
 		UIData.set(self, value)
 
-#class UITargetImage(UIContainer):
-#	typelist = UIContainer.typelist + ('target image',)
-#	# callback
-#	def __init__(self, name, image, targets=[]):
-#		UIContainer.__init__(self, name)
-#		self.image = UIImage('Image', image, 'r')
-#		self.targets = UIArray('Targets', targets, 'rw')
-#		self.addUIObject(self.image)
-#		self.addUIObject(self.targets)
-#
-#	def getTargets(self):
-#		return self.targets.get()
-#
-#	def setTargets(self, value):
-#		self.targets.set(value)
-#
-#	def setImage(self, value):
-#		self.image.set(value)
-#
-#	def set(self, image, targets):
-#		self.setImage(image)
-#		self.setTargets(targets)
+class UIClickImage(UIContainer):
+	typelist = UIContainer.typelist + ('click image',)
+	def __init__(self, name, clickcallback, image, permissions='r'):
+		self.clickcallback = clickcallback
+		UIContainer.__init__(self, name)
+		self.image = UIImage('Image', image, 'r')
+		self.coordinates = UIArray('Coordinates', [], 'rw')
+		self.method = UIMethod('Click', self.doClickCallback)
+		self.addUIObject(self.coordinates)
+		self.addUIObject(self.method)
+		self.addUIObject(self.image)
+
+	def doClickCallback(self):
+		self.clickcallback(tuple(self.coordinates.get()))
 
 class UITargetImage(UIContainer):
 	typelist = UIContainer.typelist + ('target image',)

@@ -312,6 +312,18 @@ class ImagePanel(wxPanel):
 		paintdc.Blit(0, 0, xsize/xscale + 1, ysize/yscale + 1, dc,
 									xviewoffset/xscale, yviewoffset/yscale)
 
+class ClickImagePanel(ImagePanel):
+	def __init__(self, parent, id, callback=None):
+		self.callback = callback
+		ImagePanel.__init__(self, parent, id)
+		EVT_LEFT_DCLICK(self.panel, self.OnLeftDoubleClick)
+
+	def OnLeftDoubleClick(self, evt):
+		if self.image is not None:
+			xy = self.view2image((evt.m_x, evt.m_y))
+			if callable(self.callback):
+				self.callback(xy)
+
 class TargetImagePanel(ImagePanel):
 	def __init__(self, parent, id, callback=None):
 		self.callback = callback
@@ -465,7 +477,6 @@ class TargetImagePanel(ImagePanel):
 
 	def OnLeftDoubleClick(self, evt):
 		if self.target_type is not None:
-			viewoffset = self.panel.GetViewStart()
 			x, y = self.view2image((evt.m_x, evt.m_y))
 			target = self.addTarget(self.target_type, x, y)
 			if callable(self.callback):

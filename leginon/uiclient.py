@@ -32,15 +32,19 @@ class UIClient(XMLRPCClient, uiserver.XMLRPCServer):
 	def addServer(self):
 		self.execute('ADDSERVER', (self.hostname, self.port))
 
-	def setServer(self, namelist, value):
-		#self.execute('SET', (namelist, value))
-		threading.Thread(target=self.execute,
-											args=('SET', (namelist, value))).start()
+	def setServer(self, namelist, value, thread=True):
+		if thread:
+			threading.Thread(target=self.execute,
+												args=('SET', (namelist, value))).start()
+		else:
+			self.execute('SET', (namelist, value))
 
-	def commandServer(self, namelist, args):
-		#self.execute('COMMAND', (namelist, args))
-		threading.Thread(target=self.execute,
-											args=('COMMAND', (namelist, args))).start()
+	def commandServer(self, namelist, args, thread=True):
+		if thread:
+			threading.Thread(target=self.execute,
+												args=('COMMAND', (namelist, args))).start()
+		else:
+			self.execute('COMMAND', (namelist, args))
 
 	def addFromServer(self, namelist, typelist, value, read, write):
 		raise NotImplementedError
@@ -178,6 +182,8 @@ def WidgetClassFromTypeList(typelist):
 							return wxComboBoxWidget
 						elif typelist[2] == 'select from struct':
 							return wxTreeSelectWidget
+						elif typelist[2] == 'click image':
+							return wxClickImageWidget
 						elif typelist[2] == 'target image':
 							return wxTargetImageWidget
 						elif typelist[2] == 'dialog':
@@ -418,7 +424,6 @@ def wxClientContainerFactory(wxcontainerwidget):
 				minsize = evt.container.wxwidget.GetMinSize()
 				size = evt.parent.GetSize()
 				if minsize[0] > size[0] or minsize[1] > size[1]:
-					print size, minsize, evt.container.name
 					evt.parent.Fit()
 					evt.container.Fit()
 			evt.container.event.set()
@@ -830,6 +835,49 @@ class wxImageWidget(wxDataWidget):
 		self.label.Destroy()
 		self.imageviewer.Destroy()
 
+class wxClickImageWidget(wxContainerWidget):
+	def __init__(self, uiclient, namelist, widgethandler, parent):
+		wxContainerWidget.__init__(self, uiclient, namelist, widgethandler, parent)
+		self.wxwidget = wxBoxSizer(wxVERTICAL)
+		self.clickimage = wxImageViewer.ClickImagePanel(self.parent, -1,
+																											self.callback)
+		self.label = wxStaticText(self.parent, -1, self.name)
+		self.wxwidget.Add(self.label, 0, wxALIGN_LEFT | wxALL, 5)
+		self.wxwidget.Add(self.clickimage, 0, wxALIGN_CENTER | wxALL, 5)
+
+	def Destroy(self):
+		self.label.Destroy()
+		self.targetimage.Destroy()
+
+	def add(self, namelist, typelist, value, read, write):
+		self.setWidget(namelist, value)
+
+	def callback(self, xy):
+		self.uiclient.setServer(self.namelist + ('Coordinates',), xy, False)
+		self.uiclient.commandServer(self.namelist + ('Click',), (), False)
+
+	def _set(self, value):
+		if value:
+			self.clickimage.setImageFromMrcString(value)
+			width, height = self.targetimage.GetSizeTuple()
+			self.wxwidget.SetItemMinSize(self.clickimage, width, height)
+		else:
+			self.clickimage.clearImage()
+
+	def setWidget(self, namelist, value):
+		if namelist == self.namelist + ('Image',):
+			evt = SetWidgetEvent(self, value.data)
+			wxPostEvent(self.widgethandler, evt)
+
+	def set(self, namelist, value=None):
+		if value is None:
+			self._set(namelist)
+		else:
+			self.setWidget(namelist, value)
+		
+	def delete(self, namelist):
+		pass
+
 class wxTargetImageWidget(wxContainerWidget):
 	def __init__(self, uiclient, namelist, widgethandler, parent):
 		self.lock = threading.Lock()
@@ -840,13 +888,9 @@ class wxTargetImageWidget(wxContainerWidget):
 		self.wxwidget.Add(self.label, 0, wxALIGN_LEFT | wxALL, 5)
 		self.wxwidget.Add(self.targetimage, 0, wxALIGN_CENTER | wxALL, 5)
 
-#	def apply(self, evt):
-#		value = self.targetimage.targets
-#		self.uiclient.setServer(self.namelist + ('Targets',), value)
-
 	def Destroy(self):
 		self.label.Destroy()
-		self.targetimage.Destroy()
+		self.clickimage.Destroy()
 
 	def add(self, namelist, typelist, value, read, write):
 		self.setWidget(namelist, value)
