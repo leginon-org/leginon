@@ -851,6 +851,8 @@ scope_params = [
 	('low dose mode', str),
 	('film stock', int),
 	('film exposure number', int),
+	('pre film exposure', bool),
+	('post film exposure', bool),
 	('film exposure', bool),
 	('film exposure type', str),
 	('film exposure time', float),
