@@ -263,7 +263,7 @@ class MoreData(Data):
 class EMData(Data):
 	def typemap(cls):
 		t = Data.typemap()
-		t += [ ('system time', float), ]
+		t += [ ('em host', str), ('system time', float)]
 		return t
 	typemap = classmethod(typemap)
 
@@ -415,6 +415,7 @@ class PresetData(Data):
 		t = Data.typemap()
 		t += [
 			('name', str),
+			('em host', str),
 			('magnification', int),
 			('spot size', int),
 			('intensity', float),
@@ -545,7 +546,7 @@ class PhaseCorrelationImageData(CorrelationImageData):
 class CameraImageData(ImageData):
 	def typemap(cls):
 		t = ImageData.typemap()
-		t += [ ('scope', ScopeEMData), ('camera', CameraEMData), ]
+		t += [ ('em host', str), ('scope', ScopeEMData), ('camera', CameraEMData), ]
 		return t
 	typemap = classmethod(typemap)
 
@@ -628,6 +629,7 @@ class CorrectorCamstateData(Data):
 	def typemap(cls):
 		t = Data.typemap()
 		t += [
+			('em host', str),
 			('dimension', dict),
 			('binning', dict),
 			('offset', dict),
