@@ -16,6 +16,9 @@ class Manager(node.Node):
 	def __init__(self, id):
 		# the id is manager (in a list)
 		node.Node.__init__(self, id, {})
+
+		self.clients = {}
+
 		self.uiserver.server.register_function(self.getNodeLocations, 'getNodeLocations')
 
 		self.nodelocations['manager'] = self.location()
@@ -58,9 +61,40 @@ class Manager(node.Node):
 		'return an id for a new node'
 		return self.id + (name,)
 
+	def outputEvent(self, ievent, wait, nodeid):
+		try:
+			self.clients[nodeid].push(ievent)
+		except KeyError:
+			print 'cannot output event %s to %s' % (ievent,nodeid)
+			return
+		if wait:
+			self.waitEvent(ievent)
+
 	def confirmEvent(self, ievent):
-		self.outputEvent(event.ConfirmationEvent(self.ID(), ievent.id), \
-				0, ievent.id[:-1])
+		self.outputEvent(event.ConfirmationEvent(self.ID(), ievent.id),
+											0, ievent.id[:-1])
+
+	def addClient(self, newid, loc):
+		self.clients[newid] = self.clientclass(self.ID(), loc)
+
+		## this was added to work with interface server
+		if self.uiactive:
+			name = newid[-1]
+			if name not in self.clientlist:
+				self.clientlist.append(name)
+			self.clientdict[name] = newid
+			self.clientlistdata.set(self.clientlist)
+
+	def delClient(self, newid):
+		if newid in self.clients:
+			del self.clients[newid]
+
+			## this was added to work with interface server
+			if self.uiactive:
+				name = newid[-1]
+				self.clientlist.remove(name)
+				del self.clientdict[name]
+				self.clientlistdata.set(self.clientlist)
 
 	def registerConfirmedEvent(self, ievent):
 		nodeid = ievent.content[:-1]
@@ -135,7 +169,7 @@ class Manager(node.Node):
 			self.addLauncher(nodeid, nodelocation)
 
 		# for the clients and mapping
-		self.addEventClient(nodeid, nodelocation)
+		self.addClient(nodeid, nodelocation)
 		#print 'REGISTER NODE clients', self.clients
 
 		# published data of nodeid mapping to location of node
@@ -168,7 +202,7 @@ class Manager(node.Node):
 			self.removeNodeData(nodeid)
 			self.removeNodeDistmaps(nodeid)
 			self.server.datahandler.remove(nodeid)
-			self.delEventClient(nodeid)
+			self.delClient(nodeid)
 			print 'node', nodeid, 'unregistered'
 		else:
 			print 'node', nodeid, 'does not exist'
@@ -253,7 +287,7 @@ class Manager(node.Node):
 		#print 'EV', ev
 		#self.clients[launcher].push(ev)
 		#print 'CLIENTS', self.clients
-		self.outputEvent(ev, nodeid=launcher)
+		self.outputEvent(ev, 0, launcher)
 		#print 'MANAGER LAUNCH DONE'
 
 	def killNode(self, nodeid):
@@ -326,8 +360,6 @@ class Manager(node.Node):
 				ndict = self.nodeDict()
 				self.nodetreedata.set(ndict)
 
-				
-
 	def newLauncher(self, name):
 		t = threading.Thread(name='launcher thread', target=launcher.Launcher, args=(self.id + (name,), self.nodelocations))
 		t.start()
@@ -341,6 +373,14 @@ class Manager(node.Node):
 
 	def defineUserInterface(self):
 		nodespec = node.Node.defineUserInterface(self)
+
+		self.clientlist = []
+		self.clientdict = {}
+
+		## this is data for ui to read, but not visible
+		self.clientlistdata = self.registerUIData('clientlist', 'array', permissions='r')
+		self.clientlistdata.set(self.clientlist)
+
 
 		self.ui_nodes = {}
 		self.ui_launchers = {}

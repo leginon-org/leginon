@@ -59,7 +59,6 @@ class Node(leginonobject.LeginonObject):
 		leginonobject.LeginonObject.__init__(self, id)
 
 		self.nodelocations = nodelocations
-		self.clients = {}
 
 		self.registry = {'outputs':[], 'inputs':[]}
 
@@ -183,8 +182,7 @@ class Node(leginonobject.LeginonObject):
 		self.addManager(ievent.content)
 
 	def addManager(self, loc):
-		self.delAllEventClients()
-		self.addEventClient(('manager',), loc)
+		self.managerclient = self.clientclass(self.ID(), loc)
 		newid = self.ID()
 		myloc = self.location()
 		available_event = event.NodeAvailableEvent(newid, myloc)
@@ -204,9 +202,9 @@ class Node(leginonobject.LeginonObject):
 		self.die_event.wait()
 		self.exit()
 
-	def outputEvent(self, ievent, wait=0, nodeid=('manager',)):
+	def outputEvent(self, ievent, wait=0):
 		try:
-			self.clients[nodeid].push(ievent)
+			self.managerclient.push(ievent)
 		except KeyError:
 			print 'cannot output event %s to %s' % (ievent,nodeid)
 			return
@@ -252,8 +250,8 @@ class Node(leginonobject.LeginonObject):
 		for nodeid in nodeiddata.content:
 			nodelocation = self.researchByLocation(self.nodelocations['manager'],
 				nodeid)
-			self.addEventClient(nodeid, nodelocation.content)
-			self.clients[nodeid].push(idata)
+			client = self.clientclass(self.ID(), nodelocation.content)
+			self.client.push(idata)
 
 	## no longer have to mark_data becuase id takes care of it
 	#def mark_data(self, data):
@@ -270,17 +268,14 @@ class Node(leginonobject.LeginonObject):
 		return cdata
 
 	def researchByDataID(self, dataid):
-		# will change soon
-		loc = self.nodelocations['manager']
-		nodeiddata = self.researchByLocation(loc, dataid)
+		nodeiddata = self.managerclient.pull(dataid)
 
 		if nodeiddata is None:
 			print "researchByDataID: no such data ID %s" % (dataid,)
 			raise IOError
 
 		# should interate over nodes, be crafty, etc.
-		datalocationdata = self.researchByLocation(self.nodelocations['manager'], nodeiddata.content[-1])
-
+		datalocationdata = self.managerclient.pull(nodeiddata.content[-1])
 		return self.researchByLocation(datalocationdata.content, dataid)
 
 	def location(self):
@@ -301,36 +296,6 @@ class Node(leginonobject.LeginonObject):
 	def raw_input(self, prompt):
 		newprompt = '%s%s' % (str(self.id), prompt)
 		return raw_input(newprompt)
-
-  # down from here is from EventHandler
-	def addEventClient(self, newid, loc):
-		self.clients[newid] = self.clientclass(self.ID(), loc)
-
-		## this was added to work with interface server
-		if self.uiactive:
-			name = newid[-1]
-			if name not in self.clientlist:
-				self.clientlist.append(name)
-			self.clientdict[name] = newid
-		self.clientlistdata.set(self.clientlist)
-
-	def delEventClient(self, newid):
-		if newid in self.clients:
-			del self.clients[newid]
-
-			## this was added to work with interface server
-			if self.uiactive:
-				name = newid[-1]
-				self.clientlist.remove(name)
-				del self.clientdict[name]
-		self.clientlistdata.set(self.clientlist)
-
-	def delAllEventClients(self):
-		try:
-			for clientid in self.clients:
-				del self.clients[clientid]
-		except:
-			pass
 
 	def addEventInput(self, eventclass, func):
 		self.server.datahandler.setBinding(eventclass, func)
