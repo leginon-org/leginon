@@ -8,7 +8,7 @@
 
 import threading
 import data
-import uiserver
+#from uiserver import Server
 
 # Exceptions
 class Error(Exception):
@@ -73,8 +73,8 @@ class Object(object):
 		return self
 
 	def _setServer(self, server):
-		if not isinstance(server, uiserver.Server) and server is not None:
-			raise TypeError('Invalid server for Object')
+#		if not isinstance(server, Server) and server is not None:
+#			raise TypeError('Invalid server for Object')
 		self.server = server
 
 	def _enable(self, enabled, block, thread):

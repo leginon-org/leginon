@@ -13,30 +13,15 @@ import uiserver
 import uiclient
 import threading
 
-def add():
-	for i in range(1):
-		container = uidata.LargeContainer('C ' + str(i))
-		for i in range(32):
-			container.addObject(uidata.Image('Image Viewer ' + str(i), None))
-		server.addObject(container)
+value = uidata.Integer('Test Value', 1, 'rw')
+def Test(s):
+	v = value.get()
+	value.set(s + 1)
+	return s
 
 server = uiserver.Server()
-server.addObject(uidata.Method('Add', add))
-container = uidata.LargeContainer('LC')
-messages = [uidata.Message('0', 'error', 'Testing error message'),
-						uidata.Message('1', 'info', 'Testing info message'),
-						uidata.Message('2', 'warning', 'Testing warning message'),
-						uidata.Message('3', 'info', 'Testing info message' + ' foo'*50),
-						uidata.Message('4', 'error', 'Testing error message')]
-messagelog = uidata.MessageLog('Message log name')
-parentcontainer = uidata.LargeContainer('PC')
-parentcontainer.addObject(container)
-container.addObject(messagelog)
-container.addObject(uidata.LargeContainer('Sub Container 0'))
-container.addObject(uidata.LargeContainer('Sub Container 1'))
-container.addObject(uidata.LargeContainer('Sub Container 2'))
-parentcontainer.addObject(uidata.MessageLog('Empty'))
-server.addObject(parentcontainer)
-messagelog.addObjects(messages)
+server.addObject(value)
+server.addObject(uidata.SingleSelectFromList('Test', ['foo', 'bar'], 1, callback=Test))
+
 client = uiclient.UIApp({'instance': server}, 'UI Test')
 
