@@ -93,8 +93,10 @@ class Watcher(node.Node):
 		try:
 			newdata = self.dataqueue.get(blocking)
 			self.processData(newdata)
+			return 1
 		except Queue.Empty:
 			print 'Queue is empty, no data processed'
+			return 0
 
 	## maybe this should start a new thread?
 	def uiProcessData(self):
