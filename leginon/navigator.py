@@ -98,8 +98,7 @@ class Navigator(node.Node, camerafuncs.CameraFuncs):
 
 		shift_types = self.shift_types.keys()
 		temparam = self.registerUIData('temparam', 'array', default=shift_types)
-		movetype = self.registerUIData('TEM Parameter', 'string', choices=temparam, permissions='rw')
-		movetype.set(self.shiftType)
+		movetype = self.registerUIData('TEM Parameter', 'string', choices=temparam, permissions='rw', callback=self.shiftType)
 
 		self.delaydata = self.registerUIData('Delay (sec)', 'float', default=2.5, permissions='rw')
 
