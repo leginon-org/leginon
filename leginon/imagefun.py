@@ -228,7 +228,9 @@ def power(numericarray, mask_radius=1.0, thresh=3):
 
 	pow = shuffle(pow)
 
-	center_mask(pow, int(mask_radius / 100.0 * pow.shape[0]))
+	mask_radius = int(mask_radius / 100.0 * pow.shape[0])
+	if mask_radius:
+					center_mask(pow, mask_radius)
 
 	m = mean(pow)
 	s = stdev(pow, known_mean=m)
