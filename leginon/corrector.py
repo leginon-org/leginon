@@ -8,7 +8,6 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import camerafuncs
 import copy
 import data
 import event
@@ -21,6 +20,8 @@ except:
 import threading
 import EM
 import gui.wx.Corrector
+import remotecall
+import instrument
 
 class CameraError(Exception):
 	pass
@@ -30,6 +31,14 @@ class FindExposureTimeError(Exception):
 
 class AbortError(Exception):
 	pass
+
+class ImageCorrection(remotecall.Object):
+	def __init__(self, node):
+		self.node = node
+
+	def getImage(self, ccdcameraname=None):
+		if ccdcameraname is not None:
+			self.instrument.setCCDCamera(ccdcameraname)
 
 class Corrector(node.Node):
 	'''
@@ -59,7 +68,8 @@ class Corrector(node.Node):
 		node.Node.__init__(self, name, session, managerlocation, **kwargs)
 
 		self.emclient = EM.EMClient(self)
-		self.cam = camerafuncs.CameraFuncs(self)
+
+		self.instrument = instrument.Proxy(self.objectservice)
 
 		self.ref_cache = {}
 
@@ -73,9 +83,9 @@ class Corrector(node.Node):
 
 	def setPlan(self):
 		try:
-			self.cam.setCameraDict(self.settings['camera settings'])
-			camconfig = self.cam.getCameraEMData()
-		except camerafuncs.CameraError, e:
+			self.instrument.ccdcamera.Settings = self.settings['camera settings']
+			camconfig = self.instrument.getData(data.CameraEMData)
+		except Exception, e:
 			self.logger.error('Plan not saved: %s' % e)
 			return
 
@@ -122,36 +132,30 @@ class Corrector(node.Node):
 
 	def acquireRaw(self):
 		try:
-			self.cam.setCameraDict(self.settings['camera settings'])
-			imagedata = self.cam.acquireCameraImageData(correction=False)
-		except (EM.ScopeUnavailable, camerafuncs.CameraError), e:
-			self.logger.error('Raw acquisition failed: %s' % e)
+			self.instrument.ccdcamera.Settings = self.settings['camera settings']
+			image = self.instrument.ccdcamera.Image
 		except Exception, e:
 			self.logger.exception('Raw acquisition failed: %s' % e)
 		else:
-			imagearray = imagedata['image']
-			self.displayImage(imagearray)
+			self.displayImage(image)
 		self.panel.acquisitionDone()
 
 	def acquireCorrected(self):
 		try:
-			self.cam.setCameraDict(self.settings['camera settings'])
-			imagedata = self.acquireCorrectedArray()
-		except (EM.ScopeUnavailable, camerafuncs.CameraError), e:
-			self.logger.error('Corrected acquisition failed: %s' % e)
+			self.instrument.ccdcamera.Settings = self.settings['camera settings']
+			image = self.acquireCorrectedImage()
 		except Exception, e:
 			self.logger.exception('Corrected acquisition failed: %s' % e)
 		else:
-			if imagedata is not None:
-				self.displayImage(imagedata)
+			if image is not None:
+				self.displayImage(image)
 		self.panel.acquisitionDone()
 
-	def displayImage(self, imagedata):
-		if imagedata is None:
+	def displayImage(self, image):
+		if image is None:
 			self.setImage(None, stats={})
 		else:
-			self.setImage(imagedata.astype(Numeric.Float32),
-										stats=self.stats(imagedata))
+			self.setImage(image.astype(Numeric.Float32), stats=self.stats(image))
 
 	def retrievePlan(self, corstate):
 		qplan = data.CorrectorPlanData()
@@ -169,68 +173,55 @@ class Corrector(node.Node):
 	def storePlan(self, plandata):
 		self.publish(plandata, database=True, dbforce=True)
 
-	def acquireSeries(self, n, camdata):
+	def acquireSeries(self, n):
 		series = []
 		for i in range(n):
 			self.logger.info('Acquiring reference image (%s of %s)' % (i+1, n))
-			imagedata = self.cam.acquireCameraImageData(correction=False)
-			numimage = imagedata['image']
-			camdata = imagedata['camera']
-			scopedata = imagedata['scope']
-			series.append(numimage)
-		return {'image series': series, 'scope': scopedata, 'camera':camdata}
+			image = self.instrument.ccdcamera.Image
+			series.append(image)
+		return series
 
 	def acquireReference(self, dark=False):
 		try:
-			self.cam.setCameraDict(self.settings['camera settings'])
-			originalcamdata = self.cam.getCameraEMData()
-		except camerafuncs.CameraError, e:
+			self.instrument.ccdcamera.Settings = self.settings['camera settings']
+			exposuretype = self.instrument.ccdcamera.ExposureType
+			if dark:
+				if exposuretype != 'dark':
+					self.instrument.ccdcamera.ExposureType = 'dark'
+				typekey = 'dark'
+				self.logger.info('Acquiring dark references...')
+			else:
+				if exposuretype != 'normal':
+					self.instrument.ccdcamera.ExposureType = 'normal'
+				typekey = 'bright'
+				self.logger.info('Acquiring bright references...')
+		except Exception, e:
 			self.logger.error('Reference acquisition failed: %s' % e)
-			return
-
-		if originalcamdata is None:
 			return None
-		tempcamdata = data.CameraEMData(initializer=originalcamdata)
-		if dark:
-			tempcamdata['exposure type'] = 'dark'
-			typekey = 'dark'
-			self.logger.info('Acquiring dark references...')
-		else:
-			tempcamdata['exposure type'] = 'normal'
-			typekey = 'bright'
-			self.logger.info('Acquiring bright references...')
-		try:
-			self.cam.setCameraEMData(tempcamdata)
-		except camerafuncs.SetCameraError, e:
-			self.logger.error('Reference acquisition failed: %s' % e)
-			return
 
-		seriesinfo = self.acquireSeries(self.settings['n average'],
-																		camdata=tempcamdata)
-		series = seriesinfo['image series']
-		seriescam = seriesinfo['camera']
-		seriesscope = seriesinfo['scope']
+		try:
+			series = self.acquireSeries(self.settings['n average'])
+		except Exception, e:
+			self.logger.error('Reference acquisition failed: %s' % e)
 
 		self.logger.info('Averaging reference series...')
 		ref = imagefun.averageSeries(series)
 
 		corstate = data.CorrectorCamstateData()
-		corstate['dimension'] = seriescam['dimension']
-		corstate['offset'] = seriescam['offset']
-		corstate['binning'] = seriescam['binning']
+		geometry = self.instrument.ccdcamera.Geometry
+		corstate.friendly_update(geometry)
 
 		refimagedata = self.storeRef(typekey, ref, corstate)
 		if refimagedata is not None:
 			self.logger.info('Got reference image, calculating normalization')
 			self.calc_norm(refimagedata)
 
-		if tempcamdata['exposure type'] == 'dark':
-			self.logger.info('Reseting camera exposure type to normal from dark.')
-			try:
-				self.cam.setCameraEMData(originalcamdata)
-			except camerafuncs.SetCameraError, e:
-				self.logger.warning('Cannot reset camera exposure type to normal: %s'
-														% e)
+		try:
+			self.instrument.ccdcamera.ExposureType = exposuretype
+		except Exception, e:
+			self.logger.error('Reference acquisition failed: %s' % e)
+			return None
+
 		return ref
 
 	def researchRef(self, camstate, type):
@@ -369,18 +360,26 @@ class Corrector(node.Node):
 		norm = normavg / norm
 		self.storeRef('norm', norm, corstate)
 
-	def acquireCorrectedArray(self):
-		imagedata = self.acquireCorrectedImageData()
-		if imagedata is None:
+	def acquireCorrectedImage(self):
+		try:
+			image = self.instrument.ccdcamera.Image
+			geometry = self.instrument.ccdcamera.Geometry
+		except:
+			self.logger.exception('Unable to acquire image')
 			return None
-		return imagedata['image']
+		try:
+			image = self.correct(image, geometry)
+		except Exception, e:
+			self.logger.warning('Unable to correct acquired image: %s' % e)
+			return None
+		return image
 
 	def acquireCorrectedImageData(self):
 		self.setStatus('processing')
 		errstr = 'Acquisition of corrected image failed: %s'
 		try:
-			imagedata = self.cam.acquireCameraImageData(correction=0)
-		except (EM.ScopeUnavailable, camerafuncs.CameraError):
+			imagedata = self.instrument.getData(data.CameraImageData)
+		except Exception, e:
 			self.logger.exception(errstr % 'unable to access instrument')
 			self.setStatus('idle')
 			return None
@@ -400,6 +399,8 @@ class Corrector(node.Node):
 		'''
 		this puts an image through a pipeline of corrections
 		'''
+		if type(camstate) is dict:
+			camstate = data.CorrectorCamstateData(initializer=camstate)
 		normalized = self.normalize(original, camstate)
 		plan = self.retrievePlan(camstate)
 		if plan is not None:
@@ -489,8 +490,7 @@ class Corrector(node.Node):
 
 		raise NotImplementedError('need to work out the details of configuring the camera here')
 
-		imagedata = self.cam.acquireCameraImageData(correction=False)
-		im = imagedata['image']
+		im = self.instrument.ccdcamera.Image
 		mean = darkmean = imagefun.mean(im)
 		self.displayImage(im)
 		self.logger.info('Dark reference mean: %s' % str(darkmean))
@@ -505,8 +505,7 @@ class Corrector(node.Node):
 		for i in range(tries):
 			config = { 'exposure time': trial_exp }
 			raise NotImplementedError('need to work out the details of configuring the camera here')
-			imagedata = self.cam.acquireCameraImageData(correction=False)
-			im = imagedata['image']
+			im = self.instrument.ccdcamera.Image
 			mean = imagefun.mean(im)
 			self.displayImage(im)
 			self.logger.info('Image mean: %s' % str(mean))
