@@ -215,7 +215,7 @@ class Manager(node.Node):
 
 	def killNode(self, nodeid):
 		self.clients[nodeid].push(event.KillEvent(self.ID()))
-		self.removeNode(nodeid)
+		#self.removeNode(nodeid)
 
 	def addEventDistmap(self, eventclass, from_node=None, to_node=None):
 		args = (eventclass, from_node, to_node)

@@ -83,7 +83,10 @@ class ShelveDataKeeper(DataHandler):
 			self.shelflock = threading.Lock()
 
 	def exit(self):
-		os.remove(self.filename)
+		try:
+			os.remove(self.filename)
+		except:
+			print "failed to remove %s" % self.filename
 
 	def query(self, id):
 		self.shelflock.acquire()
@@ -147,7 +150,10 @@ class CachedDictDataKeeper(DataHandler):
 			self.shelflock = threading.Lock()
 
 	def exit(self):
-		os.remove(self.filename)
+		try:
+			os.remove(self.filename)
+		except:
+			print "failed to remove %s" % self.filename
 
 	def query(self, id):
 		self.lock.acquire()

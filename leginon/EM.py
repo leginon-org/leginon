@@ -41,6 +41,11 @@ class DataHandler(datahandler.DataBinder):
 		self.lock.release()
 		return result
 
+	def exit(self):
+		# perhaps not here
+		self.scope.exit()
+		self.camera.exit()
+
 	def insert(self, idata):
 		if isinstance(idata, event.Event):
 			datahandler.DataBinder.insert(self, idata)
@@ -62,13 +67,18 @@ class DataHandler(datahandler.DataBinder):
 			raise InvalidEventError('eventclass must be Event subclass')
 
 class EM(node.Node):
-	def __init__(self, id, managerloc, scope = (None, None), camera = (None, None)):
+	def __init__(self, id, managerloc, scope = None, camera = None):
 		# internal
 		self.lock = threading.Lock()
 		# external
 		self.nodelock = threading.Lock()
 		self.locknodeid = None
 
+		# very temporary
+		if scope is None:
+			scope = ('tecnai', 'tecnai')
+		if camera is None:
+			camera = ('tietz', 'tietz')
 		self.setEM(scope, camera)
 
 		node.Node.__init__(self, id, managerloc, DataHandler, (self.lock, self.scope, self.camera, self))
@@ -78,7 +88,7 @@ class EM(node.Node):
 
 		self.start()
 
-	def setEM(self, scope = (None, None), camera = (None, None)):
+	def setEM(self, scope, camera):
 		if scope[0]:
 			fp, pathname, description = imp.find_module(scope[0])
 			scopemodule = imp.load_module(scope[0], fp, pathname, description)

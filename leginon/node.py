@@ -88,13 +88,14 @@ class Node(leginonobject.LeginonObject):
 				raise
 			else:
 				print 'no exception'
+		self.die_event = threading.Event()
 
 	def exit(self):
 		self.outputEvent(event.NodeUnavailableEvent(self.ID()))
 		self.server.exit()
 
 	def die(self, ievent):
-		sys.exit()
+		self.die_event.set()
 
 	def defineUserInterface(self):
 		'''
@@ -169,12 +170,14 @@ class Node(leginonobject.LeginonObject):
 
 	def start(self):
 		'''this is the node's parent method'''
-		interact_thread = self.interact()
+		#interact_thread = self.interact()
 
 		self.main()
 
 		# wait until the interact thread terminates
-		interact_thread.join()
+		#interact_thread.join()
+		self.die_event.wait()
+		
 		self.exit()
 
 	def outputEvent(self, ievent, wait=0, nodeid=('manager',)):
