@@ -7,6 +7,7 @@ import interface
 import TreeWidget
 import os
 import threading
+import socket
 
 class SpecWidget(Frame):
 	def __init__(self, parent, uiclient, spec, **kwargs):
@@ -460,6 +461,8 @@ class NodeGUILauncher(Frame):
 		launchbut = Button(f, text='Launch GUI', command=self.launchgui)
 		launchhostlab = Label(f, text='Host')
 		self.launchhostent = Entry(f, width=15)
+		defaulthost = socket.gethostname()
+		self.launchhostent.insert(0, defaulthost)
 		launchportlab = Label(f, text='Port')
 		self.launchportent = Entry(f, width=15)
 		launchbut.pack(side=LEFT)
