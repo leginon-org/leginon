@@ -359,7 +359,7 @@ class leginondata {
 		return $imageinfo;
 	}
 
-	function getGridInfo($imgId) {
+	function getGridId($imgId) {
 		$q = "select "
 			."grid.`grid ID` as gridId "
 			."from AcquisitionImageData a "
@@ -370,7 +370,7 @@ class leginondata {
 
 		$Rgridinfo = $this->mysql->SQLQuery($q);
 		$gridinfo = mysql_fetch_array($Rgridinfo);
-		return $gridinfo;
+		return $gridinfo[gridId];
 	}
 
 	function getImageRelation($imgId, $preset='', $matchtargetnb=true) {

@@ -260,4 +260,11 @@ function getFileSize($filename, $precision, $unit="") {
 	}
 	return round($bytes, $precision).' '.$ext;
 }
+
+function getmicrotime()
+{
+   list($usec, $sec) = explode(" ", microtime());
+   return ((float)$usec + (float)$sec);
+}
+
 ?>

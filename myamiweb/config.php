@@ -19,6 +19,11 @@ $DATABASE = "dbemdata";
 // --- Project Base URL
 
 $PROJECT_URL = "http://cronus1.scripps.edu/leginon/project/";
+$PROJECT_HOSTNAME = "cronus1";
+$PROJECT_DBUSER = "usr_object";
+$PROJECT_DBPASSWORD = "";
+$PROJECT_DATABASE = "project";
+
 
 // --- Set External SQL server here (use for import/export application)
 $SQL_HOSTS[] = "cronus1";
@@ -26,6 +31,7 @@ $SQL_HOSTS[] = "cronus2";
 $SQL_HOSTS[] = "stratocaster";
 
 // --- Set method to read mrc 
+
 //	use an external python script to read mrc files
 // $method = "pymrc"; 
 //	use a php extension mrcmodule.so to read mrc files

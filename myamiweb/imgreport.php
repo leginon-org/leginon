@@ -172,7 +172,7 @@ if (is_array($imageinfo) && $id=$imageinfo[parentId]) {
 	foreach($parentimageinfokeys as $k) {
 		if (in_array($k, $parentlinks))
 			$v = '<a class="header" href="'
-			.$PHP_SELF.'?id='.$id.'">'
+			.$PHP_SELF.'?id='.$id.'&preset='.$imageinfo[parentpreset].'">'
 			.$imageinfo[$k].'</a>';
 		else
 			$v = $imageinfo[$k];
@@ -196,7 +196,7 @@ if (is_array($datatypes))
 			$relId = $rel[id];
 			$relfilename = $leginondata->getFilename($relId);
 			echo formatHtmlRow($rel[preset], '<a class="header" href="'
-                                .$PHP_SELF.'?id='.$relId.'">'
+                                .$PHP_SELF.'?id='.$relId.'&preset='.$rel[preset].'">'
                                 .$relfilename.'</a>');
 		} else break;
 	}

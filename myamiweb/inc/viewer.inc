@@ -42,7 +42,7 @@ class viewer {
 
 	function addLoiControl($refreshtime="") {
 		if (empty($refreshtime))
-			$refreshtime = 5;
+			$refreshtime = 10;
 		$btstop = new button('st1', 'stop');
 		$btstop->setLink('javascript:stop()');
 		$btstart = new button('st2', 'start');
@@ -52,7 +52,7 @@ class viewer {
 		.$btstart->getJavascript().$this->crlf
 		.'var mintime=1000;'.$this->crlf
 		.'var maxtime=60000;'.$this->crlf
-		.'var refreshtime=5000;'.$this->crlf
+		.'var refreshtime=10000;'.$this->crlf
 		.'window.name="loi";'.$this->crlf
 		.''.$this->crlf
 		.'function start(){'.$this->crlf

@@ -9,9 +9,9 @@
 require ('inc/leginon.inc');
 require ('inc/viewer.inc');
 
-$sessionId=$_POST[sessionId];
-$imageId=$_POST[imageId];
-$preset=$_POST[$_POST[controlpre]];
+$sessionId = ($_POST[sessionId]) ? $_POST[sessionId] : $_GET[expId];
+$imageId = $_POST[imageId];
+$preset = $_POST[$_POST[controlpre]];
 
 // --- Set sessionId
 $lastId = $leginondata->getLastSessionId();

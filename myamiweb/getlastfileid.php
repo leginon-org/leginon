@@ -11,7 +11,7 @@ $session = ($_GET[session]) ? $_GET[session] : $_POST[session];
 $lastfileid = $leginondata->getLastFilenameId($session);
 $strfileid = ($lastfileid) ? "=$lastfileid" : "";
 $refresh = ($_POST[refreshstate]) ? $_POST[refreshstate] : "false";
-$refreshtime = ($_POST[refreshtime]) ? $_POST[refreshtime] : "1000";
+$refreshtime = ($_POST[refreshtime]) ? $_POST[refreshtime] : "10000";
 ?>
 <html>
 <head>

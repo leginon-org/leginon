@@ -16,6 +16,7 @@
 <font face="Arial, Helvetica, sans-serif" size="2">
 <?
 require('inc/leginon.inc');
+require('inc/project.inc');
 $p[]='gridId';
 $p[]='mag';
 $p[]='defocus';
@@ -28,11 +29,13 @@ if ($id) {
 	echo "<font style='font-size: 12px;'>";
 	$newimage = $leginondata->findImage($id, $preset);
 	$id = $newimage[id];
-			$info = $leginondata->getGridInfo($id);
+			$gridId	= $leginondata->getGridId($id);
+			$project = new project();
+			$gridinfo = $project->getGridInfo($gridId);
 			$filename = $leginondata->getFilename($id);
 			$presets = $leginondata->getPresets($id, $p);
-			if ($info[gridId])
-				echo '<a class="header" target="gridinfo" href="'.$PROJECT_URL.'getgrid.php?gridId='.$info[gridId].'">grid info&raquo;</a>';
+			if ($gridId)
+				echo '<a class="header" target="gridinfo" href="'.$PROJECT_URL.'getgrid.php?gridId='.$gridId.'">grid# '.$gridinfo[number].' info&raquo;</a>';
 			if (is_array($presets))
 			foreach($presets as $k=>$v)
 				if ($k=='defocus')
