@@ -11,24 +11,67 @@ def getBitmap(filename):
 	return bitmap
 
 PresetOrderChangedEventType = wx.NewEventType()
+PresetChoiceEventType = wx.NewEventType()
 PresetsChangedEventType = wx.NewEventType()
+NewPresetEventType = wx.NewEventType()
 
 EVT_PRESET_ORDER_CHANGED = wx.PyEventBinder(PresetOrderChangedEventType)
+EVT_PRESET_CHOICE = wx.PyEventBinder(PresetChoiceEventType)
 EVT_PRESETS_CHANGED = wx.PyEventBinder(PresetsChangedEventType)
+EVT_NEW_PRESET = wx.PyEventBinder(NewPresetEventType)
 
 class PresetOrderChangedEvent(wx.PyCommandEvent):
 	def __init__(self, presets, source):
 		wx.PyCommandEvent.__init__(self, PresetOrderChangedEventType,
 																source.GetId())
-		#self.SetEventType(PresetOrderChangedEventType)
 		self.SetEventObject(source)
 		self.presets = presets
+
+class PresetsChoiceEvent(wx.PyCommandEvent):
+	def __init__(self, choice, source):
+		wx.PyCommandEvent.__init__(self, PresetChoiceEventType, source.GetId())
+		self.SetEventObject(source)
+		self.choice = choice
 
 class PresetsChangedEvent(wx.PyEvent):
 	def __init__(self, presets):
 		wx.PyEvent.__init__(self)
 		self.SetEventType(PresetsChangedEventType)
 		self.presets = presets
+
+class NewPresetEvent(wx.PyEvent):
+	def __init__(self):
+		wx.PyEvent.__init__(self)
+		self.SetEventType(NewPresetEventType)
+
+class PresetChoice(wx.Choice):
+	def __init__(self, *args, **kwargs):
+		wx.Choice.__init__(self, *args, **kwargs)
+		self.Enable(False)
+
+		self.Bind(wx.EVT_CHOICE, self.onChoice)
+		self.Bind(EVT_PRESETS_CHANGED, self.onPresetsChanged)
+
+	def onChoice(self, evt):
+		evt = PresetsChoiceEvent(evt.GetString(), self)
+		self.GetEventHandler().AddPendingEvent(evt)
+
+	def onPresetsChanged(self, evt):
+		self.setChoices(evt.presets)
+
+	def setChoices(self, choices):
+		selection = self.GetStringSelection()
+		self.Freeze()
+		self.Clear()
+		self.AppendItems(choices)
+		if choices:
+			n = self.FindString(selection)
+			if n == wx.NOT_FOUND:
+				self.SetSelection(0)
+			else:
+				self.SetSelection(n)
+		self.Enable(choices)
+		self.Thaw()
 
 class PresetOrder(wx.Panel):
 	def __init__(self, *args, **kwargs):

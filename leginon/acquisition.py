@@ -22,6 +22,8 @@ import node
 import EM
 import imagefun
 import gui.wx.Acquisition
+import gui.wx.Node
+import gui.wx.Presets
 
 try:
 	import numarray as Numeric
@@ -91,20 +93,20 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.start()
 
 	def onInitialized(self):
-		evt = gui.wx.Acquisition.NodeInitializedEvent(self)
+		evt = gui.wx.Node.NodeInitializedEvent(self)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 		evt.event.wait()
 
 	def setStatus(self, status):
-		evt = gui.wx.Acquisition.SetStatusEvent(status)
+		evt = gui.wx.Node.SetStatusEvent(status)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
 	def displayImage(self, image):
-		evt = gui.wx.Acquisition.SetImageEvent(image)
+		evt = gui.wx.Node.SetImageEvent(image)
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
 	def onPresetPublished(self, evt):
-		evt = gui.wx.Acquisition.NewPresetEvent()
+		evt = gui.wx.Presets.NewPresetEvent()
 		self.panel.GetEventHandler().AddPendingEvent(evt)
 
 	def handleDriftDone(self, ev):

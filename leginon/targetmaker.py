@@ -13,6 +13,8 @@ import calibrationclient
 import math
 import EM
 import targethandler
+import gui.wx.MosaicTargetMaker
+import gui.wx.Node
 
 def magnitude(coordinate, coordinates):
 	return map(lambda c: math.sqrt(sum(map(lambda m, n: (n - m)**2,
@@ -40,76 +42,60 @@ class TargetMaker(node.Node, targethandler.TargetHandler):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 		self.emclient = EM.EMClient(self)
 
-#	def defineUserInterface(self):
-#		node.Node.defineUserInterface(self)
-#		publishtargetsmethod = uidata.Method('Publish Targets',
-#																						self.publishTargetList)
-#		container = uidata.LargeContainer('Target Maker')
-#		container.addObjects((publishtargetsmethod,))
-#		self.uicontainer.addObject(container)
-
 class MosaicTargetMaker(TargetMaker):
+	panelclass = gui.wx.MosaicTargetMaker.Panel
 	eventinputs = TargetMaker.eventinputs + [event.MakeTargetListEvent]
-	def __init__(self, id, session, managerlocation, **kwargs):
+	def __init__(self, id, session, managerlocation, panel=None, **kwargs):
+		self.panel = panel
 		TargetMaker.__init__(self, id, session, managerlocation, **kwargs)
 		self.pixelsizecalclient = calibrationclient.PixelSizeCalibrationClient(self)
 		self.addEventInput(event.MakeTargetListEvent, self.makeMosaicTargetList)
 		self.presetsclient = presets.PresetsClient(self)
+
+		self.preset = None
+		self.label = None
+		self.radius = None
+		self.overlap = None
+
 		self.defineUserInterface()
+
+		self.onInitialized()
 		self.start()
 
-	def defineUserInterface(self):
-		TargetMaker.defineUserInterface(self)
+	def onInitialized(self):
+		evt = gui.wx.Node.NodeInitializedEvent(self)
+		self.panel.GetEventHandler().AddPendingEvent(evt)
+		evt.event.wait()
 
-		self.statusmessage = uidata.String('Current status', '', 'r')
-		statuscontainer = uidata.Container('Status')
-		statuscontainer.addObjects((self.statusmessage,))
-
-		self.presetname = self.presetsclient.uiSinglePresetSelector('Preset', '', 'rw', persist=True)
-		self.radius = uidata.Float('Radius (meters)', 1.0e-3, 'rw', persist=True)
-		self.overlap = uidata.Integer('Overlap (percent)', 0, 'rw', persist=True)
-		self.listlabel = uidata.String('Label', '', 'rw', persist=True)
-		settingscontainer = uidata.Container('Settings')
-		settingscontainer.addObjects((self.presetname, self.radius, self.overlap, self.listlabel))
-
-		publishtargetlistmethod = uidata.Method('Publish Target List', self.makeMosaicTargetList)
-		controlcontainer = uidata.Container('Control')
-		controlcontainer.addObjects((publishtargetlistmethod,))
-
-		container = uidata.LargeContainer('Mosaic Target Maker')
-		container.addObjects((statuscontainer, settingscontainer, controlcontainer))
-		self.uicontainer.addObject(container)
-
-	def setStatusMessage(self, message):
-		self.statusmessage.set(message)
+	def setStatus(self, status):
+		evt = gui.wx.Node.SetStatusEvent(status)
+		self.panel.GetEventHandler().AddPendingEvent(evt)
 
 	def makeMosaicTargetList(self, ievent=None):
 		# make targets using current instrument state and selected preset
-		self.setStatusMessage('getting current EM state')
+		self.setStatus('Getting current EM state...')
 		try:
 			scope = self.emclient.getScope()
 			camera = self.emclient.getCamera()
 		except node.ResearchError:
-			self.setStatusMessage('Error publishing targets, cannot find EM')
+			self.setStatus('Error publishing targets, cannot find EM')
 			return
 		alpha = scope['stage position']['a']
 		alphadeg = alpha * 180.0 / 3.14159
 		self.logger.info('using current alpha tilt in targets: %.2f deg' % (alphadeg,))
-		pname = self.presetname.get()
-
-		if pname is None:
-			self.setStatusMessage('Error publishing targets, no preset selected')
+		if self.preset is None:
+			self.setStatus('Error publishing targets, no preset selected')
 			return
 
-		self.setStatusMessage('Finding preset "%s"' % pname)
-		preset = self.presetsclient.getPresetByName(pname)
+		self.setStatus('Finding preset "%s"' % self.preset)
+		preset = self.presetsclient.getPresetByName(self.preset)
 
 		if preset is None:
-			message = 'Error publishing tagets, cannot find preset "%s"' % pname
-			self.setStatusMessage(message)
+			message = 'Error publishing tagets, cannot find preset "%s"' % self.preset
+			self.setStatus(message)
 			return
 
-		self.setStatusMessage('Updating target settings')
+		self.setStatus('Updating target settings')
 		scope.friendly_update(preset)
 		camera.friendly_update(preset)
 		size = camera['dimension']['x']
@@ -119,10 +105,9 @@ class MosaicTargetMaker(TargetMaker):
 			# stage position
 			scope['stage position'][key] = center[key]
 
-		radius = self.radius.get()
-		overlap = self.overlap.get()/100.0
+		overlap = self.overlap/100.0
 		if overlap < 0.0 or overlap >= 100.0:
-			self.setStatusMessage('Invalid overlap specified')
+			self.setStatus('Invalid overlap specified')
 			return
 		magnification = scope['magnification']
 		try:
@@ -133,11 +118,10 @@ class MosaicTargetMaker(TargetMaker):
 		binning = camera['binning']['x']
 		imagesize = camera['dimension']['x']
 
-		self.setStatusMessage('Creating target list')
+		self.setStatus('Creating target list')
 		if ievent is None: 
 			### generated from user invoked method
-			label = self.listlabel.get()
-			targetlist = self.newTargetList(mosaic=True, label=label)
+			targetlist = self.newTargetList(mosaic=True, label=self.label)
 			grid = None
 		else:
 			### generated from external event
@@ -145,15 +129,16 @@ class MosaicTargetMaker(TargetMaker):
 			gridid = grid['grid ID']
 			label = '%06d' % (gridid,)
 			targetlist = self.newTargetList(mosaic=True, label=label)
-		self.setStatusMessage('Publishing target list')
+		self.setStatus('Publishing target list')
 		### publish to DB so new targets get right reference
 		self.publish(targetlist, database=True)
-		for delta in self.makeCircle(radius, pixelsize, binning, imagesize, overlap):
+		args = (self.radius, pixelsize, binning, imagesize, overlap)
+		for delta in self.makeCircle(*args):
 			targetdata = self.newTargetForGrid(grid, delta[0], delta[1], scope=scope, camera=camera, preset=preset, list=targetlist, type='acquisition')
 			self.publish(targetdata, database=True)
 		### publish with event
 		self.publish(targetlist, pubevent=True)
-		self.setStatusMessage('Target list published')
+		self.setStatus('Target list published')
 
 	def makeCircle(self, radius, pixelsize, binning, imagesize, overlap=0.0):
 		imagesize = int(round(imagesize*(1.0 - overlap)))

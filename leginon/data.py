@@ -1435,6 +1435,13 @@ class wxCheckBoxData(wxData):
 		)
 	typemap = classmethod(typemap)
 
+class wxTextCtrlData(wxData):
+	def typemap(cls):
+		return wxData.typemap() + (
+			('value', str),
+		)
+	typemap = classmethod(typemap)
+
 class wxIntCtrlData(wxData):
 	def typemap(cls):
 		return wxData.typemap() + (
@@ -1453,6 +1460,13 @@ class wxPresetOrderData(wxData):
 	def typemap(cls):
 		return wxData.typemap() + (
 			('preset order', list),
+		)
+	typemap = classmethod(typemap)
+
+class wxPresetChoiceData(wxData):
+	def typemap(cls):
+		return wxData.typemap() + (
+			('string selection', list),
 		)
 	typemap = classmethod(typemap)
 

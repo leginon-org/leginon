@@ -1,48 +1,14 @@
-import threading
 import wx
 import wx.lib.masked
 import wx.lib.scrolledpanel
 import gui.wx.Data
 import wxImageViewer
+import gui.wx.Node
 import gui.wx.Presets
 
-NodeInitializedEventType = wx.NewEventType()
-SetStatusEventType = wx.NewEventType()
-SetImageEventType = wx.NewEventType()
-NewPresetEventType = wx.NewEventType()
-EVT_SET_STATUS = wx.PyEventBinder(SetStatusEventType)
-EVT_SET_IMAGE = wx.PyEventBinder(SetImageEventType)
-EVT_NODE_INITIALIZED = wx.PyEventBinder(NodeInitializedEventType)
-EVT_NEW_PRESET = wx.PyEventBinder(NewPresetEventType)
-
-class NodeInitializedEvent(wx.PyEvent):
-	def __init__(self, node):
-		wx.PyEvent.__init__(self)
-		self.SetEventType(NodeInitializedEventType)
-		self.node = node
-		self.event = threading.Event()
-
-class SetStatusEvent(wx.PyEvent):
-	def __init__(self, status):
-		wx.PyEvent.__init__(self)
-		self.SetEventType(SetStatusEventType)
-		self.status = status
-
-class SetImageEvent(wx.PyEvent):
-	def __init__(self, image):
-		wx.PyEvent.__init__(self)
-		self.SetEventType(SetImageEventType)
-		self.image = image
-
-class NewPresetEvent(wx.PyEvent):
-	def __init__(self):
-		wx.PyEvent.__init__(self)
-		self.SetEventType(NewPresetEventType)
-
-class Panel(wx.lib.scrolledpanel.ScrolledPanel):
+class Panel(gui.wx.Node.Panel):
 	def __init__(self, parent, name):
-		wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent, -1,
-																								name='%s.pAcquisition' % name)
+		gui.wx.Node.Panel.__init__(self, parent, -1, name='%s.pAcquisition' % name)
 
 		self.node = None
 
@@ -143,8 +109,8 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 		self.SetSizerAndFit(self.szmain)
 		self.SetupScrolling()
 
-		self.Bind(EVT_NODE_INITIALIZED, self.onNodeInitialized)
-		self.Bind(EVT_NEW_PRESET, self.onNewPreset)
+		self.Bind(gui.wx.Node.EVT_NODE_INITIALIZED, self.onNodeInitialized)
+		self.Bind(gui.wx.Presets.EVT_NEW_PRESET, self.onNewPreset)
 
 		self.Bind(wx.lib.masked.EVT_NUM, self.onWaitNum, self.ncwait)
 		self.Bind(wx.EVT_CHOICE, self.onMoveTypeChoice, self.cmovetype)
@@ -161,15 +127,8 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 		self.Bind(wx.EVT_TOGGLEBUTTON, self.onTogglePause, self.tbpause)
 		self.Bind(wx.EVT_TOGGLEBUTTON, self.onToggleStop, self.tbstop)
 
-		self.Bind(EVT_SET_STATUS, self.onSetStatus)
-		self.Bind(EVT_SET_IMAGE, self.onSetImage)
-
-	def _getStaticBoxSizer(self, label, *args):
-		sbs = wx.StaticBoxSizer(wx.StaticBox(self, -1, label), wx.VERTICAL)
-		gbsz = wx.GridBagSizer(5, 5)
-		sbs.Add(gbsz, 1, wx.EXPAND|wx.ALL, 5)
-		self.szmain.Add(sbs, *args)
-		return gbsz
+		self.Bind(gui.wx.Node.EVT_SET_STATUS, self.onSetStatus)
+		self.Bind(gui.wx.Node.EVT_SET_IMAGE, self.onSetImage)
 
 	def initializeValues(self):
 		movetypes = self.node.calclients.keys()
@@ -213,7 +172,8 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 	def onNewPreset(self, evt=None):
 		presets = self.node.presetsclient.getPresetNames()
 		if presets:
-			self.presetorder.setChoices(presets)
+			evt = gui.wx.Presets.PresetsChangedEvent(presets)
+			self.presetorder.GetEventHandler().AddPendingEvent(evt)
 
 	def onNodeInitialized(self, evt):
 		self.node = evt.node

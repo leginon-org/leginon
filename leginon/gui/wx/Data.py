@@ -4,20 +4,28 @@ import wx.lib.intctrl
 import wx.lib.masked
 import gui.wx.Presets
 
-getmap = {'string selection': 'GetStringSelection',
-						'value': 'GetValue',
-						'preset order': 'getValues'}
+getmap = {
+	'string selection': 'GetStringSelection',
+	'value': 'GetValue',
+	'preset order': 'getValues',
+}
 
-setmap = {'string selection': 'SetStringSelection',
-						'value': 'SetValue',
-						'preset order': 'setValues'}
+setmap = {
+	'string selection': 'SetStringSelection',
+	'value': 'SetValue',
+	'preset order': 'setValues',
+}
 
-eventmap = {wx.RadioBox: wx.EVT_RADIOBOX,
-						wx.Choice: wx.EVT_CHOICE,
-						wx.CheckBox: wx.EVT_CHECKBOX,
-						wx.lib.intctrl.IntCtrl: wx.EVT_TEXT,
-						wx.lib.masked.NumCtrl: wx.lib.masked.EVT_NUM,
-						gui.wx.Presets.PresetOrder: gui.wx.Presets.EVT_PRESET_ORDER_CHANGED}
+eventmap = {
+	wx.RadioBox: wx.EVT_RADIOBOX,
+	wx.Choice: wx.EVT_CHOICE,
+	wx.CheckBox: wx.EVT_CHECKBOX,
+	wx.TextCtrl: wx.EVT_TEXT,
+	wx.lib.intctrl.IntCtrl: wx.EVT_TEXT,
+	wx.lib.masked.NumCtrl: wx.lib.masked.EVT_NUM,
+	gui.wx.Presets.PresetOrder: gui.wx.Presets.EVT_PRESET_ORDER_CHANGED,
+	gui.wx.Presets.PresetChoice: gui.wx.Presets.EVT_PRESET_CHOICE,
+}
 
 def getWindowPath(window):
 	parent = window
@@ -36,7 +44,8 @@ def getWindowDataClass(window):
 	try:
 		return getattr(data, 'wx' + window.__class__.__name__ + 'Data')
 	except AttributeError:
-		raise ValueError('No data class for window class')
+		raise ValueError('No data class for window class %s'
+											% window.__class__.__name__)
 
 def setWindowFromData(window, d):
 	for key, value in setmap.items():

@@ -16,7 +16,6 @@ import event
 import importexport
 import leginonconfig
 import launcher
-import setupwizard
 import node
 import threading
 import uiserver
@@ -27,6 +26,7 @@ import copy
 import uiclient
 import newdict
 import socket
+import gui.wx.SetupWizard
 import gui.wx.Manager
 import nodeclassreg
 
@@ -108,7 +108,8 @@ class Manager(node.Node):
 
 		self.launcherdict = {}
 		# will move, I promise
-		setup = setupwizard.SetupWizard(self.frame, self.research, self.publish)
+		setup = gui.wx.SetupWizard.SetupWizard(self.frame,
+																						self.research, self.publish)
 
 		# handle better
 		if setup.session is None:

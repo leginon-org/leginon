@@ -169,10 +169,11 @@ class ListCtrlPanel(wx.Panel):
 		wx.LayoutAlgorithm().LayoutWindow(self, self.panel)
 
 import os, sys
-import node, acquisition, targetfinder
+import node, acquisition, targetfinder, targetmaker
 
 iconmap = [('acquisition', acquisition.Acquisition),
 						('targetfinder', targetfinder.TargetFinder),
+						('atlasmaker', targetmaker.MosaicTargetMaker),
 						('node', node.Node)]
 
 class Panel(ListCtrlPanel):
