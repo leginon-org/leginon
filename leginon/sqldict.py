@@ -278,7 +278,10 @@ class SQLDict(object):
 		def test(obj):
 			return not isinstance(obj, data.Data)
 		actualresults = filter(test, cursorresults.values())
-		numrows = len(actualresults[0])
+		if actualresults:
+			numrows = len(actualresults[0])
+		else:
+			numrows = 0
 		all = [{} for i in range(numrows)]
 
 		for i in range(numrows):
