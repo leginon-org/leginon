@@ -7,16 +7,15 @@
 #
 import emserver
 import gatan
-import scopedict
 import socket
 import tecnai
 import threading
-import tietz
+#import tietz
 
 if __name__ == '__main__':
-    rpcscope = emserver.makeserver(scopedict.factory(tecnai.tecnai),
+    rpcscope = emserver.makeserver(methoddict.factory(tecnai.tecnai),
                               socket.gethostname(), 8000)
-#    rpccamera = emserver.makeserver(methoddict.factory(tietz.Tietz),
+#    rpccamera = emserver.makeserver(methoddict.factory(tietz.TietzSimulation),
     rpccamera = emserver.makeserver(methoddict.factory(gatan.Gatan),
                               socket.gethostname(), 8001)
     scopethread = threading.Thread(None, rpcscope.serve_forever, None, (), {})

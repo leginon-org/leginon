@@ -6,8 +6,6 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-scope.py - a virtual class defining generic functions of a TEM
-camera.py - a virtual class defining generic functions of a CCD camera
 tecnai.py - implements scope.py for the Tecnai TEM
 tietz.py - implements camera.py for the Tietz CCD camera
 gatan.py - implemenets camera.py for the Gatan CCD camera
@@ -15,7 +13,7 @@ tecnaicom.py - generated python COM wrapper for Tecnai Scripting
 ldcom.py - generated python COM wrapper for Low Dose Module
 tietzcom.py - generated python COM wrapper for Tietz CAMC
 gatancom.py - generated python COM wrapper for Gatan (tecnaiccd.dll)
-*dict.py - dictionary wrappers for generic scope and camera modules,
+methoddict.py - dictionary wrappers for generic scope and camera modules,
            allows access in scope['magnification'] = 100 format
 emserver.py - XML-RPC server wrapper for networked commands
 client.py - a wrapper for creating a XML-RPC networked client that can access
@@ -75,7 +73,7 @@ state = emclient.copy()
 
 The emScope server internals basically go through the following steps:
 1. Creates an instance of XML-RPC server emserver.
--> Instantiates an instance of scopedict or cameradict (wrapper for
+-> Instantiates an instance of methoddict wrapper for
 dictionary implementation.
 -> Instantiate an instance of tecnai, tietz, or gatan.
 -> Loads the COM module wrapper in python
