@@ -632,7 +632,7 @@ class Application(wxObjectCanvas.wxRectangleObject):
 			for nodespec in application['nodes']:
 				if node.getClass() == nodespec[0]:
 					if node.getAlias() == nodespec[1]:
-						if node.getDependencies() == nodespec[5]:
+						if node.getDependencies() == nodespec[3]:
 							parent = node.getParent()
 							if parent is not None and parent.getAlias() == nodespec[2]:
 								nodes.append(node)
