@@ -25,26 +25,11 @@ class Client(Base):
 		Base.__init__(self, id)
 		self.clients = {}
 
-#		for t in self.transportmodules:
-#			self.clients[t] = apply(t.Client, (self.ID(), serverlocation,))
-
-		# will make manager sort this out soon
-		clientlocation = self.location()
-		if ('hostname' in serverlocation) and ('hostname' in clientlocation) \
-				and (serverlocation['hostname'] == clientlocation['hostname']):
-#			if ('PID' in serverlocation) and ('PID' in clientlocation) \
-#					and (serverlocation['PID'] == clientlocation['PID']):
-			self.clients[localtransport] = \
-				apply(localtransport.Client, (self.ID(), serverlocation,))
-
-			if sys.platform != 'win32':
-				try:
-					self.clients[unixtransport] = \
-						apply(unixtransport.Client, (self.ID(), serverlocation,))
-				except AttributeError:
-					del self.clients[unixtransport]
-
-		self.clients[tcptransport] = apply(tcptransport.Client, (self.ID(), serverlocation,))
+		for t in self.transportmodules:
+			try:
+				self.clients[t] = apply(t.Client, (self.ID(), serverlocation,))
+			except ValueError:
+				pass
 
 		self.serverlocation = serverlocation
 

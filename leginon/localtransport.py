@@ -26,6 +26,8 @@ class Server(leginonobject.LeginonObject):
 class Client(leginonobject.LeginonObject):
 	def __init__(self, id, location):
 		leginonobject.LeginonObject.__init__(self, id)
+		if location['hostname'] == self.location()['hostname']:
+			raise ValueError
 		self.serverlocation = location
 
 	def push(self, idata):

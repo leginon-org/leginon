@@ -64,7 +64,7 @@ class Manager(node.Node):
 		else:
 			# this could be in distribute
 			# could wait for all nodes given event to confirm
-			self.outputEvent(ievent, nodeid)
+			self.outputEvent(ievent, 0, nodeid)
 
 	def addLauncher(self, nodeid):
 		self.launcherlist.append(nodeid[-1])
@@ -293,6 +293,7 @@ if __name__ == '__main__':
 	import signal, sys
 
 	manager_id = ('manager',)
+	#manager_id = 'manager'
 	m = Manager(manager_id)
 
 	## GUI

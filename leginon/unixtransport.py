@@ -3,6 +3,7 @@ import socket
 import leginonobject
 import socketstreamtransport
 import os
+import sys
 
 class Server(SocketServer.ThreadingUnixStreamServer, socketstreamtransport.Server):
 	def __init__(self, id, dh, filename = None, path = '.'):
@@ -33,6 +34,8 @@ class Server(SocketServer.ThreadingUnixStreamServer, socketstreamtransport.Serve
 
 class Client(socketstreamtransport.Client):
 	def __init__(self, id, location, buffer_size = 1024):
+		if sys.platform == 'win32':
+			raise ValueError
 		socketstreamtransport.Client.__init__(self, id, location, buffer_size)
 
 	def connect(self, family = socket.AF_UNIX, type = socket.SOCK_STREAM):
