@@ -570,12 +570,17 @@ class Corrector(node.Node):
 		self.uicontainer.addObject(container)
 
 	def uiSetPlanParams(self):
-		camconfig = self.cam.uiGetParams()
+		### if apply as needed, use local config
+		self.cam.uiApplyAsNeeded()
+		camconfig = self.cam.getCameraEMData()
+
 		newcamstate = data.CorrectorCamstateData()
+		newcamstate['session'] = self.session
 		newcamstate['dimension'] = camconfig['dimension']
 		newcamstate['offset'] = camconfig['offset']
 		newcamstate['binning'] = camconfig['binning']
 		plandata = data.CorrectorPlanData()
+		plandata['session'] = self.session
 		plandata['camstate'] = newcamstate
 		plandata['bad_rows'] = self.badrows.get()
 		plandata['bad_cols'] = self.badcols.get()
