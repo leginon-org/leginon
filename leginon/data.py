@@ -395,7 +395,7 @@ class CameraSensitivityCalibrationData(CalibrationData):
 		t = CalibrationData.typemap()
 		t += [
 			('high tension', int),
-			('sensititivy', int),
+			('sensitivity', int),
 		]
 		return t
 	typemap = classmethod(typemap)
@@ -478,6 +478,7 @@ class PresetData(InSessionData):
 			('exposure time', float),
 			('removed', int),
 			('hasref', bool),
+			('dose', float),
 		]
 		return t
 	typemap = classmethod(typemap)
