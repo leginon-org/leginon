@@ -82,7 +82,7 @@ class Node(leginonobject.LeginonObject):
 		self.clientclass = clientclass
 
 		#self.uiserver = uiserver.UIServer('UI', xmlrpcport)
-		self.uiserver = uiserver.UIServer(str(self.id[-1]), xmlrpcport)
+		self.uiserver = uiserver.Server(str(self.id[-1]), xmlrpcport)
 
 		self.eventswaiting = {}
 		self.ewlock = threading.Lock()
@@ -425,18 +425,18 @@ class Node(leginonobject.LeginonObject):
 		return ''
 
 	def defineUserInterface(self):
-		idarray = uidata.UIArray('ID', self.id, 'r')
-		class_string = uidata.UIString('Class', self.__class__.__name__, 'r')
-		locationstruct = uidata.UIStruct('Location', self.location(), 'r')
-#		self.uidatastruct = uidata.UIStruct('Data',
+		idarray = uidata.Array('ID', self.id, 'r')
+		class_string = uidata.String('Class', self.__class__.__name__, 'r')
+		locationstruct = uidata.Struct('Location', self.location(), 'r')
+#		self.uidatastruct = uidata.Struct('Data',
 #						self.datahandlers[self.datahandler].datadict, 'rw')
-		exitmethod = uidata.UIMethod('Exit', self.uiExit)
+		exitmethod = uidata.Method('Exit', self.uiExit)
 
-		container = uidata.UIMediumContainer('Node')
-		container.addUIObjects((idarray, class_string, locationstruct,
+		container = uidata.MediumContainer('Node')
+		container.addObjects((idarray, class_string, locationstruct,
 #														self.uidatastruct, exitmethod))
 														exitmethod))
-		self.uiserver.addUIObject(container)
+		self.uiserver.addObject(container)
 
 class ResearchError(Exception):
 	pass

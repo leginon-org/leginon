@@ -62,27 +62,27 @@ class ImViewer(imagewatcher.ImageWatcher):
 
 	def defineUserInterface(self):
 		imagewatcher.ImageWatcher.defineUserInterface(self)
-		self.uifilename = uidata.UIString('Filename', '', 'rw')
-		loadmethod = uidata.UIMethod('Load MRC', self.uiLoadImage)
-		savemethod = uidata.UIMethod('Save MRC', self.uiSaveImage)
-		filecontainer = uidata.UIContainer('File')
-		filecontainer.addUIObjects((self.uifilename, loadmethod, savemethod))
+		self.uifilename = uidata.String('Filename', '', 'rw')
+		loadmethod = uidata.Method('Load MRC', self.uiLoadImage)
+		savemethod = uidata.Method('Save MRC', self.uiSaveImage)
+		filecontainer = uidata.Container('File')
+		filecontainer.addObjects((self.uifilename, loadmethod, savemethod))
 
-		self.ui_image = uidata.UIImage('Image', None, 'r')
-		rawmethod = uidata.UIMethod('Acquire Raw', self.uiAcquireRaw)
-		correctedmethod = uidata.UIMethod('Acquire Corrected',
+		self.ui_image = uidata.Image('Image', None, 'r')
+		rawmethod = uidata.Method('Acquire Raw', self.uiAcquireRaw)
+		correctedmethod = uidata.Method('Acquire Corrected',
 																			self.uiAcquireCorrected)
-		eventmethod = uidata.UIMethod('Event Acquire', self.acquireEvent)
-		acquirecontainer = uidata.UIContainer('Acquisition')
-		acquirecontainer.addUIObjects((self.ui_image, rawmethod, correctedmethod,
+		eventmethod = uidata.Method('Event Acquire', self.acquireEvent)
+		acquirecontainer = uidata.Container('Acquisition')
+		acquirecontainer.addObjects((self.ui_image, rawmethod, correctedmethod,
 																		eventmethod))
 
 		cameraconfigure = self.cam.configUIData()
-		settingscontainer = uidata.UIContainer('Settings')
-		settingscontainer.addUIObject(cameraconfigure)
+		settingscontainer = uidata.Container('Settings')
+		settingscontainer.addObject(cameraconfigure)
 
-		container = uidata.UIMediumContainer('Image Viewer')
-		container.addUIObjects((acquirecontainer, settingscontainer, filecontainer))
+		container = uidata.MediumContainer('Image Viewer')
+		container.addObjects((acquirecontainer, settingscontainer, filecontainer))
 
-		self.uiserver.addUIObject(container)
+		self.uiserver.addObject(container)
 

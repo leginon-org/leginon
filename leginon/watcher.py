@@ -30,15 +30,15 @@ class Watcher(node.Node):
 
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
-		self.uiwatchflag = uidata.UIBoolean('Watching', True, 'rw')
-		self.uidataqueueflag = uidata.UIBoolean('Data Queue', False, 'rw')
-		processdatamethod = uidata.UIMethod('Process from Queue',
+		self.uiwatchflag = uidata.Boolean('Watching', True, 'rw')
+		self.uidataqueueflag = uidata.Boolean('Data Queue', False, 'rw')
+		processdatamethod = uidata.Method('Process from Queue',
 																				self.uiProcessData)
-		cleardatamethod = uidata.UIMethod('Clear Queue', self.uiClearQueue)
-		container = uidata.UIMediumContainer('Watcher')
-		container.addUIObjects((self.uiwatchflag, self.uidataqueueflag,
+		cleardatamethod = uidata.Method('Clear Queue', self.uiClearQueue)
+		container = uidata.MediumContainer('Watcher')
+		container.addObjects((self.uiwatchflag, self.uidataqueueflag,
 														processdatamethod, cleardatamethod))
-		self.uiserver.addUIObject(container)
+		self.uiserver.addObject(container)
 
 	## the event queue could be put in node.py or datahandler.DataBinder
 	def handleEvent(self, pubevent):

@@ -57,46 +57,30 @@ class Corrector(node.Node):
 
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
-		darkmethod = uidata.UIMethod('Acquire Dark', self.uiAcquireDark)
-		brightmethod = uidata.UIMethod('Acquire Bright', self.uiAcquireBright)
-		correctedmethod = uidata.UIMethod('Acquire Corrected',
+		darkmethod = uidata.Method('Acquire Dark', self.uiAcquireDark)
+		brightmethod = uidata.Method('Acquire Bright', self.uiAcquireBright)
+		correctedmethod = uidata.Method('Acquire Corrected',
 																			self.uiAcquireCorrected)
 
-		acquirecontainer = uidata.UIContainer('Image Acquisition')
-		acquirecontainer.addUIObjects((darkmethod, brightmethod, correctedmethod))
-		self.ui_image = uidata.UIImage('Image', None, 'rw')
+		acquirecontainer = uidata.Container('Image Acquisition')
+		acquirecontainer.addObjects((darkmethod, brightmethod, correctedmethod))
+		self.ui_image = uidata.Image('Image', None, 'rw')
 
-		self.uiframestoaverage = uidata.UIInteger('Frames to Average', 3, 'rw')
-		self.uifakeflag = uidata.UIBoolean('Fake Image', False, 'rw')
+		self.uiframestoaverage = uidata.Integer('Frames to Average', 3, 'rw')
+		self.uifakeflag = uidata.Boolean('Fake Image', False, 'rw')
 		cameraconfigure = self.cam.configUIData()
-#			self.registerUIData('clip limits', 'array', default=()),
-#			self.registerUIData('bad rows', 'array', default=()),
-#			self.registerUIData('bad cols', 'array', default=())
-		self.cliplimits = uidata.UIArray('Clip Limits', (), 'rw')
-		self.badrows = uidata.UIArray('Bad Rows', (), 'rw')
-		self.badcols = uidata.UIArray('Bad Cols', (), 'rw')
-#		setplan = self.registerUIMethod(self.uiSetPlanParams, 'Set Plan Params',
-		setplan = uidata.UIMethod('Set Plan', self.uiSetPlanParams)
+		self.cliplimits = uidata.Array('Clip Limits', (), 'rw')
+		self.badrows = uidata.Array('Bad Rows', (), 'rw')
+		self.badcols = uidata.Array('Bad Cols', (), 'rw')
+		setplan = uidata.Method('Set Plan', self.uiSetPlanParams)
 
-		preferencescontainer = uidata.UIContainer('Preferences')
-		preferencescontainer.addUIObjects((self.uiframestoaverage, self.uifakeflag, cameraconfigure, self.cliplimits, self.badrows, self.badcols, setplan))
-		container = uidata.UIMediumContainer('Corrector')
-		container.addUIObjects((acquirecontainer, self.ui_image,
+		preferencescontainer = uidata.Container('Preferences')
+		preferencescontainer.addObjects((self.uiframestoaverage, self.uifakeflag, cameraconfigure, self.cliplimits, self.badrows, self.badcols, setplan))
+		container = uidata.MediumContainer('Corrector')
+		container.addObjects((acquirecontainer, self.ui_image,
 														preferencescontainer))
-		self.uiserver.addUIObject(container)
+		self.uiserver.addObject(container)
 
-#																																			argspec)
-#
-#		ret = self.registerUIData('Current Plan', 'struct')
-#		getplan = self.registerUIMethod(self.uiGetPlanParams, 'Get Plan Params',
-#																													(), returnspec=ret)
-#		plan = self.registerUISpec('Plan', (getplan, setplan))
-#
-#		myspec = self.registerUISpec('Corrector', (plan, acquirecontainer, prefs))
-#		myspec += nodespec
-#		return myspec
-
-#	def uiSetPlanParams(self, cliplimits, badrows, badcols):
 	def uiSetPlanParams(self):
 		camconfig = self.cam.cameraConfig()
 		newcamstate = data.CorrectorCamstateData()

@@ -159,11 +159,11 @@ class CalibrationClient(object):
 		shiftinfo.update({'actual states': actual, 'pixel shift': unbinned, 'peak value': peakvalue, 'shape':pcimage.shape, 'stats': (stats1, stats2)})
 		return shiftinfo
 
-	def configUIData(self):
-		self.ui_image1 = self.registerUIData('Image 1', 'binary', permissions='r')
-		self.ui_image2 = self.registerUIData('Image 2', 'binary', permissions='r')
-		imagespec = self.registerUIContainer('Images', (self.image1, self.image2))
-		return imagespec
+#	def configUIData(self):
+#		self.ui_image1 = self.registerUIData('Image 1', 'binary', permissions='r')
+#		self.ui_image2 = self.registerUIData('Image 2', 'binary', permissions='r')
+#		imagespec = self.registerUIContainer('Images', (self.image1, self.image2))
+#		return imagespec
 
 class MatrixCalibrationClient(CalibrationClient):
 	'''

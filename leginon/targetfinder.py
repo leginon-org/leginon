@@ -74,46 +74,14 @@ class ClickTargetFinder(TargetFinder):
 		
 	def defineUserInterface(self):
 		TargetFinder.defineUserInterface(self)
-		self.clickimage = uidata.UITargetImage('Clickable Image', None, 'rw')
+		self.clickimage = uidata.TargetImage('Clickable Image', None, 'rw')
 		self.clickimage.addTargetType('Imaging Target')
 		self.clickimage.addTargetType('Focus Target')
-		advancemethod = uidata.UIMethod('Advance Image', self.advanceImage)
-		submitmethod = uidata.UIMethod('Submit Targets', self.submitTargets)
-		container = uidata.UIMediumContainer('Click Target Finder')
-		container.addUIObjects((advancemethod, submitmethod, self.clickimage))
-		self.uiserver.addUIObject(container)
-
-#		tfspec = TargetFinder.defineUserInterface(self)
-#
-#		clickimage = self.registerUIData('Clickable Image', 'binary', callback=self.uiImage, permissions='rw')
-#		myspec = self.registerUISpec('Click Target Finder', (clickimage,))
-#		myspec += tfspec
-#		return myspec
-
-#	def uiImage(self, value=None):
-#		'''
-#		get next image from queue
-#		'''
-#		if value is None:
-#			### Get image from queue and set current image
-#			if self.currentimage is None:
-#				if self.processDataFromQueue():
-#					self.currentimage = self.numarray
-#				else:
-#					self.currentimage = None
-#
-#			### return current image
-#			if self.currentimage is None:
-#				mrcstr = ''
-#			else:
-#				mrcstr = Mrc.numeric_to_mrcstr(self.currentimage)
-#			return xmlbinlib.Binary(mrcstr)
-#		else:
-#			### submit targets from GUI
-#			self.submitTargets(value)
-#
-#			## I don't think this is necessary
-#			#return xmlbinlib.Binary('')
+		advancemethod = uidata.Method('Advance Image', self.advanceImage)
+		submitmethod = uidata.Method('Submit Targets', self.submitTargets)
+		container = uidata.MediumContainer('Click Target Finder')
+		container.addObjects((advancemethod, submitmethod, self.clickimage))
+		self.uiserver.addObject(container)
 
 	def advanceImage(self):
 		if self.processDataFromQueue():
@@ -147,31 +115,6 @@ class ClickTargetFinder(TargetFinder):
 			targetdata.friendly_update(target)
 			self.targetlist.append(targetdata)
 		return targetlist
-
-#	def submitTargets(self, targetlist):
-#		self.targetlist = []
-#		for target in targetlist:
-#			### attach some image info about this one
-#			imageinfo = self.imageInfo()
-#			target.update(imageinfo)
-#			# hopefully target matches ImageTargetData
-#			print 'TARGET', target.keys()
-#			print 'TARGET button', target['button']
-#			b = target['button']
-#			del target['button']
-#			if b == 1:
-#				targetdata = data.ImageTargetData(self.ID(), target)
-#			elif b == 2:
-#				targetdata = data.FocusTargetData(self.ID(), target)
-#			else:
-#				raise RuntimeError('unknown button %s' % (b,))
-#
-#			print 'TARGETDATA append', targetdata['id']
-#			self.targetlist.append(targetdata)
-#		for targetdata in self.targetlist:
-#			print 'TARGETDATA later', targetdata['id']
-#		self.publishTargetList()
-#		self.currentimage = None
 
 # perhaps this should be a 'mixin' class so it can work with any target finder
 class MosaicClickTargetFinder(ClickTargetFinder):
@@ -216,8 +159,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 	def defineUserInterface(self):
 		ClickTargetFinder.defineUserInterface(self)
-		clearmethod = uidata.UIMethod('Reset Mosaic', self.mosaicClear)
-		container = uidata.UIMediumContainer('Mosaic Click Target Finder')
-		container.addUIObjects((clearmethod,))
-		self.uiserver.addUIObject(container)
+		clearmethod = uidata.Method('Reset Mosaic', self.mosaicClear)
+		container = uidata.MediumContainer('Mosaic Click Target Finder')
+		container.addObjects((clearmethod,))
+		self.uiserver.addObject(container)
 

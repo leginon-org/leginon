@@ -48,32 +48,32 @@ class XMLRPCServer(object):
 		t.start()
 		self.serverthread = t
 
-class UIServer(XMLRPCServer, uidata.UIContainer):
+class Server(XMLRPCServer, uidata.Container):
 	def __init__(self, name='UI', port=None):
 		self.uiclients = []
 		XMLRPCServer.__init__(self, port=port)
-		uidata.UIContainer.__init__(self, name)
+		uidata.Container.__init__(self, name)
 		self.server.register_function(self.setFromClient, 'SET')
 		self.server.register_function(self.commandFromClient, 'COMMAND')
 		self.server.register_function(self.addServer, 'ADDSERVER')
 
-	def getUIObjectFromList(self, namelist):
+	def getObjectFromList(self, namelist):
 		namelist[0] = self.name
-		return uidata.UIContainer.getUIObjectFromList(self, namelist)
+		return uidata.Container.getObjectFromList(self, namelist)
 
 	def setFromClient(self, namelist, value):
 		'''this is how a UI client sets a data value'''
-		uidataobject = self.getUIObjectFromList(namelist)
-		if not isinstance(uidataobject, uidata.UIData):
-			raise TypeError('name list does not resolve to UIData instance')
+		uidataobject = self.getObjectFromList(namelist)
+		if not isinstance(uidataobject, uidata.Data):
+			raise TypeError('name list does not resolve to Data instance')
 		# except from this client?
 		uidataobject._set(value)
 		return ''
 
 	def commandFromClient(self, namelist, args):
-		uimethodobject = self.getUIObjectFromList(namelist)
-		if not isinstance(uimethodobject, uidata.UIMethod):
-			raise TypeError('name list does not resolve to UIMethod instance')
+		uimethodobject = self.getObjectFromList(namelist)
+		if not isinstance(uimethodobject, uidata.Method):
+			raise TypeError('name list does not resolve to Method instance')
 		# need to catch arg error
 		#threading.Thread(name=uimethodobject.name + ' thread',
 		#									target=uimethodobject.method, args=args).start()
@@ -92,10 +92,10 @@ class UIServer(XMLRPCServer, uidata.UIContainer):
 		self.uiclients.append(addclient)
 		#for uiobject in self.uiobjectdict.values():
 		for uiobject in self.uiobjectlist:
-			self.addAllUIObjects(addclient, uiobject, (uiobject.name,))
+			self.addAllObjects(addclient, uiobject, (uiobject.name,))
 		return ''
 
-	def addAllUIObjects(self, client, uiobject, namelist):
+	def addAllObjects(self, client, uiobject, namelist):
 		if hasattr(uiobject, 'value'):
 			value = uiobject.value
 		else:
@@ -109,22 +109,22 @@ class UIServer(XMLRPCServer, uidata.UIContainer):
 		else:
 			write = False
 		client.execute('ADD', (namelist, uiobject.typelist, value, read, write))
-		if isinstance(uiobject, uidata.UIContainer):
+		if isinstance(uiobject, uidata.Container):
 			#for childuiobject in uiobject.uiobjectdict.values():
 			for childuiobject in uiobject.uiobjectlist:
-				self.addAllUIObjects(client, childuiobject, namelist+(childuiobject.name,))
+				self.addAllObjects(client, childuiobject, namelist+(childuiobject.name,))
 
-	def addUIObjectCallback(self, namelist, typelist, value, read, write):
+	def addObjectCallback(self, namelist, typelist, value, read, write):
 		for client in self.uiclients:
 			# delete if fail?
 			client.execute('ADD', (namelist, typelist, value, read, write))
 
-	def setUIObjectCallback(self, namelist, value):
+	def setObjectCallback(self, namelist, value):
 		for client in self.uiclients:
 			# delete if fail?
 			client.execute('SET', (namelist, value))
 
-	def deleteUIObjectCallback(self, namelist):
+	def deleteObjectCallback(self, namelist):
 		for client in self.uiclients:
 			# delete if fail?
 			client.execute('DEL', (namelist,))

@@ -61,15 +61,15 @@ class SimpleAcquisition(acquisition.Acquisition):
 	def defineUserInterface(self):
 		acquisition.Acquisition.defineUserInterface(self)
 
-		acq = uidata.UIMethod('Acquire', self.acquireImageOne)
-		self.pausetime = uidata.UIFloat('Pause Time', 0.0, 'rw')
+		acq = uidata.Method('Acquire', self.acquireImageOne)
+		self.pausetime = uidata.Float('Pause Time', 0.0, 'rw')
 
-		acqloop = uidata.UIMethod('Acquire Loop', self.acquireImageLoop)
-		acqloopstop = uidata.UIMethod('Stop', self.acquireImageLoopStop)
+		acqloop = uidata.Method('Acquire Loop', self.acquireImageLoop)
+		acqloopstop = uidata.Method('Stop', self.acquireImageLoopStop)
 
-		acqcont = uidata.UIMediumContainer('Acquire')
-		acqcont.addUIObjects((acq, acqloop, acqloopstop))
+		acqcont = uidata.MediumContainer('Acquire')
+		acqcont.addObjects((acq, acqloop, acqloopstop))
 
-		container = uidata.UIMediumContainer('Simple Acquisition')
-		container.addUIObject(acqcont)
-		self.uiserver.addUIObject(container)
+		container = uidata.MediumContainer('Simple Acquisition')
+		container.addObject(acqcont)
+		self.uiserver.addObject(container)

@@ -61,10 +61,10 @@ class PresetsClient(object):
 				return p
 
 	def uiPresetSelector(self):
-		getpresets = uidata.UIMethod('Get Names', self.uiGetPresetNames)
-		self.uiselectpreset = uidata.UISingleSelectFromList('Select Preset', [], 0)
-		container = uidata.UIContainer('Preset Selection')
-		container.addUIObjects((getpresets, self.uiselectpreset))
+		getpresets = uidata.Method('Get Names', self.uiGetPresetNames)
+		self.uiselectpreset = uidata.SingleSelectFromList('Select Preset', [], 0)
+		container = uidata.Container('Preset Selection')
+		container.addObjects((getpresets, self.uiselectpreset))
 		return container
 
 	def uiGetPresetNames(self):
@@ -131,12 +131,6 @@ class OLDPresetsClient(object):
 		p.friendly_update(scopedata)
 		p.friendly_update(cameradata)
 		return p
-
-	def UI(self):
-		### this is just a start
-		### will be similar to camerafuncs configUIData
-		self.registerUIData()
-		self.registerUIMethod()
 
 class CircularIter(object):
 	'''
@@ -403,23 +397,23 @@ class PresetsManager(node.Node):
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
 
-		self.othersession = uidata.UIString('Session', '', 'rw')
-		fromdb = uidata.UIMethod('Import', self.uiGetPresetsFromDB)
+		self.othersession = uidata.String('Session', '', 'rw')
+		fromdb = uidata.Method('Import', self.uiGetPresetsFromDB)
 
-		self.presetparams = uidata.UIStruct('Parameters', {}, 'rw', self.uiParamsCallback)
-		self.uiselectpreset = uidata.UISingleSelectFromList('Preset', [], 0, callback=self.uiSelectCallback)
+		self.presetparams = uidata.Struct('Parameters', {}, 'rw', self.uiParamsCallback)
+		self.uiselectpreset = uidata.SingleSelectFromList('Preset', [], 0, callback=self.uiSelectCallback)
 		pnames = self.presetNames()
 		self.uiselectpreset.set(pnames, 0)
 
-		toscopemethod = uidata.UIMethod('To Scope', self.uiToScope)
-		fromscopemethod = uidata.UIMethod('Selected From Scope', self.uiSelectedFromScope)
+		toscopemethod = uidata.Method('To Scope', self.uiToScope)
+		fromscopemethod = uidata.Method('Selected From Scope', self.uiSelectedFromScope)
 
-		self.enteredname = uidata.UIString('New Name', '', 'rw')
-		newfromscopemethod = uidata.UIMethod('New From Scope', self.uiNewFromScope)
+		self.enteredname = uidata.String('New Name', '', 'rw')
+		newfromscopemethod = uidata.Method('New From Scope', self.uiNewFromScope)
 
-		container = uidata.UIMediumContainer('Presets Manager')
-		container.addUIObjects((self.othersession, fromdb, self.uiselectpreset, toscopemethod, fromscopemethod, self.enteredname, newfromscopemethod, self.presetparams))
-		self.uiserver.addUIObject(container)
+		container = uidata.MediumContainer('Presets Manager')
+		container.addObjects((self.othersession, fromdb, self.uiselectpreset, toscopemethod, fromscopemethod, self.enteredname, newfromscopemethod, self.presetparams))
+		self.uiserver.addObject(container)
 
 		return
 

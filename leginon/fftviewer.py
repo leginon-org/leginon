@@ -16,10 +16,10 @@ class FFTViewer(imagewatcher.ImageWatcher):
 
 	def defineUserInterface(self):
 		imagewatcher.ImageWatcher.defineUserInterface(self)
-		self.ui_image = uidata.UIImage('FFT Image', None, 'r')
-		container = uidata.UIMediumContainer('FFT Viewer')
-		container.addUIObject(self.ui_image)
-		self.uiserver.addUIObject(container)
+		self.ui_image = uidata.Image('FFT Image', None, 'r')
+		container = uidata.MediumContainer('FFT Viewer')
+		container.addObject(self.ui_image)
+		self.uiserver.addObject(container)
 
 	def processData(self, imagedata):
 		imagewatcher.ImageWatcher.processData(self, imagedata)

@@ -381,12 +381,12 @@ class EM(node.Node):
 
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
-		self.statestruct = uidata.UIStruct('Instrument State', {},
+		self.statestruct = uidata.Struct('Instrument State', {},
 																				'rw', self.uiCallback)
 		self.statestruct.set(self.uistate, callback=False)
-		updatemethod = uidata.UIMethod('Update', self.uiUpdate)
-		unlockmethod = uidata.UIMethod('Unlock', self.uiUnlock)
-		container = uidata.UIMediumContainer('EM')
-		container.addUIObjects((self.statestruct, updatemethod, unlockmethod))
-		self.uiserver.addUIObject(container)
+		updatemethod = uidata.Method('Update', self.uiUpdate)
+		unlockmethod = uidata.Method('Unlock', self.uiUnlock)
+		container = uidata.MediumContainer('EM')
+		container.addObjects((self.statestruct, updatemethod, unlockmethod))
+		self.uiserver.addObject(container)
 

@@ -98,22 +98,22 @@ class Navigator(node.Node):
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
 		movetypes = self.calclients.keys()
-		self.movetype = uidata.UISingleSelectFromList('TEM Parameter', movetypes, 0)
-		self.delaydata = uidata.UIFloat('Delay (sec)', 2.5, 'rw')
+		self.movetype = uidata.SingleSelectFromList('TEM Parameter', movetypes, 0)
+		self.delaydata = uidata.Float('Delay (sec)', 2.5, 'rw')
 
 		cameraconfigure = self.cam.configUIData()
 
-		settingscontainer = uidata.UIContainer('Settings')
-		settingscontainer.addUIObjects((self.movetype, self.delaydata, cameraconfigure))
+		settingscontainer = uidata.Container('Settings')
+		settingscontainer.addObjects((self.movetype, self.delaydata, cameraconfigure))
 
-		acqmeth = uidata.UIMethod('Acquire', self.acquireImage)
-		self.image = uidata.UIClickImage('Navigation', self.handleImageClick2, None)
-		controlcontainer = uidata.UIContainer('Control')
-		controlcontainer.addUIObjects((acqmeth, self.image))
+		acqmeth = uidata.Method('Acquire', self.acquireImage)
+		self.image = uidata.ClickImage('Navigation', self.handleImageClick2, None)
+		controlcontainer = uidata.Container('Control')
+		controlcontainer.addObjects((acqmeth, self.image))
 
-		container = uidata.UIMediumContainer('Navigator')
-		container.addUIObjects((settingscontainer, controlcontainer))
-		self.uiserver.addUIObject(container)
+		container = uidata.MediumContainer('Navigator')
+		container.addObjects((settingscontainer, controlcontainer))
+		self.uiserver.addObject(container)
 
 class SimpleNavigator(Navigator):
 	def __init__(self, id, session, nodelocations, **kwargs):

@@ -7,20 +7,20 @@ import Mrc
 
 # Exceptions
 # maybe overdone
-class UIError(Exception):
+class Error(Exception):
 	pass
 
-class UIObjectError(UIError):
+class ObjectError(Error):
 	pass
 
-class UIDataError(UIObjectError):
+class DataError(ObjectError):
 	pass
 
-class PermissionsError(UIDataError):
+class PermissionsError(DataError):
 	pass
 
 # UI Objects
-class UIObject(object):
+class Object(object):
 	typelist = ('object',)
 	def __init__(self, name):
 		if type(name) is str:
@@ -30,27 +30,27 @@ class UIObject(object):
 		self.parent = None
 
 	def setParent(self, parent):
-		if parent is not None and not isinstance(parent, UIContainer):
-			raise TypeError('parent must be a UIContainer or None')
+		if parent is not None and not isinstance(parent, Container):
+			raise TypeError('parent must be a Container or None')
 		else:
 			self.parent = parent
 
-	def getUIObjectFromList(self, namelist):
+	def getObjectFromList(self, namelist):
 		if len(namelist) == 1 and namelist[0] == self.name:
 			return self
 		else:
-			raise ValueError('incorrect UI object')
+			raise ValueError('connect get Object from list, no such Object')
 
-class UIContainer(UIObject):
-	typelist = UIObject.typelist + ('container',)
+class Container(Object):
+	typelist = Object.typelist + ('container',)
 	def __init__(self, name):
-		UIObject.__init__(self, name)
+		Object.__init__(self, name)
 		self.uiobjectdict = {}
 		self.uiobjectlist = []
 
-	def addUIObject(self, uiobject):
+	def addObject(self, uiobject):
 		if uiobject.name not in self.uiobjectdict:
-			if isinstance(uiobject, UIObject):
+			if isinstance(uiobject, Object):
 				uiobject.setParent(self)
 				if hasattr(uiobject, 'value'):
 					value = uiobject.value
@@ -64,18 +64,18 @@ class UIContainer(UIObject):
 					write = uiobject.write
 				else:
 					write = False
-				self.addUIObjectCallback((uiobject.name,), uiobject.typelist,
+				self.addObjectCallback((uiobject.name,), uiobject.typelist,
 																		value, read, write)
-				if isinstance(uiobject, UIContainer):
-					uiobject.addUIObjectsCallback()
+				if isinstance(uiobject, Container):
+					uiobject.addObjectsCallback()
 				self.uiobjectdict[uiobject.name] = uiobject
 				self.uiobjectlist.append(uiobject)
 			else:
-				raise TypeError('value must be a UIObject instance')
+				raise TypeError('value must be a Object instance')
 		else:
-			raise ValueError('name already exists in UI Object mapping')
+			raise ValueError('name already exists in Object mapping')
 
-	def addUIObjectsCallback(self):
+	def addObjectsCallback(self):
 		#for uiobject in self.uiobjectdict.values():
 		for uiobject in self.uiobjectlist:
 			if hasattr(uiobject, 'value'):
@@ -90,43 +90,43 @@ class UIContainer(UIObject):
 				write = uiobject.write
 			else:
 				write = False
-			self.addUIObjectCallback((uiobject.name,), uiobject.typelist,
+			self.addObjectCallback((uiobject.name,), uiobject.typelist,
 																	value, read, write)
-			if isinstance(uiobject, UIContainer):
-				uiobject.addUIObjectsCallback()
+			if isinstance(uiobject, Container):
+				uiobject.addObjectsCallback()
 
-	def addUIObjects(self, uiobjects):
+	def addObjects(self, uiobjects):
 		for uiobject in uiobjects:
-			self.addUIObject(uiobject)
+			self.addObject(uiobject)
 
-	def deleteUIObject(self, name):
+	def deleteObject(self, name):
 		# update "spec"?
 		try:
 			uiobject = self.uiobjectdict[name]
 			del self.uiobjectdict[name]
 			self.uiobjectlist.remove(uiobject)
-			self.deleteUIObjectCallback((uiobject.name,))
+			self.deleteObjectCallback((uiobject.name,))
 			uiobject.setParent(None)
 		except KeyError:
-			raise ValueError('cannot delete object not in UI Object mapping')
+			raise ValueError('cannot delete Object, not in Object mapping')
 
-	def addUIObjectCallback(self, namelist, typelist, value, read, write):
+	def addObjectCallback(self, namelist, typelist, value, read, write):
 		if self.parent is not None:
-			self.parent.addUIObjectCallback((self.name,) + namelist,
+			self.parent.addObjectCallback((self.name,) + namelist,
 																			typelist, value, read, write)
 		else:
 			pass
 			#raise RuntimeError('cannot add object to container without parent')
 
-	def setUIObjectCallback(self, namelist, value):
+	def setObjectCallback(self, namelist, value):
 		if self.parent is not None:
-			self.parent.setUIObjectCallback((self.name,) + namelist, value)
+			self.parent.setObjectCallback((self.name,) + namelist, value)
 
-	def deleteUIObjectCallback(self, namelist):
+	def deleteObjectCallback(self, namelist):
 		if self.parent is not None:
-			self.parent.deleteUIObjectCallback((self.name,) + namelist)
+			self.parent.deleteObjectCallback((self.name,) + namelist)
 
-	def getUIObjectFromList(self, namelist):
+	def getObjectFromList(self, namelist):
 		if type(namelist) not in (list, tuple):
 			raise TypeError('name hierarchy must be a list')
 		if not namelist:
@@ -138,42 +138,42 @@ class UIContainer(UIObject):
 				#for uiobject in self.uiobjectdict.values():
 				for uiobject in self.uiobjectlist:
 					try:
-						return uiobject.getUIObjectFromList(namelist[1:])
+						return uiobject.getObjectFromList(namelist[1:])
 					except ValueError:
 						pass
-				raise ValueError('cannot get object, not in child UI Object mappings')
+				raise ValueError('cannot get object, not in child Object mappings')
 		else:
-			raise ValueError('cannot get object from list, not parent of UI object')
+			raise ValueError('cannot get object from list, not parent of Object')
 
-class UISmallContainer(UIContainer):
-	typelist = UIContainer.typelist + ('small',)
+class SmallContainer(Container):
+	typelist = Container.typelist + ('small',)
 
-class UIMediumContainer(UIContainer):
-	typelist = UIContainer.typelist + ('medium',)
+class MediumContainer(Container):
+	typelist = Container.typelist + ('medium',)
 
-class UILargeContainer(UIContainer):
-	typelist = UIContainer.typelist + ('large',)
+class LargeContainer(Container):
+	typelist = Container.typelist + ('large',)
 
-class UIClientContainer(UILargeContainer):
-	typelist = UILargeContainer.typelist + ('client',)
+class ClientContainer(LargeContainer):
+	typelist = LargeContainer.typelist + ('client',)
 	def __init__(self, name, location):
 		self.value = location
-		UILargeContainer.__init__(self, name)
+		LargeContainer.__init__(self, name)
 
-class UIMethod(UIObject):
-	typelist = UIObject.typelist + ('method',)
+class Method(Object):
+	typelist = Object.typelist + ('method',)
 	def __init__(self, name, method):
-		UIObject.__init__(self, name)
+		Object.__init__(self, name)
 		if not callable(method):
 			raise TypeError('method must be callable')
 		self.method = method
 
-class UIData(UIObject):
+class Data(Object):
 	permissionsvalues = ('r', 'w', 'rw', 'wr')
-	typelist = UIObject.typelist + ('data',)
+	typelist = Object.typelist + ('data',)
 	nonevalue = None
 	def __init__(self, name, value, permissions='r', callback=None):
-		UIObject.__init__(self, name)
+		Object.__init__(self, name)
 		if permissions in self.permissionsvalues:
 			if 'r' in permissions:
 				self.read = True
@@ -219,7 +219,7 @@ class UIData(UIObject):
 		else:
 			raise TypeError('invalid data value for type')
 		if self.parent is not None:
-			self.parent.setUIObjectCallback((self.name,), self.value)
+			self.parent.setObjectCallback((self.name,), self.value)
 
 	# needs reversal of _get/get like set
 	def get(self):
@@ -247,38 +247,38 @@ class UIData(UIObject):
 		#return False
 		return True
 
-class UIBoolean(UIData):
-	typelist = UIData.typelist + ('boolean',)
+class Boolean(Data):
+	typelist = Data.typelist + ('boolean',)
 
-class UIInteger(UIData):
-	typelist = UIData.typelist + ('integer',)
+class Integer(Data):
+	typelist = Data.typelist + ('integer',)
 
-class UIFloat(UIData):
-	typelist = UIData.typelist + ('float',)
+class Float(Data):
+	typelist = Data.typelist + ('float',)
 
-class UIString(UIData):
-	typelist = UIData.typelist + ('string',)
+class String(Data):
+	typelist = Data.typelist + ('string',)
 
-class UIArray(UIData):
-	typelist = UIData.typelist + ('array',)
+class Array(Data):
+	typelist = Data.typelist + ('array',)
 
-class UIStruct(UIData):
-	typelist = UIData.typelist + ('struct',)
+class Struct(Data):
+	typelist = Data.typelist + ('struct',)
 
-class UIDate(UIData):
-	typelist = UIData.typelist + ('date',)
+class Date(Data):
+	typelist = Data.typelist + ('date',)
 
-class UIProgress(UIInteger):
-	typelist = UIInteger.typelist + ('progress',)
+class Progress(Integer):
+	typelist = Integer.typelist + ('progress',)
 
-class UISingleSelectFromList(UIContainer):
-	typelist = UIContainer.typelist + ('single select from list',)
+class SingleSelectFromList(Container):
+	typelist = Container.typelist + ('single select from list',)
 	def __init__(self, name, listvalue, selectedindex, callback=None):
-		UIContainer.__init__(self, name)
-		self.list = UIArray('List', listvalue, 'r')
-		self.selected = UIInteger('Selected', selectedindex, 'rw', callback)
-		self.addUIObject(self.list)
-		self.addUIObject(self.selected)
+		Container.__init__(self, name)
+		self.list = Array('List', listvalue, 'r')
+		self.selected = Integer('Selected', selectedindex, 'rw', callback)
+		self.addObject(self.list)
+		self.addObject(self.selected)
 
 	def setCallback(self, callback):
 		self.selected.setCallback(callback)
@@ -308,15 +308,15 @@ class UISingleSelectFromList(UIContainer):
 		except IndexError:
 			return None
 
-class UISelectFromList(UIContainer):
-	typelist = UIContainer.typelist + ('select from list',)
+class SelectFromList(Container):
+	typelist = Container.typelist + ('select from list',)
 	def __init__(self, name, listvalue, selectedvalues, permissions='r',
 								callback=None):
-		UIContainer.__init__(self, name)
-		self.list = UIArray('List', listvalue, permissions)
-		self.selected = UIArray('Selected', selectedvalues, 'rw', callback)
-		self.addUIObject(self.list)
-		self.addUIObject(self.selected)
+		Container.__init__(self, name)
+		self.list = Array('List', listvalue, permissions)
+		self.selected = Array('Selected', selectedvalues, 'rw', callback)
+		self.addObject(self.list)
+		self.addObject(self.selected)
 
 	def setCallback(self, callback):
 		self.selected.setCallback(callback)
@@ -346,15 +346,15 @@ class UISelectFromList(UIContainer):
 			value.append(valuelist[i])
 		return value
 
-class UISelectFromStruct(UIContainer):
-	typelist = UIContainer.typelist + ('select from struct',)
+class SelectFromStruct(Container):
+	typelist = Container.typelist + ('select from struct',)
 	# callback
 	def __init__(self, name, structvalue, selectedvalue, permissions='r'):
-		UIContainer.__init__(self, name)
-		self.struct = UIStruct('Struct', structvalue, permissions)
-		self.selected = UIArray('Selected', selectedvalue, 'rw')
-		self.addUIObject(self.struct)
-		self.addUIObject(self.selected)
+		Container.__init__(self, name)
+		self.struct = Struct('Struct', structvalue, permissions)
+		self.selected = Array('Selected', selectedvalue, 'rw')
+		self.addObject(self.struct)
+		self.addObject(self.selected)
 
 	def set(self, structvalue, selectedvalue):
 		self.setStruct(structvalue)
@@ -372,43 +372,43 @@ class UISelectFromStruct(UIContainer):
 	def setSelected(self, selectedvalue):
 		self.selected.set(selectedvalue)
 
-class UIBinary(UIData):
-	typelist = UIData.typelist + ('binary',)
+class Binary(Data):
+	typelist = Data.typelist + ('binary',)
 	def __init__(self, name, value, permissions='r', callback=None):
 #		if type(value) is str:
 #			value = xmlrpclib.Binary(value)
-		UIData.__init__(self, name, value, permissions, callback)
+		Data.__init__(self, name, value, permissions, callback)
 
 	def set(self, value):
 		if type(value) is str:
 			value = xmlrpclib.Binary(value)
-		UIData.set(self, value)
+		Data.set(self, value)
 
-class UIDialog(UIContainer):
-	typelist = UIContainer.typelist + ('dialog',)
+class Dialog(Container):
+	typelist = Container.typelist + ('dialog',)
 	def __init__(self, name):
-		UIContainer.__init__(self, name)
+		Container.__init__(self, name)
 
 	def destroy(self):
-		self.parent.deleteUIObject(self.name)
+		self.parent.deleteObject(self.name)
 
-class UIMessageDialog(UIDialog):
-	typelist = UIDialog.typelist + ('message',)
+class MessageDialog(Dialog):
+	typelist = Dialog.typelist + ('message',)
 	def __init__(self, name, label):
-		UIDialog.__init__(self, name)
-		self.addUIObject(UIString('Message', label, 'r'))
-		self.addUIObject(UIMethod('OK', self.ok))
+		Dialog.__init__(self, name)
+		self.addObject(String('Message', label, 'r'))
+		self.addObject(Method('OK', self.ok))
 
 	def ok(self):
 		self.destroy()
 
-class UIImage(UIBinary):
-	typelist = UIBinary.typelist + ('image',)
+class Image(Binary):
+	typelist = Binary.typelist + ('image',)
 	nonevalue = ''
 	def __init__(self, name, value, permissions='r', callback=None):
 #		if isinstance(value, Numeric.arraytype):
 #			value = self.array2image(value)
-		UIBinary.__init__(self, name, value, permissions, callback)
+		Binary.__init__(self, name, value, permissions, callback)
 
 	# needs optimization
 	def array2image(self, a):
@@ -419,19 +419,19 @@ class UIImage(UIBinary):
 			value = xmlrpclib.Binary(self.array2image(value))
 		else:
 			value = xmlrpclib.Binary(value)
-		UIData.set(self, value)
+		Data.set(self, value)
 
-class UIClickImage(UIContainer):
-	typelist = UIContainer.typelist + ('click image',)
+class ClickImage(Container):
+	typelist = Container.typelist + ('click image',)
 	def __init__(self, name, clickcallback, image, permissions='r'):
 		self.clickcallback = clickcallback
-		UIContainer.__init__(self, name)
-		self.image = UIImage('Image', image, 'r')
-		self.coordinates = UIArray('Coordinates', [], 'rw')
-		self.method = UIMethod('Click', self.doClickCallback)
-		self.addUIObject(self.coordinates)
-		self.addUIObject(self.method)
-		self.addUIObject(self.image)
+		Container.__init__(self, name)
+		self.image = Image('Image', image, 'r')
+		self.coordinates = Array('Coordinates', [], 'rw')
+		self.method = Method('Click', self.doClickCallback)
+		self.addObject(self.coordinates)
+		self.addObject(self.method)
+		self.addObject(self.image)
 
 	def setImage(self, value):
 		self.image.set(value)
@@ -439,24 +439,24 @@ class UIClickImage(UIContainer):
 	def doClickCallback(self):
 		self.clickcallback(tuple(self.coordinates.get()))
 
-class UITargetImage(UIContainer):
-	typelist = UIContainer.typelist + ('target image',)
+class TargetImage(Container):
+	typelist = Container.typelist + ('target image',)
 	# callback
 	def __init__(self, name, image, permissions='r'):
-		UIContainer.__init__(self, name)
+		Container.__init__(self, name)
 		self.targets = {}
-		self.image = UIImage('Image', image, 'r')
-		self.addUIObject(self.image)
+		self.image = Image('Image', image, 'r')
+		self.addObject(self.image)
 
 	def addTargetType(self, name, targets=[]):
 		if name in self.targets:
 			raise ValueError('Target type already exists')
-		self.targets[name] = UIArray(name, targets, 'rw')
-		self.addUIObject(self.targets[name])
+		self.targets[name] = Array(name, targets, 'rw')
+		self.addObject(self.targets[name])
 
 	def deleteTargetType(self, name):
 		try:
-			self.deleteUIObject(self.targets[name])
+			self.deleteObject(self.targets[name])
 			del self.targets[name]
 		except KeyError:
 			raise ValueError('No such target type')

@@ -147,33 +147,33 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 	def defineUserInterface(self):
 		calibrator.Calibrator.defineUserInterface(self)
-		self.defocustiltvalue = uidata.UIFloat('Tilt', 0.01, 'rw')
-		self.defocus1 = uidata.UIFloat('Defocus 1', -1e-6, 'rw')
-		self.defocus2 = uidata.UIFloat('Defocus 2', -2e-6, 'rw')
-		caldefocusmethod = uidata.UIMethod('Calibrate',
+		self.defocustiltvalue = uidata.Float('Tilt', 0.01, 'rw')
+		self.defocus1 = uidata.Float('Defocus 1', -1e-6, 'rw')
+		self.defocus2 = uidata.Float('Defocus 2', -2e-6, 'rw')
+		caldefocusmethod = uidata.Method('Calibrate',
 																				self.uiCalibrateDefocus)
-		defocuscontainer = uidata.UIContainer('Defocus')
-		defocuscontainer.addUIObjects((self.defocustiltvalue,
+		defocuscontainer = uidata.Container('Defocus')
+		defocuscontainer.addObjects((self.defocustiltvalue,
 																		self.defocus1, self.defocus2,
 																		caldefocusmethod))
 
-		self.stigtiltvalue = uidata.UIFloat('Stigmator Tilt', 0.01, 'rw')
-		self.stigdelta = uidata.UIFloat('Stigmator Delta', 0.01, 'rw')
-		calstigmethod = uidata.UIMethod('Calibrate Stigmators',
+		self.stigtiltvalue = uidata.Float('Stigmator Tilt', 0.01, 'rw')
+		self.stigdelta = uidata.Float('Stigmator Delta', 0.01, 'rw')
+		calstigmethod = uidata.Method('Calibrate Stigmators',
 																		self.uiCalibrateStigmators)
-		stigcontainer = uidata.UIContainer('Stigmator')
-		stigcontainer.addUIObjects((self.stigtiltvalue, self.stigdelta,
+		stigcontainer = uidata.Container('Stigmator')
+		stigcontainer.addObjects((self.stigtiltvalue, self.stigdelta,
 																calstigmethod))
 
-		self.measuretiltvalue = uidata.UIFloat('Measure Tilt', 0.01, 'rw')
-		self.resultvalue = uidata.UIStruct('Necessary Correction', {}, 'r')
-		measuremethod = uidata.UIMethod('Measure', self.uiMeasureDefocusStig)
-		measurecontainer = uidata.UIContainer('Measure')
-		measurecontainer.addUIObjects((self.measuretiltvalue, self.resultvalue, measuremethod))
+		self.measuretiltvalue = uidata.Float('Measure Tilt', 0.01, 'rw')
+		self.resultvalue = uidata.Struct('Necessary Correction', {}, 'r')
+		measuremethod = uidata.Method('Measure', self.uiMeasureDefocusStig)
+		measurecontainer = uidata.Container('Measure')
+		measurecontainer.addObjects((self.measuretiltvalue, self.resultvalue, measuremethod))
 
-		container = uidata.UIMediumContainer('Beam Tilt Calibrator')
-		container.addUIObjects((defocuscontainer, stigcontainer, measurecontainer))
-		self.uiserver.addUIObject(container)
+		container = uidata.MediumContainer('Beam Tilt Calibrator')
+		container.addObjects((defocuscontainer, stigcontainer, measurecontainer))
+		self.uiserver.addObject(container)
 
 	def uiCalibrateDefocus(self):
 		self.calibrateDefocus(self.defocustiltvalue.get(),

@@ -28,23 +28,23 @@ class GridPreview(node.Node):
 
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
-		self.presetname = uidata.UIString('Preset Name', 'vlm170', 'rw')
-		self.simulateflag = uidata.UIBoolean('Simulation', False, 'rw')
+		self.presetname = uidata.String('Preset Name', 'vlm170', 'rw')
+		self.simulateflag = uidata.Boolean('Simulation', False, 'rw')
 		spiral = {'center': {'x':0.0,'y':0.0}, 'overlap': 20, 'maxtargets': 4}
-		self.spiral = uidata.UIStruct('Spiral', spiral, 'rw', self.uiSpiralPrefs)
-		settingscontainer = uidata.UIContainer('Settings')
-		settingscontainer.addUIObjects((self.presetname, self.simulateflag,
+		self.spiral = uidata.Struct('Spiral', spiral, 'rw', self.uiSpiralPrefs)
+		settingscontainer = uidata.Container('Settings')
+		settingscontainer.addObjects((self.presetname, self.simulateflag,
 																		self.spiral))
 
-		startmethod = uidata.UIMethod('Start', self.runLoop)
-		stopmethod = uidata.UIMethod('Stop', self.stopLoop)
-		resetmethod = uidata.UIMethod('Reset', self.resetLoop)
-		controlcontainer = uidata.UIContainer('Control')
-		controlcontainer.addUIObjects((startmethod, stopmethod, resetmethod))
+		startmethod = uidata.Method('Start', self.runLoop)
+		stopmethod = uidata.Method('Stop', self.stopLoop)
+		resetmethod = uidata.Method('Reset', self.resetLoop)
+		controlcontainer = uidata.Container('Control')
+		controlcontainer.addObjects((startmethod, stopmethod, resetmethod))
 
-		container = uidata.UIMediumContainer('Grid Preview')
-		container.addUIObjects((settingscontainer, controlcontainer))
-		self.uiserver.addUIObject(container)
+		container = uidata.MediumContainer('Grid Preview')
+		container.addObjects((settingscontainer, controlcontainer))
+		self.uiserver.addObject(container)
 
 	def setMyPresetData(self):
 		presetname = self.presetname.get()

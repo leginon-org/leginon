@@ -147,7 +147,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.publish(trialimage, pubevent=True, database=False)
 		else:
 			pimagedata = data.AcquisitionImageData(id=dataid, initializer=imagedata, preset=presetdata)
-			self.publish(pimagedata, pubevent=True, database=True)
+			self.publish(pimagedata, pubevent=True, database=self.databaseflag.get())
 			print 'PIMAGEDATA'
 			print '   scope image shift', pimagedata['scope']['image shift']
 			print '   preset image shift', pimagedata['preset']['image shift']
@@ -223,36 +223,37 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 	def defineUserInterface(self):
 		targetwatcher.TargetWatcher.defineUserInterface(self)
-		self.uimovetype = uidata.UISingleSelectFromList('Move Type',
+		self.uimovetype = uidata.SingleSelectFromList('Move Type',
 																							self.calclients.keys(), 0)
-		self.uidelay = uidata.UIFloat('Delay (sec)', 2.5, 'rw')
-		self.uiacquiretype = uidata.UISingleSelectFromList('Acquisition Type',
+		self.uidelay = uidata.Float('Delay (sec)', 2.5, 'rw')
+		self.uiacquiretype = uidata.SingleSelectFromList('Acquisition Type',
 																							['raw', 'corrected'], 0)
-		settingscontainer = uidata.UIContainer('Settings')
-		settingscontainer.addUIObjects((self.uimovetype, self.uidelay,
-																		self.uiacquiretype))
+		self.databaseflag = uidata.Boolean('Publish to Database', True, 'rw')
+		settingscontainer = uidata.Container('Settings')
+		settingscontainer.addObjects((self.uimovetype, self.uidelay,
+																		self.uiacquiretype, self.databaseflag))
 
 		presets = self.presetsclient.getPresets()
-		self.uipresetnames = uidata.UISelectFromList('Sequence', presets, [], 'r')
-		refreshpresetnames = uidata.UIMethod('Refresh', self.uiRefreshPresetNames)
-		sequencecontainer = uidata.UIContainer('Presets Sequence')
-		sequencecontainer.addUIObjects((self.uipresetnames, refreshpresetnames))
+		self.uipresetnames = uidata.SelectFromList('Sequence', presets, [], 'r')
+		refreshpresetnames = uidata.Method('Refresh', self.uiRefreshPresetNames)
+		sequencecontainer = uidata.Container('Presets Sequence')
+		sequencecontainer.addObjects((self.uipresetnames, refreshpresetnames))
 
 		pselect = self.presetsclient.uiPresetSelector()
 
-		toscopemethod = uidata.UIMethod('Apply Preset', self.uiToScope)
-		toscopeandacquiremethod = uidata.UIMethod('Apply Preset and Acquire',
+		toscopemethod = uidata.Method('Apply Preset', self.uiToScope)
+		toscopeandacquiremethod = uidata.Method('Apply Preset and Acquire',
 																							self.uiToScopeAcquire)
-		presetscontainer = uidata.UIContainer('Presets')
-		presetscontainer.addUIObjects((sequencecontainer, pselect, toscopemethod,
+		presetscontainer = uidata.Container('Presets')
+		presetscontainer.addObjects((sequencecontainer, pselect, toscopemethod,
 																		toscopeandacquiremethod))
-		trialmethod = uidata.UIMethod('Trial', self.uiTrial)
+		trialmethod = uidata.Method('Trial', self.uiTrial)
 
-		self.ui_image = uidata.UIImage('Image', None, 'rw')
+		self.ui_image = uidata.Image('Image', None, 'rw')
 
 
-		container = uidata.UIMediumContainer('Acquisition')
-		container.addUIObjects((settingscontainer, presetscontainer, trialmethod, self.ui_image))
+		container = uidata.MediumContainer('Acquisition')
+		container.addObjects((settingscontainer, presetscontainer, trialmethod, self.ui_image))
 
-		self.uiserver.addUIObject(container)
+		self.uiserver.addObject(container)
 

@@ -17,11 +17,11 @@ class TargetMaker(node.Node):
 
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
-		publishtargetsmethod = uidata.UIMethod('Publish Targets',
+		publishtargetsmethod = uidata.Method('Publish Targets',
 																						self.publishTargetList)
-		container = uidata.UIMediumContainer('Target Maker')
-		container.addUIObjects((publishtargetsmethod,))
-		self.uiserver.addUIObject(container)
+		container = uidata.MediumContainer('Target Maker')
+		container.addObjects((publishtargetsmethod,))
+		self.uiserver.addObject(container)
 
 class SpiralTargetMaker(TargetMaker):
 	def __init__(self, id, session, nodelocations, **kwargs):
@@ -34,20 +34,20 @@ class SpiralTargetMaker(TargetMaker):
 		TargetMaker.defineUserInterface(self)
 
 		pselect = self.presetsclient.uiPresetSelector()
-		self.maxtargets = uidata.UIInteger('Maximum Targets', 2, 'rw')
-		self.overlap = uidata.UIInteger('Percent Overlap', 50, 'rw')
-		self.center = uidata.UIStruct('Spiral Center', {'x': 0.0, 'y': 0.0}, 'rw')
-		settingscontainer = uidata.UIContainer('Settings')
-		settingscontainer.addUIObjects((pselect, self.maxtargets, self.overlap, self.center))
+		self.maxtargets = uidata.Integer('Maximum Targets', 2, 'rw')
+		self.overlap = uidata.Integer('Percent Overlap', 50, 'rw')
+		self.center = uidata.Struct('Spiral Center', {'x': 0.0, 'y': 0.0}, 'rw')
+		settingscontainer = uidata.Container('Settings')
+		settingscontainer.addObjects((pselect, self.maxtargets, self.overlap, self.center))
 
-		publishspiralmethod = uidata.UIMethod('Publish Spiral', self.publishTargetList)
-		self.progress = uidata.UIProgress('', 0)
-		controlcontainer = uidata.UIContainer('Control')
-		controlcontainer.addUIObjects((self.progress, publishspiralmethod))
+		publishspiralmethod = uidata.Method('Publish Spiral', self.publishTargetList)
+		self.progress = uidata.Progress('', 0)
+		controlcontainer = uidata.Container('Control')
+		controlcontainer.addObjects((self.progress, publishspiralmethod))
 
-		container = uidata.UIMediumContainer('Spiral Target Maker')
-		container.addUIObjects((settingscontainer, controlcontainer))
-		self.uiserver.addUIObject(container)
+		container = uidata.MediumContainer('Spiral Target Maker')
+		container.addObjects((settingscontainer, controlcontainer))
+		self.uiserver.addObject(container)
 
 	def publishTargetList(self):
 		self.progress.set(0)

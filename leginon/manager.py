@@ -303,10 +303,10 @@ class Manager(node.Node):
 	def addNodeUIClient(self, nodeid, nodelocation):
 		if nodeid in self.uiclientcontainers:
 			self.deleteNodeUIClient(nodeid)
-		clientcontainer = uidata.UIClientContainer(str(nodeid[-1]),
+		clientcontainer = uidata.ClientContainer(str(nodeid[-1]),
 														(nodelocation['hostname'], nodelocation['UI port']))
 		try:
-			self.uiserver.addUIObject(clientcontainer)
+			self.uiserver.addObject(clientcontainer)
 			self.uiclientcontainers[nodeid] = clientcontainer
 		except:
 			self.printerror('cannot add client container for node')
@@ -326,7 +326,7 @@ class Manager(node.Node):
 		try:
 			name = self.uiclientcontainers[nodeid].name
 			del self.uiclientcontainers[nodeid]
-			self.uiserver.deleteUIObject(name)
+			self.uiserver.deleteObject(name)
 		except:
 			self.printerror('cannot delete client container for node')
 			self.printException()
@@ -650,60 +650,60 @@ class Manager(node.Node):
 		'''See node.Node.defineUserInterface.'''
 		node.Node.defineUserInterface(self)
 
-		self.uilaunchname = uidata.UIString('Name', '', 'rw')
-		self.uiclassselect = uidata.UISingleSelectFromList('Node Class', [], 0)
-		self.uilauncherselect = uidata.UISingleSelectFromList('Launcher', [], 0)
+		self.uilaunchname = uidata.String('Name', '', 'rw')
+		self.uiclassselect = uidata.SingleSelectFromList('Node Class', [], 0)
+		self.uilauncherselect = uidata.SingleSelectFromList('Launcher', [], 0)
 		self.uilauncherselect.setCallback(self.uiLauncherSelectCallback)
-		self.uilaunchargs = uidata.UIString('Arguments', '()', 'rw')
-		self.uilaunchflag = uidata.UIBoolean('Process', False, 'rw')
-		launchmethod = uidata.UIMethod('Launch', self.uiLaunch)
+		self.uilaunchargs = uidata.String('Arguments', '()', 'rw')
+		self.uilaunchflag = uidata.Boolean('Process', False, 'rw')
+		launchmethod = uidata.Method('Launch', self.uiLaunch)
 		launchobjects = (self.uilaunchname, self.uilauncherselect,
 											self.uiclassselect, self.uilaunchargs,
 											self.uilaunchflag, launchmethod)
-		launchcontainer = uidata.UIMediumContainer('Launch')
-		launchcontainer.addUIObjects(launchobjects)
+		launchcontainer = uidata.MediumContainer('Launch')
+		launchcontainer.addObjects(launchobjects)
 
-		self.uinodeinfo = uidata.UIStruct('Node Info', {}, 'r')
+		self.uinodeinfo = uidata.Struct('Node Info', {}, 'r')
 		infoobjects = (self.uinodeinfo,)
-		self.uiaddnodehostname = uidata.UISingleSelectFromList('Hostname',
+		self.uiaddnodehostname = uidata.SingleSelectFromList('Hostname',
 																										leginonconfig.LAUNCHERS, 0)
-		self.uiaddnodeport = uidata.UIInteger('TCP Port', 55555, 'rw')
-		addmethod = uidata.UIMethod('Add', self.uiAddNode)
+		self.uiaddnodeport = uidata.Integer('TCP Port', 55555, 'rw')
+		addmethod = uidata.Method('Add', self.uiAddNode)
 		addobjects = (self.uiaddnodehostname, self.uiaddnodeport, addmethod)
-		self.uikillselect = uidata.UISingleSelectFromList('Kill Node', [], 0)
-		killmethod = uidata.UIMethod('Kill', self.uiKillNode)
+		self.uikillselect = uidata.SingleSelectFromList('Kill Node', [], 0)
+		killmethod = uidata.Method('Kill', self.uiKillNode)
 		killobjects = (self.uikillselect, killmethod)
-		nodemanagementcontainer = uidata.UIMediumContainer('Node Management')
-		nodemanagementcontainer.addUIObjects(infoobjects + addobjects + killobjects)
+		nodemanagementcontainer = uidata.MediumContainer('Node Management')
+		nodemanagementcontainer.addObjects(infoobjects + addobjects + killobjects)
 
-		self.uiapplicationname = uidata.UIString('Name', '', 'rw')
-		applicationsavemethod = uidata.UIMethod('Save', self.uiSaveApp)
-		applicationloadmethod = uidata.UIMethod('Load', self.uiLoadApp)
-		applicationlaunchmethod = uidata.UIMethod('Launch', self.uiLaunchApp)
-		applicationkillmethod = uidata.UIMethod('Kill', self.uiKillApp)
+		self.uiapplicationname = uidata.String('Name', '', 'rw')
+		applicationsavemethod = uidata.Method('Save', self.uiSaveApp)
+		applicationloadmethod = uidata.Method('Load', self.uiLoadApp)
+		applicationlaunchmethod = uidata.Method('Launch', self.uiLaunchApp)
+		applicationkillmethod = uidata.Method('Kill', self.uiKillApp)
 		applicationobjects = (self.uiapplicationname, applicationsavemethod,
 													applicationloadmethod, applicationlaunchmethod,
 													applicationkillmethod)
-		applicationcontainer = uidata.UIMediumContainer('Application')
-		applicationcontainer.addUIObjects(applicationobjects)
+		applicationcontainer = uidata.MediumContainer('Application')
+		applicationcontainer.addObjects(applicationobjects)
 
-		self.uifromnodeselect = uidata.UISingleSelectFromList('From Node', [], 0)
+		self.uifromnodeselect = uidata.SingleSelectFromList('From Node', [], 0)
 		self.uieventclasses = event.eventClasses()
 		eventclasses = self.uieventclasses.keys()
 		eventclasses.sort()
-		self.uieventselect = uidata.UISingleSelectFromList('Event', eventclasses, 0)
-		self.uitonodeselect = uidata.UISingleSelectFromList('To Node', [], 0)
-		bindmethod = uidata.UIMethod('Bind', self.uiAddDistmap)
-		unbindmethod = uidata.UIMethod('Unbind', self.uiDelDistmap)
+		self.uieventselect = uidata.SingleSelectFromList('Event', eventclasses, 0)
+		self.uitonodeselect = uidata.SingleSelectFromList('To Node', [], 0)
+		bindmethod = uidata.Method('Bind', self.uiAddDistmap)
+		unbindmethod = uidata.Method('Unbind', self.uiDelDistmap)
 		eventobjects = (self.uifromnodeselect, self.uieventselect,
 										self.uitonodeselect, bindmethod, unbindmethod)
-		eventcontainer = uidata.UIMediumContainer('Event Bindings')
-		eventcontainer.addUIObjects(eventobjects)
+		eventcontainer = uidata.MediumContainer('Event Bindings')
+		eventcontainer.addObjects(eventobjects)
 
-		container = uidata.UIMediumContainer('Manager')
-		container.addUIObjects((launchcontainer, nodemanagementcontainer,
+		container = uidata.MediumContainer('Manager')
+		container.addObjects((launchcontainer, nodemanagementcontainer,
 														eventcontainer, applicationcontainer))
-		self.uiserver.addUIObject(container)
+		self.uiserver.addObject(container)
 
 if __name__ == '__main__':
 	import sys

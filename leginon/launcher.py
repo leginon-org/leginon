@@ -67,17 +67,6 @@ class Launcher(node.Node):
 			self.caller.launchCall('thread',nodeclass, args,kwargs)
 		self.confirmEvent(launchevent)
 
-#	def defineUserInterface(self):
-#		nint = node.Node.defineUserInterface(self)
-#
-#		ref = self.registerUIMethod(self.uiRefresh, 'Refresh', ())
-#
-#		self.registerUISpec('Launcher: %s' % (self.id,), (nint, ref))
-
-	def uiRefresh(self):
-		self.publishNodeClasses()
-		return ''
-
 	def launchThread(self):
 		pass
 

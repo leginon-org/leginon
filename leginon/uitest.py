@@ -8,75 +8,75 @@ import xmlrpclib
 def bar():
 	print 'commanded'
 
-server = uiserver.UIServer()
+server = uiserver.Server()
 print 'UI server location =', server.hostname, server.port
-server2 = uiserver.UIServer('client test')
+server2 = uiserver.Server('client test')
 
-#bar1 = uidata.UIContainer('bar 1')
-#bar2 = uidata.UIContainer('bar 2')
-foo = uidata.UIClientContainer('client test', (server2.hostname, server2.port))
-server.addUIObject(foo)
-server2.addUIObject(uidata.UIString('asdf', 'asdfkjlaksdf', 'rw'))
-bar1 = uidata.UIMediumContainer('bar 1')
-bar2 = uidata.UIMediumContainer('bar 2')
-bar2.addUIObject(uidata.UISelectFromList('List Select X', ['b',2,3,'foo'], [2]))
-foo1 = uidata.UIMediumContainer('foo 1')
-foo2 = uidata.UIMediumContainer('foo 2')
-foo2.addUIObject(uidata.UIInteger('Test Int', 42, 'r'))
-server2.addUIObject(foo1)
-server2.addUIObject(foo2)
-server.addUIObject(bar1)
-testdata = uidata.UIString('Testing 1', 'this is a test string', 'rw')
-bar1.addUIObject(testdata)
-bar1.addUIObject(uidata.UIString('Testing 2', 'this is a test string', 'rw'))
+#bar1 = uidata.Container('bar 1')
+#bar2 = uidata.Container('bar 2')
+foo = uidata.ClientContainer('client test', (server2.hostname, server2.port))
+server.addObject(foo)
+server2.addObject(uidata.String('asdf', 'asdfkjlaksdf', 'rw'))
+bar1 = uidata.MediumContainer('bar 1')
+bar2 = uidata.MediumContainer('bar 2')
+bar2.addObject(uidata.SelectFromList('List Select X', ['b',2,3,'foo'], [2]))
+foo1 = uidata.MediumContainer('foo 1')
+foo2 = uidata.MediumContainer('foo 2')
+foo2.addObject(uidata.Integer('Test Int', 42, 'r'))
+server2.addObject(foo1)
+server2.addObject(foo2)
+server.addObject(bar1)
+testdata = uidata.String('Testing 1', 'this is a test string', 'rw')
+bar1.addObject(testdata)
+bar1.addObject(uidata.String('Testing 2', 'this is a test string', 'rw'))
 testdata.set('set string')
-#bar1.deleteUIObject('Testing 2')
-#bar1.deleteUIObject('foo 2')
+#bar1.deleteObject('Testing 2')
+#bar1.deleteObject('foo 2')
 
-p = uidata.UIProgress('Progress Bar', 25)
-bar1.addUIObject(p)
+p = uidata.Progress('Progress Bar', 25)
+bar1.addObject(p)
 
-server.addUIObject(bar2)
+server.addObject(bar2)
 
-#image1 = uidata.UIImage('Image 1', None, 'rw')
+#image1 = uidata.Image('Image 1', None, 'rw')
 import Numeric
 import Mrc
 import Image
 image = Mrc.mrc_to_numeric('test2.mrc')
-image1 = uidata.UIImage('Image 1', image)
-image2 = uidata.UITargetImage('Target Image 1', image)
+image1 = uidata.Image('Image 1', image)
+image2 = uidata.TargetImage('Target Image 1', image)
 
 image2.addTargetType('Foo', [(200, 120)])
 image2.addTargetType('Bar', [])
 image2.addTargetType('Foo Bar', [(120, 200), (50, 78)])
 
 
-#bar2.addUIObject(image1)
-bar2.addUIObject(image2)
+#bar2.addObject(image1)
+bar2.addObject(image2)
 
 def gar(foo):
 	print foo
-clickimage = uidata.UIClickImage('Click Image', gar, image)
-bar1.addUIObject(clickimage)
+clickimage = uidata.ClickImage('Click Image', gar, image)
+bar1.addObject(clickimage)
 
-foo1.addUIObject(uidata.UIMethod('Method 1', bar))
-foo1.addUIObject(uidata.UIBoolean('Boolean 1', 1, 'r'))
-foo1.addUIObject(uidata.UIBoolean('Boolean 2', 0, 'rw'))
-foo1.addUIObject(uidata.UISingleSelectFromList('List Select 1', [1,2,3], 1))
+foo1.addObject(uidata.Method('Method 1', bar))
+foo1.addObject(uidata.Boolean('Boolean 1', 1, 'r'))
+foo1.addObject(uidata.Boolean('Boolean 2', 0, 'rw'))
+foo1.addObject(uidata.SingleSelectFromList('List Select 1', [1,2,3], 1))
 struct = {'a': 1,
 					'b': {'a': 'foo', 'b': 'bar'},
 					'c': 'asdf',
 					'd': {'x': 1, 'y': 2},
 					'e': 55.7777,
 					'f': {'foo': {'bar': 2, 'foobar': 67.7}}}
-bar1.addUIObject(uidata.UIStruct('Struct 1', struct, 'r'))
-#bar1.addUIObject(uidata.UIStruct('Struct 2', struct, 'rw'))
-bar1.addUIObject(uidata.UISelectFromStruct('SFT 1', struct, []))
-#bar1.addUIObject(uidata.UIMessageDialog('MD 1', 'This is a dialog'))
+bar1.addObject(uidata.Struct('Struct 1', struct, 'r'))
+#bar1.addObject(uidata.Struct('Struct 2', struct, 'rw'))
+bar1.addObject(uidata.SelectFromStruct('SFT 1', struct, []))
+#bar1.addObject(uidata.MessageDialog('MD 1', 'This is a dialog'))
 
 client = uiclient.UIApp(server.hostname, server.port)
 #import time
 #time.sleep(10.0)
-#server.deleteUIObject('client test')
-#server2.deleteUIObject('foo 2')
+#server.deleteObject('client test')
+#server2.deleteObject('foo 2')
 

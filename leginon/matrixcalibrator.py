@@ -118,28 +118,28 @@ class MatrixCalibrator(calibrator.Calibrator):
 
 	def defineUserInterface(self):
 		calibrator.Calibrator.defineUserInterface(self)
-		self.uinaverage = uidata.UIInteger('N Average', 1, 'rw')
-		self.uicurbase = uidata.UIBoolean('Current as Base', True, 'rw')
-		self.uibase = uidata.UIStruct('Base', {'x':0,'y':0}, 'rw')
+		self.uinaverage = uidata.Integer('N Average', 1, 'rw')
+		self.uicurbase = uidata.Boolean('Current as Base', True, 'rw')
+		self.uibase = uidata.Struct('Base', {'x':0,'y':0}, 'rw')
 		parameters = self.parameters.keys()
 		parameters.sort()
-		self.uiparameter = uidata.UISingleSelectFromList('Parameter', parameters, 0)
-		self.uidelta = uidata.UIFloat('Delta', 2e-6, 'rw')
-		self.ui_interval = uidata.UIFloat('Interval', 2e-6, 'rw')
+		self.uiparameter = uidata.SingleSelectFromList('Parameter', parameters, 0)
+		self.uidelta = uidata.Float('Delta', 2e-6, 'rw')
+		self.ui_interval = uidata.Float('Interval', 2e-6, 'rw')
 		validshift = {'correlation': {'min': 20.0, 'max': 512.0},
   							   'calibration': {'min': 20.0, 'max': 512.0}}
-		self.uivalidshift = uidata.UIStruct('Valid Shift', validshift, 'rw')
+		self.uivalidshift = uidata.Struct('Valid Shift', validshift, 'rw')
 
-		settingscontainer = uidata.UIContainer('Settings')
-		settingscontainer.addUIObjects((self.uinaverage, self.uicurbase, self.uibase,
+		settingscontainer = uidata.Container('Settings')
+		settingscontainer.addObjects((self.uinaverage, self.uicurbase, self.uibase,
 																		self.uiparameter, self.uidelta,
 																		self.ui_interval, self.uivalidshift))
 
-		calibratemethod = uidata.UIMethod('Calibrate', self.uiCalibrate)
+		calibratemethod = uidata.Method('Calibrate', self.uiCalibrate)
 
-		container = uidata.UIMediumContainer('Matrix Calibrator')
-		container.addUIObjects((settingscontainer, calibratemethod))
-		self.uiserver.addUIObject(container)
+		container = uidata.MediumContainer('Matrix Calibrator')
+		container.addObjects((settingscontainer, calibratemethod))
+		self.uiserver.addObject(container)
 
 	def uiCalibrate(self):
 		self.calibrate()

@@ -107,7 +107,7 @@ class CameraFuncs(object):
 		returns camera configuration UI object
 		'''
 
-		return uidata.UIStruct('Camera Configuration', None, 'rw', self.uiConfig)
+		return uidata.Struct('Camera Configuration', None, 'rw', self.uiConfig)
 
 	def uiConfig(self, value=None):
 		'''

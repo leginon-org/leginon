@@ -103,16 +103,16 @@ class Focuser(acquisition.Acquisition):
 
 	def defineUserInterface(self):
 		acquisition.Acquisition.defineUserInterface(self)
-		self.btilt = uidata.UIFloat('Beam Tilt', 0.02, 'rw')
+		self.btilt = uidata.Float('Beam Tilt', 0.02, 'rw')
 		focustypes = self.focus_methods.keys()
 		focustypes.sort()
-		self.focustype = uidata.UISingleSelectFromList('Focus Correction Type',
+		self.focustype = uidata.SingleSelectFromList('Focus Correction Type',
 																							focustypes, 0)
-		self.stigcorrection = uidata.UIBoolean('Stigmator Correction', False, 'rw')
-		self.publishimages = uidata.UIBoolean('Publish Images', True, 'rw')
-		testmethod = uidata.UIMethod('Test Autofocus', self.uiTest)
-		container = uidata.UIMediumContainer('Focuser')
-		container.addUIObjects((self.btilt, self.focustype, self.stigcorrection,
+		self.stigcorrection = uidata.Boolean('Stigmator Correction', False, 'rw')
+		self.publishimages = uidata.Boolean('Publish Images', True, 'rw')
+		testmethod = uidata.Method('Test Autofocus', self.uiTest)
+		container = uidata.MediumContainer('Focuser')
+		container.addObjects((self.btilt, self.focustype, self.stigcorrection,
 														self.publishimages, testmethod))
-		self.uiserver.addUIObject(container)
+		self.uiserver.addObject(container)
 
