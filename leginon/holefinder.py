@@ -294,11 +294,11 @@ class HoleFinder(targetfinder.TargetFinder):
 			'edge-lpf-on': self.lowpasson.get(),
 			'edge-lpf-size': self.lowpasssize.get(),
 			'edge-lpf-sigma': self.lowpasssigma.get(),
-			'edge-filter-type': self.filtertype.get(),
+			'edge-filter-type': self.filtertype.getSelectedValue(),
 			'edge-threshold': self.edgethresh.get(),
 
 			'template-rings': self.ringlist.get(),
-			'template-correlation-type': self.cortype.get(),
+			'template-correlation-type': self.cortype.getSelectedValue(),
 			'template-lpf': self.corfilt.get(),
 
 			'threshold-value': self.threshvalue.get(),
