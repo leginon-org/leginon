@@ -24,7 +24,7 @@ class DataSpec(SpecObject):
 	This describes a piece of data for an xml-rpc client
 	The client can use this description to define the data presentation
 	"""
-	def __init__(self, id, server, name, xmlrpctype, permissions=None, choices=None, default=None, pyname=None):
+	def __init__(self, id, server, name, xmlrpctype, permissions=None, choices=None, default=None, pyname=None, callback=None):
 		SpecObject.__init__(self, id, 'data')
 
 		self.server = server
@@ -38,10 +38,13 @@ class DataSpec(SpecObject):
 		else:
 			raise RuntimeError('invalid permissions %s' % permissions)
 		self.choices = choices
-		self.callback = None
 		self.default = default
 		self.uidata = default
 		self.pyname = pyname
+		if callback is not None:
+			self.registerCallback(callback)
+		else:
+			self.callback = None
 
 	def registerCallback(self, callback):
 		if callable(callback):
@@ -56,14 +59,16 @@ class DataSpec(SpecObject):
 		if self.callback is None:
 			return copy.deepcopy(self.uidata)
 		else:
-			return self.callback()
+			return copy.deepcopy(self.callback())
 
 	def set(self, value):
+		valuecopy = copy.deepcopy(value)
 		if self.callback is None:
-			self.uidata = copy.deepcopy(value)
-			return value
+			self.uidata = valuecopy
+			return copy.deepcopy(self.uidata)
 		else:
-			return self.callback(value)
+			d = self.callback(valuecopy)
+			return copy.deepcopy(d)
 
 	def dict(self):
 		d = SpecObject.dict(self)
@@ -178,9 +183,9 @@ class Server(xmlrpcserver.xmlrpcserver):
 		m = MethodSpec(id, name, argspec, returnspec)
 		return m
 
-	def registerData(self, name, xmlrpctype, permissions=None, choices=None, default=None):
+	def registerData(self, name, xmlrpctype, permissions=None, choices=None, default=None, pyname=None, callback=None):
 		id = self.ID()
-		d = DataSpec(id, self, name, xmlrpctype, permissions, choices, default)
+		d = DataSpec(id, self, name, xmlrpctype, permissions, choices, default, pyname, callback)
 		idstr = str(id)
 		self.uidata[idstr] = d
 		return d
