@@ -488,7 +488,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		for i, dataid in enumerate(self.mosaicdata['data IDs']):
 			# create an instance model to query
 			self.setStatusMessage('Finding image %i of %i' % (i + 1, ntotal))
-			imagedata = self.researchDMID(data.AcquisitionImageData, dataid)
+			imagedata = self.researchDBID(data.AcquisitionImageData, dataid)
 			self.addTile(imagedata)
 		self.setStatusMessage('Mosaic loaded (%i of %i images loaded successfully)' % (i+1, ntotal))
 		if self.autocreate.get():

@@ -341,8 +341,8 @@ class Node(leginonobject.LeginonObject):
 			raise RuntimeError('research needs either data instance or data class')
 		return resultlist
 
-	def researchDMID(self, dataclass, dbid):
-		print 'WARNING:  researchDMID() IS TEMPORARY WHILE WE ARE STILL STORING LISTS OF DMIDs'
+	def researchDBID(self, dataclass, dbid):
+		print 'WARNING:  researchDBID() IS TEMPORARY WHILE WE ARE STILL STORING LISTS OF DBIDs'
 		return self.dbdatakeeper.direct_query(dataclass, dbid)
 
 	def updateReferencedData(self, datareference, updateinstance):
