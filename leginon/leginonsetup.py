@@ -22,14 +22,18 @@ class Wizard(Tkinter.Toplevel):
 		self.backbutton = Tkinter.Button(buttonframe, text='< Back')
 		self.backbutton.grid(row=0, column=0, padx=5, pady=5)
 		self.backbutton['state'] = Tkinter.DISABLED
+		# these are not quite right
+		self.backbutton.bind('<Return>', lambda e: self.backbutton.invoke())
 
 		self.nextbutton = Tkinter.Button(buttonframe, text='Next >')
 		self.nextbutton.grid(row=0, column=1, padx=5, pady=5)
-		self.backbutton['state'] = Tkinter.DISABLED
+		self.nextbutton['state'] = Tkinter.DISABLED
+		self.nextbutton.bind('<Return>', lambda e: self.nextbutton.invoke())
 
 		self.cancelbutton = Tkinter.Button(buttonframe, text='Cancel')
 		self.cancelbutton.grid(row=0, column=2, padx=5, pady=5)
-		self.backbutton['state'] = Tkinter.DISABLED
+		self.cancelbutton['state'] = Tkinter.DISABLED
+		self.cancelbutton.bind('<Return>', lambda e: self.cancelbutton.invoke())
 
 		buttonframe.grid(row=1, column=0, sticky=Tkinter.E)
 
@@ -45,23 +49,24 @@ class Wizard(Tkinter.Toplevel):
 
 		self.widget = widget
 
+		self.backbutton['command'] = back
 		if back is not None:
 			self.backbutton['state'] = Tkinter.NORMAL
 		else:
 			self.backbutton['state'] = Tkinter.DISABLED
-		self.backbutton['command'] = back
 
+		self.nextbutton['command'] = next
 		if next is not None:
 			self.nextbutton['state'] = Tkinter.NORMAL
+			self.nextbutton.focus_set()
 		else:
 			self.nextbutton['state'] = Tkinter.DISABLED
-		self.nextbutton['command'] = next
 
+		self.cancelbutton['command'] = cancel
 		if cancel is not None:
 			self.cancelbutton['state'] = Tkinter.NORMAL
 		else:
 			self.cancelbutton['state'] = Tkinter.DISABLED
-		self.cancelbutton['command'] = cancel
 
 		self.widget.grid(row=0, column=0, padx=15, pady=15)
 
