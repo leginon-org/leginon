@@ -1687,19 +1687,20 @@ class wxTreePanel(wxPanel):
 			parentid = self.containers[container.container]
 		else:
 			parentid = self.root
-		self.childsizer.Add(container.sizer, 1, wxEXPAND)
+		self.childsizer.Add(container.panel, 1, wxEXPAND)
 		id = self.tree.AppendItem(parentid, container.name)
 		if parentid != self.root:
 			self.tree.Expand(parentid)
 		self.containers[container] = id
 		self.tree.SetPyData(id, container)
+		container.show(False)
 		#self.tree.SelectItem(id)
 
 	def deleteContainer(self, container):
 		id = self.containers[container]
 		self.tree.Delete(id)
 		try:
-			self.childsizer.Remove(container.sizer)
+			self.childsizer.Remove(container.panel)
 			del self.containers[container]
 		except KeyError:
 			pass
@@ -1715,12 +1716,14 @@ class wxTreePanel(wxPanel):
 class wxTreePanelContainerWidget(wxContainerWidget):
 	def __init__(self, name, parent, container, value, configuration):
 		self.treepanel = container.getTreeContainer()
+		self.panel = wxPanel(self.treepanel.childpanel, -1)
 		self.sizer = wxBoxSizer(wxVERTICAL)
+		self.panel.SetSizer(self.sizer)
 		self.message = None
 		self.messages = {}
 		wxContainerWidget.__init__(self, name, parent, container, value,
 																configuration)
-		self.childparent = self.treepanel.childpanel
+		self.childparent = self.panel
 		self.treepanel.addContainer(self)
 
 	def getTreeContainer(self):
@@ -1728,7 +1731,8 @@ class wxTreePanelContainerWidget(wxContainerWidget):
 
 	def _show(self, show):
 		wxContainerWidget._show(self, show)
-		self.treepanel.childsizer.Show(self.sizer, show)
+		self.panel.Show(show)
+		self.treepanel.childsizer.Show(self.panel, show)
 
 	def show(self, show):
 		#self.treepanel.tree.SelectItem(self.treepanel.containers[self])
@@ -1744,6 +1748,7 @@ class wxTreePanelContainerWidget(wxContainerWidget):
 
 	def layout(self):
 		wxContainerWidget.layout(self)
+		self.sizer.Layout()
 		self.treepanel.childsizer.FitInside(self.childparent)
 
 	def destroy(self):
