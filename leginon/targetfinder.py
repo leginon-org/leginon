@@ -303,8 +303,11 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		try:
 			stagepos = self.emclient.getScope()['stage position']
 		except EM.ScopeUnavailable:
-			self.logger.exception('could not get current position')
+			stagepos = None
+
+		if stagepos is None:
 			self.currentposition = []
+			self.logger.exception('could not get current position')
 			return
 		center = self.mosaic.getFakeParameter()
 		shift = {}
