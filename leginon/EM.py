@@ -14,6 +14,7 @@ import time
 import uidata
 import Queue
 import emregistry
+import timer
 
 if sys.platform == 'win32':
 	sys.coinit_flags = 0
@@ -241,9 +242,10 @@ class EM(node.Node):
 			ids[i] = (ids[i],)
 
 		self.uistate = {}
-		self.defineUserInterface()
+		container = self.defineUserInterface()
 		self.state = self.getEM(self.uiscopedict.keys() + self.uicameradict.keys())
 		self.uiUpdate()
+		self.uiserver.addObject(container)
 
 		e = event.ListPublishEvent(id=self.ID(), idlist=ids)
 		self.outputEvent(e, wait=True)
@@ -291,14 +293,15 @@ class EM(node.Node):
 				destination[key] = source[key]
 
 	def getEM(self, withkeys=[], withoutkeys=[], updatestatus=True):
-		if updatestatus:
-			self.uiSetStatus('Getting parameters', 5)
-			self.uiSetStatus('Acquiring lock for parameter query', 10)
+		foo = timer.Timer()
+#		if updatestatus:
+#			self.uiSetStatus('Getting parameters', 5)
+#			self.uiSetStatus('Acquiring lock for parameter query', 10)
 		self.lock.acquire()
-		if updatestatus:
-			self.uiSetStatus('Lock acquired, processing request', 15)
+#		if updatestatus:
+#			self.uiSetStatus('Lock acquired, processing request', 15)
 
-		result = {}
+		self.result = {}
 
 		if not withkeys and withoutkeys:
 			withkeys = ['all em']
@@ -351,8 +354,8 @@ class EM(node.Node):
 				withoutkeys += self.scope.keys()
 				withoutkeys += self.camera.keys()
 
-		if updatestatus:
-			self.uiSetStatus('Refining request', 20)
+#		if updatestatus:
+#			self.uiSetStatus('Refining request', 20)
 
 		for key in withoutkeys:
 			try:
@@ -360,37 +363,53 @@ class EM(node.Node):
 			except ValueError:
 				pass
 
-		if updatestatus:
-			self.uiSetStatus('Sending request to instrument', 25)
-			if withkeys:
-				percent = 25
-				increment = (90-percent)/len(withkeys)
+#		if updatestatus:
+#			self.uiSetStatus('Sending request to instrument', 25)
+#			if withkeys:
+#				percent = 25
+#				increment = (90-percent)/len(withkeys)
 
 		scopekeys = self.scope.keys()
 		camerakeys = self.camera.keys()
+#		threads = []
 		for key in withkeys:
-			if updatestatus:
-				self.uiSetStatus('Requesting ' + key + ' value', None)
+#			if updatestatus:
+#				self.uiSetStatus('Requesting ' + key + ' value', None)
 			if key in scopekeys:
-				result[key] = self.scope[key]
+				self.result[key] = self.scope[key]
+#				t = threading.Thread(target=self.getScope, args=(key,))
+#				t.start()
+#				threads.append(t)
 			elif key in camerakeys:
-				result[key] = self.camera[key]
+				self.result[key] = self.camera[key]
+#				t = threading.Thread(target=self.getCamera, args=(key,))
+#				t.start()
+#				threads.append(t)
 			else:
 				pass
-			if updatestatus:
-				percent += increment
-				self.uiSetStatus('Value of ' + key + ' acquired', percent)
+#			if updatestatus:
+#				percent += increment
+#				self.uiSetStatus('Value of ' + key + ' acquired', percent)
 
-		result['system time'] = time.time()
+		self.result['system time'] = time.time()
 
-		if updatestatus:
-			self.uiSetStatus('Releasing Lock', 90)
+#		if updatestatus:
+#			self.uiSetStatus('Releasing Lock', 90)
+#		for t in threads:
+#			t.join()
 		self.lock.release()
-		if updatestatus:
-			self.uiSetStatus('Lock Released', 95)
-			self.uiSetStatus('Parameter get completed', 100)
-			self.uiSetStatus('', 0)
-		return result
+#		if updatestatus:
+#			self.uiSetStatus('Lock Released', 95)
+#			self.uiSetStatus('Parameter get completed', 100)
+#			self.uiSetStatus('', 0)
+		foo.stop()
+		return self.result
+
+	def getScope(self, key):
+		self.result[key] = self.scope[key]
+
+	def getCamera(self, key):
+		self.result[key] = self.camera[key]
 
 	def sortEMdict(self, emdict):
 		'''
@@ -421,27 +440,27 @@ class EM(node.Node):
 		return newdict
 
 	def setEM(self, emstate, updatestatus=True):
-		if updatestatus:
-			self.uiSetStatus('Setting parameters', 5)
-			self.uiSetStatus('Acquiring lock for parameter modifications', 10)
+#		if updatestatus:
+#			self.uiSetStatus('Setting parameters', 5)
+#			self.uiSetStatus('Acquiring lock for parameter modifications', 10)
 		self.lock.acquire()
-		if updatestatus:
-			self.uiSetStatus('Lock acquired, processing request', 15)
+#		if updatestatus:
+#			self.uiSetStatus('Lock acquired, processing request', 15)
 
 		# order the items in emstate
 		ordered = self.sortEMdict(emstate)
 
-		if updatestatus:
-			self.uiSetStatus('Request processed, sending to instrument', 20)
-			if ordered:
-				percent = 20
-				increment = (90-percent)/len(ordered.keys())
+#		if updatestatus:
+#			self.uiSetStatus('Request processed, sending to instrument', 20)
+#			if ordered:
+#				percent = 20
+#				increment = (90-percent)/len(ordered.keys())
 
 		scopekeys = self.scope.keys()
 		camerakeys = self.camera.keys()
 		for emkey, emvalue in ordered.items():
-			if updatestatus:
-				self.uiSetStatus('Requesting modification of ' + emkey, None)
+#			if updatestatus:
+#				self.uiSetStatus('Requesting modification of ' + emkey, None)
 			if emvalue is not None:
 				if emkey in scopekeys:
 					try:
@@ -455,17 +474,17 @@ class EM(node.Node):
 					except:	
 						#print "failed to set '%s' to" % EMkey, EMstate[EMkey]
 						self.printException()
-			if updatestatus:
-				percent += increment
-				self.uiSetStatus('Value of ' + emkey + ' modified', percent)
+#			if updatestatus:
+#				percent += increment
+#				self.uiSetStatus('Value of ' + emkey + ' modified', percent)
 
-		if updatestatus:
-			self.uiSetStatus('Releasing Lock', 90)
+#		if updatestatus:
+#			self.uiSetStatus('Releasing Lock', 90)
 		self.lock.release()
-		if updatestatus:
-			self.uiSetStatus('Lock Released', 95)
-			self.uiSetStatus('Parameter modifications completed', 100)
-			self.uiSetStatus('', 0)
+#		if updatestatus:
+#			self.uiSetStatus('Lock Released', 95)
+#			self.uiSetStatus('Parameter modifications completed', 100)
+#			self.uiSetStatus('', 0)
 
 	# needs to have statelock locked
 	def uiUpdate(self):
@@ -480,22 +499,22 @@ class EM(node.Node):
 			if key not in self.uistate or self.uistate[key] != setdict[key]:
 				request[key] = setdict[key]
 
-		self.uiSetUIStatus(None, 30)
+#		self.uiSetUIStatus(None, 30)
 
 		if not request:
 			return
 
-		self.uiSetUIStatus('Acquiring lock', 40)
+#		self.uiSetUIStatus('Acquiring lock', 40)
 		self.statelock.acquire()
-		self.uiSetUIStatus('Lock acquired', 50)
+#		self.uiSetUIStatus('Lock acquired', 50)
 		done_event = threading.Event()
-		self.uiSetUIStatus('Queuing microscope parameter change request', 60)
+#		self.uiSetUIStatus('Queuing microscope parameter change request', 60)
 		self.queue.put(Request(done_event, request))
-		self.uiSetUIStatus('Microscope parameter change request queued', 70)
+#		self.uiSetUIStatus('Microscope parameter change request queued', 70)
 		done_event.wait()
-		self.uiSetUIStatus('Microscope parameter change request completed', 80)
+#		self.uiSetUIStatus('Microscope parameter change request completed', 80)
 		self.statelock.release()
-		self.uiSetUIStatus('Lock released', 90)
+#		self.uiSetUIStatus('Lock released', 90)
 
 	def queueHandler(self):
 		while True:
@@ -517,98 +536,98 @@ class EM(node.Node):
 	def uiResetDefocus(self):
 		self.scopecontainer.disable()
 		self.cameracontainer.disable()
-		self.uiSetUIStatus('Reseting defocus', 10)
+#		self.uiSetUIStatus('Reseting defocus', 10)
 		self.uiSetState({'reset defocus': 1})
-		self.uiSetUIStatus('Defocus reset', 90)
-		self.uiSetUIStatus('Requesting defocus value', 95)
+#		self.uiSetUIStatus('Defocus reset', 90)
+#		self.uiSetUIStatus('Requesting defocus value', 95)
 		self.statelock.acquire()
 		done_event = threading.Event()
 		self.queue.put(Request(done_event, ['defocus']))
 		done_event.wait()
 		self.statelock.release()
-		self.uiSetUIStatus('Defocus reset request completed', 100)
-		self.uiSetUIStatus('', 0)
+#		self.uiSetUIStatus('Defocus reset request completed', 100)
+#		self.uiSetUIStatus('', 0)
 		self.cameracontainer.enable()
 		self.scopecontainer.enable()
 
 	def uiToggleMainScreen(self):
 		self.scopecontainer.disable()
 		self.cameracontainer.disable()
-		self.uiSetUIStatus('Toggling mainscreen', 10)
+#		self.uiSetUIStatus('Toggling mainscreen', 10)
 		try:
 			uiscreenposition = self.uiscopedict['screen position'].get()
 		except KeyError:
 			return
 		if uiscreenposition == 'down':
-			self.uiSetUIStatus('Putting mainscreen up', 15)
+#			self.uiSetUIStatus('Putting mainscreen up', 15)
 			self.uiSetState({'screen position': 'up'})
 		elif uiscreenposition == 'up':
-			self.uiSetUIStatus('Putting mainscreen down', 15)
+#			self.uiSetUIStatus('Putting mainscreen down', 15)
 			self.uiSetState({'screen position': 'down'})
-		self.uiSetUIStatus('Main screen toggled', 100)
-		self.uiSetUIStatus('', 0)
+#		self.uiSetUIStatus('Main screen toggled', 100)
+#		self.uiSetUIStatus('', 0)
 		self.cameracontainer.enable()
 		self.scopecontainer.enable()
 
 	def uiRefreshScope(self):
 		self.scopecontainer.disable()
 		self.cameracontainer.disable()
-		self.uiSetUIStatus('Getting microscope parameters', 10)
-		self.uiSetUIStatus('Acquiring lock', 20)
+#		self.uiSetUIStatus('Getting microscope parameters', 10)
+#		self.uiSetUIStatus('Acquiring lock', 20)
 		self.statelock.acquire()
 		done_event = threading.Event()
 		request = self.uiGetDictData(self.uiscopedict).keys()
-		self.uiSetUIStatus('Queuing microscope parameter query request', 30)
+#		self.uiSetUIStatus('Queuing microscope parameter query request', 30)
 		self.queue.put(Request(done_event, request))
-		self.uiSetUIStatus('Microscope parameter query request queued', 40)
+#		self.uiSetUIStatus('Microscope parameter query request queued', 40)
 		done_event.wait()
-		self.uiSetUIStatus('Microscope parameter query request completed', 80)
+#		self.uiSetUIStatus('Microscope parameter query request completed', 80)
 		self.statelock.release()
-		self.uiSetUIStatus('Lock released', 90)
-		self.uiSetUIStatus('Refreshed microscope parameters', 100)
-		self.uiSetUIStatus('', 0)
+#		self.uiSetUIStatus('Lock released', 90)
+#		self.uiSetUIStatus('Refreshed microscope parameters', 100)
+#		self.uiSetUIStatus('', 0)
 		self.cameracontainer.enable()
 		self.scopecontainer.enable()
 
-	def uiSetUIStatus(self, message, percent):
-		if hasattr(self, 'uiprogresslabel') and hasattr(self, 'uiprogress'):
-			if message is not None:
-				self.uiprogresslabel.set(message)
-			if percent is not None:
-				self.uiprogress.set(percent)
+#	def uiSetUIStatus(self, message, percent):
+#		if hasattr(self, 'uiprogresslabel') and hasattr(self, 'uiprogress'):
+#			if message is not None:
+#				self.uiprogresslabel.set(message)
+#			if percent is not None:
+#				self.uiprogress.set(percent)
 #			if percent is not None or message is not None:
 #				time.sleep(0.25)
 
-	def uiSetStatus(self, message, percent):
-		if hasattr(self, 'progresslabel') and hasattr(self, 'progress'):
-			if message is not None:
-				self.progresslabel.set(message)
-			if percent is not None:
-				self.progress.set(percent)
+#	def uiSetStatus(self, message, percent):
+#		if hasattr(self, 'progresslabel') and hasattr(self, 'progress'):
+#			if message is not None:
+#				self.progresslabel.set(message)
+#			if percent is not None:
+#				self.progress.set(percent)
 #			if percent is not None or message is not None:
 #				time.sleep(0.25)
 
 	def uiSetScope(self):
 		self.scopecontainer.disable()
 		self.cameracontainer.disable()
-		self.uiSetUIStatus('Setting microscope parameters', 10)
+#		self.uiSetUIStatus('Setting microscope parameters', 10)
 		scopedict = self.uiGetDictData(self.uiscopedict)
-		self.uiSetUIStatus(None, 20)
+#		self.uiSetUIStatus(None, 20)
 		updatedstate = self.uiSetState(scopedict)
-		self.uiSetUIStatus('Microscope parameter change completed', 90)
-		self.uiSetUIStatus('', 0)
+#		self.uiSetUIStatus('Microscope parameter change completed', 90)
+#		self.uiSetUIStatus('', 0)
 		self.cameracontainer.enable()
 		self.scopecontainer.enable()
 
 	def uiSetCamera(self):
 		self.scopecontainer.disable()
 		self.cameracontainer.disable()
-		self.uiSetUIStatus('Setting camera parameters', 10)
+#		self.uiSetUIStatus('Setting camera parameters', 10)
 		cameradict = self.uiGetDictData(self.uicameradict)
-		self.uiSetUIStatus(None, 20)
+#		self.uiSetUIStatus(None, 20)
 		updatedstate = self.uiSetState(cameradict)
-		self.uiSetUIStatus('Camera parameter change completed', 90)
-		self.uiSetUIStatus('', 0)
+#		self.uiSetUIStatus('Camera parameter change completed', 90)
+#		self.uiSetUIStatus('', 0)
 		self.cameracontainer.enable()
 		self.scopecontainer.enable()
 
@@ -636,21 +655,21 @@ class EM(node.Node):
 
 		# status
 
-		self.progresslabel = uidata.String('State', '', 'r')
-		self.progress = uidata.Progress('', 0)
-		self.externalstatusupdate = uidata.Boolean(
-																					'Update status for external changes',
-																					False, 'rw')
-		statuscontainer = uidata.Container('Status')
-		statuscontainer.addObject(self.progresslabel)
-		statuscontainer.addObject(self.progress)
-		statuscontainer.addObject(self.externalstatusupdate)
-
-		self.uiprogresslabel = uidata.String('State', '', 'r')
-		self.uiprogress = uidata.Progress('', 0)
-		uistatuscontainer = uidata.Container('User Request Status')
-		uistatuscontainer.addObject(self.uiprogresslabel)
-		uistatuscontainer.addObject(self.uiprogress)
+#		self.progresslabel = uidata.String('State', '', 'r')
+#		self.progress = uidata.Progress('', 0)
+#		self.externalstatusupdate = uidata.Boolean(
+#																					'Update status for external changes',
+#																					False, 'rw')
+#		statuscontainer = uidata.Container('Status')
+#		statuscontainer.addObject(self.progresslabel)
+#		statuscontainer.addObject(self.progress)
+#		statuscontainer.addObject(self.externalstatusupdate)
+#
+#		self.uiprogresslabel = uidata.String('State', '', 'r')
+#		self.uiprogress = uidata.Progress('', 0)
+#		uistatuscontainer = uidata.Container('User Request Status')
+#		uistatuscontainer.addObject(self.uiprogresslabel)
+#		uistatuscontainer.addObject(self.uiprogress)
 
 		# scope
 
@@ -738,8 +757,11 @@ class EM(node.Node):
 		self.cameracontainer.addObject(setcamera)
 
 		container = uidata.MediumContainer('EM')
-		container.addObject(statuscontainer)
-		container.addObject(uistatuscontainer)
+#		container.addObject(statuscontainer)
+#		container.addObject(uistatuscontainer)
 		container.addObjects((self.scopecontainer, self.cameracontainer))
-		self.uiserver.addObject(container)
+
+		return container
+
+		#self.uiserver.addObject(container)
 

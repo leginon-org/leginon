@@ -144,7 +144,7 @@ def center_fill(input, size, value=0):
 def power(numericarray):
 	fft = ffteng.transform(numericarray)
 	## should I square this?
-	pow = Numeric.absolute(fft)
+	pow = Numeric.absolute(fft) + 1
 	pow = Numeric.log(pow)
 	pow = Numeric.clip(pow, 6, 14)
 	pow = shuffle(pow)

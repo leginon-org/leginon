@@ -97,7 +97,7 @@ class Server(XMLRPCServer, uidata.Container):
 	### and is this just a really bad idea for something like
 	### EM that does a lot of stuff in a callback when a value is set
 	### I guess things like that are not "preferences", but they are
-	### all treated the same here.  Anything data value in the user
+	### all treated the same here.	Anything data value in the user
 	### interface is a preference
 	def usePreferences(self):
 		'''
@@ -184,17 +184,50 @@ class Server(XMLRPCServer, uidata.Container):
 		self.addObjectsCallback(addclient)
 		return ''
 
-	def addObjectCallback(self, dependencies, namelist, typelist, value, settings, client=None):
+	def addObjectsCallback2(self, client=None):
+		objects = self.getObjects(self)
 		if client is not None:
 			try:
-				client.execute('ADD', (dependencies, namelist, typelist, value, settings))
+				client.execute('ADD OBJECTS', (objects,))
 			except xmlrpclib.ProtocolError, e:
 				print 'Error adding to client ' + str(client) + ': ' + str(e)
 		else:
 			for client in self.uiclients:
 				# delete if fail?
 				try:
-					client.execute('ADD',
+					client.execute('ADDS', (objects,))
+				except (xmlrpclib.ProtocolError, socket.error), e:
+					print 'Error adding to client ' + str(client) + ': ' + str(e)
+
+	def getObjects(self, parent):
+		objects = []
+		for i, uiobject in enumerate(parent.uiobjectlist):
+			if hasattr(uiobject, 'value'):
+				value = uiobject.value
+			else:
+				value = ''
+			if i == 0:
+				dependencies = []
+			else:
+				dependencies = [parent.uiobjectlist[i - 1].getName()]
+			objects.append((dependencies, (uiobject.name,), uiobject.typelist, value,
+                              uiobject.getSettings()))
+			if isinstance(uiobject, uidata.Container):
+				objects.append(self.getObjects(uiobject))
+				
+		return objects
+
+	def addObjectCallback(self, dependencies, namelist, typelist, value, settings, client=None):
+		if client is not None:
+			try:
+				client.execute('ADD OBJECT', (dependencies, namelist, typelist, value, settings))
+			except xmlrpclib.ProtocolError, e:
+				print 'Error adding to client ' + str(client) + ': ' + str(e)
+		else:
+			for client in self.uiclients:
+				# delete if fail?
+				try:
+					client.execute('ADD OBJECT',
 													(dependencies, namelist, typelist, value, settings))
 				except (xmlrpclib.ProtocolError, socket.error), e:
 					print 'Error adding to client ' + str(client) + ': ' + str(e)
