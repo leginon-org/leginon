@@ -1,7 +1,7 @@
 <?
 /**
- *	@version $Revision: 1.15 $
- *	@version $Id: image.inc,v 1.15 2004-12-11 00:51:02 dfellman Exp $
+ *	@version $Revision: 1.16 $
+ *	@version $Id: image.inc,v 1.16 2005-01-24 22:55:19 dfellman Exp $
  */
 /**
  *	Tools to display images / mosaic
@@ -64,8 +64,12 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 
 		if ($binning=='auto')
 			$binning = ($dimx > 1024) ? (($dimx > 2048) ? 4 : 2 ) : 1;
-		$filterdata = new filter($pic, $p[minpix], $p[maxpix], $p[colormap], $binning);
-		$img = $filterdata->getFilter($p[filter]);
+//		$img = imagecreatefrommrc($pic, $p[minpix], $p[maxpix], $p[colormap], $binning);
+		if (function_exists($p[filter]))
+			$img = $p[filter]($pic, $p[minpix], $p[maxpix], $p[colormap], $binning);
+		else
+			$img = getdefault($pic, $p[minpix], $p[maxpix], $p[colormap], $binning);
+
 		if ($size) {
 			$scalefactor = (imagesx($img)) ? $size/imagesx($img) : 1;
 			imagescale($img, $scalefactor);
@@ -366,7 +370,7 @@ class Mosaic {
 		$sessionId = $imageinfo[0][sessionId];
 		$squaresize = $imageinfo[0][dimx]/$ratio;
 		$this->params['size'] = $squaresize;
-		$this->params['binning'] = ($ratio<1) ? 1 : $ratio;
+		$this->params['binning'] =  ($ratio<1) ? 1 : $ratio;
 
 		if ($fromImg)
 			$img = $fromImg;
@@ -377,7 +381,14 @@ class Mosaic {
 			$squarepoints = getsquarepoints($cx, $cy, $angle, $squaresize);
 			$dst_x = $squarepoints[0];
 			$dst_y = $squarepoints[1];
+//			if ($k <3 ) {
 			$gimg = getImage($sessionId, $r[imageId], $preset, $this->params);
+//			} else if ($k>15){
+//				$gimg = imagecreatefrommrc($myfile, 0, 255, 0, 4);
+			//	$gimg = getImage($sessionId, $r[imageId], $preset, $this->params);
+//			} else {
+//				$gimg = imagecreatetruecolor(50,50);
+//			}
 			$src_w = imagesx($gimg);
 			$src_h = imagesy($gimg);
 			imagecopy($img, $gimg, $dst_x, $dst_y, $src_x, $src_y, $src_w, $src_h);

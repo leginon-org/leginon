@@ -7,8 +7,8 @@
  *	see  http://ami.scripps.edu/software/leginon-license
  */
 
-$pic=ImageCreate(255,10);
-ImageColorAllocat($pic, 255, 155, 255);
+$pic=ImageCreate(255,1);
+imagecolorallocate($pic, 255, 255, 255);
 header("Content-type: image/x-png");
 ImagePNG($pic);
 ImageDestroy($pic);
