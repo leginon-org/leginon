@@ -169,6 +169,12 @@ class Focuser(acquisition.Acquisition):
 		t.setDaemon(1)
 		t.start()
 
+	def notifyManualFocus(self):
+		myname = self.id[-1]
+		title = 'manual focus' % (myname,)
+		message = 'Please confirm defocus in Focuser %s' % (myname,)
+		self.outputMessage(title, message)
+
 	def manualCheckLoop(self, presetname, emtarget=None):
 		## go to preset and target
 		self.presetsclient.toScope(presetname, emtarget)
@@ -177,6 +183,7 @@ class Focuser(acquisition.Acquisition):
 		time.sleep(delay)
 		self.manual_check_done.clear()
 		print 'starting manual focus loop'
+		self.notifyManualFocus()
 		while 1:
 			if self.manual_check_done.isSet():
 				break
