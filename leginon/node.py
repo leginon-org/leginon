@@ -8,8 +8,8 @@ if sys.platform == 'win32':
 	sys.coinit_flags = 0
 
 class Client(datatransport.Client):
-	def __init__(self, location):
-		datatransport.Client.__init__(self, location)
+	def __init__(self, loc):
+		datatransport.Client.__init__(self, loc)
 
 	def push(self, idata):
 #		if isinstance(idata, event.Event):
@@ -81,19 +81,28 @@ class Node(leginonobject.LeginonObject):
 		self.server.datahandler._insert(idata)
 		self.announce(eventclass(idata.id))
 
-	def publishRemote(self, location, idata):
+	def publishRemote(self, loc, idata):
 		# perhaps an event can be generated in this too
 		# this should be done by nodeid instead?
-		client = self.clientclass(location)
+		client = self.clientclass(loc)
 		client.push(idata)
 
 	def mark_data(self, data):
 		data.origin['id'] = self.nodeid
 		data.origin['location'] = self.location()
 
-	def research(self, location, dataid):
-		client = self.clientclass(location)
+	def research(self, loc, dataid):
+		# can this determine what to do?
+		return self.researchByLocation(loc, dataid)
+
+	def researchByLocation(self, loc, dataid):
+		client = self.clientclass(loc)
 		return client.pull(dataid)
+
+	def researchByDataID(self, dataid):
+		locationdata = self.researchByLocation(self.managerloc, dataid)
+		# should interate, etc.
+		return self.researchByLocation(locationdata.content[0], dataid)
 
 	def location(self):
 		loc = leginonobject.LeginonObject.location(self)
@@ -111,8 +120,8 @@ class Node(leginonobject.LeginonObject):
 		return raw_input(newprompt)
 
   # down from here is from EventHandler
-	def addEventClient(self, newid, location):
-		self.clients[newid] = self.clientclass(location)
+	def addEventClient(self, newid, loc):
+		self.clients[newid] = self.clientclass(loc)
 
 	def delEventClient(self, newid):
 		if newid in self.clients:

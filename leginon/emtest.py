@@ -13,12 +13,14 @@ class EMTest(node.Node):
 		#self.addEventOutput(event.PublishEvent)
 
 		print "starting emtest..."
-		maglocdata = self.research(self.managerloc, 'magnification')
-		magdata = self.research(maglocdata.content[0], 'magnification')
+		magdata = self.researchByDataID('magnification')
 		print magdata.content
+
 		magdata.content['magnification'] = 1000
-		self.publishRemote(maglocdata.content[0], magdata)
-		newmagdata = self.research(maglocdata.content[0], 'magnification')
+		print magdata.origin
+		self.publishRemote(magdata.origin['location'], magdata)
+
+		newmagdata = self.researchByDataID('magnification')
 		print newmagdata.content
 
 if __name__ == '__main__':
