@@ -117,29 +117,28 @@ class MatrixCalibrator(calibrator.Calibrator):
 
 		percent = self.settings['%s shift fraction' % self.parameter]/100.0
 		delta = percent * camconfig['dimension']['x']*camconfig['binning']['x']*pixsize
-		self.logger.info('Delta %s' % delta)
-
+		self.logger.debug('Delta %s' % delta)
 
 		shifts = {}
 		for axis in self.axislist:
 			shifts[axis] = {'row': 0.0, 'col': 0.0}
 			n = 0
 			for base in baselist:
-				self.logger.info('Axis %s' % axis)
+				self.logger.info('Calibrating %s axis...' % axis)
 				basevalue = base[axis]
 
 				### 
 				newvalue = basevalue + delta
-				self.logger.info('New value %s' % newvalue)
+				self.logger.debug('New value %s' % newvalue)
 
 				state1 = self.makeState(basevalue, axis)
 				state2 = self.makeState(newvalue, axis)
-				self.logger.info('States %s, %s' % (state1, state2))
+				self.logger.debug('States %s, %s' % (state1, state2))
 				shiftinfo = calclient.measureStateShift(state1, state2, 1, settle=self.settle[self.parameter])
 
 				rowpix = shiftinfo['pixel shift']['row']
 				colpix = shiftinfo['pixel shift']['col']
-				self.logger.info('shift %s rows, %s cols' % (rowpix, colpix))
+				self.logger.info('Shift between images: (%.2f, %.2f)' % (colpix, rowpix))
 				totalpix = abs(rowpix + 1j * colpix)
 
 				actual_states = shiftinfo['actual states']
@@ -147,13 +146,18 @@ class MatrixCalibrator(calibrator.Calibrator):
 				actual2 = actual_states[1][self.parameter][axis]
 				change = actual2 - actual1
 				perpix = change / totalpix
-				self.logger.info('Per pixel %s' % perpix)
 
 				## deviation from pixsize should be less than
 				## 12%
 				#tol = 12/100.0
 				tol = self.settings['%s tolerance' % self.parameter]/100.0
 				err = abs(perpix - pixsize) / pixsize
+
+				s = 'Pixel size error: %.2f' % (err*100.0)
+				s += '%'
+				s += ' (per pixel %s)' % perpix
+				self.logger.info(s)
+
 				if err > tol:
 					self.logger.warning('Failed pixel size tolerance')
 					continue
@@ -228,7 +232,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 
 	def getParameter(self):
 		self.saveparam = self.emclient.getScope()[self.parameter]
-		self.logger.info('Storing parameter %s, %s'
+		self.logger.debug('Storing parameter %s, %s'
 											% (self.parameter, self.saveparam))
 
 	def setParameter(self):

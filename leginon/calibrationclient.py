@@ -59,7 +59,7 @@ class CalibrationClient(object):
 			raise Abort()
 
 	def acquireStateImage(self, state, publish_image=0, settle=0.0):
-		self.node.logger.info('Acquiring image...')
+		self.node.logger.debug('Acquiring image...')
 		## acquire image at this state
 		newemdata = data.ScopeEMData(initializer=state)
 		self.node.emclient.setScope(newemdata)
@@ -91,8 +91,9 @@ class CalibrationClient(object):
 		    'stats': statistics of two images acquired (not implemented)
 		'''
 
-		self.node.logger.info('Acquiring state images...')
+		self.node.logger.info('Acquiring images...')
 
+		self.node.logger.info('Acquiring image (1 of 2)')
 		info1 = self.acquireStateImage(state1, publish_images, settle)
 		imagedata1 = info1['imagedata']
 		imagecontent1 = imagedata1
@@ -112,6 +113,7 @@ class CalibrationClient(object):
 		else:
 			self.node.logger.info('Checking for drift...')
 
+			self.node.logger.info('Acquiring image (2 of 2)')
 			info1 = self.acquireStateImage(state1, publish_images, settle)
 			imagedata1 = info1['imagedata']
 			imagecontent1 = imagedata1
@@ -123,7 +125,8 @@ class CalibrationClient(object):
 				apply(image_callback, (self.numimage1, 'Correlation'))
 			self.correlator.insertImage(self.numimage1)
 
-			self.node.logger.info('Correlation...')
+			self.node.logger.info('Calculating shift between the images...')
+			self.node.logger.debug('Correlating...')
 			if self.node.settings['correlation type'] == 'cross':
 				pcimage = self.correlator.crossCorrelate()
 			elif self.node.settings['correlation type'] == 'phase':
@@ -131,7 +134,7 @@ class CalibrationClient(object):
 			else:
 				raise RuntimeError('Invalid correlation type')
 
-			self.node.logger.info('Peak finding...')
+			self.node.logger.debug('Peak finding...')
 			self.peakfinder.setImage(pcimage)
 			self.peakfinder.subpixelPeak(npix=9)
 			peak = self.peakfinder.getResults()
@@ -173,7 +176,8 @@ class CalibrationClient(object):
 
 		self.checkAbort()
 
-		self.node.logger.info('Correlation...')
+		self.node.logger.info('Calculating shift between the images...')
+		self.node.logger.debug('Correlating...')
 		if self.node.settings['correlation type'] == 'cross':
 			pcimage = self.correlator.crossCorrelate()
 		elif self.node.settings['correlation type'] == 'phase':
@@ -182,11 +186,11 @@ class CalibrationClient(object):
 			raise RuntimeError('Invalid correlation type')
 
 		## peak finding
-		self.node.logger.info('Peak finding...')
+		self.node.logger.debug('Peak finding...')
 		self.peakfinder.setImage(pcimage)
 		self.peakfinder.subpixelPeak(npix=9)
 		peak = self.peakfinder.getResults()
-		self.node.logger.info('Peak minsum %f' % peak['minsum'])
+		self.node.logger.debug('Peak minsum %f' % peak['minsum'])
 
 		pixelpeak = peak['subpixel peak']
 		pixelpeak = pixelpeak[1], pixelpeak[0]
@@ -195,7 +199,7 @@ class CalibrationClient(object):
 
 		peakvalue = peak['subpixel peak value']
 		shift = correlator.wrap_coord(peak['subpixel peak'], pcimage.shape)
-		self.node.logger.info('pixel shift (row,col): %s' % (shift,))
+		self.node.logger.debug('pixel shift (row,col): %s' % (shift,))
 
 		## need unbinned result
 		binx = imagecontent1['camera']['binning']['x']
