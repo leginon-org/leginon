@@ -68,9 +68,6 @@ class EM(node.Node):
 		self.nodelock = threading.Lock()
 		self.locknodeid = None
 
-		self.addEventInput(event.Lock, self.lock)
-		self.addEventInput(event.Unlock, self.unlock)
-
 		if scopeclass:
 			self.scope = scopedict.factory(scopeclass)()
 		else:
@@ -81,6 +78,9 @@ class EM(node.Node):
 			self.camera = None
 
 		node.Node.__init__(self, id, managerloc, DataHandler, (self.lock, self.scope, self.camera, self))
+
+		self.addEventInput(event.LockEvent, self.lock)
+		self.addEventInput(event.UnlockEvent, self.unlock)
 
 		self.start()
 

@@ -44,6 +44,8 @@ class Client(socketstreamtransport.Client):
 		try:
 			self.socket.connect(self.serverlocation['UNIX pipe filename'])
 		except Exception, e:
+			if isinstance(e, KeyError):
+				raise IOError
 			# socket error, connection refused
 			if (e[0] == 111 or e[0] == 2):
 				self.socket = None
