@@ -5,17 +5,45 @@ class wxListView(wxListBox):
 		wxListBox.__init__(self, parent, -1)
 		EVT_LISTBOX(self, self.GetId(), self.onSelect)
 
+	def fromString(self, string):
+		try:
+			return eval(string)
+		except:
+			raise ValueError('Cannot evaluate string to value')
+
+	def toString(self, value):
+		if type(value) is str:
+			return '"%s"' % value
+		else:
+			return str(value)
+
 	def getValues(self):
 		values = []
 		for i in range(self.GetCount()):
-			values.append(self.GetString(i))
+			try:
+				values.append(self.fromString(self.GetString(i)))
+			except ValueError:
+				raise
 		return values
 
 	def setValues(self, values):
-		if values != self.getValues():
-			self.Clear()
-			for value in values:
-				self.Append(value)
+		count = self.GetCount()
+		n = len(values)
+		if count < n:
+			nsame = count
+		else:
+			nsame = n
+		for i in range(nsame):
+			try:
+				if self.fromString(self.GetString(i)) != values[i]:
+					self.SetString(i, self.toString(values[i]))
+			except ValueError:
+				raise
+		if count < n:
+			self.InsertItems(map(self.toString, values[nsame:]), nsame)
+		elif count > n:
+			for i in range(count - 1, n - 1, -1):
+				self.Delete(i)
 
 	def onSelect(self, evt):
 		n = evt.GetSelection()
@@ -54,39 +82,61 @@ class wxListEdit(wxPanel):
 		EVT_BUTTON(self.downbutton, self.downbutton.GetId(), self.onDown)
 		EVT_LISTBOX(self.listbox, self.listbox.GetId(), self.onSelect)
 
+	def fromString(self, string):
+		try:
+			return eval(string)
+		except:
+			raise ValueError('Cannot evaluate string to value')
+
+	def toString(self, value):
+		if type(value) is str:
+			return '"%s"' % value
+		else:
+			return str(value)
+
 	def getValues(self):
 		values = []
 		for i in range(self.listbox.GetCount()):
 			try:
-				values.append(eval(self.listbox.GetString(i)))
-			except:
-				print 'Error evaluating list values'
+				values.append(self.fromString(self.listbox.GetString(i)))
+			except ValueError:
+				raise
 		return values
 
 	def setValues(self, values):
-		if values != self.getValues():
-			self.listbox.Clear()
-			for value in values:
-				if type(value) is str:
-					value = '"%s"' % value
-				self.listbox.Append(str(value))
+		count = self.listbox.GetCount()
+		n = len(values)
+		if count < n:
+			nsame = count
+		else:
+			nsame = n
+		for i in range(nsame):
+			try:
+				if self.fromString(self.listbox.GetString(i)) != values[i]:
+					self.listbox.SetString(i, self.toString(values[i]))
+			except ValueError:
+				raise
+		if count < n:
+			self.listbox.InsertItems(map(self.toString, values[nsame:]), nsame)
+		elif count > n:
+			for i in range(count - 1, n - 1, -1):
+				self.listbox.Delete(i)
 
 	def doCallback(self):
 		if callable(self.callback):
 			self.callback(self.getValues())
 
 	def onInsert(self, evt):
-		value = self.entry.GetValue()
 		try:
-			eval(value)
-		except:
-			print 'Error evaluating value'
+			value = self.fromString(self.entry.GetValue())
+		except ValueError:
 			return
+		string = self.toString(value)
 		n = self.listbox.GetSelection()
 		if n < 0:
-			self.listbox.Append(value)
+			self.listbox.Append(string)
 		else:
-			self.listbox.InsertItems([value], n)
+			self.listbox.InsertItems([string], n)
 			self.updateButtons(n + 1)
 		self.doCallback()
 
@@ -139,6 +189,40 @@ class wxListEdit(wxPanel):
 		else:
 			self.downbutton.Enable(False)
 
+class wxColumnList(wxListCtrl):
+	def __init__(self, parent):
+			wxListCtrl.__init__(self, parent, -1, style=wxLC_REPORT)
+
+	def getValues(self):
+		value = {}
+		value['columns'] = []
+		for i in range(self.GetColumnCount()):
+			value['columns'].append(self.GetColumn(i).GetText())
+		value['items'] = []
+		for i in range(self.GetItemCount()):
+			item = []
+			for j in range(self.GetColumnCount()):
+				item.append(eval(self.GetItem(i, j).GetText()))
+			value['items'].append(item)
+		return value
+
+	def setValues(self, value):
+		columns = value['columns']
+		items = value['items']
+		self.ClearAll()
+		for i, value in enumerate(columns):
+			self.InsertColumn(i, value)
+		for i, item in enumerate(items):
+			if len(item) != len(columns):
+				self.ClearAll()
+				raise ValueError('Invalid item dimension for column list')
+			self.InsertStringItem(i, '')
+			for j, value in enumerate(item):
+				if type(value) is str:
+					value = '"%s"' % value
+				value = str(value)
+				self.SetStringItem(i, j, value)
+
 if __name__ == '__main__':
 	class MyApp(wxApp):
 		def OnInit(self):
@@ -146,8 +230,35 @@ if __name__ == '__main__':
 			self.SetTopWindow(frame)
 			self.panel = wxPanel(frame, -1)
 			self.sizer = wxBoxSizer(wxVERTICAL)
+
+			self.listview = wxListView(self.panel)
+			self.sizer.Add(self.listview, 1, wxEXPAND)
+			print self.listview.getValues()
+			self.listview.setValues(['a', 'b', 'c', 'd'])
+			print self.listview.getValues()
+			self.listview.setValues(['a', 'b', 'c', 'z'])
+			print self.listview.getValues()
+			self.listview.setValues(['a', 'b'])
+			print self.listview.getValues()
+			self.listview.setValues(['a', 'b', 'x', 'y', 'z'])
+			print self.listview.getValues()
+			self.listview.setValues(['q', 'r', 'x', 'y', 'z'])
+			print self.listview.getValues()
+
 			self.listedit = wxListEdit(self.panel, self.callback)
 			self.sizer.Add(self.listedit, 1, wxEXPAND)
+
+			self.columnlist = wxColumnList(self.panel)
+			self.columnlist.setValues({'columns':
+																		['Column 1', 'Column 2', 'Column 3'],
+																	'items':
+																		[['a', 'b', 'c'],
+																			['d', 'e', 'f'],
+																			['g', 'h', 'i'],
+																			['j', 'k', 'l']]})
+			print self.columnlist.getValues()
+			self.sizer.Add(self.columnlist, 1, wxEXPAND)
+
 			self.panel.SetSizerAndFit(self.sizer)
 			frame.Fit()
 			frame.Show(True)
