@@ -113,14 +113,14 @@ if __name__ == '__main__':
 			managerlocation['data transport']['TCP transport'] = {}
 			port = int(sys.argv[2])
 			managerlocation['data transport']['TCP transport']['port'] = port
-			m = Launcher(myid, {'manager': managerlocation})
+			m = Launcher(myid, nodelocations={'manager': managerlocation})
 		except IndexError:
-			m = Launcher(myid, {}, int(sys.argv[1]))
+			m = Launcher(myid, int(sys.argv[1]))
 	except IndexError:
 		try:
-			m = Launcher(myid, {}, 55555)
+			m = Launcher(myid, 55555)
 		except:
-			m = Launcher(myid, {})
+			m = Launcher(myid)
 	print 'Done.'
 	m.start()
 

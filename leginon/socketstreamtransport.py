@@ -21,15 +21,23 @@ def localHack(obj):
 		except (KeyError, IndexError):
 			raise
 
-	ltinstance = location['data transport']['local transport']['instance']
-	uiinstance = location['UI']['instance']
-	del location['data transport']['local transport']['instance']
-	del location['UI']['instance']
+	try:
+		ltinstance = location['data transport']['local transport']['instance']
+		del location['data transport']['local transport']['instance']
+	except KeyError:
+		ltinstance = None
+	try:
+		uiinstance = location['UI']['instance']
+		del location['UI']['instance']
+	except KeyError:
+		uiinstance = None
 
 	pickle = cPickle.dumps(obj, True)
 
-	location['data transport']['local transport']['instance'] = ltinstance
-	location['UI']['instance'] = uiinstance
+	if ltinstance is not None:
+		location['data transport']['local transport']['instance'] = ltinstance
+	if uiinstance is not None:
+		location['UI']['instance'] = uiinstance
 
 	return pickle
 
