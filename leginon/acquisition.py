@@ -564,7 +564,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		scope = self.emclient.getScope()
 		camera = self.emclient.getCamera()
 		driftdetecteddata = data.DriftDetectedData(scope=scope, camera=camera)
-		self.reportStatus('acquisition', 'Passing beam tilt %s' % str(allemdata['scope']['beam tilt']))
+		self.reportStatus('acquisition', 'Passing beam tilt %s' % str(scope['beam tilt']))
 		self.driftdone.clear()
 		self.publish(driftdetecteddata, pubevent=True)
 		self.reportStatus('acquisition', 'Waiting for DriftManager...')
