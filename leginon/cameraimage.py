@@ -47,7 +47,7 @@ def sumSeries(series):
 		return series[0]
 	first = series[0]
 	others = series[1:]
-	sum = first.astype(Numeric.Float32)
+	sum = first.astype(Numeric.Float64)
 	for other in others:
 		sum += other
 	return sum
