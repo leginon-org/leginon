@@ -70,7 +70,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		targetfinder.TargetFinder.__init__(self, id, session, managerlocation, **kwargs)
 		self.hf = holefinderback.HoleFinder()
 		self.icecalc = ice.IceCalculator()
-		self.instrument = instrument.Proxy(self.objectservice)
+		self.instrument = instrument.Proxy(self.objectservice, self.session)
 
 		self.images = {
 			'Original': None,

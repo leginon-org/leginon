@@ -25,7 +25,7 @@ class IntensityMonitor(node.Node):
 	}
 	def __init__(self, id, session, managerlocation, **kwargs):
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
-		self.instrument = instrument.Proxy(self.objectservice)
+		self.instrument = instrument.Proxy(self.objectservice, self.session)
 		self.threadstop = threading.Event()
 		self.start()
 

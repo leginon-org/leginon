@@ -45,7 +45,7 @@ class TargetMaker(node.Node, targethandler.TargetHandler):
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.targetlist = []
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
-		self.instrument = instrument.Proxy(self.objectservice)
+		self.instrument = instrument.Proxy(self.objectservice, self.session)
 
 class MosaicTargetMaker(TargetMaker):
 	panelclass = gui.wx.MosaicTargetMaker.Panel

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/atlasviewer.py,v $
-# $Revision: 1.7 $
+# $Revision: 1.8 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-24 07:44:46 $
+# $Date: 2005-02-24 20:15:20 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -160,7 +160,7 @@ class AtlasViewer(node.Node, targethandler.TargetWaitHandler):
 
 		targethandler.TargetWaitHandler.__init__(self)
 
-		self.instrument = instrument.Proxy(self.objectservice)
+		self.instrument = instrument.Proxy(self.objectservice, self.session)
 		self.presetsclient = presets.PresetsClient(self)
 
 		calibrationclients = {

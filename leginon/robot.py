@@ -103,7 +103,7 @@ class RobotNode(node.Node):
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.abort = False
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
-		self.instrument = instrument.Proxy(self.objectservice)
+		self.instrument = instrument.Proxy(self.objectservice, self.session)
 
 	def waitScope(self, parameter, value, interval=-1.0, timeout=0.0):
 		if self.instrument.tem.hasAttribute(parameter):

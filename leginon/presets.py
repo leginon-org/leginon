@@ -174,7 +174,7 @@ class PresetsManager(node.Node):
 	def __init__(self, name, session, managerlocation, **kwargs):
 		node.Node.__init__(self, name, session, managerlocation, **kwargs)
 
-		self.instrument = instrument.Proxy(self.objectservice)
+		self.instrument = instrument.Proxy(self.objectservice, self.session)
 		self.calclients = {
 			'pixel size':calibrationclient.PixelSizeCalibrationClient(self),
 			'image':calibrationclient.ImageShiftCalibrationClient(self),

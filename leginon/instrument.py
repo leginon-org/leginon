@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.14 $
+# $Revision: 1.15 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-24 17:33:18 $
+# $Date: 2005-02-24 20:15:21 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -15,13 +15,14 @@ import data
 import remotecall
 
 class Proxy(object):
-	def __init__(self, objectservice):
+	def __init__(self, objectservice, session=None):
 		self.tems = {}
 		self.ccdcameras = {}
 		self.imagecorrections = {}
 		self.tem = None
 		self.ccdcamera = None
 		self.imagecorrection = None
+		self.session = session
 		self.objectservice = objectservice
 		self.objectservice._addDescriptionHandler(add=self.onAddDescription,
 																							remove=self.onRemoveDescription)
@@ -95,6 +96,7 @@ class Proxy(object):
 			if image:
 				instance['image'] = instance['camera']['image data']
 				instance['camera']['image data'] = None
+			instance['session'] = self.session
 			return instance
 		elif issubclass(dataclass, data.CorrectedCameraImageData):
 			if self.imagecorrection is None:
@@ -121,6 +123,7 @@ class Proxy(object):
 		result = proxy.multiCall(attributes, types)
 		for i, key in enumerate(keys):
 			instance[key] = result[i]
+		instance['session'] = self.session
 		return instance
 
 	def setData(self, instance):
