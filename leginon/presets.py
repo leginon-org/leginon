@@ -139,7 +139,6 @@ class PresetsClient(object):
 		presetlist = self.getPresetsFromDB()
 		return presetlist.keys()
 
-
 class SinglePresetSelector(uidata.Container):
 	def __init__(self, presetsclient, label='', default='', permissions='rw', persist=False):
 		uidata.Container.__init__(self, label)
@@ -162,7 +161,6 @@ class SinglePresetSelector(uidata.Container):
 		else:
 			availstr = 'No Presets Available'
 		self.available.set(availstr)
-
 
 class PresetsManager(node.Node):
 	panelclass = gui.wx.PresetsManager.Panel
@@ -215,7 +213,7 @@ class PresetsManager(node.Node):
 		try:
 			if emtarget is None or emtarget['movetype'] is None:
 				self.logger.info('Changing preset to "%s"' % pname)
-				self.cycleToScope(pname)
+				self._cycleToScope(pname)
 			else:
 				self.logger.info('Changing preset to "%s" and targeting' % pname)
 				self.targetToScope(pname, emtarget)
@@ -249,6 +247,7 @@ class PresetsManager(node.Node):
 			self.presetToDB(newp)
 			self.presets[name] = newp
 		self.setOrder()
+		self.panel.presetsEvent()
 
 	def presetToDB(self, presetdata):
 		'''
@@ -300,6 +299,7 @@ class PresetsManager(node.Node):
 			self.setOrder(namelist, setorder=False)
 		else:
 			namelist = self.presets.keys()
+		self.panel.presetsEvent()
 
 	def getOrder(self):
 		return self.presets.keys()
@@ -309,6 +309,7 @@ class PresetsManager(node.Node):
 		remove a preset by name
 		'''
 		if pname not in self.presets.keys():
+			self.panel.presetsEvent()
 			return 
 
 		## remove from self.presets, store in DB
@@ -316,6 +317,7 @@ class PresetsManager(node.Node):
 		if premove is self.currentpreset:
 			message = 'You may not remove the currently set preset, send another preset to scope first'
 			self.logger.info(message)
+			self.panel.presetsEvent()
 			return
 
 		del self.presets[pname]
@@ -324,6 +326,7 @@ class PresetsManager(node.Node):
 
 		## update order, selector list, etc.
 		self.setOrder()
+		self.panel.presetsEvent()
 
 	def toScope(self, pname, magonly=False, outputevent=True):
 		'''
@@ -339,7 +342,7 @@ class PresetsManager(node.Node):
 
 		name = presetdata['name']
 		beginmessage = 'Changing preset to "%s"' % (name,)
-		endmessage = '     Preset changed to "%s"' % (name,)
+		endmessage = 'Preset changed to "%s"' % (name,)
 
 		if magonly:
 			mag = presetdata['magnification']
@@ -425,7 +428,11 @@ class PresetsManager(node.Node):
 		sessiondata = self.sessiondict[name]
 		return self.presetsclient.getPresetsFromDB(sessiondata)
 
-	def cycleToScope(self, presetname, dofinal=True):
+	def cycleToScope(self, presetname):
+		self._cycleToScope(presetname)
+		self.panel.presetsEvent()
+
+	def _cycleToScope(self, presetname, dofinal=True):
 		'''
 		prestename = target preset
 		force = True:  cycle even if cycling to same preset
@@ -555,10 +562,12 @@ class PresetsManager(node.Node):
 	def fromScope(self, newname):
 		newpreset = self._fromScope(newname)
 		if newpreset is None:
+			self.panel.presetsEvent()
 			return
 		self.setOrder()
 		self.panel.setParameters(newpreset)
 		self.logger.info('Preset from instrument: %s' % (newname,))
+		self.panel.presetsEvent()
 
 	def selectPreset(self, pname):
 		self.currentselection = self.presetByName(pname)
@@ -645,12 +654,15 @@ class PresetsManager(node.Node):
 
 	def acquireDoseImage(self, presetname):
 		if self.currentpreset is None or self.currentpreset['name'] != presetname:
-			self.cycleToScope(presetname)
+			self._cycleToScope(presetname)
 		if self.currentpreset is None or self.currentpreset['name'] != presetname:
+			self.panel.presetsEvent()
 			return
 		self._acquireDoseImage()
+		self.panel.presetsEvent()
 
 	def _acquireDoseImage(self):
+		errstr = 'Acquire dose image failed: %s'
 		if self.currentpreset is None:
 			self.logger.error('Please go to a preset before measuring dose')
 			return
@@ -667,31 +679,44 @@ class PresetsManager(node.Node):
 				camdata1['dimension'][axis] = 512
 				camdata1['offset'][axis] += (change / 2)
 
-		self.cam.setCameraEMData(camdata1)
-		imagedata = self.cam.acquireCameraImageData(correction=True)
-		self.logger.info('returning to original preset camera dimensions')
-		self.cam.setCameraEMData(camdata0)
+		try:
+			self.cam.setCameraEMData(camdata1)
+			imagedata = self.cam.acquireCameraImageData(correction=True)
+		except camerafuncs.CameraError:
+			self.logger.error(errstr % 'unable to set camera parameters')
+			return
+		try:
+			self.cam.setCameraEMData(camdata0)
+		except camerafuncs.CameraError:
+			estr = 'Return to orginial preset camera dimemsion failed: %s'
+			self.logger.error(estr % 'unable to set camera parameters')
+			return
+
+		self.logger.info('Returned to original preset camera dimensions')
+
 		if imagedata is None:
+			self.logger.error(errstr % 'unable to get corrected image')
 			return
 
 		## display
-		self.setImage(imagedata['image'].astype(Numeric.Float32))
 		dose = self.dosecal.dose_from_imagedata(imagedata)
+		if dose is not None:
+			self.displayDose(self.currentpreset)
+			self.setImage(imagedata['image'].astype(Numeric.Float32))
+
+	def saveDose(self, dose, presetname):
 		## store the dose in the current preset
-		self.currentpreset = self.renewPreset(self.currentpreset)
-		self.currentpreset['dose'] = dose
-		self.presetToDB(self.currentpreset)
-		self.panel.setParameters(self.currentpreset)
-		self.displayDose(self.currentpreset)
+		preset = self.renewPreset(self.presets[presetname])
+		preset['dose'] = dose
+		self.presetToDB(preset)
+		if self.currentpreset is not None:
+			if self.currentpreset['name'] == presetname:
+				self.currentpreset = preset
+				self.panel.setParameters(self.currentpreset)
 
 	def displayDose(self, preset):
 		dose = preset['dose']
-		if dose is None:
-			displaydose = 'N/A'
-		else:
-			displaydose = dose / 1e20
-			displaydose = '%.2f' % (displaydose,)
-		self.panel.setDoseValue('%s: %s' % (preset['name'], displaydose))
+		self.panel.setDoseValue(dose)
 
 	def targetToScope(self, newpresetname, emtargetdata):
 		'''
@@ -701,7 +726,7 @@ class PresetsManager(node.Node):
 		'''
 		## first cycle through presets before sending the final one
 		if self.currentpreset is None or self.currentpreset['name'] != newpresetname:
-			self.cycleToScope(newpresetname, dofinal=False)
+			self._cycleToScope(newpresetname, dofinal=False)
 
 		self.logger.info('Going to target and to preset %s' % (newpresetname,))
 

@@ -66,28 +66,6 @@ def getLoggerSettings():
 			formatter._fmt
 			formatter.datefmt
 
-'''
-class Dialog(wx.Dialog):
-	def __init__(self, parent, title):
-		wx.Dialog.__init__(self, parent, -1, title)
-
-		sz = wx.GridBagSizer(5, 5)
-
-		szbuttons = wx.GridBagSizer(5, 5)
-		szbuttons.AddGrowableCol(0)
-
-		sbsz = wx.StaticBoxSizer(wx.StaticBox(self, -1, 'Handler'), wx.VERTICAL)
-		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
-
-		szdialog = wx.GridBagSizer(5, 5)
-		szdialog.Add(sbsz, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
-		szdialog.Add(szbuttons, (1, 0), (1, 1), wx.EXPAND|wx.ALL, 10)
-		szdialog.AddGrowableRow(0)
-		szdialog.AddGrowableCol(0)
-
-		self.SetSizerAndFit(szdialog)
-'''
-
 class EditHandlerDialog(wx.Dialog):
 	def __init__(self, parent, handler=None, window=None):
 		if handler is None:

@@ -107,6 +107,10 @@ class PresetOrder(wx.Panel):
 		self._sizer()
 		self._bind()
 
+	def Enable(self, enable):
+		wx.Panel.Enable(self, enable)
+		self.Refresh()
+
 	def _widgets(self, label='Presets Order'):
 		if label:
 			self.storder = wx.StaticText(self, -1, label)

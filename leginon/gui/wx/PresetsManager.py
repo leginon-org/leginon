@@ -1,20 +1,29 @@
 import data
+import threading
 import wx
 from gui.wx.Entry import FloatEntry, EVT_ENTRY
 import gui.wx.Camera
+import gui.wx.Dialog
 import gui.wx.ImageViewer
 import gui.wx.Node
 import gui.wx.Presets
 import gui.wx.Settings
 import gui.wx.ToolBar
 
+PresetsEventType = wx.NewEventType()
 SetParametersEventType = wx.NewEventType()
 SetDoseValueEventType = wx.NewEventType()
 SetCalibrationsEventType = wx.NewEventType()
 
+EVT_PRESETS = wx.PyEventBinder(PresetsEventType)
 EVT_SET_DOSE_VALUE = wx.PyEventBinder(SetDoseValueEventType)
 EVT_SET_CALIBRATIONS = wx.PyEventBinder(SetCalibrationsEventType)
 EVT_SET_PARAMETERS = wx.PyEventBinder(SetParametersEventType)
+
+class PresetsEvent(wx.PyCommandEvent):
+	def __init__(self, source):
+		wx.PyCommandEvent.__init__(self, PresetsEventType, source.GetId())
+		self.SetEventObject(source)
 
 class SetParametersEvent(wx.PyCommandEvent):
 	def __init__(self, parameters, source):
@@ -23,10 +32,10 @@ class SetParametersEvent(wx.PyCommandEvent):
 		self.parameters = parameters
 
 class SetDoseValueEvent(wx.PyEvent):
-	def __init__(self, dosestring):
+	def __init__(self, dose):
 		wx.PyEvent.__init__(self)
 		self.SetEventType(SetDoseValueEventType)
-		self.dosestring = dosestring
+		self.dose = dose
 
 class SetCalibrationsEvent(wx.PyCommandEvent):
 	def __init__(self, times, source):
@@ -141,8 +150,7 @@ class Parameters(wx.Panel):
 		if not dose or dose == 'N/A':
 			dose = None
 		else:
-			# oops
-			dose = float(dose)*1e20
+			dose = float(dose)
 		parameters.update(self.cpcamconfig.getConfiguration())
 		return parameters
 
@@ -172,7 +180,7 @@ class Parameters(wx.Panel):
 			if parameters['dose'] is None:
 				dose = 'N/A'
 			else:
-				dose = '%.4f' % (parameters['dose']/1e20,)
+				dose = '%e' % (parameters['dose'],)
 			self.stdose.SetLabel(dose)
 
 			try:
@@ -281,6 +289,37 @@ class EditPresets(gui.wx.Presets.PresetOrder):
 			self.bfromscope.Enable(False)
 			self.bremove.Enable(False)
 
+class DoseDialog(gui.wx.Dialog.Dialog):
+	def __init__(self, parent):
+		gui.wx.Dialog.Dialog.__init__(self, parent, 'Dose Image', 'Dose Image')
+		self.dose = None
+
+	def onInitialize(self):
+		gui.wx.Dialog.Dialog.onInitialize(self)
+
+		self.image = gui.wx.ImageViewer.ImagePanel(self, -1)
+
+		self.doselabel = wx.StaticText(self, -1, '')
+
+		self.sz.Add(self.image, (0, 0), (1, 1), wx.EXPAND)
+		self.sz.Add(self.doselabel, (1, 0), (1, 1),
+								wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+
+		self.sz.AddGrowableRow(0)
+		self.sz.AddGrowableCol(0)
+
+		self.addButton('Yes', wx.ID_OK)
+		self.addButton('No', wx.ID_CANCEL)
+
+	def setDose(self, dose):
+		self.dose = dose
+		if dose is None:
+			dosestr = 'N/A'
+		else:
+			dosestr = '%e' % dose
+		dosestr = 'Use the measured dose %s for this preset?' % dosestr
+		self.doselabel.SetLabel(dosestr)
+
 class Panel(gui.wx.Node.Panel):
 	icon = 'presets'
 	def __init__(self, parent, name):
@@ -302,27 +341,6 @@ class Panel(gui.wx.Node.Panel):
 		self.sz.Add(self.parameters, (1, 1), (1, 1), wx.EXPAND|wx.ALL)
 		self.sz.Add(self.presets, (0, 0), (2, 1), wx.ALIGN_CENTER)
 		self.szmain.Add(self.sz, (1, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 5)
-
-		# dose image
-		self.szdoseimage = self._getStaticBoxSizer('Dose Image', (1, 1), (3, 1),
-																								wx.EXPAND|wx.ALL)
-		stimagedose = wx.StaticText(self, -1, 'Dose:')
-		self.stimagedose = wx.StaticText(self, -1, '')
-
-		self.bacquire = wx.Button(self, -1, 'Acquire')
-
-		self.imagepanel = gui.wx.ImageViewer.ImagePanel(self, -1)
-
-		self.szdoseimage.Add(stimagedose, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
-		self.szdoseimage.Add(self.stimagedose, (0, 1), (1, 1),
-													wx.ALIGN_CENTER_VERTICAL)
-		self.szdoseimage.Add(self.bacquire, (0, 2), (1, 1),
-													wx.ALIGN_CENTER_VERTICAL)
-		self.szdoseimage.Add(self.imagepanel, (1, 0), (1, 3), wx.ALIGN_CENTER)
-		self.szdoseimage.AddGrowableCol(2)
-
-		self.szmain.AddGrowableCol(1)
-		self.szmain.AddGrowableRow(3)
 
 		self.SetSizer(self.szmain)
 		self.SetAutoLayout(True)
@@ -347,14 +365,29 @@ class Panel(gui.wx.Node.Panel):
 		self.Bind(gui.wx.Presets.EVT_PRESET_REMOVED,
 							self.onRemove, self.presets)
 		self.Bind(wx.EVT_BUTTON, self.onToScope, self.presets.btoscope)
-		self.Bind(wx.EVT_BUTTON, self.onAcquireDoseImage, self.presets.bacquire)
 		self.Bind(wx.EVT_BUTTON, self.onFromScope, self.presets.bfromscope)
 		self.Bind(wx.EVT_BUTTON, self.onNewFromScope, self.presets.bnewfromscope)
 
 		self.importdialog = ImportDialog(self.GetParent(), self.node)
 		self.Bind(wx.EVT_BUTTON, self.onImport, self.presets.bimport)
 
-		self.Bind(wx.EVT_BUTTON, self.onAcquireDoseImage, self.bacquire)
+		self.dosedialog = DoseDialog(self.GetParent())
+		self.Bind(wx.EVT_BUTTON, self.onAcquireDoseImage, self.presets.bacquire)
+
+		self.Bind(EVT_PRESETS, self.onPresets)
+
+	def _presetsEnable(self, enable):
+		self.toolbar.Enable(enable)
+		self.parameters.Enable(enable)
+		self.presets.Enable(enable)
+		self.importdialog.Enable(enable)
+
+	def onPresets(self, evt):
+		self._presetsEnable(True)
+
+	def presetsEvent(self):
+		evt = PresetsEvent(self)
+		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)
@@ -362,34 +395,54 @@ class Panel(gui.wx.Node.Panel):
 		dialog.Destroy()
 
 	def onCycleOrderChanged(self, evt):
-		self.node.setCycleOrder(evt.presets)
+		self._presetsEnable(False)
+		target = self.node.setCycleOrder
+		args = (evt.presets,)
+		threading.Thread(target=target, args=args).start()
 
 	def setOrder(self, presets, setorder=True):
 		if setorder:
 			evt = gui.wx.Presets.PresetsChangedEvent(presets)
 			self.presets.GetEventHandler().AddPendingEvent(evt)
 
-	def setDoseValue(self, dosestring):
-		evt = SetDoseValueEvent(dosestring)
+	def setDoseValue(self, dose):
+		evt = SetDoseValueEvent(dose)
 		self.GetEventHandler().AddPendingEvent(evt)
 
+	def onSetImage(self, evt):
+		self.dosedialog.image.setImage(evt.image)
+		if not self.dosedialog.IsShown():
+			if self.dosedialog.ShowModal() == wx.ID_OK:
+				self.node.saveDose(self.dosedialog.dose,
+														self.presets.getSelectedPreset())
+			self.setImage(None)
+
 	def onSetDoseValue(self, evt):
-		self.stimagedose.SetLabel(evt.dosestring)
+		self.dosedialog.setDose(evt.dose)
 
 	def onAcquireDoseImage(self, evt):
-		self.node.acquireDoseImage(self.presets.getSelectedPreset())
+		self._presetsEnable(False)
+		target = self.node.acquireDoseImage
+		args = (self.presets.getSelectedPreset(),)
+		threading.Thread(target=target, args=args).start()
 
 	def onImport(self, evt):
 		self.importdialog.ShowModal()
 
 	def onFromScope(self, evt):
 		name = self.presets.getSelectedPreset()
-		self.node.fromScope(name)
+		self._presetsEnable(False)
+		target = self.node.fromScope
+		args = (name,)
+		threading.Thread(target=target, args=args).start()
 
 	def onNewFromScope(self, evt):
 		dialog = NewDialog(self.GetParent(), self.node)
 		if dialog.ShowModal() == wx.ID_OK:
-			self.node.fromScope(dialog.name)
+			self._presetsEnable(False)
+			target = self.node.fromScope
+			args = (dialog.name,)
+			threading.Thread(target=target, args=args).start()
 		dialog.Destroy()
 
 	def onUpdateParameters(self, evt=None):
@@ -422,10 +475,16 @@ class Panel(gui.wx.Node.Panel):
 			self.parameters.Enable(False)
 
 	def onToScope(self, evt):
-		self.node.cycleToScope(self.presets.getSelectedPreset())
+		self._presetsEnable(False)
+		target = self.node.cycleToScope
+		args = (self.presets.getSelectedPreset(),)
+		threading.Thread(target=target, args=args).start()
 
 	def onRemove(self, evt):
-		self.node.removePreset(evt.presetname)
+		self._presetsEnable(False)
+		target = self.node.removePreset
+		args = (evt.presetname,)
+		threading.Thread(target=target, args=args).start()
 
 class SettingsDialog(gui.wx.Settings.Dialog):
 	def initialize(self):
@@ -568,8 +627,9 @@ class ImportDialog(wx.Dialog):
 			name = self.lbpresets.GetString(i)
 			presets[name] = self.presets[name]
 			self.lbpresets.Deselect(i)
-		self.node.importPresets(presets)
-		self.Enable(True)
+		target = self.node.importPresets
+		args = (presets,)
+		threading.Thread(target=target, args=args).start()
 
 if __name__ == '__main__':
 	class App(wx.App):
