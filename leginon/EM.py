@@ -334,7 +334,16 @@ class EM(node.Node):
 		return newdata
 
 	def handleSet(self, setevent):
-		scopedata = setevent['data']
+		try:
+			scopedata = setevent['data']
+		except ValueError:
+			print '-------------------------------------------------------'
+			print 'THIS IS THE MYSTERY EXCEPTION...'
+			print 'SETEVENT', setevent
+			print 'SOMETHING IS WRONG WITH THE FOLLOWING DATA REFERENCE:'
+			print 'DATA REF', setevent.special_getitem('data', False)
+			print '--------------- ACTUAL EXCEPTION: ---------------------'
+			raise
 		self.logger.debug('handleSet: %s' % (scopedata,))
 		self.statelock.acquire()
 		try:
