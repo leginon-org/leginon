@@ -10,15 +10,15 @@ import calibrationclient
 
 class Navigator(node.Node):
 	def __init__(self, id, nodelocations, **kwargs):
+		self.cam = camerafuncs.CameraFuncs(self)
+		node.Node.__init__(self, id, nodelocations, **kwargs)
+
 		self.calclients = {
 			'image shift': calibrationclient.ImageShiftCalibrationClient(self),
 			'beam shift': calibrationclient.BeamShiftCalibrationClient(self),
 			'stage position': calibrationclient.StageCalibrationClient(self),
 			'modeled stage position': calibrationclient.ModeledStageCalibrationClient(self)
 		}
-
-		self.cam = camerafuncs.CameraFuncs(self)
-		node.Node.__init__(self, id, nodelocations, **kwargs)
 
 		self.addEventInput(event.ImageClickEvent, self.handleImageClick)
 		self.addEventInput(event.ImageAcquireEvent, self.handleImageAcquire)

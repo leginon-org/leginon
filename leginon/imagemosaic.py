@@ -430,14 +430,14 @@ class ImageMosaic(watcher.Watcher):
 class StateImageMosaic(ImageMosaic):
 	def __init__(self, id, nodelocations, watchfor = event.TileImagePublishEvent, **kwargs):
 
+		ImageMosaic.__init__(self, id, nodelocations, watchfor, **kwargs)
+
 		self.calibrationclients = {}
 		calibrationclasses = [calibrationclient.StageCalibrationClient,
 													calibrationclient.ImageShiftCalibrationClient]
 		for calibrationclass in calibrationclasses:
 			instance = calibrationclass(self)
 			self.calibrationclients[instance.parameter()] = instance
-
-		ImageMosaic.__init__(self, id, nodelocations, watchfor, **kwargs)
 
 #		self.positionmethods['pixel size'] = self.positionByPixelSize
 #		self.automaticpriority = ['pixel size', 'calibration', 'correlation']
