@@ -209,7 +209,7 @@ class Focuser(acquisition.Acquisition):
 		## autofocus
 		if self.auto_on.get():
 			autofocuspreset = self.autofocuspreset.get()
-			autopresettarget = data.PresetTargetData(emtarget=presettarget['emtarget'], preset=autofocuspreset, target=target)
+			autopresettarget = data.PresetTargetData(emtarget=presettarget['emtarget'], preset=autofocuspreset)
 			status = self.autoFocus(resultdata, autopresettarget)
 			resultdata['auto status'] = status
 			if status != 'ok':
