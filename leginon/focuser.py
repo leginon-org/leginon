@@ -27,9 +27,10 @@ class Focuser(acquisition.Acquisition):
 		self.abortfail.clear()
 		btilt = self.btilt.get()
 		pub = self.publishimages.get()
+		checkdrift = False
 		drift_timeout = 300
 		try:
-			correction = self.btcalclient.measureDefocusStig(btilt, pub, drift_timeout)
+			correction = self.btcalclient.measureDefocusStig(btilt, pub, checkdrift, drift_timeout)
 		except calibrationclient.Abort:
 			print 'measureDefocusStig was aborted'
 			return 1
