@@ -1,6 +1,6 @@
 #
 # XML-RPC CLIENT LIBRARY
-# $Id: xmlrpclib.py,v 1.1 2003-03-06 21:34:45 pulokas Exp $
+# $Id: xmlrpclib.py,v 1.2 2003-03-07 02:29:34 pulokas Exp $
 #
 # an XML-RPC client interface for Python.
 #
@@ -127,6 +127,7 @@ Exported functions:
 """
 
 import re, string, time, operator
+from timer import Timer
 
 from types import *
 
@@ -289,6 +290,7 @@ class Binary:
 
     def decode(self, data):
 	## first try the faster radix64, then base64
+	t = Timer('Binary.decode')
 	try:
 		import radix64
 		print 'USING RADIX64'
@@ -297,8 +299,10 @@ class Binary:
 		import base64
 		print 'USING BASE64'
 		self.data = base64.decodestring(data)
+	t.stop()
 
     def encode(self, out):
+    	t = Timer('Binary.encode')
         out.write("<value><base64>\n")
 	## first try the faster radix64, then base64
 	try:
@@ -311,6 +315,7 @@ class Binary:
 		print 'USING BASE64'
 		base64.encode(StringIO.StringIO(self.data), out)
         out.write("</base64></value>\n")
+	t.stop()
 
 def binary(data):
     value = Binary()
