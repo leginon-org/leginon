@@ -55,7 +55,7 @@ class Leginon(Tkinter.Frame):
 		for node in nodelocations:
 			page = self.notebook.add(eval(node)[-1])
 			gui = nodegui.NodeGUI(page, nodelocations[node]['hostname'],
-																	nodelocations[node]['UI port'])
+																	nodelocations[node]['UI port'], None, False)
 			gui.pack(fill=Tkinter.BOTH, expand=Tkinter.YES)
 		gridatlaspage = self.notebook.add('Grid Atlas')
 		gridatlaswidget = GridAtlasWidget(gridatlaspage,
@@ -98,12 +98,17 @@ class CustomWidget(Tkinter.Frame):
 	def widgetFromName(self, uiclientname, name):
 		widget = None
 		spec = self.uiclients[uiclientname].getSpec()
+		return self.widgetFrom(uiclientname, spec, name)
+
+	def widgetFrom(self, uiclientname, spec, name):
 		content = spec['content']
 		for subspec in content:
-			if subspec['name'] == name:
-				widget = nodegui.widgetFromSpec(self, self.uiclients[uiclientname],
-																																		subspec)
-		return widget
+			if subspec['name'] == name[0]:
+				if len(name) == 1:
+					return nodegui.widgetFromSpec(self, self.uiclients[uiclientname],
+																														subspec, False)
+				else:
+					return self.widgetFrom(uiclientname, subspec, name[1:])
 
 # maybe the widgets themselves could launch the necessary nodes
 class GridAtlasWidget(CustomWidget):
@@ -116,8 +121,17 @@ class GridAtlasWidget(CustomWidget):
 		self.uiClient('MN', mosaicnavigator)
 		self.uiClient('IV', imageviewer)
 
-		widget = self.widgetFromName('SIM', 'Mosaic Image')
-		widget.pack()
+		widget = self.widgetFromName('GP', ('Controls', 'Run'))
+		widget.grid(row = 0, column = 0)
+		widget = self.widgetFromName('GP', ('Controls', 'Stop'))
+		widget.grid(row = 1, column = 0)
+		widget = self.widgetFromName('GP', ('Controls', 'Reset'))
+		widget.grid(row = 2, column = 0)
+		widget = self.widgetFromName('SIM', ('Image', 'Publish Image'))
+		widget.grid(row = 3, column = 0)
+
+		widget = self.widgetFromName('SIM', ['Mosaic Image'])
+		widget.grid(row = 0, column = 1, rowspan = 4)
 
 if __name__ == '__main__':
 
