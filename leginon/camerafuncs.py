@@ -13,15 +13,15 @@ class CameraFuncs(object):
 		'''
 		acquire an image with optional camstate and correction
 		'''
+		print 'setting camera state'
 		if camstate is not None:
 			self.cameraState(camstate)
+		print 'camstate set'
 
+		print 'researching'
 		try:
 			if correction:
-				if correction == 2:
-					imdata = self.researchByDataID('fake normalized image data')
-				else:
-					imdata = self.researchByDataID('normalized image data')
+				imdata = self.researchByDataID('normalized image data')
 				imagearray = imdata.content
 			else:
 				imdata = self.researchByDataID('image data')
@@ -30,6 +30,7 @@ class CameraFuncs(object):
 			print detail
 			print 'cameraAcquireArray: unable to acquire image data'
 			imagearray = None
+		print 'researching done'
 		return imagearray
 
 	def cameraAcquireCamera(self, camstate=None, correction=0):
@@ -52,24 +53,19 @@ class CameraFuncs(object):
 		'''
 		if camstate is not None:
 			try:
+				print 'publishing camera'
 				camdata = data.EMData('camera', camstate)
 				self.publishRemote(camdata)
+				print 'publishing camera done'
 			except Exception, detail:
 				print detail
 				print 'cameraState: unable to set camera state'
 		## it would be nice to get this all in one research
 		## can't use 'camera' because don't want image data
 		try:
-			exp = self.researchByDataID('exposure time')
-			dim = self.researchByDataID('dimension')
-			bin = self.researchByDataID('binning')
-			off = self.researchByDataID('offset')
-			newcamstate = {
-				'exposure time':exp,
-				'dimension': dim,
-				'offset': off,
-				'binning': bin
-				}
+			print 'researching camera no image data'
+			newcamstate = self.researchByDataID('camera no image data')
+			print 'done researching camera no image data'
 			return newcamstate
 		except Exception, detail:
 			print detail
