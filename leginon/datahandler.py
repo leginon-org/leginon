@@ -8,25 +8,31 @@ import event
 import random
 
 class DataHandler(leginonobject.LeginonObject):
+	'''Base class for DataHandlers. Defines virtual functions.'''
 	def __init__(self, id):
 		leginonobject.LeginonObject.__init__(self, id)
 
 	def query(self, id):
+		'''Returns data with data ID.'''
 		raise NotImplementedError
 
 	def insert(self, newdata):
+		'''Stores data.'''
 		raise NotImplementedError
 
 	def remove(self, id):
+		'''Removes data with data ID.'''
 		raise NotImplementedError
 
 	def ids(self):
+		'''Return data IDs of all stored data.'''
 		raise NotImplementedError
 
 	def exit(self):
 		pass
 
 class DictDataKeeper(DataHandler):
+	'''Keep data in a dictionary.'''
 	def __init__(self, id):
 		DataHandler.__init__(self, id)
 		self.datadict = {}
@@ -63,6 +69,7 @@ class DictDataKeeper(DataHandler):
 		return result
 
 class ShelveDataKeeper(DataHandler):
+	'''Keep data in a shelf (dictionary in a file).'''
 	def __init__(self, id, filename = None, path = '.'):
 		DataHandler.__init__(self, id)
 
@@ -120,6 +127,7 @@ class ShelveDataKeeper(DataHandler):
 
 # I'm reasonably sure this works, but it hasn't been fully tested
 class CachedDictDataKeeper(DataHandler):
+	'''Keep data in a dictionary. Cache data on disk after timeout has elasped.'''
 	def __init__(self, id, age = 600.0, timeout = 60.0, filename = None, path = '.'):
 		DataHandler.__init__(self, id)
 
@@ -212,9 +220,11 @@ class CachedDictDataKeeper(DataHandler):
 		return result
 
 class SimpleDataKeeper(CachedDictDataKeeper):
+	'''Define a basic data keeper with functionality.'''
 	pass
 
 class DataBinder(DataHandler):
+	'''Bind data to a function. Used for mapping Events to handlers.'''
 	def __init__(self, id):
 		DataHandler.__init__(self, id)
 		self.priority = []
