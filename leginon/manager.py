@@ -335,6 +335,10 @@ class Manager(node.Node):
 		'''
 		args = (launcher, newproc, target, name, nodeargs, dependencies)
 		self.app.addLaunchSpec(args)
+		# be dependent on the launcher you're launching from by default
+		if launcher not in dependencies:
+			dependencies.append(launcher)
+		print args
 		t = threading.Thread(target=self.waitNode, args=args)
 		t.start()
 
