@@ -286,11 +286,13 @@ class ImagePanel(wxPanel):
 				xscale, yscale = self.getScale()
 				virtualsize = ((width - 1) * xscale, (height - 1) * yscale)
 			self.panel.SetVirtualSize(virtualsize)
+			self.virtualsize = virtualsize
 		else:
 			self.panel.SetVirtualSize((0, 0))
+			self.virtualsize = (0, 0)
 
 		if self.biggerView():
-			xsize, ysize = self.panel.GetVirtualSize()
+			xsize, ysize = self.virtualsize
 			xclientsize, yclientsize = self.panel.GetClientSize()
 			self.offset = ((xclientsize - xsize)/2, (yclientsize - ysize)/2)
 		else:
@@ -363,7 +365,7 @@ class ImagePanel(wxPanel):
 		return (center[0]/2, center[1]/2)
 
 	def biggerView(self):
-		size = self.panel.GetVirtualSize()
+		size = self.virtualsize
 		clientsize = self.panel.GetClientSize()
 		if size[0] < clientsize[0] or size[1] < clientsize[1]:
 			return True
@@ -409,7 +411,7 @@ class ImagePanel(wxPanel):
 
 		if self.smallScale():
 			xoffset, yoffset = self.offset
-			width, height = self.panel.GetVirtualSize()
+			width, height = self.virtualsize
 			if evt.m_x < xoffset or evt.m_x > xoffset + width: 
 				self.UpdateDrawing()
 				return
