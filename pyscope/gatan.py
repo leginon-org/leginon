@@ -12,7 +12,10 @@ import pythoncom
 import pywintypes
 import win32com.client
 import gatancom
-import Numeric
+try:
+	import numarray as Numeric
+except:
+	import Numeric
 
 class Gatan(object):
 	def __init__(self):
@@ -57,7 +60,7 @@ class Gatan(object):
 			'inserted': {'type': bool},
 			'retractable': {'type': bool},
 			'acquiring': {'type': bool},
-			'image data': {'type': Numeric.arraytype},
+			'image data': {'type': Numeric.ArrayType},
 		}
 
 		if not self.getRetractable():

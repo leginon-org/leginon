@@ -6,7 +6,10 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 import SimpleXMLRPCServer
-import Numeric
+try:
+	import numarray as Numeric
+except:
+	import Numeric
 import base64
 
 def makeserver(emdict, host, port):
@@ -18,7 +21,7 @@ def makeserver(emdict, host, port):
 				raise Exception('method "%s" is not supported' % method)
 			else:
 				result = apply(func, params)
-				if isinstance(result, Numeric.arraytype):
+				if isinstance(result, Numeric.ArrayType):
 					result = base64.encodestring(result.tostring())
 				return result
 

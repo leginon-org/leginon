@@ -13,7 +13,10 @@ import pywintypes
 import win32com.client
 import array
 import mmapfile
-import Numeric
+try:
+	import numarray as Numeric
+except:
+	import Numeric
 import tietzcom
 
 class Ping:
@@ -196,7 +199,7 @@ class Tietz(object):
 																		{'x': {'type': int}, 'y': {'type': int}}},
 			'exposure time': {'type': int},
 			'exposure type': {'type': str, 'values': ['normal', 'dark', 'bias', 'readout']},
-			'image data': {'type': Numeric.arraytype},
+			'image data': {'type': Numeric.ArrayType},
 			'chip name': {'type': str},
 			'camera name': {'type': str},
 			'camera size': {'type': dict, 'values':
@@ -380,7 +383,7 @@ class Tietz(object):
 		return False
 	
 	def getImage(self):
-		# {'type': Numeric.arraytype}
+		# {'type': Numeric.ArrayType}
 		# 0 uses internal flash signal
 		# 1 uses internal exposure signal (PVCam and PXL only)
 		# shutter_mode = 1
@@ -596,6 +599,23 @@ class Tietz(object):
 			self._setParameterValue('cpShutterCloseDelay', value)
 		except pywintypes.com_error:
 			raise ValueError('Invalid shutter close delay')
+
+	def setShutter(self, state):
+		if state == 'open':
+			if self.theAda.OpenShutter != 0:
+				raise RuntimeError('Open shutter failed')
+		elif state == 'closed':
+			if self.theAda.CloseShutter != 0:
+				raise RuntimeError('Close shutter failed')
+		else:
+			raise ValueError("setShutter state must be 'open' or 'closed', not %s" % (state,))
+
+	def getShutter(self):
+		status = self.theAda.ShutterStatus
+		if status:
+			return 'closed'
+		else:
+			return 'open'
 
 	def getSerialNumber(self):
 		# {'type': str}
