@@ -3,6 +3,40 @@ import cPickle
 import threading
 import datahandler
 
+class DBDataKeeper(datahandler.DataHandler):
+	def __init__(self, id):
+		# session == self.id[0]
+		datahandler.DataHandler.__init__(self, id)
+		# connect?
+
+	def query(self, **kwargs):
+		pass
+		# WHERE stuff
+		# return instance of Data
+
+		# images with be converted from an mrc file here, an instance of Data
+		# will have to be created here.
+
+	def insert(self, newdata):
+		pass
+		# newdata is instance of data to be inserted (I don't think its a copy)
+
+		# images with be converted to an mrc file here, the filename will be
+		# available. What should the path of the file be?
+
+	# you can clean up with this if you want
+	def exit(self):
+		pass
+		# disconnect?
+
+	# don't bother with these for now
+	def remove(self, id):
+		pass
+	def ids(self):
+		pass
+
+# Ignore for now
+
 # doens't really lock across processes
 # bad things could happen with have multiple sessions and don't specify session
 
