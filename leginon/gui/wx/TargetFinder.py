@@ -26,8 +26,7 @@ class Panel(gui.wx.Node.Panel):
 
 		self.szbuttons = wx.GridBagSizer(5, 5)
 		self.szbuttons.Add(self.bsettings, (0, 0), (1, 1), wx.EXPAND)
-		self.szmain.Add(self.szbuttons, (1, 0), (1, 1),
-										wx.ALIGN_CENTER_HORIZONTAL|wx.ALIGN_TOP)
+		self.szmain.Add(self.szbuttons, (1, 0), (1, 1), wx.ALIGN_CENTER)
 		self.szmain.AddGrowableCol(1)
 
 	def onNodeInitialized(self):

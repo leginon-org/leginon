@@ -4,26 +4,79 @@ from gui.wx.Entry import IntEntry, FloatEntry
 import gui.wx.Settings
 import gui.wx.ClickTargetFinder
 
+ImageUpdatedEventType = wx.NewEventType()
+EVT_IMAGE_UPDATED = wx.PyEventBinder(ImageUpdatedEventType)
+class ImageUpdatedEvent(wx.PyCommandEvent):
+	def __init__(self, source, name, image):
+		wx.PyCommandEvent.__init__(self, ImageUpdatedEventType, source.GetId())
+		self.SetEventObject(source)
+		self.name = name
+		self.image = image
+
 class Panel(gui.wx.ClickTargetFinder.Panel):
 	def initialize(self):
 		gui.wx.ClickTargetFinder.Panel.initialize(self)
 
 		self.btiles = wx.Button(self, -1, 'Tiles...')
 		self.bmosaic = wx.Button(self, -1, 'Mosaic...')
+		self.brefreshtargets = wx.Button(self, -1, 'Refresh Targets')
+		self.bshowposition = wx.Button(self, -1, 'Show Position')
+		self.bfindsquares = wx.Button(self, -1, 'Find Squares')
 		self.szbuttons.Add(self.btiles, (2, 0), (1, 1), wx.EXPAND)
 		self.szbuttons.Add(self.bmosaic, (3, 0), (1, 1), wx.EXPAND)
+		self.szbuttons.Add(self.brefreshtargets, (4, 0), (1, 1), wx.EXPAND)
+		self.szbuttons.Add(self.bshowposition, (5, 0), (1, 1), wx.EXPAND)
+		self.szbuttons.Add(self.bfindsquares, (6, 0), (1, 1), wx.EXPAND)
+
+		self.rbdisplay = {}
+		self.rbdisplay['Original'] = wx.RadioButton(self, -1, 'Originial',
+																							style=wx.RB_GROUP)
+		self.rbdisplay['Filtered'] = wx.RadioButton(self, -1, 'Filtered')
+		self.rbdisplay['Thresholded'] = wx.RadioButton(self, -1, 'Thresholded')
+
+		self.blpfsettings = wx.Button(self, -1, 'Settings...')
+		self.bblobsettings = wx.Button(self, -1, 'Settings...')
+
+		sz = self._getStaticBoxSizer('Display', (2, 0), (1, 1), wx.ALIGN_CENTER)
+		sz.Add(self.rbdisplay['Original'], (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.rbdisplay['Filtered'], (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.rbdisplay['Thresholded'], (2, 0), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.blpfsettings, (1, 1), (1, 1), wx.ALIGN_CENTER)
+		sz.Add(self.bblobsettings, (2, 1), (1, 1), wx.ALIGN_CENTER)
+
+		self.Bind(EVT_IMAGE_UPDATED, self.onImageUpdated)
+
+	def onImageUpdated(self, evt):
+		# targets ?
+		if self.rbdisplay[evt.name].GetValue():
+			self.imagepanel.setImage(evt.image)
+
+	def onDisplayRadioButton(self, evt):
+		for key, value in self.rbdisplay.items():
+			if value.GetValue():
+				try:
+					image = self.node.images[key]
+				except KeyError:
+					image = None
+				self.imagepanel.setImage(image)
+				break
+
+	def imageUpdated(self, name, image):
+		evt = ImageUpdatedEvent(self, name, image)
+		self.GetEventHandler().AddPendingEvent(evt)
 
 	def onNodeInitialized(self):
 		gui.wx.ClickTargetFinder.Panel.onNodeInitialized(self)
 		self.Bind(wx.EVT_BUTTON, self.onTilesButton, self.btiles)
 		self.Bind(wx.EVT_BUTTON, self.onMosaicButton, self.bmosaic)
-
-	'''
-	def onSettingsButton(self, evt):
-		dialog = SettingsDialog(self)
-		dialog.ShowModal()
-		dialog.Destroy()
-	'''
+		self.Bind(wx.EVT_BUTTON, self.onRefreshTargetsButton, self.brefreshtargets)
+		self.Bind(wx.EVT_BUTTON, self.onShowPositionButton, self.bshowposition)
+		self.Bind(wx.EVT_BUTTON, self.onLPFSettingsButton, self.blpfsettings)
+		self.Bind(wx.EVT_BUTTON, self.onBlobSettingsButton, self.bblobsettings)
+		self.Bind(wx.EVT_BUTTON, self.onFindSquaresButton, self.bfindsquares)
+		for value in self.rbdisplay.values():
+			self.Bind(wx.EVT_RADIOBUTTON, self.onDisplayRadioButton, value)
 
 	def onTilesButton(self, evt):
 		choices = self.node.getMosaicNames()
@@ -41,6 +94,25 @@ class Panel(gui.wx.ClickTargetFinder.Panel):
 		dialog = MosaicSettingsDialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
+
+	def onRefreshTargetsButton(self, evt):
+		self.node.displayDatabaseTargets()
+
+	def onShowPositionButton(self, evt):
+		self.node.refreshCurrentPosition()
+
+	def onLPFSettingsButton(self, evt):
+		dialog = LPFSettingsDialog(self)
+		dialog.ShowModal()
+		dialog.Destroy()
+
+	def onBlobSettingsButton(self, evt):
+		dialog = BlobSettingsDialog(self)
+		dialog.ShowModal()
+		dialog.Destroy()
+
+	def onFindSquaresButton(self, evt):
+		self.node.findSquares()
 
 class TilesDialog(wx.Dialog):
 	def __init__(self, parent, choices):
@@ -137,6 +209,82 @@ class MosaicSettingsDialog(gui.wx.Settings.Dialog):
 
 	def onSaveButton(self, evt):
 		self.node.publishMosaicImage()
+
+class LPFSettingsDialog(gui.wx.Settings.Dialog):
+	def initialize(self):
+		self.widgets['size'] = IntEntry(self, -1, min=1, chars=4)
+		self.widgets['sigma'] = FloatEntry(self, -1, min=0.0, chars=4)
+
+		sz = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Size:')
+		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['size'], (0, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Sigma:')
+		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['sigma'], (1, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		sz.AddGrowableCol(1)
+
+		sb = wx.StaticBox(self, -1, 'Low Pass Filter')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
+
+		return [sbsz]
+
+class BlobSettingsDialog(gui.wx.Settings.Dialog):
+	def initialize(self):
+		self.widgets['threshold'] = IntEntry(self, -1, min=0, chars=4)
+		self.widgets['border'] = IntEntry(self, -1, min=0, chars=4)
+		self.widgets['max blobs'] = IntEntry(self, -1, min=0, chars=4)
+		self.widgets['min blob size'] = IntEntry(self, -1, min=0, chars=6)
+		self.widgets['max blob size'] = IntEntry(self, -1, min=0, chars=6)
+		self.widgets['min blob mean'] = FloatEntry(self, -1, chars=6)
+		self.widgets['max blob mean'] = FloatEntry(self, -1, chars=6)
+		self.widgets['min blob stdev'] = FloatEntry(self, -1, chars=6)
+		self.widgets['max blob stdev'] = FloatEntry(self, -1, chars=6)
+
+		szrange = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Min.')
+		szrange.Add(label, (0, 1), (1, 1), wx.ALIGN_CENTER)
+		label = wx.StaticText(self, -1, 'Max.')
+		szrange.Add(label, (0, 2), (1, 1), wx.ALIGN_CENTER)
+		label = wx.StaticText(self, -1, 'Blob size:')
+		szrange.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER)
+		szrange.Add(self.widgets['min blob size'], (1, 1), (1, 1),
+								wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		szrange.Add(self.widgets['max blob size'], (1, 2), (1, 1),
+								wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'Blob mean:')
+		szrange.Add(label, (2, 0), (1, 1), wx.ALIGN_CENTER)
+		szrange.Add(self.widgets['min blob mean'], (2, 1), (1, 1),
+								wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		szrange.Add(self.widgets['max blob mean'], (2, 2), (1, 1),
+								wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		label = wx.StaticText(self, -1, 'Blob stdev.:')
+		szrange.Add(label, (3, 0), (1, 1), wx.ALIGN_CENTER)
+		szrange.Add(self.widgets['min blob stdev'], (3, 1), (1, 1),
+								wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+		szrange.Add(self.widgets['max blob stdev'], (3, 2), (1, 1),
+								wx.ALIGN_CENTER|wx.FIXED_MINSIZE)
+
+		sz = wx.GridBagSizer(5, 5)
+		label = wx.StaticText(self, -1, 'Border:')
+		sz.Add(label, (0, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['border'], (0, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		label = wx.StaticText(self, -1, 'Max. number of blobs:')
+		sz.Add(label, (1, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+		sz.Add(self.widgets['max blobs'], (1, 1), (1, 1),
+						wx.ALIGN_CENTER_VERTICAL|wx.FIXED_MINSIZE|wx.ALIGN_RIGHT)
+		sz.Add(szrange, (2, 0), (1, 2), wx.ALIGN_CENTER)
+		sz.AddGrowableCol(1)
+
+		sb = wx.StaticBox(self, -1, 'Blob Finding')
+		sbsz = wx.StaticBoxSizer(sb, wx.VERTICAL)
+		sbsz.Add(sz, 1, wx.EXPAND|wx.ALL, 5)
+
+		return [sbsz]
 
 if __name__ == '__main__':
 	class App(wx.App):

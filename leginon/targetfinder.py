@@ -173,6 +173,9 @@ class ClickTargetFinder(TargetFinder):
 		self.typenames = ['acquisition', 'focus', 'done', 'position']
 		self.panel.addTargetTypes(self.typenames)
 
+		if self.__class__ == ClickTargetFinder:
+			self.start()
+
 	def findTargets(self, imdata, targetlist):
 		## check if targets already found on this image
 		previous = self.researchTargets(image=imdata)
@@ -241,6 +244,12 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			'modeled stage position':
 												calibrationclient.ModeledStageCalibrationClient(self)
 		}
+		self.images = {
+			'Original': None,
+			'Extra Crispy': None,
+			'Filtered': None,
+			'Thresholded': None
+		}
 		self.mosaic = mosaic.EMMosaic(self.calclients['stage position'])
 		self.mosaicimagelist = None
 		self.mosaicimage = None
@@ -255,8 +264,14 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.clearTiles()
 
 		if self.__class__ == MosaicClickTargetFinder:
-			self.defineUserInterface()
 			self.start()
+
+	def setImage(self, image):
+		self.updateImage('Original', image)
+
+	def updateImage(self, name, image):
+		self.images[name] = image
+		self.panel.imageUpdated(name, image)
 
 	# not complete
 	def handleTargetListDone(self, targetlistdoneevent):
@@ -323,7 +338,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 				self.targetlist = targets[0]['list']
 			self.targetmap[id] = targets
 
-	def uiRefreshCurrentPosition(self):
+	def refreshCurrentPosition(self):
 		self.updateCurrentPosition()
 		self.panel.setTargets('position', self.currentposition)
 
@@ -561,17 +576,17 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 	def storeSquareFinderPrefs(self):
 		prefs = data.SquareFinderPrefsData()
 		prefs['image'] = self.mosaicimagedata
-		prefs['lpf-size'] = self.lpfsize.get()
-		prefs['lpf-sigma'] = self.lpfsigma.get()
-		prefs['threshold'] = self.squares_thresh.get()
-		prefs['border'] = self.border.get()
-		prefs['maxblobs'] = self.maxblobs.get()
-		prefs['minblobsize'] = self.minblobsize.get()
-		prefs['maxblobsize'] = self.maxblobsize.get()
-		prefs['mean-min'] = self.mean_min.get()
-		prefs['mean-max'] = self.mean_max.get()
-		prefs['std-min'] = self.std_min.get()
-		prefs['std-max'] = self.std_max.get()
+		prefs['lpf-size'] = self.settings['size']
+		prefs['lpf-sigma'] = self.settings['sigma']
+		prefs['threshold'] = self.settings['threshold']
+		prefs['border'] = self.settings['border']
+		prefs['maxblobs'] = self.settings['max blobs']
+		prefs['minblobsize'] = self.settings['min blob size']
+		prefs['maxblobsize'] = self.settings['max blob size']
+		prefs['mean-min'] = self.settings['min blob mean']
+		prefs['mean-max'] = self.settings['max blob mean']
+		prefs['std-min'] = self.settings['min blob stdev']
+		prefs['std-max'] = self.settings['max blob stdev']
 		self.publish(prefs, database=True)
 		return prefs
 
@@ -586,30 +601,30 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.logger.info(message)
 		self.setStatus(message)
 
-		size = self.lpfsize.get()
-		sigma = self.lpfsigma.get()
+		size = self.settings['size']
+		sigma = self.settings['sigma']
 		kernel = convolver.gaussian_kernel(size, sigma)
 		self.convolver.setKernel(kernel)
 		image = self.convolver.convolve(image=original_image)
-		self.filtered_image.set(image.astype(numarray.Float32))
+		self.updateImage('Filtered', image.astype(numarray.Float32))
 
 		## threshold grid bars
-		squares_thresh = self.squares_thresh.get()
+		squares_thresh = self.settings['threshold']
 		image = imagefun.threshold(image, squares_thresh)
-		self.threshold_image.set(image.astype(numarray.Float32))
+		self.updateImage('Thresholded', image.astype(numarray.Float32))
 
 		## find blobs
-		border = self.border.get()
-		maxblobs = self.maxblobs.get()
-		minblobsize = self.minblobsize.get()
-		maxblobsize = self.maxblobsize.get()
-		blobs = imagefun.find_blobs(original_image, image, border, maxblobs, maxblobsize, minblobsize)
+		blobs = imagefun.find_blobs(original_image, image,
+																self.settings['border'],
+																self.settings['max blobs'],
+																self.settings['min blob size'],
+																self.settings['max blob size'])
 
 		## use stats to find good ones
-		mean_min = self.mean_min.get()
-		mean_max = self.mean_max.get()
-		std_min = self.std_min.get()
-		std_max = self.std_max.get()
+		mean_min = self.settings['min blob mean']
+		mean_max = self.settings['max blob mean']
+		std_min = self.settings['min blob stdev']
+		std_max = self.settings['max blob stdev']
 		targets = []
 		prefs = self.storeSquareFinderPrefs()
 		rows, columns = image.shape
@@ -633,50 +648,4 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		message = 'found %s squares' % (len(targets),)
 		self.logger.info(message)
 		self.setStatus(message)
-
-	def defineUserInterface(self):
-		ClickTargetFinder.defineUserInterface(self)
-
-		### Targets
-		targetcont = uidata.Container('Targeting')
-		refreshtargets = uidata.Method('Refresh Targets',
-																		self.displayDatabaseTargets)
-		refreshposition = uidata.Method('Refresh Current Position',
-																		self.uiRefreshCurrentPosition)
-
-		findsquarescont = uidata.Container('Square Finder')
-		findsquares = uidata.Method('Find Squares', self.findSquares)
-
-		self.lpfsize = uidata.Number('Low Pass Filter Size', 5, 'rw', persist=True, size=(4, 1))
-		self.lpfsigma = uidata.Number('Low Pass Filter Sigma', 1.4, 'rw', persist=True, size=(6, 1))
-		self.squares_thresh= uidata.Float('Grid Bar Threshold', 100.0, 'rw', persist=True, size=(4, 1))
-
-		self.border = uidata.Number('Border', 0, 'rw', persist=True, size=(4, 1))
-		self.maxblobs = uidata.Number('Maximum number of blobs', 100, 'rw', persist=True, size=(4, 1))
-		self.minblobsize = uidata.Number('Minimum blob size', 10, 'rw', persist=True, size=(6, 1))
-		self.maxblobsize = uidata.Number('Maximum blob size', 10000, 'rw', persist=True, size=(6, 1))
-		meanlimits = uidata.Container('Mean Value Limits')
-		self.mean_min = uidata.Number('Minimum', 1000, 'rw', persist=True)
-		self.mean_max = uidata.Number('Maximum', 20000, 'rw', persist=True)
-		meanlimits.addObject(self.mean_min, position={'position':(0,0)})
-		meanlimits.addObject(self.mean_max, position={'position':(0,1)})
-
-		stdlimits = uidata.Container('Standard Deviation Limits')
-		self.std_min = uidata.Number('Minimum', 10, 'rw', persist=True)
-		self.std_max = uidata.Number('Maximum', 500, 'rw', persist=True)
-		stdlimits.addObject(self.std_min, position={'position':(0,0)})
-		stdlimits.addObject(self.std_max, position={'position':(0,1)})
-
-		self.filtered_image = uidata.Image('Filtered', None, 'r')
-		self.threshold_image = uidata.Image('Thresholded', None, 'r')
-
-		findsquarescont.addObjects((findsquares, self.lpfsize, self.lpfsigma, self.squares_thresh, self.border, self.maxblobs, self.minblobsize, self.maxblobsize, meanlimits, stdlimits, self.filtered_image, self.threshold_image))
-		
-		targetcont.addObject(refreshtargets, position={'position':(0,0)})
-		targetcont.addObject(refreshposition, position={'position':(0,1)})
-		targetcont.addObject(findsquarescont, position={'position':(1,0), 'span':(1,2)})
-
-		container = uidata.LargeContainer('Mosaic Click Target Finder')
-		container.addObjects((targetcont,))
-		self.uicontainer.addObject(container)
 

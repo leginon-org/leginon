@@ -46,12 +46,12 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.szbuttons.Add(self.bsubmit, (1, 0), (1, 1), wx.EXPAND)
 
 		self.imagepanel = gui.wx.ImageViewer.TargetImagePanel(self, -1)
-		self.szimage = self._getStaticBoxSizer('Target Image', (1, 1), (2, 1),
+		self.szimage = self._getStaticBoxSizer('Target Image', (1, 1), (3, 1),
 																						wx.EXPAND|wx.ALL)
 		self.szimage.Add(self.imagepanel, (0, 0), (1, 1), wx.EXPAND)
 		self.szimage.AddGrowableRow(0)
 		self.szimage.AddGrowableCol(0)
-		self.szmain.AddGrowableRow(2)
+		self.szmain.AddGrowableRow(3)
 
 		self.Bind(EVT_ADD_TARGET_TYPES, self.onAddTargetTypes)
 		self.Bind(EVT_ADD_TARGETS, self.onAddTargets)
@@ -79,11 +79,11 @@ class Panel(gui.wx.TargetFinder.Panel):
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def addTargets(self, typename, targets):
-		evt = AddTargetsEvent(self, typenames, targets)
+		evt = AddTargetsEvent(self, typename, targets)
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def setTargets(self, typename, targets):
-		evt = SetTargetsEvent(self, typenames, targets)
+		evt = SetTargetsEvent(self, typename, targets)
 		self.GetEventHandler().AddPendingEvent(evt)
 
 	def getTargets(self, typename):
