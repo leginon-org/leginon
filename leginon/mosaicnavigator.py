@@ -46,6 +46,9 @@ class MosaicNavigator(navigator.Navigator):
 				nearestdelta = deltaposition
 				nearesttile = tile
 
+		print 'nearest tile position =', mosaicdata[nearesttile]['position']
+		print 'moving to row: %s, column: %s' % (nearestdelta[0], nearestdelta[1])
+
 		self.publishRemote(data.EMData('all', mosaicdata[nearesttile]['state']))
 		e = self.shiftEventClass(self.ID(),
 									{'row': nearestdelta[0], 'column': nearestdelta[1]})
