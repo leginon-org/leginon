@@ -282,7 +282,7 @@ class ManagerSetup(object):
 		for suffix in 'abcdefghijklmnopqrstuvwxyz':
 			maybe_name = time.strftime('%y%b%d'+suffix).lower()
 			qsession = data.SessionData(name=maybe_name)
-			maybe_session = self.research(datainstance=qsession)
+			maybe_session = self.manager.research(datainstance=qsession)
 			if maybe_session:
 				continue
 			else:
