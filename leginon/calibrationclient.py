@@ -1,6 +1,7 @@
 import data
 import Numeric
 import LinearAlgebra
+import math
 
 class CalibrationClient(object):
 	'''
@@ -10,8 +11,18 @@ class CalibrationClient(object):
 		self.node = node
 
 	def getCalibration(self, key):
-		cal = self.node.researchByDataID('calibrations')
-		return cal.content[key]
+		try:
+			cal = self.node.researchByDataID('calibrations')
+		except:
+			print 'CalibrationClient unable to use calibrations.  Is a CalibrationLibrary node running?'
+			raise
+		try:
+			calvalue = cal.content[key]
+		except KeyError:
+			print '%s has not been calibrated' % (key,)
+			raise
+			
+		return calvalue
 
 	def setCalibration(self, key, calibration):
 		newdict = {key: calibration}
@@ -43,9 +54,43 @@ class MatrixCalibrationClient(CalibrationClient):
 		'''
 		raise NotImplementedError()
 
-	def setCalibration(self, key, matrix, angle, pixelsize):
-		calibration = {}
-		CalibrationClient.setCalibration(self, key, calibration)
+	def setCalibration(self, key, measurement):
+		mat = self.measurementToMatrix(measurement)
+		CalibrationClient.setCalibration(self, key, mat)
+
+	def measurementToMatrix(self, measurement):
+		'''
+		convert a mesurement in pixels/[TEM parameter] to a matrix
+		in [TEM parameter]/pixel
+		'''
+		xrow = measurement['x']['row']
+		xcol = measurement['x']['col']
+		yrow = measurement['y']['row']
+		ycol = measurement['y']['col']
+		matrix = Numeric.array([[xrow,yrow],[xcol,ycol]],Numeric.Float32)
+		matrix = LinearAlgebra.inverse(matrix)
+		return matrix
+
+	def matrixAnglePixsize(self, scope, camera):
+		mag = scope['magnification']
+		binx = camera['binning']['x']
+		biny = camera['binning']['y']
+		par = self.parameter()
+
+		key = self.magCalibrationKey(mag, par)
+		matrix = self.getCalibration(key)
+
+		xvect = matrix[:,0]
+		yvect = matrix[:,1]
+
+		xangle = math.atan2(xvect[0], xvect[1])
+		xpixsize = math.hypot(xvect[0], xvect[1])
+		yangle = math.atan2(yvect[0], yvect[1])
+		ypixsize = math.hypot(yvect[0], yvect[1])
+		ret = {}
+		ret['x'] = {'angle': xangle,'pixel size': xpixsize}
+		ret['y'] = {'angle': yangle,'pixel size': ypixsize}
+		return ret
 
 	def transform(self, pixelshift, scope, camera):
 		'''
