@@ -16,6 +16,11 @@ class LeginonObject(object):
 		#loc['weakref'] = weakref.ref(self)
 		return loc
 
+	def print_location(self):
+		loc = self.location()
+		for key,value in loc.items():
+			print '%-25s  %s' % (key,value)
+
 	def ID(self):
 		newid = self.id + (self.idcounter,)
 		self.idcounter += 1

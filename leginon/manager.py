@@ -109,7 +109,8 @@ class Manager(node.Node):
 		if isinstance(readyevent, event.LauncherAvailableEvent):
 			self.addLauncher(nodeid)
 
-		self.nodeDict()
+		ndict = self.nodeDict()
+		self.nodetreedata.set(ndict)
 
 		self.confirmEvent(readyevent)
 
@@ -119,7 +120,8 @@ class Manager(node.Node):
 
 		# also remove from launcher registry
 		self.delLauncher(nodeid)
-		self.nodeDict()
+		ndict = self.nodeDict()
+		self.nodetreedata.set(ndict)
 
 	def removeNode(self, nodeid):
 		nodelocationdata = self.server.datahandler.query(nodeid)
@@ -257,11 +259,6 @@ class Manager(node.Node):
 		for to_node in do:
 			self.clients[to_node].push(ievent)
 
-	def print_location(self):
-		loc = self.location()
-		for key,value in loc.items():
-			print '%-25s  %s' % (key,value)
-
 	def spawnLauncher(self, id):
 		t = threading.Thread(name='launcher thread', target=launcher.Launcher, args=(self.id + (id,), self.location()))
 		t.start()
@@ -286,12 +283,8 @@ class Manager(node.Node):
 
 		## UI data to be used as enums for method args
 		self.launcherlistdata = self.registerUIData('launcherlist', 'array')
-		self.nodeclasslistdata = self.registerUIData('nodeclasslist', 'array')
-		self.eventclasslistdata = self.registerUIData('eventclasslist', 'array')
-		self.nodeclasslistdata.set(nodeclass_list)
-		self.eventclasslistdata.set(eventclass_list)
-
-
+		self.nodeclasslistdata = self.registerUIData('nodeclasslist', 'array', default=nodeclass_list)
+		self.eventclasslistdata = self.registerUIData('eventclasslist', 'array', default=eventclass_list)
 
 		argspec = (
 		self.registerUIData('Name', 'string'),
@@ -315,8 +308,8 @@ class Manager(node.Node):
 		)
 		spec3 = self.registerUIMethod(self.uiAddDistmap, 'Bind', argspec)
 
-		self.nodetreedata = self.registerUIData('Node Tree', 'struct', permissions='rw')
-		self.nodeDict()
+		ndict = self.nodeDict()
+		self.nodetreedata = self.registerUIData('Node Tree', 'struct', permissions='r', default=ndict)
 
 		argspec = (
 		self.registerUIData('Filename', 'string'),
@@ -343,7 +336,6 @@ class Manager(node.Node):
 			if nodelocationdata is not None:
 				nodeloc = nodelocationdata.content
 				nodeinfo[nodename] = nodeloc
-		self.nodetreedata.set(nodeinfo)
 		return nodeinfo
 
 	def uiLaunch(self, name, launcher_str, nodeclass_str, args, newproc=0):
@@ -400,6 +392,8 @@ if __name__ == '__main__':
 		gui = 0
 	else:
 		gui = 1
+
+	gui = 0
 	if gui:
 		import nodegui, Tkinter
 		port = m.location()['UI port']
