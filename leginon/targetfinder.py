@@ -617,8 +617,8 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		blobs = imagefun.find_blobs(original_image, image,
 																self.settings['blobs']['border'],
 																self.settings['blobs']['max'],
-																self.settings['blobs']['min size'],
-																self.settings['blobs']['max size'])
+																self.settings['blobs']['max size'],
+																self.settings['blobs']['min size'])
 
 		## use stats to find good ones
 		mean_min = self.settings['blobs']['min mean']
