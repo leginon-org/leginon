@@ -274,9 +274,12 @@ class PresetsManager(node.Node):
 	def uiSetOrderCallback(self, namelist):
 		## make sure nothing is added or removed from the list
 		## only order changes are allowed
-		test1 = list(namelist)
+		if namelist is None:
+			test1 = None
+		else:
+			test1 = list(namelist)
+			test1.sort()
 		test2 = list(self.presets.keys())
-		test1.sort()
 		test2.sort()
 		if test1 == test2:
 			self.setOrder(namelist, fromcallback=True)
