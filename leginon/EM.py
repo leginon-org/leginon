@@ -126,12 +126,13 @@ class EM(node.Node):
 		]
 
 		## if any of these are changed, follow up with the specified pause
+		## these pauses are just a guess in order to allow for normalizations and such
 		self.pauses = {
-			'magnification':  0.8,
+			'magnification':  1.5,
 			'spot size': 0.4,
 			'image shift': 0.2,
 			'beam shift': 0.1,
-			'defocus': 0.5,
+			'defocus': 0.4,
 			'intensity': 0.1,
 		}
 
