@@ -169,7 +169,6 @@ function toggleButton(imagename, name) {
 	state = toggleimage(imagename, name);
 	if (m = eval("document.viewerform."+imagename+"_st")) {
 		m.value=state;
-		displaydebug(m.value);
 	}
 	return state;
 }
