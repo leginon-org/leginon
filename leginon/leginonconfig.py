@@ -55,8 +55,9 @@ DB_PASS = ''
 if '' in (DB_HOST, DB_NAME, DB_USER):
 	raise LeginonConfigError('need database info in leginonconfig.py')
 
-# This is optional.  If not using a project database, leave blank.
-DB_PROJECT_HOST = ''
+# This is optional.  If not using a project database, leave DB_PROJECT_HOST
+# set to 'none', and the other DB_PROJECT_ variables blank.
+DB_PROJECT_HOST = 'none'
 DB_PROJECT_NAME = ''
 DB_PROJECT_USER = ''
 DB_PROJECT_PASS = ''
