@@ -544,60 +544,87 @@ bin(PyObject *self, PyObject *args)
 	return PyArray_Return(result);
 }
 
-static PyObject *houghline2(PyObject *self, PyObject *args) {
-	PyObject *input, *gradient = NULL;
-	PyArrayObject *inputarray, *gradientarray, *hough;
-	int dimensions[2];
-	int n;
-	int i, j, theta, r;
-	double rtheta;
-	double gradientvalue;
-	float increment = 1.0;
-	float gradient_tolerance = 1.0;
-	float gradient_tolerances[2];
+static PyObject *nonmaximasuppress(PyObject *self, PyObject *args) {
+	PyObject *input, *gradient;
+	PyArrayObject *inputarray, *gradientarray;
+	int window = 7;
+	int i, j, k;
+	double m, theta;
+	int sintheta, costheta;
 
-	if (!PyArg_ParseTuple(args, "OO|ff", &input, &gradient, &gradient_tolerance,
-																				&increment))
+	if(!PyArg_ParseTuple(args, "OO|i", &input, &gradient, &window))
 		return NULL;
 
-	inputarray = (PyArrayObject *)
-									PyArray_ContiguousFromObject(input, PyArray_DOUBLE, 2, 2);
-	gradientarray = (PyArrayObject *)
-									PyArray_ContiguousFromObject(gradient, PyArray_DOUBLE, 2, 2);
+	inputarray = (PyArrayObject *)PyArray_ContiguousFromObject(input,
+																															PyArray_DOUBLE,
+																															2, 2);
+	gradientarray = (PyArrayObject *)PyArray_ContiguousFromObject(gradient,
+																																PyArray_DOUBLE,
+																																2, 2);
 
-	if(inputarray->dimensions[0] != inputarray->dimensions[1])
+	for(i = 0; i < inputarray->nd; i++)
+		if(inputarray->dimensions[i] != gradientarray->dimensions[i])
+			return NULL;
+
+	for(i = window/2; i < inputarray->dimensions[0] - window/2; i++) {
+		for(j = window/2; j < inputarray->dimensions[1] - window/2; j++) {
+			m = *(double *)(inputarray->data + i*inputarray->strides[0]
+																				+ j*inputarray->strides[1]);
+			theta = *(double *)(gradientarray->data + i*gradientarray->strides[0]
+																							+ j*gradientarray->strides[1]);
+			sintheta = (int)round(sin(theta));
+			costheta = (int)round(cos(theta));
+			for(k = -window/2; k <= window/2; k++) {
+				if(m < *(double *)(inputarray->data
+													+ (i + k*sintheta)*inputarray->strides[0]
+													+ (j + k*costheta)*inputarray->strides[1]))
+					*(double *)(inputarray->data + i*inputarray->strides[0]
+																				+ j*inputarray->strides[1]) = 0.0;
+			}
+		}
+	}
+	return Py_None;
+}
+
+static PyObject *hysteresisthreshold(PyObject *self, PyObject *args) {
+	PyObject *input;
+	PyArrayObject *inputarray, *outputarray;
+	int i, j, k, l;
+	float lowthreshold, highthreshold;
+
+	if(!PyArg_ParseTuple(args, "Off", &input, &lowthreshold, &highthreshold))
 		return NULL;
 
-	n = inputarray->dimensions[0];
+	inputarray = (PyArrayObject *)PyArray_ContiguousFromObject(input,
+																															PyArray_DOUBLE,
+																															2, 2);
 
-	dimensions[0] = (int)ceil(M_SQRT2*n);
-	dimensions[1] = (int)round(90.0/increment);
-	hough = (PyArrayObject *)PyArray_FromDims(2, dimensions, PyArray_DOUBLE);
+	outputarray = (PyArrayObject *)PyArray_FromDims(inputarray->nd,
+																									inputarray->dimensions,
+																									PyArray_INT);
 
-	for(i = 0; i < inputarray->dimensions[0]; i++)
-		for(j = 0; j < inputarray->dimensions[1]; j++)
-			if(((double *)inputarray->data)[j * (i + 1)] > 0.0) {
-				gradientvalue = *(double *)(gradientarray->data
-																		+ i*gradientarray->strides[0]
-																		+ j*gradientarray->strides[1]);
-				while(gradientvalue < 0.0)
-					gradientvalue += 2.0*M_PI;
-				while(gradientvalue > M_PI_2)
-					gradientvalue -= M_PI;
-				gradient_tolerances[0] = gradientvalue - gradient_tolerance*M_PI/180.0;
-				gradient_tolerances[1] = gradientvalue + gradient_tolerance*M_PI/180.0;
-				for(theta = 0; theta < dimensions[1]; theta++) {
-					rtheta = theta * increment * M_PI/180;
-					r = (int)(abs(j*cos(rtheta)) + i*sin(rtheta) + 0.5);
-					if(rtheta > gradient_tolerances[0] && rtheta < gradient_tolerances[1])
-					*(double *)(hough->data + r*hough->strides[0]
-											+ theta*hough->strides[1]) +=
-									*(double *)(inputarray->data + i*inputarray->strides[0]
-															+ j*inputarray->strides[1]);
+	for(i = 1; i < inputarray->dimensions[0] - 1; i++) {
+		for(j = 1; j < inputarray->dimensions[1] - 1; j++) {
+			if(*(double *)(inputarray->data + i*inputarray->strides[0]
+											+ j*inputarray->strides[1]) >= highthreshold) {
+				*(int *)(outputarray->data + i*outputarray->strides[0]
+																		+ j*outputarray->strides[1]) = 1;
+				for(k = -1; k <= 1; k++) {
+					for(l = -1; l <= 1; l++) {
+						if(k == 0 && l == 0)
+							continue;
+						if(*(double *)(inputarray->data
+													+ (i + k)*inputarray->strides[0]
+													+ (j + l)*inputarray->strides[1]) >= lowthreshold) {
+							*(int *)(outputarray->data + (i + k)*outputarray->strides[0]
+																				+ (j + l)*outputarray->strides[1]) = 1;
+						}
+					}
 				}
 			}
-
-	return PyArray_Return(hough);
+		}
+	}
+	return PyArray_Return(outputarray);
 }
 
 static PyObject *houghline(PyObject *self, PyObject *args) {
@@ -611,7 +638,7 @@ static PyObject *houghline(PyObject *self, PyObject *args) {
 	int ntheta = 90;
 	float gradient_tolerance = M_PI/180.0;
 
-	if (!PyArg_ParseTuple(args, "O|Ofi", &input, &gradient, &gradient_tolerance,
+	if(!PyArg_ParseTuple(args, "O|Ofi", &input, &gradient, &gradient_tolerance,
 																				&ntheta))
 		return NULL;
 
@@ -674,6 +701,8 @@ static struct PyMethodDef numeric_methods[] = {
 	{"blobs", blobs, METH_VARARGS},
 	{"despike", despike, METH_VARARGS},
 	{"bin", bin, METH_VARARGS},
+	{"nonmaximasuppress", nonmaximasuppress, METH_VARARGS},
+	{"hysteresisthreshold", hysteresisthreshold, METH_VARARGS},
 	{"houghline", houghline, METH_VARARGS},
 	{NULL, NULL}
 };
