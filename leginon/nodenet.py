@@ -17,11 +17,11 @@ class Node(xmlrpcnode.xmlrpcnode):
 		self.location = location.NodeLocation(self.location.hostname,
 							self.location.port,
 							self.location.pid,
-							-1, # not implemented?
 							self.datahandler.port)
 
-		## events should be initialized by subclass before this
-		self.events = getattr(self, 'events', [])
+		## eventmap should be initialized by subclass before this
+		self.eventmap = getattr(self, 'eventmap', {})
+		self.outevents = getattr(self, 'outevents', ())
 
 		if manageraddress:
 			manager_location = location.Location(manageraddress[0],
@@ -37,13 +37,17 @@ class Node(xmlrpcnode.xmlrpcnode):
 
 		### still thinking of the best way to pass events to manager
 		### right now just passing nothing
+
 		inevents = ()
 		outevents = ()
+		eventinfo = {'in': inevents, 'out': outevents}
+		## should be this way:
+		#inevents = self.eventmap.keys()
+		#outevents = self.outevents
 
 		nodeinfo = {'location pickle' : cPickle.dumps(self.location),
 				'methods' : meths,
-				'inevents' : inevents,
-				'outevents': outevents}
+				'events': eventinfo}
 
 		args = (nodeinfo,)
 		self.callProxy('manager', 'addNode', args)
