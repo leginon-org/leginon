@@ -22,9 +22,16 @@ import cPickle
 import leginonconfig
 import os
 
+import sys
+if sys.platform == 'win32':
+	import winsound
+
 def beep():
-	print 'BEEP!'
-	print ''
+	try:
+		winsound.PlaySound("SystemExclamation", winsound.SND_ALIAS)
+		print 'BEEP!'
+	except:
+		print '\aBEEP!'
 
 class DataHandler(object):
 	'''
