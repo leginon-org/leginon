@@ -87,7 +87,6 @@ class NumericImage:
 		h,w = shape  # transpose Numeric array
 		self.orig_size = w,h
 		self.extrema =  min(self.orig_array.flat), max(self.orig_array.flat)
-		print 'stats', self.extrema
 
 	def get(self, x, y):
 		return self.orig_array[y,x]

@@ -3,7 +3,7 @@
 import sys
 from Tkinter import *
 from ScrolledCanvas import *
-from Mrc import *
+import Mrc
 from NumericImage import *
 
 
@@ -130,7 +130,7 @@ class ImageViewer(Frame):
 
 	def import_numeric(self, data):
 		"""
-		import_numeric(numarray, clip)
+		import_numeric(numarray)
 		Display 2D Numeric array in this ImageViewer.
 		Optional 'clip' tuple gives min and max value to display
 		"""
@@ -158,15 +158,8 @@ if __name__ == '__main__':
 	jim = ImageViewer(root, bg='#488')
 	jim.pack()
 
-	## read mrc image into Numeric array
-	data1 = mrc_to_numeric('test1.mrc')
-	#data1 = data1[:256]
+	data1 = Mrc.mrc_to_numeric('test1.mrc')
 
-	#import Numeric
-	#data = Numeric.arrayrange(16384)
-	#data.shape = (128,128)
-
-	## create a photo image and plug it into the viewer
 	jim.import_numeric(data1)
 	jim.show()
 

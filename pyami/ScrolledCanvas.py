@@ -54,6 +54,19 @@ class ScrolledCanvas(Frame):
 		pass
 
 	def configure_callback(self, event):
+
+		### check if container is bigger than canvas
+		if self.winfo_width() < int(self.canvas['width']):
+			self.hscroll_state(ON)
+		else:
+			self.hscroll_state(OFF)
+
+		if self.winfo_height() < int(self.canvas['height']):
+			self.vscroll_state(ON)
+		else:
+			self.vscroll_state(OFF)
+
+	def configure_callback2(self, event):
 		### Check if scrollbar is necessary after a resize.
 		### If this configure was a result of a scrollbar toggle
 		### do not reset the scrollbar to original state
