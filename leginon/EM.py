@@ -109,7 +109,7 @@ class EM(node.Node):
 						print "failed to get '%s'" % EMkey
 				elif EMkey == 'scope':
 					result.update(self.scope)
-				elif EMKey == 'camera no image data':
+				elif EMkey == 'camera no image data':
 					for camerakeys in self.camera:
 						if camerakey != 'image data':
 							result[camerakey] = self.camera[camerakey]
