@@ -14,7 +14,7 @@ class Calibrator(node.Node):
 	def __init__(self, id, session, nodelocations, **kwargs):
 		node.Node.__init__(self, id, session, nodelocations, **kwargs)
 		self.cam = camerafuncs.CameraFuncs(self)
-		self.imageviewer = None
+		self.ui_image = None
 
 	def getMagnification(self):
 		magdata = self.researchByDataID(('magnification',))
@@ -25,16 +25,16 @@ class Calibrator(node.Node):
 		return dat
 
 	def imageViewer(self):
-		if self.imageviewer is None:
-			self.imageviewer = uidata.UIImage('Calibrator Image', None, 'r')
-		return self.imageviewer
+		if self.ui_image is None:
+			self.ui_image = uidata.UIImage('Calibrator Image', None, 'r')
+		return self.ui_image
 
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
 		
-		self.imageviewer = uidata.UIImage('Calibrator Image', None, 'r')
+		self.ui_image = uidata.UIImage('Calibrator Image', None, 'r')
 		cameraconfig = self.cam.configUIData()
 
 		container = uidata.UIMediumContainer('Calibrator')
-		container.addUIObjects((self.imageviewer, cameraconfig))
+		container.addUIObjects((self.ui_image, cameraconfig))
 		self.uiserver.addUIObject(container)
