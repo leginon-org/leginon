@@ -1,17 +1,17 @@
+# -*- coding: iso-8859-1 -*-
 # The Leginon software is Copyright 2004
 # The Scripps Research Institute, La Jolla, CA
 # For terms of the license agreement
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Camera.py,v $
-# $Revision: 1.23 $
+# $Revision: 1.24 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
+# $Date: 2004-10-22 00:28:25 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
 
-# -*- coding: iso-8859-1 -*-
 import copy
 import data
 import wx

@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Manager.py,v $
-# $Revision: 1.20 $
+# $Revision: 1.21 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
+# $Date: 2004-10-22 00:28:25 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -18,6 +18,7 @@ import os
 import threading
 import wx
 import wx.lib.intctrl
+import gui.wx.About
 import gui.wx.ApplicationEditor
 import gui.wx.Launcher
 import gui.wx.Logging
@@ -210,11 +211,19 @@ class Frame(wx.Frame):
 		self.settingsmenu.AppendItem(self.loggingmenuitem)
 		self.menubar.Append(self.settingsmenu, '&Settings')
 
+		# help menu
+		self.helpmenu = wx.Menu()
+		self.aboutmenuitem = wx.MenuItem(self.settingsmenu, -1, '&About...')
+		self.Bind(wx.EVT_MENU, self.onMenuAbout, self.aboutmenuitem)
+		self.helpmenu.AppendItem(self.aboutmenuitem)
+		self.menubar.Append(self.helpmenu, '&Help')
+
 		self.SetMenuBar(self.menubar)
 
 		self.toolbar = gui.wx.ToolBar.ToolBar(self)
 		self.toolbar.Show(True)
 		self.SetToolBar(self.toolbar)
+
 
 		# status bar
 		self.statusbar = StatusBar(self)
@@ -330,6 +339,11 @@ class Frame(wx.Frame):
 
 	def onMenuLogging(self, evt):
 		dialog = gui.wx.Logging.LoggingConfigurationDialog(self)
+		dialog.ShowModal()
+		dialog.Destroy()
+
+	def onMenuAbout(self, evt):
+		dialog = gui.wx.About.Dialog(self)
 		dialog.ShowModal()
 		dialog.Destroy()
 
