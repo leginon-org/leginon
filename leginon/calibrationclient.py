@@ -164,10 +164,6 @@ class CalibrationClient(object):
 
 		self.node.logger.info('Correlation...')
 		pcimage = self.correlator.phaseCorrelate()
-		#pcimagedata = data.PhaseCorrelationImageData(self.node.ID(), pcimage, imagedata1.id, imagedata2.id)
-		pcimagedata = data.PhaseCorrelationImageData(image=pcimage, subject1=imagedata1, subject2=imagedata2)
-
-		#self.publish(pcimagedata, pubevent=True)
 
 		## peak finding
 		self.node.logger.info('Peak finding...')

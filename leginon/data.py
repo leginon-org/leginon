@@ -1108,26 +1108,6 @@ class MosaicImageData(ImageData):
 		return t
 	typemap = classmethod(typemap)
 
-class CorrelationImageData(ImageData):
-	'''
-	ImageData that results from a correlation of two images
-	content has the following keys:
-		'image': Numeric data	
-		'subject1':  first image (data id) used in correlation
-		'subject2':  second image (data id) used in correlation
-	'''
-	def typemap(cls):
-		t = ImageData.typemap()
-		t += [ ('subject1', ImageData), ('subject2', ImageData), ]
-		return t
-	typemap = classmethod(typemap)
-
-class CrossCorrelationImageData(CorrelationImageData):
-	pass
-
-class PhaseCorrelationImageData(CorrelationImageData):
-	pass
-
 class CameraImageData(ImageData):
 	def typemap(cls):
 		t = ImageData.typemap()

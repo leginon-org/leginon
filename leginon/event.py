@@ -206,15 +206,6 @@ class BrightImagePublishEvent(CorrectorImagePublishEvent):
 class NormImagePublishEvent(CorrectorImagePublishEvent):
 	dataclass = data.NormImageData
 
-class CorrelationImagePublishEvent(ImagePublishEvent):
-	dataclass = data.NormImageData
-
-class CrossCorrelationImagePublishEvent(CorrelationImagePublishEvent):
-	dataclass = data.CrossCorrelationImageData
-
-class PhaseCorrelationImagePublishEvent(CorrelationImagePublishEvent):
-	dataclass = data.PhaseCorrelationImageData
-
 class ImageTargetListPublishEvent(PublishEvent):
 	dataclass = data.ImageTargetListData
 

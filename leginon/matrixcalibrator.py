@@ -211,7 +211,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 			self.logger.error(
 										'Cannot get corrected images, Corrector may not be running')
 		except:
-			pass
+			self.logger.exception('exception in self.calibrate()')
 		else:
 			self.logger.info('Calibration completed successfully')
 		# return to original state
