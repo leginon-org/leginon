@@ -178,6 +178,8 @@ class Manager(node.Node):
 		for to_node in do:
 			print 'TONODE', to_node
 			try:
+				### this is a special case of outputEvent
+				### so we don't use outputEvent here
 				self.clients[to_node].push(ievent)
 			except:
 				self.printException()
@@ -202,6 +204,9 @@ class Manager(node.Node):
 				e.wait()
 			print 'DONE WAITING FOR DISTRIB...'
 			## now confirm back to original event sender
+			## in this case, don't confirm unless this
+			## event was actually intended for this handler
+			## is this a good idea?
 			self.confirmEvent(ievent)
 
 	# launcher related methods
@@ -295,6 +300,8 @@ class Manager(node.Node):
 		self.uiUpdateNodeInfo()
 		self.addNodeUIClient(nodeid, nodelocation)
 
+		self.confirmEvent(readyevent)
+
 	def addNodeUIClient(self, nodeid, nodelocation):
 		if nodeid in self.uiclientcontainers:
 			self.deleteNodeUIClient(nodeid)
@@ -314,6 +321,7 @@ class Manager(node.Node):
 		self.delLauncher(nodeid)
 		self.uiUpdateNodeInfo()
 		self.deleteNodeUIClient(nodeid)
+		self.confirmEvent(unavailable_event)
 
 	def deleteNodeUIClient(self, nodeid):
 		# also remove from launcher registry
@@ -331,6 +339,7 @@ class Manager(node.Node):
 			self.setNodeStatus(nodeid, True)
 		elif isinstance(ievent, event.NodeUninitializedEvent):
 			self.setNodeStatus(nodeid, False)
+		self.confirmEvent(ievent)
 
 	def setNodeStatus(self, nodeid, status):
 		self.initializednodescondition.acquire()
@@ -444,7 +453,7 @@ class Manager(node.Node):
 		'''Attempt telling a node to die and unregister. Unregister if communication with the node fails.'''
 		ev = event.KillEvent()
 		try:
-			self.clients[nodeid].push(ev)
+			self.outputEvent(ev, nodeid)
 		except IOError:
 			self.printerror('cannot push KillEvent to ' + str(nodeid)
 												+ ', unregistering')
@@ -485,6 +494,7 @@ class Manager(node.Node):
 			self.unpublishDataLocation(id, unpublishevent['id'][:-1])
 		else:
 			raise TypeError
+		self.confirmEvent(unpublishevent)
 
 	def unpublishDataLocation(self, dataid, nodeid):
 		'''Unregisters data by unmapping the location from the data ID. If no other location are mapped to the data ID, the data ID is removed.'''
