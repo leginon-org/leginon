@@ -28,7 +28,7 @@ wxEVT_COMMAND_SERVER = wxNewEventType()
 
 class AddWidgetEvent(wxPyEvent):
 	def __init__(self, dependencies, namelist, typelist, value,	
-								configuration, event):
+								configuration, event, children):
 		wxPyEvent.__init__(self)
 		self.SetEventType(wxEVT_ADD_WIDGET)
 		self.namelist = namelist
@@ -37,6 +37,7 @@ class AddWidgetEvent(wxPyEvent):
 		self.configuration = configuration
 		self.dependencies = dependencies
 		self.event = event
+		self.children = children
 
 class SetWidgetEvent(wxPyEvent):
 	def __init__(self, namelist, value, event):
@@ -223,14 +224,15 @@ class wxUIClient(object):
 			if not isinstance(threading.currentThread(), threading._MainThread):
 				threadingevent = threading.Event()
 
+		if 'children' in properties:
+			children = properties['children']
+		else:
+			children = []
 		evt = AddWidgetEvent(dependencies, namelist, typelist, value,	
-													configuration, threadingevent)
+													configuration, threadingevent, children)
 		wxPostEvent(self.container.widgethandler, evt)
 		if threadingevent is not None:
 			threadingevent.wait()
-		if 'children' in properties:
-			for childproperties in properties['children']:
-				self.addFromServer(childproperties)
 		return ''
 
 	def setFromServer(self, properties):
@@ -285,10 +287,8 @@ class wxXMLRPCClient(XMLRPCUIClient, wxUIClient):
 		threading.Thread(target=self.addServer, args=()).start()
 
 class UIApp(wxApp):
-	def __init__(self, clientclass, clientclassargs, title='UI',
-								containername='UI Client'):
-		self.clientclass = clientclass
-		self.clientclassargs = clientclassargs
+	def __init__(self, location, title='UI', containername='UI Client'):
+		self.location = location
 		self.title = title
 		self.containername = containername
 		wxApp.__init__(self, 0)
@@ -300,7 +300,7 @@ class UIApp(wxApp):
 		self.panel.SetScrollRate(1, 1)		
 		containerclass = wxClientContainerFactory(wxSimpleContainerWidget)
 		self.container = containerclass(self.containername, self.panel, self,
-																		self.clientclass, self.clientclassargs)
+																		self.location)
 		if self.container.sizer is not None:
 			self.panel.SetSizer(self.container.sizer)
 		self.SetTopWindow(self.frame)
@@ -391,9 +391,10 @@ class wxContainerWidget(wxWidget):
 					self.sizer.Show(childsizer, show)
 			child.show(show)
 
-	def _addWidget(self, name, typelist, value, configuration):
+	def _addWidget(self, name, typelist, value, configuration, children):
 		childclass = WidgetClassFromTypeList(typelist)
 		if issubclass(childclass, wxClientContainerWidget):
+			'''
 			if 'local' in value and value['local'] is not None:
 				clientclass = wxLocalClient
 				value = (value['local'],)
@@ -403,11 +404,29 @@ class wxContainerWidget(wxWidget):
 			else:
 				return
 			child = childclass(name, self.childparent, self, clientclass, value)
+			'''
+			child = childclass(name, self.childparent, self, value, configuration)
 		elif issubclass(childclass, wxDataWidget):
 			child = childclass(name, self.childparent, self, value, configuration)
 		else:
 			child = childclass(name, self.childparent, self)
 		self.children[name] = child
+
+		for childproperties in children:
+			try:
+				value = childproperties['value']
+			except KeyError:
+				value = None
+			try:
+				children = childproperties['children']
+			except KeyError:
+				children = []
+			child._addWidget(childproperties['namelist'][-1],
+												childproperties['typelist'],	
+												value,
+												childproperties['configuration'],
+												children)
+
 		if isinstance(child, wxNotebookContainerWidget):
 			childsizer = None
 		elif isinstance(child, wxDialogContainerWidget):
@@ -452,7 +471,8 @@ class wxContainerWidget(wxWidget):
 				self.pending.append(evt)
 			else:
 				childname = evt.namelist[0]
-				self._addWidget(childname, evt.typelist, evt.value, evt.configuration)
+				self._addWidget(childname, evt.typelist, evt.value, evt.configuration,
+												evt.children)
 				if evt.event is not None:
 					evt.event.set()
 		else:
@@ -578,8 +598,9 @@ class wxSimpleContainerWidget(wxContainerWidget):
 	def destroy(self):
 		wxContainerWidget.destroy(self)
 
-	def _addWidget(self, namelist, typelist, value, configuration):
-		wxContainerWidget._addWidget(self, namelist, typelist, value, configuration)
+	def _addWidget(self, name, typelist, value, configuration, children):
+		wxContainerWidget._addWidget(self, name, typelist, value,
+																	configuration, children)
 		self.layout()
 
 class wxStaticBoxContainerWidget(wxContainerWidget):
@@ -596,8 +617,9 @@ class wxStaticBoxContainerWidget(wxContainerWidget):
 		wxContainerWidget.destroy(self)
 		self.staticbox.Destroy()
 
-	def _addWidget(self, namelist, typelist, value, configuration):
-		wxContainerWidget._addWidget(self, namelist, typelist, value, configuration)
+	def _addWidget(self, name, typelist, value, configuration, children):
+		wxContainerWidget._addWidget(self, name, typelist, value,
+																	configuration, children)
 		self.layout()
 
 class wxNotebookContainerWidget(wxContainerWidget):
@@ -619,8 +641,9 @@ class wxNotebookContainerWidget(wxContainerWidget):
 		self.container.notebooksizer.Fit(self.parentnotebook)
 		self.container.layout()
 
-	def _addWidget(self, namelist, typelist, value, configuration):
-		wxContainerWidget._addWidget(self, namelist, typelist, value, configuration)
+	def _addWidget(self, name, typelist, value, configuration, children):
+		wxContainerWidget._addWidget(self, name, typelist, value,
+																	configuration, children)
 		self.layout()
 
 	def destroy(self):
@@ -643,8 +666,8 @@ class wxDialogContainerWidget(wxContainerWidget):
 		self.sizer = wxBoxSizer(wxVERTICAL)
 		self.panel.SetSizer(self.sizer)
 		self.childparent = self.panel
-		self.panel.Show(true)
-		self.dialog.Show(true)
+#		self.panel.Show(true)
+#		self.dialog.Show(true)
 
 	def show(self, show):
 		self.panel.Show(show)
@@ -666,9 +689,18 @@ class wxClientContainerWidget(object):
 
 def wxClientContainerFactory(wxcontainerwidget):
 	class wxClientContainer(wxClientContainerWidget, wxcontainerwidget):
-		def __init__(self, name, parent, container, clientclass, clientclassargs):
+		def __init__(self, name, parent, container, value, configuration={}):
 			wxcontainerwidget.__init__(self, name, parent, container)
-			self.uiclient = apply(clientclass, clientclassargs + (self,))
+			if 'instance' in value and value['instance'] is not None:
+				clientclass = wxLocalClient
+				args = (value['instance'],)
+			elif 'hostname' in value and value['hostname'] is not None \
+						and 'XML-RPC port' in value and value['XML-RPC port'] is not None:
+				clientclass = wxXMLRPCClient
+				args = (value['hostname'], value['XML-RPC port'])
+			else:
+				raise ValueError('No location information to create client container')
+			self.uiclient = apply(clientclass, args + (self,))
 
 		def onSetServer(self, evt):
 			evt.namelist.insert(0, self.name)
@@ -1084,9 +1116,7 @@ class wxMessageDialogWidget(wxContainerWidget):
 		self.dialog.sizer.Fit(self.dialog)
 		self.dialog.Show(true)
 
-	def onAddWidget(self, evt):
-		name = evt.namelist[0]
-		value = evt.value
+	def _addWidget(self, name, typelist, value, configuration, children):
 		if name == 'Message':
 			self.setMessage(value)
 			self.messageflag = True
@@ -1094,6 +1124,9 @@ class wxMessageDialogWidget(wxContainerWidget):
 			self.okflag = True
 		if self.messageflag and self.okflag:
 			self.display()
+
+	def onAddWidget(self, evt):
+		self._addWidget(evt.namelist[0], None, evt.value, None, None)
 		if evt.event is not None:
 			evt.event.set()
 
@@ -1156,13 +1189,14 @@ class wxComboBoxWidget(wxContainerWidget):
 		if self.value['List']:
 			self.combobox.SetSelection(value)
 
-	def onAddWidget(self, evt):
-		name = evt.namelist[0]
-		value = evt.value
+	def _addWidget(self, name, typelist, value, configuration, children):
 		if name == 'List':
 			self.setList(value)
 		elif name == 'Selected':
 			self.setSelected(value)
+
+	def onAddWidget(self, evt):
+		self._addWidget(evt.namelist[0], None, evt.value, None, None)
 		if evt.event is not None:
 			evt.event.set()
 
@@ -1209,13 +1243,14 @@ class wxOrderedListBoxWidget(wxContainerWidget):
 		self.value['Selected'] = value
 		self.orderedlistbox.setSelected(value)
 
-	def onAddWidget(self, evt):
-		name = evt.namelist[0]
-		value = evt.value
+	def _addWidget(self, name, typelist, value, configuration, children):
 		if name == 'List':
 			self.setList(value)
 		elif name == 'Selected':
 			self.setSelected(value)
+
+	def onAddWidget(self, evt):
+		self._addWidget(evt.namelist[0], None, evt.value, None, None)
 		if evt.event is not None:
 			evt.event.set()
 
@@ -1266,13 +1301,14 @@ class wxTreeSelectWidget(wxContainerWidget):
 			self.tree.select(value[0])
 			self.tree.Enable(true)
 
-	def onAddWidget(self, evt):
-		name = evt.namelist[0]
-		value = evt.value
+	def _addWidget(self, name, typelist, value, configuration, children):
 		if name == 'Struct':
 			self.setStruct(value)
 		elif name == 'Selected':
 			self.setSelected(value)
+
+	def onAddWidget(self, evt):
+		self._addWidget(evt.namelist[0], None, evt.value, None, None)
 		if evt.event is not None:
 			evt.event.set()
 
@@ -1327,12 +1363,13 @@ class wxClickImageWidget(wxContainerWidget):
 		else:
 			self.clickimage.clearImage()
 
-	def onAddWidget(self, evt):
+	def _addWidget(self, name, typelist, value, configuration, children):
 		# should disable until all available
-		name = evt.namelist[0]
-		value = evt.value
 		if name == 'Image':
 			self.setImage(value)
+
+	def onAddWidget(self, evt):
+		self._addWidget(evt.namelist[0], None, evt.value, None, None)
 		if evt.event is not None:
 			evt.event.set()
 
@@ -1384,14 +1421,15 @@ class wxTargetImageWidget(wxContainerWidget):
 	def setTargets(self, name, value):
 		self.targetimage.setTargetTypeValue(name, value)
 
-	def onAddWidget(self, evt):
+	def _addWidget(self, name, typelist, value, configuration, children):
 		# should disable until all available
-		name = evt.namelist[0]
-		value = evt.value
 		if name == 'Image':
 			self.setImage(value)
 		else:
 			self.setTargets(name, value)
+
+	def onAddWidget(self, evt):
+		self._addWidget(evt.namelist[0], None, evt.value, None, None)
 		if evt.event is not None:
 			evt.event.set()
 
@@ -1506,8 +1544,9 @@ class wxTreePanelContainerWidget(wxContainerWidget):
 		self.treepanel.childsizer.Show(self.sizer, show)
 		wxContainerWidget.show(self, show)
 
-	def _addWidget(self, name, typelist, value, configuration):
-		wxContainerWidget._addWidget(self, name, typelist, value, configuration)
+	def _addWidget(self, namelist, typelist, value, configuration, children):
+		wxContainerWidget._addWidget(self, namelist, typelist, value,
+																	configuration, children)
 		self.layout()
 
 	def layout(self):
@@ -1520,5 +1559,5 @@ class wxTreePanelContainerWidget(wxContainerWidget):
 
 if __name__ == '__main__':
 	import sys
-	client = UIApp(sys.argv[1], int(sys.argv[2]))
+	client = UIApp({'hostname': sys.argv[1], 'XML-RPC port': int(sys.argv[2])})
 

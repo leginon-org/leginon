@@ -51,6 +51,5 @@ event.wait()
 
 location = manager.Manager(('manager',), None).location()
 launcher.Launcher((socket.gethostname(),), {'manager': location})
-instance = location['UI']['instance']
-client = uiclient.UIApp(uiclient.wxLocalClient, (instance,), 'Leginon II')
+client = uiclient.UIApp(location['UI'], 'Leginon II')
 
