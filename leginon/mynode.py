@@ -8,10 +8,11 @@ class MyNode(node.Node):
 	def __init__(self, managerlocation):
 		node.Node.__init__(self, managerlocation)
 
-		self.addEventIn(ControlEvent, self.handle_intervalchange)
-		self.addEventOut(PublishEvent)
+		self.addEventIn(event.ControlEvent, self.handle_intervalchange)
+		self.addEventOut(event.PublishEvent)
 
 		self.interval = 2
+		print self.location()
 		self.main()
 
 	def main(self):
@@ -22,24 +23,21 @@ class MyNode(node.Node):
 	def print_stuff(self):
 		timenow = time.asctime()
 		print timenow
-		mydata = StringData(self, timenow)
-		newid = self.publish(mydata)
-		myevent = event.PublishEvent(newid)
+		mydata = data.StringData(self.id, timenow)
+		self.publish(mydata)
+		myevent = event.PublishEvent(dataid=mydata.id)
 		self.announce(myevent)
 
 	def handle_intervalchange(self, controlevent):
+		print 'got control event %s' % controlevent
 		new_interval = controlevent.content
+		print 'new_interval %s is type %s' % (new_interval, type(new_interval))
 		self.change_interval(new_interval)
 
 	def change_interval(self, new_interval):
 		self.interval = new_interval
 
 
-class StringData(data.Data):
-	def __init__(self, creator, content):
-		if type(content) != str:
-			raise TypeError('StringData content must be string')
-		data.Data.__init__(self, creator, content)
 
 
 if __name__ == '__main__':

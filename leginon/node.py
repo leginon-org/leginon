@@ -2,6 +2,7 @@
 import leginonobject
 import event
 import clientpull
+import datahandler
 
 class Node(leginonobject.LeginonObject):
 	def __init__(self, managerloc = None):
@@ -19,7 +20,12 @@ class Node(leginonobject.LeginonObject):
 		raise NotImplementedError()
 
 	def announce(self, event):
-		print 'announce %s' % event
+		# mark event with info about the creator
+		loc = self.location()
+		hostname = loc['hostname']
+		port = loc['event port']
+		event.creator = (hostname, port)
+
 		client = (self.managerloc['hostname'], self.managerloc['event port'])
 		self.eventhandler.push(client, event)
 
@@ -50,16 +56,9 @@ class Node(leginonobject.LeginonObject):
 
 class NodeDataHandler(clientpull.Client, clientpull.Server):
 	def __init__(self):
-		clientpull.Server.__init__(self)
+		clientpull.Server.__init__(self, datahandler.SimpleDataKeeper)
 		loc = clientpull.Server.location(self)
-		print 'NodeDataHandler Location: %s' % loc
 		self.port = loc['datatcp port']
 
-	def addClient(self, hostname, port):
-		clientpull.Client.__init__(self, hostname, port)
-
 	def insert(self, newdata):
-		dataid = id(newdata)
-		self.datastore[id] = newdata
-		return dataid
-
+		self.datahandler.insert(newdata)

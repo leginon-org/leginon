@@ -29,11 +29,7 @@ class PushHandler(SocketServer.StreamRequestHandler, leginonobject.LeginonObject
 		# needs error checking, cPickle attempt
 		# data_id needs to be send with a newline
 		newdata = pickle.load(self.rfile)
-		print 'received newdata %s' % newdata
 		self.server.datahandler.insert(newdata)
-		#self.server.server.handle_data(newdata)
-		# temporarily making data a dictionary w/ actual data and data id
-		#self.server.datatoid(data['data id'], data['data'])
 
 class Server(SocketServer.ThreadingTCPServer, leginonobject.LeginonObject):
 	def __init__(self, dh, handler, port=None):
@@ -99,7 +95,6 @@ class PullClient(Client):
 class PushClient(Client):
 	def push(self, data):
 		# needs to account for different data_id datatypes
-		print 'socket connect:  %s %s' % (self.hostname, self.port)
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		s.connect((self.hostname, self.port)) # Connect to server
 		s.send(pickle.dumps(data))

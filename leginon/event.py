@@ -3,6 +3,7 @@
 import leginonobject
 import clientpush
 import data
+import datahandler
 
 
 class Event(data.Data):
@@ -16,7 +17,6 @@ class EventClient(clientpush.Client):
 
 	def push(self, event):
 		if isinstance(event, Event):
-			print 'EventClient.push is calling clientpush.Client.push'
 			clientpush.Client.push(self, event)
 		else:
 			raise InvalidEventError('event must be Event instance')
@@ -24,11 +24,11 @@ class EventClient(clientpush.Client):
 
 class EventServer(clientpush.Server):
 	def __init__(self):
-		clientpush.Server.__init__(self)
+		clientpush.Server.__init__(self, datahandler.DataBinder)
 
 	def bind(self, eventclass, func):
 		if issubclass(eventclass, Event):
-			clientpush.Server.bind(self, eventclass, func)
+			self.datahandler.setBinding(eventclass, func)
 		else:
 			raise InvalidEventError('eventclass must be Event subclass')
 
@@ -38,13 +38,11 @@ class EventHandler(leginonobject.LeginonObject):
 		leginonobject.LeginonObject.__init__(self)
 		self.server = EventServer()
 		self.port = self.server.location()['datatcp port']
-		self.distributor = 
 		self.clients = {}
 		self.distmap = {}
 		self.registry = {'outputs':[], 'inputs':[]}
 
 	def addClient(self, hostname, port):
-		print 'EventHandler.ADDCLIENT %s %s' % (hostname, port)
 		self.clients[hostname,port] = EventClient(hostname, port)
 
 	def delClient(self, hostname, port):
@@ -74,28 +72,32 @@ class EventHandler(leginonobject.LeginonObject):
 			self.distmap[eventclass] = {}
 		if from_node not in self.distmap[eventclass]:
 			self.distmap[eventclass][from_node] = []
-		if to_node noe in self.distmap[eventclass][from_node];
+		if to_node not in self.distmap[eventclass][from_node]:
 			self.distmap[eventclass][from_node].append(to_node)
 
 	def distribute(self, event):
-		'''push event to event servers based on event class and source'''
+		print 'distribute %s' % event
+		'''push event to eventclients based on event class and source'''
 		eventclass = event.__class__
 		from_node = event.creator
 		done = []
 		for distclass,fromnodes in self.distmap.items():
 		  if issubclass(eventclass, distclass):
+		    print '%s is subclass of %s' % (eventclass, distclass)
 		    for fromnode in (event.creator, None):
 		      if fromnode in fromnodes:
 		        for to_node in fromnodes[from_node]:
 		          if to_node:
-		            self.handler.push(to_node, event)				
-		            done.append(to_node)
+			    if to_node not in done:
+		              self.push(to_node, event)
+		              done.append(to_node)
 		          else:
 			    for to_node in self.handler.clients:
-		            self.handler.push(to_node, event)
+			      if to_node not in done:
+		                self.push(to_node, event)
+		                done.append(to_node)
 
 	def push(self, client, event):
-		print 'EventHandler.push to client %s, event %s' % (client,event)
 		self.clients[client].push(event)
 
 ## Standard Event Types:
@@ -105,14 +107,15 @@ class EventHandler(leginonobject.LeginonObject):
 ##	ControlEvent
 
 class PublishEvent(Event):
-	def __init__(self, creator, dataid):
+	def __init__(self, creator = None, dataid=None):
 		Event.__init__(self, creator, content=dataid)
 
 class ControlEvent(Event):
-	def __init__(self, creator, param):
+	def __init__(self, creator=None, param=None):
 		### to prevent abuse of this event, only a few simple python
 		### number types are allowed for the content
 		allowedtypes = (int, long, float)
+		print 'CONTROLEVENT init param %s' % param
 		if type(param) in allowedtypes:
 			Event.__init__(self, creator, content=param)
 		else:

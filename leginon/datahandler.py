@@ -29,7 +29,7 @@ class SimpleDataKeeper(DataHandler):
 		return result
 
 	def insert(self, newdata):
-		if type(newdata) != data.Data:
+		if not issubclass(newdata.__class__, data.Data):
 			raise TypeError
 		self.datadictlock.acquire()
 		self.datadict[newdata.id] = newdata
@@ -44,13 +44,14 @@ class DataBinder(DataHandler):
 	def insert(self, newdata):
 		# now send data to a type specific handler function
 		dataclass = newdata.__class__
-		if dataclass in self.bindings:
-			func = self.bindings[dataclass]
-			args = (newdata,)
-			try:
-				apply(func, args)
-			except:
-				pass
+		for bindclass in self.bindings:
+			if issubclass(dataclass, bindclass):
+				func = self.bindings[bindclass]
+				args = (newdata,)
+				try:
+					apply(func, args)
+				except:
+					pass
 
 	def setBinding(self, dataclass, func=None):
 		'func must take data instance as first arg'
