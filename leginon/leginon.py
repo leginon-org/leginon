@@ -150,6 +150,7 @@ class Leginon(Tkinter.Frame):
 		self.wrappers = {}
 		self.gridatlases = {}
 		self.targets = {}
+		self.imagecollectors = {}
 		self.manager = None
 		self.remotelauncher = None
 
@@ -176,6 +177,8 @@ class Leginon(Tkinter.Frame):
 		self.editmenu.add_command(label='Add Grid Atlas...',
 															command=self.menuAddGridAtlas)
 		self.editmenu.add_command(label='Add Target...', command=self.menuAddTarget)
+		self.editmenu.add_command(label='Add Viewer...',
+																	command=self.menuAddImageCollection)
 		self.menu.entryconfigure(1, state=Tkinter.DISABLED)
 
 		self.windowmenu = Tkinter.Menu(self.menu, tearoff=0)
@@ -197,6 +200,19 @@ class Leginon(Tkinter.Frame):
 				elif source in self.gridatlases:
 					sourceids.append(self.gridatlases[source].targetid)
 			self.addTarget(add_dialog.result[0], sourceids)
+
+	def menuAddImageCollection(self):
+		name = 'Viewer #%s' % str(len(self.imagecollectors) + 1)
+		add_dialog = AddChoicesDialog(self, name,
+											 self.targets.keys() + self.gridatlases.keys(), [])
+		if add_dialog.result is not None:
+			sourceids = []
+			for source in add_dialog.result[1]:
+				if source in self.targets:
+					sourceids.append(self.targets[source].targetid)
+				elif source in self.gridatlases:
+					sourceids.append(self.gridatlases[source].targetid)
+			self.addImageCollection(add_dialog.result[0], sourceids)
 
 	def menuAddGridAtlas(self):
 		name = 'Grid Atlas #%s' % str(len(self.gridatlases) + 1)
@@ -241,6 +257,7 @@ class Leginon(Tkinter.Frame):
 		self.wrappers = {}
 		self.gridatlases = {}
 		self.targets = {}
+		self.imagecollectors = {}
 
 	# needs to check what got started, the whole lot needs error handling
 	def new(self):
@@ -336,6 +353,13 @@ class Leginon(Tkinter.Frame):
 
 	def addTarget(self, name, sourceids=[]):
 		self.targets[name] = Target(self.manager, self.manageruiclient,
+																self.locallauncherid, self.notebook,
+																self.debug, self.windowmenu, name,
+																sourceids)
+
+	def addImageCollection(self, name, sourceids=[]):
+		self.imagecollectors[name] = ImageCollection(self.manager,
+																self.manageruiclient,
 																self.locallauncherid, self.notebook,
 																self.debug, self.windowmenu, name,
 																sourceids)
@@ -501,6 +525,12 @@ class ImageCorrectionWidget(CustomWidget):
 		self.addWidget('Control', corrector, ('Acquire', 'Acquire Corrected'))
 
 		widget = self.addWidget('Results', corrector, ('Acquire', 'Image'))
+
+class ImageCollectionWidget(CustomWidget):
+	def __init__(self, parent, imagecollector):
+		CustomWidget.__init__(self, parent)
+		self.addWidget('Control', imagecollector, ('Images', 'Advance Image'))
+		self.addWidget('Results', imagecollector, ('Images', 'Image'))
 
 class PresetsWidget(CustomWidget):
 	def __init__(self, parent, presets):
@@ -751,6 +781,25 @@ class ImageCorrection(WidgetWrapper):
 	def initializeWidget(self):
 		self.widget = ImageCorrectionWidget(self.page,
 															self.nodeinfo['corrector']['UI info'])
+
+class ImageCollection(WidgetWrapper):
+	def __init__(self, manager, manageruiclient, launcherid, notebook,
+																		debug, windowmenu, name, sourceids):
+		WidgetWrapper.__init__(self, manager, manageruiclient, launcherid,
+														notebook, debug, windowmenu, name)
+		self.addNodeInfo('imagecollector', self.name + ' Image Collector',
+																											'ImageCollector')
+		self.sourceids = sourceids
+		self.initialize()
+
+	def initializeWidget(self):
+		self.widget = ImageCollectionWidget(self.page,
+															self.nodeinfo['imagecollector']['UI info'])
+
+	def initializeBindings(self):
+		for nodeid in self.sourceids:
+			self.manager.addEventDistmap(event.CameraImagePublishEvent,
+																	nodeid, self.nodeinfo['imagecollector']['ID'])
 
 class Presets(WidgetWrapper):
 	def __init__(self, manager, manageruiclient, launcherid, notebook,

@@ -83,4 +83,4 @@ registerNodeClass('mosaicnavigator', 'MosaicNavigator')
 registerNodeClass('targetfinder', 'ClickTargetFinder')
 registerNodeClass('simpleacquisition', 'SimpleAcquisition')
 registerNodeClass('imagenode', 'ImageNode')
-
+registerNodeClass('imagecollector', 'ImageCollector')
