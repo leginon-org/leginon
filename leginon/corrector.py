@@ -102,6 +102,7 @@ class Corrector(node.Node):
 		newcamstate = data.CorrectorCamstateData()
 		newcamstate.friendly_update(camconfig)
 		newcamstate['id'] = None
+		plandata = data.CorrectorPlanData()
 		plandata['camstate'] = newcamstate
 		plandata['clip_limits'] = self.cliplimits.get()
 		plandata['bad_rows'] = self.badrows.get()
@@ -149,7 +150,6 @@ class Corrector(node.Node):
 		corstate['id'] = None
 		qplan = data.CorrectorPlanData()
 		qplan['camstate'] = corstate
-		qplan['id'] = None
 		plandatalist = self.research(datainstance=qplan)
 		if plandatalist:
 			return plandatalist[0]
