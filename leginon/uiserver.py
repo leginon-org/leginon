@@ -76,6 +76,12 @@ class Server(XMLRPCServer, uidata.Container):
 		self.updatePickle(namelist, value)
 		return ''
 
+	### Where should this be called?
+	### and is this just a really bad idea for something like
+	### EM that does a lot of stuff in a callback when a value is set
+	### I guess things like that are not "preferences", but they are
+	### all treated the same here.  Anything data value in the user
+	### interface is a preference
 	def setFromPickle(self):
 		'''
 		this "replays" the recorded user preferences
