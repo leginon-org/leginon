@@ -1770,6 +1770,7 @@ class MosaicClickTargetFinderSettingsData(ClickTargetFinderSettingsData,
 			('scale size', int),
 			('mosaic image on tile change', bool),
 		)
+		return typemap
 	typemap = classmethod(typemap)
 
 class AcquisitionSettingsData(SettingsData):

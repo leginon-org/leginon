@@ -45,7 +45,7 @@ class Panel(gui.wx.Node.Panel):
 											id=gui.wx.ToolBar.ID_ACQUIRE)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onStageLocationsTool,
 											id=gui.wx.ToolBar.ID_STAGE_LOCATIONS)
-		self.Bind(wx.EVT_IMAGE_CLICKED, self.onImageClicked)
+		self.Bind(gui.wx.ImageViewer.EVT_IMAGE_CLICKED, self.onImageClicked)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)

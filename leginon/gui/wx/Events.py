@@ -22,7 +22,7 @@ def eventFactory(name):
 	g[eventname] = type(eventname, (FactoryEvent,), {'_eventtype': g[typename]})
 
 eventFactory('Acquisition Done')
-eventFactory('Altas Created')
+eventFactory('Atlas Created')
 eventFactory('Calibration Done')
 eventFactory('Get Instrument Done')
 eventFactory('Set Instrument Done')
