@@ -71,6 +71,8 @@ def sqlRepr(obj):
         for orig, repl in sqlStringReplace:
             obj = obj.replace(orig, repl)
         return "'%s'" % obj
+    elif t is bool:
+    	return repr(int(obj))
     elif t is type(0L) or t is type(1):
         return repr(int(obj))
     elif t is type(1.0):

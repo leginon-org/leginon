@@ -1050,6 +1050,8 @@ def sqltype(object,key=None):
 		return "DOUBLE"
 	elif t in (int,long):
 		return "INT(20)"
+	elif t is bool:
+		return "TINYINT(1)"
 	else:
 		return None
 
