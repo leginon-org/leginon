@@ -282,7 +282,10 @@ class SQLDict:
 				newdata = dataclass()
 				memo[memokey]=newdata
 				try:
-					newdata.update(result[i])
+					## this is friendly_update because
+					## there could be columns that
+					## are no longer used
+					newdata.friendly_update(result[i])
 				except KeyError, e:
 					raise
 
@@ -309,7 +312,7 @@ class SQLDict:
 				self._connectData(target, pool)
 				if isinstance(target, data.SessionData):
 					imagepath = target['image path']
-			if isinstance(value, FileReference):
+			if isinstance(value, strictdict.FileReference):
 				needpath.append(key)
 
 		## now read data using the found path
@@ -1220,26 +1223,6 @@ def sql2data(in_dict, qikey=None, qinfo=None):
 
 	return content
 
-## this is a place holder for data that is stored in a file
-## until we find the full path
-class FileReference(object):
-	'''
-	this is a place holder for data that is stored in a file
-	until we find the full path
-	   'filename' is the filename, without a path.
-	   'loader' is a function that takes the full path filename and
-	     returns the data that was read from file.
-	Once you find the path, call read(path) to return the data.
-	'''
-	def __init__(self, filename, pathkey, loader):
-		self.filename = filename
-		self.loader = loader
-		self.pathkey = pathkey
-
-	def read(self, path):
-		fullname = os.path.join(path, self.filename)
-		return self.loader(fullname)
-
 def datatype(in_dict, qikey=None, qinfo=None):
 	"""
 	This function converts a specific string or a SQL type to 
@@ -1263,7 +1246,7 @@ def datatype(in_dict, qikey=None, qinfo=None):
 		elif a[0] == 'MRC':
 			## set up a FileReference, to be used later
 			## when we know the full path
-			content[a[1]] = FileReference(value, 'image path', Mrc.mrc_to_numeric)
+			content[a[1]] = strictdict.FileReference(value, 'image path', Mrc.mrc_to_numeric)
 		elif a[0] == 'REF':
 			jqikey = qinfo[qikey]['join'][a[2]]
 			dr = data.DataReference()
