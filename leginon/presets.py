@@ -23,7 +23,8 @@ class PresetsClient(object):
 	'''
 	client functions for nodes to access PresetsManager
 	'''
-	def __init__(self, node):
+	def __init__(self, node, uistatus=None):
+		self.uistatus = uistatus
 		self.node = node
 		self.node.addEventInput(event.PresetChangedEvent, self.presetchanged)
 		self.pchanged = {}
@@ -38,11 +39,14 @@ class PresetsClient(object):
 		evt['name'] = presetname
 		evt['emtarget'] = emtarget
 		try:
-			print 'requesting preset change to %s' % (presetname,)
+			if self.uistatus is not None:
+				self.uistatus.set('Requesting preset change to %s' % (presetname,))
 			self.node.outputEvent(evt, wait=True)
-			print 'done with preset change to %s' % (presetname,)
+			if self.uistatus is not None:
+				self.uistatus.set('Preset change to %s completed' % (presetname,))
 		except node.ConfirmationTimeout:
-			print 'no response from PresetsManager after % s, be sure this node is bound to PresetsManager' % (timeout,)
+			if self.uistatus is not None:
+				self.uistatus.set('Preset change request timed out')
 
 	def presetchanged(self, ievent):
 		name = ievent['name']
@@ -85,7 +89,6 @@ class PresetsClient(object):
 	def uiGetSelectedName(self):
 		presetname = self.uiselectpreset.getSelectedValue()
 		return presetname
-
 
 class DataHandler(node.DataHandler):
 	def query(self, id):
@@ -141,13 +144,13 @@ class PresetsManager(node.Node):
 		pname = ievent['name']
 		emtarget = ievent['emtarget']
 		if emtarget is None:
-			print 'ToScope'
+			self.uistatus.set('Changing preset to "%s"' % pname)
 			self.toScopeFollowCycle(pname)
 		else:
-			print 'targetToScope'
+			self.uistatus.set('Changing preset to "%s" and targeting' % pname)
 			self.targetToScope(pname, emtarget)
 		self.confirmEvent(ievent)
-		print 'Preset changed to %s' % (pname,)
+		self.uistatus.set('Preset changed to "%s"' % pname)
 
 	def getPresetsFromDB(self, session=None):
 		'''
@@ -278,15 +281,15 @@ class PresetsManager(node.Node):
 		elif isinstance(p, data.PresetData):
 			presetdata = p
 		else:
-			print 'Bad arg for toScope'
+			self.messagelog.error('Invalid argument to set scope')
 			return
 
 		if presetdata is None:
-			print 'no such preset'
+			self.messagelog.error('No such preset')
 			return
 
 		name = presetdata['name']
-		print 'changing to preset %s' % (name,)
+		self.uistatus.set('Changing preset to "%s"' % name)
 
 		## should switch to using AllEMData
 		scopedata = data.ScopeEMData()
@@ -300,12 +303,12 @@ class PresetsManager(node.Node):
 			self.publishRemote(cameradata)
 		except node.PublishError:
 			self.printException()
-			print '** Maybe EM is not running?'
+			self.messagelog.error('Cannot set instrument parameters')
 		else:
 			pause = self.changepause.get()
 			time.sleep(pause)
 			self.currentpreset = presetdata
-			print 'preset changed to %s' % (name,)
+			self.uistatus.set('Preset changed to %s' % (name,))
 			self.outputEvent(event.PresetChangedEvent(name=name))
 
 	def fromScope(self, name):
@@ -333,7 +336,7 @@ class PresetsManager(node.Node):
 		self.presetToDB(newpreset)
 		pnames = self.presetNames()
 		self.uiselectpreset.set(pnames, len(pnames)-1)
-		print 'got preset %s from scope' % (name,)
+		self.uistatus.set('Set preset "%s" values from instrument' % name)
 		node.beep()
 		return newpreset
 
@@ -347,10 +350,10 @@ class PresetsManager(node.Node):
 				eucfoc = preset['eucentric focus']
 				break
 		if eucfoc is None:
-			print 'no such preset'
+			self.messagelog.error('No such preset "%s"' % pname)
 			return
 
-		print 'setting eucentric focus for preset %s' % (pname,)
+		self.uistatus.set('Setting eucentric focus for preset %s' % (pname,))
 
 		scopedata = data.ScopeEMData()
 		scopedata['id'] = ('scope',)
@@ -359,7 +362,7 @@ class PresetsManager(node.Node):
 			self.publishRemote(scopedata)
 		except node.PublishError:
 			self.printException()
-			print '** Maybe EM is not running?'
+			self.messagelog.error('Cannot set instrument parameters')
 
 	def eucFromScope(self, name):
 		'''
@@ -375,7 +378,7 @@ class PresetsManager(node.Node):
 			if p['name'] == name:
 				p['eucentric focus'] = focusvalue
 				self.presetToDB(p)
-				print 'got eucentric focus for %s: %s' % (name,focusvalue)
+				self.uistatus.set('Eucentric focus for %s: %s' % (name, focusvalue))
 
 		node.beep()
 
@@ -391,7 +394,7 @@ class PresetsManager(node.Node):
 		try:
 			othersession = sessions[0]
 		except (TypeError, IndexError):
-			print 'cannot find session:', othersessionname
+			self.messagelog.error('Cannot location session: %s', othersessionname)
 			return
 		self.getPresetsFromDB(othersession)
 		names = self.presetNames()
@@ -406,27 +409,27 @@ class PresetsManager(node.Node):
 		usecycle = self.usecycle.get()
 		if usecycle:
 			order = self.orderlist.get()
-			print 'NEW', new
+			self.uinew.set(new)
 			if self.currentpreset is None:
 				# first time, we don't know where where
 				# are, so go directly to requested preset
 				# then recursive toScopeFollowCylce
-				print 'First Preset Change... automatically doing complete cycle'
+				self.uistatus.set('First preset change, automatically cycling...')
 				self.toScope(new)
 				self.toScopeFollowCycle(new)
 				return
 			current = self.currentpreset['name']
-			print 'CURRENT', current
+			self.uicurrent.set(current)
 
 			## if cycle creation works, then 
 			try:
 				cycle = self.createCycleList(current, new)
 			except RuntimeError:
 				cycle = []
-			print 'CYCLE', cycle
+			self.uistatus.set('Cycle: %s' % str(cycle)[1:-1])
 
 			if cycle:
-				print 'following cycle to %s' % (new,)
+				self.uistatus.set('Cycling to %s' % (new,))
 				# remove first and last from list
 				try:
 					del cycle[0]
@@ -442,9 +445,9 @@ class PresetsManager(node.Node):
 
 				if samemag:
 					if self.cyclemagchanged.get():
-						print 'cycling, even though new preset has the same magnification'
+						self.uistatus.set('Cycling, but magnification will not change')
 					else:
-						print 'not cycling because magnification does not change'
+						self.uistatus.set('Not cycling, magnification will not change')
 						cycle = []
 
 				for p in cycle:
@@ -453,7 +456,7 @@ class PresetsManager(node.Node):
 						mag = presetdata['magnification']
 						if currentmag == mag:
 							continue
-						print 'mag: %s' % (mag,)
+						self.uistatus.set('Magnification is %sx' % (mag,))
 						scopedata = data.ScopeEMData()
 						scopedata['magnification'] = mag
 						scopedata['id'] = ('scope',)
@@ -461,26 +464,26 @@ class PresetsManager(node.Node):
 							self.publishRemote(scopedata)
 						except node.PublishError:
 							self.printException()
-							print '** Maybe EM is not running?'
+							self.messagelog.error('Cannot set instrument parameters')
 						currentmag = mag
 						pause = self.changepause.get()
 						time.sleep(pause)
 					else:
-						print 'toScope(%s)' % (p,)
+						self.uistatus.set('Preset "%s" to instrument' % (p,))
 						self.toScope(p)
 
-		print 'toScope(%s)' % (new,)
+		self.uistatus.set('Preset "%s" to instrument' % (new,))
 		self.toScope(new)
 
 	def createCycleList(self, first, last, order=None):
 		if order is None:
 			order = self.orderlist.get()
 		if not order:
-			print 'no order list specified'
+			#print 'no order list specified'
 			raise RuntimeError('no order list specified')
-		print 'ORDER', order
+		self.uistatus.set('Order: %s' % str(order)[1:-1])
 		if last not in order:
-			print 'last not in order list'
+			#print 'last not in order list'
 			raise RuntimeError('last not in order')
 		if first not in order:
 			first = last
@@ -560,10 +563,10 @@ class PresetsManager(node.Node):
 			d = newpreset.toDict(noNone=True)
 			del d['session']
 			self.presetparams.set(d, callback=False)
-			print 'created new preset: %s' % (newname,)
+			self.messagelog.info('created new preset: %s' % (newname,))
 			self.validateCycleOrder()
 		else:
-			print 'Enter a preset name!'
+			self.messagelog.error('Invalid name for new preset')
 
 	def uiSelectCallback(self, index):
 		try:
@@ -645,15 +648,25 @@ class PresetsManager(node.Node):
 
 		self.messagelog = uidata.MessageLog('Message Log')
 
-		self.xyonly = uidata.Boolean('Target Stage X and Y Only', True, 'rw', persist=True)
+		self.uistatus = uidata.String('Status', '', 'r')
+		self.uiprevious = uidata.String('Previous', '', 'r')
+		self.uicurrent = uidata.String('Current', '', 'r')
+		self.uinew = uidata.String('New', '', 'r')
+		statuscontainer = uidata.Container('Status')
+		statuscontainer.addObjects((self.uistatus, self.uiprevious,
+																self.uicurrent, self.uinew))
+
+		self.xyonly = uidata.Boolean('Target stage x and y only', True, 'rw',
+																	persist=True)
 
 		sessionnamelist = self.getSessionNameList()
-		self.othersession = uidata.SingleSelectFromList('Session', sessionnamelist, 0)
+		self.othersession = uidata.SingleSelectFromList('Session', sessionnamelist,
+																										0)
 		fromdb = uidata.Method('Import', self.uiGetPresetsFromDB)
 		importcont = uidata.Container('Import')
 		importcont.addObjects((self.othersession, fromdb))
 
-		## create preset
+		# create preset
 		self.enteredname = uidata.String('New Name', '', 'rw')
 		newfromscopemethod = uidata.Method('New From Scope', self.uiNewFromScope)
 		createcont = uidata.Container('Preset Creation')
@@ -673,60 +686,74 @@ class PresetsManager(node.Node):
 		self.cal_beam = uidata.String('Beam Shift Matrix', '', 'r')
 		self.cal_modeledstagemod = uidata.String('Modeled Stage', '', 'r')
 		self.cal_modeledstagemag = uidata.String('Modeled Stage Mag Only', '', 'r')
-		calcont.addObjects((self.cal_pixelsize, self.cal_imageshift, self.cal_stage, self.cal_beam, self.cal_modeledstagemod, self.cal_modeledstagemag))
+		calcont.addObjects((self.cal_pixelsize, self.cal_imageshift,
+												self.cal_stage, self.cal_beam,
+												self.cal_modeledstagemod, self.cal_modeledstagemag))
 
-		## selection
+		# selection
 		self.autosquare = uidata.Boolean('Auto Square', True, 'rw')
-		self.presetparams = uidata.Struct('Parameters', {}, 'rw', self.uiParamsCallback)
-		self.uiselectpreset = uidata.SingleSelectFromList('Preset', [], 0, callback=self.uiSelectCallback)
+		self.presetparams = uidata.Struct('Parameters', {}, 'rw',
+																			self.uiParamsCallback)
+		self.uiselectpreset = uidata.SingleSelectFromList('Preset', [], 0,
+																								callback=self.uiSelectCallback)
 		toscopemethod = uidata.Method('To Scope', self.uiToScope)
 		self.changepause = uidata.Float('Pause', 1.0, 'rw', persist=True)
 		cyclecont = uidata.Container('Cycle')
-		self.usecycle = uidata.Boolean('Follow Cycle', True, 'rw', persist=True)
-		self.cyclemagchanged = uidata.Boolean('Cycle even if going to same magnification', True, 'rw', persist=True)
-		self.cyclemagonly = uidata.Boolean('Cycle Magnification Only', False, 'rw', persist=True)
+		self.usecycle = uidata.Boolean('Follow cycle', True, 'rw', persist=True)
+		self.cyclemagchanged = uidata.Boolean('Cycle same magnification', True,
+																					'rw', persist=True)
+		self.cyclemagonly = uidata.Boolean('Cycle magnification only', False, 'rw',
+																				persist=True)
 		self.orderlist = uidata.Sequence('Cycle Order', [], 'rw', persist=True)
-		cyclecont.addObjects((self.usecycle,self.cyclemagchanged,self.cyclemagonly,self.orderlist))
+		cyclecont.addObjects((self.usecycle, self.cyclemagchanged,
+													self.cyclemagonly, self.orderlist))
 
 		fromscopemethod = uidata.Method('From Scope', self.uiSelectedFromScope)
-		eucfromscopemethod = uidata.Method('Eucentric Focus From Scope', self.uiSelectedEucFromScope)
-		euctoscopemethod = uidata.Method('Eucentric Focus To Scope', self.uiSelectedEucToScope)
+		eucfromscopemethod = uidata.Method('Eucentric Focus From Scope',
+																				self.uiSelectedEucFromScope)
+		euctoscopemethod = uidata.Method('Eucentric Focus To Scope',
+																			self.uiSelectedEucToScope)
 		removemethod = uidata.Method('Remove', self.uiSelectedRemove)
 
 
 		selectcont = uidata.Container('Selection')
-		selectcont.addObjects((self.uiselectpreset,toscopemethod,fromscopemethod,eucfromscopemethod,euctoscopemethod,removemethod,self.changepause,cyclecont,self.autosquare,self.presetparams,statuscont,calcont))
+		selectcont.addObjects((self.uiselectpreset, toscopemethod, fromscopemethod,
+														eucfromscopemethod, euctoscopemethod, removemethod,
+														self.changepause, cyclecont, self.autosquare,
+														self.presetparams, statuscont, calcont))
 
 		pnames = self.presetNames()
 		self.uiselectpreset.set(pnames, 0)
 		self.orderlist.set(pnames)
 
-		## acquisition
+		# acquisition
 		cameraconfigure = self.cam.configUIData()
-		acqdosemeth = uidata.Method('Acquire Dose Image (be sure specimen is out of the field of view)', self.uiAcquireDose)
-		acqrefmeth = uidata.Method('Acquire Preset Reference Image', self.uiAcquireRef)
+		acqdosemeth = uidata.Method('Acquire Dose Image (be sure specimen is not in the field of view)', self.uiAcquireDose)
+		acqrefmeth = uidata.Method('Acquire Preset Reference Image',
+																self.uiAcquireRef)
 
 		#self.statrows = uidata.Sequence('Stats Row Range', [], 'rw', persist=True)
-		#self.statcols = uidata.Sequence('Stats Column Range', [], 'rw', persist=True)
+		#self.statcols = uidata.Sequence('Stats Column Range', [], 'rw',
+		#																	persist=True)
 		#statsmeth = uidata.Method('Get Stats', self.uiGetStats)
-
 
 		self.ui_image = uidata.Image('Image', None, 'r')
 
 
 		imagecont = uidata.Container('Acquisition')
-		imagecont.addObjects((cameraconfigure, acqdosemeth, acqrefmeth, self.ui_image,))
+		imagecont.addObjects((cameraconfigure, acqdosemeth, acqrefmeth,
+													self.ui_image,))
 
-
-		## main container
+		# main container
 		container = uidata.LargeContainer('Presets Manager')
-		container.addObjects((self.messagelog,self.xyonly,importcont,createcont,selectcont,imagecont))
+		container.addObjects((self.messagelog, statuscontainer, self.xyonly,
+													importcont, createcont, selectcont, imagecont))
 		self.uiserver.addObject(container)
 
 		return
 
 	def uiAcquireRef(self):
-		print 'acquiring ref image'
+		self.uistatus.set('Acquiring reference image')
 		imagedata = self.cam.acquireCameraImageData(camconfig='UI', correction=True)
 		if imagedata is None:
 			return
@@ -738,7 +765,8 @@ class PresetsManager(node.Node):
 			self.currentpreset['hasref'] = True
 		ref['preset'] = self.currentpreset
 		self.publish(ref, database=True)
-		print 'published new reference image for %s' % (self.currentpreset['name'],)
+		self.uistatus.set('Published new reference image for %s'
+												% (self.currentpreset['name'],))
 
 		## display
 		self.ui_image.set(imagedata['image'])
@@ -748,7 +776,7 @@ class PresetsManager(node.Node):
 		if self.currentpreset is None:
 			self.messagelog.error('You go to a preset before measuring dose')
 			return
-		print 'acquiring dose image (using preset config, but 512x512)'
+		self.uistatus.set('Acquiring dose image using preset config at 512x512')
 		config = data.CameraConfigData()
 		config.friendly_update(self.currentpreset)
 		config['dimension'] = {'x':512,'y':512}
@@ -796,11 +824,11 @@ class PresetsManager(node.Node):
 			else:
 				currentname = self.currentpreset['name']
 			previousname = order[order.index(newpresetname)-1]
-			print 'PREV', previousname
-			print 'CUR', currentname
-			print 'NEW', newpresetname
+			self.uiprevious.set(previousname)
+			self.uicurrent.set(currentname)
+			self.uinew.set(newpresetname)
 			if currentname not in (newpresetname, previousname):
-				print 'now cycling to %s' % (previousname,)
+				self.uistatus.set('Now cycling to %s' % (previousname,))
 				self.toScopeFollowCycle(previousname)
 
 		oldpreset = emtargetdata['preset']
@@ -840,7 +868,7 @@ class PresetsManager(node.Node):
 
 		newishift = {}
 		if oldmag == newmag:
-			print 'SAME MAG MODE'
+			self.uistatus.set('Using same magnification mode')
 			newishift['x'] = scopedata['image shift']['x']
 			newishift['x'] -= oldpreset['image shift']['x']
 			newishift['x'] += newpreset['image shift']['x']
@@ -849,7 +877,7 @@ class PresetsManager(node.Node):
 			newishift['y'] -= oldpreset['image shift']['y']
 			newishift['y'] += newpreset['image shift']['y']
 		else:
-			print 'DIFFERENT MAG MODE'
+			self.uistatus.set('Using different magnification mode')
 			newishift['x'] = newpreset['image shift']['x']
 			newishift['y'] = newpreset['image shift']['y']
 
@@ -867,7 +895,7 @@ class PresetsManager(node.Node):
 			self.publishRemote(cameradata)
 		except node.PublishError:
 			self.printException()
-			print '** Maybe EM is not running?'
+			self.messagelog.error('Cannot set instrument parameters')
 		except:
 			self.printException()
 		else:
@@ -875,5 +903,5 @@ class PresetsManager(node.Node):
 			time.sleep(pause)
 			name = newpreset['name']
 			self.currentpreset = newpreset
-			print 'preset changed to %s' % (name,)
+			self.uistatus.set('Preset changed to %s' % (name,))
 			self.outputEvent(event.PresetChangedEvent(name=name))
