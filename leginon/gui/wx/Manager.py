@@ -355,7 +355,7 @@ class Frame(wx.Frame):
 		if not self.launcherkillmenuitem.IsEnabled():
 			self.launcherkillmenuitem.Enable(True)
 
-		self.statusbar.SetStatusText('Add launcher \'%s\'' % evt.name)
+		self.statusbar.SetStatusText('Added launcher \'%s\'' % evt.name)
 
 	def onRemoveLauncher(self, evt):
 		if self.manager.getLauncherCount() < 1:
@@ -367,6 +367,8 @@ class Frame(wx.Frame):
 			self.launcherkillmenu.Delete(item)
 			if self.launcherkillmenu.GetMenuItemCount() < 1:
 				self.launcherkillmenuitem.Enable(False)
+
+		self.statusbar.SetStatusText('Removed launcher \'%s\'' % evt.name)
 
 	def onApplicationStarting(self, evt):
 		self.runappmenuitem.Enable(False)
@@ -396,7 +398,7 @@ class Frame(wx.Frame):
 	def onApplicationStarted(self, evt):
 		self.killappmenuitem.Enable(True)
 		if self.appgauge is not None:
-			self.statusbar.SetStatusText('Application %s started.' % evt.name)
+			self.statusbar.SetStatusText('Application %s started' % evt.name)
 			self.appgauge.Destroy()
 			self.appgauge = None
 			count = self.statusbar.GetFieldsCount()
@@ -407,6 +409,7 @@ class Frame(wx.Frame):
 		self.killappmenuitem.Enable(False)
 		if self.manager.getLauncherCount() > 0:
 			self.runappmenuitem.Enable(True)
+		self.statusbar.SetStatusText('Application killed')
 
 class AddNodeDialog(wx.Dialog):
 	def __init__(self, parent):

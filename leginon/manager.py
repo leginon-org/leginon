@@ -468,16 +468,16 @@ class Manager(node.Node):
 
 		self.confirmEvent(evt)
 
+		if name in self.appnodes:
+			self.onApplicationNodeStarted(name)
+			self.appnodes.remove(name)
+			if not self.appnodes:
+				self.applicationevent.set()
 		self.onAddNode(name)
 
 	def onAddNode(self, name, status='ok'):
 		evt = gui.wx.Manager.AddNodeEvent(name, status)
 		self.frame.GetEventHandler().AddPendingEvent(evt)
-		if name in self.appnodes:
-			self.onApplicationNodeStarted(name, status)
-			self.appnodes.remove(name)
-			if not self.appnodes:
-				self.applicationevent.set()
 
 	def onRemoveNode(self, name):
 		evt = gui.wx.Manager.RemoveNodeEvent(name)
@@ -568,8 +568,14 @@ class Manager(node.Node):
 										'manager location':self.location()}
 		evt = event.CreateNodeEvent(initializer=initializer)
 		cevt = self.outputEvent(evt, launcher, wait=True)
-		if cevt['status'] == 'failed':
-			self.onAddNode(name, cevt['status'])
+		status =  cevt['status']
+		if status == 'failed':
+			if name in self.appnodes:
+				self.onApplicationNodeStarted(name, status)
+				self.appnodes.remove(name)
+				if not self.appnodes:
+					self.applicationevent.set()
+			self.onAddNode(name, status)
 
 	def waitNodes(self, nodes):
 		self.initializednodescondition.acquire()
@@ -674,7 +680,7 @@ class Manager(node.Node):
 		evt = gui.wx.Manager.ApplicationStartingEvent(name, nnodes)
 		self.frame.GetEventHandler().AddPendingEvent(evt)
 
-	def onApplicationNodeStarted(self, name, status):
+	def onApplicationNodeStarted(self, name, status='ok'):
 		evt = gui.wx.Manager.ApplicationNodeStartedEvent(name, status)
 		self.frame.GetEventHandler().AddPendingEvent(evt)
 
