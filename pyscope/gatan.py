@@ -15,8 +15,11 @@ else:
 	class gatan(camera.camera):
 		def __init__(self):
 			self.theCamera = win32com.client.Dispatch("TecnaiCCD.GatanCamera")        
-			self.arraytypecode = 'H'
-			self.Numerictypecode = Numeric.UInt16
+#			self.arraytypecode = 'H'
+#			self.Numerictypecode = Numeric.UInt16
+			self.arraytypecode = 'h'
+			self.Numerictypecode = Numeric.Int16
+			self.camerasize = {'x': 4096, 'y': 4096}
 	    
 		def __del__(self):
 			pass
@@ -31,13 +34,21 @@ else:
 			self.theCamera.Binning = binning['x']
 			self.theCamera.ExposureTime = float(exposure_time) / 1000.0
 	
-			imagetuple = self.theCamera.AcquireRawImage()
+#			imagetuple = self.theCamera.AcquireRawImage()
+			imagetuple = self.theCamera.AcquireImage()
+#			print imagetuple[0][:32]
 
+#			imagelist = []
+#			for row in imagetuple:
+#				for value in row:
+#					imagelist.append(value)
 			imagelist = []
 			for row in imagetuple:
-				for value in row:
-					imagelist.append(value)
-			a = array.array(self.arraytypecode, imagelist)
+				imagelist += list(row)
+			try:
+				a = array.array(self.arraytypecode, imagelist)
+			except Exception, e:
+				print e
 			na = Numeric.array(a, self.Numerictypecode)
 			na.shape = (dimension['y'], dimension['x'])
 			return na
