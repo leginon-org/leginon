@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.25 $
- *	@version $Id: leginon.inc,v 1.25 2004-09-28 18:13:56 dfellman Exp $
+ *	@version $Revision: 1.26 $
+ *	@version $Id: leginon.inc,v 1.26 2004-10-04 19:05:25 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -26,6 +26,14 @@ class leginondata {
 	var $ffttypes = array('focpow', 'fft');
 	var $defaulttypes = array('all'=>'all', 'atlas'=>'atlas');
 	var $manualtype = 'manual';
+	var $calibrationtables = array (
+		'CameraSensitivityCalibrationData',
+		'GoodTiltCalibrationData',
+		'MatrixCalibrationData',
+		'PixelSizeCalibrationData',
+		'StageModelCalibrationData',
+		'StageModelMagCalibrationData'
+	);
 
 	function leginondata() {
 		require("config.php");
@@ -95,12 +103,8 @@ class leginondata {
 		."where a.`REF|SessionData|Session` <> 'NULL' "
 		.$projectwhere
 		."order by s.DEF_timestamp DESC ";
-		$result = $this->mysql->SQLQuery($q);
-		$sessions = array();
-		if ($result)
-			while($session = mysql_fetch_array($result, MYSQL_ASSOC))
-				$sessions[] = $session;
-		return $sessions;
+
+		return $this->mysql->getSQLResult($q);
 	}
 
 	function getSessionInfo($expId) {
@@ -124,36 +128,44 @@ class leginondata {
 		."left join AcquisitionImageData a on (a.`REF|SessionData|session`=s.`DEF_id`) "
 		."where s.`DEF_id`='$expId' "
 		."order by a.`DEF_timestamp` DESC ";
-		$Rsessioninfo = $this->mysql->SQLQuery($q) or die ("No data type found");
-		$sessioninfo = mysql_fetch_array($Rsessioninfo, MYSQL_ASSOC); 
-		return $sessioninfo;
+		$sessioninfo = $this->mysql->getSQLResult($q);
+		return $sessioninfo[0];
+	}
+
+	function getInstruments() {
+		$q="select "
+		."`DEF_id` as id, "
+		."`name`, "
+		."`description`, "
+		."IF (length(description), concat(name,' - ',description), name) as fullname "
+		."from InstrumentData ";
+		return $this->mysql->getSQLResult($q);
 	}
 
 	function getSummary($expId) {
-		$summary = array();
 		$q="select p.name, count(a.`DEF_id`) as nb from AcquisitionImageData a "
 			." left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
 			." where a.`REF|SessionData|session` = '$expId' "
 			." group by p.name ";
-		$Rsummary = $this->mysql->SQLQuery($q) or die ("No data type found");
-		$ndata=mysql_num_rows($Rsummary);
-		while ($row = mysql_fetch_array($Rsummary)) 
-			$summary[] = $row;
-		return $summary;
+		return $this->mysql->getSQLResult($q);
+	}
+
+	function getUsers() {
+		return $this->getAll('UserData');
+	}
+
+	function getGroups() {
+		return $this->getAll('GroupData');
 	}
 
 	function getComments($sessionId, $type='rt') {
-		$comments = array();
 		$q="select "
 			."date_format(c.`timestamp`, '%Y-%d-%m %T') as `timestamp`,"
 			."c.name, c.comment "
 			."from `viewer_comment` c " 
 			."where `sessionId` = '$sessionId' and `type` = '$type' "
 			." ";
-		$Rcomments = $this->mysql->SQLQuery($q);
-		while ($row = mysql_fetch_assoc($Rcomments)) 
-			$comments[] = $row;
-		return $comments;
+		return $this->mysql->getSQLResult($q);
 	}
 
 	function getDatatypes($expId) {
@@ -291,6 +303,11 @@ class leginondata {
 			return $ids;
 	}
 
+	function getAll($table) {
+		$q = "select * from `$table`";
+		return $this->mysql->getSQLResult($q);
+	}
+
 	function getDataInfo($table, $id, $fields=array()) {
 		if (!$table)
 			return false;
@@ -342,6 +359,33 @@ class leginondata {
 		$RfileInfo = $this->mysql->SQLQuery($q);
 		$fileInfo = mysql_fetch_array($RfileInfo);
 		return $fileInfo[filename];
+	}
+
+	function getCalibrations($calibration, $instrumentId=False, $limit='', $type='') {
+		if (!in_array($calibration, $this->calibrationtables))
+			return False;
+		if (is_numeric($instrumentId))
+			$where[]="i.`DEF_id`=$instrumentId";
+		$calibration_fields = $this->mysql->getFields($calibration); 
+		if (in_array('type', $calibration_fields) && $type) {
+			$where[] = "cal.`type`='$type'";
+		}
+		if ($where)
+			$sql_where = "where ".implode(' AND ', $where)." ";
+
+		if ($limit)
+			$sql_limit = " limit $limit ";
+
+		$q = "select "
+			."cal.* "
+			."from ".$calibration." cal "
+			."left join SessionData s on (s.`DEF_id`=cal.`REF|SessionData|session`) "
+			."left join InstrumentData i on (i.`DEF_id`=s.`REF|InstrumentData|instrument`) "
+			.$sql_where
+			."order by cal.`DEF_id` DESC "
+			.$sql_limit;
+
+		return $this->mysql->getSQLResult($q);
 	}
 
 	function getImageMatrixCalibration($imgId, $type='image shift') {
@@ -418,10 +462,7 @@ class leginondata {
 		$q="select "
 		."distinct mcal.`type` "
 		."from MatrixCalibrationData mcal";
-		$Rparent = $this->mysql->SQLQuery($q);
-		while ($t= mysql_fetch_array($Rparent)) 
-			$types[] = $t[type];
-		return $types;
+		return $this->mysql->getSQLResult($q);
 	}
 
 	function getImageFFT($imgId) {
@@ -900,6 +941,26 @@ class leginondata {
 		$queries[] = "delete from `$table` where $where ";
 	    }
 	    $this->mysql->SQLQueries($queries);
+	}
+
+	function dumpCalibration($tbl_applicationdata) {
+	    $result = $this->mysql->SQLQuery("SHOW TABLES");
+	    while($row = mysql_fetch_row($result))
+		$tables[] = $row[0];
+
+	    $ref_tables=array();
+	    foreach($tables as $table) {
+		echo "<hr>".$table."<br>";
+	    	$result = $this->mysql->SQLQuery("SHOW FIELDS FROM $table"); 
+	    	while($row = mysql_fetch_array($result)) {
+			echo $row[Field]."<br>";
+			if (ereg("^REF\|$tbl_applicationdata", $row[Field]))
+				if(!in_array($table,$ref_tables))
+					$ref_tables[]=$table;
+		}
+
+	    }
+	return $ref_tables;
 	}
 
 	function dumpApplicationData($applicationId) {

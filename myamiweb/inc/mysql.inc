@@ -190,6 +190,17 @@ class mysql {
 		return $res;
 	}
 
+	function getSQLResult($query, $fetch=MYSQL_ASSOC) {
+		if (!$result = $this->SQLQuery($query))
+			return False;
+		if (!is_resource($result))
+			return $result;
+		$data = array();
+		while ($row = mysql_fetch_array($result, $fetch))
+			$data[] = $row;
+		return $data;
+	}
+
 	function SQLQueries($queries) {
 		$this->connect_db($this->new_sqlhost);
 		$q = (is_array($queries)) ? $queries : array($queries);
