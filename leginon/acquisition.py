@@ -217,6 +217,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		targetdeltarow = targetdata['delta row']
 		targetdeltacolumn = targetdata['delta column']
 		targetscope = targetdata['scope']
+		targetscope = data.ScopeEMData(initializer=targetscope)
 		targetcamera = targetdata['camera']
 
 		## ignore these fields:
