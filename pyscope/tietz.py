@@ -39,6 +39,49 @@ else:
 
 	class Tietz(camera.Camera):
 		camType = None
+
+		dependencymapping = {
+			'getChipName': [('cpChipName', 'r')],
+			'getCameraName': [('cpCameraName', 'r')],
+			'getCameraSize': [('cpTotalDimensionX', 'r'),
+														('cpTotalDimensionY', 'r')],
+			'getPixelSize': [('cpPixelSizeX', 'r'),
+													('cpPixelSizeY', 'r')],
+			'getMaximumPixelValue': [('cpDynamic', 'r')],
+			'getNumberOfGains': [('cpNumberOfGains', 'r')],
+			'getGainFactors': [('cpGainFactors', 'r')],
+			'getNumberOfReadoutSpeeds': [('cpNumberOfReadoutSpeeds', 'r')],
+			'getReadoutSpeeds': [('cpReadoutSpeeds', 'r')],
+			'getLiveModeAvailable': [('cpLiveModeAvailable', 'r')],
+			'getNumberOfDeadColumns': [('cpNumberOfDeadColumns', 'r')],
+			'getDeadColumns': [('cpDeadColumns', 'r')],
+			'getSimulationImagePath': [('cpImagePath', 'r')],
+			'getGain': [('cpCurrentGainIndex', 'r'), ('cpGainFactors', 'r')],
+			'getGainIndex': [('cpCurrentGainIndex', 'r')],
+			'setGainIndex': [('cpCurrentGainIndex', 'w')],
+			'getReadoutSpeed': [('cpCurrentSpeedIndex', 'r'),
+															('cpReadoutSpeeds', 'r')],
+			'getReadoutSpeedIndex': [('cpCurrentSpeedIndex', 'r')],
+			'setReadoutSpeedIndex': [('cpCurrentSpeedIndex', 'w')],
+			'getImageTransform': [('cpImageGeometry', 'r')],
+			'setImageTransform': [('cpImageGeometry', 'w')],
+			'getTemperature': [('cpCurrentTemperature', 'r')],
+			'setTemperature': [('cpTemperatureSetpoint', 'w')],
+			'getShutterOpenDelay': [('cpShutterOpenDelay', 'r')],
+			'setShutterOpenDelay': [('cpShutterOpenDelay', 'w')],
+			'getShutterCloseDelay': [('cpShutterCloseDelay', 'r')],
+			'setShutterCloseDelay': [('cpShutterCloseDelay', 'w')],
+			'getSerialNumber': [('cpSerialNumber', 'r')],
+			'getPreampDelay': [('cpPreampDelay', 'r')],
+			'setPreampDelay': [('cpPreampDelay', 'w')],
+			'getParallelMode': [('cpPMode', 'r')],
+			'setParallelMode': [('cpPMode', 'w')],
+			'getHardwareGainIndex': [('cpHWGainIndex', 'r')],
+			'getHardwareSpeedIndex': [('cpHWSpeedIndex', 'r')],
+			'getRetractable': [('cpIsRetractable', 'r')],
+			'getCameraAxis': [('cpCameraPositionOnTem', 'r')],
+			'setUseSpeedtabForGainSwitch': [('cpUseSpeedtabForGainSwitch', 'w')],
+		}
 		
 		def __init__(self, cameratype=None):
 			# ???
@@ -107,6 +150,41 @@ else:
 				print e
 				return
 
+			for methodname, dependencies in self.dependencymapping.items():
+				supported = True
+				for dependency in dependencies:
+					parametername, permission = dependency
+					if permission not in self.getPermissions(parametername):
+						supported = False
+				if not supported:
+					setattr(self, methodname, self.raiseNotImplementedError)
+
+		def raiseNotImplementedError(self, **kwargs):
+			raise NotImplementedError
+
+		def getPermissions(self, parametername):
+			try:
+				parameter = getattr(win32com.client.constants, parametername)
+			except:
+				return ''
+			value = self.theCamera.QueryParameter(parameter)
+			if value == 0:
+				return ''
+			elif value == 5:
+				return 'r'
+			elif value == 6:
+				return 'w'
+			elif value == 7:
+				return 'rw'
+			elif value == 9:
+				return 'r'
+			elif value == 10:
+				return 'w'
+			elif value == 11:
+				return 'rw'
+			else:
+				return ''
+
 		def exit(self):
 			self.theCamera.UnlockCAMC()
 	
@@ -174,7 +252,7 @@ else:
 		def getPixelSize(self):
 			x = self.theCamera.LParam(win32com.client.constants.cpPixelSizeX)
 			y = self.theCamera.LParam(win32com.client.constants.cpPixelSizeY)
-			return {'x': x, 'y': y}
+			return {'x': x/1000000000.0, 'y': y/1000000000.0}
 
 		def getMaximumPixelValue(self):
 			return self.theCamera.LParam(win32com.client.constants.cpDynamic)
@@ -214,27 +292,27 @@ else:
 		def getSimulationImagePath(self):
 			return self.theCamera.SParam(win32com.client.constants.cpImagePath)
 
-		def getCurrentGainIndex(self):
+		def getGainIndex(self):
 			return self.theCamera.LParam(win32com.client.constants.cpCurrentGainIndex)
 
-		def getCurrentGain(self):
-			return self.getGainFactors()[self.getCurrentGainIndex() - 1]
+		def getGain(self):
+			return self.getGainFactors()[self.getGainIndex() - 1]
 
-		def setCurrentGainIndex(self, value):
+		def setGainIndex(self, value):
 			try:
 				self.theCamera.SetLParam(win32com.client.constants.cpCurrentGainIndex,
 																	value)
 			except pywintypes.com_error:
 				raise ValueError('Invalid gain index specified')
 
-		def getCurrentReadoutSpeedIndex(self):
+		def getReadoutSpeedIndex(self):
 			return self.theCamera.LParam(
 																	win32com.client.constants.cpCurrentSpeedIndex)
 
-		def getCurrentReadoutSpeed(self):
-			return self.getReadoutSpeeds()[self.getCurrentReadoutSpeedIndex() - 1]
+		def getReadoutSpeed(self):
+			return self.getReadoutSpeeds()[self.getReadoutSpeedIndex() - 1]
 
-		def setCurrentReadoutSpeedIndex(self, value):
+		def setReadoutSpeedIndex(self, value):
 			try:
 				self.theCamera.SetLParam(win32com.client.constants.cpCurrentSpeedIndex,
 																	value)
@@ -375,188 +453,39 @@ else:
 		def __init__(self):
 			Tietz.__init__(self, 'PXL')
 	
-		def getSimulationImagePath(self):
-			raise NotImplementedError
-
 	class TietzSimulation(Tietz):
 		def __init__(self):
 			Tietz.__init__(self, 'Simulation')
-
-		def setTemperature(self, value):
-			raise NotImplementedError
-
-		def setShutterOpenDelay(self, value):
-			raise NotImplementedError
-
-		def setShutterCloseDelay(self, value):
-			raise NotImplementedError
-
-		def setPreampDelay(self, value):
-			raise NotImplementedError
-
-		def setParallelMode(self, value):
-			raise NotImplementedError
-
-		def setUseSpeedtabForGainSwitch(self, value):
-			raise NotImplementedError
 
 	class TietzPVCam(Tietz):
 		def __init__(self):
 			Tietz.__init__(self, 'PVCam')
 	
-		def getSimulationImagePath(self):
-			raise NotImplementedError
-
-		def setUseSpeedtabForGainSwitch(self, value):
-			raise NotImplementedError
-
 	class TietzFastScan(Tietz):
 		def __init__(self):
 			Tietz.__init__(self, 'FastScan')
 	
-		def getSimulationImagePath(self):
-			raise NotImplementedError
-
-		def getCurrentGainIndex(self):
-			raise NotImplementedError
-
-		def getCurrentGain(self):
-			raise NotImplementedError
-
-		def setCurrentGainIndex(self, value):
-			raise NotImplementedError
-
-		def getCurrentReadoutSpeedIndex(self):
-			raise NotImplementedError
-
-		def getCurrentReadoutSpeed(self):
-			raise NotImplementedError
-
-		def setCurrentReadoutSpeedIndex(self, value):
-			raise NotImplementedError
-
-		def getTemperature(self):
-			raise NotImplementedError
-
-		def setTemperature(self, value):
-			raise NotImplementedError
-
-		def getSerialNumber(self):
-			raise NotImplementedError
-
-		def getShutterOpenDelay(self):
-			raise NotImplementedError
-
-		def setShutterOpenDelay(self, value):
-			raise NotImplementedError
-
-		def getShutterCloseDelay(self):
-			raise NotImplementedError
-
-		def setShutterCloseDelay(self, value):
-			raise NotImplementedError
-
-		def getPreampDelay(self):
-			raise NotImplementedError
-
-		def setPreampDelay(self, value):
-			raise NotImplementedError
-
-		def getParallelMode(self):
-			raise NotImplementedError
-
-		def setParallelMode(self, value):
-			raise NotImplementedError
-
-		def setUseSpeedtabForGainSwitch(self, value):
-			raise NotImplementedError
-
-		def getHardwareGainIndex(self):
-			raise NotImplementedError
-
-		def getHardwareSpeedIndex(self):
-			raise NotImplementedError
-
 	class TietzFastScanFW(Tietz):
 		def __init__(self):
 			Tietz.__init__(self, 'FastScanFW')
 	
-		def getSimulationImagePath(self):
-			raise NotImplementedError
-
-		def getCurrentReadoutSpeedIndex(self):
-			raise NotImplementedError
-
-		def getCurrentReadoutSpeed(self):
-			raise NotImplementedError
-
-		def setCurrentReadoutSpeedIndex(self, value):
-			raise NotImplementedError
-
-		def getTemperature(self):
-			raise NotImplementedError
-
-		def setTemperature(self, value):
-			raise NotImplementedError
-
-		def getSerialNumber(self):
-			raise NotImplementedError
-
-		def getShutterOpenDelay(self):
-			raise NotImplementedError
-
-		def setShutterOpenDelay(self, value):
-			raise NotImplementedError
-
-		def getShutterCloseDelay(self):
-			raise NotImplementedError
-
-		def setShutterCloseDelay(self, value):
-			raise NotImplementedError
-
-		def getPreampDelay(self):
-			raise NotImplementedError
-
-		def setPreampDelay(self, value):
-			raise NotImplementedError
-
-		def getParallelMode(self):
-			raise NotImplementedError
-
-		def setParallelMode(self, value):
-			raise NotImplementedError
-
-		def setUseSpeedtabForGainSwitch(self, value):
-			raise NotImplementedError
-
-		def getHardwareGainIndex(self):
-			raise NotImplementedError
-
-		def getHardwareSpeedIndex(self):
-			raise NotImplementedError
-
-		# really?
-		def getCameraAxis(self):
-			raise NotImplementedError
-
 	class TietzSCX(Tietz):
 		def __init__(self):
 			Tietz.__init__(self, 'SCX')
 	
-		def getSimulationImagePath(self):
-			raise NotImplementedError
-
-		def setUseSpeedtabForGainSwitch(self, value):
-			raise NotImplementedError
-
 if __name__ == '__main__':
 	foo = TietzSimulation()
 	#foo = TietzSCX()
 	methods = dir(foo)
 	methods.remove('getImage')
+	methods.remove('getPermissions')
 	for i in methods:
 		if i[:3] == 'get':
 			try:
 				print i, getattr(foo, i)()
 			except NotImplementedError:
 				print 'not implemented'
+#	for i in methods:
+#		if i[:3] == 'set':
+#			print i
+
