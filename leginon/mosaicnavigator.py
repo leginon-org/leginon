@@ -13,7 +13,7 @@ class MosaicNavigator(navigator.Navigator):
 		self.start()
 
 	def addStateMosaic(self, ievent):
-		self.printerror('What's the deal with MosaicNavigator')
+		self.printerror("What's the deal with MosaicNavigator")
 		idata = self.researchByDataID(ievent.content)
 		imagedataid = idata.content['image data ID']
 		statemosaicdata = idata.content
