@@ -914,13 +914,6 @@ class NodeLocationData(LocationData):
 		return t
 	typemap = classmethod(typemap)
 
-class DataLocationData(LocationData):
-	def typemap(cls):
-		t = LocationData.typemap()
-		t += [ ('location', list), ]
-		return t
-	typemap = classmethod(typemap)
-
 class NodeClassesData(InSessionData):
 	def typemap(cls):
 		t = InSessionData.typemap()
@@ -1098,9 +1091,6 @@ class NewPresetData(InSessionData):
 		return t
 	typemap = classmethod(typemap)
 
-class CorrelationData(InSessionData):
-	pass
-
 class ImageData(InSessionData):
 	def typemap(cls):
 		t = InSessionData.typemap()
@@ -1258,9 +1248,6 @@ class AcquisitionFFTData(ProcessedAcquisitionImageData):
 
 class ScaledAcquisitionImageData(ImageData):
 	'''Small version of AcquisitionImageData'''
-	pass
-
-class TrialImageData(PresetImageData):
 	pass
 
 class ImageListData(InSessionData):
