@@ -15,27 +15,27 @@ class ManagerCLI(object):
 
 	def launchers(self):
 		'list the available launcher nodes'
-		launcherlist = self.uiclient.execute('launchers')
+		launcherlist = self.uiclient.getargtype('launch','launcher_str')
 		for launcher in launcherlist:
 			print '\t%s' % launcher
 
+	def nodeclasses(self):
+		'list available node classes'
+		nodeclasslist = self.uiclient.getargtype('launch','nodeclasses')
+		for nodeclass in nodeclasslist:
+			print '\t%s' % nodeclass
+
 	def nodes(self):
 		'list all available nodes'
-		nodelist = self.uiclient.execute('nodes')
+		nodelist = self.uiclient.getargtype('bind','fromnode_str')
 		for node in nodelist:
 			print '\t%s' % node
 
 	def eventclasses(self):
 		'list available event classes'
-		eventclasslist = self.uiclient.execute('eventclasses')
+		eventclasslist = self.uiclient.getargtype('bind','eventclass_str')
 		for eventclass in eventclasslist:
 			print '\t%s' % eventclass
-
-	def nodeclasses(self):
-		'list available node classes'
-		nodeclasslist = self.uiclient.execute('nodeclasses')
-		for nodeclass in nodeclasslist:
-			print '\t%s' % nodeclass
 
 	def launch(self, name, launcher, nodeclass, args='', newproc=0):
 		'''

@@ -49,6 +49,17 @@ class Manager(node.Node):
 		'return an id for a new node'
 		return self.id + (name,)
 
+	def addLauncher(self, nodeid):
+		self.launcherlist.append(nodeid[-1])
+		self.launcherdict[nodeid[-1]] = nodeid
+
+	def delLauncher(self, nodeid):
+		try:
+			self.launcherlist.remove(nodeid[-1])
+			del self.launcherdict[nodeid[-1]]
+		except:
+			pass
+
 	def registerNode(self, readyevent):
 		nodeid = readyevent.id[:-1]
 		print 'registering node', nodeid
@@ -67,17 +78,16 @@ class Manager(node.Node):
 			nodelocationdata = data.NodeLocationData(nodeid, nodelocation)
 		self.server.datahandler._insert(nodelocationdata)
 
-		# let UI server know about the new node
-		self.uiAddNode(nodeid)
+		# check if new node is launcher
 		if isinstance(readyevent, event.LauncherAvailableEvent):
-			self.uiAddLauncher(nodeid)
+			self.addLauncher(nodeid)
 
 	def unregisterNode(self, unavailable_event):
 		nodeid = unavailable_event.id[:-1]
 		self.removeNode(nodeid)
 
-		# let UI server know about unregistered node
-		## NOT DONE YET
+		# also remove from launcher registry
+		self.delLauncher(nodeid)
 
 	def removeNode(self, nodeid):
 		nodelocationdata = self.server.datahandler.query(nodeid)
@@ -195,66 +205,44 @@ class Manager(node.Node):
 										self.clients[to_node].push(ievent)
 										done.append(to_node)
 
-	### these are methods that I want to export to the UI
 
 	def defineUserInterface(self):
 		self.ui_nodes = {}
 		self.ui_launchers = {}
+
 		self.ui_eventclasses = event.eventClasses()
 		self.ui_nodeclasses = common.nodeClasses()
 
-		self.uiserver.RegisterMethod(self.uiLaunchers, (), 'launchers')
-		self.uiserver.RegisterMethod(self.uiNodes, (), 'nodes')
-		self.uiserver.RegisterMethod(self.uiNodeclasses, (), 'nodeclasses')
-		self.uiserver.RegisterMethod(self.uiEventclasses, (), 'eventclasses')
+		eventclass_list = self.ui_eventclasses.keys()
+		nodeclass_list = self.ui_nodeclasses.keys()
+		self.launcherlist = []
+		self.launcherdict = {}
+
 		self.uiserver.RegisterMethod(self.uiGetID, (), 'id')
 
 		argspec = (
 			{'name':'name', 'type':'string'},
-			{'name':'launcher_str', 'type':'string'},
-			{'name':'nodeclass_str', 'type':'string'},
+			{'name':'launcher_str', 'type':self.launcherlist},
+			{'name':'nodeclass_str', 'type':nodeclass_list},
 			{'name':'args', 'type':'string', 'default':''},
 			{'name':'newproc', 'type':'boolean', 'default':False}
 			)
 		self.uiserver.RegisterMethod(self.uiLaunch, argspec, 'launch')
+
 		argspec = (
-			{'name':'eventclass_str', 'type':'string'},
-			{'name':'fromnode_str', 'type':'string'},
-			{'name':'tonode_str', 'type':'string'}
+			{'name':'eventclass_str', 'type':eventclass_list},
+			{'name':'fromnode_str', 'type':self.clientlist},
+			{'name':'tonode_str', 'type':self.clientlist}
 			)
 		self.uiserver.RegisterMethod(self.uiAddDistmap, argspec, 'bind')
-
-	def uiLaunchers(self):
-		'return the current list of launchers'
-		return self.ui_launchers.keys()
-
-	def uiNodes(self):
-		'return the current list of nodes'
-		return self.ui_nodes.keys()
-
-	def uiNodeclasses(self):
-		'return the current list of node classes'
-		return self.ui_nodeclasses.keys()
-
-	def uiEventclasses(self):
-		'return the current list of event classes'
-		return self.ui_eventclasses.keys()
 
 	def uiGetID(self):
 		return self.id
 
-	def uiAddNode(self, node_id):
-		node_str = node_id[-1]
-		self.ui_nodes[node_str] = node_id
-
-	def uiAddLauncher(self, launcher_id):
-		launcher_str = launcher_id[-1]
-		self.ui_launchers[launcher_str] = launcher_id
-
 	def uiLaunch(self, name, launcher_str, nodeclass_str, args, newproc):
 		"interface to the launchNode method"
 
-		launcher_id = self.ui_launchers[launcher_str]
+		launcher_id = self.launcherdict[launcher_str]
 		nodeclass = self.ui_nodeclasses[nodeclass_str]
 
 		args = '(%s)' % args
@@ -271,8 +259,8 @@ class Manager(node.Node):
 
 	def uiAddDistmap(self, eventclass_str, fromnode_str, tonode_str):
 		eventclass = self.ui_eventclasses[eventclass_str]
-		fromnode_id = self.ui_nodes[fromnode_str]
-		tonode_id = self.ui_nodes[tonode_str]
+		fromnode_id = self.clientdict[fromnode_str]
+		tonode_id = self.clientdict[tonode_str]
 		self.addEventDistmap(eventclass, fromnode_id, tonode_id)
 
 		## just to make xmlrpc happy
@@ -286,7 +274,7 @@ if __name__ == '__main__':
 	m = Manager(manager_id)
 
 	## GUI
-	gui = 0
+	gui = 1
 	if gui:
 		import managergui
 		import Tkinter

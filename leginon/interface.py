@@ -31,7 +31,7 @@ class Server(xmlrpcserver.xmlrpcserver):
 				raise RuntimeError('bad argname in argdict')
 			xmlrpctype = argdict['type']
 			if xmlrpctype not in xmlrpctypes:
-				if type(xmlrpctype) != tuple:
+				if type(xmlrpctype) not in (tuple,list):
 					raise RuntimeError('bad xmlrpctype')
 
 		self.funcdict[alias] = {'func': method, 'argspec':argspec}
@@ -45,7 +45,6 @@ class Server(xmlrpcserver.xmlrpcserver):
 			funcstruct[key] = {}
 			funcstruct[key]['argspec'] = value['argspec']
 
-		print 'UIMethods', funcstruct
 		return funcstruct
 
 
@@ -58,9 +57,11 @@ class ClientComponent(object):
 		self.argspec = argspec
 		self.argnames = []
 		self.argvalues = {}
+		self.argtypes = {}
 		for arg in argspec:
 			argname = arg['name']
 			self.argnames.append(argname)
+			self.argtypes[argname] = arg['type']
 			if 'default' in arg:
 				self.argvalues[argname] = arg['default']
 			else:
@@ -71,6 +72,9 @@ class ClientComponent(object):
 		for argname in self.argnames:
 			arglist.append(self.argvalues[argname])
 		return tuple(arglist)
+
+	def type(self, argname):
+		return self.argtypes[argname]
 
 	def __setitem__(self, key, value):
 		self.argvalues[key] = value
@@ -97,6 +101,9 @@ class Client(object):
 
 	def setarg(self, funcname, argname, value):
 		self.funcdict[funcname][argname] = value
+
+	def getargtype(self, funcname, argname):
+		return self.funcdict[funcname].type(argname)
 
 class TestNode(object):
 	def __init__(self):

@@ -54,6 +54,11 @@ class Node(leginonobject.LeginonObject):
 		leginonobject.LeginonObject.__init__(self, id)
 
 		self.clients = {}
+
+		# this was added for interface server
+		self.clientlist = []
+		self.clientdict = {}
+
 		self.registry = {'outputs':[], 'inputs':[]}
 
 		self.server = datatransport.Server(self.ID(), dh, dhargs)
@@ -90,7 +95,9 @@ class Node(leginonobject.LeginonObject):
 		{'name':'mystr', 'type':'string', 'default':'hello'},
 		{'name':'selection', 'type':('red','green','blue')}
 		)
-		alias is an optional alias that should be used the the UI
+		- arg types are found in interface.xmlrpctypes and this 
+		can also be set to sequence for an enumeration type.
+		- alias is an optional alias that should be used the the UI
 		  (defaults to the method name)
 		'''
 		pass
@@ -193,9 +200,17 @@ class Node(leginonobject.LeginonObject):
 	def addEventClient(self, newid, loc):
 		self.clients[newid] = self.clientclass(self.ID(), loc)
 
+		## this was added to work with interface server
+		self.clientlist.append(newid[-1])
+		self.clientdict[newid[-1]] = newid
+
 	def delEventClient(self, newid):
 		if newid in self.clients:
 			del self.clients[newid]
+
+			## this was added to work with interface server
+			self.clientlist.remove(newid[-1])
+			del self.clientdict[newid[-1]]
 
 	def addEventInput(self, eventclass, func):
 		self.server.datahandler.setBinding(eventclass, func)

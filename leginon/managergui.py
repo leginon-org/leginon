@@ -12,24 +12,23 @@ class ManagerGUI(Frame):
 		self.build_it()
 
 	def update_all(self):
-		self.update_launcherlist()
-		self.update_nodelists()
-		self.update_eventclasslist()
-		self.update_nodeclasslist()
+		self.uiclient.getMethods()
 
-	def update_launcherlist(self):
-		launcherlist = self.uiclient.execute('launchers')
+		launcherlist = self.uiclient.getargtype('launch','launcher_str')
 		self.gui_launcherlist.setlist(launcherlist)
-	def update_nodelists(self):
-		nodelist = self.uiclient.execute('nodes')
-		self.gui_fromnodelist.setlist(nodelist)
-		self.gui_tonodelist.setlist(nodelist)
-	def update_eventclasslist(self):
-		eventclasslist = self.uiclient.execute('eventclasses')
-		self.gui_eventclasslist.setlist(eventclasslist)
-	def update_nodeclasslist(self):
-		nodeclasslist = self.uiclient.execute('nodeclasses')
+
+		nodeclasslist = self.uiclient.getargtype('launch','nodeclass_str')
 		self.gui_nodeclasslist.setlist(nodeclasslist)
+
+		fromnodelist = self.uiclient.getargtype('bind','fromnode_str')
+		self.gui_fromnodelist.setlist(fromnodelist)
+
+		tonodelist = self.uiclient.getargtype('bind','tonode_str')
+		self.gui_tonodelist.setlist(tonodelist)
+
+		eventlist = self.uiclient.getargtype('bind','eventclass_str')
+		self.gui_eventclasslist.setlist(eventlist)
+
 
 
 	def launch(self):
