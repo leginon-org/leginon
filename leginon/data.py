@@ -274,6 +274,13 @@ class NodeClassesData(Data):
 		return t
 	typemap = classmethod(typemap)
 
+class DriftData(Data):
+	def typemap(cls):
+		t = Data.typemap()
+		t += []
+		return t
+	typemap = classmethod(typemap)
+
 class CalibrationData(Data):
 	def typemap(cls):
 		t = Data.typemap()
@@ -336,6 +343,15 @@ class NewPresetData(Data):
 			('binning', dict),
 			('offset', dict),
 			('exposure time', int),
+		]
+		return t
+	typemap = classmethod(typemap)
+
+class PresetSequenceData(Data):
+	def typemap(cls):
+		t = Data.typemap()
+		t += [
+			('sequence', list)
 		]
 		return t
 	typemap = classmethod(typemap)
@@ -488,7 +504,7 @@ class StateMosaicData(Data):
 		return t
 	typemap = classmethod(typemap)
 
-## this stuff camera from ImageCanvas.eventXYInfo and ImageWatcher.imageInfo
+## this stuff came from ImageCanvas.eventXYInfo and ImageWatcher.imageInfo
 ## XXX preset may not always be set
 class ImageTargetData(Data):
 	def typemap(cls):
@@ -523,4 +539,11 @@ class ImageTargetListData(Data):
 		return t
 	typemap = classmethod(typemap)
 
+class PixelDriftData(Data):
+	def typemap(cls):
+		t = Data.typemap()
+		t += [ ('rows', float), ]
+		t += [ ('cols', float), ]
+		return t
+	typemap = classmethod(typemap)
 
