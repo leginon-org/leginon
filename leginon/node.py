@@ -297,7 +297,7 @@ class Node(leginonobject.LeginonObject):
 		## setting an item of datainstance will reset the dbid
 		### this is stupid because we should only have to check identity
 		### not equality
-		if datainstance['session']['name'] != self.session['name']:
+		if datainstance['session'] is None or datainstance['session']['name'] != self.session['name']:
 			datainstance['session'] = self.session
 		for key in datainstance:
 			if isinstance(datainstance[key], data.InSessionData):
