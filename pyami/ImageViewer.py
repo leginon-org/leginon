@@ -11,9 +11,10 @@ class ImageItem:
 		self.photoimage = NumericImage('L', (0,0))
 		self.nwx = nwx
 		self.nwy = nwy
-		self.id = canvas.create_image(self.nwx, self.nwy, anchor=NW, image=self.photoimage)
+		self.id = canvas.canvas.create_image(self.nwx, self.nwy, anchor=NW, image=self.photoimage)
 		self.width = -1
 		self.height = -1
+		self.canvas = canvas
 
 	def imagexy(self,canvasx,canvasy):
 		"""
@@ -46,6 +47,21 @@ class ImageItem:
 			raise ValueError, "2D Numeric array required"
 		self.height,self.width = data.shape
 
+		### be sure canvas is big enough to fit new image size
+
+		xmax = self.nwx + self.width
+		ymax = self.nwy + self.height
+
+		if self.canvas['width'] < xmax:
+			newwidth = xmax
+		else:
+			newwidth = self.canvas['width']
+		if self.canvas['height'] < ymax:
+			newheight = ymax
+		else:
+			newheight = self.canvas['height']
+		self.canvas.resize(newwidth,newheight)
+
 		self.photoimage.use_array(data)
 		self.photoimage.paste_array()
 
@@ -57,7 +73,9 @@ class ImageCanvas(ScrolledCanvas):
 	"""
 	def __init__(self,*args,**kargs):
 		ScrolledCanvas.__init__(self,*args,**kargs)
+		self['cursor'] = 'crosshair'
 		self.images = []
+		self.cursorinfo = CursorInfo(self)
 
 		### linkable Tk variables
 		self.can_x = IntVar()
@@ -90,31 +108,56 @@ class ImageCanvas(ScrolledCanvas):
 		self.can_x.set(can_x)
 		self.can_y.set(can_y)
 
-		### find an image, if any, that is below the cursor
-		### may not be the top image if overlapping!!!
-		for im in self.images:
-			imcoord = im.imagexy(can_x, can_y)
-			print 'imcoord', imcoord
+		info = self.cursorinfo.query(can_x, can_y)
+
+
+class CursorInfo:
+	"""
+	CursorInfo(imagecanvas)
+	Maintains info about what is under the cursor.
+	"""
+	def __init__(self, imagecanvas):
+		self.imagecanvas = imagecanvas
+		self.imageitem = None
+		self.imagex = IntVar()
+		self.imagey = IntVar()
+		self.imagedata = DoubleVar()
+		self.imagelevel = IntVar()
+
+	def query(self, canvasx, canvasy):
+		"""
+		find an image, if any, that is below the cursor
+		This may not be the top image if overlapping!!!
+		"""
+		img = None
+		img_x = None
+		img_y = None
+		img_i = None
+		for im in self.imagecanvas.images:
+			imcoord = im.imagexy(canvasx, canvasy)
 			if imcoord:
 				img = im
 				img_x = imcoord[0]
 				img_y = imcoord[1]
 				img_i = im.data_level(img_x,img_y)
 				break
-			else:
-				img_x = None
-				img_y = None
-				img_i = None
 
-			self.img_x.set(img_x)
-			self.img_y.set(img_y)
-			self.img_i.set(img_i)
+		self.imageitem = img
+		self.imagex.set(img_x)
+		self.imagey.set(img_y)
+		self.imagedata.set(img_i)
 
-
-class PixelDataBar(Frame):
-	def __init__(self, *args, **kargs):
-		Frame.__init__(self, *args, **kargs)
+		return (img, img_x, img_y, img_i)
 		
+class CursorInfoWidget(Frame):
+	def __init__(self, cursorinfo, *args, **kargs):
+		Frame.__init__(self, *args, **kargs)
+		self.xlab = Label(self, textvariable=cursorinfo.imagex, width=6)
+		self.ylab = Label(self, textvariable=cursorinfo.imagey, width=6)
+		self.ilab = Label(self, textvariable=cursorinfo.imagedata, width=6)
+		self.xlab.pack(side=LEFT)
+		self.ylab.pack(side=LEFT)
+		self.ilab.pack(side=LEFT)
 
 class ImageViewer(Frame):
 	"""
@@ -127,7 +170,6 @@ class ImageViewer(Frame):
 
 	def __init__(self, *args, **kargs):
 		Frame.__init__(self, *args, **kargs)
-		self['bg'] = 'red'
 		self._build()
 
 	## put together component widgets
@@ -135,9 +177,11 @@ class ImageViewer(Frame):
 		self.heading = Label(self, text='ImageViewer')
 		self.heading.pack(side=TOP, padx=3,pady=3)
 
-		self.canvas = ImageCanvas(self, bg = 'blue',bd=4, relief=RAISED)
-		self.canvas.pack(padx=3,pady=3,expand=YES,fill=BOTH,side=TOP)
+		self.canvas = ImageCanvas(self, bg = '#48f',bd=4, relief=RAISED)
+		self.canvas.pack(padx=4,pady=4,expand=YES,fill=BOTH,side=TOP)
 		self.im = self.canvas.create_image_item(0,0)
+		self.cursorinfo = CursorInfoWidget(self.canvas.cursorinfo)
+		self.cursorinfo.pack(side=TOP)
 
 	def info_bar(self, state):
 		if state == ON:
@@ -160,18 +204,20 @@ class ImageViewer(Frame):
 if __name__ == '__main__':
 	root = Tk()
 
-	jim = ImageViewer(root)
+	jim = ImageViewer(root, bg='#488')
 	jim.pack()
 
+
+
 	## read mrc image into Numeric array
-	data = mrc_to_numeric('test1.mrc')
-	data = data[:256]
+	data1 = mrc_to_numeric('test1.mrc')
+	data1 = data1[:256]
 
 	#import Numeric
 	#data = Numeric.arrayrange(16384)
 	#data = Numeric.reshape(data, (128,128))
 
 	## create a photo image and plug it into the viewer
-	jim.import_numeric(data)
+	jim.import_numeric(data1)
 
 	root.mainloop()

@@ -15,9 +15,10 @@ class ScrolledCanvas(Frame):
 		self.canvas.bind('<Leave>', self.leave_callback)
 
 	def _build(self):
-		can = self.canvas = Canvas(self, bg='#44f')
-		hs = self.hscroll = Scrollbar(self, orient=HORIZONTAL, background=self['background'], troughcolor=self['background'])
-		vs = self.vscroll = Scrollbar(self, orient=VERTICAL, background=self['background'], troughcolor=self['background'])
+		bgcolor = self['background']
+		can = self.canvas = Canvas(self, bg=bgcolor)
+		hs = self.hscroll = Scrollbar(self, orient=HORIZONTAL, background=bgcolor, troughcolor=bgcolor)
+		vs = self.vscroll = Scrollbar(self, orient=VERTICAL, background=bgcolor, troughcolor=bgcolor)
 
 		## connect canvas to scrollbars
 		can.config(xscrollcommand=hs.set, yscrollcommand=vs.set)

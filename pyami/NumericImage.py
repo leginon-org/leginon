@@ -41,7 +41,6 @@ class NumericImage(ImageTk.PhotoImage):
 	def array_to_image(self, clip=None):
 		h,w = self.array.shape
 		size = (w,h)
-		print "array_to_image size", size
 		if len(size) != 2:
 			return None
 
