@@ -77,33 +77,33 @@ class DBDataKeeper(datahandler.DataHandler):
 	# don't bother with these for now
 	def remove(self, id):
 		pass
+
 	def ids(self):
 		pass
 
+	def saveImage(self, imagedata):
+		numdata = imagedata['image']
+		session = imagedata['session']
+		id = imagedata['id']
+
+		if numdata is not None:
+			# filename = ???
+			filename = './images/%s-%s.mrc' % (session, id)
+			try:
+				Mrc.numeric_to_mrc(numdata, filename)
+			except:
+				self.printerror('error converting image to file')
+			imagedata['database filename'] = filename
+			imagedata['image'] = None
+
 	def image2file(self, idata):
 		if isinstance(idata, data.ImageData):
-			if idata['image'] is not None:
-				# filename = ???
-				filename = './images/%s-%s.mrc' % (self.session, idata['id'])
-				try:
-					Mrc.numeric_to_mrc(idata['image'], filename)
-				except:
-					self.printerror('error converting image to file')
-				idata['database filename'] = filename
-				idata['image'] = None
+			self.saveImage(idata)
 
 		types = idata.types()
 		for key in types:
 			if issubclass(types[key], data.ImageData):
-				if idata[key]['image'] is not None:
-					# filename = ???
-					filename = './images/%s-%s-%s.mrc' % (self.session, idata['id'], key)
-					try:
-						Mrc.numeric_to_mrc(idata[key]['image'], filename)
-					except:
-						self.printerror('error converting image to file')
-					idata[key]['database filename'] = filename
-					idata[key]['image'] = None
+				self.saveImage(idata[key])
 
 	def file2image(self, idata):
 		if isinstance(idata, data.ImageData):
