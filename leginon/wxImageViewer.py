@@ -144,6 +144,9 @@ class ZoomTool(ImageTool):
 	def updateLabel(self):
 		xscale, yscale = self.imagepanel.getScale()
 		self.label.SetLabel('Zoom: ' + str(xscale) + 'x')
+		width, height = self.label.GetSizeTuple()
+		self.sizer.SetItemMinSize(self.label, width, height)
+		self.sizer.Layout()
 
 	def zoomIn(self, x, y):
 		xscale, yscale = self.imagepanel.getScale()
@@ -284,6 +287,10 @@ class ImagePanel(wxPanel):
 			return False
 
 	def setScale(self, scale):
+		for n in scale:
+			# from one test
+			if n > 512.0 or n < 0.002:
+				return
 		oldscale = self.getScale()
 		self.scale = scale
 		if self.smallScale() or self.smallScale(oldscale):
