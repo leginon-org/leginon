@@ -465,8 +465,7 @@ class NodeLabel(object):
 		self.label.bind('<Button-3>', self.rightClick)
 
 	def argsLabel(self, args):
-		return "Name: %s\nClass: %s\nLauncher: %s\nProcess: %s\nArguments: %s" \
-																% (args[3], args[2], args[0], args[1], args[4])
+		return "Name: %s\nClass: %s\nLauncher: %s\nProcess: %s\nArguments: %s\nDependencies: %s" % (args[3], args[2], args[0], args[1], args[4], args[5])
 
 	def rightClick(self, ievent):
 		if self.editor.connectionmanager.activeconnection is None:
@@ -754,6 +753,7 @@ class NodeDialog(mySimpleDialog):
 		Tkinter.Label(master, text='Launcher:').grid(row=2)
 		Tkinter.Label(master, text='Process:').grid(row=3)
 		Tkinter.Label(master, text='Arguments:').grid(row=4)
+		Tkinter.Label(master, text='Dependencies:').grid(row=5)
 
 		self.nameentry = Tkinter.Entry(master)
 
@@ -789,12 +789,16 @@ class NodeDialog(mySimpleDialog):
 		self.argumentsentry = Tkinter.Entry(master)
 		self.argumentsentry.insert(Tkinter.END, '()')
 
+		self.dependenciesentry = Tkinter.Entry(master)
+		self.dependenciesentry.insert(Tkinter.END, '[]')
+
 		self.nameentry.grid(row=0, column=1)
 #		scrollbar.grid(row=1, column=2, sticky=Tkinter.N+Tkinter.S)
 #		self.classlistbox.grid(row=1, column=1)
 		self.launcherentry.grid(row=2, column=1)
 		self.processcheckbutton.grid(row=3, column=1)
 		self.argumentsentry.grid(row=4, column=1)
+		self.dependenciesentry.grid(row=5, column=1)
 
 		if self.args is not None:
 			self.nameentry.delete(0, Tkinter.END)
@@ -811,6 +815,9 @@ class NodeDialog(mySimpleDialog):
 			self.argumentsentry.delete(0, Tkinter.END)
 			self.argumentsentry.insert(Tkinter.END, str(self.args[4]))
 		
+			self.dependenciesentry.delete(0, Tkinter.END)
+			self.dependenciesentry.insert(Tkinter.END, str(self.args[5]))
+
 	def apply(self):
 		name = self.nameentry.get()
 		selection = self.classlistbox.curselection()
@@ -820,7 +827,9 @@ class NodeDialog(mySimpleDialog):
 		launcher = eval(self.launcherentry.get())
 		process = self.processvariable.get()
 		arguments = eval(self.argumentsentry.get())
-		self.result = (launcher, process, classstring, name, arguments)
+		dependenciese = eval(self.dependenciesentry.get())
+		self.result = (launcher, process, classstring,
+											name, arguments, dependenciese)
 
 if __name__ == '__main__':
 	import sys

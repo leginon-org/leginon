@@ -335,7 +335,10 @@ class Manager(node.Node):
 		'''
 		args = (launcher, newproc, target, name, nodeargs, dependencies)
 		self.app.addLaunchSpec(args)
+		t = threading.Thread(target=self.waitNode, args=args)
+		t.start()
 
+	def waitNode(self, launcher, newproc, target, name, nodeargs, dependencies):
 		newid = self.id + (name,)
 		args = (newid, self.session, self.nodelocations) + nodeargs
 		# could be with threading event, but might need locking
@@ -350,6 +353,7 @@ class Manager(node.Node):
 														targetclass=target, args=args)
 		self.outputEvent(ev, 0, launcher)
 		return newid
+
 
 	def addNode(self, hostname, port):
 		'''Add a running node to the manager. Sends an event to the location.'''
