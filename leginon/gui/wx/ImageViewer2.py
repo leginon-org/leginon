@@ -20,9 +20,9 @@ def wxBitmapFromNumarray(n, min=None, max=None, color=False):
 		wximage.SetData(numextension.rgbstring(n, float(min), float(max)))
 	return wx.BitmapFromImage(wximage)
 
-class BufferedWindow(wx.ScrolledWindow):
+class BufferedWindow(wx.Window):
 	def __init__(self, parent, id):
-		wx.ScrolledWindow.__init__(self, parent, id)
+		wx.Window.__init__(self, parent, id)
 
 		self.onSize(None)
 
@@ -79,8 +79,8 @@ class BitmapWindow(BufferedWindow):
 		self._yoffsetscaled = 0
 		self._xscale = 1.0
 		self._yscale = 1.0
-		self._xview = 0
-		self._yview = 0
+		self._xscroll = 0
+		self._yscroll = 0
 		self._bitmap = None
 		BufferedWindow.__init__(self, parent, id)
 
@@ -109,8 +109,8 @@ class BitmapWindow(BufferedWindow):
 
 		dc.SetUserScale(self._xscale, self._yscale)
 
-		x = max(int(self._xview/self._xscale), self._xview, 0)
-		y = max(int(self._yview/self._yscale), self._yview, 0)
+		x = max(int(self._xscroll/self._xscale), self._xscroll, 0)
+		y = max(int(self._yscroll/self._yscale), self._yscroll, 0)
 		if wx.Platform == '__WXGTK__':
 			width = min(self._bitmapwidth - x, self._clientwidthscaled)
 			height = min(self._bitmapheight - y, self._clientheightscaled)
@@ -190,13 +190,20 @@ class OffsetWindow(ScaledWindow):
 			updated = True
 		return updated
 
+	def updateScrollbars(self, position=(0, 0)):
+		xposition, yposition = position
+		xthumbsize = min(int(self._clientwidth/self._xscale), self._clientwidth)
+		ythumbsize = min(int(self._clientheight/self._yscale), self._clientheight)
+		xrange = min(self._bitmapwidthscaled, self._bitmapwidth)
+		yrange = min(self._bitmapheightscaled, self._bitmapheight)
+		self.SetScrollbar(wx.HORIZONTAL, xposition, xthumbsize, xrange)
+		self.SetScrollbar(wx.VERTICAL, yposition, ythumbsize, yrange)
+		# ?
+		self._xscroll = self.GetScrollPos(wx.HORIZONTAL)
+		self._yscroll = self.GetScrollPos(wx.VERTICAL)
+
 	def _setBitmap(self, bitmap):
 		ScaledWindow._setBitmap(self, bitmap)
-		ppux = max(int(self._xscale), 1)
-		ppuy = max(int(self._yscale), 1)
-		nux = min(int(self._bitmapwidth*self._xscale), self._bitmapwidth)
-		nuy = min(int(self._bitmapheight*self._yscale), self._bitmapheight)
-		self.SetScrollbars(ppux, ppuy, nux, nuy)
 		self.updateOffset()
 
 	def _onSize(self, evt):
@@ -206,14 +213,15 @@ class OffsetWindow(ScaledWindow):
 			self.Refresh()
 
 	def clientToImage(self, x, y):
-		xview, yview = self.GetViewStart()
-		xview = max(int(xview/self._xscale), xview)
-		yview = max(int(yview/self._yscale), yview)
+		xscroll = self.GetScrollPos(wx.HORIZONTAL)
+		yscroll = self.GetScrollPos(wx.VERTICAL)
+		xscroll = max(int(xscroll/self._xscale), xscroll)
+		yscroll = max(int(yscroll/self._yscale), yscroll)
 		xscaled = int(round(x/self._xscale))
 		yscaled = int(round(y/self._yscale))
 		xoffset = max(self._xoffsetscaled, self._xoffset)
 		yoffset = max(self._yoffsetscaled, self._yoffset)
-		return xview + xscaled - xoffset, yview + yscaled - yoffset
+		return xscroll + xscaled - xoffset, yscroll + yscaled - yoffset
 
 	def _setScale(self, x, y, center=None):
 		if center is None:
@@ -221,10 +229,6 @@ class OffsetWindow(ScaledWindow):
 		xcenter, ycenter = self.clientToImage(*center)
 		if ScaledWindow._setScale(self, x, y):
 			self.updateOffset()
-			ppux = max(int(self._xscale), 1)
-			ppuy = max(int(self._yscale), 1)
-			nux = min(int(self._bitmapwidth*self._xscale), self._bitmapwidth)
-			nuy = min(int(self._bitmapheight*self._yscale), self._bitmapheight)
 
 			xposition = min(int(xcenter*self._xscale), xcenter)
 			yposition = min(int(ycenter*self._yscale), ycenter)
@@ -233,8 +237,8 @@ class OffsetWindow(ScaledWindow):
 			xposition += min(self._xoffset*self._xscale, self._xoffset)
 			yposition += min(self._yoffset*self._yscale, self._yoffset)
 
-			self.SetScrollbars(ppux, ppuy, nux, nuy, xposition, yposition)
-			self._xview, self._yview = self.GetViewStart()
+			self.updateScrollbars(position=(xposition, yposition))
+
 			return True
 		return False
 
@@ -242,23 +246,6 @@ class OffsetWindow(ScaledWindow):
 		if self._setScale(x, y, center):
 			self.updateDrawing()
 			self.Refresh()
-
-	def _onPaint(self, dc):
-		updated = False
-		xview, yview = self.GetViewStart()
-		if self._xview != xview:
-			self._xview = xview
-			updated = True
-		if self._yview != yview:
-			self._yview = yview
-			updated = True
-		if updated:
-			self.updateDrawing()
-			if wx.Platform != '__WXGTK__':
-				# TODO: ScrolledWindow w/ update on buffer
-				self.Refresh()
-				return
-		ScaledWindow._onPaint(self, dc)
 
 if __name__ == '__main__':
 	import sys
