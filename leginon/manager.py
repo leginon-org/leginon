@@ -206,7 +206,11 @@ class Manager(node.Node):
 		open a GUI for the manager	
 		"""
 
-		root = Tk()
+		try:
+			root = Tk()
+		except TclError, e:
+			print "manager, cannot start GUI:", e
+			return
 
 		######################
 		#### Launch Node Frame
