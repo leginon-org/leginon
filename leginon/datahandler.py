@@ -74,7 +74,7 @@ class DictDataKeeper(DataHandler):
 class SizedDataKeeper(DictDataKeeper):
 	def __init__(self, maxsize=256.0):
 		DictDataKeeper.__init__(self)
-		self.maxsize = maxsize * 1024 * 1024 * 8
+		self.maxsize = maxsize * 1024 * 1024
 		self.datadict = strictdict.OrderedDict()
 		self.size = 0
 
@@ -87,7 +87,8 @@ class SizedDataKeeper(DictDataKeeper):
 
 		try:
 			self.size += newdata.size()
-			self.datadict[newdata['id']] = newdata
+			if newdata['id'] is not None:
+				self.datadict[newdata['id']] = newdata
 			self.clean()
 		finally:
 			self.lock.release()
