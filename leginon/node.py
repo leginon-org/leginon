@@ -73,9 +73,7 @@ class Node(leginonobject.LeginonObject):
 		self.exit()
 
 	def die(self, ievent):
-		print "die?"
-		os._exit(1)
-		print "dead..."
+		sys.exit()
 
 	def addManager(self, loc):
 		self.managerloc = loc
