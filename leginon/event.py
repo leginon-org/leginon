@@ -131,7 +131,7 @@ class ImageTilePublishEvent(ImagePublishEvent):
 	def __init__(self, id, content, confirm):
 		ImagePublishEvent.__init__(self, id, content, confirm)
 
-class EMImageTilePublishEvent(ImagePublishEvent):
+class StateImageTilePublishEvent(ImagePublishEvent):
 	'Event indicating image tile was published'
 	def __init__(self, id, content, confirm):
 		ImagePublishEvent.__init__(self, id, content, confirm)
