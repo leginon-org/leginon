@@ -13,6 +13,7 @@ import Mrc
 import xmlrpclib
 #import xmlrpclib2 as xmlbinlib
 xmlbinlib = xmlrpclib
+from timer import Timer
 
 False=0
 True=1
@@ -444,8 +445,10 @@ class ImageData(Data):
 		if mrcstr == '':
 			self.iv.displayMessage('NO IMAGE DATA')
 		else:
-			print 'converting mrcstr to numeric'
+			t = Timer('converting mrcstr to numeric')
 			numdata = Mrc.mrcstr_to_numeric(mrcstr)
+			t.stop()
+			print 'DISPLAYING', numdata.typecode()
 			print 'import numeric'
 			self.iv.import_numeric(numdata)
 			print 'done'
@@ -498,15 +501,21 @@ class Method(SpecWidget):
 			self.argwidgetsdict[id].refresh(aspec)
 
 	def butcom(self):
+		bc = Timer('butcom')
 		args = []
 		for argwidget in self.argwidgetslist:
 			newvalue = argwidget.getWidget()
 			args.append(newvalue)
 		args = tuple(args)
 		print 'executing %s' % (self.id,)
+		t = Timer('uiclient execute')
 		ret = self.uiclient.execute(self.id, args)
+		t.stop()
 		if ret is not None:
+			t = Timer('process return')
 			self.process_return(ret)
+			t.stop()
+		bc.stop()
 
 	def process_return(self, returnvalue):
 		if self.retwidget is not None:
