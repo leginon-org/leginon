@@ -39,14 +39,18 @@ CCD = 'gatan'
 #       Launchers       #
 #########################
 LAUNCHERS = [
-	'tecnai2',
 	'tecnai',
+	'tecnai2',
 	'defcon1',
+	'defcon2',
+	'defcon3',
 	'amilab1',
 	'amilab2',
-	'defcon3',
 	'tecnai2-ssi',
+	'cronus1',
+	'cronus2',
 	'cronus3',
+	'rodin',
 ]
 
 #########################
