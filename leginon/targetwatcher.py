@@ -167,7 +167,7 @@ class TargetWatcher(watcher.Watcher):
 
 			self.uitargetstatus.set('Processing target')
 
-			self.uisourceimageid.set()
+			self.uisourceimageid.set('')
 
 			adjustedtarget = data.AcquisitionImageTargetData(initializer=target,
 																												status='processing')
