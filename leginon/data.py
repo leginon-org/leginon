@@ -1338,6 +1338,7 @@ class ImageTargetListData(InSessionData):
 		t += [
 		  ('label', str),
 		  ('mosaic', bool),
+		  ('image', AcquisitionImageData),
 		]
 		return t
 	typemap = classmethod(typemap)
