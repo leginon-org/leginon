@@ -6,8 +6,6 @@ import numarray.fft
 import numarray.nd_image
 import correlator
 import peakfinder
-import time
-import NumericImage
 
 def _minmax(coor, minc, maxc):
     if coor[0] < minc[0]:
@@ -187,28 +185,78 @@ def shiftImage(image1, image2, shift):
 				offset2[1]:offset2[1] + image2.shape[1]] += image2
 	return image
 
-for i in range(16):
-#for i in [0]:
-	for j in range(9):
-	#for j in [4]:
-		f1 = '04dec17b_000%d_0000%dgr.mrc' % (749 + i, j + 1)
-		f2 = '05jan20a_000%d_0000%dgr.mrc' % (749 + i, j + 1)
+def alignTarget(target, shape1, shape2, theta, shift):
+	target = numarray.array(target, numarray.Float32)
+	shape1 = numarray.array(shape1, numarray.Float32)
+	shape2 = numarray.array(shape2, numarray.Float32)
+	shift = numarray.array(shift, numarray.Float32)
+	target -= shape1/2
+	sintheta = math.sin(math.radians(theta))
+	costheta = math.cos(math.radians(theta))
+	rotationmatrix = numarray.zeros((2, 2), numarray.Float32)
+	rotationmatrix[0, 0] = costheta
+	rotationmatrix[0, 1] = sintheta
+	rotationmatrix[1, 0] = -sintheta
+	rotationmatrix[1, 1] = costheta
+	target[0], target[1] = target[1], target[0]
+	numarray.reshape(target, (2, 1))
+	target = numarray.matrixmultiply(rotationmatrix, target)
+	numarray.reshape(target, 2)
+	target[0], target[1] = target[1], target[0]
+	target += shape2/2
+	target += shift
+	return tuple(target)
 
-		image1 = Mrc.mrc_to_numeric(f1)
-		image2 = Mrc.mrc_to_numeric(f2)
+def alignImage(image1, image2):
+	image1 = normalize(image1)
+	image2 = normalize(image2)
+	theta = findRotation(image1, image2)
+	image1, image2 = padAndRotate(image1, image2, theta)
+	shift = correlate(image1, image2)
 
-		t = time.time()
+	return theta, shift
 
-		image1 = normalize(image1)
-		image2 = normalize(image2)
+if __name__ == '__main__':
+	import time
+	import NumericImage
 
-		theta = findRotation(image1, image2)
-		image1, image2 = padAndRotate(image1, image2, theta)
-		shift = correlate(image1, image2)
+	#for i in range(16):
+	for i in [0]:
+		#for j in range(9):
+		for j in [4]:
+			f1 = '04dec17b_000%d_0000%dgr.mrc' % (749 + i, j + 1)
+			f2 = '05jan20a_000%d_0000%dgr.mrc' % (749 + i, j + 1)
+	
+			image1 = Mrc.mrc_to_numeric(f1)
+			image2 = Mrc.mrc_to_numeric(f2)
+	
+			t = time.time()
 
-		t = time.time() - t
+			image1 = normalize(image1)
+			image2 = normalize(image2)
 
-		image = shiftImage(image1, image2, shift)
-		NumericImage.NumericImage(image).jpeg('%d_%d.jpg' % (749 + i, j + 1), 100)
-		print 'grid ID %d, image %d: rotation %d degrees, shift %s pixels (%g seconds)' % (749 + i, j + 1, theta, shift, t)
+			theta = findRotation(image1, image2)
+			image1, image2 = padAndRotate(image1, image2, theta)
+			shift = correlate(image1, image2)
+
+			t = time.time() - t
+
+			image = shiftImage(image1, image2, shift)
+			NumericImage.NumericImage(image).jpeg('%d_%d.jpg' % (749 + i, j + 1), 100)
+
+			'''
+			image1 = Mrc.mrc_to_numeric(f1)
+			image2 = Mrc.mrc_to_numeric(f2)
+			image1 = normalize(image1)
+			image2 = normalize(image2)
+			target = (3*image1.shape[0]/4, 3*image1.shape[1]/4)
+			alignedtarget = alignTarget(target, image1.shape, image2.shape,
+																	theta, shift)
+			imagefun.mark_image(image1, target, 1.0, size=15)
+			imagefun.mark_image(image2, alignedtarget, 1.0, size=15)
+			NumericImage.NumericImage(image1).jpeg('1.jpg')
+			NumericImage.NumericImage(image2).jpeg('2.jpg')
+			'''
+
+			print 'grid ID %d, image %d: rotation %d degrees, shift %s pixels (%g seconds)' % (749 + i, j + 1, theta, shift, t)
 
