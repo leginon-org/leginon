@@ -9,6 +9,8 @@
 
 require('inc/leginon.inc');
 require('inc/image.inc');
+require('inc/cachedb.inc');
+$cache=True;
 
 $g=true;
 if (!$sessionId=stripslashes($_GET[session])) {
@@ -30,7 +32,15 @@ if ($t=='png') {
 	$quality=$t;
 }
 
-
+if ($cache) {
+	$uri = "http://".$_SERVER[SERVER_NAME].$REQUEST_URI;
+	$cachedb = new cachedb('cronus1', 'usr_object', '', 'cache');
+	if ($image = $cachedb->get($uri)) {
+		Header( "Content-type: $type ");
+		echo $image;
+		exit;
+	}
+}
 
 $minpix = ($_GET['np']) ? $_GET['np'] : 0;
 $maxpix = ($_GET['xp']) ? $_GET['xp'] : 255;
@@ -43,7 +53,7 @@ if (!$filter=$_GET['flt'])
 if (!$binning=$_GET['binning']) 
 	$binning = 'auto';
 
-$displayloadingtime = false;
+$displayloadingtime = true;
 
 if ($g) {
 	$params = array (
@@ -91,13 +101,26 @@ if ($g) {
 	} else {
 		$img = getImage($sessionId, $id, $preset, $params);
 	}
+if ($cache) {
+	ob_start();
 	Header( "Content-type: $type ");
 	if ($t=='png')
 		imagepng($img);
 	else
 		imagejpeg($img,'',$quality);
-
+	$stringimage = ob_get_contents();
 	imagedestroy($img);
+	ob_clean();
+	$re = $cachedb->put($uri, $stringimage);
+	echo $stringimage;
+} else {
+	Header( "Content-type: $type ");
+        if ($t=='png')
+                imagepng($img);
+        else
+                imagejpeg($img,'',$quality);
+	imagedestroy($img);
+}
 } else {
 	Header("Content-type: image/x-png");
 	$blkimg = blankimage();

@@ -1,4 +1,15 @@
 <?
+/**
+ *	@version $Revision: 1.7 $
+ *	@version $Id: image.inc,v 1.7 2004-10-04 19:06:47 dfellman Exp $
+ */
+/**
+ *	Tools to display images / mosaic
+ *	
+ */
+
+require_once("config.php");
+require_once("inc/util.inc");
 require_once('inc/filter.inc');
 require_once('inc/graphutil.inc');
 require_once('inc/scalebar.inc');
@@ -229,7 +240,7 @@ class Mosaic {
 			$this->params = $params;
 	}
 
-	function getMosaic() {
+	function getMosaic($fromImg="") {
 		if (!$this->imageIds)
 			return blankimage();
 		if ($this->loadtime) 
@@ -288,7 +299,10 @@ class Mosaic {
 		$this->params['size'] = $squaresize;
 		$this->params['binning'] = ($ratio<1) ? 1 : $ratio;
 
-		foreach ($imageinfo as $k=>$r) {
+		if ($fromImg)
+			$img = $fromImg;
+		else {
+		    foreach ($imageinfo as $k=>$r) {
 			$cx = ($margin + $dcols[$k] - $min_col)/$ratio; 
 			$cy = ($margin + $drows[$k] + $max_row)/$ratio;
 			$squarepoints = getsquarepoints($cx, $cy, $angle, $squaresize);
@@ -309,7 +323,9 @@ class Mosaic {
 				drawsquare($img, $squarepoints, $mosaicframecol);
 				imagestringshadow($img, 4, $dst_x+1, $dst_y, $k+1, $mosaicframecol);
 			}
+		    }
 		}
+
 		if ($crossquare) {
 			$col = $crosscol;
 			drawsquare($img, $crossquare, $crosscol);
