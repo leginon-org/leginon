@@ -54,8 +54,7 @@ class Handler(SocketServer.StreamRequestHandler):
 		try:
 			obj = pickle.load(self.rfile)
 		except (pickle.UnpicklingError, EOFError):
-			raise
-			print 'no data to read, handle socket connection failed'
+			print 'unpickling error'
 			return
 		
 		if isinstance(obj, ExitException):
@@ -75,19 +74,13 @@ class Handler(SocketServer.StreamRequestHandler):
 			except IOError:
 				print 'write failed when acknowledging push'
 		else:
+			### request for data
+			o = self.server.datahandler.query(obj)
 			try:
-				o = self.server.datahandler.query(obj)
-				try:
-					p = pickle.dumps(o, pickle.HIGHEST_PROTOCOL)
-				except:
-					try:
-						self.wfile.write(localHack(self.server.datahandler.query(obj)))
-					except:
-						print 'cannot transport unpickleable data'
-						raise IOError
-				self.wfile.write(p)
-			except IOError:
-				print 'write failed when returning requested data'
+				p = pickle.dumps(o, pickle.HIGHEST_PROTOCOL)
+			except:
+				p = localHack(o)
+			self.wfile.write(p)
 
 class Server(object):
 	def __init__(self, dh):
@@ -138,13 +131,9 @@ class Client(object):
 			raise IOError('connect to server failed')
 		try:
 			p = pickle.dumps(idata, pickle.HIGHEST_PROTOCOL)
-			self.send(p)
 		except:
-			try:
-				self.send(localHack(idata))
-			except:
-				raise
-				raise IOError('cannot push unpickleable data')
+			p = localHack(idata)
+		self.send(p)
 		serverexception = pickle.loads(self.receive())
 		self.close()
 		if serverexception is not None:
