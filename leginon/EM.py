@@ -453,14 +453,6 @@ class EM(node.Node):
 		node.Node.exit(self)
 		#self.server.exit()
 		self.requestqueue.put(ExitRequest())
-		try:
-			self.scope.exit()
-		except AttributeError:
-			pass
-		try:
-			self.camera.exit()
-		except AttributeError:
-			pass
 
 	def doLock(self, ievent):
 		if ievent['node'] != self.locknode:
@@ -538,12 +530,15 @@ class EM(node.Node):
 		else:
 			camerakeys = []
 		for key in withkeys:
-			if key in scopekeys:
-				result[key] = self.scope[key]
-			elif key in camerakeys:
-				result[key] = self.camera[key]
-			else:
-				pass
+			try:
+				if key in scopekeys:
+					result[key] = self.scope[key]
+				elif key in camerakeys:
+					result[key] = self.camera[key]
+				else:
+					pass
+			except:
+				self.logger.exception('Cannot get value of \'%s\'' % key)
 
 		self.panel.setParameters(result)
 
@@ -651,6 +646,14 @@ class EM(node.Node):
 			elif isinstance(request, SetInstrumentRequest):
 				pass
 			elif isinstance(request, ExitRequest):
+				try:
+					self.scope.exit()
+				except AttributeError:
+					pass
+				try:
+					self.camera.exit()
+				except AttributeError:
+					pass
 				break
 			else:
 				raise TypeError('invalid EM request')

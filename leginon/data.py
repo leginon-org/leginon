@@ -1356,6 +1356,7 @@ class LaunchedApplicationData(InSessionData):
 	def typemap(cls):
 		return InSessionData.typemap() + (
 			('application', ApplicationData),
+			('launchers', list),
 		)
 	typemap = classmethod(typemap)
 
@@ -1588,6 +1589,8 @@ class MosaicTargetMakerSettingsData(SettingsData):
 			('label', str),
 			('radius', float),
 			('overlap', float),
+			('max targets', int),
+			('max size', int),
 		)
 	typemap = classmethod(typemap)
 

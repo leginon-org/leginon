@@ -149,23 +149,26 @@ class Acquisition(targetwatcher.TargetWatcher):
 		except InvalidStagePosition:
 			return 'invalid'
 		except NoMoveCalibration:
-			self.logger.error('calibrate this move type, then continue')
+			self.logger.info('Pausing...')
+			self.logger.error('Calibrate this move type, then continue')
 			self.beep()
-			self.pause.set()
+			self.pause.clear()
 			return 'repeat'
 
 		try:
 			presetnames = self.validatePresets()
 		except InvalidPresetsSequence:
+			estr = 'Presets sequence is invalid, please correct it'
 			if targetdata is None or targetdata['type'] == 'simulated':
-				self.logger.error('correct the invalid presets sequence, then try again')
+				self.logger.error(estr + ' and try again')
 				return 'aborted'
 			else:
 				## if there was a targetdata, then 
 				## we assume we are in a target list loop
-				self.logger.error('Paused... correct the invalid presets sequence, then continue')
+				self.logger.info('Pausing...')
+				self.logger.error(estr + ' and press continue')
 				self.beep()
-				self.pause.set()
+				self.pause.clear()
 				return 'repeat'
 
 		for newpresetname in presetnames:
@@ -270,7 +273,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			pixelshift = {'row':deltarow, 'col':deltacol}
 	
 			## figure out scope state that gets to the target
-			movetype = self.settings['movetype']
+			movetype = self.settings['move type']
 			calclient = self.calclients[movetype]
 			try:
 				newscope = calclient.transform(pixelshift, targetscope, targetcamera)

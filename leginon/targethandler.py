@@ -43,7 +43,7 @@ class TargetHandler(object):
 		havelist = have.values()
 		havelist.sort(self.compareTargetNumber)
 		if havelist:
-			self.logger.info('Found %s targets' % (len(havelist),))
+			self.logger.debug('Found %s targets' % (len(havelist),))
 		return havelist
 
 	def lastTargetNumber(self, **kwargs):

@@ -238,8 +238,8 @@ class Frame(wx.Frame):
 			dialog.Destroy()
 			return
 		launchernames = self.manager.getLauncherNames()
-		history = self.manager.getApplicationHistory()
-		dialog = RunApplicationDialog(self, apps, launchernames, history)
+		history, launchers = self.manager.getApplicationHistory()
+		dialog = RunApplicationDialog(self, apps, launchernames, history, launchers)
 		if dialog.ShowModal() == wx.ID_OK:
 			app = dialog.getValues()
 			threading.Thread(name='wx.manager runApplication',
@@ -666,7 +666,7 @@ class BindEventDialog(wx.Dialog):
 		self.unboundeventlistbox.AppendItems(unbound)
 
 class RunApplicationDialog(wx.Dialog):
-	def __init__(self, parent, apps, launchernames, history):
+	def __init__(self, parent, apps, launchernames, history, launchers):
 		self.apps = apps
 		self.launchernames = launchernames
 
@@ -677,6 +677,8 @@ class RunApplicationDialog(wx.Dialog):
 				names.remove(n)
 				names.insert(0, n)
 		self.history = names
+
+		self.launchers = launchers
 
 		wx.Dialog.__init__(self, parent, -1, 'Run Application')
 
@@ -726,6 +728,12 @@ class RunApplicationDialog(wx.Dialog):
 			name = evt.GetString()
 		self.app = self.apps[name]
 		launcheraliases = self.app.getLauncherAliases()
+
+		lastlaunchers = {}
+		if name in self.launchers and self.launchers[name] is not None:
+			for alias, launchername in self.launchers[name]:
+				lastlaunchers[alias] = launchername
+
 		if self.launchersizer is not None:
 			self.sizer.Remove(self.launchersizer)
 			for label in self.launcherlabels:
@@ -742,7 +750,15 @@ class RunApplicationDialog(wx.Dialog):
 				self.launcherlabels.append(label)
 				self.launchersizer.Add(label, (i, 0), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 				choice = wx.Choice(self, -1, choices=self.launchernames)
-				choice.SetSelection(0)
+				n = 0
+				try:
+					name = lastlaunchers[launcheralias]
+					n = choice.FindString(name)
+					if n == wx.NOT_FOUND:
+						n = 0
+				except KeyError:
+					pass
+				choice.SetSelection(n)
 				self.launchersizer.Add(choice, (i, 1), (1, 1), wx.ALIGN_CENTER_VERTICAL)
 				self.launcherchoices[launcheralias] = choice
 		self.sizer.Add(self.launchersizer, (2, 0), (1, 2), wx.ALIGN_CENTER)

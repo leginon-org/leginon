@@ -311,8 +311,8 @@ class Manager(node.Node):
 					self.removeNode(to_node)
 					raise
 				self.logEvent(ievent, 'distributed to %s' % (to_node,))
-			except:
-				self.logger.exception('')
+			except Exception, e:
+				self.logger.exception('Error distributing events: %s' % e)
 				# make sure we don't wait for confirmation
 				if eventid is not None:
 					ewaits[eventid][to_node].set()
@@ -652,11 +652,13 @@ class Manager(node.Node):
 		appdata = data.LaunchedApplicationData(initializer=initializer)
 		appdatalist = self.research(appdata)
 		history = []
+		map = {}
 		for a in appdatalist:
 			name =  a['application']['name']
 			if name not in history:
 				history.append(name)
-		return history
+				map[name] = a['launchers']
+		return history, map
 
 	def onApplicationStarting(self, name, nnodes):
 		evt = gui.wx.Manager.ApplicationStartingEvent(name, nnodes)
@@ -693,6 +695,7 @@ class Manager(node.Node):
 		initializer = {}
 		initializer['session'] = self.session
 		initializer['application'] = app.applicationdata
+		initializer['launchers'] = app.launchernames.items()
 		self.waitApplication(app)
 		d = data.LaunchedApplicationData(initializer=initializer)
 		self.publish(d, database=True, dbforce=True)

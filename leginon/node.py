@@ -206,12 +206,13 @@ class Node(leginonobject.LeginonObject):
 		try:
 			client.push(ievent)
 			#self.logEvent(ievent, status='%s eventToClient' % (self.name,))
-		except Exception, e:
+		except IOError:
 			# make sure we don't wait for an event that failed
 			if wait:
 				eventwait.set()
-			if not isinstance(e, IOError):
-				self.logger.exception('')
+			raise
+		except Exception, e:
+			self.logger.exception('Error sending event to client: %s' % e)
 			raise
 
 		confirmationevent = None

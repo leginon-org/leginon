@@ -134,8 +134,8 @@ class Focuser(acquisition.Acquisition):
 			foc = scope['focus']
 			self.logger.info('Defocus %s' % defoc)
 			self.logger.info('Focus %s' % foc)
-		except:
-			self.logger.exception('')
+		except Exception, e:
+			self.logger.exception('Autofocus failed: %s' % e)
 
 		try:
 			correction = self.btcalclient.measureDefocusStig(btilt, pub, drift_threshold=driftthresh, image_callback=self.setImage, target=target)

@@ -1,11 +1,10 @@
 import wx
 
 class Panel(wx.Panel):
+	nonestr = ''
 	def __init__(self, parent, id, **kwargs):
 		wx.Panel.__init__(self, parent, id, **kwargs)
 		self.SetBackgroundColour(wx.Colour(255, 255, 220))
-
-		self.nonestr = ''
 
 		self.sz = wx.GridBagSizer(0, 0)
 
@@ -35,6 +34,7 @@ class Panel(wx.Panel):
 		self.Fit()
 
 class Stats(Panel):
+	nonestr = 'N/A'
 	order = [
 		'Mean',
 		'Min.',

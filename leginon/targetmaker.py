@@ -16,6 +16,12 @@ import targethandler
 import gui.wx.MosaicTargetMaker
 import gui.wx.Node
 
+class AtlasError(Exception):
+	pass
+
+class AtlasSizeError(AtlasError):
+	pass
+
 def magnitude(coordinate, coordinates):
 	return map(lambda c: math.sqrt(sum(map(lambda m, n: (n - m)**2,
 																					coordinate, c))), coordinates)
@@ -48,8 +54,10 @@ class MosaicTargetMaker(TargetMaker):
 	defaultsettings = {
 		'preset': None,
 		'label': '',
-		'radius': 0.01,
+		'radius': 0.005,
 		'overlap': 0.0,
+		'max targets': 64,
+		'max size': 8192,
 	}
 	eventinputs = TargetMaker.eventinputs + [event.MakeTargetListEvent]
 	def __init__(self, id, session, managerlocation, **kwargs):
@@ -77,10 +85,12 @@ class MosaicTargetMaker(TargetMaker):
 		except EM.CameraUnavailable:
 			self.logger.error('Error publishing targets, cannot access camera')
 			return
+		self.logger.info('Get current EM state completed')
 		alpha = scope['stage position']['a']
 		alpha = scope['stage position']['a']
 		alphadeg = alpha * 180.0 / 3.14159
-		self.logger.info('Using current alpha tilt in targets: %.2f deg' % (alphadeg,))
+		if alphadeg != 0.0:
+			self.logger.info('Using current alpha tilt in targets: %.2f deg' % (alphadeg,))
 		presetname = self.settings['preset']
 		if not presetname:
 			self.logger.error('Error publishing targets, no preset selected')
@@ -94,7 +104,7 @@ class MosaicTargetMaker(TargetMaker):
 			self.logger.error(message)
 			return
 
-		self.logger.info('Updating target settings')
+		self.logger.info('Updating target settings...')
 		scope.friendly_update(preset)
 		camera.friendly_update(preset)
 		size = camera['dimension']['x']
@@ -112,12 +122,12 @@ class MosaicTargetMaker(TargetMaker):
 		try:
 			pixelsize = self.pixelsizecalclient.retrievePixelSize(magnification)
 		except calibrationclient.NoPixelSizeError:
-			print 'No available pixel size'
+			self.logger.error('No available pixel size')
 			return
 		binning = camera['binning']['x']
 		imagesize = camera['dimension']['x']
 
-		self.logger.info('Creating target list')
+		self.logger.info('Creating target list...')
 		if ievent is None: 
 			### generated from user invoked method
 			targetlist = self.newTargetList(mosaic=True, label=self.settings['label'])
@@ -128,34 +138,56 @@ class MosaicTargetMaker(TargetMaker):
 			gridid = grid['grid ID']
 			label = '%06d' % (gridid,)
 			targetlist = self.newTargetList(mosaic=True, label=label)
-		self.logger.info('Publishing target list')
+		self.logger.info('Publishing target list...')
 		### publish to DB so new targets get right reference
 		self.publish(targetlist, database=True)
 		args = (self.settings['radius'], pixelsize, binning, imagesize, overlap)
-		for delta in self.makeCircle(*args):
-			targetdata = self.newTargetForGrid(grid, delta[0], delta[1], scope=scope, camera=camera, preset=preset, list=targetlist, type='acquisition')
+		try:
+			deltas = self.makeCircle(*args)
+		except AtlasSizeError, e:
+			self.logger.error('Error creating atlas: %s' % e)
+			return
+		for delta in deltas:
+			targetdata = self.newTargetForGrid(grid,
+																					delta[0], delta[1],
+																					scope=scope, camera=camera,
+																					preset=preset,
+																					list=targetlist,
+																					type='acquisition')
 			self.publish(targetdata, database=True)
 		### publish with event
 		self.publish(targetlist, pubevent=True)
 		self.logger.info('Target list published')
 
 	def makeCircle(self, radius, pixelsize, binning, imagesize, overlap=0.0):
+		maxtargets = self.settings['max targets']
+		maxsize = self.settings['max size']
+
 		imagesize = int(round(imagesize*(1.0 - overlap)))
 		if imagesize <= 0:
-			raise ValueError('Invalid overlap value')
+			raise AtlasSizeError('invalid overlap')
+
 		pixelradius = radius/(pixelsize*binning)
+		if pixelradius > maxsize/2:
+			raise AtlasSizeError('image will exceed maximum size')
+
 		lines = [imagesize/2]
 		while lines[-1] < pixelradius - imagesize:
 			lines.append(lines[-1] + imagesize)
+
 		pixels = [pixelradius*2]
 		for i in lines:
 			if i > pixelradius:
 				pixels.append(0.0)
 			else:
 				pixels.append(pixelradius*math.cos(math.asin(i/pixelradius))*2)
+		if len(pixels) > maxtargets:
+			raise AtlasSizeError('too many targets needed')
+
 		images = []
 		for i in pixels:
 			images.append(int(math.ceil(i/imagesize)))
+
 		targets = []
 		sign = 1
 		for n, i in enumerate(images):
@@ -167,6 +199,9 @@ class MosaicTargetMaker(TargetMaker):
 				if y > 0:
 					targets.append((x, -y))
 			sign = -sign
+
+		self.logger.info('Creating atlas with a radius of %d pixels, from %d target(s)' % (pixelradius, len(targets)))
+
 		return targets
 
 	def makeSpiral(self, maxtargets, overlap, size):

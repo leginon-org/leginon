@@ -339,7 +339,11 @@ class ValueTool(ImageTool):
 		self.button.SetToggle(True)
 
 	def valueString(self, x, y, value):
-		return '(%d, %d) %s' % (x, y, '%g' % value)
+		if value is None:
+			valuestr = 'N/A'
+		else:
+			valuestr = '%g' % value
+		return '(%d, %d) %s' % (x, y, valuestr)
 
 	def getToolTipString(self, x, y, value):
 		#self.imagepanel.pospanel.set({'x': x, 'y': y, 'value': value})

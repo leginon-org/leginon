@@ -634,8 +634,8 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 														% (pixelshift1['col'], pixelshift1['row']))
 			self.node.logger.info('Pixel shift (2 of 2): (%.2f, %.2f)'
 														% (pixelshift2['col'], pixelshift2['row']))
-		except:
-			self.node.logger.exception('')
+		except Exception, e:
+			self.node.logger.exception('Calibration measurement failed: %s' % e)
 		## return to original beam tilt
 		emdata = data.ScopeEMData(initializer={'beam tilt':beamtilt})
 		self.node.emclient.setScope(emdata)
