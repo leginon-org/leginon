@@ -58,9 +58,11 @@ class Navigator(node.Node):
 
 		## acquire image
 		self.acquireImage()
+		self.confirmEvent(clickevent)
 
 	def handleImageAcquire(self, acqevent):
 		self.acquireImage()
+		self.confirmEvent(acqevent)
 
 	# I wouldn't expect this to actually work
 	def handleImageClick2(self, xy):

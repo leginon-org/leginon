@@ -49,6 +49,8 @@ class Watcher(node.Node):
 		if self.lockblocking == 0:
 			havelock = self.handlelock.acquire(0)
 			if not havelock:
+				## should we do this?
+				#self.confirmEvent(pubevent)
 				return
 		elif self.lockblocking == 1:
 			havelock = self.handlelock.acquire(1)
@@ -60,6 +62,8 @@ class Watcher(node.Node):
 		## release lock if necessary
 		if havelock:
 			self.handlelock.release()
+
+		self.confirmEvent(pubevent)
 
 	def processEvent(self, pubevent):
 		if self.datanow:

@@ -43,6 +43,7 @@ class PresetsClient(object):
 		name = ievent['name']
 		if name in self.pchanged:
 			self.pchanged[name].set()
+		self.node.confirmEvent(ievent)
 
 	def getPresets(self):
 		seqdata = self.node.researchByDataID(('presets',))
@@ -182,6 +183,7 @@ class PresetsManager(node.Node):
 			self.toScope(pname)
 		else:
 			self.targetToScope(pname, emtarget)
+		self.confirmEvent(ievent)
 
 	def getPresetsFromDB(self, session=None):
 		'''
@@ -338,6 +340,8 @@ class PresetsManager(node.Node):
 		newname = self.enteredname.get()
 		if newname:
 			newpreset = self.fromScope(newname)
+			d = newpreset.toDict(noNone=True)
+			self.presetparams.set(d, callback=False)
 		else:
 			print 'Enter a preset name!'
 
