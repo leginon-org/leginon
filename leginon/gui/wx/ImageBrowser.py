@@ -28,8 +28,10 @@ class ImageBrowserPanel(wx.Panel):
 		wx.Panel.__init__(self, parent, -1)
 		self.node = parent.node
 
+		self.image = None
 		self.szmain = wx.GridBagSizer(3, 3)
 
+		## two list boxes
 		sessionlab = wx.StaticText(self, -1, 'Session:')
 		names = self.getSessions()
 		self.sessionbox = wx.ListBox(self, -1, choices=names)
@@ -44,9 +46,16 @@ class ImageBrowserPanel(wx.Panel):
 		self.Bind(wx.EVT_LISTBOX, self.onSessionSelect, self.sessionbox)
 		self.Bind(wx.EVT_LISTBOX, self.onImageSelect, self.imagebox)
 
-		'''
-		self.Bind(wx.EVT_LISTBOX_DCLICK, self.onImageDoubleClick, self.imagebox)
-		'''
+		## buttons
+		butsz = wx.GridBagSizer(3, 3)
+		publish = wx.Button(self, -1, 'Publish')
+		self.Bind(wx.EVT_BUTTON, self.onPublish, publish)
+		butsz.Add(publish, (0,0), (1,1))
+		self.szmain.Add(butsz, (2,0), (1,1))
+
+		## checkbox for view image
+		self.preview = wx.CheckBox(self, -1, label='Preview')
+		self.szmain.Add(self.preview, (2,1), (1,1), wx.EXPAND|wx.ALL)
 
 		## main box
 		sb = wx.StaticBox(self, -1, 'Image Browser')
@@ -63,6 +72,7 @@ class ImageBrowserPanel(wx.Panel):
 		'''
 
 		#self.Enable(False)
+		self.imagebox.Enable(False)
 
 	def getSessions(self):
 		user = self.node.session['user']
@@ -83,12 +93,24 @@ class ImageBrowserPanel(wx.Panel):
 		sesname = evt.GetString()
 		sesdata = self.session_dict[sesname]
 		imagenames = self.getImages(sesdata)
-		self.imagebox.Set(imagenames)
+		if imagenames:
+			self.imagebox.Set(imagenames)
+			self.imagebox.Enable(True)
+		else:
+			self.imagebox.Set(['no images'])
+			self.imagebox.Enable(False)
 
 	def onImageSelect(self, evt):
+		previewstate = self.preview.GetValue()
 		imname = evt.GetString()
-		imdata = self.image_dict[imname]
-		self.node.loadImage(imdata)
+		self.image = self.image_dict[imname]
+		if previewstate:
+						self.node.loadImage(self.image)
+
+	def onPublish(self, evt):
+		if self.image is None:
+			return
+		self.node.publishImage(self.image)
 
 if __name__ == '__main__':
 	class App(wx.App):

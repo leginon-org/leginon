@@ -431,6 +431,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 		statsdata['image'] = imagedata
 		self.publish(statsdata, database=True)
 
+	def publishImage(self, imdata):
+		self.publish(imdata, pubevent=True)
+
 	def setImageFilename(self, imagedata):
 		if imagedata['filename']:
 			return
