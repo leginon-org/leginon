@@ -49,7 +49,8 @@ class Server(SocketServer.ThreadingTCPServer, leginonobject.LeginonObject):
 					SocketServer.ThreadingTCPServer.__init__(self, ('', port), handler)
 					break
 				except Exception, var:
-					if (var[0] == 98 or var[0] == 10048): # socket error, address already in use
+					# socket error, address already in use
+					if (var[0] == 98 or var[0] == 10048):
 						port += 1
 					else:
 						raise
@@ -68,7 +69,6 @@ class PushServer(Server):
 	def __init__(self, server, port=None):
 		Server.__init__(self, server, PushHandler, port)
 
-# pull is a function for now, until a client class seems reasonable
 class Client(leginonobject.LeginonObject):
 	def __init__(self, hostname, port, buffer_size = 1024):
 		self.buffer_size = buffer_size 
@@ -77,13 +77,11 @@ class Client(leginonobject.LeginonObject):
 		self.port = port
 
 class PullClient(Client):
-	def pull(self, data_id):
+	def pull(self, data_id, family = socket.AF_INET, type = socket.SOCK_STREAM):
 		print 'PullClient.pull data_id = %s' % data_id
 		data = ""
-		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		s = socket.socket(family, type)
 		s.connect((self.hostname, self.port)) # Connect to server
-
-
 		idpickle = cPickle.dumps(data_id)
 		s.send(idpickle)
 
@@ -97,11 +95,11 @@ class PullClient(Client):
 		return cPickle.loads(data)
 
 class PushClient(Client):
-	def push(self, data):
+	def push(self, idata, family = socket.AF_INET, type = socket.SOCK_STREAM):
 		# needs to account for different data_id datatypes
-		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		s = socket.socket(family, type)
 		s.connect((self.hostname, self.port)) # Connect to server
-		s.send(cPickle.dumps(data))
+		s.send(cPickle.dumps(idata))
 		s.close()
 
 if __name__ == '__main__':

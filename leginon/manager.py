@@ -15,8 +15,8 @@ class Manager(node.Node):
 		self.common = common
 
 		## this makes every received event get distributed
-		self.addEventIn(event.Event, self.eventhandler.distribute)
-		self.addEventIn(event.NodeReadyEvent, self.registerNode)
+		self.addEventInput(event.Event, self.distribute)
+		self.addEventInput(event.NodeReadyEvent, self.registerNode)
 		#self.addDistmap(event.PublishEvent, , ):
 
 		self.main()
@@ -25,17 +25,18 @@ class Manager(node.Node):
 		print self.location()
 		self.interact()
 
-	def addDistmap(self, eventclass, from_node=None, to_node=None):
-		self.eventhandler.addDistmap(eventclass, from_node, to_node)
+	# now addEventDistmap inherited from node
+#	def addDistmap(self, eventclass, from_node=None, to_node=None):
+#		self.eventhandler.addDistmap(eventclass, from_node, to_node)
 
 	def registerNode(self, readyevent):
 		newid = readyevent.origin['id']
 		loc = readyevent.origin['location']
 		hostname = loc['hostname']
-		eventport = loc['event port']
+		eventport = loc['push port']
 		print 'registering node', newid, hostname, eventport
 		self.addEventClient(newid, hostname, eventport)
-		print self.eventhandler.clients
+		print self.clients
 
 	def launchNode(self, launcher, newproc, target, newid):
 		manloc = self.location()
@@ -54,7 +55,7 @@ class Manager(node.Node):
 		"""
 		#ev = event.LaunchEvent(nodeid, nodeclass, newproc)
 		ev = event.LaunchEvent(newproc, target, args, kwargs)
-		self.eventhandler.push(launcher, ev)
+		self.clients[launcher].push(ev)
 
 if __name__ == '__main__':
 	import signal, sys

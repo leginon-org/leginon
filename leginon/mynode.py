@@ -8,9 +8,9 @@ class MyNode(node.Node):
 	def __init__(self, nodeid, managerlocation):
 		node.Node.__init__(self, nodeid, managerlocation)
 
-		#self.addEventIn(event.ControlEvent, self.handle_intervalchange)
-		self.addEventIn(event.PublishEvent, self.handle_intervalpublished)
-		self.addEventOut(event.PublishEvent)
+		#self.addEventInput(event.ControlEvent, self.handle_intervalchange)
+		self.addEventInput(event.PublishEvent, self.handle_intervalpublished)
+		self.addEventOutput(event.PublishEvent)
 
 		self.interval = 5
 		print self.location()
@@ -38,7 +38,7 @@ class MyNode(node.Node):
 		dataid = publishevent.content
 		print 'publish event %s dataid %s' % (publishevent, dataid)
 		datahost = publishevent.origin['location']['hostname']
-		dataport = publishevent.origin['location']['data port']
+		dataport = publishevent.origin['location']['pull port']
 		dataserv = (datahost,dataport)
 		new_interval = self.research(dataserv, dataid)
 		print 'new_interval %s is type %s' % (new_interval, type(new_interval))

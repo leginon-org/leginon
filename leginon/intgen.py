@@ -8,8 +8,8 @@ class IntGen(node.Node):
 	def __init__(self, nodeid, managerlocation):
 		node.Node.__init__(self, nodeid, managerlocation)
 
-		#self.addEventOut(event.ControlEvent)
-		self.addEventOut(event.PublishEvent)
+		#self.addEventOutput(event.ControlEvent)
+		self.addEventOutput(event.PublishEvent)
 
 		print self.location()
 		print self.nodeid

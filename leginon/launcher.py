@@ -9,10 +9,10 @@ import calllauncher
 
 
 class Launcher(node.Node):
-	def __init__(self, nodeid, managerlocation):
+	def __init__(self, nodeid, managerlocation = None):
 		node.Node.__init__(self, nodeid, managerlocation)
 
-		self.addEventIn(event.LaunchEvent, self.handleLaunch)
+		self.addEventInput(event.LaunchEvent, self.handleLaunch)
 		self.caller = calllauncher.CallLauncher()
 		self.main()
 
@@ -22,7 +22,7 @@ class Launcher(node.Node):
 		This uses LauncherReadyEvent
 		'''
 		managerhost = self.managerloc['hostname']
-		managerport = self.managerloc['event port']
+		managerport = self.managerloc['push port']
 		self.addEventClient('manager', managerhost, managerport)
 		self.announce(event.LauncherReadyEvent())
 
@@ -63,7 +63,7 @@ if __name__ == '__main__':
 
 	manloc = {}
 	manloc['hostname'] = sys.argv[1]
-	manloc['event port'] = int(sys.argv[2])
+	manloc['push port'] = int(sys.argv[2])
 
 	myhost = socket.gethostname()
 

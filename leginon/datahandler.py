@@ -1,3 +1,4 @@
+
 import leginonobject
 import data
 import threading
@@ -140,7 +141,8 @@ class CachedDictDataKeeper(DataHandler):
 	def cache(self, id):
 		if not self.datadict[id]['cached']:
 			self.shelf[str(id)] = self.datadict[id]['data']
-			self.datadict[id] = {'cached' : 1}
+			self.datadict[id]['cached'] = 1
+			del self.datadict[id]['data']
 
 class SimpleDataKeeper(CachedDictDataKeeper):
 	pass
