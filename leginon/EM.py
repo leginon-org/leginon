@@ -7,6 +7,7 @@ import threading
 import data
 import event
 import sys
+import imp
 if sys.platform == 'win32':
 	import pythoncom
 
@@ -61,21 +62,14 @@ class DataHandler(datahandler.DataBinder):
 			raise InvalidEventError('eventclass must be Event subclass')
 
 class EM(node.Node):
-	def __init__(self, id, managerloc, scopeclass = None, cameraclass = None):
+	def __init__(self, id, managerloc, scope = (None, None), camera = (None, None)):
 		# internal
 		self.lock = threading.Lock()
 		# external
 		self.nodelock = threading.Lock()
 		self.locknodeid = None
 
-		if scopeclass:
-			self.scope = scopedict.factory(scopeclass)()
-		else:
-			self.scope = None
-		if cameraclass:
-			self.camera = cameradict.factory(cameraclass)()
-		else:
-			self.camera = None
+		self.setEM(scope, camera)
 
 		node.Node.__init__(self, id, managerloc, DataHandler, (self.lock, self.scope, self.camera, self))
 
@@ -83,6 +77,26 @@ class EM(node.Node):
 		self.addEventInput(event.UnlockEvent, self.unlock)
 
 		self.start()
+
+	def setEM(self, scope = (None, None), camera = (None, None)):
+		if scope[0]:
+			fp, pathname, description = imp.find_module(scope[0])
+			scopemodule = imp.load_module(scope[0], fp, pathname, description)
+			if scope[1]:
+				self.scope = scopedict.factory(scopemodule.__dict__[scope[1]])()
+			else:
+				self.scope = None
+		else:
+			self.scope = None
+		if camera[0]:
+			fp, pathname, description = imp.find_module(camera[0])
+			cameramodule = imp.load_module(camera[0], fp, pathname, description)
+			if camera[1]:
+				self.camera = cameradict.factory(cameramodule.__dict__[camera[1]])()
+			else:
+				self.camera = None
+		else:
+			self.camera = None
 
 	def main(self):
 		self.addEventOutput(event.ListPublishEvent)
@@ -131,9 +145,9 @@ class EM(node.Node):
 			raise ValueError
 
 	def defineUserInterface(self):
-		node.Node.defineUserInterface(self)
-		spec = self.registerUIData('EM State', 'struct', permissions='rw')
-		self.registerUISpec('EM', (spec,))
+		nodespec = node.Node.defineUserInterface(self)
+		emspec = self.registerUIData('EM State', 'struct', permissions='rw')
+		self.registerUISpec('EM', (nodespec, emspec))
 		d = {}
 		if self.scope:
 			d.update(self.scope)
