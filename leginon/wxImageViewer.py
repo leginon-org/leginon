@@ -266,7 +266,7 @@ class ImagePanel(wxPanel):
 			xscale, yscale = self.scale
 			if not self.smallScale():
 				bitmapwidth = int(bitmapwidth * xscale)
-				bitmapheight = int(bitmapwidth * yscale)
+				bitmapheight = int(bitmapheight * yscale)
 
 			if bitmapwidth < clientwidth:
 				width = bitmapwidth
