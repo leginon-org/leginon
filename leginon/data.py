@@ -392,26 +392,6 @@ class UnknownData(object):
 	def __init__(self, qikey):
 		self.qikey = qikey
 
-def accumulateData(originaldata, func, memo=None):
-	d = id(originaldata)
-
-	if memo is None:
-		memo = {}
-	if memo.has_key(d):
-		return None
-
-	myresult = []
-	for key,value in originaldata.items():
-		if isinstance(value, Data):
-			childresult = accumulateData(value, func, memo)
-			if childresult is not None:
-				myresult += childresult
-
-	myresult = func(originaldata) + myresult
-
-	memo[d] = myresult
-	return myresult
-
 def data2dict(idata, noNone=False, dereference=False):
 	d = {}
 	for key,value in idata.items(dereference=dereference):
@@ -727,6 +707,13 @@ class DataHandler(object):
 		dr = DataReference(datahandler=self)
 		return dr
 
+## for queries, setting item to None will ignore item in query
+## setting item to NULL(dataclass) will only return results where the item
+## is specifically NULL in the database
+def NULL(dataclass):
+	d = dataclass()
+	d.setPersistent(0)
+	return d
 
 '''
 ## How to define a new leginon data type:
@@ -1312,7 +1299,8 @@ class ImageTargetData(InSessionData):
 		  ('version', int),
 		  ('number', int),
 		  ('status', str),
-			('grid', GridData),
+		  ('grid', GridData),
+		  ('list', ImageTargetListData),
 		]
 		return t
 	typemap = classmethod(typemap)
@@ -1343,11 +1331,13 @@ class AcquisitionImageTargetData(ImageTargetData):
 		return t
 	typemap = classmethod(typemap)
 
-### XXX the list here has variable length
 class ImageTargetListData(InSessionData):
 	def typemap(cls):
 		t = InSessionData.typemap()
-		t += [ ('targets', list), ]
+		t += [
+		  ('label', str),
+		  ('mosaic', bool),
+		]
 		return t
 	typemap = classmethod(typemap)
 

@@ -70,18 +70,33 @@ class DBDataKeeper(object):
 		alias = classname + str(id(idata))
 		return alias
 
+	def qid(self, mydata):
+		### what are the chances that there will be a conflict
+		### because a dbid is the same as a python id?
+		if isinstance(mydata, data.DataReference):
+			myclassname = mydata.dataclass.__name__
+			if mydata.dbid is not None:
+				myid = myclassname+str(mydata.dbid)
+			else:
+				mydata = mydata.getData()
+				myid = id(mydata)
+		elif isinstance(mydata, data.Data):
+			myid = id(mydata)
+			myclassname = mydata.__class__.__name__
+		else:
+			raise RuntimeError('need Data or DataReference')
+		return {'id': myid, 'class name': myclassname, 'data': mydata}
+
 	def datainfo(self, mydata, dbid=None):
 		'''
 		function that should be called in data.accumulateData
 		'''
-		myid = id(mydata)
-		myclassname = mydata.__class__.__name__
-		myalias = myclassname + str(myid)
-
+		stuff = self.qid(mydata)
+		myalias = stuff['class name'] + str(stuff['id'])
+		myid = stuff['id']
 		info = {}
-		info['class name'] = myclassname
+		info['class name'] = stuff['class name']
 		info['alias'] = myalias
-		#info['python id'] = myid
 
 		if dbid is not None:
 			## force a simple query on DEF_id
@@ -102,11 +117,13 @@ class DBDataKeeper(object):
 			## this instance will be used to create a query
 			wheredict = {}
 			joindict = {}
-			for key,value in mydata.items():
+			for key,value in mydata.items(dereference=False):
 				if value is None:
 					pass
-				elif isinstance(value, data.Data):
-					joindict[key] = id(value)
+
+				elif isinstance(value, (data.Data, data.DataReference)):
+					stuff = self.qid(value)
+					joindict[key] = stuff['id']
 				else:
 					wheredict[key] = value
 			info['where'] = wheredict
@@ -121,15 +138,38 @@ class DBDataKeeper(object):
 		info['root'] = isroot
 
 		finalinfo = {myid: info}
-
 		return [finalinfo]
+
+	def accumulateData(self, originaldata, memo=None):
+		d = id(originaldata)
+
+		if memo is None:
+			memo = {}
+		if memo.has_key(d):
+			return None
+
+		myresult = []
+
+		if isinstance(originaldata, data.Data):
+			for key,value in originaldata.items(dereference=False):
+				if isinstance(value, data.DataReference):
+					if value.dbid is None:
+						value = value.getData()
+					childresult = self.accumulateData(value, memo)
+					if childresult is not None:
+						myresult += childresult
+
+		myresult = self.datainfo(originaldata) + myresult
+
+		memo[d] = myresult
+		return myresult
 
 	def queryInfo(self, idata):
 		'''
 		Items of idata that are None, should be ignored.
 		'''
 		idata.isRoot=1
-		mylist = data.accumulateData(idata, self.datainfo)
+		mylist = self.accumulateData(idata)
 		finaldict = {}
 		for d in mylist:
 			finaldict.update(d)

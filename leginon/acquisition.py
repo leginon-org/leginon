@@ -406,7 +406,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		else:
 			numberstr = '%05d' % (imagedata['target']['number'],)
 			if imagedata['target']['list'] is not None:
-				listlabel = image['target']['list']['label']
+				listlabel = imagedata['target']['list']['label']
 		if imagedata['preset'] is None:
 			presetstr = ''
 		else:

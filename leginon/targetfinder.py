@@ -16,8 +16,9 @@ import threading
 import uidata
 import node
 import EM
+import targethandler
 
-class TargetFinder(imagewatcher.ImageWatcher):
+class TargetFinder(imagewatcher.ImageWatcher, targethandler.TargetHandler):
 	eventinputs = imagewatcher.ImageWatcher.eventinputs + [
 																							event.TargetListDoneEvent] + EM.EMClient.eventinputs
 	eventoutputs = imagewatcher.ImageWatcher.eventoutputs + [
@@ -30,44 +31,7 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		self.addEventInput(event.TargetListDoneEvent, self.handleTargetListDone)
 		self.emclient = EM.EMClient(self)
 
-	def researchImageTargets(self, imagedata):
-		'''
-		Get a list of all targets that have this image as their parent.
-		only want most recent versions of each
-		'''
-		targetquery = data.AcquisitionImageTargetData(image=imagedata)
-		targets = self.research(datainstance=targetquery)
-
-		## now filter out only the latest versions
-		# map target id to latest version
-		# assuming query result is ordered by timestamp, this works
-		have = {}
-		for target in targets:
-			targetnum = target['number']
-			if targetnum not in have:
-				have[targetnum] = target
-		havelist = have.values()
-		havelist.sort(self.compareTargetNumber)
-		if havelist:
-			self.logger.info('Found %s targets for image'
-												% (len(havelist),))
-		return havelist
-
-	def compareTargetNumber(self, first, second):
-		return cmp(first['number'], second['number'])
-
-	def lastTargetNumber(self, imagedata):
-		'''
-		Returns the number of the last target associated with the given image data.
-		'''
-		targets = self.researchImageTargets(imagedata)
-		maxnumber = 0
-		for target in targets:
-			if target['number'] > maxnumber:
-				maxnumber = target['number']
-		return maxnumber
-
-	def findTargets(self, imdata):
+	def findTargets(self, imdata, targetlist):
 		'''
 		Virtual function, inheritting classes implement building self.targetlist,
 		a list of ImageTargetData items.
@@ -80,12 +44,15 @@ class TargetFinder(imagewatcher.ImageWatcher):
 	def processImageListData(self, imagelistdata):
 		if 'images' not in imagelistdata or imagelistdata['images'] is None:
 			return
+		targetlist = self.newTargetList()
 		for ref in imagelistdata['images']:
 			imagedata = ref.getData()
 			if imagedata is None:
 				continue
-			self.findTargets(imagedata)
-		self.publishTargetList()
+			self.findTargets(imagedata, targetlist)
+		self.publish(targetlist, database=True, pubevent=True)
+		if self.wait_for_done.get():
+			self.waitForTargetListDone()
 
 	def processImageData(self, imagedata):
 		'''
@@ -95,50 +62,6 @@ class TargetFinder(imagewatcher.ImageWatcher):
 			return
 		self.findTargets(imagedata)
 		self.publishTargetList()
-
-	def publishTargetList(self):
-		'''
-		Updates and publishes the target list self.targetlist. Waits for target
-		to be "done" if specified.
-		'''
-
-		self.unNotifyUserSubmit()
-
-		## map image id to max target number in DB
-		## so we don't have to query DB every iteration of the loop
-		targetnumbers = {}
-
-		## add a 'number' to the target and then publish it
-		for target in self.targetlist:
-			# target may have number if it was previously published
-			if target['number'] is None:
-				parentimage = target['image']
-				## should I use dmid or dbid?
-				parentid = parentimage.dmid
-				if parentid in targetnumbers:
-					last_targetnumber = targetnumbers[parentid]
-				else:
-					last_targetnumber = self.lastTargetNumber(parentimage)
-					targetnumbers[parentid] = last_targetnumber
-
-				## increment target number
-				targetnumbers[parentid] += 1
-				target['number'] = targetnumbers[parentid]
-			self.logger.info('Publishing (%s, %s) %s' %
-					(target['delta row'], target['delta column'], target['image'].dmid))
-			self.publish(target, database=True)
-			#targetrefs.append(target.reference())
-
-		## make a list of references to the targets
-		refs = map(lambda x: x.reference(), self.targetlist)
-		targetlistdata = data.ImageTargetListData(targets=refs)
-
-		self.makeTargetListEvent(targetlistdata)
-
-		self.publish(targetlistdata, pubevent=True)
-
-		self.targetlist = []
-		# wait for target list to be processed by other node
 		if self.wait_for_done.get():
 			self.waitForTargetListDone()
 
@@ -186,23 +109,6 @@ class TargetFinder(imagewatcher.ImageWatcher):
 			self.targetlistevents[targetlistid]['received'].set()
 		self.confirmEvent(targetlistdoneevent)
 
-	def newTargetData(self, imagedata, type, drow, dcol):
-		'''
-		returns a new target data object with data filled in from the image data
-		'''
-		imagearray = imagedata['image']
-		targetdata = data.AcquisitionImageTargetData(type=type, version=0, status='new')
-		targetdata['image'] = imagedata
-		targetdata['scope'] = imagedata['scope']
-		targetdata['camera'] = imagedata['camera']
-		targetdata['preset'] = imagedata['preset']
-		targetdata['type'] = type
-		targetdata['delta row'] = drow
-		targetdata['delta column'] = dcol
-		if 'grid' in imagedata and imagedata['grid'] is not None:
-			targetdata['grid'] = imagedata['grid']
-		return targetdata
-
 	def defineUserInterface(self):
 		imagewatcher.ImageWatcher.defineUserInterface(self)
 
@@ -230,9 +136,9 @@ class ClickTargetFinder(TargetFinder):
 			self.defineUserInterface()
 			self.start()
 
-	def findTargets(self, imdata):
+	def findTargets(self, imdata, targetlist):
 		## check if targets already found on this image
-		previous = self.researchImageTargets(imdata)
+		previous = self.researchTargets(image=imdata)
 		if previous:
 			self.logger.warning('There are %s existing targets for this image'
 													% (len(previous),))
@@ -240,6 +146,8 @@ class ClickTargetFinder(TargetFinder):
 			if self.preventrepeat.get():
 				self.logger.error('You are not allowed to submit targets again')
 				return
+
+		# XXX would be nice to display existing targets too
 
 		# display image
 		self.clickimage.setTargets([])
@@ -252,14 +160,13 @@ class ClickTargetFinder(TargetFinder):
 		self.logger.info('Waiting for user to select targets...')
 		self.userpause.wait()
 		self.logger.info('Done waiting')
-		self.targetlist += self.getTargetDataList('focus')
-		self.targetlist += self.getTargetDataList('acquisition')
+		self.targetsFromClickImage('focus', targetlist)
+		self.targetsFromClickImage('acquisition', targetlist)
 
 	def submitTargets(self):
 		self.userpause.set()
 
-	def getTargetDataList(self, typename):
-		targetlist = []
+	def targetsFromClickImage(self, typename, targetlist):
 		for imagetarget in self.clickimage.getTargetType(typename):
 			column, row = imagetarget
 			imagedata = self.clickimage.imagedata
@@ -267,9 +174,8 @@ class ClickTargetFinder(TargetFinder):
 			drow = row - imagearray.shape[0]/2
 			dcol = column - imagearray.shape[1]/2
 
-			targetdata = self.newTargetData(imagedata, typename, drow, dcol)
-			targetlist.append(targetdata)
-		return targetlist
+			targetdata = self.newTargetForImage(imagedata, drow, dcol, type=typename, list=targetlist)
+			self.publish(targetdata, database=True)
 
 	def defineUserInterface(self):
 		TargetFinder.defineUserInterface(self)

@@ -12,18 +12,19 @@ import event, data
 import watcher
 import threading
 import uidata
+import targethandler
 
-class TargetWatcher(watcher.Watcher):
+class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 	'''
 	TargetWatcher will watch for TargetLists
 	It is also initialized with a specific type of target that it can
 	process.  All other targets are republished in another target list.
 	'''
 
-	eventinputs = watcher.Watcher.eventinputs + [event.TargetListDoneEvent,
+	eventinputs = watcher.Watcher.eventinputs + targethandler.TargetHandler.eventinputs + [event.TargetListDoneEvent,
 																						event.ImageTargetListPublishEvent,
 																						event.ImageTargetShiftPublishEvent]
-	eventoutputs = watcher.Watcher.eventoutputs + [event.TargetListDoneEvent,
+	eventoutputs = watcher.Watcher.eventoutputs + targethandler.TargetHandler.eventoutputs + [event.TargetListDoneEvent,
 																							event.ImageTargetListPublishEvent,
 																							event.NeedTargetShiftEvent]
 
@@ -95,35 +96,38 @@ class TargetWatcher(watcher.Watcher):
 	def handleTargetShift(self, ev):
 		driftdata = ev['data']
 		self.driftedimages = driftdata['shifts']
+		self.logger.debug('HANDLING TARGET SHIFT ' + str(self.driftedimages))
 		# may be waiting for a requested image shift
 		req = driftdata['requested']
 		if req:
+			self.logger.debug('TARGET SHIFT WAS REQUESTED')
 			self.newtargetshift.set()
+		else:
+			self.logger.debug('TARGET SHIFT NOT REQUESTED')
 
 	def processData(self, newdata):
 		if not isinstance(newdata, data.ImageTargetListData):
 			return
-		### for now use dbid since it is persistent
-		### would rather use the dmid of the reference
-		### that led to this newdata
-		### dmid of newdata is no good becuase it
-		### might not match dmid of the original image
-		imageid = newdata.dbid
-		self.uitargetlistid.set(str(imageid))
+
+		### get targets that belong to this target list
+		targetlist = self.researchTargets(list=newdata)
 
 		# separate the good targets from the rejects
-		targetlist = newdata['targets']
 		goodtargets = []
 		rejects = []
-		for targetref in targetlist:
-			## I was hoping we wouldn't have to getData until
-			## we actually process the target, but we need to
-			## know 'type' right now
-			target = targetref.getData()
+
+		for target in targetlist:
+			im = target['image']
+			if im is not None:
+				imageid = target['image'].dbid
+			else:
+				imageid = None
+			self.logger.debug('IMAGEID ' + str(imageid))
+			self.uitargetlistid.set(str(imageid))
 			if target['type'] == self.target_type:
 				goodtargets.append(target)
 			else:
-				rejects.append(targetref)
+				rejects.append(target)
 
 		self.uintargets.set('%d process, %d pass, %d total' %
 													(len(goodtargets), len(rejects), len(targetlist)))
@@ -131,8 +135,14 @@ class TargetWatcher(watcher.Watcher):
 		# republish the rejects and wait for them to complete
 		if rejects and self.publishrejects.get():
 			self.uistatus.set('Publishing passed targets')
-			newtargetlist = data.ImageTargetListData(targets=rejects)
-			self.passTargets(newtargetlist)
+			rejectlist = self.newTargetList()
+			self.publish(rejectlist, database=True, dbforce=True)
+			for target in rejects:
+				reject = data.AcquisitionImageTargetData(initializer=target)
+				reject['list'] = rejectlist
+				self.publish(reject, database=True)
+
+			self.passTargets(rejectlist)
 			self.uistatus.set('Waiting for passed targets to be processed...')
 			rejectstatus = self.waitForRejects()
 
@@ -191,7 +201,9 @@ class TargetWatcher(watcher.Watcher):
 			process_status = 'repeat'
 			while process_status == 'repeat':
 				# check if this imageid needs update
+				self.logger.debug('DRIFTED IMAGES ' + str(self.driftedimages))
 				if imageid in self.driftedimages:
+					self.logger.debug('THIS IS DRIFTED')
 					self.uitargetstatus.set('Target has drifted')
 					#if self.driftedimages[imageid]:
 					#	'ALREADY HAVE ADJUST'
@@ -201,8 +213,10 @@ class TargetWatcher(watcher.Watcher):
 						self.newtargetshift.clear()
 						ev = event.NeedTargetShiftEvent(imageid=imageid)
 						self.uitargetstatus.set('Waiting for adjustment value...')
+						self.logger.debug('SENDING NEEDTARGETSHIFTEVENT AND WAITING ' + str(imageid))
 						self.outputEvent(ev)
 						self.newtargetshift.wait()
+						self.logger.debug('DONE WAITING')
 						# 'done.'
 					adjust = self.driftedimages[imageid]
 					# perhaps flip

@@ -12,6 +12,7 @@ import presets
 import calibrationclient
 import math
 import EM
+import targethandler
 
 def magnitude(coordinate, coordinates):
 	return map(lambda c: math.sqrt(sum(map(lambda m, n: (n - m)**2,
@@ -31,20 +32,13 @@ def sortTargets(targets, start=None):
 		del targets[0]
 	return targets
 
-class TargetMaker(node.Node):
-	eventinputs = node.Node.eventinputs + EM.EMClient.eventinputs
-	eventoutputs = node.Node.eventoutputs + [event.ImageTargetListPublishEvent] + EM.EMClient.eventoutputs
+class TargetMaker(node.Node, targethandler.TargetHandler):
+	eventinputs = node.Node.eventinputs + targethandler.TargetHandler.eventinputs + EM.EMClient.eventinputs
+	eventoutputs = node.Node.eventoutputs + targethandler.TargetHandler.eventoutputs + EM.EMClient.eventoutputs
 	def __init__(self, id, session, managerlocation, **kwargs):
 		self.targetlist = []
 		node.Node.__init__(self, id, session, managerlocation, **kwargs)
 		self.emclient = EM.EMClient(self)
-
-	def publishTargetList(self):
-		if self.targetlist:
-			refs = map(lambda x: x.reference(), self.targetlist)
-			targetlistdata = data.ImageTargetListData(targets=refs)
-			self.publish(targetlistdata, pubevent=True)
-			self.targetlist = []
 
 #	def defineUserInterface(self):
 #		node.Node.defineUserInterface(self)
@@ -59,7 +53,7 @@ class MosaicTargetMaker(TargetMaker):
 	def __init__(self, id, session, managerlocation, **kwargs):
 		TargetMaker.__init__(self, id, session, managerlocation, **kwargs)
 		self.pixelsizecalclient = calibrationclient.PixelSizeCalibrationClient(self)
-		self.addEventInput(event.MakeTargetListEvent, self.publishTargetList)
+		self.addEventInput(event.MakeTargetListEvent, self.makeMosaicTargetList)
 		self.presetsclient = presets.PresetsClient(self)
 		self.defineUserInterface()
 		self.start()
@@ -71,14 +65,14 @@ class MosaicTargetMaker(TargetMaker):
 		statuscontainer = uidata.Container('Status')
 		statuscontainer.addObjects((self.statusmessage,))
 
-		self.presetname = uidata.String('Preset', '', 'rw', persist=True)
+		self.presetname = self.presetsclient.uiSinglePresetSelector('Preset', '', 'rw', persist=True)
 		self.radius = uidata.Float('Radius (meters)', 1.0e-3, 'rw', persist=True)
 		self.overlap = uidata.Integer('Overlap (percent)', 0, 'rw', persist=True)
+		self.listlabel = uidata.String('Label', '', 'rw', persist=True)
 		settingscontainer = uidata.Container('Settings')
-		settingscontainer.addObjects((self.presetname, self.radius, self.overlap))
+		settingscontainer.addObjects((self.presetname, self.radius, self.overlap, self.listlabel))
 
-		publishtargetlistmethod = uidata.Method('Publish Target List',
-																				self.publishTargetList)
+		publishtargetlistmethod = uidata.Method('Publish Target List', self.makeMosaicTargetList)
 		controlcontainer = uidata.Container('Control')
 		controlcontainer.addObjects((publishtargetlistmethod,))
 
@@ -89,55 +83,9 @@ class MosaicTargetMaker(TargetMaker):
 	def setStatusMessage(self, message):
 		self.statusmessage.set(message)
 
-	### Next 3 methods are similar to target finder, need to create a common base class
-	def researchGridTargets(self, griddata=None):
-		'''
-		Get a list of all targets that have this do not have a
-		parent image
-		only want most recent versions of each
-		'''
-		targetquery = data.AcquisitionImageTargetData(session=self.session, grid=griddata)
-		targets = self.research(datainstance=targetquery)
-		gridtargets = []
-		for target in targets:
-			## if there is a reference there, then it has an image
-			im = target.special_getitem('image', dereference=False)
-			if im is None:
-				gridtargets.append(target)
-
-		## now filter out only the latest versions
-		# map target id to latest version
-		# assuming query result is ordered by timestamp, this works
-		have = {}
-		for target in gridtargets:
-			targetnum = target['number']
-			if targetnum not in have:
-				have[targetnum] = target
-		havelist = have.values()
-		havelist.sort(self.compareTargetNumber)
-		if havelist:
-			self.logger.info('Found %s targets for image'
-												% (len(havelist),))
-		return havelist
-
-	def compareTargetNumber(self, first, second):
-		return cmp(first['number'], second['number'])
-
-	def lastGridTargetNumber(self, griddata=None):
-		'''
-		Returns the number of the last target associated with the
-		grid.
-		'''
-		targets = self.researchGridTargets(griddata)
-		maxnumber = 0
-		for target in targets:
-			if target['number'] > maxnumber:
-				maxnumber = target['number']
-		return maxnumber
-
-	def publishTargetList(self, ievent=None):
+	def makeMosaicTargetList(self, ievent=None):
 		# make targets using current instrument state and selected preset
-		self.setStatusMessage('Publishing target list')
+		self.setStatusMessage('getting current EM state')
 		try:
 			scope = self.emclient.getScope()
 			camera = self.emclient.getCamera()
@@ -184,41 +132,25 @@ class MosaicTargetMaker(TargetMaker):
 		imagesize = camera['dimension']['x']
 
 		self.setStatusMessage('Creating target list')
-		if ievent is None:
-			## get last target number (no grid)
-			lastnumber = self.lastGridTargetNumber()
+		if ievent is None: 
+			### generated from user invoked method
+			label = self.listlabel.get()
+			targetlist = self.newTargetList(mosaic=True, label=label)
+			grid = None
 		else:
-			## get last target number for this grid
-			#lastnumber = self.getLastTargetNumber(ievent['grid'])
-
-			# actually, for now ignore grid, because it needs to
-			# be in the filename somehow
-			# not specifying grid here will generate
-			# target numbers that are unique for this session
-			# rather than for this grid
-			lastnumber = self.lastGridTargetNumber()
-
-		number = lastnumber + 1
-		for delta in self.makeCircle(radius, pixelsize, binning, imagesize,
-																	overlap):
-			initializer = {'number': number,
-	'session': self.session,
-											'delta row': delta[0],
-											'delta column': delta[1],
-											'scope': scope,
-											'camera': camera,
-											'preset': preset}
-			if ievent is not None:
-				try:
-					initializer['grid'] = ievent['grid']
-				except (KeyError, AttributeError):
-					pass
-			targetdata = data.AcquisitionImageTargetData(initializer=initializer,
-																										type='acquisition')
-			self.targetlist.append(targetdata)
-			number += 1
+			### generated from external event
+			grid = ievent['grid']
+			gridid = grid['grid ID']
+			label = '%06d' % (gridid,)
+			targetlist = self.newTargetList(mosaic=True, label=label)
 		self.setStatusMessage('Publishing target list')
-		TargetMaker.publishTargetList(self)
+		### publish to DB so new targets get right reference
+		self.publish(targetlist, database=True)
+		for delta in self.makeCircle(radius, pixelsize, binning, imagesize, overlap):
+			targetdata = self.newTargetForGrid(grid, delta[0], delta[1], scope=scope, camera=camera, preset=preset, list=targetlist, type='acquisition')
+			self.publish(targetdata, database=True)
+		### publish with event
+		self.publish(targetlist, pubevent=True)
 		self.setStatusMessage('Target list published')
 
 	def makeCircle(self, radius, pixelsize, binning, imagesize, overlap=0.0):
