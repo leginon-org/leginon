@@ -93,7 +93,16 @@ class DBRecordData(Data):
 
 class CalibrationData(Data):
 	def __init__(self, id, content):
-		Data.__init__(self, id, dict(content))
+		Data.__init__(self, id, content)
+
+class MatrixCalibrationData(CalibrationData):
+	def __init__(self, id, matrix):
+		try:
+			matrixcontent = matrix.astype(Numeric.Float64)
+			CalibrationData.__init__(self, id, matrixcontent)
+		except AttributeError:
+			print 'MatrixCalibrationData requires Numeric array'
+			raise
 
 class PresetData(Data):
 	def __init__(self, id, content):
