@@ -25,6 +25,10 @@ class EMData(Data):
 	def __init__(self, id, content):
 		Data.__init__(self, id, dict(content))
 
+class DBData(Data):
+	def __init__(self, id, content):
+		Data.__init__(self, id, dict(content))
+
 # we're going to play with the image being a Numeric array, and hopefully
 # type and dimenion can be extracted from only that
 class ImageData(Data):

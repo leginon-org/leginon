@@ -11,8 +11,7 @@ import sys
 import MySQLdb
 import presettable
 import threading
-if sys.platform == 'win32':
-	import pythoncom
+import cPickle
 
 class DataHandler(datahandler.DataBinder):
 	def __init__(self, id, lock, table, DBnode):
@@ -28,8 +27,9 @@ class DataHandler(datahandler.DataBinder):
 		self.lock.acquire()
 
 		## query DB for this id
-		row = sqltable.query()
-		# result = data.DBData(self.ID(), content)
+		row = self.table[idstr]
+		del row['leginonid']
+		result = data.DBData(id, row)
 
 		self.lock.release()
 		return result
@@ -41,6 +41,9 @@ class DataHandler(datahandler.DataBinder):
 			self.lock.acquire()
 			rowdict = idata.content
 			## insert this rowdict into the sqltable
+			newid = idata.id
+			newidstr = cPickle.dumps(newid)
+			self.table[newidstr] = rowdict
 			self.lock.release()
 
 	# borrowed from NodeDataHandler
