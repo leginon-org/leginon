@@ -389,7 +389,7 @@ class Tietz(object):
 		# 1 uses internal exposure signal (PVCam and PXL only)
 		# shutter_mode = 1
 
-		offset = self.getOffset()
+		offset = dict(self.getOffset())
 		dimension = self.getDimension()
 		binning = self.getBinning()
 
