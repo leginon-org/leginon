@@ -704,13 +704,6 @@ class AcquisitionImageData(PresetImageData):
 		return t
 	typemap = classmethod(typemap)
 
-class FocusImageData(PresetImageData):
-	def typemap(cls):
-		t = PresetImageData.typemap()
-		t += [ ('target', FocusTargetData), ]
-		return t
-	typemap = classmethod(typemap)
-
 class TrialImageData(PresetImageData):
 	pass
 
@@ -751,6 +744,8 @@ class ImageTargetData(InSessionData):
 		  ('scope', ScopeEMData),
 		  ('camera', CameraEMData),
 		  ('preset', PresetData),
+		  ('type', str),
+		  ('version', int),
 		]
 		return t
 	typemap = classmethod(typemap)
@@ -781,9 +776,6 @@ class AcquisitionImageTargetData(ImageTargetData):
 		return t
 	typemap = classmethod(typemap)
 
-class FocusTargetData(AcquisitionImageTargetData):
-	pass
-
 ### XXX the list here has variable length
 class ImageTargetListData(InSessionData):
 	def typemap(cls):
@@ -799,7 +791,7 @@ class FocuserResultData(InSessionData):
 	def typemap(cls):
 		t = InSessionData.typemap()
 		t += [
-		  ('target', FocusTargetData),
+		  ('target', AcquisitionImageTargetData),
 		  ('defocus', float),
 		  ('stigx', float),
 		  ('stigy', float),
