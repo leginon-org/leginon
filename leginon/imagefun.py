@@ -207,13 +207,6 @@ def fakeCols(inputarray, badcols, goodcol):
 		inputarray[:,col] = fakecol
 	return inputarray
 
-def convolve(image, kernel):
-	imfft = ffteng.transform(image)
-	kerfft = ffteng.transform(kernel)
-	conv = Numeric.multiply(imfft, kerfft)
-	result = ffteng.itransform(conv)
-	return result
-
 ## see the correlator.py module for a more efficient way to do
 ## correlations on a series of images
 def cross_correlate(im1, im2):
