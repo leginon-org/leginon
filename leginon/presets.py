@@ -534,7 +534,6 @@ class PresetsManager(node.Node):
 		try:
 			pname = self.presetNames()[index]
 			self.currentselection = self.presetByName(pname)
-			print 'SELECT', id(self.currentselection['session'])
 		except IndexError:
 			self.currentselection = None
 		else:
