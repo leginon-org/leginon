@@ -35,11 +35,11 @@ class DataHandler(node.DataHandler):
 		print 'EM query: creating data, (keys = %s)' % str(stuff.keys())
 
 		if emkey == 'scope':
-			result = data.ScopeEMData(self.ID(), initializer=stuff)
+			result = data.ScopeEMData(('scope',), initializer=stuff)
 		elif emkey == 'camera':
-			result = data.CameraEMData(self.ID(), initializer=stuff)
-		elif emkey == 'all':
-			result = data.AllEMData(self.ID(), initializer=stuff)
+			result = data.CameraEMData(('camera',), initializer=stuff)
+		elif emkey == 'all em':
+			result = data.AllEMData(('all em',), initializer=stuff)
 		else:
 			### could be either CameraEMData or ScopeEMData
 			newid = self.ID()
@@ -135,7 +135,7 @@ class EM(node.Node):
 
 		self.addEventOutput(event.ListPublishEvent)
 
-		ids = ['scope', 'camera', 'camera no image data', 'all']
+		ids = ['scope', 'camera', 'camera no image data', 'all em']
 		ids += self.scope.keys()
 		ids += self.camera.keys()
 		for i in range(len(ids)):
@@ -219,18 +219,18 @@ class EM(node.Node):
 							result[camerakey] = self.camera[camerakey]
 				elif EMkey == 'camera':
 					result.update(self.camera)
-				elif EMkey == 'all':
+				elif EMkey == 'all em':
 					result.update(self.scope)
 					result.update(self.camera)
 		elif withoutkeys is not None:
-			if not ('scope' in withoutkeys or 'all' in withoutkeys):
+			if not ('scope' in withoutkeys or 'all em' in withoutkeys):
 				for EMkey in self.scope:
 					if not EMkey in withoutkeys:
 						try:
 							result[EMkey] = self.scope[EMkey]
 						except:	
 							print "failed to get '%s'" % EMkey
-			if not ('camera' in withoutkeys or 'all' in withoutkeys):
+			if not ('camera' in withoutkeys or 'all em' in withoutkeys):
 				for EMkey in self.camera:
 					if not EMkey in withoutkeys:
 						try:
