@@ -218,7 +218,7 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 			'defocus': solution[0][0],
 			'stigx': solution[0][1],
 			'stigy': solution[0][2],
-			'min': float(solution[1])
+			'min': float(solution[1][0])
 			}
 		return result
 
