@@ -22,20 +22,6 @@ class GridPreview(node.Node):
 		self.calclient = calibrationclient.StageCalibrationClient(self)
 		self.presetsclient = presets.PresetsClient(self)
 
-		## default camera config
-		currentconfig = self.cam.config()
-		currentconfig['state']['dimension']['x'] = 1024
-		currentconfig['state']['binning']['x'] = 2
-		currentconfig['state']['exposure time'] = 400
-
-		currentconfig['state']['binning']['x'] = 1
-		currentconfig['state']['offset']['x'] = 0
-		currentconfig['state']['offset']['y'] = 0
-		currentconfig['correct'] = 0
-		currentconfig['auto offset'] = 0
-
-		self.cam.config(currentconfig)
-
 		self.defineUserInterface()
 		self.start()
 
@@ -45,11 +31,10 @@ class GridPreview(node.Node):
 		self.presetname = self.registerUIData('Preset Name', 'string', default='vlm170', permissions='rw')
 
 		self.sim = self.registerUIData('Simulate TEM/camera', 'boolean', permissions='rw', default=0)
-		cam = self.cam.configUIData()
 		defprefs = {'center': {'x':0.0,'y':0.0}, 'overlap': 50, 'maxtargets': 4}
 		spiralprefs = self.registerUIData('Spiral', 'struct', callback=self.uiSpiralPrefs, default=defprefs, permissions='rw')
 		self.sim = self.registerUIData('Simulate TEM/camera', 'boolean', permissions='rw', default=0)
-		prefs = self.registerUIContainer('Preferences', (self.presetname, cam, spiralprefs, self.sim))
+		prefs = self.registerUIContainer('Preferences', (self.presetname, spiralprefs, self.sim))
 
 		start = self.registerUIMethod(self.runLoop, 'Run', ())
 		stop = self.registerUIMethod(self.stopLoop, 'Stop', ())
@@ -57,11 +42,15 @@ class GridPreview(node.Node):
 		controls = self.registerUIContainer('Controls', (start,stop,reset))
 		self.registerUISpec('Grid Preview', (prefs, controls))
 
+	def setMyPresetData(self):
+		presetname = self.presetname.get()
+		presetlist = self.presetsclient.retrievePresets(presetname)
+		self.presetdata = presetlist[0]
+
 	def uiSpiralPrefs(self, value=None):
 		if value is not None:
-			camconfig = self.cam.config()
-			camstate = camconfig['state']
-			size = camstate['dimension']['x']
+			self.setMyPresetData()
+			size = self.presetdata['dimension']['x']
 			self.prefs = value
 			overlap = value['overlap']
 			maxtargets = value['maxtargets']
@@ -107,16 +96,13 @@ class GridPreview(node.Node):
 				self.publishRemote(emdata)
 			else:
 				# move to next postion
-				camconfig = self.cam.config()
-				camstate = camconfig['state']
-				print 'camstate', camstate
 				scopestate = self.getScope()
 
 				targetrow, targetcol = target
 				print 'targetrow', targetrow
 				pixelshift = {'row':targetrow, 'col':targetcol}
 				print 'transforming'
-				newstate = self.calclient.transform(pixelshift, scopestate, camstate)
+				newstate = self.calclient.transform(pixelshift, scopestate, self.presetdata)
 				print 'done transforming'
 				emdat = data.EMData(('scope',), em=newstate)
 				print 'moving to next position'
