@@ -320,6 +320,8 @@ class Manager(node.Node):
 
 		ndict = self.nodeDict()
 		self.nodetreedata = self.registerUIData('Nodes', 'struct', permissions='r', default=ndict)
+		datatree = self.registerUIData('Data', 'struct', permissions='r')
+		datatree.set(self.uiDataDict)
 
 		argspec = (
 		self.registerUIData('Filename', 'string'),
@@ -333,7 +335,7 @@ class Manager(node.Node):
 		argspec = (self.registerUIData('ID', 'string'),)
 		launcherspec = self.registerUIMethod(self.spawnLauncher, 'Spawn Launcher', (argspec))
 
-		self.registerUISpec('Manager', (nodespec, spec1, spec2, spec3, app, launcherspec, self.nodetreedata))
+		self.registerUISpec('Manager', (nodespec, spec1, spec2, spec3, app, launcherspec, self.nodetreedata, datatree))
 
 	def nodeDict(self):
 		"""
@@ -392,6 +394,18 @@ class Manager(node.Node):
 		## just to make xmlrpc happy
 		return ''
 
+	def uiDataDict(self, value=None):
+		if value is None:
+			return self.key2str(self.server.datahandler.datadict)
+
+	def key2str(self, d):
+		if type(d) is dict:
+			newdict = {}
+			for k in d:
+				newdict[str(k)] = self.key2str(d[k])
+			return newdict
+		else:
+			return str(d)
 
 if __name__ == '__main__':
 	import sys

@@ -74,12 +74,10 @@ class Calibration(node.Node):
 				for t in self.validshift[shift]:
 					if self.validshift[shift][t] != value[shift][t]:
 						typelist.append(t)
-				print 'in shift', shift, "typelist =", typelist
 				if len(typelist) != 1:
 					break
 				for t in typelist:
 					self.validshift[shift][t] = value[shift][t]
-					print self.validshift[shift][t]
 					if t == 'percent':
 						self.validshift[shift]['pixel'] = \
 							self.calculatePixelFromPercent(value[shift][t])
