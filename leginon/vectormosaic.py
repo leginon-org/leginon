@@ -26,16 +26,15 @@ def add_piece(target, source, gxoff, gyoff, theta, sclx, scly, thresh,
 
 	sourceoffset = Numeric.matrixmultiply(rotation, sourceoffset)
 
-	targetoffset = (int(round(float(target.shape[0])/2.0)),
-									int(round(float(target.shape[1])/2.0)))
+	targetoffset = -stagemin * targetpixelperstage
 
 	print sourceoffset
 
 	for i in range(source.shape[0]):
 		for j in range(source.shape[1]):
-			stagerow = targetoffset[0] + int(round(sourceoffset[0]
+			stagerow = int(round(targetoffset[0] + sourceoffset[0]
 																				+ i*scaledtargetpixelperstage[0]))
-			stagecolumn = targetoffset[1] + int(round(sourceoffset[1]
+			stagecolumn = int(round(targetoffset[1] + sourceoffset[1]
 																				+ j*scaledtargetpixelperstage[1]))
 			target[stagerow, stagecolumn] = source[i, j]
 
