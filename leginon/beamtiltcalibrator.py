@@ -188,7 +188,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		eutoscope = uidata.Method('Send Recorded Eucentric Focus to Scope', self.uiEucToScope)
 		self.eucstatus = uidata.MessageLog('Status')
 
-		euc.addObjects((eufromscope,eutoscope, self.eucstatus))
+		euc.addObjects((eufromscope, eutoscope))
+		euc.addObject(self.eucstatus, position={'expand': 'all'})
 
 		container = uidata.LargeContainer('Beam Tilt Calibrator')
 		container.addObjects((defocuscontainer, stigcontainer, measurecontainer, euc))
