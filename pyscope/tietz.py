@@ -173,7 +173,8 @@ class Tietz(object):
 			'offset': {'type': dict, 'values':
 																		{'x': {'type': int}, 'y': {'type': int}}},
 			'exposure time': {'type': int},
-			'exposure type': {'type': str, 'values': ['normal', 'dark', 'bias', 'readout']},
+			'exposure type': {'type': str,
+												'values': ['normal', 'dark', 'bias', 'readout']},
 			'image data': {'type': numarray.ArrayType},
 			'chip name': {'type': str},
 			'camera name': {'type': str},
@@ -428,8 +429,8 @@ class Tietz(object):
 
 	def getPixelSize(self):
 		# {'type': dict, 'values': {'x': {'type': float}, 'y': {'type': float}}}}
-		x = self._getParameterValue('cpPixelSizeX')/1000000000.0
-		y = self._getParameterValue('cpPixelSizeY')/1000000000.0
+		x = self._getParameterValue('cpPixelSizeX')/1e9
+		y = self._getParameterValue('cpPixelSizeY')/1e9
 		return {'x': x, 'y': y}
 
 	def getMaximumPixelValue(self):
