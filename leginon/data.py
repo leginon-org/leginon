@@ -460,8 +460,11 @@ class Data(DataDict, leginonobject.LeginonObject):
 		'''
 		needs to not dereference
 		'''
-		for k in other.keys():
-			self[k] = other.special_getitem(k, dereference=False)
+		if isinstance(other, Data):
+			for k in other.keys():
+				self[k] = other.special_getitem(k, dereference=False)
+		else:
+			super(Data, self).update(other)
 
 	def __deepcopy__(self, memo={}):
 		# without this, it will copy the dict
