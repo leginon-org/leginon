@@ -439,14 +439,45 @@ class PresetsManager(node.Node):
 
 		scopedata = data.ScopeEMData(id=('scope',), initializer=emdata)
 
-		# remove influence of old preset from emdata
-		scopedata['image shift']['x'] -= oldpreset['image shift']['x']
-		scopedata['image shift']['y'] -= oldpreset['image shift']['y']
+
+
+		## figure out if we should ignore the target image shift
+		## this is just a rough try at how to do this
+		if oldpreset['magnification'] < 1500:
+			oldmag = 'LM'
+		else:
+			oldmag = 'SA'
+		if newpreset['magnification'] < 1500:
+			newmag = 'LM'
+		else:
+			newmag = 'SA'
+
+		## figure out how to transform the target image shift
+		## ???
+		## for now, assume that target does not have image shift
+		targetishift = {}
+		oldpresetishift = {}
+		if oldmag == newmag:
+			print 'SAME MAG MODE'
+			targetishift['x'] = scopedata['image shift']['x']
+			targetishift['y'] = scopedata['image shift']['y']
+			oldpresetishift['x'] = oldpreset['image shift']['x']
+			oldpresetishift['y'] = oldpreset['image shift']['y']
+		else:
+			print 'DIFFERENT MAG MODE'
+			targetishift['x'] = 0.0
+			targetishift['y'] = 0.0
+			oldpresetishift['x'] = 0.0
+			oldpresetishift['y'] = 0.0
+
+		newishift = {}
+		# remove influence of old preset from target
+		targetishift['x'] -= oldpresetishift['x']
+		targetishift['y'] -= oldpresetishift['y']
 
 		# add influence of new preset
-		newishift = {}
-		newishift['x'] = scopedata['image shift']['x'] + newpreset['image shift']['x']
-		newishift['y'] = scopedata['image shift']['y'] + newpreset['image shift']['y']
+		newishift['x'] = targetishift['x'] + newpreset['image shift']['x']
+		newishift['y'] = targetishift['y'] + newpreset['image shift']['y']
 
 		## should use AllEMData, but that is not working yet
 		scopedata.friendly_update(newpreset)
