@@ -53,7 +53,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		'wait for rejects': False,
 		'duplicate targets': False,
 		'duplicate target type': 'focus',
-		'preset lock': 'acquisition',
 	}
 	eventinputs = targetwatcher.TargetWatcher.eventinputs \
 								+ [event.DriftDoneEvent,
@@ -116,8 +115,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.imagelistdata = data.ImageListData(session=self.session,
 																						targets=newdata)
 		self.publish(self.imagelistdata, database=True)
-		if self.settings['preset lock'] == 'target list':
-			self.presetsclient.lock()
 		targetwatcher.TargetWatcher.processData(self, newdata)
 		self.publish(self.imagelistdata, pubevent=True)
 		self.presetsclient.unlock()
@@ -177,9 +174,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 				self.beep()
 				return 'repeat'
 
-		if self.settings['preset lock'] == 'target':
-			self.presetsclient.lock()
-
 		ret = 'ok'
 		for newpresetname in presetnames:
 			presettarget = data.PresetTargetData(emtarget=emtarget, preset=newpresetname)
@@ -187,9 +181,6 @@ class Acquisition(targetwatcher.TargetWatcher):
 			if force == False:
 				if self.alreadyAcquired(targetdata, presettarget):
 					continue
-
-			if self.settings['preset lock'] == 'acquisition':
-				self.presetsclient.lock()
 
 			self.presetsclient.toScope(newpresetname, emtarget)
 			self.reportStatus('processing', 'Determining current preset')
@@ -217,13 +208,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 				if ret in ('aborted', 'repeat'):
 					self.reportStatus('acquisition', 'Acquisition state is "%s"' % ret)
 					break
-			if self.settings['preset lock'] == 'acquisition':
-				self.presetsclient.unlock()
 
 		self.reportStatus('processing', 'Processing complete')
-
-		if self.settings['preset lock'] in ('target', 'acquisition'):
-			self.presetsclient.unlock()
 
 		return ret
 

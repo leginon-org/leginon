@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Acquisition.py,v $
-# $Revision: 1.28 $
+# $Revision: 1.29 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-12-08 23:40:33 $
+# $Date: 2005-02-16 21:35:09 $
 # $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
@@ -166,16 +166,6 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		self.widgets['wait for rejects'] = wx.CheckBox(self, -1,
 																				'Publish and wait for rejected targets')
 
-		# preset lock
-		locktypes = self.node.presetlocktypes
-		self.widgets['preset lock'] = Choice(self, -1, choices=locktypes)
-		szlocktype = wx.GridBagSizer(5, 5)
-		szlocktype.Add(wx.StaticText(self, -1, 'Preset Lock Type'),
-										(0, 0), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL)
-		szlocktype.Add(self.widgets['preset lock'],
-										(0, 1), (1, 1),
-										wx.ALIGN_CENTER_VERTICAL)
 #		# duplicate target
 #		self.widgets['duplicate targets'] = wx.CheckBox(self, -1,
 #																				'Duplicate targets with type:')
