@@ -31,7 +31,7 @@ class XMLRPCServer(object):
 		self.port = port
 		if self.port is not None:
 			# this exception will fall through if __init__ fails
-			self.server = SimpleXMLRPCServer.SimpleXMLRPCServer(
+			self.xmlrpcserver = SimpleXMLRPCServer.SimpleXMLRPCServer(
 																	(self.hostname, self.port), logRequests=False)
 			self._startServing()
 			return
@@ -39,7 +39,7 @@ class XMLRPCServer(object):
 		# find a port in range defined by IANA as dynamic/private
 		for self.port in portrange:
 			try:
-				self.server = SimpleXMLRPCServer.SimpleXMLRPCServer(
+				self.xmlrpcserver = SimpleXMLRPCServer.SimpleXMLRPCServer(
 																										(self.hostname, self.port),
 																										logRequests=False)
 				break
@@ -55,15 +55,13 @@ class XMLRPCServer(object):
 
 	def _startServing(self):
 		t = threading.Thread(name='UI XML-RPC server thread',
-													target=self.server.serve_forever)
+													target=self.xmlrpcserver.serve_forever)
 		t.setDaemon(1)
 		t.start()
 		self.serverthread = t
 
 class Server(XMLRPCServer, uidata.Container):
 	def __init__(self, name='UI', port=None, tries=5):
-		self.queue = Queue.Queue()
-
 		self.xmlrpcclients = []
 		self.localclients = []
 		self.tries = tries
@@ -74,10 +72,11 @@ class Server(XMLRPCServer, uidata.Container):
 		XMLRPCServer.__init__(self, port=port)
 
 		uidata.Container.__init__(self, name)
+		self.server = self
 
-		self.server.register_function(self.setFromClient, 'set')
-		self.server.register_function(self.commandFromClient, 'command')
-		self.server.register_function(self.addXMLRPCClientServer, 'add client')
+		self.xmlrpcserver.register_function(self.setFromClient, 'set')
+		self.xmlrpcserver.register_function(self.commandFromClient, 'command')
+		self.xmlrpcserver.register_function(self.addXMLRPCClientServer, 'add client')
 
 	def location(self):
 		location = {}
@@ -85,22 +84,6 @@ class Server(XMLRPCServer, uidata.Container):
 		location['XML-RPC port'] = self.port
 		location['instance'] = self
 		return location
-
-	def queueHandler(self):
-		while True:
-			try:
-				request = self.queue.pop()
-				if 'typelist' in request:
-					if 'client' in request['typelist'] and request['value'] is None:
-						request['value'] = uiobject.toXMLRPC(request['value'])
-
-				self.localExecute(request, client)
-
-				if hasattr(uiobject, 'toXMLRPC') and 'value' in request:
-					request['value'] = uiobject.toXMLRPC(request['value'])
-				self.XMLRPCExecute(request, client)
-			except Exception, e:
-				print e
 
 	def getNameList(self):
 		return []
@@ -123,11 +106,6 @@ class Server(XMLRPCServer, uidata.Container):
 
 		return ''
 
-	def addObject(self, uiobject):
-		uidata.Container.addObject(self, uiobject)
-
-		# updates the objects with stored preferences
-		self.usePreferences()
 
 	def commandFromClient(self, namelist, args):
 		uimethodobject = self.getObjectFromList(namelist)
@@ -141,12 +119,12 @@ class Server(XMLRPCServer, uidata.Container):
 		addclient = XMLRPCClient(hostname, port)
 		self.xmlrpcclients.append(addclient)
 		self.failures.append(0)
-		self.addObjectsCallback(addclient)
+		self.addChildObjects(addclient)
 		return ''
 
 	def addLocalClient(self, client):
 		self.localclients.append(client)
-		self.addObjectsCallback(client)
+		self.addChildObjects(client)
 
 	def localExecute(self, commandstring, properties, client=None):
 		if client in self.localclients:
@@ -181,7 +159,14 @@ class Server(XMLRPCServer, uidata.Container):
 			del self.xmlrpcclients[i]
 			del self.failures[i]
 
-	def addObjectCallback(self, uiobject, client=None):
+	def addObject(self, uiobject):
+		uidata.Container.addObject(self, uiobject)
+
+		# updates the objects with stored preferences
+		self.usePreferences()
+
+	def _addObject(self, uiobject, client=None):
+		uiobject.server = self
 		properties = {}
 		properties['dependencies'] = []
 		properties['namelist'] = uiobject.getNameList()
@@ -201,7 +186,7 @@ class Server(XMLRPCServer, uidata.Container):
 			properties['value'] = uiobject.toXMLRPC(properties['value'])
 		self.XMLRPCExecute('add', properties, client)
 
-	def setObjectCallback(self, uiobject, client=None):
+	def _setObject(self, uiobject, client=None):
 		properties = {}
 		properties['namelist'] = uiobject.getNameList()
 		properties['value'] = uiobject.value
@@ -212,13 +197,13 @@ class Server(XMLRPCServer, uidata.Container):
 			properties['value'] = uiobject.toXMLRPC(properties['value'])
 		self.XMLRPCExecute('set', properties, client)
 
-	def deleteObjectCallback(self, uiobject, client=None):
+	def _deleteObject(self, uiobject, client=None):
 		properties = {}
 		properties['namelist'] = uiobject.getNameList()
 		self.localExecute('removeFromServer', properties, client)
 		self.XMLRPCExecute('remove', properties, client)
 
-	def configureObjectCallback(self, uiobject, client=None):
+	def _configureObject(self, uiobject, client=None):
 		properties = {}
 		properties['namelist'] = uiobject.getNameList()
 		properties['configuration'] = uiobject.getConfiguration()

@@ -5,6 +5,7 @@
 #       For terms of the license agreement
 #       see  http://ami.scripps.edu/software/leginon-license
 #
+
 import copy
 import xmlrpclib
 import Numeric
@@ -36,31 +37,22 @@ class Object(object):
 		else:
 			raise TypeError('name must be a string')
 		self.parent = None
+		self.server = None
 		self.enabled = True
-
-	def getName(self):
-		return self.name
-
-	def getParent(self):
-		return self.parent
+		self.lock = threading.RLock()
 
 	def getNameList(self):
+		# not thread safe
 		namelist = [self.name,]
 		if self.parent is not None:
 			namelist = self.parent.getNameList() + namelist
 		return namelist
 
-	def setParent(self, parent):
-		if parent is not None and not isinstance(parent, Container):
-			raise TypeError('parent must be a Container or None')
-		else:
-			self.parent = parent
-
 	def getObjectFromList(self, namelist):
-		if len(namelist) == 1 and namelist[0] == self.name:
-			return self
-		else:
+		# not thread safe
+		if len(namelist) != 1 or namelist[0] != self.name:
 			raise ValueError('connect get Object from list, no such Object')
+		return self
 
 	def disable(self):
 		self._enable(False)
@@ -69,11 +61,14 @@ class Object(object):
 		self._enable(True)
 
 	def _enable(self, enabled):
+		self.lock.acquire()
 		self.enabled = enabled
-		if self.parent is not None:
-			self.parent.configureObjectCallback(self)
+		if self.server is not None:
+			self.server._configureObject(self)
+		self.lock.release()
 
 	def getConfiguration(self):
+		# not thread safe
 		configuration = {}
 		configuration['enabled'] = self.enabled
 		return configuration
@@ -85,98 +80,77 @@ class Container(Object):
 		self.uiobjectdict = {}
 		self.uiobjectlist = []
 
-	def getObjects(self):
-		return self.uiobjectlist
-
 	def addObject(self, uiobject):
-		if uiobject.name not in self.uiobjectdict:
-			if isinstance(uiobject, Object):
-				uiobject.setParent(self)
-				if hasattr(uiobject, 'value'):
-					value = uiobject.value
-				else:
-					value = ''
-				try:
-					dependencies = [self.uiobjectlist[-1].getName()]
-				except IndexError:
-					dependencies = []
-				self.addObjectCallback(uiobject)
-				if isinstance(uiobject, Container):
-					uiobject.addObjectsCallback()
-				self.uiobjectdict[uiobject.name] = uiobject
-				self.uiobjectlist.append(uiobject)
-			else:
-				raise TypeError('value must be a Object instance')
-		else:
+		self.lock.acquire()
+		if uiobject.name in self.uiobjectdict:
+			self.lock.release()
 			raise ValueError(uiobject.name + ' name already exists in Object mapping')
 
-	def addObjectsCallback(self, client=None):
-		for i, uiobject in enumerate(self.uiobjectlist):
-			if hasattr(uiobject, 'value'):
-				value = uiobject.value
-			else:
-				value = ''
-			if i == 0:
-				dependencies = []
-			else:
-				dependencies = [self.uiobjectlist[i - 1].getName()]
-			self.addObjectCallback(uiobject, client)
+		if not isinstance(uiobject, Object):
+			self.lock.release()
+			raise TypeError('value must be a Object instance')
+
+		uiobject.parent = self
+
+		if self.server is not None:
+			self.server._addObject(uiobject)
 			if isinstance(uiobject, Container):
-				uiobject.addObjectsCallback(client)
+				uiobject.addChildObjects()
+
+		self.uiobjectdict[uiobject.name] = uiobject
+		self.uiobjectlist.append(uiobject)
+		self.lock.release()
 
 	def addObjects(self, uiobjects):
+		self.lock.acquire()
 		for uiobject in uiobjects:
 			self.addObject(uiobject)
+		self.lock.release()
+
+	def addChildObjects(self, client=None):
+		self.lock.acquire()
+		for uiobject in self.uiobjectlist:
+			self.server._addObject(uiobject, client)
+			if isinstance(uiobject, Container):
+				uiobject.addChildObjects(client)
+		self.lock.release()
 
 	def deleteObject(self, name):
-		# update "spec"?
+		self.lock.acquire()
 		try:
 			uiobject = self.uiobjectdict[name]
 			del self.uiobjectdict[name]
 			self.uiobjectlist.remove(uiobject)
-			self.deleteObjectCallback(uiobject)
-			uiobject.setParent(None)
+			if self.server is not None:
+				self.server._deleteObject(uiobject)
+			uiobject.server = None
+			uiobject.parent = None
 		except KeyError:
+			self.lock.release()
 			raise ValueError('cannot delete Object, not in Object mapping')
-
-	def addObjectCallback(self, uiobject, client=None):
-		if self.parent is not None:
-			self.parent.addObjectCallback(uiobject, client)
-		else:
-			pass
-			#raise RuntimeError('cannot add object to container without parent')
-
-	def setObjectCallback(self, uiobject):
-		if self.parent is not None:
-			self.parent.setObjectCallback(uiobject)
-
-	def deleteObjectCallback(self, uiobject):
-		if self.parent is not None:
-			self.parent.deleteObjectCallback(uiobject)
-
-	def configureObjectCallback(self, uiobject):
-		if self.parent is not None:
-			self.parent.configureObjectCallback(uiobject)
+		self.lock.release()
 
 	def getObjectFromList(self, namelist):
+		# not thread safe
 		if type(namelist) not in (list, tuple):
 			raise TypeError('name hierarchy must be a list')
+
 		if not namelist:
 			raise ValueError('no widget name[s] specified')
-		if namelist[0] == self.name:
-			if len(namelist) == 1:
-				return self
-			else:
-				#for uiobject in self.uiobjectdict.values():
-				for uiobject in self.uiobjectlist:
-					try:
-						obj = uiobject.getObjectFromList(namelist[1:])
-						return obj
-					except ValueError:
-						pass
-				raise ValueError('cannot get object, not in child Object mappings')
-		else:
+
+		if namelist[0] != self.name:
 			raise ValueError('cannot get object from list, not parent of Object')
+
+		if len(namelist) == 1:
+			return self
+		else:
+			for uiobject in self.uiobjectlist:
+				try:
+					obj = uiobject.getObjectFromList(namelist[1:])
+					return obj
+				except ValueError:
+					pass
+			raise ValueError('cannot get object, not in child Object mappings')
 
 class SmallContainer(Container):
 	typelist = Container.typelist + ('small',)
@@ -224,8 +198,8 @@ class Method(Object):
 class Data(Object):
 	permissionsvalues = ('r', 'w', 'rw', 'wr')
 	typelist = Object.typelist + ('data',)
-	nonevalue = None
-	def __init__(self, name, value, permissions='r', callback=None, persist=False):
+	def __init__(self, name, value, permissions='r', callback=None,
+								persist=False):
 		Object.__init__(self, name)
 		if permissions in self.permissionsvalues:
 			if 'r' in permissions:
@@ -265,16 +239,11 @@ class Data(Object):
 			raise PermissionsError('cannot set, permission denied')
 
 	def set(self, value, callback=True):
-		### XXX Is this deepcopy necessary?
-		###     Only if we intend to modify value.  Probably should 
-		### figure out where value may be modified and do the deepcopy
-		### locally in that place.
-		try:
-			value = copy.deepcopy(value)
-		except copy.Error:
-			return
+		#try:
+		#	value = copy.deepcopy(value)
+		#except copy.Error:
+		#	return
 		if self.validate(value):
-			# should call in constructor?
 			if callback and self.callback is not None:
 				callbackvalue = self.callback(value)
 				if self.validate(callbackvalue):
@@ -283,12 +252,10 @@ class Data(Object):
 					self.value = value
 			else:
 				self.value = value
-			if self.nonevalue is not None and self.value is None:
-				self.value = self.nonevalue
 		else:
 			raise TypeError('invalid data value for type')
-		if self.parent is not None:
-			self.parent.setObjectCallback(self)
+		if self.server is not None:
+			self.server._setObject(self)
 
 	# needs reversal of _get/get like set
 	def get(self):
@@ -298,19 +265,7 @@ class Data(Object):
 			raise PermissionsError('cannot get, permission denied')
 
 	def _get(self):
-		# to be sure, perhaps not necessary
-		if self.nonevalue is not None and self.value == self.nonevalue:
-			value = None
-		else:
-			value = self.value
-		if self.validate(value):
-#			if self.callback is not None:
-#				callbackvalue = self.callback()
-#				if self.validate(callbackvalue):
-#					value = callbackvalue
-			return value
-		else:
-			raise TypeError('internal error, invalid data value for type')
+		return self.value
 
 	def validate(self, value):
 		#return False
@@ -319,68 +274,53 @@ class Data(Object):
 class Boolean(Data):
 	typelist = Data.typelist + ('boolean',)
 
-#	def set(self, value, callback=True):
-#		if value:
-#			value = 1
-#		else:
-#			value = 0
-#		Data.set(self, value, callback)
-
 	def validate(self, value):
-		if value is None:	
-			return False
-		else:
+		if type(value) is bool or value is 0 or value is 1:
 			return True
+		else:
+			return False
 
 class Number(Data):
 	typelist = Data.typelist + ('number',)
-	nonevalue = ''
 
 	def validate(self, value):
-		return True
+		if type(value) in (int, float) or value is None:
+			return True
+		else:
+			return False
 
 class Integer(Data):
 	typelist = Data.typelist + ('integer',)
-	nonevalue = ''
 
 	def validate(self, value):
-		return True
-		if type(value) is not int and value is not None:
-			return False
-		else:
+		if type(value) is int or value is None:
 			return True
+		else:
+			return False
 
 class Float(Data):
 	typelist = Data.typelist + ('float',)
-	nonevalue = ''
 
 	def validate(self, value):
-		return True
-		if type(value) is not float and value is not None:
-			return False
-		else:
+		if type(value) is float or value is None:
 			return True
+		else:
+			return False
 
 class String(Data):
 	typelist = Data.typelist + ('string',)
-	# no
-	nonevalue = -1
 
 	def validate(self, value):
-		return True
-		if type(value) is not str and value is not None:
-			return False
-		else:
+		if type(value) is str or value is None:
 			return True
+		else:
+			return False
 
 class Array(Data):
 	typelist = Data.typelist + ('array',)
 
 	def validate(self, value):
-		if value is None:	
-			return False
-		else:
-			return True
+		return True
 
 class GridTray(Array):
 	typelist = Array.typelist + ('grid tray',)
@@ -404,10 +344,12 @@ class Sequence(Array):
 
 class SingleSelectFromList(Container):
 	typelist = Container.typelist + ('single select from list',)
-	def __init__(self, name, listvalue, selectedindex, callback=None, persist=False):
+	def __init__(self, name, listvalue, selectedindex, callback=None,
+																											persist=False):
 		Container.__init__(self, name)
 		self.list = Array('List', listvalue, 'r', persist=persist)
-		self.selected = Integer('Selected', selectedindex, 'rw', callback, persist=persist)
+		self.selected = Integer('Selected', selectedindex, 'rw', callback,
+															persist=persist)
 		self.persist = persist
 		self.addObject(self.list)
 		self.addObject(self.selected)
@@ -446,7 +388,8 @@ class SelectFromList(Container):
 								callback=None, persist=False):
 		Container.__init__(self, name)
 		self.list = Array('List', listvalue, permissions, persist=persist)
-		self.selected = Array('Selected', selectedvalues, 'rw', callback, persist=persist)
+		self.selected = Array('Selected', selectedvalues, 'rw', callback,
+													persist=persist)
 		self.persist = persist
 		self.addObject(self.list)
 		self.addObject(self.selected)
@@ -482,7 +425,8 @@ class SelectFromList(Container):
 class SelectFromStruct(Container):
 	typelist = Container.typelist + ('select from struct',)
 	# callback
-	def __init__(self, name, structvalue, selectedvalue, permissions='r', persist=False):
+	def __init__(self, name, structvalue, selectedvalue, permissions='r',
+								persist=False):
 		Container.__init__(self, name)
 		self.struct = Struct('Struct', structvalue, permissions, persist=persist)
 		self.selected = Array('Selected', selectedvalue, 'rw', persist=persist)
@@ -508,16 +452,6 @@ class SelectFromStruct(Container):
 
 class Binary(Data):
 	typelist = Data.typelist + ('binary',)
-#	def __init__(self, name, value, permissions='r', callback=None,
-#																										persist=False):
-#		if type(value) is str:
-#			value = xmlrpclib.Binary(value)
-#		Data.__init__(self, name, value, permissions, callback, persist)
-#
-#	def set(self, value):
-#		if type(value) is str:
-#			value = xmlrpclib.Binary(value)
-#		Data.set(self, value)
 
 	def toXMLRPC(self, value):
 		return xmlrpclib.Binary(value)
@@ -545,20 +479,6 @@ class MessageDialog(Dialog):
 
 class PILImage(Binary):
 	typelist = Binary.typelist + ('PIL image',)
-	nonevalue = ''
-#	def __init__(self, name, value, permissions='r', callback=None,
-#																										persist=False):
-#		Binary.__init__(self, name, value, permissions, callback, persist)
-
-#	def set(self, value):
-#		if value is not None:
-#			stream = cStringIO.StringIO()
-#			value.save(stream, 'jpeg')
-#			value = xmlrpclib.Binary(stream.getvalue())
-#			stream.close()
-#		else:
-#			value = xmlrpclib.Binary(value)
-#		Data.set(self, value)
 
 	def toXMLRPC(self, value):
 		if value is not None:
@@ -566,39 +486,23 @@ class PILImage(Binary):
 			value.save(stream, 'jpeg')
 			value = xmlrpclib.Binary(stream.getvalue())
 			stream.close()
-		else:
-			value = xmlrpclib.Binary(value)
 		return value
 
 class Image(Binary):
 	typelist = Binary.typelist + ('image',)
-	nonevalue = ''
-#	def __init__(self, name, value, permissions='r', callback=None, persist=False):
-#		if isinstance(value, Numeric.arraytype):
-#			value = self.array2image(value)
-#		Binary.__init__(self, name, value, permissions, callback, persist)
 
-	# needs optimization
 	def array2image(self, a):
 		return Mrc.numeric_to_mrcstr(a)
-
-#	def set(self, value):
-#		if isinstance(value, Numeric.arraytype):
-#			value = xmlrpclib.Binary(self.array2image(value))
-#		else:
-#			value = xmlrpclib.Binary(value)
-#		Data.set(self, value)
 
 	def toXMLRPC(self, value):
 		if isinstance(value, Numeric.arraytype):
 			value = xmlrpclib.Binary(self.array2image(value))
-		else:
-			value = xmlrpclib.Binary(value)
 		return value
 
 class ClickImage(Container):
 	typelist = Container.typelist + ('click image',)
-	def __init__(self, name, clickcallback, image, permissions='r', persist=False):
+	def __init__(self, name, clickcallback, image, permissions='r',
+								persist=False):
 		self.clickcallback = clickcallback
 		Container.__init__(self, name)
 		self.image = Image('Image', image, 'r', persist=persist)
