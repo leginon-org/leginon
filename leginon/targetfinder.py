@@ -37,14 +37,13 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		print 'DONE'
 
 	def publishTargetList(self):
-
 		if self.targetlist:
-			targetlistdata = data.ImageTargetListData(self.ID(),
-																								targets=self.targetlist)
+			targetlistdata = data.ImageTargetListData(self.ID(), targets=self.targetlist)
+			print 'TARGETLISTDATA'
+			for targetdata in targetlistdata['targets']:
+				print targetdata['id']
+				
 			self.publish(targetlistdata, eventclass=event.ImageTargetListPublishEvent)
-			print 'published targetlistdata', targetlistdata
-			print 'targets'
-			print targetlistdata['targets']
 
 	def defineUserInterface(self):
 		imwatch = imagewatcher.ImageWatcher.defineUserInterface(self)
@@ -111,10 +110,22 @@ class ClickTargetFinder(TargetFinder):
 			### attach some image info about this one
 			imageinfo = self.imageInfo()
 			target.update(imageinfo)
-			print 'TARGET', target
 			# hopefully target matches ImageTargetData
-			targetdata = data.ImageTargetData(self.ID(), target)
+			print 'TARGET', target.keys()
+			print 'TARGET button', target['button']
+			b = target['button']
+			del target['button']
+			if b == 1:
+				targetdata = data.ImageTargetData(self.ID(), target)
+			elif b == 2:
+				targetdata = data.FocusTargetData(self.ID(), target)
+			else:
+				raise RuntimeError('unknown button %s' % (b,))
+
+			print 'TARGETDATA append', targetdata['id']
 			self.targetlist.append(targetdata)
+		for targetdata in self.targetlist:
+			print 'TARGETDATA later', targetdata['id']
 		self.publishTargetList()
 		self.currentimage = None
 
