@@ -116,7 +116,7 @@ class Application(leginonobject.LeginonObject):
 		args = tuple(ns['args'])
 		dependencies = []
 		for dependency in ns['dependencies']:
-			dependencies.append(self.getName() + ' ' + dependency)
+			dependencies.append(dependency)
 		return ns['alias'], (launcherid, ns['new process flag'],
 													ns['class string'], nodename, args,
 													dependencies)
