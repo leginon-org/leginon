@@ -25,16 +25,13 @@ class Focuser(acquisition.Acquisition):
 			'Defocus': self.correctDefocus
 		}
 
-		self.cam = camerafuncs.CameraFuncs(self)
-
 		self.manualchecklock = threading.Lock()
-
-		self.btcalclient = calibrationclient.BeamTiltCalibrationClient(self)
 		self.abortfail = threading.Event()
 		self.manual_check_done = threading.Event()
 		self.manual_pause = threading.Event()
 		self.manual_continue = threading.Event()
 		acquisition.Acquisition.__init__(self, id, sesison, managerlocation, target_type='focus', **kwargs)
+		self.btcalclient = calibrationclient.BeamTiltCalibrationClient(self)
 
 	def autoFocus(self, emtarget, resultdata):
 		## need btilt, pub, driftthresh
