@@ -15,6 +15,24 @@ import ldcom
 import adacom
 import time
 
+defaultmagtable = [(21, 18.5), (28, 25), (38, 34), (56, 50), (75, 66), (97, 86),	(120, 105), (170, 150), (220, 195), (330, 290), (420, 370), (550, 490),
+	(800, 710), (1100, 970), (1500, 1350), (2100, 1850), (1700, 1500),
+	(2500, 2200), (3500, 3100), (5000, 4400), (6500, 5800), (7800, 6900),
+	(9600, 8500), (11500, 10000), (14500, 13000), (19000, 17000), (25000, 22000),
+	(29000, 25500), (50000, 44000), (62000, 55000), (80000, 71000),
+	(100000, 89000), (150000, 135000), (200000, 175000), (240000, 210000),
+	(280000, 250000), (390000, 350000), (490000, 430000), (700000, 620000)]
+
+polaramagtable = [(54, 62), (67, 76), (91, 100), (110, 125), (155, 175),
+	(195, 220), (250, 280), (320, 360), (430, 480), (570, 650), (700, 790),
+	(880, 990), (1100, 1200), (1600, 1800), (2050, 2300), (2600, 2950),
+	(2650, 3000), (3900, 4500), (5000, 5600), (8200, 9300), (12000, 13500),
+	(15500, 18000), (20000, 22500), (24500, 27500), (29500, 34000),
+	(36000, 41000), (44000, 50000), (54000, 61000), (68000, 77000),
+	(84000, 95000), (105000, 115000), (140000, 160000), (175000, 200000),
+	(210000, 235000), (275000, 310000), (350000, 400000), (420000, 470000),
+	(560000, 630000), (710000, 800000)]
+
 class Tecnai(object):
 	def cmpmags(self, x, y):
 		key = self.cmpmags_status
@@ -25,7 +43,7 @@ class Tecnai(object):
 		elif x[key] > y[key]: 
 			 return 1
 		
-	def __init__(self):
+	def __init__(self, magtable=defaultmagtable):
 		self.correctedstage = True
 		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
 		try:
@@ -35,46 +53,11 @@ class Tecnai(object):
 																					clsctx=pythoncom.CLSCTX_LOCAL_SERVER)
 		except pythoncom.com_error:
 			raise RuntimeError('Unable to initialize microscope interface[s]')
+
 		# this was a quick way of doing things, needs to be redone
-		self.magTable = [{'index': 1, 'up': 21, 'down': 18.5},
-						 {'index': 2, 'up': 28, 'down': 25},
-						 {'index': 3, 'up': 38, 'down': 34},
-						 {'index': 4, 'up': 56, 'down': 50},
-						 {'index': 5, 'up': 75, 'down': 66},
-						 {'index': 6, 'up': 97, 'down': 86},
-						 {'index': 7, 'up': 120, 'down': 105},
-						 {'index': 8, 'up': 170, 'down': 150},
-						 {'index': 9, 'up': 220, 'down': 195},
-						 {'index': 10, 'up': 330, 'down': 290},
-						 {'index': 11, 'up': 420, 'down': 370},
-						 {'index': 12, 'up': 550, 'down': 490},
-						 {'index': 13, 'up': 800, 'down': 710},
-						 {'index': 14, 'up': 1100, 'down': 970},
-						 {'index': 15, 'up': 1500, 'down': 1350},
-						 {'index': 16, 'up': 2100, 'down': 1850},
-						 {'index': 17, 'up': 1700, 'down': 1500},
-						 {'index': 18, 'up': 2500, 'down': 2200},
-						 {'index': 19, 'up': 3500, 'down': 3100},
-						 {'index': 20, 'up': 5000, 'down': 4400},
-						 {'index': 21, 'up': 6500, 'down': 5800},
-						 {'index': 22, 'up': 7800, 'down': 6900},
-						 {'index': 23, 'up': 9600, 'down': 8500},
-						 {'index': 24, 'up': 11500, 'down': 10000},
-						 {'index': 25, 'up': 14500, 'down': 13000},
-						 {'index': 26, 'up': 19000, 'down': 17000},
-						 {'index': 27, 'up': 25000, 'down': 22000},
-						 {'index': 28, 'up': 29000, 'down': 25500},
-						 {'index': 29, 'up': 50000, 'down': 44000},
-						 {'index': 30, 'up': 62000, 'down': 55000},
-						 {'index': 31, 'up': 80000, 'down': 71000},
-						 {'index': 32, 'up': 100000, 'down': 89000},
-						 {'index': 33, 'up': 150000, 'down': 135000},
-						 {'index': 34, 'up': 200000, 'down': 175000},
-						 {'index': 35, 'up': 240000, 'down': 210000},
-						 {'index': 36, 'up': 280000, 'down': 250000},
-						 {'index': 37, 'up': 390000, 'down': 350000},
-						 {'index': 38, 'up': 490000, 'down': 430000},
-						 {'index': 39, 'up': 700000, 'down': 620000}]
+		self.magTable = []
+		for i, mag in enumerate(magtable):
+			self.magTable.append({'index': i + 1, 'up': mag[0], 'down': mag[1]})
 
 		self.methodmapping = {
 			'beam blank': {'get': 'getBeamBlank', 'set': 'setBeamBlank'},
@@ -1029,4 +1012,8 @@ class Tecnai(object):
 				= win32com.client.constants.dtYYMMDD
 		else:
 			raise ValueError('Invalid film date type specified')
+
+class TecnaiPolara(Tecnai):
+	def __init__(self, magtable=polaramagtable):
+		Tecnai.__init__(self, magtable)
 

@@ -68,6 +68,7 @@ def getCameraNames():
 	return getNames('camera')
 
 registerScope('Tecnai', 'tecnai', 'Tecnai', 'Tecnai TEM')
+registerScope('Tecnai Polara', 'tecnai', 'TecnaiPolara', 'Tecnai Polara TEM')
 
 registerCamera('Tietz PXL', 'tietz', 'TietzPXL', 'Tietz PXL CCD Camera')
 registerCamera('Tietz Simulation', 'tietz', 'TietzSimulation',
