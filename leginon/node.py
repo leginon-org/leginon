@@ -80,6 +80,8 @@ class Node(leginonobject.LeginonObject):
 		self.addEventOutput(event.UnpublishEvent)
 		self.addEventOutput(event.NodeAvailableEvent)
 		self.addEventOutput(event.NodeUnavailableEvent)
+		self.addEventOutput(event.NodeInitializedEvent)
+		self.addEventOutput(event.NodeUninitializedEvent)
 
 		self.addEventInput(event.KillEvent, self.die)
 		self.addEventInput(event.ConfirmationEvent, self.handleConfirmedEvent)
@@ -122,11 +124,13 @@ class Node(leginonobject.LeginonObject):
 		#interact_thread = self.interact()
 
 		self.releaseLauncher()
+		self.outputEvent(event.NodeInitializedEvent(self.ID()))
 		self.main()
 
 		# wait until the interact thread terminates
 		#interact_thread.join()
 		self.die_event.wait()
+		self.outputEvent(event.NodeUninitializedEvent(self.ID()))
 		self.exit()
 
 	# location method
@@ -278,7 +282,7 @@ class Node(leginonobject.LeginonObject):
 		else:
 			try:
 				result += self.datahandlers[dbdatakeeper.DBDataKeeper].query(
-																													datainstance, indices)
+																											datainstance, indices)
 			except KeyError:
 				self.printerror('DBDataKeeper research failed, no DBDataKeeper')
 

@@ -31,6 +31,13 @@ class Launcher(node.Node):
 		self.outputEvent(ievent=e, wait=1)
 		time.sleep(1)
 		self.publishNodeClasses()
+		self.outputEvent(event.NodeInitializedEvent(self.ID()))
+
+	def start(self):
+		self.main()
+		self.die_event.wait()
+		self.outputEvent(event.NodeUninitializedEvent(self.ID()))
+		self.exit()
 
 	def main(self):
 		pass

@@ -38,6 +38,8 @@ class Manager(node.Node):
 
 		self.nodelocations['manager'] = self.location()
 
+		# ready nodes, someday 'initialized' nodes
+		self.nodes = []
 		self.distmap = {}
 		# maps event id to list of node it was distributed to if event['confirm']
 		self.confirmmap = {}
@@ -49,6 +51,8 @@ class Manager(node.Node):
 		self.addEventInput(event.NodeUnavailableEvent, self.unregisterNode)
 		self.addEventInput(event.NodeClassesPublishEvent,
 															self.handleNodeClassesPublish)
+		self.addEventInput(event.NodeInitializedEvent, self.setNodeStatus)
+		self.addEventInput(event.NodeUninitializedEvent, self.setNodeStatus)
 		self.addEventInput(event.PublishEvent, self.registerData)
 		self.addEventInput(event.UnpublishEvent, self.unregisterData)
 		self.addEventInput(event.ListPublishEvent, self.registerData)
@@ -243,14 +247,12 @@ class Manager(node.Node):
 
 	def registerNode(self, readyevent):
 		'''Event handler for registering a node with the manager. Initializes a client for the node and adds information regarding the node's location.'''
-		#nodeid = readyevent.id[:-1]
 		nodeid = readyevent['id'][:-1]
 		self.printerror('registering node ' + str(nodeid))
 
 		nodelocation = readyevent['location']
 
 		# check if new node is launcher
-#		if isinstance(readyevent, event.LauncherAvailableEvent):
 		if readyevent['nodeclass'] == 'Launcher':
 			self.addLauncher(nodeid, nodelocation)
 
@@ -258,14 +260,12 @@ class Manager(node.Node):
 		self.addClient(nodeid, nodelocation)
 
 		# published data of nodeid mapping to location of node
-#		nodelocationdata = self.server.datahandler.query(nodeid)
 		nodelocationdata = self.datahandlers[self.datahandler].query(nodeid)
 		if nodelocationdata is None:
 			nodelocationdata = data.NodeLocationData(nodeid, location=nodelocation)
 		else:
 			# fools! should do something nifty to unregister, reregister, etc.
 			nodelocationdata = data.NodeLocationData(nodeid, location=nodelocation)
-#		self.server.datahandler._insert(nodelocationdata)
 		self.datahandlers[self.datahandler].insert(nodelocationdata)
 
 		self.confirmEvent(readyevent)
@@ -278,6 +278,17 @@ class Manager(node.Node):
 
 		# also remove from launcher registry
 		self.delLauncher(nodeid)
+
+	def setNodeStatus(self, ievent):
+		print self.nodes
+		nodeid = ievent['id'][:-1]
+		if isinstance(ievent, event.NodeInitializedEvent):
+			if nodeid not in self.nodes:
+				self.nodes.append(nodeid)
+		elif isinstance(ievent, event.NodeUninitializedEvent):
+			if nodeid in self.nodes:
+				self.nodes.remove(nodeid)
+		print self.nodes
 
 	def removeNode(self, nodeid):
 		'''Remove data, event mappings, and client for the node with the specfied node ID.'''
@@ -314,19 +325,27 @@ class Manager(node.Node):
 		for dataid in self.datahandlers[self.datahandler].ids():
 			self.unpublishDataLocation(dataid, nodeid)
 
-	def launchNode(self, launcher, newproc, target, name, nodeargs=()):
+	def launchNode(self, launcher, newproc, target, name, nodeargs=(), dependencies=[]):
 		'''
 		Launch a node with a launcher node.
 		launcher = id of launcher node
 		newproc = flag to indicate new process, else new thread
 		target = name of a class in this launchers node class list
-		args, kwargs = args for callable object
+		dependencies = node dependent on to launch
 		'''
-		args = (launcher, newproc, target, name, nodeargs)
+		args = (launcher, newproc, target, name, nodeargs, dependencies)
 		self.app.addLaunchSpec(args)
 
 		newid = self.id + (name,)
 		args = (newid, self.session, self.nodelocations) + nodeargs
+		# could be with threading event, but might need locking
+		# doesn't really account for node uninitialized
+		for nodeid in dependencies:
+			while True:
+				if nodeid not in self.nodes:
+					time.sleep(0.5)
+				else:
+					break
 		ev = event.LaunchEvent(self.ID(), newproc=newproc,
 														targetclass=target, args=args)
 		self.outputEvent(ev, 0, launcher)
