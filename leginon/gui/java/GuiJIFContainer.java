@@ -9,14 +9,14 @@ public class GuiJIFContainer {
 	private XmlRpcClient xmlrpcclient;
 	private Hashtable spec;
 	private Vector content;
-	private Container c;
+	private NodeDesktop dtp;
 	private String name, spectype;
-	int width=300, height=200;
+	int width=350, height=300;
 
-	public GuiJIFContainer(XmlRpcClient xmlrpcclient, Hashtable specWidget, Container c) throws Exception {
+	public GuiJIFContainer(XmlRpcClient xmlrpcclient, Hashtable specWidget, NodeDesktop dtp) throws Exception {
 		this.xmlrpcclient=xmlrpcclient;
 		this.spec=specWidget;
-		this.c=c;
+		this.dtp=dtp;
 		build();
 	}
 
@@ -45,16 +45,7 @@ public class GuiJIFContainer {
     			JScrollPane scrollPane = new JScrollPane(framePanel);
                 	scrollPane.setPreferredSize(new Dimension(width,height));
 
-			JInternalFrame jif = new JInternalFrame();
-			jif.setTitle(n);
-			jif.setContentPane(scrollPane); 
-			jif.setIconifiable(true);
-			jif.setResizable(true);
-			jif.setMaximizable(true);
-			jif.setClosable(false);
-			jif.setBounds(20*(jif_count%10), 20*(jif_count%10), width, height);
-			jif.setVisible(true);
-			jif.pack();
+			dtp.addJIF(scrollPane, jif_count, n);
 
 			if (s.equals("container")) {
 				new GuiContainer(xmlrpcclient, (Hashtable)o, framePanel);
@@ -63,8 +54,6 @@ public class GuiJIFContainer {
 			} else if (s.equals("data")) {
 				new GuiData(xmlrpcclient, (Hashtable)o, framePanel);
 			} 
-			c.add(jif,2);
-			jif.setIcon(true);
 			jif_count++;
 		}
 

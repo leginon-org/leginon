@@ -2,6 +2,7 @@
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+import java.net.*;
 
 public class GUILauncher extends JPanel {
 
@@ -25,6 +26,18 @@ public class GUILauncher extends JPanel {
 	private ComboBoxEditor editor = comboBox.getEditor();
 	private JTextField jText;
 
+
+	private String getLocalhost() throws UnknownHostException {
+		InetAddress addr = InetAddress.getLocalHost();
+	        // Get IP Address
+	        byte[] ipAddr = addr.getAddress();
+    
+	        // Get hostname
+	        String hostname = addr.getHostName();
+		return hostname;
+	}
+
+
 	private void initcomponents() throws Exception  {
 		JPanel panel = new JPanel();
 		jText = new JTextField(""+portnumber, 6);
@@ -35,6 +48,9 @@ public class GUILauncher extends JPanel {
 			public void actionPerformed(ActionEvent e) {
 				try {	
 					portnumber = Integer.parseInt(jText.getText());
+					host = (String)comboBox.getSelectedItem();
+					comboBox.addItem(host);
+					System.out.println("http://"+host+":"+portnumber);
         				nodegui newWindow = new nodegui("http://"+host+":"+portnumber);
 					newWindow.setBounds(20*(nw_count%10), 20*(nw_count%10), width, height);
 					newWindow.setVisible(true);
@@ -44,7 +60,11 @@ public class GUILauncher extends JPanel {
 		});
 
 		comboBox.setEditable(true);
-		comboBox.addItem(DEFAULTHOST);
+		try {
+			host = getLocalhost();
+		} catch (UnknownHostException e) { }
+
+		comboBox.addItem(host);
 
         	panel.add(bt_cmd);
 		panel.add(comboBox);

@@ -96,10 +96,6 @@ class GuiMethod {
 
 			if (xmlrpctype.equals("string"))
     				new AddTextField(name, 20, defaultval, widgets, mainPanel);
-			if (xmlrpctype.equals("integer"))
-    				new AddTextField(name, 20, defaultval, widgets, mainPanel);
-			if (xmlrpctype.equals("float"))
-    				new AddTextField(name, 20, defaultval, widgets, mainPanel);
 
 			if (xmlrpctype.equals("boolean"))
 				new AddCheckBox(name, widgets, mainPanel);
@@ -144,9 +140,9 @@ class GuiData {
 			JPanel permPanel =new JPanel();	
                 	permPanel.setLayout(new BoxLayout(permPanel, BoxLayout.X_AXIS));
 			String permissions = (String)spec.get("permissions");
-			if (permissions.matches("[r]"))
+			if (permissions.matches("^[a-zA-Z]*[rR][a-zA-Z]*"))
 				new AddButton ("Get", xmlrpcclient, "GET", id, widgets, permPanel);
-			if (permissions.matches("[w]")) 
+			if (permissions.matches("^[a-zA-Z]*[wW][a-zA-Z]*"))
 				new AddButton ("Set", xmlrpcclient, "SET", id, widgets, permPanel);
 			mainPanel.add(permPanel);
 		}
@@ -162,14 +158,11 @@ class GuiData {
 				String choices_type = (String)choices.get("type");
 				String choices_id = (String)choices.get("id");
 				if (choices_type.equals("array"))
-					new AddComboBox(name, xmlrpcclient, choices_id, widgets, mainPanel);
+					new AddComboBox(name, xmlrpcclient, choices_id, widgets, mainPanel, true);
 				if (choices_type.equals("struct"))
 					new TreeData(name, xmlrpcclient, choices_id, widgets, mainPanel);
 		} else
-		if (xmlrpctype.equals("string")) {
-			new AddTextField(20, defaultval, widgets, mainPanel);
-		} else
-		if (xmlrpctype.equals("array")) {
+		if (xmlrpctype.matches("string|integer|float|array")) {
 			new AddTextField(20, defaultval, widgets, mainPanel);
 		} else
 		if (xmlrpctype.equals("boolean")) {
@@ -215,22 +208,32 @@ class AddComboBox {
 	Vector items = new Vector();
 	Vector widgets;
 	JComboBox cb;
+	boolean editable;
 
-	public AddComboBox(String text, XmlRpcClient xmlrpcclient, String id, Vector widgets, Container c) throws Exception  {
+	public AddComboBox(String text, XmlRpcClient xmlrpcclient, String id, Vector widgets, Container c, boolean editable) throws Exception  {
 		this.text=text;
 		this.xmlrpcclient=xmlrpcclient;
 		this.widgets=widgets;
 		this.id=id;
 		this.c = c;
+		this.editable=editable;
 		build();
 	}
 
+	public AddComboBox(String text, XmlRpcClient xmlrpcclient, String id, Vector widgets, Container c) throws Exception  {
+		this(text, xmlrpcclient, id, widgets, c, false);
+	}
+
 	public AddComboBox(XmlRpcClient xmlrpcclient, String id, Vector widgets, Container c) throws Exception  {
-		this(null, xmlrpcclient, id, widgets, c);
+		this(null, xmlrpcclient, id, widgets, c, false);
 	}
 
 	public String getValue() {
 		return (String)cb.getSelectedItem();
+	}	
+
+	public void setValue(String value) {
+		cb.setSelectedItem(value);
 	}	
 
 	public void update() throws Exception {
@@ -246,6 +249,7 @@ class AddComboBox {
 
 		getData(id);
 		cb = new JComboBox(items);
+		cb.setEditable(editable);
 		JLabel lbl = new JLabel(text);
 		aPanel.add(lbl);
 		aPanel.add(cb);
@@ -346,7 +350,7 @@ class AddButton {
 					args = getData(widgets);
 				}
 					// Display xmlRPC command
-					System.out.println("xmlrpcclient.execute("+cmdxmlrpc+", "+args+");");
+					// System.out.println("xmlrpcclient.execute("+cmdxmlrpc+", "+args+");");
 					Object result = xmlrpcclient.execute(cmdxmlrpc, args);
 					
 					refresh(widgets, result);
@@ -368,6 +372,7 @@ class AddButton {
 			} else if (o instanceof AddComboBox) {
 				AddComboBox c = (AddComboBox)o;
 				c.update();
+				c.setValue((String)result);
 			} else if (o instanceof AddTextField) {
 				AddTextField t = (AddTextField)o;
 				if (result!=null)
@@ -388,6 +393,9 @@ class AddButton {
 			} else if (o instanceof TreeData) {
 				TreeData td = (TreeData)o;
 				args.add(td.getHashTree());
+			} else if (o instanceof AddComboBox) {
+				AddComboBox acb = (AddComboBox)o;
+				args.add(acb.getValue());
 			}
 		}
 		return args;

@@ -18,12 +18,13 @@ public class nodegui extends JFrame {
     private XmlRpcClient client;
     private String cmd,url;
     private Hashtable hash_name = new Hashtable();
-    private JDesktopPane dtp = new JDesktopPane();
+    private NodeDesktop nd = new NodeDesktop();
+    private JDesktopPane dtp = nd.getDesktopPane();
     private GuiJIFContainer gc= null;
     private JPanel  controlPanel = new JPanel();
     private Container contentPane;
 
-
+    
     public nodegui(String url) throws Exception {
 		this.url=url;
 		addControl();
@@ -55,13 +56,15 @@ public class nodegui extends JFrame {
     private void getSpec() throws Exception {
 	client = new XmlRpcClient (url);
 	Object result = new Object();
-	result = send("spec", new Vector());
+	result = client.execute("spec", new Vector());
 	Hashtable spec = (Hashtable)result;
-	gc = new GuiJIFContainer(client, spec, dtp);
-	super.setTitle("Interface to "+gc.getSpectype()+":"+gc.getName());
+//	System.out.println("Spec"+spec);
+	gc = new GuiJIFContainer(client, spec, nd);
+	super.setTitle(url+":: Interface to "+gc.getSpectype()+":"+gc.getName());
     }
 
     private void display() throws Exception {
+	setJMenuBar(nd.createMenuBar());
 	getSpec();
         contentPane = getContentPane();
         contentPane.setLayout(new BorderLayout());
@@ -72,12 +75,6 @@ public class nodegui extends JFrame {
     private void refresh() {
 	dtp.removeAll();
 	dtp.repaint();
-    }
-
-    private Object send(String cmd, Vector v) throws Exception {
-	Object ret_obj=new Object();
-	ret_obj = client.execute (cmd, new Vector());
-	return ret_obj;
     }
 
     public static void main (String args[]) throws Exception {
