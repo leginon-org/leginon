@@ -98,7 +98,6 @@ class GridPreview(node.Node):
 				camstate = camconfig['state']
 				print 'camstate', camstate
 				scopestate = self.getScope()
-				print 'SCOPE', scopestate
 
 				targetrow, targetcol = target
 				print 'targetrow', targetrow
