@@ -172,6 +172,7 @@ class EM(node.Node):
 			print self.locknodeid, 'releasing EM lock'
 			self.locknodeid = None
 			self.nodelock.release()
+		self.confirmEvent(ievent)
 
 	### now this is handled by EMData
 	def pruneEMdict(self, emdict):
