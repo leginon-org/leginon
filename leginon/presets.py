@@ -180,9 +180,10 @@ class PresetsManager(node.Node):
 		self.currentselection = None
 		self.currentpreset = None
 		self.presets = strictdict.OrderedDict()
-		self.getPresetsFromDB()
 
 		self.defineUserInterface()
+		## this will fill in UI with current session presets
+		self.getPresetsFromDB()
 		self.start()
 
 	def changePreset(self, ievent):
@@ -260,6 +261,19 @@ class PresetsManager(node.Node):
 			newdict[name] = newp
 			number += 1
 		self.presets = newdict
+
+		## update the selector list but keep the same preset
+		## selected
+		if hasattr(self, 'uiselectpreset'):
+			selectedindex = self.uiselectpreset.getSelected()
+			try:
+				selectedname = self.uiselectpreset.getSelectedValue()
+			except RuntimeError:
+				selectedindex = 0
+			else:
+				selectedindex = self.presets.keys().index(selectedname)
+			self.uiselectpreset.set(self.presets.keys(), selectedindex)
+
 		## only set the UI if this was not from a callback
 		if hasattr(self, 'orderlist') and not fromcallback:
 			self.orderlist.set(self.presets.keys())
@@ -686,9 +700,6 @@ class PresetsManager(node.Node):
 		cyclecont.addObject(self.orderlist, position={'position':(1,0), 'span':(1,3)})
 
 		selectcont.addObjects((controls, self.presetparams, calcont, cyclecont))
-		pnames = self.presetNames()
-		self.uiselectpreset.set(pnames, 0)
-		self.orderlist.set(pnames)
 
 		# acquisition frame
 
