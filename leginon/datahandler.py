@@ -253,8 +253,14 @@ class DataBinder(DataHandler):
 		args = (newdata,)
 		for bindclass, func in self.bindings:
 			if issubclass(dataclass, bindclass):
+				print '++++++++++++++++++++++++++++++++++'
 				print 'FUNC', func, args
-				apply(func, args)
+				try:
+					apply(func, args)
+				except:
+					print 'EXC'
+					self.printException()
+				print '----------------------------------'
 
 	def addBinding(self, dataclass, func):
 		'func must take data instance as first arg'
