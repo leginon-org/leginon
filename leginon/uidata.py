@@ -111,7 +111,7 @@ class Container(Object):
 															uiobject.typelist, value,
 															uiobject.getSettings(), client)
 			if isinstance(uiobject, Container):
-				uiobject.addObjectsCallback()
+				uiobject.addObjectsCallback(client)
 
 	def addObjects(self, uiobjects):
 		for uiobject in uiobjects:
