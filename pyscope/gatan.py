@@ -26,7 +26,7 @@ else:
 		def __del__(self):
 			pass
 
-		def getImage(self, offset, dimension, binning, exposure_time):    
+		def getImage(self, offset, dimension, binning, exposure_time, imagetype):
 			if binning['x'] != binning['y']:
 				raise ValueError
 			self.theCamera.CameraLeft = offset['x']

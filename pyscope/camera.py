@@ -12,7 +12,7 @@ class Camera:
 	def exit(self):
 		pass
 
-	def getImage(self, offset, dimension, binning, exposure_time):
+	def getImage(self, offset, dimension, binning, exposure_time, imagetype):
 		raise NotImplementedError
 
 	def getInserted(self):

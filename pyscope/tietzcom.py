@@ -2,7 +2,7 @@
 # Created by makepy.py version 0.4.6
 # By python version 2.3.2 (#49, Oct  2 2003, 20:02:00) [MSC v.1200 32 bit (Intel)]
 # From type library 'CAMC4.exe'
-# On Wed Dec 10 11:43:56 2003
+# On Thu Dec 11 10:11:15 2003
 """CAMC4 1.0 Type Library"""
 makepy_version = '0.4.6'
 python_version = 0x20302f0

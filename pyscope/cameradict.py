@@ -17,12 +17,14 @@ def factory(cameraclass):
 										'binning': {'x': int, 'y': int},
 										'exposure time' : float,
 										'image data' : Numeric.arraytype,
+										'image type': str,
 										'inserted': bool}
 			self.data = {'offset': {'x': 0, 'y': 0},
 										'dimension': {'x': 512, 'y': 512},
 										'binning': {'x': 1, 'y': 1},
 										'exposure time' : 500.0,
 										'inserted': True,
+										'image type': 'normal',
 										'image data' : None}
 			if dict is not None:
 				self.update(dict)
@@ -55,7 +57,8 @@ def factory(cameraclass):
 			return self.data[key]
 	  
 		def __setitem__(self, key, item):
-			setkeys = ['offset', 'dimension', 'binning', 'exposure time']
+			setkeys = ['offset', 'dimension', 'binning', 'exposure time',
+									'image type']
 			if key in setkeys:
 				self.data[key] = item
 			elif key == 'inserted':
@@ -121,10 +124,11 @@ def factory(cameraclass):
 
 		def refresh(self):
 			self.data['inserted'] = self.getInserted()
-			self.data['image data'] = self.getImage(self.data['offset'], \
-																							self.data['dimension'], \
-																							self.data['binning'], \
-																							self.data['exposure time'])
+			self.data['image data'] = self.getImage(self.data['offset'],
+																							self.data['dimension'],
+																							self.data['binning'],
+																							self.data['exposure time'],
+																							self.data['image type'])
 
 	return cameradict
 
