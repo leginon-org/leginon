@@ -641,16 +641,16 @@ static PyObject *hysteresisthreshold(PyObject *self, PyObject *args) {
 static PyObject *houghline(PyObject *self, PyObject *args) {
 	PyObject *input, *gradient = NULL;
 	PyArrayObject *inputarray, *gradientarray = NULL, *hough;
-	int dimensions[2];
-	int n;
-	int i, j, k, kmin, kmax, r;
+	int dimensions[3];
+	int n, nd;
+	int i, j, k, kmin, kmax, r, direction;
 	double rtheta;
 	double gradientvalue;
 	int ntheta = 90;
-	float gradient_tolerance = M_PI/180.0;
+	float gradient_tolerance = M_PI/180.0, rscale = 1.0;
 
-	if(!PyArg_ParseTuple(args, "O|Ofi", &input, &gradient, &gradient_tolerance,
-																				&ntheta))
+	if(!PyArg_ParseTuple(args, "O|Ofif", &input, &gradient, &gradient_tolerance,
+																				&ntheta, &rscale))
 		return NULL;
 
 	inputarray = (PyArrayObject *)
@@ -664,9 +664,14 @@ static PyObject *houghline(PyObject *self, PyObject *args) {
 
 	n = inputarray->dimensions[0];
 
-	dimensions[0] = (int)ceil(M_SQRT2*n);
+	dimensions[0] = (int)ceil(M_SQRT2*n) * rscale;
 	dimensions[1] = ntheta;
-	hough = (PyArrayObject *)PyArray_FromDims(2, dimensions, PyArray_DOUBLE);
+	dimensions[2] = 2;
+	if(gradientarray == NULL)
+		nd = 2;
+	else
+		nd = 3;
+	hough = (PyArrayObject *)PyArray_FromDims(3, dimensions, PyArray_DOUBLE);
 
 	for(i = 0; i < inputarray->dimensions[0]; i++)
 		for(j = 0; j < inputarray->dimensions[1]; j++)
@@ -677,10 +682,16 @@ static PyObject *houghline(PyObject *self, PyObject *args) {
 																			+ j*gradientarray->strides[1]);
 					while(gradientvalue < 0.0)
 						gradientvalue += 2.0*M_PI;
-					while(gradientvalue > M_PI_2)
+					while(gradientvalue >= 2.0*M_PI)
+						gradientvalue -= 2.0*M_PI;
+					if(gradientvalue >= 0.0 && gradientvalue < M_PI_2) {
+						direction = 0;
+					} else if	(gradientvalue >= M_PI && gradientvalue < 1.5*M_PI) {
+						direction = 1;
 						gradientvalue -= M_PI;
-					if(gradientvalue < 0.0 || gradientvalue > M_PI_2)
+					} else {
 						continue;
+					}
 					kmin = (int)(ntheta/M_PI_2*(gradientvalue - gradient_tolerance)+0.5);
 					kmax = (int)(ntheta/M_PI_2*(gradientvalue + gradient_tolerance)+1.5);
 					if(kmin < 0)
@@ -693,9 +704,10 @@ static PyObject *houghline(PyObject *self, PyObject *args) {
 				}
 				for(k = kmin; k < kmax; k++) {
 					rtheta = (k*M_PI_2)/ntheta;
-					r = (int)(abs(j*cos(rtheta)) + i*sin(rtheta) + 0.5);
+					r = (int)((abs(j*cos(rtheta)) + i*sin(rtheta))*rscale + 0.5);
 					*(double *)(hough->data + r*hough->strides[0]
-											+ k*hough->strides[1]) +=
+											+ k*hough->strides[1]
+											+ direction*hough->strides[2]) +=
 									*(double *)(inputarray->data + i*inputarray->strides[0]
 															+ j*inputarray->strides[1]);
 				}
