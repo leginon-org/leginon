@@ -53,11 +53,11 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.edgeson = uidata.Boolean('Find Edges On', True, 'rw', persist=True)
 		self.lowpasson = uidata.Boolean('Low Pass Filter On', True, 'rw', persist=True)
 		self.lowpasssize = uidata.Integer('Low Pass Filter Size', 5, 'rw', persist=True)
-		self.lowpasssigma = uidata.Float('Low Pass Filter Sigma', 1.0, 'rw', persist=True)
-		self.edgethresh = uidata.Float('Threshold', 100.0, 'rw', persist=True)
+		self.lowpasssigma = uidata.Number('Low Pass Filter Sigma', 1.0, 'rw', persist=True)
+		self.edgethresh = uidata.Number('Threshold', 100.0, 'rw', persist=True)
 		self.filtertype = uidata.SingleSelectFromList('Filter Type', ['laplacian3', 'laplacian5', 'laplacian-gaussian', 'sobel'], 0, persist=True)
 		self.glapsize = uidata.Integer('LoG Size', 9, 'rw', persist=True)
-		self.glapsigma = uidata.Float('LoG Sigma', 1.4, 'rw', persist=True)
+		self.glapsigma = uidata.Number('LoG Sigma', 1.4, 'rw', persist=True)
 		self.edgeabs = uidata.Boolean('Absolute Value', False, 'rw', persist=True)
 		edgemeth = uidata.Method('Find Edges', self.findEdges)
 		self.edgeimage = uidata.Image('Edge Image', None, 'r')
@@ -68,14 +68,14 @@ class HoleFinder(targetfinder.TargetFinder):
 		### Correlate Template
 		self.ringlist = uidata.Sequence('Ring Diameters', [(30,40)], 'rw', persist=True)
 		self.cortype = uidata.SingleSelectFromList('Correlation Type', ['cross correlation', 'phase correlation'], 0, persist=True)
-		self.corfilt = uidata.Float('Low Pass Filter', 0.0, 'rw', persist=True)
+		self.corfilt = uidata.Number('Low Pass Filter', 0.0, 'rw', persist=True)
 		cormeth = uidata.Method('Correlate Template', self.correlateTemplate)
 		self.corimage = uidata.Image('Correlation Image', None, 'r')
 		corcont = uidata.LargeContainer('Template Correlation')
 		corcont.addObjects((self.ringlist, self.cortype, self.corfilt, cormeth, self.corimage))
 
 		### threshold
-		self.threshvalue = uidata.Float('Threshold Value', 3.0, 'rw', persist=True)
+		self.threshvalue = uidata.Number('Threshold Value', 3.0, 'rw', persist=True)
 		threshmeth = uidata.Method('Threshold', self.threshold)
 		self.threshimage = uidata.Image('Thresholded Image', None, 'r')
 		threshcont = uidata.LargeContainer('Threshold')
@@ -89,11 +89,11 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.allblobs = uidata.Sequence('All Blobs', [], 'r')
 		self.allblobsimage = uidata.TargetImage('All Blobs Image', None, 'r')
 		self.allblobsimage.addTargetType('All Blobs')
-		self.latspacing = uidata.Float('Spacing', 150.0, 'rw', persist=True)
-		self.lattol = uidata.Float('Tolerance', 0.1, 'rw', persist=True)
+		self.latspacing = uidata.Number('Spacing', 150.0, 'rw', persist=True)
+		self.lattol = uidata.Number('Tolerance', 0.1, 'rw', persist=True)
 
-		self.holestatsrad = uidata.Float('Hole Stats Radius', 15.0, 'rw', persist=True)
-		self.icei0 = uidata.Float('Zero Thickness', 1000.0, 'rw', persist=True)
+		self.holestatsrad = uidata.Number('Hole Stats Radius', 15.0, 'rw', persist=True)
+		self.icei0 = uidata.Number('Zero Thickness', 1000.0, 'rw', persist=True)
 
 
 		fitlatmeth = uidata.Method('Fit Lattice', self.fitLattice)
