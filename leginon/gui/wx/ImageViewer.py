@@ -342,6 +342,7 @@ class ValueTool(ImageTool):
 		return '(%d, %d) %s' % (x, y, str(value))
 
 	def getToolTipString(self, x, y, value):
+		#self.imagepanel.pospanel.set({'x': x, 'y': y, 'value': value})
 		if self.button.GetToggle():
 			return self.valueString(x, y, value)
 		else:
@@ -487,7 +488,6 @@ class ZoomTool(ImageTool):
 		size = self.imagepanel.panel.GetSize()
 		viewcenter = (size[0]/2, size[1]/2)
 		self.zoom(selection, viewcenter)
-		self.imagepanel.UpdateDrawing()
 
 class ImagePanel(wx.Panel):
 	def __init__(self, parent, id, imagesize=(512, 512)):
@@ -542,6 +542,8 @@ class ImagePanel(wx.Panel):
 
 		self.statspanel = gui.wx.Stats.Stats(self, -1, style=wx.SIMPLE_BORDER)
 		self.sizer.Add(self.statspanel, (1, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3)
+		#self.pospanel = gui.wx.Stats.Position(self, -1, style=wx.SIMPLE_BORDER)
+		#self.sizer.Add(self.pospanel, (2, 0), (1, 1), wx.ALIGN_CENTER|wx.ALL, 3)
 
 		# bind panel events
 		self.panel.Bind(wx.EVT_LEFT_UP, self.OnLeftClick)
