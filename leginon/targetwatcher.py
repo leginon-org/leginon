@@ -50,6 +50,26 @@ class TargetWatcher(watcher.Watcher):
 
 		self.targetwatcherlog = uidata.MessageLog('Messages')
 
+		self.uistatus = uidata.String('Status', '', 'r')
+		self.uitargetlistid = uidata.String('Current target list', '', 'r')
+		self.uintargets = uidata.String('Number of targets', '', 'r')
+
+		self.uitargetid = uidata.String('ID', '', 'r')
+		self.uitargetnumber = uidata.String('Number', '', 'r')
+		self.uitargetstatus = uidata.String('Status', '', 'r')
+		self.uisourceimageid = uidata.String('Source image', '', 'r')
+
+		targetstatuscontainer = uidata.Container('Current Target')
+		targetstatuscontainer.addObjects((self.uitargetid, self.uitargetnumber,
+																			self.uitargetstatus,
+																			self.uisourceimageid))
+
+		self.uicontrolstatus = uidata.String('Control status', 'Normal', 'r')
+		statuscontainer = uidata.Container('Status')
+		statuscontainer.addObjects((self.uistatus, self.uitargetlistid,
+																self.uintargets, targetstatuscontainer,
+																self.uicontrolstatus))
+
 		pausemethod = uidata.Method('Pause', self.pauseTargetListLoop)
 		continuemethod = uidata.Method('Continue',
 																		self.continueTargetListLoop)
@@ -62,16 +82,17 @@ class TargetWatcher(watcher.Watcher):
 		controlcontainer.addObjects((targetcontainer,))
 
 		container = uidata.LargeContainer('Target Watcher')
-		container.addObjects((self.targetwatcherlog, controlcontainer,))
+		container.addObjects((self.targetwatcherlog, statuscontainer,
+													controlcontainer,))
 
 		self.uiserver.addObject(container)
 
 	def handleTargetShift(self, ev):
-		print 'Handling target shift'
+		#print 'Handling target shift'
 		dataid = ev['dataid']
 		driftdata = self.researchByDataID(dataid)
 		self.driftedimages = driftdata['shifts']
-		print 'Drifted images:', self.driftedimages
+		#print 'Drifted images:', self.driftedimages
 		# may be waiting for a requested image shift
 		req = driftdata['requested']
 		if req:
@@ -80,6 +101,8 @@ class TargetWatcher(watcher.Watcher):
 	def processData(self, newdata):
 		if not isinstance(newdata, data.ImageTargetListData):
 			return
+
+		self.uitargetlistid.set(str(newdata['id']))
 
 		# separate the good targets from the rejects
 		targetlist = newdata['targets']
@@ -91,15 +114,15 @@ class TargetWatcher(watcher.Watcher):
 			else:
 				rejects.append(target)
 
-		print '%s received %d targets, processing %d, passing on %d' \
-						% (self.id[-1], len(targetlist), len(goodtargets), len(rejects))
+		self.uintargets.set('%d to be processed, %d to be passed, %d total' %
+													(len(goodtargets), len(rejects), len(targetlist)))
 
 		# republish the rejects and wait for them to complete
 		if rejects:
-			#print self.id, 'PUBLISHING REJECTS', len(rejects)
+			self.uistatus.set('Publishing passed targets')
 			newtargetlist = data.ImageTargetListData(id=self.ID(), targets=rejects)
 			self.passTargets(newtargetlist)
-			print 'Waiting for passed targets to be processed...'
+			self.uistatus.set('Waiting for passed targets to be processed...')
 			rejectstatus = self.waitForRejects()
 
 			# decide whether or not to continue doing the
@@ -109,11 +132,11 @@ class TargetWatcher(watcher.Watcher):
 				## may not be a good idea all the time
 				## This means if rejects were aborted
 				## then this whole target list was aborted
-				print 'Passed targets not processed, aborting current target list'
+				self.uistatus.set('Passed targets not processed, aborted current target list')
 				self.reportTargetListDone(newdata['id'], rejectstatus)
 				return
 
-			print 'Passed targets processed, processing current target list'
+			self.uistatus.set('Passed targets processed, processing current target list')
 
 		# process the good ones
 		self.abort.clear()
@@ -121,27 +144,31 @@ class TargetWatcher(watcher.Watcher):
 		self.cont.clear()
 		targetliststatus = 'success'
 		ntargets = len(goodtargets)
-		for target in goodtargets:
+		for i, target in enumerate(goodtargets):
+			self.uicontrolstatus.set('Normal')
 			# abort
+			self.uitargetid.set(str(target['id']))
+			self.uitargetnumber.set('%d of %d' % (i, len(goodtargets)))
 			if self.abort.isSet():
-				print 'Aborting current target list'
+				self.uistatus.set('Aborting current target list')
+				self.uicontrolstatus.set('Aborted')
 				targetliststatus = 'aborted'
 				break
 
 			# if this target is done, skip it
-			#print 'TARGET STATUS', target['status']
+			#'TARGET STATUS', target['status']
 			if target['status'] == 'done':
-				print 'Skipping done target', target['id']
+				self.uitargetstatus.set('Target has been done, processing next target')
 				continue
 
-			print 'Processing target', target['id'],
+			self.uitargetstatus.set('Processing target')
 
 			try:
 				imageid = target['image']['id']
-				print 'from source image', imageid
+				self.uisourceimageid.set(str(imageid))
 			except (KeyError, TypeError):
 				imageid = None
-				print
+				self.uisourceimageid.set('None')
 
 			adjustedtarget = data.AcquisitionImageTargetData(initializer=target,
 																												status='processing')
@@ -152,22 +179,22 @@ class TargetWatcher(watcher.Watcher):
 			while process_status == 'repeat':
 				# check if this imageid needs update
 				if imageid in self.driftedimages:
-					print 'Target has drifted'
-#					if self.driftedimages[imageid]:
-#						print 'ALREADY HAVE ADJUST'
-#					else:
+					self.uitargetstatus.set('Target has drifted')
+					#if self.driftedimages[imageid]:
+					#	'ALREADY HAVE ADJUST'
+					#else:
 					if not self.driftedimages[imageid]:
 						# need to have drift manager do it
 						self.newtargetshift.clear()
 						ev = event.NeedTargetShiftEvent(imageid=imageid)
-						print 'Waiting for adjustment value...',
+						self.uitargetstatus.set('Waiting for adjustment value...')
 						self.outputEvent(ev)
 						self.newtargetshift.wait()
-						print 'done.'
+						# 'done.'
 					adjust = self.driftedimages[imageid]
 					# perhaps flip
-					print 'Adjusting target by (%d, %d)...' % (adjust['rows'],
-																											adjust['columns']),
+					self.uitargetstatus.set('Adjusting target by x %d, y %d...'
+																	% (adjust['columns'], adjust['rows']))
 				
 					## create new adjusted target from old
 					adjustedtarget = \
@@ -177,9 +204,9 @@ class TargetWatcher(watcher.Watcher):
 					adjustedtarget['delta column'] = target['delta column'] \
 																														+ adjust['columns']
 					self.publish(adjustedtarget, database=True, dbforce=True)
-					print 'done.'
-#				else:
-#					print 'NOT DRIFTED TARGET'
+					# 'done.'
+				#else:
+				#	 'NOT DRIFTED TARGET'
 
 				# now have processTargetData work on it
 				try:
@@ -187,22 +214,25 @@ class TargetWatcher(watcher.Watcher):
 				except:
 					self.printException()
 					process_status = 'exception'
-				print 'Target processed with status:', process_status
+				self.uitargetstatus.set('Target processed with status "%s"'
+																% process_status)
 
 				# pause
 				if self.pause.isSet():
 					messagestr = 'Pausing current target list...'
-					print messagestr
+					# messagestr
 					message = self.targetwatcherlog.information(messagestr)
 					self.cont.clear()
+					self.uicontrolstatus.set('Paused')
 					self.cont.wait()
 					self.pause.clear()
-					print 'done.'
+					self.uicontrolstatus.set('Normal')
 					message.clear()
 
 				# abort
 				if self.abort.isSet():
-					print 'Aborting current target list'
+					self.uistatus.set('Aborting target list processing')
+					self.uicontrolstatus.set('Aborted')
 					break
 
 				# end of target repeat loop
@@ -211,6 +241,11 @@ class TargetWatcher(watcher.Watcher):
 																										status='done')
 			self.publish(donetarget, database=True, dbforce=True)
 
+		self.uistatus.set('Target list processed.')
+		self.uitargetid.set('')
+		self.uitargetnumber.set('')
+		self.uitargetstatus = uidata.String('', '', 'r')
+		self.uisourceimageid = uidata.String('', '', 'r')
 		self.reportTargetListDone(newdata['id'], targetliststatus)
 
 	def reportTargetListDone(self, listid, status):
@@ -226,10 +261,8 @@ class TargetWatcher(watcher.Watcher):
 
 	def waitForRejects(self):
 		# wait for focus target list to complete
-		#print 'Waiting for passed targets to be processed...'
 		for tid, teventinfo in self.targetlistevents.items():
 			teventinfo['received'].wait()
-		#print 'Done waiting for rejected targets'
 
 		## check status of all target lists
 		## all statuses must be success in order for complete success
@@ -245,7 +278,6 @@ class TargetWatcher(watcher.Watcher):
 	def handleTargetListDone(self, targetlistdoneevent):
 		targetlistid = targetlistdoneevent['targetlistid']
 		status = targetlistdoneevent['status']
-		print 'Got notification target list', targetlistid, 'is done'
 		if targetlistid in self.targetlistevents:
 			self.targetlistevents[targetlistid]['status'] = status
 			self.targetlistevents[targetlistid]['received'].set()
@@ -255,14 +287,14 @@ class TargetWatcher(watcher.Watcher):
 		raise NotImplementedError()
 
 	def abortTargetListLoop(self):
-		print 'Aborting current target list after current target is processed'
+		self.uicontrolstatus.set('Aborting (after current target)...')
 		self.abort.set()
 
 	def pauseTargetListLoop(self):
-		print 'Pausing current target list after current target is processed'
+		self.uicontrolstatus.set('Pausing (after current target)...')
 		self.pause.set()
 
 	def continueTargetListLoop(self):
-		print 'Continuing processing of current target list'
+		self.uicontrolstatus.set('Normal')
 		self.cont.set()
 
