@@ -220,7 +220,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		return ret
 
-	def alreadyAcquired(self, targetdata, preset):
+	def alreadyAcquired(self, targetdata, presetname):
 		'''
 		determines if image already acquired using targetdata and presetname
 		'''
@@ -230,7 +230,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		# seems to have trouple with using original targetdata as
 		# a query, so use a copy with only some of the fields
-		presetquery = data.PresetData(name=preset['name'])
+		presetquery = data.PresetData(name=presetname)
 		imagequery = data.AcquisitionImageData(target=targetdata, preset=presetquery)
 		## other things to fill in
 		imagequery['scope'] = data.ScopeEMData()
