@@ -550,7 +550,7 @@ class Debug(WidgetWrapper):
 		for node in nodelocations:
 			page = self.widget.add(eval(node)[-1])
 			gui = nodegui.NodeGUI(page, nodelocations[node]['hostname'],
-																	nodelocations[node]['UI port'], None, True)
+																	nodelocations[node]['UI port'], None, True, True)
 			gui.pack(fill=Tkinter.BOTH, expand=Tkinter.YES)
 		self.widget.setnaturalsize()
 
@@ -558,7 +558,7 @@ class Debug(WidgetWrapper):
 		if self.widget is not None:
 			page = self.widget.add(name)
 			gui = nodegui.NodeGUI(page, ui_info['hostname'],
-																	ui_info['UI port'], None, True)
+																	ui_info['UI port'], None, True, True)
 			gui.pack(fill=Tkinter.BOTH, expand=Tkinter.YES)
 
 class ImageCorrection(WidgetWrapper):

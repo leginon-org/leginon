@@ -60,7 +60,6 @@ class Corrector(node.Node):
 		e = event.ListPublishEvent(self.ID(), idlist=ids)
 		self.outputEvent(e)
 
-		self.imagedatalock = threading.RLock()
 		self.defineUserInterface()
 		self.start()
 
@@ -72,10 +71,10 @@ class Corrector(node.Node):
 		acqbright = self.registerUIMethod(self.uiAcquireBright, 'Acquire Bright',())
 		acqcorr = self.registerUIMethod(self.uiAcquireCorrected,
 																					'Acquire Corrected', ())
-		acquireimage = self.registerUIData('Image', 'binary', permissions='r',
+		self.acquireimage = self.registerUIData('Image', 'binary', permissions='r',
 																				callback = self.uiAcquireImage)
 		acquirecontainer = self.registerUIContainer('Acquire',
-																	(acqdark, acqbright, acqcorr, acquireimage))
+															(acqdark, acqbright, acqcorr, self.acquireimage))
 
 		self.navgdata = self.registerUIData('Frames to Average', 'integer',
 																						default=3, permissions='rw')
@@ -123,33 +122,34 @@ class Corrector(node.Node):
 		return dict(plandata)
 
 	def uiAcquireDark(self):
-		self.imagedatalock.acquire()
-		self.imagedata = self.acquireReference(dark=True)
-		print 'Dark Stats: %s' % (self.stats(self.imagedata),)
-		self.imagedatalock.release()
+		imagedata = self.acquireReference(dark=True)
+		print 'Dark Stats: %s' % (self.stats(imagedata),)
+		self.acquireimage.set(imagedata)
+		self.imagedata = imagedata
 		return ''
 
 	def uiAcquireBright(self):
-		self.imagedatalock.acquire()
-		self.imagedata = self.acquireReference(dark=False)
-		print 'Bright Stats: %s' % (self.stats(self.imagedata),)
-		self.imagedatalock.release()
+		imagedata = self.acquireReference(dark=False)
+		print 'Bright Stats: %s' % (self.stats(imagedata),)
+		self.acquireimage.set(imagedata)
+		self.imagedata = imagedata
 		return ''
 
 	def uiAcquireCorrected(self):
 		camconfig = self.cam.config()
 		camstate = camconfig['state']
 		self.cam.state(camstate)
-		self.imagedatalock.acquire()
-		self.imagedata = self.acquireCorrectedArray()
-		print 'Corrected Stats: %s' % (self.stats(self.imagedata),)
-		self.imagedatalock.release()
+		imagedata = self.acquireCorrectedArray()
+		print 'Corrected Stats: %s' % (self.stats(imagedata),)
+		self.acquireimage.set(imagedata)
+		self.imagedata = imagedata
 		return ''
 
-	def uiAcquireImage(self):
-		self.imagedatalock.acquire()
-		mrcstr = Mrc.numeric_to_mrcstr(self.imagedata)
-		self.imagedatalock.release()
+	def uiAcquireImage(self, value=None):
+		if value is None:
+			mrcstr = Mrc.numeric_to_mrcstr(self.imagedata)
+		else:
+			mrcstr = Mrc.numeric_to_mrcstr(value)
 		return xmlbinlib.Binary(mrcstr)
 
 	def newPlan(self, camstate):

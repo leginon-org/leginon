@@ -65,9 +65,11 @@ class DataSpec(SpecObject):
 		valuecopy = copy.deepcopy(value)
 		if self.callback is None:
 			self.uidata = valuecopy
+			self.server.uiServerPush(self.dict()['id'], valuecopy)
 			return copy.deepcopy(self.uidata)
 		else:
 			d = self.callback(valuecopy)
+			self.server.uiServerPush(self.dict()['id'], d)
 			return copy.deepcopy(d)
 
 	def dict(self):
@@ -147,12 +149,14 @@ class Server(xmlrpcserver.xmlrpcserver):
 	def __init__(self, id, port=None):
 		xmlrpcserver.xmlrpcserver.__init__(self, id, port=port)
 		self.uidata = {}
+		self.uiclients = []
 		#self.server.register_function(self.uiMethods, 'methods')
 		self.server.register_function(self.uiSpec, 'spec')
-		self.server.register_function(self.uiGet, 'GET')
-		self.server.register_function(self.uiSet, 'SET')
+		self.server.register_function(self.uiClientPull, 'GET')
+		self.server.register_function(self.uiClientPush, 'SET')
+		self.server.register_function(self.uiServer, 'SERVER')
 
-	def uiGet(self, idstr):
+	def uiClientPull(self, idstr):
 		'''this is how a UI client gets a data value'''
 		data = self.uidata[idstr]
 		value = data.get()
@@ -161,11 +165,23 @@ class Server(xmlrpcserver.xmlrpcserver):
 		else:
 			return value
 
-	def uiSet(self, idstr, value):
+	def uiClientPush(self, idstr, value):
 		'''this is how a UI client sets a data value'''
 		data = self.uidata[idstr]
 		data.set(value)
 		return data.get()
+
+	def uiServerPush(self, id, value):
+		for client in self.uiclients:
+			try:
+				client.execute('SET', (id, value))
+			except:
+				self.uiclients.remove(client)
+		return ''
+
+	def uiServer(self, hostname, port):
+		self.uiclients.append(Client(hostname, port))
+		return ''
 
 	def registerMethod(self, func, name, argspec, returnspec=None):
 		id = self.ID()
@@ -206,9 +222,11 @@ class Server(xmlrpcserver.xmlrpcserver):
 
 
 class Client(object):
-	def __init__(self, hostname, port):
+	def __init__(self, hostname, port, server=None):
 		uri = 'http://%s:%s' % (hostname, port)
 		self.proxy = xmlrpclib.ServerProxy(uri)
+		if server is not None:
+			self.execute('SERVER', (server.hostname, server.port))
 
 	def getSpec(self):
 		#self.spec = self.proxy.spec()

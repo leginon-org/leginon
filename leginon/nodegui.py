@@ -14,6 +14,7 @@ import xmlrpclib
 #import xmlrpclib2 as xmlbinlib
 xmlbinlib = xmlrpclib
 from timer import Timer
+import xmlrpcserver
 
 False=0
 True=1
@@ -62,6 +63,19 @@ class Container(SpecWidget):
 		for cspec in spec['content']:
 			id = cspec['id']
 			self.content[id].refresh(cspec)
+
+	def getWidgetInstance(self, widgetid):
+		containers = []
+		for id in self.content:
+			if widgetid == id:
+				return self.content[id]
+			if isinstance(self.content[id], Container):
+				containers.append(self.content[id])
+		for container in containers:
+			instance = container.getWidgetInstance(widgetid)
+			if instance is not None:
+				return instance
+		return None
 
 class NotebookContainer(Container):
 	def __init__(self, parent, uiclient, spec, styled=True):
@@ -604,9 +618,24 @@ class Method(SpecWidget):
 		if self.retwidget is not None:
 			self.retwidget.setWidget(returnvalue)
 
+class Server(xmlrpcserver.xmlrpcserver):
+	def __init__(self, id, nodegui, port=None):
+		self.nodegui = nodegui
+		xmlrpcserver.xmlrpcserver.__init__(self, id, port=port)
+		self.server.register_function(self.set, 'SET')
+
+	def set(self, id, value):
+		#print 'SET', id, value
+		instance = self.nodegui.getWidgetInstance(id)
+		if instance is not None:
+			instance.setWidget(value)
+		else:
+			self.printerror('cannot find instance of %s to set' % str(id))
+		return ''
 
 class NodeGUI(Frame):
-	def __init__(self, parent, hostname=None, port=None, node=None, styled=True):
+	def __init__(self, parent, hostname=None, port=None, node=None, styled=True,
+																																	server=False):
 		#self.parent = parent
 		self.styled = styled
 		if (hostname is not None) and (port is not None):
@@ -618,8 +647,18 @@ class NodeGUI(Frame):
 			raise RuntimeError('NodeGUI needs either node instance or hostname and port')
 
 		Frame.__init__(self, parent)
-		self.uiclient = interface.Client(hostname, port)
+
+		if server:
+			self.server = Server(('UI client server',), self)
+		else:
+			self.server = None
+
+		self.uiclient = interface.Client(hostname, port, self.server)
+
 		self.__build()
+
+	def getWidgetInstance(self, id):
+		return self.mainframe.getWidgetInstance(id)
 
 	def __build(self):
 		if self.styled:
