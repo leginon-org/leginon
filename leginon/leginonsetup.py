@@ -2,6 +2,7 @@
 import Tkinter
 import sys
 import os
+import leginonconfig
 import manager
 import launcher
 import time
@@ -315,10 +316,7 @@ class RunWidget(Tkinter.Frame):
 	def startLocalLauncher(self):
 #		launcherpath = '\\\\colossus\\amishare\\suloway\\pyleginon\\launcher.py'
 #		launcherpath = '\\\\colossus\\amishare\\suloway\\pyleginon\\launcher.py'
-		try:
-			launcherpath = os.environ['LEGINONPATH']
-		except:
-			raise RuntimeError('LEGINONPATH environment variable error')
+		launcherpath = leginonconfig.LEGINON_PATH
 
 		if sys.platform == 'win32':
 			process = os.spawnv(os.P_NOWAIT, 'C:\\Python22\\python.exe',

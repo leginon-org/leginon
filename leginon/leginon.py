@@ -6,6 +6,7 @@ import time
 import Tkinter
 import tkSimpleDialog
 import Pmw
+import leginonconfig
 import event
 import interface
 import leginonsetup
@@ -14,13 +15,9 @@ import acquisition
 import EM
 import targetfinder
 
-try:
-	if sys.platform == 'win32':
-		applicationfilename = os.environ['LEGINONPATH'] + '\\leginon.app'
-	else:
-		applicationfilename = os.environ['LEGINONPATH'] + '/leginon-linux.app'
-except:
-	raise RuntimeError('LEGINONPATH environment variable error')
+
+applicationfilename = os.path.join(leginonconfig.LEGINON_PATH, 'leginon.app')
+
 
 class mySimpleDialog(tkSimpleDialog.Dialog):
 	def __init__(self, parent, title, args=None):
