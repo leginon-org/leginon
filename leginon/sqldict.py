@@ -256,7 +256,7 @@ class SQLDict:
 					all[i][qikey] = cursorresult[i]
 				else:
 					all[i][qikey] = None
-					
+
 
 		rootlist = []
                 for d in all:
@@ -265,7 +265,7 @@ class SQLDict:
                                         theroot = v
                                         self._connectData(v, d)
                         rootlist.append(theroot)
-                
+
                 return rootlist
 
 	def _format(self, sqlresult, qikey):
