@@ -3,12 +3,13 @@ import random
 #import threading, weakref
 
 class LeginonObject(object):
+	'''Generic base class for objects. Defines ID and location.'''
 	def __init__(self, id):
 		self.id = id
 		self.idcounter = 0
 
 	def location(self):
-		'return a dict describing the location of this object'
+		'''Returns a dict describing the location of this object.'''
 		loc = {}
 		loc['hostname'] = socket.gethostname()
 		loc['PID'] = os.getpid()
@@ -18,17 +19,20 @@ class LeginonObject(object):
 		return loc
 
 	def print_location(self):
+		'''Output the location this object to stdout.'''
 		loc = self.location()
 		print '     Leginon Object: %s' % (self.id,)
 		for key,value in loc.items():
 			print '         %-25s  %s' % (key,value)
 
 	def ID(self):
+		'''Generate a new ID for a child object.'''
 		newid = self.id + (self.idcounter,)
 		self.idcounter += 1
 		return newid
 
 	def printerror(self, errorstring, color=None):
+		'''Format error output with color and identifcation. Print to stdout.'''
 		# there is better way, but since ANSI colors hurt my eyes
 		# I don't know if we'll keep them
 		if self.__class__.__name__ == 'Manager':

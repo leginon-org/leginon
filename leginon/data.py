@@ -4,64 +4,60 @@ import array
 import Numeric
 
 class Data(leginonobject.LeginonObject):
-	'''baseclass for leginon data.  subclasses should implement content'''
+	'''Baseclass for leginon data. Subclasses should implement content.'''
 	def __init__(self, id, content):
 		leginonobject.LeginonObject.__init__(self, id)
 		self.content = content
 
-		## taking this out until it breaks something
-		#self.origin = {}
-
 class IntData(Data):
+	'''Integer data.'''
 	def __init__(self, id, content):
 		Data.__init__(self, id, int(content))
 
-
 class StringData(Data):
+	'''String data.'''
 	def __init__(self, id, content):
 		Data.__init__(self, id, str(content))
 
 class EMData(Data):
+	'''EM data. Dictionary of keys to values.'''
 	def __init__(self, id, content):
 		Data.__init__(self, id, dict(content))
 
 class DBData(Data):
+	'''Database data.'''
 	def __init__(self, id, content):
 		Data.__init__(self, id, dict(content))
 
-# we're going to play with the image being a Numeric array, and hopefully
-# type and dimenion can be extracted from only that
 class ImageData(Data):
+	'''Image data. Content is a 2-D Numeric array.'''
 	def __init__(self, id, content):
 		Data.__init__(self, id, content)
 
-# this is for the manager, it masquerades (sp?) as the data with the same id,
-# but it contains the location of the data instead.
-# the content is the list of locations the manager gets from the nodeid and
-# its noderegistry
 class LocationData(Data):
+	'''Has data ID, but content is the location of the real data. Used by Manager.'''
 	def __init__(self, id, content):
 		Data.__init__(self, id, content)
 
-# nodeid is the dataid, content is dict with physical location
 class NodeLocationData(LocationData):
+	'''Node ID is the data ID, but content is the location of the node. Used by Manager.'''
 	def __init__(self, id, content):
 		LocationData.__init__(self, id, dict(content))
 	def __repr__(self):
 			return "<NodeLocationData for %s> %s" % (self.id, self.content)
 
 class NodeClassesData(Data):
+	'''Node Classes data.'''
 	def __init__(self, id, content):
 		Data.__init__(self, id, tuple(content))
 
-
-# real dataid is the dataid, but content is actually a list of nodeids when
-# the real data is located
 class DataLocationData(LocationData):
+	'''Has data ID, but content is a list of node IDs where the data is located. Used by Manager.'''
 	def __init__(self, id, content):
 		LocationData.__init__(self, id, list(content))
 	def __repr__(self):
-			return "<DataLocationData for %s> %s" % (self.id, self.content)
+		'''Returns a readable format.'''
+		return "<DataLocationData for %s> %s" % (self.id, self.content)
 
 class NumericData(Data):
 	def __init__(self, id, content):

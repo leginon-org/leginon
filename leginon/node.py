@@ -15,10 +15,11 @@ True = 1
 if sys.platform == 'win32':
 	sys.coinit_flags = 0
 
-class Client(datatransport.Client):
-	def __init__(self, id, loc):
-		datatransport.Client.__init__(self, id, loc)
-
+# Once used to prevent pushing of any data except events on the client side.
+#class Client(datatransport.Client):
+#	def __init__(self, id, loc):
+#		datatransport.Client.__init__(self, id, loc)
+#
 #	def push(self, idata):
 #		if isinstance(idata, event.Event):
 #			datatransport.Client.push(self, idata)
@@ -26,6 +27,7 @@ class Client(datatransport.Client):
 #			raise event.InvalidEventError('event must be Event instance')
 
 class DataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
+	'''Overrides SimpleDataKeeper and DataBinder to combine storing data and mapping events for use by Node.'''
 	def __init__(self, id):
 		# this will call LeginonObject constructor twice I think
 		datahandler.SimpleDataKeeper.__init__(self, id)
@@ -56,8 +58,9 @@ class DataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
 			raise event.InvalidEventError('eventclass must be Event subclass')
 
 class Node(leginonobject.LeginonObject):
+	'''Atomic operating unit for performing tasks, creating data and events.'''
 	def __init__(self, id, nodelocations = {}, dh = DataHandler, dhargs = (),
-								tcpport=None, xmlrpcport=None, clientclass = Client):
+								tcpport=None, xmlrpcport=None, clientclass = datatransport.Client):
 		leginonobject.LeginonObject.__init__(self, id)
 
 		self.nodelocations = nodelocations

@@ -11,6 +11,7 @@ False=0
 True=1
 
 class Manager(node.Node):
+	'''Overlord of the nodes. Handles node communication (data and events).'''
 	def __init__(self, id, tcpport=None, xmlrpcport=None):
 		# the id is manager (in a list)
 
