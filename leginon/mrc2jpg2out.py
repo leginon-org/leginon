@@ -19,4 +19,11 @@ if __name__ == '__main__':
 	import sys
 
 	filename = sys.argv[1]
-	mrc2jpg2out(filename, newsize=(512,512))
+	try:
+		newsizex = int(sys.argv[2])
+		newsizey = int(sys.argv[3])
+	except IndexError:
+		newsize = None
+	else:
+		newsize = (newsizex, newsizey)
+	mrc2jpg2out(filename, newsize=newsize)
