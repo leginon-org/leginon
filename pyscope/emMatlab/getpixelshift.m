@@ -1,3 +1,10 @@
+%
+% COPYRIGHT:
+%       The Leginon software is Copyright 2003
+%       The Scripps Research Institute, La Jolla, CA
+%       For terms of the license agreement
+%       see  http://ami.scripps.edu/software/leginon-license
+%
 function shift = getpixelshift(scopeaddr, camaddr, delta, n)
 beamtilt = emMatlab('http://amilab8:8000', 'get', 'beam tilt');
 

@@ -1,3 +1,11 @@
+#
+# COPYRIGHT:
+#       The Leginon software is Copyright 2003
+#       The Scripps Research Institute, La Jolla, CA
+#       For terms of the license agreement
+#       see  http://ami.scripps.edu/software/leginon-license
+#
+
 scope.py - a virtual class defining generic functions of a TEM
 camera.py - a virtual class defining generic functions of a CCD camera
 tecnai.py - implements scope.py for the Tecnai TEM

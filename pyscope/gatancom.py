@@ -2,6 +2,13 @@
 # By python version 2.2.1 (#34, Apr  9 2002, 19:34:33) [MSC 32 bit (Intel)]
 # From type library 'tecnaiccd.dll'
 # On Fri Aug 30 11:32:57 2002
+#
+# COPYRIGHT:
+#       The Leginon software is Copyright 2003
+#       The Scripps Research Institute, La Jolla, CA
+#       For terms of the license agreement
+#       see  http://ami.scripps.edu/software/leginon-license
+#
 """TecnaiCCD 1.0 Type Library"""
 makepy_version = '0.4.1'
 python_version = 0x20201f0

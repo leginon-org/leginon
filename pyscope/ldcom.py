@@ -2,6 +2,13 @@
 # By python version 2.2 (#28, Dec 21 2001, 12:21:22) [MSC 32 bit (Intel)]
 # From type library 'LDSERVER.EXE'
 # On Thu Mar 07 09:58:21 2002
+#
+# COPYRIGHT:
+#       The Leginon software is Copyright 2003
+#       The Scripps Research Institute, La Jolla, CA
+#       For terms of the license agreement
+#       see  http://ami.scripps.edu/software/leginon-license
+#
 """Low Dose Server Library"""
 makepy_version = '0.4.0'
 python_version = 0x20200f0

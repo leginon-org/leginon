@@ -2,6 +2,13 @@
 # By python version 2.2.2 (#37, Oct 14 2002, 17:02:34) [MSC 32 bit (Intel)]
 # From type library 'adaExp.exe'
 # On Thu Jul 10 17:14:15 2003
+#
+# COPYRIGHT:
+#       The Leginon software is Copyright 2003
+#       The Scripps Research Institute, La Jolla, CA
+#       For terms of the license agreement
+#       see  http://ami.scripps.edu/software/leginon-license
+#
 """adaExp Library"""
 makepy_version = '0.4.1'
 python_version = 0x20202f0

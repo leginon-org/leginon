@@ -1,3 +1,10 @@
+%
+% COPYRIGHT:
+%       The Leginon software is Copyright 2003
+%       The Scripps Research Institute, La Jolla, CA
+%       For terms of the license agreement
+%       see  http://ami.scripps.edu/software/leginon-license
+%
 function shift = phasecorrelation(im1, im2, n)
 imdim = size(im1);
 imcenter = imdim/2;

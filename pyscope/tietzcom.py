@@ -2,6 +2,13 @@
 # By python version 2.2 (#28, Dec 21 2001, 12:21:22) [MSC 32 bit (Intel)]
 # From type library 'CAMC.exe'
 # On Wed Mar 06 09:32:12 2002
+#
+# COPYRIGHT:
+#       The Leginon software is Copyright 2003
+#       The Scripps Research Institute, La Jolla, CA
+#       For terms of the license agreement
+#       see  http://ami.scripps.edu/software/leginon-license
+#
 """CAMC 1.0 Type Library"""
 makepy_version = '0.4.0'
 python_version = 0x20200f0

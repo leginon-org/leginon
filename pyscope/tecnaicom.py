@@ -2,6 +2,13 @@
 # By python version 2.2.3 (#42, May 30 2003, 18:12:08) [MSC 32 bit (Intel)]
 # From type library 'stdscript.dll'
 # On Thu Sep 11 11:17:23 2003
+#
+# COPYRIGHT:
+#       The Leginon software is Copyright 2003
+#       The Scripps Research Institute, La Jolla, CA
+#       For terms of the license agreement
+#       see  http://ami.scripps.edu/software/leginon-license
+#
 """Tecnai Scripting"""
 makepy_version = '0.4.4'
 python_version = 0x20203f0

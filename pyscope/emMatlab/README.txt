@@ -1,3 +1,10 @@
+#
+# COPYRIGHT:
+#       The Leginon software is Copyright 2003
+#       The Scripps Research Institute, La Jolla, CA
+#       For terms of the license agreement
+#       see  http://ami.scripps.edu/software/leginon-license
+#
 Makefile - makes em.so for a C to Python interface
            (allows easier emScope calls in C)
            makes emTCL.so for a TCL to C interface

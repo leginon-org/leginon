@@ -1,3 +1,10 @@
+%
+% COPYRIGHT:
+%       The Leginon software is Copyright 2003
+%       The Scripps Research Institute, La Jolla, CA
+%       For terms of the license agreement
+%       see  http://ami.scripps.edu/software/leginon-license
+%
 function imageoverlap(im1, im2, shift, n)
 shift = round(shift);
 dim1 = size(im1);

@@ -1,3 +1,10 @@
+%
+% COPYRIGHT:
+%       The Leginon software is Copyright 2003
+%       The Scripps Research Institute, La Jolla, CA
+%       For terms of the license agreement
+%       see  http://ami.scripps.edu/software/leginon-license
+%
 function autofocus(scopeaddr, camaddr, tilt, defocus)
 win = figure(1);
 set(win,'Name','emMatlab Autofocus Demo','NumberTitle','off');
