@@ -256,6 +256,22 @@ class Node(leginonobject.LeginonObject):
 	def registerUISpec(self, name=None, content=()):
 		return self.uiserver.registerSpec(name, content)
 
+	def uiDataDict(self, value=None):
+		if value is None:
+			try:
+				return self.key2str(self.server.datahandler.datadict)
+			except AttributeError:
+				return {}
+
+	def key2str(self, d):
+		if type(d) is dict:
+			newdict = {}
+			for k in d:
+				newdict[str(k)] = self.key2str(d[k])
+			return newdict
+		else:
+			return str(d)
+
 	def defineUserInterface(self):
 		'''
 		This is where you register methods that can be accessed
@@ -293,20 +309,4 @@ class Node(leginonobject.LeginonObject):
 								(exitspec, idspec, classspec, locationspec, datatree))
 
 		return containerspec
-
-	def uiDataDict(self, value=None):
-		if value is None:
-			try:
-				return self.key2str(self.server.datahandler.datadict)
-			except AttributeError:
-				return {}
-
-	def key2str(self, d):
-		if type(d) is dict:
-			newdict = {}
-			for k in d:
-				newdict[str(k)] = self.key2str(d[k])
-			return newdict
-		else:
-			return str(d)
 
