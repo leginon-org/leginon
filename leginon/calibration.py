@@ -8,6 +8,7 @@ import event
 import time
 import Numeric
 import LinearAlgebra
+import cPickle
 
 False=0
 True=1
@@ -323,6 +324,29 @@ class Calibration(node.Node):
 		print 'shift', shift
 		return {'shift': {'x': shift[1], 'y': shift[0]}, 'peak value': peakvalue}
 
+	def save(self, filename):
+		print "saving", self.calibration, "to file:", filename
+		try:
+			f = file(filename, 'w')
+			cPickle.dump(self.calibration, f)
+			f.close()
+		except:
+			print "Error: failed to save calibration"
+			raise
+		return ''
+
+	def load(self, filename):
+		try:
+			f = file(filename, 'r')
+			self.calibration = cPickle.load(f)
+			f.close()
+		except:
+			print "Error: failed to load calibration"
+			raise
+		else:
+			print "loading", self.calibration, "from file:", filename
+		return ''
+
 	def defineUserInterface(self):
 		nodespec = node.Node.defineUserInterface(self)
 
@@ -354,7 +378,13 @@ class Calibration(node.Node):
 					{'row': {'min': 10.0, 'max': 50.0}, 'col': {'min': 10.0, 'max': 50.0}}}}
 		)
 
-		self.registerUISpec('Calibration', (nodespec, cspec, rspec, self.validshift))
+		argspec = (self.registerUIData('Filename', 'string'),)
+		save = self.registerUIMethod(self.save, 'Save', argspec)
+		load = self.registerUIMethod(self.load, 'Load', argspec)
+
+		filespec = self.registerUIContainer('File', (save, load))
+
+		self.registerUISpec('Calibration', (nodespec, cspec, rspec, self.validshift, filespec))
 
 	def uiCalibrate(self):
 		self.calibrate()
