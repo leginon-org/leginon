@@ -461,6 +461,7 @@ class PresetData(InSessionData):
 			('offset', dict),
 			('exposure time', float),
 			('removed', int),
+			('hasref', bool),
 		]
 		return t
 	typemap = classmethod(typemap)
@@ -631,11 +632,7 @@ class PresetReferenceImageData(PresetImageData):
 	'''
 	This is a reference image for getting stats at different presets
 	'''
-	def typemap(cls):
-		t = PresetImageData.typemap()
-		t += [ ('comment', str), ]
-		return t
-	typemap = classmethod(typemap)
+	pass
 
 class AcquisitionImageData(PresetImageData):
 	def typemap(cls):
