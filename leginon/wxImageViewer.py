@@ -337,10 +337,12 @@ class TargetImagePanel(ImagePanel):
 				self.OnZoomButton(None)
 			EVT_LEFT_DCLICK(self.panel, self.OnLeftDoubleClick)
 			EVT_RIGHT_DCLICK(self.panel, self.OnRightDoubleClick)
+			self.panel.SetCursor(wxStockCursor(wxCURSOR_BULLSEYE))
 		else:
 			self.closest_target = None
 			EVT_LEFT_DCLICK(self.panel, None)
 			EVT_RIGHT_DCLICK(self.panel, None)
+			self.panel.SetCursor(wxCROSS_CURSOR)
 			self.UpdateDrawing()
 
 	def initTarget(self):
