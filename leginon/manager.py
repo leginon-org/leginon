@@ -40,7 +40,7 @@ class Manager(node.Node):
 
 		self.uiclientcontainers = {}
 
-		self.checkPythonVersion()
+#		self.checkPythonVersion()
 		self.uiserver.server.register_function(self.uiGetNodeLocations, 'getNodeLocations')
 
 		self.nodelocations['manager'] = self.location()
@@ -754,8 +754,9 @@ class ManagerSetup(object):
 			try:
 				hostname = session['instrument']['hostname']
 				self.manager.addNode(hostname, 55555)
-			except:
-				self.manager.outputWarning('Cannot add instrument\'s launcher.')
+			except (TypeError, IOError):
+				if isinstance(e, IOError):
+					self.manager.outputWarning('Cannot add instrument\'s launcher.')
 			parent = self.container.getParent()
 			if parent is not None:
 				parent.deleteObject(self.container.getName())
