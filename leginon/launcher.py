@@ -55,8 +55,10 @@ class Launcher(node.Node):
 
 	def onCreateNode(self, ievent):
 		targetclass = ievent['targetclass']
-		nodeclass = nodeclassreg.getNodeClass(targetclass)
-		if nodeclass is None:
+		try:
+			nodeclass = nodeclassreg.getNodeClass(targetclass)
+		except nodeclassreg.NotFoundError:
+			self.confirmEvent(ievent, status='failed')
 			return
 
 		nodename = ievent['node']

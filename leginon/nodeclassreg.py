@@ -14,35 +14,38 @@ reg_dict = {}
 reg_list = []
 sortclasses = {}
 
+class NodeRegistryError(Exception):
+	pass
+
+class NotFoundError(NodeRegistryError):
+	pass
+
+class InvalidNodeError(NodeRegistryError):
+	pass
+
 def registerNodeClass(modulename, classname, sortclass=None):
 	### find the module
 	try:
 		modinfo = imp.find_module(modulename)
 	except ImportError, detail:
-		print '### Module not found: %s' % modulename
-		print '    %s' % detail
-		return
+		raise NotFoundError('Module \'%s\' not found' % modulename)
 
 	### import the module
 	try:
 		mod = imp.load_module(modulename, *modinfo)
 	except Exception, detail:
-		print '### Exception while importing %s' % modulename
-		print '    %s' % detail
-		return
+		raise
 
 	### get the class from the module
 	try:
 		nodeclass = getattr(mod, classname)
 	except AttributeError, detail:
-		print '### Class %s not in module %s' % (classname, modulename)
-		print '    %s' % detail
-		return
+		message = 'Class %s not found in module \'%s\'' % (classname, modulename)
+		raise NotFoundError(message)
 
 	### make sure class is Node
 	if not issubclass(nodeclass, node.Node):
-		print '### %s is not subclass of node.Node' % nodeclass
-		return
+		raise InvalidNodeError('%s is not subclass of node.Node' % nodeclass)
 
 	### everything worked, record this in the registry
 	reg_dict[classname] = {'module': mod}
@@ -53,8 +56,7 @@ def registerNodeClass(modulename, classname, sortclass=None):
 
 def getNodeClass(classname):
 	if classname not in reg_dict:
-		print '%s not in registry' % classname
-		return None
+		raise NotFoundError('\'%s\' not in registry' % classname)
 	mod = reg_dict[classname]['module']
 	#reload(mod)
 	return getattr(mod, classname)

@@ -30,10 +30,11 @@ EVT_APPLICATION_KILLED = wx.PyEventBinder(ApplicationKilledEventType)
 EVT_ADD_LAUNCHER_PANEL = wx.PyEventBinder(AddLauncherPanelEventType)
 
 class AddNodeEvent(wx.PyEvent):
-	def __init__(self, name):
+	def __init__(self, name, status='ok'):
 		wx.PyEvent.__init__(self)
 		self.SetEventType(AddNodeEventType)
 		self.name = name
+		self.status = status
 
 class RemoveNodeEvent(wx.PyEvent):
 	def __init__(self, name):
@@ -61,10 +62,11 @@ class ApplicationStartingEvent(wx.PyEvent):
 		self.nnodes = nnodes
 
 class ApplicationNodeStartedEvent(wx.PyEvent):
-	def __init__(self, name):
+	def __init__(self, name, status='ok'):
 		wx.PyEvent.__init__(self)
 		self.SetEventType(ApplicationNodeStartedEventType)
 		self.name = name
+		self.status = status
 
 class ApplicationStartedEvent(wx.PyEvent):
 	def __init__(self, name):
@@ -384,7 +386,10 @@ class Frame(wx.Frame):
 
 	def onApplicationNodeStarted(self, evt):
 		if self.appgauge is not None:
-			self.statusbar.SetStatusText('Started %s node' % evt.name)
+			if evt.status == 'ok':
+				self.statusbar.SetStatusText('Started %s node' % evt.name)
+			else:
+				self.statusbar.SetStatusText('Failed to start %s node' % evt.name)
 			self.appgauge.count += 1
 			self.appgauge.SetValue(self.appgauge.count)
 
