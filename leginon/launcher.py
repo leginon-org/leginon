@@ -14,9 +14,7 @@ import event
 import leginonobject
 import node
 import nodeclassreg
-import time
-import threading
-import uidata
+#import time
 import uiserver
 
 class Launcher(node.Node):
@@ -33,29 +31,10 @@ class Launcher(node.Node):
 
 		self.datahandler.insert(self.uicontainer)
 
-		self.addEventInput(event.LaunchEvent, self.handleLaunch)
 		self.defineUserInterface()
-#		l = self.location()
-#		self.start()
-
-	def onThreads(self):
-		threads = threading.enumerate()
-		print '%d running threads:' % len(threads)
-		for thread in threads:
-			print thread
-
-	def defineUserInterface(self):
-		node.Node.defineUserInterface(self)
-		self.uicontainer.addObject(uidata.Method('Threads', self.onThreads))
-
-	def addManager(self, location):
-		node.Node.addManager(self, location)
-#		time.sleep(1)
 		self.publishNodeClasses()
-		self.outputEvent(event.NodeInitializedEvent(id=self.ID()))
-
-	def start(self):
-		pass
+		self.addEventInput(event.LaunchEvent, self.handleLaunch)
+		self.start()
 
 	def exit(self):
 		node.Node.exit(self)
@@ -74,14 +53,11 @@ class Launcher(node.Node):
 		self.publish(d, pubevent=True)
 
 	def handleLaunch(self, launchevent):
-		# unpack event
 		targetclass = launchevent['targetclass']
 		args = launchevent['args']
-		if launchevent['kwargs'] is not None:
-			kwargs = launchevent['kwargs']
-		else:
+		kwargs = launchevent['kwargs']
+		if kwargs is None:
 			kwargs = {}
-
 		kwargs['uicontainer'] = self.uicontainer
 		kwargs['launcher'] = self.id
 		kwargs['datahandler'] = self.datahandler
@@ -89,19 +65,11 @@ class Launcher(node.Node):
 		# get the requested class object
 		nodeclass = nodeclassreg.getNodeClass(targetclass)
 
-		#print 'launching', nodeclass
-
 		id = args[0]
 		session = args[1]
 		nodelocations = args[2]
 		nodeclass(id, session, nodelocations, **kwargs)
 		self.confirmEvent(launchevent)
-
-	def launchThread(self):
-		pass
-
-	def launchProcess(self):
-		pass
 
 if __name__ == '__main__':
 	import sys, socket
