@@ -27,7 +27,13 @@ class NodeDataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
 		if isinstance(idata, event.Event):
 			datahandler.DataBinder.insert(self, idata)
 		else:
-			#raise InvalidEventError('event must be Event instance')
+			raise InvalidEventError('event must be Event instance')
+
+	# use this to insert into your own server
+	def _insert(self, idata):
+		if isinstance(idata, event.Event):
+			datahandler.DataBinder.insert(self, idata)
+		else:
 			datahandler.SimpleDataKeeper.insert(self, idata)
 
 	# def query(self, id): is inherited from SimpleDataKeeper
@@ -72,8 +78,12 @@ class Node(leginonobject.LeginonObject):
 		self.mark_data(idata)
 		if not issubclass(eventclass, event.PublishEvent):
 			raise TypeError('PublishEvent subclass required')
-		self.server.datahandler.insert(idata)
+		self.server.datahandler._insert(idata)
 		self.announce(eventclass(idata.id))
+
+	def publishRemote(self, nodeid, idata):
+		# perhaps an event can be generated in this too
+		self.clients[nodeid].insert(idata)
 
 	def mark_data(self, data):
 		data.origin['id'] = self.nodeid

@@ -1,20 +1,20 @@
 #!/usr/bin/env python
 
 import leginonobject
+import datahandler
 import node
+import data
 import common
 import event
 import signal
-
 import os
 
 class Manager(node.Node):
 	def __init__(self):
-		node.Node.__init__(self, 'manager', managerloc=None)
+		node.Node.__init__(self, 'manager', None)
 
 		self.common = common
 		self.distmap = {}
-		self.dataregistry = {}
 
 		## this makes every received event get distributed
 		self.addEventInput(event.Event, self.distribute)
@@ -36,25 +36,27 @@ class Manager(node.Node):
 		print self.clients
 
 	def registerData(self, publishevent):
-		print 'registering data', publishevent.origin
-		print publishevent
-
+		#print 'registering data, from', publishevent.origin
 		if isinstance(publishevent, event.PublishEvent):
 			id = publishevent.content
-			self.addDataRegistryEntry(id, publishevent.origin['id'])
+			self.publishDataLocation(id, publishevent.origin['id'])
 		elif isinstance(publishevent, event.ListPublishEvent):
 			for id in publishevent.content:
-				self.addDataRegistryEntry(id, publishevent.origin['id'])
+				self.publishDataLocation(id, publishevent.origin['id'])
 		else:
 			raise TypeError
 
-		print self.dataregistry
-
-	def addDataRegistryEntry(self, dataid, nodeid):
-		if dataid in self.dataregistry:
-			self.dataregistry[dataid].append(nodeid)
+	# I think the data location should be looked up dynamically based on
+	# node ID, I had a ManagerDataHandler, but things didn't quite work out
+	# To keep it simple for now the static location is stored
+	def publishDataLocation(self, dataid, nodeid):
+		locationdata = self.server.datahandler.query(dataid)
+		#print "locationdata =", locationdata
+		if locationdata == None:
+			locationdata = data.LocationData(dataid, [self.clients[nodeid].serverlocation])
 		else:
-			self.dataregistry[dataid] = [nodeid]
+			locationdata.content.append(self.clients[nodeid].serverlocation)
+		self.server.datahandler._insert(locationdata)
 
 	def launchNode(self, launcher, newproc, target, newid, nodeargs=()):
 		manloc = self.location()

@@ -25,6 +25,7 @@ class Client(Base):
 		if ('hostname' in serverlocation) and ('hostname' in clientlocation) and (serverlocation['hostname'] == clientlocation['hostname']):
 				self.clients[localtransport] = apply(localtransport.Client, (serverlocation,))
 		self.clients[tcptransport] = apply(tcptransport.Client, (serverlocation,))
+		self.serverlocation = serverlocation
 
 	def pull(self, id):
 		try:
