@@ -98,8 +98,13 @@ class TargetWatcher(watcher.Watcher):
 	def processData(self, newdata):
 		if not isinstance(newdata, data.ImageTargetListData):
 			return
-
-		self.uitargetlistid.set(str(newdata.dmid))
+		### for now use dbid since it is persistent
+		### would rather use the dmid of the reference
+		### that led to this newdata
+		### dmid of newdata is no good becuase it
+		### might not match dmid of the original image
+		imageid = newdata.dbid
+		self.uitargetlistid.set(str(imageid))
 
 		# separate the good targets from the rejects
 		targetlist = newdata['targets']
