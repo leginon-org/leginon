@@ -46,7 +46,8 @@ class DataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
 class Node(leginonobject.LeginonObject):
 	'''Atomic operating unit for performing tasks, creating data and events.'''
 	def __init__(self, id, session, nodelocations = {},
-											dh = DataHandler, dhargs = (),
+											datahandlers = [(DataHandler, ()),
+																			(dbdatakeeper.DBDataKeeper, ())],
 											tcpport=None, xmlrpcport=None,
 											clientclass = datatransport.Client, launchlock=None):
 		leginonobject.LeginonObject.__init__(self, id, session)
@@ -56,13 +57,17 @@ class Node(leginonobject.LeginonObject):
 
 		self.eventmapping = {'outputs':[], 'inputs':[]}
 
+		# manager.launchNode could specify which datahandlers to have
 		self.datahandlers = {}
-		self.datahandlers['node'] = apply(dh, (self.ID(),) + dhargs)
+		for dh in datahandlers:
+			self.datahandlers[dh[0]] = apply(dh[0], (self.ID(),) + dh[1])
+
+#		self.datahandlers['node'] = apply(dh, (self.ID(),) + dhargs)
 #		self.datahandlers['database'] = dbdatakeeper.DBDataKeeper(self.ID(),
 #																															self.session)
 
 		self.server = datatransport.Server(self.ID(),
-																				self.datahandlers['node'], tcpport)
+																				self.datahandlers[DataHandler], tcpport)
 		self.clientclass = clientclass
 
 		self.uiserver = interface.Server(self.ID(), xmlrpcport)
@@ -146,14 +151,14 @@ class Node(leginonobject.LeginonObject):
 	def addEventInput(self, eventclass, func):
 		'''Map a function (event handler) to be called when the specified event is received.'''
 #		self.server.datahandler.setBinding(eventclass, func)
-		self.datahandlers['node'].setBinding(eventclass, func)
+		self.datahandlers[DataHandler].setBinding(eventclass, func)
 		if eventclass not in self.eventmapping['inputs']:
 			self.eventmapping['inputs'].append(eventclass)
 
 	def delEventInput(self, eventclass):
 		'''Unmap all functions (event handlers) to be called when the specified event is received.'''
 #		self.server.datahandler.setBinding(eventclass, None)
-		self.datahandlers['node'].setBinding(eventclass, None)
+		self.datahandlers[DataHandler].setBinding(eventclass, None)
 		if eventclass in self.eventmapping['inputs']:
 			self.eventmapping['inputs'].remove(eventclass)
 
@@ -204,7 +209,10 @@ class Node(leginonobject.LeginonObject):
 			return
 
 		if 'database' in kwargs and kwargs['database']:
-			self.datahandlers['database'].insert(idata)
+			try:
+				self.datahandlers[dbdatakeeper.DBDataKeeper].insert(idata)
+			except KeyError:
+				self.printerror('no DBDataKeeper to publish: %s' % str(idata.id))
 
 		if 'eventclass' in kwargs:
 			eventclass = kwargs['eventclass']
@@ -219,7 +227,7 @@ class Node(leginonobject.LeginonObject):
 			confirm = False
 
 		if 'node' in kwargs and kwargs['node']:
-			self.datahandlers['node'].insert(idata)
+			self.datahandlers[DataHandler].insert(idata)
 
 			# this idata.id is content, I think
 			e = eventclass(self.ID(), idata.id, confirm)
@@ -241,9 +249,13 @@ class Node(leginonobject.LeginonObject):
 				except ResearchError:
 					pass
 
-#		result.append(self.datahandlers['database'].query(kwargs))
-		# assumes query yields list of matches
-		result += self.datahandlers['database'].query(kwargs)
+		try:
+#			result.append(self.datahandlers[dbdatakeeper.DBDataKeeper].query(kwargs))
+			# assumes query yields list of matches
+			result += self.datahandlers[dbdatakeeper.DBDataKeeper].query(kwargs)
+		except KeyError:
+			self.printerror('research failed, no DBDataKeeper')
+
 		# first for now
 		try:
 			return result[0]
@@ -255,7 +267,7 @@ class Node(leginonobject.LeginonObject):
 		if not issubclass(eventclass, event.UnpublishEvent):
 			raise TypeError('UnpublishEvent subclass required')
 #		self.server.datahandler.remove(dataid)
-		self.datahandlers['node'].remove(dataid)
+		self.datahandlers[DataHandler].remove(dataid)
 		self.outputEvent(eventclass(self.ID(), dataid))
 
 	def publishRemote(self, idata):
@@ -350,7 +362,7 @@ class Node(leginonobject.LeginonObject):
 		if value is None:
 			try:
 #				return self.key2str(self.server.datahandler.datadict)
-				return self.key2str(self.datahandlers['node'].datadict)
+				return self.key2str(self.datahandlers[DataHandler].datadict)
 #				return self.server.datahandler.datadict
 			except AttributeError:
 				return {}

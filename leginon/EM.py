@@ -49,7 +49,10 @@ class EM(node.Node):
 			camera = ('gatan', 'gatan')
 		self.setEMclasses(scope, camera)
 
-		node.Node.__init__(self, id, nodelocations, DataHandler, (self,), **kwargs)
+		node.Node.__init__(self, id, nodelocations,
+												[(DataHandler, (self,)),
+													(dbdatakeeper.DBDataKeeper, ())],
+												**kwargs)
 
 		self.addEventInput(event.LockEvent, self.doLock)
 		self.addEventInput(event.UnlockEvent, self.doUnlock)

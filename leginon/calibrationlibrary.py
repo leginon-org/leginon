@@ -37,7 +37,8 @@ class DataHandler(datahandler.DataBinder):
 
 class CalibrationLibrary(node.Node):
 	def __init__(self, id, nodelocations, **kwargs):
-		node.Node.__init__(self, id, nodelocations, DataHandler, (self,), **kwargs)
+		node.Node.__init__(self, id, nodelocations,
+					[(DataHandler, (self,)), (dbdatakeeper.DBDataKeeper, ())], **kwargs)
 		self.storagedict = {
 			'pickle': PickleStorage(),
 			'db': DBStorage()

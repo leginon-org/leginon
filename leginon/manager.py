@@ -27,8 +27,10 @@ class Manager(node.Node):
 
 		self.clients = {}
 
-		node.Node.__init__(self, id, session, nodelocations={}, dh=DataHandler,
-										dhargs=(), tcpport=tcpport, xmlrpcport=xmlrpcport, **kwargs)
+		node.Node.__init__(self, id, session, nodelocations={},
+															datahandlers=[(DataHandler, ()),
+																						(dbdatakeeper.DBDataKeeper, ())],
+															tcpport=tcpport, xmlrpcport=xmlrpcport, **kwargs)
 
 		self.uiserver.server.register_function(self.uiGetNodeLocations,
 																						'getNodeLocations')

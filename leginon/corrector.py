@@ -48,7 +48,8 @@ class Corrector(node.Node):
 		self.cam = camerafuncs.CameraFuncs(self)
 		self.plans = {}
 
-		node.Node.__init__(self, id, nodelocations, DataHandler, (self,), **kwargs)
+		node.Node.__init__(self, id, nodelocations, [(DataHandler, (self,)),
+																		(dbdatakeeper.DBDataKeeper, ())], **kwargs)
 		self.addEventOutput(event.DarkImagePublishEvent)
 		self.addEventOutput(event.BrightImagePublishEvent)
 		self.addEventOutput(event.ListPublishEvent)
