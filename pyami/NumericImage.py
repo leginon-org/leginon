@@ -5,6 +5,7 @@ import Numeric
 import Image
 import ImageTk
 import math,sys
+import time
 
 ## (Numeric typcode,size) => (PIL mode,  PIL rawmode)
 ntype_itype = {
@@ -30,7 +31,7 @@ def numeric_bin(ndata, bin):
 
 	newshape = shape[0]/bin[0], shape[1]/bin[1]
 
-def linearscale(input, boundfrom, boundto):
+def linearscale(input, boundfrom, boundto, extrema=None):
 	"""
 	Rescale the data in the range 'boundfrom' to the range 'boundto'.
 	"""
@@ -47,13 +48,30 @@ def linearscale(input, boundfrom, boundto):
 	minto,maxto = boundto
 
 	### default from bounds are min,max of the input
-	if minfrom == None:
-		minfrom = min(Numeric.ravel(input))
-	if maxfrom == None:
-		maxfrom = max(Numeric.ravel(input))
+	if minfrom is None:
+		if extrema:
+			minfrom = extrema[0]
+		else:
+			minfrom = Numeric.argmin(input.flat)
+			minfrom = input.flat[minfrom]
+	if maxfrom is None:
+		if extrema:
+			maxfrom = extrema[1]
+		else:
+			maxfrom = Numeric.argmax(input.flat)
+			maxfrom = input.flat[maxfrom]
 
-	rangefrom = float(maxfrom - minfrom)
-	rangeto = float(maxto - minto)
+	t0 = time.clock()
+
+	# 0.58
+	#rangefrom = float(maxfrom - minfrom)
+	#rangeto = float(maxto - minto)
+
+	# 
+	## prepare for fast math
+	rangefrom = Numeric.array((maxfrom - minfrom)).astype('f')
+	rangeto = Numeric.array((maxto - minto)).astype('f')
+	minfrom = Numeric.array(minfrom).astype('f')
 
 	# this is a hack to prevent zero division
 	# is there a better way to do this with some sort of 
@@ -61,7 +79,14 @@ def linearscale(input, boundfrom, boundto):
 	if not rangefrom:
 		rangefrom = 1e-99
 
-	output = (input - minfrom) * rangeto / rangefrom
+	#output = (input - minfrom) * rangeto / rangefrom
+	scale = rangeto / rangefrom
+	offset = minfrom * scale
+	output = input * scale - offset
+
+	t1 = time.clock()
+	t = t1 - t0
+	print 'linscale math:  %.3f' % (t,)
 	return output
 
 # resize and rotate filters:  NEAREST, BILINEAR, BICUBIC
@@ -75,6 +100,67 @@ def resize(pil_image, size):
 	else:
 		new_image = pil_image
 	return new_image
+
+# 1024x1024:  1.89
+def extrema1(numarray):
+		t0 = time.clock()
+
+		flat = numarray.flat
+		ext =  min(flat), max(flat)
+		t1 = time.clock()
+
+		t = t1 - t0
+		print 'time: %.3f' % (t,)
+		return ext
+
+# 1024x1024:  0.1
+def extrema2(numarray):
+		t0 = time.clock()
+
+		flat = numarray.flat
+		extmin = Numeric.argmin(flat)
+		extmax = Numeric.argmax(flat)
+		minval = flat[extmin]
+		maxval = flat[extmax]
+		ext = (minval, maxval)
+
+		t1 = time.clock()
+		t = t1 - t0
+		print 'time: %.3f' % (t,)
+		return ext
+
+# 1024x1024:  3.4
+def extrema3(numarray):
+		t0 = time.clock()
+
+		flat = numarray.flat
+		minval = maxval = flat[0]
+		for val in flat:
+			if val > maxval:
+				maxval = val
+			elif val < minval:
+				minval = val
+		ext = (minval, maxval)
+
+		t1 = time.clock()
+		t = t1 - t0
+		print 'time: %.3f' % (t,)
+		return ext
+
+# 1024x1024:  3.75
+def extrema4(numarray):
+		t0 = time.clock()
+
+		flat = numarray.flat
+		sflat = Numeric.sort(flat)
+		minval = sflat[0]
+		maxval = sflat[-1]
+		ext = (minval, maxval)
+
+		t1 = time.clock()
+		t = t1 - t0
+		print 'time: %.3f' % (t,)
+		return ext
 
 
 class NumericImage:
@@ -102,7 +188,13 @@ class NumericImage:
 		### if output size and clip are not set, use defaults
 		if not self.transform['output_size']:
 			self.transform['output_size'] = self.orig_size
-		self.extrema =  min(Numeric.ravel(self.orig_array)), max(Numeric.ravel(self.orig_array))
+		print 'find extrema'
+		flat = self.orig_array.flat
+		extmin = Numeric.argmin(flat)
+		extmax = Numeric.argmax(flat)
+		minval = flat[extmin]
+		maxval = flat[extmax]
+		self.extrema = (minval, maxval)
 		print 'numeric extrema set'
 		if not self.transform['clip']:
 			self.transform['clip'] = self.extrema
@@ -134,8 +226,7 @@ class NumericImage:
 		"""
 
 		clip = self.transform['clip']
-		print 'UPDATE IMAGE with clip', clip
-		final = linearscale(self.orig_array, clip, (0,255))
+		final = linearscale(self.orig_array, clip, (0,255), self.extrema)
 		type = final.typecode()
 		h,w = final.shape
 		imsize = w,h

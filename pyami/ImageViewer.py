@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import sys
 from Tkinter import *
 from ImageCanvas import *
 #from NumericImage import *
@@ -55,6 +54,8 @@ class ImageViewer(Frame):
 
 
 if __name__ == '__main__':
+	import sys
+	filename = sys.argv[1]
 	root = Tk()
 
 	print 'create ImageViewer'
@@ -62,15 +63,15 @@ if __name__ == '__main__':
 	print 'pack ImageViewer'
 	jim.pack()
 
-	if 0:
-		print 'read MRC'
-		from mrc import Mrc
-		data1 = Mrc.mrc_to_numeric('test1.mrc')
+	print 'read MRC'
+	from mrc import Mrc
+	data1 = Mrc.mrc_to_numeric(filename)
 
-		print 'data into ImageViewer'
+	print 'data into ImageViewer'
+	while 1:
 		jim.import_numeric(data1)
-		print 'clip ImageViewer'
-		jim.clip((500,700))
-
-	print 'mainloop'
-	root.mainloop()
+		raw_input('return to continue')
+	#print 'clip ImageViewer'
+	#jim.clip((500,700))
+	#print 'mainloop'
+	#root.mainloop()

@@ -125,12 +125,17 @@ class ImageCanvas(Frame):
 
 	def update_canvas(self):
 		self.numimage.update_image()
+		## this next line is currently the time waster
 		self.photo = self.numimage.photoimage()
+		print 'END'
+		t0 = time.clock()
 		newwidth = self.photo.width()
 		newheight = self.photo.height()
 		self.resize(0,0,newwidth,newheight)
 		self.canvas.itemconfig(self.canimage, image=self.photo)
 		self.update()
+		t1 = time.clock()
+		t = t1 - t0
 
 	def zoom(self, factor):
 		self.zoomfactor = self.zoomfactor * factor
