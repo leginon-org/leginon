@@ -19,6 +19,7 @@ import presets
 import copy
 import threading
 import uidata
+from node import ResearchError
 
 class Acquisition(targetwatcher.TargetWatcher):
 
@@ -215,10 +216,14 @@ class Acquisition(targetwatcher.TargetWatcher):
 		cor = self.uicorrectimage.get()
 
 		## acquire image
+		imagedata = None
 		try:
-			imagedata = self.cam.acquireCameraImageData(correction=cor)
+			try:
+				imagedata = self.cam.acquireCameraImageData(correction=cor)
+			except ResearchError:
+				self.acquisitionlog.error('Cannot access EM node to acquire image')
 		except camerafuncs.NoCorrectorError:
-			self.acquisitionlog.error('No corrector running to correct image')
+			self.acquisitionlog.error('Cannot access Corrector node to correct image')
 		if imagedata is None:
 			return 'fail'
 
