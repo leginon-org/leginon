@@ -566,7 +566,7 @@ if sys.platform == 'win32':
 			gridclearedmethod = uidata.Method('Grid Cleared', self.uiGridCleared)
 
 			gridcontainer = uidata.Container('Grids')
-			gridcontainer.addObjects((self.gridtrayselect, #self.uigridtray,
+			gridcontainer.addObjects((self.gridtrayselect, self.uigridtray,
 																griddeletemethod, gridclearmethod,
 																self.uigridrangestart, self.uigridrangestop,
 																gridaddrangemethod, gridclearedmethod))

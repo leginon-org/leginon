@@ -432,7 +432,7 @@ class wxContainerWidget(wxWidget):
 
 		self.nosizerclasses = (wxNotebookContainerWidget, wxDialogContainerWidget,
 														wxTreePanelContainerWidget, wxMessageDialogWidget,
-														wxFileDialogWidget, wxGridTrayWidget)
+														wxFileDialogWidget)
 		self.expandclasses = (wxMessageWidget, wxMessageLogWidget)
 		wxWidget.__init__(self, name, parent, container, value, configuration)
 		self.childparent = self.parent
@@ -875,8 +875,8 @@ class wxProgressWidget(wxDataWidget):
 
 class wxGridTrayWidget(wxDataWidget):
 	def __init__(self, name, parent, container, value, configuration):
-		wxDataWidget.__init__(self, name, parent, container, value, configuration)
 		self.sizer = wxBoxSizer(wxHORIZONTAL)
+		wxDataWidget.__init__(self, name, parent, container, value, configuration)
 		self.gridtray = wxGridTray.GridTrayPanel(parent, self.setServer)
 
 		self.set(value)
