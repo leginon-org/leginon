@@ -6,6 +6,7 @@ import Mrc
 import imagefun
 import peakfinder
 import LinearAlgebra
+import convolver
 
 class CircleMaskCreator(object):
 	def __init__(self):
