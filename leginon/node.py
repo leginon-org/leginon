@@ -254,7 +254,7 @@ class Node(leginonobject.LeginonObject):
 			nodelocation = self.researchByLocation(self.nodelocations['manager'],
 				nodeid)
 			client = self.clientclass(self.ID(), nodelocation.content)
-			self.client.push(idata)
+			client.push(idata)
 
 	def researchByLocation(self, loc, dataid):
 		client = self.clientclass(self.ID(), loc)
