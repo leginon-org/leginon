@@ -2,6 +2,7 @@
 
 import timedloop
 import time
+import array
 
 class AcquireLoop(timedloop.TimedLoop):
 	"""
@@ -20,6 +21,17 @@ class AcquireLoop(timedloop.TimedLoop):
 		"""
 		this is the real guts of this node
 		"""
+
+		# this is rough, ImageData type, etc. to come soon
+		imagedata = self.researchByDataID('image data')
+		image = imagedata.content['image data']
+
+		imagedatatype = self.researchByDataID('datatype code')
+		datatype = imagedatatype.content['datatype code']
+
+		imagearray = array.array(datatype, image)
+		print 'image 1...10', imagearray[:10]
+
 		## acquire image
 		print 'acquiring image %s' % time.asctime()
 
