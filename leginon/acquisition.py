@@ -45,7 +45,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 			newtargetemdata = None
 		else:
 			print 'TARGETDATA'
-			print '   row,col', targetdata['array row'], targetdata['array column']
+			print '   row,col', targetdata['delta row'], targetdata['delta column']
 			print '   scope image shift', targetdata['scope']['image shift']
 			if targetdata['preset'] is not None:
 				print '   preset image shift', targetdata['preset']['image shift']
@@ -121,19 +121,23 @@ class Acquisition(targetwatcher.TargetWatcher):
 		#targetinfo = copy.deepcopy(targetdata.content)
 		targetinfo = copy.deepcopy(targetdata)
 		## get relavent info from target event
-		targetrow = targetinfo['array row']
-		targetcol = targetinfo['array column']
-		targetshape = targetinfo['array shape']
+#		targetrow = targetinfo['array row']
+#		targetcol = targetinfo['array column']
+#		targetshape = targetinfo['array shape']
+		targetdeltarow = targetinfo['delta row']
+		targetdeltacolumn = targetinfo['delta column']
 		targetscope = targetinfo['scope']
 		targetcamera = targetinfo['camera']
 
-		## calculate delta from image center
-		deltarow = targetrow - targetshape[0] / 2
-		deltacol = targetcol - targetshape[1] / 2
+#		## calculate delta from image center
+#		deltarow = targetrow - targetshape[0] / 2
+#		deltacol = targetcol - targetshape[1] / 2
 
 		## to shift targeted point to center...
-		deltarow = -deltarow
-		deltacol = -deltacol
+#		deltarow = -deltarow
+#		deltacol = -deltacol
+		deltarow = -targetdeltarow
+		deltacol = -targetdeltacolumn
 
 		pixelshift = {'row':deltarow, 'col':deltacol}
 

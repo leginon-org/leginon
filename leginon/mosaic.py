@@ -327,9 +327,8 @@ class EMMosaic(Mosaic):
 
 	def getTargetInfo(self, x, y):
 		tile, deltaposition, location = self.getNearestTile(x, y)
-		return {'array row': location[0],
-						'array column': location[1],
-						'array shape': tile.image.shape,
+		return {'delta row': deltaposition[0],
+						'delta column': deltaposition[1],
 						'scope': tile.state['scope'],
 						'camera': tile.state['camera']}
 

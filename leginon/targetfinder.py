@@ -139,9 +139,9 @@ class ClickTargetFinder(TargetFinder):
 		targetlist = []
 		for imagetarget in self.clickimage.getTargetType(typename):
 			column, row = imagetarget
-			target = {'array row': row,
-								'array column': column,
-								'array shape': self.currentimage.shape}
+			# using self.currentiamge.shape could be bad
+			target = {'delta row': row - self.currentimage.shape/2,
+								'delta column': column - self.currentimage.shape/2}
 			imageinfo = self.imageInfo()
 			target.update(imageinfo)
 			targetdata = datatype(self.ID(), target)

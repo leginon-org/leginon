@@ -29,7 +29,7 @@ class ImageWatcher(watcher.Watcher):
 		add some info to clickinfo to create targetinfo
 		'''
 		imageinfo = {}
-		imageinfo['image id'] = self.imagedata['id']
+#		imageinfo['image id'] = self.imagedata['id']
 		imageinfo['scope'] = self.imagedata['scope']
 		imageinfo['camera'] = self.imagedata['camera']
 		if 'preset' in self.imagedata and self.imagedata['preset'] is not None:

@@ -625,7 +625,7 @@ class StateMosaicData(Data):
 
 ## this stuff came from ImageCanvas.eventXYInfo and ImageWatcher.imageInfo
 ## XXX preset may not always be set
-class ImageTargetData(Data):
+class OldImageTargetData(Data):
 	def typemap(cls):
 		t = Data.typemap()
 		t += [
@@ -642,6 +642,20 @@ class ImageTargetData(Data):
 		  ('scope', ScopeEMData),
 		  ('camera', CameraEMData),
 		  ('source', str),
+		  ('preset', PresetData)
+		]
+		return t
+	typemap = classmethod(typemap)
+
+class ImageTargetData(Data):
+	def typemap(cls):
+		t = Data.typemap()
+		t += [
+			# pixel delta to target from state in row, column
+		  ('delta row', int),
+		  ('delta column', int),
+		  ('scope', ScopeEMData),
+		  ('camera', CameraEMData),
 		  ('preset', PresetData)
 		]
 		return t
