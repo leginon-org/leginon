@@ -25,6 +25,8 @@ class DataManagerOverflowError(DataError):
 	pass
 class DataAccessError(DataError):
 	pass
+class DataDuplicateError(DataError):
+	pass
 
 ## manages weak references between data instances
 ## DataManager holds strong references to every Data instance that
@@ -55,10 +57,10 @@ class DataManager(object):
 
 	def startServer(self):
 		self.server = tcptransport.Server(self)
+		self.server.start()
 		port = self.server.port
 		hostname = self.server.hostname
 		self.location = (hostname, port)
-		print 'LOCATION', self.location
 
 	def newid(self):
 		self.dmid += 1
@@ -67,6 +69,12 @@ class DataManager(object):
 	def insert(self, datainstance):
 		self.lock.acquire()
 		try:
+			## if it is already persistent, and we already have
+			## it in datadict, then raise an exception
+			dbid = datainstance.dbid
+			if dbid is not None and dbid in self.db2dm:
+				raise DataDuplicateError("persistent data %s already exists in DataManager" % (dbid,))
+
 			## insert into datadict and sizedict
 			newid = self.newid()
 			self.datadict[newid] = datainstance
@@ -74,7 +82,7 @@ class DataManager(object):
 			self.resize(datainstance)
 
 			## insert into persist dicts if it is in database
-			if datainstance.dbid is not None:
+			if dbid is not None:
 				self.setPersistent(datainstance)
 		finally:
 			self.lock.release()
@@ -188,7 +196,8 @@ class DataManager(object):
 
 	def query(self, datareference):
 		### this is how tcptransport server accesses this data manager
-		return self.getData(datareference)
+		datainstance = self.getData(datareference)
+		return datainstance
 
 datamanager = DataManager()
 
@@ -310,7 +319,7 @@ class Data(DataDict, leginonobject.LeginonObject):
 	to initialize with a dictionary.  If a key exists in both
 	initializer and kwargs, the kwargs value is used.
 	'''
-	def __init__(self, **kwargs):
+	def __init__(self, initializer=None, **kwargs):
 		DataDict.__init__(self)
 
 		## Database ID (primary key)
@@ -326,9 +335,11 @@ class Data(DataDict, leginonobject.LeginonObject):
 		datamanager.insert(self)
 
 		# if initializer was given, update my values
-		if 'initializer' in kwargs:
-			self.update(kwargs['initializer'])
-			del kwargs['initializer']
+		#if 'initializer' in kwargs:
+		#	self.update(kwargs['initializer'])
+		#	del kwargs['initializer']
+		if initializer is not None:
+			self.update(initializer)
 
 		# additional keyword arguments also update my values
 		# (overriding anything set by initializer)
@@ -337,6 +348,20 @@ class Data(DataDict, leginonobject.LeginonObject):
 		# LeginonObject base class needs id
 		legid = self['id']
 		leginonobject.LeginonObject.__init__(self, legid)
+
+	## definining __reduce__ allows unpickler to call __init__
+	## which is necessary to register data with datamanager
+	## After calling __init__, __dict__ will be updated, so we
+	## have to remove dmid since that has already been set in __init__
+	def __reduce__(self):
+		state = dict(self.__dict__)
+		del state['dmid']
+		## giving the new object an initializer has a lot of
+		## duplicate information to what is given in the
+		## state dict, but it is necessary to get the dict
+		## base class to have its items set
+		initializer = dict(self.items(dereference=False))
+		return (self.__class__, (initializer,), state)
 
 	def setPersistent(self, dbid):
 		self.dbid = dbid
@@ -354,9 +379,6 @@ class Data(DataDict, leginonobject.LeginonObject):
 				val = item[1]
 			deref.append((item[0],val))
 		return deref
-
-	def __getstate__(self):
-		return self.__dict__
 
 	def values(self, dereference=True):
 		original = super(Data, self).values()
@@ -385,8 +407,8 @@ class Data(DataDict, leginonobject.LeginonObject):
 	def __setitem__(self, key, value):
 		'''
 		'''
-		super(Data, self).__setitem__(key, value)
 		if not hasattr(self, 'initdone'):
+			super(Data, self).__setitem__(key, value)
 			return
 
 		if hasattr(self, 'dbid') and self.dbid is not None:
@@ -399,7 +421,7 @@ class Data(DataDict, leginonobject.LeginonObject):
 		elif isinstance(value,Data):
 			value = DataReference(value)
 		#DataDict.__setitem__(self, key, value)
-		#super(Data, self).__setitem__(key, value)
+		super(Data, self).__setitem__(key, value)
 		datamanager.resize(self)
 
 	def typemap(cls):
