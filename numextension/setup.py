@@ -1,6 +1,7 @@
 from distutils.core import setup, Extension
+from numarray.numarrayext import NumarrayExtension
 
-module = Extension('numextension', sources = ['numextension.c'])
+module = NumarrayExtension('numextension', sources = ['numextension.c'])
 
 setup(
 	name='NumExtension',

@@ -869,6 +869,130 @@ static PyObject *rgbstring(PyObject *self, PyObject *args) {
 	return output;
 }
 
+static PyObject *hanning(PyObject *self, PyObject *args, PyObject *kwargs) {
+	PyObject *shape;
+	int m, n;
+	float a = 0.5, b;
+	PyArrayObject *result;
+	int i, j;
+
+	static char *kwlist[] = {"shape", "a", NULL};
+
+	if(!PyArg_ParseTupleAndKeywords(args, kwargs, "O|f", kwlist, shape, &a))
+		return NULL;
+
+	if(!PyArg_ParseTuple(shape, "(ii)", &m, &n))
+		return NULL;
+
+	if(!(result = NA_NewArray(NULL, tFloat32, 2, m, n)))
+		return NULL;
+
+	b = 1 - a;
+
+	for(i = 0; i < m; i++) {
+		for(j = 0; j < n; j++) {
+			((float *)result->data)[i*n + j] = 
+				(float)(a - b*cos(2.0*M_PI*((float)i)/((float)(m - 1))))
+								*(a - b*cos(2.0*M_PI*((float)j)/((float)(n - 1))));
+		}
+	}
+
+	return NA_OutputArray(result, tFloat32, 0);
+}
+
+static PyObject *highpass(PyObject *self, PyObject *args) {
+	int m, n;
+	PyArrayObject *result;
+	int i, j;
+	float x;
+
+	if(!PyArg_ParseTuple(args, "(ii)", &m, &n))
+		return NULL;
+
+	if(!(result = NA_NewArray(NULL, tFloat32, 2, m, n)))
+		return NULL;
+
+	for(i = 0; i < m; i++) {
+		for(j = 0; j < n; j++) {
+			x = cos(M_PI*((((float)i)/((float)m)) - 0.5))
+						*cos(M_PI*((((float)j)/(2.0*((float)n)))));
+			((float *)result->data)[i*n + j] = (float)((1.0 - x)*(2.0 - x));
+		}
+	}
+
+	return NA_OutputArray(result, tFloat32, 0);
+}
+
+float bilinear(float *array, int m, int n, float x, float y) {
+	int x0, y0, x1, y1;
+	float v00 = 0.0, v01 = 0.0, v10 = 0.0, v11 = 0.0;
+	x0 = (int)x;
+	y0 = (int)y;
+	x1 = x0 + 1;
+	y1 = y0 + 1;
+	if((x0 < n) && (y0 < m) && (x0 >= 0) && (y0 >= 0))
+		v00 = array[y0*n + x0];
+	if((x1 < n) && (y0 < m) && (x1 >= 0) && (y0 >= 0))
+		v01 = array[y0*n + x1];
+	if((x0 < n) && (y1 < m) && (x0 >= 0) && (y1 >= 0))
+		v10 = array[y1*n + x0];
+	if((x1 < n) && (y1 < m) && (x1 >= 0) && (y1 >= 0))
+		v01 = array[y1*n + x1];
+	return (v00*(y1 - y)*(x1 - x)) + (v01*(y1 - y)*(x - x0))
+					+ (v10*(y - y0)*(x1 - x)) + (v11*(y - y0)*(x - x0));
+}
+
+float nearestneighbor(float *array, int m, int n, float x, float y) {
+	int x0 = (int)(x + 0.5);
+	int y0 = (int)(y + 0.5);
+	if((x0 < 0) || (y0 < 0) || (x0 >= n) || (y0 >= m))
+		return 0.0;
+	return array[y0*n + x0];
+}
+
+static PyObject *logpolar(PyObject *self, PyObject *args) {
+	int m, n;
+	PyObject *input;
+	PyArrayObject *inputarray, *outputarray;
+	int i, j;
+	float r, theta, costheta, sintheta, x, y;
+	int inputsize;
+	float base;
+
+	if(!PyArg_ParseTuple(args, "O(ii)", &input, &m, &n))
+		return NULL;
+
+	if(!(outputarray = NA_NewArray(NULL, tFloat32, 2, m, n)))
+		return NULL;
+
+	inputarray = NA_InputArray(input, tFloat32, NUM_C_ARRAY);
+
+	if(inputarray->dimensions[0]/2 < inputarray->dimensions[1])
+		inputsize = inputarray->dimensions[0]/2;
+	else
+		inputsize = inputarray->dimensions[1];
+	base = pow(inputsize, 1.0/n);
+
+	for(i = 0; i < m; i++) {
+		theta = M_PI*(((float)i)/((float)m) - 0.5);
+		costheta = cos(theta);
+		sintheta = sin(theta);
+		for(j = 0; j < n; j++) {
+			r = pow(base, j) - 1;
+			x = r*costheta;
+			y = (r*sintheta) + ((float)inputarray->dimensions[0])/2.0;
+			((float *)outputarray->data)[i*n + j] =
+									//bilinear(inputarray->data, inputarray->dimensions[0],
+									nearestneighbor(inputarray->data, inputarray->dimensions[0],
+																							inputarray->dimensions[1], x, y);
+		}
+	}
+
+	Py_XDECREF(inputarray);
+
+	return NA_OutputArray(outputarray, tFloat32, 0);
+}
+
 static struct PyMethodDef numeric_methods[] = {
 	{"min", min, METH_VARARGS},
 	{"max", max, METH_VARARGS},
@@ -882,6 +1006,9 @@ static struct PyMethodDef numeric_methods[] = {
 	{"houghline", houghline, METH_VARARGS},
 	{"linearscale", linearscale, METH_VARARGS},
 	{"rgbstring", rgbstring, METH_VARARGS},
+	{"hanning", hanning, METH_VARARGS|METH_KEYWORDS},
+	{"highpass", highpass, METH_VARARGS},
+	{"logpolar", logpolar, METH_VARARGS},
 	{NULL, NULL}
 };
 
