@@ -1137,10 +1137,6 @@ class wxConnectionPointObject(wxRectangleObject):
 	def OnMotion(self, evt):
 		self.ProcessEvent(MoveConnectionEvent(evt.m_x, evt.m_y))
 
-#	def OnLeftDoubleClick(self, evt):
-#		binding = Binding(self.eventclass, self, None)
-#		self.ProcessEvent(StartConnectionEvent(binding))
-
 	def OnLeftClick(self, evt):
 		self.ProcessEvent(EndConnectionEvent(self))
 

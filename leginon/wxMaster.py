@@ -1,7 +1,6 @@
 from wxPython.wx import *
 import wxObjectCanvas
 import nodeclassreg
-import event
 
 class RenameDialog(wxDialog):
 	def __init__(self, parent, id, title='Rename', pos=wxDefaultPosition,
@@ -82,7 +81,7 @@ class BindingInput(BindingConnectionPoint):
 		if self.getDrawText():
 			x, y = self.getCanvasPosition()
 			#y = y - self.height
-			dc.DrawRotatedText(self.eventclass, x, y, 90)
+			dc.DrawRotatedText(self.eventclass.__name__, x, y, 90)
 
 class BindingOutput(BindingConnectionPoint):
 	def __init__(self, eventclass):
@@ -102,7 +101,7 @@ class BindingOutput(BindingConnectionPoint):
 			x, y = self.getCanvasPosition()
 			x = x + self.width
 			y = y + self.height
-			dc.DrawRotatedText(self.eventclass, x, y, -90)
+			dc.DrawRotatedText(self.eventclass.__name__, x, y, -90)
 
 class Node(wxObjectCanvas.wxRectangleObject):
 	def __init__(self, alias, nodeclass):
@@ -112,10 +111,10 @@ class Node(wxObjectCanvas.wxRectangleObject):
 
 		nc = nodeclassreg.getNodeClass(self.nodeclass)
 		for inputclass in nc.eventinputs:
-			input = BindingInput(inputclass.__name__)
+			input = BindingInput(inputclass)
 			self.addInputConnectionPoint(input)
 		for outputclass in nc.eventoutputs:
-			output = BindingOutput(outputclass.__name__)
+			output = BindingOutput(outputclass)
 			self.addOutputConnectionPoint(output)
 
 		self.addText(self.alias)
@@ -227,7 +226,7 @@ class Binding(wxObjectCanvas.wxConnectionObject):
 		self.eventclass = eventclass
 		wxObjectCanvas.wxConnectionObject.__init__(self, bindingoutput,
 																											bindinginput)
-		self.label = BindingLabel(self.eventclass)
+		self.label = BindingLabel(self.eventclass.__name__)
 		self.addShapeObject(self.label)
 
 	def getEventClass(self):
@@ -528,22 +527,22 @@ class Application(wxObjectCanvas.wxRectangleObject):
 		wxObjectCanvas.wxRectangleObject.OnStartConnection(self, evt)
 		for node in self.getNodes():
 			for input in node.inputconnectionpoints:
-				if input.eventclass == self.connection.eventclass:
+				if issubclass(self.connection.eventclass, input.eventclass):
 					input.setDrawText(True)
 
 	def OnEndConnection(self, evt):
 		if self.connection is not None:
-			if self.connection.eventclass == evt.toso.eventclass:
+			if issubclass(self.connection.eventclass, evt.toso.eventclass):
 				for node in self.getNodes():
 					for input in node.inputconnectionpoints:
-						if input.eventclass == self.connection.eventclass:
+						if issubclass(self.connection.eventclass, input.eventclass):
 							input.setDrawText(False)
 				wxObjectCanvas.wxRectangleObject.OnEndConnection(self, evt)
 
 	def cancelConnection(self):
 		for node in self.getNodes():
 			for input in node.inputconnectionpoints:
-				if input.eventclass == self.connection.eventclass:
+				if issubclass(self.connection.eventclass, input.eventclass):
 					input.setDrawText(False)
 		wxObjectCanvas.wxRectangleObject.cancelConnection(self)
 
