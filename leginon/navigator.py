@@ -12,8 +12,9 @@ class Navigator(node.Node):
 	def __init__(self, id, nodelocations, **kwargs):
 		self.calclients = {
 			'image shift': calibrationclient.ImageShiftCalibrationClient(self),
-			'stage': calibrationclient.StageCalibrationClient(self),
-			'modeled stage': calibrationclient.ModeledStageCalibrationClient(self)
+			'beam shift': calibrationclient.BeamShiftCalibrationClient(self),
+			'stage position': calibrationclient.StageCalibrationClient(self),
+			'modeled stage position': calibrationclient.ModeledStageCalibrationClient(self)
 		}
 
 		self.cam = camerafuncs.CameraFuncs(self)
@@ -94,7 +95,7 @@ class Navigator(node.Node):
 
 		movetypes = self.calclients.keys()
 		temparam = self.registerUIData('temparam', 'array', default=movetypes)
-		self.movetype = self.registerUIData('TEM Parameter', 'string', choices=temparam, permissions='rw', default='stage')
+		self.movetype = self.registerUIData('TEM Parameter', 'string', choices=temparam, permissions='rw', default='stage position')
 
 		self.delaydata = self.registerUIData('Delay (sec)', 'float', default=2.5, permissions='rw')
 
