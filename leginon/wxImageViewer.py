@@ -31,7 +31,7 @@ class ImagePanel(wxPanel):
 		EVT_SIZE(self.panel, self.OnSize)
 #		wxInitAllImageHandlers()
 
-	def setImageFromMrcString(self, imagestring):
+	def PILsetImageFromMrcString(self, imagestring):
 		self.clearImage()
 		stream = cStringIO.StringIO(imagestring)
 		self.image = Image.open(stream)
@@ -50,7 +50,7 @@ class ImagePanel(wxPanel):
 		wximage.SetData(image.convert('RGB').tostring())
 		self.setImage(wximage)
 
-	def NEWsetImageFromMrcString(self, imagestring):
+	def setImageFromMrcString(self, imagestring):
 		self.clearImage()
 		numimage = Mrc.mrcstr_to_numeric(imagestring)
 		n = NumericImage(numimage)
@@ -289,9 +289,10 @@ if __name__ == '__main__':
 	class MyApp(wxApp):
 		def OnInit(self):
 			frame = wxFrame(NULL, -1, 'Image Viewer')
-			frame.Show(true)
 			self.SetTopWindow(frame)
 			self.panel = TargetImagePanel(frame, -1)
+			frame.Fit()
+			frame.Show(true)
 			return true
 
 	app = MyApp(0)
