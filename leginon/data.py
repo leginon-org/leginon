@@ -35,10 +35,14 @@ class LocationData(Data):
 class NodeLocationData(LocationData):
 	def __init__(self, id, content):
 		LocationData.__init__(self, id, dict(content))
+	def __repr__(self):
+			return "<NodeLocationData for %s> %s" % (self.id, self.content)
 
 # real dataid is the dataid, but content is actually a list of nodeids when
 # the real data is located
 class DataLocationData(LocationData):
 	def __init__(self, id, content):
 		LocationData.__init__(self, id, list(content))
+	def __repr__(self):
+			return "<DataLocationData for %s> %s" % (self.id, self.content)
 

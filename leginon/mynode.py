@@ -19,18 +19,17 @@ class MyNode(node.Node):
 		self.main()
 
 	def main(self):
-		while 1:
+		#while 1:
+		for i in [1,2,3]:
 			self.print_stuff()
 			time.sleep(self.interval)
+		self.announce(event.NodeUnavailableEvent())
 
 	def print_stuff(self):
 		self.timenow = time.asctime()
 		print 'node %s says %s' % (self.nodeid,self.timenow)
 		mydata = data.StringData(self.timenow)
 		self.publish(mydata)
-		print self.server.datahandler.datadict
-		self.unpublish(mydata.id)
-		print self.server.datahandler.datadict
 
 	def handle_intervalchange(self, controlevent):
 		print 'got control event %s' % controlevent

@@ -22,6 +22,7 @@ class Manager(node.Node):
 		## this makes every received event get distributed
 		self.addEventInput(event.Event, self.distribute)
 		self.addEventInput(event.NodeAvailableEvent, self.registerNode)
+		self.addEventInput(event.NodeUnavailableEvent, self.unregisterNode)
 		#self.addDistmap(event.PublishEvent, , ):
 
 		self.addEventInput(event.PublishEvent, self.registerData)
@@ -63,24 +64,44 @@ class Manager(node.Node):
 			print 'this is a launcher'
 			self.gui_add_launcher(nodeid)
 
-#	def unregisterNode(self, readyevent):
-#		print 'registering node', readyevent.origin
-#
-#		nodeid = readyevent.origin['id']
-#		nodelocation = readyevent.origin['location']
-#
-#		# for the clients and mapping
-#		self.delEventClient(nodeid)
-#		print self.clients
-#
-#		# published data of nodeid mapping to location of node
-#		nodelocationdata = self.server.datahandler.query(nodeid)
-#		if nodelocationdata == None:
-#			nodelocationdata = data.NodeLocationData(nodeid, nodelocation)
-#		else:
-#			# fools! should do something nifty to unregister, reregister, etc.
-#			nodelocationdata = data.NodeLocationData(nodeid, nodelocation)
-#		self.server.datahandler._insert(nodelocationdata)
+	def unregisterNode(self, unavailable_event):
+		print 'unregistering node', unavailable_event.origin
+		nodeid = unavailable_event.origin['id']
+
+		#print 'removing data references:'
+		self.removeNodeData(nodeid)
+		#print self.server.datahandler.datadict
+
+		#print 'removing event mappings:'
+		self.removeNodeDistmaps(nodeid)
+		#print self.distmap
+
+		#print 'removing node reference and client:'
+		self.removeNode(nodeid)
+		#print self.server.datahandler.datadict
+		#print self.clients
+
+	def removeNode(self, nodeid):
+		self.server.datahandler.remove(nodeid)
+		self.delEventClient(nodeid)
+
+	def removeNodeDistmaps(self, nodeid):
+		# needs to completely cleanup the distmap
+		for eventclass in self.distmap:
+			try:
+				del self.distmap[eventclass][nodeid]
+			except KeyError:
+				pass
+			for othernodeid in self.distmap[eventclass]:
+				try:
+					self.distmap[eventclass][othernodeid].remove(nodeid)
+				except ValueError:
+					pass
+
+	def removeNodeData(self, nodeid):
+		# terribly inefficient
+		for dataid in self.server.datahandler.ids():
+			self.unpublishDataLocation(dataid, nodeid)
 
 	def registerData(self, publishevent):
 		if isinstance(publishevent, event.PublishEvent):
@@ -102,7 +123,6 @@ class Manager(node.Node):
 		self.server.datahandler._insert(datalocationdata)
 
 	def unregisterData(self, unpublishevent):
-		print "HERE"
 		if isinstance(unpublishevent, event.UnpublishEvent):
 			id = unpublishevent.content
 			self.unpublishDataLocation(id, unpublishevent.origin['id'])
@@ -111,9 +131,8 @@ class Manager(node.Node):
 
 	# creates/appends list with nodeid of published data
 	def unpublishDataLocation(self, dataid, nodeid):
-		print "THERE"
 		datalocationdata = self.server.datahandler.query(dataid)
-		if datalocationdata:
+		if datalocationdata and (type(datalocationdata) == data.DataLocationData):
 			try:
 				datalocationdata.content.remove(nodeid)
 				if len(datalocationdata.content) == 0:
