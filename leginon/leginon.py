@@ -290,6 +290,10 @@ class Leginon(Tkinter.Frame):
 																		self.locallauncherid, self.notebook,
 																		self.debug, self.windowmenu,
 																		'Image Correction')
+#		self.presets = Presets(self.manager, self.manageruiclient,
+#																		self.locallauncherid, self.notebook,
+#																		self.debug, self.windowmenu,
+#																		'Presets')
 		self.calibrations = Calibrations(self.manager, self.manageruiclient,
 																		self.locallauncherid, self.notebook,
 																		self.debug, self.windowmenu,
@@ -346,10 +350,13 @@ class WidgetGroup(Pmw.Group):
 	def addWidget(self, widget, setcommand=None):
 		nwidgets = len(self.widgets)
 		if isinstance(widget, nodegui.ImageData):
-			widget.grid(row = 0, column = nwidgets, padx = 10, pady = 5,
-																			sticky='nsew')
+			widget.iv.canvas.resize(0, 0, 512, 512)
+			widget.grid(row=0, column=nwidgets, padx=10, pady=5, sticky='nsew')
+			#widget.grid(row=0, column=nwidgets, padx=10, pady=5)
+			#self.rowconfigure(0, weight=0)
+			#self.columnconfigure(nwidgets, weight=0)
 		else:
-			widget.grid(row = nwidgets, column = 0, padx = 10, pady = 5,
+			widget.grid(row=nwidgets, column = 0, padx = 10, pady = 5,
 																			sticky=Tkinter.W+Tkinter.E)
 		if setcommand is not None:
 			self.addSetCommand(setcommand)
@@ -494,7 +501,10 @@ class ImageCorrectionWidget(CustomWidget):
 		self.addWidget('Control', corrector, ('Acquire', 'Acquire Corrected'))
 
 		widget = self.addWidget('Results', corrector, ('Acquire', 'Image'))
-		widget.iv.canvas.resize(0, 0, 512, 512)
+
+class PresetsWidget(CustomWidget):
+	def __init__(self, parent, presets):
+		CustomWidget.__init__(self, parent)
 
 class CalibrationsWidget(CustomWidget):
 	def __init__(self, parent, matrixcalibrator):
@@ -522,10 +532,10 @@ class CalibrationsWidget(CustomWidget):
 		self.addWidget('Control', matrixcalibrator, ('Calibrate',))
 
 		widget = self.addWidget('Results', matrixcalibrator, ('Images', 'Image 1'))
-		widget.iv.canvas.resize(0, 0, 512, 512)
+		widget.iv.canvas.resize(0, 0, 350, 350)
 
 		widget = self.addWidget('Results', matrixcalibrator, ('Images', 'Image 2'))
-		widget.iv.canvas.resize(0, 0, 512, 512)
+		widget.iv.canvas.resize(0, 0, 350, 350)
 
 class AutoFocusWidget(CustomWidget):
 	def __init__(self, parent, beamtiltcalibrator):
@@ -569,10 +579,7 @@ class AutoFocusWidget(CustomWidget):
 		self.arrangeTree(widget, None, False)
 
 #		widget = self.addWidget('Results', matrixcalibrator, ('Images', 'Image 1'))
-#		widget.iv.canvas.resize(0, 0, 512, 512)
-#
 #		widget = self.addWidget('Results', matrixcalibrator, ('Images', 'Image 2'))
-#		widget.iv.canvas.resize(0, 0, 512, 512)
 
 class GridAtlasWidget(CustomWidget):
 	def __init__(self, parent, gridpreview, stateimagemosaic):
@@ -593,7 +600,6 @@ class GridAtlasWidget(CustomWidget):
 		self.addWidget('Control', gridpreview, ('Controls', 'Reset'))
 
 		widget = self.addWidget('Results', stateimagemosaic, ('Mosaic Image',))
-		widget.iv.canvas.resize(0, 0, 512, 512)
 
 class TargetWidget(CustomWidget):
 	def __init__(self, parent, acquisition, clicktargetfinder):
@@ -610,7 +616,6 @@ class TargetWidget(CustomWidget):
 		self.arrangeCombobox(widget, None, False)
 
 		widget = self.addWidget('Results', clicktargetfinder, ('Clickable Image',))
-		widget.iv.canvas.resize(0, 0, 512, 512)
 
 class WidgetWrapper(object):
 	def __init__(self, manager, manageruiclient, launcherid, notebook,
@@ -746,6 +751,19 @@ class ImageCorrection(WidgetWrapper):
 	def initializeWidget(self):
 		self.widget = ImageCorrectionWidget(self.page,
 															self.nodeinfo['corrector']['UI info'])
+
+class Presets(WidgetWrapper):
+	def __init__(self, manager, manageruiclient, launcherid, notebook,
+																			debug, windowmenu, name):
+		WidgetWrapper.__init__(self, manager, manageruiclient, launcherid,
+														notebook, debug, windowmenu, name)
+		self.addNodeInfo('presets', self.name + ' Presets Manager',
+																							'PresetsManager')
+		self.initialize()
+
+	def initializeWidget(self):
+		self.widget = PresetsWidget(self.page,
+															self.nodeinfo['presets']['UI info'])
 
 class Calibrations(WidgetWrapper):
 	def __init__(self, manager, manageruiclient, launcherid, notebook,
