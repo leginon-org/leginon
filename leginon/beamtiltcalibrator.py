@@ -60,7 +60,8 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		## store calibration
 		print 'storing calibration'
 		mag = self.getMagnification()
-		self.calclient.storeMatrix(mag, 'coma-free', matrix)
+		ht = self.getHighTension()
+		self.calclient.storeMatrix(ht, mag, 'coma-free', matrix)
 		return ''
 
 	def calibrateDefocus(self, tilt_value, defocus1, defocus2):
@@ -86,12 +87,13 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 		## store calibration
 		print 'storing calibration'
+		ht = self.getHighTension()
 		mag = self.getMagnification()
 		print 'MATRIX', matrix
 		print 'MATRIX shape', matrix.shape
 		print 'MATRIX type', matrix.typecode()
 		print 'MATRIX flat', Numeric.ravel(matrix)
-		self.calclient.storeMatrix(mag, 'defocus', matrix)
+		self.calclient.storeMatrix(ht, mag, 'defocus', matrix)
 		return ''
 
 	def calibrateStigmators(self, tilt_value, delta):
@@ -130,8 +132,9 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 
 			## store calibration
 			mag = self.getMagnification()
+			ht = self.getHighTension()
 			type = 'stig' + stigaxis
-			self.calclient.storeMatrix(mag, type, matrix)
+			self.calclient.storeMatrix(ht, mag, type, matrix)
 
 		## return to original stig
 		stigdict = {'stigmator':{'objective':currentstig}}
