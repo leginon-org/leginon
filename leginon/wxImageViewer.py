@@ -30,6 +30,8 @@ class ImagePanel(wxPanel):
 		self.sizer.Add(self.toolsizer)
 
 		self.initPanel()
+		height, width = self.panel.GetClientSize()
+		self.buffer = wxEmptyBitmap(height, width)
 		self.initValue()
 		self.initZoom()
 
@@ -248,9 +250,6 @@ class ImagePanel(wxPanel):
 		dc.EndDrawing()
 
 	def scaledBlit(self, x, y, w, h):
-		if self.buffer == wxNullBitmap:
-			return
-
 		dc = wxMemoryDC()
 		dc.SelectObject(self.buffer)
 
@@ -274,9 +273,6 @@ class ImagePanel(wxPanel):
 #			pass
 
 	def UpdateDrawing(self):
-		if self.buffer == wxNullBitmap:
-			return
-
 		dc = wxMemoryDC()
 		dc.SelectObject(self.buffer)
 		self.Draw(dc)
@@ -296,9 +292,6 @@ class ImagePanel(wxPanel):
 		self.UpdateDrawing()
 
 	def OnPaint(self, evt):
-		if self.buffer == wxNullBitmap:
-			return
-
 		dc = wxMemoryDC()
 		dc.SelectObject(self.buffer)
 		self.Draw(dc)

@@ -3,6 +3,7 @@ import uiserver
 import threading
 import time
 from wxPython.wx import *
+from wxPython.wxc import wxPyAssertionError
 import wxImageViewer
 import wxDictTree
 
@@ -66,6 +67,7 @@ class wxUIClient(UIClient):
 		# h4X0r
 		while(not hasattr(self.container, 'name')):
 			time.sleep(0.01)
+		#print 'ADD', namelist, typelist
 		self.container.add((self.container.name,) + tuple(namelist),
 																									typelist, value, read, write)
 		return ''
@@ -359,9 +361,13 @@ class wxNotebookContainerWidget(wxContainerWidget):
 		self.parentnotebook.DeletePage(self.getPageNumber())
 
 	def getPageNumber(self):
-		for i in range(self.parentnotebook.GetPageCount()):
-			if self.parentnotebook.GetPage(i) == self.panel:
-				return i
+		try:
+			for i in range(self.parentnotebook.GetPageCount()):
+				if self.parentnotebook.GetPage(i) == self.panel:
+					return i
+		except wxPyAssertionError:
+			time.sleep(0.01)
+			return self.getPageNumber()
 
 class wxClientContainerWidget(object):
 	pass
