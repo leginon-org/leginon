@@ -9,50 +9,22 @@ import camerafuncs
 import presets
 import threading
 
-class SimpleAcquisition(node.Node):
+class SimpleAcquisition(acquisition.Acquisition):
+	'''
+	SimpleAcquisition does not take targets, it just acquires images
+	at the users command
+	'''
 	def __init__(self, id, nodelocations, **kwargs):
-		node.Node.__init__(self, id, nodelocations, **kwargs)
-
-		self.cam = camerafuncs.CameraFuncs(self)
-		self.presetsclient = presets.PresetsClient(self)
-
 		self.loopstop = threading.Event()
 		self.looplock = threading.Lock()
 
-		self.defineUserInterface()
-		self.start()
-
-	def setPreset(self):
-		presetname = self.presetname.get()
-		print 'going to preset %s' % (presetname,)
-		self.preset = self.presetsclient.getPreset(presetname)
-		print 'preset mag:', self.preset['magnification']
-		self.presetsclient.toScope(self.preset)
-		time.sleep(2)
-
-	def acquireImage(self):
-		print 'acquiring image'
-		acqtype = self.acqtype.get()
-		if acqtype == 'raw': imagedata = self.cam.acquireCameraImageData(None,0)
-		elif acqtype == 'corrected':
-			try:
-				imagedata = self.cam.acquireCameraImageData(camstate,1)
-			except:
-				print 'image not acquired'
-				imagedata = None
-
-		if imagedata is None:
-			return
-		## attach preset to imagedata
-		imagedata.content['preset'] = dict(self.preset)
-
-		print 'publishing image'
-		self.publish(imagedata, event.CameraImagePublishEvent)
-		print 'image published'
+		acquisition.Acquisition.__init__(self, id, nodelocations, **kwargs)
 
 	def acquireImageOne(self):
-		self.setPreset()
-		self.acquireImage()
+		'''
+		this is same as Acquisition 'uiTrial'
+		'''
+		self.processTargetData()
 		return ''
 
 	def acquireImageLoop(self, pausetime):
@@ -71,12 +43,13 @@ class SimpleAcquisition(node.Node):
 		return ''
 
 	def loop(self, pausetime):
-		self.setPreset()
+		## would be nice if only set preset at beginning
+		## need to change Acquisition to do that as option
 		self.loopstop.clear()
 		while 1:
 			if self.loopstop.isSet():
 				break
-			self.acquireImage()
+			self.processTargetData()
 			time.sleep(pausetime)
 		try:
 			self.looploock.release()
@@ -88,14 +61,7 @@ class SimpleAcquisition(node.Node):
 		return ''
 
 	def defineUserInterface(self):
-		nodeui = node.Node.defineUserInterface(self)
-
-		acqtypes = self.registerUIData('acqtypes', 'array', default=('raw', 'corrected'))
-		self.acqtype = self.registerUIData('Acquisition Type', 'string', default='raw', permissions='rw', choices=acqtypes)
-
-		self.presetname = self.registerUIData('Preset Name', 'string', default='p56', permissions='rw')
-
-		prefs = self.registerUIContainer('Preferences', (self.acqtype,self.presetname))
+		acqspec = acquisition.Acquisition.defineUserInterface(self)
 
 		acq = self.registerUIMethod(self.acquireImageOne, 'Acquire', ())
 		pausetime = self.registerUIData('Pause Time', 'float', default=0)
@@ -103,5 +69,7 @@ class SimpleAcquisition(node.Node):
 		acqloopstop = self.registerUIMethod(self.acquireImageLoopStop, 'Stop', ())
 		acqcont = self.registerUIContainer('Acquire', (acq, acqloop, acqloopstop))
 
-		self.registerUISpec('Simple Acquisition', (acqcont, prefs, nodeui))
+		myspec = self.registerUISpec('Simple Acquisition', (acqcont,))
+		myspec += acqspec
+		return myspec
 
