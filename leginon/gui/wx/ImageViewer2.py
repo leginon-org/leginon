@@ -2,11 +2,22 @@ import math
 import numextension
 import wx
 
-def wxBitmapFromNumarray(n, min=None, max=None):
+def getColorMap():
+	b = [0] * 512 + range(256) + [255] * 512 + range(255, -1, -1)
+	g = b[512:] + b[:512]
+	r = g[512:] + g[:512]
+	return zip(r, g, b)
+
+colormap = getColorMap()
+
+def wxBitmapFromNumarray(n, min=None, max=None, color=False):
 	if min is None or max is None:
 		min, max = numextension.minmax(n)
 	wximage = wx.EmptyImage(n.shape[1], n.shape[0])
-	wximage.SetData(numextension.rgbstring(n, float(min), float(max)))
+	if color:
+		wximage.SetData(numextension.rgbstring(n, float(min), float(max), colormap))
+	else:
+		wximage.SetData(numextension.rgbstring(n, float(min), float(max)))
 	return wx.BitmapFromImage(wximage)
 
 class BufferedWindow(wx.ScrolledWindow):
@@ -187,13 +198,28 @@ class OffsetWindow(ScaledWindow):
 		if self.updateOffset() and wx.Platform != '__WXGTK__':
 			self.Refresh()
 
-	def _setScale(self, x, y):
+	def _setScale(self, x, y, center=None):
+		xview, yview = self.GetViewStart()
+		if center is None:
+			xcenter = xview + self._clientwidthscaled/2 - self._xoffsetscaled
+			ycenter = yview + self._clientheightscaled/2 - self._yoffsetscaled
+		else:
+			xcenter = xview + int(center[0]/self._xscale) - self._xoffsetscaled
+			ycenter = yview + int(center[1]/self._yscale) - self._yoffsetscaled
 		if ScaledWindow._setScale(self, x, y):
+			xposition = xcenter - self._clientwidthscaled/2
+			yposition = ycenter - self._clientheightscaled/2
 			self.SetScrollbars(self._xscale, self._yscale,
-													self._bitmapwidth, self._bitmapheight)
+													self._bitmapwidth, self._bitmapheight,
+													xposition, yposition)
 			self.updateOffset()
 			return True
 		return False
+
+	def setScale(self, x, y, center=None):
+		if self._setScale(x, y, center):
+			self.updateDrawing()
+			self.Refresh()
 
 	def _onPaint(self, dc):
 		updated = False
@@ -214,13 +240,15 @@ class OffsetWindow(ScaledWindow):
 				return
 		ScaledWindow._onPaint(self, dc)
 
+
 if __name__ == '__main__':
 	import sys
 	import Mrc
+	import numarray
 
 	def wxBitmapFromMRC(filename):
 		n = Mrc.mrcstr_to_numeric(open(filename, 'rb').read())
-		return wxBitmapFromNumarray(n)
+		return wxBitmapFromNumarray(n) #, color=True)
 
 	try:
 		filename = sys.argv[1]
@@ -238,7 +266,7 @@ if __name__ == '__main__':
 			self.panel = OffsetWindow(frame, -1)
 
 			self.panel.Bind(wx.EVT_LEFT_UP,
-		lambda e: self.panel.setScale(*map(lambda s: s*2.0, self.panel.getScale())))
+		lambda e: self.panel.setScale(*(tuple(map(lambda s: s*2.0, self.panel.getScale()))) + ((e.m_x, e.m_y),)))
 			self.panel.Bind(wx.EVT_RIGHT_UP,
 		lambda e: self.panel.setScale(*map(lambda s: s/2.0, self.panel.getScale())))
 
