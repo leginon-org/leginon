@@ -101,6 +101,8 @@ class DataHandler(node.DataHandler):
 			result = node.DataHandler.query(self, id)
 		return result
 
+class PresetChangeError(Exception):
+	pass
 
 class PresetsManager(node.Node):
 
@@ -154,14 +156,19 @@ class PresetsManager(node.Node):
 		'''
 		pname = ievent['name']
 		emtarget = ievent['emtarget']
-		if emtarget is None:
-			self.uistatus.set('Changing preset to "%s"' % pname)
-			self.cycleToScope(pname)
+		try:
+			if emtarget is None:
+				self.uistatus.set('Changing preset to "%s"' % pname)
+				self.cycleToScope(pname)
+			else:
+				self.uistatus.set('Changing preset to "%s" and targeting' % pname)
+				self.targetToScope(pname, emtarget)
+		except PresetChangeError:
+			self.uistatus.set('preset request to "%s" failed' % pname)
 		else:
-			self.uistatus.set('Changing preset to "%s" and targeting' % pname)
-			self.targetToScope(pname, emtarget)
+			self.uistatus.set('Preset changed to "%s"' % pname)
+		## should we confirm if failure?
 		self.confirmEvent(ievent)
-		self.uistatus.set('Preset changed to "%s"' % pname)
 
 	def getPresetsFromDB(self, session=None):
 		'''
@@ -230,8 +237,9 @@ class PresetsManager(node.Node):
 		'''
 		presetdata = self.presetByName(pname)
 		if presetdata is None:
-			self.messagelog.error('No such preset %s' % (pname,))
-			return
+			message = 'No such preset %s' % (pname,)
+			self.messagelog.error(message)
+			raise PresetChangeError(message)
 
 		scopedata = data.ScopeEMData()
 		cameradata = data.CameraEMData()
@@ -262,18 +270,19 @@ class PresetsManager(node.Node):
 			if cameradata is not None:
 				self.publishRemote(cameradata)
 		except node.PublishError:
-			self.printException()
-			self.messagelog.error('Cannot set instrument parameters')
+			message = 'Cannot set instrument parameters. Maybe EM node is not working'
+			self.messagelog.error(message)
+			raise PresetChangeError(message)
+
+		pause = self.changepause.get()
+		time.sleep(pause)
+		if magonly:
+			self.currentpreset = None
 		else:
-			pause = self.changepause.get()
-			time.sleep(pause)
-			if magonly:
-				self.currentpreset = None
-			else:
-				self.currentpreset = presetdata
-			self.uistatus.set(endmessage)
-			print endmessage
-			self.outputEvent(event.PresetChangedEvent(name=name))
+			self.currentpreset = presetdata
+		self.uistatus.set(endmessage)
+		print endmessage
+		self.outputEvent(event.PresetChangedEvent(name=name))
 
 	def fromScope(self, name):
 		'''
@@ -322,7 +331,10 @@ class PresetsManager(node.Node):
 
 	def uiToScope(self):
 		new = self.uiselectpreset.getSelectedValue()
-		self.cycleToScope(new)
+		try:
+			self.cycleToScope(new)
+		except PresetChangeError:
+			print 'Preset Change Failed!'
 		node.beep()
 
 	def cycleToScope(self, presetname, dofinal=True):
@@ -614,7 +626,7 @@ class PresetsManager(node.Node):
 		cyclecont = uidata.Container('Cycle')
 		self.usecycle = uidata.Boolean('Cycle On', True, 'rw', persist=True)
 		self.cyclemagshortcut = uidata.Boolean('Cycle Magnification Shortcut', True, 'rw', persist=True)
-		self.cyclemagonly = uidata.Boolean('Cycle Magnification Only', False, 'rw', persist=True)
+		self.cyclemagonly = uidata.Boolean('Cycle Magnification Only', True, 'rw', persist=True)
 		self.orderlist = uidata.Sequence('Cycle Order', [], 'rw', persist=True)
 		cyclecont.addObjects((self.usecycle, self.cyclemagshortcut,
 													self.cyclemagonly, self.orderlist))
@@ -793,19 +805,18 @@ class PresetsManager(node.Node):
 			self.publishRemote(scopedata)
 			self.publishRemote(cameradata)
 		except node.PublishError:
-			self.printException()
-			self.messagelog.error('Cannot set instrument parameters')
-		except:
-			self.printException()
-		else:
-			pause = self.changepause.get()
-			time.sleep(pause)
-			name = newpreset['name']
-			self.currentpreset = newpreset
-			message = 'Preset (with target) changed to %s' % (name,)
-			self.uistatus.set(message)
-			print message
-			self.outputEvent(event.PresetChangedEvent(name=name))
+			message = 'Cannot set instrument parameters'
+			self.messagelog.error(message)
+			raise PresetChangeError(message)
+
+		pause = self.changepause.get()
+		time.sleep(pause)
+		name = newpreset['name']
+		self.currentpreset = newpreset
+		message = 'Preset (with target) changed to %s' % (name,)
+		self.uistatus.set(message)
+		print message
+		self.outputEvent(event.PresetChangedEvent(name=name))
 
 class PresetParameters(uidata.Container):
 	def __init__(self, node, postcallback=None):
