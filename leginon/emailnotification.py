@@ -92,8 +92,11 @@ class EmailClient(object):
 		thread.start()
 
 	def outputEventAndSet(self, oevent, threadingevent):
-		self.node.outputEvent(oevent, wait=True)
-		threadingevent.set()
+		try:
+			self.node.outputEvent(oevent, wait=True)
+			threadingevent.set()
+		except node.ConfirmationNoBinding:
+			pass
 
 class Email(node.Node):
 	eventinputs = node.Node.eventinputs + [event.EmailEvent]
