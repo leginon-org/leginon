@@ -861,6 +861,7 @@ class EntryWidget(wx.BoxSizer, DataWidget):
 	password = False
 	def __init__(self, name, parent, container, value, configuration):
 		self.dirty = False
+		self.error = False
 		wx.BoxSizer.__init__(self, wx.HORIZONTAL)
 		self.label = wx.StaticText(parent, -1, name + ':')
 
@@ -869,7 +870,7 @@ class EntryWidget(wx.BoxSizer, DataWidget):
 				size = (150, -1)
 			else:
 				size = (-1, -1)
-			style=wx.TE_PROCESS_ENTER|wx.TE_RICH2
+			style=wx.TE_PROCESS_ENTER
 			if self.password:
 				style |= wx.TE_PASSWORD
 			self.entry = wx.TextCtrl(parent, -1, size=size, style=style)
@@ -878,16 +879,22 @@ class EntryWidget(wx.BoxSizer, DataWidget):
 
 		DataWidget.__init__(self, name, parent, container, value, configuration)
 
-		self.set(value)
-
 		if self.write:
-			self.entry.SetStyle(0, self.entry.GetLastPosition(), wx.TextAttr(wx.BLACK))
+			image = wx.BitmapFromImage(wx.Image('%s/%s.bmp'
+																					% (wxMessageLog.iconsdir, 'error')))
+			self.errorbitmap = wx.StaticBitmap(parent, -1, image,
+																					(image.GetWidth(), image.GetHeight()))
+																						
 			wx.EVT_KILL_FOCUS(self.entry, self.onKillFocus)
 			wx.EVT_TEXT_ENTER(self.entry, self.entry.GetId(), self.onEnter)
 			wx.EVT_CHAR(self.entry, self.onChar)
 
 		self.Add(self.label, 0, wx.ALIGN_CENTER | wx.LEFT | wx.RIGHT, 3)
 		self.Add(self.entry, 0, wx.ALIGN_CENTER | wx.LEFT | wx.RIGHT, 3)
+		if self.write:
+			self.Add(self.errorbitmap, 0, wx.ALIGN_CENTER | wx.LEFT | wx.RIGHT, 3)
+			self.Show(self.errorbitmap, False)
+		self.set(value)
 		self.layout()
 
 #	def SetToolTip(self, tooltip):
@@ -895,11 +902,16 @@ class EntryWidget(wx.BoxSizer, DataWidget):
 #		self.entry.SetToolTip(tooltip)
 
 	def setDirty(self, dirty):
-		self.dirty = dirty
-		if dirty:
-			self.entry.SetStyle(0, self.entry.GetLastPosition(), wx.TextAttr(wx.RED))
-		else:
-			self.entry.SetStyle(0, self.entry.GetLastPosition(), wx.TextAttr(wx.BLACK))
+		if self.dirty != dirty:
+			if self.error:
+				self.setError(False)
+			self.dirty = dirty
+
+	def setError(self, error):
+		if self.error != error:
+			self.Show(self.errorbitmap, error)
+			self.Layout()
+			self.error = error
 
 	def onChar(self, evt):
 		self.setDirty(True)
@@ -915,6 +927,8 @@ class EntryWidget(wx.BoxSizer, DataWidget):
 	def destroy(self):
 		self.entry.Destroy()
 		self.label.Destroy()
+		if self.write:
+			self.errorbitmap.Destroy()
 
 	def onEnter(self, evt):
 		self.setFromWidget(evt)
@@ -926,8 +940,10 @@ class EntryWidget(wx.BoxSizer, DataWidget):
 				value = eval(value)
 			except:
 				if str not in self.types:
+					self.setError(True)
 					return
 		if type(value) not in self.types:
+			self.setError(True)
 			return
 		self.setDirty(False)
 		self.value = value
@@ -969,6 +985,8 @@ class EntryWidget(wx.BoxSizer, DataWidget):
 	def _show(self, show):
 		self.label.Show(show)
 		self.entry.Show(show)
+		if self.error:
+			self.errorbitmap.Show(show)
 		DataWidget._show(self, show)
 
 def entryWidgetClassFactory(itypes, ispassword=False):
