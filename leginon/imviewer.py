@@ -86,7 +86,9 @@ class ImViewer(watcher.Watcher, camerafuncs.CameraFuncs):
 		if imarray is None:
 			mrcstr = ''
 		else:
+			print 'converting numeric to mrcstr'
 			mrcstr = Mrc.numeric_to_mrcstr(imarray)
+		print 'returning binary mrcstr'
 		return xmlrpclib.Binary(mrcstr)
 
 	def uiAcquireCorrected(self):
@@ -100,7 +102,13 @@ class ImViewer(watcher.Watcher, camerafuncs.CameraFuncs):
 	def acquireArray(self, corr=0):
 		camconfig = self.cameraConfig()
 		camstate = camconfig['state']
+		print 'START'
+		t1 = time.clock()
 		imarray = self.cameraAcquireArray(camstate, correction=corr)
+		print 'STOP'
+		t2 = time.clock()
+		tdiff = t2 - t1
+		print 'TIME cameraAcquireArray', tdiff
 		return imarray
 
 	def acquireAndDisplay(self, corr=0):

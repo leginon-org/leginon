@@ -4,8 +4,10 @@ Provides a mix-in class CameraFuncs
 
 import data
 import cameraimage
+import Numeric
 
-CAMSIZE = (2048,2048)
+#CAMSIZE = (2048,2048)
+CAMSIZE = (4096,4096)
 
 class CameraFuncs(object):
 	'''
@@ -28,6 +30,8 @@ class CameraFuncs(object):
 			else:
 				imdata = self.researchByDataID('image data')
 				imagearray = imdata.content['image data']
+				print 'type(imagearray)', type(imagearray)
+				imagearray = Numeric.array(imagearray, 'l')
 		except Exception, detail:
 			print detail
 			print 'cameraAcquireArray: unable to acquire image data'
@@ -62,8 +66,6 @@ class CameraFuncs(object):
 			except Exception, detail:
 				print detail
 				print 'cameraState: unable to set camera state'
-		## it would be nice to get this all in one research
-		## can't use 'camera' because don't want image data
 		try:
 			print 'researching camera no image data'
 			newcamstate = self.researchByDataID('camera no image data')
