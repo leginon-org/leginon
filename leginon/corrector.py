@@ -23,10 +23,10 @@ class DataHandler(node.DataHandler):
 			result = self.node.acquireCorrectedImageData()
 			self.lock.release()
 			return result
-		elif id == 'fake normalized image data':
-			result = self.node.acquireCorrectedFakeImageData()
-			self.lock.release()
-			return result
+		#elif id == 'fake normalized image data':
+		#	result = self.node.acquireCorrectedFakeImageData()
+		#	self.lock.release()
+		#	return result
 		else:
 			self.lock.release()
 			return node.DataHandler.query(self, id)
@@ -43,7 +43,7 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 		self.addEventOutput(event.BrightImagePublishEvent)
 		self.addEventOutput(event.ListPublishEvent)
 
-		ids = ['normalized image data', 'fake normalized image data']
+		ids = ['normalized image data',]
 		e = event.ListPublishEvent(self.ID(), ids)
 		self.outputEvent(e)
 
@@ -68,8 +68,9 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 		self.clipflag = self.registerUIData('Do Clipping', 'boolean', default=1, permissions='rw')
 		self.clipmin = self.registerUIData('Clip Min', 'float', default=0.0, permissions='rw')
 		self.clipmax = self.registerUIData('Clip Max', 'float', default=8000, permissions='rw')
+		self.fakeflag = self.registerUIData('Fake', 'boolean', default=False, permissions='rw')
 
-		prefs = self.registerUIContainer('Preferences', (self.camdata, self.navgdata, self.clipflag, self.clipmin, self.clipmax))
+		prefs = self.registerUIContainer('Preferences', (self.camdata, self.navgdata, self.clipflag, self.clipmin, self.clipmax, self.fakeflag))
 
 		self.registerUISpec('Corrector', (acq, prefs, nodespec))
 
@@ -154,6 +155,12 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 			return image
 
 	def acquireCorrectedImageData(self):
+		if self.fakeflag.get():
+			return self.__acquireCorrectedFakeImageData()
+		else:
+			return self.__acquireCorrectedImageData()
+
+	def __acquireCorrectedImageData(self):
 		camstate = self.cameraAcquireCamera()
 		numimage = camstate['image data']
 		#binning = self.researchByDataID('binning').content['binning']
@@ -175,7 +182,7 @@ class Corrector(node.Node, camerafuncs.CameraFuncs):
 		self.publish(correctdata, event.ImagePublishEvent)
 		return ''
 
-	def acquireCorrectedFakeImageData(self):
+	def __acquireCorrectedFakeImageData(self):
 		numimage = mrc_to_numeric('test1.mrc')
 		camstate = self.camdata.get()
 		print 'camstate', camstate
