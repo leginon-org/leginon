@@ -180,6 +180,25 @@ def swap(numericarray):
 	newarray[rows/2:] = numericarray[:rows/2]
 	return newarray
 
+def swap_row_halves(numericarray):
+	rows,cols = numericarray.shape
+	newarray = Numeric.zeros(numericarray.shape, numericarray.typecode())
+	newarray[:rows/2] = numericarray[rows/2:]
+	newarray[rows/2:] = numericarray[:rows/2]
+	return newarray
+
+def swap_col_halves(numericarray):
+	rows,cols = numericarray.shape
+	newarray = Numeric.zeros(numericarray.shape, numericarray.typecode())
+	newarray[:,:cols/2] = numericarray[:,cols/2:]
+	newarray[:,cols/2:] = numericarray[:,:cols/2]
+	return newarray
+
+def swap_quadrants(numericarray):
+	newarray = swap_row_halves(numericarray)
+	newarray = swap_col_halves(newarray)
+	return newarray
+
 def zeroRow(inputarray, row):
 	inputarray[row] = 0
 	return inputarray
