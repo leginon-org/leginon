@@ -392,6 +392,26 @@ class Tietz(object):
 		offset = self.getOffset()
 		dimension = self.getDimension()
 		binning = self.getBinning()
+
+		imagetransform = self.getImageTransform()
+		if imagetransform['mirror']:
+			camerasize = self.getCameraSize()
+		if 'vertical' in imagetransform['mirror']:
+			offset['x'] = camerasize['x']/binning['x'] - offset['x'] - dimension['x']
+		if 'horizontal' in imagetransform['mirror']:
+			offset['y'] = camerasize['y']/binning['y'] - offset['y'] - dimension['y']
+
+		# rotation untested
+		if imagetransform['rotation'] == 90:
+			offset['x'] = camerasize['y']/binning['y'] - offset['y'] - dimension['y']
+			offset['y'] = offset['x']
+		elif imagetransform['rotation'] == 180:
+			offset['x'] = camerasize['x']/binning['x'] - offset['x'] - dimension['x']
+			offset['y'] = camerasize['y']/binning['y'] - offset['y'] - dimension['y']
+		elif imagetransform['rotation'] == 270:
+			offset['x'] = offset['y']
+			offset['y'] = camerasize['x']/binning['x'] - offset['x'] - dimension['x']
+
 		hr = self.camera.Format(offset['x']*binning['x'], offset['y']*binning['y'],
 														dimension['x'], dimension['y'],
 														binning['x'], binning['y'])
