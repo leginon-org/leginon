@@ -91,8 +91,12 @@ class TargetWatcher(watcher.Watcher):
 			print 'python id', id(target)
 			print 'target id', target['id']
 			print 'target id id', id(target['id'])
-			imageid = target['image']['id']
-			print 'TARGET SOURCE IMAGE', imageid
+			try:
+				imageid = target['image']['id']
+				print 'TARGET SOURCE IMAGE', imageid
+			except (KeyError, TypeError):
+				imageid = None
+				
 
 
 			while 1:
