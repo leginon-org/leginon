@@ -96,7 +96,6 @@ class ImageCanvas(Frame):
 	def use_numeric(self, ndata):
 		## use the old value of clip
 		oldclip = self.clip()
-		print 'oldclip', oldclip
 		self.numimage = NumericImage(ndata,clip=oldclip)
 		self.update_scaling_widgets()
 		self.update_canvas()
@@ -296,7 +295,6 @@ class ScalingWidget(Frame):
 		self.maxscale['to'] = newmax
 
 	def set_values(self, newvalues):
-		print 'setting values', newvalues
 		self.minscale.set(newvalues[0])
 		self.maxscale.set(newvalues[1])
 
@@ -309,7 +307,6 @@ class ScalingWidget(Frame):
 		self.maxscale['command'] = None
 
 	def _minscale_callback(self, newval=None):
-		print 'hello'
 		### turn off this callback while it is running
 		self.minscale['command'] = ''
 		if self.minscalevalue == newval:
