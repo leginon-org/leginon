@@ -151,7 +151,7 @@ class Focuser(acquisition.Acquisition):
 			cor = self.uicorrectimage.get()
 			print 'acquiring focus image'
 			imagedata = self.cam.acquireCameraImageData(correction=cor)
-			fid = data.AcquisitionImageData(initializer=imagedata, id=self.ID(), preset=presetdata, label=labelstring, target=target)
+			fid = data.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=labelstring, target=target)
 			self.publish(fid, database=True)
 			print 'focus image published'
 
@@ -160,6 +160,10 @@ class Focuser(acquisition.Acquisition):
 		self.publish(frd, database=True)
 
 		return 'ok'
+
+	def alreadyAcquired(self, targetdata, presetname):
+		## for now, always do acquire
+		return False
 
 	def manualNow(self):
 		presetnames = self.uipresetnames.getSelectedValues()

@@ -98,6 +98,9 @@ class Acquisition(targetwatcher.TargetWatcher):
 			self.outputWarning('No presets specified for target acquisition')
 
 		for newpresetname in presetnames:
+			if self.alreadyAcquired(targetdata, newpresetname):
+				continue
+
 			self.presetsclient.toScope(newpresetname, emtarget)
 			print 'getting current preset'
 			p = self.presetsclient.getCurrentPreset()
@@ -113,6 +116,26 @@ class Acquisition(targetwatcher.TargetWatcher):
 			print 'done'
 
 		return 'ok'
+
+	def alreadyAcquired(self, targetdata, presetname):
+		'''
+		determines if image already acquired
+		'''
+		## if image exists with targetdata and presetdata, no acquire
+		## we expect target to be exact, however, presetdata may have
+		## changed so we only query on preset name
+		presetquery = data.PresetData(name=presetname)
+		imagequery = data.AcquisitionImageData(target=targetdata, preset=presetquery)
+		# do I want fill=False here???
+		datalist = self.research(datainstance=imagequery)
+		if datalist:
+			## no need to acquire again, but need to republish
+			print 'image was acquired previously... republishing'
+			imagedata = datalist[0]
+			self.publishDisplayWait(imagedata)
+			return True
+		else:
+			return False
 
 	def targetToEMData(self, targetdata):
 		'''
@@ -158,53 +181,42 @@ class Acquisition(targetwatcher.TargetWatcher):
 		emdata = data.ScopeEMData(id=('scope',), initializer=newscope)
 		return emdata
 
-	def acquire(self, presetdata, target=None, trial=False, emtarget=None):
+	def acquire(self, presetdata, target=None, emtarget=None):
+		### corrected or not??
 		cor = self.uicorrectimage.get()
 
-		### corrected or not??
+		## acquire image
 		imagedata = self.cam.acquireCameraImageData(correction=cor)
-
 		if imagedata is None:
 			return 'fail'
 
-		imarray = imagedata['image']
-
 		labelstring = self.labelstring.get()
 
-		## attach preset to imagedata and create PresetImageData
-		## use same id as original imagedata
-		dataid = self.ID()
+		## convert CameraImageData to AcquisitionImageData
+		imagedata = data.AcquisitionImageData(initializer=imagedata, preset=presetdata, label=labelstring, target=target)
 
-		if trial:
-			trialimage = data.TrialImageData(id=dataid, initializer=imagedata, preset=presetdata, label=labelstring)
-			print 'publishing trial image'
-			self.publish(trialimage, pubevent=True, database=False)
-			print 'image published'
-			if self.displayimageflag.get():
-				print 'displaying image'
-				self.ui_image.set(imarray)
-		else:
-			pimagedata = data.AcquisitionImageData(id=dataid, initializer=imagedata, preset=presetdata, label=labelstring, target=target)
+		self.publishDisplayWait(imagedata)
 
-			## set up to handle done events
-			self.doneevents[dataid] = {}
-			self.doneevents[dataid]['received'] = threading.Event()
-			self.doneevents[dataid]['status'] = 'waiting'
+	def publishDisplayWait(self, imagedata):
+		'''
+		publish image data, display it, then wait for something to 
+		process it
+		'''
+		## set up to handle done events
+		dataid = imagedata['id']
+		self.doneevents[dataid] = {}
+		self.doneevents[dataid]['received'] = threading.Event()
+		self.doneevents[dataid]['status'] = 'waiting'
 
-			self.publish(pimagedata, pubevent=True, database=self.databaseflag.get())
-			print 'image published'
-			if self.displayimageflag.get():
-				print 'displaying image'
-				self.ui_image.set(imarray)
+		print 'publishing image'
+		self.publish(imagedata, pubevent=True, database=self.databaseflag.get())
+		print 'image published'
+		if self.displayimageflag.get():
+			print 'displaying image'
+			self.ui_image.set(imagedata['image'])
 
-			if self.waitfordone.get():
-				self.waitForImageProcessDone()
-
-#			print 'PIMAGEDATA'
-#			print '   scope image shift', pimagedata['scope']['image shift']
-#			print '   preset image shift', pimagedata['preset']['image shift']
-
-
+		if self.waitfordone.get():
+			self.waitForImageProcessDone()
 		return 'ok'
 
 	def waitForImageProcessDone(self):
