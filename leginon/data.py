@@ -402,13 +402,6 @@ class PixelSizeCalibrationData(MagDependentCalibrationData):
 		return t
 	typemap = classmethod(typemap)
 
-class GoodTiltCalibrationData(MagDependentCalibrationData):
-	def typemap(cls):
-		t = MagDependentCalibrationData.typemap()
-		t += [ ('tilt', float), ]
-		return t
-	typemap = classmethod(typemap)
-
 class MatrixCalibrationData(MagDependentCalibrationData):
 	def typemap(cls):
 		t = MagDependentCalibrationData.typemap()

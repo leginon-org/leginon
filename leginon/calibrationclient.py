@@ -234,18 +234,6 @@ class MatrixCalibrationClient(CalibrationClient):
 	def __init__(self, node):
 		CalibrationClient.__init__(self, node)
 
-	def retrieveGoodTilt(self, mag):
-		queryinstance = data.GoodTiltCalibrationData(magnification=mag)
-		queryinstance['session'] = data.SessionData()
-		queryinstance['session']['instrument'] = self.node.session['instrument']
-		caldatalist = self.node.research(datainstance=queryinstance, results=1)
-		if len(caldatalist) > 0:
-			caldata = caldatalist[0]
-		else:
-			return None
-		goodtilt = caldata['tilt']
-		return goodtilt
-
 	def retrieveMatrix(self, mag, caltype):
 		'''
 		finds the requested matrix using magnification and type
@@ -259,7 +247,7 @@ class MatrixCalibrationClient(CalibrationClient):
 			caldata = caldatalist[0]
 		else:
 			raise NoMatrixCalibrationError
-		matrix = caldata['matrix']
+		matrix = caldata['matrix'].copy()
 		return matrix
 
 	def storeMatrix(self, mag, type, matrix):
@@ -288,10 +276,6 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		fmatrix = self.retrieveMatrix(mag, 'defocus')
 		amatrix = self.retrieveMatrix(mag, 'stigx')
 		bmatrix = self.retrieveMatrix(mag, 'stigy')
-
-		goodtilt = self.retrieveGoodTilt(mag)
-		if goodtilt is not None:
-			tilt_value = goodtilt
 
 		if None in (fmatrix, amatrix, bmatrix):
 			raise RuntimeError('missing calibration matrix')
@@ -507,13 +491,6 @@ class BeamTiltCalibrationClient(MatrixCalibrationClient):
 		pixelshiftdiff['col'] = pixelshift2['col'] - pixelshift1['col']
 		return pixelshiftdiff
 
-	def storeGoodTilt(self, mag, goodtilt):
-		'''
-		stores a new good tilt calibration
-		'''
-		caldata = data.GoodTiltCalibrationData(id=self.node.ID(), magnification=mag, tilt=goodtilt)
-		self.node.publish(caldata, database=True)
-
 class SimpleMatrixCalibrationClient(MatrixCalibrationClient):
 	def __init__(self, node):
 		MatrixCalibrationClient.__init__(self, node)
@@ -657,7 +634,8 @@ class ModeledStageCalibrationClient(CalibrationClient):
 			caldata = caldatalist[0]
 			print 'GOT ANGLE', caldata['angle']
 			print 'GOT MEAN', caldata['mean']
-			return caldata
+			caldata2 = dict(caldata)
+			return caldata2
 		else:
 			raise RuntimeError('no model mag calibration')
 
@@ -684,11 +662,16 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		caldatalist = self.node.research(datainstance=qinst, results=1)
 		if len(caldatalist) > 0:
 			caldata = caldatalist[0]
-			print 'GOT PERIOD', caldata['period']
+			print 'PERIOD', caldata['period']
+			print 'A', caldata['a'], caldata['a'].shape
+			print 'B', caldata['b'], caldata['b'].shape
 			## return it to rank 0 array
-			caldata['a'] = caldata['a'][0]
-			caldata['b'] = caldata['b'][0]
-			return caldata
+			caldata2 = {}
+			caldata2['axis'] = caldata['axis']
+			caldata2['period'] = caldata['period']
+			caldata2['a'] = Numeric.ravel(caldata['a']).copy()
+			caldata2['b'] = Numeric.ravel(caldata['b']).copy()
+			return caldata2
 		else:
 			raise RuntimeError('no model calibration')
 
@@ -765,7 +748,7 @@ class ModeledStageCalibrationClient(CalibrationClient):
 		delta = self.pixtix(xmod, ymod, xmagcal, ymagcal, curstage['x'], curstage['y'], pixcol, pixrow)
 
 		newscope = data.ScopeEMData(initializer=scope)
-		newscope['state position'] = dict(scope['stage position'])
+		newscope['stage position'] = dict(scope['stage position'])
 		newscope['stage position']['x'] += delta['x']
 		newscope['stage position']['y'] += delta['y']
 		return newscope
