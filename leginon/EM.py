@@ -404,7 +404,7 @@ class EM(node.Node):
 		if self.camera is not None:
 			keys += self.camera.keys()
 		if keys:
-			self.state = self.getEM(keys)
+			self.state = self.getEM(keys, withoutkeys=['image data'])
 
 		self.start()
 		self.publishData()
@@ -513,6 +513,7 @@ class EM(node.Node):
 			camerakeys = self.camera.keys()
 		else:
 			camerakeys = []
+
 		for key in withkeys:
 			try:
 				if key in scopekeys:
