@@ -101,6 +101,10 @@ def WidgetClassFromTypeList(typelist):
 							if len(typelist) > 3:
 								if typelist[3] == 'image':
 									return wxImageWidget
+						elif typelist[2] == 'array':
+							if len(typelist) > 3:
+								if typelist[3] == 'sequence':
+									return wxListBoxWidget
 					return wxEntryWidget
 	raise ValueError('invalid type for widget')
 	
@@ -588,6 +592,33 @@ class wxCheckBoxWidget(wxDataWidget):
 
 	def destroy(self):
 		self.checkbox.Destroy()
+
+class wxListBoxWidget(wxDataWidget):
+	def __init__(self, name, parent, container, value, read, write):
+		wxDataWidget.__init__(self, name, parent, container, value, read, write)
+		self.sizer = wxBoxSizer(wxVERTICAL)
+		self.label = wxStaticText(self.parent, -1, self.name)
+		self.listbox = wxListBox(self.parent, -1)
+
+		EVT_LISTBOX(self.listbox, self.listbox.GetId(), self.OnListBox)
+
+		self.set(value)
+
+		self.sizer.Add(self.label, 0)
+		self.sizer.Add(self.listbox, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT, 3)
+		self.layout()
+
+	def OnListBox(self, evt):
+		self.listbox.Deselect(evt.GetSelection())
+
+	def setWidget(self, value):
+		self.listbox.Clear()
+		for i in value:
+			self.listbox.Append(str(i))
+
+	def destroy(self):
+		self.label.Destroy()
+		self.listbox.Destroy()
 
 class wxTreeCtrlWidget(wxDataWidget):
 	def __init__(self, name, parent, container, value, read, write):

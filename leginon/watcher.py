@@ -5,6 +5,22 @@ import node, event
 import Queue
 import uidata
 
+class WatcherQueue(Queue.Queue):
+	def __init__(self, callback, maxsize=0):
+		self.callback = callback
+		Queue.Queue.__init__(self, maxsize)
+
+	def _put(self, item):
+		Queue.Queue._put(self, item)
+		if callable(self.callback):
+			self.callback(self.queue)
+
+	def _get(self):
+		item = Queue.Queue(self)
+		if callable(self.callback):
+			self.callback(self.queue)
+		return item
+
 class Watcher(node.Node):
 	'''
 	Base class for a node that watches for data to be published
@@ -26,21 +42,24 @@ class Watcher(node.Node):
 		self.handlelock = threading.Lock()
 		self.datanow = 1
 
-		self.eventqueue = Queue.Queue(0)
-		self.dataqueue = Queue.Queue(0)
+		self.uieventqueue = uidata.Sequence('Event Queue', [])
+		self.uidataqueue = uidata.Sequence('Data Queue', [])
+		self.eventqueue = WatcherQueue(self.uieventqueue.set, 0)
+		self.dataqueue = WatcherQueue(self.uidataqueue.set, 0)
 
 		self.addEventInput(self.watchfor, self.handleEvent)
 
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
 		self.uiwatchflag = uidata.Boolean('Watching', True, 'rw')
-		self.uidataqueueflag = uidata.Boolean('Data Queue', False, 'rw')
+		self.uidataqueueflag = uidata.Boolean('Queue Data', False, 'rw')
 		processdatamethod = uidata.Method('Process from Queue',
 																				self.uiProcessData)
 		cleardatamethod = uidata.Method('Clear Queue', self.uiClearQueue)
 		container = uidata.MediumContainer('Watcher')
-		container.addObjects((self.uiwatchflag, self.uidataqueueflag,
-														processdatamethod, cleardatamethod))
+		container.addObjects((self.uieventqueue, self.uidataqueue,
+													self.uiwatchflag, self.uidataqueueflag,
+													processdatamethod, cleardatamethod))
 		self.uiserver.addObject(container)
 
 	## the event queue could be put in node.py or datahandler.DataBinder

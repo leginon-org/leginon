@@ -286,6 +286,11 @@ class Progress(Integer):
 class Application(Struct):
 	typelist = Struct.typelist + ('application',)
 
+class Sequence(Array):
+	typelist = Array.typelist + ('sequence',)
+	def __init__(self, name, value):
+		Array.__init__(self, name, value)
+
 class SingleSelectFromList(Container):
 	typelist = Container.typelist + ('single select from list',)
 	def __init__(self, name, listvalue, selectedindex, callback=None, persist=False):
