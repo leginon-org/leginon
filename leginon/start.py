@@ -9,28 +9,14 @@
 #
 
 import manager
-import time
 import launcher
 import uiclient
 import socket
-import os
-import sys
-import data
 import threading
-
-#import psyco
-#psyco.log()
-#psyco.profile()
-#psyco.full()
 
 #import gc
 #gc.enable()
 #gc.set_debug(gc.DEBUG_LEAK)
-
-try:
-	session = sys.argv[1]
-except IndexError:
-	session = time.strftime('%Y-%m-%d-%H-%M')
 
 '''
 def startManager(location, event):
