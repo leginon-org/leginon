@@ -8,6 +8,7 @@ import data
 import event
 import sys
 import imp
+import cPickle
 if sys.platform == 'win32':
 	import pythoncom
 
@@ -53,10 +54,17 @@ class DataHandler(datahandler.DataBinder):
 			self.lock.acquire()
 			for id in idata.content:
 				if self.scope and self.scope.has_key(id):
-					print id, idata.content
-					self.scope[id] = idata.content[id]
+					print id, idata.content[id]
+					try:
+						self.scope[id] = idata.content[id]
+					except:	
+						print "failed to set '%s' to" % id, idata.content[id]
 				elif self.camera and self.camera.has_key(id):
-					self.camera[id] = idata.content[id]
+					print id, idata.content[id]
+					try:
+						self.camera[id] = idata.content[id]
+					except:	
+						print "failed to set '%s' to" % id, idata.content[id]
 			self.lock.release()
 
 	# borrowed from NodeDataHandler
@@ -140,13 +148,14 @@ class EM(node.Node):
 			f = file(filename, 'w')
 			savestate = self.server.datahandler.query('all')
 			try:
-				del savestate['image data']
+				del savestate.content['image data']
 			except KeyError:
 				pass
 			cPickle.dump(savestate, f)
 			f.close()
 		except:
 			print "Error: failed to save EM state"
+			raise
 		else:
 			print "done."
 		return ''
@@ -155,11 +164,12 @@ class EM(node.Node):
 		print "Loading state from file: %s..." % filename,
 		try:
 			f = file(filename, 'r')
-			loadstate = data.EMData('all', cPickle.load(f))
+			loadstate = cPickle.load(f)
 			self.server.datahandler.insert(loadstate)
 			f.close()
 		except:
 			print "Error: failed to load EM state"
+			raise
 		else:
 			print "done."
 		return ''
