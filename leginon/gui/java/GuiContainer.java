@@ -439,9 +439,6 @@ class AddButton {
 					else
 						refresh(widgets, result);
 
-					System.out.println("w: "+widgets);
-					System.out.println("wR: "+widgetsReturn);
-
 				} catch (Exception e) {
 					System.err.println("Exception: "+e);
 				}
@@ -497,7 +494,6 @@ class AddButton {
 		Vector args = new Vector();
 		for (Enumeration enumwidget = widgets.elements() ; enumwidget.hasMoreElements() ;) {
 			Object o = enumwidget.nextElement();
-		System.out.println("Object "+o);
 			if (o instanceof AddTextField) {
 				AddTextField t = (AddTextField)o;
 				args.add(t.getValue());
@@ -512,7 +508,6 @@ class AddButton {
 				args.add(c.getValue());
 			}
 		}
-		System.out.println("ARGS2: "+args);
 		return args;
 	}
 
