@@ -36,7 +36,8 @@ def mapPath(path):
 			if value == path[:len(value)]:
 				path = key + path[len(value):]
 				break
-		return path
+
+		return os.path.normpath(path)
 
 def unmapPath(path):
 		if not pathmapping:
@@ -135,5 +136,6 @@ USERNAME = configparser.get('User', 'name')
 # drive mapping
 drives = configparser.options('Drive Mapping')
 for drive in drives:
-	pathmapping[drive + ':\\'] = configparser.get('Drive Mapping', drive)
+	drivepath = drive.upper() + ':'
+	pathmapping[drivepath] = configparser.get('Drive Mapping', drive)
 
