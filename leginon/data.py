@@ -662,7 +662,8 @@ class ImageTargetData(Data):
 		  ('delta column', int),
 		  ('scope', ScopeEMData),
 		  ('camera', CameraEMData),
-		  ('preset', PresetData)
+		  ('preset', PresetData),
+		  ('image id', tuple)
 		]
 		return t
 	typemap = classmethod(typemap)
@@ -675,6 +676,24 @@ class ImageTargetListData(Data):
 	def typemap(cls):
 		t = Data.typemap()
 		t += [ ('targets', list), ]
+		return t
+	typemap = classmethod(typemap)
+
+class FocuserResultData(Data):
+	'''
+	results of doing autofocus
+	'''
+	def typemap(cls):
+		t = Data.typemap()
+		t += [
+		  ('defocus', float),
+		  ('stigx', float),
+		  ('stigx', float),
+		  ('stigx', float),
+		  ('min', float),
+		  ('stig correction', int),
+		  ('defocus correction', str),
+		]
 		return t
 	typemap = classmethod(typemap)
 

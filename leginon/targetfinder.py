@@ -43,10 +43,16 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		if self.targetlist:
 			targetlistdata = data.ImageTargetListData(id=self.ID(), targets=self.targetlist)
 			for targetdata in targetlistdata['targets']:
-				print targetdata['id']
+				targetdata['image id'] = self.imagedata['id']
 				
 			self.publish(targetlistdata, pubevent=True)
+
+		self.targetsToDatabase()
 		self.targetlist = []
+
+	def targetsToDatabase(self):
+		for target in self.targetlist:
+			self.publish(target, database=True)
 
 	def defineUserInterface(self):
 		imagewatcher.ImageWatcher.defineUserInterface(self)
