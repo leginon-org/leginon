@@ -221,11 +221,13 @@ class Panel(ListCtrlPanel):
 		if launcher is not None:
 			self.setLauncher(launcher)
 
+		self.defaultcolor = (self.listctrl.GetForegroundColour(),
+													self.listctrl.GetBackgroundColour())
 		self.statuscolors = {
-			'INFO': wx.BLUE,
-			'WARNING': wx.Color(255, 255, 0),
-			'ERROR': wx.RED,
-			'PROCESSING': wx.GREEN,
+			'INFO': (wx.BLUE, self.defaultcolor[1]),
+			'WARNING': (wx.Color(225, 180, 0), self.defaultcolor[1]),
+			'ERROR': (wx.RED, self.defaultcolor[1]),
+			'PROCESSING': (wx.GREEN, self.defaultcolor[1]),
 		}
 		self.initializeImageList()
 
@@ -265,9 +267,9 @@ class Panel(ListCtrlPanel):
 				try:
 					color = self.statuscolors[evt.level]
 				except KeyError:
-					# won't work for different default color
-					color = wx.BLACK
-				self.listctrl.SetItemTextColour(item, color)
+					color = self.defaultcolor
+				self.listctrl.SetItemBackgroundColour(item, color[1])
+				self.listctrl.SetItemTextColour(item, color[0])
 				return
 
 	def sortOrder(self, x, y):
