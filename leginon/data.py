@@ -147,10 +147,24 @@ class CalibrationData(Data):
 		return t
 	typemap = classmethod(typemap)
 
-class MatrixCalibrationData(CalibrationData):
+class MagDependentCalibrationData(CalibrationData):
 	def typemap(cls):
 		t = CalibrationData.typemap()
-		t += [ ('magnification', int), ('matrix', Numeric.ArrayType), ]
+		t += [ ('magnification', int), ]
+		return t
+	typemap = classmethod(typemap)
+
+class PixelSizeCalibrationData(MagDependentCalibrationData):
+	def typemap(cls):
+		t = MagDependentCalibrationData.typemap()
+		t += [ ('pixelsize', float), ]
+		return t
+	typemap = classmethod(typemap)
+
+class MatrixCalibrationData(MagDependentCalibrationData):
+	def typemap(cls):
+		t = MagDependentCalibrationData.typemap()
+		t += [ ('matrix', Numeric.ArrayType), ]
 		return t
 	typemap = classmethod(typemap)
 
