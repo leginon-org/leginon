@@ -28,6 +28,8 @@ class UIClient(XMLRPCClient, uiserver.XMLRPCServer):
 		self.server.register_function(self.addFromServer, 'ADD')
 		self.server.register_function(self.setFromServer, 'SET')
 		self.server.register_function(self.deleteFromServer, 'DEL')
+
+	def addServer(self):
 		self.execute('ADDSERVER', (self.hostname, self.port))
 
 	def setServer(self, namelist, value):
@@ -48,10 +50,9 @@ class UIClient(XMLRPCClient, uiserver.XMLRPCServer):
 class wxUIClient(UIClient):
 	def __init__(self, serverhostname, serverport, port=None):
 		# there are some timing issues to be thought out
-		self.app = UIApp(0)
 		UIClient.__init__(self, serverhostname, serverport, port)
-		# quick
-		self.app.uiclient = self
+		self.app = UIApp(self)
+		threading.Thread(target=self.addServer, args=()).start()
 		self.app.MainLoop()
 
 	def addFromServer(self, namelist, typelist, value):
@@ -71,6 +72,10 @@ class wxUIClient(UIClient):
 		return ''
 
 class UIApp(wxApp):
+	def __init__(self, uiclient):
+		self.uiclient = uiclient
+		wxApp.__init__(self, 0)
+
 	def OnInit(self):
 		self.frame = wxFrame(NULL, -1, 'UI')
 		self.panel = wxPanel(self.frame, -1)
@@ -89,6 +94,7 @@ class UIApp(wxApp):
 		return true
 
 	def addWidget(self, evt):
+		print 'addingWidget'
 		uiwidget = evt.widget_type(self.uiclient, evt.namelist,
 																			self.frame, evt.parent)
 		evt.container.children[evt.namelist] = uiwidget
@@ -181,6 +187,8 @@ def WidgetClassFromTypeList(typelist):
 					if len(typelist) > 2:
 						if typelist[2] == 'select from list':
 							return wxComboBoxWidget
+						elif typelist[2] == 'select from struct':
+							return wxTreeSelectWidget
 						elif typelist[2] == 'target image':
 							return wxTargetImageWidget
 						elif typelist[2] == 'dialog':
@@ -244,6 +252,7 @@ class wxContainerWidget(ContainerWidget):
 		self.event.clear()
 		evt = AddWidgetEvent(namelist, self, typelist, self.parent, value)
 		wxPostEvent(self.window, evt)
+		print threading.currentThread()
 		self.event.wait()
 
 	def setWidget(self, namelist, value):
@@ -542,14 +551,14 @@ class wxTreeSelectWidget(wxContainerWidget):
 		self.lock = threading.Lock()
 		wxContainerWidget.__init__(self, uiclient, namelist, window, parent)
 		self.wxwidget = wxBoxSizer(wxHORIZONTAL)
-		self.tree = wxComboBox(self.parent, -1)
+		self.tree = wxDictTree.DictTreeCtrlPanel(self.parent, -1, self.name,
+																											None, self.select)
 		self.tree.Enable(false)
-		EVT_COMBOBOX(self.window, self.combobox.GetId(), self.apply)
-		self.wxwidget.Add(self.combobox, 0, wxALIGN_CENTER | wxALL, 5)
-		self.value = {'List': [], 'Selected': None}
+		self.wxwidget.Add(self.tree, 0, wxALIGN_CENTER | wxALL, 5)
+		self.value = {'Struct': [], 'Selected': None}
 
-	def apply(self, evt):
-		value = [evt.GetSelection()]
+	def select(self, itemlist):
+		value = [itemlist]
 		self.uiclient.setServer(self.namelist + ('Selected',), value)
 
 	def Destroy(self):
@@ -559,27 +568,25 @@ class wxTreeSelectWidget(wxContainerWidget):
 		self.setWidget(namelist, value)
 
 	def _set(self, value):
-		if 'List' in value:
-			self.combobox.Clear()
-			for i in range(len(value['List'])):
-				self.combobox.Append(str(value['List'][i]))
-		if 'Selected' in value:
-			i = value['Selected'][0]
-			self.combobox.SetValue(str(value['List'][i]))
-		self.combobox.Enable(true)
+		if 'Struct' in value:
+			self.tree.set(value['Struct'])
+################################################################
+#		if 'Selected' in value:
+#			i = value['Selected'][0]
+#			self.combobox.SetValue(str(value['List'][i]))
+		self.tree.Enable(true)
 
 	def setWidget(self, namelist, value):
 		self.lock.acquire()
-		if namelist == self.namelist + ('List',):
-			self.value['List'] = value
+		if namelist == self.namelist + ('Struct',):
+			self.value['Struct'] = value
 		elif namelist == self.namelist + ('Selected',):
 			self.value['Selected'] = value
 		else:
 			self.lock.release()
 			return
-		if self.value['List'] and self.value['Selected'] is not None:
-			evt = SetWidgetEvent(self, self.value)
-			wxPostEvent(self.window, evt)
+		evt = SetWidgetEvent(self, {namelist[-1]: value})
+		wxPostEvent(self.window, evt)
 		self.lock.release()
 
 	# container set, should only be called within the container (setWidget)
@@ -666,4 +673,8 @@ class wxTargetImageWidget(wxContainerWidget):
 		
 	def delete(self, namelist):
 		pass
+
+if __name__ == '__main__':
+	import sys
+	client = wxUIClient(sys.argv[1], int(sys.argv[2]))
 
