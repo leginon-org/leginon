@@ -51,7 +51,7 @@ class Manager(node.Node):
 
 	def confirmEvent(self, ievent):
 		self.outputEvent(event.ConfirmationEvent(self.ID(), ievent.id), \
-				ievent.id[:-1])
+				0, ievent.id[:-1])
 
 	def registerConfirmedEvent(self, ievent):
 		nodeid = ievent.content[:-1]
@@ -63,6 +63,7 @@ class Manager(node.Node):
 				#del self.confirmwaitlist[ievent.content]
 		else:
 			# this could be in distribute
+			# could wait for all nodes given event to confirm
 			self.outputEvent(ievent, nodeid)
 
 	def addLauncher(self, nodeid):

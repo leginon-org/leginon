@@ -113,8 +113,7 @@ class Node(leginonobject.LeginonObject):
 		newid = self.ID()
 		myloc = self.location()
 		available_event = event.NodeAvailableEvent(newid, myloc)
-		self.outputEvent(available_event)
-		self.waitEvent(available_event)
+		self.outputEvent(ievent=available_event, wait=1)
 
 	def main(self):
 		raise NotImplementedError()
@@ -133,8 +132,10 @@ class Node(leginonobject.LeginonObject):
 		self.server.exit()
 		self.outputEvent(event.NodeUnavailableEvent(self.ID()))
 
-	def outputEvent(self, ievent, nodeid=('manager',)):
+	def outputEvent(self, ievent, wait=0, nodeid=('manager',)):
 		self.clients[nodeid].push(ievent)
+		if wait:
+			self.waitEvent(ievent)
 
 	def confirmEvent(self, ievent):
 		self.outputEvent(event.ConfirmationEvent(self.ID(), ievent.id))
