@@ -10,8 +10,9 @@ import threading
 from Tkinter import *
 import ImageViewer
 import Mrc
-import xmlrpclib
 import math
+import calibrationclient
+import xmlrpclib
 #import xmlrpclib2 as xmlbinlib
 xmlbinlib = xmlrpclib
 
@@ -426,11 +427,13 @@ class StateImageMosaic(ImageMosaic):
 
 		ImageMosaic.__init__(self, id, nodelocations, watchfor, **kwargs)
 
-		self.positionmethods['pixel size'] = self.positionByPixelSize
+#		self.positionmethods['pixel size'] = self.positionByPixelSize
 		self.positionmethods['calibration'] = self.positionByCalibration
-		self.automaticpriority = ['pixel size', 'calibration', 'correlation']
+#		self.automaticpriority = ['pixel size', 'calibration', 'correlation']
+		self.automaticpriority = ['calibration', 'correlation']
 		#self.positionmethod = self.positionmethods.keys()[0]
-		self.positionmethod = 'pixel size'
+#		self.positionmethod = 'pixel size'
+		self.positionmethod = 'calibration'
 
 #		self.addEventInput(event.CalibrationPublishEvent, self.setCalibration)
 		self.start()
@@ -463,20 +466,21 @@ class StateImageMosaic(ImageMosaic):
 				imagemosaic.addTile(idata.id, tileimage, position, tilestate)
 				print idata.id, "position =", imagemosaic.getTilePosition(idata.id)
 
-	def setCalibration(self, ievent):
-		idata = self.researchByDataID(ievent.content)
-		self.calibrationmatrix = self.calculateCalibrationMatrix(idata.content)
+#	def setCalibration(self, ievent):
+#		idata = self.researchByDataID(ievent.content)
+#		self.calibrationmatrix = self.calculateCalibrationMatrix(idata.content)
 
-	def calculateCalibrationMatrix(self, calibration):
-		matrix = Numeric.array([[calibration['x pixel shift']['x'],
-															calibration['x pixel shift']['y']],
-														[calibration['y pixel shift']['x'],
-															calibration['y pixel shift']['y']]])
-		matrix[0] /= calibration['x pixel shift']['value']
-		matrix[1] /= calibration['y pixel shift']['value']
-		return matrix
+#	def calculateCalibrationMatrix(self, calibration):
+#		matrix = Numeric.array([[calibration['x pixel shift']['x'],
+#															calibration['x pixel shift']['y']],
+#														[calibration['y pixel shift']['x'],
+#															calibration['y pixel shift']['y']]])
+#		matrix[0] /= calibration['x pixel shift']['value']
+#		matrix[1] /= calibration['y pixel shift']['value']
+#		return matrix
 
-	def positionByCalibration(self, idata, imagemosaic):
+	def positionByCalibration(self, idata, imagemosaic,
+																					parameter='stage position'):
 #		if self.calibrationmatix is None:
 #			self.printerror('cannot process by calibration, no calibration available')
 #			raise ValueError
@@ -489,10 +493,11 @@ class StateImageMosaic(ImageMosaic):
 #		y = -(column * matrix[0, 1] + row * matrix[1, 1])/4
 #		return (int(round(y)), int(round(x)))
 
-		return self.calibrationclients['stage position'].itransform(
-																		idata.content['scope']['stage position'],
+		position = self.calibrationclients[parameter].itransform(
+																		idata.content['scope'][parameter],
 																		idata.content['scope'],
-															i			idata.content['camera'])
+																		idata.content['camera'])
+		return (position['row'], position['col'])
 
 #	def setPixelSizeAndRotation(self, ievent):
 #		idata = self.researchByDataID(ievent.content)
@@ -508,24 +513,25 @@ class StateImageMosaic(ImageMosaic):
 #		self.pixelsize = Numeric.array([pixelsize[0], pixelsize[1]],
 #																												Numeric.Float32)
 
+#	def calculateRotationMatrix(self, xtheta, ytheta):
+#		xsintheta = math.sin(theta)
+#		xcostheta = math.cos(theta)      
+#		ysintheta = math.sin(theta)
+#		ycostheta = math.cos(theta)      
+#		return Numeric.array([[xcostheta, -ysintheta],
+#													[xsintheta, ycostheta]], Numeric.Float32)
 
-	def calculateRotationMatrix(self, theta):
-		sintheta = math.sin(theta)
-		costheta = math.cos(theta)      
-		return Numeric.array([[-costheta, sintheta],
-													[sintheta, costheta]], Numeric.Float32)
-
-	def positionByPixelSize(self, idata, imagemosaic):
-		tilescopestate = idata.content['scope']
-		if self.rotationmatrix is None or self.pixelsize is None:
-			self.printerror('cannot process by pixel size, no calibration available')
-			raise ValueError
-		x = tilescopestate['stage position']['x']
-		y = tilescopestate['stage position']['y']
-		stateposition = Numeric.array([y, x], Numeric.Float32)
-		position = Numeric.matrixmultiply(self.rotationmatrix,
-																		stateposition / self.pixelsize)
-		return (int(round(position[0])), int(round(position[1])))
+#	def positionByPixelSize(self, idata, imagemosaic):
+#		tilescopestate = idata.content['scope']
+#		if self.rotationmatrix is None or self.pixelsize is None:
+#			self.printerror('cannot process by pixel size, no calibration available')
+#			raise ValueError
+#		x = tilescopestate['stage position']['x']
+#		y = tilescopestate['stage position']['y']
+#		stateposition = Numeric.array([y, x], Numeric.Float32)
+#		position = Numeric.matrixmultiply(self.rotationmatrix,
+#																		stateposition / self.pixelsize)
+#		return (int(round(position[0])), int(round(position[1])))
 
 	def uiPublishMosaicImage(self):
 		#ImageMosaic.uiPublishMosaicImage(self)
