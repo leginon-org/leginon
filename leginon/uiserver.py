@@ -103,7 +103,7 @@ class Server(XMLRPCServer, uidata.Container):
 				print e
 
 	def getNameList(self):
-		return ()
+		return []
 
 	def getObjectFromList(self, namelist):
 		namelist[0] = self.name

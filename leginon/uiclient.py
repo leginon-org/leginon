@@ -218,6 +218,7 @@ class wxUIClient(object):
 
 	def setFromServer(self, properties):
 		namelist = properties['namelist']
+		#namelist = list(namelist)
 		value = properties['value']
 		evt = SetWidgetEvent(namelist, value)
 		wxPostEvent(self.container.widgethandler, evt)

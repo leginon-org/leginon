@@ -454,12 +454,9 @@ class Manager(node.Node):
 		'''Add a running node to the manager. Sends an event to the location.'''
 		e = event.NodeAvailableEvent(id=self.id, location=self.location(),
 																	nodeclass=self.__class__.__name__)
-		print 'addNode location =', location
 		client = self.clientclass(location)
 		try:
-			print 'addNode client push'
 			client.push(e)
-			print 'addNode client push done'
 		except EOFError:
 			self.printerror('manager unable to add node')
 

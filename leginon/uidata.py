@@ -45,7 +45,7 @@ class Object(object):
 		return self.parent
 
 	def getNameList(self):
-		namelist = (self.name,)
+		namelist = [self.name,]
 		if self.parent is not None:
 			namelist = self.parent.getNameList() + namelist
 		return namelist
