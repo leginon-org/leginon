@@ -83,7 +83,7 @@ class Convolver(object):
 		self.kernel_fft[self.shape] = kfft
 		return kfft
 
-	def convolve(self, image=None, kernel=None, last_image=False):
+	def convolve(self, image=None, kernel=None, last_image=False, border='copy'):
 		if image is not None and last_image:
 			raise ValueError('Cannot use both a new image and the last image')
 		imfft = self.image_fft
@@ -98,6 +98,11 @@ class Convolver(object):
 		kfft = self.makeKernelFFT()
 		self.result_fft = Numeric.multiply(kfft, imfft)
 		result = self.fftengine.itransform(self.result_fft)
+
+		# what to do with border?
+		if border == 'copy':
+			pass
+
 		return result
 
 
