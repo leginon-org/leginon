@@ -369,7 +369,7 @@ class Tietz(object):
 			pass
 	
 	def getOffset(self):
-		return self.offset
+		return dict(self.offset)
 
 	def setOffset(self, value):
 		# {'type': dict,
@@ -379,10 +379,10 @@ class Tietz(object):
 		#								'y':
 		#						{'type': int,
 		#							'range': [0, camerasize['y'] - dimension['y']*binning['y']]}}}
-		self.offset = value
+		self.offset = dict(value)
 
 	def getDimension(self):
-		return self.dimension
+		return dict(self.dimension)
 
 	def setDimension(self, value):
 		# {'type': dict,
@@ -392,10 +392,10 @@ class Tietz(object):
 		#								'y':
 		#						{'type': int,
 		#							'range': [0, (camerasize['y'] - offset['y'])/binning['y']]}}}
-		self.dimension = value
+		self.dimension = dict(value)
 
 	def getBinning(self):
-		return self.binning
+		return dict(self.binning)
 
 	def setBinning(self, value):
 		# {'type': dict,
@@ -405,7 +405,7 @@ class Tietz(object):
 		#								'y':
 		#					{'type': int,
 		#						'range': [1, (camerasize['y'] - offset['y'])/dimension['y']]}}}
-		self.binning = value
+		self.binning = dict(value)
 
 	def getExposureTime(self):
 		return self.exposuretime

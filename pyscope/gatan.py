@@ -86,24 +86,24 @@ class Gatan(ccdcamera.CCDCamera):
 		return object.__getattribute__(self, attr_name)
 
 	def getOffset(self):
-		return self.offset
+		return dict(self.offset)
 
 	def setOffset(self, value):
-		self.offset = value
+		self.offset = dict(value)
 
 	def getDimension(self):
-		return self.dimension
+		return dict(self.dimension)
 
 	def setDimension(self, value):
-		self.dimension = value
+		self.dimension = dict(value)
 
 	def getBinning(self):
-		return self.binning
+		return dict(self.binning)
 
 	def setBinning(self, value):
 		if value['x'] != value['y']:
 			raise ValueError('multiple binning dimesions not supported')
-		self.binning = value
+		self.binning = dict(value)
 
 	def getExposureTime(self):
 		return int(self.camera.ExposureTime*1000)
