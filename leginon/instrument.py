@@ -4,10 +4,10 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.25 $
+# $Revision: 1.26 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-03-10 01:29:27 $
-# $Author: suloway $
+# $Date: 2005-03-29 22:35:42 $
+# $Author: pulokas $
 # $State: Exp $
 # $Locker:  $
 
@@ -269,6 +269,7 @@ class FastCCDCamera(CCDCamera):
 
 parametermapping = (
 	# ScopeEM
+	('system time', 'SystemTime'),
 	('magnification', 'Magnification'),
 	('spot size', 'SpotSize'),
 	('image shift', 'ImageShift'),
