@@ -404,7 +404,10 @@ class TreeData(Data):
 		return self.sc.frame
 
 	def setWidget(self, value):
-		self.dict = value
+		if value is None:
+			self.dict = {}
+		else:
+			self.dict = value
 		item = StructTreeItem(None, self.name, self.dict)
 		if self.treenode is not None:
 			del(self.treenode)
@@ -491,7 +494,8 @@ class Method(SpecWidget):
 			args.append(newvalue)
 		args = tuple(args)
 		ret = self.uiclient.execute(self.id, args)
-		self.process_return(ret)
+		if ret is not None:
+			self.process_return(ret)
 
 	def process_return(self, returnvalue):
 		if self.retwidget is not None:
