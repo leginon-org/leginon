@@ -23,6 +23,7 @@ class MessageLog(wx.ListCtrl, ColumnSorterMixin):
 		self.levels = ['ERROR', 'WARNING', 'INFO']
 
 		self.imagelist = wx.ImageList(16, 16)
+		self.imagelist.AddWithColourMask(wx.EmptyBitmap(16, 16), wx.BLACK)
 		self.icons = {}
 		for i in self.levels:
 			image = wx.Image(icons.getPath('%s.png' % i.lower()))
@@ -110,9 +111,9 @@ if __name__ == '__main__':
 			panel = wx.Panel(frame, -1)
 
 			ml = MessageLog(panel)
-			ml.addMessage('info', 'Message 0')
-			ml.addMessage('warning', 'Message 1')
-			ml.addMessage('error', 'Message 2')
+			ml.addMessage('INFO', 'Message 0')
+			ml.addMessage('WARNING', 'Message 1')
+			ml.addMessage('ERROR', 'Message 2')
 
 			sizer = wx.GridBagSizer(5, 5)
 			sizer.Add(ml, (0, 0), (1, 1), wx.EXPAND|wx.ALL, 5)
