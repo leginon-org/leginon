@@ -52,8 +52,16 @@ class Logger(logging.Logger):
 			filename = self.filename.get()
 		elif filename == self.filename.get():
 			return
-		self.filehandler = logging.handlers.RotatingFileHandler(filename,
+		try:
+			self.filehandler = logging.handlers.RotatingFileHandler(filename,
 																																backupCount=32)
+		except IOError, e:
+			i = 0
+			format = 'Message %d'
+			while format % i in self.container:
+				i += 1
+			self.container.addObject(uidata.Message(format % i, 'error',
+																					'Error logging to file: %s' % str(e)))
 		self.filehandler.setFormatter(self.formatter)
 		self.addHandler(self.filehandler)
 		self.filehandler.doRollover()

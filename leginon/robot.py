@@ -156,6 +156,7 @@ class RobotNode(node.Node):
 		self.statuslabel.set(message)
 
 if sys.platform == 'win32':
+	import pythoncom
 	import win32com.client
 	import pywintypes
 	class RobotControl(RobotNode):
@@ -179,8 +180,6 @@ if sys.platform == 'win32':
 	
 			#self.communication = TestCommunications()
 
-			sys.coinit_flags = 0
-			import pythoncom
 			pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
 			try:
 				self.communication = win32com.client.Dispatch(
@@ -364,11 +363,26 @@ if sys.platform == 'win32':
 					raise GridQueueEmpty
 			return gridnumber
 
+		def newGrid(self, gridboxid, gridnumber):
+			projectdata = project.ProjectData()
+			return projectdata.newGrid('Robot #%d' % gridnumber, -1, gridnumber,
+																	gridboxid, gridnumber)
+
+		def getGridID(self, gridboxid, gridnumber):
+			projectdata = project.ProjectData()
+			gridlocations = projectdata.getGridLocations()
+			gridboxidindex = gridlocations.Index(['gridboxId'])
+			gridlocations = gridboxidindex[gridboxid].fetchall()
+			for gridlocation in gridlocations:
+				if gridlocation['location'] == gridnumber:
+					return gridlocation['gridId']
+			return self.newGrid(gridboxid, gridnumber)
+
 		def selectGrid(self):
 			try:
 				self.gridnumber = self.getGridNumber()
-				initializer = {'grid number': self.gridnumber,
-												'grid tray ID': self.gridtrayid}
+				gridid = self.getGridID(self.gridtrayid, self.gridnumber)
+				initializer = {'grid ID': gridid}
 				self.griddata = data.GridData(initializer=initializer)
 			except GridQueueEmpty:
 				self.uicurrentgridnumber.set(None)

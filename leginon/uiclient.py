@@ -10,6 +10,7 @@ import xmlrpc
 import threading
 import time
 import sys
+sys.coinit_flags = 0
 import wx
 import wxImageViewer
 import wxDictTree

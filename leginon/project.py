@@ -72,6 +72,7 @@ class ProjectData:
 																	'number': number, 'boxId': boxId}])
 		self.gridlocations.insert([{'gridboxId': boxId, 'gridId': gridId,
 																'location': location}])
+		return gridId
 
 	def getGridLocations(self):
 		return self.gridlocations
