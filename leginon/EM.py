@@ -13,8 +13,8 @@ if sys.platform == 'win32':
 	import pythoncom
 
 class DataHandler(datahandler.DataBinder):
-	def __init__(self, id, EMnode):
-		datahandler.DataBinder.__init__(self, id)
+	def __init__(self, id, session, EMnode):
+		datahandler.DataBinder.__init__(self, id, session)
 		self.EMnode = EMnode
 
 	def query(self, id):
@@ -51,12 +51,10 @@ class EM(node.Node):
 			camera = ('gatan', 'gatan')
 		self.setEMclasses(scope, camera)
 
-		print 'node __init__?'
 		node.Node.__init__(self, id, session, nodelocations,
 												[(DataHandler, (self,)),
 													(dbdatakeeper.DBDataKeeper, ())],
 												launchlock=kwargs['launchlock'])
-		print 'no'
 
 		self.addEventInput(event.LockEvent, self.doLock)
 		self.addEventInput(event.UnlockEvent, self.doUnlock)
