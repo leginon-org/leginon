@@ -44,7 +44,9 @@ class xmlrpcserver(SimpleXMLRPCServer):
 		self._start_serving()
 
 	def _start_serving(self):
-		print 'xml-rpc server %s:%s' % (self.host,self.port)
+		hostname = self.location.hostname
+		port = self.location.port
+		print 'xml-rpc server %s:%s' % (hostname,port)
 		self.register_instance(self)
 		th = threading.Thread(target=self.serve_forever)
 		th.setDaemon(1)
