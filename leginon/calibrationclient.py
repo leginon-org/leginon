@@ -22,7 +22,6 @@ class CalibrationClient(object):
 		#ffteng = fftengine.fftFFTW(planshapes=(), estimate=1)
 		self.correlator = correlator.Correlator(ffteng)
 		self.peakfinder = peakfinder.PeakFinder()
-		self.settle = 1.5
 
 	def getCalibration(self, key):
 		try:
@@ -46,17 +45,19 @@ class CalibrationClient(object):
 		'''
 		return str(int(magnification)) + caltype
 
-	def acquireStateImage(self, state):
+	def acquireStateImage(self, state, publish_image=0, settle=0.0):
 		## acquire image at this state
 		newemdata = data.EMData('scope', state)
 		self.node.publish(event.LockEvent(self.node.ID()))
 		self.node.publishRemote(newemdata)
-		print 'state settling time %s' % (self.settle,)
-		time.sleep(self.settle)
+		print 'state settling time %s' % (settle,)
+		time.sleep(settle)
 
 		imagedata = self.cam.acquireCameraImageData()
 		actual_state = imagedata.content['scope']
-		self.node.publish(imagedata, event.CameraImagePublishEvent)
+
+		if publish_image:
+			self.node.publish(imagedata, event.CameraImagePublishEvent)
 
 		## should find image stats to help determine validity of image
 		## in correlations
@@ -65,7 +66,7 @@ class CalibrationClient(object):
 		info = {'requested state': state, 'imagedata': imagedata, 'image stats': image_stats}
 		return info
 
-	def measureStateShift(self, state1, state2):
+	def measureStateShift(self, state1, state2, publish_images=0, settle=0.0):
 		'''
 		Measures the pixel shift between two states
 		 Returned dict has these keys:
@@ -77,8 +78,8 @@ class CalibrationClient(object):
 		'''
 
 		print 'acquiring state images'
-		info1 = self.acquireStateImage(state1)
-		info2 = self.acquireStateImage(state2)
+		info1 = self.acquireStateImage(state1, publish_images, settle)
+		info2 = self.acquireStateImage(state2, publish_images, settle)
 
 		imagedata1 = info1['imagedata']
 		imagedata2 = info2['imagedata']
@@ -176,7 +177,7 @@ class BeamTiltCalibrationClient(CalibrationClient):
 		beamtilt = emdata.content
 		return beamtilt
 
-	def measureDefocusStig(self, tilt_value):
+	def measureDefocusStig(self, tilt_value, publish_images=0):
 		emdata = self.node.researchByDataID('magnification')
 		mag = emdata.content['magnification']
 		fmatrix = self.getMatrix(mag, 'defocus')
@@ -194,7 +195,7 @@ class BeamTiltCalibrationClient(CalibrationClient):
 			state1['beam tilt'][tiltaxis] -= (tilt_value/2.0)
 			state2 = copy.deepcopy(tiltcenter)
 			state2['beam tilt'][tiltaxis] += (tilt_value/2.0)
-			shiftinfo = self.measureStateShift(state1, state2)
+			shiftinfo = self.measureStateShift(state1, state2, publish_images, settle=0.25)
 			pixshift = shiftinfo['pixel shift']
 
 			shifts[tiltaxis] = (pixshift['row'], pixshift['col'])
@@ -251,8 +252,8 @@ class BeamTiltCalibrationClient(CalibrationClient):
 			'defocus': solution[0][0],
 			'stigx': solution[0][1],
 			'stigy': solution[0][2],
+			'min': solution[1]
 			}
-		print 'SOLUTION CHISQ', solution[1]
 		return result
 
 	def eq11(self, shift1, shift2, param1, param2, beam_tilt):
@@ -304,12 +305,12 @@ class BeamTiltCalibrationClient(CalibrationClient):
 
 			print 'STATES1'
 			print states1
-			shiftinfo = self.measureStateShift(states1[0], states1[1])
+			shiftinfo = self.measureStateShift(states1[0], states1[1], 1, settle=0.25)
 			pixelshift1 = shiftinfo['pixel shift']
 
 			print 'STATES2'
 			print states2
-			shiftinfo = self.measureStateShift(states2[0], states2[1])
+			shiftinfo = self.measureStateShift(states2[0], states2[1], 1, settle=0.25)
 			pixelshift2 = shiftinfo['pixel shift']
 			print 'PIXELSHIFT1', pixelshift1
 			print 'PIXELSHIFT2', pixelshift2
