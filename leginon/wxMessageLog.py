@@ -1,6 +1,9 @@
 from wxPython.wx import *
 
-iconsdir = 'icons'
+import sys, os
+
+rundir = sys.path[0]
+iconsdir = os.path.join(rundir, 'icons')
 types = ['info', 'warning', 'error']
 
 class wxMessage(wxPanel):
