@@ -111,7 +111,7 @@ class TestLoop(TimedLoop):
 		NumericControlEvent - modifies the loop interval
 	"""
 	def __init__(self, id, managerlocation=None):
-		timedloop.TimedLoop.__init__(self, id, managerlocation)
+		TimedLoop.__init__(self, id, managerlocation)
 		print 'TestLoop %s started' % (self.id,)
 
 	def action(self):
@@ -126,7 +126,7 @@ class TestLoop(TimedLoop):
 		self.publish(adata, event.PublishEvent)
 
 	def defineUserInterface(self):
-		timedloop.TimedLoop.defineUserInterface(self)
+		TimedLoop.defineUserInterface(self)
 
 		self.registerUIFunction(self.myStart, (), alias='Start')
 		self.registerUIFunction(self.myStop, (), alias='Stop')

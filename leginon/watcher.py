@@ -57,8 +57,7 @@ class TestWatch(Watcher):
 	def __init__(self, id, managerlocation):
 		watchfor = event.PublishEvent
 		lockblocking = 0
-		watcher.Watcher.__init__(self, id, managerlocation, watchfor, lockblocking)
-
+		Watcher._init__(self, id, managerlocation, watchfor, lockblocking)
 
 	def processData(self, newdata):
 		print 'processing newdata %s' % newdata
