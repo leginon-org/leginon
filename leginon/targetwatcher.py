@@ -111,6 +111,8 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 		### get targets that belong to this target list
 		targetlist = self.researchTargets(list=newdata)
+		listid = newdata.dbid
+		self.logger.debug('TargetWatcher will process %s targets in list %s' % (len(targetlist),listid))
 
 		# separate the good targets from the rejects
 		goodtargets = []
@@ -129,8 +131,8 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			else:
 				rejects.append(target)
 
-		self.uintargets.set('%d process, %d pass, %d total' %
-													(len(goodtargets), len(rejects), len(targetlist)))
+		self.uintargets.set('%d process, %d pass, %d total' % (len(goodtargets), len(rejects), len(targetlist)))
+		self.logger.debug('%d process, %d pass, %d total' % (len(goodtargets), len(rejects), len(targetlist)))
 
 		# republish the rejects and wait for them to complete
 		if rejects and self.publishrejects.get():
@@ -165,6 +167,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		self.cont.clear()
 		targetliststatus = 'success'
 		for i, target in enumerate(goodtargets):
+			self.logger.debug('target %s status %s' % (i, target['status'],))
 			self.uicontrolstatus.set('Normal')
 			# abort
 			## not sure what this should be
@@ -191,11 +194,12 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 			self.uisourceimageid.set('')
 
-			self.logger.debug('publishing processing target')
+			self.logger.debug('creating processing target')
 			adjustedtarget = data.AcquisitionImageTargetData(initializer=target,
 																												status='processing')
 			#self.publish(adjustedtarget, database=True, dbforce=True)
 			## Why force???
+			self.logger.debug('publishing processing target')
 			self.publish(adjustedtarget, database=True)
 			self.logger.debug('processing target published')
 
@@ -268,11 +272,12 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 
 				# end of target repeat loop
 
-			self.logger.debug('publishing done target')
+			self.logger.debug('creating done target')
 			donetarget = data.AcquisitionImageTargetData(initializer=adjustedtarget,
 																										status='done')
 			#self.publish(donetarget, database=True, dbforce=True)
 			## Why force???
+			self.logger.debug('publishing done target')
 			self.publish(donetarget, database=True)
 			self.logger.debug('done target published')
 

@@ -82,9 +82,9 @@ class TargetHandler(object):
 		## get next number if not already specified
 		if 'number' not in kwargs or kwargs['number'] is None:
 			lastnumber = self.lastTargetNumber(image=imagedata, session=self.session)
-			number = lastnumber + 1
+			kwargs['number'] = lastnumber + 1
 
-		targetdata = self.newTarget(image=imagedata, scope=imagedata['scope'], camera=imagedata['camera'], preset=imagedata['preset'], drow=drow, dcol=dcol, number=number, session=self.session, **kwargs)
+		targetdata = self.newTarget(image=imagedata, scope=imagedata['scope'], camera=imagedata['camera'], preset=imagedata['preset'], drow=drow, dcol=dcol, session=self.session, **kwargs)
 		return targetdata
 
 	def newTargetForGrid(self, grid, drow, dcol, **kwargs):
