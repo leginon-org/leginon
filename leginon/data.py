@@ -439,11 +439,8 @@ class Data(newdict.TypedDict, leginonobject.LeginonObject):
 
 	## definining __reduce__ allows unpickler to call __init__ 	 
 	## which is necessary to register data with datamanager 	 
-	## After calling __init__, __dict__ will be updated, so we 	 
-	## have to remove dmid since that has already been set in __init__
 	def __reduce__(self): 	 
 		state = dict(self.__dict__) 	 
-		del state['dmid'] 	 
 		## giving the new object an initializer has a lot of 	 
 		## duplicate information to what is given in the 	 
 		## state dict, but it is necessary to get the dict 	 
