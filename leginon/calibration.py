@@ -22,6 +22,10 @@ class Calibration(node.Node):
 
 		self.attempts = 5
 		self.range = [0.000, 0.01]
+		self.validpixelshift = {'x': [self.camerastate['dimension']['x']/6,
+															5*self.camerastate['dimension']['x']/6],
+														'y': [self.camerastate['dimension']['y']/6,
+															5*self.camerastate['dimension']['y']/6]}
 
 		self.start()
 
@@ -49,14 +53,23 @@ class Calibration(node.Node):
 				return self.calculate(cdata, i)
 
 	def calculate(self, cdata, i):
-		return {'image shift': {'x': self.settingValue(i) / cdata['shift']['x'],
-														'y': self.settingValue(i) / cdata['shift']['y']}}
+		return {'image shift': {'x': cdata['shift']['x'] / self.settingValue(i),
+														'y': cdata['shift']['y'] / self.settingValue(i)}}
 
 	def valid(self, cdata):
-		if cdata['shift']['x'] == 0.0 or cdata['shift']['y'] == 0.0:
-			return False
-		else:
+		if (self.inRange(abs(cdata['shift']['x']), self.validpixelshift['x']) or
+				self.inRange(abs(cdata['shift']['y']), self.validpixelshift['y'])):
 			return True
+		else:
+			return False
+
+	def inRange(self, value, r):
+		if (len(r) != 2) or (r[0] > r[1]):
+			raise ValueError
+		if (value >= r[0]) and (value <= r[1]):
+			return True
+		else:
+			return False
 
 	def correlate(self, image):
 		self.correlator.setImage(1, image)
@@ -76,6 +89,10 @@ class Calibration(node.Node):
 		shift = correlator.wrap_coord(peak, pcimage.shape)
 		print 'shift', shift
 		return {'shift': {'x': shift[1], 'y': shift[0]}}
+
+	def defineUserInterface(self):
+		nodespec = node.Node.defineUserInterface(self)
+		self.registerUISpec('Calibration', (nodespec))
 
 #			imageshift = (shiftrange[1] + shiftrange[0])/2
 #			shiftpair = ((shiftrange[1] + shiftrange[0])/4, \
