@@ -71,4 +71,5 @@ registerNodeClass('calibrationtest', 'CalibrationTest')
 registerNodeClass('autofocus', 'AutoFocusCalibration')
 registerNodeClass('imagemosaic', 'ImageMosaic')
 registerNodeClass('testmosaic', 'TestMosaic')
+registerNodeClass('imagenode', 'ImageNode')
 
