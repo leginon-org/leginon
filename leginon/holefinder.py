@@ -266,6 +266,12 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.ice()
 
 	def findTargets(self, imdata):
+		## check if targets already found on this image
+		previous = self.researchImageTargets(imdata)
+		if previous:
+			self.targetlist = previous
+			return
+
 		## automated part
 		self.hf['original'] = imdata['image']
 		self.everything()
