@@ -258,6 +258,7 @@ class SimpleCorrector(node.Node):
 		correctorcamstatedata['binning'] = camerastate['binning']
 		imagedata['camstate'] = correctorcamstatedata
 		imagedata['filename'] = self.filename(referencetype, imagedata.dmid[-1])
+		imagedata['session'] = self.session
 		self.status.set('Publishing reference image...')
 		self.publish(imagedata, pubevent=True, database=True)
 		self.status.set('Reference image published')
@@ -789,6 +790,7 @@ class Corrector(node.Node):
 		imagetemp['image'] = numdata
 		imagetemp['camstate'] = camstate
 		imagetemp['filename'] = self.filename(type, imagetemp.dmid[-1])
+		imagetemp['session'] = self.session
 		self.uistatus.set('Publishing reference image...')
 		self.publish(imagetemp, pubevent=True, database=True)
 		self.uistatus.set('Reference image published')

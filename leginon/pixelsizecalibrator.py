@@ -89,4 +89,5 @@ class PixelSizeCalibrator(calibrator.Calibrator):
 		caldata['magnification'] = mag
 		caldata['pixelsize'] = psize
 		caldata['comment'] = comment
+		caldata['session'] = self.session
 		self.publish(caldata, database=True)
