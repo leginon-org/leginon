@@ -114,6 +114,10 @@ if numextension is not None:
 		return numextension.despike(image.astype(Numeric.Float32), size, sigma)
 
 
+def medianSeries(series):
+	index = int((len(series) - 0.5)/2.0)
+	return Numeric.sort(Numeric.array(series), 0)[index]
+
 def sumSeries(series):
 	if len(series) == 0:
 		return None

@@ -61,6 +61,7 @@ def getNodeClassNames():
 
 ### register Node classes in the order you want them listed publicly
 registerNodeClass('corrector', 'Corrector')
+registerNodeClass('corrector', 'SimpleCorrector')
 registerNodeClass('matrixcalibrator', 'MatrixCalibrator')
 registerNodeClass('pixelsizecalibrator', 'PixelSizeCalibrator')
 registerNodeClass('beamtiltcalibrator', 'BeamTiltCalibrator')

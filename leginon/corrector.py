@@ -23,6 +23,9 @@ import os
 import copy
 import uidata
 
+class CameraError(Exception):
+	pass
+
 class DataHandler(node.DataHandler):
 	def query(self, id):
 		self.lock.acquire()
@@ -33,6 +36,163 @@ class DataHandler(node.DataHandler):
 		else:
 			self.lock.release()
 			return node.DataHandler.query(self, id)
+
+class SimpleCorrector(node.Node):
+	eventoutputs = node.Node.eventoutputs + [event.DarkImagePublishEvent,
+																						event.BrightImagePublishEvent,
+																						event.ListPublishEvent]
+	def __init__(self, id, session, nodelocations, **kwargs):
+		self.camerafuncs = camerafuncs.CameraFuncs(self)
+		node.Node.__init__(self, id, session, nodelocations,
+												datahandler=DataHandler, **kwargs)
+
+		self.outputEvent(event.ListPublishEvent(id=self.ID(),
+																						idlist=[('corrected image data',)]))
+
+		self.defineUserInterface()
+		self.start()
+
+	def getImageStats(self, image):
+		mean = imagefun.mean(image)
+		stdev = imagefun.stdev(image, known_mean=mean)
+		min = imagefun.min(image)
+		max = imagefun.max(image)
+		return {'mean': mean, 'stdev': stdev, 'min': min, 'max': max}
+
+	def getCameraSettings(self, binning, exposuretype):
+		cameradata = self.camerafuncs.getCameraEMData()
+		if cameradata is None:
+			raise CameraError('cannot get camera settings')
+		camerasize = self.session['instrument']['camera size']
+		cameradata['id'] = ('camera',)
+		for axis in ['x', 'y']:
+			cameradata['offset'][axis] = 0
+			cameradata['binning'][axis] = binning
+			cameradata['dimension'][axis] = camerasize/binning
+		cameradata['exposure type'] = exposuretype
+		return cameradata
+
+	def setCameraSettings(self, binning, exposuretype):
+		cameradata = self.getCameraSettings(binning, exposuretype)
+		self.camerafuncs.setCameraEMData(cameradata)
+		return cameradata
+
+	def getMedianImage(self, naverage):
+		images = []
+		for i in range(naverage):
+			self.status.set('Acquiring image %d of %d...' % (i+1, naverage))
+			imagedata = self.camerafuncs.acquireCameraImageData(correction=False)
+			images.append(imagedata['image'])
+			if self.displayacquire.get():
+				self.image.set(imagedata['image'])
+		self.status.set('Calculating median image...')
+		image = imagefun.medianSeries(images)
+		if self.displaymedian.get():
+			self.image.set(image)
+		return image
+
+	def publishReference(self, referencetype, image, camerastate):
+		if referencetype == 'dark':
+			imagedata = data.DarkImageData()
+		elif referencetype == 'normal':
+			imagedata = data.BrightImageData()
+		elif referencetype == 'normalized':
+			imagedata = data.NormImageData()
+		else:
+			raise ValueError('Invalid reference type specified')
+
+		imagedata['id'] = self.ID()
+		imagedata['image'] = image
+		correctorcamstatedata = data.CorrectorCamstateData()
+		correctorcamstatedata['dimension'] = camerastate['dimension']
+		correctorcamstatedata['offset'] = camerastate['offset']
+		correctorcamstatedata['binning'] = camerastate['binning']
+		imagedata['camstate'] = correctorcamstatedata
+
+		self.status.set('Publishing reference image...')
+		self.publish(imagedata, pubevent=True, database=True)
+		self.status.set('Reference image published')
+
+	def acquireReferenceImage(self, binning, exposuretype, naverage):
+		self.status.set('Setting up camera...')
+		camerastate = self.setCameraSettings(binning, exposuretype)
+		image = self.getMedianImage(naverage)
+		print self.getImageStats(image)
+		self.publishReference(exposuretype, image, camerastate)
+
+	def acquireReferenceImages(self):
+		naverage = self.imagestoaverage.get()
+		exposuretypestrings = {'dark': 'Dark', 'normal': 'Bright'}
+		try:
+			for exposuretype in ['dark', 'normal']:
+				for binning in [1, 2, 4, 8]:
+					self.exposuretype.set(exposuretypestrings[exposuretype])
+					self.binning.set(str(binning))
+					image = self.acquireReferenceImage(binning, exposuretype, naverage)
+		except (CameraError, node.PublishError), e:
+			if isinstance(e, CameraError):
+				message = 'Error configuring camera'
+			elif isinstance(e, node.PublishError):
+				message = 'Error saving reference to the database'
+			else:
+				message = 'Error acquiring reference images'
+			if str(e):
+				message += ': %s' % str(e)
+			self.messagelog.error(message)
+			self.status.set('Error acquiring reference images')
+			self.exposuretype.set('')
+			self.binning.set('')
+			return
+
+		self.status.set('Reference images acquired')
+		self.exposuretype.set('')
+		self.binning.set('')
+
+	def onAcquireReferenceImages(self):
+		self.automethod.disable()
+		try:
+			self.acquireReferenceImages()
+		except:
+			self.automethod.enable()
+			raise
+		self.automethod.enable()
+
+	def defineUserInterface(self):
+		node.Node.defineUserInterface(self)
+
+		self.messagelog = uidata.MessageLog('Message Log')
+
+		self.status = uidata.String('Status', '', 'r')
+		self.exposuretype = uidata.String('Exposure type', '', 'r')
+		self.binning = uidata.String('Binning', '', 'r')
+		statuscontainer = uidata.Container('Status')
+		statuscontainer.addObjects((self.status, self.exposuretype, self.binning))
+
+		self.displayacquire = uidata.Boolean('Acquired images', False,
+																					'rw', persist=True)
+		self.displaymedian = uidata.Boolean('Median images', True,
+																					'rw', persist=True)
+		displaycontainer = uidata.Container('Display')
+		displaycontainer.addObjects((self.displayacquire, self.displaymedian))
+		self.imagestoaverage = uidata.Integer('Images to average', 3, 'rw',
+																					persist=True)
+		settingscontainer = uidata.Container('Settings')
+		settingscontainer.addObjects((displaycontainer, self.imagestoaverage))
+
+		self.image = uidata.Image('Image', None)
+
+		self.automethod = uidata.Method('Auto', self.onAcquireReferenceImages)
+		referencescontainer = uidata.Container('References')
+		referencescontainer.addObjects((self.automethod,))
+
+		controlcontainer = uidata.Container('Control')
+		controlcontainer.addObjects((referencescontainer,))
+
+		container = uidata.LargeContainer('Simple Corrector')
+		container.addObjects((self.messagelog, statuscontainer, self.image,
+													settingscontainer, controlcontainer))
+
+		self.uiserver.addObjects((container,))
 
 class Corrector(node.Node):
 	'''
