@@ -24,6 +24,7 @@ class Focuser(acquisition.Acquisition):
 		this replaces Acquisition.acquire()
 		Instead of acquiring an image, we do autofocus
 		'''
+		info = {}
 		self.abortfail.clear()
 		btilt = self.btilt.get()
 		pub = self.publishimages.get()
@@ -39,6 +40,8 @@ class Focuser(acquisition.Acquisition):
 		stigx = correction['stigx']
 		stigy = correction['stigy']
 		min = correction['min']
+
+		info.update({'defocus':defoc, 'stigx':stigx, 'stigy':stigy, 'min':min})
 
 		### validate defocus correction
 		# possibly use min (value minimized during least square fit)
@@ -67,6 +70,9 @@ class Focuser(acquisition.Acquisition):
 		if validstig and self.stigcorrection.get():
 			print 'Stig correction'
 			self.correctStig(stigx, stigy)
+			info['corrected stig'] = 1
+		else:
+			info['corrected stig'] = 0
 
 		if validdefocus:
 			print 'Defocus correction'
@@ -76,7 +82,12 @@ class Focuser(acquisition.Acquisition):
 			except (IndexError, KeyError):
 				print 'no method selected for correcting defocus'
 			else:
+				info['defocus correction'] = focustype
 				focusmethod(defoc)
+
+		frd = data.FocuserResultData(initializer=info)
+		self.publish(frd, database=True)
+
 		return 0
 
 	def correctStig(self, deltax, deltay):
