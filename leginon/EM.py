@@ -62,8 +62,10 @@ class EM(node.Node):
 
 if __name__ == '__main__':
 	import time
+	import tecnai
+	import tietz
 
-	foo = EM('myEM', ('cronus1', 49152))
+	foo = EM('myEM', {'hostname' : 'cronus1', 'port' : 49152}, tecnai.tecnai, tietz.tietz)
 	while(1):
 		time.sleep(.01)
 
