@@ -191,9 +191,10 @@ class SQLDict:
 
     class _multipleQueries:
 
-	def __init__(self, db, queryinfo):
+	def __init__(self, db, queryinfo, readimages=True):
 	    self.db = db
 	    self.queryinfo = queryinfo
+	    self.readimages = readimages
 	    #print 'querinfo ', self.queryinfo
 	    self.queries = setQueries(queryinfo)
 	    #print 'queries ', self.queries
@@ -267,7 +268,7 @@ class SQLDict:
                 
                 return rootlist
 
-	def _format(self, sqlresult, qikey, memo={}):
+	def _format(self, sqlresult, qikey):
 		"""Convert SQL result to data instances. Create a new data class
 		only if it does not exist.
 		"""
@@ -279,6 +280,8 @@ class SQLDict:
 		classname = self.queryinfo[qikey]['class name']
 		dataclass = getattr(data, classname)
 
+		## keep memo to ensure only creating instance once
+		memo = {}
 		for r in result:
 			memokey = (classname, r['DEF_id'])
 			dbid = r['DEF_id']
@@ -298,14 +301,11 @@ class SQLDict:
 				except KeyError, e:
 					raise
 
-				### load things from files
-				if hasattr(newdata, 'load'):
-					newdata.load()
+				## add pending dbid for now, actual dbid
+				## after all items are set, otherwise __setitem__
+				## will reset dbid
+				newdata.pending_dbid = dbid
 
-			## add pending dbid for now, actual dbid
-			## after all items are set, otherwise __setitem__
-			## will reset dbid
-			newdata.pending_dbid = dbid
 			datalist.append(newdata)
 
 		return datalist
@@ -331,7 +331,11 @@ class SQLDict:
 				if isinstance(target, data.SessionData):
 					imagepath = target['image path']
 			elif isinstance(value, strictdict.FileReference):
-				needpath.append(key)
+				#needpath.append(key)
+				if self.readimages:
+					needpath.append(key)
+				else:
+					root[key] = None
 
 		## now read data using the found path
 		for key in needpath:
@@ -613,11 +617,11 @@ class SQLDict:
 	"""
 	return self._createSQLTable(self.db, table, definition)
 
-    def multipleQueries(self, queryinfo):
+    def multipleQueries(self, queryinfo, readimages=True):
 	"""
 		Execute a list of queries, it will return a list of dictionaries
 	"""
-	return self._multipleQueries(self.db, queryinfo)
+	return self._multipleQueries(self.db, queryinfo, readimages)
 
 
 class ObjectBuilder:
