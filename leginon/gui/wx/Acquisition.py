@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Acquisition.py,v $
-# $Revision: 1.25 $
+# $Revision: 1.26 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-21 22:27:06 $
+# $Date: 2004-10-28 17:24:34 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -20,6 +20,7 @@ import wx
 import gui.wx.Events
 import gui.wx.ImageViewer
 import gui.wx.ToolBar
+import threading
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'acquisition'
@@ -40,6 +41,10 @@ class Panel(gui.wx.Node.Panel):
 		self.toolbar.AddTool(gui.wx.ToolBar.ID_ABORT,
 													'stop',
 													shortHelpString='Abort')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SIMULATE_TARGET,
+													'simulatetarget',
+													shortHelpString='Simulate Target')
+		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PLAY, False)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_PAUSE, False)
 		self.toolbar.EnableTool(gui.wx.ToolBar.ID_ABORT, False)
@@ -69,6 +74,11 @@ class Panel(gui.wx.Node.Panel):
 											id=gui.wx.ToolBar.ID_PAUSE)
 		self.toolbar.Bind(wx.EVT_TOOL, self.onStopTool,
 											id=gui.wx.ToolBar.ID_ABORT)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onSimulateTargetTool,
+											id=gui.wx.ToolBar.ID_SIMULATE_TARGET)
+
+	def onSimulateTargetTool(self, evt):
+		threading.Thread(target=self.node.simulateTarget).start()
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)

@@ -524,3 +524,11 @@ class Acquisition(targetwatcher.TargetWatcher):
 	def reportStatus(self, type, message):
 		self.logger.info('%s: %s' % (type, message))
 
+	def simulateTarget(self):
+		targetdata = self.newSimulatedTarget()
+		self.publish(targetdata, database=True)
+		## change to 'processing' just like targetwatcher does
+		proctargetdata = data.AcquisitionImageTargetData(initializer=targetdata, status='processing')
+		ret = self.processTargetData(targetdata=proctargetdata, attempt=1)
+		self.logger.info('Done with simulated target, status: %s (repeat will not be honored)' % (ret,))
+
