@@ -30,15 +30,6 @@ watch_set = (
 'stage position',
 )
 
-class SetEMEvent(event.PublishEvent):
-	pass
-
-class SetScopeEvent(SetEMEvent):
-	dataclass = data.ScopeEMData
-
-class SetCameraEvent(SetEMEvent):
-	dataclass = data.CameraEMData
-
 class EMClient(object):
 	def __init__(self, node):
 		self.node = node
@@ -69,11 +60,11 @@ class EMClient(object):
 		return self.cameraimageref['data']
 
 	def setScope(self, value):
-		setevent = SetScopeEvent(data=value)
+		setevent = event.SetScopeEvent(data=value)
 		self.node.outputEvent(setevent, wait=True)
 
 	def setCamera(self, value):
-		setevent = SetCameraEvent(data=value)
+		setevent = event.SetCameraEvent(data=value)
 		self.node.outputEvent(setevent, wait=True)
 
 
@@ -99,7 +90,7 @@ class ExitRequest(Request):
 	pass
 
 class EM(node.Node):
-	eventinputs = node.Node.eventinputs + [event.LockEvent, event.UnlockEvent, SetScopeEvent, SetCameraEvent]
+	eventinputs = node.Node.eventinputs + [event.LockEvent, event.UnlockEvent, event.SetScopeEvent, event.SetCameraEvent]
 	def __init__(self, id, session, managerlocation, tcpport=None, **kwargs):
 		self.messagelog = uidata.MessageLog('Message Log')
 
@@ -219,8 +210,8 @@ class EM(node.Node):
 		self.addEventInput(event.UnlockEvent, self.doUnlock)
 
 		# watch for SetScopeEvent and SetCameraEvent
-		self.addEventInput(SetScopeEvent, self.handleSet)
-		self.addEventInput(SetCameraEvent, self.handleSet)
+		self.addEventInput(event.SetScopeEvent, self.handleSet)
+		self.addEventInput(event.SetCameraEvent, self.handleSet)
 
 		# the handler thread waits for queue requests and processes them
 		# scope and camera are typically COM objects and need to be intialized

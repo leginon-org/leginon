@@ -338,15 +338,9 @@ class PresetsManager(node.Node):
 		self.uistatus.set(beginmessage)
 		self.logger.info(beginmessage)
 
-		## should switch to using AllEMData
-		try:
-			self.emclient.setScope(scopedata)
-			if cameradata is not None:
-				self.emclient.setCamera(cameradata)
-		except node.PublishError:
-			message = 'Cannot set instrument parameters. Maybe EM node is not working'
-			self.messagelog.error(message)
-			raise PresetChangeError(message)
+		self.emclient.setScope(scopedata)
+		if cameradata is not None:
+			self.emclient.setCamera(cameradata)
 
 		pause = self.changepause.get()
 		time.sleep(pause)

@@ -336,6 +336,15 @@ class PresetChangedEvent(Event):
 		return t
 	typemap = classmethod(typemap)
 
+class SetEMEvent(PublishEvent):
+	pass
+
+class SetScopeEvent(SetEMEvent):
+	dataclass = data.ScopeEMData
+
+class SetCameraEvent(SetEMEvent):
+	dataclass = data.CameraEMData
+
 class DeviceLockEvent(ControlEvent):
 	pass
 
