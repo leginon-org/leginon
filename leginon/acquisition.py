@@ -146,6 +146,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		for newpresetname in presetnames:
 			presettarget = data.PresetTargetData(emtarget=emtarget, preset=newpresetname)
+			self.publish(presettarget, database=True)
 			if force == False:
 				if self.alreadyAcquired(targetdata, presettarget):
 					continue
@@ -265,6 +266,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 		oldpreset = targetdata['preset']
 		# now make EMTargetData to hold all this
 		emtargetdata = data.EMTargetData(scope=newscope, preset=oldpreset)
+		self.publish(emtargetdata, database=True)
 		return emtargetdata
 
 	def acquireFilm(self, presetdata, target=None, emtarget=None):
