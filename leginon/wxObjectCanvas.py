@@ -173,6 +173,7 @@ class wxConnectionObject(object):
 		self.fromso = so1
 		self.toso = so2
 		self.text = text
+		self.tempto = None
 
 	def setParent(self, parent):
 		self.parent = parent
@@ -190,7 +191,11 @@ class wxConnectionObject(object):
 		return self.toso
 
 	def setToShapeObject(self, so):
+		self.tempto = None
 		self.toso = so
+
+	def setTempTo(self, position):
+		self.tempto = position
 
 	def setText(self, text):
 		self.text = text
@@ -263,6 +268,93 @@ class wxConnectionObject(object):
 		x1, y1 = p1
 		x2, y2 = p2
 		dc.DrawLine(x1, y1, x2, y2)
+
+		tx = (x2 - x1)/2 + x1
+		ty = (y2 - y1)/2 + y1
+		self.DrawText(dc, tx, ty)
+
+	def crookedLine(self, dc, so1, so2):
+		x1, y1 = so1.getCanvasCenter()
+		x2, y2 = so2.getCanvasCenter()
+		n1, e1, s1, w1 = so1.getFaces()
+		n2, e2, s2, w2 = so2.getFaces()
+
+		direction = so1.direction(so2)
+		if direction == 'n':
+			x1, y1 = n1
+			x2, y2 = s2
+			my = (y1 - y2)/2 + y2
+			l1 = (x1, y1, x1, my)
+			l2 = (x1, my, x2, my)
+			l3 = (x2, my, x2, y2)
+			self.DrawArrow(dc, (x2, y2), 'n')
+		elif direction == 'e':
+			x1, y1 = e1
+			x2, y2 = w2
+			mx = (x2 - x1)/2 + x1
+			l1 = (x1, y1, mx, y1)
+			l2 = (mx, y1, mx, y2)
+			l3 = (mx, y2, x2, y2)
+			self.DrawArrow(dc, (x2, y2), 'e')
+		elif direction == 's':
+			x1, y1 = s1
+			x2, y2 = n2
+			my = (y2 - y1)/2 + y1
+			l1 = (x1, y1, x1, my)
+			l2 = (x1, my, x2, my)
+			l3 = (x2, my, x2, y2)
+			self.DrawArrow(dc, (x2, y2), 's')
+		elif direction == 'w':
+			x1, y1 = w1
+			x2, y2 = e2
+			mx = (x1 - x2)/2 + x2
+			l1 = (x1, y1, mx, y1)
+			l2 = (mx, y1, mx, y2)
+			l3 = (mx, y2, x2, y2)
+			self.DrawArrow(dc, (x2, y2), 'w')
+		apply(dc.DrawLine, l1)
+		apply(dc.DrawLine, l2)
+		apply(dc.DrawLine, l3)
+
+		tx = (x2 - x1)/2 + x1
+		ty = (y2 - y1)/2 + y1
+		self.DrawText(dc, tx, ty)
+
+	def _crookedLine(self, dc, so1, x2, y2):
+		x1, y1 = so1.getCanvasCenter()
+		n1, e1, s1, w1 = so1.getFaces()
+		direction = so1._direction(x2, y2)
+		if direction == 'n':
+			x1, y1 = n1
+			my = (y1 - y2)/2 + y2
+			l1 = (x1, y1, x1, my)
+			l2 = (x1, my, x2, my)
+			l3 = (x2, my, x2, y2)
+			self.DrawArrow(dc, (x2, y2), 'n')
+		elif direction == 'e':
+			x1, y1 = e1
+			mx = (x2 - x1)/2 + x1
+			l1 = (x1, y1, mx, y1)
+			l2 = (mx, y1, mx, y2)
+			l3 = (mx, y2, x2, y2)
+			self.DrawArrow(dc, (x2, y2), 'e')
+		elif direction == 's':
+			x1, y1 = s1
+			my = (y2 - y1)/2 + y1
+			l1 = (x1, y1, x1, my)
+			l2 = (x1, my, x2, my)
+			l3 = (x2, my, x2, y2)
+			self.DrawArrow(dc, (x2, y2), 's')
+		elif direction == 'w':
+			x1, y1 = w1
+			mx = (x1 - x2)/2 + x2
+			l1 = (x1, y1, mx, y1)
+			l2 = (mx, y1, mx, y2)
+			l3 = (mx, y2, x2, y2)
+			self.DrawArrow(dc, (x2, y2), 'w')
+		apply(dc.DrawLine, l1)
+		apply(dc.DrawLine, l2)
+		apply(dc.DrawLine, l3)
 
 		tx = (x2 - x1)/2 + x1
 		ty = (y2 - y1)/2 + y1
@@ -352,12 +444,17 @@ class wxConnectionObject(object):
 		return True
 
 	def Draw(self, dc):
-		if self.fromso is None or self.toso is None:
-			return
-		if self.elbowLine(dc, self.fromso, self.toso):
-			return
-		if self.straightLine(dc, self.fromso, self.toso):
-			return
+		if self.fromso is not None:
+			if self.tempto is not None:
+				x, y = self.tempto
+				self._crookedLine(dc, self.fromso, x, y)
+			elif self.toso is not None:
+				self.crookedLine(dc, self.fromso, self.toso)
+
+#		if self.elbowLine(dc, self.fromso, self.toso):
+#			return
+#		if self.straightLine(dc, self.fromso, self.toso):
+#			return
 
 class wxShapeObject(wxShapeObjectEvtHandler):
 	def __init__(self, width, height):
@@ -552,13 +649,16 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 		return (n, e, s, w)
 
 	def direction(self, so):
+		x, y = so.getCanvasCenter()
+		return self._direction(x, y)
+
+	def _direction(self, x2, y2):
 		# \ n /
 		#  \ /
 		# w \ e
 		#  / \
 		# / s \
 		x1, y1 = self.getCanvasCenter()
-		x2, y2 = so.getCanvasCenter()
 
 		try:
 			slope = float(y2 - y1)/float(x2 - x1)
@@ -783,6 +883,8 @@ class wxObjectCanvas(wxScrolledWindow):
 			else:	
 				self.draginfo.setPosition(evt.m_x, evt.m_y)
 				self.UpdateDrawing()
+		self.master.ProcessEvent(evt)
+		self.UpdateDrawing()
 
 	def popupMenu(self, x, y):
 		shapeobject = self.master.getShapeObjectFromXY(x, y)
