@@ -25,7 +25,24 @@ class Watcher(node.Node):
 		self.watchOn()
 
 	def defineUserInterface(self):
-		return node.Node.defineUserInterface(self)
+		nui = node.Node.defineUserInterface(self)
+		
+		toggle = self.registerUIData('Watcher On', 'boolean', permissions = 'rw', default=1)
+		toggle.set(self.uiWatchToggleCallback)
+
+		myspec = self.registerUISpec('Watcher', (toggle,))
+		myspec += nui
+
+		return myspec
+
+	def uiWatchToggleCallback(self, value=None):
+		if value is not None:
+			self.watchvalue = value
+		if self.watchvalue:
+			self.watchOn()
+		else:
+			self.watchOff()
+		return self.watchvalue
 
 	def die(self):
 		node.Node.die(self)
