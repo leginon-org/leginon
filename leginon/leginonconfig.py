@@ -31,5 +31,8 @@ DB_PASS		= ''
 ## use os.getcwd() for current directory
 LEGINON_PATH	= os.getcwd()
 IMAGE_PATH	= os.path.join(LEGINON_PATH, 'images')
-mkdirs(IMAGE_PATH)
 
+try:
+	mkdirs(IMAGE_PATH)
+except:
+	print 'error creating IMAGE_PATH %s' % (IMAGE_PATH,)
