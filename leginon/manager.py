@@ -677,7 +677,10 @@ class Manager(node.Node):
 
 	def uiLauncherSelectCallback(self, value):
 		launchername = self.uilauncherselect.getSelectedValue(value)
-		classes = list(self.launcherdict[launchername]['classes'])
+		try:
+			classes = list(self.launcherdict[launchername]['classes'])
+		except KeyError:
+			classes = []
 		classes.sort()
 		self.uiclassselect.set(classes, 0)
 		return value
