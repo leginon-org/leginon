@@ -212,7 +212,7 @@ class NumericImage:
 		wximage.SetData(self.image.convert('RGB').tostring())
 		return wximage
 
-	def jpeg(self, filename=None, quality=100):
+	def jpeg(self, filename=None, quality=100, newsize=None):
 		'''
 		Convert numeric -> JPEG [quality]
 		filename defaults to stdout
@@ -221,7 +221,10 @@ class NumericImage:
 		img = self.update_image()
 		if filename is None:
 			filename = sys.stdout
-		img.convert('L').save(filename, "JPEG", quality=quality)
+		if newsize is None:
+			img.convert('L').save(filename, "JPEG", quality=quality)
+		else:
+			img.convert('L').resize(newsize).save(filename, "JPEG", quality=quality)
 
 
 
