@@ -6,112 +6,6 @@ import dbdatakeeper
 import cPickle
 import copy
 
-class StrictDict(dict):
-	'''
-	StrictDict(keys)
-	   keys - sequence of keys that are allowed in the dict
-
-	Subclassed from dict, with the following differences:
-	   - restricted to only keys specified at initialization
-	   - keys() method returns keys in same order as initialized
-	   - new method allowed_keys() returns all the allowed keys
-	'''
-	def __init__(self, keys):
-		dict.__init__(self)
-		self.__allowed = tuple(keys)
-
-	def __setitem__(self, key, value):
-		if key in self.__allowed:
-			dict.__setitem__(self, key, value)
-
-	def allowed_keys(self):
-		return self.__allowed
-
-	def keys(self):
-		ordered = []
-		actualkeys = dict.keys(self)
-		for key in self.__allowed:
-			if key in actualkeys:
-				ordered.append(key)
-		return ordered
-
-	def update(self, obj):
-		for key in obj.keys(): self[key] = obj[key]
-
-	def diff(self, other):
-		return self.__diffValues(dict(self), dict(other))
-
-	def __sub__(self, other):
-		return self.diff(other)
-
-	def significant(self):
-		'''
-		return copy of self with only the significant items
-		'''
-		pass
-
-	def __equalKeys(self, keys1, keys2):
-		if len(keys1) != len(keys2):
-			return 0
-		for key in keys1:
-			if key not in keys2:
-				return 0
-		return 1
-
-	def __nonzeroValues(self, value):
-		'''
-		return true if at least one nonzero item in value
-		'''
-		if isinstance(value, dict):
-			#### dict objects
-			for key, value in value.items():
-				if self.__nonzeroValues(value):
-					return 1
-			return 0
-		else:
-			#### other objects
-			if value:
-				return 1
-			else:
-				return 0
-
-	def __diffValues(self, value1, value2):
-		try:
-			diff = value1 - value2
-		except TypeError:
-			if type(value1) == type(value2) == dict:
-				## dict subtraction
-				if not self.__equalKeys(value1.keys(), value2.keys()):
-					raise ValueError('keys are not same')
-				diff = {}
-				for key in value1:
-					diff[key] = self.__diffValues(value1[key], value2[key])
-			else:
-				## don't know what to do with this type
-				raise
-
-		return diff
-
-### most common allowed keys for PresetDict
-PRESET_KEYS = (
-	'spot size',
-	'magnification',
-	'image shift',
-	'beam shift',
-	'intensity',
-	'defocus',
-
-	'dimension',
-	'binning',
-	'offset',
-	'exposure time'
-)
-
-class PresetDict(StrictDict):
-	def __init__(self):
-		StrictDict.__init__(self, PRESET_KEYS)
-
-
 class PresetsClient(object):
 	def __init__(self, node):
 		self.node = node
@@ -124,15 +18,14 @@ class PresetsClient(object):
 			print 'PresetClient unable to use presets.  Is a PresetsManager node running?'
 			raise
 		try:
-#			presetdict = presetdata.content[key]
-#			dictcopy = copy.deepcopy(presetdict)
+			## make a new PresetData from the stored version
 			dictcopy = copy.deepcopy(presetdata)
-			presetvalue = PresetDict()
-			presetvalue.update(dictcopy)
+			presetdata = data.PresetData(self.ID())
+			presetdata.update(dictcopy)
 		except KeyError:
 			print '%s is not in presets' % (key,)
 			raise
-		return presetvalue
+		return presetdata
 
 	def setPreset(self, key, presetdict):
 		dictcopy = copy.deepcopy(dict(presetdict))
@@ -151,12 +44,20 @@ class PresetsClient(object):
 		'''
 		return a new preset 
 		'''
-		p = PresetDict()
+		p = PresetData(self.ID())
 		scope = self.node.researchByDataID('scope')
 		camera = self.node.researchByDataID('camera no image data')
-		# these two work?
-		p.update(scope)
-		p.update(camera)
+		#p.update(scope)
+		#p.update(camera)
+		for key in p:
+			try:
+				p[key] = scope[key]
+			except KeyError:
+				pass
+			try:
+				p[key] = camera[key]
+			except KeyError:
+				pass
 		return p
 
 
@@ -175,7 +76,7 @@ class DataHandler(datahandler.DataBinder):
 		if isinstance(idata, event.Event):
 			datahandler.DataBinder.insert(self, idata)
 		else:
-			self.node.setPresets(idata.content)
+			self.node.setPresets(idata)
 
 	# borrowed from NodeDataHandler
 	def setBinding(self, eventclass, func):
