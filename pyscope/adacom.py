@@ -1,27 +1,23 @@
-# Created by makepy.py version 0.4.1
-# By python version 2.2.2 (#37, Oct 14 2002, 17:02:34) [MSC 32 bit (Intel)]
+# -*- coding: mbcs -*-
+# Created by makepy.py version 0.4.6
+# By python version 2.3.2 (#49, Oct  2 2003, 20:02:00) [MSC v.1200 32 bit (Intel)]
 # From type library 'adaExp.exe'
-# On Thu Jul 10 17:14:15 2003
-#
-# COPYRIGHT:
-#       The Leginon software is Copyright 2003
-#       The Scripps Research Institute, La Jolla, CA
-#       For terms of the license agreement
-#       see  http://ami.scripps.edu/software/leginon-license
-#
+# On Wed Dec 17 12:23:59 2003
 """adaExp Library"""
-makepy_version = '0.4.1'
-python_version = 0x20202f0
+makepy_version = '0.4.6'
+python_version = 0x20302f0
 
 import win32com.client.CLSIDToClass, pythoncom
+from pywintypes import IID
+from win32com.client import Dispatch
 
 # The following 3 lines may need tweaking for the particular server
 # Candidates are pythoncom.Missing and pythoncom.Empty
-defaultNamedOptArg=pythoncom.Missing
-defaultNamedNotOptArg=pythoncom.Missing
-defaultUnnamedArg=pythoncom.Missing
+defaultNamedOptArg=pythoncom.Empty
+defaultNamedNotOptArg=pythoncom.Empty
+defaultUnnamedArg=pythoncom.Empty
 
-CLSID = pythoncom.MakeIID('{7116A70D-7497-499C-8E59-D72CDB13F379}')
+CLSID = IID('{7116A70D-7497-499C-8E59-D72CDB13F379}')
 MajorVersion = 1
 MinorVersion = 0
 LibraryFlags = 8
@@ -40,40 +36,41 @@ class constants:
 from win32com.client import DispatchBaseClass
 class ITAdaExp(DispatchBaseClass):
 	"""Dispatch interface for TAdaExp Object"""
-	CLSID = pythoncom.MakeIID('{8D304182-1C3E-45A3-955D-3D81F7C82284}')
+	CLSID = IID('{8D304182-1C3E-45A3-955D-3D81F7C82284}')
+	coclass_clsid = IID('{549B8B80-8169-4908-B0E5-EAFA51153561}')
 
 	# The method SetCurrentSpecimenHolder is actually a property, but must be used as a method to correctly pass the arguments
 	def SetCurrentSpecimenHolder(self, Id=defaultNamedNotOptArg):
-		return self._oleobj_.InvokeTypes(0x14, LCID, 2, (3, 0), ((3, 1),),Id)
+		return self._oleobj_.InvokeTypes(20, LCID, 2, (3, 0), ((3, 1),),Id)
 
 	# The method SetFegExtractor is actually a property, but must be used as a method to correctly pass the arguments
 	def SetFegExtractor(self, Val=defaultNamedNotOptArg):
-		return self._oleobj_.InvokeTypes(0x1d, LCID, 2, (3, 0), ((5, 1),),Val)
+		return self._oleobj_.InvokeTypes(29, LCID, 2, (3, 0), ((5, 1),),Val)
 
 	# The method SetFegGunLens is actually a property, but must be used as a method to correctly pass the arguments
 	def SetFegGunLens(self, Val=defaultNamedNotOptArg):
-		return self._oleobj_.InvokeTypes(0x1f, LCID, 2, (3, 0), ((3, 1),),Val)
+		return self._oleobj_.InvokeTypes(31, LCID, 2, (3, 0), ((3, 1),),Val)
 
 	# The method SetFilamentIndex is actually a property, but must be used as a method to correctly pass the arguments
 	def SetFilamentIndex(self, Val=defaultNamedNotOptArg):
-		return self._oleobj_.InvokeTypes(0x17, LCID, 2, (3, 0), ((3, 1),),Val)
+		return self._oleobj_.InvokeTypes(23, LCID, 2, (3, 0), ((3, 1),),Val)
 
 	# The method SetFilamentLimit is actually a property, but must be used as a method to correctly pass the arguments
 	def SetFilamentLimit(self, Val=defaultNamedNotOptArg):
-		return self._oleobj_.InvokeTypes(0x1b, LCID, 2, (3, 0), ((3, 1),),Val)
+		return self._oleobj_.InvokeTypes(27, LCID, 2, (3, 0), ((3, 1),),Val)
 
 	# The method SetTmp is actually a property, but must be used as a method to correctly pass the arguments
 	def SetTmp(self, Val=defaultNamedNotOptArg):
-		return self._oleobj_.InvokeTypes(0x12, LCID, 2, (3, 0), ((3, 1),),Val)
+		return self._oleobj_.InvokeTypes(18, LCID, 2, (3, 0), ((3, 1),),Val)
 
 	# The method SetWehneltIndex is actually a property, but must be used as a method to correctly pass the arguments
 	def SetWehneltIndex(self, Val=defaultNamedNotOptArg):
-		return self._oleobj_.InvokeTypes(0x19, LCID, 2, (3, 0), ((3, 1),),Val)
+		return self._oleobj_.InvokeTypes(25, LCID, 2, (3, 0), ((3, 1),),Val)
 
 	# The method SpecimenHolderName is actually a property, but must be used as a method to correctly pass the arguments
 	def SpecimenHolderName(self, Id=defaultNamedNotOptArg):
 		# Result is a Unicode object - return as-is for this version of Python
-		return self._oleobj_.InvokeTypes(0x16, LCID, 2, (8, 0), ((3, 1),),Id)
+		return self._oleobj_.InvokeTypes(22, LCID, 2, (8, 0), ((3, 1),),Id)
 
 	_prop_map_get_ = {
 		"CloseShutter": (4, 2, (3, 0), (), "CloseShutter", None),
@@ -108,7 +105,8 @@ class ITAdaExp(DispatchBaseClass):
 
 class ITAdaExpEvents:
 	"""Events interface for TAdaExp Object"""
-	CLSID = CLSID_Sink = pythoncom.MakeIID('{B0837CB1-2954-478C-BF84-541873BDFE58}')
+	CLSID = CLSID_Sink = IID('{B0837CB1-2954-478C-BF84-541873BDFE58}')
+	coclass_clsid = IID('{549B8B80-8169-4908-B0E5-EAFA51153561}')
 	_public_methods_ = [] # For COM Server support
 	_dispid_to_func_ = {
 		}
@@ -136,36 +134,15 @@ class ITAdaExpEvents:
 		import win32com.server.util
 		if iid==self.CLSID_Sink: return win32com.server.util.wrap(self)
 
-	# Handlers for the control
+	# Event Handlers
 	# If you create handlers, they should have the following prototypes:
 
 
-class CoClassBaseClass:
-	def __init__(self, oobj=None):
-		if oobj is None: oobj = pythoncom.new(self.CLSID)
-		self.__dict__["_dispobj_"] = self.default_interface(oobj)
-	def __repr__(self):
-		return "<win32com.gen_py.%s.%s>" % (__doc__, self.__class__.__name__)
-
-	def __getattr__(self, attr):
-		d=self.__dict__["_dispobj_"]
-		if d is not None: return getattr(d, attr)
-		raise AttributeError, attr
-	def __setattr__(self, attr, value):
-		if self.__dict__.has_key(attr): self.__dict__[attr] = value; return
-		try:
-			d=self.__dict__["_dispobj_"]
-			if d is not None:
-				d.__setattr__(attr, value)
-				return
-		except AttributeError:
-			pass
-		self.__dict__[attr] = value
-
+from win32com.client import CoClassBaseClass
 # This CoClass is known by the name 'adaExp.TAdaExp'
 class TAdaExp(CoClassBaseClass): # A CoClass
 	# TAdaExp Object
-	CLSID = pythoncom.MakeIID("{549B8B80-8169-4908-B0E5-EAFA51153561}")
+	CLSID = IID('{549B8B80-8169-4908-B0E5-EAFA51153561}')
 	coclass_sources = [
 		ITAdaExpEvents,
 	]
@@ -177,14 +154,40 @@ class TAdaExp(CoClassBaseClass): # A CoClass
 
 ITAdaExp_vtables_dispatch_ = 1
 ITAdaExp_vtables_ = [
-	('SetTmp', 18, ((3,1,None), (16387,10,None), ), (3, 0, None), ('Val', 'Value')),
-	('SetFilamentIndex', 23, ((3,1,None), (16387,10,None), ), (3, 0, None), ('Val', 'Value')),
-	('SetWehneltIndex', 25, ((3,1,None), (16387,10,None), ), (3, 0, None), ('Val', 'Value')),
-	('SetFilamentLimit', 27, ((3,1,None), (16387,10,None), ), (3, 0, None), ('Val', 'Value')),
-	('SetFegExtractor', 29, ((5,1,None), (16387,10,None), ), (3, 0, None), ('Val', 'Value')),
-	('SetFegGunLens', 31, ((3,1,None), (16387,10,None), ), (3, 0, None), ('Val', 'Value')),
-	('SetCurrentSpecimenHolder', 20, ((3,1,None), (16387,10,None), ), (3, 0, None), ('Id', 'Value')),
-	('SpecimenHolderName', 22, ((3,1,None), (16392,10,None), ), (3, 0, None), ('Id', 'Value')),
+	(('LoadPlate', 'Value'), 1, (1, (), [(16387, 10, None, None)], 1, 2, 4, 0, 28, (3, 0, None, None), 0)),
+	(('UnloadPlate', 'Value'), 2, (2, (), [(16387, 10, None, None)], 1, 2, 4, 0, 32, (3, 0, None, None), 0)),
+	(('PlateLoadStatus', 'Value'), 3, (3, (), [(16387, 10, None, None)], 1, 2, 4, 0, 36, (3, 0, None, None), 0)),
+	(('CloseShutter', 'Value'), 4, (4, (), [(16387, 10, None, None)], 1, 2, 4, 0, 40, (3, 0, None, None), 0)),
+	(('OpenShutter', 'Value'), 5, (5, (), [(16387, 10, None, None)], 1, 2, 4, 0, 44, (3, 0, None, None), 0)),
+	(('ShutterStatus', 'Value'), 6, (6, (), [(16387, 10, None, None)], 1, 2, 4, 0, 48, (3, 0, None, None), 0)),
+	(('DisconnectExternalShutter', 'Value'), 7, (7, (), [(16387, 10, None, None)], 1, 2, 4, 0, 52, (3, 0, None, None), 0)),
+	(('ConnectExternalShutter', 'Value'), 8, (8, (), [(16387, 10, None, None)], 1, 2, 4, 0, 56, (3, 0, None, None), 0)),
+	(('ExternalShutterStatus', 'Value'), 9, (9, (), [(16387, 10, None, None)], 1, 2, 4, 0, 60, (3, 0, None, None), 0)),
+	(('ExposePlateLabel', 'Value'), 10, (10, (), [(16387, 10, None, None)], 1, 2, 4, 0, 64, (3, 0, None, None), 0)),
+	(('UpdateExposureNumber', 'Value'), 11, (11, (), [(16387, 10, None, None)], 1, 2, 4, 0, 68, (3, 0, None, None), 0)),
+	(('MainScreenUp', 'Value'), 12, (12, (), [(16387, 10, None, None)], 1, 2, 4, 0, 72, (3, 0, None, None), 0)),
+	(('MainScreenDown', 'Value'), 13, (13, (), [(16387, 10, None, None)], 1, 2, 4, 0, 76, (3, 0, None, None), 0)),
+	(('MainScreenStatus', 'Value'), 14, (14, (), [(16387, 10, None, None)], 1, 2, 4, 0, 80, (3, 0, None, None), 0)),
+	(('GetTmpStatus', 'Value'), 17, (17, (), [(16387, 10, None, None)], 1, 2, 4, 0, 84, (3, 0, None, None), 0)),
+	(('SetTmp', 'Val', 'Value'), 18, (18, (), [(3, 1, None, None), (16387, 10, None, None)], 1, 2, 4, 0, 88, (3, 0, None, None), 0)),
+	(('GunType', 'Value'), 19, (19, (), [(16387, 10, None, None)], 1, 2, 4, 0, 92, (3, 0, None, None), 0)),
+	(('FilamentIndex', 'Value'), 21, (21, (), [(16387, 10, None, None)], 1, 2, 4, 0, 96, (3, 0, None, None), 0)),
+	(('SetFilamentIndex', 'Val', 'Value'), 23, (23, (), [(3, 1, None, None), (16387, 10, None, None)], 1, 2, 4, 0, 100, (3, 0, None, None), 0)),
+	(('WehneltIndex', 'Value'), 24, (24, (), [(16387, 10, None, None)], 1, 2, 4, 0, 104, (3, 0, None, None), 0)),
+	(('SetWehneltIndex', 'Val', 'Value'), 25, (25, (), [(3, 1, None, None), (16387, 10, None, None)], 1, 2, 4, 0, 108, (3, 0, None, None), 0)),
+	(('FilamentLimit', 'Value'), 26, (26, (), [(16387, 10, None, None)], 1, 2, 4, 0, 112, (3, 0, None, None), 0)),
+	(('SetFilamentLimit', 'Val', 'Value'), 27, (27, (), [(3, 1, None, None), (16387, 10, None, None)], 1, 2, 4, 0, 116, (3, 0, None, None), 0)),
+	(('FegExtractor', 'Value'), 28, (28, (), [(16389, 10, None, None)], 1, 2, 4, 0, 120, (3, 0, None, None), 0)),
+	(('SetFegExtractor', 'Val', 'Value'), 29, (29, (), [(5, 1, None, None), (16387, 10, None, None)], 1, 2, 4, 0, 124, (3, 0, None, None), 0)),
+	(('FegGunLens', 'Value'), 30, (30, (), [(16387, 10, None, None)], 1, 2, 4, 0, 128, (3, 0, None, None), 0)),
+	(('SetFegGunLens', 'Val', 'Value'), 31, (31, (), [(3, 1, None, None), (16387, 10, None, None)], 1, 2, 4, 0, 132, (3, 0, None, None), 0)),
+	(('GonioLedStatus', 'Value'), 32, (32, (), [(16387, 10, None, None)], 1, 2, 4, 0, 136, (3, 0, None, None), 0)),
+	(('SpecimenHolderInserted', 'Value'), 33, (33, (), [(16387, 10, None, None)], 1, 2, 4, 0, 140, (3, 0, None, None), 0)),
+	(('NumberOfSpecimenHolders', 'Value'), 15, (15, (), [(16387, 10, None, None)], 1, 2, 4, 0, 144, (3, 0, None, None), 0)),
+	(('CurrentSpecimentHolder', 'Value'), 16, (16, (), [(16387, 10, None, None)], 1, 2, 4, 0, 148, (3, 0, None, None), 0)),
+	(('SetCurrentSpecimenHolder', 'Id', 'Value'), 20, (20, (), [(3, 1, None, None), (16387, 10, None, None)], 1, 2, 4, 0, 152, (3, 0, None, None), 0)),
+	(('SpecimenHolderName', 'Id', 'Value'), 22, (22, (), [(3, 1, None, None), (16392, 10, None, None)], 1, 2, 4, 0, 156, (3, 0, None, None), 0)),
+	(('CurrentSpecimenHolderName', 'Value'), 34, (34, (), [(16392, 10, None, None)], 1, 2, 4, 0, 160, (3, 0, None, None), 0)),
 ]
 
 RecordMap = {
@@ -199,10 +202,12 @@ CLSIDToPackageMap = {}
 win32com.client.CLSIDToClass.RegisterCLSIDsFromDict( CLSIDToClassMap )
 VTablesToPackageMap = {}
 VTablesToClassMap = {
+	'{8D304182-1C3E-45A3-955D-3D81F7C82284}' : 'ITAdaExp',
 }
 
 
-VTablesNamesToCLSIDMap = {
+NamesToIIDMap = {
+	'ITAdaExpEvents' : '{B0837CB1-2954-478C-BF84-541873BDFE58}',
 	'ITAdaExp' : '{8D304182-1C3E-45A3-955D-3D81F7C82284}',
 }
 
