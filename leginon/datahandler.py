@@ -236,6 +236,7 @@ class DataBinder(DataHandler):
 		'''
 		while 1:
 			item = self.queue.get(block=True)
+			print self.id, 'DEQUEUED', item
 			try:
 				self.handleData(item)
 			except:
@@ -252,6 +253,7 @@ class DataBinder(DataHandler):
 		args = (newdata,)
 		for bindclass, func in self.bindings:
 			if issubclass(dataclass, bindclass):
+				print 'FUNC', func, args
 				apply(func, args)
 
 	def addBinding(self, dataclass, func):
