@@ -300,8 +300,13 @@ class Node(leginonobject.LeginonObject):
 		if datainstance['session'] is None or datainstance['session']['name'] != self.session['name']:
 			datainstance['session'] = self.session
 		for key in datainstance:
-			if isinstance(datainstance[key], data.InSessionData):
-				self.addSession(datainstance[key])
+			try:
+				child = datainstance[key]
+			except data.DataAccessError:
+				self.logger.exception('addSession')
+			else:
+				if isinstance(child, data.InSessionData):
+					self.addSession(child)
 
 	def research(self, dataclass=None, datainstance=None, results=None, readimages=True):
 		'''
