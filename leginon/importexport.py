@@ -96,8 +96,8 @@ class XMLApplicationExport:
 			schema_create += '      name="%s" %s' % (row['Field'], self.crlf)
 			schema_create += '      type="%s" %s' % (row['Type'], self.crlf)
 			if row['Default']:
-				schema_create += '      default="DEFAULT \'%s\'%s ' % (row['Default'], self.crlf)
-			if row['Null']:
+				schema_create += '      default="DEFAULT \'%s\'"%s' % (row['Default'], self.crlf)
+			if not row['Null']:
 				schema_create += '      null="NOT NULL"%s' % (self.crlf,)
 			if row['Extra']:
 				schema_create += '      extra="%s"%s ' % (row['Extra'], self.crlf)

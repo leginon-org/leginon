@@ -23,6 +23,7 @@ import datahandler
 import leginonobject
 import socket
 import os
+import importexport
 
 class Manager(node.Node):
 	'''Overlord of the nodes. Handles node communication (data and events).'''
@@ -559,6 +560,25 @@ class Manager(node.Node):
 		self.application.kill()
 
 	# UI methods
+	def uiExportApp(self):
+		filename = self.importexportfilename.get()
+		appname = self.uiapplicationlist.getSelectedValue()
+		app = importexport.ImportExport()
+		dump = app.exportApplication(appname)
+		try:
+			f = open(filename,'w')
+			f.write(dump)
+			f.close()
+		except IOError,e:
+			print e
+			return
+		print dump
+
+	def uiImportApp(self):
+		filename = self.importexportfilename.get()
+		appname = self.uiapplicationlist.getSelectedValue()
+		app = importexport.ImportExport()
+		app.importApplication(filename)
 
 	def uiUpdateNodeInfo(self):
 		'''Updates nodes lists and info in UI.'''
@@ -728,9 +748,19 @@ class Manager(node.Node):
 		applicationloadmethod = uidata.Method('Load', self.uiLoadApp)
 		applicationlaunchmethod = uidata.Method('Launch', self.uiLaunchApp)
 		applicationkillmethod = uidata.Method('Kill', self.uiKillApp)
+
+		importexportcontainer = uidata.Container('Import / Export')
+		self.importexportfilename = uidata.String('Filename', '', 'rw')
+		applicationexportmethod = uidata.Method('Export', self.uiExportApp)
+		applicationimportmethod = uidata.Method('Import', self.uiImportApp)
+		importexportobjects = (self.importexportfilename, applicationexportmethod, applicationimportmethod)
+
+		
+		importexportcontainer.addObjects(importexportobjects)
+
 		applicationobjects = (self.uiapplicationlist, applicationrefreshmethod,
-													applicationloadmethod, applicationlaunchmethod,
-													applicationkillmethod)
+				applicationloadmethod, applicationlaunchmethod,
+				applicationkillmethod, importexportcontainer)
 		self.uilauncheraliascontainer = None
 		self.applicationcontainer = uidata.LargeContainer('Application')
 		self.applicationcontainer.addObjects(applicationobjects)
