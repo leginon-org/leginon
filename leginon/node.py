@@ -26,7 +26,7 @@ class Client(datatransport.Client):
 #		else:
 #			raise event.InvalidEventError('event must be Event instance')
 
-class NodeDataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
+class DataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
 	def __init__(self, id):
 		# this will call LeginonObject constructor twice I think
 		datahandler.SimpleDataKeeper.__init__(self, id)
@@ -55,7 +55,7 @@ class NodeDataHandler(datahandler.SimpleDataKeeper, datahandler.DataBinder):
 			raise event.InvalidEventError('eventclass must be Event subclass')
 
 class Node(leginonobject.LeginonObject):
-	def __init__(self, id, nodelocations = {}, dh = NodeDataHandler, dhargs = (), clientclass = Client):
+	def __init__(self, id, nodelocations = {}, dh = DataHandler, dhargs = (), clientclass = Client):
 		leginonobject.LeginonObject.__init__(self, id)
 
 		self.nodelocations = nodelocations

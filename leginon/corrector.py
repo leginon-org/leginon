@@ -5,10 +5,22 @@ import cameraimage
 reload(cameraimage)
 import data, event
 import shelve
+import threading
 from Mrc import mrc_to_numeric, numeric_to_mrc
 
 ### these should go in a stats node or module
 
+class DataHandler(node.DataHandler):
+	# acq/rel twice on normal data
+	def query(self, id):
+		self.lock.acquire()
+		if id == 'normalzed image data':
+			result = self.acquireCorrectedImageData()
+			self.lock.release()
+			return result
+		else:
+			self.lock.release()
+			return node.DataHandler.query(self, id)
 
 class Corrector(node.Node):
 	def __init__(self, id, nodelocations):
@@ -20,6 +32,12 @@ class Corrector(node.Node):
 		self.addEventOutput(event.ImagePublishEvent)
 		self.addEventOutput(event.DarkImagePublishEvent)
 		self.addEventOutput(event.BrightImagePublishEvent)
+		self.addEventOutput(event.ListPublishEvent)
+
+		ids = ['normalized image data']
+		e = event.ListPublishEvent(self.ID(), ids)
+		self.outputEvent(e)
+
 		self.start()
 
 	def main(self):
@@ -121,7 +139,7 @@ class Corrector(node.Node):
 		self.calc_norm(key)
 		return ''
 
-	def acquireCorrected(self, ievent=None):
+	def acquireCorrectedImageData(self):
 		camdata = self.researchByDataID('camera')
 		camstate = camdata.content
 		numimage = camstate['image data']
@@ -129,7 +147,10 @@ class Corrector(node.Node):
 		key = self.cameraKey(camstate)
 		corrected = self.correct(numimage, key)
 		print 'corrected done'
-		correctdata = data.ImageData(self.ID(), corrected)
+		return data.ImageData(self.ID(), corrected)
+
+	def acquireCorrected(self, ievent=None):
+		correctdata = self.acquireCorrectedImageData()
 		print 'publishing corrected'
 		self.publish(correctdata, event.ImagePublishEvent)
 		print 'done pub correct'
