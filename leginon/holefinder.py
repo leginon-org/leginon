@@ -159,6 +159,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.originalimage.set(orig)
 
 	def findEdges(self):
+		self.logger.info('find edges')
 		n = self.glapsize.get()
 		sig = self.glapsigma.get()
 		ab = self.edgeabs.get()
@@ -173,6 +174,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.edgeimage.set(self.hf['edges'].astype(Numeric.Float32))
 
 	def correlateTemplate(self):
+		self.logger.info('correlate ring template')
 		ringlist = self.ringlist.get()
 		# convert diameters to radii
 		radlist = []
@@ -188,6 +190,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.corimage.set(self.hf['correlation'].astype(Numeric.Float32))
 
 	def threshold(self):
+		self.logger.info('threshold')
 		tvalue = self.threshvalue.get()
 		self.hf.configure_threshold(tvalue)
 		self.hf.threshold_correlation()
@@ -202,6 +205,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		return centers
 
 	def findBlobs(self):
+		self.logger.info('find blobs')
 		border = self.blobborder.get()
 		blobsize = self.maxblobsize.get()
 		maxblobs = self.maxblobs.get()
@@ -214,6 +218,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.allblobsimage.setTargetType('All Blobs', centers)
 
 	def fitLattice(self):
+		self.logger.info('fit lattice')
 		latspace = self.latspacing.get()
 		lattol = self.lattol.get()
 		r = self.holestatsrad.get()
@@ -241,6 +246,7 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.latblobsimage.setTargetType('Lattice Blobs', centers)
 
 	def ice(self):
+		self.logger.info('limit thickness')
 		i0 = self.icei0.get()
 		tmin = self.icetmin.get()
 		tmax = self.icetmax.get()
@@ -272,15 +278,26 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.goodholesimage.imagedata = self.currentimagedata
 
 	def applyTargetTemplate(self, centers):
+		self.logger.info('apply template')
 		acq_vect = self.acq_target_template.get()
 		foc_vect = self.foc_target_template.get()
 		newtargets = {'acquisition':[], 'focus':[]}
 		for center in centers:
 			for vect in acq_vect:
 				target = center[0]+vect[0], center[1]+vect[1]
+				tarx = target[0]
+				tary = target[1]
+				if tarx < 0 or tarx >= image.shape[1] or tary < 0 or tary >= image.shape[0]:
+					self.logger.info('skipping template point %s: out of image bounds' % (vect,))
+					continue
 				newtargets['acquisition'].append(target)
 			for vect in foc_vect:
 				target = center[0]+vect[0], center[1]+vect[1]
+				tarx = target[0]
+				tary = target[1]
+				if tarx < 0 or tarx >= image.shape[1] or tary < 0 or tary >= image.shape[0]:
+					self.logger.info('skipping template point %s: out of image bounds' % (vect,))
+					continue
 				## check if target has good thickness
 				if self.focthickon.get():
 					rad = self.focicerad.get()
@@ -289,9 +306,14 @@ class HoleFinder(targetfinder.TargetFinder):
 					tstd = self.focicetstd.get()
 					coord = target[1], target[0]
 					stats = self.hf.get_hole_stats(self.hf['original'], coord, rad)
+					if stats is None:
+						self.logger.info('skipping template point %s:  stats region out of bounds' % (vect, tm, ts))
+						continue
 					tm = self.icecalc.get_thickness(stats['mean'])
 					ts = self.icecalc.get_stdev_thickness(stats['std'], stats['mean'])
+					self.logger.info('template point %s stats:  mean: %s, stdev: %s' % (vect, tm, ts))
 					if (tmin <= tm <= tmax) and (ts < tstd):
+						self.logger.info('template point %s passed thickness test')
 						newtargets['focus'].append(target)
 						break
 				else:

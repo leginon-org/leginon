@@ -288,14 +288,11 @@ class HoleFinder(object):
 		edgethresh = self.edges_config['thresh']
 
 		if lp:
-			print 'low pass filter'
 			kernel = convolver.gaussian_kernel(lpn, lpsig)
 			self.edgefinder.setKernel(kernel)
 			smooth = self.edgefinder.convolve(image=sourceim)
 		else:
 			smooth = sourceim
-
-		print 'finding edges'
 
 		if filt == 'laplacian3':
 			kernel = convolver.laplacian_kernel3
@@ -350,7 +347,6 @@ class HoleFinder(object):
 		fromimage = 'edges'
 		if self.__results[fromimage] is None:
 			raise RuntimeError('need image %s before creating template' % (fromimage,))
-		print 'creating template'
 		self.configure_template(ring_list)
 		shape = self.__results[fromimage].shape
 		center = (0,0)
@@ -375,7 +371,6 @@ class HoleFinder(object):
 		fromimage = 'edges'
 		if None in (self.__results[fromimage], self.__results['template']):
 			raise RuntimeError('need image %s and template before correlation' % (fromimage,))
-		print 'correlating template'
 		edges = self.__results[fromimage]
 		template = self.__results['template']
 		cortype = self.correlation_config['cortype']
@@ -409,7 +404,6 @@ class HoleFinder(object):
 		if self.__results['correlation'] is None:
 			raise RuntimeError('need correlation image to threshold')
 		self.configure_threshold(threshold)
-		print 'thresholding correlation'
 		cc = self.__results['correlation']
 		t = imagefun.threshold(cc, self.threshold)
 		self.__update_result('threshold', t)
@@ -430,7 +424,6 @@ class HoleFinder(object):
 		'''
 		if None in (self.__results['threshold'],self.__results['correlation']):
 			raise RuntimeError('need correlation image and threshold image to find blobs')
-		print 'finding blobs'
 		im = self.__results['correlation']
 		mask = self.__results['threshold']
 		border = self.blobs_config['border']
@@ -439,7 +432,6 @@ class HoleFinder(object):
 		try:
 			blobs = imagefun.find_blobs(im, mask, border, maxblobs, maxsize)
 		except imagefun.TooManyBlobs:
-			print 'found too many blobs, emptying blob list'
 			blobs = []
 		self.__update_result('blobs', blobs)
 
@@ -511,7 +503,6 @@ class HoleFinder(object):
 			if len(lat.blobs) > maxblobs:
 				maxblobs = len(lat.blobs)
 				best_lattice = lat
-		print 'best lattice has %s blobs' % (maxblobs,)
 		self.__update_result('lattice', best_lattice)
 		if best_lattice is None:
 			self.__update_result('holes', [])
