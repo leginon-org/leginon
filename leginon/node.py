@@ -58,7 +58,7 @@ class Node(leginonobject.LeginonObject):
 	def __init__(self, id, nodelocations = {}, dh = NodeDataHandler, dhargs = (), clientclass = Client):
 		leginonobject.LeginonObject.__init__(self, id)
 
-		self.managerloc = nodelocations['manager']
+		self.nodelocations = nodelocations
 		self.clients = {}
 
 		self.registry = {'outputs':[], 'inputs':[]}
@@ -79,10 +79,10 @@ class Node(leginonobject.LeginonObject):
 		self.addEventOutput(event.NodeUnavailableEvent)
 		self.addEventInput(event.KillEvent, self.die)
 		self.addEventInput(event.ConfirmationEvent, self.registerConfirmedEvent)
-		if self.managerloc is not None:
-			print 'adding manager, %s' % self.managerloc
+		if 'manager' in self.nodelocations:
+			print 'adding manager, %s' % self.nodelocations['manager']
 			try:
-				self.addManager(self.managerloc)
+				self.addManager(self.nodelocations['manager'])
 			except:
 				print 'exception in addManager'
 				raise
@@ -242,7 +242,7 @@ class Node(leginonobject.LeginonObject):
 
 	def publishRemote(self, nodeid, idata):
 		# perhaps an event can be generated in this too
-		nodelocation = self.researchByLocation(self.managerloc, nodeid).content
+		nodelocation = self.researchByLocation(self.nodelocations['manager'], nodeid).content
 		# should interate over nodes, be crafty, etc.
 		self.addEventClient(nodeid, nodelocation)
 		self.clients[nodeid].push(idata)
@@ -265,7 +265,7 @@ class Node(leginonobject.LeginonObject):
 
 	def researchByDataID(self, dataid):
 		# will change soon
-		loc = self.managerloc
+		loc = self.nodelocations['manager']
 		nodeiddata = self.researchByLocation(loc, dataid)
 
 		if nodeiddata is None:
@@ -273,7 +273,7 @@ class Node(leginonobject.LeginonObject):
 			raise IOError
 
 		# should interate over nodes, be crafty, etc.
-		datalocationdata = self.researchByLocation(self.managerloc, nodeiddata.content[0])
+		datalocationdata = self.researchByLocation(self.nodelocations['manager'], nodeiddata.content[0])
 
 		return self.researchByLocation(datalocationdata.content, dataid)
 

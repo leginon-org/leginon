@@ -15,8 +15,9 @@ True=1
 class Manager(node.Node):
 	def __init__(self, id):
 		# the id is manager (in a list)
-		node.Node.__init__(self, id, None)
+		node.Node.__init__(self, id, {})
 
+		self.nodelocations['manager'] = self.location()
 		self.distmap = {}
 		# maps event id to list of node it was distributed to if event.confirm
 		self.confirmmap = {}
@@ -222,9 +223,8 @@ class Manager(node.Node):
 		args = (launcher, newproc, target, name, nodeargs)
 		self.app.addLaunchSpec(args)
 
-		manloc = self.location()
 		newid = self.nodeID(name)
-		args = (newid, manloc) + nodeargs
+		args = (newid, self.nodelocations) + nodeargs
 		self.launch(launcher, newproc, target, args)
 
 	def launch(self, launcher, newproc, target, args=(), kwargs={}):
@@ -287,7 +287,7 @@ class Manager(node.Node):
 			self.clients[to_node].push(ievent)
 
 	def spawnLauncher(self, id):
-		t = threading.Thread(name='launcher thread', target=launcher.Launcher, args=(self.id + (id,), self.location()))
+		t = threading.Thread(name='launcher thread', target=launcher.Launcher, args=(self.id + (id,), self.nodelocations))
 		t.start()
 		# for XML-RPC
 		return ''

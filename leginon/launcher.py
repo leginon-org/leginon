@@ -10,8 +10,8 @@ import time
 
 
 class Launcher(node.Node):
-	def __init__(self, id, managerlocation = None):
-		node.Node.__init__(self, id, managerlocation)
+	def __init__(self, id, nodelocations = {}):
+		node.Node.__init__(self, id, nodelocations)
 
 		self.addEventInput(event.LaunchEvent, self.handleLaunch)
 		self.addEventInput(event.UpdateNodeClassesEvent, self.publishNodeClasses)
@@ -26,7 +26,7 @@ class Launcher(node.Node):
 		Node uses NodeAvailableEvent 
 		This uses LauncherAvailableEvent
 		'''
-		self.managerloc = loc
+		self.nodelocations['manager'] = loc
 		self.addEventClient(('manager',), loc)
 
 		launcherinfo = self.location()
@@ -77,26 +77,15 @@ class Launcher(node.Node):
 	def launchProcess(self):
 		pass
 
-#	def launchNode(self, nodeid, nodeclass, args = None):
-#		## new node's manager = launcher's manager
-#		print 'launching %s %s' % (nodeid, nodeclass)
-#		nodeargs = tuple([nodeid, self.managerloc] + list(args))
-#		apply(nodeclass, nodeargs)
-#
-#	def launchDataServer(self, dataserverclass):
-#		print 'launching %s' % nodeclass
-#		dataserverclass()
-
-
 if __name__ == '__main__':
-	import sys,socket
+	import sys, socket
 
-	manloc = {}
-	manloc['hostname'] = sys.argv[1]
-	manloc['TCP port'] = int(sys.argv[2])
-#	manloc['UNIX pipe filename'] = str(sys.argv[3])
+	managerlocation = {}
+	managerlocation['hostname'] = sys.argv[1]
+	managerlocation['TCP port'] = int(sys.argv[2])
+#	managerlocation['UNIX pipe filename'] = str(sys.argv[3])
 
 	myhost = socket.gethostname()
 	myid = (myhost,)
 
-	m = Launcher(myid, manloc)
+	m = Launcher(myid, {'manager': managerlocation})

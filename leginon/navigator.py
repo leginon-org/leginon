@@ -3,8 +3,8 @@
 import node, event
 
 class Navigator(node.Node):
-	def __init__(self, id, managerlocation, emnode='em'):
-		node.Node.__init__(self, id, managerlocation)
+	def __init__(self, id, nodelocations, emnode='em'):
+		node.Node.__init__(self, id, nodelocations)
 		self.emnode = emnode
 
 		self.addEventInput(event.ImageClickEvent, self.handleImageClick)

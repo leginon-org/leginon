@@ -5,8 +5,8 @@ import time
 import data
 
 class IntGen(node.Node):
-	def __init__(self, id, managerlocation):
-		node.Node.__init__(self, id, managerlocation)
+	def __init__(self, id, nodelocations):
+		node.Node.__init__(self, id, nodelocations)
 
 		self.addEventOutput(event.NumericControlEvent)
 		self.addEventOutput(event.StartEvent)

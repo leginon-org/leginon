@@ -13,10 +13,10 @@ from Mrc import mrc_to_numeric
 
 
 class ImViewer(watcher.Watcher):
-	def __init__(self, id, managerlocation):
+	def __init__(self, id, nodelocations):
 		watchfor = event.ImagePublishEvent
 		lockblocking = 0
-		watcher.Watcher.__init__(self, id, managerlocation, watchfor, lockblocking)
+		watcher.Watcher.__init__(self, id, nodelocations, watchfor, lockblocking)
 
 		self.addEventOutput(event.ImageClickEvent)
 

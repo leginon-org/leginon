@@ -17,8 +17,8 @@ class AcquireLoop(timedloop.TimedLoop):
 		StopEvent - stops the acquisition loop
 		NumericControlEvent - modifies the loop interval
 	"""
-	def __init__(self, id, managerlocation):
-		timedloop.TimedLoop.__init__(self, id, managerlocation)
+	def __init__(self, id, nodelocations):
+		timedloop.TimedLoop.__init__(self, id, nodelocations)
 		print 'AcquireLoop started', self.id
 
 	def action(self):

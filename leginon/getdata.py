@@ -5,8 +5,8 @@ import time
 import data
 
 class GetData(node.Node):
-	def __init__(self, id, managerlocation):
-		node.Node.__init__(self, id, managerlocation)
+	def __init__(self, id, nodelocations):
+		node.Node.__init__(self, id, nodelocations)
 
 		print self.location()
 		print self.id

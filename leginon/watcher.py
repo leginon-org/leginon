@@ -14,8 +14,8 @@ class Watcher(node.Node):
 		1 = blocking lock:  events wait until previous is handled
 		None = no lock:  each event handled in own thread
 	'''
-	def __init__(self, id, managerlocation, watchfor=event.PublishEvent, lockblocking=None):
-		node.Node.__init__(self, id, managerlocation)
+	def __init__(self, id, nodelocations, watchfor=event.PublishEvent, lockblocking=None):
+		node.Node.__init__(self, id, nodelocations)
 		self.watchfor = watchfor
 		self.lockblocking = lockblocking
 		self.lock = threading.RLock()
@@ -57,10 +57,10 @@ class Watcher(node.Node):
 ## an example of subclassing Watcher
 
 class TestWatch(Watcher):
-	def __init__(self, id, managerlocation):
+	def __init__(self, id, nodelocations):
 		watchfor = event.PublishEvent
 		lockblocking = 0
-		Watcher.__init__(self, id, managerlocation, watchfor, lockblocking)
+		Watcher.__init__(self, id, nodelocations, watchfor, lockblocking)
 
 	def processData(self, newdata):
 		numarray = newdata.content

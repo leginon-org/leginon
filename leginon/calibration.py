@@ -11,7 +11,7 @@ False=0
 True=1
 
 class Calibration(node.Node):
-	def __init__(self, id, managerlocation):
+	def __init__(self, id, nodelocations):
 		self.camerastate = {"offset": {'x': 0, 'y': 0}, \
 												"dimension": {'x': 512, 'y': 512}, \
 												"binning": {'x': 1, 'y': 1}, \
@@ -60,7 +60,7 @@ class Calibration(node.Node):
 		# asdf
 		self.axislist = ['x', 'y']
 
-		node.Node.__init__(self, id, managerlocation)
+		node.Node.__init__(self, id, nodelocations)
 		self.clearStateImages()
 		self.start()
 
@@ -348,24 +348,24 @@ class Calibration(node.Node):
 
 
 class StageCalibration(Calibration):
-	def __init__(self, id, managerlocation):
-		Calibration.__init__(self, id, managerlocation)
+	def __init__(self, id, nodelocations):
+		Calibration.__init__(self, id, nodelocations)
 
 	def state(self, value, axis):
 		return {'stage position': {axis: value}}
 
 
 class ImageShiftCalibration(Calibration):
-	def __init__(self, id, managerlocation):
-		Calibration.__init__(self, id, managerlocation)
+	def __init__(self, id, nodelocations):
+		Calibration.__init__(self, id, nodelocations)
 
 	def state(self, value, axis):
 		return {'image shift': {axis: value}}
 
 
 class AutoFocusCalibration(Calibration):
-	def __init__(self, id, managerlocation):
-		Calibration.__init__(self, id, managerlocation)
+	def __init__(self, id, nodelocations):
+		Calibration.__init__(self, id, nodelocations)
 		self.axislist = ['x']
 		self.defocus = 0.0001
 		self.deltadefocus

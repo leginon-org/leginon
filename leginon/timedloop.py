@@ -15,13 +15,13 @@ class TimedLoop(node.Node):
 		StopEvent - stops the loop
 		NumericControlEvent - modifies the loop interval
 	"""
-	def __init__(self, nodeid, managerlocation):
+	def __init__(self, nodeid, nodelocations):
 		self.interval = 0
 		self.nextevent = threading.Event()
 		self.stopevent = threading.Event()
 		self.mainlock = threading.RLock()
 
-		node.Node.__init__(self, nodeid, managerlocation)
+		node.Node.__init__(self, nodeid, nodelocations)
 
 		self.addEventInput(event.StartEvent, self._handle_start)
 		self.addEventInput(event.StopEvent, self._handle_stop)
@@ -114,8 +114,8 @@ class TestLoop(TimedLoop):
 		StopEvent - stops the acquisition loop
 		NumericControlEvent - modifies the loop interval
 	"""
-	def __init__(self, id, managerlocation=None):
-		TimedLoop.__init__(self, id, managerlocation)
+	def __init__(self, id, nodelocations=None):
+		TimedLoop.__init__(self, id, nodelocations)
 		print 'TestLoop %s started' % (self.id,)
 		print 'TestLoop location %s' % (self.location(),)
 

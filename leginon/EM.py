@@ -67,7 +67,7 @@ class DataHandler(datahandler.DataBinder):
 			raise InvalidEventError('eventclass must be Event subclass')
 
 class EM(node.Node):
-	def __init__(self, id, managerloc, scope = None, camera = None):
+	def __init__(self, id, nodelocations, scope = None, camera = None):
 		# internal
 		self.lock = threading.Lock()
 		# external
@@ -81,7 +81,7 @@ class EM(node.Node):
 			camera = ('tietz', 'tietz')
 		self.setEM(scope, camera)
 
-		node.Node.__init__(self, id, managerloc, DataHandler, (self.lock, self.scope, self.camera, self))
+		node.Node.__init__(self, id, nodelocations, DataHandler, (self.lock, self.scope, self.camera, self))
 
 		self.addEventInput(event.LockEvent, self.lock)
 		self.addEventInput(event.UnlockEvent, self.unlock)

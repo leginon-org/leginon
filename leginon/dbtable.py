@@ -54,8 +54,8 @@ class DataHandler(datahandler.DataBinder):
 			raise InvalidEventError('eventclass must be Event subclass')
 
 class DBTable(node.Node):
-	def __init__(self, id, managerloc, dbhost, dbuser, dbpasswd, dbname, tablename, presetspec):
-	#def __init__(self, id, managerloc, dbconnectdict, tablename):
+	def __init__(self, id, nodelocations, dbhost, dbuser, dbpasswd, dbname, tablename, presetspec):
+	#def __init__(self, id, nodelocations, dbconnectdict, tablename):
 		#self.db = MySQLdb.connect(**dbconnectdict)
 		self.db = MySQLdb.connect(host=dbhost,user=dbuser,passwd=dbpasswd,db=dbname)
 		self.tablename = tablename
@@ -66,7 +66,7 @@ class DBTable(node.Node):
 		self.nodelock = threading.Lock()
 		self.locknodeid = None
 
-		node.Node.__init__(self, id, managerloc, DataHandler, (self.lock, self.table, self))
+		node.Node.__init__(self, id, nodelocations, DataHandler, (self.lock, self.table, self))
 
 		self.addEventInput(event.LockEvent, self.lock)
 		self.addEventInput(event.UnlockEvent, self.unlock)

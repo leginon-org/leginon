@@ -5,8 +5,8 @@ import time
 import data
 
 class MyNode(node.Node):
-	def __init__(self, id, managerlocation):
-		node.Node.__init__(self, id, managerlocation)
+	def __init__(self, id, nodelocations):
+		node.Node.__init__(self, id, nodelocations)
 
 		self.addEventInput(event.NumericControlEvent, self.handle_intervalchange)
 		self.addEventInput(event.StartEvent, self.start)
