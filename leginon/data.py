@@ -80,6 +80,7 @@ class DataManager(object):
 		self.size = 0
 		### end of things that need to be locked
 
+		self.limitreached = False
 		megs = 256
 		self.maxsize = megs * 1024 * 1024
 
@@ -170,7 +171,6 @@ class DataManager(object):
 			del self.datadict[dmid]
 			self.size -= self.sizedict[dmid]
 			del self.sizedict[dmid]
-			print '****removed something', self.size
 			if dmid in self.dm2db:
 				dbkey = self.dm2db[dmid]
 				del self.dm2db[dmid]
@@ -212,6 +212,12 @@ class DataManager(object):
 			for key in self.datadict.keys():
 				if self.size <= self.maxsize:
 					break
+				if not self.limitreached:
+					self.limitreached = True
+					print '************************************************************************'
+					print '***** DataManager size reached, removing data as needed ******'
+					print '************************************************************************'
+
 				if key in self.hold:
 					continue
 				self.remove(key)
