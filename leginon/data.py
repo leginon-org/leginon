@@ -259,7 +259,40 @@ class MoreData(Data):
 		t += [ ('newdata1', NewData), ('newdata2', NewData), ('otherdata', OtherData),]
 		return t
 	typemap = classmethod(typemap)
+
+class GroupData(Data):
+	def typemap(cls):
+		t = Data.typemap()
+		t += [('name', str)]
+		return t
+	typemap = classmethod(typemap)
 	
+class UserData(Data):
+	def typemap(cls):
+		t = Data.typemap()
+		t += [('name', str),
+					('group', GroupData)]
+		return t
+	typemap = classmethod(typemap)
+
+class InstrumentData(Data):
+	def typemap(cls):
+		t = Data.typemap()
+		t += [('name', str),
+					('description', str),
+					('hostname', str)]
+		return t
+	typemap = classmethod(typemap)
+
+class SessionData(Data):
+	def typemap(cls):
+		t = Data.typemap()
+		t += [('name', str),
+					('user', UserData),
+					('instrument', InstrumentData)]
+		return t
+	typemap = classmethod(typemap)
+
 class EMData(Data):
 	def typemap(cls):
 		t = Data.typemap()
