@@ -6,15 +6,15 @@ import tcptransport
 import datahandler
 
 class Base(leginonobject.LeginonObject):
-	def __init__(self):
-		leginonobject.LeginonObject.__init__(self)
+	def __init__(self, id):
+		leginonobject.LeginonObject.__init__(self, id)
 		self.transportmodules = [localtransport, tcptransport]
 
 class Client(Base):
 	# hostname/port -> location or whatever
 	# needs to be transport generalized like server
-	def __init__(self, serverlocation):
-		Base.__init__(self)
+	def __init__(self, id, serverlocation):
+		Base.__init__(self, id)
 		self.clients = {}
 
 #		for t in self.transportmodules:
@@ -40,8 +40,8 @@ class Client(Base):
 			self.clients[tcptransport].push(idata)
 
 class Server(Base):
-	def __init__(self, dhclass = datahandler.SimpleDataKeeper, dhargs = ()):
-		Base.__init__(self)
+	def __init__(self, id, dhclass = datahandler.SimpleDataKeeper, dhargs = ()):
+		Base.__init__(self, id)
 		self.datahandler = apply(dhclass, dhargs)
 		self.servers = {}
 		for t in self.transportmodules:

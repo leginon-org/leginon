@@ -9,8 +9,8 @@ from viewer.ImageViewer import ImageViewer
 import node, event
 
 class ImViewer(node.Node):
-	def __init__(self, nodeid, managerlocation):
-		node.Node.__init__(self, nodeid, managerlocation)
+	def __init__(self, id, managerlocation):
+		node.Node.__init__(self, id, managerlocation)
 
 		t = threading.Thread(target=self.open_viewer)
 		t.setDaemon(1)

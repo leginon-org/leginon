@@ -5,8 +5,8 @@ import time
 import data
 
 class EMTest(node.Node):
-	def __init__(self, nodeid, managerlocation):
-		node.Node.__init__(self, nodeid, managerlocation)
+	def __init__(self, id, managerlocation):
+		node.Node.__init__(self, id, managerlocation)
 
 		#self.addEventInput(event.ControlEvent, self.handle_intervalchange)
 		#self.addEventInput(event.PublishEvent, self.handle_intervalpublished)

@@ -6,8 +6,8 @@ import shelve
 import time
 
 class DataHandler(leginonobject.LeginonObject):
-	def __init__(self):
-		leginonobject.LeginonObject.__init__(self)
+	def __init__(self, id):
+		leginonobject.LeginonObject.__init__(self, id)
 
 	def query(self, id):
 		raise NotImplementedError
@@ -22,8 +22,8 @@ class DataHandler(leginonobject.LeginonObject):
 		raise NotImplementedError
 
 class DictDataKeeper(DataHandler):
-	def __init__(self):
-		DataHandler.__init__(self)
+	def __init__(self, id):
+		DataHandler.__init__(self, id)
 		self.datadict = {}
 		self.datadictlock = threading.Lock()
 
@@ -58,8 +58,8 @@ class DictDataKeeper(DataHandler):
 		return result
 
 class ShelveDataKeeper(DataHandler):
-	def __init__(self, filename = None, path = '.'):
-		DataHandler.__init__(self)
+	def __init__(self, id, filename = None, path = '.'):
+		DataHandler.__init__(self, id)
 
 		# there is an issue if done too quick, try to open existing file
 		# needs another attempt
@@ -113,8 +113,8 @@ class ShelveDataKeeper(DataHandler):
 
 # I'm reasonably sure this works, but it hasn't been fully tested
 class CachedDictDataKeeper(DataHandler):
-	def __init__(self, age = 600.0, timeout = 60.0, filename = None, path = '.'):
-		DataHandler.__init__(self)
+	def __init__(self, id, age = 600.0, timeout = 60.0, filename = None, path = '.'):
+		DataHandler.__init__(self, id)
 
 		self.datadict = {}
 		self.lock = threading.Lock()
@@ -198,8 +198,8 @@ class SimpleDataKeeper(CachedDictDataKeeper):
 	pass
 
 class DataBinder(DataHandler):
-	def __init__(self):
-		DataHandler.__init__(self)
+	def __init__(self, id):
+		DataHandler.__init__(self, id)
 		self.bindings = {}
 
 	def insert(self, newdata):

@@ -11,8 +11,8 @@ if sys.platform == 'win32':
 	import pythoncom
 
 class DataHandler(datahandler.DataBinder):
-	def __init__(self, lock, scope, camera, EMnode):
-		datahandler.DataBinder.__init__(self)
+	def __init__(self, id, lock, scope, camera, EMnode):
+		datahandler.DataBinder.__init__(self, id)
 		self.lock = lock
 		self.scope = scope
 		self.camera = camera
@@ -21,15 +21,15 @@ class DataHandler(datahandler.DataBinder):
 	def query(self, id):
 		self.lock.acquire()
 		if self.scope and self.scope.has_key(id):
-			result = data.EMData({id : self.scope[id]})
+			result = data.EMData(self.ID(), {id : self.scope[id]})
 		elif self.camera and self.camera.has_key(id):
-			result = data.EMData({id : self.camera[id]})
+			result = data.EMData(self.ID(), {id : self.camera[id]})
 		elif self.scope and id == 'scope':
-			result = data.EMData(self.scope)
+			result = data.EMData(self.ID(), self.scope)
 		elif self.camera and id == 'camera':
-			result = data.EMData(self.camera)
+			result = data.EMData(self.ID(), self.camera)
 		elif id == 'all':
-			result = data.EMData({})
+			result = data.EMData(self.ID(), {})
 			if self.scope:
 				result.content.update(self.scope)
 			if self.camera:
@@ -62,7 +62,7 @@ class DataHandler(datahandler.DataBinder):
 			raise InvalidEventError('eventclass must be Event subclass')
 
 class EM(node.Node):
-	def __init__(self, nodeid, managerloc, scopeclass = None, cameraclass = None):
+	def __init__(self, id, managerloc, scopeclass = None, cameraclass = None):
 		self.lock = threading.Lock()
 		if scopeclass:
 			self.scope = scopedict.factory(scopeclass)()
@@ -73,7 +73,7 @@ class EM(node.Node):
 		else:
 			self.camera = None
 
-		node.Node.__init__(self, nodeid, managerloc, DataHandler, (self.lock, self.scope, self.camera, self))
+		node.Node.__init__(self, id, managerloc, DataHandler, (self.lock, self.scope, self.camera, self))
 
 		self.addEventOutput(event.ListPublishEvent)
 
@@ -87,7 +87,7 @@ class EM(node.Node):
 		if self.scope and self.camera:
 			ids.append('all')
 
-		e = event.ListPublishEvent(ids)
+		e = event.ListPublishEvent(self.ID(), ids)
 		self.announce(e)
 
 if __name__ == '__main__':
