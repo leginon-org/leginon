@@ -19,11 +19,43 @@ try:
 except:
 	import Numeric
 import copy
+import gui.wx.Focuser
 
 class Focuser(acquisition.Acquisition):
+	panelclass = gui.wx.Focuser.Panel
+	settingsclass = data.FocuserSettingsData
+	# oops
+	defaultsettings = {
+		'pause time': 2.5,
+		'move type': 'image shift',
+		'preset order': [],
+		'correct image': True,
+		'display image': True,
+		'save image': True,
+		'wait for process': False,
+		'wait for rejects': False,
+		'duplicate targets': False,
+		'duplicate target type': 'focus',
+		'correction type': 'Defocus',
+		'preset': '',
+		'melt time': 0.0,
+		'beam tilt': 0.02,
+		'drift threshold': 2.0,
+		'fit limit': 1000,
+		'check drift': True,
+		'check before': False,
+		'check after': False,
+		'stig correction': False,
+		'stig defocus min': 1e-6,
+		'stig defocus max': 4e-6,
+		'acquire final': True,
+	}
+
 	eventinputs = acquisition.Acquisition.eventinputs
 	eventoutputs = acquisition.Acquisition.eventoutputs
+
 	def __init__(self, id, session, managerlocation, **kwargs):
+
 		self.focus_methods = {
 			'None': self.correctNone,
 			'Stage Z': self.correctZ,
@@ -62,10 +94,10 @@ class Focuser(acquisition.Acquisition):
 
 	def autoFocus(self, resultdata, presettarget):
 		## need btilt, pub, driftthresh
-		btilt = self.btilt.get()
+		btilt = self.settings['beam tilt']
 		pub = False
-		if self.drifton.get():
-			driftthresh = self.driftthresh.get()
+		if self.settings['check drift']:
+			driftthresh = self.settings['drift threshold']
 		else:
 			driftthresh = None
 
@@ -77,7 +109,7 @@ class Focuser(acquisition.Acquisition):
 		## set to eucentric focus if doing Z correction
 		## WARNING:  this assumes that user will not change
 		## to another focus type before doing the correction
-		focustype = self.focustype.getSelectedValue()
+		focustype = self.settings['correction type']
 		if focustype == 'Stage Z':
 			self.logger.info('setting eucentric focus')
 			self.eucentricFocusToScope()
@@ -104,11 +136,11 @@ class Focuser(acquisition.Acquisition):
 			correction = self.btcalclient.measureDefocusStig(btilt, pub, drift_threshold=driftthresh, image_callback=self.ui_image.set, target=target)
 		except calibrationclient.Abort:
 			self.logger.info('measureDefocusStig was aborted')
-			self.autofocusresult.set('aborted')
+			self.setStatus('aborted')
 			return 'aborted'
 		except calibrationclient.Drifting:
 			self.driftDetected(presettarget)
-			self.autofocusresult.set('drift detected (will try again when drift is done)')
+			self.setStatus('drift detected (will try again when drift is done)')
 			return 'repeat'
 
 		self.logger.info('Measured defocus and stig %s' % correction)
@@ -123,7 +155,7 @@ class Focuser(acquisition.Acquisition):
 		status = 'ok'
 
 		### validate defocus correction
-		fitlimit = self.fitlimit.get()
+		fitlimit = self.settings['fit limit']
 		if fitmin <= fitlimit:
 			validdefocus = True
 			self.logger.info('Good focus measurement')
@@ -134,12 +166,12 @@ class Focuser(acquisition.Acquisition):
 
 		### validate stig correction
 		# stig is only valid in a certain defocus range
-		if validdefocus and (self.stigfocminthresh.get() < abs(defoc) < self.stigfocmaxthresh.get()):
+		if validdefocus and (self.settings['stig defocus min'] < abs(defoc) < self.self.settings['stif defocus max']):
 			validstig = True
 		else:
 			validstig = False
 
-		if validstig and self.stigcorrection.get():
+		if validstig and self.settings['stig correction']:
 			self.logger.info('Stig correction...')
 			self.correctStig(stigx, stigy)
 			resultdata['stig correction'] = 1
@@ -149,7 +181,7 @@ class Focuser(acquisition.Acquisition):
 		if validdefocus:
 			self.logger.info('Defocus correction...')
 			try:
-				focustype = self.focustype.getSelectedValue()
+				focustype = self.settings['correction type']
 				focusmethod = self.focus_methods[focustype]
 			except (IndexError, KeyError):
 				self.logger.warning('No method selected for correcting defocus')
@@ -162,7 +194,7 @@ class Focuser(acquisition.Acquisition):
 			resultstring = 'invalid focus measurement'
 		if resultdata['stig correction']:
 			resultstring = resultstring + ', corrected stig by x,y=%.4f,%.4f' % (stigx, stigy)
-		self.autofocusresult.set(resultstring)
+		self.setStatus(resultstring)
 		return status
 
 	def acquire(self, presetdata, target=None, presettarget=None, attempt=None):
@@ -177,7 +209,7 @@ class Focuser(acquisition.Acquisition):
 		## Need to melt only once per target, event though
 		## this method may be called multiple times on the same
 		## target.
-		melt_time = self.melt.get()
+		melt_time = self.settings['melt time']
 		if melt_time and attempt > 1:
 			self.logger.info('target attempt %s, so not melting' % (attempt,))
 		elif melt_time:
@@ -201,7 +233,7 @@ class Focuser(acquisition.Acquisition):
 			self.cam.setCameraEMData(camstate0)
 
 		## pre manual check
-		if self.pre_manual_check.get():
+		if self.settings['check before']:
 			self.manualCheckLoop(presettarget)
 			resultdata['pre manual check'] = True
 		else:
@@ -209,7 +241,7 @@ class Focuser(acquisition.Acquisition):
 
 		## autofocus
 		if self.auto_on.get():
-			autofocuspreset = self.autofocuspreset.get()
+			autofocuspreset = self.settings['preset']
 			autopresettarget = data.PresetTargetData(emtarget=presettarget['emtarget'], preset=autofocuspreset)
 			autostatus = self.autoFocus(resultdata, autopresettarget)
 			resultdata['auto status'] = autostatus
@@ -221,7 +253,7 @@ class Focuser(acquisition.Acquisition):
 			resultdata['auto status'] = 'skipped'
 
 		## post manual check
-		if self.post_manual_check.get():
+		if self.settings['check after']:
 			self.manualCheckLoop(presettarget)
 			resultdata['post manual check'] = True
 			status = 'ok'
@@ -229,7 +261,7 @@ class Focuser(acquisition.Acquisition):
 			resultdata['post manual check'] = False
 
 		## aquire and save the focus image
-		if self.acquirefinal.get():
+		if self.settings['acquire final']:
 			## go back to focus preset and target
 			self.presetsclient.toScope(presetdata['name'], presettarget['emtarget'])
 			delay = self.uidelay.get()
@@ -249,7 +281,7 @@ class Focuser(acquisition.Acquisition):
 		return False
 
 	def manualNow(self):
-		presetnames = self.uipresetnames.get()
+		presetnames = self.settings['preset order']
 		try:
 			presetname = presetnames[0]
 		except IndexError:
@@ -433,47 +465,13 @@ class Focuser(acquisition.Acquisition):
 	def defineUserInterface(self):
 		acquisition.Acquisition.defineUserInterface(self)
 		self.messagelog = uidata.MessageLog('Messages')
-		self.melt = uidata.Float('Melt Time (s)', 0.0, 'rw', persist=True)
 
 		## auto focus
 		autocont = uidata.Container('Auto Focus')
 		self.auto_on = uidata.Boolean('Auto Focus On', True, 'rw', persist=True)
-
-		self.drifton = uidata.Boolean('Check Drift', True, 'rw', persist=True)
-		self.driftthresh = uidata.Float('Threshold (pixels)', 2.0, 'rw', persist=True)
-
-		self.btilt = uidata.Float('Beam Tilt', 0.02, 'rw', persist=True)
-		#self.publishimages = uidata.Boolean('Publish Tilt Images', False, 'rw', persist=True)
-
-		self.autofocuspreset = self.presetsclient.uiSinglePresetSelector('Auto Focus Preset', '', 'rw', persist=True)
-		self.fitlimit = uidata.Float('Fit Limit', 1000, 'rw', persist=True)
-		focustypes = self.focus_methods.keys()
-		focustypes.sort()
-		self.focustype = uidata.SingleSelectFromList('Correction Type', focustypes, 0, persist=True)
-
-		# stig
-		self.stigcorrection = uidata.Boolean('Stig Correction', False, 'rw', persist=True)
-		self.stigfocminthresh = uidata.Float('Stig Defocus Min', 1e-6, 'rw', persist=True)
-		self.stigfocmaxthresh = uidata.Float('Stig Defocus Max', 4e-6, 'rw', persist=True)
-		self.autofocusresult = uidata.String('Last Auto Focus Result', '', 'r')
-
 		autocont.addObject(self.auto_on, position={'position':(0,0)})
-		autocont.addObject(self.btilt, position={'position':(0,1)})
-		autocont.addObject(self.drifton, position={'position':(1,0)})
-		autocont.addObject(self.driftthresh, position={'position':(1,1)})
-
-		autocont.addObject(self.autofocuspreset, position={'position':(3,0), 'span':(1,2)})
-		autocont.addObject(self.fitlimit, position={'position':(4,0)})
-		autocont.addObject(self.focustype, position={'position':(4,1)})
-
-		autocont.addObject(self.stigcorrection, position={'position':(5,0)})
-		autocont.addObject(self.stigfocminthresh, position={'position':(5,1)})
-		autocont.addObject(self.stigfocmaxthresh, position={'position':(5,2)})
-		autocont.addObject(self.autofocusresult, position={'position':(6,0), 'span':(1,3)})
 
 		## manual focus check
-		self.pre_manual_check = uidata.Boolean('Before Auto', False, 'rw', persist=True)
-		self.post_manual_check = uidata.Boolean('After Auto', False, 'rw', persist=True)
 		manualmeth = uidata.Method('Manual Check Now', self.manualNow)
 		manualpause = uidata.Method('Pause', self.manualPause)
 		manualcontinue = uidata.Method('Continue', self.manualContinue)
@@ -495,8 +493,6 @@ class Focuser(acquisition.Acquisition):
 
 		# row 0
 		mancont.addObject(manualmeth, position={'position':(0,0)})
-		mancont.addObject(self.pre_manual_check, position={'position':(0,1)})
-		mancont.addObject(self.post_manual_check, position={'position':(0,2)})
 		# row 1
 		mancont.addObject(manualpause, position={'position':(1,0)})
 		mancont.addObject(manualcontinue, position={'position':(1,1)})
@@ -524,11 +520,10 @@ class Focuser(acquisition.Acquisition):
 		self.cc_image.addTargetType('peak')
 
 		#### other
-		self.acquirefinal = uidata.Boolean('Acquire Final Image', True, 'rw', persist=True)
 		abortfailmethod = uidata.Method('Abort With Failure', self.uiAbortFailure)
 		testmethod = uidata.Method('Test Autofocus (broken)', self.uiTest)
 		container = uidata.LargeContainer('Focuser')
 		container.addObject(self.messagelog, position={'expand': 'all'})
-		container.addObjects((self.melt, autocont, mancont, self.cc_image, self.acquirefinal, abortfailmethod, testmethod))
+		container.addObjects((autocont, mancont, self.cc_image, abortfailmethod, testmethod))
 		self.uicontainer.addObject(container)
 

@@ -1,4 +1,5 @@
 import wx
+from gui.wx.Choice import Choice
 import gui.wx.Entry
 import gui.wx.Presets
 
@@ -8,6 +9,7 @@ class SettingsError(Exception):
 attributes = {
 	wx.CheckBox: ('GetValue', 'SetValue', wx.EVT_CHECKBOX),
 	wx.Choice: ('GetStringSelection', 'SetStringSelection', wx.EVT_CHOICE),
+	Choice: ('GetStringSelection', 'SetStringSelection', wx.EVT_CHOICE),
 	gui.wx.Entry.Entry: ('GetValue', 'SetValue', gui.wx.Entry.EVT_ENTRY),
 	gui.wx.Entry.IntEntry: ('GetValue', 'SetValue', gui.wx.Entry.EVT_ENTRY),
 	gui.wx.Entry.FloatEntry: ('GetValue', 'SetValue', gui.wx.Entry.EVT_ENTRY),
@@ -85,7 +87,10 @@ class Dialog(wx.Dialog):
 
 	def setSettings(self, sd):
 		for key, widget in self.widgets.items():
-			getattr(widget, attributes[widget.__class__][1])(sd[key])
+			try:
+				getattr(widget, attributes[widget.__class__][1])(sd[key])
+			except ValueError:
+				raise ValueError('Invalid value %s for widget "%s"' % (sd[key], key))
 
 	def setNodeSettings(self):
 		node = self.GetParent().node

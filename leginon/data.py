@@ -1519,6 +1519,25 @@ class AcquisitionSettingsData(SettingsData):
 		)
 	typemap = classmethod(typemap)
 
+class FocuserSettingsData(AcquisitionSettingsData):
+	def typemap(cls):
+		return AcquisitionSettingsData.typemap() + (
+			('correction type', str),
+			('preset', str),
+			('melt time', float),
+			('beam tilt', float),
+			('fit limit', float),
+			('check drift', bool),
+			('drift threshold', float),
+			('check before', bool),
+			('check after', bool),
+			('stig correction', bool),
+			('stig defocus min', float),
+			('stig defocus max', float),
+			('acquire final', bool),
+		)
+	typemap = classmethod(typemap)
+
 class Request(type):
 	def __new__(cls, dataclass):
 		return type.__new__(cls, 'Request' + dataclass.__name__, (Data,),

@@ -1,7 +1,6 @@
-import data
-import gui.wx.Data
 import gui.wx.Node
 import gui.wx.Settings
+from gui.wx.Choice import Choice
 from gui.wx.Entry import FloatEntry, EVT_ENTRY
 from gui.wx.Presets import EditPresetOrder, EVT_PRESET_ORDER_CHANGED
 import wx
@@ -75,7 +74,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 
 		# move type
 		movetypes = self.node.calclients.keys()
-		self.widgets['move type'] = wx.Choice(self, -1, choices=movetypes)
+		self.widgets['move type'] = Choice(self, -1, choices=movetypes)
 		szmovetype = wx.GridBagSizer(5, 5)
 		szmovetype.Add(wx.StaticText(self, -1, 'Use'),
 										(0, 0), (1, 1),
@@ -120,7 +119,7 @@ class SettingsDialog(gui.wx.Settings.Dialog):
 		# duplicate target
 		self.widgets['duplicate targets'] = wx.CheckBox(self, -1,
 																				'Duplicate targets with type:')
-		self.widgets['duplicate target type'] = wx.Choice(self, -1,
+		self.widgets['duplicate target type'] = Choice(self, -1,
 																							choices=self.node.duplicatetypes)
 
 		szduplicate = wx.GridBagSizer(0, 0)
