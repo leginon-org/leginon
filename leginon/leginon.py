@@ -544,6 +544,7 @@ class ImageCorrectionWidget(CustomWidget):
 		self.addWidget('Control', corrector, ('Acquire', 'Acquire Corrected'))
 
 		widget = self.addWidget('Results', corrector, ('Acquire', 'Image'))
+		widget.getbutton.grid_forget()
 
 class ImageCollectorWidget(CustomWidget):
 	def __init__(self, parent, acquisition, imagecollector):
@@ -572,7 +573,8 @@ class ImageCollectorWidget(CustomWidget):
 
 		self.addWidget('Settings', imagecollector, ('Images', 'Select'))
 		self.addWidget('Control', imagecollector, ('Images', 'Select Image'))
-		self.addWidget('Results', imagecollector, ('Images', 'Image'))
+		widget = self.addWidget('Results', imagecollector, ('Images', 'Image'))
+		widget.getbutton.grid_forget()
 
 class PresetsWidget(CustomWidget):
 	def __init__(self, parent, presets):
@@ -604,11 +606,13 @@ class CalibrationsWidget(CustomWidget):
 		self.addWidget('Control', matrixcalibrator, ('Calibrate',))
 
 		widget = self.addWidget('Results', matrixcalibrator, ('Images', 'Image 1'))
+		widget.getbutton.grid_forget()
 		widget.iv.canvas.resizeflag = True
 		widget.iv.canvas.resize(0, 0, 350, 350)
 		widget.iv.canvas.resizeflag = False
 
 		widget = self.addWidget('Results', matrixcalibrator, ('Images', 'Image 2'))
+		widget.getbutton.grid_forget()
 		widget.iv.canvas.resizeflag = True
 		widget.iv.canvas.resize(0, 0, 350, 350)
 		widget.iv.canvas.resizeflag = False
@@ -650,8 +654,8 @@ class AutoFocusWidget(CustomWidget):
 							('Calibrate', 'Measure', 'Measure'))
 
 		widget = self.addWidget('Results', beamtiltcalibrator,
-														('Calibrate', 'Measure', 'Necessary Correction'),
-																																				True)
+											('Calibrate', 'Measure', 'Necessary Correction'), True)
+		widget.getbutton.grid_forget()
 		self.arrangeTree(widget, None, False)
 
 #		widget = self.addWidget('Results', matrixcalibrator, ('Images', 'Image 1'))
@@ -682,6 +686,7 @@ class GridAtlasWidget(CustomWidget):
 		self.addWidget('Control', gridpreview, ('Controls', 'Reset'))
 
 		widget = self.addWidget('Results', stateimagemosaic, ('Mosaic Image',))
+		widget.getbutton.grid_forget()
 
 class TargetWidget(CustomWidget):
 	def __init__(self, parent, acquisition, clicktargetfinder):

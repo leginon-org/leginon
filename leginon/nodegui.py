@@ -211,7 +211,8 @@ class Data(SpecWidget):
 
 		### optional get/set
 		if self.permissions is not None:
-			if 'r' in self.permissions and not self.server:
+			#if 'r' in self.permissions and not self.server:
+			if 'r' in self.permissions:
 				if self.styled:
 					self.getbutton = Button(headframe, text='Get',
 																	command=self.getServer, bg=self.buttoncolor)
