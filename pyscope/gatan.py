@@ -15,6 +15,7 @@ import gatancom
 
 class Gatan(object):
 	def __init__(self):
+		self.unsupported = []
 		self.exposuretype = 'normal'
 
 		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
@@ -31,9 +32,22 @@ class Gatan(object):
 			'offset': {'get':'getOffset', 'set': 'setOffset'},
 			'exposure time': {'get':'getExposureTime', 'set': 'setExposureTime'},
 			'exposure type': {'get':'getExposureType', 'set': 'setExposureType'},
+			'speed': {'get': 'getSpeed', 'set': 'setSpeed'},
 			'inserted': {'get': 'getInserted', 'set': 'setInserted'},
+			'retractable': {'get': 'getRetractable'},
+			'acquiring': {'get': 'getAcquiring'},
 			'image data': {'get':'getImage'}
 		}
+
+		if not self.getRetractable():
+			self.unsupported.append('getInserted')
+			self.unsupported.append('setInserted')
+			del self.methodmapping['inserted']
+
+	def __getattribute__(self, attr_name):
+		if attr_name in object.__getattribute__(self, 'unsupported'):
+			raise AttributeError('attribute not supported')
+		return object.__getattribute__(self, attr_name)
 
 	def getOffset(self):
 		return {'x': self.camera.CameraLeft, 'y': self.camera.CameraTop}
@@ -104,6 +118,27 @@ class Gatan(object):
 				return image
 		return self.camera.AcquireRawImage()
 
+	def getAcquiring(self):
+		if self.camera.IsAcquiring:
+			return True
+		else:
+			return False
+
+	def getSpeed(self):
+		return self.camera.Speed
+
+	def setSpeed(self, value):
+		try:
+			self.camera.Speed = value
+		except pywintypes.com_error, e:
+			raise ValueError('Invalid speed')
+
+	def getRetractable(self):
+		if self.camera.IsRetractable:
+			return True
+		else:
+			return False
+
 	def setInserted(self, value):
 		if value:
 			self.camera.Insert()
@@ -111,7 +146,7 @@ class Gatan(object):
 			self.camera.Retract()
 
 	def getInserted(self):
-		if self.camera.IsInserted == 1:
+		if self.camera.IsInserted:
 			return True
 		else:
 			return False

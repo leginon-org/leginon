@@ -38,8 +38,8 @@ class Tietz(object):
 		'getMaximumPixelValue': [('cpDynamic', 'r')],
 		'getNumberOfGains': [('cpNumberOfGains', 'r')],
 		'getGainFactors': [('cpGainFactors', 'r')],
-		'getNumberOfReadoutSpeeds': [('cpNumberOfReadoutSpeeds', 'r')],
-		'getReadoutSpeeds': [('cpReadoutSpeeds', 'r')],
+		'getNumberOfSpeeds': [('cpNumberOfSpeeds', 'r')],
+		'getSpeeds': [('cpSpeeds', 'r')],
 		'getLiveModeAvailable': [('cpLiveModeAvailable', 'r')],
 		'getNumberOfDeadColumns': [('cpNumberOfDeadColumns', 'r')],
 		'getDeadColumns': [('cpDeadColumns', 'r')],
@@ -47,9 +47,9 @@ class Tietz(object):
 		'getGain': [('cpCurrentGainIndex', 'r'), ('cpGainFactors', 'r')],
 		'getGainIndex': [('cpCurrentGainIndex', 'r')],
 		'setGainIndex': [('cpCurrentGainIndex', 'w')],
-		'getReadoutSpeed': [('cpCurrentSpeedIndex', 'r'), ('cpReadoutSpeeds', 'r')],
-		'getReadoutSpeedIndex': [('cpCurrentSpeedIndex', 'r')],
-		'setReadoutSpeedIndex': [('cpCurrentSpeedIndex', 'w')],
+		'getSpeed': [('cpCurrentSpeedIndex', 'r'), ('cpSpeeds', 'r')],
+		'getSpeedIndex': [('cpCurrentSpeedIndex', 'r')],
+		'setSpeedIndex': [('cpCurrentSpeedIndex', 'w')],
 		'getImageTransform': [('cpImageGeometry', 'r')],
 		'setImageTransform': [('cpImageGeometry', 'w')],
 		'getTemperature': [('cpCurrentTemperature', 'r')],
@@ -169,8 +169,8 @@ class Tietz(object):
 			'maximum pixel value': {'get':'getMaximumPixelValue'},
 			'number of gains': {'get':'getNumberOfGains'},
 			'gain factors': {'get':'getGainFactors'},
-			'number of readout speeds': {'get':'getNumberOfReadoutSpeeds'},
-			'readout speeds': {'get':'getReadoutSpeeds'},
+			'number of speeds': {'get':'getNumberOfSpeeds'},
+			'speeds': {'get':'getSpeeds'},
 			'live mode available': {'get':'getLiveModeAvailable'},
 			'number of dead columns': {'get':'getNumberOfDeadColumns'},
 			'dead columns': {'get':'getDeadColumns'},
@@ -178,9 +178,9 @@ class Tietz(object):
 			'gain': {'get':'getGain'},
 			'gain index': {'get':'getGainIndex',
 											'set': 'setGainIndex'},
-			'readout speed': {'get':'getReadoutSpeed'},
-			'readout speed index': {'get':'getReadoutSpeedIndex',
-															'set': 'setReadoutSpeedIndex'},
+			'speed': {'get':'getSpeed'},
+			'speed index': {'get':'getSpeedIndex',
+															'set': 'setSpeedIndex'},
 			'image transform': {'get':'getImageTransform',
 													'set': 'setImageTransform'},
 			'temperature': {'get':'getTemperature',
@@ -368,12 +368,12 @@ class Tietz(object):
 	def getGainFactors(self):
 		return eval(self._getParameterValue('cpGainFactors'))
 
-	def getNumberOfReadoutSpeeds(self):
-		return self._getParameterValue('cpNumberOfReadoutSpeeds')
+	def getNumberOfSpeeds(self):
+		return self._getParameterValue('cpNumberOfSpeeds')
 
 	# eval...
-	def getReadoutSpeeds(self):
-		return eval(self._getParameterValue('cpReadoutSpeeds'))
+	def getSpeeds(self):
+		return eval(self._getParameterValue('cpSpeeds'))
 
 	def getLiveModeAvailable(self):
 		value = self._getParameterValue('cpLiveModeAvailable')
@@ -405,17 +405,17 @@ class Tietz(object):
 		except pywintypes.com_error:
 			raise ValueError('Invalid gain index specified')
 
-	def getReadoutSpeedIndex(self):
+	def getSpeedIndex(self):
 		return self._getParameterValue('cpCurrentSpeedIndex')
 
-	def getReadoutSpeed(self):
-		return self.getReadoutSpeeds()[self.getReadoutSpeedIndex() - 1]
+	def getSpeed(self):
+		return self.getSpeeds()[self.getSpeedIndex() - 1]
 
-	def setReadoutSpeedIndex(self, value):
+	def setSpeedIndex(self, value):
 		try:
 			self._setParameterValue('cpCurrentSpeedIndex', value)
 		except pywintypes.com_error:
-			raise ValueError('Invalid readout speed index specified')
+			raise ValueError('Invalid speed index specified')
 
 	def getImageTransform(self):
 		bitmask = self._getParameterValue('cpImageGeometry')
