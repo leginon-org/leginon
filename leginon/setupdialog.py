@@ -2,6 +2,10 @@ import wx
 import wx.wizard
 import wx.lib.intctrl
 import leginonconfig
+import os
+import data
+import project
+import time
 
 class WizardPage(wx.wizard.PyWizardPage):
 	def __init__(self, parent, previous=None, next=None):
@@ -381,11 +385,12 @@ class SessionCreatePage(WizardPage):
 
 		textsizer = wx.GridBagSizer(0, 3)
 
-		textsizer.Add(wx.StaticText(self, -1, 'Project:'), (0, 0), (1, 1),
-														wx.ALIGN_CENTER_VERTICAL)
-		self.projecttext = wx.StaticText(self, -1, '')
-		textsizer.Add(self.projecttext, (0, 1), (1, 1),
-														wx.ALIGN_CENTER_VERTICAL)
+		if parent.projects:
+			textsizer.Add(wx.StaticText(self, -1, 'Project:'), (0, 0), (1, 1),
+															wx.ALIGN_CENTER_VERTICAL)
+			self.projecttext = wx.StaticText(self, -1, '')
+			textsizer.Add(self.projecttext, (0, 1), (1, 1),
+															wx.ALIGN_CENTER_VERTICAL)
 
 		textsizer.Add(wx.StaticText(self, -1, 'Instrument:'), (1, 0), (1, 1),
 														wx.ALIGN_CENTER_VERTICAL)
@@ -432,6 +437,7 @@ class SetupWizard(wx.wizard.Wizard):
 			dlg.ShowModal()
 			dlg.Destroy()
 			raise RuntimeError('Databases with no users are not current supported')
+
 		self.userpage = UserPage(self)
 
 		sessiontypepage = SessionTypePage(self)
@@ -458,7 +464,26 @@ class SetupWizard(wx.wizard.Wizard):
 		self.imagedirectorypage.setNext(self.sessioncreatepage)
 
 		self.FitToPage(self.userpage)
-		self.RunWizard(self.userpage)
+
+		if hasattr(leginonconfig, 'USERNAME') and leginonconfig.USERNAME:
+			usernames = self.setup._indexBy('name', self.users.values())
+			try:
+				name = usernames[leginonconfig.USERNAME]['full name']
+				self.userpage.userchoice.SetStringSelection(name)
+				userdata = self.users[self.userpage.userchoice.GetStringSelection()]
+				self.names, self.sessions = self.setup.getSessions(userdata)
+				if not self.sessions:
+					self.userpage.setNext(self.namepage)
+				self.RunWizard(self.userpage.GetNext())
+			except KeyError:
+				dlg = wx.MessageDialog(self,
+									'Cannot find user "%s" in database' % leginonconfig.USERNAME,
+									'Warning', wx.OK|wx.ICON_WARNING)
+				dlg.ShowModal()
+				dlg.Destroy()
+				self.RunWizard(self.userpage)
+		else:
+			self.RunWizard(self.userpage)
 
 	def onPageChanging(self, evt):
 		# this count only for forward
@@ -494,6 +519,9 @@ class SetupWizard(wx.wizard.Wizard):
 			self.session = self.setup.createSession(user, name, description,
 																							instrument, directory)
 			self.publish(self.session, database=True)
+			if self.projects:
+				projectid = self.projects[project]['projectId']
+				self.setup.linkSessionProject(self.session, projectid)
 			self.connect = self.sessioncreatepage.connectcheckbox.GetValue()
 
 	def onPageChanged(self, evt):
@@ -508,7 +536,8 @@ class SetupWizard(wx.wizard.Wizard):
 			directory = self.imagedirectorypage.directorytextctrl.GetValue()
 			self.sessioncreatepage.nametext.SetLabel(name)
 			self.sessioncreatepage.descriptiontext.SetLabel(description)
-			self.sessioncreatepage.projecttext.SetLabel(project)
+			if self.projects:
+				self.sessioncreatepage.projecttext.SetLabel(project)
 			self.sessioncreatepage.instrumenttext.SetLabel(instrument)
 			self.sessioncreatepage.imagedirectorytext.SetLabel(directory)
 			# autoresize on static text gets reset by sizer during layout
@@ -519,14 +548,10 @@ class SetupWizard(wx.wizard.Wizard):
 				self.sessioncreatepage.sizer.SetItemMinSize(o, o.GetSize())
 			self.sessioncreatepage.pagesizer.Layout()
 
-import os
-import data
-import project
-import time
-
 class Setup(object):
 	def __init__(self, research):
 		self.research = research
+		self.projectdata = project.ProjectData()
 
 	def _indexBy(self, by, datalist):
 		index = {}
@@ -553,10 +578,9 @@ class Setup(object):
 						self._indexBy('name', sessiondatalist))
 
 	def getProjects(self):
-		projectdata = project.ProjectData()
-		if not projectdata.isConnected():
+		if not self.projectdata.isConnected():
 			return {}
-		projects = projectdata.getProjects()
+		projects = self.projectdata.getProjects()
 		projectdatalist = projects.getall()
 		return self._indexBy('name', projectdatalist)
 
@@ -592,6 +616,13 @@ class Setup(object):
 			'image path': imagedirectory,
 		}
 		return data.SessionData(initializer=initializer)
+
+	def linkSessionProject(self, sessiondata, projectid):
+		if not self.projectdata.isConnected():
+			raise RuntimeError('Cannot link session, not connected to database.')
+		projectsession = project.ProjectExperiment(projectid, sessiondata['name'])
+		experiments = self.projectdata.getProjectExperiments()
+		experiments.insert([projectsession.dumpdict()])
 
 if __name__ == '__main__':
 	class TestApp(wx.App):

@@ -16,7 +16,8 @@ import dbdatakeeper
 import event
 import importexport
 import leginonconfig
-import managersetup
+import launcher
+import setupdialog
 import node
 import threading
 import uiserver
@@ -28,6 +29,7 @@ import time
 import uiclient
 import wx
 import newdict
+import socket
 
 class DataBinder(databinder.DataBinder):
 	def handleData(self, newdata):
@@ -141,7 +143,39 @@ class Manager(node.Node):
 		self.addEventInput(event.Event, self.distributeEvents)
 
 		self.launcherdict = {}
-		self.managersetup = managersetup.ManagerSetup(self)
+		#self.managersetup = managersetup.ManagerSetup(self)
+		# will move, I promise
+		setup = setupdialog.SetupWizard(self.frame, self.research, self.publish)
+
+		# handle better
+		if setup.session is None:
+			raise RuntimeError('Setup cancelled')
+
+		self.uicontainer.session = self.session = setup.session
+		self.uicontainer.getUserPreferencesFromDatabase()
+
+		self.defineUserInterface()
+
+		threading.Thread(name='local launcher thread', target=launcher.Launcher,
+											args=(socket.gethostname().lower(),),
+											kwargs={'session': self.session,
+															'managerlocation': self.location()}).start()
+#		launcher.Launcher(socket.gethostname().lower(), session=self.session,
+#           				    managerlocation=self.location())
+
+		if setup.connect and self.session['instrument'] is not None:
+			if self.session['instrument']['hostname'] != socket.gethostname().lower():
+				try:
+					hostname = self.session['instrument']['hostname']
+					if hostname:
+						location = {}
+						location['TCP transport'] = {}
+						location['TCP transport']['hostname'] = hostname
+						location['TCP transport']['port'] = 55555
+						self.addNode(location, hostname)
+				except (IOError, TypeError, socket.error):
+					self.messagelog.warning('Cannot add instrument\'s launcher.')
+
 
 	def location(self):
 		location = leginonobject.LeginonObject.location(self)
