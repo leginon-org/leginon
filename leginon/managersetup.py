@@ -90,6 +90,7 @@ class ManagerSetup(object):
 		  'instrument': self.uiGetInstrument(),
 		}
 		imagepath = os.path.join(leginonconfig.IMAGE_PATH, initializer['name'])
+		imagepath = imagepath.replace('\\', '/')
 		initializer['image path'] = imagepath
 		return data.SessionData(initializer=initializer)
 
@@ -310,6 +311,7 @@ class ManagerSetup(object):
 		self.load_sessioninstrument.set(inst)
 
 		path = leginonconfig.mapPath(sessiondata['image path'])
+		print sessiondata['image path']
 		self.load_sessionpath.set(path)
 
 	def getSessionDataName(self, sessiondata):
@@ -409,11 +411,6 @@ class ManagerSetup(object):
 		build_instrumentcontainer.addObjects((self.instrumentselection,
 																		self.build_instrumentdescription,
 																		self.build_instrumenthostname))
-
-
-
-		## default path comes from leginonconfig
-		image_path = os.path.join(leginonconfig.IMAGE_PATH,session_name)
 
 		self.createmethod = uidata.Method('Create Session', self.uiCreateSession)
 		self.cancelcreatemethod = uidata.Method('Cancel',
