@@ -1,9 +1,83 @@
+#!/usr/bin/env python
 
 import leginonobject
 import array
 import Numeric
+import strictdict
 
-class Data(leginonobject.LeginonObject):
+## How to define a new leginon data type:
+##   Subclass Data or a subclass of Data.  Override the typemap() class
+## method to define the types of the items contained in the class
+##   
+
+class DataDict(strictdict.TypedDict):
+	'''
+	A wrapper around TypedDict that adds a class method: typemap()
+	This class method is used to create the type_map_or_seq argument
+	that is normally passed during instantiation.  We then remove this
+	argument from the init method.  In other words,
+	we are hard coding the TypedDict types into the class and making
+	it easy to override these types in a subclass.
+
+	The typemap() method should return the same information as the 
+	types() method already provided by TypedDict.  The difference is
+	that (as of now) types() returns a KeyedDict and typedict() 
+	returns a list of tuples mapping.  Maybe this can be unified soon.
+	Another key difference is that since typemap() is a class method,
+	we can inquire about the types of a DataDict's contents without
+	actually having an instance.  This might be useful for something
+	like a database interface that needs to create tables from these
+	classes.
+	'''
+	def __init__(self, map_or_seq=None):
+		strictdict.TypedDict.__init__(self, map_or_seq, type_map_or_seq=self.typemap())
+
+	def typemap(cls):
+		'''
+		Returns the mapping of keys to types for this class.
+		  [(key, type), (key, type), ...]
+		Override this in subclasses to specialize the contents
+		of this type of data.
+		'''
+		return []
+	typemap = classmethod(typemap)
+
+class Data(DataDict, leginonobject.LeginonObject):
+	'''
+	Inherits DataDict and LeginonObject to for the base class
+	for all leginon data.
+	'''
+	def __init__(self, id, initializer=None, **kwargs):
+		# LeginonObject base class needs id
+		leginonobject.LeginonObject.__init__(self, id)
+		# DataDict base class
+		DataDict.__init__(self)
+		# initial values
+		self['id'] = id
+		if initializer is not None:
+			self.update(initializer)
+		self.update(kwargs)
+
+	def typemap(cls):
+		t = DataDict.typemap() + [('id', tuple)]
+		return t
+	typemap = classmethod(typemap)
+
+class NewData(Data):
+	'''
+	Example of a new data type
+	'''
+	def __init__(self, id, initializer=None, **kwargs):
+		Data.__init__(self, id, initializer, **kwargs)
+
+	def typemap(cls):
+		t1 = Data.typemap()
+		t2 = [ ('stuff', int) ]
+		return t1 + t2
+	typemap = classmethod(typemap)
+
+
+class OLDData(leginonobject.LeginonObject):
 	'''Baseclass for leginon data. Subclasses should implement content.'''
 	def __init__(self, id, content):
 		leginonobject.LeginonObject.__init__(self, id)
@@ -179,3 +253,8 @@ class ImageTargetData(Data):
 class ImageTargetListData(Data):
 	def __init__(self, id, content):
 		Data.__init__(self, id, list(content))
+
+if __name__ == '__main__':
+	id = (1,2)
+	d = Data(id)
+	print 'd', d
