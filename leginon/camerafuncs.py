@@ -395,7 +395,7 @@ class SmartCameraParameters(uidata.Container):
 		self.addObject(self.square, position={'position': (0, 0)})
 		self.addObject(self.centered, position={'position': (0, 1)})
 
-		size = len(str(max(self.camerasize.values())))
+		size = (len(str(max(self.camerasize.values()))), 1)
 
 		for param in ('binning', 'dimension', 'offset'):
 			container = uidata.Container(param[0].upper() + param[1:])
@@ -406,7 +406,7 @@ class SmartCameraParameters(uidata.Container):
 			self.addObject(container, position={'span': (1, 2)})
 
 		self.exposuretime = uidata.Integer('Exposure Time (ms)', 500, 'rw',
-																				persist=True, size=6)
+																				persist=True, size=(6, 1))
 		self.addObject(self.exposuretime, position={'span': (1, 2)})
 
 		for parameter in ('Binning', 'Offset', 'Dimension'):

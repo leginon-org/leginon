@@ -843,12 +843,16 @@ class Manager(node.Node):
 
 		self.uiaddnodehostname = uidata.HistoryData(uidata.String, 'Hostname',
 																								None, persist=True)
-		self.uiaddnodeport = uidata.Integer('TCP Port', 55555, 'rw')
+		self.uiaddnodeport = uidata.Integer('TCP Port', 55555, 'rw', size=(5, 1))
 		self.addmethod = uidata.Method('Add', self.uiAddNode)
-		addobjects = (self.uiaddnodehostname, self.uiaddnodeport)
 		addcontainer = uidata.Container('Add Existing Node')
-		addcontainer.addObjects(addobjects)
-		addcontainer.addObject(self.addmethod, position={'justify': ['right']})
+		addcontainer.addObject(self.uiaddnodehostname,
+														position={'position': (0, 0),
+																			'span': (1, 2)})
+		addcontainer.addObject(self.uiaddnodeport,
+														position={'position': (1, 0)})
+		addcontainer.addObject(self.addmethod, position={'position': (1, 1),
+																											'justify': ['right']})
 
 		self.uikillselect = uidata.SingleSelectFromList('Node', [], 0)
 		killmethod = uidata.Method('Kill', self.uiKillNode)
@@ -860,8 +864,19 @@ class Manager(node.Node):
 		self.killcontainer.positionObject(killmethod, {'position': (0, 1)})
 
 		nodemanagementcontainer = uidata.LargeContainer('Nodes')
-		nodemanagementcontainer.addObjects((self.uinodeinfo, self.launchcontainer,
-																				addcontainer, self.killcontainer))
+		nodemanagementcontainer.addObject(self.launchcontainer,
+																			position={'position': (0, 0),
+																								'expand': 'all'})
+		nodemanagementcontainer.addObject(addcontainer,
+																			position={'position': (1, 0),
+																								'expand': 'all'})
+		nodemanagementcontainer.addObject(self.killcontainer,
+																			position={'position': (2, 0),
+																								'expand': 'all'})
+		nodemanagementcontainer.addObject(self.uinodeinfo,
+																			position={'position': (0, 1),
+																								'span': (3, 1),
+																								'justify': ['center']})
 
 		### Applications
 

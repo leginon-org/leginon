@@ -51,7 +51,7 @@ class PrintRLock(object):
 # UI Objects
 class Object(object):
 	typelist = ('object',)
-	def __init__(self, name, tooltip=None):
+	def __init__(self, name, tooltip=None, size=None):
 		if type(name) is not str:
 			raise TypeError('name must be a string')
 		self.name = name
@@ -61,6 +61,8 @@ class Object(object):
 		self.configuration['enabled'] = True
 		if tooltip is not None:
 			self.configuration['tool tip'] = tooltip
+		if size is not None:
+			self.configuration['size'] = size
 		#self.lock = PrintRLock(self.name)
 		self.lock = threading.RLock()
 
@@ -124,8 +126,8 @@ class Data(Object):
 	permissionsvalues = ('r', 'w', 'rw', 'wr')
 	typelist = Object.typelist + ('data',)
 	def __init__(self, name, value, permissions='r', callback=None,
-								usercallback=None, persist=False, tooltip=None):
-		Object.__init__(self, name, tooltip)
+								usercallback=None, persist=False, tooltip=None, size=None):
+		Object.__init__(self, name, tooltip, size)
 		if permissions in self.permissionsvalues:
 			if 'r' in permissions:
 				self.configuration['read'] = True
@@ -231,14 +233,6 @@ class Number(Data):
 
 class Integer(Data):
 	typelist = Data.typelist + ('integer',)
-	def __init__(self, name, value, permissions='r', callback=None,
-								usercallback=None, persist=False, tooltip=None, size=None):
-		
-		Data.__init__(self, name, value, permissions, callback, usercallback,
-									persist, tooltip)
-		if size is not None:
-			self.configuration['size'] = (size, 1)
-
 	def validate(self, value):
 		return True
 		if type(value) is int or value is None:

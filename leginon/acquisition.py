@@ -523,19 +523,16 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		self.acquisitionlog = uidata.MessageLog('Messages')
 
-		self.uiprocessingstatus = uidata.String('Status', '', 'r')
-		processingstatuscontainer = uidata.Container('Processing')
-		processingstatuscontainer.addObjects((self.uiprocessingstatus,))
-		self.uiacquisitionstatus = uidata.String('Status', '', 'r')
-		acquisitionstatuscontainer = uidata.Container('Acquisition')
-		acquisitionstatuscontainer.addObjects((self.uiacquisitionstatus,))
-		self.uioutputstatus = uidata.String('Status', '', 'r')
-		outputstatuscontainer = uidata.Container('Output')
-		outputstatuscontainer.addObjects((self.uioutputstatus,))
+		self.uiprocessingstatus = uidata.String('Processing', '', 'r')
+		self.uioutputstatus = uidata.String('Output', '', 'r')
+		self.uiacquisitionstatus = uidata.String('Acquisition', '', 'r')
 		statuscontainer = uidata.Container('Status')
-		statuscontainer.addObjects((processingstatuscontainer,
-																outputstatuscontainer,
-																acquisitionstatuscontainer))
+		statuscontainer.addObject(self.uiprocessingstatus,
+															position={'expand': 'all'})
+		statuscontainer.addObject(self.uioutputstatus,
+															position={'expand': 'all'})
+		statuscontainer.addObject(self.uiacquisitionstatus,
+															position={'expand': 'all'})
 
 		self.ui_image = uidata.Image('Image', None, 'rw')
 
@@ -546,16 +543,20 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		presetscontainer = uidata.Container('Presets Sequence')
 
-		self.uiavailablepresetnames = uidata.String('Preset Names', '', 'r')
-		refreshpresetnames = uidata.Method('Show Available Presets', self.uiRefreshPresetNames)
+		self.uiavailablepresetnames = uidata.String('Preset names', '', 'r')
 		self.uipresetnames = uidata.Sequence('Presets Sequence', [], 'rw', persist=True)
-		presetscontainer.addObjects((refreshpresetnames, self.uiavailablepresetnames, self.uipresetnames,))
+		refreshpresetnames = uidata.Method('Show Presets', self.uiRefreshPresetNames)
+		presetscontainer.addObject(self.uiavailablepresetnames)
+		presetscontainer.addObject(refreshpresetnames,
+																position={'justify': 'right'})
+		presetscontainer.addObject(self.uipresetnames)
 
 		self.uimovetype = uidata.SingleSelectFromList('Move Type',
 																									self.calclients.keys(),
 																									0, persist=True)
 		self.alwaysmovestage = uidata.Boolean('Reset stage position even when move type is image shift', False, 'rw', persist=True)
-		self.uidelay = uidata.Float('Delay (sec)', 2.5, 'rw', persist=True)
+		self.uidelay = uidata.Float('Delay (sec)', 2.5, 'rw', persist=True,
+																	size=(5, 1))
 		self.uicorrectimage = uidata.Boolean('Correct image', True, 'rw',
 																			persist=True)
 
@@ -563,23 +564,39 @@ class Acquisition(targetwatcher.TargetWatcher):
 																				persist=True)
 
 		acquirecontainer = uidata.Container('Acquisition')
-		acquirecontainer.addObjects((self.uicorrectimage, self.uimovetype, self.alwaysmovestage,
-																	self.uidelay, self.waitfordone))
+		acquirecontainer.addObjects((self.uicorrectimage, self.uimovetype,
+																	self.alwaysmovestage, self.uidelay,
+																	self.waitfordone))
 
-		self.databaseflag = uidata.Boolean('Publish to Database', True, 'rw')
-		self.dbimages = uidata.SingleSelectFromList('Images In DB', [], 0)
+		self.databaseflag = uidata.Boolean('Save images in database', True, 'rw')
+		self.dbimages = uidata.SingleSelectFromList('Image', [], 0)
 		updatedbimages = uidata.Method('Refresh', self.uiUpdateDBImages)
-		self.pretendfromdb = uidata.Method('Pretend This Was Just Acquired', self.uiPretendAcquire)
-		self.reacquirefromdb = uidata.Method('Acquire Again', self.uiAcquireTargetAgain)
+		self.pretendfromdb = uidata.Method('Simulate',
+																				self.uiPretendAcquire,
+					tooltip='Pretend image selected from the database was just acquired')
+		self.reacquirefromdb = uidata.Method('Reacquire',
+																					self.uiAcquireTargetAgain,
+					tooltip='Acquire the image selected from the database again')
 		self.pretendfromdb.disable()
 		self.reacquirefromdb.disable()
 
 		databasecontainer = uidata.Container('Database')
-		databasecontainer.addObjects((self.databaseflag, self.dbimages, updatedbimages, self.pretendfromdb, self.reacquirefromdb))
+		databasecontainer.addObject(self.databaseflag,
+																position={'position': (0, 0), 'span': (1, 2)})
+		databasecontainer.addObject(self.dbimages,
+																position={'position': (1, 0)})
+		databasecontainer.addObject(updatedbimages,
+																position={'position': (1, 1)})
+		databasecontainer.addObject(self.pretendfromdb,
+																position={'position': (2, 1)})
+		databasecontainer.addObject(self.reacquirefromdb,
+																position={'position': (3, 1)})
 
 		settingscontainer = uidata.Container('Settings')
-		settingscontainer.addObjects((uicontainer, presetscontainer,
-																	acquirecontainer, databasecontainer))
+		settingscontainer.addObject(uicontainer, position={'expand': 'all'})
+		settingscontainer.addObject(presetscontainer, position={'expand': 'all'})
+		settingscontainer.addObject(acquirecontainer, position={'expand': 'all'})
+		settingscontainer.addObject(databasecontainer, position={'expand': 'all'})
 
 		trialmethod = uidata.Method('Trial Image', self.uiTrial)
 		self.waitingforimages = uidata.SingleSelectFromList('Waiting For', [], 0)
@@ -587,11 +604,22 @@ class Acquisition(targetwatcher.TargetWatcher):
 		self.stopwaiting.disable()
 
 		controlcontainer = uidata.Container('Control')
-		controlcontainer.addObjects((self.waitingforimages, self.stopwaiting,
-																	trialmethod))
+		controlcontainer.addObject(self.waitingforimages,
+																position={'position': (0, 0)})
+		controlcontainer.addObject(self.stopwaiting, position={'position': (0, 1)})
+		#controlcontainer.addObject(trialmethod)
 
 		container = uidata.LargeContainer('Acquisition')
-		container.addObjects((self.acquisitionlog, statuscontainer, self.ui_image, settingscontainer, controlcontainer))
+		container.addObject(self.acquisitionlog, position={'position': (0, 0),
+																												'span': (1, 2),
+																												'expand': 'all'})
+		container.addObject(statuscontainer, position={'position': (1, 0),
+																										'span': (1, 2),
+																										'expand': 'all'})
+		container.addObject(settingscontainer, position={'position': (2, 0)})
+		container.addObject(controlcontainer, position={'position': (3, 0)})
+		container.addObject(self.ui_image, position={'position': (2, 1),
+																									'span': (2, 1)})
 
 		self.uicontainer.addObject(container)
 

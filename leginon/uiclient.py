@@ -906,6 +906,8 @@ class EntryWidget(wx.BoxSizer, DataWidget):
 			else:
 				size = (-1, -1)
 			style=wx.TE_PROCESS_ENTER
+			if int in self.types or float in self.types:
+				style |= wx.TE_RIGHT
 			if self.password:
 				style |= wx.TE_PASSWORD
 			self.entry = wx.TextCtrl(parent, -1, size=size, style=style)

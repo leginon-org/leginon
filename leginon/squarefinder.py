@@ -34,7 +34,7 @@ class Plugin(object):
 		return self._process(input)
 
 	def defineUserInterface(self):
-		return []
+		self.uicontainer = uidata.Container(self.name)
 
 class Image(object):
 	def __init__(self, image):
@@ -116,7 +116,7 @@ class PluginPipeline(object):
 	def setTargetViewer(self, targetviewer):
 		self.targetviewer = targetviewer
 
-	def onProcess(self):
+	def onReprocess(self):
 		self.processevent.set()
 		self.verifyevent.set()
 
@@ -126,23 +126,20 @@ class PluginPipeline(object):
 	def defineUserInterface(self):
 		userinterfaceitems = []
 
-		self.display = uidata.Boolean('Display', True, 'rw', persist=True)
+		self.display = uidata.Boolean('Display image', True, 'rw', persist=True)
 		userinterfaceitems.append(self.display)
 
 		self.verify = {}
 		self.containers = {}
 		for plugin in self.plugins:
-			self.containers[plugin] = uidata.Container(plugin.name)
+			self.containers[plugin] = plugin.uicontainer
 			self.verify[plugin] = uidata.Boolean('Wait for verification', False, 'rw',
 																						persist=True)
-			objects = []
-			objects.append(self.verify[plugin])
-			objects += plugin.userinterfaceitems
-			self.containers[plugin].addObjects(objects)
+			self.containers[plugin].addObject(self.verify[plugin])
 			userinterfaceitems.append(self.containers[plugin])
 
-		self.processmethod = uidata.Method('Process', self.onProcess)
-		userinterfaceitems.append(self.processmethod)
+		self.reprocessmethod = uidata.Method('Reprocess', self.onReprocess)
+		userinterfaceitems.append(self.reprocessmethod)
 		self.proceedmethod = uidata.Method('Proceed', self.onProceed)
 		userinterfaceitems.append(self.proceedmethod)
 
@@ -169,10 +166,12 @@ class LowPassFilterPlugin(Plugin):
 		return value
 
 	def defineUserInterface(self):
+		Plugin.defineUserInterface(self)
 		self.size = uidata.Number('Size', 5, 'rw', callback=self.onSetSize,
-															persist=True)
-		self.sigma = uidata.Number('Sigma', 1.4, 'rw', persist=True)
-		return [self.size, self.sigma]
+															persist=True, size=(4, 1))
+		self.sigma = uidata.Number('Sigma', 1.4, 'rw', persist=True, size=(6, 1))
+		self.uicontainer.addObject(self.size, position={'position': (0, 0)})
+		self.uicontainer.addObject(self.sigma, position={'position': (0, 1)})
 
 class ThresholdPlugin(Plugin):
 	name = 'Threshold'
@@ -196,7 +195,11 @@ class BlobFinderPlugin(Plugin):
 		maxblobs = self.maxblobs.get()
 		minblobsize = self.minblobsize.get()
 		maxblobsize = self.maxblobsize.get()
-		scale = int(1.0/self.scale.get())
+		scale = self.scale.getSelectedValue()
+		if scale is None:
+			scale = 1
+		else:
+			scale = int(scale.split('/')[-1])
 		try:
 			blobs = imagefun.find_blobs(input.image[::scale, ::scale],
 																	input.mask[::scale, ::scale],
@@ -210,23 +213,31 @@ class BlobFinderPlugin(Plugin):
 		return self.outputclass(input.image, targets)
 
 	def defineUserInterface(self):
-		self.border = uidata.Number('Border', 0, 'rw', persist=True)
-		self.maxblobs = uidata.Number('Maximum Blobs', 100, 'rw', persist=True)
-		self.minblobsize = uidata.Number('Minimum Blob Size', 0, 'rw', persist=True)
-		self.maxblobsize = uidata.Number('Maximum Blob Size', 1000, 'rw',
-																			persist=True)
-		self.scale = uidata.Number('Scale', 1.0, 'rw', persist=True)
-		return [self.border, self.maxblobs,
-						self.minblobsize, self.maxblobsize,
-						self.scale]
+		Plugin.defineUserInterface(self)
+		self.border = uidata.Number('Border', 0, 'rw', persist=True, size=(4, 1))
+		self.maxblobs = uidata.Number('Maximum number of blobs', 100, 'rw',
+																	persist=True, size=(4, 1))
+		self.minblobsize = uidata.Number('Minimum', 0, 'rw', persist=True,
+																			size=(6, 1))
+		self.maxblobsize = uidata.Number('Maximum', 1000, 'rw', persist=True,
+																			size=(6, 1))
+		self.blobsizecontainer = uidata.Container('Blob Size')
+		self.blobsizecontainer.addObject(self.minblobsize,
+																			position={'position': (0, 0)})
+		self.blobsizecontainer.addObject(self.maxblobsize,
+																			position={'position': (0, 1)})
+		scales = ['1', '1/2', '1/4', '1/8', '1/16']
+		self.scale = uidata.SingleSelectFromList('Scale', scales, 0, persist=True)
+		self.uicontainer.addObjects((self.blobsizecontainer, self.border,
+																	self.maxblobs, self.scale))
 
 class SquareBlobFinderPlugin(BlobFinderPlugin):
 	name = 'Square Blob Finder'
 
 	def _process(self, input):
 		squaredimension = self.squaredimension.get()
-		minblobsizetolerance = self.minblobsizetolerance.get()
-		maxblobsizetolerance = self.maxblobsizetolerance.get()
+		minblobsizetolerance = self.minblobsizetolerance.get()/100.0
+		maxblobsizetolerance = self.maxblobsizetolerance.get()/100.0
 		shape = input.image.shape
 		self.maxblobs.set(shape[0]*shape[1]/squaredimension**2)
 		self.minblobsize.set((squaredimension * (minblobsizetolerance))**2)
@@ -235,18 +246,25 @@ class SquareBlobFinderPlugin(BlobFinderPlugin):
 		return BlobFinderPlugin._process(self, input)
 
 	def defineUserInterface(self):
-		self.squaredimension = uidata.Number('Square Dimension', 200, 'rw',
-																					persist=True)
-		self.minblobsizetolerance = uidata.Number('Minimum Blob Size Tolerance',
-																							0.6, 'rw', persist=True)
-		self.maxblobsizetolerance = uidata.Number('Maximum Blob Size Tolerance',
-																							1.25, 'rw', persist=True)
-		userinterfaceitems = []
-		userinterfaceitems.append(self.squaredimension)
-		userinterfaceitems.append(self.minblobsizetolerance)
-		userinterfaceitems.append(self.maxblobsizetolerance)
-		userinterfaceitems += BlobFinderPlugin.defineUserInterface(self)
-		return userinterfaceitems
+		BlobFinderPlugin.defineUserInterface(self)
+		self.squaredimension = uidata.Number('Dimension of square', 200, 'rw',
+																					persist=True, size=(4, 1))
+		self.minblobsizetolerance = uidata.Number('Minimum', 60, 'rw',
+																							persist=True, size=(3, 1))
+		self.maxblobsizetolerance = uidata.Number('Maximum', 125, 'rw',
+																							persist=True, size=(3, 1))
+		tolerancecontainer = uidata.Container('Tolerance (Percent)')
+		tolerancecontainer.addObject(self.minblobsizetolerance,
+																	position={'position': (0, 0)})
+		tolerancecontainer.addObject(self.maxblobsizetolerance,
+																	position={'position': (0, 1)})
+		self.uicontainer.deleteObject(self.blobsizecontainer)
+		blobsizecontainer = uidata.Container('Square Blob Size')
+		blobsizecontainer.addObject(self.squaredimension)
+		blobsizecontainer.addObject(tolerancecontainer, position={'expand': 'all'})
+		blobsizecontainer.addObject(self.blobsizecontainer,
+																position={'expand': 'all'})
+		self.uicontainer.addObject(blobsizecontainer)
 
 class TargetBorderPlugin(Plugin):
 	name = 'Target Border'
@@ -270,8 +288,9 @@ class TargetBorderPlugin(Plugin):
 		return self.outputclass(input.image, targets)
 
 	def defineUserInterface(self):
-		self.border = uidata.Number('Border', 0, 'rw', persist=True)
-		return [self.border]
+		Plugin.defineUserInterface(self)
+		self.border = uidata.Number('Border', 0, 'rw', persist=True, size=(4, 1))
+		self.uicontainer.addObject(self.border)
 
 class RandomTargetPlugin(Plugin):
 	name = 'Random Target Selection'
@@ -287,8 +306,10 @@ class RandomTargetPlugin(Plugin):
 		return self.outputclass(input.image, targets)
 
 	def defineUserInterface(self):
-		self.ntargets = uidata.Number('Number of targets', 1, 'rw', persist=True)
-		return [self.ntargets]
+		Plugin.defineUserInterface(self)
+		self.ntargets = uidata.Number('Number of targets', 1, 'rw', persist=True,
+																	size=(4, 1))
+		self.uicontainer.addObject(self.ntargets)
 
 class CenterOffsetTargetsPlugin(Plugin):
 	name = 'Center Offset Targets'
@@ -352,10 +373,22 @@ class SquareFinder(targetfinder.TargetFinder):
 		filecontainer.addObjects((self.filename, self.loadmethod))
 
 		pipelinecontainer = uidata.Container('Pipeline')
-		pipelinecontainer.addObjects(self.pluginpipeline.userinterfaceitems)
+		for uiobject in self.pluginpipeline.userinterfaceitems:
+			if isinstance(uiobject, uidata.Method):
+				pipelinecontainer.addObject(uiobject)
+			else:
+				pipelinecontainer.addObject(uiobject, position={'expand': 'all'})
 
 		container = uidata.LargeContainer('Square Finder')
-		container.addObjects((self.messagelog, filecontainer,
-													pipelinecontainer, self.ui_image))
-		self.uicontainer.addObjects((container,))
+		container.addObject(self.messagelog, position={'position': (0, 0),
+																										'span': (1, 2),
+																										'expand': 'all',
+																										'justify': ['center']})
+		container.addObject(pipelinecontainer, position={'position': (1, 0),
+																									'justify': ['center']})
+		container.addObject(filecontainer, position={'position': (2, 0),
+																									'justify': ['center']})
+		container.addObject(self.ui_image, position={'position': (1, 1),
+																									'span': (2, 1)})
+		self.uicontainer.addObject(container)
 
