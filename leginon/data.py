@@ -389,9 +389,9 @@ def accumulateData(originaldata, func, memo=None):
 	memo[d] = myresult
 	return myresult
 
-def data2dict(idata, noNone=False):
+def data2dict(idata, noNone=False, dereference=False):
 	d = {}
-	for key,value in idata.items():
+	for key,value in idata.items(dereference=dereference):
 		if isinstance(value, Data):
 			subd = data2dict(value, noNone)
 			if subd:
@@ -590,8 +590,8 @@ class Data(DataDict, leginonobject.LeginonObject):
 			f = DataDict.getFactory(self, valuetype)
 		return f
 
-	def toDict(self, noNone=False):
-		return data2dict(self, noNone)
+	def toDict(self, noNone=False, dereference=False):
+		return data2dict(self, noNone, dereference)
 
 	def size(self):
 		## This is crazy, but fun:
