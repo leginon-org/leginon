@@ -153,13 +153,17 @@ class ListCtrlPanel(wx.Panel):
 		self.panelmap[label] = panel
 		index = self.listctrl.GetItemCount()
 		index = self.listctrl.InsertImageStringItem(index, label, imageindex)
-		self.listctrl.SetColumnWidth(0, wx.LIST_AUTOSIZE)
 		self.listctrl.SetItemData(index, self.data)
 		self.datatextmap[self.data] = label
 		self.data += 1
-		#print (self.listctrl.GetColumnWidth(0), -1)
-		#self.swselect.SetDefaultSize((self.listctrl.GetColumnWidth(0), -1))
-		#self.Layout()
+
+		self.listctrl.SetColumnWidth(0, wx.LIST_AUTOSIZE)
+		clientwidth = self.listctrl.GetColumnWidth(0)
+		if clientwidth > self.listctrl.GetClientSize().width:
+			self.listctrl.SetClientSize((clientwidth, -1))
+			sashwidth = self.listctrl.GetSize().width + 18
+			self.swselect.SetDefaultSize((sashwidth, -1))
+			self.Layout()
 
 	def removePanel(self, panel):
 		for text, p in self.panelmap.items():
@@ -178,6 +182,8 @@ class ListCtrlPanel(wx.Panel):
 		if hasattr(panel, 'messagelog'):
 			panel.messagelog.Destroy()
 		panel.Destroy()
+
+		self.listctrl.SetColumnWidth(0, wx.LIST_AUTOSIZE)
 
 	def _onSetPanel(self, panel):
 		pass
@@ -207,10 +213,6 @@ class ListCtrlPanel(wx.Panel):
 		if evt.GetEventObject() is self.swmessage:
 			self.swmessage.SetDefaultSize((-1, evt.GetDragRect().height))
 		self.Layout()
-
-#	def onSize(self, evt):
-#		self.Layout()
-#		evt.Skip()
 
 	def Layout(self):
 		wx.LayoutAlgorithm().LayoutWindow(self, self.panel)
