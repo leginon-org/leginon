@@ -1,17 +1,27 @@
 #!/usr/bin/env python
 
-import string
+import string, cPickle
 
 
 class Event(object):
-	def __init__(self, source):
+	def __init__(self, source = None):
 		self.source = source
 
-	def tostring(self):
+	def class_string(self):
 		myclass = self.__class__
 		mybasetup = bases_tup(myclass)
 		mystr = string.join(mybasetup, '.')
 		return mystr
+
+	def xmlrpc_repr(self):
+		"""
+		package the event into a dict for xmlrpc
+		"""
+		myclass = self.class_string()
+		picklestring = cPickle.dumps(self)
+
+		xmlrpcdict = {'class':myclass, 'pickle':picklestring}
+		return xmlrpcdict
 
 
 def bases_tup(classobject):
@@ -27,16 +37,33 @@ def bases_tup(classobject):
 	return basetup
 
 
+class MyEvent(event.Event):
+	def __init__(self):
+		event.Event.__init__(self)
+
+	def xmlrpc_repr(self):
+		repr = event.Event.xmlrpc_repr(self)
+		repr['newstuff'] = 'stuff for MyEvent'
+		return repr
+
+
+class YourEvent(event.Event):
+	def __init__(self):
+		event.Event.__init__(self)
+
+	def xmlrpc_repr(self):
+		repr = event.Event.xmlrpc_repr(self)
+		repr['somestuff'] = 'stuff for YourEvent'
+		return repr
 
 
 class DataPublished(Event):
 	def __init__(self):
 		Event.__init__(self)
 
-
-class ImageReady(DataReady):
+class ImagePublished(DataPublished):
 	def __init__(self):
-		DataReady.__init__(self)
+		DataPublished.__init__(self)
 
 
 

@@ -48,11 +48,14 @@ class Node(xmlrpcnode.xmlrpcnode):
 		args = (eventrepr,)
 		self.callProxy('manager', 'notify', args)
 
-	def EXPORT_event_dispatch(self, event):
+	def EXPORT_event_dispatch(self, eventrepr):
 		### this decides what to do with incoming events
-		## the 
-		meth = self.eventmap[event]
-		apply(meth
+
+		eventpickle = eventrepr['pickle']
+		event = cPickle.loads(eventpickle)
+		eventclass = event.__class__
+		meth = self.eventmap[eventclass]
+		apply(meth, (event,))
 
 	def publish(self, dataid, data):
 		self.datahandler.put(dataid, data)

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import nodenet
+import event
 
 class Node1(nodenet.Node):
 	def __init__(self, manageraddress):
@@ -27,6 +28,25 @@ class Node2(nodenet.Node):
 	def EXPORT_announce(self):
 		e = nodenet.Event()
 		self.announce(e)
+
+
+class MyNode(nodenet.Node):
+
+	def __init__(self, manageraddress = None):
+
+		self.eventmap = {
+			event.MyEvent:  self.handleMyEvent,
+			event.YourEvent:  self.handleYourEvent
+			}
+
+		nodenet.Node.__init__(self, 'Node3', manageraddress)
+
+	def handleMyEvent(self, event):
+		print 'handleMyEvent got the event: ', event
+
+	def handleYourEvent(self, event):
+		print 'handleYourEvent got the event: ', event
+
 
 if __name__ == '__main__':
 	import sys, signal
