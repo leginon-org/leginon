@@ -13,9 +13,7 @@ ffteng = fftengine.fftEngine()
 try:
 	import numextension
 except ImportError:
-	print '''could not import numextension
-You should use the numextension compiled Numeric extensions to make things 
-faster.  For now you are using slower functions implemented in imagefun'''
+	print 'Using imagefun (compile numextension to optimize)'
 	numextension = None
 
 ## Numeric seems to use infinity as a result of zero

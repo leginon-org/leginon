@@ -39,8 +39,7 @@ class _fftEngine(object):
 try:
 	import sfftw
 except ImportError:
-	print 'Warning:  you are using Numeric for FFTs.'
-	print 'Compile the sfftw module for faster FFTs.'
+	print 'Using Numeric FFT (compile sfftw to optimize)'
 
 	class fftEngine(_fftEngine):
 		'''subclass of fftEngine which uses FFT from Numeric module'''
