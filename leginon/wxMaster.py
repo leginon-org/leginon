@@ -7,6 +7,9 @@ class MasterMixIn(object):
 	def __init__(self, master):
 		self._setMaster(master)
 
+	def setMaster(self, master):
+		self._setMaster(master)
+
 	def _setMaster(self, master):
 		self.master = master
 
@@ -15,6 +18,9 @@ class MasterMixIn(object):
 
 class ApplicationMixIn(object):
 	def __init__(self, application=None):
+		self.setApplication(application)
+
+	def setApplication(self, application):
 		self._setApplication(application)
 
 	def _setApplication(self, application):
@@ -37,21 +43,43 @@ class NodesMixIn(object):
 	def __init__(self):
 		self.nodes = []
 
-	def addNode(self, node):
-		self._addNode(node):
-
 	def _addNode(self, node):
 		if node in self.nodes:
-			raise ValueError('node does already exists')
+			raise ValueError('node already exists')
 		self.nodes.append(node)
-
-	def deleteNode(self, node):
-		self._deleteNode(node)
 
 	def _deleteNode(self, node):
 		if node not in self.nodes:
 			raise ValueError('node does not exist')
 		self.nodes.remove(node)
+
+class LaunchersMixIn(object):
+	def __init__(self):
+		self.launchers = []
+
+	def _addLauncher(self, launcher):
+		if launcher in self.launchers:
+			raise ValueError('launcher already exists')
+		self.launchers.append(launcher)
+
+	def _deleteLauncher(self, launcher):
+		if launcher not in self.launchers:
+			raise ValueError('launcher does not exist')
+		self.launchers.remove(launcher)
+
+class ApplicationsMixIn(object):
+	def __init__(self):
+		self.applications = []
+
+	def _addApplication(self, application):
+		if application in self.applications:
+			raise ValueError('application already exists')
+		self.applications.append(application)
+
+	def _deleteApplication(self, application):
+		if application not in self.applications:
+			raise ValueError('application does not exist')
+		self.applications.remove(application)
 
 class Binding(MasterMixIn):
 	def __init__(self, master, eventclass=None, fromnode=None, tonode=None):
@@ -61,6 +89,9 @@ class Binding(MasterMixIn):
 		self.tonode = None
 		self.setFromNode(fromnode)
 		self.setToNode(tonode)
+
+	def setMaster(self, master):
+		MasterMixIn.setMaster(self, master)
 
 	def _setEventClass(self, eventclass):
 		self.eventclass = eventclass
@@ -106,53 +137,56 @@ class Node(MasterMixIn, ApplicationMixIn, LauncherMixIn):
 		self.bindingoutputs = []
 		self.bindinginputs = []
 
+	def setMaster(self, master):
+		MasterMixIn.setMaster(self, master)
+		self.master._addNode(self)
+
+	def setApplication(self, application):
+		if self.application is not None:
+			self.application._deleteNode(self)
+		ApplicationMixIn.setApplication(self, application)
+		if self.application is not None:
+			self.application._addNode(self)
+
 	def _setNodeClass(self):
 		self.nodeclass = nodeclass
 
 	def getNodeClass(self):
 		return self.nodeclass
 
-	def addBindingInput(self, binding):
-		tonode = binding.getToNode()
-		if tonode is not None:
-			tonode._deleteBindingInput()
-		binding._setToNode(self)
-		self._addBindingInput(binding)
-
 	def _addBindingInput(self, binding):
 		if binding in self.bindinginputs:
 			raise ValueError('binding input already exists')
 		self.bindinginputs.append(binding)
-
-	def deleteBindingInput(self, binding):
-		binding._setToNode(None)
-		self._deleteBindingInput(binding)
 
 	def _deleteBindingInput(self, binding):
 		if binding not in self.bindinginputs:
 			raise ValueError('binding input does not exist')
 		self.bindinginputs.remove(binding)
 
-	def addBindingOutput(self, binding):
-		fromnode = binding.getFromNode()
-		if fromnode is not None:
-			fromnode._deleteBindingOutput()
-		binding._setFromNode(self)
-		self._addBindingOutput(binding)
-
 	def _addBindingOutput(self, binding):
 		if binding in self.bindingoutputs:
 			raise ValueError('binding output already exists')
 		self.bindingoutputs.append(binding)
 
-	def deleteBindingOutput(self, binding):
-		binding._setFromNode(None)
-		self._deleteBindingOutput(binding)
-
 	def _deleteBindingOutput(self, binding):
 		if binding not in self.bindingoutputs:
 			raise ValueError('binding output does not exist')
 		self.bindingoutputs.remove(binding)
+
+	def setLauncher(self, launcher):
+		if self.launcher is not None:
+			self.launcher._deleteNode(self)
+		self._setLauncher(launcher)
+		if self.launcher is not None:
+			self.launcher._addNode(self)
+
+	def setApplication(self, application):
+		if self.application is not None:
+			self.application._deleteNode(self)
+		self._setApplication(application)
+		if self.application is not None:
+			self.application._addNode(self)
 
 class Launcher(MasterMixIn, ApplicationMixIn, NodesMixIn):
 	def __init__(self, master, application=None):
@@ -160,27 +194,48 @@ class Launcher(MasterMixIn, ApplicationMixIn, NodesMixIn):
 		ApplicationMixIn.__init__(self, application)
 		NodesMixIn.__init__(self)
 
-	def addNode(self):
+	def setMaster(self, master):
+		MasterMixIn.setMaster(self, master)
+		self.master._addLauncher(self)
 
-	def deleteNode(self):
+	def setApplication(self, application):
+		if self.application is not None:
+			self.application._deleteLauncher(self)
+		ApplicationMixIn.setApplication(self, application)
+		if self.application is not None:
+			self.application._addLauncher(self)
 
-class Application(MasterMixIn):
+	def setApplication(self, application):
+		if self.application is not None:
+			self.application._deleteLauncher(self)
+		self._setApplication(application)
+		if self.application is not None:
+			self.application._addLauncher(self)
+
+class Application(MasterMixIn, NodesMixIn, LaunchersMixIn):
 	def __init__(self, master):
 		MasterMixIn.__init__(self, master)
-		self.launchers = []
-		self.nodes = []
+		NodesMixIn.__init__(self)
+		LaunchersMixIn.__init__(self)
+
+	def setMaster(self, master):
+		MasterMixIn.setMaster(self, master)
+		self.master._addApplication(self)
+
 		# not implemented
 #		self.eventoutputs = []
 #		self.eventinputs = []
 #		self.bindingoutputs = []
 #		self.bindinginputs = []
 
-class Master(object):
+class Master(NodesMixIn, LaunchersMixIn, ApplicationsMixIn):
 	def __init__(self):
-		self.applications = []
-		self.launchers = []
-		self.nodes = []
-		self.bindings = []
+		NodesMixIn.__init__(self)
+		LaunchersMixIn.__init__(self)
+		ApplicationsMixIn.__init__(self)
+
+		# not implemented
+#		self.bindings = []
 
 class RectangleLineShape(wxLineShape):
 	pass
