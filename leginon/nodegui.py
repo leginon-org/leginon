@@ -334,6 +334,7 @@ class Method(SpecWidget):
 
 class NodeGUI(Frame):
 	def __init__(self, parent, hostname=None, port=None, node=None):
+		#self.parent = parent
 		if (hostname is not None) and (port is not None):
 			pass
 		elif node is not None:
@@ -378,7 +379,19 @@ class NodeGUI(Frame):
 	def launchgui(self):
 		host = self.launchhostent.get()
 		port = self.launchportent.get()
-		tk = newGUIWindow(host, port)
+		tk = self.newGUIWindow(host, port)
+
+	def newGUIWindow(self, host, port):
+		top = Toplevel()
+		top.title('Node GUI')
+		gui = NodeGUI(top, host, port)
+		gui.pack(expand=YES, fill=BOTH)
+
+#	t = threading.Thread(target=tk.mainloop)
+#	t.setDaemon(1)
+#	t.start()
+#	tk.mainloop()
+#	return tk
 
 # This was done quickly, should be thought out more I suppose
 class StructTreeItem(TreeWidget.TreeItem):
@@ -435,18 +448,6 @@ class StructTreeItem(TreeWidget.TreeItem):
 			return [StructTreeItem(self, None, self.value)]
 
 
-def newGUIWindow(host, port):
-	tk = Tk()
-	tk.wm_title('Node GUI')
-	Pmw.initialise(tk)
-	gui = NodeGUI(tk, host, port)
-	gui.pack(expand=YES, fill=BOTH)
-
-#	t = threading.Thread(target=tk.mainloop)
-#	t.setDaemon(1)
-#	t.start()
-	tk.mainloop()
-	return tk
 
 
 if __name__ == '__main__':
@@ -454,5 +455,8 @@ if __name__ == '__main__':
 	hostname = sys.argv[1]
 	port = int(sys.argv[2])
 
-	tk = newGUIWindow(hostname, port)
-	tk.wait_window()
+	tk = Tk()
+	gui = NodeGUI(tk, hostname, port)
+	gui.pack(expand=YES, fill=BOTH)
+	tk.mainloop()
+
