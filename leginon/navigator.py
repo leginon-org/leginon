@@ -243,7 +243,7 @@ class Navigator(node.Node):
 		stores a location in the DB under the current session name
 		if no location is specified, store all self.stagelocations
 		'''
-		self.publish(stagelocdata, database=True)
+		self.publish(stagelocdata, database=True, dbforce=True)
 
 	def toScope(self, loc):
 		'''

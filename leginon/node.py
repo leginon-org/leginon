@@ -73,8 +73,8 @@ class DataHandler(leginonobject.LeginonObject):
 	def delBinding(self, eventclass, func):
 		self.databinder.delBinding(eventclass, func)
 
-	def dbInsert(self, idata):
-		self.dbdatakeeper.insert(idata)
+	def dbInsert(self, idata, force=False):
+		self.dbdatakeeper.insert(idata, force=force)
 
 	def dbQuery(self, idata, results=None):
 		return self.dbdatakeeper.query(idata, results)
@@ -333,10 +333,14 @@ class Node(leginonobject.LeginonObject):
 			return
 
 		if 'database' in kwargs and kwargs['database']:
+			if 'dbforce' in kwargs:
+				dbforce = kwargs['dbforce']
+			else:
+				dbforce = False
 			if isinstance(idata, data.InSessionData):
 				self.addSession(idata)
 			try:
-				self.datahandler.dbInsert(idata)
+				self.datahandler.dbInsert(idata, force=dbforce)
 			except KeyError, e:
 				self.printerror('no DBDataKeeper to publish: %s' % str(idata['id']))
 				raise

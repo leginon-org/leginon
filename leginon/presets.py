@@ -100,8 +100,7 @@ class DataHandler(node.DataHandler):
 class PresetsManager(node.Node):
 
 	eventinputs = node.Node.eventinputs + [event.ChangePresetEvent]
-	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent,
-																						event.ListPublishEvent]
+	eventoutputs = node.Node.eventoutputs + [event.PresetChangedEvent, event.ListPublishEvent]
 
 	def __init__(self, id, session, nodelocations, **kwargs):
 		node.Node.__init__(self, id, session, nodelocations, datahandler=DataHandler, **kwargs)
@@ -186,7 +185,7 @@ class PresetsManager(node.Node):
 		for p in tostore:
 			pdata = copy.copy(p)
 			pdata['session'] = self.session
-			self.publish(pdata, database=True)
+			self.publish(pdata, database=True, dbforce=True)
 
 	def presetByName(self, name):
 		for p in self.presets:
