@@ -11,6 +11,7 @@ import camerafuncs
 import threading
 import calibrationclient
 import gonmodel
+import uidata
 
 class GonModeler(node.Node):
 	def __init__(self, id, session, nodelocations, **kwargs):
@@ -146,12 +147,12 @@ class GonModeler(node.Node):
 		f.write(datastr + '\n')
 		f.close()
 
-	def uiFit(self, datfile, terms):
-		self.fit(datfile, terms, magonly=0)
+	def uiFit(self):
+		self.fit(self.uidatfile, self.uiterms, magonly=0)
 		return ''
 
-	def uiMagOnly(self, datfile, terms):
-		self.fit(datfile, terms, magonly=1)
+	def uiMagOnly(self):
+		self.fit(self.uidatfile, self.uiterms, magonly=1)
 		return ''
 
 	def fit(self, datfile, terms, magonly=1):
@@ -184,31 +185,35 @@ class GonModeler(node.Node):
 	def defineUserInterface(self):
 		nodespec = node.Node.defineUserInterface(self)
 
-		axes = self.registerUIData('axes', 'array', default=('x','y'))
-		argspec = (
-			self.registerUIData('Axis', 'string', default='x', choices=axes),
-			self.registerUIData('Points', 'integer', default=200),
-			self.registerUIData('Interval', 'float', default=5e-6),
-			)
-		start = self.registerUIMethod(self.uiStartLoop, 'Start', argspec)
-		stop = self.registerUIMethod(self.uiStopLoop, 'Stop', ())
-		measure = self.registerUIContainer('Measure', (start, stop))
-		argspec = (
-			self.registerUIData('Data File', 'string'),
-			self.registerUIData('Terms', 'integer')
-		)
-		fit = self.registerUIMethod(self.uiFit, 'Fit Model', argspec)
-		magonly = self.registerUIMethod(self.uiMagOnly, 'Mag Only', argspec)
+		self.uiaxis = uidata.SingleSelectFromList('Axis',  ['x','y'], 0)
+		self.uipoints = uidata.String('Points', 200, 'rw')
+		self.uiinterval = uidata.Float('Interval', 5e-6, 'rw', persist=True)
+		start = uidata.Method('Start', self.uiStartLoop)
+		stop = uidata.Method('Stop', self.uiStopLoop)
 
-		modelcont = self.registerUIContainer('Model', (measure,fit,magonly))
+		measurecont = uidata.Container('Measure')
+		measurecont.addObjects((self.uiaxis, self.uipoints, self.uiinterval, start, stop))
+
+		self.uidatafile = uidata.String('Data File', '', 'rw')
+		self.uiterms = uidata.Integer('Terms', 5, 'rw')
+		fit = uidata.Method('Fit Model', self.uiFit)
+		magonly = uidata.Method('Mag Only', self.uiMagOnly)
+
+		modelcont = uidata.Container('Model')
+		modelcont.addObjects((self.uidatafile, self.uiterms, fit, magonly))
 
 		camconfig = self.cam.configUIData()
 
-		self.registerUISpec('Goniometer Modeler', (modelcont, camconfig, nodespec))
+		maincont = uidata.MediumContainer('GonModeler')
+		maincont.addObjects((measurecont, modelcont, camconfig))
+		self.uiserver.addObject(maincont)
 
-	def uiStartLoop(self, axis, points, interval):
+	def uiStartLoop(self):
 		if not self.threadlock.acquire(0):
 			return ''
+		axis = self.uiaxis
+		points = self.uipoints
+		interval = self.uiinterval
 		self.threadstop.clear()
 		t = threading.Thread(target=self.loop, args=(axis, points, interval))
 		t.setDaemon(1)
