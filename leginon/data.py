@@ -42,6 +42,64 @@ class DataDict(strictdict.TypedDict):
 		return []
 	typemap = classmethod(typemap)
 
+	def factories(self, valuetype):
+		if valuetype is DataDict:
+			f = DataDict
+		else:
+			f = strictdict.TypedDict.factories(self, valuetype)
+		return f
+
+def replaceData(originaldata, func, memo=None, copymemo=None):
+	'''
+	(this is confusing, difficult to describe)
+	func is called on a copy of original data, but only after func 
+	has already been called on all children of original data 
+	which are themselves Data instances.  The children are replaced
+	with 
+	Before func is called on the copy of original Data instance, all the 
+	children which are Data instances are replaced with the result of
+	calling func on them.
+	'''
+	## create copy of originaldata, replace each child 
+	## with depthFirst(child).  Which is similar to saying:
+	## replace each child with func(child)
+	## I would like to use copy or deepcopy here, but
+	## since I want to replace some values with some type
+	## of reference to that value, the types cannot be enforced
+	## like TypedDict.  Instead I use KeyedDict.
+
+	d = id(originaldata)
+
+	if memo is None:
+		memo = {}
+	if memo.has_key(d):
+		return memo[d]
+
+	## deepcopy makes our memo system fail because children
+	## now have multiple copies
+	#mycopy = copy.deepcopy(originaldata)
+
+	## copy fails because originaldata's children are modified
+	mycopy = copy.copy(originaldata)
+
+	for key,value in mycopy.items():
+		if isinstance(value, Data):
+			mycopy[key] = replaceData(value, func, memo)
+		else:
+			mycopy[key] = value
+
+	replacement = func(mycopy)
+
+	memo[d] = replacement
+	return replacement
+
+class DataReference(object):
+	'''
+	instances of DataReference can be used in place of the actual data
+	when one Data object references another.
+	'''
+	pass
+
 class Data(DataDict, leginonobject.LeginonObject):
 	'''
 	Combines DataDict and LeginonObject to create the base class
@@ -74,6 +132,24 @@ class Data(DataDict, leginonobject.LeginonObject):
 		return t
 	typemap = classmethod(typemap)
 
+	def depthFirst(self, func):
+		'''
+
+		'''
+		mycopy = copy.deepcopy(self)
+		return replaceData(mycopy, func)
+
+	def factories(self, valuetype):
+		if issubclass(valuetype, Data):
+			def f(value):
+				if type(value) in (valuetype, DataReference):
+					return value
+				else:
+					raise ValueError('must be type %s' % (valuetype,))
+				
+		else:
+			f = DataDict.factories(self, valuetype)
+		return f
 
 ## How to define a new leginon data type:
 ##   - Inherit Data or a subclass of Data.
@@ -83,7 +159,7 @@ class Data(DataDict, leginonobject.LeginonObject):
 ##      typemap = classmethod(typemap)
 ##   - typemap() should return a sequence mapping, usually a list
 ##       of tuples:   [ (key, type), (key, type),... ]
-
+## Examples:
 class NewData(Data):
 	'''
 	Example of a new data type
@@ -93,6 +169,21 @@ class NewData(Data):
 		t += [ ('stuff', int), ('thing', float), ]
 		return t
 	typemap = classmethod(typemap)
+
+class OtherData(Data):
+	def typemap(cls):
+		t = Data.typemap()
+		t += [ ('NewData', NewData), ('mynum', int),]
+		return t
+	typemap = classmethod(typemap)
+
+class MoreData(Data):
+	def typemap(cls):
+		t = Data.typemap()
+		t += [ ('NewData1', NewData), ('NewData2', NewData), ('OtherData', OtherData),]
+		return t
+	typemap = classmethod(typemap)
+	
 
 class NumericData(Data):
 	'''
