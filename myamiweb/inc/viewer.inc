@@ -353,6 +353,7 @@ class view {
 		$this->scale_st = "false";
 		$this->target_st = "false";
 		$this->quality = "80";
+		$this->colormap = "0";
 		
 	}
 
@@ -462,6 +463,7 @@ class view {
 			.'var jsbinning'.$this->name.';'
 			.'var jspreset'.$this->name.'="'.$this->preset.'";'.$this->crlf
 			.'var jsquality'.$this->name.'="'.$this->quality.'";'.$this->crlf
+			.'var jscolormap'.$this->name.'="'.$this->colormap.'";'.$this->crlf
 			.$this->crlf;
 		return $javascript;
 	}

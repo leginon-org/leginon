@@ -8,8 +8,32 @@
  */
 
 $title = "Image Adjust";
-if ($displayname=$_GET['displayname'])
+if ($displayname=$_REQUEST['displayname'])
 	$title .=" - ".$displayname;
+
+if (!$cmap = $_REQUEST['colormap'])
+	$cmap = 0;
+$defaultmax = ($cmap) ? 1274 : 255;
+if (!$min=$_REQUEST['pmin'])
+	$min=0;
+if (!$max=$_REQUEST['pmax'])
+	$max=$defaultmax;
+if (!$name=$_REQUEST['name'])
+	$name='v';
+if (!$currentfilter=$_REQUEST['filter'])
+	$currentfilter='default';
+if (!$currentbinning=$_REQUEST['binning'])
+	$currentbinning='auto';
+if ($min > $defaultmax)
+	$min = $defaultmax;
+if ($max > $defaultmax)
+	$max = $defaultmax;
+$currentgradient='grad.php';
+
+
+$arrayurl = explode("/", $_SERVER['PHP_SELF']);
+array_pop($arrayurl);
+$baseurl=implode("/",$arrayurl);
 ?>
 <html>
 <head>
@@ -24,29 +48,20 @@ if ($displayname=$_GET['displayname'])
 <script src="js/viewiframe.js"></script>
 <script><!--
 <?
-if (!$min=$_GET['pmin'])
-	$min=0;
-if (!$max=$_GET['pmax'])
-	$max=255;
-if (!$name=$_GET['name'])
-	$name='v';
-if (!$currentfilter=$_GET['filter'])
-	$currentfilter='default';
-if (!$currentbinning=$_GET['binning'])
-	$currentbinning='auto';
 
-$arrayurl = explode("/", $_SERVER['PHP_SELF']);
-array_pop($arrayurl);
-$baseurl=implode("/",$arrayurl);
+
+
 echo"
 var jsminpix = $min;
 var jsmaxpix = $max;
+var jscolormap = $cmap;
 var jsmingradpix = 0;
-var jsmaxgradpix = 255;
+var jsmaxgradpix = $defaultmax;
 var jsbaseurl = '$baseurl/';
 var jsviewname = '$name';
 var jsfilter = '$currentfilter';
 var jsbinning = '$currentbinning';
+var gradient = '/img/dfe/$currentgradient';
 ";
 require('inc/filter.inc');
 $filterdata = new filter();
@@ -70,6 +85,7 @@ function update() {
 		if (jsfilter!="default")
 			eval("parentwindow.toggleimage('"+jsviewname+"filter_bt', 'filter_bt')");
 	parentwindow.setminmax(jsviewname,jsminpix,jsmaxpix);
+	parentwindow.setcolormap(jsviewname,jscolormap);
 	parentwindow.newfile(jsviewname);
 
 }
@@ -82,10 +98,10 @@ function drawSliders() {
   minpix1.width         = 255;
   minpix1.height        = 8;
   minpix1.minVal        = 0;
-  minpix1.maxVal        = 255;
+  minpix1.maxVal        = <?=$defaultmax?>;
   minpix1.valueInterval = 1;
   minpix1.arrowAmount   = 1;
-  minpix1.valueDefault  = <? echo $min ?>;
+  minpix1.valueDefault  = <?=$min ?>;
   minpix1.imgBasePath   = 'img/';
   minpix1.setBackgroundImage('dfe/white.php', 'no-repeat');
   minpix1.setSliderIcon('dfe/cursor_min2.gif', 11, 8);
@@ -98,10 +114,10 @@ function drawSliders() {
   maxpix1.width         = 255;
   maxpix1.height        = 8;
   maxpix1.minVal        = 0;
-  maxpix1.maxVal        = 255;
+  maxpix1.maxVal        = <?=$defaultmax?>;
   maxpix1.valueInterval = 1;
   maxpix1.arrowAmount   = 1;
-  maxpix1.valueDefault  = <? echo $max ?>;
+  maxpix1.valueDefault  = <?=$max ?>;
   maxpix1.imgBasePath   = 'img/';
   maxpix1.setBackgroundImage('dfe/white.php', 'no-repeat');
   maxpix1.setSliderIcon('dfe/cursor_max2.gif', 11, 8);
@@ -116,7 +132,7 @@ function init(){
   drawSliders();
   jsminpix = minpix1.valueDefault;
   jsmaxpix = maxpix1.valueDefault;
-  document.getElementById('gradientDiv').style.background = 'url('+jsbaseurl+'img/dfe/grad.php?min='+jsminpix+'&max='+jsmaxpix+')'; 
+  document.getElementById('gradientDiv').style.background = 'url('+jsbaseurl+gradient+'?colormap='+jscolormap+'&min='+jsminpix+'&max='+jsmaxpix+')'; 
   this.focus();
 } 
 
@@ -126,10 +142,17 @@ function init(){
 </head>
 <body leftmargin="0" topmargin="0" bottommargin="0" marginwidth="0" marginheight="0" bgcolor="#FFFFFF" onload="init();">
 <form method="post" name="adjustform" id="adjust" >
+<?   $cmapstr = ($cmap==1) ? "0" : "1";  ?>
+<input type="hidden" name="colormap" value="<?=$cmapstr?>">
 <div id="imagemap" style="z-index:99999;position:absolute;visibility:hidden;border:1px solid black"></div>
 <div id="treedata" style="z-index:99999;position:absolute;visibility:hidden;border:1px solid black"></div>
 <table border=0>
   <tr>
+   <td>
+	<button class="button" type="submit" value="">
+	<img src="img/dfe/grad.php?w=15&h=15&colormap=<?=$cmapstr?>">
+	</button>
+   </td>
    <td>
 	<label for="maxpix1Div">max</label><br>
 	<label for="minpix1Div">min</label>
@@ -155,7 +178,7 @@ function init(){
  </td>
  </tr>
  <tr>
-	<td>
+	<td colspan="2">
 		Filter
 	</td>
 	<td>

@@ -175,6 +175,12 @@ INPUT.button {
 /*  ns4. */
 }
 
+.button {
+ background: #000000;
+ font-size: 0px;
+ padding: 1px 0px ;
+}
+
 .datafield0
 {
         color:                  #777777;

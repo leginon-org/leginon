@@ -1,7 +1,7 @@
 <?
 /**
- *	@version $Revision: 1.13 $
- *	@version $Id: image.inc,v 1.13 2004-12-07 00:30:42 dfellman Exp $
+ *	@version $Revision: 1.14 $
+ *	@version $Id: image.inc,v 1.14 2004-12-09 19:09:11 dfellman Exp $
  */
 /**
  *	Tools to display images / mosaic
@@ -22,6 +22,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 		'maxpix' => 255,
 		'filter' => 'default',
 		'fft' => false,
+		'colormap' => false,
 		'binning' => 'auto',
 		'scalebar' => true,
 		'displaytargets' => true,
@@ -63,7 +64,7 @@ function getImage($sessionId, $imageId, $preset, $params = array()) {
 
 		if ($binning=='auto')
 			$binning = ($dimx > 1024) ? (($dimx > 2048) ? 4 : 2 ) : 1;
-		$filterdata = new filter($pic, $p[minpix], $p[maxpix], $binning);
+		$filterdata = new filter($pic, $p[minpix], $p[maxpix], $p[colormap], $binning);
 		$img = $filterdata->getFilter($p[filter]);
 		if ($size) {
 			$scalefactor = (imagesx($img)) ? $size/imagesx($img) : 1;

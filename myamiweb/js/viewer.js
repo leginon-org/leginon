@@ -132,11 +132,12 @@ function newfile(view){
 	if ((cfilter = eval("jsfilter"+view)) && eval(view+"filter_bt_st")) flt="&flt="+cfilter; else flt="";
 	if (cbinning = eval("jsbinning"+view)) binning="&binning="+cbinning; else binning="";
 	if (cquality = eval("jsquality"+view)) quality="&t="+cquality; else quality="";
+	if (ccolormap= eval("jscolormap"+view)) colormap="&colormap="+ccolormap; else colormap="";
 
 	options = "preset="+selpreset+
 		"&session="+jsSessionId+
 		"&id="+jsimgId+
-		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+binning;
+		"&s="+jssize+quality+tg+sb+fft+np+xp+flt+binning+colormap;
 
 	if (options == lastoptions[vid])
 		return;
@@ -170,6 +171,10 @@ function setminmax(viewname, min,max) {
 	eval("jsmax"+viewname+"="+max);
 }
 
+function setcolormap(viewname, colormap) {
+	eval("jscolormap"+viewname+"="+colormap);
+}
+
 function setfilter(viewname, filter) {
 	eval("jsfilter"+viewname+"='"+filter+"'");
 }
@@ -188,10 +193,12 @@ function popUpAdjust(URL, view, param){
 	max = eval("jsmax"+view);
 	filter = eval("jsfilter"+view);
 	binning = eval("jsbinning"+view);
+	colormap = eval("jscolormap"+view);
 	min = (min) ? "&pmin="+min : "";
 	max = (max) ? "&pmax="+max : "";
 	filter = (filter) ? "&filter="+filter : "";
 	binning = (binning) ? "&binning="+binning : "";
+	colormap= (colormap) ? "&colormap="+colormap : "";
 	param = (param) ? param : "left=0,top=0,height=35,width=370";
-	window.open(URL+min+max+filter+binning, view+"adj", param+",toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes");
+	window.open(URL+min+max+filter+binning+colormap, view+"adj", param+",toolbar=0,scrollbars=0,location=0,statusbar=0,menubar=0,resizable=0,alwaysRaised=yes");
 }

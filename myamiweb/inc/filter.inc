@@ -9,6 +9,7 @@
 
 define(MIN_PIXEL_VAL, 0); 
 define(MAX_PIXEL_VAL, 255); 
+define(MAX_COLOR_PIXEL_VAL, 1274); 
 
 class filter {
 
@@ -30,11 +31,23 @@ class filter {
 				5 => 5
 			);
 
-	function filter($filename="", $minpix="", $maxpix="", $binning=1) {
+	function filter($filename="", $minpix="", $maxpix="", $colormap=false, $binning=1) {
 		$this->filename = $filename;
 		$this->minpix = ($minpix) ? $minpix : MIN_PIXEL_VAL;
-		$this->maxpix = ($maxpix) ? $maxpix : MAX_PIXEL_VAL;
+		$this->maxpix = ($maxpix) ? $maxpix : (($colormap) ? MAX_COLOR_PIXEL_VAL : MAX_PIXEL_VAL);
 		$this->binning = ($binning) ? $binning : 1;
+		$this->colormap = ($colormap) ? true : false;
+/*
+		echo $this->minpix;
+		echo " ";
+		echo $this->maxpix;
+		echo " ";
+		echo $this->binning;
+		echo " ";
+		echo $this->colormap;
+		echo "E ";
+		exit;
+*/
 	}
 
 	function getFilterTypes() {
@@ -72,8 +85,10 @@ class filter {
 		switch ($type) {
 			case 'default':
 				$img = imageCreateFromMRC (
-						$this->filename, $this->minpix,
-						$this->maxpix, $this->binning
+						$this->filename, 
+						$this->minpix, $this->maxpix,
+						$this->colormap,
+						$this->binning
 						);
 				break;
 
@@ -81,8 +96,11 @@ class filter {
 				$kernel = 5;
 				$sigma = 2.73;
 				$img = imageFilteredCreateFromMRC (
-						$this->filename, $this->minpix,
-						$this->maxpix, $this->binning,
+						$this->filename,
+						$this->minpix,
+						$this->maxpix,
+						$this->colormap,
+						$this->binning,
 						$kernel, $sigma
 						);
 				break;
@@ -92,7 +110,9 @@ class filter {
 				$sigma = 1;
 				$img = imageFilteredCreateFromMRC (
 						$this->filename, $this->minpix,
-						$this->maxpix, $this->binning,
+						$this->maxpix,
+						$this->colormap,
+						$this->binning,
 						$kernel, $sigma
 						);
 				$kernel = 3;
@@ -104,8 +124,11 @@ class filter {
 				$kernel = 3;
 				$sigma = 1;
 				$img = imageFilteredCreateFromMRC (
-						$this->filename, $this->minpix,
-						$this->maxpix, 2,
+						$this->filename,
+						$this->minpix,
+						$this->maxpix,
+						$this->colormap,
+						2,
 						$kernel, $sigma
 						);
 				imagescale($img, .5);
