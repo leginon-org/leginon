@@ -8,7 +8,10 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import Numeric
+try:
+	import numarray as Numeric
+except:
+	import Numeric
 import array
 import struct
 import sys
@@ -17,13 +20,13 @@ import imagefun
 
 ## MRC supported types
 mrcmode_typecode = {
-	0: (1, Numeric.UnsignedInt8),
+	0: (1, Numeric.UInt8),
 	1: (2, Numeric.Int16),
 	2: (4, Numeric.Float32),
 	3: (8, Numeric.Complex32),
 }
 typecode_mrcmode = {
-	Numeric.UnsignedInt8: 0,
+	Numeric.UInt8: 0,
 	Numeric.Int16: 1,
 	Numeric.Float32: 2,
 	Numeric.Complex32: 3,

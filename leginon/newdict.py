@@ -1,4 +1,7 @@
-import Numeric
+try:
+	import numarray as Numeric
+except:
+	import Numeric
 import os
 
 class FileReference(object):

@@ -5,7 +5,34 @@
 #			 For terms of the license agreement
 #			 see	http://ami.scripps.edu/software/leginon-license
 #
-import Numeric
+try:
+	import numarray as Numeric
+	def toFloat(inputarray):
+		'''
+		if inputarray is an integer type:
+			return a Float32 version of it
+		else:
+			return inputarray
+		'''
+		if isinstance(inputarray.typecode(), Numeric.IntegralType):
+			return inputarray.astype(Numeric.Float32)
+		else:
+			return inputarray
+except:
+	import Numeric
+	## these are integer types in Numeric
+	numeric_integers = (Numeric.Int, Numeric.Int16, Numeric.Int32, Numeric.Int8, Numeric.UInt16, Numeric.UInt32, Numeric.UInt8,)
+	def toFloat(inputarray):
+		'''
+		if inputarray is an integer type:
+			return a Float32 version of it
+		else:
+			return inputarray
+		'''
+		if inputarray.typecode() in numeric_integers:
+			return inputarray.astype(Numeric.Float32)
+		else:
+			return inputarray
 import fftengine
 
 ffteng = fftengine.fftEngine()
@@ -22,33 +49,7 @@ faster.  For now you are using slower functions implemented in imagefun'''
 ## division, but I can find no infinity constant or any other way of 
 ## producing infinity without first doing a zero division
 ## Here is my infinity contant
-inf = 1.0 / Numeric.array(0.0, Numeric.Float32)
-
-## these are integer types in Numeric
-numeric_integers = (
-	Numeric.Character,
-	Numeric.Int,
-	Numeric.Int0,
-	Numeric.Int16,
-	Numeric.Int32,
-	Numeric.Int8,
-	Numeric.UInt,
-	Numeric.UInt16,
-	Numeric.UInt32,
-	Numeric.UInt8,
-)
-
-def toFloat(inputarray):
-	'''
-	if inputarray is an integer type:
-		return a Float32 version of it
-	else:
-		return inputarray
-	'''
-	if inputarray.typecode() in numeric_integers:
-		return inputarray.astype(Numeric.Float32)
-	else:
-		return inputarray
+inf = Numeric.array(1.0, Numeric.Float32) / Numeric.array(0.0, Numeric.Float32)
 
 def stdev_slow(inputarray, known_mean=None):
 	im = toFloat(inputarray)

@@ -10,7 +10,10 @@
 
 import leginonconfig
 import leginonobject
-import Numeric
+try:
+	import numarray as Numeric
+except:
+	import Numeric
 import newdict
 import warnings
 import types

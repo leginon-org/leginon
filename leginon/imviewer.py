@@ -9,7 +9,10 @@
 #
 
 import imagewatcher
-import Numeric
+try:
+	import numarray as Numeric
+except:
+	import Numeric
 import threading
 import camerafuncs
 import imagefun

@@ -1,6 +1,10 @@
 #!/usr/bin/env python
-import Numeric
-import FFT
+try:
+	import numarray as Numeric
+	import numarray.fft as FFT
+except ImportError:
+	import Numeric
+	import FFT
 import time
 import sys
 

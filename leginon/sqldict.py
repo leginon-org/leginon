@@ -151,7 +151,10 @@ import copy
 import sqldb
 import string
 import re
-import Numeric
+try:
+	import numarray as Numeric
+except:
+	import Numeric
 import MySQLdb.cursors
 from types import *
 import data
