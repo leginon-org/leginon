@@ -23,7 +23,7 @@ class GridPreview(node.Node):
 		## default camera config
 		currentconfig = self.cam.config()
 		currentconfig['state']['dimension']['x'] = 1024
-		currentconfig['state']['binning']['x'] = 4
+		currentconfig['state']['binning']['x'] = 2
 		currentconfig['state']['exposure time'] = 400
 		self.cam.config(currentconfig)
 
