@@ -40,7 +40,8 @@ class CameraFuncs(object):
 			numimage = cameradict['image data']
 			del cameradict['image data']
 			dataid = self.node.ID()
-			imdata = data.CameraImageData(dataid, image=numimage, scope=scopedict, camera=cameradict)
+			imdata = data.CameraImageData(dataid, image=numimage,
+																		scope=scopedict, camera=cameradict)
 
 		return imdata
 

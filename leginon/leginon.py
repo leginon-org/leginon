@@ -278,7 +278,6 @@ class Leginon(Tkinter.Frame):
 			self.manager.app.addLaunchSpec(i[1])
 
 		self.manager.app.launch()
-		print nodes
 		self.manager.waitNodes(nodes)
 
 	def startUI(self):
@@ -298,17 +297,17 @@ class Leginon(Tkinter.Frame):
 		except:
 			return {}
 
-	def uiClient(self, nodeid, attempts = 10):
-		nodeidstr = str(nodeid)
-		for i in range(attempts):
-			try:
-				nodelocations = self.nodeLocations()
-				hostname = nodelocations[nodeidstr]['hostname']
-				uiport = nodelocations[nodeidstr]['UI port']
-				return interface.Client(hostname, uiport)
-			except KeyError:
-				time.sleep(0.25)
-		return None
+#	def uiClient(self, nodeid, attempts = 10):
+#		nodeidstr = str(nodeid)
+#		for i in range(attempts):
+#			try:
+#				nodelocations = self.nodeLocations()
+#				hostname = nodelocations[nodeidstr]['hostname']
+#				uiport = nodelocations[nodeidstr]['UI port']
+#				return interface.Client(hostname, uiport)
+#			except KeyError:
+#				time.sleep(0.25)
+#		return None
 
 	def managerLocation(self):
 		managerlocation = self.manager.location()
@@ -328,11 +327,47 @@ class Leginon(Tkinter.Frame):
 																self.debug, self.windowmenu, name,
 																sourceids)
 
+class WidgetGroup(Pmw.Group):
+	def __init__(self, parent, name):
+		Pmw.Group.__init__(self, parent, tag_text=name)
+		self.widgets = []
+		self.applybutton = None
+		self.setcommands = []
+
+	def addWidget(self, widget, setcommand=None):
+		nwidgets = len(self.widgets)
+		widget.grid(row = nwidgets, column = 0, padx = 10, pady = 5,
+																		sticky=Tkinter.W+Tkinter.E)
+		if setcommand is not None:
+			self.addSetCommand(setcommand)
+		if self.applybutton is not None:
+			self.applybutton.grid_configure(row=nwidgets+1)
+		self.widgets.append(widget)
+
+	def addSetCommand(self, setcommand):
+		nwidgets = len(self.widgets)
+		if self.applybutton is None:
+			self.applybutton = Tkinter.Button(self.interior(), text='Apply',
+																													command=self.apply)
+			self.applybutton.grid(row = nwidgets+1, column = 0, padx = 10, pady = 5)
+		self.setcommands.append(setcommand)
+
+	def apply(self):
+		for setcommand in self.setcommands:
+			setcommand()
+
 class CustomWidget(Tkinter.Frame):
 	def __init__(self, parent):
 		Tkinter.Frame.__init__(self, parent)
-#		self.uiclients = {}
 		self.groups = {}
+		self.widgets = {}
+
+	def getWidgetInstance(self, id):
+		# may need locking
+		try:
+			return self.widgets[id]
+		except KeyError:
+			return None
 
 	def widgetFromName(self, parent, uiclient, name, attempts=10):
 		for i in range(attempts):
@@ -347,7 +382,11 @@ class CustomWidget(Tkinter.Frame):
 		for subspec in content:
 			if subspec['name'] == name[0]:
 				if len(name) == 1:
-					return nodegui.widgetFromSpec(parent, uiclient, subspec, False)
+					w = nodegui.widgetFromSpec(parent, uiclient, subspec, False, True)
+					if subspec['id'] in self.widgets:
+						print 'error, widget id %s already exists' % str(subspec['id'])
+					self.widgets[subspec['id']] = w
+					return w
 				else:
 					return self.widgetFrom(parent, uiclient, subspec, name[1:])
 
@@ -356,36 +395,54 @@ class CustomWidget(Tkinter.Frame):
 		widget.entry['width'] = width
 		widget.entry['justify'] = justify
 		widget.entry.grid(row = 0, column = 1, padx = 5, pady = 5, columnspan = 1)
-		widget.getbutton.grid(row = 0, column = 2, padx = 5, pady = 5)
-		widget.setbutton.grid(row = 0, column = 3, padx = 5, pady = 5)
+		if widget.getbutton is None:
+			widget.setbutton.grid(row = 0, column = 2, padx = 5, pady = 5)
+		else:
+			widget.getbutton.grid(row = 0, column = 2, padx = 5, pady = 5)
+			widget.setbutton.grid(row = 0, column = 3, padx = 5, pady = 5)
 
 	def arrangeCombobox(self, widget, text=None):
 		if text is not None:
 			widget.label.configure(text=text)
 		widget.combo.grid(row = 0, column = 1, padx = 5, pady = 5, columnspan = 1)
-		widget.getbutton.grid(row = 0, column = 2, padx = 5, pady = 5)
-		widget.setbutton.grid(row = 0, column = 3, padx = 5, pady = 5)
+		if widget.getbutton is None:
+			widget.setbutton.grid(row = 0, column = 2, padx = 5, pady = 5)
+		else:
+			widget.getbutton.grid(row = 0, column = 2, padx = 5, pady = 5)
+			widget.setbutton.grid(row = 0, column = 3, padx = 5, pady = 5)
 
-	# addGroup and addWidget might be able to be done purely with Pmw.Group
+	def arrangeTree(self, widget, text=None):
+		if text is not None:
+			widget.label.configure(text=text)
+		widget.label.grid(row = 0, column = 0, padx = 5, pady = 5)
+		if widget.getbutton is None:
+			widget.setbutton.grid(row = 0, column = 1, padx = 5, pady = 5)
+		else:
+			widget.getbutton.grid(row = 0, column = 1, padx = 5, pady = 5)
+			widget.setbutton.grid(row = 0, column = 2, padx = 5, pady = 5)
+		widget.sc.frame.grid(row = 1, column = 0, padx = 5, pady = 5,
+																											columnspan = 2)
+		widget.sc.frame.configure(bd=1, relief=Tkinter.SUNKEN)
+
 	def addGroup(self, name):
-		group = Pmw.Group(self, tag_text = name)
+		group = WidgetGroup(self, name)
+		self.groups[name] = group
 		group.grid(row = len(self.groups), column = 0, padx=10, pady=10)
 		# whatever
 		if name == 'Image':
 			group.grid(row = 0, column = 1, rowspan = len(self.groups))
-		self.groups[name] = {}
-		self.groups[name]['group'] = group
-		self.groups[name]['widgets'] = []
 
-	def addWidget(self, groupname, uiclient, name):
+	def addWidget(self, groupname, info, name, groupset=False):
+		info['server'].nodegui = self
+		uiclient = info['client']
 		if groupname not in self.groups:
 			self.addGroup(groupname)
-		nwidgets = len(self.groups[groupname]['widgets'])
-		interior = self.groups[groupname]['group'].interior()
+		interior = self.groups[groupname].interior()
 		widget = self.widgetFromName(interior, uiclient, name)
-		widget.grid(row = nwidgets, column = 0, padx = 10, pady = 5,
-																		sticky=Tkinter.W+Tkinter.E)
-		self.groups[groupname]['widgets'].append(widget)
+		if groupset:
+			self.groups[groupname].addWidget(widget, widget.setbutton.invoke)
+		else:
+			self.groups[groupname].addWidget(widget)
 		return widget
 
 class ImageCorrectionWidget(CustomWidget):
@@ -393,8 +450,11 @@ class ImageCorrectionWidget(CustomWidget):
 		CustomWidget.__init__(self, parent)
 
 		widget = self.addWidget('Settings', corrector,
-														('Preferences', 'Frames to Average'))
+														('Preferences', 'Frames to Average'), True)
 		self.arrangeEntry(widget, 2)
+		widget = self.addWidget('Settings', corrector,
+														('Preferences', 'Camera Configuration'), True)
+		self.arrangeTree(widget)
 
 		self.addWidget('Control', corrector, ('Acquire', 'Acquire Dark'))
 		self.addWidget('Control', corrector, ('Acquire', 'Acquire Bright'))
@@ -531,8 +591,10 @@ class WidgetWrapper(object):
 				nodelocations = self.nodeLocations()
 				hostname = nodelocations[nodeidstr]['hostname']
 				uiport = nodelocations[nodeidstr]['UI port']
-				uiclient = interface.Client(hostname, uiport)
-				return {'client': uiclient, 'hostname': hostname, 'UI port': uiport}
+				server = nodegui.Server(('Custom Widget Server',), None)
+				uiclient = interface.Client(hostname, uiport, server)
+				return {'client': uiclient, 'hostname': hostname,
+								'UI port': uiport, 'server': server}
 			except KeyError:
 				time.sleep(0.25)
 		return None
@@ -550,7 +612,8 @@ class Debug(WidgetWrapper):
 		for node in nodelocations:
 			page = self.widget.add(eval(node)[-1])
 			gui = nodegui.NodeGUI(page, nodelocations[node]['hostname'],
-																	nodelocations[node]['UI port'], None, True, True)
+																	nodelocations[node]['UI port'],
+																	None, True, True)
 			gui.pack(fill=Tkinter.BOTH, expand=Tkinter.YES)
 		self.widget.setnaturalsize()
 
@@ -571,7 +634,7 @@ class ImageCorrection(WidgetWrapper):
 
 	def initializeWidget(self):
 		self.widget = ImageCorrectionWidget(self.page,
-															self.nodeinfo['corrector']['UI info']['client'])
+															self.nodeinfo['corrector']['UI info'])
 
 class GridAtlas(WidgetWrapper):
 	def __init__(self, manager, manageruiclient, launcherid, notebook,
@@ -593,8 +656,8 @@ class GridAtlas(WidgetWrapper):
 
 	def initializeWidget(self):
 		self.widget = GridAtlasWidget(self.page,
-												self.nodeinfo['gridpreview']['UI info']['client'],
-												self.nodeinfo['stateimagemosaic']['UI info']['client'])
+												self.nodeinfo['gridpreview']['UI info'],
+												self.nodeinfo['stateimagemosaic']['UI info'])
 
 class Target(WidgetWrapper):
 	def __init__(self, manager, manageruiclient, launcherid, notebook,
@@ -622,9 +685,8 @@ class Target(WidgetWrapper):
 
 
 	def initializeWidget(self):
-		self.widget = TargetWidget(self.page,
-																self.nodeinfo['acquire']['UI info']['client'],
-																self.nodeinfo['target']['UI info']['client'])
+		self.widget = TargetWidget(self.page, self.nodeinfo['acquire']['UI info'],
+																					self.nodeinfo['target']['UI info'])
 
 if __name__ == '__main__':
 

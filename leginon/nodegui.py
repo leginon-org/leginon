@@ -20,7 +20,8 @@ False=0
 True=1
 
 class SpecWidget(Frame):
-	def __init__(self, parent, uiclient, spec, styled=True, **kwargs):
+	def __init__(self, parent, uiclient, spec,
+											styled=True, server=False, **kwargs):
 		Frame.__init__(self, parent, **kwargs)
 		self.parent = parent
 		self.spec = spec
@@ -31,13 +32,14 @@ class SpecWidget(Frame):
 			self['bg'] = '#4488BB'
 			self.buttoncolor = '#7AA6C5'
 			self.entrycolor = '#FFF'
+		self.server = server
 
 	def refresh(self, spec):
 		self.spec = spec
 
 class Container(SpecWidget):
-	def __init__(self, parent, uiclient, spec, styled=True):
-		SpecWidget.__init__(self, parent, uiclient, spec, styled)
+	def __init__(self, parent, uiclient, spec, styled=True, server=False):
+		SpecWidget.__init__(self, parent, uiclient, spec, styled, server)
 		if self.styled:
 			self.label = Label(self, text=spec['name'], bg=self['bg'])
 		else:
@@ -51,7 +53,7 @@ class Container(SpecWidget):
 		self.content = {}
 		for spec in content:
 			id = spec['id']
-			w = widgetFromSpec(self, self.uiclient, spec, self.styled)
+			w = widgetFromSpec(self, self.uiclient, spec, self.styled, self.server)
 			if w.__class__ is TreeData:
 				w.pack(side=TOP, expand=YES, fill=BOTH)
 			else:
@@ -78,8 +80,8 @@ class Container(SpecWidget):
 		return None
 
 class NotebookContainer(Container):
-	def __init__(self, parent, uiclient, spec, styled=True):
-		Container.__init__(self, parent, uiclient, spec, styled)
+	def __init__(self, parent, uiclient, spec, styled=True, server=False):
+		Container.__init__(self, parent, uiclient, spec, styled, server)
 
 	def build(self):
 		self.notebook = Pmw.NoteBook(self)
@@ -93,7 +95,8 @@ class NotebookContainer(Container):
 			tabwidth = self.tabwidth(name)
 			total_tab_width += tabwidth
 
-			w = widgetFromSpec(newframe, self.uiclient, spec, self.styled)
+			w = widgetFromSpec(newframe, self.uiclient, spec,
+																self.styled, self.server)
 			if w.__class__ is TreeData:
 				w.pack(expand=YES, fill=BOTH)
 			else:
@@ -108,15 +111,15 @@ class NotebookContainer(Container):
 		w = self.notebook.component(tabname).winfo_reqwidth()
 		return w
 
-def widgetFromSpec(parent, uiclient, spec, styled=True):
+def widgetFromSpec(parent, uiclient, spec, styled=True, server=False):
 	spectype = spec['spectype']
 	if spectype == 'container':
-		widget = Container(parent, uiclient, spec, styled)
+		widget = Container(parent, uiclient, spec, styled, server)
 	elif spectype == 'method':
-		widget = Method(parent, uiclient, spec, styled)
+		widget = Method(parent, uiclient, spec, styled, server)
 	elif spectype == 'data':
 		dataclass = whichDataClass(spec)
-		widget = dataclass(parent, uiclient, spec, styled)
+		widget = dataclass(parent, uiclient, spec, styled, server)
 	else:
 		raise RuntimeError('invalid spec type')
 	return widget
@@ -152,12 +155,12 @@ def whichDataClass(dataspec):
 		raise RuntimeError('type not supported')
 
 class Data(SpecWidget):
-	def __init__(self, parent, uiclient, spec, styled=True):
+	def __init__(self, parent, uiclient, spec, styled=True, server=False):
 		if styled:
 			SpecWidget.__init__(self, parent, uiclient, spec,
-													styled, bd=2, relief=SOLID)
+													styled, server, bd=2, relief=SOLID)
 		else:
-			SpecWidget.__init__(self, parent, uiclient, spec, styled)
+			SpecWidget.__init__(self, parent, uiclient, spec, styled, server)
 		self.getbutton = None
 		self.setbutton = None
 		self.initInfo(spec)
@@ -181,10 +184,10 @@ class Data(SpecWidget):
 		else:
 			self.pyname = None
 
-		if 'default' in spec:
-			self.default = spec['default']
-		else:
-			self.default = None
+#		if 'default' in spec:
+#			self.default = spec['default']
+#		else:
+#			self.default = None
 
 	def build(self):
 		headframe = Frame(self)
@@ -200,7 +203,7 @@ class Data(SpecWidget):
 
 		### optional get/set
 		if self.permissions is not None:
-			if 'r' in self.permissions:
+			if 'r' in self.permissions and not self.server:
 				if self.styled:
 					self.getbutton = Button(headframe, text='Get',
 																	command=self.getServer, bg=self.buttoncolor)
@@ -227,8 +230,12 @@ class Data(SpecWidget):
 			w = self.buildWidget(self)
 		else:
 			w = self.buildWidget(headframe)
-		if self.default is not None:
-			self.setWidget(self.default)
+
+#		if self.default is not None and self.default:
+#			self.getServer()
+
+		self.getServer()
+
 		if self.styled:
 			w.pack(side=TOP, expand=YES, fill=BOTH)
 		else:
@@ -237,8 +244,9 @@ class Data(SpecWidget):
 	def refresh(self, spec):
 		SpecWidget.refresh(self, spec)
 		self.initInfo(spec)
-		if self.default is not None:
-			self.setWidget(self.default)
+#		if self.default is not None and self.default:
+#			self.getServer()
+		self.getServer()
 
 	def setServer(self):
 		value = self.getWidget()
@@ -261,8 +269,8 @@ class Data(SpecWidget):
 
 
 class EntryData(Data):
-	def __init__(self, parent, uiclient, spec, styled=True):
-		Data.__init__(self, parent, uiclient, spec, styled)
+	def __init__(self, parent, uiclient, spec, styled=True, server=False):
+		Data.__init__(self, parent, uiclient, spec, styled, server)
 
 	def buildWidget(self, parent):
 		if self.styled:
@@ -297,8 +305,8 @@ class EntryData(Data):
 
 
 class CheckbuttonData(Data):
-	def __init__(self, parent, uiclient, spec, styled=True):
-		Data.__init__(self, parent, uiclient, spec, styled)
+	def __init__(self, parent, uiclient, spec, styled=True, server=False):
+		Data.__init__(self, parent, uiclient, spec, styled, server)
 
 	def buildWidget(self, parent):
 		self.tkvar = BooleanVar()
@@ -316,8 +324,8 @@ class CheckbuttonData(Data):
 		return value
 
 class ComboboxData(Data):
-	def __init__(self, parent, uiclient, spec, styled=True):
-		Data.__init__(self, parent, uiclient, spec, styled)
+	def __init__(self, parent, uiclient, spec, styled=True, server=False):
+		Data.__init__(self, parent, uiclient, spec, styled, server)
 		if self.choices is None:
 			raise RuntimeError('need choices for ComboboxData')
 		if self.choicestype != 'array':
@@ -356,8 +364,8 @@ class ComboboxData(Data):
 		return value
 
 class DependentComboboxData(Data):
-	def __init__(self, parent, uiclient, spec, styled=True):
-		Data.__init__(self, parent, uiclient, spec, styled)
+	def __init__(self, parent, uiclient, spec, styled=True, server=False):
+		Data.__init__(self, parent, uiclient, spec, styled, server)
 		if self.choices is None:
 			raise RuntimeError('need choices for ComboboxData')
 		if self.choicestype != 'struct':
@@ -428,8 +436,8 @@ class DependentComboboxData(Data):
 		return values
 
 class TreeSelectorData(Data):
-	def __init__(self, parent, uiclient, spec, styled=True):
-		Data.__init__(self, parent, uiclient, spec, styled)
+	def __init__(self, parent, uiclient, spec, styled=True, server=False):
+		Data.__init__(self, parent, uiclient, spec, styled, server)
 		if self.type != 'array':
 			raise RuntimeError('TreeSelectorData requires array type')
 
@@ -459,7 +467,8 @@ class TreeSelectorData(Data):
 		self.sc.canvas.selectedtrace = [' ',]
 
 	def setWidget(self, value):
-		raise NotImplementedError()
+		#raise NotImplementedError()
+		pass
 
 	def getWidget(self):
 		## return the path to the selected item
@@ -467,27 +476,30 @@ class TreeSelectorData(Data):
 
 
 class TreeData(Data):
-	def __init__(self, parent, uiclient, spec, styled=True):
-		Data.__init__(self, parent, uiclient, spec, styled)
+	def __init__(self, parent, uiclient, spec, styled=True, server=False):
+		self.dict = {}
+		Data.__init__(self, parent, uiclient, spec, styled, server)
 		if self.type != 'struct':
 			raise RuntimeError('TreeData requires struct type')
 
 	def buildWidget(self, parent):
 		self.treenode = None
 		if self.styled:
-			self.sc = TreeWidget.ScrolledCanvas(parent, highlightthickness=0, bg=self.entrycolor, height=180, width=200)
+			self.sc = TreeWidget.ScrolledCanvas(self, highlightthickness=0, bg=self.entrycolor, height=180, width=200)
 		else:
-			self.sc = TreeWidget.ScrolledCanvas(parent, highlightthickness=0, height=180, width=200)
+			self.sc = TreeWidget.ScrolledCanvas(self, highlightthickness=0, bg='white', height=180, width=200)
 		return self.sc.frame
 
 	def setWidget(self, value):
+		if self.dict == value:
+			return
 		if value is None:
 			self.dict = {}
 		else:
 			self.dict = value
 		item = StructTreeItem(None, self.name, self.dict)
 		if self.treenode is not None:
-			del(self.treenode)
+			self.treenode.destroy()
 		self.treenode = TreeWidget.TreeNode(self.sc.canvas, None, item)
 		self.treenode.expand()
 
@@ -496,8 +508,8 @@ class TreeData(Data):
 
 
 class ImageData(Data):
-	def __init__(self, parent, uiclient, spec, styled=True):
-		Data.__init__(self, parent, uiclient, spec, styled)
+	def __init__(self, parent, uiclient, spec, styled=True, server=False):
+		Data.__init__(self, parent, uiclient, spec, styled, server)
 		if self.type != 'binary':
 			raise RuntimeError('ImageData requires binary type')
 
@@ -510,8 +522,10 @@ class ImageData(Data):
 #		print 'setWidget'
 		# value must be binary data from xmlrpc
 		if not isinstance(value, xmlbinlib.Binary):
-			raise RuntimeError('value must be instance of Binary')
-		mrcstr = value.data
+			print 'Error setting image: value must be instance of Binary'
+			mrcstr = ''
+		else:
+			mrcstr = value.data
 
 		#print 'length', len(mrcstr)
 		#f = open('junkdata', 'w')
@@ -552,12 +566,12 @@ class ImageData(Data):
 
 
 class Method(SpecWidget):
-	def __init__(self, parent, uiclient, spec, styled=True):
+	def __init__(self, parent, uiclient, spec, styled=True, server=False):
 		if styled:
-			SpecWidget.__init__(self, parent, uiclient, spec, styled,
-																							bd=3, relief=SOLID)
+			SpecWidget.__init__(self, parent, uiclient, spec, styled, server,
+																										bd=3, relief=SOLID)
 		else:
-			SpecWidget.__init__(self, parent, uiclient, spec, styled)
+			SpecWidget.__init__(self, parent, uiclient, spec, styled, server)
 		self.build()
 
 	def build(self):
@@ -625,12 +639,14 @@ class Server(xmlrpcserver.xmlrpcserver):
 		self.server.register_function(self.set, 'SET')
 
 	def set(self, id, value):
-		#print 'SET', id, value
-		instance = self.nodegui.getWidgetInstance(id)
-		if instance is not None:
-			instance.setWidget(value)
-		else:
-			self.printerror('cannot find instance of %s to set' % str(id))
+		try:
+			instance = self.nodegui.getWidgetInstance(id)
+			if instance is not None:
+				instance.setWidget(value)
+			else:
+				self.printerror('cannot find instance of %s to set' % str(id))
+		except:
+			return 0
 		return ''
 
 class NodeGUI(Frame):
@@ -683,7 +699,11 @@ class NodeGUI(Frame):
 		if self.mainframe is not None:
 			self.mainframe.destroy()
 		spec = self.getSpec()
-		self.mainframe = NotebookContainer(self, self.uiclient, spec, self.styled)
+		if self.server is None:
+			self.mainframe = NotebookContainer(self, self.uiclient, spec, self.styled)
+		else:
+			self.mainframe = NotebookContainer(self, self.uiclient, spec,
+																												self.styled, True)
 		self.name = self.mainframe.name
 		self.mainframe.pack(expand=YES, fill=BOTH)
 
@@ -749,12 +769,16 @@ class StructTreeItem(TreeWidget.TreeItem):
 	def GetSubList(self):
 		if type(self.value) is dict:
 			sublist = []
-			for k in self.value:
+			value = self.value.keys()
+			value.sort()
+			for k in value: 
 				item = StructTreeItem(self, k, self.value[k])
 				sublist.append(item)
 			return sublist
 		elif type(self.value) in (tuple,list):
 			sublist = []
+			if type(self.value) == list:
+				self.value.sort()
 			for k in self.value:
 				item = StructTreeItem(self, None, k)
 				sublist.append(item)

@@ -38,22 +38,22 @@ class DataSpec(SpecObject):
 		else:
 			raise RuntimeError('invalid permissions %s' % permissions)
 		self.choices = choices
-		self.default = default
-		self.uidata = default
+		self.uidata = None
 		self.pyname = pyname
 		if callback is not None:
 			self.registerCallback(callback)
 		else:
 			self.callback = None
+#		self.default = False
+		if default is not None:
+			self.set(default)
+#			self.default = True
 
 	def registerCallback(self, callback):
 		if callable(callback):
 			self.callback = callback
 		else:
 			raise TypeError('callback must be callable')
-
-		if self.default is not None:
-			self.callback(self.default)
 
 	def get(self):
 		if self.callback is None:
@@ -84,8 +84,7 @@ class DataSpec(SpecObject):
 			type = self.choices.xmlrpctype
 			d['choices'] = {'id':idstr, 'type':type}
 
-		if self.default is not None:
-			d['default'] = self.default
+#		d['default'] = self.default
 		if self.pyname is not None:
 			d['python name'] = self.pyname
 		return d
@@ -172,12 +171,10 @@ class Server(xmlrpcserver.xmlrpcserver):
 		return data.get()
 
 	def uiServerPush(self, id, value):
-		for client in self.uiclients:
-			try:
-				client.execute('SET', (id, value))
-			except:
+		uiclients = copy.copy(self.uiclients)
+		for client in uiclients:
+			if client.execute('SET', (id, value)) == 0:
 				self.uiclients.remove(client)
-		return ''
 
 	def uiServer(self, hostname, port):
 		self.uiclients.append(Client(hostname, port))

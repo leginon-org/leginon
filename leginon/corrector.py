@@ -71,8 +71,7 @@ class Corrector(node.Node):
 		acqbright = self.registerUIMethod(self.uiAcquireBright, 'Acquire Bright',())
 		acqcorr = self.registerUIMethod(self.uiAcquireCorrected,
 																					'Acquire Corrected', ())
-		self.acquireimage = self.registerUIData('Image', 'binary', permissions='r',
-																				callback = self.uiAcquireImage)
+		self.acquireimage = self.registerUIData('Image', 'binary', permissions='r')
 		acquirecontainer = self.registerUIContainer('Acquire',
 															(acqdark, acqbright, acqcorr, self.acquireimage))
 
@@ -124,15 +123,15 @@ class Corrector(node.Node):
 	def uiAcquireDark(self):
 		imagedata = self.acquireReference(dark=True)
 		print 'Dark Stats: %s' % (self.stats(imagedata),)
-		self.acquireimage.set(imagedata)
-		self.imagedata = imagedata
+		mrcstr = Mrc.numeric_to_mrcstr(imagedata)
+		self.acquireimage.set(xmlbinlib.Binary(mrcstr))
 		return ''
 
 	def uiAcquireBright(self):
 		imagedata = self.acquireReference(dark=False)
 		print 'Bright Stats: %s' % (self.stats(imagedata),)
-		self.acquireimage.set(imagedata)
-		self.imagedata = imagedata
+		mrcstr = Mrc.numeric_to_mrcstr(imagedata)
+		self.acquireimage.set(xmlbinlib.Binary(mrcstr))
 		return ''
 
 	def uiAcquireCorrected(self):
@@ -141,16 +140,9 @@ class Corrector(node.Node):
 		self.cam.state(camstate)
 		imagedata = self.acquireCorrectedArray()
 		print 'Corrected Stats: %s' % (self.stats(imagedata),)
-		self.acquireimage.set(imagedata)
-		self.imagedata = imagedata
+		mrcstr = Mrc.numeric_to_mrcstr(imagedata)
+		self.acquireimage.set(xmlbinlib.Binary(mrcstr))
 		return ''
-
-	def uiAcquireImage(self, value=None):
-		if value is None:
-			mrcstr = Mrc.numeric_to_mrcstr(self.imagedata)
-		else:
-			mrcstr = Mrc.numeric_to_mrcstr(value)
-		return xmlbinlib.Binary(mrcstr)
 
 	def newPlan(self, camstate):
 		newcamstate = copy.deepcopy(camstate)
@@ -162,6 +154,9 @@ class Corrector(node.Node):
 		newcamstate = copy.deepcopy(camstate)
 		del newcamstate['exposure time']
 		plandatalist = self.research(dataclass=data.CorrectorPlanData, camstate=newcamstate)
+		if not plandatalist:
+			self.printerror('cannot find plan data for camera state')
+			return None
 		plandata = plandatalist[0]
 		return plandata
 
@@ -274,7 +269,6 @@ class Corrector(node.Node):
 
 	def acquireCorrectedArray(self):
 		imagedata = self.acquireCorrectedImageData()
-#		return imagedata.content['image']
 		return imagedata['image']
 
 	def acquireCorrectedImageData(self):
@@ -286,12 +280,9 @@ class Corrector(node.Node):
 			return data.ImageData(self.ID, image=corrected)
 		else:
 			imagedata = self.cam.acquireCameraImageData(correction=0)
-			#numimage = imagedata.content['image']
-			#camstate = imagedata.content['camera']
 			numimage = imagedata['image']
 			camstate = imagedata['camera']
 			corrected = self.correct(numimage, camstate)
-			#imagedata.content['image'] = corrected
 			imagedata['image'] = corrected
 			return imagedata
 
@@ -299,15 +290,18 @@ class Corrector(node.Node):
 		'''
 		this puts an image through a pipeline of corrections
 		'''
-		plandata = self.retrievePlan(camstate)
 #		print 'normalize'
 		normalized = self.normalize(original, camstate)
-#		print 'touchup'
-		touchedup = self.removeBadPixels(normalized, plandata)
-#		print 'clip'
-		clipped = self.clip(touchedup, plandata)
-#		print 'done'
-		return clipped
+		plandata = self.retrievePlan(camstate)
+		if plandata is not None:
+#			print 'touchup'
+			touchedup = self.removeBadPixels(normalized, plandata)
+#			print 'clip'
+			clipped = self.clip(touchedup, plandata)
+#			print 'done'
+			return clipped
+		else:
+			return normalized
 
 	def removeBadPixels(self, image, plandata):
 		badrows = plandata['bad_rows']
