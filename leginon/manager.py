@@ -57,6 +57,36 @@ class Manager(node.Node):
 		ev = event.LaunchEvent(newproc, target, args, kwargs)
 		self.clients[launcher].push(ev)
 
+	def addEventDistmap(self, eventclass, from_node=None, to_node=None):
+		if eventclass not in self.distmap:
+			self.distmap[eventclass] = {}
+		if from_node not in self.distmap[eventclass]:
+			self.distmap[eventclass][from_node] = []
+		if to_node not in self.distmap[eventclass][from_node]:
+			self.distmap[eventclass][from_node].append(to_node)
+
+	def distribute(self, ievent):
+		'''push event to eventclients based on event class and source'''
+		#print 'DIST', event.origin
+		eventclass = ievent.__class__
+		from_node = ievent.origin['id']
+		done = []
+		for distclass,fromnodes in self.distmap.items():
+			if issubclass(eventclass, distclass):
+				for fromnode in (from_node, None):
+					if fromnode in fromnodes:
+						for to_node in fromnodes[from_node]:
+							if to_node:
+								if to_node not in done:
+									self.clients[to_node].push(ievent)
+									done.append(to_node)
+							else:
+								for to_node in self.handler.clients:
+									if to_node not in done:
+										self.clients[to_node].push(ievent)
+										done.append(to_node)
+
 if __name__ == '__main__':
 	import signal, sys
 	m = Manager()
+

@@ -1,53 +1,54 @@
-#!/usr/bin/env python
-
 import SocketServer
 import cPickle
 import socket
 import leginonobject
 import data
 
-class PullHandler(SocketServer.StreamRequestHandler, leginonobject.LeginonObject):
+class Handler(SocketServer.StreamRequestHandler):
 	def __init__(self, request, server_address, server):
-		# not sure it needs to be a LeginonObject
-		leginonobject.LeginonObject.__init__(self)
 		SocketServer.StreamRequestHandler.__init__(self, request, server_address, server)
 
-	def handle(self):
-		# needs error checking
-		data_id = cPickle.load(self.rfile)
+	def read(self):
+		return cPickle.load(self.rfile)
 
-		# pickle the data from data_id (w/o the trailing newline char)
-		data = self.server.datahandler.query(data_id)
-		cPickle.dump(data, self.wfile)
+	def write(self, o):
+		cPickle.dump(o, self.wfile)
 
-class PushHandler(SocketServer.StreamRequestHandler, leginonobject.LeginonObject):
+class PushHandler(Handler):
 	def __init__(self, request, server_address, server):
-		# not sure it needs to be a LeginonObject
-		leginonobject.LeginonObject.__init__(self)
-		SocketServer.StreamRequestHandler.__init__(self, request, server_address, server)
+		Handler.__init__(self, request, server_address, server)
+
+	def _handle(self, idata):
+		self.server.datahandler.insert(idata)
 
 	def handle(self):
-		# needs error checking, cPickle attempt
-		# data_id needs to be send with a newline
-		newdata = cPickle.load(self.rfile)
-		self.server.datahandler.insert(newdata)
+		idata = self.read()
+		self._handle(idata)
 
-class PushPullHandler(SocketServer.StreamRequestHandler, leginonobject.LeginonObject):
+class PullHandler(Handler):
 	def __init__(self, request, server_address, server):
-		# not sure it needs to be a LeginonObject
-		leginonobject.LeginonObject.__init__(self)
-		SocketServer.StreamRequestHandler.__init__(self, request, server_address, server)
+		Handler.__init__(self, request, server_address, server)
+
+	def _handle(self, id):
+		self.write(self.server.datahandler.query(id))
 
 	def handle(self):
-		# needs error checking
-		idata = cPickle.load(self.rfile)
-		if isinstance(idata, data.Data):
-			# data_id needs to be send with a newline
-			self.server.datahandler.insert(idata)
-		else: # 'tis an id and nothing more or at least until there is an id class
-			# pickle the data from data_id (w/o the trailing newline char)
-			wdata = self.server.datahandler.query(idata)
-			cPickle.dump(wdata, self.wfile)
+		id = self.read()
+		self._handle(id)
+
+class PushPullHandler(PushHandler, PullHandler):
+	def __init__(self, request, server_address, server):
+		PushHandler.__init__(self, request, server_address, server)
+		#PullHandler.__init__(self, request, server_address, server)
+
+	def handle(self):
+		obj = self.read()
+		if isinstance(obj, data.Data):
+			# if is data, then push
+			PushHandler._handle(self, obj)
+		else:
+			# (elif when ID has a type) its and ID -> pull (query) by ID
+			PullHandler._handle(self, obj)
 
 class Server(SocketServer.ThreadingTCPServer, leginonobject.LeginonObject):
 	def __init__(self, dh, handler, port=None):
@@ -99,12 +100,12 @@ class Client(leginonobject.LeginonObject):
 		self.port = port
 
 class PullClient(Client):
-	def pull(self, data_id, family = socket.AF_INET, type = socket.SOCK_STREAM):
-		print 'PullClient.pull data_id = %s' % data_id
+	def pull(self, id, family = socket.AF_INET, type = socket.SOCK_STREAM):
+		print 'PullClient.pull id = %s' % id
 		data = ""
 		s = socket.socket(family, type)
 		s.connect((self.hostname, self.port)) # Connect to server
-		idpickle = cPickle.dumps(data_id)
+		idpickle = cPickle.dumps(id)
 		s.send(idpickle)
 
 		while 1:
@@ -124,21 +125,6 @@ class PushClient(Client):
 		s.send(cPickle.dumps(idata))
 		s.close()
 
-if __name__ == '__main__':
-	import threading
-
-	class dummyServer:
-		def datafromid(self, data_id):
-			return {data_id : 'foo bar'}
-		def datatoid(self, data_id, data):
-			print `{data_id : data}`
-
-	pullserver = PullServer(dummyServer())
-	pushserver = PushServer(dummyServer())
-	print 'pull server at:', pullserver.server_address
-	print 'push server at:', pushserver.server_address
-	t1 = threading.Thread(None, pullserver.serve_forever, None, (), {})
-	t2 = threading.Thread(None, pushserver.serve_forever, None, (), {})
-	t1.start()
-	t2.start()
+class PushPullClient(PushClient, PullClient):
+	pass
 
