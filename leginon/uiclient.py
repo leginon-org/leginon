@@ -59,7 +59,6 @@ class wxUIClient(UIClient):
 		threading.Thread(target=self.addServer, args=()).start()
 
 	def addFromServer(self, namelist, typelist, value, read, write):
-		print 'ADD', namelist, typelist, value, read, write
 		# h4X0r
 		while(not hasattr(self.container, 'name')):
 			time.sleep(0.01)
@@ -68,7 +67,6 @@ class wxUIClient(UIClient):
 		return ''
 
 	def setFromServer(self, namelist, value):
-		print 'SET', namelist, value
 		self.container.set((self.container.name,) + tuple(namelist), value)
 		return ''
 
@@ -510,7 +508,7 @@ class wxEntryWidget(wxDataWidget):
 			self.applybutton = wxButton(self.parent, -1, 'Apply')
 			self.applybutton.Enable(false)
 			EVT_BUTTON(self.parent, self.applybutton.GetId(), self.apply)
-			self.entry = wxTextCtrl(self.parent, -1)
+			self.entry = wxTextCtrl(self.parent, -1, style=wxTE_PROCESS_ENTER)
 			EVT_TEXT(self.parent, self.entry.GetId(), self.onEdit)
 			EVT_TEXT_ENTER(self.parent, self.entry.GetId(), self.onEnter)
 		else:
