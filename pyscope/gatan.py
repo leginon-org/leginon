@@ -17,13 +17,19 @@ import Numeric
 class Gatan(object):
 	def __init__(self):
 		self.unsupported = []
-		self.exposuretype = 'normal'
+
 
 		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
 		try:
 			self.camera = win32com.client.Dispatch('TecnaiCCD.GatanCamera')        
 		except pywintypes.com_error, e:
 			raise RuntimeError('Unable to initialize Gatan interface')
+
+		self.binning = {'x': self.camera.Binning, 'y': self.camera.Binning}
+		self.offset = {'x': self.camera.CameraLeft, 'y': self.camera.CameraRight}
+		self.dimension = {'x': self.camera.CameraRight - self.camera.CameraLeft,
+											'y': self.camera.CameraBottom - self.camera.CameraTop}
+		self.exposuretype = 'normal'
 
 		self.methodmapping = {
 			'binning': {'get':'getBinning', 'set': 'setBinning'},
@@ -66,50 +72,24 @@ class Gatan(object):
 		return object.__getattribute__(self, attr_name)
 
 	def getOffset(self):
-		return {'x': self.camera.CameraLeft, 'y': self.camera.CameraTop}
-
-	def _setOffset(self, value):
-		dimension = self.getDimension()
-		self.camera.CameraLeft = value['x']
-		self.camera.CameraTop = value['y']
-		self.camera.CameraRight = value['x'] + dimension['x']
-		self.camera.CameraBottom = value['y'] + dimension['y']
+		return self.offset
 
 	def setOffset(self, value):
-		try:
-			self._setOffset(value)
-		except pywintypes.com_error, e:
-			pass
+		self.offset = value
 
 	def getDimension(self):
-		offset = self.getOffset()
-		return {'x': self.camera.CameraRight - offset['x'],
-						'y': self.camera.CameraBottom - offset['y']}
+		return self.dimension
 
 	def setDimension(self, value):
-		try:
-			self._setDimension(value)
-		except pywintypes.com_error, e:
-			pass
-
-	def _setDimension(self, value):
-		offset = self.getOffset()
-		self.camera.CameraRight = offset['x'] + value['x']
-		self.camera.CameraBottom = offset['y'] + value['y']
+		self.dimension = value
 
 	def getBinning(self):
-		return {'x': self.camera.Binning, 'y': self.camera.Binning}
+		return self.binning
 
 	def setBinning(self, value):
-		try:
-			self._setBinning(value)
-		except pywintypes.com_error, e:
-			pass
-
-	def _setBinning(self, value):
 		if value['x'] != value['y']:
 			raise ValueError('multiple binning dimesions not supported')
-		self.camera.Binning = value['x']
+		self.binning = value
 
 	def getExposureTime(self):
 		return int(self.camera.ExposureTime*1000)
@@ -126,6 +106,14 @@ class Gatan(object):
 		self.exposuretype = value
 
 	def getImage(self):
+		try:
+			self.camera.Binning = self.binning['x']
+			self.camera.CameraLeft = self.offset['x']
+			self.camera.CameraTop = self.offset['y']
+			self.camera.CameraRight = self.dimension['x'] + self.camera.CameraLeft
+			self.camera.CameraBottom = self.dimension['y'] + self.camera.CameraTop
+		except pywintypes.com_error, e:
+			raise ValueError('Invalid image dimensions')
 		if self.getExposureType() == 'dark':
 			if False:
 			#if self.getRetractable():
