@@ -86,4 +86,5 @@ registerNodeClass('targetfinder', 'MosaicClickTargetFinder')
 registerNodeClass('simpleacquisition', 'SimpleAcquisition')
 registerNodeClass('imagenode', 'ImageNode')
 registerNodeClass('imagecollector', 'ImageCollector')
+registerNodeClass('targetmaker', 'SpiralTargetMaker')
 
