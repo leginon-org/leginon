@@ -5,17 +5,26 @@ from gui.wx.Entry import FloatEntry, EVT_ENTRY
 from gui.wx.Presets import EditPresetOrder, EVT_PRESET_ORDER_CHANGED
 import wx
 import gui.wx.ImageViewer
+import gui.wx.ToolBar
 
 class Panel(gui.wx.Node.Panel):
 	icon = 'acquisition'
-	tools = [
-		'settings',
-		'play',
-		'pause',
-		'stop',
-	]
 	def __init__(self, parent, name):
 		gui.wx.Node.Panel.__init__(self, parent, -1)
+
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_SETTINGS,
+													'settings',
+													shortHelpString='Settings')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_PLAY,
+													'play',
+													shortHelpString='Process')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_PAUSE,
+													'pause',
+													shortHelpString='Pause')
+		self.toolbar.AddTool(gui.wx.ToolBar.ID_ABORT,
+													'stop',
+													shortHelpString='Abort')
+		self.toolbar.Realize()
 
 		# image
 		self.imagepanel = gui.wx.ImageViewer.ImagePanel(self, -1)
@@ -28,7 +37,14 @@ class Panel(gui.wx.Node.Panel):
 		self.SetupScrolling()
 
 	def onNodeInitialized(self):
-		pass
+		self.toolbar.Bind(wx.EVT_TOOL, self.onSettingsTool,
+											id=gui.wx.ToolBar.ID_SETTINGS)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onPlayTool,
+											id=gui.wx.ToolBar.ID_PLAY)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onPauseTool,
+											id=gui.wx.ToolBar.ID_PAUSE)
+		self.toolbar.Bind(wx.EVT_TOOL, self.onStopTool,
+											id=gui.wx.ToolBar.ID_STOP)
 
 	def onSettingsTool(self, evt):
 		dialog = SettingsDialog(self)

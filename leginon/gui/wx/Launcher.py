@@ -91,6 +91,7 @@ class Frame(wx.Frame):
 		self.SetMenuBar(self.menubar)
 
 		self.toolbar = gui.wx.ToolBar.ToolBar(self)
+		self.toolbar.Show(True)
 		self.SetToolBar(self.toolbar)
 
 		# status bar
@@ -166,7 +167,7 @@ class ListCtrlPanel(wx.Panel):
 		self.panel = panel
 		self.panel.Show(True)
 
-		wx.LayoutAlgorithm().LayoutWindow(self, self.panel)
+		self.Layout()
 
 		self.Thaw()
 
@@ -192,9 +193,6 @@ class Panel(ListCtrlPanel):
 	def __init__(self, parent, launcher=None):
 		ListCtrlPanel.__init__(self, parent, -1, style=wx.NO_BORDER)
 
-		self.toolbar = parent.toolbar
-		self.toolbar.setSpacerWidth(self.sashwindow.GetSize().width)
-
 		self.order = []
 
 		if launcher is not None:
@@ -212,7 +210,14 @@ class Panel(ListCtrlPanel):
 		self.Bind(EVT_SET_ORDER, self.onSetOrder)
 
 	def _setPanel(self, panel):
-		self.toolbar.setPanel(panel)
+		tb = self.GetParent().GetToolBar()
+		tb.Show(False)
+		if hasattr(panel, 'toolbar'):
+			tb = panel.toolbar
+		else:
+			tb = self.GetParent().toolbar
+		self.GetParent().SetToolBar(tb)
+		tb.Show(True)
 		ListCtrlPanel._setPanel(self, panel)
 
 	def onStatusUpdated(self, evt):
@@ -314,7 +319,13 @@ class Panel(ListCtrlPanel):
 
 	def Layout(self):
 		ListCtrlPanel.Layout(self)
-		self.toolbar.setSpacerWidth(self.sashwindow.GetSize().width)
+		tb = self.GetParent().GetToolBar()
+		if hasattr(tb, 'spacer'):
+			tb.spacer.SetSize((self.sashwindow.GetSize().width, -1))
+			tb.Realize()
+	
+	def getToolBar(self):
+		return gui.wx.ToolBar.ToolBar(self.GetParent())
 
 def getStatusIcon(image, color):
 	bitmap = wx.BitmapFromImage(image)

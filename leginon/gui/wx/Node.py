@@ -43,7 +43,8 @@ class Panel(wx.lib.scrolledpanel.ScrolledPanel):
 			kwargs['style'] = wx.SIMPLE_BORDER
 		wx.lib.scrolledpanel.ScrolledPanel.__init__(self, parent, id, **kwargs)
 
-		self.toolbar = parent.toolbar
+		self.toolbar = parent.getToolBar()
+		self.toolbar.Show(False)
 
 		self.szmain = wx.GridBagSizer(5, 5)
 

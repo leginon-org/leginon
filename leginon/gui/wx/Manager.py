@@ -195,8 +195,8 @@ class Frame(wx.Frame):
 		self.SetMenuBar(self.menubar)
 
 		self.toolbar = gui.wx.ToolBar.ToolBar(self)
+		self.toolbar.Show(True)
 		self.SetToolBar(self.toolbar)
-
 
 		# status bar
 		self.statusbar = StatusBar(self)

@@ -22,6 +22,22 @@ ID_MODEL = 1018
 
 class ToolBar(wx.ToolBar):
 	def __init__(self, parent):
+		pre = wx.PreToolBar()
+		pre.Show(False)
+		pre.Create(parent, -1, style=wx.TB_HORIZONTAL|wx.NO_BORDER)
+		self.this = pre.this
+		self._setOORInfo(self)
+		self.spacer = wx.StaticText(self, -1, '')
+		self.AddControl(self.spacer)
+
+	def AddTool(self, id, bitmap, **kwargs):
+		bitmap = '%s.png' % bitmap
+		bitmap = wx.BitmapFromImage(wx.Image(icons.getPath(bitmap)))
+		wx.ToolBar.AddTool(self, id, bitmap, **kwargs)
+
+'''
+class ToolBar(wx.ToolBar):
+	def __init__(self, parent):
 		wx.ToolBar.__init__(self, parent, -1)
 		self.spacer = wx.StaticText(self, -1, '')
 		self.AddControl(self.spacer)
@@ -217,3 +233,4 @@ class ToolBar(wx.ToolBar):
 			if count > 0 and selection >= 0:
 				self.tools[tool].SetSelection(selection)
 
+'''
