@@ -4,6 +4,7 @@ import leginonobject
 import array
 import Numeric
 import strictdict
+import copy
 
 ## Unresolved issue:
 ##  It would be nice if you could cast one Data type to another
@@ -58,7 +59,11 @@ class Data(DataDict, leginonobject.LeginonObject):
 
 		# if initializer was given, update my values
 		if initializer is not None:
-			self.update(initializer)
+			## initializer can be mapping or sequence
+			## so it's easiest to let OrderedDict make
+			## sure of that
+			validinit = strictdict.OrderedDict(initializer)
+			self.update(validinit)
 		# additional keyword arguments also update my values
 		self.update(kwargs)
 
@@ -67,6 +72,12 @@ class Data(DataDict, leginonobject.LeginonObject):
 		t += [ ('id', tuple), ('session', str), ]
 		return t
 	typemap = classmethod(typemap)
+
+	def __deepcopy__(self, memo):
+		id_copy = copy.deepcopy(self.id, memo)
+		initializer = self.items()
+		initializer_copy = copy.deepcopy(initializer, memo)
+		return self.__class__(id=id_copy, initializer=initializer_copy)
 
 ## How to define a new leginon data type:
 ##   - Inherit Data or a subclass of Data.

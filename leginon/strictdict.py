@@ -5,6 +5,7 @@ Provides several specialized mapping types derived from the built-in dict type.
 
 import Numeric
 from types import NoneType
+import copy
 
 ## still missing from these classes:
 ##   __copy__
@@ -111,6 +112,9 @@ class OrderedDict(dict):
 		r = '%s(%s)' % (self.__class__.__name__, s)
 		return r
 
+	def __deepcopy__(self, memo):
+		initializer = copy.deepcopy(self.__ordered_items, memo)
+		return self.__class__(initializer)
 
 class KeyedDict(OrderedDict):
 	'''
