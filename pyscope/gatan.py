@@ -21,7 +21,6 @@ class Gatan(object):
 	def __init__(self):
 		self.unsupported = []
 
-
 		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
 		try:
 			self.camera = win32com.client.Dispatch('TecnaiCCD.GatanCamera')        

@@ -9,7 +9,7 @@ import sys
 sys.coinit_flags = 0
 import pythoncom
 import win32com.client
-import pywintypes
+import winerror
 import tecnaicom
 import ldcom
 import adacom
@@ -33,13 +33,23 @@ class Tecnai(object):
 	def __init__(self, magtable=defaultmagtable):
 		self.correctedstage = True
 		pythoncom.CoInitializeEx(pythoncom.COINIT_MULTITHREADED)
+
 		try:
-			self.theScope = win32com.client.Dispatch('Tecnai.Instrument')		
-			self.theLowDose = win32com.client.Dispatch('LDServer.LdSrv')
-			self.theAda = win32com.client.Dispatch('adaExp.TAdaExp',
+			self.tecnai = win32com.client.Dispatch('Tecnai.Instrument')
+			print dir(self.tecnai)
+		except pythoncom.com_error, (hr, msg, exc, arg):
+			raise RuntimeError('unable to initialize Tecnai interface: %s' % msg)
+
+		try:
+			self.lowdose = win32com.client.Dispatch('LDServer.LdSrv')
+		except pythoncom.com_error, (hr, msg, exc, arg):
+			raise RuntimeError('unable to initialize low dose interface: %s' % msg)
+
+		try:
+			self.exposure = win32com.client.Dispatch('adaExp.TAdaExp',
 																					clsctx=pythoncom.CLSCTX_LOCAL_SERVER)
-		except pythoncom.com_error:
-			raise RuntimeError('Unable to initialize microscope interface[s]')
+		except pythoncom.com_error, (hr, msg, exc, arg):
+			raise RuntimeError('unable to initialize exposure adapter: %s' % msg)
 
 		self.magnifications = map(float, magtable)
 		self.sortedmagnifications = list(self.magnifications)
@@ -202,46 +212,46 @@ class Tecnai(object):
 
 	def normalizeLens(self, lens = 'all'):
 		if lens == 'all':
-			self.theScope.NormalizeAll()
+			self.tecnai.NormalizeAll()
 		elif lens == 'objective':
-			self.theScope.Projection.Normalize(win32com.client.constants.pnmObjective)
+			self.tecnai.Projection.Normalize(win32com.client.constants.pnmObjective)
 		elif lens == 'projector':
-			self.theScope.Projection.Normalize(win32com.client.constants.pnmProjector)
+			self.tecnai.Projection.Normalize(win32com.client.constants.pnmProjector)
 		elif lens == 'allprojection':
-			self.theScope.Projection.Normalize(win32com.client.constants.pnmAll)
+			self.tecnai.Projection.Normalize(win32com.client.constants.pnmAll)
 		elif lens == 'spotsize':
-			self.theScope.Illumination.Normalize(win32com.client.constants.nmSpotsize)
+			self.tecnai.Illumination.Normalize(win32com.client.constants.nmSpotsize)
 		elif lens == 'intensity':
-			self.theScope.Illumination.Normalize(win32com.client.constants.nmIntensity)
+			self.tecnai.Illumination.Normalize(win32com.client.constants.nmIntensity)
 		elif lens == 'condenser':
-			self.theScope.Illumination.Normalize(win32com.client.constants.nmCondenser)
+			self.tecnai.Illumination.Normalize(win32com.client.constants.nmCondenser)
 		elif lens == 'minicondenser':
-			self.theScope.Illumination.Normalize(win32com.client.constants.nmMiniCondenser)
+			self.tecnai.Illumination.Normalize(win32com.client.constants.nmMiniCondenser)
 		elif lens == 'objectivepole':
-			self.theScope.Illumination.Normalize(win32com.client.constants.nmObjectivePole)
+			self.tecnai.Illumination.Normalize(win32com.client.constants.nmObjectivePole)
 		elif lens == 'allillumination':
-			self.theScope.Illumination.Normalize(win32com.client.constants.nmAll)
+			self.tecnai.Illumination.Normalize(win32com.client.constants.nmAll)
 		else:
 			raise ValueError
 
 	def getScreenCurrent(self):
-		return float(self.theScope.Camera.ScreenCurrent)
+		return float(self.tecnai.Camera.ScreenCurrent)
 	
 	def getGunTilt(self):
 		value = {'x': None, 'y': None}
-		value['x'] = float(self.theScope.Gun.Tilt.X)
-		value['y'] = float(self.theScope.Gun.Tilt.Y)
+		value['x'] = float(self.tecnai.Gun.Tilt.X)
+		value['y'] = float(self.tecnai.Gun.Tilt.Y)
 
 		return value
 	
 	def setGunTilt(self, vector, relative = 'absolute'):
 		if relative == 'relative':
 			try:
-				vector['x'] += self.theScope.Gun.Tilt.X
+				vector['x'] += self.tecnai.Gun.Tilt.X
 			except KeyError:
 				pass
 			try:
-				vector['y'] += self.theScope.Gun.Tilt.Y
+				vector['y'] += self.tecnai.Gun.Tilt.Y
 			except KeyError:
 				pass
 		elif relative == 'absolute':
@@ -249,7 +259,7 @@ class Tecnai(object):
 		else:
 			raise ValueError
 		
-		vec = self.theScope.Gun.Tilt
+		vec = self.tecnai.Gun.Tilt
 		try:
 			vec.X = vector['x']
 		except KeyError:
@@ -258,23 +268,23 @@ class Tecnai(object):
 			vec.Y = vector['y']
 		except KeyError:
 			pass
-		self.theScope.Gun.Tilt = vec
+		self.tecnai.Gun.Tilt = vec
 	
 	def getGunShift(self):
 		value = {'x': None, 'y': None}
-		value['x'] = self.theScope.Gun.Shift.X
-		value['y'] = self.theScope.Gun.Shift.Y
+		value['x'] = self.tecnai.Gun.Shift.X
+		value['y'] = self.tecnai.Gun.Shift.Y
 
 		return value
 	
 	def setGunShift(self, vector, relative = 'absolute'):
 		if relative == 'relative':
 			try:
-				vector['x'] += self.theScope.Gun.Shift.X
+				vector['x'] += self.tecnai.Gun.Shift.X
 			except KeyError:
 				pass
 			try:
-				vector['y'] += self.theScope.Gun.Shift.Y
+				vector['y'] += self.tecnai.Gun.Shift.Y
 			except KeyError:
 				pass
 		elif relative == 'absolute':
@@ -282,7 +292,7 @@ class Tecnai(object):
 		else:
 			raise ValueError
 		
-		vec = self.theScope.Gun.Shift
+		vec = self.tecnai.Gun.Shift
 		try:
 			vec.X = vector['x']
 		except KeyError:
@@ -291,60 +301,60 @@ class Tecnai(object):
 			vec.Y = vector['y']
 		except KeyError:
 			pass
-		self.theScope.Gun.Shift = vec
+		self.tecnai.Gun.Shift = vec
 	
 	def getHighTension(self):
-		return int(self.theScope.Gun.HTValue)
+		return int(self.tecnai.Gun.HTValue)
 	
 	def setHighTension(self, ht):
-		self.theScope.Gun.HTValue = ht
+		self.tecnai.Gun.HTValue = ht
 	
 	def getIntensity(self):
-		return float(self.theScope.Illumination.Intensity)
+		return float(self.tecnai.Illumination.Intensity)
 	
 	def setIntensity(self, intensity, relative = 'absolute'):
 		if relative == 'relative':
-			intensity += self.theScope.Illumination.Intensity
+			intensity += self.tecnai.Illumination.Intensity
 		elif relative == 'absolute':
 			pass
 		else:
 			raise ValueError
 		
-		self.theScope.Illumination.Intensity = intensity
+		self.tecnai.Illumination.Intensity = intensity
 
 	def getDarkFieldMode(self):
-		if self.theScope.Illumination.DFMode == win32com.client.constants.dfOff:
+		if self.tecnai.Illumination.DFMode == win32com.client.constants.dfOff:
 			return 'off'
-		elif self.theScope.Illumination.DFMode == win32com.client.constants.dfCartesian:
+		elif self.tecnai.Illumination.DFMode == win32com.client.constants.dfCartesian:
 			return 'cartesian'
-		elif self.theScope.Illumination.DFMode == win32com.client.constants.dfConical:
+		elif self.tecnai.Illumination.DFMode == win32com.client.constants.dfConical:
 			return 'conical'
 		else:
 			raise SystemError
 		
 	def setDarkFieldMode(self, mode):
 		if mode == 'off':
-			self.theScope.Illumination.DFMode = win32com.client.constants.dfOff
+			self.tecnai.Illumination.DFMode = win32com.client.constants.dfOff
 		elif mode == 'cartesian':
-			self.theScope.Illumination.DFMode = win32com.client.constants.dfCartesian
+			self.tecnai.Illumination.DFMode = win32com.client.constants.dfCartesian
 		elif mode == 'conical':
-			self.theScope.Illumination.DFMode = win32com.client.constants.dfConical
+			self.tecnai.Illumination.DFMode = win32com.client.constants.dfConical
 		else:
 			raise ValueError
 	
 	def getBeamBlank(self):
-		if self.theScope.Illumination.BeamBlanked == 0:
+		if self.tecnai.Illumination.BeamBlanked == 0:
 			return 'off'
-		elif self.theScope.Illumination.BeamBlanked == 1:
+		elif self.tecnai.Illumination.BeamBlanked == 1:
 			return 'on'
 		else:
 			raise SystemError
 		
 	def setBeamBlank(self, bb):
 		if bb == 'off' :
-			self.theScope.Illumination.BeamBlanked = 0
+			self.tecnai.Illumination.BeamBlanked = 0
 		elif bb == 'on':
-			self.theScope.Illumination.BeamBlanked = 1
+			self.tecnai.Illumination.BeamBlanked = 1
 		else:
 			raise ValueError
 	
@@ -353,28 +363,28 @@ class Tecnai(object):
 							'objective': {'x': None, 'y': None},
 							'diffraction': {'x': None, 'y': None}}
 		value['condenser']['x'] = \
-			float(self.theScope.Illumination.CondenserStigmator.X)
+			float(self.tecnai.Illumination.CondenserStigmator.X)
 		value['condenser']['y'] = \
-			float(self.theScope.Illumination.CondenserStigmator.Y)
+			float(self.tecnai.Illumination.CondenserStigmator.Y)
 		value['objective']['x'] = \
-			float(self.theScope.Projection.ObjectiveStigmator.X)
+			float(self.tecnai.Projection.ObjectiveStigmator.X)
 		value['objective']['y'] = \
-			float(self.theScope.Projection.ObjectiveStigmator.Y)
+			float(self.tecnai.Projection.ObjectiveStigmator.Y)
 		value['diffraction']['x'] = \
-			float(self.theScope.Projection.DiffractionStigmator.X)
+			float(self.tecnai.Projection.DiffractionStigmator.X)
 		value['diffraction']['y'] = \
-			float(self.theScope.Projection.DiffractionStigmator.Y)
+			float(self.tecnai.Projection.DiffractionStigmator.Y)
 
 		return value
 		
 	def setStigmator(self, stigs, relative = 'absolute'):
 		for key in stigs.keys():
 			if key == 'condenser':
-				stigmator = self.theScope.Illumination.CondenserStigmator
+				stigmator = self.tecnai.Illumination.CondenserStigmator
 			elif key == 'objective':
-				stigmator = self.theScope.Projection.ObjectiveStigmator
+				stigmator = self.tecnai.Projection.ObjectiveStigmator
 			elif key == 'diffraction':
-				stigmator = self.theScope.Projection.DiffractionStigmator
+				stigmator = self.tecnai.Projection.DiffractionStigmator
 			else:
 				raise ValueError
 	   
@@ -399,42 +409,42 @@ class Tecnai(object):
 					pass
 
 			if key == 'condenser':
-				self.theScope.Illumination.CondenserStigmator = stigmator
+				self.tecnai.Illumination.CondenserStigmator = stigmator
 			elif key == 'objective':
-				self.theScope.Projection.ObjectiveStigmator = stigmator
+				self.tecnai.Projection.ObjectiveStigmator = stigmator
 			elif key == 'diffraction':
-				self.theScope.Projection.DiffractionStigmator = stigmator
+				self.tecnai.Projection.DiffractionStigmator = stigmator
 			else:
 				raise ValueError
 	
 	def getSpotSize(self):
-		return int(self.theScope.Illumination.SpotsizeIndex)
+		return int(self.tecnai.Illumination.SpotsizeIndex)
 	
 	def setSpotSize(self, ss, relative = 'absolute'):
 		if relative == 'relative':
-			ss += self.theScope.Illumination.SpotsizeIndex
+			ss += self.tecnai.Illumination.SpotsizeIndex
 		elif relative == 'absolute':
 			pass
 		else:
 			raise ValueError
 		
-		self.theScope.Illumination.SpotsizeIndex = ss
+		self.tecnai.Illumination.SpotsizeIndex = ss
 	
 	def getBeamTilt(self):
 		value = {'x': None, 'y': None}
-		value['x'] = float(self.theScope.Illumination.RotationCenter.X)
-		value['y'] = float(self.theScope.Illumination.RotationCenter.Y)
+		value['x'] = float(self.tecnai.Illumination.RotationCenter.X)
+		value['y'] = float(self.tecnai.Illumination.RotationCenter.Y)
 
 		return value
 	
 	def setBeamTilt(self, vector, relative = 'absolute'):
 		if relative == 'relative':
 			try:
-				vector['x'] += self.theScope.Illumination.RotationCenter.X
+				vector['x'] += self.tecnai.Illumination.RotationCenter.X
 			except KeyError:
 				pass
 			try:
-				vector['y'] += self.theScope.Illumination.RotationCenter.Y
+				vector['y'] += self.tecnai.Illumination.RotationCenter.Y
 			except KeyError:
 				pass
 		elif relative == 'absolute':
@@ -442,7 +452,7 @@ class Tecnai(object):
 		else:
 			raise ValueError
 		
-		vec = self.theScope.Illumination.RotationCenter
+		vec = self.tecnai.Illumination.RotationCenter
 		try:
 			vec.X = vector['x']
 		except KeyError:
@@ -451,23 +461,23 @@ class Tecnai(object):
 			vec.Y = vector['y']
 		except KeyError:
 			pass
-		self.theScope.Illumination.RotationCenter = vec
+		self.tecnai.Illumination.RotationCenter = vec
 	
 	def getBeamShift(self):
 		value = {'x': None, 'y': None}
-		value['x'] = float(self.theScope.Illumination.Shift.X)
-		value['y'] = float(self.theScope.Illumination.Shift.Y)
+		value['x'] = float(self.tecnai.Illumination.Shift.X)
+		value['y'] = float(self.tecnai.Illumination.Shift.Y)
 
 		return value
 
 	def setBeamShift(self, vector, relative = 'absolute'):
 		if relative == 'relative':
 			try:
-				vector['x'] += self.theScope.Illumination.Shift.X
+				vector['x'] += self.tecnai.Illumination.Shift.X
 			except KeyError:
 				pass
 			try:
-				vector['y'] += self.theScope.Illumination.Shift.Y
+				vector['y'] += self.tecnai.Illumination.Shift.Y
 			except KeyError:
 				pass
 		elif relative == 'absolute':
@@ -475,7 +485,7 @@ class Tecnai(object):
 		else:
 			raise ValueError
 		
-		vec = self.theScope.Illumination.Shift
+		vec = self.tecnai.Illumination.Shift
 		try:
 			vec.X = vector['x']
 		except KeyError:
@@ -484,22 +494,22 @@ class Tecnai(object):
 			vec.Y = vector['y']
 		except KeyError:
 			pass
-		self.theScope.Illumination.Shift = vec
+		self.tecnai.Illumination.Shift = vec
 	
 	def getImageShift(self):
 		value = {'x': None, 'y': None}
-		value['x'] = float(self.theScope.Projection.ImageBeamShift.X)
-		value['y'] = float(self.theScope.Projection.ImageBeamShift.Y)
+		value['x'] = float(self.tecnai.Projection.ImageBeamShift.X)
+		value['y'] = float(self.tecnai.Projection.ImageBeamShift.Y)
 		return value
 	
 	def setImageShift(self, vector, relative = 'absolute'):
 		if relative == 'relative':
 			try:
-				vector['x'] += self.theScope.Projection.ImageBeamShift.X
+				vector['x'] += self.tecnai.Projection.ImageBeamShift.X
 			except KeyError:
 				pass
 			try:
-				vector['y'] += self.theScope.Projection.ImageBeamShift.Y
+				vector['y'] += self.tecnai.Projection.ImageBeamShift.Y
 			except KeyError:
 				pass
 		elif relative == 'absolute':
@@ -507,7 +517,7 @@ class Tecnai(object):
 		else:
 			raise ValueError
 		
-		vec = self.theScope.Projection.ImageBeamShift
+		vec = self.tecnai.Projection.ImageBeamShift
 		try:
 			vec.X = vector['x']
 		except KeyError:
@@ -516,22 +526,22 @@ class Tecnai(object):
 			vec.Y = vector['y']
 		except KeyError:
 			pass
-		self.theScope.Projection.ImageBeamShift = vec
+		self.tecnai.Projection.ImageBeamShift = vec
 	
 	def getRawImageShift(self):
 		value = {'x': None, 'y': None}
-		value['x'] = float(self.theScope.Projection.ImageShift.X)
-		value['y'] = float(self.theScope.Projection.ImageShift.Y)
+		value['x'] = float(self.tecnai.Projection.ImageShift.X)
+		value['y'] = float(self.tecnai.Projection.ImageShift.Y)
 		return value
 	
 	def setRawImageShift(self, vector, relative = 'absolute'):
 		if relative == 'relative':
 			try:
-				vector['x'] += self.theScope.Projection.ImageShift.X
+				vector['x'] += self.tecnai.Projection.ImageShift.X
 			except KeyError:
 				pass
 			try:
-				vector['y'] += self.theScope.Projection.ImageShift.Y
+				vector['y'] += self.tecnai.Projection.ImageShift.Y
 			except KeyError:
 				pass
 		elif relative == 'absolute':
@@ -539,7 +549,7 @@ class Tecnai(object):
 		else:
 			raise ValueError
 		
-		vec = self.theScope.Projection.ImageShift
+		vec = self.tecnai.Projection.ImageShift
 		try:
 			vec.X = vector['x']
 		except KeyError:
@@ -548,31 +558,31 @@ class Tecnai(object):
 			vec.Y = vector['y']
 		except KeyError:
 			pass
-		self.theScope.Projection.ImageShift = vec
+		self.tecnai.Projection.ImageShift = vec
 	
 	def getDefocus(self):
-		return float(self.theScope.Projection.Defocus)
+		return float(self.tecnai.Projection.Defocus)
 	
 	def setDefocus(self, defocus, relative = 'absolute'):
 		if relative == 'relative':
-			defocus += self.theScope.Projection.Defocus
+			defocus += self.tecnai.Projection.Defocus
 		elif relative == 'absolute':
 			pass
 		else:
 			raise ValueError
 		
-		self.theScope.Projection.Defocus = defocus
+		self.tecnai.Projection.Defocus = defocus
 	
 	def resetDefocus(self, value):
 		if not value:
 			return
-		self.theScope.Projection.ResetDefocus()
+		self.tecnai.Projection.ResetDefocus()
 
 	def getResetDefocus(self):
 		return False
 	
 	def getMagnification(self):
-		index = self.theScope.Projection.MagnificationIndex
+		index = self.tecnai.Projection.MagnificationIndex
 		if index < 1:
 			index = 1
 		return float(self.magnifications[index - 1])
@@ -590,28 +600,28 @@ class Tecnai(object):
 			prevmag = m
 			
 		index = self.magnifications.index(prevmag) + 1
-		self.theScope.Projection.MagnificationIndex = index
+		self.tecnai.Projection.MagnificationIndex = index
 		return
 
 	def getMagnificationIndex(self):
-		return self.theScope.Projection.MagnificationIndex - 1
+		return self.tecnai.Projection.MagnificationIndex - 1
 
 	def setMagnificationIndex(self, value):
-		self.theScope.Projection.MagnificationIndex  = value + 1
+		self.tecnai.Projection.MagnificationIndex  = value + 1
 
 	def getMagnifications(self):
 		return self.magnifications
 	
 	def getStagePosition(self):
 		value = {'x': None, 'y': None, 'z': None, 'a': None}
-		if(self.theScope.Stage.Holder == win32com.client.constants.hoDoubleTilt):
+		if(self.tecnai.Stage.Holder == win32com.client.constants.hoDoubleTilt):
 			value['b'] = None
-		value['x'] = float(self.theScope.Stage.Position.X)
-		value['y'] = float(self.theScope.Stage.Position.Y)
-		value['z'] = float(self.theScope.Stage.Position.Z)
-		value['a'] = float(self.theScope.Stage.Position.A)
+		value['x'] = float(self.tecnai.Stage.Position.X)
+		value['y'] = float(self.tecnai.Stage.Position.Y)
+		value['z'] = float(self.tecnai.Stage.Position.Z)
+		value['a'] = float(self.tecnai.Stage.Position.A)
 		if 'b' in value:
-			value['b'] = float(self.theScope.Stage.Position.B)
+			value['b'] = float(self.tecnai.Stage.Position.B)
 		return value
 
 	def _setStagePosition(self, position, relative = 'absolute'):
@@ -620,11 +630,11 @@ class Tecnai(object):
 
 		if relative == 'relative':
 			for key in position:
-				position[key] += getattr(self.theScope.Stage.Position, key.upper())
+				position[key] += getattr(self.tecnai.Stage.Position, key.upper())
 		elif relative != 'absolute':
 			raise ValueError
 		
-		pos = self.theScope.Stage.Position
+		pos = self.tecnai.Stage.Position
 
 		axes = 0
 		for key, value in position.items():
@@ -632,79 +642,130 @@ class Tecnai(object):
 			axes |= getattr(win32com.client.constants, 'axis' + key.upper())
 
 		try:
-			self.theScope.Stage.Goto(pos, axes)
-		except pywintypes.com_error:
-			print 'Stage limit hit'
+			print self.tecnai.Stage.Goto(pos, axes)
+		except pythoncom.com_error, (hr, msg, exc, arg):
+			print 'Stage.Goto failed with error %d: %s' % (hr, msg)
+			if exc is None:
+				print 'No extended error information, assuming stage limit was hit'
+			else:
+				wcode, source, text, helpFile, helpId, scode = exc
+				if winerror.SUCCEEDED(wcode) and text is None:
+					print 'No extended error information, assuming stage limit was hit'
+				else:
+					# ?
+					pass
+
 #		for key in position:
-#			while abs(getattr(self.theScope.Stage.Position, key.upper())
+#			while abs(getattr(self.tecnai.Stage.Position, key.upper())
 #								- getattr(pos, key.upper())) > tolerance:
 #				time.sleep(polltime)
 	
 	def getLowDose(self):
 		try:
-			if (self.theLowDose.IsInitialized == 1) and (self.theLowDose.LowDoseActive == win32com.client.constants.IsOn):
+			if (self.lowdose.IsInitialized == 1) and (self.lowdose.LowDoseActive == win32com.client.constants.IsOn):
 				return 'on'
 			else:
 				return 'off'
-		except pythoncom.com_error:
-			return 'disabled'
+		except pythoncom.com_error, (hr, msg, exc, arg):
+			if exc is None:
+				# No extended error information, assuming low dose is disenabled
+				return 'disabled'
+			else:
+				wcode, source, text, helpFile, helpId, scode = exc
+				if winerror.SUCCEEDED(wcode) and text is None:
+					# No extended error information, assuming low dose is disenabled
+					return 'disabled'
+				else:
+					# ?
+					pass
  
 	def setLowDose(self, ld):
 		try:
 			if ld == 'off' :
-				self.theLowDose.LowDoseActive = win32com.client.constants.IsOff
+				self.lowdose.LowDoseActive = win32com.client.constants.IsOff
 			elif ld == 'on':
-				if self.theLowDose.IsInitialized == 0:
+				if self.lowdose.IsInitialized == 0:
 					raise RuntimeError('Low dose is not initialized')
 				else:
-					self.theLowDose.LowDoseActive = win32com.client.constants.IsOn
+					self.lowdose.LowDoseActive = win32com.client.constants.IsOn
 			else:
 				raise ValueError
-		except pythoncom.com_error:
-			raise RuntimeError('Low dose is not enabled')
+		except pythoncom.com_error, (hr, msg, exc, arg):
+			if exc is None:
+				# No extended error information, assuming low dose is disenabled
+				raise RuntimeError('Low dose is not enabled')
+			else:
+				wcode, source, text, helpFile, helpId, scode = exc
+				if winerror.SUCCEEDED(wcode) and text is None:
+					# No extended error information, assuming low dose is disenabled
+					raise RuntimeError('Low dose is not enabled')
+				else:
+					# ?
+					pass
 
 	def getLowDoseMode(self):
 		try:
-			if self.theLowDose.LowDoseState == win32com.client.constants.eExposure:
+			if self.lowdose.LowDoseState == win32com.client.constants.eExposure:
 				return 'exposure'
-			elif self.theLowDose.LowDoseState == win32com.client.constants.eFocus1:
+			elif self.lowdose.LowDoseState == win32com.client.constants.eFocus1:
 				return 'focus1'
-			elif self.theLowDose.LowDoseState == win32com.client.constants.eFocus2:
+			elif self.lowdose.LowDoseState == win32com.client.constants.eFocus2:
 				return 'focus2'
-			elif self.theLowDose.LowDoseState == win32com.client.constants.eSearch:
+			elif self.lowdose.LowDoseState == win32com.client.constants.eSearch:
 				return 'search'
 			else:
 				return 'unknown'
-		except pythoncom.com_error:
-			return 'disabled'
+		except pythoncom.com_error, (hr, msg, exc, arg):
+			if exc is None:
+				# No extended error information, assuming low dose is disenabled
+				return 'disabled'
+			else:
+				wcode, source, text, helpFile, helpId, scode = exc
+				if winerror.SUCCEEDED(wcode) and text is None:
+					# No extended error information, assuming low dose is disenabled
+					return 'disabled'
+				else:
+					# ?
+					pass
 		
 	def setLowDoseMode(self, mode):
-		if mode == 'exposure':
-			self.theLowDose.LowDoseState = win32com.client.constants.eExposure
-		elif mode == 'focus1':
-			self.theLowDose.LowDoseState = win32com.client.constants.eFocus1
-		elif mode == 'focus2':
-			self.theLowDose.LowDoseState = win32com.client.constants.eFocus2
-		elif mode == 'search':
-			self.theLowDose.LowDoseState = win32com.client.constants.eSearch
-		else:
-			raise ValueError
-
-		return 0
+		try:
+			if mode == 'exposure':
+				self.lowdose.LowDoseState = win32com.client.constants.eExposure
+			elif mode == 'focus1':
+				self.lowdose.LowDoseState = win32com.client.constants.eFocus1
+			elif mode == 'focus2':
+				self.lowdose.LowDoseState = win32com.client.constants.eFocus2
+			elif mode == 'search':
+				self.lowdose.LowDoseState = win32com.client.constants.eSearch
+			else:
+				raise ValueError
+		except pythoncom.com_error, (hr, msg, exc, arg):
+			if exc is None:
+				# No extended error information, assuming low dose is disenabled
+				raise RuntimeError('Low dose is not enabled')
+			else:
+				wcode, source, text, helpFile, helpId, scode = exc
+				if winerror.SUCCEEDED(wcode) and text is None:
+					# No extended error information, assuming low dose is disenabled
+					raise RuntimeError('Low dose is not enabled')
+				else:
+					# ?
+					pass
 	
 	def getDiffractionMode(self):
-		if self.theScope.Projection.Mode == win32com.client.constants.pmImaging:
+		if self.tecnai.Projection.Mode == win32com.client.constants.pmImaging:
 			return 'imaging'
-		elif self.theScope.Projection.Mode == win32com.client.constants.pmDiffraction:
+		elif self.tecnai.Projection.Mode == win32com.client.constants.pmDiffraction:
 			return 'diffraction'
 		else:
 			raise SystemError
 		
 	def setDiffractionMode(self, mode):
 		if mode == 'imaging':
-			self.theScope.Projection.Mode = win32com.client.constants.pmImaging
+			self.tecnai.Projection.Mode = win32com.client.constants.pmImaging
 		elif mode == 'diffraction':
-			self.theScope.Projection.Mode = win32com.client.constants.pmDiffraction
+			self.tecnai.Projection.Mode = win32com.client.constants.pmDiffraction
 		else:
 			raise ValueError
 		
@@ -712,16 +773,16 @@ class Tecnai(object):
 
 	def setShutter(self, state):
 		if state == 'open':
-			if self.theAda.OpenShutter != 0:
+			if self.exposure.OpenShutter != 0:
 				raise RuntimeError('Open shutter failed')
 		elif state == 'closed':
-			if self.theAda.CloseShutter != 0:
+			if self.exposure.CloseShutter != 0:
 				raise RuntimeError('Close shutter failed')
 		else:
-			raise ValueError("setShutter state must be 'open' or 'closed', not %s" % (state,))
+			raise ValueError('Invalid value for setShutter \'%s\'' % (state,))
 
 	def getShutter(self):
-		status = self.theAda.ShutterStatus
+		status = self.exposure.ShutterStatus
 		if status:
 			return 'closed'
 		else:
@@ -729,16 +790,16 @@ class Tecnai(object):
 
 	def setExternalShutter(self, state):
 		if state == 'connected':
-			if self.theAda.ConnectExternalShutter != 0:
+			if self.exposure.ConnectExternalShutter != 0:
 				raise RuntimeError('Connect shutter failed')
 		elif state == 'disconnected':
-			if self.theAda.DisconnectExternalShutter != 0:
+			if self.exposure.DisconnectExternalShutter != 0:
 				raise RuntimeError('Disconnect shutter failed')
 		else:
-			raise ValueError("setExternalShutter state must be 'connected' or 'disconnected', not %s" % (state,))
+			raise ValueError('Invalid value for setExternalShutter \'%s\'' % (state,))
 		
 	def getExternalShutter(self):
-		status = self.theAda.ExternalShutterStatus
+		status = self.exposure.ExternalShutterStatus
 		if status:
 			return 'connected'
 		else:
@@ -751,18 +812,18 @@ class Tecnai(object):
 		if self.getFilmStock() < 1:
 			raise RuntimeError('No film to take exposure')
 
-		if self.theAda.LoadPlate != 0:
+		if self.exposure.LoadPlate != 0:
 			raise RuntimeError('Load plate failed')
-		if self.theAda.ExposePlateLabel != 0:
+		if self.exposure.ExposePlateLabel != 0:
 			raise RuntimeError('Expose plate label failed')
 
 	def postFilmExposure(self, value):
 		if not value:
 			return
 
-		if self.theAda.UnloadPlate != 0:
+		if self.exposure.UnloadPlate != 0:
 			raise RuntimeError('Unload plate failed')
-#		if self.theAda.UpdateExposureNumber != 0:
+#		if self.exposure.UpdateExposureNumber != 0:
 #			raise RuntimeError('Update exposure number failed')
 
 	def filmExposure(self, value):
@@ -773,82 +834,79 @@ class Tecnai(object):
 		if self.getFilmStock() < 1:
 			raise RuntimeError('No film to take exposure')
 
-		if self.theAda.CloseShutter != 0:
+		if self.exposure.CloseShutter != 0:
 			raise RuntimeError('Close shutter (pre-exposure) failed')
-		if self.theAda.DisconnectExternalShutter != 0:
+		if self.exposure.DisconnectExternalShutter != 0:
 			raise RuntimeError('Disconnect external shutter failed')
-		if self.theAda.LoadPlate != 0:
+		if self.exposure.LoadPlate != 0:
 			raise RuntimeError('Load plate failed')
-		if self.theAda.ExposePlateLabel != 0:
+		if self.exposure.ExposePlateLabel != 0:
 			raise RuntimeError('Expose plate label failed')
-		if self.theAda.OpenShutter != 0:
+		if self.exposure.OpenShutter != 0:
 			raise RuntimeError('Open (pre-exposure) shutter failed')
 		'''
 		
-		self.theScope.Camera.TakeExposure()
+		self.tecnai.Camera.TakeExposure()
 		
 		'''
-		if self.theAda.CloseShutter != 0:
+		if self.exposure.CloseShutter != 0:
 			raise RuntimeError('Close shutter (post-exposure) failed')
-		if self.theAda.UnloadPlate != 0:
+		if self.exposure.UnloadPlate != 0:
 			raise RuntimeError('Unload plate failed')
-		if self.theAda.UpdateExposureNumber != 0:
+		if self.exposure.UpdateExposureNumber != 0:
 			raise RuntimeError('Update exposure number failed')
-		if self.theAda.ConnectExternalShutter != 0:
+		if self.exposure.ConnectExternalShutter != 0:
 			raise RuntimeError('Connect external shutter failed')
-		if self.theAda.OpenShutter != 0:
+		if self.exposure.OpenShutter != 0:
 			raise RuntimeError('Open shutter (post-exposure) failed')
 		'''
 
 	def getMainScreen(self):
-		#if self.theAda.MainScreenStatus == 1:
 		timeout = 5.0
 		sleeptime = 0.05
-		while (self.theScope.Camera.MainScreen
+		while (self.tecnai.Camera.MainScreen
 						== win32com.client.constants.spUnknown):
 			time.sleep(sleeptime)
-			if self.theScope.Camera.MainScreen != win32com.client.constants.spUnknown:
+			if self.tecnai.Camera.MainScreen != win32com.client.constants.spUnknown:
 				break
 			timeout -= sleeptime
 			if timeout <= 0.0:
 				return 'unknown'
-		if self.theScope.Camera.MainScreen == win32com.client.constants.spUp:
+		if self.tecnai.Camera.MainScreen == win32com.client.constants.spUp:
 			return 'up'
-		elif self.theScope.Camera.MainScreen == win32com.client.constants.spDown:
+		elif self.tecnai.Camera.MainScreen == win32com.client.constants.spDown:
 			return 'down'
 		else:
 			return 'unknown'
 
 	def getSmallScreen(self):
-		if self.theScope.Camera.IsSmallScreenDown:
+		if self.tecnai.Camera.IsSmallScreenDown:
 			return 'down'
 		else:
 			return 'up'
 
 	def setMainScreen(self, mode):
 		if mode == 'up':
-			self.theScope.Camera.MainScreen = win32com.client.constants.spUp
-			#self.theAda.MainScreenUp
+			self.tecnai.Camera.MainScreen = win32com.client.constants.spUp
 		elif mode == 'down':
-			self.theScope.Camera.MainScreen = win32com.client.constants.spDown
-			#self.theAda.MainScreenDown
+			self.tecnai.Camera.MainScreen = win32com.client.constants.spDown
 		else:
 			raise ValueError
 
 	def getHolderStatus(self):
-		if self.theAda.SpecimenHolderInserted == adacom.constants.eInserted:
+		if self.exposure.SpecimenHolderInserted == adacom.constants.eInserted:
 			return 'inserted'
-		elif self.theAda.SpecimenHolderInserted == adacom.constants.eNotInserted:
+		elif self.exposure.SpecimenHolderInserted == adacom.constants.eNotInserted:
 			return 'not inserted'
 		else:
 			return 'unknown'
 
 	def getHolderType(self):
-		if self.theAda.CurrentSpecimenHolderName == u'No Specimen Holder':
+		if self.exposure.CurrentSpecimenHolderName == u'No Specimen Holder':
 			return 'no holder'
-		elif self.theAda.CurrentSpecimenHolderName == u'Single Tilt':
+		elif self.exposure.CurrentSpecimenHolderName == u'Single Tilt':
 			return 'single tilt'
-		elif self.theAda.CurrentSpecimenHolderName == u'ST Cryo Holder':
+		elif self.exposure.CurrentSpecimenHolderName == u'ST Cryo Holder':
 			return 'cryo'
 		else:
 			return 'unknown holder'
@@ -864,52 +922,52 @@ class Tecnai(object):
 			raise ValueError('invalid holder type specified')
 
 		for i in [1,2,3]:
-			if self.theAda.SpecimenHolderName(i) == holderstr:
-				self.theAda.SetCurrentSpecimenHolder(i)
+			if self.exposure.SpecimenHolderName(i) == holderstr:
+				self.exposure.SetCurrentSpecimenHolder(i)
 				return
 
 		raise SystemError('no such holder available')
 
 	def getStageStatus(self):
-		if self.theAda.GonioLedStatus == adacom.constants.eOn:
+		if self.exposure.GonioLedStatus == adacom.constants.eOn:
 			return 'busy'
-		elif self.theAda.GonioLedStatus == adacom.constants.eOff:
+		elif self.exposure.GonioLedStatus == adacom.constants.eOff:
 			return 'ready'
 		else:
 			return 'unknown'
 
 	def getTurboPump(self):
-		if self.theAda.GetTmpStatus == adacom.constants.eOn:
+		if self.exposure.GetTmpStatus == adacom.constants.eOn:
 			return 'on'
-		elif self.theAda.GetTmpStatus == adacom.constants.eOff:
+		elif self.exposure.GetTmpStatus == adacom.constants.eOff:
 			return 'off'
 		else:
 			return 'unknown'
 
 	def setTurboPump(self, mode):
 		if mode == 'on':
-			self.theAda.SetTmp(adacom.constants.eOn)
+			self.exposure.SetTmp(adacom.constants.eOn)
 		elif mode == 'off':
-			self.theAda.SetTmp(adacom.constants.eOff)
+			self.exposure.SetTmp(adacom.constants.eOff)
 		else:
 			raise ValueError
 
 	def getColumnValves(self):
-		if self.theScope.Vacuum.ColumnValvesOpen:
+		if self.tecnai.Vacuum.ColumnValvesOpen:
 			return 'open'
 		else:
 			return 'closed'
 
 	def setColumnValves(self, state):
 		if state == 'closed':
-			self.theScope.Vacuum.ColumnValvesOpen = 0
+			self.tecnai.Vacuum.ColumnValvesOpen = 0
 		elif state == 'open':
-			self.theScope.Vacuum.ColumnValvesOpen = 1
+			self.tecnai.Vacuum.ColumnValvesOpen = 1
 		else:
 			raise ValueError
 
 	def getVacuumStatus(self):
-		status = self.theScope.Vacuum.Status
+		status = self.tecnai.Vacuum.Status
 		if status == win32com.client.constants.vsOff:
 			return 'off'
 		elif status == win32com.client.constants.vsCameraAir:
@@ -926,70 +984,70 @@ class Tecnai(object):
 			return 'unknown'
 
 	def getColumnPressure(self):
-		return float(self.theScope.Vacuum.Gauges('P4').Pressure)
+		return float(self.tecnai.Vacuum.Gauges('P4').Pressure)
 
 	def getObjectiveExcitation(self):
-		return float(self.theScope.Projection.ObjectiveExcitation)
+		return float(self.tecnai.Projection.ObjectiveExcitation)
 
 	def getFocus(self):
-		return float(self.theScope.Projection.Focus)
+		return float(self.tecnai.Projection.Focus)
 
 	def setFocus(self, value):
-		self.theScope.Projection.Focus = value
+		self.tecnai.Projection.Focus = value
 
 	def getFilmStock(self):
-		return self.theScope.Camera.Stock
+		return self.tecnai.Camera.Stock
 
 	def getFilmExposureNumber(self):
-		return self.theScope.Camera.ExposureNumber % 100000
+		return self.tecnai.Camera.ExposureNumber % 100000
 
 	def setFilmExposureNumber(self, value):
-		self.theScope.Camera.ExposureNumber = (self.theScope.Camera.ExposureNumber
+		self.tecnai.Camera.ExposureNumber = (self.tecnai.Camera.ExposureNumber
 																										/ 100000) * 100000 + value
 
 	def getFilmExposureType(self):
-		if self.theScope.Camera.ManualExposure:
+		if self.tecnai.Camera.ManualExposure:
 			return 'manual'
 		else:
 			return 'automatic'
 
 	def setFilmExposureType(self, value):
 		if value ==  'manual':
-			self.theScope.Camera.ManualExposure = True
+			self.tecnai.Camera.ManualExposure = True
 		elif value == 'automatic':
-			self.theScope.Camera.ManualExposure = False
+			self.tecnai.Camera.ManualExposure = False
 		else:
 			raise ValueError('Invalid value for film exposure type')
 
 	def getFilmExposureTime(self):
-		if self.theScope.Camera.ManualExposure:
+		if self.tecnai.Camera.ManualExposure:
 			return self.getFilmManualExposureTime()
 		else:
 			return self.getFilmAutomaticExposureTime()
 
 	def getFilmManualExposureTime(self):
-		return float(self.theScope.Camera.ManualExposureTime)
+		return float(self.tecnai.Camera.ManualExposureTime)
 
 	def setFilmManualExposureTime(self, value):
-		self.theScope.Camera.ManualExposureTime = value
+		self.tecnai.Camera.ManualExposureTime = value
 
 	def getFilmAutomaticExposureTime(self):
-		return float(self.theScope.Camera.MeasuredExposureTime)
+		return float(self.tecnai.Camera.MeasuredExposureTime)
 
 	def getFilmText(self):
-		return str(self.theScope.Camera.FilmText)
+		return str(self.tecnai.Camera.FilmText)
 
 	def setFilmText(self, value):
-		self.theScope.Camera.FilmText = value
+		self.tecnai.Camera.FilmText = value
 
 	def getFilmUserCode(self):
-		return str(self.theScope.Camera.Usercode)
+		return str(self.tecnai.Camera.Usercode)
 
 	def setFilmUserCode(self, value):
-		self.theScope.Camera.Usercode = value
+		self.tecnai.Camera.Usercode = value
 
 	def getFilmDateType(self):
-		filmdatetype = self.theScope.Camera.PlateLabelDateType
+		filmdatetype = self.tecnai.Camera.PlateLabelDateType
 		if filmdatetype == win32com.client.constants.dtNoDate:
 			return 'no date'
 		elif filmdatetype == win32com.client.constants.dtDDMMYY:
@@ -1003,16 +1061,16 @@ class Tecnai(object):
 
 	def setFilmDateType(self, value):
 		if value == 'no date':
-			self.theScope.Camera.PlateLabelDateType \
+			self.tecnai.Camera.PlateLabelDateType \
 				= win32com.client.constants.dtNoDate
 		elif value == 'DD-MM-YY':
-			self.theScope.Camera.PlateLabelDateType \
+			self.tecnai.Camera.PlateLabelDateType \
 				= win32com.client.constants.dtDDMMYY
 		elif value == 'MM/DD/YY':
-			self.theScope.Camera.PlateLabelDateType \
+			self.tecnai.Camera.PlateLabelDateType \
 				= win32com.client.constants.dtMMDDYY
 		elif value == 'YY.MM.DD':
-			self.theScope.Camera.PlateLabelDateType \
+			self.tecnai.Camera.PlateLabelDateType \
 				= win32com.client.constants.dtYYMMDD
 		else:
 			raise ValueError('Invalid film date type specified')
