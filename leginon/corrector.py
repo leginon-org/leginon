@@ -64,6 +64,10 @@ class SimpleCorrector(node.Node):
 			raise ValueError('Invalid reference type specified')
 		return dataclass
 
+	def filename(self, reftype, imid):
+		f = '%s_%s_%s_%06d' % (self.session['name'], self.name, reftype, imid)
+		return f
+
 	def researchReference(self, binning, referencetype):
 		referencedata = self.getReferenceDataClass(referencetype)()
 
@@ -253,7 +257,7 @@ class SimpleCorrector(node.Node):
 		correctorcamstatedata['offset'] = camerastate['offset']
 		correctorcamstatedata['binning'] = camerastate['binning']
 		imagedata['camstate'] = correctorcamstatedata
-		imagedata['filename'] = '%s_%s_%s_%06d' % (self.session['name'], self.name, referencetype, imagedata.dmid[-1])
+		imagedata['filename'] = self.filename(referencetype, imagedata.dmid[-1])
 		self.status.set('Publishing reference image...')
 		self.publish(imagedata, pubevent=True, database=True)
 		self.status.set('Reference image published')
@@ -783,10 +787,15 @@ class Corrector(node.Node):
 			imagetemp = data.NormImageData()
 		imagetemp['image'] = numdata
 		imagetemp['camstate'] = camstate
+		imagetemp['filename'] = self.filename(type, imagetemp.dmid[-1])
 		self.uistatus.set('Publishing reference image...')
 		self.publish(imagetemp, pubevent=True, database=True)
 		self.uistatus.set('Reference image published')
 		return imagetemp
+
+	def filename(self, reftype, imid):
+		f = '%s_%s_%s_%06d' % (self.session['name'], self.name, reftype, imid)
+		return f
 
 	def calc_norm(self, corimagedata):
 		corstate = corimagedata['camstate']
