@@ -28,12 +28,12 @@ class Handler(SocketServer.StreamRequestHandler):
 				raise
 			try:
 				# returns exception if error, else None
-				cPickle.dump(e, self.wfile)
+				cPickle.dump(e, self.wfile, 1)
 			except IOError:
 				print "socket transport: write failed when acknowledging push"
 		else:
 			try:
-				cPickle.dump(self.server.datahandler.query(obj), self.wfile)
+				cPickle.dump(self.server.datahandler.query(obj), self.wfile, 1)
 			except IOError:
 				print "socket transport: write failed when returning requested data"
 
@@ -62,7 +62,7 @@ class Client(leginonobject.LeginonObject):
 
 	def pull(self, id):
 		self.connect()
-		idpickle = cPickle.dumps(id)
+		idpickle = cPickle.dumps(id, 1)
 		self.send(idpickle)
 		data = self.receive()
 		self.close()
@@ -70,7 +70,7 @@ class Client(leginonobject.LeginonObject):
 
 	def push(self, idata):
 		self.connect()
-		self.send(cPickle.dumps(idata))
+		self.send(cPickle.dumps(idata, 1))
 		serverexception = cPickle.loads(self.receive())
 		self.close()
 		if serverexception != None:
