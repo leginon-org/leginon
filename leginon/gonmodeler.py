@@ -88,7 +88,9 @@ class GonModeler(node.Node):
 		## go to state
 		if state is not None:
 			newemdata = data.ScopeEMData()
-			newemdata['stage position'] = state
+			newemdata['stage position'] = {axis: state[axis]}
+			debugdict = newemdata.toDict(noNone=True)
+			self.logger.debug('setScope: ' + str(debugdict))
 			self.emclient.setScope(newemdata)
 			time.sleep(self.settle)
 
