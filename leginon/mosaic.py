@@ -1,5 +1,4 @@
 import Numeric
-import fftengine
 import correlator
 import peakfinder
 import math
@@ -13,7 +12,7 @@ class Mosaic(object):
 	def __init__(self):
 		self.targetlist = []
 
-		self.correlator = correlator.Correlator(fftengine.fftNumeric())
+		self.correlator = correlator.Correlator()
 		self.peakfinder = peakfinder.PeakFinder()
 
 		self.tiles = []

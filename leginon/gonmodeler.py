@@ -1,6 +1,5 @@
 import node
 import data
-import fftengine
 import correlator
 import peakfinder
 import event
@@ -16,9 +15,7 @@ import string
 class GonModeler(node.Node):
 	def __init__(self, id, session, nodelocations, **kwargs):
 		self.cam = camerafuncs.CameraFuncs(self)
-		ffteng = fftengine.fftNumeric()
-		#ffteng = fftengine.fftFFTW(planshapes=(), estimate=1)
-		self.correlator = correlator.Correlator(ffteng)
+		self.correlator = correlator.Correlator()
 		self.peakfinder = peakfinder.PeakFinder()
 		self.settle = 5.0
 		self.threadstop = threading.Event()

@@ -1,14 +1,21 @@
 #!/usr/bin/env python
 
 import Numeric
+import fftengine
+
+## chose a FFT engine class
+if fftengine.fftFFTW is None:
+	fftclass = fftengine.fftNumeric
+else:
+	fftclass = fftengine.fftFFTW
 
 class Correlator(object):
 	'''
 	Provides correlation handling functions.
 	A buffer of two images is maintained.
 	'''
-	def __init__(self, ffteng):
-		self.fftengine = ffteng
+	def __init__(self):
+		self.fftengine = fftclass()
 		self.clearBuffer()
 
 	def setImage(self, index, newimage):

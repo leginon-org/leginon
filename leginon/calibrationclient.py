@@ -4,7 +4,6 @@ import LinearAlgebra
 import math
 import copy
 import camerafuncs
-import fftengine
 import correlator
 import peakfinder
 import time
@@ -32,9 +31,7 @@ class CalibrationClient(object):
 		self.node = node
 		self.cam = node.cam
 
-		ffteng = fftengine.fftNumeric()
-		#ffteng = fftengine.fftFFTW(planshapes=(), estimate=1)
-		self.correlator = correlator.Correlator(ffteng)
+		self.correlator = correlator.Correlator()
 		self.peakfinder = peakfinder.PeakFinder()
 		self.abortevent = threading.Event()
 
