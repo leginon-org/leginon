@@ -271,13 +271,35 @@ class StateImageMosaic(ImageMosaic):
 			raise ValueError
 		self.imagemosaic[idata.id]['state'] = idata.content['state']
 
+	def pixelShift(self, ievent):
+		row = ievent.content['row']
+		column = ievent.content['column']
+
+		matrix = self.calibration2matrix()
+		determinant = LinearAlgebra.determinant(matrix)
+		x = (matrix[1,1] * column - matrix[1,0] * row) / determinant
+		y = (matrix[0,0] * row - matrix[0,1] * column) / determinant
+		return (y, x)
+
+	def calibration2matrix(self):
+		matrix = Numeric.array([[self.calibration['x pixel shift']['x'],
+														self.calibration['x pixel shift']['y']],
+													[self.calibration['y pixel shift']['x'],
+														self.calibration['y pixel shift']['y']]])
+		matrix[0] /= self.calibration['x pixel shift']['value']
+		matrix[1] /= self.calibration['y pixel shift']['value']
+		return matrix
+
 	def processDataByCalibration(self, idata):
 		if self.calibration is None:
 			self.printerror(
 				'unable to process data %s by calibration, no calibration available'
 					% str(idata.id))
 			return
-		idata.content['state']
+		# hardcode for now
+		self.imagemosaic[idata.id]['position'] = \
+			self.pixelLocation(idata.content['state']['stage position']['y'],
+														idata.content['state']['stage position']['x']) 
 
 	def processDataByCorrelation(self, idata):
 		ImageMosaic.processData(self, idata)
