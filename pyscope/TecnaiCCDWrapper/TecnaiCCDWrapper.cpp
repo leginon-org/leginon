@@ -1,52 +1,56 @@
 #include <Python.h>
 #include <numarray/libnumarray.h>
+#include <PythonCOM.h>
 
 #define _WIN32_DCOM
 #include <atlbase.h>
 
-#import "c:\tecnai\plugins\tecnaiccd.dll" no_namespace
-
 static PyObject *acquire(PyObject *self, PyObject *args) {
+	PyObject *pPyObject;
+	PyIDispatch *pPyIDispatch;
+	IDispatch *pIDispatch;
+	REFIID riid = IID_NULL;
+	unsigned int cNames = 1;
+	OLECHAR FAR* FAR* rgszNames = new LPOLESTR[cNames];
+	LCID lcid = LOCALE_SYSTEM_DEFAULT;
+	DISPID FAR* rgDispId = new DISPID[cNames];
+	DISPPARAMS dispParams = {NULL, NULL, 0, 0};
+	VARIANT varResult;
+	EXCEPINFO excepInfo;
+	unsigned int uArgErr;
+	HRESULT hr;
+
+	rgszNames[0] = L"AcquireRawImage";
+
+	if (!PyArg_ParseTuple(args, "O", &pPyObject))
+		return NULL;
+
+	pPyIDispatch = (PyIDispatch *)pPyObject;
+	pIDispatch = pPyIDispatch->GetI(pPyIDispatch);
+
+	PY_INTERFACE_PRECALL;
+
+	hr = pIDispatch->GetIDsOfNames(riid, rgszNames, cNames, lcid, rgDispId);
+	delete [] rgszNames;
+
+	hr = pIDispatch->Invoke(rgDispId[0], riid, lcid, DISPATCH_METHOD, &dispParams, &varResult, &excepInfo, &uArgErr);
+	delete [] rgDispId;
+
+	PY_INTERFACE_POSTCALL;
+
 	PyArrayObject *result;
 	NumarrayType type;
 	int *dims;
 
-	HRESULT hr;
-	CComPtr<IGatanCamera> pCamera;
 	SAFEARRAY *psaImage = NULL;
-	_variant_t vTemp;
 	void HUGEP *pbuffer = NULL;
 	VARTYPE vartype;
-	int left, top, right, bottom, binning;
-	float exposuretime;
 
-	if (!PyArg_ParseTuple(args, "iiiiif", &left, &top, &right, &bottom, &binning, &exposuretime))
-		return NULL;
-
-	// don't initialize com/create instance every acquire, will update
-	// I also meant to set exceptions
-	CoInitializeEx(NULL, COINIT_MULTITHREADED);
-
-	hr = pCamera.CoCreateInstance(&(OLESTR("TecnaiCCD.GatanCamera")));
-	if (FAILED(hr)) {
-		PyErr_SetString(PyExc_RuntimeError, "Failed to initialize camera");
-		return NULL;
-	}
-
-	pCamera->CameraLeft = left;
-	pCamera->CameraTop = top;
-	pCamera->CameraRight = right;
-	pCamera->CameraBottom = bottom;
-	pCamera->Binning = binning;
-	pCamera->ExposureTime = exposuretime;
-
-	vTemp = pCamera->AcquireRawImage();
-
-	if (!(vTemp.vt & VT_ARRAY)) {
+	if (!(varResult.vt & VT_ARRAY)) {
 		PyErr_SetString(PyExc_RuntimeError, "Image is not an array");
 		return NULL;
 	}
-	psaImage = vTemp.parray;
+	psaImage = varResult.parray;
 
 	hr = SafeArrayAccessData(psaImage, (void HUGEP* FAR*)&pbuffer);
 	if (FAILED(hr)) {
@@ -81,9 +85,6 @@ static PyObject *acquire(PyObject *self, PyObject *args) {
 	result = NA_vNewArray(pbuffer, type, psaImage->cDims, dims);
 	SafeArrayUnaccessData(psaImage);
 	delete dims;
-
-	pCamera.Release();
-	CoUninitialize();
 
 	return (PyObject *)result;
 }

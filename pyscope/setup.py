@@ -1,9 +1,13 @@
 from distutils.core import setup, Extension
+from distutils.sysconfig import get_python_lib
 import sys
 
 if sys.platform == 'win32':
+	pl = get_python_lib(True)
 	module = Extension(
 		'TecnaiCCDWrapper',
+		include_dirs=['%s/win32/include' % pl, '%s/win32com/include' % pl],
+		library_dirs=['%s/win32/libs' % pl, '%s/win32com/libs' % pl],
 		sources=['TecnaiCCDWrapper/TecnaiCCDWrapper.cpp']
 	)
 	ext_package = 'pyScope'

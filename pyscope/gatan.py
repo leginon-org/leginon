@@ -125,38 +125,17 @@ class Gatan(object):
 			#if self.getRetractable():
 				if self.getInserted():
 					self.setInserted(False)
-					image = TecnaiCCDWrapper.acquire(
-										self.camera.CameraLeft,
-										self.camera.CameraTop,
-										self.camera.CameraRight,
-										self.camera.CameraBottom,
-										self.camera.Binning,
-										self.camera.ExposureTime
-									)
+					image = TecnaiCCDWrapper.acquire(self.camera._oleobj_)
 					self.setInserted(True)
 					return image
 			else:
 				exposuretime = self.getExposureTime()
 				self.setExposureTime(0)
-				image = TecnaiCCDWrapper.acquire(
-									self.camera.CameraLeft,
-									self.camera.CameraTop,
-									self.camera.CameraRight,
-									self.camera.CameraBottom,
-									self.camera.Binning,
-									self.camera.ExposureTime
-								)
+				image = TecnaiCCDWrapper.acquire(self.camera._oleobj_)
 				self.setExposureTime(exposuretime)
 				return image
 		try:
-			return TecnaiCCDWrapper.acquire(
-								self.camera.CameraLeft,
-								self.camera.CameraTop,
-								self.camera.CameraRight,
-								self.camera.CameraBottom,
-								self.camera.Binning,
-								self.camera.ExposureTime
-							)
+			return TecnaiCCDWrapper.acquire(self.camera._oleobj_)
 		except pywintypes.com_error, e:
 			raise ValueError('Invalid image dimensions')
 
