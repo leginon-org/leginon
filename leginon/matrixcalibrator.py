@@ -125,7 +125,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 				tol = self.uitolerance.get()
 				err = abs(perpix - pixsize) / pixsize
 				if err > tol:
-					self.info.warning('Failed pixel size tolerance')
+					self.logger.warning('Failed pixel size tolerance')
 					continue
 
 				if change == 0.0:
