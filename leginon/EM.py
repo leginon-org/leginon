@@ -109,7 +109,8 @@ class ExitRequest(Request):
 class EM(node.Node):
 	eventinputs = node.Node.eventinputs + [event.LockEvent, event.UnlockEvent, event.SetScopeEvent, event.SetCameraEvent]
 	def __init__(self, id, session, managerlocation, tcpport=None, **kwargs):
-		self.messagelog = uidata.MessageLog('Message Log')
+		self.scopemessagelog = uidata.MessageLog('Scope Message Log')
+		self.cameramessagelog = uidata.MessageLog('Camera Message Log')
 
 		# These keys are not included in a get all parameters
 		self.prunekeys = [
@@ -211,7 +212,7 @@ class EM(node.Node):
 			scopename = self.session['instrument']['scope']
 		except (TypeError, KeyError):
 			# no scope is associated with this session
-			self.messagelog.warning('no scope is associated with this session')
+			self.scopemessagelog.warning('no scope is associated with this session')
 			scopename = None
 
 		# get the camera module and class from the database
@@ -219,7 +220,7 @@ class EM(node.Node):
 			cameraname = self.session['instrument']['camera']
 		except (TypeError, KeyError):
 			# no camera is associated with this session
-			self.messagelog.warning('no camera is associated with this session')
+			self.cameramessagelog.warning('no camera is associated with this session')
 			cameraname = None
 
 		# add event inputs for locking and unlocking EM from a node
@@ -345,7 +346,7 @@ class EM(node.Node):
 			scopeclass = self.getClass(modulename, classname)
 			self.scope = methoddict.factory(scopeclass)()
 		except Exception, e:
-			self.messagelog.error('Cannot set scope to type ' + str(scopename))
+			self.scopemessagelog.error('Cannot set scope to type ' + str(scopename))
 
 	def setCameraType(self, cameraname):
 		modulename, classname, d = emregistry.getCameraInfo(cameraname)
@@ -353,7 +354,7 @@ class EM(node.Node):
 			cameraclass = self.getClass(modulename, classname)
 			self.camera = methoddict.factory(cameraclass)()
 		except Exception, e:
-			self.messagelog.error('Cannot set camera to type ' + str(cameraname))
+			self.cameramessagelog.error('Cannot set camera to type ' + str(cameraname))
 
 	def main(self):
 		pass
@@ -485,7 +486,7 @@ class EM(node.Node):
 			camerakeys = []
 
 		if 'focus' in orderedkeys and 'defocus' in orderedkeys:
-			self.messagelog.warning('Focus and defocus changed at the same time defocus ' + str(state['focus']) +  ' focus ' + str(state['defocus']))
+			self.scopemessagelog.warning('Focus and defocus changed at the same time defocus ' + str(state['focus']) +  ' focus ' + str(state['defocus']))
 
 		for key in orderedkeys:
 			value = state[key]
@@ -496,13 +497,13 @@ class EM(node.Node):
 					try:
 						self.scope[key] = value
 					except:	
-						self.messagelog.error('Failed to set \'%s\' to %s' % (key, value))
+						self.scopemessagelog.error('Failed to set \'%s\' to %s' % (key, value))
 						self.logger.exception('Set \'%s\' %s failed' % (key, value))
 				elif key in camerakeys:
 					try:
 						self.camera[key] = value
 					except:	
-						self.messagelog.error('Failed to set \'%s\' to %s' % (key, value))
+						self.cameramessagelog.error('Failed to set \'%s\' to %s' % (key, value))
 						self.logger.exception('Set \'%s\' %s failed' % (key, value))
 
 			if self.uipauses.get() and (key in self.pauses):
@@ -729,8 +730,16 @@ class EM(node.Node):
 		refreshscope = uidata.Method('Refresh', self.uiRefreshScope)
 		setscope = uidata.Method('Set', self.uiSetScope)
 		self.scopecontainer = uidata.LargeContainer('Microscope')
-		self.scopecontainer.addObjects((self.uipauses, scopeinterface,
-																		refreshscope, setscope))
+		self.scopecontainer.addObject(self.scopemessagelog,
+																	position={'expand': 'all',
+																						'position': (0, 0),
+																						'span': (1, 2)})
+		self.scopecontainer.addObject(self.uipauses, position={'position': (1, 0),
+																														'span': (1, 2)})
+		self.scopecontainer.addObject(scopeinterface, position={'position': (2, 0),
+																														'span': (1, 2)})
+		self.scopecontainer.addObject(setscope, position={'position': (3, 0)})
+		self.scopecontainer.addObject(refreshscope, position={'position': (3, 1)})
 		self.scopecontainer.disable()
 
 		# camera
@@ -738,14 +747,17 @@ class EM(node.Node):
 		self.cameracontainer = uidata.LargeContainer('Camera')
 		refreshcamera = uidata.Method('Refresh', self.uiRefreshCamera)
 		setcamera = uidata.Method('Set', self.uiSetCamera)
-		self.cameracontainer.addObjects((camerainterface, refreshcamera, setcamera))
+		self.cameracontainer.addObject(self.cameramessagelog,
+																		position={'expand': 'all',
+																						'position': (0, 0),
+																						'span': (1, 2)})
+		self.cameracontainer.addObject(camerainterface, position={
+																														'position': (1, 0),
+																														'span': (1, 2)})
+		self.cameracontainer.addObject(setcamera, position={'position': (2, 0)})
+		self.cameracontainer.addObject(refreshcamera, position={'position': (2, 1)})
 		self.cameracontainer.disable()
 
-		container = uidata.LargeContainer('EM')
-		container.addObject(self.messagelog, position={'expand': 'all'})
-		if self.scope is not None:
-			container.addObject(self.scopecontainer)
-		if self.camera is not None:
-			container.addObject(self.cameracontainer)
-		self.uicontainer.addObject(container)
+		self.uicontainer.addObject(self.scopecontainer)
+		self.uicontainer.addObject(self.cameracontainer)
 
