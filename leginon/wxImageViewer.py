@@ -22,14 +22,36 @@ class ImagePanel(wxPanel):
 		self.SetSizer(self.sizer)
 		self.panel = wxScrolledWindow(self, -1, size=(512, 512))
 		self.panel.SetScrollRate(1,1)
+		self.panel.SetCursor(wxCROSS_CURSOR)
 		self.sizer.Add(self.panel)
 		size = self.panel.GetSize()
 		self.sizer.SetItemMinSize(self.panel, size.GetWidth(), size.GetHeight())
+		self.initValueLabels()
+		#self.sizer.Layout()
 		self.Fit()
-		EVT_MOTION(self.panel, self.motion)
 		EVT_PAINT(self.panel, self.OnPaint)
 		EVT_SIZE(self.panel, self.OnSize)
 #		wxInitAllImageHandlers()
+
+	def initValueLabels(self):
+		self.xlabel = wxStaticText(self, -1, '0000',
+																style=wxALIGN_CENTRE | wxST_NO_AUTORESIZE)
+		self.xlabel.SetLabel('')
+		self.ylabel = wxStaticText(self, -1, '0000',
+																style=wxALIGN_CENTRE | wxST_NO_AUTORESIZE)
+		self.ylabel.SetLabel('')
+		self.valuelabel = wxStaticText(self, -1, '00000',
+																		style=wxALIGN_CENTRE | wxST_NO_AUTORESIZE)
+		self.valuelabel.SetLabel('')
+		self.valuesizer = wxBoxSizer(wxHORIZONTAL)
+		self.valuesizer.Add(wxStaticText(self, -1, 'x: '))
+		self.valuesizer.Add(self.xlabel)
+		self.valuesizer.Add(wxStaticText(self, -1, 'y: '))
+		self.valuesizer.Add(self.ylabel)
+		self.valuesizer.Add(wxStaticText(self, -1, 'Value: '))
+		self.valuesizer.Add(self.valuelabel)
+		self.sizer.Prepend(self.valuesizer)
+		EVT_MOTION(self.panel, self.motion)
 
 	def PILsetImageFromMrcString(self, imagestring):
 		self.clearImage()
@@ -79,10 +101,12 @@ class ImagePanel(wxPanel):
 			return
 		try:
 			viewoffset = self.panel.GetViewStart()
-			xy = (viewoffset[0] + evt.m_x, viewoffset[1] + evt.m_y)
-			#rgb = self.image.getpixel(xy)
-			rgb = self.image[xy[1], xy[0]]
-			print xy, '=', rgb
+			x = viewoffset[0] + evt.m_x
+			y = viewoffset[1] + evt.m_y
+			rgb = self.image[y, x]
+			self.xlabel.SetLabel(str(x))
+			self.ylabel.SetLabel(str(y))
+			self.valuelabel.SetLabel(str(rgb))
 		except:
 			pass
 
