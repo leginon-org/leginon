@@ -146,7 +146,7 @@ def power(numericarray):
 	## should I square this?
 	pow = Numeric.absolute(fft)
 	pow = Numeric.log(pow)
-	pow = Numeric.clip(pow, 6, 14)
+	pow = Numeric.clip(pow, 8, 14)
 	pow = shuffle(pow)
 	return pow
 
@@ -237,7 +237,7 @@ class Blob(object):
 	'''
 	a Blob instance represets a connected set of pixels
 	'''
-	neighbors = ((-1,-1),(-1,0),(-1,1), (0,-1), (0,1), (1,-1), (1,0), (1,1))
+	neighbor_deltas = Numeric.array(((-1,-1),(-1,0),(-1,1), (0,-1), (0,1), (1,-1), (1,0), (1,1)))
 	maxpoints = 2000
 	def __init__(self, image, mask):
 		self.image = image
@@ -252,8 +252,7 @@ class Blob(object):
 		attempt to add 
 		'''
 		recursionerror = False
-		self.pixel_list.append(Numeric.array((row, col), Numeric.Float32))
-		self.value_list.append(Numeric.array(self.image[row,col], Numeric.Float32))
+		self.pixel_list.append((row, col))
 		## turn off pixel in mask
 		tmpmask[row,col] = 0
 		## reset stats
@@ -265,18 +264,17 @@ class Blob(object):
 			return False
 
 		# check neighbors
-		for neighbor in self.neighbors:
+		neighbors = self.neighbor_deltas + (row,col)
+		for neighbor in neighbors:
 			if self.recursionerror:
 				break
-			nrow = row + neighbor[0]
-			ncol = col + neighbor[1]
-			if nrow < 0 or nrow >= self.image.shape[0]:
+			try:
+				value = tmpmask[neighbor]
+			except IndexError:
 				continue
-			if ncol < 0 or ncol >= self.image.shape[1]:
-				continue
-			if tmpmask[nrow,ncol]:
+			if value:
 				try:
-					self.add_point(nrow,ncol,tmpmask)
+					self.add_point(neighbor[0],neighbor[1],tmpmask)
 				except RuntimeError:
 					self.recursionerror = True
 					break
@@ -303,6 +301,10 @@ class Blob(object):
 		else:
 			self.stats['size'] = Numeric.zeros((2,),Numeric.Float32)
 		
+		## need to calculate value list here
+		# this is fake:
+		self.value_list = [2]
+
 		value_array = Numeric.array(self.value_list, Numeric.Float32)
 		valuesum = Numeric.sum(value_array)
 		valuesquares = value_array ** 2
@@ -350,10 +352,13 @@ def find_blobs(image, mask, border=0, maxblobs=300, maxblobsize=50):
 				if (maxblobs is not None) and (len(blobs) > maxblobs):
 					raise TooManyBlobs('found more than %s blobs' % (maxblobs,))
 
+	t.stop()
+
 	print 'Found %s blobs.' % (len(blobs),)
 	print 'Calculating blob stats'
 	for blob in blobs:
 		blob.calc_stats()
+	t.stop()
 	return blobs
 
 def mark_image(image, coord, value):
