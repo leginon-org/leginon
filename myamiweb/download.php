@@ -2,13 +2,20 @@
 require('inc/leginon.inc');
 $imgId  = $_GET[id];
 $preset = $_GET[preset];
+$fft = ($_GET['fft']==1) ? true : false;
 
 $newimage = $leginondata->findImage($imgId, $preset);
 $imgId = $newimage[id];
 $imageinfo = $leginondata->getImageInfo($imgId);
 $sessionId = $imageinfo[sessionId];
 $path = $leginondata->getImagePath($sessionId);
-$filename = $leginondata->getFilename($imgId);
+if ($fft) {
+	$fftimg = $leginondata->getImageFFT($imgId);
+	$filename = $fftimg[fftimage];
+} else {
+	$filename = $leginondata->getFilename($imgId);
+}
+
 
 $pic  = $path.$filename;
 $size = filesize($path.$filename);

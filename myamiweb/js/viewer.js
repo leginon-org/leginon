@@ -77,7 +77,7 @@ function newfile(view){
 	ni = jsimagescriptcur+"?"+options;
 	nlink = "javascript:popUpMap('map.php?"+options+"')";
 	ninfolink = "imgreport.php?id="+jsimgId+"&preset="+selpreset;
-	ndownloadlink = "download.php?id="+jsimgId+"&preset="+selpreset;
+	ndownloadlink = "download.php?id="+jsimgId+"&preset="+selpreset+fft;
 
 	if (img = document.images[eval("\"" +view+ "img\"")]) 
 		img.src = ni;
