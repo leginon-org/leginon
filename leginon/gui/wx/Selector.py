@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/gui/wx/Selector.py,v $
-# $Revision: 1.1 $
+# $Revision: 1.2 $
 # $Name: not supported by cvs2svn $
-# $Date: 2004-10-27 21:19:00 $
+# $Date: 2004-10-27 21:54:52 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -67,19 +67,35 @@ class Selector(wx.lib.scrolledpanel.ScrolledPanel):
 		self.SetAutoLayout(True)
 		self.SetupScrolling()
 
-	def _add(self, index, item):
-		rows = range(index, len(self.order))
-		rows.reverse()
-		for row in rows:
-			for column, moveitem in enumerate(self.items[self.order[row]].items):
-				if moveitem is None:
-					continue
-				self.szselect.SetItemPosition(moveitem, (row + 1, column))
-
+	def addItem(self, row, item):
 		for i, additem in enumerate(item.items):
 			if additem is None:
 				continue
-			self.szselect.Add(additem, (index, i), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+			self.szselect.Add(additem, (row, i), (1, 1), wx.ALIGN_CENTER_VERTICAL)
+
+	def moveItem(self, row, item):
+		for column, moveitem in enumerate(item.items):
+			if moveitem is None:
+				continue
+			self.szselect.SetItemPosition(moveitem, (row, column))
+
+	def detachItem(self, item):
+		for removeitem in item.items:
+			if removeitem is None:
+				continue
+			self.szselect.Detach(removeitem)
+
+	def destroyItem(self, item):
+		self.detachItem(item)
+		item.destroy()
+
+	def insert(self, index, item):
+		rows = range(index, len(self.order))
+		rows.reverse()
+		for row in rows:
+			self.moveItem(row + 1, self.items[self.order[row]])
+
+		self.addItem(index, item)
 
 		self.items[item.name] = item
 		self.order.insert(index, item.name)
@@ -88,10 +104,7 @@ class Selector(wx.lib.scrolledpanel.ScrolledPanel):
 
 	def append(self, item):
 		index = len(self.order)
-		self._add(index, item)
-
-	def insert(self, index, item):
-		self._add(index, item)
+		self.insert(index, item)
 
 	def remove(self, name):
 		index = self.order.index(name)
@@ -100,17 +113,25 @@ class Selector(wx.lib.scrolledpanel.ScrolledPanel):
 		item = self.items[name]
 		del self.items[name]
 
-		for removeitem in item.items:
-			if removeitem is None:
-				continue
-			self.szselect.Detach(removeitem)
-		item.destroy()
+		self.destroyItem(item)
 
 		for row in range(index, len(self.order)):
-			for column, moveitem in enumerate(self.items[self.order[row]].items):
-				if moveitem is None:
-					continue
-				self.szselect.SetItemPosition(moveitem, (row, column))
+			self.moveItem(row, self.items[self.order[row]])
+
+		self.szselect.Layout()
+
+	def sort(self, cmpfunc=None):
+		order = list(self.order)
+		order.sort(cmpfunc)
+		for name in order:
+			i = (self.order.index(name), order.index(name))
+			if i[0] == i[1]:
+				continue
+			item = self.items[self.order[i[1]]]
+			self.moveItem(len(self.order), item)
+			self.moveItem(i[1], self.items[name])
+			self.moveItem(i[0], item)
+			self.order[i[0]], self.order[i[1]] = self.order[i[1]], self.order[i[0]]
 
 		self.szselect.Layout()
 
@@ -134,16 +155,17 @@ if __name__ == '__main__':
 			return True
 
 	app = App(0)
-	app.selector.append(SelectorItem(app.selector, '0', 'node'))
-	app.selector.append(SelectorItem(app.selector, '1', 'node'))
-	app.selector.append(SelectorItem(app.selector, '2', 'node'))
-	app.selector.append(SelectorItem(app.selector, '3', 'node'))
-	app.selector.append(SelectorItem(app.selector, '4', 'node'))
-	app.selector.append(SelectorItem(app.selector, '5', 'node'))
-	app.selector.append(SelectorItem(app.selector, '6', 'node'))
 	app.selector.append(SelectorItem(app.selector, '7', 'node'))
+	app.selector.append(SelectorItem(app.selector, '1', 'node'))
+	app.selector.append(SelectorItem(app.selector, '4', 'node'))
+	app.selector.append(SelectorItem(app.selector, '3', 'node'))
+	app.selector.append(SelectorItem(app.selector, '5', 'node'))
+	app.selector.append(SelectorItem(app.selector, '2', 'node'))
+	app.selector.append(SelectorItem(app.selector, '6', 'node'))
+	app.selector.append(SelectorItem(app.selector, '0', 'node'))
 	app.selector.remove('2')
 	app.selector.insert(3, SelectorItem(app.selector, 'asdf', 'node'))
 	app.selector.remove('3')
+	app.selector.sort()
 	app.MainLoop()
 
