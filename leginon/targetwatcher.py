@@ -50,7 +50,10 @@ class TargetWatcher(watcher.Watcher):
 		driftdata = self.researchByDataID(dataid)
 		self.driftedimages = driftdata['shifts']
 		print 'DRIFTED IMAGES', self.driftedimages
-		self.newtargetshift.set()
+		# may be waiting for a requested image shift
+		req = driftdata['requested']
+		if req:
+			self.newtargetshift.set()
 
 	def processData(self, newdata):
 		'''
@@ -84,7 +87,6 @@ class TargetWatcher(watcher.Watcher):
 		self.abort.clear()
 		self.pause.clear()
 		self.cont.clear()
-		print self.id, 'PROCESSING GOOD', len(goodtargets)
 		targetliststatus = 'success'
 		for target in goodtargets:
 			print 'STARTING NEW TARGET', target['id']
@@ -142,13 +144,17 @@ class TargetWatcher(watcher.Watcher):
 					print 'done pausing'
 				print 'checking abort'
 				if self.abort.isSet():
-					print 'breaking from targetlist loop'
-					targetliststatus = 'failure'
+					print 'breaking from repeat loop'
 					break
 				print 'not aborted'
 
 				if process_status != 'repeat':
 					break
+
+			if self.abort.isSet():
+				print 'breaking from targetlist loop'
+				targetliststatus = 'abort'
+				break
 
 		e = event.TargetListDoneEvent(id=self.ID(), targetlistid=newdata['id'], status=targetliststatus)
 		self.outputEvent(e)
