@@ -1,4 +1,5 @@
 from wxPython.wx import *
+import math
 
 wxEVT_UPDATE_DRAWING = wxNewEventType()
 
@@ -163,170 +164,106 @@ class wxShapeObjectEvtHandler(wxEvtHandler):
 	def OnLower(self, evt):
 		evt.Skip()
 
-class wxConnectionObject(object):
-	def __init__(self, shapeobject1, shapeobject2):
-		self.shapeobject1 = shapeobject1
-		self.shapeobject2 = shapeobject2
-		self.forward = True
-		self.backward = True
-
-	def same(self, other):
-		if (self.shapeobject1 == other.shapeobject1 and
-				self.shapeobject2 == other.shapeobject2):
-			return True
-		if (self.shapeobject2 == other.shapeobject1 and
-				self.shapeobject1 == other.shapeobject2):
-			return True
-		return False
-
-	def connects(self, shapeobject):
-		if shapeobject == self.shapeobject1 or shapeobject == self.shapeobject2:
-			return True
-		return False
-
-	def Draw(self, dc):
-		if self.forward and self.backward:
-			self.DrawLine(dc, 3)
-			self.DrawLine(dc, -3, True)
-		elif self.forward:
-			self.DrawLine(dc, 0)
-		elif self.backward:
-			self.DrawLine(dc, 0, True)
-
-	def getCenters(self):
-		so1 = self.shapeobject1
-		so2 = self.shapeobject2
-		x1 = so1.x + so1.xoffset + so1.width/2
-		y1 = so1.y + so1.yoffset + so1.height/2
-		x2 = so2.x + so2.xoffset + so2.width/2
-		y2 = so2.y + so2.yoffset + so2.height/2
-		return (x1, y1, x2, y2)
-
-	def DrawLine(self, dc, offset=0, reverse=False):
-		x1, y1, x2, y2 = self.getCenters()
-
-		try:
-			slope = float(y2 - y1)/float(x2 - x1)
-		except ZeroDivisionError:
-			# good enough
-			slope = 1
-
-		oldbrush = dc.GetBrush()
-		dc.SetBrush(wxBLACK_BRUSH)
-		if slope >= -1 and slope < 1:
-			y1 += offset
-			y2 += offset
-			if x1 > x2:
-				x1 = self.shapeobject1.x
-				x2 = self.shapeobject2.x + self.shapeobject2.width - 1
-				if reverse:
-					dc.DrawPolygon([(0, 0), (-7, -3), (-7, 3)], x1, y1)
-				else:
-					dc.DrawPolygon([(0, 0), (7, -3), (7, 3)], x2, y2)
-			else:
-				x1 = self.shapeobject1.x + self.shapeobject1.width
-				x2 = self.shapeobject2.x
-				if reverse:
-					dc.DrawPolygon([(0, 0), (7, -3), (7, 3)], x1, y1)
-				else:
-					dc.DrawPolygon([(0, 0), (-7, -3), (-7, 3)], x2, y2)
-			mx = x2 + (x1 - x2)/2 + offset
-			dc.DrawLine(x1, y1, mx, y1)
-			dc.DrawLine(mx, y1, mx, y2)
-			dc.DrawLine(mx, y2, x2, y2)
-		else:
-			x1 += offset
-			x2 += offset
-			if y1 > y2:
-				y1 = self.shapeobject1.y
-				y2 = self.shapeobject2.y + self.shapeobject2.height - 1
-				if reverse:
-					dc.DrawPolygon([(0, 0), (-3, -7), (3, -7)], x1, y1)
-				else:
-					dc.DrawPolygon([(0, 0), (-3, 7), (3, 7)], x2, y2)
-			else:
-				y1 = self.shapeobject1.y + self.shapeobject1.height
-				y2 = self.shapeobject2.y
-				if reverse:
-					dc.DrawPolygon([(0, 0), (-3, 7), (3, 7)], x1, y1)
-				else:
-					dc.DrawPolygon([(0, 0), (-3, -7), (3, -7)], x2, y2)
-			my = y2 + (y1 - y2)/2 + offset
-			dc.DrawLine(x1, y1, x1, my)
-			dc.DrawLine(x1, my, x2, my)
-			dc.DrawLine(x2, my, x2, y2)
-		
-#		dc.DrawLine(x1, y1, x2, y2)
-		dc.SetBrush(oldbrush)
-
 class wxShapeObject(wxShapeObjectEvtHandler):
-	def __init__(self, x, y, width, height):
+	def __init__(self, width, height):
 		wxShapeObjectEvtHandler.__init__(self)
-		self.x = x
-		self.y = y
 		self.width = width
 		self.height = height
+		self.parent = None
 
-		self.xoffset = 0
-		self.yoffset = 0
-		self.text = []
+		self.text = {}
 
 		self.shapeobjects = []
-		self.connectionobjects = []
+		self.positions = {}
+		self.connections = []
+
+	def getPosition(self):
+		if self.parent is not None:
+			return self.parent.getChildPosition(self)
+		else:
+			return (0, 0)
 
 	def setPosition(self, x, y):
-		self.x = x
-		self.y = y
-		for so in self.shapeobjects:
-			so.setOffset(self.x + self.xoffset, self.y + self.yoffset)
+		if self.parent is not None:
+			self.parent.setChildPosition(self, x, y)
 
-	def setOffset(self, x, y):
-		self.xoffset = x
-		self.yoffset = y
-		for so in self.shapeobjects:
-			so.setOffset(self.x + self.xoffset, self.y + self.yoffset)
+	def getCanvasPosition(self):
+		if self.parent is not None:
+			return self.parent.getChildCanvasPosition(self)
+		else:
+			return (0, 0)
+
+	def getChildPosition(self, so):
+		if so in self.positions:
+			return self.positions[so]
+		else:
+			raise ValueError('No position for shape object')
+
+	def setChildPosition(self, so, x, y):
+		self.positions[so] = (x, y)
+
+	def getChildCanvasPosition(self, so):
+		childx, childy = self.getChildPosition(so)
+		x, y = self.getCanvasPosition()
+		return (childx + x, childy + y)
+
+	def getCanvasOffset(self):
+		x, y = self.getPosition()
+		cx, cy = self.getCanvasPosition()
+		return (cx - x, cy - y)
+
+	def setParent(self, parent):
+		self.parent = parent
+
+	def getParent(self):
+		return self.parent
 
 	def UpdateDrawing(self):
 		self.ProcessEvent(UpdateDrawingEvent())
 
-	def addShapeObject(self, so):
+	#def addShapeObject(self, so, x=0, y=0):
+	def addShapeObject(self, so, x, y):
 		if so not in self.shapeobjects:
-			self.shapeobjects.append(so)
+			so.setParent(self)
+			self.shapeobjects.insert(0, so)
+			self.positions[so] = (x, y)
 			so.SetNextHandler(self)
-			so.setOffset(self.x + self.xoffset, self.y + self.yoffset)
 			self.UpdateDrawing()
 
 	def removeShapeObject(self, so):
 		if so in self.shapeobjects:
+			so.setParent(None)
 			self.shapeobjects.remove(so)
+			del self.positions[so]
 			# delete handler?
-		remove = []
-		for co in self.connectionobjects:
-			if co.connects(so):
-				remove.append(co)
-		for i in remove:
-			self.removeConnectionObject(i)
-		self.UpdateDrawing()
-
-	def addConnectionObject(self, co):
-		for i in self.connectionobjects:
-			if co.same(i):
-				return
-		self.connectionobjects.append(co)
-		self.UpdateDrawing()
-
-	def removeConnectionObject(self, co):
-		if co in self.connectionobjects:
-			self.connectionobjects.remove(co)
 			self.UpdateDrawing()
 
-	def getShapeObjectFromXY(self, x, y, w=None, h=None):
+	def addConnection(self, connection):
+		if connection not in self.connections:
+			self.connections.append(connection)
+			self.UpdateDrawing()
+
+	def removeConnection(self, connection):
+		if connection in self.connections:
+			self.connections.remove(connection)
+			self.UpdateDrawing()
+
+	def getShapeObjectFromXY(self, x, y):
 		for shapeobject in self.shapeobjects:
-			if inside(shapeobject.x + shapeobject.xoffset,
-								shapeobject.y + shapeobject.yoffset,
-								shapeobject.width, shapeobject.height,
-								x, y, w, h):
-				return shapeobject.getShapeObjectFromXY(x, y, w, h)
+			ccx, ccy = self.getChildCanvasPosition(shapeobject)
+			if inside(ccx, ccy, shapeobject.width, shapeobject.height, x, y):
+				return shapeobject.getShapeObjectFromXY(x, y)
+		return self
+
+	def getContainingShapeObject(self, shapeobject):
+		x, y = shapeobject.getCanvasPosition()
+		w = shapeobject.width
+		h = shapeobject.height
+		for so in self.shapeobjects:
+			ccx, ccy = self.getChildCanvasPosition(so)
+			if inside(ccx, ccy, so.width, so.height, x, y, w, h):
+				if so != shapeobject:
+					return so.getContainingShapeObject(shapeobject)
 		return self
 
 	def raiseShapeObject(self, shapeobject, top=False):
@@ -350,18 +287,169 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 			self.UpdateDrawing()
 
 	def Draw(self, dc):
-		for text, tx, ty in self.text:
-			dc.DrawText(text, self.x + self.xoffset + tx, self.y + self.yoffset + ty)
+		for text in self.text:
+			x, y = self.getCanvasPosition()
+			tx, ty = self.text[text]
+			dc.DrawText(text, x + tx, y + ty)
 
-		for i in range(len(self.connectionobjects) - 1, -1, -1):
-			co = self.connectionobjects[i]
-			co.Draw(dc)
 		for i in range(len(self.shapeobjects) - 1, -1, -1):
 			so = self.shapeobjects[i]
 			so.Draw(dc)
 
+		for i in range(len(self.connections) - 1, -1, -1):
+			connection = self.connections[i]
+			self.DrawConnection(dc, connection)
+
+	def getCanvasCenter(self):
+		x, y = self.getCanvasPosition()
+		return (x + self.width/2, y + self.height/2)
+
+	def DrawArrow(self, dc, p, direction, size=7):
+		x, y = p
+		if direction == 'n':
+			dc.DrawPolygon([(0, 0), (-3, 7), (3, 7)], x, y)
+		elif direction == 's':
+			dc.DrawPolygon([(0, 0), (-3, -7), (3, -7)], x, y)
+		elif direction == 'e':
+			dc.DrawPolygon([(0, 0), (-7, -3), (-7, 3)], x, y)
+		elif direction == 'w':
+			dc.DrawPolygon([(0, 0), (7, -3), (7, 3)], x, y)
+
+	def magnitude(self, p1, p2):
+		return math.sqrt((p2[0] - p1[0])**2 + (p2[1] - p1[1])**2)
+
+	def elbowLine(self, dc, so1, so2):
+		x1, y1 = so1.getCanvasCenter()
+		x2, y2 = so2.getCanvasCenter()
+		n1 = (x1, y1 - so1.height/2)
+		e1 = (x1 + so1.width/2, y1)
+		s1 = (x1, y1 + so1.height/2)
+		w1 = (x1 - so1.width/2, y1)
+		n2 = (x2, y2 - so2.height/2)
+		e2 = (x2 + so2.width/2, y2)
+		s2 = (x2, y2 + so2.height/2)
+		w2 = (x2 - so2.width/2, y2)
+
+		if x1 > x2:
+			# III and IV quadrants
+			if y1 > y2:
+				# IV quadrant
+				if self.magnitude(n1, e2) < self.magnitude(w1, s2):
+					p1, p2 = n1, e2
+					reverse = False
+					self.DrawArrow(dc, p2, 'w')
+				else:
+					p1, p2 = w1, s2
+					reverse = True
+					self.DrawArrow(dc, p2, 'n')
+			else:
+				# III quadrant
+				if self.magnitude(s1, e2) < self.magnitude(w1, n2):
+					p1, p2 = s1, e2
+					reverse = False
+					self.DrawArrow(dc, p2, 'w')
+				else:
+					p1, p2 = w1, n2
+					reverse = True
+					self.DrawArrow(dc, p2, 's')
+		else:
+			# I and II quadrants
+			if y1 > y2:
+				# I quadrant
+				if self.magnitude(n1, w2) < self.magnitude(e1, s2):
+					p1, p2 = n1, w2
+					reverse = False
+					self.DrawArrow(dc, p2, 'e')
+				else:
+					p1, p2 = e1, s2
+					reverse = True
+					self.DrawArrow(dc, p2, 'n')
+			else:
+				# II quadrant
+				if self.magnitude(s1, w2) < self.magnitude(e1, n2):
+					p1, p2 = s1, w2
+					reverse = False
+					self.DrawArrow(dc, p2, 'e')
+				else:
+					p1, p2 = e1, n2
+					reverse = True
+					self.DrawArrow(dc, p2, 's')
+		x1, y1 = p1
+		x2, y2 = p2
+		if reverse:
+			mx = x2
+			my = y1
+		else:
+			mx = x1
+			my = y2
+		dc.DrawLine(x1, y1, mx, my)
+		dc.DrawLine(mx, my, x2, y2)
+
+	def DrawLine(self, dc, so1, so2):
+		oldbrush = dc.GetBrush()
+		dc.SetBrush(wxBLACK_BRUSH)
+		self.elbowLine(dc, so1, so2)
+		dc.SetBrush(oldbrush)
+
+	def DrawConnection(self, dc, connection):
+		self.DrawLine(dc, self, connection)
+
+	def crookedLine(self, dc, shapeobject1, shapeobject2, offset=0):
+		x1, y1 = shapeobject1.getCanvasPosition()
+		x2, y2 = shapeobject2.getCanvasPosition()
+		x1 += shapeobject1.width/2
+		y1 += shapeobject1.height/2
+		x2 += shapeobject2.width/2
+		y2 += shapeobject2.height/2
+
+		try:
+			slope = float(y2 - y1)/float(x2 - x1)
+		except ZeroDivisionError:
+			# good enough
+			slope = 1
+
+		if slope >= -1 and slope < 1:
+			if x1 > x2:
+				y1 += offset
+				y2 += offset
+				x1 -= shapeobject1.width/2
+				x2 += shapeobject2.width/2
+				dc.DrawPolygon([(0, 0), (7, -3), (7, 3)], x2, y2)
+				mx = x2 + (x1 - x2)/2 + offset
+			else:
+				y1 -= offset
+				y2 -= offset
+				x1 += shapeobject1.width/2
+				x2 -= shapeobject2.width/2
+				dc.DrawPolygon([(0, 0), (-7, -3), (-7, 3)], x2, y2)
+				mx = x2 + (x1 - x2)/2 - offset
+			dc.DrawLine(x1, y1, mx, y1)
+			dc.DrawLine(mx, y1, mx, y2)
+			dc.DrawLine(mx, y2, x2, y2)
+		else:
+			if y1 > y2:
+				x1 += offset
+				x2 += offset
+				y1 -= shapeobject1.height/2
+				y2 += shapeobject2.height/2
+				dc.DrawPolygon([(0, 0), (-3, 7), (3, 7)], x2, y2)
+				my = y2 + (y1 - y2)/2 + offset
+			else:
+				x1 -= offset
+				x2 -= offset
+				y1 += shapeobject1.height/2
+				y2 -= shapeobject2.height/2
+				dc.DrawPolygon([(0, 0), (-3, -7), (3, -7)], x2, y2)
+				my = y2 + (y1 - y2)/2 - offset
+			dc.DrawLine(x1, y1, x1, my)
+			dc.DrawLine(x1, my, x2, my)
+			dc.DrawLine(x2, my, x2, y2)
+		
+#		dc.DrawLine(x1, y1, x2, y2)
+		dc.SetBrush(oldbrush)
+
 	def addText(self, text, x=0, y=0):
-		self.text.append((text, x, y))
+		self.text[text] = (x, y)
 
 	def OnLeftClick(self, evt):
 		self.ProcessEvent(RaiseEvent(self, True))
@@ -371,9 +459,13 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 		self.ProcessEvent(LowerEvent(self, False))
 		evt.Skip()
 
+	def OnLeftDragStart(self, evt):
+		self.ProcessEvent(RaiseEvent(self, True))
+
 	def OnRaise(self, evt):
 		if evt.shapeobject in self.shapeobjects:
 			self.raiseShapeObject(evt.shapeobject, evt.top)
+			self.ProcessEvent(RaiseEvent(self, False))
 		else:
 			evt.Skip()
 
@@ -384,12 +476,12 @@ class wxShapeObject(wxShapeObjectEvtHandler):
 			evt.Skip()
 
 class wxRectangleObject(wxShapeObject):
-	def __init__(self, x, y, width, height):
-		wxShapeObject.__init__(self, x, y, width, height)
+	def __init__(self, width, height):
+		wxShapeObject.__init__(self, width, height)
 
 	def Draw(self, dc):
-		dc.DrawRectangle(self.x + self.xoffset, self.y + self.yoffset,
-											self.width, self.height)
+		x, y = self.getCanvasPosition()
+		dc.DrawRectangle(x, y, self.width, self.height)
 		wxShapeObject.Draw(self, dc)
 
 class DragInfo(object):
@@ -399,8 +491,9 @@ class DragInfo(object):
 		self.yoffset = yoffset
 
 	def setPosition(self, x, y):
-		x = x - self.shapeobject.xoffset - self.xoffset
-		y = y - self.shapeobject.yoffset - self.yoffset
+		xoffset, yoffset = self.shapeobject.getCanvasOffset()
+		x = x - xoffset - self.xoffset
+		y = y - yoffset - self.yoffset
 		self.shapeobject.setPosition(x, y)
 
 class wxObjectCanvas(wxScrolledWindow):
@@ -445,15 +538,23 @@ class wxObjectCanvas(wxScrolledWindow):
 	def OnUpdateDrawing(self, evt):
 		self.UpdateDrawing()
 
+	def updateParent(self, shapeobject):
+		cx, cy = shapeobject.getCanvasPosition()
+		w = shapeobject.width
+		h = shapeobject.height
+		oldparent = shapeobject.getParent()
+		newparent = self.master.getContainingShapeObject(shapeobject)
+		if oldparent is not None and oldparent != newparent:
+			oldparent.removeShapeObject(shapeobject)
+			x, y = newparent.getCanvasPosition()
+			newparent.addShapeObject(shapeobject, cx - x, cy - y)
+
 	def OnLeftUp(self, evt):
 		if self.draginfo is not None:
 			self.draginfo.setPosition(evt.m_x, evt.m_y)
-#			x = self.draginfo.shapeobject.x
-#			y = self.draginfo.shapeobject.y
-#			w = self.draginfo.shapeobject.width
-#			h = self.draginfo.shapeobject.height
-#			shapeobject = self.master.getShapeObjectFromXY(x, y, w, h)
-#			shapeobject.addShapeObject(self.draginfo.shapeobject)
+			self.updateParent(self.draginfo.shapeobject)
+			self.draginfo.shapeobject.ProcessEvent(
+									LeftDragEndEvent(self.draginfo.shapeobject, evt.m_x, evt.m_y))
 			self.draginfo = None
 			self.UpdateDrawing()
 		else:
@@ -468,11 +569,12 @@ class wxObjectCanvas(wxScrolledWindow):
 		if evt.LeftIsDown():
 			if self.draginfo is None:
 				shapeobject = self.master.getShapeObjectFromXY(evt.m_x, evt.m_y)
-				xoffset = evt.m_x - shapeobject.xoffset - shapeobject.x
-				yoffset = evt.m_y - shapeobject.yoffset - shapeobject.y
-				self.draginfo = DragInfo(shapeobject, xoffset, yoffset)
-			else:
-				print evt.m_x, evt.m_y
+				xoffset, yoffset = shapeobject.getCanvasPosition()
+				self.draginfo = DragInfo(shapeobject, evt.m_x - xoffset,
+																							evt.m_y - yoffset)
+				shapeobject.ProcessEvent(LeftDragStartEvent(shapeobject,
+																										evt.m_x, evt.m_y))
+			else:	
 				self.draginfo.setPosition(evt.m_x, evt.m_y)
 				self.UpdateDrawing()
 
@@ -481,7 +583,7 @@ if __name__ == '__main__':
 		def OnInit(self):
 			frame = wxFrame(NULL, -1, 'Test')
 			self.SetTopWindow(frame)
-			self.master = wxRectangleObject(0, 0, 600, 600)
+			self.master = wxRectangleObject(600, 600)
 			self.master.addText('master shape object', 10, 10)
 			self.canvas = wxObjectCanvas(frame, -1, self.master)
 			frame.Fit()
@@ -490,21 +592,24 @@ if __name__ == '__main__':
 
 	app = MyApp(0)
 
-	o1 = wxRectangleObject(25, 25, 400, 400)
+	o1 = wxRectangleObject(400, 400)
 	o1.addText('test child object', 10, 10)
-	app.master.addShapeObject(o1)
+	app.master.addShapeObject(o1, 25, 25)
 
-	o2 = wxRectangleObject(25, 25, 200, 200)
+	o2 = wxRectangleObject(200, 200)
 	o2.addText('test child child 1 object', 10, 10)
-	o1.addShapeObject(o2)
+	o1.addShapeObject(o2, 25, 25)
 
-	o3 = wxRectangleObject(50, 50, 200, 200)
+	o3 = wxRectangleObject(50, 50)
 	o3.addText('test child child 2 object', 10, 10)
-	o1.addShapeObject(o3)
+	o1.addShapeObject(o3, 250, 100)
 
-	o4 = wxRectangleObject(30, 30, 50, 50)
+	o2.addConnection(o3)
+	o3.addConnection(o2)
+
+	o4 = wxRectangleObject(50, 50)
 	o4.addText('foo', 10, 10)
-	o2.addShapeObject(o4)
+	o2.addShapeObject(o4, 30, 30)
 
 	app.MainLoop()
 
