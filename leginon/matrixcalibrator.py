@@ -167,7 +167,7 @@ class MatrixCalibrator(calibrator.Calibrator):
 		#self.uivalidshift = uidata.Struct('Valid Shift', validshift, 'rw')
 
 		settingscontainer = uidata.Container('Settings')
-		settingscontainer.addObjects((self.uitolerance, self.uiparameter, self.uinaverage, self.ui_interval, self.uicurbase, self.uibase))
+		settingscontainer.addObjects((self.uitolerance, self.shiftpercent, self.uiparameter, self.uinaverage, self.ui_interval, self.uicurbase, self.uibase))
 
 		calibratemethod = uidata.Method('Calibrate', self.uiCalibrate)
 
