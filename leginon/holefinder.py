@@ -96,8 +96,8 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.goodholes = uidata.Sequence('Good Holes', [])
 		self.goodholesimage = uidata.TargetImage('Good Holes Image', None, 'r')
 		submitmeth = uidata.Method('Submit', self.submit)
-		self.goodholesimage.addTargetType('Imaging Target')
-		self.goodholesimage.addTargetType('Focus Target')
+		self.goodholesimage.addTargetType('acquisition')
+		self.goodholesimage.addTargetType('focus')
 
 		allblobscontainer = uidata.MediumContainer('All Blobs')
 		allblobscontainer.addObjects((self.blobborder, self.maxblobsize, findblobmeth, self.allblobs, self.allblobsimage))
@@ -213,8 +213,8 @@ class HoleFinder(targetfinder.TargetFinder):
 		self.goodholes.set(centers)
 		self.goodholesimage.setImage(self.hf['original'])
 		# takes x,y instead of row,col
-		self.goodholesimage.setTargetType('Imaging Target', centers)
-		self.goodholesimage.setTargetType('Focus Target', [])
+		self.goodholesimage.setTargetType('acquisition', centers)
+		self.goodholesimage.setTargetType('focus', [])
 
 
 	def everything(self):
@@ -240,13 +240,13 @@ class HoleFinder(targetfinder.TargetFinder):
 		if self.usercheckon.get():
 			self.userpause.clear()
 			self.userpause.wait()
-		self.getTargetDataList('Focus Target', data.FocusTargetData)
-		self.getTargetDataList('Imaging Target', data.AcquisitionImageTargetData)
+		self.getTargetDataList('focus')
+		self.getTargetDataList('acquisition')
 
 	def submit(self):
 		self.userpause.set()
 
-	def getTargetDataList(self, typename, datatype):
+	def getTargetDataList(self, typename):
 		for imagetarget in self.goodholesimage.getTargetType(typename):
 			column, row = imagetarget
 			# using self.currentiamge.shape could be bad
@@ -254,6 +254,6 @@ class HoleFinder(targetfinder.TargetFinder):
 								'delta column': column - self.numarray.shape[1]/2}
 			imageinfo = self.imageInfo()
 			target.update(imageinfo)
-			targetdata = datatype(id=self.ID())
+			targetdata = data.AcquisitionImageTargetData(id=self.ID(), type=typename)
 			targetdata.friendly_update(target)
 			self.targetlist.append(targetdata)

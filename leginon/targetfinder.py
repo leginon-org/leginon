@@ -42,8 +42,6 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		self.publishTargetList()
 
 	def publishTargetList(self):
-
-
 		self.targetsToDatabase()
 		if self.targetlist:
 			targetlistdata = data.ImageTargetListData(id=self.ID(), targets=self.targetlist)
@@ -101,6 +99,7 @@ class TargetFinder(imagewatcher.ImageWatcher):
 
 	def targetsToDatabase(self):
 		for target in self.targetlist:
+			print 'TARGET publishing %s' % (target['id'],)
 			self.publish(target, database=True)
 
 	def defineUserInterface(self):
@@ -134,8 +133,8 @@ class ClickTargetFinder(TargetFinder):
 		## user now clicks on targets
 		self.userpause.clear()
 		self.userpause.wait()
-		self.getTargetDataList('Focus Target', data.FocusTargetData)
-		self.getTargetDataList('Imaging Target', data.AcquisitionImageTargetData)
+		self.getTargetDataList('focus')
+		self.getTargetDataList('acquisition')
 
 	def submitTargets(self):
 		self.userpause.set()
@@ -143,8 +142,8 @@ class ClickTargetFinder(TargetFinder):
 	def defineUserInterface(self):
 		TargetFinder.defineUserInterface(self)
 		self.clickimage = uidata.TargetImage('Clickable Image', None, 'rw')
-		self.clickimage.addTargetType('Imaging Target')
-		self.clickimage.addTargetType('Focus Target')
+		self.clickimage.addTargetType('acquisition')
+		self.clickimage.addTargetType('focus')
 		#advancemethod = uidata.Method('Advance Image', self.advanceImage)
 		submitmethod = uidata.Method('Submit Targets', self.submitTargets)
 		container = uidata.MediumContainer('Click Target Finder')
@@ -164,11 +163,11 @@ class ClickTargetFinder(TargetFinder):
 		self.clickimage.setTargets([])
 
 	def OLDprocessTargets(self):
-		self.getTargetDataList('Focus Target', data.FocusTargetData)
-		self.getTargetDataList('Imaging Target', data.AcquisitionImageTargetData)
+		self.getTargetDataList('focus')
+		self.getTargetDataList('acquisition')
 		self.publishTargetList()
 
-	def getTargetDataList(self, typename, datatype):
+	def getTargetDataList(self, typename):
 		for imagetarget in self.clickimage.getTargetType(typename):
 			column, row = imagetarget
 			# using self.numarray.shape could be bad
@@ -176,7 +175,7 @@ class ClickTargetFinder(TargetFinder):
 								'delta column': column - self.numarray.shape[1]/2}
 			imageinfo = self.imageInfo()
 			target.update(imageinfo)
-			targetdata = datatype(id=self.ID())
+			targetdata = data.AcquisitionImageTargetData(id=self.ID(), type=typename)
 			targetdata.friendly_update(target)
 			self.targetlist.append(targetdata)
 
@@ -210,7 +209,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		print 'output event done'
 
 	def submitTargets(self):
-		self.getTargetDataList('Imaging Target', data.AcquisitionImageTargetData)
+		self.getTargetDataList('acquisition')
 		self.publishTargetList()
 
 	def processImageData(self, imagedata):
@@ -283,7 +282,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.clickimage.setImage(self.mosaic.getMosaicImage())
 		self.clickimage.setTargets([])
 
-	def getTargetDataList(self, typename, datatype):
+	def getTargetDataList(self, typename):
 		for imagetarget in self.clickimage.getTargetType(typename):
 			x, y = imagetarget
 			target = self.mosaic.getTargetInfo(x, y)
@@ -291,7 +290,7 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			### just need preset, everythin else is there already
 			target['preset'] = imageinfo['preset']
 
-			targetdata = datatype(id=self.ID())
+			targetdata = data.AcquisitionImageTargetData(id=self.ID(), type=typename)
 			targetdata.friendly_update(target)
 			self.targetlist.append(targetdata)
 
