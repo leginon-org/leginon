@@ -198,7 +198,8 @@ class SQLDict:
 	    for key,query in self.queries.items():
 	    	c = self._cursor()
 		try:
-			# print 'query =', query
+			print '-----------------------------------------------'
+			print 'query =', query
 			c.execute(query)
 		except MySQLdb.ProgrammingError, e:
 			errno = e.args[0]
@@ -672,8 +673,73 @@ def setQueries(in_dict):
 	for key,value in in_dict.items():
 		if type(value) is type({}):
 			select = sqlexpr.selectAllFormat(value['alias'])
-			queries[key]="%s %s" % (select, queryFormat(in_dict))
+			print "ALIAS SELECT: ",value['alias']
+			queries[key]="%s %s" % (select, queryFormatOptimized(in_dict,value['alias']))
+			print "--------------------NEXT ONE------------------------"
 	return queries
+
+def queryFormatOptimized(in_dict,tableselect):
+	"""
+	queryFormat: format the 'SQL WHERE' and figure out the tables to join.
+	"""
+	sqlquery = ""
+	sqlfrom = ""
+	sqljoin = []
+	sqlwhere = []
+	optimizedjoinlist = []
+	optimizedjoinonlist = []
+	alljoin={}
+	joinon={}
+	alljoinon={}
+	wherejoin={}
+	listselect=[]
+	asdf=[]
+	for key,value in in_dict.items():
+		if type(value) is type({}):
+			c = value['class name']
+			a = value['alias']
+			j = value['join']
+			r = value['root']
+			if r:
+				sqlfrom = sqlexpr.fromFormat(c,a)
+				sqlorder = sqlexpr.orderFormat(a)
+			if j:
+				for field,id in j.items():
+					joinTable = in_dict[id]
+					joinfield = join2ref(field, joinTable)
+					fieldname = joinFieldName(a, joinfield)
+					joinonalias = joinTable['alias']
+					alljoinon[joinonalias] = sqlexpr.joinFormat(fieldname, joinTable)
+					joinon[joinonalias]=a
+					if value['where']:
+						if not a in optimizedjoinlist:
+							optimizedjoinlist.append(a)
+						if not joinonalias in optimizedjoinlist:
+							optimizedjoinlist.append(joinonalias)
+			sqlexprstr = sqlexpr.whereFormat(value)
+			if sqlexprstr:
+				sqlwhere.append(sqlexprstr)
+
+	if alljoinon.has_key(tableselect):
+		sqljoin.append(alljoinon[tableselect])
+		if not tableselect in optimizedjoinlist:
+			optimizedjoinlist.append(tableselect)
+
+	for l in optimizedjoinlist:
+		if joinon.has_key(l):
+			if not joinon[l] in optimizedjoinlist:
+				optimizedjoinlist.append(joinon[l])
+			if not alljoinon[l] in sqljoin:
+				sqljoin.append(alljoinon[l])
+
+	sqljoinstr = ' '.join(sqljoin)
+	if sqlwhere:
+		sqlwherestr= 'WHERE ' + ' AND '.join(sqlwhere)
+	else:
+		sqlwherestr = ''
+
+	sqlquery = "%s %s %s %s" % (sqlfrom, sqljoinstr, sqlwherestr, sqlorder)
+	return sqlquery
 
 def queryFormat(in_dict):
 	"""
@@ -683,6 +749,7 @@ def queryFormat(in_dict):
 	sqlfrom = ""
 	sqljoin = []
 	sqlwhere = []
+	listwhere = []
 	for key,value in in_dict.items():
 		if type(value) is type({}):
 			c = value['class name']
@@ -698,11 +765,11 @@ def queryFormat(in_dict):
 					joinfield = join2ref(field, joinTable)
 					fieldname = joinFieldName(a, joinfield)
 					sqljoin.append(sqlexpr.joinFormat(fieldname, joinTable))
+					listjoin.append(fieldname)
 			sqlexprstr = sqlexpr.whereFormat(value)
 			if sqlexprstr:
 				sqlwhere.append(sqlexprstr)
 	sqljoinstr = ' '.join(sqljoin)
-
 	if sqlwhere:
 		sqlwherestr= 'WHERE ' + ' AND '.join(sqlwhere)
 	else:
