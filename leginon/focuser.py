@@ -292,7 +292,7 @@ class Focuser(acquisition.Acquisition):
 
 		return status
 
-	def alreadyAcquired(self, targetdata, preset, emtarget):
+	def alreadyAcquired(self, targetdata, presetname):
 		## for now, always do acquire
 		return False
 
