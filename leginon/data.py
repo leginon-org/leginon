@@ -662,7 +662,7 @@ class NewPresetImageData(CameraImageData):
 class AcquisitionImageData(PresetImageData):
 	def typemap(cls):
 		t = PresetImageData.typemap()
-		t += [ ('target', ImageTargetData), ]
+		t += [ ('target', AcquisitionImageTargetData), ]
 		return t
 	typemap = classmethod(typemap)
 
@@ -706,7 +706,15 @@ class ImageTargetData(InSessionData):
 		  ('scope', ScopeEMData),
 		  ('camera', CameraEMData),
 		  ('preset', PresetData),
-		  ('image', ImageData)
+		]
+		return t
+	typemap = classmethod(typemap)
+
+class AcquisitionImageTargetData(ImageTargetData):
+	def typemap(cls):
+		t = ImageTargetData.typemap()
+		t += [
+		  ('image', AcquisitionImageData)
 		]
 		return t
 	typemap = classmethod(typemap)
