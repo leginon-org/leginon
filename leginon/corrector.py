@@ -472,7 +472,7 @@ class Corrector(node.Node):
 
 	def stats(self, im):
 		mean = imagefun.mean(im)
-		stdev = imagefun.stdev(im)
+		stdev = imagefun.stdev(im, known_mean=mean)
 		mn = imagefun.min(im)
 		mx = imagefun.max(im)
 		return {'mean':mean,'stdev':stdev,'min':mn,'max':mx}
