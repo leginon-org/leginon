@@ -51,7 +51,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		if self.settings['use camera settings']:
 			try:
 				self.instrument.ccdcamera.Settings = self.settings['camera settings']
-			except Exception, e
+			except Exception, e:
 				self.logger.error('Calibration failed: %s' % e)
 				return
 
@@ -88,7 +88,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		if self.settings['use camera settings']:
 			try:
 				self.instrument.ccdcamera.Settings = self.settings['camera settings']
-			except Exception, e
+			except Exception, e:
 				self.logger.error('Defocus calibration failed: %s' % e)
 				return
 		state1 = {'defocus': defocus1}
@@ -129,7 +129,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		if self.settings['use camera settings']:
 			try:
 				self.instrument.ccdcamera.Settings = self.settings['camera settings']
-			except Exception, e
+			except Exception, e:
 				self.logger.error('Stigmator calibration failed: %s' % e)
 				return
 
@@ -184,7 +184,7 @@ class BeamTiltCalibrator(calibrator.Calibrator):
 		if self.settings['use camera settings']:
 			try:
 				self.instrument.ccdcamera.Settings = self.settings['camera settings']
-			except Exception, e
+			except Exception, e:
 				self.logger.error('Measure defocus failed: %s' % e)
 				return
 		try:

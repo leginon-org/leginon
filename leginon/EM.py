@@ -36,10 +36,8 @@ class EM(node.Node):
 		# the handler thread waits for queue requests and processes them
 		# scope and camera are typically COM objects and need to be initialized
 		# in this thread
-		args = (scopename, cameraname, description)
 		self.handlerthread = threading.Thread(name='EM handler thread',
-																					target=self.handler,
-																					args=args)
+																					target=self.handler)
 		self.handlerthread.setDaemon(1)
 		self.handlerthread.start()
 
@@ -72,8 +70,11 @@ class EM(node.Node):
 				instance = ObjectClass()
 				self.instruments.append(instance)
 				self.objectservice._addObject(objectname, instance)
+				self.logger.info('Added interface for %s' % name)
 			except Exception, e:
 				self.logger.debug('Initialization of %s failed: %s' % (name, e))
+		if not self.instruments:
+			self.logger.warning('No interfaces could be initiailized')
 
 		self.start()
 

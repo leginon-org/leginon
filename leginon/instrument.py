@@ -4,9 +4,9 @@
 # see http://ami.scripps.edu/software/leginon-license
 #
 # $Source: /ami/sw/cvsroot/pyleginon/instrument.py,v $
-# $Revision: 1.13 $
+# $Revision: 1.14 $
 # $Name: not supported by cvs2svn $
-# $Date: 2005-02-24 07:44:48 $
+# $Date: 2005-02-24 17:33:18 $
 # $Author: suloway $
 # $State: Exp $
 # $Locker:  $
@@ -52,7 +52,7 @@ class Proxy(object):
 		if name in self.ccdcameras and self.ccdcamera is self.ccdcameras[name]:
 			self.ccdcamera = None
 
-		if name in self.imagecorrections
+		if name in self.imagecorrections:
 			if self.imagecorrection is self.imagecorrections[name]:
 				self.imagecorrection = None
 

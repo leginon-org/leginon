@@ -34,6 +34,7 @@ class AbortError(Exception):
 class ImageCorrection(remotecall.Object):
 	def __init__(self, node):
 		self.node = node
+		remotecall.Object.__init__(self)
 
 	def getImage(self, ccdcameraname=None):
 		return self.node.acquireCorrectedImage()
