@@ -40,7 +40,6 @@ class NodeGUIArg(Frame):
 
 	def get(self):
 		if type(self.type) is dict:
-			print self.struct
 			return self.struct
 		else:
 			return self.tkvar.get()
@@ -82,7 +81,7 @@ class NodeGUIArg(Frame):
 		sc.frame.pack()
 		item = StructTreeItem(None, name, self.struct)
 		node = TreeWidget.TreeNode(sc.canvas, None, item)
-		node.update()
+		node.expand()
 		
 	def arg_date(self, name):
 		raise NotImplementedError
@@ -133,13 +132,16 @@ class NodeGUIComponent(Frame):
 			self.retwidget.insert(1.0, `returnvalue`)
 			self.retwidget['state'] = DISABLED
 		if ret == 'struct':
-			self.retwidget['state'] = NORMAL
-			self.retwidget['height'] = len(returnvalue)
-			self.retwidget.delete(1.0,END)
-			for key,value in returnvalue.items():
-				rowstr = key + ': ' + `value` + '\n'
-				self.retwidget.insert(END, rowstr)
-			self.retwidget['state'] = DISABLED
+			item = StructTreeItem(None, 'Result', returnvalue)
+			node = TreeWidget.TreeNode(self.retwidget.canvas, None, item)
+			node.expand()
+#			self.retwidget['state'] = NORMAL
+#			self.retwidget['height'] = len(returnvalue)
+#			self.retwidget.delete(1.0,END)
+#			for key,value in returnvalue.items():
+#				rowstr = key + ': ' + `value` + '\n'
+#				self.retwidget.insert(END, rowstr)
+#			self.retwidget['state'] = DISABLED
 		else:
 			pass
 
@@ -149,7 +151,7 @@ class NodeGUIComponent(Frame):
 		return a widget if one was created
 		'''
 		self.returntype = returntype
-		if returntype in ('array','string','struct'):
+		if returntype in ('array','string'):
 			wid = Frame(self)
 			widlab = Label(wid, text='Result:')
 			self.retwidget = Text(wid, height=1,width=30,wrap=NONE)
@@ -161,6 +163,9 @@ class NodeGUIComponent(Frame):
 			self.retwidget.grid(row=0, column=1)
 			retscroll.grid(row=1,column=1,sticky=EW)
 			return wid
+		if returntype == 'struct':
+			self.retwidget = TreeWidget.ScrolledCanvas(self, bg='white', highlightthickness=0)
+			return self.retwidget.frame
 		else:
 			return None
 
@@ -204,6 +209,7 @@ class NodeGUI(Frame):
 			c.pack(side=TOP, expand=YES, fill=BOTH)
 			self.components[key] = c
 		
+# This was done quickly, should be thought out more I suppose
 class StructTreeItem(TreeWidget.TreeItem):
 	def __init__(self, parent, key, value):
 		self.parent = parent
@@ -238,7 +244,8 @@ class StructTreeItem(TreeWidget.TreeItem):
 				self.parent.update(self.value)
 
 	def GetIconName(self):
-		pass
+		if not self.IsExpandable():
+			return "python"
 
 	def IsExpandable(self):
 		if self.key:

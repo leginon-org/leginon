@@ -113,8 +113,11 @@ class EM(node.Node):
 	def defineUserInterface(self):
 		node.Node.defineUserInterface(self)
 		d = {}
-		d.update(self.scope)
-		#d.update(self.camera)
+		if self.scope:
+			d.update(self.scope)
+		if self.camera:
+			d.update(self.camera)
+			del d['image data']
 		argspec = (
 			{'name': 'em', 'alias': 'EM', 'type': d},)
 		self.registerUIFunction(self.uiSetState, argspec, 'Set')
@@ -125,7 +128,6 @@ class EM(node.Node):
 				self.scope[id] = state[id]
 			elif self.camera and self.camera.has_key(id):
 				self.camera[id] = state[id]
-		print self.scope
 		return 0
 
 if __name__ == '__main__':
