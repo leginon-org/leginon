@@ -5,6 +5,7 @@ import sqldb
 import cPickle
 import md5
 
+
 class dbDict(object):
 	"""
 	This creates a dictionary which stores Keys and values as
@@ -17,11 +18,16 @@ class dbDict(object):
 		username='usr_object'
 		databasename='dbemdata'
 	Example:
+		import dbdict
 		a=dbdict.dbDict('dbdictname')
 		b=dbdict.dbDict('dbdictname', hostname='host.domain')
 
-	"a" creates a new table on localhost's database
-	"b" creates a new table on host.domain's database
+
+		"a" creates a new table on localhost's database
+		"b" creates a new table on host.domain's database
+
+		dbd = dbdict.dbDict('dbdictname', hostname='cronus2')
+		dbd[1]={'k':'v', 1:'nom'}
 		
 	"""
 	def __init__(self, tablename, hostname='localhost', username='usr_object', databasename='dbemdata'):
@@ -33,6 +39,12 @@ class dbDict(object):
 		self.__create()
 		self.__close_db()
 	
+	def __addSlashes(self, str):
+		"""
+		Escape single quotes from the string str
+		"""
+		return repr(str + '"')[:-2] + "'"
+
 	##
 	## methods to convert:
 	##
@@ -66,6 +78,8 @@ class dbDict(object):
 					hash varchar(64) NOT NULL default '',
 					objectKey mediumblob NOT NULL,
 					object longblob NOT NULL,
+					objectKeyString text NOT NULL,
+					objectString text NOT NULL,
 					PRIMARY KEY  (Id),
 					UNIQUE KEY objectKey (objectKey(255)),
 					UNIQUE KEY hash (hash)
@@ -152,19 +166,27 @@ class dbDict(object):
 				else:
 					raise KeyError(blobKey)	
 
+
 	def __put(self, blobKey, blob):
 		'Insert a new object in an existing object table.'
 		if self.dbc is not None:
 			hash = md5.new("""%s""" % blobKey).hexdigest()
 			cpickle_blobKey = self.__pickle_key(blobKey)
 			cpickle_blob	= self.__pickle_key(blob)
-			return self.dbc.insert	("""replace into `%s` (hash, objectKey, object)
-							values ('%s', '%s', '%s') """ %
-						 	(self.tablename, hash, cpickle_blobKey, cpickle_blob)
+			blobKey_str="""%s""" % (blobKey)
+			blob_str="""%s""" % (blob)
+			blobKey_str=self.__addSlashes(blobKey_str)
+			blob_str=self.__addSlashes(blob_str)
+
+			q = ("""replace into `%s` (hash, objectKey, object, objectKeyString, objectString)
+							values ('%s', '%s', '%s', %s, %s) """ %
+						 	(self.tablename, hash, cpickle_blobKey, cpickle_blob, blobKey_str, blob_str)
 						)
+			return self.dbc.insert(q)
 	##
 	## methods to emulate a Python Dictionary
 	##
+
 
 	def drop(self):
 		'Drop an existing object table in the database.'
