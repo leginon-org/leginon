@@ -37,13 +37,18 @@ sqlStringReplace = [
     ]
 
 try:
-    import mx.DateTime.ISO
-    origISOStr = mx.DateTime.ISO.strGMT
-    from mx.DateTime import DateTimeType
+    try:
+        import mx.DateTime.ISO
+        origISOStr = mx.DateTime.ISO.strGMT
+        from mx.DateTime import DateTimeType
+    except ImportError:
+        import DateTime.ISO
+        origISOStr = DateTime.ISO.strGMT
+        from DateTime import DateTimeType
 except ImportError:
-    import DateTime.ISO
-    origISOStr = DateTime.ISO.strGMT
-    from DateTime import DateTimeType
+    origISOStr = None
+    DateTimeType = None
+
 import re
 import string
 import sqldict
@@ -79,7 +84,7 @@ def sqlRepr(obj):
         return repr(int(obj))
     elif t is type(1.0):
         return repr(obj)
-    elif t is DateTimeType:
+    elif DateTimeType is not None and t is DateTimeType:
         return "'%s'" % isoStr(obj)
     elif obj is None:
         return "NULL"

@@ -12,7 +12,7 @@
 
 try:
 	import numarray as Numeric
-	import linear_algebra as LinearAlgebra
+	import numarray.linear_algebra as LinearAlgebra
 except:
 	import Numeric
 	import LinearAlgebra
