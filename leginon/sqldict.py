@@ -471,7 +471,18 @@ class SQLDict:
 		try:
 			return result['DEF_id']
 		except KeyError:
-			raise KeyError('No Primary Key found')
+			qkey = sqlexpr.Show('INDEX', self.table).sqlRepr()
+			c.execute(qkey)
+			keys = c.fetchall()
+			prikeyfield = None
+			for key in keys:
+				if key['Key_name']=='PRIMARY':
+					prikeyfield = key['Column_name']
+					break;
+			if prikeyfield:
+				return result[prikeyfield]
+			else:
+				raise KeyError('No Primary Key found')
 	    else:
 		q = sqlexpr.Insert(self.table, v).sqlRepr()
 		c.execute(q)
