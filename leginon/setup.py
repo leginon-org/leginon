@@ -22,6 +22,6 @@ setup(
 	package_dir={'Leginon': ''},
 	data_files=[('Leginon/config', ['config/default.cfg']),
 							('Leginon/icons', glob.glob('icons/*.png'))],
-	scripts=['install-leginon.py'],
+	scripts=['install-leginon.py', 'start-leginon.py'],
 )
 
