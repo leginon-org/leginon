@@ -21,6 +21,7 @@ class ImagePanel(wxPanel):
 		self.scale = (1.0, 1.0)
 
 		wxPanel.__init__(self, parent, id)
+		wxInitAllImageHandlers()
 
 		self.sizer = wxBoxSizer(wxVERTICAL)
 		self.SetAutoLayout(true)
@@ -29,14 +30,7 @@ class ImagePanel(wxPanel):
 		self.toolsizer = wxBoxSizer(wxHORIZONTAL)
 		self.sizer.Add(self.toolsizer)
 
-		# need "inside" size
-		self.panel = wxScrolledWindow(self, -1, size=self.size)
-		self.panel.SetScrollRate(1,1)
-		self.panel.SetCursor(wxCROSS_CURSOR)
-		self.sizer.Add(self.panel)
-		size = self.panel.GetSize()
-		self.sizer.SetItemMinSize(self.panel, size.GetWidth(), size.GetHeight())
-
+		self.initPanel()
 		self.initValue()
 		self.initZoom()
 #		self.initScaleEntry()
@@ -47,6 +41,14 @@ class ImagePanel(wxPanel):
 		EVT_PAINT(self.panel, self.OnPaint)
 		EVT_SIZE(self.panel, self.OnSize)
 		EVT_MOTION(self.panel, self.motion)
+
+	def initPanel(self):
+		self.panel = wxScrolledWindow(self, -1, size=self.size)
+		self.panel.SetScrollRate(1,1)
+		self.panel.SetCursor(wxCROSS_CURSOR)
+		self.sizer.Add(self.panel)
+		width, height = self.panel.GetSizeTuple()
+		self.sizer.SetItemMinSize(self.panel, width, height)
 
 	def initValueLabels(self):
 		self.xlabel = wxStaticText(self, -1, '0000',
@@ -66,12 +68,14 @@ class ImagePanel(wxPanel):
 		self.toolsizer.Add(self.valuelabel)
 
 	def bitmapTool(self, filename):
-		image = Image.open(filename)
-		wximage = wxEmptyImage(image.size[0], image.size[1])
-		wximage.SetData(image.convert('RGB').tostring())
+		wximage = wxImage(filename)
 		bitmap = wxBitmapFromImage(wximage)
 		bitmap.SetMask(wxMaskColour(bitmap, wxWHITE))
 		return bitmap
+
+	def OnValueButton(self, evt):
+		self.UpdateDrawing()
+		self.valueflag = not self.valueflag
 
 	def initValue(self):
 		self.valueflag = True
@@ -81,9 +85,29 @@ class ImagePanel(wxPanel):
 		EVT_BUTTON(self, valuebutton.GetId(), self.OnValueButton)
 		self.toolsizer.Add(valuebutton, 0, wxALL, 3)
 
-	def OnValueButton(self, evt):
-		self.UpdateDrawing()
-		self.valueflag = not self.valueflag
+	def updateZoomLabel(self):
+		self.zoomlabel.SetLabel(str(self.scale[0]) + 'x')
+
+	def OnZoomIn(self, evt):
+		self.setScale((self.scale[0]*2, self.scale[1]*2),
+									self.view2image((evt.m_x, evt.m_y)))
+		self.updateZoomLabel()
+
+	def OnZoomOut(self, evt):
+		self.setScale((self.scale[0]/2, self.scale[1]/2),
+									self.view2image((evt.m_x, evt.m_y)))
+		self.updateZoomLabel()
+
+	def OnZoomButton(self, evt):
+		if self.zoomflag:
+			self.panel.SetCursor(wxStockCursor(wxCURSOR_MAGNIFIER))
+			EVT_LEFT_UP(self.panel, self.OnZoomIn)
+			EVT_RIGHT_UP(self.panel, self.OnZoomOut)
+		else:
+			self.panel.SetCursor(wxCROSS_CURSOR)
+			EVT_LEFT_UP(self.panel, None)
+			EVT_RIGHT_UP(self.panel, None)
+		self.zoomflag = not self.zoomflag
 
 	def initZoom(self):
 		self.zoomflag = True
@@ -97,47 +121,6 @@ class ImagePanel(wxPanel):
 		self.updateZoomLabel()
 		self.toolsizer.Add(self.zoomlabel, 0, wxALL, 3)
 
-	def OnZoomButton(self, evt):
-		if self.zoomflag:
-			self.panel.SetCursor(wxStockCursor(wxCURSOR_MAGNIFIER))
-			EVT_LEFT_UP(self.panel, self.OnZoomIn)
-			EVT_RIGHT_UP(self.panel, self.OnZoomOut)
-		else:
-			self.panel.SetCursor(wxCROSS_CURSOR)
-			EVT_LEFT_UP(self.panel, None)
-			EVT_RIGHT_UP(self.panel, None)
-		self.zoomflag = not self.zoomflag
-
-	def OnZoomIn(self, evt):
-		self.setScale((self.scale[0]*2, self.scale[1]*2),
-									self.view2image((evt.m_x, evt.m_y)))
-		self.updateZoomLabel()
-
-	def OnZoomOut(self, evt):
-		self.setScale((self.scale[0]/2, self.scale[1]/2),
-									self.view2image((evt.m_x, evt.m_y)))
-		self.updateZoomLabel()
-
-	def updateZoomLabel(self):
-		self.zoomlabel.SetLabel(str(self.scale[0]) + 'x')
-
-	def initScaleEntry(self):
-		self.scalesizer = wxBoxSizer(wxHORIZONTAL)
-		self.scale_entry = {}
-		for axis, i in [('x', 0), ('y', 1)]:
-			self.scalesizer.Add(wxStaticText(self, -1, axis + ':'),
-													0, wxCENTER | wxALL, 5)
-			self.scale_entry[i] = wxTextCtrl(self, -1, value=str(self.scale[i]))
-			size = self.scale_entry[i].GetSize()
-			size = (size[0]/2, size[1])
-			self.scale_entry[i].SetSize(size)
-			self.scale_entry[i].SetMaxLength(6)
-			self.scalesizer.Add(self.scale_entry[i], 0, wxCENTER | wxALL, 3)
-		scalebutton = wxButton(self, -1, 'Scale')
-		self.scalesizer.Add(scalebutton, 0, wxCENTER | wxALL, 3)
-		EVT_BUTTON(self, scalebutton.GetId(), self.OnScale)
-		self.sizer.Prepend(self.scalesizer)
-
 	def getEntryScale(self):
 		scale = list(self.scale)
 		for i in range(len(self.scale)):
@@ -146,14 +129,6 @@ class ImagePanel(wxPanel):
 			except:
 				self.scale_entry[i].SetValue(str(self.scale[i]))
 		return scale
-
-	def OnScale(self, evt):
-		self.setScale(self.getEntryScale(), self.getViewCenter())
-
-	def getViewCenter(self):
-		center = self.panel.GetClientSize()
-		center = (center[0]/2, center[1]/2)
-		return self.view2image(center)
 
 	def setScale(self, scale, offset=None):
 		self.scale = tuple(scale)
@@ -173,6 +148,31 @@ class ImagePanel(wxPanel):
 		else:
 			self.panel.Scroll(0, 0)
 		#self.panel.Refresh(0)
+
+	def getViewCenter(self):
+		center = self.panel.GetClientSize()
+		center = (center[0]/2, center[1]/2)
+		return self.view2image(center)
+
+	def OnScale(self, evt):
+		self.setScale(self.getEntryScale(), self.getViewCenter())
+
+	def initScaleEntry(self):
+		self.scalesizer = wxBoxSizer(wxHORIZONTAL)
+		self.scale_entry = {}
+		for axis, i in [('x', 0), ('y', 1)]:
+			self.scalesizer.Add(wxStaticText(self, -1, axis + ':'),
+													0, wxCENTER | wxALL, 5)
+			self.scale_entry[i] = wxTextCtrl(self, -1, value=str(self.scale[i]))
+			size = self.scale_entry[i].GetSize()
+			size = (size[0]/2, size[1])
+			self.scale_entry[i].SetSize(size)
+			self.scale_entry[i].SetMaxLength(6)
+			self.scalesizer.Add(self.scale_entry[i], 0, wxCENTER | wxALL, 3)
+		scalebutton = wxButton(self, -1, 'Scale')
+		self.scalesizer.Add(scalebutton, 0, wxCENTER | wxALL, 3)
+		EVT_BUTTON(self, scalebutton.GetId(), self.OnScale)
+		self.sizer.Prepend(self.scalesizer)
 
 	def PILsetImageFromMrcString(self, imagestring):
 		self.clearImage()
@@ -225,17 +225,16 @@ class ImagePanel(wxPanel):
 						int(round((xy[1] * self.scale[1]) - viewoffset[1])))
 
 	def motion(self, evt):
-		if self.image is None or not self.valueflag:
+		if self.image is None:
 			return
-		try:
+		if self.valueflag:
 			x, y = self.view2image((evt.m_x, evt.m_y))
 			value = self.image[y, x]
 			self.drawLabel((x, y), value)
+#		if self.valuelabelflag:
 #			self.xlabel.SetLabel(str(x))
 #			self.ylabel.SetLabel(str(y))
 #			self.valuelabel.SetLabel(str(value))
-		except Exception, e:
-			pass
 
 	def drawLabel(self, xy, value):
 		dc = wxClientDC(self.panel)
@@ -249,7 +248,7 @@ class ImagePanel(wxPanel):
 		#self.panel.SetToolTip(tooltip)
 
 		try:
-			apply(self.blit, self.damaged)
+			apply(self.scaledBlit, self.damaged)
 		except AttributeError:
 			pass
 
@@ -275,7 +274,6 @@ class ImagePanel(wxPanel):
 		self.damaged = (xy[0], xy[1],
 										extent[0] + 4, extent[1] + 4)
 
-		#dc.DrawRectangle(xy[0], xy[1], 50, 20)
 		apply(dc.DrawRectangle, self.damaged)
 
 		dc.SetFont(wxNORMAL_FONT)
@@ -283,7 +281,7 @@ class ImagePanel(wxPanel):
 
 		dc.EndDrawing()
 
-	def blit(self, x, y, w, h):
+	def scaledBlit(self, x, y, w, h):
 		if self.buffer == wxNullBitmap:
 			return
 		dc = wxMemoryDC()
@@ -296,6 +294,17 @@ class ImagePanel(wxPanel):
 		vx, vy = self.image2view((x, y))
 		clientdc.Blit(x/self.scale[0], y/self.scale[1],
 									w/self.scale[0] + 1, h/self.scale[1] + 1, dc, ix, iy)
+
+	def Draw(self, dc):
+#		try:
+		dc.BeginDrawing()
+		if self.bitmap is None:
+			dc.Clear()
+		else:
+			dc.DrawBitmap(self.bitmap, 0, 0)
+		dc.EndDrawing()
+#		except wxPyAssertionError:
+#			pass
 
 	def UpdateDrawing(self):
 		if self.buffer == wxNullBitmap:
@@ -312,19 +321,8 @@ class ImagePanel(wxPanel):
 												viewoffset[0]/self.scale[0],
 												viewoffset[1]/self.scale[1])
 
-	def Draw(self, dc):
-#		try:
-		dc.BeginDrawing()
-		if self.bitmap is None:
-			dc.Clear()
-		else:
-			dc.DrawBitmap(self.bitmap, 0, 0)
-		dc.EndDrawing()
-#		except wxPyAssertionError:
-#			pass
-
 	def OnSize(self, evt):
-		width, height = self.panel.GetSizeTuple()
+		width, height = self.panel.GetClientSize()
 		self.buffer = wxEmptyBitmap(width, height)
 		self.UpdateDrawing()
 
@@ -338,6 +336,7 @@ class ImagePanel(wxPanel):
 		paintdc = wxPaintDC(self.panel)
 		paintdc.SetUserScale(self.scale[0], self.scale[1])
 		size = self.panel.GetClientSize()
+		# not quite working
 		paintdc.Blit(0, 0, Numeric.ceil(size[0]/self.scale[0]),
 												Numeric.ceil(size[1]/self.scale[1]), dc,
 												viewoffset[0]/self.scale[0],
