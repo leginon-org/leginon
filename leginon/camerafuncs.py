@@ -440,9 +440,12 @@ class SmartCameraParameters(uidata.Container):
 		return parameterdict
 
 	def set(self, parameterdict):
-		if not self.validate(parameterdict):
-			raise ValueError('Invalid parameters specified')
-
+		try:
+			self.validate(parameterdict)
+		except ValueError, e:
+			self.node.logger.exception('')
+			if hasattr(self.node, 'messagelog'):
+				self.node.messagelog.error(str(e))
 		centered = self.isCentered(parameterdict)
 		self.centered.set(centered)
 
@@ -511,7 +514,4 @@ class SmartCameraParameters(uidata.Container):
 				binning = self['Binning'][axis].get()
 			
 			if size > camerasize/binning:
-				return False
-
-		return True
-
+				raise ValueError('Invalid parameters specified, dim: %s, bin: %s, off: %s' % (dimension,binning,offset))
