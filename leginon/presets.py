@@ -957,6 +957,7 @@ class PresetsManager(node.Node):
 			self.instrument.setData(scopedata)
 			self.instrument.setData(cameradata)
 		except Exception, e:
+			self.logger.error(e)
 			message = 'Move to target failed: unable to set instrument'
 			self.logger.error(message)
 			raise PresetChangeError(message)
