@@ -60,7 +60,8 @@ class Manager(node.Node):
 
 		## stuff to do if Node is a Launcher
 		if isinstance(readyevent, event.LauncherReadyEvent):
-			self.gui_add_launcher(newid)
+			print 'this is a launcher'
+			self.gui_add_launcher(nodeid)
 
 #	def unregisterNode(self, readyevent):
 #		print 'registering node', readyevent.origin
@@ -185,19 +186,35 @@ class Manager(node.Node):
 		launch_lab = Label(launch_frame, text='LAUNCHER')
 		launch_lab.pack(side=TOP)
 
-		f = Frame(launch_frame)
+		f = Frame(launch_frame, relief=RAISED)
 		lab = Label(f, text='Launcher ID')
-		#ent = Entry(f, textvariable=self.gui_launch_launcher)
+		ent = Entry(f, textvariable=self.gui_launch_launcher)
 		self.gui_launcherlist = Listbox(f, height=6)
-		lab.pack(side=LEFT)
-		self.gui_launcherlist.pack(side=LEFT)
+
+		self.gui_launcherlist.bind('<Button-1>', self.gui_select_launcherid)
+
+		lab.grid(row=0, column=0, sticky=S)
+		ent.grid(row=1, column=0, sticky=N)
+		self.gui_launcherlist.grid(row=0, column=1, rowspan=2)
+
 		f.pack(side=TOP)
+
+
 
 		f = Frame(launch_frame)
 		lab = Label(f, text='Node Class')
 		ent = Entry(f, textvariable=self.gui_launch_target)
-		lab.pack(side=LEFT)
-		ent.pack(side=LEFT)
+		
+		self.gui_nodeclasslist = Listbox(f, height=10)
+		self.gui_nodeclasslist.bind('<Button-1>', self.gui_select_nodeclass)
+		## fill listbox with classes from common module
+		self.nodeclasses = common.nodeClasses()
+		for nodeclass in self.nodeclasses:
+			self.gui_nodeclasslist.insert(END, nodeclass)
+
+		lab.grid(row=0, column=0, sticky=S)
+		ent.grid(row=1, column=0, sticky=N)
+		self.gui_nodeclasslist.grid(row=0, column=1, rowspan=2)
 		f.pack(side=TOP)
 
 		f = Frame(launch_frame)
@@ -236,21 +253,31 @@ class Manager(node.Node):
 			return
 		### NOT DONE YET
 
-	def gui_launch_command(self):
-		#launcher = self.gui_launch_launcher.get()
+	def gui_select_launcherid(self, guievent):
 		launcherlist = self.gui_launcherlist.get(0,END)
-		launcherindex = int(self.gui_launcherlist.curselection()[0])
+		#launcherindex = int(self.gui_launcherlist.curselection()[0])
+		launcherindex = self.gui_launcherlist.nearest(int(guievent.y))
 		launcher = launcherlist[launcherindex]
+		self.gui_launch_launcher.set(launcher)
+
+	def gui_select_nodeclass(self, guievent):
+		targetlist = self.gui_nodeclasslist.get(0,END)
+		#targetindex = int(self.gui_nodeclasslist.curselection()[0])
+		targetindex = self.gui_nodeclasslist.nearest(int(guievent.y))
+		targetname = targetlist[targetindex]
+		self.gui_launch_target.set(targetname)
+
+	def gui_launch_command(self):
+
+		launcher = self.gui_launch_launcher.get()
 		newproc = self.gui_launch_newproc.get()
 
 		target = self.gui_launch_target.get()
-		target = 'self.common.%s' % target
+		target = self.nodeclasses[target]
+
+
 		print 'TARGET', target
-		try:
-			target = eval(target)
-		except:
-			print 'problem evaluating target'
-			return
+
 		newid = self.gui_launch_id.get()
 
 		args = self.gui_launch_args.get()
