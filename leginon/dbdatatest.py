@@ -44,10 +44,10 @@ mydata2['camera'] = cameradict2
 print 'MYDATA2'
 print mydata2
 
-
 dbdk = dbdatakeeper.DBDataKeeper(('dbdk',1), 'testsession')
-dbdk.insert(mydata)
-dbdk.insert(mydata2)
+
+#dbdk.insert(mydata)
+#dbdk.insert(mydata2)
 
 #sys.exit()
 
@@ -66,9 +66,8 @@ mydata3['camera'] = cameradict3
 print 'MYDATA3'
 print mydata3
 
+mydata4 = dbdk.query(mydata3)
 sys.exit()
-
-#mydata4 = dbdk.query(mydata3)
 
 ## WAS LIKE THIS:
 # mynode.research(data.NewPresetData, magnifcation=1900...)

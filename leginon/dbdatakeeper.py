@@ -15,7 +15,7 @@ class DBDataKeeper(datahandler.DataHandler):
 		# session id = session
 		self.dbd = sqldict.SQLDict()
 
-	def query(self, idata, indices, results=0):
+	def OLDquery(self, idata, indices, results=None):
 		# idata: instance of a Data class 
 		# indices: {field:value, ... } for the WHERE clause
 		#print 'querying'
@@ -28,7 +28,7 @@ class DBDataKeeper(datahandler.DataHandler):
 		self.dbd.myTable.myIndex = self.dbd.myTable.Index(sqlindices.keys(),
 			orderBy = {'fields':('DEF_timestamp',),'sort':'DESC'})
 		# return a list of dictionnaries for all matching rows
-		if results > 0:
+		if results is not None:
 			result = self.dbd.myTable.myIndex[sqlindices.values()].fetchmany(results)
 		else:
 			result = self.dbd.myTable.myIndex[sqlindices.values()].fetchall()
@@ -58,11 +58,120 @@ class DBDataKeeper(datahandler.DataHandler):
 		# images with be converted from an mrc file here, an instance of Data
 		# will have to be created here.
 
+	def query(self, idata, results=None):
+		'''
+		query using a partial Data instance
+		'''
+		# idata: instance of a Data class 
+		# indices: {field:value, ... } for the WHERE clause
+		#print 'querying'
+
+		queryinfo = self.queryInfo(idata)
+		print 'QUERYINFO'
+		print queryinfo
+
+		return
+		### now we need to access multiple tables, not just one
+
+		table = self.makeTableName(idata)
+		self.dbd.myTable = self.dbd.Table(table)
+		sqlindices = sqldict.sqlColumnsFormat(indices)
+		self.dbd.myTable.myIndex = self.dbd.myTable.Index(sqlindices.keys(), orderBy = {'fields':('DEF_timestamp',),'sort':'DESC'})
+
+		# return a list of dictionnaries for all matching rows
+		if results is not None:
+			result = self.dbd.myTable.myIndex[sqlindices.values()].fetchmany(results)
+		else:
+			result = self.dbd.myTable.myIndex[sqlindices.values()].fetchall()
+		result = map(sqldict.sql2data, result)
+		for i in range(len(result)):
+			del result[i]['DEF_id']
+			del result[i]['DEF_timestamp']
+			newid = result[i]['id']
+			del result[i]['id']
+			try:
+				result[i] = idata.__class__(newid, result[i])
+			except KeyError, e:
+				self.printerror('cannot convert database result to data instance')
+				del result[i]
+		map(self.file2image, result)
+		return result
+
+		# return an instance
+		# result =  self.dbd.myTable.Index[indices.values()].fetchone()
+		# val = data.update((sqldict.sql2data(result))
+		# return val
+
+		# to return one match only:
+		# result = self.db.myTable.Index[indices.values()].fetchone()
+		# return sqldict.sql2data(result)
+	
+		# images with be converted from an mrc file here, an instance of Data
+		# will have to be created here.
+
+	def makeTableName(self, idata):
+		'''
+		Make a name for a table.
+		'''
+		classname = idata.__class__.__name__
+		return classname
+
+	def makeTableAlias(self, idata):
+		'''
+		Make an alias for a table.
+		'''
+		classname = idata.__class__.__name__
+		alias = classname + str(id(idata))
+		return alias
+
+	def datainfo(self, mydata):
+		'''
+		function that should be called in data.accumulateData
+		'''
+		myid = id(mydata)
+		myclassname = mydata.__class__.__name__
+		myalias = myclassname + str(myid)
+
+		info = {}
+		info['class name'] = myclassname
+		info['alias'] = myalias
+		#info['python id'] = myid
+
+		wheredict = {}
+		joindict = {}
+		for key,value in mydata.items():
+			if value is None:
+				pass
+			elif isinstance(value, data.Data):
+				joindict[key] = id(value)
+			else:
+				wheredict[key] = value
+		info['where'] = wheredict
+		info['join'] = joindict
+
+		finalinfo = {myid: info}
+
+		return [finalinfo]
+
+	def queryInfo(self, idata):
+		'''
+		Items of idata that are None, should be ignored.
+		Items of idata that are DataReferences refer to another Data
+		Other items are normal comparisons for the WHERE clause
+		'''
+		mylist = data.accumulateData(idata, self.datainfo)
+		finaldict = {}
+		for d in mylist:
+			finaldict.update(d)
+		return finaldict
+
 	def insert(self, newdata):
-		# self.flatInsert(newdata)
+		#self.flatInsert(newdata)
 		self.recursiveInsert(newdata)
 
 	def flatInsert(self, newdata):
+		print 'flatInsert'
+		print newdata
 		newdatacopy = copy.deepcopy(newdata)
 		table = newdatacopy.__class__.__name__
 		definition = sqldict.sqlColumnsDefinition(newdatacopy)

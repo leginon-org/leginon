@@ -49,7 +49,7 @@ class DataDict(strictdict.TypedDict):
 			f = strictdict.TypedDict.factories(self, valuetype)
 		return f
 
-def replaceData(originaldata, func, memo=None, copymemo=None):
+def replaceData(originaldata, func, memo=None):
 	'''
 	(this is confusing, difficult to describe)
 	func is called on a copy of original data, but only after func 
@@ -88,6 +88,27 @@ def replaceData(originaldata, func, memo=None, copymemo=None):
 
 	memo[d] = replacement
 	return replacement
+
+def accumulateData(originaldata, func, memo=None):
+	d = id(originaldata)
+
+	if memo is None:
+		memo = {}
+	if memo.has_key(d):
+		return None
+
+	myresult = []
+	for key,value in originaldata.items():
+		if isinstance(value, Data):
+			childresult = accumulateData(value, func, memo)
+			if childresult is not None:
+				myresult += childresult
+
+	myresult = func(originaldata) + myresult
+
+	memo[d] = myresult
+	return myresult
+
 
 class DataReference(dict):
 	'''
@@ -157,7 +178,6 @@ class Data(DataDict, leginonobject.LeginonObject):
 	def factories(self, valuetype):
 		if issubclass(valuetype, Data):
 			def f(value):
-				print 'VALUE', value
 				if isinstance(value, DataReference):
 					return value
 				elif isinstance(value, valuetype):
@@ -199,14 +219,14 @@ class NewData(Data):
 class OtherData(Data):
 	def typemap(cls):
 		t = Data.typemap()
-		t += [ ('NewData', NewData), ('mynum', int),]
+		t += [ ('newdata', NewData), ('mynum', int),]
 		return t
 	typemap = classmethod(typemap)
 
 class MoreData(Data):
 	def typemap(cls):
 		t = Data.typemap()
-		t += [ ('NewData1', NewData), ('NewData2', NewData), ('OtherData', OtherData),]
+		t += [ ('newdata1', NewData), ('newdata2', NewData), ('otherdata', OtherData),]
 		return t
 	typemap = classmethod(typemap)
 	
