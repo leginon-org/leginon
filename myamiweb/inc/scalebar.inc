@@ -18,7 +18,11 @@ class ScaleBar {
 			'20um' => 20e-6,
 			'50um' => 50e-6,
 			'100um' => 100e-6,
-			'200um' => 200e-6
+			'200um' => 200e-6,
+			'500um' => 500e-6,
+			'1mm' => 1e-3,
+			'2mm' => 2e-3,
+			'5mm' => 5e-3
 		);
 
 	var $labelfontsize=4;
@@ -62,9 +66,9 @@ class ScaleBar {
 		$this->offsetbarY = $v;
 	}
 
-	function display() {
+	function display($h="") {
 		// --- display label / scale bar
-		$h = $this->size;
+		$h = ($h) ? $h : $this->size;
 		$offsetbarlabelX=$this->offsetbarX+$this->nbpixels/2;
 		$offsetbarlabelY=$h-$this->offsetbarY-$this->labelfontsize*4;
 		$barX1 = $this->offsetbarX;

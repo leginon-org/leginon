@@ -44,6 +44,7 @@ $SQL_HOSTS[] = "stratocaster";
 
 //	use an external python script to read mrc files
 // $method = "pymrc"; 
+
 //	use a php extension mrcmodule.so to read mrc files
 //
 //	edit /etc/php.ini the following

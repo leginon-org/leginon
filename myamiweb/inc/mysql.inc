@@ -193,6 +193,16 @@ class mysql {
 		$this->close_db();
 		return mysql_insert_id();
 	}
+	
+	function getFields($table) {
+		$fields = array();
+		if ($table) {
+			$R = $this->SQLQuery("SHOW FIELDS FROM `$table`");
+			while ($r = mysql_fetch_array($R))
+				$fields[] = $r[Field];
+		}
+		return $fields;
+	}
 
 }
 

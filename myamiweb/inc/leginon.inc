@@ -5,8 +5,8 @@
  *	The Scripps Research Institute, La Jolla, CA
  *	For terms of the license agreement see
  *	@licence http://ami.scripps.edu/software/leginon-license
- *	@version $Revision: 1.17 $
- *	@version $Id: leginon.inc,v 1.17 2004-05-17 21:15:37 dfellman Exp $
+ *	@version $Revision: 1.18 $
+ *	@version $Id: leginon.inc,v 1.18 2004-05-26 00:27:30 dfellman Exp $
  */
 /**
  *	Query definition to access all leginon data 
@@ -24,7 +24,7 @@ class leginondata {
 	var $format = "sql";
 	var $saveasfile = false;
 	var $ffttypes = array('focpow', 'fft');
-	var $defaulttypes = array('all'=>'all');
+	var $defaulttypes = array('all'=>'all', 'atlas'=>'atlas');
 
 	function leginondata() {
 		require("config.php");
@@ -208,12 +208,89 @@ class leginondata {
 		return $fileInfo[id];
 	} 
 
-	function getImagePath($sessionId){
+	function getImagePath($sessionId) {
 		$q = "select `image path` as path from `SessionData` "
 		    ." where `DEF_id`='$sessionId' ";
 		$Rpath=$this->mysql->SQLQuery($q);
 		$path = mysql_fetch_array($Rpath);
 		return $this->formatPath($path[path]);
+	}
+
+	function getId($fields=array(), $table = "AcquisitionImageData") {
+		$acq_fields = $this->mysql->getFields($table); 
+		$where = array();
+		
+		foreach ($fields as $k=>$f) {
+			if (!in_array($k, $acq_fields))
+				return false;
+			$where[] = "`$k`='".addslashes($f)."'";
+		}
+		if (empty($where))
+			return false;
+		$wherestr = implode(' and ', $where);
+		$q = 'select DEF_id as id from `'.$table.'`'
+			.' where '.$wherestr;
+		$R = $this->mysql->SQLQuery($q);
+		$ids = array();
+		while ($r = mysql_fetch_array($R))
+			$ids[] = $r[id];
+
+		if (count($ids)==1)
+			return $ids[0];
+		else
+			return $ids;
+	}
+
+	function getDataInfo($table, $id, $fields=array()) {
+		if (!$table)
+			return false;
+		$data = array();
+		$str_fields = '*';
+
+		$acq_fields = $this->mysql->getFields($table); 
+		if (is_array($fields) && !empty($fields)) {	
+			$formated_fields = array();
+			foreach ($fields as $f) {
+				if (!in_array($f, $acq_fields))
+					return false;
+				$formated_fields[] = "`$f`";
+			}
+			$str_fields = implode(', ', $formated_fields);
+		}
+		$q = 'select '.$str_fields.' from `'.$table.'`'
+			.' where `DEF_id`="'.$id.'"';
+		$R = $this->mysql->SQLQuery($q);
+		while ($r = mysql_fetch_array($R, MYSQL_ASSOC))
+			$data[] = $r;
+		return $data;
+	}
+
+	function getImageAtlas($sessionId) {
+		$q = "select `MRC|image` as filename from `MosaicImageData` where "
+		    ." `REF|SessionData|Session` =\"$sessionId\"  ";
+		$RfileInfo = $this->mysql->SQLQuery($q);
+		$fileInfo = mysql_fetch_array($RfileInfo);
+		return $fileInfo[filename];
+	}
+
+	function getMosaicImageInfo($id) {
+		$q = "select "
+			." m.`SEQ|id`, m.`REF|SessionData|session` as sessionId, "
+			." m.`MRC|image` as filename, m.scale, "
+			." md.`SEQ|id` , md.`SEQ|data IDs` "
+			." from `MosaicImageData` m "
+			." left join `MosaicData` md "
+			." on (md.`DEF_id` = m.`REF|MosaicData|mosaic` ) "
+			." where m.`DEF_id` ='".$id."'";
+		$Rq = $this->mysql->SQLQuery($q);
+		return mysql_fetch_array($Rq, MYSQL_ASSOC);
+		
+	}
+
+	function getMosaicDataInfo($id) {
+		$table = 'MosaicData';
+		$fields = array ('SEQ|id', 'REF|SessionData|session', 'SEQ|data IDs');
+		return $this->getDataInfo($table, $id, $fields);
 	}
 
 	function getFilename($id, $table="AcquisitionImageData") {
@@ -252,7 +329,9 @@ class leginondata {
 		return $parent;
 	}
 
-	function getMatrixCalibration($type) {
+	function getMatrixCalibration($type, $limit="") {
+		if ($limit)
+			$limit = " limit ".$limit;
 		$q = "select "
 			."unix_timestamp(mcal.`DEF_timestamp`) as `unixtimestamp`,"
 			."date_format(mcal.`DEF_timestamp`, '%Y-%d-%m %T') as `timestamp`,"
@@ -266,7 +345,7 @@ class leginondata {
 			."where "
 			."mcal.`DEF_timestamp`>'20040222000000' and "
 			."mcal.`type`='".$type."' "
-			."order by mcal.`DEF_id` ";
+			."order by mcal.`DEF_id` ".$limit;
 
 		$Rparent = $this->mysql->SQLQuery($q);
 		return $Rparent;
@@ -367,8 +446,6 @@ class leginondata {
 			."on (parent.`DEF_id`=parenttarget.`REF|AcquisitionImageData|image`) "
 			."left join PresetData pp "
 			."on (pp.DEF_id=parent.`REF|PresetData|preset`) "
-			."left join CameraEMData cp "
-			."on (parenttarget.`REF|CameraEMData|camera`=cp.`DEF_id`) "
 			."left join ScopeEMData pscope on (pscope.`DEF_id`=parent.`REF|ScopeEMData|scope`) "
 			."left join SessionData ps1 on (ps1.`DEF_id`=parent.`REF|SessionData|session`) "
 			."left join SessionData ps2 on (ps2.`DEF_id`=ppi.`REF|SessionData|session`) "
@@ -389,6 +466,10 @@ class leginondata {
 			."scope.magnification, "
 			."scope.defocus, "
 			."scope.`high tension`, "
+			."parenttarget.`delta column`, "
+			."parenttarget.`delta row`, "
+			."floor(parenttarget.`delta column`+cp.`SUBD|dimension|x`/2) as targetx, "
+			."floor(parenttarget.`delta row`+cp.`SUBD|dimension|y`/2) as targety, "
 			."grid.`grid ID` as gridId "
 			.$parentselect
 			."from AcquisitionImageData a "
@@ -399,6 +480,8 @@ class leginondata {
 			."left join PresetData p on (p.DEF_id=a.`REF|PresetData|preset`) "
 			."left join AcquisitionImageTargetData parenttarget "
 			."on (parenttarget.`DEF_id`=a.`REF|AcquisitionImageTargetData|target`) "
+			."left join CameraEMData cp "
+			."on (parenttarget.`REF|CameraEMData|camera`=cp.`DEF_id`) "
 			."left join GridData grid "
 			."on (grid.`DEF_id`=a.`REF|GridData|grid`) "
 			."cross join PixelSizeCalibrationData pi on "
@@ -555,7 +638,6 @@ class leginondata {
 			."left join AcquisitionImageData as child "
 			."on (child.`REF|AcquisitionImageTargetData|target`=t.`DEF_id`) "
 			."where "
-		//	."t.`version`='0' and "
 			."t.`type`='acquisition' and "
 			."a.`DEF_id`='".$imgId."' "
 			."order by t.`tnumber` ";
@@ -1109,6 +1191,5 @@ class leginondata {
 }
 
 $leginondata = new leginondata();
-
 
 ?>

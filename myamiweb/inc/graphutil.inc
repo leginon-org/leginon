@@ -14,12 +14,23 @@ function drawcross ($img, $cx, $cy, $size, $col) {
 	imageline($img, $cx, $cy-$size, $cx, $cy+$size, $col);
 }
 
-function drawsquare($img, $cx, $cy, $angle, $size, $col) {
-	$square = new square($cx, $cy, $size);
-	$squarepoints = $square->getRotatedPointCoords($angle);
+function drawsquare($img, $squarepoints, $col) {
 	$npoints=count($squarepoints)/2;
 	imagepolygon($img, $squarepoints, $npoints, $col);
+	return true;
+}
+
+function getsquarepoints($cx, $cy, $angle, $size) {
+	$square = new square($cx, $cy, $size);
+	$squarepoints = $square->getRotatedPointCoords($angle);
 	return $squarepoints;
+}
+
+function imagestringshadow($img, $size, $cx, $cy, $text, $col, $colshadow="") {
+	if (empty($colshadow)) 
+		$colshadow = imagecolorallocate($img, 0, 0, 0); 
+	imagestring($img, $size, $cx+1, $cy+1, $text, $colshadow);
+	imagestring($img, $size, $cx, $cy, $text, $col);
 }
 
 class graphutil {
