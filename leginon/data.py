@@ -318,7 +318,7 @@ class SessionData(Data):
 		t += [('name', str),
 					('user', UserData),
 					('instrument', InstrumentData),
-					('path', str)]
+					('image path', str)]
 		return t
 	typemap = classmethod(typemap)
 
@@ -577,26 +577,27 @@ class ImageData(InSessionData):
 		return t
 	typemap = classmethod(typemap)
 
+	def path(self):
+		'''
+		create a directory for this image file if it does not exist.
+		return the full path of this directory.
+		'''
+		impath = self['session']['image path']
+		leginonconfig.mkdirs(impath)
+		return impath
+
 	def filename(self):
 		'''
 		create a unique filename for this image
 		filename format:  [session]_[label]_[nodename]_[integer].mrc
 		'''
-		# create new directory for session
-		sessionname = self['session']['name']
-		impath = self['session']['path']
-		impath = os.path.join(impath, sessionname)
-		leginonconfig.mkdirs(impath)
-
 		basename = sessionname
 		if self['label']:
 			basename += '_%s' % (self['label'],)
 		mynode = self['id'][-2]
 		myindex = self['id'][-1]
 		basename += '_%s_%04d.mrc' % (mynode, myindex)
-		fullname = os.path.join(impath, basename)
-
-		return fullname
+		return basename
 
 class CorrelationImageData(ImageData):
 	'''
