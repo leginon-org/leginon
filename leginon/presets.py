@@ -350,7 +350,7 @@ class PresetsManager(node.Node):
 			self.currentpreset = presetdata
 		self.uistatus.set(endmessage)
 		self.logger.info(endmessage)
-		self.outputEvent(event.PresetChangedEvent(name=name))
+		self.outputEvent(event.PresetChangedEvent(name=name, preset=presetdata))
 
 	def fromScope(self, name):
 		'''
