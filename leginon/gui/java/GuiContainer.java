@@ -90,13 +90,14 @@ class GuiMethod {
 		argspec = (Vector)spec.get("argspec");
 		Vector args = new Vector();
 		widgets = new Vector();
+		String xmlrpctype = "";
 		
 		if (argspec instanceof Vector)
 		for (Enumeration e = argspec.elements() ; e.hasMoreElements() ;) {
 			Hashtable o = (Hashtable)e.nextElement();
 			String type  = (String)o.get("spectype");
 			String name = (String)o.get("name");
-			String xmlrpctype  = (String)o.get("xmlrpctype");
+			xmlrpctype  = (String)o.get("xmlrpctype");
 			String id = (String)o.get("id");
 
 			Object defaultval = null;
@@ -115,7 +116,7 @@ class GuiMethod {
 			} else
 
 			if (xmlrpctype.matches("string|integer|float|array"))
-    				new AddTextField(name, 20, defaultval, widgets, mainPanel);
+    				new AddTextField(name, 20, defaultval, xmlrpctype, widgets, mainPanel);
 
 			if (xmlrpctype.equals("boolean"))
 				new AddCheckBox(name, widgets, mainPanel);
@@ -197,7 +198,7 @@ class GuiData {
 					new TreeData(name, xmlrpcclient, choices_id, widgets, mainPanel);
 		} else
 		if (xmlrpctype.matches("string|integer|float|array")) {
-			new AddTextField(20, defaultval, widgets, mainPanel);
+			new AddTextField(20, defaultval, xmlrpctype, widgets, mainPanel);
 		} else
 		if (xmlrpctype.equals("boolean")) {
 			new AddCheckBox(name, widgets, mainPanel);
@@ -305,28 +306,43 @@ class AddComboBox {
 }
 
 class AddTextField {
-	private String text;
+	private String text, xmlrpctype;
 	private Object defaultval;
 	private int size;
 	private Vector widgets;
 	private Container c;
 	private JTextField textField;
 
-	public AddTextField(String text, int size, Object defaultval, Vector widgets, Container c) {
+	public AddTextField(String text, int size, Object defaultval, String xmlrpctype, Vector widgets, Container c) {
 		this.text=text;
 		this.size=size;
 		this.defaultval=defaultval;
+		this.xmlrpctype=xmlrpctype;
 		this.widgets=widgets;
 		this.c = c;
 		build();
 	}
 
-	public AddTextField(int size, Object defaultval, Vector widgets, Container c) {
-		this(null, size, defaultval, widgets, c);
+	public AddTextField(int size, Object defaultval, String xmlrpctype, Vector widgets, Container c) {
+		this(null, size, defaultval, xmlrpctype, widgets, c);
 	}
 	
-	public String getValue() {
-		return textField.getText();
+	public Object getValue() {
+		String value = textField.getText();
+			
+		if (xmlrpctype.equals("boolean"))
+			return new Boolean(value);
+		else
+		if (xmlrpctype.equals("float"))
+			return new Double(value);
+		else
+		if (xmlrpctype.equals("integer"))
+			return new Integer(value);
+		else
+		if (xmlrpctype.equals("string"))
+			return value;
+		else
+			return value;
 	}
 
 	public void update(String text) {
@@ -368,6 +384,8 @@ class AddButton {
 	public AddButton (String name, XmlRpcClient xmlrpcclient, String id, Vector widgets, Container c) throws Exception  {
 		this(name,xmlrpcclient,null,id,widgets,c);
 	}
+
+
 	private void build() throws Exception {
         	JButton button = new JButton(name);
 		c.add(button);
