@@ -170,7 +170,7 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 	def alreadyAcquired(self, targetdata, presetname):
 		'''
-		determines if image already acquired
+		determines if image already acquired using targetdata and presetname
 		'''
 		## if image exists with targetdata and presetdata, no acquire
 		## we expect target to be exact, however, presetdata may have
@@ -178,11 +178,8 @@ class Acquisition(targetwatcher.TargetWatcher):
 
 		# seems to have trouple with using original targetdata as
 		# a query, so use a copy with only some of the fields
-		targetquery = data.AcquisitionImageTargetData()
-		for key in ('session',):
-			targetquery[key] = targetdata[key]
 		presetquery = data.PresetData(name=presetname)
-		imagequery = data.AcquisitionImageData(target=targetquery, preset=presetquery)
+		imagequery = data.AcquisitionImageData(target=targetdata, preset=presetquery)
 		## other things to fill in
 		imagequery['scope'] = data.ScopeEMData()
 		imagequery['camera'] = data.CameraEMData()
