@@ -241,7 +241,7 @@ class HoleFinder(object):
 		self.template_config = {'min_radius': 25, 'max_radius': 30}
 		self.correlation_config = {'cortype': 'cross correlation'}
 		self.threshold = 3.0
-		self.blobs_config = {'border': 20}
+		self.blobs_config = {'border': 20, 'maxblobsize': 50}
 		self.lattice_config = {'tolerance': 0.1, 'vector': 100.0, 'minspace': 20}
 		self.holestats_config = {'radius': 20}
 		self.ice_config = {'i0': None, 'min': 0.0, 'max': 0.1, 'std': 0.05}
@@ -406,9 +406,11 @@ class HoleFinder(object):
 		if self.save_mrc:
 			Mrc.numeric_to_mrc(t, 'threshold.mrc')
 
-	def configure_blobs(self, border=None):
+	def configure_blobs(self, border=None, maxblobsize=None):
 		if border is not None:
 			self.blobs_config['border'] = border
+		if maxblobsize is not None:
+			self.blobs_config['maxblobsize'] = maxblobsize
 
 	def find_blobs(self):
 		'''
@@ -420,7 +422,8 @@ class HoleFinder(object):
 		im = self.__results['correlation']
 		mask = self.__results['threshold']
 		border = self.blobs_config['border']
-		blobs = imagefun.find_blobs(im, mask, border)
+		maxsize = self.blobs_config['maxblobsize']
+		blobs = imagefun.find_blobs(im, mask, border, maxsize)
 		self.__update_result('blobs', blobs)
 
 	def configure_lattice(self, tolerance=None, spacing=None, minspace=None):
