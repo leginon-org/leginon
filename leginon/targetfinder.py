@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 #
 # COPYRIGHT:
 #       The Leginon software is Copyright 2003
@@ -8,40 +6,31 @@
 #       see  http://ami.scripps.edu/software/leginon-license
 #
 
-import threading
-import imagewatcher
-import node, event, data
-import Queue
-import Mrc
-import uidata
-import Numeric
-import mosaic
 import calibrationclient
 import camerafuncs
-import time
-
-import xmlrpclib
-#import xmlrpclib2 as xmlbinlib
-xmlbinlib = xmlrpclib
-
-# TO DO:
-#  - every TargetFinder should have optional target editing before publishing
-#  - a lot of work to reorganize this class hierarchy
-#       - everything to do with ImageTargetData should be in this module
-#               (not in imagewatcher)
+import data
+import event
+import imagewatcher
+import mosaic
+import Mrc
+import threading
+import uidata
 
 class TargetFinder(imagewatcher.ImageWatcher):
-	eventoutputs = imagewatcher.ImageWatcher.eventoutputs + [event.ImageTargetListPublishEvent]
-	eventinputs = imagewatcher.ImageWatcher.eventinputs + [event.TargetListDoneEvent]
+	eventoutputs = imagewatcher.ImageWatcher.eventoutputs + [
+																							event.ImageTargetListPublishEvent]
+	eventinputs = imagewatcher.ImageWatcher.eventinputs + [
+																							event.TargetListDoneEvent]
 	def __init__(self, id, session, nodelocations, **kwargs):
 		self.targetlist = []
-		imagewatcher.ImageWatcher.__init__(self, id, session, nodelocations, **kwargs)
-		self.addEventInput(event.TargetListDoneEvent, self.handleTargetListDone)
 		self.targetlistevents = {}
+		imagewatcher.ImageWatcher.__init__(self, id, session, nodelocations,
+																				**kwargs)
+		self.addEventInput(event.TargetListDoneEvent, self.handleTargetListDone)
 
 	def researchImageTargets(self, imagedata):
 		'''
-		get a list of all targets that have this image as parent
+		Get a list of all targets that have this image as their parent.
 		'''
 		targetquery = data.AcquisitionImageTargetData()
 		imagequery = data.AcquisitionImageData(initializer=imagedata)
@@ -51,6 +40,9 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		return targets
 
 	def lastTargetIndex(self, imagedata):
+		'''
+		Returns the index of the last target associated with the given image data.
+		'''
 		targets = self.researchImageTargets(imagedata)
 		maxindex = 0
 		for target in targets:
@@ -60,20 +52,27 @@ class TargetFinder(imagewatcher.ImageWatcher):
 
 	def findTargets(self, imdata):
 		'''
-		this should build self.targetlist, a list of 
-		ImageTargetData items.
+		Virtual function, inherehiting classes implement building self.targetlist,
+		a list of ImageTargetData items.
 		'''
 		raise NotImplementedError()
 
 	def processImageData(self, imagedata):
+		'''
+		Gets and publishes target information of specified image data.
+		'''
 		self.findTargets(imagedata)
 		self.publishTargetList()
 
 	def publishTargetList(self):
+		'''
+		Updates and publishes the target list self.targetlist. Waits for target
+		to be "done" if specified.
+		'''
 		index = 1
 		for target in self.targetlist:
-			## XXX this might not work for mosaic
-			## XXX need to publish a mosaic image so this will work
+			# XXX this might not work for mosaic
+			# XXX need to publish a mosaic image so this will work
 			target['image'] = self.imagedata
 			target['index'] = index
 			index += 1
@@ -81,11 +80,10 @@ class TargetFinder(imagewatcher.ImageWatcher):
 			self.publish(target, database=True)
 
 		if self.targetlist:
-			targetlistdata = data.ImageTargetListData(id=self.ID(), targets=self.targetlist)
+			targetlistdata = data.ImageTargetListData(id=self.ID(),
+																								targets=self.targetlist)
 
-			self.targetlistevents[targetlistdata['id']] = {}
-			self.targetlistevents[targetlistdata['id']]['received'] = threading.Event()
-			self.targetlistevents[targetlistdata['id']]['stats'] = 'waiting'
+			self.makeTargetListEvent(targetlistdata)
 
 			self.publish(targetlistdata, pubevent=True)
 
@@ -95,7 +93,18 @@ class TargetFinder(imagewatcher.ImageWatcher):
 
 		self.targetlist = []
 
+	def makeTargetListEvent(self, targetlistdata):
+		'''
+		Creates a threading event to be waited on for target list data.
+		'''
+		self.targetlistevents[targetlistdata['id']] = {}
+		self.targetlistevents[targetlistdata['id']]['received'] = threading.Event()
+		self.targetlistevents[targetlistdata['id']]['stats'] = 'waiting'
+
 	def waitForTargetListDone(self):
+		'''
+		Waits until theading events of all target list data are cleared.
+		'''
 		for tid, teventinfo in self.targetlistevents.items():
 			print '%s WAITING for %s' % (self.id,tid,)
 			teventinfo['received'].wait()
@@ -104,21 +113,16 @@ class TargetFinder(imagewatcher.ImageWatcher):
 		print '%s DONE WAITING' % (self.id,)
 
 	def passTargets(self, targetlistdata):
-		## create an event watcher for each target we pass
-		#for target in targetlistdata['targets']:
-		#	targetid = target['id']
-		#	## maybe should check if already waiting on this target?
-		#	self.targetevents[targetid] = {}
-		#	self.targetevents[targetid]['received'] = threading.Event()
-		#	self.targetevents[targetid]['status'] = 'waiting'
-
-		self.targetlistevents[targetlistdata['id']] = {}
-		self.targetlistevents[targetlistdata['id']]['received'] = threading.Event()
-		self.targetlistevents[targetlistdata['id']]['stats'] = 'waiting'
-
+		'''
+		???
+		'''
+		self.makeTargetListEvent(targetlistdata)
 		self.publish(targetlistdata, pubevent=True)
 
 	def handleTargetListDone(self, targetlistdoneevent):
+		'''
+		Receives a target list done event and sets the threading event.
+		'''
 		targetlistid = targetlistdoneevent['targetlistid']
 		status = targetlistdoneevent['status']
 		print 'got targetlistdone event, setting threading event', targetlistid
@@ -129,16 +133,17 @@ class TargetFinder(imagewatcher.ImageWatcher):
 
 	def defineUserInterface(self):
 		imagewatcher.ImageWatcher.defineUserInterface(self)
-		# turn off data queue by default
+
+		# turn off data queuing by default
 		self.uidataqueueflag.set(False)
 
-		self.wait_for_done = uidata.Boolean('Wait for "Done"', True, 'rw', persist=True)
+		self.wait_for_done = uidata.Boolean('Wait for "Done"', True, 'rw',
+																				persist=True)
 
 		container = uidata.LargeContainer('Target Finder')
 		container.addObjects((self.wait_for_done,))
 
 		self.uiserver.addObject(container)
-
 
 class ClickTargetFinder(TargetFinder):
 	def __init__(self, id, session, nodelocations, **kwargs):
@@ -151,31 +156,21 @@ class ClickTargetFinder(TargetFinder):
 			self.start()
 
 	def findTargets(self, imdata):
-		## display image
+		# display image
 		self.clickimage.setTargets([])
 		self.clickimage.setImage(imdata['image'])
 
-		## user now clicks on targets
+		# user now clicks on targets
 		self.userpause.clear()
 		self.userpause.wait()
-		self.getTargetDataList('focus')
-		self.getTargetDataList('acquisition')
+		self.targetlist += self.getTargetDataList('focus')
+		self.targetlist += self.getTargetDataList('acquisition')
 
 	def submitTargets(self):
 		self.userpause.set()
 
-	def defineUserInterface(self):
-		TargetFinder.defineUserInterface(self)
-		self.clickimage = uidata.TargetImage('Clickable Image', None, 'rw')
-		self.clickimage.addTargetType('acquisition')
-		self.clickimage.addTargetType('focus')
-		#advancemethod = uidata.Method('Advance Image', self.advanceImage)
-		submitmethod = uidata.Method('Submit Targets', self.submitTargets)
-		container = uidata.LargeContainer('Click Target Finder')
-		container.addObjects((self.clickimage, submitmethod))
-		self.uiserver.addObject(container)
-
 	def getTargetDataList(self, typename):
+		targetlist = []
 		for imagetarget in self.clickimage.getTargetType(typename):
 			column, row = imagetarget
 			# using self.numarray.shape could be bad
@@ -183,14 +178,30 @@ class ClickTargetFinder(TargetFinder):
 								'delta column': column - self.numarray.shape[1]/2}
 			imageinfo = self.imageInfo()
 			target.update(imageinfo)
-			targetdata = data.AcquisitionImageTargetData(id=self.ID(), type=typename, version=0)
+			targetdata = data.AcquisitionImageTargetData(id=self.ID(), type=typename,
+																										version=0)
 			targetdata.friendly_update(target)
-			self.targetlist.append(targetdata)
+			targetlist.append(targetdata)
+		return targetlist
 
-# perhaps this should be a 'mixin' class so it can work with any target finder
+	def defineUserInterface(self):
+		TargetFinder.defineUserInterface(self)
+
+		self.clickimage = uidata.TargetImage('Clickable Image', None, 'rw')
+		self.clickimage.addTargetType('acquisition')
+		self.clickimage.addTargetType('focus')
+
+		submitmethod = uidata.Method('Submit Targets', self.submitTargets)
+
+		container = uidata.LargeContainer('Click Target Finder')
+		container.addObjects((self.clickimage, submitmethod))
+
+		self.uiserver.addObject(container)
+
 class MosaicClickTargetFinder(ClickTargetFinder):
 	eventoutputs = ClickTargetFinder.eventoutputs + [event.MosaicDoneEvent]
 	def __init__(self, id, session, nodelocations, **kwargs):
+		self.mosaicselectionmapping = {}
 		ClickTargetFinder.__init__(self, id, session, nodelocations, **kwargs)
 		self.cam = camerafuncs.CameraFuncs(self)
 		self.calclients = {
@@ -202,40 +213,59 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		self.mosaic = mosaic.EMMosaic(self.calclients)
 		initializer = {'id': self.ID(), 'data IDs': []}
 		self.mosaicdata = data.MosaicData(initializer=initializer)
+
 		if self.__class__ == MosaicClickTargetFinder:
 			self.defineUserInterface()
 			self.start()
 
 	# not complete
 	def handleTargetListDone(self, targetlistdoneevent):
-		ClickTargetFinder.handleTargetListDone(self, targetlistdoneevent)
+		self.setStatusMessage('Target list done')
+		#ClickTargetFinder.handleTargetListDone(self, targetlistdoneevent)
 		self.mosaicToDatabase()
 		self.mosaicClear()
 		self.outputEvent(event.MosaicDoneEvent())
+		self.setStatusMessage('Mosaic is done, notification sent')
 
 	def submitTargets(self):
+		self.setStatusMessage('Sumbiting targets')
 		self.getTargetDataList('acquisition')
 		self.publishTargetList()
+		self.setStatusMessage('Targets submitted')
 
 	def processImageData(self, imagedata):
-		#ClickTargetFinder.processImageData(self, imagedata)
 		'''
 		different from ClickTargetFinder because findTargets is
 		not per image, instead we have submitTargets.
 		'''
+		self.setStatusMessage('Processing inbound image data')
+		#ClickTargetFinder.processImageData(self, imagedata)
+		self.setStatusMessage('Adding image to mosaic')
 		self.mosaic.addTile(imagedata)
 		self.mosaicdata['data IDs'].append(imagedata['id'])
+		self.setStatusMessage('Image added to mosaic')
 		self.displayMosaic()
+		self.setStatusMessage('Image data processed')
 
 	def mosaicToDatabase(self):
+		if not self.mosaicdata['data IDs']:
+			self.setStatusMessage('Mosaic is empty')
+			return
+
 		if self.mosaicdata['session'] is not None:
 			if self.mosaicdata['session']['name'] != self.session['name']:
-				self.outputError('Cannot save loaded mosaic.')
+				self.setStatusMessage(
+											'Cannot publish a mosaic loaded from a different session')
 				return
+
+		self.setStatusMessage('Publishing mosaic data')
+
 		mosaicdata = self.mosaicdata
 		initializer = {'id': self.ID(), 'data IDs': list(mosaicdata['data IDs'])}
 		self.mosaicdata = data.MosaicData(initializer=initializer)
 		self.publish(mosaicdata, database=True)
+
+		self.setStatusMessage('Publishing mosaic image data')
 
 		mosaicimagedata = data.MosaicImageData()
 		mosaicimagedata['id'] = self.ID()
@@ -244,30 +274,46 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		mosaicimagedata['scale'] = self.mosaic.scale
 		self.publish(mosaicimagedata, database=True)
 
+		self.setStatusMessage('Mosaic published')
+
 	def updateMosaicSelection(self):
-		sessioninitializer = {'user': self.session['user'],
-													'instrument': self.session['instrument']}
+		self.setStatusMessage('Updating mosaic selection')
+		try:
+			sessioninitializer = {'user': self.session['user'],
+														'instrument': self.session['instrument']}
+		except TypeError:
+			self.mosaicselection.set([], 0)
+			self.setStatusMessage(
+												'No session availible to determine user and instrument')
+			return
 		session = data.SessionData(initializer=sessioninitializer)
 		initializer = {'session': session}
 		instance = data.MosaicData(initializer=initializer)
+		self.setStatusMessage('Finding mosaics')
 		mosaics = self.research(datainstance=instance)
 		self.mosaicselectionmapping = {}
 		for mosaic in mosaics:
 			key = str(mosaic['session']['name']) + ' ' + str(mosaic['id'])
 			self.mosaicselectionmapping[key] = mosaic
 		self.mosaicselection.set(self.mosaicselectionmapping.keys(), 0)
+		self.setStatusMessage('Mosaic selection updated')
 
 	def mosaicFromDatabase(self):
+		self.setStatusMessage('Loading mosaic')
 		key = self.mosaicselection.getSelectedValue()
 		try:
 			mosaicdata = self.mosaicselectionmapping[key]
 		except KeyError:
-			self.outputError('Invalid mosaic selected.')
+			self.setStatusMessage('Invalid mosaic selected')
 			return
+		self.setStatusMessage('Clearing mosaic')
 		self.mosaic.clear()
 		mosaicsession = mosaicdata['session']
-		for dataid in mosaicdata['data IDs']:
-			## create an instance model to query
+		self.setStatusMessage('Finding mosaic images and data')
+		n = len(mosaicdata['data IDs'])
+		nloaded = 0
+		for i, dataid in enumerate(mosaicdata['data IDs']):
+			# create an instance model to query
 			inst = data.AcquisitionImageData()
 			# these are known:
 			inst['id'] = dataid
@@ -276,18 +322,21 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 			inst['scope'] = data.ScopeEMData()
 			inst['camera'] = data.CameraEMData()
 			inst['preset'] = data.PresetData()
+			self.setStatusMessage('Finding image %i of %i' % (i, n))
 			imagedatalist = self.research(datainstance=inst, fill=False)
 			try:
 				imagedata = imagedatalist[0]
 			except IndexError:
-				#self.outputWarning('Cannot find image data referenced by mosaic')
-				print 'Cannot find image data referenced by mosaic'
+				self.setStatusMessage('Cannot find image data referenced by mosaic')
 			else:
 				self.imagedata = imagedata
 				self.mosaic.addTile(imagedata)
+				nloaded += 1
+				self.setStatusMessage('Added image %i of %i' % (i, n))
 		self.mosaicdata = mosaicdata
 		self.displayMosaic()
-		print 'mosaic from database finished'
+		self.setStatusMessage('Mosaic loaded (%i of %i images loaded successfully)'
+													% (nloaded, n))
 
 	def getMosaicImage(self):
 		if self.scaleimage.get():
@@ -298,35 +347,47 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 
 	def displayMosaic(self):
 		if self.displayimage.get():
+			self.setStatusMessage('Diplaying mosaic image')
 			self.clickimage.setImage(self.getMosaicImage())
+		else:
+			self.setStatusMessage('Not diplaying mosaic image')
 		self.clickimage.setTargets([])
 
 	def mosaicToFile(self):
+		self.setStatusMessage('Saving mosaic image to file')
 		filename = self.uifilename.get()
+		self.setStatusMessage('Creating mosaic image')
 		mosaicnumericarray = self.getMosaicImage()
-		Mrc.numeric_to_mrc(mosaicnumericarray, filename)
-		print 'mosaic to file finished'
+		self.setStatusMessage('Mosaic image created')
+		if mosaicnumericarray is not None:
+			try:
+				Mrc.numeric_to_mrc(mosaicnumericarray, filename)
+			except:
+				self.setStatusMessage('Error saving mosaic image MRC to file')
+			self.setStatusMessage('Mosaic image saved to file')
+		else:
+			self.setStatusMessage('Error saving mosaic image, no mosaic')
 
 	def getTargetDataList(self, typename):
 		for imagetarget in self.clickimage.getTargetType(typename):
 			x, y = imagetarget
 			target = self.mosaic.getTargetInfo(x, y)
 			imageinfo = self.imageInfo()
-			### just need preset, everythin else is there already
+			# just need preset, everythin else is there already
 			target['preset'] = imageinfo['preset']
 
-			targetdata = data.AcquisitionImageTargetData(id=self.ID(), type=typename, version=0)
+			targetdata = data.AcquisitionImageTargetData(id=self.ID(), type=typename,
+																										version=0)
 			targetdata.friendly_update(target)
 			self.targetlist.append(targetdata)
 
-	#def advanceImage(self):
-	#	pass
-
 	def mosaicClear(self):
+		self.setStatusMessage('Clearing mosaic')
 		self.mosaic.clear()
 		initializer = {'id': self.ID(), 'data IDs': []}
 		self.mosaicdata = data.MosaicData(initializer=initializer)
 		self.clickimage.setImage(None)
+		self.setStatusMessage('Mosaic cleared')
 
 	def uiSetCalibrationParameter(self, value):
 		if not hasattr(self, 'uicalibrationparameter'):
@@ -335,11 +396,18 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 		try:
 			self.mosaic.setCalibrationParameter(parameter)
 		except ValueError:
-			self.printerror('invalid calibration parameter specified')
+			self.setStatusMessage('invalid calibration parameter specified')
 		return value
+
+	def setStatusMessage(self, message):
+		self.statusmessage.set(message)
 
 	def defineUserInterface(self):
 		ClickTargetFinder.defineUserInterface(self)
+
+		self.statusmessage = uidata.String('Current status', '', 'r')
+		statuscontainer = uidata.Container('Status')
+		statuscontainer.addObjects((self.statusmessage,))
 
 		parameters = self.mosaic.getCalibrationParameters()
 		parameter = parameters.index(self.mosaic.getCalibrationParameter())
@@ -380,6 +448,6 @@ class MosaicClickTargetFinder(ClickTargetFinder):
 																	loadcontainer, filecontainer))
 
 		container = uidata.LargeContainer('Mosaic Click Target Finder')
-		container.addObjects((settingscontainer, controlcontainer))
+		container.addObjects((statuscontainer, settingscontainer, controlcontainer))
 		self.uiserver.addObject(container)
 

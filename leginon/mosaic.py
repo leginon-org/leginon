@@ -18,6 +18,8 @@ class Tile(object):
 
 class Mosaic(object):
 	def __init__(self):
+		self.scale = 1.0
+
 		self.targetlist = []
 
 		self.correlator = correlator.Correlator()
