@@ -261,7 +261,7 @@ class Node(leginonobject.LeginonObject):
 			e = eventclass(id=self.ID(), dataid=idata['id'], confirm=confirm)
 			self.outputEvent(e)
 
-	def research(self, dataclass=None, datainstance=None):
+	def research(self, dataclass=None, datainstance=None, results=None):
 		'''
 		How a node finds some data in the leginon system:
 			1) Using a data class and keyword args:
@@ -291,7 +291,6 @@ class Node(leginonobject.LeginonObject):
 
 		### use DBDataKeeper query if not results yet
 		if not resultlist and datainstance is not None:
-			results = kwargs.get('results', None)
 			newresults = self.datahandler.dbQuery(datainstance, results)
 			resultlist += newresults
 
