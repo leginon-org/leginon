@@ -73,38 +73,29 @@ class BufferedWindow(wx.Window):
 
 class BitmapWindow(BufferedWindow):
 	def __init__(self, parent, id):
-		self._xbitmap = 0
-		self._ybitmap = 0
-		self._bitmapwidth = 0
-		self._bitmapheight = 0
-
+		self._bitmaprect = wx.Rect(0, 0, 0, 0)
 		self._bitmap = None
-
-		self._xblit = 0
-		self._yblit = 0
-		self._blitwidth = 0
-		self._blitheight = 0
-
+		self._blitrect = wx.Rect(0, 0, 0, 0)
 		BufferedWindow.__init__(self, parent, id)
 
 	def _updateBlitGeometry(self):
 		if self._bitmap is None:
-			self._blitwidth = 0
-			self._blitheight = 0
+			self._blitrect.width = 0
+			self._blitrect.height = 0
 		else:
-			self._blitwidth = min(self._bitmapwidth - self._xbitmap,
-														self._clientwidth)
-			self._blitheight = min(self._bitmapheight - self._ybitmap,
-															self._clientheight)
+			self._blitrect.width = min(self._bitmaprect.width - self._bitmaprect.x,
+																	self._clientwidth)
+			self._blitrect.height = min(self._bitmaprect.height - self._bitmaprect.y,
+																	self._clientheight)
 
 	def _setBitmap(self, bitmap):
 		self._bitmap = bitmap
 		if bitmap is None:
-			self._bitmapwidth = 0
-			self._bitmapheight = 0
+			self._bitmaprect.width = 0
+			self._bitmaprect.height = 0
 		else:
-			self._bitmapwidth = self._bitmap.GetWidth()
-			self._bitmapheight = self._bitmap.GetHeight()
+			self._bitmaprect.width = self._bitmap.GetWidth()
+			self._bitmaprect.height = self._bitmap.GetHeight()
 		self._updateBlitGeometry()
 
 	def setBitmap(self, bitmap):
@@ -122,22 +113,24 @@ class BitmapWindow(BufferedWindow):
 			return
 
 		if wx.Platform == '__WXGTK__':
-			bitmap = self._bitmap.GetSubBitmap((self._xbitmap, self._ybitmap,
-																				self._blitwidth, self._blitheight))
+			bitmap = self._bitmap.GetSubBitmap((self._bitmaprect.x,
+																					self._bitmaprect.y,
+																					self._blitrect.width,
+																					self._blitrect.height))
 			memorydc = wx.MemoryDC()
 			memorydc.SelectObject(bitmap)
 
-			dc.Blit(self._xblit, self._yblit,
-							self._blitwidth, self._blitheight,
+			dc.Blit(self._blitrect.x, self._blitrect.y,
+							self._blitrect.width, self._blitrect.height,
 							memorydc,
 							0, 0)
 		else:
 			memorydc = wx.MemoryDC()
 			memorydc.SelectObject(self._bitmap)
-			dc.Blit(self._xblit, self._yblit,
-							self._blitwidth, self._blitheight,
+			dc.Blit(self._blitrect.x, self._blitrect.y,
+							self._blitrect.width, self._blitrect.height,
 							memorydc,
-							self._xbitmap, self._ybitmap)
+							self._bitmaprect.x, self._bitmaprect.y)
 		memorydc.SelectObject(wx.NullBitmap)
 
 	def _onSize(self, evt):
@@ -154,7 +147,14 @@ class ScaledWindow(BitmapWindow):
 		BitmapWindow.__init__(self, parent, id)
 
 	def _updateBlitGeometry(self):
-		BitmapWindow._updateBlitGeometry(self)
+		if self._bitmap is None:
+			self._blitrect.width = 0
+			self._blitrect.height = 0
+		else:
+			self._blitrect.width = min(self._bitmaprect.width - self._bitmaprect.x,
+																	int(self._clientwidth/self._xscale + 1))
+			self._blitrect.height = min(self._bitmaprect.height - self._bitmaprect.y,
+																	int(self._clientheight/self._yscale + 1))
 
 	def _setScale(self, x, y):
 		updated = False
@@ -195,24 +195,24 @@ class CenteredWindow(ScaledWindow):
 
 	def _updateBlitGeometry(self):
 		ScaledWindow._updateBlitGeometry(self)
-		bitmapwidthscaled = self._bitmapwidth*self._xscale
+		bitmapwidthscaled = self._bitmaprect.width*self._xscale
 		if self._bitmap is None or bitmapwidthscaled >= self._clientwidth:
 			xcentered = 0
 		else:
 			xcentered = (self._clientwidth - bitmapwidthscaled)/(2.0*self._xscale)
 
-		bitmapheightscaled = self._bitmapheight*self._yscale
+		bitmapheightscaled = self._bitmaprect.height*self._yscale
 		if self._bitmap is None or bitmapheightscaled >= self._clientheight:
 			ycentered = 0
 		else:
 			ycentered = (self._clientheight - bitmapheightscaled)/(2.0*self._yscale)
 
-		if self._xblit != xcentered:
-			self._xblit = xcentered
+		if self._blitrect.x != xcentered:
+			self._blitrect.x = xcentered
 			self._refresh = True
 
-		if self._yblit != ycentered:
-			self._yblit = ycentered
+		if self._blitrect.y != ycentered:
+			self._blitrect.y = ycentered
 			self._refresh = True
 
 	def _onSize(self, evt):
@@ -227,38 +227,52 @@ class OffsetWindow(CenteredWindow):
 	def __init__(self, parent, id):
 		self._xoffset = 0
 		self._yoffset = 0
-		ScaledWindow.__init__(self, parent, id)
-
-	def _updateBlitGeometry(self):
-		CenteredWindow._updateBlitGeometry(self)
-		self._xbitmap = int(round(self._xoffset/self._xscale))
-		self._ybitmap = int(round(self._yoffset/self._yscale))
+		CenteredWindow.__init__(self, parent, id)
 
 	def clientToImage(self, x, y):
 		x /= self._xscale
 		y /= self._yscale
-		x -= self._xblit*self._xscale
-		y -= self._yblit*self._yscale
-		x += self._xbitmap
-		y += self._ybitmap
+		x -= self._blitrect.x
+		y -= self._blitrect.y
+		x += self._bitmaprect.x
+		y += self._bitmaprect.y
 		return x, y
 
 	def imageToClient(self, x, y):
-		x -= self._xbitmap
-		y -= self._ybitmap
-		x += self._xblit*self._xscale
-		y += self._yblit*self._yscale
+		x -= self._bitmaprect.x
+		y -= self._bitmaprect.y
+		x += self._blitrect.x
+		y += self._blitrect.y
 		x *= self._xscale
 		y *= self._yscale
 		return x, y
 
 	def _setScale(self, x, y, center=None):
-		'''
 		if center is None:
 			center = (self._clientwidth/2.0, self._clientheight/2.0)
 		center = self.clientToImage(*center)
-		'''
 		CenteredWindow._setScale(self, x, y)
+		self._setOffset(*center)
+
+	def _setOffset(self, x, y):
+		x -= self._clientwidth/(2.0*self._xscale)
+		y -= self._clientheight/(2.0*self._yscale)
+		x = min(x, self._bitmaprect.width - self._clientwidth/self._xscale
+																			- self._blitrect.x*2)
+		y = min(y, self._bitmaprect.height - self._clientheight/self._yscale
+																				- self._blitrect.y*2)
+		x = max(x, 0)
+		y = max(y, 0)
+		x = int(round(x))
+		y = int(round(y))
+		if self._bitmaprect.x != x:
+			self._bitmaprect.x = x
+			self._updatedrawing = True
+			self._refresh = True
+		if self._bitmaprect.y != y:
+			self._bitmaprect.y = y
+			self._updatedrawing = True
+			self._refresh = True
 
 	def setScale(self, x, y, center=None):
 		self._setScale(x, y, center)
@@ -267,6 +281,25 @@ class OffsetWindow(CenteredWindow):
 		if self._refresh:
 			self.Refresh()
 			self._refresh = False
+
+	def _onSize(self, evt):
+		CenteredWindow._onSize(self, evt)
+		x = min(self._bitmaprect.x, self._bitmaprect.width - self._clientwidth/self._xscale)
+		y = min(self._bitmaprect.y, self._bitmaprect.height - self._clientheight/self._yscale)
+		x = max(x, 0)
+		y = max(y, 0)
+		x = int(round(x))
+		y = int(round(y))
+		if self._bitmaprect.x != x:
+			self._blitrect.width += self._bitmaprect.x - x
+			self._bitmaprect.x = x
+			self._updatedrawing = True
+			self._refresh = True
+		if self._bitmaprect.y != y:
+			self._blitrect.height += self._bitmaprect.y - y
+			self._bitmaprect.y = y
+			self._updatedrawing = True
+			self._refresh = True
 
 class ScrolledWindow(OffsetWindow):
 	def __init__(self, parent, id):
@@ -285,8 +318,8 @@ class ScrolledWindow(OffsetWindow):
 		if self._bitmap is None:
 			xrange, yrange = 0, 0
 		else:
-			xrange = min(self._bitmapwidthscaled, self._bitmapwidth)
-			yrange = min(self._bitmapheightscaled, self._bitmapheight)
+			xrange = min(self._bitmaprect.widthscaled, self._bitmaprect.width)
+			yrange = min(self._bitmaprect.heightscaled, self._bitmaprect.height)
 		self.SetScrollbar(wx.HORIZONTAL, xposition, xthumbsize, xrange)
 		self.SetScrollbar(wx.VERTICAL, yposition, ythumbsize, yrange)
 		self._xscroll = self.GetScrollPos(wx.HORIZONTAL)
@@ -305,6 +338,19 @@ if __name__ == '__main__':
 		n = Mrc.mrcstr_to_numeric(open(filename, 'rb').read())
 		return wxBitmapFromNumarray(n, min, max, color)
 
+	scale = 2.0
+
+	def onLeftUp(evt):
+		eventobject = evt.GetEventObject()
+		xscale, yscale = eventobject.getScale()
+		eventobject.setScale(xscale*scale, yscale*scale)
+
+	def onRightUp(evt):
+		eventobject = evt.GetEventObject()
+		xscale, yscale = eventobject.getScale()
+		eventobject.setScale(xscale/scale, yscale/scale)
+		#eventobject.setScale(xscale/scale, yscale/scale, (evt.m_x, evt.m_y))
+
 	try:
 		filename = sys.argv[1]
 	except IndexError:
@@ -318,16 +364,11 @@ if __name__ == '__main__':
 			#self.panel = BufferedWindow(frame, -1)
 			#self.panel = BitmapWindow(frame, -1)
 			#self.panel = ScaledWindow(frame, -1)
-			#self.panel = CenteredWindow(frame, -1)
-			self.panel = OffsetWindow(frame, -1)
+			self.panel = CenteredWindow(frame, -1)
+			#self.panel = OffsetWindow(frame, -1)
 
-			self.panel.Bind(wx.EVT_LEFT_UP,
-		#lambda e: self.panel.setScale(*(tuple(map(lambda s: s*2.0, self.panel.getScale()))))
-		lambda e: self.panel.setScale(*(tuple(map(lambda s: s*2.0, self.panel.getScale()))) + ((e.m_x, e.m_y),))
-			)
-
-			self.panel.Bind(wx.EVT_RIGHT_UP,
-		lambda e: self.panel.setScale(*map(lambda s: s/2.0, self.panel.getScale())))
+			self.panel.Bind(wx.EVT_LEFT_UP, onLeftUp)
+			self.panel.Bind(wx.EVT_RIGHT_UP, onRightUp)
 
 			self.sizer.Add(self.panel, 1, wx.EXPAND|wx.ALL)
 			frame.SetSizerAndFit(self.sizer)

@@ -22,7 +22,7 @@ class QueryError(DatabaseError):
 	pass
 
 class DBDataKeeper(object):
-	def __init__(self, logger):
+	def __init__(self, logger=None):
 		self.logger = logger
 		try:
 			self.dbd = sqldict.SQLDict()
@@ -49,7 +49,8 @@ class DBDataKeeper(object):
 			raise RuntimeError('direct_query should only return a single result')
 
 	def query(self, idata, results=None, readimages=True):
-		self.logger.info('query %s' % idata)
+		if self.logger is not None:
+			self.logger.info('query %s' % idata)
 		self.lock.acquire()
 		try:
 			ret = self._query(idata, results, readimages=readimages)
