@@ -97,7 +97,7 @@ class ImageProcessDoneEvent(NotificationEvent):
 	'Event indicating target list is done'
 	def typemap(cls):
 		t = NotificationEvent.typemap()
-		t += [ ('imageid', tuple), ('status', str)]
+		t += [ ('imageid', int), ('status', str)]
 		return t
 	typemap = classmethod(typemap)
 
