@@ -266,7 +266,9 @@ class wxUIClient(object):
 			if not isinstance(threading.currentThread(), threading._MainThread):
 				threadingevent = threading.Event()
 		evt = SetWidgetEvent(namelist, value, threadingevent)
+		print 'wxPostEvent is where it hangs sometimes...'
 		wxPostEvent(self.container.widgethandler, evt)
+		print '                      ...but not this time'
 		if threadingevent is not None:
 			threadingevent.wait()
 		return ''
