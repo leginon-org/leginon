@@ -87,7 +87,7 @@ class ManagerSetup(object):
 		initializer = {
 		  'name': self.createsessionname.get(),
 		  'comment': self.createsessioncomment.get(),
-		  'user': self.uiGetUser(),
+		  'user': self.userdata,
 		  'instrument': self.uiGetInstrument(),
 		}
 		imagepath = os.path.join(leginonconfig.IMAGE_PATH, initializer['name'])
