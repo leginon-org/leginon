@@ -153,8 +153,10 @@ class Corrector(node.Node):
 			print 'acquiring %s of %s' % (i+1, n)
 			imagedata = self.cam.acquireCameraImageData()
 			numimage = imagedata.content['image']
+			camstate = imagedata.content['camera']
+			scopestate = imagedata.content['scope']
 			series.append(numimage)
-		return series
+		return {'image series': series, 'scope': scopestate, 'camera':camstate}
 
 	def acquireReference(self, dark=False):
 		camconfig = self.cam.config()
@@ -173,14 +175,19 @@ class Corrector(node.Node):
 		self.cam.state(tempcamstate)
 
 		navg = self.navgdata.get()
-		series = self.acquireSeries(navg)
+
+		seriesinfo = self.acquireSeries(navg)
+		series = seriesinfo['image series']
+		seriescam = seriesinfo['camera']
+		seriesscope = seriesinfo['scope']
+
 		ref = cameraimage.averageSeries(series)
 
 		plankey = self.newPlan(camstate)
 
 		self.plans[plankey][typekey] = ref
 
-		imagedata = datatype(self.ID(), ref)
+		imagedata = datatype(self.ID(), ref, seriesscope, seriescam)
 		self.publish(imagedata, pubtype)
 
 		self.calc_norm(plankey)
