@@ -74,11 +74,24 @@ class Corrector(node.Node):
 
 		referencescontainer = uidata.Container('References')
 		referencescontainer.addObjects((darkmethod, brightmethod))
-		imagecontainer = uidata.Container('Image')
-		imagecontainer.addObjects((rawmethod, correctedmethod))
+
+		testcontainer = uidata.Container('Test')
+		testcontainer.addObjects((rawmethod, correctedmethod))
 		controlcontainer = uidata.Container('Control')
-		controlcontainer.addObjects((referencescontainer, imagecontainer))
+
+		self.despikeon = uidata.Boolean('Despike', False, 'rw', persist=True)
+		self.despikevalue = uidata.Float('Despike Threshold', 2.0, 'rw', persist=True)
+
+		controlcontainer.addObjects((self.despikeon, self.despikevalue, referencescontainer, testcontainer))
 		self.display_flag = uidata.Boolean('Display Image', True, 'rw', persist=True)
+
+		statscontainer = uidata.Container('Statistics')
+		self.statsmean = uidata.Float('Mean', None, 'r')
+		self.statsmin = uidata.Float('Min', None, 'r')
+		self.statsmax = uidata.Float('Max', None, 'r')
+		self.statsstd = uidata.Float('Std. Dev.', None, 'r')
+		statscontainer.addObjects((self.statsmean, self.statsmin, self.statsmax, self.statsstd))
+
 		self.ui_image = uidata.Image('Image', None, 'rw')
 
 		self.uiframestoaverage = uidata.Integer('Frames to Average', 3, 'rw')
@@ -88,20 +101,22 @@ class Corrector(node.Node):
 		self.badrows = uidata.Array('Bad Rows', (), 'rw')
 		self.badcols = uidata.Array('Bad Cols', (), 'rw')
 		setplan = uidata.Method('Set Plan', self.uiSetPlanParams)
+		getplan = uidata.Method('Get Plan', self.uiGetPlanParams)
 
 		settingscontainer = uidata.Container('Settings')
 		settingscontainer.addObjects((self.uiframestoaverage, self.uifakeflag,
 																	cameraconfigure, self.cliplimits,
-																	self.badrows, self.badcols, setplan))
+																	self.badrows, self.badcols, setplan, getplan))
 		container = uidata.LargeContainer('Corrector')
-		container.addObjects((settingscontainer, controlcontainer, self.display_flag, self.ui_image))
+		container.addObjects((settingscontainer, controlcontainer, self.display_flag, statscontainer, self.ui_image))
 		self.uiserver.addObject(container)
 
 	def uiSetPlanParams(self):
 		camconfig = self.cam.cameraConfig()
 		newcamstate = data.CorrectorCamstateData()
-		newcamstate.friendly_update(camconfig)
-		newcamstate['id'] = None
+		newcamstate['dimension'] = camconfig['dimension']
+		newcamstate['offset'] = camconfig['offset']
+		newcamstate['binning'] = camconfig['binning']
 		current = self.cam.currentCameraEMData()
 		plandata = data.CorrectorPlanData()
 		plandata['camstate'] = newcamstate
@@ -113,14 +128,18 @@ class Corrector(node.Node):
 	def uiGetPlanParams(self):
 		camconfig = self.cam.cameraConfig()
 		newcamstate = data.CorrectorCamstateData()
-		newcamstate.friendly_update(camconfig)
-		newcamstate['id'] = None
+		newcamstate['dimension'] = camconfig['dimension']
+		newcamstate['offset'] = camconfig['offset']
+		newcamstate['binning'] = camconfig['binning']
 		plandata = self.retrievePlan(newcamstate)
-		print 'plandata', plandata
-		d = dict(plandata)
-		del d['id']
-		del d['session']
-		return d
+		if plandata is None:
+			self.cliplimits.set([])
+			self.badrows.set([])
+			self.badcols.set([])
+		else:
+			self.cliplimits.set(plandata['clip_limits'])
+			self.badrows.set(plandata['bad_rows'])
+			self.badcols.set(plandata['bad_cols'])
 
 	def uiAcquireDark(self):
 		try:
@@ -128,7 +147,6 @@ class Corrector(node.Node):
 		except node.PublishError:
 			self.outputError('Cannot set EM parameter, EM may not be running')
 		else:
-			print 'Dark Stats: %s' % (self.stats(imagedata),)
 			self.displayImage(imagedata)
 
 	def uiAcquireBright(self):
@@ -137,7 +155,6 @@ class Corrector(node.Node):
 		except node.PublishError:
 			self.outputError('Cannot set EM parameter, EM may not be running')
 		else:
-			print 'Bright Stats: %s' % (self.stats(imagedata),)
 			self.displayImage(imagedata)
 
 	def uiAcquireRaw(self):
@@ -149,7 +166,10 @@ class Corrector(node.Node):
 			self.outputError('Cannot set EM parameter, EM may not be running')
 		else:
 			imagearray = imagedata['image']
-			print 'Corrected Stats: %s' % (self.stats(imagearray),)
+			if self.despikeon.get():
+				print 'despiking'
+				thresh = self.despikevalue.get()
+				imagearray = imagefun.despike(imagearray, thresh)
 			self.displayImage(imagearray)
 
 	def uiAcquireCorrected(self):
@@ -159,23 +179,35 @@ class Corrector(node.Node):
 		except node.PublishError:
 			self.outputError('Cannot set EM parameter, EM may not be running')
 		else:
-			print 'Corrected Stats: %s' % (self.stats(imagedata),)
 			self.displayImage(imagedata)
 
 	def displayImage(self, imagedata):
 		if self.display_flag.get():
 			self.ui_image.set(imagedata)
+			self.displayStats(imagedata)
+
+	def displayStats(self, imagedata):
+		stats = self.stats(imagedata)
+		print 'STATS', stats
+		self.statsmean.set(stats['mean'])
+		self.statsmin.set(stats['min'])
+		self.statsmax.set(stats['max'])
+		self.statsstd.set(stats['stdev'])
 
 	def newCamstate(self, camdata):
 		camdatacopy = copy.deepcopy(camdata)
 		camstate = data.CorrectorCamstateData(id=self.ID())
-		camstate.friendly_update(camdatacopy)
+		camstate['dimension'] = camdatacopy['dimension']
+		camstate['offset'] = camdatacopy['offset']
+		camstate['binning'] = camdatacopy['binning']
 		return camstate
 
 	def retrievePlan(self, corstate):
 		corstate['id'] = None
 		qplan = data.CorrectorPlanData()
 		qplan['camstate'] = corstate
+		qplan['session'] = data.SessionData()
+		qplan['session']['instrument'] = self.session['instrument']
 		plandatalist = self.research(datainstance=qplan)
 		if plandatalist:
 			return plandatalist[0]
@@ -184,7 +216,6 @@ class Corrector(node.Node):
 
 	def storePlan(self, plandata):
 		self.publish(plandata, database=True)
-		#self.publish(plandata, database=False)
 
 	def acquireSeries(self, n, camdata):
 		series = []
@@ -203,8 +234,10 @@ class Corrector(node.Node):
 		if dark:
 			camdata['exposure type'] = 'dark'
 			typekey = 'dark'
+			print 'DARK'
 		else:
 			typekey = 'bright'
+			print 'BRIGHT'
 
 		self.cam.currentCameraEMData(camdata)
 
@@ -219,8 +252,16 @@ class Corrector(node.Node):
 
 		print 'averaging series'
 		ref = imagefun.averageSeries(series)
+
+		if self.despikeon.get():
+			print 'despiking reference image'
+			thresh = self.despikevalue.get()
+			ref = imagefun.despike(ref, thresh)
+
 		corstate = data.CorrectorCamstateData()
-		corstate.friendly_update(seriescam)
+		corstate['dimension'] = seriescam['dimension']
+		corstate['offset'] = seriescam['offset']
+		corstate['binning'] = seriescam['binning']
 
 		refimagedata = self.storeRef(typekey, ref, corstate)
 
@@ -360,7 +401,9 @@ class Corrector(node.Node):
 			numimage = imagedata['image']
 			camdata = imagedata['camera']
 			corstate = data.CorrectorCamstateData()
-			corstate.friendly_update(camdata)
+			corstate['dimension'] = camdata['dimension']
+			corstate['offset'] = camdata['offset']
+			corstate['binning'] = camdata['binning']
 			corrected = self.correct(numimage, corstate)
 			imagedata['image'] = corrected
 			return imagedata
@@ -369,6 +412,11 @@ class Corrector(node.Node):
 		'''
 		this puts an image through a pipeline of corrections
 		'''
+		if self.despikeon.get():
+			print 'despiking'
+			thresh = self.despikevalue.get()
+			original = imagefun.despike(original, thresh)
+
 #		print 'normalize'
 		normalized = self.normalize(original, camstate)
 		plandata = self.retrievePlan(camstate)
