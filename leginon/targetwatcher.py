@@ -117,7 +117,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 		imagetime = imagedata['scope']['system time']
 		# last declared drift
 		lastdeclared = self.research(data.DriftDeclaredData(), results=1)
-		if not lastdrift:
+		if not lastdeclared:
 			## no drift declared, no adjustment needed
 			return adjustedtarget
 		# last declared drift time
@@ -136,7 +136,7 @@ class TargetWatcher(watcher.Watcher, targethandler.TargetHandler):
 			else:
 				# yes, but was it measured after declared drift?
 				imagedrift = imagedrift[0]
-				if imagedrift['system time'] < lasdeclaredtime:
+				if imagedrift['system time'] < lastdeclaredtime:
 					# too old, need to measure it again
 					imagedrift = self.requestImageDrift(imagedata)
 
