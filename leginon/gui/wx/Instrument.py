@@ -534,9 +534,9 @@ class Panel(gui.wx.Node.Panel):
 				pass
 
 	def onControl(self, evt):
-		keypath = self.reversemap[evt.GetEventObject()]
+		keypath = self.controlmap[evt.GetEventObject()]
 		value = getValue(evt)
-		self.node.uiSetState(self.makeDict(keypath, value))
+		self.node.setState(self.makeDict(keypath, value))
 
 	def makeDict(self, keypath, value):
 		if len(keypath) == 0:

@@ -620,6 +620,14 @@ class EM(node.Node):
 		self.uiSetDictData(self.uicameradict, self.state)
 		self.uistate.update(self.uiGetDictData(self.uicameradict))
 
+	def setState(self, setdict):
+		self.statelock.acquire()
+		try:
+			done_event = threading.Event()
+			self.requestqueue.put(SetRequest(done_event, setdict))
+		finally:
+			self.statelock.release()
+
 	def uiSetState(self, setdict):
 		request = {}
 		for key in setdict:
