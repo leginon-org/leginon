@@ -688,15 +688,22 @@ class NodeGUILauncher(Frame):
 
 		launchbut = Button(f, text='Launch GUI', command=self.launchgui)
 		launchhostlab = Label(f, text='Host')
-		self.launchhostent = Entry(f, width=15)
+
+		#self.launchhostent = Entry(f, width=15)
+		self.hostvar = StringVar()
+		self.launchhostent = Pmw.ComboBox(f, entry_textvariable=self.hostvar)
+		self.launchhostent.component('entryfield').component('entry')['width'] = 12
 		defaulthost = socket.gethostname()
-		self.launchhostent.insert(0, defaulthost)
+		self.hostvar.set(defaulthost)
+		
+		self.hosthistory = []
+		self.addHostHistory(defaulthost)
+
 		launchportlab = Label(f, text='Port')
 
 		self.launchportent = Pmw.Counter(f, datatype='integer')
 		portent = self.launchportent.component('entry')
-		portent.insert(0, 49152)
-
+		portent.insert(0, 49153)
 
 		launchbut.pack(side=LEFT)
 		launchhostlab.pack(side=LEFT)
@@ -709,10 +716,18 @@ class NodeGUILauncher(Frame):
 
 		f.pack(side=TOP, fill=BOTH)
 
+	def addHostHistory(self, host):
+		if host not in self.hosthistory:
+			self.hosthistory.append(host)
+			self.launchhostent.setlist(self.hosthistory)
+
 	def launchgui(self, event=None):
-		host = self.launchhostent.get()
+		host = self.hostvar.get()
 		port = self.launchportent.get()
 		tk = self.newGUIWindow(host, port)
+		# only store host in history if launch worked
+		if tk is not None:
+			self.addHostHistory(host)
 
 	def newGUIWindow(self, host, port):
 		top = Toplevel()
@@ -720,8 +735,10 @@ class NodeGUILauncher(Frame):
 		try:
 			gui = NodeGUI(top, host, port)
 			gui.pack(expand=YES, fill=BOTH)
+			return top
 		except:
 			top.destroy()
+			return None
 
 if __name__ == '__main__':
 	import sys
